@@ -25,9 +25,8 @@ EVP_PKEY_get_default_digest_nid() sets I<pnid> to the default message
 digest NID for the public key signature operations associated with key
 I<pkey>.  Note that some signature algorithms (i.e. Ed25519 and Ed448)
 do not use a digest during signing.  In this case I<pnid> will be set
-to NID_undef.  This function is only reliable for legacy keys, which
-are keys with a B<EVP_PKEY_ASN1_METHOD>; these keys have typically
-been created with L<EVP_PKEY_assign_RSA(3)> or similar.
+to NID_undef.  This function is only reliable for legacy keys; these keys have
+typically been created with L<EVP_PKEY_assign_RSA(3)> or similar.
 
 =head1 NOTES
 

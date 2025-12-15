@@ -1199,10 +1199,6 @@ DEPEND[html/man3/EVP_PKEY2PKCS8.html]=man3/EVP_PKEY2PKCS8.pod
 GENERATE[html/man3/EVP_PKEY2PKCS8.html]=man3/EVP_PKEY2PKCS8.pod
 DEPEND[man/man3/EVP_PKEY2PKCS8.3]=man3/EVP_PKEY2PKCS8.pod
 GENERATE[man/man3/EVP_PKEY2PKCS8.3]=man3/EVP_PKEY2PKCS8.pod
-DEPEND[html/man3/EVP_PKEY_ASN1_METHOD.html]=man3/EVP_PKEY_ASN1_METHOD.pod
-GENERATE[html/man3/EVP_PKEY_ASN1_METHOD.html]=man3/EVP_PKEY_ASN1_METHOD.pod
-DEPEND[man/man3/EVP_PKEY_ASN1_METHOD.3]=man3/EVP_PKEY_ASN1_METHOD.pod
-GENERATE[man/man3/EVP_PKEY_ASN1_METHOD.3]=man3/EVP_PKEY_ASN1_METHOD.pod
 DEPEND[html/man3/EVP_PKEY_CTX_ctrl.html]=man3/EVP_PKEY_CTX_ctrl.pod
 GENERATE[html/man3/EVP_PKEY_CTX_ctrl.html]=man3/EVP_PKEY_CTX_ctrl.pod
 DEPEND[man/man3/EVP_PKEY_CTX_ctrl.3]=man3/EVP_PKEY_CTX_ctrl.pod
@@ -1247,10 +1243,6 @@ DEPEND[html/man3/EVP_PKEY_CTX_set_tls1_prf_md.html]=man3/EVP_PKEY_CTX_set_tls1_p
 GENERATE[html/man3/EVP_PKEY_CTX_set_tls1_prf_md.html]=man3/EVP_PKEY_CTX_set_tls1_prf_md.pod
 DEPEND[man/man3/EVP_PKEY_CTX_set_tls1_prf_md.3]=man3/EVP_PKEY_CTX_set_tls1_prf_md.pod
 GENERATE[man/man3/EVP_PKEY_CTX_set_tls1_prf_md.3]=man3/EVP_PKEY_CTX_set_tls1_prf_md.pod
-DEPEND[html/man3/EVP_PKEY_asn1_get_count.html]=man3/EVP_PKEY_asn1_get_count.pod
-GENERATE[html/man3/EVP_PKEY_asn1_get_count.html]=man3/EVP_PKEY_asn1_get_count.pod
-DEPEND[man/man3/EVP_PKEY_asn1_get_count.3]=man3/EVP_PKEY_asn1_get_count.pod
-GENERATE[man/man3/EVP_PKEY_asn1_get_count.3]=man3/EVP_PKEY_asn1_get_count.pod
 DEPEND[html/man3/EVP_PKEY_check.html]=man3/EVP_PKEY_check.pod
 GENERATE[html/man3/EVP_PKEY_check.html]=man3/EVP_PKEY_check.pod
 DEPEND[man/man3/EVP_PKEY_check.3]=man3/EVP_PKEY_check.pod
@@ -3349,7 +3341,6 @@ html/man3/EVP_MAC.html \
 html/man3/EVP_OpenInit.html \
 html/man3/EVP_PBE_CipherInit.html \
 html/man3/EVP_PKEY2PKCS8.html \
-html/man3/EVP_PKEY_ASN1_METHOD.html \
 html/man3/EVP_PKEY_CTX_ctrl.html \
 html/man3/EVP_PKEY_CTX_get0_libctx.html \
 html/man3/EVP_PKEY_CTX_get0_pkey.html \
@@ -3361,7 +3352,6 @@ html/man3/EVP_PKEY_CTX_set_params.html \
 html/man3/EVP_PKEY_CTX_set_rsa_pss_keygen_md.html \
 html/man3/EVP_PKEY_CTX_set_scrypt_N.html \
 html/man3/EVP_PKEY_CTX_set_tls1_prf_md.html \
-html/man3/EVP_PKEY_asn1_get_count.html \
 html/man3/EVP_PKEY_check.html \
 html/man3/EVP_PKEY_copy_parameters.html \
 html/man3/EVP_PKEY_decapsulate.html \
@@ -4022,7 +4012,6 @@ man/man3/EVP_MAC.3 \
 man/man3/EVP_OpenInit.3 \
 man/man3/EVP_PBE_CipherInit.3 \
 man/man3/EVP_PKEY2PKCS8.3 \
-man/man3/EVP_PKEY_ASN1_METHOD.3 \
 man/man3/EVP_PKEY_CTX_ctrl.3 \
 man/man3/EVP_PKEY_CTX_get0_libctx.3 \
 man/man3/EVP_PKEY_CTX_get0_pkey.3 \
@@ -4034,7 +4023,6 @@ man/man3/EVP_PKEY_CTX_set_params.3 \
 man/man3/EVP_PKEY_CTX_set_rsa_pss_keygen_md.3 \
 man/man3/EVP_PKEY_CTX_set_scrypt_N.3 \
 man/man3/EVP_PKEY_CTX_set_tls1_prf_md.3 \
-man/man3/EVP_PKEY_asn1_get_count.3 \
 man/man3/EVP_PKEY_check.3 \
 man/man3/EVP_PKEY_copy_parameters.3 \
 man/man3/EVP_PKEY_decapsulate.3 \

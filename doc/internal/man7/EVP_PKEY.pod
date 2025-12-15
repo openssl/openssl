@@ -31,7 +31,7 @@ and it can take one of the following forms:
 This is the form that an B<EVP_PKEY> in OpenSSL prior to 3.0 had.  The
 internal key in the B<EVP_PKEY> is a pointer to the low-level key
 types, such as B<RSA>, B<DSA> and B<EC>, and is governed by an associated
-L<EVP_PKEY_ASN1_METHOD(3)>.
+B<EVP_PKEY_ASN1_METHOD>.
 
 The functions available through those two method structures get full
 access to the B<EVP_PKEY> and therefore have a lot of freedom to
@@ -94,8 +94,8 @@ the L<EVP_KEYMGMT(3)>, the dirty count is maintained in the B<EVP_PKEY>
 itself, and is incremented every time L<EVP_PKEY_set_params(3)> or its
 specialised derivatives are called.
 For legacy origin keys, this requires the associated
-L<EVP_PKEY_ASN1_METHOD(3)> to implement the dirty_cnt() function.  All
-of OpenSSL's built-in L<EVP_PKEY_ASN1_METHOD(3)> implement this
+B<EVP_PKEY_ASN1_METHOD> to implement the dirty_cnt() function.  All
+of OpenSSL's built-in B<EVP_PKEY_ASN1_METHOD> implement this
 function.
 
 =head2 Export cache for provider operations
@@ -122,7 +122,7 @@ there are two forms of the latter, we have the "legacy origin" and the
 The export to the operation key cache can be performed independent of
 what form the origin has.
 For a legacy origin, this requires that the associated
-L<EVP_PKEY_ASN1_METHOD(3)> implements the functions export_to() and
+B<EVP_PKEY_ASN1_METHOD> implements the functions export_to() and
 dirty_cnt().
 For a provider native origin, this requires that the associated
 L<EVP_KEYMGMT(3)> implements the OSSL_FUNC_keymgmt_export() function
@@ -166,7 +166,7 @@ Export the internal origin key to the provider, using the appropriate
 method.
 
 For legacy origin keys, that's done with the help of the
-L<EVP_PKEY_ASN1_METHOD(3)> export_to() function.
+B<EVP_PKEY_ASN1_METHOD> export_to() function.
 
 For provider native origin keys, that's done by retrieving the key
 data in L<OSSL_PARAM(3)> form from the origin keys, using the

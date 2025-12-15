@@ -91,7 +91,7 @@ B<EVP_PKEY> with EVP_PKEY_assign_RSA() and similar functions.
 
 =head1 SEE ALSO
 
-L<EVP_PKEY_ASN1_METHOD(3)>, L<EVP_PKEY_assign_RSA(3)>
+L<EVP_PKEY_assign_RSA(3)>
 
 =head1 COPYRIGHT
 
