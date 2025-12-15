@@ -2569,7 +2569,7 @@ CON_FUNC_RETURN tls_construct_server_key_exchange(SSL_CONNECTION *s,
     EVP_PKEY *pkdh = NULL;
     unsigned char *encodedPoint = NULL;
     size_t encodedlen = 0;
-    int curve_id = 0;
+    int group_id = 0;
     const SIGALG_LOOKUP *lu = s->s3.tmp.sigalg;
     int i;
     unsigned long type;
@@ -2603,49 +2603,64 @@ CON_FUNC_RETURN tls_construct_server_key_exchange(SSL_CONNECTION *s,
             CERT *cert = s->cert;
             EVP_PKEY *pkdhp = NULL;
 
-            if (s->cert->dh_tmp_auto) {
-                pkdh = ssl_get_auto_dh(s);
-                if (pkdh == NULL) {
+            /* Get NID of appropriate shared FFDHE group */
+            group_id = tls1_shared_group(s, TLS1_GROUPS_RETURN_TMP_ID,
+                TLS1_GROUPS_FFDHE_GROUPS);
+            if (group_id != 0) {
+                /* Cache the group used in the SSL_SESSION */
+                s->session->kex_group = group_id;
+
+                s->s3.tmp.pkey = ssl_generate_pkey_group(s, group_id);
+                if (s->s3.tmp.pkey == NULL) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     goto err;
                 }
-                pkdhp = pkdh;
             } else {
-                pkdhp = cert->dh_tmp;
-            }
+
+                if (s->cert->dh_tmp_auto) {
+                    pkdh = ssl_get_auto_dh(s);
+                    if (pkdh == NULL) {
+                        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                        goto err;
+                    }
+                    pkdhp = pkdh;
+                } else {
+                    pkdhp = cert->dh_tmp;
+                }
 #if !defined(OPENSSL_NO_DEPRECATED_3_0)
-            if ((pkdhp == NULL) && (s->cert->dh_tmp_cb != NULL)) {
-                pkdh = ssl_dh_to_pkey(s->cert->dh_tmp_cb(SSL_CONNECTION_GET_USER_SSL(s),
-                    0, 1024));
-                if (pkdh == NULL) {
+                if ((pkdhp == NULL) && (s->cert->dh_tmp_cb != NULL)) {
+                    pkdh = ssl_dh_to_pkey(s->cert->dh_tmp_cb(SSL_CONNECTION_GET_USER_SSL(s),
+                        0, 1024));
+                    if (pkdh == NULL) {
+                        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                        goto err;
+                    }
+                    pkdhp = pkdh;
+                }
+#endif
+                if (pkdhp == NULL) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_MISSING_TMP_DH_KEY);
+                    goto err;
+                }
+                if (!ssl_security(s, SSL_SECOP_TMP_DH,
+                        EVP_PKEY_get_security_bits(pkdhp), 0, pkdhp)) {
+                    SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_DH_KEY_TOO_SMALL);
+                    goto err;
+                }
+                if (s->s3.tmp.pkey != NULL) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     goto err;
                 }
-                pkdhp = pkdh;
-            }
-#endif
-            if (pkdhp == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_MISSING_TMP_DH_KEY);
-                goto err;
-            }
-            if (!ssl_security(s, SSL_SECOP_TMP_DH,
-                    EVP_PKEY_get_security_bits(pkdhp), 0, pkdhp)) {
-                SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_DH_KEY_TOO_SMALL);
-                goto err;
-            }
-            if (s->s3.tmp.pkey != NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
 
-            s->s3.tmp.pkey = ssl_generate_pkey(s, pkdhp);
-            if (s->s3.tmp.pkey == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto err;
-            }
+                s->s3.tmp.pkey = ssl_generate_pkey(s, pkdhp);
+                if (s->s3.tmp.pkey == NULL) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
 
-            EVP_PKEY_free(pkdh);
-            pkdh = NULL;
+                EVP_PKEY_free(pkdh);
+                pkdh = NULL;
+            }
 
             /* These BIGNUMs need to be freed when we're finished */
             freer = 1;
@@ -2665,18 +2680,18 @@ CON_FUNC_RETURN tls_construct_server_key_exchange(SSL_CONNECTION *s,
                 goto err;
             }
 
-            /* Get NID of appropriate shared curve */
-            curve_id = tls1_shared_group(s, TLS1_GROUPS_RETURN_TMP_ID,
+            /* Get NID of appropriate shared ECDHE curve */
+            group_id = tls1_shared_group(s, TLS1_GROUPS_RETURN_TMP_ID,
                 TLS1_GROUPS_NON_FFDHE_GROUPS);
-            if (curve_id == 0) {
+            if (group_id == 0) {
                 SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                     SSL_R_UNSUPPORTED_ELLIPTIC_CURVE);
                 goto err;
             }
             /* Cache the group used in the SSL_SESSION */
-            s->session->kex_group = curve_id;
+            s->session->kex_group = group_id;
             /* Generate a new key for this curve */
-            s->s3.tmp.pkey = ssl_generate_pkey_group(s, curve_id);
+            s->s3.tmp.pkey = ssl_generate_pkey_group(s, group_id);
             if (s->s3.tmp.pkey == NULL) {
                 /* SSLfatal() already called */
                 goto err;
@@ -2793,7 +2808,7 @@ CON_FUNC_RETURN tls_construct_server_key_exchange(SSL_CONNECTION *s,
          * point itself
          */
         if (!WPACKET_put_bytes_u8(pkt, NAMED_CURVE_TYPE)
-            || !WPACKET_put_bytes_u16(pkt, curve_id)
+            || !WPACKET_put_bytes_u16(pkt, group_id)
             || !WPACKET_sub_memcpy_u8(pkt, encodedPoint, encodedlen)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
