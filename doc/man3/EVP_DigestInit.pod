@@ -432,7 +432,9 @@ returns B<NID_sha1>. This function is normally used when setting ASN1 OIDs.
 
 =item EVP_MD_CTX_get0_md_data()
 
-Return the digest method private data for the passed B<EVP_MD_CTX>.
+Return the digest method private data for the passed B<EVP_MD_CTX>. This
+function exists for legacy backward compatibility reasons and always returns
+NULL.
 
 =item EVP_MD_CTX_get0_md(), EVP_MD_CTX_get1_md()
 
