@@ -32,6 +32,15 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Fixed certificate date calculation when using explicit start dates with
+   the `-days` option. Previously, when both `-not_before`/`-startdate` and
+   `-days` were specified, the expiry date was incorrectly calculated from
+   the current time instead of from the specified start date. This affected
+   the `openssl x509`, `openssl req -x509`, and `openssl ca` commands.
+   The expiry date is now correctly calculated as start_date + days.
+
+   *Jeffrey Kintscher*
+
  * The crypto-mdebug-backtrace configuration option has been entirely removed.
    The option has been a no-op since 1.0.2.
 
