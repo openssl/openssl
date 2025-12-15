@@ -27,6 +27,8 @@ OpenSSL 4.0
 
 ### Major changes between OpenSSL 3.6 and OpenSSL 4.0 [under development]
 
+  * OPENSSL_cleanup() no longer invoked as atexit(3) handler by default.
+
   * ENGINE support was removed. The `no-engine` build option and the
    `OPENSSL_NO_ENGINE` macro is always present.
 
