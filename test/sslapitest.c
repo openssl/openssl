@@ -11431,6 +11431,139 @@ end:
 
     return testresult;
 }
+
+#ifndef OPENSSL_NO_TLS1_3
+/*
+ * Test the server will reject FFDHE ciphersuites if no supported FFDHE group is
+ * advertised by the client.
+ */
+static int test_no_shared_ffdhe_group(int idx)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method());
+    SSL_CTX *sctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0, ret, expected = 1;
+    char *clientgroup = NULL, *servergroup = NULL, *ciphersuite = NULL;
+    int want_error = SSL_ERROR_NONE;
+
+    if (!TEST_ptr(sctx) || !TEST_ptr(cctx))
+        goto end;
+
+    switch (idx) {
+    case 0:
+        clientgroup = "ffdhe2048";
+        servergroup = "ffdhe3072";
+        ciphersuite = "DHE-RSA-AES128-SHA256:AES128-SHA256";
+        break;
+    case 1:
+        clientgroup = "ffdhe3072";
+        servergroup = "ffdhe4096";
+        ciphersuite = "DHE-RSA-AES128-SHA256:AES128-SHA256";
+        break;
+    case 2:
+        clientgroup = "ffdhe4096";
+        servergroup = "ffdhe6144";
+        ciphersuite = "DHE-RSA-AES128-SHA256:AES128-SHA256";
+        break;
+    case 3:
+        clientgroup = "ffdhe6144";
+        servergroup = "ffdhe8192";
+        ciphersuite = "DHE-RSA-AES128-SHA256:AES128-SHA256";
+        break;
+    case 4:
+        clientgroup = "ffdhe8192";
+        servergroup = "ffdhe2048";
+        ciphersuite = "DHE-RSA-AES128-SHA256:AES128-SHA256";
+        break;
+    case 5:
+        clientgroup = "ffdhe2048";
+        servergroup = "ffdhe3072";
+        ciphersuite = "DHE-RSA-AES128-SHA256";
+        expected = 0;
+        want_error = SSL_ERROR_SSL;
+        break;
+    case 6:
+        clientgroup = "ffdhe3072";
+        servergroup = "ffdhe4096";
+        ciphersuite = "DHE-RSA-AES128-SHA256";
+        expected = 0;
+        want_error = SSL_ERROR_SSL;
+        break;
+    case 7:
+        clientgroup = "ffdhe4096";
+        servergroup = "ffdhe6144";
+        ciphersuite = "DHE-RSA-AES128-SHA256";
+        expected = 0;
+        want_error = SSL_ERROR_SSL;
+        break;
+    case 8:
+        clientgroup = "ffdhe6144";
+        servergroup = "ffdhe8192";
+        ciphersuite = "DHE-RSA-AES128-SHA256";
+        expected = 0;
+        want_error = SSL_ERROR_SSL;
+        break;
+    case 9:
+        clientgroup = "ffdhe8192";
+        servergroup = "ffdhe2048";
+        ciphersuite = "DHE-RSA-AES128-SHA256";
+        expected = 0;
+        want_error = SSL_ERROR_SSL;
+        break;
+    default:
+        TEST_error("Invalid text index");
+        goto end;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, NULL,
+            NULL,
+            0,
+            0,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(SSL_set_dh_auto(serverssl, 1))
+        || !TEST_true(SSL_set_min_proto_version(serverssl, TLS1_2_VERSION))
+        || !TEST_true(SSL_set_max_proto_version(serverssl, TLS1_2_VERSION))
+        || !TEST_true(SSL_set_cipher_list(serverssl, ciphersuite))
+        || !TEST_true(SSL_set_cipher_list(clientssl, ciphersuite))
+        || !TEST_true(SSL_set1_groups_list(serverssl, servergroup))
+        || !TEST_true(SSL_set1_groups_list(clientssl, clientgroup)))
+        goto end;
+
+    ret = create_ssl_connection(serverssl, clientssl, want_error);
+    if (!TEST_int_eq(expected, ret))
+        goto end;
+
+    if (expected <= 0) {
+        testresult = 1;
+        goto end;
+    }
+
+    /*
+     * Note that the server should not select the DHE ciphersuite if there are
+     * no shared FFDHE groups, so if it was selected, that is an error.
+     */
+    if (TEST_int_eq(TLS1_CK_DHE_RSA_WITH_AES_128_SHA256,
+            SSL_CIPHER_get_id(SSL_get_current_cipher(clientssl))))
+        goto end;
+
+    testresult = 1;
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+#endif /* OPENSSL_NO_TLS1_3 */
 #endif /* OPENSSL_NO_DH */
 #endif /* OPENSSL_NO_TLS1_2 */
 
@@ -14146,6 +14279,9 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DH
     ADD_ALL_TESTS(test_set_tmp_dh, 11);
     ADD_ALL_TESTS(test_dh_auto, 7);
+#ifndef OPENSSL_NO_TLS1_3
+    ADD_ALL_TESTS(test_no_shared_ffdhe_group, 10);
+#endif
 #endif
 #endif
 #ifndef OSSL_NO_USABLE_TLS1_3
