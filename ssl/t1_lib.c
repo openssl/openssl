@@ -1001,11 +1001,18 @@ end:
 /*-
  * For nmatch >= 0, return the id of the |nmatch|th shared group or 0
  * if there is no match.
- * For nmatch == -1, return number of matches
- * For nmatch == -2, return the id of the group to use for
- * a tmp key, or 0 if there is no match.
+ * For nmatch == TLS1_GROUPS_RETURN_NUMBER, return number of matches
+ * For nmatch == TLS1_GROUPS_RETURN_TMP_ID, return the id of the group to use
+ * for a tmp key, or 0 if there is no match.
+ * If groups == TLS1_GROUPS_FFDHE_GROUPS, only shared groups that are FFDHE
+ * groups (i.e., between OSSL_TLS_GROUP_ID_FFDHE_START and
+ * OSSL_TLS_GROUP_ID_FFDHE_END, inclusive) will be included in the search.
+ * If groups == TLS1_GROUPS_NON_FFDHE_GROUPS, only shared groups that are not
+ * FFDHE groups will be included in the search.
+ * If groups == TLS1_GROUPS_ALL_GROUPS, all groups will be included in the
+ * search.
  */
-uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
+uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch, int groups)
 {
     const uint16_t *pref, *supp;
     size_t num_pref, num_supp, i;
@@ -1015,8 +1022,8 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
     /* Can't do anything on client side */
     if (s->server == 0)
         return 0;
-    if (nmatch == -2) {
-        if (tls1_suiteb(s)) {
+    if (nmatch == TLS1_GROUPS_RETURN_TMP_ID) {
+        if (groups != TLS1_GROUPS_FFDHE_GROUPS && tls1_suiteb(s)) {
             /*
              * For Suite B ciphersuite determines curve: we already know
              * these are acceptable due to previous checks.
@@ -1051,6 +1058,8 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
         int minversion, maxversion;
 
         if (!tls1_in_list(id, supp, num_supp)
+            || (groups == TLS1_GROUPS_NON_FFDHE_GROUPS && is_ffdhe_group(id))
+            || (groups == TLS1_GROUPS_FFDHE_GROUPS && !is_ffdhe_group(id))
             || !tls_group_allowed(s, id, SSL_SECOP_CURVE_SHARED))
             continue;
         inf = tls1_group_id_lookup(ctx, id);
@@ -1074,7 +1083,7 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
             return id;
         k++;
     }
-    if (nmatch == -1)
+    if (nmatch == TLS1_GROUPS_RETURN_NUMBER)
         return k;
     /* Out of range (nmatch > k). */
     return 0;
@@ -1907,7 +1916,7 @@ int tls1_check_ec_tmp_key(SSL_CONNECTION *s, unsigned long cid)
 {
     /* If not Suite B just need a shared group */
     if (!tls1_suiteb(s))
-        return tls1_shared_group(s, 0) != 0;
+        return tls1_shared_group(s, 0, TLS1_GROUPS_NON_FFDHE_GROUPS) != 0;
     /*
      * If Suite B, AES128 MUST use P-256 and AES256 MUST use P-384, no other
      * curves permitted.
