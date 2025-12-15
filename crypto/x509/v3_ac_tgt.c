@@ -7,11 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * Needed for EVP_PKEY_asn1_find
- */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <stdio.h>
 #include <openssl/x509_acert.h>
 #include <crypto/x509_acert.h>
@@ -23,6 +18,7 @@
 #include "ext_dat.h"
 #include "x509_local.h"
 #include "crypto/asn1.h"
+#include "crypto/evp.h"
 
 static int i2r_ISSUER_SERIAL(X509V3_EXT_METHOD *method,
     OSSL_ISSUER_SERIAL *iss,
@@ -153,7 +149,7 @@ static int i2r_OBJECT_DIGEST_INFO(X509V3_EXT_METHOD *method,
         int pkey_nid, dig_nid;
         const EVP_PKEY_ASN1_METHOD *ameth;
         if (OBJ_find_sigid_algs(sig_nid, &dig_nid, &pkey_nid)) {
-            ameth = EVP_PKEY_asn1_find(NULL, pkey_nid);
+            ameth = evp_pkey_asn1_find(pkey_nid);
             if (ameth && ameth->sig_print)
                 return ameth->sig_print(out, digalg, sig, indent + 4, 0);
         }

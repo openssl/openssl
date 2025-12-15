@@ -7,17 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * For EVP_PKEY_asn1_get0_info(), EVP_PKEY_asn1_get_count() and
- * EVP_PKEY_asn1_get0()
- */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include "internal/namemap.h"
 #include "internal/tsan_assist.h"
 #include "internal/hashtable.h"
 #include "internal/sizes.h"
 #include "crypto/context.h"
+#include "crypto/evp.h"
 
 #define NAMEMAP_HT_BUCKETS 512
 
@@ -446,7 +441,7 @@ static void get_legacy_pkey_meth_names(const EVP_PKEY_ASN1_METHOD *ameth,
     int nid = 0, base_nid = 0, flags = 0;
     const char *pem_name = NULL;
 
-    EVP_PKEY_asn1_get0_info(&nid, &base_nid, &flags, NULL, &pem_name, ameth);
+    evp_pkey_asn1_get0_info(&nid, &base_nid, &flags, NULL, &pem_name, ameth);
     if (nid != NID_undef) {
         if ((flags & ASN1_PKEY_ALIAS) == 0) {
             switch (nid) {
@@ -534,8 +529,8 @@ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
             int i, end;
 
             /* We also pilfer data from the legacy EVP_PKEY_ASN1_METHODs */
-            for (i = 0, end = EVP_PKEY_asn1_get_count(); i < end; i++)
-                get_legacy_pkey_meth_names(EVP_PKEY_asn1_get0(i), namemap);
+            for (i = 0, end = evp_pkey_asn1_get_count(); i < end; i++)
+                get_legacy_pkey_meth_names(evp_pkey_asn1_get0(i), namemap);
         }
 #endif
     }
