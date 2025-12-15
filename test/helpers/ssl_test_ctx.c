@@ -520,19 +520,10 @@ const char *ssl_max_fragment_len_name(int MFL_mode)
 __owur static int parse_expected_key_type(int *ptype, const char *value)
 {
     int nid;
-#ifndef OPENSSL_NO_DEPRECATED_3_6
-    const EVP_PKEY_ASN1_METHOD *ameth;
-#endif
 
     if (value == NULL)
         return 0;
-#ifndef OPENSSL_NO_DEPRECATED_3_6
-    ameth = EVP_PKEY_asn1_find_str(NULL, value, -1);
-    if (ameth != NULL)
-        EVP_PKEY_asn1_get0_info(&nid, NULL, NULL, NULL, NULL, ameth);
-    else
-        nid = OBJ_sn2nid(value);
-#else
+
     /*
      * These functions map the values differently than
      * EVP_PKEY_asn1_find_str (which was used before) so use this hack
@@ -551,7 +542,7 @@ __owur static int parse_expected_key_type(int *ptype, const char *value)
     } else {
         nid = OBJ_ln2nid(value);
     }
-#endif
+
     if (nid == NID_undef)
         nid = OBJ_sn2nid(value);
 #ifndef OPENSSL_NO_EC

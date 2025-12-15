@@ -1516,20 +1516,6 @@ int EVP_PBE_get(int *ptype, int *ppbe_nid, size_t num);
 #define ASN1_PKEY_CTRL_CMS_IS_RI_TYPE_SUPPORTED 0xb
 
 #ifndef OPENSSL_NO_DEPRECATED_3_6
-OSSL_DEPRECATEDIN_3_6 int EVP_PKEY_asn1_get_count(void);
-OSSL_DEPRECATEDIN_3_6 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx);
-OSSL_DEPRECATEDIN_3_6
-const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(ENGINE **pe, int type);
-OSSL_DEPRECATEDIN_3_6
-const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
-    const char *str, int len);
-OSSL_DEPRECATEDIN_3_6
-int EVP_PKEY_asn1_get0_info(int *ppkey_id, int *pkey_base_id,
-    int *ppkey_flags, const char **pinfo,
-    const char **ppem_str,
-    const EVP_PKEY_ASN1_METHOD *ameth);
-
-OSSL_DEPRECATEDIN_3_6 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_get0_asn1(const EVP_PKEY *pkey);
 OSSL_DEPRECATEDIN_3_6 EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_new(int id, int flags,
     const char *pem_str,
     const char *info);

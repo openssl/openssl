@@ -273,29 +273,6 @@ static const SSL_CIPHER cipher_aliases[] = {
 
 };
 
-#ifndef OPENSSL_NO_DEPRECATED_3_6
-/*
- * Search for public key algorithm with given name and return its pkey_id if
- * it is available. Otherwise return 0
- */
-static int get_optional_pkey_id(const char *pkey_name)
-{
-    const EVP_PKEY_ASN1_METHOD *ameth;
-    int pkey_id = 0;
-    ameth = EVP_PKEY_asn1_find_str(NULL, pkey_name, -1);
-    if (ameth && EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, NULL, NULL, ameth) > 0)
-        return pkey_id;
-    return 0;
-}
-
-#else
-static int get_optional_pkey_id(const char *pkey_name)
-{
-    (void)pkey_name;
-    return 0;
-}
-#endif
-
 int ssl_load_ciphers(SSL_CTX *ctx)
 {
     size_t i;
@@ -384,36 +361,33 @@ int ssl_load_ciphers(SSL_CTX *ctx)
     memcpy(ctx->ssl_mac_pkey_id, default_mac_pkey_id,
         sizeof(ctx->ssl_mac_pkey_id));
 
-    ctx->ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX] = get_optional_pkey_id(SN_id_Gost28147_89_MAC);
+    ctx->ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX] = 0;
     if (ctx->ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX])
         ctx->ssl_mac_secret_size[SSL_MD_GOST89MAC_IDX] = 32;
     else
         ctx->disabled_mac_mask |= SSL_GOST89MAC;
 
-    ctx->ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX] = get_optional_pkey_id(SN_gost_mac_12);
+    ctx->ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX] = 0;
     if (ctx->ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX])
         ctx->ssl_mac_secret_size[SSL_MD_GOST89MAC12_IDX] = 32;
     else
         ctx->disabled_mac_mask |= SSL_GOST89MAC12;
 
-    ctx->ssl_mac_pkey_id[SSL_MD_MAGMAOMAC_IDX] = get_optional_pkey_id(SN_magma_mac);
+    ctx->ssl_mac_pkey_id[SSL_MD_MAGMAOMAC_IDX] = 0;
     if (ctx->ssl_mac_pkey_id[SSL_MD_MAGMAOMAC_IDX])
         ctx->ssl_mac_secret_size[SSL_MD_MAGMAOMAC_IDX] = 32;
     else
         ctx->disabled_mac_mask |= SSL_MAGMAOMAC;
 
-    ctx->ssl_mac_pkey_id[SSL_MD_KUZNYECHIKOMAC_IDX] = get_optional_pkey_id(SN_kuznyechik_mac);
+    ctx->ssl_mac_pkey_id[SSL_MD_KUZNYECHIKOMAC_IDX] = 0;
     if (ctx->ssl_mac_pkey_id[SSL_MD_KUZNYECHIKOMAC_IDX])
         ctx->ssl_mac_secret_size[SSL_MD_KUZNYECHIKOMAC_IDX] = 32;
     else
         ctx->disabled_mac_mask |= SSL_KUZNYECHIKOMAC;
 
-    if (!get_optional_pkey_id(SN_id_GostR3410_2001))
-        ctx->disabled_auth_mask |= SSL_aGOST01 | SSL_aGOST12;
-    if (!get_optional_pkey_id(SN_id_GostR3410_2012_256))
-        ctx->disabled_auth_mask |= SSL_aGOST12;
-    if (!get_optional_pkey_id(SN_id_GostR3410_2012_512))
-        ctx->disabled_auth_mask |= SSL_aGOST12;
+    ctx->disabled_auth_mask |= SSL_aGOST01 | SSL_aGOST12;
+    ctx->disabled_auth_mask |= SSL_aGOST12;
+    ctx->disabled_auth_mask |= SSL_aGOST12;
     /*
      * Disable GOST key exchange if no GOST signature algs are available *
      */

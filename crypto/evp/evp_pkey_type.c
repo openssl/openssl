@@ -65,7 +65,7 @@ int EVP_PKEY_type(int type)
     int ret;
     const EVP_PKEY_ASN1_METHOD *ameth;
 
-    ameth = EVP_PKEY_asn1_find(NULL, type);
+    ameth = evp_pkey_asn1_find(type);
     if (ameth)
         ret = ameth->pkey_id;
     else
