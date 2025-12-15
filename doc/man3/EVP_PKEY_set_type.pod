@@ -22,21 +22,15 @@ I<pkey> is NULL, these functions will still return the same return
 values as if it wasn't.
 
 EVP_PKEY_set_type() initialises I<pkey> to contain an internal legacy
-key.  When doing this, it finds a L<EVP_PKEY_ASN1_METHOD(3)>
-corresponding to I<type>, and associates I<pkey> with the findings.
-It is an error if no L<EVP_PKEY_ASN1_METHOD(3)> could be found for
+key. It is an error if no legacy implementations could be found for
 I<type>.
 
 EVP_PKEY_set_type_str() initialises I<pkey> to contain an internal legacy
-key. When doing this, it finds a L<EVP_PKEY_ASN1_METHOD(3)>
-corresponding to I<str> that has then length I<len>, and associates
-I<pkey> with the findings.
-It is an error if no L<EVP_PKEY_ASN1_METHOD(3)> could be found for
-I<type>.
+key. It is an error if no legacy implementation could be found for I<type>.
 
 For both EVP_PKEY_set_type() and EVP_PKEY_set_type_str(), I<pkey> gets
 a numeric type, which can be retrieved with L<EVP_PKEY_get_id(3)>.  This
-numeric type is taken from the L<EVP_PKEY_ASN1_METHOD(3)> that was
+numeric type is taken from the internal legacy implementation that was
 found, and is equal to or closely related to I<type> in the case of
 EVP_PKEY_set_type(), or related to I<str> in the case of
 EVP_PKEY_set_type_str().
@@ -53,7 +47,7 @@ All functions described here return 1 if successful, or 0 on error.
 =head1 SEE ALSO
 
 L<EVP_PKEY_assign(3)>, L<EVP_PKEY_get_id(3)>, L<EVP_PKEY_get0_RSA(3)>,
-L<EVP_PKEY_copy_parameters(3)>, L<EVP_PKEY_ASN1_METHOD(3)>,
+L<EVP_PKEY_copy_parameters(3)>,
 L<EVP_KEYMGMT(3)>
 
 =head1 COPYRIGHT
