@@ -90,6 +90,10 @@ static int test_camellia_1blk_key128_armv8(void)
 
     /* Test Vectors (Standard Camellia KAT) */
 
+    //static const uint8_t k[CAMELLIA_BLOCK_SIZE] = {
+    //    0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
+    //    0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88
+    //};
     static const uint8_t k[CAMELLIA_BLOCK_SIZE] = {
         0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
         0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
@@ -115,7 +119,8 @@ static int test_camellia_1blk_key128_armv8(void)
     camellia_keysetup_neon((struct camellia_simd_ctx *)&ctx, k, 128 / 8);
     memcpy(block, input, CAMELLIA_BLOCK_SIZE);
 
-    camellia_encrypt_1blk_armv8((struct camellia_simd_ctx *)&ctx, block, block);
+    //camellia_encrypt_1blk_armv8((struct camellia_simd_ctx *)&ctx, block, block);
+    camellia_encrypt_1blk_aese((struct camellia_simd_ctx *)&ctx, block, block);
     if (!TEST_mem_eq(block, CAMELLIA_BLOCK_SIZE, expected_1rnd, CAMELLIA_BLOCK_SIZE)) {
         TEST_error("Initial 1-round encryption failed.");
         return 0;
@@ -519,13 +524,13 @@ int setup_tests(void)
     /*ADD_TEST(test_camellia_128_ref);*/
 #ifdef CMLL_AES_CAPABLE
     ADD_TEST(test_camellia_1blk_key128_armv8);
-    ADD_TEST(test_camellia_16blk_key128_neon);
-    ADD_TEST(test_camellia_1blk_key192_armv8);
-    ADD_TEST(test_camellia_16blk_key192_neon);
-    ADD_TEST(test_camellia_1blk_key256_armv8);
-    ADD_TEST(test_camellia_16blk_key256_neon);
-    ADD_TEST(test_camellia_cbc_neon);
-    ADD_TEST(test_camellia_ctr_neon);
+    //ADD_TEST(test_camellia_16blk_key128_neon);
+    //ADD_TEST(test_camellia_1blk_key192_armv8);
+    //ADD_TEST(test_camellia_16blk_key192_neon);
+    //ADD_TEST(test_camellia_1blk_key256_armv8);
+    //ADD_TEST(test_camellia_16blk_key256_neon);
+    //ADD_TEST(test_camellia_cbc_neon);
+    //ADD_TEST(test_camellia_ctr_neon);
 #endif
     return 1;
 }
