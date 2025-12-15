@@ -495,7 +495,35 @@ static HT *m_ht = NULL;
 #define NUM_WORKERS 16
 
 static struct test_mt_entry test_mt_entries[TEST_MT_POOL_SZ];
-static char *worker_exits[NUM_WORKERS];
+static char **worker_exits;
+static thread_t *workers;
+static int num_workers = NUM_WORKERS;
+
+static int setup_num_workers(void)
+{
+    char *harness_jobs = getenv("HARNESS_JOBS");
+    char *lhash_workers = getenv("LHASH_WORKERS");
+    /* If we have HARNESS_JOBS set, don't eat more than a quarter */
+    if (harness_jobs != NULL) {
+        int jobs = atoi(harness_jobs);
+        if (jobs > 0)
+            num_workers = jobs / 4;
+    }
+    /* But if we have explicitly set LHASH_WORKERS use that */
+    if (lhash_workers != NULL) {
+        int jobs = atoi(lhash_workers);
+        if (jobs > 0)
+            num_workers = jobs;
+    }
+
+    TEST_info("using %d workers\n", num_workers);
+
+    free(worker_exits);
+    free(workers);
+    worker_exits = calloc(num_workers, sizeof(*worker_exits));
+    workers = calloc(num_workers, sizeof(*workers));
+    return worker_exits != NULL && workers != NULL;
+}
 
 HT_START_KEY_DEFN(mtkey)
 HT_DEF_KEY_FIELD(index, uint32_t)
@@ -650,15 +678,15 @@ static int test_hashtable_multithread(void)
         1, /* Check collisions */
     };
     int ret = 0;
-    thread_t workers[NUM_WORKERS];
     int i;
 #ifdef MEASURE_HASH_PERFORMANCE
     struct timeval start, end, delta;
 #endif
 
-    memset(worker_exits, 0, sizeof(char *) * NUM_WORKERS);
+    if (!TEST_true(setup_num_workers()))
+        goto end;
+
     memset(test_mt_entries, 0, sizeof(TEST_MT_ENTRY) * TEST_MT_POOL_SZ);
-    memset(workers, 0, sizeof(thread_t) * NUM_WORKERS);
 
     m_ht = ossl_ht_new(&hash_conf);
 
@@ -673,13 +701,13 @@ static int test_hashtable_multithread(void)
     gettimeofday(&start, NULL);
 #endif
 
-    for (i = 0; i < NUM_WORKERS; i++) {
+    for (i = 0; i < num_workers; i++) {
         if (!run_thread(&workers[i], do_mt_hash_work))
             goto shutdown;
     }
 
 shutdown:
-    for (--i; i >= 0; i--) {
+    for (i = 0; i < num_workers; i++) {
         wait_for_thread(workers[i]);
     }
 
@@ -688,7 +716,7 @@ shutdown:
      * conditions
      */
     ret = 1;
-    for (i = 0; i < NUM_WORKERS; i++) {
+    for (i = 0; i < num_workers; i++) {
         if (worker_exits[i] != NULL) {
             TEST_info("Worker %d failed: %s\n", i, worker_exits[i]);
             ret = 0;
@@ -710,6 +738,10 @@ end_free:
     ossl_ht_free(m_ht);
     CRYPTO_THREAD_lock_free(worker_lock);
     CRYPTO_THREAD_lock_free(testrand_lock);
+    free(workers);
+    workers = NULL;
+    free(worker_exits);
+    worker_exits = NULL;
 end:
     return ret;
 }
