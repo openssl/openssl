@@ -185,14 +185,41 @@ int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
 
         if (len == 0)
             len = defltlen;
-
-        if (thiswb->len != len) {
+        if (rl->alloc_cb)
+        {
+          if ((thiswb->buf) && (!rl->orig_free_done))
+          {
+            OPENSSL_free(thiswb->buf);
+            rl->orig_free_done = 1;
+          }
+          thiswb->buf = NULL;         /* force reallocation */
+        }
+        else if (thiswb->len != len) {
             OPENSSL_free(thiswb->buf);
             thiswb->buf = NULL; /* force reallocation */
+        }
+        if (rl->cb_memory)
+        {
+           thiswb->buf = NULL;         /* force reallocation */
+           rl->cb_memory = 0;
         }
 
         p = thiswb->buf;
         if (p == NULL) {
+		if (rl->alloc_cb)
+            {
+              rl->cb_memory = 1;
+              size_t need = len;
+              size_t got = 0;
+              p = rl->alloc_cb(rl->cb_arg, need, &got);
+              if (!p) {
+                  if (rl->numwpipes < currpipe)
+                      rl->numwpipes = currpipe;
+                  RLAYERfatal(rl, SSL_AD_NO_ALERT, ERR_R_CRYPTO_LIB);
+                  return 0;
+              }
+              TLS_BUFFER_set_app_buffer(thiswb, 1);
+            } else {
             p = OPENSSL_malloc(len);
             if (p == NULL) {
                 if (rl->numwpipes < currpipe)
@@ -206,6 +233,7 @@ int tls_setup_write_buffer(OSSL_RECORD_LAYER *rl, size_t numwpipes,
                 return 0;
             }
         }
+	}
         memset(thiswb, 0, sizeof(TLS_BUFFER));
         thiswb->buf = p;
         thiswb->len = len;
@@ -1596,7 +1624,13 @@ int tls_initialise_write_packets_default(OSSL_RECORD_LAYER *rl,
             return 0;
         }
         (*wpinited)++;
-        if (!WPACKET_allocate_bytes(thispkt, align, NULL)) {
+	if ((rl->alloc_cb) && (align > 0)) {
+            if (!WPACKET_allocate_bytes(thispkt, align, NULL)) {
+                RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+        }
+	else if (!WPACKET_allocate_bytes(thispkt, align, NULL)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -2158,6 +2192,25 @@ int tls_free_buffers(OSSL_RECORD_LAYER *rl)
 
     return tls_release_read_buffer(rl);
 }
+/* Callback registration */
+void ossl_record_layer_set_callbacks(OSSL_RECORD_LAYER *rl,
+    unsigned char *(*alloc_cb)(void *arg, size_t req, size_t *actual),
+    void (*flush_cb)(void *arg),
+    void *arg)
+{
+    if (!rl)
+        return;
+    rl->alloc_cb = alloc_cb;
+    rl->flush_cb = flush_cb;
+    rl->cb_arg = arg;
+}
+
+void ossl_record_layer_flush(OSSL_RECORD_LAYER *rl)
+{
+   if (rl && rl->flush_cb)
+        rl->flush_cb(rl->cb_arg);
+}
+
 
 const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_new_record_layer,

@@ -606,3 +606,4 @@ SSL_CTX_set_domain_flags                606	3_5_0	EXIST::FUNCTION:
 SSL_CTX_get_domain_flags                607	3_5_0	EXIST::FUNCTION:
 SSL_get_domain_flags                    608	3_5_0	EXIST::FUNCTION:
 SSL_CTX_set_new_pending_conn_cb         609	3_5_0	EXIST::FUNCTION:
+SSL_set_record_layer_callbacks         610     3_5_0   EXIST::FUNCTION: 

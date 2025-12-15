@@ -1588,6 +1588,24 @@ void SSL_set0_wbio(SSL *s, BIO *wbio)
     sc->rlayer.wrlmethod->set1_bio(sc->rlayer.wrl, sc->wbio);
 }
 
+typedef unsigned char *(*ossl_record_alloc_buf_cb)(void *arg, size_t req, size_t *actual);
+typedef void (*ossl_record_flush_cb)(void *arg);
+int SSL_set_record_layer_callbacks(
+    SSL *ssl,
+    ossl_record_alloc_buf_cb alloc_cb,
+    ossl_record_flush_cb flush_cb,
+    void *arg)
+{
+    if (ssl == NULL )
+        return 0;
+
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl); /* adapt macro in your tree */
+    if (sc == NULL)
+        return 0;
+    ossl_record_layer_set_callbacks(sc->rlayer.wrl, alloc_cb, flush_cb, arg);
+    return 1;
+}
+ 
 void SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio)
 {
     /*

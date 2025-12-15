@@ -206,6 +206,8 @@ struct record_functions_st {
      */
     int (*prepare_write_bio)(OSSL_RECORD_LAYER *rl, int type);
 };
+typedef unsigned char *(*ossl_record_alloc_buf_cb)(void *arg, size_t req, size_t *actual);
+typedef void (*ossl_record_flush_cb)(void *arg);
 
 struct ossl_record_layer_st {
     OSSL_LIB_CTX *libctx;
@@ -369,6 +371,11 @@ struct ossl_record_layer_st {
 
     /* Function pointers for version specific functions */
     const struct record_functions_st *funcs;
+    ossl_record_alloc_buf_cb alloc_cb;
+    ossl_record_flush_cb flush_cb;
+    void *cb_arg;
+    int   cb_memory;
+    int orig_free_done;
 };
 
 typedef struct dtls_rlayer_record_data_st {
@@ -535,3 +542,9 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
 #define TLS_BUFFER_is_app_buffer(b) ((b)->app_buffer)
 
 void ossl_tls_buffer_release(TLS_BUFFER *b);
+/* declare helper in header */
+void ossl_record_layer_set_callbacks(OSSL_RECORD_LAYER *rl,
+    unsigned char *(*alloc_cb)(void *arg, size_t req, size_t *actual),
+    void (*flush_cb)(void *arg),
+    void *arg);
+void ossl_record_layer_flush(OSSL_RECORD_LAYER *rl);

@@ -1201,6 +1201,9 @@ struct ssl_ctx_st {
 #ifndef OPENSSL_NO_QLOG
     char *qlog_title; /* Session title for qlog */
 #endif
+    int (*batch_cb)(SSL *ssl, const unsigned char *buf,
+                    size_t len, void *user_arg);
+    void *batch_cb_arg;
 };
 
 typedef struct ossl_quic_tls_callbacks_st {
