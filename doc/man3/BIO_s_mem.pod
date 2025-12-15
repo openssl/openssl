@@ -77,6 +77,11 @@ it will return zero and BIO_should_retry(b) will be false. If B<v> is non
 zero then it will return B<v> when it is empty and it will set the read retry
 flag (that is BIO_read_retry(b) is true). To avoid ambiguity with a normal
 positive return value B<v> should be set to a negative value, typically -1.
+The default behaviour for read-only BIOs is as if BIO_set_mem_eof_return(0)
+were called. The default behaviour for read-write BIOs is special: BIO_eof()
+returns EOF for an empty buffer, while the BIO_read() behaviour remains
+identical to the case BIO_set_mem_eof_return(-1). This default behaviour
+is maintained for backward compatibility.
 Calling this macro will fail for datagram mem BIOs.
 
 BIO_get_mem_data() sets *B<pp> to a pointer to the start of the memory BIOs data

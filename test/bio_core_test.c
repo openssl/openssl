@@ -84,6 +84,7 @@ static int test_bio_core(void)
         || !TEST_ptr((cbio = BIO_new_from_core_bio(libctx, &corebio))))
         goto err;
 
+    BIO_set_mem_eof_return(cbio, 0);
     if (!TEST_int_gt(BIO_puts(corebio.bio, msg), 0)
         /* Test a ctrl via BIO_eof */
         || !TEST_false(BIO_eof(cbio))

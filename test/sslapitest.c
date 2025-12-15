@@ -9460,6 +9460,79 @@ end:
     return testresult;
 }
 
+/*
+ * Test that SSL BIO reports EOF correctly
+ * Test 0: EOF after peer close_notify has been received
+ * Test 1: EOF after the underlying BIO reports EOF
+ */
+static int test_ssl_bio_eof(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    BIO *clientbio = BIO_new(BIO_f_ssl());
+    char buf[1];
+    size_t nbytes = 0;
+
+    if (!TEST_ptr(clientbio))
+        goto end;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(),
+            0, 0,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+            NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_int_eq(BIO_set_ssl(clientbio, clientssl, BIO_NOCLOSE), 1))
+        goto end;
+
+    /* Check we don't receive EOF in normal flow */
+    if (!TEST_true(SSL_write_ex(serverssl, "1", 1, &nbytes)))
+        goto end;
+    if (!TEST_true(BIO_read_ex(clientbio, buf, 1, &nbytes))
+        || !TEST_false(BIO_eof(clientbio)))
+        goto end;
+    /* Absence of data doesn't cause the EOF state */
+    if (!TEST_false(BIO_read_ex(clientbio, buf, 1, &nbytes))
+        || !TEST_false(BIO_eof(clientbio)))
+        goto end;
+
+    /* In test 0 send close_notify from the server */
+    if (tst == 0)
+        SSL_shutdown(serverssl);
+
+    /* In test 1 force the underlying BIO_s_mem to report EOF at end of data */
+    if (tst == 1) {
+        BIO *rbio = SSL_get_rbio(clientssl);
+        if (!TEST_ptr(rbio)
+            || !TEST_int_eq(BIO_method_type(rbio), BIO_TYPE_MEM))
+            goto end;
+        if (!TEST_true(BIO_set_mem_eof_return(rbio, 0)))
+            goto end;
+    }
+
+    /* Now client should observe EOF on the SSL BIO */
+    if (!TEST_int_eq(BIO_read_ex(clientbio, buf, 1, &nbytes), 0)
+        || !TEST_true(BIO_eof(clientbio)))
+        goto end;
+
+    testresult = 1;
+end:
+    BIO_free_all(clientbio);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 #if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
 static int cert_cb_cnt;
 
@@ -14046,6 +14119,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ticket_callbacks, 20);
     ADD_ALL_TESTS(test_shutdown, 7);
     ADD_TEST(test_async_shutdown);
+    ADD_ALL_TESTS(test_ssl_bio_eof, 2);
     ADD_ALL_TESTS(test_incorrect_shutdown, 2);
     ADD_ALL_TESTS(test_cert_cb, 6);
     ADD_ALL_TESTS(test_client_cert_cb, 2);

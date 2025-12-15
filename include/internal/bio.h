@@ -45,6 +45,12 @@ int bread_conv(BIO *bio, char *data, size_t datal, size_t *read);
 #define BIO_CTRL_SET_KTLS_TX_ZEROCOPY_SENDFILE 90
 
 /*
+ * This is used with memory BIOs:
+ * BIO_FLAGS_MEM_LEGACY_EOF means legacy behaviour of BIO_eof()
+ */
+#define BIO_FLAGS_MEM_LEGACY_EOF 0x1000
+
+/*
  * This is used with socket BIOs:
  * BIO_FLAGS_KTLS_TX means we are using ktls with this BIO for sending.
  * BIO_FLAGS_KTLS_TX_CTRL_MSG means we are about to send a ctrl message next.

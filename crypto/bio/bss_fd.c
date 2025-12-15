@@ -114,8 +114,9 @@ static int fd_read(BIO *b, char *out, int outl)
 {
     int ret = 0;
 
-    if (out != NULL) {
+    if (out != NULL && outl > 0) {
         clear_sys_error();
+        b->flags &= ~BIO_FLAGS_IN_EOF;
         ret = (int)UP_read(b->num, out, outl);
         BIO_clear_retry_flags(b);
         if (ret <= 0) {
