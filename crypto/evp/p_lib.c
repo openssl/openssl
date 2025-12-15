@@ -1517,9 +1517,9 @@ static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str,
     }
 #ifndef FIPS_MODULE
     if (str != NULL)
-        ameth = EVP_PKEY_asn1_find_str(NULL, str, len);
+        ameth = evp_pkey_asn1_find_str(str, len);
     else if (type != EVP_PKEY_NONE)
-        ameth = EVP_PKEY_asn1_find(NULL, type);
+        ameth = evp_pkey_asn1_find(type);
 #endif
 
     {
@@ -1704,7 +1704,7 @@ void evp_pkey_free_legacy(EVP_PKEY *x)
     const EVP_PKEY_ASN1_METHOD *ameth = x->ameth;
 
     if (ameth == NULL && x->legacy_cache_pkey.ptr != NULL)
-        ameth = EVP_PKEY_asn1_find(NULL, x->type);
+        ameth = evp_pkey_asn1_find(x->type);
 
     if (ameth != NULL) {
         if (x->legacy_cache_pkey.ptr != NULL) {

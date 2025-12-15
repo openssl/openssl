@@ -1331,12 +1331,6 @@ EVP_PBE_find                            ?	4_0_0	EXIST::FUNCTION:
 EVP_PBE_find_ex                         ?	4_0_0	EXIST::FUNCTION:
 EVP_PBE_cleanup                         ?	4_0_0	EXIST::FUNCTION:
 EVP_PBE_get                             ?	4_0_0	EXIST::FUNCTION:
-EVP_PKEY_asn1_get_count                 ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_6
-EVP_PKEY_asn1_get0                      ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_6
-EVP_PKEY_asn1_find                      ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_6
-EVP_PKEY_asn1_find_str                  ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_6
-EVP_PKEY_asn1_get0_info                 ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_6
-EVP_PKEY_get0_asn1                      ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_6
 EVP_PKEY_asn1_new                       ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_6
 EVP_PKEY_asn1_copy                      ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_6
 EVP_PKEY_asn1_free                      ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_6

@@ -919,4 +919,14 @@ int evp_pkey_decrypt_alloc(EVP_PKEY_CTX *ctx, unsigned char **outp,
 int ossl_md2hmacnid(int mdnid);
 int ossl_hmac2mdnid(int hmac_nid);
 
+const EVP_PKEY_ASN1_METHOD *evp_pkey_asn1_find(int type);
+const EVP_PKEY_ASN1_METHOD *evp_pkey_asn1_find_str(const char *str, int len);
+int evp_pkey_asn1_get_count(void);
+const EVP_PKEY_ASN1_METHOD *evp_pkey_asn1_get0(int idx);
+int evp_pkey_asn1_get0_info(int *ppkey_id, int *ppkey_base_id,
+    int *ppkey_flags, const char **pinfo,
+    const char **ppem_str,
+    const EVP_PKEY_ASN1_METHOD *ameth);
+const EVP_PKEY_ASN1_METHOD *evp_pkey_get0_asn1(const EVP_PKEY *pkey);
+
 #endif /* OSSL_CRYPTO_EVP_H */

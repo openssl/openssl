@@ -1239,34 +1239,6 @@ static void list_type(FUNC_TYPE ft, int one)
 
 static void list_pkey(void)
 {
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    int i;
-
-    if (select_name == NULL && include_legacy()) {
-        BIO_printf(bio_out, "Legacy:\n");
-        for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
-            const EVP_PKEY_ASN1_METHOD *ameth;
-            int pkey_id, pkey_base_id, pkey_flags;
-            const char *pinfo, *pem_str;
-            ameth = EVP_PKEY_asn1_get0(i);
-            EVP_PKEY_asn1_get0_info(&pkey_id, &pkey_base_id, &pkey_flags,
-                &pinfo, &pem_str, ameth);
-            if (pkey_flags & ASN1_PKEY_ALIAS) {
-                BIO_printf(bio_out, " Name: %s\n", OBJ_nid2ln(pkey_id));
-                BIO_printf(bio_out, "\tAlias for: %s\n",
-                    OBJ_nid2ln(pkey_base_id));
-            } else {
-                BIO_printf(bio_out, " Name: %s\n", pinfo);
-                BIO_printf(bio_out, "\tType: %s Algorithm\n",
-                    pkey_flags & ASN1_PKEY_DYNAMIC ? "External" : "Builtin");
-                BIO_printf(bio_out, "\tOID: %s\n", OBJ_nid2ln(pkey_id));
-                if (pem_str == NULL)
-                    pem_str = "(none)";
-                BIO_printf(bio_out, "\tPEM string: %s\n", pem_str);
-            }
-        }
-    }
-#endif
     BIO_printf(bio_out, "Provided:\n");
     BIO_printf(bio_out, " Key Managers:\n");
     list_keymanagers();
