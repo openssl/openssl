@@ -214,7 +214,7 @@ struct tls_group_st {
 static struct tls_group_st xor_group = {
     0, /* group_id, set by randomize_tls_alg_id() */
     128, /* secbits */
-    TLS1_3_VERSION, /* mintls */
+    TLS1_2_VERSION, /* mintls */
     0, /* maxtls */
     -1, /* mindtls */
     -1, /* maxdtls */
