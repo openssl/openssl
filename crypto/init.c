@@ -29,8 +29,13 @@
 #include <openssl/cmp_util.h> /* for OSSL_CMP_log_close() */
 #include <openssl/trace.h>
 #include <openssl/ssl.h> /* for OPENSSL_INIT_(NO_)?LOAD_SSL_STRINGS */
+#include "crypto/bn.h"
 #include "crypto/ctype.h"
 #include "sslerr.h"
+
+#ifdef S390X_MOD_EXP
+#include "s390x_arch.h"
+#endif
 
 static int stopped = 0;
 static uint64_t optsdone = 0;
@@ -75,58 +80,6 @@ err:
     init_lock = NULL;
 
     return 0;
-}
-
-static CRYPTO_ONCE load_crypto_nodelete = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_nodelete)
-{
-    OSSL_TRACE(INIT, "ossl_init_load_crypto_nodelete()\n");
-
-#if !defined(OPENSSL_USE_NODELETE) \
-    && !defined(OPENSSL_NO_PINSHARED)
-#if defined(DSO_WIN32) && !defined(_WIN32_WCE)
-    {
-        HMODULE handle = NULL;
-        BOOL ret;
-
-        /* We don't use the DSO route for WIN32 because there is a better way */
-        ret = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
-                | GET_MODULE_HANDLE_EX_FLAG_PIN,
-            (void *)&base_inited, &handle);
-
-        OSSL_TRACE1(INIT,
-            "ossl_init_load_crypto_nodelete: "
-            "obtained DSO reference? %s\n",
-            (ret == TRUE ? "No!" : "Yes."));
-        return (ret == TRUE) ? 1 : 0;
-    }
-#elif !defined(DSO_NONE)
-    /*
-     * Deliberately leak a reference to ourselves. This will force the library
-     * to remain loaded until the OPENSSL_cleanup()  is called.
-     */
-    {
-        DSO *dso;
-        void *err;
-
-        if (!err_shelve_state(&err))
-            return 0;
-
-        dso = DSO_dsobyaddr(&base_inited, DSO_FLAG_NO_UNLOAD_ON_FREE);
-        /*
-         * In case of No!, it is uncertain our exit()-handlers can still be
-         * called. After dlclose() the whole library might have been unloaded
-         * already.
-         */
-        OSSL_TRACE1(INIT, "obtained DSO reference? %s\n",
-            (dso == NULL ? "No!" : "Yes."));
-        DSO_free(dso);
-        err_unshelve_state(err);
-    }
-#endif
-#endif
-
-    return 1;
 }
 
 static CRYPTO_ONCE load_crypto_strings = CRYPTO_ONCE_STATIC_INIT;
@@ -270,7 +223,7 @@ void OPENSSL_cleanup(void)
     if (!base_inited)
         return;
 
-    /* Might be explicitly called a*/
+    /* Might be explicitly called */
     if (stopped)
         return;
     stopped = 1;
@@ -357,6 +310,10 @@ void OPENSSL_cleanup(void)
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_trace_cleanup()\n");
     ossl_trace_cleanup();
 
+#ifdef S390X_MOD_EXP
+    OPENSSL_s390x_cleanup();
+#endif
+
     base_inited = 0;
 }
 
@@ -402,10 +359,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
      *
      * When the caller specifies OPENSSL_INIT_BASE_ONLY, that should be the
      * *only* option specified.  With that option we return immediately after
-     * doing the requested limited initialization.  Note that
-     * err_shelve_state() called by us via ossl_init_load_crypto_nodelete()
-     * re-enters OPENSSL_init_crypto() with OPENSSL_INIT_BASE_ONLY, but with
-     * base already initialized this is a harmless NOOP.
+     * doing the requested limited initialization.
      *
      * If we remain the only caller of err_shelve_state() the recursion should
      * perhaps be removed, but if in doubt, it can be left in place.
@@ -427,9 +381,6 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         if ((tmp & opts) == opts)
             return 1;
     }
-
-    if (!RUN_ONCE(&load_crypto_nodelete, ossl_init_load_crypto_nodelete))
-        return 0;
 
     if ((opts & OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS)
         && !RUN_ONCE_ALT(&load_crypto_strings,

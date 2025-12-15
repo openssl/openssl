@@ -124,6 +124,10 @@ sub-library (see L<ASYNC_start_job(3)>). This is a default option.
 With this option the library will register its fork handlers.
 See OPENSSL_fork_prepare(3) for details.
 
+=item OPENSSL_INIT_NO_ATEXIT
+
+The option has no effect in 4.0 and later.
+
 =back
 
 Multiple options may be combined together in a single call to
