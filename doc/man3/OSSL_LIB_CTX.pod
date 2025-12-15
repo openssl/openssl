@@ -129,7 +129,8 @@ lookups. This is specifically designed to benefit legacy high-throughput
 applications with worker threads doing isolated computations, without requiring
 a code restructuring. Existing and new applications are generally recommended to
 not use this feature and instead structure the application to pre-initialize
-contexts where possible.
+contexts where possible. This function should only be called from a non-threaded
+context, before any worker threads have been dispatched.
 
 If propq is NULL, it will only speed up method store operations with a NULL
 property query. If propq is not NULL, it will also speed up method store
