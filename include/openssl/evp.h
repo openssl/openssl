@@ -1523,8 +1523,6 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(ENGINE **pe, int type);
 OSSL_DEPRECATEDIN_3_6
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
     const char *str, int len);
-OSSL_DEPRECATEDIN_3_6 int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth);
-OSSL_DEPRECATEDIN_3_6 int EVP_PKEY_asn1_add_alias(int to, int from);
 OSSL_DEPRECATEDIN_3_6
 int EVP_PKEY_asn1_get0_info(int *ppkey_id, int *pkey_base_id,
     int *ppkey_flags, const char **pinfo,
