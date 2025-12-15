@@ -256,6 +256,12 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_EOF:
         if (ctx->ibuf_len > 0)
             return 0;
+        /*
+         * If there is no ctx or no next BIO, BIO_read() returns 0, which means
+         * EOF, BIO_eof() should return 1 in this case.
+         */
+        if (ctx == NULL || b->next_bio == NULL)
+            return 1;
         ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
         break;
     case BIO_CTRL_INFO:
