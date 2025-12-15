@@ -63,6 +63,8 @@ extern void camellia_keysetup_neon(struct camellia_simd_ctx *ctx,
                                      const void *vkey, unsigned int keylen);
 extern void camellia_encrypt_1blk_armv8(struct camellia_simd_ctx *ctx, 
                                        void *vout, const void *vin);
+extern void camellia_encrypt_1blk_aese(struct camellia_simd_ctx *ctx, 
+                                       void *vout, const void *vin);
 extern void camellia_decrypt_1blk_armv8(struct camellia_simd_ctx *ctx, 
                                        void *vout, const void *vin);
 extern void camellia_encrypt_16blks_neon(struct camellia_simd_ctx *ctx, 
