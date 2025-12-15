@@ -4670,9 +4670,21 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
 
         qc = cctx.qc;
         ql = lctx.ql;
+        /*
+         * Need to ensure that we take a reference on our new listener
+         * so that we don't free it before this connection
+         */
+        if (!SSL_up_ref(&ql->obj.ssl))
+            goto out;
+
         ossl_quic_channel_free(qc->ch);
         ossl_quic_port_free(qc->port);
         ossl_quic_engine_free(qc->engine);
+        /*
+         * Ensure that we point to our listener so we can drop
+         * the above refcount when this SSL object is freed
+         */
+        qc->listener = ql;
         qc->obj.engine = ql->engine;
         qc->engine = ql->engine;
         qc->port = ql->port;
