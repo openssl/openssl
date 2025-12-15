@@ -29,7 +29,7 @@ OpenSSL 4.0
 
   * The script tool `c_rehash` was removed. Use `openssl rehash` instead.
 
-  * OPENSSL_cleanup() no longer invoked as atexit(3) handler by default.
+  * libcrypto no longer cleans up globally allocated data via atexit()
 
   * ENGINE support was removed. The `no-engine` build option and the
    `OPENSSL_NO_ENGINE` macro is always present.
