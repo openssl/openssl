@@ -30,6 +30,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/http.h>
 #include <openssl/pem.h>
+#include <openssl/posix_time.h>
 #include <openssl/store.h>
 #include <openssl/pkcs12.h>
 #include <openssl/ui.h>
@@ -3359,7 +3360,26 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         days = 0;
     }
     if (enddate == NULL) {
-        if (X509_time_adj_ex(X509_getm_notAfter(x), days, 0, NULL) == NULL) {
+        if (days > 0 && startdate != NULL) {
+            struct tm tm;
+            time_t notBefore_time;
+
+            /* Extract time_t from notBefore */
+            if (!ASN1_TIME_to_tm(X509_get0_notBefore(x), &tm)) {
+                BIO_printf(bio_err, "Error converting notBefore to time\n");
+                return 0;
+            }
+            if (!OPENSSL_timegm(&tm, &notBefore_time)) {
+                BIO_printf(bio_err, "Error converting notBefore to time_t\n");
+                return 0;
+            }
+            /* Set notAfter = notBefore + days */
+            if (X509_time_adj_ex(X509_getm_notAfter(x), days, 0,
+                                 &notBefore_time) == NULL) {
+                BIO_printf(bio_err, "Error setting notAfter certificate field\n");
+                return 0;
+            }
+        } else if (X509_time_adj_ex(X509_getm_notAfter(x), days, 0, NULL) == NULL) {
             BIO_printf(bio_err, "Error setting notAfter certificate field\n");
             return 0;
         }
