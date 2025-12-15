@@ -2805,6 +2805,7 @@ __owur int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id, int minversion,
 __owur EVP_PKEY *ssl_generate_param_group(SSL_CONNECTION *s, uint16_t id);
 void tls1_get_formatlist(SSL_CONNECTION *s, const unsigned char **pformats,
     size_t *num_formats);
+__owur int tls1_check_ffdhe_tmp_key(SSL_CONNECTION *s, unsigned long id);
 __owur int tls1_check_ec_tmp_key(SSL_CONNECTION *s, unsigned long id);
 
 __owur int tls_group_allowed(SSL_CONNECTION *s, uint16_t curve, int op);
