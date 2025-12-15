@@ -715,7 +715,7 @@ int req_main(int argc, char **argv)
             else
                 BIO_printf(bio_err, "'%s'\n", keyout);
         }
-        out = bio_open_owner(keyout, outformat, newreq);
+        out = bio_open_owner(keyout, outformat, 1);
         if (out == NULL)
             goto end;
 
