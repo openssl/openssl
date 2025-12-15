@@ -429,7 +429,7 @@ int BIO_sendmmsg(BIO *b, BIO_MSG *msg,
 
     if (HAS_CALLBACK(b))
         ret = (size_t)bio_call_callback(b, BIO_CB_SENDMMSG | BIO_CB_RETURN,
-            (void *)&args, ret, 0, 0, ret, NULL);
+            (void *)&args, ret, 0, 0, (long)ret, msgs_processed);
 
     return ret;
 }
@@ -476,7 +476,7 @@ int BIO_recvmmsg(BIO *b, BIO_MSG *msg,
 
     if (HAS_CALLBACK(b))
         ret = (size_t)bio_call_callback(b, BIO_CB_RECVMMSG | BIO_CB_RETURN,
-            (void *)&args, ret, 0, 0, ret, NULL);
+            (void *)&args, ret, 0, 0, (long)ret, msgs_processed);
 
     return ret;
 }
