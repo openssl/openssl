@@ -1903,6 +1903,46 @@ static int tls1_check_cert_param(SSL_CONNECTION *s, X509 *x, int check_ee_md)
 }
 
 /*
+ * tls1_check_ffdhe_tmp_key - Check FFDHE temporary key compatibility
+ * @s: SSL connection
+ * @cid: Cipher ID we're considering using
+ *
+ * Checks that the kDHE cipher suite we're considering using
+ * is compatible with the client extensions.
+ *
+ * Returns 0 when the cipher can't be used or 1 when it can.
+ */
+int tls1_check_ffdhe_tmp_key(SSL_CONNECTION *s, unsigned long cid)
+{
+    const uint16_t *peer_groups;
+    size_t num_peer_groups;
+
+    /* If we have a shared FFDHE group, we can certainly use it. */
+    if (tls1_shared_group(s, 0, TLS1_GROUPS_FFDHE_GROUPS) != 0)
+        return 1;
+
+    /*
+     * Otherwise, we follow RFC 7919:
+     *     If a compatible TLS server receives a Supported Groups extension from
+     *     a client that includes any FFDHE group (i.e., any codepoint between
+     *     256 and 511, inclusive, even if unknown to the server), and if none
+     *     of the client-proposed FFDHE groups are known and acceptable to the
+     *     server, then the server MUST NOT select an FFDHE cipher suite.
+     */
+    tls1_get_peer_groups(s, &peer_groups, &num_peer_groups);
+    for (size_t i = 0; i < num_peer_groups; i++) {
+        if (is_ffdhe_group(peer_groups[i]))
+            return 0;
+    }
+
+    /*
+     * The client did not send any FFDHE groups, so we can use this ciphersuite
+     * using any group we like.
+     */
+    return 1;
+}
+
+/*
  * tls1_check_ec_tmp_key - Check EC temporary key compatibility
  * @s: SSL connection
  * @cid: Cipher ID we're considering using
