@@ -4214,7 +4214,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             parg);
 
     case SSL_CTRL_GET_SHARED_GROUP: {
-        uint16_t id = tls1_shared_group(sc, larg);
+        uint16_t id = tls1_shared_group(sc, larg, TLS1_GROUPS_ALL_GROUPS);
 
         if (larg != -1)
             return tls1_group_id2nid(id, 1);
