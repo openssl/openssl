@@ -9,7 +9,6 @@
 
 #include <string.h>
 #include <openssl/core_dispatch.h>
-#include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
@@ -1768,6 +1767,4 @@ void cleanup_tests(void)
     OSSL_PROVIDER_unload(keyprov);
     OSSL_LIB_CTX_free(testctx);
     OSSL_LIB_CTX_free(keyctx);
-
-    OPENSSL_cleanup();
 }

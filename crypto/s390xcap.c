@@ -221,7 +221,6 @@ void OPENSSL_cpuid_setup(void)
         OPENSSL_s390xcex = -1;
     } else {
         OPENSSL_s390xcex = open("/dev/z90crypt", O_RDWR | O_CLOEXEC);
-        OPENSSL_atexit(OPENSSL_s390x_cleanup);
     }
     OPENSSL_s390xcex_nodev = 0;
 #endif
