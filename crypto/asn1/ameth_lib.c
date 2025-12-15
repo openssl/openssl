@@ -22,7 +22,6 @@
 #include "standard_methods.h"
 
 typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
-static STACK_OF(EVP_PKEY_ASN1_METHOD) *app_methods = NULL;
 
 DECLARE_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_ASN1_METHOD *,
     const EVP_PKEY_ASN1_METHOD *, ameth);
@@ -39,20 +38,17 @@ IMPLEMENT_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_ASN1_METHOD *,
 int EVP_PKEY_asn1_get_count(void)
 {
     int num = OSSL_NELEM(standard_methods);
-    if (app_methods)
-        num += sk_EVP_PKEY_ASN1_METHOD_num(app_methods);
     return num;
 }
 
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx)
 {
     int num = OSSL_NELEM(standard_methods);
-    if (idx < 0)
+
+    if (idx < 0 || idx >= num)
         return NULL;
-    if (idx < num)
-        return standard_methods[idx];
-    idx -= num;
-    return sk_EVP_PKEY_ASN1_METHOD_value(app_methods, idx);
+
+    return standard_methods[idx];
 }
 
 static const EVP_PKEY_ASN1_METHOD *pkey_asn1_find(int type)
@@ -61,12 +57,6 @@ static const EVP_PKEY_ASN1_METHOD *pkey_asn1_find(int type)
     const EVP_PKEY_ASN1_METHOD *t = &tmp, **ret;
 
     tmp.pkey_id = type;
-    if (app_methods) {
-        int idx;
-        idx = sk_EVP_PKEY_ASN1_METHOD_find(app_methods, &tmp);
-        if (idx >= 0)
-            return sk_EVP_PKEY_ASN1_METHOD_value(app_methods, idx);
-    }
     ret = OBJ_bsearch_ameth(&t, standard_methods, OSSL_NELEM(standard_methods));
     if (ret == NULL || *ret == NULL)
         return NULL;
@@ -114,61 +104,6 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
             return ameth;
     }
     return NULL;
-}
-
-int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
-{
-    EVP_PKEY_ASN1_METHOD tmp = {
-        0,
-    };
-
-    /*
-     * One of the following must be true:
-     *
-     * pem_str == NULL AND ASN1_PKEY_ALIAS is set
-     * pem_str != NULL AND ASN1_PKEY_ALIAS is clear
-     *
-     * Anything else is an error and may lead to a corrupt ASN1 method table
-     */
-    if (!((ameth->pem_str == NULL
-              && (ameth->pkey_flags & ASN1_PKEY_ALIAS) != 0)
-            || (ameth->pem_str != NULL
-                && (ameth->pkey_flags & ASN1_PKEY_ALIAS) == 0))) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
-    }
-
-    if (app_methods == NULL) {
-        app_methods = sk_EVP_PKEY_ASN1_METHOD_new(ameth_cmp);
-        if (app_methods == NULL)
-            return 0;
-    }
-
-    tmp.pkey_id = ameth->pkey_id;
-    if (sk_EVP_PKEY_ASN1_METHOD_find(app_methods, &tmp) >= 0) {
-        ERR_raise(ERR_LIB_EVP,
-            EVP_R_PKEY_APPLICATION_ASN1_METHOD_ALREADY_REGISTERED);
-        return 0;
-    }
-
-    if (!sk_EVP_PKEY_ASN1_METHOD_push(app_methods, ameth))
-        return 0;
-    sk_EVP_PKEY_ASN1_METHOD_sort(app_methods);
-    return 1;
-}
-
-int EVP_PKEY_asn1_add_alias(int to, int from)
-{
-    EVP_PKEY_ASN1_METHOD *ameth;
-    ameth = EVP_PKEY_asn1_new(from, ASN1_PKEY_ALIAS, NULL, NULL);
-    if (ameth == NULL)
-        return 0;
-    ameth->pkey_base_id = to;
-    if (!EVP_PKEY_asn1_add0(ameth)) {
-        EVP_PKEY_asn1_free(ameth);
-        return 0;
-    }
-    return 1;
 }
 
 int EVP_PKEY_asn1_get0_info(int *ppkey_id, int *ppkey_base_id,
