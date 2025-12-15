@@ -137,7 +137,7 @@ static int file_read(BIO *b, char *out, int outl)
 {
     int ret = 0;
 
-    if (b->init && (out != NULL)) {
+    if (b->init != 0 && out != NULL && outl > 0) {
         if (b->flags & BIO_FLAGS_UPLINK_INTERNAL)
             ret = (int)UP_fread(out, 1, outl, b->ptr);
         else

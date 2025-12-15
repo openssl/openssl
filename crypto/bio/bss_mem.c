@@ -124,7 +124,7 @@ static int mem_init(BIO *bi, unsigned long flags)
     *bb->readp = *bb->buf;
     bi->shutdown = 1;
     bi->init = 1;
-    bi->num = -1;
+    bi->num = -2;
     bi->ptr = (char *)bb;
     return 1;
 }
@@ -205,6 +205,8 @@ static int mem_read(BIO *b, char *out, int outl)
         bm->data += ret;
     } else if (bm->length == 0) {
         ret = b->num;
+        if (ret == -2)
+            ret = -1;
         if (ret != 0)
             BIO_set_retry_read(b);
     }
@@ -288,7 +290,7 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = -1;
         break;
     case BIO_CTRL_EOF:
-        ret = (long)(bm->length == 0);
+        ret = (long)(bm->length == 0 && (b->num == 0 || b->num == -2));
         break;
     case BIO_C_SET_BUF_MEM_EOF_RETURN:
         b->num = (int)num;
