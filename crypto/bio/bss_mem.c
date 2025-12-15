@@ -125,6 +125,7 @@ static int mem_init(BIO *bi, unsigned long flags)
     bi->shutdown = 1;
     bi->init = 1;
     bi->num = -1;
+    bi->flags |= BIO_FLAGS_MEM_LEGACY_EOF;
     bi->ptr = (char *)bb;
     return 1;
 }
@@ -288,10 +289,14 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = -1;
         break;
     case BIO_CTRL_EOF:
-        ret = (long)(bm->length == 0);
+        if (b->num == 0 || (b->flags & BIO_FLAGS_MEM_LEGACY_EOF) != 0)
+            ret = (long)(bm->length == 0);
+        else
+            ret = 0;
         break;
     case BIO_C_SET_BUF_MEM_EOF_RETURN:
         b->num = (int)num;
+        b->flags &= ~BIO_FLAGS_MEM_LEGACY_EOF;
         break;
     case BIO_CTRL_INFO:
         ret = (long)bm->length;

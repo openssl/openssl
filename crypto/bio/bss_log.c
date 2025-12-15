@@ -91,10 +91,10 @@ static const BIO_METHOD methods_slg = {
     "syslog",
     bwrite_conv,
     slg_write,
-    NULL, /* slg_write_old,    */
-    NULL, /* slg_read,         */
+    NULL, /* slg_read          */
+    NULL, /* slg_read_old      */
     slg_puts,
-    NULL,
+    NULL, /* slg_gets          */
     slg_ctrl,
     slg_new,
     slg_free,

@@ -106,8 +106,9 @@ static int sock_read(BIO *b, char *out, int outl)
 {
     int ret = 0;
 
-    if (out != NULL) {
+    if (out != NULL && outl > 0) {
         clear_socket_error();
+        b->flags &= ~BIO_FLAGS_IN_EOF;
 #ifndef OPENSSL_NO_KTLS
         if (BIO_get_ktls_recv(b))
             ret = ktls_read_record(b->num, out, outl);

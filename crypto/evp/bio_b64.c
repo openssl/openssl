@@ -322,7 +322,6 @@ static int b64_read(BIO *b, char *out, int outl)
         outl -= i;
         out += i;
     }
-    /* BIO_clear_retry_flags(b); */
     BIO_copy_next_retry(b);
     return ret == 0 ? ret_code : ret;
 }
@@ -431,8 +430,12 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
 
     ctx = (BIO_B64_CTX *)BIO_get_data(b);
     next = BIO_next(b);
+    /*
+     * If there is no ctx or no next BIO, BIO_read() returns 0, which means EOF.
+     * BIO_eof() should return 1 in this case.
+     */
     if (ctx == NULL || next == NULL)
-        return 0;
+        return cmd == BIO_CTRL_EOF;
 
     switch (cmd) {
     case BIO_CTRL_RESET:
@@ -492,6 +495,7 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
             goto again;
         }
         /* Finally flush the underlying BIO */
+        BIO_clear_retry_flags(b);
         ret = BIO_ctrl(next, cmd, num, ptr);
         BIO_copy_next_retry(b);
         break;

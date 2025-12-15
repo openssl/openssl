@@ -106,6 +106,7 @@ static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes)
     ssl = sb->ssl;
 
     BIO_clear_retry_flags(b);
+    BIO_clear_flags(b, BIO_FLAGS_IN_EOF);
 
     ret = ssl_read_internal(ssl, buf, size, readbytes);
 
@@ -150,9 +151,11 @@ static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes)
         BIO_set_retry_special(b);
         retry_reason = BIO_RR_CONNECT;
         break;
+    case SSL_ERROR_ZERO_RETURN:
+        BIO_set_flags(b, BIO_FLAGS_IN_EOF);
+        break;
     case SSL_ERROR_SYSCALL:
     case SSL_ERROR_SSL:
-    case SSL_ERROR_ZERO_RETURN:
     default:
         break;
     }
@@ -404,6 +407,11 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_GET_WPOLL_DESCRIPTOR:
         if (!SSL_get_wpoll_descriptor(ssl, (BIO_POLL_DESCRIPTOR *)ptr))
             ret = 0;
+        break;
+    case BIO_CTRL_EOF:
+        ret = BIO_test_flags(b, BIO_FLAGS_IN_EOF)
+            ? 1
+            : BIO_ctrl(SSL_get_rbio(ssl), cmd, num, ptr);
         break;
     default:
         ret = BIO_ctrl(SSL_get_rbio(ssl), cmd, num, ptr);
