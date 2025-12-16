@@ -66,8 +66,6 @@ static QUIC_STREAM *list_next(QUIC_STREAM_LIST_NODE *l, QUIC_STREAM_LIST_NODE *n
     offsetof(QUIC_STREAM, active_node))
 #define accept_next(l, s) list_next((l), &(s)->accept_node, \
     offsetof(QUIC_STREAM, accept_node))
-#define ready_for_gc_next(l, s) list_next((l), &(s)->ready_for_gc_node, \
-    offsetof(QUIC_STREAM, ready_for_gc_node))
 #define accept_head(l) list_next((l), (l), \
     offsetof(QUIC_STREAM, accept_node))
 #define ready_for_gc_head(l) list_next((l), (l), \
@@ -779,13 +777,9 @@ size_t ossl_quic_stream_map_get_total_accept_queue_len(QUIC_STREAM_MAP *qsm)
 
 void ossl_quic_stream_map_gc(QUIC_STREAM_MAP *qsm)
 {
-    QUIC_STREAM *qs, *qs_head, *qsn = NULL;
+    QUIC_STREAM *qs;
 
-    for (qs = qs_head = ready_for_gc_head(&qsm->ready_for_gc_list);
-        qs != NULL && qs != qs_head;
-        qs = qsn) {
-        qsn = ready_for_gc_next(&qsm->ready_for_gc_list, qs);
-
+    while ((qs = ready_for_gc_head(&qsm->ready_for_gc_list)) != NULL) {
         ossl_quic_stream_map_release(qsm, qs);
     }
 }
