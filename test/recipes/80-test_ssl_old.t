@@ -566,11 +566,16 @@ sub testssl {
 
           SKIP: {
               skip "skipping dhe512 test", 1
-                  if ($no_dh);
+                  if ($no_dh || $no_ec);
 
+              # Need some explicit EC groups to suppress default support of
+              # ffdhe2048 and ffdhe3072 in the client hello, which then
+              # overrides the server's DH temp parameters from "-dh512".
+              #
               is(run(test([@ssltest,
                            "-s_cipher", "EDH",
                            "-c_cipher", 'EDH:@SECLEVEL=1',
+                           "-groups", "?P-256:?X25519:?MLKEM512",
                            "-dhe512",
                            $protocol])), 0,
                  "testing connection with weak DH, expecting failure");
