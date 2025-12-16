@@ -14,10 +14,6 @@ Header:
       compression_methods (len=1)
         No Compression (0x00)
       extensions, length = ?
-        extension_type=ec_point_formats(11), length=4
-          uncompressed (0)
-          ansiX962_compressed_prime (1)
-          ansiX962_compressed_char2 (2)
         extension_type=supported_groups(10), length=20
           MLKEM512 (512)
           MLKEM768 (513)

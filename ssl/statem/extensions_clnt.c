@@ -11,7 +11,15 @@
 #include "../ssl_local.h"
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/tlsgroups.h"
 #include "statem_local.h"
+
+/* Used in the negotiate_dhe function */
+typedef enum {
+    ffdhe_check,
+    ecdhe_check,
+    ptfmt_check
+} dhe_check_t;
 
 EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context, X509 *x,
@@ -136,43 +144,78 @@ EXT_RETURN tls_construct_ctos_srp(SSL_CONNECTION *s, WPACKET *pkt,
 }
 #endif
 
-static int use_ecc(SSL_CONNECTION *s, int min_version, int max_version)
+/*
+ * With (D)TLS < 1.3 the only negotiated supported key exchange groups are
+ * FFDHE (RFC7919) and ECDHE/ECX (RFC8422 + legacy).  With (D)TLS 1.3, we add
+ * KEMs, and the supported groups are no longer cipher-dependent.
+ *
+ * This function serves two purposes:
+ *
+ * - To determine whether to send the supported point formats extension.
+ *   This is no longer applicable with (D)TLS >= 1.3.
+ * - To determine whether to send the supported groups extension.
+ *
+ * In the former case, we only care about whether both ECC ciphers and EC/ECX
+ * supported groups are configured, and the (D)TLS min version is at most 1.2.
+ *
+ * In the latter case, we also admit DHE ciphers with FFDHE groups, or any TLS
+ * 1.3 cipher, since the extension is effectively mandatory for (D)TLS 1.3,
+ * with the sole exception of psk-ke resumption, provided the client is sure
+ * that the server will not want elect a full handshake. The check type then
+ * indicates whether ECDHE or FFDHE negotiation should be performed.
+ */
+static int negotiate_dhe(SSL_CONNECTION *s, dhe_check_t check_type,
+    int min_version, int max_version)
 {
     int i, end, ret = 0;
-    unsigned long alg_k, alg_a;
     STACK_OF(SSL_CIPHER) *cipher_stack = NULL;
     const uint16_t *pgroups = NULL;
     size_t num_groups, j;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    int dtls = SSL_CONNECTION_IS_DTLS(s);
 
+    /* See if we support any EC or FFDHE ciphersuites */
     cipher_stack = SSL_get1_supported_ciphers(ssl);
     end = sk_SSL_CIPHER_num(cipher_stack);
     for (i = 0; i < end; i++) {
         const SSL_CIPHER *c = sk_SSL_CIPHER_value(cipher_stack, i);
+        unsigned long alg_k = c->algorithm_mkey;
+        unsigned long alg_a = c->algorithm_auth;
 
-        alg_k = c->algorithm_mkey;
-        alg_a = c->algorithm_auth;
-        if ((alg_k & (SSL_kECDHE | SSL_kECDHEPSK))
-            || (alg_a & SSL_aECDSA)
-            || c->min_tls >= TLS1_3_VERSION) {
+        int is_ffdhe_ciphersuite = (alg_k & (SSL_kDHE | SSL_kDHEPSK));
+        int is_ec_ciphersuite = ((alg_k & (SSL_kECDHE | SSL_kECDHEPSK))
+            || (alg_a & SSL_aECDSA));
+        int is_tls13 = (dtls ? DTLS_VERSION_GT(c->min_dtls, DTLS1_2_VERSION)
+                             : (c->min_tls > TLS1_2_VERSION));
+
+        if ((check_type == ffdhe_check && (is_ffdhe_ciphersuite || is_tls13))
+            || (check_type == ecdhe_check && (is_ec_ciphersuite || is_tls13))
+            || (check_type == ptfmt_check && is_ec_ciphersuite)) {
             ret = 1;
             break;
         }
     }
     sk_SSL_CIPHER_free(cipher_stack);
-    if (!ret)
+    if (ret == 0)
         return 0;
 
-    /* Check we have at least one EC supported group */
+    /* Check we have at least one EC or FFDHE supported group */
     tls1_get_supported_groups(s, &pgroups, &num_groups);
     for (j = 0; j < num_groups; j++) {
         uint16_t ctmp = pgroups[j];
+        const TLS_GROUP_INFO *ginfo = NULL;
 
-        if (tls_valid_group(s, ctmp, min_version, max_version, 1, NULL)
+        if (!tls_valid_group(s, ctmp, min_version, max_version, NULL, &ginfo))
+            continue;
+
+        if (check_type == ffdhe_check && is_ffdhe_group(ginfo->group_id)
+            && tls_group_allowed(s, ctmp, SSL_SECOP_CURVE_SUPPORTED))
+            return 1;
+
+        if (check_type != ffdhe_check && is_ecdhe_group(ginfo->group_id)
             && tls_group_allowed(s, ctmp, SSL_SECOP_CURVE_SUPPORTED))
             return 1;
     }
-
     return 0;
 }
 
@@ -189,12 +232,14 @@ EXT_RETURN tls_construct_ctos_ec_pt_formats(SSL_CONNECTION *s, WPACKET *pkt,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, reason);
         return EXT_RETURN_FAIL;
     }
-    if (!use_ecc(s, min_version, max_version))
+    if (!negotiate_dhe(s, ptfmt_check, min_version, max_version))
+        return EXT_RETURN_NOT_SENT;
+
+    tls1_get_formatlist(s, &pformats, &num_formats);
+    if (num_formats == 0)
         return EXT_RETURN_NOT_SENT;
 
     /* Add TLS extension ECPointFormats to the ClientHello message */
-    tls1_get_formatlist(s, &pformats, &num_formats);
-
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_ec_point_formats)
         /* Sub-packet for formats extension */
         || !WPACKET_start_sub_packet_u16(pkt)
@@ -214,6 +259,8 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
     const uint16_t *pgroups = NULL;
     size_t num_groups = 0, i, tls13added = 0, added = 0;
     int min_version, max_version, reason;
+    int dtls = SSL_CONNECTION_IS_DTLS(s);
+    int use_ecdhe, use_ffdhe;
 
     reason = ssl_get_min_max_version(s, &min_version, &max_version, NULL);
     if (reason != 0) {
@@ -222,11 +269,13 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
     /*
-     * We only support EC groups in TLSv1.2 or below, and in DTLS. Therefore
-     * if we don't have EC support then we don't send this extension.
+     * If we don't support suitable groups, don't send the extension
      */
-    if (!use_ecc(s, min_version, max_version)
-        && (SSL_CONNECTION_IS_DTLS(s) || max_version < TLS1_3_VERSION))
+    use_ecdhe = negotiate_dhe(s, ecdhe_check, min_version, max_version);
+    use_ffdhe = negotiate_dhe(s, ffdhe_check, min_version, max_version);
+    if (!use_ecdhe && !use_ffdhe
+        && (dtls ? DTLS_VERSION_LE(max_version, DTLS1_2_VERSION)
+                 : (max_version <= TLS1_2_VERSION)))
         return EXT_RETURN_NOT_SENT;
 
     /*
@@ -244,19 +293,25 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
     }
     /* Copy group ID if supported */
     for (i = 0; i < num_groups; i++) {
+        const TLS_GROUP_INFO *ginfo = NULL;
         uint16_t ctmp = pgroups[i];
         int okfortls13;
 
-        if (tls_valid_group(s, ctmp, min_version, max_version, 0, &okfortls13)
-            && tls_group_allowed(s, ctmp, SSL_SECOP_CURVE_SUPPORTED)) {
-            if (!WPACKET_put_bytes_u16(pkt, ctmp)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return EXT_RETURN_FAIL;
-            }
-            if (okfortls13 && max_version == TLS1_3_VERSION)
-                tls13added++;
-            added++;
+        if (!tls_valid_group(s, ctmp, min_version, max_version, &okfortls13,
+                &ginfo)
+            || (!use_ecdhe && is_ecdhe_group(ginfo->group_id))
+            || (!use_ffdhe && is_ffdhe_group(ginfo->group_id))
+            /* Note: SSL_SECOP_CURVE_SUPPORTED covers all key exchange groups */
+            || !tls_group_allowed(s, ctmp, SSL_SECOP_CURVE_SUPPORTED))
+            continue;
+
+        if (!WPACKET_put_bytes_u16(pkt, ctmp)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
         }
+        if (okfortls13 && max_version == TLS1_3_VERSION)
+            tls13added++;
+        added++;
     }
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
         if (added == 0)
@@ -746,7 +801,7 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
             if (!tls_group_allowed(s, pgroups[i], SSL_SECOP_CURVE_SUPPORTED))
                 continue;
             if (!tls_valid_group(s, pgroups[i], TLS1_3_VERSION, TLS1_3_VERSION,
-                    0, NULL))
+                    NULL, NULL))
                 continue;
 
             group_id = pgroups[i];
@@ -1912,7 +1967,7 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
         if (i >= num_groups
             || !tls_group_allowed(s, group_id, SSL_SECOP_CURVE_SUPPORTED)
             || !tls_valid_group(s, group_id, TLS1_3_VERSION, TLS1_3_VERSION,
-                0, NULL)) {
+                NULL, NULL)) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
             return 0;
         }

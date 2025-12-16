@@ -857,25 +857,25 @@ void tls1_get_group_tuples(SSL_CONNECTION *s, const size_t **ptuples,
 }
 
 int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id,
-    int minversion, int maxversion,
-    int isec, int *okfortls13)
+    int minversion, int maxversion, int *okfortls13,
+    const TLS_GROUP_INFO **giptr)
 {
     const TLS_GROUP_INFO *ginfo = tls1_group_id_lookup(SSL_CONNECTION_GET_CTX(s),
         group_id);
-    int ret;
+    int ret = 0;
     int group_minversion, group_maxversion;
 
     if (okfortls13 != NULL)
         *okfortls13 = 0;
 
     if (ginfo == NULL)
-        return 0;
+        goto end;
 
     group_minversion = SSL_CONNECTION_IS_DTLS(s) ? ginfo->mindtls : ginfo->mintls;
     group_maxversion = SSL_CONNECTION_IS_DTLS(s) ? ginfo->maxdtls : ginfo->maxtls;
 
     if (group_minversion < 0 || group_maxversion < 0)
-        return 0;
+        goto end;
     if (group_maxversion == 0)
         ret = 1;
     else
@@ -888,11 +888,9 @@ int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id,
             *okfortls13 = (group_maxversion == 0)
                 || (group_maxversion >= TLS1_3_VERSION);
     }
-    ret &= !isec
-        || strcmp(ginfo->algorithm, "EC") == 0
-        || strcmp(ginfo->algorithm, "X25519") == 0
-        || strcmp(ginfo->algorithm, "X448") == 0;
-
+end:
+    if (giptr != NULL)
+        *giptr = ginfo;
     return ret;
 }
 
