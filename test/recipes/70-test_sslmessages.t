@@ -100,7 +100,7 @@ my $proxy = TLSProxy::Proxy->new(
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_STATUS_REQUEST,
         TLSProxy::Message::CLIENT,
         checkhandshake::STATUS_REQUEST_CLI_EXTENSION],
-    (disabled("ec") ? () :
+    ((disabled("ec") && disabled("dh")) ? () :
                       [TLSProxy::Message::MT_CLIENT_HELLO,
                        TLSProxy::Message::EXT_SUPPORTED_GROUPS,
                        TLSProxy::Message::CLIENT,

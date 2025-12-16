@@ -2801,7 +2801,7 @@ __owur int tls1_set_groups_list(SSL_CTX *ctx,
     const char *str);
 __owur EVP_PKEY *ssl_generate_pkey_group(SSL_CONNECTION *s, uint16_t id);
 __owur int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id, int minversion,
-    int maxversion, int isec, int *okfortls13);
+    int maxversion, int *okfortls13, const TLS_GROUP_INFO **giptr);
 __owur EVP_PKEY *ssl_generate_param_group(SSL_CONNECTION *s, uint16_t id);
 void tls1_get_formatlist(SSL_CONNECTION *s, const unsigned char **pformats,
     size_t *num_formats);
