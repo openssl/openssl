@@ -19,7 +19,10 @@ use warnings;
 
 my $flavour = shift;
 my $output = "";
-while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
+my $arg;
+while ($arg = shift) {
+    $output = $arg if $arg =~ /\w[\w\-]*\.\w+$/;
+}
 if (!$output) {
 	$output = "-";
 }
