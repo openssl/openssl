@@ -491,19 +491,53 @@ end:
     return success;
 }
 
+// static int test_ctlog_from_base64(void)
+// {
+//     CTLOG *ctlogp = NULL;
+//     const char notb64[] = "\01\02\03\04";
+//     const char pad[] = "====";
+//     const char name[] = "name";
+
+//     /* We expect these to both fail! */
+//     if (!TEST_true(!CTLOG_new_from_base64(&ctlogp, notb64, name))
+//         || !TEST_true(!CTLOG_new_from_base64(&ctlogp, pad, name)))
+//         return 0;
+//     return 1;
+// }
+
+
+
+// 2025-12-16
 static int test_ctlog_from_base64(void)
 {
+    int ret = 0;
     CTLOG *ctlogp = NULL;
-    const char notb64[] = "\01\02\03\04";
+    static const char notb64[] = "\x01\x02\x03\x04"; 
     const char pad[] = "====";
     const char name[] = "name";
 
-    /* We expect these to both fail! */
-    if (!TEST_true(!CTLOG_new_from_base64(&ctlogp, notb64, name))
-        || !TEST_true(!CTLOG_new_from_base64(&ctlogp, pad, name)))
-        return 0;
-    return 1;
+    /* Case 1: Non-base64 input should fail and should not produce an object. */
+    if (!TEST_false(CTLOG_new_from_base64(&ctlogp, notb64, name))
+        || !TEST_ptr_null(ctlogp))
+        goto end;
+
+    /* Defensive: Even if the implementation changes, it does not affect the second case. */
+    CTLOG_free(ctlogp);
+    ctlogp = NULL;
+
+    /* Case 2: Input consisting only of padding should fail and should not produce an object. */
+    if (!TEST_false(CTLOG_new_from_base64(&ctlogp, pad, name))
+        || !TEST_ptr_null(ctlogp))
+        goto end;
+
+    ret = 1;
+
+end:
+    CTLOG_free(ctlogp);
+    return ret;
 }
+
+
 #endif
 
 int setup_tests(void)
