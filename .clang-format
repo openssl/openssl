@@ -16,6 +16,18 @@ PointerAlignment: Right
 # of a comment block to protect comments as
 # per STYLE.md
 CommentPragmas:  '(^ IWYU pragma:|^\*$|^-$)'
+# OpenSSL uses type names (usually typedefs) extensively. Tell clang-format about them.
+TypeNames:
+  - "BIGNUM"
+  - "BN_BLINDING"
+  - "BN_CTX"
+  - "BN_GENCB"
+  - "BN_MONT_CTX"
+  - "BN_RECP_CTX"
+  - "BN_ULLONG"
+  - "BN_ULONG"
+  - "OSSL_FN_CTX"
+  - "OSSL_FN_ULONG"
 # OpenSSL uses macros extensively. Tell clang-format about them.
 TypenameMacros: ['LHASH_OF', 'STACK_OF']
 StatementMacros:
