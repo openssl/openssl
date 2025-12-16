@@ -2285,6 +2285,8 @@ const char *EVP_SKEY_get0_provider_name(const EVP_SKEY *skey);
 EVP_SKEY *EVP_SKEY_to_provider(EVP_SKEY *skey, OSSL_LIB_CTX *libctx,
     OSSL_PROVIDER *prov, const char *propquery);
 
+__owur int EVP_freeze_method_store(OSSL_LIB_CTX *ctx);
+
 #ifdef __cplusplus
 }
 #endif
