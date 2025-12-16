@@ -857,25 +857,25 @@ void tls1_get_group_tuples(SSL_CONNECTION *s, const size_t **ptuples,
 }
 
 int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id,
-    int minversion, int maxversion,
-    int isec, int *okfortls13)
+    int minversion, int maxversion, int *okfortls13,
+    const TLS_GROUP_INFO **giptr)
 {
     const TLS_GROUP_INFO *ginfo = tls1_group_id_lookup(SSL_CONNECTION_GET_CTX(s),
         group_id);
-    int ret;
+    int ret = 0;
     int group_minversion, group_maxversion;
 
     if (okfortls13 != NULL)
         *okfortls13 = 0;
 
     if (ginfo == NULL)
-        return 0;
+        goto end;
 
     group_minversion = SSL_CONNECTION_IS_DTLS(s) ? ginfo->mindtls : ginfo->mintls;
     group_maxversion = SSL_CONNECTION_IS_DTLS(s) ? ginfo->maxdtls : ginfo->maxtls;
 
     if (group_minversion < 0 || group_maxversion < 0)
-        return 0;
+        goto end;
     if (group_maxversion == 0)
         ret = 1;
     else
@@ -888,11 +888,9 @@ int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id,
             *okfortls13 = (group_maxversion == 0)
                 || (group_maxversion >= TLS1_3_VERSION);
     }
-    ret &= !isec
-        || strcmp(ginfo->algorithm, "EC") == 0
-        || strcmp(ginfo->algorithm, "X25519") == 0
-        || strcmp(ginfo->algorithm, "X448") == 0;
-
+end:
+    if (giptr != NULL)
+        *giptr = ginfo;
     return ret;
 }
 
@@ -1060,19 +1058,22 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch, int groups)
         if (!tls1_in_list(id, supp, num_supp))
             continue;
 
-        if (id >= OSSL_TLS_GROUP_ID_FFDHE_START && id <= OSSL_TLS_GROUP_ID_FFDHE_END) {
+        if (id >= OSSL_TLS_GROUP_ID_FFDHE_START
+            && id <= OSSL_TLS_GROUP_ID_FFDHE_END) {
             /*
              * If the caller is not interested in FFDHE groups or the group is
              * not allowed, ignore it
              */
-            if (groups == TLS1_GROUPS_NON_FFDHE_GROUPS || !tls_group_allowed(s, id, SSL_SECOP_TMP_DH))
+            if (groups == TLS1_GROUPS_NON_FFDHE_GROUPS
+                || !tls_group_allowed(s, id, SSL_SECOP_TMP_DH))
                 continue;
         } else {
             /*
              * If the caller is only interested in FFDHE groups or the group is
              * not allowed, ignore it
              */
-            if (groups == TLS1_GROUPS_FFDHE_GROUPS || !tls_group_allowed(s, id, SSL_SECOP_CURVE_SHARED))
+            if (groups == TLS1_GROUPS_FFDHE_GROUPS
+                || !tls_group_allowed(s, id, SSL_SECOP_CURVE_SHARED))
                 continue;
         }
 
@@ -1768,7 +1769,8 @@ int tls1_check_group_id(SSL_CONNECTION *s, uint16_t group_id,
             return 0;
     }
 
-    if (group_id >= OSSL_TLS_GROUP_ID_FFDHE_START && group_id <= OSSL_TLS_GROUP_ID_FFDHE_END) {
+    if (group_id >= OSSL_TLS_GROUP_ID_FFDHE_START
+        && group_id <= OSSL_TLS_GROUP_ID_FFDHE_END) {
         if (!tls_group_allowed(s, group_id, SSL_SECOP_TMP_DH))
             return 0;
     } else {
@@ -1950,7 +1952,8 @@ int tls1_check_ffdhe_tmp_key(SSL_CONNECTION *s, unsigned long cid)
      */
     tls1_get_peer_groups(s, &peer_groups, &num_peer_groups);
     for (size_t i = 0; i < num_peer_groups; i++) {
-        if (peer_groups[i] >= OSSL_TLS_GROUP_ID_FFDHE_START && peer_groups[i] <= OSSL_TLS_GROUP_ID_FFDHE_END)
+        if (peer_groups[i] >= OSSL_TLS_GROUP_ID_FFDHE_START
+            && peer_groups[i] <= OSSL_TLS_GROUP_ID_FFDHE_END)
             return 0;
     }
 
