@@ -234,7 +234,11 @@ static int test_EVP_MD_fetch_freeze(void)
     EVP_MD_free(md);
     md = NULL;
 
-    if (!TEST_int_eq(OSSL_LIB_CTX_freeze(ctx, "?fips=true"), 1)
+    /*
+     * Freeze the method store which contains only the SHA256 method
+     * without any property query
+     */
+    if (!TEST_int_eq(OSSL_LIB_CTX_freeze_method_store(ctx), 1)
         || !TEST_ptr(md = EVP_MD_fetch(ctx, "SHA256", NULL))
         || !TEST_true(test_md(md))
         || !TEST_int_eq(md->origin, EVP_ORIG_FROZEN))
@@ -244,7 +248,7 @@ static int test_EVP_MD_fetch_freeze(void)
 
     if (!TEST_ptr(md = EVP_MD_fetch(ctx, "SHA256", "?fips=true"))
         || !TEST_true(test_md(md))
-        || !TEST_int_eq(md->origin, EVP_ORIG_FROZEN))
+        || !TEST_int_ne(md->origin, EVP_ORIG_FROZEN))
         goto err;
     EVP_MD_free(md);
 

@@ -9,6 +9,8 @@
 
 #include "internal/cryptlib.h"
 
+#define NAMEMAP_NAME_MAX_LENGTH 64
+
 typedef struct ossl_namemap_st OSSL_NAMEMAP;
 
 OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx);

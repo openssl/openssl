@@ -20,6 +20,7 @@
 #include "internal/common.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+#include "openssl/crypto.h"
 
 static void cleanup_old_md_data(EVP_MD_CTX *ctx, int force)
 {
@@ -49,7 +50,7 @@ void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force, int keep_fetched)
 
     /*
      * Don't assume ctx->md_data was cleaned in EVP_Digest_Final, because
-     * sometimes only copies of the context are ever finalised.
+     * sometimes only copies of the context are ever finalized.
      */
     cleanup_old_md_data(ctx, force);
     if (force)
@@ -1075,17 +1076,52 @@ static void evp_md_free(void *md)
     EVP_MD_free(md);
 }
 
+static void *evp_md_dup(void *vin)
+{
+    EVP_MD *in = vin;
+    EVP_MD *out;
+
+    out = evp_md_new();
+    if (out == NULL)
+        return NULL;
+    memcpy(out, in, sizeof(*out));
+    if (!CRYPTO_NEW_REF(&out->refcnt, 1))
+        goto err;
+    out->type_name = OPENSSL_strdup(in->type_name);
+    if (out->type_name == NULL)
+        goto err;
+    out->origin = EVP_ORIG_FROZEN;
+    if (!ossl_provider_up_ref(out->prov))
+        goto err;
+
+    return out;
+err:
+    OPENSSL_free(out);
+    return NULL;
+}
+
+static void evp_md_frozen_free(EVP_MD *md)
+{
+    int i;
+
+    if (md == NULL || md->origin != EVP_ORIG_FROZEN)
+        return;
+
+    CRYPTO_DOWN_REF(&md->refcnt, &i);
+    if (i > 0)
+        return;
+    evp_md_free_int(md);
+}
+
 EVP_MD *EVP_MD_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
     const char *properties)
 {
-    EVP_MD *md = NULL;
-
-    if (evp_generic_fetch_frozen(ctx, OSSL_OP_DIGEST, algorithm, properties,
-            NULL, (void **)&md))
-        return md;
-
-    md = evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
-        evp_md_from_algorithm, evp_md_up_ref, evp_md_free);
+    EVP_MD *md = evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
+        evp_md_from_algorithm,
+        evp_md_up_ref,
+        evp_md_free,
+        evp_md_dup,
+        (void (*)(void *))evp_md_frozen_free);
 
     return md;
 }
