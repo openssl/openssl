@@ -112,6 +112,7 @@ int ossl_sm2_encrypt(const EC_KEY *key,
     int rc = 0, ciphertext_leni;
     size_t i;
     BN_CTX *ctx = NULL;
+    int ctx_started = 0; // A flag indicating whether BN_CTX_start() is called.  2025-12-16
     BIGNUM *k = NULL;
     BIGNUM *x1 = NULL;
     BIGNUM *y1 = NULL;
@@ -166,6 +167,7 @@ int ossl_sm2_encrypt(const EC_KEY *key,
     }
 
     BN_CTX_start(ctx);
+    ctx_started = 1; // Set the flag to indicate BN_CTX_start() has been called.  2025-12-16
     k = BN_CTX_get(ctx);
     x1 = BN_CTX_get(ctx);
     x2 = BN_CTX_get(ctx);
@@ -271,6 +273,10 @@ done:
     OPENSSL_free(x2y2);
     OPENSSL_free(C3);
     EVP_MD_CTX_free(hash);
+    if (ctx != NULL) {
+        if (ctx_started)
+            BN_CTX_end(ctx);  // Only call BN_CTX_end() if BN_CTX_start() was called.  2025-12-16
+    }
     BN_CTX_free(ctx);
     EC_POINT_free(kG);
     EC_POINT_free(kP);
@@ -285,6 +291,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
     int rc = 0;
     int i;
     BN_CTX *ctx = NULL;
+    int ctx_started = 0; // A flag indicating whether BN_CTX_start() is called.  2025-12-16
     const EC_GROUP *group = EC_KEY_get0_group(key);
     EC_POINT *C1 = NULL;
     struct SM2_Ciphertext_st *sm2_ctext = NULL;
@@ -334,6 +341,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
     }
 
     BN_CTX_start(ctx);
+    ctx_started = 1; // Set the flag to indicate BN_CTX_start() has been called.  2025-12-16
     x2 = BN_CTX_get(ctx);
     y2 = BN_CTX_get(ctx);
 
@@ -411,7 +419,11 @@ done:
     OPENSSL_free(x2y2);
     OPENSSL_free(computed_C3);
     EC_POINT_free(C1);
-    BN_CTX_free(ctx);
+    if (ctx != NULL) {
+        if (ctx_started)
+            BN_CTX_end(ctx);  // Only call BN_CTX_end() if BN_CTX_start() was called.  2025-12-16
+        BN_CTX_free(ctx);
+    }
     SM2_Ciphertext_free(sm2_ctext);
     EVP_MD_CTX_free(hash);
 

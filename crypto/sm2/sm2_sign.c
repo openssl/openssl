@@ -212,6 +212,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     ECDSA_SIG *sig = NULL;
     EC_POINT *kG = NULL;
     BN_CTX *ctx = NULL;
+    int ctx_started = 0; // A flag indicating whether BN_CTX_start() is called.  2025-12-16
     BIGNUM *k = NULL;
     BIGNUM *rk = NULL;
     BIGNUM *r = NULL;
@@ -236,6 +237,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     }
 
     BN_CTX_start(ctx);
+    ctx_started = 1; // Set the flag to indicate BN_CTX_start() has been called.  2025-12-16
     k = BN_CTX_get(ctx);
     rk = BN_CTX_get(ctx);
     x1 = BN_CTX_get(ctx);
@@ -321,7 +323,10 @@ done:
         BN_free(r);
         BN_free(s);
     }
-
+    if (ctx != NULL) {
+        if (ctx_started)
+            BN_CTX_end(ctx);  // Only call BN_CTX_end() if BN_CTX_start() was called.  2025-12-16
+    }
     BN_CTX_free(ctx);
     EC_POINT_free(kG);
     return sig;
