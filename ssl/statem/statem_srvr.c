@@ -2629,8 +2629,8 @@ CON_FUNC_RETURN tls_construct_server_key_exchange(SSL_CONNECTION *s,
                 }
 #if !defined(OPENSSL_NO_DEPRECATED_3_0)
                 if ((pkdhp == NULL) && (s->cert->dh_tmp_cb != NULL)) {
-                    pkdh = ssl_dh_to_pkey(s->cert->dh_tmp_cb(SSL_CONNECTION_GET_USER_SSL(s),
-                        0, 1024));
+                    pkdh = ssl_dh_to_pkey(
+                        s->cert->dh_tmp_cb(SSL_CONNECTION_GET_USER_SSL(s), 0, 1024));
                     if (pkdh == NULL) {
                         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                         goto err;
