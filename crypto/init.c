@@ -350,7 +350,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
      *
      * When the caller specifies OPENSSL_INIT_BASE_ONLY, that should be the
      * *only* option specified.  With that option we return immediately after
-     * doing the requested limited initialization.  
+     * doing the requested limited initialization.
      *
      * If we remain the only caller of err_shelve_state() the recursion should
      * perhaps be removed, but if in doubt, it can be left in place.
