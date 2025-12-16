@@ -1357,6 +1357,8 @@ StatementMacros:
   - "ASN1_SEQUENCE_END_enc"
   - "ASN1_SEQUENCE_END_name"
   - "ASN1_SEQUENCE_END_ref"
+  - "make_dh"
+  - "make_dh_bn"
   - "static_ASN1_CHOICE_END"
   - "static_ASN1_CHOICE_END_name"
   - "static_ASN1_CHOICE_END_selector"
