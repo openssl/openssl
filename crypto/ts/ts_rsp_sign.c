@@ -729,7 +729,7 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
     }
 
     if (ctx->signer_md == NULL)
-        signer_md = EVP_MD_fetch(ctx->libctx, "SHA256", ctx->propq);
+        signer_md = EVP_MD_fetch(ctx->libctx, SN_sha256, ctx->propq);
     else if (EVP_MD_get0_provider(ctx->signer_md) == NULL)
         signer_md = EVP_MD_fetch(ctx->libctx, EVP_MD_get0_name(ctx->signer_md),
             ctx->propq);

@@ -333,7 +333,7 @@ int ossl_bn_gen_dsa_nonce_fixed_top(BIGNUM *out, const BIGNUM *range,
         goto end;
     }
 
-    md = EVP_MD_fetch(libctx, "SHA512", NULL);
+    md = EVP_MD_fetch(libctx, SN_sha512, NULL);
     if (md == NULL) {
         ERR_raise(ERR_LIB_BN, BN_R_NO_SUITABLE_DIGEST);
         goto end;

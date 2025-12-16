@@ -95,8 +95,8 @@ ML_DSA_KEY *ossl_ml_dsa_key_new(OSSL_LIB_CTX *libctx, const char *propq,
         ret->libctx = libctx;
         ret->params = params;
         ret->prov_flags = ML_DSA_KEY_PROV_FLAGS_DEFAULT;
-        ret->shake128_md = EVP_MD_fetch(libctx, "SHAKE-128", propq);
-        ret->shake256_md = EVP_MD_fetch(libctx, "SHAKE-256", propq);
+        ret->shake128_md = EVP_MD_fetch(libctx, SN_shake128, propq);
+        ret->shake256_md = EVP_MD_fetch(libctx, SN_shake256, propq);
         if (ret->shake128_md == NULL || ret->shake256_md == NULL)
             goto err;
     }

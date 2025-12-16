@@ -8,6 +8,7 @@
  */
 
 #include <openssl/byteorder.h>
+#include <openssl/obj_mac.h>
 #include <openssl/rand.h>
 #include <openssl/proverr.h>
 #include "crypto/ml_kem.h"
@@ -1959,10 +1960,10 @@ ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
     key->vinfo = vinfo;
     key->libctx = libctx;
     key->prov_flags = ML_KEM_KEY_PROV_FLAGS_DEFAULT;
-    key->shake128_md = EVP_MD_fetch(libctx, "SHAKE128", properties);
-    key->shake256_md = EVP_MD_fetch(libctx, "SHAKE256", properties);
-    key->sha3_256_md = EVP_MD_fetch(libctx, "SHA3-256", properties);
-    key->sha3_512_md = EVP_MD_fetch(libctx, "SHA3-512", properties);
+    key->shake128_md = EVP_MD_fetch(libctx, SN_shake128, properties);
+    key->shake256_md = EVP_MD_fetch(libctx, SN_shake256, properties);
+    key->sha3_256_md = EVP_MD_fetch(libctx, SN_sha3_256, properties);
+    key->sha3_512_md = EVP_MD_fetch(libctx, SN_sha3_512, properties);
     key->d = key->z = key->rho = key->pkhash = key->encoded_dk = key->seedbuf = NULL;
     key->s = key->m = key->t = NULL;
 

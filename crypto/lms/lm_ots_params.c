@@ -7,29 +7,31 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/obj_mac.h>
+
 #include "crypto/lms.h"
 #include "crypto/lms_sig.h"
 #include "crypto/lms_util.h"
 
 /* Refer to SP800-208 Section 4 LM-OTS parameter sets */
 static const LM_OTS_PARAMS lm_ots_params[] = {
-    { OSSL_LM_OTS_TYPE_SHA256_N32_W1, 32, 1, 265, 7, "SHA256" },
-    { OSSL_LM_OTS_TYPE_SHA256_N32_W2, 32, 2, 133, 6, "SHA256" },
-    { OSSL_LM_OTS_TYPE_SHA256_N32_W4, 32, 4, 67, 4, "SHA256" },
-    { OSSL_LM_OTS_TYPE_SHA256_N32_W8, 32, 8, 34, 0, "SHA256" },
+    { OSSL_LM_OTS_TYPE_SHA256_N32_W1, 32, 1, 265, 7, SN_sha256 },
+    { OSSL_LM_OTS_TYPE_SHA256_N32_W2, 32, 2, 133, 6, SN_sha256 },
+    { OSSL_LM_OTS_TYPE_SHA256_N32_W4, 32, 4, 67, 4, SN_sha256 },
+    { OSSL_LM_OTS_TYPE_SHA256_N32_W8, 32, 8, 34, 0, SN_sha256 },
     { OSSL_LM_OTS_TYPE_SHA256_N24_W1, 24, 1, 200, 8, "SHA256-192" },
     { OSSL_LM_OTS_TYPE_SHA256_N24_W2, 24, 2, 101, 6, "SHA256-192" },
     { OSSL_LM_OTS_TYPE_SHA256_N24_W4, 24, 4, 51, 4, "SHA256-192" },
     { OSSL_LM_OTS_TYPE_SHA256_N24_W8, 24, 8, 26, 0, "SHA256-192" },
-    { OSSL_LM_OTS_TYPE_SHAKE_N32_W1, 32, 1, 265, 7, "SHAKE-256" },
-    { OSSL_LM_OTS_TYPE_SHAKE_N32_W2, 32, 2, 133, 6, "SHAKE-256" },
-    { OSSL_LM_OTS_TYPE_SHAKE_N32_W4, 32, 4, 67, 4, "SHAKE-256" },
-    { OSSL_LM_OTS_TYPE_SHAKE_N32_W8, 32, 8, 34, 0, "SHAKE-256" },
+    { OSSL_LM_OTS_TYPE_SHAKE_N32_W1, 32, 1, 265, 7, SN_shake256 },
+    { OSSL_LM_OTS_TYPE_SHAKE_N32_W2, 32, 2, 133, 6, SN_shake256 },
+    { OSSL_LM_OTS_TYPE_SHAKE_N32_W4, 32, 4, 67, 4, SN_shake256 },
+    { OSSL_LM_OTS_TYPE_SHAKE_N32_W8, 32, 8, 34, 0, SN_shake256 },
     /* SHAKE-256/192 - OpenSSL does not support this as a name */
-    { OSSL_LM_OTS_TYPE_SHAKE_N24_W1, 24, 1, 200, 8, "SHAKE-256" },
-    { OSSL_LM_OTS_TYPE_SHAKE_N24_W2, 24, 2, 101, 6, "SHAKE-256" },
-    { OSSL_LM_OTS_TYPE_SHAKE_N24_W4, 24, 4, 51, 4, "SHAKE-256" },
-    { OSSL_LM_OTS_TYPE_SHAKE_N24_W8, 24, 8, 26, 0, "SHAKE-256" },
+    { OSSL_LM_OTS_TYPE_SHAKE_N24_W1, 24, 1, 200, 8, SN_shake256 },
+    { OSSL_LM_OTS_TYPE_SHAKE_N24_W2, 24, 2, 101, 6, SN_shake256 },
+    { OSSL_LM_OTS_TYPE_SHAKE_N24_W4, 24, 4, 51, 4, SN_shake256 },
+    { OSSL_LM_OTS_TYPE_SHAKE_N24_W8, 24, 8, 26, 0, SN_shake256 },
     { 0, 0, 0, 0, 0, NULL },
 };
 

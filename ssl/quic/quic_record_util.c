@@ -95,7 +95,7 @@ int ossl_quic_provide_initial_secret(OSSL_LIB_CTX *libctx,
         return 1;
 
     /* Initial encryption always uses SHA-256. */
-    if ((sha256 = EVP_MD_fetch(libctx, "SHA256", propq)) == NULL)
+    if ((sha256 = EVP_MD_fetch(libctx, SN_sha256, propq)) == NULL)
         return 0;
 
     if (is_server) {
@@ -192,7 +192,7 @@ struct suite_info {
 
 static const struct suite_info suite_aes128gcm = {
     "AES-128-GCM",
-    "SHA256",
+    SN_sha256,
     32,
     16,
     12,
@@ -205,7 +205,7 @@ static const struct suite_info suite_aes128gcm = {
 
 static const struct suite_info suite_aes256gcm = {
     "AES-256-GCM",
-    "SHA384",
+    SN_sha384,
     48,
     32,
     12,
@@ -218,7 +218,7 @@ static const struct suite_info suite_aes256gcm = {
 
 static const struct suite_info suite_chacha20poly1305 = {
     "ChaCha20-Poly1305",
-    "SHA256",
+    SN_sha256,
     32,
     32,
     12,

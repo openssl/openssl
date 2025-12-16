@@ -245,7 +245,7 @@ int OCSP_RESPID_set_by_key_ex(OCSP_RESPID *respid, X509 *cert,
 {
     ASN1_OCTET_STRING *byKey = NULL;
     unsigned char md[SHA_DIGEST_LENGTH];
-    EVP_MD *sha1 = EVP_MD_fetch(libctx, "SHA1", propq);
+    EVP_MD *sha1 = EVP_MD_fetch(libctx, SN_sha1, propq);
     int ret = 0;
 
     if (sha1 == NULL)
@@ -289,7 +289,7 @@ int OCSP_RESPID_match_ex(OCSP_RESPID *respid, X509 *cert, OSSL_LIB_CTX *libctx,
     if (respid->type == V_OCSP_RESPID_KEY) {
         unsigned char md[SHA_DIGEST_LENGTH];
 
-        sha1 = EVP_MD_fetch(libctx, "SHA1", propq);
+        sha1 = EVP_MD_fetch(libctx, SN_sha1, propq);
         if (sha1 == NULL)
             goto err;
 

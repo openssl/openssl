@@ -449,7 +449,7 @@ err:
 static const char *default_mdname(size_t N)
 {
     if (N == 160)
-        return "SHA1";
+        return SN_sha1;
     else if (N == 224)
         return "SHA-224";
     else if (N == 256)

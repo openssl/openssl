@@ -469,7 +469,7 @@ static int derive_kdk(int flen, const unsigned char *from, RSA *rsa,
      * messages for the same ciphertext, they'll know that the message is
      * synthetically generated, which means that the padding check failed
      */
-    md = EVP_MD_fetch(rsa->libctx, "sha256", NULL);
+    md = EVP_MD_fetch(rsa->libctx, SN_sha256, NULL);
     if (md == NULL) {
         ERR_raise(ERR_LIB_RSA, ERR_R_FETCH_FAILED);
         goto err;

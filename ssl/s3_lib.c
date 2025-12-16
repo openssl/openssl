@@ -4960,7 +4960,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
                     tmp->algorithm2);
 
                 if (md != NULL
-                    && EVP_MD_is_a(md, OSSL_DIGEST_NAME_SHA2_256)) {
+                    && EVP_MD_is_a(md, SN_sha256)) {
                     ret = tmp;
                     break;
                 }

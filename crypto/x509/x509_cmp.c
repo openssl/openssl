@@ -292,7 +292,7 @@ unsigned long X509_NAME_hash_ex(const X509_NAME *x, OSSL_LIB_CTX *libctx,
 {
     unsigned long ret = 0;
     unsigned char md[SHA_DIGEST_LENGTH];
-    EVP_MD *sha1 = EVP_MD_fetch(libctx, "SHA1", propq);
+    EVP_MD *sha1 = EVP_MD_fetch(libctx, SN_sha1, propq);
     int i2d_ret;
 
     /* Make sure X509_NAME structure contains valid cached encoding */

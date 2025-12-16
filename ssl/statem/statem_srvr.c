@@ -4258,7 +4258,7 @@ static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
                 tctx->ext.secure->tick_aes_key, iv)
             || !ssl_hmac_init(hctx, tctx->ext.secure->tick_hmac_key,
                 sizeof(tctx->ext.secure->tick_hmac_key),
-                "SHA256")) {
+                SN_sha256)) {
             EVP_CIPHER_free(cipher);
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
