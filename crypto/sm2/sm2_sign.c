@@ -212,7 +212,6 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     ECDSA_SIG *sig = NULL;
     EC_POINT *kG = NULL;
     BN_CTX *ctx = NULL;
-    int ctx_started = 0; // A flag indicating whether BN_CTX_start() is called.  2025-12-16
     BIGNUM *k = NULL;
     BIGNUM *rk = NULL;
     BIGNUM *r = NULL;
@@ -237,14 +236,13 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     }
 
     BN_CTX_start(ctx);
-    ctx_started = 1; // Set the flag to indicate BN_CTX_start() has been called.  2025-12-16
     k = BN_CTX_get(ctx);
     rk = BN_CTX_get(ctx);
     x1 = BN_CTX_get(ctx);
     tmp = BN_CTX_get(ctx);
     if (tmp == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
-        goto done;
+        goto end_first;
     }
 
     /*
@@ -256,7 +254,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
 
     if (r == NULL || s == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
-        goto done;
+        goto end_first;
     }
 
     /*
@@ -271,7 +269,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     for (;;) {
         if (!BN_priv_rand_range_ex(k, order, 0, ctx)) {
             ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
-            goto done;
+            goto end_first;
         }
 
         if (!EC_POINT_mul(group, kG, k, NULL, NULL, ctx)
@@ -279,7 +277,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
                 ctx)
             || !BN_mod_add(r, e, x1, order, ctx)) {
             ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
-            goto done;
+            goto end_first;
         }
 
         /* try again if r == 0 or r+k == n */
@@ -288,7 +286,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
 
         if (!BN_add(rk, r, k)) {
             ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
-            goto done;
+            goto end_first;
         }
 
         if (BN_cmp(rk, order) == 0)
@@ -300,7 +298,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
             || !BN_sub(tmp, k, tmp)
             || !BN_mod_mul(s, s, tmp, order, ctx)) {
             ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
-            goto done;
+            goto end_first;
         }
 
         /* try again if s == 0 */
@@ -310,7 +308,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
         sig = ECDSA_SIG_new();
         if (sig == NULL) {
             ERR_raise(ERR_LIB_SM2, ERR_R_ECDSA_LIB);
-            goto done;
+            goto end_first;
         }
 
         /* takes ownership of r and s */
@@ -318,14 +316,12 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
         break;
     }
 
+end_first:
+    BN_CTX_end(ctx);
 done:
     if (sig == NULL) {
         BN_free(r);
         BN_free(s);
-    }
-    if (ctx != NULL) {
-        if (ctx_started)
-            BN_CTX_end(ctx);  // Only call BN_CTX_end() if BN_CTX_start() was called.  2025-12-16
     }
     BN_CTX_free(ctx);
     EC_POINT_free(kG);
