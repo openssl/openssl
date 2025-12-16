@@ -474,7 +474,7 @@ ENGINE_FUNC(int, ENGINE_register_EC, (ENGINE *e), 0)
 /* OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_EC(ENGINE *e); */
 ENGINE_VOID_FUNC(ENGINE_unregister_EC, (ENGINE *e))
 /* OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_EC(void); */
-ENGINE_VOID_FUNC_NOARGS(ENGINE_unregister_all_EC)
+ENGINE_VOID_FUNC_NOARGS(ENGINE_register_all_EC)
 /* OSSL_DEPRECATEDIN_3_0 int ENGINE_register_DH(ENGINE *e); */
 ENGINE_FUNC(int, ENGINE_register_DH, (ENGINE *e), 0)
 /* OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_DH(ENGINE *e); */
