@@ -1148,9 +1148,6 @@ ENGINE_VOID_FUNC_NOARGS(ENGINE_setup_bsd_cryptodev)
  * from other headers.
  */
 
-/* int ossl_err_load_ENGINE_strings(void); */
-ENGINE_FUNC_NOARGS(int, ossl_err_load_ENGINE_strings, 1)
-
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 /* int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e); */
 ENGINE_FUNC(int, EVP_PKEY_set1_engine, (EVP_PKEY *pkey, ENGINE *e), 0)
