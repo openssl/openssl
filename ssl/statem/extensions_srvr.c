@@ -1794,7 +1794,7 @@ EXT_RETURN tls_construct_stoc_status_request(SSL_CONNECTION *s, WPACKET *pkt,
      * separate message
      */
     if (SSL_CONNECTION_IS_VERSION13(s)
-        && !tls_construct_cert_status_body(s, chainidx, pkt)) {
+        && !tls_construct_cert_status_body(s, resp, pkt)) {
         /* SSLfatal() already called */
         return EXT_RETURN_FAIL;
     }

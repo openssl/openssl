@@ -515,7 +515,7 @@ int ssl_cipher_get_evp_cipher_sn(SSL_CTX *ctx, const SSL_CIPHER *sslc,
             }
 
             if (ecbnid != NID_undef)
-                *enc = ssl_evp_cipher_fetch(ctx->libctx, ecbnid, ctx->propq);
+                *enc = ssl_evp_cipher_fetch(ctx->libctx, OBJ_nid2sn(ecbnid), ctx->propq);
         }
 
         if (*enc == NULL)
