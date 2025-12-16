@@ -151,7 +151,7 @@ OpenSSL error strings will not be available, only an error code. This code can
 be put through the openssl errstr command line application to produce a human
 readable error (see L<openssl-errstr(1)>).
 
-The OPENSSL_atexit() is a wrapper on atexit(3) provided by platform's libc.
+The OPENSSL_atexit() is a wrapper on atexit(3) provided by the platform's libc.
 
 The OPENSSL_thread_stop_ex() function deallocates resources associated
 with the current thread for the given OSSL_LIB_CTX B<ctx>. The B<ctx> parameter
