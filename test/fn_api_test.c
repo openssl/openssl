@@ -133,12 +133,12 @@ static const OSSL_FN_ULONG ex_add_num3_num3[] = {
 
 #define ADD_CASE(i, op1, op2, ex)         \
     {                                     \
-        /* op1, with size */ op1,         \
-        LIMBSOF(op1),                     \
-        /* op2, with size */ op2,         \
-        LIMBSOF(op2),                     \
-        /* ex, with size */ ex,           \
-        LIMBSOF(ex),                      \
+        /* op1 */ op1,                    \
+        /* op1_size */ LIMBSOF(op1),      \
+        /* op2 */ op2,                    \
+        /* op2_size */ LIMBSOF(op2),      \
+        /* ex */ ex,                      \
+        /* ex_size */ LIMBSOF(ex),        \
         /* op1_live_size */ LIMBSOF(op1), \
         /* op2_live_size */ LIMBSOF(op2), \
         /* res_live_size */ LIMBSOF(ex),  \
@@ -530,12 +530,12 @@ end:
 /* i should be set to match the iteration number that's displayed when testing */
 #define MUL_CASE(i, op1, op2, ex)                                        \
     {                                                                    \
-        /* op1, with size */ op1,                                        \
-        LIMBSOF(op1),                                                    \
-        /* op2, with size */ op2,                                        \
-        LIMBSOF(op2),                                                    \
-        /* ex, with size */ ex,                                          \
-        LIMBSOF(ex),                                                     \
+        /* op1 */ op1,                                                   \
+        /* op1_size */ LIMBSOF(op1),                                     \
+        /* op2 */ op2,                                                   \
+        /* op2_size */ LIMBSOF(op2),                                     \
+        /* ex */ ex,                                                     \
+        /* ex_size */ LIMBSOF(ex),                                       \
         /* op1_live_size */ LIMBSOF(op1) + 1,                            \
         /* op2_live_size */ LIMBSOF(op2) + 2,                            \
         /* res_live_size */ LIMBSOF(op1) + LIMBSOF(op2) + ((i - 1) % 4), \
@@ -574,12 +574,12 @@ static int test_mul(int i)
 /* i should be set to match the iteration number that's displayed when testing */
 #define MUL_TRUNCATED_CASE(i, op1, op2, ex)   \
     {                                         \
-        /* op1, with size */ op1,             \
-        LIMBSOF(op1),                         \
-        /* op2, with size */ op2,             \
-        LIMBSOF(op2),                         \
-        /* ex, with size */ ex,               \
-        LIMBSOF(ex),                          \
+        /* op1 */ op1,                        \
+        /* op1_size */ LIMBSOF(op1),          \
+        /* op2 */ op2,                        \
+        /* op2_size */ LIMBSOF(op2),          \
+        /* ex */ ex,                          \
+        /* ex_size */ LIMBSOF(ex),            \
         /* op1_live_size */ LIMBSOF(op1) + 1, \
         /* op2_live_size */ LIMBSOF(op2) + 2, \
         /* res_live_size */ LIMBSOF(ex) / 2,  \
@@ -588,12 +588,12 @@ static int test_mul(int i)
 /* A special case, where the truncation is set to the size of ex minus 64 bits */
 #define MUL_TRUNCATED_SPECIAL_CASE1(i, op1, op2, ex)         \
     {                                                        \
-        /* op1, with size */ op1,                            \
-        LIMBSOF(op1),                                        \
-        /* op2, with size */ op2,                            \
-        LIMBSOF(op2),                                        \
-        /* ex, with size */ ex,                              \
-        LIMBSOF(ex),                                         \
+        /* op1 */ op1,                                       \
+        /* op1_size */ LIMBSOF(op1),                         \
+        /* op2 */ op2,                                       \
+        /* op2_size */ LIMBSOF(op2),                         \
+        /* ex */ ex,                                         \
+        /* ex_size */ LIMBSOF(ex),                           \
         /* op1_live_size */ LIMBSOF(op1) + 1,                \
         /* op2_live_size */ LIMBSOF(op2) + 2,                \
         /* res_live_size */ LIMBSOF(ex) - 8 / OSSL_FN_BYTES, \

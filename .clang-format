@@ -599,6 +599,8 @@ TypeNames:
   - "ossl_finish_mutate_cb"
   - "OSSL_FIPS_IND"
   - "OSSL_FIPS_IND_CHECK_CB"
+  - "OSSL_FN_CTX"
+  - "OSSL_FN_ULONG"
   - "OSSL_FUNC"
   - "OSSL_HANDSHAKE_STATE"
   - "OSSL_HASH"
