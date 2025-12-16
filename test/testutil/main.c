@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/crypto.h>
 #include "../testutil.h"
 #include "output.h"
 #include "tu_local.h"
@@ -33,6 +34,7 @@ int main(int argc, char *argv[])
         ret = run_tests(argv[0]);
         cleanup_tests();
         opt_check_usage();
+        OPENSSL_cleanup();
     } else if (setup_res == 0) {
         opt_help(test_get_options());
     }
