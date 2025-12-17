@@ -273,7 +273,7 @@ const OSSL_DISPATCH ossl_kdf_snmpkdf_functions[] = {
  *     okey -         pointer to key output, FIPS testing limited to SHA-1.
  *     keylen -       key length
  * Output:
- *     obuffer - filled with derived key
+ *     okey   - filled with derived key
  *     return - 1 on pass, 0 fail
  */
 static int SNMPKDF(const EVP_MD *evp_md,
