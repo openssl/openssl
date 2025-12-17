@@ -1031,7 +1031,10 @@ PROV_R_BAD_DECRYPT:100:bad decrypt
 PROV_R_BAD_ENCODING:141:bad encoding
 PROV_R_BAD_LENGTH:142:bad length
 PROV_R_BAD_TLS_CLIENT_VERSION:161:bad tls client version
+PROV_R_BN_CTX_ERR:256:bn ctx err
 PROV_R_BN_ERROR:160:bn error
+PROV_R_BN_FAILURE:257:bn failure
+PROV_R_BN_GET_ERR:258:bn get err
 PROV_R_CIPHER_OPERATION_FAILED:102:cipher operation failed
 PROV_R_COFACTOR_REQUIRED:236:cofactor required
 PROV_R_DERIVATION_FUNCTION_INIT_FAILED:205:derivation function init failed
@@ -1079,6 +1082,7 @@ PROV_R_INVALID_IV_LENGTH:109:invalid iv length
 PROV_R_INVALID_KDF:232:invalid kdf
 PROV_R_INVALID_KEY:158:invalid key
 PROV_R_INVALID_KEY_LENGTH:105:invalid key length
+PROV_R_INVALID_LABEL:259:invalid label
 PROV_R_INVALID_MAC:151:invalid mac
 PROV_R_INVALID_MEMORY_SIZE:235:invalid memory size
 PROV_R_INVALID_MGF1_MD:167:invalid mgf1 md

@@ -76,6 +76,7 @@ my @files = qw(
               );
 push @files, qw(evpkdf_ssh.txt) unless $no_sshkdf;
 push @files, qw(evpkdf_snmp.txt) unless $no_snmpkdf;
+push @files, qw(evpkdf_srtp.txt) unless $no_srtpkdf;
 push @files, qw(
                 evpkdf_kbkdf_counter.txt
                 evpkdf_kbkdf_kmac.txt

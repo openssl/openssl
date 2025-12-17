@@ -12,6 +12,7 @@ $PKCS12KDF_GOAL=../../libdefault.a
 $SSKDF_GOAL=../../libdefault.a ../../libfips.a
 $SCRYPT_GOAL=../../libdefault.a
 $SNMPKDF_GOAL=../../libdefault.a ../../libfips.a
+$SRTPKDF_GOAL=../../libdefault.a ../../libfips.a
 $SSHKDF_GOAL=../../libdefault.a ../../libfips.a
 $X942KDF_GOAL=../../libdefault.a ../../libfips.a
 $HMAC_DRBG_KDF_GOAL=../../libdefault.a ../../libfips.a
@@ -49,6 +50,10 @@ ENDIF
 
 IF[{- !$disabled{snmpkdf} -}]
   SOURCE[$SNMPKDF_GOAL]=snmpkdf.c
+ENDIF
+
+IF[{- !$disabled{srtpkdf} -}]
+  SOURCE[$SRTPKDF_GOAL]=srtpkdf.c
 ENDIF
 
 IF[{- !$disabled{sshkdf} -}]

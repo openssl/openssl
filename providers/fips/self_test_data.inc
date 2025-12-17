@@ -533,6 +533,41 @@ static const ST_KAT_PARAM snmpkdf_params[] = {
 };
 #endif
 
+#ifndef OPENSSL_NO_SRTPKDF
+static const char srtpkdf_cipher[] = "AES-256-CTR";
+static const unsigned char srtpkdf_kdr[] = {
+    0x00, 0x00, 0x00, 0x00, 0x01, 0x00 };
+
+static const unsigned char srtpkdf_key[] = {
+    0x4b, 0x26, 0xfa, 0xdc, 0x0a, 0x9b, 0xe8, 0x23,
+    0xdc, 0xd6, 0xab, 0xc8, 0x2c, 0x04, 0x39, 0x75,
+    0xa6, 0x03, 0xf0, 0x05, 0x87, 0xb8, 0x75, 0x34,
+    0x60, 0xba, 0xf0, 0x50, 0x2e, 0xee, 0x66, 0xbb };
+
+static const unsigned char srtpkdf_salt[] = {
+    0x99, 0x74, 0xa3, 0x00, 0x33, 0x28, 0x84, 0xfb,
+    0xfa, 0x03, 0x71, 0x8c, 0xe0, 0xe0 };
+
+static const unsigned char srtpkdf_index[] = {
+    0x6e, 0xe6, 0x30, 0x14 };
+
+static const int srtpkdf_label = 5;
+
+static const unsigned char srtpkdf_expected[] = {
+    0x5c, 0x4e, 0x98, 0xd3, 0x29, 0x6e, 0x00, 0x9b,
+    0x45, 0x38, 0x09, 0x6d, 0x72, 0xe4 };
+
+static const ST_KAT_PARAM srtpkdf_params[] = {
+    ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_CIPHER, srtpkdf_cipher),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SRTPKDF_KDR, srtpkdf_kdr),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_KEY, srtpkdf_key),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SALT, srtpkdf_salt),
+    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SRTPKDF_INDEX, srtpkdf_index),
+    ST_KAT_PARAM_INT(OSSL_KDF_PARAM_SRTPKDF_LABEL, srtpkdf_label),
+    ST_KAT_PARAM_END()
+};
+#endif
+
 #ifndef OPENSSL_NO_SSKDF
 static const char sskdf_digest[] = "SHA256";
 static const unsigned char sskdf_secret[] = {
@@ -862,6 +897,15 @@ static const ST_KAT_KDF st_kat_kdf_tests[] =
         0,
         snmpkdf_params,
         ITM(snmpkdf_expected)
+    },
+#endif
+#ifndef OPENSSL_NO_SRTPKDF
+    {
+        OSSL_SELF_TEST_DESC_KDF_SRTPKDF,
+        OSSL_KDF_NAME_SRTPKDF,
+        0,
+        srtpkdf_params,
+        ITM(srtpkdf_expected)
     },
 #endif
 #ifndef OPENSSL_NO_SSKDF

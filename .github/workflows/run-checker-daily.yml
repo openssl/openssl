@@ -105,6 +105,7 @@ jobs:
           no-sm4,
           no-snmpkdf,
           no-sock,
+          no-srtpkdf,
           no-sse2,
           no-sshkdf,
           no-sskdf,
