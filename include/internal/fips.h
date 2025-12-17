@@ -24,14 +24,22 @@ int ossl_fips_self_testing(void);
  * adjusted accordingly.
  */
 typedef enum {
-    ST_ID_DIGEST_SHA1,
-    ST_ID_DIGEST_SHA256,
-    ST_ID_DIGEST_SHA512,
-    ST_ID_DIGEST_SHA3_256,
+    ST_ID_DRBG_HASH,
+    ST_ID_DRBG_CTR,
+    ST_ID_DRBG_HMAC,
     ST_ID_CIPHER_AES_256_GCM,
     ST_ID_CIPHER_AES_128_ECB,
 #ifndef OPENSSL_NO_DES
     ST_ID_CIPHER_DES_EDE3_ECB,
+#endif
+#ifndef OPENSSL_NO_ML_KEM
+    ST_ID_ASYM_KEYGEN_ML_KEM,
+#endif
+#ifndef OPENSSL_NO_ML_DSA
+    ST_ID_ASYM_KEYGEN_ML_DSA,
+#endif
+#ifndef OPENSSL_NO_SLH_DSA
+    ST_ID_ASYM_KEYGEN_SLH_DSA,
 #endif
     ST_ID_SIG_RSA_SHA256,
 #ifndef OPENSSL_NO_EC
@@ -60,6 +68,18 @@ typedef enum {
 #ifndef OPENSSL_NO_LMS
     ST_ID_SIG_LMS,
 #endif
+#ifndef OPENSSL_NO_ML_KEM
+    ST_ID_KEM_ML_KEM,
+#endif
+    ST_ID_ASYM_CIPHER_RSA_ENC,
+    ST_ID_ASYM_CIPHER_RSA_DEC,
+    ST_ID_ASYM_CIPHER_RSA_DEC_CRT,
+#ifndef OPENSSL_NO_DH
+    ST_ID_KA_DH,
+#endif
+#ifndef OPENSSL_NO_EC
+    ST_ID_KA_ECDH,
+#endif
     ST_ID_KDF_TLS13_EXTRACT,
     ST_ID_KDF_TLS13_EXPAND,
     ST_ID_KDF_TLS12_PRF,
@@ -84,31 +104,11 @@ typedef enum {
 #ifndef OPENSSL_NO_X942KDF
     ST_ID_KDF_X942KDF,
 #endif
-    ST_ID_DRBG_HASH,
-    ST_ID_DRBG_CTR,
-    ST_ID_DRBG_HMAC,
-#ifndef OPENSSL_NO_DH
-    ST_ID_KA_DH,
-#endif
-#ifndef OPENSSL_NO_EC
-    ST_ID_KA_ECDH,
-#endif
-#ifndef OPENSSL_NO_ML_KEM
-    ST_ID_ASYM_KEYGEN_ML_KEM,
-#endif
-#ifndef OPENSSL_NO_ML_DSA
-    ST_ID_ASYM_KEYGEN_ML_DSA,
-#endif
-#ifndef OPENSSL_NO_SLH_DSA
-    ST_ID_ASYM_KEYGEN_SLH_DSA,
-#endif
-#ifndef OPENSSL_NO_ML_KEM
-    ST_ID_KEM_ML_KEM,
-#endif
-    ST_ID_ASYM_CIPHER_RSA_ENC,
-    ST_ID_ASYM_CIPHER_RSA_DEC,
-    ST_ID_ASYM_CIPHER_RSA_DEC_CRT,
     ST_ID_MAC_HMAC,
+    ST_ID_DIGEST_SHA1,
+    ST_ID_DIGEST_SHA256,
+    ST_ID_DIGEST_SHA512,
+    ST_ID_DIGEST_SHA3_256,
     ST_ID_MAX
 } self_test_id_t;
 
