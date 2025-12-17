@@ -37,6 +37,10 @@ OpenSSL 4.0
 
    *Jeffrey Kintscher*
 
+ * The script tool `c_rehash` was removed. Use `openssl rehash` instead.
+
+   *Norbert Pocs*
+
  * The crypto-mdebug-backtrace configuration option has been entirely removed.
    The option has been a no-op since 1.0.2.
 
