@@ -3327,6 +3327,7 @@ static const ST_KAT_PARAM hmac_kat_params[] = {
 
 ST_DEFINITION st_all_tests[ST_ID_MAX] = {
     {
+        ST_ID_DIGEST_SHA1,
         "SHA1",
         OSSL_SELF_TEST_DESC_MD_SHA1,
         SELF_TEST_KAT_DIGEST,
@@ -3336,6 +3337,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         ITM_BUF(sha1_digest),
     },
     {
+        ST_ID_DIGEST_SHA256,
         "SHA256",
         OSSL_SELF_TEST_DESC_MD_SHA2,
         SELF_TEST_KAT_DIGEST,
@@ -3345,6 +3347,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         ITM_BUF(sha256_digest),
     },
     {
+        ST_ID_DIGEST_SHA512,
         "SHA512",
         OSSL_SELF_TEST_DESC_MD_SHA2,
         SELF_TEST_KAT_DIGEST,
@@ -3354,6 +3357,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         ITM_BUF(sha512_digest),
     },
     {
+        ST_ID_DIGEST_SHA3_256,
         "SHA3-256",
         OSSL_SELF_TEST_DESC_MD_SHA3,
         SELF_TEST_KAT_DIGEST,
@@ -3362,7 +3366,9 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         ITM_BUF(sha3_256_pt),
         ITM_BUF(sha3_256_digest),
     },
-    { "AES-256-GCM",
+    {
+        ST_ID_CIPHER_AES_256_GCM,
+        "AES-256-GCM",
         OSSL_SELF_TEST_DESC_CIPHER_AES_GCM,
         SELF_TEST_KAT_CIPHER,
         SELF_TEST_DEFERRED,
@@ -3374,8 +3380,10 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
             ITM_BUF(aes_256_gcm_key),
             ITM_BUF(aes_256_gcm_iv),
             ITM_BUF(aes_256_gcm_aad),
-            ITM_BUF(aes_256_gcm_tag) } },
+            ITM_BUF(aes_256_gcm_tag) },
+    },
     {
+        ST_ID_CIPHER_AES_128_ECB,
         "AES-128-ECB",
         OSSL_SELF_TEST_DESC_CIPHER_AES_ECB,
         SELF_TEST_KAT_CIPHER,
@@ -3390,6 +3398,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
     },
 #ifndef OPENSSL_NO_DES
     {
+        ST_ID_CIPHER_DES_EDE3_ECB,
         "DES-EDE3-ECB",
         OSSL_SELF_TEST_DESC_CIPHER_TDES,
         SELF_TEST_KAT_CIPHER,
@@ -3404,6 +3413,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
     },
 #endif
     {
+        ST_ID_SIG_RSA_SHA256,
         "RSA-SHA256",
         OSSL_SELF_TEST_DESC_SIGN_RSA,
         SELF_TEST_KAT_SIGNATURE,
@@ -3422,6 +3432,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
     },
 #ifndef OPENSSL_NO_EC
     {
+        ST_ID_SIG_ECDSA_SHA256,
         "ECDSA-SHA256",
         OSSL_SELF_TEST_DESC_SIGN_ECDSA,
         SELF_TEST_KAT_SIGNATURE,
@@ -3441,6 +3452,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
     },
 #ifndef OPENSSL_NO_HMAC_DRBG_KDF
     {
+        ST_ID_SIG_DET_ECDSA_SHA256,
         "ECDSA-SHA256",
         OSSL_SELF_TEST_DESC_SIGN_DetECDSA,
         SELF_TEST_KAT_SIGNATURE,
@@ -3458,6 +3470,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
 #endif
 #ifndef OPENSSL_NO_EC2M
     {
+        ST_ID_SIG_E2CM_ECDSA_SHA256,
         "ECDSA-SHA256",
         OSSL_SELF_TEST_DESC_SIGN_ECDSA,
         SELF_TEST_KAT_SIGNATURE,
@@ -3477,6 +3490,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
 #endif
 #ifndef OPENSSL_NO_ECX
     {
+        ST_ID_SIG_ED448,
         "ED448",
         OSSL_SELF_TEST_DESC_SIGN_EDDSA,
         SELF_TEST_KAT_SIGNATURE,
@@ -3491,6 +3505,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         },
     },
     {
+        ST_ID_SIG_ED25519,
         "ED25519",
         OSSL_SELF_TEST_DESC_SIGN_EDDSA,
         SELF_TEST_KAT_SIGNATURE,
@@ -3508,6 +3523,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
 #endif /* OPENSSL_NO_EC */
 #ifndef OPENSSL_NO_DSA
     {
+        ST_ID_SIG_DSA_SHA256,
         "DSA-SHA256",
         OSSL_SELF_TEST_DESC_SIGN_DSA,
         SELF_TEST_KAT_SIGNATURE,
@@ -3527,6 +3543,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
 #endif /* OPENSSL_NO_DSA */
 #ifndef OPENSSL_NO_ML_DSA
     {
+        ST_ID_SIG_ML_DSA_65,
         "ML-DSA-65",
         OSSL_SELF_TEST_DESC_SIGN_ML_DSA,
         SELF_TEST_KAT_SIGNATURE,
@@ -3555,6 +3572,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
      * here.
      */
     {
+        ST_ID_SIG_SLH_DSA_SHA2_128F,
         "SLH-DSA-SHA2-128f",
         OSSL_SELF_TEST_DESC_SIGN_SLH_DSA,
         SELF_TEST_KAT_SIGNATURE,
@@ -3571,6 +3589,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         },
     },
     {
+        ST_ID_SIG_SLH_DSA_SHAKE_128F,
         "SLH-DSA-SHAKE-128f",
         OSSL_SELF_TEST_DESC_SIGN_SLH_DSA,
         SELF_TEST_KAT_SIGNATURE,
@@ -3598,6 +3617,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
  */
 #ifndef OPENSSL_NO_LMS
     {
+        ST_ID_SIG_LMS,
         "LMS",
         OSSL_SELF_TEST_DESC_SIGN_LMS,
         SELF_TEST_KAT_SIGNATURE,
@@ -3613,6 +3633,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
     },
 #endif /* OPENSSL_NO_LMS */
     {
+        ST_ID_KDF_TLS13_EXTRACT,
         OSSL_KDF_NAME_TLS1_3_KDF,
         OSSL_SELF_TEST_DESC_KDF_TLS13_EXTRACT,
         SELF_TEST_KAT_KDF,
@@ -3625,6 +3646,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         .depends_on = hkdf_depends_on,
     },
     {
+        ST_ID_KDF_TLS13_EXPAND,
         OSSL_KDF_NAME_TLS1_3_KDF,
         OSSL_SELF_TEST_DESC_KDF_TLS13_EXPAND,
         SELF_TEST_KAT_KDF,
@@ -3637,6 +3659,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         .depends_on = hkdf_depends_on,
     },
     {
+        ST_ID_KDF_TLS12_PRF,
         OSSL_KDF_NAME_TLS1_PRF,
         OSSL_SELF_TEST_DESC_KDF_TLS12_PRF,
         SELF_TEST_KAT_KDF,
@@ -3648,6 +3671,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         },
     },
     {
+        ST_ID_KDF_PBKDF2,
         OSSL_KDF_NAME_PBKDF2,
         OSSL_SELF_TEST_DESC_KDF_PBKDF2,
         SELF_TEST_KAT_KDF,
@@ -3660,6 +3684,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
     },
 #ifndef OPENSSL_NO_KBKDF
     {
+        ST_ID_KDF_KBKDF,
         OSSL_KDF_NAME_KBKDF,
         OSSL_SELF_TEST_DESC_KDF_KBKDF,
         SELF_TEST_KAT_KDF,
@@ -3672,6 +3697,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         .depends_on = kbkdf_depends_on,
     },
     {
+        ST_ID_KDF_KBKDF_KMAC,
         OSSL_KDF_NAME_KBKDF,
         OSSL_SELF_TEST_DESC_KDF_KBKDF_KMAC,
         SELF_TEST_KAT_KDF,
@@ -3685,6 +3711,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
     },
 #endif
     {
+        ST_ID_KDF_HKDF,
         OSSL_KDF_NAME_HKDF,
         OSSL_SELF_TEST_DESC_KDF_HKDF,
         SELF_TEST_KAT_KDF,
@@ -3698,6 +3725,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
     },
 #ifndef OPENSSL_NO_SNMPKDF
     {
+        ST_ID_KDF_SNMPKDF,
         OSSL_KDF_NAME_SNMPKDF,
         OSSL_SELF_TEST_DESC_KDF_SNMPKDF,
         SELF_TEST_KAT_KDF,
@@ -3711,6 +3739,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
 #endif
 #ifndef OPENSSL_NO_SRTPKDF
     {
+        ST_ID_KDF_SRTPKDF,
         OSSL_KDF_NAME_SRTPKDF,
         OSSL_SELF_TEST_DESC_KDF_SRTPKDF,
         SELF_TEST_KAT_KDF,
@@ -3724,6 +3753,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
 #endif
 #ifndef OPENSSL_NO_SSKDF
     {
+        ST_ID_KDF_SSKDF,
         OSSL_KDF_NAME_SSKDF,
         OSSL_SELF_TEST_DESC_KDF_SSKDF,
         SELF_TEST_KAT_KDF,
@@ -3735,6 +3765,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
 #endif
 #ifndef OPENSSL_NO_X963KDF
     {
+        ST_ID_KDF_X963KDF,
         OSSL_KDF_NAME_X963KDF,
         OSSL_SELF_TEST_DESC_KDF_X963KDF,
         SELF_TEST_KAT_KDF,
@@ -3746,6 +3777,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
 #endif
 #ifndef OPENSSL_NO_X942KDF
     {
+        ST_ID_KDF_X942KDF,
         OSSL_KDF_NAME_X942KDF_ASN1,
         OSSL_SELF_TEST_DESC_KDF_X942KDF,
         SELF_TEST_KAT_KDF,
@@ -3758,6 +3790,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
     },
 #endif
     {
+        ST_ID_DRBG_HASH,
         "HASH-DRBG",
         OSSL_SELF_TEST_DESC_DRBG_HASH,
         SELF_TEST_DRBG,
@@ -3777,6 +3810,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         },
     },
     {
+        ST_ID_DRBG_CTR,
         "CTR-DRBG",
         OSSL_SELF_TEST_DESC_DRBG_CTR,
         SELF_TEST_DRBG,
@@ -3796,6 +3830,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         },
     },
     {
+        ST_ID_DRBG_HMAC,
         "HMAC-DRBG",
         OSSL_SELF_TEST_DESC_DRBG_HMAC,
         SELF_TEST_DRBG,
@@ -3816,6 +3851,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
     },
 #ifndef OPENSSL_NO_DH
     {
+        ST_ID_KA_DH,
         "DH",
         OSSL_SELF_TEST_DESC_KA_DH,
         SELF_TEST_KAT_KAS,
@@ -3831,6 +3867,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
 #endif
 #ifndef OPENSSL_NO_EC
     {
+        ST_ID_KA_ECDH,
         "EC",
         OSSL_SELF_TEST_DESC_KA_ECDH,
         SELF_TEST_KAT_KAS,
@@ -3850,6 +3887,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
      * key generation.
      */
     {
+        ST_ID_ASYM_KEYGEN_ML_KEM,
         "ML-KEM-512",
         OSSL_SELF_TEST_DESC_KEYGEN_ML_KEM,
         SELF_TEST_KAT_ASYM_KEYGEN,
@@ -3863,6 +3901,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
 #endif
 #ifndef OPENSSL_NO_ML_DSA
     {
+        ST_ID_ASYM_KEYGEN_ML_DSA,
         "ML-DSA-65",
         OSSL_SELF_TEST_DESC_KEYGEN_ML_DSA,
         SELF_TEST_KAT_ASYM_KEYGEN,
@@ -3876,6 +3915,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
 #endif
 #ifndef OPENSSL_NO_SLH_DSA
     {
+        ST_ID_ASYM_KEYGEN_SLH_DSA,
         "SLH-DSA-SHA2-128f",
         OSSL_SELF_TEST_DESC_KEYGEN_SLH_DSA,
         SELF_TEST_KAT_ASYM_KEYGEN,
@@ -3889,6 +3929,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
 #endif
 #ifndef OPENSSL_NO_ML_KEM
     {
+        ST_ID_KEM_ML_KEM,
         "ML-KEM-512",
         OSSL_SELF_TEST_DESC_KEM,
         SELF_TEST_KAT_KEM,
@@ -3904,6 +3945,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
     },
 #endif
     {
+        ST_ID_ASYM_CIPHER_RSA_ENC,
         "RSA",
         OSSL_SELF_TEST_DESC_ASYM_RSA_ENC,
         SELF_TEST_KAT_ASYM_CIPHER,
@@ -3919,6 +3961,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         .depends_on = rsaenc_depends_on,
     },
     {
+        ST_ID_ASYM_CIPHER_RSA_DEC,
         "RSA",
         OSSL_SELF_TEST_DESC_ASYM_RSA_DEC,
         SELF_TEST_KAT_ASYM_CIPHER,
@@ -3934,6 +3977,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         .depends_on = rsaenc_depends_on,
     },
     {
+        ST_ID_ASYM_CIPHER_RSA_DEC_CRT,
         "RSA",
         OSSL_SELF_TEST_DESC_ASYM_RSA_DEC,
         SELF_TEST_KAT_ASYM_CIPHER,
@@ -3949,6 +3993,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
         .depends_on = rsaenc_depends_on,
     },
     {
+        ST_ID_MAC_HMAC,
         "HMAC",
         OSSL_SELF_TEST_DESC_INTEGRITY_HMAC,
         SELF_TEST_KAT_MAC,
