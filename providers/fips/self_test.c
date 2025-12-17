@@ -199,7 +199,7 @@ static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex
     EVP_MAC_CTX *ctx = NULL;
     OSSL_PARAM params[2], *p = params;
 
-    if (!SELF_TEST_kats_single(ev, libctx, ST_ID_MAC_HMAC))
+    if (!SELF_TEST_kats_execute(ev, libctx, ST_ID_MAC_HMAC, 0))
         goto err;
 
     OSSL_SELF_TEST_onbegin(ev, event_type, OSSL_SELF_TEST_DESC_INTEGRITY_HMAC);
@@ -267,7 +267,6 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
     EVP_RAND *testrand = NULL;
     EVP_RAND_CTX *rng;
 #endif
-    int do_deferred = 0;
 
     if (!RUN_ONCE(&fips_self_test_init, do_fips_self_test_init))
         return 0;
@@ -327,22 +326,19 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
     }
 
     if (on_demand_test) {
-        /* ensure all states are cleared so al tests are repeated */
+        /* ensure all states are cleared so all tests are repeated */
         for (int i = 0; i < ST_ID_MAX; i++) {
-            st_all_tests[i].state = SELF_TEST_STATE_IN_PROGRESS;
+            st_all_tests[i].state = SELF_TEST_STATE_INIT;
         }
-        do_deferred = 1;
     }
 
     if ((st->do_not_defer_tests != NULL)
         && strcmp(st->do_not_defer_tests, "1") == 0) {
-        do_deferred = 1;
+        on_demand_test = 1;
     }
 
-    if (!SELF_TEST_kats(ev, st->libctx, do_deferred)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
+    if (on_demand_test && !SELF_TEST_kats(ev, st->libctx))
         goto end;
-    }
 
     /* Verify that the RNG has been restored properly */
     rng = ossl_rand_get0_private_noncreating(st->libctx);
