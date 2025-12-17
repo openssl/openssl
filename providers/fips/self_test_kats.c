@@ -12,6 +12,7 @@
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
+#include <openssl/proverr.h>
 #include <openssl/rand.h>
 #include "crypto/ml_dsa.h"
 #include "crypto/rand.h"
@@ -1114,6 +1115,11 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int do_deferred)
     for (i = 0; i < ST_ID_MAX; i++) {
         int res;
 
+        if (st_all_tests[i].id != i) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CONFIG_DATA);
+            return 0;
+        }
+
         if (!do_deferred && (st_all_tests[i].deferred == SELF_TEST_DEFERRED) && (st_all_tests[i].state != SELF_TEST_STATE_PASSED))
             continue;
 
@@ -1180,8 +1186,10 @@ int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int id)
     EVP_RAND_CTX *saved_rand = ossl_rand_get0_private_noncreating(libctx);
     int ret;
 
-    if (id >= ST_ID_MAX)
+    if (id >= ST_ID_MAX || st_all_tests[id].id != id) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CONFIG_DATA);
         return 0;
+    }
 
     if (saved_rand != NULL && !EVP_RAND_CTX_up_ref(saved_rand))
         return 0;

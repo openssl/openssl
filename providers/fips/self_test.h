@@ -150,6 +150,7 @@ typedef struct st_kat_mac_st {
 } ST_KAT_MAC;
 
 typedef struct self_test_st {
+    self_test_id_t id;
     const char *algorithm;
     const char *desc;
     enum st_test_category category;
