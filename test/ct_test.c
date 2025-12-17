@@ -498,6 +498,7 @@ static int test_ctlog_from_base64(void)
     static const char notb64[] = "\x01\x02\x03\x04"; 
     const char pad[] = "====";
     const char name[] = "name";
+    const char invalid_key[] = "AAAA";
 
     /* Case 1: Non-base64 input should fail and should not produce an object. */
     if (!TEST_false(CTLOG_new_from_base64(&ctlogp, notb64, name))
@@ -510,6 +511,14 @@ static int test_ctlog_from_base64(void)
 
     /* Case 2: Input consisting only of padding should fail and should not produce an object. */
     if (!TEST_false(CTLOG_new_from_base64(&ctlogp, pad, name))
+        || !TEST_ptr_null(ctlogp))
+        goto end;
+
+    CTLOG_free(ctlogp);
+    ctlogp = NULL;
+
+    /* Case 3: Valid base64 but invalid key should fail and should not produce an object. */
+    if (!TEST_false(CTLOG_new_from_base64(&ctlogp, invalid_key, name))
         || !TEST_ptr_null(ctlogp))
         goto end;
 
