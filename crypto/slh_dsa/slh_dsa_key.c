@@ -35,7 +35,7 @@ static int slh_dsa_key_hash_init(SLH_DSA_KEY *key)
 {
     int is_shake = key->params->is_shake;
     int security_category = key->params->security_category;
-    const char *digest_alg = is_shake ? "SHAKE-256" : "SHA2-256";
+    const char *digest_alg = is_shake ? SN_shake256 : SN_sha256;
 
     key->md = EVP_MD_fetch(key->libctx, digest_alg, key->propq);
     if (key->md == NULL)
@@ -50,7 +50,8 @@ static int slh_dsa_key_hash_init(SLH_DSA_KEY *key)
             key->md_big = key->md;
         } else {
             /* Security categories 3 & 5 also need SHA-512 */
-            key->md_big = EVP_MD_fetch(key->libctx, "SHA2-512", key->propq);
+            key->md_big = EVP_MD_fetch(key->libctx, SN_sha512,
+                key->propq);
             if (key->md_big == NULL)
                 goto err;
         }

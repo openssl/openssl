@@ -1088,7 +1088,7 @@ static int s390x_pkey_ecd_keygen25519(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     if (RAND_priv_bytes_ex(ctx->libctx, privkey, ED25519_KEYLEN, 0) <= 0)
         goto err;
 
-    md = EVP_MD_fetch(ctx->libctx, "SHA512", ctx->propquery);
+    md = EVP_MD_fetch(ctx->libctx, SN_sha512, ctx->propquery);
     if (md == NULL)
         goto err;
 
@@ -1159,7 +1159,7 @@ static int s390x_pkey_ecd_keygen448(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     if (hashctx == NULL)
         goto err;
 
-    md = EVP_MD_fetch(ctx->libctx, "SHAKE256", ctx->propquery);
+    md = EVP_MD_fetch(ctx->libctx, SN_shake256, ctx->propquery);
     if (md == NULL)
         goto err;
 

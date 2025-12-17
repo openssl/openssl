@@ -9,6 +9,7 @@
  *
  * Originally written by Mike Hamburg
  */
+#include <openssl/obj_mac.h>
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
@@ -31,7 +32,7 @@ static c448_error_t oneshot_hash(OSSL_LIB_CTX *ctx, uint8_t *out, size_t outlen,
     if (hashctx == NULL)
         return C448_FAILURE;
 
-    shake256 = EVP_MD_fetch(ctx, "SHAKE256", propq);
+    shake256 = EVP_MD_fetch(ctx, SN_shake256, propq);
     if (shake256 == NULL)
         goto err;
 
@@ -73,7 +74,7 @@ static c448_error_t hash_init_with_dom(OSSL_LIB_CTX *ctx, EVP_MD_CTX *hashctx,
         - (for_prehash == 0 ? 1 : 0));
     dom[1] = (uint8_t)context_len;
 
-    shake256 = EVP_MD_fetch(ctx, "SHAKE256", propq);
+    shake256 = EVP_MD_fetch(ctx, SN_shake256, propq);
     if (shake256 == NULL)
         return C448_FAILURE;
 

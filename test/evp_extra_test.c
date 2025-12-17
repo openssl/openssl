@@ -4059,7 +4059,7 @@ static int test_RSA_OAEP_set_get_params(void)
 
         params[0] = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_PAD_MODE, &padding);
         params[1] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST,
-            OSSL_DIGEST_NAME_SHA2_256, 0);
+            SN_sha256, 0);
         params[2] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST,
             OSSL_DIGEST_NAME_SHA1, 0);
         params[3] = OSSL_PARAM_construct_end();
@@ -4081,7 +4081,7 @@ static int test_RSA_OAEP_set_get_params(void)
         if (!TEST_true(EVP_PKEY_CTX_get_params(key_ctx, params)))
             goto err;
 
-        if (!TEST_str_eq(oaepmd, OSSL_DIGEST_NAME_SHA2_256)
+        if (!TEST_str_eq(oaepmd, "SHA2-256")
             || !TEST_str_eq(mgf1md, OSSL_DIGEST_NAME_SHA1))
             goto err;
     }

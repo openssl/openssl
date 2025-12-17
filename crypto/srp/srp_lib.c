@@ -30,7 +30,7 @@ static BIGNUM *srp_Calc_xy(const BIGNUM *x, const BIGNUM *y, const BIGNUM *N,
     unsigned char *tmp = NULL;
     int numN = BN_num_bytes(N);
     BIGNUM *res = NULL;
-    EVP_MD *sha1 = EVP_MD_fetch(libctx, "SHA1", propq);
+    EVP_MD *sha1 = EVP_MD_fetch(libctx, SN_sha1, propq);
 
     if (sha1 == NULL)
         return NULL;
@@ -157,7 +157,7 @@ BIGNUM *SRP_Calc_x_ex(const BIGNUM *s, const char *user, const char *pass,
     if ((cs = OPENSSL_malloc(BN_num_bytes(s))) == NULL)
         goto err;
 
-    sha1 = EVP_MD_fetch(libctx, "SHA1", propq);
+    sha1 = EVP_MD_fetch(libctx, SN_sha1, propq);
     if (sha1 == NULL)
         goto err;
 

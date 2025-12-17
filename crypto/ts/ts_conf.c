@@ -445,7 +445,7 @@ int TS_CONF_set_ess_cert_id_digest(CONF *conf, const char *section,
     const char *md = NCONF_get_string(conf, section, ENV_ESS_CERT_ID_ALG);
 
     if (md == NULL)
-        md = "sha256";
+        md = SN_sha256;
 
     cert_md = EVP_get_digestbyname(md);
     if (cert_md == NULL) {

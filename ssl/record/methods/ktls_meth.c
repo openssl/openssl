@@ -61,9 +61,9 @@ static int ktls_int_check_supported_cipher(OSSL_RECORD_LAYER *rl,
     if (md == NULL)
         return 0;
 
-    if (EVP_MD_is_a(md, "SHA1")
-        || EVP_MD_is_a(md, "SHA2-256")
-        || EVP_MD_is_a(md, "SHA2-384"))
+    if (EVP_MD_is_a(md, SN_sha1)
+        || EVP_MD_is_a(md, SN_sha256)
+        || EVP_MD_is_a(md, SN_sha384))
         return 1;
 
     return 0;
@@ -92,11 +92,11 @@ static int ktls_configure_crypto(OSSL_LIB_CTX *libctx, int version, const EVP_CI
         if (EVP_CIPHER_is_a(c, "AES-128-CBC") || EVP_CIPHER_is_a(c, "AES-256-CBC")) {
         if (md == NULL)
             return 0;
-        if (EVP_MD_is_a(md, "SHA1"))
+        if (EVP_MD_is_a(md, SN_sha1))
             crypto_info->auth_algorithm = CRYPTO_SHA1_HMAC;
-        else if (EVP_MD_is_a(md, "SHA2-256"))
+        else if (EVP_MD_is_a(md, SN_sha256))
             crypto_info->auth_algorithm = CRYPTO_SHA2_256_HMAC;
-        else if (EVP_MD_is_a(md, "SHA2-384"))
+        else if (EVP_MD_is_a(md, SN_sha384))
             crypto_info->auth_algorithm = CRYPTO_SHA2_384_HMAC;
         else
             return 0;

@@ -2840,7 +2840,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
      * elsewhere in OpenSSL. The session ID is set to the SHA256 hash of the
      * ticket.
      */
-    sha256 = EVP_MD_fetch(sctx->libctx, "SHA2-256", sctx->propq);
+    sha256 = EVP_MD_fetch(sctx->libctx, SN_sha256, sctx->propq);
     if (sha256 == NULL) {
         /* Error is already recorded */
         SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);

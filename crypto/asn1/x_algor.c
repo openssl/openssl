@@ -144,7 +144,7 @@ int ossl_x509_algor_new_from_md(X509_ALGOR **palg, const EVP_MD *md)
     X509_ALGOR *alg;
 
     /* Default is SHA1 so no need to create it - still success */
-    if (md == NULL || EVP_MD_is_a(md, "SHA1"))
+    if (md == NULL || EVP_MD_is_a(md, SN_sha1))
         return 1;
     if ((alg = X509_ALGOR_new()) == NULL)
         return 0;
@@ -181,7 +181,7 @@ int ossl_x509_algor_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md)
     ASN1_STRING *stmp = NULL;
 
     *palg = NULL;
-    if (mgf1md == NULL || EVP_MD_is_a(mgf1md, "SHA1"))
+    if (mgf1md == NULL || EVP_MD_is_a(mgf1md, SN_sha1))
         return 1;
     /* need to embed algorithm ID inside another */
     if (!ossl_x509_algor_new_from_md(&algtmp, mgf1md))

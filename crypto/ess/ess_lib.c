@@ -285,9 +285,9 @@ static int find(const ESS_CERT_ID *cid, const ESS_CERT_ID_V2 *cid_v2,
     }
 
     if (cid != NULL)
-        strcpy(name, "SHA1");
+        strcpy(name, SN_sha1);
     else if (cid_v2->hash_alg == NULL)
-        strcpy(name, "SHA256");
+        strcpy(name, SN_sha256);
     else
         OBJ_obj2txt(name, sizeof(name), cid_v2->hash_alg->algorithm, 0);
 

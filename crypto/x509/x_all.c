@@ -13,6 +13,7 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/obj_mac.h>
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
@@ -562,13 +563,13 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
             /* A known algorithm, but without a digest */
             switch (pknid) {
             case NID_ED25519: /* Follow CMS default given in RFC8419 */
-                md_name = "SHA512";
+                md_name = SN_sha512;
                 break;
             case NID_ED448: /* Follow CMS default given in RFC8419 */
-                md_name = "SHAKE256";
+                md_name = SN_shake256;
                 break;
             default: /* Fall back to SHA-256 */
-                md_name = "SHA256";
+                md_name = SN_sha256;
                 break;
             }
             if ((md = EVP_MD_fetch(cert->libctx, md_name,

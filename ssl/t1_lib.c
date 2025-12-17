@@ -3161,7 +3161,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
         if (aes256cbc == NULL
             || ssl_hmac_init(hctx, tctx->ext.secure->tick_hmac_key,
                    sizeof(tctx->ext.secure->tick_hmac_key),
-                   "SHA256")
+                   SN_sha256)
                 <= 0
             || EVP_DecryptInit_ex(ctx, aes256cbc, NULL,
                    tctx->ext.secure->tick_aes_key,

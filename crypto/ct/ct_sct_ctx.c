@@ -204,7 +204,8 @@ __owur static int ct_public_key_hash(SCT_CTX *sctx, X509_PUBKEY *pkey,
     unsigned char *md = NULL, *der = NULL;
     int der_len;
     unsigned int md_len;
-    EVP_MD *sha256 = EVP_MD_fetch(sctx->libctx, "SHA2-256", sctx->propq);
+    EVP_MD *sha256 = EVP_MD_fetch(sctx->libctx, SN_sha256,
+        sctx->propq);
 
     if (sha256 == NULL)
         goto err;

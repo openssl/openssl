@@ -22,13 +22,13 @@ static int s390x_fc_from_md(const EVP_MD *md)
 {
     int fc;
 
-    if (EVP_MD_is_a(md, "SHA2-224"))
+    if (EVP_MD_is_a(md, SN_sha224))
         fc = S390X_HMAC_SHA_224;
-    else if (EVP_MD_is_a(md, "SHA2-256"))
+    else if (EVP_MD_is_a(md, SN_sha256))
         fc = S390X_HMAC_SHA_256;
-    else if (EVP_MD_is_a(md, "SHA2-384"))
+    else if (EVP_MD_is_a(md, SN_sha384))
         fc = S390X_HMAC_SHA_384;
-    else if (EVP_MD_is_a(md, "SHA2-512"))
+    else if (EVP_MD_is_a(md, SN_sha512))
         fc = S390X_HMAC_SHA_512;
     else
         return 0;
