@@ -32,8 +32,9 @@ typedef struct self_test_post_params_st {
 } SELF_TEST_POST_PARAMS;
 
 int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test);
-int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int do_deferred);
-int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int id);
+int SELF_TEST_kats_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+    self_test_id_t id, int switch_rand);
+int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx);
 
 void SELF_TEST_disable_conditional_error_state(void);
 
@@ -57,10 +58,8 @@ enum st_test_state {
     SELF_TEST_STATE_IN_PROGRESS,
     SELF_TEST_STATE_PASSED,
     SELF_TEST_STATE_FAILED,
+    SELF_TEST_STATE_IMPLICIT,
 };
-
-#define SELF_TEST_ONLOAD 0
-#define SELF_TEST_DEFERRED 1
 
 /* used to store raw parameters for keys and algorithms */
 typedef struct st_kat_param_st {
@@ -154,7 +153,6 @@ typedef struct self_test_st {
     const char *algorithm;
     const char *desc;
     enum st_test_category category;
-    int deferred;
     enum st_test_state state;
     ST_BUFFER pt;
     ST_BUFFER expected; /* Set to NULL if this value changes */

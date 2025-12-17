@@ -199,7 +199,7 @@ static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex
     EVP_MAC_CTX *ctx = NULL;
     OSSL_PARAM params[2], *p = params;
 
-    if (!SELF_TEST_kats_single(ev, libctx, ST_ID_MAC_HMAC))
+    if (!SELF_TEST_kats_execute(ev, libctx, ST_ID_MAC_HMAC, 0))
         goto err;
 
     OSSL_SELF_TEST_onbegin(ev, event_type, OSSL_SELF_TEST_DESC_INTEGRITY_HMAC);
@@ -330,7 +330,7 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
         for (int i = 0; i < ST_ID_MAX; i++)
             st_all_tests[i].state = SELF_TEST_STATE_INIT;
 
-    if (!SELF_TEST_kats(ev, st->libctx, on_demand_test)) {
+    if (on_demand_test && !SELF_TEST_kats(ev, st->libctx)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
         goto end;
     }

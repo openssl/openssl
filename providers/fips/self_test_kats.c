@@ -1086,120 +1086,15 @@ static int setup_main_random(OSSL_LIB_CTX *libctx)
     return 1;
 err:
     EVP_RAND_CTX_free(main_rand);
+    /* Ensure this global variable does not reference freed memory */
+    main_rand = NULL;
     return 0;
 }
 
-/*
- * Run the algorithm KAT's.
- * Return 1 is successful, otherwise return 0.
- * This runs all the tests regardless of if any fail.
- * when do_deferred is 1 also run deferred tests, they are normally skipped
- */
-int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int do_deferred)
+static int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+    self_test_id_t id)
 {
-    EVP_RAND_CTX *saved_rand = ossl_rand_get0_private_noncreating(libctx);
-    int i, ret = 1;
-
-    if (saved_rand != NULL && !EVP_RAND_CTX_up_ref(saved_rand))
-        return 0;
-    if (!setup_main_random(libctx)
-        || !RAND_set0_private(libctx, main_rand)) {
-        /* Decrement saved_rand reference counter */
-        EVP_RAND_CTX_free(saved_rand);
-        EVP_RAND_CTX_free(main_rand);
-        /* Ensure this global variable does not reference freed memory */
-        main_rand = NULL;
-        return 0;
-    }
-
-    for (i = 0; i < ST_ID_MAX; i++) {
-        int res;
-
-        if (st_all_tests[i].id != i) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CONFIG_DATA);
-            return 0;
-        }
-
-        if (!do_deferred && (st_all_tests[i].deferred == SELF_TEST_DEFERRED) && (st_all_tests[i].state != SELF_TEST_STATE_PASSED))
-            continue;
-
-        switch (st_all_tests[i].category) {
-        case SELF_TEST_KAT_DIGEST:
-            res = self_test_digest(&st_all_tests[i], st, libctx);
-            break;
-        case SELF_TEST_KAT_CIPHER:
-            res = self_test_cipher(&st_all_tests[i], st, libctx);
-            break;
-        case SELF_TEST_KAT_SIGNATURE:
-            res = self_test_digest_sign(&st_all_tests[i], st, libctx);
-            break;
-        case SELF_TEST_KAT_KDF:
-            res = self_test_kdf(&st_all_tests[i], st, libctx);
-            break;
-        case SELF_TEST_DRBG:
-            res = self_test_drbg(&st_all_tests[i], st, libctx);
-            break;
-        case SELF_TEST_KAT_KAS:
-            res = self_test_ka(&st_all_tests[i], st, libctx);
-            break;
-        case SELF_TEST_KAT_ASYM_KEYGEN:
-            res = self_test_asym_keygen(&st_all_tests[i], st, libctx);
-            break;
-        case SELF_TEST_KAT_KEM:
-            res = self_test_kem(&st_all_tests[i], st, libctx);
-            break;
-        case SELF_TEST_KAT_ASYM_CIPHER:
-            res = self_test_asym_cipher(&st_all_tests[i], st, libctx);
-            break;
-        case SELF_TEST_KAT_MAC:
-            res = self_test_mac(&st_all_tests[i], st, libctx);
-            break;
-        default:
-            res = 0;
-            break;
-        }
-        if (res)
-            st_all_tests[i].state = SELF_TEST_STATE_PASSED;
-        else
-            ret = 0;
-    }
-
-    RAND_set0_private(libctx, saved_rand);
-    /* The above call will cause main_rand to be freed */
-    main_rand = NULL;
-    return ret;
-}
-
-/*
- * Run a single algorithm KAT.
- * This is similar to SELF_TEST_kats() but only runs the test for a single
- * algorithm.
- * Return 1 is successful, otherwise return 0. If no test is found for the
- * algorithm it also returns 0.
- * This runs all the tests for the given algorithm regardless of if any fail.
- *
- * NOTE: currently tests that require the TEST RNG will not work, as we can't
- * replace the working DRBG with the TEST DRB after initialization.
- */
-int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int id)
-{
-    EVP_RAND_CTX *saved_rand = ossl_rand_get0_private_noncreating(libctx);
     int ret;
-
-    if (id >= ST_ID_MAX || st_all_tests[id].id != id) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CONFIG_DATA);
-        return 0;
-    }
-
-    if (saved_rand != NULL && !EVP_RAND_CTX_up_ref(saved_rand))
-        return 0;
-    if (!setup_main_random(libctx)
-        || !RAND_set0_private(libctx, main_rand)) {
-        /* Decrement saved_rand reference counter */
-        EVP_RAND_CTX_free(saved_rand);
-        EVP_RAND_CTX_free(main_rand);
-        return 0;
-    }
 
     switch (st_all_tests[id].category) {
     case SELF_TEST_KAT_DIGEST:
@@ -1238,10 +1133,156 @@ int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int id)
     }
     if (ret)
         st_all_tests[id].state = SELF_TEST_STATE_PASSED;
-    else
+    else {
         st_all_tests[id].state = SELF_TEST_STATE_FAILED;
+        ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
+    }
+
+    return ret;
+}
+
+static int SELF_TEST_kat_deps(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+    ST_DEFINITION *test)
+{
+    if (test->depends_on == NULL)
+        return 0;
+
+    for (int i = 0; test->depends_on[i] != ST_ID_MAX; i++)
+        if (!SELF_TEST_kats_execute(st, libctx, test->depends_on[i], 0))
+            return 0;
+
+    return 1;
+}
+
+/*
+ * Run a single algorithm KAT, and its dependencies.
+ * Return 1 if successful, otherwise return 0.
+ */
+int SELF_TEST_kats_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+    self_test_id_t id, int switch_rand)
+{
+    EVP_RAND_CTX *saved_rand = NULL;
+    int ret;
+
+    if (id >= ST_ID_MAX || st_all_tests[id].id != id) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CONFIG_DATA);
+        return 0;
+    }
+
+    /*
+     * Dependency chains may cause a test to be referenced multiple times,
+     * immediately return if not in initial state.
+     */
+    switch (st_all_tests[id].state) {
+    case SELF_TEST_STATE_INIT:
+        break;
+    case SELF_TEST_STATE_FAILED:
+        return 0;
+    case SELF_TEST_STATE_IN_PROGRESS:
+    case SELF_TEST_STATE_PASSED:
+    case SELF_TEST_STATE_IMPLICIT:
+        return 1;
+    }
+
+    if (switch_rand) {
+        saved_rand = ossl_rand_get0_private_noncreating(libctx);
+        if (saved_rand != NULL && !EVP_RAND_CTX_up_ref(saved_rand))
+            return 0;
+        if (!setup_main_random(libctx)
+            || !RAND_set0_private(libctx, main_rand)) {
+            /* Decrement saved_rand reference counter */
+            EVP_RAND_CTX_free(saved_rand);
+            EVP_RAND_CTX_free(main_rand);
+            /* Ensure this global variable does not reference freed memory */
+            main_rand = NULL;
+            return 0;
+        }
+    }
+
+    /* Mark test as in progress */
+    st_all_tests[id].state = SELF_TEST_STATE_IN_PROGRESS;
+
+    /* check if there are dependent tests to run */
+    if (st_all_tests[id].depends_on) {
+        if (!SELF_TEST_kat_deps(st, libctx, &st_all_tests[id])) {
+            ret = 0;
+            goto done;
+        }
+    }
+
+    /* may have already been run through dependency chains */
+    switch (st_all_tests[id].state) {
+    case SELF_TEST_STATE_IN_PROGRESS:
+        ret = SELF_TEST_kats_single(st, libctx, id);
+        break;
+    case SELF_TEST_STATE_PASSED:
+        ret = 1;
+        break;
+    default:
+        /* ensure all states are set to failed if we get here */
+        st_all_tests[id].state = SELF_TEST_STATE_FAILED;
+        ret = 0;
+    }
+
+    /*
+     * if an implicit algorithm has explicit dependencies we want to
+     * ensure they are all executed as well otherwise we could not
+     * mark it as passed.
+     */
+    if (st_all_tests[id].state == SELF_TEST_STATE_PASSED)
+        for (int i = 0; i < ST_ID_MAX; i++)
+            if (st_all_tests[i].state == SELF_TEST_STATE_IMPLICIT
+                && st_all_tests[i].depends_on != NULL)
+                if (!(ret = SELF_TEST_kat_deps(st, libctx, &st_all_tests[i])))
+                    break;
+
+done:
+    /*
+     * now mark (pass or fail) all the algorithm tests that have been marked
+     * by this test implicitly tested.
+     */
+    for (int i = 0; i < ST_ID_MAX; i++)
+        if (st_all_tests[i].state == SELF_TEST_STATE_IMPLICIT)
+            st_all_tests[i].state = st_all_tests[id].state;
+
+    if (switch_rand) {
+        RAND_set0_private(libctx, saved_rand);
+        /* The above call will cause main_rand to be freed */
+        main_rand = NULL;
+    }
+    return ret;
+}
+
+/*
+ * Run the algorithm KAT's.
+ * Return 1 is successful, otherwise return 0.
+ * This runs all the tests regardless of if any fail, but it will not forcibly
+ * run tests that have been implicitly satisfied.
+ */
+int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
+{
+    EVP_RAND_CTX *saved_rand = ossl_rand_get0_private_noncreating(libctx);
+    int i, ret = 1;
+
+    if (saved_rand != NULL && !EVP_RAND_CTX_up_ref(saved_rand))
+        return 0;
+    if (!setup_main_random(libctx)
+        || !RAND_set0_private(libctx, main_rand)) {
+        /* Decrement saved_rand reference counter */
+        EVP_RAND_CTX_free(saved_rand);
+        EVP_RAND_CTX_free(main_rand);
+        /* Ensure this global variable does not reference freed memory */
+        main_rand = NULL;
+        return 0;
+    }
+
+    for (i = 0; i < ST_ID_MAX; i++)
+        if (!SELF_TEST_kats_execute(st, libctx, i, 0))
+            ret = 0;
 
     RAND_set0_private(libctx, saved_rand);
+    /* The above call will cause main_rand to be freed */
+    main_rand = NULL;
     return ret;
 }
 
