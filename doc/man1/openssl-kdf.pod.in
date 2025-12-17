@@ -141,7 +141,7 @@ This option is identical to the B<-mac> option.
 
 Specifies the name of a supported KDF algorithm which will be used.
 The supported algorithms names include TLS1-PRF, HKDF, SSKDF, PBKDF2,
-SNMPKDF, SSHKDF, X942KDF-ASN1, X942KDF-CONCAT, X963KDF and SCRYPT.
+SNMPKDF, SRTPKDF, SSHKDF, X942KDF-ASN1, X942KDF-CONCAT, X963KDF and SCRYPT.
 
 =back
 
@@ -180,6 +180,16 @@ Use SNMPKDF to create a hex-encoded derived key from an engine ID, hash and pass
     openssl kdf -keylen 20 -kdfopt digest:SHA1 \
                 -kdfopt pass:IFUcNbMl \
                 -kdfopt hexeid:800002b805123456789abcdef0123456789abcdef0123456789abcdef0123456 SNMPKDF
+
+Use SRTPKDF to create a SRTP authentication derived key from a cipher, mkey, msalt,
+    kdr, index and label:
+
+    openssl kdf -keylen 20 -kdfopt cipher:cipher \
+                -kdfopt key:mkey \
+                -kdfopt salt:msalt \
+                -kdfopt kdr:kdr \
+                -kdfopt index:index \
+                -kdfopt label:1
 
 Use SSHKDF to create a hex-encoded derived key from a secret key, hash and session_id:
 
