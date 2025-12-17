@@ -27,6 +27,8 @@ OpenSSL 4.0
 
 ### Major changes between OpenSSL 3.6 and OpenSSL 4.0 [under development]
 
+  * The script tool `c_rehash` was removed. Use `openssl rehash` instead.
+
   * ENGINE support was removed. The `no-engine` build option and the
    `OPENSSL_NO_ENGINE` macro is always present.
 
