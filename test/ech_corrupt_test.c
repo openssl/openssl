@@ -353,8 +353,8 @@ static const unsigned char too_many_outers[] = {
     0xcf, 0x37, 0xbb, 0x4c, 0xcd, 0xa7, 0x62, 0xda,
     0x04, 0xd2, 0xdb, 0xe2, 0x89, 0x33, 0x36, 0x15,
     0x96, 0xc9, 0x00, 0x00, 0x08, 0x13, 0x02, 0x13,
-    0x03, 0x13, 0x01, 0x00, 0xff, 0x01, 0x00, 0x00,
-    0x4c, /* extslen, incl. our added outers */
+    0x03, 0x13, 0x01, 0x00, 0xff, 0x01, 0x00,
+    0x00, 0x4c, /* extslen, incl. our added outers */
     0xfd, 0x00, /* outers */
     0x00, 0x2b, /* len of outers */
     0x2a, /* above minus one (42) 21 outers */
@@ -403,6 +403,40 @@ static const unsigned char no_supported_exts[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00
+};
+
+static const unsigned char tlsv12_inner[] = {
+    0x03, 0x03, /* version, then client-random */
+    0x23, 0xc3, 0xa0, 0x49, 0xea, 0x17, 0x9e, 0x30,
+    0x6f, 0x0e, 0xc9, 0x79, 0xd0, 0xd1, 0xfd, 0xea,
+    0x63, 0xfd, 0x20, 0x04, 0xaa, 0xb3, 0x2a, 0x29,
+    0xf5, 0x96, 0x60, 0x29, 0x42, 0x7e, 0x5c, 0x7b,
+    0x00, /* zero'd session ID */
+    0x00, 0x02, /* ciphersuite len, just one */
+    0xc0, 0x2c, /* a TLSv1.2 ciphersuite */
+    0x01, 0x00, /* no compression */
+    0x00, 0x32, /* extslen */
+    0xfd, 0x00, /* outers */
+    0x00, 0x11, /* len of outers */
+    0x10, /* above minus one (16) 8 outers */
+    0x00, 0x0b, /* the 'normal' outers, minus supported_versions */
+    0x00, 0x0a,
+    0x00, 0x23,
+    0x00, 0x16,
+    0x00, 0x17,
+    0x00, 0x0d,
+    0x00, 0x2d,
+    0x00, 0x33,
+    /* and now the inner SNI, inner ECH and padding octets */
+    0x00, 0x00, 0x00, 0x14, 0x00, 0x12, 0x00, 0x00,
+    0x0f, 0x66, 0x6f, 0x6f, 0x2e, 0x65, 0x78, 0x61,
+    0x6d, 0x70, 0x6c, 0x65, 0x2e, 0x63, 0x6f, 0x6d,
+    0xfe, 0x0d, 0x00, 0x01, 0x01,
+    0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
 /* A set of test vectors */
@@ -554,9 +588,36 @@ static TEST_ECHINNER test_inners[] = {
       NULL, 0,
       0, /* expected result */
       SSL_R_BAD_EXTENSION},
-    /* 22. no supported_versions hence TLSv1.2 */
+    /*
+     * 22. no supported_versions hence TLSv1.2, with server set to
+     * allow max tlsv1.3
+     */
     { NULL, 0,
       no_supported_exts, sizeof(no_supported_exts),
+      NULL, 0,
+      0, /* expected result */
+      SSL_R_UNSUPPORTED_PROTOCOL},
+    /*
+     * 23. no supported_versions hence TLSv1.2, with server set to
+     * allow max tlsv1.2
+     */
+    { NULL, 0,
+      no_supported_exts, sizeof(no_supported_exts),
+      NULL, 0,
+      0, /* expected result */
+      SSL_R_NO_PROTOCOLS_AVAILABLE},
+    /*
+     * 24. no supported_versions hence TLSv1.2, with server set to
+     * allow min tlsv1.2
+     */
+    { NULL, 0,
+      no_supported_exts, sizeof(no_supported_exts),
+      NULL, 0,
+      0, /* expected result */
+      SSL_R_UNSUPPORTED_PROTOCOL},
+    /* 25. smuggled TLSv1.2 CH */
+    { NULL, 0,
+      tlsv12_inner, sizeof(tlsv12_inner),
       NULL, 0,
       0, /* expected result */
       SSL_R_UNSUPPORTED_PROTOCOL},
@@ -1360,6 +1421,19 @@ static int test_ch_corrupt(int testidx)
                                        TLS1_3_VERSION, TLS1_3_VERSION,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
+    /* set server to be willing to only accept TLSv1.2 for test case 23 */
+    if (testidx == 22
+        && !TEST_true(SSL_CTX_set_max_proto_version(sctx, TLS1_2_VERSION)))
+        goto end;
+    /* set server to be willing to accept TLSv1.2 for test case 24 */
+    if (testidx == 23
+        && !TEST_true(SSL_CTX_set_min_proto_version(sctx, TLS1_2_VERSION)))
+        goto end;
+    /* set client/server to be willing to accept TLSv1.2 for test case 25 */
+    if (testidx == 24
+        && !TEST_true(SSL_CTX_set_min_proto_version(sctx, TLS1_2_VERSION))
+        && !TEST_true(SSL_CTX_set_min_proto_version(cctx, TLS1_2_VERSION)))
+        goto end;
     if (!TEST_true(SSL_CTX_set1_echstore(sctx, es)))
         goto end;
     if (!TEST_ptr(c_to_s_fbio = BIO_new(bio_f_tls_corrupt_filter())))
