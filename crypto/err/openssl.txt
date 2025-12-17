@@ -1,4 +1,4 @@
-# Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -1077,8 +1077,10 @@ PROV_R_INVALID_INPUT_LENGTH:230:invalid input length
 PROV_R_INVALID_ITERATION_COUNT:123:invalid iteration count
 PROV_R_INVALID_IV_LENGTH:109:invalid iv length
 PROV_R_INVALID_KDF:232:invalid kdf
+PROV_R_INVALID_KDR:256:invalid kdr
 PROV_R_INVALID_KEY:158:invalid key
 PROV_R_INVALID_KEY_LENGTH:105:invalid key length
+PROV_R_INVALID_LABEL:257:invalid label
 PROV_R_INVALID_MAC:151:invalid mac
 PROV_R_INVALID_MEMORY_SIZE:235:invalid memory size
 PROV_R_INVALID_MGF1_MD:167:invalid mgf1 md

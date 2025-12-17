@@ -447,6 +447,9 @@ static const OSSL_ALGORITHM fips_kdfs[] = {
 #ifndef OPENSSL_NO_SNMPKDF
     { PROV_NAMES_SNMPKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_snmpkdf_functions },
 #endif
+#ifndef OPENSSL_NO_SRTPKDF
+    { PROV_NAMES_SRTPKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_srtpkdf_functions },
+#endif
 #ifndef OPENSSL_NO_SSHKDF
     { PROV_NAMES_SSHKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_sshkdf_functions },
 #endif
@@ -470,6 +473,9 @@ static const OSSL_ALGORITHM fips_kdfs_internal[] = {
 #endif
 #ifndef OPENSSL_NO_SNMPKDF
     { PROV_NAMES_SNMPKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_snmpkdf_functions },
+#endif
+#ifndef OPENSSL_NO_SRTPKDF
+    { PROV_NAMES_SRTPKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_srtpkdf_functions },
 #endif
 #ifndef OPENSSL_NO_SSHKDF
     { PROV_NAMES_SSHKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_sshkdf_functions },

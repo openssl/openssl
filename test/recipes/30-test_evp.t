@@ -42,6 +42,7 @@ my $no_determinstic_nonce = disabled("hmac-drbg-kdf");
 my $no_kbkdf = disabled("kbkdf");
 my $no_krb5kdf = disabled("krb5kdf");
 my $no_snmpkdf = disabled("snmpkdf");
+my $no_srtpkdf = disabled("srtpkdf");
 my $no_sshkdf = disabled("sshkdf");
 
 # Default config depends on if the legacy module is built or not
@@ -76,6 +77,7 @@ my @files = qw(
               );
 push @files, qw(evpkdf_ssh.txt) unless $no_sshkdf;
 push @files, qw(evpkdf_snmp.txt) unless $no_snmpkdf;
+push @files, qw(evpkdf_srtp.txt) unless $no_srtpkdf;
 push @files, qw(
                 evpkdf_kbkdf_counter.txt
                 evpkdf_kbkdf_kmac.txt

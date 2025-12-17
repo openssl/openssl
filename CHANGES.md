@@ -167,6 +167,10 @@ OpenSSL 4.0
 
    *Simo Sorce*
 
+ * Added SRTP KDF (EVP_KDF_SRTPKDF) to EVP_KDF
+
+   *Barry Fussell and Helen Zhang*
+
 OpenSSL 3.6
 -----------
 

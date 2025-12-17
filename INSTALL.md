@@ -1177,7 +1177,7 @@ The `lms` algorithm support is currently limited to verification only as per
         md4|mdc2|
         ml-dsa|ml-kem|
         ocb|poly1305|pvkkdf|rc2|rc4|rmd160|scrypt|
-        seed|siphash|siv|slh-dsa|sm2|sm3|sm4|snmpkdf|sshkdf|sskdf|
+        seed|siphash|siv|slh-dsa|sm2|sm3|sm4|snmpkdf|srtpkdf|sshkdf|sskdf|
         x942kdf|x963kdf|whirlpool}
 
 Build without support for the specified algorithm.
