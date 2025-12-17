@@ -170,10 +170,6 @@ $code.=<<___;
     eor     $v_t0.16b,$v_t0.16b,$v_t4.16b
     eor     $v_t0.16b,$v_t0.16b,$v_t1.16b
 
-    /* transform key... */
-    rev64   $v_t2.2s,$v_t2.2s
-
-    /* what is this "folding" doing? Need it here? */
     ext     $v_x.16b,$v_t0.16b,$v_zero.16b,#8
     eor     $v_x.16b,$v_t0.16b,$v_x.16b
 
@@ -221,6 +217,15 @@ $code.=<<___;
 ___
 }
 
+sub fls_neon{
+    my ($x_L, $x_R, $x_CTX, $kl_idx, $kr_idx) = @_;
+    my $kl_offset = $kl_idx * 8;
+    my $kr_offset = $kr_idx * 8;
+$code.=<<___;
+
+___
+}
+
 # Port of fls. Operates on 32-bit halves of 64-bit GPRs.
 # In: x_L (assumes x4, [lr|ll]), x_R (assumes x5, [rr|rl]), x_CTX, kl_idx, kr_idx
 # Out: x_L, x_R (updated)
@@ -251,6 +256,21 @@ $code.=<<___;
     and     w9,w5,w9            // [ 0 | krl & (rl^(rr v krr)) ]
     ror     w9,w9,#31           // [ 0 | ROL1(krl & (rl^(rr v krr)))]
     eor     x5,x5,x9,lsl #32    // [ rr^ROL1(krl & (rl^(rr v krr)))| rl^(rr v krr) ]
+___
+}
+
+sub enc_inpack_neon(){
+    my ($ab, $cd, $rio_ptr, $key_ptr, $key, $mask, $gpr_key, $gpr_mask) = @_;
+$code.=<<___;
+    ldp     d0,d1,[$rio_ptr]        // Load input
+    adrp    $gpr_mask,.Lpack_bswap
+    add     $gpr_mask,$gpr_mask,:lo12:.Lpack_bswap
+    ldr     q3,[$gpr_mask]         // Load swap mask into a temporary
+    ldr     $gpr_key,[$key_ptr]
+    tbl     $ab.16b,{$ab.16b},$mask.16b
+    fmov    d2,$gpr_key            // Move key to a vector
+    tbl     $cd.16b,{$cd.16b},$mask.16b
+    eor     $ab.16b,$ab.16b,$key.16b
 ___
 }
 
@@ -356,6 +376,23 @@ sub dec_rounds(){
     &roundsm_cd_to_ab($i+2, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222);
 }
 
+sub enc_outunpack_neon(){
+    my ($ab, $cd, $rio_ptr, $key_ptr, $key, $mask, $gpr_key, $gpr_mask, $max) = @_;
+$code.=<<___;
+    lsl     w9,$max,#3      // max * 8
+    add     x9,$key_ptr,x9        // &(CTX+max*8)
+    ldr     $gpr_key,[x9,#0]      // assume key_table == 0
+    fmov    d2,$gpr_key            // Move key to a vector
+    adrp    $gpr_mask,.Lpack_bswap
+    add     $gpr_mask,$gpr_mask,:lo12:.Lpack_bswap
+    ldr     q3,[$gpr_mask]         // Load swap mask into a temporary
+    eor     $cd.16b,$cd.16b,$key.16b
+    tbl     $ab.16b,{$ab.16b},$mask.16b
+    tbl     $cd.16b,{$cd.16b},$mask.16b
+    stp     d1,d0,[$rio_ptr]        // Load input
+___
+}
+
 # In: x4, x5, x0, max(w30), x1(dst). Out: [x1]. Clobbers: x8, x9
 sub enc_outunpack(){
     my ($max) = @_;
@@ -403,35 +440,27 @@ camellia_encrypt_1blk_aese:
     // Load constants needed for camellia_f into v17-v27 + v16(bswap)
     adrp    x10,camellia_neon_consts
     add     x10,x10,:lo12:camellia_neon_consts
-    ldp     q20,q21,[x10],#64    // pre_tf_lo/hi_s1
-    ldp     q22,q23,[x10],#112   // post_tf_lo/hi_s1
-    ldr     q19,[x10],#48        //mask_0f
-    ldr     q16,[x10],#16        //bswap128
-    ldr     d18,[x10],#8         //sbox4_input_mask
-    ldr     q17,[x10],#16        //inv_shift_row_and_unpcklbw
-    ldp     q24,q25,[x10],#32    //sp0044/sp1110
-    ldp     q26,q27,[x10],#32    //sp0222/sp3033
+    ldp     q20,q21,[x10],#64       // pre_tf_lo/hi_s1
+    ldp     q22,q23,[x10],#112      // post_tf_lo/hi_s1
+    ldr     q19,[x10],#48           //mask_0f
+    ldr     q16,[x10],#104          //bswap128 - then big jump
+    ldr     d18,[x10],#8            //sbox4_input_mask_swap32
+    ldr     q17,[x10],#16           //inv_shift_row_and_unpcklbw_sp2n3_swap32
+    ldp     q24,q25,[x10],#32       //{sp4mask/sp1mask}_swap32
+    ldp     q26,q27,[x10],#32       //{sp2mask/sp3mask}_swap32
 ___
-    &enc_inpack();
+    &enc_inpack_neon("v0","v1","x2","x0","v2","v3","x4","x5");
 
 $code.=<<___;
     eor     v31.16b,v31.16b,v31.16b
-    ror     x4,x4,#32
-    ror     x5,x5,#32
-    fmov    d0,x4
-    fmov    d1,x5
 ___
     &enc_rounds_aese(0,"v0","v1","v2","v6","v7","v8","v9","v10","v31","v17","v18","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
 $code.=<<___;
     mov     x4,v0.2d[0]
     mov     x5,v1.2d[0]
-    ror     x4,x4,#32
-    ror     x5,x5,#32
 ___
     &fls("x4", "x5", "x0", 8, 9);
 $code.=<<___;
-    ror     x4,x4,#32
-    ror     x5,x5,#32
     fmov    d0,x4
     fmov    d1,x5
 ___
@@ -439,13 +468,9 @@ ___
 $code.=<<___;
     mov     x4,v0.2d[0]
     mov     x5,v1.2d[0]
-    ror     x4,x4,#32
-    ror     x5,x5,#32
 ___
     &fls("x4", "x5", "x0", 16, 17);
 $code.=<<___;
-    ror     x4,x4,#32
-    ror     x5,x5,#32
     fmov    d0,x4
     fmov    d1,x5
 ___
@@ -453,8 +478,6 @@ ___
 $code.=<<___;
     mov     x4,v0.2d[0]
     mov     x5,v1.2d[0]
-    ror     x4,x4,#32
-    ror     x5,x5,#32
 ___
 
 $code.=<<___;
@@ -466,24 +489,16 @@ $code.=<<___;
 ___
     &fls("x4", "x5", "x0", 24, 25);
 $code.=<<___;
-    ror     x4,x4,#32
-    ror     x5,x5,#32
     fmov    d0,x4
     fmov    d1,x5
 ___
     &enc_rounds_aese(24,"v0","v1","v2","v6","v7","v8","v9","v10","v31","v17","v18","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
 $code.=<<___;
-    mov     x4,v0.2d[0]
-    mov     x5,v1.2d[0]
-    ror     x4,x4,#32
-    ror     x5,x5,#32
-___
-$code.=<<___;
     mov     w30,#32         // MAX = 32
 
 __enc_done_aese:
 ___
-    &enc_outunpack("w30");
+    &enc_outunpack_neon("v0","v1","x1","x0","v2","v3","x4","x5","w30");
 $code.=<<___;
 
     ldp     q8,q9,[sp,#16]
@@ -683,6 +698,24 @@ camellia_neon_consts:
     // Shuffle mask for combining results (part 4 - related to SBOX3 rotate)
     .long   0x04ff0404, 0x04ff0404
     .long   0xff0a0aff, 0x0aff0a0a
+ // === Constants for Key Schedule F-function ===
+.Lsbox4_input_mask_swap32:
+	.byte 0xff, 0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00
+.Linv_shift_row_and_unpcklbw_sp2n3_swap32:
+	.byte 0x04, 0xff, 0x01, 0xff, 0x0e, 0xff, 0x0b, 0xff
+	.byte 0x00, 0xff, 0x0d, 0xff, 0x0a, 0xff, 0x07, 0xff
+.Lsp4mask_swap32:
+	.byte 0x00, 0xff, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff
+	.byte 0x01, 0xff, 0x01, 0x01, 0x01, 0xff, 0x01, 0x01
+.Lsp1mask_swap32:
+	.byte 0xff, 0x04, 0x04, 0x04, 0xff, 0x04, 0x04, 0x04
+	.byte 0xff, 0x07, 0x07, 0x07, 0x07, 0xff, 0xff, 0x07
+.Lsp2mask_swap32:
+	.byte 0x06, 0x06, 0x06, 0xff, 0x06, 0x06, 0x06, 0xff
+	.byte 0x0c, 0x0c, 0x0c, 0xff, 0xff, 0xff, 0x0c, 0x0c
+.Lsp3mask_swap32:
+	.byte 0x04, 0x04, 0xff, 0x04, 0x04, 0x04, 0xff, 0x04
+	.byte 0x0a, 0x0a, 0xff, 0x0a, 0xff, 0x0a, 0x0a, 0xff
 // === Sigmas for key setup ===
 .Lsigma1:
 	.long 0x3BCC908B, 0xA09E667F;
