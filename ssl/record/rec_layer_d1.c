@@ -204,6 +204,8 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
     void (*cb)(const SSL *ssl, int type2, int val) = NULL;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
     int is_dtls13;
+    uint16_t curr_epoch = 0;
+    int in_early_data = 0;
 
     if (sc == NULL)
         return -1;
@@ -255,6 +257,34 @@ start:
                     &rr->version, &rr->type,
                     &rr->data, &rr->length,
                     &rr->epoch, &rr->seq_num));
+
+            /*
+             * If Server of DTLS1.3 is currently in Early Data (Epoch 1)
+             * and we get an Epoch 2 record, we need to end Early Data.
+             */
+            if (ret <= 0 && sc->server == 1 && is_dtls13 && sc->rlayer.rrlmethod->get_epoch(sc->rlayer.rrl, &curr_epoch)
+                && curr_epoch == 1 && sc->rlayer.rrlmethod->unprocessed_records(sc->rlayer.rrl) > 0) {
+
+                /*
+                 * Change the Read Record Layer to Epoch 2
+                 */
+                if (!s->method->ssl3_enc->change_cipher_state(sc,
+                        SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_READ)) {
+                    SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    return -1;
+                }
+
+                /*
+                 * Read the Buffered Epoch 2 record
+                 */
+                ret = HANDLE_RLAYER_READ_RETURN(sc,
+                    sc->rlayer.rrlmethod->read_record(sc->rlayer.rrl,
+                        &rr->rechandle,
+                        &rr->version, &rr->type,
+                        &rr->data, &rr->length,
+                        &rr->epoch, &rr->seq_num));
+            }
+
             if (ret <= 0) {
                 ret = dtls1_read_failed(sc, ret);
                 /*
@@ -499,10 +529,12 @@ start:
         goto start;
     }
 
+    in_early_data = (sc->early_data_state == SSL_EARLY_DATA_READING);
+
     /*
      * Unexpected handshake message (Client Hello, or protocol violation)
      */
-    if (!ossl_statem_get_in_handshake(sc) && rr->type == SSL3_RT_HANDSHAKE) {
+    if (!ossl_statem_get_in_handshake(sc) && rr->type == SSL3_RT_HANDSHAKE && !in_early_data) {
         unsigned char msg_type;
 
         /*
@@ -553,7 +585,6 @@ start:
 
     if (!ossl_statem_get_in_handshake(sc)
         && (rr->type == SSL3_RT_HANDSHAKE || rr->type == SSL3_RT_ACK)) {
-        int in_early_data = (sc->early_data_state == SSL_EARLY_DATA_READING);
 
         /*
          * To get here we must be trying to read app data but found handshake
