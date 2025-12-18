@@ -8,7 +8,6 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include "crypto/x509.h"
@@ -80,10 +79,8 @@ ASN1_SEQUENCE_enc(X509_CRL_INFO, enc, crl_inf_cb) = {
 
 static int crl_set_issuers(X509_CRL *crl)
 {
-
-    int i, j;
     GENERAL_NAMES *most_recent_issuer, *gtmp;
-    STACK_OF(X509_REVOKED) *revoked;
+    STACK_OF(X509_REVOKED) *revoked = X509_CRL_get_REVOKED(crl);
 
     /*
      * The CRL's nextUpdate field is optional, but we will still verify
@@ -91,10 +88,10 @@ static int crl_set_issuers(X509_CRL *crl)
      */
     if (crl->crl.lastUpdate == NULL) {
         crl->flags |= EXFLAG_INVALID;
+        ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_TIME_VALUE,
+            "lastUpdate in CRL is not well-formed");
         return 0;
     }
-
-    revoked = X509_CRL_get_REVOKED(crl);
 
     /*
      * If this extension is not present on the first entry in an indirect CRL,
@@ -105,7 +102,7 @@ static int crl_set_issuers(X509_CRL *crl)
      */
     most_recent_issuer = NULL;
 
-    for (i = 0; i < sk_X509_REVOKED_num(revoked); i++) {
+    for (int j, i = 0; i < sk_X509_REVOKED_num(revoked); i++) {
         X509_REVOKED *rev = sk_X509_REVOKED_value(revoked, i);
         STACK_OF(X509_EXTENSION) *exts;
         ASN1_ENUMERATED *reason;
@@ -121,13 +118,17 @@ static int crl_set_issuers(X509_CRL *crl)
          */
         if ((rev_date = X509_REVOKED_get0_revocationDate(rev)) == NULL) {
             crl->flags |= EXFLAG_INVALID;
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_TIME_VALUE,
+                "Revocation date in CRL is not well-formed");
             return 0;
         }
 
         gtmp = X509_REVOKED_get_ext_d2i(rev, NID_certificate_issuer, &j, NULL);
         if (gtmp == NULL && j != -1) {
             crl->flags |= EXFLAG_INVALID;
-            return 1;
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
+                "Invalid Certificate Issuer in CRL");
+            return 0;
         }
 
         if (gtmp != NULL) {
@@ -139,6 +140,8 @@ static int crl_set_issuers(X509_CRL *crl)
              */
             if (crl->idp == NULL || !crl->idp->indirectCRL) {
                 crl->flags |= EXFLAG_INVALID;
+                ERR_raise_data(ERR_LIB_ASN1, ASN1_R_INVALID_VALUE,
+                    "CRL Certificate Issuer extension requires Indirect CRL flag to be set");
                 GENERAL_NAMES_free(gtmp);
                 return 0;
             }
@@ -161,7 +164,9 @@ static int crl_set_issuers(X509_CRL *crl)
         reason = X509_REVOKED_get_ext_d2i(rev, NID_crl_reason, &j, NULL);
         if (reason == NULL && j != -1) {
             crl->flags |= EXFLAG_INVALID;
-            return 1;
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
+                "Invalid CRL Reason");
+            return 0;
         }
 
         if (reason != NULL) {
@@ -171,7 +176,6 @@ static int crl_set_issuers(X509_CRL *crl)
             rev->reason = CRL_REASON_NONE;
 
         /* Check for critical CRL entry extensions and validate time. */
-
         exts = rev->extensions;
 
         for (j = 0; j < sk_X509_EXTENSION_num(exts); j++) {
@@ -186,6 +190,8 @@ static int crl_set_issuers(X509_CRL *crl)
             if (nid == NID_invalidity_date) {
                 if ((inv_date = X509V3_EXT_d2i(ext)) == NULL) {
                     crl->flags |= EXFLAG_INVALID;
+                    ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_TIME_VALUE,
+                        "InvalidityDate in CRL is not well-formed");
                     return 0;
                 }
                 ASN1_GENERALIZEDTIME_free(inv_date);
@@ -242,35 +248,74 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     case ASN1_OP_D2I_POST:
         if (!X509_CRL_digest(crl, EVP_sha1(), crl->sha1_hash, NULL))
             crl->flags |= EXFLAG_NO_FINGERPRINT;
-        crl->idp = X509_CRL_get_ext_d2i(crl,
-            NID_issuing_distribution_point, &i,
-            NULL);
+        crl->idp = X509_CRL_get_ext_d2i(crl, NID_issuing_distribution_point, &i, NULL);
         if (crl->idp != NULL) {
-            if (!setup_idp(crl, crl->idp))
+            if (!setup_idp(crl, crl->idp)) {
                 crl->flags |= EXFLAG_INVALID;
+                ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
+                    "CRL contains invalid Issuing Distribution Point");
+            }
         } else if (i != -1) {
             crl->flags |= EXFLAG_INVALID;
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
+                "CRL contains invalid Issuing Distribution Point");
         }
 
-        crl->akid = X509_CRL_get_ext_d2i(crl,
-            NID_authority_key_identifier, &i,
-            NULL);
-        if (crl->akid == NULL && i != -1)
+        crl->akid = X509_CRL_get_ext_d2i(crl, NID_authority_key_identifier, &i, NULL);
+        if (crl->akid == NULL && i != -1) {
             crl->flags |= EXFLAG_INVALID;
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
+                "CRL contains invalid Authority Key Identifier");
+        }
 
-        crl->crl_number = X509_CRL_get_ext_d2i(crl,
-            NID_crl_number, &i, NULL);
-        if (crl->crl_number == NULL && i != -1)
+        /*
+         * RFC 5280 §4.2.1.1 (Authority Key Identifier):
+         * The authorityCertIssuer and authorityCertSerialNumber fields are
+         * paired and MUST either both be present or both be absent.
+         */
+        if (crl->akid != NULL && !!crl->akid->issuer != !!crl->akid->serial) {
             crl->flags |= EXFLAG_INVALID;
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
+                "Authority Key Identifier's Issuer and serial number in CRL must be paired");
+        }
 
-        crl->base_crl_number = X509_CRL_get_ext_d2i(crl,
-            NID_delta_crl, &i,
-            NULL);
-        if (crl->base_crl_number == NULL && i != -1)
+        /*
+         * RFC 5280, 4.1.2.2 (Serial Number) The serial number MUST be a
+         * positive integer assigned by the CA to each certificate.
+         * https://datatracker.ietf.org/doc/html/rfc5280#section-4.1.2.2
+         */
+        if (crl->akid != NULL && crl->akid->serial != NULL) {
+            ASN1_INTEGER *serial = crl->akid->serial;
+
+            if (serial->length == 1 && serial->data[0] == 0) {
+                crl->flags |= EXFLAG_INVALID;
+                ERR_raise_data(ERR_LIB_ASN1, ASN1_R_INVALID_VALUE,
+                    "Authority Key Identifier's serial number in CRL is zero");
+            } else if ((serial->type & V_ASN1_NEG) != 0) {
+                crl->flags |= EXFLAG_INVALID;
+                ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_NEGATIVE_VALUE,
+                    "Authority Key Identifier's serial number in the CRL must be positive");
+            }
+        }
+
+        crl->crl_number = X509_CRL_get_ext_d2i(crl, NID_crl_number, &i, NULL);
+        if (crl->crl_number == NULL && i != -1) {
             crl->flags |= EXFLAG_INVALID;
-        /* Delta CRLs must have CRL number */
-        if (crl->base_crl_number && !crl->crl_number)
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT, "Invalid CRL Number");
+        }
+
+        crl->base_crl_number = X509_CRL_get_ext_d2i(crl, NID_delta_crl, &i, NULL);
+        if (crl->base_crl_number == NULL && i != -1) {
             crl->flags |= EXFLAG_INVALID;
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
+                "Invalid Delta CRL Indicator");
+        }
+
+        if (crl->base_crl_number && !crl->crl_number) {
+            crl->flags |= EXFLAG_INVALID;
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
+                "Delta CRLs must have CRL number");
+        }
 
         /*
          * See if we have any unhandled critical CRL extensions and indicate
@@ -305,6 +350,13 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             if (crl->meth->crl_init(crl) == 0)
                 return 0;
         }
+
+        /*
+         * ASN.1 parsing errors and additional CRL validation are now propagated
+         * to the error stack, and the CRL is rejected early.
+         */
+        if (crl->flags & EXFLAG_INVALID || crl->idp_flags & IDP_INVALID)
+            return 0;
 
         crl->flags |= EXFLAG_SET;
         break;
@@ -353,8 +405,11 @@ static int setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp)
         crl->idp_flags |= IDP_ONLYATTR;
     }
 
-    if (idp_only > 1)
+    if (idp_only > 1) {
         crl->idp_flags |= IDP_INVALID;
+        ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
+            "onlyUser, onlyCA, and onlyAttr flags in IDP are mutually exclusive");
+    }
 
     if (idp->indirectCRL > 0)
         crl->idp_flags |= IDP_INDIRECT;
@@ -375,8 +430,11 @@ static int setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp)
      * indirectCRL, and OnlyContainsAttributeCerts are all FALSE, there must
      * be either a distributionPoint field or an onlySomeReasons field present.
      */
-    if (crl->idp_flags == IDP_PRESENT && idp->distpoint == NULL)
+    if (crl->idp_flags == IDP_PRESENT && idp->distpoint == NULL) {
         crl->idp_flags |= IDP_INVALID;
+        ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
+            "IDP missing required distributionPoint or onlySomeReasons");
+    }
 
     return ret;
 }

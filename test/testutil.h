@@ -380,6 +380,23 @@ int test_true(const char *file, int line, const char *s, int b);
 int test_false(const char *file, int line, const char *s, int b);
 
 /*
+ * Checks whether a specific error reason is present in the error stack.
+ * This function iterates over the current thread's error queue extracting all
+ * pending errors. If any of them match the specified reason code (as returned
+ * by ERR_GET_REASON()), the function returns 1 to indicate that the
+ * corresponding error was found.
+ */
+int test_err_r(const char *file, int line, int lib, int reason);
+
+/*
+ * Checks whether a specific string is present in the error data stack.
+ * This function iterates over the current thread's error queue extracting all
+ * pending errors. If any of them match the specified string the function
+ * returns 1 to indicate that the corresponding error was found.
+ */
+int test_err_s(const char *file, int line, const char *data);
+
+/*
  * Comparisons between BIGNUMs.
  * BIGNUMS can be compared against other BIGNUMs or zero.
  * Some additional equality tests against 1 & specific values are provided.
@@ -522,6 +539,9 @@ void test_perror(const char *s);
 #define TEST_true(a) test_true(__FILE__, __LINE__, #a, (a) != 0)
 #define TEST_false(a) test_false(__FILE__, __LINE__, #a, (a) != 0)
 
+#define TEST_err_r(a, b) test_err_r(__FILE__, __LINE__, a, b)
+#define TEST_err_s(a) test_err_s(__FILE__, __LINE__, a)
+
 #define TEST_BN_eq(a, b) test_BN_eq(__FILE__, __LINE__, #a, #b, a, b)
 #define TEST_BN_ne(a, b) test_BN_ne(__FILE__, __LINE__, #a, #b, a, b)
 #define TEST_BN_lt(a, b) test_BN_lt(__FILE__, __LINE__, #a, #b, a, b)
@@ -663,13 +683,5 @@ X509_CRL *CRL_from_strings(const char **pem);
  * into |*out| so we can free it.
  */
 BIO *glue2bio(const char **pem, char **out);
-/*
- * Checks whether a specific error reason is present in the error stack.
- * This function iterates over the current thread's error queue using
- * ERR_get_error_all(), extracting all pending errors. If any of them match
- * the specified reason code (as returned by ERR_GET_REASON()), the function
- * returns 1 to indicate that the corresponding error was found.
- */
-int err_chk(int lib, int reason);
 
 #endif /* OSSL_TESTUTIL_H */
