@@ -392,8 +392,8 @@ static int tls13_add_record_padding(OSSL_RECORD_LAYER *rl,
     size_t rlen;
     size_t max_frag_len = rl->max_frag_len;
     int isdtls = rl->isdtls;
-    int dtls13_min_ciphertext_len = 16;
-    int mac_size = 0;
+    size_t dtls13_min_ciphertext_len = 16;
+    size_t mac_size = 0;
     size_t taglen = rl->taglen;
 
     /* Nothing to be done in the case of a plaintext alert */
