@@ -253,6 +253,8 @@ int ossl_ech_get_retry_configs(SSL_CONNECTION *s, unsigned char **rcfgs,
     for (i = 0; i != num; i++) {
         ee = sk_OSSL_ECHSTORE_ENTRY_value(es->entries, i);
         if (ee != NULL && ee->for_retry == OSSL_ECH_FOR_RETRY) {
+            if (ee->encoded_len > SIZE_MAX - retslen)
+                return 0;
             tmp = (unsigned char *)OPENSSL_realloc(rets,
                 retslen + ee->encoded_len);
             if (tmp == NULL)
