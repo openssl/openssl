@@ -1220,6 +1220,7 @@ end:
 #define OSSL_ECH_TEST_CUSTOM 3
 #define OSSL_ECH_TEST_ENOE 4 /* early + no-ech */
 #define OSSL_ECH_TEST_CBS 5 /* test callbacks */
+#define OSSL_ECH_TEST_V12 6 /* test TLSv1.2 */
 /* note: early-data is prohibited after HRR so no tests for that */
 
 /*
@@ -1275,6 +1276,13 @@ static int test_ech_roundtrip_helper(int idx, int combo)
             TLS1_3_VERSION, TLS1_3_VERSION,
             &sctx, &cctx, cert, privkey)))
         goto end;
+    if (combo == OSSL_ECH_TEST_V12) {
+        /* force client to TLSv1.2 and later fail as expected */
+        if (!TEST_true(SSL_CTX_set_max_proto_version(cctx, TLS1_2_VERSION)))
+            goto end;
+        if (!TEST_true(SSL_CTX_set_min_proto_version(cctx, TLS1_2_VERSION)))
+            goto end;
+    }
     if (combo == OSSL_ECH_TEST_EARLY || combo == OSSL_ECH_TEST_ENOE) {
         if (!TEST_true(SSL_CTX_set_options(sctx, SSL_OP_NO_ANTI_REPLAY))
             || !TEST_true(SSL_CTX_set_max_early_data(sctx,
@@ -1315,9 +1323,17 @@ static int test_ech_roundtrip_helper(int idx, int combo)
         goto end;
     if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "server.example")))
         goto end;
-    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_NONE)))
+    if (combo == OSSL_ECH_TEST_V12) {
+        if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_NONE)))
+            goto end;
+        res = 1;
         goto end;
+    } else {
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_NONE)))
+            goto end;
+    }
     /* override cert verification */
     SSL_set_verify_result(clientssl, X509_V_OK);
     clientstatus = SSL_ech_get1_status(clientssl, &cinner, &couter);
@@ -1467,6 +1483,14 @@ static int ech_cb_test(int idx)
     return test_ech_roundtrip_helper(idx, OSSL_ECH_TEST_CBS);
 }
 
+/* Test a roundtrip (fails) with ECH but a TLSv1.2 SSL_CTX */
+static int ech_v12_test(int idx)
+{
+    if (verbose)
+        TEST_info("Doing: ech TLSv1.2 test ");
+    return test_ech_roundtrip_helper(idx, OSSL_ECH_TEST_V12);
+}
+
 #endif
 
 int setup_tests(void)
@@ -1511,6 +1535,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(ech_custom_test, suite_combos);
     ADD_ALL_TESTS(ech_enoe_test, suite_combos);
     ADD_ALL_TESTS(ech_cb_test, suite_combos);
+    ADD_ALL_TESTS(ech_v12_test, suite_combos);
     /* TODO(ECH): add more test code as other PRs done */
     return 1;
 err:
