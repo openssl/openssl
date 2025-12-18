@@ -392,7 +392,7 @@ static int test_register_deregister(void)
     for (i = 0; i < OSSL_NELEM(impls); i++)
         if (!TEST_true(ossl_method_store_add(store, &prov, impls[i].nid,
                 impls[i].prop, impls[i].impl,
-                &up_ref, &down_ref))) {
+                &up_ref, &down_ref, NULL, NULL))) {
             TEST_note("iteration %zd", i + 1);
             goto err;
         }
@@ -502,7 +502,7 @@ static int test_property(void)
         if (!TEST_true(ossl_method_store_add(store, *impls[i].prov,
                 impls[i].nid, impls[i].prop,
                 impls[i].impl,
-                &up_ref, &down_ref))) {
+                &up_ref, &down_ref, NULL, NULL))) {
             TEST_note("iteration %zd", i + 1);
             goto err;
         }
@@ -613,13 +613,13 @@ static int test_query_cache_stochastic(void)
         v[i] = 2 * i;
         BIO_snprintf(buf, sizeof(buf), "n=%d\n", i);
         if (!TEST_true(ossl_method_store_add(store, &prov, i, buf, "abc",
-                &up_ref, &down_ref))
+                &up_ref, &down_ref, NULL, NULL))
             || !TEST_true(ossl_method_store_cache_set(store, &prov, i,
                 buf, v + i,
-                &up_ref, &down_ref))
+                &up_ref, &down_ref, NULL, NULL))
             || !TEST_true(ossl_method_store_cache_set(store, &prov, i,
                 "n=1234", "miss",
-                &up_ref, &down_ref))) {
+                &up_ref, &down_ref, NULL, NULL))) {
             TEST_note("iteration %d", i);
             goto err;
         }

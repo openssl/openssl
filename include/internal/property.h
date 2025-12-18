@@ -59,7 +59,9 @@ int ossl_method_unlock_store(OSSL_METHOD_STORE *store);
 int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     int nid, const char *properties, void *method,
     int (*method_up_ref)(void *),
-    void (*method_destruct)(void *));
+    void (*method_destruct)(void *),
+    void *(*method_dup)(void *),
+    void (*free_frozen)(void *));
 int ossl_method_store_remove(OSSL_METHOD_STORE *store, int nid,
     const void *method);
 void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
@@ -82,7 +84,9 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
 int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int nid, const char *prop_query, void *result,
     int (*method_up_ref)(void *),
-    void (*method_destruct)(void *));
+    void (*method_destruct)(void *),
+    void *(*method_dup)(void *),
+    void (*free_frozen)(void *));
 
 __owur int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store);
 
@@ -96,5 +100,9 @@ size_t ossl_property_list_to_string(OSSL_LIB_CTX *ctx,
 
 int ossl_global_properties_no_mirrored(OSSL_LIB_CTX *libctx);
 void ossl_global_properties_stop_mirroring(OSSL_LIB_CTX *libctx);
+
+int ossl_method_store_freeze_cache(OSSL_METHOD_STORE *store);
+int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
+    int nid, const char *prop_query, void **result);
 
 #endif

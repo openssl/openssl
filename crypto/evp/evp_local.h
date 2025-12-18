@@ -301,7 +301,9 @@ void *evp_generic_fetch(OSSL_LIB_CTX *ctx, int operation_id,
         const OSSL_ALGORITHM *algodef,
         OSSL_PROVIDER *prov),
     int (*up_ref_method)(void *),
-    void (*free_method)(void *));
+    void (*free_method)(void *),
+    void *(*dup_method)(void *),
+    void (*free_frozen_method)(void *));
 void *evp_generic_fetch_from_prov(OSSL_PROVIDER *prov, int operation_id,
     const char *name, const char *properties,
     void *(*new_method)(int name_id,
