@@ -229,7 +229,7 @@ static int test_bio_base64_run(test_case *t, int llen, int wscnt)
 
     /*
      * When the input is long enough, and the source bio is retriable, exercise
-     * retries by writting the input to the underlying BIO in two steps (1024
+     * retries by writing the input to the underlying BIO in two steps (1024
      * bytes, then the rest) and trying to decode some data after each write.
      */
     n1 = elen;
