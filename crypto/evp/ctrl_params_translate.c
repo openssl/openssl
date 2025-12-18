@@ -2869,7 +2869,7 @@ static int evp_pkey_ctx_setget_params_to_ctrl(EVP_PKEY_CTX *pctx,
          * function to put it to good use, or maybe affect it.
          *
          * NOTE: even though EVP_PKEY_CTX_ctrl return value is documented
-         * as return positive on Success and 0 or negative on falure. There
+         * as return positive on Success and 0 or negative on failure. There
          * maybe parameters (e.g. ecdh_cofactor), which actually return 0
          * as success value. That is why we do POST_PARAMS_TO_CTRL for 0
          * value as well

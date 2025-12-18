@@ -268,7 +268,7 @@ static int rsasve_generate(PROV_RSA_CTX *prsactx,
     /*
      * If outlen is specified, then it must report the length
      * of the out buffer on input so that we can confirm
-     * its size is sufficent for encapsulation
+     * its size is sufficient for encapsulation
      */
     if (outlen != NULL && *outlen < nlen) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_OUTPUT_LENGTH);
@@ -299,8 +299,7 @@ static int rsasve_generate(PROV_RSA_CTX *prsactx,
 /**
  * rsasve_recover - Recovers a secret value from ciphertext using an RSA
  * private key.  Once, recovered, the secret value is considered to be a
- * shared secret.  Algorithm is preformed as per
- * NIST SP 800-56B Rev 2
+ * shared secret.  Algorithm is performed as per NIST SP 800-56B Rev 2
  * 7.2.1.3 RSASVE Recovery Operation (RSASVE.RECOVER).
  *
  * This function performs RSA decryption using the private key from the
