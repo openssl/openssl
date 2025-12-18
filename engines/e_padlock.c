@@ -201,9 +201,9 @@ struct padlock_cipher_data {
             int rounds : 4;
             int dgst : 1; /* n/a in C3 */
             int align : 1; /* n/a in C3 */
-            int ciphr : 1; /* n/a in C3 */
+            int ciphr : 1; /* n/a in C3 */ /* codespell:ignore */
             unsigned int keygen : 1;
-            int interm : 1;
+            int interm : 1; /* codespell:ignore */
             unsigned int encdec : 1;
             int ksize : 2;
         } b;
