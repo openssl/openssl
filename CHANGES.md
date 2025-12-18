@@ -89,6 +89,11 @@ OpenSSL 4.0
 
    *Milan Broz*, *Neil Horman*, *Norbert Pocs*
 
+ * BIO_f_reliable() implementation was removed without replacement.
+   It was broken since 3.0 release without any complaints.
+
+   *Tomáš Mráz*
+
  * Added SNMP KDF (EVP_KDF_SNMPKDF) to EVP_KDF
 
    *Barry Fussell and Helen Zhang*
