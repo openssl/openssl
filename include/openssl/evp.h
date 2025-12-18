@@ -848,7 +848,6 @@ int EVP_CIPHER_CTX_get_algor(EVP_CIPHER_CTX *ctx, X509_ALGOR **alg);
 const BIO_METHOD *BIO_f_md(void);
 const BIO_METHOD *BIO_f_base64(void);
 const BIO_METHOD *BIO_f_cipher(void);
-const BIO_METHOD *BIO_f_reliable(void);
 __owur int BIO_set_cipher(BIO *b, const EVP_CIPHER *c, const unsigned char *k,
     const unsigned char *i, int enc);
 
