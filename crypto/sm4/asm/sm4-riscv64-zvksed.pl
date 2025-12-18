@@ -240,7 +240,7 @@ my ($vindex)=("v0");
 
 $code .= <<___;
 .section .rodata
-.align 4           
+.align 4
 .Lreverse_index:
     .word 3, 2, 1, 0
 .text
@@ -263,7 +263,7 @@ rv64i_zvksed_sm4_cbc_encrypt:
 
     # Load the reverse index (for IV updates)
     la $tmp, .Lreverse_index
-    @{[vle32_v $vindex, $tmp]}    
+    @{[vle32_v $vindex, $tmp]}
 # =====================================================
 # If data length ≥ 64 bytes, process 4 blocks in batch:
 # 4-block CBC encryption pipeline:
@@ -304,7 +304,7 @@ rv64i_zvksed_sm4_cbc_encrypt:
     @{[enc_blk $vdata1]}
     @{[vrev8_v $vdata1, $vdata1]}
 
-    #Update IV to ciphertext block 1    
+    #Update IV to ciphertext block 1
     @{[vrgather_vv $vivec, $vdata1, $vindex]}
 
     @{[vxor_vv $vdata2, $vdata2, $vivec]}
@@ -325,16 +325,16 @@ rv64i_zvksed_sm4_cbc_encrypt:
     #Update IV to ciphertext block 3
     @{[vrgather_vv $vivec, $vdata3, $vindex]}
 
-    # Save the ciphertext (in reverse element order)   
+    # Save the ciphertext (in reverse element order)
     li $tmp_stride, $STRIDE
     @{[reverse_order_S $vdata0, $out]}
-    addi $out, $out, $BLOCK_SIZE 
+    addi $out, $out, $BLOCK_SIZE
     @{[reverse_order_S $vdata1, $out]}
-    addi $out, $out, $BLOCK_SIZE 
-    @{[reverse_order_S $vdata2, $out]} 
-    addi $out, $out, $BLOCK_SIZE 
+    addi $out, $out, $BLOCK_SIZE
+    @{[reverse_order_S $vdata2, $out]}
+    addi $out, $out, $BLOCK_SIZE
     @{[reverse_order_S $vdata3, $out]}
-    addi $out, $out, $BLOCK_SIZE  
+    addi $out, $out, $BLOCK_SIZE
 
     addi $len, $len, -$FOUR_BLOCKS
     bnez $len, .Lcbc_enc_loop
@@ -344,27 +344,27 @@ rv64i_zvksed_sm4_cbc_encrypt:
 
 .Lcbc_enc_single:
     # Load input data0
-    @{[vle32_v $vdata0, $in]}  
+    @{[vle32_v $vdata0, $in]}
     addi $in, $in, $BLOCK_SIZE
-    #XOR with IV                                                      
-    @{[vxor_vv $vdata0, $vdata0, $vivec]}  
-    
-    @{[vrev8_v $vdata0, $vdata0]}     
-    # Encrypt with all keys    
-    @{[enc_blk $vdata0]}
-    @{[vrev8_v $vdata0, $vdata0]} 
+    #XOR with IV
+    @{[vxor_vv $vdata0, $vdata0, $vivec]}
 
-    # Update IV to ciphertext block 0   
+    @{[vrev8_v $vdata0, $vdata0]}
+    # Encrypt with all keys
+    @{[enc_blk $vdata0]}
+    @{[vrev8_v $vdata0, $vdata0]}
+
+    # Update IV to ciphertext block 0
     @{[vrgather_vv $vivec, $vdata0, $vindex]}
-    
+
     # Save the ciphertext (in reverse element order)
     li $tmp_stride, $STRIDE
-    @{[reverse_order_S $vdata0, $out]} 
+    @{[reverse_order_S $vdata0, $out]}
     addi $out, $out, $BLOCK_SIZE
     addi $len, $len, -$BLOCK_SIZE
 
     li $tmp, $BLOCK_SIZE
-    bgeu $len, $tmp, .Lcbc_enc_single  
+    bgeu $len, $tmp, .Lcbc_enc_single
     # Save the final IV
     @{[vse32_v $vivec, $ivp]}
 .Lcbc_enc_end:

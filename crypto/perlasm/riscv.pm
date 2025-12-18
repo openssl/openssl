@@ -470,11 +470,11 @@ sub vadd_vv {
 
 sub vrgather_vv {
     # vrgather.vv vd, vs2, vs1, vm
-    my $template = 0b001100_0_00000_00000_000_00000_1010111;  
-    my $vd = read_vreg shift;    
-    my $vs2 = read_vreg shift;  
-    my $vs1 = read_vreg shift;   
-    my $vm = read_mask_vreg shift;  
+    my $template = 0b001100_0_00000_00000_000_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $vs1 = read_vreg shift;
+    my $vm = read_mask_vreg shift;
     return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($vs1 << 15) | ($vd << 7));
 }
 
