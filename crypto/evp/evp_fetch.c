@@ -388,6 +388,7 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
     return method;
 }
 
+/* TODO: FREEZE: Replace with actual implementation */
 /*
  * Returns 1 if method store is frozen AND prop query is equal to frozen prop
  * query. Only sets METHOD if found.
@@ -397,7 +398,6 @@ int evp_generic_fetch_frozen(OSSL_LIB_CTX *libctx, int operation_id,
     OSSL_PROVIDER *prov, void **method)
 {
     OSSL_METHOD_STORE *store = get_evp_method_store(libctx);
-    OSSL_FROZEN_METHOD_STORE *frozen_store;
     const char *store_propq;
     OSSL_NAMEMAP *namemap;
     uint32_t meth_id;
@@ -428,14 +428,12 @@ int evp_generic_fetch_frozen(OSSL_LIB_CTX *libctx, int operation_id,
     }
 
     /* Return 0 if not frozen or prop query is different than frozen prop query */
-    if (!ossl_method_store_is_frozen(store)
-        || (frozen_store = ossl_get_frozen_method_store(store)) == NULL)
+    if (!ossl_method_store_is_frozen(store))
         return 0;
-
-    if (strlen(propq) != 0) {
-        store_propq = ossl_get_frozen_method_store_propq(frozen_store);
-        if (strcmp(propq, store_propq) != 0)
-            return 0;
+    if (strlen(propq) != 0
+        && (store_propq = ossl_method_store_frozen_propq(store)) != NULL
+        && strcmp(propq, store_propq) != 0) {
+        return 0;
     }
 
     /* If we haven't received a name id yet, try to get one for the name */
