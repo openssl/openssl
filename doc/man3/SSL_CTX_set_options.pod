@@ -385,16 +385,17 @@ received.
 
 Note that a server that has loaded many ECH configurations and that enables ECH
 trial decryption will attempt decryption with every ECH key when presented with
-a GREASEd ECH, and with possibly that many even when presented with a real ECH.
-That could easily become an accidental denial of service.
+a GREASEd ECH, (see B<SSL_OP_ECH_GREASE>) and with possibly that many even
+when presented with a real ECH.  That could easily become an accidental denial
+of service.
 
 Note also that the ECH specification recommends that servers that enable this
 option consider implementing some form of rate limiting mechanism to limit the
 potential damage caused in such scenarios.
 
 If trial decryption is enabled then decryption will be attempted with the ECH
-configurations in the order they were loaded. So, were it possible to load the
-configuration most likely to be used first, that would improve efficiency.
+configurations in the order they were loaded. So, where it is possible to load
+the configuration most likely to be used first, that would improve efficiency.
 
 =item SSL_OP_ECH_GREASE_RETRY_CONFIG
 
