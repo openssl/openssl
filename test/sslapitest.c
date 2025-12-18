@@ -3548,6 +3548,82 @@ static int test_ssl_bio_change_wbio(void)
     return execute_test_ssl_bio(0, CHANGE_WBIO);
 }
 
+/*
+ * Test that BIO_dup_chain() on an SSL BIO succeeds only when the SSL
+ * connection is in its initial state (before handshake).
+ */
+#ifndef OPENSSL_NO_TLS1_2
+static int test_ssl_bio_dup(void)
+{
+    BIO *sslbio = NULL, *membio = NULL, *dupbio = NULL;
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL, *ssl = NULL;
+    int testresult = 0;
+
+    /* Test 1: BIO_dup_chain should succeed when SSL is in initial state */
+    if (!TEST_ptr(cctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method()))
+            || !TEST_ptr(ssl = SSL_new(cctx))
+            || !TEST_ptr(sslbio = BIO_new(BIO_f_ssl()))
+            || !TEST_ptr(membio = BIO_new(BIO_s_mem())))
+        goto end;
+
+    BIO_set_ssl(sslbio, ssl, BIO_CLOSE);
+    BIO_push(sslbio, membio);
+    membio = NULL;
+    ssl = NULL;
+
+    /* SSL is in initial state, dup should succeed */
+    if (!TEST_ptr(dupbio = BIO_dup_chain(sslbio)))
+        goto end;
+
+    BIO_free_all(dupbio);
+    dupbio = NULL;
+    BIO_free_all(sslbio);
+    sslbio = NULL;
+    SSL_CTX_free(cctx);
+    cctx = NULL;
+
+    /* Test 2: BIO_dup_chain should fail when SSL has completed handshake */
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_2_VERSION, TLS1_2_VERSION,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* Create SSL BIO with the connected SSL */
+    if (!TEST_ptr(sslbio = BIO_new(BIO_f_ssl())))
+        goto end;
+
+    /* Use BIO_NOCLOSE so we don't double-free clientssl */
+    BIO_set_ssl(sslbio, clientssl, BIO_NOCLOSE);
+
+    /* SSL has completed handshake, dup should fail */
+    if (!TEST_ptr_null(dupbio = BIO_dup_chain(sslbio)))
+        goto end;
+
+    testresult = 1;
+
+end:
+    BIO_free_all(dupbio);
+    BIO_free(membio);
+    BIO_free_all(sslbio);
+    SSL_free(ssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+#endif
+
 #if !defined(OPENSSL_NO_TLS1_2) || defined(OSSL_NO_USABLE_TLS1_3)
 typedef struct {
     /* The list of sig algs */
@@ -13943,6 +14019,9 @@ int setup_tests(void)
     ADD_TEST(test_ssl_bio_pop_ssl_bio);
     ADD_TEST(test_ssl_bio_change_rbio);
     ADD_TEST(test_ssl_bio_change_wbio);
+#ifndef OPENSSL_NO_TLS1_2
+    ADD_TEST(test_ssl_bio_dup);
+#endif
 #if !defined(OPENSSL_NO_TLS1_2) || defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_set_sigalgs, OSSL_NELEM(testsigalgs) * 2);
     ADD_TEST(test_keylog);
