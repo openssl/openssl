@@ -350,7 +350,7 @@ int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
         return rv;
     }
 
-    if (obuffer == NULL || o_len > keylen)
+    if ((obuffer == NULL) || (keylen > INT_MAX) || (o_len > (int)keylen))
         return rv;
 
     /* set up a couple of work areas for the final logic on the salt */
