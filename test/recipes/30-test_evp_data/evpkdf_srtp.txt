@@ -161,8 +161,6 @@ Ctrl.hexkdr = hexkdr:000000000001
 Ctrl.index = hexindex:69B62109
 Ctrl.label = label:3
 Output = 94D76CA7ADB05b8631CF62538D97BE74
-#Output = 9C24681511F585B2442A3265BB93FA1C (with index leading 0)
-#Output = A2C079EC6518fEC73FA0F30AF94739A7 (in expectedResults.json)
 
 # prompt.json tgId:3, tcid:21, expectedResults.json tcId:21 srtcpKa
 KDF = SRTPKDF
@@ -170,9 +168,9 @@ Ctrl.cipher = cipher:AES-128-CTR
 Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
 Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
 Ctrl.hexkdr = hexkdr:000000000001
-Ctrl.index = hexindex:000069B62109
+Ctrl.index = hexindex:69B62109
 Ctrl.label = label:4
-Output = 3861C849E08497EAED9601EE56942632BAC2A3B9
+Output = FA02251D693645BC1001f83C5A13CB3E3D77F7EA
 
 # prompt.json tgId:3, tcid:21, expectedResults.json tcId:21 srtcpKs
 KDF = SRTPKDF
@@ -180,6 +178,6 @@ Ctrl.cipher = cipher:AES-128-CTR
 Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
 Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
 Ctrl.hexkdr = hexkdr:000000000001
-Ctrl.index = hexindex:000069B62109
+Ctrl.index = hexindex:69B62109
 Ctrl.label = label:5
-Output = F20E8E07C439080ACAD11D170771
+Output = 70C0481A04E3610EC8AF8623FA9B
