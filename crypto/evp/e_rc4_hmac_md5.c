@@ -28,15 +28,7 @@ static const EVP_CIPHER r4_hmac_md5_cipher = {
 #endif
     1, EVP_RC4_KEY_SIZE, 0,
     EVP_CIPH_STREAM_CIPHER | EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_FLAG_AEAD_CIPHER,
-    EVP_ORIG_GLOBAL,
-    NULL,
-    NULL,
-    NULL,
-    0,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    EVP_ORIG_GLOBAL
 };
 
 const EVP_CIPHER *EVP_rc4_hmac_md5(void)

@@ -22,15 +22,7 @@ static const EVP_CIPHER d_xcbc_cipher = {
     NID_desx_cbc,
     8, 24, 8,
     EVP_CIPH_CBC_MODE,
-    EVP_ORIG_GLOBAL,
-    NULL,
-    NULL,
-    NULL,
-    0,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    EVP_ORIG_GLOBAL
 };
 
 const EVP_CIPHER *EVP_desx_cbc(void)

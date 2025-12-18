@@ -22,22 +22,13 @@
 
 IMPLEMENT_BLOCK_CIPHER(aria_128, ks, aria, EVP_ARIA_KEY,
     NID_aria_128, 16, 16, 16, 128,
-    0, NULL, NULL,
-    NULL,
-    NULL,
-    NULL)
+    0)
 IMPLEMENT_BLOCK_CIPHER(aria_192, ks, aria, EVP_ARIA_KEY,
     NID_aria_192, 16, 24, 16, 128,
-    0, NULL, NULL,
-    NULL,
-    NULL,
-    NULL)
+    0)
 IMPLEMENT_BLOCK_CIPHER(aria_256, ks, aria, EVP_ARIA_KEY,
     NID_aria_256, 16, 32, 16, 128,
-    0, NULL, NULL,
-    NULL,
-    NULL,
-    NULL)
+    0)
 
 #define IMPLEMENT_ARIA_CFBR(ksize, cbits) \
     IMPLEMENT_CFBR(aria, aria, EVP_ARIA_KEY, ks, ksize, cbits, 16, 0)
@@ -52,12 +43,7 @@ IMPLEMENT_ARIA_CFBR(256, 8)
     static const EVP_CIPHER aria_##keylen##_##mode = {                                \
         nid##_##keylen##_##nmode, blocksize, keylen / 8, ivlen,                       \
         flags | EVP_CIPH_##MODE##_MODE,                                               \
-        EVP_ORIG_GLOBAL,                                                              \
-        NULL,                                                                         \
-        NULL,                                                                         \
-        NULL,                                                                         \
-        0,                                                                            \
-        NULL, NULL, NULL, NULL                                                        \
+        EVP_ORIG_GLOBAL                                                               \
     };                                                                                \
     const EVP_CIPHER *EVP_aria_##keylen##_##mode(void)                                \
     {                                                                                 \
@@ -79,12 +65,7 @@ BLOCK_CIPHER_generic(NID_aria, 256, 1, 16, ctr, ctr, CTR, 0)
         NID_aria_##keylen##_##mode,                    \
         1, keylen / 8, 12,                             \
         ARIA_AUTH_FLAGS | EVP_CIPH_##MODE##_MODE,      \
-        EVP_ORIG_GLOBAL,                               \
-        NULL,                                          \
-        NULL,                                          \
-        NULL,                                          \
-        0,                                             \
-        NULL, NULL, NULL, NULL                         \
+        EVP_ORIG_GLOBAL                                \
     };                                                 \
     const EVP_CIPHER *EVP_aria_##keylen##_##mode(void) \
     {                                                  \

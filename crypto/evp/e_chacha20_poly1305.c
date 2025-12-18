@@ -25,15 +25,7 @@ static const EVP_CIPHER chacha20 = {
     CHACHA_KEY_SIZE, /* key_len */
     CHACHA_CTR_SIZE, /* iv_len, 128-bit counter in the context */
     EVP_CIPH_CUSTOM_IV | EVP_CIPH_ALWAYS_CALL_INIT,
-    EVP_ORIG_GLOBAL,
-    NULL,
-    NULL,
-    NULL,
-    0,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    EVP_ORIG_GLOBAL
 };
 
 const EVP_CIPHER *EVP_chacha20(void)
@@ -49,15 +41,7 @@ static const EVP_CIPHER chacha20_poly1305 = {
     CHACHA_KEY_SIZE, /* key_len */
     12, /* iv_len, 96-bit nonce in the context */
     EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_CUSTOM_IV | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT | EVP_CIPH_CUSTOM_COPY | EVP_CIPH_FLAG_CUSTOM_CIPHER | EVP_CIPH_CUSTOM_IV_LENGTH,
-    EVP_ORIG_GLOBAL,
-    NULL,
-    NULL,
-    NULL,
-    0,
-    NULL, /* set_asn1_parameters */
-    NULL, /* get_asn1_parameters */
-    NULL,
-    NULL /* app_data */
+    EVP_ORIG_GLOBAL
 };
 
 const EVP_CIPHER *EVP_chacha20_poly1305(void)

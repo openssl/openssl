@@ -20,39 +20,20 @@
 IMPLEMENT_BLOCK_CIPHER(rc2, ks, RC2, EVP_RC2_KEY, NID_rc2,
     8,
     RC2_KEY_LENGTH, 8, 64,
-    EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT,
-    NULL, NULL,
-    NULL, NULL,
-    NULL)
+    EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT)
 
 static const EVP_CIPHER r2_64_cbc_cipher = {
     NID_rc2_64_cbc,
     8, 8 /* 64 bit */, 8,
     EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT,
-    EVP_ORIG_GLOBAL,
-    NULL,
-    NULL,
-    NULL,
-    0,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    EVP_ORIG_GLOBAL
 };
 
 static const EVP_CIPHER r2_40_cbc_cipher = {
     NID_rc2_40_cbc,
     8, 5 /* 40 bit */, 8,
     EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CTRL_INIT,
-    EVP_ORIG_GLOBAL,
-    NULL,
-    NULL,
-    NULL,
-    0,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    EVP_ORIG_GLOBAL
 };
 
 const EVP_CIPHER *EVP_rc2_64_cbc(void)

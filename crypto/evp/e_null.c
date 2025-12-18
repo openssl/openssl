@@ -16,15 +16,7 @@
 static const EVP_CIPHER n_cipher = {
     NID_undef,
     1, 0, 0, 0,
-    EVP_ORIG_GLOBAL,
-    NULL,
-    NULL,
-    NULL,
-    0,
-    NULL,
-    NULL,
-    NULL,
-    NULL
+    EVP_ORIG_GLOBAL
 };
 
 const EVP_CIPHER *EVP_enc_null(void)
