@@ -9,12 +9,13 @@
 
 #include <openssl/ssl.h>
 #include <openssl/ech.h>
-#include "../ssl_local.h"
-#include "ech_local.h"
 #include <openssl/rand.h>
-#include "../statem/statem_local.h"
-#include "internal/ech_helpers.h"
 #include <openssl/kdf.h>
+#include "internal/ech_helpers.h"
+#include "internal/ssl_unwrap.h"
+#include "../ssl_local.h"
+#include "../statem/statem_local.h"
+#include "ech_local.h"
 
 #ifndef OPENSSL_NO_ECH
 
@@ -294,16 +295,11 @@ int ossl_ech_send_grease(SSL_CONNECTION *s, WPACKET *pkt)
     size_t cipher_len = 0, cipher_len_jitter = 0;
     unsigned char cid, senderpub[OSSL_ECH_MAX_GREASE_PUB];
     unsigned char cipher[OSSL_ECH_MAX_GREASE_CT];
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
-    if (s == NULL)
-        return 0;
-    if (s->ssl.ctx == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
     WPACKET_get_total_written(pkt, &pp_at_start);
     /* randomly select cipher_len to be one of 144, 176, 208, 244 */
-    if (RAND_bytes_ex(s->ssl.ctx->libctx, &cid, 1, 0) <= 0) {
+    if (RAND_bytes_ex(sctx->libctx, &cid, 1, 0) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -311,7 +307,7 @@ int ossl_ech_send_grease(SSL_CONNECTION *s, WPACKET *pkt)
     cipher_len = 144;
     cipher_len += 32 * cipher_len_jitter;
     /* generate a random (1 octet) client id */
-    if (RAND_bytes_ex(s->ssl.ctx->libctx, &cid, 1, 0) <= 0) {
+    if (RAND_bytes_ex(sctx->libctx, &cid, 1, 0) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -327,7 +323,7 @@ int ossl_ech_send_grease(SSL_CONNECTION *s, WPACKET *pkt)
     if (OSSL_HPKE_get_grease_value(hpke_suite_in_p, &hpke_suite,
                                    senderpub, &senderpub_len,
                                    cipher, cipher_len,
-                                   s->ssl.ctx->libctx, NULL) != 1) {
+                                   sctx->libctx, sctx->propq) != 1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -1019,6 +1015,7 @@ int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
         + SSL3_RANDOM_SIZE - OSSL_ECH_SIGNAL_LEN;
     unsigned int hashlen = 0;
     unsigned char hashval[EVP_MAX_MD_SIZE];
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     if ((md = (EVP_MD *)ssl_handshake_md(s)) == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_ECH_REQUIRED);
@@ -1046,7 +1043,7 @@ int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
         } else {
             if (s->ext.ech.hrrsignal_p == NULL) {
                 /* No ECH found so we'll exit, but set random output */
-                if (RAND_bytes_ex(s->ssl.ctx->libctx, acbuf,
+                if (RAND_bytes_ex(sctx->libctx, acbuf,
                                   OSSL_ECH_SIGNAL_LEN, 0) <= 0) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_ECH_REQUIRED);
                     goto end;
@@ -1733,6 +1730,7 @@ static unsigned char *hpke_decrypt_encch(SSL_CONNECTION *s,
     size_t info_len = OSSL_ECH_MAX_INFO_LEN;
     int rv = 0;
     OSSL_HPKE_CTX *hctx = NULL;
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 # ifdef OSSL_ECH_SUPERVERBOSE
     size_t publen = 0;
     unsigned char *pub = NULL;
@@ -1783,7 +1781,7 @@ static unsigned char *hpke_decrypt_encch(SSL_CONNECTION *s,
     ERR_set_mark();
     /* Use OSSL_HPKE_* APIs */
     hctx = OSSL_HPKE_CTX_new(hpke_mode, hpke_suite, OSSL_HPKE_ROLE_RECEIVER,
-                             NULL, NULL);
+                             sctx->libctx, sctx->propq);
     if (hctx == NULL)
         goto clearerrs;
     rv = OSSL_HPKE_decap(hctx, senderpub, senderpublen, ee->keyshare,

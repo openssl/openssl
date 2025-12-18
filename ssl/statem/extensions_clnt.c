@@ -1401,7 +1401,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
             return EXT_RETURN_FAIL;
         }
         /* for outer CH allocate a similar sized random value */
-        if (RAND_bytes_ex(s->ssl.ctx->libctx, rndbuf, totalrndsize, 0) <= 0) {
+        if (RAND_bytes_ex(sctx->libctx, rndbuf, totalrndsize, 0) <= 0) {
             OPENSSL_free(rndbuf);
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return EXT_RETURN_FAIL;
@@ -2519,6 +2519,7 @@ EXT_RETURN tls_construct_ctos_ech(SSL_CONNECTION *s, WPACKET *pkt,
                                   size_t chainidx)
 {
     int rv = 0, hpke_mode = OSSL_HPKE_MODE_BASE;
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     OSSL_ECHSTORE_ENTRY *ee = NULL;
     OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
     unsigned char config_id_to_use = 0x00, info[OSSL_ECH_MAX_INFO_LEN];
@@ -2597,7 +2598,7 @@ EXT_RETURN tls_construct_ctos_ech(SSL_CONNECTION *s, WPACKET *pkt,
     } OSSL_TRACE_END(TLS);
     config_id_to_use = ee->config_id; /* if requested, use a random config_id instead */
     if ((s->options & SSL_OP_ECH_IGNORE_CID) != 0) {
-        if (RAND_bytes_ex(s->ssl.ctx->libctx, &config_id_to_use, 1, 0) <= 0) {
+        if (RAND_bytes_ex(sctx->libctx, &config_id_to_use, 1, 0) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -2637,7 +2638,7 @@ EXT_RETURN tls_construct_ctos_ech(SSL_CONNECTION *s, WPACKET *pkt,
 # endif
         s->ext.ech.hpke_ctx = OSSL_HPKE_CTX_new(hpke_mode, hpke_suite,
                                                 OSSL_HPKE_ROLE_SENDER,
-                                                NULL, NULL);
+                                                sctx->libctx, sctx->propq);
         if (s->ext.ech.hpke_ctx == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
