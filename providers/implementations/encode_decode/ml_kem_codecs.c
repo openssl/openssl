@@ -256,7 +256,7 @@ ossl_ml_kem_d2i_PUBKEY(const uint8_t *pubenc, int publen, int evp_type,
 
     if (!ossl_ml_kem_parse_public_key(pubenc, (size_t)publen, ret)) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
-            "errror parsing %s public key from input SPKI",
+            "error parsing %s public key from input SPKI",
             v->algorithm_name);
         ossl_ml_kem_key_free(ret);
         return NULL;

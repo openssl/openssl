@@ -900,7 +900,7 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
         goto end;
 
     /*
-     * We now have the folowing lists available to make a decision for
+     * We now have the following lists available to make a decision for
      * which group the server should use for key exchange :
      * From client: clntgroups[clnt_num_groups],
      *              keyshares_arr[keyshares_cnt], encoded_pubkey_arr[keyshares_cnt]

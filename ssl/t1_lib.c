@@ -1582,10 +1582,10 @@ static int tuple_cb(const char *tuple, int len, void *arg)
 /*
  * Set groups and prepare generation of keyshares based on a string of groupnames,
  * names separated by the group or the tuple delimiter, with per-group prefixes to
- * (1) add a key share for this group, (2) ignore the group if unkown to the current
+ * (1) add a key share for this group, (2) ignore the group if unknown to the current
  * context, (3) delete a previous occurrence of the group in the current tuple.
  *
- * The list parsing is done in two hierachical steps: The top-level step extracts the
+ * The list parsing is done in two hierarchical steps: The top-level step extracts the
  * string of a tuple using tuple_cb, while the next lower step uses gid_cb to
  * parse and process the groups inside a tuple
  */
@@ -1645,7 +1645,7 @@ int tls1_set_groups_list(SSL_CTX *ctx,
     }
 
     /*
-     * We check whether a tuple was completly emptied by using "-" prefix
+     * We check whether a tuple was completely emptied by using "-" prefix
      * excessively, in which case we remove the tuple
      */
     for (i = j = 0; j < gcb.tplcnt; j++) {
@@ -1691,7 +1691,7 @@ empty_list:
 
     /*
      * tuple_cb and gid_cb combo ensures there are no duplicates or unknown groups so we
-     * can just go ahead and set the results (after diposing the existing)
+     * can just go ahead and set the results (after disposing the existing)
      */
     OPENSSL_free(*grpext);
     *grpext = gcb.gid_arr;

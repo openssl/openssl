@@ -146,7 +146,7 @@ static int blake2_mac_final(void *vmacctx,
     return BLAKE2_FINAL(out, &macctx->ctx);
 }
 
-/* See blake2.h for parameter defintion */
+/* See blake2.h for parameter definition */
 static const OSSL_PARAM *blake2_gettable_ctx_params(ossl_unused void *ctx,
     ossl_unused void *provctx)
 {

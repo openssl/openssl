@@ -75,7 +75,7 @@
  * This is a simple non-blocking QUIC HTTP/1.0 server application.
  * Server accepts QUIC connections. It then accepts bi-directional
  * stream from client and reads request. By default it sends
- * 12345 bytes back as HHTTP/1.0 response to any GET request.
+ * 12345 bytes back as HTTP/1.0 response to any GET request.
  * If GET request comes with URL for example as follows:
  *     /foo/bar/file_65535.txt
  * then the server sends 64kB of data in HTTP/1.0 response.
@@ -218,7 +218,7 @@ struct poll_event_connection {
  * Members in poll manager deserve some explanation:
  *    - pm_head, holds a list of poll_event structures (connections and
  *      streams)
- *    - pm_event_count number of events to montior in SSL_poll(3ossl)
+ *    - pm_event_count number of events to monitor in SSL_poll(3ossl)
  *    - pm_poll_set array of events to poll on
  *    - pm_poll_set_sz number of slots (space) available in pm_poll_set
  *    - pm_need_rebuild whenever list of events to monitor in a list changes
