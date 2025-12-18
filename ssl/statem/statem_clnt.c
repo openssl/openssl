@@ -1216,6 +1216,7 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
     BUF_MEM *inner_mem = NULL;
     PACKET rpkt; /* we'll decode back the inner ch to help make the outer */
     SSL_SESSION *sess = NULL;
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     size_t sess_id_len = 0, innerlen = 0;
     int mt = SSL3_MT_CLIENT_HELLO, rv = 0;
     OSSL_HPKE_SUITE suite;
@@ -1273,7 +1274,7 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
             sess_id_len = sizeof(s->tmp_session_id);
             s->tmp_session_id_len = sess_id_len;
             if (s->hello_retry_request == SSL_HRR_NONE
-                && RAND_bytes_ex(s->ssl.ctx->libctx, s->tmp_session_id,
+                && RAND_bytes_ex(sctx->libctx, s->tmp_session_id,
                        sess_id_len, 0)
                     <= 0) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
