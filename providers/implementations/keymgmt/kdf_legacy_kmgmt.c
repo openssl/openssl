@@ -69,7 +69,7 @@ int ossl_kdf_data_up_ref(KDF_DATA *kdfdata)
 
     /* This is effectively doing a new operation on the KDF_DATA and should be
      * adequately guarded again modules' error states.  However, both current
-     * calls here are guarded propery in exchange/kdf_exch.c.  Thus, it
+     * calls here are guarded properly in exchange/kdf_exch.c.  Thus, it
      * could be removed here.  The concern is that something in the future
      * might call this function without adequate guards.  It's a cheap call,
      * it seems best to leave it even though it is currently redundant.

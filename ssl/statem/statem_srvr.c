@@ -2906,7 +2906,7 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
      * We must not leak whether a decryption failure occurs because of
      * Bleichenbacher's attack on PKCS #1 v1.5 RSA padding (see RFC 2246,
      * section 7.4.7.1). We use the special padding type
-     * RSA_PKCS1_WITH_TLS_PADDING to do that. It will automaticaly decrypt the
+     * RSA_PKCS1_WITH_TLS_PADDING to do that. It will automatically decrypt the
      * RSA, check the padding and check that the client version is as expected
      * in the premaster secret. If any of that fails then the function appears
      * to return successfully but with a random result. The call below could
