@@ -218,11 +218,36 @@ ___
 }
 
 sub fls_neon{
-    my ($x_L, $x_R, $x_CTX, $kl_idx, $kr_idx) = @_;
+    my ($ll_lr, $rl_rr, $tmp_lr, $tmp_rr, $x_CTX, $kl_idx, $kr_idx) = @_;
     my $kl_offset = $kl_idx * 8;
     my $kr_offset = $kr_idx * 8;
 $code.=<<___;
+    ldp     s28,s29,[$x_CTX,#$kl_offset]    // kll,klr
+    ushr    $tmp_lr.2d,$ll_lr.2d,#32        // [ 0 | lr ]
+    and     v30.8b,$ll_lr.8b,v28.8b         // kll & ll (working on lower 32)
 
+    shl     v31.4s,v30.4s,#1
+    sri     v31.4s,v30.4s,#31               // ROL1(kll & ll)
+
+    ushr    $tmp_rr.2d,$rl_rr.2d,#32        // pre [ 0 | rr ]
+    
+    eor     $tmp_lr.8b,$tmp_lr.8b,v31.8b    // lr^=ROL1(kll & ll)
+    orr     v29.8b,$tmp_lr.8b,v29.8b        // lr^=ROL1(kll & ll) v klr
+
+    ldp     s28,s30,[$x_CTX,#$kr_offset]    // pre-load krl,krr
+    
+    eor     $ll_lr.8b,$ll_lr.8b,v29.8b      // ll^(lr^ROL1(kll & ll) v klr)
+    mov     $ll_lr.s[1],$tmp_lr.s[0]        // [ lr^ROL1(kll & ll) | ll^(lr^ROL1(kll & ll) v klr)]
+
+    orr     v30.8b,$tmp_rr.8b,v30.8b        // rr v krr
+    eor     $rl_rr.8b,$rl_rr.8b,v30.8b      // rl^(rr v krr)
+    and     v28.8b,$rl_rr.8b,v28.8b         // krl & (rl^(rr v krr))
+
+    shl     v31.4s,v28.4s,#1
+    sri     v31.4s,v28.4s,#31               // ROL1(krl & (rl^(rr v krr)))
+
+    eor     $tmp_rr.8b,v31.8b,$tmp_rr.8b    // rr^ROL1(krl & (rl^(rr v krr)))
+    mov     $rl_rr.s[1],$tmp_rr.s[0]        // [ rr^ROL1(krl & (rl^(rr v krr))) | rl^(rr v krr) ]
 ___
 }
 
@@ -452,34 +477,13 @@ ___
     &enc_inpack_neon("v0","v1","x2","x0","v2","v3","x4","x5");
 
 $code.=<<___;
-    eor     v31.16b,v31.16b,v31.16b
+    eor     v11.16b,v11.16b,v11.16b
 ___
-    &enc_rounds_aese(0,"v0","v1","v2","v6","v7","v8","v9","v10","v31","v17","v18","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
-$code.=<<___;
-    mov     x4,v0.2d[0]
-    mov     x5,v1.2d[0]
-___
-    &fls("x4", "x5", "x0", 8, 9);
-$code.=<<___;
-    fmov    d0,x4
-    fmov    d1,x5
-___
-    &enc_rounds_aese(8,"v0","v1","v2","v6","v7","v8","v9","v10","v31","v17","v18","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
-$code.=<<___;
-    mov     x4,v0.2d[0]
-    mov     x5,v1.2d[0]
-___
-    &fls("x4", "x5", "x0", 16, 17);
-$code.=<<___;
-    fmov    d0,x4
-    fmov    d1,x5
-___
-    &enc_rounds_aese(16,"v0","v1","v2","v6","v7","v8","v9","v10","v31","v17","v18","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
-$code.=<<___;
-    mov     x4,v0.2d[0]
-    mov     x5,v1.2d[0]
-___
-
+    &enc_rounds_aese(0,"v0","v1","v2","v6","v7","v8","v9","v10","v11","v17","v18","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
+    &fls_neon("v0","v1","v2","v3","x0",8,9);
+    &enc_rounds_aese(8,"v0","v1","v2","v6","v7","v8","v9","v10","v11","v17","v18","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
+    &fls_neon("v0","v1","v2","v3","x0",16,17);
+    &enc_rounds_aese(16,"v0","v1","v2","v6","v7","v8","v9","v10","v11","v17","v18","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
 $code.=<<___;
     mov     w30,#24         // MAX = 24
 
@@ -487,12 +491,8 @@ $code.=<<___;
     cmp     w9,#16
     b.eq    __enc_done_aese
 ___
-    &fls("x4", "x5", "x0", 24, 25);
-$code.=<<___;
-    fmov    d0,x4
-    fmov    d1,x5
-___
-    &enc_rounds_aese(24,"v0","v1","v2","v6","v7","v8","v9","v10","v31","v17","v18","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
+    &fls_neon("v0","v1","v2","v3","x0", 24, 25);
+    &enc_rounds_aese(24,"v0","v1","v2","v6","v7","v8","v9","v10","v11","v17","v18","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
 $code.=<<___;
     mov     w30,#32         // MAX = 32
 
