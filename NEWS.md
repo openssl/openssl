@@ -311,7 +311,7 @@ This release adds the following new features:
   * Added X509_STORE_get1_objects to avoid issues with the existing
     X509_STORE_get0_objects API in multi-threaded applications.
 
-  * Support for using certificate profiles and extened delayed delivery in CMP
+  * Support for using certificate profiles and extended delayed delivery in CMP
 
 This release incorporates the following potentially significant or incompatible
 changes:

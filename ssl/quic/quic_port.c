@@ -521,9 +521,9 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
 
     /*
      * Creating a a new channel is made a bit tricky here as there is a
-     * bit of a circular dependency.  Initalizing a channel requires that
+     * bit of a circular dependency.  Initializing a channel requires that
      * the ch->tls and optionally the qlog_title be configured prior to
-     * initalization, but we need the channel at least partially configured
+     * initialization, but we need the channel at least partially configured
      * to create the new handshake layer, so we have to do this in a few steps.
      */
 
@@ -1035,7 +1035,7 @@ err:
 /**
  * @brief Parses contents of a buffer into a validation token.
  *
- * VALIDATION_TOKEN should already be initalized. Does some basic sanity checks.
+ * VALIDATION_TOKEN should already be initialized. Does some basic sanity checks.
  *
  * @param token   Validation token to fill data in.
  * @param buf     Buffer of previously marshaled validation token.
@@ -1293,7 +1293,7 @@ static void port_send_version_negotiation(QUIC_PORT *port, BIO_ADDR *peer,
 }
 
 /**
- * @brief defintions of token lifetimes
+ * @brief definitions of token lifetimes
  *
  * RETRY tokens are only valid for 10 seconds
  * NEW_TOKEN tokens have a lifetime of 3600 sec (1 hour)

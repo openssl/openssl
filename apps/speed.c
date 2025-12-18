@@ -4378,7 +4378,7 @@ int speed_main(int argc, char **argv)
             }
 
             /*
-             * Try explicitly fetching the signature algoritm implementation to
+             * Try explicitly fetching the signature algorithm implementation to
              * use in case the algorithm does not support EVP_PKEY_sign_init
              */
             ERR_set_mark();
@@ -4414,7 +4414,7 @@ int speed_main(int argc, char **argv)
             }
             if (EVP_PKEY_sign(sig_sign_ctx, NULL, &max_sig_len, md, md_len) <= 0) {
                 BIO_printf(bio_err,
-                    "Error while obtaining signature bufffer length for %s.\n",
+                    "Error while obtaining signature buffer length for %s.\n",
                     sig_name);
                 goto sig_err_break;
             }

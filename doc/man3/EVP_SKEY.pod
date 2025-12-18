@@ -129,7 +129,7 @@ EVP_SKEY_up_ref() returns 1 for success and 0 on failure.
 EVP_SKEY_export() and EVP_SKEY_get0_raw_key() return 1 for success and 0 on failure.
 
 EVP_SKEY_get0_skeymgmt_name() and EVP_SKEY_get0_provider_name() return the
-names of the associated EVP_SKEYMGMT object and its provider correspondigly.
+names of the associated EVP_SKEYMGMT object and its provider correspondingly.
 
 EVP_SKEY_is_a() returns 1 if I<skey> has the key type I<name>,
 otherwise 0.

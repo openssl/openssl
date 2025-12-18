@@ -1072,7 +1072,7 @@ typedef struct ssl_poll_event_st {
  * this, applications must still ensure no events in an SSL_POLL_EVENT
  * structure recorded from a previous call to this function are left over, which
  * may still reference that poll descriptor. Therefore, applications must still
- * excercise caution when freeing resources which are registered, or which were
+ * exercise caution when freeing resources which are registered, or which were
  * previously registered in a poll group.
  */
 #define SSL_POLL_FLAG_NO_HANDLE_EVENTS       (1U << 0)
@@ -1324,13 +1324,13 @@ void process_event(const SSL_POLL_EVENT *event)
         for (i = 0; i < nevents; ++i) {
             process_event(&events[i]); /* do something in application */
 
-            /* We have processed the event so now reenable it. */
+            /* We have processed the event so now re-enable it. */
             SSL_POLL_CHANGE_chflag(chg++, events[i].desc, events[i].instance,
                                    SSL_POLL_EVENT_FLAG_DISABLE, 0);
             ++nchanges;
         }
 
-        /* Reenable any event we processed and go to sleep again. */
+        /* Re-enable any event we processed and go to sleep again. */
         if (!SSL_POLL_GROUP_change_poll(pg, changes, nchanges, sizeof(changes[0]),
                                         events, OSSL_NELEM(events), sizeof(events[0]),
                                         NULL, 0, &nevents))
@@ -1419,7 +1419,7 @@ There are two kinds of polling that occur:
 Firstly, the `SSL_POLL_METHOD` object is defined abstractly as follows:
 
 ```c
-/* API (Psuedocode) */
+/* API (Pseudocode) */
 #define SSL_POLL_METHOD_CAP_IMMEDIATE  (1U << 0) /* supports immediate mode */
 #define SSL_POLL_METHOD_CAP_RETAINED   (1U << 1) /* supports retained mode */
 

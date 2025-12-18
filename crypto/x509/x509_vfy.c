@@ -386,7 +386,7 @@ static int sk_X509_contains(STACK_OF(X509) *sk, X509 *cert)
  * Likely it would be good if build_chain() sets |check_signing_allowed|.
  * Yet if |sk| is a list of trusted certs, as with X509_STORE_CTX_set0_trusted_stack(),
  * better not set |check_signing_allowed|.
- * Maybe not touch X509_STORE_CTX_get1_issuer(), for API backward compatiblity.
+ * Maybe not touch X509_STORE_CTX_get1_issuer(), for API backward compatibility.
  */
 static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int check_signing_allowed,
     int no_dup, STACK_OF(X509) *sk, X509 *x)
