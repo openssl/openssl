@@ -77,6 +77,14 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
         tag = (int)len;
         if (--max == 0)
             goto err;
+        /*
+         * ITU-T X.690 (02/2021) Sec. 8.1.2.4 requires tag values encoded in
+         * this manner to be at least 31
+         */
+        if (tag < 31) {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_INVALID_BER_TAG_ENCODING);
+            return 0x80;
+        }
     } else {
         tag = i;
         p++;
