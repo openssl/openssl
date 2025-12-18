@@ -15,7 +15,6 @@
 #include "internal/cryptlib.h"
 
 typedef struct ossl_method_store_st OSSL_METHOD_STORE;
-typedef struct ossl_frozen_method_store_st OSSL_FROZEN_METHOD_STORE;
 typedef struct ossl_property_list_st OSSL_PROPERTY_LIST;
 
 typedef enum {
@@ -75,8 +74,7 @@ int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
 /* Frozen method store related functions */
 int ossl_method_store_freeze(OSSL_METHOD_STORE *store, const char *propq);
 int ossl_method_store_is_frozen(OSSL_METHOD_STORE *store);
-OSSL_FROZEN_METHOD_STORE *ossl_get_frozen_method_store(OSSL_METHOD_STORE *store);
-const char *ossl_get_frozen_method_store_propq(OSSL_FROZEN_METHOD_STORE *store);
+const char *ossl_method_store_frozen_propq(OSSL_METHOD_STORE *store);
 
 /* Get the global properties associate with the specified library context */
 OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OSSL_LIB_CTX *ctx,
