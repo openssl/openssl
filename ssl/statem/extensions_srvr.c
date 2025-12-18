@@ -2500,6 +2500,7 @@ EXT_RETURN tls_construct_stoc_ech(SSL_CONNECTION *s, WPACKET *pkt,
 {
     unsigned char *rcfgs = NULL;
     size_t rcfgslen = 0;
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     if (context == SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST
         && (s->ext.ech.success == 1 || s->ext.ech.backend == 1)
@@ -2522,7 +2523,7 @@ EXT_RETURN tls_construct_stoc_ech(SSL_CONNECTION *s, WPACKET *pkt,
         && s->ext.ech.attempted == 1) {
         unsigned char randomconf[8];
 
-        if (RAND_bytes_ex(s->ssl.ctx->libctx, randomconf, 8,
+        if (RAND_bytes_ex(sctx->libctx, randomconf, 8,
                           RAND_DRBG_STRENGTH) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
