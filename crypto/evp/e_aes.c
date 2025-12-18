@@ -31,14 +31,12 @@
 
 #define BLOCK_CIPHER_generic(nid, keylen, blocksize, ivlen, nmode, mode, MODE, flags) \
     static const EVP_CIPHER aes_##keylen##_##mode = {                                 \
-        nid##_##keylen##_##nmode, blocksize, keylen / 8, ivlen,                       \
+        nid##_##keylen##_##nmode,                                                     \
+        blocksize,                                                                    \
+        keylen / 8,                                                                   \
+        ivlen,                                                                        \
         flags | EVP_CIPH_##MODE##_MODE,                                               \
         EVP_ORIG_GLOBAL,                                                              \
-        NULL,                                                                         \
-        NULL,                                                                         \
-        NULL,                                                                         \
-        0,                                                                            \
-        NULL, NULL, NULL, NULL                                                        \
     };                                                                                \
     const EVP_CIPHER *EVP_aes_##keylen##_##mode(void)                                 \
     {                                                                                 \
@@ -47,16 +45,12 @@
 
 #define BLOCK_CIPHER_custom(nid, keylen, blocksize, ivlen, mode, MODE, flags)                                              \
     static const EVP_CIPHER aes_##keylen##_##mode = {                                                                      \
-        nid##_##keylen##_##mode, blocksize,                                                                                \
+        nid##_##keylen##_##mode,                                                                                           \
+        blocksize,                                                                                                         \
         (EVP_CIPH_##MODE##_MODE == EVP_CIPH_XTS_MODE || EVP_CIPH_##MODE##_MODE == EVP_CIPH_SIV_MODE ? 2 : 1) * keylen / 8, \
         ivlen,                                                                                                             \
         flags | EVP_CIPH_##MODE##_MODE,                                                                                    \
         EVP_ORIG_GLOBAL,                                                                                                   \
-        NULL,                                                                                                              \
-        NULL,                                                                                                              \
-        NULL,                                                                                                              \
-        0,                                                                                                                 \
-        NULL, NULL, NULL, NULL                                                                                             \
     };                                                                                                                     \
     const EVP_CIPHER *EVP_aes_##keylen##_##mode(void)                                                                      \
     {                                                                                                                      \
@@ -108,11 +102,7 @@ BLOCK_CIPHER_custom(NID_aes, 256, 1, 12, ccm, CCM,
 
 static const EVP_CIPHER aes_128_wrap = {
     NID_id_aes128_wrap,
-    8, 16, 8, WRAP_FLAGS, EVP_ORIG_GLOBAL,
-    NULL, NULL,
-    NULL,
-    0,
-    NULL, NULL, NULL, NULL
+    8, 16, 8, WRAP_FLAGS, EVP_ORIG_GLOBAL
 };
 
 const EVP_CIPHER *EVP_aes_128_wrap(void)
@@ -122,11 +112,7 @@ const EVP_CIPHER *EVP_aes_128_wrap(void)
 
 static const EVP_CIPHER aes_192_wrap = {
     NID_id_aes192_wrap,
-    8, 24, 8, WRAP_FLAGS, EVP_ORIG_GLOBAL,
-    NULL, NULL,
-    NULL,
-    0,
-    NULL, NULL, NULL, NULL
+    8, 24, 8, WRAP_FLAGS, EVP_ORIG_GLOBAL
 };
 
 const EVP_CIPHER *EVP_aes_192_wrap(void)
@@ -136,11 +122,7 @@ const EVP_CIPHER *EVP_aes_192_wrap(void)
 
 static const EVP_CIPHER aes_256_wrap = {
     NID_id_aes256_wrap,
-    8, 32, 8, WRAP_FLAGS, EVP_ORIG_GLOBAL,
-    NULL, NULL,
-    NULL,
-    0,
-    NULL, NULL, NULL, NULL
+    8, 32, 8, WRAP_FLAGS, EVP_ORIG_GLOBAL
 };
 
 const EVP_CIPHER *EVP_aes_256_wrap(void)
@@ -150,11 +132,7 @@ const EVP_CIPHER *EVP_aes_256_wrap(void)
 
 static const EVP_CIPHER aes_128_wrap_pad = {
     NID_id_aes128_wrap_pad,
-    8, 16, 4, WRAP_FLAGS, EVP_ORIG_GLOBAL,
-    NULL, NULL,
-    NULL,
-    0,
-    NULL, NULL, NULL, NULL
+    8, 16, 4, WRAP_FLAGS, EVP_ORIG_GLOBAL
 };
 
 const EVP_CIPHER *EVP_aes_128_wrap_pad(void)
@@ -164,11 +142,7 @@ const EVP_CIPHER *EVP_aes_128_wrap_pad(void)
 
 static const EVP_CIPHER aes_192_wrap_pad = {
     NID_id_aes192_wrap_pad,
-    8, 24, 4, WRAP_FLAGS, EVP_ORIG_GLOBAL,
-    NULL, NULL,
-    NULL,
-    0,
-    NULL, NULL, NULL, NULL
+    8, 24, 4, WRAP_FLAGS, EVP_ORIG_GLOBAL
 };
 
 const EVP_CIPHER *EVP_aes_192_wrap_pad(void)
@@ -178,11 +152,7 @@ const EVP_CIPHER *EVP_aes_192_wrap_pad(void)
 
 static const EVP_CIPHER aes_256_wrap_pad = {
     NID_id_aes256_wrap_pad,
-    8, 32, 4, WRAP_FLAGS, EVP_ORIG_GLOBAL,
-    NULL, NULL,
-    NULL,
-    0,
-    NULL, NULL, NULL, NULL
+    8, 32, 4, WRAP_FLAGS, EVP_ORIG_GLOBAL
 };
 
 const EVP_CIPHER *EVP_aes_256_wrap_pad(void)

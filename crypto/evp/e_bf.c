@@ -17,6 +17,5 @@
 #include "evp_local.h"
 
 IMPLEMENT_BLOCK_CIPHER(bf, ks, BF, EVP_BF_KEY, NID_bf, 8, 16, 8, 64,
-    EVP_CIPH_VARIABLE_LENGTH, NULL, NULL,
-    NULL, NULL, NULL)
+    EVP_CIPH_VARIABLE_LENGTH)
 #endif

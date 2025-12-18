@@ -17,15 +17,12 @@
 #include "evp_local.h"
 
 BLOCK_CIPHER_defs(des, EVP_DES_KEY, NID_des, 8, 8, 8, 64,
-    EVP_CIPH_RAND_KEY, NULL, NULL,
-    NULL, NULL, NULL)
+    EVP_CIPH_RAND_KEY)
 
 BLOCK_CIPHER_def_cfb(des, EVP_DES_KEY, NID_des, 8, 8, 1,
-    EVP_CIPH_RAND_KEY, NULL, NULL,
-    NULL, NULL, NULL)
+    EVP_CIPH_RAND_KEY)
 
 BLOCK_CIPHER_def_cfb(des, EVP_DES_KEY, NID_des, 8, 8, 8,
-    EVP_CIPH_RAND_KEY, NULL, NULL,
-    NULL, NULL, NULL)
+    EVP_CIPH_RAND_KEY)
 
 #endif

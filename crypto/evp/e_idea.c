@@ -18,7 +18,6 @@
 #include "evp_local.h"
 
 BLOCK_CIPHER_defs(idea, IDEA_KEY_SCHEDULE, NID_idea, 8, 16, 8, 64,
-    0, NULL, NULL,
-    NULL, NULL, NULL)
+    0)
 
 #endif

@@ -21,14 +21,12 @@
 
 #define BLOCK_CIPHER_generic(nid, keylen, blocksize, ivlen, nmode, mode, MODE, flags) \
     static const EVP_CIPHER camellia_##keylen##_##mode = {                            \
-        nid##_##keylen##_##nmode, blocksize, keylen / 8, ivlen,                       \
+        nid##_##keylen##_##nmode,                                                     \
+        blocksize,                                                                    \
+        keylen / 8,                                                                   \
+        ivlen,                                                                        \
         flags | EVP_CIPH_##MODE##_MODE,                                               \
         EVP_ORIG_GLOBAL,                                                              \
-        NULL,                                                                         \
-        NULL,                                                                         \
-        NULL,                                                                         \
-        0,                                                                            \
-        NULL, NULL, NULL, NULL                                                        \
     };                                                                                \
     const EVP_CIPHER *EVP_camellia_##keylen##_##mode(void)                            \
     {                                                                                 \

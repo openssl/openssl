@@ -24,12 +24,7 @@
     static const EVP_CIPHER sm4_##mode = {                                    \
         nid##_##nmode, blocksize, 128 / 8, ivlen,                             \
         flags | EVP_CIPH_##MODE##_MODE,                                       \
-        EVP_ORIG_GLOBAL,                                                      \
-        NULL,                                                                 \
-        NULL,                                                                 \
-        NULL,                                                                 \
-        0,                                                                    \
-        NULL, NULL, NULL, NULL                                                \
+        EVP_ORIG_GLOBAL                                                       \
     };                                                                        \
     const EVP_CIPHER *EVP_sm4_##mode(void)                                    \
     {                                                                         \
