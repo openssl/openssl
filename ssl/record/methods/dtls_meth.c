@@ -991,7 +991,7 @@ static int dtls_set_curr_mtu(OSSL_RECORD_LAYER *rl, size_t mtu)
     return 1;
 }
 
-static int dtls_unprocessed_records(OSSL_RECORD_LAYER *rl)
+static size_t dtls_unprocessed_records(OSSL_RECORD_LAYER *rl)
 {
     return pqueue_size(&rl->unprocessed_rcds);
 }

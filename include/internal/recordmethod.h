@@ -334,7 +334,7 @@ struct ossl_record_method_st {
     /*
      * Return number of records in the queue of unprocessed records
      */
-    int (*unprocessed_records)(OSSL_RECORD_LAYER *rl);
+    size_t (*unprocessed_records)(OSSL_RECORD_LAYER *rl);
 
     /*
      * Allocate read or write buffers. Does nothing if already allocated.
