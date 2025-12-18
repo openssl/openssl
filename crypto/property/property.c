@@ -73,13 +73,6 @@ typedef struct {
     LHASH_OF(QUERY) *cache;
 } ALGORITHM;
 
-struct ossl_frozen_method_store_st {
-    /* Property query associated with frozen state */
-    char *propq;
-
-    /* TODO: FREEZE */
-};
-
 typedef struct {
     SPARSE_ARRAY_OF(ALGORITHM) * algs;
 
@@ -110,8 +103,11 @@ struct ossl_method_store_st {
      */
     CRYPTO_RWLOCK *biglock;
 
-    /* Non-null if method store is frozen */
-    OSSL_FROZEN_METHOD_STORE *frozen_store;
+    /* Flag: 1 if method store is frozen */
+    int frozen;
+
+    /* Property query associated with frozen state */
+    char *frozen_propq;
 };
 
 typedef struct {
@@ -331,9 +327,7 @@ void ossl_method_store_free(OSSL_METHOD_STORE *store)
 
     stored_algs_free(store->algs);
     CRYPTO_THREAD_lock_free(store->biglock);
-    if (store->frozen_store != NULL)
-        OPENSSL_free(store->frozen_store->propq);
-    OPENSSL_free(store->frozen_store);
+    OPENSSL_free(store->frozen_propq);
     OPENSSL_free(store);
 }
 
@@ -393,7 +387,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     int ret = 0;
     int i;
 
-    if (nid <= 0 || method == NULL || store == NULL || store->frozen_store != NULL)
+    if (nid <= 0 || method == NULL || store == NULL || store->frozen == 1)
         return 0;
 
     if (properties == NULL)
@@ -511,7 +505,7 @@ int ossl_method_store_remove(OSSL_METHOD_STORE *store, int nid,
     STORED_ALGORITHMS *sa;
     int i;
 
-    if (nid <= 0 || method == NULL || store == NULL || store->frozen_store != NULL)
+    if (nid <= 0 || method == NULL || store == NULL || store->frozen == 1)
         return 0;
 
     sa = stored_algs_shard(store, nid);
@@ -614,7 +608,7 @@ int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
 {
     struct alg_cleanup_by_provider_data_st data;
 
-    if (store == NULL || store->frozen_store != NULL)
+    if (store == NULL || store->frozen == 1)
         return 0;
 
     for (int k = 0; k < NUM_SHARDS; ++k) {
@@ -632,36 +626,30 @@ int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
 
 int ossl_method_store_freeze(OSSL_METHOD_STORE *store, const char *propq)
 {
-    if (store == NULL || store->frozen_store != NULL)
+    if (store == NULL || store->frozen == 1)
         return 0;
-    store->frozen_store = OPENSSL_zalloc(sizeof(*store->frozen_store));
-    if (store->frozen_store == NULL)
-        return 0;
+
     if (propq != NULL) {
-        store->frozen_store->propq = OPENSSL_strdup(propq);
-        if (store->frozen_store->propq == NULL) {
-            OPENSSL_free(store->frozen_store);
-            store->frozen_store = NULL;
+        store->frozen_propq = OPENSSL_strdup(propq);
+        if (store->frozen_propq == NULL)
             return 0;
-        }
     }
     /* TODO: FREEZE: Create frozen caches */
+    store->frozen = 1;
+
     return 1;
 }
 
 int ossl_method_store_is_frozen(OSSL_METHOD_STORE *store)
 {
-    return store != NULL && store->frozen_store != NULL;
+    return store != NULL && store->frozen == 1;
 }
 
-OSSL_FROZEN_METHOD_STORE *ossl_get_frozen_method_store(OSSL_METHOD_STORE *store)
+const char *ossl_method_store_frozen_propq(OSSL_METHOD_STORE *store)
 {
-    return store != NULL ? store->frozen_store : NULL;
-}
-
-const char *ossl_get_frozen_method_store_propq(OSSL_FROZEN_METHOD_STORE *store)
-{
-    return (store != NULL && store->propq != NULL) ? store->propq : "";
+    if (store == NULL)
+        return NULL;
+    return store->frozen_propq;
 }
 
 static void alg_do_one(ALGORITHM *alg, IMPLEMENTATION *impl,
@@ -901,7 +889,7 @@ static void ossl_method_cache_flush(STORED_ALGORITHMS *sa, int nid)
 
 int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
 {
-    if (store == NULL || store->frozen_store != NULL)
+    if (store == NULL || store->frozen == 1)
         return 0;
 
     for (int i = 0; i < NUM_SHARDS; ++i) {
@@ -996,6 +984,7 @@ static void ossl_method_cache_flush_some(STORED_ALGORITHMS *sa)
 static EVP_MD andrew_md;
 static void *andrew_method = NULL;
 
+/* TODO: FREEZE: Replace with actual implementation */
 int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int nid, const char *prop_query, void **method)
 {
@@ -1028,6 +1017,7 @@ err:
     return res;
 }
 
+/* TODO: FREEZE: Replace with actual implementation */
 int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store,
     OSSL_PROVIDER *prov, int nid,
     const char *prop_query, void **method)
@@ -1071,7 +1061,7 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     size_t len;
     int res = 1;
 
-    if (nid <= 0 || store == NULL || prop_query == NULL || store->frozen_store != NULL)
+    if (nid <= 0 || store == NULL || prop_query == NULL || store->frozen == 1)
         return 0;
 
     if (!ossl_assert(prov != NULL))
