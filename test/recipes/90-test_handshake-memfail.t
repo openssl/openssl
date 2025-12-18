@@ -64,7 +64,7 @@ for my $idx (@seq) {
     #
     # We need to setup our openssl malloc failures env var to fail the target malloc
     # the format of this string is a series of A@B;C@D tuples where A,C are the number
-    # of mallocs to consider, and B,D are the likelyhood that they should fail.
+    # of mallocs to consider, and B,D are the likelihood that they should fail.
     # We always skip the first "skip" allocations, then iteratively guarantee that 
     # next <idx> mallocs pass, followed by the next single malloc failing, with the remainder
     # passing

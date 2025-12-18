@@ -844,7 +844,7 @@ next_io:
             if (*p != '\r' && *p != '\n')
                 break;
         }
-        if (*p != '\0') /* not end of headers or not end of error reponse content */
+        if (*p != '\0') /* not end of headers or not end of error response content */
             goto next_line;
 
         /* Found blank line(s) indicating end of headers */

@@ -27,7 +27,7 @@ static int lm_ots_compute_pubkey_final(EVP_MD_CTX *ctx, EVP_MD_CTX *ctxIq,
  *              that returns a non finalized value of H(I || q)
  * @param sig An LM_OTS_SIG object that contains C and y
  * @param pub The public key LM_OTS_PARAMS
- * @param Id A 16 byte indentifier (I) associated with a LMS tree
+ * @param Id A 16 byte identifier (I) associated with a LMS tree
  * @param q The leaf index of the LMS tree.
  * @param msg A message to verify
  * @param msglen The size of |msg|

@@ -2471,7 +2471,7 @@ static void ch_rx_handle_packet(QUIC_CHANNEL *ch, int channel_only)
         while (PACKET_remaining(&vpkt) > 0) {
             /*
              * We only support quic version 1 at the moment, so
-             * look to see if thats offered
+             * look to see if that's offered
              */
             if (!PACKET_get_net_4(&vpkt, &supported_ver))
                 return;

@@ -624,7 +624,7 @@ my %params = (
     'OSSL_LIBSSL_RECORD_LAYER_PARAM_BLOCK_PADDING' =>  "block_padding",
     'OSSL_LIBSSL_RECORD_LAYER_PARAM_HS_PADDING' =>     "hs_padding",
 
-# Symmetric Key parametes
+# Symmetric Key parameters
     'OSSL_SKEY_PARAM_RAW_BYTES' => "raw-bytes",
     'OSSL_SKEY_PARAM_KEY_LENGTH' => "key-length",
 );

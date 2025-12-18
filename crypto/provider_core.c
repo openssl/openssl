@@ -1044,7 +1044,7 @@ static int provider_init(OSSL_PROVIDER *prov)
     OSSL_TRACE_BEGIN(PROVIDER)
     {
         BIO_printf(trc_out,
-            "(provider %s) initalizing\n", prov->name);
+            "(provider %s) initializing\n", prov->name);
     }
     OSSL_TRACE_END(PROVIDER);
 #endif

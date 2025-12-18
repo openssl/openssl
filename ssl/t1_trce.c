@@ -1310,7 +1310,7 @@ static int ssl_print_certificate(BIO *bio, const SSL_CONNECTION *sc, int indent,
         x = NULL;
     }
     if (x == NULL)
-        BIO_puts(bio, "<UNPARSEABLE CERTIFICATE>\n");
+        BIO_puts(bio, "<UNPARSABLE CERTIFICATE>\n");
     else {
         BIO_puts(bio, "\n------details-----\n");
         X509_print_ex(bio, x, XN_FLAG_ONELINE, 0);
@@ -1541,7 +1541,7 @@ static int ssl_print_cert_request(BIO *bio, int indent, const SSL_CONNECTION *sc
         p = msg;
         nm = d2i_X509_NAME(NULL, &p, (long)dlen);
         if (!nm) {
-            BIO_puts(bio, "<UNPARSEABLE DN>\n");
+            BIO_puts(bio, "<UNPARSABLE DN>\n");
         } else {
             X509_NAME_print_ex(bio, nm, 0, XN_FLAG_ONELINE);
             BIO_puts(bio, "\n");

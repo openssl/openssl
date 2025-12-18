@@ -969,7 +969,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     SET_EXPECT1(pparams, OSSL_STORE_INFO_PARAMS);
     SET_EXPECT1(pcert, OSSL_STORE_INFO_CERT);
     /*
-     * Up to here, the follwing holds.
+     * Up to here, the following holds.
      * If just one of the ppkey, ppubkey, pparams, and pcert function parameters
      * is nonzero, expect > 0 indicates which type of credential is expected.
      * If expect == 0, more than one of them is nonzero (multiple types expected).
