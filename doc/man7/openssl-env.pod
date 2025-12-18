@@ -61,7 +61,7 @@ Unless OpenSSL tracing support is generally disabled,
 enable trace output of specific parts of OpenSSL libraries, by name.
 This output usually makes sense only if you know OpenSSL internals well.
 
-The value of this environment varialble is a comma-separated list of names,
+The value of this environment variable is a comma-separated list of names,
 with the following available:
 
 =over 4
