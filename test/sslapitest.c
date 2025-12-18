@@ -8417,7 +8417,7 @@ static int test_key_update_local_in_write(int idx)
     tmp = NULL;
 
     /*
-     * For DTLS1.3 the key udpate will succeed for it would
+     * For DTLS1.3 the key update will succeed for it would
      * have just dropped the packet above
      */
     if (!testdtls)
