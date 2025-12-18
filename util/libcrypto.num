@@ -1001,7 +1001,6 @@ EVP_CIPHER_CTX_get_algor                ?	4_0_0	EXIST::FUNCTION:
 BIO_f_md                                ?	4_0_0	EXIST::FUNCTION:
 BIO_f_base64                            ?	4_0_0	EXIST::FUNCTION:
 BIO_f_cipher                            ?	4_0_0	EXIST::FUNCTION:
-BIO_f_reliable                          ?	4_0_0	EXIST::FUNCTION:
 BIO_set_cipher                          ?	4_0_0	EXIST::FUNCTION:
 EVP_md_null                             ?	4_0_0	EXIST::FUNCTION:
 EVP_md2                                 ?	4_0_0	EXIST::FUNCTION:MD2
