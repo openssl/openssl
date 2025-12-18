@@ -79,7 +79,7 @@ $ENV{'MALLOC_PERTURB_'} = '128' if !defined $ENV{'MALLOC_PERTURB_'};
 
 my $tap_verbosity = exists $ENV{'HARNESS_VERBOSE'} ? $ENV{'HARNESS_VERBOSE'} == 'yes' : 0;
 # Show test times by default, unless we have lowered verbosity.
-my $tap_timer =  ($tap_verbosity >= 0) ? 1 : 0;
+my $tap_timer = ($tap_verbosity >= 0) ? 1 : 0;
 # But also ensure HARNESS_TIMER is respected if it is set.
 $tap_timer = exists $ENV{'HARNESS_TIMER'} ? $ENV{'HARNESS_TIMER'} : $tap_timer;
 
