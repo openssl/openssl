@@ -15159,7 +15159,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_key_update_peer_in_read, 4);
     ADD_ALL_TESTS(test_key_update_local_in_write, 4);
 #endif
-#if !defined(OPENSSL_NO_TLS1_3)
+#if !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_key_update_local_in_read, 2);
 #endif
     ADD_ALL_TESTS(test_ssl_clear, 8);
