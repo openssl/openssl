@@ -29,8 +29,13 @@
 #include <openssl/cmp_util.h> /* for OSSL_CMP_log_close() */
 #include <openssl/trace.h>
 #include <openssl/ssl.h> /* for OPENSSL_INIT_(NO_)?LOAD_SSL_STRINGS */
+#include "crypto/bn.h"
 #include "crypto/ctype.h"
 #include "sslerr.h"
+
+#ifdef S390X_MOD_EXP
+#include "s390x_arch.h"
+#endif
 
 static int stopped = 0;
 static uint64_t optsdone = 0;
@@ -304,6 +309,10 @@ void OPENSSL_cleanup(void)
 
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_trace_cleanup()\n");
     ossl_trace_cleanup();
+
+#ifdef S390X_MOD_EXP
+    OPENSSL_s390x_cleanup();
+#endif
 
     base_inited = 0;
 }

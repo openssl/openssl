@@ -422,11 +422,6 @@ static int keep_random_devices_open = 1;
     && defined(OPENSSL_RAND_SEED_GETRANDOM)
 static void *shm_addr;
 
-static void cleanup_shm(void)
-{
-    shmdt(shm_addr);
-}
-
 /*
  * Ensure that the system randomness source has been adequately seeded.
  * This is done by having the first start of libcrypto, wait until the device
@@ -493,8 +488,8 @@ static int wait_random_seeded(void)
              * If this call fails, it isn't a big problem.
              */
             shm_addr = shmat(shm_id, NULL, SHM_RDONLY);
-            if (shm_addr != (void *)-1)
-                OPENSSL_atexit(&cleanup_shm);
+            if (shm_addr == (void *)-1)
+                shm_addr = NULL;
         }
     }
     return seeded;
@@ -583,6 +578,14 @@ void ossl_rand_pool_cleanup(void)
 
     for (i = 0; i < OSSL_NELEM(random_devices); i++)
         close_random_device(i);
+
+#if defined(__linux) && defined(DEVRANDOM_WAIT) \
+    && defined(OPENSSL_RAND_SEED_GETRANDOM)
+    if (shm_addr != NULL) {
+        shmdt(shm_addr);
+        shm_addr = NULL;
+    }
+#endif
 }
 
 void ossl_rand_pool_keep_random_devices_open(int keep)

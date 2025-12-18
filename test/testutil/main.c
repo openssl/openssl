@@ -34,12 +34,12 @@ int main(int argc, char *argv[])
         ret = run_tests(argv[0]);
         cleanup_tests();
         opt_check_usage();
-        OPENSSL_cleanup();
     } else if (setup_res == 0) {
         opt_help(test_get_options());
     }
 end:
     ret = pulldown_test_framework(ret);
     test_close_streams();
+    OPENSSL_cleanup();
     return ret;
 }

@@ -37,6 +37,11 @@ features available in OpenSSL 4.0.
 Some functions have been removed that were deprecated in previous
 versions of OpenSSL. See L<ossl-removed-api(7)>.
 
+libcrypto no longer arms OPENSSL_cleanup() function as atexit(3) handler.
+Memory leak detectors may report there is allocated, but still reachable,
+allocated memory at application exit. If clean report is desired, then
+application must call OPENSSL_cleanup() explicitly before main() returns.
+
 =head1 OPENSSL 3.6
 
 =head2 Main Changes from OpenSSL 3.5
