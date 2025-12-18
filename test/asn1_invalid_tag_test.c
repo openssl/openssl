@@ -11,7 +11,7 @@
  * Comprehensive tests for issue #28424: Invalid non-minimal tag encodings
  *
  * Tests verify that ASN1_get_object() correctly rejects tag values < 31
- * encoded in long form, which violates ITU-T X.690 (02/2021) Sec. 8.1.2.4
+ * encoded in long form, which violates ITU-T X.690 (02/2021) Sec. 8.1.2
  */
 
 #include <stdio.h>

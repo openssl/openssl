@@ -24,7 +24,7 @@ setup("test_asn1_invalid_tag_cli");
 plan tests => 15;
 
 # Paths to test certificates
-my $invalid_cert_pem = srctop_file("test", "test_cert_28424.pem");
+my $invalid_cert_pem = srctop_file("test", "recipes", "04-test_asn1_invalid_tag_cli_data", "test_cert_28424.pem");
 
 # Create temporary valid certificate for regression testing
 my ($valid_fh, $valid_cert_pem) = tempfile(SUFFIX => '.pem', UNLINK => 1);

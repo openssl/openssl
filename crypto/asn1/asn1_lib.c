@@ -78,7 +78,7 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
         if (--max == 0)
             goto err;
         /*
-         * ITU-T X.690 (02/2021) Sec. 8.1.2.4 requires tag values encoded in
+         * ITU-T X.690 (02/2021) Sec. 8.1.2 requires tag values encoded in
          * this manner to be at least 31
          */
         if (tag < 31) {
