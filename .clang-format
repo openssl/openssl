@@ -1132,8 +1132,14 @@ TypeNames:
 # OpenSSL uses macros extensively. Tell clang-format about them.
 TypenameMacros: ['LHASH_OF', 'STACK_OF']
 StatementMacros:
+  - "BLOCK_CIPHER_aead"
   - "BLOCK_CIPHER_generic"
   - "BLOCK_CIPHER_custom"
+  - "BLOCK_CIPHER_def_cbc"
+  - "BLOCK_CIPHER_def_cfb"
+  - "BLOCK_CIPHER_def_ofb"
+  - "BLOCK_CIPHER_def_ecb"
+  - "BLOCK_CIPHER_defs"
   - "BLOCK_CIPHER_generic_pack"
   - "DECLARE_AES_EVP"
   - "DECLARE_ASN1_ALLOC_FUNCTIONS"
