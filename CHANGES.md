@@ -32,6 +32,15 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Fixed ASN.1 BER parser to correctly reject invalid non-minimal tag
+   encodings. According to ITU-T X.690 Section 8.1.2, long-form tag
+   encoding must only be used for tag numbers >= 31. The parser now
+   properly rejects long-form encodings for tag numbers < 31 with the
+   error code ASN1_R_INVALID_BER_TAG_ENCODING.
+   ([GitHub issue #28424])
+
+   *Jeffrey Kintscher*
+
  * The crypto-mdebug-backtrace configuration option has been entirely removed.
    The option has been a no-op since 1.0.2.
 
