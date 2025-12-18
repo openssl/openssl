@@ -13,7 +13,7 @@ SOURCE[../../libcrypto]=$COMMON\
         e_xcbc_d.c e_rc2.c e_cast.c e_rc5.c m_null.c \
         p_seal.c p_sign.c p_verify.c p_legacy.c \
         bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c \
-        c_allc.c c_alld.c bio_ok.c \
+        c_allc.c c_alld.c \
         evp_pkey.c evp_pbe.c p5_crpt.c p5_crpt2.c pbe_scrypt.c \
         e_aes_cbc_hmac_sha1.c e_aes_cbc_hmac_sha256.c e_rc4_hmac_md5.c \
         e_chacha20_poly1305.c \
