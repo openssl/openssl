@@ -62,7 +62,7 @@ static int _dopr(char **sbuffer, char **buffer,
 #define DP_F_NUM (1 << 3)
 /* print leading zeroes */
 #define DP_F_ZERO (1 << 4)
-/* print HEX in UPPPERcase */
+/* print HEX in UPPERcase */
 #define DP_F_UP (1 << 5)
 /* treat value as unsigned */
 #define DP_F_UNSIGNED (1 << 6)

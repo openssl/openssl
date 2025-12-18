@@ -242,7 +242,7 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
             memcpy(q++, p, sizeof(*q));
 
         /*
-         * Note that OSSL_CIPHER_PARAM_AEAD_IVLEN is a synomym for
+         * Note that OSSL_CIPHER_PARAM_AEAD_IVLEN is a synonym for
          * OSSL_CIPHER_PARAM_IVLEN so both are covered here.
          */
         p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_IVLEN);

@@ -384,7 +384,7 @@ static int builder_limit_test(void)
     }
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
-    /* Count the elements in the params arrary, expecting n */
+    /* Count the elements in the params array, expecting n */
     for (i = 0; params[i].key != NULL; i++)
         ;
     if (!TEST_int_eq(i, n))
@@ -397,7 +397,7 @@ static int builder_limit_test(void)
     if (!TEST_true(OSSL_PARAM_BLD_push_int(bld, "g", 2))
         || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
-    /* Count the elements in the params arrary, expecting 1 */
+    /* Count the elements in the params array, expecting 1 */
     for (i = 0; params[i].key != NULL; i++)
         ;
     if (!TEST_int_eq(i, 1))

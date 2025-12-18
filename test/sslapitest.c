@@ -850,7 +850,7 @@ static int test_ccs_change_cipher(void)
     size_t readbytes;
 
     /*
-     * Create a conection so we can resume and potentially (but not) use
+     * Create a connection so we can resume and potentially (but not) use
      * a different cipher in the second connection.
      */
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),

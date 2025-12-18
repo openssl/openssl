@@ -168,7 +168,7 @@ static int der_encode_sharedinfo(WPACKET *pkt, unsigned char *buf, size_t buflen
  * |cek_oidlen| The length (in bytes) of the key wrapping algorithm oid,
  * |acvp| is the optional blob of DER data representing one or more of the
  *   OtherInfo fields related to |partyu|, |partyv|, |supp_pub| and |supp_priv|.
- *   This field should noramlly be NULL. If |acvp| is non NULL then |partyu|,
+ *   This field should normally be NULL. If |acvp| is non NULL then |partyu|,
  *   |partyv|, |supp_pub| and |supp_priv| should all be NULL.
  * |acvp_len| is the |acvp| length (in bytes).
  * |partyu| is the optional public info contributed by the initiator.
@@ -236,7 +236,7 @@ x942_encode_otherinfo(size_t keylen,
         goto err;
     /*
      * Since we allocated the exact size required, the buffer should point to the
-     * start of the alllocated buffer at this point.
+     * start of the allocated buffer at this point.
      */
     if (WPACKET_get_curr(&pkt) != der_buf)
         goto err;

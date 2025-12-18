@@ -3284,9 +3284,9 @@ static int test_pkey_ctx_fail_without_provider(int tst)
 
     /*
      * We check for certain algos in the null provider.
-     * If an algo is expected to have a provider keymgmt, contructing an
+     * If an algo is expected to have a provider keymgmt, constructing an
      * EVP_PKEY_CTX is expected to fail (return NULL).
-     * Otherwise, if it's expected to have legacy support, contructing an
+     * Otherwise, if it's expected to have legacy support, constructing an
      * EVP_PKEY_CTX is expected to succeed (return non-NULL).
      */
     switch (tst) {

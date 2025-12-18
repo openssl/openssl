@@ -32,7 +32,7 @@ typedef struct {
     union {
         /*
          * These fields are never directly addressed, but their sizes are
-         * imporant so that all native types can be copied here without overrun.
+         * important so that all native types can be copied here without overrun.
          */
         ossl_intmax_t i;
         ossl_uintmax_t u;

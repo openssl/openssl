@@ -36,7 +36,7 @@ our @tests_ec = (
     {
         # The Ed448 signature algorithm will not be enabled.
         # Because of the config order, the certificate is first loaded, and
-        # then the security level is chaged. If you try this with s_server
+        # then the security level is changed. If you try this with s_server
         # the order will be reversed and it will instead fail to load the key.
         name => "SECLEVEL 5 server with ED448 key",
         server => { "CipherString" => "DEFAULT:\@SECLEVEL=5",

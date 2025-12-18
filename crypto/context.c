@@ -419,7 +419,7 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
      * The alloc call ensures there's a value there. We release the ctx->lock
      * for this, because the allocation itself may recursively call
      * ossl_lib_ctx_get_data for other indexes (never this one). The allocation
-     * will itself aquire the ctx->lock when it actually comes to store the
+     * will itself acquire the ctx->lock when it actually comes to store the
      * allocated data (see ossl_lib_ctx_generic_new() above). We call
      * ossl_crypto_alloc_ex_data_intern() here instead of CRYPTO_alloc_ex_data().
      * They do the same thing except that the latter calls CRYPTO_get_ex_data()
