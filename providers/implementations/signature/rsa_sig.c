@@ -108,7 +108,7 @@ typedef struct {
     unsigned int mgf1_md_set : 1;
     /*
      * Flags to say what are the possible next external calls in what
-     * consitutes the life cycle of an algorithm.  The relevant calls are:
+     * constitutes the life cycle of an algorithm.  The relevant calls are:
      * - init
      * - update
      * - final

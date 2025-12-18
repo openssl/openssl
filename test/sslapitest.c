@@ -12830,9 +12830,9 @@ static int check_secret_history(SSL *s)
              * write case
              * NOTE: There is an odd corner case here.  It may occur that
              * in a single iteration of the state machine, the read key is yielded
-             * prior to the write key for the same level.  This is undesireable
+             * prior to the write key for the same level.  This is undesirable
              * for quic, but it is ok, as the general implementation of every 3rd
-             * party quic stack while prefering write keys before read, allows
+             * party quic stack while preferring write keys before read, allows
              * for read before write if both keys are yielded in the same call
              * to SSL_do_handshake, as the tls adaptation code for that quic stack
              * can then cache keys until both are available, so we allow read before

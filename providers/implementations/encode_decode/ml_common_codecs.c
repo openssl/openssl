@@ -57,7 +57,7 @@ ossl_ml_common_pkcs8_fmt_order(const char *algorithm_name,
 
     /*
      * Formats are case-insensitive, separated by spaces, tabs or commas.
-     * Duplicate formats are allowed, the first occurence determines the order.
+     * Duplicate formats are allowed, the first occurrence determines the order.
      */
     do {
         if (*(fmt += strspn(fmt, sep)) == '\0')

@@ -50,7 +50,7 @@
 /*
  * Return whether a value that can only be 0 or 1 is non-zero, in constant time
  * in practice!  The return value is a mask that is all ones if true, and all
- * zeros otherwise (twos-complement arithmentic assumed for unsigned values).
+ * zeros otherwise (twos-complement arithmetic assumed for unsigned values).
  *
  * Although this is used in constant-time selects, we omit a value barrier
  * here.  Value barriers impede auto-vectorization (likely because it forces
@@ -824,7 +824,7 @@ static void scalar_mult_const(scalar *s, uint16_t a)
 }
 
 /*-
- * FIPS 203, Section 4.3, Algoritm 9: "NTT".
+ * FIPS 203, Section 4.3, Algorithm 9: "NTT".
  * In-place number theoretic transform of a given scalar.  Note that ML-KEM's
  * kPrime 3329 does not have a 512th root of unity, so this transform leaves
  * off the last iteration of the usual FFT code, with the 128 relevant roots of
@@ -857,7 +857,7 @@ static void scalar_ntt(scalar *s)
 }
 
 /*-
- * FIPS 203, Section 4.3, Algoritm 10: "NTT^(-1)".
+ * FIPS 203, Section 4.3, Algorithm 10: "NTT^(-1)".
  * In-place inverse number theoretic transform of a given scalar, with pairs of
  * entries of s->v being interpreted as elements of GF(3329^2). Just as with
  * the number theoretic transform, this leaves off the first step of the normal
@@ -914,7 +914,7 @@ static void scalar_sub(scalar *lhs, const scalar *rhs)
  * GF(3329)[X]/(X^2 - 17^(2*bitreverse(i)+1)).
  *
  * The value of 17^(2*bitreverse(i)+1) mod 3329 is stored in the precomputed
- * ModRoots table. Note that our Barrett transform only allows us to multipy
+ * ModRoots table. Note that our Barrett transform only allows us to multiply
  * two reduced numbers together, so we need some intermediate reduction steps,
  * even if an uint64_t could hold 3 multiplied numbers.
  */
