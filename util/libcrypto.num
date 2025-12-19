@@ -841,12 +841,10 @@ EVP_MD_xof                              ?	4_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_get0_md                      ?	4_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_get1_md                      ?	4_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_md                           ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
-EVP_MD_CTX_update_fn                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
-EVP_MD_CTX_set_update_fn                ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_MD_CTX_get_size_ex                  ?	4_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_get_pkey_ctx                 ?	4_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_set_pkey_ctx                 ?	4_0_0	EXIST::FUNCTION:
-EVP_MD_CTX_get0_md_data                 ?	4_0_0	EXIST::FUNCTION:
+EVP_MD_CTX_get0_md_data                 ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_0
 EVP_CIPHER_get_nid                      ?	4_0_0	EXIST::FUNCTION:
 EVP_CIPHER_get0_name                    ?	4_0_0	EXIST::FUNCTION:
 EVP_CIPHER_get0_description             ?	4_0_0	EXIST::FUNCTION:

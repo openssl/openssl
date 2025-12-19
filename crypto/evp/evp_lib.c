@@ -909,23 +909,12 @@ void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
 }
 #endif /* !defined(FIPS_MODULE) */
 
+#ifndef OPENSSL_NO_DEPRECATED_4_0
 void *EVP_MD_CTX_get0_md_data(const EVP_MD_CTX *ctx)
 {
-    return ctx->md_data;
+    return NULL;
 }
-
-int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
-    const void *data, size_t count)
-{
-    return ctx->update;
-}
-
-void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
-    int (*update)(EVP_MD_CTX *ctx,
-        const void *data, size_t count))
-{
-    ctx->update = update;
-}
+#endif
 
 void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags)
 {
