@@ -27,7 +27,7 @@ static const EVP_MD sha1_md = {
     SHA_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     EVP_ORIG_GLOBAL,
-    LEGACY_EVP_MD_METH_TABLE(SHA_CBLOCK)
+    SHA_CBLOCK
 };
 
 const EVP_MD *EVP_sha1(void)
@@ -41,7 +41,7 @@ static const EVP_MD sha224_md = {
     SHA224_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     EVP_ORIG_GLOBAL,
-    LEGACY_EVP_MD_METH_TABLE(SHA256_CBLOCK)
+    SHA256_CBLOCK
 };
 
 const EVP_MD *EVP_sha224(void)
@@ -55,7 +55,7 @@ static const EVP_MD sha256_md = {
     SHA256_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     EVP_ORIG_GLOBAL,
-    LEGACY_EVP_MD_METH_TABLE(SHA256_CBLOCK)
+    SHA256_CBLOCK
 };
 
 const EVP_MD *EVP_sha256(void)
@@ -69,7 +69,7 @@ static const EVP_MD sha512_224_md = {
     SHA224_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     EVP_ORIG_GLOBAL,
-    LEGACY_EVP_MD_METH_TABLE(SHA512_CBLOCK)
+    SHA512_CBLOCK
 };
 
 const EVP_MD *EVP_sha512_224(void)
@@ -83,7 +83,7 @@ static const EVP_MD sha512_256_md = {
     SHA256_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     EVP_ORIG_GLOBAL,
-    LEGACY_EVP_MD_METH_TABLE(SHA512_CBLOCK)
+    SHA512_CBLOCK
 };
 
 const EVP_MD *EVP_sha512_256(void)
@@ -97,7 +97,7 @@ static const EVP_MD sha384_md = {
     SHA384_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     EVP_ORIG_GLOBAL,
-    LEGACY_EVP_MD_METH_TABLE(SHA512_CBLOCK)
+    SHA512_CBLOCK
 };
 
 const EVP_MD *EVP_sha384(void)
@@ -111,7 +111,7 @@ static const EVP_MD sha512_md = {
     SHA512_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     EVP_ORIG_GLOBAL,
-    LEGACY_EVP_MD_METH_TABLE(SHA512_CBLOCK),
+    SHA512_CBLOCK
 };
 
 const EVP_MD *EVP_sha512(void)
@@ -119,31 +119,31 @@ const EVP_MD *EVP_sha512(void)
     return &sha512_md;
 }
 
-#define EVP_MD_SHA3(bitlen)                                               \
-    const EVP_MD *EVP_sha3_##bitlen(void)                                 \
-    {                                                                     \
-        static const EVP_MD sha3_##bitlen##_md = {                        \
-            NID_sha3_##bitlen,                                            \
-            NID_RSA_SHA3_##bitlen,                                        \
-            bitlen / 8,                                                   \
-            EVP_MD_FLAG_DIGALGID_ABSENT,                                  \
-            EVP_ORIG_GLOBAL,                                              \
-            LEGACY_EVP_MD_METH_TABLE((KECCAK1600_WIDTH - bitlen * 2) / 8) \
-        };                                                                \
-        return &sha3_##bitlen##_md;                                       \
+#define EVP_MD_SHA3(bitlen)                        \
+    const EVP_MD *EVP_sha3_##bitlen(void)          \
+    {                                              \
+        static const EVP_MD sha3_##bitlen##_md = { \
+            NID_sha3_##bitlen,                     \
+            NID_RSA_SHA3_##bitlen,                 \
+            bitlen / 8,                            \
+            EVP_MD_FLAG_DIGALGID_ABSENT,           \
+            EVP_ORIG_GLOBAL,                       \
+            (KECCAK1600_WIDTH - bitlen * 2) / 8    \
+        };                                         \
+        return &sha3_##bitlen##_md;                \
     }
-#define EVP_MD_SHAKE(bitlen)                                              \
-    const EVP_MD *EVP_shake##bitlen(void)                                 \
-    {                                                                     \
-        static const EVP_MD shake##bitlen##_md = {                        \
-            NID_shake##bitlen,                                            \
-            0,                                                            \
-            bitlen / 8,                                                   \
-            EVP_MD_FLAG_XOF | EVP_MD_FLAG_DIGALGID_ABSENT,                \
-            EVP_ORIG_GLOBAL,                                              \
-            LEGACY_EVP_MD_METH_TABLE((KECCAK1600_WIDTH - bitlen * 2) / 8) \
-        };                                                                \
-        return &shake##bitlen##_md;                                       \
+#define EVP_MD_SHAKE(bitlen)                               \
+    const EVP_MD *EVP_shake##bitlen(void)                  \
+    {                                                      \
+        static const EVP_MD shake##bitlen##_md = {         \
+            NID_shake##bitlen,                             \
+            0,                                             \
+            bitlen / 8,                                    \
+            EVP_MD_FLAG_XOF | EVP_MD_FLAG_DIGALGID_ABSENT, \
+            EVP_ORIG_GLOBAL,                               \
+            (KECCAK1600_WIDTH - bitlen * 2) / 8            \
+        };                                                 \
+        return &shake##bitlen##_md;                        \
     }
 
 EVP_MD_SHA3(224)
