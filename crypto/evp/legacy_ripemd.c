@@ -17,16 +17,13 @@
 #include "crypto/evp.h"
 #include "legacy_meth.h"
 
-IMPLEMENT_LEGACY_EVP_MD_METH(ripe, RIPEMD160)
-
 static const EVP_MD ripemd160_md = {
     NID_ripemd160,
     NID_ripemd160WithRSA,
     RIPEMD160_DIGEST_LENGTH,
     0,
     EVP_ORIG_GLOBAL,
-    LEGACY_EVP_MD_METH_TABLE(ripe_init, ripe_update, ripe_final, NULL,
-        RIPEMD160_CBLOCK),
+    LEGACY_EVP_MD_METH_TABLE(RIPEMD160_CBLOCK)
 };
 
 const EVP_MD *EVP_ripemd160(void)
