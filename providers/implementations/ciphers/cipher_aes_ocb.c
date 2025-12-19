@@ -450,24 +450,32 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
 
     if (p.iv != NULL) {
-        if (p.iv->data != NULL && ctx->base.ivlen > p.iv->data_size) {
+        size_t ivlen = ctx->base.ivlen;
+
+        if (p.iv->data != NULL && ivlen > p.iv->data_size)
+            ivlen = p.tag->data_size;
+
+        if (p.iv->data != NULL && ivlen == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
-        if (!OSSL_PARAM_set_octet_string_or_ptr(p.iv, ctx->base.oiv,
-                ctx->base.ivlen)) {
+        if (!OSSL_PARAM_set_octet_string_or_ptr(p.iv, ctx->base.oiv, ivlen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
     }
 
     if (p.upd_iv != NULL) {
-        if (p.upd_iv->data != NULL && ctx->base.ivlen > p.upd_iv->data_size) {
+        size_t updivlen = ctx->base.ivlen;
+
+        if (p.upd_iv->data != NULL && updivlen > p.upd_iv->data_size)
+            updivlen = p.tag->data_size;
+
+        if (p.upd_iv->data != NULL && updivlen == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
-        if (!OSSL_PARAM_set_octet_string_or_ptr(p.upd_iv, ctx->base.iv,
-                ctx->base.ivlen)) {
+        if (!OSSL_PARAM_set_octet_string_or_ptr(p.upd_iv, ctx->base.iv, updivlen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
