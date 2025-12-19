@@ -35,5 +35,5 @@
         return fn##_final(md, EVP_MD_CTX_get0_md_data(ctx));                \
     }
 
-#define LEGACY_EVP_MD_METH_TABLE(init, update, final, ctrl, blksz) \
-    init, update, final, NULL, NULL, blksz, 0, ctrl
+#define LEGACY_EVP_MD_METH_TABLE(blksz) \
+    NULL, NULL, NULL, NULL, NULL, blksz, 0, NULL
