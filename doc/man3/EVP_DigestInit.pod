@@ -19,7 +19,7 @@ EVP_MD_names_do_all, EVP_MD_get0_provider, EVP_MD_get_type,
 EVP_MD_get_pkey_type, EVP_MD_get_size, EVP_MD_get_block_size, EVP_MD_get_flags,
 EVP_MD_CTX_get0_name, EVP_MD_CTX_md, EVP_MD_CTX_get0_md, EVP_MD_CTX_get1_md,
 EVP_MD_CTX_get_type, EVP_MD_CTX_get_size_ex, EVP_MD_CTX_get_block_size,
-EVP_MD_CTX_get0_md_data, EVP_MD_CTX_update_fn, EVP_MD_CTX_set_update_fn,
+EVP_MD_CTX_get0_md_data,
 EVP_md_null,
 EVP_get_digestbyname, EVP_get_digestbynid, EVP_get_digestbyobj,
 EVP_MD_CTX_get_pkey_ctx, EVP_MD_CTX_set_pkey_ctx,
@@ -97,7 +97,6 @@ EVP_MD_CTX_type, EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_md_data
  int EVP_MD_CTX_get_size_ex(const EVP_MD_CTX *ctx);
  int EVP_MD_CTX_get_block_size(const EVP_MD_CTX *ctx);
  int EVP_MD_CTX_get_type(const EVP_MD_CTX *ctx);
- void *EVP_MD_CTX_get0_md_data(const EVP_MD_CTX *ctx);
 
  const EVP_MD *EVP_md_null(void);
 
@@ -124,7 +123,7 @@ EVP_MD_CTX_type, EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_md_data
  #define EVP_MD_CTX_block_size EVP_MD_CTX_get_block_size
  #define EVP_MD_CTX_type EVP_MD_CTX_get_type
  #define EVP_MD_CTX_pkey_ctx EVP_MD_CTX_get_pkey_ctx
- #define EVP_MD_CTX_md_data EVP_MD_CTX_get0_md_data
+
 
 The following functions have been deprecated since OpenSSL 3.0, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
@@ -132,12 +131,13 @@ see L<openssl_user_macros(7)>:
 
  const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
 
- int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
-                                              const void *data, size_t count);
+The following functions have been deprecated since OpenSSL 4.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
 
- void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
-                               int (*update)(EVP_MD_CTX *ctx,
-                                             const void *data, size_t count));
+ void *EVP_MD_CTX_get0_md_data(const EVP_MD_CTX *ctx);
+
+ #define EVP_MD_CTX_md_data EVP_MD_CTX_get0_md_data
 
 =head1 DESCRIPTION
 
@@ -437,9 +437,8 @@ returns B<NID_sha1>. This function is normally used when setting ASN1 OIDs.
 
 =item EVP_MD_CTX_get0_md_data()
 
-Return the digest method private data for the passed B<EVP_MD_CTX>. This
-function exists for legacy backward compatibility reasons and always returns
-NULL.
+This function is deprecated and exists for legacy backward compatibility reasons
+and always returns NULL.
 
 =item EVP_MD_CTX_get0_md(), EVP_MD_CTX_get1_md()
 
@@ -452,16 +451,6 @@ this function will not have its reference count incremented and therefore it
 should not be used after the EVP_MD_CTX is freed.
 EVP_MD_CTX_get1_md() is the same except the ownership is passed to the
 caller and is from the passed B<EVP_MD_CTX>.
-
-=item EVP_MD_CTX_set_update_fn()
-
-Sets the update function for I<ctx> to I<update>.
-This is the function that is called by EVP_DigestUpdate(). If not set, the
-update function from the B<EVP_MD> type specified at initialization is used.
-
-=item EVP_MD_CTX_update_fn()
-
-Returns the update function for I<ctx>.
 
 =item EVP_MD_get_flags()
 

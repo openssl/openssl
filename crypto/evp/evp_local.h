@@ -16,11 +16,9 @@ struct evp_md_ctx_st {
     const EVP_MD *reqdigest; /* The original requested digest */
     const EVP_MD *digest;
     unsigned long flags;
-    void *md_data;
+
     /* Public key context for sign/verify */
     EVP_PKEY_CTX *pctx;
-    /* Update function: usually copied from EVP_MD */
-    int (*update)(EVP_MD_CTX *ctx, const void *data, size_t count);
 
     /*
      * Opaque ctx returned from a providers digest algorithm implementation
