@@ -32,6 +32,10 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Added "ExternalMu-ML-DSA" digest algorithm for ML-DSA and HashML-DSA.
+
+   *Shane Lontis*
+
  * The crypto-mdebug-backtrace configuration option has been entirely removed.
    The option has been a no-op since 1.0.2.
 
