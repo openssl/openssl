@@ -713,6 +713,12 @@ static const unsigned char drbg_ctr_aes128_pr_df_expected[] = {
     0x23, 0xc5, 0x1f, 0x68
 };
 
+static const self_test_id_t drbg_ctr_depends_on[] = {
+    ST_ID_CIPHER_AES_128_ECB,
+    ST_ID_CIPHER_AES_256_GCM,
+    ST_ID_MAX
+};
+
 /*
  * HMAC_DRBG.rsp
  *
@@ -3306,6 +3312,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
             ITM_BUF(drbg_ctr_aes128_pr_df_addin0),
             ITM_BUF(drbg_ctr_aes128_pr_df_addin1),
         },
+        .depends_on = drbg_ctr_depends_on,
     },
     {
         ST_ID_DRBG_HMAC,
