@@ -220,8 +220,7 @@ int ossl_ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
         if ((p.tag->data == NULL && !OSSL_PARAM_set_octet_string_or_ptr(p.tag, ctx->buf, taglen))
-            || (p.tag->data != NULL && (p.tag->data_type != OSSL_PARAM_OCTET_STRING
-                                        || !ctx->hw->gettag(ctx, p.tag->data, taglen)))) {
+            || (p.tag->data != NULL && (p.tag->data_type != OSSL_PARAM_OCTET_STRING || !ctx->hw->gettag(ctx, p.tag->data, taglen)))) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
