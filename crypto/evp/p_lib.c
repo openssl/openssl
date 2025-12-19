@@ -1921,14 +1921,10 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
 
         if (!CRYPTO_THREAD_write_lock(pk->lock))
             goto end;
-        if (pk->ameth->dirty_cnt(pk) != pk->dirty_cnt_copy
-            && !evp_keymgmt_util_clear_operation_cache(pk)) {
-            CRYPTO_THREAD_unlock(pk->lock);
-            evp_keymgmt_freedata(tmp_keymgmt, keydata);
-            keydata = NULL;
-            EVP_KEYMGMT_free(tmp_keymgmt);
-            goto end;
-        }
+
+        if (pk->ameth->dirty_cnt(pk) != pk->dirty_cnt_copy)
+            evp_keymgmt_util_clear_operation_cache(pk);
+
         EVP_KEYMGMT_free(tmp_keymgmt); /* refcnt-- */
 
         /* Check to make sure some other thread didn't get there first */
