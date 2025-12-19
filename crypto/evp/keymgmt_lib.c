@@ -219,14 +219,13 @@ static void op_cache_free(OP_CACHE_ELEM *e)
     OPENSSL_free(e);
 }
 
-int evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk)
+void evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk)
 {
-    if (pk != NULL) {
-        sk_OP_CACHE_ELEM_pop_free(pk->operation_cache, op_cache_free);
-        pk->operation_cache = NULL;
-    }
+    if (pk == NULL)
+        return;
 
-    return 1;
+    sk_OP_CACHE_ELEM_pop_free(pk->operation_cache, op_cache_free);
+    pk->operation_cache = NULL;
 }
 
 OP_CACHE_ELEM *evp_keymgmt_util_find_operation_cache(EVP_PKEY *pk,
