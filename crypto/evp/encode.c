@@ -685,16 +685,16 @@ static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
 
     switch (eof) {
     case 2:
-        *(t++) = (unsigned char)(l >> 16L) & 0xff;
+        *t = (unsigned char)(l >> 16L) & 0xff;
         break;
     case 1:
         *(t++) = (unsigned char)(l >> 16L) & 0xff;
-        *(t++) = (unsigned char)(l >> 8L) & 0xff;
+        *t = (unsigned char)(l >> 8L) & 0xff;
         break;
     case 0:
         *(t++) = (unsigned char)(l >> 16L) & 0xff;
         *(t++) = (unsigned char)(l >> 8L) & 0xff;
-        *(t++) = (unsigned char)(l) & 0xff;
+        *t = (unsigned char)(l) & 0xff;
         break;
     }
     ret += 3 - eof;
