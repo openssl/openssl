@@ -473,13 +473,7 @@ EVP_MD *EVP_MD_CTX_get1_md(EVP_MD_CTX *ctx);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
-OSSL_DEPRECATEDIN_3_0
-int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
-    const void *data, size_t count);
-OSSL_DEPRECATEDIN_3_0
-void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
-    int (*update)(EVP_MD_CTX *ctx,
-        const void *data, size_t count));
+
 #endif
 int EVP_MD_CTX_get_size_ex(const EVP_MD_CTX *ctx);
 
@@ -493,8 +487,11 @@ int EVP_MD_CTX_get_size_ex(const EVP_MD_CTX *ctx);
 EVP_PKEY_CTX *EVP_MD_CTX_get_pkey_ctx(const EVP_MD_CTX *ctx);
 #define EVP_MD_CTX_pkey_ctx EVP_MD_CTX_get_pkey_ctx
 void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx);
+#ifndef OPENSSL_NO_DEPRECATED_4_0
+OSSL_DEPRECATEDIN_4_0
 void *EVP_MD_CTX_get0_md_data(const EVP_MD_CTX *ctx);
 #define EVP_MD_CTX_md_data EVP_MD_CTX_get0_md_data
+#endif
 
 int EVP_CIPHER_get_nid(const EVP_CIPHER *cipher);
 #define EVP_CIPHER_nid EVP_CIPHER_get_nid

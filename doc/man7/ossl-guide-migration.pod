@@ -37,10 +37,24 @@ features available in OpenSSL 4.0.
 Some functions have been removed that were deprecated in previous
 versions of OpenSSL. See L<ossl-removed-api(7)>.
 
+=head2 Upgrading from OpenSSL 3.x
+
+=head3 Removal of atexit() usage
+
 libcrypto no longer arms OPENSSL_cleanup() function as atexit(3) handler.
 Memory leak detectors may report there is allocated, but still reachable,
 allocated memory at application exit. If clean report is desired, then
 application must call OPENSSL_cleanup() explicitly before main() returns.
+
+=head3 Deprecation of EVP_MD_CTX_get0_md_data()
+
+The function EVP_MD_CTX_get0_md_data() has been deprecated in 4.0. This function
+is only useful in previous versions to obtain the data stored in an
+B<EVP_MD_CTX> by a custom EVP_MD implementation. However, the ability to create
+custom EVP_MD implementations has been removed in OpenSSL 4.0, so this function
+is no longer useful. It always returns NULL, so should simply be removed from
+applications that call it. Applications wishing to use a custom digest
+implementation should instead use the provider API.
 
 =head1 OPENSSL 3.6
 
