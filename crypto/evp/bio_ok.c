@@ -440,7 +440,10 @@ static int sig_out(BIO *b)
     md = ctx->md;
     digest = EVP_MD_CTX_get0_md(md);
     md_size = EVP_MD_get_size(digest);
-    md_data = EVP_MD_CTX_get0_md_data(md);
+    md_data = NULL;
+    /* This makes no sense. See #29445*/
+    if (md_data == NULL)
+        goto berr;
 
     if (md_size <= 0)
         goto berr;
@@ -488,7 +491,10 @@ static int sig_in(BIO *b)
     digest = EVP_MD_CTX_get0_md(md);
     if ((md_size = EVP_MD_get_size(digest)) <= 0)
         goto berr;
-    md_data = EVP_MD_CTX_get0_md_data(md);
+    md_data = NULL;
+    /* This makes no sense. See #29445 */
+    if (md_data == NULL)
+        goto berr;
 
     if ((int)(ctx->buf_len - ctx->buf_off) < 2 * md_size)
         return 1;

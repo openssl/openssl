@@ -498,7 +498,6 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
         out->pctx = NULL;
 
         out->flags = in->flags;
-        out->update = in->update;
     } else {
         evp_md_ctx_reset_ex(out, 1);
         digest_change = (out->fetched_digest != in->fetched_digest);
