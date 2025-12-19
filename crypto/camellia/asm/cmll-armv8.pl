@@ -144,26 +144,39 @@ ___
 $code.=<<___;
 
     /* P-function */
-    tbl     $v_t1.16b,{$v_t4.16b},$inv_shift_row.16b
-    tbl     $v_x.16b,{$v_x.16b},$sp0044.16b
+    tbl     $v_t0.16b,{$v_t4.16b},$sp0222.16b
+    tbl     $v_t1.16b,{$v_t4.16b},$sp3033.16b
     tbl     $v_t4.16b,{$v_t4.16b},$sp1110.16b
-    add     $v_t2.16b,$v_t1.16b,$v_t1.16b
-    ushr    $v_t0.16b,$v_t1.16b,#7
+    tbl     $v_x.16b,{$v_x.16b},$sp0044.16b
+    // s2 = s1 <<< 1 (Rotate Left 1)
+    shl     $v_t2.16b,$v_t0.16b,#1
+    sri     $v_t2.16b,$v_t0.16b,#7
+    // s3 = s1 >>> 1 (Rotate Left 7)
     shl     $v_t3.16b,$v_t1.16b,#7
-    orr     $v_t0.16b,$v_t0.16b,$v_t2.16b
-    ushr    $v_t1.16b,$v_t1.16b,#1
-    tbl     $v_t0.16b,{$v_t0.16b},$sp0222.16b
-    orr     $v_t1.16b,$v_t1.16b,$v_t3.16b
+    sri     $v_t3.16b,$v_t1.16b,#1
+
+    //tbl     $v_t1.16b,{$v_t4.16b},$inv_shift_row.16b
+    //tbl     $v_x.16b,{$v_x.16b},$sp0044.16b
+    //tbl     $v_t4.16b,{$v_t4.16b},$sp1110.16b
+    //add     $v_t2.16b,$v_t1.16b,$v_t1.16b
+    //ushr    $v_t0.16b,$v_t1.16b,#7
+    //shl     $v_t3.16b,$v_t1.16b,#7
+    //orr     $v_t0.16b,$v_t0.16b,$v_t2.16b
+    //ushr    $v_t1.16b,$v_t1.16b,#1
+    //tbl     $v_t0.16b,{$v_t0.16b},$sp0222.16b
+    //orr     $v_t1.16b,$v_t1.16b,$v_t3.16b
+
+    eor     $v_t4.16b,$v_x.16b,$v_t4.16b
+    eor     $v_t2.16b,$v_t3.16b,$v_t2.16b
+    eor     $v_t0.16b,$v_t4.16b,$v_t2.16b
+    //tbl     $v_t1.16b,{$v_t1.16b},$sp3033.16b
+    //eor     $v_t0.16b,$v_t0.16b,$v_t4.16b
+    //eor     $v_t0.16b,$v_t0.16b,$v_t1.16b
 
     /* pre-load round subkey (the value already passed in a GPR) */
     fmov    d8,$key     // referring to v_t2 (v8)
 
     /* ...continue calculating P-function */
-    eor     $v_t4.16b,$v_x.16b,$v_t4.16b
-    tbl     $v_t1.16b,{$v_t1.16b},$sp3033.16b
-    eor     $v_t0.16b,$v_t0.16b,$v_t4.16b
-    eor     $v_t0.16b,$v_t0.16b,$v_t1.16b
-
     ext     $v_x.16b,$v_t0.16b,$v_zero.16b,#8
     eor     $v_x.16b,$v_t0.16b,$v_x.16b
 
@@ -706,11 +719,15 @@ camellia_neon_consts:
 	.byte 0xff, 0x04, 0x04, 0x04, 0xff, 0x04, 0x04, 0x04
 	.byte 0xff, 0x07, 0x07, 0x07, 0x07, 0xff, 0xff, 0x07
 .Lsp2mask_swap32:
-	.byte 0x06, 0x06, 0x06, 0xff, 0x06, 0x06, 0x06, 0xff
-	.byte 0x0c, 0x0c, 0x0c, 0xff, 0xff, 0xff, 0x0c, 0x0c
+//	.byte 0x06, 0x06, 0x06, 0xff, 0x06, 0x06, 0x06, 0xff
+//	.byte 0x0c, 0x0c, 0x0c, 0xff, 0xff, 0xff, 0x0c, 0x0c
+    .byte 0x0b, 0x0b, 0x0b, 0xff, 0x0b, 0x0b, 0x0b, 0xff
+    .byte 0x0a, 0x0a, 0x0a, 0xff, 0xff, 0xff, 0x0a, 0x0a
 .Lsp3mask_swap32:
-	.byte 0x04, 0x04, 0xff, 0x04, 0x04, 0x04, 0xff, 0x04
-	.byte 0x0a, 0x0a, 0xff, 0x0a, 0xff, 0x0a, 0x0a, 0xff
+//	.byte 0x04, 0x04, 0xff, 0x04, 0x04, 0x04, 0xff, 0x04
+//	.byte 0x0a, 0x0a, 0xff, 0x0a, 0xff, 0x0a, 0x0a, 0xff
+    .byte 0x0e, 0x0e, 0xff, 0x0e, 0x0e, 0x0e, 0xff, 0x0e
+    .byte 0x0d, 0x0d, 0xff, 0x0d, 0xff, 0x0d, 0x0d, 0xff
 // === Sigmas for key setup ===
 .Lsigma1:
 	.long 0x3BCC908B, 0xA09E667F;
