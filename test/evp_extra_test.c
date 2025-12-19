@@ -4224,11 +4224,11 @@ static int test_evp_cipher_parameter_sizes(void)
         ivlen = OSSL_PARAM_UNMODIFIED;
 
         params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_IV,
-                                                      NULL, 0);
+            NULL, 0);
         params[1] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV,
-                                                      NULL, 0);
+            NULL, 0);
         params[2] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-                                                      NULL, 0);
+            NULL, 0);
         params[3] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &ivlen);
         params[4] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN, &taglen);
         params[5] = OSSL_PARAM_construct_end();
@@ -4239,7 +4239,7 @@ static int test_evp_cipher_parameter_sizes(void)
         if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, t->cipher_name, "")))
             goto next_iteration;
 
-        if(!TEST_true(EVP_CipherInit_ex2(ctx, cipher, NULL, NULL, 1, NULL))
+        if (!TEST_true(EVP_CipherInit_ex2(ctx, cipher, NULL, NULL, 1, NULL))
             || !TEST_true(EVP_CIPHER_CTX_get_params(ctx, params))
             || !TEST_size_t_eq(params[0].return_size, t->ivlen)
             || !TEST_size_t_eq(params[1].return_size, t->updatedivlen)
@@ -4250,7 +4250,7 @@ static int test_evp_cipher_parameter_sizes(void)
             goto err;
         }
 
-next_iteration:
+    next_iteration:
         EVP_CIPHER_CTX_free(ctx);
         ctx = NULL;
         EVP_CIPHER_free(cipher);
@@ -4264,7 +4264,6 @@ err:
     EVP_CIPHER_free(cipher);
     return 0;
 }
-
 
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 static int test_decrypt_null_chunks(void)
@@ -5991,7 +5990,7 @@ static int aes_gcm_encrypt(const unsigned char *gcm_key, size_t gcm_key_s,
         || !TEST_size_t_eq(params[2].return_size, sizeof(outtag)))
         goto err;
 
-        ret = 1;
+    ret = 1;
 err:
     EVP_CIPHER_free(cipher);
     EVP_CIPHER_CTX_free(ctx);
@@ -6083,11 +6082,11 @@ static int test_aes_gcm_ivlen_change_cve_2023_5363(void)
     };
 
     if (!TEST_true(aes_gcm_encrypt(gcm_key, sizeof(gcm_key), gcm_iv, sizeof(gcm_iv),
-                                   gcm_pt, sizeof(gcm_pt), NULL, 0,
-                                   gcm_ct, sizeof(gcm_ct), gcm_tag, sizeof(gcm_tag)))
+            gcm_pt, sizeof(gcm_pt), NULL, 0,
+            gcm_ct, sizeof(gcm_ct), gcm_tag, sizeof(gcm_tag)))
         || !TEST_true(aes_gcm_decrypt(gcm_key, sizeof(gcm_key), gcm_iv, sizeof(gcm_iv),
-                                     gcm_pt, sizeof(gcm_pt), NULL, 0,
-                                     gcm_ct, sizeof(gcm_ct), gcm_tag, sizeof(gcm_tag))))
+            gcm_pt, sizeof(gcm_pt), NULL, 0,
+            gcm_ct, sizeof(gcm_ct), gcm_tag, sizeof(gcm_tag))))
         return 0;
 
     return 1;
