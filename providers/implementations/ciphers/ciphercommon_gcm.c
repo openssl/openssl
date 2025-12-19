@@ -213,8 +213,7 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
 
     if (p.tag != NULL) {
-        size_t taglen = (ctx->taglen != UNINITIALISED_SIZET) ? ctx->taglen :
-                        GCM_TAG_MAX_SIZE;
+        size_t taglen = (ctx->taglen != UNINITIALISED_SIZET) ? ctx->taglen : GCM_TAG_MAX_SIZE;
 
         if (p.tag->data != NULL && taglen > p.tag->data_size)
             taglen = p.tag->data_size;
