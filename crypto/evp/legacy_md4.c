@@ -23,7 +23,7 @@ static const EVP_MD md4_md = {
     MD4_DIGEST_LENGTH,
     0,
     EVP_ORIG_GLOBAL,
-    LEGACY_EVP_MD_METH_TABLE(MD4_CBLOCK),
+    MD4_CBLOCK
 };
 
 const EVP_MD *EVP_md4(void)

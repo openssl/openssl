@@ -21,21 +21,6 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-static void cleanup_old_md_data(EVP_MD_CTX *ctx, int force)
-{
-    if (ctx->digest != NULL) {
-        if (ctx->digest->cleanup != NULL
-            && !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_CLEANED))
-            ctx->digest->cleanup(ctx);
-        if (ctx->md_data != NULL && ctx->digest->ctx_size > 0
-            && (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE)
-                || force)) {
-            OPENSSL_clear_free(ctx->md_data, ctx->digest->ctx_size);
-            ctx->md_data = NULL;
-        }
-    }
-}
-
 void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force, int keep_fetched)
 {
     if (ctx->algctx != NULL) {
@@ -51,7 +36,6 @@ void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force, int keep_fetched)
      * Don't assume ctx->md_data was cleaned in EVP_Digest_Final, because
      * sometimes only copies of the context are ever finalised.
      */
-    cleanup_old_md_data(ctx, force);
     if (force)
         ctx->digest = NULL;
 
@@ -177,8 +161,6 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
         }
         type = ctx->digest;
     }
-
-    cleanup_old_md_data(ctx, 1);
 
     if (ossl_likely(ctx->digest == type)) {
         if (ossl_unlikely(!ossl_assert(type->prov != NULL))) {
@@ -322,8 +304,10 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
     if (ossl_unlikely(sz < 0))
         return 0;
     mdsize = sz;
-    if (ossl_unlikely(ctx->digest->prov == NULL))
-        goto legacy;
+    if (ossl_unlikely(ctx->digest->prov == NULL)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
+        return 0;
+    }
 
     if (ossl_unlikely(ctx->digest->dfinal == NULL)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
@@ -349,19 +333,6 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
     }
 
     return ret;
-
-    /* Code below to be removed when legacy support is dropped. */
-legacy:
-    OPENSSL_assert(mdsize <= EVP_MAX_MD_SIZE);
-    ret = ctx->digest->final(ctx, md);
-    if (isize != NULL)
-        *isize = (unsigned int)mdsize;
-    if (ctx->digest->cleanup) {
-        ctx->digest->cleanup(ctx);
-        EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
-    }
-    OPENSSL_cleanse(ctx->md_data, ctx->digest->ctx_size);
-    return ret;
 }
 
 /* This is a one shot operation */
@@ -376,8 +347,10 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
         return 0;
     }
 
-    if (ossl_unlikely(ctx->digest->prov == NULL))
-        goto legacy;
+    if (ossl_unlikely(ctx->digest->prov == NULL)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
+        return 0;
+    }
 
     if (ossl_unlikely(ctx->digest->dfinal == NULL)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
@@ -401,22 +374,6 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
         ret = ctx->digest->dfinal(ctx->algctx, md, &size, size);
 
     ctx->flags |= EVP_MD_CTX_FLAG_FINALISED;
-
-    return ret;
-
-legacy:
-    if (EVP_MD_xof(ctx->digest)
-        && size <= INT_MAX
-        && ctx->digest->md_ctrl(ctx, EVP_MD_CTRL_XOF_LEN, (int)size, NULL)) {
-        ret = ctx->digest->final(ctx, md);
-        if (ctx->digest->cleanup != NULL) {
-            ctx->digest->cleanup(ctx);
-            EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
-        }
-        OPENSSL_cleanse(ctx->md_data, ctx->digest->ctx_size);
-    } else {
-        ERR_raise(ERR_LIB_EVP, EVP_R_NOT_XOF_OR_INVALID_LENGTH);
-    }
 
     return ret;
 }
@@ -539,7 +496,6 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 
         EVP_PKEY_CTX_free(out->pctx);
         out->pctx = NULL;
-        cleanup_old_md_data(out, 0);
 
         out->flags = in->flags;
         out->update = in->update;
@@ -761,8 +717,10 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
         return 0;
     }
 
-    if (ctx->digest != NULL && ctx->digest->prov == NULL)
-        goto legacy;
+    if (ctx->digest != NULL && ctx->digest->prov == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_CTRL_NOT_IMPLEMENTED);
+        return 0;
+    }
 
     switch (cmd) {
     case EVP_MD_CTRL_XOF_LEN:
@@ -786,16 +744,7 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
         ret = EVP_MD_CTX_set_params(ctx, params);
     else
         ret = EVP_MD_CTX_get_params(ctx, params);
-    goto conclude;
 
-    /* Code below to be removed when legacy support is dropped. */
-legacy:
-    if (ctx->digest->md_ctrl == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_CTRL_NOT_IMPLEMENTED);
-        return 0;
-    }
-
-    ret = ctx->digest->md_ctrl(ctx, cmd, p1, p2);
 conclude:
     if (ret <= 0)
         return 0;
