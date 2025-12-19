@@ -4,19 +4,21 @@
 
 OPENSSL_INIT_new, OPENSSL_INIT_set_config_filename,
 OPENSSL_INIT_set_config_appname, OPENSSL_INIT_set_config_file_flags,
-OPENSSL_INIT_free, OPENSSL_init_crypto, OPENSSL_cleanup, OPENSSL_atexit,
-OPENSSL_thread_stop_ex, OPENSSL_thread_stop - OpenSSL initialisation
+OPENSSL_INIT_free, OPENSSL_init_crypto, OPENSSL_cleanup, OPENSSL_cleanup_ex, OPENSSL_atexit,
+OPENSSL_add_library_user, OPENSSL_thread_stop_ex, OPENSSL_thread_stop - OpenSSL initialisation
 and deinitialisation functions
 
 =head1 SYNOPSIS
 
  #include <openssl/crypto.h>
 
- void OPENSSL_cleanup(void);
+ void OPENSSL_cleanup();
+ void OPENSSL_cleanup_ex();
  int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
  int OPENSSL_atexit(void (*handler)(void));
  void OPENSSL_thread_stop_ex(OSSL_LIB_CTX *ctx);
  void OPENSSL_thread_stop(void);
+ int OPENSSL_add_library_user();
 
  OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void);
  int OPENSSL_INIT_set_config_filename(OPENSSL_INIT_SETTINGS *init,
@@ -136,19 +138,31 @@ OPENSSL_init_crypto(). For example:
  OPENSSL_init_crypto(OPENSSL_INIT_NO_ADD_ALL_CIPHERS
                      | OPENSSL_INIT_NO_ADD_ALL_DIGESTS, NULL);
 
-The OPENSSL_cleanup() function deinitialises OpenSSL (both libcrypto
-and libssl). All resources allocated by OpenSSL are freed. Typically there
-should be no need to call this function directly as it is initiated
-automatically on application exit. This is done via the standard C library
-atexit() function. In the event that the application will close in a manner
-that will not call the registered atexit() handlers then the application should
-call OPENSSL_cleanup() directly. Developers of libraries using OpenSSL
-are discouraged from calling this function and should instead, typically, rely
-on auto-deinitialisation. This is to avoid error conditions where both an
-application and a library it depends on both use OpenSSL, and the library
-deinitialises it before the application has finished using it.
+The OPENSSL_add_library_user() call is used to increase the reference count on
+libcrypto as a whole.  Each call to OPENSSL_add_library_user must be paired with
+a call to OPENSSL_cleanup_ex(), which drops the library reference count.  Only
+after reaching a reference count of 0 will library resources actually be
+released.  Failure to balance these calls properly will result in memory leaks
+(in the event that OPENSSL_add_library_user() is called more often than
+OPENSSL_cleanup()), or in undefined behavior resulting from using the library
+while it is uninitialized (in the event OPENSSL_cleanup_ex() is called more often
+than OPENSSL_add_library_user()).
 
-Once OPENSSL_cleanup() has been called the library cannot be reinitialised.
+The OPENSSL_cleanup() function deinitialises OpenSSL (both libcrypto
+and libssl). All resources allocated by OpenSSL are freed.  Note that
+OPENSSL_cleanup() in favor of OPENSSL_cleanup_ex which must be paired with a
+call to OPENSSL_add_library_user().  OPENSSL_cleanup() can still be used by
+legacy applications, but will perform no operation if any other software
+component has use the OPENSSL_add_library_user() call.  This ensures that,
+should other software components use the new library reference counting
+mechanism available via OPENSSL_add_library_user() and OPENSSL_cleanup_ex(),
+that calls to OPENSSL_cleanup() do not free library resources prematurely.
+However, this change in behavior may lead to memory leaks if all software
+components in a process do not update to the new mechanism.  See
+L<ossl-guide-migration(7)> for more details.
+
+Once OPENSSL_cleanup() has been called, Or once OPENSSL_cleanup_ex() has been
+called and the library reference count reaches 0, the library cannot be reinitialised.
 Attempts to call OPENSSL_init_crypto() will fail and an ERR_R_INIT_FAIL error
 will be added to the error stack. Note that because initialisation has failed
 OpenSSL error strings will not be available, only an error code. This code can
@@ -231,6 +245,10 @@ L<OPENSSL_init_ssl(3)>
 The OPENSSL_init_crypto(), OPENSSL_cleanup(), OPENSSL_atexit(),
 OPENSSL_thread_stop(), OPENSSL_INIT_new(), OPENSSL_INIT_set_config_appname()
 and OPENSSL_INIT_free() functions were added in OpenSSL 1.1.0.
+
+The OPENSSL_add_library_user() and OPENSSL_cleanup_ex() calls was added in OpenSSL 4.0.0.
+
+The OPENSSL_cleanup() function was deprecated in OpenSSL 4.0.0.
 
 B<OPENSSL_INIT_ENGINE_RDRAND>, B<OPENSSL_INIT_ENGINE_DYNAMIC>,
 B<OPENSSL_INIT_ENGINE_OPENSSL>, B<OPENSSL_INIT_ENGINE_CRYPTODEV>,
