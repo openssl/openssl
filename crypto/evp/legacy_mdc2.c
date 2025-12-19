@@ -23,7 +23,7 @@ static const EVP_MD mdc2_md = {
     MDC2_DIGEST_LENGTH,
     0,
     EVP_ORIG_GLOBAL,
-    LEGACY_EVP_MD_METH_TABLE(MDC2_BLOCK),
+    MDC2_BLOCK
 };
 
 const EVP_MD *EVP_mdc2(void)

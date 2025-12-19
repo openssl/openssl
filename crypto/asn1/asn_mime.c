@@ -157,7 +157,6 @@ static ASN1_VALUE *b64_read_asn1(BIO *bio, const ASN1_ITEM *it, ASN1_VALUE **x,
 
 static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
 {
-    const EVP_MD *md;
     int i, have_unknown = 0, write_comma, ret = 0, md_nid;
     have_unknown = 0;
     write_comma = 0;
@@ -179,21 +178,6 @@ static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
             continue;
         }
 
-        md = EVP_get_digestbynid(md_nid);
-        if (md && md->md_ctrl) {
-            int rv;
-            char *micstr;
-            rv = md->md_ctrl(NULL, EVP_MD_CTRL_MICALG, 0, &micstr);
-            if (rv > 0) {
-                rv = BIO_puts(out, micstr);
-                OPENSSL_free(micstr);
-                if (rv < 0)
-                    goto err;
-                continue;
-            }
-            if (rv != -2)
-                goto err;
-        }
         switch (md_nid) {
         case NID_sha1:
             if (BIO_puts(out, "sha1") < 0)

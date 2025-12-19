@@ -18,7 +18,7 @@ static const EVP_MD sm3_md = {
     SM3_DIGEST_LENGTH,
     0,
     EVP_ORIG_GLOBAL,
-    LEGACY_EVP_MD_METH_TABLE(SM3_CBLOCK)
+    SM3_CBLOCK
 };
 
 const EVP_MD *EVP_sm3(void)

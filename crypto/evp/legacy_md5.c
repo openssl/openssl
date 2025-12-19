@@ -23,7 +23,7 @@ static const EVP_MD md5_md = {
     MD5_DIGEST_LENGTH,
     0,
     EVP_ORIG_GLOBAL,
-    LEGACY_EVP_MD_METH_TABLE(MD5_CBLOCK)
+    MD5_CBLOCK
 };
 
 const EVP_MD *EVP_md5(void)
