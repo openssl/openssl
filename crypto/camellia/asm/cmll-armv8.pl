@@ -120,7 +120,7 @@ $xt2 = "x8"; # Temp 3
 #   Lower 64 bits of v_x contain the result.
 #
 sub f_aese(){
-    my ($v_ab, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key) = @_;
+    my ($v_ab, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033) = @_;
 $code.=<<___;
 
 	/*
@@ -173,15 +173,9 @@ $code.=<<___;
     //eor     $v_t0.16b,$v_t0.16b,$v_t4.16b
     //eor     $v_t0.16b,$v_t0.16b,$v_t1.16b
 
-    /* pre-load round subkey (the value already passed in a GPR) */
-    fmov    d8,$key     // referring to v_t2 (v8)
-
     /* ...continue calculating P-function */
     ext     $v_x.16b,$v_t0.16b,$v_zero.16b,#8
     eor     $v_x.16b,$v_t0.16b,$v_x.16b
-
-    /* xor result with the round subkey */
-    eor     $v_x.16b,$v_x.16b,$v_t2.16b    // xor result with subkey
 ___
 }
 
@@ -202,8 +196,8 @@ ___
 }
 
 sub roundsm_aese(){
-    my ($v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key) = @_;
-    &f_aese($v_ab, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
+    my ($v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033) = @_;
+    &f_aese($v_ab, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033);
 $code.=<<___;
     eor     $v_cd.16b,$v_cd.16b,$v_x.16b
 ___
@@ -336,11 +330,20 @@ $code.=<<___;
 ___
 }
 
+sub add_key(){
+    my ($subkey_idx, $cd) = @_;
+    my $subkey_offset = $subkey_idx * 8;
+$code.=<<___;
+    ldr     d8,[x0,#$subkey_offset]
+    eor     $cd.16b,$cd.16b,v8.16b
+___
+}
+
 sub load_key(){
     my ($subkey_idx, $key) = @_;
     my $subkey_offset = $subkey_idx * 8;
 $code.=<<___;
-    ldr     $key,[x0,#$subkey_offset]   // TODO: check this first
+    ldr     $key,[x0,#$subkey_offset]
 ___
 }
 
@@ -356,14 +359,14 @@ ___
 
 sub roundsm_aese_ab_to_cd(){
     my ($subkey_idx, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key) = @_;
-    &load_key($subkey_idx, $key);
-    &roundsm_aese($v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key)
+    &add_key($subkey_idx, $v_cd);
+    &roundsm_aese($v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033)
 }
 
 sub roundsm_aese_cd_to_ab(){
     my ($subkey_idx, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key) = @_;
-    &load_key($subkey_idx, $key);
-    &roundsm_aese($v_cd, $v_ab, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key)
+    &add_key($subkey_idx, $v_ab);
+    &roundsm_aese($v_cd, $v_ab, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033)
 }
 
 sub roundsm_ab_to_cd(){
