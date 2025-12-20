@@ -783,7 +783,7 @@ static int setup_connection(char *hostname, char *port,
      * Virtually all clients should do this unless you really know what you
      * are doing.
      */
-    if (!SSL_set1_host(*ssl, hostname)) {
+    if (!SSL_set1_dnsname(*ssl, hostname)) {
         fprintf(stderr, "Failed to set the certificate verification hostname");
         goto end;
     }
