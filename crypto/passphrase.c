@@ -310,6 +310,7 @@ static int ossl_pw_get_password(char *buf, int size, int rwflag,
     size_t password_len = 0;
     OSSL_PARAM params[] = {
         OSSL_PARAM_utf8_string(OSSL_PASSPHRASE_PARAM_INFO, NULL, 0),
+        OSSL_PARAM_uint(OSSL_PASSPHRASE_PARAM_MIN_LENGTH, NULL),
         OSSL_PARAM_END
     };
 
