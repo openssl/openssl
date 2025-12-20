@@ -116,7 +116,7 @@ static ASN1_TYPE *generate_v3(const char *str, X509V3_CTX *cnf, int depth,
 
     asn1_tags.imp_tag = -1;
     asn1_tags.imp_class = -1;
-    asn1_tags.format = ASN1_GEN_FORMAT_ASCII;
+    asn1_tags.format = ASN1_GEN_FORMAT_UTF8;
     asn1_tags.exp_count = 0;
     if (CONF_parse_list(str, ',', 1, asn1_cb, &asn1_tags) != 0) {
         *perr = ASN1_R_UNKNOWN_TAG;
