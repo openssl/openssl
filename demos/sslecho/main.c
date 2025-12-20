@@ -309,7 +309,7 @@ int main(int argc, char **argv)
         /* Set hostname for SNI */
         SSL_set_tlsext_host_name(ssl, rem_server_ip);
         /* Configure server hostname check */
-        if (!SSL_set1_host(ssl, rem_server_ip)) {
+        if (!SSL_set1_dnsname(ssl, rem_server_ip)) {
             ERR_print_errors_fp(stderr);
             goto exit;
         }

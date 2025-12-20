@@ -264,8 +264,12 @@ SSL_CTX_set_purpose                     ?	4_0_0	EXIST::FUNCTION:
 SSL_set_purpose                         ?	4_0_0	EXIST::FUNCTION:
 SSL_CTX_set_trust                       ?	4_0_0	EXIST::FUNCTION:
 SSL_set_trust                           ?	4_0_0	EXIST::FUNCTION:
-SSL_set1_host                           ?	4_0_0	EXIST::FUNCTION:
-SSL_add1_host                           ?	4_0_0	EXIST::FUNCTION:
+SSL_set1_host                           ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_0
+SSL_add1_host                           ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_0
+SSL_set1_dnsname                        ?	4_0_0	EXIST::FUNCTION:
+SSL_add1_dnsname                        ?	4_0_0	EXIST::FUNCTION:
+SSL_set1_ipaddr                         ?	4_0_0	EXIST::FUNCTION:
+SSL_add1_ipaddr                         ?	4_0_0	EXIST::FUNCTION:
 SSL_get0_peername                       ?	4_0_0	EXIST::FUNCTION:
 SSL_set_hostflags                       ?	4_0_0	EXIST::FUNCTION:
 SSL_CTX_dane_enable                     ?	4_0_0	EXIST::FUNCTION:

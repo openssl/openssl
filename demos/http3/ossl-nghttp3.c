@@ -429,7 +429,7 @@ OSSL_DEMO_H3_CONN *OSSL_DEMO_H3_CONN_new_for_addr(SSL_CTX *ctx, const BIO_ADDRIN
     qconn_bio = NULL;
 
     /* Set the hostname we will validate the X.509 certificate against. */
-    if (SSL_set1_host(qconn, bare_hostname) <= 0)
+    if (SSL_set1_dnsname(qconn, bare_hostname) <= 0)
         goto err;
 
     /* Configure SNI */
