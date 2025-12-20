@@ -14,6 +14,8 @@
 #include <openssl/buffer.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+
+#include "crypto/ctype.h"
 #include "crypto/x509.h"
 
 #include "x509_local.h"
@@ -23,59 +25,300 @@
 #define SET_HOST 0
 #define ADD_HOST 1
 
-static char *str_copy(const char *s)
+static X509_BUFFER *buffer_from_bytes(const uint8_t *bytes, size_t length)
 {
-    return OPENSSL_strdup(s);
+    X509_BUFFER *buf, *ret = NULL;
+    uint8_t *data = NULL;
+
+    if ((buf = OPENSSL_zalloc(sizeof *buf)) == NULL)
+        goto err;
+
+    if ((data = OPENSSL_memdup(bytes, length)) == NULL)
+        goto err;
+
+    ret = buf;
+    buf = NULL;
+    ret->data = data;
+    ret->len = length;
+    data = NULL;
+
+err:
+    free(buf);
+    free(data);
+
+    return ret;
 }
 
-static void str_free(char *s)
+static X509_BUFFER *buffer_from_string(const uint8_t *bytes, size_t length)
 {
-    OPENSSL_free(s);
+    X509_BUFFER *buf, *ret = NULL;
+    uint8_t *data = NULL;
+
+    if ((buf = OPENSSL_zalloc(sizeof *buf)) == NULL)
+        goto err;
+
+    if ((data = (uint8_t *)OPENSSL_strdup((char *)bytes)) == NULL)
+        goto err;
+
+    if (strlen((char *)data) != length)
+        goto err;
+
+    ret = buf;
+    buf = NULL;
+    ret->data = data;
+    ret->len = length;
+    data = NULL;
+
+err:
+    free(buf);
+    free(data);
+
+    return ret;
 }
 
-static int int_x509_param_set_hosts(X509_VERIFY_PARAM *vpm, int mode,
-    const char *name, size_t namelen)
+static X509_BUFFER *buffer_copy(const X509_BUFFER *b)
 {
-    char *copy;
+    return buffer_from_bytes(b->data, b->len);
+}
 
-    /*
-     * Refuse names with embedded NUL bytes, except perhaps as final byte.
-     * XXX: Do we need to push an error onto the error stack?
-     */
-    if (namelen == 0 || name == NULL)
-        namelen = name ? strlen(name) : 0;
-    else if (name != NULL
-        && memchr(name, '\0', namelen > 1 ? namelen - 1 : namelen) != NULL)
-        return 0;
-    if (namelen > 0 && name[namelen - 1] == '\0')
-        --namelen;
+static void buffer_free(X509_BUFFER *b)
+{
+    if (b == NULL)
+        return;
+    OPENSSL_free((void *)b->data);
+    OPENSSL_free(b);
+}
 
-    if (mode == SET_HOST) {
-        sk_OPENSSL_STRING_pop_free(vpm->hosts, str_free);
-        vpm->hosts = NULL;
+static int replace_buffer_stack(STACK_OF(X509_BUFFER) **dest,
+    STACK_OF(X509_BUFFER) *const *src)
+{
+    sk_X509_BUFFER_pop_free(*dest, buffer_free);
+    *dest = NULL;
+    if (*src != NULL) {
+        *dest = sk_X509_BUFFER_deep_copy(*src, buffer_copy, buffer_free);
+        if (*dest == NULL)
+            return 0;
     }
-    if (name == NULL || namelen == 0)
+    return 1;
+}
+
+static int buffer_cmp(const X509_BUFFER *const *a, const X509_BUFFER *const *b)
+{
+    if ((*a)->len < (*b)->len)
+        return -1;
+    if ((*a)->len > (*b)->len)
         return 1;
+    return memcmp((*a)->data, (*b)->data, (*b)->len);
+}
 
-    copy = OPENSSL_strndup(name, namelen);
-    if (copy == NULL)
+static void clear_buffer_stack(STACK_OF(X509_BUFFER) **buffer_stack)
+{
+    sk_X509_BUFFER_pop_free(*buffer_stack, buffer_free);
+    *buffer_stack = NULL;
+}
+
+static int add_bytes_to_buffer_stack(STACK_OF(X509_BUFFER) **buffer_stack,
+    const uint8_t *name, size_t name_len)
+{
+    STACK_OF(X509_BUFFER) *tmp_stack = NULL;
+    X509_BUFFER *copy = NULL;
+    int ret = 0;
+
+    if ((copy = buffer_from_bytes(name, name_len)) == NULL)
+        goto err;
+
+    tmp_stack = *buffer_stack;
+    if (tmp_stack == NULL && (tmp_stack = sk_X509_BUFFER_new(buffer_cmp)) == NULL)
+        goto err;
+
+    if (!sk_X509_BUFFER_push(tmp_stack, copy))
+        goto err;
+
+    ret = 1;
+    copy = NULL;
+    *buffer_stack = tmp_stack;
+    tmp_stack = NULL;
+
+err:
+    sk_X509_BUFFER_pop_free(tmp_stack, buffer_free);
+    buffer_free(copy);
+
+    return ret;
+}
+
+static int add_string_to_buffer_stack(STACK_OF(X509_BUFFER) **buffer_stack,
+    const uint8_t *name, size_t name_len)
+{
+    STACK_OF(X509_BUFFER) *tmp_stack = NULL;
+    X509_BUFFER *copy = NULL;
+    int ret = 0;
+
+    if ((copy = buffer_from_string(name, name_len)) == NULL)
+        goto err;
+
+    tmp_stack = *buffer_stack;
+    if (tmp_stack == NULL && (tmp_stack = sk_X509_BUFFER_new(buffer_cmp)) == NULL)
+        goto err;
+
+    if (!sk_X509_BUFFER_push(tmp_stack, copy))
+        goto err;
+
+    ret = 1;
+    copy = NULL;
+    *buffer_stack = tmp_stack;
+    tmp_stack = NULL;
+
+err:
+    sk_X509_BUFFER_pop_free(tmp_stack, buffer_free);
+    buffer_free(copy);
+
+    return ret;
+}
+
+/*
+ * Input validation for verification parameter names. As these could
+ * potentially come from untrusted input, doing basic input validation
+ * makes sense.
+ */
+static int validate_ip_name(const uint8_t *name, size_t len)
+{
+    if (name != NULL && (len == 4 || len == 16))
+        return 1;
+    return 0;
+}
+
+static int validate_string_name(const char *name, size_t *name_len)
+{
+    size_t len = *name_len;
+
+    if (name == NULL || len == 0)
         return 0;
 
-    if (vpm->hosts == NULL && (vpm->hosts = sk_OPENSSL_STRING_new_null()) == NULL) {
-        OPENSSL_free(copy);
-        return 0;
-    }
+    /* Accept the trailing \0 byte if this is a C string */
+    if (name[len - 1] == '\0')
+        len--;
 
-    if (!sk_OPENSSL_STRING_push(vpm->hosts, copy)) {
-        OPENSSL_free(copy);
-        if (sk_OPENSSL_STRING_num(vpm->hosts) == 0) {
-            sk_OPENSSL_STRING_free(vpm->hosts);
-            vpm->hosts = NULL;
-        }
+    /* Refuse the empty string */
+    if (len == 0)
         return 0;
-    }
+
+    /* Refuse values with embedded \0 bytes other than at the end */
+    if (memchr(name, '\0', len) != NULL)
+        return 0;
 
     return 1;
+}
+
+static int is_alnum(int c, int enforce)
+{
+    if (enforce)
+        return ossl_isalnum(c);
+    else
+        return c != '.' && c != '-';
+}
+
+/*
+ * XXX charset_enforce allows anything, but this is actually incorrect.
+ * We appear to be supporting utf-8 names in the openssl application by
+ * passing utf8 values and generating certifiates with utf-8 email addresses
+ * in them.
+ *
+ * This is incorrect, the encoded values in the certificates must be encoded
+ * as Punycode - not directly as utf-8, so by the time we are comparing
+ * an email address in a vpm to an email address in a certificate we
+ * should just be comparing the bytes, but they should be Punycode *NOT*
+ * utf-8.
+ *
+ * I am currently setting charset_enforce to 0 when setting an email address
+ * because we have tests that appear to include utf8 in a certificate and are
+ * testing for it, which is wrong.
+ *
+ * what *should* be happening is the Punycode should be in the cert, the "openssl"
+ * application should be converting the utf-8 to Punycode, adding it to the vpm
+ * as an email address, then the compare is done Punycode to Punycode.
+ *
+ * I am correctly validating DNS names, which in the cert (and in DNS responses)
+ * should always be Punycode.
+ */
+static int validate_dns_name(const char *name, size_t len, int charset_enforce)
+{
+    size_t i, part_len;
+    char c, prev;
+
+    if (len < 2 || len > 256)
+        return 0;
+
+    part_len = 0;
+    prev = '\0';
+    for (i = 0; i < len; i++) {
+        c = name[i];
+        if (c == '.') {
+            /* Can not start a label with a . */
+            if (part_len == 0)
+                return 0;
+            /* Can not end a label with a _ */
+            if (prev == '_')
+                return 0;
+            part_len = 0;
+        } else {
+            if (!is_alnum(c, charset_enforce) && c != '-')
+                return 0;
+            if (c == '-') {
+                /* Can not start a label with a _ */
+                if (part_len == 0)
+                    return 0;
+            }
+        }
+        part_len++;
+        if (part_len > 63)
+            return 0;
+
+        prev = c;
+    }
+    /* Can not end with a . or a _ */
+    if (prev == '.' || prev == '-')
+        return 0;
+
+    return 1;
+}
+
+static int validate_email_name(const char *name, size_t len)
+{
+    size_t dns_len, local_len;
+    char *at, *dnsname;
+
+    /* 63 for local part, 1 for @, 255 for domain name, 1 for \0 */
+    if (len > 326)
+        return 0;
+
+    /* Reject it if there is no @ */
+    if ((at = memchr(name, '@', len)) == NULL)
+        return 0;
+
+    /* Ensure the local part is not oversize */
+    local_len = len - (at - name);
+    if (local_len > 63)
+        return 0;
+
+    /* We don't do any further validation of the local part */
+
+    /* What is after the @ must valid as a dns name */
+    dnsname = at + 1;
+    dns_len = len - local_len - 1;
+
+    /*
+     * Do not enforce the character set on the other part of
+     * an email address for the moment. This is incorrect, but
+     * the openssl app appears to have tests for encoding invalid
+     * certificates with utf8 values directly in the certificate and
+     * checking values which are utf8 directly against that certificate.
+     *
+     * This is incorrect, as the certificate should have the utf8 values
+     * encoded as Punycode, and the application should itself turn the
+     * utf8 values into Punycode before setting them in a VPM. But for
+     * the moment we keep things the same.
+     */
+    return validate_dns_name(dnsname, dns_len, /*charset_enforce=*/0);
 }
 
 X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
@@ -97,10 +340,10 @@ void X509_VERIFY_PARAM_free(X509_VERIFY_PARAM *param)
     if (param == NULL)
         return;
     sk_ASN1_OBJECT_pop_free(param->policies, ASN1_OBJECT_free);
-    sk_OPENSSL_STRING_pop_free(param->hosts, str_free);
+    clear_buffer_stack(&param->hosts);
+    clear_buffer_stack(&param->ips);
+    clear_buffer_stack(&param->emails);
     OPENSSL_free(param->peername);
-    OPENSSL_free(param->email);
-    OPENSSL_free(param->ip);
     OPENSSL_free(param);
 }
 
@@ -192,22 +435,17 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
     x509_verify_param_copy(hostflags, 0);
 
     if (test_x509_verify_param_copy(hosts, NULL)) {
-        sk_OPENSSL_STRING_pop_free(dest->hosts, str_free);
-        dest->hosts = NULL;
-        if (src->hosts != NULL) {
-            dest->hosts = sk_OPENSSL_STRING_deep_copy(src->hosts, str_copy, str_free);
-            if (dest->hosts == NULL)
-                return 0;
-        }
-    }
-
-    if (test_x509_verify_param_copy(email, NULL)) {
-        if (!X509_VERIFY_PARAM_set1_email(dest, src->email, src->emaillen))
+        if (!replace_buffer_stack(&dest->hosts, &src->hosts))
             return 0;
     }
 
-    if (test_x509_verify_param_copy(ip, NULL)) {
-        if (!X509_VERIFY_PARAM_set1_ip(dest, src->ip, src->iplen))
+    if (test_x509_verify_param_copy(ips, NULL)) {
+        if (!replace_buffer_stack(&dest->ips, &src->ips))
+            return 0;
+    }
+
+    if (test_x509_verify_param_copy(emails, NULL)) {
+        if (!replace_buffer_stack(&dest->emails, &src->emails))
             return 0;
     }
 
@@ -229,31 +467,6 @@ int X509_VERIFY_PARAM_set1(X509_VERIFY_PARAM *to,
     ret = X509_VERIFY_PARAM_inherit(to, from);
     to->inh_flags = save_flags;
     return ret;
-}
-
-static int int_x509_param_set1(char **pdest, size_t *pdestlen,
-    const char *src, size_t srclen)
-{
-    char *tmp;
-
-    if (src != NULL) {
-        if (srclen == 0)
-            srclen = strlen(src);
-
-        tmp = OPENSSL_malloc(srclen + 1);
-        if (tmp == NULL)
-            return 0;
-        memcpy(tmp, src, srclen);
-        tmp[srclen] = '\0'; /* enforce NUL termination */
-    } else {
-        tmp = NULL;
-        srclen = 0;
-    }
-    OPENSSL_free(*pdest);
-    *pdest = tmp;
-    if (pdestlen != NULL)
-        *pdestlen = srclen;
-    return 1;
 }
 
 int X509_VERIFY_PARAM_set1_name(X509_VERIFY_PARAM *param, const char *name)
@@ -389,19 +602,86 @@ int X509_VERIFY_PARAM_set1_policies(X509_VERIFY_PARAM *param,
 
 char *X509_VERIFY_PARAM_get0_host(X509_VERIFY_PARAM *param, int idx)
 {
-    return sk_OPENSSL_STRING_value(param->hosts, idx);
+    X509_BUFFER *buf = sk_X509_BUFFER_value(param->hosts, idx);
+
+    return (buf != NULL) ? (char *)buf->data : NULL;
 }
 
 int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
-    const char *name, size_t namelen)
+    const char *dnsname, size_t len)
 {
-    return int_x509_param_set_hosts(param, SET_HOST, name, namelen);
+    clear_buffer_stack(&param->hosts);
+    if (dnsname == NULL)
+        return 1;
+    if (len == 0)
+        len = strlen(dnsname);
+    if (len == 0)
+        return 1;
+    if (dnsname == NULL && len == 0)
+        return 1;
+    return X509_VERIFY_PARAM_add1_host(param, dnsname, len);
 }
 
 int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
-    const char *name, size_t namelen)
+    const char *dnsname, size_t len)
 {
-    return int_x509_param_set_hosts(param, ADD_HOST, name, namelen);
+    if (dnsname == NULL)
+        return 1;
+    if (len == 0)
+        len = strlen(dnsname);
+    if (len == 0)
+        return 1;
+    if (!validate_string_name(dnsname, &len))
+        return 0;
+    if (!validate_dns_name(dnsname, len, /*charset_enforce=*/1))
+        return 0;
+    return add_string_to_buffer_stack(&param->hosts, (const uint8_t *)dnsname, len);
+}
+
+int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
+    const uint8_t *ip, size_t len)
+{
+    clear_buffer_stack(&param->ips);
+    if (ip == NULL)
+        return 1;
+    return X509_VERIFY_PARAM_add1_ip(param, ip, len);
+}
+
+int X509_VERIFY_PARAM_add1_ip(X509_VERIFY_PARAM *param,
+    const uint8_t *ip, size_t len)
+{
+    if (!validate_ip_name(ip, len))
+        return 0;
+    return add_bytes_to_buffer_stack(&param->ips, ip, len);
+}
+
+char *X509_VERIFY_PARAM_get0_email(X509_VERIFY_PARAM *param)
+{
+    X509_BUFFER *buf = sk_X509_BUFFER_value(param->emails, 0);
+
+    return (buf != NULL) ? (char *)buf->data : NULL;
+}
+
+int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
+    const char *email, size_t len)
+{
+    clear_buffer_stack(&param->emails);
+    if (email == NULL)
+        return 1;
+    return X509_VERIFY_PARAM_add1_email(param, email, len);
+}
+
+int X509_VERIFY_PARAM_add1_email(X509_VERIFY_PARAM *param,
+    const char *email, size_t len)
+{
+    if (len == 0)
+        len = strlen(email);
+    if (!validate_string_name(email, &len))
+        return 0;
+    if (!validate_email_name(email, len))
+        return 0;
+    int ret = add_string_to_buffer_stack(&param->emails, (const uint8_t *)email, len);
+    return ret;
 }
 
 void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
@@ -438,56 +718,51 @@ void X509_VERIFY_PARAM_move_peername(X509_VERIFY_PARAM *to,
         from->peername = NULL;
 }
 
-char *X509_VERIFY_PARAM_get0_email(X509_VERIFY_PARAM *param)
+static const unsigned char *int_X509_VERIFY_PARAM_get0_ip(X509_VERIFY_PARAM *param, size_t *plen, size_t idx)
 {
-    return param->email;
-}
-
-int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
-    const char *email, size_t emaillen)
-{
-    return int_x509_param_set1(&param->email, &param->emaillen,
-        email, emaillen);
-}
-
-static unsigned char *int_X509_VERIFY_PARAM_get0_ip(X509_VERIFY_PARAM *param, size_t *plen)
-{
-    if (param == NULL || param->ip == NULL) {
+    if (param == NULL || param->ips == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
-    if (plen != NULL)
-        *plen = param->iplen;
-    return param->ip;
+    X509_BUFFER *buf = sk_X509_BUFFER_value(param->ips, idx);
+
+    if (buf != NULL) {
+        if (plen != NULL)
+            *plen = buf->len;
+        return (unsigned char *)buf->data;
+    }
+    return NULL;
 }
 
 char *X509_VERIFY_PARAM_get1_ip_asc(X509_VERIFY_PARAM *param)
 {
     size_t iplen;
-    unsigned char *ip = int_X509_VERIFY_PARAM_get0_ip(param, &iplen);
+    /* XXX casts away const */
+    unsigned char *ip = (unsigned char *)int_X509_VERIFY_PARAM_get0_ip(param, &iplen, 0);
 
     return ip == NULL ? NULL : ossl_ipaddr_to_asc(ip, (int)iplen);
-}
-
-int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
-    const unsigned char *ip, size_t iplen)
-{
-    if (iplen != 0 && iplen != 4 && iplen != 16) {
-        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
-    }
-    return int_x509_param_set1((char **)&param->ip, &param->iplen,
-        (char *)ip, iplen);
 }
 
 int X509_VERIFY_PARAM_set1_ip_asc(X509_VERIFY_PARAM *param, const char *ipasc)
 {
     unsigned char ipout[16];
-    size_t iplen = (size_t)ossl_a2i_ipadd(ipout, ipasc);
+    size_t iplen;
 
-    if (iplen == 0)
+    if (ipasc == NULL)
+        return X509_VERIFY_PARAM_set1_ip(param, NULL, 0);
+    if ((iplen = (size_t)ossl_a2i_ipadd(ipout, ipasc)) == 0)
         return 0;
     return X509_VERIFY_PARAM_set1_ip(param, ipout, iplen);
+}
+
+int X509_VERIFY_PARAM_add1_ip_asc(X509_VERIFY_PARAM *param, const char *ipasc)
+{
+    unsigned char ipout[16];
+    size_t iplen;
+
+    if ((iplen = (size_t)ossl_a2i_ipadd(ipout, ipasc)) == 0)
+        return 0;
+    return X509_VERIFY_PARAM_add1_ip(param, ipout, iplen);
 }
 
 int X509_VERIFY_PARAM_get_depth(const X509_VERIFY_PARAM *param)
@@ -505,8 +780,6 @@ const char *X509_VERIFY_PARAM_get0_name(const X509_VERIFY_PARAM *param)
     return param->name;
 }
 
-#define vpm_empty_id NULL, 0U, NULL, NULL, 0, NULL, 0
-
 /*
  * Default verify parameters: these are used for various applications and can
  * be overridden by the user specified table. NB: the 'name' field *must* be
@@ -514,66 +787,47 @@ const char *X509_VERIFY_PARAM_get0_name(const X509_VERIFY_PARAM *param)
  */
 
 static const X509_VERIFY_PARAM default_table[] = {
-    { "code_sign", /* Code sign parameters */
-        0, /* check time to use */
-        0, /* inheritance flags */
-        0, /* flags */
-        X509_PURPOSE_CODE_SIGN, /* purpose */
-        X509_TRUST_OBJECT_SIGN, /* trust */
-        -1, /* depth */
-        -1, /* auth_level */
-        NULL, /* policies */
-        vpm_empty_id },
-    { "default", /* X509 default parameters */
-        0, /* check time to use */
-        0, /* inheritance flags */
-        X509_V_FLAG_TRUSTED_FIRST, /* flags */
-        0, /* purpose */
-        0, /* trust */
-        100, /* depth */
-        -1, /* auth_level */
-        NULL, /* policies */
-        vpm_empty_id },
-    { "pkcs7", /* S/MIME sign parameters */
-        0, /* check time to use */
-        0, /* inheritance flags */
-        0, /* flags */
-        X509_PURPOSE_SMIME_SIGN, /* purpose */
-        X509_TRUST_EMAIL, /* trust */
-        -1, /* depth */
-        -1, /* auth_level */
-        NULL, /* policies */
-        vpm_empty_id },
-    { "smime_sign", /* S/MIME sign parameters */
-        0, /* check time to use */
-        0, /* inheritance flags */
-        0, /* flags */
-        X509_PURPOSE_SMIME_SIGN, /* purpose */
-        X509_TRUST_EMAIL, /* trust */
-        -1, /* depth */
-        -1, /* auth_level */
-        NULL, /* policies */
-        vpm_empty_id },
-    { "ssl_client", /* SSL/TLS client parameters */
-        0, /* check time to use */
-        0, /* inheritance flags */
-        0, /* flags */
-        X509_PURPOSE_SSL_CLIENT, /* purpose */
-        X509_TRUST_SSL_CLIENT, /* trust */
-        -1, /* depth */
-        -1, /* auth_level */
-        NULL, /* policies */
-        vpm_empty_id },
-    { "ssl_server", /* SSL/TLS server parameters */
-        0, /* check time to use */
-        0, /* inheritance flags */
-        0, /* flags */
-        X509_PURPOSE_SSL_SERVER, /* purpose */
-        X509_TRUST_SSL_SERVER, /* trust */
-        -1, /* depth */
-        -1, /* auth_level */
-        NULL, /* policies */
-        vpm_empty_id }
+    {
+        .name = "code_sign", /* Code sign parameters */
+        .purpose = X509_PURPOSE_CODE_SIGN,
+        .trust = X509_TRUST_OBJECT_SIGN,
+        .depth = -1,
+        .auth_level = -1,
+    },
+    {
+        .name = "default", /* X509 default parameters */
+        .flags = X509_V_FLAG_TRUSTED_FIRST,
+        .depth = 100,
+        .auth_level = -1,
+    },
+    {
+        .name = "pkcs7", /* S/MIME sign parameters */
+        .purpose = X509_PURPOSE_SMIME_SIGN,
+        .trust = X509_TRUST_EMAIL,
+        .depth = -1,
+        .auth_level = -1,
+    },
+    {
+        .name = "smime_sign", /* S/MIME sign parameters */
+        .purpose = X509_PURPOSE_SMIME_SIGN,
+        .trust = X509_TRUST_EMAIL,
+        .depth = -1,
+        .auth_level = -1,
+    },
+    {
+        .name = "ssl_client", /* SSL/TLS client parameters */
+        .purpose = X509_PURPOSE_SSL_CLIENT,
+        .trust = X509_TRUST_SSL_CLIENT,
+        .depth = -1,
+        .auth_level = -1,
+    },
+    {
+        .name = "ssl_server", /* SSL/TLS server parameters */
+        .purpose = X509_PURPOSE_SSL_SERVER,
+        .trust = X509_TRUST_SSL_SERVER,
+        .depth = -1,
+        .auth_level = -1,
+    }
 };
 
 static STACK_OF(X509_VERIFY_PARAM) *param_table = NULL;

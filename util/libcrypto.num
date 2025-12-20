@@ -5183,9 +5183,12 @@ X509_VERIFY_PARAM_get0_peername         ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_move_peername         ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get0_email            ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set1_email            ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_add1_email           	?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get1_ip_asc           ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set1_ip               ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set1_ip_asc           ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_add1_ip             	?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_add1_ip_asc           ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get_depth             ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get_auth_level        ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get0_name             ?	4_0_0	EXIST::FUNCTION:

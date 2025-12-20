@@ -1128,6 +1128,78 @@ int SSL_set_trust(SSL *s, int trust)
     return X509_VERIFY_PARAM_set_trust(sc->param, trust);
 }
 
+int SSL_set1_dnsname(SSL *s, const char *host)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL)
+        return 0;
+
+    return X509_VERIFY_PARAM_set1_host(sc->param, host, 0);
+}
+
+int SSL_add1_dnsname(SSL *s, const char *host)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL)
+        return 0;
+
+    return X509_VERIFY_PARAM_add1_host(sc->param, host, strlen(host));
+}
+
+int SSL_set1_ipaddr(SSL *s, const char *ipaddr)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    ASN1_OCTET_STRING *ip;
+
+    if (sc == NULL)
+        return 0;
+
+    ip = a2i_IPADDRESS(ipaddr);
+    if (ip == NULL)
+        return 0;
+
+    return X509_VERIFY_PARAM_set1_ip(sc->param, ASN1_STRING_get0_data(ip),
+        ASN1_STRING_length(ip));
+}
+
+int SSL_add1_ipaddr(SSL *s, const char *ipaddr)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    ASN1_OCTET_STRING *ip;
+
+    if (sc == NULL)
+        return 0;
+
+    ip = a2i_IPADDRESS(ipaddr);
+    if (ip == NULL)
+        return 0;
+
+    return X509_VERIFY_PARAM_add1_ip(sc->param, ASN1_STRING_get0_data(ip),
+        ASN1_STRING_length(ip));
+}
+
+int SSL_set1_email(SSL *s, const char *email)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL)
+        return 0;
+
+    return X509_VERIFY_PARAM_set1_email(sc->param, email, 0);
+}
+
+int SSL_add1_email(SSL *s, const char *email)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL)
+        return 0;
+
+    return X509_VERIFY_PARAM_add1_email(sc->param, email, 0);
+}
+
 int SSL_set1_host(SSL *s, const char *host)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);

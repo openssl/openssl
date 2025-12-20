@@ -201,6 +201,264 @@ static int test_self_signed(const char *filename, int use_trusted, int expected)
     return ret;
 }
 
+static const char *multiname_cert[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIFnDCCBISgAwIBAgIUTgfdSQm2hjgUZoA8jeQX7sDPAoowDQYJKoZIhvcNAQEL\n"
+    "BQAwgYUxCzAJBgNVBAYTAkNBMRAwDgYDVQQIDAdBbGJlcnRhMREwDwYDVQQHDAhF\n"
+    "ZG1vbnRvbjERMA8GA1UECgwITXVwcGV0cnkxITAfBgNVBAsMGFN0YXRsZXIgYW5k\n"
+    "IFdhbGRvcmYgUiBVUzEbMBkGA1UEAwwSYmVha2VyLm11cHBldHJ5LmNhMB4XDTI2\n"
+    "MDExMjIwNTUwOVoXDTI3MDExMjIwNTUwOVowgYUxCzAJBgNVBAYTAkNBMRAwDgYD\n"
+    "VQQIDAdBbGJlcnRhMREwDwYDVQQHDAhFZG1vbnRvbjERMA8GA1UECgwITXVwcGV0\n"
+    "cnkxITAfBgNVBAsMGFN0YXRsZXIgYW5kIFdhbGRvcmYgUiBVUzEbMBkGA1UEAwwS\n"
+    "YmVha2VyLm11cHBldHJ5LmNhMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKC\n"
+    "AQEA+EsGQCX4YyZF3QbVcFUcWpYDp8MJHr5vF0cosvj9afGPhpLREWR7EmnNA8Gf\n"
+    "wb+ef/jNrDg8W81uDD3N29PvbM+hHAQPaHrRupQZ+W+uIVEAu/lpI359jIRS1Sey\n"
+    "IcU2vIgn3Tlnv4UX3o3QMyH8+RcCvSNrWu4+f9ipMAy/xq3PWBm+fHi/+bI03eDy\n"
+    "0xNm8kpXbhqZQiZ1tAhsTa3V2pIufqAnctDgl2GUHtfmKO095OHimjhQXHxO8Ctk\n"
+    "R+vFv0nleJoAAfkmaMdtdTd1O8m3AtQv6xQC4X5Tu/+FKKQOXjf/8OtqW2lrlxxR\n"
+    "pbFuy66I9HVyf+gGWEbZyqbCpwIDAQABo4ICADCCAfwwggG3BgNVHREEggGuMIIB\n"
+    "qoILbXVwcGV0cnkuY2GCD3d3dy5tdXBwZXRyeS5jYYITc3RhdGxlci5tdXBwZXRy\n"
+    "eS5jYYITd2FsZG9yZi5tdXBwZXRyeS5jYYETc3RhdGxlckBtdXBwdGVyeS5jYYET\n"
+    "d2FsZG9yZkBtdXBwdGVyeS5jYYcExikABIcQIAEFA7o+AAAAAAAAAAIAMIcEqveq\n"
+    "AocQKAEBuAAQAAAAAAAAAAAAC4cEwCEEDIcQIAEFAAACAAAAAAAAAAAADIcExwdb\n"
+    "DYcQIAEFAAAtAAAAAAAAAAAADYcEwMvmCocQIAEFAACoAAAAAAAAAAAADocEwAUF\n"
+    "8YcQIAEFAAAvAAAAAAAAAAAAD4cEwHAkBIcQIAEFAAASAAAAAAAAAAANDYcExmG+\n"
+    "NYcQIAEFAAABAAAAAAAAAAAAU4cEwCSUEYcQIAEH/gAAAAAAAAAAAAAAU4cEwDqA\n"
+    "HocQIAEFAwwnAAAAAAAAAAIAMIcEwQAOgYcQIAEH/QAAAAAAAAAAAAAAAYcExwdT\n"
+    "KocQIAEFAACfAAAAAAAAAAAAQocEygwbIYcQIAENwwAAAAAAAAAAAAAANTALBgNV\n"
+    "HQ8EBAMCBDAwEwYDVR0lBAwwCgYIKwYBBQUHAwEwHQYDVR0OBBYEFCutBN63ufhB\n"
+    "IY4dOuFcYfC3p+mMMA0GCSqGSIb3DQEBCwUAA4IBAQBBWfTvwxV1s3xaS5Ko6T7B\n"
+    "vS7TPih0MO8auv0mvZXG3jy/LfAfgu05PbGIf0dzFhBpoZD0VrrugmdemLkJd+u6\n"
+    "pbEttGFZtcGb//MtjUAYQnEq6fYgDeT0dGU0upwQPWGgh5LpFSab+71C6Ofc3YFM\n"
+    "WPH7UaRBUV2mqNtUokOce6kYtl97St7p6cGpQW9Q1uFQODvAm3ZPq/YNGnTJAOdb\n"
+    "9UX8Td1T5fH86H0hb6qB0AEhVdgjPUgs33zYNWRPg8fYleT6w1MpE2HaUqqhld3B\n"
+    "ZtVZ5IznkY+8qH0rua89m4TV3qzUqNVUL0uxkWnQI3W8g3Adin7QN3EA6ZYrTD3q\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+static const time_t multiname_valid_at = 1768253189;
+
+static const char *multiname_dnsnames[] = {
+    "muppetry.ca",
+    "www.muppetry.ca",
+    "statler.muppetry.ca",
+    "waldorf.muppetry.ca",
+    NULL,
+};
+
+static const char *multiname_emails[] = {
+    "statler@mupptery.ca",
+    "waldorf@mupptery.ca",
+    NULL,
+};
+
+static const char *multiname_ips[] = {
+    "198.41.0.4",
+    "2001:503:ba3e::2:30",
+    "170.247.170.2",
+    "2801:1b8:10::b",
+    "192.33.4.12",
+    "2001:500:2::c",
+    "199.7.91.13",
+    "2001:500:2d::d",
+    "192.203.230.10",
+    "2001:500:a8::e",
+    "192.5.5.241",
+    "2001:500:2f::f",
+    "192.112.36.4",
+    "2001:500:12::d0d",
+    "198.97.190.53",
+    "2001:500:1::53",
+    "192.36.148.17",
+    "2001:7fe::53",
+    "192.58.128.30",
+    "2001:503:c27::2:30",
+    "193.0.14.129",
+    "2001:7fd::1",
+    "199.7.83.42",
+    "2001:500:9f::42",
+    "202.12.27.33",
+    "2001:dc3::35",
+    NULL,
+};
+static int test_multiname_selfsigned()
+{
+    X509 *cert = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_STORE *store = NULL;
+    X509_VERIFY_PARAM *vpm = NULL;
+    int fails = 0;
+
+    if (!TEST_ptr((cert = X509_from_strings(multiname_cert))))
+        return 0;
+
+    if (!TEST_true(X509_self_signed(cert, 1)))
+        return 0;
+
+    if (!TEST_ptr(store = X509_STORE_new()))
+        return 0;
+
+    if (!TEST_true(X509_STORE_add_cert(store, cert)))
+        return 0;
+
+    if (!TEST_ptr((vpm = X509_STORE_get0_param(store))))
+        return 0;
+
+    if (!TEST_ptr(ctx = X509_STORE_CTX_new()))
+        return 0;
+
+    X509_VERIFY_PARAM_set_time(vpm, multiname_valid_at);
+
+    for (size_t i = 0; multiname_dnsnames[i] != NULL; i++) {
+        /* Try one not in the certificate */
+        if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "bunsen.muppetry.ca", 0)))
+            return 0;
+        if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+            return 0;
+        if (!TEST_false(X509_verify_cert(ctx))) {
+            TEST_info("Verify succeeded for non-present name bunsen.muppetry.ca\n");
+            return 0;
+        }
+        X509_STORE_CTX_cleanup(ctx);
+        if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
+            return 0;
+        if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+            return 0;
+        if (!TEST_true(X509_verify_cert(ctx)))
+            return 0;
+        X509_STORE_CTX_cleanup(ctx);
+        if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, multiname_dnsnames[i], strlen(multiname_dnsnames[i]))))
+            return 0;
+        if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+            return 0;
+        if (!TEST_true(X509_verify_cert(ctx))) {
+            TEST_info("Verify failed for initial name %s\n", multiname_dnsnames[i]);
+            fails++;
+        }
+        X509_STORE_CTX_cleanup(ctx);
+        for (size_t j = 0; multiname_dnsnames[j] != NULL; j++) {
+            if (j != i) {
+                if (!TEST_true(X509_VERIFY_PARAM_add1_host(vpm, multiname_dnsnames[j], 0)))
+                    return 0;
+                if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+                    return 0;
+                if (!TEST_true(X509_verify_cert(ctx))) {
+                    TEST_info("Verify failed with added name %s\n", multiname_dnsnames[j]);
+                    fails++;
+                }
+                X509_STORE_CTX_cleanup(ctx);
+            }
+        }
+        /* Try the CN */
+        if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+            return 0;
+        if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "beaker.muppetry.ca", 0)))
+            return 0;
+        if (!TEST_true(X509_verify_cert(ctx))) {
+            TEST_info("Verify failed for CN name beaker.muppetry.ca\n");
+            fails++;
+        }
+        X509_STORE_CTX_cleanup(ctx);
+        if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
+            return 0;
+    }
+
+    for (size_t i = 0; multiname_emails[i] != NULL; i++) {
+        /* Try one not in the certificate */
+        if (!TEST_true(X509_VERIFY_PARAM_set1_email(vpm, "bunsen@muppetry.ca", 0)))
+            return 0;
+        if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+            return 0;
+        if (!TEST_false(X509_verify_cert(ctx))) {
+            TEST_info("Verify succeeded for non-present name bunsen@muppetry.ca\n");
+            return 0;
+        }
+        X509_STORE_CTX_cleanup(ctx);
+        if (!TEST_true(X509_VERIFY_PARAM_set1_email(vpm, NULL, 0)))
+            return 0;
+        if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+            return 0;
+        if (!TEST_true(X509_verify_cert(ctx)))
+            return 0;
+        X509_STORE_CTX_cleanup(ctx);
+        if (!TEST_true(X509_VERIFY_PARAM_set1_email(vpm, multiname_emails[i], strlen(multiname_emails[i]))))
+            return 0;
+        if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+            return 0;
+        if (!TEST_true(X509_verify_cert(ctx))) {
+            TEST_info("Verify failed for initial name %s\n", multiname_emails[i]);
+            fails++;
+        }
+        X509_STORE_CTX_cleanup(ctx);
+        for (size_t j = 0; multiname_emails[j] != NULL; j++) {
+            if (j != i) {
+                if (!TEST_true(X509_VERIFY_PARAM_add1_email(vpm, multiname_emails[j], 0)))
+                    return 0;
+                if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+                    return 0;
+                if (!TEST_true(X509_verify_cert(ctx))) {
+                    TEST_info("Verify failed with added name %s\n", multiname_emails[j]);
+                    fails++;
+                }
+                X509_STORE_CTX_cleanup(ctx);
+            }
+        }
+        X509_STORE_CTX_cleanup(ctx);
+        if (!TEST_true(X509_VERIFY_PARAM_set1_email(vpm, NULL, 0)))
+            return 0;
+    }
+
+    for (size_t i = 0; multiname_ips[i] != NULL; i++) {
+        /* Try one not in the certificate */
+        if (!TEST_true(X509_VERIFY_PARAM_set1_ip_asc(vpm, "8.8.8.8")))
+            return 0;
+        if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+            return 0;
+        if (!TEST_false(X509_verify_cert(ctx))) {
+            TEST_info("Verify succeeded for non-present name 8.8.8.8\n");
+            return 0;
+        }
+        X509_STORE_CTX_cleanup(ctx);
+        if (!TEST_true(X509_VERIFY_PARAM_set1_ip_asc(vpm, NULL)))
+            return 0;
+        if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+            return 0;
+        if (!TEST_true(X509_verify_cert(ctx)))
+            return 0;
+        X509_STORE_CTX_cleanup(ctx);
+        if (!TEST_true(X509_VERIFY_PARAM_set1_ip_asc(vpm, multiname_ips[i])))
+            return 0;
+        if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+            return 0;
+        if (!TEST_true(X509_verify_cert(ctx))) {
+            TEST_info("Verify failed for initial name %s\n", multiname_ips[i]);
+            fails++;
+        }
+        X509_STORE_CTX_cleanup(ctx);
+        for (size_t j = 0; multiname_ips[j] != NULL; j++) {
+            if (j != i) {
+                if (!TEST_true(X509_VERIFY_PARAM_add1_ip_asc(vpm, multiname_ips[j])))
+                    return 0;
+                if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+                    return 0;
+                if (!TEST_true(X509_verify_cert(ctx))) {
+                    TEST_info("Verify failed with added name %s\n", multiname_ips[j]);
+                    fails++;
+                }
+                X509_STORE_CTX_cleanup(ctx);
+            }
+        }
+        X509_STORE_CTX_cleanup(ctx);
+        if (!TEST_true(X509_VERIFY_PARAM_set1_ip_asc(vpm, NULL)))
+            return 0;
+    }
+
+    X509_STORE_CTX_free(ctx);
+    X509_free(cert);
+    return fails == 0;
+}
+
 static int test_self_signed_good(void)
 {
     return test_self_signed(root_f, 1, 1);
@@ -321,6 +579,7 @@ int setup_tests(void)
     ADD_TEST(test_purpose_ssl_client);
     ADD_TEST(test_purpose_ssl_server);
     ADD_TEST(test_purpose_any);
+    ADD_TEST(test_multiname_selfsigned);
     return 1;
 err:
     cleanup_tests();
