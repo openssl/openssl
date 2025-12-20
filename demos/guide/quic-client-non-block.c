@@ -313,7 +313,7 @@ int main(int argc, char *argv[])
      * Virtually all clients should do this unless you really know what you
      * are doing.
      */
-    if (!SSL_set1_host(ssl, hostname)) {
+    if (!SSL_set1_dnsname(ssl, hostname)) {
         printf("Failed to set the certificate verification hostname");
         goto end;
     }

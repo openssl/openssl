@@ -16,9 +16,17 @@ X509_VERIFY_PARAM_set1_host, X509_VERIFY_PARAM_add1_host,
 X509_VERIFY_PARAM_set_hostflags,
 X509_VERIFY_PARAM_get_hostflags,
 X509_VERIFY_PARAM_get0_peername,
-X509_VERIFY_PARAM_get0_email, X509_VERIFY_PARAM_set1_email,
-X509_VERIFY_PARAM_set1_ip, X509_VERIFY_PARAM_get1_ip_asc,
-X509_VERIFY_PARAM_set1_ip_asc
+X509_VERIFY_PARAM_get0_email,
+X509_VERIFY_PARAM_set1_email,
+X509_VERIFY_PARAM_set1_rfc822, X509_VERIFY_PARAM_add1_rfc822,
+X509_VERIFY_PARAM_set1_smtputf8, X509_VERIFY_PARAM_add1_smtputf8,
+X509_VERIFY_PARAM_set1_ip, X509_VERIFY_PARAM_add1_ip,
+X509_VERIFY_PARAM_set1_ip_asc, X509_VERIFY_PARAM_add1_ip_asc,
+X509_VERIFY_PARAM_get1_ip_asc,
+X509_VERIFY_PARAM_set1_host_input_validation,
+X509_VERIFY_PARAM_set1_rfc822_input_validation,
+X509_VERIFY_PARAM_set1_smtputf8_input_validation,
+X509_VERIFY_PARAM_set1_ip_input_validation
 - X509 verification parameters
 
 =head1 SYNOPSIS
@@ -66,10 +74,29 @@ X509_VERIFY_PARAM_set1_ip_asc
  char *X509_VERIFY_PARAM_get0_email(X509_VERIFY_PARAM *param);
  int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
                                   const char *email, size_t emaillen);
+ int X509_VERIFY_PARAM_set1_rfc822(X509_VERIFY_PARAM *param,
+                                  const char *email, size_t emaillen);
+ int X509_VERIFY_PARAM_add1_rfc822(X509_VERIFY_PARAM *param,
+                                 const char *email, size_t emaillen);
+ int X509_VERIFY_PARAM_set1_smtputf8(X509_VERIFY_PARAM *param,
+                                  const char *email, size_t emaillen);
+ int X509_VERIFY_PARAM_add1_smtputf8(X509_VERIFY_PARAM *param,
+                                 const char *email, size_t emaillen);
  char *X509_VERIFY_PARAM_get1_ip_asc(X509_VERIFY_PARAM *param);
  int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
                                const unsigned char *ip, size_t iplen);
+ int X509_VERIFY_PARAM_add1_ip(X509_VERIFY_PARAM *param,
+                               const unsigned char *ip, size_t iplen);
  int X509_VERIFY_PARAM_set1_ip_asc(X509_VERIFY_PARAM *param, const char *ipasc);
+ int X509_VERIFY_PARAM_add1_ip_asc(X509_VERIFY_PARAM *param, const char *ipasc);
+ void X509_VERIFY_PARAM_set1_ip_input_validation(X509_VERIFY_PARAM *param,
+    int (*validate_ip)(const uint8_t *name, size_t len));
+ void X509_VERIFY_PARAM_set1_host_input_validation(X509_VERIFY_PARAM *param,
+    int (*validate_host)(const char *name, size_t len));
+ void X509_VERIFY_PARAM_set1_rfc822_input_validation(X509_VERIFY_PARAM *param,
+    int (*validate_rfc822)(const char *name, size_t len));
+ void X509_VERIFY_PARAM_set1_smtputf8_input_validation(X509_VERIFY_PARAM *param,
+    int (*validate_smtputf8)(const char *name, size_t len));
 
 =head1 DESCRIPTION
 
@@ -195,13 +222,44 @@ the return value.
 
 X509_VERIFY_PARAM_get0_email() returns the expected RFC822 email address.
 
-X509_VERIFY_PARAM_set1_email() sets the expected RFC822 email address to
+X509_VERIFY_PARAM_set1_rfc822() clears all expected RFC822 email
+addresses, and sets the expected RFC822 email address to I<email>.  If
+I<email> is NULL no expected address is set. Otherwise, if
+I<emaillen> is zero, I<email> must be NUL-terminated; if I<emaillen>
+is nonzero, I<emaillen> must be set to the length of I<email>.  When
+any email address is specified, certificate verification automatically
+invokes L<X509_check_email(3)>.
+
+X509_VERIFY_PARAM_add1_rfc822() adds I<email> as an additional
+reference identifier that can match RFC822 email addresses in the
+peer's certificate.  Any previous names set via
+X509_VERIFY_PARAM_set1_rfc822(), X509_VERIFY_PARAM_add1_rfc822(), or
+X509_VERIFY_PARAM_set1_email() are
+retained on success, no change is made on failure. It is a failure if
+email is NULL or the empty string.The peer is considered verified
+when any one of the specified RFC822 or SMTPUTF8 names matches a corresponding email
+address SAN in the certificate.
+
+X509_VERIFY_PARAM_set1_smtputf8() sets the expected SMTPUTF8 email address to
 I<email>.
-If I<email> is NULL, email checking is disabled. Otherwise,
+If I<email> is NULL, SMTPUTF8 email checking is disabled. Otherwise,
 if I<emaillen> is zero, I<email> must be NUL-terminated; if I<emaillen> is nonzero,
-I<emaillen> must be set to the length of I<email>.  When an email address
+I<emaillen> must be set to the length of I<email>.  When any email address
 is specified, certificate verification automatically invokes
 L<X509_check_email(3)>.
+
+X509_VERIFY_PARAM_add1_smtputf8() adds I<email> as an additional
+reference identifier that can match SMTPUTF8 email addresses in the
+peer's certificate.  Any previous names set via
+X509_VERIFY_PARAM_set1_smtputf8(), X509_VERIFY_PARAM_add1_smtputf8(), or
+X509_VERIFY_PARAM_set1_email() are
+retained on success, no change is made on failure. It is a failure if
+email is NULL or the empty string. The peer is considered verified
+when any one of the specified RFC822 or SMTPUTF8 names matches a corresponding email
+address SAN in the certificate.
+
+X509_VERIFY_PARAM_set1_email() calls X509_VERIFY_PARAM_set_rfc822(), and
+X509_VERIFY_PARAM_set_smtputf8() and succeeds if any call succeeds.
 
 X509_VERIFY_PARAM_get1_ip_asc() returns the expected IP address as a string.
 The caller is responsible for freeing it.
@@ -213,10 +271,40 @@ I<iplen> must be set to 4 for IPv4 and 16 for IPv6.  When an IP
 address is specified, certificate verification automatically invokes
 L<X509_check_ip(3)>.
 
+X509_VERIFY_PARAM_add1_ip() adds I<ip> as an additional reference
+identifier that can match the peer's certificate on success.  Any
+previous names set via X509_VERIFY_PARAM_set1_ip(),
+X509_VERIFY_PARAM_add1_ip(), X509_VERIFY_PARAM_set1_ip_asc(), or
+X509_VERIFY_PARAM_add1_ip_asc() are retained. No change is made on
+failure. It is a failure if <ip> is NULL or the empty string. When
+multiple names are configured, the peer is considered verified when
+any name matches.
+
 X509_VERIFY_PARAM_set1_ip_asc() sets the expected IP address to
 I<ipasc>.  The I<ipasc> argument must be a NUL-terminated ASCII string:
 dotted decimal quad for IPv4 and colon-separated hexadecimal for
 IPv6.  The condensed "::" notation is supported for IPv6 addresses.
+
+X509_VERIFY_PARAM_add1_ip_asc() adds I<ip_asc> as an additional
+reference identifier that can match the peer's certificate on success.
+The I<ipasc> argument must be a NUL-terminated ASCII string: dotted
+decimal quad for IPv4 and colon-separated hexadecimal for IPv6.  The
+condensed "::" notation is supported for IPv6 addresses.  Any previous
+names set via X509_VERIFY_PARAM_set1_ip(),
+X509_VERIFY_PARAM_add1_ip(), X509_VERIFY_PARAM_set1_ip_asc(), or
+X509_VERIFY_PARAM_add1_ip_asc() are retained. No change is made on
+failure. It is a failure if I<ip_asc> is NULL or the empty string.
+When multiple names are configured, the peer is considered verified
+when any one of the specified addresses matches a corresponding IP address SAN in the certificate.
+
+X509_VERIFY_PARAM_set1_host_input_validation(),
+X509_VERIFY_PARAM_set1_rfc822_input_validation(),
+X509_VERIFY_PARAM_set1_smtputf8_input_validation(), and
+X509_VERIFY_PARAM_set1_ip_input_validation() set a verification
+function to validate the input on setting the corresponding validation
+parameter expected values. These functions bypass OpenSSL's input validation
+to these commands. if the provided function succeeds, the corresponding
+input will be accepted and attempted to be used when verifying certificates.
 
 =head1 RETURN VALUES
 
@@ -225,8 +313,10 @@ X509_VERIFY_PARAM_set_inh_flags(),
 X509_VERIFY_PARAM_set_purpose(), X509_VERIFY_PARAM_set_trust(),
 X509_VERIFY_PARAM_add0_policy() X509_VERIFY_PARAM_set1_policies(),
 X509_VERIFY_PARAM_set1_host(), X509_VERIFY_PARAM_add1_host(),
-X509_VERIFY_PARAM_set1_email(), X509_VERIFY_PARAM_set1_ip() and
-X509_VERIFY_PARAM_set1_ip_asc() return 1 for success and 0 for
+X509_VERIFY_PARAM_set1_email(),
+X509_VERIFY_PARAM_set1_ip(), X509_VERIFY_PARAM_add1_ip(),
+X509_VERIFY_PARAM_set1_ip_asc(),
+X509_VERIFY_PARAM_add1_ip_asc() return 1 for success and 0 for
 failure.
 
 X509_VERIFY_PARAM_get0_host(), X509_VERIFY_PARAM_get0_email(), and
