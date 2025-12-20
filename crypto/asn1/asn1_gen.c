@@ -116,7 +116,7 @@ static ASN1_TYPE *generate_v3(const char *str, X509V3_CTX *cnf, int depth,
 
     asn1_tags.imp_tag = -1;
     asn1_tags.imp_class = -1;
-    asn1_tags.format = ASN1_GEN_FORMAT_UTF8;
+    asn1_tags.format = ASN1_GEN_FORMAT_ASCII;
     asn1_tags.exp_count = 0;
     if (CONF_parse_list(str, ',', 1, asn1_cb, &asn1_tags) != 0) {
         *perr = ASN1_R_UNKNOWN_TAG;
@@ -324,6 +324,10 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
     case ASN1_GEN_FLAG_OCTWRAP:
         if (!append_exp(arg, V_ASN1_OCTET_STRING, V_ASN1_UNIVERSAL, 0, 0, 1))
             return -1;
+        break;
+
+    case V_ASN1_UTF8STRING:
+        arg->format = ASN1_GEN_FORMAT_UTF8;
         break;
 
     case ASN1_GEN_FLAG_FORMAT:
