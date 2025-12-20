@@ -14,23 +14,20 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-#if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && \
-    (defined(__x86_64) || defined(__x86_64__) || \
-    defined(_M_AMD64) || defined (_M_X64))
+#if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
 
-# define HAS_IA32CAP_IS_64
+#define HAS_IA32CAP_IS_64
 #endif
 
-
-# include "enc_b64_avx2.h"
-# include "enc_b64_scalar.h"
+#include "enc_b64_avx2.h"
+#include "enc_b64_scalar.h"
 
 static unsigned char conv_ascii2bin(unsigned char a,
-                                    const unsigned char *table);
+    const unsigned char *table);
 int evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
-                        const unsigned char *f, int dlen, int *wrap_cnt);
+    const unsigned char *f, int dlen, int *wrap_cnt);
 static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
-                               const unsigned char *f, int n, int eof);
+    const unsigned char *f, int n, int eof);
 /*-
  * 64 char lines
  * pad input with 0
@@ -395,7 +392,7 @@ int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
         inl -= i;
         int wrap_cnt = 0;
         j = evp_encodeblock_int(ctx, out, ctx->enc_data, ctx->length,
-                                &wrap_cnt);
+            &wrap_cnt);
         ctx->num = 0;
         out += j;
         total = j;
@@ -404,32 +401,30 @@ int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
     int wrap_cnt = 0;
     if (ctx->length % 3 != 0) {
         j = evp_encodeblock_int(ctx, out, in, inl - (inl % ctx->length),
-                                &wrap_cnt);
+            &wrap_cnt);
     } else {
 #if defined(__AVX2__)
-        const int newlines =
-            !(ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) ? ctx->length : 0;
+        const int newlines = !(ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) ? ctx->length : 0;
 
         j = encode_base64_avx2(ctx,
-                            (unsigned char *)out,
-                            (const unsigned char *)in,
-                            inl - (inl % ctx->length), newlines, &wrap_cnt);
+            (unsigned char *)out,
+            (const unsigned char *)in,
+            inl - (inl % ctx->length), newlines, &wrap_cnt);
 #elif defined(HAS_IA32CAP_IS_64)
-        if ((OPENSSL_ia32cap_P[2] & (1u << 5)) != 0){
-            const int newlines =
-                !(ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) ? ctx->length : 0;
+        if ((OPENSSL_ia32cap_P[2] & (1u << 5)) != 0) {
+            const int newlines = !(ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) ? ctx->length : 0;
 
             j = encode_base64_avx2(ctx,
-                                (unsigned char *)out,
-                                (const unsigned char *)in,
-                                inl - (inl % ctx->length), newlines, &wrap_cnt);
+                (unsigned char *)out,
+                (const unsigned char *)in,
+                inl - (inl % ctx->length), newlines, &wrap_cnt);
         } else {
             j = evp_encodeblock_int(ctx, out, in, inl - (inl % ctx->length),
-                                    &wrap_cnt);
+                &wrap_cnt);
         }
 #else
         j = evp_encodeblock_int(ctx, out, in, inl - (inl % ctx->length),
-                                &wrap_cnt);
+            &wrap_cnt);
 #endif
     }
     in += inl - (inl % ctx->length);
@@ -461,7 +456,7 @@ void EVP_EncodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)
 
     if (ctx->num != 0) {
         ret = evp_encodeblock_int(ctx, out, ctx->enc_data, ctx->num,
-                                  &wrap_cnt);
+            &wrap_cnt);
         if ((ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) == 0)
             out[ret++] = '\n';
         out[ret] = '\0';

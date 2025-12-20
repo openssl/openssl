@@ -406,7 +406,7 @@ static int b64_write(BIO *b, const char *in, int inl)
     }
     int n_bytes_enc = 0;
     if (!EVP_EncodeUpdate(ctx->base64, encoded, &n_bytes_enc,
-                          (unsigned char *)in, inl)) {
+            (unsigned char *)in, inl)) {
         if (ret == 0)
             return -1;
         return ret;

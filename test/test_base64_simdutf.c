@@ -39,14 +39,12 @@ static inline uint32_t next_u32(uint32_t *state)
     return *state;
 }
 
-static const unsigned char data_bin2ascii[65] =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const unsigned char data_bin2ascii[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 /* SRP uses a different base64 alphabet */
-static const unsigned char srpdata_bin2ascii[65] =
-    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz./";
+static const unsigned char srpdata_bin2ascii[65] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz./";
 
 #ifndef CHARSET_EBCDIC
-# define conv_bin2ascii(a, table)       ((table)[(a)&0x3f])
+#define conv_bin2ascii(a, table) ((table)[(a) & 0x3f])
 #else
 /*
  * We assume that PEM encoded files are EBCDIC files (i.e., printable text
@@ -54,11 +52,11 @@ static const unsigned char srpdata_bin2ascii[65] =
  * (text) format again. (No need for conversion in the conv_bin2ascii macro,
  * as the underlying textstring data_bin2ascii[] is already EBCDIC)
  */
-# define conv_bin2ascii(a, table)       ((table)[(a)&0x3f])
+#define conv_bin2ascii(a, table) ((table)[(a) & 0x3f])
 #endif
 
 static int evp_encodeblock_int_old(EVP_ENCODE_CTX *ctx, unsigned char *t,
-                                   const unsigned char *f, int dlen)
+    const unsigned char *f, int dlen)
 {
     int i, ret = 0;
     unsigned long l;
@@ -71,8 +69,7 @@ static int evp_encodeblock_int_old(EVP_ENCODE_CTX *ctx, unsigned char *t,
 
     for (i = dlen; i > 0; i -= 3) {
         if (i >= 3) {
-            l = (((unsigned long)f[0]) << 16L) |
-                (((unsigned long)f[1]) << 8L) | f[2];
+            l = (((unsigned long)f[0]) << 16L) | (((unsigned long)f[1]) << 8L) | f[2];
             *(t++) = conv_bin2ascii(l >> 18L, table);
             *(t++) = conv_bin2ascii(l >> 12L, table);
             *(t++) = conv_bin2ascii(l >> 6L, table);
@@ -95,7 +92,7 @@ static int evp_encodeblock_int_old(EVP_ENCODE_CTX *ctx, unsigned char *t,
     return ret;
 }
 static int evp_encodeupdate_old(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
-                                const unsigned char *in, int inl)
+    const unsigned char *in, int inl)
 {
     int i, j;
     int total = 0;
@@ -180,11 +177,10 @@ static int test_encode_line_lengths_reinforced(void)
             input[i] = (unsigned char)(r % 256);
 
         for (int partial_ctx_fill = 0; partial_ctx_fill <= 80;
-             partial_ctx_fill += 1) {
+            partial_ctx_fill += 1) {
             for (int ctx_len = 1; ctx_len <= 80; ctx_len += 1) {
-                printf
-                ("Trial %d, input length %d, ctx length %d, partial ctx fill %d\n",
-                 t + 1, inl, ctx_len, partial_ctx_fill);
+                printf("Trial %d, input length %d, ctx length %d, partial ctx fill %d\n",
+                    t + 1, inl, ctx_len, partial_ctx_fill);
                 EVP_ENCODE_CTX *ctx_simd = EVP_ENCODE_CTX_new();
                 EVP_ENCODE_CTX *ctx_ref = EVP_ENCODE_CTX_new();
 
@@ -219,28 +215,26 @@ static int test_encode_line_lengths_reinforced(void)
                         ctx_ref->flags |= EVP_ENCODE_CTX_USE_SRP_ALPHABET;
                     }
 
-                    int ret_simd =
-                        EVP_EncodeUpdate(ctx_simd, out_simd, &outlen_simd,
-                                         input, (int)inl);
-                    int ret_ref =
-                        evp_encodeupdate_old(ctx_ref, out_ref, &outlen_ref,
-                                             input, (int)inl);
+                    int ret_simd = EVP_EncodeUpdate(ctx_simd, out_simd, &outlen_simd,
+                        input, (int)inl);
+                    int ret_ref = evp_encodeupdate_old(ctx_ref, out_ref, &outlen_ref,
+                        input, (int)inl);
 
                     if (!TEST_int_eq(ret_simd, ret_ref)
-                        || !TEST_mem_eq(out_ref,outlen_ref, out_simd, outlen_simd)
+                        || !TEST_mem_eq(out_ref, outlen_ref, out_simd, outlen_simd)
                         || !TEST_int_eq(outlen_simd, outlen_ref))
-                    return 0;
+                        return 0;
 
                     EVP_EncodeFinal(ctx_simd, out_simd + outlen_simd,
-                                    &finlen_simd);
+                        &finlen_simd);
                     evp_encodefinal_old(ctx_ref, out_ref + outlen_ref,
-                                        &finlen_ref);
+                        &finlen_ref);
 
                     int total_ref = outlen_ref + finlen_ref;
                     int total_simd = outlen_simd + finlen_simd;
 
                     if (!TEST_int_eq(finlen_simd, finlen_ref)
-                            || !TEST_mem_eq(out_ref, total_ref, out_simd, total_simd))
+                        || !TEST_mem_eq(out_ref, total_ref, out_simd, total_simd))
                         return 0;
                 }
 
