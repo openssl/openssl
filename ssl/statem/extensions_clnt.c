@@ -1788,7 +1788,7 @@ int tls_parse_stoc_use_srtp(SSL_CONNECTION *s, PACKET *pkt,
     /* Throw an error if the server gave us an unsolicited extension */
     clnt = SSL_get_srtp_profiles(SSL_CONNECTION_GET_SSL(s));
     if (clnt == NULL) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_NO_SRTP_PROFILES);
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_NO_SRTP_PROFILES);
         return 0;
     }
 
@@ -1805,7 +1805,7 @@ int tls_parse_stoc_use_srtp(SSL_CONNECTION *s, PACKET *pkt,
         }
     }
 
-    SSLfatal(s, SSL_AD_DECODE_ERROR,
+    SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
         SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
     return 0;
 }
