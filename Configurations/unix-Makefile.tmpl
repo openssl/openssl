@@ -890,6 +890,7 @@ uninstall_dev: uninstall_runtime_libs
 	done
 	-$(RMDIR) "$(DESTDIR)$(PKGCONFIGDIR)"
 	-$(RMDIR) "$(DESTDIR)$(CMAKECONFIGDIR)"
+	-$(RMDIR) "$(DESTDIR)$(libdir)/cmake"
 	-$(RMDIR) "$(DESTDIR)$(libdir)"
 
 _install_modules_deps: install_runtime_libs build_modules
