@@ -46,7 +46,7 @@ application must call OPENSSL_cleanup() explicitly before main() returns.
 
 =head2 Main Changes from OpenSSL 3.5
 
-The functions EVP_PKEY_asn1_*() and L<EVP_PKEY_get0_asn1(3)> were deprecated in
+The functions EVP_PKEY_asn1_*() and EVP_PKEY_get0_asn1() were deprecated in
 favour of the provider API. EVP_PKEY_assign_[DSA|SIPHASH]() were also deprecated.
 Please use the new high level and provider API.
 

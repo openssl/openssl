@@ -25,6 +25,7 @@
 #include <openssl/pkcs12.h>
 #include "crypto/asn1.h"
 #include <openssl/des.h>
+#include "crypto/evp.h"
 
 #define MIN_LENGTH 4
 
@@ -145,7 +146,7 @@ static int check_pem(const char *nm, const char *name)
              * NB: ENGINE implementations won't contain a deprecated old
              * private key decode function so don't look for them.
              */
-            ameth = EVP_PKEY_asn1_find_str(NULL, nm, slen);
+            ameth = evp_pkey_asn1_find_str(nm, slen);
             if (ameth && ameth->old_priv_decode)
                 return 1;
         }
@@ -157,7 +158,7 @@ static int check_pem(const char *nm, const char *name)
         const EVP_PKEY_ASN1_METHOD *ameth;
         slen = ossl_pem_check_suffix(nm, "PARAMETERS");
         if (slen > 0) {
-            ameth = EVP_PKEY_asn1_find_str(NULL, nm, slen);
+            ameth = evp_pkey_asn1_find_str(nm, slen);
             if (ameth) {
                 int r;
                 if (ameth->param_decode)

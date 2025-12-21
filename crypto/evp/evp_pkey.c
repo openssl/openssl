@@ -7,11 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * Needed for EVP_PKEY_get0_asn1 and EVP_PKEY_asn1_get0_info
- */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <stdio.h>
 #include <stdlib.h>
 #include "internal/cryptlib.h"
@@ -259,9 +254,9 @@ const char *EVP_PKEY_get0_type_name(const EVP_PKEY *key)
 
 #ifndef OPENSSL_NO_DEPRECATED_3_6
     /* Otherwise fallback to legacy */
-    ameth = EVP_PKEY_get0_asn1(key);
+    ameth = evp_pkey_get0_asn1(key);
     if (ameth != NULL)
-        EVP_PKEY_asn1_get0_info(NULL, NULL,
+        evp_pkey_asn1_get0_info(NULL, NULL,
             NULL, NULL, &name, ameth);
 #endif
 

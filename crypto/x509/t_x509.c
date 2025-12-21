@@ -7,11 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * because of EVP_PKEY_asn1_find deprecation
- */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
@@ -21,6 +16,7 @@
 #include <openssl/x509v3.h>
 #include "crypto/asn1.h"
 #include "crypto/x509.h"
+#include "crypto/evp.h"
 
 void OSSL_STACK_OF_X509_free(STACK_OF(X509) *certs)
 {
@@ -307,7 +303,7 @@ int X509_signature_print(BIO *bp, const X509_ALGOR *sigalg,
         int pkey_nid, dig_nid;
         const EVP_PKEY_ASN1_METHOD *ameth;
         if (OBJ_find_sigid_algs(sig_nid, &dig_nid, &pkey_nid)) {
-            ameth = EVP_PKEY_asn1_find(NULL, pkey_nid);
+            ameth = evp_pkey_asn1_find(pkey_nid);
             if (ameth && ameth->sig_print)
                 return ameth->sig_print(bp, sigalg, sig, indent + 4, 0);
         }
