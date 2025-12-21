@@ -78,11 +78,10 @@ $code .= <<___;
 ossl_hwsm3_block_data_order_zvksh:
     # Obtain VLEN and select the corresponding branch
     csrr t0, vlenb
-    addi t1, t0, -64
-    beqz t1, ossl_hwsm3_block_data_order_zvksh_zvl512
-    addi t1, t0, -32
+    srl t1, t0, 5
+    beqz t1, ossl_hwsm3_block_data_order_zvksh_zvl128
+    srl t1, t0, 6
     beqz t1, ossl_hwsm3_block_data_order_zvksh_zvl256
-    j ossl_hwsm3_block_data_order_zvksh_zvl128
 ossl_hwsm3_block_data_order_zvksh_zvl512:
     @{[vsetivli "zero", 8, "e32", "m1", "tu", "mu"]}
     @{[vle32_v $V26, $CTX]}
