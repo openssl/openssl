@@ -79,8 +79,6 @@ $code .= <<___;
 .globl sha512_block_data_order_zvkb_zvknhb
 .type sha512_block_data_order_zvkb_zvknhb,\@function
 sha512_block_data_order_zvkb_zvknhb:
-    @{[vsetivli "zero", 4, "e64", "m2", "ta", "ma"]}
-
     # H is stored as {a,b,c,d},{e,f,g,h}, but we need {f,e,b,a},{h,g,d,c}
     # The dst vtype is e64m2 and the index vtype is e8mf4.
     # We use index-load with the following index pattern at v1.
@@ -105,14 +103,12 @@ sha512_block_data_order_zvkb_zvknhb:
     # The AVL is 4 in SHA, so we could use a single e8(8 element masking) for masking.
     @{[vsetivli "zero", 1, "e8", "m1", "ta", "ma"]}
     @{[vmv_v_i $V0, 0x01]}
+
+    # Obtain VLEN and select the corresponding branch
     csrr t0, vlenb
-    addi t1, t0, -64
-    beqz t1, sha512_block_data_order_zvkb_zvknhb_zvl512
-    addi t1, t0, -32
-    beqz t1, sha512_block_data_order_zvkb_zvknhb_zvl256
-    j sha512_block_data_order_zvkb_zvknhb_zvl128
-sha512_block_data_order_zvkb_zvknhb_zvl512:
-sha512_block_data_order_zvkb_zvknhb_zvl256:
+    srl t1, t0, 5
+    beqz t1, sha512_block_data_order_zvkb_zvknhb_zvl128
+sha512_block_data_order_zvkb_zvknhb_zvl256_zvl512:
     # When vlen=256 or 512, the round constants K512 can be loaded
     # at once in vector register files.
     @{[vsetivli "zero", 4, "e64", "m1", "ta", "ma"]}
