@@ -340,6 +340,12 @@ static long ok_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_EOF: /* More to read */
+        /*
+         * If there is no ctx or no next BIO or no init flag, BIO_read()
+         * returns 0, which means EOF, BIO_eof() should return 1 in this case.
+         */
+        if (ctx == NULL || next == NULL || BIO_get_init(b) == 0)
+            return 1;
         if (ctx->cont <= 0)
             ret = 1;
         else
@@ -370,6 +376,7 @@ static long ok_ctrl(BIO *b, int cmd, long num, void *ptr)
         ctx->cont = (int)ret;
 
         /* Finally flush the underlying BIO */
+        BIO_clear_retry_flags(b);
         ret = BIO_ctrl(next, cmd, num, ptr);
         BIO_copy_next_retry(b);
         break;
