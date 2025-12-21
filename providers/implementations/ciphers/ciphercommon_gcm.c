@@ -153,7 +153,6 @@ const OSSL_PARAM *ossl_gcm_gettable_ctx_params(
 int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
-    size_t sz;
     struct ossl_cipher_gcm_get_ctx_params_st p;
 
     if (ctx == NULL || !ossl_cipher_gcm_get_ctx_params_decoder(params, &p))
