@@ -191,6 +191,25 @@ ___
     return $code;
 }
 
+# aes-128-cbc encryption with round keys v1-v11
+sub aes_128_encrypt_cbc {
+    my $code=<<___;
+    @{[vaesz_vs $V24, $V17]}    # with round key w[ 0, 3]
+    @{[vaesem_vs $V24, $V2]}    # with round key w[ 4, 7]
+    @{[vaesem_vs $V24, $V3]}    # with round key w[ 8,11]
+    @{[vaesem_vs $V24, $V4]}    # with round key w[12,15]
+    @{[vaesem_vs $V24, $V5]}    # with round key w[16,19]
+    @{[vaesem_vs $V24, $V6]}    # with round key w[20,23]
+    @{[vaesem_vs $V24, $V7]}    # with round key w[24,27]
+    @{[vaesem_vs $V24, $V8]}    # with round key w[28,31]
+    @{[vaesem_vs $V24, $V9]}    # with round key w[32,35]
+    @{[vaesem_vs $V24, $V10]}   # with round key w[36,39]
+    @{[vaesef_vs $V24, $V11]}   # with round key w[40,43]
+___
+
+    return $code;
+}
+
 # aes-128 decryption with round keys v1-v11
 sub aes_128_decrypt {
     my $code=<<___;
@@ -313,6 +332,27 @@ ___
     return $code;
 }
 
+# aes-192-cbc encryption with round keys v1-v13
+sub aes_192_encrypt_cbc {
+    my $code=<<___;
+    @{[vaesz_vs $V24, $V17]}    # with round key w[ 0, 3]
+    @{[vaesem_vs $V24, $V2]}    # with round key w[ 4, 7]
+    @{[vaesem_vs $V24, $V3]}    # with round key w[ 8,11]
+    @{[vaesem_vs $V24, $V4]}    # with round key w[12,15]
+    @{[vaesem_vs $V24, $V5]}    # with round key w[16,19]
+    @{[vaesem_vs $V24, $V6]}    # with round key w[20,23]
+    @{[vaesem_vs $V24, $V7]}    # with round key w[24,27]
+    @{[vaesem_vs $V24, $V8]}    # with round key w[28,31]
+    @{[vaesem_vs $V24, $V9]}    # with round key w[32,35]
+    @{[vaesem_vs $V24, $V10]}   # with round key w[36,39]
+    @{[vaesem_vs $V24, $V11]}   # with round key w[40,43]
+    @{[vaesem_vs $V24, $V12]}   # with round key w[44,47]
+    @{[vaesef_vs $V24, $V13]}   # with round key w[48,51]
+___
+
+    return $code;
+}
+
 # aes-192 decryption with round keys v1-v13
 sub aes_192_decrypt {
     my $code=<<___;
@@ -338,6 +378,29 @@ ___
 sub aes_256_encrypt {
     my $code=<<___;
     @{[vaesz_vs $V24, $V1]}     # with round key w[ 0, 3]
+    @{[vaesem_vs $V24, $V2]}    # with round key w[ 4, 7]
+    @{[vaesem_vs $V24, $V3]}    # with round key w[ 8,11]
+    @{[vaesem_vs $V24, $V4]}    # with round key w[12,15]
+    @{[vaesem_vs $V24, $V5]}    # with round key w[16,19]
+    @{[vaesem_vs $V24, $V6]}    # with round key w[20,23]
+    @{[vaesem_vs $V24, $V7]}    # with round key w[24,27]
+    @{[vaesem_vs $V24, $V8]}    # with round key w[28,31]
+    @{[vaesem_vs $V24, $V9]}    # with round key w[32,35]
+    @{[vaesem_vs $V24, $V10]}   # with round key w[36,39]
+    @{[vaesem_vs $V24, $V11]}   # with round key w[40,43]
+    @{[vaesem_vs $V24, $V12]}   # with round key w[44,47]
+    @{[vaesem_vs $V24, $V13]}   # with round key w[48,51]
+    @{[vaesem_vs $V24, $V14]}   # with round key w[52,55]
+    @{[vaesef_vs $V24, $V15]}   # with round key w[56,59]
+___
+
+    return $code;
+}
+
+# aes-256-cbc encryption with round keys v1-v15
+sub aes_256_encrypt_cbc {
+    my $code=<<___;
+    @{[vaesz_vs $V24, $V17]}    # with round key w[ 0, 3]
     @{[vaesem_vs $V24, $V2]}    # with round key w[ 4, 7]
     @{[vaesem_vs $V24, $V3]}    # with round key w[ 8,11]
     @{[vaesem_vs $V24, $V4]}    # with round key w[12,15]
@@ -386,7 +449,7 @@ ___
 #                               size_t length, const AES_KEY *key,
 #                               unsigned char *ivec, const int enc);
 my ($INP, $OUTP, $LEN, $KEYP, $IVP, $ENC) = ("a0", "a1", "a2", "a3", "a4", "a5");
-my ($T0, $T1, $ROUNDS) = ("t0", "t1", "t2");
+my ($T0, $T1, $ROUNDS, $VL, $LEN32) = ("t0", "t1", "t2", "t3", "t4");
 
 $code .= <<___;
 .p2align 3
@@ -427,13 +490,29 @@ L_cbc_enc_128:
 
     @{[vle32_v $V24, $INP]}
     @{[vxor_vv $V24, $V24, $V16]}
-    j 2f
+    j 3f
 
 1:
     @{[vle32_v $V17, $INP]}
-    @{[vxor_vv $V24, $V24, $V17]}
+    # Use V17 as a temporary register to reduce instruction‑register dependency.
+    @{[vxor_vv $V17, $V17, $V1]}
 
 2:
+    # AES body
+    @{[aes_128_encrypt_cbc]}
+
+    @{[vse32_v $V24, $OUTP]}
+
+    addi $INP, $INP, 16
+    addi $OUTP, $OUTP, 16
+    addi $LEN, $LEN, -16
+
+    bnez $LEN, 1b
+
+    @{[vse32_v $V24, $IVP]}
+
+    ret
+3:
     # AES body
     @{[aes_128_encrypt]}
 
@@ -462,13 +541,29 @@ L_cbc_enc_192:
 
     @{[vle32_v $V24, $INP]}
     @{[vxor_vv $V24, $V24, $V16]}
-    j 2f
+    j 3f
 
 1:
     @{[vle32_v $V17, $INP]}
-    @{[vxor_vv $V24, $V24, $V17]}
+    # Use V17 as a temporary register to reduce instruction‑register dependency.
+    @{[vxor_vv $V17, $V17, $V1]}
 
 2:
+    # AES body
+    @{[aes_192_encrypt_cbc]}
+
+    @{[vse32_v $V24, $OUTP]}
+
+    addi $INP, $INP, 16
+    addi $OUTP, $OUTP, 16
+    addi $LEN, $LEN, -16
+
+    bnez $LEN, 1b
+
+    @{[vse32_v $V24, $IVP]}
+
+    ret
+3:
     # AES body
     @{[aes_192_encrypt]}
 
@@ -497,13 +592,29 @@ L_cbc_enc_256:
 
     @{[vle32_v $V24, $INP]}
     @{[vxor_vv $V24, $V24, $V16]}
-    j 2f
+    j 3f
 
 1:
     @{[vle32_v $V17, $INP]}
-    @{[vxor_vv $V24, $V24, $V17]}
+    # Use V17 as a temporary register to reduce instruction‑register dependency.
+    @{[vxor_vv $V17, $V17, $V1]}
 
 2:
+    # AES body
+    @{[aes_256_encrypt_cbc]}
+
+    @{[vse32_v $V24, $OUTP]}
+
+    addi $INP, $INP, 16
+    addi $OUTP, $OUTP, 16
+    addi $LEN, $LEN, -16
+
+    bnez $LEN, 1b
+
+    @{[vse32_v $V24, $IVP]}
+
+    ret
+3:
     # AES body
     @{[aes_256_encrypt]}
 
