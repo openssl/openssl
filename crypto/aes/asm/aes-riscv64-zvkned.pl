@@ -64,12 +64,22 @@ my ($V0, $V1, $V2, $V3, $V4, $V5, $V6, $V7,
     $V24, $V25, $V26, $V27, $V28, $V29, $V30, $V31,
 ) = map("v$_",(0..31));
 
+my ($VLENB, $VLENB_CHECK) = ("t5", "t6");
+
 # Load all 11 round keys to v1-v11 registers.
 sub aes_128_load_key {
     my $KEYP = shift;
 
     my $code=<<___;
+    csrr $VLENB, vlenb
+    srl $VLENB_CHECK, $VLENB, 5
+    beqz $VLENB_CHECK, load_key_zvl128
+    # When vlenb >= 128, only apply for half
+    @{[vsetivli "zero", 4, "e32", "mf2", "ta", "ma"]}
+    j load_key_single
+load_key_zvl128:
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+load_key_single:
     @{[vle32_v $V1, $KEYP]}
     addi $KEYP, $KEYP, 16
     @{[vle32_v $V2, $KEYP]}
@@ -101,7 +111,15 @@ sub aes_192_load_key {
     my $KEYP = shift;
 
     my $code=<<___;
+    csrr $VLENB, vlenb
+    srl $VLENB_CHECK, $VLENB, 5
+    beqz $VLENB_CHECK, load_key_zvl128
+    # When vlenb >= 128, only apply for half
+    @{[vsetivli "zero", 4, "e32", "mf2", "ta", "ma"]}
+    j load_key_single
+load_key_zvl128:
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+load_key_single:
     @{[vle32_v $V1, $KEYP]}
     addi $KEYP, $KEYP, 16
     @{[vle32_v $V2, $KEYP]}
@@ -137,7 +155,15 @@ sub aes_256_load_key {
     my $KEYP = shift;
 
     my $code=<<___;
+    csrr $VLENB, vlenb
+    srl $VLENB_CHECK, $VLENB, 5
+    beqz $VLENB_CHECK, load_key_zvl128
+    # When vlenb >= 128, only apply for half
+    @{[vsetivli "zero", 4, "e32", "mf2", "ta", "ma"]}
+    j load_key_single
+load_key_zvl128:
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+load_key_single:
     @{[vle32_v $V1, $KEYP]}
     addi $KEYP, $KEYP, 16
     @{[vle32_v $V2, $KEYP]}
@@ -764,7 +790,7 @@ L_ecb_enc_128:
     @{[aes_128_load_key $KEYP]}
 
 1:
-    @{[vsetvli $VL, $LEN32, "e32", "m4", "ta", "ma"]}
+    @{[vsetvli $VL, $LEN32, "e32", "m8", "ta", "ma"]}
     slli $T0, $VL, 2
     sub $LEN32, $LEN32, $VL
 
@@ -791,7 +817,7 @@ L_ecb_enc_192:
     @{[aes_192_load_key $KEYP]}
 
 1:
-    @{[vsetvli $VL, $LEN32, "e32", "m4", "ta", "ma"]}
+    @{[vsetvli $VL, $LEN32, "e32", "m8", "ta", "ma"]}
     slli $T0, $VL, 2
     sub $LEN32, $LEN32, $VL
 
@@ -818,7 +844,7 @@ L_ecb_enc_256:
     @{[aes_256_load_key $KEYP]}
 
 1:
-    @{[vsetvli $VL, $LEN32, "e32", "m4", "ta", "ma"]}
+    @{[vsetvli $VL, $LEN32, "e32", "m8", "ta", "ma"]}
     slli $T0, $VL, 2
     sub $LEN32, $LEN32, $VL
 
@@ -875,7 +901,7 @@ L_ecb_dec_128:
     @{[aes_128_load_key $KEYP]}
 
 1:
-    @{[vsetvli $VL, $LEN32, "e32", "m4", "ta", "ma"]}
+    @{[vsetvli $VL, $LEN32, "e32", "m8", "ta", "ma"]}
     slli $T0, $VL, 2
     sub $LEN32, $LEN32, $VL
 
@@ -902,7 +928,7 @@ L_ecb_dec_192:
     @{[aes_192_load_key $KEYP]}
 
 1:
-    @{[vsetvli $VL, $LEN32, "e32", "m4", "ta", "ma"]}
+    @{[vsetvli $VL, $LEN32, "e32", "m8", "ta", "ma"]}
     slli $T0, $VL, 2
     sub $LEN32, $LEN32, $VL
 
@@ -929,7 +955,7 @@ L_ecb_dec_256:
     @{[aes_256_load_key $KEYP]}
 
 1:
-    @{[vsetvli $VL, $LEN32, "e32", "m4", "ta", "ma"]}
+    @{[vsetvli $VL, $LEN32, "e32", "m8", "ta", "ma"]}
     slli $T0, $VL, 2
     sub $LEN32, $LEN32, $VL
 
