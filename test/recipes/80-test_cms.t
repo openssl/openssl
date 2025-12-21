@@ -522,6 +522,15 @@ my @smime_cms_cades_ko_tests = (
       [ @prov, "-verify", "-cades", "-in", "cades-ko.cms", "-inform", "DER",
         "-CAfile", $smroot, "-out", "cades-ko.txt" ],
       \&final_compare
+    ],
+
+    [ "sign content with -noattr, verify with -cades should fail (issue #27055)",
+      [ @prov, "-sign", "-in", $smcont, "-outform", "DER", "-nodetach",
+        "-noattr", "-certfile", $smroot, "-signer", $smrsa1, "-out", "cades-noattr.cms" ],
+      "fail to verify -noattr signature with -cades flag",
+      [ @prov, "-verify", "-cades", "-in", "cades-noattr.cms", "-inform", "DER",
+        "-CAfile", $smroot, "-out", "cades-noattr.txt" ],
+      \&final_compare
     ]
 );
 
