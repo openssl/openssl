@@ -148,11 +148,13 @@ $code.=<<___;
     tbl     $v_t1.16b,{$v_t4.16b},$sp3033.16b
     tbl     $v_t4.16b,{$v_t4.16b},$sp1110.16b
     tbl     $v_x.16b,{$v_x.16b},$sp0044.16b
-    // s2 = s1 <<< 1 (Rotate Left 1)
+
+    // s2 = s1 <<< 1
     shl     $v_t2.16b,$v_t0.16b,#1
-    sri     $v_t2.16b,$v_t0.16b,#7
-    // s3 = s1 >>> 1 (Rotate Left 7)
+    // s3 = s1 >>> 1
     shl     $v_t3.16b,$v_t1.16b,#7
+
+    sri     $v_t2.16b,$v_t0.16b,#7
     sri     $v_t3.16b,$v_t1.16b,#1
 
     //tbl     $v_t1.16b,{$v_t4.16b},$inv_shift_row.16b
