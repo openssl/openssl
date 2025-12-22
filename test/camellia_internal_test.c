@@ -126,7 +126,8 @@ static int test_camellia_1blk_key128_armv8(void)
         return 0;
     }
 
-    camellia_decrypt_1blk_armv8((struct camellia_simd_ctx *)&ctx, block, block);
+    //camellia_decrypt_1blk_armv8((struct camellia_simd_ctx *)&ctx, block, block);
+    camellia_decrypt_1blk_aese((struct camellia_simd_ctx *)&ctx, block, block);
     if (!TEST_mem_eq(block, CAMELLIA_BLOCK_SIZE, input, CAMELLIA_BLOCK_SIZE)) {
         TEST_error("Decryption roundtrip failed.");
         return 0;
