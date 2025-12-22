@@ -10913,7 +10913,8 @@ static int test_ssl_dup(void)
     client2ssl = SSL_dup(clientssl);
     rbio = SSL_get_rbio(clientssl);
     if (!TEST_ptr(rbio)
-        || !TEST_true(BIO_up_ref(rbio)))
+        || !TEST_true(BIO_up_ref(rbio))
+        || !TEST_ptr(client2ssl))
         goto end;
     SSL_set0_rbio(client2ssl, rbio);
     rbio = NULL;
