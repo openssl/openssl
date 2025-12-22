@@ -157,23 +157,9 @@ $code.=<<___;
     sri     $v_t2.16b,$v_t0.16b,#7
     sri     $v_t3.16b,$v_t1.16b,#1
 
-    //tbl     $v_t1.16b,{$v_t4.16b},$inv_shift_row.16b
-    //tbl     $v_x.16b,{$v_x.16b},$sp0044.16b
-    //tbl     $v_t4.16b,{$v_t4.16b},$sp1110.16b
-    //add     $v_t2.16b,$v_t1.16b,$v_t1.16b
-    //ushr    $v_t0.16b,$v_t1.16b,#7
-    //shl     $v_t3.16b,$v_t1.16b,#7
-    //orr     $v_t0.16b,$v_t0.16b,$v_t2.16b
-    //ushr    $v_t1.16b,$v_t1.16b,#1
-    //tbl     $v_t0.16b,{$v_t0.16b},$sp0222.16b
-    //orr     $v_t1.16b,$v_t1.16b,$v_t3.16b
-
     eor     $v_t4.16b,$v_x.16b,$v_t4.16b
     eor     $v_t2.16b,$v_t3.16b,$v_t2.16b
     eor     $v_t0.16b,$v_t4.16b,$v_t2.16b
-    //tbl     $v_t1.16b,{$v_t1.16b},$sp3033.16b
-    //eor     $v_t0.16b,$v_t0.16b,$v_t4.16b
-    //eor     $v_t0.16b,$v_t0.16b,$v_t1.16b
 
     /* ...continue calculating P-function */
     ext     $v_x.16b,$v_t0.16b,$v_zero.16b,#8
@@ -294,9 +280,8 @@ $code.=<<___;
     adrp    $gpr_mask,.Lpack_bswap
     add     $gpr_mask,$gpr_mask,:lo12:.Lpack_bswap
     ldr     q3,[$gpr_mask]         // Load swap mask into a temporary
-    ldr     $gpr_key,[$key_ptr]
+    ldr     d2,[$key_ptr]
     tbl     $ab.16b,{$ab.16b},$mask.16b
-    fmov    d2,$gpr_key            // Move key to a vector
     tbl     $cd.16b,{$cd.16b},$mask.16b
     eor     $ab.16b,$ab.16b,$key.16b
 ___
@@ -313,6 +298,21 @@ $code.=<<___;
     add     x9,x0,#0            // Assume key_table == 0
     ldr     x8,[x9]             // Load key[0] into x8
     eor     x4,x4,x8            // [lr|ll] ^= key[0]
+___
+}
+
+sub dec_inpack_neon(){
+    my ($ab, $cd, $rio_ptr, $key_ptr, $key, $mask, $gpr_key, $gpr_mask, $max) = @_;
+$code.=<<___;
+    ldp     d0,d1,[$rio_ptr]        // Load input
+    adrp    $gpr_mask,.Lpack_bswap
+    add     $gpr_mask,$gpr_mask,:lo12:.Lpack_bswap
+    ldr     q3,[$gpr_mask]         // Load swap mask into a temporary
+    lsl     w9,$max,#3              // max * 8
+    ldr     d2,[$key_ptr,x9]
+    tbl     $ab.16b,{$ab.16b},$mask.16b
+    tbl     $cd.16b,{$cd.16b},$mask.16b
+    eor     $ab.16b,$ab.16b,$key.16b
 ___
 }
 
@@ -403,6 +403,16 @@ sub enc_rounds(){
     &roundsm_cd_to_ab($i+7, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222);
 }
 
+sub dec_rounds_aese(){
+    my ($i, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask,  $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key) = @_;
+    &roundsm_aese_ab_to_cd($i+7, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
+    &roundsm_aese_cd_to_ab($i+6, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
+    &roundsm_aese_ab_to_cd($i+5, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
+    &roundsm_aese_cd_to_ab($i+4, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
+    &roundsm_aese_ab_to_cd($i+3, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
+    &roundsm_aese_cd_to_ab($i+2, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
+}
+
 sub dec_rounds(){
     my ($i, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222) = @_;
     &roundsm_ab_to_cd($i+7, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222);
@@ -418,8 +428,7 @@ sub enc_outunpack_neon(){
 $code.=<<___;
     lsl     w9,$max,#3      // max * 8
     add     x9,$key_ptr,x9        // &(CTX+max*8)
-    ldr     $gpr_key,[x9,#0]      // assume key_table == 0
-    fmov    d2,$gpr_key            // Move key to a vector
+    ldr     d2,[x9,#0]      // assume key_table == 0
     adrp    $gpr_mask,.Lpack_bswap
     add     $gpr_mask,$gpr_mask,:lo12:.Lpack_bswap
     ldr     q3,[$gpr_mask]         // Load swap mask into a temporary
@@ -443,6 +452,20 @@ $code.=<<___;
     ror     x4,x4,#32       // Rotate  AB state (swap ll and lr)
     rev     x4,x4           // Change endianness
     stp     x5,x4,[x1]      // Store 128-bit result [RCD0 | RAB0]
+___
+}
+
+sub dec_outunpack_neon(){
+    my ($ab, $cd, $rio_ptr, $key_ptr, $key, $mask, $gpr_key, $gpr_mask) = @_;
+$code.=<<___;
+    ldr     d2,[$key_ptr]      // assume key_table == 0
+    adrp    $gpr_mask,.Lpack_bswap
+    add     $gpr_mask,$gpr_mask,:lo12:.Lpack_bswap
+    ldr     q3,[$gpr_mask]         // Load swap mask into a temporary
+    eor     $cd.16b,$cd.16b,$key.16b
+    tbl     $ab.16b,{$ab.16b},$mask.16b
+    tbl     $cd.16b,{$cd.16b},$mask.16b
+    stp     d1,d0,[$rio_ptr]        // Load input
 ___
 }
 
@@ -521,6 +544,67 @@ $code.=<<___;
     ldp     x29,x30,[sp],#144
     ret
 .size   camellia_encrypt_1blk_aese,.-camellia_encrypt_1blk_aese
+
+.global camellia_decrypt_1blk_aese
+.type   camellia_decrypt_1blk_aese,%function
+.align  5
+camellia_decrypt_1blk_aese:
+    stp     x29, x30, [sp, -144]!
+    mov     x29, sp
+
+    stp     q8,q9,[sp,#16]
+    stp     q10,q11,[sp,#48]
+    stp     q12,q13,[sp,#80]
+    stp     q14,q15,[sp,#112]
+
+    ldr     w9,[x0,#272]    // Load key_length byte (assuming offset 272)
+    mov     w30,#32         // w30 will hold the 'max' value
+    mov     w8,#24
+    cmp     w9,#16
+    csel    w30,w8,w30,eq   // w30 == 24 if key_length == 16 else 32.
+
+    // === CONSTANT LOADING ===
+    // Load constants needed for camellia_f into v14-v15 and v17-v27
+    adrp    x10,camellia_neon_consts
+    add     x10,x10,:lo12:camellia_neon_consts
+    ldp     q20,q21,[x10],#32       // pre_tf_lo/hi_s1
+    ldp     q14,q15,[x10],#32       // pre_tf_lo/hi_s4
+    ldp     q22,q23,[x10],#112      // post_tf_lo/hi_s1
+    ldr     q19,[x10],#152          // mask_0f
+    ldr     d18,[x10],#8            // sbox4_input_mask_swap32
+    ldr     q17,[x10],#16           // inv_shift_row_and_unpcklbw_sp2n3_swap32
+    ldp     q24,q25,[x10],#32       // {sp4mask/sp1mask}_swap32
+    ldp     q26,q27,[x10],#32       // {sp2mask/sp3mask}_swap32
+___
+    &dec_inpack_neon("v0","v1","x2","x0","v2","v3","x4","x5","w30");
+
+$code.=<<___;
+    eor     v11.16b,v11.16b,v11.16b
+    cmp     w30,#24
+    b.eq    __dec_rounds16_aese
+___
+    &dec_rounds_aese(24,"v0","v1","v2","v6","v7","v8","v9","v10","v11","v14","v15","v17","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
+    &fls_neon("v0","v1","v2","v3","x0",25,24);
+$code.=<<___;
+
+__dec_rounds16_aese:
+___
+    &dec_rounds_aese(16,"v0","v1","v2","v6","v7","v8","v9","v10","v11","v14","v15","v17","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
+    &fls_neon("v0","v1","v2","v3","x0",17,16);
+    &dec_rounds_aese(8,"v0","v1","v2","v6","v7","v8","v9","v10","v11","v14","v15","v17","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
+    &fls_neon("v0","v1","v2","v3","x0",9,8);
+    &dec_rounds_aese(0,"v0","v1","v2","v6","v7","v8","v9","v10","v11","v14","v15","v17","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
+
+    &dec_outunpack_neon("v0","v1","x1","x0","v2","v3","x4","x5");
+$code.=<<___;
+
+    ldp     q8,q9,[sp,#16]
+    ldp     q10,q11,[sp,#48]
+    ldp     q12,q13,[sp,#80]
+    ldp     q14,q15,[sp,#112]
+    ldp     x29,x30,[sp],#144
+    ret
+.size   camellia_decrypt_1blk_aese,.-camellia_decrypt_1blk_aese
 
 .global camellia_encrypt_1blk_armv8
 .type   camellia_encrypt_1blk_armv8,%function
@@ -724,13 +808,9 @@ camellia_neon_consts:
 	.byte 0xff, 0x04, 0x04, 0x04, 0xff, 0x04, 0x04, 0x04
 	.byte 0xff, 0x07, 0x07, 0x07, 0x07, 0xff, 0xff, 0x07
 .Lsp2mask_swap32:
-//	.byte 0x06, 0x06, 0x06, 0xff, 0x06, 0x06, 0x06, 0xff
-//	.byte 0x0c, 0x0c, 0x0c, 0xff, 0xff, 0xff, 0x0c, 0x0c
     .byte 0x0b, 0x0b, 0x0b, 0xff, 0x0b, 0x0b, 0x0b, 0xff
     .byte 0x0a, 0x0a, 0x0a, 0xff, 0xff, 0xff, 0x0a, 0x0a
 .Lsp3mask_swap32:
-//	.byte 0x04, 0x04, 0xff, 0x04, 0x04, 0x04, 0xff, 0x04
-//	.byte 0x0a, 0x0a, 0xff, 0x0a, 0xff, 0x0a, 0x0a, 0xff
     .byte 0x0e, 0x0e, 0xff, 0x0e, 0x0e, 0x0e, 0xff, 0x0e
     .byte 0x0d, 0x0d, 0xff, 0x0d, 0xff, 0x0d, 0x0d, 0xff
 // === Sigmas for key setup ===
