@@ -10,7 +10,7 @@ use strict;
 use warnings;
 
 use IPC::Open3;
-use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_file/;
 use OpenSSL::Test::Utils;
 use Symbol 'gensym';
 
@@ -23,6 +23,8 @@ my $s_client_match = 0;
 my $test_name = "test_ech_client_server";
 setup($test_name);
 
+plan skip_all => "$test_name requires ECH"
+    if disabled("ech");
 plan skip_all => "$test_name requires EC cryptography"
     if disabled("ec") || disabled("ecx");
 plan skip_all => "$test_name requires sock enabled"
@@ -32,16 +34,17 @@ plan skip_all => "$test_name requires TLSv1.3 enabled"
 plan skip_all => "$test_name is not available Windows or VMS"
     if $^O =~ /^(VMS|MSWin32|msys)$/;
 
-plan tests => 18;
+plan tests => 22;
 
 my $shlib_wrap   = bldtop_file("util", "shlib_wrap.sh");
 my $apps_openssl = bldtop_file("apps", "openssl");
 
-my $echconfig_pem         = srctop_file("test", "certs", "ech-eg.pem");
-my $badconfig_pem         = srctop_file("test", "certs", "ech-mid.pem");
+my $echconfig_pem         = srctop_file("test", "certs", "echdir", "ech-eg.pem");
+my $badconfig_pem         = srctop_file("test", "certs", "echdir", "ech-mid.pem");
 my $server_pem            = srctop_file("test", "certs", "echserver.pem");
 my $server_key            = srctop_file("test", "certs", "echserver.key");
 my $root_pem              = srctop_file("test", "certs", "rootcert.pem");
+my $ech_dir               = srctop_dir("test", "certs", "echdir" );
 
 sub extract_ecl()
 {
@@ -88,6 +91,15 @@ sub start_ech_client_server
                          "-servername", "example.com",
                          "-ech_trialdecrypt",
                          "-tls1_3");
+     } elsif ($test_type eq "keydir" ) {
+        # load keys from key dir (some will fail)
+        @s_server_cmd = ("s_server", "-accept", "0", "-naccept", "1",
+                         "-cert", $server_pem, "-key", $server_key,
+                         "-cert2", $server_pem, "-key2", $server_key,
+                         "-ech_dir", $ech_dir,
+                         "-ech_noretry_dir", $ech_dir,
+                         "-servername", "example.com",
+                         "-tls1_3");
     } else {
         # default for all other tests (for now)
         @s_server_cmd = ("s_server", "-accept", "0", "-naccept", "1",
@@ -117,6 +129,8 @@ sub start_ech_client_server
             last;
         } elsif (/^Using default/) {
             ;
+        } elsif (/^Added (\d+) ECH/) {
+            ;
         } elsif (/^Added ECH key pair/) {
             ;
         } elsif (/^Loaded/) {
@@ -134,12 +148,20 @@ sub start_ech_client_server
     #                  -prexit
     my @s_client_cmd;
     if ($test_type eq "GREASE-suite" ) {
-        # GREASE
+        # GREASE with suite
         @s_client_cmd = ("s_client",
                          "-connect", "localhost:$s_server_port",
                          "-servername", "server.example",
                          "-CAfile", $root_pem,
                          "-ech_grease_suite", "0x21,2,3",
+                         "-prexit");
+     } elsif ($test_type eq "bad-GREASE-suite" ) {
+        # bad GREASE suite
+        @s_client_cmd = ("s_client",
+                         "-connect", "localhost:$s_server_port",
+                         "-servername", "server.example",
+                         "-CAfile", $root_pem,
+                         "-ech_grease_suite", "thisisnotagoodone",
                          "-prexit");
     } elsif ($test_type eq "lots-of-options" ) {
         # real ECH with lots of options
@@ -154,7 +176,7 @@ sub start_ech_client_server
                          "-ech_outer_alpn", "http451",
                          "-prexit");
     } elsif ($test_type eq "GREASE-type" ) {
-        # GREASE with suite
+        # GREASE with type
         @s_client_cmd = ("s_client",
                          "-connect", "localhost:$s_server_port",
                          "-servername", "server.example",
@@ -280,6 +302,16 @@ sub grease_suite_test {
     ok($s_client_match == 1, "s_client with GREASE-suite ECH");
 }
 
+sub bad_grease_suite_test {
+    print("\n\nGREASE suite ECHConfig test.\n");
+    my $tt="bad-GREASE-suite";
+    my $win="^ECH: NOT CONFIGURED";
+    start_ech_client_server($tt, $win);
+    ok($s_server_port ne "0", "s_server port check");
+    print("s_server ready, on port $s_server_port pid: $s_server_pid\n");
+    ok($s_client_match == 1, "s_client with bad GREASE-suite ECH");
+}
+
 sub grease_type_test {
     print("\n\nGREASE type ECH test.\n");
     my $tt="GREASE-type";
@@ -330,13 +362,25 @@ sub cid_wrong_test {
     ok($s_client_match == 1, "s_client/s_server with no CID/no trial decrypt");
 }
 
+sub keydir_test {
+    print("\n\nServer using key dir test.\n");
+    my $tt = "keydir";
+    my $win = "^ECH: success";
+    start_ech_client_server($tt, $win);
+    ok($s_server_port ne "0", "s_server port check");
+    print("s_server ready, on port $s_server_port pid: $s_server_pid\n");
+    ok($s_client_match == 1, "s_server using ech keydir on command line");
+}
+
 basic_test();
 wrong_test();
 grease_test();
 grease_suite_test();
+bad_grease_suite_test();
 grease_type_test();
 lots_of_options_test();
 no_outer_test();
 cid_free_test();
 cid_wrong_test();
+keydir_test();
 

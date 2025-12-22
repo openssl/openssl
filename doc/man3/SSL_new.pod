@@ -94,6 +94,8 @@ SSL_set0_client_CA_list() or similar functions
 
 =item any client certificate types configured via SSL_set1_client_certificate_types
 
+=item any Encrypted Client Hello (ECH) settings (see L<SSL_set1_echstore(3)>).
+
 =back
 
 SSL_dup() is not supported on QUIC SSL objects and returns NULL if called on
