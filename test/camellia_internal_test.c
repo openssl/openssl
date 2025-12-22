@@ -524,13 +524,13 @@ int setup_tests(void)
     /*ADD_TEST(test_camellia_128_ref);*/
 #ifdef CMLL_AES_CAPABLE
     ADD_TEST(test_camellia_1blk_key128_armv8);
-    //ADD_TEST(test_camellia_16blk_key128_neon);
-    //ADD_TEST(test_camellia_1blk_key192_armv8);
-    //ADD_TEST(test_camellia_16blk_key192_neon);
-    //ADD_TEST(test_camellia_1blk_key256_armv8);
-    //ADD_TEST(test_camellia_16blk_key256_neon);
-    //ADD_TEST(test_camellia_cbc_neon);
-    //ADD_TEST(test_camellia_ctr_neon);
+    ADD_TEST(test_camellia_16blk_key128_neon);
+    ADD_TEST(test_camellia_1blk_key192_armv8);
+    ADD_TEST(test_camellia_16blk_key192_neon);
+    ADD_TEST(test_camellia_1blk_key256_armv8);
+    ADD_TEST(test_camellia_16blk_key256_neon);
+    ADD_TEST(test_camellia_cbc_neon);
+    ADD_TEST(test_camellia_ctr_neon);
 #endif
     return 1;
 }

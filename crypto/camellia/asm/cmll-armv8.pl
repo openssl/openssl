@@ -2700,13 +2700,13 @@ $code.=<<___;
 .Lctr_tail:
     cbz     x21,.Lctr_done
 
-    ldr     q28,[sp,#464]       // Load base IV
-
 .Lctr_tail_loop:
+    ldr     q28,[sp,#464]       // Load base IV
     mov     v28.s[3],w24        // Update counter in vector
 
     rev32   v30.16b,v28.16b     // Use v30 as temp to keep v28 LE
     str     q30,[sp,#208]       // Store to stack to use as Inp
+    str     q28,[sp,#464]       // Store base IV
 
     mov     x0,x22              // Key
     add     x1,sp,#224          // Output Scratch
