@@ -374,25 +374,6 @@ int SSL_CTX_ech_set1_outer_alpn_protos(SSL_CTX *ctx,
     return 1;
 }
 
-int SSL_CTX_ech_raw_decrypt(SSL_CTX *ctx,
-                            int *decrypted_ok,
-                            char **inner_sni, char **outer_sni,
-                            unsigned char *outer_ch, size_t outer_len,
-                            unsigned char *inner_ch, size_t *inner_len,
-                            unsigned char **hrrtok, size_t *toklen)
-{
-    if (ctx == NULL) {
-        /*
-         * TODO(ECH): decide whether to populate this or to
-         * punt on split-mode 'till after the first ECH-enabled
-         * release.
-         */
-        ERR_raise(ERR_LIB_SSL, SSL_R_ECH_REQUIRED);
-        return 0;
-    }
-    return 0;
-}
-
 void SSL_CTX_ech_set_callback(SSL_CTX *ctx, SSL_ech_cb_func f)
 {
     if (ctx == NULL) {
