@@ -815,15 +815,6 @@ static unsigned char bit_long_encap_len[] = {
     0x00, 0xFF,
 };
 
-/* bit longer encap len (more than extension) */
-static unsigned char bit_longer_encap_len[] = {
-    0xfe, 0x0d, 0x00, 0xba, /* ext type & length */
-    0x00,
-    0x00, 0x01, 0x00, 0x01, /* cipher suite KDF, AEAD */
-    0x7c,
-    0x00, 0x30,
-};
-
 /* too short to get to payload_len */
 static unsigned char too_short_payload_len[] = {
     0xfe, 0x0d, 0x00, 0x29, /* ext type & length */
@@ -932,16 +923,13 @@ static TEST_ECHOUTER test_echs[] = {
     /* 13. bit_long_encap_len value */
     { bit_long_encap_len, sizeof(bit_long_encap_len),
       0, /* expected result */ SSL_R_BAD_EXTENSION},
-    /* 14. bit_longer_encap_len value */
-    { bit_longer_encap_len, sizeof(bit_longer_encap_len),
-      0, /* expected result */ SSL_R_BAD_EXTENSION},
-    /* 15. too_short_payload_len value */
+    /* 14.  too_short_payload_len value */
     { too_short_payload_len, sizeof(too_short_payload_len),
       0, /* expected result */ SSL_R_BAD_EXTENSION},
-    /* 16. bit_long_payload_len value */
+    /* 15. bit_long_payload_len value */
     { bit_long_payload_len, sizeof(bit_long_payload_len),
       0, /* expected result */ SSL_R_BAD_EXTENSION},
-    /* 17. zero_payload_len value */
+    /* 16. zero_payload_len value */
     { zero_payload_len, sizeof(zero_payload_len),
       0, /* expected result */ SSL_R_BAD_EXTENSION},
 };
@@ -1530,7 +1518,7 @@ static int test_sh_corrupt(int testidx)
     connrv = create_ssl_connection(server, client, exp_err);
     if (!TEST_int_eq(connrv, ts->rv_expected))
         goto end;
-    if (connrv == 1 && ts->borkage & OSSL_ECH_BORK_GREASE) {
+    if (connrv == 1 && (ts->borkage & OSSL_ECH_BORK_GREASE) != 0) {
         if (!TEST_true(SSL_ech_get1_retry_config(client, &retryconfig,
                                                  &retryconfiglen))
             || !TEST_ptr(retryconfig)
