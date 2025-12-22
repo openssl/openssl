@@ -520,7 +520,7 @@ static int get1_best_issuer_other_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x
  * Alternative lookup method: look from a STACK stored in other_ctx.
  * Returns NULL on internal/fatal error, empty stack if not found.
  */
-static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx, const X509_NAME *nm)
+static STACK_OF(X509) *lookup_certs_sk(const X509_STORE_CTX *ctx, const X509_NAME *nm)
 {
     STACK_OF(X509) *sk = sk_X509_new_null();
     X509 *x;
@@ -533,7 +533,6 @@ static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx, const X509_NAME *nm)
         if (X509_NAME_cmp(nm, X509_get_subject_name(x)) == 0) {
             if (!X509_add_cert(sk, x, X509_ADD_FLAG_UP_REF)) {
                 OSSL_STACK_OF_X509_free(sk);
-                ctx->error = X509_V_ERR_OUT_OF_MEM;
                 return NULL;
             }
         }
