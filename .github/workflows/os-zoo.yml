@@ -238,7 +238,7 @@ jobs:
           ".github/workflows/make-test"
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: "ci@linux-x86"
         path: artifacts.tar.gz
