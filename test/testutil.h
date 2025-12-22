@@ -663,5 +663,13 @@ X509_CRL *CRL_from_strings(const char **pem);
  * into |*out| so we can free it.
  */
 BIO *glue2bio(const char **pem, char **out);
+/*
+ * Checks whether a specific error reason is present in the error stack.
+ * This function iterates over the current thread's error queue using
+ * ERR_get_error_all(), extracting all pending errors. If any of them match
+ * the specified reason code (as returned by ERR_GET_REASON()), the function
+ * returns 1 to indicate that the corresponding error was found.
+ */
+int err_chk(int lib, int reason);
 
 #endif /* OSSL_TESTUTIL_H */

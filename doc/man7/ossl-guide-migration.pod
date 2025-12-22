@@ -37,6 +37,11 @@ features available in OpenSSL 4.0.
 Some functions have been removed that were deprecated in previous
 versions of OpenSSL. See L<ossl-removed-api(7)>.
 
+libcrypto no longer arms OPENSSL_cleanup() function as atexit(3) handler.
+Memory leak detectors may report there is allocated, but still reachable,
+allocated memory at application exit. If clean report is desired, then
+application must call OPENSSL_cleanup() explicitly before main() returns.
+
 =head1 OPENSSL 3.6
 
 =head2 Main Changes from OpenSSL 3.5
@@ -160,8 +165,8 @@ more information about providers.
 
 The refactoring to support Providers conflicts internally with the APIs used to
 support engines, including the ENGINE API and any function that creates or
-modifies custom "METHODS" (for example L<EVP_MD_meth_new(3)>,
-L<EVP_CIPHER_meth_new(3)>, L<EVP_PKEY_meth_new(3)>, L<RSA_meth_new(3)>,
+modifies custom "METHODS" (for example EVP_MD_meth_new(),
+EVP_CIPHER_meth_new(), EVP_PKEY_meth_new(), L<RSA_meth_new(3)>,
 L<EC_KEY_METHOD_new(3)>, etc.). These functions are being deprecated in
 OpenSSL 3.0, and users of these APIs should know that their use can likely
 bypass provider selection and configuration, with unintended consequences.

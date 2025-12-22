@@ -25,7 +25,7 @@
 #include "providers/implementations/kdfs/snmpkdf.inc"
 
 #define KDF_SNMP_PASSWORD_HASH_AMOUNT (1024 * 1024)
-#define KDF_SNMP_MIN_PASSWORD_LEN     8
+#define KDF_SNMP_MIN_PASSWORD_LEN 8
 
 /* See RFC 3414, Appendix A.2.2 */
 /* See NIST SP800-135 Section 6.8 */
@@ -40,9 +40,9 @@ static OSSL_FUNC_kdf_gettable_ctx_params_fn kdf_snmpkdf_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn kdf_snmpkdf_get_ctx_params;
 
 static int SNMPKDF(const EVP_MD *evp_md,
-                   const unsigned char *eid, size_t eid_len,
-                   unsigned char *password, size_t password_len,
-                   unsigned char *key, size_t keylen);
+    const unsigned char *eid, size_t eid_len,
+    unsigned char *password, size_t password_len,
+    unsigned char *key, size_t keylen);
 
 typedef struct {
     /* Warning: Any changes to this structure may require you to update kdf_snmpkdf_dup */
@@ -74,15 +74,15 @@ static void *kdf_snmpkdf_dup(void *vctx)
     dest = kdf_snmpkdf_new(src->provctx);
     if (dest != NULL) {
         if (!ossl_prov_memdup(src->eid, src->eid_len,
-                              &dest->eid, &dest->eid_len)
-                || !ossl_prov_memdup(src->password, src->password_len,
-                                     &dest->password, &dest->password_len)
-                || !ossl_prov_digest_copy(&dest->digest, &src->digest))
+                &dest->eid, &dest->eid_len)
+            || !ossl_prov_memdup(src->password, src->password_len,
+                &dest->password, &dest->password_len)
+            || !ossl_prov_digest_copy(&dest->digest, &src->digest))
             goto err;
     }
     return dest;
 
- err:
+err:
     kdf_snmpkdf_free(dest);
     return NULL;
 }
@@ -110,7 +110,7 @@ static void kdf_snmpkdf_reset(void *vctx)
 }
 
 static int snmpkdf_set_membuf(unsigned char **dst, size_t *dst_len,
-                              const OSSL_PARAM *p)
+    const OSSL_PARAM *p)
 {
     OPENSSL_clear_free(*dst, *dst_len);
     *dst = NULL;
@@ -119,7 +119,7 @@ static int snmpkdf_set_membuf(unsigned char **dst, size_t *dst_len,
 }
 
 static int kdf_snmpkdf_derive(void *vctx, unsigned char *key, size_t keylen,
-                              const OSSL_PARAM params[])
+    const OSSL_PARAM params[])
 {
     KDF_SNMPKDF *ctx = (KDF_SNMPKDF *)vctx;
     const EVP_MD *md;
@@ -142,15 +142,15 @@ static int kdf_snmpkdf_derive(void *vctx, unsigned char *key, size_t keylen,
     }
 
     return SNMPKDF(md, ctx->eid, ctx->eid_len,
-                   ctx->password, ctx->password_len,
-                   key, keylen);
+        ctx->password, ctx->password_len,
+        key, keylen);
 }
 
 static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     struct snmp_set_ctx_params_st p;
     KDF_SNMPKDF *ctx = vctx;
-    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    OSSL_LIB_CTX *libctx;
 #ifdef FIPS_MODULE
     const EVP_MD *md = NULL;
 #endif
@@ -161,6 +161,7 @@ static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (ctx == NULL || !snmp_set_ctx_params_decoder(params, &p))
         return 0;
 
+    libctx = PROV_LIBCTX_OF(ctx->provctx);
     if (p.digest != NULL) {
         if (!ossl_prov_digest_load(&ctx->digest, p.digest, p.propq, libctx))
             return 0;
@@ -174,8 +175,7 @@ static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (p.pw != NULL) {
         if (!snmpkdf_set_membuf(&ctx->password, &ctx->password_len, p.pw))
             return 0;
-        if ((ctx->password_len > KDF_SNMP_PASSWORD_HASH_AMOUNT) ||
-            (ctx->password_len < KDF_SNMP_MIN_PASSWORD_LEN))
+        if ((ctx->password_len > KDF_SNMP_PASSWORD_HASH_AMOUNT) || (ctx->password_len < KDF_SNMP_MIN_PASSWORD_LEN))
             return 0;
     }
 
@@ -186,7 +186,7 @@ static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM *kdf_snmpkdf_settable_ctx_params(ossl_unused void *ctx,
-                                                         ossl_unused void *p_ctx)
+    ossl_unused void *p_ctx)
 {
     return snmp_set_ctx_params_list;
 }
@@ -225,23 +225,23 @@ static int kdf_snmpkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM *kdf_snmpkdf_gettable_ctx_params(ossl_unused void *ctx,
-                                                         ossl_unused void *p_ctx)
+    ossl_unused void *p_ctx)
 {
     return snmp_get_ctx_params_list;
 }
 
 const OSSL_DISPATCH ossl_kdf_snmpkdf_functions[] = {
-    { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_snmpkdf_new },
-    { OSSL_FUNC_KDF_DUPCTX, (void(*)(void))kdf_snmpkdf_dup },
-    { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_snmpkdf_free },
-    { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_snmpkdf_reset },
-    { OSSL_FUNC_KDF_DERIVE, (void(*)(void))kdf_snmpkdf_derive },
+    { OSSL_FUNC_KDF_NEWCTX, (void (*)(void))kdf_snmpkdf_new },
+    { OSSL_FUNC_KDF_DUPCTX, (void (*)(void))kdf_snmpkdf_dup },
+    { OSSL_FUNC_KDF_FREECTX, (void (*)(void))kdf_snmpkdf_free },
+    { OSSL_FUNC_KDF_RESET, (void (*)(void))kdf_snmpkdf_reset },
+    { OSSL_FUNC_KDF_DERIVE, (void (*)(void))kdf_snmpkdf_derive },
     { OSSL_FUNC_KDF_SETTABLE_CTX_PARAMS,
-      (void(*)(void))kdf_snmpkdf_settable_ctx_params },
-    { OSSL_FUNC_KDF_SET_CTX_PARAMS, (void(*)(void))kdf_snmpkdf_set_ctx_params },
+        (void (*)(void))kdf_snmpkdf_settable_ctx_params },
+    { OSSL_FUNC_KDF_SET_CTX_PARAMS, (void (*)(void))kdf_snmpkdf_set_ctx_params },
     { OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS,
-      (void(*)(void))kdf_snmpkdf_gettable_ctx_params },
-    { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))kdf_snmpkdf_get_ctx_params },
+        (void (*)(void))kdf_snmpkdf_gettable_ctx_params },
+    { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void (*)(void))kdf_snmpkdf_get_ctx_params },
     { 0, NULL }
 };
 
@@ -274,9 +274,9 @@ const OSSL_DISPATCH ossl_kdf_snmpkdf_functions[] = {
  *     return -       1 pass 0 for error
  */
 static int SNMPKDF(const EVP_MD *evp_md,
-                   const unsigned char *e_id, size_t e_len,
-                   unsigned char *password, size_t password_len,
-                   unsigned char *okey, size_t okeylen)
+    const unsigned char *e_id, size_t e_len,
+    unsigned char *password, size_t password_len,
+    unsigned char *okey, size_t okeylen)
 {
     EVP_MD_CTX *md = NULL;
     unsigned char digest[EVP_MAX_MD_SIZE];

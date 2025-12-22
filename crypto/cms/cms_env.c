@@ -1480,19 +1480,6 @@ int ossl_cms_RecipientInfo_wrap_init(CMS_RecipientInfo *ri,
         ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_KEY_LENGTH);
         return 0;
     }
-    if ((EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_GET_WRAP_CIPHER) != 0) {
-        ret = EVP_CIPHER_meth_get_ctrl(cipher)(NULL, EVP_CTRL_GET_WRAP_CIPHER,
-            0, &kekcipher);
-        if (ret <= 0)
-            return 0;
-
-        if (kekcipher != NULL) {
-            if (EVP_CIPHER_get_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
-                return 0;
-            kekcipher_name = EVP_CIPHER_get0_name(kekcipher);
-            goto enc;
-        }
-    }
 
     /*
      * Pick a cipher based on content encryption cipher. If it is DES3 use
@@ -1509,7 +1496,7 @@ int ossl_cms_RecipientInfo_wrap_init(CMS_RecipientInfo *ri,
         kekcipher_name = SN_id_aes192_wrap;
     else
         kekcipher_name = SN_id_aes256_wrap;
-enc:
+
     fetched_kekcipher = EVP_CIPHER_fetch(ossl_cms_ctx_get0_libctx(cms_ctx),
         kekcipher_name,
         ossl_cms_ctx_get0_propq(cms_ctx));

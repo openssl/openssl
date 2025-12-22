@@ -45,6 +45,7 @@ jobs:
           cd /build && cp ${GITHUB_WORKSPACE}/interop/openssl/openssl.spec SPECS/ && \
           cd SPECS/ && source ${GITHUB_WORKSPACE}/VERSION.dat && \
           sed -i "s/soversion 3/soversion $SHLIB_VERSION/;s/^Version: .*\$/Version: $MAJOR.$MINOR.$PATCH/" openssl.spec && \
+          sed -i "/^%attr.*_libdir.*engines-/ d" openssl.spec && \
           sed -i 's/^Release: .*$/Release: dev/' openssl.spec
           yum-builddep -y /build/SPECS/openssl.spec # just for sure nothing is missing
           mkdir -p /build/SOURCES

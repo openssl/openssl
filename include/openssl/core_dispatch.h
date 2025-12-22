@@ -162,16 +162,16 @@ OSSL_CORE_MAKE_FUNC(void,
 
 OSSL_CORE_MAKE_FUNC(OSSL_CORE_BIO *, BIO_new_file, (const char *filename, const char *mode))
 OSSL_CORE_MAKE_FUNC(OSSL_CORE_BIO *, BIO_new_membuf, (const void *buf, int len))
-OSSL_CORE_MAKE_FUNC(int, BIO_read_ex, (OSSL_CORE_BIO * bio, void *data, size_t data_len, size_t *bytes_read))
-OSSL_CORE_MAKE_FUNC(int, BIO_write_ex, (OSSL_CORE_BIO * bio, const void *data, size_t data_len, size_t *written))
-OSSL_CORE_MAKE_FUNC(int, BIO_gets, (OSSL_CORE_BIO * bio, char *buf, int size))
-OSSL_CORE_MAKE_FUNC(int, BIO_puts, (OSSL_CORE_BIO * bio, const char *str))
-OSSL_CORE_MAKE_FUNC(int, BIO_up_ref, (OSSL_CORE_BIO * bio))
-OSSL_CORE_MAKE_FUNC(int, BIO_free, (OSSL_CORE_BIO * bio))
-OSSL_CORE_MAKE_FUNC(int, BIO_vprintf, (OSSL_CORE_BIO * bio, const char *format, va_list args))
+OSSL_CORE_MAKE_FUNC(int, BIO_read_ex, (OSSL_CORE_BIO *bio, void *data, size_t data_len, size_t *bytes_read))
+OSSL_CORE_MAKE_FUNC(int, BIO_write_ex, (OSSL_CORE_BIO *bio, const void *data, size_t data_len, size_t *written))
+OSSL_CORE_MAKE_FUNC(int, BIO_gets, (OSSL_CORE_BIO *bio, char *buf, int size))
+OSSL_CORE_MAKE_FUNC(int, BIO_puts, (OSSL_CORE_BIO *bio, const char *str))
+OSSL_CORE_MAKE_FUNC(int, BIO_up_ref, (OSSL_CORE_BIO *bio))
+OSSL_CORE_MAKE_FUNC(int, BIO_free, (OSSL_CORE_BIO *bio))
+OSSL_CORE_MAKE_FUNC(int, BIO_vprintf, (OSSL_CORE_BIO *bio, const char *format, va_list args))
 OSSL_CORE_MAKE_FUNC(int, BIO_vsnprintf,
     (char *buf, size_t n, const char *fmt, va_list args))
-OSSL_CORE_MAKE_FUNC(int, BIO_ctrl, (OSSL_CORE_BIO * bio, int cmd, long num, void *ptr))
+OSSL_CORE_MAKE_FUNC(int, BIO_ctrl, (OSSL_CORE_BIO *bio, int cmd, long num, void *ptr))
 
 /* New seeding functions prototypes with the 101-104 series */
 #define OSSL_FUNC_CLEANUP_USER_ENTROPY 96
@@ -180,9 +180,9 @@ OSSL_CORE_MAKE_FUNC(int, BIO_ctrl, (OSSL_CORE_BIO * bio, int cmd, long num, void
 #define OSSL_FUNC_GET_USER_NONCE 99
 
 #define OSSL_FUNC_INDICATOR_CB 95
-OSSL_CORE_MAKE_FUNC(void, indicator_cb, (OPENSSL_CORE_CTX * ctx, OSSL_INDICATOR_CALLBACK **cb))
+OSSL_CORE_MAKE_FUNC(void, indicator_cb, (OPENSSL_CORE_CTX *ctx, OSSL_INDICATOR_CALLBACK **cb))
 #define OSSL_FUNC_SELF_TEST_CB 100
-OSSL_CORE_MAKE_FUNC(void, self_test_cb, (OPENSSL_CORE_CTX * ctx, OSSL_CALLBACK **cb, void **cbarg))
+OSSL_CORE_MAKE_FUNC(void, self_test_cb, (OPENSSL_CORE_CTX *ctx, OSSL_CALLBACK **cb, void **cbarg))
 
 /* Functions to get seed material from the operating system */
 #define OSSL_FUNC_GET_ENTROPY 101
@@ -257,26 +257,26 @@ OSSL_CORE_MAKE_FUNC(int, provider_random_bytes, (void *provctx, int which, void 
 /* Libssl related functions */
 #define OSSL_FUNC_SSL_QUIC_TLS_CRYPTO_SEND 2001
 OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_crypto_send,
-    (SSL * s, const unsigned char *buf, size_t buf_len,
+    (SSL *s, const unsigned char *buf, size_t buf_len,
         size_t *consumed, void *arg))
 #define OSSL_FUNC_SSL_QUIC_TLS_CRYPTO_RECV_RCD 2002
 OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_crypto_recv_rcd,
-    (SSL * s, const unsigned char **buf, size_t *bytes_read,
+    (SSL *s, const unsigned char **buf, size_t *bytes_read,
         void *arg))
 #define OSSL_FUNC_SSL_QUIC_TLS_CRYPTO_RELEASE_RCD 2003
 OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_crypto_release_rcd,
-    (SSL * s, size_t bytes_read, void *arg))
+    (SSL *s, size_t bytes_read, void *arg))
 #define OSSL_FUNC_SSL_QUIC_TLS_YIELD_SECRET 2004
 OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_yield_secret,
-    (SSL * s, uint32_t prot_level, int direction,
+    (SSL *s, uint32_t prot_level, int direction,
         const unsigned char *secret, size_t secret_len, void *arg))
 #define OSSL_FUNC_SSL_QUIC_TLS_GOT_TRANSPORT_PARAMS 2005
 OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_got_transport_params,
-    (SSL * s, const unsigned char *params, size_t params_len,
+    (SSL *s, const unsigned char *params, size_t params_len,
         void *arg))
 #define OSSL_FUNC_SSL_QUIC_TLS_ALERT 2006
 OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_alert,
-    (SSL * s, unsigned char alert_code, void *arg))
+    (SSL *s, unsigned char alert_code, void *arg))
 
 /* Operations */
 
@@ -315,6 +315,8 @@ OSSL_CORE_MAKE_FUNC(int, SSL_QUIC_TLS_alert,
 #define OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS 13
 #define OSSL_FUNC_DIGEST_SQUEEZE 14
 #define OSSL_FUNC_DIGEST_COPYCTX 15
+#define OSSL_FUNC_DIGEST_SERIALIZE 16
+#define OSSL_FUNC_DIGEST_DESERIALIZE 17
 
 OSSL_CORE_MAKE_FUNC(void *, digest_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(int, digest_init, (void *dctx, const OSSL_PARAM params[]))
@@ -345,6 +347,10 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, digest_settable_ctx_params,
     (void *dctx, void *provctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, digest_gettable_ctx_params,
     (void *dctx, void *provctx))
+OSSL_CORE_MAKE_FUNC(int, digest_serialize,
+    (void *dctx, unsigned char *out, size_t *outl))
+OSSL_CORE_MAKE_FUNC(int, digest_deserialize,
+    (void *dctx, const unsigned char *in, size_t inl))
 
 /* Symmetric Ciphers */
 

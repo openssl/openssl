@@ -695,48 +695,6 @@ static const unsigned char kExampleED25519PubKeyDER[] = {
     0xef, 0x5b, 0x7c, 0x20, 0xe8, 0x66, 0x28, 0x30, 0x3c, 0x8a, 0x82, 0x40,
     0x97, 0xa3, 0x08, 0xdc, 0x65, 0x80, 0x39, 0x29
 };
-
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-static const unsigned char kExampleX25519KeyDER[] = {
-    0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x6e,
-    0x04, 0x22, 0x04, 0x20, 0xa0, 0x24, 0x3a, 0x31, 0x24, 0xc3, 0x3f, 0xf6,
-    0x7b, 0x96, 0x0b, 0xd4, 0x8f, 0xd1, 0xee, 0x67, 0xf2, 0x9b, 0x88, 0xac,
-    0x50, 0xce, 0x97, 0x36, 0xdd, 0xaf, 0x25, 0xf6, 0x10, 0x34, 0x96, 0x6e
-};
-#endif
-#endif
-#endif
-
-/* kExampleDHKeyDER is a DH private key in ASN.1, DER format. */
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-#ifndef OPENSSL_NO_DH
-static const unsigned char kExampleDHKeyDER[] = {
-    0x30, 0x82, 0x01, 0x21, 0x02, 0x01, 0x00, 0x30, 0x81, 0x95, 0x06, 0x09,
-    0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x03, 0x01, 0x30, 0x81, 0x87,
-    0x02, 0x81, 0x81, 0x00, 0xf7, 0x52, 0xc2, 0x68, 0xcc, 0x66, 0xc4, 0x8d,
-    0x03, 0x3f, 0xfa, 0x9c, 0x52, 0xd0, 0xd8, 0x33, 0xf2, 0xe1, 0xc9, 0x9e,
-    0xb7, 0xe7, 0x6e, 0x90, 0x97, 0xeb, 0x92, 0x91, 0x6a, 0x9a, 0x85, 0x63,
-    0x92, 0x79, 0xab, 0xb6, 0x3d, 0x23, 0x58, 0x5a, 0xe8, 0x45, 0x06, 0x81,
-    0x97, 0x77, 0xe1, 0xcc, 0x34, 0x4e, 0xae, 0x36, 0x80, 0xf2, 0xc4, 0x7f,
-    0x8a, 0x52, 0xb8, 0xdb, 0x58, 0xc8, 0x4b, 0x12, 0x4c, 0xf1, 0x4c, 0x53,
-    0xc1, 0x89, 0x39, 0x8d, 0xb6, 0x06, 0xd8, 0xea, 0x7f, 0x2d, 0x36, 0x53,
-    0x96, 0x29, 0xbe, 0xb6, 0x75, 0xfc, 0xe7, 0xf3, 0x36, 0xd6, 0xf4, 0x8f,
-    0x16, 0xa6, 0xc7, 0xec, 0x7b, 0xce, 0x42, 0x8d, 0x48, 0x2e, 0xb7, 0x74,
-    0x00, 0x11, 0x52, 0x61, 0xb4, 0x19, 0x35, 0xec, 0x5c, 0xe4, 0xbe, 0x34,
-    0xc6, 0x59, 0x64, 0x5e, 0x42, 0x61, 0x70, 0x54, 0xf4, 0xe9, 0x6b, 0x53,
-    0x02, 0x01, 0x02, 0x04, 0x81, 0x83, 0x02, 0x81, 0x80, 0x64, 0xc2, 0xe3,
-    0x09, 0x69, 0x37, 0x3c, 0xd2, 0x4a, 0xba, 0xc3, 0x78, 0x6a, 0x9b, 0x8a,
-    0x2a, 0xdb, 0xe7, 0xe6, 0xc0, 0xfa, 0x3a, 0xbe, 0x39, 0x67, 0xc0, 0xa9,
-    0x2a, 0xf0, 0x0a, 0xc1, 0x53, 0x1c, 0xdb, 0xfa, 0x1a, 0x26, 0x98, 0xb0,
-    0x8c, 0xc6, 0x06, 0x4a, 0xa2, 0x48, 0xd3, 0xa4, 0x3b, 0xbd, 0x05, 0x48,
-    0xea, 0x59, 0xdb, 0x18, 0xa4, 0xca, 0x66, 0xd9, 0x5d, 0xb8, 0x95, 0xd1,
-    0xeb, 0x97, 0x3d, 0x66, 0x97, 0x5c, 0x86, 0x8f, 0x7e, 0x90, 0xd3, 0x43,
-    0xd1, 0xa2, 0x0d, 0xcb, 0xe7, 0xeb, 0x90, 0xea, 0x09, 0x40, 0xb1, 0x6f,
-    0xf7, 0x4c, 0xf2, 0x41, 0x83, 0x1d, 0xd0, 0x76, 0xef, 0xaf, 0x55, 0x6f,
-    0x5d, 0xa9, 0xa3, 0x55, 0x81, 0x2a, 0xd1, 0x5d, 0x9d, 0x22, 0x77, 0x97,
-    0x83, 0xde, 0xad, 0xb6, 0x5d, 0x19, 0xc1, 0x53, 0xec, 0xfb, 0xaf, 0x06,
-    0x2e, 0x87, 0x2a, 0x0b, 0x7a
-};
 #endif
 #endif
 
@@ -1106,30 +1064,6 @@ static int test_ml_dsa_seed_only(int idx)
 }
 #endif
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-#ifndef OPENSSL_NO_DH
-static EVP_PKEY *load_example_dh_key(void)
-{
-    return load_example_key("DH", kExampleDHKeyDER,
-        sizeof(kExampleDHKeyDER));
-}
-#endif
-
-#ifndef OPENSSL_NO_ECX
-static EVP_PKEY *load_example_ed25519_key(void)
-{
-    return load_example_key("ED25519", kExampleED25519KeyDER,
-        sizeof(kExampleED25519KeyDER));
-}
-
-static EVP_PKEY *load_example_x25519_key(void)
-{
-    return load_example_key("X25519", kExampleX25519KeyDER,
-        sizeof(kExampleX25519KeyDER));
-}
-#endif
-#endif /* OPENSSL_NO_DEPRECATED_3_0 */
-
 static EVP_PKEY *load_example_hmac_key(void)
 {
     EVP_PKEY *pkey = NULL;
@@ -1477,13 +1411,11 @@ static int test_EC_priv_pub(void)
     bld = NULL;
 
     /*
-     * We indicate only parameters here, in spite of having built a key that
-     * has a private part, because the PEM_write_bio_PrivateKey_ex call is
-     * expected to fail because it does not support exporting a private EC
-     * key without a corresponding public key
+     * ossl_ec_key_fromdata() automatically generates the public key on import
+     * if one is not provided, so fail the test if a public key is not
+     * available.
      */
-    if (!test_selection(params_and_priv, OSSL_KEYMGMT_SELECT_ALL_PARAMETERS)
-        || test_selection(params_and_priv, OSSL_KEYMGMT_SELECT_PUBLIC_KEY))
+    if (!test_selection(params_and_priv, OSSL_KEYMGMT_SELECT_KEYPAIR))
         goto err;
 
     /* Test !priv and pub */
@@ -3445,33 +3377,11 @@ static int test_set_get_raw_keys(int tst)
         && test_set_get_raw_keys_int(tst, 1, 1);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-static int pkey_custom_check(EVP_PKEY *pkey)
-{
-    return 0xbeef;
-}
-
-static int pkey_custom_pub_check(EVP_PKEY *pkey)
-{
-    return 0xbeef;
-}
-
-static int pkey_custom_param_check(EVP_PKEY *pkey)
-{
-    return 0xbeef;
-}
-
-static EVP_PKEY_METHOD *custom_pmeth;
-#endif
-
 static int test_EVP_PKEY_check(int i)
 {
     int ret = 0;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    EVP_PKEY_CTX *ctx2 = NULL;
-#endif
     const APK_DATA *ak = &keycheckdata[i];
     const unsigned char *input = ak->kder;
     size_t input_len = ak->size;
@@ -3499,31 +3409,10 @@ static int test_EVP_PKEY_check(int i)
     if (!TEST_int_eq(EVP_PKEY_param_check(ctx), expected_param_check))
         goto done;
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    ctx2 = EVP_PKEY_CTX_new_id(0xdefaced, NULL);
-    /* assign the pkey directly, as an internal test */
-    if (!EVP_PKEY_up_ref(pkey))
-        goto done;
-
-    ctx2->pkey = pkey;
-
-    if (!TEST_int_eq(EVP_PKEY_check(ctx2), 0xbeef))
-        goto done;
-
-    if (!TEST_int_eq(EVP_PKEY_public_check(ctx2), 0xbeef))
-        goto done;
-
-    if (!TEST_int_eq(EVP_PKEY_param_check(ctx2), 0xbeef))
-        goto done;
-#endif
-
     ret = 1;
 
 done:
     EVP_PKEY_CTX_free(ctx);
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    EVP_PKEY_CTX_free(ctx2);
-#endif
     EVP_PKEY_free(pkey);
     return ret;
 }
@@ -5738,464 +5627,6 @@ err:
     return res;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-static EVP_PKEY_METHOD *custom_pmeth = NULL;
-static const EVP_PKEY_METHOD *orig_pmeth = NULL;
-
-#define EVP_PKEY_CTRL_MY_COMMAND 9999
-
-static int custom_pmeth_init(EVP_PKEY_CTX *ctx)
-{
-    int (*pinit)(EVP_PKEY_CTX *ctx);
-
-    EVP_PKEY_meth_get_init(orig_pmeth, &pinit);
-    return pinit(ctx);
-}
-
-static void custom_pmeth_cleanup(EVP_PKEY_CTX *ctx)
-{
-    void (*pcleanup)(EVP_PKEY_CTX *ctx);
-
-    EVP_PKEY_meth_get_cleanup(orig_pmeth, &pcleanup);
-    pcleanup(ctx);
-}
-
-static int custom_pmeth_sign(EVP_PKEY_CTX *ctx, unsigned char *out,
-    size_t *outlen, const unsigned char *in,
-    size_t inlen)
-{
-    int (*psign)(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
-        const unsigned char *tbs, size_t tbslen);
-
-    EVP_PKEY_meth_get_sign(orig_pmeth, NULL, &psign);
-    return psign(ctx, out, outlen, in, inlen);
-}
-
-static int custom_pmeth_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
-    size_t *siglen, const unsigned char *tbs,
-    size_t tbslen)
-{
-    int (*pdigestsign)(EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen,
-        const unsigned char *tbs, size_t tbslen);
-
-    EVP_PKEY_meth_get_digestsign(orig_pmeth, &pdigestsign);
-    return pdigestsign(ctx, sig, siglen, tbs, tbslen);
-}
-
-static int custom_pmeth_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
-    size_t *keylen)
-{
-    int (*pderive)(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen);
-
-    EVP_PKEY_meth_get_derive(orig_pmeth, NULL, &pderive);
-    return pderive(ctx, key, keylen);
-}
-
-static int custom_pmeth_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
-{
-    int (*pcopy)(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src);
-
-    EVP_PKEY_meth_get_copy(orig_pmeth, &pcopy);
-    return pcopy(dst, src);
-}
-
-static int ctrl_called;
-
-static int custom_pmeth_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
-{
-    int (*pctrl)(EVP_PKEY_CTX *ctx, int type, int p1, void *p2);
-
-    EVP_PKEY_meth_get_ctrl(orig_pmeth, &pctrl, NULL);
-
-    if (type == EVP_PKEY_CTRL_MY_COMMAND) {
-        ctrl_called = 1;
-        return 1;
-    }
-
-    return pctrl(ctx, type, p1, p2);
-}
-
-static int test_custom_pmeth(int idx)
-{
-    EVP_PKEY_CTX *pctx = NULL;
-    EVP_MD_CTX *ctx = NULL;
-    EVP_PKEY *pkey = NULL;
-    int id, orig_id, orig_flags;
-    int testresult = 0;
-    size_t reslen;
-    unsigned char *res = NULL;
-    unsigned char msg[] = { 'H', 'e', 'l', 'l', 'o' };
-    const EVP_MD *md = EVP_sha256();
-    int doderive = 0;
-
-    ctrl_called = 0;
-
-    /* We call deprecated APIs so this test doesn't support a custom libctx */
-    if (testctx != NULL)
-        return 1;
-
-    switch (idx) {
-    case 0:
-    case 6:
-        id = EVP_PKEY_RSA;
-        pkey = load_example_rsa_key();
-        break;
-    case 1:
-    case 7:
-#ifndef OPENSSL_NO_DSA
-        id = EVP_PKEY_DSA;
-        pkey = load_example_dsa_key();
-        break;
-#else
-        return 1;
-#endif
-    case 2:
-    case 8:
-#ifndef OPENSSL_NO_EC
-        id = EVP_PKEY_EC;
-        pkey = load_example_ec_key();
-        break;
-#else
-        return 1;
-#endif
-    case 3:
-    case 9:
-#ifndef OPENSSL_NO_ECX
-        id = EVP_PKEY_ED25519;
-        md = NULL;
-        pkey = load_example_ed25519_key();
-        break;
-#else
-        return 1;
-#endif
-    case 4:
-    case 10:
-#ifndef OPENSSL_NO_DH
-        id = EVP_PKEY_DH;
-        doderive = 1;
-        pkey = load_example_dh_key();
-        break;
-#else
-        return 1;
-#endif
-    case 5:
-    case 11:
-#ifndef OPENSSL_NO_ECX
-        id = EVP_PKEY_X25519;
-        doderive = 1;
-        pkey = load_example_x25519_key();
-        break;
-#else
-        return 1;
-#endif
-    default:
-        TEST_error("Should not happen");
-        goto err;
-    }
-
-    if (!TEST_ptr(pkey))
-        goto err;
-
-    if (idx < 6) {
-        if (!TEST_true(evp_pkey_is_provided(pkey)))
-            goto err;
-    } else {
-        EVP_PKEY *tmp = pkey;
-
-        /* Convert to a legacy key */
-        pkey = EVP_PKEY_new();
-        if (!TEST_ptr(pkey)) {
-            pkey = tmp;
-            goto err;
-        }
-        if (!TEST_true(evp_pkey_copy_downgraded(&pkey, tmp))) {
-            EVP_PKEY_free(tmp);
-            goto err;
-        }
-        EVP_PKEY_free(tmp);
-        if (!TEST_true(evp_pkey_is_legacy(pkey)))
-            goto err;
-    }
-
-    if (!TEST_ptr(orig_pmeth = EVP_PKEY_meth_find(id))
-        || !TEST_ptr(pkey))
-        goto err;
-
-    EVP_PKEY_meth_get0_info(&orig_id, &orig_flags, orig_pmeth);
-    if (!TEST_int_eq(orig_id, id)
-        || !TEST_ptr(custom_pmeth = EVP_PKEY_meth_new(id, orig_flags)))
-        goto err;
-
-    if (id == EVP_PKEY_ED25519) {
-        EVP_PKEY_meth_set_digestsign(custom_pmeth, custom_pmeth_digestsign);
-    }
-    if (id == EVP_PKEY_DH || id == EVP_PKEY_X25519) {
-        EVP_PKEY_meth_set_derive(custom_pmeth, NULL, custom_pmeth_derive);
-    } else {
-        EVP_PKEY_meth_set_sign(custom_pmeth, NULL, custom_pmeth_sign);
-    }
-    if (id != EVP_PKEY_ED25519 && id != EVP_PKEY_X25519) {
-        EVP_PKEY_meth_set_init(custom_pmeth, custom_pmeth_init);
-        EVP_PKEY_meth_set_cleanup(custom_pmeth, custom_pmeth_cleanup);
-        EVP_PKEY_meth_set_copy(custom_pmeth, custom_pmeth_copy);
-    }
-    EVP_PKEY_meth_set_ctrl(custom_pmeth, custom_pmeth_ctrl, NULL);
-    if (!TEST_true(EVP_PKEY_meth_add0(custom_pmeth)))
-        goto err;
-
-    if (doderive) {
-        pctx = EVP_PKEY_CTX_new(pkey, NULL);
-        if (!TEST_ptr(pctx)
-            || !TEST_int_eq(EVP_PKEY_derive_init(pctx), 1)
-            || !TEST_int_ge(EVP_PKEY_CTX_ctrl(pctx, -1, -1,
-                                EVP_PKEY_CTRL_MY_COMMAND, 0, NULL),
-                1)
-            || !TEST_int_eq(ctrl_called, 1)
-            || !TEST_int_ge(EVP_PKEY_derive_set_peer(pctx, pkey), 1)
-            || !TEST_int_ge(EVP_PKEY_derive(pctx, NULL, &reslen), 1)
-            || !TEST_ptr(res = OPENSSL_malloc(reslen))
-            || !TEST_int_ge(EVP_PKEY_derive(pctx, res, &reslen), 1))
-            goto err;
-    } else {
-        ctx = EVP_MD_CTX_new();
-        reslen = EVP_PKEY_size(pkey);
-        res = OPENSSL_malloc(reslen);
-        if (!TEST_ptr(ctx)
-            || !TEST_ptr(res)
-            || !TEST_true(EVP_DigestSignInit(ctx, &pctx, md, NULL, pkey))
-            || !TEST_int_ge(EVP_PKEY_CTX_ctrl(pctx, -1, -1,
-                                EVP_PKEY_CTRL_MY_COMMAND, 0, NULL),
-                1)
-            || !TEST_int_eq(ctrl_called, 1))
-            goto err;
-
-        if (id == EVP_PKEY_ED25519) {
-            if (!TEST_true(EVP_DigestSign(ctx, res, &reslen, msg, sizeof(msg))))
-                goto err;
-        } else {
-            if (!TEST_true(EVP_DigestUpdate(ctx, msg, sizeof(msg)))
-                || !TEST_true(EVP_DigestSignFinal(ctx, res, &reslen)))
-                goto err;
-        }
-    }
-
-    testresult = 1;
-err:
-    OPENSSL_free(res);
-    EVP_MD_CTX_free(ctx);
-    if (doderive)
-        EVP_PKEY_CTX_free(pctx);
-    EVP_PKEY_free(pkey);
-    EVP_PKEY_meth_remove(custom_pmeth);
-    EVP_PKEY_meth_free(custom_pmeth);
-    custom_pmeth = NULL;
-    return testresult;
-}
-
-static int test_evp_md_cipher_meth(void)
-{
-    EVP_MD *md = EVP_MD_meth_dup(EVP_sha256());
-    EVP_CIPHER *ciph = EVP_CIPHER_meth_dup(EVP_aes_128_cbc());
-    int testresult = 0;
-
-    if (!TEST_ptr(md) || !TEST_ptr(ciph))
-        goto err;
-
-    testresult = 1;
-
-err:
-    EVP_MD_meth_free(md);
-    EVP_CIPHER_meth_free(ciph);
-
-    return testresult;
-}
-
-typedef struct {
-    int data;
-} custom_dgst_ctx;
-
-static int custom_md_init_called = 0;
-static int custom_md_cleanup_called = 0;
-
-static int custom_md_init(EVP_MD_CTX *ctx)
-{
-    custom_dgst_ctx *p = EVP_MD_CTX_md_data(ctx);
-
-    if (p == NULL)
-        return 0;
-
-    custom_md_init_called++;
-    return 1;
-}
-
-static int custom_md_cleanup(EVP_MD_CTX *ctx)
-{
-    custom_dgst_ctx *p = EVP_MD_CTX_md_data(ctx);
-
-    if (p == NULL)
-        /* Nothing to do */
-        return 1;
-
-    custom_md_cleanup_called++;
-    return 1;
-}
-
-static int test_custom_md_meth(void)
-{
-    ASN1_OBJECT *o = NULL;
-    EVP_MD_CTX *mdctx = NULL;
-    EVP_MD *tmp = NULL;
-    char mess[] = "Test Message\n";
-    unsigned char md_value[EVP_MAX_MD_SIZE];
-    unsigned int md_len;
-    int testresult = 0;
-    int nid;
-
-    /*
-     * We are testing deprecated functions. We don't support a non-default
-     * library context in this test.
-     */
-    if (testctx != NULL)
-        return TEST_skip("Non-default libctx");
-
-    custom_md_init_called = custom_md_cleanup_called = 0;
-
-    nid = OBJ_create("1.3.6.1.4.1.16604.998866.1", "custom-md", "custom-md");
-    if (!TEST_int_ne(nid, NID_undef))
-        goto err;
-    if (!TEST_int_eq(OBJ_txt2nid("1.3.6.1.4.1.16604.998866.1"), nid))
-        goto err;
-    tmp = EVP_MD_meth_new(nid, NID_undef);
-    if (!TEST_ptr(tmp))
-        goto err;
-
-    if (!TEST_true(EVP_MD_meth_set_init(tmp, custom_md_init))
-        || !TEST_true(EVP_MD_meth_set_cleanup(tmp, custom_md_cleanup))
-        || !TEST_true(EVP_MD_meth_set_app_datasize(tmp,
-            sizeof(custom_dgst_ctx))))
-        goto err;
-
-    mdctx = EVP_MD_CTX_new();
-    if (!TEST_ptr(mdctx)
-        /*
-         * Initing our custom md and then initing another md should
-         * result in the init and cleanup functions of the custom md
-         * being called.
-         */
-        || !TEST_true(EVP_DigestInit_ex(mdctx, tmp, NULL))
-        || !TEST_true(EVP_DigestInit_ex(mdctx, EVP_sha256(), NULL))
-        || !TEST_true(EVP_DigestUpdate(mdctx, mess, strlen(mess)))
-        || !TEST_true(EVP_DigestFinal_ex(mdctx, md_value, &md_len))
-        || !TEST_int_eq(custom_md_init_called, 1)
-        || !TEST_int_eq(custom_md_cleanup_called, 1))
-        goto err;
-
-    if (!TEST_int_eq(OBJ_create("1.3.6.1.4.1.16604.998866.1",
-                         "custom-md", "custom-md"),
-            NID_undef)
-        || !TEST_int_eq(ERR_GET_LIB(ERR_peek_error()), ERR_LIB_OBJ)
-        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()), OBJ_R_OID_EXISTS))
-        goto err;
-
-    o = ASN1_OBJECT_create(nid, (unsigned char *)"\53\6\1\4\1\201\201\134\274\373\122\1", 12,
-        "custom-md", "custom-md");
-    if (!TEST_int_eq(OBJ_add_object(o), nid))
-        goto err;
-
-    testresult = 1;
-err:
-    ASN1_OBJECT_free(o);
-    EVP_MD_CTX_free(mdctx);
-    EVP_MD_meth_free(tmp);
-    return testresult;
-}
-
-typedef struct {
-    int data;
-} custom_ciph_ctx;
-
-static int custom_ciph_init_called = 0;
-static int custom_ciph_cleanup_called = 0;
-
-static int custom_ciph_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc)
-{
-    custom_ciph_ctx *p = EVP_CIPHER_CTX_get_cipher_data(ctx);
-
-    if (p == NULL)
-        return 0;
-
-    custom_ciph_init_called++;
-    return 1;
-}
-
-static int custom_ciph_cleanup(EVP_CIPHER_CTX *ctx)
-{
-    custom_ciph_ctx *p = EVP_CIPHER_CTX_get_cipher_data(ctx);
-
-    if (p == NULL)
-        /* Nothing to do */
-        return 1;
-
-    custom_ciph_cleanup_called++;
-    return 1;
-}
-
-static int test_custom_ciph_meth(void)
-{
-    EVP_CIPHER_CTX *ciphctx = NULL;
-    EVP_CIPHER *tmp = NULL;
-    int testresult = 0;
-    int nid;
-
-    /*
-     * We are testing deprecated functions. We don't support a non-default
-     * library context in this test.
-     */
-    if (testctx != NULL)
-        return TEST_skip("Non-default libctx");
-
-    custom_ciph_init_called = custom_ciph_cleanup_called = 0;
-
-    nid = OBJ_create("1.3.6.1.4.1.16604.998866.2", "custom-ciph", "custom-ciph");
-    if (!TEST_int_ne(nid, NID_undef))
-        goto err;
-    if (!TEST_int_eq(OBJ_txt2nid("1.3.6.1.4.1.16604.998866.2"), nid))
-        goto err;
-    tmp = EVP_CIPHER_meth_new(nid, 16, 16);
-    if (!TEST_ptr(tmp))
-        goto err;
-
-    if (!TEST_true(EVP_CIPHER_meth_set_init(tmp, custom_ciph_init))
-        || !TEST_true(EVP_CIPHER_meth_set_flags(tmp, EVP_CIPH_ALWAYS_CALL_INIT))
-        || !TEST_true(EVP_CIPHER_meth_set_cleanup(tmp, custom_ciph_cleanup))
-        || !TEST_true(EVP_CIPHER_meth_set_impl_ctx_size(tmp,
-            sizeof(custom_ciph_ctx))))
-        goto err;
-
-    ciphctx = EVP_CIPHER_CTX_new();
-    if (!TEST_ptr(ciphctx)
-        /*
-         * Initing our custom cipher and then initing another cipher
-         * should result in the init and cleanup functions of the custom
-         * cipher being called.
-         */
-        || !TEST_true(EVP_CipherInit_ex(ciphctx, tmp, NULL, NULL, NULL, 1))
-        || !TEST_true(EVP_CipherInit_ex(ciphctx, EVP_aes_128_cbc(), NULL,
-            NULL, NULL, 1))
-        || !TEST_int_eq(custom_ciph_init_called, 1)
-        || !TEST_int_eq(custom_ciph_cleanup_called, 1))
-        goto err;
-
-    testresult = 1;
-err:
-    EVP_CIPHER_CTX_free(ciphctx);
-    EVP_CIPHER_meth_free(tmp);
-    return testresult;
-}
-
-#endif /* OPENSSL_NO_DEPRECATED_3_0 */
-
 #ifndef OPENSSL_NO_ECX
 static int ecxnids[] = {
     NID_X25519,
@@ -6932,16 +6363,6 @@ int setup_tests(void)
     ADD_TEST(test_EVP_SM2_verify);
 #endif
     ADD_ALL_TESTS(test_set_get_raw_keys, OSSL_NELEM(keys));
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    custom_pmeth = EVP_PKEY_meth_new(0xdefaced, 0);
-    if (!TEST_ptr(custom_pmeth))
-        return 0;
-    EVP_PKEY_meth_set_check(custom_pmeth, pkey_custom_check);
-    EVP_PKEY_meth_set_public_check(custom_pmeth, pkey_custom_pub_check);
-    EVP_PKEY_meth_set_param_check(custom_pmeth, pkey_custom_param_check);
-    if (!TEST_int_eq(EVP_PKEY_meth_add0(custom_pmeth), 1))
-        return 0;
-#endif
     ADD_ALL_TESTS(test_EVP_PKEY_check, OSSL_NELEM(keycheckdata));
 #ifndef OPENSSL_NO_CMAC
     ADD_TEST(test_CMAC_keygen);
@@ -7013,13 +6434,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ivlen_change, OSSL_NELEM(ivlen_change_ciphers));
     if (OSSL_NELEM(keylen_change_ciphers) - 1 > 0)
         ADD_ALL_TESTS(test_keylen_change, OSSL_NELEM(keylen_change_ciphers) - 1);
-
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    ADD_ALL_TESTS(test_custom_pmeth, 12);
-    ADD_TEST(test_evp_md_cipher_meth);
-    ADD_TEST(test_custom_md_meth);
-    ADD_TEST(test_custom_ciph_meth);
-#endif
 
 #ifndef OPENSSL_NO_ECX
     ADD_ALL_TESTS(test_ecx_short_keys, OSSL_NELEM(ecxnids));
