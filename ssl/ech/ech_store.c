@@ -926,6 +926,7 @@ int OSSL_ECHSTORE_get1_info(OSSL_ECHSTORE *es, int index, time_t *loaded_secs,
             goto err;
     }
     *has_private = (ee->keyshare == NULL ? 0 : 1);
+    *for_retry = ee->for_retry;
     /* Now "print" the ECHConfigList */
     out = BIO_new(BIO_s_mem());
     if (out == NULL) {

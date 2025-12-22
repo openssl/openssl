@@ -9,7 +9,7 @@
 
 /*
  * Externally-visible data structures and prototypes for handling
- * Encrypted ClientHello (ECH).
+ * shared-mode Encrypted ClientHello (ECH).
  */
 #ifndef OPENSSL_ECH_H
 # define OPENSSL_ECH_H
@@ -120,12 +120,6 @@ int SSL_ech_get1_retry_config(SSL *s, unsigned char **ec, size_t *eclen);
  */
 int SSL_CTX_ech_set1_outer_alpn_protos(SSL_CTX *s, const unsigned char *protos,
                                        const size_t protos_len);
-int SSL_CTX_ech_raw_decrypt(SSL_CTX *ctx,
-                            int *decrypted_ok,
-                            char **inner_sni, char **outer_sni,
-                            unsigned char *outer_ch, size_t outer_len,
-                            unsigned char *inner_ch, size_t *inner_len,
-                            unsigned char **hrrtok, size_t *toklen);
 void SSL_CTX_ech_set_callback(SSL_CTX *ctx, SSL_ech_cb_func f);
 int SSL_set1_ech_config_list(SSL *ssl, const uint8_t *ecl, size_t ecl_len);
 
