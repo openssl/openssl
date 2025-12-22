@@ -829,7 +829,7 @@ out_free:
  * Collect from |ctx->store| all certs with subject matching |nm|.
  * Returns NULL on internal/fatal error, empty stack if not found.
  */
-STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
+STACK_OF(X509) *X509_STORE_CTX_get1_certs(const X509_STORE_CTX *ctx,
     const X509_NAME *nm)
 {
     int i, idx = -1, cnt = 0;

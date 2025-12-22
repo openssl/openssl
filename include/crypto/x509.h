@@ -244,7 +244,7 @@ struct x509_store_ctx_st { /* X509_STORE_CTX */
     int (*cert_crl)(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x);
     /* Check policy status of the chain */
     int (*check_policy)(X509_STORE_CTX *ctx);
-    STACK_OF(X509) *(*lookup_certs)(X509_STORE_CTX *ctx,
+    STACK_OF(X509) *(*lookup_certs)(const X509_STORE_CTX *ctx,
         const X509_NAME *nm);
     /* cannot constify 'ctx' param due to lookup_certs_sk() in x509_vfy.c */
     STACK_OF(X509_CRL) *(*lookup_crls)(const X509_STORE_CTX *ctx,
