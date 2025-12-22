@@ -1108,9 +1108,6 @@ static int ech_api_basic_calls(void)
     SSL_CTX_ech_set_callback(NULL, NULL);
     SSL_ech_set_callback(NULL, NULL);
     if (!TEST_false(SSL_ech_get1_retry_config(NULL, NULL, NULL))
-        || !TEST_false(SSL_CTX_ech_raw_decrypt(NULL, NULL, NULL, NULL,
-                                               NULL, 0, NULL, NULL,
-                                               NULL, NULL))
         || !TEST_int_eq(SSL_ech_get1_status(NULL, &rinner, &router),
                         SSL_ECH_STATUS_FAILED))
         goto end;
@@ -1707,7 +1704,7 @@ static int ech_in_out_test(int idx)
     if ((expected_inner == NULL && cinner == NULL)
         || (expected_inner != NULL && cinner != NULL
             && strlen(expected_inner) == strlen(cinner)
-            && !strcmp(expected_inner, cinner)))
+            && strcmp(expected_inner, cinner) == 0))
         cres = 1;
     if (!TEST_int_eq(cres, 1))
         goto end;
