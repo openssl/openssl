@@ -85,15 +85,11 @@ static void camellia_encrypt_armv8_wrapper(const unsigned char *in, unsigned cha
 }*/
 
 #ifdef CMLL_AES_CAPABLE
-static int test_camellia_1blk_key128_armv8(void)
+static int test_camellia_1blk_key128_aese(void)
 {
 
     /* Test Vectors (Standard Camellia KAT) */
 
-    //static const uint8_t k[CAMELLIA_BLOCK_SIZE] = {
-    //    0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
-    //    0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88
-    //};
     static const uint8_t k[CAMELLIA_BLOCK_SIZE] = {
         0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
         0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
@@ -119,15 +115,58 @@ static int test_camellia_1blk_key128_armv8(void)
     camellia_keysetup_neon((struct camellia_simd_ctx *)&ctx, k, 128 / 8);
     memcpy(block, input, CAMELLIA_BLOCK_SIZE);
 
-    //camellia_encrypt_1blk_armv8((struct camellia_simd_ctx *)&ctx, block, block);
     camellia_encrypt_1blk_aese((struct camellia_simd_ctx *)&ctx, block, block);
     if (!TEST_mem_eq(block, CAMELLIA_BLOCK_SIZE, expected_1rnd, CAMELLIA_BLOCK_SIZE)) {
         TEST_error("Initial 1-round encryption failed.");
         return 0;
     }
 
-    //camellia_decrypt_1blk_armv8((struct camellia_simd_ctx *)&ctx, block, block);
     camellia_decrypt_1blk_aese((struct camellia_simd_ctx *)&ctx, block, block);
+    if (!TEST_mem_eq(block, CAMELLIA_BLOCK_SIZE, input, CAMELLIA_BLOCK_SIZE)) {
+        TEST_error("Decryption roundtrip failed.");
+        return 0;
+    }
+
+    return 1;
+}
+
+static int test_camellia_1blk_key128_armv8(void)
+{
+
+    /* Test Vectors (Standard Camellia KAT) */
+
+    static const uint8_t k[CAMELLIA_BLOCK_SIZE] = {
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
+        0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
+    };
+
+    static const uint8_t input[CAMELLIA_BLOCK_SIZE] = {
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
+        0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
+    };
+
+    /* Expected Ciphertext after 1 round */
+
+    static const uint8_t expected_1rnd[CAMELLIA_BLOCK_SIZE] = {
+        0x67, 0x67, 0x31, 0x38, 0x54, 0x96, 0x69, 0x73,
+        0x08, 0x57, 0x06, 0x56, 0x48, 0xEA, 0xBE, 0x43
+    };
+
+    /* Use the standard C context struct */
+
+    CAMELLIA_KEY ctx;
+    uint8_t block[CAMELLIA_BLOCK_SIZE];
+
+    camellia_keysetup_neon((struct camellia_simd_ctx *)&ctx, k, 128 / 8);
+    memcpy(block, input, CAMELLIA_BLOCK_SIZE);
+
+    camellia_encrypt_1blk_armv8((struct camellia_simd_ctx *)&ctx, block, block);
+    if (!TEST_mem_eq(block, CAMELLIA_BLOCK_SIZE, expected_1rnd, CAMELLIA_BLOCK_SIZE)) {
+        TEST_error("Initial 1-round encryption failed.");
+        return 0;
+    }
+
+    camellia_decrypt_1blk_armv8((struct camellia_simd_ctx *)&ctx, block, block);
     if (!TEST_mem_eq(block, CAMELLIA_BLOCK_SIZE, input, CAMELLIA_BLOCK_SIZE)) {
         TEST_error("Decryption roundtrip failed.");
         return 0;
@@ -524,6 +563,7 @@ int setup_tests(void)
 {
     /*ADD_TEST(test_camellia_128_ref);*/
 #ifdef CMLL_AES_CAPABLE
+    ADD_TEST(test_camellia_1blk_key128_aese);
     ADD_TEST(test_camellia_1blk_key128_armv8);
     ADD_TEST(test_camellia_16blk_key128_neon);
     ADD_TEST(test_camellia_1blk_key192_armv8);
