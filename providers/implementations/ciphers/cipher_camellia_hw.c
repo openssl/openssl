@@ -22,16 +22,16 @@
 #include "cipher_camellia.h"
 
 #ifdef CMLL_AES_CAPABLE
-static void camellia_encrypt_armv8_wrapper(const unsigned char *in, unsigned char *out, 
+static void camellia_encrypt_aese_wrapper(const unsigned char *in, unsigned char *out, 
                                    const CAMELLIA_KEY *key) 
 {
     /*Treating key memory block as an optimized SIMD context, not the standard key struct.*/
-    camellia_encrypt_1blk_armv8((struct camellia_simd_ctx *)key, out, in);
+    camellia_encrypt_1blk_aese((struct camellia_simd_ctx *)key, out, in);
 }
-static void camellia_decrypt_armv8_wrapper(const unsigned char *in, unsigned char *out, 
+static void camellia_decrypt_aese_wrapper(const unsigned char *in, unsigned char *out, 
                                    const CAMELLIA_KEY *key) 
 {
-    camellia_decrypt_1blk_armv8((struct camellia_simd_ctx *)key, out, in);
+    camellia_decrypt_1blk_aese((struct camellia_simd_ctx *)key, out, in);
 }
 static void camellia_cbc_neon_wrapper(const unsigned char *in, unsigned char *out,
                                        size_t len, const CAMELLIA_KEY *key,
@@ -60,7 +60,7 @@ static int cipher_hw_camellia_initkey(PROV_CIPHER_CTX *dat,
 #ifdef CMLL_AES_CAPABLE
     camellia_keysetup_neon((struct camellia_simd_ctx *)ks, key, keylen);
     if (dat->enc || (mode != EVP_CIPH_ECB_MODE && mode != EVP_CIPH_CBC_MODE)) {
-        dat->block = (block128_f) camellia_encrypt_armv8_wrapper;
+        dat->block = (block128_f) camellia_encrypt_aese_wrapper;
         if (mode == EVP_CIPH_CBC_MODE) {
             dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
                 (cbc128_f) camellia_cbc_neon_wrapper : NULL;
@@ -69,7 +69,7 @@ static int cipher_hw_camellia_initkey(PROV_CIPHER_CTX *dat,
                 (ctr128_f) camellia_ctr32_encrypt_blocks_neon : NULL;
         }
     } else {
-        dat->block = (block128_f) camellia_decrypt_armv8_wrapper;
+        dat->block = (block128_f) camellia_decrypt_aese_wrapper;
         if (mode == EVP_CIPH_CBC_MODE) {
             dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
                 (cbc128_f) camellia_cbc_neon_wrapper : NULL;

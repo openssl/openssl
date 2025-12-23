@@ -89,38 +89,32 @@ $code=<<___;
 .arch   armv8-a+crypto
 
 /*
-    1-block (serial) implementation
+    1-block (serial and Neon/AESE) implementation
 */
 ___
 
-$xab = "x4"; # State Left Half
-$xcd = "x5"; # State Right Half
-
-$xt0 = "x6"; # Temp 1
-$xt1 = "x7"; # Temp 2
-$xt2 = "x8"; # Temp 3
-
 # Inputs:
-#  v_ab:            Input vector register name (e.g., v2 or v3)
-#  v_x:             Output/Working vector register name (e.g., v1 to v5)
+#  v_ab:            Input vector register name (e.g., v0 or v1)
+#  v_x:             Output/Working vector register name (e.g., v2)
 #  v_t0 - v_t4:     Temporary vector register names (v6-v10)
+#  v_zero:         v11 - all-zero vector
+#  pre_s4lo_mask:  v14
+#  pre_s4hi_mask:  v15
 #  inv_shift_row:  v17
-#  sbox4mask:      v18
 #  _0f0f0f0fmask:  v19
 #  pre_s1lo_mask:  v20
 #  pre_s1hi_mask:  v21
 #  post_s1lo_mask: v22
 #  post_s1hi_mask: v23
-#  sp0044:         v24
-#  sp1110:         v25
-#  sp0222:         v26
-#  sp3033:         v27
-#  key:            GPR name holding key (e.g., x1)
+#  sp4mask:        v24
+#  sp1mask:        v25
+#  sp2mask:        v26
+#  sp3mask:        v27
 # Output:
 #   Lower 64 bits of v_x contain the result.
 #
 sub f_aese(){
-    my ($v_ab, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033) = @_;
+    my ($v_ab, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask) = @_;
 $code.=<<___;
 
 	/*
@@ -144,10 +138,10 @@ ___
 $code.=<<___;
 
     /* P-function */
-    tbl     $v_t0.16b,{$v_t4.16b},$sp0222.16b
-    tbl     $v_t1.16b,{$v_t4.16b},$sp3033.16b
-    tbl     $v_t4.16b,{$v_t4.16b},$sp1110.16b
-    tbl     $v_x.16b,{$v_x.16b},$sp0044.16b
+    tbl     $v_t0.16b,{$v_t4.16b},$sp2mask.16b
+    tbl     $v_t1.16b,{$v_t4.16b},$sp3mask.16b
+    tbl     $v_t4.16b,{$v_t4.16b},$sp1mask.16b
+    tbl     $v_x.16b,{$v_x.16b},$sp4mask.16b
 
     // s2 = s1 <<< 1
     shl     $v_t2.16b,$v_t0.16b,#1
@@ -184,14 +178,13 @@ ___
 }
 
 sub roundsm_aese(){
-    my ($v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033) = @_;
-    &f_aese($v_ab, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033);
+    my ($v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask) = @_;
+    &f_aese($v_ab, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask);
 $code.=<<___;
     eor     $v_cd.16b,$v_cd.16b,$v_x.16b
 ___
 }
 
-# Port of roundsm.
 # In: x_ab, x_cd, x_rt2, x_rt0, x_rt1 (temps)
 #     sp0044, sp0330, sp2200, sp1001, sp1110, sp4404, sp3033, sp0222 (table addrs)
 # Out: x_ab, x_cd (updated)
@@ -360,37 +353,37 @@ ___
 }
 
 sub roundsm_aese_ab_to_cd(){
-    my ($subkey_idx, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key) = @_;
+    my ($subkey_idx, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask, $key) = @_;
     &add_key($subkey_idx, $v_cd);
-    &roundsm_aese($v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033)
+    &roundsm_aese($v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask)
 }
 
 sub roundsm_aese_cd_to_ab(){
-    my ($subkey_idx, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key) = @_;
+    my ($subkey_idx, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask, $key) = @_;
     &add_key($subkey_idx, $v_ab);
-    &roundsm_aese($v_cd, $v_ab, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033)
+    &roundsm_aese($v_cd, $v_ab, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask)
 }
 
 sub roundsm_ab_to_cd(){
     my ($subkey_idx, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222) = @_;
     &load_key_to_x8($subkey_idx);
-    &roundsm_tbl($xab, $xcd, $xt2, $xt0, $xt1, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222); # (ab=x4, cd=x5, rt2=x8, rt0=x6, rt1=x7)
+    &roundsm_tbl("x4", "x5", "x8", "x6", "x7", $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222); # (ab=x4, cd=x5, rt2=x8, rt0=x6, rt1=x7)
 }
 
 sub roundsm_cd_to_ab(){
     my ($subkey_idx, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222) = @_;
     &load_key_to_x8($subkey_idx);
-    &roundsm_tbl($xcd, $xab, $xt2, $xt0, $xt1, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222); # (ab=x5, cd=x4, rt2=x8, rt0=x6, rt1=x7)
+    &roundsm_tbl("x5", "x4", "x8", "x6", "x7", $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222); # (ab=x5, cd=x4, rt2=x8, rt0=x6, rt1=x7)
 }
 
 sub enc_rounds_aese(){
-    my ($i, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask,  $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key) = @_;
-    &roundsm_aese_ab_to_cd($i+2, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
-    &roundsm_aese_cd_to_ab($i+3, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
-    &roundsm_aese_ab_to_cd($i+4, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
-    &roundsm_aese_cd_to_ab($i+5, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
-    &roundsm_aese_ab_to_cd($i+6, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
-    &roundsm_aese_cd_to_ab($i+7, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
+    my ($i, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask,  $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask, $key) = @_;
+    &roundsm_aese_ab_to_cd($i+2, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask, $key);
+    &roundsm_aese_cd_to_ab($i+3, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask, $key);
+    &roundsm_aese_ab_to_cd($i+4, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask, $key);
+    &roundsm_aese_cd_to_ab($i+5, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask, $key);
+    &roundsm_aese_ab_to_cd($i+6, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask, $key);
+    &roundsm_aese_cd_to_ab($i+7, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask, $key);
 }
 
 sub enc_rounds(){
@@ -404,13 +397,13 @@ sub enc_rounds(){
 }
 
 sub dec_rounds_aese(){
-    my ($i, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask,  $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key) = @_;
-    &roundsm_aese_ab_to_cd($i+7, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
-    &roundsm_aese_cd_to_ab($i+6, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
-    &roundsm_aese_ab_to_cd($i+5, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
-    &roundsm_aese_cd_to_ab($i+4, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
-    &roundsm_aese_ab_to_cd($i+3, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
-    &roundsm_aese_cd_to_ab($i+2, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp0044, $sp1110, $sp0222, $sp3033, $key);
+    my ($i, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask,  $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask, $key) = @_;
+    &roundsm_aese_ab_to_cd($i+7, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask, $key);
+    &roundsm_aese_cd_to_ab($i+6, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask, $key);
+    &roundsm_aese_ab_to_cd($i+5, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask, $key);
+    &roundsm_aese_cd_to_ab($i+4, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask, $key);
+    &roundsm_aese_ab_to_cd($i+3, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask, $key);
+    &roundsm_aese_cd_to_ab($i+2, $v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask, $key);
 }
 
 sub dec_rounds(){
@@ -427,8 +420,7 @@ sub enc_outunpack_neon(){
     my ($ab, $cd, $rio_ptr, $key_ptr, $key, $mask, $gpr_key, $gpr_mask, $max) = @_;
 $code.=<<___;
     lsl     w9,$max,#3      // max * 8
-    add     x9,$key_ptr,x9        // &(CTX+max*8)
-    ldr     d2,[x9,#0]      // assume key_table == 0
+    ldr     d2,[$key_ptr,x9]      // assume key_table == 0
     adrp    $gpr_mask,.Lpack_bswap
     add     $gpr_mask,$gpr_mask,:lo12:.Lpack_bswap
     ldr     q3,[$gpr_mask]         // Load swap mask into a temporary
@@ -497,18 +489,16 @@ camellia_encrypt_1blk_aese:
     stp     q14,q15,[sp,#112]
 
     // === CONSTANT LOADING ===
-    // Load constants needed for camellia_f into v17-v27 + v16(bswap)
+    // Load constants needed for camellia_f into v14-v15 and v17-v27
     adrp    x10,camellia_neon_consts
     add     x10,x10,:lo12:camellia_neon_consts
     ldp     q20,q21,[x10],#32       // pre_tf_lo/hi_s1
     ldp     q14,q15,[x10],#32       // pre_tf_lo/hi_s4
     ldp     q22,q23,[x10],#112      // post_tf_lo/hi_s1
-    ldr     q19,[x10],#48           //mask_0f
-    ldr     q16,[x10],#104          //bswap128 - then big jump
-    ldr     d18,[x10],#8            //sbox4_input_mask_swap32
-    ldr     q17,[x10],#16           //inv_shift_row_and_unpcklbw_sp2n3_swap32
-    ldp     q24,q25,[x10],#32       //{sp4mask/sp1mask}_swap32
-    ldp     q26,q27,[x10],#32       //{sp2mask/sp3mask}_swap32
+    ldr     q19,[x10],#160          // mask_0f
+    ldr     q17,[x10],#16           // inv_shift_row_and_unpcklbw_sp2n3_swap32
+    ldp     q24,q25,[x10],#32       // {sp4mask/sp1mask}_swap32
+    ldp     q26,q27,[x10],#32       // {sp2mask/sp3mask}_swap32
 ___
     &enc_inpack_neon("v0","v1","x2","x0","v2","v3","x4","x5");
 
@@ -570,8 +560,7 @@ camellia_decrypt_1blk_aese:
     ldp     q20,q21,[x10],#32       // pre_tf_lo/hi_s1
     ldp     q14,q15,[x10],#32       // pre_tf_lo/hi_s4
     ldp     q22,q23,[x10],#112      // post_tf_lo/hi_s1
-    ldr     q19,[x10],#152          // mask_0f
-    ldr     d18,[x10],#8            // sbox4_input_mask_swap32
+    ldr     q19,[x10],#160          // mask_0f
     ldr     q17,[x10],#16           // inv_shift_row_and_unpcklbw_sp2n3_swap32
     ldp     q24,q25,[x10],#32       // {sp4mask/sp1mask}_swap32
     ldp     q26,q27,[x10],#32       // {sp2mask/sp3mask}_swap32
@@ -2626,7 +2615,8 @@ $code.=<<___;
     mov     x1, x20
     mov     x2, x19
     
-    bl      camellia_decrypt_1blk_armv8     // Factor write_out out?
+    //bl      camellia_decrypt_1blk_armv8
+    bl      camellia_decrypt_1blk_aese     // Factor write_out out?
     
     // XOR Result with Previous IV
     ldp     x0,x1,[x20]     // Load Dec(C_i)
