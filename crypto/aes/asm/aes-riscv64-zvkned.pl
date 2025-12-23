@@ -72,14 +72,14 @@ sub aes_128_load_key {
 
     my $code=<<___;
     csrr $VLENB, vlenb
-    srl $VLENB_CHECK, $VLENB, 5
-    beqz $VLENB_CHECK, load_key_zvl128
-    # When vlenb >= 128, only apply for half
+    srli $VLENB_CHECK, $VLENB, 5
+    beqz $VLENB_CHECK, 8f
+    # When vlenb >= 256, only apply for half
     @{[vsetivli "zero", 4, "e32", "mf2", "ta", "ma"]}
-    j load_key_single
-load_key_zvl128:
+    j 9f
+8:
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
-load_key_single:
+9:
     @{[vle32_v $V1, $KEYP]}
     addi $KEYP, $KEYP, 16
     @{[vle32_v $V2, $KEYP]}
@@ -112,14 +112,14 @@ sub aes_192_load_key {
 
     my $code=<<___;
     csrr $VLENB, vlenb
-    srl $VLENB_CHECK, $VLENB, 5
-    beqz $VLENB_CHECK, load_key_zvl128
-    # When vlenb >= 128, only apply for half
+    srli $VLENB_CHECK, $VLENB, 5
+    beqz $VLENB_CHECK, 8f
+    # When vlenb >= 256, only apply for half
     @{[vsetivli "zero", 4, "e32", "mf2", "ta", "ma"]}
-    j load_key_single
-load_key_zvl128:
+    j 9f
+8:
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
-load_key_single:
+9:
     @{[vle32_v $V1, $KEYP]}
     addi $KEYP, $KEYP, 16
     @{[vle32_v $V2, $KEYP]}
@@ -156,14 +156,14 @@ sub aes_256_load_key {
 
     my $code=<<___;
     csrr $VLENB, vlenb
-    srl $VLENB_CHECK, $VLENB, 5
-    beqz $VLENB_CHECK, load_key_zvl128
-    # When vlenb >= 128, only apply for half
+    srli $VLENB_CHECK, $VLENB, 5
+    beqz $VLENB_CHECK, 8f
+    # When vlenb >= 256, only apply for half
     @{[vsetivli "zero", 4, "e32", "mf2", "ta", "ma"]}
-    j load_key_single
-load_key_zvl128:
+    j 9f
+8:
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
-load_key_single:
+9:
     @{[vle32_v $V1, $KEYP]}
     addi $KEYP, $KEYP, 16
     @{[vle32_v $V2, $KEYP]}
