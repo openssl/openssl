@@ -323,7 +323,7 @@ int TS_TST_INFO_get_ext_by_critical(TS_TST_INFO *a, int crit, int lastpos)
     return X509v3_get_ext_by_critical(a->extensions, crit, lastpos);
 }
 
-X509_EXTENSION *TS_TST_INFO_get_ext(TS_TST_INFO *a, int loc)
+const X509_EXTENSION *TS_TST_INFO_get_ext(TS_TST_INFO *a, int loc)
 {
     return X509v3_get_ext(a->extensions, loc);
 }

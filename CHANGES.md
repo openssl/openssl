@@ -32,7 +32,13 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
- * The script tool `c_rehash` was removed. Use `openssl rehash` instead.
+ * Various function return values have been constified, particularly in X509
+   and related areas, and when functions were returning non-const objects
+   owned by a const parameter.
+
+   *Bob Beck*
+
+* The script tool `c_rehash` was removed. Use `openssl rehash` instead.
 
    *Norbert Pocs*
 

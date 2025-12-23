@@ -149,7 +149,7 @@ end:
     return result;
 }
 
-static int compare_extension_printout(X509_EXTENSION *extension,
+static int compare_extension_printout(const X509_EXTENSION *extension,
     const char *expected_output)
 {
     BIO *text_buffer = NULL;
@@ -250,7 +250,7 @@ static int execute_cert_test(CT_TEST_FIXTURE *fixture)
     if (fixture->certificate_file != NULL) {
         int sct_extension_index;
         int i;
-        X509_EXTENSION *sct_extension = NULL;
+        const X509_EXTENSION *sct_extension = NULL;
 
         if (!TEST_ptr(cert = load_pem_cert(fixture->certs_dir,
                           fixture->certificate_file)))
