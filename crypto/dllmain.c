@@ -20,6 +20,9 @@
  */
 #endif
 
+/* XXX I'm a dirty dirty boy... */
+extern void ossl_cleanup_destructor(void);
+
 /*
  * All we really need to do is remove the 'error' state when a thread
  * detaches
@@ -37,6 +40,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         OPENSSL_thread_stop();
         break;
     case DLL_PROCESS_DETACH:
+        ossl_cleanup_destructor();
         break;
     }
     return TRUE;
