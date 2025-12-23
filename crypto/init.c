@@ -33,13 +33,38 @@
 #include "crypto/ctype.h"
 #include "sslerr.h"
 
+/*
+ * Clean up via destructor if we are being used with valgrind.
+ * this is generally safe since we run after the destructors of libraries
+ * which might call our freeing functions, nevertheless a destructor
+ * is still useful attack surface if we don't need it for valgrind,
+ * we don't use it.
+ */
+#if defined __has_include
+/* Any compiler you're going to run valgrind on has this */
+#if __has_include(<valgrind/valgrind.h>)
+#include <valgrind/valgrind.h>
+#define OPENSSL_VALGRIND_H_INCLUDED
+#endif
+#endif /* defined(__has_include) */
+
+#if defined(SSL_VALGRIND_H_INCLUDED) && defined(__has_feature)
+/* This is the way on anything that might run us under valgrind */
+void ossl_cleanup_destructor(void) __attribute__((destructor));
+#else
+/*
+ * We do not even install a destructor unless compiled with valgrind
+ * headers visible
+ */
+void ossl_cleanup_destructor(void);
+#endif
+
 #ifdef S390X_MOD_EXP
 #include "s390x_arch.h"
 #endif
 
 static int stopped = 0;
 static uint64_t optsdone = 0;
-
 /* Guards access to the optsdone variable on platforms without atomics */
 static CRYPTO_RWLOCK *optsdone_lock = NULL;
 /* Guards simultaneous INIT_LOAD_CONFIG calls with non-NULL settings */
@@ -212,7 +237,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_async)
     return 1;
 }
 
-void OPENSSL_cleanup(void)
+static void ossl_cleanup_internal(void)
 {
     /*
      * At some point we should consider looking at this function with a view to
@@ -461,6 +486,29 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
 
     return 1;
+}
+
+void ossl_cleanup_destructor(void)
+{
+    /*
+     * If we are production build that was built in the presence of
+     * valgrind headers (see above), This destructor will be installed
+     * as a destructor. It will not do anything unless the code is
+     * actually running under valgrind.
+     */
+#if defined(OPENSSL_VALGRIND_H_INCLUDED) && defined(RUNNING_UNDER_VALGRIND)
+    if (RUNNING_UNDER_VALGRIND)
+        ossl_cleanup_internal();
+#endif /* defined(OPENSSL_VALGRIND_H_INCLUDED) && defined(RUNNING_UNDER_VALGRIND) */
+}
+
+void OPENSSL_cleanup(void)
+{
+#if defined(OPENSSL_VALGRIND_H_INCLUDED) && defined(RUNNING_UNDER_VALGRIND)
+    if (RUNNING_UNDER_VALGRIND)
+        return;
+#endif /* defined(OPENSSL_VALGRIND_H_INCLUDED) && defined(RUNNING_UNDER_VALGRIND) */
+    ossl_cleanup_internal();
 }
 
 int OPENSSL_atexit(void (*handler)(void))
