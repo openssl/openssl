@@ -449,7 +449,7 @@ ___
 #                               size_t length, const AES_KEY *key,
 #                               unsigned char *ivec, const int enc);
 my ($INP, $OUTP, $LEN, $KEYP, $IVP, $ENC) = ("a0", "a1", "a2", "a3", "a4", "a5");
-my ($T0, $T1, $ROUNDS, $VL, $LEN32) = ("t0", "t1", "t2", "t3", "t4");
+my ($T0, $T1, $ROUNDS) = ("t0", "t1", "t2");
 
 $code .= <<___;
 .p2align 3
