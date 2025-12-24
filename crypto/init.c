@@ -38,6 +38,19 @@
 #include "s390x_arch.h"
 #endif
 
+#if !defined(OPENSSL_SYS_WIN32)
+__attribute__((constructor)) static void library_constructor(void)
+{
+    if (!OPENSSL_add_library_user())
+        return;
+}
+
+__attribute__((destructor)) static void library_destructor(void)
+{
+    OPENSSL_cleanup_ex();
+}
+#endif
+
 static void OPENSSL_cleanup_int(int legacy_cleanup);
 
 static int stopped = 0;
@@ -396,6 +409,21 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 {
     uint64_t tmp;
     int aloaddone = 0;
+
+#if !defined(OPENSSL_SYS_WIN32)
+    /*
+     * Note: This requires some explanation.  Because we're using a destructor for
+     * cleanup and teardown, we have some build time issues to accommodate.  If libcrypto
+     * is built as a static library, the constructor/destructor may not get included, as archive
+     * files only pull in referenced symbols at link time. Since constructors/destructors aren't
+     * typically referenced, they never get pulled in to a statically linked application, and
+     * so we never clean up memory.
+     * To adjust for that, we reference them here, in a function that we know will always get
+     * pulled in to avoid that happening
+     */
+    static void (*linkholder)(void) __attribute__((used)) = library_constructor;
+    static void (*linkdownholder)(void) __attribute__((used)) = library_destructor;
+#endif
 
     /* Applications depend on 0 being returned when cleanup was already done */
     if (ossl_unlikely(stopped)) {

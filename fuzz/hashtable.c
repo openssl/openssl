@@ -101,9 +101,6 @@ int FuzzerInitialize(int *argc, char ***argv)
 {
     HT_CONFIG fuzz_conf = { NULL, fuzz_free_cb, NULL, 0, 1, 0 };
 
-    if (!OPENSSL_add_library_user())
-        return -1;
-
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_clear_error();
     prediction_table = OPENSSL_calloc(65537, sizeof(FUZZER_VALUE));
@@ -393,5 +390,4 @@ void FuzzerCleanup(void)
 {
     ossl_ht_free(fuzzer_table);
     OPENSSL_free(prediction_table);
-    OPENSSL_cleanup_ex();
 }
