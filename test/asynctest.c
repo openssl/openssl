@@ -332,6 +332,7 @@ static int test_ASYNC_block_pause(void)
     ASYNC_JOB *job = NULL;
     int funcret;
     ASYNC_WAIT_CTX *waitctx = NULL;
+    int ret = 0;
 
     if (!ASYNC_init_thread(1, 0)
         || (waitctx = ASYNC_WAIT_CTX_new()) == NULL
@@ -341,14 +342,20 @@ static int test_ASYNC_block_pause(void)
             != ASYNC_FINISH
         || funcret != 1) {
         fprintf(stderr, "test_ASYNC_block_pause() failed\n");
-        ASYNC_WAIT_CTX_free(waitctx);
-        ASYNC_cleanup_thread();
-        return 0;
+        goto err;
     }
 
+    ret = 1;
+err:
+    /* Ensure job completes before cleanup to avoid outstanding jobs */
+    while (job != NULL) {
+        if (ASYNC_start_job(&job, waitctx, &funcret, blockpause, NULL, 0)
+                != ASYNC_PAUSE)
+            break;
+    }
     ASYNC_WAIT_CTX_free(waitctx);
     ASYNC_cleanup_thread();
-    return 1;
+    return ret;
 }
 
 static int test_ASYNC_start_job_ex(void)
