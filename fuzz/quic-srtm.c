@@ -17,8 +17,6 @@
 int FuzzerInitialize(int *argc, char ***argv)
 {
     FuzzerSetRand();
-    if (!OPENSSL_add_library_user())
-        return -1;
 
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS | OPENSSL_INIT_ASYNC, NULL);
     OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
@@ -129,5 +127,4 @@ err:
 void FuzzerCleanup(void)
 {
     FuzzerClearRand();
-    OPENSSL_cleanup_ex();
 }

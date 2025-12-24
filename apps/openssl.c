@@ -249,11 +249,6 @@ int main(int argc, char *argv[])
     arg.argv = NULL;
     arg.size = 0;
 
-    if (!OPENSSL_add_library_user()) {
-        ret = EXIT_FAILURE;
-        goto end_noclean;
-    }
-
     /* Set up some of the environment. */
     bio_in = dup_bio_in(FORMAT_TEXT);
     bio_out = dup_bio_out(FORMAT_TEXT);
@@ -377,8 +372,6 @@ end:
 #ifndef OPENSSL_NO_SECURE_MEMORY
     CRYPTO_secure_malloc_done();
 #endif
-    OPENSSL_cleanup_ex();
-end_noclean:
     EXIT(ret);
 }
 

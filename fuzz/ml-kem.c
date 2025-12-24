@@ -604,8 +604,6 @@ static struct op_table_entry ops[] = {
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
-    if (!OPENSSL_add_library_user())
-        return -1;
     return 0;
 }
 
@@ -662,5 +660,4 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 
 void FuzzerCleanup(void)
 {
-    OPENSSL_cleanup_ex();
 }

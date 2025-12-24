@@ -68,6 +68,11 @@ result of this design change is that library memory resources may leak on
 application exit.  Only when all software components of a process make use of
 the new api, can proper leak-free cleanup be performed.
 
+Note that libcrypto opportunistically uses the B<__attribute__((constructor))> and
+B<__attribute__((destructor))> compiler extensions to automatically increase/decrease
+the reference counts on libcrypto on platforms/compilers that support those features, and
+so, on those platforms, manual addition of these calls are not necessecary.
+
 =head1 OPENSSL 3.6
 
 =head2 Main Changes from OpenSSL 3.5
