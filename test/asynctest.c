@@ -126,6 +126,7 @@ static int test_ASYNC_init_thread(void)
     ASYNC_JOB *job1 = NULL, *job2 = NULL, *job3 = NULL;
     int funcret1, funcret2, funcret3;
     ASYNC_WAIT_CTX *waitctx1 = NULL, *waitctx2 = NULL, *waitctx3 = NULL;
+    int ret = 0;
 
     if (!ASYNC_init_thread(2, 0)
         || (waitctx1 = ASYNC_WAIT_CTX_new()) == NULL
@@ -155,18 +156,32 @@ static int test_ASYNC_init_thread(void)
         || funcret2 != 1
         || funcret3 != 1) {
         fprintf(stderr, "test_ASYNC_init_thread() failed\n");
-        ASYNC_WAIT_CTX_free(waitctx1);
-        ASYNC_WAIT_CTX_free(waitctx2);
-        ASYNC_WAIT_CTX_free(waitctx3);
-        ASYNC_cleanup_thread();
-        return 0;
+        goto err;
     }
 
+    ret = 1;
+err:
+    /* Ensure all jobs complete before cleanup to avoid outstanding jobs */
+    while (job1 != NULL) {
+        if (ASYNC_start_job(&job1, waitctx1, &funcret1, only_pause, NULL, 0)
+                != ASYNC_PAUSE)
+            break;
+    }
+    while (job2 != NULL) {
+        if (ASYNC_start_job(&job2, waitctx2, &funcret2, only_pause, NULL, 0)
+                != ASYNC_PAUSE)
+            break;
+    }
+    while (job3 != NULL) {
+        if (ASYNC_start_job(&job3, waitctx3, &funcret3, only_pause, NULL, 0)
+                != ASYNC_PAUSE)
+            break;
+    }
     ASYNC_WAIT_CTX_free(waitctx1);
     ASYNC_WAIT_CTX_free(waitctx2);
     ASYNC_WAIT_CTX_free(waitctx3);
     ASYNC_cleanup_thread();
-    return 1;
+    return ret;
 }
 
 static int test_callback(void *arg)
@@ -210,6 +225,7 @@ static int test_ASYNC_start_job(void)
     ASYNC_JOB *job = NULL;
     int funcret;
     ASYNC_WAIT_CTX *waitctx = NULL;
+    int ret = 0;
 
     ctr = 0;
 
@@ -223,14 +239,20 @@ static int test_ASYNC_start_job(void)
         || ctr != 2
         || funcret != 2) {
         fprintf(stderr, "test_ASYNC_start_job() failed\n");
-        ASYNC_WAIT_CTX_free(waitctx);
-        ASYNC_cleanup_thread();
-        return 0;
+        goto err;
     }
 
+    ret = 1;
+err:
+    /* Ensure job completes before cleanup to avoid outstanding jobs */
+    while (job != NULL) {
+        if (ASYNC_start_job(&job, waitctx, &funcret, add_two, NULL, 0)
+                != ASYNC_PAUSE)
+            break;
+    }
     ASYNC_WAIT_CTX_free(waitctx);
     ASYNC_cleanup_thread();
-    return 1;
+    return ret;
 }
 
 static int test_ASYNC_get_current_job(void)
@@ -238,6 +260,7 @@ static int test_ASYNC_get_current_job(void)
     ASYNC_JOB *job = NULL;
     int funcret;
     ASYNC_WAIT_CTX *waitctx = NULL;
+    int ret = 0;
 
     currjob = NULL;
 
@@ -250,14 +273,20 @@ static int test_ASYNC_get_current_job(void)
             != ASYNC_FINISH
         || funcret != 1) {
         fprintf(stderr, "test_ASYNC_get_current_job() failed\n");
-        ASYNC_WAIT_CTX_free(waitctx);
-        ASYNC_cleanup_thread();
-        return 0;
+        goto err;
     }
 
+    ret = 1;
+err:
+    /* Ensure job completes before cleanup to avoid outstanding jobs */
+    while (job != NULL) {
+        if (ASYNC_start_job(&job, waitctx, &funcret, save_current, NULL, 0)
+                != ASYNC_PAUSE)
+            break;
+    }
     ASYNC_WAIT_CTX_free(waitctx);
     ASYNC_cleanup_thread();
-    return 1;
+    return ret;
 }
 
 static int test_ASYNC_WAIT_CTX_get_all_fds(void)
@@ -267,6 +296,7 @@ static int test_ASYNC_WAIT_CTX_get_all_fds(void)
     ASYNC_WAIT_CTX *waitctx = NULL;
     OSSL_ASYNC_FD fd = OSSL_BAD_ASYNC_FD, delfd = OSSL_BAD_ASYNC_FD;
     size_t numfds, numdelfds;
+    int ret = 0;
 
     if (!ASYNC_init_thread(1, 0)
         || (waitctx = ASYNC_WAIT_CTX_new()) == NULL
@@ -317,14 +347,20 @@ static int test_ASYNC_WAIT_CTX_get_all_fds(void)
         || numdelfds != 0
         || funcret != 1) {
         fprintf(stderr, "test_ASYNC_get_wait_fd() failed\n");
-        ASYNC_WAIT_CTX_free(waitctx);
-        ASYNC_cleanup_thread();
-        return 0;
+        goto err;
     }
 
+    ret = 1;
+err:
+    /* Ensure job completes before cleanup to avoid outstanding jobs */
+    while (job != NULL) {
+        if (ASYNC_start_job(&job, waitctx, &funcret, waitfd, NULL, 0)
+                != ASYNC_PAUSE)
+            break;
+    }
     ASYNC_WAIT_CTX_free(waitctx);
     ASYNC_cleanup_thread();
-    return 1;
+    return ret;
 }
 
 static int test_ASYNC_block_pause(void)
