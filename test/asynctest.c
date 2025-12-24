@@ -164,17 +164,17 @@ err:
     /* Ensure all jobs complete before cleanup to avoid outstanding jobs */
     while (job1 != NULL) {
         if (ASYNC_start_job(&job1, waitctx1, &funcret1, only_pause, NULL, 0)
-                != ASYNC_PAUSE)
+            != ASYNC_PAUSE)
             break;
     }
     while (job2 != NULL) {
         if (ASYNC_start_job(&job2, waitctx2, &funcret2, only_pause, NULL, 0)
-                != ASYNC_PAUSE)
+            != ASYNC_PAUSE)
             break;
     }
     while (job3 != NULL) {
         if (ASYNC_start_job(&job3, waitctx3, &funcret3, only_pause, NULL, 0)
-                != ASYNC_PAUSE)
+            != ASYNC_PAUSE)
             break;
     }
     ASYNC_WAIT_CTX_free(waitctx1);
@@ -247,7 +247,7 @@ err:
     /* Ensure job completes before cleanup to avoid outstanding jobs */
     while (job != NULL) {
         if (ASYNC_start_job(&job, waitctx, &funcret, add_two, NULL, 0)
-                != ASYNC_PAUSE)
+            != ASYNC_PAUSE)
             break;
     }
     ASYNC_WAIT_CTX_free(waitctx);
@@ -281,7 +281,7 @@ err:
     /* Ensure job completes before cleanup to avoid outstanding jobs */
     while (job != NULL) {
         if (ASYNC_start_job(&job, waitctx, &funcret, save_current, NULL, 0)
-                != ASYNC_PAUSE)
+            != ASYNC_PAUSE)
             break;
     }
     ASYNC_WAIT_CTX_free(waitctx);
@@ -355,7 +355,7 @@ err:
     /* Ensure job completes before cleanup to avoid outstanding jobs */
     while (job != NULL) {
         if (ASYNC_start_job(&job, waitctx, &funcret, waitfd, NULL, 0)
-                != ASYNC_PAUSE)
+            != ASYNC_PAUSE)
             break;
     }
     ASYNC_WAIT_CTX_free(waitctx);
@@ -386,7 +386,7 @@ err:
     /* Ensure job completes before cleanup to avoid outstanding jobs */
     while (job != NULL) {
         if (ASYNC_start_job(&job, waitctx, &funcret, blockpause, NULL, 0)
-                != ASYNC_PAUSE)
+            != ASYNC_PAUSE)
             break;
     }
     ASYNC_WAIT_CTX_free(waitctx);
@@ -466,7 +466,8 @@ err:
     /* Ensure job completes before cleanup to avoid outstanding jobs */
     while (job != NULL) {
         if (ASYNC_start_job(&job, waitctx, &funcret, change_deflt_libctx,
-                            NULL, 0) != ASYNC_PAUSE)
+                NULL, 0)
+            != ASYNC_PAUSE)
             break;
     }
     ASYNC_WAIT_CTX_free(waitctx);
