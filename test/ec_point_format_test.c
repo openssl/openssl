@@ -392,7 +392,6 @@ static int test_ec_point_encoding_validation(void)
      * Our fix ensures:
      * - Server validates EC point format list (Problem 1) - tested above
      * - Server sends SSL_AD_ILLEGAL_PARAMETER for invalid points (Problems 2 & 3)
-     *   This is already in master at ssl/statem/statem_srvr.c:3339-3341
      */
 
     /* Handshake should succeed with valid encoding */
