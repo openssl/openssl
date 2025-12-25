@@ -588,7 +588,7 @@ const OPTIONS rehash_options[] = {
 
 int rehash_main(int argc, char **argv)
 {
-    BIO_printf(bio_err, "Not available; use c_rehash script\n");
+    BIO_printf(bio_err, "Not available\n");
     return 1;
 }
 

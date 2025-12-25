@@ -399,8 +399,6 @@ int ossl_serial_number_print(BIO *out, const ASN1_INTEGER *bs, int indent);
 int ossl_bio_print_hex(BIO *out, unsigned char *buf, int len);
 int ossl_x509_compare_asn1_time(const X509_VERIFY_PARAM *vpm,
     const ASN1_TIME *time, int *comparison);
-int ossl_x509_check_certificate_times(const X509_VERIFY_PARAM *vpm, X509 *x,
-    int *error);
 /* No error callback if depth < 0 */
 int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth);
 int ossl_x509_check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify);

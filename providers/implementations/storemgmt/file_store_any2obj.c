@@ -306,8 +306,8 @@ err:
 
 static OSSL_FUNC_decoder_decode_fn raw2obj_decode;
 static int raw2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
-                          OSSL_CALLBACK *data_cb, void *data_cbarg,
-                          OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
+    OSSL_CALLBACK *data_cb, void *data_cbarg,
+    OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
     struct any2obj_ctx_st *ctx = vctx;
     BIO *in = ossl_bio_new_from_core_bio(ctx->provctx, cin);
@@ -344,9 +344,9 @@ static int raw2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 
     /* any2obj_decode_final() frees |mem| for us */
     return any2obj_decode_final(ctx, OSSL_OBJECT_SKEY, "raw", "SKEY",
-                                mem, data_cb, data_cbarg);
+        mem, data_cb, data_cbarg);
 
- err:
+err:
     BIO_free(in);
     BUF_MEM_free(mem);
     return 0;

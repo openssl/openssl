@@ -308,8 +308,8 @@ static int test_a_time(X509_STORE_CTX *ctx, X509 *x509,
         return 1;
     }
     error = 0;
-    if (ossl_x509_check_certificate_times(vpm, x509, &error) != expected_value) {
-        TEST_info("%s:%d - ossl_X509_check_certificate_times %s unexpectedly "
+    if (X509_check_certificate_times(vpm, x509, &error) != expected_value) {
+        TEST_info("%s:%d - X509_check_certificate_times %s unexpectedly "
                   "when verifying notBefore %lld, notAfter %lld at time %lld\n",
             file, line,
             expected_value ? "failed" : "succeeded",

@@ -340,6 +340,11 @@ different OpenSSL version and does not guarantee interoperability between
 different providers. Some providers may not allow export/import across
 process boundaries.
 
+NOTE: Applications must guarantee that only trusted data is used during
+deserialization. The deserialization operation is not built to address
+adversarial data compromise, and only basic checks to protect from simple
+mistakes are implemented.
+
 =item EVP_MD_CTX_dup()
 
 Can be used to duplicate the message digest state from I<in>.  This is useful
@@ -432,9 +437,9 @@ returns B<NID_sha1>. This function is normally used when setting ASN1 OIDs.
 
 =item EVP_MD_CTX_get0_md_data()
 
-Return the digest method private data for the passed B<EVP_MD_CTX>.
-The space is allocated by OpenSSL and has the size originally set with
-EVP_MD_meth_set_app_datasize().
+Return the digest method private data for the passed B<EVP_MD_CTX>. This
+function exists for legacy backward compatibility reasons and always returns
+NULL.
 
 =item EVP_MD_CTX_get0_md(), EVP_MD_CTX_get1_md()
 
@@ -461,7 +466,8 @@ Returns the update function for I<ctx>.
 =item EVP_MD_get_flags()
 
 Returns the I<md> flags. Note that these are different from the B<EVP_MD_CTX>
-ones. See L<EVP_MD_meth_set_flags(3)> for more information.
+ones. See the "flags" parameter as documented in L<EVP_MD-common(7)> for a
+description of the available flags.
 
 =item EVP_MD_get_pkey_type()
 
@@ -821,7 +827,6 @@ digest name passed on the command line.
 
 =head1 SEE ALSO
 
-L<EVP_MD_meth_new(3)>,
 L<openssl-dgst(1)>,
 L<evp(7)>,
 L<OSSL_PROVIDER(3)>,
