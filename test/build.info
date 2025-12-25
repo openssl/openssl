@@ -55,6 +55,7 @@ IF[{- !$disabled{tests} -}]
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bio_callback_test bio_memleak_test bio_core_test bio_dgram_test param_build_test \
           bioprinttest sslapitest ssl_handshake_rtt_test dtlstest sslcorrupttest \
+          ec_point_format_test \
           bio_base64_test bio_enc_test pkey_meth_test pkey_meth_kdf_test evp_kdf_test uitest \
           cipherbytes_test threadstest_fips threadpool_test \
           asn1_encode_test asn1_decode_test asn1_string_table_test asn1_stable_parse_test \
@@ -582,6 +583,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[sslapitest]=sslapitest.c helpers/ssltestlib.c filterprov.c tls-provider.c
   INCLUDE[sslapitest]=../include ../apps/include ../providers/common/include ..
   DEPEND[sslapitest]=../libcrypto.a ../libssl.a libtestutil.a
+
+  SOURCE[ec_point_format_test]=ec_point_format_test.c helpers/ssltestlib.c
+  INCLUDE[ec_point_format_test]=../include ../apps/include ..
+  DEPEND[ec_point_format_test]=../libcrypto.a ../libssl.a libtestutil.a
 
   SOURCE[handshake-memfail]=handshake-memfail.c helpers/ssltestlib.c
   INCLUDE[handshake-memfail]=../include ../apps/include
