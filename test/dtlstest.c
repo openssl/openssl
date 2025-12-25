@@ -360,13 +360,9 @@ static int test_dtls_duplicate_records(void)
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
 
-    /**
-     * TODO(DTLSv1.3): Tests fails with
-     *  dtls1_read_bytes:unexpected record:../ssl/record/rec_layer_d1.c:609:
-     */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_VERSION, DTLS1_2_VERSION,
+            DTLS1_VERSION, 0,
             &sctx, &cctx, cert, privkey)))
         return 0;
 
