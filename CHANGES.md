@@ -32,6 +32,15 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Fixed TLS 1.2 ECDHE server-side validation of EC point format extension.
+   The server now properly validates that clients include the uncompressed
+   point format (0x00) in the EC Point Formats extension when negotiating
+   ECDHE cipher suites, as required by RFC 8422 Section 5.1. Invalid EC
+   point encodings in ClientKeyExchange messages are now correctly rejected
+   with an illegal_parameter alert instead of internal_error.
+
+   *Jeffrey Kintscher*
+
  * The crypto-mdebug-backtrace configuration option has been entirely removed.
    The option has been a no-op since 1.0.2.
 
