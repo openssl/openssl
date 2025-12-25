@@ -76,15 +76,9 @@ static int test_dtls_unprocessed(int testidx)
 
     timer_cb_count = 0;
 
-    /**
-     * TODO(DTLSv1.3): Tests fails with
-     *  # No progress made
-     *  # ERROR: (bool) 'create_bare_ssl_connection(serverssl1, clientssl1,
-     *      SSL_ERROR_NONE, 0, 0) == true' failed @ ../test/dtlstest.c:128
-     */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_VERSION, DTLS1_2_VERSION,
+            DTLS1_VERSION, 0,
             &sctx, &cctx, cert, privkey)))
         return 0;
 
@@ -120,8 +114,10 @@ static int test_dtls_unprocessed(int testidx)
      */
     c_to_s_mempacket = SSL_get_wbio(clientssl1);
     c_to_s_mempacket = BIO_next(c_to_s_mempacket);
-    mempacket_test_inject(c_to_s_mempacket, (char *)certstatus,
-        sizeof(certstatus), 1, INJECT_PACKET_IGNORE_REC_SEQ);
+    if (!TEST_int_gt(mempacket_test_inject(c_to_s_mempacket, (char *)certstatus,
+        sizeof(certstatus), 1, INJECT_PACKET_IGNORE_REC_SEQ),
+                     0))
+        goto end;
 
     /*
      * Create the connection. We use "create_bare_ssl_connection" here so that
@@ -184,31 +180,157 @@ end:
 
 #define TOTAL_RECORDS (TOTAL_FULL_HAND_RECORDS + TOTAL_RESUME_HAND_RECORDS)
 
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
+static int test_dtls_drop_records(int serverwbio, int minversion, int maxversion,
+                                  int doresumption, int epoch, int idx);
+static int test_dtls_drop_records_dtls1(int idx)
+{
+    int doresumption;
+    int cli_to_srv_cookie, cli_to_srv_epoch0, cli_to_srv_epoch1;
+    int srv_to_cli_epoch0;
+    int serverwbio;
+    int epoch = 0;
+
+    if (idx >= TOTAL_FULL_HAND_RECORDS) {
+        doresumption = 1;
+        cli_to_srv_epoch0 = CLI_TO_SRV_RESUME_EPOCH_0_RECS;
+        cli_to_srv_epoch1 = CLI_TO_SRV_RESUME_EPOCH_1_RECS;
+        srv_to_cli_epoch0 = SRV_TO_CLI_RESUME_EPOCH_0_RECS;
+        cli_to_srv_cookie = CLI_TO_SRV_RESUME_COOKIE_EXCH;
+        idx -= TOTAL_FULL_HAND_RECORDS;
+    } else {
+        doresumption = 0;
+        cli_to_srv_epoch0 = CLI_TO_SRV_EPOCH_0_RECS;
+        cli_to_srv_epoch1 = CLI_TO_SRV_EPOCH_1_RECS;
+        srv_to_cli_epoch0 = SRV_TO_CLI_EPOCH_0_RECS;
+        cli_to_srv_cookie = CLI_TO_SRV_COOKIE_EXCH;
+    }
+    /* Work out which record to drop based on the test number */
+    if (idx >= cli_to_srv_cookie + cli_to_srv_epoch0 + cli_to_srv_epoch1) {
+        serverwbio = 1;
+        idx -= cli_to_srv_cookie + cli_to_srv_epoch0 + cli_to_srv_epoch1;
+        if (idx >= SRV_TO_CLI_COOKIE_EXCH + srv_to_cli_epoch0) {
+            epoch = 1;
+            idx -= SRV_TO_CLI_COOKIE_EXCH + srv_to_cli_epoch0;
+        }
+    } else {
+        serverwbio = 0;
+        if (idx >= cli_to_srv_cookie + cli_to_srv_epoch0) {
+            epoch = 1;
+            idx -= cli_to_srv_cookie + cli_to_srv_epoch0;
+        }
+    }
+
+    return test_dtls_drop_records(serverwbio, DTLS1_VERSION, DTLS1_2_VERSION,
+                                  doresumption, epoch, idx);
+}
+
+/* ClientHello */
+# define DTLS13_CLI_TO_SRV_EPOCH_0_RECS_FULL 1
+/* ServerHello */
+# define DTLS13_SRV_TO_CLI_EPOCH_0_RECS_FULL 1
+/* Finish */
+# define DTLS13_CLI_TO_SRV_EPOCH_2_RECS_FULL 1
+/* EncryptedExtensions, Certificate, CertificateVerify, Finish */
+# define DTLS13_SRV_TO_CLI_EPOCH_2_RECS_FULL 4
+
+# define DTLS13_TOTAL_HAND_RECORDS_FULL \
+    (DTLS13_CLI_TO_SRV_EPOCH_0_RECS_FULL + DTLS13_SRV_TO_CLI_EPOCH_0_RECS_FULL \
+     + DTLS13_CLI_TO_SRV_EPOCH_2_RECS_FULL + DTLS13_SRV_TO_CLI_EPOCH_2_RECS_FULL)
+
+/* ClientHello */
+# define DTLS13_CLI_TO_SRV_EPOCH_0_RECS_RESM 1
+/* ServerHello */
+# define DTLS13_SRV_TO_CLI_EPOCH_0_RECS_RESM 1
+/* Finish */
+# define DTLS13_CLI_TO_SRV_EPOCH_2_RECS_RESM 1
+/* EncryptedExtensions, Finish */
+# define DTLS13_SRV_TO_CLI_EPOCH_2_RECS_RESM 2
+
+# define DTLS13_TOTAL_HAND_RECORDS_RESM \
+    (DTLS13_CLI_TO_SRV_EPOCH_0_RECS_RESM + DTLS13_SRV_TO_CLI_EPOCH_0_RECS_RESM \
+     + DTLS13_CLI_TO_SRV_EPOCH_2_RECS_RESM + DTLS13_SRV_TO_CLI_EPOCH_2_RECS_RESM)
+
+# define DTLS13_TOTAL_RECORDS \
+    (DTLS13_TOTAL_HAND_RECORDS_FULL + DTLS13_TOTAL_HAND_RECORDS_RESM)
+
+/**
+ * test_dtls_drop_records_dtls13 tests DTLS 1.3 implementation robustness against
+ * dropped records
+ *
+ * @param idx
+ *
+ * idx:
+ *      0) Tests drop of ClientHello (Client)
+ *      1) Tests drop of Finish (Client)
+ *      2) Tests drop of ServerHello (Server)
+ *      3) Tests drop of EncryptedExtensions (Server)
+ *      4) Tests drop of Certificate (Server)
+ *      5) Tests drop of CertificateVerify (Server)
+ *      6) Tests drop of Finish (Server)
+ *      7) Tests drop of ClientHello (Client) in resumption
+ *      8) Tests drop of Finish (Client) in resumption
+ *      9) Tests drop of ServerHello (Server) in resumption
+ *      10) Tests drop of EncryptedExtensions (Server) in resumption
+ *      11) Tests drop of Finish (Server) in resumption
+ *
+ * @return 1 on success, 0 on failure
+ */
+
+static int test_dtls_drop_records_dtls13(int idx)
+{
+    int doresumption;
+    int srv_to_cli_epoch0, cli_to_srv_epoch0, cli_to_srv_epoch2;
+    int serverwbio;
+    int epoch = 0;
+
+    if (idx >= DTLS13_TOTAL_HAND_RECORDS_FULL) {
+        doresumption = 1;
+        cli_to_srv_epoch0 = DTLS13_CLI_TO_SRV_EPOCH_0_RECS_RESM;
+        cli_to_srv_epoch2 = DTLS13_CLI_TO_SRV_EPOCH_2_RECS_RESM;
+        srv_to_cli_epoch0 = DTLS13_SRV_TO_CLI_EPOCH_0_RECS_RESM;
+        idx -= DTLS13_TOTAL_HAND_RECORDS_FULL;
+    } else {
+        doresumption = 0;
+        cli_to_srv_epoch0 = DTLS13_CLI_TO_SRV_EPOCH_0_RECS_FULL;
+        cli_to_srv_epoch2 = DTLS13_CLI_TO_SRV_EPOCH_2_RECS_FULL;
+        srv_to_cli_epoch0 = DTLS13_SRV_TO_CLI_EPOCH_0_RECS_FULL;
+    }
+    /* Work out which record to drop based on the test number */
+    if (idx >= cli_to_srv_epoch0 + cli_to_srv_epoch2) {
+        serverwbio = 1;
+        idx -= cli_to_srv_epoch0 + cli_to_srv_epoch2;
+        if (idx >= srv_to_cli_epoch0) {
+            epoch = 2;
+            idx -= srv_to_cli_epoch0;
+        }
+    } else {
+        serverwbio = 0;
+        if (idx >= cli_to_srv_epoch0) {
+            epoch = 2;
+            idx -= cli_to_srv_epoch0;
+        }
+    }
+
+    return test_dtls_drop_records(serverwbio, DTLS1_3_VERSION, 0, doresumption, epoch, idx);
+}
+
 /*
  * We are assuming a ServerKeyExchange message is sent in this test. If we don't
  * have either DH or EC, then it won't be
  */
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
-static int test_dtls_drop_records(int idx)
+static int test_dtls_drop_records(int serverwbio, int minversion, int maxversion,
+                                  int doresumption, int epoch, int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     BIO *c_to_s_fbio, *mempackbio;
     int testresult = 0;
-    int epoch = 0;
     SSL_SESSION *sess = NULL;
-    int cli_to_srv_cookie, cli_to_srv_epoch0, cli_to_srv_epoch1;
-    int srv_to_cli_epoch0;
 
-    /**
-     * TODO(DTLSv1.3): Tests fails with
-     *  dtls1_read_bytes:ssl/tls alert unexpected message:
-     *      ssl/record/rec_layer_d1.c:454:SSL alert number 10
-     * And "no progress made"
-     */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_VERSION, DTLS1_2_VERSION,
+            minversion, maxversion,
             &sctx, &cctx, cert, privkey)))
         return 0;
 
@@ -227,7 +349,7 @@ static int test_dtls_drop_records(int idx)
     SSL_CTX_set_cookie_generate_cb(sctx, generate_cookie_cb);
     SSL_CTX_set_cookie_verify_cb(sctx, verify_cookie_cb);
 
-    if (idx >= TOTAL_FULL_HAND_RECORDS) {
+    if (doresumption) {
         /* We're going to do a resumption handshake. Get a session first. */
         if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                 NULL, NULL))
@@ -241,17 +363,6 @@ static int test_dtls_drop_records(int idx)
         SSL_free(serverssl);
         SSL_free(clientssl);
         serverssl = clientssl = NULL;
-
-        cli_to_srv_epoch0 = CLI_TO_SRV_RESUME_EPOCH_0_RECS;
-        cli_to_srv_epoch1 = CLI_TO_SRV_RESUME_EPOCH_1_RECS;
-        srv_to_cli_epoch0 = SRV_TO_CLI_RESUME_EPOCH_0_RECS;
-        cli_to_srv_cookie = CLI_TO_SRV_RESUME_COOKIE_EXCH;
-        idx -= TOTAL_FULL_HAND_RECORDS;
-    } else {
-        cli_to_srv_epoch0 = CLI_TO_SRV_EPOCH_0_RECS;
-        cli_to_srv_epoch1 = CLI_TO_SRV_EPOCH_1_RECS;
-        srv_to_cli_epoch0 = SRV_TO_CLI_EPOCH_0_RECS;
-        cli_to_srv_cookie = CLI_TO_SRV_COOKIE_EXCH;
     }
 
     c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
@@ -272,19 +383,11 @@ static int test_dtls_drop_records(int idx)
     DTLS_set_timer_cb(serverssl, timer_cb);
 
     /* Work out which record to drop based on the test number */
-    if (idx >= cli_to_srv_cookie + cli_to_srv_epoch0 + cli_to_srv_epoch1) {
+    if (serverwbio) {
         mempackbio = SSL_get_wbio(serverssl);
-        idx -= cli_to_srv_cookie + cli_to_srv_epoch0 + cli_to_srv_epoch1;
-        if (idx >= SRV_TO_CLI_COOKIE_EXCH + srv_to_cli_epoch0) {
-            epoch = 1;
-            idx -= SRV_TO_CLI_COOKIE_EXCH + srv_to_cli_epoch0;
-        }
     } else {
         mempackbio = SSL_get_wbio(clientssl);
-        if (idx >= cli_to_srv_cookie + cli_to_srv_epoch0) {
-            epoch = 1;
-            idx -= cli_to_srv_cookie + cli_to_srv_epoch0;
-        }
+
         mempackbio = BIO_next(mempackbio);
     }
     BIO_ctrl(mempackbio, MEMPACKET_CTRL_SET_DROP_EPOCH, epoch, NULL);
@@ -766,7 +869,8 @@ int setup_tests(void)
 
     ADD_ALL_TESTS(test_dtls_unprocessed, NUM_TESTS);
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
-    ADD_ALL_TESTS(test_dtls_drop_records, TOTAL_RECORDS);
+    ADD_ALL_TESTS(test_dtls_drop_records_dtls1, TOTAL_RECORDS);
+    ADD_ALL_TESTS(test_dtls_drop_records_dtls13, DTLS13_TOTAL_RECORDS);
 #endif
     ADD_TEST(test_cookie);
     ADD_TEST(test_dtls_duplicate_records);
