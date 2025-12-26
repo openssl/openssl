@@ -1136,6 +1136,7 @@ int cms_main(int argc, char **argv)
                 goto end;
             if (kparam != NULL) {
                 EVP_PKEY_CTX *pctx;
+
                 if ((pctx = CMS_SignerInfo_get0_pkey_ctx(si)) == NULL)
                     goto end;
                 if (!cms_set_pkey_param(pctx, kparam->param))
