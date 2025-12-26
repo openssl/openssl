@@ -1013,7 +1013,7 @@ int cms_main(int argc, char **argv)
             if ((pctx = CMS_RecipientInfo_get0_pkey_ctx(ri)) == NULL)
                 goto end;
             if (kparam != NULL) {
-                if (pctx != NULL && !cms_set_pkey_param(pctx, kparam->param))
+                if (!cms_set_pkey_param(pctx, kparam->param))
                     goto end;
             }
 
