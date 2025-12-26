@@ -480,7 +480,7 @@ The caller retains ownership of the returned object and needs to free it when
 it is no longer needed, e.g. via X509_free() for X509 objects or
 DSA_SIG_free() for DSA_SIG objects.
 
-If either I<a> or else I<*a> is NULL fresh storage is allocated for the
+If either I<a> or else I<*a> is NULL, then fresh storage is allocated for the
 returned object, and if I<a> is not NULL then I<*a> is set equal to the
 returned pointer.
 
