@@ -833,7 +833,7 @@ static int is_valid_netmask(unsigned char *mask, int len)
 
     // netmask must be 4 bytes for IPv4
     // or 16 bytes for IPv6
-    if (len != sizeof(in_addr_t) && len != sizeof(struct in6_addr))
+    if (len != sizeof(in_addr_t) && len != sizeof(in6_addr_t))
         return 0;
 
     int found_zero = 0;
