@@ -2910,9 +2910,9 @@ static int test_ssl_listen_ex(void)
     testresult = 1;
 
 err:
+    SSL_free(qlistener);
     SSL_free(serverssl);
     SSL_free(clientssl);
-    SSL_free(qlistener);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     SSL_CTX_free(qmctx);

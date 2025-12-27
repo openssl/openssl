@@ -479,6 +479,10 @@ DEPEND[html/man3/ADMISSIONS.html]=man3/ADMISSIONS.pod
 GENERATE[html/man3/ADMISSIONS.html]=man3/ADMISSIONS.pod
 DEPEND[man/man3/ADMISSIONS.3]=man3/ADMISSIONS.pod
 GENERATE[man/man3/ADMISSIONS.3]=man3/ADMISSIONS.pod
+DEPEND[html/man3/ASN1_BIT_STRING_get_length.html]=man3/ASN1_BIT_STRING_get_length.pod
+GENERATE[html/man3/ASN1_BIT_STRING_get_length.html]=man3/ASN1_BIT_STRING_get_length.pod
+DEPEND[man/man3/ASN1_BIT_STRING_get_length.3]=man3/ASN1_BIT_STRING_get_length.pod
+GENERATE[man/man3/ASN1_BIT_STRING_get_length.3]=man3/ASN1_BIT_STRING_get_length.pod
 DEPEND[html/man3/ASN1_EXTERN_FUNCS.html]=man3/ASN1_EXTERN_FUNCS.pod
 GENERATE[html/man3/ASN1_EXTERN_FUNCS.html]=man3/ASN1_EXTERN_FUNCS.pod
 DEPEND[man/man3/ASN1_EXTERN_FUNCS.3]=man3/ASN1_EXTERN_FUNCS.pod
@@ -1183,10 +1187,6 @@ DEPEND[html/man3/EVP_MAC.html]=man3/EVP_MAC.pod
 GENERATE[html/man3/EVP_MAC.html]=man3/EVP_MAC.pod
 DEPEND[man/man3/EVP_MAC.3]=man3/EVP_MAC.pod
 GENERATE[man/man3/EVP_MAC.3]=man3/EVP_MAC.pod
-DEPEND[html/man3/EVP_MD_meth_new.html]=man3/EVP_MD_meth_new.pod
-GENERATE[html/man3/EVP_MD_meth_new.html]=man3/EVP_MD_meth_new.pod
-DEPEND[man/man3/EVP_MD_meth_new.3]=man3/EVP_MD_meth_new.pod
-GENERATE[man/man3/EVP_MD_meth_new.3]=man3/EVP_MD_meth_new.pod
 DEPEND[html/man3/EVP_OpenInit.html]=man3/EVP_OpenInit.pod
 GENERATE[html/man3/EVP_OpenInit.html]=man3/EVP_OpenInit.pod
 DEPEND[man/man3/EVP_OpenInit.3]=man3/EVP_OpenInit.pod
@@ -1319,14 +1319,6 @@ DEPEND[html/man3/EVP_PKEY_keygen.html]=man3/EVP_PKEY_keygen.pod
 GENERATE[html/man3/EVP_PKEY_keygen.html]=man3/EVP_PKEY_keygen.pod
 DEPEND[man/man3/EVP_PKEY_keygen.3]=man3/EVP_PKEY_keygen.pod
 GENERATE[man/man3/EVP_PKEY_keygen.3]=man3/EVP_PKEY_keygen.pod
-DEPEND[html/man3/EVP_PKEY_meth_get_count.html]=man3/EVP_PKEY_meth_get_count.pod
-GENERATE[html/man3/EVP_PKEY_meth_get_count.html]=man3/EVP_PKEY_meth_get_count.pod
-DEPEND[man/man3/EVP_PKEY_meth_get_count.3]=man3/EVP_PKEY_meth_get_count.pod
-GENERATE[man/man3/EVP_PKEY_meth_get_count.3]=man3/EVP_PKEY_meth_get_count.pod
-DEPEND[html/man3/EVP_PKEY_meth_new.html]=man3/EVP_PKEY_meth_new.pod
-GENERATE[html/man3/EVP_PKEY_meth_new.html]=man3/EVP_PKEY_meth_new.pod
-DEPEND[man/man3/EVP_PKEY_meth_new.3]=man3/EVP_PKEY_meth_new.pod
-GENERATE[man/man3/EVP_PKEY_meth_new.3]=man3/EVP_PKEY_meth_new.pod
 DEPEND[html/man3/EVP_PKEY_new.html]=man3/EVP_PKEY_new.pod
 GENERATE[html/man3/EVP_PKEY_new.html]=man3/EVP_PKEY_new.pod
 DEPEND[man/man3/EVP_PKEY_new.3]=man3/EVP_PKEY_new.pod
@@ -3035,6 +3027,10 @@ DEPEND[html/man3/X509_check_ca.html]=man3/X509_check_ca.pod
 GENERATE[html/man3/X509_check_ca.html]=man3/X509_check_ca.pod
 DEPEND[man/man3/X509_check_ca.3]=man3/X509_check_ca.pod
 GENERATE[man/man3/X509_check_ca.3]=man3/X509_check_ca.pod
+DEPEND[html/man3/X509_check_certificate_times.html]=man3/X509_check_certificate_times.pod
+GENERATE[html/man3/X509_check_certificate_times.html]=man3/X509_check_certificate_times.pod
+DEPEND[man/man3/X509_check_certificate_times.3]=man3/X509_check_certificate_times.pod
+GENERATE[man/man3/X509_check_certificate_times.3]=man3/X509_check_certificate_times.pod
 DEPEND[html/man3/X509_check_host.html]=man3/X509_check_host.pod
 GENERATE[html/man3/X509_check_host.html]=man3/X509_check_host.pod
 DEPEND[man/man3/X509_check_host.3]=man3/X509_check_host.pod
@@ -3055,10 +3051,6 @@ DEPEND[html/man3/X509_cmp.html]=man3/X509_cmp.pod
 GENERATE[html/man3/X509_cmp.html]=man3/X509_cmp.pod
 DEPEND[man/man3/X509_cmp.3]=man3/X509_cmp.pod
 GENERATE[man/man3/X509_cmp.3]=man3/X509_cmp.pod
-DEPEND[html/man3/X509_cmp_time.html]=man3/X509_cmp_time.pod
-GENERATE[html/man3/X509_cmp_time.html]=man3/X509_cmp_time.pod
-DEPEND[man/man3/X509_cmp_time.3]=man3/X509_cmp_time.pod
-GENERATE[man/man3/X509_cmp_time.3]=man3/X509_cmp_time.pod
 DEPEND[html/man3/X509_digest.html]=man3/X509_digest.pod
 GENERATE[html/man3/X509_digest.html]=man3/X509_digest.pod
 DEPEND[man/man3/X509_digest.3]=man3/X509_digest.pod
@@ -3177,6 +3169,7 @@ DEPEND[man/man3/s2i_ASN1_IA5STRING.3]=man3/s2i_ASN1_IA5STRING.pod
 GENERATE[man/man3/s2i_ASN1_IA5STRING.3]=man3/s2i_ASN1_IA5STRING.pod
 IMAGEDOCS[man3]=
 HTMLDOCS[man3]=html/man3/ADMISSIONS.html \
+html/man3/ASN1_BIT_STRING_get_length.html \
 html/man3/ASN1_EXTERN_FUNCS.html \
 html/man3/ASN1_INTEGER_get_int64.html \
 html/man3/ASN1_INTEGER_new.html \
@@ -3353,7 +3346,6 @@ html/man3/EVP_KEM_free.html \
 html/man3/EVP_KEYEXCH_free.html \
 html/man3/EVP_KEYMGMT.html \
 html/man3/EVP_MAC.html \
-html/man3/EVP_MD_meth_new.html \
 html/man3/EVP_OpenInit.html \
 html/man3/EVP_PBE_CipherInit.html \
 html/man3/EVP_PKEY2PKCS8.html \
@@ -3387,8 +3379,6 @@ html/man3/EVP_PKEY_get_size.html \
 html/man3/EVP_PKEY_gettable_params.html \
 html/man3/EVP_PKEY_is_a.html \
 html/man3/EVP_PKEY_keygen.html \
-html/man3/EVP_PKEY_meth_get_count.html \
-html/man3/EVP_PKEY_meth_new.html \
 html/man3/EVP_PKEY_new.html \
 html/man3/EVP_PKEY_print_private.html \
 html/man3/EVP_PKEY_set1_RSA.html \
@@ -3816,12 +3806,12 @@ html/man3/X509_STORE_set_verify_cb_func.html \
 html/man3/X509_VERIFY_PARAM_set_flags.html \
 html/man3/X509_add_cert.html \
 html/man3/X509_check_ca.html \
+html/man3/X509_check_certificate_times.html \
 html/man3/X509_check_host.html \
 html/man3/X509_check_issued.html \
 html/man3/X509_check_private_key.html \
 html/man3/X509_check_purpose.html \
 html/man3/X509_cmp.html \
-html/man3/X509_cmp_time.html \
 html/man3/X509_digest.html \
 html/man3/X509_dup.html \
 html/man3/X509_get0_distinguishing_id.html \
@@ -3852,6 +3842,7 @@ html/man3/i2d_re_X509_tbs.html \
 html/man3/o2i_SCT_LIST.html \
 html/man3/s2i_ASN1_IA5STRING.html
 MANDOCS[man3]=man/man3/ADMISSIONS.3 \
+man/man3/ASN1_BIT_STRING_get_length.3 \
 man/man3/ASN1_EXTERN_FUNCS.3 \
 man/man3/ASN1_INTEGER_get_int64.3 \
 man/man3/ASN1_INTEGER_new.3 \
@@ -4028,7 +4019,6 @@ man/man3/EVP_KEM_free.3 \
 man/man3/EVP_KEYEXCH_free.3 \
 man/man3/EVP_KEYMGMT.3 \
 man/man3/EVP_MAC.3 \
-man/man3/EVP_MD_meth_new.3 \
 man/man3/EVP_OpenInit.3 \
 man/man3/EVP_PBE_CipherInit.3 \
 man/man3/EVP_PKEY2PKCS8.3 \
@@ -4062,8 +4052,6 @@ man/man3/EVP_PKEY_get_size.3 \
 man/man3/EVP_PKEY_gettable_params.3 \
 man/man3/EVP_PKEY_is_a.3 \
 man/man3/EVP_PKEY_keygen.3 \
-man/man3/EVP_PKEY_meth_get_count.3 \
-man/man3/EVP_PKEY_meth_new.3 \
 man/man3/EVP_PKEY_new.3 \
 man/man3/EVP_PKEY_print_private.3 \
 man/man3/EVP_PKEY_set1_RSA.3 \
@@ -4491,12 +4479,12 @@ man/man3/X509_STORE_set_verify_cb_func.3 \
 man/man3/X509_VERIFY_PARAM_set_flags.3 \
 man/man3/X509_add_cert.3 \
 man/man3/X509_check_ca.3 \
+man/man3/X509_check_certificate_times.3 \
 man/man3/X509_check_host.3 \
 man/man3/X509_check_issued.3 \
 man/man3/X509_check_private_key.3 \
 man/man3/X509_check_purpose.3 \
 man/man3/X509_cmp.3 \
-man/man3/X509_cmp_time.3 \
 man/man3/X509_digest.3 \
 man/man3/X509_dup.3 \
 man/man3/X509_get0_distinguishing_id.3 \

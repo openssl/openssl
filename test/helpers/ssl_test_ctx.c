@@ -155,7 +155,6 @@ static const test_enum ssl_protocols[] = {
     { "TLSv1.2", TLS1_2_VERSION },
     { "TLSv1.1", TLS1_1_VERSION },
     { "TLSv1", TLS1_VERSION },
-    { "SSLv3", SSL3_VERSION },
     { "DTLSv1", DTLS1_VERSION },
     { "DTLSv1.2", DTLS1_2_VERSION },
 };
