@@ -10,6 +10,7 @@
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "internal/safe_math.h"
+#include <arpa/inet.h>
 #include <stdio.h>
 #include "crypto/asn1.h"
 #include <openssl/asn1t.h>
@@ -824,6 +825,46 @@ end:
     return ret;
 }
 
+static int is_valid_netmask(unsigned char *mask, int len)
+{
+    if (mask == NULL) {
+        return 0;
+    }
+
+    // netmask must be 4 bytes for IPv4
+    // or 16 bytes for IPv6
+    if (len != sizeof(in_addr_t) && len != sizeof(struct in6_addr))
+        return 0;
+
+    int found_zero = 0;
+
+    for (size_t i = 0; i < len; i++) {
+        uint8_t v = mask[i];
+
+        if (v == 0) {   // byte all 0s?
+            found_zero = 1;
+            continue;
+        }
+
+        if (v == 0xff) {    // byte all 1s?
+            if (found_zero)
+                return 0;   // 1 afer 0, not allowed
+
+            continue;
+        }
+
+        // check individual bits
+        for (int j = 0; j < 8; j++) {
+            if (((v << j) & 0x80) && found_zero)  // 1 after zeros?
+                return 0;   // 1 after 0 not allowed
+
+            found_zero = 1;
+        }
+    }
+
+    return 1;
+}
+
 static int nc_ip(ASN1_OCTET_STRING *ip, ASN1_OCTET_STRING *base)
 {
     int hostlen, baselen, i;
@@ -845,8 +886,10 @@ static int nc_ip(ASN1_OCTET_STRING *ip, ASN1_OCTET_STRING *base)
 
     maskptr = base->data + hostlen;
 
+    if (!is_valid_netmask(maskptr, hostlen))
+        return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+
     /* Considering possible not aligned base ipAddress */
-    /* Not checking for wrong mask definition: i.e.: 255.0.255.0 */
     for (i = 0; i < hostlen; i++)
         if ((hostptr[i] & maskptr[i]) != (baseptr[i] & maskptr[i]))
             return X509_V_ERR_PERMITTED_VIOLATION;

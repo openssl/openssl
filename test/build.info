@@ -70,7 +70,8 @@ IF[{- !$disabled{tests} -}]
           ca_internals_test bio_tfo_test membio_test bio_dgram_test list_test \
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
-          x509_acert_test x509_req_test strtoultest bio_pw_callback_test
+          x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
+          nc_invalid_mask_test
 
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
@@ -314,6 +315,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[v3nametest]=v3nametest.c
   INCLUDE[v3nametest]=../include ../apps/include
   DEPEND[v3nametest]=../libcrypto libtestutil.a
+
+  SOURCE[nc_invalid_mask_test]=nc_invalid_mask_test.c
+  INCLUDE[nc_invalid_mask_test]=.. ../include ../apps/include
+  DEPEND[nc_invalid_mask_test]=../libcrypto.a libtestutil.a
 
   SOURCE[crltest]=crltest.c
   INCLUDE[crltest]=../include ../apps/include
