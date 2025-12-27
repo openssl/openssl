@@ -471,21 +471,28 @@ OSSL_PROVIDER *EVP_ASYM_CIPHER_get0_provider(const EVP_ASYM_CIPHER *cipher)
 EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
     const char *properties)
 {
+    const EVP_FETCH_OPERATION fetch_ops = {
+        .new_method = evp_asym_cipher_from_algorithm,
+        .up_ref_method = evp_asym_cipher_up_ref,
+        .free_method = evp_asym_cipher_free
+    };
     return evp_generic_fetch(ctx, OSSL_OP_ASYM_CIPHER, algorithm, properties,
-        evp_asym_cipher_from_algorithm,
-        evp_asym_cipher_up_ref,
-        evp_asym_cipher_free);
+        &fetch_ops);
 }
 
 EVP_ASYM_CIPHER *evp_asym_cipher_fetch_from_prov(OSSL_PROVIDER *prov,
     const char *algorithm,
     const char *properties)
 {
+    const EVP_FETCH_OPERATION fetch_ops = {
+        .new_method = evp_asym_cipher_from_algorithm,
+        .up_ref_method = evp_asym_cipher_up_ref,
+        .free_method = evp_asym_cipher_free
+    };
+
     return evp_generic_fetch_from_prov(prov, OSSL_OP_ASYM_CIPHER,
         algorithm, properties,
-        evp_asym_cipher_from_algorithm,
-        evp_asym_cipher_up_ref,
-        evp_asym_cipher_free);
+        &fetch_ops);
 }
 
 int EVP_ASYM_CIPHER_is_a(const EVP_ASYM_CIPHER *cipher, const char *name)
@@ -509,15 +516,18 @@ const char *EVP_ASYM_CIPHER_get0_description(const EVP_ASYM_CIPHER *cipher)
 }
 
 void EVP_ASYM_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
-    void (*fn)(EVP_ASYM_CIPHER *cipher,
-        void *arg),
+    void (*fn)(EVP_ASYM_CIPHER *cipher, void *arg),
     void *arg)
 {
-    evp_generic_do_all(libctx, OSSL_OP_ASYM_CIPHER,
-        (void (*)(void *, void *))fn, arg,
+    const EVP_FETCH_OPERATION fetch_ops = {
         evp_asym_cipher_from_algorithm,
         evp_asym_cipher_up_ref,
-        evp_asym_cipher_free);
+        evp_asym_cipher_free
+    };
+
+    evp_generic_do_all(libctx, OSSL_OP_ASYM_CIPHER,
+        (void (*)(void *, void *))fn, arg,
+        &fetch_ops);
 }
 
 int EVP_ASYM_CIPHER_names_do_all(const EVP_ASYM_CIPHER *cipher,

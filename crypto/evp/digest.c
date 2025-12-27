@@ -1031,9 +1031,14 @@ static void evp_md_free(void *md)
 EVP_MD *EVP_MD_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
     const char *properties)
 {
-    EVP_MD *md = evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
-        evp_md_from_algorithm, evp_md_up_ref, evp_md_free);
+    const EVP_FETCH_OPERATION fetch_ops = {
+        .new_method = evp_md_from_algorithm,
+        .up_ref_method = evp_md_up_ref,
+        .free_method = evp_md_free
+    };
 
+    EVP_MD *md = evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
+        &fetch_ops);
     return md;
 }
 
@@ -1067,20 +1072,29 @@ void EVP_MD_do_all_provided(OSSL_LIB_CTX *libctx,
     void (*fn)(EVP_MD *mac, void *arg),
     void *arg)
 {
+    const EVP_FETCH_OPERATION fetch_ops = {
+        .new_method = evp_md_from_algorithm,
+        .up_ref_method = evp_md_up_ref,
+        .free_method = evp_md_free
+    };
+
     evp_generic_do_all(libctx, OSSL_OP_DIGEST,
-        (void (*)(void *, void *))fn, arg,
-        evp_md_from_algorithm, evp_md_up_ref, evp_md_free);
+        (void (*)(void *, void *))fn, arg, &fetch_ops);
 }
 
 EVP_MD *evp_digest_fetch_from_prov(OSSL_PROVIDER *prov,
     const char *algorithm,
     const char *properties)
 {
+    const EVP_FETCH_OPERATION fetch_ops = {
+        .new_method = evp_md_from_algorithm,
+        .up_ref_method = evp_md_up_ref,
+        .free_method = evp_md_free
+    };
+
     return evp_generic_fetch_from_prov(prov, OSSL_OP_DIGEST,
         algorithm, properties,
-        evp_md_from_algorithm,
-        evp_md_up_ref,
-        evp_md_free);
+        &fetch_ops);
 }
 
 typedef struct {

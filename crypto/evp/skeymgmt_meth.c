@@ -131,21 +131,29 @@ EVP_SKEYMGMT *evp_skeymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
     const char *name,
     const char *properties)
 {
+    const EVP_FETCH_OPERATION fetch_ops = {
+        .new_method = skeymgmt_from_algorithm,
+        .up_ref_method = (int (*)(void *))EVP_SKEYMGMT_up_ref,
+        .free_method = (void (*)(void *))EVP_SKEYMGMT_free
+    };
+
     return evp_generic_fetch_from_prov(prov,
         OSSL_OP_SKEYMGMT,
         name, properties,
-        skeymgmt_from_algorithm,
-        (int (*)(void *))EVP_SKEYMGMT_up_ref,
-        (void (*)(void *))EVP_SKEYMGMT_free);
+        &fetch_ops);
 }
 
 EVP_SKEYMGMT *EVP_SKEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
     const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_SKEYMGMT, algorithm, properties,
-        skeymgmt_from_algorithm,
-        (int (*)(void *))EVP_SKEYMGMT_up_ref,
-        (void (*)(void *))EVP_SKEYMGMT_free);
+    const EVP_FETCH_OPERATION fetch_ops = {
+        .new_method = skeymgmt_from_algorithm,
+        .up_ref_method = (int (*)(void *))EVP_SKEYMGMT_up_ref,
+        .free_method = (void (*)(void *))EVP_SKEYMGMT_free
+    };
+
+    return evp_generic_fetch(ctx, OSSL_OP_SKEYMGMT,
+        algorithm, properties, &fetch_ops);
 }
 
 int EVP_SKEYMGMT_up_ref(EVP_SKEYMGMT *skeymgmt)
@@ -197,11 +205,15 @@ void EVP_SKEYMGMT_do_all_provided(OSSL_LIB_CTX *libctx,
     void (*fn)(EVP_SKEYMGMT *skeymgmt, void *arg),
     void *arg)
 {
-    evp_generic_do_all(libctx, OSSL_OP_SKEYMGMT,
-        (void (*)(void *, void *))fn, arg,
+    const EVP_FETCH_OPERATION fetch_ops = {
         skeymgmt_from_algorithm,
         (int (*)(void *))EVP_SKEYMGMT_up_ref,
-        (void (*)(void *))EVP_SKEYMGMT_free);
+        (void (*)(void *))EVP_SKEYMGMT_free
+    };
+
+    evp_generic_do_all(libctx, OSSL_OP_SKEYMGMT,
+        (void (*)(void *, void *))fn, arg,
+        &fetch_ops);
 }
 
 int EVP_SKEYMGMT_names_do_all(const EVP_SKEYMGMT *skeymgmt,

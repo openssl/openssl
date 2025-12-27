@@ -251,11 +251,7 @@ static void *
 inner_evp_generic_fetch(struct evp_method_data_st *methdata,
     OSSL_PROVIDER *prov, int operation_id,
     const char *name, ossl_unused const char *properties,
-    void *(*new_method)(int name_id,
-        const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
-    int (*up_ref_method)(void *),
-    void (*free_method)(void *))
+    const EVP_FETCH_OPERATION *fetch_ops)
 {
     OSSL_METHOD_STORE *store = get_evp_method_store(methdata->libctx);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(methdata->libctx);
@@ -326,9 +322,9 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
         methdata->name_id = name_id;
         methdata->names = name;
         methdata->propquery = propq;
-        methdata->method_from_algorithm = new_method;
-        methdata->refcnt_up_method = up_ref_method;
-        methdata->destruct_method = free_method;
+        methdata->method_from_algorithm = fetch_ops->new_method;
+        methdata->refcnt_up_method = fetch_ops->up_ref_method;
+        methdata->destruct_method = fetch_ops->free_method;
         methdata->flag_construct_error_occurred = 0;
         if ((method = ossl_method_construct(methdata->libctx, operation_id,
                  &prov, 0 /* !force_cache */,
@@ -351,13 +347,14 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
             if (name_id == 0) {
                 ERR_raise_data(ERR_LIB_EVP, ERR_R_FETCH_FAILED,
                     "Algorithm %s cannot be found", name);
-                free_method(method);
+                fetch_ops->free_method(method);
                 method = NULL;
             } else {
                 meth_id = evp_method_id(name_id, operation_id);
                 if (meth_id != 0)
                     ossl_method_store_cache_set(store, prov, meth_id, propq,
-                        method, up_ref_method, free_method);
+                        method, fetch_ops->up_ref_method,
+                        fetch_ops->free_method);
             }
         }
 
@@ -390,11 +387,7 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
 
 void *evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
     const char *name, const char *properties,
-    void *(*new_method)(int name_id,
-        const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
-    int (*up_ref_method)(void *),
-    void (*free_method)(void *))
+    const EVP_FETCH_OPERATION *fetch_ops)
 {
     struct evp_method_data_st methdata;
     void *method;
@@ -402,8 +395,7 @@ void *evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
     methdata.libctx = libctx;
     methdata.tmp_store = NULL;
     method = inner_evp_generic_fetch(&methdata, NULL, operation_id,
-        name, properties,
-        new_method, up_ref_method, free_method);
+        name, properties, fetch_ops);
     dealloc_tmp_evp_method_store(methdata.tmp_store);
     return method;
 }
@@ -416,20 +408,16 @@ void *evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
  */
 void *evp_generic_fetch_from_prov(OSSL_PROVIDER *prov, int operation_id,
     const char *name, const char *properties,
-    void *(*new_method)(int name_id,
-        const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
-    int (*up_ref_method)(void *),
-    void (*free_method)(void *))
+    const EVP_FETCH_OPERATION *fetch_ops)
 {
     struct evp_method_data_st methdata;
     void *method;
 
     methdata.libctx = ossl_provider_libctx(prov);
     methdata.tmp_store = NULL;
+
     method = inner_evp_generic_fetch(&methdata, prov, operation_id,
-        name, properties,
-        new_method, up_ref_method, free_method);
+        name, properties, fetch_ops);
     dealloc_tmp_evp_method_store(methdata.tmp_store);
     return method;
 }
@@ -630,19 +618,16 @@ static void filter_on_operation_id(int id, void *method, void *arg)
 void evp_generic_do_all(OSSL_LIB_CTX *libctx, int operation_id,
     void (*user_fn)(void *method, void *arg),
     void *user_arg,
-    void *(*new_method)(int name_id,
-        const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
-    int (*up_ref_method)(void *),
-    void (*free_method)(void *))
+    const EVP_FETCH_OPERATION *fetch_ops)
 {
     struct evp_method_data_st methdata;
     struct filter_data_st data;
 
     methdata.libctx = libctx;
     methdata.tmp_store = NULL;
+
     (void)inner_evp_generic_fetch(&methdata, NULL, operation_id, NULL, NULL,
-        new_method, up_ref_method, free_method);
+        fetch_ops);
 
     data.operation_id = operation_id;
     data.user_fn = user_fn;

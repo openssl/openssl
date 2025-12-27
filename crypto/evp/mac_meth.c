@@ -175,9 +175,14 @@ err:
 EVP_MAC *EVP_MAC_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
     const char *properties)
 {
-    return evp_generic_fetch(libctx, OSSL_OP_MAC, algorithm, properties,
-        evp_mac_from_algorithm, evp_mac_up_ref,
-        evp_mac_free);
+    const EVP_FETCH_OPERATION fetch_ops = {
+        .new_method = evp_mac_from_algorithm,
+        .up_ref_method = evp_mac_up_ref,
+        .free_method = evp_mac_free
+    };
+
+    return evp_generic_fetch(libctx, OSSL_OP_MAC,
+        algorithm, properties, &fetch_ops);
 }
 
 int EVP_MAC_up_ref(EVP_MAC *mac)
@@ -246,18 +251,25 @@ void EVP_MAC_do_all_provided(OSSL_LIB_CTX *libctx,
     void (*fn)(EVP_MAC *mac, void *arg),
     void *arg)
 {
+    const EVP_FETCH_OPERATION fetch_ops = {
+        evp_mac_from_algorithm, evp_mac_up_ref, evp_mac_free
+    };
+
     evp_generic_do_all(libctx, OSSL_OP_MAC,
-        (void (*)(void *, void *))fn, arg,
-        evp_mac_from_algorithm, evp_mac_up_ref, evp_mac_free);
+                       (void (*)(void *, void *))fn, arg, &fetch_ops);
 }
 
 EVP_MAC *evp_mac_fetch_from_prov(OSSL_PROVIDER *prov,
     const char *algorithm,
     const char *properties)
 {
+    const EVP_FETCH_OPERATION evp_fetch_ops = {
+        .new_method = evp_mac_from_algorithm,
+        .up_ref_method = evp_mac_up_ref,
+        .free_method = evp_mac_free
+    };
+
     return evp_generic_fetch_from_prov(prov, OSSL_OP_MAC,
         algorithm, properties,
-        evp_mac_from_algorithm,
-        evp_mac_up_ref,
-        evp_mac_free);
+        &evp_fetch_ops);
 }

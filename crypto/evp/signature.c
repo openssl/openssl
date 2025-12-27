@@ -483,21 +483,29 @@ OSSL_PROVIDER *EVP_SIGNATURE_get0_provider(const EVP_SIGNATURE *signature)
 EVP_SIGNATURE *EVP_SIGNATURE_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
     const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
-        evp_signature_from_algorithm,
-        evp_signature_up_ref,
-        evp_signature_free);
+    const EVP_FETCH_OPERATION fetch_ops = {
+        .new_method = evp_signature_from_algorithm,
+        .up_ref_method = evp_signature_up_ref,
+        .free_method = evp_signature_free
+    };
+
+    return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE,
+        algorithm, properties, &fetch_ops);
 }
 
 EVP_SIGNATURE *evp_signature_fetch_from_prov(OSSL_PROVIDER *prov,
     const char *algorithm,
     const char *properties)
 {
+    const EVP_FETCH_OPERATION fetch_ops = {
+        .new_method = evp_signature_from_algorithm,
+        .up_ref_method = evp_signature_up_ref,
+        .free_method = evp_signature_free
+    };
+
     return evp_generic_fetch_from_prov(prov, OSSL_OP_SIGNATURE,
         algorithm, properties,
-        evp_signature_from_algorithm,
-        evp_signature_up_ref,
-        evp_signature_free);
+        &fetch_ops);
 }
 
 int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name)
@@ -532,11 +540,15 @@ void EVP_SIGNATURE_do_all_provided(OSSL_LIB_CTX *libctx,
         void *arg),
     void *arg)
 {
-    evp_generic_do_all(libctx, OSSL_OP_SIGNATURE,
-        (void (*)(void *, void *))fn, arg,
+    const EVP_FETCH_OPERATION fetch_ops = {
         evp_signature_from_algorithm,
         evp_signature_up_ref,
-        evp_signature_free);
+        evp_signature_free
+    };
+
+    evp_generic_do_all(libctx, OSSL_OP_SIGNATURE,
+        (void (*)(void *, void *))fn, arg,
+        &fetch_ops);
 }
 
 int EVP_SIGNATURE_names_do_all(const EVP_SIGNATURE *signature,

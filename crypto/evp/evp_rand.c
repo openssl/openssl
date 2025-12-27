@@ -282,9 +282,14 @@ static void *evp_rand_from_algorithm(int name_id,
 EVP_RAND *EVP_RAND_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
     const char *properties)
 {
-    return evp_generic_fetch(libctx, OSSL_OP_RAND, algorithm, properties,
-        evp_rand_from_algorithm, evp_rand_up_ref,
-        evp_rand_free);
+    const EVP_FETCH_OPERATION fetch_ops = {
+        .new_method = evp_rand_from_algorithm,
+        .up_ref_method = evp_rand_up_ref,
+        .free_method = evp_rand_free
+    };
+
+    return evp_generic_fetch(libctx, OSSL_OP_RAND,
+        algorithm, properties, &fetch_ops);
 }
 
 int EVP_RAND_up_ref(EVP_RAND *rand)
@@ -492,10 +497,14 @@ void EVP_RAND_do_all_provided(OSSL_LIB_CTX *libctx,
     void (*fn)(EVP_RAND *rand, void *arg),
     void *arg)
 {
+    const EVP_FETCH_OPERATION fetch_ops = {
+        .new_method = evp_rand_from_algorithm,
+        .up_ref_method = evp_rand_up_ref,
+        .free_method = evp_rand_free
+    };
+
     evp_generic_do_all(libctx, OSSL_OP_RAND,
-        (void (*)(void *, void *))fn, arg,
-        evp_rand_from_algorithm, evp_rand_up_ref,
-        evp_rand_free);
+        (void (*)(void *, void *))fn, arg, &fetch_ops);
 }
 
 int EVP_RAND_names_do_all(const EVP_RAND *rand,
