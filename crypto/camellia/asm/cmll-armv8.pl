@@ -96,8 +96,8 @@ ___
 # Inputs:
 #  v_ab:            Input vector register name (e.g., v0 or v1)
 #  v_x:             Output/Working vector register name (e.g., v2)
-#  v_t0 - v_t4:     Temporary vector register names (v6-v10)
-#  v_zero:         v11 - all-zero vector
+#  v_t0 - v_t4:     Temporary vector register names (v3-v7)
+#  v_zero:         v31 - all-zero vector
 #  pre_s4lo_mask:  v14
 #  pre_s4hi_mask:  v15
 #  inv_shift_row:  v17
@@ -200,35 +200,35 @@ ___
 }
 
 sub fls_neon{
-    my ($ll_lr, $rl_rr, $tmp_lr, $tmp_rr, $x_CTX, $kl_idx, $kr_idx) = @_;
+    my ($ll_lr, $rl_rr, $tmp_lr, $tmp_rr, $v_t0, $v_t1, $v_t2, $v_t3, $x_CTX, $kl_idx, $kr_idx) = @_;
     my $kl_offset = $kl_idx * 8;
     my $kr_offset = $kr_idx * 8;
 $code.=<<___;
-    ldp     s28,s29,[$x_CTX,#$kl_offset]    // kll,klr
+    ldp     s4,s5,[$x_CTX,#$kl_offset]    // kll,klr -> v_t0,v_t1
     ushr    $tmp_lr.2d,$ll_lr.2d,#32        // [ 0 | lr ]
-    and     v30.8b,$ll_lr.8b,v28.8b         // kll & ll (working on lower 32)
+    and     $v_t2.8b,$ll_lr.8b,$v_t0.8b         // kll & ll (working on lower 32)
 
-    shl     v31.4s,v30.4s,#1
-    sri     v31.4s,v30.4s,#31               // ROL1(kll & ll)
+    shl     $v_t3.4s,$v_t2.4s,#1
+    sri     $v_t3.4s,$v_t2.4s,#31               // ROL1(kll & ll)
 
     ushr    $tmp_rr.2d,$rl_rr.2d,#32        // pre [ 0 | rr ]
     
-    eor     $tmp_lr.8b,$tmp_lr.8b,v31.8b    // lr^=ROL1(kll & ll)
-    orr     v29.8b,$tmp_lr.8b,v29.8b        // lr^=ROL1(kll & ll) v klr
+    eor     $tmp_lr.8b,$tmp_lr.8b,$v_t3.8b    // lr^=ROL1(kll & ll)
+    orr     $v_t1.8b,$tmp_lr.8b,$v_t1.8b        // lr^=ROL1(kll & ll) v klr
 
-    ldp     s28,s30,[$x_CTX,#$kr_offset]    // pre-load krl,krr
+    ldp     s4,s6,[$x_CTX,#$kr_offset]    // pre-load krl,krr -> v_t0, v_t2
     
-    eor     $ll_lr.8b,$ll_lr.8b,v29.8b      // ll^(lr^ROL1(kll & ll) v klr)
+    eor     $ll_lr.8b,$ll_lr.8b,$v_t1.8b      // ll^(lr^ROL1(kll & ll) v klr)
     mov     $ll_lr.s[1],$tmp_lr.s[0]        // [ lr^ROL1(kll & ll) | ll^(lr^ROL1(kll & ll) v klr)]
 
-    orr     v30.8b,$tmp_rr.8b,v30.8b        // rr v krr
-    eor     $rl_rr.8b,$rl_rr.8b,v30.8b      // rl^(rr v krr)
-    and     v28.8b,$rl_rr.8b,v28.8b         // krl & (rl^(rr v krr))
+    orr     $v_t2.8b,$tmp_rr.8b,$v_t2.8b        // rr v krr
+    eor     $rl_rr.8b,$rl_rr.8b,$v_t2.8b      // rl^(rr v krr)
+    and     $v_t0.8b,$rl_rr.8b,$v_t0.8b         // krl & (rl^(rr v krr))
 
-    shl     v31.4s,v28.4s,#1
-    sri     v31.4s,v28.4s,#31               // ROL1(krl & (rl^(rr v krr)))
+    shl     $v_t3.4s,$v_t0.4s,#1
+    sri     $v_t3.4s,$v_t0.4s,#31               // ROL1(krl & (rl^(rr v krr)))
 
-    eor     $tmp_rr.8b,v31.8b,$tmp_rr.8b    // rr^ROL1(krl & (rl^(rr v krr)))
+    eor     $tmp_rr.8b,$v_t3.8b,$tmp_rr.8b    // rr^ROL1(krl & (rl^(rr v krr)))
     mov     $rl_rr.s[1],$tmp_rr.s[0]        // [ rr^ROL1(krl & (rl^(rr v krr))) | rl^(rr v krr) ]
 ___
 }
@@ -427,7 +427,7 @@ $code.=<<___;
     eor     $cd.16b,$cd.16b,$key.16b
     tbl     $ab.16b,{$ab.16b},$mask.16b
     tbl     $cd.16b,{$cd.16b},$mask.16b
-    stp     d1,d0,[$rio_ptr]        // Load input
+    stp     d1,d0,[$rio_ptr]        // Store output
 ___
 }
 
@@ -475,7 +475,61 @@ $code.=<<___;
 ___
 }
 
+# Core encryption algorithm (with input/output factored out)
+my $aese_enc_core_count = 0;
+sub aese_enc_core(){
+    my $id = $aese_enc_core_count++; # Get a unique ID for this specific inlining
 $code.=<<___;
+    eor     v31.16b,v31.16b,v31.16b
+___
+    &enc_rounds_aese(0,"v0","v1","v2","v3","v4","v5","v6","v7","v31","v18","v19","v23","v22","v16","v17","v20","v21","v24","v25","v26","v27","x8");
+    &fls_neon("v0","v1","v2","v3","v4","v5","v6","v7","x0",8,9);
+    &enc_rounds_aese(8,"v0","v1","v2","v3","v4","v5","v6","v7","v31","v18","v19","v23","v22","v16","v17","v20","v21","v24","v25","v26","v27","x8");
+    &fls_neon("v0","v1","v2","v3","v4","v5","v6","v7","x0",16,17);
+    &enc_rounds_aese(16,"v0","v1","v2","v3","v4","v5","v6","v7","v31","v18","v19","v23","v22","v16","v17","v20","v21","v24","v25","v26","v27","x8");
+$code.=<<___;
+    mov     w30,#24         // MAX = 24
+
+    ldr     w9,[x0,#272]    // Assume key_length == 272
+    cmp     w9,#16
+    b.eq    .Lenc_done_aese_$id
+___
+    &fls_neon("v0","v1","v2","v3","v4","v5","v6","v7","x0", 24, 25);
+    &enc_rounds_aese(24,"v0","v1","v2","v3","v4","v5","v6","v7","v31","v18","v19","v23","v22","v16","v17","v20","v21","v24","v25","v26","v27","x8");
+$code.=<<___;
+    mov     w30,#32         // MAX = 32
+
+.Lenc_done_aese_$id:
+___
+}
+
+# Core decryption algorithm (with input/output factored out)
+my $aese_dec_core_count = 0;
+sub aese_dec_core(){
+    my $id = $aese_dec_core_count++; # Get a unique ID for this specific inlining
+$code.=<<___;
+    eor     v31.16b,v31.16b,v31.16b
+    cmp     w30,#24
+    b.eq    .Ldec_rounds16_aese_$id
+___
+    &dec_rounds_aese(24,"v0","v1","v2","v3","v4","v5","v6","v7","v31","v18","v19","v23","v22","v16","v17","v20","v21","v24","v25","v26","v27","x8");
+    &fls_neon("v0","v1","v2","v3","v4","v5","v6","v7","x0",25,24);
+$code.=<<___;
+
+.Ldec_rounds16_aese_$id:
+___
+    &dec_rounds_aese(16,"v0","v1","v2","v3","v4","v5","v6","v7","v31","v18","v19","v23","v22","v16","v17","v20","v21","v24","v25","v26","v27","x8");
+    &fls_neon("v0","v1","v2","v3","v4","v5","v6","v7","x0",17,16);
+    &dec_rounds_aese(8,"v0","v1","v2","v3","v4","v5","v6","v7","v31","v18","v19","v23","v22","v16","v17","v20","v21","v24","v25","v26","v27","x8");
+    &fls_neon("v0","v1","v2","v3","v4","v5","v6","v7","x0",9,8);
+    &dec_rounds_aese(0,"v0","v1","v2","v3","v4","v5","v6","v7","v31","v18","v19","v23","v22","v16","v17","v20","v21","v24","v25","v26","v27","x8");
+}
+
+$code.=<<___;
+/*
+    1-block Neon/AESE encryption/decryption
+*/
+
 .global camellia_encrypt_1blk_aese
 .type   camellia_encrypt_1blk_aese,%function
 .align  5
@@ -489,41 +543,21 @@ camellia_encrypt_1blk_aese:
     stp     q14,q15,[sp,#112]
 
     // === CONSTANT LOADING ===
-    // Load constants needed for camellia_f into v14-v15 and v17-v27
+    // Load constants needed for f_aese into v16-v27
     adrp    x10,camellia_neon_consts
     add     x10,x10,:lo12:camellia_neon_consts
-    ldp     q20,q21,[x10],#32       // pre_tf_lo/hi_s1
-    ldp     q14,q15,[x10],#32       // pre_tf_lo/hi_s4
-    ldp     q22,q23,[x10],#112      // post_tf_lo/hi_s1
-    ldr     q19,[x10],#160          // mask_0f
-    ldr     q17,[x10],#16           // inv_shift_row_and_unpcklbw_sp2n3_swap32
+    ldp     q16,q17,[x10],#32       // pre_tf_lo/hi_s1
+    ldp     q18,q19,[x10],#32       // pre_tf_lo/hi_s4
+    ldp     q20,q21,[x10],#112      // post_tf_lo/hi_s1
+    ldr     q22,[x10],#160          // mask_0f
+    ldr     q23,[x10],#16           // inv_shift_row_and_unpcklbw_sp2n3_swap32
     ldp     q24,q25,[x10],#32       // {sp4mask/sp1mask}_swap32
     ldp     q26,q27,[x10],#32       // {sp2mask/sp3mask}_swap32
 ___
     &enc_inpack_neon("v0","v1","x2","x0","v2","v3","x4","x5");
 
-$code.=<<___;
-    eor     v11.16b,v11.16b,v11.16b
-___
-    &enc_rounds_aese(0,"v0","v1","v2","v6","v7","v8","v9","v10","v11","v14","v15","v17","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
-    &fls_neon("v0","v1","v2","v3","x0",8,9);
-    &enc_rounds_aese(8,"v0","v1","v2","v6","v7","v8","v9","v10","v11","v14","v15","v17","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
-    &fls_neon("v0","v1","v2","v3","x0",16,17);
-    &enc_rounds_aese(16,"v0","v1","v2","v6","v7","v8","v9","v10","v11","v14","v15","v17","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
-$code.=<<___;
-    mov     w30,#24         // MAX = 24
+    &aese_enc_core();
 
-    ldr     w9,[x0,#272]    // Assume key_length == 272
-    cmp     w9,#16
-    b.eq    __enc_done_aese
-___
-    &fls_neon("v0","v1","v2","v3","x0", 24, 25);
-    &enc_rounds_aese(24,"v0","v1","v2","v6","v7","v8","v9","v10","v11","v14","v15","v17","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
-$code.=<<___;
-    mov     w30,#32         // MAX = 32
-
-__enc_done_aese:
-___
     &enc_outunpack_neon("v0","v1","x1","x0","v2","v3","x4","x5","w30");
 $code.=<<___;
 
@@ -557,32 +591,17 @@ camellia_decrypt_1blk_aese:
     // Load constants needed for camellia_f into v14-v15 and v17-v27
     adrp    x10,camellia_neon_consts
     add     x10,x10,:lo12:camellia_neon_consts
-    ldp     q20,q21,[x10],#32       // pre_tf_lo/hi_s1
-    ldp     q14,q15,[x10],#32       // pre_tf_lo/hi_s4
-    ldp     q22,q23,[x10],#112      // post_tf_lo/hi_s1
-    ldr     q19,[x10],#160          // mask_0f
-    ldr     q17,[x10],#16           // inv_shift_row_and_unpcklbw_sp2n3_swap32
+    ldp     q16,q17,[x10],#32       // pre_tf_lo/hi_s1
+    ldp     q18,q19,[x10],#32       // pre_tf_lo/hi_s4
+    ldp     q20,q21,[x10],#112      // post_tf_lo/hi_s1
+    ldr     q22,[x10],#160          // mask_0f
+    ldr     q23,[x10],#16           // inv_shift_row_and_unpcklbw_sp2n3_swap32
     ldp     q24,q25,[x10],#32       // {sp4mask/sp1mask}_swap32
     ldp     q26,q27,[x10],#32       // {sp2mask/sp3mask}_swap32
 ___
     &dec_inpack_neon("v0","v1","x2","x0","v2","v3","x4","x5","w30");
 
-$code.=<<___;
-    eor     v11.16b,v11.16b,v11.16b
-    cmp     w30,#24
-    b.eq    __dec_rounds16_aese
-___
-    &dec_rounds_aese(24,"v0","v1","v2","v6","v7","v8","v9","v10","v11","v14","v15","v17","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
-    &fls_neon("v0","v1","v2","v3","x0",25,24);
-$code.=<<___;
-
-__dec_rounds16_aese:
-___
-    &dec_rounds_aese(16,"v0","v1","v2","v6","v7","v8","v9","v10","v11","v14","v15","v17","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
-    &fls_neon("v0","v1","v2","v3","x0",17,16);
-    &dec_rounds_aese(8,"v0","v1","v2","v6","v7","v8","v9","v10","v11","v14","v15","v17","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
-    &fls_neon("v0","v1","v2","v3","x0",9,8);
-    &dec_rounds_aese(0,"v0","v1","v2","v6","v7","v8","v9","v10","v11","v14","v15","v17","v19","v20","v21","v22","v23","v24","v25","v26","v27","x8");
+    &aese_dec_core();
 
     &dec_outunpack_neon("v0","v1","x1","x0","v2","v3","x4","x5");
 $code.=<<___;
@@ -2426,11 +2445,10 @@ camellia_cbc_encrypt_neon:
     // Arguments (AAPCS64): x0=in, x1=out, x2=len, x3=key, x4=ivec
 
     // Prologue
-    stp     x29,x30,[sp,#-64]!
+    stp     x29,x30,[sp,#-48]!
     mov     x29,sp
     stp     x19,x20,[sp,#16]
     stp     x21,x22,[sp,#32]
-    str     x23,[sp,#48]
     
     // Check length (must be >= 16 for at least one loop)
     cmp     x2, #16
@@ -2442,42 +2460,57 @@ camellia_cbc_encrypt_neon:
     // Back up some reg-s
     mov     x20,x0              // Input
     mov     x21,x1              // Output
-    mov     x22,x3              // Key (CTX)
-    mov     x23,x4              // IV
+    mov     x0,x3              // Key (CTX)
+    mov     x22,x4              // IV
     
-    ldp     x6,x7,[x23]         // Load the 128-bit IV into v6 and v7 (C_0)
+    // === CONSTANT LOADING ===
+    // Load constants once
+    adrp    x10,camellia_neon_consts
+    add     x10,x10,:lo12:camellia_neon_consts
+    ldp     q16,q17,[x10],#32       // pre_tf_lo/hi_s1
+    ldp     q18,q19,[x10],#32       // pre_tf_lo/hi_s4
+    ldp     q20,q21,[x10],#112      // post_tf_lo/hi_s1
+    ldr     q22,[x10],#160          // mask_0f
+    ldr     q23,[x10],#16           // inv_shift_row_and_unpcklbw_sp2n3_swap32
+    ldp     q24,q25,[x10],#32       // {sp4mask/sp1mask}_swap32
+    ldp     q26,q27,[x10],#32       // {sp2mask/sp3mask}_swap32
+
+    ldp     d6,d7,[x22]         // Load the 128-bit IV into v6 and v7 (C_0)
 
 .Lcbc_enc_loop:
-    ldp     x0,x1,[x20],#16         // Load P_i into v0
-
-    // P_i ^ IV
-    eor     x0,x0,x6
-    eor     x1,x1,x7
-
-    stp     x0,x1,[x21]             // Store in OUTP!
-
-    mov     x0,x22                  // CTX
     mov     x1,x21                  // OUTP
-    mov     x2,x21                  // INP is OUTP!
+
+    ldp     d0,d1,[x20],#16        // Load input
+    adrp    x4,.Lpack_bswap
+    add     x4,x4,:lo12:.Lpack_bswap
+    ldr     q3,[x4]                 // Load swap mask into a temporary
+    eor     v0.16b,v0.16b,v6.16b    // P_i ^ IV
+    ldr     d2,[x0]
+    eor     v1.16b,v1.16b,v7.16b    // P_i ^ IV
+    tbl     v0.16b,{v0.16b},v3.16b
+    tbl     v1.16b,{v1.16b},v3.16b
+    eor     v0.16b,v0.16b,v2.16b
+
+___
+    &aese_enc_core();
+    &enc_outunpack_neon("v0","v1","x1","x0","v2","v3","x4","x5","w30");
+$code.=<<___; 
     
-    //bl      camellia_encrypt_1blk_armv8     // Factor out write_output?
-    bl      camellia_encrypt_1blk_aese     // Factor out write_output?
-    
-    ldp     x6,x7,[x21]             // Load output
+    mov     v7.d[0],v0.d[0]
+    mov     v6.d[0],v1.d[0]
 
     add     x21,x21,#16         // OUTP++
 
     cmp     x20,x19
     b.lo    .Lcbc_enc_loop
 
-    stp     x6,x7,[x23]
+    stp     d6,d7,[x22]
 
 .Lcbc_abort_exit:
     // Epilogue
     ldp     x19,x20,[sp,#16]
     ldp     x21,x22,[sp,#32]
-    ldr     x23,[sp,#48]
-    ldp     x29,x30,[sp],#64
+    ldp     x29,x30,[sp],#48
     ret
 .size camellia_cbc_encrypt_neon,.-camellia_cbc_encrypt_neon
 
@@ -2601,42 +2634,68 @@ $code.=<<___;
 .Lcbc_dec_tail:
     cbz     x21,.Lcbc_dec_done
 
-    ldp     x24,x25,[x23]        // IV (Low/High)
+    ldp     d28,d29,[x23]       // IV (Low/High). TODO: back up to stack
+    mov     w30,w8              // lastk - 1blk routine uses w30
+    //stp     d28,d29,[sp,#336] // Need this if aese_dec_core uses v28-29
     
-.Lcbc_tail_loop:
-    // Load Ciphertext (C_i)
-    ldp     x6,x7,[x19]         // x6/x7 = C_i
-    
-    // Save C_i (It becomes IV for i+1)
-    stp     x6,x7,[sp,#208]     // use "scratch space"
+    // === CONSTANT LOADING ===
+    // Load constants once
+    adrp    x10,camellia_neon_consts
+    add     x10,x10,:lo12:camellia_neon_consts
+    ldp     q16,q17,[x10],#32       // pre_tf_lo/hi_s1
+    ldp     q18,q19,[x10],#32       // pre_tf_lo/hi_s4
+    ldp     q20,q21,[x10],#112      // post_tf_lo/hi_s1
+    ldr     q22,[x10],#160          // mask_0f
+    ldr     q23,[x10],#16           // inv_shift_row_and_unpcklbw_sp2n3_swap32
+    ldp     q24,q25,[x10],#32       // {sp4mask/sp1mask}_swap32
+    ldp     q26,q27,[x10],#32       // {sp2mask/sp3mask}_swap32
 
+.Lcbc_tail_loop:
     // Call Decrypt 1-Block
     mov     x0, x22
-    mov     x1, x20
-    mov     x2, x19
-    
+
+    ldp     d0,d1,[x19],#16        // Load input
+    adrp    x4,.Lpack_bswap
+    add     x4,x4,:lo12:.Lpack_bswap
+    ldr     q3,[x4]         // Load swap mask into a temporary
+    stp     d0,d1,[sp,#208]     // backup C_i on stack -> IV for i+1
+    lsl     w9,w30,#3              // max * 8 - uncorrupted?
+    ldr     d2,[x0,x9]
+    tbl     v0.16b,{v0.16b},v3.16b
+    tbl     v1.16b,{v1.16b},v3.16b
+    eor     v0.16b,v0.16b,v2.16b
+___
+    &aese_dec_core();
+$code.=<<___;
+
     //bl      camellia_decrypt_1blk_armv8
-    bl      camellia_decrypt_1blk_aese     // Factor write_out out?
+
+    ldr     d2,[x0]      // assume key_table == 0
+    adrp    x4,.Lpack_bswap
+    add     x4,x4,:lo12:.Lpack_bswap
+    ldr     q3,[x4]         // Load swap mask into a temporary
+    eor     v1.16b,v1.16b,v2.16b
+    tbl     v0.16b,{v0.16b},v3.16b
+    tbl     v1.16b,{v1.16b},v3.16b
     
     // XOR Result with Previous IV
-    ldp     x0,x1,[x20]     // Load Dec(C_i)
+    //ldp     d28,d29,[sp,#336]     // Need this if aese_dec_core uses v28-29
+    eor     v0.16b,v0.16b,v29.16b
+    eor     v1.16b,v1.16b,v28.16b
     
-    eor     x0,x0,x24
-    eor     x1,x1,x25
-    
-    stp     x0,x1,[x20]     // Store P_i
+    stp     d1,d0,[x20]        // Store P_i
 
     // Update IV
-    ldp     x24,x25,[sp,#208]
+    ldp     d28,d29,[sp,#208]
+    //stp     d28,d29,[sp,#336]     // Need this if aese_dec_core uses v28-29
 
     // Advance
-    add     x19,x19,#16
     add     x20,x20,#16
     subs    x21,x21,#16
     b.gt    .Lcbc_tail_loop
 
     // Store Final IV back to memory
-    stp     x24,x25,[x23]
+    stp     d28,d29,[x23]
 
 .Lcbc_dec_done:
     // === EPILOGUE ===
