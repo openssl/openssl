@@ -18,7 +18,7 @@
 #
 ##############################################################################
 #
-# Copyright 2020-2023 Jussi Kivilinna
+# Copyright 2020-2023, 2025 Jussi Kivilinna
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy of
 # this software and associated documentation files (the "Software"), to deal in
@@ -58,10 +58,20 @@
 #
 ##############################################################################
 #
-# November 2025
+# November-December 2025
 #
-# Performance (and speedup wrt C-implementation) for CBC decryption and CTR.
-# (`openssl speed -evp (-decrypt) camellia-128-xxx; 8192-byte message)
+# CBC and CTR modes of operation were initially written to use scalar table
+# look-up for 1-block routines (CBC encryption, CBC decryption and CTR tail
+# blocks) due to efficiency (on Graviton4, assembly CBC encryption was 14.7 cpb
+# vs 18.8 cpb of the C-implementation). However, due to susceptibility to timing
+# side channel, a constant-time Neon/AESE versions of 1-block encryption/decryption
+# were added, and are currently in use. Even after thorough optimisation, CBC
+# encryption with it is 2x slower than that of C-implementation (that itself uses
+# table look-up - 37.6 cpb. 
+#
+# Performance (and speedup wrt C-implementation) for CBC decryption and CTR are,
+# however, much improved. Below are the numbers for the following benchmark:
+# `openssl speed -evp (-decrypt) camellia-128-xxx`; 8192-byte message
 #
 #                       ThX2            Graviton4
 # CBC (decryption)  7.9 cpb (3.7x)      4 cpb (5x)
@@ -93,6 +103,9 @@ $code=<<___;
 */
 ___
 
+# Vectorised (NEON/AES) F-function.
+# Approximately twice slower than the scalar version with table look-up.
+#
 # Inputs:
 #  v_ab:            Input vector register name (e.g., v0 or v1)
 #  v_x:             Output/Working vector register name (e.g., v2)
@@ -155,13 +168,13 @@ $code.=<<___;
     eor     $v_t2.16b,$v_t3.16b,$v_t2.16b
     eor     $v_t0.16b,$v_t4.16b,$v_t2.16b
 
-    /* ...continue calculating P-function */
     ext     $v_x.16b,$v_t0.16b,$v_zero.16b,#8
     eor     $v_x.16b,$v_t0.16b,$v_x.16b
 ___
 }
 
-# Port of xor2ror16. Assumes table base addresses are in GPRs.
+# Core routine of the scalar F-function.
+# Assumes table base addresses are in GPRs.
 # In: x_ab (data), x_dst (accum), x_tbl0, x_tbl1, x_tmp1, x_tmp2
 # Out: x_ab (rotated), x_dst (updated)
 sub xor2ror16 {
@@ -177,6 +190,7 @@ $code.=<<___;
 ___
 }
 
+# Wrapper over f_aese.
 sub roundsm_aese(){
     my ($v_ab, $v_cd, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask) = @_;
     &f_aese($v_ab, $v_x, $v_t0, $v_t1, $v_t2, $v_t3, $v_t4, $v_zero, $pre_s4lo_mask, $pre_s4hi_mask, $inv_shift_row, $_0f0f0f0fmask, $pre_s1lo_mask, $pre_s1hi_mask, $post_s1lo_mask, $post_s1hi_mask, $sp4mask, $sp1mask, $sp2mask, $sp3mask);
@@ -199,6 +213,15 @@ $code.=<<___;
 ___
 }
 
+# Vectorised implementation of FL/FL^{-1} function.
+# Approximately as fast as the scalar version.
+# In: 
+#   ll_lr, rl_rr (v0, v1) - input states
+#   tmp_lr, tmp_rr (v2, v3) - vectors to hold right halfs of input states temporarily
+#   v_t0, v_t1, v_t2, v_t3 (v4-v7) - temporary vector registers
+#   x_CTX (x0) - base round key pointer
+#   kl_idx, kr_idx - round key offset indices
+# Out: ll_lr, rl_rr (updated)
 sub fls_neon{
     my ($ll_lr, $rl_rr, $tmp_lr, $tmp_rr, $v_t0, $v_t1, $v_t2, $v_t3, $x_CTX, $kl_idx, $kr_idx) = @_;
     my $kl_offset = $kl_idx * 8;
@@ -233,7 +256,8 @@ $code.=<<___;
 ___
 }
 
-# Port of fls. Operates on 32-bit halves of 64-bit GPRs.
+# Scalar implementation of FL/FL^{-1}.
+# Operates on 32-bit halves of 64-bit GPRs.
 # In: x_L (assumes x4, [lr|ll]), x_R (assumes x5, [rr|rl]), x_CTX, kl_idx, kr_idx
 # Out: x_L, x_R (updated)
 # Clobbers: x6-x9
@@ -266,8 +290,16 @@ $code.=<<___;
 ___
 }
 
+# In:
+#   ab, cd (v0, v1) - vectors to hold input states
+#   rio_ptr (x2) - pointer to input state
+#   key_ptr (x0) - pointer to round key
+#   key (v2) - temporary vector to hold round key
+#   mask (v3) - temporary vector to hold the swap mask
+#   gpr_mask - GPR to hold address of the swap mask
+# Out: ab, cd
 sub enc_inpack_neon(){
-    my ($ab, $cd, $rio_ptr, $key_ptr, $key, $mask, $gpr_key, $gpr_mask) = @_;
+    my ($ab, $cd, $rio_ptr, $key_ptr, $key, $mask, $gpr_mask) = @_;
 $code.=<<___;
     ldp     d0,d1,[$rio_ptr]        // Load input
     adrp    $gpr_mask,.Lpack_bswap
@@ -294,8 +326,17 @@ $code.=<<___;
 ___
 }
 
+# In:
+#   ab, cd (v0, v1) - vectors to hold input states
+#   rio_ptr (x2) - pointer to input state
+#   key_ptr (x0) - pointer to round key
+#   key (v2) - temporary vector to hold round key
+#   mask (v3) - temporary vector to hold the swap mask
+#   gpr_mask - GPR to hold address of the swap mask
+#   max - last key index
+# Out: ab, cd
 sub dec_inpack_neon(){
-    my ($ab, $cd, $rio_ptr, $key_ptr, $key, $mask, $gpr_key, $gpr_mask, $max) = @_;
+    my ($ab, $cd, $rio_ptr, $key_ptr, $key, $mask, $gpr_mask, $max) = @_;
 $code.=<<___;
     ldp     d0,d1,[$rio_ptr]        // Load input
     adrp    $gpr_mask,.Lpack_bswap
@@ -334,21 +375,12 @@ $code.=<<___;
 ___
 }
 
-sub load_key(){
-    my ($subkey_idx, $key) = @_;
-    my $subkey_offset = $subkey_idx * 8;
-$code.=<<___;
-    ldr     $key,[x0,#$subkey_offset]
-___
-}
-
 # In: x0, subkey_idx. Out: x8(key). Clobbers: x9
 sub load_key_to_x8(){
     my ($subkey_idx) = @_;
     my $subkey_offset = $subkey_idx * 8;
 $code.=<<___;
-    add     x9,x0,#$subkey_offset   // Assume key_table == 0
-    ldr     x8,[x9]
+    ldr     x8,[x0,#$subkey_offset]
 ___
 }
 
@@ -416,8 +448,18 @@ sub dec_rounds(){
     &roundsm_cd_to_ab($i+2, $sp0044, $sp0330, $sp2200, $sp1001, $sp1110, $sp4404, $sp3033, $sp0222);
 }
 
+# In:
+#   ab, cd (v0, v1) - vectors to hold input states
+#   rio_ptr (x1) - pointer to output state
+#   key_ptr (x0) - pointer to round key
+#   key (v2) - temporary vector to hold round key
+#   mask (v3) - temporary vector to hold the swap mask
+#   gpr_mask - GPR to hold address of the swap mask
+#   max - last key index
+# Clobbers: x9
+# Out: ab, cd
 sub enc_outunpack_neon(){
-    my ($ab, $cd, $rio_ptr, $key_ptr, $key, $mask, $gpr_key, $gpr_mask, $max) = @_;
+    my ($ab, $cd, $rio_ptr, $key_ptr, $key, $mask, $gpr_mask, $max) = @_;
 $code.=<<___;
     lsl     w9,$max,#3      // max * 8
     ldr     d2,[$key_ptr,x9]      // assume key_table == 0
@@ -447,8 +489,16 @@ $code.=<<___;
 ___
 }
 
+# In:
+#   ab, cd (v0, v1) - vectors to hold input states
+#   rio_ptr (x1) - pointer to output state
+#   key_ptr (x0) - pointer to round key
+#   key (v2) - temporary vector to hold round key
+#   mask (v3) - temporary vector to hold the swap mask
+#   gpr_mask - GPR to hold address of the swap mask
+# Out: ab, cd
 sub dec_outunpack_neon(){
-    my ($ab, $cd, $rio_ptr, $key_ptr, $key, $mask, $gpr_key, $gpr_mask) = @_;
+    my ($ab, $cd, $rio_ptr, $key_ptr, $key, $mask, $gpr_mask) = @_;
 $code.=<<___;
     ldr     d2,[$key_ptr]      // assume key_table == 0
     adrp    $gpr_mask,.Lpack_bswap
@@ -554,11 +604,11 @@ camellia_encrypt_1blk_aese:
     ldp     q24,q25,[x10],#32       // {sp4mask/sp1mask}_swap32
     ldp     q26,q27,[x10],#32       // {sp2mask/sp3mask}_swap32
 ___
-    &enc_inpack_neon("v0","v1","x2","x0","v2","v3","x4","x5");
+    &enc_inpack_neon("v0","v1","x2","x0","v2","v3","x5");
 
     &aese_enc_core();
 
-    &enc_outunpack_neon("v0","v1","x1","x0","v2","v3","x4","x5","w30");
+    &enc_outunpack_neon("v0","v1","x1","x0","v2","v3","x5","w30");
 $code.=<<___;
 
     ldp     q8,q9,[sp,#16]
@@ -599,11 +649,11 @@ camellia_decrypt_1blk_aese:
     ldp     q24,q25,[x10],#32       // {sp4mask/sp1mask}_swap32
     ldp     q26,q27,[x10],#32       // {sp2mask/sp3mask}_swap32
 ___
-    &dec_inpack_neon("v0","v1","x2","x0","v2","v3","x4","x5","w30");
+    &dec_inpack_neon("v0","v1","x2","x0","v2","v3","x5","w30");
 
     &aese_dec_core();
 
-    &dec_outunpack_neon("v0","v1","x1","x0","v2","v3","x4","x5");
+    &dec_outunpack_neon("v0","v1","x1","x0","v2","v3","x5");
 $code.=<<___;
 
     ldp     q8,q9,[sp,#16]
@@ -613,6 +663,10 @@ $code.=<<___;
     ldp     x29,x30,[sp],#144
     ret
 .size   camellia_decrypt_1blk_aese,.-camellia_decrypt_1blk_aese
+
+/*
+    1-block scalar (table look-up) encryption/decryption
+*/
 
 .global camellia_encrypt_1blk_armv8
 .type   camellia_encrypt_1blk_armv8,%function
@@ -1538,16 +1592,14 @@ ___
 #    General macros
 #
 
-#sub filter_8bit_neon(){
-#    my ($x,$lo_t,$hi_t,$mask,$tmp) = @_;
-#$code.=<<___;
-#    and     $tmp.16b,$x.16b,$mask.16b
-#    ushr    $x.16b,$x.16b,#4
-#    tbl     $tmp.16b,{$lo_t.16b},$tmp.16b
-#    tbl     $x.16b,{$hi_t.16b},$x.16b
-#    eor     $x.16b,$x.16b,$tmp.16b
-#___
-#}
+# Pre/post-AES filter of input state.
+# In:
+#   in (vector) - input state
+#   lo_t (vector) - lower filter part
+#   hi_t (vector) - upper filter part
+#   mask (vector) - filter mask, separating lower from upper parts
+#   tmp (vector) - clobber register
+# Out: out (vector) - filtered state
 sub filter_8bit_neon_3op(){
     my ($out,$in,$lo_t,$hi_t,$mask,$tmp) = @_;
 $code.=<<___;
@@ -1559,6 +1611,14 @@ $code.=<<___;
 ___
 }
 
+# Pre/post-AES filter of input state.
+# In:
+#   in (vector) - input state
+#   lo_t (vector) - lower filter part
+#   hi_t (vector) - upper filter part
+#   mask (vector) - filter mask, separating lower from upper parts
+#   tmp (vector) - clobber register
+# Out: in (vector) - filtered state (updated input state)
 sub filter_8bit_neon(){
     my ($x,$lo_t,$hi_t,$mask,$tmp) = @_;
     &filter_8bit_neon_3op($x,$x,$lo_t,$hi_t,$mask,$tmp);
@@ -2493,7 +2553,7 @@ camellia_cbc_encrypt_neon:
 
 ___
     &aese_enc_core();
-    &enc_outunpack_neon("v0","v1","x1","x0","v2","v3","x4","x5","w30");
+    &enc_outunpack_neon("v0","v1","x1","x0","v2","v3","x5","w30");
 $code.=<<___; 
     
     mov     v7.d[0],v0.d[0]
