@@ -488,7 +488,7 @@ int i2d_ECPrivateKey_bio(BIO *bp, const EC_KEY *eckey)
 int X509_pubkey_digest(const X509 *data, const EVP_MD *type,
     unsigned char *md, unsigned int *len)
 {
-    ASN1_BIT_STRING *key = X509_get0_pubkey_bitstr(data);
+    const ASN1_BIT_STRING *key = X509_get0_pubkey_bitstr(data);
 
     if (key == NULL)
         return 0;

@@ -41,6 +41,17 @@ OpenSSL 4.0
 
    *Jeffrey Kintscher*
 
+ * Removed configure options can now only be disabled. You may continue to use
+   `disable-<feature>`, which will remain supported. Using `enable-<feature>`
+   for a removed feature is no longer permitted.
+
+   *Andrew Dinh*
+
+ * Support for SSLv3 was removed. SSLv3 has been deprecated since
+   2015, and OpenSSL had it disabled by default since 1.1.0 (2016).
+
+   *Kurt Roeckx*
+
  * The script tool `c_rehash` was removed. Use `openssl rehash` instead.
 
    *Norbert Pocs*
@@ -109,6 +120,11 @@ OpenSSL 4.0
    replace ENGINEs functionality.
 
    *Milan Broz*, *Neil Horman*, *Norbert Pocs*
+
+ * BIO_f_reliable() implementation was removed without replacement.
+   It was broken since 3.0 release without any complaints.
+
+   *Tomáš Mráz*
 
  * Added SNMP KDF (EVP_KDF_SNMPKDF) to EVP_KDF
 
