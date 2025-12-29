@@ -624,6 +624,14 @@ sub vmv_v_i {
     return ".word ".($template | ($imm << 15) | ($vd << 7));
 }
 
+sub vmv1r_v {
+    # vmv1r.v vd, vs1
+    my $template = 0b1001111_00000_00000_011_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs1 = read_vreg shift;
+    return ".word ".($template | ($vs1 << 20) | ($vd << 7));
+}
+
 sub vmv_v_x {
     # vmv.v.x vd, rs1
     my $template = 0b0101111_00000_00000_100_00000_1010111;

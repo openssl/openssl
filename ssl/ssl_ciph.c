@@ -254,7 +254,6 @@ static const SSL_CIPHER cipher_aliases[] = {
     { 0, SSL_TXT_GOST12, NULL, 0, 0, 0, 0, SSL_GOST12_256 },
 
     /* protocol version aliases */
-    { 0, SSL_TXT_SSLV3, NULL, 0, 0, 0, 0, 0, SSL3_VERSION },
     { 0, SSL_TXT_TLSV1, NULL, 0, 0, 0, 0, 0, TLS1_VERSION },
     { 0, "TLSv1.0", NULL, 0, 0, 0, 0, 0, TLS1_VERSION },
     { 0, SSL_TXT_TLSV1_2, NULL, 0, 0, 0, 0, 0, TLS1_2_VERSION },

@@ -125,7 +125,7 @@ can be one of the following:
 These are the general-purpose I<version-flexible> SSL/TLS methods.
 The actual protocol version used will be negotiated to the highest version
 mutually supported by the client and the server.
-The supported protocols are SSLv3, TLSv1, TLSv1.1, TLSv1.2 and TLSv1.3.
+The supported protocols are TLSv1, TLSv1.1, TLSv1.2 and TLSv1.3.
 Applications should use these methods, and avoid the version-specific
 methods described below, which are deprecated.
 
@@ -155,9 +155,7 @@ TLSv1 protocol. These methods are deprecated.
 
 =item SSLv3_method(), SSLv3_server_method(), SSLv3_client_method()
 
-A TLS/SSL connection established with these methods will only understand the
-SSLv3 protocol.
-The SSLv3 protocol is deprecated and should not be used.
+Starting in version 3.6 those functions always return NULL.
 
 =item DTLS_method(), DTLS_server_method(), DTLS_client_method()
 
