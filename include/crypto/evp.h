@@ -119,16 +119,12 @@ struct evp_pkey_ctx_st {
 
     /* EVP_PKEY identity */
     int legacy_keytype;
-    /* Method associated with this operation */
-    const EVP_PKEY_METHOD *pmeth;
     /* Key: may be NULL */
     EVP_PKEY *pkey;
     /* Peer key for key agreement, may be NULL */
     EVP_PKEY *peerkey;
     /* Algorithm specific data */
     void *data;
-    /* Indicator if digest_custom needs to be called */
-    unsigned int flag_call_digest_custom : 1;
     /*
      * Used to support taking custody of memory in the case of a provider being
      * used with the deprecated EVP_PKEY_CTX_set_rsa_keygen_pubexp() API. This
@@ -140,69 +136,7 @@ struct evp_pkey_ctx_st {
 
 #define EVP_PKEY_FLAG_DYNAMIC 1
 
-struct evp_pkey_method_st {
-    int pkey_id;
-    int flags;
-    int (*init)(EVP_PKEY_CTX *ctx);
-    int (*copy)(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src);
-    void (*cleanup)(EVP_PKEY_CTX *ctx);
-    int (*paramgen_init)(EVP_PKEY_CTX *ctx);
-    int (*paramgen)(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
-    int (*keygen_init)(EVP_PKEY_CTX *ctx);
-    int (*keygen)(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
-    int (*sign_init)(EVP_PKEY_CTX *ctx);
-    int (*sign)(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
-        const unsigned char *tbs, size_t tbslen);
-    int (*verify_init)(EVP_PKEY_CTX *ctx);
-    int (*verify)(EVP_PKEY_CTX *ctx,
-        const unsigned char *sig, size_t siglen,
-        const unsigned char *tbs, size_t tbslen);
-    int (*verify_recover_init)(EVP_PKEY_CTX *ctx);
-    int (*verify_recover)(EVP_PKEY_CTX *ctx,
-        unsigned char *rout, size_t *routlen,
-        const unsigned char *sig, size_t siglen);
-    int (*signctx_init)(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx);
-    int (*signctx)(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
-        EVP_MD_CTX *mctx);
-    int (*verifyctx_init)(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx);
-    int (*verifyctx)(EVP_PKEY_CTX *ctx, const unsigned char *sig, int siglen,
-        EVP_MD_CTX *mctx);
-    int (*encrypt_init)(EVP_PKEY_CTX *ctx);
-    int (*encrypt)(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
-        const unsigned char *in, size_t inlen);
-    int (*decrypt_init)(EVP_PKEY_CTX *ctx);
-    int (*decrypt)(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
-        const unsigned char *in, size_t inlen);
-    int (*derive_init)(EVP_PKEY_CTX *ctx);
-    int (*derive)(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen);
-    int (*ctrl)(EVP_PKEY_CTX *ctx, int type, int p1, void *p2);
-    int (*ctrl_str)(EVP_PKEY_CTX *ctx, const char *type, const char *value);
-    int (*digestsign)(EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen,
-        const unsigned char *tbs, size_t tbslen);
-    int (*digestverify)(EVP_MD_CTX *ctx, const unsigned char *sig,
-        size_t siglen, const unsigned char *tbs,
-        size_t tbslen);
-    int (*check)(EVP_PKEY *pkey);
-    int (*public_check)(EVP_PKEY *pkey);
-    int (*param_check)(EVP_PKEY *pkey);
-
-    int (*digest_custom)(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx);
-} /* EVP_PKEY_METHOD */;
-
-DEFINE_STACK_OF_CONST(EVP_PKEY_METHOD)
-
 void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx);
-
-const EVP_PKEY_METHOD *ossl_dh_pkey_method(void);
-const EVP_PKEY_METHOD *ossl_dhx_pkey_method(void);
-const EVP_PKEY_METHOD *ossl_dsa_pkey_method(void);
-const EVP_PKEY_METHOD *ossl_ec_pkey_method(void);
-const EVP_PKEY_METHOD *ossl_ecx25519_pkey_method(void);
-const EVP_PKEY_METHOD *ossl_ecx448_pkey_method(void);
-const EVP_PKEY_METHOD *ossl_ed25519_pkey_method(void);
-const EVP_PKEY_METHOD *ossl_ed448_pkey_method(void);
-const EVP_PKEY_METHOD *ossl_rsa_pkey_method(void);
-const EVP_PKEY_METHOD *ossl_rsa_pss_pkey_method(void);
 
 struct evp_mac_st {
     OSSL_PROVIDER *prov;
@@ -251,7 +185,6 @@ struct evp_kdf_st {
 
 #define EVP_ORIG_DYNAMIC 0
 #define EVP_ORIG_GLOBAL 1
-#define EVP_ORIG_METH 2
 
 struct evp_md_st {
     /* nid */
@@ -768,7 +701,6 @@ struct evp_skey_st {
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
 void evp_cleanup_int(void);
-void evp_app_cleanup_int(void);
 void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
     EVP_KEYMGMT **keymgmt,
     const char *propquery);

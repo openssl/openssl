@@ -673,11 +673,12 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
 }
 
 static int try_skey(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
-                    const OSSL_PROVIDER *provider, OSSL_LIB_CTX *libctx, const char *propq)
+    const OSSL_PROVIDER *provider, OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_SKEY *skey = NULL;
     const char *skeymgmt_name = data->data_type == NULL
-                                ? OSSL_SKEY_TYPE_GENERIC : data->data_type;
+        ? OSSL_SKEY_TYPE_GENERIC
+        : data->data_type;
     size_t keysize = 0;
     unsigned char *keybytes = NULL;
 
@@ -685,13 +686,13 @@ static int try_skey(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
         return 0;
 
     if (data->octet_data != NULL) {
-        keysize  = data->octet_data_size;
+        keysize = data->octet_data_size;
         keybytes = (unsigned char *)data->octet_data;
         skey = EVP_SKEY_import_raw_key(libctx, skeymgmt_name,
-                                       keybytes, keysize, propq);
+            keybytes, keysize, propq);
     } else if (data->ref != NULL) {
         EVP_SKEYMGMT *skeymgmt = evp_skeymgmt_fetch_from_prov((OSSL_PROVIDER *)provider,
-                                                              skeymgmt_name, propq);
+            skeymgmt_name, propq);
         OSSL_PARAM params[2];
 
         /*
@@ -701,10 +702,10 @@ static int try_skey(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
         if (skeymgmt == NULL)
             return 0;
 
-        keysize  = data->ref_size;
+        keysize = data->ref_size;
         keybytes = (unsigned char *)data->ref;
         params[0] = OSSL_PARAM_construct_octet_ptr(OSSL_OBJECT_PARAM_REFERENCE,
-                                                   (void **)&keybytes, keysize);
+            (void **)&keybytes, keysize);
         params[1] = OSSL_PARAM_construct_end();
 
         skey = EVP_SKEY_import_SKEYMGMT(libctx, skeymgmt, OSSL_SKEYMGMT_SELECT_ALL, params);

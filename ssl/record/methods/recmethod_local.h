@@ -378,7 +378,6 @@ typedef struct dtls_rlayer_record_data_st {
     TLS_RL_RECORD rrec;
 } DTLS_RLAYER_RECORD_DATA;
 
-extern const struct record_functions_st ssl_3_0_funcs;
 extern const struct record_functions_st tls_1_funcs;
 extern const struct record_functions_st tls_1_3_funcs;
 extern const struct record_functions_st tls_any_funcs;

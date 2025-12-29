@@ -23,6 +23,7 @@ B<openssl> B<genpkey>
 [B<-paramfile> I<file>]
 [B<-algorithm> I<alg>]
 [B<-pkeyopt> I<opt>:I<value>]
+[B<-encopt> I<opt>:I<value>]
 [B<-genparam>]
 [B<-text>]
 {- $OpenSSL::safe::opt_r_synopsis -}
@@ -96,13 +97,27 @@ PKCS#3 refers to DH Keys. Some options are not shared between DH and DHX keys.
 
 =item B<-pkeyopt> I<opt>:I<value>
 
-Set the public key algorithm option I<opt> to I<value>. The precise set of
-options supported depends on the public key algorithm used and its
+Set the public key algorithm option I<opt> to I<value>.
+The precise set of
+supported options depends on the public key algorithm used and its
 implementation. See L</KEY GENERATION OPTIONS> and
 L</PARAMETER GENERATION OPTIONS> below for more details.
 
 To list the possible I<opt> values for an algorithm use:
 B<openssl> B<genpkey> -algorithm XXX -help
+
+=item B<-encopt> I<opt>:I<value>
+
+Set the private key encoder parameter I<opt> to I<value>.
+In order to set multiple parameters, multiple B<-encopt> options can be
+specified, each specifying a single parameter.
+The precise set of supported parameters depends on the public key algorithm
+involved and its implementation.
+This is primarily applicable to B<ML-DSA> and B<ML-KEM>, whose private key
+encoding to a B<PKCS#8> object can take a number of different forms.
+The C<output_formats> parameter can be used to select the preferred output
+forms.
+See L<EVP_PKEY-ML-DSA(7)> and L<EVP_PKEY-ML-KEM(7)> for details.
 
 =item B<-genparam>
 
@@ -552,6 +567,12 @@ The ability to generate X448, ED25519 and ED448 keys was added in OpenSSL 1.1.1.
 Support for B<ML-DSA> and B<ML-KEM> was added in OpenSSL 3.5.
 
 The B<-engine> option was removed in OpenSSL 4.0.
+
+The B<-encopt> option was added in OpenSSL 4.0.
+
+As of OpenSSL 4.0 the B<-pass> and B<-I<cipher>> options apply when
+private keys are output in either B<DER> or B<PEM> form.
+Previously, these private key encryption options were ignored in B<DER> form.
 
 =head1 COPYRIGHT
 

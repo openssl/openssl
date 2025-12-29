@@ -12,7 +12,6 @@ B<openssl> B<ciphers>
 [B<-s>]
 [B<-v>]
 [B<-V>]
-[B<-ssl3>]
 [B<-tls1>]
 [B<-tls1_1>]
 [B<-tls1_2>]
@@ -76,7 +75,7 @@ L<SSL_CIPHER_description(3)>.
 
 Like B<-v>, but include the official cipher suite values in hex.
 
-=item B<-tls1_3>, B<-tls1_2>, B<-tls1_1>, B<-tls1>, B<-ssl3>
+=item B<-tls1_3>, B<-tls1_2>, B<-tls1_1>, B<-tls1>
 
 In combination with the B<-s> option, list the ciphers which could be used if
 the specified protocol were negotiated.

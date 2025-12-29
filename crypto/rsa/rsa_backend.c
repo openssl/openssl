@@ -28,9 +28,9 @@
 #include "rsa_local.h"
 
 /*
- * The intention with the "backend" source file is to offer backend support
- * for legacy backends (EVP_PKEY_ASN1_METHOD and EVP_PKEY_METHOD) and provider
- * implementations alike.
+ * The intention with the "backend" source file is to offer backend functions
+ * for legacy backends (EVP_PKEY_ASN1_METHOD) and provider implementations
+ * alike.
  */
 
 DEFINE_STACK_OF(BIGNUM)
