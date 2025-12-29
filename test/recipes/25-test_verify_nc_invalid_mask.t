@@ -128,40 +128,104 @@ sub verify_cert {
                     $cert]));
 }
 
-# Tests 2-3: Create CA with invalid IPv4 mask 255.0.255.0
-my ($ca1_key, $ca1_cert) = create_nc_ca('ca-invalid-ipv4-1',
-                                         'permitted;IP:192.168.0.0/255.0.255.0');
+# Tests 2-4: Try to create CA with invalid IPv4 mask 255.0.255.0
+# Key generation should succeed (test 2), but cert creation should FAIL (test 3)
+{
+    my $keyfile = File::Spec->catfile($tempdir, "ca-invalid-ipv4-1-key.pem");
+    my $certfile = File::Spec->catfile($tempdir, "ca-invalid-ipv4-1-cert.pem");
+    my $extfile = File::Spec->catfile($tempdir, "ca-invalid-ipv4-1-ext.cnf");
 
-# Create end-entity cert within the "permitted" range
-my $ee1_permitted = create_ee_cert('ee1-permitted', $ca1_key, $ca1_cert,
-                                    'IP:192.168.1.1');
+    open(my $fh, '>', $extfile) or die "Cannot create $extfile: $!";
+    print $fh "[req]\n";
+    print $fh "distinguished_name = req_distinguished_name\n\n";
+    print $fh "[req_distinguished_name]\n\n";
+    print $fh "[v3_ca]\n";
+    print $fh "basicConstraints = critical,CA:TRUE\n";
+    print $fh "keyUsage = keyCertSign,cRLSign\n";
+    print $fh "subjectKeyIdentifier = hash\n";
+    print $fh "authorityKeyIdentifier = keyid\n";
+    print $fh "nameConstraints = permitted;IP:192.168.0.0/255.0.255.0\n";
+    close($fh);
 
-# Test 4: Verify the certificate - this should ideally fail due to invalid mask,
-# but currently passes (demonstrating the bug)
-ok(!verify_cert($ee1_permitted, $ca1_cert),
-   "CURRENT: Certificate with invalid CA mask 255.0.255.0 is accepted rejected");
+    ok(run(app(['openssl', 'genpkey', '-algorithm', 'RSA',
+                '-pkeyopt', 'rsa_keygen_bits:2048', '-out', $keyfile])),
+       "Generate key for ca-invalid-ipv4-1");
 
-# Tests 5-6: Create CA with invalid IPv4 mask 255.255.128.255
-my ($ca2_key, $ca2_cert) = create_nc_ca('ca-invalid-ipv4-2',
-                                         'excluded;IP:10.0.0.0/255.255.128.255');
+    ok(!run(app(['openssl', 'req', '-new', '-x509', '-key', $keyfile,
+                 '-out', $certfile, '-days', '3650',
+                 '-subj', "/CN=Test NC CA ca-invalid-ipv4-1",
+                 '-extensions', 'v3_ca', '-config', $extfile])),
+       "CA creation with invalid mask 255.0.255.0 properly rejected");
 
-# Create end-entity cert
-my $ee2 = create_ee_cert('ee2', $ca2_key, $ca2_cert, 'IP:172.16.0.1');
+    ok(!-f $certfile,
+       "Certificate file not created for invalid mask 255.0.255.0");
+}
 
-# Test 7: Verify
-ok(!verify_cert($ee2, $ca2_cert),
-   "CURRENT: Certificate with invalid CA mask 255.255.128.255 is rejected");
+# Tests 5-7: Try to create CA with invalid IPv4 mask 255.255.128.255
+# Key generation should succeed (test 5), but cert creation should FAIL (test 6)
+{
+    my $keyfile = File::Spec->catfile($tempdir, "ca-invalid-ipv4-2-key.pem");
+    my $certfile = File::Spec->catfile($tempdir, "ca-invalid-ipv4-2-cert.pem");
+    my $extfile = File::Spec->catfile($tempdir, "ca-invalid-ipv4-2-ext.cnf");
 
-# Tests 8-9: Create CA with invalid IPv4 mask 255.255.254.1
-my ($ca3_key, $ca3_cert) = create_nc_ca('ca-invalid-ipv4-3',
-                                         'permitted;IP:172.16.0.0/255.255.254.1');
+    open(my $fh, '>', $extfile) or die "Cannot create $extfile: $!";
+    print $fh "[req]\n";
+    print $fh "distinguished_name = req_distinguished_name\n\n";
+    print $fh "[req_distinguished_name]\n\n";
+    print $fh "[v3_ca]\n";
+    print $fh "basicConstraints = critical,CA:TRUE\n";
+    print $fh "keyUsage = keyCertSign,cRLSign\n";
+    print $fh "subjectKeyIdentifier = hash\n";
+    print $fh "authorityKeyIdentifier = keyid\n";
+    print $fh "nameConstraints = excluded;IP:10.0.0.0/255.255.128.255\n";
+    close($fh);
 
-# Create end-entity cert
-my $ee3 = create_ee_cert('ee3', $ca3_key, $ca3_cert, 'IP:172.16.0.1');
+    ok(run(app(['openssl', 'genpkey', '-algorithm', 'RSA',
+                '-pkeyopt', 'rsa_keygen_bits:2048', '-out', $keyfile])),
+       "Generate key for ca-invalid-ipv4-2");
 
-# Test 10: Verify
-ok(!verify_cert($ee3, $ca3_cert),
-   "CURRENT: Certificate with invalid CA mask 255.255.254.1 is rejected");
+    ok(!run(app(['openssl', 'req', '-new', '-x509', '-key', $keyfile,
+                 '-out', $certfile, '-days', '3650',
+                 '-subj', "/CN=Test NC CA ca-invalid-ipv4-2",
+                 '-extensions', 'v3_ca', '-config', $extfile])),
+       "CA creation with invalid mask 255.255.128.255 properly rejected");
+
+    ok(!-f $certfile,
+       "Certificate file not created for invalid mask 255.255.128.255");
+}
+
+# Tests 8-10: Try to create CA with invalid IPv4 mask 255.255.254.1
+# Key generation should succeed (test 8), but cert creation should FAIL (test 9)
+{
+    my $keyfile = File::Spec->catfile($tempdir, "ca-invalid-ipv4-3-key.pem");
+    my $certfile = File::Spec->catfile($tempdir, "ca-invalid-ipv4-3-cert.pem");
+    my $extfile = File::Spec->catfile($tempdir, "ca-invalid-ipv4-3-ext.cnf");
+
+    open(my $fh, '>', $extfile) or die "Cannot create $extfile: $!";
+    print $fh "[req]\n";
+    print $fh "distinguished_name = req_distinguished_name\n\n";
+    print $fh "[req_distinguished_name]\n\n";
+    print $fh "[v3_ca]\n";
+    print $fh "basicConstraints = critical,CA:TRUE\n";
+    print $fh "keyUsage = keyCertSign,cRLSign\n";
+    print $fh "subjectKeyIdentifier = hash\n";
+    print $fh "authorityKeyIdentifier = keyid\n";
+    print $fh "nameConstraints = permitted;IP:172.16.0.0/255.255.254.1\n";
+    close($fh);
+
+    ok(run(app(['openssl', 'genpkey', '-algorithm', 'RSA',
+                '-pkeyopt', 'rsa_keygen_bits:2048', '-out', $keyfile])),
+       "Generate key for ca-invalid-ipv4-3");
+
+    ok(!run(app(['openssl', 'req', '-new', '-x509', '-key', $keyfile,
+                 '-out', $certfile, '-days', '3650',
+                 '-subj', "/CN=Test NC CA ca-invalid-ipv4-3",
+                 '-extensions', 'v3_ca', '-config', $extfile])),
+       "CA creation with invalid mask 255.255.254.1 properly rejected");
+
+    ok(!-f $certfile,
+       "Certificate file not created for invalid mask 255.255.254.1");
+}
 
 # Tests 11-12: Create CA with VALID IPv4 mask (for comparison)
 my ($ca_valid_key, $ca_valid_cert) = create_nc_ca('ca-valid-ipv4',

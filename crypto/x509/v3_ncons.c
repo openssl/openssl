@@ -44,6 +44,7 @@ static int nc_email(ASN1_IA5STRING *sub, ASN1_IA5STRING *eml);
 static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base);
 static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base);
 static int nc_ip(ASN1_OCTET_STRING *ip, ASN1_OCTET_STRING *base);
+static int is_valid_netmask(unsigned char *mask, int len);
 
 const X509V3_EXT_METHOD ossl_v3_name_constraints = {
     NID_name_constraints, 0,
@@ -181,6 +182,18 @@ static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
         if (!v2i_GENERAL_NAME_ex(sub->base, method, ctx, &tval, 1)) {
             ERR_raise(ERR_LIB_X509V3, ERR_R_X509V3_LIB);
             goto err;
+        }
+        /* Validate IP address constraint subnet masks */
+        if (sub->base->type == GEN_IPADD) {
+            ASN1_OCTET_STRING *ip = sub->base->d.iPAddress;
+            if (ip->length == 8 || ip->length == 32) {
+                int hostlen = ip->length / 2;
+                unsigned char *maskptr = ip->data + hostlen;
+                if (!is_valid_netmask(maskptr, hostlen)) {
+                    ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_IPADDRESS);
+                    goto err;
+                }
+            }
         }
         if (*ptree == NULL)
             *ptree = sk_GENERAL_SUBTREE_new_null();
@@ -825,6 +838,11 @@ end:
     return ret;
 }
 
+/*
+ * Validate subnet mask is CIDR-compliant per RFC 5280 Section 4.2.1.10.
+ * Ensures mask has contiguous 1-bits followed by contiguous 0-bits.
+ * Returns 1 if valid, 0 otherwise.
+ */
 static int is_valid_netmask(unsigned char *mask, int len)
 {
     if (mask == NULL) {
@@ -855,10 +873,13 @@ static int is_valid_netmask(unsigned char *mask, int len)
 
         // check individual bits
         for (int j = 0; j < 8; j++) {
-            if (((v << j) & 0x80) && found_zero)  // 1 after zeros?
+            uint8_t b = (v << j) & 0x80;
+
+            if (b && found_zero)  // 1 after zeros?
                 return 0;   // 1 after 0 not allowed
 
-            found_zero = 1;
+            if (!b)
+                found_zero = 1;
         }
     }
 
@@ -885,9 +906,6 @@ static int nc_ip(ASN1_OCTET_STRING *ip, ASN1_OCTET_STRING *base)
         return X509_V_ERR_PERMITTED_VIOLATION;
 
     maskptr = base->data + hostlen;
-
-    if (!is_valid_netmask(maskptr, hostlen))
-        return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 
     /* Considering possible not aligned base ipAddress */
     for (i = 0; i < hostlen; i++)
