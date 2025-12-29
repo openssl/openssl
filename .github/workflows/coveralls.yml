@@ -107,7 +107,7 @@ jobs:
     - name: setup hostname workaround
       run: sudo hostname localhost
     - name: config
-      run: CC=gcc ./config --debug --coverage ${{ matrix.branches.extra_config }} no-asm enable-rc5 enable-md2 enable-ssl3 enable-nextprotoneg enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-buildtest-c++ enable-ssl-trace enable-trace
+      run: CC=gcc ./config --debug --coverage ${{ matrix.branches.extra_config }} no-asm enable-rc5 enable-md2 enable-nextprotoneg enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-buildtest-c++ enable-ssl-trace enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make

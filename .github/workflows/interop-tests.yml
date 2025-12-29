@@ -46,7 +46,8 @@ jobs:
           cd SPECS/ && source ${GITHUB_WORKSPACE}/VERSION.dat && \
           sed -i "s/soversion 3/soversion $SHLIB_VERSION/;s/^Version: .*\$/Version: $MAJOR.$MINOR.$PATCH/" openssl.spec && \
           sed -i "/^%attr.*_libdir.*engines-/ d" openssl.spec && \
-          sed -i 's/^Release: .*$/Release: dev/' openssl.spec
+          sed -i 's/^Release: .*$/Release: dev/' openssl.spec && \
+          sed -i "/^%{_bindir}\/c_rehash$/ d" openssl.spec
           yum-builddep -y /build/SPECS/openssl.spec # just for sure nothing is missing
           mkdir -p /build/SOURCES
           tar --transform "s/^__w\/openssl\/openssl/openssl-$MAJOR.$MINOR.$PATCH/" -czf /build/SOURCES/openssl-$MAJOR.$MINOR.$PATCH.tar.gz /__w/openssl/openssl/

@@ -1425,9 +1425,6 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     case TLS1_VERSION:
         (*retrl)->funcs = &tls_1_funcs;
         break;
-    case SSL3_VERSION:
-        (*retrl)->funcs = &ssl_3_0_funcs;
-        break;
     default:
         /* Should not happen */
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);

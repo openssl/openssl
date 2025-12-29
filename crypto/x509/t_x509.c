@@ -138,7 +138,7 @@ int X509_print_ex(BIO *bp, const X509 *x, unsigned long nmflags, unsigned long c
             goto err;
     }
     if (!(cflag & X509_FLAG_NO_PUBKEY)) {
-        X509_PUBKEY *xpkey = X509_get_X509_PUBKEY(x);
+        const X509_PUBKEY *xpkey = X509_get_X509_PUBKEY(x);
         ASN1_OBJECT *xpoid;
         X509_PUBKEY_get0_param(&xpoid, NULL, NULL, NULL, xpkey);
         if (BIO_write(bp, "        Subject Public Key Info:\n", 33) <= 0)
@@ -204,7 +204,7 @@ int X509_ocspid_print(BIO *bp, const X509 *x)
     int derlen;
     int i;
     unsigned char SHA1md[SHA_DIGEST_LENGTH];
-    ASN1_BIT_STRING *keybstr;
+    const ASN1_BIT_STRING *keybstr;
     const X509_NAME *subj;
     EVP_MD *md = NULL;
 
