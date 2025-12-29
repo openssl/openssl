@@ -2829,33 +2829,59 @@ $code.=<<___;
 .Lctr_tail:
     cbz     x21,.Lctr_done
 
+    // Zero working vectors
+    eor     v0.16b,v0.16b,v0.16b
+    eor     v1.16b,v1.16b,v1.16b
+    mov     w30,w8              // lastk - 1blk routine uses w30
+
+    // === CONSTANT LOADING ===
+    // Load constants once
+    adrp    x10,camellia_neon_consts
+    add     x10,x10,:lo12:camellia_neon_consts
+    ldp     q16,q17,[x10],#32       // pre_tf_lo/hi_s1
+    ldp     q18,q19,[x10],#32       // pre_tf_lo/hi_s4
+    ldp     q20,q21,[x10],#112      // post_tf_lo/hi_s1
+    ldr     q22,[x10],#160          // mask_0f
+    ldr     q23,[x10],#16           // inv_shift_row_and_unpcklbw_sp2n3_swap32
+    ldp     q24,q25,[x10],#32       // {sp4mask/sp1mask}_swap32
+    ldp     q26,q27,[x10],#32       // {sp2mask/sp3mask}_swap32
+
 .Lctr_tail_loop:
     ldr     q28,[sp,#464]       // Load base IV
     mov     v28.s[3],w24        // Update counter in vector
 
-    rev32   v30.16b,v28.16b     // Use v30 as temp to keep v28 LE
-    str     q30,[sp,#208]       // Store to stack to use as Inp
+    mov     v0.d[0],v28.d[0]
+    mov     v1.d[0],v28.d[1]
+
     str     q28,[sp,#464]       // Store base IV
 
     mov     x0,x22              // Key
-    add     x1,sp,#224          // Output Scratch
-    add     x2,sp,#208          // Input (Counter)
-    
-    bl      camellia_encrypt_1blk_aese
+
+    ldr     d2,[x0]
+    eor     v0.16b,v0.16b,v2.16b
+___
+    &aese_enc_core();
+$code.=<<___;
     //bl      camellia_encrypt_1blk_armv8
     
+    lsl     w9,w30,#3      // max * 8
+    ldr     d2,[x0,x9]      // assume key_table == 0
+    adrp    x4,.Lpack_bswap
+    add     x4,x4,:lo12:.Lpack_bswap
+    ldr     q3,[x4]         // Load swap mask into a temporary
+    eor     v1.16b,v1.16b,v2.16b
+    tbl     v0.16b,{v0.16b},v3.16b
+    tbl     v1.16b,{v1.16b},v3.16b
+
     // XOR & Store
-    ldp     x6,x7,[sp,#224]     // Keystream
-    ldp     x4,x5,[x19]       // Input
-    eor     x4,x4,x6
-    eor     x5,x5,x7
-    stp     x4,x5,[x20]       // Output
+    ldp     d4,d5,[x19],#16       // Input
+    eor     v4.16b,v4.16b,v1.16b
+    eor     v5.16b,v5.16b,v0.16b
+    stp     d4,d5,[x20],#16       // Output
     
     // Increment counter
     add     w24,w24,#1
     
-    add     x19,x19,#16
-    add     x20,x20,#16
     subs    x21,x21,#1
     b.gt    .Lctr_tail_loop
 
