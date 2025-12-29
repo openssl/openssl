@@ -165,6 +165,7 @@ jobs:
             # RV64GC with all currently OpenSSL-supported extensions, with zvl256
             #   crypto/sha/asm/sha512-riscv64-zvkb-zvknhb.pl
             #   crypto/sm3/asm/sm3-riscv64-zvksh.pl
+            #   crypto/aes/asm/aes-riscv64-zvkned.pl
             arch: riscv64-linux-gnu,
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64,
@@ -176,6 +177,7 @@ jobs:
             # RV64GC with all currently OpenSSL-supported extensions, with zvl512
             #   crypto/sha/asm/sha512-riscv64-zvkb-zvknhb.pl
             #   crypto/sm3/asm/sm3-riscv64-zvksh.pl
+            #   crypto/aes/asm/aes-riscv64-zvkned.pl
             arch: riscv64-linux-gnu,
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64,
