@@ -25,7 +25,7 @@ OP_CACHE_ELEM
  OP_CACHE_ELEM *evp_keymgmt_util_find_operation_cache(EVP_PKEY *pk,
                                                       EVP_KEYMGMT *keymgmt,
                                                       int selection);
- int evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk);
+ void evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk);
  int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
                                     void *keydata, int selection);
  void evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk);
@@ -81,8 +81,7 @@ evp_keymgmt_util_find_operation_cache() returns a pointer to the
 operation cache slot.  If I<keymgmt> is NULL, or if there is no slot
 with a match for I<keymgmt>, NULL is returned.
 
-evp_keymgmt_util_cache_keydata() and evp_keymgmt_util_clear_operation_cache()
-return 1 on success or 0 otherwise.
+evp_keymgmt_util_cache_keydata() return 1 on success or 0 otherwise.
 
 =head1 NOTES
 
