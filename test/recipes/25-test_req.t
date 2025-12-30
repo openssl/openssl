@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 116;
+plan tests => 119;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -778,3 +778,19 @@ ok(run(app(["openssl", "req", "-x509", "-new", "-text",
 && ++$today{strftime("%Y-%m-%d", gmtime)}
 && (grep { defined $today{$_} } get_not_before_date($cert))
 && (grep { defined $today{$_} } get_not_after_date($cert)), "explicit start and end dates");
+
+# Tests for -not_before with -days for req -x509 (Issue #29363 fix)
+my $req_cert = "req-explicit-dates.pem";
+ok(run(app(["openssl", "req", "-x509", "-new", "-text",
+            "-config", srctop_file('test', 'test.cnf'),
+            "-key", srctop_file("test", "testrsa.pem"),
+            "-not_before", "20231001000000Z",
+            "-days", "365",
+            "-out", $req_cert])),
+   "req -x509 with explicit start date and days");
+
+# Verify the dates
+ok(get_not_before($req_cert) =~ /Oct  1 00:00:00 2023 GMT/,
+   "req -x509 notBefore is explicit start date");
+ok(get_not_after($req_cert) =~ /Sep 30 00:00:00 2024 GMT/,
+   "req -x509 notAfter calculated from start date");

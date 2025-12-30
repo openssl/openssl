@@ -398,6 +398,9 @@ YYYYMMDDHHMMSSZ (the same as an ASN1 GeneralizedTime structure). In
 both formats, seconds SS and timezone Z must be present.
 Alternatively, you can also use "today".
 
+When combined with B<-days>, the expiry date is calculated from this start date
+rather than from the current time.
+
 Cannot be used together with the B<-preserve_dates> option.
 
 =item B<-not_after> I<date>
@@ -413,7 +416,9 @@ This overrides the option B<-days>.
 
 =item B<-days> I<arg>
 
-Specifies the number of days from today until a newly generated certificate expires.
+Specifies the number of days until a newly generated certificate expires.
+If B<-not_before> is specified, the days are counted from the start date;
+otherwise, they are counted from the current time.
 The default is 30.
 
 Cannot be used together with the option B<-preserve_dates>.
