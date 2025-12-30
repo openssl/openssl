@@ -61,7 +61,8 @@ static int ml_dsa_pairwise_test(const ML_DSA_KEY *key)
     int ret = 0;
 
     if (!ml_dsa_has(key, OSSL_KEYMGMT_SELECT_KEYPAIR)
-        || ossl_fips_self_testing())
+        || ossl_fips_self_testing()
+        || ossl_self_test_in_progress(ST_ID_ASYM_KEYGEN_ML_DSA))
         return 1;
 
     /*
@@ -106,6 +107,12 @@ ML_DSA_KEY *ossl_prov_ml_dsa_new(PROV_CTX *ctx, const char *propq, int evp_type)
 
     if (!ossl_prov_is_running())
         return 0;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(ctx),
+            ST_ID_ASYM_KEYGEN_ML_DSA))
+        return NULL;
+#endif
 
     key = ossl_ml_dsa_key_new(PROV_LIBCTX_OF(ctx), propq, evp_type);
     /*
