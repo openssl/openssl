@@ -426,6 +426,16 @@ sub rori {
     return ".word ".($template | ($shamt << 20) | ($rs1 << 15) | ($rd << 7));
 }
 
+sub andn {
+    # Encoding for andn rd, rs1, rs2 instruction on RV64
+    #               XXXXXXX_ rs2 _ rs1 _XXX_ rd  _XXXXXXX
+    my $template = 0b0100000_00000_00000_111_00000_0110011;
+    my $rd = read_reg shift;
+    my $rs1 = read_reg shift;
+    my $rs2 = read_reg shift;
+    return ".word ".($template | ($rs2 << 20) | ($rs1 << 15) | ($rd << 7));
+}
+
 sub roriw {
     # Encoding for roriw rd, rs1, shamt instruction on RV64
     #               XXXXXXX_ shamt _ rs1 _XXX_ rd  _XXXXXXX
