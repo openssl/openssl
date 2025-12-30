@@ -184,6 +184,13 @@ static int test_encode_line_lengths_reinforced(void)
                 EVP_ENCODE_CTX *ctx_simd = EVP_ENCODE_CTX_new();
                 EVP_ENCODE_CTX *ctx_ref = EVP_ENCODE_CTX_new();
 
+                if (!ctx_simd || !ctx_ref) {
+                    EVP_ENCODE_CTX_free(ctx_simd);
+                    EVP_ENCODE_CTX_free(ctx_ref);
+                    TEST_error("Out of memory for contexts");
+                    return 0;
+                }
+
                 fuzz_fill_encode_ctx(ctx_simd, partial_ctx_fill);
 
                 memset(out_simd, 0xCC, sizeof(out_simd)); /* poison to catch short writes */
@@ -191,13 +198,6 @@ static int test_encode_line_lengths_reinforced(void)
 
                 int outlen_simd = 0, outlen_ref = 0; /* bytes produced by Update */
                 int finlen_simd = 0, finlen_ref = 0; /* bytes produced by Final */
-
-                if (!ctx_simd || !ctx_ref) {
-                    EVP_ENCODE_CTX_free(ctx_simd);
-                    EVP_ENCODE_CTX_free(ctx_ref);
-                    TEST_error("Out of memory for contexts");
-                    return 0;
-                }
 
                 EVP_EncodeInit(ctx_simd);
                 EVP_EncodeInit(ctx_ref);
