@@ -407,17 +407,13 @@ static int b64_write(BIO *b, const char *in, int inl)
     int n_bytes_enc = 0;
     if (!EVP_EncodeUpdate(ctx->base64, encoded, &n_bytes_enc,
             (unsigned char *)in, inl)) {
-        if (ret == 0)
-            return -1;
-        return ret;
+        return -1;
     }
     ret += inl;
     i = BIO_write(next, encoded, n_bytes_enc);
     if (i <= 0) {
         BIO_copy_next_retry(b);
         return ret == 0 ? i : ret;
-        ctx->buf_len = 0;
-        ctx->buf_off = 0;
     }
     return ret;
 }
