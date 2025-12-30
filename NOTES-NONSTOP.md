@@ -187,7 +187,7 @@ the following variables. The following set of compiler defines are required:
 ### Optional Build Variables
 
     DBGFLAG="--debug"
-    CIPHENABLES="enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-rc4"
+    CIPHENABLES="enable-weak-ssl-ciphers enable-rc4"
 
 ### Internal Known TNS/X to TNS/E Cross Compile Variables
 

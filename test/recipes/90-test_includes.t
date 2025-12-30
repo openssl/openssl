@@ -35,6 +35,9 @@ ok(run(test(["conf_include_test",  "-f", data_file("incdir.cnf")])), "test inclu
 SKIP: {
     skip "Skipping legacy test", 1
         if disabled("legacy");
+    # Ensure libcrypto can be resolved for the legacy provider on AIX.
+    local $ENV{LIBPATH} = abs_path(bldtop_dir("."))
+        if config('target') =~ m|^aix|;
     ok(run(test(["conf_include_test", "-providers", data_file("includes-prov-dir.cnf")])),
        "test directory includes with provider configs");
 }
