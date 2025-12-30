@@ -266,12 +266,12 @@ KeccakF1600_int:
     @{[rori $A20, $A24, 64-62]}
 
     ##################### Chi+Iota
-    andn $T0,  $A2, $A1
-    andn $A24, $A3, $A2
-    andn $T1, $A0, $A4
-    andn $T2,  $A1, $A0
+    @{[andn $T0,  $A2, $A1]}
+    @{[andn $A24, $A3, $A2]}
+    @{[andn $T1, $A0, $A4]}
+    @{[andn $T2,  $A1, $A0]}
     xor $A0, $A0, $T0
-    andn $T0, $A4, $A3
+    @{[andn $T0, $A4, $A3]}
     xor $A1, $A1, $A24
     @{[vmv_x_s $A24, $V0]}
     xor $A3, $A3, $T1
@@ -280,49 +280,49 @@ KeccakF1600_int:
     ld $T2, 0($A24)
     addi $A24, $A24, 8
 
-    andn $T0, $A7, $A6
+    @{[andn $T0, $A7, $A6]}
     @{[vmv_v_x $V0, $A24]}
-    andn $A24, $A8, $A7
-    andn $T1, $A5, $A9
+    @{[andn $A24, $A8, $A7]}
+    @{[andn $T1, $A5, $A9]}
     xor $A0, $A0, $T2
-    andn $T2, $A6, $A5
+    @{[andn $T2, $A6, $A5]}
     xor $A5, $A5, $T0
-    andn $T0, $A9, $A8
+    @{[andn $T0, $A9, $A8]}
     xor $A6, $A6, $A24
     xor $A8, $A8, $T1
     xor $A9, $A9, $T2
     xor $A7, $A7, $T0
     @{[vmv_v_x $V1, $A0]}
 
-    andn $T0, $A12, $A11
-    andn $A24, $A13, $A12
-    andn $T1, $A10, $A14
-    andn $T2, $A11, $A10
+    @{[andn $T0, $A12, $A11]}
+    @{[andn $A24, $A13, $A12]}
+    @{[andn $T1, $A10, $A14]}
+    @{[andn $T2, $A11, $A10]}
     xor $A10, $A10, $T0
-    andn $T0, $A14, $A13
+    @{[andn $T0, $A14, $A13]}
     xor $A11, $A11, $A24
     xor $A13, $A13, $T1
     xor $A14, $A14, $T2
     xor $A12, $A12, $T0
 
-    andn $T0, $A17, $A16
-    andn $A24, $A18, $A17
-    andn $T1, $A15, $A19
-    andn $T2, $A16, $A15
+    @{[andn $T0, $A17, $A16]}
+    @{[andn $A24, $A18, $A17]}
+    @{[andn $T1, $A15, $A19]}
+    @{[andn $T2, $A16, $A15]}
     xor $A15, $A15, $T0
-    andn $T0, $A19, $A18
+    @{[andn $T0, $A19, $A18]}
     xor $A16, $A16, $A24
     xor $A18, $A18, $T1
     xor $A19, $A19, $T2
     xor $A17, $A17, $T0
 
     @{[vmv_x_s $A24, $V2]}
-    andn $T0, $A22, $A21
-    andn $A0, $A23, $A22
-    andn $T1, $A20, $A24
-    andn $T2, $A21, $A20
+    @{[andn $T0, $A22, $A21]}
+    @{[andn $A0, $A23, $A22]}
+    @{[andn $T1, $A20, $A24]}
+    @{[andn $T2, $A21, $A20]}
     xor $A20, $A20, $T0
-    andn $T0, $A24, $A23
+    @{[andn $T0, $A24, $A23]}
     xor $A21, $A21, $A0
     xor $A23, $A23, $T1
     @{[vmv_x_s $T1, $V0]}
@@ -436,16 +436,16 @@ KeccakF1600:
 ___
 
 ###############################################################################
-# SHA3_absorb
+# SHA3_absorb_v_zbb
 ###############################################################################
 $code .= <<___;
-# size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len, size_t r);
+# size_t SHA3_absorb_v_zbb(uint64_t A[5][5], const unsigned char *inp, size_t len, size_t r);
 # x10 = A, x11 = inp, x12 = len, x13 = r
 .text
 .p2align    5
-.globl SHA3_absorb
-.type SHA3_absorb, \@function
-SHA3_absorb:
+.globl SHA3_absorb_v_zbb
+.type SHA3_absorb_v_zbb, \@function
+SHA3_absorb_v_zbb:
     addi sp, sp, -208
     sd $T1, 96(sp)
     sd $A15, 96+8(sp)
@@ -713,20 +713,20 @@ SHA3_absorb:
     ld $T2, 192(sp)
     addi sp, sp, 208
     ret
-.size SHA3_absorb, .-SHA3_absorb
+.size SHA3_absorb_v_zbb, .-SHA3_absorb_v_zbb
 ___
 
 ###############################################################################
-# SHA3_squeeze
+# SHA3_squeeze_v_zbb
 ###############################################################################
 $code .= <<___;
-# void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r, int next);
+# void SHA3_squeeze_v_zbb(uint64_t A[5][5], unsigned char *out, size_t len, size_t r, int next);
 # x10 = A, x11 = out, x12 = len, x13 = r, x14 = next
 .text
 .p2align    5
-.globl SHA3_squeeze
-.type SHA3_squeeze, \@function
-SHA3_squeeze:
+.globl SHA3_squeeze_v_zbb
+.type SHA3_squeeze_v_zbb, \@function
+SHA3_squeeze_v_zbb:
     addi sp, sp, -48
     sd $T2, 0(sp)
     sd $A15, 8(sp)
@@ -812,7 +812,7 @@ SHA3_squeeze:
     ld $A19, 32+8(sp)
     addi sp, sp, 48
     ret
-.size SHA3_squeeze, .-SHA3_squeeze
+.size SHA3_squeeze_v_zbb, .-SHA3_squeeze_v_zbb
 ___
 
 print $code;

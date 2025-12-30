@@ -72,13 +72,14 @@ IF[{- !$disabled{asm} -}]
 
   $KECCAK1600ASM_ppc64=keccak1600-ppc64.s
 
-  $KECCAK1600ASM_riscv64=keccak1600-riscv64-zvbb.S
+  $KECCAK1600ASM_riscv64=keccak1600_riscv.c keccak1600.c keccak1600-riscv64-v-zbb.S
+  $KECCAK1600DEF_riscv64=INCLUDE_C_KECCAK1600
 
   # Now that we have defined all the arch specific variables, use the
   # appropriate one, and define the appropriate macros
   IF[$KECCAK1600ASM_{- $target{asm_arch} -}]
     $KECCAK1600ASM=$KECCAK1600ASM_{- $target{asm_arch} -}
-    $KECCAK1600DEF=KECCAK1600_ASM
+    $KECCAK1600DEF=KECCAK1600_ASM $KECCAK1600DEF_{- $target{asm_arch} -}
   ENDIF
 ENDIF
 
@@ -185,7 +186,7 @@ GENERATE[sha256-riscv64-zbb.S]=asm/sha256-riscv64-zbb.pl zbb
 GENERATE[sha256-riscv64-zvkb-zvknha_or_zvknhb.S]=asm/sha256-riscv64-zvkb-zvknha_or_zvknhb.pl
 GENERATE[sha512-riscv64-zbb.S]=asm/sha512-riscv64-zbb.pl
 GENERATE[sha512-riscv64-zvkb-zvknhb.S]=asm/sha512-riscv64-zvkb-zvknhb.pl
-GENERATE[keccak1600-riscv64-zvbb.S]=asm/keccak1600-riscv64-zvbb.pl
+GENERATE[keccak1600-riscv64-v-zbb.S]=asm/keccak1600-riscv64-v-zbb.pl
 
 # These are not yet used and do not support multi-squeeze
 GENERATE[keccak1600-c64x.S]=asm/keccak1600-c64x.pl
