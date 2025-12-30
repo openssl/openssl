@@ -835,18 +835,20 @@ static int cert_status_cb(SSL *s, void *arg)
     SSL_get0_tlsext_status_ocsp_resp_ex(s, &sk_resp);
 
     if (sk_resp == NULL || sk_OCSP_RESPONSE_num(sk_resp) <= 0) {
+        int r = SSL_TLSEXT_ERR_OK;
         if (srctx->sk_resp_in != NULL) {
-            get_ocsp_resp_from_files(s, srctx, &sk_resp);
+            r = get_ocsp_resp_from_files(s, srctx, &sk_resp);
         } else {
-            ret = get_ocsp_resp_from_responder(s, srctx, &sk_resp);
-            if (ret != SSL_TLSEXT_ERR_OK)
-                goto err;
+            r = get_ocsp_resp_from_responder(s, srctx, &sk_resp);
         }
-
+        if (r != SSL_TLSEXT_ERR_OK || sk_resp == NULL) {
+            ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+            goto err;
+        }
         (void)SSL_set0_tlsext_status_ocsp_resp_ex(s, sk_resp);
     }
 
-    if (srctx->verbose) {
+    if (srctx->verbose && sk_resp != NULL) {
         BIO_puts(bio_err, "cert_status: ocsp response sent:\n");
         BIO_printf(bio_err, "cert_status: number of responses: %d\n",
             sk_OCSP_RESPONSE_num(sk_resp));
