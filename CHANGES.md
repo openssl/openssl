@@ -32,6 +32,15 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Fixed ASN.1 BER parser to correctly reject invalid non-minimal tag
+   encodings. According to ITU-T X.690 Section 8.1.2, long-form tag
+   encoding must only be used for tag numbers >= 31. The parser now
+   properly rejects long-form encodings for tag numbers < 31 with the
+   error code ASN1_R_INVALID_BER_TAG_ENCODING.
+   ([GitHub issue #28424])
+
+   *Jeffrey Kintscher*
+
  * Removed configure options can now only be disabled. You may continue to use
    `disable-<feature>`, which will remain supported. Using `enable-<feature>`
    for a removed feature is no longer permitted.
