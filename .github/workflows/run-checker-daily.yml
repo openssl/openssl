@@ -68,7 +68,6 @@ jobs:
 #          enable-fuzz-libfuzzer,  # Requires extra setup
           no-gost,
           enable-h3demo,
-          enable-heartbeats,
           enable-hqinterop,
           no-hw,
           no-idea,
