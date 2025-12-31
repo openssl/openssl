@@ -40,14 +40,14 @@ plan tests => 2;
 
 # Test 1: RFC 8446 Section 4.2.9 - psk_dhe_ke requires key_share
 # Remove key_share and supported_groups, keep psk_key_exchange_modes
-# This isolates the first validation check in extensions.c:1398
+# This isolates the first validation check in final_key_share() in extensions.c
 $proxy->filter(\&remove_keyshare_and_groups_filter);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 ok(TLSProxy::Message->fail(), "Test 1: psk_dhe_ke without key_share should fail (RFC 8446 4.2.9)");
 
 # Test 2: RFC 8446 Section 9.2 - supported_groups requires key_share
 # Remove key_share and psk_key_exchange_modes, keep supported_groups
-# This isolates the second validation check in extensions.c:1409
+# This isolates the second validation check in final_key_share in extensions.c
 $proxy->clear();
 $proxy->filter(\&remove_keyshare_and_psk_modes_filter);
 $proxy->start();
