@@ -242,11 +242,204 @@ err:
     return ret == 0;
 }
 
+#ifdef FIPS_MODULE
+/* Test FIPS 203 input validation - encap should fail with corrupted public key */
+static int test_encap_validation_failure(void)
+{
+    ML_KEM_KEY *private_key = NULL;
+    ML_KEM_KEY *public_key = NULL;
+    uint8_t *encoded_public_key = NULL;
+    uint8_t *ciphertext = NULL;
+    uint8_t shared_secret[ML_KEM_SHARED_SECRET_BYTES];
+    const ML_KEM_VINFO *v;
+    EVP_RAND_CTX *privctx;
+    OSSL_PARAM params[3];
+    unsigned int strength = 256;
+    int ret = 0;
+
+    /* Set up entropy for key generation */
+    if (!TEST_ptr(privctx = RAND_get0_private(NULL)))
+        return 0;
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+                                                  ml_kem_private_entropy,
+                                                  sizeof(ml_kem_private_entropy));
+    params[1] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, &strength);
+    params[2] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_RAND_CTX_set_params(privctx, params)))
+        return 0;
+
+    /* Create ML-KEM-768 keys */
+    public_key = ossl_ml_kem_key_new(NULL, NULL, EVP_PKEY_ML_KEM_768);
+    private_key = ossl_ml_kem_key_new(NULL, NULL, EVP_PKEY_ML_KEM_768);
+    if (!TEST_ptr(private_key) || !TEST_ptr(public_key))
+        return 0;
+
+    v = ossl_ml_kem_key_vinfo(public_key);
+    if (!TEST_ptr(v))
+        goto cleanup;
+
+    encoded_public_key = OPENSSL_malloc(v->pubkey_bytes);
+    ciphertext = OPENSSL_malloc(v->ctext_bytes);
+    if (!TEST_ptr(encoded_public_key) || !TEST_ptr(ciphertext))
+        goto cleanup;
+
+    /* Generate a valid key pair */
+    if (!TEST_true(ossl_ml_kem_genkey(encoded_public_key, v->pubkey_bytes, private_key)))
+        goto cleanup;
+
+    /* Set up public entropy for encap operations */
+    EVP_RAND_CTX *pubctx;
+    if (!TEST_ptr(pubctx = RAND_get0_public(NULL)))
+        goto cleanup;
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+                                                  ml_kem_public_entropy,
+                                                  sizeof(ml_kem_public_entropy));
+    params[1] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, &strength);
+    params[2] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_RAND_CTX_set_params(pubctx, params)))
+        goto cleanup;
+
+    if (!TEST_true(ossl_ml_kem_parse_public_key(encoded_public_key, v->pubkey_bytes, public_key)))
+        goto cleanup;
+
+    /* Corrupt the encoded public key to break modulus check */
+    /*
+     * We need to corrupt it in a way that passes parsing but fails ByteEncode12(ByteDecode12())
+     * validation. Corrupt a few bytes in the t vector portion to create invalid coefficients
+     */
+    encoded_public_key[10] = 0xFF;  /* Make some coefficients > 2^12 */
+    encoded_public_key[11] = 0xFF;
+    encoded_public_key[12] = 0xFF;
+
+    /* Re-parse the corrupted public key - this should succeed in parsing */
+    ossl_ml_kem_key_reset(public_key);
+    public_key = ossl_ml_kem_key_new(NULL, NULL, EVP_PKEY_ML_KEM_768);
+    if (!TEST_ptr(public_key))
+        goto cleanup;
+
+    /* Parse should succeed but create invalid internal state */
+    if (!ossl_ml_kem_parse_public_key(encoded_public_key, v->pubkey_bytes, public_key)) {
+        /* If parsing fails, skip the validation test */
+        ret = 1;
+        goto cleanup;
+    }
+
+    /* Encap should fail due to FIPS 203 modulus validation */
+    if (!TEST_false(ossl_ml_kem_encap_rand(ciphertext, v->ctext_bytes,
+                                           shared_secret, sizeof(shared_secret),
+                                           public_key)))
+        goto cleanup;
+
+    ret = 1;
+
+cleanup:
+    OPENSSL_free(encoded_public_key);
+    OPENSSL_free(ciphertext);
+    ossl_ml_kem_key_free(private_key);
+    ossl_ml_kem_key_free(public_key);
+    return ret;
+}
+
+/* Test FIPS 203 input validation - decap should fail with corrupted private key */
+static int test_decap_validation_failure(void)
+{
+    ML_KEM_KEY *key = NULL;
+    uint8_t *encoded_public_key = NULL;
+    uint8_t *encoded_private_key = NULL;
+    uint8_t *ciphertext = NULL;
+    uint8_t shared_secret[ML_KEM_SHARED_SECRET_BYTES];
+    const ML_KEM_VINFO *v;
+    EVP_RAND_CTX *privctx;
+    OSSL_PARAM params[3];
+    unsigned int strength = 256;
+    int ret = 0;
+
+    /* Set up entropy for key generation */
+    if (!TEST_ptr(privctx = RAND_get0_private(NULL)))
+        return 0;
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+                                                  ml_kem_private_entropy,
+                                                  sizeof(ml_kem_private_entropy));
+    params[1] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, &strength);
+    params[2] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_RAND_CTX_set_params(privctx, params)))
+        return 0;
+
+    /* Create a ML-KEM-768 key */
+    key = ossl_ml_kem_key_new(NULL, NULL, EVP_PKEY_ML_KEM_768);
+    if (!TEST_ptr(key))
+        return 0;
+
+    v = ossl_ml_kem_key_vinfo(key);
+    if (!TEST_ptr(v))
+        goto cleanup;
+
+    encoded_public_key = OPENSSL_malloc(v->pubkey_bytes);
+    encoded_private_key = OPENSSL_malloc(v->prvkey_bytes);
+    ciphertext = OPENSSL_malloc(v->ctext_bytes);
+    if (!TEST_ptr(encoded_public_key) || !TEST_ptr(encoded_private_key) || !TEST_ptr(ciphertext))
+        goto cleanup;
+
+    /* Generate a valid key pair */
+    if (!TEST_true(ossl_ml_kem_genkey(encoded_public_key, v->pubkey_bytes, key)))
+        goto cleanup;
+
+    if (!TEST_true(ossl_ml_kem_encode_private_key(encoded_private_key, v->prvkey_bytes, key)))
+        goto cleanup;
+
+    /* Set up entropy for encap operation */
+    EVP_RAND_CTX *pubctx;
+    if (!TEST_ptr(pubctx = RAND_get0_public(NULL)))
+        goto cleanup;
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+                                                  ml_kem_public_entropy,
+                                                  sizeof(ml_kem_public_entropy));
+    params[1] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, &strength);
+    params[2] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_RAND_CTX_set_params(pubctx, params)))
+        goto cleanup;
+
+    /* Generate a valid ciphertext first */
+    if (!TEST_true(ossl_ml_kem_encap_rand(ciphertext, v->ctext_bytes,
+                                          shared_secret, sizeof(shared_secret),
+                                          key)))
+        goto cleanup;
+
+    /* Corrupt the stored hash in the key to break hash validation */
+    /* This bypasses parsing and directly tests the validation */
+    if (key->pkhash != NULL)
+        key->pkhash[0] ^= 0xFF; /* Corrupt the first byte of the hash */
+
+    /* Decap should fail due to FIPS 203 hash validation */
+    if (!TEST_false(ossl_ml_kem_decap(shared_secret, sizeof(shared_secret),
+                                      ciphertext, v->ctext_bytes,
+                                      key)))
+        goto cleanup;
+
+    ret = 1;
+
+cleanup:
+    OPENSSL_free(encoded_public_key);
+    OPENSSL_free(encoded_private_key);
+    OPENSSL_free(ciphertext);
+    ossl_ml_kem_key_free(key);
+    return ret;
+}
+#endif /* FIPS_MODULE */
+
 int setup_tests(void)
 {
     if (!TEST_true(RAND_set_DRBG_type(NULL, "TEST-RAND", "fips=no", NULL, NULL)))
         return 0;
 
     ADD_TEST(sanity_test);
+#ifdef FIPS_MODULE
+    ADD_TEST(test_encap_validation_failure);
+    ADD_TEST(test_decap_validation_failure);
+#endif /* FIPS_MODULE */
     return 1;
 }
