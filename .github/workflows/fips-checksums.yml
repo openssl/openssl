@@ -79,7 +79,7 @@ jobs:
   compute-abidiff:
     runs-on: ubuntu-latest
     env:
-      BUILD_OPTS: -g --strict-warnings enable-ktls enable-fips enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-ssl3 enable-ssl3-method enable-trace enable-zlib enable-zstd
+      BUILD_OPTS: -g --strict-warnings enable-ktls enable-fips enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-trace enable-zlib enable-zstd
     steps:
       - name: create build dirs
         run: |

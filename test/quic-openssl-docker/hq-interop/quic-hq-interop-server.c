@@ -31,7 +31,7 @@
  * Environment variables:
  * - FILEPREFIX: Specifies the directory containing files to serve.
  *   Defaults to "./downloads" if not set.
- * - SSLKEYLOGFILE: specifies that keylogging should be preformed on the server
+ * - SSLKEYLOGFILE: specifies that keylogging should be performed on the server
  *   should be set to a file name to record keylog data to
  * - NO_ADDR_VALIDATE: Disables server address validation of clients
  *
@@ -654,18 +654,18 @@ static int run_quic_server(SSL_CTX *ctx, BIO *sock)
         if (!SSL_set_incoming_stream_policy(conn,
                 SSL_INCOMING_STREAM_POLICY_ACCEPT,
                 0)) {
-            fprintf(stderr, "Failed to set incomming stream policy\n");
+            fprintf(stderr, "Failed to set incoming stream policy\n");
             goto close_conn;
         }
 
         /*
-         * Until the connection is closed, accept incomming stream
+         * Until the connection is closed, accept incoming stream
          * requests and serve them
          */
         for (;;) {
             /*
              * Note that SSL_accept_stream is blocking here, as the
-             * conn SSL object inherited the deafult blocking property
+             * conn SSL object inherited the default blocking property
              * from its parent, the listener SSL object.  As such there
              * is no need to handle retry failures here.
              */
@@ -676,7 +676,7 @@ static int run_quic_server(SSL_CTX *ctx, BIO *sock)
                  * Hit a legitimate error, and should bail out
                  * or
                  * The Client closed the connection, and there are no
-                 * more incomming streams expected
+                 * more incoming streams expected
                  *
                  * Filter on the shutdown error, and only print an error
                  * message if the cause is not SHUTDOWN

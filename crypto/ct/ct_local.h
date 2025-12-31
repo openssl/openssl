@@ -145,7 +145,7 @@ __owur int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner);
  * Issuer must not be NULL.
  * Returns 1 on success, 0 on failure.
  */
-__owur int SCT_CTX_set1_issuer(SCT_CTX *sctx, const X509 *issuer);
+__owur int SCT_CTX_set1_issuer(SCT_CTX *sctx, X509 *issuer);
 
 /*
  * Sets the public key of the issuer of the certificate that the SCT was created
@@ -153,14 +153,13 @@ __owur int SCT_CTX_set1_issuer(SCT_CTX *sctx, const X509 *issuer);
  * The public key must not be NULL.
  * Returns 1 on success, 0 on failure.
  */
-__owur int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
+__owur int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, const X509_PUBKEY *pubkey);
 
 /*
  * Sets the public key of the CT log that the SCT is from.
  * Returns 1 on success, 0 on failure.
  */
 __owur int SCT_CTX_set1_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
-
 /*
  * Sets the time to evaluate the SCT against, in milliseconds since the Unix
  * epoch. If the SCT's timestamp is after this time, it will be interpreted as

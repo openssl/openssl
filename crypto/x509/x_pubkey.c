@@ -64,8 +64,7 @@ ASN1_SEQUENCE(X509_PUBKEY_INTERNAL) = {
     ASN1_SIMPLE(X509_PUBKEY, public_key, ASN1_BIT_STRING)
 } static_ASN1_SEQUENCE_END_name(X509_PUBKEY, X509_PUBKEY_INTERNAL)
 
-                                          X509_PUBKEY
-    * ossl_d2i_X509_PUBKEY_INTERNAL(const unsigned char **pp, long len, OSSL_LIB_CTX *libctx, const char *propq)
+X509_PUBKEY *ossl_d2i_X509_PUBKEY_INTERNAL(const unsigned char **pp, long len, OSSL_LIB_CTX *libctx, const char *propq)
 {
     X509_PUBKEY *xpub = OPENSSL_zalloc(sizeof(*xpub));
 
@@ -1029,7 +1028,7 @@ int X509_PUBKEY_get0_param(ASN1_OBJECT **ppkalg,
     return 1;
 }
 
-ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x)
+const ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x)
 {
     if (x == NULL)
         return NULL;

@@ -95,7 +95,7 @@ int setup_tests(void)
     char str1[] = "SubjectPublicKeyInfo", str2[] = "subjectpublickeyinfo";
     int res;
     X509 *cert = NULL;
-    X509_PUBKEY *cert_pubkey = NULL;
+    const X509_PUBKEY *cert_pubkey = NULL;
     const unsigned char *p = der_bytes;
 
     if (setlocale(LC_ALL, "") == NULL)

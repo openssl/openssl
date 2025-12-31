@@ -10,6 +10,7 @@
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/encoder.h>
+#include <openssl/encodererr.h>
 #include <openssl/ui.h>
 #include "internal/core.h"
 #include "internal/namemap.h"
@@ -638,6 +639,55 @@ int OSSL_ENCODER_CTX_set_params(OSSL_ENCODER_CTX *ctx,
             continue;
         if (!encoder->set_ctx_params(encoderctx, params))
             ok = 0;
+    }
+    return ok;
+}
+
+int OSSL_ENCODER_CTX_ctrl_string(OSSL_ENCODER_CTX *ctx,
+    const char *name, const char *value)
+{
+    const OSSL_PARAM *settable = NULL;
+    int i, n, ok = 0;
+
+    if (!ossl_assert(ctx != NULL)) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (ctx->encoder_insts == NULL)
+        return 1;
+
+    n = OSSL_ENCODER_CTX_get_num_encoders(ctx);
+    for (i = 0; i < n; i++) {
+        OSSL_ENCODER_INSTANCE *encoder_inst = sk_OSSL_ENCODER_INSTANCE_value(ctx->encoder_insts, i);
+        OSSL_ENCODER *encoder = OSSL_ENCODER_INSTANCE_get_encoder(encoder_inst);
+        void *encoderctx = OSSL_ENCODER_INSTANCE_get_encoder_ctx(encoder_inst);
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+        int good = 0;
+
+        if (encoderctx == NULL || encoder->set_ctx_params == NULL)
+            continue;
+
+        settable = OSSL_ENCODER_settable_ctx_params(encoder);
+        if (settable == NULL)
+            continue;
+        if (!OSSL_PARAM_allocate_from_text(params, settable, name, value,
+                strlen(value), &good)) {
+            if (!good)
+                continue;
+            ERR_raise_data(ERR_LIB_OSSL_ENCODER, OSSL_ENCODER_R_BAD_PARAMETER_VALUE,
+                "bad encoder parameter value: %s:%s", name, value);
+            return 0;
+        }
+        good = encoder->set_ctx_params(encoderctx, params);
+        OPENSSL_free(params[0].data);
+        if (!good)
+            return 0;
+        ++ok;
+    }
+    if (!ok) {
+        ERR_raise_data(ERR_LIB_OSSL_ENCODER, OSSL_ENCODER_R_UNKNOWN_PARAMETER_NAME,
+            "unknown encoder parameter name: %s", name);
     }
     return ok;
 }
