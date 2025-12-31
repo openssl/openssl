@@ -96,10 +96,8 @@ static int x9_62_tests(int n)
 
     TEST_info("ECDSA KATs for curve %s", OBJ_nid2sn(nid));
 
-#ifdef FIPS_MODULE
-    if (EC_curve_nid2nist(nid) == NULL)
-        return TEST_skip("skip non approved curves");
-#endif /* FIPS_MODULE */
+    if (OSSL_PROVIDER_available(NULL, "fips") && EC_curve_nid2nist(nid) == NULL)
+        return TEST_skip("skip non approved curves in FIPS mode");
 
     if (!TEST_ptr(mctx = EVP_MD_CTX_new())
         /* get the message digest */
