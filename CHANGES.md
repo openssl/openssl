@@ -32,6 +32,14 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Fixed TLS 1.3 extension validation to enforce RFC 8446 requirements.
+   The server now properly validates that when a client advertises psk_dhe_ke
+   mode in the psk_key_exchange_modes extension, or when a client sends the
+   supported_groups extension, the corresponding key_share extension must also
+   be present.
+
+   *Jeffrey Kintscher*
+
  * The crypto-mdebug-backtrace configuration option has been entirely removed.
    The option has been a no-op since 1.0.2.
 
