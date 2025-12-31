@@ -167,7 +167,7 @@ This release incorporates the following bug fixes and mitigations:
   * Fixed a bug where the RC4-MD5 ciphersuite incorrectly used the
     AAD data as the MAC key ([CVE-2022-1434])
   * Fix a bug in the OPENSSL_LH_flush() function that breaks reuse of the memory
-    occuppied by the removed hash table entries ([CVE-2022-1473])
+    occupied by the removed hash table entries ([CVE-2022-1473])
 
 ### Major changes between OpenSSL 3.0.1 and OpenSSL 3.0.2 [15 Mar 2022]
 
@@ -188,7 +188,7 @@ This release incorporates the following bug fixes and mitigations:
   * Enhanced 'openssl list' with many new options.
   * Added migration guide to man7.
   * Implemented support for fully "pluggable" TLSv1.3 groups.
-  * Added suport for Kernel TLS (KTLS).
+  * Added support for Kernel TLS (KTLS).
   * Changed the license to the Apache License v2.0.
   * Moved all variations of the EVP ciphers CAST5, BF, IDEA, SEED, RC2,
     RC4, RC5, and DES to the legacy provider.
@@ -231,7 +231,7 @@ This release incorporates the following bug fixes and mitigations:
   * Deprecated ERR_put_error(), ERR_get_error_line(), ERR_get_error_line_data(),
     ERR_peek_error_line_data(), ERR_peek_last_error_line_data() and
     ERR_func_error_string().
-  * Added OSSL_PROVIDER_available(), to check provider availibility.
+  * Added OSSL_PROVIDER_available(), to check provider availability.
   * Added 'openssl mac' that uses the EVP_MAC API.
   * Added 'openssl kdf' that uses the EVP_KDF API.
   * Add OPENSSL_info() and 'openssl info' to get built-in data.

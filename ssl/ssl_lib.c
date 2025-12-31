@@ -352,7 +352,7 @@ static int dane_tlsa_add(SSL_DANE *dane,
                 /*
                  * The Full(0) certificate decodes to a seemingly valid X.509
                  * object with a plausible key, so the TLSA record is well
-                 * formed.  However, we don't actually need the certifiate for
+                 * formed.  However, we don't actually need the certificate for
                  * usages PKIX-EE(1) or DANE-EE(3), because at least the EE
                  * certificate is always presented by the peer.  We discard the
                  * certificate, and just use the TLSA data as an opaque blob

@@ -317,7 +317,7 @@ static const OSSL_DISPATCH xor_keyexch_functions[] = {
 
 static const OSSL_ALGORITHM tls_prov_keyexch[] = {
     /*
-     * Obviously this is not FIPS approved, but in order to test in conjuction
+     * Obviously this is not FIPS approved, but in order to test in conjunction
      * with the FIPS provider we pretend that it is.
      */
     { "XOR", "provider=tls-provider,fips=yes", xor_keyexch_functions },
@@ -446,7 +446,7 @@ static const OSSL_DISPATCH xor_kem_functions[] = {
 
 static const OSSL_ALGORITHM tls_prov_kem[] = {
     /*
-     * Obviously this is not FIPS approved, but in order to test in conjuction
+     * Obviously this is not FIPS approved, but in order to test in conjunction
      * with the FIPS provider we pretend that it is.
      */
     { "XOR", "provider=tls-provider,fips=yes", xor_kem_functions },
@@ -763,7 +763,7 @@ static const OSSL_DISPATCH xor_keymgmt_functions[] = {
 
 static const OSSL_ALGORITHM tls_prov_keymgmt[] = {
     /*
-     * Obviously this is not FIPS approved, but in order to test in conjuction
+     * Obviously this is not FIPS approved, but in order to test in conjunction
      * with the FIPS provider we pretend that it is.
      */
     { "XOR", "provider=tls-provider,fips=yes", xor_keymgmt_functions },

@@ -531,7 +531,7 @@ static int encoder_process(struct encoder_process_data_st *data)
         OSSL_TRACE_BEGIN(ENCODER)
         {
             BIO_printf(trc_out,
-                "[%d]    Skipping because recusion level %d failed\n",
+                "[%d]    Skipping because recursion level %d failed\n",
                 data->level, new_data.level);
         }
         OSSL_TRACE_END(ENCODER);

@@ -481,7 +481,7 @@ static int test_multi(int idx)
 
 #ifdef OPENSSL_NO_DEPRECATED_3_0
     if (idx == 3)
-        return TEST_skip("Skipping tests for deprected functions");
+        return TEST_skip("Skipping tests for deprecated functions");
 #endif
 
     multi_success = 1;

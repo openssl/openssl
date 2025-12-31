@@ -151,7 +151,7 @@ int EVP_PKEY_generate(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
         goto legacy;
 
     /*
-     * Asssigning gentmp to ctx->keygen_info is something our legacy
+     * Assigning gentmp to ctx->keygen_info is something our legacy
      * implementations do.  Because the provider implementations aren't
      * allowed to reach into our EVP_PKEY_CTX, we need to provide similar
      * space for backward compatibility.  It's ok that we attach a local

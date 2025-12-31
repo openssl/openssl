@@ -2238,7 +2238,7 @@ static const struct translation_st evp_pkey_ctx_translations[] = {
         OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST, OSSL_PARAM_UTF8_STRING, fix_md },
     /*
      * The "rsa_oaep_label" ctrl_str expects the value to always be hex.
-     * This is accomodated by default_fixup_args() above, which mimics that
+     * This is accommodated by default_fixup_args() above, which mimics that
      * expectation for any translation item where |ctrl_str| is NULL and
      * |ctrl_hexstr| is non-NULL.
      */
@@ -2799,7 +2799,7 @@ static int evp_pkey_ctx_setget_params_to_ctrl(EVP_PKEY_CTX *pctx,
          * function to put it to good use, or maybe affect it.
          *
          * NOTE: even though EVP_PKEY_CTX_ctrl return value is documented
-         * as return positive on Success and 0 or negative on falure. There
+         * as return positive on Success and 0 or negative on failure. There
          * maybe parameters (e.g. ecdh_cofactor), which actually return 0
          * as success value. That is why we do POST_PARAMS_TO_CTRL for 0
          * value as well

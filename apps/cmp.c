@@ -1180,7 +1180,7 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
     if (opt_grant_implicitconf)
         (void)OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(srv_ctx, 1);
 
-    if (opt_failure != INT_MIN) { /* option has been set explicity */
+    if (opt_failure != INT_MIN) { /* option has been set explicitly */
         if (opt_failure < 0 || OSSL_CMP_PKIFAILUREINFO_MAX < opt_failure) {
             CMP_err1("-failure out of range, should be >= 0 and <= %d",
                 OSSL_CMP_PKIFAILUREINFO_MAX);
@@ -2937,7 +2937,7 @@ int cmp_main(int argc, char **argv)
             || opt_tls_keypass != NULL || opt_tls_extra != NULL
             || opt_tls_trusted != NULL || opt_tls_host != NULL)
         && !opt_tls_used)
-        CMP_warn("Ingnoring TLS options(s) since -tls_used is not given");
+        CMP_warn("Ignoring TLS options(s) since -tls_used is not given");
     if (opt_port != NULL) {
         if (opt_tls_used) {
             CMP_err("-tls_used option not supported with -port option");

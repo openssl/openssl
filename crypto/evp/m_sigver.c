@@ -237,7 +237,7 @@ reinitialize:
              * This might be requested by a later call to EVP_MD_CTX_get0_md().
              * In that case the "explicit fetch" rules apply for that
              * function (as per man pages), i.e. the ref count is not updated
-             * so the EVP_MD should not be used beyound the lifetime of the
+             * so the EVP_MD should not be used beyond the lifetime of the
              * EVP_MD_CTX.
              */
             ctx->fetched_digest = EVP_MD_fetch(locpctx->libctx, mdname, props);

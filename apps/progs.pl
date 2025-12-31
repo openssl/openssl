@@ -107,7 +107,7 @@ EOF
 # The format of this table is:
 #   [0] = alternative command to use instead
 #   [1] = deprecented in this version
-#   [2] = preprocessor conditional for exclusing irrespective of deprecation
+#   [2] = preprocessor conditional for excluding irrespective of deprecation
 #        rsa      => [ "pkey",      "3_0", "rsa" ],
 #        genrsa   => [ "genpkey",   "3_0", "rsa" ],
         rsautl   => [ "pkeyutl",   "3_0", "rsa" ],

@@ -8,7 +8,7 @@
  */
 
 /*
- * SRP is deprecated and there is no replacent. When SRP is removed, the code in
+ * SRP is deprecated and there is no replacement. When SRP is removed, the code in
  * this file can be removed too. Until then we have to use the deprecated APIs.
  */
 #define OPENSSL_SUPPRESS_DEPRECATED

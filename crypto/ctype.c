@@ -258,7 +258,7 @@ int ossl_ctype_check(int c, unsigned int mask)
 }
 
 /*
- * Implement some of the simplier functions directly to avoid the overhead of
+ * Implement some of the simpler functions directly to avoid the overhead of
  * accessing memory via ctype_char_map[].
  */
 

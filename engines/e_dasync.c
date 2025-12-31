@@ -13,7 +13,7 @@
 /*
  * SHA-1 low level APIs are deprecated for public use, but still ok for
  * internal use.  Note, that due to symbols not being exported, only the
- * #defines and strucures can be accessed, in this case SHA_CBLOCK and
+ * #defines and structures can be accessed, in this case SHA_CBLOCK and
  * sizeof(SHA_CTX).
  */
 #include "internal/deprecated.h"
