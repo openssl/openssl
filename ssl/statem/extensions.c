@@ -1359,6 +1359,12 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
      *     THEN
      *         fail (RFC 8446 Section 9.2 violation)
      *     ELSE IF
+     *         key_share is present
+     *         AND
+     *         supported_groups extension is not present
+     *     THEN
+     *         fail (RFC 8446 Section 9.2 violation - reverse check)
+     *     ELSE IF
      *         we have a suitable key_share
      *     THEN
      *         IF
@@ -1410,6 +1416,18 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
             && s->clienthello->pre_proc_exts[TLSEXT_IDX_supported_groups].present) {
             SSLfatal(s, SSL_AD_MISSING_EXTENSION,
                      SSL_R_NO_SUITABLE_KEY_SHARE);
+            return 0;
+        }
+
+        /*
+         * RFC 8446 Section 9.2: Conversely, if a "key_share" extension is sent,
+         * the client MUST also send a "supported_groups" extension. This applies
+         * to both the initial ClientHello and the second ClientHello after HRR.
+         */
+        if (sent && s->clienthello != NULL
+            && !s->clienthello->pre_proc_exts[TLSEXT_IDX_supported_groups].present) {
+            SSLfatal(s, SSL_AD_MISSING_EXTENSION,
+                     SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION);
             return 0;
         }
 

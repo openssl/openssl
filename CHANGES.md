@@ -32,11 +32,10 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
- * Fixed TLS 1.3 extension validation to enforce RFC 8446 requirements.
-   The server now properly validates that when a client advertises psk_dhe_ke
-   mode in the psk_key_exchange_modes extension, or when a client sends the
-   supported_groups extension, the corresponding key_share extension must also
-   be present.
+ * Fixed TLS 1.3 ClientHello extension validation to enforce RFC 8446
+   requirements. The server now properly validates mutual dependencies
+   between key_share, supported_groups, and psk_key_exchange_modes
+   extensions as required by RFC 8446 Sections 4.2.9 and 9.2.
 
    *Jeffrey Kintscher*
 
