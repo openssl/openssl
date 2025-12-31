@@ -391,8 +391,11 @@ static int test_register_deregister(void)
 
     for (i = 0; i < OSSL_NELEM(impls); i++)
         if (!TEST_true(ossl_method_store_add(store, &prov, impls[i].nid,
-                impls[i].prop, impls[i].impl,
-                &up_ref, &down_ref))) {
+                impls[i].prop,
+                &(const METHOD) {
+                    .method = impls[i].impl,
+                    .up_ref = up_ref,
+                    .free = down_ref }))) {
             TEST_note("iteration %zd", i + 1);
             goto err;
         }
@@ -466,8 +469,10 @@ static int test_property(void)
     for (i = 0; i < OSSL_NELEM(impls); i++)
         if (!TEST_true(ossl_method_store_add(store, *impls[i].prov,
                 impls[i].nid, impls[i].prop,
-                impls[i].impl,
-                &up_ref, &down_ref))) {
+                &(const METHOD) {
+                    .method = impls[i].impl,
+                    .up_ref = &up_ref,
+                    .free = &down_ref }))) {
             TEST_note("iteration %zd", i + 1);
             goto err;
         }
@@ -577,14 +582,23 @@ static int test_query_cache_stochastic(void)
     for (i = 1; i <= max; i++) {
         v[i] = 2 * i;
         BIO_snprintf(buf, sizeof(buf), "n=%d\n", i);
-        if (!TEST_true(ossl_method_store_add(store, &prov, i, buf, "abc",
-                &up_ref, &down_ref))
+        if (!TEST_true(ossl_method_store_add(store, &prov, i, buf,
+                &(const METHOD) {
+                    .method = "abc",
+                    .up_ref = &up_ref,
+                    .free = &down_ref }))
             || !TEST_true(ossl_method_store_cache_set(store, &prov, i,
-                buf, v + i,
-                &up_ref, &down_ref))
+                buf,
+                &(const METHOD) {
+                    .method = v + i,
+                    .up_ref = &up_ref,
+                    .free = &down_ref }))
             || !TEST_true(ossl_method_store_cache_set(store, &prov, i,
-                "n=1234", "miss",
-                &up_ref, &down_ref))) {
+                "n=1234",
+                &(const METHOD) {
+                    .method = "miss",
+                    .up_ref = &up_ref,
+                    .free = &down_ref }))) {
             TEST_note("iteration %d", i);
             goto err;
         }

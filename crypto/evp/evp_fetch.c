@@ -35,10 +35,7 @@ struct evp_method_data_st {
 
     unsigned int flag_construct_error_occurred : 1;
 
-    void *(*method_from_algorithm)(int name_id, const OSSL_ALGORITHM *,
-        OSSL_PROVIDER *);
-    int (*refcnt_up_method)(void *method);
-    void (*destruct_method)(void *method);
+    const EVP_FETCH_OPERATION *fetch_ops;
 };
 
 /*
@@ -198,9 +195,11 @@ static int put_evp_method_in_store(void *store, void *method,
         "put_evp_method_in_store: "
         "store: %p, names: %s, operation_id %d, method_id: %d, properties: %s\n",
         store, names, methdata->operation_id, meth_id, propdef ? propdef : "<null>");
-    return ossl_method_store_add(store, prov, meth_id, propdef, method,
-        methdata->refcnt_up_method,
-        methdata->destruct_method);
+    return ossl_method_store_add(store, prov, meth_id, propdef,
+        &(const METHOD) {
+            .method = method,
+            .up_ref = methdata->fetch_ops->up_ref_method,
+            .free = methdata->fetch_ops->free_method });
 }
 
 /*
@@ -227,7 +226,7 @@ static void *construct_evp_method(const OSSL_ALGORITHM *algodef,
     if (name_id == 0)
         return NULL;
 
-    method = methdata->method_from_algorithm(name_id, algodef, prov);
+    method = methdata->fetch_ops->new_method(name_id, algodef, prov);
 
     /*
      * Flag to indicate that there was actual construction errors.  This
@@ -244,7 +243,7 @@ static void destruct_evp_method(void *method, void *data)
 {
     struct evp_method_data_st *methdata = data;
 
-    methdata->destruct_method(method);
+    methdata->fetch_ops->free_method(method);
 }
 
 static void *
@@ -322,9 +321,7 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
         methdata->name_id = name_id;
         methdata->names = name;
         methdata->propquery = propq;
-        methdata->method_from_algorithm = fetch_ops->new_method;
-        methdata->refcnt_up_method = fetch_ops->up_ref_method;
-        methdata->destruct_method = fetch_ops->free_method;
+        methdata->fetch_ops = fetch_ops;
         methdata->flag_construct_error_occurred = 0;
         if ((method = ossl_method_construct(methdata->libctx, operation_id,
                  &prov, 0 /* !force_cache */,
@@ -353,8 +350,10 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                 meth_id = evp_method_id(name_id, operation_id);
                 if (meth_id != 0)
                     ossl_method_store_cache_set(store, prov, meth_id, propq,
-                        method, fetch_ops->up_ref_method,
-                        fetch_ops->free_method);
+                        &(const METHOD) {
+                            .method = method,
+                            .up_ref = fetch_ops->up_ref_method,
+                            .free = fetch_ops->free_method });
             }
         }
 

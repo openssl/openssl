@@ -256,7 +256,7 @@ void EVP_MAC_do_all_provided(OSSL_LIB_CTX *libctx,
     };
 
     evp_generic_do_all(libctx, OSSL_OP_MAC,
-                       (void (*)(void *, void *))fn, arg, &fetch_ops);
+        (void (*)(void *, void *))fn, arg, &fetch_ops);
 }
 
 EVP_MAC *evp_mac_fetch_from_prov(OSSL_PROVIDER *prov,
