@@ -4794,8 +4794,8 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
      * it just fails to create channel.
      */
     if (!ossl_assert((conn_ssl = ossl_quic_channel_get0_tls(new_ch)) != NULL)
-        || !(ossl_assert((conn = SSL_CONNECTION_FROM_SSL(conn_ssl)) != NULL)
-        || !(ossl_assert((conn_ssl = SSL_CONNECTION_GET_USER_SSL(conn)) != NULL))
+        || !ossl_assert((conn = SSL_CONNECTION_FROM_SSL(conn_ssl)) != NULL)
+        || !ossl_assert((conn_ssl = SSL_CONNECTION_GET_USER_SSL(conn)) != NULL))
         goto out;
 
     qc = (QUIC_CONNECTION *)conn_ssl;
