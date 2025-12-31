@@ -104,8 +104,6 @@ jobs:
           no-sse2,
           no-ssl,
           no-ssl-trace,
-          enable-ssl3,
-          enable-ssl3-method,
           enable-sslkeylog,
           no-shared,
           no-tests,

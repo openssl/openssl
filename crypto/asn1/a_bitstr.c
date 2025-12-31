@@ -220,3 +220,36 @@ int ASN1_BIT_STRING_check(const ASN1_BIT_STRING *a,
     }
     return ok;
 }
+
+int ASN1_BIT_STRING_get_length(const ASN1_BIT_STRING *abs, size_t *out_length,
+    int *out_unused_bits)
+{
+    size_t length;
+    int unused_bits;
+
+    if (abs == NULL || abs->type != V_ASN1_BIT_STRING)
+        return 0;
+
+    if (out_length == NULL || out_unused_bits == NULL)
+        return 0;
+
+    length = abs->length;
+    unused_bits = 0;
+
+    if ((abs->flags & ASN1_STRING_FLAG_BITS_LEFT) != 0)
+        unused_bits = abs->flags & 0x07;
+
+    if (length == 0 && unused_bits != 0)
+        return 0;
+
+    if (unused_bits != 0) {
+        unsigned char mask = (1 << unused_bits) - 1;
+        if ((abs->data[length - 1] & mask) != 0)
+            return 0;
+    }
+
+    *out_length = length;
+    *out_unused_bits = unused_bits;
+
+    return 1;
+}

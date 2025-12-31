@@ -29,7 +29,9 @@ static int set_cloexec(int fd)
 #if defined(OPENSSL_SYS_WINDOWS)
 
 static CRYPTO_ONCE ensure_wsa_startup_once = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_RWLOCK *wsa_lock;
 static int wsa_started;
+static int wsa_ref;
 
 static void ossl_wsa_cleanup(void)
 {
@@ -37,6 +39,9 @@ static void ossl_wsa_cleanup(void)
         wsa_started = 0;
         WSACleanup();
     }
+
+    CRYPTO_THREAD_lock_free(wsa_lock);
+    wsa_lock = NULL;
 }
 
 DEFINE_RUN_ONCE_STATIC(do_wsa_startup)
@@ -44,16 +49,43 @@ DEFINE_RUN_ONCE_STATIC(do_wsa_startup)
     WORD versionreq = 0x0202; /* Version 2.2 */
     WSADATA wsadata;
 
-    if (WSAStartup(versionreq, &wsadata) != 0)
+    wsa_lock = CRYPTO_THREAD_lock_new();
+    if (wsa_lock == NULL)
         return 0;
+
+    if (WSAStartup(versionreq, &wsadata) != 0) {
+        CRYPTO_THREAD_lock_free(wsa_lock);
+        wsa_lock = NULL;
+        return 0;
+    }
     wsa_started = 1;
-    OPENSSL_atexit(ossl_wsa_cleanup);
+
     return 1;
 }
 
 static ossl_inline int ensure_wsa_startup(void)
 {
-    return RUN_ONCE(&ensure_wsa_startup_once, do_wsa_startup);
+    int rv, unused;
+
+    rv = RUN_ONCE(&ensure_wsa_startup_once, do_wsa_startup);
+    if (rv != 0)
+        CRYPTO_atomic_add(&wsa_ref, 1, &unused, wsa_lock);
+
+    return rv;
+}
+
+static void wsa_done(void)
+{
+    int ref;
+
+    if (wsa_lock != NULL) {
+        CRYPTO_atomic_add(&wsa_ref, -1, &ref, wsa_lock);
+        if (ref == 0) {
+            ossl_wsa_cleanup();
+            ensure_wsa_startup_once = CRYPTO_ONCE_STATIC_INIT;
+            wsa_lock = NULL;
+        }
+    }
 }
 
 #endif
@@ -154,6 +186,8 @@ int ossl_rio_notifier_init(RIO_NOTIFIER *nfy)
     if (!ensure_wsa_startup()) {
         ERR_raise_data(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR,
             "Cannot start Windows sockets");
+
+        wsa_done();
         return 0;
     }
 #endif
@@ -340,6 +374,9 @@ void ossl_rio_notifier_cleanup(RIO_NOTIFIER *nfy)
     BIO_closesocket(nfy->wfd);
     BIO_closesocket(nfy->rfd);
     nfy->rfd = nfy->wfd = -1;
+#if defined(OPENSSL_SYS_WINDOWS)
+    wsa_done();
+#endif
 }
 
 int ossl_rio_notifier_signal(RIO_NOTIFIER *nfy)

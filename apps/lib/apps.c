@@ -39,6 +39,7 @@
 #include <openssl/bn.h>
 #include <openssl/ssl.h>
 #include <openssl/core_names.h>
+#include <openssl/encoder.h>
 #include "s_apps.h"
 #include "apps.h"
 
@@ -606,12 +607,12 @@ EVP_PKEY *load_keyparams(const char *uri, int format, int maybe_stdin,
 }
 
 EVP_SKEY *load_skey(const char *uri, int format, int may_stdin,
-                    const char *pass, int quiet)
+    const char *pass, int quiet)
 {
     EVP_SKEY *skey = NULL;
 
     (void)load_key_certs_crls(uri, format, may_stdin, pass, NULL, 0,
-                              NULL, NULL, NULL, NULL, NULL, NULL, NULL, &skey);
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL, &skey);
 
     return skey;
 }
@@ -674,18 +675,16 @@ static void warn_cert_msg(const char *uri, X509 *cert, const char *msg)
 static void warn_cert(const char *uri, X509 *cert, int warn_EE,
     X509_VERIFY_PARAM *vpm)
 {
+    int error;
     uint32_t ex_flags = X509_get_extension_flags(cert);
-    /*
-     * This should not be used as as example for how to verify
-     * certificates. This treats an invalid not before or an invalid
-     * not after time in the certificate as infinitely valid, which
-     * you don't want outside of a toy testing function like this.
-     */
-    int res = X509_cmp_timeframe(vpm, X509_get0_notBefore(cert),
-        X509_get0_notAfter(cert));
 
-    if (res != 0)
-        warn_cert_msg(uri, cert, res > 0 ? "has expired" : "not yet valid");
+    if (!X509_check_certificate_times(vpm, cert, &error)) {
+        char msg[128];
+
+        ERR_error_string_n(error, msg, sizeof(msg));
+        warn_cert_msg(uri, cert, msg);
+    }
+
     if (warn_EE && (ex_flags & EXFLAG_V1) == 0 && (ex_flags & EXFLAG_CA) == 0)
         warn_cert_msg(uri, cert, "is not a CA cert");
 }
@@ -2107,6 +2106,65 @@ int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value)
 err:
     OPENSSL_free(stmp);
     return rv;
+}
+
+static int
+encoder_ctrl_string(OSSL_ENCODER_CTX *ctx, const char *value)
+{
+    int rv = 0;
+    char *stmp, *vtmp = NULL;
+
+    stmp = OPENSSL_strdup(value);
+    if (stmp == NULL)
+        return -1;
+    vtmp = strchr(stmp, ':');
+    if (vtmp == NULL) {
+        BIO_printf(bio_err,
+            "Missing encoder option value: %s\n", value);
+        goto end;
+    }
+
+    *vtmp = 0;
+    vtmp++;
+    rv = OSSL_ENCODER_CTX_ctrl_string(ctx, stmp, vtmp);
+
+end:
+    OPENSSL_free(stmp);
+    return rv;
+}
+
+int encode_private_key(BIO *out, const char *output_type, const EVP_PKEY *pkey,
+    const STACK_OF(OPENSSL_STRING) *encopt,
+    const EVP_CIPHER *cipher, const char *pass)
+{
+    int ret = 0;
+    OSSL_ENCODER_CTX *ectx = OSSL_ENCODER_CTX_new_for_pkey(pkey, EVP_PKEY_PRIVATE_KEY,
+        output_type, "PrivateKeyInfo", NULL);
+
+    if (ectx == NULL)
+        return 0;
+
+    if (cipher != NULL)
+        if (!OSSL_ENCODER_CTX_set_cipher(ectx, EVP_CIPHER_get0_name(cipher), NULL)
+            || !OSSL_ENCODER_CTX_set_passphrase(ectx, (const unsigned char *)pass,
+                strlen(pass)))
+            goto end;
+
+    if (encopt != NULL) {
+        int i, n = sk_OPENSSL_STRING_num(encopt);
+
+        for (i = 0; i < n; ++i) {
+            const char *opt = sk_OPENSSL_STRING_value(encopt, i);
+
+            if (encoder_ctrl_string(ectx, opt) <= 0)
+                goto end;
+        }
+    }
+
+    ret = OSSL_ENCODER_to_bio(ectx, out);
+end:
+    OSSL_ENCODER_CTX_free(ectx);
+    return ret;
 }
 
 static void nodes_print(const char *name, STACK_OF(X509_POLICY_NODE) *nodes)

@@ -2,5 +2,5 @@ openssl_conf = openssl_init
 
 .include = ./includes.1.d
 .include ./includes.2.d
-.include ./nonexistant.d
+.include ./nonexistent.d
 .include ./included-file.noncnf

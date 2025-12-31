@@ -1274,23 +1274,6 @@ static void list_pkey(void)
 
 static void list_pkey_meth(void)
 {
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    size_t i;
-    size_t meth_count = EVP_PKEY_meth_get_count();
-
-    if (select_name == NULL && include_legacy()) {
-        BIO_printf(bio_out, "Legacy:\n");
-        for (i = 0; i < meth_count; i++) {
-            const EVP_PKEY_METHOD *pmeth = EVP_PKEY_meth_get0(i);
-            int pkey_id, pkey_flags;
-
-            EVP_PKEY_meth_get0_info(&pkey_id, &pkey_flags, pmeth);
-            BIO_printf(bio_out, " %s\n", OBJ_nid2ln(pkey_id));
-            BIO_printf(bio_out, "\tType: %s Algorithm\n",
-                pkey_flags & ASN1_PKEY_DYNAMIC ? "External" : "Builtin");
-        }
-    }
-#endif
     BIO_printf(bio_out, "Provided:\n");
     BIO_printf(bio_out, " Encryption:\n");
     list_asymciphers();
@@ -1564,9 +1547,6 @@ static void list_disabled(void)
 #endif
 #ifdef OPENSSL_NO_SRTP
     BIO_puts(bio_out, "SRTP\n");
-#endif
-#ifdef OPENSSL_NO_SSL3
-    BIO_puts(bio_out, "SSL3\n");
 #endif
 #ifdef OPENSSL_NO_TLS1
     BIO_puts(bio_out, "TLS1\n");
