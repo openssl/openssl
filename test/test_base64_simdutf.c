@@ -121,7 +121,7 @@ static int evp_encodeupdate_old(EVP_ENCODE_CTX *ctx, unsigned char *out, int *ou
         }
         *out = '\0';
     }
-    while (inl >= ctx->length && total <= INT_MAX) {
+    while (inl >= ctx->length) {
         j = evp_encodeblock_int_old(ctx, out, in, ctx->length);
         in += ctx->length;
         inl -= ctx->length;
@@ -132,11 +132,6 @@ static int evp_encodeupdate_old(EVP_ENCODE_CTX *ctx, unsigned char *out, int *ou
             total++;
         }
         *out = '\0';
-    }
-    if (total > INT_MAX) {
-        /* Too much output data! */
-        *outl = 0;
-        return 0;
     }
     if (inl != 0)
         memcpy(&(ctx->enc_data[0]), in, inl);
