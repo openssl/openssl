@@ -382,6 +382,10 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DUP:
         dbio = (BIO *)ptr;
         dbs = BIO_get_data(dbio);
+        if (!SSL_in_init(ssl) || !SSL_in_before(ssl)) {
+            ret = 0;
+            break;
+        }
         SSL_free(dbs->ssl);
         dbs->ssl = SSL_dup(ssl);
         dbs->num_renegotiates = bs->num_renegotiates;
