@@ -270,20 +270,27 @@ EVP_KEYMGMT *evp_keymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
     const char *name,
     const char *properties)
 {
+    const EVP_FETCH_OPERATION fetch_ops = {
+        .new_method = keymgmt_from_algorithm,
+        .up_ref_method = evp_keymgmt_up_ref,
+        .free_method = evp_keymgmt_free
+    };
+
     return evp_generic_fetch_from_prov(prov, OSSL_OP_KEYMGMT,
-        name, properties,
-        keymgmt_from_algorithm,
-        evp_keymgmt_up_ref,
-        evp_keymgmt_free);
+        name, properties, &fetch_ops);
 }
 
 EVP_KEYMGMT *EVP_KEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
     const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_KEYMGMT, algorithm, properties,
-        keymgmt_from_algorithm,
-        evp_keymgmt_up_ref,
-        evp_keymgmt_free);
+    const EVP_FETCH_OPERATION fetch_ops = {
+        .new_method = keymgmt_from_algorithm,
+        .up_ref_method = evp_keymgmt_up_ref,
+        .free_method = evp_keymgmt_free
+    };
+
+    return evp_generic_fetch(ctx, OSSL_OP_KEYMGMT,
+        algorithm, properties, &fetch_ops);
 }
 
 int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt)
@@ -345,11 +352,14 @@ void EVP_KEYMGMT_do_all_provided(OSSL_LIB_CTX *libctx,
     void (*fn)(EVP_KEYMGMT *keymgmt, void *arg),
     void *arg)
 {
-    evp_generic_do_all(libctx, OSSL_OP_KEYMGMT,
-        (void (*)(void *, void *))fn, arg,
+    const EVP_FETCH_OPERATION fetch_ops = {
         keymgmt_from_algorithm,
         evp_keymgmt_up_ref,
-        evp_keymgmt_free);
+        evp_keymgmt_free
+    };
+
+    evp_generic_do_all(libctx, OSSL_OP_KEYMGMT,
+        (void (*)(void *, void *))fn, arg, &fetch_ops);
 }
 
 int EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,

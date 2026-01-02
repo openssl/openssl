@@ -200,9 +200,12 @@ static int put_decoder_in_store(void *store, void *method,
     if (store == NULL && (store = get_decoder_store(methdata->libctx)) == NULL)
         return 0;
 
-    return ossl_method_store_add(store, prov, id, propdef, method,
-        ossl_decoder_up_ref,
-        ossl_decoder_free);
+    return ossl_method_store_add(
+        store, prov, id, propdef,
+        &(const METHOD) {
+            .method = method,
+            .up_ref = ossl_decoder_up_ref,
+            .free = ossl_decoder_free });
 }
 
 /* Create and populate a decoder method */
@@ -395,8 +398,11 @@ inner_ossl_decoder_fetch(struct decoder_data_st *methdata,
             if (id == 0 && name != NULL)
                 id = ossl_namemap_name2num(namemap, name);
             if (id != 0)
-                ossl_method_store_cache_set(store, prov, id, propq, method,
-                    up_ref_decoder, free_decoder);
+                ossl_method_store_cache_set(store, prov, id, propq,
+                    &(const METHOD) {
+                        .method = method,
+                        .up_ref = up_ref_decoder,
+                        .free = free_decoder });
         }
 
         /*

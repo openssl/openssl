@@ -44,12 +44,6 @@
 #define IMPL_CACHE_FLUSH_THRESHOLD (CACHE_SIZE / NUM_SHARDS)
 
 typedef struct {
-    void *method;
-    int (*up_ref)(void *);
-    void (*free)(void *);
-} METHOD;
-
-typedef struct {
     const OSSL_PROVIDER *provider;
     OSSL_PROPERTY_LIST *properties;
     METHOD method;
@@ -369,9 +363,7 @@ static int ossl_method_store_insert(STORED_ALGORITHMS *sa, ALGORITHM *alg)
  * It is an internal unique identifier.
  */
 int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
-    int nid, const char *properties, void *method,
-    int (*method_up_ref)(void *),
-    void (*method_destruct)(void *))
+    int nid, const char *properties, const METHOD *method)
 {
     STORED_ALGORITHMS *sa;
     ALGORITHM *alg = NULL;
@@ -379,7 +371,8 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     int ret = 0;
     int i;
 
-    if (nid <= 0 || method == NULL || store == NULL)
+    if (nid <= 0 || method == NULL || method->method == NULL
+        || store == NULL)
         return 0;
 
     if (properties == NULL)
@@ -392,9 +385,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     impl = OPENSSL_malloc(sizeof(*impl));
     if (impl == NULL)
         return 0;
-    impl->method.method = method;
-    impl->method.up_ref = method_up_ref;
-    impl->method.free = method_destruct;
+    impl->method = *method;
     if (!ossl_method_up_ref(&impl->method)) {
         OPENSSL_free(impl);
         return 0;
@@ -972,9 +963,8 @@ err:
 }
 
 int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
-    int nid, const char *prop_query, void *method,
-    int (*method_up_ref)(void *),
-    void (*method_destruct)(void *))
+    int nid, const char *prop_query,
+    const METHOD *method)
 {
     QUERY elem, *old, *p = NULL;
     ALGORITHM *alg;
@@ -1010,9 +1000,7 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     if (p != NULL) {
         p->query = p->body;
         p->provider = prov;
-        p->method.method = method;
-        p->method.up_ref = method_up_ref;
-        p->method.free = method_destruct;
+        p->method = *method;
         if (!ossl_method_up_ref(&p->method))
             goto err;
         memcpy((char *)p->query, prop_query, len + 1);

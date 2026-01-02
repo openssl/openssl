@@ -12,6 +12,13 @@
 
 #define EVP_CTRL_RET_UNSUPPORTED -1
 
+struct evp_fetch_operation_st {
+    void *(*new_method)(int name_id, const OSSL_ALGORITHM *algodef,
+        OSSL_PROVIDER *prov);
+    int (*up_ref_method)(void *);
+    void (*free_method)(void *);
+};
+
 struct evp_md_ctx_st {
     const EVP_MD *reqdigest; /* The original requested digest */
     const EVP_MD *digest;
@@ -297,29 +304,17 @@ int ossl_is_partially_overlapping(const void *ptr1, const void *ptr2, int len);
 
 void *evp_generic_fetch(OSSL_LIB_CTX *ctx, int operation_id,
     const char *name, const char *properties,
-    void *(*new_method)(int name_id,
-        const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
-    int (*up_ref_method)(void *),
-    void (*free_method)(void *));
+    const EVP_FETCH_OPERATION *fetch_ops);
 void *evp_generic_fetch_from_prov(OSSL_PROVIDER *prov, int operation_id,
     const char *name, const char *properties,
-    void *(*new_method)(int name_id,
-        const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
-    int (*up_ref_method)(void *),
-    void (*free_method)(void *));
+    const EVP_FETCH_OPERATION *fetch_ops);
 void evp_generic_do_all_prefetched(OSSL_LIB_CTX *libctx, int operation_id,
     void (*user_fn)(void *method, void *arg),
     void *user_arg);
 void evp_generic_do_all(OSSL_LIB_CTX *libctx, int operation_id,
     void (*user_fn)(void *method, void *arg),
     void *user_arg,
-    void *(*new_method)(int name_id,
-        const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
-    int (*up_ref_method)(void *),
-    void (*free_method)(void *));
+    const EVP_FETCH_OPERATION *fetch_ops);
 
 /* Internal fetchers for method types that are to be combined with others */
 EVP_KEYMGMT *evp_keymgmt_fetch_by_number(OSSL_LIB_CTX *ctx, int name_id,
