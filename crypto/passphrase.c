@@ -112,7 +112,7 @@ int ossl_pw_disable_passphrase_caching(struct ossl_passphrase_data_st *data)
  * 4.  It reports back the length of the prompted pass phrase.
  */
 static int do_ui_passphrase(char *pass, size_t pass_size, size_t *pass_len,
-    unsigned int pass_len_min, const char *prompt_info, int verify,
+    size_t pass_len_min, const char *prompt_info, int verify,
     const UI_METHOD *ui_method, void *ui_data)
 {
     char *prompt = NULL, *ipass = NULL, *vpass = NULL;
@@ -122,6 +122,11 @@ static int do_ui_passphrase(char *pass, size_t pass_size, size_t *pass_len,
 
     if (!ossl_assert(pass != NULL && pass_size != 0 && pass_len != NULL)) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (!ossl_assert(pass_len_min < INT_MAX && pass_size < INT_MAX)) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
 
@@ -150,7 +155,7 @@ static int do_ui_passphrase(char *pass, size_t pass_size, size_t *pass_len,
 
     prompt_idx = UI_add_input_string(ui, prompt,
                      UI_INPUT_FLAG_DEFAULT_PWD,
-                     ipass, pass_len_min, (int)pass_size)
+                     ipass, (int)pass_len_min, (int)pass_size)
         - 1;
     if (prompt_idx < 0) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_UI_LIB);
