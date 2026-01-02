@@ -3227,6 +3227,11 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
         }
     }
 
+    if (c_obj_create == NULL || c_obj_add_sigid == NULL) {
+        ERR_raise(ERR_LIB_USER, XORPROV_R_OBJ_CREATE_ERR);
+        goto err;
+    }
+
     /*
      * Register algorithms manually as add_provider_sigalgs is
      * only called during session establishment -- too late for
