@@ -161,7 +161,7 @@ method functions.
 
 UI_add_user_data() sets the user data pointer for the method to use at any
 time.  The built-in UI method doesn't care about this info.  Note that several
-calls to this function doesn't add data, it replaces the previous poiner
+calls to this function doesn't add data, it replaces the previous pointer
 with the one given as argument.
 The return value is the previously set user data pointer if it was set
 using UI_add_user_data() and thus the caller owns it, otherwise NULL.
