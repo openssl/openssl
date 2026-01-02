@@ -208,7 +208,7 @@ int ossl_pw_get_passphrase(char *pass, size_t pass_size, size_t *pass_len,
     const char *source = NULL;
     size_t source_len = 0;
     const char *prompt_info = NULL;
-    unsigned int pass_len_min = 0;
+    size_t pass_len_min = 0;
     const UI_METHOD *ui_method = NULL;
     UI_METHOD *allocated_ui_method = NULL;
     void *ui_data = NULL;
@@ -264,7 +264,7 @@ int ossl_pw_get_passphrase(char *pass, size_t pass_size, size_t *pass_len,
                 "Password minimum length data type incorrect");
             return 0;
         }
-        pass_len_min = (unsigned int*)p->data;
+        pass_len_min = *(const size_t *)p->data;
     }
 
     if (data->type == is_pem_password) {
