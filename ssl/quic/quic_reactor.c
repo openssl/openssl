@@ -11,6 +11,12 @@
 #include "internal/thread_arch.h"
 #include <assert.h>
 
+#if defined(OPENSSL_SYS_WINDOWS)
+#include <winsock2.h>
+#include <mstcpip.h>
+#include <mswsock.h>
+#endif
+
 /*
  * Core I/O Reactor Framework
  * ==========================
@@ -69,23 +75,55 @@ void ossl_quic_reactor_cleanup(QUIC_REACTOR *rtor)
     }
 }
 
-void ossl_quic_reactor_set_poll_r(QUIC_REACTOR *rtor, const BIO_POLL_DESCRIPTOR *r)
+void ossl_quic_reactor_set_poll_r(QUIC_REACTOR *rtor, const BIO_POLL_DESCRIPTOR *r, int is_server)
 {
     if (r == NULL)
         rtor->poll_r.type = BIO_POLL_DESCRIPTOR_TYPE_NONE;
     else
         rtor->poll_r = *r;
 
+#if defined(OPENSSL_SYS_WINDOWS)
+    /*
+     * On Windows recvfrom() may return WSAECONNRESET when destination port
+     * used in preceding call to sendto() is no longer available. The reset
+     * error receved from UDP socket takes the whole port down. This behavior
+     * must be supprssed for server sockets.
+     */
+    if (is_server && rtor->poll_w.type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD) {
+        BOOL bNewBehavior = FALSE;
+        DWORD dwBytesReturned = 0;
+
+        WSAIoctl(rtor->poll_w.value.fd, SIO_UDP_CONNRESET, &bNewBehavior,
+            sizeof(bNewBehavior), NULL, 0, &dwBytesReturned, NULL, NULL);
+    }
+#endif
+
     rtor->can_poll_r
         = ossl_quic_reactor_can_support_poll_descriptor(rtor, &rtor->poll_r);
 }
 
-void ossl_quic_reactor_set_poll_w(QUIC_REACTOR *rtor, const BIO_POLL_DESCRIPTOR *w)
+void ossl_quic_reactor_set_poll_w(QUIC_REACTOR *rtor, const BIO_POLL_DESCRIPTOR *w, int is_server)
 {
     if (w == NULL)
         rtor->poll_w.type = BIO_POLL_DESCRIPTOR_TYPE_NONE;
     else
         rtor->poll_w = *w;
+
+#if defined(OPENSSL_SYS_WINDOWS)
+    /*
+     * On Windows recvfrom() may return WSAECONNRESET when destination port
+     * used in preceding call to sendto() is no longer available. The reset
+     * error receved from UDP socket takes the whole port down. This behavior
+     * must be supprssed for server sockets.
+     */
+    if (is_server && rtor->poll_w.type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD) {
+        BOOL bNewBehavior = FALSE;
+        DWORD dwBytesReturned = 0;
+
+        WSAIoctl(rtor->poll_w.value.fd, SIO_UDP_CONNRESET, &bNewBehavior,
+            sizeof(bNewBehavior), NULL, 0, &dwBytesReturned, NULL, NULL);
+    }
+#endif
 
     rtor->can_poll_w
         = ossl_quic_reactor_can_support_poll_descriptor(rtor, &rtor->poll_w);

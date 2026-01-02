@@ -155,10 +155,10 @@ int ossl_quic_reactor_init(QUIC_REACTOR *rtor,
 void ossl_quic_reactor_cleanup(QUIC_REACTOR *rtor);
 
 void ossl_quic_reactor_set_poll_r(QUIC_REACTOR *rtor,
-    const BIO_POLL_DESCRIPTOR *r);
+    const BIO_POLL_DESCRIPTOR *r, int is_server);
 
 void ossl_quic_reactor_set_poll_w(QUIC_REACTOR *rtor,
-    const BIO_POLL_DESCRIPTOR *w);
+    const BIO_POLL_DESCRIPTOR *w, int is_server);
 
 const BIO_POLL_DESCRIPTOR *ossl_quic_reactor_get_poll_r(const QUIC_REACTOR *rtor);
 const BIO_POLL_DESCRIPTOR *ossl_quic_reactor_get_poll_w(const QUIC_REACTOR *rtor);
