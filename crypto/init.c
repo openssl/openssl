@@ -33,13 +33,25 @@
 #include "crypto/ctype.h"
 #include "sslerr.h"
 
+/*
+ * Clean up via destructor on anything modern, which should
+ * mean we run after the destructors of libraries  which might
+ * call our freeing functions
+ */
+
+#if defined(__has_feature)
+/* kind of a hack detection... we'd need to know the MSVC way to do this too... */
+void ossl_cleanup_destructor(void) __attribute__((destructor));
+#else
+void ossl_cleanup_destructor(void);
+#endif
+
 #ifdef S390X_MOD_EXP
 #include "s390x_arch.h"
 #endif
 
 static int stopped = 0;
 static uint64_t optsdone = 0;
-
 /* Guards access to the optsdone variable on platforms without atomics */
 static CRYPTO_RWLOCK *optsdone_lock = NULL;
 /* Guards simultaneous INIT_LOAD_CONFIG calls with non-NULL settings */
@@ -212,7 +224,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_async)
     return 1;
 }
 
-void OPENSSL_cleanup(void)
+void ossl_cleanup_destructor(void)
 {
     /*
      * At some point we should consider looking at this function with a view to
@@ -461,6 +473,11 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
 
     return 1;
+}
+
+void OPENSSL_cleanup(void)
+{
+    return;
 }
 
 int OPENSSL_atexit(void (*handler)(void))
