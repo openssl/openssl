@@ -112,7 +112,7 @@ int ossl_pw_disable_passphrase_caching(struct ossl_passphrase_data_st *data)
  * 4.  It reports back the length of the prompted pass phrase.
  */
 static int do_ui_passphrase(char *pass, size_t pass_size, size_t *pass_len,
-    const char *prompt_info, int verify,
+    unsigned int pass_len_min, const char *prompt_info, int verify,
     const UI_METHOD *ui_method, void *ui_data)
 {
     char *prompt = NULL, *ipass = NULL, *vpass = NULL;
@@ -150,7 +150,7 @@ static int do_ui_passphrase(char *pass, size_t pass_size, size_t *pass_len,
 
     prompt_idx = UI_add_input_string(ui, prompt,
                      UI_INPUT_FLAG_DEFAULT_PWD,
-                     ipass, 0, (int)pass_size)
+                     ipass, pass_len_min, (int)pass_size)
         - 1;
     if (prompt_idx < 0) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_UI_LIB);
@@ -208,6 +208,7 @@ int ossl_pw_get_passphrase(char *pass, size_t pass_size, size_t *pass_len,
     const char *source = NULL;
     size_t source_len = 0;
     const char *prompt_info = NULL;
+    unsigned int pass_len_min = 0;
     const UI_METHOD *ui_method = NULL;
     UI_METHOD *allocated_ui_method = NULL;
     void *ui_data = NULL;
@@ -255,6 +256,17 @@ int ossl_pw_get_passphrase(char *pass, size_t pass_size, size_t *pass_len,
         prompt_info = p->data;
     }
 
+    if ((p = OSSL_PARAM_locate_const(params,
+             OSSL_PASSPHRASE_PARAM_MIN_LENGTH))
+        != NULL) {
+        if (p->data_type != OSSL_PARAM_UNSIGNED_INTEGER) {
+            ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
+                "Password minimum length data type incorrect");
+            return 0;
+        }
+        pass_len_min = (unsigned int*)p->data;
+    }
+
     if (data->type == is_pem_password) {
         /* We use a UI wrapper for PEM */
         pem_password_cb *cb = data->_.pem_password.password_cb;
@@ -277,7 +289,7 @@ int ossl_pw_get_passphrase(char *pass, size_t pass_size, size_t *pass_len,
         return 0;
     }
 
-    ret = do_ui_passphrase(pass, pass_size, pass_len, prompt_info, verify,
+    ret = do_ui_passphrase(pass, pass_size, pass_len, pass_len_min, prompt_info, verify,
         ui_method, ui_data);
 
     UI_destroy_method(allocated_ui_method);
