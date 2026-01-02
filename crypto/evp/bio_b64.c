@@ -411,10 +411,8 @@ static int b64_write(BIO *b, const char *in, int inl)
     }
     ret += inl;
     i = BIO_write(next, encoded, n_bytes_enc);
-    if (i <= 0) {
+    if (i <= 0)
         BIO_copy_next_retry(b);
-        return ret;
-    }
     return ret;
 }
 
