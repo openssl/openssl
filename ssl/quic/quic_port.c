@@ -326,9 +326,9 @@ static int port_update_poll_desc(QUIC_PORT *port, BIO *net_bio, int for_write)
      * guaranteed to be the only port under it.
      */
     if (for_write)
-        ossl_quic_reactor_set_poll_w(&port->engine->rtor, &d);
+        ossl_quic_reactor_set_poll_w(&port->engine->rtor, &d, port->allow_incoming);
     else
-        ossl_quic_reactor_set_poll_r(&port->engine->rtor, &d);
+        ossl_quic_reactor_set_poll_r(&port->engine->rtor, &d, port->allow_incoming);
 
     return 1;
 }
