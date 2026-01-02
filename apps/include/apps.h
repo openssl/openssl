@@ -145,11 +145,10 @@ char *process_additional_mac_key_arguments(const char *arg);
 char *get_str_from_file(const char *filename);
 int load_cert_certs(const char *uri,
     X509 **pcert, STACK_OF(X509) **pcerts,
-    int exclude_http, const char *pass, const char *desc,
-    X509_VERIFY_PARAM *vpm);
-STACK_OF(X509) *load_certs_multifile(char *files, const char *pass,
+    int exclude_http, const char *pass, const char *desc, X509_VERIFY_PARAM *vpm);
+STACK_OF(X509) *load_certs_multifile(char *files, const char *source,
     const char *desc, X509_VERIFY_PARAM *vpm);
-X509_STORE *load_certstore(char *input, const char *pass, const char *desc,
+X509_STORE *load_certstore(char *input, const char *source, const char *desc,
     X509_VERIFY_PARAM *vpm);
 int load_certs(const char *uri, int maybe_stdin, STACK_OF(X509) **certs,
     const char *pass, const char *desc);
