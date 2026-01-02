@@ -269,7 +269,8 @@ int ossl_pw_get_passphrase(char *pass, size_t pass_size, size_t *pass_len,
                 "Password minimum length data type incorrect");
             return 0;
         }
-        pass_len_min = *(const size_t *)p->data;
+        if (p->data)
+            pass_len_min = *(const size_t *)p->data;
     }
 
     if (data->type == is_pem_password) {
