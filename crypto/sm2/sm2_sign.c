@@ -242,7 +242,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     tmp = BN_CTX_get(ctx);
     if (tmp == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
-        goto done;
+        goto end_first;
     }
 
     /*
@@ -254,7 +254,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
 
     if (r == NULL || s == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
-        goto done;
+        goto end_first;
     }
 
     /*
@@ -269,7 +269,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     for (;;) {
         if (!BN_priv_rand_range_ex(k, order, 0, ctx)) {
             ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
-            goto done;
+            goto end_first;
         }
 
         if (!EC_POINT_mul(group, kG, k, NULL, NULL, ctx)
@@ -277,7 +277,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
                 ctx)
             || !BN_mod_add(r, e, x1, order, ctx)) {
             ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
-            goto done;
+            goto end_first;
         }
 
         /* try again if r == 0 or r+k == n */
@@ -286,7 +286,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
 
         if (!BN_add(rk, r, k)) {
             ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
-            goto done;
+            goto end_first;
         }
 
         if (BN_cmp(rk, order) == 0)
@@ -298,7 +298,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
             || !BN_sub(tmp, k, tmp)
             || !BN_mod_mul(s, s, tmp, order, ctx)) {
             ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
-            goto done;
+            goto end_first;
         }
 
         /* try again if s == 0 */
@@ -308,7 +308,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
         sig = ECDSA_SIG_new();
         if (sig == NULL) {
             ERR_raise(ERR_LIB_SM2, ERR_R_ECDSA_LIB);
-            goto done;
+            goto end_first;
         }
 
         /* takes ownership of r and s */
@@ -316,12 +316,13 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
         break;
     }
 
+end_first:
+    BN_CTX_end(ctx);
 done:
     if (sig == NULL) {
         BN_free(r);
         BN_free(s);
     }
-
     BN_CTX_free(ctx);
     EC_POINT_free(kG);
     return sig;
