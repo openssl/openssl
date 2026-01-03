@@ -500,8 +500,3 @@ void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx)
         return NULL;
     return sk_void_value(ad->sk, idx);
 }
-
-OSSL_LIB_CTX *ossl_crypto_ex_data_get_ossl_lib_ctx(const CRYPTO_EX_DATA *ad)
-{
-    return ad->ctx;
-}
