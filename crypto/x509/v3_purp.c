@@ -594,14 +594,29 @@ int ossl_x509v3_cache_extensions(X509 *x)
     if (x->akid == NULL && i != -1)
         x->ex_flags |= EXFLAG_INVALID;
 
-    /* Check if subject name matches issuer */
+    /* This is very similar to ossl_x509_likely_issued(x, x, 1) == X509_V_OK */
     if (X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x)) == 0) {
-        x->ex_flags |= EXFLAG_SI; /* Cert is self-issued */
-        if (X509_check_akid(x, x->akid) == X509_V_OK /* SKID matches AKID */
-            /* .. and the signature alg matches the PUBKEY alg: */
-            && check_sig_alg_match(X509_get0_pubkey(x), x) == X509_V_OK)
-            x->ex_flags |= EXFLAG_SS; /* indicate self-signed */
-        /* This is very related to ossl_x509_likely_issued(x, x) == X509_V_OK */
+        EVP_PKEY *pkey = X509_get0_pubkey(x);
+
+        x->ex_flags |= EXFLAG_SI; /* Certificate is self-issued */
+        if (x->skid == NULL && pkey != NULL) {
+            /*
+             * When the SKID is missing, which is rare for self-issued certs,
+             * we can afford doing the (accurate) actual self-signature check.
+             */
+            ERR_set_mark();
+            if (X509_verify(x, pkey) > 0)
+                x->ex_flags |= EXFLAG_SS;
+            ERR_pop_to_mark();
+        } else if (X509_check_akid(x, x->akid) == X509_V_OK
+            && check_sig_alg_match(pkey, x) == X509_V_OK) {
+            /*
+             * When SKID is present, which RFC 5280 requires, assume self-signed
+             * if SKID matches AKID and signature alg matches pkey algorithm.
+             * Not checking if any given key usage extension allows signing.
+             */
+            x->ex_flags |= EXFLAG_SS;
+        }
     }
 
     /* Handle subject alternative names and various other extensions */
@@ -991,13 +1006,18 @@ int X509_check_issued(X509 *issuer, X509 *subject)
 {
     int ret;
 
-    if ((ret = ossl_x509_likely_issued(issuer, subject)) != X509_V_OK)
+    if ((ret = ossl_x509_likely_issued(issuer, subject, 0)) != X509_V_OK)
         return ret;
     return ossl_x509_signing_allowed(issuer, subject);
 }
 
-/* do the checks 1., 2., and 3. as described above for X509_check_issued() */
-int ossl_x509_likely_issued(X509 *issuer, X509 *subject)
+/*
+ * Do the checks 1., 2., and 3. as described above for X509_check_issued().
+ * These are very similar to a section of ossl_x509v3_cache_extensions().
+ * If use_ss is set and issuer equals subject (such that self-signature
+ * should be checked), use EXFLAG_SS result of ossl_x509v3_cache_extensions().
+ */
+int ossl_x509_likely_issued(X509 *issuer, X509 *subject, int use_ss)
 {
     int ret;
 
@@ -1006,10 +1026,23 @@ int ossl_x509_likely_issued(X509 *issuer, X509 *subject)
         != 0)
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 
-    /* set issuer->skid and subject->akid */
+    /* set issuer->skid, subject->akid, and subject->ex_flags */
     if (!ossl_x509v3_cache_extensions(issuer)
         || !ossl_x509v3_cache_extensions(subject))
         return X509_V_ERR_UNSPECIFIED;
+
+    if (use_ss
+        && (issuer == subject
+            || (X509_NAME_cmp(X509_get_issuer_name(issuer),
+                    X509_get_issuer_name(subject))
+                    == 0
+                && ASN1_INTEGER_cmp(X509_get0_serialNumber(issuer),
+                       X509_get0_serialNumber(subject))
+                    == 0)))
+        /* issuer and subject are semantically the same cert */
+        return (issuer->ex_flags & EXFLAG_SS) != 0
+            ? X509_V_OK
+            : X509_V_ERR_CERT_SIGNATURE_FAILURE;
 
     ret = X509_check_akid(issuer, subject->akid);
     if (ret != X509_V_OK)
