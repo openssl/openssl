@@ -560,6 +560,11 @@ int ossl_x509v3_cache_extensions(X509 *x)
             case NID_dvcs:
                 x->ex_xkusage |= XKU_DVCS;
                 break;
+
+            case NID_tcg_dice_kp_eca:
+                x->ex_xkusage |= XKU_TCG_DICE_ECA;
+                break;
+
             case NID_anyExtendedKeyUsage:
                 x->ex_xkusage |= XKU_ANYEKU;
                 break;
@@ -752,7 +757,10 @@ static int check_ssl_ca(const X509 *x)
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
     int non_leaf)
 {
-    if (xku_reject(x, XKU_SSL_CLIENT))
+    /* Allow CA cert's EKU to contain DICE embedded CA EKU */
+    uint32_t add_flags = non_leaf ? XKU_TCG_DICE_ECA : 0;
+
+    if (xku_reject(x, XKU_SSL_CLIENT | add_flags))
         return 0;
     if (non_leaf)
         return check_ssl_ca(x);
@@ -776,7 +784,10 @@ static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
 static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
     int non_leaf)
 {
-    if (xku_reject(x, XKU_SSL_SERVER | XKU_SGC))
+    /* Allow CA cert's EKU to contain DICE embedded CA EKU */
+    uint32_t add_flags = non_leaf ? XKU_TCG_DICE_ECA : 0;
+
+    if (xku_reject(x, XKU_SSL_SERVER | XKU_SGC | add_flags))
         return 0;
     if (non_leaf)
         return check_ssl_ca(x);
