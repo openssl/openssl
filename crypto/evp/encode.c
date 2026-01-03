@@ -457,10 +457,12 @@ void EVP_EncodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)
     if (ctx->num != 0) {
         ret = evp_encodeblock_int(ctx, out, ctx->enc_data, ctx->num,
             &wrap_cnt);
-        if ((ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) == 0)
-            out[ret++] = '\n';
-        out[ret] = '\0';
-        ctx->num = 0;
+        if (ossl_assert(ret >= 0)) {
+            if ((ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) == 0)
+                out[ret++] = '\n';
+            out[ret] = '\0';
+            ctx->num = 0;
+        }
     }
     *outl = ret;
 }

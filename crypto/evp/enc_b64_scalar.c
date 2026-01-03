@@ -147,7 +147,7 @@ int evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     }
 
     if (ctx_length == 1) {
-        while (i < dlen && ret <= INT_MAX && ctx != NULL) {
+        while (i < dlen && ctx != NULL) {
             t1 = f[i];
             *(t++) = e0[t1];
             *(t++) = e1[(t1 & 0x03) << 4];
@@ -166,7 +166,7 @@ int evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     } else if (ctx_length % 3 != 0) {
         i = 0;
         int wrap_cnt_nm3 = 0;
-        while (i + 2 < dlen && ret <= INT_MAX) {
+        while (i + 2 < dlen) {
             if (ctx != NULL) {
                 if ((wrap_cnt_nm3 < ctx->length
                         && (wrap_cnt_nm3 + 3 + wrap_cnt_by_input) > ctx->length)
@@ -216,7 +216,7 @@ int evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
             }
         }
     } else {
-        for (i = 0; i + 2 < dlen && ret <= INT_MAX; i += 3) {
+        for (i = 0; i + 2 < dlen; i += 3) {
 
             t1 = f[i];
             t2 = f[i + 1];
