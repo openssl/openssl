@@ -362,8 +362,9 @@ static int ec_to_text(BIO *out, const void *key, int selection)
     }
 
     if (type_label != NULL
-        && BIO_printf(out, "%s: (%d bit)\n", type_label,
-               EC_GROUP_order_bits(group))
+        && BIO_printf(out, "%s: (%d bit field, %d bit security level)\n",
+               type_label, EC_GROUP_get_degree(group),
+               EC_GROUP_security_bits(group))
             <= 0)
         goto err;
     if (priv != NULL

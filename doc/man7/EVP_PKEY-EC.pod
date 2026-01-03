@@ -161,6 +161,15 @@ The following Gettable types are also available for the built-in EC algorithm:
 
 =over 4
 
+=item "field-degree" (B<OSSL_PKEY_PARAM_EC_FIELD_DEGREE>) <integer>
+
+This is the bit length of the curve's field coefficients.
+It coincides with the B<OSSL_PKEY_PARAM_EC_CHAR2_M> parameter for binary
+fields, and is otherwise (for prime fields) equal to the bit length of the
+field's characteristic.
+For most curves (e.g. C<secp160r1>) this number is embedded in the curve's
+name.
+
 =item "basis-type" (B<OSSL_PKEY_PARAM_EC_CHAR2_TYPE>) <UTF8 string>
 
 Supports the values "tpBasis" for a trinomial or "ppBasis" for a pentanomial.
@@ -194,7 +203,8 @@ OpenSSL FIPS provider's EC algorithm:
 
 =item "key-check" (B<OSSL_PKEY_PARAM_FIPS_KEY_CHECK>) <integer>
 
-See L<provider-keymgmt(7)/Common Information Parameters> for further information.
+See L<provider-keymgmt(7)/Common Information Parameters> for descriptions
+of additional parameters generally available across all algorithms.
 
 =back
 
@@ -299,6 +309,10 @@ L<EVP_PKEY(3)>,
 L<provider-keymgmt(7)>,
 L<EVP_SIGNATURE-ECDSA(7)>,
 L<EVP_KEYEXCH-ECDH(7)>
+
+=head1 HISTORY
+
+The B<OSSL_PKEY_PARAM_EC_FIELD_DEGREE> parameter was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

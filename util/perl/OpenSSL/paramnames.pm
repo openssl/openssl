@@ -343,6 +343,7 @@ my %params = (
 
 # Elliptic Curve Explicit Domain Parameters
     'OSSL_PKEY_PARAM_EC_FIELD_TYPE' =>                   "field-type",
+    'OSSL_PKEY_PARAM_EC_FIELD_DEGREE' =>                 "field-degree",
     'OSSL_PKEY_PARAM_EC_P' =>                            "p",
     'OSSL_PKEY_PARAM_EC_A' =>                            "a",
     'OSSL_PKEY_PARAM_EC_B' =>                            "b",
