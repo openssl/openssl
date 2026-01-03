@@ -226,7 +226,7 @@ static int ssl_write(BIO *b, const char *buf, size_t size, size_t *written)
 
 static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
-    SSL **sslp, *ssl;
+    SSL **sslp, *ssl, *dupssl;
     BIO_SSL *bs, *dbs;
     BIO *dbio, *bio;
     long ret = 1;
@@ -382,14 +382,19 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DUP:
         dbio = (BIO *)ptr;
         dbs = BIO_get_data(dbio);
+        dupssl = SSL_dup(ssl);
+        if (dupssl == NULL) {
+            ret = 0;
+            break;
+        }
         SSL_free(dbs->ssl);
-        dbs->ssl = SSL_dup(ssl);
+        dbs->ssl = dupssl;
         dbs->num_renegotiates = bs->num_renegotiates;
         dbs->renegotiate_count = bs->renegotiate_count;
         dbs->byte_count = bs->byte_count;
         dbs->renegotiate_timeout = bs->renegotiate_timeout;
         dbs->last_time = bs->last_time;
-        ret = (dbs->ssl != NULL);
+        ret = 1;
         break;
     case BIO_C_GET_FD:
         ret = BIO_ctrl(SSL_get_rbio(ssl), cmd, num, ptr);
