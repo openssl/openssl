@@ -67,7 +67,11 @@ X509_POLICY_DATA *ossl_policy_data_new(POLICYINFO *policy,
 
     if (id)
         ret->valid_policy = id;
-    else {
+    else if (policy->policyid == NULL) {
+        sk_ASN1_OBJECT_free(ret->expected_policy_set);
+        OPENSSL_free(ret);
+        return NULL;
+    } else {
         ret->valid_policy = policy->policyid;
         policy->policyid = NULL;
     }

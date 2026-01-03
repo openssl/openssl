@@ -32,6 +32,11 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * OpenSSL now properly rejects certificate policies that are missing the
+   policy OID, which is mandatory per RFC 5280.
+
+   *Jeffrey Kintscher*
+
  * Removed configure options can now only be disabled. You may continue to use
    `disable-<feature>`, which will remain supported. Using `enable-<feature>`
    for a removed feature is no longer permitted.
@@ -54,6 +59,10 @@ OpenSSL 4.0
    OPENSSL_cleanup() before the process exits.
 
    *Alexandr Nedvedicky*
+
+ * The script tool `c_rehash` was removed. Use `openssl rehash` instead.
+
+   *Norbert Pocs*
 
  * The crypto-mdebug-backtrace configuration option has been entirely removed.
    The option has been a no-op since 1.0.2.
