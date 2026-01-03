@@ -1,0 +1,82 @@
+name: "Scan to check for NEWS/CHANGES suggestions"
+
+on: pull_request
+env:
+  NEED_NEWS_CHANGES: "no"
+permissions: {}
+
+jobs:
+  scan_for_news_changes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: "Check if we already have a NEWS/CHANGES entry"
+        run: |
+          git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > ./names.txt
+          set +e
+          grep -q "NEWS\.md" names.txt
+          if [ $? -eq 0 ]; then
+            echo "FOUND_NEWS_CHANGES_ADDITION=yes" >> $GITHUB_ENV
+          else
+            grep -q "CHANGES\.md" names.txt
+            if [ $? -eq 0 ]; then
+              echo "FOUND_NEWS_CHANGES_ADDITION=yes" >> $GITHUB_ENV
+            else
+              echo "FOUND_NEWS_CHANGES_ADDITION=no" >> $GITHUB_ENV
+            fi
+          fi
+      - name: "Check if this PR affects a CVE"
+        if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' }}
+        run: |
+          git log ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > ./log.txt
+          set +e
+          grep -q "CVE-" ./log.txt
+          if [ $? -eq 0 ]; then
+            echo "Changes in this PR reference a CVE"
+            echo "NEED_NEWS_CHANGES=yes" >> $GITHUB_ENV
+          fi
+      - name: "Check if this PR impacts a public API"
+        if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' }}
+        run: |
+          set +e
+          grep -q "include\/crypto" ./names.txt
+          if [ $? -eq 0 ]; then
+            echo "Changes in this PR may impact public APIS's"
+            echo "NEED_NEWS_CHANGES=yes" >> $GITHUB_ENV
+          fi
+      - name: "Check if this is a feature branch merge"
+        if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' }}
+        run: |
+          set +e
+          echo ${{ github.head_ref }} | grep -q "feature"
+          if [ $? -eq 0 ]; then
+            echo "Feature branch found"
+            echo "NEED_NEWS_CHANGES=yes" >> $GITHUB_ENV
+          fi
+      - name: "Check if configuration options have changed"
+        if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' }}
+        run: | 
+          git checkout ${{ github.event.pull_request.base.sha }}
+          set +e
+          ./Configure --help > ./before.txt 2>&1
+          git checkout ${{ github.event.pull_request.head.sha }}
+          ./Configure --help > ./after.txt 2>&1
+          set -e
+          CONF_CHANGE=$(diff ./before.txt ./after.txt | wc -l)
+          if [ $CONF_CHANGE -ne 0 ]; then
+            echo "Configuration options changes"
+            echo "NEED_NEWS_CHANGES=yes" >> $GITHUB_ENV
+          fi
+      - name: "Report Results"
+        if: ${{ !(contains(github.event.pull_request.labels.*.name, 'no_news_changes_needed')) }}
+        run: |
+          if [ "${{ env.NEED_NEWS_CHANGES }}" == "yes" ]; then
+            echo "Suggest that you add a NEWS/CHANGES entry for this PR"
+            echo "Alternatively, quiet this suggestion by applying the no_news_changes_needed label"
+            exit 1
+          fi
+
+
