@@ -24,6 +24,7 @@ B<openssl> B<x509>
 [B<-outform> B<DER>|B<PEM>]
 [B<-nocert>]
 [B<-noout>]
+[B<-setalias> I<arg>]
 [B<-dateopt>]
 [B<-text>]
 [B<-certopt> I<option>]
@@ -76,7 +77,6 @@ B<openssl> B<x509>
 [B<-CAserial> I<filename>]
 [B<-CAcreateserial>]
 [B<-trustout>]
-[B<-setalias> I<arg>]
 [B<-clrtrust>]
 [B<-addtrust> I<arg>]
 [B<-clrreject>]
@@ -89,6 +89,7 @@ B<openssl> B<x509>
 This command is a multi-purposes certificate handling command.
 It can be used to print certificate information,
 convert certificates to various forms, edit certificate trust settings,
+assign to it an alias ("nickname"),
 generate certificates from scratch or from certification requests
 and then self-signing them or signing them like a "micro CA".
 
@@ -215,6 +216,14 @@ Do not output a certificate (except for printing as requested by below options).
 
 This option prevents output except for printing as requested by below options.
 
+=item B<-setalias> I<arg>
+
+Sets the alias ("nickname") of the certificate. This will allow the certificate
+to be referred to using a user-defined name, for example "Steve's Certificate".
+
+No option has been implemented to clear an alias,
+but an alias may be overridden by setting a different one.
+
 =back
 
 =head2 Certificate Printing Options
@@ -252,7 +261,7 @@ two certificates with the same fingerprint can be considered to be the same.
 
 =item B<-alias>
 
-Prints the certificate "alias" (nickname), if any.
+Prints the certificate alias ("nickname"), if any.
 
 =item B<-serial>
 
@@ -581,24 +590,31 @@ and saved into the serial number file determined as described above.
 
 =head2 Trust Settings
 
-A B<trusted certificate> is an ordinary certificate which has several
-additional pieces of information attached to it such as the permitted
-and prohibited uses of the certificate and possibly an "alias" (nickname).
+When a certificate is validated w.r.t. a given trust store, a chain of
+certificates is built until a suitably trusted certificate is reached.
+By default a CA certificate is trusted when it is in the trust store
+and is a self-signed (root) CA certificate.
+A CA certificate having no explicit trust attributes is usable for any purpose.
 
-Normally when a certificate is being verified at least one certificate
-must be "trusted". By default a trusted certificate must be stored
-locally and must be a root CA: any certificate chain ending in this CA
-is then usable for any purpose.
-
-Trust settings currently are only used with a root CA.
-They allow a finer control over the purposes the root CA can be used for.
+To provide a finer control over the purposes a CA certificate can be used for,
+explicit trust attributes may be set for it.
 For example, a CA may be trusted for SSL client but not SSL server use.
 
-See L<openssl-verification-options(1)> for more information
-on the meaning of trust settings.
+A B<trusted certificate> is an ordinary certificate which has several
+additional trust attributes attached to it such as the permitted
+and prohibited uses of the certificate.
 
-Future versions of OpenSSL will recognize trust settings on any
-certificate: not just root CAs.
+Trust attributes names typically coincide with the names of extended key usages
+(EKUs) as defined in RFC 5280 section 4.2.1.12. Valid names include
+B<clientAuth>, B<serverAuth>, B<emailProtection>, and B<anyExtendedKeyUsage>.
+Further ones may be defined by applications of OpenSSL.
+B<anyExtendedKeyUsage> enables all purposes when added to the trust list
+and blocks all purposes when added to the rejection list.
+
+Trust settings can be used with any CA certificates, not just for root CAs.
+
+See L<openssl-verification-options(1)> for more information
+on certificate validation and on the meaning of trust attribute settings.
 
 =over 4
 
@@ -610,11 +626,6 @@ certificate is output and any trust settings are discarded.
 With the B<-trustout> option a trusted certificate is output. A trusted
 certificate is automatically output if any trust settings are modified.
 
-=item B<-setalias> I<arg>
-
-Sets the "alias" of the certificate. This will allow the certificate
-to be referred to using a nickname for example "Steve's Certificate".
-
 =item B<-clrtrust>
 
 Clears all the permitted or trusted uses of the certificate.
@@ -622,11 +633,6 @@ Clears all the permitted or trusted uses of the certificate.
 =item B<-addtrust> I<arg>
 
 Adds a trusted certificate use.
-Any object name can be used here but currently only B<clientAuth>,
-B<serverAuth>, B<emailProtection>, and B<anyExtendedKeyUsage> are defined.
-As of OpenSSL 1.1.0, the last of these blocks all purposes when rejected or
-enables all purposes when trusted.
-Other OpenSSL applications may define additional uses.
 
 =item B<-clrreject>
 
@@ -634,8 +640,7 @@ Clears all the prohibited or rejected uses of the certificate.
 
 =item B<-addreject> I<arg>
 
-Adds a prohibited trust anchor purpose.
-It accepts the same values as the B<-addtrust> option.
+Adds a prohibited trust anchor use.
 
 =back
 
@@ -700,7 +705,7 @@ Don't give a hexadecimal dump of the certificate signature.
 
 =item B<no_aux>
 
-Don't print out certificate trust information.
+Don't print out certificate trust attribute information.
 
 =item B<no_extensions>
 
@@ -837,6 +842,9 @@ before OpenSSL 1.0.0 was based on the deprecated MD5 algorithm and the encoding
 of the distinguished name. In OpenSSL 1.0.0 and later it is based on a canonical
 version of the DN using SHA1. This means that any directories using the old
 form must have their links rebuilt using L<openssl-rehash(1)> or similar.
+
+Since OpenSSL 1.1.0, B<anyExtendedKeyUsage> blocks all uses when rejected or
+enables all uses when added as trusted.
 
 The B<-signkey> option has been renamed to B<-key> in OpenSSL 3.0,
 keeping the old name as an alias.

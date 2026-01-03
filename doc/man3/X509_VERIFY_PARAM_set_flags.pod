@@ -2,6 +2,8 @@
 
 =head1 NAME
 
+X509_VERIFY_PARAM_inherit, X509_VERIFY_PARAM_set1,
+X509_VERIFY_PARAM_set1_name, X509_VERIFY_PARAM_get0_name,
 X509_VERIFY_PARAM_set_flags, X509_VERIFY_PARAM_clear_flags,
 X509_VERIFY_PARAM_get_flags, X509_VERIFY_PARAM_set_purpose,
 X509_VERIFY_PARAM_get_purpose,
@@ -15,7 +17,7 @@ X509_VERIFY_PARAM_get0_host,
 X509_VERIFY_PARAM_set1_host, X509_VERIFY_PARAM_add1_host,
 X509_VERIFY_PARAM_set_hostflags,
 X509_VERIFY_PARAM_get_hostflags,
-X509_VERIFY_PARAM_get0_peername,
+X509_VERIFY_PARAM_get0_peername, X509_VERIFY_PARAM_move_peername,
 X509_VERIFY_PARAM_get0_email, X509_VERIFY_PARAM_set1_email,
 X509_VERIFY_PARAM_set1_ip, X509_VERIFY_PARAM_get1_ip_asc,
 X509_VERIFY_PARAM_set1_ip_asc
@@ -25,6 +27,13 @@ X509_VERIFY_PARAM_set1_ip_asc
 
  #include <openssl/x509_vfy.h>
 
+ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
+                               const X509_VERIFY_PARAM *src);
+ int X509_VERIFY_PARAM_set1(X509_VERIFY_PARAM *dest,
+                            const X509_VERIFY_PARAM *src);
+
+ int X509_VERIFY_PARAM_set1_name(X509_VERIFY_PARAM *param, const char *name);
+ const char *X509_VERIFY_PARAM_get0_name(const X509_VERIFY_PARAM *param);
  int X509_VERIFY_PARAM_set_flags(X509_VERIFY_PARAM *param,
                                  unsigned long flags);
  int X509_VERIFY_PARAM_clear_flags(X509_VERIFY_PARAM *param,
@@ -63,6 +72,8 @@ X509_VERIFY_PARAM_set1_ip_asc
                                       unsigned int flags);
  unsigned int X509_VERIFY_PARAM_get_hostflags(const X509_VERIFY_PARAM *param);
  char *X509_VERIFY_PARAM_get0_peername(const X509_VERIFY_PARAM *param);
+ void X509_VERIFY_PARAM_move_peername(X509_VERIFY_PARAM *dest,
+                                      X509_VERIFY_PARAM *src);
  char *X509_VERIFY_PARAM_get0_email(X509_VERIFY_PARAM *param);
  int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
                                   const char *email, size_t emaillen);
@@ -76,54 +87,74 @@ X509_VERIFY_PARAM_set1_ip_asc
 These functions manipulate the B<X509_VERIFY_PARAM> structure associated with
 a certificate verification operation.
 
-The X509_VERIFY_PARAM_set_flags() function sets the flags in B<param> by oring
-it with B<flags>. See L</VERIFICATION FLAGS> for a complete
-description of values the B<flags> parameter can take.
+X509_VERIFY_PARAM_inherit() returns success if I<src> is NULL.  Otherwise,
+it copies the parameters from the B<X509_VERIFY_PARAM> structure I<src> to
+I<dest>, depending on the inheritance flags of I<src> and I<dest> ORed together.
+See the L</INHERITANCE FLAGS> section for a description of these bits.
+Yet if in the resulting flags <X509_VP_FLAG_LOCKED> is set, it just
+returns success (after resetting the inheritance flags of I<dest>
+if the B<X509_VP_FLAG_ONCE> flag is set).
+The flags in I<dest> get ORed by those in I<src>.
 
-X509_VERIFY_PARAM_get_flags() returns the flags in B<param>.
+X509_VERIFY_PARAM_set1() acts like X509_VERIFY_PARAM_inherit() while in addition
+B<X509_VP_FLAG_DEFAULT> is temporarily set in the inheritance flags of I<dest>,
+and finally restores the original inheritance flags of I<dest>.
 
-X509_VERIFY_PARAM_get_inh_flags() returns the inheritance flags in B<param>
+X509_VERIFY_PARAM_set1_name() copies the given I<name> as the name of I<param>.
+
+X509_VERIFY_PARAM_get0_name() returns the name set for I<param>.
+
+The X509_VERIFY_PARAM_set_flags() function sets the flags in I<param> by oring
+it with I<flags>. See L</VERIFICATION FLAGS> for a complete
+description of values the I<flags> parameter can take.
+
+X509_VERIFY_PARAM_get_flags() returns the flags in I<param>.
+
+X509_VERIFY_PARAM_get_inh_flags() returns the inheritance flags in I<param>
 which specifies how verification flags are copied from one structure to
 another. X509_VERIFY_PARAM_set_inh_flags() sets the inheritance flags.
-See the B<INHERITANCE FLAGS> section for a description of these bits.
+See the L</INHERITANCE FLAGS> section for a description of these bits.
 
-X509_VERIFY_PARAM_clear_flags() clears the flags B<flags> in B<param>.
+X509_VERIFY_PARAM_clear_flags() clears the flags I<flags> in I<param>.
 
-X509_VERIFY_PARAM_set_purpose() sets the verification purpose in B<param>
-to B<purpose>. This determines the acceptable purpose of the certificate
+X509_VERIFY_PARAM_set_purpose() sets the verification purpose in I<param>
+to I<purpose>.
+This determines the acceptable use of the certificate
 chain, for example B<X509_PURPOSE_SSL_CLIENT>.
-The purpose requirement is cleared if B<purpose> is X509_PURPOSE_DEFAULT_ANY.
+See L<openssl-verification-options(1)/Purposes> for details.
+The purpose requirement is cleared if B<purpose> is X509_PURPOSE_DEFAULT_ANY,
+which is the default.
 
 X509_VERIFY_PARAM_get_purpose() returns the purpose in B<param>.
 
-X509_VERIFY_PARAM_set_trust() sets the trust setting in B<param> to
-B<trust>.
+X509_VERIFY_PARAM_set_trust() sets the trust setting in I<param> to
+I<trust>.
 
-X509_VERIFY_PARAM_set_time() sets the verification time in B<param> to
-B<t>. Normally the current time is used.
+X509_VERIFY_PARAM_set_time() sets the verification time in I<param> to
+I<t>. Normally the current time is used.
 
-X509_VERIFY_PARAM_add0_policy() adds B<policy> to the acceptable policy set.
+X509_VERIFY_PARAM_add0_policy() adds I<policy> to the acceptable policy set.
 Contrary to preexisting documentation of this function it does not enable
 policy checking.
 
 X509_VERIFY_PARAM_set1_policies() enables policy checking (it is disabled
-by default) and sets the acceptable policy set to B<policies>. Any existing
-policy set is cleared. The B<policies> parameter can be B<NULL> to clear
+by default) and sets the acceptable policy set to I<policies>. Any existing
+policy set is cleared. The I<policies> parameter can be NULL to clear
 an existing policy set.
 
-X509_VERIFY_PARAM_set_depth() sets the maximum verification depth to B<depth>.
+X509_VERIFY_PARAM_set_depth() sets the maximum verification depth to I<depth>.
 That is the maximum number of intermediate CA certificates that can appear in a
 chain.
 A maximal depth chain contains 2 more certificates than the limit, since
-neither the end-entity certificate nor the trust-anchor count against this
-limit.
-Thus a B<depth> limit of 0 only allows the end-entity certificate to be signed
-directly by the trust anchor, while with a B<depth> limit of 1 there can be one
+neither the target certificate nor the trust anchor count against this limit.
+Thus a I<depth> limit of 0 only allows the target certificate to be signed
+directly by the trust anchor, while with a I<depth> limit of 1 there can be one
 intermediate CA certificate between the trust anchor and the end-entity
 certificate.
+The default value is -1, meaning "no maximum".
 
 X509_VERIFY_PARAM_set_auth_level() sets the authentication security level to
-B<auth_level>.
+I<auth_level>.
 The authentication security level determines the acceptable signature and public
 key strength when verifying certificate chains.
 For a certificate chain to validate, the public keys of all the certificates
@@ -133,27 +164,27 @@ anchor> certificate, which is either directly trusted or validated by means othe
 than its signature.
 See L<SSL_CTX_set_security_level(3)> for the definitions of the available
 levels.
-The default security level is -1, or "not set".
+The default security level is -1, meaning "not set".
 At security level 0 or lower all algorithms are acceptable.
 Security level 1 requires at least 80-bit-equivalent security and is broadly
 interoperable, though it will, for example, reject MD5 signatures or RSA keys
 shorter than 1024 bits.
 
-X509_VERIFY_PARAM_get0_host() returns the B<n>th expected DNS hostname that has
+X509_VERIFY_PARAM_get0_host() returns the I<n>th expected DNS hostname that has
 been set using X509_VERIFY_PARAM_set1_host() or X509_VERIFY_PARAM_add1_host().
-To obtain all names start with B<n> = 0 and increment B<n> as long as no NULL
+To obtain all names start with I<n> = 0 and increment I<n> as long as no NULL
 pointer is returned.
 
 X509_VERIFY_PARAM_set1_host() sets the expected DNS hostname to
-B<name> clearing any previously specified hostname.  If
-B<name> is NULL, or empty the list of hostnames is cleared, and
-name checks are not performed on the peer certificate.  If B<name>
-is NUL-terminated, B<namelen> may be zero, otherwise B<namelen>
-must be set to the length of B<name>.
+I<name> clearing any previously specified hostname.  If
+I<name> is NULL, or empty the list of hostnames is cleared, and
+name checks are not performed on the peer certificate.  If I<name>
+is NUL-terminated, I<namelen> may be zero, otherwise I<namelen>
+must be set to the length of I<name>.
 
 When a hostname is specified,
 certificate verification automatically invokes L<X509_check_host(3)>
-with flags equal to the B<flags> argument given to
+with flags equal to the I<flags> argument given to
 X509_VERIFY_PARAM_set_hostflags() (default zero).  Applications
 are strongly advised to use this interface in preference to explicitly
 calling L<X509_check_host(3)>, hostname checks may be out of scope
@@ -176,10 +207,10 @@ flag takes precedence over the B<X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT> flag.
 X509_VERIFY_PARAM_get_hostflags() returns any host flags previously set via a
 call to X509_VERIFY_PARAM_set_hostflags().
 
-X509_VERIFY_PARAM_add1_host() adds B<name> as an additional reference
+X509_VERIFY_PARAM_add1_host() adds I<name> as an additional reference
 identifier that can match the peer's certificate.  Any previous names
 set via X509_VERIFY_PARAM_set1_host() or X509_VERIFY_PARAM_add1_host()
-are retained, no change is made if B<name> is NULL or empty.  When
+are retained, no change is made if I<name> is NULL or empty.  When
 multiple names are configured, the peer is considered verified when
 any name matches.
 
@@ -190,33 +221,39 @@ reference identifier specifies a parent domain (starts with ".")
 rather than a hostname, the peer name may be a wildcard name or a
 sub-domain of the reference identifier respectively.  The return
 string is allocated by the library and is no longer valid once the
-associated B<param> argument is freed.  Applications must not free
+associated I<param> argument is freed.  Applications must not free
 the return value.
+
+X509_VERIFY_PARAM_move_peername() copies the peername from the
+B<X509_VERIFY_PARAM> structure I<src> to the structure <dest> and removes it
+from I<src>. If I<src> is NULL, it just removes the peername from <dest>.
 
 X509_VERIFY_PARAM_get0_email() returns the expected RFC822 email address.
 
 X509_VERIFY_PARAM_set1_email() sets the expected RFC822 email address to
-B<email>.  If B<email> is NUL-terminated, B<emaillen> may be zero, otherwise
-B<emaillen> must be set to the length of B<email>.  When an email address
+I<email>.  If I<email> is NUL-terminated, I<emaillen> may be zero, otherwise
+I<emaillen> must be set to the length of I<email>.  When an email address
 is specified, certificate verification automatically invokes
 L<X509_check_email(3)>.
 
 X509_VERIFY_PARAM_get1_ip_asc() returns the expected IP address as a string.
 The caller is responsible for freeing it.
 
-X509_VERIFY_PARAM_set1_ip() sets the expected IP address to B<ip>.
-The B<ip> argument is in binary format, in network byte-order and
-B<iplen> must be set to 4 for IPv4 and 16 for IPv6.  When an IP
+X509_VERIFY_PARAM_set1_ip() sets the expected IP address to I<ip>.
+The I<ip> argument is in binary format, in network byte-order and
+I<iplen> must be set to 4 for IPv4 and 16 for IPv6.  When an IP
 address is specified, certificate verification automatically invokes
 L<X509_check_ip(3)>.
 
 X509_VERIFY_PARAM_set1_ip_asc() sets the expected IP address to
-B<ipasc>.  The B<ipasc> argument is a NUL-terminal ASCII string:
+I<ipasc>.  The I<ipasc> argument is a NUL-terminal ASCII string:
 dotted decimal quad for IPv4 and colon-separated hexadecimal for
 IPv6.  The condensed "::" notation is supported for IPv6 addresses.
 
 =head1 RETURN VALUES
 
+X509_VERIFY_PARAM_inherit(), X509_VERIFY_PARAM_set1(),
+X509_VERIFY_PARAM_set1_name(),
 X509_VERIFY_PARAM_set_flags(), X509_VERIFY_PARAM_clear_flags(),
 X509_VERIFY_PARAM_set_inh_flags(),
 X509_VERIFY_PARAM_set_purpose(), X509_VERIFY_PARAM_set_trust(),
@@ -226,23 +263,23 @@ X509_VERIFY_PARAM_set1_email(), X509_VERIFY_PARAM_set1_ip() and
 X509_VERIFY_PARAM_set1_ip_asc() return 1 for success and 0 for
 failure.
 
+X509_VERIFY_PARAM_get0_name(),
 X509_VERIFY_PARAM_get0_host(), X509_VERIFY_PARAM_get0_email(), and
 X509_VERIFY_PARAM_get1_ip_asc(), return the string pointers specified above
 or NULL if the respective value has not been set or on error.
 
 X509_VERIFY_PARAM_get_flags() returns the current verification flags.
-
 X509_VERIFY_PARAM_get_hostflags() returns any current host flags.
-
 X509_VERIFY_PARAM_get_inh_flags() returns the current inheritance flags.
-
-X509_VERIFY_PARAM_set_time() and X509_VERIFY_PARAM_set_depth() do not return
-values.
-
 X509_VERIFY_PARAM_get_depth() returns the current verification depth.
-
 X509_VERIFY_PARAM_get_auth_level() returns the current authentication security
 level.
+X509_VERIFY_PARAM_get_time() returns the verification time, NULL if unset.
+
+X509_VERIFY_PARAM_set_time(), X509_VERIFY_PARAM_set_depth(),
+X509_VERIFY_PARAM_set_auth_level(), X509_VERIFY_PARAM_set_hostflags(),
+and X509_VERIFY_PARAM_move_peername() do not return values.
+
 
 X509_VERIFY_PARAM_get_purpose() returns the current purpose,
 which may be B<X509_PURPOSE_DEFAULT_ANY> if unset.
@@ -250,7 +287,7 @@ which may be B<X509_PURPOSE_DEFAULT_ANY> if unset.
 =head1 VERIFICATION FLAGS
 
 The verification flags consists of zero or more of the following flags
-ored together.
+ORed together.
 
 B<X509_V_FLAG_CRL_CHECK> enables CRL checking for the certificate chain leaf
 certificate. An error occurs if a suitable CRL cannot be found.
@@ -269,7 +306,7 @@ ignored.
 B<X509_V_FLAG_IGNORE_CRITICAL> disables critical extension checking. By default
 any unhandled critical extensions in certificates or (if checked) CRLs result
 in a fatal error. If this flag is set unhandled critical extensions are
-ignored. B<WARNING> setting this option for anything other than debugging
+ignored. B<WARNING:> setting this option for anything other than debugging
 purposes can be a security risk. Finer control over which extensions are
 supported can be performed in the verification callback.
 
@@ -285,7 +322,7 @@ verification callback relating to policy checking.
 B<X509_V_FLAG_EXPLICIT_POLICY>, B<X509_V_FLAG_INHIBIT_ANY> and
 B<X509_V_FLAG_INHIBIT_MAP> set the B<require explicit policy>, B<inhibit any
 policy> and B<inhibit policy mapping> flags respectively as defined in
-B<RFC3280>. Policy checking is automatically enabled if any of these flags
+RFC 5280. Policy checking is automatically enabled if any of these flags
 are set.
 
 If B<X509_V_FLAG_NOTIFY_POLICY> is set and the policy checking is successful
@@ -388,7 +425,7 @@ CRLs from the CRL distribution points extension.
 =head1 EXAMPLES
 
 Enable CRL checking when performing certificate verification during SSL
-connections associated with an B<SSL_CTX> structure B<ctx>:
+connections associated with an B<SSL_CTX> structure I<ctx>:
 
  X509_VERIFY_PARAM *param;
 
