@@ -465,10 +465,36 @@ int EC_GROUP_order_bits(const EC_GROUP *group)
     return group->meth->group_order_bits(group);
 }
 
+int EC_GROUP_security_bits(const EC_GROUP *group)
+{
+    int ecbits = group->meth->group_order_bits(group);
+
+    /*
+     * The following estimates are based on the values published in Table 2 of
+     * "NIST Special Publication 800-57 Part 1 Revision 4" at
+     * http://dx.doi.org/10.6028/NIST.SP.800-57pt1r4 .
+     *
+     * Note that the above reference explicitly categorizes algorithms in a
+     * discrete set of values {80, 112, 128, 192, 256}, and that it is relevant
+     * only for NIST approved Elliptic Curves, while OpenSSL applies the same
+     * logic also to other curves.
+     */
+    if (ecbits >= 512)
+        return 256;
+    if (ecbits >= 384)
+        return 192;
+    if (ecbits >= 256)
+        return 128;
+    if (ecbits >= 224)
+        return 112;
+    if (ecbits >= 160)
+        return 80;
+    return ecbits / 2;
+}
+
 int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor,
     BN_CTX *ctx)
 {
-
     if (group->cofactor == NULL)
         return 0;
     if (!BN_copy(cofactor, group->cofactor))

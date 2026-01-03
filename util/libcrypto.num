@@ -617,6 +617,7 @@ EC_GROUP_get_mont_data                  ?	4_0_0	EXIST::FUNCTION:EC
 EC_GROUP_get_order                      ?	4_0_0	EXIST::FUNCTION:EC
 EC_GROUP_get0_order                     ?	4_0_0	EXIST::FUNCTION:EC
 EC_GROUP_order_bits                     ?	4_0_0	EXIST::FUNCTION:EC
+EC_GROUP_security_bits                  ?	4_0_0	EXIST::FUNCTION:EC
 EC_GROUP_get_cofactor                   ?	4_0_0	EXIST::FUNCTION:EC
 EC_GROUP_get0_cofactor                  ?	4_0_0	EXIST::FUNCTION:EC
 EC_GROUP_set_curve_name                 ?	4_0_0	EXIST::FUNCTION:EC

@@ -214,19 +214,7 @@ static int ec_bits(const EVP_PKEY *pkey)
 
 static int ec_security_bits(const EVP_PKEY *pkey)
 {
-    int ecbits = ec_bits(pkey);
-
-    if (ecbits >= 512)
-        return 256;
-    if (ecbits >= 384)
-        return 192;
-    if (ecbits >= 256)
-        return 128;
-    if (ecbits >= 224)
-        return 112;
-    if (ecbits >= 160)
-        return 80;
-    return ecbits / 2;
+    return EC_GROUP_security_bits(EC_KEY_get0_group(pkey->pkey.ec));
 }
 
 static int ec_missing_parameters(const EVP_PKEY *pkey)

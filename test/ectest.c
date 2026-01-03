@@ -306,6 +306,7 @@ static int prime_field_tests(void)
                                  "3168947d59dcc912042351377ac5fb32"))
         || !TEST_BN_eq(y, z)
         || !TEST_int_eq(EC_GROUP_get_degree(group), 160)
+        || !TEST_int_eq(EC_GROUP_security_bits(group), 80)
         || !group_order_tests(group)
 
         /* Curve P-192 (FIPS PUB 186-2, App. 6) */
@@ -343,6 +344,7 @@ static int prime_field_tests(void)
         || !TEST_false(EC_POINT_set_affine_coordinates(group, P, x, yplusone,
             ctx))
         || !TEST_int_eq(EC_GROUP_get_degree(group), 192)
+        || !TEST_int_eq(EC_GROUP_security_bits(group), 80)
         || !group_order_tests(group)
 
         /* Curve P-224 (FIPS PUB 186-2, App. 6) */
@@ -380,6 +382,7 @@ static int prime_field_tests(void)
         || !TEST_false(EC_POINT_set_affine_coordinates(group, P, x, yplusone,
             ctx))
         || !TEST_int_eq(EC_GROUP_get_degree(group), 224)
+        || !TEST_int_eq(EC_GROUP_security_bits(group), 112)
         || !group_order_tests(group)
 
         /* Curve P-256 (FIPS PUB 186-2, App. 6) */
@@ -418,6 +421,7 @@ static int prime_field_tests(void)
         || !TEST_false(EC_POINT_set_affine_coordinates(group, P, x, yplusone,
             ctx))
         || !TEST_int_eq(EC_GROUP_get_degree(group), 256)
+        || !TEST_int_eq(EC_GROUP_security_bits(group), 128)
         || !group_order_tests(group)
 
         /* Curve P-384 (FIPS PUB 186-2, App. 6) */
@@ -462,6 +466,7 @@ static int prime_field_tests(void)
         || !TEST_false(EC_POINT_set_affine_coordinates(group, P, x, yplusone,
             ctx))
         || !TEST_int_eq(EC_GROUP_get_degree(group), 384)
+        || !TEST_int_eq(EC_GROUP_security_bits(group), 192)
         || !group_order_tests(group)
 
         /* Curve P-521 (FIPS PUB 186-2, App. 6) */
@@ -516,6 +521,7 @@ static int prime_field_tests(void)
         || !TEST_false(EC_POINT_set_affine_coordinates(group, P, x, yplusone,
             ctx))
         || !TEST_int_eq(EC_GROUP_get_degree(group), 521)
+        || !TEST_int_eq(EC_GROUP_security_bits(group), 256)
         || !group_order_tests(group)
 
         /* more tests using the last curve */
@@ -612,6 +618,7 @@ static struct c2_curve_test {
     const char *order;
     const char *cof;
     int degree;
+    int security;
 } char2_curve_tests[] = {
     /* Curve K-163 (FIPS PUB 186-2, App. 6) */
     {
@@ -621,7 +628,7 @@ static struct c2_curve_test {
         "1",
         "02FE13C0537BBC11ACAA07D793DE4E6D5E5C94EEE8",
         "0289070FB05D38FF58321F2E800536D538CCDAA3D9",
-        1, "04000000000000000000020108A2E0CC0D99F8A5EF", "2", 163 },
+        1, "04000000000000000000020108A2E0CC0D99F8A5EF", "2", 163, 80 },
     /* Curve B-163 (FIPS PUB 186-2, App. 6) */
     {
         "NIST curve B-163",
@@ -630,7 +637,7 @@ static struct c2_curve_test {
         "020A601907B8C953CA1481EB10512F78744A3205FD",
         "03F0EBA16286A2D57EA0991168D4994637E8343E36",
         "00D51FBC6C71A0094FA2CDD545B11C5C0C797324F1",
-        1, "040000000000000000000292FE77E70C12A4234C33", "2", 163 },
+        1, "040000000000000000000292FE77E70C12A4234C33", "2", 163, 80 },
     /* Curve K-233 (FIPS PUB 186-2, App. 6) */
     {
         "NIST curve K-233",
@@ -641,7 +648,7 @@ static struct c2_curve_test {
         "01DB537DECE819B7F70F555A67C427A8CD9BF18AEB9B56E0C11056FAE6A3",
         0,
         "008000000000000000000000000000069D5BB915BCD46EFB1AD5F173ABDF",
-        "4", 233 },
+        "4", 233, 112 },
     /* Curve B-233 (FIPS PUB 186-2, App. 6) */
     {
         "NIST curve B-233",
@@ -652,7 +659,7 @@ static struct c2_curve_test {
         "01006A08A41903350678E58528BEBF8A0BEFF867A7CA36716F7E01F81052",
         1,
         "01000000000000000000000000000013E974E72F8A6922031D2603CFE0D7",
-        "2", 233 },
+        "2", 233, 112 },
     /* Curve K-283 (FIPS PUB 186-2, App. 6) */
     {
         "NIST curve K-283",
@@ -667,7 +674,7 @@ static struct c2_curve_test {
         0,
         "01FFFFFF"
         "FFFFFFFFFFFFFFFFFFFFFFFFFFFFE9AE2ED07577265DFF7F94451E061E163C61",
-        "4", 283 },
+        "4", 283, 128 },
     /* Curve B-283 (FIPS PUB 186-2, App. 6) */
     {
         "NIST curve B-283",
@@ -684,7 +691,7 @@ static struct c2_curve_test {
         1,
         "03FFFFFF"
         "FFFFFFFFFFFFFFFFFFFFFFFFFFFFEF90399660FC938A90165B042A7CEFADB307",
-        "2", 283 },
+        "2", 283, 128 },
     /* Curve K-409 (FIPS PUB 186-2, App. 6) */
     {
         "NIST curve K-409",
@@ -699,7 +706,7 @@ static struct c2_curve_test {
         1,
         "007FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
         "FFFFFFFFFFFFFE5F83B2D4EA20400EC4557D5ED3E3E7CA5B4B5C83B8E01E5FCF",
-        "4", 409 },
+        "4", 409, 192 },
     /* Curve B-409 (FIPS PUB 186-2, App. 6) */
     {
         "NIST curve B-409",
@@ -716,7 +723,7 @@ static struct c2_curve_test {
         1,
         "0100000000000000000000000000000000000000"
         "00000000000001E2AAD6A612F33307BE5FA47C3C9E052F838164CD37D9A21173",
-        "2", 409 },
+        "2", 409, 192 },
     /* Curve K-571 (FIPS PUB 186-2, App. 6) */
     {
         "NIST curve K-571",
@@ -735,7 +742,7 @@ static struct c2_curve_test {
         "0200000000000000"
         "00000000000000000000000000000000000000000000000000000000131850E1"
         "F19A63E4B391A8DB917F4138B630D84BE5D639381E91DEB45CFE778F637C1001",
-        "4", 571 },
+        "4", 571, 256 },
     /* Curve B-571 (FIPS PUB 186-2, App. 6) */
     {
         "NIST curve B-571",
@@ -758,7 +765,7 @@ static struct c2_curve_test {
         "03FFFFFFFFFFFFFF"
         "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE661CE18"
         "FF55987308059B186823851EC7DD9CA1161DE93D5174D66E8382E9BB2FE84E47",
-        "2", 571 }
+        "2", 571, 256 }
 };
 
 static int char2_curve_test(int n)
@@ -836,6 +843,7 @@ static int char2_curve_test(int n)
 #endif
 
     if (!TEST_int_eq(EC_GROUP_get_degree(group), test->degree)
+        || !TEST_int_eq(EC_GROUP_security_bits(group), test->security)
         || !group_order_tests(group))
         goto err;
 
@@ -1183,6 +1191,7 @@ static int group_field_test(void)
 struct nistp_test_params {
     const int nid;
     int degree;
+    int security;
     /*
      * Qx, Qy and D are taken from
      * http://csrc.nist.gov/groups/ST/toolkit/documents/Examples/ECDSA_Prime.pdf
@@ -1196,6 +1205,7 @@ static const struct nistp_test_params nistp_tests_params[] = {
         /* P-224 */
         NID_secp224r1,
         224,
+        112,
         /* p */
         "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000000000000000000001",
         /* a */
@@ -1219,6 +1229,7 @@ static const struct nistp_test_params nistp_tests_params[] = {
         /* P-256 */
         NID_X9_62_prime256v1,
         256,
+        128,
         /* p */
         "ffffffff00000001000000000000000000000000ffffffffffffffffffffffff",
         /* a */
@@ -1242,6 +1253,7 @@ static const struct nistp_test_params nistp_tests_params[] = {
         /* P-521 */
         NID_secp521r1,
         521,
+        256,
         /* p */
         "1ff"
         "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
@@ -1330,7 +1342,8 @@ static int nistp_single_test(int idx)
         || !TEST_true(EC_POINT_set_affine_coordinates(NISTP, G, x, y, ctx))
         || !TEST_true(BN_hex2bn(&order, test->order))
         || !TEST_true(EC_GROUP_set_generator(NISTP, G, order, BN_value_one()))
-        || !TEST_int_eq(EC_GROUP_get_degree(NISTP), test->degree))
+        || !TEST_int_eq(EC_GROUP_get_degree(NISTP), test->degree)
+        || !TEST_int_eq(EC_GROUP_security_bits(NISTP), test->security))
         goto err;
 
     TEST_note("NIST test vectors ... ");
@@ -3003,6 +3016,11 @@ static int do_test_custom_explicit_fromdata(EC_GROUP *group, BN_CTX *ctx,
             goto err;
     }
 
+    if (!TEST_true(EVP_PKEY_get_int_param(pkeyparam,
+            OSSL_PKEY_PARAM_EC_FIELD_DEGREE, &i_out))
+        || !TEST_int_eq(EC_GROUP_get_degree(group), i_out))
+        goto err;
+
     if (EC_GROUP_get_field_type(group) == NID_X9_62_prime_field) {
         /* No extra fields should be set for a prime field */
         if (!TEST_false(EVP_PKEY_get_int_param(pkeyparam,
@@ -3493,7 +3511,7 @@ static int ec_d2i_publickey_test(void)
     const unsigned char *pk_enc = pubkey_enc;
     EVP_PKEY *gen_key = NULL, *decoded_key = NULL;
     EVP_PKEY_CTX *pctx = NULL;
-    int pklen, ret = 0;
+    int pklen, i_out = 0, ret = 0;
     OSSL_PARAM params[2];
 
     if (!TEST_ptr(gen_key = EVP_EC_gen("P-256")))
@@ -3516,8 +3534,15 @@ static int ec_d2i_publickey_test(void)
                          &pk_enc, pklen)))
         goto err;
 
-    if (!TEST_true(EVP_PKEY_eq(gen_key, decoded_key)))
+    if (!TEST_true(EVP_PKEY_eq(gen_key, decoded_key))
+        || !TEST_true(EVP_PKEY_get_int_param(gen_key,
+            OSSL_PKEY_PARAM_EC_FIELD_DEGREE, &i_out))
+        || !TEST_int_eq(i_out, 256)
+        || !TEST_true(EVP_PKEY_get_int_param(decoded_key,
+            OSSL_PKEY_PARAM_EC_FIELD_DEGREE, &i_out))
+        || !TEST_int_eq(i_out, 256))
         goto err;
+
     ret = 1;
 
 err:
