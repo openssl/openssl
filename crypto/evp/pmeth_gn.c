@@ -107,6 +107,8 @@ int EVP_PKEY_generate(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
     /* Legacy compatible keygen callback info, only used with provider impls */
     int gentmp[2];
 
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
     if (ppkey == NULL)
         return -1;
 
