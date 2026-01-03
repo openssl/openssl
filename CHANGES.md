@@ -32,6 +32,13 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Fixed CAdES verification to correctly reject signatures that lack signed
+   attributes, as required by RFC 5652. Previously, `openssl
+   cms -verify -cades` incorrectly succeeded when verifying signatures created
+   with `-noattr` (no signed attributes).
+
+   *Jeffrey Kintscher*
+
  * Removed configure options can now only be disabled. You may continue to use
    `disable-<feature>`, which will remain supported. Using `enable-<feature>`
    for a removed feature is no longer permitted.

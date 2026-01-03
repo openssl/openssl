@@ -384,7 +384,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
     if ((flags & CMS_NO_ATTR_VERIFY) == 0 || cadesVerify) {
         for (i = 0; i < scount; i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
-            if (CMS_signed_get_attr_count(si) < 0)
+            if (CMS_signed_get_attr_count(si) < 0 && !cadesVerify)
                 continue;
             if (CMS_SignerInfo_verify(si) <= 0)
                 goto err;
