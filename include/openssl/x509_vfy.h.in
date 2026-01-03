@@ -169,7 +169,7 @@ typedef int (*X509_STORE_CTX_cert_crl_fn)(X509_STORE_CTX *ctx,
     X509_CRL *crl, X509 *x);
 typedef int (*X509_STORE_CTX_check_policy_fn)(X509_STORE_CTX *ctx);
 typedef STACK_OF(X509)
-    *(*X509_STORE_CTX_lookup_certs_fn)(X509_STORE_CTX *ctx,
+    *(*X509_STORE_CTX_lookup_certs_fn)(const X509_STORE_CTX *ctx,
         const X509_NAME *nm);
 typedef STACK_OF(X509_CRL)
     *(*X509_STORE_CTX_lookup_crls_fn)(const X509_STORE_CTX *ctx,
@@ -427,7 +427,7 @@ STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *xs);
 #endif
 STACK_OF(X509_OBJECT) *X509_STORE_get1_objects(X509_STORE *xs);
 STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *xs);
-STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *xs,
+STACK_OF(X509) *X509_STORE_CTX_get1_certs(const X509_STORE_CTX *xs,
     const X509_NAME *nm);
 STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(const X509_STORE_CTX *st,
     const X509_NAME *nm);
