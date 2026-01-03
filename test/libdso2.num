@@ -1,0 +1,2 @@
+do_dso2_setup                          1    *   EXIST::FUNCTION:
+do_dso2_fini                           2    *   EXIST::FUNCTION:

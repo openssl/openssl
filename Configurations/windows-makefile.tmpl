@@ -918,6 +918,7 @@ EOF
      my $deps = join(" ", @objs, @ress, @defs, @deps);
      my $import = platform->sharedlib_import($lib);
      my $dll =  platform->sharedlib($lib);
+     my $dlldir = dirname($dll);
      my $shared_def = $target{lddefflag} . join("", @defs);
      my $implib_rule = $target{ld_implib_rule} || "";
      my $implib_flag = $target{ld_implib_flag}
@@ -938,11 +939,11 @@ $objs$target{ld_resp_delim}\$(LDOUTFLAG)$dll$target{ldpostoutflag}$target{ld_res
 	IF EXIST $dll.manifest \\
 	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$dll.manifest \$(MTOUTFLAG)$dll
 	IF EXIST apps\\$dll DEL /Q /F apps\\$dll
-	IF EXIST test\\$dll DEL /Q /F test\\$dll
 	IF EXIST fuzz\\$dll DEL /Q /F fuzz\\$dll
 	COPY $dll apps
-	COPY $dll test
 	COPY $dll fuzz
+    IF NOT "$dlldir" == "test" ( IF EXIST test\\$dll DEL /Q /F test\\$dll )
+    IF NOT "$dlldir" == "test" ( COPY $dll test )
 EOF
  }
  sub obj2dso {

@@ -1779,6 +1779,9 @@ EOF
       die "More than one exported symbol map" if scalar @defs > 1;
 
       my $full = platform->sharedlib($args{lib});
+      my $dirfull = dirname($full);
+      my $basefull = basename($full);
+
       # $import is for Windows and subsystems thereof, where static import
       # libraries for DLLs are a thing.  On platforms that have this mechanism,
       # $import has the name of this import library.  On platforms that don't
@@ -1840,7 +1843,7 @@ EOF
               $recipe .= <<"EOF";
 $simple: $full
 	rm -f $simple && \\
-	ln -s $full $simple
+	ln -s $basefull $simple
 EOF
           }
       }
@@ -1872,7 +1875,7 @@ EOF
 	cp -p $full apps/
 	cp -p $full fuzz/
 EOF
-          if (!$disabled{tests}) {
+          if (!$disabled{tests} && ("$dirfull" ne "test")) {
             $recipe .= <<"EOF";
 	rm -f test/$full
 	cp -p $full test/

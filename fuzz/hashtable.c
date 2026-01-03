@@ -390,5 +390,4 @@ void FuzzerCleanup(void)
 {
     ossl_ht_free(fuzzer_table);
     OPENSSL_free(prediction_table);
-    OPENSSL_cleanup();
 }

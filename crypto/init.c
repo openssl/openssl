@@ -18,6 +18,7 @@
 #include "crypto/async.h"
 #include "internal/comp.h"
 #include "internal/err.h"
+#include "internal/tsan_assist.h"
 #include "crypto/err.h"
 #include "crypto/objects.h"
 #include <stdlib.h>
@@ -36,6 +37,21 @@
 #ifdef S390X_MOD_EXP
 #include "s390x_arch.h"
 #endif
+
+#if !defined(OPENSSL_SYS_WIN32)
+__attribute__((constructor)) static void library_constructor(void)
+{
+    if (!OPENSSL_add_library_user())
+        return;
+}
+
+__attribute__((destructor)) static void library_destructor(void)
+{
+    OPENSSL_cleanup_ex();
+}
+#endif
+
+static void OPENSSL_cleanup_int(int legacy_cleanup);
 
 static int stopped = 0;
 static uint64_t optsdone = 0;
@@ -212,8 +228,75 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_async)
     return 1;
 }
 
+static TSAN_QUALIFIER int library_users = 0;
+static TSAN_QUALIFIER int library_refcount_used = 0;
+
+__owur int OPENSSL_add_library_user(void)
+{
+    int used;
+
+    tsan_counter(&library_users);
+
+    /*
+     * Flag that some component has used the library refcount
+     * api within this process
+     */
+    used = tsan_load(&library_refcount_used);
+    if (used == 0)
+        tsan_counter(&library_refcount_used);
+    return 1;
+}
+
+#ifndef OPENSSL_NO_DEPRECATED_4_0
 void OPENSSL_cleanup(void)
 {
+    OPENSSL_cleanup_int(1);
+}
+#endif
+
+void OPENSSL_cleanup_ex(void)
+{
+    OPENSSL_cleanup_int(0);
+}
+
+static void OPENSSL_cleanup_int(int legacy_cleanup)
+{
+    int count;
+    int used;
+
+    if (legacy_cleanup == 0) {
+        /*
+         * Note: We have to do this decr/load tomfoolery here because
+         * the implementations of tsan_add (which is used in the implementation
+         * of tsan_decr) is inconsistent.  On most platforms its an atomic fetch/add operation
+         * EXCEPT on armv4, in which its a non-atomic expression evaluation (implying its
+         * an add/fetch operation). because of that we never know if what's returned from
+         * tsan_decr is a pre or post decremented value.  The only way to be sure is to
+         * do the decrement and then load the result to guarantee post decrement evaluation
+         */
+        tsan_decr(&library_users);
+        count = tsan_load(&library_users);
+        OPENSSL_assert(count >= 0);
+        if (count > 0) {
+            return;
+        }
+    } else {
+        /*
+         * If we are using the legacy OPENSSL_cleanup api, then we need to
+         * be careful here.  If no other software component has used the
+         * new refcounting api, then OPENSSL_cleanup can function as it
+         * normally would, but if _any_ software component has used the new
+         * api, then the legacy api should become a no-op.  This ensures that
+         * if we have a combination of new and old api usages within a process,
+         * then the outcome is that, at worst, we leak memory at process exit
+         * rather than cleaning the library while other users are still making
+         * use of it.
+         */
+        used = tsan_load(&library_refcount_used);
+        if (used != 0)
+            return;
+    }
+
     /*
      * At some point we should consider looking at this function with a view to
      * moving most/all of this into onfree handlers in OSSL_LIB_CTX.
@@ -326,6 +409,21 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 {
     uint64_t tmp;
     int aloaddone = 0;
+
+#if !defined(OPENSSL_SYS_WIN32)
+    /*
+     * Note: This requires some explanation.  Because we're using a destructor for
+     * cleanup and teardown, we have some build time issues to accommodate.  If libcrypto
+     * is built as a static library, the constructor/destructor may not get included, as archive
+     * files only pull in referenced symbols at link time. Since constructors/destructors aren't
+     * typically referenced, they never get pulled in to a statically linked application, and
+     * so we never clean up memory.
+     * To adjust for that, we reference them here, in a function that we know will always get
+     * pulled in to avoid that happening
+     */
+    static void (*linkholder)(void) __attribute__((used)) = library_constructor;
+    static void (*linkdownholder)(void) __attribute__((used)) = library_destructor;
+#endif
 
     /* Applications depend on 0 being returned when cleanup was already done */
     if (ossl_unlikely(stopped)) {

@@ -669,5 +669,4 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 
 void FuzzerCleanup(void)
 {
-    OPENSSL_cleanup();
 }
