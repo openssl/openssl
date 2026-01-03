@@ -1037,9 +1037,6 @@ static int final_ec_pt_formats(SSL_CONNECTION *s, unsigned int context,
 {
     unsigned long alg_k, alg_a;
 
-    if (s->server)
-        return 1;
-
     alg_k = s->s3.tmp.new_cipher->algorithm_mkey;
     alg_a = s->s3.tmp.new_cipher->algorithm_auth;
 

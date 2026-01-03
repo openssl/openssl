@@ -32,6 +32,15 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Fixed TLS 1.2 ECDHE server-side validation of EC point format extension.
+   The server now properly validates that clients include the uncompressed
+   point format (0x00) in the EC Point Formats extension when negotiating
+   ECDHE cipher suites, as required by RFC 8422 Section 5.1. Invalid EC
+   point encodings in ClientKeyExchange messages are now correctly rejected
+   with an illegal_parameter alert instead of internal_error.
+
+   *Jeffrey Kintscher*
+ 
  * Removed configure options can now only be disabled. You may continue to use
    `disable-<feature>`, which will remain supported. Using `enable-<feature>`
    for a removed feature is no longer permitted.
