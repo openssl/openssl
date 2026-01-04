@@ -179,8 +179,6 @@ static int test_encode_line_lengths_reinforced(void)
         for (int partial_ctx_fill = 0; partial_ctx_fill <= 80;
             partial_ctx_fill += 1) {
             for (int ctx_len = 1; ctx_len <= 80; ctx_len += 1) {
-                printf("Trial %d, input length %d, ctx length %d, partial ctx fill %d\n",
-                    t + 1, inl, ctx_len, partial_ctx_fill);
                 EVP_ENCODE_CTX *ctx_simd = EVP_ENCODE_CTX_new();
                 EVP_ENCODE_CTX *ctx_ref = EVP_ENCODE_CTX_new();
 
