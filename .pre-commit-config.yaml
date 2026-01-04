@@ -10,4 +10,4 @@ repos:
       - id: "clang-format"
         types_or: []
         files: '\.c\.in$|\.h\.in$|\.c$|\.h$'
-        args: ["--style=file"]
+        args: ["--Werror", "--dry-run", "--style=file"]
