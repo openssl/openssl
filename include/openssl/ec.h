@@ -253,6 +253,14 @@ const BIGNUM *EC_GROUP_get0_order(const EC_GROUP *group);
  */
 int EC_GROUP_order_bits(const EC_GROUP *group);
 
+/** Gets the symmetric-equivalent security bit size an EC_GROUP.
+ * This is rounded down to one of the standard sizes, (80, 112,
+ * 128, 192, 256) or reported as-is when smaller than 80.
+ *  \param  group  EC_GROUP object
+ *  \return symmetric-equivalent security bits.
+ */
+int EC_GROUP_security_bits(const EC_GROUP *group);
+
 /** Gets the cofactor of a EC_GROUP
  *  \param  group     EC_GROUP object
  *  \param  cofactor  BIGNUM to which the cofactor is copied
