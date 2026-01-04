@@ -673,6 +673,11 @@ sub vsetivli__x0_4_e32_m1_tu_mu {
     return ".word 0xc1027057";
 }
 
+sub vsetivli__x0_4_e32_mf2_tu_mu {
+    # vsetivli x0, 4, e32, m1, tu, mu
+    return ".word 0xc1727057";
+}
+
 sub vsetivli__x0_4_e64_m1_tu_mu {
     # vsetivli x0, 4, e64, m1, tu, mu
     return ".word 0xc1827057";
