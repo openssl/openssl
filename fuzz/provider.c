@@ -224,7 +224,6 @@ end:
 
 static int read_octet_ptr(const uint8_t **buf, size_t *len, char **res)
 {
-    /* TODO: This representation could need an improvement potentially. */
     if (*len > 1 && **buf == 0xFF && *(*buf + 1) == 0xFF) {
         /* represent NULL somehow */
         *res = NULL;
@@ -260,19 +259,43 @@ static void free_params(OSSL_PARAM *param)
     }
 }
 
-static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *len)
+
+typedef struct {
+    OSSL_PARAM *params;
+    void **allocated_buffers;
+    size_t num_params;
+} FUZZED_PARAMS;
+
+static void fuzzed_params_free(FUZZED_PARAMS *fp) {
+    if (fp == NULL)
+        return;
+    if (fp->allocated_buffers != NULL) {
+        for (size_t i = 0; i < fp->num_params; i++) {
+            OPENSSL_free(fp->allocated_buffers[i]);
+        }
+        OPENSSL_free(fp->allocated_buffers);
+    }
+    OPENSSL_free(fp->params);
+    OPENSSL_free(fp);
+}
+
+static FUZZED_PARAMS *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *len)
 {
     OSSL_PARAM *p;
-    OSSL_PARAM *fuzzed_parameters;
+    FUZZED_PARAMS *fuzzed_parameters;
     int p_num = 0;
 
     for (p = param; p != NULL && p->key != NULL; p++)
         p_num++;
 
-    fuzzed_parameters = OPENSSL_calloc(p_num + 1, sizeof(OSSL_PARAM));
-    p = fuzzed_parameters;
+    fuzzed_parameters = OPENSSL_calloc(1, sizeof(FUZZED_PARAMS));
+    fuzzed_parameters->allocated_buffers = OPENSSL_malloc(p_num * sizeof(void *));
+    fuzzed_parameters->num_params = p_num;
+    fuzzed_parameters->params = OPENSSL_calloc(p_num + 1, sizeof(OSSL_PARAM));
+    p = fuzzed_parameters->params;
 
-    for (; param != NULL && param->key != NULL; param++) {
+    int idx = 0;
+    for (; param != NULL && param->key != NULL; param++, idx++) {
         int64_t *use_param = NULL;
         int64_t *p_value_int = NULL;
         uint64_t *p_value_uint = NULL;
@@ -281,7 +304,7 @@ static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *l
         char *p_value_octet_str = DFLT_OCTET_STRING;
         char *p_value_utf8_ptr = DFLT_UTF8_PTR;
         char *p_value_octet_ptr = DFLT_OCTET_PTR;
-
+        void *allocated = NULL;
         int data_len = 0;
 
         if (!read_int(buf, len, &use_param)) {
@@ -307,10 +330,8 @@ static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *l
                 p_value_int = OPENSSL_malloc(sizeof(int64_t));
                 *p_value_int = 0;
             }
-
-            *p = *param;
+            allocated = p_value_int;
             p->data = p_value_int;
-            p++;
             break;
         case OSSL_PARAM_UNSIGNED_INTEGER:
             if (strcmp(param->key, OSSL_KDF_PARAM_ITER) == 0) {
@@ -329,60 +350,49 @@ static OSSL_PARAM *fuzz_params(OSSL_PARAM *param, const uint8_t **buf, size_t *l
                 p_value_uint = OPENSSL_malloc(sizeof(uint64_t));
                 *p_value_uint = 0;
             }
-
-            *p = *param;
+            allocated = p_value_uint;
             p->data = p_value_uint;
-            p++;
             break;
         case OSSL_PARAM_REAL:
             if (!*use_param || !read_double(buf, len, &p_value_double)) {
                 p_value_double = OPENSSL_malloc(sizeof(double));
                 *p_value_double = 0;
             }
-
-            *p = *param;
+            allocated = p_value_double;
             p->data = p_value_double;
-            p++;
             break;
         case OSSL_PARAM_UTF8_STRING:
             if (*use_param && (data_len = read_utf8_string(buf, len, &p_value_utf8_str)) < 0)
                 data_len = 0;
-            *p = *param;
             p->data = p_value_utf8_str;
             p->data_size = data_len;
-            p++;
             break;
         case OSSL_PARAM_OCTET_STRING:
             if (*use_param && (data_len = read_octet_string(buf, len, &p_value_octet_str)) < 0)
                 data_len = 0;
-            *p = *param;
             p->data = p_value_octet_str;
             p->data_size = data_len;
-            p++;
             break;
         case OSSL_PARAM_UTF8_PTR:
             if (*use_param && (data_len = read_utf8_ptr(buf, len, &p_value_utf8_ptr)) < 0)
                 data_len = 0;
-            *p = *param;
             p->data = p_value_utf8_ptr;
             p->data_size = data_len;
-            p++;
             break;
         case OSSL_PARAM_OCTET_PTR:
             if (*use_param && (data_len = read_octet_ptr(buf, len, &p_value_octet_ptr)) < 0)
                 data_len = 0;
-            *p = *param;
             p->data = p_value_octet_ptr;
             p->data_size = data_len;
-            p++;
             break;
         default:
             break;
         }
-
+        *p = *param;
+        fuzzed_parameters->allocated_buffers[idx] = allocated;
+        p++;
         OPENSSL_free(use_param);
     }
-
     return fuzzed_parameters;
 }
 
@@ -578,18 +588,17 @@ end:
     return r;
 }
 
-#define EVP_FUZZ(source, evp, f)                                                               \
-    do {                                                                                       \
-        evp *alg = sk_##evp##_value(source, *algorithm % sk_##evp##_num(source));              \
-        OSSL_PARAM *fuzzed_params;                                                             \
-                                                                                               \
-        if (alg == NULL)                                                                       \
-            break;                                                                             \
-        fuzzed_params = fuzz_params((OSSL_PARAM *)evp##_settable_ctx_params(alg), &buf, &len); \
-        if (fuzzed_params != NULL)                                                             \
-            f(alg, fuzzed_params);                                                             \
-        free_params(fuzzed_params);                                                            \
-        OSSL_PARAM_free(fuzzed_params);                                                        \
+#define EVP_FUZZ(source, evp, f) \
+    do { \
+        evp *alg = sk_##evp##_value(source, *algorithm % sk_##evp##_num(source)); \
+        FUZZED_PARAMS *fuzzed_parameters; \
+        \
+        if (alg == NULL) \
+            break; \
+        fuzzed_parameters = fuzz_params((OSSL_PARAM*) evp##_settable_ctx_params(alg), &buf, &len); \
+        if (fuzzed_parameters != NULL) \
+            f(alg, fuzzed_parameters->params); \
+        fuzzed_params_free(fuzzed_parameters); \
     } while (0);
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
