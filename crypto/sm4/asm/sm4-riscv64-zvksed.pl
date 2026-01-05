@@ -451,56 +451,56 @@ rv64i_zvksed_sm4_cbc_decrypt:
     addi $base, $in, -128
     @{[reverse_order_L $vivec, $base]}
 
-    # Save the plaintext (in reverse element order)
-    @{[reverse_order_S $vdata0, $out]}
-    addi $out, $out, $BLOCK_SIZE
-
     @{[vxor_vv $vdata1, $vdata1, $vivec]}
 
     addi $base, $in, -112
     @{[reverse_order_L $vivec, $base]}
-    @{[reverse_order_S $vdata1, $out]}
-    addi $out, $out, $BLOCK_SIZE
 
     @{[vxor_vv $vdata2, $vdata2, $vivec]}
 
     addi $base, $in, -96
     @{[reverse_order_L $vivec, $base]}
-    @{[reverse_order_S $vdata2, $out]}
-    addi $out, $out, $BLOCK_SIZE
 
     @{[vxor_vv $vdata3, $vdata3, $vivec]}
 
     addi $base, $in, -80
     @{[reverse_order_L $vivec, $base]}
-    @{[reverse_order_S $vdata3, $out]}
-    addi $out, $out, $BLOCK_SIZE
 
     @{[vxor_vv $vdata4, $vdata4, $vivec]}
 
     addi $base, $in, -64
     @{[reverse_order_L $vivec, $base]}
-    @{[reverse_order_S $vdata4, $out]}
-    addi $out, $out, $BLOCK_SIZE
 
     @{[vxor_vv $vdata5, $vdata5, $vivec]}
 
     addi $base, $in, -48
     @{[reverse_order_L $vivec, $base]}
-    @{[reverse_order_S $vdata5, $out]}
-    addi $out, $out, $BLOCK_SIZE
 
     @{[vxor_vv $vdata6, $vdata6, $vivec]}
 
     addi $base, $in, -32
     @{[reverse_order_L $vivec, $base]}
-    @{[reverse_order_S $vdata6, $out]}
-    addi $out, $out, $BLOCK_SIZE
 
     @{[vxor_vv $vdata7, $vdata7, $vivec]}
 
     addi $base, $in, -16
     @{[reverse_order_L $vivec, $base]}
+
+    # Save the plaintext (in reverse element order)
+    @{[reverse_order_S $vdata0, $out]}
+    addi $out, $out, $BLOCK_SIZE
+    @{[reverse_order_S $vdata1, $out]}
+    addi $out, $out, $BLOCK_SIZE
+    @{[reverse_order_S $vdata2, $out]}
+    addi $out, $out, $BLOCK_SIZE
+    @{[reverse_order_S $vdata3, $out]}
+    addi $out, $out, $BLOCK_SIZE
+    @{[reverse_order_S $vdata4, $out]}
+    addi $out, $out, $BLOCK_SIZE
+    @{[reverse_order_S $vdata5, $out]}
+    addi $out, $out, $BLOCK_SIZE
+    @{[reverse_order_S $vdata6, $out]}
+    addi $out, $out, $BLOCK_SIZE
     @{[reverse_order_S $vdata7, $out]}
     addi $out, $out, $BLOCK_SIZE
 
@@ -548,28 +548,29 @@ rv64i_zvksed_sm4_cbc_decrypt:
     # Update ciphertext to IV (in reverse element order)
     addi $base, $in, -64
     @{[reverse_order_L $vivec, $base]}
-    # Save the plaintext (in reverse element order)
-    @{[reverse_order_S $vdata0, $out]}
-    addi $out, $out, $BLOCK_SIZE
 
     @{[vxor_vv $vdata1, $vdata1, $vivec]}
 
     addi $base, $in, -48
     @{[reverse_order_L $vivec, $base]}
-    @{[reverse_order_S $vdata1, $out]}
-    addi $out, $out, $BLOCK_SIZE
 
     @{[vxor_vv $vdata2, $vdata2, $vivec]}
 
     addi $base, $in, -32
     @{[reverse_order_L $vivec, $base]}
-    @{[reverse_order_S $vdata2, $out]}
-    addi $out, $out, $BLOCK_SIZE
 
     @{[vxor_vv $vdata3, $vdata3, $vivec]}
 
     addi $base, $in, -16
     @{[reverse_order_L $vivec, $base]}
+
+    # Save the plaintext (in reverse element order)
+    @{[reverse_order_S $vdata0, $out]}
+    addi $out, $out, $BLOCK_SIZE
+    @{[reverse_order_S $vdata1, $out]}
+    addi $out, $out, $BLOCK_SIZE
+    @{[reverse_order_S $vdata2, $out]}
+    addi $out, $out, $BLOCK_SIZE
     @{[reverse_order_S $vdata3, $out]}
     addi $out, $out, $BLOCK_SIZE
 
