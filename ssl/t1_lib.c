@@ -1088,7 +1088,7 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
 int tls1_set_groups(uint16_t **grpext, size_t *grpextlen,
                     uint16_t **ksext, size_t *ksextlen,
                     size_t **tplext, size_t *tplextlen,
-                    int *groups, size_t ngroups)
+                    const int *groups, size_t ngroups)
 {
     uint16_t *glist = NULL, *kslist = NULL;
     size_t *tpllist = NULL;
