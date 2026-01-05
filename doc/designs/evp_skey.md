@@ -102,9 +102,9 @@ EVP_SKEY *EVP_SKEY_generate(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
 EVP_SKEY *EVP_SKEY_import(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
                           const char *propquery,
                           int selection, const OSSL_PARAM *params);
-EVP_SKEY *EVP_SKEY_import_raw(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
-                              const char *key, size_t keylen,
-                              const char *propquery);
+EVP_SKEY *EVP_SKEY_import_raw_key(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
+                                  unsigned char *key, size_t keylen,
+                                  const char *propquery);
 int EVP_SKEY_up_ref(EVP_SKEY *skey);
 void EVP_SKEY_free(EVP_SKEY *skey);
 ```
