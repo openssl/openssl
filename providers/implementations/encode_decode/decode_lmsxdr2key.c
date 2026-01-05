@@ -56,8 +56,8 @@ static int lmsxdr2key_does_selection(void *provctx, int selection)
 }
 
 static int lmsxdr2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
-                             OSSL_CALLBACK *data_cb, void *data_cbarg,
-                             OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
+    OSSL_CALLBACK *data_cb, void *data_cbarg,
+    OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
     struct lmsxdr2key_ctx_st *ctx = vctx;
     LMS_KEY *key = NULL;
@@ -97,7 +97,7 @@ static int lmsxdr2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
             key = NULL;
         }
     }
- next:
+next:
     /*
      * Indicated that we successfully decoded something, or not at all.
      * Ending up "empty handed" is not an error.
@@ -116,15 +116,12 @@ static int lmsxdr2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         OSSL_PARAM params[4];
         int object_type = OSSL_OBJECT_PKEY;
 
-        params[0] =
-            OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_TYPE, &object_type);
-        params[1] =
-            OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
-                                             (char *)"lms", 0);
+        params[0] = OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_TYPE, &object_type);
+        params[1] = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
+            (char *)"lms", 0);
         /* The address of the key becomes the octet string */
-        params[2] =
-            OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_REFERENCE,
-                                              &key, sizeof(key));
+        params[2] = OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_REFERENCE,
+            &key, sizeof(key));
         params[3] = OSSL_PARAM_construct_end();
 
         ok = data_cb(params, data_cbarg);
@@ -136,13 +133,12 @@ static int lmsxdr2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 }
 
 static int lmsxdr2key_export_object(void *vctx,
-                                    const void *reference, size_t reference_sz,
-                                    OSSL_CALLBACK *export_cb,
-                                    void *export_cbarg)
+    const void *reference, size_t reference_sz,
+    OSSL_CALLBACK *export_cb,
+    void *export_cbarg)
 {
     struct lmsxdr2key_ctx_st *ctx = vctx;
-    OSSL_FUNC_keymgmt_export_fn *export =
-        ossl_prov_get_keymgmt_export(ossl_lms_keymgmt_functions);
+    OSSL_FUNC_keymgmt_export_fn *export = ossl_prov_get_keymgmt_export(ossl_lms_keymgmt_functions);
     void *keydata;
 
     if (reference_sz == sizeof(keydata) && export != NULL) {
@@ -162,9 +158,9 @@ const OSSL_DISPATCH ossl_xdr_to_lms_decoder_functions[] = {
     { OSSL_FUNC_DECODER_NEWCTX, (void (*)(void))lmsxdr2key_newctx },
     { OSSL_FUNC_DECODER_FREECTX, (void (*)(void))lmsxdr2key_freectx },
     { OSSL_FUNC_DECODER_DOES_SELECTION,
-      (void (*)(void))lmsxdr2key_does_selection },
+        (void (*)(void))lmsxdr2key_does_selection },
     { OSSL_FUNC_DECODER_DECODE, (void (*)(void))lmsxdr2key_decode },
     { OSSL_FUNC_DECODER_EXPORT_OBJECT,
-      (void (*)(void))lmsxdr2key_export_object },
+        (void (*)(void))lmsxdr2key_export_object },
     OSSL_DISPATCH_END
 };

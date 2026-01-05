@@ -71,8 +71,7 @@ static int is_valid_date(int64_t year, int64_t month, int64_t day)
  */
 static int is_valid_time(int64_t hours, int64_t minutes, int64_t seconds)
 {
-    return hours >= 0 && minutes >= 0 && seconds >= 0 && hours <= 23 &&
-        minutes <= 59 && seconds <= 59;
+    return hours >= 0 && minutes >= 0 && seconds >= 0 && hours <= 23 && minutes <= 59 && seconds <= 59;
 }
 
 /* 0000-01-01 00:00:00 UTC */
@@ -92,27 +91,23 @@ static int is_valid_posix_time(int64_t time)
  * (Public Domain)
  */
 static int posix_time_from_utc(int64_t year, int64_t month, int64_t day,
-                               int64_t hours, int64_t minutes, int64_t seconds,
-                               int64_t *out_time)
+    int64_t hours, int64_t minutes, int64_t seconds,
+    int64_t *out_time)
 {
     int64_t era, year_of_era, day_of_year, day_of_era, posix_days;
 
-    if (!is_valid_date(year, month, day) ||
-        !is_valid_time(hours, minutes, seconds))
+    if (!is_valid_date(year, month, day) || !is_valid_time(hours, minutes, seconds))
         return 0;
     if (month <= 2)
-        year--;  /* Start years on Mar 1, so leap days end a year. */
+        year--; /* Start years on Mar 1, so leap days end a year. */
 
     /* At this point year will be in the range -1 and 9999. */
     era = (year >= 0 ? year : year - 399) / 400;
     year_of_era = year - era * 400;
-    day_of_year = (153 * (month > 2 ? month - 3 : month + 9) + 2) /
-        5 + day - 1;
-    day_of_era = year_of_era * 365 + year_of_era / 4 - year_of_era /
-        100 + day_of_year;
+    day_of_year = (153 * (month > 2 ? month - 3 : month + 9) + 2) / 5 + day - 1;
+    day_of_era = year_of_era * 365 + year_of_era / 4 - year_of_era / 100 + day_of_year;
     posix_days = era * 146097 + day_of_era - 719468;
-    *out_time = posix_days * SECS_PER_DAY + hours * SECS_PER_HOUR +
-        minutes * 60 + seconds;
+    *out_time = posix_days * SECS_PER_DAY + hours * SECS_PER_HOUR + minutes * 60 + seconds;
 
     return 1;
 }
@@ -123,8 +118,8 @@ static int posix_time_from_utc(int64_t year, int64_t month, int64_t day,
  * (Public Domain)
  */
 static int utc_from_posix_time(int64_t time, int *out_year, int *out_month,
-                               int *out_day, int *out_hours, int *out_minutes,
-                               int *out_seconds)
+    int *out_day, int *out_hours, int *out_minutes,
+    int *out_seconds)
 {
     int64_t days, leftover_seconds, era, day_of_era, year_of_era, day_of_year;
     int64_t month_of_year;
@@ -138,27 +133,24 @@ static int utc_from_posix_time(int64_t time, int *out_year, int *out_month,
         days--;
         leftover_seconds += SECS_PER_DAY;
     }
-    days += 719468;  /*  Shift to starting epoch of Mar 1 0000. */
+    days += 719468; /*  Shift to starting epoch of Mar 1 0000. */
 
     /* At this point, days will be in the range -61 and 3652364. */
     era = (days > 0 ? days : days - 146096) / 146097;
     day_of_era = days - era * 146097;
-    year_of_era = (day_of_era - day_of_era / 1460 + day_of_era / 36524 -
-                   day_of_era / 146096) / 365;
-    *out_year = (int) (year_of_era + era * 400);  /* Year starts on Mar 1 */
-    day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 -
-                                year_of_era / 100);
+    year_of_era = (day_of_era - day_of_era / 1460 + day_of_era / 36524 - day_of_era / 146096) / 365;
+    *out_year = (int)(year_of_era + era * 400); /* Year starts on Mar 1 */
+    day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
     month_of_year = (5 * day_of_year + 2) / 153;
-    *out_month = (int) (month_of_year < 10 ? month_of_year + 3 :
-                        month_of_year - 9);
+    *out_month = (int)(month_of_year < 10 ? month_of_year + 3 : month_of_year - 9);
     if (*out_month <= 2)
-        (*out_year)++;  /* Adjust year back to Jan 1 start of year. */
+        (*out_year)++; /* Adjust year back to Jan 1 start of year. */
 
-    *out_day = (int) (day_of_year - (153 * month_of_year + 2) / 5 + 1);
-    *out_hours = (int) leftover_seconds / SECS_PER_HOUR;
+    *out_day = (int)(day_of_year - (153 * month_of_year + 2) / 5 + 1);
+    *out_hours = (int)leftover_seconds / SECS_PER_HOUR;
     leftover_seconds %= SECS_PER_HOUR;
-    *out_minutes = (int) leftover_seconds / 60;
-    *out_seconds = (int) leftover_seconds % 60;
+    *out_minutes = (int)leftover_seconds / 60;
+    *out_seconds = (int)leftover_seconds % 60;
 
     return 1;
 }
@@ -166,19 +158,19 @@ static int utc_from_posix_time(int64_t time, int *out_year, int *out_month,
 int OPENSSL_tm_to_posix(const struct tm *tm, int64_t *out)
 {
     return posix_time_from_utc(tm->tm_year + (int64_t)1900,
-                               tm->tm_mon + (int64_t)1, tm->tm_mday,
-                               tm->tm_hour, tm->tm_min, tm->tm_sec, out);
+        tm->tm_mon + (int64_t)1, tm->tm_mday,
+        tm->tm_hour, tm->tm_min, tm->tm_sec, out);
 }
 
 int OPENSSL_posix_to_tm(int64_t time, struct tm *out_tm)
 {
-    struct tm tmp_tm = {0};
+    struct tm tmp_tm = { 0 };
 
     memset(out_tm, 0, sizeof(*out_tm));
 
     if (!utc_from_posix_time(time, &tmp_tm.tm_year, &tmp_tm.tm_mon,
-                             &tmp_tm.tm_mday, &tmp_tm.tm_hour,
-                             &tmp_tm.tm_min, &tmp_tm.tm_sec))
+            &tmp_tm.tm_mday, &tmp_tm.tm_hour,
+            &tmp_tm.tm_min, &tmp_tm.tm_sec))
         return 0;
 
     tmp_tm.tm_year -= 1900;
@@ -199,10 +191,8 @@ int ossl_asn1_time_tm_to_time_t(const struct tm *tm, time_t *out)
         return 0;
 
     if (sizeof(time_t) == sizeof(int32_t)
-        && ((!bad_idea_bears && (posix_time > INT32_MAX
-                                     || posix_time < INT32_MIN))
-            || (bad_idea_bears && (posix_time > UINT32_MAX
-                                   || posix_time < 0))))
+        && ((!bad_idea_bears && (posix_time > INT32_MAX || posix_time < INT32_MIN))
+            || (bad_idea_bears && (posix_time > UINT32_MAX || posix_time < 0))))
         return 0;
 
     *out = posix_time;
@@ -221,7 +211,7 @@ int OPENSSL_timegm(const struct tm *tm, time_t *out)
     return ossl_asn1_time_tm_to_time_t(tm, out);
 }
 
-struct tm * OPENSSL_gmtime(const time_t *time, struct tm *out_tm)
+struct tm *OPENSSL_gmtime(const time_t *time, struct tm *out_tm)
 {
     if (!ossl_asn1_time_time_t_to_tm(time, out_tm))
         return NULL;
@@ -255,12 +245,11 @@ int OPENSSL_gmtime_adj(struct tm *tm, int offset_day, long offset_sec)
 }
 
 int OPENSSL_gmtime_diff(int *out_days, int *out_secs, const struct tm *from,
-                        const struct tm *to)
+    const struct tm *to)
 {
     int64_t time_to, time_from, timediff, daydiff;
 
-    if (!OPENSSL_tm_to_posix(to, &time_to) ||
-        !OPENSSL_tm_to_posix(from, &time_from))
+    if (!OPENSSL_tm_to_posix(to, &time_to) || !OPENSSL_tm_to_posix(from, &time_from))
         return 0;
 
     /* Times are in range, so these calculations cannot overflow. */
@@ -271,8 +260,10 @@ int OPENSSL_gmtime_diff(int *out_days, int *out_secs, const struct tm *from,
     daydiff = timediff / SECS_PER_DAY;
     timediff %= SECS_PER_DAY;
 
-    *out_secs = (int) timediff;
-    *out_days = (int) daydiff;
+    if (out_secs != NULL)
+        *out_secs = (int)timediff;
+    if (out_days != NULL)
+        *out_days = (int)daydiff;
 
     return 1;
 }

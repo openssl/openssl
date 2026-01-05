@@ -8,7 +8,7 @@
  */
 
 #ifdef OPENSSL_NO_CT
-# error "CT is disabled"
+#error "CT is disabled"
 #endif
 
 #include <stddef.h>
@@ -81,9 +81,9 @@ __owur static int ct_x509_cert_fixup(X509 *cert, X509 *presigner)
         return 1;
 
     preidx = ct_x509_get_ext(presigner, NID_authority_key_identifier,
-                             &pre_akid_ext_is_dup);
+        &pre_akid_ext_is_dup);
     certidx = ct_x509_get_ext(cert, NID_authority_key_identifier,
-                              &cert_akid_ext_is_dup);
+        &cert_akid_ext_is_dup);
 
     /* An error occurred whilst searching for the extension */
     if (preidx < -1 || certidx < -1)
@@ -109,8 +109,7 @@ __owur static int ct_x509_cert_fixup(X509 *cert, X509 *presigner)
         if (preext == NULL || certext == NULL)
             return 0;
         preextdata = X509_EXTENSION_get_data(preext);
-        if (preextdata == NULL ||
-            !X509_EXTENSION_set_data(certext, preextdata))
+        if (preextdata == NULL || !X509_EXTENSION_set_data(certext, preextdata))
             return 0;
     }
     return 1;
@@ -198,8 +197,8 @@ err:
     return 0;
 }
 
-__owur static int ct_public_key_hash(SCT_CTX *sctx, X509_PUBKEY *pkey,
-                                     unsigned char **hash, size_t *hash_len)
+__owur static int ct_public_key_hash(SCT_CTX *sctx, const X509_PUBKEY *pkey,
+    unsigned char **hash, size_t *hash_len)
 {
     int ret = 0;
     unsigned char *md = NULL, *der = NULL;
@@ -235,19 +234,19 @@ __owur static int ct_public_key_hash(SCT_CTX *sctx, X509_PUBKEY *pkey,
 
     md = NULL;
     ret = 1;
- err:
+err:
     EVP_MD_free(sha256);
     OPENSSL_free(md);
     OPENSSL_free(der);
     return ret;
 }
 
-int SCT_CTX_set1_issuer(SCT_CTX *sctx, const X509 *issuer)
+int SCT_CTX_set1_issuer(SCT_CTX *sctx, X509 *issuer)
 {
     return SCT_CTX_set1_issuer_pubkey(sctx, X509_get_X509_PUBKEY(issuer));
 }
 
-int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey)
+int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, const X509_PUBKEY *pubkey)
 {
     return ct_public_key_hash(sctx, pubkey, &sctx->ihash, &sctx->ihashlen);
 }

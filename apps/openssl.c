@@ -23,7 +23,7 @@
 #include <openssl/err.h>
 /* Needed to get the other O_xxx flags. */
 #ifdef OPENSSL_SYS_VMS
-# include <unixio.h>
+#include <unixio.h>
 #endif
 #include "apps.h"
 #include "progs.h"
@@ -46,7 +46,7 @@ static void warn_deprecated(const FUNCTION *fp)
 {
     if (fp->deprecated_version != NULL)
         BIO_printf(bio_err, "The command %s was deprecated in version %s.",
-                   fp->name, fp->deprecated_version);
+            fp->name, fp->deprecated_version);
     else
         BIO_printf(bio_err, "The command %s is deprecated.", fp->name);
     if (strcmp(fp->deprecated_alternative, DEPRECATED_NO_ALTERNATIVE) != 0)
@@ -90,15 +90,14 @@ static void apps_shutdown(void)
     destroy_ui_method();
 }
 
-
 #ifndef OPENSSL_NO_TRACE
 typedef struct tracedata_st {
     BIO *bio;
-    unsigned int ingroup:1;
+    unsigned int ingroup : 1;
 } tracedata;
 
 static size_t internal_trace_cb(const char *buf, size_t cnt,
-                                int category, int cmd, void *vdata)
+    int category, int cmd, void *vdata)
 {
     int ret = 0;
     tracedata *trace_data = vdata;
@@ -116,8 +115,8 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
         tid = CRYPTO_THREAD_get_current_id();
         hex = OPENSSL_buf2hexstr((const unsigned char *)&tid, sizeof(tid));
         BIO_snprintf(buffer, sizeof(buffer), "TRACE[%s]:%s: ",
-                     hex == NULL ? "<null>" : hex,
-                     OSSL_trace_get_category_name(category));
+            hex == NULL ? "<null>" : hex,
+            OSSL_trace_get_category_name(category));
         OPENSSL_free(hex);
         BIO_set_prefix(trace_data->bio, buffer);
         break;
@@ -177,12 +176,13 @@ static void setup_trace_category(int category)
         || bio == NULL
         || (trace_data->bio = channel) == NULL
         || OSSL_trace_set_callback(category, internal_trace_cb,
-                                   trace_data) == 0
+               trace_data)
+            == 0
         || sk_tracedata_push(trace_data_stack, trace_data) == 0) {
 
         fprintf(stderr,
-                "warning: unable to setup trace callback for category '%s'.\n",
-                OSSL_trace_get_category_name(category));
+            "warning: unable to setup trace callback for category '%s'.\n",
+            OSSL_trace_get_category_name(category));
 
         OSSL_trace_set_callback(category, NULL, NULL);
         BIO_free_all(channel);
@@ -219,7 +219,7 @@ static void setup_trace(const char *str)
                 setup_trace_category(category);
             } else {
                 fprintf(stderr,
-                        "warning: unknown trace category: '%s'.\n", item);
+                    "warning: unknown trace category: '%s'.\n", item);
             }
         }
     }
@@ -276,8 +276,8 @@ int main(int argc, char *argv[])
         sec_mem = strtol(sec_mem_char, &end, 0);
         if (errno != 0 || *end != 0 || end == sec_mem_char) {
             BIO_printf(bio_err,
-                       "FATAL: could not convert OPENSSL_SEC_MEM (%s) to number\n",
-                       sec_mem_char);
+                "FATAL: could not convert OPENSSL_SEC_MEM (%s) to number\n",
+                sec_mem_char);
             ret = EXIT_FAILURE;
             goto end;
         }
@@ -291,8 +291,8 @@ int main(int argc, char *argv[])
             sec_mem_minsize = strtol(sec_mem_minsize_char, &end, 0);
             if (errno != 0 || *end != 0 || end == sec_mem_minsize_char) {
                 BIO_printf(bio_err,
-                           "FATAL: could not convert OPENSSL_SEC_MEM_MINSIZE (%s) to number\n",
-                           sec_mem_minsize_char);
+                    "FATAL: could not convert OPENSSL_SEC_MEM_MINSIZE (%s) to number\n",
+                    sec_mem_minsize_char);
                 ret = 1;
                 goto end;
             }
@@ -301,23 +301,23 @@ int main(int argc, char *argv[])
         ret = CRYPTO_secure_malloc_init(sec_mem, sec_mem_minsize);
         if (ret != 1) {
             BIO_printf(bio_err,
-                       "FATAL: could not initialize secure memory\n");
+                "FATAL: could not initialize secure memory\n");
             ERR_print_errors(bio_err);
             ret = 1;
             goto end;
         }
 #else
         BIO_printf(bio_err,
-                   "FATAL: OPENSSL_SEC_MEM environment variable was set, but "
-                   "openssl was compiled without secure memory support.\n");
+            "FATAL: OPENSSL_SEC_MEM environment variable was set, but "
+            "openssl was compiled without secure memory support.\n");
 #endif
     }
 
     if ((fname = "apps_startup", !apps_startup())
-            || (fname = "prog_init", (prog = prog_init()) == NULL)) {
+        || (fname = "prog_init", (prog = prog_init()) == NULL)) {
         BIO_printf(bio_err,
-                   "FATAL: Startup failure (dev note: %s()) for %s\n",
-                   fname, argv[0]);
+            "FATAL: Startup failure (dev note: %s()) for %s\n",
+            fname, argv[0]);
         ERR_print_errors(bio_err);
         ret = 1;
         goto end;
@@ -342,7 +342,8 @@ int main(int argc, char *argv[])
 
         argc--;
         argv++;
-        opt_appname(argc == 1 || global_help ? "help" : global_version ? "version" : argv[0]);
+        opt_appname(argc == 1 || global_help ? "help" : global_version ? "version"
+                                                                       : argv[0]);
     } else {
         argv[0] = pname;
     }
@@ -351,13 +352,13 @@ int main(int argc, char *argv[])
      * If there's no command, assume "help". If there's an override for help
      * or version run those, otherwise run the command given.
      */
-    ret =  (argc == 0) || global_help
-            ? do_cmd(prog, 1, help_argv)
-            : global_version
-                ? do_cmd(prog, 1, version_argv)
-                : do_cmd(prog, argc, argv);
+    ret = (argc == 0) || global_help
+        ? do_cmd(prog, 1, help_argv)
+        : global_version
+        ? do_cmd(prog, 1, version_argv)
+        : do_cmd(prog, argc, argv);
 
- end:
+end:
     OPENSSL_free(default_config_file);
     lh_FUNCTION_free(prog);
     OPENSSL_free(arg.argv);
@@ -371,22 +372,25 @@ int main(int argc, char *argv[])
 #ifndef OPENSSL_NO_SECURE_MEMORY
     CRYPTO_secure_malloc_done();
 #endif
+    OPENSSL_cleanup();
     EXIT(ret);
 }
 
 typedef enum HELP_CHOICE {
-    OPT_hERR = -1, OPT_hEOF = 0, OPT_hHELP
+    OPT_hERR = -1,
+    OPT_hEOF = 0,
+    OPT_hHELP
 } HELP_CHOICE;
 
 const OPTIONS help_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: help [options] [command]\n"},
+    { OPT_HELP_STR, 1, '-', "Usage: help [options] [command]\n" },
 
     OPT_SECTION("General"),
-    {"help", OPT_hHELP, '-', "Display this summary"},
+    { "help", OPT_hHELP, '-', "Display this summary" },
 
     OPT_PARAMETERS(),
-    {"command", 0, 0, "Name of command to display help (optional)"},
-    {NULL}
+    { "command", 0, 0, "Name of command to display help (optional)" },
+    { NULL }
 };
 
 int help_main(int argc, char **argv)
@@ -441,11 +445,11 @@ int help_main(int argc, char **argv)
             if (tp == FT_md) {
                 i = 1;
                 BIO_printf(bio_err,
-                           "\nMessage Digest commands (see the `dgst' command for more details)\n");
+                    "\nMessage Digest commands (see the `dgst' command for more details)\n");
             } else if (tp == FT_cipher) {
                 i = 1;
                 BIO_printf(bio_err,
-                           "\nCipher commands (see the `enc' command for more details)\n");
+                    "\nCipher commands (see the `enc' command for more details)\n");
             }
         }
         BIO_printf(bio_err, "%-*s", dc.width, fp->name);
@@ -494,7 +498,7 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
     }
 
     BIO_printf(bio_err, "Invalid command '%s'; type \"help\" for a list.\n",
-               argv[0]);
+        argv[0]);
     return 1;
 }
 

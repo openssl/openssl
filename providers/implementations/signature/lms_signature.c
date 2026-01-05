@@ -103,7 +103,7 @@ static int lms_verify_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[]
 }
 
 static int lms_verify(void *vctx, const unsigned char *sigbuf, size_t sigbuf_len,
-                      const unsigned char *msg, size_t msglen)
+    const unsigned char *msg, size_t msglen)
 {
     int ret = 0;
     PROV_LMS_CTX *ctx = (PROV_LMS_CTX *)vctx;
@@ -127,7 +127,7 @@ const OSSL_DISPATCH ossl_lms_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))lms_newctx },
     { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))lms_freectx },
     { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_INIT,
-      (void (*)(void))lms_verify_msg_init },
+        (void (*)(void))lms_verify_msg_init },
     { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))lms_verify },
     OSSL_DISPATCH_END
 };

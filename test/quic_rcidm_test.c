@@ -25,18 +25,18 @@ static int test_rcidm(int idx)
 {
     int testresult = 0;
     QUIC_RCIDM *rcidm;
-    OSSL_QUIC_FRAME_NEW_CONN_ID ncid_frame_1 = {0}, ncid_frame_2 = {0};
+    OSSL_QUIC_FRAME_NEW_CONN_ID ncid_frame_1 = { 0 }, ncid_frame_2 = { 0 };
     QUIC_CONN_ID dcid_out;
     const QUIC_CONN_ID *odcid = NULL;
     uint64_t seq_num_out;
 
-    ncid_frame_1.seq_num        = 2;
+    ncid_frame_1.seq_num = 2;
     ncid_frame_1.conn_id.id_len = 8;
-    ncid_frame_1.conn_id.id[0]  = 3;
+    ncid_frame_1.conn_id.id[0] = 3;
 
-    ncid_frame_2.seq_num        = 3;
+    ncid_frame_2.seq_num = 3;
     ncid_frame_2.conn_id.id_len = 8;
-    ncid_frame_2.conn_id.id[0]  = 4;
+    ncid_frame_2.conn_id.id[0] = 4;
 
     odcid = ((idx == 2) ? NULL : &cid8_1);
     if (!TEST_ptr(rcidm = ossl_quic_rcidm_new(odcid)))

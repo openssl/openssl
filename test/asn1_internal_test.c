@@ -55,7 +55,7 @@ static int test_tbl_standard(void)
     TEST_info("asn1 tbl_standard: out of order");
     for (tmp = tbl_standard, i = 0; i < OSSL_NELEM(tbl_standard); i++, tmp++)
         TEST_note("asn1 tbl_standard: Index %zu, NID %d, Name=%s",
-                  i, tmp->nid, OBJ_nid2ln(tmp->nid));
+            i, tmp->nid, OBJ_nid2ln(tmp->nid));
 
     return 0;
 }
@@ -71,13 +71,13 @@ static int test_tbl_standard(void)
 
 static int test_standard_methods(void)
 {
-    const EVP_PKEY_ASN1_METHOD * const *tmp;
+    const EVP_PKEY_ASN1_METHOD *const *tmp;
     int last_pkey_id = -1;
     size_t i;
     int ok = 1;
 
     for (tmp = standard_methods, i = 0; i < OSSL_NELEM(standard_methods);
-         i++, tmp++) {
+        i++, tmp++) {
         if ((*tmp)->pkey_id < last_pkey_id) {
             last_pkey_id = 0;
             break;
@@ -93,9 +93,9 @@ static int test_standard_methods(void)
          * Anything else is an error and may lead to a corrupt ASN1 method table
          */
         if (!TEST_true(((*tmp)->pem_str == NULL && ((*tmp)->pkey_flags & ASN1_PKEY_ALIAS) != 0)
-                       || ((*tmp)->pem_str != NULL && ((*tmp)->pkey_flags & ASN1_PKEY_ALIAS) == 0))) {
+                || ((*tmp)->pem_str != NULL && ((*tmp)->pkey_flags & ASN1_PKEY_ALIAS) == 0))) {
             TEST_note("asn1 standard methods: Index %zu, pkey ID %d, Name=%s",
-                      i, (*tmp)->pkey_id, OBJ_nid2sn((*tmp)->pkey_id));
+                i, (*tmp)->pkey_id, OBJ_nid2sn((*tmp)->pkey_id));
             ok = 0;
         }
     }
@@ -107,9 +107,9 @@ static int test_standard_methods(void)
 
     TEST_note("asn1 standard methods: out of order");
     for (tmp = standard_methods, i = 0; i < OSSL_NELEM(standard_methods);
-         i++, tmp++)
+        i++, tmp++)
         TEST_note("asn1 standard methods: Index %zu, pkey ID %d, Name=%s",
-                  i, (*tmp)->pkey_id, OBJ_nid2sn((*tmp)->pkey_id));
+            i, (*tmp)->pkey_id, OBJ_nid2sn((*tmp)->pkey_id));
 
     return 0;
 }
@@ -135,7 +135,7 @@ static int test_empty_nonoptional_content(void)
         || !TEST_true(RSA_set0_key(rsa, n, e, NULL)))
         goto end;
 
-    n = e = NULL;                /* They are now "owned" by |rsa| */
+    n = e = NULL; /* They are now "owned" by |rsa| */
 
     /*
      * This SHOULD fail, as we're trying to encode a public key as a private
@@ -144,7 +144,7 @@ static int test_empty_nonoptional_content(void)
     if (TEST_int_le(i2d_RSAPrivateKey(rsa, NULL), 0))
         ok = 1;
 
- end:
+end:
     RSA_free(rsa);
     BN_free(n);
     BN_free(e);
@@ -164,8 +164,8 @@ static int test_unicode(const unsigned char *univ, size_t len, int expected)
 
     for (; univ < end; univ += 4) {
         if (!TEST_int_eq(ASN1_mbstring_copy(NULL, univ, 4, MBSTRING_UNIV,
-                                            B_ASN1_UTF8STRING),
-                         expected))
+                             B_ASN1_UTF8STRING),
+                expected))
             ok = 0;
     }
     return ok;
@@ -231,7 +231,7 @@ static int test_obj_create_once(const char *oid, const char *sn, const char *ln)
 }
 
 static int test_asn1_time_conversion(char *time_string, const char *file,
-                                     int line)
+    int line)
 {
     int ret = 0;
     int is_utc = 0;
@@ -250,31 +250,31 @@ static int test_asn1_time_conversion(char *time_string, const char *file,
         /* our original string could have been provided as gen, or utc */
         if (strlen(time_string) == 13) {
             if (!TEST_ptr(result = ossl_asn1_time_from_tm(result, &tm,
-                                                          V_ASN1_UNDEF)))
+                              V_ASN1_UNDEF)))
                 goto err;
         } else {
             if (!TEST_ptr(result
-                          = ossl_asn1_time_from_tm(result, &tm,
-                                                   V_ASN1_GENERALIZEDTIME)))
+                    = ossl_asn1_time_from_tm(result, &tm,
+                        V_ASN1_GENERALIZEDTIME)))
                 goto err;
         }
     } else {
         if (!TEST_ptr(result
-                      = ossl_asn1_time_from_tm(result, &tm,
-                                               V_ASN1_GENERALIZEDTIME)))
+                = ossl_asn1_time_from_tm(result, &tm,
+                    V_ASN1_GENERALIZEDTIME)))
             goto err;
     }
     if (!TEST_true((strcmp(time_string,
-                           (const char *)ASN1_STRING_get0_data(result))
-                    == 0))) {
+                        (const char *)ASN1_STRING_get0_data(result))
+            == 0))) {
         TEST_info("Expected time: %s, Got time: %s\n", time_string,
-                  ASN1_STRING_get0_data(result));
+            ASN1_STRING_get0_data(result));
         goto err;
     }
 
     ret = 1;
 
- err:
+err:
     if (!ret)
         TEST_info("Failed to convert time %s at %s:%d\n", time_string, file, line);
     ASN1_STRING_free(asn1_time);
@@ -340,14 +340,14 @@ static int test_obj_create(void)
         || !TEST_true(test_obj_create_once(arc "6", NULL, ln_prefix "6"))
         || !TEST_int_ne(OBJ_ln2nid(ln_prefix "6"), NID_undef)
         || !TEST_true(test_obj_create_once(arc "7",
-                                           sn_prefix "7", ln_prefix "7"))
+            sn_prefix "7", ln_prefix "7"))
         || !TEST_int_ne(OBJ_sn2nid(sn_prefix "7"), NID_undef)
         || !TEST_int_ne(OBJ_ln2nid(ln_prefix "7"), NID_undef))
         return 0;
 
     if (!TEST_false(test_obj_create_once(NULL, NULL, NULL))
         || !TEST_false(test_obj_create_once(broken_arc "8",
-                                            sn_prefix "8", ln_prefix "8")))
+            sn_prefix "8", ln_prefix "8")))
         return 0;
 
     return 1;
@@ -399,9 +399,8 @@ static int test_a_posix_time(int64_t time, struct tm *tm, ASN1_TIME *asn1_time)
 
     if (!TEST_int_eq(OPENSSL_posix_to_tm(time, tm), expected_to_work)) {
         TEST_info("OPENSSL_posix_to_tm %s unexpectedly converting %lld\n",
-                  expected_to_work ? "failed" : "succeeded", (long long) time);
+            expected_to_work ? "failed" : "succeeded", (long long)time);
         ret = 0;
-
     }
     if (ret && expected_to_work && OPENSSL_timegm(tm, &time_as_time_t)) {
         /*
@@ -414,8 +413,8 @@ static int test_a_posix_time(int64_t time, struct tm *tm, ASN1_TIME *asn1_time)
         if ((ASN1_TIME_adj(asn1_time, time_as_time_t, 0, 0) != NULL)
             == !expected_to_work) {
             TEST_info("ASN1_TIME_adj %s unexpectedly converting %lld\n",
-                      expected_to_work ? "failed" : "succeeded",
-                      (long long) time);
+                expected_to_work ? "failed" : "succeeded",
+                (long long)time);
             ret = 0;
         }
     } else {
@@ -424,10 +423,10 @@ static int test_a_posix_time(int64_t time, struct tm *tm, ASN1_TIME *asn1_time)
          * passing through time_t, to test the underlying conversion to ASN1_TIME.
          */
         if (!TEST_int_eq(ossl_asn1_time_from_posix(time, asn1_time),
-                         expected_to_work)) {
+                expected_to_work)) {
             TEST_info("ossl_asn1_time_from_posix %s unexpectedly converting %lld\n",
-                      expected_to_work ? "failed" : "succeeded",
-                      (long long) time);
+                expected_to_work ? "failed" : "succeeded",
+                (long long)time);
             ret = 0;
         }
     }
@@ -440,20 +439,20 @@ static int test_a_posix_time(int64_t time, struct tm *tm, ASN1_TIME *asn1_time)
          */
         if (!ASN1_TIME_to_tm(asn1_time, tm)) {
             TEST_info("ASN1_TIME_to_tm failed unexpectedly converting %lld\n",
-                      (long long) time);
+                (long long)time);
             ret = 0;
         }
         /* That tm should convert back to a posix time */
         if (!TEST_int_eq(OPENSSL_tm_to_posix(tm, &should_be_same),
-                         expected_to_work)) {
+                expected_to_work)) {
             TEST_info("OPENSSL_tm_to_posix failed unexpectedly converting %lld\n",
-                      (long long) time);
+                (long long)time);
             ret = 0;
         }
         /* The resulting posix time should be the same one we started with. */
         if (!TEST_int64_t_eq(time, should_be_same)) {
             TEST_info("Got converted time of time of %lld, expected %lld\n",
-                      (long long) should_be_same, (long long) time);
+                (long long)should_be_same, (long long)time);
             ret = 0;
         }
     }
@@ -542,17 +541,33 @@ static int posix_time_test(void)
 #define INCREMENT 100000 /* because doing them all is a bit slow */
 
     for (test_time = MIN_POSIX_TIME - INCREMENT;
-         test_time <= MAX_POSIX_TIME + INCREMENT;
-         test_time += INCREMENT) {
+        test_time <= MAX_POSIX_TIME + INCREMENT;
+        test_time += INCREMENT) {
         if (!test_a_posix_time(test_time, &tm, conversion_time))
             goto err;
     }
 
     ret = 1;
 
- err:
+err:
     ASN1_TIME_free(conversion_time);
     return ret;
+}
+
+static int test_mbstring_ncopy(void)
+{
+    ASN1_STRING *str = NULL;
+    const unsigned char in[] = { 0xFF, 0xFE, 0xFF, 0xFE };
+    int inlen = 4;
+    int inform = MBSTRING_UNIV;
+
+    if (!TEST_int_eq(ASN1_mbstring_ncopy(&str, in, inlen, inform, B_ASN1_GENERALSTRING, 0, 0), -1)
+        || !TEST_int_eq(ASN1_mbstring_ncopy(&str, in, inlen, inform, B_ASN1_VISIBLESTRING, 0, 0), -1)
+        || !TEST_int_eq(ASN1_mbstring_ncopy(&str, in, inlen, inform, B_ASN1_VIDEOTEXSTRING, 0, 0), -1)
+        || !TEST_int_eq(ASN1_mbstring_ncopy(&str, in, inlen, inform, B_ASN1_GENERALIZEDTIME, 0, 0), -1))
+        return 0;
+
+    return 1;
 }
 
 int setup_tests(void)
@@ -566,5 +581,6 @@ int setup_tests(void)
     ADD_TEST(test_obj_nid_undef);
     ADD_TEST(posix_time_test);
     ADD_TEST(test_asn1_time_tm_conversions);
+    ADD_TEST(test_mbstring_ncopy);
     return 1;
 }

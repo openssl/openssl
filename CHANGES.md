@@ -32,6 +32,34 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Removed configure options can now only be disabled. You may continue to use
+   `disable-<feature>`, which will remain supported. Using `enable-<feature>`
+   for a removed feature is no longer permitted.
+
+   *Andrew Dinh*
+
+ * Support for SSLv3 was removed. SSLv3 has been deprecated since
+   2015, and OpenSSL had it disabled by default since 1.1.0 (2016).
+
+   *Kurt Roeckx*
+
+ * The script tool `c_rehash` was removed. Use `openssl rehash` instead.
+
+   *Norbert Pocs*
+
+ * libcrypto no longer cleans up globally allocated data on process exit. This data
+   is cleaned up automatically by the OS instead. Some memory leak detectors
+   may report spurious allocated and reachable memory at application exit. To
+   avoid such spurious leak detection reports the application may call
+   OPENSSL_cleanup() before the process exits.
+
+   *Alexandr Nedvedicky*
+
+ * The crypto-mdebug-backtrace configuration option has been entirely removed.
+   The option has been a no-op since 1.0.2.
+
+   *Neil Horman*
+
  * Removed extra leading '00:' when printing key data such as an RSA modulus
    in hexadecimal format where the first (most significant) byte is >= 0x80.
    This had been added artificially to resemble ASN.1 DER encoding internals.
@@ -45,6 +73,10 @@ OpenSSL 4.0
    *Beat Bolli*
 
  * The deprecated function ASN1_STRING_data has been removed.
+
+   *Bob Beck*
+
+* The ASN1_STRING_FLAG_X509_TIME define has been removed.
 
    *Bob Beck*
 
@@ -83,6 +115,23 @@ OpenSSL 4.0
    replace ENGINEs functionality.
 
    *Milan Broz*, *Neil Horman*, *Norbert Pocs*
+
+ * BIO_f_reliable() implementation was removed without replacement.
+   It was broken since 3.0 release without any complaints.
+
+   *Tomáš Mráz*
+
+ * Added SNMP KDF (EVP_KDF_SNMPKDF) to EVP_KDF
+
+   *Barry Fussell and Helen Zhang*
+
+ * Added `EVP_MD_CTX_serialize()`/`EVP_MD_CTX_deserialize()` functions. These
+   functions allow to export the internal state of a Digest and re-import it
+   later to continue a computation from a specific checkpoint.  Only SHA-2 and
+   the SHA-3 family (Keccak, SHAKE, SHA-3) of functions currently support this
+   functionality
+
+   *Simo Sorce*
 
 OpenSSL 3.6
 -----------

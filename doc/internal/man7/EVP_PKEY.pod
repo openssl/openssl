@@ -31,7 +31,7 @@ and it can take one of the following forms:
 This is the form that an B<EVP_PKEY> in OpenSSL prior to 3.0 had.  The
 internal key in the B<EVP_PKEY> is a pointer to the low-level key
 types, such as B<RSA>, B<DSA> and B<EC>, and is governed by an associated
-L<EVP_PKEY_METHOD(3)> and an L<EVP_PKEY_ASN1_METHOD(3)>.
+L<EVP_PKEY_ASN1_METHOD(3)>.
 
 The functions available through those two method structures get full
 access to the B<EVP_PKEY> and therefore have a lot of freedom to

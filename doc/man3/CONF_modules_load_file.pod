@@ -162,12 +162,6 @@ context.
 Therefore, even if used with a freshly created library context, the function
 is not thread safe, and should not be used except as part of early application
 initialisation.
-Applications that want to use multiple library contexts may find that the most
-recently loaded configuration file perturbs prior settings in other library
-contexts.
-For example, B<ssl> module settings are not library context specific, and the
-last configuration file loaded that has an C<ssl_config> setting changes the
-SSL settings for all library contexts.
 The L<SSL_CTX_config(3)> and L<SSL_config(3)> functions can be used to perform
 late customisation of SSL contexts and connection handles.
 Here I<late> means that the chosen section's settings are applied in addition
