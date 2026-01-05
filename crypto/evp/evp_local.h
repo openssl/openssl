@@ -12,6 +12,8 @@
 
 #define EVP_CTRL_RET_UNSUPPORTED -1
 
+#define EVP_ENCODE_B64_LENGTH 48
+
 struct evp_md_ctx_st {
     const EVP_MD *reqdigest; /* The original requested digest */
     const EVP_MD *digest;
@@ -272,12 +274,6 @@ int PKCS5_v2_PBKDF2_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
 struct evp_Encode_Ctx_st {
     /* number saved in a partial encode/decode */
     int num;
-    /*
-     * The length is either the output line length (in input bytes) or the
-     * shortest input line length that is ok.  Once decoding begins, the
-     * length is adjusted up each time a longer line is decoded
-     */
-    int length;
     /* data to encode */
     unsigned char enc_data[80];
     /* number read on current line */
