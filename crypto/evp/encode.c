@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <limits.h>
+#include <assert.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include "crypto/evp.h"
@@ -364,7 +365,6 @@ void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, unsigned int flags)
 
 void EVP_EncodeInit(EVP_ENCODE_CTX *ctx)
 {
-    ctx->length = 48;
     ctx->num = 0;
     ctx->line_num = 0;
     ctx->flags = 0;
@@ -379,19 +379,19 @@ int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
     *outl = 0;
     if (inl <= 0)
         return 0;
-    OPENSSL_assert(ctx->length <= (int)sizeof(ctx->enc_data));
-    if (ctx->length - ctx->num > inl) {
+    assert(EVP_ENCODE_B64_LENGTH <= (int)sizeof(ctx->enc_data));
+    if (EVP_ENCODE_B64_LENGTH - ctx->num > inl) {
         memcpy(&(ctx->enc_data[ctx->num]), in, inl);
         ctx->num += inl;
         return 1;
     }
     if (ctx->num != 0) {
-        i = ctx->length - ctx->num;
+        i = EVP_ENCODE_B64_LENGTH - ctx->num;
         memcpy(&(ctx->enc_data[ctx->num]), in, i);
         in += i;
         inl -= i;
         int wrap_cnt = 0;
-        j = evp_encodeblock_int(ctx, out, ctx->enc_data, ctx->length,
+        j = evp_encodeblock_int(ctx, out, ctx->enc_data, EVP_ENCODE_B64_LENGTH,
             &wrap_cnt);
         ctx->num = 0;
         out += j;
@@ -399,39 +399,39 @@ int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
         *out = '\0';
     }
     int wrap_cnt = 0;
-    if (ctx->length % 3 != 0) {
-        j = evp_encodeblock_int(ctx, out, in, inl - (inl % ctx->length),
+    if (EVP_ENCODE_B64_LENGTH % 3 != 0) {
+        j = evp_encodeblock_int(ctx, out, in, inl - (inl % EVP_ENCODE_B64_LENGTH),
             &wrap_cnt);
     } else {
 #if defined(__AVX2__)
-        const int newlines = !(ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) ? ctx->length : 0;
+        const int newlines = !(ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) ? EVP_ENCODE_B64_LENGTH : 0;
 
         j = encode_base64_avx2(ctx,
             (unsigned char *)out,
             (const unsigned char *)in,
-            inl - (inl % ctx->length), newlines, &wrap_cnt);
+            inl - (inl % EVP_ENCODE_B64_LENGTH), newlines, &wrap_cnt);
 #elif defined(HAS_IA32CAP_IS_64)
         if ((OPENSSL_ia32cap_P[2] & (1u << 5)) != 0) {
-            const int newlines = !(ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) ? ctx->length : 0;
+            const int newlines = !(ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) ? EVP_ENCODE_B64_LENGTH : 0;
 
             j = encode_base64_avx2(ctx,
                 (unsigned char *)out,
                 (const unsigned char *)in,
-                inl - (inl % ctx->length), newlines, &wrap_cnt);
+                inl - (inl % EVP_ENCODE_B64_LENGTH), newlines, &wrap_cnt);
         } else {
-            j = evp_encodeblock_int(ctx, out, in, inl - (inl % ctx->length),
+            j = evp_encodeblock_int(ctx, out, in, inl - (inl % EVP_ENCODE_B64_LENGTH),
                 &wrap_cnt);
         }
 #else
-        j = evp_encodeblock_int(ctx, out, in, inl - (inl % ctx->length),
+        j = evp_encodeblock_int(ctx, out, in, inl - (inl % EVP_ENCODE_B64_LENGTH),
             &wrap_cnt);
 #endif
     }
-    in += inl - (inl % ctx->length);
-    inl -= inl - (inl % ctx->length);
+    in += inl - (inl % EVP_ENCODE_B64_LENGTH);
+    inl -= inl - (inl % EVP_ENCODE_B64_LENGTH);
     out += j;
     total += j;
-    if ((ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) == 0 && ctx->length % 3 != 0) {
+    if ((ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) == 0 && EVP_ENCODE_B64_LENGTH % 3 != 0) {
         *(out++) = '\n';
         total++;
     }
@@ -487,7 +487,6 @@ void EVP_DecodeInit(EVP_ENCODE_CTX *ctx)
 {
     /* Only ctx->num and ctx->flags are used during decoding. */
     ctx->num = 0;
-    ctx->length = 0;
     ctx->line_num = 0;
     ctx->flags = 0;
 }
