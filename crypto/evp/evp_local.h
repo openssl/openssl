@@ -301,10 +301,9 @@ void *evp_generic_fetch(OSSL_LIB_CTX *ctx, int operation_id,
         const OSSL_ALGORITHM *algodef,
         OSSL_PROVIDER *prov),
     int (*up_ref_method)(void *),
-    void (*free_method)(void *));
-int evp_generic_fetch_frozen(OSSL_LIB_CTX *libctx, int operation_id,
-    const char *name, const char *properties,
-    OSSL_PROVIDER *prov, void **method);
+    void (*free_method)(void *),
+    void *(*dup_method)(void *),
+    void (*free_frozen_method)(void *));
 void *evp_generic_fetch_from_prov(OSSL_PROVIDER *prov, int operation_id,
     const char *name, const char *properties,
     void *(*new_method)(int name_id,
@@ -413,3 +412,5 @@ int evp_names_do_all(OSSL_PROVIDER *prov, int number,
     void (*fn)(const char *name, void *data),
     void *data);
 int evp_cipher_cache_constants(EVP_CIPHER *cipher);
+int evp_method_id2name_id_op_id(uint32_t meth_id, int *name_id,
+    unsigned int *operation_id);
