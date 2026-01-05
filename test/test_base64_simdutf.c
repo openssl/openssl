@@ -161,6 +161,8 @@ static int test_encode_line_lengths_reinforced(void)
     /* Generous output buffers (Update + Final + newlines), plus a guard byte */
     unsigned char out_simd[9000 * 2 + 1] = { 0 };
     unsigned char out_ref[9000 * 2 + 1] = { 0 };
+    EVP_ENCODE_CTX *ctx_simd = NULL;
+    EVP_ENCODE_CTX *ctx_ref = NULL;
 
     for (int t = 0; t < trials; t++) {
         uint32_t r = next_u32(&seed);
@@ -176,8 +178,8 @@ static int test_encode_line_lengths_reinforced(void)
             for (int ctx_len = 1; ctx_len <= 80; ctx_len += 1) {
                 printf("Trial %d, input length %d, ctx length %d, partial ctx fill %d\n",
                     t + 1, inl, ctx_len, partial_ctx_fill);
-                EVP_ENCODE_CTX *ctx_simd = EVP_ENCODE_CTX_new();
-                EVP_ENCODE_CTX *ctx_ref = EVP_ENCODE_CTX_new();
+                ctx_simd = EVP_ENCODE_CTX_new();
+                ctx_ref = EVP_ENCODE_CTX_new();
 
                 if (!ctx_simd || !ctx_ref) {
                     EVP_ENCODE_CTX_free(ctx_simd);
@@ -218,7 +220,7 @@ static int test_encode_line_lengths_reinforced(void)
                     if (!TEST_int_eq(ret_simd, ret_ref)
                         || !TEST_mem_eq(out_ref, outlen_ref, out_simd, outlen_simd)
                         || !TEST_int_eq(outlen_simd, outlen_ref))
-                        return 0;
+                        goto fail;
 
                     EVP_EncodeFinal(ctx_simd, out_simd + outlen_simd,
                         &finlen_simd);
@@ -230,7 +232,7 @@ static int test_encode_line_lengths_reinforced(void)
 
                     if (!TEST_int_eq(finlen_simd, finlen_ref)
                         || !TEST_mem_eq(out_ref, total_ref, out_simd, total_simd))
-                        return 0;
+                        goto fail;
                 }
 
                 EVP_ENCODE_CTX_free(ctx_simd);
@@ -240,6 +242,11 @@ static int test_encode_line_lengths_reinforced(void)
     }
 
     return 1;
+
+fail:
+    EVP_ENCODE_CTX_free(ctx_simd);
+    EVP_ENCODE_CTX_free(ctx_ref);
+    return 0;
 }
 
 int setup_tests(void)
