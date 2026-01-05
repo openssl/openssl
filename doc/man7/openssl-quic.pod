@@ -899,6 +899,20 @@ that a call to L<SSL_handle_events(3)> is performed after the specified timeout
 
 =back
 
+=head1 WINDOWS APPLICATION NOTES
+
+QUIC protocol uses UDP sockets. The recvfrom() function on Windows may fail
+with C<WSAECONNRESET> error causing OpenSSL QUIC stack to enter permanent
+error, which prevents further communication over QUIC protocol. Applications
+should disable SIO_UDP_CONNRESET and SIO_UDP_NETRESET error notification
+on UDP sockets they pass to OpenSSL QUIC stack. More details can be found here:
+https://learn.microsoft.com/en-us/windows/win32/winsock/winsock-ioctls#sio_udp_connreset-opcode-setting-i-t3
+
+OpenSSL attempts to always disable SIO_UDP_CONNRESET and SIO_UDP_NETRESET
+on UDP sockets it receives from application, but no error is reported back
+if the respective C<WSAIoctl()> calls fail. Robust application should set those
+options itself so it can handle error notifications from C<WSAIoctl()> properly.
+
 =head1 SEE ALSO
 
 L<SSL_handle_events(3)>, L<SSL_get_event_timeout(3)>,
