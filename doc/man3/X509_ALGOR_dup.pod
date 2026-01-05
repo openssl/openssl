@@ -59,9 +59,9 @@ nonzero otherwise.
 
 =head1 HISTORY
 
-The X509_ALGOR_copy() was added in OpenSSL 1.1.1e.
+X509_ALGOR_copy() was added in OpenSSL 1.1.1e.
 
-The return type of X509_ALGOR_set_md() was improved in OpenSSL 4.0.
+X509_ALGOR_set_md() return a value since OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

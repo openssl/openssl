@@ -55,7 +55,7 @@ OpenSSL 4.0
 
    *Alexandr Nedvedicky*
 
- * The crypto-mdebug-backtrace configuration option has been entirely removed.
+ * The `crypto-mdebug-backtrace` configuration option has been entirely removed.
    The option has been a no-op since 1.0.2.
 
    *Neil Horman*
@@ -72,20 +72,21 @@ OpenSSL 4.0
 
    *Beat Bolli*
 
- * The deprecated function ASN1_STRING_data has been removed.
+ * The deprecated function `ASN1_STRING_data()` has been removed.
 
    *Bob Beck*
 
-* The ASN1_STRING_FLAG_X509_TIME define has been removed.
+* The `ASN1_STRING_FLAG_X509_TIME` define has been removed.
 
    *Bob Beck*
 
- * various function parameters have been constified,
+ * Various function parameters have been constified,
    in particular for X509-related functions.
+   `X509_ALGOR_set_md()` now returns a value indicating success or failure.
 
    *David von Oheimb*
 
- * Added `-hmac-env` and `-hmac-stdin` options to openssl-dgst.
+ * Added `-hmac-env` and `-hmac-stdin` options to `openssl-dgst`.
 
    *Igor Ustinov*
 
@@ -94,9 +95,9 @@ OpenSSL 4.0
 
    *Ryan Hooper*
 
- * Fixed CRLs with invalid ASN1_TIME in invalidityDate extensions,
+ * Fixed CRLs with invalid `ASN1_TIME` in invalidityDate extensions,
    where verification incorrectly succeeded. Enforced proper
-   handling of ASN1_TIME validation results so that any CRL
+   handling of `ASN1_TIME` validation results so that any CRL
    containing invalid time fields is rejected immediately,
    preventing the error from propagating to verification.
 
@@ -116,12 +117,12 @@ OpenSSL 4.0
 
    *Milan Broz*, *Neil Horman*, *Norbert Pocs*
 
- * BIO_f_reliable() implementation was removed without replacement.
+ * `BIO_f_reliable()` implementation was removed without replacement.
    It was broken since 3.0 release without any complaints.
 
    *Tomáš Mráz*
 
- * Added SNMP KDF (EVP_KDF_SNMPKDF) to EVP_KDF
+ * Added SNMP KDF (`EVP_KDF_SNMPKDF`) to `EVP_KDF`
 
    *Barry Fussell and Helen Zhang*
 
