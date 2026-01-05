@@ -42,7 +42,7 @@ jobs:
         if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' }}
         run: |
           set +e
-          grep -q "include\/crypto" ./names.txt
+          grep -q "include\/openssl" ./names.txt
           if [ $? -eq 0 ]; then
             echo "Changes in this PR may impact public APIS's"
             echo "NEED_NEWS_CHANGES=yes" >> $GITHUB_ENV
