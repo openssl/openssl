@@ -198,7 +198,7 @@ X509_VERIFY_PARAM_get0_email() returns the expected RFC822 email address.
 X509_VERIFY_PARAM_set1_email() sets the expected RFC822 email address to
 I<email>.
 If I<email> is NULL, email checking is disabled. Otherwise,
-if I<emaillen> is zero, I<email> must be NUL-terminated, otherwise
+if I<emaillen> is zero, I<email> must be NUL-terminated; if I<emaillen> is nonzero,
 I<emaillen> must be set to the length of I<email>.  When an email address
 is specified, certificate verification automatically invokes
 L<X509_check_email(3)>.
