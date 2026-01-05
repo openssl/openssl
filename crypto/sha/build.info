@@ -72,8 +72,8 @@ IF[{- !$disabled{asm} -}]
 
   $KECCAK1600ASM_ppc64=keccak1600-ppc64.s
 
-  $KECCAK1600ASM_riscv64=keccak1600_riscv.c keccak1600.c keccak1600-riscv64-v-zbb.S
-  $KECCAK1600DEF_riscv64=INCLUDE_C_KECCAK1600
+  # $KECCAK1600ASM_riscv64=keccak1600_riscv.c keccak1600.c keccak1600-riscv64-v-zbb.S
+  # $KECCAK1600DEF_riscv64=INCLUDE_C_KECCAK1600
 
   # Now that we have defined all the arch specific variables, use the
   # appropriate one, and define the appropriate macros
