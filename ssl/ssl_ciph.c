@@ -490,6 +490,7 @@ int ssl_cipher_get_evp_cipher_sn(SSL_CTX *ctx, const SSL_CIPHER *sslc,
 
     if (i == -1) {
         *enc = NULL;
+        *inputoffs = 0;
     } else {
         if (i == SSL_ENC_NULL_IDX) {
             /*

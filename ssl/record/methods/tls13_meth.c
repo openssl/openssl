@@ -392,7 +392,6 @@ static int tls13_add_record_padding(OSSL_RECORD_LAYER *rl,
     size_t rlen;
     size_t max_frag_len = rl->max_frag_len;
     int isdtls = rl->isdtls;
-    size_t dtls13_min_ciphertext_len = 16;
     size_t mac_size = 0;
     size_t taglen = rl->taglen;
 
@@ -470,8 +469,8 @@ static int tls13_add_record_padding(OSSL_RECORD_LAYER *rl,
             if (rl->mac_ctx != NULL)
                 mac_size = EVP_MAC_CTX_get_mac_size(rl->mac_ctx);
 
-            if (padding + rlen + taglen + mac_size < dtls13_min_ciphertext_len)
-                padding += dtls13_min_ciphertext_len - (padding + rlen + taglen + mac_size);
+            if (padding + rlen + taglen + mac_size < DTLS13_CIPHERTEXT_MINSIZE)
+                padding += DTLS13_CIPHERTEXT_MINSIZE - (padding + rlen + taglen + mac_size);
         }
 
         if (padding > 0) {
