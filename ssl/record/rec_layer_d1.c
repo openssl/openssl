@@ -229,6 +229,8 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
 
 start:
     sc->rwstate = SSL_NOTHING;
+    curr_epoch = 0;
+    in_early_data = 0;
 
     /*
      * We are not handshaking and have no data yet, so process data buffered

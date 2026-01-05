@@ -92,7 +92,7 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
              * End of Early Data Message
              */
         } else if (s->ext.early_data == SSL_EARLY_DATA_ACCEPTED
-            && !SSL_NO_EOED(s) && !SSL_CONNECTION_IS_DTLS13(s)) {
+            && !SSL_NO_EOED(s)) {
             if (mt == SSL3_MT_END_OF_EARLY_DATA) {
                 st->hand_state = TLS_ST_SR_END_OF_EARLY_DATA;
                 return 1;
@@ -1076,7 +1076,7 @@ WORK_STATE ossl_statem_server_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
          * In QUIC with 0-RTT we just carry on when otherwise we would stop
          * to allow the server to read early data
          */
-        if (SSL_NO_EOED(s) && s->ext.early_data == SSL_EARLY_DATA_ACCEPTED
+        if (SSL_IS_QUIC_HANDSHAKE(s) && s->ext.early_data == SSL_EARLY_DATA_ACCEPTED
             && s->early_data_state != SSL_EARLY_DATA_FINISHED_READING) {
             s->early_data_state = SSL_EARLY_DATA_FINISHED_READING;
             if (!ssl->method->ssl3_enc->change_cipher_state(s, SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_READ)) {

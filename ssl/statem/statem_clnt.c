@@ -489,8 +489,7 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
          * RFC 9147 Section 5.6 states DTLS1.3 should omit the
          * End of Early Data Message
          */
-        if (s->ext.early_data == SSL_EARLY_DATA_ACCEPTED && !SSL_NO_EOED(s)
-            && !SSL_CONNECTION_IS_DTLS13(s)) {
+        if (s->ext.early_data == SSL_EARLY_DATA_ACCEPTED && !SSL_NO_EOED(s)) {
             st->hand_state = TLS_ST_CW_END_OF_EARLY_DATA;
             return WRITE_TRAN_CONTINUE;
         }
