@@ -535,8 +535,7 @@ static const ST_KAT_PARAM snmpkdf_params[] = {
 
 #ifndef OPENSSL_NO_SRTPKDF
 static const char srtpkdf_cipher[] = "AES-256-CTR";
-static const unsigned char srtpkdf_kdr[] = {
-    0x00, 0x00, 0x00, 0x00, 0x01, 0x00 };
+static const int srtpkdf_kdr = 0x100;
 
 static const unsigned char srtpkdf_key[] = {
     0x4b, 0x26, 0xfa, 0xdc, 0x0a, 0x9b, 0xe8, 0x23,
@@ -559,10 +558,10 @@ static const unsigned char srtpkdf_expected[] = {
 
 static const ST_KAT_PARAM srtpkdf_params[] = {
     ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_CIPHER, srtpkdf_cipher),
-    ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SRTPKDF_KDR, srtpkdf_kdr),
     ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_KEY, srtpkdf_key),
     ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SALT, srtpkdf_salt),
     ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SRTPKDF_INDEX, srtpkdf_index),
+    ST_KAT_PARAM_INT(OSSL_KDF_PARAM_SRTPKDF_KDR, srtpkdf_kdr),
     ST_KAT_PARAM_INT(OSSL_KDF_PARAM_SRTPKDF_LABEL, srtpkdf_label),
     ST_KAT_PARAM_END()
 };
