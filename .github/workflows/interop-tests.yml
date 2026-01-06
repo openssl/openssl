@@ -17,7 +17,7 @@ jobs:
     if: github.repository == 'openssl/openssl'
     runs-on: ubuntu-22.04
     container:
-      image: docker.io/fedora:40
+      image: docker.io/fedora:43
       options: --sysctl net.ipv6.conf.lo.disable_ipv6=0
     timeout-minutes: 90
     strategy:
@@ -34,21 +34,21 @@ jobs:
         run: export
       - name : Install needed tools
         run: |
-          dnf -y install perl gcc rpmdevtools dnf-utils make tmt-all beakerlib \
-                 fips-mode-setup crypto-policies-scripts
+          dnf -y install perl gcc make \
+                 rpmdevtools dnf-utils \
+                 tmt-all beakerlib \
+                 crypto-policies-scripts
       - name: install interop tests
         run: |
           cd ${GITHUB_WORKSPACE}
-          git clone --branch=openssl-v0.1 --depth=1 https://gitlab.com/redhat-crypto/tests/interop.git
+          git clone --branch=openssl-v0.2 --depth=1 https://gitlab.com/redhat-crypto/tests/interop.git
       - name: build openssl as an rpm
         run: |
           mkdir -p /build/SPECS && cd /build && echo -e "%_topdir /build\n%_lto_cflags %{nil}" >~/.rpmmacros && rpmdev-setuptree
           cd /build && cp ${GITHUB_WORKSPACE}/interop/openssl/openssl.spec SPECS/ && \
           cd SPECS/ && source ${GITHUB_WORKSPACE}/VERSION.dat && \
-          sed -i "s/soversion 3/soversion $SHLIB_VERSION/;s/^Version: .*\$/Version: $MAJOR.$MINOR.$PATCH/" openssl.spec && \
-          sed -i "/^%attr.*_libdir.*engines-/ d" openssl.spec && \
-          sed -i 's/^Release: .*$/Release: dev/' openssl.spec && \
-          sed -i "/^%{_bindir}\/c_rehash$/ d" openssl.spec
+          sed -i "s/SOVERSION/$SHLIB_VERSION/" openssl.spec && \
+          sed -i "s/^Version: .*\$/Version: $MAJOR.$MINOR.$PATCH/" openssl.spec
           yum-builddep -y /build/SPECS/openssl.spec # just for sure nothing is missing
           mkdir -p /build/SOURCES
           tar --transform "s/^__w\/openssl\/openssl/openssl-$MAJOR.$MINOR.$PATCH/" -czf /build/SOURCES/openssl-$MAJOR.$MINOR.$PATCH.tar.gz "$GITHUB_WORKSPACE"
