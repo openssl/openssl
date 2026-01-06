@@ -1,7 +1,7 @@
 # Note that some of these directories are filtered in Configure.  Look for
 # %skipdir there for further explanations.
 
-SUBDIRS=crypto ssl apps util tools fuzz providers doc
+SUBDIRS=crypto ssl apps util fuzz providers doc
 IF[{- !$disabled{tests} -}]
   SUBDIRS=test
 ENDIF

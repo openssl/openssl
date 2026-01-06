@@ -188,7 +188,7 @@ int tls_parse_ctos_maxfragmentlen(SSL_CONNECTION *s, PACKET *pkt,
     /* Received |value| should be a valid max-fragment-length code. */
     if (!IS_MAX_FRAGMENT_LENGTH_EXT_VALID(value)) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-            SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH);
+            SSL_R_TLS_EXT_INVALID_MAX_FRAGMENT_LENGTH);
         return 0;
     }
 

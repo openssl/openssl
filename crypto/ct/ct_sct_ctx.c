@@ -197,7 +197,7 @@ err:
     return 0;
 }
 
-__owur static int ct_public_key_hash(SCT_CTX *sctx, X509_PUBKEY *pkey,
+__owur static int ct_public_key_hash(SCT_CTX *sctx, const X509_PUBKEY *pkey,
     unsigned char **hash, size_t *hash_len)
 {
     int ret = 0;
@@ -241,12 +241,12 @@ err:
     return ret;
 }
 
-int SCT_CTX_set1_issuer(SCT_CTX *sctx, const X509 *issuer)
+int SCT_CTX_set1_issuer(SCT_CTX *sctx, X509 *issuer)
 {
     return SCT_CTX_set1_issuer_pubkey(sctx, X509_get_X509_PUBKEY(issuer));
 }
 
-int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey)
+int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, const X509_PUBKEY *pubkey)
 {
     return ct_public_key_hash(sctx, pubkey, &sctx->ihash, &sctx->ihashlen);
 }

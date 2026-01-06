@@ -58,10 +58,10 @@ static const unsigned char sha256magic[] = "SHA256v1";
     (                                                 \
         SHA256MAGIC_LEN /* magic */                   \
         + sizeof(uint32_t) /* c->md_len */            \
+        + sizeof(uint32_t) /* c->num */               \
         + sizeof(uint32_t) * 8 /* c->h */             \
         + sizeof(uint32_t) * 2 /* c->Nl + c->Nh */    \
         + sizeof(uint32_t) * SHA_LBLOCK /* c->data */ \
-        + sizeof(uint32_t) /* c->num */               \
     )
 
 static int SHA256_Serialize(SHA256_CTX *c, unsigned char *out,
@@ -90,6 +90,9 @@ static int SHA256_Serialize(SHA256_CTX *c, unsigned char *out,
     /* md_len */
     p = OPENSSL_store_u32_le(p, c->md_len);
 
+    /* num */
+    p = OPENSSL_store_u32_le(p, c->num);
+
     /* h */
     for (i = 0; i < sizeof(c->h) / sizeof(SHA_LONG); i++)
         p = OPENSSL_store_u32_le(p, c->h[i]);
@@ -102,15 +105,17 @@ static int SHA256_Serialize(SHA256_CTX *c, unsigned char *out,
     for (i = 0; i < SHA_LBLOCK; i++)
         p = OPENSSL_store_u32_le(p, c->data[i]);
 
-    /* num */
-    p = OPENSSL_store_u32_le(p, c->num);
-
     if (outlen != NULL)
         *outlen = SHA256_SERIALIZATION_LEN;
 
     return 1;
 }
 
+/*
+ * This function only performs basic input sanity checks and is not
+ * built to handle malicious input data. Only trusted input should be
+ * fed to this function
+ */
 static int SHA256_Deserialize(SHA256_CTX *c, const unsigned char *in,
     size_t inlen)
 {
@@ -133,6 +138,12 @@ static int SHA256_Deserialize(SHA256_CTX *c, const unsigned char *in,
         return 0;
     }
 
+    /* num check */
+    p = OPENSSL_load_u32_le(&val, p);
+    if (val >= sizeof(c->data))
+        return 0;
+    c->num = (unsigned int)val;
+
     /* h */
     for (i = 0; i < (sizeof(c->h) / sizeof(SHA_LONG)); i++) {
         p = OPENSSL_load_u32_le(&val, p);
@@ -151,10 +162,6 @@ static int SHA256_Deserialize(SHA256_CTX *c, const unsigned char *in,
         c->data[i] = (SHA_LONG)val;
     }
 
-    /* num */
-    p = OPENSSL_load_u32_le(&val, p);
-    c->num = (unsigned int)val;
-
     return 1;
 }
 
@@ -164,10 +171,10 @@ static const unsigned char sha512magic[] = "SHA512v1";
     (                                              \
         SHA512MAGIC_LEN /* magic */                \
         + sizeof(uint32_t) /* c->md_len */         \
+        + sizeof(uint32_t) /* c->num */            \
         + sizeof(uint64_t) * 8 /* c->h */          \
         + sizeof(uint64_t) * 2 /* c->Nl + c->Nh */ \
         + SHA512_CBLOCK /* c->u.d/c->u.p */        \
-        + sizeof(uint32_t) /* c->num */            \
     )
 
 static int SHA512_Serialize(SHA512_CTX *c, unsigned char *out,
@@ -196,6 +203,9 @@ static int SHA512_Serialize(SHA512_CTX *c, unsigned char *out,
     /* md_len */
     p = OPENSSL_store_u32_le(p, c->md_len);
 
+    /* num */
+    p = OPENSSL_store_u32_le(p, c->num);
+
     /* h */
     for (i = 0; i < sizeof(c->h) / sizeof(SHA_LONG64); i++)
         p = OPENSSL_store_u64_le(p, c->h[i]);
@@ -208,15 +218,17 @@ static int SHA512_Serialize(SHA512_CTX *c, unsigned char *out,
     memcpy(p, c->u.p, SHA512_CBLOCK);
     p += SHA512_CBLOCK;
 
-    /* num */
-    p = OPENSSL_store_u32_le(p, c->num);
-
     if (outlen != NULL)
         *outlen = SHA512_SERIALIZATION_LEN;
 
     return 1;
 }
 
+/*
+ * This function only performs basic input sanity checks and is not
+ * built to handle malicious input data. Only trusted input should be
+ * fed to this function
+ */
 static int SHA512_Deserialize(SHA512_CTX *c, const unsigned char *in,
     size_t inlen)
 {
@@ -239,6 +251,12 @@ static int SHA512_Deserialize(SHA512_CTX *c, const unsigned char *in,
     if ((unsigned int)val32 != c->md_len)
         return 0;
 
+    /* num check */
+    p = OPENSSL_load_u32_le(&val32, p);
+    if (val32 >= sizeof(c->u.d))
+        return 0;
+    c->num = (unsigned int)val32;
+
     /* h */
     for (i = 0; i < (sizeof(c->h) / sizeof(SHA_LONG64)); i++) {
         p = OPENSSL_load_u64_le(&val, p);
@@ -254,10 +272,6 @@ static int SHA512_Deserialize(SHA512_CTX *c, const unsigned char *in,
     /* data */
     memcpy(c->u.p, p, SHA512_CBLOCK);
     p += SHA512_CBLOCK;
-
-    /* num */
-    p = OPENSSL_load_u32_le(&val32, p);
-    c->num = (unsigned int)val32;
 
     return 1;
 }

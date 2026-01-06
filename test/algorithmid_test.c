@@ -20,7 +20,7 @@ static const char *pubkey_filename = NULL; /* For test_spki_file() */
 
 #define ALGORITHMID_NAME "algorithm-id"
 
-static int test_spki_aid(X509_PUBKEY *pubkey, const char *filename)
+static int test_spki_aid(const X509_PUBKEY *pubkey, const char *filename)
 {
     const ASN1_OBJECT *oid;
     X509_ALGOR *alg = NULL;
@@ -103,7 +103,7 @@ end:
 
 static int test_x509_spki_aid(X509 *cert, const char *filename)
 {
-    X509_PUBKEY *pubkey = X509_get_X509_PUBKEY(cert);
+    const X509_PUBKEY *pubkey = X509_get_X509_PUBKEY(cert);
 
     return test_spki_aid(pubkey, filename);
 }

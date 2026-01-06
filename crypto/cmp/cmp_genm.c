@@ -39,7 +39,7 @@ static int ossl_X509_check(OSSL_CMP_CTX *ctx, const char *source, X509 *cert,
     int ret, err;
     OSSL_CMP_severity level = vpm == NULL ? OSSL_CMP_LOG_WARNING : OSSL_CMP_LOG_ERR;
 
-    ret = ossl_x509_check_certificate_times(vpm, cert, &err);
+    ret = X509_check_certificate_times(vpm, cert, &err);
     if (!ret) {
         const char *msg;
 

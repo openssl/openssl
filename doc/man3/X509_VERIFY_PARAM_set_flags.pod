@@ -258,6 +258,14 @@ certificate. An error occurs if a suitable CRL cannot be found.
 B<X509_V_FLAG_CRL_CHECK_ALL> expands CRL checking to the entire certificate
 chain if B<X509_V_FLAG_CRL_CHECK> has also been enabled, and is otherwise ignored.
 
+B<X509_V_FLAG_OCSP_RESP_CHECK> enables Online Certificate Status Protocol (OCSP)
+checking for the certificate chain leaf certificate. An error occurs if a suitable
+OCSP response cannot be found.
+
+B<X509_V_FLAG_OCSP_RESP_CHECK_ALL> expands OCSP checking to the entire certificate
+chain if B<X509_V_FLAG_OCSP_RESP_CHECK> has also been enabled, and is otherwise
+ignored.
+
 B<X509_V_FLAG_IGNORE_CRITICAL> disables critical extension checking. By default
 any unhandled critical extensions in certificates or (if checked) CRLs result
 in a fatal error. If this flag is set unhandled critical extensions are

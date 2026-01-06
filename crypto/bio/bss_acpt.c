@@ -266,6 +266,9 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                 }
             }
 
+            /* Free old values before assigning new ones to prevent memory leak */
+            OPENSSL_free(c->cache_accepting_name);
+            OPENSSL_free(c->cache_accepting_serv);
             c->cache_accepting_name = BIO_ADDR_hostname_string(&c->cache_accepting_addr, 1);
             c->cache_accepting_serv = BIO_ADDR_service_string(&c->cache_accepting_addr, 1);
             c->state = ACPT_S_ACCEPT;

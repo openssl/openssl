@@ -126,10 +126,7 @@ See OPENSSL_fork_prepare(3) for details.
 
 =item OPENSSL_INIT_NO_ATEXIT
 
-By default OpenSSL will attempt to clean itself up when the process exits via an
-"atexit" handler. Using this option suppresses that behaviour. This means that
-the application will have to clean up OpenSSL explicitly using
-OPENSSL_cleanup().
+The option has no effect in 4.0 and later.
 
 =back
 
@@ -158,11 +155,7 @@ OpenSSL error strings will not be available, only an error code. This code can
 be put through the openssl errstr command line application to produce a human
 readable error (see L<openssl-errstr(1)>).
 
-The OPENSSL_atexit() function enables the registration of a
-function to be called during OPENSSL_cleanup(). Stop handlers are
-called after deinitialisation of resources local to a thread, but before other
-process wide resources are freed. In the event that multiple stop handlers are
-registered, no guarantees are made about the order of execution.
+The OPENSSL_atexit() is a wrapper on atexit(3) provided by the platform's libc.
 
 The OPENSSL_thread_stop_ex() function deallocates resources associated
 with the current thread for the given OSSL_LIB_CTX B<ctx>. The B<ctx> parameter

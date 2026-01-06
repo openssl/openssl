@@ -1606,12 +1606,7 @@ static int test_large_app_data(int tst)
 #endif
 
     case 4:
-#ifndef OPENSSL_NO_SSL3
-        prot = SSL3_VERSION;
-        break;
-#else
         return TEST_skip("SSL 3 not supported");
-#endif
 
     case 5:
 #ifndef OPENSSL_NO_DTLS1_2
@@ -12050,9 +12045,6 @@ static int check_version_string(SSL *s, int version)
     const char *verstr = NULL;
 
     switch (version) {
-    case SSL3_VERSION:
-        verstr = "SSLv3";
-        break;
     case TLS1_VERSION:
         verstr = "TLSv1";
         break;
@@ -12090,11 +12082,6 @@ static int test_version(int idx)
     const SSL_METHOD *clientmeth = TLS_client_method();
 
     switch (idx) {
-#if !defined(OPENSSL_NO_SSL3)
-    case 0:
-        version = SSL3_VERSION;
-        break;
-#endif
 #if !defined(OPENSSL_NO_TLS1)
     case 1:
         version = TLS1_VERSION;
@@ -12131,8 +12118,7 @@ static int test_version(int idx)
     }
 
     if (is_fips
-        && (version == SSL3_VERSION
-            || version == TLS1_VERSION
+        && (version == TLS1_VERSION
             || version == DTLS1_VERSION)) {
         TEST_skip("Protocol version not supported with FIPS");
         return 1;

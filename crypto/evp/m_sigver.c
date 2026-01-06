@@ -17,12 +17,6 @@
 #include "internal/common.h"
 #include "evp_local.h"
 
-static int update(EVP_MD_CTX *ctx, const void *data, size_t datalen)
-{
-    ERR_raise(ERR_LIB_EVP, EVP_R_ONLY_ONESHOT_SUPPORTED);
-    return 0;
-}
-
 /*
  * If we get the "NULL" md then the name comes back as "UNDEF". We want to use
  * NULL for this.
@@ -67,7 +61,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     ERR_set_mark();
 
     if (evp_pkey_ctx_is_legacy(locpctx))
-        goto legacy;
+        goto notsupported;
 
     /* do not reinitialize if pkey is set or operation is different */
     if (reinit
@@ -151,7 +145,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
             signature = evp_signature_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
                 supported_sig, locpctx->propquery);
             if (signature == NULL)
-                goto legacy;
+                goto notsupported;
             break;
         }
         if (signature == NULL)
@@ -271,8 +265,13 @@ reinitialize:
      * If the operation was not a success and no digest was found, an error
      * needs to be raised.
      */
-    if (ret > 0 || mdname != NULL)
-        goto end;
+    if (ret > 0 || mdname != NULL) {
+        if (ret > 0)
+            ret = evp_pkey_ctx_use_cached_data(locpctx);
+
+        EVP_KEYMGMT_free(tmp_keymgmt);
+        return ret > 0 ? 1 : 0;
+    }
     if (type == NULL) /* This check is redundant but clarifies matters */
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_DEFAULT_DIGEST);
     ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_FAILURE,
@@ -285,85 +284,14 @@ err:
     EVP_KEYMGMT_free(tmp_keymgmt);
     return 0;
 
-legacy:
-    /*
-     * If we don't have the full support we need with provided methods,
-     * let's go see if legacy does.
-     */
+notsupported:
     ERR_pop_to_mark();
     EVP_KEYMGMT_free(tmp_keymgmt);
-    tmp_keymgmt = NULL;
 
-    if (type == NULL && mdname != NULL)
-        type = evp_get_digestbyname_ex(locpctx->libctx, mdname);
-
-    if (ctx->pctx->pmeth == NULL) {
-        ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
-            ver ? "%s digest_verify_init" : "%s digest_sign_init",
-            EVP_PKEY_get0_type_name(locpctx->pkey));
-        return 0;
-    }
-
-    if (!(ctx->pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM)) {
-
-        if (type == NULL) {
-            int def_nid;
-            if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) > 0)
-                type = EVP_get_digestbynid(def_nid);
-        }
-
-        if (type == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_NO_DEFAULT_DIGEST);
-            return 0;
-        }
-    }
-
-    if (ver) {
-        if (ctx->pctx->pmeth->verifyctx_init) {
-            if (ctx->pctx->pmeth->verifyctx_init(ctx->pctx, ctx) <= 0)
-                return 0;
-            ctx->pctx->operation = EVP_PKEY_OP_VERIFYCTX;
-        } else if (ctx->pctx->pmeth->digestverify != 0) {
-            ctx->pctx->operation = EVP_PKEY_OP_VERIFY;
-            ctx->update = update;
-        } else if (EVP_PKEY_verify_init(ctx->pctx) <= 0) {
-            return 0;
-        }
-    } else {
-        if (ctx->pctx->pmeth->signctx_init) {
-            if (ctx->pctx->pmeth->signctx_init(ctx->pctx, ctx) <= 0)
-                return 0;
-            ctx->pctx->operation = EVP_PKEY_OP_SIGNCTX;
-        } else if (ctx->pctx->pmeth->digestsign != 0) {
-            ctx->pctx->operation = EVP_PKEY_OP_SIGN;
-            ctx->update = update;
-        } else if (EVP_PKEY_sign_init(ctx->pctx) <= 0) {
-            return 0;
-        }
-    }
-    if (EVP_PKEY_CTX_set_signature_md(ctx->pctx, type) <= 0)
-        return 0;
-    if (pctx)
-        *pctx = ctx->pctx;
-    if (ctx->pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM)
-        return 1;
-    if (!EVP_DigestInit_ex(ctx, type, NULL))
-        return 0;
-    /*
-     * This indicates the current algorithm requires
-     * special treatment before hashing the tbs-message.
-     */
-    ctx->pctx->flag_call_digest_custom = 0;
-    if (ctx->pctx->pmeth->digest_custom != NULL)
-        ctx->pctx->flag_call_digest_custom = 1;
-
-    ret = 1;
-end:
-    if (ret > 0)
-        ret = evp_pkey_ctx_use_cached_data(locpctx);
-
-    EVP_KEYMGMT_free(tmp_keymgmt);
-    return ret > 0 ? 1 : 0;
+    ERR_raise_data(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
+        ver ? "%s digest_verify_init" : "%s digest_sign_init",
+        EVP_PKEY_get0_type_name(locpctx->pkey));
+    return 0;
 }
 
 int EVP_DigestSignInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
@@ -414,11 +342,15 @@ int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
         return 0;
     }
 
-    if (pctx == NULL
-        || pctx->operation != EVP_PKEY_OP_SIGNCTX
+    if (pctx == NULL)
+        return EVP_DigestUpdate(ctx, data, dsize);
+
+    if (pctx->operation != EVP_PKEY_OP_SIGNCTX
         || pctx->op.sig.algctx == NULL
-        || pctx->op.sig.signature == NULL)
-        goto legacy;
+        || pctx->op.sig.signature == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+    }
 
     signature = pctx->op.sig.signature;
     desc = signature->description != NULL ? signature->description : "";
@@ -435,21 +367,6 @@ int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
             "%s digest_sign_update:%s", signature->type_name, desc);
     ERR_clear_last_mark();
     return ret;
-
-legacy:
-    if (pctx != NULL) {
-        if (pctx->pmeth == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-            return 0;
-        }
-        /* do_sigver_init() checked that |digest_custom| is non-NULL */
-        if (pctx->flag_call_digest_custom
-            && !ctx->pctx->pmeth->digest_custom(ctx->pctx, ctx))
-            return 0;
-        pctx->flag_call_digest_custom = 0;
-    }
-
-    return EVP_DigestUpdate(ctx, data, dsize);
 }
 
 int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
@@ -468,7 +385,7 @@ int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
         || pctx->operation != EVP_PKEY_OP_VERIFYCTX
         || pctx->op.sig.algctx == NULL
         || pctx->op.sig.signature == NULL)
-        goto legacy;
+        return EVP_DigestUpdate(ctx, data, dsize);
 
     signature = pctx->op.sig.signature;
     desc = signature->description != NULL ? signature->description : "";
@@ -485,17 +402,6 @@ int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
             "%s digest_verify_update:%s", signature->type_name, desc);
     ERR_clear_last_mark();
     return ret;
-
-legacy:
-    if (pctx != NULL) {
-        /* do_sigver_init() checked that |digest_custom| is non-NULL */
-        if (pctx->flag_call_digest_custom
-            && !ctx->pctx->pmeth->digest_custom(ctx->pctx, ctx))
-            return 0;
-        pctx->flag_call_digest_custom = 0;
-    }
-
-    return EVP_DigestUpdate(ctx, data, dsize);
 }
 
 int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
@@ -503,7 +409,6 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
 {
     EVP_SIGNATURE *signature;
     const char *desc;
-    int sctx = 0;
     int r = 0;
     EVP_PKEY_CTX *dctx = NULL, *pctx = ctx->pctx;
 
@@ -515,8 +420,10 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
     if (pctx == NULL
         || pctx->operation != EVP_PKEY_OP_SIGNCTX
         || pctx->op.sig.algctx == NULL
-        || pctx->op.sig.signature == NULL)
-        goto legacy;
+        || pctx->op.sig.signature == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+    }
 
     signature = pctx->op.sig.signature;
     desc = signature->description != NULL ? signature->description : "";
@@ -545,79 +452,6 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
     else
         EVP_PKEY_CTX_free(dctx);
     return r;
-
-legacy:
-    if (pctx == NULL || pctx->pmeth == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-        return 0;
-    }
-
-    /* do_sigver_init() checked that |digest_custom| is non-NULL */
-    if (pctx->flag_call_digest_custom
-        && !ctx->pctx->pmeth->digest_custom(ctx->pctx, ctx))
-        return 0;
-    pctx->flag_call_digest_custom = 0;
-
-    if (pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM) {
-        if (sigret == NULL)
-            return pctx->pmeth->signctx(pctx, sigret, siglen, ctx);
-        if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISE) != 0) {
-            r = pctx->pmeth->signctx(pctx, sigret, siglen, ctx);
-            ctx->flags |= EVP_MD_CTX_FLAG_FINALISED;
-        } else {
-            dctx = EVP_PKEY_CTX_dup(pctx);
-            if (dctx == NULL)
-                return 0;
-            r = dctx->pmeth->signctx(dctx, sigret, siglen, ctx);
-            EVP_PKEY_CTX_free(dctx);
-        }
-        return r;
-    }
-    if (pctx->pmeth->signctx != NULL)
-        sctx = 1;
-    else
-        sctx = 0;
-    if (sigret != NULL) {
-        unsigned char md[EVP_MAX_MD_SIZE];
-        unsigned int mdlen = 0;
-
-        if (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) {
-            if (sctx)
-                r = pctx->pmeth->signctx(pctx, sigret, siglen, ctx);
-            else
-                r = EVP_DigestFinal_ex(ctx, md, &mdlen);
-        } else {
-            EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_new();
-
-            if (tmp_ctx == NULL)
-                return 0;
-            if (!EVP_MD_CTX_copy_ex(tmp_ctx, ctx)) {
-                EVP_MD_CTX_free(tmp_ctx);
-                return 0;
-            }
-            if (sctx)
-                r = tmp_ctx->pctx->pmeth->signctx(tmp_ctx->pctx,
-                    sigret, siglen, tmp_ctx);
-            else
-                r = EVP_DigestFinal_ex(tmp_ctx, md, &mdlen);
-            EVP_MD_CTX_free(tmp_ctx);
-        }
-        if (sctx || !r)
-            return r;
-        if (EVP_PKEY_sign(pctx, sigret, siglen, md, mdlen) <= 0)
-            return 0;
-    } else {
-        if (sctx) {
-            if (pctx->pmeth->signctx(pctx, sigret, siglen, ctx) <= 0)
-                return 0;
-        } else {
-            int s = EVP_MD_get_size(ctx->digest);
-
-            if (s <= 0 || EVP_PKEY_sign(pctx, sigret, siglen, NULL, s) <= 0)
-                return 0;
-        }
-    }
-    return 1;
 }
 
 int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
@@ -655,10 +489,6 @@ int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
             ERR_clear_last_mark();
             return ret;
         }
-    } else {
-        /* legacy */
-        if (pctx->pmeth != NULL && pctx->pmeth->digestsign != NULL)
-            return pctx->pmeth->digestsign(ctx, sigret, siglen, tbs, tbslen);
     }
 
     if (sigret != NULL && EVP_DigestSignUpdate(ctx, tbs, tbslen) <= 0)
@@ -671,9 +501,6 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
 {
     EVP_SIGNATURE *signature;
     const char *desc;
-    int vctx = 0;
-    unsigned int mdlen = 0;
-    unsigned char md[EVP_MAX_MD_SIZE];
     int r = 0;
     EVP_PKEY_CTX *dctx = NULL, *pctx = ctx->pctx;
 
@@ -685,8 +512,10 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
     if (pctx == NULL
         || pctx->operation != EVP_PKEY_OP_VERIFYCTX
         || pctx->op.sig.algctx == NULL
-        || pctx->op.sig.signature == NULL)
-        goto legacy;
+        || pctx->op.sig.signature == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        return 0;
+    }
 
     signature = pctx->op.sig.signature;
     desc = signature->description != NULL ? signature->description : "";
@@ -714,47 +543,6 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
     else
         EVP_PKEY_CTX_free(dctx);
     return r;
-
-legacy:
-    if (pctx == NULL || pctx->pmeth == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-        return 0;
-    }
-
-    /* do_sigver_init() checked that |digest_custom| is non-NULL */
-    if (pctx->flag_call_digest_custom
-        && !ctx->pctx->pmeth->digest_custom(ctx->pctx, ctx))
-        return 0;
-    pctx->flag_call_digest_custom = 0;
-
-    if (pctx->pmeth->verifyctx != NULL)
-        vctx = 1;
-    else
-        vctx = 0;
-    if (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) {
-        if (vctx) {
-            r = pctx->pmeth->verifyctx(pctx, sig, (int)siglen, ctx);
-            ctx->flags |= EVP_MD_CTX_FLAG_FINALISED;
-        } else
-            r = EVP_DigestFinal_ex(ctx, md, &mdlen);
-    } else {
-        EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_new();
-        if (tmp_ctx == NULL)
-            return -1;
-        if (!EVP_MD_CTX_copy_ex(tmp_ctx, ctx)) {
-            EVP_MD_CTX_free(tmp_ctx);
-            return -1;
-        }
-        if (vctx)
-            r = tmp_ctx->pctx->pmeth->verifyctx(tmp_ctx->pctx,
-                sig, (int)siglen, tmp_ctx);
-        else
-            r = EVP_DigestFinal_ex(tmp_ctx, md, &mdlen);
-        EVP_MD_CTX_free(tmp_ctx);
-    }
-    if (vctx || !r)
-        return r;
-    return EVP_PKEY_verify(pctx, sig, siglen, md, mdlen);
 }
 
 int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
@@ -789,11 +577,8 @@ int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
             ERR_clear_last_mark();
             return ret;
         }
-    } else {
-        /* legacy */
-        if (pctx->pmeth != NULL && pctx->pmeth->digestverify != NULL)
-            return pctx->pmeth->digestverify(ctx, sigret, siglen, tbs, tbslen);
     }
+
     if (EVP_DigestVerifyUpdate(ctx, tbs, tbslen) <= 0)
         return -1;
     return EVP_DigestVerifyFinal(ctx, sigret, siglen);

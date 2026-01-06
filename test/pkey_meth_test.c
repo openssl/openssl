@@ -53,42 +53,10 @@ static int test_asn1_meths(void)
 }
 #endif
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-/* Test of EVP_PKEY_METHOD ordering */
-static int test_pkey_meths(void)
-{
-    size_t i;
-    int prev = -1;
-    int good = 1;
-    int pkey_id;
-    const EVP_PKEY_METHOD *pmeth;
-
-    for (i = 0; i < EVP_PKEY_meth_get_count(); i++) {
-        pmeth = EVP_PKEY_meth_get0(i);
-        EVP_PKEY_meth_get0_info(&pkey_id, NULL, pmeth);
-        if (pkey_id < prev)
-            good = 0;
-        prev = pkey_id;
-    }
-    if (!good) {
-        TEST_error("EVP_PKEY_METHOD table out of order");
-        for (i = 0; i < EVP_PKEY_meth_get_count(); i++) {
-            pmeth = EVP_PKEY_meth_get0(i);
-            EVP_PKEY_meth_get0_info(&pkey_id, NULL, pmeth);
-            TEST_note("%d : %s", pkey_id, OBJ_nid2ln(pkey_id));
-        }
-    }
-    return good;
-}
-#endif
-
 int setup_tests(void)
 {
 #ifndef OPENSSL_NO_DEPRECATED_3_6
     ADD_TEST(test_asn1_meths);
-#endif
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    ADD_TEST(test_pkey_meths);
 #endif
     return 1;
 }

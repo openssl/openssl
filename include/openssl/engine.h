@@ -474,7 +474,7 @@ ENGINE_FUNC(int, ENGINE_register_EC, (ENGINE *e), 0)
 /* OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_EC(ENGINE *e); */
 ENGINE_VOID_FUNC(ENGINE_unregister_EC, (ENGINE *e))
 /* OSSL_DEPRECATEDIN_3_0 void ENGINE_register_all_EC(void); */
-ENGINE_VOID_FUNC_NOARGS(ENGINE_unregister_all_EC)
+ENGINE_VOID_FUNC_NOARGS(ENGINE_register_all_EC)
 /* OSSL_DEPRECATEDIN_3_0 int ENGINE_register_DH(ENGINE *e); */
 ENGINE_FUNC(int, ENGINE_register_DH, (ENGINE *e), 0)
 /* OSSL_DEPRECATEDIN_3_0 void ENGINE_unregister_DH(ENGINE *e); */
@@ -1148,9 +1148,7 @@ ENGINE_VOID_FUNC_NOARGS(ENGINE_setup_bsd_cryptodev)
  * from other headers.
  */
 
-/* int ossl_err_load_ENGINE_strings(void); */
-ENGINE_FUNC_NOARGS(int, ossl_err_load_ENGINE_strings, 1)
-
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 /* int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e); */
 ENGINE_FUNC(int, EVP_PKEY_set1_engine, (EVP_PKEY *pkey, ENGINE *e), 0)
 
@@ -1176,6 +1174,10 @@ ENGINE_FUNC(const ENGINE *, OSSL_STORE_LOADER_get0_engine, (const OSSL_STORE_LOA
 /* int RAND_set_rand_engine(ENGINE *engine); */
 ENGINE_FUNC(int, RAND_set_rand_engine, (ENGINE *engine), 0)
 
+/* int ERR_load_ENGINE_strings(void); */
+ENGINE_FUNC_NOARGS(int, ERR_load_ENGINE_strings, 1)
+#endif
+
 /*
  * int TS_CONF_set_crypto_device(CONF *conf, const char *section,
  *                              const char *device);
@@ -1185,9 +1187,6 @@ ENGINE_FUNC(int, TS_CONF_set_crypto_device,
 
 /* int TS_CONF_set_default_engine(const char *name); */
 ENGINE_FUNC(int, TS_CONF_set_default_engine, (const char *name), 0)
-
-/* int ERR_load_ENGINE_strings(void); */
-ENGINE_FUNC_NOARGS(int, ERR_load_ENGINE_strings, 1)
 
 /* int SSL_CTX_set_client_cert_engine(SSL_CTX *ctx, ENGINE *e); */
 ENGINE_FUNC(int, SSL_CTX_set_client_cert_engine, (SSL_CTX *ctx, ENGINE *e), 0)

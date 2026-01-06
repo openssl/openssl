@@ -586,8 +586,8 @@ static const unsigned char keccakmagic[] = "KECCAKv1";
         KECCAKMAGIC_LEN /* magic string */                                           \
         + sizeof(uint64_t) /* impl-ID */                                             \
         + sizeof(uint64_t) /* c->md_size */                                          \
-        + (sizeof(uint64_t) * 5 * 5) /* c->A */                                      \
         + (sizeof(uint64_t) * 4) /* c->block_size, c->bufsz, c->pad, c->xof_state */ \
+        + (sizeof(uint64_t) * 5 * 5) /* c->A */                                      \
         + (KECCAK1600_WIDTH / 8 - 32) /* c->buf */                                   \
     )
 
@@ -618,16 +618,16 @@ static int KECCAK_Serialize(KECCAK1600_CTX *c, int impl_id,
     p = OPENSSL_store_u64_le(p, impl_id);
     p = OPENSSL_store_u64_le(p, c->md_size);
 
+    p = OPENSSL_store_u64_le(p, c->block_size);
+    p = OPENSSL_store_u64_le(p, c->bufsz);
+    p = OPENSSL_store_u64_le(p, c->pad);
+    p = OPENSSL_store_u64_le(p, c->xof_state);
+
     /* A matrix */
     for (i = 0; i < 5; i++) {
         for (j = 0; j < 5; j++)
             p = OPENSSL_store_u64_le(p, c->A[i][j]);
     }
-
-    p = OPENSSL_store_u64_le(p, c->block_size);
-    p = OPENSSL_store_u64_le(p, c->bufsz);
-    p = OPENSSL_store_u64_le(p, c->pad);
-    p = OPENSSL_store_u64_le(p, c->xof_state);
 
     if (outlen != NULL)
         *outlen = KECCAK_SERIALIZATION_LEN;
@@ -638,6 +638,11 @@ static int KECCAK_Serialize(KECCAK1600_CTX *c, int impl_id,
     return 1;
 }
 
+/*
+ * This function only performs basic input sanity checks and is not
+ * built to handle malicious input data. Only trusted input should be
+ * fed to this function
+ */
 static int KECCAK_Deserialize(KECCAK1600_CTX *c, int impl_id,
     const unsigned char *input, size_t len)
 {
@@ -664,6 +669,21 @@ static int KECCAK_Deserialize(KECCAK1600_CTX *c, int impl_id,
     if (val != (uint64_t)c->md_size)
         return 0;
 
+    /* check that block_size is congruent with the initialized value */
+    p = OPENSSL_load_u64_le(&val, p);
+    if (val != c->block_size)
+        return 0;
+    /* check that bufsz does not exceed block_size */
+    p = OPENSSL_load_u64_le(&val, p);
+    if (val > c->block_size)
+        return 0;
+    c->bufsz = (size_t)val;
+    p = OPENSSL_load_u64_le(&val, p);
+    if (val != c->pad)
+        return 0;
+    p = OPENSSL_load_u64_le(&val, p);
+    c->xof_state = (int)val;
+
     /* A matrix */
     for (i = 0; i < 5; i++) {
         for (j = 0; j < 5; j++) {
@@ -671,15 +691,6 @@ static int KECCAK_Deserialize(KECCAK1600_CTX *c, int impl_id,
             c->A[i][j] = val;
         }
     }
-
-    p = OPENSSL_load_u64_le(&val, p);
-    c->block_size = (size_t)val;
-    p = OPENSSL_load_u64_le(&val, p);
-    c->bufsz = (size_t)val;
-    p = OPENSSL_load_u64_le(&val, p);
-    c->pad = (unsigned char)val;
-    p = OPENSSL_load_u64_le(&val, p);
-    c->xof_state = (int)val;
 
     /* buf */
     memcpy(c->buf, p, sizeof(c->buf));

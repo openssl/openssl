@@ -301,7 +301,7 @@ static int test_evp_pkey_export_to_provider(int n)
     OSSL_PROVIDER *prov = NULL;
     X509 *cert = NULL;
     BIO *bio = NULL;
-    X509_PUBKEY *pubkey = NULL;
+    const X509_PUBKEY *pubkey = NULL;
     EVP_KEYMGMT *keymgmt = NULL;
     EVP_PKEY *pkey = NULL;
     void *keydata = NULL;

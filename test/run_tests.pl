@@ -26,6 +26,7 @@ use File::Basename;
 use FindBin;
 use lib "$FindBin::Bin/../util/perl";
 use OpenSSL::Glob;
+use Scalar::Util qw(looks_like_number);
 
 my $srctop = $ENV{SRCTOP} || $ENV{TOP};
 my $bldtop = $ENV{BLDTOP} || $ENV{TOP};
@@ -78,7 +79,13 @@ $ENV{CTLOG_FILE} = rel2abs(catfile($srctop, "test", "ct", "log_list.cnf"));
 $ENV{'MALLOC_PERTURB_'} = '128' if !defined $ENV{'MALLOC_PERTURB_'};
 
 my $tap_verbosity = exists $ENV{'HARNESS_VERBOSE'} ? $ENV{'HARNESS_VERBOSE'} : 0;
-# Show test times by default, unless we have lowered verbosity.
+# If $tap_verbosity looks like a number, keep its value.  Otherwise, enforce a
+# numeric value for its truthiness.
+$tap_verbosity =
+    looks_like_number($tap_verbosity)
+    ? $tap_verbosity
+    : ($tap_verbosity ? 1 : 0);
+# Show test times by default, unless we have lowered verbosity (HARNESS_VERBOSE value < 0).
 my $tap_timer =  ($tap_verbosity >= 0) ? 1 : 0;
 # But also ensure HARNESS_TIMER is respected if it is set.
 $tap_timer = exists $ENV{'HARNESS_TIMER'} ? $ENV{'HARNESS_TIMER'} : $tap_timer;

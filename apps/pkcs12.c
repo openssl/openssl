@@ -51,7 +51,7 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bags,
 void print_attribute(BIO *out, const ASN1_TYPE *av);
 int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
     const char *name);
-void hex_prin(BIO *out, unsigned char *buf, int len);
+static void hex_print(BIO *out, unsigned char *buf, int len);
 static int alg_print(const X509_ALGOR *alg);
 int cert_load(BIO *in, STACK_OF(X509) *sk);
 static int set_pbe(int *ppbe, const char *str);
@@ -1286,13 +1286,13 @@ void print_attribute(BIO *out, const ASN1_TYPE *av)
         break;
 
     case V_ASN1_OCTET_STRING:
-        hex_prin(out, av->value.octet_string->data,
+        hex_print(out, av->value.octet_string->data,
             av->value.octet_string->length);
         BIO_printf(out, "\n");
         break;
 
     case V_ASN1_BIT_STRING:
-        hex_prin(out, av->value.bit_string->data,
+        hex_print(out, av->value.bit_string->data,
             av->value.bit_string->length);
         BIO_printf(out, "\n");
         break;
@@ -1354,7 +1354,7 @@ int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
     return 1;
 }
 
-void hex_prin(BIO *out, unsigned char *buf, int len)
+static void hex_print(BIO *out, unsigned char *buf, int len)
 {
     int i;
     for (i = 0; i < len; i++)

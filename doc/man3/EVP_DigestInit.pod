@@ -340,6 +340,11 @@ different OpenSSL version and does not guarantee interoperability between
 different providers. Some providers may not allow export/import across
 process boundaries.
 
+NOTE: Applications must guarantee that only trusted data is used during
+deserialization. The deserialization operation is not built to address
+adversarial data compromise, and only basic checks to protect from simple
+mistakes are implemented.
+
 =item EVP_MD_CTX_dup()
 
 Can be used to duplicate the message digest state from I<in>.  This is useful

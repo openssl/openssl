@@ -145,10 +145,6 @@ static int use_ecc(SSL_CONNECTION *s, int min_version, int max_version)
     size_t num_groups, j;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
-    /* See if we support any ECC ciphersuites */
-    if (s->version == SSL3_VERSION)
-        return 0;
-
     cipher_stack = SSL_get1_supported_ciphers(ssl);
     end = sk_SSL_CIPHER_num(cipher_stack);
     for (i = 0; i < end; i++) {
@@ -1369,7 +1365,7 @@ int tls_parse_stoc_maxfragmentlen(SSL_CONNECTION *s, PACKET *pkt,
     /* |value| should contains a valid max-fragment-length code. */
     if (!IS_MAX_FRAGMENT_LENGTH_EXT_VALID(value)) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-            SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH);
+            SSL_R_TLS_EXT_INVALID_MAX_FRAGMENT_LENGTH);
         return 0;
     }
 
@@ -1381,7 +1377,7 @@ int tls_parse_stoc_maxfragmentlen(SSL_CONNECTION *s, PACKET *pkt,
      */
     if (value != s->ext.max_fragment_len_mode) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-            SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH);
+            SSL_R_TLS_EXT_INVALID_MAX_FRAGMENT_LENGTH);
         return 0;
     }
 

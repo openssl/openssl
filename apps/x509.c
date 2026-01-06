@@ -312,10 +312,27 @@ static int self_signed(X509_STORE *ctx, X509 *cert)
     return ret;
 }
 
+static int add_object(STACK_OF(ASN1_OBJECT) **sk, const char *name,
+    const char *desc, const char *prog)
+{
+    ASN1_OBJECT *obj = NULL;
+
+    if (*sk == NULL && (*sk = sk_ASN1_OBJECT_new_null()) == NULL)
+        return 0;
+    if ((obj = OBJ_txt2obj(name, 0)) == NULL) {
+        BIO_printf(bio_err, "%s: Unknown %s object value: %s\n", prog, desc, name);
+        return 0;
+    }
+    if (sk_ASN1_OBJECT_push(*sk, obj) != 0)
+        return 1;
+
+    ASN1_OBJECT_free(obj);
+    return 0;
+}
+
 int x509_main(int argc, char **argv)
 {
     ASN1_INTEGER *sno = NULL;
-    ASN1_OBJECT *objtmp = NULL;
     BIO *out = NULL;
     CONF *extconf = NULL;
     int ext_copy = EXT_COPY_UNSET;
@@ -499,27 +516,13 @@ int x509_main(int argc, char **argv)
             subj = opt_arg();
             break;
         case OPT_ADDTRUST:
-            if (trust == NULL && (trust = sk_ASN1_OBJECT_new_null()) == NULL)
-                goto err;
-            if ((objtmp = OBJ_txt2obj(opt_arg(), 0)) == NULL) {
-                BIO_printf(bio_err, "%s: Invalid trust object value %s\n",
-                    prog, opt_arg());
-                goto opthelp;
-            }
-            if (!sk_ASN1_OBJECT_push(trust, objtmp))
-                goto err;
+            if (!add_object(&trust, opt_arg(), "trust", prog))
+                goto end;
             trustout = 1;
             break;
         case OPT_ADDREJECT:
-            if (reject == NULL && (reject = sk_ASN1_OBJECT_new_null()) == NULL)
-                goto err;
-            if ((objtmp = OBJ_txt2obj(opt_arg(), 0)) == NULL) {
-                BIO_printf(bio_err, "%s: Invalid reject object value %s\n",
-                    prog, opt_arg());
-                goto opthelp;
-            }
-            if (!sk_ASN1_OBJECT_push(reject, objtmp))
-                goto err;
+            if (!add_object(&reject, opt_arg(), "reject", prog))
+                goto end;
             trustout = 1;
             break;
         case OPT_SETALIAS:
@@ -1143,19 +1146,37 @@ cert_loop:
     }
 
     if (checkend) {
+        X509_VERIFY_PARAM *vpm;
         time_t tcheck = time(NULL) + checkoffset;
-        int expired = X509_cmp_time(X509_get0_notAfter(x), &tcheck) < 0;
+        int expired = 0;
+        int error, valid;
 
-        if (expired)
+        if ((vpm = X509_VERIFY_PARAM_new()) == NULL) {
+            BIO_printf(out, "Malloc failed\n");
+            goto end_cert_loop;
+        }
+        X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_USE_CHECK_TIME);
+        X509_VERIFY_PARAM_set_time(vpm, tcheck);
+
+        valid = X509_check_certificate_times(vpm, x, &error);
+        if (!valid) {
+            char msg[128];
+
+            ERR_error_string_n(error, msg, sizeof(msg));
+            BIO_printf(out, "%s\n", msg);
+        }
+        if (error == X509_V_ERR_CERT_HAS_EXPIRED) {
             BIO_printf(out, "Certificate will expire\n");
-        else
+            expired = 1;
+        } else {
             BIO_printf(out, "Certificate will not expire\n");
-
+        }
         if (multi && k > 0)
             ret |= expired;
         else
             ret = expired;
 
+        X509_VERIFY_PARAM_free(vpm);
         if (multi && k < sk_X509_num(certs) - 1)
             goto end_cert_loop;
         else

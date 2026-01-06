@@ -1025,7 +1025,6 @@ typedef enum OPTION_choice {
     OPT_SPLIT_SEND_FRAG,
     OPT_MAX_PIPELINES,
     OPT_READ_BUF,
-    OPT_SSL3,
     OPT_TLS1_3,
     OPT_TLS1_2,
     OPT_TLS1_1,
@@ -1270,9 +1269,6 @@ const OPTIONS s_server_options[] = {
     { "no_ca_names", OPT_NOCANAMES, '-',
         "Disable TLS Extension CA Names" },
     { "stateless", OPT_STATELESS, '-', "Require TLSv1.3 cookies" },
-#ifndef OPENSSL_NO_SSL3
-    { "ssl3", OPT_SSL3, '-', "Just talk SSLv3" },
-#endif
 #ifndef OPENSSL_NO_TLS1
     { "tls1", OPT_TLS1, '-', "Just talk TLSv1" },
 #endif
@@ -1326,8 +1322,8 @@ const OPTIONS s_server_options[] = {
     { NULL }
 };
 
-#define IS_PROT_FLAG(o)                                                   \
-    (o == OPT_SSL3 || o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2 \
+#define IS_PROT_FLAG(o)                                  \
+    (o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2 \
         || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2)
 
 int s_server_main(int argc, char *argv[])
@@ -1855,10 +1851,6 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_SSL_CONFIG:
             ssl_config = opt_arg();
-            break;
-        case OPT_SSL3:
-            min_version = SSL3_VERSION;
-            max_version = SSL3_VERSION;
             break;
         case OPT_TLS1_3:
             min_version = TLS1_3_VERSION;

@@ -213,6 +213,11 @@ char *OPENSSL_uni2utf8(const unsigned char *uni, int unilen)
     /* re-run the loop emitting UTF-8 string */
     for (asclen = 0, i = 0; i < unilen;) {
         j = bmp_to_utf8(asctmp + asclen, uni + i, unilen - i);
+        /* when UTF8_putc fails */
+        if (j < 0) {
+            OPENSSL_free(asctmp);
+            return NULL;
+        }
         if (j == 4)
             i += 4;
         else
