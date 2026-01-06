@@ -212,19 +212,6 @@ typedef INTN ossl_ssize_t;
 #undef OPENSSL_NO_INTTYPES_H
 /* Because the specs say that inttypes.h includes stdint.h if present */
 #undef OPENSSL_NO_STDINT_H
-#elif defined(_MSC_VER) && _MSC_VER < 1600
-/*
- * minimally required typdefs for systems not supporting inttypes.h or
- * stdint.h: currently just older VC++
- */
-typedef signed char int8_t;
-typedef unsigned char uint8_t;
-typedef short int16_t;
-typedef unsigned short uint16_t;
-typedef int int32_t;
-typedef unsigned int uint32_t;
-typedef __int64 int64_t;
-typedef unsigned __int64 uint64_t;
 #elif defined(OPENSSL_SYS_TANDEM)
 #include <stdint.h>
 #include <sys/types.h>
@@ -235,8 +222,8 @@ typedef unsigned __int64 uint64_t;
 
 #ifdef _WIN32
 #ifdef _WIN64
-typedef __int64 ossl_ssize_t;
-#define OSSL_SSIZE_MAX _I64_MAX
+typedef int64_t ossl_ssize_t;
+#define OSSL_SSIZE_MAX INT64_MAX
 #else
 typedef int ossl_ssize_t;
 #define OSSL_SSIZE_MAX INT_MAX
