@@ -83,7 +83,7 @@ void ossl_quic_reactor_cleanup(QUIC_REACTOR *rtor)
  * must be suppressed for QUIC protocol so QUIC applications may rely on
  * QUIC protocol itself to detect network failures.
  */
-static rtor_configure_winsock(BIO_POLL_DESCRIPTOR *bpd)
+static void rtor_configure_winsock(BIO_POLL_DESCRIPTOR *bpd)
 {
     BOOL bNewBehavior = FALSE;
     DWORD dwBytesReturned = 0;
