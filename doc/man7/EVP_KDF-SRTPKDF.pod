@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_KDF-SRTP - The SRTP EVP_KDF implementation
+EVP_KDF-SRTPKDF - The SRTP EVP_KDF implementation
 
 =head1 DESCRIPTION
 
