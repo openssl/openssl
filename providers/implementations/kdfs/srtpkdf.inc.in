@@ -16,9 +16,9 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                           ['OSSL_KDF_PARAM_CIPHER',        'cipher', 'utf8_string'],
                           ['OSSL_KDF_PARAM_KEY',           'key',    'octet_string'],
                           ['OSSL_KDF_PARAM_SALT',          'salt',   'octet_string'],
-                          ['OSSL_KDF_PARAM_SRTPKDF_KDR',   'kdr',    'octet_string'],
                           ['OSSL_KDF_PARAM_SRTPKDF_INDEX', 'index',  'octet_string'],
-                          ['OSSL_KDF_PARAM_LABEL',         'label', 'int'],
+                          ['OSSL_KDF_PARAM_SRTPKDF_KDR',   'kdr',    'uint64'],
+                          ['OSSL_KDF_PARAM_LABEL',         'label',  'uint32'],
                          )); -}
 
 {- produce_param_decoder('srtp_get_ctx_params',
