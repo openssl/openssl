@@ -182,10 +182,8 @@ static int test_encode_line_lengths_reinforced(void)
                 ctx_ref = EVP_ENCODE_CTX_new();
 
                 if (!ctx_simd || !ctx_ref) {
-                    EVP_ENCODE_CTX_free(ctx_simd);
-                    EVP_ENCODE_CTX_free(ctx_ref);
                     TEST_error("Out of memory for contexts");
-                    return 0;
+                    goto fail;
                 }
 
                 fuzz_fill_encode_ctx(ctx_simd, partial_ctx_fill);
