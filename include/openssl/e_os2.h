@@ -207,6 +207,7 @@ typedef UINTN uintptr_t;
 typedef INTN ossl_ssize_t;
 #define OSSL_SSIZE_MAX MAX_INTN
 #endif
+#endif
 
 #elif (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || defined(__osf__) || defined(__sgi) || defined(__hpux) || defined(OPENSSL_SYS_VMS) || defined(__OpenBSD__)
 #include <inttypes.h>
