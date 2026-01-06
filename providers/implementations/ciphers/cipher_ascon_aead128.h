@@ -38,7 +38,7 @@ typedef enum direction_et {
 struct ascon_aead128_ctx_st
 {
     void *provctx;
-    ascon_aead_ctx_t *internal_ctx; /* a handle for the implementation internal context */
+    ASCON_AEAD_CTX *internal_ctx; /* a handle for the implementation internal context */
 
     uint8_t tag[FIXED_TAG_LENGTH]; /* storing the tag with fixed length */
     uint8_t iv[ASCON_AEAD_NONCE_LEN]; /* storing the IV (nonce) for get_updated_iv */

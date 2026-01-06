@@ -16,6 +16,8 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/ciphercommon_aead.h"
+#include "internal/common.h"
+#include "providers/implementations/ciphers/cipher_ascon_aead128.inc"
 
 /* Return value constants */
 #define OSSL_RV_SUCCESS 1
@@ -48,7 +50,7 @@ static void ascon_aead128_cleanctx(void *vctx)
 static void *ascon_aead128_newctx(void *provctx)
 {
     struct ascon_aead128_ctx_st *ctx;
-    ascon_aead_ctx_t *intctx;
+    ASCON_AEAD_CTX *intctx;
 
     if (!ossl_prov_is_running())
         return NULL;
@@ -79,7 +81,7 @@ static void *ascon_aead128_dupctx(void *vctx)
 {
     struct ascon_aead128_ctx_st *src = vctx;
     struct ascon_aead128_ctx_st *dst = NULL;
-    ascon_aead_ctx_t *saved_internal_ctx;
+    ASCON_AEAD_CTX *saved_internal_ctx;
 
     if (src == NULL || !ossl_prov_is_running())
         return NULL;
@@ -327,7 +329,7 @@ static int ascon_aead128_final(void *vctx, unsigned char *out, size_t *outl, siz
         size_t tag_len = FIXED_TAG_LENGTH;
         size_t ret;
 
-        ret = ossl_ascon_aead128_encrypt_final((ascon_aead_ctx_t *)ctx->internal_ctx,
+        ret = ossl_ascon_aead128_encrypt_final((ASCON_AEAD_CTX *)ctx->internal_ctx,
                                                ciphertext, tag, tag_len);
         *outl = ret;
         ctx->is_tag_set = true;
@@ -342,7 +344,7 @@ static int ascon_aead128_final(void *vctx, unsigned char *out, size_t *outl, siz
             const uint8_t *expected_tag = ctx->tag;
             size_t expected_tag_len = FIXED_TAG_LENGTH;
 
-            ret = ossl_ascon_aead128_decrypt_final((ascon_aead_ctx_t *)ctx->internal_ctx,
+            ret = ossl_ascon_aead128_decrypt_final((ASCON_AEAD_CTX *)ctx->internal_ctx,
                                                    plaintext, &is_tag_valid,
                                                    expected_tag,
                                                    expected_tag_len);
@@ -400,151 +402,125 @@ static int ascon_aead128_get_params(OSSL_PARAM params[])
 static const OSSL_PARAM *ascon_aead128_gettable_ctx_params(ossl_unused void *cctx,
                                                            ossl_unused void *provctx)
 {
-    static const OSSL_PARAM table[] = {
-        {OSSL_CIPHER_PARAM_KEYLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0},
-        {OSSL_CIPHER_PARAM_IVLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0},
-        {OSSL_CIPHER_PARAM_AEAD_TAGLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0},
-        {OSSL_CIPHER_PARAM_AEAD_TAG, OSSL_PARAM_OCTET_STRING, NULL, 0, 0},
-        {OSSL_CIPHER_PARAM_UPDATED_IV, OSSL_PARAM_OCTET_STRING, NULL, 0, 0},
-        {NULL, 0, NULL, 0, 0},
-    };
-
-    return table;
+    return ascon_aead128_get_ctx_params_list;
 }
 
 static int ascon_aead128_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     struct ascon_aead128_ctx_st *ctx = vctx;
-    OSSL_PARAM *p;
-    int ok = 1;
+    struct ascon_aead128_get_ctx_params_st p;
 
-    if (ctx == NULL)
+    if (ctx == NULL || !ascon_aead128_get_ctx_params_decoder(params, &p))
         return 0;
 
-    for (p = params; p->key != NULL; p++) {
-        if (strcmp(p->key, OSSL_CIPHER_PARAM_KEYLEN) == 0) {
-            ok &= OSSL_PARAM_set_size_t(p, ASCON_AEAD128_KEY_LEN);
-        } else if (strcmp(p->key, OSSL_CIPHER_PARAM_IVLEN) == 0) {
-            ok &= OSSL_PARAM_set_size_t(p, ASCON_AEAD_NONCE_LEN);
-        } else if (strcmp(p->key, OSSL_CIPHER_PARAM_AEAD_TAGLEN) == 0) {
-            ok &= OSSL_PARAM_set_size_t(p, ctx->tag_len);
-        } else if (strcmp(p->key, OSSL_CIPHER_PARAM_AEAD_TAG) == 0) {
-            /* Check that p->data_type matches "octet string" */
-            /* Check that p->data (the given buffer) is not NULL */
-            if (p->data == NULL || p->data_type != OSSL_PARAM_OCTET_STRING) {
-                ok = 0;
-                break;
-            }
-
-            /* Check if the given buffer is big enough */
-            if (p->data_size < FIXED_TAG_LENGTH) {
-                ok = 0;
-                break;
-            }
-
-            /* Check if ctx->is_tag_set is true */
-            if (!ctx->is_tag_set) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
-                ok = 0;
-                break;
-            }
-            /* Copy tag to destination */
-            memcpy(p->data, ctx->tag, FIXED_TAG_LENGTH);
-            p->return_size = FIXED_TAG_LENGTH;
-            ok &= 1;
-        } else if (strcmp(p->key, OSSL_CIPHER_PARAM_UPDATED_IV) == 0) {
-            /* Check that p->data_type matches "octet string" */
-            /* Check that p->data (the given buffer) is not NULL */
-            if (p->data == NULL || p->data_type != OSSL_PARAM_OCTET_STRING) {
-                ok = 0;
-                break;
-            }
-
-            /* Check if the given buffer is big enough */
-            if (p->data_size < ASCON_AEAD_NONCE_LEN) {
-                ok = 0;
-                break;
-            }
-
-            /* Check if ctx->iv_set is true */
-            if (!ctx->iv_set) {
-                ok = 0;
-                break;
-            }
-            /* Copy IV to destination */
-            memcpy(p->data, ctx->iv, ASCON_AEAD_NONCE_LEN);
-            p->return_size = ASCON_AEAD_NONCE_LEN;
-            ok &= 1;
-        }
+    if (p.keylen != NULL
+            && !OSSL_PARAM_set_size_t(p.keylen, ASCON_AEAD128_KEY_LEN)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
     }
 
-    return ok;
+    if (p.ivlen != NULL
+            && !OSSL_PARAM_set_size_t(p.ivlen, ASCON_AEAD_NONCE_LEN)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
+    }
+
+    if (p.taglen != NULL
+            && !OSSL_PARAM_set_size_t(p.taglen, ctx->tag_len)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
+    }
+
+    if (p.tag != NULL) {
+        if (p.tag->data_type != OSSL_PARAM_OCTET_STRING) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+        if (p.tag->data_size < FIXED_TAG_LENGTH) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+        if (!ctx->is_tag_set) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
+            return 0;
+        }
+        memcpy(p.tag->data, ctx->tag, FIXED_TAG_LENGTH);
+        p.tag->return_size = FIXED_TAG_LENGTH;
+    }
+
+    if (p.upd_iv != NULL) {
+        if (p.upd_iv->data_type != OSSL_PARAM_OCTET_STRING) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+        if (p.upd_iv->data_size < ASCON_AEAD_NONCE_LEN) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+        if (!ctx->iv_set) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+        memcpy(p.upd_iv->data, ctx->iv, ASCON_AEAD_NONCE_LEN);
+        p.upd_iv->return_size = ASCON_AEAD_NONCE_LEN;
+    }
+
+    return 1;
 }
 
-/* Parameters that libcrypto can send to this implementation */
 static const OSSL_PARAM *ascon_aead128_settable_ctx_params(ossl_unused void *cctx,
                                                            ossl_unused void *provctx)
 {
-    static const OSSL_PARAM table[] = {
-        {OSSL_CIPHER_PARAM_AEAD_TAG, OSSL_PARAM_OCTET_STRING, NULL, 0, 0},
-        {OSSL_CIPHER_PARAM_AEAD_TAGLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0},
-        {NULL, 0, NULL, 0, 0},
-    };
-
-    return table;
+    return ascon_aead128_set_ctx_params_list;
 }
 
 static int ascon_aead128_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     struct ascon_aead128_ctx_st *ctx = vctx;
-    const OSSL_PARAM *p;
-    int ok = 1;
+    struct ascon_aead128_set_ctx_params_st p;
 
-    if (ctx == NULL)
+    if (ctx == NULL || !ascon_aead128_set_ctx_params_decoder(params, &p))
         return 0;
 
-    for (p = params; p->key != NULL; p++) {
-        if (strcmp(p->key, OSSL_CIPHER_PARAM_AEAD_TAGLEN) == 0) {
-            size_t tag_len = 0;
+    if (p.taglen != NULL) {
+        size_t tag_len = 0;
 
-            if (!OSSL_PARAM_get_size_t(p, &tag_len)) {
-                ok = 0;
-                break;
-            }
-            if (tag_len != FIXED_TAG_LENGTH) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_NOT_SUPPORTED);
-                ok = 0;
-                break;
-            }
-            ctx->tag_len = tag_len;
-            ok = 1;
-        } else if (strcmp(p->key, OSSL_CIPHER_PARAM_AEAD_TAG) == 0) {
-            /* When data is NULL, this is a request to set tag length (for encryption) */
-            if (p->data == NULL) {
-                /* For encryption, we accept setting tag length via NULL data */
-                /* The tag length may be passed in data_size, but we always use FIXED_TAG_LENGTH */
-                /* Accept any tag length request during encryption and use our fixed length */
-                ctx->tag_len = FIXED_TAG_LENGTH;
-                ok = 1;
-                break;
-            }
-
-            if (p->data_type != OSSL_PARAM_OCTET_STRING) {
-                ok = 0;
-                break;
-            }
-
-            /* We only accept strictly 16-byte tags here */
-            if (p->data_size != FIXED_TAG_LENGTH) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_NOT_SUPPORTED);
-                ok = 0;
-                break;
-            }
-            memcpy(ctx->tag, p->data, FIXED_TAG_LENGTH);
-            ctx->is_tag_set = 1;
+        if (!OSSL_PARAM_get_size_t(p.taglen, &tag_len)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
         }
+        if (tag_len != FIXED_TAG_LENGTH) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_NOT_SUPPORTED);
+            return 0;
+        }
+        ctx->tag_len = tag_len;
     }
-    return ok;
+
+    if (p.tag != NULL) {
+        /* When data is NULL, this is a request to set tag length (for encryption) */
+        if (p.tag->data == NULL) {
+            /* For encryption, we accept setting tag length via NULL data */
+            /* The tag length may be passed in data_size, but we always use FIXED_TAG_LENGTH */
+            /* Accept any tag length request during encryption and use our fixed length */
+            ctx->tag_len = FIXED_TAG_LENGTH;
+            return 1;
+        }
+
+        if (p.tag->data_type != OSSL_PARAM_OCTET_STRING) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
+
+        /* We only accept strictly 16-byte tags here */
+        if (p.tag->data_size != FIXED_TAG_LENGTH) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_NOT_SUPPORTED);
+            return 0;
+        }
+        memcpy(ctx->tag, p.tag->data, FIXED_TAG_LENGTH);
+        ctx->is_tag_set = 1;
+    }
+
+    return 1;
 }
 
 /*
