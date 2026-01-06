@@ -256,7 +256,7 @@ int parse_yesno(const char *str, int def);
 X509_NAME *parse_name(const char *str, int chtype, int multirdn,
     const char *desc);
 void policies_print(X509_STORE_CTX *ctx);
-int bio_to_mem(unsigned char **out, int maxlen, BIO *in);
+int bio_to_mem(unsigned char **out, size_t *outlen, size_t maxlen, BIO *in);
 int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value);
 int x509_ctrl_string(X509 *x, const char *value);
 int x509_req_ctrl_string(X509_REQ *x, const char *value);

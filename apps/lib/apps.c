@@ -49,6 +49,7 @@
 #include "apps.h"
 
 #include "internal/sockets.h" /* for openssl_fdset() */
+#include "internal/numbers.h" /* for LONG_MAX */
 #include "internal/e_os.h"
 
 #ifdef _WIN32
@@ -2060,45 +2061,45 @@ err:
 }
 
 /*
- * Read whole contents of a BIO into an allocated memory buffer and return
- * it.
+ * Read whole contents of a BIO into an allocated memory buffer.
+ * The return value is one on success, zero on error.
+ * If `maxlen` is non-zero, at most `maxlen` bytes are returned, or else, if
+ * the input is longer than `maxlen`, an error is returned.
+ * If `maxlen` is zero, the limit is effectively `SIZE_MAX`.
  */
-
-int bio_to_mem(unsigned char **out, int maxlen, BIO *in)
+int bio_to_mem(unsigned char **out, size_t *outlen, size_t maxlen, BIO *in)
 {
+    unsigned char tbuf[4096];
     BIO *mem;
-    int len, ret;
-    unsigned char tbuf[1024];
+    BUF_MEM *bufm;
+    size_t sz = 0;
+    int len;
 
     mem = BIO_new(BIO_s_mem());
     if (mem == NULL)
-        return -1;
+        return 0;
     for (;;) {
-        if ((maxlen != -1) && maxlen < 1024)
-            len = maxlen;
-        else
-            len = 1024;
-        len = BIO_read(in, tbuf, len);
-        if (len < 0) {
-            BIO_free(mem);
-            return -1;
-        }
-        if (len == 0)
+        if ((len = BIO_read(in, tbuf, 4096)) == 0)
             break;
-        if (BIO_write(mem, tbuf, len) != len) {
+        if (len < 0
+            || BIO_write(mem, tbuf, len) != len
+            || sz > SIZE_MAX - len
+            || ((sz += len) > maxlen && maxlen != 0)) {
             BIO_free(mem);
-            return -1;
+            return 0;
         }
-        if (maxlen != -1)
-            maxlen -= len;
-
-        if (maxlen == 0)
-            break;
     }
-    ret = BIO_get_mem_data(mem, (char **)out);
-    BIO_set_flags(mem, BIO_FLAGS_MEM_RDONLY);
+
+    /* So BIO_free orphans BUF_MEM */
+    (void)BIO_set_close(mem, BIO_NOCLOSE);
+    BIO_get_mem_ptr(mem, &bufm);
     BIO_free(mem);
-    return ret;
+    *out = (unsigned char *)bufm->data;
+    *outlen = bufm->length;
+    /* Tell BUF_MEM to orphan data */
+    bufm->data = NULL;
+    BUF_MEM_free(bufm);
+    return 1;
 }
 
 int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value)

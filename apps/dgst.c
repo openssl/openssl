@@ -721,12 +721,11 @@ static int do_fp_oneshot_sign(BIO *out, EVP_MD_CTX *ctx, BIO *in, int sep, int b
 {
     int res, ret = EXIT_FAILURE;
     size_t len = 0;
-    int buflen = 0;
-    int maxlen = 16 * 1024 * 1024;
+    size_t buflen = 0;
+    size_t maxlen = 16 * 1024 * 1024;
     uint8_t *buf = NULL, *sig = NULL;
 
-    buflen = bio_to_mem(&buf, maxlen, in);
-    if (buflen <= 0) {
+    if (!bio_to_mem(&buf, &buflen, maxlen, in)) {
         BIO_printf(bio_err, "Read error in %s\n", file);
         return ret;
     }
