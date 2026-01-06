@@ -416,8 +416,11 @@ static int drbg_fetch_algs_from_prov(const OSSL_PARAM params[],
 {
     OSSL_PROVIDER *prov = NULL;
     const OSSL_PARAM *p;
+    const char *digest_name = NULL;
+    const char *hmac_name = NULL;
     EVP_MD *md = NULL;
     EVP_MAC *mac = NULL;
+    OSSL_PARAM mac_params[3], *mp = mac_params;
     int ret = 0;
 
     if (macctx == NULL || digest == NULL)
@@ -434,35 +437,49 @@ static int drbg_fetch_algs_from_prov(const OSSL_PARAM params[],
 
     p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST);
     if (p) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
+        if (OSSL_PARAM_get_utf8_string_ptr(p, &digest_name)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_VALUE_ERROR);
             goto done;
-
-        md = evp_digest_fetch_from_prov(prov, (const char *)p->data, NULL);
+        }
+        md = evp_digest_fetch_from_prov(prov, digest_name, NULL);
         if (md) {
             EVP_MD_free(*digest);
             *digest = md;
         } else {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
+            goto done;
+        }
+    } else {
+        /* we need a digest */
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
+        goto done;
+    }
+    p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_MAC);
+    if (p == NULL) {
+        hmac_name = "HMAC";
+    } else {
+        if (OSSL_PARAM_get_utf8_string_ptr(p, &hmac_name)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_VALUE_ERROR);
             goto done;
         }
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_MAC);
-    if (p == NULL) {
-        ret = 1;
-        goto done;
-    }
-
-    if (p->data_type != OSSL_PARAM_UTF8_STRING)
-        goto done;
-
     EVP_MAC_CTX_free(*macctx);
     *macctx = NULL;
 
-    mac = evp_mac_fetch_from_prov(prov, (const char *)p->data, NULL);
+    mac = evp_mac_fetch_from_prov(prov, hmac_name, NULL);
     if (mac) {
         *macctx = EVP_MAC_CTX_new(mac);
         /* The context holds on to the MAC */
         EVP_MAC_free(mac);
+        *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, (char *)digest_name, 0);
+        *mp = OSSL_PARAM_construct_end();
+        if (!EVP_MAC_CTX_set_params(*macctx, mac_params)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MAC);
+            EVP_MAC_CTX_free(*macctx);
+            *macctx = NULL;
+            goto done;
+        }
         ret = 1;
     }
 
