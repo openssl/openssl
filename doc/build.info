@@ -4631,8 +4631,8 @@ DEPEND[man/man7/EVP_KDF-SNMPKDF.7]=man7/EVP_KDF-SNMPKDF.pod
 GENERATE[man/man7/EVP_KDF-SNMPKDF.7]=man7/EVP_KDF-SNMPKDF.pod
 DEPEND[html/man7/EVP_KDF-SRTPKDF.html]=man7/EVP_KDF-SRTPKDF.pod
 GENERATE[html/man7/EVP_KDF-SRTPKDF.html]=man7/EVP_KDF-SRTPKDF.pod
-DEPEND[man/man7/EVP_KDF-SRTPPDF.7]=man7/EVP_KDF-SRTPPDF.pod
-GENERATE[man/man7/EVP_KDF-SRTPPDF.7]=man7/EVP_KDF-SRTPPDF.pod
+DEPEND[man/man7/EVP_KDF-SRTPKDF.7]=man7/EVP_KDF-SRTPKDF.pod
+GENERATE[man/man7/EVP_KDF-SRTPKDF.7]=man7/EVP_KDF-SRTPKDF.pod
 DEPEND[html/man7/EVP_KDF-SS.html]=man7/EVP_KDF-SS.pod
 GENERATE[html/man7/EVP_KDF-SS.html]=man7/EVP_KDF-SS.pod
 DEPEND[man/man7/EVP_KDF-SS.7]=man7/EVP_KDF-SS.pod
@@ -5208,7 +5208,7 @@ html/man7/EVP_KDF-PKCS12KDF.html \
 html/man7/EVP_KDF-PVKKDF.html \
 html/man7/EVP_KDF-SCRYPT.html \
 html/man7/EVP_KDF-SNMPKDF.html \
-html/man7/EVP_KDF-SRTPPDF.html \
+html/man7/EVP_KDF-SRTPKDF.html \
 html/man7/EVP_KDF-SS.html \
 html/man7/EVP_KDF-SSHKDF.html \
 html/man7/EVP_KDF-TLS13_KDF.html \
@@ -5371,7 +5371,7 @@ man/man7/EVP_KDF-PKCS12KDF.7 \
 man/man7/EVP_KDF-PVKKDF.7 \
 man/man7/EVP_KDF-SCRYPT.7 \
 man/man7/EVP_KDF-SNMPKDF.7 \
-man/man7/EVP_KDF-SRTPPDF.7 \
+man/man7/EVP_KDF-SRTPKDF.7 \
 man/man7/EVP_KDF-SS.7 \
 man/man7/EVP_KDF-SSHKDF.7 \
 man/man7/EVP_KDF-TLS13_KDF.7 \
