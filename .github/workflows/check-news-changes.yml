@@ -9,10 +9,10 @@ jobs:
   scan_for_news_changes:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
-          fetch-depth: 2
+          fetch-depth: 0
       - name: "Check if we already have a NEWS/CHANGES entry"
         run: |
           git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > ./names.txt
