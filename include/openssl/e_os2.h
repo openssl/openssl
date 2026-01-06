@@ -203,12 +203,10 @@ typedef UINT32 uint32_t;
 typedef INT64 int64_t;
 typedef UINT64 uint64_t;
 typedef UINTN uintptr_t;
-#if !defined(OSSL_SSIZE_MAX)
+#ifndef OSSL_SSIZE_MAX
 typedef INTN ossl_ssize_t;
 #define OSSL_SSIZE_MAX MAX_INTN
 #endif
-#endif
-
 #elif (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || defined(__osf__) || defined(__sgi) || defined(__hpux) || defined(OPENSSL_SYS_VMS) || defined(__OpenBSD__)
 #include <inttypes.h>
 #undef OPENSSL_NO_INTTYPES_H
@@ -237,11 +235,12 @@ typedef unsigned __int64 uint64_t;
 
 #ifdef _WIN32
 #ifdef _WIN64
-typedef int64_t ossl_ssize_t;
-#define OSSL_SSIZE_MAX INT64_MAX
+typedef __int64 ossl_ssize_t;
+#define OSSL_SSIZE_MAX _I64_MAX
 #else
 typedef int ossl_ssize_t;
 #define OSSL_SSIZE_MAX INT_MAX
+#endif
 #endif
 
 #ifndef OSSL_SSIZE_MAX
