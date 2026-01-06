@@ -14,16 +14,18 @@
 Title = SRTPKDF tests (from RFC 3711 test vectors and additional cases)
 
 # Test Case 1: RFC 3711 test vectors B.3, encryption key
+FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
 Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
 Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
-Ctrl.hexkdr = hexkdr:00
+Ctrl.kdr = kdr:0
 Ctrl.index = hexindex:000000000000
 Ctrl.label = label:0
 Output = C61E7A93744F39EE10734AFE3FF7A087
 
 # Test Case 1.1, variation, missing kdr (default as zero)
+FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
 Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
@@ -33,15 +35,17 @@ Ctrl.label = label:0
 Output = C61E7A93744F39EE10734AFE3FF7A087
 
 # Test Case 1.2, variation, missing index (default as zero)
+FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
 Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
 Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
-Ctrl.hexkdr = hexkdr:00
+Ctrl.kdr = kdr:0
 Ctrl.label = label:0
 Output = C61E7A93744F39EE10734AFE3FF7A087
 
 # Test Case 1.3, variation, default kdr and index
+FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
 Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
@@ -50,70 +54,77 @@ Ctrl.label = label:0
 Output = C61E7A93744F39EE10734AFE3FF7A087
 
 # Test Case 1.4, variation, missing label (default as zero)
+FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
 Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
 Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
-Ctrl.hexkdr = hexkdr:00
+Ctrl.kdr = kdr:0
 Ctrl.index = hexindex:000000000000
 Output = C61E7A93744F39EE10734AFE3FF7A087
 
 # Test Case 2: RFC 3711 test vectors B.3, salt key
+FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
 Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
 Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
-Ctrl.hexkdr = hexkdr:00
+Ctrl.kdr = kdr:0
 Ctrl.index = hexindex:000000000000
 Ctrl.label = label:2
 Output = 30CBBC08863D8C85D49DB34A9AE1
 
 # Test Case 3: RFC 3711 test vectors B.3, authentication key
+FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
 Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
 Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
-Ctrl.hexkdr = hexkdr:00
+Ctrl.kdr = kdr:0
 Ctrl.index = hexindex:000000000000
 Ctrl.label = label:1
 Output = CEBE321F6FF7716B6FD4AB49AF256A156D38BAA4
 
 # Negative Test case 1, missing cipher
+FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
 Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
-Ctrl.hexkdr = hexkdr:00
+Ctrl.kdr = kdr:0
 Ctrl.index = hexindex:000000000000
 Ctrl.label = label:0
 Output = C61E7A93744F39EE10734AFE3FF7A087
 Result = KDF_DERIVE_ERROR
 
 # Negative Test case 2, missing key
+FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
 Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
-Ctrl.hexkdr = hexkdr:00
+Ctrl.kdr = kdr:0
 Ctrl.index = hexindex:000000000000
 Ctrl.label = label:0
 Output = C61E7A93744F39EE10734AFE3FF7A087
 Result = KDF_DERIVE_ERROR
 
 # Negative Test case 3, missing salt
+FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
 Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
-Ctrl.hexkdr = hexkdr:00
+Ctrl.kdr = kdr:0
 Ctrl.index = hexindex:000000000000
 Ctrl.label = label:0
 Output = C61E7A93744F39EE10734AFE3FF7A087
 Result = KDF_DERIVE_ERROR
 
 # Negative Test case 4, invalid label
+FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
 Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
 Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
-Ctrl.hexkdr = hexkdr:00
+Ctrl.kdr = kdr:0
 Ctrl.index = hexindex:000000000000
 Ctrl.label = label:8
 Output = C61E7A93744F39EE10734AFE3FF7A087
@@ -123,61 +134,67 @@ Result = KDF_DERIVE_ERROR
 # https://github.com/usnistgov/ACVP-Server/tree/master/gen-val/json-files/kdf-components-srtp-1.0
 
 # prompt.json tgId:3, tcid:21, expectedResults.json tcId:21 srtpKe
+FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
 Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
 Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
-Ctrl.hexkdr = hexkdr:000000000001
+Ctrl.kdr = kdr:1
 Ctrl.index = hexindex:08284B49F520
 Ctrl.label = label:0
 Output = A920DF50EAA111D03FBE9B203121C07D
 
 # prompt.json tgId:3, tcid:21, expectedResults.json tcId:21 srtpKa
+FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
 Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
 Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
-Ctrl.hexkdr = hexkdr:000000000001
+Ctrl.kdr = kdr:1
 Ctrl.index = hexindex:08284B49F520
 Ctrl.label = label:1
 Output = A337DC070C0DAFA942F1E3A27ACD3C9917CE4B4D
 
 # prompt.json tgId:3, tcid:21, expectedResults.json tcId:21 srtpKs
+FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
 Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
 Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
-Ctrl.hexkdr = hexkdr:000000000001
+Ctrl.kdr = kdr:1
 Ctrl.index = hexindex:08284B49F520
 Ctrl.label = label:2
 Output = 9E2BC99C86037F2AD98D72927428
 
 # prompt.json tgId:3, tcid:21, expectedResults.json tcId:21 srtcpKe
+FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
 Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
 Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
-Ctrl.hexkdr = hexkdr:000000000001
+Ctrl.kdr = kdr:1
 Ctrl.index = hexindex:69B62109
 Ctrl.label = label:3
 Output = 94D76CA7ADB05b8631CF62538D97BE74
 
 # prompt.json tgId:3, tcid:21, expectedResults.json tcId:21 srtcpKa
+FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
 Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
 Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
-Ctrl.hexkdr = hexkdr:000000000001
+Ctrl.kdr = kdr:1
 Ctrl.index = hexindex:69B62109
 Ctrl.label = label:4
 Output = FA02251D693645BC1001f83C5A13CB3E3D77F7EA
 
 # prompt.json tgId:3, tcid:21, expectedResults.json tcId:21 srtcpKs
+FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
 Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
 Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
-Ctrl.hexkdr = hexkdr:000000000001
+Ctrl.kdr = kdr:1
 Ctrl.index = hexindex:69B62109
 Ctrl.label = label:5
 Output = 70C0481A04E3610EC8AF8623FA9B
