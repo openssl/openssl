@@ -11,6 +11,8 @@
 #define OPENSSL_E_OS2_H
 #pragma once
 
+#include <stdint.h>
+
 #include <openssl/macros.h>
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 #define HEADER_E_OS2_H
@@ -186,8 +188,8 @@ extern "C" {
 
 #ifdef _WIN32
 #ifdef _WIN64
-typedef __int64 ossl_ssize_t;
-#define OSSL_SSIZE_MAX _I64_MAX
+typedef int64_t ossl_ssize_t;
+#define OSSL_SSIZE_MAX INT64_MAX
 #else
 typedef int ossl_ssize_t;
 #define OSSL_SSIZE_MAX INT_MAX
