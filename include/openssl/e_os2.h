@@ -11,8 +11,6 @@
 #define OPENSSL_E_OS2_H
 #pragma once
 
-#include <stdint.h>
-
 #include <openssl/macros.h>
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 #define HEADER_E_OS2_H
@@ -186,16 +184,6 @@ extern "C" {
 #define OPENSSL_EXTERN extern
 #endif
 
-#ifdef _WIN32
-#ifdef _WIN64
-typedef int64_t ossl_ssize_t;
-#define OSSL_SSIZE_MAX INT64_MAX
-#else
-typedef int ossl_ssize_t;
-#define OSSL_SSIZE_MAX INT_MAX
-#endif
-#endif
-
 #if defined(OPENSSL_SYS_UEFI) && !defined(ossl_ssize_t)
 typedef INTN ossl_ssize_t;
 #define OSSL_SSIZE_MAX MAX_INTN
@@ -257,6 +245,17 @@ typedef unsigned __int64 uint64_t;
 #include <stdint.h>
 #undef OPENSSL_NO_STDINT_H
 #endif
+
+#ifdef _WIN32
+#ifdef _WIN64
+typedef int64_t ossl_ssize_t;
+#define OSSL_SSIZE_MAX INT64_MAX
+#else
+typedef int ossl_ssize_t;
+#define OSSL_SSIZE_MAX INT_MAX
+#endif
+#endif
+
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && defined(INTMAX_MAX) && defined(UINTMAX_MAX)
 typedef intmax_t ossl_intmax_t;
 typedef uintmax_t ossl_uintmax_t;
