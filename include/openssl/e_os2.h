@@ -184,33 +184,6 @@ extern "C" {
 #define OPENSSL_EXTERN extern
 #endif
 
-#ifdef _WIN32
-#ifdef _WIN64
-typedef __int64 ossl_ssize_t;
-#define OSSL_SSIZE_MAX _I64_MAX
-#else
-typedef int ossl_ssize_t;
-#define OSSL_SSIZE_MAX INT_MAX
-#endif
-#endif
-
-#if defined(OPENSSL_SYS_UEFI) && !defined(ossl_ssize_t)
-typedef INTN ossl_ssize_t;
-#define OSSL_SSIZE_MAX MAX_INTN
-#endif
-
-#ifndef OSSL_SSIZE_MAX
-#include <sys/types.h>
-typedef ssize_t ossl_ssize_t;
-#if defined(SSIZE_MAX)
-#define OSSL_SSIZE_MAX SSIZE_MAX
-#elif defined(_POSIX_SSIZE_MAX)
-#define OSSL_SSIZE_MAX _POSIX_SSIZE_MAX
-#else
-#define OSSL_SSIZE_MAX ((ssize_t)(SIZE_MAX >> 1))
-#endif
-#endif
-
 #if defined(UNUSEDRESULT_DEBUG)
 #define __owur __attribute__((__warn_unused_result__))
 #else
@@ -230,24 +203,15 @@ typedef UINT32 uint32_t;
 typedef INT64 int64_t;
 typedef UINT64 uint64_t;
 typedef UINTN uintptr_t;
+#ifndef OSSL_SSIZE_MAX
+typedef INTN ossl_ssize_t;
+#define OSSL_SSIZE_MAX MAX_INTN
+#endif
 #elif (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || defined(__osf__) || defined(__sgi) || defined(__hpux) || defined(OPENSSL_SYS_VMS) || defined(__OpenBSD__)
 #include <inttypes.h>
 #undef OPENSSL_NO_INTTYPES_H
 /* Because the specs say that inttypes.h includes stdint.h if present */
 #undef OPENSSL_NO_STDINT_H
-#elif defined(_MSC_VER) && _MSC_VER < 1600
-/*
- * minimally required typdefs for systems not supporting inttypes.h or
- * stdint.h: currently just older VC++
- */
-typedef signed char int8_t;
-typedef unsigned char uint8_t;
-typedef short int16_t;
-typedef unsigned short uint16_t;
-typedef int int32_t;
-typedef unsigned int uint32_t;
-typedef __int64 int64_t;
-typedef unsigned __int64 uint64_t;
 #elif defined(OPENSSL_SYS_TANDEM)
 #include <stdint.h>
 #include <sys/types.h>
@@ -255,6 +219,29 @@ typedef unsigned __int64 uint64_t;
 #include <stdint.h>
 #undef OPENSSL_NO_STDINT_H
 #endif
+
+#ifdef _WIN32
+#ifdef _WIN64
+typedef int64_t ossl_ssize_t;
+#define OSSL_SSIZE_MAX INT64_MAX
+#else
+typedef int ossl_ssize_t;
+#define OSSL_SSIZE_MAX INT_MAX
+#endif
+#endif
+
+#ifndef OSSL_SSIZE_MAX
+#include <sys/types.h>
+typedef ssize_t ossl_ssize_t;
+#if defined(SSIZE_MAX)
+#define OSSL_SSIZE_MAX SSIZE_MAX
+#elif defined(_POSIX_SSIZE_MAX)
+#define OSSL_SSIZE_MAX _POSIX_SSIZE_MAX
+#else
+#define OSSL_SSIZE_MAX ((ssize_t)(SIZE_MAX >> 1))
+#endif
+#endif
+
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && defined(INTMAX_MAX) && defined(UINTMAX_MAX)
 typedef intmax_t ossl_intmax_t;
 typedef uintmax_t ossl_uintmax_t;
