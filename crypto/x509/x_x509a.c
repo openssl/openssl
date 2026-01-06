@@ -33,7 +33,7 @@ ASN1_SEQUENCE(X509_CERT_AUX) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(X509_CERT_AUX)
 
-int X509_trusted(const X509 *x)
+int X509_trusted(const X509 *x) /* returns whether auxiliary data is present */
 {
     return x->aux ? 1 : 0;
 }

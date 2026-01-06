@@ -15,6 +15,7 @@ I<command>
 
 There are many situations where X.509 public-key certificates are verified
 within the OpenSSL libraries and in various OpenSSL commands.
+
 For checking certificates, the term I<validation> would actually be more
 appropriate,
 but for historical reasons the term I<verification> is often used instead.
@@ -22,19 +23,28 @@ but for historical reasons the term I<verification> is often used instead.
 In the sequel, the certificate to be validated is called I<target certificate>.
 Since it usually is an end-entity (EE) certificate, it is also known as
 "leaf" certificate (of a chain or tree), but it may also be a CA certificate.
-Certificate verification is implemented by L<X509_verify_cert(3)>.
-The validation process involves several steps and depends on multiple options.
-The most important of them are detailed in the following sections.
 
-In a nutshell, a valid chain of certificates needs to be constructed and checked
-starting from the I<target certificate> that is to be validated and ending in a
-trust anchor, which usually is a certificate that due to some policy is trusted.
+=head2 Certificate validation
+
+I<Certificate validation> is the process of checking whether
+the I<target certificate>, i.e., the certificate to be validated,
+can be traced down to a so-called trust anchor (see L</Trust Anchors> below)
+and is acceptable to use for the verification purpose (see L</Purposes>), if any.
+
+In a nutshell, a valid chain of certificates needs
+to be built up and verified starting from the target certificate
+and ending in a certificate having a signature that can be verified
+using a so-called trust anchor (see L</Trust Anchors> below).
+
 Certificate validation can be performed in the context of a I<purpose>, which
 is a high-level specification of the intended use of the target certificate,
 such as C<sslserver> for (D)TLS servers, or (by default) for any purpose.
 
-All certificates in the chain except the target ceritificate must be CA
-certificates.
+Certificate verification is implemented by L<X509_verify_cert(3)>.
+The validation process involves several steps and depends on multiple options.
+The most important of them are detailed in the following sections.
+
+All certificates in the chain except the target certificate must be CA certificates.
 An X.509v3 certificate is considered a CA certificate
 if it has a basicConstraints extension with the `CA` flag set.
 If a pathLenConstraint is included then the chain is checked to satisfy it.
@@ -43,31 +53,94 @@ then the latter must include the keyCertSign bit, and for proxy certificates
 used for issuing a certificate it must include also the digitalSignature bit.
 
 The details of how each OpenSSL command handles errors
-are documented on the specific command page.
+are documented on the specific command pages.
 
 DANE support is documented in L<openssl-s_client(1)>,
 L<SSL_CTX_dane_enable(3)>, L<SSL_set1_host(3)>,
 L<X509_VERIFY_PARAM_set_flags(3)>, and L<X509_check_host(3)>.
 
+
+=head2 Purposes
+
+A I<purpose> is a high-level specification of the intended use of the target certificate.
+Currently predefined purposes are C<sslclient>, C<sslserver>, C<nssslserver>,
+C<smimesign>, C<smimeencrypt>, C<crlsign>, C<ocsphelper>, C<timestampsign>,
+C<codesign>, and C<any>.
+
+If peer certificate verification is enabled, by default the TLS implementation
+and thus the commands L<openssl-s_client(1)> and L<openssl-s_server(1)>
+check for consistency with
+TLS server (C<sslserver>) or TLS client use (C<sslclient>), respectively.
+CMS signature validation, which can be done via L<openssl-cms(1)>,
+checks by default for consistency with S/MIME signing use (C<smimesign>).
+Otherwise, if no purpose is given, no purpose check is performed,
+which implies that all purposes are allowed.
+
+Purposes are strongly related to the extended key usages (EKUs)
+that may be placed by the respective CA in X.509v3 certificate extensions.
+For instance,
+the purpose C<sslserver> corresponds to the EKU B<id-kp-serverAuth>.
+
+While IETF RFC 5280 says that EKUs B<id-kp-serverAuth> and B<id-kp-clientAuth>
+are (only) for WWW use, in practice they are used for all kinds of TLS clients
+and servers, and this is what OpenSSL assumes as well.
+
+For the list of recognized EKUs see the L</Extended Key Usage> section below.
+
+
+=head2 Verification Methods
+
+Verification methods determine a set verification parameters,
+such as the verification purpose (if any),
+the maximum verification depth (i.e., the number of subordinate CA certificates
+allowed in a chain),
+the trust model, and any required certificate policies.
+
+By default, no purpose is given, the maximum verification depth is 100,
+and certificate policy processing is not enabled.
+
+The trust model determines which auxiliary trust or reject OIDs are applicable
+to verifying the given certificate chain.
+They can be given using the B<-addtrust> and B<-addreject> options
+for L<openssl-x509(1)>.
+
+The currently predefined verification methods are C<ssl_client>,
+C<ssl_server>, C<smime_sign> with alias C<pkcs7>, C<code_sign>, and C<default>.
+These can be given using the B<-verify_name> option of various OpenSSL commands.
+They mimic the combinations of purpose and trust settings used in SSL/(D)TLS,
+CMS/PKCS7 (including S/MIME), and code signing.
+
+
 =head2 Trust Anchors
 
-In general, according to RFC 4158 and RFC 5280, a I<trust anchor> is just
-a public key (with algorithm and any parameters) and an associated subject name
-that in a suitable context is considered trusted for some purpose(s)
-and thus is acceptable as the root of a chain of certificates.
+In general, according to
+L<RFC 4158 section 1.3|https://datatracker.ietf.org/doc/html/rfc4158#section-1.3>,
+a I<trust anchor>
+is a public key that for some reason is considered trusted for some purpose,
+plus the name of the entity to which the corresponding private key belongs.
+L<RFC 5280 section 6.1.1|https://datatracker.ietf.org/doc/html/rfc5280#section-6.1.1>
+introduces the term I<trust anchor information>, which is a trust anchor
+plus some more detail, namely the algorithm of the public key
+and, optionally, any parameters of the public key.
 
-In practice, trust anchors are given in the form of certificates.
-Commonly they are self-signed root CA certificates.
-Their most essential fields are the subjectPublicKeyInfo and
-the subject distinguished name (DN), while the subject key identifier extension
-is generally optional but highly recommended to be included in CA certificates
-because they help chain building.
+When validating a certificate, a chain of certificates is acceptable only if
+the signature of its last certificate can be verified using a trust anchor.
+
+In practice, trust anchors are typically given in the form of certificates,
+where their essential fields are the subjectPublicKeyInfo containing the public key
+and the subject distinguished name (DN) and/or subject alternative names.
+Usually, a I<trust anchor certificate> is self-signed but does not need to be.
+A self-signed certificate must also be I<self-issued>,
+which means that its issuer is identical to its subject.
+
 In addition to the requirements given in RFC 5280 for trust anchor handling,
 OpenSSL performs on trust anchor certificates the same checks as on regular
 CA certificates, in particular those regarding the validity period
 and X.509v3 extensions like basic constraints and key usage.
 Depending on the given validation purpose, in part even the extended key usage
 is checked - for details see the L</Extended Key Usage> section below.
+Moreover, the subject key identifier extension, if present,
+is used for matching trust anchors during chain building.
 
 The most crucial input to certificate validation is a I<trust store>,
 which includes a collection of certificates and validation options.
@@ -77,8 +150,8 @@ By default all self-signed certificates in the trust store
 are considered to be trust anchors, for all or for specified purposes.
 
 Independent of any extended key usage (EKU) X.509v3 extension included,
-from the OpenSSL perspective a trust anchor certificate should be augmented
-with local trust attributes, giving an explicit designation for which
+from the OpenSSL perspective a trust anchor certificate
+should be augmented with an explicit designation for which
 uses of a target certificate the certificate may serve as a trust anchor.
 If this information is missing, it is by default trusted for all uses.
 In PEM encoding, the presence of trust attributes
@@ -86,6 +159,7 @@ is indicated by the C<TRUSTED CERTIFICATE> string.
 Such a designation provides a set of positive trust attributes
 explicitly stating acceptance for the listed uses
 and/or a set of negative trust attributes explicitly rejecting the listed uses.
+See L<openssl-x509(1)/Trust Settings> how to edit those trust attributes.
 These uses are encoded using the OID values defined for the extended key usages
 that may be included in X.509v3 certificate extensions.
 For the list of EKUs with currently predefined meaning
@@ -178,8 +252,8 @@ it must allow for certificate signing (keyCertSign).
 =back
 
 The lookup first searches for issuer certificates in the trust store.
-If it does not find a match there it consults
-the list of untrusted ("intermediate" CA) certificates, if provided.
+If it does not find a match there it consults the list of untrusted
+ ("intermediate" or "subordinate" CA) certificates, if provided.
 
 =head2 Certification Path Validation
 
@@ -194,15 +268,16 @@ for consistency with the intended specific purpose, if any.
 If no purpose is given explicitly then no such checks are done except for
 CMS signature checking, where by default C<smimesign> is checked, and SSL/(D)TLS
 connection setup, where by default C<sslserver> or C<sslclient> are checked.
-The X.509v3 extensions of the target or "leaf" certificate
+If a purpose is present,
+the X.509v3 extensions of the target or "leaf" certificate
 must be compatible with the specified purpose.
 All other certificates down the chain are checked to be valid CA certificates,
 and possibly also further non-standard checks are performed.
 The precise extensions required are described in detail
 in the L</Certificate Extensions> section below.
 
-The third step is to check the trust settings on the last certificate or
-trust anchor, which typically is given as a self-signed root CA certificate.
+The third step is to check the trust settings on the trust anchor
+(which typically is given as a self-signed root CA certificate).
 If specified, it must be trusted for the given use.
 For compatibility, a self-signed certificate
 with no trust attributes is considered to be valid for all uses.
@@ -422,7 +497,7 @@ Allow verification to succeed if an incomplete chain can be built.
 That is, a chain ending in a certificate that normally would not be trusted
 (because it is not self-signed and has no matching positive trust attributes)
 but is an element of the trust store.
-This certificate may be self-issued or belong to an intermediate CA.
+This certificate may be self-issued or belong to an subordinate CA.
 
 =item B<-check_ss_sig>
 
@@ -461,7 +536,7 @@ This option may be used multiple times.
 =item B<-untrusted> I<file>
 
 Parse I<file> as a set of one or more certificates.
-All certificates (typically of intermediate CAs) are considered untrusted
+All certificates (typically of intermedate/subordinate CAs) are considered untrusted
 and may be used to
 construct a certificate chain from the target certificate to a trust anchor.
 This option may be used multiple times.
@@ -494,28 +569,17 @@ Set policy variable inhibit-policy-mapping (see RFC5280).
 
 =item B<-purpose> I<purpose>
 
-A high-level specification of the intended use of the target certificate.
-Currently predefined purposes are C<sslclient>, C<sslserver>, C<nssslserver>,
-C<smimesign>, C<smimeencrypt>, C<crlsign>, C<ocsphelper>, C<timestampsign>,
-C<codesign> and C<any>.
-If peer certificate verification is enabled, by default the TLS implementation
-and thus the commands L<openssl-s_client(1)> and L<openssl-s_server(1)>
-check for consistency with
-TLS server (C<sslserver>) or TLS client use (C<sslclient>), respectively.
-By default, CMS signature validation, which can be done via L<openssl-cms(1)>,
-checks for consistency with S/MIME signing use (C<smimesign>).
+The intended use for the certificate to be verified.
+See L</Purposes> for details.
 
-While IETF RFC 5280 says that B<id-kp-serverAuth> and B<id-kp-clientAuth>
-are only for WWW use, in practice they are used for all kinds of TLS clients
-and servers, and this is what OpenSSL assumes as well.
 
 For details on the checks performed see the L</Certificate Extensions> section.
 
 =item B<-verify_depth> I<num>
 
-Limit the certificate chain to I<num> intermediate CA certificates.
+Limit the certificate chain to I<num> subordinate CA certificates.
 A maximal depth chain can have up to I<num>+2 certificates, since neither the
-end-entity certificate nor the trust-anchor certificate count against the
+target certificate nor the trust anchor count against the
 B<-verify_depth> limit.
 
 =item B<-verify_email> I<email>
@@ -535,20 +599,9 @@ the subject certificate.
 
 =item B<-verify_name> I<name>
 
-Use a set of verification parameters, also known as verification method,
-identified by I<name>. The currently predefined methods are named C<ssl_client>,
-C<ssl_server>, C<smime_sign> with alias C<pkcs7>, C<code_sign>, and C<default>.
-These mimic the combinations of purpose and trust settings used in SSL/(D)TLS,
-CMS/PKCS7 (including S/MIME), and code signing.
-
-The verification parameters include the trust model, various flags that can
-partly be set also via other command-line options, and the verification purpose,
-which in turn implies certificate key usage and extended key usage requirements.
-
-The trust model determines which auxiliary trust or reject OIDs are applicable
-to verifying the given certificate chain.
-They can be given using the B<-addtrust> and B<-addreject> options
-for L<openssl-x509(1)>.
+Use a predefined set of verification parameters,
+also known as verification method, identified by I<name>.
+See L</Verification Methods> for details.
 
 =back
 
@@ -556,9 +609,9 @@ for L<openssl-x509(1)>.
 
 Sometimes there may be more than one certificate chain leading to an
 end-entity certificate.
-This usually happens when a root or intermediate CA signs a certificate
+This usually happens when a root or subordinate CA signs a certificate
 for another a CA in other organization.
-Another reason is when a CA might have intermediates that use two different
+Another reason is when a CA might have subordinates that use two different
 signature formats, such as a SHA-1 and a SHA-256 digest.
 
 The following options can be used to provide data that will allow the
@@ -594,7 +647,8 @@ This option has no effect and is retained for backward compatibility only.
 =head2 Certificate Extensions
 
 Options like B<-purpose> and B<-verify_name> trigger the processing of specific
-certificate extensions, which determine what certificates can be used for.
+certificate extensions such as extended key usage (EKU)
+that determine what certificates can be used for.
 
 The following two subsections on the B<basicConstraints> and B<keyUsage>
 extensions and on X.509v1 certificates apply to I<all> CA certificates
