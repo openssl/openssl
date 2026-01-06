@@ -137,7 +137,7 @@ static int srtpkdf_set_membuf(unsigned char **dst, size_t *dst_len,
     return OSSL_PARAM_get_octet_string(p, (void **)dst, 0, dst_len);
 }
 
-static int isPowerOfTwo (unsigned int x, unsigned int *n)
+static int isPowerOfTwo(unsigned int x, unsigned int *n)
 {
     *n = 0;
     while (((x % 2) == 0) && x > 1) { /* While x is even and > 1 */
