@@ -513,7 +513,7 @@ int mempacket_swap_epoch(BIO *bio)
         } else {
             epoch = (rec[RECORD_EPOCH_HI] << 8) | rec[RECORD_EPOCH_LO];
             len = ((rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO]) + rechdrlen;
-            }
+        }
         if (rem < len)
             return 0;
 
