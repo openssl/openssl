@@ -436,6 +436,9 @@ static int drbg_fetch_algs_from_prov(const struct drbg_set_ctx_params_st *p,
         } else {
             goto done;
         }
+        if (!ossl_prov_macctx_load(macctx, NULL, NULL, p->digest,
+                p->propq, "HMAC", NULL, NULL, libctx))
+            goto done;
     }
 
     ret = 1;
