@@ -15,7 +15,6 @@
 
 #include <openssl/whrlpool.h>
 #include "crypto/evp.h"
-#include "legacy_meth.h"
 
 static const EVP_MD whirlpool_md = {
     NID_whirlpool,

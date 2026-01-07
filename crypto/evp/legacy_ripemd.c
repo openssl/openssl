@@ -15,7 +15,6 @@
 
 #include <openssl/ripemd.h>
 #include "crypto/evp.h"
-#include "legacy_meth.h"
 
 static const EVP_MD ripemd160_md = {
     NID_ripemd160,
