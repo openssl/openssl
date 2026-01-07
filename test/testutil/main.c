@@ -56,16 +56,17 @@ end:
 #if defined(OPENSSL_VALGRIND_H_INCLUDED) && defined(RUNNING_ON_VALGRIND)
     /*
      * Somewhat paradoxically, we do *NOT* want to clean up normally
-     * when running tests using valgrind in order to test the suppression
-     * file which we will ship with the distribution.
-     *
-     * If for any reason you actually wish to run the test under valgrind
-     * but still call cleanup, just run it without OSSL_USE_VALGRIND set.
+     * when running our tests using valgrind in order to test the
+     * suppression file which we will ship with the distribution. We
+     * set the OSSL_USE_VALGRIND environment variable for this
+     * purpose, but we only want to dodge cleanup when running under
+     * valgrind, *and* that environment variable is set. If you run
+     * this under valgrind without that environment variable set, it
+     * will still call OPENSSL_cleanup normally.
      */
     if (RUNNING_ON_VALGRIND && getenv(OSSL_USE_VALGRIND) != NULL)
         return ret;
 #endif /* defined(OPENSSL_VALGRIND_H_INCLUDED) && defined(RUNNING_ON_VALGRIND) */
-
     OPENSSL_cleanup();
     return ret;
 }
