@@ -140,6 +140,11 @@ void *PKCS12_item_decrypt_d2i_ex(const X509_ALGOR *algor, const ASN1_ITEM *it,
     void *ret;
     int outlen = 0;
 
+    if (oct == NULL) {
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
     if (!PKCS12_pbe_crypt_ex(algor, pass, passlen, oct->data, oct->length,
             &out, &outlen, 0, libctx, propq))
         return NULL;
