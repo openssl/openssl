@@ -19,7 +19,7 @@ export OSSL_CI_ARTIFACTS_PATH="$(cd "$OSSL_CI_ARTIFACTS_PATH"; pwd)"
 
 # Run the tests. This might fail, but we need to capture artifacts anyway.
 set +e
-make test HARNESS_JOBS=${HARNESS_JOBS:-4} "$@"
+make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16} "$@"
 RESULT=$?
 set -e
 
