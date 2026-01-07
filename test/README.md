@@ -191,9 +191,9 @@ Running Tests under Valgrind
 Normally, testing for memory leaks is accomplished by building Openssl with the
 enable-asan option, which links the library with the compiler asan library.  However
 Some people prefer to use valgrind to do dynamic instrumentation for memory leak checking.
-OpenSSL also offers a supression file to supress reachable memory leaks, that are often
+OpenSSL also offers a suppression file to suppress reachable memory leaks, that are often
 inappropriately considered to be true leaks.  In order to maintain and test this
-supression file, OpenSSL tests can be run under valgrind automatically.
+suppression file, OpenSSL tests can be run under valgrind automatically.
 
 To run the test suite under valgrind:
 
