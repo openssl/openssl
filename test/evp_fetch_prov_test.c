@@ -368,6 +368,63 @@ static int test_cipher(const EVP_CIPHER *cipher)
         && TEST_true(encrypt_decrypt(cipher, testmsg, sizeof(testmsg)));
 }
 
+static int test_EVP_CIPHER_fetch_freeze(void)
+{
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    /*
+     * Test does not make sense if cached fetch is disabled.
+     * There's nothing to freeze, and test will fail.
+     */
+    return 1;
+#endif
+
+    EVP_CIPHER *cipher = NULL;
+    int ret = 0;
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(ctx, "AES-128-CBC", NULL))
+        || !TEST_true(test_cipher(cipher))
+        || !TEST_int_ne(cipher->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_CIPHER_free(cipher);
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(ctx, "AES-128-CBC", "?provider=default"))
+        || !TEST_true(test_cipher(cipher))
+        || !TEST_int_ne(cipher->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_CIPHER_free(cipher);
+    cipher = NULL;
+
+    if (!TEST_int_eq(OSSL_LIB_CTX_freeze(ctx, "?fips=true"), 1)
+        || !TEST_ptr(cipher = EVP_CIPHER_fetch(ctx, "AES-128-CBC", NULL))
+        || !TEST_true(test_cipher(cipher))
+        || !TEST_int_eq(cipher->origin, EVP_ORIG_FROZEN))
+        goto err;
+    /* Technically, frozen version doesn't need to be freed */
+    EVP_CIPHER_free(cipher);
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(ctx, "AES-128-CBC", "?fips=true"))
+        || !TEST_true(test_cipher(cipher))
+        || !TEST_int_eq(cipher->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_CIPHER_free(cipher);
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(ctx, "AES-128-CBC", "?provider=default"))
+        || !TEST_true(test_cipher(cipher))
+        || !TEST_int_ne(cipher->origin, EVP_ORIG_FROZEN))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_CIPHER_free(cipher);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
 static int test_implicit_EVP_CIPHER_fetch(void)
 {
     OSSL_LIB_CTX *ctx = NULL;
@@ -483,6 +540,7 @@ int setup_tests(void)
         ADD_TEST(test_explicit_EVP_MD_fetch_by_name);
         ADD_ALL_TESTS_NOSUBTEST(test_explicit_EVP_MD_fetch_by_X509_ALGOR, 2);
     } else {
+        ADD_TEST(test_EVP_CIPHER_fetch_freeze);
         ADD_TEST(test_implicit_EVP_CIPHER_fetch);
         ADD_TEST(test_explicit_EVP_CIPHER_fetch_by_name);
         ADD_ALL_TESTS_NOSUBTEST(test_explicit_EVP_CIPHER_fetch_by_X509_ALGOR, 2);
