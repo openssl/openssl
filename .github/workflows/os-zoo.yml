@@ -52,7 +52,7 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   linux:
     if: github.repository == 'openssl/openssl'
@@ -104,7 +104,7 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   macos:
     if: github.repository == 'openssl/openssl'
@@ -130,7 +130,7 @@ jobs:
         sysctl machdep.cpu
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   windows:
     if: github.repository == 'openssl/openssl'
@@ -183,7 +183,7 @@ jobs:
       shell: cmd
       run: |
         call "${{ matrix.platform.vcvars }}"
-        nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4
+        nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4 LHASH_WORKERS=16
 
   linux-arm64:
     runs-on: ubuntu-24.04-arm
@@ -200,7 +200,7 @@ jobs:
     - name: get cpu info
       run: ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   linux-x86:
     runs-on: ubuntu-latest
@@ -261,7 +261,7 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   linux-s390x:
     runs-on: linux-s390x
@@ -281,7 +281,7 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   linux-riscv64:
     runs-on: linux-riscv64
@@ -301,7 +301,7 @@ jobs:
     - name: make test
       env:
         OPENSSL_riscvcap: RV64GC_ZBA_ZBB_ZBC_ZBS_ZKT_V
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   freebsd-x86_64:
     runs-on: ubuntu-latest
