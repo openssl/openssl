@@ -49,8 +49,9 @@ static OSSL_FUNC_kdf_gettable_ctx_params_fn kdf_srtpkdf_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn kdf_srtpkdf_get_ctx_params;
 
 static int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
-    const unsigned char *mkey, const unsigned char *msalt, const int kdr, const int kdr_n,
-    const unsigned char *index, int label, unsigned char *obuffer, const size_t keylen);
+    const unsigned char *mkey, const unsigned char *msalt, const unsigned char *index,
+    const uint32_t kdr, const uint32_t kdr_n,
+    uint32_t label, unsigned char *obuffer, const size_t keylen);
 
 typedef struct {
     /* Warning: Any changes to this structure may require you to update kdf_srtpkdf_dup */
@@ -60,12 +61,11 @@ typedef struct {
     size_t key_len;
     unsigned char *salt;
     size_t salt_len;
-    int kdr;
-    int kdr_n; /* 2 ** kdr_n = kdr */
-    size_t kdr_len;
     unsigned char *index;
     size_t index_len;
-    int label;
+    uint32_t kdr;
+    uint32_t kdr_n; /* 2 ** kdr_n = kdr */
+    uint32_t label;
 } KDF_SRTPKDF;
 
 static void *kdf_srtpkdf_new(void *provctx)
@@ -137,14 +137,27 @@ static int srtpkdf_set_membuf(unsigned char **dst, size_t *dst_len,
     return OSSL_PARAM_get_octet_string(p, (void **)dst, 0, dst_len);
 }
 
-static int isPowerOfTwo(unsigned int x, unsigned int *n)
+static int is_power_of_two(uint32_t x, uint32_t *n)
 {
-    *n = 0;
-    while (((x % 2) == 0) && x > 1) { /* While x is even and > 1 */
-        x /= 2;
-        (*n)++;
+    /* Check if we've been given an exact power of two */
+    if (x == 0 || x & (x - 1) != 0) {
+        *n = 0;
+        return 0;
     }
-    return (x == 1);
+    /* Count the number of trailing bits in the passed value */
+#ifdef __GNUC__
+    *n = __builtin_ctz(x);
+#else
+    {
+        uint32_t count = 0;
+        while ((x & 1) == 0) {
+            count++;
+            x >>= 1;
+        }
+        *n = count;
+    }
+#endif
+    return 1;
 }
 
 static int kdf_srtpkdf_derive(void *vctx, unsigned char *key, size_t keylen,
@@ -171,8 +184,8 @@ static int kdf_srtpkdf_derive(void *vctx, unsigned char *key, size_t keylen,
         return 0;
     }
     if (ctx->kdr > 0) {
-        unsigned int n = 0;
-        if (!isPowerOfTwo((unsigned int)ctx->kdr, &n)
+        uint32_t n = 0;
+        if (!is_power_of_two(ctx->kdr, &n)
             || n > KDF_SRTP_MAX_KDR) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KDR);
             return 0;
@@ -184,8 +197,8 @@ static int kdf_srtpkdf_derive(void *vctx, unsigned char *key, size_t keylen,
         return 0;
     }
 
-    return SRTPKDF(libctx, cipher, ctx->key, ctx->salt, ctx->kdr, ctx->kdr_n,
-        ctx->index, ctx->label, key, keylen);
+    return SRTPKDF(libctx, cipher, ctx->key, ctx->salt, ctx->index,
+        ctx->kdr, ctx->kdr_n, ctx->label, key, keylen);
 }
 
 static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
@@ -214,18 +227,18 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         && !srtpkdf_set_membuf(&ctx->salt, &ctx->salt_len, p.salt))
         return 0;
 
-    if (p.kdr != NULL) {
-        if (!OSSL_PARAM_get_int(p.kdr, &kdr))
-            return 0;
-        ctx->kdr = kdr;
-    }
-
     if ((p.index != NULL)
         && !srtpkdf_set_membuf(&ctx->index, &ctx->index_len, p.index))
         return 0;
 
+    if (p.kdr != NULL) {
+        if (!OSSL_PARAM_get_uint32(p.kdr, &kdr))
+            return 0;
+        ctx->kdr = kdr;
+    }
+
     if (p.label != NULL) {
-        if (!OSSL_PARAM_get_int(p.label, &label))
+        if (!OSSL_PARAM_get_uint32(p.label, &label))
             return 0;
         ctx->label = label;
     }
@@ -307,9 +320,9 @@ const OSSL_DISPATCH ossl_kdf_srtpkdf_functions[] = {
  *   cipher - AES cipher
  *   mkey - pointer to master key
  *   msalt- pointer to master salt
+ *   idx - pointer to index
  *   kdr - key derivation rate
  *   kdr_n - power of kdr (2**kdr_n = kdr)
- *   idx - pointer to index
  *   label - 8-bit label
  *   obuffer - buffer for output
  *   keylen - length of output buffer
@@ -318,15 +331,16 @@ const OSSL_DISPATCH ossl_kdf_srtpkdf_functions[] = {
  *   return - 1 on pass, 0 fail
  */
 int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
-    const unsigned char *mkey, const unsigned char *msalt, const int kdr, const int kdr_n,
-    const unsigned char *index, int label, unsigned char *obuffer, const size_t keylen)
+    const unsigned char *mkey, const unsigned char *msalt, const unsigned char *index,
+    const uint32_t kdr, const uint32_t kdr_n,
+    uint32_t label, unsigned char *obuffer, const size_t keylen)
 {
     EVP_CIPHER_CTX *ctx = NULL;
     int outl, i, index_len = 0, o_len = 0, salt_len = 0;
     unsigned char buf[EVP_MAX_KEY_LENGTH];
     char iv[KDF_SRTP_IV_LEN];
-    char local_salt[KDF_SRTP_SALT_LEN + 2];
-    char master_salt[KDF_SRTP_SALT_LEN + 2];
+    unsigned char local_salt[KDF_SRTP_MAX_SALT_LEN];
+    unsigned char master_salt[KDF_SRTP_MAX_SALT_LEN];
     BN_CTX *bn_ctx = NULL;
     BIGNUM *bn_index = NULL, *bn_salt = NULL;
     int ret, iv_len = KDF_SRTP_IV_LEN, rv = 0;
@@ -419,9 +433,7 @@ int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
     memset(buf, 0, o_len);
     if (!(ctx = EVP_CIPHER_CTX_new())
         || (EVP_CIPHER_CTX_reset(ctx) <= 0)
-        || (EVP_EncryptInit_ex(ctx, cipher, NULL, (unsigned char *)mkey,
-                (unsigned char *)local_salt)
-            <= 0)
+        || (EVP_EncryptInit_ex(ctx, cipher, NULL, mkey, local_salt) <= 0)
         || (EVP_CIPHER_CTX_set_padding(ctx, 0) <= 0)
         || (EVP_EncryptUpdate(ctx, (unsigned char *)obuffer, &outl, buf, o_len) <= 0)
         || (EVP_EncryptFinal_ex(ctx, (unsigned char *)obuffer, &outl) <= 0))
