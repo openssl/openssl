@@ -101,7 +101,7 @@ sub aes_192_load_key {
     my $KEYP = shift;
 
     my $code=<<___;
-    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    @{[vsetivli "zero", 4, "e32", "mf2", "ta", "ma"]}
     @{[vle32_v $V1, $KEYP]}
     addi $KEYP, $KEYP, 16
     @{[vle32_v $V2, $KEYP]}
@@ -137,7 +137,7 @@ sub aes_256_load_key {
     my $KEYP = shift;
 
     my $code=<<___;
-    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    @{[vsetivli "zero", 4, "e32", "mf2", "ta", "ma"]}
     @{[vle32_v $V1, $KEYP]}
     addi $KEYP, $KEYP, 16
     @{[vle32_v $V2, $KEYP]}
@@ -982,7 +982,7 @@ L_set_key_256:
     li $T1, 14
     sw $T1, 240($KEYP)
 
-    @{[vsetivli__x0_4_e32_m1_tu_mu]}
+    @{[vsetivli__x0_4_e32_mf2_tu_mu]}
 
     # Load the key
     @{[vle32_v $V10, ($UKEY)]}
@@ -1128,7 +1128,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_enc_192:
-    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    @{[vsetivli "zero", 4, "e32", "mf2", "ta", "ma"]}
 
     @{[vle32_v $V1, $INP]}
 
@@ -1179,7 +1179,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_enc_256:
-    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    @{[vsetivli "zero", 4, "e32", "mf2", "ta", "ma"]}
 
     @{[vle32_v $V1, $INP]}
 
@@ -1307,7 +1307,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_dec_192:
-    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    @{[vsetivli "zero", 4, "e32", "mf2", "ta", "ma"]}
 
     @{[vle32_v $V1, $INP]}
 
@@ -1360,7 +1360,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_dec_256:
-    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    @{[vsetivli "zero", 4, "e32", "mf2", "ta", "ma"]}
 
     @{[vle32_v $V1, $INP]}
 
