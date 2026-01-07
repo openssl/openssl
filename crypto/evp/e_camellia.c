@@ -7,17 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <string.h>
-#include <assert.h>
-#include <openssl/camellia.h>
 #include "crypto/evp.h"
-#include "crypto/modes.h"
-#include "crypto/cmll_platform.h"
-#include "evp_local.h"
 
 #define BLOCK_CIPHER_generic(nid, keylen, blocksize, ivlen, nmode, mode, MODE, flags) \
     static const EVP_CIPHER camellia_##keylen##_##mode = {                            \

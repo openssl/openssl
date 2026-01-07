@@ -7,17 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include "internal/cryptlib.h"
+#include <openssl/macros.h>
 
 #ifndef OPENSSL_NO_IDEA
-#include <openssl/evp.h>
-#include <openssl/objects.h>
 #include "crypto/evp.h"
-#include <openssl/idea.h>
-#include "evp_local.h"
 
 BLOCK_CIPHER_defs(idea, IDEA_KEY_SCHEDULE, NID_idea, 8, 16, 8, 64,
     0)
 
+#else
+NON_EMPTY_TRANSLATION_UNIT
 #endif

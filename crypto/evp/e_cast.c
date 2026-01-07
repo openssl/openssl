@@ -7,18 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include "internal/cryptlib.h"
+#include <openssl/macros.h>
 
 #ifndef OPENSSL_NO_CAST
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include "crypto/evp.h"
 #include <openssl/cast.h>
-#include "evp_local.h"
+#include "crypto/evp.h"
 
 IMPLEMENT_BLOCK_CIPHER(cast5, ks, CAST, EVP_CAST_KEY,
     NID_cast5, 8, CAST_KEY_LENGTH, 8, 64,
     EVP_CIPH_VARIABLE_LENGTH)
 
+#else
+NON_EMPTY_TRANSLATION_UNIT
 #endif

@@ -7,15 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include "internal/cryptlib.h"
+#include <openssl/macros.h>
 
 #ifndef OPENSSL_NO_RC4
-
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/rc4.h>
-
 #include "crypto/evp.h"
 
 static const EVP_CIPHER r4_cipher = {
@@ -41,4 +35,6 @@ const EVP_CIPHER *EVP_rc4_40(void)
 {
     return &r4_40_cipher;
 }
+#else
+NON_EMPTY_TRANSLATION_UNIT
 #endif

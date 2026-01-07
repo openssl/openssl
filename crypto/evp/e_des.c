@@ -6,15 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#include <stdio.h>
-#include "internal/cryptlib.h"
+
+#include <openssl/macros.h>
+
 #ifndef OPENSSL_NO_DES
-#include <openssl/evp.h>
-#include <openssl/objects.h>
 #include "crypto/evp.h"
-#include <openssl/des.h>
-#include <openssl/rand.h>
-#include "evp_local.h"
 
 BLOCK_CIPHER_defs(des, EVP_DES_KEY, NID_des, 8, 8, 8, 64,
     EVP_CIPH_RAND_KEY)
@@ -25,4 +21,6 @@ BLOCK_CIPHER_def_cfb(des, EVP_DES_KEY, NID_des, 8, 8, 1,
 BLOCK_CIPHER_def_cfb(des, EVP_DES_KEY, NID_des, 8, 8, 8,
     EVP_CIPH_RAND_KEY)
 
+#else
+NON_EMPTY_TRANSLATION_UNIT
 #endif

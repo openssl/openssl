@@ -7,15 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include "internal/cryptlib.h"
+#include <openssl/macros.h>
+
 #ifndef OPENSSL_NO_BF
-#include <openssl/evp.h>
 #include "crypto/evp.h"
-#include <openssl/objects.h>
-#include <openssl/blowfish.h>
-#include "evp_local.h"
 
 IMPLEMENT_BLOCK_CIPHER(bf, ks, BF, EVP_BF_KEY, NID_bf, 8, 16, 8, 64,
     EVP_CIPH_VARIABLE_LENGTH)
+#else
+NON_EMPTY_TRANSLATION_UNIT
 #endif
