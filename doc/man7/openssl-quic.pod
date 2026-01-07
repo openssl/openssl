@@ -913,8 +913,6 @@ on UDP sockets it receives from application, but no error is reported back
 when it fails. Robust application should set those options itself so
 it can handle errors from WSAIoctl() conveniently.
 
-=back
-
 =head1 SEE ALSO
 
 L<SSL_handle_events(3)>, L<SSL_get_event_timeout(3)>,
