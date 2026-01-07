@@ -908,7 +908,7 @@ should disable SIO_UDP_CONNRESET and SIO_UDP_NETRESET error notification
 on UDP sockets they pass to OpenSSL QUIC stack. More details can be found here:
 https://learn.microsoft.com/en-us/windows/win32/winsock/winsock-ioctls#sio_udp_connreset-opcode-setting-i-t3
 
-OpenSSL attempts to always dissable SIO_UDP_CONNRESET and SIO_UDP_NETRESET
+OpenSSL attempts to always disable SIO_UDP_CONNRESET and SIO_UDP_NETRESET
 on UDP sockets it receives from application, but no error is reported back
 when it fails. Robust application should set those options itself so
 it can handle errors from WSAIoctl() conveniently.
