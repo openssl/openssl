@@ -14,19 +14,10 @@
  */
 #include "internal/deprecated.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <openssl/opensslconf.h>
-#include <openssl/evp.h>
-#include <openssl/objects.h>
 #include <openssl/aes.h>
 #include <openssl/sha.h>
-#include <openssl/rand.h>
 #include "internal/cryptlib.h"
-#include "crypto/modes.h"
-#include "internal/constant_time.h"
 #include "crypto/evp.h"
-#include "evp_local.h"
 
 #if defined(AES_ASM) && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
 

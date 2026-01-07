@@ -7,16 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include "internal/cryptlib.h"
-#include "internal/endian.h"
+#include <openssl/macros.h>
 
 #ifndef OPENSSL_NO_CHACHA
 
-#include <openssl/evp.h>
-#include <openssl/objects.h>
 #include "crypto/evp.h"
-#include "evp_local.h"
 #include "crypto/chacha.h"
 
 static const EVP_CIPHER chacha20 = {
@@ -49,4 +44,6 @@ const EVP_CIPHER *EVP_chacha20_poly1305(void)
     return (&chacha20_poly1305);
 }
 #endif
+#else
+NON_EMPTY_TRANSLATION_UNIT
 #endif

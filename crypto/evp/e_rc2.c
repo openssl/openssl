@@ -6,16 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#include <stdio.h>
-#include "internal/cryptlib.h"
+#include <openssl/macros.h>
 
 #ifndef OPENSSL_NO_RC2
-
-#include <openssl/evp.h>
-#include <openssl/objects.h>
 #include "crypto/evp.h"
 #include <openssl/rc2.h>
-#include "evp_local.h"
 
 IMPLEMENT_BLOCK_CIPHER(rc2, ks, RC2, EVP_RC2_KEY, NID_rc2,
     8,
@@ -46,4 +41,6 @@ const EVP_CIPHER *EVP_rc2_40_cbc(void)
     return &r2_40_cbc_cipher;
 }
 
+#else
+NON_EMPTY_TRANSLATION_UNIT
 #endif

@@ -7,17 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * MD5 and RC4 low level APIs are deprecated for public use, but still ok for
- * internal use.
- */
-#include "internal/deprecated.h"
-
-#include "internal/cryptlib.h"
-#include <openssl/opensslconf.h>
+#include <openssl/macros.h>
 
 #if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_MD5)
-
 #include "crypto/evp.h"
 
 static const EVP_CIPHER r4_hmac_md5_cipher = {
@@ -35,4 +27,6 @@ const EVP_CIPHER *EVP_rc4_hmac_md5(void)
 {
     return &r4_hmac_md5_cipher;
 }
+#else
+NON_EMPTY_TRANSLATION_UNIT
 #endif

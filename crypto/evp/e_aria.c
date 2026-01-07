@@ -8,17 +8,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/deprecated.h"
+#include <openssl/macros.h>
 
-#include "internal/cryptlib.h"
 #ifndef OPENSSL_NO_ARIA
-#include <openssl/evp.h>
-#include <openssl/modes.h>
-#include <openssl/rand.h>
-#include "crypto/aria.h"
 #include "crypto/evp.h"
-#include "crypto/modes.h"
-#include "evp_local.h"
 
 IMPLEMENT_BLOCK_CIPHER(aria_128, ks, aria, EVP_ARIA_KEY,
     NID_aria_128, 16, 16, 16, 128,
@@ -80,4 +73,6 @@ BLOCK_CIPHER_aead(128, ccm, CCM)
 BLOCK_CIPHER_aead(192, ccm, CCM)
 BLOCK_CIPHER_aead(256, ccm, CCM)
 
+#else
+NON_EMPTY_TRANSLATION_UNIT
 #endif

@@ -9,16 +9,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/deprecated.h"
+#include <openssl/macros.h>
 
-#include "internal/cryptlib.h"
 #ifndef OPENSSL_NO_SM4
-#include <openssl/evp.h>
-#include <openssl/modes.h>
-#include "crypto/sm4.h"
 #include "crypto/evp.h"
-#include "crypto/sm4_platform.h"
-#include "evp_local.h"
 
 #define BLOCK_CIPHER_generic(nid, blocksize, ivlen, nmode, mode, MODE, flags) \
     static const EVP_CIPHER sm4_##mode = {                                    \
@@ -39,4 +33,6 @@
     BLOCK_CIPHER_generic(nid, 1, 16, ctr, ctr, CTR, flags)
 
 DEFINE_BLOCK_CIPHERS(NID_sm4, 0)
+#else
+NON_EMPTY_TRANSLATION_UNIT
 #endif

@@ -7,14 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include "internal/cryptlib.h"
+#include <openssl/macros.h>
+
 #ifndef OPENSSL_NO_DES
-#include <openssl/objects.h>
 #include "crypto/evp.h"
-#include <openssl/des.h>
-#include <openssl/rand.h>
-#include "evp_local.h"
 
 BLOCK_CIPHER_defs(des_ede, DES_EDE_KEY, NID_des_ede, 8, 16, 8, 64,
     EVP_CIPH_RAND_KEY | EVP_CIPH_FLAG_DEFAULT_ASN1)
@@ -51,4 +47,6 @@ const EVP_CIPHER *EVP_des_ede3_wrap(void)
     return &des3_wrap;
 }
 
+#else
+NON_EMPTY_TRANSLATION_UNIT
 #endif

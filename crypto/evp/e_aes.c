@@ -7,27 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * This file uses the low-level AES functions (which are deprecated for
- * non-internal use) in order to implement the EVP AES ciphers.
- */
-#include "internal/deprecated.h"
-
-#include <string.h>
-#include <assert.h>
-#include <openssl/opensslconf.h>
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/aes.h>
-#include <openssl/rand.h>
-#include <openssl/cmac.h>
 #include "crypto/evp.h"
-#include "internal/cryptlib.h"
-#include "crypto/modes.h"
-#include "crypto/siv.h"
-#include "crypto/aes_platform.h"
-#include "evp_local.h"
 
 #define BLOCK_CIPHER_generic(nid, keylen, blocksize, ivlen, nmode, mode, MODE, flags) \
     static const EVP_CIPHER aes_##keylen##_##mode = {                                 \
