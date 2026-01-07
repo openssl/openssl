@@ -15,7 +15,6 @@
 
 #include <openssl/mdc2.h>
 #include "crypto/evp.h"
-#include "legacy_meth.h"
 
 static const EVP_MD mdc2_md = {
     NID_mdc2,

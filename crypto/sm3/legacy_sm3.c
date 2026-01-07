@@ -9,7 +9,6 @@
  */
 
 #include "crypto/evp.h"
-#include "../evp/legacy_meth.h"
 #include "internal/sm3.h"
 
 static const EVP_MD sm3_md = {

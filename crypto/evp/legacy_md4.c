@@ -15,7 +15,6 @@
 
 #include <openssl/md4.h>
 #include "crypto/evp.h"
-#include "legacy_meth.h"
 
 static const EVP_MD md4_md = {
     NID_md4,

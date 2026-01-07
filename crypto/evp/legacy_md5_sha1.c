@@ -16,7 +16,6 @@
 
 #include "crypto/evp.h"
 #include "prov/md5_sha1.h" /* diverse MD5_SHA1 macros */
-#include "legacy_meth.h"
 
 static const EVP_MD md5_sha1_md = {
     NID_md5_sha1,

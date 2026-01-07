@@ -9,7 +9,6 @@
 
 #include "crypto/evp.h"
 #include "prov/blake2.h" /* diverse BLAKE2 macros */
-#include "legacy_meth.h"
 
 static const EVP_MD blake2b_md = {
     NID_blake2b512,
