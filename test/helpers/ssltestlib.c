@@ -171,17 +171,19 @@ static void dump_data(const char *data, int len)
                 printf("%02x", rec[i]);
             reclen = (rec[DTLS13_UNI_HDR_RECORD_LEN_HI] << 8) | rec[DTLS13_UNI_HDR_RECORD_LEN_LO];
             printf("\n** Record Length: %d\n", reclen);
-        } else {content = rec[RECORD_CONTENT_TYPE];
-        printf("** Record Content-type: %d\n", content);
-        printf("** Record Version: %02x%02x\n",
-            rec[RECORD_VERSION_HI], rec[RECORD_VERSION_LO]);
-        epoch = (rec[RECORD_EPOCH_HI] << 8) | rec[RECORD_EPOCH_LO];
-        printf("** Record Epoch: %d\n", epoch);
-        printf("** Record Sequence: ");
-        for (i = RECORD_SEQUENCE_START; i <= RECORD_SEQUENCE_END; i++)
-            printf("%02x", rec[i]);
-        reclen = (rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO];
-        printf("\n** Record Length: %d\n", reclen);}
+        } else {
+            content = rec[RECORD_CONTENT_TYPE];
+            printf("** Record Content-type: %d\n", content);
+            printf("** Record Version: %02x%02x\n",
+                rec[RECORD_VERSION_HI], rec[RECORD_VERSION_LO]);
+            epoch = (rec[RECORD_EPOCH_HI] << 8) | rec[RECORD_EPOCH_LO];
+            printf("** Record Epoch: %d\n", epoch);
+            printf("** Record Sequence: ");
+            for (i = RECORD_SEQUENCE_START; i <= RECORD_SEQUENCE_END; i++)
+                printf("%02x", rec[i]);
+            reclen = (rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO];
+            printf("\n** Record Length: %d\n", reclen);
+        }
 
         /* Now look at message */
         rec += rechdrlen;
@@ -369,8 +371,6 @@ static int mempacket_test_free(BIO *bio)
     BIO_set_init(bio, 0);
     return 1;
 }
-
-
 
 #define STANDARD_PACKET 0
 
