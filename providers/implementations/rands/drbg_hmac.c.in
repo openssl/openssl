@@ -527,8 +527,7 @@ static int drbg_hmac_set_ctx_params_locked(PROV_DRBG *ctx, const struct drbg_set
         if (!ossl_prov_macctx_load(&hmac->ctx, p->mac, NULL, p->digest,
                 p->propq, p->engine,
                 NULL, NULL, NULL, libctx))
-                return 0;
-
+            return 0;
     }
 
     md = ossl_prov_digest_md(&hmac->digest);
