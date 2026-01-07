@@ -189,14 +189,34 @@ static int linebuffer_write(BIO *b, const char *in, int inl)
     } while (foundnl && inl > 0);
     /*
      * We've written as much as we can.  The rest of the input buffer, if
-     * any, is text that doesn't and with a NL and therefore needs to be
-     * saved for the next trip.
+     * any, is text that doesn't end with a NL and therefore we need to try
+     * free up some space in our obuf so we can make forward progress.
      */
-    if (inl > 0) {
-        memcpy(&(ctx->obuf[ctx->obuf_len]), in, inl);
-        ctx->obuf_len += inl;
-        num += inl;
+    while (inl > 0) {
+        size_t avail = (size_t)ctx->obuf_size - (size_t)ctx->obuf_len;
+        size_t to_copy;
+
+        if (avail == 0) {
+            /* Flush buffered data to make room */
+            i = BIO_write(b->next_bio, ctx->obuf, ctx->obuf_len);
+            if (i <= 0) {
+                BIO_copy_next_retry(b);
+                return num > 0 ? num : i;
+            }
+            if (i < ctx->obuf_len)
+                memmove(ctx->obuf, ctx->obuf + i, ctx->obuf_len - i);
+            ctx->obuf_len -= i;
+            continue;
+        }
+
+        to_copy = inl > (int)avail ? avail : (size_t)inl;
+        memcpy(&(ctx->obuf[ctx->obuf_len]), in, to_copy);
+        ctx->obuf_len += (int)to_copy;
+        in += to_copy;
+        inl -= (int)to_copy;
+        num += (int)to_copy;
     }
+
     return num;
 }
 
