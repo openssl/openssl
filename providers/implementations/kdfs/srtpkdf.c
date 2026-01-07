@@ -140,7 +140,7 @@ static int srtpkdf_set_membuf(unsigned char **dst, size_t *dst_len,
 static int is_power_of_two(uint32_t x, uint32_t *n)
 {
     /* Check if we've been given an exact power of two */
-    if (x == 0 || x & (x - 1) != 0) {
+    if (x == 0 || (x & (x - 1)) != 0) {
         *n = 0;
         return 0;
     }
@@ -206,8 +206,8 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     struct srtp_set_ctx_params_st p;
     KDF_SRTPKDF *ctx = vctx;
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
-    int kdr;
-    int label;
+    uint32_t kdr;
+    uint32_t label;
 
     if (params == NULL)
         return 1;
