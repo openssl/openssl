@@ -1895,12 +1895,26 @@ static void collect_kem(EVP_KEM *kem, void *stack)
 static int kem_locate(const char *algo, unsigned int *idx)
 {
     unsigned int i;
+    EVP_KEM *kem;
+    const char *canonical_name;
 
     for (i = 0; i < kems_algs_len; i++) {
         if (strcmp(kems_algname[i], algo) == 0) {
             *idx = i;
             return 1;
         }
+    }
+    kem = EVP_KEM_fetch(app_get0_libctx(), algo, app_get0_propq());
+    if (kem != NULL) {
+        canonical_name = EVP_KEM_get0_name(kem);
+        for (i = 0; i < kems_algs_len; i++) {
+            if (strcmp(kems_algname[i], canonical_name) == 0) {
+                *idx = i;
+                EVP_KEM_free(kem);
+                return 1;
+            }
+        }
+        EVP_KEM_free(kem);
     }
     return 0;
 }
@@ -1927,12 +1941,26 @@ static void collect_signatures(EVP_SIGNATURE *sig, void *stack)
 static int sig_locate(const char *algo, unsigned int *idx)
 {
     unsigned int i;
+    EVP_SIGNATURE *sig;
+    const char *canonical_name;
 
     for (i = 0; i < sigs_algs_len; i++) {
         if (strcmp(sigs_algname[i], algo) == 0) {
             *idx = i;
             return 1;
         }
+    }
+    sig = EVP_SIGNATURE_fetch(app_get0_libctx(), algo, app_get0_propq());
+    if (sig != NULL) {
+        canonical_name = EVP_SIGNATURE_get0_name(sig);
+        for (i = 0; i < sigs_algs_len; i++) {
+            if (strcmp(sigs_algname[i], canonical_name) == 0) {
+                *idx = i;
+                EVP_SIGNATURE_free(sig);
+                return 1;
+            }
+        }
+        EVP_SIGNATURE_free(sig);
     }
     return 0;
 }
