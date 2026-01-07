@@ -130,6 +130,30 @@ Ctrl.label = label:8
 Output = C61E7A93744F39EE10734AFE3FF7A087
 Result = KDF_DERIVE_ERROR
 
+# Negative Test case 5, invalid kdr (not power of 2)
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
+Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
+Ctrl.kdr = kdr:5
+Ctrl.index = hexindex:000000000000
+Ctrl.label = label:0
+Output = C61E7A93744F39EE10734AFE3FF7A087
+Result = KDF_DERIVE_ERROR
+
+# Negative Test case 6, invalid kdr (kdr out of range)
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
+Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
+Ctrl.kdr = kdr:0x10000000
+Ctrl.index = hexindex:000000000000
+Ctrl.label = label:0
+Output = C61E7A93744F39EE10734AFE3FF7A087
+Result = KDF_DERIVE_ERROR
+
 # Additional tests from 
 # https://github.com/usnistgov/ACVP-Server/tree/master/gen-val/json-files/kdf-components-srtp-1.0
 
@@ -198,3 +222,135 @@ Ctrl.kdr = kdr:1
 Ctrl.index = hexindex:69B62109
 Ctrl.label = label:5
 Output = 70C0481A04E3610EC8AF8623FA9B
+
+# prompt.json tgId:4, tcid:31, expectedResults.json tcId:31 srtpKe
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:127A535F66D5D43135E5DB87F04AF2DB
+Ctrl.hexsalt = hexsalt:82D0D04DC693E29E0FE7FECBF041
+Ctrl.kdr = kdr:2
+Ctrl.index = hexindex:3D6FECDCE1BE
+Ctrl.label = label:0
+Output = A2F4D858CCDF585D9C5CA787C5A3031F
+
+# prompt.json tgId:4, tcid:31, expectedResults.json tcId:31 srtpKa
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:127A535F66D5D43135E5DB87F04AF2DB
+Ctrl.hexsalt = hexsalt:82D0D04DC693E29E0FE7FECBF041
+Ctrl.kdr = kdr:2
+Ctrl.index = hexindex:3D6FECDCE1BE
+Ctrl.label = label:1
+Output = C140C97CAC05B2ED338AD353014A90012F37B45C
+
+# prompt.json tgId:4, tcid:31, expectedResults.json tcId:31 srtpKs
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:127A535F66D5D43135E5DB87F04AF2DB
+Ctrl.hexsalt = hexsalt:82D0D04DC693E29E0FE7FECBF041
+Ctrl.kdr = kdr:2
+Ctrl.index = hexindex:3D6FECDCE1BE
+Ctrl.label = label:2
+Output = AA6DE94B3BCB5108EFD350AD6936
+
+# prompt.json tgId:4, tcid:31, expectedResults.json tcId:31 srtcpKe
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:127A535F66D5D43135E5DB87F04AF2DB
+Ctrl.hexsalt = hexsalt:82D0D04DC693E29E0FE7FECBF041
+Ctrl.kdr = kdr:2
+Ctrl.index = hexindex:1C7B571C
+Ctrl.label = label:3
+Output = 2844C8F56E2AF865E4EBBD0D083A4FAE
+
+# prompt.json tgId:4, tcid:31, expectedResults.json tcId:31 srtcpKa
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:127A535F66D5D43135E5DB87F04AF2DB
+Ctrl.hexsalt = hexsalt:82D0D04DC693E29E0FE7FECBF041
+Ctrl.kdr = kdr:2
+Ctrl.index = hexindex:1C7B571C
+Ctrl.label = label:4
+Output = 50135309CF64D5162723749CCF085708F8E81636
+
+# prompt.json tgId:4, tcid:31, expectedResults.json tcId:31 srtcpKs
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:127A535F66D5D43135E5DB87F04AF2DB
+Ctrl.hexsalt = hexsalt:82D0D04DC693E29E0FE7FECBF041
+Ctrl.kdr = kdr:2
+Ctrl.index = hexindex:1C7B571C
+Ctrl.label = label:5
+Output = 47CB081EC69F7E74FEB3FCD1BD20
+
+# prompt.json tgId:6, tcid:51, expectedResults.json tcId:51 srtpKe
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:CF08F8159FCF18DA8108A3FE3B707C2B
+Ctrl.hexsalt = hexsalt:4AF8352708E0A164C6645A63E5BB
+Ctrl.kdr = kdr:8
+Ctrl.index = hexindex:F4EE616415B9
+Ctrl.label = label:0
+Output = B46322B06F6E4B189F27744EAD8C5173
+
+# prompt.json tgId:6, tcid:51, expectedResults.json tcId:51 srtpKa
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:CF08F8159FCF18DA8108A3FE3B707C2B
+Ctrl.hexsalt = hexsalt:4AF8352708E0A164C6645A63E5BB
+Ctrl.kdr = kdr:8
+Ctrl.index = hexindex:F4EE616415B9
+Ctrl.label = label:1
+Output = F9F246054B3D4AA2520CE2612192749AA6970BB0
+
+# prompt.json tgId:6, tcid:51, expectedResults.json tcId:51 srtpKs
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:CF08F8159FCF18DA8108A3FE3B707C2B
+Ctrl.hexsalt = hexsalt:4AF8352708E0A164C6645A63E5BB
+Ctrl.kdr = kdr:8
+Ctrl.index = hexindex:F4EE616415B9
+Ctrl.label = label:2
+Output = 18EA8EA36A90617224FBFBCB849A
+
+# prompt.json tgId:6, tcid:51, expectedResults.json tcId:51 srtcpKe
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:CF08F8159FCF18DA8108A3FE3B707C2B
+Ctrl.hexsalt = hexsalt:4AF8352708E0A164C6645A63E5BB
+Ctrl.kdr = kdr:8
+Ctrl.index = hexindex:13DE080C
+Ctrl.label = label:3
+Output = F4140d2419f7A75CEE91FC942CD94514
+
+# prompt.json tgId:6, tcid:51, expectedResults.json tcId:51 srtcpKa
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:CF08F8159FCF18DA8108A3FE3B707C2B
+Ctrl.hexsalt = hexsalt:4AF8352708E0A164C6645A63E5BB
+Ctrl.kdr = kdr:8
+Ctrl.index = hexindex:13DE080C
+Ctrl.label = label:4
+Output = 6E65548ABFE131FF91E7AE75409F96AD9D9FE345
+
+# prompt.json tgId:6, tcid:51, expectedResults.json tcId:51 srtcpKs
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:CF08F8159FCF18DA8108A3FE3B707C2B
+Ctrl.hexsalt = hexsalt:4AF8352708E0A164C6645A63E5BB
+Ctrl.kdr = kdr:8
+Ctrl.index = hexindex:13DE080C
+Ctrl.label = label:5
+Output = 2C195A5AA9F539BD7CC7D6E23483
