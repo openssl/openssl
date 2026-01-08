@@ -1021,6 +1021,12 @@ static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
          * SSL_read() below.
          */
         if (!SSL_renegotiate_pending(peer->ssl)) {
+            /* Renegotiation is only supported for TLSv1.2 and below */
+            if (SSL_version(peer->ssl) == TLS1_3_VERSION) {
+                TEST_error("Renegotiation not supported on TLSv1.3");
+                peer->status = PEER_ERROR;
+                return;
+            }
             /*
              * If we are the client we will always attempt to resume the
              * session. The server may or may not resume dependent on the
