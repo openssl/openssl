@@ -59,7 +59,7 @@ the B<params> argument.
 
 The EVP_SKEY_import_raw_key() function is a helper that creates an B<EVP_SKEY>
 object containing the raw byte representation of the symmetric keys from the
-buffer I<key> having length I<len>. The B<skeymgmtname> defines the name of the
+buffer I<key> having length I<len>. The I<skeymgmtname> defines the name of the
 target B<EVP_SKEYMGMT> for the newly created key.
 
 The EVP_SKEY_import_SKEYMGMT() function is a helper that creates an B<EVP_SKEY>
