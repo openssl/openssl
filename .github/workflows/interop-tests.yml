@@ -43,7 +43,7 @@ jobs:
           sed -i 's/^Release: .*$/Release: dev/' openssl.spec
           yum-builddep -y /build/SPECS/openssl.spec # just for sure nothing is missing
           mkdir -p /build/SOURCES
-          tar --transform "s/^__w\/openssl\/openssl/openssl-$MAJOR.$MINOR.$PATCH/" -czf /build/SOURCES/openssl-$MAJOR.$MINOR.$PATCH.tar.gz /__w/openssl/openssl/
+          tar --transform "s/^__w\/openssl\/openssl/openssl-$MAJOR.$MINOR.$PATCH/" -czf /build/SOURCES/openssl-$MAJOR.$MINOR.$PATCH.tar.gz "$GITHUB_WORKSPACE"
           rpmbuild -bb /build/SPECS/openssl.spec
           dnf install -y /build/RPMS/x86_64/openssl-*
       - name: Run interop tests
