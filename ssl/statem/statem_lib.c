@@ -2899,6 +2899,12 @@ MSG_PROCESS_RETURN tls13_process_compressed_certificate(SSL_CONNECTION *sc,
         goto err;
     }
 
+    /* Prevent excessive pre-decompression allocation */
+    if (expected_length > sc->max_cert_list) {
+        SSLfatal(sc, SSL_AD_BAD_CERTIFICATE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
+        goto err;
+    }
+
     if (PACKET_remaining(pkt) != comp_length || comp_length == 0) {
         SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_DECOMPRESSION);
         goto err;
