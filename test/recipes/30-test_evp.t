@@ -81,12 +81,13 @@ push @files, qw(
                 evpkdf_kbkdf_kmac.txt
                ) unless $no_kbkdf;
 push @files, qw(evpkdf_ss.txt) unless $no_sskdf;
-push @files, qw(evpkdf_x942.txt evppkey_ffdhe_x942kdf.txt) unless $no_x942kdf;
+push @files, qw(evpkdf_x942.txt) unless $no_x942kdf;
 push @files, qw(evpkdf_x963.txt) unless $no_x963kdf;
 push @files, qw(
                 evppkey_ffdhe.txt
                 evppkey_dh.txt
                ) unless $no_dh;
+push @files, qw(evppkey_ffdhe_x942kdf.txt) unless ($no_x942kdf || $no_dh);
 push @files, qw(evpmac_cmac_des.txt) unless $no_des;
 push @files, qw(evpkdf_x942_des.txt) unless ($no_des || $no_x942kdf);
 push @files, qw(
