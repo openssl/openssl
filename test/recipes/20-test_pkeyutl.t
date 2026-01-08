@@ -23,7 +23,7 @@ plan tests => 27;
 
 SKIP: {
     skip "Skipping tests that require EC, SM2 or SM3", 4
-        if disabled("ec") || disabled("sm2") || disabled("sm3");
+        if disabled("ec") || disabled("sm2") || disabled("sm3") || disabled("x963kdf");
 
     # SM2
     ok_nofips(run(app(([ 'openssl', 'pkeyutl', '-sign',
