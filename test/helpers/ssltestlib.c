@@ -127,6 +127,11 @@ static void copy_flags(BIO *bio)
 #define DTLS13_UNI_HDR_LEN_BIT_IS_SET(byte) \
     (((byte) & DTLS13_UNI_HDR_LEN_BIT) == DTLS13_UNI_HDR_LEN_BIT)
 
+#define DTLS13_UNI_HDR_RECORD_SEQ_HI 1
+#define DTLS13_UNI_HDR_RECORD_SEQ_LO 2
+#define DTLS13_UNI_HDR_RECORD_LEN_HI 3
+#define DTLS13_UNI_HDR_RECORD_LEN_LO 4
+
 static void dump_data(const char *data, int len)
 {
     int rem, i, content, reclen, msglen, fragoff, fraglen, epoch;
@@ -138,31 +143,51 @@ static void dump_data(const char *data, int len)
     rec = (unsigned char *)data;
 
     while (rem > 0) {
+        int rechdrlen;
+
+        if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec))
+            rechdrlen = DTLS13_UNI_HDR_FIXED_LENGTH;
+        else
+            rechdrlen = DTLS1_RT_HEADER_LENGTH;
+
         if (rem != len)
             printf("*\n");
         printf("*---- START OF RECORD ----\n");
-        /*
-         * TODO(DTLSv1.3): support variable length headers
-         */
-        if (rem < DTLS1_RT_HEADER_LENGTH) {
+        if (rem < rechdrlen) {
             printf("*---- RECORD TRUNCATED ----\n");
             break;
         }
-        content = rec[RECORD_CONTENT_TYPE];
-        printf("** Record Content-type: %d\n", content);
-        printf("** Record Version: %02x%02x\n",
-            rec[RECORD_VERSION_HI], rec[RECORD_VERSION_LO]);
-        epoch = (rec[RECORD_EPOCH_HI] << 8) | rec[RECORD_EPOCH_LO];
-        printf("** Record Epoch: %d\n", epoch);
-        printf("** Record Sequence: ");
-        for (i = RECORD_SEQUENCE_START; i <= RECORD_SEQUENCE_END; i++)
-            printf("%02x", rec[i]);
-        reclen = (rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO];
-        printf("\n** Record Length: %d\n", reclen);
+        if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec)) {
+            content = SSL3_RT_APPLICATION_DATA;
+            printf("** Encrypted DTLS 1.3 Record Content\n");
+            epoch = *rec & DTLS13_UNI_HDR_EPOCH_BITS_MASK;
+
+            if (epoch == 0)
+                epoch = 4;
+
+            printf("** Record Epoch: %d\n", epoch);
+            printf("** Record Sequence: ");
+            for (i = DTLS13_UNI_HDR_RECORD_SEQ_HI; i <= DTLS13_UNI_HDR_RECORD_SEQ_LO; i++)
+                printf("%02x", rec[i]);
+            reclen = (rec[DTLS13_UNI_HDR_RECORD_LEN_HI] << 8) | rec[DTLS13_UNI_HDR_RECORD_LEN_LO];
+            printf("\n** Record Length: %d\n", reclen);
+        } else {
+            content = rec[RECORD_CONTENT_TYPE];
+            printf("** Record Content-type: %d\n", content);
+            printf("** Record Version: %02x%02x\n",
+                rec[RECORD_VERSION_HI], rec[RECORD_VERSION_LO]);
+            epoch = (rec[RECORD_EPOCH_HI] << 8) | rec[RECORD_EPOCH_LO];
+            printf("** Record Epoch: %d\n", epoch);
+            printf("** Record Sequence: ");
+            for (i = RECORD_SEQUENCE_START; i <= RECORD_SEQUENCE_END; i++)
+                printf("%02x", rec[i]);
+            reclen = (rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO];
+            printf("\n** Record Length: %d\n", reclen);
+        }
 
         /* Now look at message */
-        rec += DTLS1_RT_HEADER_LENGTH;
-        rem -= DTLS1_RT_HEADER_LENGTH;
+        rec += rechdrlen;
+        rem -= rechdrlen;
         if (content == SSL3_RT_HANDSHAKE) {
             printf("**---- START OF HANDSHAKE MESSAGE FRAGMENT ----\n");
             if (epoch > 0) {
@@ -347,13 +372,6 @@ static int mempacket_test_free(BIO *bio)
     return 1;
 }
 
-/* Record Header values */
-#define EPOCH_HI 3
-#define EPOCH_LO 4
-#define RECORD_SEQUENCE 10
-#define RECORD_LEN_HI 11
-#define RECORD_LEN_LO 12
-
 #define STANDARD_PACKET 0
 
 static int mempacket_test_read(BIO *bio, char *out, int outl)
@@ -361,8 +379,7 @@ static int mempacket_test_read(BIO *bio, char *out, int outl)
     MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
     MEMPACKET *thispkt;
     unsigned char *rec;
-    int rem;
-    unsigned int seq, offset, len, epoch;
+    unsigned int seq, offset, len, epoch, rem;
 
     BIO_clear_retry_flags(bio);
     if ((thispkt = sk_MEMPACKET_value(ctx->pkts, 0)) == NULL
@@ -386,27 +403,53 @@ static int mempacket_test_read(BIO *bio, char *out, int outl)
          * with any packets that have been injected
          */
         for (rem = thispkt->len, rec = thispkt->data; rem > 0; rem -= len) {
-            if (rem < DTLS1_RT_HEADER_LENGTH)
+            unsigned int rechdrlen;
+
+            if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec))
+                rechdrlen = DTLS13_UNI_HDR_FIXED_LENGTH;
+            else
+                rechdrlen = DTLS1_RT_HEADER_LENGTH;
+
+            if (rem < rechdrlen)
                 return -1;
-            epoch = (rec[EPOCH_HI] << 8) | rec[EPOCH_LO];
+
+            if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec))
+                /* We don't expect epochs higher than 3 */
+                epoch = *rec & DTLS13_UNI_HDR_EPOCH_BITS_MASK;
+            else
+                epoch = (rec[RECORD_EPOCH_HI] << 8) | rec[RECORD_EPOCH_LO];
+
             if (epoch != ctx->epoch) {
                 ctx->epoch = epoch;
                 ctx->currrec = 0;
             }
             seq = ctx->currrec;
             offset = 0;
-            do {
-                rec[RECORD_SEQUENCE - offset] = seq & 0xFF;
-                seq >>= 8;
-                offset++;
-            } while (seq > 0);
 
-            len = ((rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO])
-                + DTLS1_RT_HEADER_LENGTH;
-            if (rem < (int)len)
+            if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec)) {
+                /*
+                 * TODO(DTLSv1.3):
+                 * Sequence number is encrypted how do we retrieve it?
+                 */
+            } else {
+                do {
+                    rec[RECORD_SEQUENCE_END - offset] = seq & 0xFF;
+                    seq >>= 8;
+                    offset++;
+                } while (seq > 0);
+            }
+
+            if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec))
+                len = (rec[DTLS13_UNI_HDR_RECORD_LEN_HI] << 8) | rec[DTLS13_UNI_HDR_RECORD_LEN_LO];
+            else
+                len = (rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO];
+
+            len += rechdrlen;
+
+            if (rem < len)
                 return -1;
             if (ctx->droprec == (int)ctx->currrec && ctx->dropepoch == epoch) {
-                if (rem > (int)len)
+                if (rem > len)
                     memmove(rec, rec + len, rem - len);
                 outl -= len;
                 ctx->droprec = -1;
@@ -450,11 +493,27 @@ int mempacket_swap_epoch(BIO *bio)
         return 0;
 
     for (rem = thispkt->len, rec = thispkt->data; rem > 0; rem -= len, rec += len) {
-        if (rem < DTLS1_RT_HEADER_LENGTH)
+        int rechdrlen;
+
+        if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec))
+            rechdrlen = DTLS13_UNI_HDR_FIXED_LENGTH;
+        else
+            rechdrlen = DTLS1_RT_HEADER_LENGTH;
+
+        if (rem < rechdrlen)
             return 0;
-        epoch = (rec[EPOCH_HI] << 8) | rec[EPOCH_LO];
-        len = ((rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO])
-            + DTLS1_RT_HEADER_LENGTH;
+        if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec)) {
+            epoch = *rec & DTLS13_UNI_HDR_EPOCH_BITS_MASK;
+
+            if (epoch == 0)
+                epoch = 4;
+
+            len = ((rec[DTLS13_UNI_HDR_RECORD_LEN_HI] << 8) | rec[DTLS13_UNI_HDR_RECORD_LEN_LO]);
+            len += rechdrlen;
+        } else {
+            epoch = (rec[RECORD_EPOCH_HI] << 8) | rec[RECORD_EPOCH_LO];
+            len = ((rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO]) + rechdrlen;
+        }
         if (rem < len)
             return 0;
 
@@ -593,6 +652,7 @@ int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
         if (DTLS13_UNI_HDR_LEN_BIT_IS_SET(*in)) {
             len = 3; /* 2 bytes for len field and 1 byte for record type */
             len += DTLS13_UNI_HDR_SEQ_BIT_IS_SET(*in) ? 2 : 1;
+            len += ((inu[DTLS13_UNI_HDR_RECORD_LEN_HI] << 8) | inu[DTLS13_UNI_HDR_RECORD_LEN_LO]);
         } else {
             /* We assert that inl is the correct record length */
             len = inl;
