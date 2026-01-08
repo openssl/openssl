@@ -54,6 +54,7 @@ ASN1_R_ILLEGAL_TIME_VALUE:184:illegal time value
 ASN1_R_ILLEGAL_ZERO_CONTENT:222:illegal zero content
 ASN1_R_INTEGER_NOT_ASCII_FORMAT:185:integer not ascii format
 ASN1_R_INTEGER_TOO_LARGE_FOR_LONG:128:integer too large for long
+ASN1_R_INVALID_BER_TAG_ENCODING:234:invalid ber tag encoding
 ASN1_R_INVALID_BIT_STRING_BITS_LEFT:220:invalid bit string bits left
 ASN1_R_INVALID_BMPSTRING_LENGTH:129:invalid bmpstring length
 ASN1_R_INVALID_DIGIT:130:invalid digit
