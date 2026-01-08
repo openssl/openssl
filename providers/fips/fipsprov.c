@@ -419,6 +419,7 @@ static const OSSL_ALGORITHM fips_macs_internal[] = {
     { NULL, NULL, NULL }
 };
 
+/* clang-format off */
 #define FIPS_KDFS_COMMON()                                                               \
     { PROV_NAMES_HKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_functions },               \
     { PROV_NAMES_HKDF_SHA256, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_sha256_functions }, \
@@ -427,6 +428,7 @@ static const OSSL_ALGORITHM fips_macs_internal[] = {
     { PROV_NAMES_TLS1_3_KDF, FIPS_DEFAULT_PROPERTIES,  ossl_kdf_tls1_3_kdf_functions },  \
     { PROV_NAMES_PBKDF2, FIPS_DEFAULT_PROPERTIES, ossl_kdf_pbkdf2_functions },           \
     { PROV_NAMES_TLS1_PRF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_tls1_prf_functions }
+/* clang-format on */
 
 /*
  * NOTE:
