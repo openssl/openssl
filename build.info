@@ -72,6 +72,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/kdfs/sskdf.inc \
          providers/implementations/kdfs/tls1_prf.inc \
          providers/implementations/kdfs/x942kdf.inc \
+         providers/implementations/kdfs/x963kdf.inc \
          providers/implementations/kem/ec_kem.inc \
          providers/implementations/kem/ecx_kem.inc \
          providers/implementations/kem/ml_kem_kem.inc \
@@ -192,6 +193,7 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/kdfs/sskdf.inc \
        providers/implementations/kdfs/tls1_prf.inc \
        providers/implementations/kdfs/x942kdf.inc \
+       providers/implementations/kdfs/x963kdf.inc \
        providers/implementations/kem/ec_kem.inc \
        providers/implementations/kem/ecx_kem.inc \
        providers/implementations/kem/ml_kem_kem.inc \
@@ -307,6 +309,8 @@ GENERATE[providers/implementations/kdfs/tls1_prf.inc]=\
     providers/implementations/kdfs/tls1_prf.inc.in
 GENERATE[providers/implementations/kdfs/x942kdf.inc]=\
     providers/implementations/kdfs/x942kdf.inc.in
+GENERATE[providers/implementations/kdfs/x963kdf.inc]=\
+    providers/implementations/kdfs/x963kdf.inc.in
 GENERATE[providers/implementations/kem/ec_kem.inc]=\
     providers/implementations/kem/ec_kem.inc.in
 GENERATE[providers/implementations/kem/ecx_kem.inc]=\

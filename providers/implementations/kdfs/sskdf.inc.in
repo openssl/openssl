@@ -27,16 +27,3 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                          (['OSSL_KDF_PARAM_SIZE',                    'size',   'size_t'],
                           ['OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',    'int', 'fips'],
                          )); -}
-
-{- produce_param_decoder('x963kdf_set_ctx_params',
-                         (['OSSL_KDF_PARAM_SECRET',            'secret', 'octet_string'],
-                          ['OSSL_KDF_PARAM_KEY',               'secret', 'octet_string'],
-                          ['OSSL_KDF_PARAM_INFO',              'info',   'octet_string', SSKDF_MAX_INFOS],
-                          ['OSSL_KDF_PARAM_PROPERTIES',        'propq',  'utf8_string'],
-                          ['OSSL_KDF_PARAM_DIGEST',            'digest', 'utf8_string'],
-                          ['OSSL_KDF_PARAM_MAC',               'mac',    'utf8_string'],
-                          ['OSSL_KDF_PARAM_SALT',              'salt',   'octet_string'],
-                          ['OSSL_KDF_PARAM_MAC_SIZE',          'size',   'size_t'],
-                          ['OSSL_KDF_PARAM_FIPS_DIGEST_CHECK', 'ind_d',  'int', 'fips'],
-                          ['OSSL_KDF_PARAM_FIPS_KEY_CHECK',    'ind_k',  'int', 'fips'],
-                         )); -}

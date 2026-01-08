@@ -65,7 +65,7 @@ sub run_rsa_tests {
     SKIP: {
          skip "Skipping PVK conversion test", 1
              if disabled($cmd) || $cmd eq 'pkey' || disabled("rc4")
-                || disabled ("legacy");
+                || disabled ("legacy") || disabled("pvkkdf");
 
          subtest "$cmd conversions -- private key" => sub {
              tconversion( -type => 'pvk', -prefix => "$cmd-pvk",

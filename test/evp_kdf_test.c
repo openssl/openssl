@@ -1208,6 +1208,7 @@ static int test_kdf_scrypt(void)
 }
 #endif /* OPENSSL_NO_SCRYPT */
 
+#ifndef OPENSSL_NO_SSKDF
 static int test_kdf_ss_hash(void)
 {
     int ret;
@@ -1244,7 +1245,9 @@ static int test_kdf_ss_hash(void)
     EVP_KDF_CTX_free(kctx);
     return ret;
 }
+#endif /* OPENSSL_NO_SSKDF */
 
+#ifndef OPENSSL_NO_X963KDF
 static int test_kdf_x963(void)
 {
     int ret;
@@ -1296,7 +1299,9 @@ static int test_kdf_x963(void)
     EVP_KDF_CTX_free(kctx);
     return ret;
 }
+#endif /* OPENSSL_NO_X963KDF */
 
+#ifndef OPENSSL_NO_KBKDF
 #if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_CAMELLIA)
 /*
  * KBKDF test vectors from RFC 6803 (Camellia Encryption for Kerberos 5)
@@ -2214,7 +2219,9 @@ static int test_kdf_kbkdf_kmac(void)
     EVP_KDF_CTX_free(kctx);
     return ret;
 }
+#endif /* OPENSSL_NO_KBKDF */
 
+#ifndef OPENSSL_NO_SSKDF
 static int test_kdf_ss_hmac(void)
 {
     int ret;
@@ -2305,7 +2312,9 @@ static int test_kdf_ss_kmac(void)
     EVP_KDF_CTX_free(kctx);
     return ret;
 }
+#endif /* OPENSSL_NO_SSKDF */
 
+#ifndef OPENSSL_NO_SSHKDF
 static int test_kdf_sshkdf(void)
 {
     int ret;
@@ -2361,6 +2370,7 @@ static int test_kdf_sshkdf(void)
     EVP_KDF_CTX_free(kctx);
     return ret;
 }
+#endif /* OPENSSL_NO_SSHKDF */
 
 static int test_kdfs_same(EVP_KDF *kdf1, EVP_KDF *kdf2)
 {
@@ -2413,7 +2423,7 @@ static int test_kdf_get_kdf(void)
     return ok;
 }
 
-#if !defined(OPENSSL_NO_CMS) && !defined(OPENSSL_NO_DES)
+#if !defined(OPENSSL_NO_CMS) && !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_X942KDF)
 static int test_kdf_x942_asn1(void)
 {
     int ret;
@@ -2449,6 +2459,7 @@ static int test_kdf_x942_asn1(void)
 }
 #endif /* OPENSSL_NO_CMS */
 
+#ifndef OPENSSL_NO_KRB5KDF
 static int test_kdf_krb5kdf(void)
 {
     int ret;
@@ -2482,7 +2493,9 @@ static int test_kdf_krb5kdf(void)
     EVP_KDF_CTX_free(kctx);
     return ret;
 }
+#endif /* OPENSSL_NO_KRB5KDF */
 
+#ifndef OPENSSL_NO_HMAC_DRBG_KDF
 static int test_kdf_hmac_drbg_settables(void)
 {
     int ret = 0, i = 0, j = 0;
@@ -2592,7 +2605,9 @@ err:
     EVP_KDF_CTX_free(kctx);
     return ret;
 }
+#endif /* OPENSSL_NO_HMAC_DRBG_KDF */
 
+#ifndef OPENSSL_NO_KBKDF
 /* Test that changing the KBKDF algorithm from KMAC to HMAC works correctly */
 static int test_kbkdf_mac_change(void)
 {
@@ -2650,12 +2665,14 @@ err:
     EVP_KDF_CTX_free(kctx);
     return ret;
 }
+#endif /* OPENSSL_NO_KBKDF */
 
 int setup_tests(void)
 {
     ADD_TEST(test_kdf_pbkdf1);
     ADD_TEST(test_kdf_pbkdf1_skey);
     ADD_TEST(test_kdf_pbkdf1_key_too_long);
+#ifndef OPENSSL_NO_KBKDF
 #if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_CAMELLIA)
     ADD_TEST(test_kdf_kbkdf_6803_128);
     ADD_TEST(test_kdf_kbkdf_6803_256);
@@ -2673,6 +2690,7 @@ int setup_tests(void)
 #endif
     if (fips_provider_version_ge(NULL, 3, 1, 0))
         ADD_TEST(test_kdf_kbkdf_kmac);
+#endif /* OPENSSL_NO_KBKDF */
     ADD_TEST(test_kdf_get_kdf);
     ADD_TEST(test_kdf_tls1_prf);
     ADD_TEST(test_kdf_tls1_prf_set_skey);
@@ -2709,17 +2727,29 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_SCRYPT
     ADD_TEST(test_kdf_scrypt);
 #endif
+#ifndef OPENSSL_NO_SSKDF
     ADD_TEST(test_kdf_ss_hash);
     ADD_TEST(test_kdf_ss_hmac);
     ADD_TEST(test_kdf_ss_kmac);
+#endif
+#ifndef OPENSSL_NO_SSHKDF
     ADD_TEST(test_kdf_sshkdf);
+#endif
+#ifndef OPENSSL_NO_X963KDF
     ADD_TEST(test_kdf_x963);
-#if !defined(OPENSSL_NO_CMS) && !defined(OPENSSL_NO_DES)
+#endif
+#if !defined(OPENSSL_NO_CMS) && !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_X942KDF)
     ADD_TEST(test_kdf_x942_asn1);
 #endif
+#ifndef OPENSSL_NO_KRB5KDF
     ADD_TEST(test_kdf_krb5kdf);
+#endif
+#ifndef OPENSSL_NO_HMAC_DRBG_KDF
     ADD_TEST(test_kdf_hmac_drbg_settables);
     ADD_TEST(test_kdf_hmac_drbg_gettables);
+#endif
+#ifndef OPENSSL_NO_KBKDF
     ADD_TEST(test_kbkdf_mac_change);
+#endif
     return 1;
 }

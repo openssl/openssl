@@ -112,6 +112,7 @@ providers/implementations/kdfs/sshkdf.inc
 providers/implementations/kdfs/sskdf.inc
 providers/implementations/kdfs/tls1_prf.inc
 providers/implementations/kdfs/x942kdf.inc
+providers/implementations/kdfs/x963kdf.inc
 providers/implementations/kem/ec_kem.inc
 providers/implementations/kem/ecx_kem.inc
 providers/implementations/kem/ml_kem_kem.inc

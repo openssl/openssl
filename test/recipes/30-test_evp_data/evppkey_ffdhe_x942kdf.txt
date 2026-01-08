@@ -1,0 +1,97 @@
+#
+# Copyright 2001-2025 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# Tests start with one of these keywords
+#       Cipher Decrypt Derive Digest Encoding KDF MAC PBE
+#       PrivPubKeyPair Sign Verify VerifyRecover
+# and continue until a blank line. Lines starting with a pound sign are ignored.
+
+
+# ffdhe2048-1 and ffdhe2048-2 were randomly generated and have a shared secret
+# less than 256 bytes in length (to test padding) other keys have no special
+# properties
+PrivateKey=ffdhe2048-1
+-----BEGIN PRIVATE KEY-----
+MIIBQwIBADCCARsGCSqGSIb3DQEDATCCAQwCggEBAP//////////rfhUWKK7Spqv
+3FYgJz088di5xYPOLTaVqeE2QRRkM/vMk53OJJs++X0v42NjDHXY9oGyAq7EYXrT
+3x7V1f1lYSQz9R9fBm7QhWNlVT3tGvO1VxNef1fJNZhPDHDg5ot34qaJ2vPv6HId
+8VihNq3nNTCsyk9IOnl6vAqxgrMk+2HRCKlLssjj+7lq2rdg1/RoHU9Co945TfSu
+Vu3nY3K7GQsHp8juCm1wngL84c334uzANATNKDQvYZFy/pzphYP/jk8SMu7ygYPD
+/jsbTG+tczu1/LwuwiAFxY7xg30Wg7LG80omwbLv+ohrQjhhKFyX//////////8C
+AQICAgDhBB8CHQGUa5iGUF9rGvDjv9PDFGIvtS9OIqbbi8rqm4b6
+-----END PRIVATE KEY-----
+
+PrivateKey=ffdhe2048-2
+-----BEGIN PRIVATE KEY-----
+MIIBQwIBADCCARsGCSqGSIb3DQEDATCCAQwCggEBAP//////////rfhUWKK7Spqv
+3FYgJz088di5xYPOLTaVqeE2QRRkM/vMk53OJJs++X0v42NjDHXY9oGyAq7EYXrT
+3x7V1f1lYSQz9R9fBm7QhWNlVT3tGvO1VxNef1fJNZhPDHDg5ot34qaJ2vPv6HId
+8VihNq3nNTCsyk9IOnl6vAqxgrMk+2HRCKlLssjj+7lq2rdg1/RoHU9Co945TfSu
+Vu3nY3K7GQsHp8juCm1wngL84c334uzANATNKDQvYZFy/pzphYP/jk8SMu7ygYPD
+/jsbTG+tczu1/LwuwiAFxY7xg30Wg7LG80omwbLv+ohrQjhhKFyX//////////8C
+AQICAgDhBB8CHQEYNZIth+/EaIgKK2gcxFutVjUTWYCaReyTKMvP
+-----END PRIVATE KEY-----
+
+PublicKey=ffdhe2048-1-pub
+-----BEGIN PUBLIC KEY-----
+MIICKTCCARsGCSqGSIb3DQEDATCCAQwCggEBAP//////////rfhUWKK7Spqv3FYg
+Jz088di5xYPOLTaVqeE2QRRkM/vMk53OJJs++X0v42NjDHXY9oGyAq7EYXrT3x7V
+1f1lYSQz9R9fBm7QhWNlVT3tGvO1VxNef1fJNZhPDHDg5ot34qaJ2vPv6HId8Vih
+Nq3nNTCsyk9IOnl6vAqxgrMk+2HRCKlLssjj+7lq2rdg1/RoHU9Co945TfSuVu3n
+Y3K7GQsHp8juCm1wngL84c334uzANATNKDQvYZFy/pzphYP/jk8SMu7ygYPD/jsb
+TG+tczu1/LwuwiAFxY7xg30Wg7LG80omwbLv+ohrQjhhKFyX//////////8CAQIC
+AgDhA4IBBgACggEBAOYRygvHGUKaIXLfUatc2YkYcm9Ew65H0hwpiDXG6XHAYAjJ
+bjKNJxdFRjjeCwtJEAGlyUtjSHrka6dHDfzkQfDK6u13Z+3Xmh+nCMZwPOHDNR3I
+Ep5vy3quU7suD3ADDrjwX3sVfsXensgh+JpexbrR+leHATf8aX1g8jQofFdi1Wn7
+CbE6VciU4b32L8HPwO1ePpJGib70Em45VurmUfCwNXgEUnu1N6LYRAjH9vnjB529
+C3BSp58rJnA2aslacC0CFY6YVCQfLTdN7y+F5QlGrdGd6wQmf3FXPLf9iYSiuLrm
+jW/WDFmPnwAn5A7TEgiNeNu8pwsSKPgZqdW+lyw=
+-----END PUBLIC KEY-----
+
+PublicKey=ffdhe2048-2-pub
+-----BEGIN PUBLIC KEY-----
+MIICKTCCARsGCSqGSIb3DQEDATCCAQwCggEBAP//////////rfhUWKK7Spqv3FYg
+Jz088di5xYPOLTaVqeE2QRRkM/vMk53OJJs++X0v42NjDHXY9oGyAq7EYXrT3x7V
+1f1lYSQz9R9fBm7QhWNlVT3tGvO1VxNef1fJNZhPDHDg5ot34qaJ2vPv6HId8Vih
+Nq3nNTCsyk9IOnl6vAqxgrMk+2HRCKlLssjj+7lq2rdg1/RoHU9Co945TfSuVu3n
+Y3K7GQsHp8juCm1wngL84c334uzANATNKDQvYZFy/pzphYP/jk8SMu7ygYPD/jsb
+TG+tczu1/LwuwiAFxY7xg30Wg7LG80omwbLv+ohrQjhhKFyX//////////8CAQIC
+AgDhA4IBBgACggEBAN5LAdrzTwa7nT7855NJQLNum5Yr1O8XZupjvwtVIrJgORvh
+L8VMKJoerEwOZ38snTsh9tuKnAWrmdIyFhnOjaHm40GlvInQGff5Lwb1itf7ib3U
+ELPOO29PajwY1RocWKX7Wfdj8n6Kd9gHhdoO5v8MyZMCkUU6Rz6y1VzaVwykdsqA
+kbMdZfK8Dkpd5PBZ8SJpJF02IEzvh5OYfjcbMN2K0lDO5ZvoMYQku7yXr6PfJebC
+CpoVOaoqH19n3g8Xni8IFi7znI83UqxKuYhyYCuMwtE+HS+9WkmkQ1coo512Gw2f
+TcY3pf9gGZ41xLFxCOdrUbR3QlieI+zl+TttLzM=
+-----END PUBLIC KEY-----
+
+PrivPubKeyPair=ffdhe2048-1:ffdhe2048-1-pub
+
+PrivPubKeyPair=ffdhe2048-2:ffdhe2048-2-pub
+
+# The following two testcases check that the padding is implicitly enabled
+# with X942KDF-ASN1 KDF.
+# The plain shared secret for these keys needs padding as seen above.
+Derive=ffdhe2048-1
+PeerKey=ffdhe2048-2-pub
+Ctrl = kdf-type:X942KDF-ASN1
+Ctrl = kdf-outlen:32
+Ctrl = kdf-digest:SHA-256
+Ctrl = cekalg:AES-128-WRAP
+Ctrl = dh_pad:1
+SharedSecret=89A249DF4EE9033B89C2B4E52072A736D94F51143A1ED5C8F1E91FCBEBE09654
+
+# FIPS(3.0.0): allows the padding to be set, later versions do not #17859
+FIPSversion = >3.0.0
+Derive=ffdhe2048-2
+PeerKey=ffdhe2048-1-pub
+Ctrl = kdf-type:X942KDF-ASN1
+Ctrl = kdf-outlen:32
+Ctrl = kdf-digest:SHA-256
+Ctrl = cekalg:AES-128-WRAP
+Ctrl = dh_pad:0
+SharedSecret=89A249DF4EE9033B89C2B4E52072A736D94F51143A1ED5C8F1E91FCBEBE09654

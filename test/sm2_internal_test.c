@@ -130,6 +130,7 @@ done:
     return group;
 }
 
+#ifndef OPENSSL_NO_X963KDF
 static int test_sm2_crypt(const EC_GROUP *group,
     const EVP_MD *digest,
     const char *privkey_hex,
@@ -294,6 +295,7 @@ done:
 
     return testresult;
 }
+#endif /* OPENSSL_NO_X963KDF */
 
 static int test_sm2_sign(const EC_GROUP *group,
     const char *userid,
@@ -463,7 +465,9 @@ int setup_tests(void)
     if (fake_rand == NULL)
         return 0;
 
+#ifndef OPENSSL_NO_X963KDF
     ADD_TEST(sm2_crypt_test);
+#endif
     ADD_TEST(sm2_sig_test);
 #endif
     return 1;
