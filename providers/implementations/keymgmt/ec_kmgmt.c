@@ -647,43 +647,12 @@ static int common_get_params(void *key, OSSL_PARAM params[], int sm2)
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
         && !OSSL_PARAM_set_int(p, EC_GROUP_order_bits(ecg)))
         goto err;
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_BITS)) != NULL) {
-        int ecbits, sec_bits;
-
-        ecbits = EC_GROUP_order_bits(ecg);
-
-        /*
-         * The following estimates are based on the values published
-         * in Table 2 of "NIST Special Publication 800-57 Part 1 Revision 4"
-         * at http://dx.doi.org/10.6028/NIST.SP.800-57pt1r4 .
-         *
-         * Note that the above reference explicitly categorizes algorithms in a
-         * discrete set of values {80, 112, 128, 192, 256}, and that it is
-         * relevant only for NIST approved Elliptic Curves, while OpenSSL
-         * applies the same logic also to other curves.
-         *
-         * Classifications produced by other standardazing bodies might differ,
-         * so the results provided for "bits of security" by this provider are
-         * to be considered merely indicative, and it is the users'
-         * responsibility to compare these values against the normative
-         * references that may be relevant for their intent and purposes.
-         */
-        if (ecbits >= 512)
-            sec_bits = 256;
-        else if (ecbits >= 384)
-            sec_bits = 192;
-        else if (ecbits >= 256)
-            sec_bits = 128;
-        else if (ecbits >= 224)
-            sec_bits = 112;
-        else if (ecbits >= 160)
-            sec_bits = 80;
-        else
-            sec_bits = ecbits / 2;
-
-        if (!OSSL_PARAM_set_int(p, sec_bits))
-            goto err;
-    }
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_EC_FIELD_DEGREE)) != NULL
+        && !OSSL_PARAM_set_int(p, EC_GROUP_get_degree(ecg)))
+        goto err;
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_BITS)) != NULL
+        && !OSSL_PARAM_set_int(p, EC_GROUP_security_bits(ecg)))
+        goto err;
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_CATEGORY)) != NULL)
         if (!OSSL_PARAM_set_int(p, 0))
             goto err;
@@ -768,6 +737,7 @@ static int ec_get_params(void *key, OSSL_PARAM params[])
 
 static const OSSL_PARAM ec_known_gettable_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_EC_FIELD_DEGREE, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_CATEGORY, NULL),
@@ -844,6 +814,7 @@ static int sm2_get_params(void *key, OSSL_PARAM params[])
 
 static const OSSL_PARAM sm2_known_gettable_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_EC_FIELD_DEGREE, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
     OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_DEFAULT_DIGEST, NULL, 0),
