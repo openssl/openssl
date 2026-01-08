@@ -11,6 +11,7 @@ use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file srctop_dir bldtop_dir/;
 use OpenSSL::Test::Utils;
 use File::Temp qw(tempfile);
 use TLSProxy::Proxy;
+use TLSProxy::Message;
 use checkhandshake qw(checkhandshake @handmessages @extensions);
 
 my $test_name = "test_tls13certcomp";
@@ -220,7 +221,7 @@ $proxy->clear();
 $proxy->serverflags("-no_tx_cert_comp -no_rx_cert_comp");
 # One final skip check
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 8;
+plan tests => 9;
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
                | checkhandshake::CERT_COMP_CLI_EXTENSION,
@@ -296,3 +297,42 @@ $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS,
                "Send but not accept compressed certificates");
+
+#Test 9: Excessive uncompressed certificate length in CompressedCertificate
+$proxy->clear();
+$proxy->filter(\&excessive_uncompressed_len_filter);
+$proxy->serverflags("-cert_comp");
+$proxy->start();
+ok(is_alert_message(TLSProxy::Message::AL_DESC_BAD_CERTIFICATE),
+   "Excessive uncompressed certificate length rejected");
+
+my $done = 0;
+
+sub excessive_uncompressed_len_filter
+{
+    my $proxy = shift;
+
+    return if $done;
+
+    foreach my $m (@{$proxy->message_list}) {
+        next unless $m->mt == TLSProxy::Message::MT_COMPRESSED_CERTIFICATE;
+
+        my $data = $m->data;
+        # RFC8879 CompressedCertificate:
+        # uint16 algorithm; uint24 uncompressed_length; ...
+        substr($data, 2, 3) = "\xFF\xFF\xFF";   # uncompressed_length
+        $m->data($data);
+        $m->repack();
+        $done = 1;
+        last;
+    }
+}
+
+# Test if the last message was a failure and matches the expected type.
+sub is_alert_message
+{
+    my $alert_type = shift;
+    return 0 unless TLSProxy::Message->fail();
+    return 1 if TLSProxy::Message->alert->description() == $alert_type;
+    return 0;
+}
