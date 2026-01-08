@@ -32,6 +32,11 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Added configure options to disable KDF algorithms for
+   hmac-drbg-kdf, kbkdf, krb5kdf, pvkkdf, snmpkdf, sskdf, sshkdf, x942kdf and x963kdf.
+
+   *Shane Lontis*
+
  * Remove support for an SSLv2 Client Hello. When a client wanted to support
    both SSLv2 and higher versions like SSLv3 or even TLSv1, it needed to
    send an SSLv2 Client Hello. SSLv2 support itself was removed in version

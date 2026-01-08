@@ -830,7 +830,7 @@ static int test_protected_via_legacy_PEM(const char *type, EVP_PKEY *key)
         dump_pem, 0);
 }
 
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_PVKKDF)
 static int test_protected_via_PVK(const char *type, EVP_PKEY *key)
 {
     int ret = 0;
@@ -1019,7 +1019,7 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
     }
 #define ADD_TEST_SUITE_UNPROTECTED_PVK(KEYTYPE) \
     ADD_TEST(test_unprotected_##KEYTYPE##_via_PVK)
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_PVKKDF)
 #define IMPLEMENT_TEST_SUITE_PROTECTED_PVK(KEYTYPE, KEYTYPEstr)   \
     static int test_protected_##KEYTYPE##_via_PVK(void)           \
     {                                                             \
@@ -1048,7 +1048,7 @@ IMPLEMENT_TEST_SUITE_PARAMS(DSA, "DSA")
 IMPLEMENT_TEST_SUITE_LEGACY(DSA, "DSA")
 IMPLEMENT_TEST_SUITE_MSBLOB(DSA, "DSA")
 IMPLEMENT_TEST_SUITE_UNPROTECTED_PVK(DSA, "DSA")
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_PVKKDF)
 IMPLEMENT_TEST_SUITE_PROTECTED_PVK(DSA, "DSA")
 #endif
 #endif
@@ -1139,7 +1139,7 @@ IMPLEMENT_TEST_SUITE(RSA_PSS, "RSA-PSS", 1)
  */
 IMPLEMENT_TEST_SUITE_MSBLOB(RSA, "RSA")
 IMPLEMENT_TEST_SUITE_UNPROTECTED_PVK(RSA, "RSA")
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_PVKKDF)
 IMPLEMENT_TEST_SUITE_PROTECTED_PVK(RSA, "RSA")
 #endif
 
@@ -1602,7 +1602,7 @@ int setup_tests(void)
         ADD_TEST_SUITE_LEGACY(DSA);
         ADD_TEST_SUITE_MSBLOB(DSA);
         ADD_TEST_SUITE_UNPROTECTED_PVK(DSA);
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_PVKKDF)
         ADD_TEST_SUITE_PROTECTED_PVK(DSA);
 #endif
 #endif
@@ -1654,7 +1654,7 @@ int setup_tests(void)
          */
         ADD_TEST_SUITE_MSBLOB(RSA);
         ADD_TEST_SUITE_UNPROTECTED_PVK(RSA);
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_PVKKDF)
         ADD_TEST_SUITE_PROTECTED_PVK(RSA);
 #endif
 

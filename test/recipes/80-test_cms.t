@@ -44,6 +44,8 @@ my $provname = 'default';
 my $dsaallow = '1';
 my $no_pqc = 0;
 my $no_hkdf_fixed = 0;
+my $no_x963kdf = disabled("x963kdf");
+my $no_x942kdf = disabled("x942kdf");
 
 my $datadir = srctop_dir("test", "recipes", "80-test_cms_data");
 my $smdir    = srctop_dir("test", "smime-certs");
@@ -694,7 +696,7 @@ my @smime_cms_param_tests = (
     ]
 );
 
-if ($no_fips || $old_fips) {
+if (!$no_x942kdf && ($no_fips || $old_fips)) {
     # Only SHA1 supported in dh_cms_encrypt()
     push(@smime_cms_param_tests,
 
@@ -1005,7 +1007,7 @@ subtest "CMS Decrypt message encrypted with OpenSSL 1.1.1\n" => sub {
 
     SKIP: {
         skip "EC or DES isn't supported in this build", 1
-            if disabled("ec") || disabled("des");
+            if disabled("ec") || disabled("des") || disabled("x963kdf");
 
         my $out = "smtst.txt";
 
@@ -1283,8 +1285,8 @@ with({ exit_checker => sub { return shift == 4; } },
 sub check_availability {
     my $tnam = shift;
 
-    return "$tnam: skipped, EC disabled\n"
-        if ($no_ec && $tnam =~ /ECDH/);
+    return "$tnam: skipped, X963KDF disabled\n"
+        if ($no_x963kdf && $tnam =~ /ECDH/);
     return "$tnam: skipped, ECDH disabled\n"
         if ($no_ec && $tnam =~ /ECDH/);
     return "$tnam: skipped, EC2M disabled\n"

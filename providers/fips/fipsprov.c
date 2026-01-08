@@ -424,36 +424,71 @@ static const OSSL_ALGORITHM fips_macs_internal[] = {
     { NULL, NULL, NULL }
 };
 
-#define FIPS_KDFS_COMMON()                                                                   \
-    { PROV_NAMES_HKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_functions },                   \
-        { PROV_NAMES_HKDF_SHA256, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_sha256_functions }, \
-        { PROV_NAMES_HKDF_SHA384, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_sha384_functions }, \
-        { PROV_NAMES_HKDF_SHA512, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_sha512_functions }, \
-        { PROV_NAMES_TLS1_3_KDF, FIPS_DEFAULT_PROPERTIES,                                    \
-            ossl_kdf_tls1_3_kdf_functions },                                                 \
-        { PROV_NAMES_SSKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_sskdf_functions },             \
-        { PROV_NAMES_PBKDF2, FIPS_DEFAULT_PROPERTIES, ossl_kdf_pbkdf2_functions },           \
-        { PROV_NAMES_SNMPKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_snmpkdf_functions },         \
-        { PROV_NAMES_SSHKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_sshkdf_functions },           \
-        { PROV_NAMES_X963KDF, FIPS_DEFAULT_PROPERTIES,                                       \
-            ossl_kdf_x963_kdf_functions },                                                   \
-        { PROV_NAMES_X942KDF_ASN1, FIPS_DEFAULT_PROPERTIES,                                  \
-            ossl_kdf_x942_kdf_functions },                                                   \
-        { PROV_NAMES_TLS1_PRF, FIPS_DEFAULT_PROPERTIES,                                      \
-            ossl_kdf_tls1_prf_functions },                                                   \
-    {                                                                                        \
-        PROV_NAMES_KBKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_kbkdf_functions                  \
-    }
+/* clang-format off */
+#define FIPS_KDFS_COMMON()                                                               \
+    { PROV_NAMES_HKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_functions },               \
+    { PROV_NAMES_HKDF_SHA256, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_sha256_functions }, \
+    { PROV_NAMES_HKDF_SHA384, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_sha384_functions }, \
+    { PROV_NAMES_HKDF_SHA512, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_sha512_functions }, \
+    { PROV_NAMES_TLS1_3_KDF, FIPS_DEFAULT_PROPERTIES,  ossl_kdf_tls1_3_kdf_functions },  \
+    { PROV_NAMES_PBKDF2, FIPS_DEFAULT_PROPERTIES, ossl_kdf_pbkdf2_functions },           \
+    { PROV_NAMES_TLS1_PRF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_tls1_prf_functions }
+/* clang-format on */
 
+/*
+ * NOTE:
+ *  Any algorithms added to this table need to be copied to fips_kdfs_internal[].
+ */
 static const OSSL_ALGORITHM fips_kdfs[] = {
     FIPS_KDFS_COMMON(),
+#ifndef OPENSSL_NO_SSKDF
+    { PROV_NAMES_SSKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_sskdf_functions },
+#endif
+#ifndef OPENSSL_NO_SNMPKDF
+    { PROV_NAMES_SNMPKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_snmpkdf_functions },
+#endif
+#ifndef OPENSSL_NO_SSHKDF
+    { PROV_NAMES_SSHKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_sshkdf_functions },
+#endif
+#ifndef OPENSSL_NO_KBKDF
+    { PROV_NAMES_KBKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_kbkdf_functions },
+#endif
+#ifndef OPENSSL_NO_X942KDF
+    { PROV_NAMES_X942KDF_ASN1, FIPS_DEFAULT_PROPERTIES,
+        ossl_kdf_x942_kdf_functions },
+#endif
+#ifndef OPENSSL_NO_X963KDF
+    { PROV_NAMES_X963KDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_x963_kdf_functions },
+#endif
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM fips_kdfs_internal[] = {
     FIPS_KDFS_COMMON(),
+#ifndef OPENSSL_NO_SSKDF
+    { PROV_NAMES_SSKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_sskdf_functions },
+#endif
+#ifndef OPENSSL_NO_SNMPKDF
+    { PROV_NAMES_SNMPKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_snmpkdf_functions },
+#endif
+#ifndef OPENSSL_NO_SSHKDF
+    { PROV_NAMES_SSHKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_sshkdf_functions },
+#endif
+#ifndef OPENSSL_NO_KBKDF
+    { PROV_NAMES_KBKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_kbkdf_functions },
+#endif
+#ifndef OPENSSL_NO_X942KDF
+    { PROV_NAMES_X942KDF_ASN1, FIPS_DEFAULT_PROPERTIES,
+        ossl_kdf_x942_kdf_functions },
+#endif
+#ifndef OPENSSL_NO_X963KDF
+    { PROV_NAMES_X963KDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_x963_kdf_functions },
+#endif
+
+#ifndef OPENSSL_NO_HMAC_DRBG_KDF
     /* For deterministic ECDSA */
     { PROV_NAMES_HMAC_DRBG_KDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hmac_drbg_functions },
+#endif
     { NULL, NULL, NULL }
 };
 

@@ -366,21 +366,37 @@ static const OSSL_ALGORITHM deflt_kdfs[] = {
     { PROV_NAMES_HKDF_SHA512, "provider=default", ossl_kdf_hkdf_sha512_functions },
     { PROV_NAMES_TLS1_3_KDF, "provider=default",
         ossl_kdf_tls1_3_kdf_functions },
-    { PROV_NAMES_SSKDF, "provider=default", ossl_kdf_sskdf_functions },
+    { PROV_NAMES_TLS1_PRF, "provider=default", ossl_kdf_tls1_prf_functions },
     { PROV_NAMES_PBKDF2, "provider=default", ossl_kdf_pbkdf2_functions },
     { PROV_NAMES_PKCS12KDF, "provider=default", ossl_kdf_pkcs12_functions },
+#ifndef OPENSSL_NO_SSKDF
+    { PROV_NAMES_SSKDF, "provider=default", ossl_kdf_sskdf_functions },
+#endif
+#ifndef OPENSSL_NO_SNMPKDF
     { PROV_NAMES_SNMPKDF, "provider=default", ossl_kdf_snmpkdf_functions },
+#endif
+#ifndef OPENSSL_NO_SSHKDF
     { PROV_NAMES_SSHKDF, "provider=default", ossl_kdf_sshkdf_functions },
+#endif
+#ifndef OPENSSL_NO_X963KDF
     { PROV_NAMES_X963KDF, "provider=default", ossl_kdf_x963_kdf_functions },
-    { PROV_NAMES_TLS1_PRF, "provider=default", ossl_kdf_tls1_prf_functions },
+#endif
+#ifndef OPENSSL_NO_KBKDF
     { PROV_NAMES_KBKDF, "provider=default", ossl_kdf_kbkdf_functions },
+#endif
+#ifndef OPENSSL_NO_X942KDF
     { PROV_NAMES_X942KDF_ASN1, "provider=default", ossl_kdf_x942_kdf_functions },
+#endif
 #ifndef OPENSSL_NO_SCRYPT
     { PROV_NAMES_SCRYPT, "provider=default", ossl_kdf_scrypt_functions },
 #endif
+#ifndef OPENSSL_NO_KRB5KDF
     { PROV_NAMES_KRB5KDF, "provider=default", ossl_kdf_krb5kdf_functions },
+#endif
+#ifndef OPENSSL_NO_HMAC_DRBG_KDF
     { PROV_NAMES_HMAC_DRBG_KDF, "provider=default",
         ossl_kdf_hmac_drbg_functions },
+#endif
 #ifndef OPENSSL_NO_ARGON2
     { PROV_NAMES_ARGON2I, "provider=default", ossl_kdf_argon2i_functions },
     { PROV_NAMES_ARGON2D, "provider=default", ossl_kdf_argon2d_functions },
