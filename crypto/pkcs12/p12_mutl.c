@@ -122,8 +122,6 @@ static int PBMAC1_PBKDF2_HMAC(OSSL_LIB_CTX *ctx, const char *propq,
         ERR_raise(ERR_LIB_PKCS12, ERR_R_UNSUPPORTED);
         goto err;
     }
-    keylen = ASN1_INTEGER_get(pbkdf2_param->keylength);
-    pbkdf2_salt = pbkdf2_param->salt->value.octet_string;
 
     if (pbkdf2_param->prf == NULL) {
         kdf_hmac_nid = NID_hmacWithSHA1;
@@ -135,6 +133,22 @@ static int PBMAC1_PBKDF2_HMAC(OSSL_LIB_CTX *ctx, const char *propq,
     kdf_md = EVP_MD_fetch(ctx, OBJ_nid2sn(ossl_hmac2mdnid(kdf_hmac_nid)), propq);
     if (kdf_md == NULL) {
         ERR_raise(ERR_LIB_PKCS12, ERR_R_FETCH_FAILED);
+        goto err;
+    }
+
+    /* Validate salt is an OCTET STRING choice */
+    if (pbkdf2_param->salt == NULL
+        || pbkdf2_param->salt->type != V_ASN1_OCTET_STRING) {
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_PARSE_ERROR);
+        goto err;
+    }
+    pbkdf2_salt = pbkdf2_param->salt->value.octet_string;
+
+    /* RFC 9579 specifies missing key length as invalid */
+    if (pbkdf2_param->keylength != NULL)
+        keylen = ASN1_INTEGER_get(pbkdf2_param->keylength);
+    if (keylen <= 0 || keylen > EVP_MAX_MD_SIZE) {
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_PARSE_ERROR);
         goto err;
     }
 
