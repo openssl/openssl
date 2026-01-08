@@ -185,12 +185,12 @@ static int genb64(char *prefix, char *suffix, unsigned const char *buf,
 
 static int test_bio_base64_run(test_case *t, int llen, int wscnt)
 {
-    unsigned char *raw;
-    unsigned char *out;
+    unsigned char *raw = NULL;
+    unsigned char *out = NULL;
     unsigned out_len;
     char *encoded = NULL;
     int elen;
-    BIO *bio, *b64;
+    BIO *bio = NULL, *b64 = NULL;
     int n, n1, n2;
     int ret;
 
@@ -211,19 +211,17 @@ static int test_bio_base64_run(test_case *t, int llen, int wscnt)
     out_len = t->bytes + 1024;
     out = OPENSSL_malloc(out_len);
     if (out == NULL) {
-        OPENSSL_free(raw);
         TEST_error("out of memory");
-        return -1;
+        ret = -1;
+        goto end;
     }
 
     elen = genb64(t->prefix, t->suffix, raw, t->bytes, t->trunc, t->encoded,
                   llen, wscnt, &encoded);
     if (elen < 0 || (bio = BIO_new(BIO_s_mem())) == NULL) {
-        OPENSSL_free(raw);
-        OPENSSL_free(out);
-        OPENSSL_free(encoded);
         TEST_error("out of memory");
-        return -1;
+        ret = -1;
+        goto end;
     }
     if (t->retry)
         BIO_set_mem_eof_return(bio, EOF_RETURN);
@@ -241,14 +239,9 @@ static int test_bio_base64_run(test_case *t, int llen, int wscnt)
     if (n1 > 0)
         BIO_write(bio, encoded, n1);
 
-    b64 = BIO_new(BIO_f_base64());
-    if (b64 == NULL) {
-        BIO_free(bio);
-        OPENSSL_free(raw);
-        OPENSSL_free(out);
-        OPENSSL_free(encoded);
-        TEST_error("out of memory");
-        return -1;
+    if (!TEST_ptr(b64 = BIO_new(BIO_f_base64()))) {
+        ret = -1;
+        goto end;
     }
     if (t->no_nl)
         BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
@@ -307,11 +300,12 @@ static int test_bio_base64_run(test_case *t, int llen, int wscnt)
         ret = -1;
     }
 
-    BIO_free_all(b64);
-    OPENSSL_free(out);
+end:
+    BIO_free(bio);
+    BIO_free(b64);
     OPENSSL_free(raw);
+    OPENSSL_free(out);
     OPENSSL_free(encoded);
-
     return ret;
 }
 
