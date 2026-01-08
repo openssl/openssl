@@ -1302,7 +1302,7 @@ static int test_kdf_x963(void)
 #endif /* OPENSSL_NO_X963KDF */
 
 #ifndef OPENSSL_NO_KBKDF
-# if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_CAMELLIA)
+#if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_CAMELLIA)
 /*
  * KBKDF test vectors from RFC 6803 (Camellia Encryption for Kerberos 5)
  * section 10.
@@ -1558,7 +1558,7 @@ static int test_kdf_kbkdf_6803_256(void)
 
     return ret;
 }
-# endif
+#endif
 
 static OSSL_PARAM *construct_kbkdf_params(char *digest, char *mac, unsigned char *key,
     size_t keylen, char *salt, char *info, int *r)
@@ -1928,7 +1928,7 @@ static int test_kdf_kbkdf_8009_prf2(void)
     return ret;
 }
 
-# if !defined(OPENSSL_NO_CMAC)
+#if !defined(OPENSSL_NO_CMAC)
 /*
  * Test vector taken from
  * https://csrc.nist.gov/CSRC/media/Projects/
@@ -2066,7 +2066,7 @@ static int test_kdf_kbkdf_fixedinfo(void)
     EVP_KDF_CTX_free(kctx);
     return ret;
 }
-# endif /* OPENSSL_NO_CMAC */
+#endif /* OPENSSL_NO_CMAC */
 
 static int test_kdf_kbkdf_kmac(void)
 {
@@ -2673,10 +2673,10 @@ int setup_tests(void)
     ADD_TEST(test_kdf_pbkdf1_skey);
     ADD_TEST(test_kdf_pbkdf1_key_too_long);
 #ifndef OPENSSL_NO_KBKDF
-# if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_CAMELLIA)
+#if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_CAMELLIA)
     ADD_TEST(test_kdf_kbkdf_6803_128);
     ADD_TEST(test_kdf_kbkdf_6803_256);
-# endif
+#endif
     ADD_TEST(test_kdf_kbkdf_invalid_digest);
     ADD_TEST(test_kdf_kbkdf_invalid_mac);
     ADD_TEST(test_kdf_kbkdf_invalid_r);
@@ -2685,9 +2685,9 @@ int setup_tests(void)
     ADD_TEST(test_kdf_kbkdf_1byte_key);
     ADD_TEST(test_kdf_kbkdf_8009_prf1);
     ADD_TEST(test_kdf_kbkdf_8009_prf2);
-# if !defined(OPENSSL_NO_CMAC)
+#if !defined(OPENSSL_NO_CMAC)
     ADD_TEST(test_kdf_kbkdf_fixedinfo);
-# endif
+#endif
     if (fips_provider_version_ge(NULL, 3, 1, 0))
         ADD_TEST(test_kdf_kbkdf_kmac);
 #endif /* OPENSSL_NO_KBKDF */
