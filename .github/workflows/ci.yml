@@ -85,13 +85,13 @@ jobs:
         with:
           persist-credentials: false
       - name: install tools
-        run: sudo apt-get -y install bear clang-tidy
+        run: sudo apt-get -y install bear clang-tidy-19
       - name: config
         run: CC=clang ./config --strict-warnings --banner=Configured enable-demos enable-h3demo enable-fips enable-lms enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-weak-ssl-ciphers enable-trace && perl configdata.pm --dump
       - name: make
         run: bear -- make -s -j4
       - name: clang-tidy check
-        run: clang-tidy --allow-no-checks $(find apps/ crypto/ demos/ fuzz/ providers/ ssl/ test/ -type f -name '*.c') -p .
+        run: clang-tidy-19 --allow-no-checks $(find apps/ crypto/ demos/ fuzz/ providers/ ssl/ test/ -type f -name '*.c') -p .
 
   basic_gcc:
     runs-on: ubuntu-latest
