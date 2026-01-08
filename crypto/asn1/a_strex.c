@@ -422,7 +422,7 @@ static int do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n,
 {
     int i, prev = -1, orflags, cnt;
     int fn_opt, fn_nid;
-    ASN1_OBJECT *fn;
+    const ASN1_OBJECT *fn;
     const ASN1_STRING *val;
     const X509_NAME_ENTRY *ent;
     char objtmp[80];

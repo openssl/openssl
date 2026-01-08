@@ -432,13 +432,16 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
         return 0;
     }
     /* Find the subject name */
-    nm = ctx->subject_cert != NULL ? X509_get_subject_name(ctx->subject_cert) : X509_REQ_get_subject_name(ctx->subject_req);
+    /* XXX Casts away const */
+    nm = (X509_NAME *)(ctx->subject_cert != NULL ? X509_get_subject_name(ctx->subject_cert)
+                                                 : X509_REQ_get_subject_name(ctx->subject_req));
 
     /* Now add any email address(es) to STACK */
     while ((i = X509_NAME_get_index_by_NID(nm,
                 NID_pkcs9_emailAddress, i))
         >= 0) {
-        ne = X509_NAME_get_entry(nm, i);
+        /* XXX Casts away const */
+        ne = (X509_NAME_ENTRY *)X509_NAME_get_entry(nm, i);
         email = ASN1_STRING_dup(X509_NAME_ENTRY_get_data(ne));
         if (move_p) {
             X509_NAME_delete_entry(nm, i);
