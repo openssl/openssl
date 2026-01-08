@@ -85,6 +85,10 @@ OpenSSL 4.0
 
    *David von Oheimb*
 
+* `X509_ALGOR_set_md()` now returns a value indicating success or failure.
+
+   *David von Oheimb*
+
  * Added `-hmac-env` and `-hmac-stdin` options to openssl-dgst.
 
    *Igor Ustinov*
