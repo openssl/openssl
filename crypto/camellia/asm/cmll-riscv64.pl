@@ -94,15 +94,10 @@ sub Camellia_Feistel {
     and                     $p2, $p2, $CONST
     and                     $p3, $p3, $CONST
 
-    slli                    $p0, $p0, 2               # offset_t0_0_4Byte
-    slli                    $p1, $p1, 2               # offset_t0_1_4Byte
-    slli                    $p2, $p2, 2               # offset_t0_2_4Byte
-    slli                    $p3, $p3, 2               # offset_t0_3_4Byte
-
-    add                     $p0, $TBL_1, $p0          # SBOX4_4404 TBL_1
-    add                     $p1, $TBL_3, $p1          # SBOX3_3033 TBL_3
-    add                     $p2, $TBL_2, $p2          # SBOX2_0222 TBL_2
-    add                     $p3, $TBL_0, $p3          # SBOX1_1110 TBL_0
+    sh2add                  $p0, $p0, $TBL_1         # offset_t0_0_4Byte + SBOX4_4404 TBL_1
+    sh2add                  $p1, $p1, $TBL_3         # offset_t0_1_4Byte + SBOX3_3033 TBL_3
+    sh2add                  $p2, $p2, $TBL_2         # offset_t0_2_4Byte + SBOX2_0222 TBL_2
+    sh2add                  $p3, $p3, $TBL_0         # offset_t0_3_4Byte + SBOX1_1110 TBL_0
 
     lwu                     $T_3, 0($p0)
     lwu                     $tmp1, 0($p1)
@@ -121,15 +116,10 @@ sub Camellia_Feistel {
     and                     $p2, $p2, $CONST
     and                     $p3, $p3, $CONST
 
-    slli                    $p0, $p0, 2                # offset_t0_4Byte
-    slli                    $p1, $p1, 2                # offset_t1_4Byte
-    slli                    $p2, $p2, 2                # offset_t2_4Byte
-    slli                    $p3, $p3, 2                # offset_t3_4Byte
-
-    add                     $p0, $TBL_0, $p0           # SBOX1_1110 TBL_0
-    add                     $p1, $TBL_1, $p1           # SBOX4_4404 TBL_1
-    add                     $p2, $TBL_3, $p2           # SBOX3_3033 TBL_3
-    add                     $p3, $TBL_2, $p3           # SBOX2_0222 TBL_2
+    sh2add                  $p0, $p0, $TBL_0          # offset_t0_4Byte + SBOX1_1110 TBL_0
+    sh2add                  $p1, $p1, $TBL_1          # offset_t1_4Byte + SBOX4_4404 TBL_1
+    sh2add                  $p2, $p2, $TBL_3          # offset_t2_4Byte + SBOX3_3033 TBL_3
+    sh2add                  $p3, $p3, $TBL_2          # offset_t3_4Byte + SBOX2_0222 TBL_2
 
     lwu                     $T_2, 0($p0)
     lwu                     $tmp1, 0($p1)
