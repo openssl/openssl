@@ -56,7 +56,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => $no_fips ? 47 : 53;
+plan tests => $no_fips ? 53 : 59;
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -235,8 +235,12 @@ unless ($no_fips) {
     }
 }
 
-# Test pbmac1 pkcs12 bad files, RFC 9579
-for my $file ("pbmac1_256_256.bad-iter.p12", "pbmac1_256_256.bad-salt.p12", "pbmac1_256_256.no-len.p12")
+# Test pbmac1 pkcs12 bad files, RFC 9579 and CVE-2025-11187
+for my $file ("pbmac1_256_256.bad-iter.p12", "pbmac1_256_256.bad-salt.p12",
+              "pbmac1_256_256.no-len.p12", "pbmac1_256_256.bad-len.p12",
+              "pbmac1_256_256.bad-salt-type.p12", "pbmac1_256_256.negative-len.p12",
+              "pbmac1_256_256.no-salt.p12", "pbmac1_256_256.very-big-len.p12",
+              "pbmac1_256_256.zero-len.p12")
 {
     my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
     with({ exit_checker => sub { return shift == 1; } },
