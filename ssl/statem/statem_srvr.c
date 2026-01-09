@@ -87,6 +87,10 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
                 return 1;
             }
             break;
+            /*
+             * RFC 9147 Section 5.6 states DTLS1.3 should omit the
+             * End of Early Data Message
+             */
         } else if (s->ext.early_data == SSL_EARLY_DATA_ACCEPTED
             && !SSL_NO_EOED(s)) {
             if (mt == SSL3_MT_END_OF_EARLY_DATA) {
@@ -94,6 +98,11 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
                 return 1;
             }
             break;
+        } else if (SSL_CONNECTION_IS_DTLS13(s) && s->ext.early_data == SSL_EARLY_DATA_ACCEPTED) {
+            /*
+             * Let DTLS1.3 fallthrough to the Finished processing below
+             */
+            s->early_data_state = SSL_EARLY_DATA_FINISHED_READING;
         }
         /* Fall through */
 
@@ -1067,7 +1076,7 @@ WORK_STATE ossl_statem_server_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
          * In QUIC with 0-RTT we just carry on when otherwise we would stop
          * to allow the server to read early data
          */
-        if (SSL_NO_EOED(s) && s->ext.early_data == SSL_EARLY_DATA_ACCEPTED
+        if (SSL_IS_QUIC_HANDSHAKE(s) && s->ext.early_data == SSL_EARLY_DATA_ACCEPTED
             && s->early_data_state != SSL_EARLY_DATA_FINISHED_READING) {
             s->early_data_state = SSL_EARLY_DATA_FINISHED_READING;
             if (!ssl->method->ssl3_enc->change_cipher_state(s, SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_READ)) {
