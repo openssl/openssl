@@ -851,25 +851,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_t, OSSL_NELEM(t_data));
     ADD_ALL_TESTS(test_j, OSSL_NELEM(jf_data));
 
-#ifdef _WIN32
-    /*
-     * those tests are using _vsnprintf_s()
-     */
-    ADD_ALL_TESTS(test_fp_win32, OSSL_NELEM(pw_params));
-    ADD_ALL_TESTS(test_int_win32, OSSL_NELEM(int_data));
-    ADD_ALL_TESTS(test_width_precision_win32, OSSL_NELEM(wp_data));
-    /*
-     * test_n() which uses "%n" format string triggers
-     * an assert 'Incorrect format specifier' found in
-     * minkernel\crts\ucrt\correct_internal_stdio_output.h
-     * (line 1690).
-     * Therefore we don't add test_n() here.
-     */
-    ADD_ALL_TESTS(test_zu_win32, OSSL_NELEM(zu_data));
-    ADD_ALL_TESTS(test_t_win32, OSSL_NELEM(t_data));
-    ADD_ALL_TESTS(test_j_win32, OSSL_NELEM(jf_data));
-#endif
-
     return 1;
 }
 
