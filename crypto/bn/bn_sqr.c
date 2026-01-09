@@ -50,14 +50,14 @@ int bn_sqr_fixed_top(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
         goto err;
 
     if (al == 4) {
-#ifndef BN_SQR_COMBA
+#ifdef OPENSSL_SMALL_FOOTPRINT
         BN_ULONG t[8];
         bn_sqr_normal(rr->d, a->d, 4, t);
 #else
         bn_sqr_comba4(rr->d, a->d);
 #endif
     } else if (al == 8) {
-#ifndef BN_SQR_COMBA
+#ifdef OPENSSL_SMALL_FOOTPRINT
         BN_ULONG t[16];
         bn_sqr_normal(rr->d, a->d, 8, t);
 #else
@@ -160,14 +160,14 @@ void bn_sqr_recursive(BN_ULONG *r, const BN_ULONG *a, int n2, BN_ULONG *t)
     BN_ULONG ln, lo, *p;
 
     if (n2 == 4) {
-#ifndef BN_SQR_COMBA
+#ifdef OPENSSL_SMALL_FOOTPRINT
         bn_sqr_normal(r, a, 4, t);
 #else
         bn_sqr_comba4(r, a);
 #endif
         return;
     } else if (n2 == 8) {
-#ifndef BN_SQR_COMBA
+#ifdef OPENSSL_SMALL_FOOTPRINT
         bn_sqr_normal(r, a, 8, t);
 #else
         bn_sqr_comba8(r, a);
