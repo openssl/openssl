@@ -905,6 +905,7 @@ int pkcs12_main(int argc, char **argv)
                 goto end;
             badpass = OPENSSL_uni2utf8(utmp, utmplen);
             if (badpass == NULL) {
+                BIO_printf(bio_err, "Error: Unicode to UTF-8 conversion failed\n");
                 OPENSSL_free(utmp);
                 goto end;
             }
