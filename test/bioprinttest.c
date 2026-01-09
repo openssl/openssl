@@ -134,8 +134,6 @@ static const char *const fpexpected[][11][5] = {
     },
 };
 
-static int (*test_BIO_snprintf)(char *, size_t, const char *, ...) = BIO_snprintf;
-
 enum arg_type {
     AT_NONE = 0,
     AT_CHAR,
@@ -278,7 +276,7 @@ static int test_int(int i)
     switch (data->type) {
 #define DO_PRINT(field_)                                                    \
     do {                                                                    \
-        bio_ret = test_BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, \
+        bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format,      \
             data->value.field_);                                            \
     } while (0)
     case AT_CHAR:
@@ -314,19 +312,6 @@ static int test_int(int i)
 
     return 1;
 }
-
-#ifdef _WIN32
-static int test_int_win32(int i)
-{
-    int ret;
-
-    test_BIO_snprintf = ossl_BIO_snprintf_msvc;
-    ret = test_int(i);
-    test_BIO_snprintf = BIO_snprintf;
-
-    return ret;
-}
-#endif
 
 union ptrint {
     uintptr_t i;
@@ -432,18 +417,18 @@ static int test_width_precision(int i)
 
     switch (data->num_args) {
     case 2:
-        bio_ret = test_BIO_snprintf(bio_buf, sizeof(bio_buf), data->format,
+        bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format,
             data->arg1, data->arg2, data->value.i);
         break;
 
     case 1:
-        bio_ret = test_BIO_snprintf(bio_buf, sizeof(bio_buf), data->format,
+        bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format,
             data->arg1, data->value.i);
         break;
 
     case 0:
     default:
-        bio_ret = test_BIO_snprintf(bio_buf, sizeof(bio_buf), data->format,
+        bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format,
             data->value.i);
     }
 
@@ -459,19 +444,6 @@ static int test_width_precision(int i)
 
     return 1;
 }
-
-#ifdef _WIN32
-static int test_width_precision_win32(int i)
-{
-    int ret;
-
-    test_BIO_snprintf = ossl_BIO_snprintf_msvc;
-    ret = test_width_precision(i);
-    test_BIO_snprintf = BIO_snprintf;
-
-    return ret;
-}
-#endif
 
 static const struct n_data {
     const char *format;
@@ -605,13 +577,13 @@ static int test_n(int i)
 #define DO_PRINT(field_)                                                        \
     do {                                                                        \
         if (data->arg1_type == AT_NONE) {                                       \
-            bio_ret = test_BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, \
+            bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, \
                 &n.field_);                                                     \
         } else if (data->arg2_type == AT_NONE) {                                \
-            bio_ret = test_BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, \
+            bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, \
                 data->arg1.i, &n.field_);                                       \
         } else {                                                                \
-            bio_ret = test_BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, \
+            bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, \
                 data->arg1.i, data->arg2.i, &n.field_);                         \
         }                                                                       \
     } while (0)
@@ -683,26 +655,13 @@ static int test_zu(int i)
 
     memset(bio_buf, '@', sizeof(bio_buf));
 
-    bio_ret = test_BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value);
+    bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value);
     if (!TEST_str_eq(bio_buf, data->expected)
         + !TEST_int_eq(bio_ret, exp_ret))
         return 0;
 
     return 1;
 }
-
-#ifdef _WIN32
-static int test_zu_win32(int i)
-{
-    int ret;
-
-    test_BIO_snprintf = ossl_BIO_snprintf_msvc;
-    ret = test_zu(i);
-    test_BIO_snprintf = BIO_snprintf;
-
-    return ret;
-}
-#endif
 
 static const struct t_data {
     size_t value;
@@ -726,26 +685,13 @@ static int test_t(int i)
 
     memset(bio_buf, '@', sizeof(bio_buf));
 
-    bio_ret = test_BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value);
+    bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value);
     if (!TEST_str_eq(bio_buf, data->expected)
         + !TEST_int_eq(bio_ret, exp_ret))
         return 0;
 
     return 1;
 }
-
-#ifdef _WIN32
-static int test_t_win32(int i)
-{
-    int ret;
-
-    test_BIO_snprintf = ossl_BIO_snprintf_msvc;
-    ret = test_t(i);
-    test_BIO_snprintf = BIO_snprintf;
-
-    return ret;
-}
-#endif
 
 typedef struct j_data_st {
     uint64_t value;
@@ -773,26 +719,13 @@ static int test_j(int i)
 
     memset(bio_buf, '@', sizeof(bio_buf));
 
-    bio_ret = test_BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value);
+    bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, data->value);
     if (!TEST_str_eq(bio_buf, data->expected)
         + !TEST_int_eq(bio_ret, exp_ret))
         return 0;
 
     return 1;
 }
-
-#ifdef _WIN32
-static int test_j_win32(int i)
-{
-    int ret;
-
-    test_BIO_snprintf = ossl_BIO_snprintf_msvc;
-    ret = test_j(i);
-    test_BIO_snprintf = BIO_snprintf;
-
-    return ret;
-}
-#endif
 
 /* Precision and width. */
 typedef struct pw_st {
@@ -826,13 +759,13 @@ static int dofptest(int test, int sub, double val, const char *width, int prec)
         memset(result, '@', sizeof(result));
 
         if (prec >= 0)
-            test_BIO_snprintf(format, sizeof(format), "%%%s.%d%s", width, prec,
+            BIO_snprintf(format, sizeof(format), "%%%s.%d%s", width, prec,
                 fspec);
         else
-            test_BIO_snprintf(format, sizeof(format), "%%%s%s", width, fspec);
+            BIO_snprintf(format, sizeof(format), "%%%s%s", width, fspec);
 
         exp_ret = (int)strlen(fpexpected[test][sub][i]);
-        bio_ret = test_BIO_snprintf(result, sizeof(result), format, val);
+        bio_ret = BIO_snprintf(result, sizeof(result), format, val);
 
         if (justprint) {
             if (i == 0)
@@ -876,19 +809,6 @@ static int test_fp(int i)
         printf("    },\n");
     return r;
 }
-
-#ifdef _WIN32
-static int test_fp_win32(int i)
-{
-    int ret;
-
-    test_BIO_snprintf = ossl_BIO_snprintf_msvc;
-    ret = test_fp(i);
-    test_BIO_snprintf = BIO_snprintf;
-
-    return ret;
-}
-#endif
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,

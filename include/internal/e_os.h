@@ -83,49 +83,25 @@
 #endif
 
 #ifdef WINDOWS
-#if !defined(_WIN32_WCE) && !defined(_WIN32_WINNT)
 /*
- * Defining _WIN32_WINNT here in e_os.h implies certain "discipline."
- * Most notably we ought to check for availability of each specific
- * routine that was introduced after denoted _WIN32_WINNT with
- * GetProcAddress(). Normally newer functions are masked with higher
- * _WIN32_WINNT in SDK headers. So that if you wish to use them in
- * some module, you'd need to override _WIN32_WINNT definition in
- * the target module in order to "reach for" prototypes, but replace
- * calls to new functions with indirect calls. Alternatively it
- * might be possible to achieve the goal by /DELAYLOAD-ing .DLLs
- * and check for current OS version instead.
+ * _WIN32_WINNT constants are described here:
+ * https://learn.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt?view=msvc-170
+ * The currently chosen number matches Windows 10
  */
-#define _WIN32_WINNT 0x0501
-#endif
+#define _WIN32_WINNT 0x0A00
 #include <windows.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <errno.h>
-#if defined(_WIN32_WCE) && !defined(EACCES)
+#if !defined(EACCES)
 #define EACCES 13
 #endif
 #include <string.h>
 #include <malloc.h>
-#if defined(_MSC_VER) && !defined(_WIN32_WCE) && !defined(_DLL) && defined(stdin)
-#if _MSC_VER >= 1300 && _MSC_VER < 1600
-#undef stdin
-#undef stdout
-#undef stderr
-FILE *__iob_func(void);
-#define stdin (&__iob_func()[0])
-#define stdout (&__iob_func()[1])
-#define stderr (&__iob_func()[2])
-#endif
-#endif
 #endif
 
 #include <io.h>
 #include <fcntl.h>
-
-#ifdef OPENSSL_SYS_WINCE
-#define OPENSSL_NO_POSIX_IO
-#endif
 
 #define EXIT(n) exit(n)
 #define LIST_SEPARATOR_CHAR ';'
@@ -135,19 +111,15 @@ FILE *__iob_func(void);
 #ifndef R_OK
 #define R_OK 4
 #endif
-#ifdef OPENSSL_SYS_WINCE
-#define DEFAULT_HOME ""
-#else
 #define DEFAULT_HOME "C:"
-#endif
 
 /* Avoid Visual Studio 13 GetVersion deprecated problems */
 #if defined(_MSC_VER) && _MSC_VER >= 1800
 #define check_winnt() (1)
 #define check_win_minplat(x) (1)
 #else
-#define check_winnt() (GetVersion() < 0x80000000)
-#define check_win_minplat(x) (LOBYTE(LOWORD(GetVersion())) >= (x))
+#define check_winnt() (0)
+#define check_win_minplat(x) (0)
 #endif
 
 #else /* The non-microsoft world */
@@ -219,7 +191,7 @@ FILE *__iob_func(void);
 /***********************************************/
 
 #if defined(OPENSSL_SYS_WINDOWS)
-#if defined(_MSC_VER) && (_MSC_VER >= 1310) && !defined(_WIN32_WCE)
+#if defined(_MSC_VER) && (_MSC_VER >= 1310)
 #define open _open
 #define fdopen _fdopen
 #define close _close

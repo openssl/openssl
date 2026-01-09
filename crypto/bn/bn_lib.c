@@ -89,15 +89,6 @@ const BIGNUM *BN_value_one(void)
     return &const_one;
 }
 
-/*
- * Old Visual Studio ARM compiler miscompiles BN_num_bits_word()
- * https://mta.openssl.org/pipermail/openssl-users/2018-August/008465.html
- */
-#if defined(_MSC_VER) && defined(_ARM_) && defined(_WIN32_WCE) \
-    && _MSC_VER >= 1400 && _MSC_VER < 1501
-#define MS_BROKEN_BN_num_bits_word
-#pragma optimize("", off)
-#endif
 int BN_num_bits_word(BN_ULONG l)
 {
     BN_ULONG x, mask;
