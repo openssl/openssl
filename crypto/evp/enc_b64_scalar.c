@@ -134,7 +134,7 @@ int evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     int srp = (ctx != NULL
         && (ctx->flags & EVP_ENCODE_CTX_USE_SRP_ALPHABET) != 0);
     int wrap_cnt_by_input = *wrap_cnt / 4 * 3;
-    const int ctx_length = (ctx != NULL) ? ctx->length : 0;
+    const int ctx_length = (ctx != NULL) ? EVP_ENCODE_B64_LENGTH : 0;
 
     if (srp) {
         e0 = base64_srp_bin2ascii_0;
@@ -168,11 +168,11 @@ int evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
         int wrap_cnt_nm3 = 0;
         while (i + 2 < dlen) {
             if (ctx != NULL) {
-                if ((wrap_cnt_nm3 < ctx->length
-                        && (wrap_cnt_nm3 + 3 + wrap_cnt_by_input) > ctx->length)
+                if ((wrap_cnt_nm3 < EVP_ENCODE_B64_LENGTH
+                        && (wrap_cnt_nm3 + 3 + wrap_cnt_by_input) > EVP_ENCODE_B64_LENGTH)
                     && ((ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) == 0)) {
 
-                    switch (ctx->length % 3) {
+                    switch (EVP_ENCODE_B64_LENGTH % 3) {
                     case 0:
                         break;
                     case 1:
@@ -228,7 +228,9 @@ int evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
             ret += 4;
 
             if (ctx != NULL) {
-                if ((i + 3 + wrap_cnt_by_input) % ctx->length == 0 && ((ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) == 0) && ctx->length % 3 == 0) {
+                if ((i + 3 + wrap_cnt_by_input) % EVP_ENCODE_B64_LENGTH == 0
+                    && ((ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) == 0)
+                    && EVP_ENCODE_B64_LENGTH % 3 == 0) {
                     *(t++) = '\n';
                     ret++;
                 }
@@ -249,7 +251,9 @@ int evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
         ret += 4;
 
         if (ctx != NULL) {
-            if ((i + 1 + wrap_cnt_by_input) % ctx->length == 0 && ((ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) == 0) && ctx->length % 3 == 0) {
+            if ((i + 1 + wrap_cnt_by_input) % EVP_ENCODE_B64_LENGTH == 0
+                && ((ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) == 0)
+                && EVP_ENCODE_B64_LENGTH % 3 == 0) {
                 *(t++) = '\n';
                 ret++;
             }
@@ -266,7 +270,9 @@ int evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
         ret += 4;
 
         if (ctx != NULL) {
-            if ((i + 2 + wrap_cnt_by_input) % ctx->length == 0 && ((ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) == 0) && ctx->length % 3 == 0) {
+            if ((i + 2 + wrap_cnt_by_input) % EVP_ENCODE_B64_LENGTH == 0
+                && ((ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) == 0)
+                && EVP_ENCODE_B64_LENGTH % 3 == 0) {
                 *(t++) = '\n';
                 ret++;
             }
