@@ -73,8 +73,41 @@ The most crucial input to certificate validation is a I<trust store>,
 which includes a collection of certificates and validation options.
 This is akin to what is used in the trust stores of Mozilla Firefox,
 or Apple's and Microsoft's certificate stores, ...
-By default all self-signed certificates in the trust store
+By default all supposedly self-signed certificates in the trust store
 are considered to be trust anchors, for all or for specified purposes.
+
+For efficiency reasons, the self-signed status of certificates is
+not verified cryptographically. Instead, an approximate heuristic is applied.
+A certificate is supposedly self-signed
+if and only if all of the following conditions are met:
+
+=over 4
+
+=item *
+
+it is self-issued, i.e., its C<subject> and C<issuer> fields are equal,
+
+=item *
+
+the algorithm identifiers of its public key and signature match,
+
+=item *
+
+if it has an authorityKeyIdentifier (AKID) extension containing the C<keyIdentifier> field,
+its value matches the subjectKeyIdentifier (SKID) extension if present,
+
+=item *
+
+if it has an AKID containing the C<authorityCertSerialNumber> field,
+its value equals the serial number of the certificate, and
+
+=item *
+
+if it has an AKID containing the C<authorityCertIssuer> field
+and its C<GeneralNames> include at least one C<directoryName>,
+the first such name equals the C<issuer> field of the certificate.
+
+=back
 
 Independent of any extended key usage (EKU) X.509v3 extension included,
 from the OpenSSL perspective a trust anchor certificate should be augmented
@@ -114,7 +147,7 @@ It has a positive trust attribute accepting
 the EKU associated with the intended purpose
 or it does not have any positive trust attribute
 and one of the following compatibility conditions apply:
-It is self-signed or the B<-partial_chain> option is given
+It is supposedly self-signed or the B<-partial_chain> option is given
 (which corresponds to the B<X509_V_FLAG_PARTIAL_CHAIN> flag being set).
 
 =back
@@ -144,7 +177,7 @@ the subjectKeyIdentifier and authorityKeyIdentifier extensions are very useful.
 The subject alternative names (SAN) and issuer alternative names given in
 subjectAltName or issuerAltName extensions are not relevant for chain building.
 
-Once a self-signed certificate has been added, chain construction stops.
+Once a supposedly self-signed certificate has been added, chain construction stops.
 In this case it must fully match a trust anchor, otherwise chain building fails.
 
 A candidate issuer certificate matches a subject certificate
@@ -204,7 +237,7 @@ in the L</Certificate Extensions> section below.
 The third step is to check the trust settings on the last certificate or
 trust anchor, which typically is given as a self-signed root CA certificate.
 If specified, it must be trusted for the given use.
-For compatibility, a self-signed certificate
+For compatibility, a (supposedly) self-signed certificate
 with no trust attributes is considered to be valid for all uses.
 
 The fourth, and final, step is to check the validity of the certificate chain.
@@ -355,7 +388,7 @@ must not be marked critical.
 =item *
 
 The authorityKeyIdentifier must be given for X.509v3 certs unless they
-are self-signed.
+are supposedly self-signed.
 
 =item *
 
@@ -452,7 +485,7 @@ Since B<-trusted_first> is always on, this option has no effect.
 
 Parse I<file> as a set of one or more certificates.
 Each of them qualifies as trusted if has a suitable positive trust attribute
-or it is self-signed or the B<-partial_chain> option is specified.
+or it is supposedly self-signed or the B<-partial_chain> option is specified.
 This option implies the B<-no-CAfile>, B<-no-CApath>, and B<-no-CAstore> options
 and it cannot be used with the B<-CAfile>, B<-CApath> or B<-CAstore> options, so
 only certificates specified using the B<-trusted> option are trust anchors.
