@@ -32,6 +32,9 @@ plan skip_all => "$test_name needs TLSv1.3 enabled"
 plan skip_all => "$test_name needs EC enabled"
     if disabled("ec");
 
+plan skip_all => "$test_name needs ECX enabled"
+    if disabled("ecx");
+
 @handmessages = (
     [TLSProxy::Message::MT_CLIENT_HELLO,
         checkhandshake::ALL_HANDSHAKES],
@@ -199,8 +202,6 @@ SKIP: {
 }
 
 SKIP: {
-    skip "TODO(DTLSv1.3): When enabling sessionfile and dtls TLSProxy hangs after"
-        ." the handshake.", $testcount;
     skip "DTLS 1.3 is disabled", $testcount if disabled("dtls1_3");
     skip "DTLSProxy does not work on Windows", $testcount if $^O =~ /^(MSWin32)$/;
     run_tests(1);
@@ -238,8 +239,8 @@ sub run_tests
 
     #Test 1: First get a session
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -sess_out " . $session);
-    $proxy->serverflags("-no_rx_cert_comp -servername localhost");
+    $proxy->clientflags("-curves P-256:P-384:X25519:X448 -no_rx_cert_comp -sess_out " . $session);
+    $proxy->serverflags("-curves P-256:P-384:X25519:X448 -no_rx_cert_comp -servername localhost");
     $proxy->sessionfile($session);
     $proxy_start_success = $proxy->start();
     skip "TLSProxy did not start correctly", $testcount if $proxy_start_success == 0;
@@ -249,7 +250,8 @@ sub run_tests
     #        MUST abort handshake with pre_shared key and no psk_kex_modes)
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -sess_in " . $session);
+    $proxy->clientflags("-curves P-256:P-384:X25519:X448 -no_rx_cert_comp -sess_in " . $session);
+    $proxy->serverflags("-curves P-256:P-384:X25519:X448");
     $testtype = DELETE_EXTENSION;
     $proxy->filter(\&modify_kex_modes_filter);
     $proxy->start();
@@ -259,7 +261,8 @@ sub run_tests
     #        extension is invalid)
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -sess_in " . $session);
+    $proxy->clientflags("-curves P-256:P-384:X25519:X448 -no_rx_cert_comp -sess_in " . $session);
+    $proxy->serverflags("-curves P-256:P-384:X25519:X448");
     $testtype = EMPTY_EXTENSION;
     $proxy->start();
     ok(TLSProxy::Message->fail(), "Resume with empty kex modes");
@@ -268,8 +271,8 @@ sub run_tests
     #        key_share
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -allow_no_dhe_kex -sess_in " . $session);
-    $proxy->serverflags("-no_rx_cert_comp -allow_no_dhe_kex");
+    $proxy->clientflags("-curves P-256:P-384:X25519:X448 -no_rx_cert_comp -allow_no_dhe_kex -sess_in " . $session);
+    $proxy->serverflags("-curves P-256:P-384:X25519:X448 -no_rx_cert_comp -allow_no_dhe_kex");
     $testtype = NON_DHE_KEX_MODE_ONLY;
     $proxy->start();
     checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
@@ -282,7 +285,8 @@ sub run_tests
     #Test 5: Attempt a resume with dhe kex mode only. Should resume with a key_share
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -sess_in " . $session);
+    $proxy->clientflags("-curves P-256:P-384:X25519:X448 -no_rx_cert_comp -sess_in " . $session);
+    $proxy->serverflags("-curves P-256:P-384:X25519:X448");
     $testtype = DHE_KEX_MODE_ONLY;
     $proxy->start();
     checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
@@ -297,7 +301,8 @@ sub run_tests
     #        but rather fall back to full handshake
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -sess_in " . $session);
+    $proxy->clientflags("-curves P-256:P-384:X25519:X448 -no_rx_cert_comp -sess_in " . $session);
+    $proxy->serverflags("-curves P-256:P-384:X25519:X448");
     $testtype = UNKNOWN_KEX_MODES;
     $proxy->start();
     checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
@@ -311,8 +316,8 @@ sub run_tests
     #        a key_share, even though non-dhe is allowed, but not explicitly preferred.
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -allow_no_dhe_kex -sess_in " . $session);
-    $proxy->serverflags("-allow_no_dhe_kex");
+    $proxy->clientflags("-curves P-256:P-384:X25519:X448 -no_rx_cert_comp -allow_no_dhe_kex -sess_in " . $session);
+    $proxy->serverflags("-curves P-256:P-384:X25519:X448 -allow_no_dhe_kex");
     $testtype = BOTH_KEX_MODES;
     $proxy->start();
     checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
@@ -327,8 +332,8 @@ sub run_tests
     #        preference for non-dhe. Should resume without a key_share.
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -allow_no_dhe_kex -sess_in " . $session);
-    $proxy->serverflags("-allow_no_dhe_kex -prefer_no_dhe_kex");
+    $proxy->clientflags("-curves P-256:P-384:X25519:X448 -no_rx_cert_comp -allow_no_dhe_kex -sess_in " . $session);
+    $proxy->serverflags("-curves P-256:P-384:X25519:X448 -allow_no_dhe_kex -prefer_no_dhe_kex");
     $testtype = BOTH_KEX_MODES;
     $proxy->start();
     checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
@@ -342,8 +347,8 @@ sub run_tests
     #        preference for non-dhe, but non-dhe not allowed. Should resume with a key_share.
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -allow_no_dhe_kex -sess_in " . $session);
-    $proxy->serverflags("-prefer_no_dhe_kex");
+    $proxy->clientflags("-curves P-256:P-384:X25519:X448 -no_rx_cert_comp -allow_no_dhe_kex -sess_in " . $session);
+    $proxy->serverflags("-curves P-256:P-384:X25519:X448 -prefer_no_dhe_kex");
     $testtype = BOTH_KEX_MODES;
     $proxy->start();
     checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
@@ -358,7 +363,7 @@ sub run_tests
     #        initial key_share. Should resume with a key_share following an HRR
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -sess_in " . $session);
+    $proxy->clientflags("-curves P-256:P-384:X25519:X448 -no_rx_cert_comp -sess_in " . $session);
     $proxy->serverflags("-no_rx_cert_comp -curves P-384");
     $testtype = BOTH_KEX_MODES;
     $proxy->start();
@@ -375,7 +380,7 @@ sub run_tests
     #        key_share. Should resume with a key_share following an HRR
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -sess_in " . $session);
+    $proxy->clientflags("-curves P-256:P-384:X25519:X448 -no_rx_cert_comp -sess_in " . $session);
     $proxy->serverflags("-no_rx_cert_comp -curves P-384");
     $testtype = DHE_KEX_MODE_ONLY;
     $proxy->start();
