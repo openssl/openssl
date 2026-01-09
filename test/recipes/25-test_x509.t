@@ -17,7 +17,7 @@ use File::Compare qw/compare_text/;
 
 setup("test_x509");
 
-plan tests => 150;
+plan tests => 158;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -622,6 +622,90 @@ ok(run(app(["openssl", "x509", "-req", "-text",
 && ++$today{strftime("%Y-%m-%d", gmtime)}
 && (grep { defined $today{$_} } get_not_before_date($b_cert))
 && get_not_after_date($b_cert) eq $enddate);
+
+# Tests for -not_before with -days (Issue #29363 fix)
+# When both explicit start date and days are specified,
+# expiry should be calculated from start date, not current time
+
+# Test 1: Basic case - explicit start date with days offset
+ok(run(app(["openssl", "x509", "-req", "-text",
+            "-key", $b_key,
+            "-not_before", "20231001000000Z",
+            "-days", "365",
+            "-in", $b_csr, "-out", $b_cert]))
+&& get_not_before($b_cert) =~ /Oct  1 00:00:00 2023 GMT/
+&& get_not_after($b_cert) =~ /Sep 30 00:00:00 2024 GMT/,
+   "explicit start date with -days calculates from start date");
+
+# Test 2: Short duration - verify calculation across month boundary
+ok(run(app(["openssl", "x509", "-req", "-text",
+            "-key", $b_key,
+            "-not_before", "20230228000000Z",
+            "-days", "31",
+            "-in", $b_csr, "-out", $b_cert]))
+&& get_not_before($b_cert) =~ /Feb 28 00:00:00 2023 GMT/
+&& get_not_after($b_cert) =~ /Mar 31 00:00:00 2023 GMT/,
+   "explicit start date with -days across month boundary");
+
+# Test 3: Leap year - verify calculation includes Feb 29
+ok(run(app(["openssl", "x509", "-req", "-text",
+            "-key", $b_key,
+            "-not_before", "20240101000000Z",
+            "-days", "365",
+            "-in", $b_csr, "-out", $b_cert]))
+&& get_not_before($b_cert) =~ /Jan  1 00:00:00 2024 GMT/
+&& get_not_after($b_cert) =~ /Dec 31 00:00:00 2024 GMT/,
+   "explicit start date with -days in leap year");
+
+# Test 4: Longer duration - multi-year certificate
+ok(run(app(["openssl", "x509", "-req", "-text",
+            "-key", $b_key,
+            "-not_before", "20200101000000Z",
+            "-days", "1826",
+            "-in", $b_csr, "-out", $b_cert]))
+&& get_not_before($b_cert) =~ /Jan  1 00:00:00 2020 GMT/
+&& get_not_after($b_cert) =~ /Dec 31 00:00:00 2024 GMT/,
+   "explicit start date with long -days duration");
+
+# Test 5: Single day - should set notAfter = notBefore + 1 day
+ok(run(app(["openssl", "x509", "-req", "-text",
+            "-key", $b_key,
+            "-not_before", "20230101000000Z",
+            "-days", "1",
+            "-in", $b_csr, "-out", $b_cert]))
+&& get_not_before($b_cert) =~ /Jan  1 00:00:00 2023 GMT/
+&& get_not_after($b_cert) =~ /Jan  2 00:00:00 2023 GMT/,
+   "explicit start date with -days 1");
+
+# Test 6: GeneralizedTime format (YYYYMMDDHHMMSSZ) instead of UTCTime
+ok(run(app(["openssl", "x509", "-req", "-text",
+            "-key", $b_key,
+            "-not_before", "20500101000000Z",
+            "-days", "365",
+            "-in", $b_csr, "-out", $b_cert]))
+&& get_not_before($b_cert) =~ /Jan  1 00:00:00 2050 GMT/
+&& get_not_after($b_cert) =~ /Jan  1 00:00:00 2051 GMT/,
+   "explicit start date (GeneralizedTime) with -days");
+
+# Test 7: Verify old behavior still works (days without explicit start)
+ok(run(app(["openssl", "x509", "-req", "-text",
+            "-key", $b_key,
+            "-days", "100",
+            "-in", $b_csr, "-out", $b_cert]))
+&& get_not_before($b_cert) =~ /\w+\s+\d+\s+\d+:\d+:\d+\s+20(2[0-9]|3[0-9])\s+GMT/
+&& get_not_after($b_cert) =~ /\w+\s+\d+\s+\d+:\d+:\d+\s+20(2[0-9]|3[0-9])\s+GMT/,
+   "days without explicit start date uses current time");
+
+# Test 8: Ensure explicit end date still takes precedence over -days
+ok(run(app(["openssl", "x509", "-req", "-text",
+            "-key", $b_key,
+            "-not_before", "20231001000000Z",
+            "-not_after", "20231231000000Z",
+            "-days", "999",
+            "-in", $b_csr, "-out", $b_cert]))
+&& get_not_before($b_cert) =~ /Oct  1 00:00:00 2023 GMT/
+&& get_not_after($b_cert) =~ /Dec 31 00:00:00 2023 GMT/,
+   "explicit end date takes precedence over -days");
 
 SKIP: {
     skip "EC is not supported by this OpenSSL build", 1
