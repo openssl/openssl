@@ -32,7 +32,14 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
- * Removed configure options can now only be disabled. You may continue to use
+ * Fixed TLS 1.3 ClientHello extension validation to enforce RFC 8446
+   requirements. The server now properly validates mutual dependencies
+   between key_share, supported_groups, and psk_key_exchange_modes
+   extensions as required by RFC 8446 Sections 4.2.9 and 9.2.
+
+   *Jeffrey Kintscher*
+
+* Removed configure options can now only be disabled. You may continue to use
    `disable-<feature>`, which will remain supported. Using `enable-<feature>`
    for a removed feature is no longer permitted.
 
