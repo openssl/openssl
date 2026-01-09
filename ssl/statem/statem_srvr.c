@@ -98,9 +98,9 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
                 return 1;
             }
             break;
-        } else if (SSL_CONNECTION_IS_DTLS13(s)) {
+        } else if (SSL_CONNECTION_IS_DTLS13(s) && s->ext.early_data == SSL_EARLY_DATA_ACCEPTED) {
             /*
-             * Let DTLS1.3 failthrough to the Finished processing below
+             * Let DTLS1.3 fallthrough to the Finished processing below
              */
             s->early_data_state = SSL_EARLY_DATA_FINISHED_READING;
         }

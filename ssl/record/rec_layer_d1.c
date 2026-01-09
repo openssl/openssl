@@ -204,8 +204,8 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
     void (*cb)(const SSL *ssl, int type2, int val) = NULL;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
     int is_dtls13;
-    uint16_t curr_epoch = 0;
-    int in_early_data = 0;
+    uint16_t curr_epoch;
+    int in_early_data;
 
     if (sc == NULL)
         return -1;
