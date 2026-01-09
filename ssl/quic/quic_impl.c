@@ -5132,6 +5132,8 @@ const SSL_CIPHER *ossl_quic_get_cipher_by_char(const unsigned char *p)
 {
     const SSL_CIPHER *ciph = ssl3_get_cipher_by_char(p);
 
+    if (ciph == NULL)
+        return NULL;
     if ((ciph->algorithm2 & SSL_QUIC) == 0)
         return NULL;
 
