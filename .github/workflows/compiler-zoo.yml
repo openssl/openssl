@@ -49,7 +49,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        clang: [clang-11, clang-12, clang-13, clang-14, clang-15, clang-16, clang-17, clang-18, clang-19, clang-20]
+        clang: [clang-11, clang-12, clang-13, clang-14, clang-15, clang-16, clang-17, clang-18, clang-19, clang-20, clang-21]
     runs-on: ubuntu-22.04
     steps:
     - name: install packages
