@@ -383,6 +383,15 @@ ECH key pairs. By default, servers will only attempt decryption using
 an ECH key pair that matches the config_id in the ECH extension value
 received.
 
+Note that a server that has loaded many ECH configurations and that enables ECH
+trial decryption will attempt decryption with every ECH key when presented with
+a GREASEd ECH, and with possibly that many even when presented with a real ECH.
+That could easily become an accidental denial of service.
+
+If trial decryption is enabled then decryption will be attempted with the ECH
+configurations in the order they were loaded. So, were it possible to load the
+configuration most likely to be used first, that would improve efficiency.
+
 =item SSL_OP_ECH_GREASE_RETRY_CONFIG
 
 If set, servers will add GREASEy ECHConfig values to those sent to the
