@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -96,7 +96,7 @@ int X509_set1_notBefore(X509 *x, const ASN1_TIME *tm)
     if (x == NULL || tm == NULL)
         return 0;
     return ossl_x509_set1_time(&x->cert_info.enc.modified,
-                               &x->cert_info.validity.notBefore, tm);
+        &x->cert_info.validity.notBefore, tm);
 }
 
 int X509_set1_notAfter(X509 *x, const ASN1_TIME *tm)
@@ -104,7 +104,7 @@ int X509_set1_notAfter(X509 *x, const ASN1_TIME *tm)
     if (x == NULL || tm == NULL)
         return 0;
     return ossl_x509_set1_time(&x->cert_info.enc.modified,
-                               &x->cert_info.validity.notAfter, tm);
+        &x->cert_info.validity.notAfter, tm);
 }
 
 int X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
@@ -159,7 +159,7 @@ int X509_get_signature_type(const X509 *x)
     return EVP_PKEY_type(OBJ_obj2nid(x->sig_alg.algorithm));
 }
 
-X509_PUBKEY *X509_get_X509_PUBKEY(const X509 *x)
+const X509_PUBKEY *X509_get_X509_PUBKEY(const X509 *x)
 {
     return x->cert_info.key;
 }
@@ -170,7 +170,7 @@ const STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x)
 }
 
 void X509_get0_uids(const X509 *x, const ASN1_BIT_STRING **piuid,
-                    const ASN1_BIT_STRING **psuid)
+    const ASN1_BIT_STRING **psuid)
 {
     if (piuid != NULL)
         *piuid = x->cert_info.issuerUID;
@@ -184,7 +184,7 @@ const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x)
 }
 
 int X509_SIG_INFO_get(const X509_SIG_INFO *siginf, int *mdnid, int *pknid,
-                      int *secbits, uint32_t *flags)
+    int *secbits, uint32_t *flags)
 {
     if (mdnid != NULL)
         *mdnid = siginf->mdnid;
@@ -198,7 +198,7 @@ int X509_SIG_INFO_get(const X509_SIG_INFO *siginf, int *mdnid, int *pknid,
 }
 
 void X509_SIG_INFO_set(X509_SIG_INFO *siginf, int mdnid, int pknid,
-                       int secbits, uint32_t flags)
+    int secbits, uint32_t flags)
 {
     siginf->mdnid = mdnid;
     siginf->pknid = pknid;
@@ -207,7 +207,7 @@ void X509_SIG_INFO_set(X509_SIG_INFO *siginf, int mdnid, int pknid,
 }
 
 int X509_get_signature_info(X509 *x, int *mdnid, int *pknid, int *secbits,
-                            uint32_t *flags)
+    uint32_t *flags)
 {
     X509_check_purpose(x, -1, -1);
     return X509_SIG_INFO_get(&x->siginf, mdnid, pknid, secbits, flags);
@@ -215,7 +215,7 @@ int X509_get_signature_info(X509 *x, int *mdnid, int *pknid, int *secbits,
 
 /* Modify *siginf according to alg and sig. Return 1 on success, else 0. */
 static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
-                              const ASN1_STRING *sig, const EVP_PKEY *pubkey)
+    const ASN1_STRING *sig, const EVP_PKEY *pubkey)
 {
     int pknid, mdnid, md_size;
     const EVP_MD *md;
@@ -226,7 +226,7 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     siginf->secbits = -1;
     siginf->flags = 0;
     if (!OBJ_find_sigid_algs(OBJ_obj2nid(alg->algorithm), &mdnid, &pknid)
-            || pknid == NID_undef) {
+        || pknid == NID_undef) {
         ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_SIGID_ALGS);
         return 0;
     }
@@ -238,8 +238,8 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
         /* If we have one, use a custom handler for this algorithm */
         ameth = EVP_PKEY_asn1_find(NULL, pknid);
         if (ameth != NULL && ameth->siginf_set != NULL
-                && ameth->siginf_set(siginf, alg, sig))
-           break;
+            && ameth->siginf_set(siginf, alg, sig))
+            break;
         if (pubkey != NULL) {
             int secbits;
 
@@ -305,5 +305,5 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
 int ossl_x509_init_sig_info(X509 *x)
 {
     return x509_sig_info_init(&x->siginf, &x->sig_alg, &x->signature,
-                              X509_PUBKEY_get0(x->cert_info.key));
+        X509_PUBKEY_get0(x->cert_info.key));
 }

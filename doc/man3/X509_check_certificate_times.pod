@@ -1,0 +1,163 @@
+=pod
+
+=head1 NAME
+
+X509_check_certificate_times, X509_time_adj, X509_time_adj_ex, X509_gmtime_adj,
+X509_cmp_time, X509_cmp_current_time, X509_cmp_timeframe - X509 time functions
+
+=head1 SYNOPSIS
+
+ int X509_check_certificate_times(const X509_VERIFY_PARAM *vpm, const X509 *x,
+                                  int *error);
+ ASN1_TIME *X509_time_adj(ASN1_TIME *asn1_time, long offset_sec, time_t *in_tm);
+ ASN1_TIME *X509_time_adj_ex(ASN1_TIME *asn1_time, int offset_day, long
+                             offset_sec, time_t *in_tm);
+ ASN1_TIME *X509_gmtime_adj(ASN1_TIME *asn1_time, long offset_sec);
+
+The following functions have been deprecated since OpenSSL 4.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
+
+ int X509_cmp_time(const ASN1_TIME *asn1_time, time_t *in_tm);
+ int X509_cmp_current_time(const ASN1_TIME *asn1_time);
+ int X509_cmp_timeframe(const X509_VERIFY_PARAM *vpm,
+                        const ASN1_TIME *start, const ASN1_TIME *end);
+
+=head1 DESCRIPTION
+
+X509_check_certificate_times() compares the notBefore and notAfter
+times in certificate I<x> to check the certificate for temporal validity.
+The time used for the check will be the current system time, unless
+The the reference time included in the verification parameter I<vpm>
+is non NULL and I<vpm> has the flag B<X509_V_FLAG_USE_CHECK_TIME> set.
+
+The notBefore and notAfter times in the certificate will be accepted
+only if they are either the format of a GeneralizedTime
+(YYYYMMDDHHMMSSZ), or a UTCTime (YYMMDDHHMMSSZ) as per RFC5280, with
+the exception that the requirement: "CAs conforming to this profile
+MUST always encode certificate validity dates through the year 2049 as
+UTCTime; certificate validity dates in 2050 or later MUST be encoded
+as GeneralizedTime." is not enforced.
+
+X509_cmp_time() compares the ASN1_TIME in I<asn1_time> with the time
+in <in_tm>.
+
+X509_cmp_current_time() compares the ASN1_TIME in
+I<asn1_time> with the current time, expressed as time_t.
+
+X509_cmp_timeframe() compares the given time period with the reference time
+included in the verification parameters I<vpm> if they are not NULL and contain
+B<X509_V_FLAG_USE_CHECK_TIME>; else the current time is used as reference time.
+
+X509_time_adj_ex() sets the ASN1_TIME structure I<asn1_time> to the time
+I<offset_day> and I<offset_sec> after I<in_tm>.
+
+X509_time_adj() sets the ASN1_TIME structure I<asn1_time> to the time
+I<offset_sec> after I<in_tm>. This method can only handle second
+offsets up to the capacity of long, so the newer X509_time_adj_ex()
+API should be preferred.
+
+In both methods, if I<asn1_time> is NULL, a new ASN1_TIME structure
+is allocated and returned.
+
+In all methods, if I<in_tm> is NULL, the current time, expressed as
+time_t, is used.
+
+I<asn1_time> must satisfy the ASN1_TIME format mandated by RFC 5280,
+i.e., its format must be either YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ.
+
+X509_gmtime_adj() sets the ASN1_TIME structure I<asn1_time> to the time
+I<offset_sec> after the current time. It is equivalent to calling
+X509_time_adj() with the last parameter as NULL.
+
+=head1 BUGS
+
+Unlike many standard comparison functions, The deprecated functions
+X509_cmp_time() and X509_cmp_current_time() return 0 on error, and
+return -1 when the values are equal.
+
+The deprecated function X509_cmp_timeframe() may accept invalid
+certificate times as infinitely valid.
+
+=head1 RETURN VALUES
+
+X509_check_certiticate_times() returns 1 if the certificate is
+temporally valid at the verification time as per the rules from RFC
+5280. It returns 0 otherwise. if I<error> is non NULL, the integer
+value it points to will be set to an error code when the certificate
+is not temporally valid, or 0 when the certificate is temporally valid.
+
+The integer pointed to by I<error> will be set to
+X509_V_ERROR_ERROR_IN_CERT_NOT_BEFORE_FIELD
+or
+X509_V_ERROR_ERROR_IN_CERT_NOT_AFTER_FIELD
+if the certificate has an invalid notBefore or notAfter field, respectively.
+
+The integer pointed to by I<error> will be set to
+X509_V_ERR_CERT_NOT_YET_VALID
+or
+X509_V_ERR_CERT_HAS_EXPIRED
+if the
+verification time is outside of the certificate's correctly encoded
+validity window as per RFC5280.
+
+X509_cmp_time() and X509_cmp_current_time() return -1 if I<asn1_time>
+is earlier than, or equal to, I<in_tm> (resp. current time), and 1
+otherwise. These methods return 0 on error.
+
+X509_cmp_timeframe() compares a reference time to a start and end
+ASN1_TIME value range. The reference time is compared to the start
+value of the range inclusively, and to the end value of the range
+exclusively. The reference time used will retrieved from I<vpm> if the
+flag I<509_V_FLAG_USE_CHECK_TIME> is set in I<vpm>, otherwise it will
+be the current time. The start time used will be I<start> if it is non
+NULL, and a valid ASN1_TIME value, otherwise it will be infinitely in
+the past. The end time used will be I<end> if it is non NULL and a
+valid ASN1_TIME value, otherwise it will be infinitely in the
+future. 0 is returned unconditionally if the flag
+I<X509_V_FLAG_NO_CHECK_TIME> is set in I<vpm>. Otherwise 0 will be
+returned if the reference time is in the range of the start time and
+end time as described above. 1 is returned to indicate the reference
+time is after or equal to the end time. -1 is returned to indicate the
+reference time is before the start time. As this function treats
+invalid ASN1_TIME inputs as unlimited times, it should not be used to
+for temporal verification of certificates using untrusted inputs that
+have not been pre-validated to be correct ASN1_TIME values for a
+certificate as per RFC 5280, as invalid values will be accepted
+as valid forever.
+
+X509_time_adj(), X509_time_adj_ex() and X509_gmtime_adj() return a pointer to
+the updated ASN1_TIME structure, and NULL on error.
+
+=head1 SEE ALSO
+
+L<ASN1_GENERALIZEDTIME_check(3)>
+L<ASN1_UTCTIME_check(3)>
+L<ASN1_TIME_to_tm(3)>
+L<OPENSSL_tm_to_posix(3)> L<OPENSSL_posix_to_tm(3)>
+L<ERR_error_string_n(3)>
+
+=head1 HISTORY
+
+X509_cmp_timeframe(), X509_cmp_current_time(), and
+X509_cmp_timeframe() were deprecated in OpenSSL 4.0
+
+For replacement, consider using X509_check_certificate_times() for use
+with X509 certificates. For applications checking individual ASN1_TIME
+values, consider using ASN1_TIME_to_tm(3) with appropriate validity
+checking of the I<ASN1_TIME> value for your application, and subsequent
+comparison of either the resulting I<tm> structure, or conversion to
+posix seconds via OPENSSL_tm_to_posix(3)
+
+X509_check_certificate_times() was added in OpenSSL 4.0.
+
+=head1 COPYRIGHT
+
+Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

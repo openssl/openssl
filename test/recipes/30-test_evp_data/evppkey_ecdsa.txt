@@ -1,5 +1,5 @@
 #
-# Copyright 2001-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2001-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -267,6 +267,15 @@ CtrlInit = digest-check:0
 Ctrl = digest:SHA1
 Input = "0123456789ABCDEF1234"
 Result = KEYOP_MISMATCH
+
+FIPSversion = >=3.6.0
+Sign = P-256
+Securitycheck = 1
+Unapproved = 1
+CtrlInit = digest-check:0
+Ctrl = digest:SHA512-224
+Input = "0123456789ABCDEF1234"
+Result = KEYOP_ERROR
 
 Title = XOF disallowed
 

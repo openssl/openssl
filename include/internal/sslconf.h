@@ -8,14 +8,35 @@
  */
 
 #ifndef OSSL_INTERNAL_SSLCONF_H
-# define OSSL_INTERNAL_SSLCONF_H
-# pragma once
+#define OSSL_INTERNAL_SSLCONF_H
+#pragma once
 
 typedef struct ssl_conf_cmd_st SSL_CONF_CMD;
 
-const SSL_CONF_CMD *conf_ssl_get(size_t idx, const char **name, size_t *cnt);
-int conf_ssl_name_find(const char *name, size_t *idx);
-void conf_ssl_get_cmd(const SSL_CONF_CMD *cmd, size_t idx, char **cmdstr,
-                      char **arg);
+/*
+ * SSL library configuration module placeholder. We load it here but defer
+ * all decisions about its contents to libssl.
+ */
+
+struct ssl_conf_name_st {
+    /* Name of this set of commands */
+    char *name;
+    /* List of commands */
+    SSL_CONF_CMD *cmds;
+    /* Number of commands */
+    size_t cmd_count;
+};
+
+struct ssl_conf_cmd_st {
+    /* Command */
+    char *cmd;
+    /* Argument */
+    char *arg;
+};
+
+const SSL_CONF_CMD *conf_ssl_get(CONF_IMODULE *m, size_t idx, const char **name,
+    size_t *cnt);
+int conf_ssl_name_find(CONF_IMODULE *m, const char *name, size_t *idx);
+void conf_ssl_get_cmd(const SSL_CONF_CMD *c, size_t idx, char **cmd, char **arg);
 
 #endif

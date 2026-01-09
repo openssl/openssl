@@ -107,8 +107,7 @@ with any sub-library code.
 =head3 Other pieces of software
 
 Other pieces of software that may want to use OpenSSL's error reporting
-system, such as engines or applications, must normally get their own
-numbers.
+system, such as applications, must normally get their own numbers.
 
 =over 4
 

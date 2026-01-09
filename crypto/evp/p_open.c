@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,8 +16,8 @@
 #include <openssl/rsa.h>
 
 int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-                 const unsigned char *ek, int ekl, const unsigned char *iv,
-                 EVP_PKEY *priv)
+    const unsigned char *ek, int ekl, const unsigned char *iv,
+    EVP_PKEY *priv)
 {
     unsigned char *key = NULL;
     size_t keylen = 0;
@@ -53,7 +53,7 @@ int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
         goto err;
 
     ret = 1;
- err:
+err:
     EVP_PKEY_CTX_free(pctx);
     OPENSSL_clear_free(key, keylen);
     return ret;

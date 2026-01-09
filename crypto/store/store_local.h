@@ -11,7 +11,6 @@
 #include "internal/thread_once.h"
 #include "internal/refcount.h"
 #include <openssl/dsa.h>
-#include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/lhash.h>
 #include <openssl/x509.h>
@@ -26,18 +25,19 @@
 struct ossl_store_info_st {
     int type;
     union {
-        void *data;              /* used internally as generic pointer */
+        void *data; /* used internally as generic pointer */
 
         struct {
             char *name;
             char *desc;
-        } name;                  /* when type == OSSL_STORE_INFO_NAME */
+        } name; /* when type == OSSL_STORE_INFO_NAME */
 
-        EVP_PKEY *params;        /* when type == OSSL_STORE_INFO_PARAMS */
-        EVP_PKEY *pubkey;        /* when type == OSSL_STORE_INFO_PUBKEY */
-        EVP_PKEY *pkey;          /* when type == OSSL_STORE_INFO_PKEY */
-        X509 *x509;              /* when type == OSSL_STORE_INFO_CERT */
-        X509_CRL *crl;           /* when type == OSSL_STORE_INFO_CRL */
+        EVP_PKEY *params; /* when type == OSSL_STORE_INFO_PARAMS */
+        EVP_PKEY *pubkey; /* when type == OSSL_STORE_INFO_PUBKEY */
+        EVP_PKEY *pkey; /* when type == OSSL_STORE_INFO_PKEY */
+        X509 *x509; /* when type == OSSL_STORE_INFO_CERT */
+        X509_CRL *crl; /* when type == OSSL_STORE_INFO_CRL */
+        EVP_SKEY *skey; /* when type == OSSL_STORE_INFO_SKEY */
     } _;
 };
 DEFINE_STACK_OF(OSSL_STORE_INFO)
@@ -83,7 +83,6 @@ struct ossl_store_loader_st {
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     /* Legacy stuff */
     const char *scheme;
-    ENGINE *engine;
     OSSL_STORE_open_fn open;
     OSSL_STORE_attach_fn attach;
     OSSL_STORE_ctrl_fn ctrl;
@@ -167,12 +166,12 @@ int ossl_store_file_detach_pem_bio_int(OSSL_STORE_LOADER_CTX *ctx);
  * -------------------
  */
 OSSL_STORE_LOADER *ossl_store_loader_fetch(OSSL_LIB_CTX *libctx,
-                                           const char *scheme,
-                                           const char *properties);
+    const char *scheme,
+    const char *properties);
 
 /* Standard function to handle the result from OSSL_FUNC_store_load() */
 struct ossl_load_result_data_st {
-    OSSL_STORE_INFO *v;          /* To be filled in */
+    OSSL_STORE_INFO *v; /* To be filled in */
     OSSL_STORE_CTX *ctx;
 };
 OSSL_CALLBACK ossl_store_handle_load_result;

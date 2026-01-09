@@ -31,7 +31,7 @@
  * Environment variables:
  * - FILEPREFIX: Specifies the directory containing files to serve.
  *   Defaults to "./downloads" if not set.
- * - SSLKEYLOGFILE: specifies that keylogging should be preformed on the server
+ * - SSLKEYLOGFILE: specifies that keylogging should be performed on the server
  *   should be set to a file name to record keylog data to
  * - NO_ADDR_VALIDATE: Disables server address validation of clients
  *
@@ -41,13 +41,13 @@
 
 /* Include the appropriate header file for SOCK_STREAM */
 #ifdef _WIN32
-# include <stdarg.h>
-# include <winsock2.h>
-# include <ws2tcpip.h>
+#include <stdarg.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #else
-# include <sys/socket.h>
-# include <netinet/in.h>
-# include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
 #endif
 
 #include <openssl/bio.h>
@@ -77,7 +77,17 @@
  * negotiate the desired protocol during the TLS handshake.
  */
 static const unsigned char alpn_ossltest[] = {
-    10, 'h', 'q', '-', 'i', 'n', 't', 'e', 'r', 'o', 'p',
+    10,
+    'h',
+    'q',
+    '-',
+    'i',
+    'n',
+    't',
+    'e',
+    'r',
+    'o',
+    'p',
 };
 
 /**
@@ -124,8 +134,8 @@ static char *fileprefix = NULL;
  * - The predefined protocol is specified in the `alpn_ossltest` array.
  */
 static int select_alpn(SSL *ssl, const unsigned char **out,
-                       unsigned char *out_len, const unsigned char *in,
-                       unsigned int in_len, void *arg)
+    unsigned char *out_len, const unsigned char *in,
+    unsigned int in_len, void *arg)
 {
     /*
      * Use the next_proto helper function here.
@@ -133,8 +143,9 @@ static int select_alpn(SSL *ssl, const unsigned char **out,
      * what the client is requesting
      */
     if (SSL_select_next_proto((unsigned char **)out, out_len, alpn_ossltest,
-                              sizeof(alpn_ossltest), in,
-                              in_len) == OPENSSL_NPN_NEGOTIATED)
+            sizeof(alpn_ossltest), in,
+            in_len)
+        == OPENSSL_NPN_NEGOTIATED)
         return SSL_TLSEXT_ERR_OK;
     return SSL_TLSEXT_ERR_ALERT_FATAL;
 }
@@ -407,7 +418,7 @@ static int handle_io_failure(SSL *ssl, int res)
          */
         if (SSL_get_verify_result(ssl) != X509_V_OK)
             fprintf(stderr, "Verify error: %s\n",
-                    X509_verify_cert_error_string(SSL_get_verify_result(ssl)));
+                X509_verify_cert_error_string(SSL_get_verify_result(ssl)));
         return -1;
 
     default:
@@ -465,7 +476,7 @@ static void process_new_stream(SSL *stream)
     for (;;) {
         nread = 0;
         ret = SSL_read_ex(stream, &buf[total_read],
-                          sizeof(buf) - total_read - 1, &nread);
+            sizeof(buf) - total_read - 1, &nread);
         total_read += nread;
         if (ret <= 0) {
             ret = handle_io_failure(stream, ret);
@@ -641,20 +652,20 @@ static int run_quic_server(SSL_CTX *ctx, BIO *sock)
          * a call to SSL_set_default_stream_mode
          */
         if (!SSL_set_incoming_stream_policy(conn,
-                                            SSL_INCOMING_STREAM_POLICY_ACCEPT,
-                                            0)) {
-            fprintf(stderr, "Failed to set incomming stream policy\n");
+                SSL_INCOMING_STREAM_POLICY_ACCEPT,
+                0)) {
+            fprintf(stderr, "Failed to set incoming stream policy\n");
             goto close_conn;
         }
 
         /*
-         * Until the connection is closed, accept incomming stream
+         * Until the connection is closed, accept incoming stream
          * requests and serve them
          */
         for (;;) {
             /*
              * Note that SSL_accept_stream is blocking here, as the
-             * conn SSL object inherited the deafult blocking property
+             * conn SSL object inherited the default blocking property
              * from its parent, the listener SSL object.  As such there
              * is no need to handle retry failures here.
              */
@@ -665,7 +676,7 @@ static int run_quic_server(SSL_CTX *ctx, BIO *sock)
                  * Hit a legitimate error, and should bail out
                  * or
                  * The Client closed the connection, and there are no
-                 * more incomming streams expected
+                 * more incoming streams expected
                  *
                  * Filter on the shutdown error, and only print an error
                  * message if the cause is not SHUTDOWN
@@ -674,7 +685,7 @@ static int run_quic_server(SSL_CTX *ctx, BIO *sock)
                 errcode = ERR_get_error();
                 if (ERR_GET_REASON(errcode) != SSL_R_PROTOCOL_IS_SHUTDOWN)
                     fprintf(stderr, "Failure in accept stream, error %s\n",
-                            ERR_reason_error_string(errcode));
+                        ERR_reason_error_string(errcode));
                 break;
             }
             process_new_stream(stream);
@@ -685,7 +696,7 @@ static int run_quic_server(SSL_CTX *ctx, BIO *sock)
          * Shut down the connection. We may need to call this multiple times
          * to ensure the connection is shutdown completely.
          */
-close_conn:
+    close_conn:
         while (SSL_shutdown(conn) != 1)
             continue;
 

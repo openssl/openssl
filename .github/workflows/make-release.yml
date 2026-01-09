@@ -12,12 +12,14 @@ on:
     tags:
       - "openssl-*"
 
+permissions: {}
+
 jobs:
   release:
     runs-on: "releaser"
     steps:
     - name: "Checkout"
-      uses: "actions/checkout@v4"
+      uses: "actions/checkout@v5"
       with:
         fetch-depth: 1
         ref: ${{ github.ref_name }}
@@ -25,18 +27,22 @@ jobs:
         repository: "openssl/openssl"
         token: ${{ secrets.GHE_TOKEN }}
         path: ${{ github.ref_name }}
+        persist-credentials: false
     - name: "Prepare assets"
+      env:
+        SIGNING_KEY_UID: ${{ vars.signing_key_uid }}
       run: |
-        cd ${{ github.ref_name }}
+        cd "$GITHUB_REF_NAME"
         ./util/mktar.sh
-        mkdir assets && mv ${{ github.ref_name }}.tar.gz assets/ && cd assets
-        openssl sha1 -r ${{ github.ref_name }}.tar.gz > ${{ github.ref_name }}.tar.gz.sha1
-        openssl sha256 -r ${{ github.ref_name }}.tar.gz > ${{ github.ref_name }}.tar.gz.sha256
-        gpg -u ${{ vars.signing_key_uid }} -o ${{ github.ref_name }}.tar.gz.asc -sba ${{ github.ref_name }}.tar.gz
+        mkdir -p assets && mv "$GITHUB_REF_NAME.tar.gz" assets/ && cd assets
+        openssl sha1 -r "$GITHUB_REF_NAME.tar.gz" > "$GITHUB_REF_NAME.tar.gz.sha1"
+        openssl sha256 -r "$GITHUB_REF_NAME.tar.gz" > "$GITHUB_REF_NAME.tar.gz.sha256"
+        gpg -u "$SIGNING_KEY_UID" -o "$GITHUB_REF_NAME.tar.gz.asc" -sba "$GITHUB_REF_NAME.tar.gz"
     - name: "Create release"
       env:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
       run: |
-        VERSION=$(echo ${{ github.ref_name }} | cut -d "-" -f 2-)
-        PRE_RELEASE=$([[ ${{ github.ref_name }} =~ alpha|beta ]] && echo "-p" || echo "")
-        gh release create ${{ github.ref_name }} $PRE_RELEASE -t "OpenSSL $VERSION" -d --notes " " -R ${{ github.repository }} ${{ github.ref_name }}/assets/*
+        VERSION=$(echo "$GITHUB_REF_NAME" | cut -d "-" -f 2-)
+        PRE_RELEASE=$([[ "$GITHUB_REF_NAME" =~ alpha|beta ]] && echo "-p" || echo "")
+        NOTES=$(curl -s "https://api.openssl.org/release-metadata/news/?version=$VERSION&capture_title=False")
+        gh release create "$GITHUB_REF_NAME" $PRE_RELEASE -t "OpenSSL $VERSION" -d --notes "$NOTES" -R "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME/assets/"*

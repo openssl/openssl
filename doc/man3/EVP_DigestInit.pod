@@ -13,6 +13,7 @@ EVP_MD_CTX_set_flags, EVP_MD_CTX_clear_flags, EVP_MD_CTX_test_flags,
 EVP_Q_digest, EVP_Digest, EVP_DigestInit_ex2, EVP_DigestInit_ex, EVP_DigestInit,
 EVP_DigestUpdate, EVP_DigestFinal_ex, EVP_DigestFinalXOF, EVP_DigestFinal,
 EVP_DigestSqueeze,
+EVP_MD_CTX_serialize, EVP_MD_CTX_deserialize,
 EVP_MD_is_a, EVP_MD_get0_name, EVP_MD_get0_description,
 EVP_MD_names_do_all, EVP_MD_get0_provider, EVP_MD_get_type,
 EVP_MD_get_pkey_type, EVP_MD_get_size, EVP_MD_get_block_size, EVP_MD_get_flags,
@@ -65,6 +66,8 @@ EVP_MD_CTX_type, EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_md_data
  int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *s);
  int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *out, size_t outlen);
  int EVP_DigestSqueeze(EVP_MD_CTX *ctx, unsigned char *out, size_t outlen);
+ int EVP_MD_CTX_serialize(EVP_MD_CTX *ctx, unsigned char *out, size_t *outlen);
+ int EVP_MD_CTX_deserialize(EVP_MD_CTX *ctx, const unsigned char *in, size_t inlen);
 
  EVP_MD_CTX *EVP_MD_CTX_dup(const EVP_MD_CTX *in);
  int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in);
@@ -256,11 +259,12 @@ if the pointer is not NULL. At most B<EVP_MAX_MD_SIZE> bytes will be written.
 
 =item EVP_Digest()
 
-A wrapper around the Digest Init_ex, Update and Final_ex functions.
-Hashes I<count> bytes of data at I<data> using a digest I<type> from ENGINE
-I<impl>. The digest value is placed in I<md> and its length is written at I<size>
-if the pointer is not NULL. At most B<EVP_MAX_MD_SIZE> bytes will be written.
-If I<impl> is NULL the default implementation of digest I<type> is used.
+A wrapper around the EVP_DigestInit_ex(), EVP_DigestUpdate() and
+EVP_DigestFinal_ex() functions.
+Hashes I<count> bytes of data at I<data>. The digest value is placed in I<md>
+and its length is written at I<size> if the pointer is not NULL. At most
+B<EVP_MAX_MD_SIZE> bytes will be written. I<impl> B<must> be NULL and the
+default implementation of digest I<type> is used.
 
 =item EVP_DigestInit_ex2()
 
@@ -317,6 +321,29 @@ EVP_DigestFinalXOF() may only be called once
 Similar to EVP_DigestFinalXOF() but allows multiple calls to be made to
 squeeze variable length output data.
 EVP_DigestFinalXOF() should not be called after this.
+
+=item EVP_MD_CTX_serialize() and EVP_MD_CTX_deserialize()
+
+EVP_MD_CTX_serialize() serializes the state of the digest context I<ctx>
+and stores it in I<out>, unless I<out> is NULL.
+Otherwise the maximum necessary size of the output buffer is written to
+the I<outlen> parameter. If I<out> is not NULL then before the call the
+I<outlen> parameter must contain the length of the I<out> buffer. If the
+call is successful the data is written to I<out> and the amount of data
+written to I<outlen>.
+
+EVP_MD_CTX_deserialize() deserializes the data from I<in> of size I<inlen>
+into the digest context I<ctx>.
+
+These functions do not guarantee importability of state exported by a
+different OpenSSL version and does not guarantee interoperability between
+different providers. Some providers may not allow export/import across
+process boundaries.
+
+NOTE: Applications must guarantee that only trusted data is used during
+deserialization. The deserialization operation is not built to address
+adversarial data compromise, and only basic checks to protect from simple
+mistakes are implemented.
 
 =item EVP_MD_CTX_dup()
 
@@ -410,9 +437,9 @@ returns B<NID_sha1>. This function is normally used when setting ASN1 OIDs.
 
 =item EVP_MD_CTX_get0_md_data()
 
-Return the digest method private data for the passed B<EVP_MD_CTX>.
-The space is allocated by OpenSSL and has the size originally set with
-EVP_MD_meth_set_app_datasize().
+Return the digest method private data for the passed B<EVP_MD_CTX>. This
+function exists for legacy backward compatibility reasons and always returns
+NULL.
 
 =item EVP_MD_CTX_get0_md(), EVP_MD_CTX_get1_md()
 
@@ -439,7 +466,8 @@ Returns the update function for I<ctx>.
 =item EVP_MD_get_flags()
 
 Returns the I<md> flags. Note that these are different from the B<EVP_MD_CTX>
-ones. See L<EVP_MD_meth_set_flags(3)> for more information.
+ones. See the "flags" parameter as documented in L<EVP_MD-common(7)> for a
+description of the available flags.
 
 =item EVP_MD_get_pkey_type()
 
@@ -545,7 +573,7 @@ EVP_MD_CTX_get_params() can be used with the following OSSL_PARAM keys:
 
 Gets the digest Message Integrity Check algorithm string. This is used when
 creating S/MIME multipart/signed messages, as specified in RFC 3851.
-It may be used by external engines or providers.
+It may be used by external providers.
 
 =back
 
@@ -631,7 +659,9 @@ EVP_DigestInit_ex(),
 EVP_DigestInit(),
 EVP_DigestUpdate(),
 EVP_DigestFinal_ex(),
-EVP_DigestFinalXOF(), and
+EVP_DigestFinalXOF(),
+EVP_MD_CTX_serialize(),
+EVP_MD_CTX_deserialize(), and
 EVP_DigestFinal()
 
 return 1 for
@@ -797,7 +827,6 @@ digest name passed on the command line.
 
 =head1 SEE ALSO
 
-L<EVP_MD_meth_new(3)>,
 L<openssl-dgst(1)>,
 L<evp(7)>,
 L<OSSL_PROVIDER(3)>,
@@ -861,6 +890,9 @@ The macros EVP_MD_CTX_get_size() and EVP_MD_CTX_size were changed in OpenSSL 3.4
 to be aliases for EVP_MD_CTX_get_size_ex(), previously they were aliases for
 EVP_MD_get_size which returned a constant value. This is required for XOF
 digests since they do not have a fixed size.
+
+The EVP_MD_CTX_serialize() and EVP_MD_CTX_deserialize() functions were added in
+OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

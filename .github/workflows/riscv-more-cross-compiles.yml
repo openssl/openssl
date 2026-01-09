@@ -26,7 +26,7 @@ jobs:
     # push event commit message contains '[riscv ci]'
     # cron job
     # manual dispatch
-    if: contains(github.event.pull_request.title, 'riscv') || contains(github.event.pull_request.title, 'RISC-V') || contains(github.event.pull_request.body, '[riscv ci]') || contains(github.event.head_commit.message, '[riscv ci]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: contains(github.event.pull_request.title, 'riscv') || contains(github.event.pull_request.title, 'RISC-V') || contains(github.event.pull_request.body, '[riscv ci]') || contains(github.event.head_commit.message, '[riscv ci]') || (github.event_name == 'schedule' && github.repository == 'openssl/openssl') || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
       matrix:
@@ -162,6 +162,28 @@ jobs:
             opensslcapsname: riscvcap, # OPENSSL_riscvcap
             opensslcaps: "rv64gc_zba_zbb_zbc_zbs_zbkb_zbkc_zbkx_zknd_zkne_zknh_zksed_zksh_zkr_zkt_v_zvbb_zvbc_zvkb_zvkg_zvkned_zvknha_zvknhb_zvksed_zvksh"
           }, {
+            # RV64GC with all currently OpenSSL-supported extensions, with zvl256
+            #   crypto/sha/asm/sha512-riscv64-zvkb-zvknhb.pl
+            #   crypto/sm3/asm/sm3-riscv64-zvksh.pl
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,zba=true,zbb=true,zbc=true,zbs=true,zbkb=true,zbkc=true,zbkx=true,zknd=true,zkne=true,zknh=true,zksed=true,zksh=true,zkr=true,zkt=true,v=true,vlen=256,zvbb=true,zvbc=true,zvkb=true,zvkg=true,zvkned=true,zvknha=true,zvknhb=true,zvksed=true,zvksh=true",
+            opensslcapsname: riscvcap, # OPENSSL_riscvcap
+            opensslcaps: "rv64gc_zba_zbb_zbc_zbs_zbkb_zbkc_zbkx_zknd_zkne_zknh_zksed_zksh_zkr_zkt_v_zvbb_zvbc_zvkb_zvkg_zvkned_zvknha_zvknhb_zvksed_zvksh_zvl256"
+          }, {
+            # RV64GC with all currently OpenSSL-supported extensions, with zvl512
+            #   crypto/sha/asm/sha512-riscv64-zvkb-zvknhb.pl
+            #   crypto/sm3/asm/sm3-riscv64-zvksh.pl
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,zba=true,zbb=true,zbc=true,zbs=true,zbkb=true,zbkc=true,zbkx=true,zknd=true,zkne=true,zknh=true,zksed=true,zksh=true,zkr=true,zkt=true,v=true,vlen=512,zvbb=true,zvbc=true,zvkb=true,zvkg=true,zvkned=true,zvknha=true,zvknhb=true,zvksed=true,zvksh=true",
+            opensslcapsname: riscvcap, # OPENSSL_riscvcap
+            opensslcaps: "rv64gc_zba_zbb_zbc_zbs_zbkb_zbkc_zbkx_zknd_zkne_zknh_zksed_zksh_zkr_zkt_v_zvbb_zvbc_zvkb_zvkg_zvkned_zvknha_zvknhb_zvksed_zvksh_zvl512"
+          }, {
             # Inline asm
             # zbb/zbkb:
             #   include/crypto/md32_common.h
@@ -191,10 +213,12 @@ jobs:
     - name: install packages
       run: |
         sudo apt-get update
-        sudo apt-get -yq --force-yes install \
+        sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install \
             gcc-${{ matrix.platform.arch }} \
             ${{ matrix.platform.libs }}
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
 
@@ -218,7 +242,7 @@ jobs:
 
     - name: install qemu
       if: matrix.platform.tests != 'none'
-      run: sudo apt-get -yq --force-yes install qemu-user
+      run: sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install qemu-user
 
     - name: Set QEMU environment
       if: matrix.platform.qemucpu != ''
@@ -256,7 +280,7 @@ jobs:
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: "cross-compiles-riscv@${{ matrix.platform.opensslcaps }}"
         path: artifacts.tar.gz

@@ -37,15 +37,14 @@ static int test_func(void)
         }
     }
     ret = 1;
- err:
+err:
     SSL_CTX_free(ctx);
     return ret;
 }
 
 int global_init(void)
 {
-    if (!OPENSSL_init_ssl(OPENSSL_INIT_ENGINE_ALL_BUILTIN
-                          | OPENSSL_INIT_LOAD_CONFIG, NULL))
+    if (!OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL))
         return 0;
     return 1;
 }

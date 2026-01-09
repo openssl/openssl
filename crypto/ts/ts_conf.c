@@ -7,41 +7,36 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need to use some engine deprecated APIs */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <string.h>
 
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 #include <openssl/pem.h>
-#include <openssl/engine.h>
 #include <openssl/ts.h>
 #include <openssl/conf_api.h>
 
 /* Macro definitions for the configuration file. */
-#define BASE_SECTION                    "tsa"
-#define ENV_DEFAULT_TSA                 "default_tsa"
-#define ENV_SERIAL                      "serial"
-#define ENV_CRYPTO_DEVICE               "crypto_device"
-#define ENV_SIGNER_CERT                 "signer_cert"
-#define ENV_CERTS                       "certs"
-#define ENV_SIGNER_KEY                  "signer_key"
-#define ENV_SIGNER_DIGEST               "signer_digest"
-#define ENV_DEFAULT_POLICY              "default_policy"
-#define ENV_OTHER_POLICIES              "other_policies"
-#define ENV_DIGESTS                     "digests"
-#define ENV_ACCURACY                    "accuracy"
-#define ENV_ORDERING                    "ordering"
-#define ENV_TSA_NAME                    "tsa_name"
-#define ENV_ESS_CERT_ID_CHAIN           "ess_cert_id_chain"
-#define ENV_VALUE_SECS                  "secs"
-#define ENV_VALUE_MILLISECS             "millisecs"
-#define ENV_VALUE_MICROSECS             "microsecs"
-#define ENV_CLOCK_PRECISION_DIGITS      "clock_precision_digits"
-#define ENV_VALUE_YES                   "yes"
-#define ENV_VALUE_NO                    "no"
-#define ENV_ESS_CERT_ID_ALG             "ess_cert_id_alg"
+#define BASE_SECTION "tsa"
+#define ENV_DEFAULT_TSA "default_tsa"
+#define ENV_SERIAL "serial"
+#define ENV_SIGNER_CERT "signer_cert"
+#define ENV_CERTS "certs"
+#define ENV_SIGNER_KEY "signer_key"
+#define ENV_SIGNER_DIGEST "signer_digest"
+#define ENV_DEFAULT_POLICY "default_policy"
+#define ENV_OTHER_POLICIES "other_policies"
+#define ENV_DIGESTS "digests"
+#define ENV_ACCURACY "accuracy"
+#define ENV_ORDERING "ordering"
+#define ENV_TSA_NAME "tsa_name"
+#define ENV_ESS_CERT_ID_CHAIN "ess_cert_id_chain"
+#define ENV_VALUE_SECS "secs"
+#define ENV_VALUE_MILLISECS "millisecs"
+#define ENV_VALUE_MICROSECS "microsecs"
+#define ENV_CLOCK_PRECISION_DIGITS "clock_precision_digits"
+#define ENV_VALUE_YES "yes"
+#define ENV_VALUE_NO "no"
+#define ENV_ESS_CERT_ID_ALG "ess_cert_id_alg"
 
 /* Function definitions for certificate and key loading. */
 
@@ -57,7 +52,7 @@ X509 *TS_CONF_load_cert(const char *file)
 #endif
         goto end;
     x = PEM_read_bio_X509_AUX(cert, NULL, NULL, NULL);
- end:
+end:
     if (x == NULL)
         ERR_raise(ERR_LIB_TS, TS_R_CANNOT_LOAD_CERT);
     BIO_free(cert);
@@ -93,7 +88,7 @@ STACK_OF(X509) *TS_CONF_load_certs(const char *file)
             xi->x509 = NULL;
         }
     }
- end:
+end:
     if (othercerts == NULL)
         ERR_raise(ERR_LIB_TS, TS_R_CANNOT_LOAD_CERT);
     sk_X509_INFO_pop_free(allcerts, X509_INFO_free);
@@ -113,7 +108,7 @@ EVP_PKEY *TS_CONF_load_key(const char *file, const char *pass)
 #endif
         goto end;
     pkey = PEM_read_bio_PrivateKey(key, NULL, NULL, (char *)pass);
- end:
+end:
     if (pkey == NULL)
         ERR_raise(ERR_LIB_TS, TS_R_CANNOT_LOAD_KEY);
     BIO_free(key);
@@ -143,7 +138,7 @@ const char *TS_CONF_get_tsa_section(CONF *conf, const char *section)
 }
 
 int TS_CONF_set_serial(CONF *conf, const char *section, TS_serial_cb cb,
-                       TS_RESP_CTX *ctx)
+    TS_RESP_CTX *ctx)
 {
     int ret = 0;
     char *serial = NCONF_get_string(conf, section, ENV_SERIAL);
@@ -154,57 +149,12 @@ int TS_CONF_set_serial(CONF *conf, const char *section, TS_serial_cb cb,
     TS_RESP_CTX_set_serial_cb(ctx, cb, serial);
 
     ret = 1;
- err:
+err:
     return ret;
 }
-
-#ifndef OPENSSL_NO_ENGINE
-
-int TS_CONF_set_crypto_device(CONF *conf, const char *section,
-                              const char *device)
-{
-    int ret = 0;
-
-    if (device == NULL)
-        device = NCONF_get_string(conf, section, ENV_CRYPTO_DEVICE);
-
-    if (device && !TS_CONF_set_default_engine(device)) {
-        ts_CONF_invalid(section, ENV_CRYPTO_DEVICE);
-        goto err;
-    }
-    ret = 1;
- err:
-    return ret;
-}
-
-int TS_CONF_set_default_engine(const char *name)
-{
-    ENGINE *e = NULL;
-    int ret = 0;
-
-    if (strcmp(name, "builtin") == 0)
-        return 1;
-
-    if ((e = ENGINE_by_id(name)) == NULL)
-        goto err;
-    if (strcmp(name, "chil") == 0)
-        ENGINE_ctrl(e, ENGINE_CTRL_CHIL_SET_FORKCHECK, 1, 0, 0);
-    if (!ENGINE_set_default(e, ENGINE_METHOD_ALL))
-        goto err;
-    ret = 1;
-
- err:
-    if (!ret)
-        ERR_raise_data(ERR_LIB_TS, TS_R_COULD_NOT_SET_ENGINE,
-                       "engine:%s", name);
-    ENGINE_free(e);
-    return ret;
-}
-
-#endif
 
 int TS_CONF_set_signer_cert(CONF *conf, const char *section,
-                            const char *cert, TS_RESP_CTX *ctx)
+    const char *cert, TS_RESP_CTX *ctx)
 {
     int ret = 0;
     X509 *cert_obj = NULL;
@@ -222,13 +172,13 @@ int TS_CONF_set_signer_cert(CONF *conf, const char *section,
         goto err;
 
     ret = 1;
- err:
+err:
     X509_free(cert_obj);
     return ret;
 }
 
 int TS_CONF_set_certs(CONF *conf, const char *section, const char *certs,
-                      TS_RESP_CTX *ctx)
+    TS_RESP_CTX *ctx)
 {
     int ret = 0;
     STACK_OF(X509) *certs_obj = NULL;
@@ -242,16 +192,16 @@ int TS_CONF_set_certs(CONF *conf, const char *section, const char *certs,
         goto err;
     if (!TS_RESP_CTX_set_certs(ctx, certs_obj))
         goto err;
- end:
+end:
     ret = 1;
- err:
+err:
     OSSL_STACK_OF_X509_free(certs_obj);
     return ret;
 }
 
 int TS_CONF_set_signer_key(CONF *conf, const char *section,
-                           const char *key, const char *pass,
-                           TS_RESP_CTX *ctx)
+    const char *key, const char *pass,
+    TS_RESP_CTX *ctx)
 {
     int ret = 0;
     EVP_PKEY *key_obj = NULL;
@@ -267,13 +217,13 @@ int TS_CONF_set_signer_key(CONF *conf, const char *section,
         goto err;
 
     ret = 1;
- err:
+err:
     EVP_PKEY_free(key_obj);
     return ret;
 }
 
 int TS_CONF_set_signer_digest(CONF *conf, const char *section,
-                              const char *md, TS_RESP_CTX *ctx)
+    const char *md, TS_RESP_CTX *ctx)
 {
     int ret = 0;
     const EVP_MD *sign_md = NULL;
@@ -292,12 +242,12 @@ int TS_CONF_set_signer_digest(CONF *conf, const char *section,
         goto err;
 
     ret = 1;
- err:
+err:
     return ret;
 }
 
 int TS_CONF_set_def_policy(CONF *conf, const char *section,
-                           const char *policy, TS_RESP_CTX *ctx)
+    const char *policy, TS_RESP_CTX *ctx)
 {
     int ret = 0;
     ASN1_OBJECT *policy_obj = NULL;
@@ -316,7 +266,7 @@ int TS_CONF_set_def_policy(CONF *conf, const char *section,
         goto err;
 
     ret = 1;
- err:
+err:
     ASN1_OBJECT_free(policy_obj);
     return ret;
 }
@@ -342,13 +292,15 @@ int TS_CONF_set_policies(CONF *conf, const char *section, TS_RESP_CTX *ctx)
             ts_CONF_invalid(section, ENV_OTHER_POLICIES);
             goto err;
         }
-        if (!TS_RESP_CTX_add_policy(ctx, objtmp))
+        if (!TS_RESP_CTX_add_policy(ctx, objtmp)) {
+            ASN1_OBJECT_free(objtmp);
             goto err;
+        }
         ASN1_OBJECT_free(objtmp);
     }
 
     ret = 1;
- err:
+err:
     sk_CONF_VALUE_pop_free(list, X509V3_conf_free);
     return ret;
 }
@@ -386,7 +338,7 @@ int TS_CONF_set_digests(CONF *conf, const char *section, TS_RESP_CTX *ctx)
     }
 
     ret = 1;
- err:
+err:
     sk_CONF_VALUE_pop_free(list, X509V3_conf_free);
     return ret;
 }
@@ -423,13 +375,13 @@ int TS_CONF_set_accuracy(CONF *conf, const char *section, TS_RESP_CTX *ctx)
         goto err;
 
     ret = 1;
- err:
+err:
     sk_CONF_VALUE_pop_free(list, X509V3_conf_free);
     return ret;
 }
 
 int TS_CONF_set_clock_precision_digits(const CONF *conf, const char *section,
-                                       TS_RESP_CTX *ctx)
+    TS_RESP_CTX *ctx)
 {
     int ret = 0;
     long digits = 0;
@@ -447,12 +399,12 @@ int TS_CONF_set_clock_precision_digits(const CONF *conf, const char *section,
         goto err;
 
     return 1;
- err:
+err:
     return ret;
 }
 
 static int ts_CONF_add_flag(CONF *conf, const char *section,
-                            const char *field, int flag, TS_RESP_CTX *ctx)
+    const char *field, int flag, TS_RESP_CTX *ctx)
 {
     const char *value = NCONF_get_string(conf, section, field);
 
@@ -479,14 +431,14 @@ int TS_CONF_set_tsa_name(CONF *conf, const char *section, TS_RESP_CTX *ctx)
 }
 
 int TS_CONF_set_ess_cert_id_chain(CONF *conf, const char *section,
-                                  TS_RESP_CTX *ctx)
+    TS_RESP_CTX *ctx)
 {
     return ts_CONF_add_flag(conf, section, ENV_ESS_CERT_ID_CHAIN,
-                            TS_ESS_CERT_ID_CHAIN, ctx);
+        TS_ESS_CERT_ID_CHAIN, ctx);
 }
 
 int TS_CONF_set_ess_cert_id_digest(CONF *conf, const char *section,
-                                   TS_RESP_CTX *ctx)
+    TS_RESP_CTX *ctx)
 {
     int ret = 0;
     const EVP_MD *cert_md = NULL;

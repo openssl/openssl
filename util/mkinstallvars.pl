@@ -26,7 +26,7 @@ my @absolutes = qw(PREFIX libdir);
 # since the LIBDIR subdirectories depend on the calculation of LIBDIR from
 # PREFIX.
 my @subdirs = _pairs (PREFIX => [ qw(BINDIR LIBDIR INCLUDEDIR APPLINKDIR) ],
-                      LIBDIR => [ qw(ENGINESDIR MODULESDIR PKGCONFIGDIR
+                      LIBDIR => [ qw(MODULESDIR PKGCONFIGDIR
                                      CMAKECONFIGDIR) ]);
 # For completeness, other expected variables
 my @others = qw(VERSION LDLIBS);
@@ -44,6 +44,17 @@ foreach (@ARGV) {
     $keys{$k} = 1;
     push @{$values{$k}}, $v;
 }
+
+# special case for LIBDIR vs libdir.
+# For installations, They both get their value from ./Configure's --libdir or
+# corresponding config target attribute, but LIBDIR only gets a value if the
+# configuration is a relative path, while libdir always gets a value, so if
+# the former doesn't have a value, we give it the latter's value, and rely
+# on mechanisms further down to do the rest of the processing.
+# If they're both empty, it's still fine.
+print STDERR "DEBUG: LIBDIR = $values{LIBDIR}->[0], libdir = $values{libdir}->[0] => ";
+$values{LIBDIR}->[0] = $values{libdir}->[0] unless $values{LIBDIR}->[0];
+print STDERR "LIBDIR = $values{LIBDIR}->[0]\n";
 
 # warn if there are missing values, and also if there are unexpected values
 foreach my $k (sort keys %all) {

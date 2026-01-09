@@ -31,7 +31,7 @@ B<openssl> B<genrsa>
 [B<-quiet>]
 [B<-traditional>]
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [B<numbits>]
 
 =head1 DESCRIPTION
@@ -90,8 +90,6 @@ Write the key using the traditional PKCS#1 format instead of the PKCS#8 format.
 
 {- $OpenSSL::safe::opt_r_item -}
 
-{- $OpenSSL::safe::opt_engine_item -}
-
 {- $OpenSSL::safe::opt_provider_item -}
 
 =item B<numbits>
@@ -120,6 +118,10 @@ of a key.
 L<openssl(1)>,
 L<openssl-genpkey(1)>,
 L<openssl-gendsa(1)>
+
+=head1 HISTORY
+
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

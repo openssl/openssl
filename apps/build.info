@@ -37,9 +37,6 @@ ENDIF
 IF[{- !$disabled{'dsa'} -}]
 $OPENSSLSRC=$OPENSSLSRC dsa.c dsaparam.c gendsa.c
 ENDIF
-IF[{- !$disabled{'engine'} -}]
-$OPENSSLSRC=$OPENSSLSRC engine.c
-ENDIF
 IF[{- !$disabled{'rsa'} -}]
 $OPENSSLSRC=$OPENSSLSRC rsa.c genrsa.c
 ENDIF

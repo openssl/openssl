@@ -41,7 +41,7 @@ my @ciphers =
                      |rc2|rc4|seed)/x} @ciphers
     if disabled("legacy");
 
-plan tests => 5 + (scalar @ciphers)*2;
+plan tests => 6 + (scalar @ciphers)*2;
 
  SKIP: {
      skip "Problems getting ciphers...", 1 + scalar(@ciphers)
@@ -90,4 +90,16 @@ plan tests => 5 + (scalar @ciphers)*2;
         && compare_text($test,"salted.clear") == 0,
         "Check that we can still use a salt length of 16 bytes for PKDF2");
 
+#./util/wrap.pl apps/openssl enc -aes128 -K 30313032303330343035303630373038 -iv 100f0e0d0c0b0a090807060504030201 -in 1.txt -out 2.enc
+#./util/wrap.pl apps/openssl enc -aes128 -skeyuri skeyfile.bin -iv 100f0e0d0c0b0a090807060504030201 -in 1.txt -out 1.enc
+     my $folder = "test/recipes/20-test_enc_data";
+     my $skeyuri = srctop_file($folder, "skeyfile.bin");
+     ok(run(app([$cmd, "enc", "-in", $test, "-aes128", "-K", "30313032303330343035303630373038",
+                 "-iv", "100f0e0d0c0b0a090807060504030201",
+                 "-out", "key_from_cmdline.enc"]))
+        && run(app([$cmd, "enc", "-in", $test, "-aes128", "-skeyuri", $skeyuri,
+                 "-iv", "100f0e0d0c0b0a090807060504030201",
+                 "-out", "key_from_uri.enc" ]))
+        && File::Compare::compare("key_from_cmdline.enc", "key_from_uri.enc") == 0,
+        "Check that key from URI gives an equal result comparing to the explicit one");
 }

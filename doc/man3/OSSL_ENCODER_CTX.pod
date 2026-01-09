@@ -6,6 +6,7 @@ OSSL_ENCODER_CTX,
 OSSL_ENCODER_CTX_new,
 OSSL_ENCODER_settable_ctx_params,
 OSSL_ENCODER_CTX_set_params,
+OSSL_ENCODER_CTX_ctrl_string,
 OSSL_ENCODER_CTX_free,
 OSSL_ENCODER_CTX_set_selection,
 OSSL_ENCODER_CTX_set_output_type,
@@ -35,6 +36,8 @@ OSSL_ENCODER_CTX_set_cleanup
  const OSSL_PARAM *OSSL_ENCODER_settable_ctx_params(OSSL_ENCODER *encoder);
  int OSSL_ENCODER_CTX_set_params(OSSL_ENCODER_CTX *ctx,
                                  const OSSL_PARAM params[]);
+ int OSSL_ENCODER_CTX_ctrl_string(OSSL_ENCODER_CTX *ctx,
+                                  const char *name, const char *val);
  void OSSL_ENCODER_CTX_free(OSSL_ENCODER_CTX *ctx);
 
  int OSSL_ENCODER_CTX_set_selection(OSSL_ENCODER_CTX *ctx, int selection);
@@ -101,6 +104,13 @@ OSSL_ENCODER_CTX_set_params() attempts to set parameters specified
 with an L<OSSL_PARAM(3)> array I<params>.  Parameters that the
 implementation doesn't recognise should be ignored.
 
+OSSL_ENCODER_CTX_ctrl_string() attempts to set a single parameter named I<name>
+by parsing the specified string I<value> to the type of a settable parameter
+associated with one of the underlying encoders.
+An error is reported if no parameter named I<name> is a settable in any of the
+underlying encoders, the I<value> fails to parse, or the encoder implementation
+rejects the parsed value.
+
 OSSL_ENCODER_CTX_free() frees the given context I<ctx>.
 If the argument is NULL, nothing is done.
 
@@ -110,6 +120,8 @@ I<ctx> with a encoder, to be used to encode an input object.
 OSSL_ENCODER_CTX_add_extra() finds encoders that further encodes output
 from already added encoders, and adds them as well.  This is used to build
 encoder chains.
+
+OSSL_ENCODER_CTX_set_selection() sets what should be included in the output.
 
 OSSL_ENCODER_CTX_set_output_type() sets the ending output type.  This must
 be specified, and determines if a complete encoder chain is available.
@@ -180,9 +192,20 @@ OSSL_ENCODER_CTX_set_params() returns 1 if all recognised parameters were
 valid, or 0 if one of them was invalid or caused some other failure in the
 implementation.
 
-OSSL_ENCODER_CTX_add_encoder(), OSSL_ENCODER_CTX_add_extra(),
-OSSL_ENCODER_CTX_set_construct(), OSSL_ENCODER_CTX_set_construct_data() and
-OSSL_ENCODER_CTX_set_cleanup() return 1 on success, or 0 on failure.
+OSSL_ENCODER_CTX_ctrl_string() returns 1 on success and 0 on error.
+
+OSSL_ENCODER_CTX_add_encoder(),
+OSSL_ENCODER_CTX_add_extra(),
+OSSL_ENCODER_CTX_set_cleanup(),
+OSSL_ENCODER_CTX_set_construct(),
+OSSL_ENCODER_CTX_set_construct_data(),
+OSSL_ENCODER_CTX_set_output_structure(),
+OSSL_ENCODER_CTX_set_output_type()
+and
+OSSL_ENCODER_CTX_set_selection()
+return 1 on success, or 0 on failure.
+They always fail for encoder contexts created in a frozen state via
+L<OSSL_ENCODER_CTX_new_for_pkey(3)>.
 
 OSSL_ENCODER_CTX_get_num_encoders() returns the current number of encoders.
 It returns 0 if I<ctx> is NULL.
@@ -201,6 +224,12 @@ output type.
 
 OSSL_ENCODER_INSTANCE_get_output_structure() returns a string with the name
 of the output structure.
+
+=head1 NOTES AND BUGS
+
+The chain mechanism in ENCODE is not yet completely implemented.
+It affects functions such as OSSL_ENCODER_CTX_add_extra and the
+inner processing loop.
 
 =head1 SEE ALSO
 

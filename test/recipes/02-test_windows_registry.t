@@ -42,8 +42,6 @@ plan tests => 3;
 
 my @expectossldir = run(cmd(["reg.exe", "query", $regkey, "/reg:32", "/t", "REG_EXPAND_SZ", "/v", "OPENSSLDIR"]), capture => 1);
 
-my @expectengdir = run(cmd(["reg.exe", "query", $regkey, "/reg:32", "/t", "REG_EXPAND_SZ", "/v", "ENGINESDIR"]), capture => 1);
-
 my @expectmoddir = run(cmd(["reg.exe", "query", $regkey, "/reg:32", "/t", "REG_EXPAND_SZ", "/v", "MODULESDIR"]), capture => 1);
 
 my @ossldir = run(app(["openssl", "version", "-d"]), capture => 1);
@@ -58,18 +56,6 @@ $expect =~ s/ .*$//;
 $actual =~ s/OPENSSLDIR: *//;
 
 ok(grep(/$expect/,$actual), "Confirming version output for openssldir from registry");
-
-my @osslengineout = run(app(["openssl", "version", "-e"]), capture => 1);
-
-$expect = "@expectengdir";
-$actual = "@osslengineout";
-$expect =~ s/HKEY_LOCAL_MACHINE.*\n*//;
-$expect =~ s/\n//g;
-$expect =~ s/.*REG_EXPAND_SZ *//;
-$expect =~ s/ .*$//;
-$actual =~ s/ENGINESDIR: *//;
-
-ok(grep(/$expect/, $actual) == 1, "Confirming version output for enginesdir from registry");
 
 my @osslmoduleout = run(app(["openssl", "version", "-m"]), capture => 1);
 

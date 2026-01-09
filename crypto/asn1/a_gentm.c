@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,7 +22,7 @@ IMPLEMENT_ASN1_DUP_FUNCTION(ASN1_GENERALIZEDTIME)
 
 /* This is the primary function used to parse ASN1_GENERALIZEDTIME */
 static int asn1_generalizedtime_to_tm(struct tm *tm,
-                                      const ASN1_GENERALIZEDTIME *d)
+    const ASN1_GENERALIZEDTIME *d)
 {
     /* wrapper around ossl_asn1_time_to_tm */
     if (d->type != V_ASN1_GENERALIZEDTIME)
@@ -58,14 +58,14 @@ int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str)
 }
 
 ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,
-                                               time_t t)
+    time_t t)
 {
     return ASN1_GENERALIZEDTIME_adj(s, t, 0, 0);
 }
 
 ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s,
-                                               time_t t, int offset_day,
-                                               long offset_sec)
+    time_t t, int offset_day,
+    long offset_sec)
 {
     struct tm *ts;
     struct tm data;

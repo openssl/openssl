@@ -26,7 +26,7 @@ B<openssl> B<gendsa>
 [B<-verbose>]
 [B<-quiet>]
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<paramfile>]
 
 =head1 DESCRIPTION
@@ -71,8 +71,6 @@ be handy during batch scripts and pipelines.
 
 {- $OpenSSL::safe::opt_r_item -}
 
-{- $OpenSSL::safe::opt_engine_item -}
-
 =item I<paramfile>
 
 The DSA parameter file to use. The parameters in this file determine
@@ -99,7 +97,7 @@ L<openssl-rsa(1)>
 
 =head1 HISTORY
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

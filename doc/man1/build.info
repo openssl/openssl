@@ -18,7 +18,6 @@ DEPEND[openssl-dsa.pod]=../perlvars.pm
 DEPEND[openssl-ecparam.pod]=../perlvars.pm
 DEPEND[openssl-ec.pod]=../perlvars.pm
 DEPEND[openssl-enc.pod]=../perlvars.pm
-DEPEND[openssl-engine.pod]=../perlvars.pm
 DEPEND[openssl-errstr.pod]=../perlvars.pm
 DEPEND[openssl-fipsinstall.pod]=../perlvars.pm
 DEPEND[openssl-gendsa.pod]=../perlvars.pm

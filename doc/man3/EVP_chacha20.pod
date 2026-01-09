@@ -36,7 +36,7 @@ With an initial counter of 42 (2a in hex) would be expressed as:
 Authenticated encryption with ChaCha20-Poly1305. Like EVP_chacha20(), the key
 is 256 bits and the IV is 96 bits. This supports additional authenticated data
 (AAD) and produces a 128-bit authentication tag. See the
-L<EVP_EncryptInit(3)/AEAD Interface> section for more information.
+L<EVP_EncryptInit(3)/AEAD INTERFACE> section for more information.
 
 =back
 
@@ -53,14 +53,12 @@ uses a 32 bit counter and a 96 bit nonce for the IV.
 =head1 RETURN VALUES
 
 These functions return an B<EVP_CIPHER> structure that contains the
-implementation of the symmetric cipher. See L<EVP_CIPHER_meth_new(3)> for
-details of the B<EVP_CIPHER> structure.
+implementation of the symmetric cipher.
 
 =head1 SEE ALSO
 
 L<evp(7)>,
-L<EVP_EncryptInit(3)>,
-L<EVP_CIPHER_meth_new(3)>
+L<EVP_EncryptInit(3)>
 
 =head1 COPYRIGHT
 

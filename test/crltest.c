@@ -270,64 +270,105 @@ static const char **unknown_critical_crls[] = {
     kUnknownCriticalCRL, kUnknownCriticalCRL2
 };
 
+/*
+ * RFC 5280 states that only CRL files with the Indirect CRL flag set to True in
+ * the IDP extension require the certificate_issuer extension.
+ * https://github.com/openssl/openssl/issues/27465
+ */
+
+static const char *kCertIssuerNoIDPCRL[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIIDBDCCAewCAQEwDQYJKoZIhvcNAQELBQAweTELMAkGA1UEBhMCVVMxEzARBgNV\n",
+    "BAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xEzARBgNVBAoM\n",
+    "Ck15IENvbXBhbnkxEzARBgNVBAMMCk15IFJvb3QgQ0ExEzARBgNVBAsMCk15IFJv\n",
+    "b3QgQ0EXDTI1MDEwMTAwMDAwMFoXDTI1MTIwMTAwMDAwMFowgf8wJQIUHIACLvgf\n",
+    "JAXulqYS3LYf4KxwHl4XDTI1MDQxNzEwMTY1MVowgdUCEQCMuBk+zOZx7AAAAABY\n",
+    "LIp6Fw0yNTAzMDQwMDAwMDBaMIGwMAoGA1UdFQQDCgEEMBgGA1UdGAQRGA8yMDI1\n",
+    "MDMxNDAwMDAwMFowgYcGA1UdHQEB/wR9MHukeTB3MQswCQYDVQQGDAJVTjEPMA0G\n",
+    "A1UECAwGTXkgU1QxMRUwEwYDVQQHDAxNWSBMb2NhbGl0eTExETAPBgNVBAoTCE15\n",
+    "IFVuaXQxMREwDwYDVQQLDAhNeSBVbml0MTEaMBgGA1UEAwwRd3d3Lm15Y29tcGFu\n",
+    "eS5jb22gPTA7MBgGA1UdFAQRAg8Zz//e2nTt8vakRgzO4UAwHwYDVR0jBBgwFoAU\n",
+    "12GJH5OWi3ZUFunld9x8t2UbgCQwDQYJKoZIhvcNAQELBQADggEBAFOSlDm/mLRm\n",
+    "YnnKJr4lZb6HzjY3KvJ/p//uIh9/OOOGBlVNF+wwrCi/JtPMY/N29DHH17l6dV9d\n",
+    "hmyeg/8KScZUKxvDGyQxkd3sKrK/nahjmcLR5FGx5sqhnBUl7wzcdgObey5pAwYv\n",
+    "azVKH4EkKJ5KE/a9sGgxiAXHp8anSu8xvmqjSA6M9mS1X643QvCsPDdGHWD2iHom\n",
+    "0/FegR60yNqYaMERJz0jJv8SJ3Co38TlhH/Zr+N86RLYj3tPOsxcY5K1P8VZVPV/\n",
+    "DxVqhesv7EaeiXDhiSTFcRXytqOQX3wju4RdxiyqMd4iT98N8nTxRdbBo4EVQKql\n",
+    "PNhJBxQG0VQ=\n",
+    NULL
+};
+
+/*
+ * CRLs with an invalid Invalidity Date.
+ * https://github.com/openssl/openssl/issues/27445
+ */
+
+static const char *kInvalidDateMM[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICwDCCAagCAQEwDQYJKoZIhvcNAQELBQAweTELMAkGA1UEBhMCVVMxEzARBgNV\n",
+    "BAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xEzARBgNVBAoM\n",
+    "Ck15IENvbXBhbnkxEzARBgNVBAMMCk15IFJvb3QgQ0ExEzARBgNVBAsMCk15IFJv\n",
+    "b3QgQ0EXDTI1MDEwMTAwMDAwMFoXDTI1MTIwMTAwMDAwMFowgbswJQIUHIACLvgf\n",
+    "JAXulqYS3LYf4KxwHl4XDTI1MDQxNzEwMTY1MVowSAIRAIy4GT7M5nHsAAAAAFgs\n",
+    "inoXDTI1MDMwNDAwMDAwMFowJDAKBgNVHRUEAwoBADAWBgNVHRgEDxgNMjAxMTEz\n",
+    "MTIyNDQ2WjBIAhEAjLgZPszmcewAAAAAWCyKehcNMjUwMzA0MDAwMDAwWjAkMAoG\n",
+    "A1UdFQQDCgEEMBYGA1UdGAQPGA0yMDEyMTMxMjI1NDdaoD0wOzAYBgNVHRQEEQIP\n",
+    "Gc//3tp07fL2pEYMzuFAMB8GA1UdIwQYMBaAFNdhiR+Tlot2VBbp5XfcfLdlG4Ak\n",
+    "MA0GCSqGSIb3DQEBCwUAA4IBAQCXPgi5aD+9nPVYmpebHQHeyZgyj5DWf+Jhb0iT\n",
+    "ljjOVLht83c59eCH2bsi+ZiGSI7d6nPdqP5PL0sX2Pp1NBEJk3LanlTXdmJbhEzV\n",
+    "uTEQPgtHt2fFHVLDbFatQhTpXt+wXTahogE1oRleunG2nYzSuDBUQHKj+2VEhPxh\n",
+    "ghMLkp3ZM59SJUp8MPWLLjoGtHsIYBHlw6clnq/7tmuzDYBZPerW2gMPjKuywSYj\n",
+    "pcWJOYTFzeOrEW5wRHVMs0jDwaOOeJNlRHEJ19SsGTDSNPTk8n3OwTKSOaJ+Y9M0\n",
+    "O2p9+7c2oIK6AnLuVNTyiBtEqMvukBkHT8PPPIpsJrzGUTj6\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+static const char *kInvalidDateSS[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICdTCCAV0CAQEwDQYJKoZIhvcNAQELBQAweTELMAkGA1UEBhMCVVMxEzARBgNV\n",
+    "BAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xEzARBgNVBAoM\n",
+    "Ck15IENvbXBhbnkxEzARBgNVBAMMCk15IFJvb3QgQ0ExEzARBgNVBAsMCk15IFJv\n",
+    "b3QgQ0EXDTI1MDEwMTAwMDAwMFoXDTI1MTIwMTAwMDAwMFowcTAlAhQcgAIu+B8k\n",
+    "Be6WphLcth/grHAeXhcNMjUwNDE3MTAxNjUxWjBIAhEAjLgZPszmcewAAAAAWCyK\n",
+    "ehcNMjUwMzA0MDAwMDAwWjAkMAoGA1UdFQQDCgEFMBYGA1UdGAQPGA0yMDI0MDgy\n",
+    "MTAwMDBaoD0wOzAYBgNVHRQEEQIPGc//3tp07fL2pEYMzuFAMB8GA1UdIwQYMBaA\n",
+    "FNdhiR+Tlot2VBbp5XfcfLdlG4AkMA0GCSqGSIb3DQEBCwUAA4IBAQCl9pd3BaSn\n",
+    "crbjvcjLZH0nomP8ipuez5+eTYSdb3Tpams7/70l/YrDZnR633LJLWKOTJpkP8DA\n",
+    "2e9FWVY086enUy3AxAzsAEpnFeuACPLqqGAAgOGy/Ad6gIwR3CK4vcF+SfSHNvh0\n",
+    "50305mFrur737C3yaC1MALqkMOPeZYIm+loKK8Q3qmk2dbt5Vj4hdi09tsti3Wl+\n",
+    "SoR94psjlmzgi3/+Wf5Ubdo9LhyXjjGlx/oZm+Y55Ti30NC4HuAA7UsWLwcaD23T\n",
+    "fLmUgatPdqozdGKtK0PsuxH2sfPaVnWQExkTBysZV4iQ7OvcadhShLyjwvGHT69D\n",
+    "EK028LrNrWTA\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+static const char *kInvalidDateUTC[] = {
+
+    "-----BEGIN X509 CRL-----\n",
+    "MIICdTCCAV0CAQEwDQYJKoZIhvcNAQELBQAweTELMAkGA1UEBhMCVVMxEzARBgNV\n",
+    "BAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xEzARBgNVBAoM\n",
+    "Ck15IENvbXBhbnkxEzARBgNVBAMMCk15IFJvb3QgQ0ExEzARBgNVBAsMCk15IFJv\n",
+    "b3QgQ0EXDTI1MDEwMTAwMDAwMFoXDTI1MTIwMTAwMDAwMFowcTAlAhQcgAIu+B8k\n",
+    "Be6WphLcth/grHAeXhcNMjUwNDE3MTAxNjUxWjBIAhEAjLgZPszmcewAAAAAWCyK\n",
+    "ehcNMjUwMzA0MDAwMDAwWjAkMAoGA1UdFQQDCgEEMBYGA1UdGAQPFw0yNDExMTQw\n",
+    "NjQ0MDBaoD0wOzAYBgNVHRQEEQIPGc//3tp07fL2pEYMzuFAMB8GA1UdIwQYMBaA\n",
+    "FNdhiR+Tlot2VBbp5XfcfLdlG4AkMA0GCSqGSIb3DQEBCwUAA4IBAQDKX5PynQJ8\n",
+    "EHENKO7avhGO2z/lz/7nU76tbkGVZHgS/Vufsr/x934sRTBxkGdE8COU67FiU+Yx\n",
+    "dO2yfPjHqgoxDlxXTrI71lElSCMURDY1vR/7cHhlbQlr/TXW4vLBnwAsXYx6gjV7\n",
+    "nHxvTwvb6DE5VXN7CrWfQ+UpVpE/OymjDVcPBBp5mMKvac4PaNdlGU3BcRGx+6iH\n",
+    "/CRNHU3fgOi37KqQ3rEZBRN1CI5JX7gFf6fCFRJNFnWez65FoHkA0L/J52y6QLdm\n",
+    "KPHBluIk4UD6eeZNDAC1keYDfIsY1fDvPm4W1Hd0J5QgjKcxFXK8qRi7BPy3UZjw\n",
+    "yYUQ4YV+e1Je\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
 static X509 *test_root = NULL;
 static X509 *test_leaf = NULL;
 static X509 *test_root2 = NULL;
 static X509 *test_leaf2 = NULL;
-
-/*
- * Glue an array of strings together.  Return a BIO and put the string
- * into |*out| so we can free it.
- */
-static BIO *glue2bio(const char **pem, char **out)
-{
-    size_t s = 0;
-
-    *out = glue_strings(pem, &s);
-    return BIO_new_mem_buf(*out, (int)s);
-}
-
-/*
- * Create a CRL from an array of strings.
- */
-static X509_CRL *CRL_from_strings(const char **pem)
-{
-    X509_CRL *crl;
-    char *p;
-    BIO *b = glue2bio(pem, &p);
-
-    if (b == NULL) {
-        OPENSSL_free(p);
-        return NULL;
-    }
-
-    crl = PEM_read_bio_X509_CRL(b, NULL, NULL, NULL);
-
-    OPENSSL_free(p);
-    BIO_free(b);
-    return crl;
-}
-
-/*
- * Create an X509 from an array of strings.
- */
-static X509 *X509_from_strings(const char **pem)
-{
-    X509 *x;
-    char *p;
-    BIO *b = glue2bio(pem, &p);
-
-    if (b == NULL) {
-        OPENSSL_free(p);
-        return NULL;
-    }
-
-    x = PEM_read_bio_X509(b, NULL, NULL, NULL);
-
-    OPENSSL_free(p);
-    BIO_free(b);
-    return x;
-}
 
 /*
  * Verify |leaf| certificate (chained up to |root|).  |crls| if
@@ -336,7 +377,7 @@ static X509 *X509_from_strings(const char **pem)
  * Returns a value from X509_V_ERR_xxx or X509_V_OK.
  */
 static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
-                  unsigned long flags, time_t verification_time)
+    unsigned long flags, time_t verification_time)
 {
     X509_STORE_CTX *ctx = X509_STORE_CTX_new();
     X509_STORE *store = X509_STORE_new();
@@ -426,11 +467,22 @@ static int test_basic_crl(void)
     r = TEST_ptr(basic_crl)
         && TEST_ptr(revoked_crl)
         && TEST_int_eq(verify(test_leaf, test_root,
-                              make_CRL_stack(basic_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME), X509_V_OK)
+                           make_CRL_stack(basic_crl, NULL),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+            X509_V_OK)
         && TEST_int_eq(verify(test_leaf, test_root,
-                              make_CRL_stack(basic_crl, revoked_crl),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME), X509_V_ERR_CERT_REVOKED);
+                           make_CRL_stack(basic_crl, revoked_crl),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+            X509_V_ERR_CERT_REVOKED)
+        && TEST_int_eq(verify(test_leaf, test_root,
+                           make_CRL_stack(basic_crl, revoked_crl),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME2),
+            X509_V_ERR_CRL_HAS_EXPIRED)
+        && TEST_int_eq(verify(test_leaf, test_root,
+                           make_CRL_stack(basic_crl, revoked_crl),
+                           X509_V_FLAG_CRL_CHECK, 0),
+            X509_V_ERR_CRL_NOT_YET_VALID);
+
     if (r) {
         X509_CRL_get0_signature(basic_crl, NULL, &alg);
         tbsalg = X509_CRL_get0_tbs_sigalg(basic_crl);
@@ -447,8 +499,8 @@ static int test_basic_crl(void)
 static int test_no_crl(void)
 {
     return TEST_int_eq(verify(test_leaf, test_root, NULL,
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME),
-                       X509_V_ERR_UNABLE_TO_GET_CRL);
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+        X509_V_ERR_UNABLE_TO_GET_CRL);
 }
 
 static int test_bad_issuer_crl(void)
@@ -458,9 +510,9 @@ static int test_bad_issuer_crl(void)
 
     r = TEST_ptr(bad_issuer_crl)
         && TEST_int_eq(verify(test_leaf, test_root,
-                              make_CRL_stack(bad_issuer_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME),
-                       X509_V_ERR_UNABLE_TO_GET_CRL);
+                           make_CRL_stack(bad_issuer_crl, NULL),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+            X509_V_ERR_UNABLE_TO_GET_CRL);
     X509_CRL_free(bad_issuer_crl);
     return r;
 }
@@ -472,9 +524,9 @@ static int test_crl_empty_idp(void)
 
     r = TEST_ptr(empty_idp_crl)
         && TEST_int_eq(verify(test_leaf2, test_root2,
-                              make_CRL_stack(empty_idp_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME2),
-                       X509_V_ERR_UNABLE_TO_GET_CRL);
+                           make_CRL_stack(empty_idp_crl, NULL),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME2),
+            X509_V_ERR_UNABLE_TO_GET_CRL);
     X509_CRL_free(empty_idp_crl);
     return r;
 }
@@ -486,8 +538,9 @@ static int test_known_critical_crl(void)
 
     r = TEST_ptr(known_critical_crl)
         && TEST_int_eq(verify(test_leaf, test_root,
-                              make_CRL_stack(known_critical_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME), X509_V_OK);
+                           make_CRL_stack(known_critical_crl, NULL),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+            X509_V_OK);
     X509_CRL_free(known_critical_crl);
     return r;
 }
@@ -499,9 +552,9 @@ static int test_unknown_critical_crl(int n)
 
     r = TEST_ptr(unknown_critical_crl)
         && TEST_int_eq(verify(test_leaf, test_root,
-                              make_CRL_stack(unknown_critical_crl, NULL),
-                              X509_V_FLAG_CRL_CHECK, PARAM_TIME),
-                       X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION);
+                           make_CRL_stack(unknown_critical_crl, NULL),
+                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
+            X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION);
     X509_CRL_free(unknown_critical_crl);
     return r;
 }
@@ -534,30 +587,134 @@ static int test_reuse_crl(int idx)
     switch (idx) {
     case 0: /* valid PEM + invalid DER */
         if (!TEST_ptr_null(result)
-                || !TEST_ptr_null(reused_crl))
+            || !TEST_ptr_null(reused_crl))
             goto err;
         break;
     case 1: /* invalid PEM */
         if (!TEST_ptr_null(result)
-                || !TEST_ptr(reused_crl))
+            || !TEST_ptr(reused_crl))
             goto err;
         break;
     case 2:
         if (!TEST_ptr(result)
-                || !TEST_ptr(reused_crl)
-                || !TEST_ptr_eq(result, reused_crl))
+            || !TEST_ptr(reused_crl)
+            || !TEST_ptr_eq(result, reused_crl))
             goto err;
         break;
     }
 
     r = 1;
 
- err:
+err:
     OPENSSL_free(p);
     BIO_free(b);
     X509_CRL_free(reused_crl);
     X509_CRL_free(addref_crl);
     return r;
+}
+
+/*
+ * Validation to ensure Certificate Issuer extensions in CRL entries only appear
+ * when the Indirect CRL flag is TRUE in the Issuing Distribution Point (IDP)
+ * extension, as required by RFC 5280 section 5.3.3.
+ */
+
+static int test_crl_cert_issuer_ext(void)
+{
+    X509_CRL *crl = CRL_from_strings(kCertIssuerNoIDPCRL);
+    int test = TEST_ptr_null(crl);
+
+    X509_CRL_free(crl);
+    return test;
+}
+
+/*
+ * This function clears the error stack before parsing and delegates the actual
+ * decoding to CRL_from_strings().
+ */
+static X509_CRL *crl_clear_err_parse(const char **pem)
+{
+    ERR_clear_error();
+    return CRL_from_strings(pem);
+}
+
+static int test_crl_date_invalid(void)
+{
+    X509_CRL *tmm = NULL, *tss = NULL, *utc = NULL;
+    int test = 0;
+
+    test = TEST_ptr_null((tmm = crl_clear_err_parse(kInvalidDateMM)))
+        && TEST_true(err_chk(ERR_LIB_ASN1, ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT))
+        && TEST_ptr_null((tss = crl_clear_err_parse(kInvalidDateSS)))
+        && TEST_true(err_chk(ERR_LIB_ASN1, ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT))
+        && TEST_ptr_null((utc = crl_clear_err_parse(kInvalidDateUTC)))
+        && TEST_true(err_chk(ERR_LIB_ASN1, ASN1_R_WRONG_TAG));
+
+    X509_CRL_free(tmm);
+    X509_CRL_free(utc);
+    X509_CRL_free(tss);
+    return test;
+}
+
+/*
+ * Test to make sure X509_verify_cert sets the issuer, reasons, and
+ * CRL score of the CRLs it gets from X509_STORE_CTX->get_crl
+ */
+
+static int get_crl_fn(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x)
+{
+    *crl = CRL_from_strings(kBasicCRL);
+    return 1;
+}
+
+static int test_get_crl_fn_score(void)
+{
+    X509_STORE_CTX *ctx = X509_STORE_CTX_new();
+    X509_STORE *store = X509_STORE_new();
+    X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_new();
+    STACK_OF(X509) *roots = sk_X509_new_null();
+
+    int status = X509_V_ERR_UNSPECIFIED;
+
+    if (!TEST_ptr(ctx)
+        || !TEST_ptr(store)
+        || !TEST_ptr(param)
+        || !TEST_ptr(roots))
+        goto err;
+
+    /* Create a stack; upref the cert because we free it below. */
+    if (!TEST_true(X509_up_ref(test_root)))
+        goto err;
+    if (!TEST_true(sk_X509_push(roots, test_root))) {
+        X509_free(test_root);
+        goto err;
+    }
+    if (!TEST_true(X509_STORE_CTX_init(ctx, store, test_leaf, NULL)))
+        goto err;
+
+    X509_STORE_CTX_set0_trusted_stack(ctx, roots);
+    X509_STORE_CTX_set_get_crl(ctx, &get_crl_fn);
+    X509_VERIFY_PARAM_set_time(param, PARAM_TIME);
+    if (!TEST_long_eq((long)X509_VERIFY_PARAM_get_time(param),
+            (long)PARAM_TIME))
+        goto err;
+    X509_VERIFY_PARAM_set_depth(param, 16);
+    X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_CRL_CHECK);
+    X509_STORE_CTX_set0_param(ctx, param);
+    param = NULL;
+
+    ERR_clear_error();
+    status = X509_verify_cert(ctx) == 1 ? X509_V_OK
+                                        : X509_STORE_CTX_get_error(ctx);
+
+    TEST_int_eq(status, X509_V_OK);
+
+err:
+    OSSL_STACK_OF_X509_free(roots);
+    X509_VERIFY_PARAM_free(param);
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    return status == X509_V_OK;
 }
 
 int setup_tests(void)
@@ -573,8 +730,12 @@ int setup_tests(void)
     ADD_TEST(test_bad_issuer_crl);
     ADD_TEST(test_crl_empty_idp);
     ADD_TEST(test_known_critical_crl);
+    ADD_TEST(test_crl_cert_issuer_ext);
+    ADD_TEST(test_crl_date_invalid);
+    ADD_TEST(test_get_crl_fn_score);
     ADD_ALL_TESTS(test_unknown_critical_crl, OSSL_NELEM(unknown_critical_crls));
     ADD_ALL_TESTS(test_reuse_crl, 6);
+
     return 1;
 }
 

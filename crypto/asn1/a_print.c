@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -77,8 +77,7 @@ int ASN1_STRING_print(BIO *bp, const ASN1_STRING *v)
     n = 0;
     p = (const char *)v->data;
     for (i = 0; i < v->length; i++) {
-        if ((p[i] > '~') || ((p[i] < ' ') &&
-                             (p[i] != '\n') && (p[i] != '\r')))
+        if ((p[i] > '~') || ((p[i] < ' ') && (p[i] != '\n') && (p[i] != '\r')))
             buf[n] = '.';
         else
             buf[n] = p[i];

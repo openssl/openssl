@@ -1,5 +1,5 @@
 #
-# Copyright 2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -115,20 +115,20 @@ Output = dc2a4459e7369633a52b1bf277839a00201009a3efbf3ecb69bea2186c26b58909351fc
 
 # Verify test
 FIPSversion = >=3.4.0
-Verify-Message = ED25519:ED25519-1-PUBLIC
+Verify-Message-Public = ED25519:ED25519-1-PUBLIC
 Input = ""
 Output = e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b
 
 # Corrupted input
 FIPSversion = >=3.4.0
-Verify-Message = ED25519:ED25519-1-PUBLIC
+Verify-Message-Public = ED25519:ED25519-1-PUBLIC
 Input = "bad"
 Output = e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b
 Result = VERIFY_ERROR
 
 # Corrupted signature
 FIPSversion = >=3.4.0
-Verify-Message = ED25519:ED25519-1-PUBLIC
+Verify-Message-Public = ED25519:ED25519-1-PUBLIC
 Input = ""
 Output = e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100c
 Result = VERIFY_ERROR
@@ -144,14 +144,14 @@ Input = ""
 Output = e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b
 
 FIPSversion = >=3.4.0
-Verify-Message = ED25519:ED25519-1-PUBLIC-Raw
+Verify-Message-Public = ED25519:ED25519-1-PUBLIC-Raw
 Input = ""
 Output = e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b
 
 #Signature maleability test.
 #Same as the verify operation above but with the order added to s
 FIPSversion = >=3.4.0
-Verify-Message = ED25519:ED25519-1-PUBLIC-Raw
+Verify-Message-Public = ED25519:ED25519-1-PUBLIC-Raw
 Input = ""
 Output = e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901554c8c7872aa064e049dbb3013fbf29380d25bf5f0595bbe24655141438e7a101b
 Result = VERIFY_ERROR
@@ -325,20 +325,20 @@ Output = e301345a41a39a4d72fff8df69c98075a0cc082b802fc9b2b6bc503f926b65bddf7f4c8
 
 # Verify test
 FIPSversion = >=3.4.0
-Verify-Message = ED448:ED448-1-PUBLIC
+Verify-Message-Public = ED448:ED448-1-PUBLIC
 Input = ""
 Output = 533a37f6bbe457251f023c0d88f976ae2dfb504a843e34d2074fd823d41a591f2b233f034f628281f2fd7a22ddd47d7828c59bd0a21bfd3980ff0d2028d4b18a9df63e006c5d1c2d345b925d8dc00b4104852db99ac5c7cdda8530a113a0f4dbb61149f05a7363268c71d95808ff2e652600
 
 # Corrupted input
 FIPSversion = >=3.4.0
-Verify-Message = ED448:ED448-1-PUBLIC
+Verify-Message-Public = ED448:ED448-1-PUBLIC
 Input = "bad"
 Output = 533a37f6bbe457251f023c0d88f976ae2dfb504a843e34d2074fd823d41a591f2b233f034f628281f2fd7a22ddd47d7828c59bd0a21bfd3980ff0d2028d4b18a9df63e006c5d1c2d345b925d8dc00b4104852db99ac5c7cdda8530a113a0f4dbb61149f05a7363268c71d95808ff2e652600
 Result = VERIFY_ERROR
 
 # Corrupted signature
 FIPSversion = >=3.4.0
-Verify-Message = ED448:ED448-1-PUBLIC
+Verify-Message-Public = ED448:ED448-1-PUBLIC
 Input = ""
 Output = 533a37f6bbe457251f023c0d88f976ae2dfb504a843e34d2074fd823d41a591f2b233f034f628281f2fd7a22ddd47d7828c59bd0a21bfd3980ff0d2028d4b18a9df63e006c5d1c2d345b925d8dc00b4104852db99ac5c7cdda8530a113a0f4dbb61149f05a7363268c71d95808ff2e652601
 Result = VERIFY_ERROR
@@ -350,14 +350,14 @@ Input = ""
 Output = 533a37f6bbe457251f023c0d88f976ae2dfb504a843e34d2074fd823d41a591f2b233f034f628281f2fd7a22ddd47d7828c59bd0a21bfd3980ff0d2028d4b18a9df63e006c5d1c2d345b925d8dc00b4104852db99ac5c7cdda8530a113a0f4dbb61149f05a7363268c71d95808ff2e652600
 
 FIPSversion = >=3.4.0
-Verify-Message = ED448:ED448-1-PUBLIC-Raw
+Verify-Message-Public = ED448:ED448-1-PUBLIC-Raw
 Input = ""
 Output = 533a37f6bbe457251f023c0d88f976ae2dfb504a843e34d2074fd823d41a591f2b233f034f628281f2fd7a22ddd47d7828c59bd0a21bfd3980ff0d2028d4b18a9df63e006c5d1c2d345b925d8dc00b4104852db99ac5c7cdda8530a113a0f4dbb61149f05a7363268c71d95808ff2e652600
 
 #Signature malelability test.
 #Same as the verify operation above but with the order added to s
 FIPSversion = >=3.4.0
-Verify-Message = ED448:ED448-1-PUBLIC-Raw
+Verify-Message-Public = ED448:ED448-1-PUBLIC-Raw
 Input = ""
 Output = 533a37f6bbe457251f023c0d88f976ae2dfb504a843e34d2074fd823d41a591f2b233f034f628281f2fd7a22ddd47d7828c59bd0a21bfd3980f25278d3667403c14bcec5f9cfde9955ebc8333c0ae78fc86e518317c5c7cdda8530a113a0f4dbb61149f05a7363268c71d95808ff2e656600
 Result = VERIFY_ERROR
@@ -442,7 +442,7 @@ PublicKeyRaw = EDDSA-TV-6-PUBLIC-Raw:ED25519:dfc9425e4f968f7f0c29f0259cf5f9aed68
 
 PrivPubKeyPair = EDDSA-TV-6-Raw:EDDSA-TV-6-PUBLIC-Raw
 
-FIPSversion = >=3.4.0
+Availablein = default
 Sign-Message = ED25519ctx:EDDSA-TV-6-Raw
 Input = f726936d19c800494e3fdaff20b276a8
 Ctrl = hexcontext-string:666f6f
@@ -456,7 +456,7 @@ PublicKeyRaw = EDDSA-TV-7-PUBLIC-Raw:ED25519:dfc9425e4f968f7f0c29f0259cf5f9aed68
 
 PrivPubKeyPair = EDDSA-TV-7-Raw:EDDSA-TV-7-PUBLIC-Raw
 
-FIPSversion = >=3.4.0
+Availablein = default
 Sign-Message = Ed25519ctx:EDDSA-TV-7-Raw
 Input = f726936d19c800494e3fdaff20b276a8
 Ctrl = hexcontext-string:626172
@@ -470,7 +470,7 @@ PublicKeyRaw = EDDSA-TV-8-PUBLIC-Raw:ED25519:dfc9425e4f968f7f0c29f0259cf5f9aed68
 
 PrivPubKeyPair = EDDSA-TV-8-Raw:EDDSA-TV-8-PUBLIC-Raw
 
-FIPSversion = >=3.4.0
+Availablein = default
 Sign-Message = Ed25519ctx:EDDSA-TV-8-Raw
 Input = 508e9e6882b979fea900f62adceaca35
 Ctrl = hexcontext-string:666f6f
@@ -484,7 +484,7 @@ PublicKeyRaw = EDDSA-TV-9-PUBLIC-Raw:ED25519:0f1d1274943b91415889152e893d80e9327
 
 PrivPubKeyPair = EDDSA-TV-9-Raw:EDDSA-TV-9-PUBLIC-Raw
 
-FIPSversion = >=3.4.0
+Availablein = default
 Sign-Message = Ed25519ctx:EDDSA-TV-9-Raw
 Input = f726936d19c800494e3fdaff20b276a8
 Ctrl = hexcontext-string:666f6f

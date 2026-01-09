@@ -1,4 +1,4 @@
-# Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -24,10 +24,11 @@ permissions:
   contents: read
 
 env:
-  opts: enable-rc5 enable-md2 enable-ssl3 enable-weak-ssl-ciphers enable-zlib
+  opts: enable-rc5 enable-md2 enable-weak-ssl-ciphers enable-zlib
 
 jobs:
   fips-releases:
+    if: github.repository == 'openssl/openssl'
     strategy:
       matrix:
         release: [
@@ -96,13 +97,14 @@ jobs:
                                                  -providers
         working-directory: ${{ matrix.release.dir }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.release.tgz }}
           path: ${{ matrix.release.tgz }}
           retention-days: 7
 
   development-branches:
+    if: github.repository == 'openssl/openssl'
     strategy:
       matrix:
         branch: [
@@ -116,11 +118,6 @@ jobs:
             name: openssl-3.0,
             dir: branch-3.0,
             tgz: branch-3.0.tar.gz,
-            extra_config: "",
-          }, {
-            name: openssl-3.2,
-            dir: branch-3.2,
-            tgz: branch-3.2.tar.gz,
             extra_config: "",
           }, {
             name: openssl-3.3,
@@ -138,6 +135,11 @@ jobs:
             tgz: branch-3.5.tar.gz,
             extra_config: "",
           }, {
+            name: openssl-3.6,
+            dir: branch-3.6,
+            tgz: branch-3.6.tar.gz,
+            extra_config: "enable-lms",
+          }, {
             name: master,
             dir: branch-master,
             tgz: branch-master.tar.gz,
@@ -147,11 +149,12 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           path: ${{ matrix.branch.dir }}
           repository: openssl/openssl
           ref: ${{ matrix.branch.name }}
+          persist-credentials: false
       - name: localegen
         run: sudo locale-gen tr_TR.UTF-8
 
@@ -191,13 +194,14 @@ jobs:
         run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
         working-directory: ${{ matrix.branch.dir }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.branch.tgz }}
           path: ${{ matrix.branch.tgz }}
           retention-days: 7
 
   cross-testing:
+    if: github.repository == 'openssl/openssl'
     needs: [fips-releases, development-branches]
     runs-on: ubuntu-latest
     strategy:
@@ -209,47 +213,47 @@ jobs:
         # Note that releases are not used as a test environment for
         # later providers.  Problems in these situations ought to be
         # caught by cross branch testing before the release.
-        tree_a: [ branch-master, branch-3.5, branch-3.4, branch-3.3,
-                  branch-3.2, branch-3.0,
+        tree_a: [ branch-master, branch-3.6, branch-3.5, branch-3.4, branch-3.3,
+                  branch-3.0,
                   openssl-3.0.0, openssl-3.0.8, openssl-3.0.9, openssl-3.1.2 ]
-        tree_b: [ branch-master, branch-3.5, branch-3.4, branch-3.3,
-                  branch-3.2, branch-3.0  ]
+        tree_b: [ branch-master, branch-3.6, branch-3.5, branch-3.4, branch-3.3,
+                  branch-3.0  ]
     steps:
       - name: early exit checks
         id: early_exit
         run: |
-          if [ "${{ matrix.tree_a }}" = "${{ matrix.tree_b }}" ];           \
-          then                                                              \
-            echo "Skipping because both are the same version";              \
-            exit 1;                                                         \
+          if [ "${{ matrix.tree_a }}" = "${{ matrix.tree_b }}" ]; then
+            echo "Skipping because both are the same version"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
-        continue-on-error: true
 
-      - uses: actions/download-artifact@v4.1.8
-        if: steps.early_exit.outcome == 'success'
+      - uses: actions/download-artifact@v6.0.0
+        if: steps.early_exit.outputs.skip != 'true'
         with:
           name: ${{ matrix.tree_a }}.tar.gz
       - name: unpack first build
-        if: steps.early_exit.outcome == 'success'
+        if: steps.early_exit.outputs.skip != 'true'
         run: tar xzf "${{ matrix.tree_a }}.tar.gz"
 
-      - uses: actions/download-artifact@v4.1.8
-        if: steps.early_exit.outcome == 'success'
+      - uses: actions/download-artifact@v6.0.0
+        if: steps.early_exit.outputs.skip != 'true'
         with:
           name: ${{ matrix.tree_b }}.tar.gz
       - name: unpack second build
-        if: steps.early_exit.outcome == 'success'
+        if: steps.early_exit.outputs.skip != 'true'
         run: tar xzf "${{ matrix.tree_b }}.tar.gz"
 
       - name: set up cross validation of FIPS from A with tree from B
-        if: steps.early_exit.outcome == 'success'
+        if: steps.early_exit.outputs.skip != 'true'
         run: |
           cp providers/fips.so ../${{ matrix.tree_b }}/providers/
           cp providers/fipsmodule.cnf ../${{ matrix.tree_b }}/providers/
         working-directory: ${{ matrix.tree_a }}
 
       - name: show module versions from cross validation
-        if: steps.early_exit.outcome == 'success'
+        if: steps.early_exit.outputs.skip != 'true'
         run: |
           ./util/wrap.pl -fips apps/openssl list -provider-path providers   \
                                                  -provider base             \
@@ -260,14 +264,14 @@ jobs:
         working-directory: ${{ matrix.tree_b }}
 
       - name: get cpu info
-        if: steps.early_exit.outcome == 'success'
+        if: steps.early_exit.outputs.skip != 'true'
         run: |
           cat /proc/cpuinfo
           ./util/opensslwrap.sh version -c
         working-directory: ${{ matrix.tree_b }}
 
       - name: run cross validation tests of FIPS from A with tree from B
-        if: steps.early_exit.outcome == 'success'
+        if: steps.early_exit.outputs.skip != 'true'
         run: |
           make test HARNESS_JOBS=${HARNESS_JOBS:-4}
         working-directory: ${{ matrix.tree_b }}

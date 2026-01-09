@@ -320,13 +320,11 @@ Specifies the number of times the DRBG has been seeded or reseeded.
 
 =item "properties" (B<OSSL_RAND_PARAM_PROPERTIES>) <UTF8 string>
 
-=item "mac" (B<OSSL_RAND_PARAM_MAC>) <UTF8 string>
-
 =item "digest" (B<OSSL_RAND_PARAM_DIGEST>) <UTF8 string>
 
 =item "cipher" (B<OSSL_RAND_PARAM_CIPHER>) <UTF8 string>
 
-For RAND implementations that use an underlying computation MAC, digest or
+For RAND implementations that use an underlying digest or
 cipher, these parameters set what the algorithm should be.
 
 The value is always the name of the intended algorithm,
@@ -414,7 +412,7 @@ The remaining functions were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

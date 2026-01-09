@@ -13,18 +13,25 @@ SSL_CTX_config, SSL_config - configure SSL_CTX or SSL structure
 
 =head1 DESCRIPTION
 
-The functions SSL_CTX_config() and SSL_config() configure an B<SSL_CTX> or
-B<SSL> structure using the configuration B<name>.
+The functions SSL_CTX_config() and SSL_config() apply additional configuration
+settings to an B<SSL_CTX> or B<SSL> structure using the configuration B<name>.
+The B<name> must match a parameter in the configuration file's B<ssl> module
+section, whose value is the name of another section with SSL configuration
+commands.
+See L<SSL_CONF_cmd(3)> for a description of the available commands.
 
 By calling SSL_CTX_config() or SSL_config() an application can perform many
 complex tasks based on the contents of the configuration file: greatly
-simplifying application configuration code. A degree of future proofing
-can also be achieved: an application can support configuration features
-in newer versions of OpenSSL automatically.
+simplifying application configuration code.
+Some future-proofing can be attained this way: the specified configuration
+section can specify settings supported by the run-time version of OpenSSL that
+were not known at the time the application code was written.
 
 A configuration file must have been previously loaded, for example using
-CONF_modules_load_file(). See L<config(5)> for details of the configuration
-file syntax.
+CONF_modules_load_file(3).
+See L<config(5)> for details of the configuration file syntax.
+In most applications the default B<openssl.cnf> file is loaded automatically as
+part of library initialisation.
 
 =head1 RETURN VALUES
 
@@ -33,46 +40,71 @@ occurred.
 
 =head1 EXAMPLES
 
-If the file "config.cnf" contains the following:
+If, for example, the loaded configuration file contains the following:
 
- testapp = test_sect
+ # Top level "default" section, if no application name was specified as part
+ # initialisation, it defaults to "openssl_conf".
+ openssl_conf = openssl_init
 
- [test_sect]
- # list of configuration modules
+ [openssl_init]
+ # SSL module initialisation
+ ssl_conf = ssl_init
 
- ssl_conf = ssl_sect
+ [ssl_init]
+ system_default = default_ssl_settings
+ tweaks_for_tls12 = tls12_custom_settings
+ tweaks_for_tls13 = tls13_custom_settings
 
- [ssl_sect]
- server = server_section
+ [default_ssl_settings]
+ MinProtocol = TLSv1.2
+ # Defaults are typically the wisest choice, override only with good cause.
+ MinProtocol = ...
+ Ciphers = ...
+ Groups = ...
+ SignatureAlgorithms = ...
 
- [server_section]
- RSA.Certificate = server-rsa.pem
- ECDSA.Certificate = server-ecdsa.pem
- Ciphers = ALL:!RC4
+ [tls12_custom_settings]
+ # Defaults are typically the wisest choice, override only with good cause.
+ MaxProtocol = TLSv1.2
+ ...
 
-An application could call:
+ [tls13_custom_settings]
+ # Defaults are typically the wisest choice, override only with good cause.
+ MinProtocol = TLSv1.3
+ ...
 
- if (CONF_modules_load_file("config.cnf", "testapp", 0) <= 0) {
-     fprintf(stderr, "Error processing config file\n");
+An application that wants to only use "TLS 1.2" might call:
+
+ /* Initialised per "system_default" settings */
+ if ((ctx = SSL_CTX_new(TLS_server_method())) == NULL) {
+     fprintf(stderr, "Error creating the SSL context.\n");
      goto err;
  }
 
- ctx = SSL_CTX_new(TLS_server_method());
-
- if (SSL_CTX_config(ctx, "server") == 0) {
-     fprintf(stderr, "Error configuring server.\n");
+ /*
+  * Further tweaks per the "ssl" module "tweaks_for_tls12" setting, i.e. the
+  * configuration file's "tls12_custom_settings" section.
+  */
+ if (SSL_CTX_config(ctx, "tweaks_for_tls12") == 0) {
+     fprintf(stderr, "Error applying 'tweaks_for_tls12' context configuration.\n");
      goto err;
  }
 
-In this example two certificates and the cipher list are configured without
-the need for any additional application code.
+The setting of the protocol version ceiling and any other settings relevant to
+TLS 1.2 are in the configuration file, and don't need to be hard-coded in the
+application.
+Similarly, using C<tweaks_for_tls13> as the configuration B<name> applies the
+corresponding settings from the "tls13_custom_settings" section (per the SSL
+module C<tweaks_for_tls13> parameter).
 
 =head1 SEE ALSO
 
 L<ssl(7)>,
 L<config(5)>,
 L<SSL_CONF_cmd(3)>,
-L<CONF_modules_load_file(3)>
+L<SSL_CTX_new(3)>,
+L<CONF_modules_load_file(3)>,
+L<OPENSSL_init_ssl(3)>
 
 =head1 HISTORY
 

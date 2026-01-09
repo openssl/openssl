@@ -113,8 +113,7 @@ If RSA-PSS is used and restrictions apply then the digest must match.
 
 EVP_DigestSignInit() works in the same way as EVP_DigestSignInit_ex()
 except that the I<mdname> parameter will be inferred from the supplied
-digest I<type>, and I<props> will be NULL. Where supplied the ENGINE I<e> will
-be used for the signing and digest algorithm implementations. I<e> may be NULL.
+digest I<type>, and I<props> will be NULL. I<e> B<must> be NULL.
 
 EVP_DigestSignUpdate() hashes I<cnt> bytes of data at I<d> into the
 signature context I<ctx>. This function can be called several times on the

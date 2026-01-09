@@ -10,11 +10,13 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
+#include <openssl/proverr.h>
 #include "crypto/lms.h"
 #include "internal/param_build_set.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "providers/implementations/keymgmt/lms_kmgmt.inc"
 
 static OSSL_FUNC_keymgmt_new_fn lms_new_key;
 static OSSL_FUNC_keymgmt_free_fn lms_free_key;
@@ -66,29 +68,28 @@ static int lms_match(const void *keydata1, const void *keydata2, int selection)
 static int lms_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
     LMS_KEY *key = keydata;
+    struct lms_import_st p;
 
-    if (!ossl_prov_is_running() || key == NULL)
+    if (!ossl_prov_is_running()
+        || key == NULL
+        || !lms_import_decoder(params, &p))
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
         return 0;
 
-    return ossl_lms_pubkey_from_params(params, key);
+    return ossl_lms_pubkey_from_params(p.pub, key);
 }
 
-static const OSSL_PARAM lms_key_types[] = {
-    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0),
-    OSSL_PARAM_END
-};
 static const OSSL_PARAM *lms_imexport_types(int selection)
 {
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        return lms_key_types;
+        return lms_import_list;
     return NULL;
 }
 
 static int lms_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
-                      void *cbarg)
+    void *cbarg)
 {
     LMS_KEY *lmskey = keydata;
     OSSL_PARAM_BLD *tmpl;
@@ -106,9 +107,9 @@ static int lms_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         return 0;
 
     if (!ossl_param_build_set_octet_string(tmpl, params,
-                                           OSSL_PKEY_PARAM_PUB_KEY,
-                                           lmskey->pub.encoded,
-                                           lmskey->pub.encodedlen))
+            OSSL_PKEY_PARAM_PUB_KEY,
+            lmskey->pub.encoded,
+            lmskey->pub.encodedlen))
         goto err;
 
     params = OSSL_PARAM_BLD_to_param(tmpl);
@@ -116,7 +117,7 @@ static int lms_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         goto err;
 
     ret = param_cb(params, cbarg);
-    OSSL_PARAM_free(params);
+    OSSL_PARAM_clear_free(params);
 err:
     OSSL_PARAM_BLD_free(tmpl);
     return ret;

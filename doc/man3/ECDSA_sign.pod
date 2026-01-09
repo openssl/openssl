@@ -70,9 +70,7 @@ ECDSA_do_verify() is similar to ECDSA_verify() except the signature is
 presented in the form of a pointer to an B<ECDSA_SIG> structure.
 
 The remaining functions utilise the internal I<kinv> and I<r> values used
-during signature computation. Most applications will never need to call these
-and some external ECDSA ENGINE implementations may not support them at all if
-either I<kinv> or I<r> is not NULL.
+during signature computation. Most applications will never need to call these.
 
 ECDSA_sign_setup() may be used to precompute parts of the signing operation.
 I<eckey> is the private EC key and I<ctx> is a pointer to B<BN_CTX> structure

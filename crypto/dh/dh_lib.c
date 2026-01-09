@@ -15,18 +15,16 @@
 
 #include <stdio.h>
 #include <openssl/bn.h>
-#ifndef FIPS_MODULE
-# include <openssl/engine.h>
-#endif
 #include <openssl/obj_mac.h>
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
+#include "internal/common.h"
 #include "crypto/evp.h"
 #include "crypto/dh.h"
 #include "dh_local.h"
 
-static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx);
+static DH *dh_new_intern(OSSL_LIB_CTX *libctx);
 
 #ifndef FIPS_MODULE
 int DH_set_method(DH *dh, const DH_METHOD *meth)
@@ -39,10 +37,6 @@ int DH_set_method(DH *dh, const DH_METHOD *meth)
     mtmp = dh->meth;
     if (mtmp->finish)
         mtmp->finish(dh);
-#ifndef OPENSSL_NO_ENGINE
-    ENGINE_finish(dh->engine);
-    dh->engine = NULL;
-#endif
     dh->meth = meth;
     if (meth->init)
         meth->init(dh);
@@ -53,25 +47,27 @@ const DH_METHOD *ossl_dh_get_method(const DH *dh)
 {
     return dh->meth;
 }
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 DH *DH_new(void)
 {
-    return dh_new_intern(NULL, NULL);
+    return dh_new_intern(NULL);
 }
-# endif
+#endif
 
 DH *DH_new_method(ENGINE *engine)
 {
-    return dh_new_intern(engine, NULL);
+    if (!ossl_assert(engine == NULL))
+        return NULL;
+    return dh_new_intern(NULL);
 }
 #endif /* !FIPS_MODULE */
 
 DH *ossl_dh_new_ex(OSSL_LIB_CTX *libctx)
 {
-    return dh_new_intern(NULL, libctx);
+    return dh_new_intern(libctx);
 }
 
-static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
+static DH *dh_new_intern(OSSL_LIB_CTX *libctx)
 {
     DH *ret = OPENSSL_zalloc(sizeof(*ret));
 
@@ -93,25 +89,6 @@ static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
 
     ret->libctx = libctx;
     ret->meth = DH_get_default_method();
-#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
-    ret->flags = ret->meth->flags;  /* early default init */
-    if (engine) {
-        if (!ENGINE_init(engine)) {
-            ERR_raise(ERR_LIB_DH, ERR_R_ENGINE_LIB);
-            goto err;
-        }
-        ret->engine = engine;
-    } else
-        ret->engine = ENGINE_get_default_DH();
-    if (ret->engine) {
-        ret->meth = ENGINE_get_DH(ret->engine);
-        if (ret->meth == NULL) {
-            ERR_raise(ERR_LIB_DH, ERR_R_ENGINE_LIB);
-            goto err;
-        }
-    }
-#endif
-
     ret->flags = ret->meth->flags;
 
 #ifndef FIPS_MODULE
@@ -128,7 +105,7 @@ static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
 
     return ret;
 
- err:
+err:
     DH_free(ret);
     return NULL;
 }
@@ -149,9 +126,6 @@ void DH_free(DH *r)
     if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
 #if !defined(FIPS_MODULE)
-# if !defined(OPENSSL_NO_ENGINE)
-    ENGINE_finish(r->engine);
-# endif
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, r, &r->ex_data);
 #endif
 
@@ -223,7 +197,7 @@ int DH_security_bits(const DH *dh)
 }
 
 void DH_get0_pqg(const DH *dh,
-                 const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
+    const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
 {
     ossl_ffc_params_get0_pqg(&dh->params, p, q, g);
 }
@@ -318,13 +292,6 @@ void DH_set_flags(DH *dh, int flags)
 {
     dh->flags |= flags;
 }
-
-#ifndef FIPS_MODULE
-ENGINE *DH_get0_engine(DH *dh)
-{
-    return dh->engine;
-}
-#endif /*FIPS_MODULE */
 
 FFC_PARAMS *ossl_dh_get0_params(DH *dh)
 {

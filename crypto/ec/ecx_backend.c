@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,15 +14,15 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #ifndef FIPS_MODULE
-# include <openssl/x509.h>
+#include <openssl/x509.h>
 #endif
 #include "crypto/ecx.h"
 #include "ecx_backend.h"
 
 /*
- * The intention with the "backend" source file is to offer backend support
- * for legacy backends (EVP_PKEY_ASN1_METHOD and EVP_PKEY_METHOD) and provider
- * implementations alike.
+ * The intention with the "backend" source file is to offer backend functions
+ * for legacy backends (EVP_PKEY_ASN1_METHOD) and provider implementations
+ * alike.
  */
 
 int ossl_ecx_public_from_private(ECX_KEY *key)
@@ -33,7 +33,7 @@ int ossl_ecx_public_from_private(ECX_KEY *key)
         break;
     case ECX_KEY_TYPE_ED25519:
         if (!ossl_ed25519_public_from_private(key->libctx, key->pubkey,
-                                              key->privkey, key->propq)) {
+                key->privkey, key->propq)) {
             ERR_raise(ERR_LIB_EC, EC_R_FAILED_MAKING_PUBLIC_KEY);
             return 0;
         }
@@ -43,7 +43,7 @@ int ossl_ecx_public_from_private(ECX_KEY *key)
         break;
     case ECX_KEY_TYPE_ED448:
         if (!ossl_ed448_public_from_private(key->libctx, key->pubkey,
-                                            key->privkey, key->propq)) {
+                key->privkey, key->propq)) {
             ERR_raise(ERR_LIB_EC, EC_R_FAILED_MAKING_PUBLIC_KEY);
             return 0;
         }
@@ -52,28 +52,23 @@ int ossl_ecx_public_from_private(ECX_KEY *key)
     return 1;
 }
 
-int ossl_ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
-                          int include_private)
+int ossl_ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM *param_pub_key,
+    const OSSL_PARAM *param_priv_key,
+    int include_private)
 {
     size_t privkeylen = 0, pubkeylen = 0;
-    const OSSL_PARAM *param_priv_key = NULL, *param_pub_key;
     unsigned char *pubkey;
 
     if (ecx == NULL)
         return 0;
 
-    param_pub_key = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
-    if (include_private)
-        param_priv_key =
-            OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
-
     if (param_pub_key == NULL && param_priv_key == NULL)
         return 0;
 
-    if (param_priv_key != NULL) {
+    if (include_private && param_priv_key != NULL) {
         if (!OSSL_PARAM_get_octet_string(param_priv_key,
-                                         (void **)&ecx->privkey, ecx->keylen,
-                                         &privkeylen))
+                (void **)&ecx->privkey, ecx->keylen,
+                &privkeylen))
             return 0;
         if (privkeylen != ecx->keylen) {
             /*
@@ -87,12 +82,11 @@ int ossl_ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
         }
     }
 
-
     pubkey = ecx->pubkey;
     if (param_pub_key != NULL
         && !OSSL_PARAM_get_octet_string(param_pub_key,
-                                        (void **)&pubkey,
-                                         sizeof(ecx->pubkey), &pubkeylen))
+            (void **)&pubkey,
+            sizeof(ecx->pubkey), &pubkeylen))
         return 0;
 
     if ((param_pub_key != NULL && pubkeylen != ecx->keylen))
@@ -152,9 +146,9 @@ err:
 
 #ifndef FIPS_MODULE
 ECX_KEY *ossl_ecx_key_op(const X509_ALGOR *palg,
-                         const unsigned char *p, int plen,
-                         int id, ecx_key_op_t op,
-                         OSSL_LIB_CTX *libctx, const char *propq)
+    const unsigned char *p, int plen,
+    int id, ecx_key_op_t op,
+    OSSL_LIB_CTX *libctx, const char *propq)
 {
     ECX_KEY *key = NULL;
     unsigned char *privkey, *pubkey;
@@ -221,13 +215,13 @@ ECX_KEY *ossl_ecx_key_op(const X509_ALGOR *palg,
     }
 
     return key;
- err:
+err:
     ossl_ecx_key_free(key);
     return NULL;
 }
 
 ECX_KEY *ossl_ecx_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
-                                 OSSL_LIB_CTX *libctx, const char *propq)
+    OSSL_LIB_CTX *libctx, const char *propq)
 {
     ECX_KEY *ecx = NULL;
     const unsigned char *p;
@@ -252,7 +246,7 @@ ECX_KEY *ossl_ecx_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
      * on its own.
      */
     ecx = ossl_ecx_key_op(palg, p, plen, EVP_PKEY_NONE, KEY_OP_PRIVATE,
-                          libctx, propq);
+        libctx, propq);
     ASN1_OCTET_STRING_free(oct);
     return ecx;
 }

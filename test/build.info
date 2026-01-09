@@ -31,7 +31,8 @@ IF[{- !$disabled{tests} -}]
           testutil/format_output.c testutil/load.c testutil/fake_random.c \
           testutil/test_cleanup.c testutil/main.c testutil/testutil_init.c \
           testutil/options.c testutil/test_options.c testutil/provider.c \
-          testutil/apps_shims.c testutil/random.c testutil/helper.c $LIBAPPSSRC
+          testutil/apps_shims.c testutil/random.c testutil/helper.c \
+          testutil/compare.c $LIBAPPSSRC
   INCLUDE[libtestutil.a]=../include ../apps/include ..
   DEPEND[libtestutil.a]=../libcrypto
 
@@ -50,11 +51,11 @@ IF[{- !$disabled{tests} -}]
           conf_include_test params_api_test params_conversion_test \
           constant_time_test safe_math_test verify_extra_test clienthellotest \
           packettest asynctest secmemtest srptest memleaktest stack_test \
-          dtlsv1listentest ct_test threadstest afalgtest d2i_test \
+          dtlsv1listentest ct_test threadstest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bio_callback_test bio_memleak_test bio_core_test bio_dgram_test param_build_test \
           bioprinttest sslapitest ssl_handshake_rtt_test dtlstest sslcorrupttest \
-          bio_base64_test bio_enc_test pkey_meth_test pkey_meth_kdf_test evp_kdf_test uitest \
+          bio_base64_test test_base64_simdutf bio_enc_test pkey_meth_test pkey_meth_kdf_test evp_kdf_test uitest \
           cipherbytes_test threadstest_fips threadpool_test \
           asn1_encode_test asn1_decode_test asn1_string_table_test asn1_stable_parse_test \
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
@@ -65,22 +66,19 @@ IF[{- !$disabled{tests} -}]
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
-          provfetchtest prov_config_test rand_test \
+          provfetchtest prov_config_test libctx_config_test rand_test \
           ca_internals_test bio_tfo_test membio_test bio_dgram_test list_test \
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
-          x509_acert_test x509_req_test strtoultest bio_pw_callback_test
+          x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
+          engine_stubs_test
 
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
   ENDIF
 
   IF[{- !$disabled{'allocfail-tests'} -}]
-    PROGRAMS{noninst}=handshake-memfail
-  ENDIF
-
-  IF[{- !$disabled{'deprecated-3.0'} -}]
-    PROGRAMS{noinst}=enginetest
+    PROGRAMS{noninst}=handshake-memfail x509-memfail
   ENDIF
 
   IF[{- !$disabled{quic} -}]
@@ -158,10 +156,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[sha_test]=sha_test.c
   INCLUDE[sha_test]=../include ../apps/include
   DEPEND[sha_test]=../libcrypto libtestutil.a
-
-  SOURCE[enginetest]=enginetest.c
-  INCLUDE[enginetest]=../include ../apps/include
-  DEPEND[enginetest]=../libcrypto libtestutil.a
 
   SOURCE[exptest]=exptest.c
   INCLUDE[exptest]=../include ../apps/include
@@ -251,6 +245,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[prov_config_test]=prov_config_test.c
   INCLUDE[prov_config_test]=../include ../apps/include
   DEPEND[prov_config_test]=../libcrypto libtestutil.a
+
+  SOURCE[libctx_config_test]=libctx_config_test.c
+  INCLUDE[libctx_config_test]=../include ../apps/include
+  DEPEND[libctx_config_test]=../libcrypto ../libssl libtestutil.a
 
   SOURCE[evp_pkey_provided_test]=evp_pkey_provided_test.c
   INCLUDE[evp_pkey_provided_test]=../include ../apps/include
@@ -493,10 +491,6 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[threadstest_fips]=../include ../apps/include
   DEPEND[threadstest_fips]=../libcrypto libtestutil.a
 
-  SOURCE[afalgtest]=afalgtest.c
-  INCLUDE[afalgtest]=../include ../apps/include
-  DEPEND[afalgtest]=../libcrypto libtestutil.a
-
   SOURCE[d2i_test]=d2i_test.c
   INCLUDE[d2i_test]=../include ../apps/include
   DEPEND[d2i_test]=../libcrypto libtestutil.a
@@ -548,7 +542,11 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[bioprinttest]=bioprinttest.c
   INCLUDE[bioprinttest]=../include ../apps/include
-  DEPEND[bioprinttest]=../libcrypto libtestutil.a
+  IF[{- $config{target} =~ /^VC/ -}]
+    DEPEND[bioprinttest]=../libcrypto.a libtestutil.a
+  ELSE
+    DEPEND[bioprinttest]=../libcrypto libtestutil.a
+  ENDIF
 
   SOURCE[bio_core_test]=bio_core_test.c
   INCLUDE[bio_core_test]=../include ../apps/include
@@ -589,6 +587,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[handshake-memfail]=handshake-memfail.c helpers/ssltestlib.c
   INCLUDE[handshake-memfail]=../include ../apps/include
   DEPEND[handshake-memfail]=../libcrypto.a ../libssl.a libtestutil.a
+
+  SOURCE[x509-memfail]=x509_memfail.c
+  INCLUDE[x509-memfail]=../include ../apps/include
+  DEPEND[x509-memfail]=../libcrypto.a libtestutil.a
 
   SOURCE[ssl_handshake_rtt_test]=ssl_handshake_rtt_test.c helpers/ssltestlib.c
   INCLUDE[ssl_handshake_rtt_test]=../include ../apps/include ..
@@ -638,6 +640,10 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[bio_base64_test]=../include ../apps/include
   DEPEND[bio_base64_test]=../libcrypto libtestutil.a
 
+  SOURCE[test_base64_simdutf] = test_base64_simdutf.c
+  INCLUDE[test_base64_simdutf] = ../include ../apps/include ../crypto/include ../crypto/evp/
+  DEPEND[test_base64_simdutf] = ../libcrypto libtestutil.a
+  
   SOURCE[bio_enc_test]=bio_enc_test.c
   INCLUDE[bio_enc_test]=../include ../apps/include
   DEPEND[bio_enc_test]=../libcrypto libtestutil.a
@@ -817,7 +823,7 @@ IF[{- !$disabled{tests} -}]
   DEPEND[cmp_client_test]=../libcrypto.a libtestutil.a
 
   SOURCE[ca_internals_test]=ca_internals_test.c ../apps/ca.c ../apps/lib/apps.c \
-                            ../apps/lib/app_rand.c ../apps/lib/engine.c ../apps/lib/app_provider.c \
+                            ../apps/lib/app_rand.c ../apps/lib/app_provider.c \
                             ../apps/lib/app_libctx.c ../apps/lib/fmt.c ../apps/lib/apps_ui.c \
                             ../apps/lib/app_x509.c ../crypto/asn1/a_time.c ../crypto/ctype.c
   INCLUDE[ca_internals_test]=.. ../include ../apps/include
@@ -1094,6 +1100,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[asn1_time_test]=../include ../apps/include
   DEPEND[asn1_time_test]=../libcrypto libtestutil.a
 
+  PROGRAMS{noinst}=asn1_string_test
+  SOURCE[asn1_string_test]=asn1_string_test.c
+  INCLUDE[asn1_string_test]=../include ../apps/include
+  DEPEND[asn1_string_test]=../libcrypto libtestutil.a
+
   # We disable this test completely in a shared build because it deliberately
   # redefines some internal libssl symbols. This doesn't work in a non-shared
   # build
@@ -1145,11 +1156,15 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[provider_test]=../include ../apps/include ..
   DEPEND[provider_test]=../libcrypto libtestutil.a
   IF[{- !$disabled{module} -}]
-    MODULES{noinst}=p_test
+    MODULES{noinst}=p_test p_ossltest
     SOURCE[p_test]=p_test.c
+    SOURCE[p_ossltest]=p_ossltest.c ../providers/prov_running.c
     INCLUDE[p_test]=../include ..
+    INCLUDE[p_ossltest]=../include .. ../providers/common/include ../providers/implementations/include ../providers/implementations
+    DEPEND[p_ossltest]=../providers/libcommon.a ../libcrypto
     IF[{- defined $target{shared_defflag} -}]
       SOURCE[p_test]=p_test.ld
+      SOURCE[p_ossltest]=p_test.ld
       GENERATE[p_test.ld]=../util/providers.num
     ENDIF
     MODULES{noinst}=p_minimal
@@ -1163,6 +1178,7 @@ IF[{- !$disabled{tests} -}]
   IF[{- $disabled{module} || !$target{dso_scheme} -}]
     DEFINE[provider_test]=NO_PROVIDER_MODULE
     DEFINE[prov_config_test]=NO_PROVIDER_MODULE
+    DEFINE[libctx_config_test]=NO_PROVIDER_MODULE
     DEFINE[provider_internal_test]=NO_PROVIDER_MODULE
   ENDIF
   DEPEND[]=provider_internal_test.cnf
@@ -1307,6 +1323,10 @@ ENDIF
   SOURCE[bio_pw_callback_test]=bio_pw_callback_test.c
   INCLUDE[bio_pw_callback_test]=../include ../apps/include
   DEPEND[bio_pw_callback_test]=../libcrypto libtestutil.a
+
+  SOURCE[engine_stubs_test]=engine_stubs_test.c
+  INCLUDE[engine_stubs_test]=../include ../apps/include
+  DEPEND[engine_stubs_test]=../libcrypto libtestutil.a
 
 {-
    use File::Spec::Functions;

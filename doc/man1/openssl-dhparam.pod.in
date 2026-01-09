@@ -22,7 +22,7 @@ B<openssl dhparam>
 [B<-2>]
 [B<-3>]
 [B<-5>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [I<numbits>]
 
@@ -101,8 +101,6 @@ This option inhibits the output of the encoded version of the parameters.
 
 This option prints out the DH parameters in human readable form.
 
-{- $OpenSSL::safe::opt_engine_item -}
-
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
@@ -133,9 +131,9 @@ L<openssl-genpkey(1)>.
 
 =head1 HISTORY
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
-
 The B<-C> option was removed in OpenSSL 3.0.
+
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

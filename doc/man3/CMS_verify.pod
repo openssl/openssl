@@ -2,8 +2,9 @@
 
 =head1 NAME
 
-CMS_verify, CMS_SignedData_verify,
-CMS_get0_signers - verify a CMS SignedData structure
+CMS_verify, CMS_SignedData_verify, CMS_get0_signers, CMS_SignerInfo_verify,
+CMS_SignerInfo_verify_content, CMS_SignerInfo_verify_ex
+- verify CMS SignedData and SignedInfo structures
 
 =head1 SYNOPSIS
 
@@ -18,6 +19,11 @@ CMS_get0_signers - verify a CMS SignedData structure
                             OSSL_LIB_CTX *libctx, const char *propq);
 
  STACK_OF(X509) *CMS_get0_signers(CMS_ContentInfo *cms);
+
+ int CMS_SignerInfo_verify(CMS_SignerInfo *si);
+ int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain);
+ int CMS_SignerInfo_verify_ex(CMS_SignerInfo *si, BIO *chain,
+                                    BIO *data);
 
 =head1 DESCRIPTION
 
@@ -51,6 +57,21 @@ are used when retrieving algorithms from providers.
 
 CMS_get0_signers() retrieves the signing certificate(s) from I<cms>; it may only
 be called after a successful CMS_verify() or CMS_SignedData_verify() operation.
+
+CMS_SignerInfo_verify() verifies the signed attributes attached to the given
+SignerInfo B<si>.
+
+CMS_SignerInfo_verify_content() verifies the SignerInfo B<si> part of a
+CMS_ContentInfo with the data provided by the B<cmsbio> BIO. This BIO will be
+used by hash-based signing schemes and must return the same hash value as was
+produced by the B<cmsbio> of CMS_dataFinal() or CMS_dataFinal_ex().
+
+CMS_SignerInfo_verify_ex() extends CMS_SignerInfo_verify_content() with support
+for hash-less signing schemes, such as ML-DSA, SLH-DSA, or EdDSA, that require
+access to the raw (non-hashed) data. The raw data must be provided by the
+B<data> BIO. Note that this BIO must support the seek() function so that its
+data stream can be read multiple times, once for each signature created by a
+hash-less signing scheme.
 
 =head1 VERIFY PROCESS
 

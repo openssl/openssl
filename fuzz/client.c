@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,12 @@ static int idx;
 
 #define FUZZTIME 1485898104
 
-#define TIME_IMPL(t) { if (t != NULL) *t = FUZZTIME; return FUZZTIME; }
+#define TIME_IMPL(t)       \
+    {                      \
+        if (t != NULL)     \
+            *t = FUZZTIME; \
+        return FUZZTIME;   \
+    }
 
 /*
  * This might not work in all cases (and definitely not on Windows
@@ -36,7 +41,7 @@ static int idx;
 time_t time(time_t *t) TIME_IMPL(t)
 #endif
 
-int FuzzerInitialize(int *argc, char ***argv)
+    int FuzzerInitialize(int *argc, char ***argv)
 {
     STACK_OF(SSL_COMP) *comp_methods;
 
@@ -94,7 +99,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
             }
         }
     }
- end:
+end:
     SSL_free(client);
     ERR_clear_error();
     SSL_CTX_free(ctx);

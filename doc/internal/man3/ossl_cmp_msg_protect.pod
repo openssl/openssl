@@ -41,7 +41,7 @@ of the chain, i.e, the trust anchor (unless it is part of extraCertsOut).
 
 =head1 NOTES
 
-CMP is defined in RFC 4210 (and CRMF in RFC 4211).
+CMP is defined in RFC 9810.
 
 The I<ctx> parameter of ossl_cmp_msg_add_extraCerts()
 and thus also of ossl_cmp_msg_protect() cannot be made I<const>

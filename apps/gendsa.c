@@ -24,36 +24,37 @@
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_OUT, OPT_PASSOUT, OPT_ENGINE, OPT_CIPHER, OPT_VERBOSE, OPT_QUIET,
-    OPT_R_ENUM, OPT_PROV_ENUM
+    OPT_OUT,
+    OPT_PASSOUT,
+    OPT_CIPHER,
+    OPT_VERBOSE,
+    OPT_QUIET,
+    OPT_R_ENUM,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS gendsa_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] dsaparam-file\n"},
+    { OPT_HELP_STR, 1, '-', "Usage: %s [options] dsaparam-file\n" },
 
     OPT_SECTION("General"),
-    {"help", OPT_HELP, '-', "Display this summary"},
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
+    { "help", OPT_HELP, '-', "Display this summary" },
 
     OPT_SECTION("Output"),
-    {"out", OPT_OUT, '>', "Output the key to the specified file"},
-    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
+    { "out", OPT_OUT, '>', "Output the key to the specified file" },
+    { "passout", OPT_PASSOUT, 's', "Output file pass phrase source" },
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
-    {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
-    {"verbose", OPT_VERBOSE, '-', "Verbose output"},
-    {"quiet", OPT_QUIET, '-', "Terse output"},
+    { "", OPT_CIPHER, '-', "Encrypt the output with any supported cipher" },
+    { "verbose", OPT_VERBOSE, '-', "Verbose output" },
+    { "quiet", OPT_QUIET, '-', "Terse output" },
 
     OPT_PARAMETERS(),
-    {"dsaparam-file", 0, 0, "File containing DSA parameters"},
-    {NULL}
+    { "dsaparam-file", 0, 0, "File containing DSA parameters" },
+    { NULL }
 };
 
 int gendsa_main(int argc, char **argv)
 {
-    ENGINE *e = NULL;
     BIO *out = NULL, *in = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -69,7 +70,7 @@ int gendsa_main(int argc, char **argv)
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
- opthelp:
+        opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         case OPT_HELP:
@@ -81,9 +82,6 @@ int gendsa_main(int argc, char **argv)
             break;
         case OPT_PASSOUT:
             passoutarg = opt_arg();
-            break;
-        case OPT_ENGINE:
-            e = setup_engine(opt_arg(), 0);
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
@@ -132,9 +130,9 @@ int gendsa_main(int argc, char **argv)
     nbits = EVP_PKEY_get_bits(pkey);
     if (nbits > OPENSSL_DSA_MAX_MODULUS_BITS)
         BIO_printf(bio_err,
-                   "Warning: It is not recommended to use more than %d bit for DSA keys.\n"
-                   "         Your key size is %d! Larger key size may behave not as expected.\n",
-                   OPENSSL_DSA_MAX_MODULUS_BITS, EVP_PKEY_get_bits(pkey));
+            "Warning: It is not recommended to use more than %d bit for DSA keys.\n"
+            "         Your key size is %d! Larger key size may behave not as expected.\n",
+            OPENSSL_DSA_MAX_MODULUS_BITS, EVP_PKEY_get_bits(pkey));
 
     ctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(), pkey, app_get0_propq());
     if (ctx == NULL) {
@@ -157,16 +155,15 @@ int gendsa_main(int argc, char **argv)
         goto end;
     }
     ret = 0;
- end:
+end:
     if (ret != 0)
         ERR_print_errors(bio_err);
- end2:
+end2:
     BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);
     EVP_CIPHER_free(enc);
-    release_engine(e);
     OPENSSL_free(passout);
     return ret;
 }

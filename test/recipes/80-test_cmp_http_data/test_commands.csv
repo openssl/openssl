@@ -132,6 +132,7 @@ expected,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infoty
 1,rspin, -section,, -cmd,ir,,BLANK,,,-rspin,_RESULT_DIR/ip.der _RESULT_DIR/pkiConf.der,,BLANK,,BLANK
 0,rspin too few files - server must reject, -section,, -cmd,ir,,BLANK,,,-rspin,_RESULT_DIR/ip.der,,BLANK,,BLANK,-secret,_PBM_SECRET
 0,rspin too few files - no server, -section,, -cmd,ir,,BLANK,,,-rspin,_RESULT_DIR/ip.der,,BLANK,,BLANK, -server,""""
+0,reqout_only ir with -port, -section,, -cmd,ir,,-reqout_only,_RESULT_DIR/ir1.der,,BLANK,,BLANK, -server,"""", -port,0
 1,reqout_only ir - no server, -section,, -cmd,ir,,-reqout_only,_RESULT_DIR/ir2.der,,BLANK,,BLANK, -server,""""
 0,reqout_only non-existing directory and file, -section,, -cmd,ir,,-reqout_only,idontexist/idontexist,,BLANK,,BLANK, -server,""""
 0,reqin ir - no newkey, -section,, -cmd,ir,,-reqin,_RESULT_DIR/ir2.der,,-newkey,"""",-newkey,"""",-key,"""",-cert,"""",-secret,_PBM_SECRET

@@ -566,7 +566,7 @@ L<SSL_accept_connection(3)>.
 
 =item L<SSL_accept_connection(3)>
 
-Accepts a new incoming connection for a listner SSL object. A new SSL object
+Accepts a new incoming connection for a listener SSL object. A new SSL object
 representing the accepted connection is created and returned on success. If no
 incoming connection is available and the listener SSL object is configured in
 nonblocking mode, NULL is returned.
@@ -709,6 +709,10 @@ or allow them to be handled using L<SSL_accept_stream(3)>.
 
 Used to configure or disable default stream mode; see the MODES OF OPERATION
 section for details.
+
+=item L<SSL_get_peer_addr(3)>
+
+Used to obtain the peer address from a QUIC connection or stream.
 
 =back
 

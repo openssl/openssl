@@ -18,7 +18,7 @@ B<openssl> B<verify>
 [B<-vfyopt> I<nm>:I<v>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_v_synopsis -}
+{- $OpenSSL::safe::opt_v_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [B<-->]
 [I<certificate> ...]
@@ -77,13 +77,6 @@ Names and values of these options are algorithm-specific.
 
 {- $OpenSSL::safe::opt_name_item -}
 
-{- $OpenSSL::safe::opt_engine_item -}
-{- output_off() if $disabled{"deprecated-3.0"}; "" -}
-To load certificates or CRLs that require engine support, specify the
-B<-engine> option before any of the
-B<-trusted>, B<-untrusted> or B<-CRLfile> options.
-{- output_on() if $disabled{"deprecated-3.0"}; "" -}
-
 {- $OpenSSL::safe::opt_trust_item -}
 
 {- $OpenSSL::safe::opt_v_item -}
@@ -136,7 +129,7 @@ L<ossl_store-file(7)>
 
 The B<-show_chain> option was added in OpenSSL 1.1.0.
 
-The B<-engine option> was deprecated in OpenSSL 3.0.
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

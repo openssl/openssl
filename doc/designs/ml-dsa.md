@@ -103,7 +103,7 @@ the API's used should be
 OpenSSL command line support
 ----------------------------
 
-For backwards compatability reasons `EVP_DigestSignInit_ex()`,
+For backwards compatibility reasons `EVP_DigestSignInit_ex()`,
 `EVP_DigestSign()`, `EVP_DigestVerifyInit_ex()` and `EVP_DigestVerify()` may
 also be used, but the digest passed in `mdname` must be NULL (i.e. it
 effectively behaves the same as above).

@@ -12,12 +12,13 @@ use warnings;
 
 use File::Spec;
 use File::Basename;
-use OpenSSL::Test qw/:DEFAULT with srctop_file bldtop_dir/;
+use OpenSSL::Test qw/:DEFAULT with srctop_file data_file bldtop_dir/;
 use OpenSSL::Test::Utils;
+use Cwd qw(abs_path);
 
 setup("test_dgst");
 
-plan tests => 17;
+plan tests => 24;
 
 sub tsignverify {
     my $testtext = shift;
@@ -166,17 +167,18 @@ SKIP: {
 }
 
 SKIP: {
-    skip "dgst with engine is not supported by this OpenSSL build", 1
-        if disabled("engine") || disabled("dynamic-engine");
+    skip "dgst with provider is not supported by this OpenSSL build", 1
+        if disabled("module");
 
-    subtest "SHA1 generation by engine with `dgst` CLI" => sub {
+    subtest "SHA1 generation by provider with `dgst` CLI" => sub {
         plan tests => 1;
 
+        $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
         my $testdata = srctop_file('test', 'data.bin');
-        # intentionally using -engine twice, please do not remove the duplicate line
         my @macdata = run(app(['openssl', 'dgst', '-sha1',
-                               '-engine', "ossltest",
-                               '-engine', "ossltest",
+                               '-provider', "p_ossltest",
+                               '-provider', "default",
+                               '-propquery', '?provider=p_ossltest',
                                $testdata]), capture => 1);
         chomp(@macdata);
         my $expected = qr/SHA1\(\Q$testdata\E\)= 000102030405060708090a0b0c0d0e0f10111213/;
@@ -212,7 +214,51 @@ subtest "HMAC generation with `dgst` CLI, default digest" => sub {
        "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
 };
 
-subtest "HMAC generation with `dgst` CLI, key via option" => sub {
+subtest "HMAC generation with `dgst` CLI, key via environment" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #HMAC the data twice to check consistency
+    local $ENV{MYKEY} = 123456;
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-hmac-env', 'MYKEY',
+                            $testdata, $testdata]), capture => 1);
+    chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
+
+subtest "HMAC generation with `dgst` CLI, key via stdin" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #HMAC the data twice to check consistency
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-hmac-stdin',
+                            $testdata, $testdata], stdin => data_file("keyfile.txt")), capture => 1);
+    chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
+
+subtest "HMAC generation with `dgst` CLI, key via option key" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #HMAC the data twice to check consistency
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-mac', 'HMAC',
+                            '-macopt', 'key:123456',
+                            $testdata, $testdata]), capture => 1);
+    chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
+
+subtest "HMAC generation with `dgst` CLI, key via option hexkey" => sub {
     plan tests => 2;
 
     my $testdata = srctop_file('test', 'data.bin');
@@ -222,6 +268,68 @@ subtest "HMAC generation with `dgst` CLI, key via option" => sub {
                             $testdata, $testdata]), capture => 1);
     chomp(@hmacdata);
     my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 7c02d4a17d2560a5bb6763edbf33f3a34f415398f8f2e07f04b83ffd7c087dae/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
+
+subtest "HMAC generation with `dgst` CLI, key via option keyenv" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #HMAC the data twice to check consistency
+    local $ENV{MYKEY} = '123456';
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-mac', 'HMAC',
+                            '-macopt', 'keyenv:MYKEY',
+                            $testdata, $testdata]), capture => 1);
+    chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
+
+subtest "HMAC generation with `dgst` CLI, key via option keyenvhex" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #HMAC the data twice to check consistency
+    local $ENV{MYKEY} = 'FFFF';
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-mac', 'HMAC',
+                            '-macopt', 'keyenvhex:MYKEY',
+                            $testdata, $testdata]), capture => 1);
+    chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 7c02d4a17d2560a5bb6763edbf33f3a34f415398f8f2e07f04b83ffd7c087dae/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
+
+subtest "HMAC generation with `dgst` CLI, key via option keyfile" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #HMAC the data twice to check consistency
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-mac', 'HMAC',
+                            '-macopt', 'keyfile:' . data_file("keyfile.bin"),
+                            $testdata, $testdata]), capture => 1);
+    chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 7c02d4a17d2560a5bb6763edbf33f3a34f415398f8f2e07f04b83ffd7c087dae/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
+
+subtest "HMAC generation with `dgst` CLI, key via option keystdin" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.bin');
+    #HMAC the data twice to check consistency
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-mac', 'HMAC',
+                            '-macopt', 'keystdin',
+                            $testdata, $testdata], stdin => data_file("keyfile.txt")), capture => 1);
+    chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA2-256\(\Q$testdata\E\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
     ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
     ok($hmacdata[1] =~ $expected,
        "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");

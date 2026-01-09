@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -88,7 +88,7 @@ subtest "=== pkey handling of public keys (Ed25519) ===" => sub {
     ok(run(app([@app, '-in', $in_ed_key, '-pubin', '-pubout', '-out', $pub_out3])),
        "extract public key from pkey file with -pubin");
     is(compare_text($in_pubkey, $pub_out3), 0,
-       "public key extraced from pkey file with -pubin is same as original");
+       "public key extracted from pkey file with -pubin is same as original");
 };
 
 

@@ -10,15 +10,18 @@ use strict;
 use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
+use Cwd qw(abs_path);
 
 my $test_name = "test_sslsignature";
 setup($test_name);
 
+$ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
+
 plan skip_all => "TLSProxy isn't usable on $^O"
     if $^O =~ /^(VMS)$/;
 
-plan skip_all => "$test_name needs the dynamic engine feature enabled"
-    if disabled("engine") || disabled("dynamic-engine");
+plan skip_all => "$test_name needs the module feature enabled"
+    if disabled("module");
 
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
@@ -84,7 +87,7 @@ SKIP: {
 
 SKIP: {
     skip "TLS <= 1.2 disabled", 2
-        if alldisabled(("ssl3", "tls1", "tls1_1", "tls1_2"));
+        if alldisabled(("tls1", "tls1_1", "tls1_2"));
 
     #Test 3: Corrupting a CertVerify signature in <=TLSv1.2 should fail
     $proxy->clear();

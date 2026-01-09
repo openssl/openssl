@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 
-# Copyright 2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -24,7 +24,7 @@ open OUT,"| \"$^X\" $xlate $flavour \"$output\""
 $code=<<___;
 #include "arm_arch.h"
 
-# Theses are offsets into the CIPH_DIGEST struct
+/* These are offsets into the CIPH_DIGEST struct */
 #define CIPHER_KEY	0
 #define CIPHER_KEY_ROUNDS	8
 #define CIPHER_IV	16
@@ -310,6 +310,7 @@ $code.=<<___;
 .global asm_aescbc_sha512_hmac
 .type	asm_aescbc_sha512_hmac,%function
 
+.rodata
 .align 6
 .LK512:
 	.quad	0x428a2f98d728ae22,0x7137449123ef65cd
@@ -354,6 +355,7 @@ $code.=<<___;
 	.quad	0x5fcb6fab3ad6faec,0x6c44198c4a475817
 	.quad	0	// terminator
 
+.text
 	.align	4
 asm_aescbc_sha512_hmac:
 	AARCH64_VALID_CALL_TARGET
@@ -372,7 +374,8 @@ asm_aescbc_sha512_hmac:
 	ldr		x9, [x6, #CIPHER_KEY_ROUNDS]
 	mov		x12, x7				/* backup x7 */
 
-	adr		x10, .LK512
+	adrp		x10, .LK512
+	add		x10, x10, :lo12:.LK512
 
 	lsr		x11, x2, #4			/* aes_block = len/16 */
 	cbz		x11, .Lret			/* return if aes_block = 0 */
@@ -2087,7 +2090,8 @@ asm_sha512_hmac_aescbc_dec:
 	ldr		x9, [x6, #CIPHER_KEY_ROUNDS]
 	mov		x12, x7			/* backup x7 */
 
-	adr		x10, .LK512
+	adrp		x10, .LK512
+	add		x10, x10, :lo12:.LK512
 
 	lsr		x11, x2, #4		/* aes_block = len/16 */
 	cbz		x11, .Ldec_ret		/* return if aes_block = 0 */

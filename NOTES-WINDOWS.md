@@ -112,11 +112,10 @@ install it to a variety of locations.
 The following keys:
 
     `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL-<version>-<ctx>\OPENSSLDIR`
-    `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL-<version>-<ctx>\ENGINESDIR`
     `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\OpenSSL-<version>-<ctx>\MODULESDIR`
 
 Can be administratively set, and openssl will take the paths found there as the
-values for OPENSSLDIR, ENGINESDIR and MODULESDIR respectively.
+values for OPENSSLDIR and MODULESDIR respectively.
 
 To enable the reading of registry keys from windows builds, add
 `-DOSSL_WINCTX=<string>`to the Configure command line.  This define is used
@@ -125,7 +124,7 @@ format:
 `\\HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432node\OpenSSL-<version>-<ctx>`
 
 Where `<version>` is the major.minor version of the library being
-built, and `<ctx>` is the value specified by `-DOPENSSL_WINCTX`.  This allows
+built, and `<ctx>` is the value specified by `-DOSSL_WINCTX`.  This allows
 for multiple openssl builds to be created and installed on a single system, in
 which each library can use its own set of registry keys.
 

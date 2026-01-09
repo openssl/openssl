@@ -18,7 +18,7 @@ See <https://www.openssl.org/source/> for information related to OpenSSL
 FIPS certificates and Security Policies.
 
 Newer OpenSSL Releases that include security or bug fixes can be used to build
-all other components (such as the core API's, TLS and the default, base and
+all other components (such as the core APIs, TLS and the default, base and
 legacy providers) without any restrictions, but the FIPS provider must be built
 as specified in the Security Policy (normally with a different version of the
 source code).

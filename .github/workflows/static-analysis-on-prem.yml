@@ -1,4 +1,4 @@
-# Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -27,9 +27,11 @@ jobs:
       run: |
         echo ${{ secrets.COVERITY_AUTH_KEY }} | base64 -d > /auth_key_file.txt
         chmod 0600 /auth_key_file.txt
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: Config
-      run: CC=gcc ./config --strict-warnings --banner=Configured --debug enable-lms enable-fips enable-rc5 enable-md2 enable-ssl3 enable-nextprotoneg enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-shared enable-buildtest-c++ enable-external-tests -DPEDANTIC
+      run: CC=gcc ./config --strict-warnings --banner=Configured --debug enable-lms enable-fips enable-rc5 enable-md2 enable-nextprotoneg enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 no-shared enable-buildtest-c++ enable-external-tests -DPEDANTIC
     - name: Config dump
       run: ./configdata.pm --dump
     - name: Make

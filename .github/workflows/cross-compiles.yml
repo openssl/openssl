@@ -165,10 +165,12 @@ jobs:
     - name: install packages
       run: |
         sudo apt-get update
-        sudo apt-get -yq --force-yes install \
+        sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install \
             gcc-${{ matrix.platform.arch }} \
             ${{ matrix.platform.libs }}
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
 
@@ -192,7 +194,7 @@ jobs:
 
     - name: install qemu
       if: matrix.platform.tests != 'none'
-      run: sudo apt-get -yq --force-yes install qemu-user
+      run: sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install qemu-user
 
     - name: Set QEMU environment
       if: matrix.platform.qemucpu != ''
@@ -204,8 +206,10 @@ jobs:
                  ${{ matrix.platform.opensslcaps }}" >> $GITHUB_ENV
 
     - name: get cpu info
-      run: cat /proc/cpuinfo
-
+      if: matrix.platform.tests != 'none'
+      run: |
+         cat /proc/cpuinfo
+         QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }} ./util/opensslwrap.sh version -c
     - name: make all tests
       if: github.event_name == 'push' && matrix.platform.tests == ''
       run: |
@@ -226,7 +230,7 @@ jobs:
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: save artifacts
       if: success() || failure()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: "cross-compiles@${{ matrix.platform.arch }}"
         path: artifacts.tar.gz

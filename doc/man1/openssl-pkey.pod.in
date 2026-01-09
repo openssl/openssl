@@ -13,15 +13,16 @@ openssl-pkey - public or private key processing command
 
 B<openssl> B<pkey>
 [B<-help>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [B<-check>]
 [B<-pubcheck>]
 [B<-in> I<filename>|I<uri>]
-[B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
+[B<-inform> B<DER>|B<PEM>|B<P12>]
 [B<-passin> I<arg>]
 [B<-pubin>]
 [B<-out> I<filename>]
 [B<-outform> B<DER>|B<PEM>]
+[B<-encopt> I<opt>:I<value>]
 [B<-I<cipher>>]
 [B<-passout> I<arg>]
 [B<-traditional>]
@@ -46,8 +47,6 @@ converted between various forms and their components printed.
 =item B<-help>
 
 Print out a usage message.
-
-{- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
 
@@ -75,7 +74,7 @@ or standard input if this option is not specified.
 If the key input is encrypted and B<-passin> is not given
 a pass phrase will be prompted for.
 
-=item B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-inform> B<DER>|B<PEM>|B<P12>
 
 The key input format; unspecified by default.
 See L<openssl-format-options(1)> for details.
@@ -116,11 +115,25 @@ When password input is interrupted, the output file is not touched.
 The key output format; the default is B<PEM>.
 See L<openssl-format-options(1)> for details.
 
+=item B<-encopt> I<opt>:I<value>
+
+Set the private key encoder parameter I<opt> to I<value>.
+In order to set multiple parameters, multiple B<-encopt> options can be
+specified, each specifying a single parameter.
+The precise set of supported parameters depends on the public key algorithm
+involved and its implementation.
+This is primarily applicable to B<ML-DSA> and B<ML-KEM>, whose private key
+encoding to a B<PKCS#8> object can take a number of different forms.
+The C<output_formats> parameter can be used to select the preferred output
+forms.
+See L<EVP_PKEY-ML-DSA(7)> and L<EVP_PKEY-ML-KEM(7)> for details.
+
 =item B<-I<cipher>>
 
 Encrypt the PEM encoded private key with the supplied cipher. Any algorithm
 name accepted by EVP_get_cipherbyname() is acceptable such as B<aes128>.
-Encryption is not supported for DER output.
+In B<DER> output form encryption is supported only in the default B<PKCS#8>
+form and and is not available when the B<-traditional> option is used.
 
 =item B<-passout> I<arg>
 
@@ -132,8 +145,9 @@ see L<openssl-passphrase-options(1)>.
 =item B<-traditional>
 
 Normally a private key is written using standard format: this is PKCS#8 form
-with the appropriate encryption algorithm (if any). If the B<-traditional>
-option is specified then the older "traditional" format is used instead.
+with the appropriate encryption algorithm (if any).
+If the B<-traditional> option is specified then the older "traditional" format
+is used instead, and in B<DER> output form encryption is not available.
 
 =item B<-pubout>
 
@@ -230,7 +244,14 @@ L<openssl-gendsa(1)>
 
 =head1 HISTORY
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
+The B<-engine> option was removed in OpenSSL 4.0.
+
+The B<-encopt> option was added in OpenSSL 4.0.
+
+As of OpenSSL 4.0 the B<-pass> and B<-I<cipher>> options apply when private
+keys are output in both B<PEM> and B<DER> (except with B<-traditional>) forms.
+Previously, these private key encryption options were rejected in combination
+with the B<DER> output form.
 
 =head1 COPYRIGHT
 

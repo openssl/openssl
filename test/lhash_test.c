@@ -33,14 +33,14 @@
 DEFINE_LHASH_OF_EX(int);
 
 static int int_tests[] = { 65537, 13, 1, 3, -5, 6, 7, 4, -10, -12, -14, 22, 9,
-                           -17, 16, 17, -23, 35, 37, 173, 11 };
+    -17, 16, 17, -23, 35, 37, 173, 11 };
 static const size_t n_int_tests = OSSL_NELEM(int_tests);
 static short int_found[OSSL_NELEM(int_tests)];
 static short int_not_found;
 
 static unsigned long int int_hash(const int *p)
 {
-    return 3 & *p;      /* To force collisions */
+    return 3 & *p; /* To force collisions */
 }
 
 static int int_cmp(const int *p, const int *q)
@@ -86,12 +86,12 @@ static int test_int_lhash(void)
         int data;
         int null;
     } dels[] = {
-        { 65537,    0 },
-        { 173,      0 },
-        { 999,      1 },
-        { 37,       0 },
-        { 1,        0 },
-        { 34,       1 }
+        { 65537, 0 },
+        { 173, 0 },
+        { 999, 1 },
+        { 37, 0 },
+        { 1, 0 },
+        { 34, 1 }
     };
     const unsigned int n_dels = OSSL_NELEM(dels);
     LHASH_OF(int) *h = lh_int_new(&int_hash, &int_cmp);
@@ -167,7 +167,7 @@ static int test_int_lhash(void)
     /* delete */
     for (i = 0; i < n_dels; i++) {
         const int b = lh_int_delete(h, &dels[i].data) == NULL;
-        if (!TEST_int_eq(b ^ dels[i].null,  0)) {
+        if (!TEST_int_eq(b ^ dels[i].null, 0)) {
             TEST_info("lhash int delete %d", i);
             goto end;
         }
@@ -182,7 +182,6 @@ end:
     lh_int_free(h);
     return testresult;
 }
-
 
 static int int_filter_all(HT_VALUE *v, void *arg)
 {
@@ -207,31 +206,28 @@ static int int_foreach(HT_VALUE *v, void *arg)
     return 1;
 }
 
-static uint64_t hashtable_hash(uint8_t *key, size_t keylen)
+static uint64_t hashtable_hash(HT_KEY *key)
 {
-    return (uint64_t)(*(uint32_t *)key);
+    return (uint64_t)(*(uint32_t *)key->keybuf);
 }
 
-static int test_int_hashtable(void)
+static int test_int_hashtable(int idx)
 {
     static struct {
         int data;
         int should_del;
     } dels[] = {
-        { 65537 , 1},
-        { 173 , 1},
-        { 999 , 0 },
-        { 37 , 1 },
-        { 1 , 1 },
-        { 34 , 0 }
+        { 65537, 1 },
+        { 173, 1 },
+        { 999, 0 },
+        { 37, 1 },
+        { 1, 1 },
+        { 34, 0 }
     };
     const size_t n_dels = OSSL_NELEM(dels);
     HT_CONFIG hash_conf = {
-        NULL,
-        NULL,
-        NULL,
-        0,
-        1,
+        .collision_check = 1,
+        .no_rcu = idx,
     };
     INTKEY key;
     int rc = 0;
@@ -250,7 +246,8 @@ static int test_int_hashtable(void)
     for (i = 0; i < n_int_tests; i++) {
         HT_SET_KEY_FIELD(&key, mykey, int_tests[i]);
         if (!TEST_int_eq(ossl_ht_test_int_insert(ht, TO_HT_KEY(&key),
-                         &int_tests[i], NULL), 1)) {
+                             &int_tests[i], NULL),
+                1)) {
             TEST_info("int insert %zu", i);
             goto end;
         }
@@ -273,7 +270,7 @@ static int test_int_hashtable(void)
         if (!TEST_int_eq(int_found[i], 1)) {
             TEST_info("hashtable int foreach %zu", i);
             goto end;
-    }
+        }
 
     /* filter */
     list = ossl_ht_filter(ht, 64, int_filter_all, NULL);
@@ -288,7 +285,7 @@ static int test_int_hashtable(void)
         if (dels[i].should_del) {
             if (!TEST_int_eq(todel, 1)) {
                 TEST_info("hashtable couldn't find entry %d to delete\n",
-                          dels[i].data);
+                    dels[i].data);
                 goto end;
             }
         } else {
@@ -296,7 +293,7 @@ static int test_int_hashtable(void)
                 TEST_info("%d found an entry that shouldn't be there\n", dels[i].data);
                 goto end;
             }
-       }
+        }
     }
 
     rc = 1;
@@ -312,7 +309,7 @@ static unsigned long int stress_hash(const int *p)
 
 #ifdef MEASURE_HASH_PERFORMANCE
 static int
-timeval_subtract (struct timeval *result, struct timeval *x, struct timeval *y)
+timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *y)
 {
     /* Perform the carry for the later subtraction by updating y. */
     if (x->tv_usec < y->tv_usec) {
@@ -366,7 +363,7 @@ static int test_stress(void)
 
     /* num_items */
     if (!TEST_int_eq(lh_int_num_items(h), n))
-            goto end;
+        goto end;
 
     /* delete in a different order */
     for (i = 0; i < n; i++) {
@@ -405,13 +402,14 @@ static int test_hashtable_stress(int idx)
     unsigned int i;
     int testresult = 0, *p;
     HT_CONFIG hash_conf = {
-        NULL,              /* use default context */
-        hashtable_intfree, /* our free function */
-        hashtable_hash,    /* our hash function */
-        625000,            /* preset hash size */
-        1,                 /* Check collisions */
-        0                  /* Lockless reads */
+        .ht_free_fn = hashtable_intfree,
+        .ht_hash_fn = hashtable_hash,
+        .init_neighborhoods = 625000,
+        .collision_check = 1,
+        .lockless_reads = idx % 2,
+        .no_rcu = idx / 2,
     };
+
     HT *h;
     INTKEY key;
     HT_VALUE *v;
@@ -419,9 +417,11 @@ static int test_hashtable_stress(int idx)
     struct timeval start, end, delta;
 #endif
 
-    hash_conf.lockless_reads = idx;
     h = ossl_ht_new(&hash_conf);
-
+    if (h == NULL
+        && hash_conf.no_rcu
+        && hash_conf.lockless_reads)
+        return 1;
 
     if (!TEST_ptr(h))
         goto end;
@@ -441,7 +441,8 @@ static int test_hashtable_stress(int idx)
         *p = 3 * i + 1;
         HT_SET_KEY_FIELD(&key, mykey, *p);
         if (!TEST_int_eq(ossl_ht_test_int_insert(h, TO_HT_KEY(&key),
-                         p, NULL), 1)) {
+                             p, NULL),
+                1)) {
             TEST_info("hashtable unable to insert element %d\n", *p);
             goto end;
         }
@@ -449,14 +450,14 @@ static int test_hashtable_stress(int idx)
 
     /* make sure we stored everything */
     if (!TEST_size_t_eq(ossl_ht_count(h), n))
-            goto end;
+        goto end;
 
     /* delete or get in a different order */
     for (i = 0; i < n; i++) {
         const int j = (7 * i + 4) % n * 3 + 1;
         HT_SET_KEY_FIELD(&key, mykey, j);
 
-        switch (idx) {
+        switch (idx % 2) {
         case 0:
             if (!TEST_int_eq((ossl_ht_delete(h, TO_HT_KEY(&key))), 1)) {
                 TEST_info("hashtable didn't delete key %d\n", j);
@@ -495,7 +496,35 @@ static HT *m_ht = NULL;
 #define NUM_WORKERS 16
 
 static struct test_mt_entry test_mt_entries[TEST_MT_POOL_SZ];
-static char *worker_exits[NUM_WORKERS];
+static char **worker_exits;
+static thread_t *workers;
+static int num_workers = NUM_WORKERS;
+
+static int setup_num_workers(void)
+{
+    char *harness_jobs = getenv("HARNESS_JOBS");
+    char *lhash_workers = getenv("LHASH_WORKERS");
+    /* If we have HARNESS_JOBS set, don't eat more than a quarter */
+    if (harness_jobs != NULL) {
+        int jobs = atoi(harness_jobs);
+        if (jobs > 0)
+            num_workers = jobs / 4;
+    }
+    /* But if we have explicitly set LHASH_WORKERS use that */
+    if (lhash_workers != NULL) {
+        int jobs = atoi(lhash_workers);
+        if (jobs > 0)
+            num_workers = jobs;
+    }
+
+    TEST_info("using %d workers\n", num_workers);
+
+    free(worker_exits);
+    free(workers);
+    worker_exits = calloc(num_workers, sizeof(*worker_exits));
+    workers = calloc(num_workers, sizeof(*workers));
+    return worker_exits != NULL && workers != NULL;
+}
 
 HT_START_KEY_DEFN(mtkey)
 HT_DEF_KEY_FIELD(index, uint32_t)
@@ -503,9 +532,14 @@ HT_END_KEY_DEFN(MTKEY)
 
 IMPLEMENT_HT_VALUE_TYPE_FNS(TEST_MT_ENTRY, mt, static)
 
+struct ht_internal_st {
+    HT_CONFIG config;
+};
+
 static int worker_num = 0;
 static CRYPTO_RWLOCK *worker_lock;
 static CRYPTO_RWLOCK *testrand_lock;
+static CRYPTO_RWLOCK *no_rcu_lock;
 static int free_failure = 0;
 static int shutting_down = 0;
 static int global_iteration = 0;
@@ -526,7 +560,7 @@ static void hashtable_mt_free(HT_VALUE *v)
         free_failure = 1;
     } else {
         CRYPTO_atomic_add(&m->pending_delete, -1,
-                          &ret, worker_lock);
+            &ret, worker_lock);
     }
 }
 
@@ -571,23 +605,38 @@ static void do_mt_hash_work(void)
             worker_exits[num] = "Unable to increment global iterator";
             return;
         }
-        switch(behavior) {
+        switch (behavior) {
         case DO_LOOKUP:
-            if (!ossl_ht_read_lock(m_ht))
-                break;
+            if (!m_ht->config.no_rcu) {
+                if (!ossl_ht_read_lock(m_ht))
+                    break;
+            } else {
+                if (!TEST_true(CRYPTO_THREAD_read_lock(no_rcu_lock)))
+                    break;
+            }
             m = ossl_ht_mt_TEST_MT_ENTRY_get(m_ht, TO_HT_KEY(&key), &v);
             if (m != NULL && m != expected_m) {
                 worker_exits[num] = "Read unexpected value from hashtable";
                 TEST_info("Iteration %d Read unexpected value %p when %p expected",
-                          giter, (void *)m, (void *)expected_m);
+                    giter, (void *)m, (void *)expected_m);
             }
-            ossl_ht_read_unlock(m_ht);
+            if (!m_ht->config.no_rcu) {
+                ossl_ht_read_unlock(m_ht);
+            } else {
+                if (!TEST_true(CRYPTO_THREAD_unlock(no_rcu_lock)))
+                    break;
+            }
             if (worker_exits[num] != NULL)
                 return;
             break;
         case DO_INSERT:
         case DO_REPLACE:
-            ossl_ht_write_lock(m_ht);
+            if (!m_ht->config.no_rcu) {
+                ossl_ht_write_lock(m_ht);
+            } else {
+                if (!TEST_true(CRYPTO_THREAD_write_lock(no_rcu_lock)))
+                    break;
+            }
             if (behavior == DO_REPLACE) {
                 expected_rc = 1;
                 r = &m;
@@ -596,23 +645,31 @@ static void do_mt_hash_work(void)
                 r = NULL;
             }
 
-            if (expected_rc != ossl_ht_mt_TEST_MT_ENTRY_insert(m_ht,
-                                                               TO_HT_KEY(&key),
-                                                               expected_m, r)) {
+            if (expected_rc != ossl_ht_mt_TEST_MT_ENTRY_insert(m_ht, TO_HT_KEY(&key), expected_m, r)) {
                 TEST_info("Iteration %d Expected rc %d on %s of element %u which is %s\n",
-                          giter, expected_rc, behavior == DO_REPLACE ? "replace" : "insert",
-                          (unsigned int)index,
-                          expected_m->in_table ? "in table" : "not in table");
+                    giter, expected_rc, behavior == DO_REPLACE ? "replace" : "insert",
+                    (unsigned int)index,
+                    expected_m->in_table ? "in table" : "not in table");
                 worker_exits[num] = "Failure on insert";
             }
             if (expected_rc == 1)
                 expected_m->in_table = 1;
-            ossl_ht_write_unlock(m_ht);
+            if (!m_ht->config.no_rcu) {
+                ossl_ht_write_unlock(m_ht);
+            } else {
+                if (!TEST_true(CRYPTO_THREAD_unlock(no_rcu_lock)))
+                    break;
+            }
             if (worker_exits[num] != NULL)
                 return;
             break;
         case DO_DELETE:
-            ossl_ht_write_lock(m_ht);
+            if (!m_ht->config.no_rcu) {
+                ossl_ht_write_lock(m_ht);
+            } else {
+                if (!TEST_true(CRYPTO_THREAD_write_lock(no_rcu_lock)))
+                    break;
+            }
             expected_rc = expected_m->in_table;
             if (expected_rc == 1) {
                 /*
@@ -628,11 +685,16 @@ static void do_mt_hash_work(void)
             }
             if (expected_rc != ossl_ht_delete(m_ht, TO_HT_KEY(&key))) {
                 TEST_info("Iteration %d Expected rc %d on delete of element %u which is %s\n",
-                          giter, expected_rc, (unsigned int)index,
-                          expected_m->in_table ? "in table" : "not in table");
+                    giter, expected_rc, (unsigned int)index,
+                    expected_m->in_table ? "in table" : "not in table");
                 worker_exits[num] = "Failure on delete";
             }
-            ossl_ht_write_unlock(m_ht);
+            if (!m_ht->config.no_rcu) {
+                ossl_ht_write_unlock(m_ht);
+            } else {
+                if (!TEST_true(CRYPTO_THREAD_unlock(no_rcu_lock)))
+                    break;
+            }
             if (worker_exits[num] != NULL)
                 return;
             break;
@@ -643,25 +705,24 @@ static void do_mt_hash_work(void)
     }
 }
 
-static int test_hashtable_multithread(void)
+static int test_hashtable_multithread(int idx)
 {
     HT_CONFIG hash_conf = {
-        NULL,              /* use default context */
-        hashtable_mt_free, /* our free function */
-        NULL,              /* default hash function */
-        0,                 /* default hash size */
-        1,                 /* Check collisions */
+        .ht_free_fn = hashtable_mt_free,
+        .init_neighborhoods = 0,
+        .collision_check = 1,
+        .no_rcu = idx,
     };
     int ret = 0;
-    thread_t workers[NUM_WORKERS];
     int i;
 #ifdef MEASURE_HASH_PERFORMANCE
     struct timeval start, end, delta;
 #endif
 
-    memset(worker_exits, 0, sizeof(char *) * NUM_WORKERS);
+    if (!TEST_true(setup_num_workers()))
+        goto end;
+
     memset(test_mt_entries, 0, sizeof(TEST_MT_ENTRY) * TEST_MT_POOL_SZ);
-    memset(workers, 0, sizeof(thread_t) * NUM_WORKERS);
 
     m_ht = ossl_ht_new(&hash_conf);
 
@@ -672,27 +733,28 @@ static int test_hashtable_multithread(void)
         goto end_free;
     if (!TEST_ptr(testrand_lock = CRYPTO_THREAD_lock_new()))
         goto end_free;
+    if (!TEST_ptr(no_rcu_lock = CRYPTO_THREAD_lock_new()))
+        goto end_free;
 #ifdef MEASURE_HASH_PERFORMANCE
     gettimeofday(&start, NULL);
 #endif
 
-    for (i = 0; i < NUM_WORKERS; i++) {
+    for (i = 0; i < num_workers; i++) {
         if (!run_thread(&workers[i], do_mt_hash_work))
             goto shutdown;
     }
 
 shutdown:
-    for (--i; i >= 0; i--) {
+    for (i = 0; i < num_workers; i++) {
         wait_for_thread(workers[i]);
     }
-
 
     /*
      * Now that the workers are done, check for any error
      * conditions
      */
     ret = 1;
-    for (i = 0; i < NUM_WORKERS; i++) {
+    for (i = 0; i < num_workers; i++) {
         if (worker_exits[i] != NULL) {
             TEST_info("Worker %d failed: %s\n", i, worker_exits[i]);
             ret = 0;
@@ -709,11 +771,19 @@ shutdown:
     TEST_info("multithread stress runs 40000 ops in %ld.%ld seconds", delta.tv_sec, delta.tv_usec);
 #endif
 
+    worker_num = 0;
+    free_failure = 0;
+    global_iteration = 0;
 end_free:
     shutting_down = 1;
     ossl_ht_free(m_ht);
     CRYPTO_THREAD_lock_free(worker_lock);
     CRYPTO_THREAD_lock_free(testrand_lock);
+    CRYPTO_THREAD_lock_free(no_rcu_lock);
+    free(workers);
+    workers = NULL;
+    free(worker_exits);
+    worker_exits = NULL;
 end:
     return ret;
 }
@@ -722,8 +792,8 @@ int setup_tests(void)
 {
     ADD_TEST(test_int_lhash);
     ADD_TEST(test_stress);
-    ADD_TEST(test_int_hashtable);
-    ADD_ALL_TESTS(test_hashtable_stress, 2);
-    ADD_TEST(test_hashtable_multithread);
+    ADD_ALL_TESTS(test_int_hashtable, 2);
+    ADD_ALL_TESTS(test_hashtable_stress, 4);
+    ADD_ALL_TESTS(test_hashtable_multithread, 2);
     return 1;
 }

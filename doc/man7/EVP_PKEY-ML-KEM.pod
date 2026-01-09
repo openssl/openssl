@@ -53,11 +53,30 @@ Use L<EVP_PKEY_CTX_set_params(3)> after calling L<EVP_PKEY_keygen_init(3)>.
 
 =back
 
+=head2 Encoder Parameters
+
+=over 4
+
+=item "output_formats" (B<OSSL_PKEY_PARAM_OUTPUT_FORMATS>) <UTF8 string>
+
+This parameter can be used with L<OSSL_ENCODER_CTX_new_for_pkey(3)>
+and L<OSSL_ENCODER_CTX_set_params(3)> to select the preferred B<PKCS#8> output
+formats of a private key.
+When this parameter is either not specified or empty, the behaviour is
+determined by the provider configuration parameters described below.
+Otherwise, it has the same syntax and behaviour as the provider configuration
+B<ml-kem.output_formats> parameter, except that the B<ml-kem.retain-seed>
+parameter is then ignored, i.e. the C<seed-only> and C<seed-priv> formats
+remain available so long as the seed was initially known, regardless of any
+setting of B<ml-kem.retain-seed>.
+
+=back
+
 =head2 Common parameters
 
 In addition to the common parameters that all keytypes should support (see
 L<provider-keymgmt(7)/Common Information Parameters>), B<ML-KEM> keys
-keys support the parameters listed below.
+support the parameters listed below.
 These are gettable using
 L<EVP_PKEY_get_octet_string_param(3)> or L<EVP_PKEY_get_params(3)>.
 They can be initialised via L<EVP_PKEY_fromdata(3)>, and are returned by
@@ -110,7 +129,7 @@ configuration options programmatically.
 
 =item C<ml-kem.import_pct_type> (B<OSSL_PKEY_PARAM_ML_KEM_IMPORT_PCT_TYPE>) <UTF8 string>
 
-When an B<ML-KEM> key is imported as an explict FIPS 203 B<dk> decapsulation
+When an B<ML-KEM> key is imported as an explicit FIPS 203 B<dk> decapsulation
 key, rather than a seed, a pairwise consistency test (PCT) is optionally
 performed.
 By default, or when this parameter is set explicitly to C<random>, the PCT
@@ -122,10 +141,10 @@ Specifying any other value of the parameter, e.g. C<none>, skips the test.
 =item C<ml-kem.retain_seed> (B<OSSL_PKEY_PARAM_ML_KEM_RETAIN_SEED>) <UTF8 string>
 
 When set to a string representing a false boolean value (see
-L<OSSL_PROVIDER_conf_get_bool(3)>), the seed will not be retained after key
-generation or key import from a seed value.
-If the resulting key is then written to a PKCS#8 object, it will contain
-only the FIPS 203 C<dk> key.
+L<OSSL_PROVIDER_conf_get_bool(3)>), the seed will not be included when
+keys are encoded to B<PKCS#8> form, unless the C<output_formats> encoder
+parameter is set to a nonempty value, as described above.
+The output B<PKCS#8> object will contain only the FIPS 203 C<dk> key.
 
 =item C<ml-kem.prefer_seed> (B<OSSL_PKEY_PARAM_ML_KEM_PREFER_SEED>) <UTF8 string>
 
@@ -193,14 +212,14 @@ recognised on input.
 =item C<bare-seed>:
 
 This format represents B<PKCS#8> objects in which the private key contains
-the 64-byte FIPS 204 seed B<(d, z)> without any ASN.1 encapsulation.
+the 64-byte FIPS 203 seed B<(d, z)> without any ASN.1 encapsulation.
 If the C<bare-seed> format is not included in the list, this format will not be
 recognised on input.
 
 =item C<bare-priv>:
 
 This format represents B<PKCS#8> objects in which the private key contains
-the FIPS 204 decapsulation key B<dk> without any ASN.1 encapsulation.
+the FIPS 203 decapsulation key B<dk> without any ASN.1 encapsulation.
 If the C<bare-priv> format is not included in the list, this format will not be
 recognised on input.
 
@@ -305,6 +324,8 @@ L<EVP_PKEY(3)>,
 L<EVP_PKEY_get_raw_private_key(3)>,
 L<EVP_PKEY_get_raw_public_key(3)>,
 L<EVP_PKEY_get1_encoded_public_key(3)>,
+L<OSSL_ENCODER_CTX_new_for_pkey(3)>,
+L<OSSL_ENCODER_CTX_set_params(3)>,
 L<OSSL_PROVIDER_add_conf_parameter(3)>,
 L<provider-keymgmt(7)>,
 L<EVP_KEM-ML-KEM(7)>
@@ -312,6 +333,7 @@ L<EVP_KEM-ML-KEM(7)>
 =head1 HISTORY
 
 This functionality was added in OpenSSL 3.5.
+The C<output_formats> B<OSSL_ENCODER_CTX> parameter was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

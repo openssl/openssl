@@ -119,7 +119,7 @@ The following sections of FIPS186-4:
 =head1 SEE ALSO
 
 L<EVP_PKEY-FFC(7)>,
-L<EVP_SIGNATURE-DSA(7)>
+L<EVP_SIGNATURE-DSA(7)>,
 L<EVP_PKEY(3)>,
 L<provider-keymgmt(7)>,
 L<EVP_KEYMGMT(3)>,

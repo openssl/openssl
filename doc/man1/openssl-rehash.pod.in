@@ -10,6 +10,7 @@ openssl-rehash, c_rehash - Create symbolic links to files named by the hash
 values
 
 =head1 SYNOPSIS
+
 =for openssl duplicate options
 
 B<openssl>
@@ -23,20 +24,7 @@ B<rehash>
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [I<directory>] ...
 
-B<c_rehash>
-[B<-h>]
-[B<-help>]
-[B<-old>]
-[B<-n>]
-[B<-v>]
-{- $OpenSSL::safe::opt_provider_synopsis -}
-[I<directory>] ...
-
 =head1 DESCRIPTION
-
-This command is generally equivalent to the external
-script B<c_rehash>,
-except for minor differences noted below.
 
 B<openssl rehash> scans directories and calculates a hash value of
 each F<.pem>, F<.crt>, F<.cer>, or F<.crl>
@@ -73,22 +61,6 @@ is found.
 A warning will also be displayed if there are files that
 cannot be parsed as either a certificate or a CRL or if
 more than one such object appears in the file.
-
-=head2 Script Configuration
-
-The B<c_rehash> script
-uses the B<openssl> program to compute the hashes and
-fingerprints. If not found in the user's B<PATH>, then set the
-B<OPENSSL> environment variable to the full pathname.
-Any program can be used, it will be invoked as follows for either
-a certificate or CRL:
-
-  $OPENSSL x509 -hash -fingerprint -noout -in FILENAME
-  $OPENSSL crl -hash -fingerprint -noout -in FILENAME
-
-where I<FILENAME> is the filename. It must output the hash of the
-file on the first line, and the fingerprint on the second,
-optionally prefixed with some text and an equals sign.
 
 =head1 OPTIONS
 
@@ -153,9 +125,13 @@ L<openssl(1)>,
 L<openssl-crl(1)>,
 L<openssl-x509(1)>
 
+=head1 HISTORY
+
+B<c_rehash> was removed in OpenSSL 4.0. Use B<openssl rehash> instead.
+
 =head1 COPYRIGHT
 
-Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

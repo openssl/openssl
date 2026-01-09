@@ -16,7 +16,6 @@ B<openssl version>
 [B<-f>]
 [B<-p>]
 [B<-d>]
-[B<-e>]
 [B<-m>]
 [B<-r>]
 [B<-c>]
@@ -62,10 +61,6 @@ Platform setting.
 
 OPENSSLDIR setting.
 
-=item B<-e>
-
-ENGINESDIR settings.
-
 =item B<-m>
 
 MODULESDIR settings.
@@ -89,7 +84,7 @@ non-Windows platforms.
 =head1 HISTORY
 
 In OpenSSL versions prior to 3.4, OpenSSL had a limitation regarding the
-B<OPENSSLDIR>, B<MODULESDIR> and B<ENGINESDIR> build time macros.  These macros
+B<OPENSSLDIR> and B<MODULESDIR> build time macros.  These macros
 were defined at build time, and represented filesystem paths.  This is common
 practice on unix like systems, as there was an expectation that a given build
 would be installed to a pre-determined location.  On Windows however, there is
@@ -98,7 +93,7 @@ B<OSSL_WINCTX> was introduced as a new build time variable to define a set of
 registry keys identified by the name openssl-<version>-<ctx>, in which the
 <version> value is derived from the version string in the openssl source, and
 the <ctx> extension is derived from the B<OSSL_WINCTX> variable.  The values of
-B<OPENSSLDIR>, B<ENGINESDIR> and B<MODULESDIR> can be set to various paths
+B<OPENSSLDIR> and B<MODULESDIR> can be set to various paths
 underneath this key to break the requirement to predict the installation path at
 build time.
 

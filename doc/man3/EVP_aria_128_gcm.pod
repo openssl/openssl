@@ -88,7 +88,7 @@ EVP_aria_256_gcm(),
 
 ARIA for 128, 192 and 256 bit keys in CBC-MAC Mode (CCM) and Galois Counter
 Mode (GCM). These ciphers require additional control operations to function
-correctly, see the L<EVP_EncryptInit(3)/AEAD Interface> section for details.
+correctly, see the L<EVP_EncryptInit(3)/AEAD INTERFACE> section for details.
 
 =back
 
@@ -102,14 +102,12 @@ See L<crypto(7)/Performance> for further information.
 =head1 RETURN VALUES
 
 These functions return an B<EVP_CIPHER> structure that contains the
-implementation of the symmetric cipher. See L<EVP_CIPHER_meth_new(3)> for
-details of the B<EVP_CIPHER> structure.
+implementation of the symmetric cipher.
 
 =head1 SEE ALSO
 
 L<evp(7)>,
-L<EVP_EncryptInit(3)>,
-L<EVP_CIPHER_meth_new(3)>
+L<EVP_EncryptInit(3)>
 
 =head1 COPYRIGHT
 

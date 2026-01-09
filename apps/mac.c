@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,42 +18,46 @@
 #include <openssl/core_names.h>
 
 #undef BUFSIZE
-#define BUFSIZE 1024*8
+#define BUFSIZE 1024 * 8
 
 typedef enum OPTION_choice {
     OPT_COMMON,
-    OPT_MACOPT, OPT_BIN, OPT_IN, OPT_OUT,
-    OPT_CIPHER, OPT_DIGEST,
+    OPT_MACOPT,
+    OPT_BIN,
+    OPT_IN,
+    OPT_OUT,
+    OPT_CIPHER,
+    OPT_DIGEST,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS mac_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] mac_name\n"},
+    { OPT_HELP_STR, 1, '-', "Usage: %s [options] mac_name\n" },
 
     OPT_SECTION("General"),
-    {"help", OPT_HELP, '-', "Display this summary"},
-    {"macopt", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form"},
-    {"cipher", OPT_CIPHER, 's', "Cipher"},
-    {"digest", OPT_DIGEST, 's', "Digest"},
-    {OPT_MORE_STR, 1, '-', "See 'PARAMETER NAMES' in the EVP_MAC_ docs"},
+    { "help", OPT_HELP, '-', "Display this summary" },
+    { "macopt", OPT_MACOPT, 's', "MAC algorithm parameters in n:v form" },
+    { "cipher", OPT_CIPHER, 's', "Cipher" },
+    { "digest", OPT_DIGEST, 's', "Digest" },
+    { OPT_MORE_STR, 1, '-', "See 'PARAMETER NAMES' in the EVP_MAC_ docs" },
 
     OPT_SECTION("Input"),
-    {"in", OPT_IN, '<', "Input file to MAC (default is stdin)"},
+    { "in", OPT_IN, '<', "Input file to MAC (default is stdin)" },
 
     OPT_SECTION("Output"),
-    {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
-    {"binary", OPT_BIN, '-',
-        "Output in binary format (default is hexadecimal)"},
+    { "out", OPT_OUT, '>', "Output to filename rather than stdout" },
+    { "binary", OPT_BIN, '-',
+        "Output in binary format (default is hexadecimal)" },
 
     OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
-    {"mac_name", 0, 0, "MAC algorithm"},
-    {NULL}
+    { "mac_name", 0, 0, "MAC algorithm" },
+    { NULL }
 };
 
 static char *alloc_mac_algorithm_name(STACK_OF(OPENSSL_STRING) **optp,
-                                      const char *name, const char *arg)
+    const char *name, const char *arg)
 {
     size_t len = strlen(name) + strlen(arg) + 2;
     char *res;
@@ -89,13 +93,14 @@ int mac_main(int argc, char **argv)
     int inform = FORMAT_BINARY;
     char *digest = NULL, *cipher = NULL;
     OSSL_PARAM *params = NULL;
+    char *new_opt = NULL;
 
     prog = opt_init(argc, argv, mac_options);
     buf = app_malloc(BUFSIZE, "I/O buffer");
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
         default:
-opthelp:
+        opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto err;
         case OPT_HELP:
@@ -112,10 +117,17 @@ opthelp:
             outfile = opt_arg();
             break;
         case OPT_MACOPT:
+            new_opt = process_additional_mac_key_arguments(opt_arg());
+            if (new_opt == NULL) {
+                ret = 1;
+                goto err;
+            }
             if (opts == NULL)
                 opts = sk_OPENSSL_STRING_new_null();
-            if (opts == NULL || !sk_OPENSSL_STRING_push(opts, opt_arg()))
+            if (opts == NULL || !sk_OPENSSL_STRING_push(opts, new_opt)) {
+                clear_free(new_opt);
                 goto opthelp;
+            }
             break;
         case OPT_CIPHER:
             OPENSSL_free(cipher);
@@ -155,7 +167,7 @@ opthelp:
         int ok = 1;
 
         params = app_params_new_from_opts(opts,
-                                          EVP_MAC_settable_ctx_params(mac));
+            EVP_MAC_settable_ctx_params(mac));
         if (params == NULL)
             goto err;
 
@@ -225,9 +237,7 @@ err:
     if (ret != 0)
         ERR_print_errors(bio_err);
     OPENSSL_clear_free(buf, BUFSIZE);
-    OPENSSL_free(cipher);
-    OPENSSL_free(digest);
-    sk_OPENSSL_STRING_free(opts);
+    sk_OPENSSL_STRING_pop_free(opts, clear_free);
     BIO_free(in);
     BIO_free(out);
     EVP_MAC_CTX_free(ctx);

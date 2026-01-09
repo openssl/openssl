@@ -87,7 +87,8 @@ certificate that is being sent back to the client via a call to
 SSL_get_certificate(); retrieve the related OCSP response to be sent back; and
 then set that response data by calling SSL_set_tlsext_status_ocsp_resp(). A
 pointer to the response data should be provided in the B<resp> argument, and
-the length of that data should be in the B<len> argument.
+the length of that data should be in the B<len> argument. The ownership of
+the data is transferred to the B<ssl> object.
 
 In the case of multi-stapling the responses to be returned by the server can be
 obtained via a call to SSL_get0_tlsext_status_ocsp_resp_ex(). The value B<*resp>
@@ -159,7 +160,7 @@ macros were added in OpenSSL 3.6.
 
 =head1 COPYRIGHT
 
-Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

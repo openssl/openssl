@@ -16,14 +16,14 @@
 #include "internal/core.h"
 #include "internal/bio.h"
 #include "internal/provider.h"
-#include "internal/threads_common.h"
+#include "internal/conf.h"
 #include "crypto/decoder.h"
 #include "crypto/context.h"
 
 struct ossl_lib_ctx_st {
     CRYPTO_RWLOCK *lock;
     OSSL_EX_DATA_GLOBAL global;
-
+    CONF_IMODULE *ssl_imod;
     void *property_string_data;
     void *evp_method_store;
     void *provider_store;
@@ -83,6 +83,34 @@ int ossl_lib_ctx_is_child(OSSL_LIB_CTX *ctx)
     if (ctx == NULL)
         return 0;
     return ctx->ischild;
+}
+
+int ossl_lib_ctx_attach_ssl_conf_imodule(OSSL_LIB_CTX *ctx, CONF_IMODULE *md)
+{
+    if (ctx == NULL || md == NULL || ctx->ssl_imod != NULL)
+        return 0;
+
+    ctx->ssl_imod = md;
+    md->libctx = ctx;
+    return 1;
+}
+
+int ossl_lib_ctx_detach_ssl_conf_imodule(OSSL_LIB_CTX *ctx, CONF_IMODULE *md)
+{
+    if (ctx != NULL && md != NULL)
+        return 0;
+
+    if (ctx != NULL && ctx->ssl_imod) {
+        ctx->ssl_imod->libctx = NULL;
+        ctx->ssl_imod = NULL;
+    }
+
+    if (md != NULL && md->libctx) {
+        md->libctx->ssl_imod = NULL;
+        md->libctx = NULL;
+    }
+
+    return 1;
 }
 
 static void context_deinit_objs(OSSL_LIB_CTX *ctx);
@@ -214,7 +242,7 @@ static int context_init(OSSL_LIB_CTX *ctx)
 
     return 1;
 
- err:
+err:
     context_deinit_objs(ctx);
 
     if (exdata_done)
@@ -258,7 +286,6 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
         ossl_decoder_cache_free(ctx->decoder_cache);
         ctx->decoder_cache = NULL;
     }
-
 
     /* P2. We want encoder_store to be cleaned up before the provider store */
     if (ctx->encoder_store != NULL) {
@@ -354,13 +381,14 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
         ctx->comp_methods = NULL;
     }
 #endif
-
 }
 
 static int context_deinit(OSSL_LIB_CTX *ctx)
 {
     if (ctx == NULL)
         return 1;
+
+    ossl_lib_ctx_detach_ssl_conf_imodule(ctx, NULL);
 
     ossl_ctx_thread_stop(ctx);
 
@@ -446,7 +474,7 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_new(void)
 
 #ifndef FIPS_MODULE
 OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(const OSSL_CORE_HANDLE *handle,
-                                             const OSSL_DISPATCH *in)
+    const OSSL_DISPATCH *in)
 {
     OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new();
 
@@ -462,7 +490,7 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(const OSSL_CORE_HANDLE *handle,
 }
 
 OSSL_LIB_CTX *OSSL_LIB_CTX_new_child(const OSSL_CORE_HANDLE *handle,
-                                     const OSSL_DISPATCH *in)
+    const OSSL_DISPATCH *in)
 {
     OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new_from_dispatch(handle, in);
 
@@ -611,6 +639,9 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index)
 
     case OSSL_LIB_CTX_COMP_METHODS:
         return (void *)&ctx->comp_methods;
+
+    case OSSL_LIB_CTX_SSL_CONF_IMODULE:
+        return (void *)ctx->ssl_imod;
 
     default:
         return NULL;

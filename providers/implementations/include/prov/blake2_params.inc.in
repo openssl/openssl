@@ -14,14 +14,14 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 #include "internal/common.h"
 
 {- produce_param_decoder('blake2_get_ctx',
-                         (['MAC_PARAM_SIZE',                    'size',   'size_t'],
-                          ['MAC_PARAM_BLOCK_SIZE',              'bsize',  'size_t'],
+                         (['OSSL_MAC_PARAM_SIZE',                    'size',   'size_t'],
+                          ['OSSL_MAC_PARAM_BLOCK_SIZE',              'bsize',  'size_t'],
                          )); -}
 
 {- produce_param_decoder('blake2_mac_set_ctx',
-                         (['MAC_PARAM_SIZE',    'size', 'size_t'],
-                          ['MAC_PARAM_KEY',     'key',  'octet_string'],
-                          ['MAC_PARAM_CUSTOM',  'cust', 'octet_string'],
-                          ['MAC_PARAM_SALT',    'salt', 'octet_string'],
+                         (['OSSL_MAC_PARAM_SIZE',    'size', 'size_t'],
+                          ['OSSL_MAC_PARAM_KEY',     'key',  'octet_string'],
+                          ['OSSL_MAC_PARAM_CUSTOM',  'cust', 'octet_string'],
+                          ['OSSL_MAC_PARAM_SALT',    'salt', 'octet_string'],
                          )); -}
     

@@ -41,7 +41,9 @@ B<openssl> B<enc>|I<cipher>
 [B<-none>]
 [B<-skeymgmt> I<skeymgmt>]
 [B<-skeyopt> I<opt>:I<value>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
+[B<-skeyuri> I<uri>]
+[B<-storepass> I<arg>]
+{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 
 B<openssl> I<cipher> [B<...>]
@@ -193,9 +195,12 @@ Print out the key and IV used.
 Print out the key and IV used then immediately exit: don't do any encryption
 or decryption.
 
-=item B<-bufsize> I<number>
+=item B<-bufsize> I<number>[B<k>]
 
 Set the buffer size for I/O.
+The maximum size that can be specified is B<2^31-1> (2147483647) bytes.
+The B<k> suffix can be specified to indicate that I<number> is provided
+in kibibytes (multiples of 1024 bytes).
 
 =item B<-nopad>
 
@@ -234,30 +239,31 @@ To obtain an existing opaque symmetric key or generate a new one, key
 options are specified as opt:value. These options can't be used together with
 any options implying raw key directly or indirectly.
 
+=item B<-skeyuri> I<uri>
+
+The URI identifying the symmetric key object to be used for encryption.  This
+option can't be used together with any options implying raw key directly or
+indirectly. The B<-skeymgmt> option is ignored. If both B<-skeyuri> and
+B<-skeyopt> options are provided, B<-skeyuri> is ignored.
+
+=item B<-storepass> I<arg>
+
+The input URI password source. For more information about the format of I<arg>
+see L<openssl-passphrase-options(1)>.
+
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
-
-{- $OpenSSL::safe::opt_engine_item -}
 
 =back
 
 =head1 NOTES
 
 The program can be called either as C<openssl I<cipher>> or
-C<openssl enc -I<cipher>>. The first form doesn't work with
-engine-provided ciphers, because this form is processed before the
-configuration file is read and any ENGINEs loaded.
+C<openssl enc -I<cipher>>.
 Use the L<openssl-list(1)> command to get a list of supported ciphers.
 
-Engines which provide entirely new encryption algorithms (such as the ccgost
-engine which provides gost89 algorithm) should be configured in the
-configuration file. Engines specified on the command line using B<-engine>
-option can only be used for hardware-assisted implementations of
-ciphers which are supported by the OpenSSL core or another engine specified
-in the configuration file.
-
-When the enc command lists supported ciphers, ciphers provided by engines,
+When the enc command lists supported ciphers, ciphers provided by providers,
 specified in the configuration files are listed too.
 
 A password will be prompted for to derive the key and IV if necessary.
@@ -279,7 +285,7 @@ Some of the ciphers do not have large keys and others have security
 implications if not used correctly. A beginner is advised to just use
 a strong block cipher, such as AES, in CBC mode.
 
-All the block ciphers normally use PKCS#5 padding, also known as standard
+All the block ciphers normally use PKCS#7 padding, also known as standard
 block padding. This allows a rudimentary integrity or password check to
 be performed. However, since the chance of random data passing the test
 is better than 1 in 256 it isn't a very good test.
@@ -307,11 +313,11 @@ to the output.
 =head1 SUPPORTED CIPHERS
 
 Note that some of these ciphers can be disabled at compile time
-and some are available only if an appropriate engine is configured
+and some are available only if an appropriate provider is configured
 in the configuration file. The output when invoking this command
 with the B<-list> option (that is C<openssl enc -list>) is
 a list of ciphers, supported by your version of OpenSSL, including
-ones provided by configured engines.
+ones provided by configured providers.
 
 This command does not support authenticated encryption modes
 like CCM and GCM, and will not support such modes in the future.
@@ -376,9 +382,6 @@ In both cases, no IV is needed. See example below.
  des-ede3-ofb       Three key triple DES EDE in OFB mode
 
  desx               DESX algorithm.
-
- gost89             GOST 28147-89 in CFB mode (provided by ccgost engine)
- gost89-cnt         GOST 28147-89 in CNT mode (provided by ccgost engine)
 
  idea-cbc           IDEA algorithm in CBC mode
  idea               same as idea-cbc
@@ -496,7 +499,7 @@ certain parameters. So if, for example, you want to use RC2 with a
 
 =head1 SEE ALSO
 
-L<openssl-list(1)>, L<EVP_SKEY(3)>
+L<openssl-list(1)>, L<EVP_SKEY(3)>, L<openssl-passphrase-options(1)>
 
 =head1 HISTORY
 
@@ -504,11 +507,15 @@ The default digest was changed from MD5 to SHA256 in OpenSSL 1.1.0.
 
 The B<-list> option was added in OpenSSL 1.1.1e.
 
-The B<-ciphers> and B<-engine> options were deprecated in OpenSSL 3.0.
+The B<-ciphers> option was deprecated in OpenSSL 3.0.
 
 The B<-saltlen> option was added in OpenSSL 3.2.
 
 The B<-skeymgmt> and B<-skeyopt> options were added in OpenSSL 3.5.
+
+The B<-engine> option was removed in OpenSSL 4.0.
+
+The B<-skeyuri> and B<-storepass> options were added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

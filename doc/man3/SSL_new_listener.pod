@@ -3,7 +3,7 @@
 =head1 NAME
 
 SSL_new_listener, SSL_new_listener_from, SSL_is_listener, SSL_get0_listener,
-SSL_listen,
+SSL_listen, SSL_listen_ex,
 SSL_accept_connection, SSL_get_accept_connection_queue_len,
 SSL_new_from_listener,
 SSL_ACCEPT_CONNECTION_NO_BLOCK - SSL object interface for abstracted connection
@@ -20,6 +20,7 @@ acceptance
  SSL *SSL_get0_listener(SSL *ssl);
 
  int SSL_listen(SSL *ssl);
+ int SSL_listen_ex(SSL *ssl, SSL *new_conn);
 
  #define SSL_ACCEPT_CONNECTION_NO_BLOCK
  SSL *SSL_accept_connection(SSL *ssl, uint64_t flags);
@@ -124,6 +125,22 @@ SSL_accept_connection()) succeeds. The SSL_listen() function is idempotent,
 subsequent calls on the same I<ssl> object are no-ops. This call is supported
 only on listener SSL objects.
 
+The SSL_listen_ex() function behaves in a similar fashion to L<DTLSv1_listen(3)>
+in that it polls a listening SSL object, and, if a new connection is available,
+writes that connection into the SSL object pointed to by B<new_conn>.  Note that
+once a connection is returned from a listener via this call, accepting
+connections via L<SSL_accept_connection(3)> is no longer permissible, and will
+result in an error.  Note that many calls into the QUIC api may trigger the quic reactor
+(such as L<SSL_poll(3)>), and will set the port into a mode in which L<SSL_accept_connection(3)>
+is assumed.  To avoid this, it is recommended that, if the use of SSL_listen_ex use is desired, that
+it is the first I/O call made to the SSL object to which the port is attached.
+
+Likewise, if a listener has accepted a connection via
+L<SSL_accept_connection(3)>, it is impermissible to accept connections via
+B<SSL_listen_ex()>.  Note also that SSL objects passed in the B<new_conn>
+parameter to B<SSL_listen_ex()> must be created using L<OSSL_QUIC_method(3)> or
+L<OSSL_QUIC_server_method(3)>.
+
 The SSL_accept_connection() call is supported only on a listener SSL object and
 accepts a new incoming connection. A new SSL object representing the accepted
 connection is created and returned on success. If no incoming connection is
@@ -198,6 +215,11 @@ object on which it is called) or NULL.
 
 SSL_listen() returns 1 on success or 0 on failure.
 
+SSL_listen_ex() returns 1 when a new connection was accepted on the new_conn
+parameter, 0 if no new connection was available at the time of the call, or -1
+in the event an internal error occurred, signaling a need to check the error
+queue.
+
 SSL_accept_connection() returns a pointer to a new SSL object on success or NULL
 on failure. On success, the caller assumes ownership of the reference.
 
@@ -227,6 +249,8 @@ L<SSL_set_blocking_mode(3)>
 =head1 HISTORY
 
 These functions were added in OpenSSL 3.5.
+
+SSL_listen_ex() was added in OpenSSL 4.0
 
 =head1 COPYRIGHT
 

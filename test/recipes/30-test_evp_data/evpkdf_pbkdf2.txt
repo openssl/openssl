@@ -1,5 +1,5 @@
 #
-# Copyright 2001-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2001-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -284,3 +284,38 @@ Ctrl.iter = iter:0
 Ctrl.digest = digest:sha1
 Result = KDF_CTRL_ERROR
 Reason = invalid iteration count
+
+Title = Test that a short password is blocked
+
+Availablein = fips
+FIPSversion = >=4.0.0
+KDF = PBKDF2
+Ctrl.pass = pass:7charpw
+Ctrl.salt = salt:saltSALTsaltSALTsaltSALTsaltSALTsalt
+Ctrl.iter = iter:4096
+Ctrl.digest = digest:sha256
+Result = KDF_CTRL_ERROR
+Reason = password strength too weak
+
+Title = but with a flag is Unapproved
+
+Availablein = fips
+FIPSversion = >=4.0.0
+KDF = PBKDF2
+Unapproved = 1
+Ctrl.pkcs5 = pkcs5:1
+Ctrl.pass = pass:7charpw
+Ctrl.salt = salt:saltSALTsaltSALTsaltSALTsaltSALTsalt
+Ctrl.iter = iter:4096
+Ctrl.digest = digest:sha256
+Output = 2764a19fdf2c10c0f0782eb80afeb7c3813d36d5
+
+Title = and long password is good (adjust to chosen length)
+
+Availablein = fips
+KDF = PBKDF2
+Ctrl.pass = pass:SomeModuleInsistOn20
+Ctrl.salt = salt:saltSALTsaltSALTsaltSALTsaltSALTsalt
+Ctrl.iter = iter:4096
+Ctrl.digest = digest:sha256
+Output = cba2e3bf10cd9c9f0cb2d6b2dfa62bfc2b3a7fca

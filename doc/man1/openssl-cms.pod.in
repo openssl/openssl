@@ -58,8 +58,8 @@ Keys and password options:
 [B<-inkey> I<filename>|I<uri>]
 [B<-passin> I<arg>]
 [B<-keyopt> I<name>:I<parameter>]
-[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+[B<-keyform> B<DER>|B<PEM>|B<P12>]
+{- $OpenSSL::safe::opt_provider_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 
 Encryption options:
@@ -375,12 +375,10 @@ set customised parameters for the preceding key or certificate. It can
 currently be used to set RSA-PSS for signing, RSA-OAEP for encryption
 or to modify default parameters for ECDH.
 
-=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>
 
 The format of the private key file; unspecified by default.
 See L<openssl-format-options(1)> for details.
-
-{- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
 
@@ -474,7 +472,7 @@ B<OSSL_KDF_PARAM_INFO> parameter of the B<KEMRecipientInfo> type's KDF.
 =item B<-md> I<digest>
 
 Digest algorithm to use when signing or resigning. If not present then the
-default digest algorithm for the signing key will be used (usually SHA1).
+default digest algorithm for the signing key will be used (usually SHA-256).
 
 =item B<-signer> I<file>
 
@@ -948,11 +946,11 @@ The -no_alt_chains option was added in OpenSSL 1.0.2b.
 
 The B<-nameopt> option was added in OpenSSL 3.0.0.
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
-
 The B<-digest> option was added in OpenSSL 3.2.
 
 The B<-recip_kdf> and B<-recip_ukm> options were added in OpenSSL 3.6.
+
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

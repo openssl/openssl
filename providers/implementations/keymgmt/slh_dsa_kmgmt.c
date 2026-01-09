@@ -10,13 +10,21 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
+#include <openssl/proverr.h>
 #include <openssl/self_test.h>
+#include <openssl/proverr.h>
 #include "crypto/slh_dsa.h"
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "providers/implementations/keymgmt/slh_dsa_kmgmt.inc"
+
+#ifdef FIPS_MODULE
+static int slh_dsa_fips140_pairwise_test(const SLH_DSA_KEY *key,
+    SLH_DSA_HASH_CTX *ctx);
+#endif /* FIPS_MODULE */
 
 static OSSL_FUNC_keymgmt_free_fn slh_dsa_free_key;
 static OSSL_FUNC_keymgmt_has_fn slh_dsa_has;
@@ -37,6 +45,27 @@ static OSSL_FUNC_keymgmt_dup_fn slh_dsa_dup_key;
 
 #define SLH_DSA_POSSIBLE_SELECTIONS (OSSL_KEYMGMT_SELECT_KEYPAIR)
 
+#ifdef FIPS_MODULE
+static FIPS_DEFERRED_TEST slh_key_gen_deferred_tests[] = {
+    { "SLH-DSA-SHA2-128f",
+        FIPS_DEFERRED_KAT_ASYM_KEYGEN,
+        FIPS_DEFERRED_TEST_INIT },
+    { NULL, 0, 0 },
+};
+#endif
+
+static int slh_dsa_self_check(OSSL_LIB_CTX *libctx)
+{
+    if (!ossl_prov_is_running())
+        return 0;
+
+#ifdef FIPS_MODULE
+    return FIPS_deferred_self_tests(libctx, slh_key_gen_deferred_tests);
+#else
+    return 1;
+#endif
+}
+
 struct slh_dsa_gen_ctx {
     SLH_DSA_HASH_CTX *ctx;
     OSSL_LIB_CTX *libctx;
@@ -47,7 +76,7 @@ struct slh_dsa_gen_ctx {
 
 static void *slh_dsa_new_key(void *provctx, const char *alg)
 {
-    if (!ossl_prov_is_running())
+    if (!slh_dsa_self_check(PROV_LIBCTX_OF(provctx)))
         return 0;
 
     return ossl_slh_dsa_key_new(PROV_LIBCTX_OF(provctx), NULL, alg);
@@ -105,48 +134,34 @@ static int slh_dsa_import(void *keydata, int selection, const OSSL_PARAM params[
 {
     SLH_DSA_KEY *key = keydata;
     int include_priv;
+    struct slh_dsa_import_st p;
 
-    if (!ossl_prov_is_running() || key == NULL)
+    if (!ossl_prov_is_running()
+        || key == NULL
+        || !slh_dsa_import_decoder(params, &p))
         return 0;
 
     if ((selection & SLH_DSA_POSSIBLE_SELECTIONS) == 0)
         return 0;
 
     include_priv = ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0);
-    return ossl_slh_dsa_key_fromdata(key, params, include_priv);
+    return ossl_slh_dsa_key_fromdata(key, p.pub, p.priv, include_priv);
 }
 
-#define SLH_DSA_IMEXPORTABLE_PARAMETERS \
-    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0), \
-    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0)
-
-static const OSSL_PARAM slh_dsa_key_types[] = {
-    SLH_DSA_IMEXPORTABLE_PARAMETERS,
-    OSSL_PARAM_END
-};
 static const OSSL_PARAM *slh_dsa_imexport_types(int selection)
 {
     if ((selection & SLH_DSA_POSSIBLE_SELECTIONS) == 0)
         return NULL;
-    return slh_dsa_key_types;
+    return slh_dsa_import_list;
 }
 
-static const OSSL_PARAM slh_dsa_params[] = {
-    OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
-    OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
-    OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
-    OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_CATEGORY, NULL),
-    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_MANDATORY_DIGEST, NULL, 0),
-    SLH_DSA_IMEXPORTABLE_PARAMETERS,
-    OSSL_PARAM_END
-};
 static const OSSL_PARAM *slh_dsa_gettable_params(void *provctx)
 {
-    return slh_dsa_params;
+    return slh_dsa_get_params_list;
 }
 
 static int key_to_params(SLH_DSA_KEY *key, OSSL_PARAM_BLD *tmpl,
-                         int selection)
+    int selection)
 {
     /* Error if there is no key or public key */
     if (key == NULL || ossl_slh_dsa_key_get_pub(key) == NULL)
@@ -155,68 +170,69 @@ static int key_to_params(SLH_DSA_KEY *key, OSSL_PARAM_BLD *tmpl,
     if (((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         && ossl_slh_dsa_key_get_priv(key) != NULL)
         if (ossl_param_build_set_octet_string(tmpl, NULL,
-                                              OSSL_PKEY_PARAM_PRIV_KEY,
-                                              ossl_slh_dsa_key_get_priv(key),
-                                              ossl_slh_dsa_key_get_priv_len(key)) != 1)
+                OSSL_PKEY_PARAM_PRIV_KEY,
+                ossl_slh_dsa_key_get_priv(key),
+                ossl_slh_dsa_key_get_priv_len(key))
+            != 1)
             return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
         return 1;
 
     return ossl_param_build_set_octet_string(tmpl, NULL,
-                                             OSSL_PKEY_PARAM_PUB_KEY,
-                                             ossl_slh_dsa_key_get_pub(key),
-                                             ossl_slh_dsa_key_get_pub_len(key));
+        OSSL_PKEY_PARAM_PUB_KEY,
+        ossl_slh_dsa_key_get_pub(key),
+        ossl_slh_dsa_key_get_pub_len(key));
 }
 
 static int slh_dsa_get_params(void *keydata, OSSL_PARAM params[])
 {
     SLH_DSA_KEY *key = keydata;
-    OSSL_PARAM *p;
+    struct slh_dsa_get_params_st p;
     const uint8_t *pub, *priv;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
-            && !OSSL_PARAM_set_size_t(p, 8 * ossl_slh_dsa_key_get_pub_len(key)))
+    if (key == NULL || !slh_dsa_get_params_decoder(params, &p))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_BITS)) != NULL
-            && !OSSL_PARAM_set_size_t(p, 8 * ossl_slh_dsa_key_get_n(key)))
+
+    if (p.bits != NULL
+        && !OSSL_PARAM_set_size_t(p.bits, 8 * ossl_slh_dsa_key_get_pub_len(key)))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
-            && !OSSL_PARAM_set_size_t(p, ossl_slh_dsa_key_get_sig_len(key)))
+    if (p.secbits != NULL
+        && !OSSL_PARAM_set_size_t(p.secbits, 8 * ossl_slh_dsa_key_get_n(key)))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_CATEGORY)) != NULL
-            && !OSSL_PARAM_set_int(p, ossl_slh_dsa_key_get_security_category(key)))
+    if (p.maxsize != NULL
+        && !OSSL_PARAM_set_size_t(p.maxsize, ossl_slh_dsa_key_get_sig_len(key)))
+        return 0;
+    if (p.seccat != NULL
+        && !OSSL_PARAM_set_int(p.seccat, ossl_slh_dsa_key_get_security_category(key)))
         return 0;
 
     priv = ossl_slh_dsa_key_get_priv(key);
     if (priv != NULL) {
-        p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PRIV_KEY);
         /* Note: ossl_slh_dsa_key_get_priv_len() includes the public key */
-        if (p != NULL
-            && !OSSL_PARAM_set_octet_string(p, priv,
-                                            ossl_slh_dsa_key_get_priv_len(key)))
+        if (p.priv != NULL
+            && !OSSL_PARAM_set_octet_string(p.priv, priv,
+                ossl_slh_dsa_key_get_priv_len(key)))
             return 0;
     }
     pub = ossl_slh_dsa_key_get_pub(key);
     if (pub != NULL) {
-        p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PUB_KEY);
-        if (p != NULL
-            && !OSSL_PARAM_set_octet_string(p, pub,
-                                            ossl_slh_dsa_key_get_pub_len(key)))
+        if (p.pub != NULL
+            && !OSSL_PARAM_set_octet_string(p.pub, pub,
+                ossl_slh_dsa_key_get_pub_len(key)))
             return 0;
     }
     /*
      * This allows apps to use an empty digest, so that the old API
      * for digest signing can be used.
      */
-    p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MANDATORY_DIGEST);
-    if (p != NULL && !OSSL_PARAM_set_utf8_string(p, ""))
+    if (p.mandgst != NULL && !OSSL_PARAM_set_utf8_string(p.mandgst, ""))
         return 0;
     return 1;
 }
 
 static int slh_dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
-                          void *cbarg)
+    void *cbarg)
 {
     SLH_DSA_KEY *key = keydata;
     OSSL_PARAM_BLD *tmpl;
@@ -241,7 +257,7 @@ static int slh_dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         goto err;
 
     ret = param_cb(params, cbarg);
-    OSSL_PARAM_free(params);
+    OSSL_PARAM_clear_free(params);
 err:
     OSSL_PARAM_BLD_free(tmpl);
     return ret;
@@ -254,6 +270,7 @@ static void *slh_dsa_load(const void *reference, size_t reference_sz)
     if (ossl_prov_is_running() && reference_sz == sizeof(key)) {
         /* The contents of the reference is the address to our object */
         key = *(SLH_DSA_KEY **)reference;
+
         /* We grabbed, so we detach it */
         *(SLH_DSA_KEY **)reference = NULL;
         return key;
@@ -262,7 +279,7 @@ static void *slh_dsa_load(const void *reference, size_t reference_sz)
 }
 
 static void *slh_dsa_gen_init(void *provctx, int selection,
-                              const OSSL_PARAM params[])
+    const OSSL_PARAM params[])
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     struct slh_dsa_gen_ctx *gctx = NULL;
@@ -285,30 +302,40 @@ static void *slh_dsa_gen_init(void *provctx, int selection,
  * Refer to FIPS 140-3 IG 10.3.A Additional Comment 1
  * Perform a pairwise test for SLH_DSA by signing and verifying a signature.
  */
-static int slh_dsa_fips140_pairwise_test(SLH_DSA_HASH_CTX *ctx,
-                                         const SLH_DSA_KEY *key,
-                                         OSSL_LIB_CTX *lib_ctx)
+static int slh_dsa_fips140_pairwise_test(const SLH_DSA_KEY *key,
+    SLH_DSA_HASH_CTX *ctx)
 {
     int ret = 0;
     OSSL_SELF_TEST *st = NULL;
     OSSL_CALLBACK *cb = NULL;
     void *cb_arg = NULL;
-    uint8_t msg[16] = {0};
+    uint8_t msg[16] = { 0 };
     size_t msg_len = sizeof(msg);
     uint8_t *sig = NULL;
     size_t sig_len;
+    OSSL_LIB_CTX *lib_ctx;
+    int alloc_ctx = 0;
 
     /* During self test, it is a waste to do this test */
-    if (ossl_fips_self_testing())
+    if (ossl_fips_self_testing()
+        || slh_key_gen_deferred_tests[0].state == FIPS_DEFERRED_TEST_IN_PROGRESS)
         return 1;
+
+    if (ctx == NULL) {
+        ctx = ossl_slh_dsa_hash_ctx_new(key);
+        if (ctx == NULL)
+            return 0;
+        alloc_ctx = 1;
+    }
+    lib_ctx = ossl_slh_dsa_key_get0_libctx(key);
 
     OSSL_SELF_TEST_get_callback(lib_ctx, &cb, &cb_arg);
     st = OSSL_SELF_TEST_new(cb, cb_arg);
     if (st == NULL)
-        return 0;
+        goto err;
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_PCT,
-                           OSSL_SELF_TEST_DESC_PCT_SLH_DSA);
+        OSSL_SELF_TEST_DESC_PCT_SLH_DSA);
 
     sig_len = ossl_slh_dsa_key_get_sig_len(key);
     sig = OPENSSL_malloc(sig_len);
@@ -316,7 +343,8 @@ static int slh_dsa_fips140_pairwise_test(SLH_DSA_HASH_CTX *ctx,
         goto err;
 
     if (ossl_slh_dsa_sign(ctx, msg, msg_len, NULL, 0, NULL, 0,
-                          sig, &sig_len, sig_len) != 1)
+            sig, &sig_len, sig_len)
+        != 1)
         goto err;
 
     OSSL_SELF_TEST_oncorrupt_byte(st, sig);
@@ -326,6 +354,8 @@ static int slh_dsa_fips140_pairwise_test(SLH_DSA_HASH_CTX *ctx,
 
     ret = 1;
 err:
+    if (alloc_ctx)
+        ossl_slh_dsa_hash_ctx_free(ctx);
     OPENSSL_free(sig);
     OSSL_SELF_TEST_onend(st, ret);
     OSSL_SELF_TEST_free(st);
@@ -346,19 +376,19 @@ static void *slh_dsa_gen(void *genctx, const char *alg)
         return NULL;
     ctx = ossl_slh_dsa_hash_ctx_new(key);
     if (ctx == NULL)
-        return NULL;
+        goto err;
     if (!ossl_slh_dsa_generate_key(ctx, key, gctx->libctx,
-                                   gctx->entropy, gctx->entropy_len))
+            gctx->entropy, gctx->entropy_len))
         goto err;
 #ifdef FIPS_MODULE
-    if (!slh_dsa_fips140_pairwise_test(ctx, key, gctx->libctx)) {
+    if (!slh_dsa_fips140_pairwise_test(key, ctx)) {
         ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
         goto err;
     }
 #endif /* FIPS_MODULE */
     ossl_slh_dsa_hash_ctx_free(ctx);
     return key;
- err:
+err:
     ossl_slh_dsa_hash_ctx_free(ctx);
     ossl_slh_dsa_key_free(key);
     return NULL;
@@ -367,28 +397,26 @@ static void *slh_dsa_gen(void *genctx, const char *alg)
 static int slh_dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {
     struct slh_dsa_gen_ctx *gctx = genctx;
-    const OSSL_PARAM *p;
+    struct slh_dsa_gen_set_params_st p;
 
-    if (gctx == NULL)
+    if (gctx == NULL || !slh_dsa_gen_set_params_decoder(params, &p))
         return 0;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_SLH_DSA_SEED);
-    if (p != NULL) {
+    if (p.seed != NULL) {
         void *vp = gctx->entropy;
         size_t len = sizeof(gctx->entropy);
 
-        if (!OSSL_PARAM_get_octet_string(p, &vp, len, &(gctx->entropy_len))) {
+        if (!OSSL_PARAM_get_octet_string(p.seed, &vp, len, &(gctx->entropy_len))) {
             gctx->entropy_len = 0;
             return 0;
         }
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PROPERTIES);
-    if (p != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
+    if (p.propq != NULL) {
+        if (p.propq->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
         OPENSSL_free(gctx->propq);
-        gctx->propq = OPENSSL_strdup(p->data);
+        gctx->propq = OPENSSL_strdup(p.propq->data);
         if (gctx->propq == NULL)
             return 0;
     }
@@ -396,14 +424,9 @@ static int slh_dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM *slh_dsa_gen_settable_params(ossl_unused void *genctx,
-                                                     ossl_unused void *provctx)
+    ossl_unused void *provctx)
 {
-    static OSSL_PARAM settable[] = {
-        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_PROPERTIES, NULL, 0),
-        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_SLH_DSA_SEED, NULL, 0),
-        OSSL_PARAM_END
-    };
-    return settable;
+    return slh_dsa_gen_set_params_list;
 }
 
 static void slh_dsa_gen_cleanup(void *genctx)
@@ -418,39 +441,39 @@ static void slh_dsa_gen_cleanup(void *genctx)
     OPENSSL_free(gctx);
 }
 
-#define MAKE_KEYMGMT_FUNCTIONS(alg, fn)                                        \
-    static OSSL_FUNC_keymgmt_new_fn slh_dsa_##fn##_new_key;                    \
-    static OSSL_FUNC_keymgmt_gen_fn slh_dsa_##fn##_gen;                        \
-    static void *slh_dsa_##fn##_new_key(void *provctx)                         \
-    {                                                                          \
-        return slh_dsa_new_key(provctx, alg);                                  \
-    }                                                                          \
-    static void *slh_dsa_##fn##_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)\
-    {                                                                          \
-        return slh_dsa_gen(genctx, alg);                                       \
-    }                                                                          \
-    const OSSL_DISPATCH ossl_slh_dsa_##fn##_keymgmt_functions[] = {            \
-        { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))slh_dsa_##fn##_new_key },     \
-        { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))slh_dsa_free_key },          \
-        { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))slh_dsa_dup_key },            \
-        { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))slh_dsa_has },                \
-        { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))slh_dsa_match },            \
-        { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))slh_dsa_import },          \
-        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))slh_dsa_imexport_types },\
-        { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))slh_dsa_export },          \
-        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))slh_dsa_imexport_types },\
-        { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))slh_dsa_load },              \
-        { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))slh_dsa_get_params }, \
-        { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))slh_dsa_gettable_params },\
-        { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))slh_dsa_validate },      \
-        { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))slh_dsa_gen_init },      \
-        { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))slh_dsa_##fn##_gen },         \
-        { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))slh_dsa_gen_cleanup },\
-        { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS,                                    \
-          (void (*)(void))slh_dsa_gen_set_params },                            \
-        { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,                               \
-          (void (*)(void))slh_dsa_gen_settable_params },                       \
-        OSSL_DISPATCH_END                                                      \
+#define MAKE_KEYMGMT_FUNCTIONS(alg, fn)                                                 \
+    static OSSL_FUNC_keymgmt_new_fn slh_dsa_##fn##_new_key;                             \
+    static OSSL_FUNC_keymgmt_gen_fn slh_dsa_##fn##_gen;                                 \
+    static void *slh_dsa_##fn##_new_key(void *provctx)                                  \
+    {                                                                                   \
+        return slh_dsa_new_key(provctx, alg);                                           \
+    }                                                                                   \
+    static void *slh_dsa_##fn##_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)   \
+    {                                                                                   \
+        return slh_dsa_gen(genctx, alg);                                                \
+    }                                                                                   \
+    const OSSL_DISPATCH ossl_slh_dsa_##fn##_keymgmt_functions[] = {                     \
+        { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))slh_dsa_##fn##_new_key },              \
+        { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))slh_dsa_free_key },                   \
+        { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))slh_dsa_dup_key },                     \
+        { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))slh_dsa_has },                         \
+        { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))slh_dsa_match },                     \
+        { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))slh_dsa_import },                   \
+        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))slh_dsa_imexport_types },     \
+        { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))slh_dsa_export },                   \
+        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))slh_dsa_imexport_types },     \
+        { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))slh_dsa_load },                       \
+        { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*)(void))slh_dsa_get_params },           \
+        { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*)(void))slh_dsa_gettable_params }, \
+        { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))slh_dsa_validate },               \
+        { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))slh_dsa_gen_init },               \
+        { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))slh_dsa_##fn##_gen },                  \
+        { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))slh_dsa_gen_cleanup },         \
+        { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS,                                             \
+            (void (*)(void))slh_dsa_gen_set_params },                                   \
+        { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,                                        \
+            (void (*)(void))slh_dsa_gen_settable_params },                              \
+        OSSL_DISPATCH_END                                                               \
     }
 
 MAKE_KEYMGMT_FUNCTIONS("SLH-DSA-SHA2-128s", sha2_128s);

@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-cmp - Certificate Management Protocol (CMP, RFC 4210) application
+openssl-cmp - Certificate Management Protocol (CMP, RFCs 9810 and 9811) application
 
 =head1 SYNOPSIS
 
@@ -70,6 +70,7 @@ Server authentication options:
 [B<-expect_sender> I<name>]
 [B<-ignore_keyusage>]
 [B<-unprotected_errors>]
+[B<-ta_in_ip_extracerts>]
 [B<-no_cache_extracerts>]
 [B<-srvcertout> I<filename>]
 [B<-extracertsout> I<filename>]
@@ -99,9 +100,9 @@ Credentials format options:
 
 [B<-certform> I<PEM|DER>]
 [B<-crlform> I<PEM|DER>]
-[B<-keyform> I<PEM|DER|P12|ENGINE>]
+[B<-keyform> I<PEM|DER|P12>]
 [B<-otherpass> I<arg>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 Random state options:
 
@@ -171,7 +172,8 @@ Certificate verification options, for both CMP and TLS:
 =head1 DESCRIPTION
 
 The B<cmp> command is a client implementation for the Certificate
-Management Protocol (CMP) as defined in RFC4210.
+Management Protocol (CMP) as defined in RFCs 9810 and
+its HTTP(S) transfer as defined in RFC 9811.
 It can be used to request certificates from a CA server,
 update their certificates,
 request certificates to be revoked, and perform other types of CMP requests.
@@ -439,7 +441,7 @@ Request implicit confirmation of newly enrolled certificates.
 Do not send certificate confirmation message for newly enrolled certificate
 without requesting implicit confirmation
 to cope with broken servers not supporting implicit confirmation correctly.
-B<WARNING:> This leads to behavior violating RFC 4210.
+B<WARNING:> This leads to behavior violating RFC 9810.
 
 =item B<-certout> I<filename>
 
@@ -697,7 +699,7 @@ This applies to the following message types and contents:
 
 B<WARNING:> This setting leads to unspecified behavior and it is meant
 exclusively to allow interoperability with server implementations violating
-RFC 4210, e.g.:
+RFC 9810, e.g.:
 
 =over 4
 
@@ -713,6 +715,22 @@ with a signature key."
 =item * appendix D.4 shows PKIConf message having protection
 
 =back
+
+=item B<-ta_in_ip_extracerts>
+
+This is a quirk option added to support 3GPP TS 33.310.
+B<WARNING:> This leads to behavior violating RFCs 4210 and 9810.
+
+It allows using self-issued certificates from the extraCerts in an IP message
+as non-authenticated trust anchors when validating the CMP message protection certificate
+in this and any subsequent responses from the server in the same transaction,
+but only if these extraCerts can also be used as trust anchors for validating
+the newly enrolled certificate received in the IP message.
+
+Note that using this option is dangerous as the to-be-trusted certificates
+obtained this way have not been authenticated (at least not at CMP level).
+Taking them over as initial trust anchors
+implements a form of trust-on-first-use (TOFU).
 
 =item B<-no_cache_extracerts>
 
@@ -813,7 +831,7 @@ This takes precedence over the B<-cert> and B<-key> options.
 The secret is used for creating MAC-based protection of outgoing messages
 and for validating incoming messages that have MAC-based protection.
 The algorithm used by default is Password-Based Message Authentication Code (PBM)
-as defined in RFC 4210 section 5.1.3.1.
+as defined in RFC 9810 section 5.1.3.1.
 
 For more information about the format of I<arg> see
 L<openssl-passphrase-options(1)>.
@@ -837,7 +855,7 @@ this "protection certificate", also called "signer certificate",
 will be included first in the extraCerts field of outgoing messages
 and the signature is done with the corresponding key.
 In Initialization Request (IR) messages this can be used for authenticating
-using an external entity certificate as defined in appendix E.7 of RFC 4210.
+using an external entity certificate as defined in appendix D.7 of RFC 9810.
 
 For Key Update Request (KUR) messages this is also used as
 the certificate to be updated if the B<-oldcert> option is not given.
@@ -880,7 +898,7 @@ L<openssl-passphrase-options(1)>.
 
 =item B<-digest> I<name>
 
-Specifies name of supported digest to use in RFC 4210's MSG_SIG_ALG
+Specifies name of supported digest to use in RFC 9810's MSG_SIG_ALG
 and as the one-way function (OWF) in C<MSG_MAC_ALG>.
 If applicable, this is used for message protection and
 proof-of-possession (POPO) signatures.
@@ -893,7 +911,7 @@ Specifies the name of the MAC algorithm in C<MSG_MAC_ALG>.
 To get the names of supported MAC algorithms use C<openssl list -mac-algorithms>
 and possibly combine such a name with the name of a supported digest algorithm,
 e.g., hmacWithSHA256.
-Defaults to C<hmac-sha1> as per RFC 4210.
+Defaults to C<hmac-sha1>, for backward compatibility with RFC 4210.
 
 =item B<-extracerts> I<filenames>|I<uris>
 
@@ -926,7 +944,7 @@ Default value is DER.
 DER format is preferred because it enables more efficient storage
 of large CRLs.
 
-=item B<-keyform> I<PEM|DER|P12|ENGINE>
+=item B<-keyform> I<PEM|DER|P12>
 
 The format of the key input; unspecified by default.
 See L<openssl(1)/Format Options> for details.
@@ -943,22 +961,6 @@ If not given here, the password will be prompted for if needed.
 
 For more information about the format of I<arg> see
 L<openssl-passphrase-options(1)>.
-
-{- $OpenSSL::safe::opt_engine_item -}
-
-{- output_off() if $disabled{"deprecated-3.0"}; "" -}
-As an alternative to using this combination:
-
-    -engine {engineid} -key {keyid} -keyform ENGINE
-
-... it's also possible to just give the key ID in URI form to B<-key>,
-like this:
-
-    -key org.openssl.engine:{engineid}:{keyid}
-
-This applies to all options specifying keys: B<-key>, B<-newkey>, and
-B<-tls_key>.
-{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 
 =back
 
@@ -1113,6 +1115,7 @@ If the transaction contains more requests, the remaining ones are not saved.
 
 Save the first CMP requests created by the client to the given file and exit.
 Any options related to CMP servers and their responses are ignored.
+This option does not combine with the B<-port> option.
 
 This option is useful for supporting offline scenarios where the certificate
 request (or any other CMP request) is produced beforehand and sent out later.
@@ -1283,7 +1286,7 @@ Send response messages without CMP-level protection.
 
 In case of negative responses, server shall send unprotected error messages,
 certificate responses (IP/CP/KUP), and revocation responses (RP).
-WARNING: This setting leads to behavior violating RFC 4210.
+WARNING: This setting leads to behavior violating RFC 9810.
 
 =item B<-accept_unprotected>
 
@@ -1296,7 +1299,7 @@ So far this has no effect because the server does not accept any error messages.
 
 =item B<-accept_raverified>
 
-Accept RAVERIFED as proof of possession (POPO).
+Accept RAVERIFIED as proof of possession (POPO).
 
 =back
 
@@ -1513,8 +1516,6 @@ L<openssl-req(1)>, L<openssl-x509(1)>, L<x509v3_config(5)>
 
 The B<cmp> application was added in OpenSSL 3.0.
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
-
 The B<-oldwithold>, B<-newwithnew>, B<-newwithold>, B<-oldwithnew>,
 The B<-srvcertout>, and B<-serial> option were added in OpenSSL 3.2, as well
 as an extension of B<-cacertsout> to use when getting CA certificates.
@@ -1528,6 +1529,10 @@ and B<-rsp_crl> options were added in OpenSSL 3.4.
 
 B<-centralkeygen>, B<-newkeyout>, B<-rsp_key> and
 B<-rsp_keypass> were added in OpenSSL 3.5.
+
+The B<-ta_in_ip_extracerts> quirk option was added in OpenSSL 4.0.
+
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

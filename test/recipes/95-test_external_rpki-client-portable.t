@@ -19,7 +19,7 @@ plan skip_all => "No external tests in this configuration"
 
 plan tests => 1;
 
-$RPKI_VERSION = "9.5";
+$RPKI_VERSION = "9.6";
 $RPKI_SRC = "rpki-client-".$RPKI_VERSION;
 $RPKI_SUFFIX = ".tar.gz";
 $RPKI_TARBALL = $RPKI_SRC.$RPKI_SUFFIX;

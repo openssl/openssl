@@ -43,8 +43,8 @@ such as L<OSSL_HTTP_proxy_connect(3)>.
 
 =head1 NOTES
 
-CMP is defined in RFC 4210.
-HTTP transfer for CMP is defined in RFC 6712.
+CMP is defined in RFC 9810.
+HTTP transfer for CMP is defined in RFC 9811.
 
 =head1 RETURN VALUES
 

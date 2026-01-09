@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,7 +19,8 @@ int FuzzerInitialize(int *argc, char ***argv)
     return 1;
 }
 
-int FuzzerTestOneInput(const uint8_t* data, size_t size){
+int FuzzerTestOneInput(const uint8_t *data, size_t size)
+{
     GENERAL_NAME *namesa;
     GENERAL_NAME *namesb;
 

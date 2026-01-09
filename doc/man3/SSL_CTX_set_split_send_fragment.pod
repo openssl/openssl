@@ -32,17 +32,20 @@ SSL_SESSION_get_max_fragment_length - Control fragment size settings and pipelin
 
 =head1 DESCRIPTION
 
-Some engines are able to process multiple simultaneous crypto operations. This
+Previous versions of libssl supported the concept of cipher pipelining. There is
+no support for this in OpenSSL 4.0. In previous versions some engines were
+able to process multiple simultaneous crypto operations. This
 capability could be utilised to parallelise the processing of a single
 connection. For example a single write can be split into multiple records and
-each one encrypted independently and in parallel. Note: this will only work in
-TLS1.1+. There is no support in SSLv3, TLSv1.0 or DTLS (any version). This
+each one encrypted independently and in parallel. Note: this would only work in
+TLS1.1+. There was no support in SSLv3, TLSv1.0 or DTLS (any version). This
 capability is known as "pipelining" within OpenSSL.
 
-In order to benefit from the pipelining capability. You need to have an engine
-that provides ciphers that support this. The OpenSSL "dasync" engine provides
-AES128-SHA based ciphers that have this capability. However, these are for
-development and test purposes only.
+In order to benefit from the pipelining capability, you would need to have an
+engine that provides ciphers that support this. Since OpenSSL 4.0 engines are no
+longer supported and therefore pipelining is not supported either. In some
+future version it may be that this capability is added back via the provider
+mechanism.
 
 SSL_CTX_set_max_send_fragment() and SSL_set_max_send_fragment() set the
 B<max_send_fragment> parameter for SSL_CTX and SSL objects respectively. This
@@ -187,7 +190,7 @@ and SSL_SESSION_get_max_fragment_length() functions were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

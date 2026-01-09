@@ -16,21 +16,21 @@
  */
 
 #ifndef OSSL_CRYPTO_LMS_SIG_H
-# define OSSL_CRYPTO_LMS_SIG_H
-# pragma once
-# ifndef OPENSSL_NO_LMS
-#  include "lms.h"
-#  include "internal/packet.h"
+#define OSSL_CRYPTO_LMS_SIG_H
+#pragma once
+#ifndef OPENSSL_NO_LMS
+#include "lms.h"
+#include "internal/packet.h"
 
 /* The values defined for 8 byte TAGS */
-extern const uint16_t OSSL_LMS_D_PBLC;      /* 8080 */
-extern const uint16_t OSSL_LMS_D_MESG;      /* 8181 */
-extern const uint16_t OSSL_LMS_D_LEAF;      /* 8282 */
-extern const uint16_t OSSL_LMS_D_INTR;      /* 8383 */
+extern const uint16_t OSSL_LMS_D_PBLC; /* 8080 */
+extern const uint16_t OSSL_LMS_D_MESG; /* 8181 */
+extern const uint16_t OSSL_LMS_D_LEAF; /* 8282 */
+extern const uint16_t OSSL_LMS_D_INTR; /* 8383 */
 
 /* Used by OTS signature when calculating Q || Cksm(Q) */
-#  define LMS_SIZE_CHECKSUM 2
-#  define LMS_SIZE_QSUM 2
+#define LMS_SIZE_CHECKSUM 2
+#define LMS_SIZE_QSUM 2
 
 /*
  * An object for storing a One-Time Signature
@@ -58,18 +58,18 @@ LMS_SIG *ossl_lms_sig_new(void);
 void ossl_lms_sig_free(LMS_SIG *sig);
 LMS_SIG *ossl_lms_sig_from_pkt(PACKET *pkt, const LMS_KEY *pub);
 int ossl_lms_sig_decode(LMS_SIG **out, LMS_KEY *pub,
-                        const unsigned char *sig, size_t siglen);
+    const unsigned char *sig, size_t siglen);
 int ossl_lms_sig_verify(const LMS_SIG *lms_sig, const LMS_KEY *pub,
-                        const EVP_MD *md,
-                        const unsigned char *msg, size_t msglen);
+    const EVP_MD *md,
+    const unsigned char *msg, size_t msglen);
 
 int ossl_lm_ots_compute_pubkey(EVP_MD_CTX *ctx, EVP_MD_CTX *ctxIq,
-                               const LM_OTS_SIG *sig, const LM_OTS_PARAMS *pub,
-                               const unsigned char *Id, uint32_t q,
-                               const unsigned char *msg, size_t msglen,
-                               unsigned char *Kc);
+    const LM_OTS_SIG *sig, const LM_OTS_PARAMS *pub,
+    const unsigned char *Id, uint32_t q,
+    const unsigned char *msg, size_t msglen,
+    unsigned char *Kc);
 uint16_t ossl_lm_ots_params_checksum(const LM_OTS_PARAMS *params,
-                                     const unsigned char *S);
+    const unsigned char *S);
 
-# endif /* OPENSSL_NO_LMS */
+#endif /* OPENSSL_NO_LMS */
 #endif /* OSSL_CRYPTO_LMS_SIG_H */

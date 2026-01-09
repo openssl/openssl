@@ -22,7 +22,7 @@ B<openssl> B<pkcs7>
 [B<-quiet>]
 [B<-text>]
 [B<-noout>]
-{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =head1 DESCRIPTION
 
@@ -79,8 +79,6 @@ issuer names.
 Don't output the encoded version of the PKCS#7 structure (or certificates
 if B<-print_certs> is set).
 
-{- $OpenSSL::safe::opt_engine_item -}
-
 {- $OpenSSL::safe::opt_provider_item -}
 
 =back
@@ -102,7 +100,7 @@ L<openssl-crl2pkcs7(1)>
 
 =head1 HISTORY
 
-The B<-engine> option was deprecated in OpenSSL 3.0.
+The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

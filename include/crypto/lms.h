@@ -13,11 +13,11 @@
  */
 
 #ifndef OSSL_CRYPTO_LMS_H
-# define OSSL_CRYPTO_LMS_H
-# pragma once
-# ifndef OPENSSL_NO_LMS
-#  include "types.h"
-#  include <openssl/params.h>
+#define OSSL_CRYPTO_LMS_H
+#pragma once
+#ifndef OPENSSL_NO_LMS
+#include "types.h"
+#include <openssl/params.h>
 
 /*
  * Numeric identifiers associated with Leighton-Micali Signatures (LMS)
@@ -25,53 +25,53 @@
  * https://www.iana.org/assignments/leighton-micali-signatures/leighton-micali-signatures.xhtml
  * which is referenced from SP800-208.
  */
-#  define OSSL_LMS_TYPE_SHA256_N32_H5   0x00000005
-#  define OSSL_LMS_TYPE_SHA256_N32_H10  0x00000006
-#  define OSSL_LMS_TYPE_SHA256_N32_H15  0x00000007
-#  define OSSL_LMS_TYPE_SHA256_N32_H20  0x00000008
-#  define OSSL_LMS_TYPE_SHA256_N32_H25  0x00000009
-#  define OSSL_LMS_TYPE_SHA256_N24_H5   0x0000000A
-#  define OSSL_LMS_TYPE_SHA256_N24_H10  0x0000000B
-#  define OSSL_LMS_TYPE_SHA256_N24_H15  0x0000000C
-#  define OSSL_LMS_TYPE_SHA256_N24_H20  0x0000000D
-#  define OSSL_LMS_TYPE_SHA256_N24_H25  0x0000000E
-#  define OSSL_LMS_TYPE_SHAKE_N32_H5    0x0000000F
-#  define OSSL_LMS_TYPE_SHAKE_N32_H10   0x00000010
-#  define OSSL_LMS_TYPE_SHAKE_N32_H15   0x00000011
-#  define OSSL_LMS_TYPE_SHAKE_N32_H20   0x00000012
-#  define OSSL_LMS_TYPE_SHAKE_N32_H25   0x00000013
-#  define OSSL_LMS_TYPE_SHAKE_N24_H5    0x00000014
-#  define OSSL_LMS_TYPE_SHAKE_N24_H10   0x00000015
-#  define OSSL_LMS_TYPE_SHAKE_N24_H15   0x00000016
-#  define OSSL_LMS_TYPE_SHAKE_N24_H20   0x00000017
-#  define OSSL_LMS_TYPE_SHAKE_N24_H25   0x00000018
+#define OSSL_LMS_TYPE_SHA256_N32_H5 0x00000005
+#define OSSL_LMS_TYPE_SHA256_N32_H10 0x00000006
+#define OSSL_LMS_TYPE_SHA256_N32_H15 0x00000007
+#define OSSL_LMS_TYPE_SHA256_N32_H20 0x00000008
+#define OSSL_LMS_TYPE_SHA256_N32_H25 0x00000009
+#define OSSL_LMS_TYPE_SHA256_N24_H5 0x0000000A
+#define OSSL_LMS_TYPE_SHA256_N24_H10 0x0000000B
+#define OSSL_LMS_TYPE_SHA256_N24_H15 0x0000000C
+#define OSSL_LMS_TYPE_SHA256_N24_H20 0x0000000D
+#define OSSL_LMS_TYPE_SHA256_N24_H25 0x0000000E
+#define OSSL_LMS_TYPE_SHAKE_N32_H5 0x0000000F
+#define OSSL_LMS_TYPE_SHAKE_N32_H10 0x00000010
+#define OSSL_LMS_TYPE_SHAKE_N32_H15 0x00000011
+#define OSSL_LMS_TYPE_SHAKE_N32_H20 0x00000012
+#define OSSL_LMS_TYPE_SHAKE_N32_H25 0x00000013
+#define OSSL_LMS_TYPE_SHAKE_N24_H5 0x00000014
+#define OSSL_LMS_TYPE_SHAKE_N24_H10 0x00000015
+#define OSSL_LMS_TYPE_SHAKE_N24_H15 0x00000016
+#define OSSL_LMS_TYPE_SHAKE_N24_H20 0x00000017
+#define OSSL_LMS_TYPE_SHAKE_N24_H25 0x00000018
 
-#  define OSSL_LM_OTS_TYPE_SHA256_N32_W1 0x00000001
-#  define OSSL_LM_OTS_TYPE_SHA256_N32_W2 0x00000002
-#  define OSSL_LM_OTS_TYPE_SHA256_N32_W4 0x00000003
-#  define OSSL_LM_OTS_TYPE_SHA256_N32_W8 0x00000004
-#  define OSSL_LM_OTS_TYPE_SHA256_N24_W1 0x00000005
-#  define OSSL_LM_OTS_TYPE_SHA256_N24_W2 0x00000006
-#  define OSSL_LM_OTS_TYPE_SHA256_N24_W4 0x00000007
-#  define OSSL_LM_OTS_TYPE_SHA256_N24_W8 0x00000008
-#  define OSSL_LM_OTS_TYPE_SHAKE_N32_W1  0x00000009
-#  define OSSL_LM_OTS_TYPE_SHAKE_N32_W2  0x0000000A
-#  define OSSL_LM_OTS_TYPE_SHAKE_N32_W4  0x0000000B
-#  define OSSL_LM_OTS_TYPE_SHAKE_N32_W8  0x0000000C
-#  define OSSL_LM_OTS_TYPE_SHAKE_N24_W1  0x0000000D
-#  define OSSL_LM_OTS_TYPE_SHAKE_N24_W2  0x0000000E
-#  define OSSL_LM_OTS_TYPE_SHAKE_N24_W4  0x0000000F
-#  define OSSL_LM_OTS_TYPE_SHAKE_N24_W8  0x00000010
+#define OSSL_LM_OTS_TYPE_SHA256_N32_W1 0x00000001
+#define OSSL_LM_OTS_TYPE_SHA256_N32_W2 0x00000002
+#define OSSL_LM_OTS_TYPE_SHA256_N32_W4 0x00000003
+#define OSSL_LM_OTS_TYPE_SHA256_N32_W8 0x00000004
+#define OSSL_LM_OTS_TYPE_SHA256_N24_W1 0x00000005
+#define OSSL_LM_OTS_TYPE_SHA256_N24_W2 0x00000006
+#define OSSL_LM_OTS_TYPE_SHA256_N24_W4 0x00000007
+#define OSSL_LM_OTS_TYPE_SHA256_N24_W8 0x00000008
+#define OSSL_LM_OTS_TYPE_SHAKE_N32_W1 0x00000009
+#define OSSL_LM_OTS_TYPE_SHAKE_N32_W2 0x0000000A
+#define OSSL_LM_OTS_TYPE_SHAKE_N32_W4 0x0000000B
+#define OSSL_LM_OTS_TYPE_SHAKE_N32_W8 0x0000000C
+#define OSSL_LM_OTS_TYPE_SHAKE_N24_W1 0x0000000D
+#define OSSL_LM_OTS_TYPE_SHAKE_N24_W2 0x0000000E
+#define OSSL_LM_OTS_TYPE_SHAKE_N24_W4 0x0000000F
+#define OSSL_LM_OTS_TYPE_SHAKE_N24_W8 0x00000010
 
 /* Constants used for verifying */
-#  define LMS_SIZE_q 4
+#define LMS_SIZE_q 4
 
 /* XDR sizes when encoding and decoding */
-#  define LMS_SIZE_I 16
-#  define LMS_SIZE_LMS_TYPE 4
-#  define LMS_SIZE_OTS_TYPE 4
-#  define LMS_MAX_DIGEST_SIZE 32
-#  define LMS_MAX_PUBKEY \
+#define LMS_SIZE_I 16
+#define LMS_SIZE_LMS_TYPE 4
+#define LMS_SIZE_OTS_TYPE 4
+#define LMS_MAX_DIGEST_SIZE 32
+#define LMS_MAX_PUBKEY \
     (LMS_SIZE_LMS_TYPE + LMS_SIZE_OTS_TYPE + LMS_SIZE_I + LMS_MAX_DIGEST_SIZE)
 
 /*
@@ -84,7 +84,7 @@ typedef struct lm_ots_params_st {
      * e.g. OSSL_LM_OTS_TYPE_SHAKE_N32_W1
      */
     uint32_t lm_ots_type;
-    uint32_t n;              /* Hash output size in bytes (32 or 24) */
+    uint32_t n; /* Hash output size in bytes (32 or 24) */
     /*
      * The width of the Winternitz coefficients in bits. One of (1, 2, 4, 8)
      * Higher values of w are slower (~2^w computations) but have smaller
@@ -124,7 +124,7 @@ typedef struct lms_pub_key_st {
      * A buffer containing an encoded public key of the form
      * u32str(lmstype) || u32str(otstype) || I[16] || K[n]
      */
-    unsigned char *encoded;         /* encoded public key data */
+    unsigned char *encoded; /* encoded public key data */
     size_t encodedlen;
     /*
      * K is the LMS tree's root public key (Called T(1))
@@ -138,7 +138,7 @@ typedef struct lms_key_st {
     const LMS_PARAMS *lms_params;
     const LM_OTS_PARAMS *ots_params;
     OSSL_LIB_CTX *libctx;
-    unsigned char *Id;        /* A pointer to 16 bytes (I[16]) */
+    unsigned char *Id; /* A pointer to 16 bytes (I[16]) */
     LMS_PUB_KEY pub;
 } LMS_KEY;
 
@@ -151,10 +151,10 @@ int ossl_lms_key_equal(const LMS_KEY *key1, const LMS_KEY *key2, int selection);
 int ossl_lms_key_valid(const LMS_KEY *key, int selection);
 int ossl_lms_key_has(const LMS_KEY *key, int selection);
 
-int ossl_lms_pubkey_from_params(const OSSL_PARAM params[], LMS_KEY *lmskey);
+int ossl_lms_pubkey_from_params(const OSSL_PARAM *pub, LMS_KEY *lmskey);
 int ossl_lms_pubkey_decode(const unsigned char *pub, size_t publen,
-                           LMS_KEY *lmskey);
+    LMS_KEY *lmskey);
 size_t ossl_lms_pubkey_length(const unsigned char *data, size_t datalen);
 
-# endif /* OPENSSL_NO_LMS */
+#endif /* OPENSSL_NO_LMS */
 #endif /* OSSL_CRYPTO_LMS_H */

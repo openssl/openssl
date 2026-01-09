@@ -158,6 +158,7 @@ openssl x509 -in sca-cert.pem -trustout \
 ./mkcert.sh genee server.example ee-key ee-cert ca-key ca-cert
 # ee variants: expired, issuer-key2, issuer-name2, bad-pathlen
 ./mkcert.sh genee server.example ee-key ee-expired ca-key ca-cert -days -1
+./mkcert.sh genee server.example ee-key ee-expired2 ca-key ca-cert -days 3650
 ./mkcert.sh genee server.example ee-key ee-cert2 ca-key2 ca-cert2
 ./mkcert.sh genee server.example ee-key ee-name2 ca-key ca-name2
 ./mkcert.sh genee server.example ee-key ee-pathlen ca-key ca-cert \
@@ -223,6 +224,8 @@ OPENSSL_KEYBITS=4096 \
 OPENSSL_KEYBITS=8192 \
 ./mkcert.sh genee server.example ee-key-8192 ee-cert-8192 ca-key ca-cert
 
+# root CA cert with explicit keyUsage not including KeyCertSign
+openssl req -new -x509 -key root-key.pem -subj /CN="Root CA" -out root-no-KeyCertSign.pem -addext keyUsage=digitalSignature -days 36525
 # self-signed end-entity cert with explicit keyUsage not including KeyCertSign
 openssl req -new -x509 -key ee-key.pem -subj /CN=ee-self-signed -out ee-self-signed.pem -addext keyUsage=digitalSignature -days 36525
 

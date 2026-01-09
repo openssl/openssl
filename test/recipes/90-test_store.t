@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016-2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -97,7 +97,6 @@ my @noexist_file_files =
 
 # There is more than one method to get a 'file:' loader.
 # The default is a built-in provider implementation.
-# However, there is also an engine, specially for testing purposes.
 #
 # @methods is a collection of extra 'openssl storeutl' arguments used to
 # try the different methods.
@@ -105,8 +104,6 @@ my @methods;
 my @prov_method = qw(-provider default);
 push @prov_method, qw(-provider legacy) unless disabled('legacy');
 push @methods, [ @prov_method ];
-push @methods, [qw(-engine loader_attic)]
-    unless disabled('loadereng');
 
 my $n = 4 + scalar @methods
     * ( (3 * scalar @noexist_files)
@@ -117,17 +114,6 @@ my $n = 4 + scalar @methods
         + (scalar @noexist_file_files)
         + 3
         + 11 );
-
-# Test doesn't work under msys because the file name munging doesn't work
-# correctly with the "ot:" prefix
-my $do_test_ossltest_store =
-    !(disabled("engine") || disabled("dynamic-engine") || $^O =~ /^msys$/);
-
-if ($do_test_ossltest_store) {
-    # test loading with apps 'org.openssl.engine:' loader, using the
-    # ossltest engine.
-    $n += 4 * scalar @src_rsa_files;
-}
 
 plan skip_all => "No plan" if $n == 0;
 
@@ -142,32 +128,6 @@ ok(!run(app(["openssl", "storeutl", $test_x509, "-crls"])),
    "storeutil with extra parameter (at end) should fail");
 
 indir "store_$$" => sub {
-    if ($do_test_ossltest_store) {
-        # ossltest loads PEM files, with names prefixed with 'ot:'.
-        # This prefix ensures that the files are, in fact, loaded through
-        # that engine and not mistakenly going through the 'file:' loader.
-
-        my $engine_scheme = 'org.openssl.engine:';
-        $ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
-
-        foreach (@src_rsa_files) {
-            my $file = srctop_file($_);
-            my $file_abs = to_abs_file($file);
-            my @pubin = $_ =~ m|pub\.pem$| ? ("-pubin") : ();
-
-            ok(run(app(["openssl", "rsa", "-text", "-noout", @pubin,
-                        "-engine", "ossltest", "-inform", "engine",
-                        "-in", "ot:$file"])));
-            ok(run(app(["openssl", "rsa", "-text", "-noout", @pubin,
-                        "-engine", "ossltest", "-inform", "engine",
-                        "-in", "ot:$file_abs"])));
-            ok(run(app(["openssl", "rsa", "-text", "-noout", @pubin,
-                        "-in", "${engine_scheme}ossltest:ot:$file"])));
-            ok(run(app(["openssl", "rsa", "-text", "-noout", @pubin,
-                        "-in", "${engine_scheme}ossltest:ot:$file_abs"])));
-        }
-    }
-
  SKIP:
     {
         init() or die "init failed";

@@ -10,15 +10,18 @@ use strict;
 use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
+use Cwd qw(abs_path);
 
 my $test_name = "test_sslvertol";
 setup($test_name);
 
+$ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
+
 plan skip_all => "TLSProxy isn't usable on $^O"
     if $^O =~ /^(VMS)$/;
 
-plan skip_all => "$test_name needs the dynamic engine feature enabled"
-    if disabled("engine") || disabled("dynamic-engine");
+plan skip_all => "$test_name needs the module feature enabled"
+    if disabled("module");
 
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
@@ -90,10 +93,10 @@ SKIP: {
        "Version tolerance test, max version but not TLS 1.3");
 }
 
-#Test 3: Testing something below SSLv3 should fail.  We must disable TLS 1.3
+#Test 3: Testing something below TLS1.0 should fail.  We must disable TLS 1.3
 #to avoid having the 'supported_versions' extension kick in and override our
 #desires.
-$client_version = TLSProxy::Record::VERS_SSL_3_0 - 1;
+$client_version = TLSProxy::Record::VERS_TLS_1_0 - 1;
 $proxy->clear();
 $proxy->clientflags("-no_tls1_3");
 $proxy->start();
@@ -101,7 +104,7 @@ my $record = pop @{$proxy->record_list};
 ok((note("Record version received: ".
          (defined $record ? $record->version() : "none")),
     TLSProxy::Message->fail()),
-   "Version tolerance test, SSL < 3.0");
+   "Version tolerance test, TLS < 1.0");
 
 sub vers_tolerance_filter
 {
@@ -116,7 +119,7 @@ sub vers_tolerance_filter
         if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
             #Set the client version
             #Anything above the max supported version should succeed
-            #Anything below SSLv3 should fail
+            #Anything below TLS1.0 should fail
             $message->client_version($client_version);
             $message->repack();
         }

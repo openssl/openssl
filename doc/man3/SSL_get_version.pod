@@ -3,7 +3,7 @@
 =head1 NAME
 
 SSL_client_version, SSL_get_version, SSL_is_dtls, SSL_is_tls, SSL_is_quic,
-SSL_version - get the protocol information of a connection
+SSL_CTX_is_quic, SSL_version - get the protocol information of a connection
 
 =head1 SYNOPSIS
 
@@ -16,6 +16,7 @@ SSL_version - get the protocol information of a connection
  int SSL_is_dtls(const SSL *ssl);
  int SSL_is_tls(const SSL *ssl);
  int SSL_is_quic(const SSL *ssl);
+ int SSL_CTX_is_quic(const SSL_CTX *ctx);
 
  int SSL_version(const SSL *s);
 
@@ -37,6 +38,8 @@ SSL_is_dtls() returns 1 if the connection is using DTLS or 0 if not.
 SSL_is_tls() returns 1 if the connection is using SSL/TLS or 0 if not.
 
 SSL_is_quic() returns 1 if the connection is using QUIC or 0 if not.
+
+SSL_CTX_is_quic() returns 1 if the ctx creates QUIC SSL objects or 0 if not.
 
 =head1 RETURN VALUES
 
@@ -139,6 +142,8 @@ L<ssl(7)>
 
 The SSL_is_dtls() function was added in OpenSSL 1.1.0. The SSL_is_tls() and
 SSL_is_quic() functions were added in OpenSSL 3.2.
+
+The SSL_CTX_is_quic() function was added in OpenSSL 4.0
 
 =head1 COPYRIGHT
 

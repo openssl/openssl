@@ -395,9 +395,8 @@ specified.
 
 =item EVP_EncryptInit_ex()
 
-This legacy function is similar to EVP_EncryptInit_ex2() when I<impl> is NULL.
-The implementation of the I<type> from the I<impl> engine will be used if it
-exists.
+This legacy function is the same as EVP_EncryptInit_ex2() except B<params> will
+be NULL. I<impl> B<must> be NULL.
 
 =item EVP_EncryptUpdate()
 
@@ -813,6 +812,11 @@ Gets 1 if the cipher algorithm I<cipher> supports the gettable EVP_CIPHER_CTX
 parameter B<OSSL_CIPHER_PARAM_RANDOM_KEY>. Only DES and 3DES set this to 1,
 all other OpenSSL ciphers return 0.
 
+=item "encrypt-then-mac" (B<OSSL_CIPHER_PARAM_ENCRYPT_THEN_MAC>) <integer>
+
+Gets 1 if the cipher algorithm I<cipher> supports TLS Encrypt-then-MAC,
+otherwise it gets 0.
+
 =item "decrypt-only" (B<OSSL_CIPHER_PARAM_DECRYPT_ONLY) <integer>
 
 Gets 1 if the cipher algorithm I<cipher> implementation supports only
@@ -850,7 +854,7 @@ See also EVP_CIPHER_CTX_get_key_length() and EVP_CIPHER_CTX_set_key_length().
 =item "tag" (B<OSSL_CIPHER_PARAM_AEAD_TAG>) <octet string>
 
 Gets or sets the AEAD tag for the associated cipher context I<ctx>.
-See L<EVP_EncryptInit(3)/AEAD Interface>.
+See L<EVP_EncryptInit(3)/AEAD INTERFACE>.
 
 =item "pipeline-tag" (B<OSSL_CIPHER_PARAM_PIPELINE_AEAD_TAG>) <octet ptr>
 
@@ -1345,15 +1349,29 @@ See L</Gettable EVP_CIPHER parameters> "tls-multi".
 
 See L</Gettable EVP_CIPHER parameters> "has-randkey".
 
+=item EVP_CIPH_FLAG_ENC_THEN_MAC
+
+See L</Gettable EVP_CIPHER parameters> "encrypt-then-mac".
+
+=item EVP_CIPH_STREAM_CIPHER, EVP_CIPH_ECB_MODE EVP_CIPH_CBC_MODE,
+EVP_CIPH_CFB_MODE, EVP_CIPH_OFB_MODE, EVP_CIPH_CTR_MODE, EVP_CIPH_GCM_MODE,
+EVP_CIPH_CCM_MODE, EVP_CIPH_XTS_MODE, EVP_CIPH_WRAP_MODE,
+EVP_CIPH_OCB_MODE, EVP_CIPH_SIV_MODE
+
+See L</Gettable EVP_CIPHER parameters> "mode".
+
 =back
 
-EVP_CIPHER_flags() uses the following flags for legacy purposes only:
+EVP_CIPHER_flags() also uses the flag B<EVP_CIPH_FLAG_CUSTOM_CIPHER> to indicate
+that the cipher supports any input length when used with the EVP_Cipher()
+function. See EVP_Cipher() for more details.
+
+The following flags are defined for legacy purposes and are not returned by
+EVP_CIPHER_flags():
 
 =over 4
 
 =item EVP_CIPH_VARIABLE_LENGTH
-
-=item EVP_CIPH_FLAG_CUSTOM_CIPHER
 
 =item EVP_CIPH_ALWAYS_CALL_INIT
 
@@ -1364,9 +1382,6 @@ EVP_CIPHER_flags() uses the following flags for legacy purposes only:
 =item EVP_CIPH_CUSTOM_COPY
 
 =item EVP_CIPH_FLAG_DEFAULT_ASN1
-
-See L<EVP_CIPHER_meth_set_flags(3)> for further information related to the above
-flags.
 
 =back
 

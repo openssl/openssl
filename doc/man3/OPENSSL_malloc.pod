@@ -125,15 +125,8 @@ OPENSSL_zalloc() calls memset() to zero the memory before returning.
 OPENSSL_aligned_alloc() operates just as OPENSSL_malloc() does, but it
 allows for the caller to specify an alignment value, for instances in
 which the default alignment of malloc is insufficient for the caller's
-needs.  Note, the alignment value must be a power of 2, and the size
-specified must be a multiple of the alignment.
-NOTES:
-
-=over 4
-
-=item *
-
-The call to OPENSSL_aligned_alloc() accepts a 3rd argument, I<freeptr>
+needs.  Note, the alignment value must be a power of 2 no larger than 65536.
+NOTE: the call to OPENSSL_aligned_alloc() accepts a 3rd argument, I<freeptr>
 which must point to a void pointer.  On some platforms, there is no available
 library call to obtain memory allocations with alignment greater than what
 malloc provides.  In this case, OPENSSL_aligned_alloc() implements its own
@@ -141,18 +134,6 @@ alignment routine, allocating additional memory and offsetting the returned
 pointer to be on the requested alignment boundary.  In order to safely free
 allocations made by this method, the caller must return the value
 in the I<freeptr> variable, rather than the returned pointer.
-
-=item *
-
-The call to OPENSSL_aligned_alloc() may fail for reasons other than memory
-exhaustion, depending on the underlying implementation, and, most notably,
-OpenSSL library's build configuration:  for example, it always returns C<NULL>
-without setting any error if OpenSSL is built with C<OPENSSL_SMALL_FOOTPRINT>
-macro defined.  Consequently, caller may need to fall back to a non-aligned
-memory allocation (and open-code the alignment routine if the alignment
-is a requirement).
-
-=back
 
 OPENSSL_clear_realloc() and OPENSSL_clear_free() should be used
 when the buffer at B<addr> holds sensitive information.
@@ -170,6 +151,10 @@ these functions return an error if multiplication of B<num> and B<size>
 leads to an integer overflow, thus preventing allocations of an incorrect size.
 
 OPENSSL_cleanse() fills B<ptr> of size B<len> with a string of 0's.
+It is useful in cases when it is needed to ensure that memory (that contains
+sensitive information) is overwritten (for example, before it is reclaimed,
+or when it is stored on stack), and such operation is not optimised out
+by compiler optimisations such as dead store elimination (as memset(3) may be).
 Use OPENSSL_cleanse() with care if the memory is a mapping of a file.
 If the storage controller uses write compression, then it's possible
 that sensitive tail bytes will survive zeroization because the block of
@@ -317,9 +302,25 @@ OPENSSL_realloc_array(), OPENSSL_clear_realloc_array(), CRYPTO_malloc_array(),
 CRYPTO_calloc(), CRYPTO_aligned_alloc_array(), CRYPTO_realloc_array(),
 CRYPTO_clear_realloc_array() were added in OpenSSL 3.6.
 
+Before OpenSSL 3.6, there was an OPENSSL_aligned_malloc() requirement
+that the size must be a multiple of the alignment, that was enforced
+only on platforms that do not provide posix_memalign(3), but do provide
+aligned_alloc(3).
+
+Before OpenSSL 4.0, the call to OPENSSL_aligned_alloc() may fail for reasons
+other than memory exhaustion or incorrect arguments, depending on the underlying
+implementation, and, most notably, OpenSSL library's build configuration:
+for example, it always returned C<NULL> without setting any error if OpenSSL
+was built with C<OPENSSL_SMALL_FOOTPRINT> macro defined.  Consequently,
+the caller may need to fall back to a non-aligned memory allocation
+(and open-code the alignment routine if the alignment is a requirement).
+
+Before OpenSSL 4.0, the call to OPENSSL_aligned_alloc() did not have
+an explicit upper limit on the value of I<alignment>.
+
 =head1 COPYRIGHT
 
-Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

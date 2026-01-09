@@ -26,7 +26,7 @@ static int ssl_new(BIO *h);
 static int ssl_free(BIO *data);
 static long ssl_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 typedef struct bio_ssl_st {
-    SSL *ssl;                   /* The ssl handle :-) */
+    SSL *ssl; /* The ssl handle :-) */
     /*
      * Re-negotiate every time the total number of bytes is this size
      * or when timeout expires.
@@ -43,11 +43,11 @@ static const BIO_METHOD methods_sslp = {
     BIO_TYPE_SSL,
     "ssl",
     ssl_write,
-    NULL,                       /* ssl_write_old, */
+    NULL, /* ssl_write_old, */
     ssl_read,
-    NULL,                       /* ssl_read_old,  */
+    NULL, /* ssl_read_old,  */
     ssl_puts,
-    NULL,                       /* ssl_gets,      */
+    NULL, /* ssl_gets,      */
     ssl_ctrl,
     ssl_new,
     ssl_free,
@@ -226,7 +226,7 @@ static int ssl_write(BIO *b, const char *buf, size_t size, size_t *written)
 
 static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
-    SSL **sslp, *ssl;
+    SSL **sslp, *ssl, *dupssl;
     BIO_SSL *bs, *dbs;
     BIO *dbio, *bio;
     long ret = 1;
@@ -267,7 +267,7 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = 0;
         break;
     case BIO_C_SSL_MODE:
-        if (num)                /* client mode */
+        if (num) /* client mode */
             SSL_set_connect_state(ssl);
         else
             SSL_set_accept_state(ssl);
@@ -382,14 +382,19 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DUP:
         dbio = (BIO *)ptr;
         dbs = BIO_get_data(dbio);
+        dupssl = SSL_dup(ssl);
+        if (dupssl == NULL) {
+            ret = 0;
+            break;
+        }
         SSL_free(dbs->ssl);
-        dbs->ssl = SSL_dup(ssl);
+        dbs->ssl = dupssl;
         dbs->num_renegotiates = bs->num_renegotiates;
         dbs->renegotiate_count = bs->renegotiate_count;
         dbs->byte_count = bs->byte_count;
         dbs->renegotiate_timeout = bs->renegotiate_timeout;
         dbs->last_time = bs->last_time;
-        ret = (dbs->ssl != NULL);
+        ret = 1;
         break;
     case BIO_C_GET_FD:
         ret = BIO_ctrl(SSL_get_rbio(ssl), cmd, num, ptr);
@@ -447,11 +452,11 @@ BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx)
 #ifndef OPENSSL_NO_SOCK
     BIO *ret = NULL, *buf = NULL, *ssl = NULL;
 
-# ifndef OPENSSL_NO_QUIC
+#ifndef OPENSSL_NO_QUIC
     if (ctx != NULL && IS_QUIC_CTX(ctx))
         /* Never use buffering for QUIC. */
         return BIO_new_ssl_connect(ctx);
-# endif
+#endif
 
     if ((buf = BIO_new(BIO_f_buffer())) == NULL)
         return NULL;
@@ -460,7 +465,7 @@ BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx)
     if ((ret = BIO_push(buf, ssl)) == NULL)
         goto err;
     return ret;
- err:
+err:
     BIO_free(buf);
     BIO_free(ssl);
 #endif
@@ -475,7 +480,7 @@ BIO *BIO_new_ssl_connect(SSL_CTX *ctx)
     if ((con = BIO_new(BIO_s_connect())) == NULL)
         return NULL;
 
-# ifndef OPENSSL_NO_QUIC
+#ifndef OPENSSL_NO_QUIC
     if (ctx != NULL && IS_QUIC_CTX(ctx))
         if (!BIO_set_sock_type(con, SOCK_DGRAM))
             goto err;
@@ -486,7 +491,7 @@ BIO *BIO_new_ssl_connect(SSL_CTX *ctx)
     if ((ret = BIO_push(ssl, con)) == NULL)
         goto err;
     return ret;
- err:
+err:
     BIO_free(ssl);
     BIO_free(con);
 #endif

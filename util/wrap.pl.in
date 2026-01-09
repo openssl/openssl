@@ -51,7 +51,6 @@ sub quote_arg_win32 {
 }
 
 my $there = canonpath(catdir(dirname($0), updir()));
-my $std_engines = catdir($there, 'engines');
 my $std_providers = catdir($there, 'providers');
 my $std_openssl_conf = catdir($there, 'apps/openssl.cnf');
 my $unix_shlib_wrap = catfile($there, 'util/shlib_wrap.sh');
@@ -84,8 +83,6 @@ local $ENV{OPENSSL_CONF_INCLUDE} = $std_openssl_conf_include
     if defined $std_openssl_conf_include
        &&($ENV{OPENSSL_CONF_INCLUDE} // '') eq ''
        && -d $std_openssl_conf_include;
-local $ENV{OPENSSL_ENGINES} = $std_engines
-    if ($ENV{OPENSSL_ENGINES} // '') eq '' && -d $std_engines;
 local $ENV{OPENSSL_MODULES} = $std_providers
     if ($ENV{OPENSSL_MODULES} // '') eq '' && -d $std_providers;
 local $ENV{OPENSSL_CONF} = $std_openssl_conf

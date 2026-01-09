@@ -17,7 +17,7 @@ use File::Compare qw/compare_text/;
 
 setup("test_x509");
 
-plan tests => 140;
+plan tests => 150;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -630,3 +630,76 @@ SKIP: {
 
     ok(run(test(["x509_test", $psscert])), "running x509_test");
 }
+
+# Tests for -checkend including -multi
+# Discussed in https://github.com/openssl/openssl/pull/29155
+
+my $c_early = "c-early.pem";
+my $c_late = "c-late.pem";
+my $c_chain = "c-chain.pem";
+my $c_key = srctop_file(@certs, 'ca-key.pem');
+ok(run(app(["openssl", "x509", "-new", "-key", $c_key, "-subj", "/CN=EARLY",
+            "-extfile", $extfile, "-days", "100", "-text", "-out", $c_early]))
+&& run(app(["openssl", "x509", "-new", "-key", $c_key, "-subj", "/CN=LATE",
+            "-extfile", $extfile, "-days", "200", "-text", "-out", $c_late])));
+my $c_time = Time::Piece->gmtime->epoch;
+my $delta_early = Time::Piece->strptime(
+                    get_field($c_early, "Not After "),
+                       "%b %d %T %Y %Z")->epoch - $c_time;
+my $delta_late = Time::Piece->strptime(
+                    get_field($c_late, "Not After "),
+                        "%b %d %T %Y %Z")->epoch - $c_time;
+sub mkchain {
+    open(my $out, ">:raw", $c_chain) or die;
+    foreach my $fn (@_) {
+        open(my $in, "<:raw", $fn) or die;
+        print {$out} <$in>;
+        close($in);
+    }
+    close($out);
+    return 0;
+}
+# Single + not expiring
+ok(run(app(["openssl", "x509", "-checkend", $delta_early - 3600,
+            "-in", $c_early])),
+    "Single cert + not expiring in -checkend window");
+# Single + expiring
+ok(!run(app(["openssl", "x509", "-checkend", $delta_early + 3600,
+            "-in", $c_early])),
+    "Single cert + expiring in -checkend window");
+# Single + expiring at boundary
+# Test may fail erroneously due to sequential now() calls
+# See https://github.com/openssl/openssl/pull/29155
+# Certificate should be valid at exact NotAfter time.
+my $delta_exact = Time::Piece->strptime( get_field($c_early, "Not After "),
+                    "%b %d %T %Y %Z")->epoch - Time::Piece->gmtime->epoch + 1;
+ok(!run(app(["openssl", "x509", "-checkend", $delta_exact, "-in", $c_early])),
+    "Single cert + expiring at -checkend boundary");
+# Multi + none expiring
+mkchain($c_early, $c_late, $c_late);
+ok(run(app(["openssl", "x509", "-multi", "-checkend",
+            $delta_early - 3600, "-in", $c_chain])),
+    "Multi cert + none expiring in -checkend window");
+# Multi + 1st expiring
+mkchain($c_early, $c_late, $c_late);
+ok(!run(app(["openssl", "x509", "-multi", "-checkend",
+             $delta_early + 3600, "-in", $c_chain])),
+    "Multi cert + 1st expiring in -checkend window");
+# Multi + 2nd expiring
+mkchain($c_late, $c_early, $c_late);
+ok(!run(app(["openssl", "x509", "-multi", "-checkend",
+             $delta_early + 3600, "-in", $c_chain])),
+    "Multi cert + 2nd expiring in -checkend window");
+# Multi + 3rd expiring
+mkchain($c_late, $c_late, $c_early);
+ok(!run(app(["openssl", "x509", "-multi", "-checkend",
+             $delta_late - 3600, "-in", $c_chain])),
+    "Multi cert + 3rd expiring in -checkend window");
+# Multi + all expiring
+mkchain($c_early, $c_late, $c_early);
+ok(!run(app(["openssl", "x509", "-multi", "-checkend",
+             $delta_late + 3600, "-in", $c_chain])),
+    "Multi cert + all expiring in -checkend window");
+# Bad parse still returns non-zero
+ok(!run(app(["openssl", "x509", "-checkend", "60", "-in", $c_key])),
+    "Bad parse with -checkend returns non-zero");
