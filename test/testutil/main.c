@@ -64,7 +64,7 @@ end:
      * this under valgrind without that environment variable set, it
      * will still call OPENSSL_cleanup normally.
      */
-    if (RUNNING_ON_VALGRIND && getenv(OSSL_USE_VALGRIND) != NULL)
+    if (RUNNING_ON_VALGRIND && getenv("OSSL_USE_VALGRIND") != NULL)
         return ret;
 #endif /* defined(OPENSSL_VALGRIND_H_INCLUDED) && defined(RUNNING_ON_VALGRIND) */
     OPENSSL_cleanup();
