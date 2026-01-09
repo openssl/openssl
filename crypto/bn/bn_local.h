@@ -52,10 +52,6 @@
 #define BN_SOFT_LIMIT (4096 / BN_BYTES)
 #endif
 
-#ifndef OPENSSL_SMALL_FOOTPRINT
-#define BN_RECURSION
-#endif
-
 /*
  * This next option uses the C libraries (2 word)/(1 word) function. If it is
  * not defined, I use my C version (which is slower). The reason for this

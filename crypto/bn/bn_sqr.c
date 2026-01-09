@@ -64,7 +64,11 @@ int bn_sqr_fixed_top(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
         bn_sqr_comba8(rr->d, a->d);
 #endif
     } else {
-#if defined(BN_RECURSION)
+#ifdef OPENSSL_SMALL_FOOTPRINT
+        if (bn_wexpand(tmp, max) == NULL)
+            goto err;
+        bn_sqr_normal(rr->d, a->d, al, tmp->d);
+#else
         if (al < BN_SQR_RECURSIVE_SIZE_NORMAL) {
             BN_ULONG t[BN_SQR_RECURSIVE_SIZE_NORMAL * 2];
             bn_sqr_normal(rr->d, a->d, al, t);
@@ -84,10 +88,6 @@ int bn_sqr_fixed_top(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
                 bn_sqr_normal(rr->d, a->d, al, tmp->d);
             }
         }
-#else
-        if (bn_wexpand(tmp, max) == NULL)
-            goto err;
-        bn_sqr_normal(rr->d, a->d, al, tmp->d);
 #endif
     }
 
@@ -141,7 +141,7 @@ void bn_sqr_normal(BN_ULONG *r, const BN_ULONG *a, int n, BN_ULONG *tmp)
     bn_add_words(r, r, tmp, max);
 }
 
-#ifdef BN_RECURSION
+#ifndef OPENSSL_SMALL_FOOTPRINT
 /*-
  * r is 2*n words in size,
  * a and b are both n words in size.    (There's not actually a 'b' here ...)
@@ -160,18 +160,10 @@ void bn_sqr_recursive(BN_ULONG *r, const BN_ULONG *a, int n2, BN_ULONG *t)
     BN_ULONG ln, lo, *p;
 
     if (n2 == 4) {
-#ifdef OPENSSL_SMALL_FOOTPRINT
-        bn_sqr_normal(r, a, 4, t);
-#else
         bn_sqr_comba4(r, a);
-#endif
         return;
     } else if (n2 == 8) {
-#ifdef OPENSSL_SMALL_FOOTPRINT
-        bn_sqr_normal(r, a, 8, t);
-#else
         bn_sqr_comba8(r, a);
-#endif
         return;
     }
     if (n2 < BN_SQR_RECURSIVE_SIZE_NORMAL) {
