@@ -420,7 +420,7 @@ static int drbg_fetch_algs_from_prov(const OSSL_PARAM params[],
     const char *hmac_name = NULL;
     EVP_MD *md = NULL;
     EVP_MAC *mac = NULL;
-    OSSL_PARAM mac_params[3], *mp = mac_params;
+    OSSL_PARAM mac_params[2], *mp = mac_params;
     int ret = 0;
 
     if (macctx == NULL || digest == NULL)
