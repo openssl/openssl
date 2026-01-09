@@ -12,7 +12,7 @@ with full leak checking.
 
 While doing full leak checking shows the global objects the library
 frees on exit as leaks, which really are not leaks, it is a chore
-to continously tell people to ignore the results from the library.
+to continuously tell people to ignore the results from the library.
 
 ==head1 ENVIRONMENT
 
@@ -32,7 +32,7 @@ include path, the macro RUNNING_ON_VALGRIND is used at exit time
 to test to see if the program is actually running under valgrind.
 
 If the program is running under valgrind, the program checks to
-see if I<OSSL_USE_VALGRIND> is set in the environemnt. If so,
+see if I<OSSL_USE_VALGRIND> is set in the environment. If so,
 the call to OPENSSL_cleanup() is skipped on exit. This will ensure
 the library globals are noticed by valgrind with full leak checking
 ensuring our suppression file is working in CI.
