@@ -32,6 +32,11 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Added configure options to disable KDF algorithms for
+   hmac-drbg-kdf, kbkdf, krb5kdf, pvkkdf, snmpkdf, sskdf, sshkdf, x942kdf and x963kdf.
+
+   *Shane Lontis*
+
  * Removed configure options can now only be disabled. You may continue to use
    `disable-<feature>`, which will remain supported. Using `enable-<feature>`
    for a removed feature is no longer permitted.

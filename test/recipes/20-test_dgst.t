@@ -372,6 +372,9 @@ SKIP: {
                      "Generating signature with xoflen should fail");
     };
 
+    skip "HMAC-DRBG-KDF is not supported by this OpenSSL build", 1
+        if disabled("hmac-drbg-kdf");
+
     subtest "signing using the nonce-type sigopt" => sub {
         plan tests => 1;
         my $data_to_sign = srctop_file('test', 'data.bin');

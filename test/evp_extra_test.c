@@ -2676,19 +2676,17 @@ static int test_EVP_SM2(void)
     EVP_MD_CTX *md_ctx_verify = NULL;
     EVP_PKEY_CTX *cctx = NULL;
     EVP_MD *check_md = NULL;
-
+    uint8_t sm2_id[] = { 1, 2, 3, 4, 'l', 'e', 't', 't', 'e', 'r' };
+#ifndef OPENSSL_NO_X963KDF
     uint8_t ciphertext[128];
     size_t ctext_len = sizeof(ciphertext);
-
     uint8_t plaintext[8];
     size_t ptext_len = sizeof(plaintext);
-
-    uint8_t sm2_id[] = { 1, 2, 3, 4, 'l', 'e', 't', 't', 'e', 'r' };
-
     OSSL_PARAM sparams[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     OSSL_PARAM gparams[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     int i;
     char mdname[OSSL_MAX_NAME_SIZE];
+#endif
 
     if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx,
                       "SM2", testpropq)))
@@ -2781,7 +2779,7 @@ static int test_EVP_SM2(void)
         goto done;
 
     /* now check encryption/decryption */
-
+#ifndef OPENSSL_NO_X963KDF
     gparams[0] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_DIGEST,
         mdname, sizeof(mdname));
     for (i = 0; i < 2; i++) {
@@ -2848,7 +2846,7 @@ static int test_EVP_SM2(void)
         if (!TEST_true(memcmp(plaintext, kMsg, sizeof(kMsg)) == 0))
             goto done;
     }
-
+#endif /* OPENSSL_NO_X963KDF */
     ret = 1;
 done:
     EVP_PKEY_CTX_free(pctx);
