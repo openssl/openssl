@@ -18,7 +18,7 @@ jobs:
     if: ${{ github.repository == 'openssl/openssl' && !inputs.only_interop }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: "log in to quay.io"
@@ -36,7 +36,7 @@ jobs:
     if: ${{ github.repository == 'openssl/openssl' && !inputs.only_interop }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           repository: microsoft/msquic
           ref: main
@@ -71,7 +71,7 @@ jobs:
             tests: retry
       fail-fast: false
     steps: &client_steps
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           repository: 'quic-interop/quic-interop-runner'
           fetch-depth: 0
@@ -129,7 +129,7 @@ jobs:
             tests: amplificationlimit
       fail-fast: false
     steps: &server_steps
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           repository: 'quic-interop/quic-interop-runner'
           fetch-depth: 0
