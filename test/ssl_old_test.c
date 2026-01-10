@@ -648,6 +648,9 @@ static void sv_usage(void)
     fprintf(stderr,
         " -dhe4096      - use 4096 bit key (safe prime) for DHE\n");
 #endif
+    fprintf(
+        stderr,
+        " -groups <list> - override the default client supported groups list\n");
     fprintf(stderr, " -no_dhe       - disable DHE\n");
 #ifndef OPENSSL_NO_EC
     fprintf(stderr, " -no_ecdhe     - disable ECDHE\n");
@@ -910,9 +913,10 @@ int main(int argc, char *argv[])
     long bytes = 256L;
 #ifndef OPENSSL_NO_DH
     EVP_PKEY *dhpkey;
-    int dhe512 = 0, dhe1024dsa = 0, dhe4096 = 0;
+    int dhe512 = 0, dhe1024dsa = 0, dhe2048 = 0, dhe4096 = 0;
     int no_dhe = 0;
 #endif
+    const char *groups = NULL;
     int no_psk = 0;
     int print_time = 0;
     clock_t s_time = 0, c_time = 0;
@@ -1001,6 +1005,8 @@ int main(int argc, char *argv[])
             dhe512 = 1;
         else if (strcmp(*argv, "-dhe1024dsa") == 0)
             dhe1024dsa = 1;
+        else if (strcmp(*argv, "-dhe2048") == 0)
+            dhe2048 = 1;
         else if (strcmp(*argv, "-dhe4096") == 0)
             dhe4096 = 1;
 #endif
@@ -1018,6 +1024,10 @@ int main(int argc, char *argv[])
 #else
             no_psk = 1;
 #endif
+        } else if (strcmp(*argv, "-groups") == 0) {
+            if (--argc < 1)
+                goto bad;
+            groups = *(++argv);
         } else if (strcmp(*argv, "-tls1_2") == 0) {
             tls1_2 = 1;
         } else if (strcmp(*argv, "-tls1_1") == 0) {
@@ -1502,6 +1512,8 @@ int main(int argc, char *argv[])
             dhpkey = get_dh1024dsa(libctx);
         else if (dhe512)
             dhpkey = get_dh512(libctx);
+        else if (dhe2048)
+            dhpkey = get_dh2048(libctx);
         else if (dhe4096)
             dhpkey = get_dh4096(libctx);
         else
@@ -1519,6 +1531,12 @@ int main(int argc, char *argv[])
             EVP_PKEY_free(dhpkey);
     }
 #endif
+    if (groups != NULL && !SSL_CTX_set1_groups_list(c_ctx, groups)) {
+        BIO_printf(bio_err, "error setting client supported groups to: %s\n",
+            groups);
+        ERR_print_errors(bio_err);
+        goto end;
+    }
 
     if (!(SSL_CTX_load_verify_file(s_ctx, CAfile)
             || SSL_CTX_load_verify_dir(s_ctx, CApath))
