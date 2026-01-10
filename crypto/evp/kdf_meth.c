@@ -169,9 +169,14 @@ err:
 EVP_KDF *EVP_KDF_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
     const char *properties)
 {
-    return evp_generic_fetch(libctx, OSSL_OP_KDF, algorithm, properties,
-        evp_kdf_from_algorithm, evp_kdf_up_ref,
-        evp_kdf_free);
+    const EVP_FETCH_OPERATION fetch_ops = {
+        .new_method = evp_kdf_from_algorithm,
+        .up_ref_method = evp_kdf_up_ref,
+        .free_method = evp_kdf_free
+    };
+
+    return evp_generic_fetch(libctx, OSSL_OP_KDF,
+        algorithm, properties, &fetch_ops);
 }
 
 int EVP_KDF_up_ref(EVP_KDF *kdf)
@@ -235,7 +240,10 @@ void EVP_KDF_do_all_provided(OSSL_LIB_CTX *libctx,
     void (*fn)(EVP_KDF *kdf, void *arg),
     void *arg)
 {
+    const EVP_FETCH_OPERATION fetch_ops = {
+        evp_kdf_from_algorithm, evp_kdf_up_ref, evp_kdf_free
+    };
+
     evp_generic_do_all(libctx, OSSL_OP_KDF,
-        (void (*)(void *, void *))fn, arg,
-        evp_kdf_from_algorithm, evp_kdf_up_ref, evp_kdf_free);
+        (void (*)(void *, void *))fn, arg, &fetch_ops);
 }

@@ -17,6 +17,12 @@
 typedef struct ossl_method_store_st OSSL_METHOD_STORE;
 typedef struct ossl_property_list_st OSSL_PROPERTY_LIST;
 
+typedef struct {
+    void *method;
+    int (*up_ref)(void *);
+    void (*free)(void *);
+} METHOD;
+
 typedef enum {
     OSSL_PROPERTY_TYPE_STRING,
     OSSL_PROPERTY_TYPE_NUMBER,
@@ -57,9 +63,8 @@ int ossl_method_lock_store(OSSL_METHOD_STORE *store);
 int ossl_method_unlock_store(OSSL_METHOD_STORE *store);
 
 int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
-    int nid, const char *properties, void *method,
-    int (*method_up_ref)(void *),
-    void (*method_destruct)(void *));
+    int nid, const char *properties,
+    const METHOD *method);
 int ossl_method_store_remove(OSSL_METHOD_STORE *store, int nid,
     const void *method);
 void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
@@ -79,9 +84,8 @@ OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OSSL_LIB_CTX *ctx,
 int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int nid, const char *prop_query, void **result);
 int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
-    int nid, const char *prop_query, void *result,
-    int (*method_up_ref)(void *),
-    void (*method_destruct)(void *));
+    int nid, const char *prop_query,
+    const METHOD *method);
 
 __owur int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store);
 

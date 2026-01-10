@@ -460,19 +460,27 @@ OSSL_PROVIDER *EVP_KEM_get0_provider(const EVP_KEM *kem)
 EVP_KEM *EVP_KEM_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
     const char *properties)
 {
+    const EVP_FETCH_OPERATION fetch_ops = {
+        .new_method = evp_kem_from_algorithm,
+        .up_ref_method = evp_kem_up_ref,
+        .free_method = evp_kem_free
+    };
+
     return evp_generic_fetch(ctx, OSSL_OP_KEM, algorithm, properties,
-        evp_kem_from_algorithm,
-        evp_kem_up_ref,
-        evp_kem_free);
+        &fetch_ops);
 }
 
 EVP_KEM *evp_kem_fetch_from_prov(OSSL_PROVIDER *prov, const char *algorithm,
     const char *properties)
 {
+    const EVP_FETCH_OPERATION evp_fetch_ops = {
+        .new_method = evp_kem_from_algorithm,
+        .up_ref_method = evp_kem_up_ref,
+        .free_method = evp_kem_free
+    };
+
     return evp_generic_fetch_from_prov(prov, OSSL_OP_KEM, algorithm, properties,
-        evp_kem_from_algorithm,
-        evp_kem_up_ref,
-        evp_kem_free);
+        &evp_fetch_ops);
 }
 
 int EVP_KEM_is_a(const EVP_KEM *kem, const char *name)
@@ -499,10 +507,14 @@ void EVP_KEM_do_all_provided(OSSL_LIB_CTX *libctx,
     void (*fn)(EVP_KEM *kem, void *arg),
     void *arg)
 {
-    evp_generic_do_all(libctx, OSSL_OP_KEM, (void (*)(void *, void *))fn, arg,
+    const EVP_FETCH_OPERATION fetch_ops = {
         evp_kem_from_algorithm,
         evp_kem_up_ref,
-        evp_kem_free);
+        evp_kem_free
+    };
+
+    evp_generic_do_all(libctx, OSSL_OP_KEM, (void (*)(void *, void *))fn, arg,
+        &fetch_ops);
 }
 
 int EVP_KEM_names_do_all(const EVP_KEM *kem,

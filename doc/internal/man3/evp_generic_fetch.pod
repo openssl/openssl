@@ -12,35 +12,31 @@ evp_generic_fetch, evp_generic_fetch_from_prov
 
  void *evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
                          const char *name, const char *properties,
-                         void *(*new_method)(int name_id,
-                                             const OSSL_DISPATCH *fns,
-                                             OSSL_PROVIDER *prov,
-                                             void *method_data),
-                         void *method_data,
-                         int (*up_ref_method)(void *),
-                         void (*free_method)(void *));
+                         const EVP_FETCH_OPERATION *fetch_ops);
 
  void *evp_generic_fetch_from_prov(OSSL_PROVIDER *prov, int operation_id,
-                                   int name_id, const char *properties,
-                                   void *(*new_method)(int name_id,
-                                                       const OSSL_DISPATCH *fns,
-                                                       OSSL_PROVIDER *prov,
-                                                       void *method_data),
-                                   void *method_data,
-                                   int (*up_ref_method)(void *),
-                                   void (*free_method)(void *));
+                                   const char *name, const char *properties,
+                                   const EVP_FETCH_OPERATION *fetch_ops);
 
 =head1 DESCRIPTION
 
 evp_generic_fetch() calls ossl_method_construct() with the given
 I<libctx>, I<operation_id>, I<name>, and I<properties> and uses
-it to create an EVP method with the help of the functions
-I<new_method>, I<up_ref_method>, and I<free_method>.
+it to create an EVP method with the help of the functions in I<fetch_ops>.
 
 evp_generic_fetch_from_prov() does the same thing as evp_generic_fetch(),
 but limits the search of methods to the provider given with I<prov>.
 This is meant to be used when one method needs to fetch an associated
 method in the same provider.
+
+The I<fetch_ops> is a pointer to a struct of function pointers:
+
+ struct evp_fetch_operation_st {
+     void *(*new_method)(int name_id, const OSSL_ALGORITHM *algodef,
+                         OSSL_PROVIDER *prov);
+     int (*up_ref_method)(void *method);
+     void (*free_method)(void *method);
+ };
 
 The three functions I<new_method>, I<up_ref_method>, and
 I<free_method> are supposed to:
