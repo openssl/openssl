@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,41 @@
 
 #include <openssl/bio.h>
 #include "testutil.h"
+
+static int test_eof(void)
+{
+    BIO *bio = BIO_new(BIO_s_mem());
+    char buf[1];
+    int testresult = 0;
+
+    if (!TEST_ptr(bio))
+        goto err;
+
+    /* legacy default behaviour */
+    if (!TEST_int_eq(BIO_read(bio, buf, 1), -1)
+        || !TEST_true(BIO_eof(bio))
+        || !TEST_true(BIO_should_retry(bio)))
+        goto err;
+
+    /* manually set eof behaviour */
+    BIO_set_mem_eof_return(bio, 0);
+    if (!TEST_int_eq(BIO_read(bio, buf, 1), 0)
+        || !TEST_true(BIO_eof(bio))
+        || !TEST_false(BIO_should_retry(bio)))
+        goto err;
+
+    /* manually set retry behaviour */
+    BIO_set_mem_eof_return(bio, -1);
+    if (!TEST_int_eq(BIO_read(bio, buf, 1), -1)
+        || !TEST_false(BIO_eof(bio))
+        || !TEST_true(BIO_should_retry(bio)))
+        goto err;
+
+    testresult = 1;
+err:
+    BIO_free(bio);
+    return testresult;
+}
 
 #ifndef OPENSSL_NO_DGRAM
 static int test_dgram(void)
@@ -118,6 +153,7 @@ int setup_tests(void)
         return 0;
     }
 
+    ADD_TEST(test_eof);
 #ifndef OPENSSL_NO_DGRAM
     ADD_TEST(test_dgram);
 #endif
