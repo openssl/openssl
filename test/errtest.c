@@ -420,6 +420,36 @@ err:
     return res;
 }
 
+static int test_error_reason(void)
+{
+    int test;
+
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+
+    test = TEST_err_r(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE)
+        && TEST_err_r(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR)
+        && TEST_err_r(ERR_LIB_CRYPTO, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+
+    return test;
+}
+
+static int test_error_string(void)
+{
+    int test;
+
+    ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE, "malloc failure");
+    ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR, "internal error");
+
+    test = TEST_err_r(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE)
+        && TEST_err_r(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR)
+        && TEST_err_s("malloc failure")
+        && TEST_err_s("internal error");
+
+    return test;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(preserves_system_error);
@@ -431,5 +461,7 @@ int setup_tests(void)
     ADD_TEST(test_marks);
     ADD_ALL_TESTS(test_save_restore, 2);
     ADD_TEST(test_clear_error);
+    ADD_TEST(test_error_reason);
+    ADD_TEST(test_error_string);
     return 1;
 }
