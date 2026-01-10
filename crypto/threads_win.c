@@ -23,7 +23,7 @@
  * only VC++ 2008 or earlier x86 compilers.
  */
 
-#if ((defined(_MSC_VER) && defined(_M_IX86) && _MSC_VER <= 1600) || (defined(__MINGW32__) && !defined(__MINGW64__)))
+#if (defined(__MINGW32__) && !defined(__MINGW64__))
 #define NO_INTERLOCKEDOR64
 #endif
 
