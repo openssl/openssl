@@ -328,8 +328,13 @@ sub app {
     return sub {
         my @cmdargs = ( @{$cmd} );
         my @prog = __fixup_prg(__apps_file(shift @cmdargs, __exeext()));
-        return cmd([ @prog, @cmdargs ],
-                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+        if ($ENV{OSSL_USE_VALGRIND} eq "yes") {
+            return cmd([ "valgrind", "--leak-check=full", "--show-leak-kinds=all", "--gen-suppressions=all", "--log-file=./valgrind.log", @prog, @cmdargs ],
+                       exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+        } else {
+            return cmd([ @prog, @cmdargs ],
+                       exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+        }
     }
 }
 
@@ -350,8 +355,13 @@ sub test {
     return sub {
         my @cmdargs = ( @{$cmd} );
         my @prog = __fixup_prg(__test_file(shift @cmdargs, __exeext()));
-        return cmd([ @prog, @cmdargs ],
+        if ($ENV{OSSL_USE_VALGRIND} eq "yes") {
+           return cmd([ "valgrind", "--leak-check=full", "--show-leak-kinds=all", "--gen-suppressions=all", "--log-file=./valgrind.log", @prog, @cmdargs ],
                    exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+        } else {
+            return cmd([ @prog, @cmdargs ],
+                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+        }
     }
 }
 
