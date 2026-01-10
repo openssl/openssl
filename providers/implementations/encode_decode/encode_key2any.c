@@ -41,6 +41,7 @@
 #include "prov/endecoder_local.h"
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
+#include "prov/lms_codecs.h"
 #include "providers/implementations/encode_decode/encode_key2any.inc"
 
 #if defined(OPENSSL_NO_DH) && defined(OPENSSL_NO_DSA) && defined(OPENSSL_NO_EC)
@@ -1105,6 +1106,19 @@ static int slh_dsa_pki_priv_to_der(const void *vkey, unsigned char **pder,
 #define slh_dsa_shake_256f_pem_type "SLH-DSA-SHAKE-256f"
 #endif /* OPENSSL_NO_SLH_DSA */
 
+#ifndef OPENSSL_NO_LMS
+static int lms_spki_pub_to_der(const void *vkey, unsigned char **pder,
+    ossl_unused void *ctx)
+{
+    return ossl_lms_i2d_pubkey(vkey, pder);
+}
+
+#define prepare_lms_params NULL
+#define lms_check_key_type NULL
+#define lms_evp_type EVP_PKEY_HSS_LMS
+#define lms_pem_type "LMS"
+#endif /* OPENSSL_NO_LMS */
+
 /* ---------------------------------------------------------------------- */
 
 static OSSL_FUNC_decoder_newctx_fn key2any_newctx;
@@ -1766,3 +1780,8 @@ MAKE_ENCODER(ml_dsa_87, ml_dsa, PrivateKeyInfo, pem);
 MAKE_ENCODER(ml_dsa_87, ml_dsa, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(ml_dsa_87, ml_dsa, SubjectPublicKeyInfo, pem);
 #endif /* OPENSSL_NO_ML_DSA */
+
+#ifndef OPENSSL_NO_LMS
+MAKE_ENCODER(lms, lms, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(lms, lms, SubjectPublicKeyInfo, pem);
+#endif
