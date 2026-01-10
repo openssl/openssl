@@ -89,12 +89,7 @@ int evp_cipher_param_to_asn1_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
 
     cipher = c->cipher;
     /*
-     * For legacy implementations, we detect custom AlgorithmIdentifier
-     * parameter handling by checking if the function pointer
-     * cipher->set_asn1_parameters is set.  We know that this pointer
-     * is NULL for provided implementations.
-     *
-     * Otherwise, for any implementation, we check the flag
+     * For any implementation, we check the flag
      * EVP_CIPH_FLAG_CUSTOM_ASN1.  If it isn't set, we apply
      * default AI parameter extraction.
      *
@@ -104,9 +99,7 @@ int evp_cipher_param_to_asn1_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
      *
      * If none of the above applies, this operation is unsupported.
      */
-    if (cipher->set_asn1_parameters != NULL) {
-        ret = cipher->set_asn1_parameters(c, type);
-    } else if ((EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_CUSTOM_ASN1) == 0) {
+    if ((EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_CUSTOM_ASN1) == 0) {
         switch (EVP_CIPHER_get_mode(cipher)) {
         case EVP_CIPH_WRAP_MODE:
             if (EVP_CIPHER_is_a(cipher, SN_id_smime_alg_CMS3DESwrap))
@@ -160,12 +153,7 @@ int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
 
     cipher = c->cipher;
     /*
-     * For legacy implementations, we detect custom AlgorithmIdentifier
-     * parameter handling by checking if there the function pointer
-     * cipher->get_asn1_parameters is set.  We know that this pointer
-     * is NULL for provided implementations.
-     *
-     * Otherwise, for any implementation, we check the flag
+     * For any implementation, we check the flag
      * EVP_CIPH_FLAG_CUSTOM_ASN1.  If it isn't set, we apply
      * default AI parameter creation.
      *
@@ -175,9 +163,7 @@ int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
      *
      * If none of the above applies, this operation is unsupported.
      */
-    if (cipher->get_asn1_parameters != NULL) {
-        ret = cipher->get_asn1_parameters(c, type);
-    } else if ((EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_CUSTOM_ASN1) == 0) {
+    if ((EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_CUSTOM_ASN1) == 0) {
         switch (EVP_CIPHER_get_mode(cipher)) {
         case EVP_CIPH_WRAP_MODE:
             ret = 1;
@@ -381,48 +367,44 @@ int EVP_CIPHER_CTX_get_block_size(const EVP_CIPHER_CTX *ctx)
 
 int EVP_CIPHER_impl_ctx_size(const EVP_CIPHER *e)
 {
-    return e->ctx_size;
+    return 0;
 }
 
 int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, unsigned int inl)
 {
-    if (ctx == NULL || ctx->cipher == NULL)
+    if (ctx == NULL || ctx->cipher == NULL || ctx->cipher->prov == NULL)
         return 0;
 
-    if (ctx->cipher->prov != NULL) {
-        /*
-         * If the provided implementation has a ccipher function, we use it,
-         * and translate its return value like this: 0 => -1, 1 => outlen
-         *
-         * Otherwise, we call the cupdate function if in != NULL, or cfinal
-         * if in == NULL.  Regardless of which, we return what we got.
-         */
-        int ret = -1;
-        size_t outl = 0;
-        size_t blocksize = EVP_CIPHER_CTX_get_block_size(ctx);
+    /*
+     * If the provided implementation has a ccipher function, we use it,
+     * and translate its return value like this: 0 => -1, 1 => outlen
+     *
+     * Otherwise, we call the cupdate function if in != NULL, or cfinal
+     * if in == NULL.  Regardless of which, we return what we got.
+     */
+    int ret = -1;
+    size_t outl = 0;
+    size_t blocksize = EVP_CIPHER_CTX_get_block_size(ctx);
 
-        if (blocksize == 0)
-            return 0;
+    if (blocksize == 0)
+        return 0;
 
-        if (ctx->cipher->ccipher != NULL)
-            ret = ctx->cipher->ccipher(ctx->algctx, out, &outl,
-                      inl + (blocksize == 1 ? 0 : blocksize),
-                      in, (size_t)inl)
-                ? (int)outl
-                : -1;
-        else if (in != NULL)
-            ret = ctx->cipher->cupdate(ctx->algctx, out, &outl,
-                inl + (blocksize == 1 ? 0 : blocksize),
-                in, (size_t)inl);
-        else
-            ret = ctx->cipher->cfinal(ctx->algctx, out, &outl,
-                blocksize == 1 ? 0 : blocksize);
+    if (ctx->cipher->ccipher != NULL)
+        ret = ctx->cipher->ccipher(ctx->algctx, out, &outl,
+                  inl + (blocksize == 1 ? 0 : blocksize),
+                  in, (size_t)inl)
+            ? (int)outl
+            : -1;
+    else if (in != NULL)
+        ret = ctx->cipher->cupdate(ctx->algctx, out, &outl,
+            inl + (blocksize == 1 ? 0 : blocksize),
+            in, (size_t)inl);
+    else
+        ret = ctx->cipher->cfinal(ctx->algctx, out, &outl,
+            blocksize == 1 ? 0 : blocksize);
 
-        return ret;
-    }
-
-    return ctx->cipher->do_cipher(ctx, out, in, inl);
+    return ret;
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
