@@ -904,6 +904,12 @@ int pkcs12_main(int argc, char **argv)
             if (utmp == NULL)
                 goto end;
             badpass = OPENSSL_uni2utf8(utmp, utmplen);
+            if (badpass == NULL) {
+                BIO_printf(bio_err, "Verbatim password did not match, and fallback conversion to UTF-8 failed\n"
+                                    "The password entered or the input encoding may be wrong\n");
+                OPENSSL_free(utmp);
+                goto end;
+            }
             OPENSSL_free(utmp);
             if (!PKCS12_verify_mac(p12, badpass, -1)) {
                 BIO_printf(bio_err, "Mac verify error: invalid password?\n");
