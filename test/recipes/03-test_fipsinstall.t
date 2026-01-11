@@ -263,6 +263,7 @@ SKIP: {
                  '-module', $infile,
                  '-provider_name', 'fips', '-mac_name', 'HMAC',
                  '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+                 '-defer_tests', '0',
                  '-section_name', 'fips_sect', '-corrupt_desc', 'SHA2'])),
        "fipsinstall fails when the digest result is corrupted");
 
@@ -271,6 +272,7 @@ SKIP: {
                  '-module', $infile,
                  '-provider_name', 'fips', '-mac_name', 'HMAC',
                  '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+                 '-defer_tests', '0',
                  '-section_name', 'fips_sect', '-corrupt_desc', 'SHA3'])),
        "fipsinstall fails when the digest result is corrupted");
 
@@ -287,6 +289,7 @@ SKIP: {
                  '-module', $infile,
                  '-provider_name', 'fips', '-mac_name', 'HMAC',
                  '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+                 '-defer_tests', '0',
                  '-section_name', 'fips_sect', '-corrupt_desc', 'AES_ECB_Decrypt'])),
        "fipsinstall fails when the AES_ECB result is corrupted");
 
