@@ -61,6 +61,11 @@ BIO_read_ex() returns 1 if data was successfully read, and 0 otherwise.
 BIO_write_ex() returns 1 if no error was encountered writing data, 0 otherwise.
 Requesting to write 0 bytes is not considered an error.
 
+BIO_read() returns the number of bytes read on success.
+A return value of 0 indicates that end-of-file was reached, or that a read
+of zero bytes was requested.
+A negative return value indicates an error condition.
+
 BIO_write() returns -2 if the "write" operation is not implemented by the BIO
 or -1 on other errors.
 Otherwise it returns the number of bytes written.
