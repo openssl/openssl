@@ -205,7 +205,7 @@ static int ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM params[],
     if (p.pubkey != NULL) {
         if (!OSSL_PARAM_get_octet_string_ptr(p.pubkey, (const void **)&pk, &pk_len))
             return 0;
-        if (pk != NULL && pk_len != key_params->pk_len) {
+        if (pk_len != 0 && pk_len != key_params->pk_len) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH,
                 "Invalid %s public key length", key_params->alg);
             return 0;
@@ -217,7 +217,7 @@ static int ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM params[],
         if (!OSSL_PARAM_get_octet_string_ptr(p.seed, (const void **)&seed,
                 &seed_len))
             return 0;
-        if (seed != NULL && seed_len != ML_DSA_SEED_BYTES) {
+        if (seed_len != 0 && seed_len != ML_DSA_SEED_BYTES) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SEED_LENGTH);
             return 0;
         }
@@ -228,7 +228,7 @@ static int ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM params[],
         if (!OSSL_PARAM_get_octet_string_ptr(p.privkey, (const void **)&sk,
                 &sk_len))
             return 0;
-        if (sk != NULL && sk_len != key_params->sk_len) {
+        if (sk_len != 0 && sk_len != key_params->sk_len) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH,
                 "Invalid %s private key length",
                 key_params->alg);
