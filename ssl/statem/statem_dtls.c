@@ -342,12 +342,19 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype)
              * wait for an alert to handle the retransmit
              */
             if (retry && BIO_ctrl(SSL_get_wbio(ssl), BIO_CTRL_DGRAM_MTU_EXCEEDED, 0, NULL) > 0
-                && !(SSL_get_options(ssl) & SSL_OP_NO_QUERY_MTU)
-                && dtls1_query_mtu(s))
+                && !(SSL_get_options(ssl) & SSL_OP_NO_QUERY_MTU)) {
+                size_t old_mtu = s->d1->mtu;
+
+                if (!dtls1_query_mtu(s))
+                    return -1;
+                /* If MTU didn't change, retry is meaningless */
+                if (s->d1->mtu == old_mtu)
+                    return -1;
                 /* Have one more go */
                 retry = 0;
-            else
+            } else {
                 return -1;
+            }
         } else {
 
             /*
