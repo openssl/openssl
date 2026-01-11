@@ -39,8 +39,9 @@ B<openssl> B<s_server>
 [B<-nbio_test>]
 [B<-crlf>]
 [B<-debug>]
-[B<-msg>]
-[B<-msgfile> I<outfile>]
+[B<-trace_hex>]
+[B<-trace_text>]
+[B<-trace_file> I<outfile>]
 [B<-state>]
 [B<-nocert>]
 [B<-quiet>]
@@ -82,7 +83,6 @@ B<openssl> B<s_server>
 [B<-status_url> I<val>]
 [B<-status_file> I<infile>]
 [B<-ssl_config> I<val>]
-[B<-trace>]
 [B<-security_debug>]
 [B<-security_debug_verbose>]
 [B<-brief>]
@@ -308,13 +308,17 @@ Print output from SSL/TLS security framework.
 
 Print more output from SSL/TLS security framework
 
-=item B<-msg>
+=item B<-trace_hex>
 
 Show all protocol messages with hex dump.
 
-=item B<-msgfile> I<outfile>
+=item B<-trace_text>
 
-File to send output of B<-msg> or B<-trace> to, default standard output.
+Show verbose trace output of protocol messages in human-readable format.
+
+=item B<-trace_file> I<outfile>
+
+File to send output of B<-trace_hex> or B<-trace_text> to, default standard output.
 
 =item B<-state>
 
@@ -546,9 +550,7 @@ certificates in the server certificate chain.
 
 Configure SSL_CTX using the given configuration value.
 
-=item B<-trace>
 
-Show verbose trace output of protocol messages.
 
 =item B<-brief>
 

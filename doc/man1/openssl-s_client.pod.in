@@ -51,18 +51,18 @@ B<openssl> B<s_client>
 [B<-prexit>]
 [B<-no-interactive>]
 [B<-debug>]
-[B<-trace>]
+[B<-trace_hex>]
+[B<-trace_text>]
+[B<-trace_file> I<filename>]
 [B<-nocommands>]
 [B<-adv>]
 [B<-security_debug>]
 [B<-security_debug_verbose>]
-[B<-msg>]
 [B<-timeout>]
 [B<-mtu> I<size>]
 [B<-no_ems>]
 [B<-keymatexport> I<label>]
 [B<-keymatexportlen> I<len>]
-[B<-msgfile> I<filename>]
 [B<-nbio_test>]
 [B<-state>]
 [B<-nbio>]
@@ -458,9 +458,17 @@ Enable security debug messages.
 
 Output more security debug output.
 
-=item B<-msg>
+=item B<-trace_hex>
 
-Show protocol messages.
+Show all protocol messages with hex dump.
+
+=item B<-trace_text>
+
+Show verbose trace output of protocol messages in human-readable format.
+
+=item B<-trace_file> I<filename>
+
+File to send output of B<-trace_hex> or B<-trace_text> to, default standard output.
 
 =item B<-timeout>
 
@@ -481,16 +489,6 @@ Export keying material using the specified label.
 =item B<-keymatexportlen> I<len>
 
 Export the specified number of bytes of keying material; default is 20.
-
-Show all protocol messages with hex dump.
-
-=item B<-trace>
-
-Show verbose trace output of protocol messages.
-
-=item B<-msgfile> I<filename>
-
-File to send output of B<-msg> or B<-trace> to, default standard output.
 
 =item B<-nbio_test>
 
