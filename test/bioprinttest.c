@@ -274,10 +274,10 @@ static int test_int(int i)
     memset(bio_buf, '@', sizeof(bio_buf));
 
     switch (data->type) {
-#define DO_PRINT(field_)                                                    \
-    do {                                                                    \
-        bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format,      \
-            data->value.field_);                                            \
+#define DO_PRINT(field_)                                               \
+    do {                                                               \
+        bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, \
+            data->value.field_);                                       \
     } while (0)
     case AT_CHAR:
         DO_PRINT(hh);
@@ -574,18 +574,18 @@ static int test_n(int i)
     memset(std_buf, '#', sizeof(std_buf));
 
     switch (data->n_type) {
-#define DO_PRINT(field_)                                                        \
-    do {                                                                        \
-        if (data->arg1_type == AT_NONE) {                                       \
+#define DO_PRINT(field_)                                                   \
+    do {                                                                   \
+        if (data->arg1_type == AT_NONE) {                                  \
             bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, \
-                &n.field_);                                                     \
-        } else if (data->arg2_type == AT_NONE) {                                \
+                &n.field_);                                                \
+        } else if (data->arg2_type == AT_NONE) {                           \
             bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, \
-                data->arg1.i, &n.field_);                                       \
-        } else {                                                                \
+                data->arg1.i, &n.field_);                                  \
+        } else {                                                           \
             bio_ret = BIO_snprintf(bio_buf, sizeof(bio_buf), data->format, \
-                data->arg1.i, data->arg2.i, &n.field_);                         \
-        }                                                                       \
+                data->arg1.i, data->arg2.i, &n.field_);                    \
+        }                                                                  \
     } while (0)
     case AT_CHAR:
         DO_PRINT(hh);
