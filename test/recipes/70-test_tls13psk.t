@@ -46,8 +46,6 @@ SKIP: {
 }
 
 SKIP: {
-    skip "TODO(DTLSv1.3): When enabling sessionfile and dtls TLSProxy hangs after"
-         ." the handshake.", $testcount;
     skip "DTLS 1.3 is disabled", $testcount if disabled("dtls1_3");
     skip "DTLSProxy does not work on Windows", $testcount if $^O =~ /^(MSWin32)$/;
     run_tests(1);
@@ -78,14 +76,24 @@ sub run_tests
         );
     }
 
+    my $curve_list = "-curves P-256:P-384:X25519:X448:ffdhe2048:ffdhe3072";
+
+    if (disabled("ec")) {
+        $curve_list = "-curves ffdhe2048:ffdhe3072";
+    } elsif (disabled("ecx")) {
+        $curve_list = "-curves P-256:P-384:ffdhe2048:ffdhe3072";
+    } elsif (disabled("dh")) {
+        $curve_list = "-curves P-256:P-384:X25519:X448";
+    }
+
     #Most PSK tests are done in test_ssl_new. This tests various failure scenarios
     #around PSK
 
     #Test 1: First get a session
     $proxy->clear();
     (undef, my $session) = tempfile();
-    $proxy->clientflags("-sess_out " . $session);
-    $proxy->serverflags("-servername localhost");
+    $proxy->clientflags($curve_list . " -sess_out " . $session);
+    $proxy->serverflags($curve_list . " -servername localhost");
     $proxy->sessionfile($session);
     $proxy_start_success = $proxy->start();
     skip "TLSProxy did not start correctly", $testcount if $proxy_start_success == 0;
@@ -93,7 +101,8 @@ sub run_tests
 
     #Test 2: Attempt a resume with PSK not in last place. Should fail
     $proxy->clear();
-    $proxy->clientflags("-sess_in " . $session);
+    $proxy->clientflags($curve_list . " -sess_in " . $session);
+    $proxy->serverflags($curve_list);
     $proxy->filter(\&modify_psk_filter);
     $testtype = PSK_LAST_FIRST_CH;
     $proxy->start();
@@ -102,7 +111,7 @@ sub run_tests
     #Test 3: Attempt a resume after an HRR where PSK hash matches selected
     #        ciphersuite. Should see PSK on second ClientHello
     $proxy->clear();
-    $proxy->clientflags("-sess_in " . $session);
+    $proxy->clientflags($curve_list . " -sess_in " . $session);
     if (disabled("ec")) {
         $proxy->serverflags("-curves ffdhe3072");
     }
@@ -121,7 +130,7 @@ sub run_tests
     #Test 4: Attempt a resume after an HRR where PSK hash does not match selected
     #        ciphersuite. Should not see PSK on second ClientHello
     $proxy->clear();
-    $proxy->clientflags("-sess_in " . $session);
+    $proxy->clientflags($curve_list . " -sess_in " . $session);
     $proxy->filter(\&modify_psk_filter);
     if (disabled("ec")) {
         $proxy->serverflags("-curves ffdhe3072");
@@ -145,7 +154,8 @@ sub run_tests
     #Test 5: Attempt a resume without a sig agls extension. Should succeed because
     #        sig algs is not needed in a resumption.
     $proxy->clear();
-    $proxy->clientflags("-sess_in " . $session);
+    $proxy->clientflags($curve_list . " -sess_in " . $session);
+    $proxy->serverflags($curve_list);
     $proxy->filter(\&remove_sig_algs_filter);
     $proxy->start();
     ok(TLSProxy::Message->success(), "Remove sig algs");
