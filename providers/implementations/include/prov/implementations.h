@@ -42,7 +42,7 @@ extern const OSSL_DISPATCH ossl_mdc2_functions[];
 extern const OSSL_DISPATCH ossl_wp_functions[];
 extern const OSSL_DISPATCH ossl_ripemd160_functions[];
 extern const OSSL_DISPATCH ossl_nullmd_functions[];
-extern const OSSL_DISPATCH ossl_external_mu_ml_dsa_functions[];
+extern const OSSL_DISPATCH ossl_ml_dsa_mu_functions[];
 
 /* Ciphers */
 extern const OSSL_DISPATCH ossl_null_functions[];

@@ -2811,7 +2811,7 @@ err:
     return ret;
 }
 
-/* Calculate ExternalMu-ML-DSA.prehash() */
+/* Calculate ML-DSA-MU.prehash() */
 static int calculate_mu(const uint8_t *pub, size_t publen,
     const uint8_t *ctx, size_t ctxlen, const uint8_t *msg, size_t msglen,
     const char *digestname, uint8_t *out, size_t outlen)
@@ -2833,7 +2833,7 @@ static int calculate_mu(const uint8_t *pub, size_t publen,
     *p = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(mdctx = EVP_MD_CTX_new())
-        || !TEST_ptr(md = EVP_MD_fetch(libctx, "ExternalMu-ML-DSA", NULL))
+        || !TEST_ptr(md = EVP_MD_fetch(libctx, "ML-DSA-MU", NULL))
         || !TEST_true(EVP_DigestInit_ex2(mdctx, md, params)))
         goto err;
     /* stream the message */

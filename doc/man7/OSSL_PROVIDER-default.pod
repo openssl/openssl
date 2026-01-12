@@ -75,7 +75,7 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item NULL, see L<EVP_MD-NULL(7)>
 
-=item ExternalMu-ML-DSA, see L<EVP_MD-EXTERNAL-MU-ML-DSA(7)>
+=item ML-DSA-MU, see L<EVP_MD-ML-DSA-MU(7)>
 
 =back
 

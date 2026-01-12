@@ -161,7 +161,7 @@ providers/implementations/digests/digestcommon.inc
 providers/implementations/digests/mdc2_prov.inc
 providers/implementations/digests/sha2_prov.inc
 providers/implementations/digests/sha3_prov.inc
-providers/implementations/digests/external_mu_ml_dsa_prov.inc
+providers/implementations/digests/ml_dsa_mu_prov.inc
 providers/implementations/include/prov/blake2_params.inc
 providers/implementations/kdfs/snmpkdf.inc
 providers/implementations/macs/cmac_prov.inc

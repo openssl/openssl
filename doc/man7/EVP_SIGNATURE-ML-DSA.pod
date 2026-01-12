@@ -82,7 +82,7 @@ Note that the message encoding steps from
 L<FIPS 204|https://csrc.nist.gov/pubs/fips/204/final> Algorithm 2 step 10 and
 Algorithm 3 step 5 are omitted when this setting is nonzero.
 
-See L<EVP_MD-EXTERNAL-MU-ML-DSA(7)> for more information on generating an
+See L<EVP_MD-ML-DSA-MU(7)> for more information on generating an
 external-mu value.
 
 The "context-string" is ignored if this value is nonzero.
@@ -153,7 +153,7 @@ To sign a message using an ML-DSA EVP_PKEY structure and an external mu:
 =head1 SEE ALSO
 
 L<EVP_PKEY-ML-DSA(7)>,
-L<EVP_MD-EXTERNAL-MU-ML-DSA(7)>,
+L<EVP_MD-ML-DSA-MU(7)>,
 L<provider-signature(7)>,
 L<EVP_PKEY_sign(3)>,
 L<EVP_PKEY_verify(3)>,

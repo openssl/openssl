@@ -276,7 +276,7 @@
  * https://csrc.nist.gov/csrc/media/Projects/post-quantum-cryptography/documents/faq/fips204-sec6-03192025.pdf
  * See ExternalMu-ML-DSA.Prehash
  */
-#define PROV_NAMES_EXTERNAL_MU_ML_DSA "ExternalMu-ML-DSA"
+#define PROV_NAMES_ML_DSA_MU "ML-DSA-MU"
 
 /*-
  * KDFs / PRFs

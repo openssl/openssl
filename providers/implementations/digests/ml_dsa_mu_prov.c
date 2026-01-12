@@ -8,7 +8,7 @@
  */
 
 /*
- * Mu is the value:
+ * mu is the value:
  *  mu = SHAKE256(tr || M', 64)
  *
  * where tr is the hash of the public key
@@ -31,7 +31,7 @@
 #include "prov/implementations.h"
 #include "internal/common.h"
 #include "internal/sha3.h"
-#include "providers/implementations/digests/external_mu_ml_dsa_prov.inc"
+#include "providers/implementations/digests/ml_dsa_mu_prov.inc"
 
 #define SHAKE256_SIZE 64
 #define SHAKE_FLAGS (PROV_DIGEST_FLAG_ALGID_ABSENT)
@@ -141,7 +141,7 @@ static int mu_get_params(OSSL_PARAM params[])
 static const OSSL_PARAM *mu_settable_ctx_params(ossl_unused void *ctx,
     ossl_unused void *provctx)
 {
-    return external_mu_ml_dsa_set_ctx_params_list;
+    return ml_dsa_mu_set_ctx_params_list;
 }
 
 static int set_property_query(MU_CTX *ctx, const char *propq)
@@ -193,9 +193,9 @@ static int digest_public_key(MU_CTX *ctx, const uint8_t *pub, size_t publen)
 static int mu_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     MU_CTX *ctx = (MU_CTX *)vctx;
-    struct external_mu_ml_dsa_set_ctx_params_st p;
+    struct ml_dsa_mu_set_ctx_params_st p;
 
-    if (ctx == NULL || !external_mu_ml_dsa_set_ctx_params_decoder(params, &p))
+    if (ctx == NULL || !ml_dsa_mu_set_ctx_params_decoder(params, &p))
         return 0;
 
     if (p.ctx != NULL) {
@@ -239,15 +239,15 @@ static int mu_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 static const OSSL_PARAM *mu_gettable_ctx_params(ossl_unused void *ctx,
     ossl_unused void *provctx)
 {
-    return external_mu_ml_dsa_get_ctx_params_list;
+    return ml_dsa_mu_get_ctx_params_list;
 }
 
 static int mu_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     MU_CTX *ctx = (MU_CTX *)vctx;
-    struct external_mu_ml_dsa_get_ctx_params_st p;
+    struct ml_dsa_mu_get_ctx_params_st p;
 
-    if (ctx == NULL || !external_mu_ml_dsa_get_ctx_params_decoder(params, &p))
+    if (ctx == NULL || !ml_dsa_mu_get_ctx_params_decoder(params, &p))
         return 0;
 
     /* Size is an alias of xoflen */
@@ -328,7 +328,7 @@ static int mu_final(void *vctx, uint8_t *out, size_t *outl, size_t outsz)
     return 1;
 }
 
-const OSSL_DISPATCH ossl_external_mu_ml_dsa_functions[] = {
+const OSSL_DISPATCH ossl_ml_dsa_mu_functions[] = {
     { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))mu_newctx },
     { OSSL_FUNC_DIGEST_INIT, (void (*)(void))mu_init },
     { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))mu_update },

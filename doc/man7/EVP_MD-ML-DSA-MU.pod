@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-EVP_MD-EXTERNAL-MU-ML-DSA - The ExternalMu-ML-DSA.Prehash() EVP_MD implementation
+EVP_MD-ML-DSA-MU - The ML-DSA-MU.Prehash() EVP_MD implementation
 
 =head1 DESCRIPTION
 
-Support for computing ExternalMu-ML-DSA.Prehash() through the B<EVP_MD> API.
+Support for computing ML-DSA-MU.Prehash() through the B<EVP_MD> API.
 
 Normally the value of C<mu> is calculated internally as part of an ML-DSA
 sign or verify operation. Mu is defined as:
@@ -19,7 +19,7 @@ In cases where prehashing the message is required, FIPS 204 allows
 the C<mu> calculation to be done externally and then C<mu> can be passed to
 ML-DSA sign or verify operations.
 
-PreHash (Hash-ML-DSA) is also supported and uses:
+PreHash (HASH-ML-DSA) is also supported and uses:
     M' = 0x01 || ctx_len || ctx || OID || HashedMessage
 
 The output C<mu> value can then be supplied as an input to L<EVP_SIGNATURE-ML-DSA(7)>
@@ -30,7 +30,7 @@ pure ML-DSA sign or verify operations.
 =head2 Identities
 
 This implementation is available with the FIPS provider as well as the
-default provider, and is identified with the name "ExternalMu-ML-DSA".
+default provider, and is identified with the name "ML-DSA-MU".
 
 =head2 Parameters
 
@@ -52,17 +52,17 @@ An optional string of octets with length at most 255. By default it is the empty
 
 =item "digest" (B<OSSL_DIGEST_PARAM_MU_DIGEST>) <utf8 string>
 
-An optional parameter related to "HashML-DSA". If used it determines the OID in
+An optional parameter related to "HASH-ML-DSA". If used it determines the OID in
 the definition of PreHash M' above.
 
 When this parameter is not specified, pure ML-DSA C<mu> is computed, and the
 input data is expected to be the full message, otherwise the input data must
 be the result of prehashing the message with the corresponding digest algorithm.
 
-The HashML-DSA variant is available to enable specialised use-cases,
+The HASH-ML-DSA variant is available to enable specialised use-cases,
 in which signing the full message with pure ML-DSA is not practical, and
 the external-mu API is a viable alternative.
-HashML-DSA is not used in protocols such as X509 & CMS (See RFC 9981 and 9982),
+HASH-ML-DSA is not used in protocols such as X509 & CMS (See RFC 9981 and 9982),
 and is not presently implemented as an independent OpenSSL signature algorithm.
 
 OpenSSL accepts the following digest names: "SHAKE-256", "SHAKE-128", "SHA-224",
@@ -113,7 +113,7 @@ To generate external 'mu' given an existing ML-DSA key and a large message:
         *p = OSSL_PARAM_construct_end();
 
         mdctx = EVP_MD_CTX_new();
-        md = EVP_MD_fetch(libctx, "ExternalMu-ML-DSA", NULL);
+        md = EVP_MD_fetch(libctx, "ML-DSA-MU", NULL);
         EVP_DigestInit_ex2(mdctx, md, params);
         /* Call EVP_DigestUpdate() multiple times to stream the message */
         while (msglen != 0) {
@@ -136,7 +136,7 @@ L<OSSL_PROVIDER-default(7)>
 
 =head1 HISTORY
 
-EVP_MD-EXTERNAL-MU-ML-DSA was added in OpenSSL 4.0.0.
+EVP_MD-ML-DSA-MU was added in OpenSSL 4.0.0.
 
 =head1 COPYRIGHT
 

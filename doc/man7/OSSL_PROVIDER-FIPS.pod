@@ -73,7 +73,7 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 KECCAK-KMAC is only used internally as a sub algorithm of KMAC.
 
-=item ExternalMu-ML-DSA, see L<EVP_MD-EXTERNAL-MU-ML-DSA(7)>
+=item ML-DSA-MU, see L<EVP_MD-ML-DSA-MU(7)>
 
 =back
 

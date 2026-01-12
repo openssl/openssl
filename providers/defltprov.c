@@ -160,7 +160,7 @@ static const OSSL_ALGORITHM deflt_digests[] = {
 
     { PROV_NAMES_NULL, "provider=default", ossl_nullmd_functions },
 #ifndef OPENSSL_NO_ML_DSA
-    { PROV_NAMES_EXTERNAL_MU_ML_DSA, "provider=default", ossl_external_mu_ml_dsa_functions },
+    { PROV_NAMES_ML_DSA_MU, "provider=default", ossl_ml_dsa_mu_functions },
 #endif
     { NULL, NULL, NULL }
 };

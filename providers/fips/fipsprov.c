@@ -303,8 +303,7 @@ static int fips_self_test(void *provctx)
 static const OSSL_ALGORITHM fips_digests[] = {
     FIPS_DIGESTS_COMMON(),
 #ifndef OPENSSL_NO_ML_DSA
-    { PROV_NAMES_EXTERNAL_MU_ML_DSA, FIPS_DEFAULT_PROPERTIES,
-        ossl_external_mu_ml_dsa_functions },
+    { PROV_NAMES_ML_DSA_MU, FIPS_DEFAULT_PROPERTIES, ossl_ml_dsa_mu_functions },
 #endif
     { NULL, NULL, NULL }
 };
