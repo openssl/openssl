@@ -26,7 +26,6 @@
 #define alloca _alloca
 #endif
 
-#if defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0333
 #ifdef OPENSSL_SYS_WIN_CORE
 
 int OPENSSL_isservice(void)
@@ -93,12 +92,6 @@ int OPENSSL_isservice(void)
 #endif
     else
         return 0;
-}
-#endif
-#else
-int OPENSSL_isservice(void)
-{
-    return 0;
 }
 #endif
 
@@ -189,7 +182,6 @@ void OPENSSL_showfatal(const char *fmta, ...)
     buf[OSSL_NELEM(buf) - 1] = _T('\0');
     va_end(ap);
 
-#if defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0333
 #ifdef OPENSSL_SYS_WIN_CORE
     /* ONECORE is always NONGUI and NT >= 0x0601 */
 #if !defined(NDEBUG)
@@ -227,9 +219,6 @@ void OPENSSL_showfatal(const char *fmta, ...)
     } else {
         MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
     }
-#endif
-#else
-    MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
 #endif
 }
 #else
