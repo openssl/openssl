@@ -40,9 +40,6 @@ SKIP: {
 }
 
 SKIP: {
-    # TODO(DTLSv1.3): This test currently does not work for DTLS. It gets stuck
-    # in the first test case.
-    skip "Test does not work correctly currently", $testcount;
     skip "DTLS 1.3 is disabled", $testcount if disabled("dtls1_3");
     skip "DTLSProxy does not work on Windows", $testcount if $^O =~ /^(MSWin32)$/;
     run_tests(1);
@@ -80,6 +77,7 @@ sub run_tests
 
     #Test 1: Inserting a cookie into an HRR should see it echoed in the ClientHello
     #        (when a key share is required)
+    $proxy->clear();
     $testtype = COOKIE_AND_KEY_SHARE;
     $proxy->filter(\&cookie_filter);
     if (disabled("ecx")) {
