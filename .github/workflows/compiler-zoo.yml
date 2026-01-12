@@ -26,7 +26,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -y install ${{ matrix.gcc }}
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -39,7 +39,7 @@ jobs:
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
-      run: make -s -j
+      run: make -s -j4
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
@@ -62,7 +62,7 @@ jobs:
         echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-$VERSION main" | sudo tee -a /etc/apt/sources.list
         sudo apt-get update || true
         sudo apt-get -y install ${{ matrix.clang }}
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -75,7 +75,7 @@ jobs:
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
-      run: make -s -j
+      run: make -s -j4
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
