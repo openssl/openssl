@@ -2,14 +2,14 @@
 
 =head1 NAME
 
-EVP_MD-ML-DSA-MU - The ML-DSA-MU.Prehash() EVP_MD implementation
+EVP_MD-ML-DSA-MU - The ML-DSA-MU EVP_MD implementation
 
 =head1 DESCRIPTION
 
-Support for computing ML-DSA-MU.Prehash() through the B<EVP_MD> API.
+Support for computing the value of external mu for ML-DSA using the B<EVP_MD> API.
 
 Normally the value of C<mu> is calculated internally as part of an ML-DSA
-sign or verify operation. Mu is defined as:
+sign or verify operation. C<mu> is defined as:
     mu = SHAKE256(tr || M', 64)
 
 Where B<tr> is the hash of the encoded public key, and, for Pure (ML-DSA):
