@@ -144,7 +144,7 @@
 /*
  * For Len=1, load 1-1-1-1 layout
  *
- * Load Coeffients and setup vectors
+ * Load Coefficients and setup vectors
  *    rj0, rjlen1, rj2, rjlen3
  *    rj4, rjlen5, rj6, rjlen7
  *
@@ -313,7 +313,7 @@
 
 /*
  * For Len=2
- * Transpose the final coefficients of 2-2-2-2 layout to the orginal
+ * Transpose the final coefficients of 2-2-2-2 layout to the original
  * coefficient array order.
  */
 .macro PermWrite42
@@ -337,7 +337,7 @@
 
 /*
  * For Len=1
- * Transpose the final coefficients of 1-1-1-1 layout to the orginal
+ * Transpose the final coefficients of 1-1-1-1 layout to the original
  * coefficient array order.
  */
 .macro PermWrite41
@@ -530,7 +530,7 @@
  *   Compute Inverse NTT based on the following 8 layers -
  *     len = 1, 2, 4, 8, 16, 32, 64, 128.
  *
- *   Each layer compute the coeffients on 2 legs, start and start + len*2 offsets.
+ *   Each layer compute the coefficients on 2 legs, start and start + len*2 offsets.
  *
  *   leg 1                        leg 2
  *   -----                        -----
@@ -545,11 +545,11 @@
  *
  *   -> leg1 = leg1 + t, leg2 = leg1 - t
  *
- *   The resulting coeffients then store back to each leg's offset.
+ *   The resulting coefficients then store back to each leg's offset.
  *
  *   Each vector has the same corresponding zeta except len=2.
  *
- *   len=2 has 2-2-2-2 layout which means every 2 32-bit coeffients has the same zeta.
+ *   len=2 has 2-2-2-2 layout which means every 2 32-bit coefficients has the same zeta.
  *   e.g.
  *         coeff vector    a1   a2   a3  a4  a5  a6  a7  a8
  *         zeta  vector    z1   z1   z2  z2  z3  z3  z4  z4
