@@ -1345,6 +1345,24 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
      *     we are a server
      * THEN
      *     IF
+     *         key_share is not present
+     *         AND
+     *         psk_dhe_ke mode is advertised
+     *     THEN
+     *         fail (RFC 8446 Section 4.2.9 violation)
+     *     ELSE IF
+     *         key_share is not present
+     *         AND
+     *         supported_groups extension is present
+     *     THEN
+     *         fail (RFC 8446 Section 9.2 violation)
+     *     ELSE IF
+     *         key_share is present
+     *         AND
+     *         supported_groups extension is not present
+     *     THEN
+     *         fail (RFC 8446 Section 9.2 violation - reverse check)
+     *     ELSE IF
      *         we have a suitable key_share
      *     THEN
      *         IF
@@ -1375,6 +1393,42 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
      *             send a HelloRetryRequest
      */
     if (s->server) {
+        /*
+         * RFC 8446 Section 4.2.9: If psk_dhe_ke mode is advertised in the
+         * psk_key_exchange_modes extension, the client MUST also send a
+         * key_share extension. If this mode is present but key_share is
+         * absent, the server MUST abort the handshake.
+         */
+        if (!sent && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) != 0) {
+            SSLfatal(s, SSL_AD_MISSING_EXTENSION,
+                     SSL_R_NO_SUITABLE_KEY_SHARE);
+            return 0;
+        }
+
+        /*
+         * RFC 8446 Section 9.2: The "supported_groups" extension is used to
+         * indicate which groups the client supports for key exchange. If this
+         * extension is sent, the client MUST also send a "key_share" extension.
+         */
+        if (!sent && s->clienthello != NULL
+            && s->clienthello->pre_proc_exts[TLSEXT_IDX_supported_groups].present) {
+            SSLfatal(s, SSL_AD_MISSING_EXTENSION,
+                     SSL_R_NO_SUITABLE_KEY_SHARE);
+            return 0;
+        }
+
+        /*
+         * RFC 8446 Section 9.2: Conversely, if a "key_share" extension is sent,
+         * the client MUST also send a "supported_groups" extension. This applies
+         * to both the initial ClientHello and the second ClientHello after HRR.
+         */
+        if (sent && s->clienthello != NULL
+            && !s->clienthello->pre_proc_exts[TLSEXT_IDX_supported_groups].present) {
+            SSLfatal(s, SSL_AD_MISSING_EXTENSION,
+                     SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION);
+            return 0;
+        }
+
         if (s->s3.peer_tmp != NULL) {
             /* We have a suitable key_share */
             if ((s->s3.flags & TLS1_FLAGS_STATELESS) != 0
