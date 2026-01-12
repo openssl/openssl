@@ -67,6 +67,25 @@ static CRYPTO_ONCE ml_dsa_ntt_once = CRYPTO_ONCE_STATIC_INIT;
  * which is then Montgomery reduced, removing the excess factor of R = 2^32.
  */
 
+#ifdef MLDSA_NTT_ASM
+extern void mldsa_poly_ntt_mult(POLY *out, const POLY *lhs, const POLY *rhs);
+void ossl_ml_dsa_poly_ntt_mult(const POLY *lhs, const POLY *rhs, POLY *out)
+{
+    mldsa_poly_ntt_mult(out, lhs, rhs);
+}
+
+extern void mldsa_poly_ntt(uint32_t *p);
+void ossl_ml_dsa_poly_ntt(POLY *p)
+{
+    mldsa_poly_ntt(p->coeff);
+}
+
+extern void mldsa_poly_ntt_inverse(uint32_t *p);
+void ossl_ml_dsa_poly_ntt_inverse(POLY *p)
+{
+    mldsa_poly_ntt_inverse(p->coeff);
+}
+#else
 /*
  * The table in FIPS 204 Appendix B uses the following formula
  * zeta[k]= 1753^bitrev(k) mod q for (k = 1..255) (The first value is not used).
@@ -284,3 +303,4 @@ void ossl_ml_dsa_poly_ntt_inverse(POLY *p)
     (void)CRYPTO_THREAD_run_once(&ml_dsa_ntt_once, ml_dsa_ntt_init);
     poly_ntt_inverse_impl(p);
 }
+#endif
