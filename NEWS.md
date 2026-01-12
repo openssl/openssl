@@ -26,9 +26,24 @@ OpenSSL 3.6
 
 ### Major changes between OpenSSL 3.6.0 and OpenSSL 3.6.1 [under development]
 
-  * none
+OpenSSL 3.6.1 is a security patch release. The most severe CVE fixed in this
+release is High.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed a regression in `X509_V_FLAG_CRL_CHECK_ALL` flag handling by restoring
+    its pre-3.6.0 behaviour of being ignored when `X509_V_FLAG_CRL_CHECK` flag
+    is not set, and no longer implying the latter flag instead.
+
+  * Fixed a regression that caused generation of empty stapled OCSP responses
+    when at least one certificate in the certificate chain had a stapled OCSP
+    response present, causing handshake failures for OpenSSL 3.6.0 servers
+    with various client implementations, including GnuTLS and BoringSSL.
 
 ### Major changes between OpenSSL 3.5 and OpenSSL 3.6.0 [1 Oct 2025]
+
+OpenSSL 3.6.0 is a feature release adding significant new functionality
+to OpenSSL.
 
 This release incorporates the following potentially significant or incompatible
 changes:

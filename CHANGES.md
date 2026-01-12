@@ -31,7 +31,48 @@ OpenSSL 3.6
 
 ### Changes between 3.6.0 and 3.6.1 [xx XXX xxxx]
 
- * none yet
+ * RISC-V capabilities string format has changed to include the base
+   architecture and the vector length for the V extension.
+   <!-- https://github.com/openssl/openssl/pull/28760 -->
+
+   *Bernd Edlinger*
+
+ * Fixed a regression in `X509_V_FLAG_CRL_CHECK_ALL` flag handling by restoring
+   its pre-3.6.0 behaviour of being ignored when `X509_V_FLAG_CRL_CHECK` flag
+   is not set, and no longer implying the latter flag instead.
+   <!-- https://github.com/openssl/openssl/pull/28797 -->
+
+   *Carter Thaxton*
+
+ * Fixed a regression that caused generation of empty stapled OCSP responses
+   when at least one certificate in the certificate chain had a stapled OCSP
+   response present, causing handshake failures for OpenSSL 3.6.0 servers
+   with various client implementations, including GnuTLS and BoringSSL.
+   <!-- https://github.com/openssl/openssl/pull/28955 -->
+
+   *Martin Rauch*
+
+ * Fixed exit code of `openssl x509` command with `-checkend` option in use.
+   <!-- https://github.com/openssl/openssl/pull/29155 -->
+
+   *Stefan Rieche*
+
+ * Fixed incorrect acceptance of some malformed ECDSA signatures on s390x.
+   <!-- https://github.com/openssl/openssl/pull/29214 -->
+
+   *Holger Dengler*
+
+ * Source code has been reformatted with `clang-format`.
+   <!-- https://github.com/openssl/openssl/pull/29245 -->
+
+   *Bob Beck*
+
+ * Reverted a change in behaviour of the single stapled OCSP response API
+   with respect to the ownership of the OCSP response object that caused
+   a memory leak.
+   <!-- https://github.com/openssl/openssl/pull/29251 -->
+
+   *Remi Gacogne and Tomáš Mráz*
 
 ### Changes between 3.5 and 3.6.0 [1 Oct 2025]
 
