@@ -50,10 +50,6 @@ SKIP: {
 }
 
 SKIP: {
-    # TODO(DTLSv1.3): This test currently does not work for DTLS. It gets stuck
-    # in the first test case.
-    skip "Test does not work correctly currently", $testcount;
-
     skip "DTLS 1.2 or 1.3 is disabled", $testcount if disabled("dtls1_3")
                                                       || disabled("dtls1_2");
     skip "DTLSProxy does not work on Windows", $testcount if $^O =~ /^(MSWin32)$/;
