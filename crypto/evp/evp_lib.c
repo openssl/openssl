@@ -228,10 +228,9 @@ int evp_cipher_get_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
     if (type == NULL || asn1_params == NULL)
         return 0;
 
-    i = ossl_asn1_type_get_octetstring_int(type, &tl, NULL, EVP_MAX_IV_LENGTH);
-    if (i <= 0)
+    i = ossl_asn1_type_get_octetstring_int(type, &tl, iv, EVP_MAX_IV_LENGTH);
+    if (i <= 0 || i > EVP_MAX_IV_LENGTH)
         return -1;
-    ossl_asn1_type_get_octetstring_int(type, &tl, iv, i);
 
     memcpy(asn1_params->iv, iv, i);
     asn1_params->iv_len = i;
