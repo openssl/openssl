@@ -60,6 +60,12 @@ static ossl_inline void asn1_type_init_oct(ASN1_OCTET_STRING *oct,
     oct->flags = 0;
 }
 
+/*
+ * This function copies 'anum' to 'num' and the data of 'oct' to 'data'.
+ * If the length of 'data' > 'max_len', copies only the first 'max_len'
+ * bytes, but returns the full length of 'oct'; this allows distinguishing
+ * whether all the data was copied.
+ */
 static int asn1_type_get_int_oct(ASN1_OCTET_STRING *oct, int32_t anum,
     long *num, unsigned char *data, int max_len)
 {
@@ -106,6 +112,13 @@ int ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num, unsigned char *data,
     return 0;
 }
 
+/*
+ * This function decodes an int-octet sequence and copies the integer to 'num'
+ * and the data of octet to 'data'.
+ * If the length of 'data' > 'max_len', copies only the first 'max_len'
+ * bytes, but returns the full length of 'oct'; this allows distinguishing
+ * whether all the data was copied.
+ */
 int ASN1_TYPE_get_int_octetstring(const ASN1_TYPE *a, long *num,
     unsigned char *data, int max_len)
 {
@@ -162,6 +175,13 @@ int ossl_asn1_type_set_octetstring_int(ASN1_TYPE *a, long num,
     return 0;
 }
 
+/*
+ * This function decodes an octet-int sequence and copies the data of octet
+ * to 'data' and the integer to 'num'.
+ * If the length of 'data' > 'max_len', copies only the first 'max_len'
+ * bytes, but returns the full length of 'oct'; this allows distinguishing
+ * whether all the data was copied.
+ */
 int ossl_asn1_type_get_octetstring_int(const ASN1_TYPE *a, long *num,
     unsigned char *data, int max_len)
 {
