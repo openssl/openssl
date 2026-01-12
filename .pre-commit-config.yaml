@@ -11,3 +11,9 @@ repos:
         types_or: []
         files: '\.c\.in$|\.h\.in$|\.c$|\.h$'
         args: ["--style=file"]
+        exclude: |
+            (?x)^(
+                  crypto/objects/obj_dat.h|
+                  crypto/objects/obj_xref.h|
+                  include/openssl/obj_mac.h
+                 )$
