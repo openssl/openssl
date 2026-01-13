@@ -116,12 +116,18 @@ L</String form of ECHConfig> section) and stores that in I<*echconfig>.  It is
 the callers responsibility to free the strings returned in I<public_name> and
 I<echconfig> after they have been returned. If the specified entry has a
 private key associated with it then I<has_private> will be set to 1, otherwise
-it will be set to 0. Simiarly if the ECHConfig for this entry will be includes
+it will be set to 0. Simiarly if the ECHConfig for this entry will be included
 in "retry-configs" then the I<for_retry> will be set to 1 or zero if that
 ECHConfig will not be included in retry-configs.
 
 The ECH fallback scheme involving retry-configs is described at
 L<https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-25#section-6.1.6>.
+
+=begin comment
+
+TODO(ECH): The I-D above should be replaced with the RFC when published.
+
+=end comment
 
 OSSL_ECHSTORE_downselect() provides the caller a way to select one particular
 ECHConfig value based on the zero-based I<index> from those stored in the
@@ -130,7 +136,7 @@ and L<openssl-s_client(1)> or equivalent) to pick a specific ECHConfig to use
 in a TLS connection.
 
 OSSL_ECHSTORE_set1_key_and_read_pem() and OSSL_ECHSTORE_read_pem() can be used
-to load a private key value and associated ECHConfigList from the B<DIO> I<in>
+to load a private key value and associated ECHConfigList from the B<BIO> I<in>
 into an B<OSSL_ECHSTORE> structure.  The former function pairs a
 previously-loaded private key (in B<EVP_PKEY> format) with an associated
 base64-encoded ECHConfigList in the I<in> B<BIO>. The latter function reads
@@ -173,7 +179,7 @@ B<SSL_CTX> or B<SSL> connection.
 =head2 Client ECH Controls
 
 SSL_set1_ech_config_list() allows clients to setup ECH by associating an
-ECHConfigList, I<ecl> with an B<SSL>  connection I<s>. This is compatible with
+ECHConfigList, I<ecl> with an B<SSL> connection I<s>. This is compatible with
 current BoringSSL APIs, allowing for smaller code changes for clients that
 support OpenSSL or BoringSSL. Note that the input I<ecl> here for OpenSSL can
 be either base64 or binary encoded, but for BoringSSL it must be binary
@@ -199,7 +205,7 @@ I<protos> and I<protos_len> inputs must be provided as for
 L<SSL_set_alpn_protos(3)>.
 
 If a client attempts ECH but that fails, or sends an ECH-GREASE'd ClientHello,
-to an ECH-supporting server, then that server may return an set of ECH
+to an ECH-supporting server, then that server may return a set of ECH
 retry-config values that the client could choose to use in a subsequent
 connection. The client can detect this situation if SSL_ech_get1_status() for
 the B<SSL> connection I<s>, returns a status of B<SSL_ECH_STATUS_GREASE_ECH>,
