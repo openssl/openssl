@@ -176,7 +176,7 @@ mldsa_poly_sub:
         blr
 .size     mldsa_poly_sub,.-mldsa_poly_sub
 
-.data
+.rodata
 .align 4
 .mldsa_consts:
 .long ML_DSA_Q, ML_DSA_Q, ML_DSA_Q, ML_DSA_Q
