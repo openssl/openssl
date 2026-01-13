@@ -205,7 +205,7 @@ static int validate_string_name(const char *name, size_t *name_len)
  * encountered '_' character are the only ones permitted.
  *
  * if |enforce| is zero, anything is allowed as long as it is not one
- * of the structurally imporatant charactes of '.' or '-'.
+ * of the structurally important characters of '.' or '-'.
  */
 static int is_dns_alnum(int c, int enforce)
 {
