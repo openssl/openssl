@@ -71,10 +71,11 @@ correct structure for an email address.
 
 SSL_add1_ipaddr() adds I<ip> to the list of IP addresses, if it parses as an IP address.
 
-TLS clients are recommended to use SSL_set1_dnsname() for server
-hostname validation. as well as L<SSL_set_tlsext_host_name(3)> for
+It is recommended that TLS clients use SSL_set1_dnsname() to configure server
+hostname validation and L<SSL_set_tlsext_host_name(3)> to configure
 Server Name Indication (SNI), which may be crucial also for correct
-routing of the connection request. SSL_set1_ip, or SSL_set1_ip_asc
+server certificate selection and/or routing of the connection request.
+SSL_set1_ip(), or SSL_set1_ip_asc()
 should be used for server IP address validation,
 
 SSL_set_hostflags() sets the I<flags> that will be passed to
