@@ -20,6 +20,7 @@
 static X509 *cert = NULL;
 static EVP_PKEY *privkey = NULL;
 static char *derin = NULL;
+static X509_STORE *store = NULL;
 
 static int test_encrypt_decrypt(const EVP_CIPHER *cipher)
 {
@@ -479,6 +480,74 @@ end:
     return ret;
 }
 
+/*
+ * Test for GitHub issue #27055 - CAdES verification with -noattr
+ *
+ * Verify that CAdES verification correctly fails when a signature
+ * is created without signed attributes (CMS_NOATTR).
+ */
+static int test_cades_verify_noattr(void)
+{
+    CMS_ContentInfo *cms_noattr = NULL;
+    BIO *data_bio = NULL;
+    BIO *out_bio = NULL;
+    const char *test_data = "Test data for CMS signing";
+    int ret = 0;
+
+    /* Create signature WITHOUT signed attributes (CMS_NOATTR) */
+    if (!TEST_ptr(data_bio = BIO_new_mem_buf(test_data, -1)))
+        goto end;
+
+    if (!TEST_ptr(cms_noattr = CMS_sign(cert, privkey, NULL, data_bio,
+                                         CMS_DETACHED | CMS_NOATTR | CMS_BINARY)))
+        goto end;
+
+    BIO_free(data_bio);
+    data_bio = NULL;
+
+    /* Verify without CMS_CADES should succeed */
+    if (!TEST_ptr(data_bio = BIO_new_mem_buf(test_data, -1)))
+        goto end;
+
+    if (!TEST_ptr(out_bio = BIO_new(BIO_s_mem())))
+        goto end;
+
+    if (!TEST_int_gt(CMS_verify(cms_noattr, NULL, store, data_bio, out_bio,
+                                 CMS_DETACHED | CMS_BINARY | CMS_NO_SIGNER_CERT_VERIFY), 0))
+        goto end;
+
+    BIO_free(data_bio);
+    BIO_free(out_bio);
+    data_bio = NULL;
+    out_bio = NULL;
+
+    /* Verify WITH CMS_CADES should FAIL (this is the key test) */
+    if (!TEST_ptr(data_bio = BIO_new_mem_buf(test_data, -1)))
+        goto end;
+
+    if (!TEST_ptr(out_bio = BIO_new(BIO_s_mem())))
+        goto end;
+
+    /*
+     * Expected: CMS_verify should return <= 0 because the signature
+     * lacks the required ESS signingCertificate attribute
+     */
+    if (!TEST_int_le(CMS_verify(cms_noattr, NULL, store, data_bio, out_bio,
+                                 CMS_DETACHED | CMS_BINARY | CMS_CADES | CMS_NO_SIGNER_CERT_VERIFY), 0))
+        goto end;
+
+    /* Clear the expected error */
+    ERR_clear_error();
+    ret = 1;
+
+end:
+    BIO_free(data_bio);
+    BIO_free(out_bio);
+    CMS_ContentInfo_free(cms_noattr);
+    return ret;
+}
+
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile\n")
 
 int setup_tests(void)
@@ -519,6 +588,24 @@ int setup_tests(void)
     }
     BIO_free(privkeybio);
 
+    /* Create X509_STORE for CAdES tests */
+    if (!TEST_ptr(store = X509_STORE_new())) {
+        X509_free(cert);
+        cert = NULL;
+        EVP_PKEY_free(privkey);
+        privkey = NULL;
+        return 0;
+    }
+    if (!TEST_true(X509_STORE_add_cert(store, cert))) {
+        X509_STORE_free(store);
+        store = NULL;
+        X509_free(cert);
+        cert = NULL;
+        EVP_PKEY_free(privkey);
+        privkey = NULL;
+        return 0;
+    }
+
     ADD_TEST(test_encrypt_decrypt_aes_cbc);
     ADD_TEST(test_encrypt_decrypt_aes_128_gcm);
     ADD_TEST(test_encrypt_decrypt_aes_192_gcm);
@@ -529,6 +616,7 @@ int setup_tests(void)
     ADD_TEST(test_encrypted_data);
     ADD_TEST(test_encrypted_data_aead);
     ADD_ALL_TESTS(test_d2i_CMS_decode, 2);
+    ADD_TEST(test_cades_verify_noattr);
     return 1;
 }
 
@@ -536,4 +624,5 @@ void cleanup_tests(void)
 {
     X509_free(cert);
     EVP_PKEY_free(privkey);
+    X509_STORE_free(store);
 }
