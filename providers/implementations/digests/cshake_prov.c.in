@@ -141,18 +141,14 @@ static int cshake_set_shake_mode(CSHAKE_CTX *ctx, int shake)
         name = (ctx->bitlen == 128 ? "CSHAKE-KECCAK-128" : "CSHAKE-KECCAK-256");
 
     if (ctx->md == NULL || !EVP_MD_is_a(ctx->md, name)) {
-        ctx->inited = 0;
         ctx->md = EVP_MD_fetch(ctx->libctx, name, ctx->propq);
         if (ctx->md == NULL)
             return 0;
     }
-    if (ctx->inited == 0) {
-        params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN,
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN,
                                                 &ctx->xoflen);
-        params[1] = OSSL_PARAM_construct_end();
-        return EVP_DigestInit_ex2(ctx->mdctx, ctx->md, params);
-    }
-    return 0;
+    params[1] = OSSL_PARAM_construct_end();
+    return EVP_DigestInit_ex2(ctx->mdctx, ctx->md, params);
 }
 
 static void *cshake_newctx(void *provctx, size_t bitlen)
