@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -303,9 +303,9 @@ const OSSL_DISPATCH ossl_kdf_srtpkdf_functions[] = {
  *
  * master_salt: a random non-salt value.
  * kdr: the key derivation rate. kdr is a number from the set
- *      factor of 2.
+ *   factor of 2.
  * index: a 48-bit value in RTP or a 32-bit value in RTCP.
- *        See Sections 3.2.1 and 4.3.2 of RFC 3711 for details.
+ *   See Sections 3.2.1 and 4.3.2 of RFC 3711 for details.
  * A function, DIV, is defined as followed:
  *   a and x are non-negative integers.
  *   a DIV x =  a | x (a DIV x) is represented as a bit string whose
@@ -319,7 +319,7 @@ const OSSL_DISPATCH ossl_kdf_srtpkdf_functions[] = {
  * Input:
  *   cipher - AES cipher
  *   mkey - pointer to master key
- *   msalt- pointer to master salt
+ *   msalt - pointer to master salt
  *   idx - pointer to index
  *   kdr - key derivation rate
  *   kdr_n - power of kdr (2**kdr_n = kdr)
@@ -338,7 +338,7 @@ int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
     EVP_CIPHER_CTX *ctx = NULL;
     int outl, i, index_len = 0, o_len = 0, salt_len = 0;
     unsigned char buf[EVP_MAX_KEY_LENGTH];
-    char iv[KDF_SRTP_IV_LEN];
+    unsigned char iv[KDF_SRTP_IV_LEN];
     unsigned char local_salt[KDF_SRTP_MAX_SALT_LEN];
     unsigned char master_salt[KDF_SRTP_MAX_SALT_LEN];
     BN_CTX *bn_ctx = NULL;
@@ -411,7 +411,7 @@ int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
 
     /* if index is NULL or kdr=0, then index and kdr are not in play */
     if (index && (kdr > 0)) {
-        if (!BN_bin2bn((unsigned char *)index, index_len, bn_index))
+        if (!BN_bin2bn(index, index_len, bn_index))
             goto err;
 
         ret = BN_rshift(bn_salt, bn_index, kdr_n);
@@ -419,7 +419,7 @@ int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
             ERR_raise(ERR_LIB_PROV, PROV_R_BN_FAILURE);
             goto err;
         }
-        iv_len = BN_bn2bin(bn_salt, (unsigned char *)iv);
+        iv_len = BN_bn2bin(bn_salt, iv);
         for (i = 1; i <= iv_len; i++)
             master_salt[salt_len - i] ^= iv[iv_len - i];
     }
@@ -432,7 +432,6 @@ int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
     /* perform the AES encryption on the master key and derived salt */
     memset(buf, 0, o_len);
     if (!(ctx = EVP_CIPHER_CTX_new())
-        || (EVP_CIPHER_CTX_reset(ctx) <= 0)
         || (EVP_EncryptInit_ex(ctx, cipher, NULL, mkey, local_salt) <= 0)
         || (EVP_CIPHER_CTX_set_padding(ctx, 0) <= 0)
         || (EVP_EncryptUpdate(ctx, (unsigned char *)obuffer, &outl, buf, o_len) <= 0)
