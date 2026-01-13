@@ -610,8 +610,6 @@ int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
         len = strlen(dnsname);
     if (len == 0)
         return 1;
-    if (dnsname == NULL && len == 0)
-        return 1;
     return X509_VERIFY_PARAM_add1_host(param, dnsname, len);
 }
 
