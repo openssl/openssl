@@ -64,8 +64,11 @@ SSL_set1_ipaddr() clears the list of addresses to match certificate IP address S
 If <ip_asc> is not NULL, it is parsed as an
 IPv4 or IPv6 address and added to the list as its first entry.
 
-SSL_add1_dnsname() adds I<dnsname> to the list of DNS name reference identifiers, if it has the
-correct structure for a DNS name.
+SSL_add1_dnsname() adds I<dnsname> to the list of DNS name reference
+identifiers, if it has the correct structure for a DNS name. This
+function is required for DANE TLSA in the presence of service name
+indirection via CNAME, MX or SRV records as specified in RFCs 7671,
+7672, and 7673.
 
 SSL_add1_email adds I<email> to the list of email address reference identifiers if it has the
 correct structure for an email address.
@@ -125,9 +128,7 @@ SSL_set1_host() or SSL_add1_host() are retained.  Adding an IP address
 is allowed only if no IP address has been set before.  No change is
 made if I<host> is NULL or empty.  The peer is considered verified
 when any of the added hostnames, if present, match, and the provided
-IP address, if present, matches.  This function is required for DANE
-TLSA in the presence of service name indirection via CNAME, MX or SRV
-records as specified in RFCs 7671, 7672, and 7673.
+IP address, if present, matches.
 
 =head1 RETURN VALUES
 

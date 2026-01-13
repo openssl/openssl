@@ -66,7 +66,7 @@ L<SSL_connect(3)> if (and only if) you want to enable DANE for that connection.
 The B<basedomain> argument specifies the RFC7671 TLSA base domain,
 which will be the primary peer reference identifier for certificate
 name checks.
-Additional server names can be specified via L<SSL_add1_host(3)>.
+Additional server names can be specified via L<SSL_add1_dnsname(3)>.
 The B<basedomain> is used as the default SNI hint if none has yet been
 specified via L<SSL_set_tlsext_host_name(3)>.
 
@@ -216,7 +216,7 @@ the lifetime of the SSL connection.
   */
  SSL_dane_set_flags(ssl, DANE_FLAG_NO_DANE_EE_NAMECHECKS);
 
- if (!SSL_add1_host(ssl, nexthop_domain))
+ if (!SSL_add1_dnsname(ssl, nexthop_domain))
      /* error */
  SSL_set_hostflags(ssl, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
 
@@ -353,7 +353,7 @@ L<SSL_set_verify(3)> with B<mode> equal to B<SSL_VERIFY_NONE>.
 
 L<ssl(7)>,
 L<SSL_new(3)>,
-L<SSL_add1_host(3)>,
+L<SSL_add1_dnsname(3)>,
 L<SSL_set_hostflags(3)>,
 L<SSL_set_tlsext_host_name(3)>,
 L<SSL_set_verify(3)>,
