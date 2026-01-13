@@ -43,7 +43,7 @@ a match for validation purposes if any of the following is true:
   certificate.  If verification flags allow it, these will also
   attempt to match against email addresses in the subject.
 
-* Any ip address in the ip address list matches any SAN ipaddr in the certificate.
+* Any address in the IP address list matches any IP address SAN in the certificate.
 
 
 The set1 family of functions clears the list, and sets the first value
@@ -51,22 +51,24 @@ to a the provided parameter if the provided parameter is not NULL.
 
 The add1 family of functions adds a single entry to the list.
 
-SSL_set1_dnsname clears the list of dnsnames to match certificate
-SAN dnsnames. if I<dnsname> is not NULL, it will be checked for
+SSL_set1_dnsname() clears the list of dnsnames to match certificate
+SAN dnsnames.
+If I<dnsname> is not NULL, it will be checked for
 validity and added to the list of DNS name reference identifiers as its first entry.
 
-SSL_set1_email clears the list of emails to match certificate SAN
-emails. if I<email> is not NULL, it will be checked for validity and
-added to the list of dnsnames as the first entry.
+SSL_set1_email() clears the list of emails to match certificate SAN
+emails.
+If I<email> is not NULL, it will be checked for validity and
+added to the list of email address reference identifiers as its first entry.
 
-SSL_set1_ipaddr clears the list of ip addresses to match
-certificate SAN ipaddrs. if <ip_asc> is not NULL, it is parsed as an
-ipv4 or ipv6 address and added to the list as the first entry.
+SSL_set1_ipaddr() clears the list of addresses to match certificate IP address SANs.
+If <ip_asc> is not NULL, it is parsed as an
+IPv4 or IPv6 address and added to the list as its first entry.
 
-SSL_add1_dnsname adds I<dnsname> to the list of dnsnames if it has the
-correct structure for a dns name.
+SSL_add1_dnsname() adds I<dnsname> to the list of DNS name reference identifiers, if it has the
+correct structure for a DNS name.
 
-SSL_add1_email adds I<email> to the list of emails if it has the
+SSL_add1_email adds I<email> to the list of email address reference identifiers if it has the
 correct structure for an email address.
 
 SSL_add1_ipaddr() adds I<ip> to the list of IP addresses, if it parses as an IP address.
