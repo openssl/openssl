@@ -35,7 +35,8 @@ presented in an SSL connection.  A peer certificate will be considered
 a match for validation purposes if any of the following is true:
 
 * Any name in the dnsname list matches any SAN dnsname in the
-  certificate If verification flags allow it, these will also attempt
+  certificate.
+  If verification flags allow it, these will also attempt
   to match against the CN in the subject.
 
 * Any email address in the email list matches any SAN email in the
