@@ -151,6 +151,7 @@ int ossl_crypto_free_ex_index_ex(OSSL_LIB_CTX *ctx, int class_index, int idx);
 
 const void *ossl_bsearch(const void *key, const void *base, int num,
     int size, int (*cmp)(const void *, const void *),
+    int (*cmp_thunk)(int (*real_cmp_fn)(const void *, const void *), const void *, const void *),
     int flags);
 
 char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
