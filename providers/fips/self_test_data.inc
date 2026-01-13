@@ -512,6 +512,7 @@ static const ST_KAT_PARAM hkdf_params[] = {
     ST_KAT_PARAM_END()
 };
 
+#ifndef OPENSSL_NO_SNMPKDF
 static const char snmpkdf_digest[] = "SHA1";
 static const unsigned char snmpkdf_eid[] = {
     0x80, 0x00, 0x02, 0xb8, 0x05, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde,
@@ -530,7 +531,9 @@ static const ST_KAT_PARAM snmpkdf_params[] = {
     ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_PASSWORD, snmpkdf_password),
     ST_KAT_PARAM_END()
 };
+#endif
 
+#ifndef OPENSSL_NO_SSKDF
 static const char sskdf_digest[] = "SHA256";
 static const unsigned char sskdf_secret[] = {
     0x6d, 0xbd, 0xc2, 0x3f, 0x04, 0x54, 0x88, 0xe4,
@@ -559,7 +562,9 @@ static const ST_KAT_PARAM sskdf_params[] = {
     ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_INFO, sskdf_otherinfo),
     ST_KAT_PARAM_END()
 };
+#endif /* OPENSSL_NO_SSKDF */
 
+#ifndef OPENSSL_NO_X942KDF
 static const char x942kdf_digest[] = "SHA256";
 static const char x942kdf_cekalg[] = "AES-128-WRAP";
 static const unsigned char x942kdf_secret[] = {
@@ -577,7 +582,9 @@ static const ST_KAT_PARAM x942kdf_params[] = {
     ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_KEY, x942kdf_secret),
     ST_KAT_PARAM_END()
 };
+#endif /* OPENSSL_NO_X942KDF */
 
+#ifndef OPENSSL_NO_X963KDF
 static const char x963kdf_digest[] = "SHA256";
 static const unsigned char x963kdf_otherinfo[] = {
     0x75, 0xee, 0xf8, 0x1a, 0xa3, 0x04, 0x1e, 0x33,
@@ -600,6 +607,7 @@ static const ST_KAT_PARAM x963kdf_params[] = {
     ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_INFO, x963kdf_otherinfo),
     ST_KAT_PARAM_END()
 };
+#endif /* OPENSSL_NO_X963KDF */
 
 static const char pbkdf2_digest[] = "SHA256";
 /*
@@ -685,6 +693,7 @@ static const ST_KAT_PARAM tls12prf_params[] = {
     ST_KAT_PARAM_END()
 };
 
+#ifndef OPENSSL_NO_KBKDF
 static const char kbkdf_digest[] = "SHA256";
 static const char kbkdf_mac[] = "HMAC";
 static const unsigned char kbkdf_salt[] = { 'p', 'r', 'f' };
@@ -734,6 +743,7 @@ static const ST_KAT_PARAM kbkdf_kmac_params[] = {
     ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_INFO, kbkdf_kmac_context),
     ST_KAT_PARAM_END()
 };
+#endif /* OPENSSL_NO_KBKDF */
 
 static const char tls13_kdf_digest[] = "SHA256";
 static int tls13_kdf_extract_mode = EVP_KDF_HKDF_MODE_EXTRACT_ONLY;
@@ -822,6 +832,7 @@ static const ST_KAT_KDF st_kat_kdf_tests[] =
         pbkdf2_params,
         ITM(pbkdf2_expected)
     },
+#ifndef OPENSSL_NO_KBKDF
     {
         OSSL_SELF_TEST_DESC_KDF_KBKDF,
         OSSL_KDF_NAME_KBKDF,
@@ -836,6 +847,7 @@ static const ST_KAT_KDF st_kat_kdf_tests[] =
         kbkdf_kmac_params,
         ITM(kbkdf_kmac_expected)
     },
+#endif
     {
         OSSL_SELF_TEST_DESC_KDF_HKDF,
         OSSL_KDF_NAME_HKDF,
@@ -843,6 +855,7 @@ static const ST_KAT_KDF st_kat_kdf_tests[] =
         hkdf_params,
         ITM(hkdf_expected)
     },
+#ifndef OPENSSL_NO_SNMPKDF
     {
         OSSL_SELF_TEST_DESC_KDF_SNMPKDF,
         OSSL_KDF_NAME_SNMPKDF,
@@ -850,6 +863,8 @@ static const ST_KAT_KDF st_kat_kdf_tests[] =
         snmpkdf_params,
         ITM(snmpkdf_expected)
     },
+#endif
+#ifndef OPENSSL_NO_SSKDF
     {
         OSSL_SELF_TEST_DESC_KDF_SSKDF,
         OSSL_KDF_NAME_SSKDF,
@@ -857,6 +872,8 @@ static const ST_KAT_KDF st_kat_kdf_tests[] =
         sskdf_params,
         ITM(sskdf_expected)
     },
+#endif
+#ifndef OPENSSL_NO_X963KDF
     {
         OSSL_SELF_TEST_DESC_KDF_X963KDF,
         OSSL_KDF_NAME_X963KDF,
@@ -864,6 +881,8 @@ static const ST_KAT_KDF st_kat_kdf_tests[] =
         x963kdf_params,
         ITM(x963kdf_expected)
     },
+#endif
+#ifndef OPENSSL_NO_X942KDF
     {
         OSSL_SELF_TEST_DESC_KDF_X942KDF,
         OSSL_KDF_NAME_X942KDF_ASN1,
@@ -871,6 +890,7 @@ static const ST_KAT_KDF st_kat_kdf_tests[] =
         x942kdf_params,
         ITM(x942kdf_expected)
     },
+#endif
 };
 
 /*-
@@ -1627,6 +1647,7 @@ static const unsigned char ecdsa_prime_expected_sig[] = {
     0x45, 0xc3, 0x6f, 0x9e, 0x2e, 0xc1, 0x44, 0x9f,
     0xfd, 0x79, 0xdb, 0x90, 0x3e, 0xb9, 0xb2
 };
+#ifndef OPENSSL_NO_HMAC_DRBG_KDF
 static const unsigned char ecdsa_prime_expected_detsig[] = {
     0x30, 0x3c, 0x02, 0x1c, 0x6a, 0x6d, 0x2c, 0x88,
     0x2b, 0xe5, 0x6b, 0xe6, 0xb1, 0x28, 0xe7, 0xa8,
@@ -1637,6 +1658,7 @@ static const unsigned char ecdsa_prime_expected_detsig[] = {
     0xf9, 0x16, 0xe6, 0x06, 0xa5, 0xf0, 0x94, 0x2f,
     0x57, 0xf1, 0x7e, 0xf2, 0x16, 0x76
 };
+#endif
 static const ST_KAT_PARAM ecdsa_prime_key[] = {
     ST_KAT_PARAM_UTF8STRING(OSSL_PKEY_PARAM_GROUP_NAME, ecd_prime_curve_name),
     ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_PUB_KEY, ecd_prime_pub),
@@ -3225,6 +3247,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
         ITM(sig_kat_persstr),
         ITM(ecdsa_prime_expected_sig)
     },
+# ifndef OPENSSL_NO_HMAC_DRBG_KDF
     {
         OSSL_SELF_TEST_DESC_SIGN_DetECDSA,
         "EC", "ECDSA-SHA256", 0, 0,
@@ -3234,6 +3257,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
         ITM(ecdsa_prime_expected_detsig),
         ecdsa_sig_params
     },
+# endif
 # ifndef OPENSSL_NO_EC2M
     {
         OSSL_SELF_TEST_DESC_SIGN_ECDSA,
