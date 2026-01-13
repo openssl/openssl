@@ -16,16 +16,16 @@
 /*
  * The _WIN32_WINNT is described here:
  * https://learn.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt?view=msvc-170
- * In nutshell it defines a windows version the resulting application is guarantied to run
- * on. If left undefined the Windows SDK provides the highest (the most
- * recent). OpenSSL chooses version 0x501 which matches Windows XP meaning the
- * compiled library will work on Windows XP.
+ * In nutshell the macro defines Windows version the resulting application is
+ * guarantied to run on. If left undefined the Windows SDK provides the highest
+ * (the most recent) definition. OpenSSL chooses version 0x501 which matches
+ * Windows XP meaning the compiled library will work on Windows XP and later.
  *
  * User may override the version specified here at build time using command as
  * follows:
  *     perl ./Configure "-D_WIN32_WINNT=0x...." ...
  *
- * the list of recognized constants (as found in the link above) is as follows:
+ * The list of recognized constants (as found in the link above) is as follows:
  * 	0x0400 // Windows NT 4.0
  *	0x0500 // Windows 2000
  *	0x0501 // Windows XP
