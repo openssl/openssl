@@ -33,8 +33,8 @@ OSSL_provider_init_fn ossl_legacy_provider_init;
 /* Extended test macros to allow passing file & line number */
 #define TEST_FL_ptr(a) test_ptr(file, line, #a, a)
 #define TEST_FL_mem_eq(a, m, b, n) test_mem_eq(file, line, #a, #b, a, m, b, n)
-#define TEST_FL_strn_eq(a, b, n) test_strn_eq(file, line, #a, #b, a, n, b, n)
-#define TEST_FL_strn2_eq(a, m, b, n) test_strn_eq(file, line, #a, #b, a, m, b, n)
+#define TEST_FL_strn_eq(a, b, n) test_strn_eq(file, line, #a, #b, a, b, n)
+#define TEST_FL_size_t_eq(a, b) test_size_t_eq(file, line, #a, #b, a, b)
 #define TEST_FL_int_eq(a, b) test_int_eq(file, line, #a, #b, a, b)
 #define TEST_FL_int_ge(a, b) test_int_ge(file, line, #a, #b, a, b)
 #define TEST_FL_int_gt(a, b) test_int_gt(file, line, #a, #b, a, b)
@@ -507,7 +507,8 @@ static int test_text(const char *file, const int line,
     const void *data1, size_t data1_len,
     const void *data2, size_t data2_len)
 {
-    return TEST_FL_strn2_eq(data1, data1_len, data2, data2_len);
+    return TEST_FL_size_t_eq(data1_len, data2_len)
+        && TEST_FL_strn_eq(data1, data2, data1_len);
 }
 
 static int test_mem(const char *file, const int line,
