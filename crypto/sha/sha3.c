@@ -19,9 +19,8 @@
 #include "crypto/s390x_arch.h"
 #if defined(KECCAK1600_ASM)
 #define S390_SHA3 1
-#define S390_SHA3_CAPABLE(name)                        \
-    ((OPENSSL_s390xcap_P.kimd[0] & S390X_CAPBIT(name)) \
-    && (OPENSSL_s390xcap_P.klmd[0] & S390X_CAPBIT(name))
+#define S390_SHA3_CAPABLE(name) \
+    ((OPENSSL_s390xcap_P.kimd[0] & S390X_CAPBIT(name)) && (OPENSSL_s390xcap_P.klmd[0] & S390X_CAPBIT(name)))
 #endif
 #endif
 
