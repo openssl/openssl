@@ -346,15 +346,22 @@ static ossl_ssize_t hexdecode(const char **inptr, void *result)
 {
     unsigned char **out = (unsigned char **)result;
     const char *in = *inptr;
-    unsigned char *ret = app_malloc(strlen(in) / 2, "hexdecode");
-    unsigned char *cp = ret;
+    size_t retlen = strlen(in) / 2;
+    unsigned char *ret = NULL, *cp;
     uint8_t byte;
     int nibble = 0;
 
-    if (ret == NULL)
+    if (retlen > 0) {
+        if ((ret = app_malloc(retlen, "hexdecode")) == NULL)
+            return -1;
+    } else if (*in == '\0') {
+        *out = NULL;
+        return 0;
+    } else {
         return -1;
+    }
 
-    for (byte = 0; *in; ++in) {
+    for (cp = ret, byte = 0; *in; ++in) {
         int x;
 
         if (isspace(_UC(*in)))
@@ -425,9 +432,7 @@ static int tlsa_import_rr(SSL *con, const char *rrdata)
         { &selector, "selector", checked_uint8 },
         { &mtype, "mtype", checked_uint8 },
         { &data, "data", hexdecode },
-        {
-            NULL,
-        }
+        { NULL, NULL, NULL },
     };
     struct tlsa_field *f;
     int ret;

@@ -3435,7 +3435,7 @@ static void print_connection_info(SSL *con)
     if ((SSL_get_options(con) & SSL_OP_NO_RENEGOTIATION))
         BIO_printf(bio_s_out, "Renegotiation is DISABLED\n");
 
-    if (keymatexportlabel != NULL) {
+    if (keymatexportlabel != NULL && keymatexportlen > 0) {
         BIO_printf(bio_s_out, "Keying material exporter:\n");
         BIO_printf(bio_s_out, "    Label: '%s'\n", keymatexportlabel);
         BIO_printf(bio_s_out, "    Length: %i bytes\n", keymatexportlen);
@@ -4134,7 +4134,7 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
 
     SSL_SESSION_get_id(session, &sess->idlen);
     sess->derlen = i2d_SSL_SESSION(session, NULL);
-    if (sess->derlen < 0) {
+    if (sess->derlen <= 0) {
         BIO_printf(bio_err, "Error encoding session\n");
         OPENSSL_free(sess);
         return 0;
