@@ -454,6 +454,72 @@ static int test_multiname_selfsigned()
             return 0;
     }
 
+    /*
+     * Test that individual categories work together, and a non-match will still fail validation
+     */
+
+    /* A dnsname, email and ip that are all valid in the cert should succeed */
+    if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "www.muppetry.ca", 0)))
+        return 0;
+    if (!TEST_true(X509_VERIFY_PARAM_set1_ip_asc(vpm, "2001:503:ba3e::2:30")))
+        return 0;
+    if (!TEST_true(X509_VERIFY_PARAM_set1_email(vpm, "waldorf@mupptery.ca", 0)))
+        return 0;
+    if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+        return 0;
+    if (!TEST_true(X509_verify_cert(ctx)))
+        fails++;
+    X509_STORE_CTX_cleanup(ctx);
+
+    /* Setting an non-matching email should fail validation even with valid dnsname and ip */
+    if (!TEST_true(X509_VERIFY_PARAM_set1_email(vpm, "bunsen@mupptery.ca", 0)))
+        return 0;
+    if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+        return 0;
+    if (!TEST_false(X509_verify_cert(ctx)))
+        fails++;
+    X509_STORE_CTX_cleanup(ctx);
+    /* reset */
+    if (!TEST_true(X509_VERIFY_PARAM_set1_email(vpm, "waldorf@mupptery.ca", 0)))
+        return 0;
+
+    /* Setting an non-matching ip should fail validation even with valid dnsname and email */
+    if (!TEST_true(X509_VERIFY_PARAM_set1_ip_asc(vpm, "199.185.178.80")))
+        return 0;
+    if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+        return 0;
+    if (!TEST_false(X509_verify_cert(ctx)))
+        fails++;
+    X509_STORE_CTX_cleanup(ctx);
+    /* reset */
+    if (!TEST_true(X509_VERIFY_PARAM_set1_ip_asc(vpm, "2001:503:ba3e::2:30")))
+        return 0;
+
+    /* Setting an non-matching dnsname should fail validation even with valid ip and email */
+    if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "www.libressl.org", 0)))
+        return 0;
+    if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+        return 0;
+    if (!TEST_false(X509_verify_cert(ctx)))
+        fails++;
+    X509_STORE_CTX_cleanup(ctx);
+    /* reset */
+    if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "www.muppetry.ca", 0)))
+        return 0;
+
+    /* Adding non-matching values to each category with a match will still succeed */
+    if (!TEST_true(X509_VERIFY_PARAM_add1_host(vpm, "www.libressl.org", 0)))
+        return 0;
+    if (!TEST_true(X509_VERIFY_PARAM_add1_ip_asc(vpm, "199.185.178.80")))
+        return 0;
+    if (!TEST_true(X509_VERIFY_PARAM_add1_email(vpm, "beck@openbsd.org", 0)))
+        return 0;
+    if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+        return 0;
+    if (!TEST_true(X509_verify_cert(ctx)))
+        fails++;
+    X509_STORE_CTX_cleanup(ctx);
+
     X509_STORE_CTX_free(ctx);
     X509_free(cert);
     return fails == 0;

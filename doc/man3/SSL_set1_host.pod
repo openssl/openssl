@@ -32,19 +32,18 @@ SSL server verification parameters
 These functions maintain lists of expected matches for peer
 certificate subject alternate name (SAN) values is peer certificates
 presented in an SSL connection.  A peer certificate will be considered
-a match for validation purposes if any of the following is true:
+a match for validation purposes if all of the following is true:
 
-* Any name in the dnsname list matches any SAN dnsname in the
-  certificate.
-  If verification flags allow it, these will also attempt
-  to match against the CN in the subject.
+* Any name in the dnsname list, if not empty, matches any SAN dnsname
+  in the certificate.  If verification flags allow it, these will also
+  attempt to match against the CN in the subject.
 
-* Any email address in the email list matches any SAN email in the
-  certificate.  If verification flags allow it, these will also
-  attempt to match against email addresses in the subject.
+* Any email address in the email list, if not empty, matches any SAN
+  email in the certificate.  If verification flags allow it, these
+  will also attempt to match against email addresses in the subject.
 
-* Any address in the IP address list matches any IP address SAN in the certificate.
-
+* Any address in the IP address list, if not empty, matches any IP
+  address SAN in the certificate.
 
 The set1 family of functions clears the list, and sets the first value
 to a the provided parameter if the provided parameter is not NULL.
@@ -121,14 +120,14 @@ the primary reference identifier of the peer, and should not call
 SSL_set1_host().
 
 SSL_add1_host() adds I<host> as an additional reference identifier
-that can match the peer's certificate.  Any previous hostnames
-set via SSL_set1_host() or SSL_add1_host() are retained.
-Adding an IP address is allowed only if no IP address has been set before.
-No change is made if I<host> is NULL or empty.
-When an IP address and/or multiple hostnames are configured,
-the peer is considered verified when any of these matches.
-This function is required for DANE TLSA in the presence of service name indirection
-via CNAME, MX or SRV records as specified in RFCs 7671, 7672, and 7673.
+that can match the peer's certificate.  Any previous hostnames set via
+SSL_set1_host() or SSL_add1_host() are retained.  Adding an IP address
+is allowed only if no IP address has been set before.  No change is
+made if I<host> is NULL or empty.  The peer is considered verified
+when any of the added hostnames, if present, match, and the provided
+IP address, if present, matches.  This function is required for DANE
+TLSA in the presence of service name indirection via CNAME, MX or SRV
+records as specified in RFCs 7671, 7672, and 7673.
 
 =head1 RETURN VALUES
 
