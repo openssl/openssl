@@ -181,6 +181,8 @@ my @gcc_devteam_warn = qw(
     -Werror
     -Wmissing-prototypes
     -Wstrict-prototypes
+    -Wdisabled-optimization
+    -Wpointer-arith
 );
 
 # These are used in addition to $gcc_devteam_warn when the compiler is clang.
