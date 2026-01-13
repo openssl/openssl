@@ -147,7 +147,7 @@ static int test_trace_channel(void)
 
     ret = put_trace_output();
     len = BIO_get_mem_data(bio, &p_buf);
-    if (!TEST_strn2_eq(p_buf, len, expected, expected_len))
+    if (!TEST_size_t_eq(len, expected_len) || !TEST_strn_eq(p_buf, expected, len))
         ret = 0;
     ret = TEST_int_eq(OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_HTTP, NULL), 1)
         && ret;
