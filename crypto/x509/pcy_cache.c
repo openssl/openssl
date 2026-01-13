@@ -43,7 +43,8 @@ static int policy_cache_create(X509 *x,
         data = ossl_policy_data_new(policy, NULL, crit);
         if (data == NULL) {
             ERR_raise(ERR_LIB_X509V3, ERR_R_X509_LIB);
-            goto just_cleanup;
+            ret = -1;
+            goto bad_policy;
         }
         /*
          * Duplicate policy OIDs are illegal: reject if matches found.

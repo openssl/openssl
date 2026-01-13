@@ -71,7 +71,7 @@ IF[{- !$disabled{tests} -}]
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
           x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
-          engine_stubs_test
+          engine_stubs_test bad_policy_test
 
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
@@ -1319,6 +1319,10 @@ ENDIF
   SOURCE[bio_pw_callback_test]=bio_pw_callback_test.c
   INCLUDE[bio_pw_callback_test]=../include ../apps/include
   DEPEND[bio_pw_callback_test]=../libcrypto libtestutil.a
+
+  SOURCE[bad_policy_test]=bad_policy_test.c
+  INCLUDE[bad_policy_test]=../include ../apps/include
+  DEPEND[bad_policy_test]=../libcrypto libtestutil.a
 
   SOURCE[engine_stubs_test]=engine_stubs_test.c
   INCLUDE[engine_stubs_test]=../include ../apps/include
