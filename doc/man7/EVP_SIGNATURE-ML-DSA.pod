@@ -101,7 +101,7 @@ passed in I<mdname> must be NULL.
 
 To sign a message using an ML-DSA EVP_PKEY structure:
 
-    void do_sign(EVP_PKEY *key, unsigned char *msg, size_t msg_len)
+    void do_sign(EVP_PKEY *key, const unsigned char *msg, size_t msg_len)
     {
         size_t sig_len;
         unsigned char *sig = NULL;
@@ -125,19 +125,17 @@ To sign a message using an ML-DSA EVP_PKEY structure:
 
 To sign a message using an ML-DSA EVP_PKEY structure and an external mu:
 
-    void do_sign(EVP_PKEY *key, unsigned char mu[64])
+    void do_sign(EVP_PKEY *key, const unsigned char mu[64])
     {
         int use_mu_instead_of_msg = 1;
         size_t sig_len;
         unsigned char *sig = NULL;
-        OSSL_PARAM params[3];
+        OSSL_PARAM params[2];
         EVP_PKEY_CTX *sctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
         EVP_SIGNATURE *sig_alg = EVP_SIGNATURE_fetch(NULL, "ML-DSA-65", NULL);
 
         params[0] = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MU, &use_mu_instead_of_msg);
-        /* The context string is an optional parameter */
-        params[1] = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_CONTEXT_STRING, (unsigned char *)"A context string", 16),
-        params[2] = OSSL_PARAM_construct_end();
+        params[1] = OSSL_PARAM_construct_end();
 
         EVP_PKEY_sign_message_init(sctx, sig_alg, params);
         /* Calculate the required size for the signature by passing a NULL buffer. */
