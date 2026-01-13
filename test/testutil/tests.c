@@ -357,8 +357,7 @@ int test_mem_ne(const char *file, int line, const char *st1, const char *st2,
     return 1;
 }
 
-#if defined(OPENSSL_NO_ERR) || defined(OPENSSL_NO_DEPRECATED_3_0) \
-    || defined(OPENSSL_SMALL_FOOTPRINT) || defined(iOPENSSL_NO_HTTP)
+#if defined(OPENSSL_NO_ERR) || defined(OPENSSL_NO_DEPRECATED_3_0) || defined(OPENSSL_SMALL_FOOTPRINT)
 
 #define TEST_ERR_EXPECT_DECLARE(ctx) return 1;
 #define TEST_ERR_EXPECT_EXTRACT(ctx)
