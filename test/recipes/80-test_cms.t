@@ -45,6 +45,7 @@ my $dsaallow = '1';
 my $no_pqc = 0;
 my $no_hkdf_fixed = 0;
 my $no_x963kdf = disabled("x963kdf");
+my $no_x942kdf = disabled("x942kdf");
 
 my $datadir = srctop_dir("test", "recipes", "80-test_cms_data");
 my $smdir    = srctop_dir("test", "smime-certs");
@@ -695,7 +696,7 @@ my @smime_cms_param_tests = (
     ]
 );
 
-if ($no_fips || $old_fips) {
+if (!$no_x942kdf && ($no_fips || $old_fips)) {
     # Only SHA1 supported in dh_cms_encrypt()
     push(@smime_cms_param_tests,
 
