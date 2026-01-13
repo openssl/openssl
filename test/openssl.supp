@@ -1,0 +1,90 @@
+#
+# OpenSSL Valgrind suppression file
+#
+
+{
+   reachable_globals_in_openssl
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   obj:*/libcrypto.so.*
+}
+{
+   reachable_globals_in_openssl2
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   obj:*/libssl.so.*
+}
+{
+   reachable_libc_dl_map_new_object
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:malloc
+   fun:strdup
+   fun:_dl_map_new_object
+   fun:dl_open_worker_begin
+#   obj:*lib*/libc.so.*
+}
+{
+   reachable_libc_dl_map_object
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:malloc
+   fun:_dl_new_object
+   fun:_dl_map_object_from_fd
+   fun:_dl_map_new_object
+#   obj:*lib*/libc.so.*
+}
+{
+   reachable_libc_dl_map_object2
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:calloc
+   fun:calloc
+   fun:_dl_new_object
+   fun:_dl_map_object_from_fd
+   fun:_dl_map_new_object
+#   obj:*lib*/libc.so.*
+}
+{
+   reachable_libc_dl_check_map_versions
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:calloc
+   fun:calloc
+   fun:_dl_check_map_versions
+   fun:dl_open_worker_begin
+#   obj:*lib*/libc.so.*
+}
+{
+   reachable_libc_dl_map_new_object2
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:malloc
+   fun:open_path
+   fun:_dl_map_new_object
+#   obj:*lib*/libc.so.*
+}
+{
+   reachable_libc_dl_map_new_object4
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:realloc
+   fun:realloc
+   fun:_dl_new_object
+   fun:_dl_map_object_from_fd
+   fun:_dl_map_new_object
+#   obj:*lib*/libc.so.*
+}
+{
+   reachable_libc_resize
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:malloc
+   fun:add_to_global_resize
+   fun:dl_open_worker_begin
+#   obj:*lib*/libc.so.*
+}
