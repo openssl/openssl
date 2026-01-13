@@ -14,6 +14,9 @@ setup("test_quic_radix");
 plan skip_all => "QUIC protocol is not supported by this OpenSSL build"
     if disabled('quic');
 
+plan skip_all => "Test does not run under Valgrind"
+    if $ENV{OSSL_USE_VALGRIND};
+
 plan tests => 1;
 
 ok(run(test(["quic_radix_test",

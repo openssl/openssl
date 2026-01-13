@@ -18,6 +18,9 @@ use Time::Local qw/timegm/;
 
 setup("test_ca");
 
+plan skip_all => "Test does not run under Valgrind"
+    if $ENV{OSSL_USE_VALGRIND};
+
 $ENV{OPENSSL} = cmdstr(app(["openssl"]), display => 1);
 
 my $cnf = srctop_file("test","ca-and-certs.cnf");

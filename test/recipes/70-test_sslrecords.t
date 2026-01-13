@@ -29,6 +29,9 @@ plan skip_all => "$test_name needs the module feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
+plan skip_all => "Test does not run under Valgrind"
+    if $ENV{OSSL_USE_VALGRIND};
+
 my $inject_recs_num = undef;
 my $content_type = undef;
 my $boundary_test_type = undef;
