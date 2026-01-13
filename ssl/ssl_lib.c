@@ -1151,33 +1151,21 @@ int SSL_add1_dnsname(SSL *s, const char *host)
 int SSL_set1_ipaddr(SSL *s, const char *ipaddr)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
-    ASN1_OCTET_STRING *ip;
 
     if (sc == NULL)
         return 0;
 
-    ip = a2i_IPADDRESS(ipaddr);
-    if (ip == NULL)
-        return 0;
-
-    return X509_VERIFY_PARAM_set1_ip(sc->param, ASN1_STRING_get0_data(ip),
-        ASN1_STRING_length(ip));
+    return X509_VERIFY_PARAM_set1_ip_asc(sc->param, ipaddr);
 }
 
 int SSL_add1_ipaddr(SSL *s, const char *ipaddr)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
-    ASN1_OCTET_STRING *ip;
 
     if (sc == NULL)
         return 0;
 
-    ip = a2i_IPADDRESS(ipaddr);
-    if (ip == NULL)
-        return 0;
-
-    return X509_VERIFY_PARAM_add1_ip(sc->param, ASN1_STRING_get0_data(ip),
-        ASN1_STRING_length(ip));
+    return X509_VERIFY_PARAM_add1_ip_asc(sc->param, ipaddr);
 }
 
 int SSL_set1_email(SSL *s, const char *email)
