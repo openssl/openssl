@@ -215,7 +215,7 @@ identifier that can match the peer's certificate.  Any previous names
 set via X509_VERIFY_PARAM_set1_email() or X509_VERIFY_PARAM_add1_email()
 are retained on success, no change is made on failure. It is a failure
  if email is NULL or the empty string. The peer is considered verified when
-any name matches.
+any one of the specified names matches a corresponding email address SAN in the certificate.
 
 X509_VERIFY_PARAM_get1_ip_asc() returns the expected IP address as a string.
 The caller is responsible for freeing it.
