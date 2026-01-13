@@ -69,7 +69,7 @@ correct structure for a dns name.
 SSL_add1_email adds I<email> to the list of emails if it has the
 correct structure for an email address.
 
-SSL_add1_ipaddr adds I<ip> to the list of ip addresses if it parses as an IP address.
+SSL_add1_ipaddr() adds I<ip> to the list of IP addresses, if it parses as an IP address.
 
 TLS clients are recommended to use SSL_set1_dnsname() for server
 hostname validation. as well as L<SSL_set_tlsext_host_name(3)> for
