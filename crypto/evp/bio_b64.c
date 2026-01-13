@@ -13,6 +13,7 @@
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include "internal/bio.h"
+#include "crypto/evp.h"
 
 static int b64_write(BIO *h, const char *buf, int num);
 static int b64_read(BIO *h, char *buf, int size);
@@ -334,6 +335,9 @@ static int b64_write(BIO *b, const char *in, int inl)
     int i;
     BIO_B64_CTX *ctx;
     BIO *next;
+    int encoded_length;
+    unsigned char *encoded;
+    int n_bytes_enc;
 
     ctx = (BIO_B64_CTX *)BIO_get_data(b);
     next = BIO_next(b);
@@ -348,6 +352,8 @@ static int b64_write(BIO *b, const char *in, int inl)
         ctx->buf_off = 0;
         ctx->tmp_len = 0;
         EVP_EncodeInit(ctx->base64);
+        if (BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL)
+            evp_encode_ctx_set_flags(ctx->base64, EVP_ENCODE_CTX_NO_NEWLINES);
     }
     if (!ossl_assert(ctx->buf_off < (int)sizeof(ctx->buf))) {
         ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
@@ -386,7 +392,7 @@ static int b64_write(BIO *b, const char *in, int inl)
     if (in == NULL || inl <= 0)
         return 0;
 
-    int encoded_length = EVP_ENCODE_LENGTH(inl);
+    encoded_length = EVP_ENCODE_LENGTH(inl);
 
     if (ctx->encoded_buf == NULL || (size_t)encoded_length > ctx->encoded_buf_len) {
         OPENSSL_free(ctx->encoded_buf);
@@ -398,13 +404,13 @@ static int b64_write(BIO *b, const char *in, int inl)
         ctx->encoded_buf_len = encoded_length;
     }
 
-    unsigned char *encoded = ctx->encoded_buf;
+    encoded = ctx->encoded_buf;
 
     if (encoded == NULL) {
         ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
         return -1;
     }
-    int n_bytes_enc = 0;
+    n_bytes_enc = 0;
     if (!EVP_EncodeUpdate(ctx->base64, encoded, &n_bytes_enc,
             (unsigned char *)in, inl)) {
         return -1;
@@ -470,15 +476,7 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
             if (i < 0)
                 return i;
         }
-        if (BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL) {
-            if (ctx->tmp_len != 0) {
-                ctx->buf_len = EVP_EncodeBlock(ctx->buf,
-                    ctx->tmp, ctx->tmp_len);
-                ctx->buf_off = 0;
-                ctx->tmp_len = 0;
-                goto again;
-            }
-        } else if (ctx->encode != B64_NONE
+        if (ctx->encode != B64_NONE
             && EVP_ENCODE_CTX_num(ctx->base64) != 0) {
             ctx->buf_off = 0;
             EVP_EncodeFinal(ctx->base64, ctx->buf, &(ctx->buf_len));

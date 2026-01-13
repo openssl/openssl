@@ -428,6 +428,44 @@ static int test_bio_base64_corner_case_bug(int idx)
     return generic_case(&t, 0);
 }
 
+#define MEM_CHK "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFB" \
+                "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFB" \
+                "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFB"
+
+static int test_bio_base64_no_nl(void)
+{
+    char msg[120];
+    BIO *b64 = NULL;
+    BIO *mem = NULL;
+    BIO *b64_chk;
+    BUF_MEM *bptr = NULL;
+    int ok = 0;
+
+    memset(msg, 'A', sizeof(msg));
+
+    b64 = BIO_new(BIO_f_base64());
+    if (!TEST_ptr(b64))
+        goto done;
+
+    mem = BIO_new(BIO_s_mem());
+    if (!TEST_ptr(mem))
+        goto done;
+
+    b64_chk = BIO_push(b64, mem);
+    if (!TEST_ptr_eq(b64, b64_chk))
+        goto done;
+
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+    BIO_write(b64, msg, sizeof(msg));
+    BIO_flush(b64);
+    BIO_get_mem_ptr(mem, &bptr);
+    ok = TEST_mem_eq(MEM_CHK, sizeof(MEM_CHK) - 1, bptr->data, bptr->length);
+
+done:
+    BIO_free_all(b64);
+    return ok;
+}
+
 int setup_tests(void)
 {
     int numidx;
@@ -483,5 +521,6 @@ int setup_tests(void)
     numidx = 2 * 2;
     ADD_ALL_TESTS(test_bio_base64_corner_case_bug, numidx);
 
+    ADD_TEST(test_bio_base64_no_nl);
     return 1;
 }
