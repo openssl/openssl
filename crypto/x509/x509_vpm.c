@@ -27,26 +27,14 @@
 
 static X509_BUFFER *buffer_from_bytes(const uint8_t *bytes, size_t length)
 {
-    X509_BUFFER *buf, *ret = NULL;
-    uint8_t *data = NULL;
+    X509_BUFFER *buf;
 
-    if ((buf = OPENSSL_zalloc(sizeof *buf)) == NULL)
-        goto err;
-
-    if ((data = OPENSSL_memdup(bytes, length)) == NULL)
-        goto err;
-
-    ret = buf;
-    buf = NULL;
-    ret->data = data;
-    ret->len = length;
-    data = NULL;
-
-err:
-    free(buf);
-    free(data);
-
-    return ret;
+    if ((buf = OPENSSL_zalloc(sizeof *buf)) != NULL
+        && (buf->data = OPENSSL_memdup(bytes, length)) != NULL)
+        buf->len = length;        
+    else
+        OPENSSL_free(buf);
+    return buf;
 }
 
 static X509_BUFFER *buffer_from_string(const uint8_t *bytes, size_t length)
