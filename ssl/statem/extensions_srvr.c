@@ -731,7 +731,7 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
         if (!check_in_list(s, group_id, srvrgroups, srvr_num_groups, 1, NULL)
             || !tls_group_allowed(s, group_id, SSL_SECOP_CURVE_SUPPORTED)
             || !tls_valid_group(s, group_id, TLS1_3_VERSION, TLS1_3_VERSION,
-                0, NULL)) {
+                NULL, NULL)) {
             /* Share not suitable or not supported, check next share */
             continue;
         }
@@ -807,7 +807,7 @@ static void check_overlap(SSL_CONNECTION *s,
             || !tls_group_allowed(s, candidate_groups[current_group],
                 SSL_SECOP_CURVE_SUPPORTED)
             || !tls_valid_group(s, candidate_groups[current_group], TLS1_3_VERSION,
-                TLS1_3_VERSION, 0, NULL))
+                TLS1_3_VERSION, NULL, NULL))
             /* No overlap or group not suitable, check next group */
             continue;
 
@@ -1692,7 +1692,7 @@ EXT_RETURN tls_construct_stoc_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
     for (i = 0; i < numgroups; i++) {
         uint16_t group = groups[i];
 
-        if (tls_valid_group(s, group, version, version, 0, NULL)
+        if (tls_valid_group(s, group, version, version, NULL, NULL)
             && tls_group_allowed(s, group, SSL_SECOP_CURVE_SUPPORTED)) {
             if (first) {
                 /*
