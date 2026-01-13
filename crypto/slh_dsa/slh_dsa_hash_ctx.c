@@ -34,7 +34,7 @@ SLH_DSA_HASH_CTX *ossl_slh_dsa_hash_ctx_new(const SLH_DSA_KEY *key)
 
     ret->key = key;
     if (key->pub != NULL
-            && !ossl_slh_dsa_hash_ctx_prehash_pk_seed(ret, SLH_DSA_PK_SEED(key), key->params->n))
+        && !ossl_slh_dsa_hash_ctx_prehash_pk_seed(ret, SLH_DSA_PK_SEED(key), key->params->n))
         goto err;
     if (!key->params->is_shake) {
         if (key->hmac != NULL) {
@@ -84,7 +84,7 @@ err:
  * So cache this value and reuse it as the starting point for many hash functions.
  */
 int ossl_slh_dsa_hash_ctx_prehash_pk_seed(SLH_DSA_HASH_CTX *ctx,
-                                          const uint8_t *pkseed, size_t n)
+    const uint8_t *pkseed, size_t n)
 {
     return ctx->key->hash_func->prehash_pk_seed(ctx, pkseed, n);
 }

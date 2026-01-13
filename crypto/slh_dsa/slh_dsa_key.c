@@ -380,7 +380,7 @@ int ossl_slh_dsa_generate_key(SLH_DSA_HASH_CTX *ctx, SLH_DSA_KEY *out,
     }
 
     if (!ossl_slh_dsa_hash_ctx_prehash_pk_seed(ctx, pub, pk_seed_len)
-            || !slh_dsa_compute_pk_root(ctx, out, 0))
+        || !slh_dsa_compute_pk_root(ctx, out, 0))
         goto err;
     out->pub = pub;
     out->has_priv = 1;

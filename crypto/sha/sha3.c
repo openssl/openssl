@@ -12,14 +12,14 @@
 #include "internal/common.h"
 
 #if defined(__aarch64__) && defined(KECCAK1600_ASM)
-# include "crypto/arm_arch.h"
+#include "crypto/arm_arch.h"
 #endif
 
 #if defined(__s390x__) && defined(OPENSSL_CPUID_OBJ)
 #include "crypto/s390x_arch.h"
 #if defined(KECCAK1600_ASM)
 #define S390_SHA3 1
-#define S390_SHA3_CAPABLE(name) \
+#define S390_SHA3_CAPABLE(name)                        \
     ((OPENSSL_s390xcap_P.kimd[0] & S390X_CAPBIT(name)) \
     && (OPENSSL_s390xcap_P.klmd[0] & S390X_CAPBIT(name))
 #endif
@@ -262,8 +262,7 @@ static size_t generic_sha3_absorb(void *vctx, const void *inp, size_t len)
 {
     KECCAK1600_CTX *ctx = vctx;
 
-    if (!(ctx->xof_state == XOF_STATE_INIT ||
-          ctx->xof_state == XOF_STATE_ABSORB))
+    if (!(ctx->xof_state == XOF_STATE_INIT || ctx->xof_state == XOF_STATE_ABSORB))
         return 0;
     ctx->xof_state = XOF_STATE_ABSORB;
     return SHA3_absorb(ctx->A, inp, len, ctx->block_size);
@@ -279,8 +278,7 @@ static int generic_sha3_squeeze(void *vctx, unsigned char *out, size_t outlen)
     return ossl_sha3_squeeze((KECCAK1600_CTX *)vctx, out, outlen);
 }
 
-static PROV_SHA3_METHOD shake_generic_meth =
-{
+static PROV_SHA3_METHOD shake_generic_meth = {
     generic_sha3_absorb,
     generic_sha3_final,
     generic_sha3_squeeze
@@ -297,8 +295,7 @@ static size_t s390x_sha3_absorb(void *vctx, const void *inp, size_t len)
     size_t rem = len % ctx->block_size;
     unsigned int fc;
 
-    if (!(ctx->xof_state == XOF_STATE_INIT ||
-          ctx->xof_state == XOF_STATE_ABSORB))
+    if (!(ctx->xof_state == XOF_STATE_INIT || ctx->xof_state == XOF_STATE_ABSORB))
         return 0;
     if (len - rem > 0) {
         fc = ctx->pad;
@@ -314,8 +311,7 @@ static int s390x_shake_final(void *vctx, unsigned char *out, size_t outlen)
     KECCAK1600_CTX *ctx = vctx;
     unsigned int fc;
 
-    if (!(ctx->xof_state == XOF_STATE_INIT ||
-          ctx->xof_state == XOF_STATE_ABSORB))
+    if (!(ctx->xof_state == XOF_STATE_INIT || ctx->xof_state == XOF_STATE_ABSORB))
         return 0;
     fc = ctx->pad | S390X_KLMD_DUFOP;
     fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KLMD_NIP : 0;
@@ -372,7 +368,7 @@ static PROV_SHA3_METHOD shake_s390x_meth = {
 #elif defined(__aarch64__) && defined(KECCAK1600_ASM)
 
 size_t SHA3_absorb_cext(uint64_t A[5][5], const unsigned char *inp, size_t len,
-                        size_t r);
+    size_t r);
 /*-
  * Hardware-assisted ARMv8.2 SHA3 extension version of the absorb()
  */
@@ -383,8 +379,7 @@ static size_t armsha3_sha3_absorb(void *vctx, const void *inp, size_t len)
     return SHA3_absorb_cext(ctx->A, inp, len, ctx->block_size);
 }
 
-static PROV_SHA3_METHOD shake_ARMSHA3_meth =
-{
+static PROV_SHA3_METHOD shake_ARMSHA3_meth = {
     armsha3_sha3_absorb,
     generic_sha3_final,
     generic_sha3_squeeze

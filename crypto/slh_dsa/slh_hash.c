@@ -25,12 +25,12 @@
 #define NIBBLE_MASK 15
 
 /* Most hash functions in SLH-DSA truncate the output */
-#define sha256_final(ctx, out, outlen)     \
-    (ctx)->md_len = (unsigned int)outlen;  \
+#define sha256_final(ctx, out, outlen)    \
+    (ctx)->md_len = (unsigned int)outlen; \
     SHA256_Final(out, ctx)
 
-#define sha512_final(ctx, out, outlen)     \
-    (ctx)->md_len = (unsigned int)outlen;  \
+#define sha512_final(ctx, out, outlen)    \
+    (ctx)->md_len = (unsigned int)outlen; \
     SHA512_Final(out, ctx)
 
 static OSSL_SLH_HASHFUNC_PRF slh_prf_sha256;
@@ -469,8 +469,7 @@ static int slh_hash_sha256_dup(SLH_DSA_HASH_CTX *dst, const SLH_DSA_HASH_CTX *sr
 const SLH_HASH_FUNC *ossl_slh_get_hash_fn(int is_shake, int security_category)
 {
     static const SLH_HASH_FUNC methods[] = {
-        {
-            slh_hash_shake_precache,
+        { slh_hash_shake_precache,
             slh_hash_shake_dup,
             slh_hmsg_shake,
             slh_prf_shake,
@@ -478,10 +477,8 @@ const SLH_HASH_FUNC *ossl_slh_get_hash_fn(int is_shake, int security_category)
             slh_f_shake,
             slh_h_shake,
             slh_f_shake,
-            slh_wots_pk_gen_shake
-        },
-        {
-            slh_hash_sha256_precache,
+            slh_wots_pk_gen_shake },
+        { slh_hash_sha256_precache,
             slh_hash_sha256_dup,
             slh_hmsg_sha256,
             slh_prf_sha256,
@@ -489,10 +486,8 @@ const SLH_HASH_FUNC *ossl_slh_get_hash_fn(int is_shake, int security_category)
             slh_f_sha256,
             slh_h_sha256,
             slh_t_sha256,
-            slh_wots_pk_gen_sha2
-        },
-        {
-            slh_hash_sha256_precache,
+            slh_wots_pk_gen_sha2 },
+        { slh_hash_sha256_precache,
             slh_hash_sha256_dup,
             slh_hmsg_sha512,
             slh_prf_sha256,
@@ -500,8 +495,7 @@ const SLH_HASH_FUNC *ossl_slh_get_hash_fn(int is_shake, int security_category)
             slh_f_sha256,
             slh_h_sha512,
             slh_t_sha512,
-            slh_wots_pk_gen_sha2
-        }
+            slh_wots_pk_gen_sha2 }
     };
     return &methods[is_shake ? 0 : (security_category == 1 ? 1 : 2)];
 }

@@ -233,7 +233,7 @@ int HASH_FINAL(unsigned char *md, HASH_CTX *c)
      * Pad the input by adding a 1 bit + K zero bits + input length (L)
      * as a 64 bit value. K must align the data to a chunk boundary.
      */
-    p[n] = 0x80;                /* there is always room for one */
+    p[n] = 0x80; /* there is always room for one */
     n++;
 
     if (n > (HASH_CBLOCK - 8)) {
