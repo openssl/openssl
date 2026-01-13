@@ -293,8 +293,8 @@ static int test_membio_str_eq(BIO *bio_provided, BIO *bio_legacy)
 
     return TEST_long_ge(len_legacy, 0)
         && TEST_long_ge(len_provided, 0)
-        && TEST_strn2_eq(str_provided, len_provided,
-            str_legacy, len_legacy);
+        && TEST_size_t_eq(len_provided, len_legacy)
+        && TEST_strn_eq(str_provided, str_legacy, len_provided);
 }
 
 static int test_protected_PEM(const char *keytype, int evp_type,
