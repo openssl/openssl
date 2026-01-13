@@ -53,7 +53,7 @@ The add1 family of functions adds a single entry to the list.
 
 SSL_set1_dnsname clears the list of dnsnames to match certificate
 SAN dnsnames. if I<dnsname> is not NULL, it will be checked for
-validity and added to the list of dnsnames as the first entry.
+validity and added to the list of DNS name reference identifiers as its first entry.
 
 SSL_set1_email clears the list of emails to match certificate SAN
 emails. if I<email> is not NULL, it will be checked for validity and
