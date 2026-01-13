@@ -31,7 +31,7 @@ static X509_BUFFER *buffer_from_bytes(const uint8_t *bytes, size_t length)
 
     if ((buf = OPENSSL_zalloc(sizeof *buf)) != NULL
         && (buf->data = OPENSSL_memdup(bytes, length)) != NULL)
-        buf->len = length;        
+        buf->len = length;
     else
         OPENSSL_free(buf);
     return buf;
@@ -197,38 +197,45 @@ static int validate_string_name(const char *name, size_t *name_len)
     return 1;
 }
 
-static int is_alnum(int c, int enforce)
+/*
+ * Check for allowed characters in a dns name label.
+ *
+ * If |enforce| is non-zero, the permitted alphanumeric characters
+ * plus the techincally incorrect but de-facto frequently permissively
+ * encountered '_' character are the only ones permitted.
+ *
+ * if |enforce| is zero, anything is allowed as long as it is not one
+ * of the structurally imporatant charactes of '.' or '-'.
+ */
+static int is_dns_alnum(int c, int enforce)
 {
     if (enforce)
-        return ossl_isalnum(c);
+        return ossl_isalnum(c) || c == '_';
     else
         return c != '.' && c != '-';
 }
 
 /*
- * XXX charset_enforce allows anything, but this is actually incorrect.
- * We appear to be supporting utf-8 names in the openssl application by
- * passing utf8 values and generating certifiates with utf-8 email addresses
- * in them.
+ * validate_hostname_part - used to validate untrusted input that is
+ * intended to be a dns name or the non-local part of an email address.
  *
- * This is incorrect, the encoded values in the certificates must be encoded
+ * Currently we use these "email" addresses to compare both to RFC822 names
+ * and to SMTPUTF8 mailbox names.
+ *
+ * For RFC822 names, The encoded values in the certificates must be encoded
  * as Punycode - not directly as utf-8, so by the time we are comparing
  * an email address in a vpm to an email address in a certificate we
  * should just be comparing the bytes, but they should be Punycode *NOT*
  * utf-8.
  *
- * I am currently setting charset_enforce to 0 when setting an email address
- * because we have tests that appear to include utf8 in a certificate and are
- * testing for it, which is wrong.
+ * In order to accomodate both SMTPUTF8 and RFC822 names, currently we
+ * do not enforce the content of the labels for email addresses.
+ * XXX perhaps this should be split apart?
  *
- * what *should* be happening is the Punycode should be in the cert, the "openssl"
- * application should be converting the utf-8 to Punycode, adding it to the vpm
- * as an email address, then the compare is done Punycode to Punycode.
+ * We do validate this for input to be compared to a SAN DNSname.
  *
- * I am correctly validating DNS names, which in the cert (and in DNS responses)
- * should always be Punycode.
  */
-static int validate_dns_name(const char *name, size_t len, int charset_enforce)
+static int validate_hostname_part(const char *name, size_t len, int charset_enforce)
 {
     size_t i, part_len;
     char c, prev;
@@ -244,15 +251,15 @@ static int validate_dns_name(const char *name, size_t len, int charset_enforce)
             /* Can not start a label with a . */
             if (part_len == 0)
                 return 0;
-            /* Can not end a label with a _ */
-            if (prev == '_')
+            /* Can not end a label with a - */
+            if (prev == '-')
                 return 0;
             part_len = 0;
         } else {
-            if (!is_alnum(c, charset_enforce) && c != '-')
+            if (!is_dns_alnum(c, charset_enforce) && c != '-')
                 return 0;
             if (c == '-') {
-                /* Can not start a label with a _ */
+                /* Can not start a label with a - */
                 if (part_len == 0)
                     return 0;
             }
@@ -275,8 +282,10 @@ static int validate_email_name(const char *name, size_t len)
     size_t dns_len, local_len;
     char *at, *dnsname;
 
-    /* 63 for local part, 1 for @, 255 for domain name, 1 for \0 */
-    if (len > 326)
+    /*
+     * 64 for local part, 1 for @, 255 for domain name, 1 for \0
+     */
+    if (len > 321)
         return 0;
 
     /* Reject it if there is no @ */
@@ -285,28 +294,24 @@ static int validate_email_name(const char *name, size_t len)
 
     /* Ensure the local part is not oversize */
     local_len = len - (at - name);
-    if (local_len > 63)
+    if (local_len > 64)
         return 0;
 
     /* We don't do any further validation of the local part */
 
-    /* What is after the @ must valid as a dns name */
+    /* What is after the @ must be valid as a dns name */
     dnsname = at + 1;
     dns_len = len - local_len - 1;
 
     /*
      * Do not enforce the character set on the other part of
-     * an email address for the moment. This is incorrect, but
-     * the openssl app appears to have tests for encoding invalid
-     * certificates with utf8 values directly in the certificate and
-     * checking values which are utf8 directly against that certificate.
-     *
-     * This is incorrect, as the certificate should have the utf8 values
-     * encoded as Punycode, and the application should itself turn the
-     * utf8 values into Punycode before setting them in a VPM. But for
-     * the moment we keep things the same.
+     * an email address for the moment. While this would be correct
+     * for an RFC822name, for an SMTPUtf8Mailbox name it is not.
+     * therefore until we possibly separate values intended for comparison
+     * against RFC822 names vs SMTPUTF8 names, we only check for
+     * structural validity, not character set.
      */
-    return validate_dns_name(dnsname, dns_len, /*charset_enforce=*/0);
+    return validate_hostname_part(dnsname, dns_len, /*charset_enforce=*/0);
 }
 
 X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
@@ -621,7 +626,7 @@ int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
         return 1;
     if (!validate_string_name(dnsname, &len))
         return 0;
-    if (!validate_dns_name(dnsname, len, /*charset_enforce=*/1))
+    if (!validate_hostname_part(dnsname, len, /*charset_enforce=*/1))
         return 0;
     return add_string_to_buffer_stack(&param->hosts, (const uint8_t *)dnsname, len);
 }
