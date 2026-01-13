@@ -866,7 +866,7 @@ mldsa_poly_ntt_inverse:
         blr
 .size     mldsa_poly_ntt_inverse,.-mldsa_poly_ntt_inverse
 
-.data
+.rodata
 .align 4
 .mldsa_consts:
 .long ML_DSA_Q, ML_DSA_Q, ML_DSA_Q, ML_DSA_Q

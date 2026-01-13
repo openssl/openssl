@@ -208,7 +208,7 @@ mldsa_poly_ntt_mult:
 	blr
 .size     mldsa_poly_ntt_mult,.-mldsa_poly_ntt_mult
 
-.data
+.rodata
 .align 4
 .mldsa_consts:
 # Q = 8380417
