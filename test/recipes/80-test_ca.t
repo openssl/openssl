@@ -29,7 +29,7 @@ sub src_file {
 
 rmtree("demoCA", { safe => 0 });
 
-plan tests => 20;
+plan tests => 22;
 
 require_ok(srctop_file("test", "recipes", "tconversion.pl"));
 
@@ -127,6 +127,30 @@ test_revoke('both_generalizedtime', {
     nextupdate     => '20990908123456Z',
     should_succeed => 1,
 });
+
+# Test CA with explicit start date and days (Issue #29363 fix)
+my $ca_cert_with_dates = "ca-issued-explicit-dates.pem";
+my $ca_csr_with_dates = "ca-csr-explicit-dates.pem";
+$ENV{CN2} = "explicit-dates-test";
+ok(run(app(['openssl', 'req',
+            '-config', $cnf,
+            '-new',
+            '-key', data_file('revoked.key'),
+            '-out', $ca_csr_with_dates,
+            '-section', 'userreq']))
+   && run(app(["openssl", "ca", "-batch",
+               "-config", $cnf,
+               "-in", $ca_csr_with_dates,
+               "-out", $ca_cert_with_dates,
+               "-startdate", "20231001000000Z",
+               "-days", "365"])),
+   "CA with explicit start date and days");
+delete $ENV{CN2};
+
+# Verify the dates are calculated correctly from start date
+ok(get_not_before($ca_cert_with_dates) =~ /Oct  1 00:00:00 2023 GMT/
+   && get_not_after($ca_cert_with_dates) =~ /Sep 30 00:00:00 2024 GMT/,
+   "CA correctly calculates expiry from start date");
 
 sub test_revoke {
     my ($filename, $opts) = @_;
