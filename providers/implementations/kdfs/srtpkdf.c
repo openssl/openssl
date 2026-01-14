@@ -51,7 +51,7 @@ static OSSL_FUNC_kdf_get_ctx_params_fn kdf_srtpkdf_get_ctx_params;
 static int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
     const unsigned char *mkey, const unsigned char *msalt, const unsigned char *index,
     const uint32_t kdr, const uint32_t kdr_n,
-    uint32_t label, unsigned char *obuffer, const size_t keylen);
+    const uint32_t label, unsigned char *obuffer, const size_t keylen);
 
 typedef struct {
     /* Warning: Any changes to this structure may require you to update kdf_srtpkdf_dup */
@@ -206,8 +206,6 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     struct srtp_set_ctx_params_st p;
     KDF_SRTPKDF *ctx = vctx;
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
-    uint32_t kdr;
-    uint32_t label;
 
     if (params == NULL)
         return 1;
@@ -232,15 +230,13 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         return 0;
 
     if (p.kdr != NULL) {
-        if (!OSSL_PARAM_get_uint32(p.kdr, &kdr))
+        if (!OSSL_PARAM_get_uint32(p.kdr, &ctx->kdr))
             return 0;
-        ctx->kdr = kdr;
     }
 
     if (p.label != NULL) {
-        if (!OSSL_PARAM_get_uint32(p.label, &label))
+        if (!OSSL_PARAM_get_uint32(p.label, &ctx->label))
             return 0;
-        ctx->label = label;
     }
 
     return 1;
@@ -333,7 +329,7 @@ const OSSL_DISPATCH ossl_kdf_srtpkdf_functions[] = {
 int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
     const unsigned char *mkey, const unsigned char *msalt, const unsigned char *index,
     const uint32_t kdr, const uint32_t kdr_n,
-    uint32_t label, unsigned char *obuffer, const size_t keylen)
+    const uint32_t label, unsigned char *obuffer, const size_t keylen)
 {
     EVP_CIPHER_CTX *ctx = NULL;
     int outl, i, index_len = 0, o_len = 0, salt_len = 0;
@@ -427,7 +423,7 @@ int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
     /* take the munged up salt from above and add the label */
     memset(local_salt, 0, KDF_SRTP_MAX_SALT_LEN);
     memcpy(local_salt, master_salt, salt_len);
-    local_salt[((KDF_SRTP_SALT_LEN - 1) - index_len)] ^= label++;
+    local_salt[((KDF_SRTP_SALT_LEN - 1) - index_len)] ^= label;
 
     /* perform the AES encryption on the master key and derived salt */
     memset(buf, 0, o_len);
