@@ -1182,7 +1182,7 @@ lint: ## Evaluate C code via "splint"
 
 .PHONY: check-format
 check-format: ## Evaluate C code according to OpenSSL coding standards
-	( cd $(SRCDIR); git diff -U0 | clang-format-diff -p1 )
+	( cd $(SRCDIR); git diff -U0 --no-prefix --no-color | clang-format-diff )
 
 generate_apps:
 	( cd $(SRCDIR); $(PERL) VMS/VMSify-conf.pl \
