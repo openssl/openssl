@@ -230,7 +230,8 @@ static uintptr_t get_unique_thread_id(void)
     }
     return thread_id;
 #else
-    return (uintptr_t)CRYPTO_THREAD_get_current_id();
+    CRYPTO_THREAD_ID thread_id = CRYPTO_THREAD_get_current_id();
+    return (uintptr_t)thread_id;
 #endif
 }
 
