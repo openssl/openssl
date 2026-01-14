@@ -28,7 +28,15 @@ OpenSSL 3.3
 
 ### Changes between 3.3.5 and 3.3.6 [xx XXX xxxx]
 
- * none yet
+ * Fixed incorrect acceptance of some malformed ECDSA signatures on s390x.
+   <!-- https://github.com/openssl/openssl/pull/29214 -->
+
+   *Holger Dengler*
+
+ * Source code has been reformatted with `clang-format`.
+   <!-- https://github.com/openssl/openssl/pull/29258 -->
+
+   *Bob Beck*
 
 ### Changes between 3.3.4 and 3.3.5 [30 Sep 2025]
 
