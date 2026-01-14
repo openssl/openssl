@@ -299,6 +299,14 @@ const OPTIONS *test_get_options(void);
 #endif
 #endif
 
+#define NONSTRING
+#ifdef __has_attribute
+#if __has_attribute(nonstring)
+#undef NONSTRING
+#define NONSTRING __attribute__((nonstring))
+#endif
+#endif
+
 #define DECLARE_COMPARISON(type, name, opname)    \
     int test_##name##_##opname(const char *, int, \
         const char *, const char *,               \

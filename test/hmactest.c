@@ -33,7 +33,7 @@
 
 #ifndef OPENSSL_NO_MD5
 static struct test_st {
-    const char key[16];
+    const char NONSTRING key[16];
     int key_len;
     const unsigned char data[64];
     int data_len;
