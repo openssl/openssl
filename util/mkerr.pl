@@ -447,8 +447,8 @@ EOF
             }
         } else {
             print OUT <<"EOF";
-# define ${lib}err(f, r) ERR_${lib}_error(0, (r), OPENSSL_FILE, OPENSSL_LINE)
-# define ERR_R_${lib}_LIB ERR_${lib}_lib()
+#define ${lib}err(f, r) ERR_${lib}_error(0, (r), OPENSSL_FILE, OPENSSL_LINE)
+#define ERR_R_${lib}_LIB ERR_${lib}_lib()
 EOF
             if ( ! $static ) {
                 print OUT <<"EOF";
