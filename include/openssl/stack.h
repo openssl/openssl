@@ -36,6 +36,7 @@ OPENSSL_STACK *OPENSSL_sk_new(OPENSSL_sk_compfunc cmp);
 OPENSSL_STACK *OPENSSL_sk_new_null(void);
 OPENSSL_STACK *OPENSSL_sk_new_reserve(OPENSSL_sk_compfunc c, int n);
 OPENSSL_STACK *OPENSSL_sk_set_thunks(OPENSSL_STACK *st, OPENSSL_sk_freefunc_thunk f_thunk);
+OPENSSL_STACK *OPENSSL_sk_set_cmp_thunks(OPENSSL_STACK *st, int (*c_thunk)(int (*)(const void *, const void *), const void *, const void *));
 int OPENSSL_sk_reserve(OPENSSL_STACK *st, int n);
 void OPENSSL_sk_free(OPENSSL_STACK *);
 void OPENSSL_sk_pop_free(OPENSSL_STACK *st, OPENSSL_sk_freefunc func);

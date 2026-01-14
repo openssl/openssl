@@ -31,6 +31,7 @@ struct stack_st {
     int sorted;
     int num_alloc;
     OPENSSL_sk_compfunc comp;
+    int (*cmp_thunk)(OPENSSL_sk_compfunc, const void *, const void *);
     OPENSSL_sk_freefunc_thunk free_thunk;
 };
 
@@ -243,8 +244,18 @@ OPENSSL_STACK *OPENSSL_sk_set_thunks(OPENSSL_STACK *st, OPENSSL_sk_freefunc_thun
     return st;
 }
 
+OPENSSL_STACK *OPENSSL_sk_set_cmp_thunks(OPENSSL_STACK *st, int (*c_thunk)(int (*)(const void *, const void *), const void *, const void *))
+{
+    if (st != NULL)
+        st->cmp_thunk = c_thunk;
+
+    return st;
+}
+
 int OPENSSL_sk_insert(OPENSSL_STACK *st, const void *data, int loc)
 {
+    int cmp_ret;
+
     if (st == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
@@ -268,11 +279,16 @@ int OPENSSL_sk_insert(OPENSSL_STACK *st, const void *data, int loc)
     st->num++;
     if (st->sorted && st->num > 1) {
         if (st->comp != NULL) {
-            if (loc > 0 && (st->comp(&st->data[loc - 1], &st->data[loc]) > 0))
-                st->sorted = 0;
-            if (loc < st->num - 1
-                && (st->comp(&st->data[loc + 1], &st->data[loc]) < 0))
-                st->sorted = 0;
+            if (loc > 0) {
+                cmp_ret = (st->cmp_thunk == NULL) ? st->comp(&st->data[loc - 1], &st->data[loc]) : st->cmp_thunk(st->comp, &st->data[loc - 1], &st->data[loc]);
+                if (cmp_ret > 0)
+                    st->sorted = 0;
+            }
+            if (loc < st->num - 1) {
+                cmp_ret = (st->cmp_thunk == NULL) ? st->comp(&st->data[loc + 1], &st->data[loc]) : st->cmp_thunk(st->comp, &st->data[loc + 1], &st->data[loc]);
+                if (cmp_ret < 0)
+                    st->sorted = 0;
+            }
         } else {
             st->sorted = 0;
         }
@@ -319,6 +335,7 @@ static int internal_find(const OPENSSL_STACK *st, const void *data,
 {
     const void *r;
     int i, count = 0;
+    int cmp_ret;
     int *pnum = pnum_matched;
 
     if (st == NULL || st->num == 0)
@@ -343,8 +360,9 @@ static int internal_find(const OPENSSL_STACK *st, const void *data,
     if (!st->sorted) {
         int res = -1;
 
-        for (i = 0; i < st->num; i++)
-            if (st->comp(&data, st->data + i) == 0) {
+        for (i = 0; i < st->num; i++) {
+            cmp_ret = (st->cmp_thunk == NULL) ? st->comp(&data, st->data + i) : st->cmp_thunk(st->comp, &data, st->data + i);
+            if (cmp_ret == 0) {
                 if (res == -1)
                     res = i;
                 ++*pnum;
@@ -352,6 +370,7 @@ static int internal_find(const OPENSSL_STACK *st, const void *data,
                 if (pnum_matched == NULL)
                     return i;
             }
+        }
         if (res == -1)
             *pnum = 0;
         return res;
@@ -359,7 +378,7 @@ static int internal_find(const OPENSSL_STACK *st, const void *data,
 
     if (pnum_matched != NULL)
         ret_val_options |= OSSL_BSEARCH_FIRST_VALUE_ON_MATCH;
-    r = ossl_bsearch(&data, st->data, st->num, sizeof(void *), st->comp, NULL,
+    r = ossl_bsearch(&data, st->data, st->num, sizeof(void *), st->comp, st->cmp_thunk,
         ret_val_options);
 
     if (pnum_matched != NULL) {
@@ -368,7 +387,8 @@ static int internal_find(const OPENSSL_STACK *st, const void *data,
             const void **p = (const void **)r;
 
             while (p < st->data + st->num) {
-                if (st->comp(&data, p) != 0)
+                cmp_ret = st->cmp_thunk == NULL ? st->comp(&data, p) : st->cmp_thunk(st->comp, &data, p);
+                if (cmp_ret != 0)
                     break;
                 ++*pnum;
                 ++p;
