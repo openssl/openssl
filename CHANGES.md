@@ -30,7 +30,21 @@ OpenSSL 3.5
 
 ### Changes between 3.5.4 and 3.5.5 [xx XXX xxxx]
 
- * none yet
+ * RISC-V capabilities string format has changed to include the base
+   architecture and the vector length for the V extension.
+   <!-- https://github.com/openssl/openssl/pull/28760 -->
+
+   *Bernd Edlinger*
+
+ * Fixed incorrect acceptance of some malformed ECDSA signatures on s390x.
+   <!-- https://github.com/openssl/openssl/pull/29214 -->
+
+   *Holger Dengler*
+
+ * Source code has been reformatted with `clang-format`.
+   <!-- https://github.com/openssl/openssl/pull/29262 -->
+
+   *Bob Beck*
 
 ### Changes between 3.5.3 and 3.5.4 [30 Sep 2025]
 
