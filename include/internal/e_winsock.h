@@ -16,12 +16,14 @@
 /*
  * The _WIN32_WINNT is described here:
  * https://learn.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt?view=msvc-170
- * In nutshell the macro defines Windows version the resulting application is
- * guarantied to run on. If left undefined the Windows SDK provides the highest
- * (the most recent) definition. OpenSSL chooses version 0x501 which matches
- * Windows XP meaning the compiled library will work on Windows XP and later.
+ * In a nutshell the macro defines minimal required Windows version where
+ * the resulting application is guaranteed to run on. If left undefined here,
+ * then the definition is provided by the Windows SDK found on host where
+ * application is being built.
  *
- * User may override the version specified here at build time using command as
+ * OpenSSL defaults to version 0x501, which matches Windows XP, meaning the
+ * compiled library will use APIs available on Windows XP and later.  User may
+ * override the version specified here at build time using command as
  * follows:
  *     perl ./Configure "-D_WIN32_WINNT=0x...." ...
  *
@@ -30,14 +32,10 @@
  *	0x0500 // Windows 2000
  *	0x0501 // Windows XP
  *	0x0502 // Windows Server 2003
- * 	0x0600 // Windows Vista
- *	0x0600 // Windows Vista
- *	0x0600 // Windows Server 2008
- *	0x0600 // Windows Vista
+ *	0x0600 // Windows Vista, Windows Server 2008, Windows Vista
  *	0x0601 // Windows 7
  *	0x0602 // Windows 8
  *	0x0603 // Windows 8.1
- *	0x0A00 // Windows 10
  *	0x0A00 // Windows 10
  */
 #define _WIN32_WINNT 0x0501
