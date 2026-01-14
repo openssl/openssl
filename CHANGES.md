@@ -30,7 +30,15 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.18 and 3.0.19 [xx XXX xxxx]
 
- * none yet
+ * Fixed incorrect acceptance of some malformed ECDSA signatures on s390x.
+   <!-- https://github.com/openssl/openssl/pull/29214 -->
+
+   *Holger Dengler*
+
+ * Source code has been reformatted with `clang-format`.
+   <!-- https://github.com/openssl/openssl/pull/29256 -->
+
+   *Bob Beck*
 
 ### Changes between 3.0.17 and 3.0.18 [30 Sep 2025]
 
