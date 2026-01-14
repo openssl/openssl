@@ -36,11 +36,12 @@ typedef struct {
  ***/
 
 /* cts128 test vectors from RFC 3962 */
-static const unsigned char cts128_test_key[16] = "chicken teriyaki";
-static const unsigned char cts128_test_input[64] = "I would like the"
-                                                   " General Gau's C"
-                                                   "hicken, please, "
-                                                   "and wonton soup.";
+static const unsigned char cts128_test_key[16] = { 'c', 'h', 'i', 'c', 'k', 'e', 'n', ' ', 't', 'e', 'r', 'i', 'y', 'a', 'k', 'i' };
+static const unsigned char cts128_test_input[64] = { 'I', ' ', 'w', 'o', 'u', 'l', 'd', ' ', 'l', 'i', 'k', 'e', ' ', 't', 'h', 'e',
+    ' ', 'G', 'e', 'n', 'e', 'r', 'a', 'l', ' ', 'G', 'a', 'u', '\'', 's', ' ', 'C', 'h',
+    'i', 'c', 'k', 'e', 'n', ',', ' ', 'p', 'l', 'e', 'a', 's', 'e', ',', ' ', 'a',
+    'n', 'd', ' ', 'w', 'o', 'n', 't', 'o', 'n', ' ', 's', 'o', 'u', 'p', '.' };
+
 static const unsigned char cts128_test_iv[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
