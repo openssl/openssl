@@ -1008,6 +1008,13 @@ int SSL_CTX_is_quic(const SSL_CTX *c)
     return IS_QUIC_CTX(c);
 }
 
+int SSL_CTX_is_server(const SSL_CTX *c)
+{
+    if (c == NULL || c->method == NULL)
+        return 0;
+    return (c->method->ssl_accept == ssl_undefined_function) ? 0 : 1;
+}
+
 int SSL_up_ref(SSL *s)
 {
     int i;

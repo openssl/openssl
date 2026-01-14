@@ -352,6 +352,10 @@ OpenSSL 3.6
 
    *Dimitri John Ledkov*
 
+ * SSL_CTX_is_server() was added.
+
+   *Igor Ustinov*
+
 OpenSSL 3.5
 -----------
 

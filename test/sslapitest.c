@@ -12182,6 +12182,34 @@ end:
 }
 
 /*
+ * Test that SSL_CTX_is_server returns the expected results.
+ */
+static int test_ssl_ctx_is_server(void)
+{
+    int testresult = 0;
+    SSL_CTX *cctx = NULL, *sctx = NULL, *gctx = NULL;
+
+    cctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method());
+    sctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
+    gctx = SSL_CTX_new_ex(libctx, NULL, TLS_method());
+
+    if (!TEST_ptr(cctx) || !TEST_ptr(sctx) || !TEST_ptr(gctx))
+        goto end;
+
+    if (!TEST_false(SSL_CTX_is_server(cctx))
+        || !TEST_true(SSL_CTX_is_server(sctx))
+        || !TEST_true(SSL_CTX_is_server(gctx)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(gctx);
+    return testresult;
+}
+
+/*
  * Test that the SSL_rstate_string*() APIs return sane results
  */
 static int test_rstate_string(void)
@@ -14070,6 +14098,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_serverinfo_custom, 4);
 #endif
     ADD_ALL_TESTS(test_version, 6);
+    ADD_TEST(test_ssl_ctx_is_server);
     ADD_TEST(test_rstate_string);
     ADD_ALL_TESTS(test_handshake_retry, 16);
     ADD_TEST(test_data_retry);
