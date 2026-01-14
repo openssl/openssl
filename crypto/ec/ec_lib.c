@@ -1577,7 +1577,9 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
     int is_prime_field = 1;
     BN_CTX *bnctx = NULL;
     const unsigned char *buf = NULL;
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
     int encoding_flag = -1;
+#endif
 #endif
 
     /* This is the simple named group case */
@@ -1752,6 +1754,12 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
         goto err;
     }
     if (named_group == group) {
+#ifdef OPENSSL_NO_EC_EXPLICIT_CURVES
+        if (EC_GROUP_check_named_curve(group, 0, NULL) == NID_undef) {
+            ERR_raise(ERR_LIB_EC, EC_R_UNKNOWN_GROUP);
+            goto err;
+        }
+#else
         /*
          * If we did not find a named group then the encoding should be explicit
          * if it was specified
@@ -1767,6 +1775,7 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
             goto err;
         }
         EC_GROUP_set_asn1_flag(group, OPENSSL_EC_EXPLICIT_CURVE);
+#endif
     } else {
         EC_GROUP_free(group);
         group = named_group;

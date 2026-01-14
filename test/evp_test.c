@@ -5433,8 +5433,16 @@ top:
     pkey = NULL;
 start:
     if (strcmp(pp->key, "PrivateKey") == 0) {
+        int unsupported = 0;
+
         pkey = PEM_read_bio_PrivateKey_ex(t->s.key, NULL, 0, NULL, libctx, NULL);
-        if (pkey == NULL && !key_unsupported()) {
+        if (pkey == NULL)
+            unsupported = key_unsupported();
+#ifdef OPENSSL_NO_EC_EXPLICIT_CURVES
+        if (strcmp(pp->value, "EC_EXPLICIT") == 0)
+            unsupported = 1;
+#endif
+        if (pkey == NULL && !unsupported) {
             EVP_PKEY_free(pkey);
             TEST_info("Can't read private key %s", pp->value);
             TEST_openssl_errors();

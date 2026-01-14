@@ -2555,6 +2555,7 @@ err:
     return r;
 }
 
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
 /*-
  * random 256-bit explicit parameters curve, cofactor absent
  * order:    0x0c38d96a9f892b88772ec2e39614a82f4f (132 bit)
@@ -2644,6 +2645,7 @@ err:
     EC_GROUP_free(group);
     return ret;
 }
+#endif
 
 /*-
  * For named curves, test that:
@@ -2887,22 +2889,27 @@ err:
 static int do_test_custom_explicit_fromdata(EC_GROUP *group, BN_CTX *ctx,
     unsigned char *gen, size_t gen_size)
 {
-    int ret = 0, i_out;
+    int ret = 0;
     EVP_PKEY_CTX *pctx = NULL;
     EVP_PKEY *pkeyparam = NULL;
     OSSL_PARAM_BLD *bld = NULL;
     const char *field_name;
     OSSL_PARAM *params = NULL;
-    const OSSL_PARAM *gettable;
     BIGNUM *p, *a, *b;
     BIGNUM *p_out = NULL, *a_out = NULL, *b_out = NULL;
     BIGNUM *order_out = NULL, *cofactor_out = NULL;
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
+    const OSSL_PARAM *gettable;
+    int i_out;
     char name[80];
     unsigned char buf[1024];
     size_t buf_len, name_len;
 #ifndef OPENSSL_NO_EC2M
-    unsigned int k1 = 0, k2 = 0, k3 = 0;
     const char *basis_name = NULL;
+#endif
+#endif
+#ifndef OPENSSL_NO_EC2M
+    unsigned int k1 = 0, k2 = 0, k3 = 0;
 #endif
 
     p = BN_CTX_get(ctx);
@@ -2919,11 +2926,15 @@ static int do_test_custom_explicit_fromdata(EC_GROUP *group, BN_CTX *ctx,
         field_name = SN_X9_62_characteristic_two_field;
 #ifndef OPENSSL_NO_EC2M
         if (EC_GROUP_get_basis_type(group) == NID_X9_62_tpBasis) {
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
             basis_name = SN_X9_62_tpBasis;
+#endif
             if (!TEST_true(EC_GROUP_get_trinomial_basis(group, &k1)))
                 goto err;
         } else {
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
             basis_name = SN_X9_62_ppBasis;
+#endif
             if (!TEST_true(EC_GROUP_get_pentanomial_basis(group, &k1, &k2, &k3)))
                 goto err;
         }
@@ -2958,11 +2969,19 @@ static int do_test_custom_explicit_fromdata(EC_GROUP *group, BN_CTX *ctx,
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
         || !TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL))
         || !TEST_int_gt(EVP_PKEY_fromdata_init(pctx), 0)
+#ifdef OPENSSL_NO_EC_EXPLICIT_CURVES
+        || !TEST_int_le(EVP_PKEY_fromdata(pctx, &pkeyparam,
+                            EVP_PKEY_KEY_PARAMETERS, params),
+            0)
+#else
         || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkeyparam,
                             EVP_PKEY_KEY_PARAMETERS, params),
-            0))
+            0)
+#endif
+    )
         goto err;
 
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
     /*- Check that all the set values are retrievable -*/
 
     /* There should be no match to a group name since the generator changed */
@@ -3096,6 +3115,7 @@ static int do_test_custom_explicit_fromdata(EC_GROUP *group, BN_CTX *ctx,
 #endif
     )
         goto err;
+#endif
     ret = 1;
 err:
     BN_free(order_out);
@@ -3218,12 +3238,15 @@ static int custom_params_test(int id)
     EC_KEY *eckey1 = NULL, *eckey2 = NULL;
     EVP_PKEY *pkey1 = NULL, *pkey2 = NULL;
     EVP_PKEY_CTX *pctx1 = NULL, *pctx2 = NULL, *dctx = NULL;
-    size_t sslen, t, bsize;
+    size_t bsize;
     unsigned char *pub1 = NULL, *pub2 = NULL;
     OSSL_PARAM_BLD *param_bld = NULL;
     OSSL_PARAM *params1 = NULL, *params2 = NULL;
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
     const unsigned char *export = NULL;
     size_t export_size = 0;
+    size_t sslen, t;
+#endif
     EVP_SKEY *skey = NULL;
 
     /* Do some setup */
@@ -3391,6 +3414,16 @@ static int custom_params_test(int id)
         goto err;
     eckey2 = NULL; /* ownership passed to pkey2 */
 
+#ifdef OPENSSL_NO_EC_EXPLICIT_CURVES
+    /* Compute keyexchange in both directions - fail with custom params */
+    if (!TEST_ptr(pctx1 = EVP_PKEY_CTX_new(pkey1, NULL))
+        || !TEST_int_le(EVP_PKEY_derive_init(pctx1), 0))
+        goto err;
+    if (!TEST_ptr(pctx2 = EVP_PKEY_CTX_new(pkey2, NULL))
+        || !TEST_int_le(EVP_PKEY_derive_init(pctx2), 0))
+        goto err;
+
+#else
     /* Compute keyexchange in both directions */
     if (!TEST_ptr(pctx1 = EVP_PKEY_CTX_new(pkey1, NULL))
         || !TEST_int_eq(EVP_PKEY_derive_init(pctx1), 1)
@@ -3474,7 +3507,7 @@ static int custom_params_test(int id)
         /* compare with previous result */
         || !TEST_mem_eq(export, export_size, buf2, sslen))
         goto err;
-
+#endif
     ret = 1;
 
 err:
@@ -3561,7 +3594,9 @@ int setup_tests(void)
 
     ADD_TEST(parameter_test);
     ADD_TEST(ossl_parameter_test);
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
     ADD_TEST(cofactor_range_test);
+#endif
     ADD_ALL_TESTS(cardinality_test, (int)crv_len);
     ADD_TEST(prime_field_tests);
 #ifndef OPENSSL_NO_EC2M

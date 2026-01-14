@@ -888,6 +888,14 @@ EC_GROUP *d2i_ECPKParameters(EC_GROUP **a, const unsigned char **in, long len)
 
     if (params->type == ECPKPARAMETERS_TYPE_EXPLICIT)
         group->decoded_from_explicit_params = 1;
+#ifdef OPENSSL_NO_EC_EXPLICIT_CURVES
+    if (EC_GROUP_check_named_curve(group, 0, NULL) == NID_undef) {
+        EC_GROUP_free(group);
+        ECPKPARAMETERS_free(params);
+        ERR_raise(ERR_LIB_EC, EC_R_UNKNOWN_GROUP);
+        return NULL;
+    }
+#endif
 
     if (a) {
         EC_GROUP_free(*a);
@@ -947,6 +955,13 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
         ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
         goto err;
     }
+
+#ifdef OPENSSL_NO_EC_EXPLICIT_CURVES
+    if (EC_GROUP_check_named_curve(ret->group, 0, NULL) == NID_undef) {
+        ERR_raise(ERR_LIB_EC, EC_R_UNKNOWN_GROUP);
+        goto err;
+    }
+#endif
 
     ret->version = priv_key->version;
 
