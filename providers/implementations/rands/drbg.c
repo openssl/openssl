@@ -22,6 +22,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "crypto/context.h"
+#include "internal/fips.h"
 
 /*
  * Support framework for NIST SP 800-90A DRBG
@@ -684,6 +685,16 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
     if (drbg->parent != NULL
         && get_parent_reseed_count(drbg) != drbg->parent_reseed_counter)
         reseed_required = 1;
+
+#ifdef FIPS_MODULE
+    /*
+     * During self tests, an unexpected reseed will cause failure.
+     * This can be triggered by the system time changing during the
+     * self test.  Refer #29632 for details.
+     */
+    if (ossl_fips_self_testing())
+        reseed_required = 0;
+#endif
 
     if (reseed_required || prediction_resistance) {
         if (!ossl_prov_drbg_reseed_unlocked(drbg, prediction_resistance, NULL,
