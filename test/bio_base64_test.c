@@ -457,7 +457,8 @@ static int test_bio_base64_no_nl(void)
 
     BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     BIO_write(b64, msg, sizeof(msg));
-    BIO_flush(b64);
+    if (!TEST_true(BIO_flush(b64)))
+        goto done;
     BIO_get_mem_ptr(mem, &bptr);
     ok = TEST_mem_eq(MEM_CHK, sizeof(MEM_CHK) - 1, bptr->data, bptr->length);
 
