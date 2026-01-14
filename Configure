@@ -182,6 +182,7 @@ my @gcc_devteam_warn = qw(
     -Wstrict-prototypes
     -Wdisabled-optimization
     -Wpointer-arith
+    -Wfloat-conversion
 );
 
 # These are used in addition to $gcc_devteam_warn when the compiler is clang.
