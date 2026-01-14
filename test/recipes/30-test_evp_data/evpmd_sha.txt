@@ -438,6 +438,40 @@ Input = EA18
 Ctrl = customization:fmkctMwhBB[<Kta&RJ5r5ToA9N9~Y-,kin8y]xB}kviaDk_kPI^{o#N1|JIF5x.67pR]]fGX)6'=j.{MnLN1M0zf@'|3OzirhSJS9#.i#&rXz1FnM{WgI|g'tk=Ui5*-L4T6cH4k?d.H<Bk/`.dRC#HklD_LeV~mz
 Output = 2EEF41BD1680C16F36AE2B9C004805F7426AC9D4BB6BF7CFC78606A6E6F6F518EB6C0BE768
 
+# Tests from https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/cSHAKE-128-1.0/internalProjection.json
+# and https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/cSHAKE-256-1.0/internalProjection.json which have
+# an input length that is a multiple of 8 bits, that have different known function names.
+# Where the output was not a multiple of 8 the last byte has been modified.
+
+FIPSversion = >=4.0.0
+Digest = CSHAKE-128
+Input = CA88F708FA
+Ctrl = function-name:KMAC
+Ctrl = customization:`kiEF`&I))7]yq0?*sKa q)[jP`4R=)lV_9tyvT$kAbH$)1}p].bbeomb.
+Output = BEBB534CCFCCD300F731D2911FB4351D5FCC95AC2509E9ABAE8F9DC51106E28D7F25AE11738334
+
+FIPSversion = >=4.0.0
+Digest = CSHAKE-256
+Input = 13D101DA
+Ctrl = function-name:TupleHash
+Ctrl = customization:q8gN}O&V*VDU4Y.^5J13tG2,1^Lw~C2rw $AB3.SX)=@z
+Output = 43163A57FC1EE8F1C501A2ADD927698CA5A4B52C0D3EF3FD6D91D8D2386765E0AE
+
+FIPSversion = >=4.0.0
+Digest = CSHAKE-256
+Input = D5D7E7517F
+Ctrl = function-name:ParallelHash
+Ctrl = customization:vD-1>T,f.R*V%ZA<NtW0$3UZD[$X%QVQE,H6E;xqYQI4co^F#Sf:CU!dmQkbPRbZ{V1x3,v3{fTPiBvT}[UOk</o*dGrN7@(nm7,^d4v]R>[ OyJ
+Output = 442BE69B2AFD7C8282839920A8446AAF16A5049D3D018EAC87E04CF9225870EFCA6F88DB415829
+
+# Test that uses an unknown function name
+FIPSversion = >=4.0.0
+Digest = CSHAKE-128
+Input = CA88F708FA
+Ctrl = function-name:BadName
+Result = DIGESTINIT_ERROR
+Reason = invalid function name
+
 Title = Case insensitive digest tests
 
 Digest = Sha3-256

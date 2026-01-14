@@ -84,7 +84,6 @@ static sha3_squeeze_fn generic_sha3_squeeze;
 #define S390_SHA3 1
 #define S390_SHA3_CAPABLE(name) \
     ((OPENSSL_s390xcap_P.kimd[0] & S390X_CAPBIT(S390X_##name)) && (OPENSSL_s390xcap_P.klmd[0] & S390X_CAPBIT(S390X_##name)))
-
 #endif
 
 static int keccak_init(void *vctx, ossl_unused const OSSL_PARAM params[])
@@ -789,7 +788,7 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 #define KECCAK_SER_ID 0x010000
 #define SHAKE_SER_ID 0x020000
 #define SHA3_SER_ID 0x040000
-#define KMAK_SER_ID 0x080000
+#define CSHAKE_KECCAK_SER_ID 0x080000
 
 #define IMPLEMENT_SHA3_functions(bitlen)                             \
     SHA3_newctx(sha3, SHA3_##bitlen, sha3_##bitlen, bitlen, (uint8_t)SHA3_PADDING)  \
@@ -805,8 +804,17 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                 SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen),              \
                 SHA3_FLAGS)
 
+#define IMPLEMENT_SHAKE_functions(bitlen)                              \
+    SHAKE_newctx(shake, SHAKE_##bitlen, shake_##bitlen, bitlen,        \
+        0 /* no default md length */, (uint8_t)SHAKE_PADDING)          \
+        IMPLEMENT_SERIALIZE_FNS(shake_##bitlen, SHAKE_SER_ID + bitlen) \
+            PROV_FUNC_SHAKE_DIGEST(shake_##bitlen, bitlen,             \
+                SHA3_BLOCKSIZE(bitlen), 0,                             \
+                SHAKE_FLAGS)
+
 #define IMPLEMENT_CSHAKE_KECCAK_functions(bitlen)                              \
     CSHAKE_KECCAK_newctx(cshake_keccak_##bitlen, bitlen, (uint8_t)CSHAKE_KECCAK_PADDING) \
+    IMPLEMENT_SERIALIZE_FNS(cshake_keccak_##bitlen, CSHAKE_KECCAK_SER_ID + bitlen) \
     PROV_FUNC_SHAKE_DIGEST(cshake_keccak_##bitlen, bitlen,                     \
                            SHA3_BLOCKSIZE(bitlen),                             \
                            CSHAKE_KECCAK_MDSIZE(bitlen),                       \
