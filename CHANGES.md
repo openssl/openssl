@@ -32,6 +32,11 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Added `OPENSSL_sk_set_cmp_thunks()` api to allow for proper typecasting
+   during comparison of elements in a `STACK_OF` structure
+
+   *Neil Horman*
+
  * Added "ML-DSA-MU" digest algorithm support.
 
    *Shane Lontis*
