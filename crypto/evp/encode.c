@@ -451,7 +451,7 @@ int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 
 void EVP_EncodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)
 {
-    unsigned int ret = 0;
+    int ret = 0;
     int wrap_cnt = 0;
 
     if (ctx->num != 0) {
