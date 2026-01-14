@@ -46,6 +46,11 @@ OpenSSL 4.0
 
    *Shane Lontis*
 
+ * Added `OPENSSL_sk_set_cmp_thunks()` api to allow for proper typecasting
+   during comparison of elements in a `STACK_OF` structure
+
+   *Neil Horman*
+
  * Added configure options to disable KDF algorithms for
    hmac-drbg-kdf, kbkdf, krb5kdf, pvkkdf, snmpkdf, sskdf, sshkdf, x942kdf and x963kdf.
 
