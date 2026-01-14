@@ -59,6 +59,13 @@ OpenSSL 4.0
 
    *Alexandr Nedvedicky*
 
+ * Fixed RFC 5280 compliance by validating that subnet masks in NameConstraints
+   extensions are CIDR-compliant (contiguous 1-bits followed by 0-bits).
+   Previously, OpenSSL incorrectly accepted non-contiguous masks such as
+   255.0.255.0, which are prohibited by RFC 5280 Section 4.2.1.10.
+
+   *Jeffrey Kintscher*
+
  * The crypto-mdebug-backtrace configuration option has been entirely removed.
    The option has been a no-op since 1.0.2.
 
