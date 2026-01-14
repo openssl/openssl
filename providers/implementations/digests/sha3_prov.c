@@ -50,10 +50,10 @@
  *
  *   Which gives the following padding values as bytes.
  */
-#define KECCAK_PADDING          0x01
-#define SHA3_PADDING            0x06
-#define SHAKE_PADDING           0x1f
-#define CSHAKE_KECCAK_PADDING   0x04
+#define KECCAK_PADDING 0x01
+#define SHA3_PADDING 0x06
+#define SHAKE_PADDING 0x1f
+#define CSHAKE_KECCAK_PADDING 0x04
 
 /*
  * Forward declaration of any unique methods implemented here. This is not strictly
@@ -494,11 +494,11 @@ static PROV_SHA3_METHOD shake_ARMSHA3_md = {
     } else {                                                  \
         ctx->meth = sha3_generic_md;                          \
     }
-# define CSHAKE_KECCAK_SET_MD(bitlen)                                          \
-    if (OPENSSL_armcap_P & ARMV8_HAVE_SHA3_AND_WORTH_USING) {                  \
-        ctx->meth = shake_ARMSHA3_md;                                          \
-    } else {                                                                   \
-        ctx->meth = shake_generic_md;                                          \
+#define CSHAKE_KECCAK_SET_MD(bitlen)                          \
+    if (OPENSSL_armcap_P & ARMV8_HAVE_SHA3_AND_WORTH_USING) { \
+        ctx->meth = shake_ARMSHA3_md;                         \
+    } else {                                                  \
+        ctx->meth = shake_generic_md;                         \
     }
 #else
 #define SHA3_SET_MD(uname, typ) ctx->meth = sha3_generic_md;
@@ -536,19 +536,19 @@ static PROV_SHA3_METHOD shake_ARMSHA3_md = {
         return ctx;                                                                 \
     }
 
-#define CSHAKE_KECCAK_newctx(uname, bitlen, pad)                                \
-static OSSL_FUNC_digest_newctx_fn uname##_newctx;                               \
-static void *uname##_newctx(void *provctx)                                      \
-{                                                                               \
-    KECCAK1600_CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) \
-                                                : NULL;                         \
-                                                                                \
-    if (ctx == NULL)                                                            \
-        return NULL;                                                            \
-    ossl_keccak_init(ctx, pad, bitlen, 2 * bitlen);                             \
-    CSHAKE_KECCAK_SET_MD(bitlen)                                                \
-    return ctx;                                                                 \
-}
+#define CSHAKE_KECCAK_newctx(uname, bitlen, pad)                                    \
+    static OSSL_FUNC_digest_newctx_fn uname##_newctx;                               \
+    static void *uname##_newctx(void *provctx)                                      \
+    {                                                                               \
+        KECCAK1600_CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) \
+                                                     : NULL;                        \
+                                                                                    \
+        if (ctx == NULL)                                                            \
+            return NULL;                                                            \
+        ossl_keccak_init(ctx, pad, bitlen, 2 * bitlen);                             \
+        CSHAKE_KECCAK_SET_MD(bitlen)                                                \
+        return ctx;                                                                 \
+    }
 
 #define PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags)  \
     PROV_FUNC_DIGEST_GET_PARAM(name, blksize, dgstsize, flags)                \
@@ -790,18 +790,18 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 #define SHA3_SER_ID 0x040000
 #define CSHAKE_KECCAK_SER_ID 0x080000
 
-#define IMPLEMENT_SHA3_functions(bitlen)                             \
-    SHA3_newctx(sha3, SHA3_##bitlen, sha3_##bitlen, bitlen, (uint8_t)SHA3_PADDING)  \
-        IMPLEMENT_SERIALIZE_FNS(sha3_##bitlen, SHA3_SER_ID + bitlen) \
-            PROV_FUNC_SHA3_DIGEST(sha3_##bitlen, bitlen,             \
-                SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen),         \
+#define IMPLEMENT_SHA3_functions(bitlen)                                           \
+    SHA3_newctx(sha3, SHA3_##bitlen, sha3_##bitlen, bitlen, (uint8_t)SHA3_PADDING) \
+        IMPLEMENT_SERIALIZE_FNS(sha3_##bitlen, SHA3_SER_ID + bitlen)               \
+            PROV_FUNC_SHA3_DIGEST(sha3_##bitlen, bitlen,                           \
+                SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen),                       \
                 SHA3_FLAGS)
 
-#define IMPLEMENT_KECCAK_functions(bitlen)                                \
+#define IMPLEMENT_KECCAK_functions(bitlen)                                                 \
     SHA3_newctx(keccak, KECCAK_##bitlen, keccak_##bitlen, bitlen, (uint8_t)KECCAK_PADDING) \
-        IMPLEMENT_SERIALIZE_FNS(keccak_##bitlen, KECCAK_SER_ID + bitlen)  \
-            PROV_FUNC_SHA3_DIGEST(keccak_##bitlen, bitlen,                \
-                SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen),              \
+        IMPLEMENT_SERIALIZE_FNS(keccak_##bitlen, KECCAK_SER_ID + bitlen)                   \
+            PROV_FUNC_SHA3_DIGEST(keccak_##bitlen, bitlen,                                 \
+                SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen),                               \
                 SHA3_FLAGS)
 
 #define IMPLEMENT_SHAKE_functions(bitlen)                              \
@@ -812,13 +812,13 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                 SHA3_BLOCKSIZE(bitlen), 0,                             \
                 SHAKE_FLAGS)
 
-#define IMPLEMENT_CSHAKE_KECCAK_functions(bitlen)                              \
+#define IMPLEMENT_CSHAKE_KECCAK_functions(bitlen)                                        \
     CSHAKE_KECCAK_newctx(cshake_keccak_##bitlen, bitlen, (uint8_t)CSHAKE_KECCAK_PADDING) \
-    IMPLEMENT_SERIALIZE_FNS(cshake_keccak_##bitlen, CSHAKE_KECCAK_SER_ID + bitlen) \
-    PROV_FUNC_SHAKE_DIGEST(cshake_keccak_##bitlen, bitlen,                     \
-                           SHA3_BLOCKSIZE(bitlen),                             \
-                           CSHAKE_KECCAK_MDSIZE(bitlen),                       \
-                           CSHAKE_KECCAK_FLAGS)
+        IMPLEMENT_SERIALIZE_FNS(cshake_keccak_##bitlen, CSHAKE_KECCAK_SER_ID + bitlen)   \
+            PROV_FUNC_SHAKE_DIGEST(cshake_keccak_##bitlen, bitlen,                       \
+                SHA3_BLOCKSIZE(bitlen),                                                  \
+                CSHAKE_KECCAK_MDSIZE(bitlen),                                            \
+                CSHAKE_KECCAK_FLAGS)
 
 /* ossl_sha3_224_functions */
 IMPLEMENT_SHA3_functions(224)
@@ -842,5 +842,5 @@ IMPLEMENT_SHAKE_functions(128)
 IMPLEMENT_SHAKE_functions(256)
 /* ossl_cshake_keccak_128_functions */
 IMPLEMENT_CSHAKE_KECCAK_functions(128)
-/* ossl_cshake_keccak_256_functions */
-IMPLEMENT_CSHAKE_KECCAK_functions(256)
+    /* ossl_cshake_keccak_256_functions */
+    IMPLEMENT_CSHAKE_KECCAK_functions(256)

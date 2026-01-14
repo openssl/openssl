@@ -834,7 +834,7 @@ static int digest_test_run(EVP_TEST *t)
 
     if (sk_OPENSSL_STRING_num(expected->controls) > 0) {
         if (!ctrl2params(t, expected->controls, defined_params,
-                         params, OSSL_NELEM(params), &params_n))
+                params, OSSL_NELEM(params), &params_n))
             return 0;
         p = params + params_n;
     }

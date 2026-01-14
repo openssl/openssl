@@ -92,11 +92,11 @@ static const unsigned char tuplehash_encoded_string[] = {
 
 /* Fixed value of encode_string("ParallelHash") */
 static const unsigned char parallelhash_encoded_string[] = {
-    0x01, 0x60, 0x50, 0x61, 0x72, 0x61, 0x6C, 0x6C, 0x65, 0x6C, 0x48, 0x61,0x73, 0x68
+    0x01, 0x60, 0x50, 0x61, 0x72, 0x61, 0x6C, 0x6C, 0x65, 0x6C, 0x48, 0x61, 0x73, 0x68
 };
 
 static int cshake_set_func_encode_string(const char *in,
-                                         const uint8_t **out, size_t *outlen)
+    const uint8_t **out, size_t *outlen)
 {
     /*
      * A list of valid function names to encoded string mappings
@@ -119,7 +119,7 @@ static int cshake_set_func_encode_string(const char *in,
      */
     if (in == NULL || in[0] == 0)
         return 1;
-    for (int i = 1; functionNameMap[i].name != NULL; ++i ) {
+    for (int i = 1; functionNameMap[i].name != NULL; ++i) {
         if (functionNameMap[i].name[0] == in[0]) {
             if (OPENSSL_strcasecmp(functionNameMap[i].name, in) == 0) {
                 *out = functionNameMap[i].encoding;
@@ -132,9 +132,8 @@ static int cshake_set_func_encode_string(const char *in,
     return 0; /* Name not found */
 }
 
-
 static int cshake_set_encode_string(const char *in,
-                                    uint8_t *out, size_t outmax, size_t *outlen)
+    uint8_t *out, size_t outmax, size_t *outlen)
 {
     size_t inlen;
 
@@ -155,7 +154,7 @@ static int cshake_set_encode_string(const char *in,
     if (inlen >= CSHAKE_MAX_STRING)
         return 0;
     return ossl_sp800_185_encode_string(out, outmax, outlen,
-                                        (const unsigned char *)in, inlen);
+        (const unsigned char *)in, inlen);
 }
 
 /*
@@ -195,7 +194,7 @@ static int cshake_set_shake_mode(CSHAKE_CTX *ctx, int shake)
             return 0;
     }
     params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN,
-                                                &ctx->xoflen);
+        &ctx->xoflen);
     params[1] = OSSL_PARAM_construct_end();
     return EVP_DigestInit_ex2(ctx->mdctx, ctx->md, params);
 }
@@ -247,7 +246,7 @@ static void *cshake_dupctx(void *ctx)
         if (src->mdctx != NULL) {
             ret->mdctx = EVP_MD_CTX_new();
             if (ret->mdctx == NULL
-                    || !EVP_MD_CTX_copy_ex(ret->mdctx, src->mdctx))
+                || !EVP_MD_CTX_copy_ex(ret->mdctx, src->mdctx))
                 goto err;
         }
         if (src->propq != NULL) {
@@ -276,7 +275,7 @@ static int cshake_init(void *vctx, const OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM *cshake_settable_ctx_params(ossl_unused void *ctx,
-                                                    ossl_unused void *provctx)
+    ossl_unused void *provctx)
 {
     return cshake_set_ctx_params_list;
 }
@@ -305,7 +304,7 @@ static int cshake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         size_t xoflen;
 
         if (!OSSL_PARAM_get_size_t(p.xoflen, &xoflen)
-                || !cshake_set_xoflen(ctx, xoflen)) {
+            || !cshake_set_xoflen(ctx, xoflen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
@@ -390,7 +389,7 @@ static int check_init(CSHAKE_CTX *ctx)
     if (ctx->inited == 0) {
         if (ctx->funclen != 0 || ctx->customlen != 0) {
             if (!cshake_set_shake_mode(ctx, 0)
-                    || !cshake_absorb_bytepad_strings(ctx))
+                || !cshake_absorb_bytepad_strings(ctx))
                 return 0;
         } else {
             /* Use SHAKE if N and S are both empty strings */
@@ -441,7 +440,7 @@ static int cshake_squeeze(void *vctx, uint8_t *out, size_t *outl, size_t outsz)
 }
 
 static const OSSL_PARAM *cshake_gettable_ctx_params(ossl_unused void *ctx,
-                                                    ossl_unused void *provctx)
+    ossl_unused void *provctx)
 {
     return cshake_get_ctx_params_list;
 }
@@ -473,32 +472,32 @@ static int cshake_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return 1;
 }
 
-#define IMPLEMENT_CSHAKE_functions(bitlen)                                     \
-static OSSL_FUNC_digest_newctx_fn cshake_##bitlen##_newctx;                    \
-static void *cshake_##bitlen##_newctx(void *provctx)                           \
-{                                                                              \
-    return cshake_newctx(provctx, bitlen);                                     \
-}                                                                              \
-PROV_FUNC_DIGEST_GET_PARAM(cshake_##bitlen, SHA3_BLOCKSIZE(bitlen),            \
-                           CSHAKE_KECCAK_MDSIZE(bitlen), CSHAKE_FLAGS)         \
-const OSSL_DISPATCH ossl_cshake_##bitlen##_functions[] = {                     \
-    { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))cshake_##bitlen##_newctx },     \
-    { OSSL_FUNC_DIGEST_INIT, (void (*)(void))cshake_init },                    \
-    { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))cshake_update },                \
-    { OSSL_FUNC_DIGEST_FINAL, (void (*)(void))cshake_final },                  \
-    { OSSL_FUNC_DIGEST_SQUEEZE, (void (*)(void))cshake_squeeze },              \
-    { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))cshake_freectx },              \
-    { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))cshake_dupctx },                \
-    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))cshake_set_ctx_params },\
-    { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,                                    \
-     (void (*)(void))cshake_settable_ctx_params },                             \
-    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS, (void (*)(void))cshake_get_ctx_params },\
-    { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS,                                    \
-     (void (*)(void))cshake_gettable_ctx_params },                             \
-    PROV_DISPATCH_FUNC_DIGEST_GET_PARAMS(cshake_##bitlen),                     \
-    PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
+#define IMPLEMENT_CSHAKE_functions(bitlen)                                          \
+    static OSSL_FUNC_digest_newctx_fn cshake_##bitlen##_newctx;                     \
+    static void *cshake_##bitlen##_newctx(void *provctx)                            \
+    {                                                                               \
+        return cshake_newctx(provctx, bitlen);                                      \
+    }                                                                               \
+    PROV_FUNC_DIGEST_GET_PARAM(cshake_##bitlen, SHA3_BLOCKSIZE(bitlen),             \
+        CSHAKE_KECCAK_MDSIZE(bitlen), CSHAKE_FLAGS)                                 \
+    const OSSL_DISPATCH ossl_cshake_##bitlen##_functions[] = {                      \
+        { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))cshake_##bitlen##_newctx },      \
+        { OSSL_FUNC_DIGEST_INIT, (void (*)(void))cshake_init },                     \
+        { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))cshake_update },                 \
+        { OSSL_FUNC_DIGEST_FINAL, (void (*)(void))cshake_final },                   \
+        { OSSL_FUNC_DIGEST_SQUEEZE, (void (*)(void))cshake_squeeze },               \
+        { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))cshake_freectx },               \
+        { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))cshake_dupctx },                 \
+        { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))cshake_set_ctx_params }, \
+        { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,                                     \
+            (void (*)(void))cshake_settable_ctx_params },                           \
+        { OSSL_FUNC_DIGEST_GET_CTX_PARAMS, (void (*)(void))cshake_get_ctx_params }, \
+        { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS,                                     \
+            (void (*)(void))cshake_gettable_ctx_params },                           \
+        PROV_DISPATCH_FUNC_DIGEST_GET_PARAMS(cshake_##bitlen),                      \
+        PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
 /* ossl_cshake_128_functions */
 IMPLEMENT_CSHAKE_functions(128)
-/* ossl_cshake_256_functions */
-IMPLEMENT_CSHAKE_functions(256)
+    /* ossl_cshake_256_functions */
+    IMPLEMENT_CSHAKE_functions(256)

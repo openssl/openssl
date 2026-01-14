@@ -60,9 +60,102 @@ static const uint8_t shake256_output[] = {
 };
 
 static const uint8_t cshake256_output[] = {
-    0x30, 0xa6, 0x5f, 0xd5, 0xff, 0x3e, 0x49, 0xe8, 0xa9, 0xef, 0x06, 0xa3, 0x56, 0x4b, 0x4f, 0x55, 0x93, 0x0f, 0x4a, 0x9e, 0xe9, 0x74, 0x13, 0xf8, 0x4a, 0x80, 0x44, 0x65, 0xec, 0x62, 0x83, 0x7a,
-    0x21, 0xce, 0x96, 0x0e, 0x27, 0x1f, 0x81, 0x26, 0xcb, 0xd8, 0x42, 0x7b, 0x7d, 0x71, 0x6a, 0xdc, 0xaf, 0x4d, 0x13, 0x52, 0x28, 0x2b, 0xd9, 0x70, 0xfb, 0x90, 0x96, 0xfe, 0x24, 0xd2, 0x22, 0x48,
-    0x73, 0xae, 0x73, 0x1e, 0x10, 0x07, 0x4b, 0x92, 0x2a, 0xae, 0x1e, 0x7b, 0x7d, 0x06, 0xe2, 0x0f, 0x80, 0x08, 0xc3, 0xa5, 0x09, 0x71, 0x57, 0x84, 0x4a, 0xa8, 0x70, 0xe7, 0x61, 0x6b, 0x0c, 0x3c,
+    0x30,
+    0xa6,
+    0x5f,
+    0xd5,
+    0xff,
+    0x3e,
+    0x49,
+    0xe8,
+    0xa9,
+    0xef,
+    0x06,
+    0xa3,
+    0x56,
+    0x4b,
+    0x4f,
+    0x55,
+    0x93,
+    0x0f,
+    0x4a,
+    0x9e,
+    0xe9,
+    0x74,
+    0x13,
+    0xf8,
+    0x4a,
+    0x80,
+    0x44,
+    0x65,
+    0xec,
+    0x62,
+    0x83,
+    0x7a,
+    0x21,
+    0xce,
+    0x96,
+    0x0e,
+    0x27,
+    0x1f,
+    0x81,
+    0x26,
+    0xcb,
+    0xd8,
+    0x42,
+    0x7b,
+    0x7d,
+    0x71,
+    0x6a,
+    0xdc,
+    0xaf,
+    0x4d,
+    0x13,
+    0x52,
+    0x28,
+    0x2b,
+    0xd9,
+    0x70,
+    0xfb,
+    0x90,
+    0x96,
+    0xfe,
+    0x24,
+    0xd2,
+    0x22,
+    0x48,
+    0x73,
+    0xae,
+    0x73,
+    0x1e,
+    0x10,
+    0x07,
+    0x4b,
+    0x92,
+    0x2a,
+    0xae,
+    0x1e,
+    0x7b,
+    0x7d,
+    0x06,
+    0xe2,
+    0x0f,
+    0x80,
+    0x08,
+    0xc3,
+    0xa5,
+    0x09,
+    0x71,
+    0x57,
+    0x84,
+    0x4a,
+    0xa8,
+    0x70,
+    0xe7,
+    0x61,
+    0x6b,
+    0x0c,
+    0x3c,
 };
 
 typedef struct test_data_st {
@@ -79,23 +172,21 @@ typedef struct test_data_st {
 static const TEST_DATA xof_test_data[] = {
     {
         "SHAKE256",
+        shake256_input,
+        sizeof(shake256_input),
+        shake256_output,
+        sizeof(shake256_output),
+    },
+    { "CSHAKE256",
         shake256_input, sizeof(shake256_input),
         shake256_output, sizeof(shake256_output),
-    },
-    {
-        "CSHAKE256",
-        shake256_input, sizeof(shake256_input),
-        shake256_output, sizeof(shake256_output),
-        64
-    },
-    {
-        "CSHAKE256",
+        64 },
+    { "CSHAKE256",
         shake256_input, sizeof(shake256_input),
         cshake256_output, sizeof(cshake256_output),
         64,
         "KMAC",
-        "Custom"
-    },
+        "Custom" },
 };
 
 static const unsigned char shake256_largemsg_input[] = {
@@ -225,8 +316,10 @@ static const unsigned char shake256_largemsg_output[] = {
 static const TEST_DATA large_msg_test_data[] = {
     {
         "SHAKE256",
-        shake256_largemsg_input, sizeof(shake256_largemsg_input),
-        shake256_largemsg_output, sizeof(shake256_largemsg_output),
+        shake256_largemsg_input,
+        sizeof(shake256_largemsg_input),
+        shake256_largemsg_output,
+        sizeof(shake256_largemsg_output),
     },
 };
 
@@ -468,10 +561,10 @@ static const STRIDE_TEST_DATA stride_test_data[] = {
  * represent the expected output.
  */
 static int do_xof_squeeze_test(const TEST_DATA *td,
-                               const STRIDE_TEST_DATA *stride,
-                               const uint8_t *in, size_t inlen,
-                               const uint8_t *expected_out,
-                               size_t expected_outlen)
+    const STRIDE_TEST_DATA *stride,
+    const uint8_t *in, size_t inlen,
+    const uint8_t *expected_out,
+    size_t expected_outlen)
 {
     int ret = 0;
     EVP_MD_CTX *ctx = NULL;
@@ -538,7 +631,7 @@ err:
 }
 
 static const size_t dupoffset_test_data[] = {
-    1, 135, 136, 137, 136*3-1, 136*3, 136*3+1
+    1, 135, 136, 137, 136 * 3 - 1, 136 * 3, 136 * 3 + 1
 };
 
 /* Helper function to test that EVP_MD_CTX_dup() copies the internal state */
@@ -599,7 +692,7 @@ static int xof_squeeze_dup_test(int tstid)
         goto err;
 
     ret = do_xof_squeeze_dup_test(td, dupoffset, msg, sizeof(msg),
-                                  out, sizeof(out));
+        out, sizeof(out));
 err:
     EVP_MD_CTX_free(ctx);
     return ret;
@@ -617,12 +710,12 @@ static int xof_squeeze_no_absorb_test(int tstid)
     memset(out, 0, sizeof(out));
     memset(out2, 0, sizeof(out2));
     if (!TEST_ptr(ctx = xof_digest_setup(td))
-            || !TEST_ptr(ctx2 = EVP_MD_CTX_dup(ctx))
-            || !TEST_true(EVP_DigestFinalXOF(ctx, out, sizeof(out)))
-            || !TEST_true(EVP_DigestSqueeze(ctx2, out2, sizeof(out2) / 2))
-            || !TEST_true(EVP_DigestSqueeze(ctx2, out2 + sizeof(out2) / 2,
-                                            sizeof(out2) / 2))
-            || !TEST_mem_eq(out2, sizeof(out2), out, sizeof(out)))
+        || !TEST_ptr(ctx2 = EVP_MD_CTX_dup(ctx))
+        || !TEST_true(EVP_DigestFinalXOF(ctx, out, sizeof(out)))
+        || !TEST_true(EVP_DigestSqueeze(ctx2, out2, sizeof(out2) / 2))
+        || !TEST_true(EVP_DigestSqueeze(ctx2, out2 + sizeof(out2) / 2,
+            sizeof(out2) / 2))
+        || !TEST_mem_eq(out2, sizeof(out2), out, sizeof(out)))
         goto err;
     ret = 1;
 

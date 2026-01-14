@@ -341,7 +341,7 @@ static int kmac_init(void *vmacctx, const unsigned char *key,
     }
 
     if (!ossl_sp800_185_bytepad(NULL, 0, &out_len, kmac_string, sizeof(kmac_string),
-                                kctx->custom, kctx->custom_len, block_len)) {
+            kctx->custom, kctx->custom_len, block_len)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -349,7 +349,7 @@ static int kmac_init(void *vmacctx, const unsigned char *key,
     if (out == NULL)
         return 0;
     res = ossl_sp800_185_bytepad(out, out_len, NULL, kmac_string, sizeof(kmac_string),
-                                 kctx->custom, kctx->custom_len, block_len)
+              kctx->custom, kctx->custom_len, block_len)
         && EVP_DigestUpdate(ctx, out, out_len)
         && EVP_DigestUpdate(ctx, kctx->key, kctx->key_len);
     OPENSSL_free(out);
@@ -485,8 +485,8 @@ static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
             return 0;
         }
         if (!ossl_sp800_185_encode_string(kctx->custom,
-                                          sizeof(kctx->custom), &kctx->custom_len,
-                                          p.custom->data, p.custom->data_size))
+                sizeof(kctx->custom), &kctx->custom_len,
+                p.custom->data, p.custom->data_size))
             return 0;
     }
 

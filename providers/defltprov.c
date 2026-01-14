@@ -125,9 +125,9 @@ static const OSSL_ALGORITHM deflt_digests[] = {
      * the KMAC-128 and KMAC-256.
      */
     { PROV_NAMES_CSHAKE_KECCAK_128, "provider=default",
-      ossl_cshake_keccak_128_functions },
+        ossl_cshake_keccak_128_functions },
     { PROV_NAMES_CSHAKE_KECCAK_256, "provider=default",
-      ossl_cshake_keccak_256_functions },
+        ossl_cshake_keccak_256_functions },
 
     /* Our primary name:NIST name */
     { PROV_NAMES_SHAKE_128, "provider=default", ossl_shake_128_functions },

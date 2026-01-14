@@ -42,8 +42,8 @@ static unsigned int get_encode_size(size_t bits)
  * e.g if bits = 32, out[2] = { 0x20, 0x01 }
  */
 int ossl_sp800_185_right_encode(unsigned char *out,
-                                size_t out_max_len, size_t *out_len,
-                                size_t bits)
+    size_t out_max_len, size_t *out_len,
+    size_t bits)
 {
     unsigned int len = get_encode_size(bits);
     int i;
@@ -74,8 +74,8 @@ int ossl_sp800_185_right_encode(unsigned char *out,
  *                                 len   bits    K     M     A     C
  */
 int ossl_sp800_185_encode_string(unsigned char *out,
-                                 size_t out_max_len, size_t *out_len,
-                                 const unsigned char *in, size_t in_len)
+    size_t out_max_len, size_t *out_len,
+    const unsigned char *in, size_t in_len)
 {
     if (in == NULL) {
         *out_len = 0;
@@ -111,9 +111,9 @@ int ossl_sp800_185_encode_string(unsigned char *out,
  *    zero_padded(multiple of w, (left_encode(w) || in1 [|| in2])
  */
 int ossl_sp800_185_bytepad(unsigned char *out, size_t out_len_max, size_t *out_len,
-                           const unsigned char *in1, size_t in1_len,
-                           const unsigned char *in2, size_t in2_len,
-                           size_t w)
+    const unsigned char *in1, size_t in1_len,
+    const unsigned char *in2, size_t in2_len,
+    size_t w)
 {
     size_t len;
     unsigned char *p = out;
@@ -133,7 +133,6 @@ int ossl_sp800_185_bytepad(unsigned char *out, size_t out_len_max, size_t *out_l
         *out_len = sz;
         return 1;
     }
-
 
     /* Left encoded w */
     *p++ = 1;
