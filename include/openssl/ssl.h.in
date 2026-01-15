@@ -825,6 +825,10 @@ void SSL_CTX_set_alpn_select_cb(SSL_CTX *ctx,
     void *arg);
 void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
     unsigned int *len);
+void SSL_CTX_get0_alpn_protos(SSL_CTX *ctx, const unsigned char **protos,
+    unsigned int *protos_len);
+void SSL_get0_alpn_protos(SSL *ssl, const unsigned char **protos,
+    unsigned int *protos_len);
 
 #ifndef OPENSSL_NO_PSK
 /*

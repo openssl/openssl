@@ -127,6 +127,10 @@ OpenSSL 4.0
 
    *Igor Ustinov*
 
+ * Added SSL_CTX_get0_alpn_protos() and SSL_get0_alpn_protos().
+
+   *Daniel Kubec*
+
  * Enabled Server verification by default in `s_server` when option
    verify_return_error is enabled.
 
