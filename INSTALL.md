@@ -802,8 +802,7 @@ binary Elliptic curves that would also be disabled by C<no-ec2m>.
 
 ### no-ech
 
-Don't build support for Encrypted Client Hello (ECH) extension (draft-ietf-tls-esni)
-TODO(ECH) update link to RFC.
+Don't build support for Encrypted Client Hello (ECH) extension.
 
 ### enable-ec_nistp_64_gcc_128
 
