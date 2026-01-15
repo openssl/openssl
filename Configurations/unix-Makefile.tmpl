@@ -1181,18 +1181,17 @@ lint: ## Evaluate C code via "splint"
 	   -I. -Iinclude -Iapps/include $(CRYPTOHEADERS) $(SSLHEADERS) $(SRCS) )
 
 CLANG_FORMAT_DIFF = clang-format-diff
-DIFFCMD = $(shell command -v ${CLANG_FORMAT_DIFF})
 
 .PHONY: check-format check-clang-format-diff-cmd
 check-clang-format-diff-cmd:
-	@if [ -z "${DIFFCMD}" ]; then \
+	@if ! command -v "$(CLANG_FORMAT_DIFF)" >/dev/null; then \
 		echo "Unable to find ${CLANG_FORMAT_DIFF}";\
 		echo "Please set the CLANG_FORMAT_DIFF variable to your clang-format-diff command";\
 		exit 1;\
 	fi
 
 check-format: check-clang-format-diff-cmd ## Evaluate C code according to OpenSSL coding standards
-	( cd $(SRCDIR); git diff -U0 --no-prefix --no-color | clang-format-diff )
+	( cd $(SRCDIR); git diff -U0 --no-prefix --no-color | $(CLANG_FORMAT_DIFF) )
 
 generate_apps:
 	( cd $(SRCDIR); $(PERL) VMS/VMSify-conf.pl \
