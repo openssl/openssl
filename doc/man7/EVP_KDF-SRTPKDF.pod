@@ -26,8 +26,6 @@ The supported parameters are:
 
 =over 4
 
-=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
-
 =item "cipher" (B<OSSL_KDF_PARAM_CIPHER>) <UTF8 string>
 
 This parameter sets the cipher to be used for the key derivation.
@@ -43,11 +41,11 @@ for AES-128 or 32 bytes for AES-256.
 This parameter sets the master salt value. This is typically 14 bytes
 as specified in RFC 3711.
 
-=item "kdr" (B<OSSL_KDF_PARAM_SRTPKDF_KDR>) <octet string>
+=item "kdr" (B<OSSL_KDF_PARAM_SRTPKDF_KDR>) <uint32_t>
 
 This parameter sets the key derivation rate (KDR). The KDR controls
 how often keys are rederived. If not set or set to zero, no key
-rederivation is performed. The KDR value is typically 6 bytes.
+rederivation is performed. The KDR value is power of 2 (range 2^0 to 2^24).
 
 =item "index" (B<OSSL_KDF_PARAM_SRTPKDF_INDEX>) <octet string>
 
@@ -55,7 +53,7 @@ This parameter sets the index value used in key derivation. For RTP
 packets, this is typically a 48-bit (6 byte) value. For RTCP packets,
 this is typically a 32-bit (4 byte) value. If not set, defaults to zero.
 
-=item "label" (B<OSSL_KDF_PARAM_SRTPKDF_LABEL>) <integer>
+=item "label" (B<OSSL_KDF_PARAM_SRTPKDF_LABEL>) <uint32_t>
 
 This parameter sets the label that identifies the type of key to derive.
 Valid values are:
@@ -111,7 +109,7 @@ with a 16-byte master key and 14-byte master salt:
  unsigned char out[16];
  unsigned char master_key[16] = { /* master key bytes */ };
  unsigned char master_salt[14] = { /* master salt bytes */ };
- int label = 0;
+ uint32_t label = 0;
  OSSL_PARAM params[5], *p = params;
 
  kdf = EVP_KDF_fetch(NULL, "SRTP", NULL);
@@ -124,7 +122,7 @@ with a 16-byte master key and 14-byte master salt:
                                           master_key, sizeof(master_key));
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
                                           master_salt, sizeof(master_salt));
- *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_SRTPKDF_LABEL, &label);
+ *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_SRTPKDF_LABEL, &label);
  *p = OSSL_PARAM_construct_end();
 
  if (EVP_KDF_derive(kctx, out, sizeof(out), params) <= 0) {
@@ -141,9 +139,9 @@ rate and index:
  unsigned char out[20];
  unsigned char master_key[16] = { /* master key bytes */ };
  unsigned char master_salt[14] = { /* master salt bytes */ };
- unsigned char kdr[6] = { 0x00, 0x00, 0x00, 0x00, 0x10, 0x00 }; /* KDR */
+ uint32_t kdr = 0x1000; /* KDR */
  unsigned char index[6] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 }; /* index */
- int label = 1;
+ uint32_t label = 1;
  OSSL_PARAM params[7], *p = params;
 
  kdf = EVP_KDF_fetch(NULL, "SRTP", NULL);
@@ -156,11 +154,10 @@ rate and index:
                                           master_key, sizeof(master_key));
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
                                           master_salt, sizeof(master_salt));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SRTPKDF_KDR,
-                                          kdr, sizeof(kdr));
+ *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_SRTPKDF_KDR, &kdr);
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SRTPKDF_INDEX,
                                           index, sizeof(index));
- *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_SRTPKDF_LABEL, &label);
+ *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_SRTPKDF_LABEL, &label);
  *p = OSSL_PARAM_construct_end();
 
  if (EVP_KDF_derive(kctx, out, sizeof(out), params) <= 0) {
@@ -184,11 +181,11 @@ L<EVP_KDF(3)/PARAMETERS>
 
 =head1 HISTORY
 
-The SRTP KDF was added in OpenSSL 3.6.
+The SRTPKDF was added in OpenSSL 4.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
