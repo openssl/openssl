@@ -93,7 +93,7 @@ jobs:
       run: echo "FIPS_VENDOR=CI" >> VERSION.dat
     - name: config
       # enable-quic is on by default, but we leave it here to check we're testing the explicit enable somewhere
-      run: CC=gcc ./config --strict-warnings --banner=Configured enable-demos enable-h3demo enable-ec_enable_explicit_curves enable-sslkeylog enable-fips enable-quic enable-lms && perl configdata.pm --dump
+      run: CC=gcc ./config --strict-warnings --banner=Configured enable-demos enable-h3demo enable-ec_explicit_curves enable-sslkeylog enable-fips enable-quic enable-lms && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -414,7 +414,7 @@ jobs:
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
-      run: ./config --strict-warnings --banner=Configured --debug enable-demos enable-h3demo enable-asan enable-ec_enable_explicit_curves enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips enable-lms && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured --debug enable-demos enable-h3demo enable-asan enable-ec_explicit_curves enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-fips enable-lms && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -443,7 +443,7 @@ jobs:
         sudo cat /proc/sys/vm/mmap_rnd_bits
         sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
-      run: ./config --strict-warnings --banner=Configured --debug -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION enable-asan enable-ec_enable_explicit_curves enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-weak-ssl-ciphers enable-nextprotoneg && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured --debug -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION enable-asan enable-ec_explicit_curves enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-weak-ssl-ciphers enable-nextprotoneg && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -474,7 +474,7 @@ jobs:
         sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
       # --debug -O1 is to produce a debug build that runs in a reasonable amount of time
-      run: CC=clang ./config --strict-warnings --banner=Configured --debug no-shared -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ec_enable_explicit_curves enable-fips enable-lms no-slh-dsa && perl configdata.pm --dump
+      run: CC=clang ./config --strict-warnings --banner=Configured --debug no-shared -O1 -fsanitize=memory -DOSSL_SANITIZE_MEMORY -fno-optimize-sibling-calls enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ec_explicit_curves enable-fips enable-lms no-slh-dsa && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -563,7 +563,7 @@ jobs:
     - name: install extra config support
       run: sudo apt-get -y install libsctp-dev abigail-tools libzstd-dev zstd
     - name: config
-      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo enable-ec_enable_explicit_curves enable-ktls enable-fips enable-lms enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-weak-ssl-ciphers enable-trace enable-zlib enable-zstd && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured enable-demos enable-h3demo enable-ec_explicit_curves enable-ktls enable-fips enable-lms enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-weak-ssl-ciphers enable-trace enable-zlib enable-zstd && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -613,7 +613,7 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
-      run: ./config --strict-warnings --banner=Configured --debug enable-demos enable-h3demo no-shared enable-crypto-mdebug enable-rc5 enable-md2 enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-ec_enable_explicit_curves no-fips && perl configdata.pm --dump
+      run: ./config --strict-warnings --banner=Configured --debug enable-demos enable-h3demo no-shared enable-crypto-mdebug enable-rc5 enable-md2 enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-ec_explicit_curves no-fips && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info

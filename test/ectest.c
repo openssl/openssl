@@ -2542,7 +2542,7 @@ err:
     return r;
 }
 
-#ifndef OPENSSL_NO_EC_ENABLE_EXPLICIT_CURVES
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
 /*-
  * random 256-bit explicit parameters curve, cofactor absent
  * order:    0x0c38d96a9f892b88772ec2e39614a82f4f (132 bit)
@@ -2885,7 +2885,7 @@ static int do_test_custom_explicit_fromdata(EC_GROUP *group, BN_CTX *ctx,
     BIGNUM *p, *a, *b;
     BIGNUM *p_out = NULL, *a_out = NULL, *b_out = NULL;
     BIGNUM *order_out = NULL, *cofactor_out = NULL;
-#ifndef OPENSSL_NO_EC_ENABLE_EXPLICIT_CURVES
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
     const OSSL_PARAM *gettable;
     int i_out;
     char name[80];
@@ -2913,13 +2913,13 @@ static int do_test_custom_explicit_fromdata(EC_GROUP *group, BN_CTX *ctx,
         field_name = SN_X9_62_characteristic_two_field;
 #ifndef OPENSSL_NO_EC2M
         if (EC_GROUP_get_basis_type(group) == NID_X9_62_tpBasis) {
-#ifndef OPENSSL_NO_EC_ENABLE_EXPLICIT_CURVES
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
             basis_name = SN_X9_62_tpBasis;
 #endif
             if (!TEST_true(EC_GROUP_get_trinomial_basis(group, &k1)))
                 goto err;
         } else {
-#ifndef OPENSSL_NO_EC_ENABLE_EXPLICIT_CURVES
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
             basis_name = SN_X9_62_ppBasis;
 #endif
             if (!TEST_true(EC_GROUP_get_pentanomial_basis(group, &k1, &k2, &k3)))
@@ -2956,7 +2956,7 @@ static int do_test_custom_explicit_fromdata(EC_GROUP *group, BN_CTX *ctx,
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
         || !TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL))
         || !TEST_int_gt(EVP_PKEY_fromdata_init(pctx), 0)
-#ifdef OPENSSL_NO_EC_ENABLE_EXPLICIT_CURVES
+#ifdef OPENSSL_NO_EC_EXPLICIT_CURVES
         || !TEST_int_le(EVP_PKEY_fromdata(pctx, &pkeyparam,
                             EVP_PKEY_KEY_PARAMETERS, params),
             0)
@@ -2968,7 +2968,7 @@ static int do_test_custom_explicit_fromdata(EC_GROUP *group, BN_CTX *ctx,
     )
         goto err;
 
-#ifndef OPENSSL_NO_EC_ENABLE_EXPLICIT_CURVES
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
     /*- Check that all the set values are retrievable -*/
 
     /* There should be no match to a group name since the generator changed */
@@ -3224,7 +3224,7 @@ static int custom_params_test(int id)
     unsigned char *pub1 = NULL, *pub2 = NULL;
     OSSL_PARAM_BLD *param_bld = NULL;
     OSSL_PARAM *params1 = NULL, *params2 = NULL;
-#ifndef OPENSSL_NO_EC_ENABLE_EXPLICIT_CURVES
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
     const unsigned char *export = NULL;
     size_t export_size = 0;
     size_t sslen, t;
@@ -3396,7 +3396,7 @@ static int custom_params_test(int id)
         goto err;
     eckey2 = NULL; /* ownership passed to pkey2 */
 
-#ifdef OPENSSL_NO_EC_ENABLE_EXPLICIT_CURVES
+#ifdef OPENSSL_NO_EC_EXPLICIT_CURVES
     /* Compute keyexchange in both directions - fail with custom params */
     if (!TEST_ptr(pctx1 = EVP_PKEY_CTX_new(pkey1, NULL))
         || !TEST_int_le(EVP_PKEY_derive_init(pctx1), 0))
@@ -3569,7 +3569,7 @@ int setup_tests(void)
 
     ADD_TEST(parameter_test);
     ADD_TEST(ossl_parameter_test);
-#ifndef OPENSSL_NO_EC_ENABLE_EXPLICIT_CURVES
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
     ADD_TEST(cofactor_range_test);
 #endif
     ADD_ALL_TESTS(cardinality_test, (int)crv_len);

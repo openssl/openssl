@@ -38,7 +38,7 @@ OpenSSL 4.0
 
  * Support of explicit EC curves was disabled by default, an error will occur if
    an explicit EC curve doesn't match any known one. New configuration option,
-   `enable-ec_enable_explicit_curves` is added.
+   `enable-ec_explicit_curves` is added.
 
    *Dmitry Belyavskiy*
 

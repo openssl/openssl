@@ -5438,7 +5438,7 @@ start:
         pkey = PEM_read_bio_PrivateKey_ex(t->s.key, NULL, 0, NULL, libctx, NULL);
         if (pkey == NULL)
             unsupported = key_unsupported();
-#ifdef OPENSSL_NO_EC_ENABLE_EXPLICIT_CURVES
+#ifdef OPENSSL_NO_EC_EXPLICIT_CURVES
         if (strcmp(pp->value, "EC_EXPLICIT") == 0)
             unsupported = 1;
 #endif

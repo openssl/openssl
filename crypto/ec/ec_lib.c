@@ -1551,7 +1551,7 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
     int is_prime_field = 1;
     BN_CTX *bnctx = NULL;
     const unsigned char *buf = NULL;
-#ifndef OPENSSL_NO_EC_ENABLE_EXPLICIT_CURVES
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
     int encoding_flag = -1;
 #endif
 #endif
@@ -1728,7 +1728,7 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
         goto err;
     }
     if (named_group == group) {
-#ifdef OPENSSL_NO_EC_ENABLE_EXPLICIT_CURVES
+#ifdef OPENSSL_NO_EC_EXPLICIT_CURVES
         if (EC_GROUP_check_named_curve(group, 0, NULL) == NID_undef) {
             ERR_raise(ERR_LIB_EC, EC_R_UNKNOWN_GROUP);
             goto err;
