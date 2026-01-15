@@ -641,7 +641,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
                     break;
             if (*keytypes == NULL) {
                 ERR_raise(ERR_LIB_EVP, EVP_R_SIGNATURE_TYPE_AND_KEY_TYPE_INCOMPATIBLE);
-                return -2;
+                ret = -2;
+                goto end;
             }
         } else {
             /*
@@ -667,12 +668,13 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
             /* If none of the fallbacks helped, we're lost */
             if (!ok) {
                 ERR_raise(ERR_LIB_EVP, EVP_R_SIGNATURE_TYPE_AND_KEY_TYPE_INCOMPATIBLE);
-                return -2;
+                ret = -2;
+                goto end;
             }
         }
 
         if (!EVP_SIGNATURE_up_ref(signature))
-            return 0;
+            goto err;
     } else {
         /* Without a pre-fetched signature, it must be figured out somehow */
         ERR_set_mark();
