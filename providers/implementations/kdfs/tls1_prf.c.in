@@ -341,6 +341,7 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                 return 0;
         } else {
             EVP_MAC_CTX_free(ctx->P_sha1);
+            ctx->P_sha1 = NULL;
             if (!ossl_prov_macctx_load(&ctx->P_hash, NULL, NULL, p.digest,
                     p.propq, p.engine,
                     OSSL_MAC_NAME_HMAC, NULL, NULL, libctx))
