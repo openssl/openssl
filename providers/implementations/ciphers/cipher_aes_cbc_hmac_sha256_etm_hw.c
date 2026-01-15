@@ -126,7 +126,7 @@ static void sha256_update(SHA256_CTX *c, const void *data, size_t len)
     }
 
     if (res)
-        SHA256_Update(c, ptr, res);
+        SHA256_Update(c, (const void *)ptr, res);
 }
 
 static void aes_cbc_hmac_sha256_set_mac_key(void *vctx,

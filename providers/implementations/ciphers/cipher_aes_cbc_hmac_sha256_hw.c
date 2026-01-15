@@ -79,7 +79,7 @@ static void sha256_update(SHA256_CTX *c, const void *data, size_t len)
         res = SHA256_CBLOCK - res;
         if (len < res)
             res = len;
-        SHA256_Update(c, ptr, res);
+        SHA256_Update(c, (const void *)ptr, res);
         ptr += res;
         len -= res;
     }
@@ -98,7 +98,7 @@ static void sha256_update(SHA256_CTX *c, const void *data, size_t len)
     }
 
     if (res)
-        SHA256_Update(c, ptr, res);
+        SHA256_Update(c, (const void *)ptr, res);
 }
 
 #if !defined(OPENSSL_NO_MULTIBLOCK)
