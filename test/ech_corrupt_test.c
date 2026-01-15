@@ -1509,7 +1509,7 @@ static int test_sh_corrupt(int testidx)
     }
     if (!TEST_true(SSL_set_tlsext_host_name(client, "foo.example.com")))
         goto end;
-    if (ts->borkage & OSSL_ECH_BORK_HRR
+    if ((ts->borkage & OSSL_ECH_BORK_HRR) != 0
         && !TEST_true(SSL_set1_groups_list(server, "P-384")))
         goto end;
     exp_err = SSL_ERROR_SSL;

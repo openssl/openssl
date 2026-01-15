@@ -279,8 +279,7 @@ err:
 /*
  * Send a random value that looks like a real ECH.
  *
- * The "best" thing to do here is not yet known. For now, we do GREASEing as
- * currently (20241102) done by chrome:
+ * We do GREASEing as follows:
  *   - always HKDF-SHA256
  *   - always AES-128-GCM
  *   - random config ID, even for requests to same server in same session
