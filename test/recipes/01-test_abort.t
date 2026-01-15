@@ -8,8 +8,13 @@
 
 
 use OpenSSL::Test;
+use OpenSSL::Test::Utils;
+use OpenSSL::Test::Simple;
 
 setup("test_abort");
+
+plan skip_all => "This test should not be run under valgrind"
+    if ( defined $ENV{OSSL_USE_VALGRIND} );
 
 plan tests => 1;
 
