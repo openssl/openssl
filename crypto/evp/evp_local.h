@@ -12,6 +12,10 @@
 
 #define EVP_CTRL_RET_UNSUPPORTED -1
 
+/*
+ * Length of the BASE64-encoded lines when encoding.
+ * This needs to be divisible by 3 to keep the AVX2 optimized code path.
+ */
 #define EVP_ENCODE_B64_LENGTH 48
 
 struct evp_md_ctx_st {
