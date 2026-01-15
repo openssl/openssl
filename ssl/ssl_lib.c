@@ -3772,6 +3772,47 @@ int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
 }
 
 /*
+ * SSL_CTX_set_get0_protos gets the ALPN protocol list on |ctx| to |protos|.
+ */
+void SSL_CTX_get0_alpn_protos(SSL_CTX *ctx, const unsigned char **protos,
+    unsigned int *protos_len)
+{
+    unsigned char *p = NULL;
+    unsigned int len = 0;
+
+    if (ctx != NULL) {
+        p = ctx->ext.alpn;
+        len = (unsigned int)ctx->ext.alpn_len;
+    }
+
+    if (protos != NULL)
+        *protos = p;
+    if (protos_len != NULL)
+        *protos_len = len;
+}
+
+/*
+ * SSL_get0_alpn_protos gets the ALPN protocol list on |ssl| to |protos|.
+ */
+void SSL_get0_alpn_protos(SSL *ssl, const unsigned char **protos,
+    unsigned int *protos_len)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+    unsigned char *p = NULL;
+    unsigned int len = 0;
+
+    if (sc != NULL) {
+        p = sc->ext.alpn;
+        len = (unsigned int)sc->ext.alpn_len;
+    }
+
+    if (protos != NULL)
+        *protos = p;
+    if (protos_len != NULL)
+        *protos_len = len;
+}
+
+/*
  * SSL_CTX_set_alpn_select_cb sets a callback function on |ctx| that is
  * called during ClientHello processing in order to select an ALPN protocol
  * from the client's list of offered protocols.

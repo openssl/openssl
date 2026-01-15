@@ -11550,6 +11550,57 @@ end:
     return testresult;
 }
 
+static int test_get_alpn(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    int testresult = 0;
+    unsigned char good[] = { 0x04, 'g', 'o', 'o', 'd' };
+    const unsigned char *expect;
+    unsigned int expect_len;
+
+    /* Create an initial SSL_CTX with no certificate configured */
+    ctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
+    if (!TEST_ptr(ctx))
+        goto end;
+
+    SSL_CTX_get0_alpn_protos(NULL, &expect, &expect_len);
+    if (!TEST_ptr_null(expect))
+        goto end;
+    if (!TEST_int_eq(expect_len, 0))
+        goto end;
+    if (!TEST_false(SSL_CTX_set_alpn_protos(ctx, good, sizeof(good))))
+        goto end;
+
+    SSL_CTX_get0_alpn_protos(ctx, &expect, &expect_len);
+    if (!TEST_mem_eq(expect, expect_len, good, sizeof(good)))
+        goto end;
+
+    ssl = SSL_new(ctx);
+    if (!TEST_ptr(ssl))
+        goto end;
+
+    SSL_get0_alpn_protos(NULL, &expect, &expect_len);
+    if (!TEST_ptr_null(expect))
+        goto end;
+    if (!TEST_int_eq(expect_len, 0))
+        goto end;
+
+    if (!TEST_false(SSL_set_alpn_protos(ssl, good, sizeof(good))))
+        goto end;
+
+    SSL_get0_alpn_protos(ssl, &expect, &expect_len);
+    if (!TEST_mem_eq(expect, expect_len, good, sizeof(good)))
+        goto end;
+
+    testresult = 1;
+
+end:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return testresult;
+}
+
 #if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_TLS1_2)
 /*
  * Complete a connection with legacy EC point format configuration
@@ -14052,6 +14103,7 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_inherit_verify_param);
     ADD_TEST(test_set_alpn);
+    ADD_TEST(test_get_alpn);
 #if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_TLS1_2)
     ADD_TEST(test_legacy_ec_point_formats);
 #endif
