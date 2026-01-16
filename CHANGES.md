@@ -89,6 +89,10 @@ OpenSSL 4.0
 
    *David von Oheimb*
 
+ * Drop darwin-i386(-cc) targets from Configurations.
+
+   *Daniel Kubec*
+
  * Added `-hmac-env` and `-hmac-stdin` options to openssl-dgst.
 
    *Igor Ustinov*
