@@ -381,8 +381,14 @@ end:
 #ifndef OPENSSL_NO_SECURE_MEMORY
     CRYPTO_secure_malloc_done();
 #endif
-#if defined(OPENSSL_VALGRIND_H_INCLUDED) && defined(RUNNING_ON_VALGRIND)
+
+#if defined(OPENSSL_VALGRIND_TEST)
+#if defined(OPENSSL_VALGRIND_H_INCLUDED)
+#if defined(RUNNING_ON_VALGRIND)
     /*
+     * Enable special behaviour if we are compiled with
+     * OPENSSL_VALGRIND_TEST defined.
+     *
      * Somewhat paradoxically, we do *NOT* want to clean up normally
      * when running our tests using valgrind in order to test the
      * suppression file which we will ship with the distribution. We
@@ -391,10 +397,15 @@ end:
      * valgrind, *and* that environment variable is set. If you run
      * this under valgrind without that environment variable set, it
      * will still call OPENSSL_cleanup normally.
+     *
      */
     if (RUNNING_ON_VALGRIND && getenv("OSSL_USE_VALGRIND") != NULL)
         EXIT(ret);
-#endif /* defined(OPENSSL_VALGRIND_H_INCLUDED) && defined(RUNNING_ON_VALGRIND) */
+#endif /* defined(RUNNING_ON_VALGRIND) */
+#else
+#error "OPENSSL_VALGRIND_TEST is defined, but <valgrind/valgrind.h> could not be included!"
+#endif /* defined(OPENSSL_VALGRIND_H_INCLUDED) */
+#endif /* defined(OPENSSL_VALGRIND_TEST) */
     OPENSSL_cleanup();
     EXIT(ret);
 }
