@@ -240,6 +240,7 @@ providers/implementations/rands/test_rng.inc
 /demos/digest/EVP_MD_demo
 /demos/digest/EVP_MD_stdin
 /demos/digest/EVP_MD_xof
+/demos/digest/nonce_chain
 /demos/encode/ec_encode
 /demos/encode/rsa_encode
 /demos/encrypt/rsa_encrypt
