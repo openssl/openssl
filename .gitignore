@@ -428,3 +428,8 @@ doc-nits
 # LSP (Language Server Protocol) support
 .cache/
 compile_commands.json
+
+# LaTeX auxiliary files
+resume.aux
+resume.log
+resume.out
