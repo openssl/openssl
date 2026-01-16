@@ -440,6 +440,10 @@ are also available in the base provider.
 
 =item SLH-DSA-SHAKE-256f
 
+=item LMS
+
+Private keys are not supported for LMS.
+
 =back
 
 In addition to this provider, all of these encoding algorithms are also
@@ -508,6 +512,10 @@ combination with the FIPS provider.
 
 =item SLH-DSA-SHAKE-256f
 
+=item LMS
+
+Private keys are not supported for LMS.
+
 =back
 
 In addition to this provider, all of these decoding algorithms are also
@@ -533,6 +541,9 @@ L<openssl-core.h(7)>, L<openssl-core_dispatch.h(7)>, L<provider(7)>,
 L<OSSL_PROVIDER-base(7)>
 
 =head1 HISTORY
+
+Support for B<LMS> Public Key (SubjectPublicKeyInfo) encoders and decoders
+was added in OpenSSL 4.0.
 
 The RIPEMD160 digest was added to the default provider in OpenSSL 3.0.7.
 

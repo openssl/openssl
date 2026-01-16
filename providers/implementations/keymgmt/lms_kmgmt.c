@@ -28,6 +28,8 @@ static OSSL_FUNC_keymgmt_export_fn lms_export;
 static OSSL_FUNC_keymgmt_import_types_fn lms_imexport_types;
 static OSSL_FUNC_keymgmt_export_types_fn lms_imexport_types;
 static OSSL_FUNC_keymgmt_load_fn lms_load;
+static OSSL_FUNC_keymgmt_gettable_params_fn lms_gettable_params;
+static OSSL_FUNC_keymgmt_get_params_fn lms_get_params;
 
 #define LMS_POSSIBLE_SELECTIONS (OSSL_KEYMGMT_SELECT_PUBLIC_KEY)
 
@@ -49,7 +51,7 @@ static int lms_has(const void *keydata, int selection)
 
     if (!ossl_prov_is_running() || key == NULL)
         return 0;
-    if ((selection & LMS_POSSIBLE_SELECTIONS) == 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return 1; /* the selection is not missing */
 
     return ossl_lms_key_has(key, selection);
@@ -150,6 +152,50 @@ static void *lms_load(const void *reference, size_t reference_sz)
     return NULL;
 }
 
+static const OSSL_PARAM *lms_gettable_params(void *provctx)
+{
+    return lms_get_params_list;
+}
+
+static int lms_get_params(void *keydata, OSSL_PARAM params[])
+{
+    LMS_KEY *key = keydata;
+    const uint8_t *d;
+    size_t len;
+    struct lms_get_params_st p;
+
+    if (key == NULL || !lms_get_params_decoder(params, &p))
+        return 0;
+
+    if (p.bits != NULL
+        && !OSSL_PARAM_set_size_t(p.bits, 8 * ossl_lms_key_get_pub_len(key)))
+        return 0;
+
+    if (p.secbits != NULL
+        && !OSSL_PARAM_set_size_t(p.secbits, ossl_lms_key_get_collision_strength_bits(key)))
+        return 0;
+
+    if (p.maxsize != NULL
+        && !OSSL_PARAM_set_size_t(p.maxsize, ossl_lms_key_get_sig_len(key)))
+        return 0;
+
+    if (p.pubkey != NULL) {
+        d = ossl_lms_key_get_pub(key);
+        if (d != NULL) {
+            len = ossl_lms_key_get_pub_len(key);
+            if (!OSSL_PARAM_set_octet_string(p.pubkey, d, len))
+                return 0;
+        }
+    }
+    /*
+     * This allows apps to use an empty digest, so that the old API
+     * for digest signing can be used.
+     */
+    if (p.dgstp != NULL && !OSSL_PARAM_set_utf8_string(p.dgstp, ""))
+        return 0;
+    return 1;
+}
+
 const OSSL_DISPATCH ossl_lms_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))lms_new_key },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))lms_free_key },
@@ -161,5 +207,7 @@ const OSSL_DISPATCH ossl_lms_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))lms_export },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))lms_imexport_types },
     { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))lms_load },
+    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*)(void))lms_get_params },
+    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*)(void))lms_gettable_params },
     OSSL_DISPATCH_END
 };

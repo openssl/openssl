@@ -276,9 +276,10 @@ static int collect_decoder_keymgmt(EVP_KEYMGMT *keymgmt, OSSL_DECODER *decoder,
     OSSL_TRACE_BEGIN(DECODER)
     {
         BIO_printf(trc_out,
-            "(ctx %p) Checking out decoder %p:\n"
+            "(ctx %p) Checking out decoder %p (%s):\n"
             "    %s with %s\n",
             (void *)data->ctx, (void *)decoder,
+            OSSL_DECODER_get0_description(decoder),
             OSSL_DECODER_get0_name(decoder),
             OSSL_DECODER_get0_properties(decoder));
     }
@@ -337,9 +338,10 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
     OSSL_TRACE_BEGIN(DECODER)
     {
         BIO_printf(trc_out,
-            "(ctx %p) Checking out decoder %p:\n"
+            "(ctx %p) Checking out decoder %p (%s):\n"
             "    %s with %s\n",
             (void *)data->ctx, (void *)decoder,
+            OSSL_DECODER_get0_description(decoder),
             OSSL_DECODER_get0_name(decoder),
             OSSL_DECODER_get0_properties(decoder));
     }
@@ -417,6 +419,13 @@ static void collect_keymgmt(EVP_KEYMGMT *keymgmt, void *arg)
     if (!EVP_KEYMGMT_up_ref(keymgmt))
         return;
 
+    OSSL_TRACE_BEGIN(DECODER)
+    {
+        BIO_printf(trc_out,
+            "(Collecting KeyManager %s %s [id %d]:\n",
+            keymgmt->description, keymgmt->type_name, keymgmt->id);
+    }
+    OSSL_TRACE_END(DECODER);
     if (sk_EVP_KEYMGMT_push(data->keymgmts, keymgmt) <= 0) {
         EVP_KEYMGMT_free(keymgmt);
         data->error_occurred = 1;
