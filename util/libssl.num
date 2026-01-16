@@ -298,7 +298,7 @@ SSL_get_srp_username                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 SSL_get_srp_userinfo                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,SRP
 SSL_CTX_set_client_hello_cb             ?	4_0_0	EXIST::FUNCTION:
 SSL_CTX_set_new_pending_conn_cb         ?	4_0_0	EXIST::FUNCTION:
-SSL_client_hello_isv2                   ?	4_0_0	EXIST::FUNCTION:
+SSL_client_hello_isv2                   ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_0
 SSL_client_hello_get0_legacy_version    ?	4_0_0	EXIST::FUNCTION:
 SSL_client_hello_get0_random            ?	4_0_0	EXIST::FUNCTION:
 SSL_client_hello_get0_session_id        ?	4_0_0	EXIST::FUNCTION:
@@ -606,5 +606,6 @@ SSL_set_quic_tls_cbs                    ?	4_0_0	EXIST::FUNCTION:
 SSL_set_quic_tls_transport_params       ?	4_0_0	EXIST::FUNCTION:
 SSL_set_quic_tls_early_data_enabled     ?	4_0_0	EXIST::FUNCTION:
 SSL_CTX_is_quic                         ?	4_0_0	EXIST::FUNCTION:
+SSL_CTX_is_server                       ?	4_0_0	EXIST::FUNCTION:
 OSSL_QUIC_method                        ?	4_0_0	EXIST::FUNCTION:QUIC
 SSL_listen_ex                           ?	4_0_0	EXIST::FUNCTION:

@@ -51,12 +51,13 @@ list received from the client on B<ssl>. If B<ssl> is NULL, no ciphers are
 available, or B<ssl> is not operating in server mode, NULL is returned.
 
 SSL_bytes_to_cipher_list() treats the supplied B<len> octets in B<bytes>
-as a wire-protocol cipher suite specification (in the three-octet-per-cipher
-SSLv2 wire format if B<isv2format> is nonzero; otherwise the two-octet
-SSLv3/TLS wire format), and parses the cipher suites supported by the library
+as a wire-protocol cipher suite specification in the two-octet
+SSLv3/TLS wire format, and parses the cipher suites supported by the library
 into the returned stacks of SSL_CIPHER objects sk and Signalling Cipher-Suite
-Values scsvs.  Unsupported cipher suites are ignored.  Returns 1 on success
-and 0 on failure.
+Values scsvs.
+The B<isv2format> is no longer supported and should always be set to 0.
+Unsupported cipher suites are ignored.
+Returns 1 on success and 0 on failure.
 
 SSL_get_cipher_list() returns a pointer to the name of the SSL_CIPHER
 listed for B<ssl> with B<priority>. If B<ssl> is NULL, no ciphers are
