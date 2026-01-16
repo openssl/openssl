@@ -354,8 +354,6 @@ struct ossl_record_layer_st {
 
     /* records being received in the current epoch */
     DTLS_BITMAP bitmap;
-    /* renegotiation starts a new set of sequence numbers */
-    DTLS_BITMAP next_bitmap;
 
     /* DTLS curr mtu size */
     size_t curr_mtu;
@@ -364,6 +362,14 @@ struct ossl_record_layer_st {
      * Whether we are currently in a handshake or not. Only maintained for DTLS
      */
     int in_init;
+
+    /*
+     * DTLSv1.3 uses encrypted sequence numbers in epoch 1 and beyond.
+     * For records that are buffered we need to put a priority on the
+     * buffered records.
+     */
+    int dtls13_epoch_1_seq;
+    int dtls13_epoch_2_seq;
 
     /* Callbacks */
     void *cbarg;
