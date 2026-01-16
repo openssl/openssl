@@ -254,24 +254,25 @@ static int test_multiname_selfsigned(void)
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
     int fails = 0;
+    int ret = 0;
 
     if (!TEST_ptr((cert = X509_from_strings(multiname_cert))))
-        return 0;
+        goto err;
 
     if (!TEST_true(X509_self_signed(cert, 1)))
-        return 0;
+        goto err;
 
     if (!TEST_ptr(store = X509_STORE_new()))
-        return 0;
+        goto err;
 
     if (!TEST_true(X509_STORE_add_cert(store, cert)))
-        return 0;
+        goto err;
 
     if (!TEST_ptr((vpm = X509_STORE_get0_param(store))))
-        return 0;
+        goto err;
 
     if (!TEST_ptr(ctx = X509_STORE_CTX_new()))
-        return 0;
+        goto err;
 
     X509_VERIFY_PARAM_set_time(vpm, multiname_valid_at);
 
@@ -279,96 +280,96 @@ static int test_multiname_selfsigned(void)
 
     /* This should get length from strlen() */
     if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "muppetry.ca", 0)))
-        return 0;
+        goto err;
     if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
-        return 0;
+        goto err;
     if (!TEST_true(X509_verify_cert(ctx)))
         fails++;
     X509_STORE_CTX_cleanup(ctx);
     if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
-        return 0;
+        goto err;
 
     /* Should succeed, correct length with the \0 byte not included. */
     if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "muppetry.ca", strlen("muppetry.ca"))))
-        return 0;
+        goto err;
     if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
-        return 0;
+        goto err;
     if (!TEST_true(X509_verify_cert(ctx)))
         fails++;
     X509_STORE_CTX_cleanup(ctx);
     if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
-        return 0;
+        goto err;
 
     /* We oddly permit passing in an embedded \0 byte with the length as the last byte */
     if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "muppetry.ca", sizeof("muppetry.ca"))))
-        return 0;
+        goto err;
     if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
-        return 0;
+        goto err;
     if (!TEST_true(X509_verify_cert(ctx)))
         fails++;
     X509_STORE_CTX_cleanup(ctx);
     if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
-        return 0;
+        goto err;
 
     /* Calls strlen(), so should succeed */
     if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "muppetry.ca\0", 0)))
-        return 0;
+        goto err;
     if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
-        return 0;
+        goto err;
     if (!TEST_true(X509_verify_cert(ctx)))
         fails++;
     X509_STORE_CTX_cleanup(ctx);
     if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
-        return 0;
+        goto err;
 
     /* Should fail, as we now have two embedded \0's at the end included in the length */
     if (!TEST_false(X509_VERIFY_PARAM_set1_host(vpm, "muppetry.ca\0", sizeof("muppetry.ca\0"))))
-        return 0;
+        goto err;
 
     /* This should work with the string terminated at the right place */
     if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "muppetry.caaaaaaaaaaaaaaaaaaaaaaaa", strlen("muppetry.ca"))))
-        return 0;
+        goto err;
     if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
-        return 0;
+        goto err;
     if (!TEST_true(X509_verify_cert(ctx)))
         fails++;
     X509_STORE_CTX_cleanup(ctx);
     if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
-        return 0;
+        goto err;
 
     /* This should work but fail to verify as we pick up an extra 'a' */
     if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "muppetry.caaaaaaaaaaaaaaaaaaaaaaaa", sizeof("muppetry.ca"))))
-        return 0;
+        goto err;
     if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
-        return 0;
+        goto err;
     if (!TEST_false(X509_verify_cert(ctx)))
         fails++;
     X509_STORE_CTX_cleanup(ctx);
     if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
-        return 0;
+        goto err;
 
     for (size_t i = 0; multiname_dnsnames[i] != NULL; i++) {
         /* Try one not in the certificate */
         if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "bunsen.muppetry.ca", 0)))
-            return 0;
+            goto err;
         if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
-            return 0;
+            goto err;
         if (!TEST_false(X509_verify_cert(ctx))) {
             TEST_info("Verify succeeded for non-present name bunsen.muppetry.ca\n");
-            return 0;
+            goto err;
         }
         X509_STORE_CTX_cleanup(ctx);
         if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
-            return 0;
+            goto err;
         if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
-            return 0;
+            goto err;
         if (!TEST_true(X509_verify_cert(ctx)))
-            return 0;
+            goto err;
         X509_STORE_CTX_cleanup(ctx);
         if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, multiname_dnsnames[i], strlen(multiname_dnsnames[i]))))
-            return 0;
+            goto err;
         if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
-            return 0;
+            goto err;
         if (!TEST_true(X509_verify_cert(ctx))) {
             TEST_info("Verify failed for initial name %s\n", multiname_dnsnames[i]);
             fails++;
@@ -377,9 +378,9 @@ static int test_multiname_selfsigned(void)
         for (size_t j = 0; multiname_dnsnames[j] != NULL; j++) {
             if (j != i) {
                 if (!TEST_true(X509_VERIFY_PARAM_add1_host(vpm, multiname_dnsnames[j], 0)))
-                    return 0;
+                    goto err;
                 if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
-                    return 0;
+                    goto err;
                 if (!TEST_true(X509_verify_cert(ctx))) {
                     TEST_info("Verify failed with added name %s\n", multiname_dnsnames[j]);
                     fails++;
@@ -389,9 +390,9 @@ static int test_multiname_selfsigned(void)
         }
         /* Try the CN */
         if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
-            return 0;
+            goto err;
         if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "beaker.muppetry.ca", 0)))
-            return 0;
+            goto err;
         if (!TEST_true(X509_verify_cert(ctx))) {
             TEST_info("Verify failed for CN name beaker.muppetry.ca\n");
             fails++;
@@ -399,14 +400,14 @@ static int test_multiname_selfsigned(void)
         /* Try the CN again */
         X509_VERIFY_PARAM_set_hostflags(vpm, X509_CHECK_FLAG_NEVER_CHECK_SUBJECT);
         if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
-            return 0;
+            goto err;
         if (!TEST_false(X509_verify_cert(ctx))) {
             TEST_info("Verify succeeded for CN name beaker.muppetry.ca when it should not\n");
             fails++;
         }
         X509_STORE_CTX_cleanup(ctx);
         if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
-            return 0;
+            goto err;
     }
 
     /*
@@ -415,57 +416,60 @@ static int test_multiname_selfsigned(void)
 
     /* A dnsname, email and ip that are all valid in the cert should succeed */
     if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "www.muppetry.ca", 0)))
-        return 0;
+        goto err;
     if (!TEST_true(X509_VERIFY_PARAM_set1_ip_asc(vpm, "2001:503:ba3e::2:30")))
-        return 0;
+        goto err;
     if (!TEST_true(X509_VERIFY_PARAM_set1_email(vpm, "waldorf@mupptery.ca", 0)))
-        return 0;
+        goto err;
     if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
-        return 0;
+        goto err;
     if (!TEST_true(X509_verify_cert(ctx)))
         fails++;
     X509_STORE_CTX_cleanup(ctx);
 
     /* Setting an non-matching email should fail validation even with valid dnsname and ip */
     if (!TEST_true(X509_VERIFY_PARAM_set1_email(vpm, "bunsen@mupptery.ca", 0)))
-        return 0;
+        goto err;
     if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
-        return 0;
+        goto err;
     if (!TEST_false(X509_verify_cert(ctx)))
         fails++;
     X509_STORE_CTX_cleanup(ctx);
     /* reset */
     if (!TEST_true(X509_VERIFY_PARAM_set1_email(vpm, "waldorf@mupptery.ca", 0)))
-        return 0;
+        goto err;
 
     /* Setting an non-matching ip should fail validation even with valid dnsname and email */
     if (!TEST_true(X509_VERIFY_PARAM_set1_ip_asc(vpm, "199.185.178.80")))
-        return 0;
+        goto err;
     if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
-        return 0;
+        goto err;
     if (!TEST_false(X509_verify_cert(ctx)))
         fails++;
     X509_STORE_CTX_cleanup(ctx);
     /* reset */
     if (!TEST_true(X509_VERIFY_PARAM_set1_ip_asc(vpm, "2001:503:ba3e::2:30")))
-        return 0;
+        goto err;
 
     /* Setting an non-matching dnsname should fail validation even with valid ip and email */
     if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "www.libressl.org", 0)))
-        return 0;
+        goto err;
     if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
-        return 0;
+        goto err;
     if (!TEST_false(X509_verify_cert(ctx)))
         fails++;
     X509_STORE_CTX_cleanup(ctx);
     /* reset */
     if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "www.muppetry.ca", 0)))
-        return 0;
+        goto err;
 
+    ret = fails == 0;
+
+err:
     X509_STORE_free(store);
     X509_STORE_CTX_free(ctx);
     X509_free(cert);
-    return fails == 0;
+    return ret;
 }
 
 static int test_self_signed_good(void)
