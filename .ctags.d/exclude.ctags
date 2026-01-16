@@ -10,4 +10,3 @@
 # List file names or patterns you want ctags to ignore.
 --exclude=.ctags.d
 --exclude=test
---exclude=check-format-test-positives.c
