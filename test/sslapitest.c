@@ -9992,8 +9992,8 @@ static int test_multiblock_write(int test_index)
      * i.e: write_len >= 4 * frag_size
      * 9 * is chosen so that multiple multiblocks are used + some leftover.
      */
-    unsigned char msg[MULTIBLOCK_FRAGSIZE * 9];
-    unsigned char buf[sizeof(msg)], *p = buf;
+    unsigned char msg[MULTIBLOCK_FRAGSIZE * 9] = { 0 };
+    unsigned char buf[sizeof(msg)] = { 0 }, *p = buf;
     size_t readbytes, written, len;
     EVP_CIPHER *ciph = NULL;
 
