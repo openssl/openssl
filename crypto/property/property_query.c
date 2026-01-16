@@ -30,7 +30,7 @@ ossl_property_find_property(const OSSL_PROPERTY_LIST *list,
         return NULL;
 
     return ossl_bsearch(&name_idx, list->properties, list->num_properties,
-        sizeof(*list->properties), &property_idx_cmp, 0);
+        sizeof(*list->properties), &property_idx_cmp, NULL, 0);
 }
 
 OSSL_PROPERTY_TYPE ossl_property_get_type(const OSSL_PROPERTY_DEFINITION *prop)

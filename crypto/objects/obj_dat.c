@@ -618,7 +618,7 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
     int (*cmp)(const void *, const void *),
     int flags)
 {
-    const char *p = ossl_bsearch(key, base, num, size, cmp, flags);
+    const char *p = ossl_bsearch(key, base, num, size, cmp, NULL, flags);
 
 #ifdef CHARSET_EBCDIC
     /*
