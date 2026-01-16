@@ -68,6 +68,10 @@ curl https://api.x.ai/v1/chat/completions \
 - `.env.example` - Template for environment variables
 - `test_grok_api.py` - Python script to test API integration
 
+## TODO
+
+- Create `resume.pdf` using LaTeX
+
 ## Security Notes
 
 - Never commit your actual API key to the repository
