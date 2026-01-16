@@ -223,7 +223,7 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (cipher == NULL)
         return 0;
     if (!EVP_CIPHER_is_a(cipher, "AES-128-CTR") && !EVP_CIPHER_is_a(cipher, "AES-192-CTR")
-            && !EVP_CIPHER_is_a(cipher, "AES-256-CTR"))
+        && !EVP_CIPHER_is_a(cipher, "AES-256-CTR"))
         return 0;
 
     if ((p.key != NULL)
