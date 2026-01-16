@@ -497,7 +497,7 @@ static STACK_OF(OPENSSL_STRING) *get_email(const X509_NAME *name,
     GENERAL_NAMES *gens)
 {
     STACK_OF(OPENSSL_STRING) *ret = NULL;
-    X509_NAME_ENTRY *ne;
+    const X509_NAME_ENTRY *ne;
     const ASN1_IA5STRING *email;
     GENERAL_NAME *gen;
     int i = -1;
