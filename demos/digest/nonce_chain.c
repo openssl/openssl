@@ -20,7 +20,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
-/* Buffer size for nonce string (sufficient for unsigned long) */
+/* Buffer size for nonce string (20 digits for max unsigned long on 64-bit) */
 #define NONCE_BUFFER_SIZE 20
 /* Progress reporting interval */
 #define PROGRESS_INTERVAL 100000
@@ -101,8 +101,8 @@ static int find_nonce(void)
         goto cleanup;
     }
 
-    /* Allocate buffer for data + nonce */
-    input_size = strlen(data) + NONCE_BUFFER_SIZE;
+    /* Allocate buffer for data + nonce + null terminator */
+    input_size = strlen(data) + NONCE_BUFFER_SIZE + 1;
     input = OPENSSL_malloc(input_size);
     if (input == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
