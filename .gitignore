@@ -1,6 +1,10 @@
 # Ignore editor artefacts
 /.dir-locals.el
 
+# Environment files
+.env
+.env.local
+
 # Top level excludes
 /Makefile.in
 /Makefile

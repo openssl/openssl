@@ -1,0 +1,20 @@
+{
+  "project": {
+    "name": "Grokipedia - 2012 Aurora Theater Shooting",
+    "officialUrl": "https://grokipedia.com/page/2012_Aurora_shooting",
+    "teamId": "e97e6a25-cade-442f-9415-04b7ebae2898"
+  },
+  "api": {
+    "provider": "x.ai",
+    "endpoint": "https://api.x.ai/v1/chat/completions",
+    "model": "grok-4-latest",
+    "authentication": {
+      "type": "bearer",
+      "tokenEnvVar": "xai-qeiOwWxfnZFIihHfUDqWxruMcNUyOy2MRuOZVakEWbbGkQUk3jFIQHUeyGaNAUMbgexdb2YpA060Xr3A" 
+    },
+    "defaultParameters": {
+      "stream": false,
+      "temperature": 0
+    }
+  }
+}
