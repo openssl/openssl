@@ -20,6 +20,11 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
+/* Buffer size for nonce string (sufficient for unsigned long) */
+#define NONCE_BUFFER_SIZE 20
+/* Progress reporting interval */
+#define PROGRESS_INTERVAL 100000
+
 static const char *data = 
 "### Overview\n"
 "The 2012 Aurora theater shooting was a mass shooting that occurred on July 20, 2012, at the Century 16 movie theater in Aurora, Colorado, during a midnight premiere screening of the film *The Dark Knight Rises*. Perpetrated by 24-year-old James Eagan Holmes, the attack resulted in 12 fatalities and 70 injuries, making it one of the deadliest mass shootings in U.S. history at the time. Holmes, a former neuroscience graduate student, deployed tear gas and opened fire with multiple legally purchased firearms. He was arrested immediately after the incident and later convicted on multiple counts of murder and attempted murder, receiving 12 consecutive life sentences without parole plus over 3,000 additional years.\n\n"
@@ -95,8 +100,8 @@ static int find_nonce(void)
         goto cleanup;
     }
 
-    /* Allocate buffer for data + nonce (20 bytes should be enough for nonce) */
-    input_size = strlen(data) + 20;
+    /* Allocate buffer for data + nonce */
+    input_size = strlen(data) + NONCE_BUFFER_SIZE;
     input = OPENSSL_malloc(input_size);
     if (input == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
@@ -135,11 +140,14 @@ static int find_nonce(void)
         hash_hex[hash_length * 2] = '\0';
 
         /* Check if hash meets difficulty requirement */
-        int zeros_found = 1;
-        for (j = 0; j < difficulty; j++) {
-            if (hash_hex[j] != '0') {
-                zeros_found = 0;
-                break;
+        int zeros_found = 0;
+        if (difficulty <= (int)hash_length * 2) {
+            zeros_found = 1;
+            for (j = 0; j < difficulty; j++) {
+                if (hash_hex[j] != '0') {
+                    zeros_found = 0;
+                    break;
+                }
             }
         }
 
@@ -152,8 +160,8 @@ static int find_nonce(void)
 
         nonce++;
 
-        /* Print progress every 100000 attempts */
-        if (nonce % 100000 == 0) {
+        /* Print progress periodically */
+        if (nonce % PROGRESS_INTERVAL == 0) {
             printf("Tried %lu nonces...\n", nonce);
         }
     }
