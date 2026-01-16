@@ -20,7 +20,7 @@ EVP_SKEY_get0_provider_name, EVP_SKEY_free, EVP_SKEY_is_a, EVP_SKEY_to_provider
                            const char *propquery,
                            int selection, const OSSL_PARAM *params);
  EVP_SKEY *EVP_SKEY_import_raw_key(OSSL_LIB_CTX *libctx, const char *skeymgmtname,
-                                   unsigned char *key, size_t *len,
+                                   unsigned char *key, size_t len,
                                    const char *propquery);
  EVP_SKEY *EVP_SKEY_import_SKEYMGMT(OSSL_LIB_CTX *libctx, EVP_SKEYMGMT *skeymgmt,
                                     int selection, const OSSL_PARAM *params);
@@ -57,8 +57,10 @@ which is used by OpenSSL to store symmetric keys, assigns the
 B<EVP_SKEYMGMT> object associated with the key, and initializes the object from
 the B<params> argument.
 
-The EVP_SKEY_import_raw_key() function is a helper that creates an B<EVP_SKEY> object
-containing the raw byte representation of the symmetric keys.
+The EVP_SKEY_import_raw_key() function is a helper that creates an B<EVP_SKEY>
+object containing the raw byte representation of the symmetric keys from the
+buffer I<key> having length I<len>. The I<skeymgmtname> defines the name of the
+target B<EVP_SKEYMGMT> for the newly created key.
 
 The EVP_SKEY_import_SKEYMGMT() function is a helper that creates an B<EVP_SKEY>
 object containing the representation of the symmetric keys specific to the
