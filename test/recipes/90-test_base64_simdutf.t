@@ -8,4 +8,4 @@
 
 use OpenSSL::Test::Simple;
 
-simple_test("b64_simdutf", "test_base64_simdutf", "b64_simdutf");
+simple_test("test_base64_simdutf", "base64_simdutf_test", "base64_simdutf");

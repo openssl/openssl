@@ -469,19 +469,20 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_FLUSH:
-        /* do a final write */
-    again:
-        while (ctx->buf_len != ctx->buf_off) {
-            i = b64_write(b, NULL, 0);
-            if (i < 0)
-                return i;
-        }
-        if (ctx->encode != B64_NONE
-            && EVP_ENCODE_CTX_num(ctx->base64) != 0) {
-            ctx->buf_off = 0;
-            EVP_EncodeFinal(ctx->base64, ctx->buf, &(ctx->buf_len));
-            /* push out the bytes */
-            goto again;
+        if (ctx->encode == B64_ENCODE) {
+            /* do a final write */
+        again:
+            while (ctx->buf_len != ctx->buf_off) {
+                i = b64_write(b, NULL, 0);
+                if (i < 0)
+                    return i;
+            }
+            if (EVP_ENCODE_CTX_num(ctx->base64) != 0) {
+                ctx->buf_off = 0;
+                EVP_EncodeFinal(ctx->base64, ctx->buf, &(ctx->buf_len));
+                /* push out the bytes */
+                goto again;
+            }
         }
         /* Finally flush the underlying BIO */
         ret = BIO_ctrl(next, cmd, num, ptr);

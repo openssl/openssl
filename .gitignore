@@ -213,7 +213,6 @@ providers/implementations/rands/test_rng.inc
 /test/evp_pkey_ctx_new_from_name
 /test/threadstest_fips
 /test/timing_load_creds
-/test/test_base64_simdutf
 
 # Demo applications
 /demos/bio/client-arg
