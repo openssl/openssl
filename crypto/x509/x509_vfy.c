@@ -925,16 +925,47 @@ static int check_id_error(X509_STORE_CTX *ctx, int errcode)
 static int check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
 {
     int i;
-    int n = sk_OPENSSL_STRING_num(vpm->hosts);
-    char *name;
+    int n = sk_X509_BUFFER_num(vpm->hosts);
+    const uint8_t *name;
 
     if (vpm->peername != NULL) {
         OPENSSL_free(vpm->peername);
         vpm->peername = NULL;
     }
     for (i = 0; i < n; ++i) {
-        name = sk_OPENSSL_STRING_value(vpm->hosts, i);
-        if (X509_check_host(x, name, 0, vpm->hostflags, &vpm->peername) > 0)
+        size_t len = sk_X509_BUFFER_value(vpm->hosts, i)->len;
+        name = sk_X509_BUFFER_value(vpm->hosts, i)->data;
+        if (X509_check_host(x, (const char *)name, len, vpm->hostflags, &vpm->peername) > 0)
+            return 1;
+    }
+    return n == 0;
+}
+
+static int check_emails(X509 *x, X509_VERIFY_PARAM *vpm)
+{
+    int i;
+    int n = sk_X509_BUFFER_num(vpm->emails);
+    const uint8_t *name;
+
+    for (i = 0; i < n; ++i) {
+        size_t len = sk_X509_BUFFER_value(vpm->emails, i)->len;
+        name = sk_X509_BUFFER_value(vpm->emails, i)->data;
+        if (X509_check_email(x, (const char *)name, len, vpm->hostflags) > 0)
+            return 1;
+    }
+    return n == 0;
+}
+
+static int check_ips(X509 *x, X509_VERIFY_PARAM *vpm)
+{
+    int i;
+    int n = sk_X509_BUFFER_num(vpm->ips);
+    const uint8_t *name;
+
+    for (i = 0; i < n; ++i) {
+        size_t len = sk_X509_BUFFER_value(vpm->ips, i)->len;
+        name = sk_X509_BUFFER_value(vpm->ips, i)->data;
+        if (X509_check_ip(x, name, len, vpm->hostflags) > 0)
             return 1;
     }
     return n == 0;
@@ -949,12 +980,11 @@ static int check_id(X509_STORE_CTX *ctx)
         if (!check_id_error(ctx, X509_V_ERR_HOSTNAME_MISMATCH))
             return 0;
     }
-    if (vpm->email != NULL
-        && X509_check_email(x, vpm->email, vpm->emaillen, 0) <= 0) {
+    if (vpm->emails != NULL && check_emails(x, vpm) <= 0) {
         if (!check_id_error(ctx, X509_V_ERR_EMAIL_MISMATCH))
             return 0;
     }
-    if (vpm->ip != NULL && X509_check_ip(x, vpm->ip, vpm->iplen, 0) <= 0) {
+    if (vpm->ips != NULL && check_ips(x, vpm) <= 0) {
         if (!check_id_error(ctx, X509_V_ERR_IP_ADDRESS_MISMATCH))
             return 0;
     }
