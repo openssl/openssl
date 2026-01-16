@@ -2207,9 +2207,11 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
 
 #ifndef OPENSSL_NO_ECH
     /*
-     * check we're dealing with a TLSv1.3 connection when ECH has
+     * Check we're dealing with a TLSv1.3 connection when ECH has
      * succeeded, and not with a smuggled earlier version ClientHello
-     * (which could be a form of attack)
+     * (which could be a form of attack).
+     * This bit checks there is a supported version present, a little
+     * bit further below, we check that that version is TLSv1.3
      */
     if (!suppversions->present && s->ext.ech.success == 1)
         return SSL_R_UNSUPPORTED_PROTOCOL;
