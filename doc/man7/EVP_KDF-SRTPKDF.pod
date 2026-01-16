@@ -26,6 +26,8 @@ The supported parameters are:
 
 =over 4
 
+=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
+
 =item "cipher" (B<OSSL_KDF_PARAM_CIPHER>) <UTF8 string>
 
 This parameter sets the cipher to be used for the key derivation.
@@ -41,7 +43,7 @@ for AES-128 or 32 bytes for AES-256.
 This parameter sets the master salt value. This is typically 14 bytes
 as specified in RFC 3711.
 
-=item "kdr" (B<OSSL_KDF_PARAM_SRTPKDF_KDR>) <uint32_t>
+=item "kdr" (B<OSSL_KDF_PARAM_SRTPKDF_KDR>) <unsigned integer>
 
 This parameter sets the key derivation rate (KDR). The KDR controls
 how often keys are rederived. If not set or set to zero, no key
@@ -53,7 +55,7 @@ This parameter sets the index value used in key derivation. For RTP
 packets, this is typically a 48-bit (6 byte) value. For RTCP packets,
 this is typically a 32-bit (4 byte) value. If not set, defaults to zero.
 
-=item "label" (B<OSSL_KDF_PARAM_SRTPKDF_LABEL>) <uint32_t>
+=item "label" (B<OSSL_KDF_PARAM_SRTPKDF_LABEL>) <unsigned integer>
 
 This parameter sets the label that identifies the type of key to derive.
 Valid values are:

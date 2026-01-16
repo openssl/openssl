@@ -94,9 +94,21 @@ Ctrl.kdr = kdr:0
 Ctrl.index = hexindex:000000000000
 Ctrl.label = label:0
 Output = C61E7A93744F39EE10734AFE3FF7A087
-Result = KDF_DERIVE_ERROR
+Result = KDF_CTRL_ERROR
 
-# Negative Test case 2, missing key
+# Negative Test case 2, invalid cipher
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CBC
+Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
+Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
+Ctrl.kdr = kdr:0
+Ctrl.index = hexindex:000000000000
+Ctrl.label = label:0
+Output = C61E7A93744F39EE10734AFE3FF7A087
+Result = KDF_CTRL_ERROR
+
+# Negative Test case 3, missing key
 FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
@@ -107,7 +119,7 @@ Ctrl.label = label:0
 Output = C61E7A93744F39EE10734AFE3FF7A087
 Result = KDF_DERIVE_ERROR
 
-# Negative Test case 3, missing salt
+# Negative Test case 4, missing salt
 FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
@@ -118,7 +130,7 @@ Ctrl.label = label:0
 Output = C61E7A93744F39EE10734AFE3FF7A087
 Result = KDF_DERIVE_ERROR
 
-# Negative Test case 4, invalid label
+# Negative Test case 5, invalid label
 FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
@@ -130,7 +142,7 @@ Ctrl.label = label:8
 Output = C61E7A93744F39EE10734AFE3FF7A087
 Result = KDF_DERIVE_ERROR
 
-# Negative Test case 5, invalid kdr (not power of 2)
+# Negative Test case 6, invalid kdr (not power of 2)
 FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
@@ -142,7 +154,7 @@ Ctrl.label = label:0
 Output = C61E7A93744F39EE10734AFE3FF7A087
 Result = KDF_DERIVE_ERROR
 
-# Negative Test case 6, invalid kdr (kdr out of range)
+# Negative Test case 7, invalid kdr (kdr out of range)
 FIPSversion = >=4.0.0
 KDF = SRTPKDF
 Ctrl.cipher = cipher:AES-128-CTR
