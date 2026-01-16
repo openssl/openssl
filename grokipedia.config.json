@@ -10,7 +10,7 @@
     "model": "grok-4-latest",
     "authentication": {
       "type": "bearer",
-      "tokenEnvVar": "xai-qeiOwWxfnZFIihHfUDqWxruMcNUyOy2MRuOZVakEWbbGkQUk3jFIQHUeyGaNAUMbgexdb2YpA060Xr3A" 
+      "tokenEnvVar": "XAI_API_KEY" 
     },
     "defaultParameters": {
       "stream": false,
