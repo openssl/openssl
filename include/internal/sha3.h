@@ -17,7 +17,7 @@
 
 #define KECCAK1600_WIDTH 1600
 #define SHA3_MDSIZE(bitlen) (bitlen / 8)
-#define KMAC_MDSIZE(bitlen) 2 * (bitlen / 8)
+#define CSHAKE_KECCAK_MDSIZE(bitlen) 2 * (bitlen / 8)
 #define SHA3_BLOCKSIZE(bitlen) (KECCAK1600_WIDTH - bitlen * 2) / 8
 
 typedef struct keccak_st KECCAK1600_CTX;

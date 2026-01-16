@@ -32,6 +32,10 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Added CSHAKE as per [SP 800-185]
+
+   *Shane Lontis*
+
  * Added "ML-DSA-MU" digest algorithm support.
 
    *Shane Lontis*
@@ -21898,3 +21902,4 @@ ndif
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [SP 800-132]: https://csrc.nist.gov/pubs/sp/800/132/final
 [SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final
+[SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final
