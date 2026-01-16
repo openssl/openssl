@@ -366,3 +366,31 @@ Ctrl.kdr = kdr:8
 Ctrl.index = hexindex:13DE080C
 Ctrl.label = label:5
 Output = 2C195A5AA9F539BD7CC7D6E23483
+
+# internalProjection.json, tgId: 1
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:A48A570A43E12372BF58495FDFD88D78
+Ctrl.hexsalt = hexsalt:E1D109B42D6C16A8830F9E7DDF4B
+Ctrl.index = hexindex:8E5BDF08FA78
+Ctrl.label = label:0
+Output = 30371635BF658204857EC5BFE13AFFE3
+
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:A48A570A43E12372BF58495FDFD88D78
+Ctrl.hexsalt = hexsalt:E1D109B42D6C16A8830F9E7DDF4B
+Ctrl.index = hexindex:8E5BDF08FA78
+Ctrl.label = label:1
+Output = 83E0821E1DDBD044C2DD3A980BB445875F97B4D5
+
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:A48A570A43E12372BF58495FDFD88D78
+Ctrl.hexsalt = hexsalt:E1D109B42D6C16A8830F9E7DDF4B
+Ctrl.index = hexindex:8E5BDF08FA78
+Ctrl.label = label:2
+Output = B27816A7A139D73E71A55FCD7006
