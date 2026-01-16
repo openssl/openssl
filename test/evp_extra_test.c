@@ -5807,6 +5807,52 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_EC
+/*
+ * Test that EVP_PKEY_sign_init_ex2() with a mismatched key/signature algorithm
+ * (e.g. RSA key with ECDSA signature) correctly fails.
+ */
+static int test_EVP_PKEY_sign_init_mismatched_key_alg(void)
+{
+    EVP_PKEY *rsa_key = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY_CTX *pkey_ctx = NULL;
+    EVP_SIGNATURE *ecdsa_sig = NULL;
+    int testresult = 0;
+
+    /* Generate an RSA key */
+    if (!TEST_ptr(pkey_ctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA", NULL))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(pkey_ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_keygen_bits(pkey_ctx, 2048), 0)
+        || !TEST_int_gt(EVP_PKEY_keygen(pkey_ctx, &rsa_key), 0))
+        goto end;
+
+    EVP_PKEY_CTX_free(pkey_ctx);
+    pkey_ctx = NULL;
+
+    /* Fetch ECDSA signature algorithm - incompatible with RSA key */
+    if (!TEST_ptr(ecdsa_sig = EVP_SIGNATURE_fetch(testctx, "ECDSA", NULL)))
+        goto end;
+
+    /* Try to init sign with mismatched key/algorithm - this should fail */
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(testctx, rsa_key, NULL)))
+        goto end;
+
+    /* This should fail with -2 (operation not supported for key type) */
+    if (!TEST_int_eq(EVP_PKEY_sign_init_ex2(ctx, ecdsa_sig, NULL), -2))
+        goto end;
+
+    testresult = 1;
+
+end:
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_CTX_free(pkey_ctx);
+    EVP_SIGNATURE_free(ecdsa_sig);
+    EVP_PKEY_free(rsa_key);
+    return testresult;
+}
+#endif
+
 static int aes_gcm_encrypt(const unsigned char *gcm_key, size_t gcm_key_s,
     const unsigned char *gcm_iv, size_t gcm_ivlen,
     const unsigned char *gcm_pt, size_t gcm_pt_s,
@@ -6714,6 +6760,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_EVP_PKEY_sign, 3);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_ALL_TESTS(test_EVP_PKEY_sign_with_app_method, 2);
+#endif
+#ifndef OPENSSL_NO_EC
+    ADD_TEST(test_EVP_PKEY_sign_init_mismatched_key_alg);
 #endif
     ADD_ALL_TESTS(test_EVP_Enveloped, 2);
     ADD_ALL_TESTS(test_d2i_AutoPrivateKey, OSSL_NELEM(keydata));
