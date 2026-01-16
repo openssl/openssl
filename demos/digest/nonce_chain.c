@@ -79,6 +79,7 @@ static int find_nonce(void)
     char *input = NULL;
     size_t input_size;
     int i, j;
+    int zeros_found;
 
     library_context = OSSL_LIB_CTX_new();
     if (library_context == NULL) {
@@ -140,7 +141,7 @@ static int find_nonce(void)
         hash_hex[hash_length * 2] = '\0';
 
         /* Check if hash meets difficulty requirement */
-        int zeros_found = 0;
+        zeros_found = 0;
         if (difficulty <= (int)hash_length * 2) {
             zeros_found = 1;
             for (j = 0; j < difficulty; j++) {
