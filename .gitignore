@@ -433,3 +433,10 @@ compile_commands.json
 resume.aux
 resume.log
 resume.out
+
+# LaTeX auxiliary files
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
