@@ -32,6 +32,10 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * FIPS self tests are now always deferred and run as needed.
+
+   *Simo Sorce*
+
  * OPENSSL_cleanup() now runs in a global destructor, or not at all by default.
 
    OpenSSL_cleanup() will no longer by default free global objects when run from
