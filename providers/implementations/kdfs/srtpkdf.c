@@ -96,6 +96,7 @@ static void *kdf_srtpkdf_dup(void *vsrc)
             || !ossl_prov_cipher_copy(&dest->cipher, &src->cipher))
             goto err;
         dest->kdr = src->kdr;
+        dest->kdr_n = src->kdr_n;
         dest->label = src->label;
     }
     return dest;
@@ -206,6 +207,7 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     struct srtp_set_ctx_params_st p;
     KDF_SRTPKDF *ctx = vctx;
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    const EVP_CIPHER *cipher;
 
     if (params == NULL)
         return 1;
@@ -215,6 +217,13 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if ((p.cipher != NULL)
         && !ossl_prov_cipher_load(&ctx->cipher, p.cipher, p.propq, libctx))
+        return 0;
+
+    cipher = ossl_prov_cipher_cipher(&ctx->cipher);
+    if (cipher == NULL)
+        return 0;
+    if (!EVP_CIPHER_is_a(cipher, "AES-128-CTR") && !EVP_CIPHER_is_a(cipher, "AES-192-CTR")
+            && !EVP_CIPHER_is_a(cipher, "AES-256-CTR"))
         return 0;
 
     if ((p.key != NULL)
@@ -337,7 +346,6 @@ int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
     unsigned char iv[KDF_SRTP_IV_LEN];
     unsigned char local_salt[KDF_SRTP_MAX_SALT_LEN];
     unsigned char master_salt[KDF_SRTP_MAX_SALT_LEN];
-    BN_CTX *bn_ctx = NULL;
     BIGNUM *bn_index = NULL, *bn_salt = NULL;
     int ret, iv_len = KDF_SRTP_IV_LEN, rv = 0;
 
@@ -389,32 +397,23 @@ int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
     memset(master_salt, 0, KDF_SRTP_MAX_SALT_LEN);
     memcpy(master_salt, msalt, salt_len);
 
-    if ((bn_ctx = BN_CTX_new_ex(provctx)) == NULL) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_BN_CTX_ERR);
-        return rv;
-    }
-
     /* gather some bignums for some math */
-    BN_CTX_start(bn_ctx);
-    bn_index = BN_CTX_get(bn_ctx);
-    bn_salt = BN_CTX_get(bn_ctx);
-    if (!bn_index || !bn_salt) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_BN_GET_ERR);
-        BN_CTX_end(bn_ctx);
-        BN_CTX_free(bn_ctx);
+    bn_index = BN_new();
+    bn_salt = BN_new();
+    if ((bn_index == NULL) || (bn_salt == NULL)) {
+        BN_free(bn_index);
+        BN_free(bn_salt);
         return rv;
     }
 
     /* if index is NULL or kdr=0, then index and kdr are not in play */
-    if (index && (kdr > 0)) {
+    if ((index != NULL) && (kdr > 0)) {
         if (!BN_bin2bn(index, index_len, bn_index))
             goto err;
 
         ret = BN_rshift(bn_salt, bn_index, kdr_n);
-        if (!ret) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_BN_FAILURE);
+        if (!ret)
             goto err;
-        }
         iv_len = BN_bn2bin(bn_salt, iv);
         for (i = 1; i <= iv_len; i++)
             master_salt[salt_len - i] ^= iv[iv_len - i];
@@ -439,9 +438,7 @@ err:
     OPENSSL_cleanse(iv, KDF_SRTP_IV_LEN);
     OPENSSL_cleanse(local_salt, KDF_SRTP_SALT_LEN + 2);
     OPENSSL_cleanse(master_salt, KDF_SRTP_IV_LEN);
-    if (ctx)
-        EVP_CIPHER_CTX_free(ctx);
-    BN_CTX_end(bn_ctx);
-    BN_CTX_free(bn_ctx);
+    BN_clear_free(bn_index);
+    BN_clear_free(bn_salt);
     return rv;
 }
