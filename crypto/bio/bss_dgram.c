@@ -427,7 +427,7 @@ static int dgram_read(BIO *b, char *out, int outl)
     BIO_ADDR peer;
     socklen_t len = sizeof(peer);
 
-    if (out != NULL) {
+    if (out != NULL && outl > 0) {
         clear_socket_error();
         BIO_ADDR_clear(&peer);
         dgram_adjust_rcv_timeout(b);

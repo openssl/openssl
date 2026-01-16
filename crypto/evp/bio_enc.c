@@ -306,8 +306,12 @@ static long enc_ctrl(BIO *b, int cmd, long num, void *ptr)
 
     ctx = BIO_get_data(b);
     next = BIO_next(b);
+    /*
+     * If there is no ctx, BIO_read() returns 0, which means EOF.
+     * BIO_eof() should return 1 in this case.
+     */
     if (ctx == NULL)
-        return 0;
+        return cmd == BIO_CTRL_EOF;
 
     switch (cmd) {
     case BIO_CTRL_RESET:
@@ -322,7 +326,11 @@ static long enc_ctrl(BIO *b, int cmd, long num, void *ptr)
         if (ctx->cont <= 0)
             ret = 1;
         else
-            ret = BIO_ctrl(next, cmd, num, ptr);
+            /*
+             * If there is no next BIO, BIO_read() returns 0, which means EOF.
+             * BIO_eof() should return 1 in this case.
+             */
+            ret = (next == NULL) ? 1 : BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_WPENDING:
         ret = ctx->buf_len - ctx->buf_off;
