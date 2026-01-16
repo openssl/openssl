@@ -68,21 +68,23 @@ sub run_tests
         );
     }
 
-    SKIP: {
-        skip "TODO(DTLSv1.3): Test fails because client sends alert with 0 epoch but"
-            . " the server increments the epoch after sending ServerHello and thus"
-            . " does not accept the alert message.",
-            $testcount if $run_test_as_dtls == 1;
-        #Test 1: We test that a server can handle an unencrypted alert when normally the
-        #        next message is encrypted
-        $proxy->clear();
-        $proxy->filter(\&alert_filter);
-        $proxy_start_success = $proxy->start();
-        skip "TLSProxy did not start correctly", $testcount if $proxy_start_success == 0;
-
-        my $alert = TLSProxy::Message->alert();
-        ok(TLSProxy::Message->fail() && !$alert->server() && !$alert->encrypted(), "Client sends an unencrypted alert");
+    #Test 1: We test that a server can handle an unencrypted alert when normally the
+    #        next message is encrypted
+    $proxy->clear();
+    $proxy->filter(\&alert_filter);
+    if ($run_test_as_dtls == 1) {
+        if (disabled("ec")) {
+            $proxy->clientflags("-groups ffdhe2048:ffdhe3072");
+        }
+        else {
+            $proxy->clientflags("-groups P-256:P-384");
+        }
     }
+    $proxy_start_success = $proxy->start();
+    skip "TLSProxy did not start correctly", $testcount if $proxy_start_success == 0;
+
+    my $alert = TLSProxy::Message->alert();
+    ok(TLSProxy::Message->fail() && !$alert->server() && !$alert->encrypted(), "Client sends an unencrypted alert");
 }
 
 sub alert_filter
