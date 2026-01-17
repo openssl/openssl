@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   run-checker:
-    if: github.repository == 'openssl/openssl'
+    if: github.event_name != 'schedule' || github.repository == 'openssl/openssl'
     strategy:
       fail-fast: false
       matrix:
@@ -147,7 +147,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   run-checker-sctp:
-    if: github.repository == 'openssl/openssl'
+    if: github.event_name != 'schedule' || github.repository == 'openssl/openssl'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -189,7 +189,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   enable_brotli_dynamic:
-    if: github.repository == 'openssl/openssl'
+    if: github.event_name != 'schedule' || github.repository == 'openssl/openssl'
     runs-on: ubuntu-latest
     steps:
     - name: install brotli
@@ -214,7 +214,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   enable_zstd_dynamic:
-    if: github.repository == 'openssl/openssl'
+    if: github.event_name != 'schedule' || github.repository == 'openssl/openssl'
     runs-on: ubuntu-latest
     steps:
     - name: install zstd
@@ -239,7 +239,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   enable_brotli_and_zstd_dynamic:
-    if: github.repository == 'openssl/openssl'
+    if: github.event_name != 'schedule' || github.repository == 'openssl/openssl'
     runs-on: ubuntu-latest
     steps:
     - name: install brotli and zstd
@@ -265,7 +265,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   malloc_failure_testing:
-    if: github.repository == 'openssl/openssl'
+    if: github.event_name != 'schedule' || github.repository == 'openssl/openssl'
     runs-on: ubuntu-latest
     steps:
     - name: checkout openssl
@@ -290,7 +290,7 @@ jobs:
         make TESTS="test_memfail" test
 
   enable_brotli_and_asan_ubsan:
-    if: github.repository == 'openssl/openssl'
+    if: github.event_name != 'schedule' || github.repository == 'openssl/openssl'
     runs-on: ubuntu-latest
     steps:
     - name: install brotli
@@ -319,7 +319,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
 
   enable_zstd_and_asan_ubsan:
-    if: github.repository == 'openssl/openssl'
+    if: github.event_name != 'schedule' || github.repository == 'openssl/openssl'
     runs-on: ubuntu-latest
     steps:
     - name: install zstd
@@ -348,7 +348,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
 
   enable_tfo:
-    if: github.repository == 'openssl/openssl'
+    if: github.event_name != 'schedule' || github.repository == 'openssl/openssl'
     strategy:
       matrix:
         os: [ubuntu-latest, macos-15, macos-15-intel]
@@ -369,7 +369,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   enable_buildtest:
-    if: github.repository == 'openssl/openssl'
+    if: github.event_name != 'schedule' || github.repository == 'openssl/openssl'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -389,7 +389,7 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   memory_sanitizer_slh_dsa:
-    if: github.repository == 'openssl/openssl'
+    if: github.event_name != 'schedule' || github.repository == 'openssl/openssl'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
