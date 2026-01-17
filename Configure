@@ -628,6 +628,7 @@ our %disabled = ( # "what"         => "comment"
                   "sctp"                => "default",
                   "sslkeylog"           => "default",
                   "tfo"                 => "default",
+                  "tls-deprecated-ec"   => "default",
                   "trace"               => "default",
                   "ubsan"               => "default",
                   "unit-test"           => "default",
