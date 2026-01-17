@@ -1347,7 +1347,7 @@ static int dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     size_t i;
     struct mmsghdr mh[BIO_MAX_MSGS_PER_CALL];
     struct iovec iov[BIO_MAX_MSGS_PER_CALL];
-    unsigned char control[BIO_MAX_MSGS_PER_CALL][BIO_CMSG_ALLOC_LEN];
+    unsigned char control[BIO_MAX_MSGS_PER_CALL][BIO_CMSG_ALLOC_LEN] = { { 0 } };
     int have_local_enabled = data->local_addr_enabled;
 #elif M_METHOD == M_METHOD_RECVMSG
     int sysflags;
@@ -1355,7 +1355,7 @@ static int dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     ossl_ssize_t l;
     struct msghdr mh;
     struct iovec iov;
-    unsigned char control[BIO_CMSG_ALLOC_LEN];
+    unsigned char control[BIO_CMSG_ALLOC_LEN] = { 0 };
     int have_local_enabled = data->local_addr_enabled;
 #elif M_METHOD == M_METHOD_WSARECVMSG
     bio_dgram_data *data = (bio_dgram_data *)b->ptr;
@@ -1363,7 +1363,7 @@ static int dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     WSAMSG wmsg;
     WSABUF wbuf;
     DWORD num_bytes_sent = 0;
-    unsigned char control[BIO_CMSG_ALLOC_LEN];
+    unsigned char control[BIO_CMSG_ALLOC_LEN] = { 0 };
 #endif
 #if M_METHOD == M_METHOD_RECVFROM || M_METHOD == M_METHOD_WSARECVMSG
     int sysflags;
