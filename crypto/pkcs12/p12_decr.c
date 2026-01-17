@@ -77,7 +77,7 @@ unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
         }
     }
 
-    if ((out = OPENSSL_malloc(max_out_len)) == NULL)
+    if ((out = OPENSSL_zalloc(max_out_len)) == NULL)
         goto err;
 
     if (!EVP_CipherUpdate(ctx, out, &i, in, inlen)) {
