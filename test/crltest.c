@@ -266,10 +266,6 @@ static const char *kUnknownCriticalCRL2[] = {
     NULL
 };
 
-static const char **unknown_critical_crls[] = {
-    kUnknownCriticalCRL, kUnknownCriticalCRL2
-};
-
 /*
  * RFC 5280 states that only CRL files with the Indirect CRL flag set to True in
  * the IDP extension require the certificate_issuer extension.
@@ -345,7 +341,6 @@ static const char *kInvalidDateSS[] = {
 };
 
 static const char *kInvalidDateUTC[] = {
-
     "-----BEGIN X509 CRL-----\n",
     "MIICdTCCAV0CAQEwDQYJKoZIhvcNAQELBQAweTELMAkGA1UEBhMCVVMxEzARBgNV\n",
     "BAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xEzARBgNVBAoM\n",
@@ -361,6 +356,113 @@ static const char *kInvalidDateUTC[] = {
     "/CRNHU3fgOi37KqQ3rEZBRN1CI5JX7gFf6fCFRJNFnWez65FoHkA0L/J52y6QLdm\n",
     "KPHBluIk4UD6eeZNDAC1keYDfIsY1fDvPm4W1Hd0J5QgjKcxFXK8qRi7BPy3UZjw\n",
     "yYUQ4YV+e1Je\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+/*
+ * RFC5280 specifies that the Delta CRL Indicator value should be an integer.
+ * https://github.com/openssl/openssl/issues/27374
+ */
+
+static const char *kCrlDeltaIndicatorString[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICPzCCAScCAQEwDQYJKoZIhvcNAQELBQAweTELMAkGA1UEBhMCVVMxEzARBgNV\n",
+    "BAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xEzARBgNVBAoM\n",
+    "Ck15IENvbXBhbnkxEzARBgNVBAMMCk15IFJvb3QgQ0ExEzARBgNVBAsMCk15IFJv\n",
+    "b3QgQ0EXDTI1MDEwMTAwMDAwMFoXDTI1MTIwMTAwMDAwMFowJzAlAhQcgAIu+B8k\n",
+    "Be6WphLcth/grHAeXhcNMjUwNDE3MTAxNjUxWqBRME8wGAYDVR0UBBECDxnP/97a\n",
+    "dO3y9qRGDM7hQDAfBgNVHSMEGDAWgBTXYYkfk5aLdlQW6eV33Hy3ZRuAJDASBgNV\n",
+    "HRsECwQJRzYzMjg3NTEwMA0GCSqGSIb3DQEBCwUAA4IBAQCUvLefNHqdQdJC8gbp\n",
+    "QME2dQM6C8yLBjcykeNImrW0Ah1fpNTcT3XP+Gc9O5i1OIrCfQ8bDmvBNryrqZfC\n",
+    "43CsQsW1YBwNIa5oWjgaRwOzqng8Q6ITYpuLDnc7n20ejft8XmgdiTFNflgGM/Hx\n",
+    "p/a+xhIQAgqfgFH7ocm5DInDS5VFTHTtbPHMPiY4EUy9FnUTenkbFpVA47mswCXd\n",
+    "5p1QJGrDJR/sx7lmP/W77dhIWNtbmpUUo61AqcO1JdF2RUkc1yg2UBuzkgV1WU3t\n",
+    "UcQuw9IXm62Io2pRgNeiqOTz5daA1OVlDRaMNEVFvlMs0NgKDx0MGPT9p3KIzSoW\n",
+    "dbXQ\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+static const char *kCrlNumberString[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICJTCCAQ0CAQEwDQYJKoZIhvcNAQELBQAweTELMAkGA1UEBhMCVVMxEzARBgNV\n",
+    "BAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xEzARBgNVBAoM\n",
+    "Ck15IENvbXBhbnkxEzARBgNVBAMMCk15IFJvb3QgQ0ExEzARBgNVBAsMCk15IFJv\n",
+    "b3QgQ0EXDTI1MDEwMTAwMDAwMFoXDTI1MTIwMTAwMDAwMFowJzAlAhQcgAIu+B8k\n",
+    "Be6WphLcth/grHAeXhcNMjUwNTI4MDMwOTE4WqA3MDUwEgYDVR0UBAsECUc2MzI4\n",
+    "NzUxMDAfBgNVHSMEGDAWgBTXYYkfk5aLdlQW6eV33Hy3ZRuAJDANBgkqhkiG9w0B\n",
+    "AQsFAAOCAQEAU+jupFC7puUTELqIipJuywX2NWiA9kZIGSZM8k7gE8UZicsDy77F\n",
+    "hnpyY8ATvRXTaFL/QKipowNlGUf9LsS9vo36XKBOb4mJQQRUV2MLBqMacG9/t1/t\n",
+    "KBbNe+zxE9edfs+gco8K0pR/UWCjo0hKvqohEZ2S2Yl7FjSB6SuPMQA58+CkGdTM\n",
+    "P9k+LlqnPFl9Csm/2XUt1Fmw9AG2K5RN2fLC1NzMG1COo6g4LX8Sj4d7WW1LQUY5\n",
+    "cgd8PXFHW27u6F2c+xl5a7depdYKKDeWf01soQjjnT3e9OXZuBDM/vXBjl8T3YLF\n",
+    "s2kylOJHvGL3sxwWVCpboTmSUTEbf/tbOA==\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+/* https://github.com/openssl/openssl/issues/27406 */
+static const char *kCrlSerialNeg[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIIClTCCAX0CAQEwDQYJKoZIhvcNAQELBQAwTjELMAkGA1UEBhMCVVMxCzAJBgNV\n",
+    "BAgMAlVTMQswCQYDVQQHDAJVUzELMAkGA1UECgwCVVMxCzAJBgNVBAMMAlVTMQsw\n",
+    "CQYDVQQLDAJVUxcNMjUwMTAxMDAwMDAwWhcNMjUxMjAxMDAwMDAwWjA1MDMCFByA\n",
+    "Ai74HyQF7pamEty2H+CscB5eFw0yNTAzMTMwMjQ0NDBaMAwwCgYDVR0VBAMKAQag\n",
+    "gcMwgcAwgaMGA1UdIwSBmzCBmIAU72ng99Ud5pns3G3Q9+K5XGRxgzWhfaR7MHkx\n",
+    "CzAJBgNVBAYTAlVTMRMwEQYDVQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4g\n",
+    "RnJhbmNpc2NvMRMwEQYDVQQKDApNeSBDb21wYW55MRMwEQYDVQQDDApNeSBSb290\n",
+    "IENBMRMwEQYDVQQLDApNeSBSb290IENBggHcMBgGA1UdFAQRAg8Zz//e2nTt8vak\n",
+    "RgzO4UAwDQYJKoZIhvcNAQELBQADggEBAGg2PYwXQCYgLo1JGi2C1bczVhf9EsQ+\n",
+    "QgeHWCHGTKrTyi5+cpHMZF750W1YoSfipwAL/RZJ+YsI++xBsMTY8mZLUOIAJnDI\n",
+    "QkwRHAB25ovdrR7baLfUq+OPgjftDWmkAzn5SHlcO2Yq/dE1rn40nMvP3uxZFZvm\n",
+    "g+QonK2yVqqHttaQdUNY0uPYja2c6mdr8By4qjQM6XnMcFIof2D3ufggZOTauLyA\n",
+    "nonhlQvyTva+UpHQ8FkE5dCN5Eiup+CYe+dxZiHp/NBdmWbmbuP34SewuK5a+lvY\n",
+    "uhaytOrOZpNT3mBRyoQpMCPMKfHCLnSUA5S7CtruAk3LkynWwy7LM2A=\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+/*
+ * File where both onlyContainsUserCerts and onlyContainsCACerts are set to True
+ * https://github.com/openssl/openssl/issues/27334
+ */
+static const char *kCrlIDP_ou_oa_sig[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICZTCCAU0CAQEwDQYJKoZIhvcNAQELBQAweTELMAkGA1UEBhMCVVMxEzARBgNV\n",
+    "BAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xEzARBgNVBAoM\n",
+    "Ck15IENvbXBhbnkxEzARBgNVBAMMCk15IFJvb3QgQ0ExEzARBgNVBAsMCk15IFJv\n",
+    "b3QgQ0EXDTI1MDEwMTAwMDAwMFoXDTI1MTIwMTAwMDAwMFowJzAlAhQcgAIu+B8k\n",
+    "Be6WphLcth/grHAeXhcNMjUwNDE3MTAxNjUxWqB3MHUwGAYDVR0UBBECDxnP/97a\n",
+    "dO3y9qRGDM7hQDAfBgNVHSMEGDAWgBTXYYkfk5aLdlQW6eV33Hy3ZRuAJDA4BgNV\n",
+    "HRwBAf8ELjAsoCSgIoYgaHR0cDovL2xvY2FsaG9zdDo4MDAwL2NhX2NybC5kZXKB\n",
+    "Af+CAf8wDQYJKoZIhvcNAQELBQADggEBAD0CXRjIwUIq7GSt4/uKBX2HQiJI2od4\n",
+    "x1CJDtAgct8t+W8w+1jfgFRCyPbbgSrlfJtBwxg8AKZ+ktM35/NwSrNTHPS4LZBS\n",
+    "bdcyKKDHTn9bbheYQcRwjHzkOsv6SnUqFqZilgpLQR2FRw47RUlod9s3oYFvyHHh\n",
+    "/aFDg0A0H9GN+fuvDsAQLHlcz7YV/vrLu5roP8bcyfc0ItYLY00Te07LQaVauVhe\n",
+    "FUDQcWdAvKPVjlYthCS5SdQDrIOQeBIT6Pxaz4MQ8XY1CuKPoxxuZrKhta8PYF1j\n",
+    "qiDVyXjcYQINt9eGurBIzPmZWyzcqf4MTAyi3m+jfNdE44jpuNCKY48=\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+/*
+ * CRL file with an invalid AKI extension
+ * https://github.com/openssl/openssl/issues/27114
+ */
+static const char *kAKIInvalid[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIIB/DCB5QIBATANBgkqhkiG9w0BAQsFADBOMQswCQYDVQQGEwJVUzELMAkGA1UE\n",
+    "CAwCVVMxCzAJBgNVBAcMAlVTMQswCQYDVQQKDAJVUzELMAkGA1UEAwwCVVMxCzAJ\n",
+    "BgNVBAsMAlVTFw0yNTAxMDEwMDAwMDBaFw0yNTEyMDEwMDAwMDBaMDUwMwIUHIAC\n",
+    "LvgfJAXulqYS3LYf4KxwHl4XDTI1MDMxMzAyNDQ0MFowDDAKBgNVHRUEAwoBBqAs\n",
+    "MCowDgYDVR0jBAcwBYIDAeJAMBgGA1UdFAQRAg8Zz//e2nTt8vakRgzO4UAwDQYJ\n",
+    "KoZIhvcNAQELBQADggEBAGg2PYwXQCYgLo1JGi2C1bczVhf9EsQ+QgeHWCHGTKrT\n",
+    "yi5+cpHMZF750W1YoSfipwAL/RZJ+YsI++xBsMTY8mZLUOIAJnDIQkwRHAB25ovd\n",
+    "rR7baLfUq+OPgjftDWmkAzn5SHlcO2Yq/dE1rn40nMvP3uxZFZvmg+QonK2yVqqH\n",
+    "ttaQdUNY0uPYja2c6mdr8By4qjQM6XnMcFIof2D3ufggZOTauLyAnonhlQvyTva+\n",
+    "UpHQ8FkE5dCN5Eiup+CYe+dxZiHp/NBdmWbmbuP34SewuK5a+lvYuhaytOrOZpNT\n",
+    "3mBRyoQpMCPMKfHCLnSUA5S7CtruAk3LkynWwy7LM2A=\n",
     "-----END X509 CRL-----\n",
     NULL
 };
@@ -519,44 +621,60 @@ static int test_bad_issuer_crl(void)
 
 static int test_crl_empty_idp(void)
 {
-    X509_CRL *empty_idp_crl = CRL_from_strings(kEmptyIdpCRL);
-    int r;
+    X509_CRL *crl;
+    int test;
 
-    r = TEST_ptr(empty_idp_crl)
-        && TEST_int_eq(verify(test_leaf2, test_root2,
-                           make_CRL_stack(empty_idp_crl, NULL),
-                           X509_V_FLAG_CRL_CHECK, PARAM_TIME2),
-            X509_V_ERR_UNABLE_TO_GET_CRL);
-    X509_CRL_free(empty_idp_crl);
-    return r;
+    test = TEST_ptr_null((crl = CRL_from_strings(kEmptyIdpCRL)))
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT)
+        && TEST_err_s("IDP missing required distributionPoint or onlySomeReasons");
+
+    X509_CRL_free(crl);
+    return test;
 }
 
+/*
+ * This test was designed to pass and to exercise known critical extensions,
+ * but validation is now strict and it fails.
+ * It should be rebuilt later with lower priority.
+ */
 static int test_known_critical_crl(void)
 {
-    X509_CRL *known_critical_crl = CRL_from_strings(kKnownCriticalCRL);
-    int r;
+    X509_CRL *crl;
+    int test;
 
-    r = TEST_ptr(known_critical_crl)
-        && TEST_int_eq(verify(test_leaf, test_root,
-                           make_CRL_stack(known_critical_crl, NULL),
-                           X509_V_FLAG_CRL_CHECK, PARAM_TIME),
-            X509_V_OK);
-    X509_CRL_free(known_critical_crl);
-    return r;
+    test = TEST_ptr_null((crl = CRL_from_strings(kKnownCriticalCRL)))
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT)
+        && TEST_err_s("CRL contains invalid Issuing Distribution Point");
+
+    X509_CRL_free(crl);
+    return test;
 }
 
-static int test_unknown_critical_crl(int n)
+static int test_unknown_critical_crl1(void)
 {
-    X509_CRL *unknown_critical_crl = CRL_from_strings(unknown_critical_crls[n]);
-    int r;
+    X509_CRL *crl;
+    int test;
 
-    r = TEST_ptr(unknown_critical_crl)
+    test = TEST_ptr((crl = CRL_from_strings(kUnknownCriticalCRL)))
         && TEST_int_eq(verify(test_leaf, test_root,
-                           make_CRL_stack(unknown_critical_crl, NULL),
+                           make_CRL_stack(crl, NULL),
                            X509_V_FLAG_CRL_CHECK, PARAM_TIME),
             X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION);
-    X509_CRL_free(unknown_critical_crl);
-    return r;
+    X509_CRL_free(crl);
+    return test;
+}
+
+static int test_unknown_critical_crl2(void)
+{
+    X509_CRL *crl;
+    int test;
+
+    test = TEST_ptr_null((crl = CRL_from_strings(kUnknownCriticalCRL2)))
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT)
+        && TEST_err_s("CRL contains invalid Issuing Distribution Point");
+
+    X509_CRL_free(crl);
+    return test;
 }
 
 static int test_reuse_crl(int idx)
@@ -622,20 +740,12 @@ err:
 static int test_crl_cert_issuer_ext(void)
 {
     X509_CRL *crl = CRL_from_strings(kCertIssuerNoIDPCRL);
-    int test = TEST_ptr_null(crl);
+    int test;
+
+    test = TEST_ptr_null(crl);
 
     X509_CRL_free(crl);
     return test;
-}
-
-/*
- * This function clears the error stack before parsing and delegates the actual
- * decoding to CRL_from_strings().
- */
-static X509_CRL *crl_clear_err_parse(const char **pem)
-{
-    ERR_clear_error();
-    return CRL_from_strings(pem);
 }
 
 static int test_crl_date_invalid(void)
@@ -643,12 +753,18 @@ static int test_crl_date_invalid(void)
     X509_CRL *tmm = NULL, *tss = NULL, *utc = NULL;
     int test = 0;
 
-    test = TEST_ptr_null((tmm = crl_clear_err_parse(kInvalidDateMM)))
-        && TEST_true(err_chk(ERR_LIB_ASN1, ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT))
-        && TEST_ptr_null((tss = crl_clear_err_parse(kInvalidDateSS)))
-        && TEST_true(err_chk(ERR_LIB_ASN1, ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT))
-        && TEST_ptr_null((utc = crl_clear_err_parse(kInvalidDateUTC)))
-        && TEST_true(err_chk(ERR_LIB_ASN1, ASN1_R_WRONG_TAG));
+    test = TEST_ptr_null((tmm = CRL_from_strings(kInvalidDateMM)))
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT)
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_ILLEGAL_TIME_VALUE)
+        && TEST_err_s("InvalidityDate in CRL is not well-formed")
+        && TEST_ptr_null((tss = CRL_from_strings(kInvalidDateSS)))
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT)
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_ILLEGAL_TIME_VALUE)
+        && TEST_err_s("InvalidityDate in CRL is not well-formed")
+        && TEST_ptr_null((utc = CRL_from_strings(kInvalidDateUTC)))
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_WRONG_TAG)
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_ILLEGAL_TIME_VALUE)
+        && TEST_err_s("InvalidityDate in CRL is not well-formed");
 
     X509_CRL_free(tmm);
     X509_CRL_free(utc);
@@ -717,6 +833,73 @@ err:
     return status == X509_V_OK;
 }
 
+static int test_crl_delta_indicator(void)
+{
+    X509_CRL *crl;
+    int test;
+
+    test = TEST_ptr_null((crl = CRL_from_strings(kCrlDeltaIndicatorString)))
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_WRONG_TAG)
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT)
+        && TEST_err_s("Invalid Delta CRL Indicator");
+
+    X509_CRL_free(crl);
+    return test;
+}
+
+static int test_crl_number(void)
+{
+    X509_CRL *crl;
+    int test;
+
+    test = TEST_ptr_null((crl = CRL_from_strings(kCrlNumberString)))
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_WRONG_TAG)
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT)
+        && TEST_err_s("Invalid CRL Number");
+
+    X509_CRL_free(crl);
+    return test;
+}
+
+static int test_crl_serial(void)
+{
+    X509_CRL *crl;
+    int test;
+
+    test = TEST_ptr_null((crl = CRL_from_strings(kCrlSerialNeg)))
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_ILLEGAL_NEGATIVE_VALUE)
+        && TEST_err_s("Authority Key Identifier's serial number in the CRL must be positive");
+
+    X509_CRL_free(crl);
+    return test;
+}
+
+static int test_crl_idp_check(void)
+{
+    X509_CRL *crl;
+    int test;
+
+    test = TEST_ptr_null((crl = CRL_from_strings(kCrlIDP_ou_oa_sig)))
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT)
+        && TEST_err_s("onlyUser, onlyCA, and onlyAttr flags in IDP are mutually exclusive");
+
+    X509_CRL_free(crl);
+    return test;
+}
+
+static int test_crl_aki_check(void)
+{
+    X509_CRL *crl;
+    int test;
+
+    test = TEST_ptr_null((crl = CRL_from_strings(kAKIInvalid)))
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT)
+        && TEST_err_s("Authority Key Identifier's Issuer and serial number in CRL must be paired");
+
+    X509_CRL_free(crl);
+    return test;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(test_root = X509_from_strings(kCRLTestRoot))
@@ -733,7 +916,14 @@ int setup_tests(void)
     ADD_TEST(test_crl_cert_issuer_ext);
     ADD_TEST(test_crl_date_invalid);
     ADD_TEST(test_get_crl_fn_score);
-    ADD_ALL_TESTS(test_unknown_critical_crl, OSSL_NELEM(unknown_critical_crls));
+    ADD_TEST(test_crl_delta_indicator);
+    ADD_TEST(test_crl_number);
+    ADD_TEST(test_crl_serial);
+    ADD_TEST(test_crl_idp_check);
+    ADD_TEST(test_crl_aki_check);
+    ADD_TEST(test_unknown_critical_crl1);
+    ADD_TEST(test_unknown_critical_crl2);
+
     ADD_ALL_TESTS(test_reuse_crl, 6);
 
     return 1;
