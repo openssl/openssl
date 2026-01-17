@@ -32,6 +32,11 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Support of deprecated elliptic curves in TLS according to RFC 8422 was
+   disabled by default
+
+   *Dmitry Belyavskiy*
+
  * Remove support for an SSLv2 Client Hello. When a client wanted to support
    both SSLv2 and higher versions like SSLv3 or even TLSv1, it needed to
    send an SSLv2 Client Hello. SSLv2 support itself was removed in version
