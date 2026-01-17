@@ -31,6 +31,7 @@
 #include "prov/provider_util.h"
 #include "prov/securitycheck.h"
 #include "internal/e_os.h"
+#include "internal/fips.h"
 #include "internal/params.h"
 #include "internal/sizes.h"
 
@@ -99,6 +100,12 @@ static void *kdf_hkdf_new(void *provctx)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_KDF_HKDF))
+        return NULL;
+#endif
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) != NULL) {
         ctx->provctx = provctx;
