@@ -148,17 +148,27 @@ struct quic_channel_st {
     uint64_t cur_retire_prior_to;
 
     /* Transport parameter values we send to our peer. */
+    uint64_t tx_init_max_data;
     uint64_t tx_init_max_stream_data_bidi_local;
     uint64_t tx_init_max_stream_data_bidi_remote;
     uint64_t tx_init_max_stream_data_uni;
+    uint64_t tx_init_max_streams_bidi;
+    uint64_t tx_init_max_streams_uni;
     uint64_t tx_max_ack_delay; /* ms */
+    unsigned char tx_ack_delay_exp;
+    unsigned char tx_disable_active_migration;
+    uint64_t tx_active_conn_id_limit;
 
     /* Transport parameter values received from server. */
+    uint64_t rx_init_max_data;
     uint64_t rx_init_max_stream_data_bidi_local;
     uint64_t rx_init_max_stream_data_bidi_remote;
     uint64_t rx_init_max_stream_data_uni;
+    uint64_t rx_init_max_streams_bidi;
+    uint64_t rx_init_max_streams_uni;
     uint64_t rx_max_ack_delay; /* ms */
     unsigned char rx_ack_delay_exp;
+    unsigned char rx_disable_active_migration;
 
     /* Diagnostic counters for testing purposes only. May roll over. */
     uint16_t diag_num_rx_ack; /* Number of ACK frames received */
@@ -188,6 +198,11 @@ struct quic_channel_st {
      * negotiated by transport parameters.
      */
     uint64_t rx_max_udp_payload_size;
+    /*
+     * Maximum payload size in bytes for datagrams received from our peer, as
+     * negotiated by transport parameters.
+     */
+    uint64_t tx_max_udp_payload_size;
     /* Maximum active CID limit, as negotiated by transport parameters. */
     uint64_t rx_active_conn_id_limit;
 
