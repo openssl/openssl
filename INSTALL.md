@@ -757,9 +757,9 @@ Don't build and install documentation, i.e. manual pages in various forms.
 
 Don't build support for loading Dynamic Shared Objects (DSO)
 
-### no-tls-deprecated-ec
+### enable-tls-deprecated-ec
 
-Disable legacy TLS EC groups that were deprecated in RFC8422.  These are the
+Enable legacy TLS EC groups that were deprecated in RFC8422.  These are the
 Koblitz curves, B<secp160r1>, B<secp160r2>, B<secp192r1>, B<secp224r1>, and the
 binary Elliptic curves that would also be disabled by C<no-ec2m>.
 
