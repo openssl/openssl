@@ -12,7 +12,7 @@
 #pragma once
 
 #ifdef WINDOWS
-#if !defined(_WIN32_WCE) && !defined(_WIN32_WINNT)
+#ifndef _WIN32_WINNT
 /*
  * Defining _WIN32_WINNT here in e_winsock.h implies certain "discipline."
  * Most notably we ought to check for availability of each specific
@@ -25,9 +25,9 @@
  * might be possible to achieve the goal by /DELAYLOAD-ing .DLLs
  * and check for current OS version instead.
  */
-#define _WIN32_WINNT 0x0501
+#define _WIN32_WINNT 0x0A00
 #endif
-#if defined(_WIN32_WINNT) || defined(_WIN32_WCE)
+#ifdef _WIN32_WINNT
 /*
  * Just like defining _WIN32_WINNT including winsock2.h implies
  * certain "discipline" for maintaining [broad] binary compatibility.
