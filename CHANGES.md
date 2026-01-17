@@ -47,6 +47,14 @@ OpenSSL Releases
 
    *Tomáš Mráz*
 
+ * Made more QUIC transport parameters configurable via the
+   `SSL_get_value_uint`/`SSL_set_value_uint` functions. Now also configurable:
+   `max_udp_payload_size`, `initial_max_data`,
+   `initial_max_stream_data_bidi_local`, `initial_max_stream_data_uni`,
+   `ack_delay_exponent`, `max_ack_delay`.
+
+   *Nikolas Gauder*
+
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
  * Added `-expected-rpks` option to the `openssl s_client`
