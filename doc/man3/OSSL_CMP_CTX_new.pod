@@ -512,9 +512,11 @@ When using signature-based protection of CMP request messages
 this CMP signer certificate will be included first in the extraCerts field.
 It serves as fallback reference certificate, see OSSL_CMP_CTX_set1_oldCert().
 The subject of this I<cert> will be used as the sender field of outgoing
-messages, while the subject of any cert set via OSSL_CMP_CTX_set1_oldCert(),
+messages, while fallback values are
+the subject of any cert set via OSSL_CMP_CTX_set1_oldCert(),
 the subject of any PKCS#10 CSR set via OSSL_CMP_CTX_set1_p10CSR(),
-and any value set via OSSL_CMP_CTX_set1_subjectName() are used as fallback.
+any value set via OSSL_CMP_CTX_set1_subjectName(), or else any value provided via
+OSSL_CMP_CTX_set1_referenceValue() and used as the commonName in a DN structure.
 
 The I<cert> argument may be NULL to clear the entry.
 
@@ -548,11 +550,18 @@ messages that have MAC-based protection (protectionAlg = C<MSG_MAC_ALG>).
 
 OSSL_CMP_CTX_set1_referenceValue() sets the given referenceValue I<ref> with
 length I<len> in the given I<ctx> or clears it if the I<ref> argument is NULL.
-According to RFC 9810 section 5.1.1, if no value for the sender field in
-CMP message headers can be determined (i.e., no CMP signer certificate
+When provided, the value is placed in senderKID when using MAC-based protection.
+When not provided, the commonName of the sender field is taken as the fallback value.
+Conversely, when provided, the value is also taken as the commonName of the sender
+field when using of MAC-based protection (as specified in RFC 9483 section 3.1),
+while for signature-base protection it is just taken as the ultimate fallback value.
+According to RFC 9810 section 5.1.1, if no value for the sender field in CMP message
+headers can be determined then the sender field will contain the NULL-DN.
+This can only happen if there is no CMP signer certificate, no certificate to be
+updated, and no PKCS#10 CSR is available from which the subject name could be taken
 and no subject DN is set via OSSL_CMP_CTX_set1_subjectName()
-then the sender field will contain the NULL-DN
-and the senderKID field of the CMP message header must be set.
+and no reference value is set via OSSL_CMP_CTX_set1_referenceValue().
+
 When signature-based protection is used the senderKID will be set to
 the subjectKeyIdentifier of the CMP signer certificate as far as present.
 If not present or when MAC-based protection is used
@@ -648,6 +657,8 @@ OSSL_CMP_CTX_set1_p10CSR() sets the PKCS#10 CSR to use in P10CR messages.
 If such a CSR is provided, its subject and public key fields are also
 used as fallback values for the certificate template of IR/CR/KUR/RR messages,
 and any extensions included are added to the template of IR/CR/KUR messages.
+Its subject is also used as fallback sender value in CMP message headers if neither
+OSSL_CMP_CTX_set1_cert() nor OSSL_CMP_CTX_set1_oldCert() have been used.
 
 OSSL_CMP_CTX_push0_genm_ITAV() adds I<itav> to the stack in the I<ctx> which
 will be the body of a General Message sent with this context.
