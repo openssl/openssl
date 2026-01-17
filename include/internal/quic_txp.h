@@ -155,6 +155,10 @@ int ossl_quic_tx_packetiser_set_cur_scid(OSSL_QUIC_TX_PACKETISER *txp,
 int ossl_quic_tx_packetiser_set_peer(OSSL_QUIC_TX_PACKETISER *txp,
     const BIO_ADDR *peer);
 
+/* Change the ACK delay exponent the TXP uses to encode ACK frames. */
+int ossl_quic_tx_packetiser_set_ack_delay_exponent(OSSL_QUIC_TX_PACKETISER *txp,
+    uint32_t exp);
+
 /*
  * Change the QLOG instance retrieval function in use after instantiation.
  */
