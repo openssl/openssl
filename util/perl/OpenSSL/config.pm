@@ -524,22 +524,6 @@ EOF
             return { target => "darwin-ppc" };
         }
       ],
-      [ 'i.86-apple-darwin.*',
-        sub {
-            my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
-            my $ISA64 = `sysctl -n hw.optional.x86_64 2>/dev/null`;
-            if ( $ISA64 == 1 && $KERNEL_BITS eq '' ) {
-                print <<EOF;
-WARNING! To build 64-bit package, do this:
-         KERNEL_BITS=64 $WHERE/Configure [options...]
-EOF
-                maybe_abort();
-            }
-            return { target => "darwin64-x86_64" }
-                if $ISA64 == 1 && $KERNEL_BITS eq '64';
-            return { target => "darwin-i386" };
-        }
-      ],
       [ 'x86_64-apple-darwin.*',
         sub {
             my $KERNEL_BITS = $ENV{KERNEL_BITS} // '';
@@ -551,13 +535,6 @@ EOF
                     return { target => "darwin64-x86_64" };
                 }
             }
-            return { target => "darwin-i386" } if $KERNEL_BITS eq '32';
-
-            print <<EOF;
-WARNING! To build 32-bit package, do this:
-         KERNEL_BITS=32 $WHERE/Configure [options...]
-EOF
-            maybe_abort();
             return { target => "darwin64-x86_64" };
         }
       ],
