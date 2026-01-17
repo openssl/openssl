@@ -121,6 +121,8 @@ KECCAK-KMAC is only used internally as a sub algorithm of KMAC.
 
 =item SNMPKDF, see L<EVP_KDF-SNMPKDF(7)>
 
+=item SRTPKDF, see L<EVP_KDF-SRTPKDF(7)>
+
 =item SSHKDF, see L<EVP_KDF-SSHKDF(7)>
 
 =item TLS1-PRF, see L<EVP_KDF-TLS1_PRF(7)>
@@ -488,6 +490,8 @@ Key agreement tests used with the "KAT_KA" type.
 =item "PBKDF2" (B<OSSL_SELF_TEST_DESC_KDF_PBKDF2>)
 
 =item "SNMPKDF" (B<OSSL_SELF_TEST_DESC_KDF_SNMPKDF>)
+
+=item "SRTPKDF" (B<OSSL_SELF_TEST_DESC_KDF_SRTPKDF>)
 
 =item "SSHKDF" (B<OSSL_SELF_TEST_DESC_KDF_SSHKDF>)
 
