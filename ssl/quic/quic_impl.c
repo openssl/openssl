@@ -4343,6 +4343,12 @@ int ossl_quic_get_value_uint(SSL *s, uint32_t class_, uint32_t id,
         return qc_getset_max_udp_payload_size(&ctx, class_, value, NULL);
     case SSL_VALUE_QUIC_DATA_MAX:
         return qc_getset_max_data(&ctx, class_, value, NULL);
+    case SSL_VALUE_QUIC_STREAM_DATA_BIDI_LOCAL_MAX:
+        return qc_getset_max_stream_data(&ctx, class_, value, /*uni=*/0, /*remote=*/0, NULL);
+    case SSL_VALUE_QUIC_STREAM_DATA_BIDI_REMOTE_MAX:
+        return qc_getset_max_stream_data(&ctx, class_, value, /*uni=*/0, /*remote=*/1, NULL);
+    case SSL_VALUE_QUIC_STREAM_DATA_UNI_REMOTE_MAX:
+        return qc_getset_max_stream_data(&ctx, class_, value, /*uni=*/1, /*remote=*/1, NULL);
     case SSL_VALUE_QUIC_STREAM_BIDI_REMOTE_MAX:
         return qc_getset_max_streams(&ctx, class_, value, /*uni=*/0, NULL);
     case SSL_VALUE_QUIC_STREAM_UNI_REMOTE_MAX:
@@ -4378,13 +4384,6 @@ int ossl_quic_get_value_uint(SSL *s, uint32_t class_, uint32_t id,
         return qc_get_stream_write_buf_stat(&ctx, class_, value,
             ossl_quic_sstream_get_buffer_avail);
 
-    case SSL_VALUE_STREAM_DATA_BIDI_LOCAL_MAX:
-        return qc_getset_max_stream_data(&ctx, class_, value, /*uni=*/0, /*remote=*/0, NULL);
-    case SSL_VALUE_STREAM_DATA_BIDI_REMOTE_MAX:
-        return qc_getset_max_stream_data(&ctx, class_, value, /*uni=*/0, /*remote=*/1, NULL);
-    case SSL_VALUE_STREAM_DATA_UNI_REMOTE_MAX:
-        return qc_getset_max_stream_data(&ctx, class_, value, /*uni=*/1, /*remote=*/1, NULL);
-
     default:
         return QUIC_RAISE_NON_NORMAL_ERROR(&ctx,
             SSL_R_UNSUPPORTED_CONFIG_VALUE, NULL);
@@ -4412,6 +4411,12 @@ int ossl_quic_set_value_uint(SSL *s, uint32_t class_, uint32_t id,
         return qc_getset_max_udp_payload_size(&ctx, class_, NULL, &value);
     case SSL_VALUE_QUIC_DATA_MAX:
         return qc_getset_max_data(&ctx, class_, NULL, &value);
+    case SSL_VALUE_QUIC_STREAM_DATA_BIDI_LOCAL_MAX:
+        return qc_getset_max_stream_data(&ctx, class_, NULL, /*uni=*/0, /*remote=*/0, &value);
+    case SSL_VALUE_QUIC_STREAM_DATA_BIDI_REMOTE_MAX:
+        return qc_getset_max_stream_data(&ctx, class_, NULL, /*uni=*/0, /*remote=*/1, &value);
+    case SSL_VALUE_QUIC_STREAM_DATA_UNI_REMOTE_MAX:
+        return qc_getset_max_stream_data(&ctx, class_, NULL, /*uni=*/1, /*remote=*/1, &value);
     case SSL_VALUE_QUIC_STREAM_BIDI_REMOTE_MAX:
         return qc_getset_max_streams(&ctx, class_, NULL, /*uni=*/0, &value);
     case SSL_VALUE_QUIC_STREAM_UNI_REMOTE_MAX:
@@ -4424,13 +4429,6 @@ int ossl_quic_set_value_uint(SSL *s, uint32_t class_, uint32_t id,
         return qc_getset_disable_active_migration(&ctx, class_, NULL, &value);
     case SSL_VALUE_QUIC_ACTIVE_CONN_ID_LIMIT:
         return qc_getset_active_conn_id_limit(&ctx, class_, NULL, &value);
-
-    case SSL_VALUE_STREAM_DATA_BIDI_LOCAL_MAX:
-        return qc_getset_max_stream_data(&ctx, class_, NULL, /*uni=*/0, /*remote=*/0, &value);
-    case SSL_VALUE_STREAM_DATA_BIDI_REMOTE_MAX:
-        return qc_getset_max_stream_data(&ctx, class_, NULL, /*uni=*/0, /*remote=*/1, &value);
-    case SSL_VALUE_STREAM_DATA_UNI_REMOTE_MAX:
-        return qc_getset_max_stream_data(&ctx, class_, NULL, /*uni=*/1, /*remote=*/1, &value);
 
     default:
         return QUIC_RAISE_NON_NORMAL_ERROR(&ctx,
