@@ -1714,13 +1714,14 @@ static int ch_on_transport_params(const unsigned char *params,
 
             if (!ossl_quic_wire_decode_transport_param_int(&pkt, &id, &v)
                 || v < QUIC_MIN_INITIAL_DGRAM_LEN
-                || !ossl_qtx_set_mdpl(ch->qtx, v)) {
+                || v > QUIC_MAX_MAX_UDP_PAYLOAD_SIZE) {
                 reason = TP_REASON_MALFORMED("MAX_UDP_PAYLOAD_SIZE");
                 goto malformed;
             }
 
             ch->rx_max_udp_payload_size = v;
 
+            ossl_qtx_set_mdpl(ch->qtx, ch->rx_max_udp_payload_size);
             got_max_udp_payload_size = 1;
             break;
 
