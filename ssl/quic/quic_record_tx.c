@@ -1068,7 +1068,6 @@ int ossl_qtx_set_mdpl(OSSL_QTX *qtx, size_t mdpl)
 
     mtu_limit = qtx->mtu - BIO_dgram_get_mtu_overhead(qtx->bio);
     qtx->mdpl = mdpl > mtu_limit ? mtu_limit : mdpl;
-    printf("qtx_set_mdpl | mdpl: %zu, mtu_limit: %zu, qtx->mdpl: %zu\n", mdpl, mtu_limit, qtx->mdpl);
     return 1;
 }
 
