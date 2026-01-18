@@ -413,6 +413,7 @@ OpenSSL 4.0
    initial_max_stream_data_bidi_remote, initial_max_stream_data_uni,
    initial_max_streams_bidi, initial_max_streams_uni, ack_delay_exponent
    max_ack_delay, disable_active_migration, active_connection_id_limit.
+   We now also respect the peer's max_udp_payload_size when sending packets.
 
    *Nikolas Gauder*
 
