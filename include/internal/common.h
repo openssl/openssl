@@ -37,6 +37,9 @@
 #define ALIGN64
 #endif
 
+/* Silent -Wcast-qual for const cast */
+#define CONST_CAST(type) (type)(uintptr_t)
+
 #ifdef NDEBUG
 #define ossl_assert(x) ossl_likely((x) != 0)
 #else

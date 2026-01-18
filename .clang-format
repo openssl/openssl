@@ -1130,7 +1130,7 @@ TypeNames:
   - "HASH_LONG"
   - "MD32_REG_T"
 # OpenSSL uses macros extensively. Tell clang-format about them.
-TypenameMacros: ['LHASH_OF', 'STACK_OF']
+TypenameMacros: ['LHASH_OF', 'STACK_OF', 'CONST_CAST']
 StatementMacros:
   - "BLOCK_CIPHER_aead"
   - "BLOCK_CIPHER_generic"
