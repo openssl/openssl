@@ -4182,7 +4182,8 @@ uint64_t ossl_quic_channel_get_max_udp_payload_size_peer_request(const QUIC_CHAN
 void ossl_quic_channel_set_max_data_request(QUIC_CHANNEL *ch, uint64_t max_data)
 {
     ch->tx_init_max_data = max_data;
-    ossl_quic_rxfc_init(&ch->conn_rxfc, NULL, max_data, DEFAULT_CONN_RXFC_MAX_WND_MUL * max_data, get_time, ch);
+    ossl_quic_rxfc_init(&ch->conn_rxfc, NULL,
+        max_data, DEFAULT_CONN_RXFC_MAX_WND_MUL * max_data, get_time, ch);
 }
 
 uint64_t ossl_quic_channel_get_max_data_request(const QUIC_CHANNEL *ch)
@@ -4194,11 +4195,6 @@ uint64_t ossl_quic_channel_get_max_data_peer_request(const QUIC_CHANNEL *ch)
 {
     return ch->rx_init_max_data;
 }
-
-/*uint64_t ossl_quic_channel_get_max_data_actual(const QUIC_CHANNEL *ch, int rx)
-{
-    return rx ? ossl_quic_rxfc_get_cwm(&ch->conn_rxfc) : ossl_quic_txfc_get_cwm(&ch->conn_txfc);
-}*/
 
 void ossl_quic_channel_set_max_stream_data_request(QUIC_CHANNEL *ch, uint64_t max_data, int is_uni, int is_remote)
 {
@@ -4229,13 +4225,6 @@ uint64_t ossl_quic_channel_get_max_stream_data_peer_request(const QUIC_CHANNEL *
         return is_remote ? ch->rx_init_max_stream_data_bidi_remote : ch->rx_init_max_stream_data_bidi_local;
 }
 
-/*uint64_t ossl_quic_channel_get_max_stream_data_actual(const QUIC_CHANNEL *ch, int is_uni, int is_remote, int rx)
-{
-// rx: limits on receiving
-// TODO acutal of max_stream_data: but which stream?
-// local and remote!
-}*/
-
 void ossl_quic_channel_set_max_streams_request(QUIC_CHANNEL *ch, uint64_t max_streams, int is_uni)
 {
     if (is_uni) {
@@ -4256,14 +4245,6 @@ uint64_t ossl_quic_channel_get_max_streams_peer_request(const QUIC_CHANNEL *ch, 
 {
     return is_uni ? ch->rx_init_max_streams_uni : ch->rx_init_max_streams_bidi;
 }
-
-/*uint64_t ossl_quic_channel_get_max_streams_actual(const QUIC_CHANNEL *ch, int is_uni, int local)
-{
-    if (local)
-        return get_stream_limit(is_uni, ch);
-    else
-        return is_uni ? ossl_quic_rxfc_get_cwm(&ch->max_streams_uni_rxfc) : ossl_quic_rxfc_get_cwm(&ch->max_streams_bidi_rxfc);
-}*/
 
 void ossl_quic_channel_set_ack_delay_exponent_request(QUIC_CHANNEL *ch, uint64_t exp)
 {
