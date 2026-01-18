@@ -1924,7 +1924,8 @@ static int ch_on_transport_params(const unsigned char *params,
     QLOG_EVENT_END()
 #endif
 
-    if (got_initial_max_data || got_initial_max_stream_data_bidi_remote
+    if (got_initial_max_data
+        || got_initial_max_stream_data_bidi_remote || got_initial_max_stream_data_uni
         || got_initial_max_streams_bidi || got_initial_max_streams_uni)
         /*
          * If FC credit was bumped, we may now be able to send. Update all
