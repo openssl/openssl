@@ -15,6 +15,8 @@
 #include "internal/list.h"
 #include "../ssl_local.h"
 
+#define QTX_DEFAULT_MTU 1500
+
 /*
  * TXE
  * ===
@@ -67,6 +69,12 @@ struct ossl_qtx_st {
 
     /* TX maximum datagram payload length. */
     size_t mdpl;
+
+    /*
+     * Our current understanding of the upper bound on an outgoing datagram size
+     * in bytes.
+     */
+    size_t mtu;
 
     /*
      * List of TXEs which are not currently in use. These are moved to the
@@ -125,6 +133,8 @@ OSSL_QTX *ossl_qtx_new(const OSSL_QTX_ARGS *args)
     qtx->propq = args->propq;
     qtx->bio = args->bio;
     qtx->mdpl = args->mdpl;
+    /* We update this if possible when we get a BIO. */
+    qtx->mtu = QTX_DEFAULT_MTU;
     qtx->get_qlog_cb = args->get_qlog_cb;
     qtx->get_qlog_cb_arg = args->get_qlog_cb_arg;
 
@@ -1024,15 +1034,41 @@ int ossl_qtx_pop_net(OSSL_QTX *qtx, BIO_MSG *msg)
 
 void ossl_qtx_set_bio(OSSL_QTX *qtx, BIO *bio)
 {
+    unsigned int mtu;
+
     qtx->bio = bio;
+
+    if (bio != NULL) {
+        /*
+         * Try to determine our MTU if possible. The BIO is not required to
+         * support this, in which case we remain at the last known MTU, or our
+         * initial default.
+         */
+        mtu = BIO_dgram_get_mtu(bio);
+        if (mtu >= QUIC_MIN_INITIAL_DGRAM_LEN)
+            ossl_qtx_set_mtu(qtx, mtu); /* best effort */
+    }
+}
+
+int ossl_qtx_set_mtu(OSSL_QTX *qtx, unsigned int mtu)
+{
+    if (mtu < QUIC_MIN_INITIAL_DGRAM_LEN)
+        return 0;
+
+    qtx->mtu = mtu;
+    return 1;
 }
 
 int ossl_qtx_set_mdpl(OSSL_QTX *qtx, size_t mdpl)
 {
+    size_t mtu_limit;
+
     if (mdpl < QUIC_MIN_INITIAL_DGRAM_LEN)
         return 0;
 
-    qtx->mdpl = mdpl;
+    mtu_limit = qtx->mtu - BIO_dgram_get_mtu_overhead(qtx->bio);
+    qtx->mdpl = mdpl > mtu_limit ? mtu_limit : mdpl;
+    printf("qtx_set_mdpl | mdpl: %zu, mtu_limit: %zu, qtx->mdpl: %zu\n", mdpl, mtu_limit, qtx->mdpl);
     return 1;
 }
 
