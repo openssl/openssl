@@ -3759,10 +3759,6 @@ static int qc_getset_max_data(QCTX *ctx, uint32_t class_,
     qctx_lock(ctx);
 
     switch (class_) {
-    /* TODO(ngauder):
-     * SSL_VALUE_CLASS_GENERIC: could be used in the future to get the current
-     * value that is negotiated by the peer, e.g., via MAX_DATA frames
-     */
     case SSL_VALUE_CLASS_FEATURE_REQUEST:
         value_out = ossl_quic_channel_get_max_data_request(ctx->qc->ch);
 
@@ -3825,10 +3821,6 @@ static int qc_getset_max_streams(QCTX *ctx, uint32_t class_,
     qctx_lock(ctx);
 
     switch (class_) {
-    /* TODO(ngauder):
-     * SSL_VALUE_CLASS_GENERIC: could be used in the future to get the current
-     * value that is negotiated by the peer, e.g., via MAX_STREAMS frames
-     */
     case SSL_VALUE_CLASS_FEATURE_REQUEST:
         value_out = ossl_quic_channel_get_max_streams_request(ctx->qc->ch, is_uni);
 
@@ -4265,13 +4257,6 @@ static int qc_getset_max_stream_data(QCTX *ctx, uint32_t class_,
     qctx_lock(ctx);
 
     switch (class_) {
-    /* TODO(ngauder):
-     * SSL_VALUE_CLASS_GENERIC: only for QUIC STREAMS since transport parameters
-     * are only negotiated once and MAX_STREAM_DATA frames are specific to a stream.
-     *
-     * QUIC_CONNECTION: read-write: SSL_VALUE_CLASS_FEATURE_REQUEST, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST
-     * QUIC_STREAM: read-only: SSL_VALUE_CLASS_GENERIC, SSL_VALUE_CLASS_FEATURE_REQUEST, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST
-     */
     case SSL_VALUE_CLASS_FEATURE_REQUEST:
         value_out = ossl_quic_channel_get_max_stream_data_request(ctx->qc->ch, is_uni, is_remote);
 
