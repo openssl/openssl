@@ -1721,7 +1721,7 @@ static int ch_on_transport_params(const unsigned char *params,
 
             ch->rx_max_udp_payload_size = v;
 
-            ossl_qtx_set_mdpl(ch->qtx, ch->rx_max_udp_payload_size);
+            ossl_qtx_set_mdpl(ch->qtx, (size_t)ch->rx_max_udp_payload_size);
             got_max_udp_payload_size = 1;
             break;
 
@@ -4250,7 +4250,7 @@ uint64_t ossl_quic_channel_get_max_streams_peer_request(const QUIC_CHANNEL *ch, 
 void ossl_quic_channel_set_ack_delay_exponent_request(QUIC_CHANNEL *ch, uint64_t exp)
 {
     ch->tx_ack_delay_exp = (unsigned char)exp;
-    ossl_quic_tx_packetiser_set_ack_delay_exponent(ch->txp, exp);
+    ossl_quic_tx_packetiser_set_ack_delay_exponent(ch->txp, (uint32_t)exp);
 }
 
 uint64_t ossl_quic_channel_get_ack_delay_exponent_request(const QUIC_CHANNEL *ch)
