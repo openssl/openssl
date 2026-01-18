@@ -12,6 +12,13 @@ SSL_VALUE_CLASS_FEATURE_REQUEST, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST,
 SSL_VALUE_CLASS_FEATURE_NEGOTIATED, SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL,
 SSL_VALUE_QUIC_STREAM_BIDI_REMOTE_AVAIL, SSL_VALUE_QUIC_STREAM_UNI_LOCAL_AVAIL,
 SSL_VALUE_QUIC_STREAM_UNI_REMOTE_AVAIL, SSL_VALUE_QUIC_IDLE_TIMEOUT,
+SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX, SSL_VALUE_QUIC_DATA_MAX,
+SSL_VALUE_QUIC_STREAM_DATA_BIDI_LOCAL_MAX,
+SSL_VALUE_QUIC_STREAM_DATA_BIDI_REMOTE_MAX,
+SSL_VALUE_QUIC_STREAM_DATA_UNI_REMOTE_MAX,
+SSL_VALUE_QUIC_STREAM_BIDI_REMOTE_MAX, SSL_VALUE_QUIC_STREAM_UNI_REMOTE_MAX,
+SSL_VALUE_QUIC_ACK_DELAY_EXPONENT, SSL_VALUE_QUIC_ACK_DELAY_MAX,
+SSL_VALUE_QUIC_DISABLE_ACTIVE_MIGRATION, SSL_VALUE_QUIC_ACTIVE_CONN_ID_LIMIT,
 SSL_VALUE_EVENT_HANDLING_MODE,
 SSL_VALUE_EVENT_HANDLING_MODE_INHERIT,
 SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT,
@@ -45,6 +52,17 @@ manage negotiable features and configuration values for an SSL object
  #define SSL_VALUE_QUIC_STREAM_UNI_LOCAL_AVAIL
  #define SSL_VALUE_QUIC_STREAM_UNI_REMOTE_AVAIL
  #define SSL_VALUE_QUIC_IDLE_TIMEOUT
+ #define SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX
+ #define SSL_VALUE_QUIC_DATA_MAX
+ #define SSL_VALUE_QUIC_STREAM_DATA_BIDI_LOCAL_MAX
+ #define SSL_VALUE_QUIC_STREAM_DATA_BIDI_REMOTE_MAX
+ #define SSL_VALUE_QUIC_STREAM_DATA_UNI_REMOTE_MAX
+ #define SSL_VALUE_QUIC_STREAM_BIDI_REMOTE_MAX
+ #define SSL_VALUE_QUIC_STREAM_UNI_REMOTE_MAX
+ #define SSL_VALUE_QUIC_ACK_DELAY_EXPONENT
+ #define SSL_VALUE_QUIC_ACK_DELAY_MAX
+ #define SSL_VALUE_QUIC_DISABLE_ACTIVE_MIGRATION
+ #define SSL_VALUE_QUIC_ACTIVE_CONN_ID_LIMIT
 
  #define SSL_VALUE_EVENT_HANDLING_MODE
  #define SSL_VALUE_EVENT_HANDLING_MODE_INHERIT
@@ -167,6 +185,104 @@ changed.
 
 This release of OpenSSL uses a default value of 30 seconds. This default value
 may change between releases of OpenSSL.
+
+=item B<SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX> (connection object)
+
+Feature (peer) request value. This configures the maximum UDP payload size in
+bytes. This feature can only be configured prior to connection establishment and
+cannot be subsequently changed. This value will be sent to the peer in the
+transport parameters.
+
+This release of OpenSSL uses a default value of 1200 bytes. This default value
+may change between releases of OpenSSL.
+
+=item B<SSL_VALUE_QUIC_DATA_MAX> (connection object)
+
+Feature (peer) request value. This configures the initial maximum amount of data
+in bytes that can be sent on the connection. This feature can only be configured
+prior to connection establishment and cannot be subsequently changed. This value
+will be sent to the peer in the transport parameters.
+
+This release of OpenSSL uses a default value of 768 * 1024 bytes. This default
+value may change between releases of OpenSSL.
+
+=item B<SSL_VALUE_QUIC_STREAM_DATA_BIDI_LOCAL_MAX> (connection object)
+
+Feature (peer) request value. This configures the initial maximum amount of data
+in bytes that can be received in terms of QUIC stream flow control on a
+bidirectional stream created by the local endpoint. This feature can only be
+configured prior to connection establishment and cannot be subsequently changed.
+This value will be sent to the peer in the transport parameters.
+
+This release of OpenSSL uses a default value of 512 * 1024 bytes. This default
+value may change between releases of OpenSSL.
+
+=item B<SSL_VALUE_QUIC_STREAM_DATA_BIDI_REMOTE_MAX> (connection object)
+
+As above, but provides the initial maximum amount of data in bytes that can be
+received in terms of QUIC stream flow control on a bidirectional stream created
+by the remote endpoint.
+
+=item B<SSL_VALUE_QUIC_STREAM_DATA_UNI_REMOTE_MAX> (connection object)
+
+As above, but provides the initial maximum amount of data in bytes that can be
+received in terms of QUIC stream flow control on a unidirectional stream created
+by the remote endpoint.
+
+=item B<SSL_VALUE_QUIC_STREAM_BIDI_REMOTE_MAX> (connection object)
+
+Feature (peer) request value. This configures the initial maximum number of
+bidirectional streams the peer is permitted to initiate. This feature can only
+be configured prior to connection establishment and cannot be subsequently
+changed. This value will be sent to the peer in the transport parameters.
+
+This release of OpenSSL uses a default value of 100 streams. This default
+value may change between releases of OpenSSL.
+
+=item B<SSL_VALUE_QUIC_STREAM_UNI_REMOTE_MAX> (connection object)
+
+As above, but provides the initial maximum number of unidirectional streams the
+peer is permitted to initiate.
+
+=item B<SSL_VALUE_QUIC_ACK_DELAY_EXPONENT> (connection object)
+
+Feature (peer) request value. This configures the ACK delay exponent. This
+feature can only be configured prior to connection establishment and cannot be
+subsequently changed. This value will be sent to the peer in the transport
+parameters.
+
+This release of OpenSSL uses a default value of 3. This default value may change
+between releases of OpenSSL.
+
+=item B<SSL_VALUE_QUIC_ACK_DELAY_MAX> (connection object)
+
+Feature (peer) request value. This configures the maximum ACK delay in
+milliseconds. This feature can only be configured prior to connection
+establishment and cannot be subsequently changed. This value will be sent to the
+peer in the transport parameters.
+
+This release of OpenSSL uses a default value of 25 milliseconds. This default
+value may change between releases of OpenSSL.
+
+=item B<SSL_VALUE_QUIC_DISABLE_ACTIVE_MIGRATION> (connection object)
+
+Feature (peer) request value. This configures whether to signal to the peer that
+we do not support active migration. This feature can only be configured prior to
+connection establishment and cannot be subsequently changed. This value will be
+sent to the peer in the transport parameters.
+
+This release of OpenSSL uses a default value of 1 (i.e., active migration is
+disabled). This default value may change between releases of OpenSSL.
+
+=item B<SSL_VALUE_QUIC_ACTIVE_CONN_ID_LIMIT> (connection object)
+
+Feature (peer) request value. This configures the maximum number of active
+connection IDs that can be used by the peer on the connection. This feature can
+only be configured prior to connection establishment and cannot be subsequently
+changed. This value will be sent to the peer in the transport parameters.
+
+This release of OpenSSL uses a default value of 2. This default value may change
+between releases of OpenSSL.
 
 =item B<SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL> (connection object)
 
@@ -339,11 +455,20 @@ L<SSL_set_default_stream_mode(3)>, L<SSL_set_incoming_stream_policy(3)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 3.3.
+The values SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX, SSL_VALUE_QUIC_DATA_MAX,
+SSL_VALUE_QUIC_STREAM_DATA_BIDI_LOCAL_MAX,
+SSL_VALUE_QUIC_STREAM_DATA_BIDI_REMOTE_MAX,
+SSL_VALUE_QUIC_STREAM_DATA_UNI_REMOTE_MAX,
+SSL_VALUE_QUIC_STREAM_BIDI_REMOTE_MAX, SSL_VALUE_QUIC_STREAM_UNI_REMOTE_MAX,
+SSL_VALUE_QUIC_ACK_DELAY_EXPONENT, SSL_VALUE_QUIC_ACK_DELAY_MAX,
+SSL_VALUE_QUIC_DISABLE_ACTIVE_MIGRATION, and SSL_VALUE_QUIC_ACTIVE_CONN_ID_LIMIT 
+were added in OpenSSL 4.0.
+
+The remaining functions and values described here were all added in OpenSSL 3.3.
 
 =head1 COPYRIGHT
 
-Copyright 2002-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
