@@ -174,23 +174,23 @@ int dsa_main(int argc, char **argv)
     private = !pubin && (!pubout || text);
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
-        BIO_printf(bio_err, "Error getting passwords\n");
+        BIO_puts(bio_err, "Error getting passwords\n");
         goto end;
     }
 
-    BIO_printf(bio_err, "read DSA key\n");
+    BIO_puts(bio_err, "read DSA key\n");
     if (pubin)
         pkey = load_pubkey(infile, informat, 1, passin, "public key");
     else
         pkey = load_key(infile, informat, 1, passin, "private key");
 
     if (pkey == NULL) {
-        BIO_printf(bio_err, "unable to load Key\n");
+        BIO_puts(bio_err, "unable to load Key\n");
         ERR_print_errors(bio_err);
         goto end;
     }
     if (!EVP_PKEY_is_a(pkey, "DSA")) {
-        BIO_printf(bio_err, "Not a DSA key\n");
+        BIO_puts(bio_err, "Not a DSA key\n");
         goto end;
     }
 
@@ -215,9 +215,9 @@ int dsa_main(int argc, char **argv)
             ERR_print_errors(bio_err);
             goto end;
         }
-        BIO_printf(out, "Public Key=");
+        BIO_puts(out, "Public Key=");
         BN_print(out, pub_key);
-        BIO_printf(out, "\n");
+        BIO_puts(out, "\n");
         BN_free(pub_key);
     }
 
@@ -225,7 +225,7 @@ int dsa_main(int argc, char **argv)
         ret = 0;
         goto end;
     }
-    BIO_printf(bio_err, "writing DSA key\n");
+    BIO_puts(bio_err, "writing DSA key\n");
     if (outformat == FORMAT_ASN1) {
         output_type = "DER";
     } else if (outformat == FORMAT_PEM) {
@@ -234,12 +234,12 @@ int dsa_main(int argc, char **argv)
         output_type = "MSBLOB";
     } else if (outformat == FORMAT_PVK) {
         if (pubin) {
-            BIO_printf(bio_err, "PVK form impossible with public key input\n");
+            BIO_puts(bio_err, "PVK form impossible with public key input\n");
             goto end;
         }
         output_type = "PVK";
     } else {
-        BIO_printf(bio_err, "bad output format specified for outfile\n");
+        BIO_puts(bio_err, "bad output format specified for outfile\n");
         goto end;
     }
 
@@ -287,13 +287,13 @@ int dsa_main(int argc, char **argv)
 
         params[0] = OSSL_PARAM_construct_int("encrypt-level", &pvk_encr);
         if (!OSSL_ENCODER_CTX_set_params(ectx, params)) {
-            BIO_printf(bio_err, "invalid PVK encryption level\n");
+            BIO_puts(bio_err, "invalid PVK encryption level\n");
             goto end;
         }
     }
 
     if (!OSSL_ENCODER_to_bio(ectx, out)) {
-        BIO_printf(bio_err, "unable to write key\n");
+        BIO_puts(bio_err, "unable to write key\n");
         goto end;
     }
     ret = 0;

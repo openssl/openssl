@@ -314,7 +314,7 @@ static int load_fips_prov_and_run_self_test(const char *prov_name,
 
     prov = OSSL_PROVIDER_load(NULL, prov_name);
     if (prov == NULL) {
-        BIO_printf(bio_err, "Failed to load FIPS module\n");
+        BIO_puts(bio_err, "Failed to load FIPS module\n");
         goto end;
     }
     if (!quiet) {
@@ -326,7 +326,7 @@ static int load_fips_prov_and_run_self_test(const char *prov_name,
             &build, sizeof(build));
         *p = OSSL_PARAM_construct_end();
         if (!OSSL_PROVIDER_get_params(prov, params)) {
-            BIO_printf(bio_err, "Failed to query FIPS module parameters\n");
+            BIO_puts(bio_err, "Failed to query FIPS module parameters\n");
             goto end;
         }
         if (OSSL_PARAM_modified(params))
@@ -340,7 +340,7 @@ static int load_fips_prov_and_run_self_test(const char *prov_name,
             &vers, sizeof(vers));
         *p = OSSL_PARAM_construct_end();
         if (!OSSL_PROVIDER_get_params(prov, params)) {
-            BIO_printf(bio_err, "Failed to query FIPS module parameters\n");
+            BIO_puts(bio_err, "Failed to query FIPS module parameters\n");
             goto end;
         }
     }
@@ -368,11 +368,13 @@ static int print_mac(BIO *bio, const char *label, const unsigned char *mac,
 static int write_config_header(BIO *out, const char *prov_name,
     const char *section)
 {
-    return BIO_printf(out, "openssl_conf = openssl_init\n\n")
-        && BIO_printf(out, "[openssl_init]\n")
-        && BIO_printf(out, "providers = provider_section\n\n")
-        && BIO_printf(out, "[provider_section]\n")
-        && BIO_printf(out, "%s = %s\n\n", prov_name, section);
+    return (BIO_printf(out, "openssl_conf = openssl_init\n\n"
+                            "[openssl_init]\n"
+                            "providers = provider_section\n\n"
+                            "[provider_section]\n"
+                            "%s = %s\n\n",
+                prov_name, section)
+        > 0);
 }
 
 /*
@@ -391,106 +393,69 @@ static int write_config_fips_section(BIO *out, const char *section,
 {
     int ret = 0;
 
-    if (BIO_printf(out, "[%s]\n", section) <= 0
-        || BIO_printf(out, "activate = 1\n") <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_INSTALL_VERSION,
-               VERSION_VAL)
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_CONDITIONAL_ERRORS,
-               opts->conditional_errors ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_SECURITY_CHECKS,
-               opts->security_checks ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_HMAC_KEY_CHECK,
-               opts->hmac_key_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_KMAC_KEY_CHECK,
-               opts->kmac_key_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_TLS1_PRF_EMS_CHECK,
-               opts->tls_prf_ems_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_NO_SHORT_MAC,
-               opts->no_short_mac ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_DRBG_TRUNC_DIGEST,
-               opts->drgb_no_trunc_dgst ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_SIGNATURE_DIGEST_CHECK,
-               opts->signature_digest_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_HKDF_DIGEST_CHECK,
-               opts->hkdf_digest_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n",
-               OSSL_PROV_PARAM_TLS13_KDF_DIGEST_CHECK,
-               opts->tls13_kdf_digest_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n",
-               OSSL_PROV_PARAM_TLS1_PRF_DIGEST_CHECK,
-               opts->tls1_prf_digest_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n",
-               OSSL_PROV_PARAM_SSHKDF_DIGEST_CHECK,
-               opts->sshkdf_digest_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_SSKDF_DIGEST_CHECK,
-               opts->sskdf_digest_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n",
-               OSSL_PROV_PARAM_X963KDF_DIGEST_CHECK,
-               opts->x963kdf_digest_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_DSA_SIGN_DISABLED,
-               opts->dsa_sign_disabled ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_TDES_ENCRYPT_DISABLED,
-               opts->tdes_encrypt_disabled ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n",
-               OSSL_PROV_PARAM_RSA_PKCS15_PAD_DISABLED,
-               opts->rsa_pkcs15_padding_disabled ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n",
-               OSSL_PROV_PARAM_RSA_PSS_SALTLEN_CHECK,
-               opts->rsa_pss_saltlen_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n",
-               OSSL_PROV_PARAM_RSA_SIGN_X931_PAD_DISABLED,
-               opts->sign_x931_padding_disabled ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_HKDF_KEY_CHECK,
-               opts->hkdf_key_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_KBKDF_KEY_CHECK,
-               opts->kbkdf_key_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n",
-               OSSL_PROV_PARAM_TLS13_KDF_KEY_CHECK,
-               opts->tls13_kdf_key_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_TLS1_PRF_KEY_CHECK,
-               opts->tls1_prf_key_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_SSHKDF_KEY_CHECK,
-               opts->sshkdf_key_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_SSKDF_KEY_CHECK,
-               opts->sskdf_key_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_X963KDF_KEY_CHECK,
-               opts->x963kdf_key_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_X942KDF_KEY_CHECK,
-               opts->x942kdf_key_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n",
-               OSSL_PROV_PARAM_PBKDF2_LOWER_BOUND_CHECK,
-               opts->pbkdf2_lower_bound_check ? "1" : "0")
-            <= 0
-        || BIO_printf(out, "%s = %s\n", OSSL_PROV_PARAM_ECDH_COFACTOR_CHECK,
-               opts->ecdh_cofactor_check ? "1" : "0")
+    if (BIO_printf(out, "[%s]\n"
+                        "activate = 1\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n",
+            section,
+            OSSL_PROV_FIPS_PARAM_INSTALL_VERSION, VERSION_VAL,
+            OSSL_PROV_FIPS_PARAM_CONDITIONAL_ERRORS, opts->conditional_errors ? "1" : "0",
+            OSSL_PROV_PARAM_SECURITY_CHECKS, opts->security_checks ? "1" : "0",
+            OSSL_PROV_PARAM_HMAC_KEY_CHECK, opts->hmac_key_check ? "1" : "0",
+            OSSL_PROV_PARAM_KMAC_KEY_CHECK, opts->kmac_key_check ? "1" : "0",
+            OSSL_PROV_PARAM_TLS1_PRF_EMS_CHECK, opts->tls_prf_ems_check ? "1" : "0",
+            OSSL_PROV_PARAM_NO_SHORT_MAC, opts->no_short_mac ? "1" : "0",
+            OSSL_PROV_PARAM_DRBG_TRUNC_DIGEST, opts->drgb_no_trunc_dgst ? "1" : "0",
+            OSSL_PROV_PARAM_SIGNATURE_DIGEST_CHECK, opts->signature_digest_check ? "1" : "0",
+            OSSL_PROV_PARAM_HKDF_DIGEST_CHECK, opts->hkdf_digest_check ? "1" : "0",
+            OSSL_PROV_PARAM_TLS13_KDF_DIGEST_CHECK, opts->tls13_kdf_digest_check ? "1" : "0",
+            OSSL_PROV_PARAM_TLS1_PRF_DIGEST_CHECK, opts->tls1_prf_digest_check ? "1" : "0",
+            OSSL_PROV_PARAM_SSHKDF_DIGEST_CHECK, opts->sshkdf_digest_check ? "1" : "0",
+            OSSL_PROV_PARAM_SSKDF_DIGEST_CHECK, opts->sskdf_digest_check ? "1" : "0",
+            OSSL_PROV_PARAM_X963KDF_DIGEST_CHECK, opts->x963kdf_digest_check ? "1" : "0",
+            OSSL_PROV_PARAM_DSA_SIGN_DISABLED, opts->dsa_sign_disabled ? "1" : "0",
+            OSSL_PROV_PARAM_TDES_ENCRYPT_DISABLED, opts->tdes_encrypt_disabled ? "1" : "0",
+            OSSL_PROV_PARAM_RSA_PKCS15_PAD_DISABLED, opts->rsa_pkcs15_padding_disabled ? "1" : "0",
+            OSSL_PROV_PARAM_RSA_PSS_SALTLEN_CHECK, opts->rsa_pss_saltlen_check ? "1" : "0",
+            OSSL_PROV_PARAM_RSA_SIGN_X931_PAD_DISABLED, opts->sign_x931_padding_disabled ? "1" : "0",
+            OSSL_PROV_PARAM_HKDF_KEY_CHECK, opts->hkdf_key_check ? "1" : "0",
+            OSSL_PROV_PARAM_KBKDF_KEY_CHECK, opts->kbkdf_key_check ? "1" : "0",
+            OSSL_PROV_PARAM_TLS13_KDF_KEY_CHECK, opts->tls13_kdf_key_check ? "1" : "0",
+            OSSL_PROV_PARAM_TLS1_PRF_KEY_CHECK, opts->tls1_prf_key_check ? "1" : "0",
+            OSSL_PROV_PARAM_SSHKDF_KEY_CHECK, opts->sshkdf_key_check ? "1" : "0",
+            OSSL_PROV_PARAM_SSKDF_KEY_CHECK, opts->sskdf_key_check ? "1" : "0",
+            OSSL_PROV_PARAM_X963KDF_KEY_CHECK, opts->x963kdf_key_check ? "1" : "0",
+            OSSL_PROV_PARAM_X942KDF_KEY_CHECK, opts->x942kdf_key_check ? "1" : "0",
+            OSSL_PROV_PARAM_PBKDF2_LOWER_BOUND_CHECK, opts->pbkdf2_lower_bound_check ? "1" : "0",
+            OSSL_PROV_PARAM_ECDH_COFACTOR_CHECK, opts->ecdh_cofactor_check ? "1" : "0")
             <= 0
         || !print_mac(out, OSSL_PROV_FIPS_PARAM_MODULE_MAC, module_mac,
             module_mac_len)
@@ -580,37 +545,37 @@ static int verify_config(const char *infile, const char *section,
 
     s = NCONF_get_string(conf, section, OSSL_PROV_FIPS_PARAM_INSTALL_VERSION);
     if (s == NULL || strcmp(s, VERSION_VAL) != 0) {
-        BIO_printf(bio_err, "version not found\n");
+        BIO_puts(bio_err, "version not found\n");
         goto end;
     }
     s = NCONF_get_string(conf, section, OSSL_PROV_FIPS_PARAM_MODULE_MAC);
     if (s == NULL) {
-        BIO_printf(bio_err, "Module integrity MAC not found\n");
+        BIO_puts(bio_err, "Module integrity MAC not found\n");
         goto end;
     }
     buf1 = OPENSSL_hexstr2buf(s, &len);
     if (buf1 == NULL
         || (size_t)len != module_mac_len
         || memcmp(module_mac, buf1, module_mac_len) != 0) {
-        BIO_printf(bio_err, "Module integrity mismatch\n");
+        BIO_puts(bio_err, "Module integrity mismatch\n");
         goto end;
     }
     if (install_mac != NULL && install_mac_len > 0) {
         s = NCONF_get_string(conf, section, OSSL_PROV_FIPS_PARAM_INSTALL_STATUS);
         if (s == NULL || strcmp(s, INSTALL_STATUS_VAL) != 0) {
-            BIO_printf(bio_err, "install status not found\n");
+            BIO_puts(bio_err, "install status not found\n");
             goto end;
         }
         s = NCONF_get_string(conf, section, OSSL_PROV_FIPS_PARAM_INSTALL_MAC);
         if (s == NULL) {
-            BIO_printf(bio_err, "Install indicator MAC not found\n");
+            BIO_puts(bio_err, "Install indicator MAC not found\n");
             goto end;
         }
         buf2 = OPENSSL_hexstr2buf(s, &len);
         if (buf2 == NULL
             || (size_t)len != install_mac_len
             || memcmp(install_mac, buf2, install_mac_len) != 0) {
-            BIO_printf(bio_err, "Install indicator status mismatch\n");
+            BIO_puts(bio_err, "Install indicator status mismatch\n");
             goto end;
         }
     }
@@ -861,7 +826,7 @@ int fipsinstall_main(int argc, char **argv)
 
     module_bio = bio_open_default(module_fname, 'r', FORMAT_BINARY);
     if (module_bio == NULL) {
-        BIO_printf(bio_err, "Failed to open module file\n");
+        BIO_puts(bio_err, "Failed to open module file\n");
         goto end;
     }
 
@@ -877,7 +842,7 @@ int fipsinstall_main(int argc, char **argv)
 
     ctx = EVP_MAC_CTX_new(mac);
     if (ctx == NULL) {
-        BIO_printf(bio_err, "Unable to create MAC CTX for module check\n");
+        BIO_puts(bio_err, "Unable to create MAC CTX for module check\n");
         goto end;
     }
 
@@ -889,7 +854,7 @@ int fipsinstall_main(int argc, char **argv)
             goto end;
 
         if (!EVP_MAC_CTX_set_params(ctx, params)) {
-            BIO_printf(bio_err, "MAC parameter error\n");
+            BIO_puts(bio_err, "MAC parameter error\n");
             ERR_print_errors(bio_err);
             ok = 0;
         }
@@ -900,7 +865,7 @@ int fipsinstall_main(int argc, char **argv)
 
     ctx2 = EVP_MAC_CTX_dup(ctx);
     if (ctx2 == NULL) {
-        BIO_printf(bio_err, "Unable to create MAC CTX for install indicator\n");
+        BIO_puts(bio_err, "Unable to create MAC CTX for install indicator\n");
         goto end;
     }
 
@@ -911,7 +876,7 @@ int fipsinstall_main(int argc, char **argv)
     mem_bio = BIO_new_mem_buf((const void *)INSTALL_STATUS_VAL,
         (int)strlen(INSTALL_STATUS_VAL));
     if (mem_bio == NULL) {
-        BIO_printf(bio_err, "Unable to create memory BIO\n");
+        BIO_puts(bio_err, "Unable to create memory BIO\n");
         goto end;
     }
     if (!do_mac(ctx2, read_buffer, mem_bio, install_mac, &install_mac_len))
@@ -924,7 +889,7 @@ int fipsinstall_main(int argc, char **argv)
                 install_mac, install_mac_len))
             goto end;
         if (!quiet)
-            BIO_printf(bio_err, "VERIFY PASSED\n");
+            BIO_puts(bio_err, "VERIFY PASSED\n");
     } else {
         conf = generate_config_and_load(prov_name, section_name, module_mac,
             module_mac_len, &fips_opts);
@@ -947,7 +912,7 @@ int fipsinstall_main(int argc, char **argv)
         fout = out_fname == NULL ? dup_bio_out(FORMAT_TEXT)
                                  : bio_open_default(out_fname, 'w', FORMAT_TEXT);
         if (fout == NULL) {
-            BIO_printf(bio_err, "Failed to open file\n");
+            BIO_puts(bio_err, "Failed to open file\n");
             goto end;
         }
 
@@ -956,7 +921,7 @@ int fipsinstall_main(int argc, char **argv)
                 install_mac, install_mac_len))
             goto end;
         if (!quiet)
-            BIO_printf(bio_err, "INSTALL PASSED\n");
+            BIO_puts(bio_err, "INSTALL PASSED\n");
     }
 
     ret = 0;

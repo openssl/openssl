@@ -163,7 +163,7 @@ char *get_passwd(const char *pass, const char *desc)
     if (!app_passwd(pass, NULL, &result, NULL))
         BIO_printf(bio_err, "Error getting password for %s\n", desc);
     if (pass != NULL && result == NULL) {
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "Trying plain input string (better precede with 'pass:')\n");
         result = OPENSSL_strdup(pass);
         if (result == NULL)
@@ -244,7 +244,7 @@ static char *app_get_pass(const char *arg, int keepbio)
             if (btmp == NULL) {
                 BIO_free_all(pwdbio);
                 pwdbio = NULL;
-                BIO_printf(bio_err, "Out of memory\n");
+                BIO_puts(bio_err, "Out of memory\n");
                 return NULL;
             }
             pwdbio = BIO_push(btmp, pwdbio);
@@ -253,7 +253,7 @@ static char *app_get_pass(const char *arg, int keepbio)
             unbuffer(stdin);
             pwdbio = dup_bio_in(FORMAT_TEXT);
             if (pwdbio == NULL) {
-                BIO_printf(bio_err, "Can't open BIO for stdin\n");
+                BIO_puts(bio_err, "Can't open BIO for stdin\n");
                 return NULL;
             }
         } else {
@@ -276,7 +276,7 @@ static char *app_get_pass(const char *arg, int keepbio)
         pwdbio = NULL;
     }
     if (i <= 0) {
-        BIO_printf(bio_err, "Error reading password from BIO\n");
+        BIO_puts(bio_err, "Error reading password from BIO\n");
         return NULL;
     }
     tmp = strchr(tpass, '\n');
@@ -332,7 +332,7 @@ CONF *app_load_config_bio(BIO *in, const char *filename)
     if (filename != NULL)
         BIO_printf(bio_err, "config file \"%s\"\n", filename);
     else
-        BIO_printf(bio_err, "config input");
+        BIO_puts(bio_err, "config input");
 
     NCONF_free(conf);
     return NULL;
@@ -342,7 +342,7 @@ CONF *app_load_config_verbose(const char *filename, int verbose)
 {
     if (verbose) {
         if (*filename == '\0')
-            BIO_printf(bio_err, "No configuration used\n");
+            BIO_puts(bio_err, "No configuration used\n");
         else
             BIO_printf(bio_err, "Using configuration from %s\n", filename);
     }
@@ -376,7 +376,7 @@ int app_load_modules(const CONF *config)
         return 1;
 
     if (CONF_modules_load(config, NULL, 0) <= 0) {
-        BIO_printf(bio_err, "Error configuring OpenSSL modules\n");
+        BIO_puts(bio_err, "Error configuring OpenSSL modules\n");
         ERR_print_errors(bio_err);
         NCONF_free(to_free);
         return 0;
@@ -758,7 +758,7 @@ STACK_OF(X509) *load_certs_multifile(char *files, const char *source,
     return result;
 
 oom:
-    BIO_printf(bio_err, "out of memory\n");
+    BIO_puts(bio_err, "out of memory\n");
 err:
     clear_free(pass);
     OSSL_STACK_OF_X509_free(certs);
@@ -934,7 +934,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     if (pcerts != NULL) {
         if (*pcerts == NULL && (*pcerts = sk_X509_new_null()) == NULL) {
             if (!quiet)
-                BIO_printf(bio_err, "Out of memory loading");
+                BIO_puts(bio_err, "Out of memory loading");
             goto end;
         }
         /*
@@ -948,7 +948,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     if (pcrls != NULL) {
         if (*pcrls == NULL && (*pcrls = sk_X509_CRL_new_null()) == NULL) {
             if (!quiet)
-                BIO_printf(bio_err, "Out of memory loading");
+                BIO_puts(bio_err, "Out of memory loading");
             goto end;
         }
         /*
@@ -971,7 +971,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
 
         if (!maybe_stdin) {
             if (!quiet)
-                BIO_printf(bio_err, "No filename or uri specified for loading\n");
+                BIO_puts(bio_err, "No filename or uri specified for loading\n");
             goto end;
         }
         uri = "<stdin>";
@@ -989,14 +989,14 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     }
     if (ctx == NULL) {
         if (!quiet)
-            BIO_printf(bio_err, "Could not open file or uri for loading");
+            BIO_puts(bio_err, "Could not open file or uri for loading");
         goto end;
     }
 
     /* expect == 0 means here multiple types of credentials are to be loaded */
     if (expect > 0 && !OSSL_STORE_expect(ctx, expect)) {
         if (!quiet)
-            BIO_printf(bio_err, "Internal error trying to load");
+            BIO_puts(bio_err, "Internal error trying to load");
         goto end;
     }
 
@@ -1088,7 +1088,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
         if (!ok) {
             failed = OSSL_STORE_INFO_type_string(type);
             if (!quiet)
-                BIO_printf(bio_err, "Error reading");
+                BIO_puts(bio_err, "Error reading");
             break;
         }
     }
@@ -1106,7 +1106,7 @@ end:
             pskey = NULL;
         failed = FAIL_NAME;
         if (failed != NULL && !quiet)
-            BIO_printf(bio_err, "Could not find or decode");
+            BIO_puts(bio_err, "Could not find or decode");
     }
 
     if (failed != NULL && !quiet) {
@@ -1128,7 +1128,7 @@ end:
             ERR_pop_to_mark();
             ERR_set_mark();
         }
-        BIO_printf(bio_err, "\n");
+        BIO_puts(bio_err, "\n");
         ERR_print_errors(bio_err);
         ERR_clear_last_mark();
     } else {
@@ -1371,8 +1371,7 @@ void print_name(BIO *out, const char *title, const X509_NAME *nm)
     }
     if (lflags == XN_FLAG_COMPAT) {
         buf = X509_NAME_oneline(nm, 0, 0);
-        BIO_puts(out, buf);
-        BIO_puts(out, "\n");
+        BIO_printf(out, "%s\n", buf);
         OPENSSL_free(buf);
     } else {
         if (mline)
@@ -1387,7 +1386,7 @@ void print_bignum_var(BIO *out, const BIGNUM *in, const char *var,
 {
     BIO_printf(out, "    static unsigned char %s_%d[] = {", var, len);
     if (BN_is_zero(in)) {
-        BIO_printf(out, "\n        0x00");
+        BIO_puts(out, "\n        0x00");
     } else {
         int i, l;
 
@@ -1400,7 +1399,7 @@ void print_bignum_var(BIO *out, const BIGNUM *in, const char *var,
                 BIO_printf(out, "0x%02X", buffer[i]);
         }
     }
-    BIO_printf(out, "\n    };\n");
+    BIO_puts(out, "\n    };\n");
 }
 
 void print_array(BIO *out, const char *title, int len, const unsigned char *d)
@@ -1410,13 +1409,13 @@ void print_array(BIO *out, const char *title, int len, const unsigned char *d)
     BIO_printf(out, "unsigned char %s[%d] = {", title, len);
     for (i = 0; i < len; i++) {
         if ((i % 10) == 0)
-            BIO_printf(out, "\n    ");
+            BIO_puts(out, "\n    ");
         if (i < len - 1)
             BIO_printf(out, "0x%02X, ", d[i]);
         else
             BIO_printf(out, "0x%02X", d[i]);
     }
-    BIO_printf(out, "\n};\n");
+    BIO_puts(out, "\n};\n");
 }
 
 X509_STORE *setup_verify(const char *CAfile, int noCAfile,
@@ -1552,7 +1551,7 @@ BIGNUM *load_serial(const char *serialfile, int *exists, int create,
         ERR_clear_error();
         ret = BN_new();
         if (ret == NULL) {
-            BIO_printf(bio_err, "Out of memory\n");
+            BIO_puts(bio_err, "Out of memory\n");
         } else if (!rand_serial(ret, ai)) {
             BIO_printf(bio_err, "Error creating random number to store in %s\n",
                 serialfile);
@@ -1567,7 +1566,7 @@ BIGNUM *load_serial(const char *serialfile, int *exists, int create,
         }
         ret = ASN1_INTEGER_to_BN(ai, NULL);
         if (ret == NULL) {
-            BIO_printf(bio_err, "Error converting number from bin to BIGNUM\n");
+            BIO_puts(bio_err, "Error converting number from bin to BIGNUM\n");
             goto err;
         }
     }
@@ -1598,7 +1597,7 @@ int save_serial(const char *serialfile, const char *suffix,
     else
         j = strlen(serialfile) + strlen(suffix) + 1;
     if (j >= BSIZE) {
-        BIO_printf(bio_err, "File name too long\n");
+        BIO_puts(bio_err, "File name too long\n");
         goto err;
     }
 
@@ -1617,7 +1616,7 @@ int save_serial(const char *serialfile, const char *suffix,
     }
 
     if ((ai = BN_to_ASN1_INTEGER(serial, NULL)) == NULL) {
-        BIO_printf(bio_err, "error converting serial to ASN.1 format\n");
+        BIO_puts(bio_err, "error converting serial to ASN.1 format\n");
         goto err;
     }
     i2a_ASN1_INTEGER(out, ai);
@@ -1646,7 +1645,7 @@ int rotate_serial(const char *serialfile, const char *new_suffix,
     if (i > j)
         j = i;
     if (j + 1 >= BSIZE) {
-        BIO_printf(bio_err, "File name too long\n");
+        BIO_puts(bio_err, "File name too long\n");
         goto err;
     }
 #ifndef OPENSSL_SYS_VMS
@@ -1805,7 +1804,7 @@ int save_index(const char *dbfile, const char *suffix, CA_DB *db)
 
     j = (int)(strlen(dbfile) + strlen(suffix));
     if (j + 6 >= BSIZE) {
-        BIO_printf(bio_err, "File name too long\n");
+        BIO_puts(bio_err, "File name too long\n");
         goto err;
     }
 #ifndef OPENSSL_SYS_VMS
@@ -1855,7 +1854,7 @@ int rotate_index(const char *dbfile, const char *new_suffix,
     if (i > j)
         j = i;
     if (j + 6 >= BSIZE) {
-        BIO_printf(bio_err, "File name too long\n");
+        BIO_puts(bio_err, "File name too long\n");
         goto err;
     }
 #ifndef OPENSSL_SYS_VMS
@@ -2882,8 +2881,8 @@ double app_tminterval(int stop, int usertime)
         SYSTEMTIME systime;
 
         if (usertime && warning) {
-            BIO_printf(bio_err, "To get meaningful results, run "
-                                "this program on idle system.\n");
+            BIO_puts(bio_err, "To get meaningful results, run "
+                              "this program on idle system.\n");
             warning = 0;
         }
         GetSystemTime(&systime);
@@ -2920,8 +2919,8 @@ double app_tminterval(int stop, int usertime)
     static int warning = 1;
 
     if (usertime && warning) {
-        BIO_printf(bio_err, "To get meaningful results, run "
-                            "this program on idle system.\n");
+        BIO_puts(bio_err, "To get meaningful results, run "
+                          "this program on idle system.\n");
         warning = 0;
     }
 #ifdef CLOCK_REALTIME
@@ -3412,12 +3411,12 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         return 0;
     if (startdate == NULL || strcmp(startdate, "today") == 0) {
         if (X509_gmtime_adj(X509_getm_notBefore(x), 0) == NULL) {
-            BIO_printf(bio_err, "Error setting notBefore certificate field\n");
+            BIO_puts(bio_err, "Error setting notBefore certificate field\n");
             return 0;
         }
     } else {
         if (!ASN1_TIME_set_string_X509(X509_getm_notBefore(x), startdate)) {
-            BIO_printf(bio_err, "Error setting notBefore certificate field\n");
+            BIO_puts(bio_err, "Error setting notBefore certificate field\n");
             return 0;
         }
     }
@@ -3427,11 +3426,11 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
     }
     if (enddate == NULL) {
         if (X509_time_adj_ex(X509_getm_notAfter(x), days, 0, NULL) == NULL) {
-            BIO_printf(bio_err, "Error setting notAfter certificate field\n");
+            BIO_puts(bio_err, "Error setting notAfter certificate field\n");
             return 0;
         }
     } else if (!ASN1_TIME_set_string_X509(X509_getm_notAfter(x), enddate)) {
-        BIO_printf(bio_err, "Error setting notAfter certificate field\n");
+        BIO_puts(bio_err, "Error setting notAfter certificate field\n");
         return 0;
     }
     if (ASN1_TIME_compare(X509_get0_notAfter(x), X509_get0_notBefore(x)) < 0) {
@@ -3563,11 +3562,11 @@ EVP_PKEY *app_keygen(EVP_PKEY_CTX *ctx, const char *alg, int bits, int verbose)
         if (bits > 0)
             BIO_printf(bio_err, " with %d bits\n", bits);
         else
-            BIO_printf(bio_err, "\n");
+            BIO_puts(bio_err, "\n");
     }
     if (!RAND_status())
-        BIO_printf(bio_err, "Warning: generating random key material may take a long time\n"
-                            "if the system has a poor entropy source\n");
+        BIO_puts(bio_err, "Warning: generating random key material may take a long time\n"
+                          "if the system has a poor entropy source\n");
     if (EVP_PKEY_keygen(ctx, &res) <= 0)
         BIO_printf(bio_err, "%s: Error generating %s key\n", opt_getprog(),
             alg != NULL ? alg : "asymmetric");
@@ -3579,8 +3578,8 @@ EVP_PKEY *app_paramgen(EVP_PKEY_CTX *ctx, const char *alg)
     EVP_PKEY *res = NULL;
 
     if (!RAND_status())
-        BIO_printf(bio_err, "Warning: generating random key parameters may take a long time\n"
-                            "if the system has a poor entropy source\n");
+        BIO_puts(bio_err, "Warning: generating random key parameters may take a long time\n"
+                          "if the system has a poor entropy source\n");
     if (EVP_PKEY_paramgen(ctx, &res) <= 0)
         BIO_printf(bio_err, "%s: Generating %s key parameters failed\n",
             opt_getprog(), alg != NULL ? alg : "asymmetric");
