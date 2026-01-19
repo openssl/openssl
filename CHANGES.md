@@ -38,7 +38,7 @@ OpenSSL 4.0
    *Shane Lontis*
 
  * Support of deprecated elliptic curves in TLS according to RFC 8422 was
-   disabled at compile-time by default. To enable it, use
+   disabled at compile-time by default. To enable it, use the
    `enable-tls-deprecated-ec` compilation option.
 
    *Dmitry Belyavskiy*
