@@ -38,7 +38,7 @@
    ...
 }
 {
-   glibc_dl_open_reachable_issue 
+   glibc_dl_open_reachable_issue
    Memcheck:Leak
    match-leak-kinds: reachable
    ...
@@ -46,7 +46,7 @@
    ...
 }
 {
-   glibc_dlopen_reachable_issue 
+   glibc_dlopen_reachable_issue
    Memcheck:Leak
    match-leak-kinds: reachable
    ...
@@ -114,8 +114,3 @@
    fun:ssl_release_record
    ...
 }
-
-
-
-
-
