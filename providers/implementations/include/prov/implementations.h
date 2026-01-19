@@ -276,7 +276,9 @@ extern const OSSL_DISPATCH ossl_kmac256_internal_functions[];
 #endif
 extern const OSSL_DISPATCH ossl_kmac128_functions[];
 extern const OSSL_DISPATCH ossl_kmac256_functions[];
+#ifndef OPENSSL_NO_SIPHASH
 extern const OSSL_DISPATCH ossl_siphash_functions[];
+#endif
 extern const OSSL_DISPATCH ossl_poly1305_functions[];
 
 /* KDFs / PRFs */
