@@ -1094,6 +1094,7 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
     if (sc == NULL || id_len > sizeof(r.session_id))
         return 0;
 
+    r.cache_id = NULL;
     r.ssl_version = sc->version;
     r.session_id_length = id_len;
     memcpy(r.session_id, id, id_len);
@@ -1510,6 +1511,7 @@ void ossl_ssl_connection_free(SSL *ssl)
         OPENSSL_free(s->clienthello->pre_proc_exts);
     OPENSSL_free(s->clienthello);
     OPENSSL_free(s->pha_context);
+    OPENSSL_free(s->cache_id);
     EVP_MD_CTX_free(s->pha_dgst);
 
     sk_X509_NAME_pop_free(s->ca_names, X509_NAME_free);
@@ -2208,6 +2210,8 @@ int SSL_accept(SSL *s)
 int SSL_connect(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    SSL_SESSION *sess;
+    int ret;
 
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s))
@@ -2220,6 +2224,24 @@ int SSL_connect(SSL *s)
     if (sc->handshake_func == NULL) {
         /* Not properly initialized yet */
         SSL_set_connect_state(s);
+    }
+
+    /*
+     * If a client session has not been set, and there's a previous session
+     * that matches the cache_id, use it.
+     * If the cache is not set to client mode, an error will be raised, so
+     * pop off as necessary.
+     */
+    if (sc->session == NULL && sc->cache_id != NULL) {
+        ERR_set_mark();
+        sess = SSL_get1_previous_client_session(s);
+        ERR_pop_to_mark();
+        if (sess != NULL) {
+            ret = SSL_set_session(s, sess);
+            SSL_SESSION_free(sess);
+            if (!ret)
+                return ret;
+        }
     }
 
     return SSL_do_handshake(s);
@@ -3856,9 +3878,24 @@ int SSL_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
 static unsigned long ssl_session_hash(const SSL_SESSION *a)
 {
     const unsigned char *session_id = a->session_id;
-    unsigned long l;
+    unsigned long l = 0;
     unsigned char tmp_storage[4];
+    size_t i;
 
+    /* if cache_id set, use that (assume client-side cache) */
+    if (a->cache_id != NULL) {
+        /* Hash the session id context */
+        for (i = 0; i < a->sid_ctx_length; i++)
+            l ^= (long)a->sid_ctx[i] << ((i & (sizeof(l) - 1)) * 8);
+
+        /* hash the cache id */
+        for (i = 0; i < a->cache_id_len; i++)
+            l ^= (long)a->cache_id[i] << ((i & (sizeof(l) - 1)) * 8);
+
+        return l;
+    }
+
+    /* hash session id (assume server-side cache) */
     if (a->session_id_length < sizeof(tmp_storage)) {
         memset(tmp_storage, 0, sizeof(tmp_storage));
         memcpy(tmp_storage, a->session_id, a->session_id_length);
@@ -3872,12 +3909,29 @@ static unsigned long ssl_session_hash(const SSL_SESSION *a)
 /*
  * NB: If this function (or indeed the hash function which uses a sort of
  * coarser function than this one) is changed, ensure
- * SSL_CTX_has_matching_session_id() is checked accordingly. It relies on
+ * SSL_has_matching_session_id() is checked accordingly. It relies on
  * being able to construct an SSL_SESSION that will collide with any existing
  * session with a matching session ID.
  */
 static int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
 {
+    /* if both have cache_id set, use that (assume client-side cache) */
+    if (a->cache_id != NULL && b->cache_id != NULL) {
+        if (a->cache_id_len != b->cache_id_len
+            || memcmp(a->cache_id, b->cache_id, a->cache_id_len) != 0)
+            return 1;
+        if (a->sid_ctx_length != b->sid_ctx_length)
+            return 1;
+        if (a->sid_ctx_length > 0
+            && memcmp(a->sid_ctx, b->sid_ctx, a->sid_ctx_length) != 0)
+            return 1;
+        return 0;
+    }
+    /* if only one has a cache_id, it's not a match */
+    if (a->cache_id != NULL || b->cache_id != NULL)
+        return 1;
+
+    /* compare session id (assume server-side cache) */
     if (a->ssl_version != b->ssl_version)
         return 1;
     if (a->session_id_length != b->session_id_length)
@@ -4979,6 +5033,10 @@ void SSL_set_accept_state(SSL *s)
 #endif
 
     sc->server = 1;
+    /* Don't use cache_id with servers */
+    OPENSSL_free(sc->cache_id);
+    sc->cache_id = NULL;
+    sc->cache_id_len = 0;
     sc->shutdown = 0;
     ossl_statem_clear(sc);
     sc->handshake_func = s->method->ssl_accept;
@@ -5215,6 +5273,10 @@ SSL *SSL_dup(SSL *s)
     if (!dup_ca_names(&retsc->ca_names, sc->ca_names)
         || !dup_ca_names(&retsc->client_ca_names, sc->client_ca_names))
         goto err;
+
+    if (sc->cache_id != NULL)
+        if ((retsc->cache_id = OPENSSL_memdup(sc->cache_id, sc->cache_id_len)) == NULL)
+            goto err;
 
     return ret;
 

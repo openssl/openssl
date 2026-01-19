@@ -2771,6 +2771,10 @@ DEPEND[html/man3/SSL_session_reused.html]=man3/SSL_session_reused.pod
 GENERATE[html/man3/SSL_session_reused.html]=man3/SSL_session_reused.pod
 DEPEND[man/man3/SSL_session_reused.3]=man3/SSL_session_reused.pod
 GENERATE[man/man3/SSL_session_reused.3]=man3/SSL_session_reused.pod
+DEPEND[html/man3/SSL_set1_cache_id.html]=man3/SSL_set1_cache_id.pod
+GENERATE[html/man3/SSL_set1_cache_id.html]=man3/SSL_set1_cache_id.pod
+DEPEND[man/man3/SSL_set1_cache_id.3]=man3/SSL_set1_cache_id.pod
+GENERATE[man/man3/SSL_set1_cache_id.3]=man3/SSL_set1_cache_id.pod
 DEPEND[html/man3/SSL_set1_host.html]=man3/SSL_set1_host.pod
 GENERATE[html/man3/SSL_set1_host.html]=man3/SSL_set1_host.pod
 DEPEND[man/man3/SSL_set1_host.3]=man3/SSL_set1_host.pod
@@ -3734,6 +3738,7 @@ html/man3/SSL_read.html \
 html/man3/SSL_read_early_data.html \
 html/man3/SSL_rstate_string.html \
 html/man3/SSL_session_reused.html \
+html/man3/SSL_set1_cache_id.html \
 html/man3/SSL_set1_host.html \
 html/man3/SSL_set1_initial_peer_addr.html \
 html/man3/SSL_set1_server_cert_type.html \
@@ -4405,6 +4410,7 @@ man/man3/SSL_read.3 \
 man/man3/SSL_read_early_data.3 \
 man/man3/SSL_rstate_string.3 \
 man/man3/SSL_session_reused.3 \
+man/man3/SSL_set1_cache_id.3 \
 man/man3/SSL_set1_host.3 \
 man/man3/SSL_set1_initial_peer_addr.3 \
 man/man3/SSL_set1_server_cert_type.3 \

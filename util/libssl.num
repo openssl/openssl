@@ -609,3 +609,8 @@ SSL_CTX_is_quic                         ?	4_0_0	EXIST::FUNCTION:
 SSL_CTX_is_server                       ?	4_0_0	EXIST::FUNCTION:
 OSSL_QUIC_method                        ?	4_0_0	EXIST::FUNCTION:QUIC
 SSL_listen_ex                           ?	4_0_0	EXIST::FUNCTION:
+SSL_get1_previous_client_session        ?	4_0_0	EXIST::FUNCTION:
+SSL_set1_cache_id                       ?	4_0_0	EXIST::FUNCTION:
+SSL_get1_cache_id                       ?	4_0_0	EXIST::FUNCTION:
+SSL_SESSION_set1_cache_id               ?	4_0_0	EXIST::FUNCTION:
+SSL_SESSION_get1_cache_id               ?	4_0_0	EXIST::FUNCTION:
