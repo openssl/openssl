@@ -1141,6 +1141,19 @@ static int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
     return ret;
 }
 
+static int SELF_TEST_kat_deps(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+    ST_DEFINITION *test)
+{
+    if (test->depends_on == NULL)
+        return 0;
+
+    for (int i = 0; test->depends_on[i] != ST_ID_MAX; i++)
+        if (!SELF_TEST_kats_execute(st, libctx, test->depends_on[i], 0))
+            return 0;
+
+    return 1;
+}
+
 /*
  * Run a single algorithm KAT, and its dependencies.
  * Return 1 if successful, otherwise return 0.
@@ -1191,13 +1204,9 @@ int SELF_TEST_kats_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
 
     /* check if there are dependent tests to run */
     if (st_all_tests[id].depends_on) {
-        for (int i = 0; st_all_tests[id].depends_on[i] != ST_ID_MAX; i++) {
-            self_test_id_t dep_id = st_all_tests[id].depends_on[i];
-
-            if (!SELF_TEST_kats_execute(st, libctx, dep_id, 0)) {
-                ret = 0;
-                goto done;
-            }
+        if (!SELF_TEST_kat_deps(st, libctx, &st_all_tests[id])) {
+            ret = 0;
+            goto done;
         }
     }
 
@@ -1214,6 +1223,18 @@ int SELF_TEST_kats_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
         st_all_tests[id].state = SELF_TEST_STATE_FAILED;
         ret = 0;
     }
+
+    /*
+     * if an implicit algorithm has explicit dependencies we want to
+     * ensure they are all executed as well otherwise we could not
+     * mark it as passed.
+     */
+    if (st_all_tests[id].state == SELF_TEST_STATE_PASSED)
+        for (int i = 0; i < ST_ID_MAX; i++)
+            if (st_all_tests[i].state == SELF_TEST_STATE_IMPLICIT
+                && st_all_tests[i].depends_on != NULL)
+                if (!(ret = SELF_TEST_kat_deps(st, libctx, &st_all_tests[i])))
+                    break;
 
 done:
     /*

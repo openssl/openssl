@@ -116,6 +116,11 @@ static const unsigned char aes_128_ecb_ct[] = {
     0x4e, 0xaa, 0x6f, 0xb4, 0xdb, 0xf7, 0x84, 0x65
 };
 
+static const self_test_id_t aes_ecb_depends_on[] = {
+    ST_ID_CIPHER_AES_256_GCM,
+    ST_ID_MAX
+};
+
 #ifndef OPENSSL_NO_DES
 /*
  * TDES-ECB test data from
@@ -3389,6 +3394,7 @@ ST_DEFINITION st_all_tests[ST_ID_MAX] = {
             CIPHER_MODE_DECRYPT,
             ITM_BUF(aes_128_ecb_key),
         },
+        .depends_on = aes_ecb_depends_on,
     },
 #ifndef OPENSSL_NO_DES
     {
