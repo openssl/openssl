@@ -1436,6 +1436,9 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_DSA
     BIO_puts(bio_out, "DSA\n");
 #endif
+#ifdef OPENSSL_NO_SIPHASH
+    BIO_puts(bio_out, "SIPHASH\n");
+#endif
 #if defined(OPENSSL_NO_DTLS)
     BIO_puts(bio_out, "DTLS\n");
 #endif
