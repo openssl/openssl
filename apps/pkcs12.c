@@ -513,7 +513,7 @@ int pkcs12_main(int argc, char **argv)
     private = 1;
 
     if (!app_passwd(passcertsarg, NULL, &passcerts, NULL)) {
-        BIO_printf(bio_err, "Error getting certificate file password\n");
+        BIO_puts(bio_err, "Error getting certificate file password\n");
         goto end;
     }
 
@@ -525,7 +525,7 @@ int pkcs12_main(int argc, char **argv)
     }
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
-        BIO_printf(bio_err, "Error getting passwords\n");
+        BIO_puts(bio_err, "Error getting passwords\n");
         goto end;
     }
 
@@ -541,9 +541,9 @@ int pkcs12_main(int argc, char **argv)
         noprompt = 1;
         if (twopass) {
             if (export_pkcs12)
-                BIO_printf(bio_err, "Option -twopass cannot be used with -passout or -password\n");
+                BIO_puts(bio_err, "Option -twopass cannot be used with -passout or -password\n");
             else
-                BIO_printf(bio_err, "Option -twopass cannot be used with -passin or -password\n");
+                BIO_puts(bio_err, "Option -twopass cannot be used with -passin or -password\n");
             goto end;
         }
     } else {
@@ -557,12 +557,12 @@ int pkcs12_main(int argc, char **argv)
 #ifndef OPENSSL_NO_UI_CONSOLE
             if (EVP_read_pw_string(
                     macpass, sizeof(macpass), "Enter MAC Password:", export_pkcs12)) {
-                BIO_printf(bio_err, "Can't read Password\n");
+                BIO_puts(bio_err, "Can't read Password\n");
                 goto end;
             }
         } else {
 #endif
-            BIO_printf(bio_err, "Unsupported option -twopass\n");
+            BIO_puts(bio_err, "Unsupported option -twopass\n");
             goto end;
         }
     }
@@ -578,13 +578,13 @@ int pkcs12_main(int argc, char **argv)
         ASN1_OBJECT *obj = NULL;
 
         if ((options & (NOCERTS | NOKEYS)) == (NOCERTS | NOKEYS)) {
-            BIO_printf(bio_err, "Nothing to export due to -noout or -nocerts and -nokeys\n");
+            BIO_puts(bio_err, "Nothing to export due to -noout or -nocerts and -nokeys\n");
             goto export_end;
         }
 
         if ((options & NOCERTS) != 0) {
             chain = 0;
-            BIO_printf(bio_err, "Warning: -chain option ignored with -nocerts\n");
+            BIO_puts(bio_err, "Warning: -chain option ignored with -nocerts\n");
         }
 
         if (!(options & NOKEYS)) {
@@ -647,7 +647,7 @@ int pkcs12_main(int argc, char **argv)
                 ee_cert_tmp = sk_X509_value(certs, 0);
 
             if (ee_cert_tmp == NULL) {
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "No end entity certificate to check with -chain\n");
                 goto export_end;
             }
@@ -704,12 +704,12 @@ int pkcs12_main(int argc, char **argv)
 #ifndef OPENSSL_NO_UI_CONSOLE
                 if (EVP_read_pw_string(pass, sizeof(pass),
                         "Enter Export Password:", 1)) {
-                    BIO_printf(bio_err, "Can't read Password\n");
+                    BIO_puts(bio_err, "Can't read Password\n");
                     goto export_end;
                 }
             } else {
 #endif
-                BIO_printf(bio_err, "Password required\n");
+                BIO_puts(bio_err, "Password required\n");
                 goto export_end;
             }
         }
@@ -742,13 +742,13 @@ int pkcs12_main(int argc, char **argv)
                 if (!PKCS12_set_pbmac1_pbkdf2(p12, mpass, -1, NULL,
                         macsaltlen, maciter,
                         macmd, pbmac1_pbkdf2_md)) {
-                    BIO_printf(bio_err, "Error creating PBMAC1\n");
+                    BIO_puts(bio_err, "Error creating PBMAC1\n");
                     goto export_end;
                 }
             } else {
                 if (!PKCS12_set_mac(p12, mpass, -1, NULL, macsaltlen, maciter, macmd)) {
-                    BIO_printf(bio_err, "Error creating PKCS12 MAC; no PKCS12KDF support?\n");
-                    BIO_printf(bio_err,
+                    BIO_puts(bio_err, "Error creating PKCS12 MAC; no PKCS12KDF support?\n");
+                    BIO_puts(bio_err,
                         "Use -nomac or -pbmac1_pbkdf2 if PKCS12KDF support not available\n");
                     goto export_end;
                 }
@@ -795,12 +795,12 @@ int pkcs12_main(int argc, char **argv)
 #ifndef OPENSSL_NO_UI_CONSOLE
             if (EVP_read_pw_string(pass, sizeof(pass), "Enter Import Password:",
                     0)) {
-                BIO_printf(bio_err, "Can't read Password\n");
+                BIO_puts(bio_err, "Can't read Password\n");
                 goto end;
             }
         } else {
 #endif
-            BIO_printf(bio_err, "Password required\n");
+            BIO_puts(bio_err, "Password required\n");
             goto end;
         }
     }
@@ -825,7 +825,7 @@ int pkcs12_main(int argc, char **argv)
             PBKDF2PARAM *pbkdf2_param = PBMAC1_get1_pbkdf2_param(macalgid);
 
             if (pbkdf2_param == NULL) {
-                BIO_printf(bio_err, ", Unsupported KDF or params for PBMAC1\n");
+                BIO_puts(bio_err, ", Unsupported KDF or params for PBMAC1\n");
             } else {
                 const ASN1_OBJECT *prfobj;
                 int prfnid;
@@ -860,7 +860,7 @@ int pkcs12_main(int argc, char **argv)
         PKCS12_get0_mac(NULL, &macalgid, NULL, NULL, p12);
 
         if (macalgid == NULL) {
-            BIO_printf(bio_err, "Warning: MAC is absent!\n");
+            BIO_puts(bio_err, "Warning: MAC is absent!\n");
             goto dump;
         }
 
@@ -872,8 +872,8 @@ int pkcs12_main(int argc, char **argv)
             pkcs12kdf = EVP_KDF_fetch(app_get0_libctx(), "PKCS12KDF",
                 app_get0_propq());
             if (pkcs12kdf == NULL) {
-                BIO_printf(bio_err, "Error verifying PKCS12 MAC; no PKCS12KDF support.\n");
-                BIO_printf(bio_err, "Use -nomacver if MAC verification is not required.\n");
+                BIO_puts(bio_err, "Error verifying PKCS12 MAC; no PKCS12KDF support.\n");
+                BIO_puts(bio_err, "Use -nomacver if MAC verification is not required.\n");
                 goto end;
             }
             EVP_KDF_free(pkcs12kdf);
@@ -896,7 +896,7 @@ int pkcs12_main(int argc, char **argv)
 
             if (ERR_GET_LIB(err) == ERR_LIB_PKCS12
                 && ERR_GET_REASON(err) == PKCS12_R_MAC_ABSENT) {
-                BIO_printf(bio_err, "Warning: MAC is absent!\n");
+                BIO_puts(bio_err, "Warning: MAC is absent!\n");
                 goto dump;
             }
 
@@ -912,11 +912,11 @@ int pkcs12_main(int argc, char **argv)
             }
             OPENSSL_free(utmp);
             if (!PKCS12_verify_mac(p12, badpass, -1)) {
-                BIO_printf(bio_err, "Mac verify error: invalid password?\n");
+                BIO_puts(bio_err, "Mac verify error: invalid password?\n");
                 ERR_print_errors(bio_err);
                 goto end;
             } else {
-                BIO_printf(bio_err, "Warning: using broken algorithm\n");
+                BIO_puts(bio_err, "Warning: using broken algorithm\n");
                 if (!twopass)
                     cpass = badpass;
             }
@@ -931,7 +931,7 @@ dump:
         goto end;
 
     if (!dump_certs_keys_p12(out, p12, cpass, -1, options, passout, enc)) {
-        BIO_printf(bio_err, "Error outputting keys and certificates\n");
+        BIO_puts(bio_err, "Error outputting keys and certificates\n");
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -992,12 +992,12 @@ int dump_certs_keys_p12(BIO *out, const PKCS12 *p12, const char *pass,
         if (bagnid == NID_pkcs7_data) {
             bags = PKCS12_unpack_p7data(p7);
             if (options & INFO)
-                BIO_printf(bio_err, "PKCS7 Data\n");
+                BIO_puts(bio_err, "PKCS7 Data\n");
         } else if (bagnid == NID_pkcs7_encrypted) {
             if (options & INFO) {
-                BIO_printf(bio_err, "PKCS7 Encrypted data: ");
+                BIO_puts(bio_err, "PKCS7 Encrypted data: ");
                 if (p7->d.encrypted == NULL) {
-                    BIO_printf(bio_err, "<no data>\n");
+                    BIO_puts(bio_err, "<no data>\n");
                 } else {
                     alg_print(p7->d.encrypted->enc_data->algorithm);
                 }
@@ -1052,7 +1052,7 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
     switch (PKCS12_SAFEBAG_get_nid(bag)) {
     case NID_keyBag:
         if (options & INFO)
-            BIO_printf(bio_err, "Key bag\n");
+            BIO_puts(bio_err, "Key bag\n");
         if (options & NOKEYS)
             return 1;
         print_attribs(out, attrs, "Bag Attributes");
@@ -1069,7 +1069,7 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
             const X509_SIG *tp8;
             const X509_ALGOR *tp8alg;
 
-            BIO_printf(bio_err, "Shrouded Keybag: ");
+            BIO_puts(bio_err, "Shrouded Keybag: ");
             tp8 = PKCS12_SAFEBAG_get0_pkcs8(bag);
             X509_SIG_get0(tp8, &tp8alg, NULL);
             alg_print(tp8alg);
@@ -1091,7 +1091,7 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
 
     case NID_certBag:
         if (options & INFO)
-            BIO_printf(bio_err, "Certificate bag\n");
+            BIO_puts(bio_err, "Certificate bag\n");
         if (options & NOCERTS)
             return 1;
         if (PKCS12_SAFEBAG_get0_attr(bag, NID_localKeyID)) {
@@ -1111,25 +1111,25 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
 
     case NID_secretBag:
         if (options & INFO)
-            BIO_printf(bio_err, "Secret bag\n");
+            BIO_puts(bio_err, "Secret bag\n");
         print_attribs(out, attrs, "Bag Attributes");
-        BIO_printf(bio_err, "Bag Type: ");
+        BIO_puts(bio_err, "Bag Type: ");
         i2a_ASN1_OBJECT(bio_err, PKCS12_SAFEBAG_get0_bag_type(bag));
-        BIO_printf(bio_err, "\nBag Value: ");
+        BIO_puts(bio_err, "\nBag Value: ");
         print_attribute(out, PKCS12_SAFEBAG_get0_bag_obj(bag));
         return 1;
 
     case NID_safeContentsBag:
         if (options & INFO)
-            BIO_printf(bio_err, "Safe Contents bag\n");
+            BIO_puts(bio_err, "Safe Contents bag\n");
         print_attribs(out, attrs, "Bag Attributes");
         return dump_certs_pkeys_bags(out, PKCS12_SAFEBAG_get0_safes(bag),
             pass, passlen, options, pempass, enc);
 
     default:
-        BIO_printf(bio_err, "Warning unsupported bag type: ");
+        BIO_puts(bio_err, "Warning unsupported bag type: ");
         i2a_ASN1_OBJECT(bio_err, PKCS12_SAFEBAG_get0_type(bag));
-        BIO_printf(bio_err, "\n");
+        BIO_puts(bio_err, "\n");
         return 1;
     }
     return ret;
@@ -1177,7 +1177,7 @@ static int alg_print(const X509_ALGOR *alg)
 
     pbenid = OBJ_obj2nid(aoid);
 
-    BIO_printf(bio_err, "%s", OBJ_nid2ln(pbenid));
+    BIO_puts(bio_err, OBJ_nid2ln(pbenid));
 
     /*
      * If PBE algorithm is PBES2 decode algorithm parameters
@@ -1294,13 +1294,13 @@ void print_attribute(BIO *out, const ASN1_TYPE *av)
     case V_ASN1_OCTET_STRING:
         hex_print(out, av->value.octet_string->data,
             av->value.octet_string->length);
-        BIO_printf(out, "\n");
+        BIO_puts(out, "\n");
         break;
 
     case V_ASN1_BIT_STRING:
         hex_print(out, av->value.bit_string->data,
             av->value.bit_string->length);
-        BIO_printf(out, "\n");
+        BIO_puts(out, "\n");
         break;
 
     case V_ASN1_OBJECT:
@@ -1309,7 +1309,7 @@ void print_attribute(BIO *out, const ASN1_TYPE *av)
             ln = "";
         OBJ_obj2txt(objbuf, sizeof(objbuf), av->value.object, 1);
         BIO_printf(out, "%s (%s)", ln, objbuf);
-        BIO_printf(out, "\n");
+        BIO_puts(out, "\n");
         break;
 
     default:
@@ -1340,10 +1340,10 @@ int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
         attr = sk_X509_ATTRIBUTE_value(attrlst, i);
         attr_obj = X509_ATTRIBUTE_get0_object(attr);
         attr_nid = OBJ_obj2nid(attr_obj);
-        BIO_printf(out, "    ");
+        BIO_puts(out, "    ");
         if (attr_nid == NID_undef) {
             i2a_ASN1_OBJECT(out, attr_obj);
-            BIO_printf(out, ": ");
+            BIO_puts(out, ": ");
         } else {
             BIO_printf(out, "%s: ", OBJ_nid2ln(attr_nid));
         }
@@ -1354,7 +1354,7 @@ int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
                 print_attribute(out, av);
             }
         } else {
-            BIO_printf(out, "<No Values>\n");
+            BIO_puts(out, "<No Values>\n");
         }
     }
     return 1;

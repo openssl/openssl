@@ -53,7 +53,7 @@ static void log_with_prefix(const char *prog, const char *fmt, va_list ap)
     (void)BIO_set_prefix(pre, prefix);
     bio = BIO_push(pre, bio_err);
     (void)BIO_vprintf(bio, fmt, ap);
-    (void)BIO_printf(bio, "\n");
+    (void)BIO_puts(bio, "\n");
     (void)BIO_flush(bio);
     (void)BIO_pop(pre);
     BIO_free(pre);
@@ -92,7 +92,7 @@ void trace_log_message(int category,
 #else
         (void)BIO_vprintf(out, fmt, ap);
 #endif
-        (void)BIO_printf(out, "\n");
+        (void)BIO_puts(out, "\n");
         OSSL_trace_end(category, out);
     }
     if (verbosity < level) {

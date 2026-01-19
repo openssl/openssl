@@ -101,7 +101,7 @@ static int update_index(CA_DB *db, char **row)
     irow[DB_NUMBER] = NULL;
 
     if (!TXT_DB_insert(db->db, irow)) {
-        BIO_printf(bio_err, "failed to update srpvfile\n");
+        BIO_puts(bio_err, "failed to update srpvfile\n");
         BIO_printf(bio_err, "TXT_DB error number %ld\n", db->db->error);
         OPENSSL_free(irow);
         return 0;
@@ -144,7 +144,7 @@ static char *srp_verify_user(const char *user, const char *srp_verifier,
         if ((gNid = SRP_create_verifier(user, password, &srp_usersalt,
                  &verifier, N, g))
             == NULL) {
-            BIO_printf(bio_err, "Internal error validating SRP verifier\n");
+            BIO_puts(bio_err, "Internal error validating SRP verifier\n");
         } else {
             if (strcmp(verifier, srp_verifier))
                 gNid = NULL;
@@ -176,7 +176,7 @@ static char *srp_create_user(char *user, char **srp_verifier,
         if ((gNid = SRP_create_verifier(user, password, &salt,
                  srp_verifier, N, g))
             == NULL) {
-            BIO_printf(bio_err, "Internal error creating SRP verifier\n");
+            BIO_puts(bio_err, "Internal error creating SRP verifier\n");
         } else {
             *srp_usersalt = salt;
         }
@@ -316,30 +316,30 @@ int srp_main(int argc, char **argv)
         goto end;
 
     if (srpvfile != NULL && configfile != NULL) {
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "-srpvfile and -configfile cannot be specified together.\n");
         goto end;
     }
     if (mode == OPT_ERR) {
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "Exactly one of the options -add, -delete, -modify -list must be specified.\n");
         goto opthelp;
     }
     if (mode == OPT_DELETE || mode == OPT_MODIFY || mode == OPT_ADD) {
         if (argc == 0) {
-            BIO_printf(bio_err, "Need at least one user.\n");
+            BIO_puts(bio_err, "Need at least one user.\n");
             goto opthelp;
         }
         user = *argv++;
     }
     if ((passinarg != NULL || passoutarg != NULL) && argc != 1) {
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "-passin, -passout arguments only valid with one user.\n");
         goto opthelp;
     }
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
-        BIO_printf(bio_err, "Error getting passwords\n");
+        BIO_puts(bio_err, "Error getting passwords\n");
         goto end;
     }
 
@@ -401,7 +401,7 @@ int srp_main(int argc, char **argv)
     }
 
     if (verbose)
-        BIO_printf(bio_err, "Database initialised\n");
+        BIO_puts(bio_err, "Database initialised\n");
 
     if (gNindex >= 0) {
         gNrow = sk_OPENSSL_PSTRING_value(db->db->data, gNindex);
@@ -411,12 +411,12 @@ int srp_main(int argc, char **argv)
         goto end;
     } else {
         if (verbose)
-            BIO_printf(bio_err, "Database has no g N information.\n");
+            BIO_puts(bio_err, "Database has no g N information.\n");
         gNrow = NULL;
     }
 
     if (verbose > 1)
-        BIO_printf(bio_err, "Starting user processing\n");
+        BIO_puts(bio_err, "Starting user processing\n");
 
     while (mode == OPT_LIST || user != NULL) {
         int userindex = -1;
@@ -428,7 +428,7 @@ int srp_main(int argc, char **argv)
 
         if (mode == OPT_LIST) {
             if (user == NULL) {
-                BIO_printf(bio_err, "List all users\n");
+                BIO_puts(bio_err, "List all users\n");
 
                 for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++)
                     print_user(db, i, 1);
@@ -578,7 +578,7 @@ int srp_main(int argc, char **argv)
     }
 
     if (verbose)
-        BIO_printf(bio_err, "User procession done.\n");
+        BIO_puts(bio_err, "User procession done.\n");
 
     if (doupdatedb) {
         /* Lets check some fields */
@@ -592,17 +592,17 @@ int srp_main(int argc, char **argv)
         }
 
         if (verbose)
-            BIO_printf(bio_err, "Trying to update srpvfile.\n");
+            BIO_puts(bio_err, "Trying to update srpvfile.\n");
         if (!save_index(srpvfile, "new", db))
             goto end;
 
         if (verbose)
-            BIO_printf(bio_err, "Temporary srpvfile created.\n");
+            BIO_puts(bio_err, "Temporary srpvfile created.\n");
         if (!rotate_index(srpvfile, "new", "old"))
             goto end;
 
         if (verbose)
-            BIO_printf(bio_err, "srpvfile updated.\n");
+            BIO_puts(bio_err, "srpvfile updated.\n");
     }
 
     ret = (errors != 0);

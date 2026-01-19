@@ -51,7 +51,7 @@ static void warn_deprecated(const FUNCTION *fp)
         BIO_printf(bio_err, "The command %s is deprecated.", fp->name);
     if (strcmp(fp->deprecated_alternative, DEPRECATED_NO_ALTERNATIVE) != 0)
         BIO_printf(bio_err, " Use '%s' instead.", fp->deprecated_alternative);
-    BIO_printf(bio_err, "\n");
+    BIO_puts(bio_err, "\n");
 }
 
 static int apps_startup(void)
@@ -107,7 +107,7 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
     switch (cmd) {
     case OSSL_TRACE_CTRL_BEGIN:
         if (trace_data->ingroup) {
-            BIO_printf(bio_err, "ERROR: tracing already started\n");
+            BIO_puts(bio_err, "ERROR: tracing already started\n");
             return 0;
         }
         trace_data->ingroup = 1;
@@ -122,7 +122,7 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
         break;
     case OSSL_TRACE_CTRL_WRITE:
         if (!trace_data->ingroup) {
-            BIO_printf(bio_err, "ERROR: writing when tracing not started\n");
+            BIO_puts(bio_err, "ERROR: writing when tracing not started\n");
             return 0;
         }
         if (cnt > INT_MAX)
@@ -132,7 +132,7 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
         break;
     case OSSL_TRACE_CTRL_END:
         if (!trace_data->ingroup) {
-            BIO_printf(bio_err, "ERROR: finishing when tracing not started\n");
+            BIO_puts(bio_err, "ERROR: finishing when tracing not started\n");
             return 0;
         }
         trace_data->ingroup = 0;
@@ -435,26 +435,26 @@ int help_main(int argc, char **argv)
     for (fp = functions; fp->name != NULL; fp++) {
         nl = 0;
         if (i++ % dc.columns == 0) {
-            BIO_printf(bio_err, "\n");
+            BIO_puts(bio_err, "\n");
             nl = 1;
         }
         if (fp->type != tp) {
             tp = fp->type;
             if (!nl)
-                BIO_printf(bio_err, "\n");
+                BIO_puts(bio_err, "\n");
             if (tp == FT_md) {
                 i = 1;
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "\nMessage Digest commands (see the `dgst' command for more details)\n");
             } else if (tp == FT_cipher) {
                 i = 1;
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "\nCipher commands (see the `enc' command for more details)\n");
             }
         }
         BIO_printf(bio_err, "%-*s", dc.width, fp->name);
     }
-    BIO_printf(bio_err, "\n\n");
+    BIO_puts(bio_err, "\n\n");
     return 0;
 }
 

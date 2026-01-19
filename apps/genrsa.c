@@ -171,7 +171,7 @@ int genrsa_main(int argc, char **argv)
     if (!opt_cipher(ciphername, &enc))
         goto end;
     if (!app_passwd(NULL, passoutarg, NULL, &passout)) {
-        BIO_printf(bio_err, "Error getting password\n");
+        BIO_puts(bio_err, "Error getting password\n");
         goto end;
     }
 
@@ -188,19 +188,19 @@ int genrsa_main(int argc, char **argv)
     EVP_PKEY_CTX_set_app_data(ctx, bio_err);
 
     if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, num) <= 0) {
-        BIO_printf(bio_err, "Error setting RSA length\n");
+        BIO_puts(bio_err, "Error setting RSA length\n");
         goto end;
     }
     if (!BN_set_word(bn, f4)) {
-        BIO_printf(bio_err, "Error allocating RSA public exponent\n");
+        BIO_puts(bio_err, "Error allocating RSA public exponent\n");
         goto end;
     }
     if (EVP_PKEY_CTX_set1_rsa_keygen_pubexp(ctx, bn) <= 0) {
-        BIO_printf(bio_err, "Error setting RSA public exponent\n");
+        BIO_puts(bio_err, "Error setting RSA public exponent\n");
         goto end;
     }
     if (EVP_PKEY_CTX_set_rsa_keygen_primes(ctx, primes) <= 0) {
-        BIO_printf(bio_err, "Error setting number of primes\n");
+        BIO_puts(bio_err, "Error setting number of primes\n");
         goto end;
     }
     pkey = app_keygen(ctx, "RSA", num, verbose);
@@ -213,7 +213,7 @@ int genrsa_main(int argc, char **argv)
         /* Every RSA key has an 'e' */
         EVP_PKEY_get_bn_param(pkey, "e", &e);
         if (e == NULL) {
-            BIO_printf(bio_err, "Error cannot access RSA e\n");
+            BIO_puts(bio_err, "Error cannot access RSA e\n");
             goto end;
         }
         hexe = BN_bn2hex(e);

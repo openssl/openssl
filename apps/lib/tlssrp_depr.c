@@ -65,12 +65,12 @@ static int ssl_srp_verify_param_cb(SSL *s, void *arg)
     if (((N = SSL_get_srp_N(s)) == NULL) || ((g = SSL_get_srp_g(s)) == NULL))
         return 0;
     if (srp_arg->debug || srp_arg->msg || srp_arg->amp == 1) {
-        BIO_printf(bio_err, "SRP parameters:\n");
-        BIO_printf(bio_err, "\tN=");
+        BIO_puts(bio_err, "SRP parameters:\n");
+        BIO_puts(bio_err, "\tN=");
         BN_print(bio_err, N);
-        BIO_printf(bio_err, "\n\tg=");
+        BIO_puts(bio_err, "\n\tg=");
         BN_print(bio_err, g);
-        BIO_printf(bio_err, "\n");
+        BIO_puts(bio_err, "\n");
     }
 
     if (SRP_check_known_gN_param(g, N))
@@ -78,7 +78,7 @@ static int ssl_srp_verify_param_cb(SSL *s, void *arg)
 
     if (srp_arg->amp == 1) {
         if (srp_arg->debug)
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "SRP param N and g are not known params, going to check deeper.\n");
 
         /*
@@ -89,7 +89,7 @@ static int ssl_srp_verify_param_cb(SSL *s, void *arg)
         if (BN_num_bits(g) <= BN_BITS && srp_Verify_N_and_g(N, g))
             return 1;
     }
-    BIO_printf(bio_err, "SRP param N and g rejected.\n");
+    BIO_puts(bio_err, "SRP param N and g rejected.\n");
     return 0;
 }
 
@@ -105,7 +105,7 @@ static char *ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
     cb_tmp.password = (char *)srp_arg->srppassin;
     cb_tmp.prompt_info = "SRP user";
     if ((l = password_callback(pass, PWD_STRLEN, 0, &cb_tmp)) < 0) {
-        BIO_printf(bio_err, "Can't read Password\n");
+        BIO_puts(bio_err, "Can't read Password\n");
         OPENSSL_free(pass);
         return NULL;
     }
@@ -118,7 +118,7 @@ int set_up_srp_arg(SSL_CTX *ctx, SRP_ARG *srp_arg, int srp_lateuser, int c_msg,
     int c_debug)
 {
     if (!srp_lateuser && !SSL_CTX_set_srp_username(ctx, srp_arg->srplogin)) {
-        BIO_printf(bio_err, "Unable to set SRP username\n");
+        BIO_puts(bio_err, "Unable to set SRP username\n");
         return 0;
     }
     srp_arg->msg = c_msg;
@@ -194,7 +194,7 @@ int set_up_srp_verifier_file(SSL_CTX *ctx, srpsrvparm *srp_callback_parm,
     srp_callback_parm->login = NULL;
 
     if (srp_callback_parm->vb == NULL) {
-        BIO_printf(bio_err, "Failed to initialize SRP verifier file\n");
+        BIO_puts(bio_err, "Failed to initialize SRP verifier file\n");
         return 0;
     }
     if ((ret = SRP_VBASE_init(srp_callback_parm->vb,
@@ -222,5 +222,5 @@ void lookup_srp_user(srpsrvparm *srp_callback_parm, BIO *bio_s_out)
         BIO_printf(bio_s_out, "LOOKUP done %s\n",
             srp_callback_parm->user->info);
     else
-        BIO_printf(bio_s_out, "LOOKUP not successful\n");
+        BIO_puts(bio_s_out, "LOOKUP not successful\n");
 }

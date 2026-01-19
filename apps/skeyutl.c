@@ -88,7 +88,7 @@ int skeyutl_main(int argc, char **argv)
         goto opthelp;
 
     if (cipher == NULL && skeymgmt == NULL) {
-        BIO_printf(bio_err, "Either -skeymgmt -or -cipher option should be specified\n");
+        BIO_puts(bio_err, "Either -skeymgmt -or -cipher option should be specified\n");
         goto end;
     }
 
@@ -122,7 +122,7 @@ int skeyutl_main(int argc, char **argv)
         }
         goto end;
     } else {
-        BIO_printf(bio_err, "Key generation is the only supported operation as of now\n");
+        BIO_puts(bio_err, "Key generation is the only supported operation as of now\n");
     }
 
 end:

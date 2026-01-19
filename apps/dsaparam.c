@@ -153,7 +153,7 @@ int dsaparam_main(int argc, char **argv)
 
     ctx = EVP_PKEY_CTX_new_from_name(app_get0_libctx(), "DSA", app_get0_propq());
     if (ctx == NULL) {
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "Error, DSA parameter generation context allocation failed\n");
         goto end;
     }
@@ -169,21 +169,21 @@ int dsaparam_main(int argc, char **argv)
             EVP_PKEY_CTX_set_cb(ctx, progress_cb);
             BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n",
                 num);
-            BIO_printf(bio_err, "This could take some time\n");
+            BIO_puts(bio_err, "This could take some time\n");
         }
         if (EVP_PKEY_paramgen_init(ctx) <= 0) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "Error, DSA key generation paramgen init failed\n");
             goto end;
         }
         if (EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, num) <= 0) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "Error, DSA key generation setting bit length failed\n");
             goto end;
         }
         if (numqbits > 0) {
             if (EVP_PKEY_CTX_set_dsa_paramgen_q_bits(ctx, numqbits) <= 0) {
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "Error, DSA key generation setting subprime bit length failed\n");
                 goto end;
             }
@@ -214,7 +214,7 @@ int dsaparam_main(int argc, char **argv)
         else
             i = PEM_write_bio_Parameters(out, params);
         if (!i) {
-            BIO_printf(bio_err, "Error, unable to write DSA parameters\n");
+            BIO_puts(bio_err, "Error, unable to write DSA parameters\n");
             goto end;
         }
     }
@@ -228,7 +228,7 @@ int dsaparam_main(int argc, char **argv)
             goto end;
         }
         if (EVP_PKEY_keygen_init(ctx) <= 0) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "Error, unable to initialise for key generation\n");
             goto end;
         }

@@ -115,7 +115,7 @@ static void list_ciphers(const char *prefix)
     int i;
 
     if (ciphers == NULL) {
-        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        BIO_puts(bio_err, "ERROR: Memory allocation\n");
         return;
     }
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -137,7 +137,7 @@ static void list_ciphers(const char *prefix)
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
         if (names != NULL && EVP_CIPHER_names_do_all(c, collect_names, names)) {
-            BIO_printf(bio_out, "  ");
+            BIO_puts(bio_out, "  ");
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
@@ -200,7 +200,7 @@ static void list_digests(const char *prefix)
     int i;
 
     if (digests == NULL) {
-        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        BIO_puts(bio_err, "ERROR: Memory allocation\n");
         return;
     }
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -222,7 +222,7 @@ static void list_digests(const char *prefix)
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
         if (names != NULL && EVP_MD_names_do_all(m, collect_names, names)) {
-            BIO_printf(bio_out, "  ");
+            BIO_puts(bio_out, "  ");
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
@@ -268,10 +268,10 @@ static void list_macs(void)
     int i;
 
     if (macs == NULL) {
-        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        BIO_puts(bio_err, "ERROR: Memory allocation\n");
         return;
     }
-    BIO_printf(bio_out, "Provided MACs:\n");
+    BIO_puts(bio_out, "Provided MACs:\n");
     EVP_MAC_do_all_provided(app_get0_libctx(), collect_macs, macs);
     sk_EVP_MAC_sort(macs);
     for (i = 0; i < sk_EVP_MAC_num(macs); i++) {
@@ -283,7 +283,7 @@ static void list_macs(void)
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
         if (names != NULL && EVP_MAC_names_do_all(m, collect_names, names)) {
-            BIO_printf(bio_out, "  ");
+            BIO_puts(bio_out, "  ");
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
@@ -333,10 +333,10 @@ static void list_kdfs(void)
     int i;
 
     if (kdfs == NULL) {
-        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        BIO_puts(bio_err, "ERROR: Memory allocation\n");
         return;
     }
-    BIO_printf(bio_out, "Provided KDFs and PDFs:\n");
+    BIO_puts(bio_out, "Provided KDFs and PDFs:\n");
     EVP_KDF_do_all_provided(app_get0_libctx(), collect_kdfs, kdfs);
     sk_EVP_KDF_sort(kdfs);
     for (i = 0; i < sk_EVP_KDF_num(kdfs); i++) {
@@ -348,7 +348,7 @@ static void list_kdfs(void)
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
         if (names != NULL && EVP_KDF_names_do_all(k, collect_names, names)) {
-            BIO_printf(bio_out, "  ");
+            BIO_puts(bio_out, "  ");
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
@@ -404,10 +404,10 @@ static void list_random_generators(void)
     int i;
 
     if (rands == NULL) {
-        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        BIO_puts(bio_err, "ERROR: Memory allocation\n");
         return;
     }
-    BIO_printf(bio_out, "Provided RNGs and seed sources:\n");
+    BIO_puts(bio_out, "Provided RNGs and seed sources:\n");
     EVP_RAND_do_all_provided(app_get0_libctx(), collect_rands, rands);
     sk_EVP_RAND_sort(rands);
     for (i = 0; i < sk_EVP_RAND_num(rands); i++) {
@@ -532,10 +532,10 @@ static void list_encoders(void)
 
     encoders = sk_OSSL_ENCODER_new(encoder_cmp);
     if (encoders == NULL) {
-        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        BIO_puts(bio_err, "ERROR: Memory allocation\n");
         return;
     }
-    BIO_printf(bio_out, "Provided ENCODERs:\n");
+    BIO_puts(bio_out, "Provided ENCODERs:\n");
     OSSL_ENCODER_do_all_provided(app_get0_libctx(), collect_encoders,
         encoders);
     sk_OSSL_ENCODER_sort(encoders);
@@ -549,7 +549,7 @@ static void list_encoders(void)
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
         if (names != NULL && OSSL_ENCODER_names_do_all(k, collect_names, names)) {
-            BIO_printf(bio_out, "  ");
+            BIO_puts(bio_out, "  ");
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s (%s)\n",
@@ -598,10 +598,10 @@ static void list_decoders(void)
 
     decoders = sk_OSSL_DECODER_new(decoder_cmp);
     if (decoders == NULL) {
-        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        BIO_puts(bio_err, "ERROR: Memory allocation\n");
         return;
     }
-    BIO_printf(bio_out, "Provided DECODERs:\n");
+    BIO_puts(bio_out, "Provided DECODERs:\n");
     OSSL_DECODER_do_all_provided(app_get0_libctx(), collect_decoders,
         decoders);
     sk_OSSL_DECODER_sort(decoders);
@@ -615,7 +615,7 @@ static void list_decoders(void)
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
         if (names != NULL && OSSL_DECODER_names_do_all(k, collect_names, names)) {
-            BIO_printf(bio_out, "  ");
+            BIO_puts(bio_out, "  ");
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s (%s)\n",
@@ -674,14 +674,14 @@ static void list_keymanagers(void)
         if (names != NULL && EVP_KEYMGMT_names_do_all(k, collect_names, names)) {
             const char *desc = EVP_KEYMGMT_get0_description(k);
 
-            BIO_printf(bio_out, "  Name: ");
+            BIO_puts(bio_out, "  Name: ");
             if (desc != NULL)
-                BIO_printf(bio_out, "%s", desc);
+                BIO_puts(bio_out, desc);
             else
-                BIO_printf(bio_out, "%s", sk_OPENSSL_CSTRING_value(names, 0));
-            BIO_printf(bio_out, "\n");
-            BIO_printf(bio_out, "    Type: Provider Algorithm\n");
-            BIO_printf(bio_out, "    IDs: ");
+                BIO_puts(bio_out, sk_OPENSSL_CSTRING_value(names, 0));
+            BIO_puts(bio_out, "\n");
+            BIO_puts(bio_out, "    Type: Provider Algorithm\n");
+            BIO_puts(bio_out, "    IDs: ");
             print_names(bio_out, names);
             BIO_printf(bio_out, " @ %s\n",
                 OSSL_PROVIDER_get0_name(EVP_KEYMGMT_get0_provider(k)));
@@ -737,14 +737,14 @@ static void list_skeymanagers(void)
         if (names != NULL && EVP_SKEYMGMT_names_do_all(k, collect_names, names)) {
             const char *desc = EVP_SKEYMGMT_get0_description(k);
 
-            BIO_printf(bio_out, "  Name: ");
+            BIO_puts(bio_out, "  Name: ");
             if (desc != NULL)
-                BIO_printf(bio_out, "%s", desc);
+                BIO_puts(bio_out, desc);
             else
-                BIO_printf(bio_out, "%s", sk_OPENSSL_CSTRING_value(names, 0));
-            BIO_printf(bio_out, "\n");
-            BIO_printf(bio_out, "    Type: Provider Algorithm\n");
-            BIO_printf(bio_out, "    IDs: ");
+                BIO_puts(bio_out, sk_OPENSSL_CSTRING_value(names, 0));
+            BIO_puts(bio_out, "\n");
+            BIO_puts(bio_out, "    Type: Provider Algorithm\n");
+            BIO_puts(bio_out, "    IDs: ");
             print_names(bio_out, names);
             BIO_printf(bio_out, " @ %s\n",
                 OSSL_PROVIDER_get0_name(EVP_SKEYMGMT_get0_provider(k)));
@@ -791,7 +791,7 @@ static void list_signatures(void)
         names = sk_OPENSSL_CSTRING_new(name_cmp);
         if (names != NULL && EVP_SIGNATURE_names_do_all(k, collect_names, names)) {
             count++;
-            BIO_printf(bio_out, "  ");
+            BIO_puts(bio_out, "  ");
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
@@ -812,7 +812,7 @@ static void list_signatures(void)
     }
     sk_EVP_SIGNATURE_pop_free(sig_stack, EVP_SIGNATURE_free);
     if (count == 0)
-        BIO_printf(bio_out, " -\n");
+        BIO_puts(bio_out, " -\n");
 }
 
 static int list_provider_tls_sigalgs(const OSSL_PARAM params[], void *data)
@@ -823,8 +823,8 @@ static int list_provider_tls_sigalgs(const OSSL_PARAM params[], void *data)
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME);
     if (p != NULL && p->data_type == OSSL_PARAM_UTF8_STRING) {
         if (*((int *)data) > 0)
-            BIO_printf(bio_out, ":");
-        BIO_printf(bio_out, "%s", (char *)(p->data));
+            BIO_puts(bio_out, ":");
+        BIO_puts(bio_out, (char *)(p->data));
         /* mark presence of a provider-based sigalg */
         *((int *)data) = 2;
     }
@@ -849,20 +849,20 @@ static void list_tls_groups(int version, int all)
     int i, num;
 
     if ((groups = sk_OPENSSL_CSTRING_new_null()) == NULL) {
-        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        BIO_puts(bio_err, "ERROR: Memory allocation\n");
         return;
     }
     if ((ctx = SSL_CTX_new(TLS_method())) == NULL) {
-        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        BIO_puts(bio_err, "ERROR: Memory allocation\n");
         goto err;
     }
     if (!SSL_CTX_set_min_proto_version(ctx, version)
         || !SSL_CTX_set_max_proto_version(ctx, version)) {
-        BIO_printf(bio_err, "ERROR: setting TLS protocol version\n");
+        BIO_puts(bio_err, "ERROR: setting TLS protocol version\n");
         goto err;
     }
     if (!SSL_CTX_get0_implemented_groups(ctx, all, groups)) {
-        BIO_printf(bio_err, "ERROR: getting implemented TLS group list\n");
+        BIO_puts(bio_err, "ERROR: getting implemented TLS group list\n");
         goto err;
     }
     num = sk_OPENSSL_CSTRING_num(groups);
@@ -884,19 +884,19 @@ static void list_tls_signatures(void)
 
     if (builtin_sigalgs != NULL) {
         if (builtin_sigalgs[0] != 0) {
-            BIO_printf(bio_out, "%s", builtin_sigalgs);
+            BIO_puts(bio_out, builtin_sigalgs);
             tls_sigalg_listed = 1;
         }
         OPENSSL_free(builtin_sigalgs);
     }
 
     if (!OSSL_PROVIDER_do_all(NULL, list_tls_sigalg_caps, &tls_sigalg_listed))
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "ERROR: could not list all provider signature algorithms\n");
     if (tls_sigalg_listed < 2)
         BIO_printf(bio_out,
             "\nNo TLS sig algs registered by currently active providers");
-    BIO_printf(bio_out, "\n");
+    BIO_puts(bio_out, "\n");
 }
 
 DEFINE_STACK_OF(EVP_KEM)
@@ -935,7 +935,7 @@ static void list_kems(void)
         names = sk_OPENSSL_CSTRING_new(name_cmp);
         if (names != NULL && EVP_KEM_names_do_all(k, collect_names, names)) {
             count++;
-            BIO_printf(bio_out, "  ");
+            BIO_puts(bio_out, "  ");
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
@@ -956,7 +956,7 @@ static void list_kems(void)
     }
     sk_EVP_KEM_pop_free(kem_stack, EVP_KEM_free);
     if (count == 0)
-        BIO_printf(bio_out, " -\n");
+        BIO_puts(bio_out, " -\n");
 }
 
 DEFINE_STACK_OF(EVP_ASYM_CIPHER)
@@ -997,7 +997,7 @@ static void list_asymciphers(void)
         if (names != NULL
             && EVP_ASYM_CIPHER_names_do_all(k, collect_names, names)) {
             count++;
-            BIO_printf(bio_out, "  ");
+            BIO_puts(bio_out, "  ");
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
@@ -1018,7 +1018,7 @@ static void list_asymciphers(void)
     }
     sk_EVP_ASYM_CIPHER_pop_free(asymciph_stack, EVP_ASYM_CIPHER_free);
     if (count == 0)
-        BIO_printf(bio_out, " -\n");
+        BIO_puts(bio_out, " -\n");
 }
 
 DEFINE_STACK_OF(EVP_KEYEXCH)
@@ -1057,7 +1057,7 @@ static void list_keyexchanges(void)
         names = sk_OPENSSL_CSTRING_new(name_cmp);
         if (names != NULL && EVP_KEYEXCH_names_do_all(k, collect_names, names)) {
             count++;
-            BIO_printf(bio_out, "  ");
+            BIO_puts(bio_out, "  ");
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
@@ -1078,7 +1078,7 @@ static void list_keyexchanges(void)
     }
     sk_EVP_KEYEXCH_pop_free(kex_stack, EVP_KEYEXCH_free);
     if (count == 0)
-        BIO_printf(bio_out, " -\n");
+        BIO_puts(bio_out, " -\n");
 }
 
 static void list_objects(void)
@@ -1115,7 +1115,7 @@ static void list_objects(void)
         if (n > oid_size) {
             oid_buf = OPENSSL_realloc(oid_buf, n + 1);
             if (oid_buf == NULL) {
-                BIO_printf(bio_err, "ERROR: Memory allocation\n");
+                BIO_puts(bio_err, "ERROR: Memory allocation\n");
                 break; /* Error */
             }
             oid_size = n + 1;
@@ -1162,7 +1162,7 @@ static void list_options_for_command(const char *command)
         BIO_printf(bio_out, "%s %c\n", o->name, c == '\0' ? '-' : c);
     }
     /* Always output the -- marker since it is sometimes documented. */
-    BIO_printf(bio_out, "- -\n");
+    BIO_puts(bio_out, "- -\n");
 }
 
 static int is_md_available(const char *name)
@@ -1228,32 +1228,32 @@ static void list_type(FUNC_TYPE ft, int one)
             BIO_printf(bio_out, "%s\n", fp->name);
         } else {
             if (i % dc.columns == 0 && i > 0)
-                BIO_printf(bio_out, "\n");
+                BIO_puts(bio_out, "\n");
             BIO_printf(bio_out, "%-*s", dc.width, fp->name);
             i++;
         }
     }
     if (!one)
-        BIO_printf(bio_out, "\n\n");
+        BIO_puts(bio_out, "\n\n");
 }
 
 static void list_pkey(void)
 {
-    BIO_printf(bio_out, "Provided:\n");
-    BIO_printf(bio_out, " Key Managers:\n");
+    BIO_puts(bio_out, "Provided:\n");
+    BIO_puts(bio_out, " Key Managers:\n");
     list_keymanagers();
 }
 
 static void list_pkey_meth(void)
 {
-    BIO_printf(bio_out, "Provided:\n");
-    BIO_printf(bio_out, " Encryption:\n");
+    BIO_puts(bio_out, "Provided:\n");
+    BIO_puts(bio_out, " Encryption:\n");
     list_asymciphers();
-    BIO_printf(bio_out, " Key Exchange:\n");
+    BIO_puts(bio_out, " Key Exchange:\n");
     list_keyexchanges();
-    BIO_printf(bio_out, " Signatures:\n");
+    BIO_puts(bio_out, " Signatures:\n");
     list_signatures();
-    BIO_printf(bio_out, " Key encapsulation:\n");
+    BIO_puts(bio_out, " Key encapsulation:\n");
     list_kems();
 }
 
@@ -1280,10 +1280,10 @@ static void list_store_loaders(void)
     int i;
 
     if (stores == NULL) {
-        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        BIO_puts(bio_err, "ERROR: Memory allocation\n");
         return;
     }
-    BIO_printf(bio_out, "Provided STORE LOADERs:\n");
+    BIO_puts(bio_out, "Provided STORE LOADERs:\n");
     OSSL_STORE_LOADER_do_all_provided(app_get0_libctx(), collect_store_loaders,
         stores);
     sk_OSSL_STORE_LOADER_sort(stores);
@@ -1296,7 +1296,7 @@ static void list_store_loaders(void)
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
         if (names != NULL && OSSL_STORE_LOADER_names_do_all(l, collect_names, names)) {
-            BIO_printf(bio_out, "  ");
+            BIO_puts(bio_out, "  ");
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
@@ -1343,17 +1343,17 @@ static void list_provider_info(void)
     int i;
 
     if (providers == NULL) {
-        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        BIO_puts(bio_err, "ERROR: Memory allocation\n");
         return;
     }
 
     if (OSSL_PROVIDER_do_all(NULL, &collect_providers, providers) != 1) {
         sk_OSSL_PROVIDER_free(providers);
-        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        BIO_puts(bio_err, "ERROR: Memory allocation\n");
         return;
     }
 
-    BIO_printf(bio_out, "Providers:\n");
+    BIO_puts(bio_out, "Providers:\n");
     sk_OSSL_PROVIDER_sort(providers);
     for (i = 0; i < sk_OSSL_PROVIDER_num(providers); i++) {
         const OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(providers, i);
@@ -1843,12 +1843,12 @@ int list_main(int argc, char **argv)
     if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
-#define MAYBE_ADD_NL(cmd)              \
-    do {                               \
-        if (print_newline++) {         \
-            BIO_printf(bio_out, "\n"); \
-        }                              \
-        cmd;                           \
+#define MAYBE_ADD_NL(cmd)            \
+    do {                             \
+        if (print_newline++) {       \
+            BIO_puts(bio_out, "\n"); \
+        }                            \
+        cmd;                         \
     } while (0)
 
     if (todo.commands)
@@ -1856,31 +1856,31 @@ int list_main(int argc, char **argv)
     if (todo.all_algorithms) {
         MAYBE_ADD_NL({});
 
-        BIO_printf(bio_out, "Digests:\n");
+        BIO_puts(bio_out, "Digests:\n");
         list_digests(" ");
-        BIO_printf(bio_out, "\nSymmetric Ciphers:\n");
+        BIO_puts(bio_out, "\nSymmetric Ciphers:\n");
         list_ciphers(" ");
-        BIO_printf(bio_out, "\n");
+        BIO_puts(bio_out, "\n");
         list_kdfs();
-        BIO_printf(bio_out, "\n");
+        BIO_puts(bio_out, "\n");
         list_macs();
 
-        BIO_printf(bio_out, "\nProvided Asymmetric Encryption:\n");
+        BIO_puts(bio_out, "\nProvided Asymmetric Encryption:\n");
         list_asymciphers();
-        BIO_printf(bio_out, "\nProvided Key Exchange:\n");
+        BIO_puts(bio_out, "\nProvided Key Exchange:\n");
         list_keyexchanges();
-        BIO_printf(bio_out, "\nProvided Signatures:\n");
+        BIO_puts(bio_out, "\nProvided Signatures:\n");
         list_signatures();
-        BIO_printf(bio_out, "\nProvided Key encapsulation:\n");
+        BIO_puts(bio_out, "\nProvided Key encapsulation:\n");
         list_kems();
-        BIO_printf(bio_out, "\nProvided Key managers:\n");
+        BIO_puts(bio_out, "\nProvided Key managers:\n");
         list_keymanagers();
 
-        BIO_printf(bio_out, "\n");
+        BIO_puts(bio_out, "\n");
         list_encoders();
-        BIO_printf(bio_out, "\n");
+        BIO_puts(bio_out, "\n");
         list_decoders();
-        BIO_printf(bio_out, "\n");
+        BIO_puts(bio_out, "\n");
         list_store_loaders();
     }
     if (todo.random_instances)

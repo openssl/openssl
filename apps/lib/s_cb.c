@@ -89,17 +89,17 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
     case X509_V_ERR_CERT_NOT_YET_VALID:
     case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
         if (err_cert != NULL) {
-            BIO_printf(bio_err, "notBefore=");
+            BIO_puts(bio_err, "notBefore=");
             ASN1_TIME_print(bio_err, X509_get0_notBefore(err_cert));
-            BIO_printf(bio_err, "\n");
+            BIO_puts(bio_err, "\n");
         }
         break;
     case X509_V_ERR_CERT_HAS_EXPIRED:
     case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
         if (err_cert != NULL) {
-            BIO_printf(bio_err, "notAfter=");
+            BIO_puts(bio_err, "notAfter=");
             ASN1_TIME_print(bio_err, X509_get0_notAfter(err_cert));
-            BIO_printf(bio_err, "\n");
+            BIO_puts(bio_err, "\n");
         }
         break;
     case X509_V_ERR_NO_EXPLICIT_POLICY:
@@ -148,7 +148,7 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
          * context
          */
         if (!SSL_CTX_check_private_key(ctx)) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "Private key does not match the certificate public key\n");
             return 0;
         }
@@ -164,13 +164,13 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
     if (cert == NULL)
         return 1;
     if (SSL_CTX_use_certificate(ctx, cert) <= 0) {
-        BIO_printf(bio_err, "error setting certificate\n");
+        BIO_puts(bio_err, "error setting certificate\n");
         ERR_print_errors(bio_err);
         return 0;
     }
 
     if (SSL_CTX_use_PrivateKey(ctx, key) <= 0) {
-        BIO_printf(bio_err, "error setting private key\n");
+        BIO_puts(bio_err, "error setting private key\n");
         ERR_print_errors(bio_err);
         return 0;
     }
@@ -179,17 +179,17 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
      * Now we know that a key and cert have been set against the SSL context
      */
     if (!SSL_CTX_check_private_key(ctx)) {
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "Private key does not match the certificate public key\n");
         return 0;
     }
     if (chain && !SSL_CTX_set1_chain(ctx, chain)) {
-        BIO_printf(bio_err, "error setting certificate chain\n");
+        BIO_puts(bio_err, "error setting certificate chain\n");
         ERR_print_errors(bio_err);
         return 0;
     }
     if (build_chain && !SSL_CTX_build_cert_chain(ctx, chflags)) {
-        BIO_printf(bio_err, "error building certificate chain\n");
+        BIO_puts(bio_err, "error building certificate chain\n");
         ERR_print_errors(bio_err);
         return 0;
     }
@@ -319,7 +319,7 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
         }
         sstr = get_sigtype(sign_nid);
         if (sstr)
-            BIO_printf(out, "%s", sstr);
+            BIO_puts(out, sstr);
         else
             BIO_printf(out, "0x%02X", (int)rsign);
         if (hash_nid != NID_undef)
@@ -399,7 +399,8 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
         if (i)
             BIO_puts(out, ":");
         nid = groups[i];
-        BIO_printf(out, "%s", SSL_group_to_name(s, nid));
+        const char *name = SSL_group_to_name(s, nid);
+        BIO_puts(out, name ? name : "(null)");
     }
     OPENSSL_free(groups);
     if (noshared) {
@@ -412,7 +413,8 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
         if (i)
             BIO_puts(out, ":");
         nid = SSL_get_shared_group(s, i);
-        BIO_printf(out, "%s", SSL_group_to_name(s, nid));
+        const char *name = SSL_group_to_name(s, nid);
+        BIO_puts(out, name ? name : "(null)");
     }
     if (ngroups == 0)
         BIO_puts(out, "NONE");
@@ -723,16 +725,16 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
     if (len > 0) {
         size_t num, i;
 
-        BIO_printf(bio, "   ");
+        BIO_puts(bio, "   ");
         num = len;
         for (i = 0; i < num; i++) {
             if (i % 16 == 0 && i > 0)
-                BIO_printf(bio, "\n   ");
+                BIO_puts(bio, "\n   ");
             BIO_printf(bio, " %02x", ((const unsigned char *)buf)[i]);
         }
         if (i < len)
-            BIO_printf(bio, " ...");
-        BIO_printf(bio, "\n");
+            BIO_puts(bio, " ...");
+        BIO_puts(bio, "\n");
     }
     (void)BIO_flush(bio);
 }
@@ -855,7 +857,7 @@ int generate_stateless_cookie_callback(SSL *ssl, unsigned char *cookie,
     /* Initialize a random secret */
     if (!cookie_initialized) {
         if (RAND_bytes(cookie_secret, COOKIE_SECRET_LENGTH) <= 0) {
-            BIO_printf(bio_err, "error setting random cookie secret\n");
+            BIO_puts(bio_err, "error setting random cookie secret\n");
             return 0;
         }
         cookie_initialized = 1;
@@ -864,7 +866,7 @@ int generate_stateless_cookie_callback(SSL *ssl, unsigned char *cookie,
     if (SSL_is_dtls(ssl)) {
         lpeer = peer = BIO_ADDR_new();
         if (peer == NULL) {
-            BIO_printf(bio_err, "memory full\n");
+            BIO_puts(bio_err, "memory full\n");
             return 0;
         }
 
@@ -876,7 +878,7 @@ int generate_stateless_cookie_callback(SSL *ssl, unsigned char *cookie,
 
     /* Create buffer with peer's address and port */
     if (!BIO_ADDR_rawaddress(peer, NULL, &length)) {
-        BIO_printf(bio_err, "Failed getting peer address\n");
+        BIO_puts(bio_err, "Failed getting peer address\n");
         BIO_ADDR_free(lpeer);
         return 0;
     }
@@ -893,7 +895,7 @@ int generate_stateless_cookie_callback(SSL *ssl, unsigned char *cookie,
             cookie_secret, COOKIE_SECRET_LENGTH, buffer, length,
             cookie, DTLS1_COOKIE_LENGTH, cookie_len)
         == NULL) {
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "Error calculating HMAC-SHA1 of buffer with secret\n");
         goto end;
     }
@@ -983,11 +985,11 @@ static void print_chain_flags(SSL *s, int flags)
         BIO_printf(bio_err, "\t%s: %s\n",
             pp->name,
             (flags & pp->retval) ? "OK" : "NOT OK");
-    BIO_printf(bio_err, "\tSuite B: ");
+    BIO_puts(bio_err, "\tSuite B: ");
     if (SSL_set_cert_flags(s, 0) & SSL_CERT_FLAG_SUITEB_128_LOS)
         BIO_puts(bio_err, flags & CERT_PKEY_SUITEB ? "OK\n" : "NOT OK\n");
     else
-        BIO_printf(bio_err, "not tested\n");
+        BIO_puts(bio_err, "not tested\n");
 }
 
 /*
@@ -1109,7 +1111,7 @@ int load_excert(SSL_EXCERT **pexc)
     }
     for (; exc; exc = exc->next) {
         if (exc->certfile == NULL) {
-            BIO_printf(bio_err, "Missing filename\n");
+            BIO_puts(bio_err, "Missing filename\n");
             return 0;
         }
         exc->cert = load_cert(exc->certfile, exc->certform,
@@ -1264,7 +1266,7 @@ void print_verify_detail(SSL *s, BIO *bio)
     if (verify_err == X509_V_OK) {
         const char *peername = SSL_get0_peername(s);
 
-        BIO_printf(bio, "Verification: OK\n");
+        BIO_puts(bio, "Verification: OK\n");
         if (peername != NULL)
             BIO_printf(bio, "Verified peername: %s\n", peername);
     } else {
@@ -1302,7 +1304,7 @@ void print_verify_detail(SSL *s, BIO *bio)
                                                             : "matched the EE",
                 mdpth);
         else
-            BIO_printf(bio, "matched the peer raw public key\n");
+            BIO_puts(bio, "matched the peer raw public key\n");
         OPENSSL_free(hexdata);
     }
 }
@@ -1331,7 +1333,7 @@ void print_ssl_summary(SSL *s)
             BIO_printf(bio_err, "Signature type: %s\n", sigalg);
         print_verify_detail(s, bio_err);
     } else if (peer_rpk != NULL) {
-        BIO_printf(bio_err, "Peer used raw public key\n");
+        BIO_puts(bio_err, "Peer used raw public key\n");
         if (SSL_get0_peer_signature_name(s, &sigalg))
             BIO_printf(bio_err, "Signature type: %s\n", sigalg);
         print_verify_detail(s, bio_err);
@@ -1597,7 +1599,7 @@ void ssl_ctx_security_debug(SSL_CTX *ctx, int verbose)
 static void keylog_callback(const SSL *ssl, const char *line)
 {
     if (bio_keylog == NULL) {
-        BIO_printf(bio_err, "Keylog callback is invoked without valid file!\n");
+        BIO_puts(bio_err, "Keylog callback is invoked without valid file!\n");
         return;
     }
 
@@ -1666,7 +1668,7 @@ void ssl_print_secure_renegotiation_notes(BIO *bio, SSL *s)
         BIO_printf(bio, "Secure Renegotiation IS%s supported\n",
             SSL_get_secure_renegotiation_support(s) ? "" : " NOT");
     } else {
-        BIO_printf(bio, "This TLS version forbids renegotiation.\n");
+        BIO_puts(bio, "This TLS version forbids renegotiation.\n");
     }
 }
 

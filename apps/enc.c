@@ -243,12 +243,12 @@ int enc_main(int argc, char **argv)
             ret = 0;
             goto end;
         case OPT_LIST:
-            BIO_printf(bio_out, "Supported ciphers:\n");
+            BIO_puts(bio_out, "Supported ciphers:\n");
             dec.bio = bio_out;
             dec.n = 0;
             OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH,
                 show_ciphers, &dec);
-            BIO_printf(bio_out, "\n");
+            BIO_puts(bio_out, "\n");
             ret = 0;
             goto end;
         case OPT_E:
@@ -424,7 +424,7 @@ int enc_main(int argc, char **argv)
     if (base64 && bsize < 80)
         bsize = 80;
     if (verbose)
-        BIO_printf(bio_err, "bufsize=%d\n", bsize);
+        BIO_printf(bio_out, "bufsize=%d\n", bsize);
 
 #ifndef OPENSSL_NO_ZLIB
     if (do_zlib)
@@ -447,7 +447,7 @@ int enc_main(int argc, char **argv)
 
     if (infile == NULL) {
         if (!streamable && printkey != 2) { /* if just print key and exit, it's ok */
-            BIO_printf(bio_err, "Unstreamable cipher mode\n");
+            BIO_puts(bio_err, "Unstreamable cipher mode\n");
             goto end;
         }
         in = dup_bio_in(informat);
@@ -459,7 +459,7 @@ int enc_main(int argc, char **argv)
 
     if (str == NULL && passarg != NULL) {
         if (!app_passwd(passarg, NULL, &pass, NULL)) {
-            BIO_printf(bio_err, "Error getting password\n");
+            BIO_puts(bio_err, "Error getting password\n");
             goto end;
         }
         str = pass;
@@ -486,13 +486,13 @@ int enc_main(int argc, char **argv)
                     break;
                 }
                 if (i < 0) {
-                    BIO_printf(bio_err, "bad password read\n");
+                    BIO_puts(bio_err, "bad password read\n");
                     goto end;
                 }
             }
         } else {
 #endif
-            BIO_printf(bio_err, "password required\n");
+            BIO_puts(bio_err, "password required\n");
             goto end;
         }
     }
@@ -583,13 +583,13 @@ int enc_main(int argc, char **argv)
                 sptr = NULL;
             } else {
                 if (hsalt != NULL && !set_hex(hsalt, salt, saltlen)) {
-                    BIO_printf(bio_err, "invalid hex salt value\n");
+                    BIO_puts(bio_err, "invalid hex salt value\n");
                     goto end;
                 }
                 if (enc) { /* encryption */
                     if (hsalt == NULL) {
                         if (RAND_bytes(salt, saltlen) <= 0) {
-                            BIO_printf(bio_err, "RAND_bytes failed\n");
+                            BIO_puts(bio_err, "RAND_bytes failed\n");
                             goto end;
                         }
                         /*
@@ -604,25 +604,25 @@ int enc_main(int argc, char **argv)
                                        (char *)salt,
                                        saltlen)
                                     != saltlen)) {
-                            BIO_printf(bio_err, "error writing output file\n");
+                            BIO_puts(bio_err, "error writing output file\n");
                             goto end;
                         }
                     }
                 } else { /* decryption */
                     if (hsalt == NULL) {
                         if (BIO_read(rbio, mbuf, sizeof(mbuf)) != sizeof(mbuf)) {
-                            BIO_printf(bio_err, "error reading input file\n");
+                            BIO_puts(bio_err, "error reading input file\n");
                             goto end;
                         }
                         if (memcmp(mbuf, magic, sizeof(mbuf)) == 0) { /* file IS salted */
                             if (BIO_read(rbio, salt,
                                     saltlen)
                                 != saltlen) {
-                                BIO_printf(bio_err, "error reading input file\n");
+                                BIO_puts(bio_err, "error reading input file\n");
                                 goto end;
                             }
                         } else { /* file is NOT salted, NO salt available */
-                            BIO_printf(bio_err, "bad magic number\n");
+                            BIO_puts(bio_err, "bad magic number\n");
                             goto end;
                         }
                     }
@@ -643,7 +643,7 @@ int enc_main(int argc, char **argv)
 
                 if (!PKCS5_PBKDF2_HMAC(str, (int)str_len, sptr, islen,
                         iter, dgst, iklen + ivlen, tmpkeyiv)) {
-                    BIO_printf(bio_err, "PKCS5_PBKDF2_HMAC failed\n");
+                    BIO_puts(bio_err, "PKCS5_PBKDF2_HMAC failed\n");
                     goto end;
                 }
                 /* split and move data back to global buffer */
@@ -651,13 +651,13 @@ int enc_main(int argc, char **argv)
                 memcpy(iv, tmpkeyiv + iklen, ivlen);
                 rawkey_set = 1;
             } else {
-                BIO_printf(bio_err, "*** WARNING : "
-                                    "deprecated key derivation used.\n"
-                                    "Using -iter or -pbkdf2 would be better.\n");
+                BIO_puts(bio_err, "*** WARNING : "
+                                  "deprecated key derivation used.\n"
+                                  "Using -iter or -pbkdf2 would be better.\n");
                 if (!EVP_BytesToKey(cipher, dgst, sptr,
                         (unsigned char *)str, (int)str_len,
                         1, key, iv)) {
-                    BIO_printf(bio_err, "EVP_BytesToKey failed\n");
+                    BIO_puts(bio_err, "EVP_BytesToKey failed\n");
                     goto end;
                 }
                 rawkey_set = 1;
@@ -675,9 +675,9 @@ int enc_main(int argc, char **argv)
             int siz = EVP_CIPHER_get_iv_length(cipher);
 
             if (siz == 0) {
-                BIO_printf(bio_err, "warning: iv not used by this cipher\n");
+                BIO_puts(bio_err, "warning: iv not used by this cipher\n");
             } else if (!set_hex(hiv, iv, siz)) {
-                BIO_printf(bio_err, "invalid hex iv value\n");
+                BIO_puts(bio_err, "invalid hex iv value\n");
                 goto end;
             }
         }
@@ -688,12 +688,12 @@ int enc_main(int argc, char **argv)
              * No IV was explicitly set and no IV was generated.
              * Hence the IV is undefined, making correct decryption impossible.
              */
-            BIO_printf(bio_err, "iv undefined\n");
+            BIO_puts(bio_err, "iv undefined\n");
             goto end;
         }
         if (hkey != NULL) {
             if (!set_hex(hkey, key, EVP_CIPHER_get_key_length(cipher))) {
-                BIO_printf(bio_err, "invalid hex key value\n");
+                BIO_puts(bio_err, "invalid hex key value\n");
                 goto end;
             }
             /* wiping secret data as we no longer need it */
@@ -706,7 +706,7 @@ int enc_main(int argc, char **argv)
          * or an opaque symmetric key. We do not allow both options simultaneously.
          */
         if (rawkey_set > 0 && (skeyopts != NULL || skeyuri != NULL)) {
-            BIO_printf(bio_err, "Either a raw key or the skeyopt/skeyuri args must be used.\n");
+            BIO_puts(bio_err, "Either a raw key or the skeyopt/skeyuri args must be used.\n");
             goto end;
         }
 
@@ -735,7 +735,7 @@ int enc_main(int argc, char **argv)
                 char *storepass = NULL;
 
                 if (!app_passwd(storepassarg, NULL, &storepass, NULL)) {
-                    BIO_printf(bio_err,
+                    BIO_puts(bio_err,
                         "Error getting store password from 'storepass' argument\n");
                 }
 
@@ -806,11 +806,11 @@ int enc_main(int argc, char **argv)
         if (inl <= 0)
             break;
         if (!streamable && !BIO_eof(rbio)) { /* do not output data */
-            BIO_printf(bio_err, "Unstreamable cipher mode\n");
+            BIO_puts(bio_err, "Unstreamable cipher mode\n");
             goto end;
         }
         if (BIO_write(wbio, (char *)buff, inl) != inl) {
-            BIO_printf(bio_err, "error writing output file\n");
+            BIO_puts(bio_err, "error writing output file\n");
             goto end;
         }
         if (!streamable)
@@ -818,9 +818,9 @@ int enc_main(int argc, char **argv)
     }
     if (!BIO_flush(wbio)) {
         if (enc)
-            BIO_printf(bio_err, "bad encrypt\n");
+            BIO_puts(bio_err, "bad encrypt\n");
         else
-            BIO_printf(bio_err, "bad decrypt\n");
+            BIO_puts(bio_err, "bad decrypt\n");
         goto end;
     }
 
@@ -868,10 +868,10 @@ static void show_ciphers(const OBJ_NAME *name, void *arg)
 
     BIO_printf(dec->bio, "-%-25s", name->name);
     if (++dec->n == 3) {
-        BIO_printf(dec->bio, "\n");
+        BIO_puts(dec->bio, "\n");
         dec->n = 0;
     } else
-        BIO_printf(dec->bio, " ");
+        BIO_puts(dec->bio, " ");
 }
 
 static int set_hex(const char *in, unsigned char *out, int size)
@@ -882,17 +882,17 @@ static int set_hex(const char *in, unsigned char *out, int size)
     i = size * 2;
     n = (int)strlen(in);
     if (n > i) {
-        BIO_printf(bio_err, "hex string is too long, ignoring excess\n");
+        BIO_puts(bio_err, "hex string is too long, ignoring excess\n");
         n = i; /* ignore exceeding part */
     } else if (n < i) {
-        BIO_printf(bio_err, "hex string is too short, padding with zero bytes to length\n");
+        BIO_puts(bio_err, "hex string is too short, padding with zero bytes to length\n");
     }
 
     memset(out, 0, size);
     for (i = 0; i < n; i++) {
         j = (unsigned char)*in++;
         if (!isxdigit(j)) {
-            BIO_printf(bio_err, "non-hex digit\n");
+            BIO_puts(bio_err, "non-hex digit\n");
             return 0;
         }
         j = (unsigned char)OPENSSL_hexchar2int(j);
