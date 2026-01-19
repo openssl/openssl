@@ -18,7 +18,7 @@
 #include "cipher_aes_cfb.h"
 
 static int cipher_hw_aes_initkey(PROV_CIPHER_CTX *dat,
-                                 const unsigned char *key, size_t keylen)
+    const unsigned char *key, size_t keylen)
 {
     int ret;
     PROV_AES_CTX *adat = (PROV_AES_CTX *)dat;
@@ -62,37 +62,37 @@ static int cipher_hw_aes_initkey(PROV_CIPHER_CTX *dat,
 
 IMPLEMENT_CIPHER_HW_COPYCTX(cipher_hw_aes_copyctx, PROV_AES_CTX)
 
-#define PROV_CIPHER_HW_aes_mode(mode)                                          \
-    static const PROV_CIPHER_HW aes_##mode = {                                 \
-        cipher_hw_aes_initkey,                                                 \
-        ossl_cipher_hw_generic_##mode,                                         \
-        cipher_hw_aes_copyctx                                                  \
-    };                                                                         \
-    PROV_CIPHER_HW_declare(mode)                                               \
-    const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_##mode(size_t keybits)       \
-    {                                                                          \
-        PROV_CIPHER_HW_select(mode)                                            \
-        return &aes_##mode;                                                    \
+#define PROV_CIPHER_HW_aes_mode(mode)                   \
+    static const PROV_CIPHER_HW aes_##mode = {          \
+        cipher_hw_aes_initkey,                          \
+        ossl_cipher_hw_generic_##mode,                  \
+        cipher_hw_aes_copyctx                           \
+    };                                                  \
+    PROV_CIPHER_HW_declare(mode)                        \
+        const PROV_CIPHER_HW *                          \
+        ossl_prov_cipher_hw_aes_##mode(size_t keybits)  \
+    {                                                   \
+        PROV_CIPHER_HW_select(mode) return &aes_##mode; \
     }
 
 #if defined(AESNI_CAPABLE)
-# include "cipher_aes_cfb_hw_aesni.inc"
+#include "cipher_aes_cfb_hw_aesni.inc"
 #elif defined(SPARC_AES_CAPABLE)
-# include "cipher_aes_hw_t4.inc"
+#include "cipher_aes_hw_t4.inc"
 #elif defined(S390X_aes_128_CAPABLE)
-# include "cipher_aes_cfb_hw_s390x.inc"
+#include "cipher_aes_cfb_hw_s390x.inc"
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
-# include "cipher_aes_hw_rv64i.inc"
+#include "cipher_aes_hw_rv64i.inc"
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
-# include "cipher_aes_hw_rv32i.inc"
+#include "cipher_aes_hw_rv32i.inc"
 #elif defined(ARMv8_HWAES_CAPABLE)
-# include "cipher_aes_hw_armv8.inc"
+#include "cipher_aes_hw_armv8.inc"
 #else
 /* The generic case */
-# define PROV_CIPHER_HW_declare(mode)
-# define PROV_CIPHER_HW_select(mode)
+#define PROV_CIPHER_HW_declare(mode)
+#define PROV_CIPHER_HW_select(mode)
 #endif
 
 PROV_CIPHER_HW_aes_mode(cfb128)
-PROV_CIPHER_HW_aes_mode(cfb1)
-PROV_CIPHER_HW_aes_mode(cfb8)
+    PROV_CIPHER_HW_aes_mode(cfb1)
+        PROV_CIPHER_HW_aes_mode(cfb8)

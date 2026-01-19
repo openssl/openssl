@@ -18,5 +18,5 @@
  */
 #ifndef __cplusplus
 /* restore state.  Must correspond to the save in __decc_include_prologue.h */
-# pragma names restore
+#pragma names restore
 #endif

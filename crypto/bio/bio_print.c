@@ -23,9 +23,9 @@
  */
 
 #ifdef HAVE_LONG_DOUBLE
-# define LDOUBLE long double
+#define LDOUBLE long double
 #else
-# define LDOUBLE double
+#define LDOUBLE double
 #endif
 
 struct pr_desc {
@@ -48,58 +48,58 @@ static int fmtfp(struct pr_desc *, LDOUBLE, int, int, int, int);
 #endif
 static int doapr_outch(struct pr_desc *, int);
 static int _dopr(char **sbuffer, char **buffer,
-                 size_t *maxlen, size_t *retlen, int *truncated,
-                 const char *format, va_list args);
+    size_t *maxlen, size_t *retlen, int *truncated,
+    const char *format, va_list args);
 
 /* format read states */
-#define DP_S_DEFAULT    0
-#define DP_S_FLAGS      1
-#define DP_S_MIN        2
-#define DP_S_DOT        3
-#define DP_S_MAX        4
-#define DP_S_MOD        5
-#define DP_S_CONV       6
-#define DP_S_DONE       7
+#define DP_S_DEFAULT 0
+#define DP_S_FLAGS 1
+#define DP_S_MIN 2
+#define DP_S_DOT 3
+#define DP_S_MAX 4
+#define DP_S_MOD 5
+#define DP_S_CONV 6
+#define DP_S_DONE 7
 
 /* format flags - Bits */
 /* left-aligned padding */
-#define DP_F_MINUS      (1 << 0)
+#define DP_F_MINUS (1 << 0)
 /* print an explicit '+' for a value with positive sign */
-#define DP_F_PLUS       (1 << 1)
+#define DP_F_PLUS (1 << 1)
 /* print an explicit ' ' for a value with positive sign */
-#define DP_F_SPACE      (1 << 2)
+#define DP_F_SPACE (1 << 2)
 /* print 0/0x prefix for octal/hex and decimal point for floating point */
-#define DP_F_NUM        (1 << 3)
+#define DP_F_NUM (1 << 3)
 /* print leading zeroes */
-#define DP_F_ZERO       (1 << 4)
+#define DP_F_ZERO (1 << 4)
 /* print HEX in UPPERcase */
-#define DP_F_UP         (1 << 5)
+#define DP_F_UP (1 << 5)
 /* treat value as unsigned */
-#define DP_F_UNSIGNED   (1 << 6)
+#define DP_F_UNSIGNED (1 << 6)
 
 /* conversion flags */
-#define DP_C_CHAR       1
-#define DP_C_SHORT      2
-#define DP_C_LONG       3
-#define DP_C_LDOUBLE    4
-#define DP_C_LLONG      5
-#define DP_C_SIZE       6
-#define DP_C_PTRDIFF    7
+#define DP_C_CHAR 1
+#define DP_C_SHORT 2
+#define DP_C_LONG 3
+#define DP_C_LDOUBLE 4
+#define DP_C_LLONG 5
+#define DP_C_SIZE 6
+#define DP_C_PTRDIFF 7
 
 /* Floating point formats */
-#define F_FORMAT        0
-#define E_FORMAT        1
-#define G_FORMAT        2
+#define F_FORMAT 0
+#define E_FORMAT 1
+#define G_FORMAT 2
 
 /* some handy macros */
 #define char_to_int(p) (p - '0')
-#define OSSL_MAX(p,q) ((p >= q) ? p : q)
+#define OSSL_MAX(p, q) ((p >= q) ? p : q)
 
 static int
 _dopr(char **sbuffer,
-      char **buffer,
-      size_t *maxlen,
-      size_t *retlen, int *truncated, const char *format, va_list args)
+    char **buffer,
+    size_t *maxlen,
+    size_t *retlen, int *truncated, const char *format, va_list args)
 {
     char ch;
     int64_t value;
@@ -128,9 +128,8 @@ _dopr(char **sbuffer,
         case DP_S_DEFAULT:
             if (ch == '%')
                 state = DP_S_FLAGS;
-            else
-                if (!doapr_outch(&desc, ch))
-                    goto out;
+            else if (!doapr_outch(&desc, ch))
+                goto out;
             ch = *format++;
             break;
         case DP_S_FLAGS:
@@ -324,8 +323,8 @@ _dopr(char **sbuffer,
                     break;
                 }
                 if (!fmtint(&desc, value,
-                            ch == 'o' ? 8 : (ch == 'u' ? 10 : 16),
-                            min, max, flags))
+                        ch == 'o' ? 8 : (ch == 'u' ? 10 : 16),
+                        min, max, flags))
                     goto out;
                 break;
 #ifndef OPENSSL_SYS_UEFI
@@ -392,7 +391,7 @@ _dopr(char **sbuffer,
         type *num;                  \
                                     \
         num = va_arg(args, type *); \
-        *num = (type) desc.pos;     \
+        *num = (type)desc.pos;      \
     } while (0)
                 case DP_C_CHAR:
                     HANDLE_N(signed char);
@@ -515,7 +514,7 @@ fmtstr(struct pr_desc *desc, const char *value, int flags, int min, int max)
 
 static int
 fmtint(struct pr_desc *desc,
-       int64_t value, int base, int min, int max, int flags)
+    int64_t value, int base, int min, int max, int flags)
 {
     static const char oct_prefix[] = "0";
 
@@ -576,8 +575,7 @@ fmtint(struct pr_desc *desc,
     zpadlen = max - place - (prefix == oct_prefix);
     if (zpadlen < 0)
         zpadlen = 0;
-    spadlen =
-        min - OSSL_MAX(max, place + zpadlen + (signvalue ? 1 : 0) + (int)strlen(prefix));
+    spadlen = min - OSSL_MAX(max, place + zpadlen + (signvalue ? 1 : 0) + (int)strlen(prefix));
     if (spadlen < 0)
         spadlen = 0;
     if (flags & DP_F_MINUS) {
@@ -665,7 +663,7 @@ static long roundv(LDOUBLE value)
 
 static int
 fmtfp(struct pr_desc *desc,
-      LDOUBLE fvalue, int min, int max, int flags, int style)
+    LDOUBLE fvalue, int min, int max, int flags, int style)
 {
     int signvalue = 0;
     LDOUBLE ufvalue;
@@ -708,7 +706,7 @@ fmtfp(struct pr_desc *desc,
         } else if (ufvalue < 0.0001) {
             realstyle = E_FORMAT;
         } else if ((max == 0 && ufvalue >= 10)
-                   || (max > 0 && ufvalue >= pow_10(max))) {
+            || (max > 0 && ufvalue >= pow_10(max))) {
             realstyle = E_FORMAT;
         } else {
             realstyle = F_FORMAT;
@@ -929,7 +927,7 @@ fmtfp(struct pr_desc *desc,
 
 #endif /* OPENSSL_SYS_UEFI */
 
-#define BUFFER_INC  1024
+#define BUFFER_INC 1024
 
 static int
 doapr_outch(struct pr_desc *desc, int c)
@@ -997,9 +995,9 @@ int BIO_vprintf(BIO *bio, const char *format, va_list args)
 {
     int ret;
     size_t retlen;
-    char hugebuf[1024 * 2];     /* Was previously 10k, which is unreasonable
-                                 * in small-stack environments, like threads
-                                 * or DOS programs. */
+    char hugebuf[1024 * 2]; /* Was previously 10k, which is unreasonable
+                             * in small-stack environments, like threads
+                             * or DOS programs. */
     char *hugebufp = hugebuf;
     size_t hugebufsize = sizeof(hugebuf);
     char *dynbuf = NULL;
@@ -1007,7 +1005,7 @@ int BIO_vprintf(BIO *bio, const char *format, va_list args)
 
     dynbuf = NULL;
     if (!_dopr(&hugebufp, &dynbuf, &hugebufsize, &retlen, &ignored, format,
-                args)) {
+            args)) {
         OPENSSL_free(dynbuf);
         return -1;
     }

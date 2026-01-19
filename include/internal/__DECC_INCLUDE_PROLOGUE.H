@@ -17,4 +17,4 @@
 /* have the compiler shorten symbols larger than 31 chars to 23 chars
  * followed by a 8 hex char CRC
  */
-#pragma names as_is,shortened
+#pragma names as_is, shortened

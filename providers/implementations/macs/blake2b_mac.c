@@ -30,4 +30,3 @@
 #define BLAKE2_FUNCTIONS ossl_blake2bmac_functions
 
 #include "blake2_mac_impl.c"
-

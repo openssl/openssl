@@ -21,16 +21,16 @@
 #include "testutil.h"
 
 #if defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_MDC2)
-# define OPENSSL_NO_MDC2
+#define OPENSSL_NO_MDC2
 #endif
 
 #ifndef OPENSSL_NO_MDC2
-# include <openssl/evp.h>
-# include <openssl/mdc2.h>
+#include <openssl/evp.h>
+#include <openssl/mdc2.h>
 
-# ifdef CHARSET_EBCDIC
-#  include <openssl/ebcdic.h>
-# endif
+#ifdef CHARSET_EBCDIC
+#include <openssl/ebcdic.h>
+#endif
 
 static unsigned char pad1[16] = {
     0x42, 0xE5, 0x0C, 0xD2, 0x24, 0xBA, 0xCE, 0xBA,
@@ -54,16 +54,16 @@ static int test_mdc2(void)
     OSSL_PARAM params[2];
 
     params[i++] = OSSL_PARAM_construct_uint(OSSL_DIGEST_PARAM_PAD_TYPE,
-                                            &pad_type),
+        &pad_type),
     params[i++] = OSSL_PARAM_construct_end();
 
     prov = OSSL_PROVIDER_load(NULL, "legacy");
     if (!TEST_ptr(prov))
         goto end;
 
-# ifdef CHARSET_EBCDIC
+#ifdef CHARSET_EBCDIC
     ebcdic2ascii(text, text, tlen);
-# endif
+#endif
 
     c = EVP_MD_CTX_new();
     if (!TEST_ptr(c)
@@ -81,7 +81,7 @@ static int test_mdc2(void)
         goto end;
 
     testresult = 1;
- end:
+end:
     EVP_MD_CTX_free(c);
     OSSL_PROVIDER_unload(prov);
     return testresult;
