@@ -119,7 +119,8 @@ int SHA224_Final(unsigned char *md, SHA256_CTX *c)
         }                                                           \
     } while (0)
 
-#define HASH_UPDATE SHA256_Update
+#define HASH_UPDATE_THUNK
+#define HASH_UPDATE SHA256_Update_thunk
 #define HASH_TRANSFORM SHA256_Transform
 #define HASH_FINAL SHA256_Final
 #define HASH_BLOCK_DATA_ORDER sha256_block_data_order
@@ -133,6 +134,12 @@ void sha256_block_data_order_c(SHA256_CTX *ctx, const void *in, size_t num);
     void sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num);
 
 #include "crypto/md32_common.h"
+#undef HASH_UPDATE_THUNK
+
+int SHA256_Update(SHA256_CTX *ctx, const void *data, size_t sz)
+{
+    return SHA256_Update_thunk((void *)ctx, (const unsigned char *)data, sz);
+}
 
 #if !defined(SHA256_ASM) || defined(INCLUDE_C_SHA256)
 static const SHA_LONG K256[64] = {
