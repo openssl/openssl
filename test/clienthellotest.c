@@ -107,7 +107,7 @@ static int test_client_hello(int currtest)
          */
         if (currtest == TEST_ADD_PADDING) {
             if (!TEST_false(SSL_CTX_set_alpn_protos(ctx,
-                    (unsigned char *)alpn_prots,
+                    (const unsigned char *)alpn_prots,
                     sizeof(alpn_prots) - 1)))
                 goto end;
             /*

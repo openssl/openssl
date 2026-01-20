@@ -1321,7 +1321,7 @@ static int test_wire_encode(int idx)
          * truncated encoding is passed as an argument to the deserializer to
          * help it determine whether decoding should fail or not.
          */
-        if (!TEST_int_eq(PACKET_buf_init(&pkt2, (unsigned char *)c->expect_buf, i), 1))
+        if (!TEST_int_eq(PACKET_buf_init(&pkt2, (const unsigned char *)c->expect_buf, i), 1))
             goto err;
 
         if (!TEST_int_eq(c->deserializer(&pkt2, i), 1))
@@ -1485,7 +1485,7 @@ static int test_wire_ack(int idx)
     const struct ack_test_case *c = &ack_cases[idx];
 
     if (!TEST_int_eq(PACKET_buf_init(&pkt,
-                         (unsigned char *)c->input_buf,
+                         (const unsigned char *)c->input_buf,
                          c->input_buf_len),
             1))
         goto err;

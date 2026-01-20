@@ -102,7 +102,7 @@ static int set_cn(X509 *crt, ...)
             break;
         name = va_arg(ap, const char *);
         if (!X509_NAME_add_entry_by_NID(n, nid, MBSTRING_ASC,
-                (unsigned char *)name, -1, -1, 1))
+                (const unsigned char *)name, -1, -1, 1))
             goto out;
     }
     if (!X509_set_subject_name(crt, n))

@@ -245,7 +245,7 @@ static int test_fin_only_blocking(void)
 
     if (!TEST_true(ossl_quic_tserver_stream_new(qtserv, 0, &sid))
         || !TEST_true(ossl_quic_tserver_write(qtserv, sid,
-            (unsigned char *)msg,
+            (const unsigned char *)msg,
             strlen(msg), &numbytes))
         || !TEST_size_t_eq(strlen(msg), numbytes))
         goto end;
@@ -983,7 +983,7 @@ static int test_bio_ssl(void)
             || !TEST_mem_eq(msg, msglen, buf, readbytes))
             goto err;
 
-        if (!TEST_true(ossl_quic_tserver_write(qtserv, sid, (unsigned char *)msg,
+        if (!TEST_true(ossl_quic_tserver_write(qtserv, sid, (const unsigned char *)msg,
                 msglen, &written)))
             goto err;
         ossl_quic_tserver_tick(qtserv);

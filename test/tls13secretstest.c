@@ -337,7 +337,7 @@ static int test_handshake_secrets(void)
         goto err;
 
     if (!TEST_true(test_secret(s, s->handshake_secret,
-            (unsigned char *)client_hts_label,
+            (const unsigned char *)client_hts_label,
             strlen(client_hts_label), client_hts,
             client_hts_key, client_hts_iv))) {
         TEST_info("Client handshake secret test failed");
@@ -352,7 +352,7 @@ static int test_handshake_secrets(void)
         goto err;
 
     if (!TEST_true(test_secret(s, s->handshake_secret,
-            (unsigned char *)server_hts_label,
+            (const unsigned char *)server_hts_label,
             strlen(server_hts_label), server_hts,
             server_hts_key, server_hts_iv))) {
         TEST_info("Server handshake secret test failed");
@@ -386,7 +386,7 @@ static int test_handshake_secrets(void)
         goto err;
 
     if (!TEST_true(test_secret(s, out_master_secret,
-            (unsigned char *)client_ats_label,
+            (const unsigned char *)client_ats_label,
             strlen(client_ats_label), client_ats,
             client_ats_key, client_ats_iv))) {
         TEST_info("Client application data secret test failed");
@@ -401,7 +401,7 @@ static int test_handshake_secrets(void)
         goto err;
 
     if (!TEST_true(test_secret(s, out_master_secret,
-            (unsigned char *)server_ats_label,
+            (const unsigned char *)server_ats_label,
             strlen(server_ats_label), server_ats,
             server_ats_key, server_ats_iv))) {
         TEST_info("Server application data secret test failed");

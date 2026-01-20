@@ -890,7 +890,7 @@ static void thread_general_worker(void)
     for (i = 0; i < 5; i++) {
         if (!TEST_true(EVP_EncryptInit_ex(cipherctx, ciph, NULL, key, iv))
             || !TEST_true(EVP_EncryptUpdate(cipherctx, out, &ciphoutl,
-                (unsigned char *)message,
+                (const unsigned char *)message,
                 (int)messlen))
             || !TEST_true(EVP_EncryptFinal(cipherctx, out, &ciphoutl)))
             goto err;

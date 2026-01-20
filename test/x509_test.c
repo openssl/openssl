@@ -152,14 +152,14 @@ static int test_asn1_item_verify(void)
     X509_get0_signature(&sig, &alg, x509);
 
     if (!TEST_int_gt(ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF),
-                         (X509_ALGOR *)alg, (ASN1_BIT_STRING *)sig,
+                         (const X509_ALGOR *)alg, (const ASN1_BIT_STRING *)sig,
                          &x509->cert_info, pkey),
             0))
         goto err;
 
     ERR_set_mark();
     if (!TEST_int_lt(ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF),
-                         (X509_ALGOR *)alg, (ASN1_BIT_STRING *)sig,
+                         (const X509_ALGOR *)alg, (const ASN1_BIT_STRING *)sig,
                          NULL, pkey),
             0)) {
         ERR_clear_last_mark();
