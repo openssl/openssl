@@ -170,7 +170,7 @@ int pkcs8_main(int argc, char **argv)
                 goto opthelp;
             }
             if (cipher == NULL)
-                cipher = (EVP_CIPHER *)EVP_aes_256_cbc();
+                cipher = CONST_CAST(EVP_CIPHER *) EVP_aes_256_cbc();
             break;
         case OPT_ITER:
             iter = opt_int_arg();
@@ -187,7 +187,7 @@ int pkcs8_main(int argc, char **argv)
             scrypt_r = 8;
             scrypt_p = 1;
             if (cipher == NULL)
-                cipher = (EVP_CIPHER *)EVP_aes_256_cbc();
+                cipher = CONST_CAST(EVP_CIPHER *) EVP_aes_256_cbc();
             break;
         case OPT_SCRYPT_N:
             if (!opt_long(opt_arg(), &scrypt_N) || scrypt_N <= 0)
@@ -228,7 +228,7 @@ int pkcs8_main(int argc, char **argv)
     }
 
     if ((pbe_nid == -1) && cipher == NULL)
-        cipher = (EVP_CIPHER *)EVP_aes_256_cbc();
+        cipher = CONST_CAST(EVP_CIPHER *) EVP_aes_256_cbc();
 
     in = bio_open_default(infile, 'r',
         informat == FORMAT_UNDEF ? FORMAT_PEM : informat);

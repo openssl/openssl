@@ -960,7 +960,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
 
     if ((input_type = format2string(format)) != NULL) {
         itp[0] = OSSL_PARAM_construct_utf8_string(OSSL_STORE_PARAM_INPUT_TYPE,
-            (char *)input_type, 0);
+            CONST_CAST(char *) input_type, 0);
         itp[1] = OSSL_PARAM_construct_end();
         params = itp;
     }

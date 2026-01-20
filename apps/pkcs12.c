@@ -222,7 +222,7 @@ int pkcs12_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL;
     PKCS12 *p12 = NULL;
     STACK_OF(OPENSSL_STRING) *canames = NULL;
-    EVP_CIPHER *default_enc = (EVP_CIPHER *)EVP_aes_256_cbc();
+    EVP_CIPHER *default_enc = CONST_CAST(EVP_CIPHER *) EVP_aes_256_cbc();
     EVP_CIPHER *enc = (EVP_CIPHER *)default_enc;
     OPTION_CHOICE o;
 
@@ -504,7 +504,7 @@ int pkcs12_main(int argc, char **argv)
         if (key_pbe == NID_undef)
             key_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
         if (enc == default_enc)
-            enc = (EVP_CIPHER *)EVP_des_ede3_cbc();
+            enc = CONST_CAST(EVP_CIPHER *) EVP_des_ede3_cbc();
         if (macalg == NULL)
             macalg = "sha1";
     }
@@ -958,7 +958,7 @@ static int jdk_trust(PKCS12_SAFEBAG *bag, void *cbarg)
         return 1;
 
     /* Get the current attrs */
-    attrs = (STACK_OF(X509_ATTRIBUTE) *)PKCS12_SAFEBAG_get0_attrs(bag);
+    attrs = CONST_CAST(STACK_OF(X509_ATTRIBUTE) *) PKCS12_SAFEBAG_get0_attrs(bag);
 
     /* Create a new attr for the JDK Trusted Usage and add it */
     attr = X509_ATTRIBUTE_create(NID_oracle_jdk_trustedkeyusage, V_ASN1_OBJECT, (ASN1_OBJECT *)cbarg);

@@ -133,7 +133,7 @@ int dgst_main(int argc, char **argv)
     int oneshot_sign = 0;
 
     buf = app_malloc(BUFSIZE, "I/O buffer");
-    md = (EVP_MD *)EVP_get_digestbyname(argv[0]);
+    md = CONST_CAST(EVP_MD *) EVP_get_digestbyname(argv[0]);
     if (md != NULL)
         digestname = argv[0];
 
@@ -369,7 +369,7 @@ int dgst_main(int argc, char **argv)
 
     if (hmac_key != NULL) {
         if (md == NULL) {
-            md = (EVP_MD *)EVP_sha256();
+            md = CONST_CAST(EVP_MD *) EVP_sha256();
             digestname = SN_sha256;
         }
         sigkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL,
@@ -427,7 +427,7 @@ int dgst_main(int argc, char **argv)
             goto end;
         }
         if (md == NULL)
-            md = (EVP_MD *)EVP_sha256();
+            md = CONST_CAST(EVP_MD *) EVP_sha256();
         if (!EVP_DigestInit_ex(mctx, md, NULL)) {
             BIO_printf(bio_err, "Error setting digest\n");
             goto end;
@@ -619,7 +619,7 @@ static void print_out(BIO *out, unsigned char *buf, size_t len,
             BIO_printf(out, "%02x", buf[i]);
 
         BIO_printf(out, " *%s\n", file);
-        OPENSSL_free((char *)file);
+        OPENSSL_free(CONST_CAST(char *) file);
     } else {
         if (sig_name != NULL) {
             BIO_puts(out, sig_name);

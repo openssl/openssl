@@ -483,7 +483,7 @@ int ocsp_main(int argc, char **argv)
             if (cert == NULL)
                 goto end;
             if (cert_id_md == NULL)
-                cert_id_md = (EVP_MD *)EVP_sha1();
+                cert_id_md = CONST_CAST(EVP_MD *) EVP_sha1();
             if (!add_ocsp_cert(&req, cert, cert_id_md, issuer, ids))
                 goto end;
             if (!sk_OPENSSL_STRING_push(reqnames, opt_arg()))
@@ -493,7 +493,7 @@ int ocsp_main(int argc, char **argv)
         case OPT_SERIAL:
             reset_unknown();
             if (cert_id_md == NULL)
-                cert_id_md = (EVP_MD *)EVP_sha1();
+                cert_id_md = CONST_CAST(EVP_MD *) EVP_sha1();
             if (!add_ocsp_serial(&req, opt_arg(), cert_id_md, issuer, ids))
                 goto end;
             if (!sk_OPENSSL_STRING_push(reqnames, opt_arg()))

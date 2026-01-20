@@ -2469,7 +2469,7 @@ static int save_free_certs(STACK_OF(X509) *certs,
         CMP_warn("saving more than one certificate in non-PEM format");
 
     if ((bio = BIO_new(BIO_s_file())) == NULL
-        || !BIO_write_filename(bio, (char *)file)) {
+        || !BIO_write_filename(bio, CONST_CAST(char *) file)) {
         CMP_err3("could not open file '%s' for %s %s certificate(s)",
             file, certs == NULL ? "deleting" : "writing", desc);
         n = -1;
@@ -2502,7 +2502,7 @@ static int save_crl(X509_CRL *crl,
         CMP_info2("received %s, saving to file '%s'", desc, file);
 
     if ((bio = BIO_new(BIO_s_file())) == NULL
-        || !BIO_write_filename(bio, (char *)file)) {
+        || !BIO_write_filename(bio, CONST_CAST(char *) file)) {
         CMP_err2("could not open file '%s' for writing %s",
             file, desc);
         goto end;
@@ -2792,7 +2792,7 @@ static int read_config(void)
             char *conf_argv[3];
             char arg1[82];
 
-            BIO_snprintf(arg1, 81, "-%s", (char *)opt->name);
+            BIO_snprintf(arg1, 81, "-%s", CONST_CAST(char *) opt->name);
             conf_argv[0] = prog;
             conf_argv[1] = arg1;
             if (opt->valtype == '-') {
@@ -3979,8 +3979,8 @@ err:
         OSSL_CMP_CTX_free(cmp_ctx);
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
         if (info != NULL) {
-            OPENSSL_free((char *)info->server);
-            OPENSSL_free((char *)info->port);
+            OPENSSL_free(CONST_CAST(char *) info->server);
+            OPENSSL_free(CONST_CAST(char *) info->port);
             APP_HTTP_TLS_INFO_free(info);
         }
 #endif

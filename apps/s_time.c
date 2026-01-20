@@ -434,7 +434,7 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
     if ((conn = BIO_new(BIO_s_connect())) == NULL)
         return NULL;
 
-    if (BIO_set_conn_hostname(conn, host) <= 0
+    if (BIO_set_conn_hostname(conn, CONST_CAST(char *) host) <= 0
         || BIO_set_conn_mode(conn, BIO_SOCK_NODELAY) <= 0) {
         BIO_free(conn);
         return NULL;

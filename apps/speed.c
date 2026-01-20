@@ -2819,7 +2819,7 @@ int speed_main(int argc, char **argv)
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
             evp_mac_mdname, 0);
         params[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-            (char *)hmac_key, len);
+            CONST_CAST(char *) hmac_key, len);
         params[2] = OSSL_PARAM_construct_end();
 
         if (mac_setup("HMAC", &mac, params, loopargs, loopargs_len) < 1)
@@ -2963,10 +2963,10 @@ int speed_main(int argc, char **argv)
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_CIPHER,
             "aes-128-gcm", 0);
         params[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_IV,
-            (char *)gmac_iv,
+            CONST_CAST(char *) gmac_iv,
             sizeof(gmac_iv) - 1);
         params[2] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-            (void *)key32, 16);
+            CONST_CAST(void *) key32, 16);
         params[3] = OSSL_PARAM_construct_end();
 
         if (mac_setup("GMAC", &mac, params, loopargs, loopargs_len) < 1)
@@ -3226,7 +3226,7 @@ int speed_main(int argc, char **argv)
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_CIPHER,
             evp_mac_ciphername, 0);
         params[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-            (char *)key32, keylen);
+            CONST_CAST(char *) key32, keylen);
         params[2] = OSSL_PARAM_construct_end();
 
         if (mac_setup("CMAC", &mac, params, loopargs, loopargs_len) < 1)
@@ -3247,7 +3247,7 @@ int speed_main(int argc, char **argv)
         OSSL_PARAM params[2];
 
         params[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-            (void *)key32, 16);
+            CONST_CAST(void *) key32, 16);
         params[1] = OSSL_PARAM_construct_end();
 
         if (mac_setup("KMAC-128", &mac, params, loopargs, loopargs_len) < 1)
@@ -3268,7 +3268,7 @@ int speed_main(int argc, char **argv)
         OSSL_PARAM params[2];
 
         params[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-            (void *)key32, 32);
+            CONST_CAST(void *) key32, 32);
         params[1] = OSSL_PARAM_construct_end();
 
         if (mac_setup("KMAC-256", &mac, params, loopargs, loopargs_len) < 1)
@@ -4170,7 +4170,7 @@ int speed_main(int argc, char **argv)
                     &bits);
                 use_params = 1;
             } else if (kem_type == KEM_EC) {
-                name = (char *)(kem_name + 2);
+                name = CONST_CAST(char *)(kem_name + 2);
                 params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
                     name, 0);
                 use_params = 1;

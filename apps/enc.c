@@ -415,7 +415,7 @@ int enc_main(int argc, char **argv)
             goto opthelp;
     }
     if (dgst == NULL)
-        dgst = (EVP_MD *)EVP_sha256();
+        dgst = CONST_CAST(EVP_MD *) EVP_sha256();
 
     if (iter == 0)
         iter = 1;
