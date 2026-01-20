@@ -437,7 +437,7 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key,
     if (publen > 0 && prvlen > 0) {
         /* point to the ek offset in dk = DKpke||ek||H(ek)||z */
         puboff = prvlen - ML_KEM_RANDOM_BYTES - ML_KEM_PKHASH_BYTES - publen;
-        if (memcmp(pubenc, (unsigned char *)prvenc + puboff, publen) != 0) {
+        if (memcmp(pubenc, (const unsigned char *)prvenc + puboff, publen) != 0) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
                 "explicit %s public key does not match private",
                 v->algorithm_name);
