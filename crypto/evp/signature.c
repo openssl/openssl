@@ -486,7 +486,7 @@ EVP_SIGNATURE *EVP_SIGNATURE_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
     return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
         evp_signature_from_algorithm,
         evp_signature_up_ref,
-        evp_signature_free);
+        evp_signature_free, NULL, NULL);
 }
 
 EVP_SIGNATURE *evp_signature_fetch_from_prov(OSSL_PROVIDER *prov,

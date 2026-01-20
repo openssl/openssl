@@ -461,6 +461,19 @@ static int set_default_context(OSSL_LIB_CTX *defctx)
 }
 #endif
 
+int OSSL_LIB_CTX_freeze(OSSL_LIB_CTX *ctx, const char *propq)
+{
+    OSSL_METHOD_STORE *store;
+
+    store = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_EVP_METHOD_STORE_INDEX);
+    if (store == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    return ossl_method_store_freeze_cache(store, propq);
+}
+
 OSSL_LIB_CTX *OSSL_LIB_CTX_new(void)
 {
     OSSL_LIB_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
@@ -545,13 +558,6 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx)
     }
 
     return NULL;
-}
-
-int OSSL_LIB_CTX_freeze(OSSL_LIB_CTX *ctx, const char *propq)
-{
-    if ((ctx = ossl_lib_ctx_get_concrete(ctx)) == NULL)
-        return 0;
-    return ossl_method_store_freeze(ctx->evp_method_store, propq);
 }
 
 void ossl_release_default_drbg_ctx(void)

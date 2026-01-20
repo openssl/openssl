@@ -202,7 +202,7 @@ static int put_decoder_in_store(void *store, void *method,
 
     return ossl_method_store_add(store, prov, id, propdef, method,
         ossl_decoder_up_ref,
-        ossl_decoder_free);
+        ossl_decoder_free, NULL, NULL);
 }
 
 /* Create and populate a decoder method */
@@ -396,7 +396,7 @@ inner_ossl_decoder_fetch(struct decoder_data_st *methdata,
                 id = ossl_namemap_name2num(namemap, name);
             if (id != 0)
                 ossl_method_store_cache_set(store, prov, id, propq, method,
-                    up_ref_decoder, free_decoder);
+                    up_ref_decoder, free_decoder, NULL, NULL);
         }
 
         /*

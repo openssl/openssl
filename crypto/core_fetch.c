@@ -162,14 +162,16 @@ void *ossl_method_construct(OSSL_LIB_CTX *libctx, int operation_id,
         ossl_method_construct_postcondition,
         &cbdata);
 
-    /* If there is a temporary store, try there first */
-    if (cbdata.store != NULL)
-        method = mcm->get(cbdata.store, (const OSSL_PROVIDER **)provider_rw,
-            mcm_data);
+    if (mcm->get != NULL) {
+        /* If there is a temporary store, try there first */
+        if (cbdata.store != NULL)
+            method = mcm->get(cbdata.store, (const OSSL_PROVIDER **)provider_rw,
+                mcm_data);
 
-    /* If no method was found yet, try the global store */
-    if (method == NULL)
-        method = mcm->get(NULL, (const OSSL_PROVIDER **)provider_rw, mcm_data);
+        /* If no method was found yet, try the global store */
+        if (method == NULL)
+            method = mcm->get(NULL, (const OSSL_PROVIDER **)provider_rw, mcm_data);
+    }
 
     return method;
 }
