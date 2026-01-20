@@ -71,6 +71,8 @@
 #define U64(C) C##ULL
 #endif
 
+int SHA512_Update_thunk(void *cp, const unsigned char *data, size_t len);
+
 int sha512_224_init(SHA512_CTX *c)
 {
     c->h[0] = U64(0x8c3d37c819544da2);
@@ -276,11 +278,11 @@ int SHA384_Final(unsigned char *md, SHA512_CTX *c)
     return SHA512_Final(md, c);
 }
 
-int SHA512_Update(SHA512_CTX *c, const void *_data, size_t len)
+int SHA512_Update_thunk(void *cp, const unsigned char *data, size_t len)
 {
+    SHA512_CTX *c = (SHA512_CTX *)cp;
     SHA_LONG64 l;
     unsigned char *p = c->u.p;
-    const unsigned char *data = (const unsigned char *)_data;
 
     if (len == 0)
         return 1;
@@ -322,6 +324,11 @@ int SHA512_Update(SHA512_CTX *c, const void *_data, size_t len)
         memcpy(p, data, len), c->num = (int)len;
 
     return 1;
+}
+
+int SHA512_Update(SHA512_CTX *c, const void *_data, size_t len)
+{
+    return SHA512_Update_thunk((void *)c, (const unsigned char *)_data, len);
 }
 
 int SHA384_Update(SHA512_CTX *c, const void *data, size_t len)
