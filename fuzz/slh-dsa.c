@@ -19,6 +19,7 @@
 #include <openssl/core_names.h>
 #include "crypto/slh_dsa.h"
 #include "internal/nelem.h"
+#include "internal/common.h"
 #include "fuzzer.h"
 
 /**
@@ -40,7 +41,7 @@ static uint8_t *consume_uint8t(const uint8_t *buf, size_t *len, uint8_t *val)
         return NULL;
     *val = *buf;
     *len -= sizeof(uint8_t);
-    return (uint8_t *)buf + 1;
+    return CONST_CAST(uint8_t *) buf + 1;
 }
 
 /**

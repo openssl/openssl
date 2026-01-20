@@ -18,6 +18,7 @@
 #include <openssl/byteorder.h>
 #include <openssl/ml_kem.h>
 #include "internal/nelem.h"
+#include "internal/common.h"
 #include "fuzzer.h"
 
 /**
@@ -39,7 +40,7 @@ static uint8_t *consume_uint8t(const uint8_t *buf, size_t *len, uint8_t *val)
         return NULL;
     *val = *buf;
     *len -= sizeof(uint8_t);
-    return (uint8_t *)buf + 1;
+    return CONST_CAST(uint8_t *) buf + 1;
 }
 
 /**
@@ -69,7 +70,7 @@ static int select_keytype_and_size(uint8_t **buf, size_t *len,
      * Note: We don't really care about endianess here, we just
      * want a random 16 bit value
      */
-    *buf = (uint8_t *)OPENSSL_load_u16_le(&keysize, *buf);
+    *buf = CONST_CAST(uint8_t *) OPENSSL_load_u16_le(&keysize, *buf);
     *len -= sizeof(uint16_t);
 
     if (*buf == NULL)
@@ -109,7 +110,7 @@ static int select_keytype_and_size(uint8_t **buf, size_t *len,
     case 4:
         /* Select valid alg, but bogus size */
         *keytype = "ML-KEM-1024";
-        *buf = (uint8_t *)OPENSSL_load_u16_le(&keysize, *buf);
+        *buf = CONST_CAST(uint8_t *) OPENSSL_load_u16_le(&keysize, *buf);
         *len -= sizeof(uint16_t);
         *keylen = (size_t)keysize;
         *keylen %= 1024; /* size to our key buffer */

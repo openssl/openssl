@@ -17,6 +17,7 @@
 #include "internal/nelem.h"
 #include "fuzzer.h"
 #include "crypto/ml_dsa.h"
+#include "internal/common.h"
 
 /**
  * @brief Consumes an 8-bit unsigned integer from a buffer.
@@ -37,7 +38,7 @@ static uint8_t *consume_uint8_t(const uint8_t *buf, size_t *len, uint8_t *val)
         return NULL;
     *val = *buf;
     *len -= sizeof(uint8_t);
-    return (uint8_t *)buf + 1;
+    return CONST_CAST(uint8_t *) buf + 1;
 }
 
 /**
@@ -59,7 +60,7 @@ static uint8_t *consume_size_t(const uint8_t *buf, size_t *len, size_t *val)
         return NULL;
     *val = *buf;
     *len -= sizeof(size_t);
-    return (uint8_t *)buf + sizeof(size_t);
+    return CONST_CAST(uint8_t *) buf + sizeof(size_t);
 }
 
 /**
@@ -89,7 +90,7 @@ static int select_keytype_and_size(uint8_t **buf, size_t *len,
      * Note: We don't really care about endianness here, we just want a random
      * 16 bit value
      */
-    *buf = (uint8_t *)OPENSSL_load_u16_le(&keysize, *buf);
+    *buf = CONST_CAST(uint8_t *) OPENSSL_load_u16_le(&keysize, *buf);
     *len -= sizeof(uint16_t);
 
     if (*buf == NULL)
@@ -128,7 +129,7 @@ static int select_keytype_and_size(uint8_t **buf, size_t *len,
     case 4:
         /* Select valid alg, but bogus size */
         *keytype = "ML-DSA-87";
-        *buf = (uint8_t *)OPENSSL_load_u16_le(&keysize, *buf);
+        *buf = CONST_CAST(uint8_t *) OPENSSL_load_u16_le(&keysize, *buf);
         *len -= sizeof(uint16_t);
         *keylen = (size_t)keysize;
         *keylen %= ML_DSA_87_PUB_LEN; /* size to our key buffer */

@@ -14,6 +14,7 @@
 #include <openssl/kdf.h>
 #include <openssl/evp.h>
 #include <openssl/provider.h>
+#include "internal/common.h"
 #include "fuzzer.h"
 
 #define DEFINE_ALGORITHMS(name, evp)                                     \
@@ -184,7 +185,7 @@ static int read_utf8_string(const uint8_t **buf, size_t *len, char **res)
 
     r = (int)found_len;
 
-    *res = (char *)*buf;
+    *res = CONST_CAST(char *) *buf;
     *len -= found_len;
     *buf = *buf + found_len; /* continue after the \0 byte */
 end:
@@ -224,7 +225,7 @@ static int read_octet_string(const uint8_t **buf, size_t *len, char **res)
         goto end;
     }
 
-    *res = (char *)*buf;
+    *res = CONST_CAST(char *) *buf;
 
     r = (int)(ptr - *buf);
     *len -= r;
@@ -651,18 +652,18 @@ end:
     return r;
 }
 
-#define EVP_FUZZ(source, evp, f)                                                               \
-    do {                                                                                       \
-        evp *alg = sk_##evp##_value(source, *algorithm % sk_##evp##_num(source));              \
-        OSSL_PARAM *fuzzed_params;                                                             \
-                                                                                               \
-        if (alg == NULL)                                                                       \
-            break;                                                                             \
-        fuzzed_params = fuzz_params((OSSL_PARAM *)evp##_settable_ctx_params(alg), &buf, &len); \
-        if (fuzzed_params != NULL)                                                             \
-            f(alg, fuzzed_params);                                                             \
-        free_params(fuzzed_params);                                                            \
-        OSSL_PARAM_free(fuzzed_params);                                                        \
+#define EVP_FUZZ(source, evp, f)                                                                          \
+    do {                                                                                                  \
+        evp *alg = sk_##evp##_value(source, *algorithm % sk_##evp##_num(source));                         \
+        OSSL_PARAM *fuzzed_params;                                                                        \
+                                                                                                          \
+        if (alg == NULL)                                                                                  \
+            break;                                                                                        \
+        fuzzed_params = fuzz_params(CONST_CAST(OSSL_PARAM *) evp##_settable_ctx_params(alg), &buf, &len); \
+        if (fuzzed_params != NULL)                                                                        \
+            f(alg, fuzzed_params);                                                                        \
+        free_params(fuzzed_params);                                                                       \
+        OSSL_PARAM_free(fuzzed_params);                                                                   \
     } while (0);
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
