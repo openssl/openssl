@@ -39,7 +39,7 @@ static EVP_PKEY *slh_dsa_key_from_data(const char *alg,
     const char *keytype = public ? OSSL_PKEY_PARAM_PUB_KEY : OSSL_PKEY_PARAM_PRIV_KEY;
     int selection = public ? EVP_PKEY_PUBLIC_KEY : EVP_PKEY_KEYPAIR;
 
-    params[0] = OSSL_PARAM_construct_octet_string(keytype, (uint8_t *)data, datalen);
+    params[0] = OSSL_PARAM_construct_octet_string(keytype, CONST_CAST(uint8_t *) data, datalen);
     params[1] = OSSL_PARAM_construct_end();
     ret = TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(lib_ctx, alg, NULL))
         && TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
@@ -258,7 +258,7 @@ static int slh_dsa_sign_verify_test(int tst_id)
     *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING, &encode);
     if (td->add_random != NULL)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_TEST_ENTROPY,
-            (char *)td->add_random,
+            CONST_CAST(char *) td->add_random,
             td->add_random_len);
     *p = OSSL_PARAM_construct_end();
 
@@ -312,7 +312,7 @@ static EVP_PKEY *do_gen_key(const char *alg,
 
     if (seed_len != 0)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_SLH_DSA_SEED,
-            (char *)seed, seed_len);
+            CONST_CAST(char *) seed, seed_len);
     *p = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(lib_ctx, alg, NULL))

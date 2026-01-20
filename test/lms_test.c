@@ -35,7 +35,7 @@ static EVP_PKEY *lms_pubkey_from_data(const unsigned char *data, size_t datalen)
     OSSL_PARAM params[2];
 
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
-        (unsigned char *)data, datalen);
+        CONST_CAST(unsigned char *) data, datalen);
     params[1] = OSSL_PARAM_construct_end();
     ret = TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "LMS", propq))
         && TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)

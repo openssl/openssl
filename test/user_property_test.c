@@ -71,7 +71,7 @@ static int testprov_provider_init(const OSSL_CORE_HANDLE *handle,
     const OSSL_DISPATCH **out,
     void **provctx)
 {
-    *provctx = (void *)handle;
+    *provctx = CONST_CAST(void *) handle;
     *out = testprov_dispatch_table;
     return 1;
 }

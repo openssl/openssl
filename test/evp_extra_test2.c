@@ -1915,7 +1915,7 @@ static int test_pkcs8key_nid_bio(void)
             1)
         && TEST_int_gt(enc_datalen = BIO_get_mem_data(enc_bio, &enc_data), 0)
         && TEST_ptr(pkey_dec = d2i_PKCS8PrivateKey_bio(enc_bio, NULL, NULL,
-                        (void *)pwd))
+                        CONST_CAST(void *) pwd))
         && TEST_true(EVP_PKEY_eq(pkey, pkey_dec));
 
     EVP_PKEY_free(pkey_dec);
@@ -2123,7 +2123,7 @@ static int do_fromdata_key_is_equal(const OSSL_PARAM params[],
         && TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
         && TEST_int_eq(EVP_PKEY_fromdata(ctx, &pkey,
                            EVP_PKEY_KEYPAIR,
-                           (OSSL_PARAM *)params),
+                           CONST_CAST(OSSL_PARAM *) params),
             1)
         && TEST_true(EVP_PKEY_eq(pkey, expected));
     EVP_PKEY_CTX_free(ctx);
@@ -3335,7 +3335,7 @@ static int test_rsa_pss_sign(void)
     sig_params[0] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_PAD_MODE,
         &padding);
     sig_params[1] = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
-        (char *)mdname, 0);
+        CONST_CAST(char *) mdname, 0);
     sig_params[2] = OSSL_PARAM_construct_end();
 
     ret = TEST_ptr(pkey = d2i_AutoPrivateKey_ex(NULL, &pdata, (long)keydata[0].size,

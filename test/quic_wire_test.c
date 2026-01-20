@@ -79,7 +79,7 @@ static const OSSL_QUIC_ACK_RANGE encode_case_3_ranges[] = {
 };
 
 static const OSSL_QUIC_FRAME_ACK encode_case_3_f = {
-    (OSSL_QUIC_ACK_RANGE *)encode_case_3_ranges,
+    CONST_CAST(OSSL_QUIC_ACK_RANGE *) encode_case_3_ranges,
     OSSL_NELEM(encode_case_3_ranges),
     { OSSL_TIME_MS },
     60, 70, 80, 1
@@ -1005,7 +1005,7 @@ static const OSSL_QUIC_FRAME_CONN_CLOSE encode_case_20_f = {
     0,
     0x1234,
     0x9781,
-    (char *)encode_case_20_reason,
+    CONST_CAST(char *) encode_case_20_reason,
     sizeof(encode_case_20_reason)
 };
 

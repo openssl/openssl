@@ -1363,9 +1363,9 @@ static int ossl_test_aes128cbchmacsha1_set_ctx_params(void *vprovctx, const OSSL
     size_t vlen;
     unsigned int len;
 
-    p = OSSL_PARAM_locate((OSSL_PARAM *)params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD);
+    p = OSSL_PARAM_locate(CONST_CAST(OSSL_PARAM *) params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD);
     if (p != NULL) {
-        if (OSSL_PARAM_get_octet_string_ptr(p, (const void **)&val, &vlen) != 1)
+        if (OSSL_PARAM_get_octet_string_ptr(p, CONST_CAST(const void **) &val, &vlen) != 1)
             return 0;
         len = val[EVP_AEAD_TLS1_AAD_LEN - 2] << 8 | val[EVP_AEAD_TLS1_AAD_LEN - 1];
         ctx->tls_ver = val[EVP_AEAD_TLS1_AAD_LEN - 4] << 8 | val[EVP_AEAD_TLS1_AAD_LEN - 3];

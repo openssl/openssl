@@ -400,7 +400,7 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
         }
     } else if (mode == MODE_ACK) {
         /* Try acknowledging. */
-        ack.ack_ranges = (OSSL_QUIC_ACK_RANGE *)c->ack_ranges;
+        ack.ack_ranges = CONST_CAST(OSSL_QUIC_ACK_RANGE *) c->ack_ranges;
         ack.num_ack_ranges = c->num_ack_ranges;
         if (!TEST_int_eq(ossl_ackm_on_rx_ack_frame(h.ackm, &ack, space, fake_time), 1))
             goto err;

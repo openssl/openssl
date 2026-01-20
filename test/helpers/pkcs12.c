@@ -162,7 +162,7 @@ static void generate_p12(PKCS12_BUILDER *pb, const PKCS12_ENC *mac)
 
     if (mac != NULL) {
         if (legacy)
-            md = (EVP_MD *)EVP_get_digestbynid(mac->nid);
+            md = CONST_CAST(EVP_MD *) EVP_get_digestbynid(mac->nid);
         else
             md = EVP_MD_fetch(test_ctx, OBJ_nid2sn(mac->nid), test_propq);
 
@@ -348,7 +348,7 @@ static int add_attributes(PKCS12_SAFEBAG *bag, const PKCS12_ATTR *attr)
                     (int)strlen(p_attr->value))))
                 goto err;
         } else if (attr_nid == NID_oracle_jdk_trustedkeyusage) {
-            attrs = (STACK_OF(X509_ATTRIBUTE) *)PKCS12_SAFEBAG_get0_attrs(bag);
+            attrs = CONST_CAST(STACK_OF(X509_ATTRIBUTE) *) PKCS12_SAFEBAG_get0_attrs(bag);
             x509_attr = X509_ATTRIBUTE_create(attr_nid, V_ASN1_OBJECT, OBJ_txt2obj(p_attr->value, 0));
             X509at_add1_attr(&attrs, x509_attr);
             PKCS12_SAFEBAG_set0_attrs(bag, attrs);

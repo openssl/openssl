@@ -957,7 +957,7 @@ store_ml_key(EVP_PKEY *pkey, const char *input_type, const char *fmts,
 
     /* Just-in-time encoding format selection */
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_OUTPUT_FORMATS,
-        (char *)fmts, 0);
+        CONST_CAST(char *) fmts, 0);
 
     ectx = OSSL_ENCODER_CTX_new_for_pkey(pkey, EVP_PKEY_KEYPAIR, input_type,
         "PrivateKeyInfo", testpropq);
@@ -1887,9 +1887,8 @@ static int test_EVP_Enveloped(int n)
         return TEST_skip("Test does not support a non-default library context");
 
     if (n == 0)
-        type = (EVP_CIPHER *)EVP_aes_256_cbc();
-    else if (!TEST_ptr(type = EVP_CIPHER_fetch(testctx, "AES-256-CBC",
-                           testpropq)))
+        type = CONST_CAST(EVP_CIPHER *) EVP_aes_256_cbc();
+    else if (!TEST_ptr(type = EVP_CIPHER_fetch(testctx, "AES-256-CBC", testpropq)))
         goto err;
 
     if (!TEST_ptr(keypair = load_example_rsa_key())
@@ -2797,7 +2796,7 @@ static int test_EVP_SM2(void)
             continue;
 
         sparams[0] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_DIGEST,
-            (char *)mdnames[i], 0);
+            CONST_CAST(char *) mdnames[i], 0);
 
         if (!TEST_ptr(cctx = EVP_PKEY_CTX_new_from_pkey(testctx,
                           pkey, testpropq)))
@@ -3255,7 +3254,7 @@ ml_kem_seed_to_priv(const char *alg, const unsigned char *seed, size_t seedlen,
         || !TEST_int_gt(EVP_PKEY_fromdata_init(ctx), 0))
         goto done;
     parr[0] = OSSL_PARAM_construct_octet_string(
-        OSSL_PKEY_PARAM_ML_KEM_SEED, (unsigned char *)seed, seedlen);
+        OSSL_PKEY_PARAM_ML_KEM_SEED, CONST_CAST(unsigned char *) seed, seedlen);
     if (!TEST_int_gt(EVP_PKEY_fromdata(ctx, &pkey, selection, parr), 0))
         goto done;
 
@@ -3465,7 +3464,7 @@ static int test_CMAC_keygen(void)
     if (!TEST_int_gt(EVP_PKEY_keygen_init(kctx), 0)
         || !TEST_int_gt(EVP_PKEY_CTX_ctrl(kctx, -1, EVP_PKEY_OP_KEYGEN,
                             EVP_PKEY_CTRL_CIPHER,
-                            0, (void *)EVP_aes_256_cbc()),
+                            0, CONST_CAST(void *) EVP_aes_256_cbc()),
             0)
         || !TEST_int_gt(EVP_PKEY_CTX_ctrl(kctx, -1, EVP_PKEY_OP_KEYGEN,
                             EVP_PKEY_CTRL_SET_MAC_KEY,
@@ -4587,7 +4586,7 @@ static int test_evp_iv_aes(int idx)
 err:
     EVP_CIPHER_CTX_free(ctx);
     if (idx >= 6)
-        EVP_CIPHER_free((EVP_CIPHER *)type);
+        EVP_CIPHER_free(CONST_CAST(EVP_CIPHER *) type);
     return ret;
 }
 
@@ -5048,7 +5047,7 @@ static int test_evp_init_seq(int idx)
     if (t->finalenc == 0 && t->tag != NULL) {
         /* Set expected tag */
         if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                             (int)t->taglen, (void *)t->tag),
+                             (int)t->taglen, CONST_CAST(void *) t->tag),
                 0)) {
             errmsg = "SET_TAG";
             goto err;
@@ -5896,7 +5895,7 @@ static int aes_gcm_decrypt(const unsigned char *gcm_key, size_t gcm_key_s,
         goto err;
 
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-        (void *)gcm_tag, gcm_tag_s);
+        CONST_CAST(void *) gcm_tag, gcm_tag_s);
 
     if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx, params))
         || !TEST_true(EVP_DecryptFinal_ex(ctx, outbuf, &outlen)))
@@ -6159,15 +6158,15 @@ static int test_evp_cipher_pipeline(void)
                 || !TEST_true(EVP_CIPHER_can_pipeline(pipeline_cipher, 1))
                 || !TEST_true(EVP_CipherPipelineEncryptInit(ctx, pipeline_cipher,
                     key, keylen, numpipes,
-                    (const unsigned char **)iv_array,
+                    CONST_CAST(const unsigned char **) iv_array,
                     ivlen))
                 /* reuse plaintext for AAD as it won't affect test */
                 || !TEST_true(EVP_CipherPipelineUpdate(ctx, NULL, outlen_array, NULL,
-                    (const unsigned char **)plaintext_array,
+                    CONST_CAST(const unsigned char **) plaintext_array,
                     inlen_array))
                 || !TEST_true(EVP_CipherPipelineUpdate(ctx, ciphertext_array_p,
                     outlen_array, outsize_array,
-                    (const unsigned char **)plaintext_array,
+                    CONST_CAST(const unsigned char **) plaintext_array,
                     inlen_array)))
                 goto err;
 
@@ -6228,15 +6227,15 @@ static int test_evp_cipher_pipeline(void)
                 || !TEST_true(EVP_CIPHER_can_pipeline(pipeline_cipher, 0))
                 || !TEST_true(EVP_CipherPipelineDecryptInit(ctx, pipeline_cipher,
                     key, keylen, numpipes,
-                    (const unsigned char **)iv_array,
+                    CONST_CAST(const unsigned char **) iv_array,
                     ivlen))
                 || !TEST_true(EVP_CIPHER_CTX_set_params(ctx, params))
                 || !TEST_true(EVP_CipherPipelineUpdate(ctx, NULL, outlen_array, NULL,
-                    (const unsigned char **)plaintext_array,
+                    CONST_CAST(const unsigned char **) plaintext_array,
                     inlen_array))
                 || !TEST_true(EVP_CipherPipelineUpdate(ctx, plaintext_array,
                     outlen_array, outsize_array,
-                    (const unsigned char **)ciphertext_array_p,
+                    CONST_CAST(const unsigned char **) ciphertext_array_p,
                     ciphertextlen_array)))
                 goto err;
 

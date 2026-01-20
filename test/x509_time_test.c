@@ -410,7 +410,7 @@ static int test_x509_cmp_time(int idx)
 
     memset(&t, 0, sizeof(t));
     t.type = x509_cmp_tests[idx].type;
-    t.data = (unsigned char *)(x509_cmp_tests[idx].data);
+    t.data = CONST_CAST(unsigned char *)(x509_cmp_tests[idx].data);
     t.length = (int)strlen(x509_cmp_tests[idx].data);
     t.flags = 0;
 

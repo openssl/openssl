@@ -665,13 +665,13 @@ static int test_rsa_saos(void)
         goto err;
 
     /* Fail if the encrypted input is not octet encoded */
-    if (!TEST_false(RSA_verify_ASN1_OCTET_STRING(0, in, inlen, (unsigned char *)no_octet_sig,
+    if (!TEST_false(RSA_verify_ASN1_OCTET_STRING(0, in, inlen, CONST_CAST(unsigned char *) no_octet_sig,
             (unsigned int)sizeof(no_octet_sig),
             rsa_pub)))
         goto err;
 
     /* Fail if the signature does not match the input */
-    if (!TEST_false(RSA_verify_ASN1_OCTET_STRING(0, in, inlen, (unsigned char *)sig_mismatch,
+    if (!TEST_false(RSA_verify_ASN1_OCTET_STRING(0, in, inlen, CONST_CAST(unsigned char *) sig_mismatch,
             (unsigned int)sizeof(sig_mismatch),
             rsa_pub)))
         goto err;

@@ -842,7 +842,7 @@ static int packet_plain_mutate(const QUIC_PKT_HDR *hdrin,
      */
     if (fault->pplaincb != NULL)
         fault->pplaincb(fault, &fault->pplainhdr,
-            (unsigned char *)fault->pplainio.buf,
+            CONST_CAST(unsigned char *) fault->pplainio.buf,
             fault->pplainio.buf_len, fault->pplaincbarg);
 
     *hdrout = &fault->pplainhdr;
@@ -857,7 +857,7 @@ static void packet_plain_finish(void *arg)
     QTEST_FAULT *fault = arg;
 
     /* Cast below is safe because we allocated the buffer */
-    OPENSSL_free((unsigned char *)fault->pplainio.buf);
+    OPENSSL_free(CONST_CAST(unsigned char *) fault->pplainio.buf);
     fault->pplainio.buf_len = 0;
     fault->pplainbuf_alloc = 0;
     fault->pplainio.buf = NULL;
@@ -895,7 +895,7 @@ int qtest_fault_resize_plain_packet(QTEST_FAULT *fault, size_t newlen)
     }
 
     /* Cast below is safe because we allocated the buffer */
-    buf = (unsigned char *)fault->pplainio.buf;
+    buf = CONST_CAST(unsigned char *) fault->pplainio.buf;
 
     if (newlen > oldlen) {
         /* Extend packet with 0 bytes */
@@ -926,7 +926,7 @@ int qtest_fault_prepend_frame(QTEST_FAULT *fault, const unsigned char *frame,
         return 0;
 
     /* Cast below is safe because we allocated the buffer */
-    buf = (unsigned char *)fault->pplainio.buf;
+    buf = CONST_CAST(unsigned char *) fault->pplainio.buf;
     old_len = fault->pplainio.buf_len;
 
     /* Extend the size of the packet by the size of the new frame */
@@ -977,7 +977,7 @@ static int handshake_mutate(const unsigned char *msgin, size_t msginlen,
          * The EncryptedExtensions message is very simple. It just has an
          * extensions block in it and nothing else.
          */
-        ee.extensions = (unsigned char *)PACKET_data(&pkt);
+        ee.extensions = CONST_CAST(unsigned char *) PACKET_data(&pkt);
         ee.extensionslen = payloadlen;
         if (!fault->encextcb(fault, &ee, payloadlen, fault->encextcbarg))
             return 0;
@@ -1127,7 +1127,7 @@ int qtest_fault_delete_extension(QTEST_FAULT *fault,
      * longer making PACKET calls.
      */
     if (end < ext + *extlen)
-        memmove((unsigned char *)start, end, end - start);
+        memmove(CONST_CAST(unsigned char *) start, end, end - start);
 
     /*
      * Calculate new extensions payload length =
@@ -1214,7 +1214,7 @@ static int pcipher_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
                  * const is safe
                  */
                 if (!bdata->fault->pciphercb(bdata->fault, &hdr,
-                        (unsigned char *)hdr.data, hdr.len,
+                        CONST_CAST(unsigned char *) hdr.data, hdr.len,
                         bdata->fault->pciphercbarg))
                     goto out;
 

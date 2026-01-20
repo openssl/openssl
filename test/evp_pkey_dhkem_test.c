@@ -126,7 +126,7 @@ static int test_ec_dhkem_derivekey_fail(void)
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
         "secp256k1", 0);
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM,
-        (char *)t->ikm, t->ikmlen);
+        CONST_CAST(char *) t->ikm, t->ikmlen);
     params[2] = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", NULL))
@@ -139,7 +139,7 @@ static int test_ec_dhkem_derivekey_fail(void)
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
         "P-224", 0);
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM,
-        (char *)t->ikm, t->ikmlen);
+        CONST_CAST(char *) t->ikm, t->ikmlen);
     params[2] = OSSL_PARAM_construct_end();
     if (!TEST_int_eq(EVP_PKEY_keygen_init(genctx), 1)
         || !TEST_int_eq(EVP_PKEY_CTX_set_params(genctx, params), 1)
@@ -150,7 +150,7 @@ static int test_ec_dhkem_derivekey_fail(void)
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
         "P-256", 0);
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM,
-        (char *)t->ikm, t->ikmlen - 1);
+        CONST_CAST(char *) t->ikm, t->ikmlen - 1);
     params[2] = OSSL_PARAM_construct_end();
     if (!TEST_int_eq(EVP_PKEY_CTX_set_params(genctx, params), 1)
         || !TEST_int_eq(EVP_PKEY_generate(genctx, &pkey), 0))
@@ -478,9 +478,9 @@ static int test_ec_dhkem_derivekey(int tstid)
     BIGNUM *priv = NULL;
 
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-        (char *)t->curvename, 0);
+        CONST_CAST(char *) t->curvename, 0);
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM,
-        (char *)t->ikm, t->ikmlen);
+        CONST_CAST(char *) t->ikm, t->ikmlen);
     params[2] = OSSL_PARAM_construct_end();
 
     ret = TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", NULL))
@@ -742,7 +742,7 @@ static int test_ecx_dhkem_derivekey(int tstid)
     }
 
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM,
-        (char *)t->ikm, t->ikmlen);
+        CONST_CAST(char *) t->ikm, t->ikmlen);
     params[1] = OSSL_PARAM_construct_end();
 
     ret = TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(libctx, t->curvename, NULL))

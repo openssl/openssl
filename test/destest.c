@@ -909,7 +909,7 @@ static struct {
 
 static int test_des_weak_keys(int n)
 {
-    const_DES_cblock *key = (unsigned char (*)[8])weak_keys[n].key;
+    const_DES_cblock *key = CONST_CAST(unsigned char (*)[8]) weak_keys[n].key;
 
     return TEST_int_eq(DES_is_weak_key(key), weak_keys[n].expect);
 }
@@ -935,7 +935,7 @@ static struct {
 
 static int test_des_check_bad_parity(int n)
 {
-    const_DES_cblock *key = (unsigned char (*)[8])bad_parity_keys[n].key;
+    const_DES_cblock *key = CONST_CAST(unsigned char (*)[8]) bad_parity_keys[n].key;
 
     return TEST_int_eq(DES_check_key_parity(key), bad_parity_keys[n].expect);
 }

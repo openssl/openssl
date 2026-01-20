@@ -1195,8 +1195,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
         OSSL_PARAM params[2];
 
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_CIPHER_PARAM_CTS_MODE,
-            (char *)expected->cts_mode,
-            0);
+            CONST_CAST(char *) expected->cts_mode, 0);
         params[1] = OSSL_PARAM_construct_end();
         if (!EVP_CIPHER_CTX_set_params(ctx_base, params)) {
             t->err = "INVALID_CTS_MODE";
@@ -1424,7 +1423,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
         OSSL_PARAM params[2];
 
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_CIPHER_PARAM_XTS_STANDARD,
-            (char *)expected->xts_standard, 0);
+            CONST_CAST(char *) expected->xts_standard, 0);
         params[1] = OSSL_PARAM_construct_end();
         if (!EVP_CIPHER_CTX_set_params(ctx, params)) {
             t->err = "SET_XTS_STANDARD_ERROR";
@@ -2824,12 +2823,12 @@ static int calculate_mu(const uint8_t *pub, size_t publen,
 
     if (pub == NULL || publen == 0)
         return 0;
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_MU_PUB_KEY, (uint8_t *)pub, publen);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_MU_PUB_KEY, CONST_CAST(uint8_t *) pub, publen);
     if (ctx != NULL && ctxlen > 0)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_MU_CONTEXT_STRING,
-            (uint8_t *)ctx, ctxlen);
+            CONST_CAST(uint8_t *) ctx, ctxlen);
     if (digestname != NULL)
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_MU_DIGEST, (char *)digestname, 0);
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_MU_DIGEST, CONST_CAST(char *) digestname, 0);
     *p = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(mdctx = EVP_MD_CTX_new())

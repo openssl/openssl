@@ -121,7 +121,7 @@ static int cb_client_npn(SSL *s, unsigned char **out, unsigned char *outlen,
      * prefixed set. We assume that NEXT_PROTO_STRING is a one element list
      * and remove the first byte to chop off the length prefix.
      */
-    *out = (unsigned char *)NEXT_PROTO_STRING + 1;
+    *out = CONST_CAST(unsigned char *) NEXT_PROTO_STRING + 1;
     *outlen = sizeof(NEXT_PROTO_STRING) - 2;
     return SSL_TLSEXT_ERR_OK;
 }
@@ -295,7 +295,7 @@ static int cb_server_alpn(SSL *s, const unsigned char **out,
         abort();
     }
 
-    if (SSL_select_next_proto((unsigned char **)out, outlen, protos,
+    if (SSL_select_next_proto(CONST_CAST(unsigned char **) out, outlen, protos,
             (unsigned int)protos_len,
             in, inlen)
         != OPENSSL_NPN_NEGOTIATED) {
@@ -1747,7 +1747,7 @@ int main(int argc, char *argv[])
         goto end;
 
     if (sn_client)
-        SSL_set_tlsext_host_name(c_ssl, sn_client);
+        SSL_set_tlsext_host_name(c_ssl, CONST_CAST(char *) sn_client);
     if (client_ktls)
         SSL_set_options(c_ssl, SSL_OP_ENABLE_KTLS);
     if (server_ktls)

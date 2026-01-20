@@ -823,7 +823,7 @@ static void configure_handshake_ssl(SSL *server, SSL *client,
 {
     if (extra->client.servername != SSL_TEST_SERVERNAME_NONE)
         SSL_set_tlsext_host_name(client,
-            ssl_servername_name(extra->client.servername));
+            CONST_CAST(char *) ssl_servername_name(extra->client.servername));
     if (extra->client.enable_pha)
         SSL_set_post_handshake_auth(client, 1);
 }
@@ -1783,7 +1783,7 @@ err:
     ret->server_alpn_negotiated = dup_str(proto, proto_len);
 
     if ((sess = SSL_get0_session(server.ssl)) != NULL) {
-        SSL_SESSION_get0_ticket_appdata(sess, (void **)&tick, &tick_len);
+        SSL_SESSION_get0_ticket_appdata(sess, CONST_CAST(void **) &tick, &tick_len);
         ret->result_session_ticket_app_data = OPENSSL_strndup((const char *)tick, tick_len);
     }
 

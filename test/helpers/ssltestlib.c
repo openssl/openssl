@@ -119,7 +119,7 @@ static void dump_data(const char *data, int len)
     printf("---- START OF PACKET ----\n");
 
     rem = len;
-    rec = (unsigned char *)data;
+    rec = CONST_CAST(unsigned char *) data;
 
     while (rem > 0) {
         if (rem != len)

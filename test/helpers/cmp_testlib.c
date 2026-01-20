@@ -74,7 +74,7 @@ int STACK_OF_X509_cmp_deep(const STACK_OF(X509) *sk1, const STACK_OF(X509) *sk2)
         return res;
     for (i = 0; i < sk_X509_num(sk1); i++) {
         a = sk_X509_value(sk1, i);
-        idx = sk_X509_find((STACK_OF(X509) *)sk2, a);
+        idx = sk_X509_find(CONST_CAST(STACK_OF(X509) *) sk2, a);
         if (idx < 0)
             return 0;
         b = sk_X509_value(sk2, idx);

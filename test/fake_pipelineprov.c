@@ -202,7 +202,7 @@ int fake_pipeline_aead_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_PIPELINE_AEAD_TAG);
     if (p != NULL) {
-        if (!OSSL_PARAM_get_octet_ptr(p, (const void **)&aead_tags, &taglen)) {
+        if (!OSSL_PARAM_get_octet_ptr(p, CONST_CAST(const void **) &aead_tags, &taglen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
@@ -230,7 +230,7 @@ int fake_pipeline_aead_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_PIPELINE_AEAD_TAG);
     if (p != NULL) {
-        if (!OSSL_PARAM_get_octet_ptr(p, (const void **)&aead_tags, &taglen)) {
+        if (!OSSL_PARAM_get_octet_ptr(p, CONST_CAST(const void **) &aead_tags, &taglen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }

@@ -34,7 +34,7 @@ static EVP_PKEY *do_gen_key(const char *alg,
 
     if (seed_len != 0)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ML_DSA_SEED,
-            (char *)seed, seed_len);
+            CONST_CAST(char *) seed, seed_len);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_PROPERTIES,
         "?fips=yes", 0);
     *p = OSSL_PARAM_construct_end();
@@ -60,12 +60,12 @@ static int ml_dsa_create_keypair(EVP_PKEY **pkey, const char *name,
 
     if (priv != NULL) {
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PRIV_KEY,
-            (uint8_t *)priv, priv_len);
+            CONST_CAST(uint8_t *) priv, priv_len);
         selection = OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
     }
     if (pub != NULL) {
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
-            (uint8_t *)pub, pub_len);
+            CONST_CAST(uint8_t *) pub, pub_len);
         selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
     }
     *p = OSSL_PARAM_construct_end();
@@ -136,7 +136,7 @@ static int ml_dsa_siggen_test(int tst_id)
     *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING, &encode);
     if (td->add_random != NULL)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_TEST_ENTROPY,
-            (char *)td->add_random,
+            CONST_CAST(char *) td->add_random,
             td->add_random_len);
     *p = OSSL_PARAM_construct_end();
 
@@ -225,7 +225,7 @@ static int ml_dsa_siggen_upd_test(int tst_id)
     *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING, &encode);
     if (td->add_random != NULL)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_TEST_ENTROPY,
-            (char *)td->add_random,
+            CONST_CAST(char *) td->add_random,
             td->add_random_len);
     *p = OSSL_PARAM_construct_end();
 
@@ -498,7 +498,7 @@ static int do_ml_dsa_sign_verify(const char *alg, int tstid)
         goto err;
 
     *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING,
-        (int *)&sp->encoded);
+        CONST_CAST(int *) &sp->encoded);
     if (sp->ctx != NULL)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_CONTEXT_STRING,
             sp->ctx, sp->ctx_len);
@@ -561,7 +561,7 @@ static int ml_dsa_digest_sign_verify_test(void)
         goto err;
 
     *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING,
-        (int *)&sp->encoded);
+        CONST_CAST(int *) &sp->encoded);
     if (sp->ctx != NULL)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_CONTEXT_STRING,
             sp->ctx, sp->ctx_len);

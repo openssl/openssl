@@ -487,7 +487,7 @@ static int encode_EVP_PKEY_PVK(const char *file, const int line,
             != 0))
         || !TEST_FL_ptr(mem_ser = BIO_new(BIO_s_mem()))
         || !TEST_FL_int_ge(i2b_PVK_bio_ex(mem_ser, pkey, enc,
-                               pass_pw, (void *)pass, testctx, testpropq),
+                               pass_pw, CONST_CAST(void *) pass, testctx, testpropq),
             0)
         || !TEST_FL_true(BIO_get_mem_ptr(mem_ser, &mem_buf) > 0)
         || !TEST_FL_ptr(*encoded = mem_buf->data)

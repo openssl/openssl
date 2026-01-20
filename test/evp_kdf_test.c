@@ -44,12 +44,12 @@ static OSSL_PARAM *construct_tls1_prf_params(const char *digest, const char *sec
         return NULL;
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-        (char *)digest, 0);
+        CONST_CAST(char *) digest, 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
-        (unsigned char *)secret,
+        CONST_CAST(unsigned char *) secret,
         strlen(secret));
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
-        (unsigned char *)seed,
+        CONST_CAST(unsigned char *) seed,
         strlen(seed));
     *p = OSSL_PARAM_construct_end();
 
@@ -2447,7 +2447,7 @@ static int test_kdf_x942_asn1(void)
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, z,
         sizeof(z));
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CEK_ALG,
-        (char *)cek_alg, 0);
+        CONST_CAST(char *) cek_alg, 0);
     *p = OSSL_PARAM_construct_end();
 
     ret = TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_X942KDF_ASN1))
@@ -2534,9 +2534,9 @@ static int test_kdf_hmac_drbg_settables(void)
     }
     /* Test that we can set values multiple times */
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_HMACDRBG_ENTROPY,
-        (char *)ent, sizeof(ent));
+        CONST_CAST(char *) ent, sizeof(ent));
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_HMACDRBG_NONCE,
-        (char *)ent, sizeof(ent));
+        CONST_CAST(char *) ent, sizeof(ent));
     params[2] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_DIGEST, "SHA256",
         0);
     params[3] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_PROPERTIES, "",

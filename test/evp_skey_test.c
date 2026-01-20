@@ -72,7 +72,7 @@ static int test_skey_cipher(void)
     params[0] = OSSL_PARAM_construct_utf8_string(FAKE_CIPHER_PARAM_KEY_NAME,
         "fake key name", 0);
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_RAW_BYTES,
-        (void *)import_key, KEY_SIZE);
+        CONST_CAST(void *) import_key, KEY_SIZE);
     params[2] = OSSL_PARAM_construct_end();
     key = EVP_SKEY_import(libctx, "fake_cipher", FAKE_CIPHER_FETCH_PROPS,
         OSSL_SKEYMGMT_SELECT_ALL, params);
@@ -154,7 +154,7 @@ static int test_skey_skeymgmt(void)
 
     /* Import EVP_SKEY */
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_RAW_BYTES,
-        (void *)import_key, KEY_SIZE);
+        CONST_CAST(void *) import_key, KEY_SIZE);
     params[1] = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(key = EVP_SKEY_import(libctx,

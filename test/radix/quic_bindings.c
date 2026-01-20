@@ -436,7 +436,7 @@ static RADIX_OBJ *RADIX_PROCESS_get_obj(RADIX_PROCESS *rp, const char *name)
 {
     RADIX_OBJ key;
 
-    key.name = (char *)name;
+    key.name = CONST_CAST(char *) name;
     return lh_RADIX_OBJ_retrieve(rp->objs, &key);
 }
 

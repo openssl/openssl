@@ -25,7 +25,7 @@ static int test_bio_memleak(void)
     if (!TEST_ptr(bio))
         goto finish;
     bufmem.length = sizeof(str);
-    bufmem.data = (char *)str;
+    bufmem.data = CONST_CAST(char *) str;
     bufmem.max = bufmem.length;
     BIO_set_mem_buf(bio, &bufmem, BIO_NOCLOSE);
     BIO_set_flags(bio, BIO_FLAGS_MEM_RDONLY);
@@ -246,7 +246,7 @@ static int test_bio_i2d_ASN1_mime(void)
         goto finish;
 
     bufmem.length = sizeof(str);
-    bufmem.data = (char *)str;
+    bufmem.data = CONST_CAST(char *) str;
     bufmem.max = bufmem.length;
     BIO_set_mem_buf(bio, &bufmem, BIO_NOCLOSE);
     BIO_set_flags(bio, BIO_FLAGS_MEM_RDONLY);

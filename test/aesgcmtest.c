@@ -90,7 +90,7 @@ static int do_decrypt(const unsigned char *iv, const unsigned char *ct,
                          ct_len)
             > 0)
         && TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                         tag_len, (void *)tag)
+                         tag_len, CONST_CAST(void *) tag)
             > 0)
         && TEST_true(EVP_DecryptFinal_ex(ctx, outbuf, &outlen) > 0)
         && TEST_mem_eq(gcm_pt, sizeof(gcm_pt), pt, ptlen);

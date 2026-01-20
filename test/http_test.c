@@ -45,8 +45,8 @@ static int mock_http_server(BIO *in, BIO *out, char version, int keep_alive,
     ASN1_VALUE *rsp, const ASN1_ITEM *it)
 {
     const char *req, *path;
-    long count = BIO_get_mem_data(in, (unsigned char **)&req);
-    const char *hdr = (char *)req, *suggested_status;
+    long count = BIO_get_mem_data(in, CONST_CAST(unsigned char **) &req);
+    const char *hdr = CONST_CAST(char *) req, *suggested_status;
     char status[4] = "200";
     int len;
     int is_get = count >= 4 && CHECK_AND_SKIP_PREFIX(hdr, "GET ");

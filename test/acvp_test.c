@@ -943,7 +943,7 @@ static int aes_ccm_enc_dec(const char *alg,
                             (int)iv_len, NULL),
             0)
         || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)tag_len,
-                            enc ? NULL : (void *)tag),
+                            enc ? NULL : CONST_CAST(void *) tag),
             0)
         || !TEST_true(EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, enc))
         || !TEST_true(EVP_CIPHER_CTX_set_padding(ctx, 0))
@@ -1037,7 +1037,7 @@ static int aes_gcm_enc_dec(const char *alg,
 
     if (!enc) {
         if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)tag_len,
-                             (void *)tag),
+                             CONST_CAST(void *) tag),
                 0))
             goto err;
     }
@@ -1209,7 +1209,7 @@ static int dh_safe_prime_keygen_test(int id)
     const struct dh_safe_prime_keygen_st *tst = &dh_safe_prime_keygen_data[id];
 
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-        (char *)tst->group_name, 0);
+        CONST_CAST(char *) tst->group_name, 0);
     params[1] = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "DH", NULL))
@@ -1444,9 +1444,9 @@ static int rsa_siggen_test(int id)
 
     p = params;
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_PAD_MODE,
-        (char *)tst->sig_pad_mode, 0);
+        CONST_CAST(char *) tst->sig_pad_mode, 0);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
-        (char *)tst->digest_alg, 0);
+        CONST_CAST(char *) tst->digest_alg, 0);
     if (salt_len >= 0)
         *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_PSS_SALTLEN,
             &salt_len);
@@ -1487,9 +1487,9 @@ static int rsa_sigver_test(int id)
 
     p = params;
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_PAD_MODE,
-        (char *)tst->sig_pad_mode, 0);
+        CONST_CAST(char *) tst->sig_pad_mode, 0);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
-        (char *)tst->digest_alg, 0);
+        CONST_CAST(char *) tst->digest_alg, 0);
     if (salt_len >= 0)
         *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_PSS_SALTLEN,
             &salt_len);
@@ -1618,19 +1618,19 @@ static int drbg_test(int id)
 
     /* Set the DRBG up */
     params[0] = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_USE_DF,
-        (int *)&tst->use_df);
+        CONST_CAST(int *) &tst->use_df);
     params[1] = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_CIPHER,
-        (char *)tst->cipher, 0);
+        CONST_CAST(char *) tst->cipher, 0);
     params[2] = OSSL_PARAM_construct_end();
     if (!TEST_true(EVP_RAND_CTX_set_params(ctx, params)))
         goto err;
 
     /* Feed in the entropy and nonce */
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
-        (void *)tst->entropy_input,
+        CONST_CAST(void *) tst->entropy_input,
         tst->entropy_input_len);
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
-        (void *)tst->nonce,
+        CONST_CAST(void *) tst->nonce,
         tst->nonce_len);
     params[2] = OSSL_PARAM_construct_end();
     if (!TEST_true(EVP_RAND_CTX_set_params(parent, params)))

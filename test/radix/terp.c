@@ -209,13 +209,13 @@ ossl_unused static void opgen_FUNC(GEN_CTX *ctx, helper_func_t f,
 {
     openc_opcode(ctx, OPK_FUNC);
     openc_fp(ctx, f);
-    openc_p(ctx, (void *)f_name);
+    openc_p(ctx, CONST_CAST(void *) f_name);
 }
 
 ossl_unused static void opgen_LABEL(GEN_CTX *ctx, const char *name)
 {
     openc_opcode(ctx, OPK_LABEL);
-    openc_p(ctx, (void *)name);
+    openc_p(ctx, CONST_CAST(void *) name);
 }
 
 static void opgen_set_line(GEN_CTX *ctx, const char *file, int line)
@@ -292,7 +292,7 @@ static int GEN_CTX_finish(GEN_CTX *ctx, GEN_SCRIPT *script)
 
 static void GEN_SCRIPT_cleanup(GEN_SCRIPT *script)
 {
-    OPENSSL_free((char *)script->buf);
+    OPENSSL_free(CONST_CAST(char *) script->buf);
 
     script->buf = NULL;
     script->buf_len = 0;

@@ -70,7 +70,7 @@ static int test_offset(int idx)
     int ret = -2;
     int day, sec;
 
-    at.data = (unsigned char *)testdata->data;
+    at.data = CONST_CAST(unsigned char *) testdata->data;
     at.length = (int)strlen(testdata->data);
     at.type = testdata->type;
     at.flags = 0;

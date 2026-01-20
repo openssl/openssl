@@ -245,7 +245,7 @@ static EVP_PKEY *make_key(const char *type,
     EVP_PKEY *template = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
-    OSSL_PARAM *gen_template_params_noconst = (OSSL_PARAM *)gen_template_params;
+    OSSL_PARAM *gen_template_params_noconst = CONST_CAST(OSSL_PARAM *) gen_template_params;
 
     if (gen_template_params != NULL
         && ((ctx = EVP_PKEY_CTX_new_from_name(NULL, type, NULL)) == NULL

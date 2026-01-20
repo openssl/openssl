@@ -115,7 +115,7 @@ static int fips_health_test_one(const uint8_t *buf, size_t n, size_t gen)
     int indicator = -1;
 
     p[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
-        (void *)buf, n);
+        CONST_CAST(void *) buf, n);
     p[1] = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(parent_alg = EVP_RAND_fetch(NULL, "TEST-RAND", "-fips"))

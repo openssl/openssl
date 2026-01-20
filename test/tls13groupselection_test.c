@@ -327,7 +327,7 @@ static void server_response_check_cb(int write_p, int version,
     if (write_p == 0 && /* Incoming data... */
         content_type == SSL3_RT_HANDSHAKE && /* carrying a handshake record type ... */
         version == TLS1_3_VERSION && /* for TLSv1.3 ... */
-        ((uint8_t *)buf)[0] == SSL3_MT_SERVER_HELLO) { /* with message type "ServerHello" */
+        (CONST_CAST(uint8_t *) buf)[0] == SSL3_MT_SERVER_HELLO) { /* with message type "ServerHello" */
         /* Check what it is: SH or HRR (compare the 'random' data field with HRR magic number) */
         if (memcmp(incoming_random, magic_HRR_random, 32) == 0)
             *server_response *= HRR;
@@ -357,7 +357,7 @@ static int test_invalidsyntax(const struct tls13groupselection_test_st *current_
     /* Customization of the contexts */
     if (ssl_or_ctx == WORK_ON_CONTEXT)
         TEST_false_or_end(SSL_CTX_set1_groups_list(client_ctx,
-            current_test_vector->client_groups));
+            CONST_CAST(char *) current_test_vector->client_groups));
     /* Creation of the SSL objects */
     TEST_true_or_end(create_ssl_objects(server_ctx, client_ctx,
         &serverssl, &clientssl,
@@ -365,7 +365,7 @@ static int test_invalidsyntax(const struct tls13groupselection_test_st *current_
 
     /* Customization of the SSL objects */
     if (ssl_or_ctx == WORK_ON_SSL_OBJECT)
-        TEST_false_or_end(SSL_set1_groups_list(clientssl, current_test_vector->client_groups));
+        TEST_false_or_end(SSL_set1_groups_list(clientssl, CONST_CAST(char *) current_test_vector->client_groups));
 
     ok = 1;
 
@@ -399,11 +399,11 @@ static int test_groupnegotiation(const struct tls13groupselection_test_st *curre
     if (ssl_or_ctx == WORK_ON_CONTEXT) {
         if (current_test_vector->client_groups != NULL) {
             TEST_true_or_end(SSL_CTX_set1_groups_list(client_ctx,
-                current_test_vector->client_groups));
+                CONST_CAST(char *) current_test_vector->client_groups));
         }
         if (current_test_vector->server_groups != NULL) {
             TEST_true_or_end(SSL_CTX_set1_groups_list(server_ctx,
-                current_test_vector->server_groups));
+                CONST_CAST(char *) current_test_vector->server_groups));
         }
         TEST_true_or_end(SSL_CTX_set_min_proto_version(client_ctx, TLS1_3_VERSION));
         TEST_true_or_end(SSL_CTX_set_min_proto_version(server_ctx, TLS1_3_VERSION));
@@ -419,10 +419,10 @@ static int test_groupnegotiation(const struct tls13groupselection_test_st *curre
     /* Customization of the SSL objects */
     if (ssl_or_ctx == WORK_ON_SSL_OBJECT) {
         if (current_test_vector->client_groups != NULL)
-            TEST_true_or_end(SSL_set1_groups_list(clientssl, current_test_vector->client_groups));
+            TEST_true_or_end(SSL_set1_groups_list(clientssl, CONST_CAST(char *) current_test_vector->client_groups));
 
         if (current_test_vector->server_groups != NULL)
-            TEST_true_or_end(SSL_set1_groups_list(serverssl, current_test_vector->server_groups));
+            TEST_true_or_end(SSL_set1_groups_list(serverssl, CONST_CAST(char *) current_test_vector->server_groups));
 
         TEST_true_or_end(SSL_set_min_proto_version(clientssl, TLS1_3_VERSION));
         TEST_true_or_end(SSL_set_min_proto_version(serverssl, TLS1_3_VERSION));

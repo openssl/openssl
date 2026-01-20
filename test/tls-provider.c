@@ -21,6 +21,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/core_object.h>
 #include "internal/asn1.h"
+#include "internal/common.h"
 /* For TLS1_3_VERSION */
 #include <openssl/ssl.h>
 #include "internal/nelem.h"
@@ -847,9 +848,9 @@ static void *xor_load(const void *reference, size_t reference_sz)
 
     if (reference_sz == sizeof(key)) {
         /* The contents of the reference is the address to our object */
-        key = *(XORKEY **)reference;
+        key = *CONST_CAST(XORKEY **) reference;
         /* We grabbed, so we detach it */
-        *(XORKEY **)reference = NULL;
+        *CONST_CAST(XORKEY **) reference = NULL;
         return key;
     }
     return NULL;
@@ -1619,7 +1620,7 @@ static int prepare_xorx_params(const void *xorxkey, int nid, int save,
     void **pstr, int *pstrtype)
 {
     ASN1_OBJECT *params = NULL;
-    XORKEY *k = (XORKEY *)xorxkey;
+    XORKEY *k = CONST_CAST(XORKEY *) xorxkey;
 
     if (k->tls_name && OBJ_sn2nid(k->tls_name) != nid) {
         ERR_raise(ERR_LIB_USER, XORPROV_R_INVALID_KEY);
@@ -1667,7 +1668,7 @@ static int xorx_spki_pub_to_der(const void *vecxkey, unsigned char **pder)
 
 static int xorx_pki_priv_to_der(const void *vecxkey, unsigned char **pder)
 {
-    XORKEY *xorxkey = (XORKEY *)vecxkey;
+    XORKEY *xorxkey = CONST_CAST(XORKEY *) vecxkey;
     unsigned char *buf = NULL;
     ASN1_OCTET_STRING oct;
     int keybloblen;
@@ -2406,7 +2407,7 @@ next:
 
         params[0] = OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_TYPE, &object_type);
         params[1] = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
-            (char *)ctx->desc->keytype_name,
+            CONST_CAST(char *) ctx->desc->keytype_name,
             0);
         /* The address of the key becomes the octet string */
         params[2] = OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_REFERENCE,
@@ -2433,7 +2434,7 @@ static int der2key_export_object(void *vctx,
 
     if (reference_sz == sizeof(keydata) && export != NULL) {
         /* The contents of the reference is the address to our object */
-        keydata = *(void **)reference;
+        keydata = *CONST_CAST(void **) reference;
 
         return export(keydata, ctx->selection, export_cb, export_cbarg);
     }
@@ -2799,7 +2800,7 @@ static int xor_sig_digest_signverify_init(void *vpxor_sigctx, const char *mdname
     void *vxorsig, int operation)
 {
     PROV_XORSIG_CTX *pxor_sigctx = (PROV_XORSIG_CTX *)vpxor_sigctx;
-    char *rmdname = (char *)mdname;
+    char *rmdname = CONST_CAST(char *) mdname;
 
     if (rmdname == NULL)
         rmdname = "sha256";

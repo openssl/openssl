@@ -629,9 +629,9 @@ static EVP_PKEY *new_raw_public_key(const char *curvename,
 
     if (!ecx)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-                                                (char *)curvename, 0);
+                                                CONST_CAST(char *)curvename, 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
-                                             (char *)pub, publen);
+                                             CONST_CAST(char *)pub, publen);
     *p = OSSL_PARAM_construct_end();
     if (EVP_PKEY_fromdata_init(ctx) <= 0)
           goto err;
@@ -661,7 +661,7 @@ static int do_encap(const TEST_ENCAPDATA *t, EVP_PKEY *rpub, EVP_PKEY *spriv)
                                             (char *)OSSL_KEM_PARAM_OPERATION_DHKEM,
                                             0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KEM_PARAM_IKME,
-                                             (char *)t->ikmE, t->ikmElen);
+                                             CONST_CAST(char *)t->ikmE, t->ikmElen);
     *p = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(libctx, rpub, NULL)))

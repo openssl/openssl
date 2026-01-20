@@ -1688,7 +1688,7 @@ static int test_fromdata_ec(void)
 
     /* try importing parameters with bad curve first */
     nokey_params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-        (char *)bad_curve, sizeof(bad_curve));
+        CONST_CAST(char *) bad_curve, sizeof(bad_curve));
     if (!TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
         || !TEST_int_eq(EVP_PKEY_fromdata(ctx, &pk, EVP_PKEY_KEY_PARAMETERS,
                             nokey_params),

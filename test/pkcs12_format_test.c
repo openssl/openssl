@@ -2829,13 +2829,13 @@ static int test_set0_attrs(void)
     add_certbag(pb, CERT1, sizeof(CERT1), ATTRS4);
 
     bag = sk_PKCS12_SAFEBAG_value(pb->bags, 0);
-    attrs = (STACK_OF(X509_ATTRIBUTE) *)PKCS12_SAFEBAG_get0_attrs(bag);
+    attrs = CONST_CAST(STACK_OF(X509_ATTRIBUTE) *) PKCS12_SAFEBAG_get0_attrs(bag);
 
     /* Create new attr, add to list and confirm return attrs is not NULL */
     attr = X509_ATTRIBUTE_create(NID_oracle_jdk_trustedkeyusage, V_ASN1_OBJECT, OBJ_txt2obj("anyExtendedKeyUsage", 0));
     X509at_add1_attr(&attrs, attr);
     PKCS12_SAFEBAG_set0_attrs(bag, attrs);
-    attrs = (STACK_OF(X509_ATTRIBUTE) *)PKCS12_SAFEBAG_get0_attrs(bag);
+    attrs = CONST_CAST(STACK_OF(X509_ATTRIBUTE) *) PKCS12_SAFEBAG_get0_attrs(bag);
     X509_ATTRIBUTE_free(attr);
     if (!TEST_ptr(attrs)) {
         goto err;

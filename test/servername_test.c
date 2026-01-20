@@ -115,7 +115,7 @@ static int client_setup_sni_before_state(void)
         goto end;
 
     /* set SNI before 'client side' is set */
-    SSL_set_tlsext_host_name(con, host);
+    SSL_set_tlsext_host_name(con, CONST_CAST(char *) host);
 
     rbio = BIO_new(BIO_s_mem());
     wbio = BIO_new(BIO_s_mem());
@@ -178,7 +178,7 @@ static int client_setup_sni_after_state(void)
     SSL_set_connect_state(con);
 
     /* set SNI after 'client side' is set */
-    SSL_set_tlsext_host_name(con, host);
+    SSL_set_tlsext_host_name(con, CONST_CAST(char *) host);
 
     if (!TEST_int_le(SSL_connect(con), 0))
         /* This shouldn't succeed because we don't have a server! */
@@ -212,7 +212,7 @@ static int server_setup_sni(void)
         goto end;
 
     /* set SNI at server side */
-    SSL_set_tlsext_host_name(serverssl, host);
+    SSL_set_tlsext_host_name(serverssl, CONST_CAST(char *) host);
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
         goto end;

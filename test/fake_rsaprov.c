@@ -229,12 +229,12 @@ static void *fake_rsa_keymgmt_load(const void *reference, size_t reference_sz)
     if (reference_sz != sizeof(key))
         return NULL;
 
-    key = *(struct fake_rsa_keydata **)reference;
+    key = *CONST_CAST(struct fake_rsa_keydata **) reference;
     if (key->status != FAKE_RSA_STATUS_IMPORTED && key->status != FAKE_RSA_STATUS_DECODED)
         return NULL;
 
     /* detach the reference */
-    *(struct fake_rsa_keydata **)reference = NULL;
+    *CONST_CAST(struct fake_rsa_keydata **) reference = NULL;
 
     return key;
 }
@@ -563,7 +563,7 @@ static void *fake_rsa_st_open_ex(void *provctx, const char *uri,
         size_t fakepw_len = 0;
         OSSL_PARAM pw_params[2] = {
             OSSL_PARAM_utf8_string(OSSL_PASSPHRASE_PARAM_INFO,
-                (void *)fake_rsa_prompt,
+                CONST_CAST(void *) fake_rsa_prompt,
                 sizeof(fake_rsa_prompt) - 1),
             OSSL_PARAM_END,
         };
@@ -1022,7 +1022,7 @@ next:
 
         params[0] = OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_TYPE, &object_type);
         params[1] = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
-            (char *)ctx->desc->keytype_name,
+            CONST_CAST(char *) ctx->desc->keytype_name,
             0);
         /* The address of the key becomes the octet string */
         params[2] = OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_REFERENCE,
@@ -1060,7 +1060,7 @@ static int der2key_export_object(void *vctx,
 
     if (reference_sz == sizeof(keydata) && export != NULL) {
         /* The contents of the reference is the address to our object */
-        keydata = *(void **)reference;
+        keydata = *CONST_CAST(void **) reference;
 
         return export(keydata, ctx->selection, export_cb, export_cbarg);
     }

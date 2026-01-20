@@ -2245,7 +2245,7 @@ static int ocsp_client_cb_multi(SSL *s, void *arg)
             }
 
             /* determine the md algorithm which was used to create cert id */
-            cid = (OCSP_CERTID *)OCSP_SINGLERESP_get0_id(sr);
+            cid = CONST_CAST(OCSP_CERTID *) OCSP_SINGLERESP_get0_id(sr);
             OCSP_id_get0_info(NULL, &cert_id_md_oid, NULL, NULL, cid);
             if (cert_id_md_oid != NULL)
                 cert_id_md = EVP_get_digestbyobj(cert_id_md_oid);
@@ -3615,9 +3615,9 @@ static int test_set_sigalgs(int idx)
         int ret;
 
         if (curr->list != NULL)
-            ret = SSL_CTX_set1_sigalgs(cctx, curr->list, (long)curr->listlen);
+            ret = SSL_CTX_set1_sigalgs(cctx, CONST_CAST(int *) curr->list, (long)curr->listlen);
         else
-            ret = SSL_CTX_set1_sigalgs_list(cctx, curr->liststr);
+            ret = SSL_CTX_set1_sigalgs_list(cctx, CONST_CAST(char *) curr->liststr);
 
         if (!ret) {
             if (curr->valid)
@@ -3640,9 +3640,9 @@ static int test_set_sigalgs(int idx)
         int ret;
 
         if (curr->list != NULL)
-            ret = SSL_set1_sigalgs(clientssl, curr->list, (long)curr->listlen);
+            ret = SSL_set1_sigalgs(clientssl, CONST_CAST(int *) curr->list, (long)curr->listlen);
         else
-            ret = SSL_set1_sigalgs_list(clientssl, curr->liststr);
+            ret = SSL_set1_sigalgs_list(clientssl, CONST_CAST(char *) curr->liststr);
         if (!ret) {
             if (curr->valid)
                 TEST_info("Failure setting sigalgs in SSL (%d)\n", idx);
@@ -5565,8 +5565,8 @@ static int test_key_exchange(int idx)
             || !TEST_true(SSL_set1_groups(clientssl, kexch_groups, kexch_groups_size)))
             goto end;
     } else {
-        if (!TEST_true(SSL_set1_groups_list(serverssl, kexch_names))
-            || !TEST_true(SSL_set1_groups_list(clientssl, kexch_names)))
+        if (!TEST_true(SSL_set1_groups_list(serverssl, CONST_CAST(char *) kexch_names))
+            || !TEST_true(SSL_set1_groups_list(clientssl, CONST_CAST(char *) kexch_names)))
             goto end;
     }
 
@@ -6509,7 +6509,7 @@ static int old_add_cb(SSL *s, unsigned int ext_type, const unsigned char **out,
 static void old_free_cb(SSL *s, unsigned int ext_type, const unsigned char *out,
     void *add_arg)
 {
-    OPENSSL_free((unsigned char *)out);
+    OPENSSL_free(CONST_CAST(unsigned char *) out);
 }
 
 static int old_parse_cb(SSL *s, unsigned int ext_type, const unsigned char *in,
@@ -6555,7 +6555,7 @@ static int new_add_cb(SSL *s, unsigned int ext_type, unsigned int context,
 static void new_free_cb(SSL *s, unsigned int ext_type, unsigned int context,
     const unsigned char *out, void *add_arg)
 {
-    OPENSSL_free((unsigned char *)out);
+    OPENSSL_free(CONST_CAST(unsigned char *) out);
 }
 
 static int new_parse_cb(SSL *s, unsigned int ext_type, unsigned int context,
@@ -8483,7 +8483,7 @@ static void sslapi_info_callback(const SSL *s, int where, int ret)
      * Check that, if we've got SSL_CB_HANDSHAKE_DONE we are not in init
      */
     if ((where & SSL_CB_HANDSHAKE_DONE)
-        && SSL_in_init((SSL *)s) != 0) {
+        && SSL_in_init(CONST_CAST(SSL *) s) != 0) {
         info_cb_failed = 1;
         return;
     }
@@ -10689,7 +10689,7 @@ static int test_pluggable_group(int idx)
     /* ensure GROUPLIST_INCREMENT (=40) logic triggers: */
     if (!TEST_true(SSL_set1_groups_list(serverssl, "xorgroup:xorkemgroup:dummy1:dummy2:dummy3:dummy4:dummy5:dummy6:dummy7:dummy8:dummy9:dummy10:dummy11:dummy12:dummy13:dummy14:dummy15:dummy16:dummy17:dummy18:dummy19:dummy20:dummy21:dummy22:dummy23:dummy24:dummy25:dummy26:dummy27:dummy28:dummy29:dummy30:dummy31:dummy32:dummy33:dummy34:dummy35:dummy36:dummy37:dummy38:dummy39:dummy40:dummy41:dummy42:dummy43"))
         /* removing a single algorithm from the list makes the test pass */
-        || !TEST_true(SSL_set1_groups_list(clientssl, group_name)))
+        || !TEST_true(SSL_set1_groups_list(clientssl, CONST_CAST(char *) group_name)))
         goto end;
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
@@ -12757,12 +12757,12 @@ static int npn_select_cb(SSL *s, unsigned char **out, unsigned char *outlen,
     switch (*idx) {
     case 0:
     case 1:
-        *out = (unsigned char *)(fooprot + 1);
+        *out = CONST_CAST(unsigned char *)(fooprot + 1);
         *outlen = *fooprot;
         return SSL_TLSEXT_ERR_OK;
 
     case 3:
-        *out = (unsigned char *)(barprot + 1);
+        *out = CONST_CAST(unsigned char *)(barprot + 1);
         *outlen = *barprot;
         return SSL_TLSEXT_ERR_OK;
 
@@ -12855,12 +12855,12 @@ static int alpn_select_cb2(SSL *ssl, const unsigned char **out,
 
     switch (*idx) {
     case 0:
-        *out = (unsigned char *)(fooprot + 1);
+        *out = CONST_CAST(unsigned char *)(fooprot + 1);
         *outlen = *fooprot;
         return SSL_TLSEXT_ERR_OK;
 
     case 2:
-        *out = (unsigned char *)(barprot + 1);
+        *out = CONST_CAST(unsigned char *)(barprot + 1);
         *outlen = *barprot;
         return SSL_TLSEXT_ERR_OK;
 

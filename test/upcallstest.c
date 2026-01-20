@@ -51,7 +51,7 @@ static int obj_provider_init(const OSSL_CORE_HANDLE *handle,
     const OSSL_DISPATCH **out,
     void **provctx)
 {
-    *provctx = (void *)handle;
+    *provctx = CONST_CAST(void *) handle;
     *out = obj_dispatch_table;
 
     for (; in->function_id != 0; in++) {

@@ -23,7 +23,7 @@ static void swap_copy(unsigned char *out, const void *in, size_t len)
     size_t j;
 
     for (j = 0; j < len; j++)
-        out[j] = ((unsigned char *)in)[len - j - 1];
+        out[j] = (CONST_CAST(unsigned char *) in)[len - j - 1];
 }
 
 /*
@@ -710,7 +710,7 @@ static int test_param_construct(int tstid)
     if (!TEST_ptr(cp = OSSL_PARAM_locate(p, "utf8ptr"))
         || !TEST_true(OSSL_PARAM_set_utf8_ptr(cp, "tuvwxyz"))
         || !TEST_size_t_eq(cp->return_size, sizeof("tuvwxyz") - 1)
-        || !TEST_true(OSSL_PARAM_get_utf8_ptr(cp, (const char **)&bufp2))
+        || !TEST_true(OSSL_PARAM_get_utf8_ptr(cp, CONST_CAST(const char **) &bufp2))
         || !TEST_str_eq(bufp2, "tuvwxyz")
         || (tstid <= 1 && !TEST_ptr_eq(bufp2, bufp)))
         goto err;
@@ -761,7 +761,7 @@ static int test_param_construct(int tstid)
         goto err;
     /* Match the return size to avoid trailing garbage bytes */
     cp->data_size = cp->return_size;
-    if (!TEST_true(OSSL_PARAM_get_octet_ptr(cp, (const void **)&vp2, &k))
+    if (!TEST_true(OSSL_PARAM_get_octet_ptr(cp, CONST_CAST(const void **) &vp2, &k))
         || !TEST_size_t_eq(k, sizeof(ul))
         || (tstid <= 1 && !TEST_ptr_eq(vp2, vp)))
         goto err;
@@ -776,7 +776,7 @@ static int test_param_construct(int tstid)
         goto err;
     /* Match the return size to avoid trailing garbage bytes */
     cp->data_size = cp->return_size;
-    if (!TEST_true(OSSL_PARAM_get_octet_ptr(cp, (const void **)&vp2, &k))
+    if (!TEST_true(OSSL_PARAM_get_octet_ptr(cp, CONST_CAST(const void **) &vp2, &k))
         || !TEST_size_t_eq(k, sizeof(ul))
         || (tstid <= 1 && !TEST_ptr_eq(vp2, vp)))
         goto err;
