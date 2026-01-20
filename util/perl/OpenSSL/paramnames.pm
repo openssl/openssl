@@ -698,14 +698,14 @@ sub trie_matched {
     printf "%s               \"param %%s present >%%d times\", s, $num);\n", $indent2;
     printf "%sreturn 0;\n", $indent2;
     printf "%s}\n", $indent1;
-    printf "%sr->%s[r->num_%s++] = (OSSL_PARAM *)p;\n", $indent1, $field, $field;
+    printf "%sr->%s[r->num_%s++] = (OSSL_PARAM *)(uintptr_t)p;\n", $indent1, $field, $field;
   } else {
     printf "%sif (ossl_unlikely(r->%s != NULL)) {\n", $indent1, $field;
     printf "%sERR_raise_data(ERR_LIB_PROV, PROV_R_REPEATED_PARAMETER,\n", $indent2;
     printf "%s               \"param %%s is repeated\", s);\n", $indent2;
     printf "%sreturn 0;\n", $indent2;
     printf "%s}\n", $indent1;
-    printf "%sr->%s = (OSSL_PARAM *)p;\n", $indent1, $field;
+    printf "%sr->%s = (OSSL_PARAM *)(uintptr_t)p;\n", $indent1, $field;
   }
 }
 
