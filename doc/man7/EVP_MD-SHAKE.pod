@@ -86,9 +86,8 @@ An alias of "xoflen".
 
 =item "function-name" (B<OSSL_DIGEST_PARAM_FUNCTION_NAME>)<UTF8 string>
 
-Sets the function name string used by CSHAKE.
-It is an optional value with a length of at most 512 bytes, and is
-empty by default.
+Sets the function name string used by CSHAKE that can be set to one of
+"", "TupleHash", "ParallelHash" or "KMAC". The default value is "".
 
 =item "customization" (B<OSSL_DIGEST_PARAM_CUSTOMIZATION>)<UTF8 string>
 

@@ -12,12 +12,11 @@
  * e.g. It is used by KMAC and cSHAKE
  */
 
-#include "internal/deprecated.h"
 #include <string.h> /* memcpy */
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include "crypto/sha.h"
-#include "internal/common.h"
+#include "internal/common.h" /* ossl_assert */
 
 /* Returns the number of bytes required to store 'bits' into a byte array */
 static unsigned int get_encode_size(size_t bits)

@@ -555,12 +555,12 @@ It is used by the MDC2 algorithm.
 
 =item "function-name" (B<OSSL_DIGEST_PARAM_FUNCTION_NAME>)<UTF8 string>
 
-Sets the function name string. By default this is an empty string.
+Sets the function name string.
 It is used by L<EVP_MD-CSHAKE(7)>.
 
 =item "customization" (B<OSSL_DIGEST_PARAM_CUSTOMIZATION>)<UTF8 string>
 
-Sets a customisation string. By default this is an empty string.
+Sets a customisation string.
 It is used by L<EVP_MD-CSHAKE(7)>.
 
 =item "properties" (B<OSSL_DIGEST_PARAM_PROPERTIES>)<UTF8 string>
