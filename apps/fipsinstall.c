@@ -199,7 +199,7 @@ typedef struct {
     unsigned int x942kdf_key_check : 1;
     unsigned int pbkdf2_lower_bound_check : 1;
     unsigned int ecdh_cofactor_check : 1;
-    unsigned int no_defer_tests : 1;
+    unsigned int defer_tests : 1;
 } FIPS_OPTS;
 
 /* Pedantic FIPS compliance */
@@ -234,7 +234,7 @@ static const FIPS_OPTS pedantic_opts = {
     1, /* x942kdf_key_check */
     1, /* pbkdf2_lower_bound_check */
     1, /* ecdh_cofactor_check */
-    1, /* no_defer_tests */
+    0, /* defer_tests */
 };
 
 /* Default FIPS settings for backward compatibility */
@@ -269,7 +269,7 @@ static FIPS_OPTS fips_opts = {
     0, /* x942kdf_key_check */
     1, /* pbkdf2_lower_bound_check */
     0, /* ecdh_cofactor_check */
-    1, /* no_defer_tests */
+    0, /* defer_tests */
 };
 
 static int check_non_pedantic_fips(int pedantic, const char *name)
@@ -495,7 +495,7 @@ static int write_config_fips_section(BIO *out, const char *section,
         || !print_mac(out, OSSL_PROV_FIPS_PARAM_MODULE_MAC, module_mac,
             module_mac_len)
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_DO_NOT_DEFER_TESTS,
-               opts->no_defer_tests ? "1" : "0")
+               opts->defer_tests ? "0" : "1")
             <= 0)
         goto end;
 
@@ -811,7 +811,7 @@ int fipsinstall_main(int argc, char **argv)
             fips_opts.self_test_onload = 0;
             break;
         case OPT_DEFER_TESTS:
-            fips_opts.no_defer_tests = 0;
+            fips_opts.defer_tests = 1;
             break;
         }
     }
