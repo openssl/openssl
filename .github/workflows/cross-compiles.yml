@@ -228,6 +228,7 @@ jobs:
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make evp tests
       if: github.event_name == 'pull_request' && matrix.platform.tests != 'none'
+      timeout-minutes: 10
       run: |
         .github/workflows/make-test \
                   TESTS="test_sslrecords" V=1 \
