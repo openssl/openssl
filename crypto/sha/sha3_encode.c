@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* including crypto/sha.h requires this for SHA256_CTX */
+#include "internal/deprecated.h"
+
 /*
  * NIST.SP.800-185 Encoding/Padding Methods used for SHA3 derived functions
  * e.g. It is used by KMAC and cSHAKE
