@@ -400,7 +400,7 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
             BIO_puts(out, ":");
         nid = groups[i];
         const char *name = SSL_group_to_name(s, nid);
-        BIO_puts(out, name ? name : "(null)");
+        BIO_puts(out, ((name != NULL) ? name : "(null)"));
     }
     OPENSSL_free(groups);
     if (noshared) {
@@ -414,7 +414,7 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
             BIO_puts(out, ":");
         nid = SSL_get_shared_group(s, i);
         const char *name = SSL_group_to_name(s, nid);
-        BIO_puts(out, name ? name : "(null)");
+        BIO_puts(out, ((name != NULL) ? name : "(null)"));
     }
     if (ngroups == 0)
         BIO_puts(out, "NONE");

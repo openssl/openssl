@@ -363,11 +363,11 @@ static int print_mac(BIO *bio, const char *label, const unsigned char *mac,
 static int write_config_header(BIO *out, const char *prov_name,
     const char *section)
 {
-    return BIO_puts(out, "openssl_conf = openssl_init\n\n")
-        && BIO_puts(out, "[openssl_init]\n")
-        && BIO_puts(out, "providers = provider_section\n\n")
-        && BIO_puts(out, "[provider_section]\n")
-        && BIO_printf(out, "%s = %s\n\n", prov_name, section);
+    return (BIO_puts(out, "openssl_conf = openssl_init\n\n") > 0)
+        && (BIO_puts(out, "[openssl_init]\n") > 0)
+        && (BIO_puts(out, "providers = provider_section\n\n") > 0)
+        && (BIO_puts(out, "[provider_section]\n") > 0)
+        && (BIO_printf(out, "%s = %s\n\n", prov_name, section) > 0);
 }
 
 /*
