@@ -1392,10 +1392,6 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
                 goto done;
         }
 
-        X509_CRL_free(crl);
-        X509_CRL_free(dcrl);
-        crl = NULL;
-        dcrl = NULL;
         /*
          * If reasons not updated we won't get anywhere by another iteration,
          * so exit loop.
@@ -1404,6 +1400,11 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
             ok = verify_cb_crl(ctx, X509_V_ERR_UNABLE_TO_GET_CRL);
             goto done;
         }
+
+        X509_CRL_free(crl);
+        X509_CRL_free(dcrl);
+        crl = NULL;
+        dcrl = NULL;
     }
 done:
     X509_CRL_free(crl);
