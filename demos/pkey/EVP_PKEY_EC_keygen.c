@@ -38,7 +38,7 @@ static EVP_PKEY *do_ec_keygen(void)
     EVP_PKEY *key = NULL;
     OSSL_PARAM params[3];
     EVP_PKEY_CTX *genctx = NULL;
-    const char *curvename = "P-256";
+    char *curvename = "P-256";
     int use_cofactordh = 1;
 
     genctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", propq);
@@ -53,7 +53,7 @@ static EVP_PKEY *do_ec_keygen(void)
     }
 
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-        (char *)curvename, 0);
+        curvename, 0);
     /*
      * This is an optional parameter.
      * For many curves where the cofactor is 1, setting this has no effect.

@@ -34,7 +34,7 @@ static int select_alpn(SSL *ssl,
     const unsigned char *in, unsigned int in_len,
     void *arg)
 {
-    if (SSL_select_next_proto((unsigned char **)out, out_len,
+    if (SSL_select_next_proto((void *)out, out_len,
             alpn_ossltest, sizeof(alpn_ossltest), in, in_len)
         != OPENSSL_NPN_NEGOTIATED)
         return SSL_TLSEXT_ERR_ALERT_FATAL;

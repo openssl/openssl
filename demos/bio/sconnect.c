@@ -32,7 +32,7 @@
 
 int main(int argc, char *argv[])
 {
-    const char *hostport = HOSTPORT;
+    char *hostport = HOSTPORT;
     const char *CAfile = CAFILE;
     const char *hostname;
     BIO *out = NULL;

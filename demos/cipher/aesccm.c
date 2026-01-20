@@ -54,7 +54,7 @@ static const unsigned char ccm_ct[] = {
 };
 
 /* Expected AEAD Tag value */
-static const unsigned char ccm_tag[] = {
+static unsigned char ccm_tag[] = {
     0x2d, 0xd6, 0xef, 0x1c, 0x45, 0xd4, 0xcc, 0xb7, 0x23, 0xdc, 0x07, 0x44,
     0x14, 0xdb, 0x50, 0x6d
 };
@@ -182,7 +182,7 @@ static int aes_ccm_decrypt(void)
         &ccm_nonce_len);
     /* Set tag length */
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-        (unsigned char *)ccm_tag,
+        ccm_tag,
         sizeof(ccm_tag));
     /*
      * Initialise decrypt operation with the cipher & mode,

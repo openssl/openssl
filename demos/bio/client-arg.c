@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     SSL_CONF_CTX *cctx;
     SSL *ssl;
     char **args = argv + 1;
-    const char *connect_str = "localhost:4433";
+    char *connect_str = "localhost:4433";
     int nargs = argc - 1;
     int ret = EXIT_FAILURE;
 

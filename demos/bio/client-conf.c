@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     CONF *conf = NULL;
     STACK_OF(CONF_VALUE) *sect = NULL;
     CONF_VALUE *cnf;
-    const char *connect_str = "localhost:4433";
+    char *connect_str = "localhost:4433";
     long errline = -1;
     int ret = EXIT_FAILURE;
 

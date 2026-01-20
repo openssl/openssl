@@ -14,7 +14,7 @@
 
 static int done;
 
-static void make_nv(nghttp3_nv *nv, const char *name, const char *value)
+static void make_nv(nghttp3_nv *nv, char *name, char *value)
 {
     nv->name = (uint8_t *)name;
     nv->value = (uint8_t *)value;
@@ -79,7 +79,7 @@ static int on_end_stream(nghttp3_conn *h3conn, int64_t stream_id,
     return 0;
 }
 
-static int try_conn(OSSL_DEMO_H3_CONN *conn, const char *bare_hostname)
+static int try_conn(OSSL_DEMO_H3_CONN *conn, char *bare_hostname)
 {
     nghttp3_nv nva[16];
     size_t num_nv = 0;
@@ -116,7 +116,7 @@ int main(int argc, char **argv)
     SSL_CTX *ctx = NULL;
     OSSL_DEMO_H3_CONN *conn = NULL;
     nghttp3_callbacks callbacks = { 0 };
-    const char *addr;
+    char *addr;
     char *hostname, *service;
     BIO_ADDRINFO *bai = NULL;
     const BIO_ADDRINFO *bai_walk;

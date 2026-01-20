@@ -57,7 +57,7 @@ static EVP_PKEY *get_key(OSSL_LIB_CTX *libctx, const char *propq, int public)
 }
 
 /* Set optional parameters for RSA OAEP Padding */
-static void set_optional_params(OSSL_PARAM *p, const char *propq)
+static void set_optional_params(OSSL_PARAM *p, char *propq)
 {
     static unsigned char label[] = "label";
 
@@ -76,7 +76,7 @@ static void set_optional_params(OSSL_PARAM *p, const char *propq)
      */
     if (propq != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST_PROPS,
-            (char *)propq, 0);
+            propq, 0);
 
     /*
      * OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST and
@@ -99,7 +99,7 @@ static int do_encrypt(OSSL_LIB_CTX *libctx,
     int ret = 0, public = 1;
     size_t buf_len = 0;
     unsigned char *buf = NULL;
-    const char *propq = NULL;
+    char *propq = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pub_key = NULL;
     OSSL_PARAM params[5];
@@ -156,7 +156,7 @@ static int do_decrypt(OSSL_LIB_CTX *libctx, const unsigned char *in, size_t in_l
     int ret = 0, public = 0;
     size_t buf_len = 0;
     unsigned char *buf = NULL;
-    const char *propq = NULL;
+    char *propq = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *priv_key = NULL;
     OSSL_PARAM params[5];

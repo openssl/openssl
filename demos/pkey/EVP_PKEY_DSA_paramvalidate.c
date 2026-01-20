@@ -45,9 +45,9 @@ static const char dsapem[] = "-----BEGIN DSA PARAMETERS-----\n"
 static const char hexseed[] = "cba30ccd905aa7675a0b81769704bf3c"
                               "ccf2ca1892b2eaf6b9e2b38d9bf6affc"
                               "42ada55986d8a1772b442770954d0b65";
-static const int gindex = 42;
-static const int pcounter = 363;
-static const char digest[] = "SHA384";
+static int gindex = 42;
+static int pcounter = 363;
+static char digest[] = "SHA384";
 
 /*
  * Create a new dsa param key that is the combination of an existing param key
@@ -157,8 +157,8 @@ int main(int argc, char **argv)
     /* Force it to do a proper validation by setting the seed */
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_FFC_SEED,
         (void *)seed, seedlen);
-    params[2] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_FFC_GINDEX, (int *)&gindex);
-    params[3] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_FFC_PCOUNTER, (int *)&pcounter);
+    params[2] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_FFC_GINDEX, &gindex);
+    params[3] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_FFC_PCOUNTER, &pcounter);
     params[4] = OSSL_PARAM_construct_end();
 
     /* generate a new key that is the combination of the existing key and the new params */
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
      * needed
      */
     params[4] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_DIGEST,
-        (char *)digest, 0);
+        digest, 0);
     params[5] = OSSL_PARAM_construct_end();
     ctx2 = create_merged_key(dsaparamskey, params, libctx, propq);
     if (ctx2 == NULL)

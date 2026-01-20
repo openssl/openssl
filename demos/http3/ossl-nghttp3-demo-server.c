@@ -72,7 +72,7 @@ struct h3ssl {
     int offset_data; /* offset to next data to send */
 };
 
-static void make_nv(nghttp3_nv *nv, const char *name, const char *value)
+static void make_nv(nghttp3_nv *nv, char *name, char *value)
 {
     nv->name = (uint8_t *)name;
     nv->value = (uint8_t *)value;
@@ -890,7 +890,7 @@ static int select_alpn(SSL *ssl, const unsigned char **out,
     unsigned char *out_len, const unsigned char *in,
     unsigned int in_len, void *arg)
 {
-    if (SSL_select_next_proto((unsigned char **)out, out_len, alpn_ossltest,
+    if (SSL_select_next_proto((void *)out, out_len, alpn_ossltest,
             sizeof(alpn_ossltest), in,
             in_len)
         != OPENSSL_NPN_NEGOTIATED)
