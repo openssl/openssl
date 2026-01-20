@@ -333,7 +333,7 @@ int SHA512_Update(SHA512_CTX *c, const void *_data, size_t len)
 
 int SHA384_Update(SHA512_CTX *c, const void *data, size_t len)
 {
-    return SHA512_Update(c, data, len);
+    return SHA512_Update_thunk((void *)c, (const unsigned char *)data, len);
 }
 
 void SHA512_Transform(SHA512_CTX *c, const unsigned char *data)

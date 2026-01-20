@@ -309,7 +309,7 @@ IMPLEMENT_digest_functions_with_serialize(sha256_192_internal, SHA256_CTX,
 IMPLEMENT_digest_functions_with_serialize(sha384, SHA512_CTX,
     SHA512_CBLOCK, SHA384_DIGEST_LENGTH,
     SHA2_FLAGS, SHA384_Init,
-    SHA384_Update, SHA384_Final,
+    SHA512_Update_thunk, SHA384_Final,
     SHA512_Serialize, SHA512_Deserialize)
 
 /* ossl_sha512_functions */
