@@ -570,7 +570,6 @@ sub clientstart
         if ($self->{isdtls} && $self->is_tls13()) {
             my $alert_message = $self->construct_alert_message($self->{client_epoch}, $self->{client_sequence_number} + 1);
             $server_sock->syswrite($alert_message) or warn "Failed to send close_notify alert: $!\n";
-            sleep(1);
         }
         $server_sock->close();
         $self->{server_sock} = undef;
@@ -581,7 +580,6 @@ sub clientstart
         if ($self->{isdtls} && $self->is_tls13() && defined($self->{sessionfile})) {
             my $alert_message = $self->construct_alert_message($self->{server_epoch}, $self->{server_sequence_number} + 1);
             $client_sock->syswrite($alert_message) or warn "Failed to send close_notify alert: $!\n";
-            sleep(1);
         }
 
         #Closing this also kills the child process
