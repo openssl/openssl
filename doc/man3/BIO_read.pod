@@ -52,7 +52,9 @@ For implementing this, unfortunately the data needs to be read byte-by-byte.
 
 BIO_write() attempts to write I<len> bytes from I<buf> to BIO I<b>.
 
-BIO_puts() attempts to write a NUL-terminated string I<buf> to BIO I<b>.
+BIO_puts() attempts to write a NUL-terminated string I<buf> to BIO I<b>,
+without the terminating NUL byte and without appending '\n'
+(so, similar to fputs(3), and not puts(3)).
 
 =head1 RETURN VALUES
 
