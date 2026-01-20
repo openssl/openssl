@@ -8147,7 +8147,7 @@ int SSL_add_expected_rpk(SSL *s, EVP_PKEY *rpk)
 
 EVP_PKEY *SSL_get0_peer_rpk(const SSL *s)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
     if (sc == NULL || sc->session == NULL)
         return NULL;
@@ -8156,7 +8156,7 @@ EVP_PKEY *SSL_get0_peer_rpk(const SSL *s)
 
 int SSL_get_negotiated_client_cert_type(const SSL *s)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
     if (sc == NULL)
         return 0;
@@ -8166,7 +8166,7 @@ int SSL_get_negotiated_client_cert_type(const SSL *s)
 
 int SSL_get_negotiated_server_cert_type(const SSL *s)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
     if (sc == NULL)
         return 0;
