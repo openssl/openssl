@@ -237,6 +237,12 @@ static int test_EVP_MD_fetch_freeze(void)
     if (!TEST_int_eq(OSSL_LIB_CTX_freeze(ctx, "?fips=true"), 1)
         || !TEST_ptr(md = EVP_MD_fetch(ctx, "SHA256", NULL))
         || !TEST_true(test_md(md))
+        || !TEST_int_eq(md->origin, EVP_ORIG_FROZEN)
+        || !TEST_ptr(md = EVP_MD_fetch(ctx, "SHA-256", NULL))
+        || !TEST_true(test_md(md))
+        || !TEST_int_eq(md->origin, EVP_ORIG_FROZEN)
+        || !TEST_ptr(md = EVP_MD_fetch(ctx, "2.16.840.1.101.3.4.2.1", NULL))
+        || !TEST_true(test_md(md))
         || !TEST_int_eq(md->origin, EVP_ORIG_FROZEN))
         goto err;
     /* Technically, frozen version doesn't need to be freed */
@@ -250,6 +256,17 @@ static int test_EVP_MD_fetch_freeze(void)
 
     if (!TEST_ptr(md = EVP_MD_fetch(ctx, "SHA256", "?provider=default"))
         || !TEST_true(test_md(md))
+        || !TEST_int_ne(md->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_MD_free(md);
+
+    if (!TEST_ptr(md = EVP_MD_fetch(ctx, "SHA1", NULL))
+        || !TEST_int_eq(md->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_MD_free(md);
+
+    /* Fetching algorithm from different context should still work */
+    if (!TEST_ptr(md = EVP_MD_fetch(NULL, "SHA1", NULL))
         || !TEST_int_ne(md->origin, EVP_ORIG_FROZEN))
         goto err;
 
