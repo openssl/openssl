@@ -59,7 +59,7 @@ int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf, size_t len)
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_OVERFLOW_ERROR);
             return 0;
         }
-        ret = BIO_write(s->s3.handshake_buffer, (void *)buf, (int)len);
+        ret = BIO_write(s->s3.handshake_buffer, (const void *)buf, (int)len);
         if (ret <= 0 || ret != (int)len) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;

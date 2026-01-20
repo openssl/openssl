@@ -469,7 +469,7 @@ int tls1_export_keying_material(SSL_CONNECTION *s, unsigned char *out,
     if (val == NULL)
         goto ret;
     currentvalpos = 0;
-    memcpy(val + currentvalpos, (unsigned char *)label, llen);
+    memcpy(val + currentvalpos, label, llen);
     currentvalpos += llen;
     memcpy(val + currentvalpos, s->s3.client_random, SSL3_RANDOM_SIZE);
     currentvalpos += SSL3_RANDOM_SIZE;

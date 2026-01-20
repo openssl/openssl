@@ -4765,13 +4765,13 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
             sk_SSL_CIPHER_num(srvr), (void *)srvr);
         for (i = 0; i < sk_SSL_CIPHER_num(srvr); ++i) {
             c = sk_SSL_CIPHER_value(srvr, i);
-            BIO_printf(trc_out, "%p:%s\n", (void *)c, c->name);
+            BIO_printf(trc_out, "%p:%s\n", (const void *)c, c->name);
         }
         BIO_printf(trc_out, "Client sent %d from %p:\n",
             sk_SSL_CIPHER_num(clnt), (void *)clnt);
         for (i = 0; i < sk_SSL_CIPHER_num(clnt); ++i) {
             c = sk_SSL_CIPHER_value(clnt, i);
-            BIO_printf(trc_out, "%p:%s\n", (void *)c, c->name);
+            BIO_printf(trc_out, "%p:%s\n", (const void *)c, c->name);
         }
     }
     OSSL_TRACE_END(TLS_CIPHER);
@@ -4890,7 +4890,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
             ok = (alg_k & mask_k) && (alg_a & mask_a);
             OSSL_TRACE7(TLS_CIPHER,
                 "%d:[%08lX:%08lX:%08lX:%08lX]%p:%s\n",
-                ok, alg_k, alg_a, mask_k, mask_a, (void *)c, c->name);
+                ok, alg_k, alg_a, mask_k, mask_a, (const void *)c, c->name);
 
             /*
              * if we are considering an ECC cipher suite that uses an ephemeral
