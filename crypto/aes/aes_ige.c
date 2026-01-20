@@ -61,11 +61,11 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
 
     if (AES_ENCRYPT == enc) {
         if (in != out && (UNALIGNED_MEMOPS_ARE_FAST || ((size_t)in | (size_t)out | (size_t)ivec) % sizeof(long) == 0)) {
-            aes_block_t *ivp = (aes_block_t *)ivec;
-            aes_block_t *iv2p = (aes_block_t *)(ivec + AES_BLOCK_SIZE);
+            const aes_block_t *ivp = (const aes_block_t *)ivec;
+            const aes_block_t *iv2p = (const aes_block_t *)(ivec + AES_BLOCK_SIZE);
 
             while (len) {
-                aes_block_t *inp = (aes_block_t *)in;
+                const aes_block_t *inp = (const aes_block_t *)in;
                 aes_block_t *outp = (aes_block_t *)out;
 
                 for (n = 0; n < N_WORDS; ++n)
@@ -110,12 +110,12 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
         }
     } else {
         if (in != out && (UNALIGNED_MEMOPS_ARE_FAST || ((size_t)in | (size_t)out | (size_t)ivec) % sizeof(long) == 0)) {
-            aes_block_t *ivp = (aes_block_t *)ivec;
-            aes_block_t *iv2p = (aes_block_t *)(ivec + AES_BLOCK_SIZE);
+            const aes_block_t *ivp = (const aes_block_t *)ivec;
+            const aes_block_t *iv2p = (const aes_block_t *)(ivec + AES_BLOCK_SIZE);
 
             while (len) {
                 aes_block_t tmp;
-                aes_block_t *inp = (aes_block_t *)in;
+                const aes_block_t *inp = (const aes_block_t *)in;
                 aes_block_t *outp = (aes_block_t *)out;
 
                 for (n = 0; n < N_WORDS; ++n)

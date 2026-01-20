@@ -571,7 +571,7 @@ int OSSL_CMP_ATAV_push1(OSSL_CMP_ATAVS **sk_p, const OSSL_CMP_ATAV *atav)
         created = 1;
     }
 
-    if ((dup = OSSL_CRMF_ATTRIBUTETYPEANDVALUE_dup((OSSL_CRMF_ATTRIBUTETYPEANDVALUE *)atav)) == NULL)
+    if ((dup = OSSL_CRMF_ATTRIBUTETYPEANDVALUE_dup((const OSSL_CRMF_ATTRIBUTETYPEANDVALUE *)atav)) == NULL)
         goto err;
     if (sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_push(*sk_p, dup))
         return 1;
