@@ -477,7 +477,7 @@ int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
         return 0;
     }
     return int_x509_param_set1((char **)&param->ip, &param->iplen,
-        (char *)ip, iplen);
+        (const char *)ip, iplen);
 }
 
 int X509_VERIFY_PARAM_set1_ip_asc(X509_VERIFY_PARAM *param, const char *ipasc)

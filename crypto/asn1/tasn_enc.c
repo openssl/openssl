@@ -546,8 +546,8 @@ static int asn1_ex_i2c(const ASN1_VALUE **pval, unsigned char *cout, int *putype
         *putype = utype;
     } else if (it->utype == V_ASN1_ANY) {
         /* If ANY set type and pointer to value */
-        ASN1_TYPE *typ;
-        typ = (ASN1_TYPE *)*pval;
+        const ASN1_TYPE *typ;
+        typ = (const ASN1_TYPE *)*pval;
         utype = typ->type;
         *putype = utype;
         pval = (const ASN1_VALUE **)&typ->value.asn1_value; /* actually is const */

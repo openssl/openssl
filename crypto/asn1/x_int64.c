@@ -50,7 +50,7 @@ static int uint64_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
     uint64_t utmp;
     int neg = 0;
     /* this exists to bypass broken gcc optimization */
-    char *cp = (char *)*pval;
+    const char *cp = (const char *)*pval;
 
     /* use memcpy, because we may not be uint64_t aligned */
     memcpy(&utmp, cp, sizeof(utmp));
@@ -113,8 +113,8 @@ static int uint64_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
     int indent, const ASN1_PCTX *pctx)
 {
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED)
-        return BIO_printf(out, "%jd\n", **(int64_t **)pval);
-    return BIO_printf(out, "%ju\n", **(uint64_t **)pval);
+        return BIO_printf(out, "%jd\n", **(const int64_t **)pval);
+    return BIO_printf(out, "%ju\n", **(const uint64_t **)pval);
 }
 
 /* 32-bit variants */
@@ -143,7 +143,7 @@ static int uint32_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
     uint32_t utmp;
     int neg = 0;
     /* this exists to bypass broken gcc optimization */
-    char *cp = (char *)*pval;
+    const char *cp = (const char *)*pval;
 
     /* use memcpy, because we may not be uint32_t aligned */
     memcpy(&utmp, cp, sizeof(utmp));
@@ -220,8 +220,8 @@ static int uint32_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
     int indent, const ASN1_PCTX *pctx)
 {
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED)
-        return BIO_printf(out, "%d\n", (int)**(int32_t **)pval);
-    return BIO_printf(out, "%u\n", (unsigned int)**(uint32_t **)pval);
+        return BIO_printf(out, "%d\n", (int)**(const int32_t **)pval);
+    return BIO_printf(out, "%u\n", (unsigned int)**(const uint32_t **)pval);
 }
 
 /* Define the primitives themselves */

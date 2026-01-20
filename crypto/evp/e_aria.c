@@ -53,16 +53,16 @@ BLOCK_CIPHER_generic(NID_aria, 256, 1, 16, ctr, ctr, CTR, 0)
     | EVP_CIPH_CUSTOM_COPY | EVP_CIPH_FLAG_AEAD_CIPHER \
     | EVP_CIPH_CUSTOM_IV_LENGTH)
 
-#define BLOCK_CIPHER_aead(keylen, mode, MODE)          \
-    static const EVP_CIPHER aria_##keylen##_##mode = { \
-        NID_aria_##keylen##_##mode,                    \
-        1, keylen / 8, 12,                             \
-        ARIA_AUTH_FLAGS | EVP_CIPH_##MODE##_MODE,      \
-        EVP_ORIG_GLOBAL                                \
-    };                                                 \
-    const EVP_CIPHER *EVP_aria_##keylen##_##mode(void) \
-    {                                                  \
-        return (EVP_CIPHER *)&aria_##keylen##_##mode;  \
+#define BLOCK_CIPHER_aead(keylen, mode, MODE)               \
+    static const EVP_CIPHER aria_##keylen##_##mode = {      \
+        NID_aria_##keylen##_##mode,                         \
+        1, keylen / 8, 12,                                  \
+        ARIA_AUTH_FLAGS | EVP_CIPH_##MODE##_MODE,           \
+        EVP_ORIG_GLOBAL                                     \
+    };                                                      \
+    const EVP_CIPHER *EVP_aria_##keylen##_##mode(void)      \
+    {                                                       \
+        return (const EVP_CIPHER *)&aria_##keylen##_##mode; \
     }
 
 BLOCK_CIPHER_aead(128, gcm, GCM)

@@ -420,7 +420,7 @@ static void get_legacy_evp_names(int base_nid, int nid, const char *pem_name,
 
 static void get_legacy_cipher_names(const OBJ_NAME *on, void *arg)
 {
-    const EVP_CIPHER *cipher = (void *)OBJ_NAME_get(on->name, on->type);
+    const EVP_CIPHER *cipher = (const void *)OBJ_NAME_get(on->name, on->type);
 
     if (cipher != NULL)
         get_legacy_evp_names(NID_undef, EVP_CIPHER_get_type(cipher), NULL, arg);
@@ -428,7 +428,7 @@ static void get_legacy_cipher_names(const OBJ_NAME *on, void *arg)
 
 static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
 {
-    const EVP_MD *md = (void *)OBJ_NAME_get(on->name, on->type);
+    const EVP_MD *md = (const void *)OBJ_NAME_get(on->name, on->type);
 
     if (md != NULL)
         get_legacy_evp_names(NID_undef, EVP_MD_get_type(md), NULL, arg);

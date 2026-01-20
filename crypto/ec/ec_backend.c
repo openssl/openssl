@@ -741,7 +741,7 @@ int ossl_x509_algor_is_sm2(const X509_ALGOR *palg)
     X509_ALGOR_get0(NULL, &ptype, &pval, palg);
 
     if (ptype == V_ASN1_OBJECT)
-        return OBJ_obj2nid((ASN1_OBJECT *)pval) == NID_sm2;
+        return OBJ_obj2nid((const ASN1_OBJECT *)pval) == NID_sm2;
 
     if (ptype == V_ASN1_SEQUENCE) {
         const ASN1_STRING *str = pval;

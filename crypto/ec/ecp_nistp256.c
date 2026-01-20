@@ -129,10 +129,10 @@ static const u64 bottom63bits = 0x7ffffffffffffffful;
  */
 static void bin32_to_felem(felem out, const u8 in[32])
 {
-    out[0] = *((u64 *)&in[0]);
-    out[1] = *((u64 *)&in[8]);
-    out[2] = *((u64 *)&in[16]);
-    out[3] = *((u64 *)&in[24]);
+    out[0] = *((const u64 *)&in[0]);
+    out[1] = *((const u64 *)&in[8]);
+    out[2] = *((const u64 *)&in[16]);
+    out[3] = *((const u64 *)&in[24]);
 }
 
 /*
@@ -1637,7 +1637,7 @@ static void select_point(const u64 idx, unsigned int size,
     memset(out, 0, sizeof(*out) * 3);
 
     for (i = 0; i < size; i++) {
-        const u64 *inlimbs = (u64 *)&pre_comp[i][0][0];
+        const u64 *inlimbs = (const u64 *)&pre_comp[i][0][0];
         u64 mask = i ^ idx;
         mask |= mask >> 4;
         mask |= mask >> 2;

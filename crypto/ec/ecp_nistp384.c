@@ -116,12 +116,12 @@ static const limb bottom56bits = 0xffffffffffffff;
 static void bin48_to_felem(felem out, const u8 in[48])
 {
     memset(out, 0, 56);
-    out[0] = (*((limb *)&in[0])) & bottom56bits;
-    out[1] = (*((limb_aX *)&in[7])) & bottom56bits;
-    out[2] = (*((limb_aX *)&in[14])) & bottom56bits;
-    out[3] = (*((limb_aX *)&in[21])) & bottom56bits;
-    out[4] = (*((limb_aX *)&in[28])) & bottom56bits;
-    out[5] = (*((limb_aX *)&in[35])) & bottom56bits;
+    out[0] = (*((const limb *)&in[0])) & bottom56bits;
+    out[1] = (*((const limb_aX *)&in[7])) & bottom56bits;
+    out[2] = (*((const limb_aX *)&in[14])) & bottom56bits;
+    out[3] = (*((const limb_aX *)&in[21])) & bottom56bits;
+    out[4] = (*((const limb_aX *)&in[28])) & bottom56bits;
+    out[5] = (*((const limb_aX *)&in[35])) & bottom56bits;
     memmove(&out[6], &in[42], 6);
 }
 

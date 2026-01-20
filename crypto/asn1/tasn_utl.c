@@ -254,9 +254,9 @@ const ASN1_TEMPLATE *ossl_asn1_do_adb(const ASN1_VALUE *val,
      * might be a legitimate value in the table
      */
     if ((tt->flags & ASN1_TFLG_ADB_OID) != 0)
-        selector = OBJ_obj2nid((ASN1_OBJECT *)*sfld);
+        selector = OBJ_obj2nid((const ASN1_OBJECT *)*sfld);
     else
-        selector = ASN1_INTEGER_get((ASN1_INTEGER *)*sfld);
+        selector = ASN1_INTEGER_get((const ASN1_INTEGER *)*sfld);
 
     /* Let application callback translate value */
     if (adb->adb_cb != NULL && adb->adb_cb(&selector) == 0) {

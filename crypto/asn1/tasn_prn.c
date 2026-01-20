@@ -433,7 +433,7 @@ static int asn1_primitive_print(BIO *out, const ASN1_VALUE **fld,
     const ASN1_PCTX *pctx)
 {
     long utype;
-    ASN1_STRING *str;
+    const ASN1_STRING *str;
     int ret = 1, needlf = 1;
     const char *pname;
     const ASN1_PRIMITIVE_FUNCS *pf;
@@ -443,20 +443,20 @@ static int asn1_primitive_print(BIO *out, const ASN1_VALUE **fld,
     if (pf && pf->prim_print)
         return pf->prim_print(out, fld, it, indent, pctx);
     if (it->itype == ASN1_ITYPE_MSTRING) {
-        str = (ASN1_STRING *)*fld;
+        str = (const ASN1_STRING *)*fld;
         utype = str->type & ~V_ASN1_NEG;
     } else {
         utype = it->utype;
         if (utype == V_ASN1_BOOLEAN)
             str = NULL;
         else
-            str = (ASN1_STRING *)*fld;
+            str = (const ASN1_STRING *)*fld;
     }
     if (utype == V_ASN1_ANY) {
         const ASN1_TYPE *atype = (const ASN1_TYPE *)*fld;
         utype = atype->type;
         fld = (const ASN1_VALUE **)&atype->value.asn1_value; /* actually is const */
-        str = (ASN1_STRING *)*fld;
+        str = (const ASN1_STRING *)*fld;
         if (pctx->flags & ASN1_PCTX_FLAGS_NO_ANY_TYPE)
             pname = NULL;
         else

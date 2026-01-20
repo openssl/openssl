@@ -142,15 +142,15 @@ static const limb bottom58bits = 0x3ffffffffffffff;
  */
 static void bin66_to_felem(felem out, const u8 in[66])
 {
-    out[0] = (*((limb *)&in[0])) & bottom58bits;
-    out[1] = (*((limb_aX *)&in[7]) >> 2) & bottom58bits;
-    out[2] = (*((limb_aX *)&in[14]) >> 4) & bottom58bits;
-    out[3] = (*((limb_aX *)&in[21]) >> 6) & bottom58bits;
-    out[4] = (*((limb_aX *)&in[29])) & bottom58bits;
-    out[5] = (*((limb_aX *)&in[36]) >> 2) & bottom58bits;
-    out[6] = (*((limb_aX *)&in[43]) >> 4) & bottom58bits;
-    out[7] = (*((limb_aX *)&in[50]) >> 6) & bottom58bits;
-    out[8] = (*((limb_aX *)&in[58])) & bottom57bits;
+    out[0] = (*((const limb *)&in[0])) & bottom58bits;
+    out[1] = (*((const limb_aX *)&in[7]) >> 2) & bottom58bits;
+    out[2] = (*((const limb_aX *)&in[14]) >> 4) & bottom58bits;
+    out[3] = (*((const limb_aX *)&in[21]) >> 6) & bottom58bits;
+    out[4] = (*((const limb_aX *)&in[29])) & bottom58bits;
+    out[5] = (*((const limb_aX *)&in[36]) >> 2) & bottom58bits;
+    out[6] = (*((const limb_aX *)&in[43]) >> 4) & bottom58bits;
+    out[7] = (*((const limb_aX *)&in[50]) >> 6) & bottom58bits;
+    out[8] = (*((const limb_aX *)&in[58])) & bottom57bits;
 }
 
 /*
