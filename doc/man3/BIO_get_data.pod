@@ -38,9 +38,10 @@ is also closed when the BIO is freed.
 
 =head1 WARNING
 
-Do not use these functions outside the implementation of a custom BIO.
+Do not use BIO_set_data(), BIO_get_data(), BIO_set_init(), BIO_get_init(), outside
+the implementation of a custom BIO.
 Calling BIO_set_data() on an existing BIO implementation with data that it does
-not expect will leads to unexcepted results.
+not expect will lead to unexpected results.
 
 =head1 RETURN VALUES
 
