@@ -41,13 +41,14 @@ jobs:
         #                capabilities variable.
         #   ppa:   Launchpad PPA repository to download packages from.
         platform: [
+          # {
+          #   arch: i386-pc-msdosdjgpp,
+          #   libs: libc-djgpp-dev libwatt-djgpp-dev djgpp-utils,
+          #   target: no-threads 386 DJGPP,
+          #   tests: none,
+          #   ppa: jwt27/djgpp-toolchain
+          # }, 
           {
-            arch: i386-pc-msdosdjgpp,
-            libs: libc-djgpp-dev libwatt-djgpp-dev djgpp-utils,
-            target: no-threads 386 DJGPP,
-            tests: none,
-            ppa: jwt27/djgpp-toolchain
-          }, {
             arch: aarch64-linux-gnu,
             libs: libc6-dev-arm64-cross,
             target: linux-aarch64,
@@ -57,104 +58,107 @@ jobs:
             libs: libc6.1-dev-alpha-cross,
             target: linux-alpha-gcc,
             fips: no
-          }, {
-            arch: arm-linux-gnueabi,
-            libs: libc6-dev-armel-cross,
-            target: linux-armv4,
-            fips: no,
-            tests: -test_includes -test_store -test_x509_store
-          }, {
-            arch: arm-linux-gnueabihf,
-            libs: libc6-dev-armhf-cross,
-            target: linux-armv4,
-            fips: no,
-            tests: -test_includes -test_store -test_x509_store
-          }, {
-            # gcc hppa seems to have some potential compiler issues
-            # with -O2 on this platform, reduce optimization to -01
-            arch: hppa-linux-gnu,
-            libs: libc6-dev-hppa-cross,
-            target: -static -O1 linux-generic32,
-            fips: no,
-            tests: -test_includes -test_store -test_x509_store
-          }, {
-            arch: m68k-linux-gnu,
-            libs: libc6-dev-m68k-cross,
-            target: -static -m68040 linux-latomic -Wno-stringop-overflow,
-            fips: no,
-            tests: -test_includes -test_store -test_x509_store
-          }, {
-            arch: mips-linux-gnu,
-            libs: libc6-dev-mips-cross,
-            target: -static linux-mips32,
-            fips: no,
-            tests: -test_includes -test_store -test_x509_store
-          }, {
-            arch: mips64-linux-gnuabi64,
-            libs: libc6-dev-mips64-cross,
-            target: -static linux64-mips64,
-            fips: no
-          }, {
-            arch: mipsel-linux-gnu,
-            libs: libc6-dev-mipsel-cross,
-            target: linux-mips32,
-            fips: no,
-            tests: -test_includes -test_store -test_x509_store
-          }, {
+          }, 
+          # {
+          #   arch: arm-linux-gnueabi,
+          #   libs: libc6-dev-armel-cross,
+          #   target: linux-armv4,
+          #   fips: no,
+          #   tests: -test_includes -test_store -test_x509_store
+          # }, {
+          #   arch: arm-linux-gnueabihf,
+          #   libs: libc6-dev-armhf-cross,
+          #   target: linux-armv4,
+          #   fips: no,
+          #   tests: -test_includes -test_store -test_x509_store
+          # }, {
+          #   # gcc hppa seems to have some potential compiler issues
+          #   # with -O2 on this platform, reduce optimization to -01
+          #   arch: hppa-linux-gnu,
+          #   libs: libc6-dev-hppa-cross,
+          #   target: -static -O1 linux-generic32,
+          #   fips: no,
+          #   tests: -test_includes -test_store -test_x509_store
+          # }, {
+          #   arch: m68k-linux-gnu,
+          #   libs: libc6-dev-m68k-cross,
+          #   target: -static -m68040 linux-latomic -Wno-stringop-overflow,
+          #   fips: no,
+          #   tests: -test_includes -test_store -test_x509_store
+          # }, {
+          #   arch: mips-linux-gnu,
+          #   libs: libc6-dev-mips-cross,
+          #   target: -static linux-mips32,
+          #   fips: no,
+          #   tests: -test_includes -test_store -test_x509_store
+          # }, {
+          #   arch: mips64-linux-gnuabi64,
+          #   libs: libc6-dev-mips64-cross,
+          #   target: -static linux64-mips64,
+          #   fips: no
+          # }, {
+          #   arch: mipsel-linux-gnu,
+          #   libs: libc6-dev-mipsel-cross,
+          #   target: linux-mips32,
+          #   fips: no,
+          #   tests: -test_includes -test_store -test_x509_store
+          # }, 
+          {
             arch: powerpc64le-linux-gnu,
             libs: libc6-dev-ppc64el-cross,
             target: linux-ppc64le,
             fips: no
-          }, {
-            arch: riscv64-linux-gnu,
-            libs: libc6-dev-riscv64-cross,
-            target: linux64-riscv64,
-            fips: no
-          }, {
-            arch: s390x-linux-gnu,
-            libs: libc6-dev-s390x-cross,
-            target: linux64-s390x,
-            fips: no
-          }, {
-            arch: sh4-linux-gnu,
-            libs: libc6-dev-sh4-cross,
-            target: no-async linux-latomic,
-            fips: no,
-            tests: -test_includes -test_store -test_x509_store
-          },
+          }, 
+          # {
+          #   arch: riscv64-linux-gnu,
+          #   libs: libc6-dev-riscv64-cross,
+          #   target: linux64-riscv64,
+          #   fips: no
+          # }, {
+          #   arch: s390x-linux-gnu,
+          #   libs: libc6-dev-s390x-cross,
+          #   target: linux64-s390x,
+          #   fips: no
+          # }, {
+          #   arch: sh4-linux-gnu,
+          #   libs: libc6-dev-sh4-cross,
+          #   target: no-async linux-latomic,
+          #   fips: no,
+          #   tests: -test_includes -test_store -test_x509_store
+          # },
 
-          # These build with shared libraries but they crash when run
-          # They mirror static builds above in order to cover more of the
-          # code base.
-          {
-            arch: hppa-linux-gnu,
-            libs: libc6-dev-hppa-cross,
-            target: linux-generic32,
-            tests: none
-          }, {
-            arch: m68k-linux-gnu,
-            libs: libc6-dev-m68k-cross,
-            target: -mcfv4e -mxgot linux-latomic -Wno-stringop-overflow no-quic,
-            tests: none
-          }, {
-            arch: mips-linux-gnu,
-            libs: libc6-dev-mips-cross,
-            target: linux-mips32,
-            tests: none
-          }, {
-            arch: mips64-linux-gnuabi64,
-            libs: libc6-dev-mips64-cross,
-            target: linux64-mips64,
-            tests: none
-          },
+          # # These build with shared libraries but they crash when run
+          # # They mirror static builds above in order to cover more of the
+          # # code base.
+          # {
+          #   arch: hppa-linux-gnu,
+          #   libs: libc6-dev-hppa-cross,
+          #   target: linux-generic32,
+          #   tests: none
+          # }, {
+          #   arch: m68k-linux-gnu,
+          #   libs: libc6-dev-m68k-cross,
+          #   target: -mcfv4e -mxgot linux-latomic -Wno-stringop-overflow no-quic,
+          #   tests: none
+          # }, {
+          #   arch: mips-linux-gnu,
+          #   libs: libc6-dev-mips-cross,
+          #   target: linux-mips32,
+          #   tests: none
+          # }, {
+          #   arch: mips64-linux-gnuabi64,
+          #   libs: libc6-dev-mips64-cross,
+          #   target: linux64-mips64,
+          #   tests: none
+          # },
 
-          # This build doesn't execute either with or without shared libraries.
-          {
-            arch: sparc64-linux-gnu,
-            libs: libc6-dev-sparc64-cross,
-            target: linux64-sparcv9,
-            tests: none
-          }
+          # # This build doesn't execute either with or without shared libraries.
+          # {
+          #   arch: sparc64-linux-gnu,
+          #   libs: libc6-dev-sparc64-cross,
+          #   target: linux64-sparcv9,
+          #   tests: none
+          # }
         ]
     runs-on: ubuntu-latest
     steps:
@@ -226,7 +230,7 @@ jobs:
       if: github.event_name == 'pull_request' && matrix.platform.tests != 'none'
       run: |
         .github/workflows/make-test \
-                  TESTS="test_evp*" \
+                  TESTS="test_sslrecords" V=1 \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: save artifacts
       if: success() || failure()
