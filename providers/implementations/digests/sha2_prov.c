@@ -30,8 +30,9 @@
 
 #define SHA2_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
 
-extern int SHA256_Update_thunk(void *ctx, const unsigned char *data, size_t sz);
 extern int SHA1_Update_thunk(void *ctx, const unsigned char *data, size_t sz);
+extern int SHA256_Update_thunk(void *ctx, const unsigned char *data, size_t sz);
+extern int SHA512_Update_thunk(void *ctx, const unsigned char *data, size_t sz);
 
 /* Special set_params method for SSL3 */
 static int sha1_set_ctx_params(void *vctx, const OSSL_PARAM params[])
@@ -315,19 +316,19 @@ IMPLEMENT_digest_functions_with_serialize(sha384, SHA512_CTX,
 IMPLEMENT_digest_functions_with_serialize(sha512, SHA512_CTX,
     SHA512_CBLOCK, SHA512_DIGEST_LENGTH,
     SHA2_FLAGS, SHA512_Init,
-    SHA512_Update, SHA512_Final,
+    SHA512_Update_thunk, SHA512_Final,
     SHA512_Serialize, SHA512_Deserialize)
 
 /* ossl_sha512_224_functions */
 IMPLEMENT_digest_functions_with_serialize(sha512_224, SHA512_CTX,
     SHA512_CBLOCK, SHA224_DIGEST_LENGTH,
     SHA2_FLAGS, sha512_224_init,
-    SHA512_Update, SHA512_Final,
+    SHA512_Update_thunk, SHA512_Final,
     SHA512_Serialize, SHA512_Deserialize)
 
 /* ossl_sha512_256_functions */
 IMPLEMENT_digest_functions_with_serialize(sha512_256, SHA512_CTX,
     SHA512_CBLOCK, SHA256_DIGEST_LENGTH,
     SHA2_FLAGS, sha512_256_init,
-    SHA512_Update, SHA512_Final,
+    SHA512_Update_thunk, SHA512_Final,
     SHA512_Serialize, SHA512_Deserialize)
