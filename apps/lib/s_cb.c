@@ -471,7 +471,7 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
     int argi, long argl, int ret, size_t *processed)
 {
     BIO *out;
-    BIO_MMSG_CB_ARGS *mmsgargs;
+    const BIO_MMSG_CB_ARGS *mmsgargs;
     size_t i;
 
     out = (BIO *)BIO_get_callback_arg(bio);
@@ -482,27 +482,27 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
     case (BIO_CB_READ | BIO_CB_RETURN):
         if (ret > 0 && processed != NULL) {
             BIO_printf(out, "read from %p [%p] (%zu bytes => %zu (0x%zX))\n",
-                (void *)bio, (void *)argp, len, *processed, *processed);
+                (void *)bio, (const void *)argp, len, *processed, *processed);
             BIO_dump(out, argp, (int)*processed);
         } else {
             BIO_printf(out, "read from %p [%p] (%zu bytes => %d)\n",
-                (void *)bio, (void *)argp, len, ret);
+                (void *)bio, (const void *)argp, len, ret);
         }
         break;
 
     case (BIO_CB_WRITE | BIO_CB_RETURN):
         if (ret > 0 && processed != NULL) {
             BIO_printf(out, "write to %p [%p] (%zu bytes => %zu (0x%zX))\n",
-                (void *)bio, (void *)argp, len, *processed, *processed);
+                (void *)bio, (const void *)argp, len, *processed, *processed);
             BIO_dump(out, argp, (int)*processed);
         } else {
             BIO_printf(out, "write to %p [%p] (%zu bytes => %d)\n",
-                (void *)bio, (void *)argp, len, ret);
+                (void *)bio, (const void *)argp, len, ret);
         }
         break;
 
     case (BIO_CB_RECVMMSG | BIO_CB_RETURN):
-        mmsgargs = (BIO_MMSG_CB_ARGS *)argp;
+        mmsgargs = (const BIO_MMSG_CB_ARGS *)argp;
         if (ret > 0) {
             for (i = 0; i < *(mmsgargs->msgs_processed); i++) {
                 BIO_MSG *msg = (BIO_MSG *)((char *)mmsgargs->msg
@@ -523,7 +523,7 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
         break;
 
     case (BIO_CB_SENDMMSG | BIO_CB_RETURN):
-        mmsgargs = (BIO_MMSG_CB_ARGS *)argp;
+        mmsgargs = (const BIO_MMSG_CB_ARGS *)argp;
         if (ret > 0) {
             for (i = 0; i < *(mmsgargs->msgs_processed); i++) {
                 BIO_MSG *msg = (BIO_MSG *)((char *)mmsgargs->msg

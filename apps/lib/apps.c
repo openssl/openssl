@@ -2662,7 +2662,7 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
         BIO *sbio = NULL;
         X509_STORE *ts = SSL_CTX_get_cert_store(ssl_ctx);
         X509_VERIFY_PARAM *vpm = X509_STORE_get0_param(ts);
-        const char *host = vpm == NULL ? NULL : X509_VERIFY_PARAM_get0_host(vpm, 0 /* first hostname */);
+        char *host = vpm == NULL ? NULL : X509_VERIFY_PARAM_get0_host(vpm, 0 /* first hostname */);
 
         /* adapt after fixing callback design flaw, see #17088 */
         if ((info->use_proxy

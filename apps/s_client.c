@@ -995,7 +995,7 @@ int s_client_main(int argc, char **argv)
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
     struct timeval tv;
 #endif
-    const char *servername = NULL;
+    char *servername = NULL;
     char *sname_alloc = NULL;
     int noservername = 0;
     const char *alpn_in = NULL;
@@ -2648,7 +2648,7 @@ re_start:
         int bytes = 0;
         int ssl_flg = 0x800;
         int pos;
-        const unsigned char *packet = (const unsigned char *)sbuf;
+        unsigned char *packet = (unsigned char *)sbuf;
 
         /* Receiving Initial Handshake packet. */
         bytes = BIO_read(sbio, (void *)packet, BUFSIZZ);
@@ -3689,7 +3689,7 @@ static int ocsp_resp_cb(SSL *s, void *arg)
         rsp = d2i_OCSP_RESPONSE(NULL, &p, len);
         if (rsp == NULL) {
             BIO_puts(arg, "OCSP response parse error\n");
-            BIO_dump_indent(arg, (char *)p, len, 4);
+            BIO_dump_indent(arg, p, len, 4);
             return 0;
         }
         print_ocsp_response(arg, rsp);
