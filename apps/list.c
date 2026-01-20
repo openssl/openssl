@@ -35,7 +35,9 @@
 
 static int verbose = 0;
 static const char *select_name = NULL;
+/* The first element is a placeholder to avoid compilation failure on empty array. */
 static const char *const disabled_features[] = {
+    ""
 #ifdef OPENSSL_NO_ASYNC
     "ASYNC",
 #endif
@@ -134,6 +136,7 @@ static const char *const disabled_features[] = {
 #endif
 };
 static const char *const disabled_protocols[] = {
+    "",
 #ifdef OPENSSL_NO_CMP
     "CMP",
 #endif
@@ -181,6 +184,7 @@ static const char *const disabled_protocols[] = {
 #endif
 };
 static const char *const disabled_algorithms[] = {
+    "",
 #ifdef OPENSSL_NO_ARGON2
     "ARGON2",
 #endif
@@ -382,9 +386,9 @@ IS_FETCHABLE(encoder, OSSL_ENCODER)
 
 #define PRINT_DISABLED_FEATURE(disabled_list, message)               \
     do {                                                             \
-        if (OSSL_NELEM(disabled_list) > 0) {                         \
+        if (OSSL_NELEM(disabled_list) > 1) {                         \
             BIO_puts(bio_out, message ":\n");                        \
-            for (size_t i = 0; i < OSSL_NELEM(disabled_list); i++) { \
+            for (size_t i = 1; i < OSSL_NELEM(disabled_list); i++) { \
                 BIO_printf(bio_out, "\t- %s\n", disabled_list[i]);   \
             }                                                        \
         }                                                            \
