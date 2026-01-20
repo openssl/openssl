@@ -62,6 +62,7 @@ enum st_test_state {
     SELF_TEST_STATE_PASSED,
     SELF_TEST_STATE_FAILED,
     SELF_TEST_STATE_IMPLICIT,
+    SELF_TEST_STATE_NO_IMPLICIT,
 };
 
 /* used to store raw parameters for keys and algorithms */

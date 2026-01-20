@@ -1175,6 +1175,7 @@ int SELF_TEST_kats_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
      */
     switch (st_all_tests[id].state) {
     case SELF_TEST_STATE_INIT:
+    case SELF_TEST_STATE_NO_IMPLICIT:
         break;
     case SELF_TEST_STATE_FAILED:
         return 0;

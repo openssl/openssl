@@ -1348,6 +1348,7 @@ static int FIPS_kat_deferred(OSSL_LIB_CTX *libctx, self_test_id_t id)
          */
         switch (st_all_tests[id].state) {
         case SELF_TEST_STATE_INIT:
+        case SELF_TEST_STATE_NO_IMPLICIT:
             break;
         case SELF_TEST_STATE_PASSED:
             ret = 1;
