@@ -142,7 +142,7 @@ struct quic_urxe_st {
 static ossl_unused ossl_inline unsigned char *
 ossl_quic_urxe_data(const QUIC_URXE *e)
 {
-    return (unsigned char *)&e[1];
+    return CONST_CAST(unsigned char *) &e[1];
 }
 
 static ossl_unused ossl_inline unsigned char *

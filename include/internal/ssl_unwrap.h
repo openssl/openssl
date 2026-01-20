@@ -28,12 +28,12 @@
 #define SSL_CONNECTION_GET_USER_SSL(sc) ((sc)->user_ssl)
 #ifndef OPENSSL_NO_QUIC
 struct ssl_connection_st *ossl_quic_obj_get0_handshake_layer(QUIC_OBJ *obj);
-#define SSL_CONNECTION_FROM_SSL_int(ssl, c)                                                                        \
-    ((ssl) == NULL ? NULL                                                                                          \
-                   : ((ssl)->type == SSL_TYPE_SSL_CONNECTION                                                       \
-                             ? (c SSL_CONNECTION *)(ssl)                                                           \
-                             : (SSL_TYPE_IS_QUIC((ssl)->type)                                                      \
-                                       ? (c SSL_CONNECTION *)ossl_quic_obj_get0_handshake_layer((QUIC_OBJ *)(ssl)) \
+#define SSL_CONNECTION_FROM_SSL_int(ssl, c)                                                                                  \
+    ((ssl) == NULL ? NULL                                                                                                    \
+                   : ((ssl)->type == SSL_TYPE_SSL_CONNECTION                                                                 \
+                             ? (c SSL_CONNECTION *)(ssl)                                                                     \
+                             : (SSL_TYPE_IS_QUIC((ssl)->type)                                                                \
+                                       ? (c SSL_CONNECTION *)ossl_quic_obj_get0_handshake_layer(CONST_CAST(QUIC_OBJ *)(ssl)) \
                                        : NULL)))
 #define SSL_CONNECTION_FROM_SSL(ssl) \
     SSL_CONNECTION_FROM_SSL_int(ssl, SSL_CONNECTION_NO_CONST)

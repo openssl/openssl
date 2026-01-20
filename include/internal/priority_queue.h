@@ -42,7 +42,7 @@
     static ossl_unused ossl_inline size_t                                                                                           \
     ossl_pqueue_##type##_num(const PRIORITY_QUEUE_OF(type) * pq)                                                                    \
     {                                                                                                                               \
-        return ossl_pqueue_num((OSSL_PQUEUE *)pq);                                                                                  \
+        return ossl_pqueue_num(CONST_CAST(OSSL_PQUEUE *) pq);                                                                       \
     }                                                                                                                               \
     static ossl_unused ossl_inline int                                                                                              \
     ossl_pqueue_##type##_push(PRIORITY_QUEUE_OF(type) * pq,                                                                         \
@@ -53,7 +53,7 @@
     static ossl_unused ossl_inline ctype *                                                                                          \
     ossl_pqueue_##type##_peek(const PRIORITY_QUEUE_OF(type) * pq)                                                                   \
     {                                                                                                                               \
-        return (type *)ossl_pqueue_peek((OSSL_PQUEUE *)pq);                                                                         \
+        return (type *)ossl_pqueue_peek(CONST_CAST(OSSL_PQUEUE *) pq);                                                              \
     }                                                                                                                               \
     static ossl_unused ossl_inline ctype *                                                                                          \
     ossl_pqueue_##type##_pop(PRIORITY_QUEUE_OF(type) * pq)                                                                          \

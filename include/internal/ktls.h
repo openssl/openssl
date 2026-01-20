@@ -115,7 +115,7 @@ static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
     *((unsigned char *)CMSG_DATA(cmsg)) = record_type;
     msg.msg_controllen = cmsg->cmsg_len;
 
-    msg_iov.iov_base = (void *)data;
+    msg_iov.iov_base = (void *)(uintptr_t)data;
     msg_iov.iov_len = length;
     msg.msg_iov = &msg_iov;
     msg.msg_iovlen = 1;
@@ -362,7 +362,7 @@ static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
     *((unsigned char *)CMSG_DATA(cmsg)) = record_type;
     msg.msg_controllen = cmsg->cmsg_len;
 
-    msg_iov.iov_base = (void *)data;
+    msg_iov.iov_base = (void *)(uintptr_t)data;
     msg_iov.iov_len = length;
     msg.msg_iov = &msg_iov;
     msg.msg_iovlen = 1;

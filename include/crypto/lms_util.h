@@ -13,6 +13,7 @@
 #include <openssl/params.h>
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
+#include "internal/common.h"
 
 /*
  * This LMS implementation assumes that the hash algorithm must be the same for
@@ -45,7 +46,7 @@ static ossl_unused ossl_inline int lms_evp_md_ctx_init(EVP_MD_CTX *ctx, const EV
     /* The OpenSSL SHAKE implementation requires the xoflen to be set */
     if (strncmp(lms_params->digestname, "SHAKE", 5) == 0) {
         params[0] = OSSL_PARAM_construct_uint32(OSSL_DIGEST_PARAM_XOFLEN,
-            (uint32_t *)&lms_params->n);
+            CONST_CAST(uint32_t *) &lms_params->n);
         p = params;
     }
     return EVP_DigestInit_ex2(ctx, md, p);
