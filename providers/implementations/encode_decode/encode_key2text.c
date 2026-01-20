@@ -443,7 +443,7 @@ static int ecx_to_text(BIO *out, const void *key, int selection)
 #ifndef OPENSSL_NO_ML_KEM
 static int ml_kem_to_text(BIO *out, const void *vkey, int selection)
 {
-    return ossl_ml_kem_key_to_text(out, (ML_KEM_KEY *)vkey, selection);
+    return ossl_ml_kem_key_to_text(out, (const ML_KEM_KEY *)vkey, selection);
 }
 #endif
 
@@ -452,7 +452,7 @@ static int ml_kem_to_text(BIO *out, const void *vkey, int selection)
 #ifndef OPENSSL_NO_SLH_DSA
 static int slh_dsa_to_text(BIO *out, const void *key, int selection)
 {
-    return ossl_slh_dsa_key_to_text(out, (SLH_DSA_KEY *)key, selection);
+    return ossl_slh_dsa_key_to_text(out, (const SLH_DSA_KEY *)key, selection);
 }
 #endif /* OPENSSL_NO_SLH_DSA */
 
@@ -618,7 +618,7 @@ err:
 #ifndef OPENSSL_NO_ML_DSA
 static int ml_dsa_to_text(BIO *out, const void *key, int selection)
 {
-    return ossl_ml_dsa_key_to_text(out, (ML_DSA_KEY *)key, selection);
+    return ossl_ml_dsa_key_to_text(out, (const ML_DSA_KEY *)key, selection);
 }
 #endif /* OPENSSL_NO_ML_DSA */
 /* ---------------------------------------------------------------------- */

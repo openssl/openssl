@@ -110,11 +110,11 @@ static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey,
     }
 
     if (pmacctx->key->cipher.cipher != NULL)
-        ciphername = (char *)EVP_CIPHER_get0_name(pmacctx->key->cipher.cipher);
+        ciphername = EVP_CIPHER_get0_name(pmacctx->key->cipher.cipher);
 
     if (!ossl_prov_set_macctx(pmacctx->macctx,
-            (char *)ciphername,
-            (char *)mdname,
+            ciphername,
+            mdname,
             pmacctx->key->properties, params))
         return 0;
 
