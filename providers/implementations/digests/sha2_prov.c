@@ -31,6 +31,7 @@
 #define SHA2_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
 
 extern int SHA256_Update_thunk(void *ctx, const unsigned char *data, size_t sz);
+extern int SHA1_Update_thunk(void *ctx, const unsigned char *data, size_t sz);
 
 /* Special set_params method for SSL3 */
 static int sha1_set_ctx_params(void *vctx, const OSSL_PARAM params[])
@@ -281,7 +282,7 @@ static int SHA512_Deserialize(SHA512_CTX *c, const unsigned char *in,
 /* ossl_sha1_functions */
 IMPLEMENT_digest_functions_with_settable_ctx(
     sha1, SHA_CTX, SHA_CBLOCK, SHA_DIGEST_LENGTH, SHA2_FLAGS,
-    SHA1_Init, SHA1_Update, SHA1_Final,
+    SHA1_Init, SHA1_Update_thunk, SHA1_Final,
     sha1_settable_ctx_params, sha1_set_ctx_params)
 
 /* ossl_sha224_functions */
