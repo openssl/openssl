@@ -335,6 +335,11 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
     if ((st->do_not_defer_tests != NULL)
         && strcmp(st->do_not_defer_tests, "1") == 0) {
         on_demand_test = 1;
+        /* ensure all states are set so no test is passed implicitly,
+         * this forces each test to always run regardless of order */
+        for (int i = 0; i < ST_ID_MAX; i++) {
+            st_all_tests[i].state = SELF_TEST_STATE_NO_IMPLICIT;
+        }
     }
 
     if (on_demand_test && !SELF_TEST_kats(ev, st->libctx))

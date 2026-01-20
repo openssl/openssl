@@ -57,11 +57,12 @@ enum st_test_category {
 };
 
 enum st_test_state {
-    SELF_TEST_STATE_INIT = 0,
-    SELF_TEST_STATE_IN_PROGRESS,
-    SELF_TEST_STATE_PASSED,
-    SELF_TEST_STATE_FAILED,
-    SELF_TEST_STATE_IMPLICIT,
+    SELF_TEST_STATE_INIT = 0, /* Test has not been execute yet */
+    SELF_TEST_STATE_IN_PROGRESS, /* Test is currently being executed */
+    SELF_TEST_STATE_PASSED, /* Test is marked as passed */
+    SELF_TEST_STATE_FAILED, /* Test failed */
+    SELF_TEST_STATE_IMPLICIT, /* Marks test as implicitly handled */
+    SELF_TEST_STATE_NO_IMPLICIT, /* Like INIT, but can't pass implicitly */
 };
 
 /* used to store raw parameters for keys and algorithms */
