@@ -14,6 +14,7 @@
 #include <openssl/ec.h>
 #include "crypto/evp.h"
 #include "crypto/ec.h"
+#include "internal/common.h"
 
 /*
  * This file is meant to contain functions to provide EVP_PKEY support for EC
@@ -130,7 +131,7 @@ int EVP_PKEY_CTX_get_ecdh_kdf_type(EVP_PKEY_CTX *ctx)
 int EVP_PKEY_CTX_set_ecdh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
     return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, EVP_PKEY_OP_DERIVE,
-        EVP_PKEY_CTRL_EC_KDF_MD, 0, (void *)(md));
+        EVP_PKEY_CTRL_EC_KDF_MD, 0, CONST_CAST(void *)(md));
 }
 
 /*

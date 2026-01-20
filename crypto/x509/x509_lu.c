@@ -348,7 +348,7 @@ STACK_OF(X509_OBJECT) *ossl_x509_store_ht_get_by_name(const X509_STORE *store,
     int ret;
 
     if (xn->canon_enc == NULL || xn->modified) {
-        ret = i2d_X509_NAME((X509_NAME *)xn, NULL);
+        ret = i2d_X509_NAME(CONST_CAST(X509_NAME *) xn, NULL);
         if (ret < 0)
             return NULL;
     }
@@ -377,7 +377,7 @@ static int x509_name_objs_ht_insert(const X509_STORE *store, const X509_NAME *xn
     }
 
     if (xn->canon_enc == NULL || xn->modified) {
-        ret = i2d_X509_NAME((X509_NAME *)xn, NULL);
+        ret = i2d_X509_NAME(CONST_CAST(X509_NAME *) xn, NULL);
         if (ret < 0)
             return 0;
     }
@@ -675,11 +675,11 @@ static int x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
     switch (type) {
     case X509_LU_X509:
         stmp.data.x509 = &x509_s;
-        x509_s.cert_info.subject = (X509_NAME *)name; /* won't modify it */
+        x509_s.cert_info.subject = CONST_CAST(X509_NAME *) name; /* won't modify it */
         break;
     case X509_LU_CRL:
         stmp.data.crl = &crl_s;
-        crl_s.crl.issuer = (X509_NAME *)name; /* won't modify it */
+        crl_s.crl.issuer = CONST_CAST(X509_NAME *) name; /* won't modify it */
         break;
     case X509_LU_NONE:
     default:
@@ -750,7 +750,7 @@ err:
 #ifndef OPENSSL_NO_DEPRECATED_4_0
 STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *xs)
 {
-    X509_STORE *store = (X509_STORE *)xs;
+    X509_STORE *store = CONST_CAST(X509_STORE *) xs;
 
     if (xs->objs_ht != NULL) {
         ossl_ht_foreach_until(xs->objs_ht, obj_ht_foreach_object, &store->objs);
@@ -962,8 +962,8 @@ X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h,
         return sk_X509_OBJECT_value(h, idx);
     for (i = idx, num = sk_X509_OBJECT_num(h); i < num; i++) {
         obj = sk_X509_OBJECT_value(h, i);
-        if (x509_object_cmp((const X509_OBJECT **)&obj,
-                (const X509_OBJECT **)&x))
+        if (x509_object_cmp(CONST_CAST(const X509_OBJECT **) &obj,
+                CONST_CAST(const X509_OBJECT **) &x))
             return NULL;
         if (x->type == X509_LU_X509) {
             if (!X509_cmp(obj->data.x509, x->data.x509))

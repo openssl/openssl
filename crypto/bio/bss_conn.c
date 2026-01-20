@@ -868,7 +868,7 @@ BIO *BIO_new_connect(const char *str)
     ret = BIO_new(BIO_s_connect());
     if (ret == NULL)
         return NULL;
-    if (BIO_set_conn_hostname(ret, str))
+    if (BIO_set_conn_hostname(ret, CONST_CAST(char *) str))
         return ret;
     BIO_free(ret);
     return NULL;

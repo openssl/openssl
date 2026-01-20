@@ -113,7 +113,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
             break;
         case 2:
             tmp_prov = EVP_KEYMGMT_get0_provider(ctx->keymgmt);
-            cipher = evp_asym_cipher_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
+            cipher = evp_asym_cipher_fetch_from_prov(CONST_CAST(OSSL_PROVIDER *) tmp_prov,
                 supported_ciph, ctx->propquery);
             if (cipher == NULL)
                 goto err;
@@ -132,7 +132,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
          * export it if |tmp_keymgmt| is different from |ctx->pkey|'s keymgmt)
          */
         tmp_keymgmt_tofree = tmp_keymgmt
-            = evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
+            = evp_keymgmt_fetch_from_prov(CONST_CAST(OSSL_PROVIDER *) tmp_prov,
                 EVP_KEYMGMT_get0_name(ctx->keymgmt),
                 ctx->propquery);
         if (tmp_keymgmt != NULL)

@@ -68,9 +68,9 @@ void *ASN1_item_dup(const ASN1_ITEM *it, const void *x)
     }
 
     if (asn1_cb != NULL) {
-        if (!asn1_cb(ASN1_OP_DUP_PRE, (ASN1_VALUE **)&x, it, NULL)
-            || !asn1_cb(ASN1_OP_GET0_LIBCTX, (ASN1_VALUE **)&x, it, &libctx)
-            || !asn1_cb(ASN1_OP_GET0_PROPQ, (ASN1_VALUE **)&x, it, &propq))
+        if (!asn1_cb(ASN1_OP_DUP_PRE, CONST_CAST(ASN1_VALUE **) &x, it, NULL)
+            || !asn1_cb(ASN1_OP_GET0_LIBCTX, CONST_CAST(ASN1_VALUE **) &x, it, &libctx)
+            || !asn1_cb(ASN1_OP_GET0_PROPQ, CONST_CAST(ASN1_VALUE **) &x, it, &propq))
             goto auxerr;
     }
 
@@ -84,7 +84,7 @@ void *ASN1_item_dup(const ASN1_ITEM *it, const void *x)
     OPENSSL_free(b);
 
     if (asn1_cb != NULL
-        && !asn1_cb(ASN1_OP_DUP_POST, &ret, it, (void *)x))
+        && !asn1_cb(ASN1_OP_DUP_POST, &ret, it, CONST_CAST(void *) x))
         goto auxerr;
 
     return ret;

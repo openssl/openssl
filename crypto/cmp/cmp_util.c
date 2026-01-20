@@ -88,7 +88,7 @@ const char *ossl_cmp_log_parse_metadata(const char *buf,
 
         if ((*level = parse_level(buf)) < 0 && p_line != NULL) {
             /* check if buf contains location info and logging level */
-            char *p_level_tmp = (char *)p_level;
+            char *p_level_tmp = CONST_CAST(char *) p_level;
             const long line_number = strtol(++p_line, &p_level_tmp, 10);
 
             p_level = p_level_tmp;

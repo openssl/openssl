@@ -394,7 +394,7 @@ int i2d_RSAPublicKey_bio(BIO *bp, const RSA *rsa)
 
 int i2d_RSA_PUBKEY_bio(BIO *bp, const RSA *rsa)
 {
-    return ASN1_i2d_bio_of(RSA, i2d_RSA_PUBKEY, bp, rsa);
+    return ASN1_i2d_bio_of(RSA, i2d_RSA_PUBKEY, bp, CONST_CAST(RSA *) rsa);
 }
 
 #ifndef OPENSSL_NO_DSA
@@ -406,7 +406,7 @@ DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa)
 
 int i2d_DSAPrivateKey_fp(FILE *fp, const DSA *dsa)
 {
-    return ASN1_i2d_fp_of(DSA, i2d_DSAPrivateKey, fp, dsa);
+    return ASN1_i2d_fp_of(DSA, i2d_DSAPrivateKey, fp, CONST_CAST(DSA *) dsa);
 }
 
 DSA *d2i_DSA_PUBKEY_fp(FILE *fp, DSA **dsa)
@@ -416,7 +416,7 @@ DSA *d2i_DSA_PUBKEY_fp(FILE *fp, DSA **dsa)
 
 int i2d_DSA_PUBKEY_fp(FILE *fp, const DSA *dsa)
 {
-    return ASN1_i2d_fp_of(DSA, i2d_DSA_PUBKEY, fp, dsa);
+    return ASN1_i2d_fp_of(DSA, i2d_DSA_PUBKEY, fp, CONST_CAST(DSA *) dsa);
 }
 #endif
 
@@ -427,7 +427,7 @@ DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa)
 
 int i2d_DSAPrivateKey_bio(BIO *bp, const DSA *dsa)
 {
-    return ASN1_i2d_bio_of(DSA, i2d_DSAPrivateKey, bp, dsa);
+    return ASN1_i2d_bio_of(DSA, i2d_DSAPrivateKey, bp, CONST_CAST(DSA *) dsa);
 }
 
 DSA *d2i_DSA_PUBKEY_bio(BIO *bp, DSA **dsa)
@@ -437,7 +437,7 @@ DSA *d2i_DSA_PUBKEY_bio(BIO *bp, DSA **dsa)
 
 int i2d_DSA_PUBKEY_bio(BIO *bp, const DSA *dsa)
 {
-    return ASN1_i2d_bio_of(DSA, i2d_DSA_PUBKEY, bp, dsa);
+    return ASN1_i2d_bio_of(DSA, i2d_DSA_PUBKEY, bp, CONST_CAST(DSA *) dsa);
 }
 
 #endif
@@ -451,7 +451,7 @@ EC_KEY *d2i_EC_PUBKEY_fp(FILE *fp, EC_KEY **eckey)
 
 int i2d_EC_PUBKEY_fp(FILE *fp, const EC_KEY *eckey)
 {
-    return ASN1_i2d_fp_of(EC_KEY, i2d_EC_PUBKEY, fp, eckey);
+    return ASN1_i2d_fp_of(EC_KEY, i2d_EC_PUBKEY, fp, CONST_CAST(EC_KEY *) eckey);
 }
 
 EC_KEY *d2i_ECPrivateKey_fp(FILE *fp, EC_KEY **eckey)
@@ -461,7 +461,7 @@ EC_KEY *d2i_ECPrivateKey_fp(FILE *fp, EC_KEY **eckey)
 
 int i2d_ECPrivateKey_fp(FILE *fp, const EC_KEY *eckey)
 {
-    return ASN1_i2d_fp_of(EC_KEY, i2d_ECPrivateKey, fp, eckey);
+    return ASN1_i2d_fp_of(EC_KEY, i2d_ECPrivateKey, fp, CONST_CAST(EC_KEY *) eckey);
 }
 #endif
 EC_KEY *d2i_EC_PUBKEY_bio(BIO *bp, EC_KEY **eckey)
@@ -471,7 +471,7 @@ EC_KEY *d2i_EC_PUBKEY_bio(BIO *bp, EC_KEY **eckey)
 
 int i2d_EC_PUBKEY_bio(BIO *bp, const EC_KEY *ecdsa)
 {
-    return ASN1_i2d_bio_of(EC_KEY, i2d_EC_PUBKEY, bp, ecdsa);
+    return ASN1_i2d_bio_of(EC_KEY, i2d_EC_PUBKEY, bp, CONST_CAST(EC_KEY *) ecdsa);
 }
 
 EC_KEY *d2i_ECPrivateKey_bio(BIO *bp, EC_KEY **eckey)
@@ -481,7 +481,7 @@ EC_KEY *d2i_ECPrivateKey_bio(BIO *bp, EC_KEY **eckey)
 
 int i2d_ECPrivateKey_bio(BIO *bp, const EC_KEY *eckey)
 {
-    return ASN1_i2d_bio_of(EC_KEY, i2d_ECPrivateKey, bp, eckey);
+    return ASN1_i2d_bio_of(EC_KEY, i2d_ECPrivateKey, bp, CONST_CAST(EC_KEY *) eckey);
 }
 #endif
 
@@ -506,7 +506,7 @@ int X509_digest(const X509 *cert, const EVP_MD *md, unsigned char *data,
         memcpy(data, cert->sha1_hash, sizeof(cert->sha1_hash));
         return 1;
     }
-    return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509), md, (char *)cert,
+    return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509), md, CONST_CAST(char *) cert,
         data, len, cert->libctx, cert->propq);
 }
 
@@ -585,7 +585,7 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
     } else if ((md = EVP_MD_fetch(cert->libctx, OBJ_nid2sn(mdnid),
                     cert->propq))
             == NULL
-        && (md = (EVP_MD *)EVP_get_digestbynid(mdnid)) == NULL) {
+        && (md = CONST_CAST(EVP_MD *) EVP_get_digestbynid(mdnid)) == NULL) {
         ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
         return NULL;
     }
@@ -621,21 +621,21 @@ int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
         memcpy(md, data->sha1_hash, sizeof(data->sha1_hash));
         return 1;
     }
-    return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509_CRL), type, (char *)data,
+    return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509_CRL), type, CONST_CAST(char *) data,
         md, len, data->libctx, data->propq);
 }
 
 int X509_REQ_digest(const X509_REQ *data, const EVP_MD *type,
     unsigned char *md, unsigned int *len)
 {
-    return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509_REQ), type, (char *)data,
+    return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509_REQ), type, CONST_CAST(char *) data,
         md, len, data->libctx, data->propq);
 }
 
 int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,
     unsigned char *md, unsigned int *len)
 {
-    return ASN1_item_digest(ASN1_ITEM_rptr(X509_NAME), type, (char *)data,
+    return ASN1_item_digest(ASN1_ITEM_rptr(X509_NAME), type, CONST_CAST(char *) data,
         md, len);
 }
 

@@ -2241,7 +2241,7 @@ static int dgram_sctp_write(BIO *b, const char *in, int inl)
         }
     }
 
-    iov[0].iov_base = (char *)in;
+    iov[0].iov_base = CONST_CAST(char *) in;
     iov[0].iov_len = inl;
     msg.msg_name = NULL;
     msg.msg_namelen = 0;

@@ -96,7 +96,7 @@ BIO *BIO_new_mem_buf(const void *buf, int len)
     bb = (BIO_BUF_MEM *)ret->ptr;
     b = bb->buf;
     /* Cast away const and trust in the MEM_RDONLY flag. */
-    b->data = (void *)buf;
+    b->data = CONST_CAST(void *) buf;
     b->length = sz;
     b->max = sz;
     *bb->readp = *bb->buf;

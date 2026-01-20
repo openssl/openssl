@@ -71,7 +71,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
         }
         prot_part_der_len = (size_t)len;
 
-        pbm_str = (ASN1_STRING *)ppval;
+        pbm_str = CONST_CAST(ASN1_STRING *) ppval;
         pbm_str_uc = pbm_str->data;
         pbm = d2i_OSSL_CRMF_PBMPARAMETER(NULL, &pbm_str_uc, pbm_str->length);
         if (pbm == NULL) {

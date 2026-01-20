@@ -41,7 +41,7 @@ static const BN_ULONG inv_sqrt_2_val[] = {
 };
 
 const BIGNUM ossl_bn_inv_sqrt_2 = {
-    (BN_ULONG *)inv_sqrt_2_val,
+    CONST_CAST(BN_ULONG *) inv_sqrt_2_val,
     OSSL_NELEM(inv_sqrt_2_val),
     OSSL_NELEM(inv_sqrt_2_val),
     0,
@@ -207,8 +207,8 @@ int ossl_bn_rsa_fips186_5_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
 
     p1i = (p1 != NULL) ? p1 : BN_CTX_get(ctx);
     p2i = (p2 != NULL) ? p2 : BN_CTX_get(ctx);
-    Xp1i = (Xp1 != NULL) ? (BIGNUM *)Xp1 : BN_CTX_get(ctx);
-    Xp2i = (Xp2 != NULL) ? (BIGNUM *)Xp2 : BN_CTX_get(ctx);
+    Xp1i = (Xp1 != NULL) ? CONST_CAST(BIGNUM *) Xp1 : BN_CTX_get(ctx);
+    Xp2i = (Xp2 != NULL) ? CONST_CAST(BIGNUM *) Xp2 : BN_CTX_get(ctx);
     if (p1i == NULL || p2i == NULL || Xp1i == NULL || Xp2i == NULL)
         goto err;
 

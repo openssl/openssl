@@ -17,6 +17,7 @@
 #include "internal/nelem.h"
 #include "crypto/evp.h"
 #include "internal/provider.h"
+#include "internal/common.h"
 #include "evp_local.h"
 
 EVP_MAC_CTX *EVP_MAC_CTX_new(EVP_MAC *mac)
@@ -285,7 +286,7 @@ unsigned char *EVP_Q_mac(OSSL_LIB_CTX *libctx,
                 goto err;
             }
         }
-        *p++ = OSSL_PARAM_construct_utf8_string(param_name, (char *)subalg, 0);
+        *p++ = OSSL_PARAM_construct_utf8_string(param_name, CONST_CAST(char *) subalg, 0);
     }
 
     /*
@@ -301,7 +302,7 @@ unsigned char *EVP_Q_mac(OSSL_LIB_CTX *libctx,
      */
     if (propq != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_PROPERTIES,
-            (char *)propq, 0);
+            CONST_CAST(char *) propq, 0);
 
     *p = OSSL_PARAM_construct_end();
 

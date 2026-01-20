@@ -107,7 +107,7 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
             break;
         case 2:
             tmp_prov = EVP_KEYMGMT_get0_provider(ctx->keymgmt);
-            kem = evp_kem_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
+            kem = evp_kem_fetch_from_prov(CONST_CAST(OSSL_PROVIDER *) tmp_prov,
                 supported_kem, ctx->propquery);
 
             if (kem == NULL) {
@@ -129,7 +129,7 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
          * to it (evp_pkey_export_to_provider() is smart enough to only actually
          * export it if |tmp_keymgmt| is different from |ctx->pkey|'s keymgmt)
          */
-        tmp_keymgmt_tofree = tmp_keymgmt = evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
+        tmp_keymgmt_tofree = tmp_keymgmt = evp_keymgmt_fetch_from_prov(CONST_CAST(OSSL_PROVIDER *) tmp_prov,
             EVP_KEYMGMT_get0_name(ctx->keymgmt),
             ctx->propquery);
         if (tmp_keymgmt != NULL) {

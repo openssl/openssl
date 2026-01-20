@@ -1860,7 +1860,7 @@ int ossl_ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
             g_pre_comp = &pre->g_pre_comp[0];
         else
             /* try to use the standard precomputation */
-            g_pre_comp = (felem(*)[3])gmul;
+            g_pre_comp = (felem(*)[3])(uintptr_t)gmul;
         generator = EC_POINT_new(group);
         if (generator == NULL)
             goto err;

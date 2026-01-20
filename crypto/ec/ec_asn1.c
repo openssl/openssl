@@ -21,6 +21,7 @@
 #include "internal/nelem.h"
 #include "crypto/asn1.h"
 #include "crypto/asn1_dsa.h"
+#include "internal/common.h"
 
 #ifndef FIPS_MODULE
 
@@ -1330,7 +1331,7 @@ int ECDSA_size(const EC_KEY *ec)
     if (bn == NULL)
         return 0;
 
-    sig.r = sig.s = (BIGNUM *)bn;
+    sig.r = sig.s = CONST_CAST(BIGNUM *) bn;
     ret = i2d_ECDSA_SIG(&sig, NULL);
 
     if (ret < 0)

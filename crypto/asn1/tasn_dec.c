@@ -16,6 +16,7 @@
 #include <openssl/err.h>
 #include "crypto/asn1.h"
 #include "internal/numbers.h"
+#include "internal/common.h"
 #include "asn1_local.h"
 
 /*
@@ -970,7 +971,7 @@ static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
         }
         /* If we've already allocated a buffer use it */
         if (*free_cont) {
-            ASN1_STRING_set0(stmp, (unsigned char *)cont /* UGLY CAST! */, len);
+            ASN1_STRING_set0(stmp, CONST_CAST(void *) cont, len);
             *free_cont = 0;
         } else {
             if (!ASN1_STRING_set(stmp, cont, len)) {

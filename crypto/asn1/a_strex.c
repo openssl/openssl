@@ -274,7 +274,7 @@ static int do_dump(unsigned long lflags, char_io *io_ch, void *arg,
         return outlen + 1;
     }
     t.type = str->type;
-    t.value.ptr = (char *)str;
+    t.value.ptr = CONST_CAST(char *) str;
     der_len = i2d_ASN1_TYPE(&t, NULL);
     if (der_len <= 0)
         return -1;

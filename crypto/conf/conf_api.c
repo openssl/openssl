@@ -27,7 +27,7 @@ CONF_VALUE *_CONF_get_section(const CONF *conf, const char *section)
     if (conf == NULL || section == NULL)
         return NULL;
     vv.name = NULL;
-    vv.section = (char *)section;
+    vv.section = CONST_CAST(char *) section;
     return conf->data != NULL ? lh_CONF_VALUE_retrieve(conf->data, &vv) : NULL;
 }
 
@@ -76,8 +76,8 @@ char *_CONF_get_string(const CONF *conf, const char *section,
     if (conf->data == NULL)
         return NULL;
     if (section != NULL) {
-        vv.name = (char *)name;
-        vv.section = (char *)section;
+        vv.name = CONST_CAST(char *) name;
+        vv.section = CONST_CAST(char *) section;
         v = lh_CONF_VALUE_retrieve(conf->data, &vv);
         if (v != NULL)
             return v->value;
@@ -88,7 +88,7 @@ char *_CONF_get_string(const CONF *conf, const char *section,
         }
     }
     vv.section = "default";
-    vv.name = (char *)name;
+    vv.name = CONST_CAST(char *) name;
     v = lh_CONF_VALUE_retrieve(conf->data, &vv);
     if (v == NULL)
         return NULL;

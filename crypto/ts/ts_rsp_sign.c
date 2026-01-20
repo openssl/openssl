@@ -734,7 +734,7 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
         signer_md = EVP_MD_fetch(ctx->libctx, EVP_MD_get0_name(ctx->signer_md),
             ctx->propq);
     else
-        signer_md = (EVP_MD *)ctx->signer_md;
+        signer_md = CONST_CAST(EVP_MD *) ctx->signer_md;
 
     if ((si = PKCS7_add_signature(p7, ctx->signer_cert,
              ctx->signer_key, signer_md))

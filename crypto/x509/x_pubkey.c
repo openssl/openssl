@@ -551,7 +551,7 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
 
         /* pub_encode() only encode parameters, not the key itself */
         if (a->ameth->pub_encode != NULL && a->ameth->pub_encode(xpk, a)) {
-            xpk->pkey = (EVP_PKEY *)a;
+            xpk->pkey = CONST_CAST(EVP_PKEY *) a;
             ret = i2d_X509_PUBKEY(xpk, pp);
             xpk->pkey = NULL;
         }
@@ -623,7 +623,7 @@ int i2d_RSA_PUBKEY(const RSA *a, unsigned char **pp)
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         return -1;
     }
-    (void)EVP_PKEY_assign_RSA(pktmp, (RSA *)a);
+    (void)EVP_PKEY_assign_RSA(pktmp, CONST_CAST(RSA *) a);
     ret = i2d_PUBKEY(pktmp, pp);
     pktmp->pkey.ptr = NULL;
     EVP_PKEY_free(pktmp);
@@ -665,7 +665,7 @@ int ossl_i2d_DH_PUBKEY(const DH *a, unsigned char **pp)
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         return -1;
     }
-    (void)EVP_PKEY_assign_DH(pktmp, (DH *)a);
+    (void)EVP_PKEY_assign_DH(pktmp, CONST_CAST(DH *) a);
     ret = i2d_PUBKEY(pktmp, pp);
     pktmp->pkey.ptr = NULL;
     EVP_PKEY_free(pktmp);
@@ -706,7 +706,7 @@ int ossl_i2d_DHx_PUBKEY(const DH *a, unsigned char **pp)
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         return -1;
     }
-    (void)EVP_PKEY_assign(pktmp, EVP_PKEY_DHX, (DH *)a);
+    (void)EVP_PKEY_assign(pktmp, EVP_PKEY_DHX, CONST_CAST(DH *) a);
     ret = i2d_PUBKEY(pktmp, pp);
     pktmp->pkey.ptr = NULL;
     EVP_PKEY_free(pktmp);
@@ -772,7 +772,7 @@ int i2d_DSA_PUBKEY(const DSA *a, unsigned char **pp)
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         return -1;
     }
-    (void)EVP_PKEY_assign_DSA(pktmp, (DSA *)a);
+    (void)EVP_PKEY_assign_DSA(pktmp, CONST_CAST(DSA *) a);
     ret = i2d_PUBKEY(pktmp, pp);
     pktmp->pkey.ptr = NULL;
     EVP_PKEY_free(pktmp);
@@ -817,7 +817,7 @@ int i2d_EC_PUBKEY(const EC_KEY *a, unsigned char **pp)
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         return -1;
     }
-    (void)EVP_PKEY_assign_EC_KEY(pktmp, (EC_KEY *)a);
+    (void)EVP_PKEY_assign_EC_KEY(pktmp, CONST_CAST(EC_KEY *) a);
     ret = i2d_PUBKEY(pktmp, pp);
     pktmp->pkey.ptr = NULL;
     EVP_PKEY_free(pktmp);
@@ -859,7 +859,7 @@ int ossl_i2d_ED25519_PUBKEY(const ECX_KEY *a, unsigned char **pp)
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         return -1;
     }
-    (void)EVP_PKEY_assign(pktmp, EVP_PKEY_ED25519, (ECX_KEY *)a);
+    (void)EVP_PKEY_assign(pktmp, EVP_PKEY_ED25519, CONST_CAST(ECX_KEY *) a);
     ret = i2d_PUBKEY(pktmp, pp);
     pktmp->pkey.ptr = NULL;
     EVP_PKEY_free(pktmp);
@@ -901,7 +901,7 @@ int ossl_i2d_ED448_PUBKEY(const ECX_KEY *a, unsigned char **pp)
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         return -1;
     }
-    (void)EVP_PKEY_assign(pktmp, EVP_PKEY_ED448, (ECX_KEY *)a);
+    (void)EVP_PKEY_assign(pktmp, EVP_PKEY_ED448, CONST_CAST(ECX_KEY *) a);
     ret = i2d_PUBKEY(pktmp, pp);
     pktmp->pkey.ptr = NULL;
     EVP_PKEY_free(pktmp);
@@ -943,7 +943,7 @@ int ossl_i2d_X25519_PUBKEY(const ECX_KEY *a, unsigned char **pp)
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         return -1;
     }
-    (void)EVP_PKEY_assign(pktmp, EVP_PKEY_X25519, (ECX_KEY *)a);
+    (void)EVP_PKEY_assign(pktmp, EVP_PKEY_X25519, CONST_CAST(ECX_KEY *) a);
     ret = i2d_PUBKEY(pktmp, pp);
     pktmp->pkey.ptr = NULL;
     EVP_PKEY_free(pktmp);
@@ -985,7 +985,7 @@ int ossl_i2d_X448_PUBKEY(const ECX_KEY *a, unsigned char **pp)
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         return -1;
     }
-    (void)EVP_PKEY_assign(pktmp, EVP_PKEY_X448, (ECX_KEY *)a);
+    (void)EVP_PKEY_assign(pktmp, EVP_PKEY_X448, CONST_CAST(ECX_KEY *) a);
     ret = i2d_PUBKEY(pktmp, pp);
     pktmp->pkey.ptr = NULL;
     EVP_PKEY_free(pktmp);

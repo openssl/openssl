@@ -711,7 +711,7 @@ static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base)
     }
     /* Just have hostname left to match: case insensitive */
     emlptr = emlat + 1;
-    emlhostlen = IA5_OFFSET_LEN(eml, emlptr);
+    emlhostlen = IA5_OFFSET_LEN(eml, CONST_CAST(char *) emlptr);
     if (emlhostlen != strlen(ulabel)
         || ia5ncasecmp(ulabel, emlptr, emlhostlen) != 0) {
         ret = X509_V_ERR_PERMITTED_VIOLATION;
@@ -759,8 +759,8 @@ static int nc_email(ASN1_IA5STRING *eml, ASN1_IA5STRING *base)
         baseptr = baseat + 1;
     }
     emlptr = emlat + 1;
-    basehostlen = IA5_OFFSET_LEN(base, baseptr);
-    emlhostlen = IA5_OFFSET_LEN(eml, emlptr);
+    basehostlen = IA5_OFFSET_LEN(base, CONST_CAST(char *) baseptr);
+    emlhostlen = IA5_OFFSET_LEN(eml, CONST_CAST(char *) emlptr);
     /* Just have hostname left to match: case insensitive */
     if (basehostlen != emlhostlen || ia5ncasecmp(baseptr, emlptr, emlhostlen))
         return X509_V_ERR_PERMITTED_VIOLATION;

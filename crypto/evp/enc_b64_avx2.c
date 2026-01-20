@@ -213,7 +213,7 @@ static inline __m256i insert_line_feed32(__m256i input, int K)
     __m128i identity = _mm_setr_epi8(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
 
     if (K >= 16) {
-        __m128i maskhi = _mm_loadu_si128((__m128i *)shuffle_masks[K - 16]);
+        __m128i maskhi = _mm_loadu_si128(CONST_CAST(__m128i *) shuffle_masks[K - 16]);
         __m256i mask = _mm256_set_m128i(maskhi, identity);
         __m256i lf_pos = _mm256_cmpeq_epi8(mask, _mm256_set1_epi8((char)0x80));
         __m256i shuffled = _mm256_shuffle_epi8(input, mask);
@@ -225,7 +225,7 @@ static inline __m256i insert_line_feed32(__m256i input, int K)
     __m256i shift = _mm256_alignr_epi8(input, _mm256_permute2x128_si256(input, input, 0x21),
         15);
     input = _mm256_blend_epi32(input, shift, 0xF0);
-    __m128i masklo = _mm_loadu_si128((__m128i *)shuffle_masks[K]);
+    __m128i masklo = _mm_loadu_si128(CONST_CAST(__m128i *) shuffle_masks[K]);
     __m256i mask = _mm256_set_m128i(identity, masklo);
     __m256i lf_pos = _mm256_cmpeq_epi8(mask, _mm256_set1_epi8((char)0x80));
     __m256i shuffled = _mm256_shuffle_epi8(input, mask);

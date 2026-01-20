@@ -290,7 +290,7 @@ BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
     ci->contentType = OBJ_nid2obj(NID_pkcs7_enveloped);
     ci->d.envelopedData = env;
     if (secret != NULL
-        && CMS_decrypt_set1_password(ci, (unsigned char *)ASN1_STRING_get0_data(secret),
+        && CMS_decrypt_set1_password(ci, CONST_CAST(unsigned char *) ASN1_STRING_get0_data(secret),
                ASN1_STRING_length(secret))
             != 1)
         goto end;
@@ -686,7 +686,7 @@ int CMS_RecipientInfo_kekri_id_cmp(CMS_RecipientInfo *ri,
     kekri = ri->d.kekri;
     tmp_os.type = V_ASN1_OCTET_STRING;
     tmp_os.flags = 0;
-    tmp_os.data = (unsigned char *)id;
+    tmp_os.data = CONST_CAST(unsigned char *) id;
     tmp_os.length = (int)idlen;
     return ASN1_OCTET_STRING_cmp(&tmp_os, kekri->kekid->keyIdentifier);
 }

@@ -957,10 +957,10 @@ static int int_set_rsa_md_name(EVP_PKEY_CTX *ctx,
     }
 
     /* Cast away the const. This is read only so should be safe */
-    *p++ = OSSL_PARAM_construct_utf8_string(mdkey, (char *)mdname, 0);
+    *p++ = OSSL_PARAM_construct_utf8_string(mdkey, CONST_CAST(char *) mdname, 0);
     if (evp_pkey_ctx_is_provided(ctx) && mdprops != NULL) {
         /* Cast away the const. This is read only so should be safe */
-        *p++ = OSSL_PARAM_construct_utf8_string(propkey, (char *)mdprops, 0);
+        *p++ = OSSL_PARAM_construct_utf8_string(propkey, CONST_CAST(char *) mdprops, 0);
     }
     *p++ = OSSL_PARAM_construct_end();
 
@@ -1030,7 +1030,7 @@ int EVP_PKEY_CTX_get_rsa_padding(EVP_PKEY_CTX *ctx, int *pad_mode)
 int EVP_PKEY_CTX_set_rsa_pss_keygen_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
     return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN,
-        EVP_PKEY_CTRL_MD, 0, (void *)(md));
+        EVP_PKEY_CTRL_MD, 0, CONST_CAST(void *)(md));
 }
 
 int EVP_PKEY_CTX_set_rsa_pss_keygen_md_name(EVP_PKEY_CTX *ctx,
@@ -1053,7 +1053,7 @@ int EVP_PKEY_CTX_set_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
         return -1;
 
     return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_CRYPT,
-        EVP_PKEY_CTRL_RSA_OAEP_MD, 0, (void *)(md));
+        EVP_PKEY_CTRL_RSA_OAEP_MD, 0, CONST_CAST(void *)(md));
 }
 
 int EVP_PKEY_CTX_set_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
@@ -1093,7 +1093,7 @@ int EVP_PKEY_CTX_get_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
 int EVP_PKEY_CTX_set_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
     return RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT,
-        EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)(md));
+        EVP_PKEY_CTRL_RSA_MGF1_MD, 0, CONST_CAST(void *)(md));
 }
 
 int EVP_PKEY_CTX_set_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
@@ -1120,7 +1120,7 @@ int EVP_PKEY_CTX_get_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, char *name,
 int EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
     return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN,
-        EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)(md));
+        EVP_PKEY_CTRL_RSA_MGF1_MD, 0, CONST_CAST(void *)(md));
 }
 
 int EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md_name(EVP_PKEY_CTX *ctx,
@@ -1164,7 +1164,7 @@ int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, void *label, int llen)
 
     /* Accept NULL for backward compatibility */
     if (label == NULL && llen == 0)
-        plabel = (void *)empty;
+        plabel = CONST_CAST(void *) empty;
 
     /* Cast away the const. This is read only so should be safe */
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL,

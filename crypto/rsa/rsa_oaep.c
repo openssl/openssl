@@ -111,7 +111,7 @@ int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OSSL_LIB_CTX *libctx,
     db = to + mdlen + 1;
 
     /* step 3a: hash the additional input */
-    if (!EVP_Digest((void *)param, plen, db, NULL, md, NULL))
+    if (!EVP_Digest(CONST_CAST(void *) param, plen, db, NULL, md, NULL))
         goto err;
     /* step 3b: zero bytes array of length nLen - KLen - 2 HLen -2 */
     memset(db + mdlen, 0, emlen - flen - 2 * mdlen - 1);
@@ -265,7 +265,7 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     for (i = 0; i < dblen; i++)
         db[i] ^= maskeddb[i];
 
-    if (!EVP_Digest((void *)param, plen, phash, NULL, md, NULL))
+    if (!EVP_Digest(CONST_CAST(void *) param, plen, phash, NULL, md, NULL))
         goto cleanup;
 
     good &= constant_time_is_zero(CRYPTO_memcmp(db, phash, mdlen));

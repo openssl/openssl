@@ -40,7 +40,7 @@ int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, const char *str)
         return 0;
     t.type = V_ASN1_UTCTIME;
     t.length = (int)len;
-    t.data = (unsigned char *)str;
+    t.data = CONST_CAST(unsigned char *) str;
     t.flags = 0;
 
     if (!ASN1_UTCTIME_check(&t))

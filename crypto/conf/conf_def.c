@@ -128,7 +128,7 @@ static int def_init_default(CONF *conf)
 
     memset(conf, 0, sizeof(*conf));
     conf->meth = &default_method;
-    conf->meth_data = (void *)CONF_type_default;
+    conf->meth_data = CONST_CAST(void *) CONF_type_default;
 
     return 1;
 }
@@ -141,7 +141,7 @@ static int def_init_WIN32(CONF *conf)
 
     memset(conf, 0, sizeof(*conf));
     conf->meth = &WIN32_method;
-    conf->meth_data = (void *)CONF_type_win32;
+    conf->meth_data = CONST_CAST(void *) CONF_type_win32;
 
     return 1;
 }

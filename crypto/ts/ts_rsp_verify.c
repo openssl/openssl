@@ -438,7 +438,7 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
     md = EVP_MD_fetch(NULL, name, NULL);
 
     if (md == NULL)
-        md = (EVP_MD *)EVP_get_digestbyname(name);
+        md = CONST_CAST(EVP_MD *) EVP_get_digestbyname(name);
 
     if (md == NULL) {
         (void)ERR_clear_last_mark();

@@ -774,12 +774,12 @@ static int fix_cipher_md(enum state state,
          * differently.  Some calls pass a NID as p1, others pass an
          * EVP_CIPHER pointer as p2...
          */
-        ctx->p2 = (char *)(ctx->p2 == NULL
+        ctx->p2 = CONST_CAST(char *)(ctx->p2 == NULL
                 ? OBJ_nid2sn(ctx->p1)
                 : get_name(ctx->p2));
         ctx->p1 = (int)strlen(ctx->p2);
     } else if (state == POST_PARAMS_TO_CTRL && ctx->action_type == OSSL_ACTION_GET) {
-        ctx->p2 = (ctx->p2 == NULL ? "" : (char *)get_name(ctx->p2));
+        ctx->p2 = (ctx->p2 == NULL ? "" : CONST_CAST(char *) get_name(ctx->p2));
         ctx->p1 = (int)strlen(ctx->p2);
     }
 
@@ -791,10 +791,10 @@ static int fix_cipher_md(enum state state,
          * Here's how we reuse |ctx->orig_p2| that was set in the
          * PRE_CTRL_TO_PARAMS state above.
          */
-        *(void **)ctx->orig_p2 = (void *)get_algo_by_name(ctx->pctx->libctx, ctx->p2);
+        *(void **)ctx->orig_p2 = CONST_CAST(void *) get_algo_by_name(ctx->pctx->libctx, ctx->p2);
         ctx->p1 = 1;
     } else if (state == PRE_PARAMS_TO_CTRL && ctx->action_type == OSSL_ACTION_SET) {
-        ctx->p2 = (void *)get_algo_by_name(ctx->pctx->libctx, ctx->p2);
+        ctx->p2 = CONST_CAST(void *) get_algo_by_name(ctx->pctx->libctx, ctx->p2);
         ctx->p1 = 0;
     }
 
@@ -892,7 +892,7 @@ static int fix_kdf_type(enum state state,
         /* Convert KDF type numbers to strings */
         for (; kdf_type_map->kdf_type_str != NULL; kdf_type_map++)
             if (ctx->p1 == kdf_type_map->kdf_type_num) {
-                ctx->p2 = (char *)kdf_type_map->kdf_type_str;
+                ctx->p2 = CONST_CAST(char *) kdf_type_map->kdf_type_str;
                 ret = 1;
                 break;
             }
@@ -1009,7 +1009,7 @@ static int fix_dh_nid(enum state state,
         return 0;
 
     if (state == PRE_CTRL_TO_PARAMS) {
-        if ((ctx->p2 = (char *)ossl_ffc_named_group_get_name(ossl_ffc_uid_to_dh_named_group(ctx->p1))) == NULL) {
+        if ((ctx->p2 = CONST_CAST(char *) ossl_ffc_named_group_get_name(ossl_ffc_uid_to_dh_named_group(ctx->p1))) == NULL) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
             return 0;
         }
@@ -1035,7 +1035,7 @@ static int fix_dh_nid5114(enum state state,
 
     switch (state) {
     case PRE_CTRL_TO_PARAMS:
-        if ((ctx->p2 = (char *)ossl_ffc_named_group_get_name(ossl_ffc_uid_to_dh_named_group(ctx->p1))) == NULL) {
+        if ((ctx->p2 = CONST_CAST(char *) ossl_ffc_named_group_get_name(ossl_ffc_uid_to_dh_named_group(ctx->p1))) == NULL) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
             return 0;
         }
@@ -1046,7 +1046,7 @@ static int fix_dh_nid5114(enum state state,
     case PRE_CTRL_STR_TO_PARAMS:
         if (ctx->p2 == NULL)
             return 0;
-        if ((ctx->p2 = (char *)ossl_ffc_named_group_get_name(ossl_ffc_uid_to_dh_named_group(atoi(ctx->p2)))) == NULL) {
+        if ((ctx->p2 = CONST_CAST(char *) ossl_ffc_named_group_get_name(ossl_ffc_uid_to_dh_named_group(atoi(ctx->p2)))) == NULL) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
             return 0;
         }
@@ -1076,7 +1076,7 @@ static int fix_dh_paramgen_type(enum state state,
         return 0;
 
     if (state == PRE_CTRL_STR_TO_PARAMS) {
-        if ((ctx->p2 = (char *)ossl_dh_gen_type_id2name(atoi(ctx->p2)))
+        if ((ctx->p2 = CONST_CAST(char *) ossl_dh_gen_type_id2name(atoi(ctx->p2)))
             == NULL) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
             return 0;
@@ -1151,7 +1151,7 @@ static int fix_ec_paramgen_curve_nid(enum state state,
         return 0;
 
     if (state == PRE_CTRL_TO_PARAMS) {
-        ctx->p2 = (char *)OBJ_nid2sn(ctx->p1);
+        ctx->p2 = CONST_CAST(char *) OBJ_nid2sn(ctx->p1);
         ctx->p1 = 0;
     } else if (state == PRE_PARAMS_TO_CTRL) {
         /*
@@ -1528,7 +1528,7 @@ static int get_payload_group_name(enum state state,
         if (uid != NID_undef) {
             const DH_NAMED_GROUP *dh_group = ossl_ffc_uid_to_dh_named_group(uid);
 
-            ctx->p2 = (char *)ossl_ffc_named_group_get_name(dh_group);
+            ctx->p2 = CONST_CAST(char *) ossl_ffc_named_group_get_name(dh_group);
         }
     } break;
 #endif
@@ -1540,7 +1540,7 @@ static int get_payload_group_name(enum state state,
         if (grp != NULL)
             nid = EC_GROUP_get_curve_name(grp);
         if (nid != NID_undef)
-            ctx->p2 = (char *)OSSL_EC_curve_nid2name(nid);
+            ctx->p2 = CONST_CAST(char *) OSSL_EC_curve_nid2name(nid);
     } break;
 #endif
     default:
@@ -1574,14 +1574,14 @@ static int get_payload_private_key(enum state state,
     case EVP_PKEY_DH: {
         const DH *dh = EVP_PKEY_get0_DH(pkey);
 
-        ctx->p2 = (BIGNUM *)DH_get0_priv_key(dh);
+        ctx->p2 = CONST_CAST(BIGNUM *) DH_get0_priv_key(dh);
     } break;
 #endif
 #ifndef OPENSSL_NO_EC
     case EVP_PKEY_EC: {
         const EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
 
-        ctx->p2 = (BIGNUM *)EC_KEY_get0_private_key(ec);
+        ctx->p2 = CONST_CAST(BIGNUM *) EC_KEY_get0_private_key(ec);
     } break;
 #endif
     default:
@@ -1611,7 +1611,7 @@ static int get_payload_public_key(enum state state,
             ctx->p2 = buf;
             break;
         case OSSL_PARAM_UNSIGNED_INTEGER:
-            ctx->p2 = (void *)DH_get0_pub_key(EVP_PKEY_get0_DH(pkey));
+            ctx->p2 = CONST_CAST(void *) DH_get0_pub_key(EVP_PKEY_get0_DH(pkey));
             break;
         default:
             return 0;
@@ -1621,7 +1621,7 @@ static int get_payload_public_key(enum state state,
 #ifndef OPENSSL_NO_DSA
     case EVP_PKEY_DSA:
         if (ctx->params->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
-            ctx->p2 = (void *)DSA_get0_pub_key(EVP_PKEY_get0_DSA(pkey));
+            ctx->p2 = CONST_CAST(void *) DSA_get0_pub_key(EVP_PKEY_get0_DSA(pkey));
             break;
         }
         return 0;
@@ -1721,7 +1721,7 @@ static int get_payload_bn(enum state state,
         return 0;
     if (ctx->params->data_type != OSSL_PARAM_UNSIGNED_INTEGER)
         return 0;
-    ctx->p2 = (BIGNUM *)bn;
+    ctx->p2 = CONST_CAST(BIGNUM *) bn;
 
     return default_fixup_args(state, translation, ctx);
 }
@@ -2826,7 +2826,7 @@ int evp_pkey_ctx_ctrl_str_to_param(EVP_PKEY_CTX *pctx,
     }
     ctx.ctrl_str = name;
     ctx.p1 = (int)strlen(value);
-    ctx.p2 = (char *)value;
+    ctx.p2 = CONST_CAST(char *) value;
     ctx.pctx = pctx;
     ctx.params = params;
 
@@ -2924,7 +2924,7 @@ int evp_pkey_ctx_set_params_to_ctrl(EVP_PKEY_CTX *ctx, const OSSL_PARAM *params)
 {
     if (ctx->keymgmt != NULL)
         return 0;
-    return evp_pkey_ctx_setget_params_to_ctrl(ctx, OSSL_ACTION_SET, (OSSL_PARAM *)params);
+    return evp_pkey_ctx_setget_params_to_ctrl(ctx, OSSL_ACTION_SET, CONST_CAST(OSSL_PARAM *) params);
 }
 
 int evp_pkey_ctx_get_params_to_ctrl(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
@@ -2960,7 +2960,7 @@ static int evp_pkey_setget_params_to_ctrl(const EVP_PKEY *pkey,
                 fixup = translation->fixup_args;
             ctx.action_type = translation->action_type;
         }
-        ctx.p2 = (void *)pkey;
+        ctx.p2 = CONST_CAST(void *) pkey;
         ctx.params = params;
 
         /*

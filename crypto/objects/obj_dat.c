@@ -134,7 +134,7 @@ static unsigned long added_obj_hash(const ADDED_OBJ *ca)
     switch (ca->type) {
     case ADDED_DATA:
         ret = (unsigned long)a->length << 20UL;
-        p = (unsigned char *)a->data;
+        p = CONST_CAST(unsigned char *) a->data;
         for (i = 0; i < a->length; i++)
             ret ^= p[i] << ((i * 3) % 24);
         break;
@@ -261,7 +261,7 @@ ASN1_OBJECT *OBJ_nid2obj(int n)
 
     if (n == NID_undef
         || (n > 0 && n < NUM_NID && nid_objs[n].nid != NID_undef))
-        return (ASN1_OBJECT *)&(nid_objs[n]);
+        return CONST_CAST(ASN1_OBJECT *) &(nid_objs[n]);
 
     ad.type = ADDED_NID;
     ad.obj = &ob;
@@ -330,7 +330,7 @@ static int ossl_obj_obj2nid(const ASN1_OBJECT *a)
         return NID_undef;
     }
     ad.type = ADDED_DATA;
-    ad.obj = (ASN1_OBJECT *)a; /* casting away const is harmless here */
+    ad.obj = CONST_CAST(ASN1_OBJECT *) a; /* casting away const is harmless here */
     adp = lh_ADDED_OBJ_retrieve(added, &ad);
     if (adp != NULL)
         nid = adp->obj->nid;
@@ -736,8 +736,8 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
     }
 
     tmpoid->nid = NID_undef;
-    tmpoid->sn = (char *)sn;
-    tmpoid->ln = (char *)ln;
+    tmpoid->sn = CONST_CAST(char *) sn;
+    tmpoid->ln = CONST_CAST(char *) ln;
 
     ok = add_object(tmpoid, 1);
 

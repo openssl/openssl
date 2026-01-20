@@ -161,7 +161,7 @@ static int convert_key_cb(const OSSL_PARAM params[], void *arg)
     if (raw_bytes == NULL)
         return 0;
 
-    if (!OSSL_PARAM_get_octet_string_ptr(raw_bytes, (const void **)&data, &len))
+    if (!OSSL_PARAM_get_octet_string_ptr(raw_bytes, CONST_CAST(const void **) &data, &len))
         return 0;
 
     *ckey->param = OSSL_PARAM_construct_octet_string(ckey->name, data, len);

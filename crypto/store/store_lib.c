@@ -51,7 +51,7 @@ static int loader_set_params(OSSL_STORE_LOADER *loader,
             return 1;
 
         propp[0] = OSSL_PARAM_construct_utf8_string(OSSL_STORE_PARAM_PROPERTIES,
-            (char *)propq, 0);
+            CONST_CAST(char *) propq, 0);
         propp[1] = OSSL_PARAM_construct_end();
 
         if (!loader->p_set_ctx_params(loader_ctx, propp))
@@ -389,7 +389,7 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search)
             break;
         case OSSL_STORE_SEARCH_BY_ALIAS:
             if (OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_STORE_PARAM_ALIAS,
-                    (char *)search->string,
+                    CONST_CAST(char *) search->string,
                     search->stringlength))
                 ret = 1;
             break;

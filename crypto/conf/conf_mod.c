@@ -170,7 +170,7 @@ int CONF_modules_load_file_ex(OSSL_LIB_CTX *libctx, const char *filename,
             goto err;
         }
     } else {
-        file = (char *)filename;
+        file = CONST_CAST(char *) filename;
     }
 
     conf = NCONF_new_ex(libctx, NULL);

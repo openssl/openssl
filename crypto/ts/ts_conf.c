@@ -107,7 +107,7 @@ EVP_PKEY *TS_CONF_load_key(const char *file, const char *pass)
     if ((key = BIO_new_file(file, "r")) == NULL)
 #endif
         goto end;
-    pkey = PEM_read_bio_PrivateKey(key, NULL, NULL, (char *)pass);
+    pkey = PEM_read_bio_PrivateKey(key, NULL, NULL, CONST_CAST(char *) pass);
 end:
     if (pkey == NULL)
         ERR_raise(ERR_LIB_TS, TS_R_CANNOT_LOAD_KEY);

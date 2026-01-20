@@ -55,7 +55,7 @@ int DH_check_params(const DH *dh, int *ret)
      * SP800-56A R3 Section 5.5.2 Assurances of Domain Parameter Validity
      * (1a) The domain parameters correspond to any approved safe prime group.
      */
-    nid = DH_get_nid((DH *)dh);
+    nid = DH_get_nid(CONST_CAST(DH *) dh);
     if (nid != NID_undef)
         return 1;
     /*
@@ -147,7 +147,7 @@ int DH_check(const DH *dh, int *ret)
     int ok = 0, r, q_good = 0;
     BN_CTX *ctx = NULL;
     BIGNUM *t1 = NULL, *t2 = NULL;
-    int nid = DH_get_nid((DH *)dh);
+    int nid = DH_get_nid(CONST_CAST(DH *) dh);
 
     *ret = 0;
     if (nid != NID_undef)
@@ -311,7 +311,7 @@ int ossl_dh_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret)
     }
 
     /* Is it from an approved Safe prime group ?*/
-    if (DH_get_nid((DH *)dh) != NID_undef && dh->length != 0) {
+    if (DH_get_nid(CONST_CAST(DH *) dh) != NID_undef && dh->length != 0) {
         if (!BN_lshift(two_powN, BN_value_one(), dh->length))
             goto end;
         if (BN_cmp(two_powN, dh->params.q) < 0)

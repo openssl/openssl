@@ -609,7 +609,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
         }
         vtmp.name = NULL;
         vtmp.section = NULL;
-        vtmp.value = (char *)str;
+        vtmp.value = CONST_CAST(char *) str;
         if (!X509V3_get_value_bool(&vtmp, &atmp->value.boolean)) {
             ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_BOOLEAN);
             goto bad_str;

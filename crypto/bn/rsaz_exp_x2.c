@@ -601,7 +601,7 @@ static void to_words52(BN_ULONG *out, int out_len,
     /* Check destination buffer capacity */
     assert(out_len >= number_of_digits(in_bitsize, DIGIT_SIZE));
 
-    in_str = (uint8_t *)in;
+    in_str = CONST_CAST(uint8_t *) in;
 
     for (; in_bitsize >= (2 * DIGIT_SIZE); in_bitsize -= (2 * DIGIT_SIZE), out += 2) {
         uint64_t digit;

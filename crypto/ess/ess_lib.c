@@ -14,6 +14,7 @@
 #include "internal/sizes.h"
 #include "crypto/ess.h"
 #include "crypto/x509.h"
+#include "internal/common.h"
 
 static ESS_CERT_ID *ESS_CERT_ID_new_init(const X509 *cert,
     int set_issuer_serial);
@@ -295,7 +296,7 @@ static int find(const ESS_CERT_ID *cid, const ESS_CERT_ID_V2 *cid_v2,
     md = EVP_MD_fetch(NULL, name, NULL);
 
     if (md == NULL)
-        md = (EVP_MD *)EVP_get_digestbyname(name);
+        md = CONST_CAST(EVP_MD *) EVP_get_digestbyname(name);
 
     if (md == NULL) {
         (void)ERR_clear_last_mark();

@@ -1743,7 +1743,7 @@ static __owur int genkey(const uint8_t seed[ML_KEM_SEED_BYTES],
     ret = 1;
 end:
     OPENSSL_cleanse((void *)augmented_seed, ML_KEM_RANDOM_BYTES);
-    OPENSSL_cleanse((void *)sigma, ML_KEM_RANDOM_BYTES);
+    OPENSSL_cleanse(CONST_CAST(void *) sigma, ML_KEM_RANDOM_BYTES);
     if (ret == 0) {
         ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR,
             "internal error while generating %s private key",

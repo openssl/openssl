@@ -20,6 +20,7 @@
 #include <openssl/ec.h>
 #include "crypto/types.h"
 #include "crypto/evp.h"
+#include "internal/common.h"
 #include "evp_local.h"
 
 int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
@@ -43,7 +44,7 @@ RSA *evp_pkey_get0_RSA_int(const EVP_PKEY *pkey)
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_AN_RSA_KEY);
         return NULL;
     }
-    return evp_pkey_get_legacy((EVP_PKEY *)pkey);
+    return evp_pkey_get_legacy(CONST_CAST(EVP_PKEY *) pkey);
 }
 
 const RSA *EVP_PKEY_get0_RSA(const EVP_PKEY *pkey)
@@ -79,7 +80,7 @@ EC_KEY *evp_pkey_get0_EC_KEY_int(const EVP_PKEY *pkey)
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_EC_KEY);
         return NULL;
     }
-    return evp_pkey_get_legacy((EVP_PKEY *)pkey);
+    return evp_pkey_get_legacy(CONST_CAST(EVP_PKEY *) pkey);
 }
 
 const EC_KEY *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey)

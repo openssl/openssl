@@ -30,9 +30,9 @@ int OSSL_ENCODER_CTX_set_cipher(OSSL_ENCODER_CTX *ctx,
     OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
 
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ENCODER_PARAM_CIPHER,
-        (void *)cipher_name, 0);
+        CONST_CAST(void *) cipher_name, 0);
     params[1] = OSSL_PARAM_construct_utf8_string(OSSL_ENCODER_PARAM_PROPERTIES,
-        (void *)propquery, 0);
+        CONST_CAST(void *) propquery, 0);
 
     return OSSL_ENCODER_CTX_set_params(ctx, params);
 }

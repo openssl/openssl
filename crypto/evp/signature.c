@@ -614,7 +614,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
          * is different from |ctx->pkey|'s keymgmt)
          */
         tmp_prov = EVP_SIGNATURE_get0_provider(signature);
-        tmp_keymgmt_tofree = tmp_keymgmt = evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
+        tmp_keymgmt_tofree = tmp_keymgmt = evp_keymgmt_fetch_from_prov(CONST_CAST(OSSL_PROVIDER *) tmp_prov,
             EVP_KEYMGMT_get0_name(ctx->keymgmt),
             ctx->propquery);
         if (tmp_keymgmt != NULL)
@@ -742,7 +742,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
                 break;
             case 2:
                 tmp_prov = EVP_KEYMGMT_get0_provider(ctx->keymgmt);
-                signature = evp_signature_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
+                signature = evp_signature_fetch_from_prov(CONST_CAST(OSSL_PROVIDER *) tmp_prov,
                     supported_sig, ctx->propquery);
                 if (signature == NULL)
                     goto notsupported;
@@ -761,7 +761,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, EVP_SIGNATURE *signature,
              * is smart enough to only actually export it if |tmp_keymgmt|
              * is different from |ctx->pkey|'s keymgmt)
              */
-            tmp_keymgmt_tofree = tmp_keymgmt = evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
+            tmp_keymgmt_tofree = tmp_keymgmt = evp_keymgmt_fetch_from_prov(CONST_CAST(OSSL_PROVIDER *) tmp_prov,
                 EVP_KEYMGMT_get0_name(ctx->keymgmt),
                 ctx->propquery);
             if (tmp_keymgmt != NULL)
@@ -1040,7 +1040,7 @@ int EVP_PKEY_CTX_set_signature(EVP_PKEY_CTX *ctx,
          * Cast away the const. This is
          * read only so should be safe
          */
-        (char *)sig, siglen);
+        CONST_CAST(char *) sig, siglen);
     *p = OSSL_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, sig_params);

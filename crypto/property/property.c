@@ -1015,7 +1015,7 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
         p->method.free = method_destruct;
         if (!ossl_method_up_ref(&p->method))
             goto err;
-        memcpy((char *)p->query, prop_query, len + 1);
+        memcpy(CONST_CAST(char *) p->query, prop_query, len + 1);
         if ((old = lh_QUERY_insert(alg->cache, p)) != NULL) {
             impl_cache_free(old);
             goto end;

@@ -80,7 +80,7 @@ static OPENSSL_STACK *internal_copy(const OPENSSL_STACK *sk,
             if ((ret->data[i] = copy_func(sk->data[i])) == NULL) {
                 while (--i >= 0)
                     if (ret->data[i] != NULL)
-                        free_func((void *)ret->data[i]);
+                        free_func(CONST_CAST(void *) ret->data[i]);
                 goto err;
             }
         }
@@ -290,7 +290,7 @@ static ossl_inline void *internal_delete(OPENSSL_STACK *st, int loc)
     st->num--;
     st->sorted = st->sorted || st->num <= 1;
 
-    return (void *)ret;
+    return CONST_CAST(void *) ret;
 }
 
 void *OPENSSL_sk_delete_ptr(OPENSSL_STACK *st, const void *p)
@@ -365,7 +365,7 @@ static int internal_find(const OPENSSL_STACK *st, const void *data,
     if (pnum_matched != NULL) {
         *pnum = 0;
         if (r != NULL) {
-            const void **p = (const void **)r;
+            const void **p = CONST_CAST(const void **) r;
 
             while (p < st->data + st->num) {
                 if (st->comp(&data, p) != 0)
@@ -376,7 +376,7 @@ static int internal_find(const OPENSSL_STACK *st, const void *data,
         }
     }
 
-    return r == NULL ? -1 : (int)((const void **)r - st->data);
+    return r == NULL ? -1 : (int)(CONST_CAST(const void **) r - st->data);
 }
 
 int OPENSSL_sk_find(const OPENSSL_STACK *st, const void *data)
@@ -438,9 +438,9 @@ void OPENSSL_sk_pop_free(OPENSSL_STACK *st, OPENSSL_sk_freefunc func)
     for (i = 0; i < st->num; i++) {
         if (st->data[i] != NULL) {
             if (st->free_thunk != NULL)
-                st->free_thunk(func, (void *)st->data[i]);
+                st->free_thunk(func, CONST_CAST(void *) st->data[i]);
             else
-                func((void *)st->data[i]);
+                func(CONST_CAST(void *) st->data[i]);
         }
     }
     OPENSSL_sk_free(st);
@@ -463,7 +463,7 @@ void *OPENSSL_sk_value(const OPENSSL_STACK *st, int i)
 {
     if (st == NULL || i < 0 || i >= st->num)
         return NULL;
-    return (void *)st->data[i];
+    return CONST_CAST(void *) st->data[i];
 }
 
 void *OPENSSL_sk_set(OPENSSL_STACK *st, int i, const void *data)
@@ -479,7 +479,7 @@ void *OPENSSL_sk_set(OPENSSL_STACK *st, int i, const void *data)
     }
     st->data[i] = data;
     st->sorted = st->num <= 1;
-    return (void *)st->data[i];
+    return CONST_CAST(void *) st->data[i];
 }
 
 void OPENSSL_sk_sort(OPENSSL_STACK *st)

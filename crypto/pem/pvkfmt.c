@@ -837,12 +837,12 @@ static int derive_pvk_key(unsigned char *key, size_t keylen,
         return 0;
 
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
-        (void *)salt, saltlen);
+        CONST_CAST(void *) salt, saltlen);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
-        (void *)pass, passlen);
+        CONST_CAST(void *) pass, passlen);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, SN_sha1, 0);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PROPERTIES,
-        (char *)propq, 0);
+        CONST_CAST(char *) propq, 0);
     *p = OSSL_PARAM_construct_end();
 
     rv = EVP_KDF_derive(ctx, key, keylen, params);
@@ -910,7 +910,7 @@ static void *do_PVK_body_key(const unsigned char **in,
             goto err;
         if (!EVP_DecryptFinal_ex(cctx, q + enctmplen, &enctmplen))
             goto err;
-        magic = read_ledword((const unsigned char **)&q);
+        magic = read_ledword(CONST_CAST(const unsigned char **) &q);
         if (magic != MS_RSA2MAGIC && magic != MS_DSS2MAGIC) {
             q = enctmp + 8;
             memset(keybuf + 5, 0, 11);
@@ -920,7 +920,7 @@ static void *do_PVK_body_key(const unsigned char **in,
                 goto err;
             if (!EVP_DecryptFinal_ex(cctx, q + enctmplen, &enctmplen))
                 goto err;
-            magic = read_ledword((const unsigned char **)&q);
+            magic = read_ledword(CONST_CAST(const unsigned char **) &q);
             if (magic != MS_RSA2MAGIC && magic != MS_DSS2MAGIC) {
                 ERR_raise(ERR_LIB_PEM, PEM_R_BAD_DECRYPT);
                 goto err;

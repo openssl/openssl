@@ -10,6 +10,7 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include "crypto/modes.h"
+#include "internal/common.h"
 
 #if !defined(STRICT_ALIGNMENT) && !defined(PEDANTIC)
 #define STRICT_ALIGNMENT 0
@@ -45,7 +46,7 @@ void CRYPTO_cbc128_encrypt(const unsigned char *in, unsigned char *out,
     } else {
         while (len >= 16) {
             for (n = 0; n < 16; n += sizeof(size_t))
-                *(size_t_aX *)(out + n) = *(size_t_aX *)(in + n) ^ *(size_t_aX *)(iv + n);
+                *(size_t_aX *)(out + n) = *CONST_CAST(size_t_aX *)(in + n) ^ *CONST_CAST(size_t_aX *)(iv + n);
             (*block)(out, out, key);
             iv = out;
             len -= 16;
@@ -100,8 +101,8 @@ void CRYPTO_cbc128_decrypt(const unsigned char *in, unsigned char *out,
             }
         } else if (16 % sizeof(size_t) == 0) { /* always true */
             while (len >= 16) {
-                size_t_aX *out_t = (size_t_aX *)out;
-                size_t_aX *iv_t = (size_t_aX *)iv;
+                size_t_aX *out_t = CONST_CAST(size_t_aX *) out;
+                size_t_aX *iv_t = CONST_CAST(size_t_aX *) iv;
 
                 (*block)(in, out, key);
                 for (n = 0; n < 16 / sizeof(size_t); n++)

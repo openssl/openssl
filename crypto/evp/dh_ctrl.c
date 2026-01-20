@@ -8,6 +8,7 @@
  */
 
 #include "internal/deprecated.h"
+#include "internal/common.h"
 
 #include <openssl/core_names.h>
 #include <openssl/params.h>
@@ -71,7 +72,7 @@ int EVP_PKEY_CTX_set_dh_paramgen_seed(EVP_PKEY_CTX *ctx,
         return ret;
 
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_FFC_SEED,
-        (void *)seed, seedlen);
+        CONST_CAST(void *) seed, seedlen);
     *p = OSSL_PARAM_construct_end();
 
     return evp_pkey_ctx_set_params_strict(ctx, params);
@@ -220,7 +221,7 @@ int EVP_PKEY_CTX_get0_dh_kdf_oid(EVP_PKEY_CTX *ctx, ASN1_OBJECT **oid)
 int EVP_PKEY_CTX_set_dh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
     return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-        EVP_PKEY_CTRL_DH_KDF_MD, 0, (void *)(md));
+        EVP_PKEY_CTRL_DH_KDF_MD, 0, CONST_CAST(void *)(md));
 }
 
 /*

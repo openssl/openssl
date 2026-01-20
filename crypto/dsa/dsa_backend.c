@@ -19,6 +19,7 @@
 #include <openssl/x509.h>
 #endif
 #include "crypto/dsa.h"
+#include "internal/common.h"
 #include "dsa_local.h"
 
 /*
@@ -64,7 +65,7 @@ err:
 int ossl_dsa_is_foreign(const DSA *dsa)
 {
 #ifndef FIPS_MODULE
-    if (DSA_get_method((DSA *)dsa) != DSA_OpenSSL())
+    if (DSA_get_method(CONST_CAST(DSA *) dsa) != DSA_OpenSSL())
         return 1;
 #endif
     return 0;

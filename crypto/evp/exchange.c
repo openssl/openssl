@@ -305,7 +305,7 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
             break;
         case 2:
             tmp_prov = EVP_KEYMGMT_get0_provider(ctx->keymgmt);
-            exchange = evp_keyexch_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
+            exchange = evp_keyexch_fetch_from_prov(CONST_CAST(OSSL_PROVIDER *) tmp_prov,
                 supported_exch, ctx->propquery);
             if (exchange == NULL) {
                 ERR_pop_to_mark();
@@ -326,7 +326,7 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
          * to it (evp_pkey_export_to_provider() is smart enough to only actually
          * export it if |tmp_keymgmt| is different from |ctx->pkey|'s keymgmt)
          */
-        tmp_keymgmt_tofree = tmp_keymgmt = evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
+        tmp_keymgmt_tofree = tmp_keymgmt = evp_keymgmt_fetch_from_prov(CONST_CAST(OSSL_PROVIDER *) tmp_prov,
             EVP_KEYMGMT_get0_name(ctx->keymgmt),
             ctx->propquery);
         if (tmp_keymgmt != NULL)

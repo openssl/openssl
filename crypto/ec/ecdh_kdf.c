@@ -18,6 +18,7 @@
 #include <openssl/ec.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
+#include "internal/common.h"
 #include "ec_local.h"
 
 /* Key derivation function from X9.63/SECG */
@@ -35,11 +36,11 @@ int ossl_ecdh_kdf_X9_63(unsigned char *out, size_t outlen,
 
     if ((kctx = EVP_KDF_CTX_new(kdf)) != NULL) {
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-            (char *)mdname, 0);
+            CONST_CAST(char *) mdname, 0);
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-            (void *)Z, Zlen);
+            CONST_CAST(void *) Z, Zlen);
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
-            (void *)sinfo, sinfolen);
+            CONST_CAST(void *) sinfo, sinfolen);
         *p = OSSL_PARAM_construct_end();
 
         ret = EVP_KDF_derive(kctx, out, outlen, params) > 0;

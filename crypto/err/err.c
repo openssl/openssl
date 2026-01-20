@@ -259,7 +259,7 @@ static int err_load_strings(const ERR_STRING_DATA *str)
         return 0;
     for (; str->error; str++)
         (void)lh_ERR_STRING_DATA_insert(int_error_hash,
-            (ERR_STRING_DATA *)str);
+            CONST_CAST(ERR_STRING_DATA *) str);
     CRYPTO_THREAD_unlock(err_string_lock);
     return 1;
 }

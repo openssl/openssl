@@ -20,6 +20,7 @@
 #include <openssl/store.h>
 #include "internal/provider.h"
 #include "internal/passphrase.h"
+#include "internal/common.h"
 #include "crypto/decoder.h"
 #include "crypto/evp.h"
 #include "crypto/x509.h"
@@ -257,7 +258,7 @@ static EVP_PKEY *try_key_ref(struct extracted_param_data_st *data,
 
         if (keydata == NULL && try_fallback > 0) {
             EVP_KEYMGMT_free(keymgmt);
-            keymgmt = evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)provider,
+            keymgmt = evp_keymgmt_fetch_from_prov(CONST_CAST(OSSL_PROVIDER *) provider,
                 data->data_type, propq);
             if (keymgmt != NULL) {
                 ERR_pop_to_mark();
@@ -687,11 +688,11 @@ static int try_skey(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
 
     if (data->octet_data != NULL) {
         keysize = data->octet_data_size;
-        keybytes = (unsigned char *)data->octet_data;
+        keybytes = CONST_CAST(unsigned char *) data->octet_data;
         skey = EVP_SKEY_import_raw_key(libctx, skeymgmt_name,
             keybytes, keysize, propq);
     } else if (data->ref != NULL) {
-        EVP_SKEYMGMT *skeymgmt = evp_skeymgmt_fetch_from_prov((OSSL_PROVIDER *)provider,
+        EVP_SKEYMGMT *skeymgmt = evp_skeymgmt_fetch_from_prov(CONST_CAST(OSSL_PROVIDER *) provider,
             skeymgmt_name, propq);
         OSSL_PARAM params[2];
 
@@ -703,7 +704,7 @@ static int try_skey(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
             return 0;
 
         keysize = data->ref_size;
-        keybytes = (unsigned char *)data->ref;
+        keybytes = CONST_CAST(unsigned char *) data->ref;
         params[0] = OSSL_PARAM_construct_octet_ptr(OSSL_OBJECT_PARAM_REFERENCE,
             (void **)&keybytes, keysize);
         params[1] = OSSL_PARAM_construct_end();

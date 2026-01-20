@@ -90,7 +90,7 @@ int i2d_KeyParams(const EVP_PKEY *a, unsigned char **pp)
 
 int i2d_KeyParams_bio(BIO *bp, const EVP_PKEY *pkey)
 {
-    return ASN1_i2d_bio_of(EVP_PKEY, i2d_KeyParams, bp, pkey);
+    return ASN1_i2d_bio_of(EVP_PKEY, i2d_KeyParams, bp, CONST_CAST(EVP_PKEY *) pkey);
 }
 
 static int

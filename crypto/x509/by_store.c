@@ -81,7 +81,7 @@ static int cache_objects(X509_LOOKUP *lctx, CACHED_STORE *store,
             if (depth > 0) {
                 CACHED_STORE substore;
 
-                substore.uri = (char *)OSSL_STORE_INFO_get0_NAME(info);
+                substore.uri = CONST_CAST(char *) OSSL_STORE_INFO_get0_NAME(info);
                 substore.libctx = store->libctx;
                 substore.propq = store->propq;
                 ok = cache_objects(lctx, &substore, criterion, depth - 1);
@@ -178,9 +178,9 @@ static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
         /* This is a shortcut for quick loading of specific containers */
         CACHED_STORE store;
 
-        store.uri = (char *)argp;
+        store.uri = CONST_CAST(char *) argp;
         store.libctx = libctx;
-        store.propq = (char *)propq;
+        store.propq = CONST_CAST(char *) propq;
         return cache_objects(ctx, &store, NULL, 0);
     }
     default:
@@ -215,7 +215,7 @@ static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
 static int by_store_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     const X509_NAME *name, X509_OBJECT *ret)
 {
-    OSSL_STORE_SEARCH *criterion = OSSL_STORE_SEARCH_by_name((X509_NAME *)name); /* won't modify it */
+    OSSL_STORE_SEARCH *criterion = OSSL_STORE_SEARCH_by_name(CONST_CAST(X509_NAME *) name); /* won't modify it */
     int ok = by_store(ctx, type, criterion, ret);
     X509_OBJECT *tmp = NULL;
 

@@ -11,6 +11,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
+#include "internal/common.h"
 
 #include "pcy_local.h"
 
@@ -32,7 +33,7 @@ X509_POLICY_NODE *ossl_policy_tree_find_sk(STACK_OF(X509_POLICY_NODE) *nodes,
     X509_POLICY_NODE l;
     int idx;
 
-    n.valid_policy = (ASN1_OBJECT *)id;
+    n.valid_policy = CONST_CAST(ASN1_OBJECT *) id;
     l.data = &n;
 
     idx = sk_X509_POLICY_NODE_find(nodes, &l);

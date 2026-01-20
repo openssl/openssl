@@ -13,6 +13,7 @@
 #include <openssl/dsa.h>
 #include <openssl/evp.h>
 #include "crypto/evp.h"
+#include "internal/common.h"
 
 static int dsa_paramgen_check(EVP_PKEY_CTX *ctx)
 {
@@ -36,7 +37,7 @@ int EVP_PKEY_CTX_set_dsa_paramgen_type(EVP_PKEY_CTX *ctx, const char *name)
         return ret;
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_TYPE,
-        (char *)name, 0);
+        CONST_CAST(char *) name, 0);
     *p++ = OSSL_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, params);
@@ -67,7 +68,7 @@ int EVP_PKEY_CTX_set_dsa_paramgen_seed(EVP_PKEY_CTX *ctx,
         return ret;
 
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_FFC_SEED,
-        (void *)seed, seedlen);
+        CONST_CAST(void *) seed, seedlen);
     *p++ = OSSL_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, params);
@@ -114,10 +115,10 @@ int EVP_PKEY_CTX_set_dsa_paramgen_md_props(EVP_PKEY_CTX *ctx,
         return ret;
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_DIGEST,
-        (char *)md_name, 0);
+        CONST_CAST(char *) md_name, 0);
     if (md_properties != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_DIGEST_PROPS,
-            (char *)md_properties, 0);
+            CONST_CAST(char *) md_properties, 0);
     *p++ = OSSL_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, params);
@@ -127,6 +128,6 @@ int EVP_PKEY_CTX_set_dsa_paramgen_md_props(EVP_PKEY_CTX *ctx,
 int EVP_PKEY_CTX_set_dsa_paramgen_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
     return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,
-        EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0, (void *)(md));
+        EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0, CONST_CAST(void *)(md));
 }
 #endif

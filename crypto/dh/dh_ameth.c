@@ -408,7 +408,7 @@ static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
             return 0;
         return ossl_dh_buf2key(dh, arg2, arg1);
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
-        dh = (DH *)EVP_PKEY_get0_DH(pkey);
+        dh = CONST_CAST(DH *) EVP_PKEY_get0_DH(pkey);
         if (dh == NULL)
             return 0;
         return (int)ossl_dh_key2buf(dh, arg2, 0, 1);

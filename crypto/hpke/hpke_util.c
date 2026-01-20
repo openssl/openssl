@@ -256,13 +256,13 @@ static int kdf_derive(EVP_KDF_CTX *kctx,
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
     if (salt != NULL)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
-            (char *)salt, saltlen);
+            CONST_CAST(char *) salt, saltlen);
     if (ikm != NULL)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-            (char *)ikm, ikmlen);
+            CONST_CAST(char *) ikm, ikmlen);
     if (info != NULL)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
-            (char *)info, infolen);
+            CONST_CAST(char *) info, infolen);
     *p = OSSL_PARAM_construct_end();
     ret = EVP_KDF_derive(kctx, out, outlen, params) > 0;
     if (!ret)
@@ -408,10 +408,10 @@ EVP_KDF_CTX *ossl_kdf_ctx_create(const char *kdfname, const char *mdname,
 
         if (mdname != NULL)
             *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                (char *)mdname, 0);
+                CONST_CAST(char *) mdname, 0);
         if (propq != NULL)
             *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PROPERTIES,
-                (char *)propq, 0);
+                CONST_CAST(char *) propq, 0);
         *p = OSSL_PARAM_construct_end();
         if (EVP_KDF_CTX_set_params(kctx, params) <= 0) {
             EVP_KDF_CTX_free(kctx);
@@ -473,7 +473,7 @@ int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite)
     if (suitestr[inplen - 1] == OSSL_HPKE_STR_DELIMCHAR)
         return 0;
     /* We want exactly two delimiters in the input string */
-    for (st = (char *)suitestr; *st != '\0'; st++) {
+    for (st = CONST_CAST(char *) suitestr; *st != '\0'; st++) {
         if (*st == OSSL_HPKE_STR_DELIMCHAR)
             delim_count++;
     }

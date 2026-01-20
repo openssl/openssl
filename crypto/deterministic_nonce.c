@@ -14,6 +14,7 @@
 #include <openssl/kdf.h>
 #include "internal/deterministic_nonce.h"
 #include "crypto/bn.h"
+#include "internal/common.h"
 
 /*
  * Convert a Bit String to an Integer (See RFC 6979 Section 2.3.2)
@@ -145,14 +146,14 @@ static EVP_KDF_CTX *kdf_setup(const char *digestname,
 
     p = params;
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-        (char *)digestname, 0);
+        CONST_CAST(char *) digestname, 0);
     if (propq != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PROPERTIES,
-            (char *)propq, 0);
+            CONST_CAST(char *) propq, 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_HMACDRBG_ENTROPY,
-        (void *)entropy, entropylen);
+        CONST_CAST(void *) entropy, entropylen);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_HMACDRBG_NONCE,
-        (void *)nonce, noncelen);
+        CONST_CAST(void *) nonce, noncelen);
     *p = OSSL_PARAM_construct_end();
 
     if (EVP_KDF_CTX_set_params(ctx, params) <= 0)

@@ -245,7 +245,7 @@ ossl_decoder_instance_new_forprov(OSSL_DECODER *decoder, void *provctx,
         OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
-            (char *)input_structure, 0);
+            CONST_CAST(char *) input_structure, 0);
         if (!decoder->set_ctx_params(decoderctx, params)) {
             decoder->freectx(decoderctx);
             return 0;
@@ -507,7 +507,7 @@ static void collect_extra_decoder(OSSL_DECODER *decoder, void *arg)
             const char *str = data->ctx->input_structure;
 
             params[0] = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
-                (char *)str, 0);
+                CONST_CAST(char *) str, 0);
             if (!decoder->set_ctx_params(decoderctx, params)) {
                 decoder->freectx(decoderctx);
                 return;

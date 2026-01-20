@@ -335,7 +335,7 @@ static int ossl_rsa_prf(OSSL_LIB_CTX *ctx,
             ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        if (HMAC_Update(hmac, (unsigned char *)label, llen) <= 0) {
+        if (HMAC_Update(hmac, CONST_CAST(unsigned char *) label, llen) <= 0) {
             ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
             goto err;
         }

@@ -1273,10 +1273,10 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
         sr = OCSP_resp_get0(bs, i);
 
         /* determine the md algorithm which was used to create cert id */
-        sr_cert_id = (OCSP_CERTID *)OCSP_SINGLERESP_get0_id(sr);
+        sr_cert_id = CONST_CAST(OCSP_CERTID *) OCSP_SINGLERESP_get0_id(sr);
         OCSP_id_get0_info(NULL, &cert_id_md_oid, NULL, NULL, sr_cert_id);
         if (cert_id_md_oid != NULL)
-            cert_id_md = (EVP_MD *)EVP_get_digestbyobj(cert_id_md_oid);
+            cert_id_md = CONST_CAST(EVP_MD *) EVP_get_digestbyobj(cert_id_md_oid);
         else
             cert_id_md = NULL;
 

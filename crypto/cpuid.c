@@ -81,7 +81,7 @@ static variant_char *ossl_strchr(const variant_char *str, char srch)
 
     while ((c = *str)) {
         if (c == srch)
-            return (variant_char *)str;
+            return CONST_CAST(variant_char *) str;
         str++;
     }
 

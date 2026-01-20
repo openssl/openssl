@@ -17,6 +17,7 @@
 #include "cms_local.h"
 #include "crypto/evp.h"
 #include "internal/sizes.h"
+#include "internal/common.h"
 
 /* KEM Recipient Info (KEMRI) routines */
 
@@ -230,7 +231,7 @@ static int kdf_derive(unsigned char *kek, size_t keklen,
         goto err;
 
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-        (unsigned char *)ss, sslen);
+        CONST_CAST(unsigned char *) ss, sslen);
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
         (char *)infoder, infolen);
     params[2] = OSSL_PARAM_construct_end();

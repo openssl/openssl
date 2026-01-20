@@ -12,6 +12,7 @@
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
 #include "internal/numbers.h"
+#include "internal/common.h"
 
 #ifndef OPENSSL_NO_SCRYPT
 
@@ -71,10 +72,10 @@ int EVP_PBE_scrypt_ex(const char *pass, size_t passlen,
         return 0;
 
     *z++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
-        (unsigned char *)pass,
+        CONST_CAST(unsigned char *) pass,
         passlen);
     *z++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
-        (unsigned char *)salt, saltlen);
+        CONST_CAST(unsigned char *) salt, saltlen);
     *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_N, &N);
     *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_R, &r);
     *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_P, &p);

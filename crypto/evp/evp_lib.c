@@ -70,7 +70,7 @@ int EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
     unsigned char *oiv = NULL;
 
     if (type != NULL) {
-        oiv = (unsigned char *)EVP_CIPHER_CTX_original_iv(c);
+        oiv = CONST_CAST(unsigned char *) EVP_CIPHER_CTX_original_iv(c);
         j = EVP_CIPHER_CTX_get_iv_length(c);
         OPENSSL_assert(j <= sizeof(c->iv));
         i = ASN1_TYPE_set_octetstring(type, oiv, j);
@@ -429,7 +429,7 @@ EVP_CIPHER *EVP_CIPHER_CTX_get1_cipher(EVP_CIPHER_CTX *ctx)
 
     if (ctx == NULL || ctx->cipher == NULL)
         return NULL;
-    cipher = (EVP_CIPHER *)ctx->cipher;
+    cipher = CONST_CAST(EVP_CIPHER *) ctx->cipher;
     if (!EVP_CIPHER_up_ref(cipher))
         return NULL;
     return cipher;
@@ -501,7 +501,7 @@ int EVP_CIPHER_CTX_get_iv_length(const EVP_CIPHER_CTX *ctx)
         else if ((EVP_CIPHER_get_flags(ctx->cipher)
                      & EVP_CIPH_CUSTOM_IV_LENGTH)
             != 0) {
-            rv = EVP_CIPHER_CTX_ctrl((EVP_CIPHER_CTX *)ctx, EVP_CTRL_GET_IVLEN,
+            rv = EVP_CIPHER_CTX_ctrl(CONST_CAST(EVP_CIPHER_CTX *) ctx, EVP_CTRL_GET_IVLEN,
                 0, &len);
             if (rv <= 0)
                 return -1;
@@ -510,7 +510,7 @@ int EVP_CIPHER_CTX_get_iv_length(const EVP_CIPHER_CTX *ctx)
          * Casting away the const is annoying but required here.  We need to
          * cache the result for performance reasons.
          */
-        ((EVP_CIPHER_CTX *)ctx)->iv_len = len;
+        (CONST_CAST(EVP_CIPHER_CTX *) ctx)->iv_len = len;
     }
     return ctx->iv_len;
 }
@@ -534,7 +534,7 @@ const unsigned char *EVP_CIPHER_CTX_original_iv(const EVP_CIPHER_CTX *ctx)
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     params[0] = OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_IV,
-        (void **)&v, sizeof(ctx->oiv));
+        CONST_CAST(void **) &v, sizeof(ctx->oiv));
     ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
 
     return ok != 0 ? v : NULL;
@@ -550,7 +550,7 @@ const unsigned char *EVP_CIPHER_CTX_iv(const EVP_CIPHER_CTX *ctx)
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     params[0] = OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_UPDATED_IV,
-        (void **)&v, sizeof(ctx->iv));
+        CONST_CAST(void **) &v, sizeof(ctx->iv));
     ok = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->algctx, params);
 
     return ok != 0 ? v : NULL;
@@ -644,9 +644,9 @@ int EVP_CIPHER_CTX_get_key_length(const EVP_CIPHER_CTX *ctx)
          * Casting away the const is annoying but required here.  We need to
          * cache the result for performance reasons.
          */
-        if (!OSSL_PARAM_get_int(params, &((EVP_CIPHER_CTX *)ctx)->key_len))
+        if (!OSSL_PARAM_get_int(params, &(CONST_CAST(EVP_CIPHER_CTX *) ctx)->key_len))
             return -1;
-        ((EVP_CIPHER_CTX *)ctx)->key_len = (int)len;
+        (CONST_CAST(EVP_CIPHER_CTX *) ctx)->key_len = (int)len;
     }
     return ctx->key_len;
 }
@@ -830,7 +830,7 @@ EVP_MD *EVP_MD_CTX_get1_md(EVP_MD_CTX *ctx)
 
     if (ctx == NULL)
         return NULL;
-    md = (EVP_MD *)ctx->reqdigest;
+    md = CONST_CAST(EVP_MD *) ctx->reqdigest;
     if (md == NULL || !EVP_MD_up_ref(md))
         return NULL;
     return md;
@@ -838,7 +838,7 @@ EVP_MD *EVP_MD_CTX_get1_md(EVP_MD_CTX *ctx)
 
 int EVP_MD_CTX_get_size_ex(const EVP_MD_CTX *ctx)
 {
-    EVP_MD_CTX *c = (EVP_MD_CTX *)ctx;
+    EVP_MD_CTX *c = CONST_CAST(EVP_MD_CTX *) ctx;
     const OSSL_PARAM *gettables;
 
     gettables = EVP_MD_CTX_gettable_params(c);
@@ -961,7 +961,7 @@ int EVP_PKEY_CTX_set_group_name(EVP_PKEY_CTX *ctx, const char *name)
         return -1;
 
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-        (char *)name, 0);
+        CONST_CAST(char *) name, 0);
     return EVP_PKEY_CTX_set_params(ctx, params);
 }
 
@@ -1114,7 +1114,7 @@ int EVP_CIPHER_CTX_get_algor_params(EVP_CIPHER_CTX *ctx, X509_ALGOR *alg)
         params[i] = OSSL_PARAM_construct_octet_string(derk, der, derl);
         if (EVP_CIPHER_CTX_get_params(ctx, params)
             && OSSL_PARAM_modified(&params[i])
-            && d2i_ASN1_TYPE(&type, (const unsigned char **)&derp,
+            && d2i_ASN1_TYPE(&type, CONST_CAST(const unsigned char **) &derp,
                    (int)derl)
                 != NULL) {
             /*
@@ -1232,7 +1232,7 @@ int EVP_PKEY_CTX_get_algor_params(EVP_PKEY_CTX *ctx, X509_ALGOR *alg)
         params[0] = OSSL_PARAM_construct_octet_string(k, der, derl);
         if (EVP_PKEY_CTX_get_params(ctx, params)
             && OSSL_PARAM_modified(&params[0])
-            && d2i_ASN1_TYPE(&type, (const unsigned char **)&derp,
+            && d2i_ASN1_TYPE(&type, CONST_CAST(const unsigned char **) &derp,
                    (long)derl)
                 != NULL) {
             /*

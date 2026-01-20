@@ -10,6 +10,7 @@
 #include "internal/ffc.h"
 #include "internal/nelem.h"
 #include "crypto/bn_dh.h"
+#include "internal/common.h"
 
 #ifndef OPENSSL_NO_DH
 
@@ -164,8 +165,8 @@ int ossl_ffc_named_group_set(FFC_PARAMS *ffc, const DH_NAMED_GROUP *group)
     if (ffc == NULL || group == NULL)
         return 0;
 
-    ossl_ffc_params_set0_pqg(ffc, (BIGNUM *)group->p, (BIGNUM *)group->q,
-        (BIGNUM *)group->g);
+    ossl_ffc_params_set0_pqg(ffc, CONST_CAST(BIGNUM *) group->p, CONST_CAST(BIGNUM *) group->q,
+        CONST_CAST(BIGNUM *) group->g);
     ffc->keylength = group->keylength;
 
     /* flush the cached nid, The DH layer is responsible for caching */

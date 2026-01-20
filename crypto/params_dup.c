@@ -145,8 +145,8 @@ OSSL_PARAM *OSSL_PARAM_dup(const OSSL_PARAM *src)
 
 static int compare_params(const void *left, const void *right)
 {
-    const OSSL_PARAM *l = *(const OSSL_PARAM **)left;
-    const OSSL_PARAM *r = *(const OSSL_PARAM **)right;
+    const OSSL_PARAM *l = *CONST_CAST(const OSSL_PARAM **) left;
+    const OSSL_PARAM *r = *CONST_CAST(const OSSL_PARAM **) right;
 
     return OPENSSL_strcasecmp(l->key, r->key);
 }

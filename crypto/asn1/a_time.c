@@ -389,7 +389,7 @@ int ASN1_TIME_set_string_X509(ASN1_TIME *s, const char *str)
         return 0;
 
     t.length = (int)len;
-    t.data = (unsigned char *)str;
+    t.data = CONST_CAST(unsigned char *) str;
 
     /*
      * RFC 5280 Section 4.1.2.5 The following function is permissive

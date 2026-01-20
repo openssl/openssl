@@ -1011,7 +1011,7 @@ static BIO *http_new_bio(const char *server /* optionally includes ":port" */,
     if (cbio == NULL)
         goto end;
     if (port != NULL)
-        (void)BIO_set_conn_port(cbio, port);
+        (void)BIO_set_conn_port(cbio, CONST_CAST(char *) port);
 
 end:
     return cbio;

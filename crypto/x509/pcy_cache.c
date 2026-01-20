@@ -201,7 +201,7 @@ X509_POLICY_DATA *ossl_policy_cache_find_data(const X509_POLICY_CACHE *cache,
 {
     int idx;
     X509_POLICY_DATA tmp;
-    tmp.valid_policy = (ASN1_OBJECT *)id;
+    tmp.valid_policy = CONST_CAST(ASN1_OBJECT *) id;
     idx = sk_X509_POLICY_DATA_find(cache->data, &tmp);
     return sk_X509_POLICY_DATA_value(cache->data, idx);
 }

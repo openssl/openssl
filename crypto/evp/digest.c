@@ -195,12 +195,12 @@ static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
     }
 
     if (ossl_unlikely(type->prov != NULL && ctx->fetched_digest != type)) {
-        if (ossl_unlikely(!EVP_MD_up_ref((EVP_MD *)type))) {
+        if (ossl_unlikely(!EVP_MD_up_ref(CONST_CAST(EVP_MD *) type))) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             return 0;
         }
         EVP_MD_free(ctx->fetched_digest);
-        ctx->fetched_digest = (EVP_MD *)type;
+        ctx->fetched_digest = CONST_CAST(EVP_MD *) type;
     }
     ctx->digest = type;
     if (ctx->algctx == NULL) {

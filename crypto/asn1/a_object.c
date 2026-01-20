@@ -300,7 +300,7 @@ ASN1_OBJECT *ossl_c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
 
     p = *pp;
     /* detach data from object */
-    data = (unsigned char *)ret->data;
+    data = CONST_CAST(unsigned char *) ret->data;
     ret->data = NULL;
     /* once detached we can change it */
     if ((data == NULL) || (ret->length < length)) {
@@ -314,8 +314,8 @@ ASN1_OBJECT *ossl_c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
     memcpy(data, p, length);
     /* If there are dynamic strings, free them here, and clear the flag */
     if ((ret->flags & ASN1_OBJECT_FLAG_DYNAMIC_STRINGS) != 0) {
-        OPENSSL_free((char *)ret->sn);
-        OPENSSL_free((char *)ret->ln);
+        OPENSSL_free(CONST_CAST(char *) ret->sn);
+        OPENSSL_free(CONST_CAST(char *) ret->ln);
         ret->flags &= ~ASN1_OBJECT_FLAG_DYNAMIC_STRINGS;
     }
     /* reattach data to object, after which it remains const */
@@ -358,13 +358,13 @@ void ASN1_OBJECT_free(ASN1_OBJECT *a)
          * Disable purely for compile-time strict const checking.  Doing this
          * on a "real" compile will cause memory leaks
          */
-        OPENSSL_free((void *)a->sn);
-        OPENSSL_free((void *)a->ln);
+        OPENSSL_free(CONST_CAST(void *) a->sn);
+        OPENSSL_free(CONST_CAST(void *) a->ln);
 #endif
         a->sn = a->ln = NULL;
     }
     if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_DATA) {
-        OPENSSL_free((void *)a->data);
+        OPENSSL_free(CONST_CAST(void *) a->data);
         a->data = NULL;
         a->length = 0;
     }

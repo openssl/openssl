@@ -20,7 +20,7 @@
 /* Utility functions for manipulating fields and offsets */
 
 /* Add 'offset' to 'addr' */
-#define offset2ptr(addr, offset) (void *)(((char *)addr) + offset)
+#define offset2ptr(addr, offset) (void *)((CONST_CAST(char *) addr) + offset)
 
 /*
  * Given an ASN1_ITEM CHOICE type return the selector value
@@ -100,7 +100,7 @@ int ossl_asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
     case -1:
         if (!CRYPTO_DOWN_REF(refcnt, &ret))
             return -1; /* failed */
-        REF_PRINT_EX(it->sname, ret, (void *)it);
+        REF_PRINT_EX(it->sname, ret, CONST_CAST(void *) it);
         REF_ASSERT_ISNT(ret < 0);
         if (ret == 0) {
             CRYPTO_THREAD_lock_free(*lock);

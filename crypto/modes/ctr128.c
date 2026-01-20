@@ -11,6 +11,7 @@
 #include <openssl/crypto.h>
 #include "internal/endian.h"
 #include "crypto/modes.h"
+#include "internal/common.h"
 
 #if defined(__GNUC__) && !defined(STRICT_ALIGNMENT)
 typedef size_t size_t_aX __attribute((__aligned__(1)));
@@ -100,7 +101,7 @@ void CRYPTO_ctr128_encrypt(const unsigned char *in, unsigned char *out,
                 (*block)(ivec, ecount_buf, key);
                 ctr128_inc_aligned(ivec);
                 for (n = 0; n < 16; n += sizeof(size_t))
-                    *(size_t_aX *)(out + n) = *(size_t_aX *)(in + n)
+                    *(size_t_aX *)(out + n) = *CONST_CAST(size_t_aX *)(in + n)
                         ^ *(size_t_aX *)(ecount_buf + n);
                 len -= 16;
                 out += 16;

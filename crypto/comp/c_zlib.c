@@ -531,7 +531,7 @@ static int bio_zlib_write(BIO *b, const char *in, int inl)
         zout->avail_out = ctx->obufsize;
     }
     /* Obtain input data directly from supplied buffer */
-    zout->next_in = (void *)in;
+    zout->next_in = CONST_CAST(void *) in;
     zout->avail_in = inl;
     for (;;) {
         /* If data in output buffer write it first */

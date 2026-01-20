@@ -834,7 +834,7 @@ static int do_check_string(const ASN1_STRING *a, int cmp_type, equal_fn equal,
         if (cmp_type != a->type)
             return 0;
         if (cmp_type == V_ASN1_IA5STRING)
-            rv = equal(a->data, a->length, (unsigned char *)b, blen, flags);
+            rv = equal(a->data, a->length, CONST_CAST(unsigned char *) b, blen, flags);
         else if (a->length == (int)blen && !memcmp(a->data, b, blen))
             rv = 1;
         if (rv > 0 && peername != NULL) {
@@ -853,7 +853,7 @@ static int do_check_string(const ASN1_STRING *a, int cmp_type, equal_fn equal,
              */
             return -1;
         }
-        rv = equal(astr, astrlen, (unsigned char *)b, blen, flags);
+        rv = equal(astr, astrlen, CONST_CAST(unsigned char *) b, blen, flags);
         if (rv > 0 && peername != NULL) {
             *peername = OPENSSL_strndup((char *)astr, astrlen);
             if (*peername == NULL) {

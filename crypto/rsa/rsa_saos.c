@@ -31,7 +31,7 @@ int RSA_sign_ASN1_OCTET_STRING(int type,
 
     sig.type = V_ASN1_OCTET_STRING;
     sig.length = m_len;
-    sig.data = (unsigned char *)m;
+    sig.data = CONST_CAST(unsigned char *) m;
 
     i = i2d_ASN1_OCTET_STRING(&sig, NULL);
     j = RSA_size(rsa);

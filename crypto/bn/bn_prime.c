@@ -55,7 +55,7 @@ static const BN_ULONG small_prime_factors[] = {
 
 #define BN_SMALL_PRIME_FACTORS_TOP OSSL_NELEM(small_prime_factors)
 static const BIGNUM _bignum_small_prime_factors = {
-    (BN_ULONG *)small_prime_factors,
+    CONST_CAST(BN_ULONG *) small_prime_factors,
     BN_SMALL_PRIME_FACTORS_TOP,
     BN_SMALL_PRIME_FACTORS_TOP,
     0,

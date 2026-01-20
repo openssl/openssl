@@ -559,10 +559,10 @@ err:
 /* Only const here because deep_copy requires it */
 static EVP_KEYMGMT *keymgmt_dup(const EVP_KEYMGMT *keymgmt)
 {
-    if (!EVP_KEYMGMT_up_ref((EVP_KEYMGMT *)keymgmt))
+    if (!EVP_KEYMGMT_up_ref(CONST_CAST(EVP_KEYMGMT *) keymgmt))
         return NULL;
 
-    return (EVP_KEYMGMT *)keymgmt;
+    return CONST_CAST(EVP_KEYMGMT *) keymgmt;
 }
 
 /*
@@ -842,17 +842,17 @@ OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
     }
     if (input_structure != NULL)
         decoder_params[i++] = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
-            (char *)input_structure, 0);
+            CONST_CAST(char *) input_structure, 0);
     if (propquery != NULL)
         decoder_params[i++] = OSSL_PARAM_construct_utf8_string(OSSL_DECODER_PARAM_PROPERTIES,
-            (char *)propquery, 0);
+            CONST_CAST(char *) propquery, 0);
 
     /* It is safe to cast away the const here */
-    cacheent.input_type = (char *)input_type;
-    cacheent.input_structure = (char *)input_structure;
-    cacheent.keytype = (char *)keytype;
+    cacheent.input_type = CONST_CAST(char *) input_type;
+    cacheent.input_structure = CONST_CAST(char *) input_structure;
+    cacheent.keytype = CONST_CAST(char *) keytype;
     cacheent.selection = selection;
-    cacheent.propquery = (char *)propquery;
+    cacheent.propquery = CONST_CAST(char *) propquery;
 
     if (!CRYPTO_THREAD_read_lock(cache->lock)) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_CRYPTO_LIB);

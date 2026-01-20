@@ -702,7 +702,7 @@ static int evp_pkey_ctx_set_md(EVP_PKEY_CTX *ctx, const EVP_MD *md,
     }
 
     if (fallback)
-        return EVP_PKEY_CTX_ctrl(ctx, -1, op, ctrl, 0, (void *)(md));
+        return EVP_PKEY_CTX_ctrl(ctx, -1, op, ctrl, 0, CONST_CAST(void *)(md));
 
     if (md == NULL) {
         name = "";
@@ -715,7 +715,7 @@ static int evp_pkey_ctx_set_md(EVP_PKEY_CTX *ctx, const EVP_MD *md,
          * Cast away the const. This is read
          * only so should be safe
          */
-        (char *)name, 0);
+        CONST_CAST(char *) name, 0);
     *p = OSSL_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, md_params);
@@ -750,7 +750,7 @@ static int evp_pkey_ctx_set1_octet_string(EVP_PKEY_CTX *ctx, int fallback,
 
     /* Code below to be removed when legacy support is dropped. */
     if (fallback)
-        return EVP_PKEY_CTX_ctrl(ctx, -1, op, ctrl, datalen, (void *)(data));
+        return EVP_PKEY_CTX_ctrl(ctx, -1, op, ctrl, datalen, CONST_CAST(void *)(data));
     /* end of legacy support */
 
     if (datalen < 0) {
@@ -763,7 +763,7 @@ static int evp_pkey_ctx_set1_octet_string(EVP_PKEY_CTX *ctx, int fallback,
          * Cast away the const. This is read
          * only so should be safe
          */
-        (unsigned char *)data,
+        CONST_CAST(unsigned char *) data,
         (size_t)datalen);
     *p = OSSL_PARAM_construct_end();
 
@@ -790,7 +790,7 @@ static int evp_pkey_ctx_add1_octet_string(EVP_PKEY_CTX *ctx, int fallback,
 
     /* Code below to be removed when legacy support is dropped. */
     if (fallback)
-        return EVP_PKEY_CTX_ctrl(ctx, -1, op, ctrl, datalen, (void *)(data));
+        return EVP_PKEY_CTX_ctrl(ctx, -1, op, ctrl, datalen, CONST_CAST(void *)(data));
     /* end of legacy support */
 
     if (datalen < 0) {
@@ -1021,7 +1021,7 @@ int EVP_PKEY_CTX_set_kem_op(EVP_PKEY_CTX *ctx, const char *op)
         return -2;
     }
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KEM_PARAM_OPERATION,
-        (char *)op, 0);
+        CONST_CAST(char *) op, 0);
     *p = OSSL_PARAM_construct_end();
     return EVP_PKEY_CTX_set_params(ctx, params);
 }
@@ -1029,7 +1029,7 @@ int EVP_PKEY_CTX_set_kem_op(EVP_PKEY_CTX *ctx, const char *op)
 int EVP_PKEY_CTX_set1_id(EVP_PKEY_CTX *ctx, const void *id, int len)
 {
     return EVP_PKEY_CTX_ctrl(ctx, -1, -1,
-        EVP_PKEY_CTRL_SET1_ID, (int)len, (void *)(id));
+        EVP_PKEY_CTRL_SET1_ID, (int)len, CONST_CAST(void *)(id));
 }
 
 int EVP_PKEY_CTX_get1_id(EVP_PKEY_CTX *ctx, void *id)
@@ -1261,7 +1261,7 @@ int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx)
         else
             ret = evp_pkey_ctx_ctrl_int(ctx, -1, ctx->operation,
                 EVP_PKEY_CTRL_SET1_ID,
-                (int)len, (void *)val);
+                (int)len, CONST_CAST(void *) val);
     }
 
     return ret;
@@ -1308,7 +1308,7 @@ int EVP_PKEY_CTX_str2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *str)
     len = strlen(str);
     if (len > INT_MAX)
         return -1;
-    return EVP_PKEY_CTX_ctrl(ctx, -1, -1, cmd, (int)len, (void *)str);
+    return EVP_PKEY_CTX_ctrl(ctx, -1, -1, cmd, (int)len, CONST_CAST(void *) str);
 }
 
 int EVP_PKEY_CTX_hex2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *hex)
@@ -1335,7 +1335,7 @@ int EVP_PKEY_CTX_md(EVP_PKEY_CTX *ctx, int optype, int cmd, const char *md)
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_DIGEST);
         return 0;
     }
-    return EVP_PKEY_CTX_ctrl(ctx, -1, optype, cmd, 0, (void *)m);
+    return EVP_PKEY_CTX_ctrl(ctx, -1, optype, cmd, 0, CONST_CAST(void *) m);
 }
 
 int EVP_PKEY_CTX_get_operation(EVP_PKEY_CTX *ctx)

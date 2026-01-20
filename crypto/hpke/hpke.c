@@ -110,7 +110,7 @@ static EVP_PKEY *evp_pkey_new_raw_nist_public_key(OSSL_LIB_CTX *libctx,
     EVP_PKEY_CTX *cctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", propq);
 
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-        (char *)gname, 0);
+        CONST_CAST(char *) gname, 0);
     params[1] = OSSL_PARAM_construct_end();
     if (cctx == NULL
         || EVP_PKEY_paramgen_init(cctx) <= 0
@@ -186,7 +186,7 @@ static int hpke_aead_dec(OSSL_HPKE_CTX *hctx, const unsigned char *iv,
     }
     *ptlen = len;
     if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-            (int)taglen, (void *)(ct + ctlen - taglen))) {
+            (int)taglen, CONST_CAST(void *)(ct + ctlen - taglen))) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -731,7 +731,7 @@ static int hpke_do_middle(OSSL_HPKE_CTX *ctx,
             NULL, 0, OSSL_HPKE_SEC51LABEL,
             suitebuf, sizeof(suitebuf),
             OSSL_HPKE_INFOHASH_LABEL,
-            (unsigned char *)info, infolen)
+            CONST_CAST(unsigned char *) info, infolen)
         != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -1329,7 +1329,7 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
 
     if (hpke_kem_id_nist_curve(suite.kem_id) == 1) {
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-            (char *)kem_info->groupname, 0);
+            CONST_CAST(char *) kem_info->groupname, 0);
         pctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", propq);
     } else {
         pctx = EVP_PKEY_CTX_new_from_name(libctx, kem_info->keytype, propq);
@@ -1341,7 +1341,7 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
     }
     if (ikm != NULL)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM,
-            (char *)ikm, ikmlen);
+            CONST_CAST(char *) ikm, ikmlen);
     *p = OSSL_PARAM_construct_end();
     if (EVP_PKEY_CTX_set_params(pctx, params) <= 0) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);

@@ -157,8 +157,8 @@ int X509_cmp(const X509 *a, const X509 *b)
         return 0;
 
     /* attempt to compute cert hash */
-    (void)X509_check_purpose((X509 *)a, -1, 0);
-    (void)X509_check_purpose((X509 *)b, -1, 0);
+    (void)X509_check_purpose(CONST_CAST(X509 *) a, -1, 0);
+    (void)X509_check_purpose(CONST_CAST(X509 *) b, -1, 0);
 
     if ((a->ex_flags & EXFLAG_NO_FINGERPRINT) == 0
         && (b->ex_flags & EXFLAG_NO_FINGERPRINT) == 0)
@@ -263,13 +263,13 @@ int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
 
     /* Ensure canonical encoding is present and up to date */
     if (a->canon_enc == NULL || a->modified) {
-        ret = i2d_X509_NAME((X509_NAME *)a, NULL);
+        ret = i2d_X509_NAME(CONST_CAST(X509_NAME *) a, NULL);
         if (ret < 0)
             return -2;
     }
 
     if (b->canon_enc == NULL || b->modified) {
-        ret = i2d_X509_NAME((X509_NAME *)b, NULL);
+        ret = i2d_X509_NAME(CONST_CAST(X509_NAME *) b, NULL);
         if (ret < 0)
             return -2;
     }
@@ -352,7 +352,7 @@ X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, const X509_NAME *name,
         return NULL;
 
     x.cert_info.serialNumber = *serial;
-    x.cert_info.issuer = (X509_NAME *)name; /* won't modify it */
+    x.cert_info.issuer = CONST_CAST(X509_NAME *) name; /* won't modify it */
 
     for (i = 0; i < sk_X509_num(sk); i++) {
         x509 = sk_X509_value(sk, i);

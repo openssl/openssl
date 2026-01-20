@@ -240,7 +240,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
             goto err;
         }
     } else {
-        EVP_MD *hmac_md = (EVP_MD *)md;
+        EVP_MD *hmac_md = CONST_CAST(EVP_MD *) md;
         int fetched = 0;
 
         if (pbmac1_kdf_nid != NID_undef) {

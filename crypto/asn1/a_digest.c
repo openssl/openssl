@@ -53,7 +53,7 @@ int ossl_asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *md, void *asn,
 {
     int i, ret = 0;
     unsigned char *str = NULL;
-    EVP_MD *fetched_md = (EVP_MD *)md;
+    EVP_MD *fetched_md = CONST_CAST(EVP_MD *) md;
 
     i = ASN1_item_i2d(asn, &str, it);
     if (i < 0 || str == NULL)

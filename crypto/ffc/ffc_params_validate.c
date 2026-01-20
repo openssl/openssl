@@ -18,6 +18,7 @@
 #include <openssl/dsaerr.h>
 #include <openssl/dherr.h>
 #include "internal/ffc.h"
+#include "internal/common.h"
 
 /* FIPS186-4 A.2.2 Unverifiable partial validation of Generator g */
 int ossl_ffc_params_validate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont,
@@ -61,7 +62,7 @@ int ossl_ffc_params_FIPS186_4_validate(OSSL_LIB_CTX *libctx,
     /* A.1.1.3 Step (1..2) : L = len(p), N = len(q) */
     L = BN_num_bits(params->p);
     N = BN_num_bits(params->q);
-    return ossl_ffc_params_FIPS186_4_gen_verify(libctx, (FFC_PARAMS *)params,
+    return ossl_ffc_params_FIPS186_4_gen_verify(libctx, CONST_CAST(FFC_PARAMS *) params,
         FFC_PARAM_MODE_VERIFY, type,
         L, N, res, cb);
 }
@@ -81,7 +82,7 @@ int ossl_ffc_params_FIPS186_2_validate(OSSL_LIB_CTX *libctx,
     /* A.1.1.3 Step (1..2) : L = len(p), N = len(q) */
     L = BN_num_bits(params->p);
     N = BN_num_bits(params->q);
-    return ossl_ffc_params_FIPS186_2_gen_verify(libctx, (FFC_PARAMS *)params,
+    return ossl_ffc_params_FIPS186_2_gen_verify(libctx, CONST_CAST(FFC_PARAMS *) params,
         FFC_PARAM_MODE_VERIFY, type,
         L, N, res, cb);
 }

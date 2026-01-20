@@ -266,7 +266,7 @@ static int asn1_template_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
 
     if (flags & ASN1_TFLG_SK_MASK) {
         /* SET OF, SEQUENCE OF */
-        STACK_OF(const_ASN1_VALUE) *sk = (STACK_OF(const_ASN1_VALUE) *)*pval;
+        STACK_OF(const_ASN1_VALUE) *sk = CONST_CAST(STACK_OF(const_ASN1_VALUE) *) *pval;
         int isset, sktag, skaclass;
         int skcontlen, sklen;
         const ASN1_VALUE *skitem;
@@ -541,7 +541,7 @@ static int asn1_ex_i2c(const ASN1_VALUE **pval, unsigned char *cout, int *putype
 
     if (it->itype == ASN1_ITYPE_MSTRING) {
         /* If MSTRING type set the underlying type */
-        strtmp = (ASN1_STRING *)*pval;
+        strtmp = CONST_CAST(ASN1_STRING *) *pval;
         utype = strtmp->type;
         *putype = utype;
     } else if (it->utype == V_ASN1_ANY) {
@@ -550,13 +550,13 @@ static int asn1_ex_i2c(const ASN1_VALUE **pval, unsigned char *cout, int *putype
         typ = (const ASN1_TYPE *)*pval;
         utype = typ->type;
         *putype = utype;
-        pval = (const ASN1_VALUE **)&typ->value.asn1_value; /* actually is const */
+        pval = CONST_CAST(const ASN1_VALUE **) &typ->value.asn1_value; /* actually is const */
     } else
         utype = *putype;
 
     switch (utype) {
     case V_ASN1_OBJECT:
-        otmp = (ASN1_OBJECT *)*pval;
+        otmp = CONST_CAST(ASN1_OBJECT *) *pval;
         cont = otmp->data;
         len = otmp->length;
         if (cont == NULL || len == 0)
@@ -590,7 +590,7 @@ static int asn1_ex_i2c(const ASN1_VALUE **pval, unsigned char *cout, int *putype
         break;
 
     case V_ASN1_BIT_STRING:
-        return ossl_i2c_ASN1_BIT_STRING((ASN1_BIT_STRING *)*pval,
+        return ossl_i2c_ASN1_BIT_STRING(CONST_CAST(ASN1_BIT_STRING *) *pval,
             cout ? &cout : NULL);
 
     case V_ASN1_INTEGER:
@@ -598,7 +598,7 @@ static int asn1_ex_i2c(const ASN1_VALUE **pval, unsigned char *cout, int *putype
         /*
          * These are all have the same content format as ASN1_INTEGER
          */
-        return ossl_i2c_ASN1_INTEGER((ASN1_INTEGER *)*pval, cout ? &cout : NULL);
+        return ossl_i2c_ASN1_INTEGER(CONST_CAST(ASN1_INTEGER *) *pval, cout ? &cout : NULL);
 
     case V_ASN1_OCTET_STRING:
     case V_ASN1_NUMERICSTRING:
@@ -618,7 +618,7 @@ static int asn1_ex_i2c(const ASN1_VALUE **pval, unsigned char *cout, int *putype
     case V_ASN1_SET:
     default:
         /* All based on ASN1_STRING and handled the same */
-        strtmp = (ASN1_STRING *)*pval;
+        strtmp = CONST_CAST(ASN1_STRING *) *pval;
         /* Special handling for NDEF */
         if ((it->size == ASN1_TFLG_NDEF)
             && (strtmp->flags & ASN1_STRING_FLAG_NDEF)) {

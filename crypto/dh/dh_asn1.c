@@ -142,8 +142,8 @@ int i2d_DHxparams(const DH *dh, unsigned char **pp)
     const FFC_PARAMS *params = &dh->params;
     int counter;
 
-    ossl_ffc_params_get0_pqg(params, (const BIGNUM **)&dhx.p,
-        (const BIGNUM **)&dhx.q, (const BIGNUM **)&dhx.g);
+    ossl_ffc_params_get0_pqg(params, CONST_CAST(const BIGNUM **) &dhx.p,
+        CONST_CAST(const BIGNUM **) &dhx.q, CONST_CAST(const BIGNUM **) &dhx.g);
     dhx.j = params->j;
     ossl_ffc_params_get_validate_params(params, &seed.data, &seedlen, &counter);
     seed.length = (int)seedlen;

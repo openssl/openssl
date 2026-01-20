@@ -40,7 +40,7 @@ int PKCS12_add_friendlyname_asc(PKCS12_SAFEBAG *bag, const char *name,
     int namelen)
 {
     if (X509at_add1_attr_by_NID(&bag->attrib, NID_friendlyName,
-            MBSTRING_ASC, (unsigned char *)name, namelen)
+            MBSTRING_ASC, CONST_CAST(unsigned char *) name, namelen)
         != NULL)
         return 1;
     else
@@ -51,7 +51,7 @@ int PKCS12_add_friendlyname_utf8(PKCS12_SAFEBAG *bag, const char *name,
     int namelen)
 {
     if (X509at_add1_attr_by_NID(&bag->attrib, NID_friendlyName,
-            MBSTRING_UTF8, (unsigned char *)name, namelen)
+            MBSTRING_UTF8, CONST_CAST(unsigned char *) name, namelen)
         != NULL)
         return 1;
     else
@@ -72,7 +72,7 @@ int PKCS12_add_friendlyname_uni(PKCS12_SAFEBAG *bag,
 int PKCS12_add_CSPName_asc(PKCS12_SAFEBAG *bag, const char *name, int namelen)
 {
     if (X509at_add1_attr_by_NID(&bag->attrib, NID_ms_csp_name,
-            MBSTRING_ASC, (unsigned char *)name, namelen)
+            MBSTRING_ASC, CONST_CAST(unsigned char *) name, namelen)
         != NULL)
         return 1;
     else

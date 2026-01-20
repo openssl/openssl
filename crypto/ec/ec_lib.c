@@ -23,6 +23,7 @@
 #include "crypto/ec.h"
 #include "crypto/bn.h"
 #include "internal/nelem.h"
+#include "internal/common.h"
 #include "ec_local.h"
 
 /* functions for EC_GROUP objects */
@@ -1485,7 +1486,7 @@ static EC_GROUP *ec_group_explicit_to_named(const EC_GROUP *group,
                 goto err;
         }
     } else {
-        ret_group = (EC_GROUP *)group;
+        ret_group = CONST_CAST(EC_GROUP *) group;
     }
     EC_GROUP_free(dup);
     return ret_group;

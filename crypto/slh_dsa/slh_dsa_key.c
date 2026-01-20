@@ -17,6 +17,7 @@
 #include "slh_dsa_local.h"
 #include "slh_dsa_key.h"
 #include "internal/encoder.h"
+#include "internal/common.h"
 
 static int slh_dsa_compute_pk_root(SLH_DSA_HASH_CTX *ctx, SLH_DSA_KEY *out, int verify);
 
@@ -242,7 +243,7 @@ int ossl_slh_dsa_key_pairwise_check(const SLH_DSA_KEY *key)
     ctx = ossl_slh_dsa_hash_ctx_new(key);
     if (ctx == NULL)
         return 0;
-    ret = slh_dsa_compute_pk_root(ctx, (SLH_DSA_KEY *)key, 1);
+    ret = slh_dsa_compute_pk_root(ctx, CONST_CAST(SLH_DSA_KEY *) key, 1);
     ossl_slh_dsa_hash_ctx_free(ctx);
     return ret;
 }

@@ -41,7 +41,7 @@ void ASN1_TYPE_set(ASN1_TYPE *a, int type, void *value)
 int ASN1_TYPE_set1(ASN1_TYPE *a, int type, const void *value)
 {
     if (!value || (type == V_ASN1_BOOLEAN)) {
-        void *p = (void *)value;
+        void *p = CONST_CAST(void *) value;
         ASN1_TYPE_set(a, type, p);
     } else if (type == V_ASN1_OBJECT) {
         ASN1_OBJECT *odup;

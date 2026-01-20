@@ -132,7 +132,7 @@ int OPENSSL_strtoul(const char *str, char **endptr, int base,
 
     errno = 0;
 
-    *internal_endptr = (char *)str;
+    *internal_endptr = CONST_CAST(char *) str;
 
     if (num == NULL)
         return 0;

@@ -303,7 +303,7 @@ static int asn1_template_print_ctx(BIO *out, const ASN1_VALUE **fld, int indent,
             } else if (BIO_printf(out, "%*s%s:\n", indent, "", fname) <= 0)
                 return 0;
         }
-        stack = (STACK_OF(const_ASN1_VALUE) *)*fld;
+        stack = CONST_CAST(STACK_OF(const_ASN1_VALUE) *) *fld;
         for (i = 0; i < sk_const_ASN1_VALUE_num(stack); i++) {
             if ((i > 0) && (BIO_puts(out, "\n") <= 0))
                 return 0;
@@ -455,7 +455,7 @@ static int asn1_primitive_print(BIO *out, const ASN1_VALUE **fld,
     if (utype == V_ASN1_ANY) {
         const ASN1_TYPE *atype = (const ASN1_TYPE *)*fld;
         utype = atype->type;
-        fld = (const ASN1_VALUE **)&atype->value.asn1_value; /* actually is const */
+        fld = CONST_CAST(const ASN1_VALUE **) &atype->value.asn1_value; /* actually is const */
         str = (const ASN1_STRING *)*fld;
         if (pctx->flags & ASN1_PCTX_FLAGS_NO_ANY_TYPE)
             pname = NULL;

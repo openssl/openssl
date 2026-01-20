@@ -22,6 +22,7 @@
 #include <openssl/kdf.h>
 #include "internal/provider.h"
 #include "crypto/dh.h"
+#include "internal/common.h"
 
 /* Key derivation function from X9.63/SECG */
 int ossl_dh_kdf_X9_42_asn1(unsigned char *out, size_t outlen,
@@ -45,14 +46,14 @@ int ossl_dh_kdf_X9_42_asn1(unsigned char *out, size_t outlen,
         goto err;
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-        (char *)mdname, 0);
+        CONST_CAST(char *) mdname, 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-        (unsigned char *)Z, Zlen);
+        CONST_CAST(unsigned char *) Z, Zlen);
     if (ukm != NULL)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_UKM,
-            (unsigned char *)ukm, ukmlen);
+            CONST_CAST(unsigned char *) ukm, ukmlen);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CEK_ALG,
-        (char *)cek_alg, 0);
+        CONST_CAST(char *) cek_alg, 0);
     *p = OSSL_PARAM_construct_end();
     ret = EVP_KDF_derive(kctx, out, outlen, params) > 0;
 err:

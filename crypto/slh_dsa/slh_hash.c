@@ -13,6 +13,7 @@
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include <openssl/rsa.h> /* PKCS1_MGF1() */
+#include "internal/common.h"
 #include "slh_dsa_local.h"
 #include "slh_dsa_key.h"
 
@@ -191,7 +192,7 @@ slh_prf_msg_sha2(SLH_DSA_HASH_CTX *hctx,
         p = params;
         /* The underlying digest to be used */
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-            (char *)EVP_MD_get0_name(key->md_big), 0);
+            CONST_CAST(char *) EVP_MD_get0_name(key->md_big), 0);
         if (key->propq != NULL)
             *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
                 (char *)key->propq, 0);

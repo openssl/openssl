@@ -69,7 +69,7 @@ unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
             }
             inlen -= mac_len;
             if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                    (int)mac_len, (unsigned char *)in + inlen)
+                    (int)mac_len, CONST_CAST(unsigned char *) in + inlen)
                 < 0) {
                 ERR_raise(ERR_LIB_PKCS12, ERR_R_INTERNAL_ERROR);
                 goto err;

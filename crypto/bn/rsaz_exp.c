@@ -200,7 +200,7 @@ void RSAZ_1024_mod_exp_avx2(BN_ULONG result_norm[16],
 #endif
 
     /* load first window */
-    p_str = (unsigned char *)exponent;
+    p_str = CONST_CAST(unsigned char *) exponent;
     wvalue = p_str[127] >> 3;
     rsaz_1024_gather5_avx2(result, table_s, wvalue);
 
@@ -260,7 +260,7 @@ void RSAZ_512_mod_exp(BN_ULONG result[8],
     unsigned char *table = storage + (64 - ((size_t)storage % 64));
     BN_ULONG *a_inv = (BN_ULONG *)(table + 16 * 8 * 8);
     BN_ULONG *temp = (BN_ULONG *)(table + 16 * 8 * 8 + 8 * 8);
-    unsigned char *p_str = (unsigned char *)exponent;
+    unsigned char *p_str = CONST_CAST(unsigned char *) exponent;
     int index;
     unsigned int wvalue;
     BN_ULONG tmp[8];

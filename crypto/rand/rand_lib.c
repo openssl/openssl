@@ -628,7 +628,7 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
             dgbl->rng_digest, 0);
     if (prov_name != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PROV_PARAM_CORE_PROV_NAME,
-            (char *)prov_name, 0);
+            CONST_CAST(char *) prov_name, 0);
     if (dgbl->rng_propq != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_PROPERTIES,
             dgbl->rng_propq, 0);
@@ -917,7 +917,7 @@ static int random_conf_init(CONF_IMODULE *md, const CONF *cnf)
 {
     STACK_OF(CONF_VALUE) *elist;
     CONF_VALUE *cval;
-    OSSL_LIB_CTX *libctx = NCONF_get0_libctx((CONF *)cnf);
+    OSSL_LIB_CTX *libctx = NCONF_get0_libctx(CONST_CAST(CONF *) cnf);
     RAND_GLOBAL *dgbl = rand_get_global(libctx);
     int i, r = 1;
 

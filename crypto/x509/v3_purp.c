@@ -449,7 +449,7 @@ int ossl_x509v3_cache_extensions(X509 *x)
 
 #ifdef tsan_ld_acq
     /* Fast lock-free check, see end of the function for details. */
-    if (tsan_ld_acq((TSAN_QUALIFIER int *)&x->ex_cached))
+    if (tsan_ld_acq(CONST_CAST(TSAN_QUALIFIER int *) &x->ex_cached))
         return (x->ex_flags & EXFLAG_INVALID) == 0;
 #endif
 
@@ -660,7 +660,7 @@ int ossl_x509v3_cache_extensions(X509 *x)
 
     x->ex_flags |= EXFLAG_SET; /* Indicate that cert has been processed */
 #ifdef tsan_st_rel
-    tsan_st_rel((TSAN_QUALIFIER int *)&x->ex_cached, 1);
+    tsan_st_rel(CONST_CAST(TSAN_QUALIFIER int *) &x->ex_cached, 1);
     /*
      * Above store triggers fast lock-free check in the beginning of the
      * function. But one has to ensure that the structure is "stable", i.e.
@@ -910,7 +910,7 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
     /* Extended Key Usage MUST be critical */
     i_ext = X509_get_ext_by_NID(x, NID_ext_key_usage, -1);
     if (i_ext >= 0
-        && !X509_EXTENSION_get_critical(X509_get_ext((X509 *)x, i_ext)))
+        && !X509_EXTENSION_get_critical(X509_get_ext(CONST_CAST(X509 *) x, i_ext)))
         return 0;
     return 1;
 }
@@ -952,7 +952,7 @@ static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *x,
     if (i_ext < 0)
         return 0;
     if (i_ext >= 0) {
-        X509_EXTENSION *ext = X509_get_ext((X509 *)x, i_ext);
+        X509_EXTENSION *ext = X509_get_ext(CONST_CAST(X509 *) x, i_ext);
         if (!X509_EXTENSION_get_critical(ext))
             return 0;
     }

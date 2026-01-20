@@ -15,6 +15,7 @@
 #include <openssl/rand.h>
 #include "crypto/bn.h"
 #include "crypto/security_bits.h"
+#include "internal/common.h"
 #include "rsa_local.h"
 
 #define RSA_FIPS186_5_MIN_KEYGEN_KEYSIZE 2048
@@ -410,7 +411,7 @@ int ossl_rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
         if (e == NULL || !BN_set_word(e, 65537))
             goto err;
     } else {
-        e = (BIGNUM *)efixed;
+        e = CONST_CAST(BIGNUM *) efixed;
     }
     /* (Step 1c) fixed exponent is checked later .*/
 

@@ -142,7 +142,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
             break;
         case 2:
             tmp_prov = EVP_KEYMGMT_get0_provider(locpctx->keymgmt);
-            signature = evp_signature_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
+            signature = evp_signature_fetch_from_prov(CONST_CAST(OSSL_PROVIDER *) tmp_prov,
                 supported_sig, locpctx->propquery);
             if (signature == NULL)
                 goto notsupported;
@@ -161,7 +161,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
          * export it if |tmp_keymgmt| is different from |locpctx->pkey|'s keymgmt)
          */
-        tmp_keymgmt_tofree = tmp_keymgmt = evp_keymgmt_fetch_from_prov((OSSL_PROVIDER *)tmp_prov,
+        tmp_keymgmt_tofree = tmp_keymgmt = evp_keymgmt_fetch_from_prov(CONST_CAST(OSSL_PROVIDER *) tmp_prov,
             EVP_KEYMGMT_get0_name(locpctx->keymgmt),
             locpctx->propquery);
         if (tmp_keymgmt != NULL)

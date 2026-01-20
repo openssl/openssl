@@ -419,7 +419,7 @@ OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
         }
 #endif
 
-        tmpl.name = (char *)name;
+        tmpl.name = CONST_CAST(char *) name;
         if (!CRYPTO_THREAD_read_lock(store->lock))
             return NULL;
         if (!sk_OSSL_PROVIDER_is_sorted(store->providers)) {
@@ -865,7 +865,7 @@ int OSSL_PROVIDER_conf_get_bool(const OSSL_PROVIDER *prov,
     char *val = NULL;
     OSSL_PARAM param[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-    param[0].key = (char *)name;
+    param[0].key = CONST_CAST(char *) name;
     param[0].data_type = OSSL_PARAM_UTF8_PTR;
     param[0].data = (void *)&val;
     param[0].data_size = sizeof(val);
@@ -1876,7 +1876,7 @@ int ossl_provider_self_test(const OSSL_PROVIDER *prov)
     OSSL_TRACE_END(PROVIDER);
 #endif
     if (ret == 0)
-        (void)provider_remove_store_methods((OSSL_PROVIDER *)prov);
+        (void)provider_remove_store_methods(CONST_CAST(OSSL_PROVIDER *) prov);
     return ret;
 }
 
@@ -2134,7 +2134,7 @@ static int ossl_provider_register_child_cb(const OSSL_CORE_HANDLE *handle,
      * This is really an OSSL_PROVIDER that we created and cast to
      * OSSL_CORE_HANDLE originally. Therefore it is safe to cast it back.
      */
-    OSSL_PROVIDER *thisprov = (OSSL_PROVIDER *)handle;
+    OSSL_PROVIDER *thisprov = CONST_CAST(OSSL_PROVIDER *) handle;
     OSSL_PROVIDER *prov;
     OSSL_LIB_CTX *libctx = thisprov->libctx;
     struct provider_store_st *store = NULL;
@@ -2210,7 +2210,7 @@ static void ossl_provider_deregister_child_cb(const OSSL_CORE_HANDLE *handle)
      * This is really an OSSL_PROVIDER that we created and cast to
      * OSSL_CORE_HANDLE originally. Therefore it is safe to cast it back.
      */
-    OSSL_PROVIDER *thisprov = (OSSL_PROVIDER *)handle;
+    OSSL_PROVIDER *thisprov = CONST_CAST(OSSL_PROVIDER *) handle;
     OSSL_LIB_CTX *libctx = thisprov->libctx;
     struct provider_store_st *store = NULL;
     int i, max;
@@ -2331,7 +2331,7 @@ static int core_get_params(const OSSL_CORE_HANDLE *handle, OSSL_PARAM params[])
      * We created this object originally and we know it is actually an
      * OSSL_PROVIDER *, so the cast is safe
      */
-    OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
+    OSSL_PROVIDER *prov = CONST_CAST(OSSL_PROVIDER *) handle;
 
     if ((p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_CORE_VERSION)) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, OPENSSL_VERSION_STR);
@@ -2354,7 +2354,7 @@ static OPENSSL_CORE_CTX *core_get_libctx(const OSSL_CORE_HANDLE *handle)
      * We created this object originally and we know it is actually an
      * OSSL_PROVIDER *, so the cast is safe
      */
-    OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
+    OSSL_PROVIDER *prov = CONST_CAST(OSSL_PROVIDER *) handle;
 
     /*
      * Using ossl_provider_libctx would be wrong as that returns
@@ -2374,7 +2374,7 @@ static int core_thread_start(const OSSL_CORE_HANDLE *handle,
      * We created this object originally and we know it is actually an
      * OSSL_PROVIDER *, so the cast is safe
      */
-    OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
+    OSSL_PROVIDER *prov = CONST_CAST(OSSL_PROVIDER *) handle;
 
     return ossl_init_thread_start(prov, arg, handfn);
 }
@@ -2410,7 +2410,7 @@ static void core_vset_error(const OSSL_CORE_HANDLE *handle,
      * We created this object originally and we know it is actually an
      * OSSL_PROVIDER *, so the cast is safe
      */
-    OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
+    OSSL_PROVIDER *prov = CONST_CAST(OSSL_PROVIDER *) handle;
 
     /*
      * If the uppermost 8 bits are non-zero, it's an OpenSSL library
@@ -2563,13 +2563,13 @@ core_provider_get0_dispatch(const OSSL_CORE_HANDLE *prov)
 static int core_provider_up_ref_intern(const OSSL_CORE_HANDLE *prov,
     int activate)
 {
-    return provider_up_ref_intern((OSSL_PROVIDER *)prov, activate);
+    return provider_up_ref_intern(CONST_CAST(OSSL_PROVIDER *) prov, activate);
 }
 
 static int core_provider_free_intern(const OSSL_CORE_HANDLE *prov,
     int deactivate)
 {
-    return provider_free_intern((OSSL_PROVIDER *)prov, deactivate);
+    return provider_free_intern(CONST_CAST(OSSL_PROVIDER *) prov, deactivate);
 }
 
 static int core_obj_add_sigid(const OSSL_CORE_HANDLE *prov,

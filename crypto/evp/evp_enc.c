@@ -129,14 +129,14 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
     }
 
     if (cipher != ctx->fetched_cipher) {
-        if (!EVP_CIPHER_up_ref((EVP_CIPHER *)cipher)) {
+        if (!EVP_CIPHER_up_ref(CONST_CAST(EVP_CIPHER *) cipher)) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             return 0;
         }
         EVP_CIPHER_free(ctx->fetched_cipher);
         /* Coverity false positive, the reference counting is confusing it */
         /* coverity[use_after_free] */
-        ctx->fetched_cipher = (EVP_CIPHER *)cipher;
+        ctx->fetched_cipher = CONST_CAST(EVP_CIPHER *) cipher;
     }
     ctx->cipher = cipher;
 
@@ -300,14 +300,14 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
     }
 
     if (cipher != ctx->fetched_cipher) {
-        if (!EVP_CIPHER_up_ref((EVP_CIPHER *)cipher)) {
+        if (!EVP_CIPHER_up_ref(CONST_CAST(EVP_CIPHER *) cipher)) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             return 0;
         }
         EVP_CIPHER_free(ctx->fetched_cipher);
         /* Coverity false positive, the reference counting is confusing it */
         /* coverity[use_after_free] */
-        ctx->fetched_cipher = (EVP_CIPHER *)cipher;
+        ctx->fetched_cipher = CONST_CAST(EVP_CIPHER *) cipher;
     }
     ctx->cipher = cipher;
     if (ctx->algctx == NULL) {
@@ -1055,7 +1055,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
             return 0;
 
         params[0] = OSSL_PARAM_construct_octet_string(
-            OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD, (void *)p->inp, p->len);
+            OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD, CONST_CAST(void *) p->inp, p->len);
         params[1] = OSSL_PARAM_construct_uint(
             OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE, &p->interleave);
         ret = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->algctx, params);
@@ -1079,7 +1079,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
             OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC, p->out, p->len);
 
         params[1] = OSSL_PARAM_construct_octet_string(
-            OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN, (void *)p->inp,
+            OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN, CONST_CAST(void *) p->inp,
             p->len);
         params[2] = OSSL_PARAM_construct_uint(
             OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE, &p->interleave);

@@ -39,7 +39,7 @@ int ossl_pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
         passlen = (int)strlen(pass);
     }
     if (salt == NULL && saltlen == 0)
-        salt = (unsigned char *)empty;
+        salt = CONST_CAST(unsigned char *) empty;
 
     kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_PBKDF2, propq);
     if (kdf == NULL)
@@ -49,13 +49,13 @@ int ossl_pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
     if (kctx == NULL)
         return 0;
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
-        (char *)pass, (size_t)passlen);
+        CONST_CAST(char *) pass, (size_t)passlen);
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_PKCS5, &mode);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
-        (unsigned char *)salt, saltlen);
+        CONST_CAST(unsigned char *) salt, saltlen);
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_ITER, &iter);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-        (char *)mdname, 0);
+        CONST_CAST(char *) mdname, 0);
     *p = OSSL_PARAM_construct_end();
     if (EVP_KDF_derive(kctx, out, keylen, params) != 1)
         rv = 0;

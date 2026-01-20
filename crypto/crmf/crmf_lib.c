@@ -31,6 +31,7 @@
 #include "internal/constant_time.h"
 #include "internal/sizes.h" /* for OSSL_MAX_NAME_SIZE */
 #include "crypto/x509.h" /* for ossl_x509_check_private_key() */
+#include "internal/common.h"
 
 /*-
  * atyp = Attribute Type
@@ -621,9 +622,9 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
         ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
-    if (subject != NULL && !X509_NAME_set((X509_NAME **)&tmpl->subject, subject))
+    if (subject != NULL && !X509_NAME_set(CONST_CAST(X509_NAME **) &tmpl->subject, subject))
         return 0;
-    if (issuer != NULL && !X509_NAME_set((X509_NAME **)&tmpl->issuer, issuer))
+    if (issuer != NULL && !X509_NAME_set(CONST_CAST(X509_NAME **) &tmpl->issuer, issuer))
         return 0;
     if (serial != NULL) {
         ASN1_INTEGER_free(tmpl->serialNumber);
@@ -783,7 +784,7 @@ unsigned char *OSSL_CRMF_ENCRYPTEDVALUE_decrypt(const OSSL_CRMF_ENCRYPTEDVALUE *
     (void)ERR_set_mark();
     cipher = EVP_CIPHER_fetch(libctx, name, propq);
     if (cipher == NULL)
-        cipher = (EVP_CIPHER *)EVP_get_cipherbyobj(enc->symmAlg->algorithm);
+        cipher = CONST_CAST(EVP_CIPHER *) EVP_get_cipherbyobj(enc->symmAlg->algorithm);
     if (cipher == NULL) {
         (void)ERR_clear_last_mark();
         ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_CIPHER);

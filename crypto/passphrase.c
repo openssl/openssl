@@ -313,7 +313,7 @@ static int ossl_pw_get_password(char *buf, int size, int rwflag,
         OSSL_PARAM_END
     };
 
-    params[0].data = (void *)info;
+    params[0].data = CONST_CAST(void *) info;
     if (ossl_pw_get_passphrase(buf, (size_t)size, &password_len, params,
             rwflag, userdata))
         return (int)password_len;

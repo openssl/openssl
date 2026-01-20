@@ -69,7 +69,7 @@ RAND_POOL *ossl_rand_pool_attach(const unsigned char *buffer, size_t len,
      * modified (in contrary to allocated buffers which are zeroed and
      * freed in the end).
      */
-    pool->buffer = (unsigned char *)buffer;
+    pool->buffer = CONST_CAST(unsigned char *) buffer;
     pool->len = len;
 
     pool->attached = 1;

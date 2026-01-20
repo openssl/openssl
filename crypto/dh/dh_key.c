@@ -244,7 +244,7 @@ int ossl_dh_generate_public_key(BN_CTX *ctx, const DH *dh,
          * We cast to remove the const qualifier in this case, it should be
          * fine...
          */
-        BN_MONT_CTX **pmont = (BN_MONT_CTX **)&dh->method_mont_p;
+        BN_MONT_CTX **pmont = CONST_CAST(BN_MONT_CTX **) &dh->method_mont_p;
 
         mont = BN_MONT_CTX_set_locked(pmont, dh->lock, dh->params.p, ctx);
         if (mont == NULL)

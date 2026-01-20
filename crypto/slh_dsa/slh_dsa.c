@@ -10,6 +10,7 @@
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
+#include "internal/common.h"
 #include "slh_dsa_local.h"
 #include "slh_dsa_key.h"
 
@@ -238,7 +239,7 @@ static uint8_t *msg_encode(const uint8_t *msg, size_t msg_len,
     if (encode == 0) {
         /* Raw message */
         *out_len = msg_len;
-        return (uint8_t *)msg;
+        return CONST_CAST(uint8_t *) msg;
     }
     if (ctx_len > SLH_DSA_MAX_CONTEXT_STRING_LEN)
         return NULL;

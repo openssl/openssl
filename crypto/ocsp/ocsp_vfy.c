@@ -11,6 +11,7 @@
 #include <openssl/ocsp.h>
 #include <openssl/err.h>
 #include "internal/sizes.h"
+#include "internal/common.h"
 #include "ocsp_local.h"
 
 static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs,
@@ -317,7 +318,7 @@ static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
         (void)ERR_set_mark();
         dgst = EVP_MD_fetch(NULL, name, NULL);
         if (dgst == NULL)
-            dgst = (EVP_MD *)EVP_get_digestbyname(name);
+            dgst = CONST_CAST(EVP_MD *) EVP_get_digestbyname(name);
 
         if (dgst == NULL) {
             (void)ERR_clear_last_mark();

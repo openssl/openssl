@@ -215,7 +215,7 @@ static int x509_name_ex_i2d(const ASN1_VALUE **val, unsigned char **out,
     const ASN1_ITEM *it, int tag, int aclass)
 {
     int ret;
-    X509_NAME *a = (X509_NAME *)*val;
+    X509_NAME *a = CONST_CAST(X509_NAME *) *val;
 
     if (a->modified) {
         ret = x509_name_encode(a);
@@ -472,7 +472,7 @@ static int i2d_name_canon(const STACK_OF(STACK_OF_X509_NAME_ENTRY) *_intname,
 {
     int i, len, ltmp;
     const ASN1_VALUE *v;
-    STACK_OF(ASN1_VALUE) *intname = (STACK_OF(ASN1_VALUE) *)_intname;
+    STACK_OF(ASN1_VALUE) *intname = CONST_CAST(STACK_OF(ASN1_VALUE) *) _intname;
 
     len = 0;
     for (i = 0; i < sk_ASN1_VALUE_num(intname); i++) {

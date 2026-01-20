@@ -1147,7 +1147,7 @@ X509 *ossl_cmp_certresponse_get1_cert(const OSSL_CMP_CTX *ctx, const OSSL_CMP_CE
             ERR_raise(ERR_LIB_CMP, CMP_R_FAILED_EXTRACTING_CENTRAL_GEN_KEY);
             return NULL;
         }
-        OSSL_CMP_CTX_set0_newPkey((OSSL_CMP_CTX *)ctx, 1, pkey);
+        OSSL_CMP_CTX_set0_newPkey(CONST_CAST(OSSL_CMP_CTX *) ctx, 1, pkey);
     }
 
     if (!ossl_assert(crep != NULL && ctx != NULL))
@@ -1289,7 +1289,7 @@ OSSL_CMP_MSG *d2i_OSSL_CMP_MSG_bio(BIO *bio, OSSL_CMP_MSG **msg)
 
 int i2d_OSSL_CMP_MSG_bio(BIO *bio, const OSSL_CMP_MSG *msg)
 {
-    return ASN1_i2d_bio_of(OSSL_CMP_MSG, i2d_OSSL_CMP_MSG, bio, msg);
+    return ASN1_i2d_bio_of(OSSL_CMP_MSG, i2d_OSSL_CMP_MSG, bio, CONST_CAST(OSSL_CMP_MSG *) msg);
 }
 
 int ossl_cmp_is_error_with_waiting(const OSSL_CMP_MSG *msg)
