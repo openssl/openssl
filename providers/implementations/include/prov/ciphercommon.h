@@ -323,7 +323,7 @@ PROV_CIPHER_HW_FN ossl_cipher_hw_chunked_ofb128;
 #define IMPLEMENT_CIPHER_HW_COPYCTX(name, CTX_TYPE)                    \
     static void name(PROV_CIPHER_CTX *dst, const PROV_CIPHER_CTX *src) \
     {                                                                  \
-        CTX_TYPE *sctx = (CTX_TYPE *)src;                              \
+        CTX_TYPE *sctx = CONST_CAST(CTX_TYPE *) src;                   \
         CTX_TYPE *dctx = (CTX_TYPE *)dst;                              \
                                                                        \
         *dctx = *sctx;                                                 \

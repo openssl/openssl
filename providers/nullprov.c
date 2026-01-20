@@ -15,6 +15,7 @@
 #include <openssl/params.h>
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "internal/common.h"
 
 OSSL_provider_init_fn ossl_null_provider_init;
 
@@ -75,6 +76,6 @@ int ossl_null_provider_init(const OSSL_CORE_HANDLE *handle,
     *out = null_dispatch_table;
 
     /* Could be anything - we don't use it */
-    *provctx = (void *)handle;
+    *provctx = CONST_CAST(void *) handle;
     return 1;
 }

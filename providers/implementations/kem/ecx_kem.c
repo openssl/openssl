@@ -135,7 +135,7 @@ static ECX_KEY *ecxkey_pubfromdata(PROV_ECX_CTX *ctx,
     OSSL_PARAM pub;
 
     pub = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
-        (char *)pubbuf, pubbuflen);
+        CONST_CAST(char *) pubbuf, pubbuflen);
 
     ecx = ossl_ecx_key_new(ctx->libctx, ctx->recipient_key->type, 1, ctx->propq);
     if (ecx == NULL)
@@ -382,7 +382,7 @@ static ECX_KEY *derivekey(PROV_ECX_CTX *ctx,
     int ok = 0;
     ECX_KEY *key;
     unsigned char *privkey;
-    unsigned char *seed = (unsigned char *)ikm;
+    unsigned char *seed = CONST_CAST(unsigned char *) ikm;
     size_t seedlen = ikmlen;
     unsigned char tmpbuf[OSSL_HPKE_MAX_PRIVATE];
     const OSSL_HPKE_KEM_INFO *info = ctx->info;
@@ -435,7 +435,7 @@ static int generate_ecxdhkm(const ECX_KEY *sender, const ECX_KEY *peer,
     size_t len = 0;
 
     /* NOTE: ossl_ecx_compute_key checks for shared secret being all zeros */
-    return ossl_ecx_compute_key((ECX_KEY *)peer, (ECX_KEY *)sender,
+    return ossl_ecx_compute_key(CONST_CAST(ECX_KEY *) peer, CONST_CAST(ECX_KEY *) sender,
         sender->keylen, out, &len, maxout);
 }
 

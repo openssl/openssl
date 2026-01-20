@@ -164,7 +164,7 @@ static int chacha20_poly1305_set_ctx_params(void *vctx,
 {
     size_t len;
     PROV_CHACHA20_POLY1305_CTX *ctx = (PROV_CHACHA20_POLY1305_CTX *)vctx;
-    PROV_CIPHER_HW_CHACHA20_POLY1305 *hw = (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->base.hw;
+    PROV_CIPHER_HW_CHACHA20_POLY1305 *hw = CONST_CAST(PROV_CIPHER_HW_CHACHA20_POLY1305 *) ctx->base.hw;
     struct chacha20_poly1305_set_ctx_params_st p;
 
     if (!chacha20_poly1305_set_ctx_params_decoder(params, &p))
@@ -249,7 +249,7 @@ static int chacha20_poly1305_einit(void *vctx, const unsigned char *key,
     ret = ossl_cipher_generic_einit(vctx, key, keylen, iv, ivlen, NULL);
     if (ret && iv != NULL) {
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
-        PROV_CIPHER_HW_CHACHA20_POLY1305 *hw = (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->hw;
+        PROV_CIPHER_HW_CHACHA20_POLY1305 *hw = CONST_CAST(PROV_CIPHER_HW_CHACHA20_POLY1305 *) ctx->hw;
 
         hw->initiv(ctx);
     }
@@ -268,7 +268,7 @@ static int chacha20_poly1305_dinit(void *vctx, const unsigned char *key,
     ret = ossl_cipher_generic_dinit(vctx, key, keylen, iv, ivlen, NULL);
     if (ret && iv != NULL) {
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
-        PROV_CIPHER_HW_CHACHA20_POLY1305 *hw = (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->hw;
+        PROV_CIPHER_HW_CHACHA20_POLY1305 *hw = CONST_CAST(PROV_CIPHER_HW_CHACHA20_POLY1305 *) ctx->hw;
 
         hw->initiv(ctx);
     }
@@ -282,7 +282,7 @@ static int chacha20_poly1305_cipher(void *vctx, unsigned char *out,
     const unsigned char *in, size_t inl)
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
-    PROV_CIPHER_HW_CHACHA20_POLY1305 *hw = (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->hw;
+    PROV_CIPHER_HW_CHACHA20_POLY1305 *hw = CONST_CAST(PROV_CIPHER_HW_CHACHA20_POLY1305 *) ctx->hw;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -307,7 +307,7 @@ static int chacha20_poly1305_final(void *vctx, unsigned char *out, size_t *outl,
     size_t outsize)
 {
     PROV_CHACHA20_POLY1305_CTX *ctx = (PROV_CHACHA20_POLY1305_CTX *)vctx;
-    PROV_CIPHER_HW_CHACHA20_POLY1305 *hw = (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->base.hw;
+    PROV_CIPHER_HW_CHACHA20_POLY1305 *hw = CONST_CAST(PROV_CIPHER_HW_CHACHA20_POLY1305 *) ctx->base.hw;
 
     if (!ossl_prov_is_running())
         return 0;

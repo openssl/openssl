@@ -158,9 +158,9 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
 {
     OSSL_PARAM core_params[32], *p = core_params;
 
-#define OSSL_FIPS_PARAM(structname, paramname)                 \
-    *p++ = OSSL_PARAM_construct_utf8_ptr(                      \
-        paramname, (char **)&fgbl->selftest_params.structname, \
+#define OSSL_FIPS_PARAM(structname, paramname)                            \
+    *p++ = OSSL_PARAM_construct_utf8_ptr(                                 \
+        paramname, CONST_CAST(char **) &fgbl->selftest_params.structname, \
         sizeof(fgbl->selftest_params.structname));
 
 /* Parameters required for self testing */
@@ -168,10 +168,10 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
 #undef OSSL_FIPS_PARAM
 
 /* FIPS indicator options can be enabled or disabled independently */
-#define OSSL_FIPS_PARAM(structname, paramname, initvalue) \
-    *p++ = OSSL_PARAM_construct_utf8_ptr(                 \
-        OSSL_PROV_PARAM_##paramname,                      \
-        (char **)&fgbl->fips_##structname.option,         \
+#define OSSL_FIPS_PARAM(structname, paramname, initvalue)    \
+    *p++ = OSSL_PARAM_construct_utf8_ptr(                    \
+        OSSL_PROV_PARAM_##paramname,                         \
+        CONST_CAST(char **) &fgbl->fips_##structname.option, \
         sizeof(fgbl->fips_##structname.option));
 #include "fips_indicator_params.inc"
 #undef OSSL_FIPS_PARAM

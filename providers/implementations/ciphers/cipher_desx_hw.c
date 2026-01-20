@@ -28,7 +28,7 @@ static int cipher_hw_desx_cbc_initkey(PROV_CIPHER_CTX *ctx,
     const unsigned char *key, size_t keylen)
 {
     PROV_TDES_CTX *tctx = (PROV_TDES_CTX *)ctx;
-    DES_cblock *deskey = (DES_cblock *)key;
+    DES_cblock *deskey = CONST_CAST(DES_cblock *) key;
 
     DES_set_key_unchecked(deskey, &tctx->ks1);
     memcpy(&tctx->ks2, &key[8], 8);
@@ -40,7 +40,7 @@ static int cipher_hw_desx_cbc_initkey(PROV_CIPHER_CTX *ctx,
 static void cipher_hw_desx_copyctx(PROV_CIPHER_CTX *dst,
     const PROV_CIPHER_CTX *src)
 {
-    PROV_TDES_CTX *sctx = (PROV_TDES_CTX *)src;
+    PROV_TDES_CTX *sctx = CONST_CAST(PROV_TDES_CTX *) src;
     PROV_TDES_CTX *dctx = (PROV_TDES_CTX *)dst;
 
     *dctx = *sctx;

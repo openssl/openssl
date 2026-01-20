@@ -785,7 +785,7 @@ static int ec_set_params(void *key, const OSSL_PARAM params[])
     if (ossl_param_is_empty(params))
         return 1;
 
-    if (!ossl_ec_group_set_params((EC_GROUP *)EC_KEY_get0_group(key), params))
+    if (!ossl_ec_group_set_params(CONST_CAST(EC_GROUP *) EC_KEY_get0_group(key), params))
         return 0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY);
@@ -1378,13 +1378,13 @@ static void *common_load(const void *reference, size_t reference_sz,
 
     if (ossl_prov_is_running() && reference_sz == sizeof(ec)) {
         /* The contents of the reference is the address to our object */
-        ec = *(EC_KEY **)reference;
+        ec = *CONST_CAST(EC_KEY **) reference;
 
         if (!common_check_sm2(ec, sm2_wanted))
             return NULL;
 
         /* We grabbed, so we detach it */
-        *(EC_KEY **)reference = NULL;
+        *CONST_CAST(EC_KEY **) reference = NULL;
         return ec;
     }
     return NULL;

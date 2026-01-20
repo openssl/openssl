@@ -24,7 +24,7 @@ static int ossl_cipher_hw_tdes_ede2_initkey(PROV_CIPHER_CTX *ctx,
     size_t keylen)
 {
     PROV_TDES_CTX *tctx = (PROV_TDES_CTX *)ctx;
-    DES_cblock *deskey = (DES_cblock *)key;
+    DES_cblock *deskey = CONST_CAST(DES_cblock *) key;
 
     tctx->tstream.cbc = NULL;
 #if defined(SPARC_DES_CAPABLE)

@@ -856,9 +856,9 @@ void *ecx_load(const void *reference, size_t reference_sz)
 
     if (ossl_prov_is_running() && reference_sz == sizeof(key)) {
         /* The contents of the reference is the address to our object */
-        key = *(ECX_KEY **)reference;
+        key = *CONST_CAST(ECX_KEY **) reference;
         /* We grabbed, so we detach it */
-        *(ECX_KEY **)reference = NULL;
+        *CONST_CAST(ECX_KEY **) reference = NULL;
         return key;
     }
     return NULL;

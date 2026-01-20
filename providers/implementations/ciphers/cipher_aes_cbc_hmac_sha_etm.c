@@ -34,14 +34,14 @@ static OSSL_FUNC_cipher_settable_ctx_params_fn aes_settable_ctx_params;
 
 static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
-    PROV_AES_HMAC_SHA_ETM_CTX *ctx = (PROV_AES_HMAC_SHA_ETM_CTX *)vctx;
+    PROV_AES_HMAC_SHA_ETM_CTX *ctx = CONST_CAST(PROV_AES_HMAC_SHA_ETM_CTX *) vctx;
     PROV_CIPHER_HW_AES_HMAC_SHA_ETM *hw;
     struct aes_cbc_hmac_sha_etm_set_ctx_params_st p;
 
     if (ctx == NULL || !aes_cbc_hmac_sha_etm_set_ctx_params_decoder(params, &p))
         return 0;
 
-    hw = (PROV_CIPHER_HW_AES_HMAC_SHA_ETM *)ctx->hw;
+    hw = CONST_CAST(PROV_CIPHER_HW_AES_HMAC_SHA_ETM *) ctx->hw;
     if (p.key != NULL) {
         if (p.key->data_type != OSSL_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
@@ -170,7 +170,7 @@ static void base_ctx_init(void *provctx, PROV_AES_HMAC_SHA_ETM_CTX *ctx,
     ossl_cipher_generic_initkey(&ctx->base, kbits, blkbits, ivbits,
         EVP_CIPH_CBC_MODE, flags,
         &meths->base, provctx);
-    ctx->hw = (PROV_CIPHER_HW_AES_HMAC_SHA_ETM *)ctx->base.hw;
+    ctx->hw = CONST_CAST(PROV_CIPHER_HW_AES_HMAC_SHA_ETM *) ctx->base.hw;
 }
 
 static void *aes_cbc_hmac_sha1_etm_newctx(void *provctx, size_t kbits,

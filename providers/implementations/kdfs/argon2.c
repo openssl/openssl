@@ -796,7 +796,7 @@ static int blake2b_mac(EVP_MAC *mac, void *out, size_t outlen, const void *in,
         goto fail;
 
     par[par_n++] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-        (void *)key, keylen);
+        CONST_CAST(void *) key, keylen);
     par[par_n++] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE, &outlen);
     par[par_n++] = OSSL_PARAM_construct_end();
 

@@ -733,7 +733,7 @@ static int ec_spki_pub_to_der(const void *eckey, unsigned char **pder,
 static int ec_pki_priv_to_der(const void *veckey, unsigned char **pder,
     ossl_unused void *ctx)
 {
-    EC_KEY *eckey = (EC_KEY *)veckey;
+    EC_KEY *eckey = CONST_CAST(EC_KEY *) veckey;
     unsigned int old_flags;
     int ret = 0;
 
@@ -918,7 +918,7 @@ static int ml_kem_pki_priv_to_der(const void *vkey, unsigned char **pder,
 static int prepare_rsa_params(const void *rsa, int nid, int save,
     void **pstr, int *pstrtype)
 {
-    const RSA_PSS_PARAMS_30 *pss = ossl_rsa_get0_pss_params_30((RSA *)rsa);
+    const RSA_PSS_PARAMS_30 *pss = ossl_rsa_get0_pss_params_30(CONST_CAST(RSA *) rsa);
 
     *pstr = NULL;
 

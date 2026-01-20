@@ -33,6 +33,7 @@
 #include "prov/endecoder_local.h"
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
+#include "internal/common.h"
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 
@@ -75,7 +76,7 @@ static int dh_to_text(BIO *out, const void *key, int selection)
         }
     }
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
-        params = ossl_dh_get0_params((DH *)dh);
+        params = ossl_dh_get0_params(CONST_CAST(DH *) dh);
         if (params == NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_NOT_PARAMETERS);
             return 0;
@@ -148,7 +149,7 @@ static int dsa_to_text(BIO *out, const void *key, int selection)
         }
     }
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
-        params = ossl_dsa_get0_params((DSA *)dsa);
+        params = ossl_dsa_get0_params(CONST_CAST(DSA *) dsa);
         if (params == NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_NOT_PARAMETERS);
             return 0;
@@ -467,7 +468,7 @@ static int rsa_to_text(BIO *out, const void *key, int selection)
     STACK_OF(BIGNUM_const) *exps = NULL;
     STACK_OF(BIGNUM_const) *coeffs = NULL;
     int primes;
-    const RSA_PSS_PARAMS_30 *pss_params = ossl_rsa_get0_pss_params_30((RSA *)rsa);
+    const RSA_PSS_PARAMS_30 *pss_params = ossl_rsa_get0_pss_params_30(CONST_CAST(RSA *) rsa);
     int ret = 0;
 
     if (out == NULL || rsa == NULL) {
@@ -495,7 +496,7 @@ static int rsa_to_text(BIO *out, const void *key, int selection)
     }
 
     RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
-    ossl_rsa_get0_all_params((RSA *)rsa, factors, exps, coeffs);
+    ossl_rsa_get0_all_params(CONST_CAST(RSA *) rsa, factors, exps, coeffs);
     primes = sk_BIGNUM_const_num(factors);
 
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {

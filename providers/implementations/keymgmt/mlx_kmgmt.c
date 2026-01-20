@@ -345,12 +345,12 @@ load_slot(OSSL_LIB_CTX *libctx, const char *propq, const char *pname,
         len = mbytes;
     } else {
         alg = key->xinfo->algorithm_name;
-        group = (char *)key->xinfo->group_name;
+        group = CONST_CAST(char *) key->xinfo->group_name;
         ppkey = &key->xkey;
         off = (1 - ml_kem_slot) * mbytes;
         len = xbytes;
     }
-    val = (void *)(in + off);
+    val = CONST_CAST(void *)(in + off);
 
     if ((ctx = EVP_PKEY_CTX_new_from_name(libctx, alg, propq)) == NULL
         || EVP_PKEY_fromdata_init(ctx) <= 0)

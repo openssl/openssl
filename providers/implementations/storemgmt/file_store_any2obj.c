@@ -107,10 +107,10 @@ static int any2obj_decode_final(void *vctx, int objtype, const char *input_type,
 
         if (data_type != NULL)
             *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
-                (char *)data_type, 0);
+                CONST_CAST(char *) data_type, 0);
         if (input_type != NULL)
             *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_INPUT_TYPE,
-                (char *)input_type, 0);
+                CONST_CAST(char *) input_type, 0);
         if (*ctx->data_structure != '\0')
             *p++ = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
                 (char *)ctx->data_structure, 0);

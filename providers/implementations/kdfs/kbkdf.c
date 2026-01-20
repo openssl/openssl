@@ -277,7 +277,7 @@ static int kmac_init(EVP_MAC_CTX *ctx, const unsigned char *custom, size_t custo
     if (custom == NULL || customlen == 0)
         return 1;
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_CUSTOM,
-        (void *)custom, customlen);
+        CONST_CAST(void *) custom, customlen);
     params[1] = OSSL_PARAM_construct_end();
     return EVP_MAC_CTX_set_params(ctx, params) > 0;
 }

@@ -24,7 +24,7 @@ int ossl_cipher_hw_tdes_ede3_initkey(PROV_CIPHER_CTX *ctx,
     const unsigned char *key, size_t keylen)
 {
     PROV_TDES_CTX *tctx = (PROV_TDES_CTX *)ctx;
-    DES_cblock *deskey = (DES_cblock *)key;
+    DES_cblock *deskey = CONST_CAST(DES_cblock *) key;
 
     tctx->tstream.cbc = NULL;
 #if defined(SPARC_DES_CAPABLE)
@@ -47,7 +47,7 @@ int ossl_cipher_hw_tdes_ede3_initkey(PROV_CIPHER_CTX *ctx,
 void ossl_cipher_hw_tdes_copyctx(PROV_CIPHER_CTX *dst,
     const PROV_CIPHER_CTX *src)
 {
-    PROV_TDES_CTX *sctx = (PROV_TDES_CTX *)src;
+    PROV_TDES_CTX *sctx = CONST_CAST(PROV_TDES_CTX *) src;
     PROV_TDES_CTX *dctx = (PROV_TDES_CTX *)dst;
 
     *dctx = *sctx;
@@ -87,7 +87,7 @@ int ossl_cipher_hw_tdes_ecb(PROV_CIPHER_CTX *ctx, unsigned char *out,
         return 1;
 
     for (i = 0, len -= DES_BLOCK_SIZE; i <= len; i += DES_BLOCK_SIZE) {
-        DES_ecb3_encrypt((const_DES_cblock *)(in + i), (DES_cblock *)(out + i),
+        DES_ecb3_encrypt(CONST_CAST(const_DES_cblock *)(in + i), (DES_cblock *)(out + i),
             &tctx->ks1, &tctx->ks2, &tctx->ks3, ctx->enc);
     }
     return 1;

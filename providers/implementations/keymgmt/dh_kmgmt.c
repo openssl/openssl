@@ -183,8 +183,8 @@ static int dh_match(const void *keydata1, const void *keydata2, int selection)
         ok = ok && key_checked;
     }
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
-        FFC_PARAMS *dhparams1 = ossl_dh_get0_params((DH *)dh1);
-        FFC_PARAMS *dhparams2 = ossl_dh_get0_params((DH *)dh2);
+        FFC_PARAMS *dhparams1 = ossl_dh_get0_params(CONST_CAST(DH *) dh1);
+        FFC_PARAMS *dhparams2 = ossl_dh_get0_params(CONST_CAST(DH *) dh2);
 
         ok = ok && ossl_ffc_params_cmp(dhparams1, dhparams2, 1);
     }
@@ -819,9 +819,9 @@ static void *dh_load(const void *reference, size_t reference_sz)
 
     if (ossl_prov_is_running() && reference_sz == sizeof(dh)) {
         /* The contents of the reference is the address to our object */
-        dh = *(DH **)reference;
+        dh = *CONST_CAST(DH **) reference;
         /* We grabbed, so we detach it */
-        *(DH **)reference = NULL;
+        *CONST_CAST(DH **) reference = NULL;
         return dh;
     }
     return NULL;

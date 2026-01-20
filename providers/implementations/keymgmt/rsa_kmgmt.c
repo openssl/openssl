@@ -677,13 +677,13 @@ static void *common_load(const void *reference, size_t reference_sz,
 
     if (ossl_prov_is_running() && reference_sz == sizeof(rsa)) {
         /* The contents of the reference is the address to our object */
-        rsa = *(RSA **)reference;
+        rsa = *CONST_CAST(RSA **) reference;
 
         if (RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK) != expected_rsa_type)
             return NULL;
 
         /* We grabbed, so we detach it */
-        *(RSA **)reference = NULL;
+        *CONST_CAST(RSA **) reference = NULL;
         return rsa;
     }
     return NULL;

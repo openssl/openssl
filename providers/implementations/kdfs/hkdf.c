@@ -485,7 +485,7 @@ static void *kdf_hkdf_fixed_digest_new(void *provctx, const char *digest)
         return NULL;
 
     param = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_DIGEST,
-        (char *)digest, 0);
+        CONST_CAST(char *) digest, 0);
     if (!ossl_prov_digest_load(&ctx->digest, &param, NULL, libctx)) {
         kdf_hkdf_free(ctx);
         return NULL;

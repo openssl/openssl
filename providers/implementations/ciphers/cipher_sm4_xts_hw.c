@@ -75,7 +75,7 @@ static int cipher_hw_sm4_xts_generic_initkey(PROV_CIPHER_CTX *ctx,
 static void cipher_hw_sm4_xts_copyctx(PROV_CIPHER_CTX *dst,
     const PROV_CIPHER_CTX *src)
 {
-    PROV_SM4_XTS_CTX *sctx = (PROV_SM4_XTS_CTX *)src;
+    PROV_SM4_XTS_CTX *sctx = CONST_CAST(PROV_SM4_XTS_CTX *) src;
     PROV_SM4_XTS_CTX *dctx = (PROV_SM4_XTS_CTX *)dst;
 
     *dctx = *sctx;

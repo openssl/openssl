@@ -188,7 +188,7 @@ int ossl_chacha20_einit(void *vctx, const unsigned char *key, size_t keylen,
     ret = ossl_cipher_generic_einit(vctx, key, keylen, iv, ivlen, NULL);
     if (ret && iv != NULL) {
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
-        PROV_CIPHER_HW_CHACHA20 *hw = (PROV_CIPHER_HW_CHACHA20 *)ctx->hw;
+        PROV_CIPHER_HW_CHACHA20 *hw = CONST_CAST(PROV_CIPHER_HW_CHACHA20 *) ctx->hw;
 
         hw->initiv(ctx);
     }
@@ -207,7 +207,7 @@ int ossl_chacha20_dinit(void *vctx, const unsigned char *key, size_t keylen,
     ret = ossl_cipher_generic_dinit(vctx, key, keylen, iv, ivlen, NULL);
     if (ret && iv != NULL) {
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
-        PROV_CIPHER_HW_CHACHA20 *hw = (PROV_CIPHER_HW_CHACHA20 *)ctx->hw;
+        PROV_CIPHER_HW_CHACHA20 *hw = CONST_CAST(PROV_CIPHER_HW_CHACHA20 *) ctx->hw;
 
         hw->initiv(ctx);
     }

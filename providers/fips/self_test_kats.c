@@ -80,7 +80,7 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 
     /* The authenticated cipher init */
     if (!enc)
-        in_tag = (unsigned char *)t->tag;
+        in_tag = CONST_CAST(unsigned char *) t->tag;
 
     return EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc)
         && (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, (int)t->iv_len, NULL) > 0)
@@ -191,7 +191,7 @@ static int add_params(OSSL_PARAM_BLD *bld, const ST_KAT_PARAM *params,
             break;
         }
         case OSSL_PARAM_INTEGER: {
-            if (!OSSL_PARAM_BLD_push_int(bld, p->name, *(int *)p->data))
+            if (!OSSL_PARAM_BLD_push_int(bld, p->name, *CONST_CAST(int *) p->data))
                 goto err;
             break;
         }
@@ -335,10 +335,9 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
         goto err;
 
     drbg_params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
-        (void *)t->entropyin,
-        t->entropyinlen);
+        CONST_CAST(void *) t->entropyin, t->entropyinlen);
     drbg_params[1] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
-        (void *)t->nonce, t->noncelen);
+        CONST_CAST(void *) t->nonce, t->noncelen);
     if (!EVP_RAND_instantiate(test, strength, 0, NULL, 0, drbg_params))
         goto err;
     if (!EVP_RAND_instantiate(drbg, strength, 0, t->persstr, t->persstrlen,
@@ -346,8 +345,7 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
         goto err;
 
     drbg_params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
-        (void *)t->entropyinpr1,
-        t->entropyinpr1len);
+        CONST_CAST(void *) t->entropyinpr1, t->entropyinpr1len);
     if (!EVP_RAND_CTX_set_params(test, drbg_params))
         goto err;
 
@@ -357,8 +355,7 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
         goto err;
 
     drbg_params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
-        (void *)t->entropyinpr2,
-        t->entropyinpr2len);
+        CONST_CAST(void *) t->entropyinpr2, t->entropyinpr2len);
     if (!EVP_RAND_CTX_set_params(test, drbg_params))
         goto err;
 
@@ -490,8 +487,7 @@ static int self_test_LMS(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
         OSSL_SELF_TEST_DESC_SIGN_LMS);
 
     pm[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
-        (unsigned char *)t->pub,
-        t->publen);
+        CONST_CAST(unsigned char *) t->pub, t->publen);
     pm[1] = OSSL_PARAM_construct_end();
 
     ctx = EVP_PKEY_CTX_new_from_name(libctx, "LMS", "");
@@ -720,8 +716,7 @@ static int self_test_kem_encapsulate(const ST_KAT_KEM *t, OSSL_SELF_TEST *st,
         goto err;
 
     *params = OSSL_PARAM_construct_octet_string(OSSL_KEM_PARAM_IKME,
-        (unsigned char *)t->entropy,
-        t->entropy_len);
+        CONST_CAST(unsigned char *) t->entropy, t->entropy_len);
     if (EVP_PKEY_encapsulate_init(ctx, params) <= 0)
         goto err;
 
@@ -1132,9 +1127,9 @@ static int set_kat_drbg(OSSL_LIB_CTX *ctx,
 
     /* Instantiate the RNGs */
     drbg_params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
-        (void *)entropy, entropy_len);
+        CONST_CAST(void *) entropy, entropy_len);
     drbg_params[1] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
-        (void *)nonce, nonce_len);
+        CONST_CAST(void *) nonce, nonce_len);
     if (!EVP_RAND_instantiate(parent_rand, strength, 0, NULL, 0, drbg_params))
         goto err;
 

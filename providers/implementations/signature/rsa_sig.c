@@ -1120,7 +1120,7 @@ static int rsa_verify_set_sig(void *vprsactx,
     OSSL_PARAM params[2];
 
     params[0] = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_SIGNATURE,
-        (unsigned char *)sig, siglen);
+        CONST_CAST(unsigned char *) sig, siglen);
     params[1] = OSSL_PARAM_construct_end();
     return rsa_sigalg_set_ctx_params(prsactx, params);
 }

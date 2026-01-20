@@ -16,6 +16,7 @@
 #endif
 #include "prov/providercommon.h"
 #include "prov/provider_util.h"
+#include "internal/common.h"
 
 void ossl_prov_cipher_reset(PROV_CIPHER *pc)
 {
@@ -163,13 +164,13 @@ int ossl_prov_set_macctx(EVP_MAC_CTX *macctx,
 
     if (mdname != NULL)
         *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-            (char *)mdname, 0);
+            CONST_CAST(char *) mdname, 0);
     if (ciphername != NULL)
         *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
-            (char *)ciphername, 0);
+            CONST_CAST(char *) ciphername, 0);
     if (properties != NULL)
         *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
-            (char *)properties, 0);
+            CONST_CAST(char *) properties, 0);
 
     *mp = OSSL_PARAM_construct_end();
 

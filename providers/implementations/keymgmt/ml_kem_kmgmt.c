@@ -498,11 +498,11 @@ static void *ml_kem_load(const void *reference, size_t reference_sz)
 
     if (ossl_prov_is_running() && reference_sz == sizeof(key)) {
         /* The contents of the reference is the address to our object */
-        key = *(ML_KEM_KEY **)reference;
+        key = *CONST_CAST(ML_KEM_KEY **) reference;
         encoded_dk = key->encoded_dk;
         key->encoded_dk = NULL;
         /* We grabbed, so we detach it */
-        *(ML_KEM_KEY **)reference = NULL;
+        *CONST_CAST(ML_KEM_KEY **) reference = NULL;
         if (encoded_dk != NULL
             && ossl_ml_kem_encode_seed(seed, sizeof(seed), key)
             && !check_seed(seed, encoded_dk, key))

@@ -85,7 +85,7 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (ctx == NULL || !aes_cbc_hmac_sha_set_ctx_params_decoder(params, &p))
         return 0;
 
-    hw = (PROV_CIPHER_HW_AES_HMAC_SHA *)ctx->hw;
+    hw = CONST_CAST(PROV_CIPHER_HW_AES_HMAC_SHA *) ctx->hw;
 
     if (p.key != NULL) {
         if (p.key->data_type != OSSL_PARAM_OCTET_STRING) {
@@ -202,7 +202,7 @@ static int aes_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
 #if !defined(OPENSSL_NO_MULTIBLOCK)
     if (p.max != NULL) {
-        PROV_CIPHER_HW_AES_HMAC_SHA *hw = (PROV_CIPHER_HW_AES_HMAC_SHA *)ctx->hw;
+        PROV_CIPHER_HW_AES_HMAC_SHA *hw = CONST_CAST(PROV_CIPHER_HW_AES_HMAC_SHA *) ctx->hw;
         size_t len = hw->tls1_multiblock_max_bufsize(ctx);
 
         if (!OSSL_PARAM_set_size_t(p.max, len)) {
@@ -275,7 +275,7 @@ static void base_init(void *provctx, PROV_AES_HMAC_SHA_CTX *ctx,
     ossl_cipher_generic_initkey(&ctx->base, kbits, blkbits, ivbits,
         EVP_CIPH_CBC_MODE, flags,
         &meths->base, provctx);
-    ctx->hw = (PROV_CIPHER_HW_AES_HMAC_SHA *)ctx->base.hw;
+    ctx->hw = CONST_CAST(PROV_CIPHER_HW_AES_HMAC_SHA *) ctx->base.hw;
 }
 
 static void *aes_cbc_hmac_sha1_newctx(void *provctx, size_t kbits,

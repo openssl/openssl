@@ -15,7 +15,7 @@
 size_t armv8_aes_gcm_encrypt(const unsigned char *in, unsigned char *out, size_t len,
                              const void *key, unsigned char ivec[16], u64 *Xi)
 {
-    AES_KEY *aes_key = (AES_KEY *)key;
+    AES_KEY *aes_key = CONST_CAST(AES_KEY *) key;
     size_t align_bytes = len - len % 16;
 
     switch(aes_key->rounds) {
@@ -47,7 +47,7 @@ size_t armv8_aes_gcm_encrypt(const unsigned char *in, unsigned char *out, size_t
 size_t armv8_aes_gcm_decrypt(const unsigned char *in, unsigned char *out, size_t len,
                              const void *key, unsigned char ivec[16], u64 *Xi)
 {
-    AES_KEY *aes_key = (AES_KEY *)key;
+    AES_KEY *aes_key = CONST_CAST(AES_KEY *) key;
     size_t align_bytes = len - len % 16;
 
     switch(aes_key->rounds) {

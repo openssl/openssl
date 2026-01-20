@@ -269,10 +269,10 @@ static void *slh_dsa_load(const void *reference, size_t reference_sz)
 
     if (ossl_prov_is_running() && reference_sz == sizeof(key)) {
         /* The contents of the reference is the address to our object */
-        key = *(SLH_DSA_KEY **)reference;
+        key = *CONST_CAST(SLH_DSA_KEY **) reference;
 
         /* We grabbed, so we detach it */
-        *(SLH_DSA_KEY **)reference = NULL;
+        *CONST_CAST(SLH_DSA_KEY **) reference = NULL;
         return key;
     }
     return NULL;

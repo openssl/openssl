@@ -585,7 +585,7 @@ static int gcm_tls_cipher(PROV_GCM_CTX *ctx, unsigned char *out, size_t *padlen,
     out += EVP_GCM_TLS_EXPLICIT_IV_LEN;
     len -= EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN;
 
-    tag = ctx->enc ? out + len : (unsigned char *)in + len;
+    tag = ctx->enc ? out + len : CONST_CAST(unsigned char *) in + len;
     if (!ctx->hw->oneshot(ctx, ctx->buf, ctx->tls_aad_len, in, len, out, tag,
             EVP_GCM_TLS_TAG_LEN)) {
         if (!ctx->enc)

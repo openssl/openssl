@@ -20,7 +20,7 @@ static int cipher_hw_des_initkey(PROV_CIPHER_CTX *ctx,
     const unsigned char *key, size_t keylen)
 {
     PROV_DES_CTX *dctx = (PROV_DES_CTX *)ctx;
-    DES_cblock *deskey = (DES_cblock *)key;
+    DES_cblock *deskey = CONST_CAST(DES_cblock *) key;
     DES_key_schedule *ks = &dctx->dks.ks;
 
     dctx->dstream.cbc = NULL;
@@ -40,7 +40,7 @@ static int cipher_hw_des_initkey(PROV_CIPHER_CTX *ctx,
 static void cipher_hw_des_copyctx(PROV_CIPHER_CTX *dst,
     const PROV_CIPHER_CTX *src)
 {
-    PROV_DES_CTX *sctx = (PROV_DES_CTX *)src;
+    PROV_DES_CTX *sctx = CONST_CAST(PROV_DES_CTX *) src;
     PROV_DES_CTX *dctx = (PROV_DES_CTX *)dst;
 
     *dctx = *sctx;
@@ -56,7 +56,7 @@ static int cipher_hw_des_ecb_cipher(PROV_CIPHER_CTX *ctx, unsigned char *out,
     if (len < bl)
         return 1;
     for (i = 0, len -= bl; i <= len; i += bl)
-        DES_ecb_encrypt((const_DES_cblock *)(in + i),
+        DES_ecb_encrypt(CONST_CAST(const_DES_cblock *)(in + i),
             (const_DES_cblock *)(out + i), key, ctx->enc);
     return 1;
 }

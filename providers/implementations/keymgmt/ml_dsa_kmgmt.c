@@ -390,16 +390,16 @@ static int ml_dsa_export(void *keydata, int selection,
      */
     if (include_private) {
         if ((buf = ossl_ml_dsa_key_get_seed(key)) != NULL) {
-            params[pnum++] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ML_DSA_SEED, (void *)buf, ML_DSA_SEED_BYTES);
+            params[pnum++] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ML_DSA_SEED, CONST_CAST(void *) buf, ML_DSA_SEED_BYTES);
         }
         if ((buf = ossl_ml_dsa_key_get_priv(key)) != NULL) {
-            params[pnum++] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, (void *)buf,
+            params[pnum++] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, CONST_CAST(void *) buf,
                 ossl_ml_dsa_key_get_priv_len(key));
         }
     }
     if (((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
         && ((buf = ossl_ml_dsa_key_get_pub(key)) != NULL)) {
-        params[pnum++] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY, (void *)buf,
+        params[pnum++] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY, CONST_CAST(void *) buf,
             ossl_ml_dsa_key_get_pub_len(key));
     }
     if (pnum == 0)
@@ -417,9 +417,9 @@ static void *ml_dsa_load(const void *reference, size_t reference_sz)
 
     if (ossl_prov_is_running() && reference_sz == sizeof(key)) {
         /* The contents of the reference is the address to our object */
-        key = *(ML_DSA_KEY **)reference;
+        key = *CONST_CAST(ML_DSA_KEY **) reference;
         /* We grabbed, so we detach it */
-        *(ML_DSA_KEY **)reference = NULL;
+        *CONST_CAST(ML_DSA_KEY **) reference = NULL;
         /* All done, if the pubkey is present. */
         if (key == NULL || ossl_ml_dsa_key_get_pub(key) != NULL)
             return key;

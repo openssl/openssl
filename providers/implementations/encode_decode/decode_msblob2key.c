@@ -24,6 +24,7 @@
 #include <openssl/x509.h>
 #include <openssl/err.h>
 #include "internal/passphrase.h"
+#include "internal/common.h"
 #include "crypto/pem.h" /* For internal PVK and "blob" headers */
 #include "crypto/rsa.h"
 #include "prov/bio.h"
@@ -188,7 +189,7 @@ next:
 
         params[0] = OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_TYPE, &object_type);
         params[1] = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
-            (char *)ctx->desc->name, 0);
+            CONST_CAST(char *) ctx->desc->name, 0);
         /* The address of the key becomes the octet string */
         params[2] = OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_REFERENCE,
             &key, sizeof(key));
@@ -220,7 +221,7 @@ msblob2key_export_object(void *vctx,
         if (selection == 0)
             selection = OSSL_KEYMGMT_SELECT_ALL;
         /* The contents of the reference is the address to our object */
-        keydata = *(void **)reference;
+        keydata = *CONST_CAST(void **) reference;
 
         return export(keydata, selection, export_cb, export_cbarg);
     }

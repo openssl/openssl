@@ -12,6 +12,7 @@
  * non-internal use) in order to implement provider AES ciphers.
  */
 #include "internal/deprecated.h"
+#include "internal/common.h"
 
 #include "cipher_aes_xts.h"
 
@@ -90,7 +91,7 @@ static int cipher_hw_aes_xts_generic_initkey(PROV_CIPHER_CTX *ctx,
 static void cipher_hw_aes_xts_copyctx(PROV_CIPHER_CTX *dst,
     const PROV_CIPHER_CTX *src)
 {
-    PROV_AES_XTS_CTX *sctx = (PROV_AES_XTS_CTX *)src;
+    PROV_AES_XTS_CTX *sctx = CONST_CAST(PROV_AES_XTS_CTX *) src;
     PROV_AES_XTS_CTX *dctx = (PROV_AES_XTS_CTX *)dst;
 
     *dctx = *sctx;

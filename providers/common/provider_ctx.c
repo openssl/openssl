@@ -11,6 +11,7 @@
 #include <string.h>
 #include "prov/provider_ctx.h"
 #include "prov/bio.h"
+#include "internal/common.h"
 
 PROV_CTX *ossl_prov_ctx_new(void)
 {
@@ -86,7 +87,7 @@ ossl_prov_ctx_get_param(PROV_CTX *ctx, const char *name, const char *defval)
         || ctx->core_get_params == NULL)
         return defval;
 
-    param[0].key = (char *)name;
+    param[0].key = CONST_CAST(char *) name;
     param[0].data_type = OSSL_PARAM_UTF8_PTR;
     param[0].data = (void *)&val;
     param[0].data_size = sizeof(val);

@@ -367,7 +367,7 @@ static int ccm_tls_cipher(PROV_CCM_CTX *ctx,
         olen = len + EVP_CCM_TLS_EXPLICIT_IV_LEN + ctx->m;
     } else {
         if (!ctx->hw->auth_decrypt(ctx, in, out, len,
-                (unsigned char *)in + len, ctx->m))
+                CONST_CAST(unsigned char *) in + len, ctx->m))
             goto err;
         olen = len;
     }

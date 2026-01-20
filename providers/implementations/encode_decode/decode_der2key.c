@@ -354,7 +354,7 @@ next:
         else
 #endif
             params[1] = OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
-                (char *)ctx->desc->keytype_name,
+                CONST_CAST(char *) ctx->desc->keytype_name,
                 0);
         /* The address of the key becomes the octet string */
         params[2] = OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_REFERENCE,
@@ -385,7 +385,7 @@ static int der2key_export_object(void *vctx,
         if (selection == 0)
             selection = OSSL_KEYMGMT_SELECT_ALL;
         /* The contents of the reference is the address to our object */
-        keydata = *(void **)reference;
+        keydata = *CONST_CAST(void **) reference;
 
         return export(keydata, selection, export_cb, export_cbarg);
     }

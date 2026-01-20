@@ -453,7 +453,7 @@ static EC_KEY *derivekey(PROV_EC_CTX *ctx,
 {
     int ret = 0;
     EC_KEY *key;
-    unsigned char *seed = (unsigned char *)ikm;
+    unsigned char *seed = CONST_CAST(unsigned char *) ikm;
     size_t seedlen = ikmlen;
     unsigned char tmpbuf[OSSL_HPKE_MAX_PRIVATE];
 

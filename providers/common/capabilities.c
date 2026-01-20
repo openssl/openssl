@@ -19,6 +19,7 @@
 #include "prov/providercommon.h"
 #include "internal/e_os.h"
 #include "crypto/ml_kem.h"
+#include "internal/common.h"
 
 /*
  * If none of EC, DH OR ML-KEM are available then we have no TLS-GROUP
@@ -105,19 +106,19 @@ static const TLS_GROUP_CONSTANTS group_list[] = {
             algorithm,                                                  \
             sizeof(algorithm)),                                         \
         OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_ID,                   \
-            (unsigned int *)&group_list[idx].group_id),                 \
+            CONST_CAST(unsigned int *) &group_list[idx].group_id),      \
         OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_SECURITY_BITS,        \
-            (unsigned int *)&group_list[idx].secbits),                  \
+            CONST_CAST(unsigned int *) &group_list[idx].secbits),       \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MIN_TLS,               \
-            (unsigned int *)&group_list[idx].mintls),                   \
+            CONST_CAST(unsigned int *) &group_list[idx].mintls),        \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_TLS,               \
-            (unsigned int *)&group_list[idx].maxtls),                   \
+            CONST_CAST(unsigned int *) &group_list[idx].maxtls),        \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS,              \
-            (unsigned int *)&group_list[idx].mindtls),                  \
+            CONST_CAST(unsigned int *) &group_list[idx].mindtls),       \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS,              \
-            (unsigned int *)&group_list[idx].maxdtls),                  \
+            CONST_CAST(unsigned int *) &group_list[idx].maxdtls),       \
         OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_IS_KEM,                \
-            (unsigned int *)&group_list[idx].is_kem),                   \
+            CONST_CAST(unsigned int *) &group_list[idx].is_kem),        \
         OSSL_PARAM_END                                                  \
     }
 
@@ -289,27 +290,27 @@ static const TLS_SIGALG_CONSTANTS sigalg_constants_list[3] = {
     { 0x0906, 256, TLS1_3_VERSION, 0, -1, -1 },
 };
 
-#define TLS_SIGALG_ENTRY(tlsname, algorithm, oid, idx)               \
-    {                                                                \
-        OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME, \
-            tlsname, sizeof(tlsname)),                               \
-        OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_NAME,      \
-            algorithm, sizeof(algorithm)),                           \
-        OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_OID,       \
-            oid, sizeof(oid)),                                       \
-        OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_CODE_POINT,       \
-            (unsigned int *)&sigalg_constants_list[idx].code_point), \
-        OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS,    \
-            (unsigned int *)&sigalg_constants_list[idx].sec_bits),   \
-        OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MIN_TLS,           \
-            (unsigned int *)&sigalg_constants_list[idx].min_tls),    \
-        OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS,           \
-            (unsigned int *)&sigalg_constants_list[idx].max_tls),    \
-        OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS,          \
-            (unsigned int *)&sigalg_constants_list[idx].min_dtls),   \
-        OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS,          \
-            (unsigned int *)&sigalg_constants_list[idx].max_dtls),   \
-        OSSL_PARAM_END                                               \
+#define TLS_SIGALG_ENTRY(tlsname, algorithm, oid, idx)                          \
+    {                                                                           \
+        OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME,            \
+            tlsname, sizeof(tlsname)),                                          \
+        OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_NAME,                 \
+            algorithm, sizeof(algorithm)),                                      \
+        OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_OID,                  \
+            oid, sizeof(oid)),                                                  \
+        OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_CODE_POINT,                  \
+            CONST_CAST(unsigned int *) &sigalg_constants_list[idx].code_point), \
+        OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS,               \
+            CONST_CAST(unsigned int *) &sigalg_constants_list[idx].sec_bits),   \
+        OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MIN_TLS,                      \
+            CONST_CAST(unsigned int *) &sigalg_constants_list[idx].min_tls),    \
+        OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS,                      \
+            CONST_CAST(unsigned int *) &sigalg_constants_list[idx].max_tls),    \
+        OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS,                     \
+            CONST_CAST(unsigned int *) &sigalg_constants_list[idx].min_dtls),   \
+        OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS,                     \
+            CONST_CAST(unsigned int *) &sigalg_constants_list[idx].max_dtls),   \
+        OSSL_PARAM_END                                                          \
     }
 
 static const OSSL_PARAM param_sigalg_list[][10] = {

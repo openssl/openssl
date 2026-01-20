@@ -16,6 +16,7 @@
 #include "crypto/lms.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
+#include "internal/common.h"
 
 static OSSL_FUNC_decoder_newctx_fn lmsxdr2key_newctx;
 static OSSL_FUNC_decoder_freectx_fn lmsxdr2key_freectx;
@@ -147,7 +148,7 @@ static int lmsxdr2key_export_object(void *vctx,
         if (selection == 0)
             selection = OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
         /* The contents of the reference is the address to our object */
-        keydata = *(void **)reference;
+        keydata = *CONST_CAST(void **) reference;
 
         return export(keydata, selection, export_cb, export_cbarg);
     }

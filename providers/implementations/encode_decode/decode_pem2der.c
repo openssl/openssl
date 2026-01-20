@@ -212,8 +212,8 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     if (i < OSSL_NELEM(pem_name_map)) {
         OSSL_PARAM params[5], *p = params;
         /* We expect these to be read only so casting away the const is ok */
-        char *data_type = (char *)pem_name_map[i].data_type;
-        char *data_structure = (char *)pem_name_map[i].data_structure;
+        char *data_type = CONST_CAST(char *) pem_name_map[i].data_type;
+        char *data_structure = CONST_CAST(char *) pem_name_map[i].data_structure;
 
         /*
          * Since this may perform decryption, we need to check the selection to

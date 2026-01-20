@@ -184,8 +184,8 @@ static int dsa_match(const void *keydata1, const void *keydata2, int selection)
         ok = ok && key_checked;
     }
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
-        FFC_PARAMS *dsaparams1 = ossl_dsa_get0_params((DSA *)dsa1);
-        FFC_PARAMS *dsaparams2 = ossl_dsa_get0_params((DSA *)dsa2);
+        FFC_PARAMS *dsaparams1 = ossl_dsa_get0_params(CONST_CAST(DSA *) dsa1);
+        FFC_PARAMS *dsaparams2 = ossl_dsa_get0_params(CONST_CAST(DSA *) dsa2);
 
         ok = ok && ossl_ffc_params_cmp(dsaparams1, dsaparams2, 1);
     }
@@ -690,9 +690,9 @@ static void *dsa_load(const void *reference, size_t reference_sz)
 
     if (ossl_prov_is_running() && reference_sz == sizeof(dsa)) {
         /* The contents of the reference is the address to our object */
-        dsa = *(DSA **)reference;
+        dsa = *CONST_CAST(DSA **) reference;
         /* We grabbed, so we detach it */
-        *(DSA **)reference = NULL;
+        *CONST_CAST(DSA **) reference = NULL;
         return dsa;
     }
     return NULL;
