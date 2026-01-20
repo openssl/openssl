@@ -645,32 +645,9 @@ void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
     }
 }
 
-/**
- * @brief Fetches a method from the method store matching the given properties.
- *
- * This function searches the method store for an implementation of a specified
- * method, identified by its id (nid), and matching the given property query. If
- * successful, it returns the method and its associated provider.
- *
- * @param store Pointer to the OSSL_METHOD_STORE from which to fetch the method.
- *              Must be non-null.
- * @param nid (identifier) of the method to be fetched. Must be > 0
- * @param prop_query String containing the property query to match against.
- * @param prov_rw Pointer to the OSSL_PROVIDER to restrict the search to, or
- *                to receive the matched provider.
- * @param method Pointer to receive the fetched method. Must be non-null.
- *
- * @return 1 if the method is successfully fetched, 0 on failure.
- *
- * If tracing is enabled, a message is printed indicating the property query and
- * the resolved provider.
- *
- * NOTE: The nid parameter here is _not_ a NID in the sense of the NID_* macros.
- * It is a unique internal identifier value.
- */
-int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
+static int ossl_method_store_fetch_best_impl(OSSL_METHOD_STORE *store,
     int nid, const char *prop_query,
-    const OSSL_PROVIDER **prov_rw, void **method)
+    const OSSL_PROVIDER **prov_rw, IMPLEMENTATION **rbest_impl)
 {
     OSSL_PROPERTY_LIST **plp;
     ALGORITHM *alg;
@@ -680,7 +657,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     int ret = 0;
     int j, best = -1, score, optional;
 
-    if (nid <= 0 || method == NULL || store == NULL)
+    if (nid <= 0 || store == NULL || rbest_impl == NULL)
         return 0;
 
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_AUTOLOAD_CONFIG)
@@ -765,8 +742,8 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
         }
     }
 fin:
-    if (ret && ossl_method_up_ref(&best_impl->method)) {
-        *method = best_impl->method.method;
+    if (ret) {
+        *rbest_impl = best_impl;
         if (prov_rw != NULL)
             *prov_rw = best_impl->provider;
     } else {
@@ -790,6 +767,44 @@ fin:
 
     ossl_property_unlock(store);
     ossl_property_free(p2);
+    return ret;
+}
+
+/**
+ * @brief Fetches a method from the method store matching the given properties.
+ *
+ * This function searches the method store for an implementation of a specified
+ * method, identified by its id (nid), and matching the given property query. If
+ * successful, it returns the method and its associated provider.
+ *
+ * @param store Pointer to the OSSL_METHOD_STORE from which to fetch the method.
+ *              Must be non-null.
+ * @param nid (identifier) of the method to be fetched. Must be > 0
+ * @param prop_query String containing the property query to match against.
+ * @param prov_rw Pointer to the OSSL_PROVIDER to restrict the search to, or
+ *                to receive the matched provider.
+ * @param method Pointer to receive the fetched method. Must be non-null.
+ *
+ * @return 1 if the method is successfully fetched, 0 on failure.
+ *
+ * If tracing is enabled, a message is printed indicating the property query and
+ * the resolved provider.
+ *
+ * NOTE: The nid parameter here is _not_ a NID in the sense of the NID_* macros.
+ * It is a unique internal identifier value.
+ */
+int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
+    int nid, const char *prop_query,
+    const OSSL_PROVIDER **prov_rw, void **method)
+{
+    IMPLEMENTATION *best_impl = NULL;
+    int ret = 0;
+
+    ret = ossl_method_store_fetch_best_impl(store, nid, prop_query, prov_rw, &best_impl);
+    if (ret && ossl_method_up_ref(&best_impl->method)) {
+        *method = best_impl->method.method;
+    }
+
     return ret;
 }
 
