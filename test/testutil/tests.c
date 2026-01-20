@@ -238,8 +238,8 @@ DEFINE_COMPARISONS(uint64_t, uint64_t, "%llu", unsigned long long)
 DEFINE_COMPARISONS(size_t, size_t, "%zu", size_t)
 DEFINE_COMPARISONS(double, double, "%g", double)
 
-DEFINE_COMPARISON(void *, ptr, eq, ==, "%p", void *)
-DEFINE_COMPARISON(void *, ptr, ne, !=, "%p", void *)
+DEFINE_COMPARISON(void *, ptr, eq, ==, "%p", const void *)
+DEFINE_COMPARISON(void *, ptr, ne, !=, "%p", const void *)
 
 int test_ptr_null(const char *file, int line, const char *s, const void *p)
 {

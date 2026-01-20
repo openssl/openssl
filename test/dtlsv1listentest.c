@@ -312,7 +312,7 @@ static int dtls_listen_test(int i)
     SSL_set0_wbio(ssl, outbio);
 
     /* Set Non-blocking IO behaviour */
-    if (!TEST_ptr(inbio = BIO_new_mem_buf((char *)tp->in, tp->inlen)))
+    if (!TEST_ptr(inbio = BIO_new_mem_buf(tp->in, tp->inlen)))
         goto err;
     BIO_set_mem_eof_return(inbio, -1);
     SSL_set0_rbio(ssl, inbio);
