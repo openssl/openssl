@@ -514,7 +514,9 @@ static const OSSL_ALGORITHM fips_keyexch[] = {
     { PROV_NAMES_DH, FIPS_DEFAULT_PROPERTIES, ossl_dh_keyexch_functions },
 #endif
 #ifndef OPENSSL_NO_EC
+#ifndef OPENSSL_NO_ECDH
     { PROV_NAMES_ECDH, FIPS_DEFAULT_PROPERTIES, ossl_ecdh_keyexch_functions },
+#endif
 #ifndef OPENSSL_NO_ECX
     { PROV_NAMES_X25519, FIPS_UNAPPROVED_PROPERTIES, ossl_x25519_keyexch_functions },
     { PROV_NAMES_X448, FIPS_UNAPPROVED_PROPERTIES, ossl_x448_keyexch_functions },
@@ -573,6 +575,7 @@ static const OSSL_ALGORITHM fips_signature[] = {
     { PROV_NAMES_ED448ph, FIPS_DEFAULT_PROPERTIES,
         ossl_ed448ph_signature_functions },
 #endif
+#ifndef OPENSSL_NO_ECDSA
     { PROV_NAMES_ECDSA, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_signature_functions },
     { PROV_NAMES_ECDSA_SHA1, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_sha1_signature_functions },
     { PROV_NAMES_ECDSA_SHA224, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_sha224_signature_functions },
@@ -583,6 +586,7 @@ static const OSSL_ALGORITHM fips_signature[] = {
     { PROV_NAMES_ECDSA_SHA3_256, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_sha3_256_signature_functions },
     { PROV_NAMES_ECDSA_SHA3_384, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_sha3_384_signature_functions },
     { PROV_NAMES_ECDSA_SHA3_512, FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_sha3_512_signature_functions },
+#endif
 #endif
 #ifndef OPENSSL_NO_ML_DSA
     { PROV_NAMES_ML_DSA_44, FIPS_DEFAULT_PROPERTIES, ossl_ml_dsa_44_signature_functions },
