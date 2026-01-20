@@ -29,7 +29,7 @@
 #define RC4_HMAC_MD5_IV_BITS 0
 #define RC4_HMAC_MD5_MODE 0
 
-#define GET_HW(ctx) ((PROV_CIPHER_HW_RC4_HMAC_MD5 *)ctx->base.hw)
+#define GET_HW(ctx) ((const PROV_CIPHER_HW_RC4_HMAC_MD5 *)ctx->base.hw)
 
 static OSSL_FUNC_cipher_encrypt_init_fn rc4_hmac_md5_einit;
 static OSSL_FUNC_cipher_decrypt_init_fn rc4_hmac_md5_dinit;

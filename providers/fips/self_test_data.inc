@@ -17,8 +17,8 @@
  */
 
 /* Macros to build Self test data */
-#define ITM(x) ((void *)&x), sizeof(x)
-#define ITM_STR(x) ((void *)&x), (sizeof(x) - 1)
+#define ITM(x) ((const void *)&x), sizeof(x)
+#define ITM_STR(x) ((const void *)&x), (sizeof(x) - 1)
 
 #define ST_KAT_PARAM_END() { "", 0, NULL, 0 }
 #define ST_KAT_PARAM_BIGNUM(name, data)                                        \
