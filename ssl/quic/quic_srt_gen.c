@@ -9,6 +9,7 @@
 #include "internal/quic_srt_gen.h"
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
+#include "internal/common.h"
 
 struct quic_srt_gen_st {
     EVP_MAC *mac;
@@ -37,7 +38,7 @@ QUIC_SRT_GEN *ossl_quic_srt_gen_new(OSSL_LIB_CTX *libctx, const char *propq,
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, "SHA256", 7);
     if (propq != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
-            (char *)propq, 0);
+            CONST_CAST(char *) propq, 0);
     *p++ = OSSL_PARAM_construct_end();
 
     if (!EVP_MAC_init(srt_gen->mac_ctx, key, key_len, params))

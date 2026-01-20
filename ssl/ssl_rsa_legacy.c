@@ -13,6 +13,7 @@
 #include <openssl/err.h>
 #include <openssl/rsa.h>
 #include <openssl/ssl.h>
+#include "internal/common.h"
 
 int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
 {
@@ -61,7 +62,7 @@ int SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type)
         goto end;
     }
 
-    if (BIO_read_filename(in, file) <= 0) {
+    if (BIO_read_filename(in, CONST_CAST(char *) file) <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_SYS_LIB);
         goto end;
     }
@@ -152,7 +153,7 @@ int SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, const char *file, int type)
         goto end;
     }
 
-    if (BIO_read_filename(in, file) <= 0) {
+    if (BIO_read_filename(in, CONST_CAST(char *) file) <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_SYS_LIB);
         goto end;
     }

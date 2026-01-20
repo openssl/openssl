@@ -72,21 +72,21 @@ int tls13_hkdf_expand_ex(OSSL_LIB_CTX *libctx, const char *propq,
 
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-        (char *)mdname, 0);
+        CONST_CAST(char *) mdname, 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-        (unsigned char *)secret, hashlen);
+        CONST_CAST(unsigned char *) secret, hashlen);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
-        (unsigned char *)label_prefix,
+        CONST_CAST(unsigned char *) label_prefix,
         sizeof(label_prefix) - 1);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_LABEL,
-        (unsigned char *)label, labellen);
+        CONST_CAST(unsigned char *) label, labellen);
     if (data != NULL)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_DATA,
-            (unsigned char *)data,
+            CONST_CAST(unsigned char *) data,
             datalen);
     if (propq != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PROPERTIES,
-            (char *)propq, 0);
+            CONST_CAST(char *) propq, 0);
 
     *p++ = OSSL_PARAM_construct_end();
 
@@ -202,19 +202,19 @@ int tls13_generate_secret(SSL_CONNECTION *s, const EVP_MD *md,
 
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-        (char *)mdname, 0);
+        CONST_CAST(char *) mdname, 0);
     if (insecret != NULL)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-            (unsigned char *)insecret,
+            CONST_CAST(unsigned char *) insecret,
             insecretlen);
     if (prevsecret != NULL)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
-            (unsigned char *)prevsecret, mdlen);
+            CONST_CAST(unsigned char *) prevsecret, mdlen);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PREFIX,
-        (unsigned char *)label_prefix,
+        CONST_CAST(unsigned char *) label_prefix,
         sizeof(label_prefix) - 1);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_LABEL,
-        (unsigned char *)derived_secret_label,
+        CONST_CAST(unsigned char *) derived_secret_label,
         sizeof(derived_secret_label) - 1);
     *p++ = OSSL_PARAM_construct_end();
 

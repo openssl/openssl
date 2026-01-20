@@ -425,7 +425,7 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
     ossl_quic_tls_free(ch->qtls);
     ossl_qrx_free(ch->qrx);
     OPENSSL_free(ch->local_transport_params);
-    OPENSSL_free((char *)ch->terminate_cause.reason);
+    OPENSSL_free(CONST_CAST(char *) ch->terminate_cause.reason);
     OSSL_ERR_STATE_free(ch->err_state);
     OPENSSL_free(ch->ack_range_scratch);
     OPENSSL_free(ch->pending_new_token);
@@ -689,7 +689,7 @@ void ossl_quic_channel_notify_flush_done(QUIC_CHANNEL *ch)
         f.error_code = ch->terminate_cause.error_code;
         f.frame_type = ch->terminate_cause.frame_type;
         f.is_app = ch->terminate_cause.app;
-        f.reason = (char *)ch->terminate_cause.reason;
+        f.reason = CONST_CAST(char *) ch->terminate_cause.reason;
         f.reason_len = ch->terminate_cause.reason_len;
         ossl_quic_tx_packetiser_schedule_conn_close(ch->txp, &f);
         /*
@@ -2926,7 +2926,7 @@ int ossl_quic_channel_start(QUIC_CHANNEL *ch)
 
 static void free_token(const unsigned char *token, size_t token_len, void *arg)
 {
-    OPENSSL_free((char *)token);
+    OPENSSL_free(CONST_CAST(char *) token);
 }
 
 /* Start a locally initiated connection shutdown. */
@@ -3889,7 +3889,7 @@ uint64_t ossl_quic_channel_get_local_stream_count_avail(const QUIC_CHANNEL *ch,
 {
     const uint64_t *p_next_ordinal, *p_max;
 
-    p_next_ordinal = ch_get_local_stream_next_ordinal_ptr((QUIC_CHANNEL *)ch,
+    p_next_ordinal = ch_get_local_stream_next_ordinal_ptr(CONST_CAST(QUIC_CHANNEL *) ch,
         is_uni);
     p_max = ch_get_local_stream_max_ptr(ch, is_uni);
 

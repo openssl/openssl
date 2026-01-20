@@ -95,10 +95,10 @@ QLOG *ossl_qlog_new(const QLOG_TRACE_INFO *info)
 
 err:
     if (qlog != NULL) {
-        OPENSSL_free((char *)qlog->info.title);
-        OPENSSL_free((char *)qlog->info.description);
-        OPENSSL_free((char *)qlog->info.group_id);
-        OPENSSL_free((char *)qlog->info.override_impl_name);
+        OPENSSL_free(CONST_CAST(char *) qlog->info.title);
+        OPENSSL_free(CONST_CAST(char *) qlog->info.description);
+        OPENSSL_free(CONST_CAST(char *) qlog->info.group_id);
+        OPENSSL_free(CONST_CAST(char *) qlog->info.override_impl_name);
         OPENSSL_free(qlog);
     }
     return NULL;
@@ -166,10 +166,10 @@ void ossl_qlog_free(QLOG *qlog)
 
     ossl_json_flush_cleanup(&qlog->json);
     BIO_free_all(qlog->bio);
-    OPENSSL_free((char *)qlog->info.title);
-    OPENSSL_free((char *)qlog->info.description);
-    OPENSSL_free((char *)qlog->info.group_id);
-    OPENSSL_free((char *)qlog->info.override_impl_name);
+    OPENSSL_free(CONST_CAST(char *) qlog->info.title);
+    OPENSSL_free(CONST_CAST(char *) qlog->info.description);
+    OPENSSL_free(CONST_CAST(char *) qlog->info.group_id);
+    OPENSSL_free(CONST_CAST(char *) qlog->info.override_impl_name);
     OPENSSL_free(qlog);
 }
 
@@ -290,8 +290,8 @@ static void qlog_event_seq_header(QLOG *qlog)
         ossl_json_key(&qlog->json, "qlog_format");
         ossl_json_str(&qlog->json, "JSON-SEQ");
 
-        write_str_once(qlog, "title", (char **)&qlog->info.title);
-        write_str_once(qlog, "description", (char **)&qlog->info.description);
+        write_str_once(qlog, "title", CONST_CAST(char **) &qlog->info.title);
+        write_str_once(qlog, "description", CONST_CAST(char **) &qlog->info.description);
 
         ossl_json_key(&qlog->json, "trace");
         ossl_json_object_begin(&qlog->json);
@@ -309,7 +309,7 @@ static void qlog_event_seq_header(QLOG *qlog)
                 } /* protocol_type */
                 ossl_json_array_end(&qlog->json);
 
-                write_str_once(qlog, "group_id", (char **)&qlog->info.group_id);
+                write_str_once(qlog, "group_id", CONST_CAST(char **) &qlog->info.group_id);
 
                 ossl_json_key(&qlog->json, "system_info");
                 ossl_json_object_begin(&qlog->json);

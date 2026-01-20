@@ -970,7 +970,7 @@ SSL *ossl_ssl_connection_new(SSL_CTX *ctx)
 
 int SSL_is_dtls(const SSL *s)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(CONST_CAST(SSL *) s);
 
 #ifndef OPENSSL_NO_QUIC
     if (s->type == SSL_TYPE_QUIC_CONNECTION || s->type == SSL_TYPE_QUIC_XSO)
@@ -985,7 +985,7 @@ int SSL_is_dtls(const SSL *s)
 
 int SSL_is_tls(const SSL *s)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(CONST_CAST(SSL *) s);
 
 #ifndef OPENSSL_NO_QUIC
     if (s->type == SSL_TYPE_QUIC_CONNECTION || s->type == SSL_TYPE_QUIC_XSO)
@@ -1089,7 +1089,7 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
      * by this SSL.
      */
     SSL_SESSION r, *p;
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(ssl);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) ssl);
 
     if (sc == NULL || id_len > sizeof(r.session_id))
         return 0;
@@ -1251,7 +1251,7 @@ int SSL_dane_enable(SSL *s, const char *basedomain)
      * invalid input, set the SNI name first.
      */
     if (sc->ext.hostname == NULL) {
-        if (!SSL_set_tlsext_host_name(s, basedomain)) {
+        if (!SSL_set_tlsext_host_name(s, CONST_CAST(char *) basedomain)) {
             ERR_raise(ERR_LIB_SSL, SSL_R_ERROR_SETTING_TLSA_BASE_DOMAIN);
             return -1;
         }
@@ -1639,7 +1639,7 @@ void SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio)
 
 BIO *SSL_get_rbio(const SSL *s)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s))
@@ -1654,7 +1654,7 @@ BIO *SSL_get_rbio(const SSL *s)
 
 BIO *SSL_get_wbio(const SSL *s)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s))
@@ -1799,7 +1799,7 @@ int SSL_set_rfd(SSL *s, int fd)
 size_t SSL_get_finished(const SSL *s, void *buf, size_t count)
 {
     size_t ret = 0;
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
     if (sc == NULL)
         return 0;
@@ -1815,7 +1815,7 @@ size_t SSL_get_finished(const SSL *s, void *buf, size_t count)
 size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count)
 {
     size_t ret = 0;
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
     if (sc == NULL)
         return 0;
@@ -1829,7 +1829,7 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count)
 
 int SSL_get_verify_mode(const SSL *s)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
     if (sc == NULL)
         return 0;
@@ -1839,7 +1839,7 @@ int SSL_get_verify_mode(const SSL *s)
 
 int SSL_get_verify_depth(const SSL *s)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
     if (sc == NULL)
         return 0;
@@ -1849,7 +1849,7 @@ int SSL_get_verify_depth(const SSL *s)
 
 int (*SSL_get_verify_callback(const SSL *s))(int, X509_STORE_CTX *)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
     if (sc == NULL)
         return NULL;
@@ -1957,7 +1957,7 @@ int SSL_has_pending(const SSL *s)
         return ossl_quic_has_pending(s);
 #endif
 
-    sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
     /* Check buffered app data if any first */
     if (SSL_CONNECTION_IS_DTLS(sc)) {
@@ -1990,7 +1990,7 @@ X509 *SSL_get1_peer_certificate(const SSL *s)
 
 X509 *SSL_get0_peer_certificate(const SSL *s)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
     if (sc == NULL)
         return NULL;
@@ -2004,7 +2004,7 @@ X509 *SSL_get0_peer_certificate(const SSL *s)
 STACK_OF(X509) *SSL_get_peer_cert_chain(const SSL *s)
 {
     STACK_OF(X509) *r;
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
     if (sc == NULL)
         return NULL;
@@ -2080,7 +2080,7 @@ int SSL_check_private_key(const SSL *ssl)
 {
     const SSL_CONNECTION *sc;
 
-    if ((sc = SSL_CONNECTION_FROM_CONST_SSL(ssl)) == NULL) {
+    if ((sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) ssl)) == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -2571,7 +2571,7 @@ int ssl_write_internal(SSL *s, const void *buf, size_t num,
         struct ssl_async_args args;
 
         args.s = s;
-        args.buf = (void *)buf;
+        args.buf = CONST_CAST(void *) buf;
         args.num = num;
         args.type = WRITEFUNC;
         args.f.func_write = s->method->ssl_write;
@@ -2846,7 +2846,7 @@ int SSL_key_update(SSL *s, int updatetype)
 
 int SSL_get_key_update_type(const SSL *s)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s))
@@ -2910,7 +2910,7 @@ int SSL_renegotiate_abbreviated(SSL *s)
 
 int SSL_renegotiate_pending(const SSL *s)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(CONST_CAST(SSL *) s);
 
     if (sc == NULL)
         return 0;
@@ -3252,7 +3252,7 @@ int ssl_cipher_ptr_id_cmp(const SSL_CIPHER *const *ap,
  */
 STACK_OF(SSL_CIPHER) *SSL_get_ciphers(const SSL *s)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
     if (sc != NULL) {
         if (sc->cipher_list != NULL) {
@@ -3266,7 +3266,7 @@ STACK_OF(SSL_CIPHER) *SSL_get_ciphers(const SSL *s)
 
 STACK_OF(SSL_CIPHER) *SSL_get_client_ciphers(const SSL *s)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
     if (sc == NULL || !sc->server)
         return NULL;
@@ -3417,7 +3417,7 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size)
     STACK_OF(SSL_CIPHER) *clntsk, *srvrsk;
     const SSL_CIPHER *c;
     int i;
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
     if (sc == NULL)
         return NULL;
@@ -3473,7 +3473,7 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size)
  */
 const char *SSL_get_servername(const SSL *s, const int type)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
     int server;
 
     if (sc == NULL)
@@ -3591,7 +3591,7 @@ int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
      * Set the default opportunistic protocol. Will be overwritten if we find
      * a match.
      */
-    *out = (unsigned char *)PACKET_data(&csubpkt);
+    *out = CONST_CAST(unsigned char *) PACKET_data(&csubpkt);
     *outlen = (unsigned char)PACKET_remaining(&csubpkt);
 
     /*
@@ -3606,7 +3606,7 @@ int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
                     if (PACKET_equal(&csubpkt, PACKET_data(&ssubpkt),
                             PACKET_remaining(&ssubpkt))) {
                         /* We found a match */
-                        *out = (unsigned char *)PACKET_data(&ssubpkt);
+                        *out = CONST_CAST(unsigned char *) PACKET_data(&ssubpkt);
                         *outlen = (unsigned char)PACKET_remaining(&ssubpkt);
                         return OPENSSL_NPN_NEGOTIATED;
                     }
@@ -3639,7 +3639,7 @@ int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
 void SSL_get0_next_proto_negotiated(const SSL *s, const unsigned char **data,
     unsigned *len)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
     if (sc == NULL) {
         /* We have no other way to indicate error */
@@ -3800,7 +3800,7 @@ void SSL_CTX_set_alpn_select_cb(SSL_CTX *ctx,
 void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
     unsigned int *len)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(ssl);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) ssl);
 
     if (sc == NULL) {
         /* We have no other way to indicate error */
@@ -4816,7 +4816,7 @@ int ossl_ssl_get_error(const SSL *s, int i, int check_err)
     int reason;
     unsigned long l;
     BIO *bio;
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
     if (i > 0)
         return SSL_ERROR_NONE;
@@ -5052,7 +5052,7 @@ const char *ssl_protocol_to_string(int version)
 
 const char *SSL_get_version(const SSL *s)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
 #ifndef OPENSSL_NO_QUIC
     /* We only support QUICv1 - so if its QUIC its QUICv1 */
@@ -5225,7 +5225,7 @@ err:
 
 X509 *SSL_get_certificate(const SSL *s)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(CONST_CAST(SSL *) s);
 
     if (sc == NULL)
         return NULL;
@@ -7393,10 +7393,10 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
         params[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_DECRYPT_ONLY,
             &decrypt_only);
         params[1] = OSSL_PARAM_construct_end();
-        if (EVP_CIPHER_get_params((EVP_CIPHER *)ciph, params)
+        if (EVP_CIPHER_get_params(CONST_CAST(EVP_CIPHER *) ciph, params)
             && decrypt_only) {
             /* If a cipher is decrypt-only, it is unusable */
-            EVP_CIPHER_free((EVP_CIPHER *)ciph);
+            EVP_CIPHER_free(CONST_CAST(EVP_CIPHER *) ciph);
             ciph = NULL;
         }
     }
@@ -7414,7 +7414,7 @@ int ssl_evp_cipher_up_ref(const EVP_CIPHER *cipher)
      * The cipher was explicitly fetched and therefore it is safe to cast
      * away the const
      */
-    return EVP_CIPHER_up_ref((EVP_CIPHER *)cipher);
+    return EVP_CIPHER_up_ref(CONST_CAST(EVP_CIPHER *) cipher);
 }
 
 void ssl_evp_cipher_free(const EVP_CIPHER *cipher)
@@ -7427,7 +7427,7 @@ void ssl_evp_cipher_free(const EVP_CIPHER *cipher)
          * The cipher was explicitly fetched and therefore it is safe to cast
          * away the const
          */
-        EVP_CIPHER_free((EVP_CIPHER *)cipher);
+        EVP_CIPHER_free(CONST_CAST(EVP_CIPHER *) cipher);
     }
 }
 
@@ -7441,7 +7441,7 @@ int ssl_evp_md_up_ref(const EVP_MD *md)
      * The digest was explicitly fetched and therefore it is safe to cast
      * away the const
      */
-    return EVP_MD_up_ref((EVP_MD *)md);
+    return EVP_MD_up_ref(CONST_CAST(EVP_MD *) md);
 }
 
 void ssl_evp_md_free(const EVP_MD *md)
@@ -7454,7 +7454,7 @@ void ssl_evp_md_free(const EVP_MD *md)
          * The digest was explicitly fetched and therefore it is safe to cast
          * away the const
          */
-        EVP_MD_free((EVP_MD *)md);
+        EVP_MD_free(CONST_CAST(EVP_MD *) md);
     }
 }
 

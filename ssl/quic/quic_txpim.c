@@ -8,6 +8,7 @@
  */
 
 #include "internal/quic_txpim.h"
+#include "internal/common.h"
 #include <stdlib.h>
 
 typedef struct quic_txpim_pkt_ex_st QUIC_TXPIM_PKT_EX;
@@ -202,7 +203,7 @@ static int compare(const void *a, const void *b)
 
 const QUIC_TXPIM_CHUNK *ossl_quic_txpim_pkt_get_chunks(const QUIC_TXPIM_PKT *fpkt)
 {
-    QUIC_TXPIM_PKT_EX *ex = (QUIC_TXPIM_PKT_EX *)fpkt;
+    QUIC_TXPIM_PKT_EX *ex = CONST_CAST(QUIC_TXPIM_PKT_EX *) fpkt;
 
     if (ex->chunks_need_sort) {
         /*
@@ -218,7 +219,7 @@ const QUIC_TXPIM_CHUNK *ossl_quic_txpim_pkt_get_chunks(const QUIC_TXPIM_PKT *fpk
 
 size_t ossl_quic_txpim_pkt_get_num_chunks(const QUIC_TXPIM_PKT *fpkt)
 {
-    QUIC_TXPIM_PKT_EX *ex = (QUIC_TXPIM_PKT_EX *)fpkt;
+    QUIC_TXPIM_PKT_EX *ex = CONST_CAST(QUIC_TXPIM_PKT_EX *) fpkt;
 
     return ex->num_chunks;
 }

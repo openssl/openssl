@@ -10,6 +10,7 @@
 #include "internal/json_enc.h"
 #include "internal/nelem.h"
 #include "internal/numbers.h"
+#include "internal/common.h"
 #include <string.h>
 #include <stdbool.h>
 
@@ -620,7 +621,7 @@ json_write_qstring_inner(OSSL_JSON_ENC *json, const char *str, size_t str_len,
 
     for (j = nul_term ? strlen(str) : str_len; j > 0; str++, j--) {
         c = *str;
-        u_str = (unsigned char *)str;
+        u_str = CONST_CAST(unsigned char *) str;
         switch (c) {
         case '\n':
             o = "\\n";

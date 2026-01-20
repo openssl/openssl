@@ -1451,7 +1451,7 @@ static int ssl_print_compressed_certificates(BIO *bio, const SSL_CONNECTION *sc,
 
     if ((comp = COMP_CTX_new(method)) == NULL
         || COMP_expand_block(comp, ucdata, (int)uclen,
-               (unsigned char *)msg, (int)clen)
+               CONST_CAST(unsigned char *) msg, (int)clen)
             != (int)uclen)
         goto err;
 

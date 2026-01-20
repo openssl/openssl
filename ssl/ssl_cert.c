@@ -629,7 +629,7 @@ const STACK_OF(X509_NAME) *SSL_CTX_get0_CA_list(const SSL_CTX *ctx)
 
 const STACK_OF(X509_NAME) *SSL_get0_CA_list(const SSL *s)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
     if (sc == NULL)
         return NULL;
@@ -659,7 +659,7 @@ void SSL_set_client_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list)
 
 const STACK_OF(X509_NAME) *SSL_get0_peer_CA_list(const SSL *s)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
     if (sc == NULL)
         return NULL;
@@ -669,7 +669,7 @@ const STACK_OF(X509_NAME) *SSL_get0_peer_CA_list(const SSL *s)
 
 STACK_OF(X509_NAME) *SSL_get_client_CA_list(const SSL *s)
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s);
 
     if (sc == NULL)
         return NULL;
@@ -797,7 +797,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file_ex(const char *file,
         ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         goto err;
     }
-    if (BIO_read_filename(in, file) <= 0)
+    if (BIO_read_filename(in, CONST_CAST(char *) file) <= 0)
         goto err;
 
     /* Internally lh_X509_NAME_retrieve() needs the libctx to retrieve SHA1 */
@@ -866,7 +866,7 @@ static int add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
         goto err;
     }
 
-    if (BIO_read_filename(in, file) <= 0)
+    if (BIO_read_filename(in, CONST_CAST(char *) file) <= 0)
         goto err;
 
     for (;;) {
@@ -1283,7 +1283,7 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
         break;
     }
     case SSL_SECOP_VERSION:
-        if ((sc = SSL_CONNECTION_FROM_CONST_SSL(s)) == NULL)
+        if ((sc = SSL_CONNECTION_FROM_CONST_SSL(CONST_CAST(SSL *) s)) == NULL)
             return 0;
         if (!SSL_CONNECTION_IS_DTLS(sc)) {
             /* SSLv3, TLS v1.0 and TLS v1.1 only allowed at level 0 */

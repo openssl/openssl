@@ -507,7 +507,8 @@ OCSP_RESPONSE *ossl_get_ocsp_response(SSL_CONNECTION *s, int chainidx)
             if (((bs = OCSP_response_get1_basic(resp)) != NULL)
                 && ((sr = OCSP_resp_get0(bs, 0)) != NULL)) {
                 /* use the first single response to get the algorithm used */
-                cid = (OCSP_CERTID *)OCSP_SINGLERESP_get0_id(sr);
+                cid = CONST_CAST(OCSP_CERTID *)
+                    OCSP_SINGLERESP_get0_id(sr);
 
                 /* determine the md algorithm which was used to create cert id */
                 OCSP_id_get0_info(&respIssuerNameHash, &cert_id_md_oid, NULL, &respSerial, cid);
@@ -544,7 +545,8 @@ OCSP_RESPONSE *ossl_get_ocsp_response(SSL_CONNECTION *s, int chainidx)
                      * get the CertID from the OCSP response to compare it with the information
                      * from the certificate
                      */
-                    sr_cert_id = (OCSP_CERTID *)OCSP_SINGLERESP_get0_id(sr);
+                    sr_cert_id = CONST_CAST(OCSP_CERTID *)
+                        OCSP_SINGLERESP_get0_id(sr);
 
                     OCSP_id_get0_info(&respIssuerNameHash, NULL, NULL, &respSerial, sr_cert_id);
 

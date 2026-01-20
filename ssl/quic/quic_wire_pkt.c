@@ -198,7 +198,7 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
         *fail_cause = QUIC_PKT_HDR_DECODE_DECODE_ERR;
 
     if (ptrs != NULL) {
-        ptrs->raw_start = (unsigned char *)PACKET_data(pkt);
+        ptrs->raw_start = CONST_CAST(unsigned char *) PACKET_data(pkt);
         ptrs->raw_sample = NULL;
         ptrs->raw_sample_len = 0;
         ptrs->raw_pn = NULL;
@@ -247,7 +247,7 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
          * this stage.
          */
         memset(hdr->pn, 0, sizeof(hdr->pn));
-        pn = (unsigned char *)PACKET_data(pkt);
+        pn = CONST_CAST(unsigned char *) PACKET_data(pkt);
         if (partial) {
             if (!PACKET_forward(pkt, sizeof(hdr->pn)))
                 return 0;
@@ -422,7 +422,7 @@ int ossl_quic_wire_decode_pkt_hdr(PACKET *pkt,
                  * know the length of the PN but we are allowed to assume it is
                  * 4 bytes long at this stage.
                  */
-                pn = (unsigned char *)PACKET_data(pkt);
+                pn = CONST_CAST(unsigned char *) PACKET_data(pkt);
                 memset(hdr->pn, 0, sizeof(hdr->pn));
                 if (partial) {
                     if (!PACKET_forward(pkt, sizeof(hdr->pn)))

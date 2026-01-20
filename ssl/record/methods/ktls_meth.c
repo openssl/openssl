@@ -478,7 +478,7 @@ static int ktls_initialise_write_packets(OSSL_RECORD_LAYER *rl,
      * This doesn't leak memory because the buffers have never been allocated
      * with KTLS
      */
-    TLS_BUFFER_set_buf(wb, (unsigned char *)templates[0].buf);
+    TLS_BUFFER_set_buf(wb, CONST_CAST(unsigned char *) templates[0].buf);
     TLS_BUFFER_set_offset(wb, 0);
     TLS_BUFFER_set_app_buffer(wb, 1);
 

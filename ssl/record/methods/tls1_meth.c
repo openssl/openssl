@@ -81,7 +81,7 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
          */
         if (rl->propq != NULL)
             *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
-                (char *)rl->propq, 0);
+                CONST_CAST(char *) rl->propq, 0);
 
         *p = OSSL_PARAM_construct_end();
 

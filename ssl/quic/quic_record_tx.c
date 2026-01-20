@@ -44,7 +44,7 @@ typedef OSSL_LIST(txe) TXE_LIST;
 
 static ossl_inline unsigned char *txe_data(const TXE *e)
 {
-    return (unsigned char *)(e + 1);
+    return CONST_CAST(unsigned char *)(e + 1);
 }
 
 /*

@@ -4090,7 +4090,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                 return 0;
 
             p = parg;
-            resp = d2i_OCSP_RESPONSE(NULL, (const unsigned char **)&p, larg);
+            resp = d2i_OCSP_RESPONSE(NULL, CONST_CAST(const unsigned char **) &p, larg);
             if (resp != NULL)
                 sk_OCSP_RESPONSE_push(sc->ext.ocsp.resp_ex, resp);
 
@@ -4906,7 +4906,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
         if (ii >= 0) {
             /* Check security callback permits this cipher */
             if (!ssl_security(s, SSL_SECOP_CIPHER_SHARED,
-                    c->strength_bits, 0, (void *)c))
+                    c->strength_bits, 0, CONST_CAST(void *) c))
                 continue;
 
             if ((alg_k & SSL_kECDHE) && (alg_a & SSL_aECDSA)

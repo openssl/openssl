@@ -84,7 +84,7 @@ typedef OSSL_LIST(rxe) RXE_LIST;
 
 static ossl_inline unsigned char *rxe_data(const RXE *e)
 {
-    return (unsigned char *)(e + 1);
+    return CONST_CAST(unsigned char *)(e + 1);
 }
 
 /*
@@ -954,7 +954,7 @@ static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
     /* Feed the AEAD tag we got so the cipher can validate it. */
     if (EVP_CIPHER_CTX_ctrl(cctx, EVP_CTRL_AEAD_SET_TAG,
             el->tag_len,
-            (unsigned char *)src + src_len - el->tag_len)
+            CONST_CAST(unsigned char *) src + src_len - el->tag_len)
         != 1)
         return 0;
 

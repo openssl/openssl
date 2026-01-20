@@ -181,7 +181,7 @@ static QUIC_LCID *lcidm_get0_lcid(const QUIC_LCIDM *lcidm, const QUIC_CONN_ID *l
     QUIC_LCID key;
 
     key.cid = *lcid;
-    key.hash_key = (uint64_t *)lcidm->hash_key;
+    key.hash_key = CONST_CAST(uint64_t *) lcidm->hash_key;
 
     if (key.cid.id_len > QUIC_MAX_CONN_ID_LEN)
         return NULL;

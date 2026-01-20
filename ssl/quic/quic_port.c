@@ -1058,7 +1058,7 @@ static int decrypt_validation_token(const QUIC_PORT *port,
         || !EVP_DecryptUpdate(port->token_ctx, plaintext, &len, data,
             (int)(ct_len - iv_len - tag_len))
         || !EVP_CIPHER_CTX_ctrl(port->token_ctx, EVP_CTRL_GCM_SET_TAG, tag_len,
-            (void *)tag)
+            CONST_CAST(void *) tag)
         || !EVP_DecryptFinal_ex(port->token_ctx, plaintext + len, &len))
         goto err;
 

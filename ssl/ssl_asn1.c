@@ -90,7 +90,7 @@ IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(SSL_SESSION_ASN1)
 static void ssl_session_oinit(ASN1_OCTET_STRING **dest, ASN1_OCTET_STRING *os,
     const unsigned char *data, size_t len)
 {
-    os->data = (unsigned char *)data; /* justified cast: data is not modified */
+    os->data = CONST_CAST(unsigned char *) data; /* justified cast: data is not modified */
     os->length = (int)len;
     os->flags = 0;
     *dest = os;

@@ -171,7 +171,7 @@ quic_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
         /* We pass a ref to the md in a successful yield_secret_cb call */
         /* TODO(QUIC FUTURE): This cast is horrible. We should try and remove it */
-        if (!EVP_MD_up_ref((EVP_MD *)kdfdigest)) {
+        if (!EVP_MD_up_ref(CONST_CAST(EVP_MD *) kdfdigest)) {
             QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
@@ -184,10 +184,10 @@ quic_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     }
 
     if (!rl->qtls->args.yield_secret_cb(level, qdir, suite_id,
-            (EVP_MD *)kdfdigest, secret, secretlen,
+            CONST_CAST(EVP_MD *) kdfdigest, secret, secretlen,
             rl->qtls->args.yield_secret_cb_arg)) {
         QUIC_TLS_FATAL(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        EVP_MD_free((EVP_MD *)kdfdigest);
+        EVP_MD_free(CONST_CAST(EVP_MD *) kdfdigest);
         goto err;
     }
 

@@ -389,7 +389,7 @@ int ossl_rio_notifier_signal(RIO_NOTIFIER *nfy)
          * Note: If wr returns 0 the buffer is already full so we don't need to
          * do anything.
          */
-        wr = writesocket(nfy->wfd, (void *)&ch, sizeof(ch));
+        wr = writesocket(nfy->wfd, CONST_CAST(void *) &ch, sizeof(ch));
     while (wr < 0 && get_last_socket_error_is_eintr());
 
     return 1;

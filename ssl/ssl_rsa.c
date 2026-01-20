@@ -69,7 +69,7 @@ int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
         goto end;
     }
 
-    if (BIO_read_filename(in, file) <= 0) {
+    if (BIO_read_filename(in, CONST_CAST(char *) file) <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_SYS_LIB);
         goto end;
     }
@@ -184,7 +184,7 @@ int SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type)
         goto end;
     }
 
-    if (BIO_read_filename(in, file) <= 0) {
+    if (BIO_read_filename(in, CONST_CAST(char *) file) <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_SYS_LIB);
         goto end;
     }
@@ -326,7 +326,7 @@ int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
         goto end;
     }
 
-    if (BIO_read_filename(in, file) <= 0) {
+    if (BIO_read_filename(in, CONST_CAST(char *) file) <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_SYS_LIB);
         goto end;
     }
@@ -407,7 +407,7 @@ int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
         goto end;
     }
 
-    if (BIO_read_filename(in, file) <= 0) {
+    if (BIO_read_filename(in, CONST_CAST(char *) file) <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_SYS_LIB);
         goto end;
     }
@@ -499,7 +499,7 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
         goto end;
     }
 
-    if (BIO_read_filename(in, file) <= 0) {
+    if (BIO_read_filename(in, CONST_CAST(char *) file) <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_SYS_LIB);
         goto end;
     }
@@ -887,7 +887,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
         ERR_raise(ERR_LIB_SSL, ERR_R_BUF_LIB);
         goto end;
     }
-    if (BIO_read_filename(bin, file) <= 0) {
+    if (BIO_read_filename(bin, CONST_CAST(char *) file) <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_SYS_LIB);
         goto end;
     }

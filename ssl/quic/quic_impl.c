@@ -285,7 +285,7 @@ static int expect_quic_as(const SSL *s, QCTX *ctx, uint32_t flags)
             goto err;
         }
 
-        qd = (QUIC_DOMAIN *)s;
+        qd = CONST_CAST(QUIC_DOMAIN *) s;
         ctx->obj = &qd->obj;
         ctx->qd = qd;
         ctx->is_domain = 1;
@@ -297,7 +297,7 @@ static int expect_quic_as(const SSL *s, QCTX *ctx, uint32_t flags)
             goto err;
         }
 
-        ql = (QUIC_LISTENER *)s;
+        ql = CONST_CAST(QUIC_LISTENER *) s;
         ctx->obj = &ql->obj;
         ctx->qd = ql->domain;
         ctx->ql = ql;
@@ -305,7 +305,7 @@ static int expect_quic_as(const SSL *s, QCTX *ctx, uint32_t flags)
         break;
 
     case SSL_TYPE_QUIC_CONNECTION:
-        qc = (QUIC_CONNECTION *)s;
+        qc = CONST_CAST(QUIC_CONNECTION *) s;
         ctx->obj = &qc->obj;
         ctx->qd = qc->domain;
         ctx->ql = qc->listener; /* never changes, so can be read without lock */
@@ -355,7 +355,7 @@ static int expect_quic_as(const SSL *s, QCTX *ctx, uint32_t flags)
             goto err;
         }
 
-        xso = (QUIC_XSO *)s;
+        xso = CONST_CAST(QUIC_XSO *) s;
         ctx->obj = &xso->obj;
         ctx->qd = xso->conn->domain;
         ctx->ql = xso->conn->listener;
@@ -1070,7 +1070,7 @@ uint64_t ossl_quic_clear_options(SSL *ssl, uint64_t options)
 /* SSL_get_options */
 uint64_t ossl_quic_get_options(const SSL *ssl)
 {
-    return quic_mask_or_options((SSL *)ssl, 0, 0);
+    return quic_mask_or_options(CONST_CAST(SSL *) ssl, 0, 0);
 }
 
 /*
@@ -2719,7 +2719,7 @@ static int quic_write_nonblocking_aon(QCTX *ctx, const void *buf,
              */
             return QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_BAD_WRITE_RETRY, NULL);
 
-        actual_buf = (unsigned char *)buf + xso->aon_buf_pos;
+        actual_buf = CONST_CAST(unsigned char *) buf + xso->aon_buf_pos;
         actual_len = len - xso->aon_buf_pos;
         assert(actual_len > 0);
     } else {
@@ -5022,7 +5022,7 @@ int ossl_quic_set_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
     if (ctx->tokencache == NULL)
         return 0;
 
-    tok = ossl_quic_build_new_token(peer, (uint8_t *)token, token_len);
+    tok = ossl_quic_build_new_token(peer, CONST_CAST(uint8_t *) token, token_len);
     if (tok == NULL)
         return 0;
 

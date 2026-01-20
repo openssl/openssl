@@ -50,11 +50,11 @@ int ossl_quic_hkdf_extract(OSSL_LIB_CTX *libctx,
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_FIPS_KEY_CHECK, &key_check);
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-        (char *)md_name, 0);
+        CONST_CAST(char *) md_name, 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
-        (unsigned char *)salt, salt_len);
+        CONST_CAST(unsigned char *) salt, salt_len);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-        (unsigned char *)ikm, ikm_len);
+        CONST_CAST(unsigned char *) ikm, ikm_len);
     *p++ = OSSL_PARAM_construct_end();
 
     ret = EVP_KDF_derive(kctx, out, out_len, params);

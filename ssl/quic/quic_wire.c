@@ -875,7 +875,7 @@ int ossl_quic_wire_decode_frame_conn_close(PACKET *pkt,
         || reason_len > SIZE_MAX)
         return 0;
 
-    if (!PACKET_get_bytes(pkt, (const unsigned char **)&f->reason,
+    if (!PACKET_get_bytes(pkt, CONST_CAST(const unsigned char **) &f->reason,
             (size_t)reason_len))
         return 0;
 

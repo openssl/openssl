@@ -194,10 +194,10 @@ static int cmd_SignatureAlgorithms(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv;
     if (cctx->ssl)
-        rv = SSL_set1_sigalgs_list(cctx->ssl, value);
+        rv = SSL_set1_sigalgs_list(cctx->ssl, CONST_CAST(char *) value);
     /* NB: ctx == NULL performs syntax checking only */
     else
-        rv = SSL_CTX_set1_sigalgs_list(cctx->ctx, value);
+        rv = SSL_CTX_set1_sigalgs_list(cctx->ctx, CONST_CAST(char *) value);
     return rv > 0;
 }
 
@@ -206,10 +206,10 @@ static int cmd_ClientSignatureAlgorithms(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv;
     if (cctx->ssl)
-        rv = SSL_set1_client_sigalgs_list(cctx->ssl, value);
+        rv = SSL_set1_client_sigalgs_list(cctx->ssl, CONST_CAST(char *) value);
     /* NB: ctx == NULL performs syntax checking only */
     else
-        rv = SSL_CTX_set1_client_sigalgs_list(cctx->ctx, value);
+        rv = SSL_CTX_set1_client_sigalgs_list(cctx->ctx, CONST_CAST(char *) value);
     return rv > 0;
 }
 
@@ -217,10 +217,10 @@ static int cmd_Groups(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv;
     if (cctx->ssl)
-        rv = SSL_set1_groups_list(cctx->ssl, value);
+        rv = SSL_set1_groups_list(cctx->ssl, CONST_CAST(char *) value);
     /* NB: ctx == NULL performs syntax checking only */
     else
-        rv = SSL_CTX_set1_groups_list(cctx->ctx, value);
+        rv = SSL_CTX_set1_groups_list(cctx->ctx, CONST_CAST(char *) value);
     return rv > 0;
 }
 
@@ -248,9 +248,9 @@ static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
         return 0;
 
     if (cctx->ctx)
-        rv = SSL_CTX_set1_groups_list(cctx->ctx, value);
+        rv = SSL_CTX_set1_groups_list(cctx->ctx, CONST_CAST(char *) value);
     else if (cctx->ssl)
-        rv = SSL_set1_groups_list(cctx->ssl, value);
+        rv = SSL_set1_groups_list(cctx->ssl, CONST_CAST(char *) value);
 
     return rv > 0;
 }
@@ -619,7 +619,7 @@ static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
         in = BIO_new(BIO_s_file());
         if (in == NULL)
             goto end;
-        if (BIO_read_filename(in, value) <= 0)
+        if (BIO_read_filename(in, CONST_CAST(char *) value) <= 0)
             goto end;
 
         decoderctx

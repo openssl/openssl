@@ -916,7 +916,7 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
      *
      * Remark: Selection priority different for client- or server-preference
      */
-    first_group_in_tuple = (uint16_t *)srvrgroups;
+    first_group_in_tuple = CONST_CAST(uint16_t *) srvrgroups;
     for (current_tuple = 0; current_tuple < srvr_num_tuples; current_tuple++) {
         size_t number_of_groups_in_tuple = srvrtuples[current_tuple];
         int prio_group_idx = 0, candidate_group_idx = 0;

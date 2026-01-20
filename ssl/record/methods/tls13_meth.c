@@ -51,7 +51,7 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         }
         EVP_MAC_free(mac);
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-            (char *)EVP_MD_name(md), 0);
+            CONST_CAST(char *) EVP_MD_name(md), 0);
         *p = OSSL_PARAM_construct_end();
         if (!EVP_MAC_init(mac_ctx, key, keylen, params)) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);

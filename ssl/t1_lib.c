@@ -1285,7 +1285,7 @@ static int gid_cb(const char *elem, int len, void *arg)
     /* Check the possible prefixes (remark: Leading and trailing spaces already cleared) */
     while (continue_while_loop && len > 0
         && ((current_prefix = strchr(prefixes, elem[0])) != NULL
-            || OPENSSL_strncasecmp(current_prefix = (char *)DEFAULT_GROUPNAME_FIRST_CHARACTER, elem, 1) == 0)) {
+            || OPENSSL_strncasecmp(current_prefix = CONST_CAST(char *) DEFAULT_GROUPNAME_FIRST_CHARACTER, elem, 1) == 0)) {
 
         switch (*current_prefix) {
         case TUPLE_DELIMITER_CHARACTER:
@@ -2933,7 +2933,7 @@ int ssl_cipher_disabled(const SSL_CONNECTION *s, const SSL_CIPHER *c,
         || ssl_version_cmp(s, maxversion, s->s3.tmp.min_ver) < 0)
         return 1;
 
-    return !ssl_security(s, op, c->strength_bits, 0, (void *)c);
+    return !ssl_security(s, op, c->strength_bits, 0, CONST_CAST(void *) c);
 }
 
 int tls_use_ticket(SSL_CONNECTION *s)
@@ -3118,7 +3118,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
     if (tctx->ext.ticket_key_evp_cb != NULL)
 #endif
     {
-        unsigned char *nctick = (unsigned char *)etick;
+        unsigned char *nctick = CONST_CAST(unsigned char *) etick;
         int rv = 0;
 
         if (tctx->ext.ticket_key_evp_cb != NULL)

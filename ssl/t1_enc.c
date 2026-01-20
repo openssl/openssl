@@ -57,20 +57,20 @@ static int tls1_PRF(SSL_CONNECTION *s,
         goto err;
     mdname = EVP_MD_get0_name(md);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-        (char *)mdname, 0);
+        CONST_CAST(char *) mdname, 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
-        (unsigned char *)sec,
+        CONST_CAST(unsigned char *) sec,
         (size_t)slen);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
-        (void *)seed1, (size_t)seed1_len);
+        CONST_CAST(void *) seed1, (size_t)seed1_len);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
-        (void *)seed2, (size_t)seed2_len);
+        CONST_CAST(void *) seed2, (size_t)seed2_len);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
-        (void *)seed3, (size_t)seed3_len);
+        CONST_CAST(void *) seed3, (size_t)seed3_len);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
-        (void *)seed4, (size_t)seed4_len);
+        CONST_CAST(void *) seed4, (size_t)seed4_len);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
-        (void *)seed5, (size_t)seed5_len);
+        CONST_CAST(void *) seed5, (size_t)seed5_len);
     /*
      * If we have a property query string, the kdf needs to know about it in the event
      * the specific kdf in use allocated a digest as part of its implementation

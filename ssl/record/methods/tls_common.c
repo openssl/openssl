@@ -1814,7 +1814,7 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
         TLS_RL_RECORD_set_data(thiswr, compressdata);
         TLS_RL_RECORD_set_length(thiswr, thistempl->buflen);
 
-        TLS_RL_RECORD_set_input(thiswr, (unsigned char *)thistempl->buf);
+        TLS_RL_RECORD_set_input(thiswr, CONST_CAST(unsigned char *) thistempl->buf);
 
         /*
          * we now 'read' from thiswr->input, thiswr->length bytes into
