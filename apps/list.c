@@ -8,6 +8,7 @@
  */
 
 /* We need to use some deprecated APIs */
+#include "openssl/bio.h"
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include "internal/e_os.h"
@@ -34,6 +35,336 @@
 
 static int verbose = 0;
 static const char *select_name = NULL;
+
+static const char *const disabled_features[] = {
+    "",
+#ifdef OPENSSL_NO_ASYNC
+    "ASYNC",
+#endif
+#ifdef OPENSSL_NO_ATEXIT
+    "ATEXIT",
+#endif
+#ifdef OPENSSL_NO_AUTOALGINIT
+    "AUTOALGINIT",
+#endif
+#ifdef OPENSSL_NO_AUTOERRINIT
+    "AUTOERRINIT",
+#endif
+#ifdef OPENSSL_NO_AUTOLOAD_CONFIG
+    "AUTOLOAD_CONFIG",
+#endif
+#ifdef OPENSSL_NO_CACHED_FETCH
+    "CACHED_FETCH",
+#endif
+#ifdef OPENSSL_NO_CMP
+    "CRMF",
+#endif
+#ifdef OPENSSL_NO_CMS
+    "CMS",
+#endif
+#ifdef OPENSSL_NO_COMP
+    "COMP",
+#endif
+#ifdef OPENSSL_NO_CT
+    "CT",
+#endif
+#ifdef OPENSSL_NO_DGRAM
+    "DGRAM",
+#endif
+#ifdef OPENSSL_NO_DSO
+    "DSO",
+#endif
+#ifdef OPENSSL_NO_ERR
+    "ERR",
+#endif
+#ifdef OPENSSL_NO_FIPS_SECURITYCHECKS
+    "FIPS_SECURITYCHECKS",
+#endif
+#ifdef OPENSSL_NO_FIPS_POST
+    "FIPS_POST",
+#endif
+#ifdef OPENSSL_NO_MODULE
+    "MODULE",
+#endif
+#ifdef OPENSSL_NO_MULTIBLOCK
+    "MULTIBLOCK",
+#endif
+#ifdef OPENSSL_NO_NEXTPROTONEG
+    "NEXTPROTONEG",
+#endif
+#ifdef OPENSSL_NO_PINSHARED
+    "PINSHARED",
+#endif
+#ifdef OPENSSL_NO_RDRAND
+    "RDRAND",
+#endif
+#ifdef OPENSSL_NO_RFC3779
+    "RFC3779",
+#endif
+#ifdef OPENSSL_NO_SM2_PRECOMP
+    "SM2_PRECOMP",
+#endif
+#ifdef OPENSSL_NO_SSE2
+    "SSE2",
+#endif
+#ifdef OPENSSL_NO_SSL_TRACE
+    "SSL_TRACE",
+#endif
+#ifdef OPENSSL_NO_STDIO
+    "STDIO",
+#endif
+#ifdef OPENSSL_NO_THREADS
+    "THREADS",
+#endif
+#ifdef OPENSSL_NO_THREAD_POOL
+    "THREAD_POOL",
+#endif
+#ifdef OPENSSL_NO_DEFAULT_THREAD_POOL
+    "DEFAULT_THREAD_POOL",
+#endif
+#ifdef OPENSSL_NO_SOCK
+    "SOCK",
+#endif
+#ifdef OPENSSL_NO_TS
+    "TS",
+#endif
+#ifdef OPENSSL_NO_UI_CONSOLE
+    "UI_CONSOLE",
+#endif
+#ifdef OPENSSL_NO_UPLINK
+    "UPLINK",
+#endif
+};
+static const char *const disabled_protocols[] = {
+    "",
+#ifdef OPENSSL_NO_CMP
+    "CMP",
+#endif
+#ifdef OPENSSL_NO_DTLS
+    "DTLS",
+#endif
+#ifdef OPENSSL_NO_DTLS1
+    "DTLS1",
+#endif
+#ifdef OPENSSL_NO_DTLS1_2
+    "DTLS1_2",
+#endif
+#ifdef OPENSSL_NO_HTTP
+    "HTTP",
+#endif
+#ifdef OPENSSL_NO_OCSP
+    "OCSP",
+#endif
+#ifdef OPENSSL_NO_TLS
+    "TLS",
+#endif
+#ifdef OPENSSL_NO_TLS1
+    "TLS1",
+#endif
+#ifdef OPENSSL_NO_TLS1_1
+    "TLS1_1",
+#endif
+#ifdef OPENSSL_NO_TLS1_2
+    "TLS1_2",
+#endif
+#ifdef OPENSSL_NO_TLS1_3
+    "TLS1_3",
+#endif
+#ifdef OPENSSL_NO_QUIC
+    "QUIC",
+#endif
+#ifdef OPENSSL_NO_SCTP
+    "SCTP",
+#endif
+#ifdef OPENSSL_NO_SRP
+    "SRP",
+#endif
+#ifdef OPENSSL_NO_SRTP
+    "SRTP",
+#endif
+};
+static const char *const disabled_algorithms[] = {
+    "",
+#ifdef OPENSSL_NO_ARGON2
+    "ARGON2",
+#endif
+#ifdef OPENSSL_NO_ARIA
+    "ARIA",
+#endif
+#ifdef OPENSSL_NO_BF
+    "BF",
+#endif
+#ifdef OPENSSL_NO_BLAKE2
+    "BLAKE2",
+#endif
+#ifdef OPENSSL_NO_CAMELLIA
+    "CAMELLIA",
+#endif
+#ifdef OPENSSL_NO_CAST
+    "CAST",
+#endif
+#ifdef OPENSSL_NO_CHACHA
+    "CHACHA",
+#endif
+#ifdef OPENSSL_NO_CMAC
+    "CMAC",
+#endif
+#ifdef OPENSSL_NO_CMS
+    "CMS",
+#endif
+#ifdef OPENSSL_NO_COMP
+    "COMP",
+#endif
+#ifdef OPENSSL_NO_DES
+    "DES",
+#endif
+#ifdef OPENSSL_NO_DGRAM
+    "DGRAM",
+#endif
+#ifdef OPENSSL_NO_DH
+    "DH",
+#endif
+#ifdef OPENSSL_NO_DSA
+    "DSA",
+#endif
+#ifdef OPENSSL_NO_HMAC_DRBG_KDF
+    "HMAC_DRBG_KDF",
+#endif
+#ifdef OPENSSL_NO_EC
+    "EC",
+#endif
+#ifdef OPENSSL_NO_ECDH
+    "ECDH",
+#endif
+#ifdef OPENSSL_NO_ECDSA
+    "ECDSA",
+#endif
+#ifdef OPENSSL_NO_ECX
+    "ECX",
+#endif
+#ifdef OPENSSL_NO_EC2M
+    "EC2M",
+#endif
+#ifdef OPENSSL_NO_KBKDF
+    "KBKDF",
+#endif
+#ifdef OPENSSL_NO_KRB5KDF
+    "KRB5KDF",
+#endif
+#ifdef OPENSSL_NO_GOST
+    "GOST",
+#endif
+#ifdef OPENSSL_NO_IDEA
+    "IDEA",
+#endif
+#ifdef OPENSSL_NO_MD2
+    "MD2",
+#endif
+#ifdef OPENSSL_NO_MD4
+    "MD4",
+#endif
+#ifdef OPENSSL_NO_MD5
+    "MD5",
+#endif
+#ifdef OPENSSL_NO_MDC2
+    "MDC2",
+#endif
+#ifdef OPENSSL_NO_ML_DSA
+    "ML_DSA",
+#endif
+#ifdef OPENSSL_NO_ML_KEM
+    "ML_KEM",
+#endif
+#ifdef OPENSSL_NO_OCB
+    "OCB",
+#endif
+#ifdef OPENSSL_NO_PSK
+    "PSK",
+#endif
+#ifdef OPENSSL_NO_RC2
+    "RC2",
+#endif
+#ifdef OPENSSL_NO_RC4
+    "RC4",
+#endif
+#ifdef OPENSSL_NO_RC5
+    "RC5",
+#endif
+#ifdef OPENSSL_NO_RMD160
+    "RMD160",
+#endif
+#ifdef OPENSSL_NO_SCRYPT
+    "SCRYPT",
+#endif
+#ifdef OPENSSL_NO_SEED
+    "SEED",
+#endif
+#ifdef OPENSSL_NO_SLH_DSA
+    "SLH_DSA",
+#endif
+#ifdef OPENSSL_NO_SIPHASH
+    "SIPHASH",
+#endif
+#ifdef OPENSSL_NO_SIV
+    "SIV",
+#endif
+#ifdef OPENSSL_NO_SNMPKDF
+    "SNMPKDF",
+#endif
+#ifdef OPENSSL_NO_SM2
+    "SM2",
+#endif
+#ifdef OPENSSL_NO_SM3
+    "SM3",
+#endif
+#ifdef OPENSSL_NO_SM4
+    "SM4",
+#endif
+#ifdef OPENSSL_NO_SSHKDF
+    "SSHKDF",
+#endif
+#ifdef OPENSSL_NO_SSKDF
+    "SSHKDF",
+#endif
+
+#ifdef OPENSSL_NO_POLY1305
+    "POLY1305",
+#endif
+#ifdef OPENSSL_NO_PVKKDF
+    "PVKKDF",
+#endif
+#ifdef OPENSSL_NO_WHIRLPOOL
+    "WHIRLPOOL",
+#endif
+#ifdef OPENSSL_NO_X942KDF
+    "X942KDF",
+#endif
+#ifdef OPENSSL_NO_X963KDF
+    "X963KDF",
+#endif
+#ifdef OPENSSL_NO_ZLIB
+    "ZLIB",
+#endif
+#ifdef OPENSSL_NO_BROTLI
+    "BROTLI",
+#endif
+#ifdef OPENSSL_NO_ZSTD
+    "ZSTD",
+#endif
+};
+
+#define PRINT_DISABLED(type)                                           \
+    do {                                                               \
+        if (OSSL_NELEM(disabled_##type) > 1) {                         \
+            BIO_puts(bio_out, "Disabled " #type ":\n");                \
+            for (size_t i = 1; i < OSSL_NELEM(disabled_##type); i++) { \
+                BIO_printf(bio_out, "\t- %s\n", disabled_##type[i]);   \
+            }                                                          \
+        } else {                                                       \
+            BIO_puts(bio_out, "No " #type " disabled.\n");             \
+        }                                                              \
+    } while (0)
+;
 
 /* Checks to see if algorithms are fetchable */
 #define IS_FETCHABLE(type, TYPE)                      \
@@ -1394,157 +1725,9 @@ static void list_provider_info(void)
 
 static void list_disabled(void)
 {
-    BIO_puts(bio_out, "Disabled algorithms:\n");
-#ifdef OPENSSL_NO_ARGON2
-    BIO_puts(bio_out, "ARGON2\n");
-#endif
-#ifdef OPENSSL_NO_ARIA
-    BIO_puts(bio_out, "ARIA\n");
-#endif
-#ifdef OPENSSL_NO_BF
-    BIO_puts(bio_out, "BF\n");
-#endif
-#ifdef OPENSSL_NO_BLAKE2
-    BIO_puts(bio_out, "BLAKE2\n");
-#endif
-#ifdef OPENSSL_NO_CAMELLIA
-    BIO_puts(bio_out, "CAMELLIA\n");
-#endif
-#ifdef OPENSSL_NO_CAST
-    BIO_puts(bio_out, "CAST\n");
-#endif
-#ifdef OPENSSL_NO_CMAC
-    BIO_puts(bio_out, "CMAC\n");
-#endif
-#ifdef OPENSSL_NO_CMS
-    BIO_puts(bio_out, "CMS\n");
-#endif
-#ifdef OPENSSL_NO_COMP
-    BIO_puts(bio_out, "COMP\n");
-#endif
-#ifdef OPENSSL_NO_DES
-    BIO_puts(bio_out, "DES\n");
-#endif
-#ifdef OPENSSL_NO_DGRAM
-    BIO_puts(bio_out, "DGRAM\n");
-#endif
-#ifdef OPENSSL_NO_DH
-    BIO_puts(bio_out, "DH\n");
-#endif
-#ifdef OPENSSL_NO_DSA
-    BIO_puts(bio_out, "DSA\n");
-#endif
-#ifdef OPENSSL_NO_SIPHASH
-    BIO_puts(bio_out, "SIPHASH\n");
-#endif
-#if defined(OPENSSL_NO_DTLS)
-    BIO_puts(bio_out, "DTLS\n");
-#endif
-#if defined(OPENSSL_NO_DTLS1)
-    BIO_puts(bio_out, "DTLS1\n");
-#endif
-#if defined(OPENSSL_NO_DTLS1_2)
-    BIO_puts(bio_out, "DTLS1_2\n");
-#endif
-#ifdef OPENSSL_NO_EC
-    BIO_puts(bio_out, "EC\n");
-#endif
-#ifdef OPENSSL_NO_ECX
-    BIO_puts(bio_out, "ECX\n");
-#endif
-#ifdef OPENSSL_NO_EC2M
-    BIO_puts(bio_out, "EC2M\n");
-#endif
-#ifdef OPENSSL_NO_GOST
-    BIO_puts(bio_out, "GOST\n");
-#endif
-#ifdef OPENSSL_NO_IDEA
-    BIO_puts(bio_out, "IDEA\n");
-#endif
-#ifdef OPENSSL_NO_MD2
-    BIO_puts(bio_out, "MD2\n");
-#endif
-#ifdef OPENSSL_NO_MD4
-    BIO_puts(bio_out, "MD4\n");
-#endif
-#ifdef OPENSSL_NO_MD5
-    BIO_puts(bio_out, "MD5\n");
-#endif
-#ifdef OPENSSL_NO_MDC2
-    BIO_puts(bio_out, "MDC2\n");
-#endif
-#ifdef OPENSSL_NO_OCB
-    BIO_puts(bio_out, "OCB\n");
-#endif
-#ifdef OPENSSL_NO_OCSP
-    BIO_puts(bio_out, "OCSP\n");
-#endif
-#ifdef OPENSSL_NO_PSK
-    BIO_puts(bio_out, "PSK\n");
-#endif
-#ifdef OPENSSL_NO_RC2
-    BIO_puts(bio_out, "RC2\n");
-#endif
-#ifdef OPENSSL_NO_RC4
-    BIO_puts(bio_out, "RC4\n");
-#endif
-#ifdef OPENSSL_NO_RC5
-    BIO_puts(bio_out, "RC5\n");
-#endif
-#ifdef OPENSSL_NO_RMD160
-    BIO_puts(bio_out, "RMD160\n");
-#endif
-#ifdef OPENSSL_NO_SCRYPT
-    BIO_puts(bio_out, "SCRYPT\n");
-#endif
-#ifdef OPENSSL_NO_SCTP
-    BIO_puts(bio_out, "SCTP\n");
-#endif
-#ifdef OPENSSL_NO_SEED
-    BIO_puts(bio_out, "SEED\n");
-#endif
-#ifdef OPENSSL_NO_SM2
-    BIO_puts(bio_out, "SM2\n");
-#endif
-#ifdef OPENSSL_NO_SM3
-    BIO_puts(bio_out, "SM3\n");
-#endif
-#ifdef OPENSSL_NO_SM4
-    BIO_puts(bio_out, "SM4\n");
-#endif
-#ifdef OPENSSL_NO_SOCK
-    BIO_puts(bio_out, "SOCK\n");
-#endif
-#ifdef OPENSSL_NO_SRP
-    BIO_puts(bio_out, "SRP\n");
-#endif
-#ifdef OPENSSL_NO_SRTP
-    BIO_puts(bio_out, "SRTP\n");
-#endif
-#ifdef OPENSSL_NO_TLS1
-    BIO_puts(bio_out, "TLS1\n");
-#endif
-#ifdef OPENSSL_NO_TLS1_1
-    BIO_puts(bio_out, "TLS1_1\n");
-#endif
-#ifdef OPENSSL_NO_TLS1_2
-    BIO_puts(bio_out, "TLS1_2\n");
-#endif
-#ifdef OPENSSL_NO_WHIRLPOOL
-    BIO_puts(bio_out, "WHIRLPOOL\n");
-#endif
-#ifdef OPENSSL_NO_ZLIB
-    BIO_puts(bio_out, "ZLIB\n");
-#endif
-#ifdef OPENSSL_NO_BROTLI
-    BIO_puts(bio_out, "BROTLI\n");
-#endif
-#ifdef OPENSSL_NO_ZSTD
-    BIO_puts(bio_out, "ZSTD\n");
-#endif
-#ifdef OPENSSL_NO_ECH
-    BIO_puts(bio_out, "ECH\n");
-#endif
+    PRINT_DISABLED(features);
+    PRINT_DISABLED(algorithms);
+    PRINT_DISABLED(protocols);
 }
 
 /* Unified enum for help and list commands. */
@@ -1660,7 +1843,7 @@ const OPTIONS list_options[] = {
 #endif
     { "providers", OPT_PROVIDER_INFO, '-',
         "List of provider information" },
-    { "disabled", OPT_DISABLED, '-', "List of disabled features" },
+    { "disabled", OPT_DISABLED, '-', "List of disabled features, algorithms, and protocols." },
     { "options", OPT_OPTIONS, 's',
         "List options for specified command" },
     { "objects", OPT_OBJECTS, '-',

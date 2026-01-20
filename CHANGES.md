@@ -35,6 +35,12 @@ OpenSSL Releases
 
    *Marcel Cornu and Tomasz Kantecki*
 
+ * Changed the output of the -disabled option for the list command.
+   Displaying disabled features, protocols, and algorithms, in relevant sections.
+   Disabled features are now generated at configuration time.
+
+   *Paul Louvel*
+
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
  * Added `-expected-rpks` option to the `openssl s_client`
