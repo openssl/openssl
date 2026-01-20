@@ -34,7 +34,8 @@
         (void)HOST_l2c(ll, (s)); \
     } while (0)
 
-#define HASH_UPDATE SHA1_Update
+#define HASH_UPDATE_THUNK
+#define HASH_UPDATE SHA1_Update_thunk
 #define HASH_TRANSFORM SHA1_Transform
 #define HASH_FINAL SHA1_Final
 #define HASH_INIT SHA1_Init
@@ -49,6 +50,12 @@ void sha1_block_data_order(SHA_CTX *c, const void *p, size_t num);
 #endif
 
 #include "crypto/md32_common.h"
+#undef HASH_UPDATE_THUNK
+
+int SHA1_Update(SHA_CTX *c, const void *data, size_t len)
+{
+    return SHA1_Update_thunk((void *)c, (const unsigned char *)data, len);
+}
 
 #define INIT_DATA_h0 0x67452301UL
 #define INIT_DATA_h1 0xefcdab89UL
