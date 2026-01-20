@@ -283,7 +283,7 @@ EVP_KEYMGMT *EVP_KEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
     return evp_generic_fetch(ctx, OSSL_OP_KEYMGMT, algorithm, properties,
         keymgmt_from_algorithm,
         evp_keymgmt_up_ref,
-        evp_keymgmt_free);
+        evp_keymgmt_free, NULL, NULL);
 }
 
 int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt)

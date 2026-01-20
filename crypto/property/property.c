@@ -12,20 +12,20 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <openssl/crypto.h>
-#include "internal/core.h"
 #include "internal/property.h"
 #include "internal/provider.h"
+#include "internal/core.h"
 #include "internal/tsan_assist.h"
-#include "crypto/ctype.h"
+#include "internal/hashtable.h"
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
 #include <openssl/trace.h>
-#include "internal/thread_once.h"
-#include "crypto/lhash.h"
 #include "crypto/sparse_array.h"
 #include "property_local.h"
 #include "crypto/context.h"
 #include "crypto/evp.h"
+#include "crypto/evp/evp_local.h"
+#include "internal/namemap.h"
 
 /*
  * The number of elements in the query cache before we initiate a flush.
@@ -38,6 +38,8 @@ typedef struct {
     void *method;
     int (*up_ref)(void *);
     void (*free)(void *);
+    void *(*dup)(void *);
+    void (*free_dup)(void *);
 } METHOD;
 
 typedef struct {
@@ -66,6 +68,9 @@ typedef struct {
 struct ossl_method_store_st {
     OSSL_LIB_CTX *ctx;
     SPARSE_ARRAY_OF(ALGORITHM) * algs;
+
+    /* (nid, propq) -> method  */
+    HT *frozen_algs;
     /*
      * Lock to protect the |algs| array from concurrent writing, when
      * individual implementations or queries are inserted.  This is used
@@ -105,6 +110,12 @@ typedef struct {
 DEFINE_SPARSE_ARRAY_OF(ALGORITHM);
 
 DEFINE_STACK_OF(ALGORITHM)
+
+HT_START_KEY_DEFN(frozen_cache_key)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
+/* TODO(FREEZE): allow variable length propq */
+HT_DEF_KEY_FIELD_CHAR_ARRAY(propq, 64)
+HT_END_KEY_DEFN(FROZEN_CACHE_KEY)
 
 typedef struct ossl_global_properties_st {
     OSSL_PROPERTY_LIST *list;
@@ -174,6 +185,30 @@ static int ossl_method_up_ref(METHOD *method)
 static void ossl_method_free(METHOD *method)
 {
     (*method->free)(method->method);
+}
+
+static void ossl_method_free_frozen(METHOD *method)
+{
+    (*method->free_dup)(method->method);
+}
+
+static METHOD *ossl_method_dup(METHOD *method)
+{
+    METHOD *dup;
+
+    dup = OPENSSL_zalloc(sizeof(*dup));
+    if (dup == NULL)
+        return NULL;
+
+    memcpy(dup, method, sizeof(*dup));
+
+    dup->method = (*method->dup)(method->method);
+    if (dup->method == NULL) {
+        OPENSSL_free(dup);
+        return NULL;
+    }
+
+    return dup;
 }
 
 static __owur int ossl_property_read_lock(OSSL_METHOD_STORE *p)
@@ -269,6 +304,8 @@ void ossl_method_store_free(OSSL_METHOD_STORE *store)
     if (store != NULL) {
         if (store->algs != NULL)
             ossl_sa_ALGORITHM_doall_arg(store->algs, &alg_cleanup, store);
+        if (store->frozen_algs != NULL)
+            ossl_ht_free(store->frozen_algs);
         ossl_sa_ALGORITHM_free(store->algs);
         CRYPTO_THREAD_lock_free(store->lock);
         CRYPTO_THREAD_lock_free(store->biglock);
@@ -325,7 +362,9 @@ static int ossl_method_store_insert(OSSL_METHOD_STORE *store, ALGORITHM *alg)
 int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     int nid, const char *properties, void *method,
     int (*method_up_ref)(void *),
-    void (*method_destruct)(void *))
+    void (*method_destruct)(void *),
+    void *(*method_dup)(void *),
+    void (*free_frozen)(void *))
 {
     ALGORITHM *alg = NULL;
     IMPLEMENTATION *impl;
@@ -348,6 +387,8 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     impl->method.method = method;
     impl->method.up_ref = method_up_ref;
     impl->method.free = method_destruct;
+    impl->method.dup = method_dup;
+    impl->method.free_dup = free_frozen;
     if (!ossl_method_up_ref(&impl->method)) {
         OPENSSL_free(impl);
         return 0;
@@ -555,34 +596,6 @@ int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
     ossl_sa_ALGORITHM_doall_arg(store->algs, &alg_cleanup_by_provider, &data);
     ossl_property_unlock(store);
     return 1;
-}
-
-int ossl_method_store_freeze(OSSL_METHOD_STORE *store, const char *propq)
-{
-    if (store == NULL || store->frozen == 1)
-        return 0;
-
-    if (propq != NULL) {
-        store->frozen_propq = OPENSSL_strdup(propq);
-        if (store->frozen_propq == NULL)
-            return 0;
-    }
-    /* TODO: FREEZE: Create frozen caches */
-    store->frozen = 1;
-
-    return 1;
-}
-
-int ossl_method_store_is_frozen(OSSL_METHOD_STORE *store)
-{
-    return store != NULL && store->frozen == 1;
-}
-
-const char *ossl_method_store_frozen_propq(OSSL_METHOD_STORE *store)
-{
-    if (store == NULL)
-        return NULL;
-    return store->frozen_propq;
 }
 
 static void alg_do_one(ALGORITHM *alg, IMPLEMENTATION *impl,
@@ -800,6 +813,9 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
     IMPLEMENTATION *best_impl = NULL;
     int ret = 0;
 
+    if (nid <= 0 || store == NULL || method == NULL)
+        return 0;
+
     ret = ossl_method_store_fetch_best_impl(store, nid, prop_query, prov_rw, &best_impl);
     if (ret && ossl_method_up_ref(&best_impl->method)) {
         *method = best_impl->method.method;
@@ -907,11 +923,6 @@ static void ossl_method_cache_flush_some(OSSL_METHOD_STORE *store)
         tsan_add(&global_seed, state.seed);
 }
 
-/* TODO: FREEZE: Remove these and replace with actual implementation */
-static EVP_MD andrew_md;
-static void *andrew_method = NULL;
-
-/* TODO: FREEZE: Replace with actual implementation */
 int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int nid, const char *prop_query, void **method)
 {
@@ -942,50 +953,19 @@ err:
     return res;
 }
 
-/* TODO: FREEZE: Replace with actual implementation */
-int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store,
-    OSSL_PROVIDER *prov, int nid,
-    const char *prop_query, void **method)
-{
-    /*
-     * Query triplet (nid, prov, prop_query) from frozen store with no fallback.
-     */
-
-    /*
-     * TODO: FREEZE: Replace with actual implementation
-     * For now, just store & fetch from global variables
-     */
-    EVP_MD *temp_method;
-
-    if (andrew_method == NULL) {
-        if (!ossl_method_store_cache_get(store, prov, nid, prop_query, (void **)&temp_method))
-            return 0;
-
-        memcpy(&andrew_md, temp_method, sizeof(andrew_md));
-        andrew_md.origin = EVP_ORIG_FROZEN;
-        andrew_method = &andrew_md;
-        EVP_MD_free(temp_method);
-    }
-
-    if (andrew_method != NULL) {
-        *method = andrew_method;
-        return 1;
-    }
-
-    return 0;
-}
-
 int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int nid, const char *prop_query, void *method,
     int (*method_up_ref)(void *),
-    void (*method_destruct)(void *))
+    void (*method_destruct)(void *),
+    void *(*method_dup)(void *),
+    void (*free_dup)(void *))
 {
     QUERY elem, *old, *p = NULL;
     ALGORITHM *alg;
     size_t len;
     int res = 1;
 
-    if (nid <= 0 || store == NULL || prop_query == NULL || store->frozen == 1)
+    if (nid <= 0 || store == NULL || prop_query == NULL)
         return 0;
 
     if (!ossl_assert(prov != NULL))
@@ -1015,6 +995,8 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
         p->method.method = method;
         p->method.up_ref = method_up_ref;
         p->method.free = method_destruct;
+        p->method.dup = method_dup;
+        p->method.free_dup = free_dup;
         if (!ossl_method_up_ref(&p->method))
             goto err;
         memcpy((char *)p->query, prop_query, len + 1);
@@ -1035,4 +1017,185 @@ err:
 end:
     ossl_property_unlock(store);
     return res;
+}
+
+int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store,
+    const char *alg_name, const char *prop_query, void **method)
+{
+    FROZEN_CACHE_KEY key;
+    HT_VALUE *val;
+
+    if (store == NULL
+        || alg_name == NULL
+        || prop_query == NULL
+        || store->frozen_algs == NULL)
+        return 0;
+
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING_CASE(&key, name, alg_name);
+    HT_SET_KEY_STRING(&key, propq, prop_query);
+
+    val = ossl_ht_get(store->frozen_algs, TO_HT_KEY(&key));
+    if (val == NULL)
+        return 1;
+    *method = ((METHOD *)val->value)->method;
+
+    return 1;
+}
+
+struct alg_freeze_st {
+    OSSL_METHOD_STORE *store;
+    int nid;
+
+    int ret;
+};
+
+static void frozen_cache_free(HT_VALUE *val)
+{
+    METHOD *method = (METHOD *)val->value;
+    if (method == NULL || method->free_dup == NULL)
+        return;
+    ossl_method_free_frozen(method);
+
+    OPENSSL_free(method);
+}
+
+static int freeze_alg(OSSL_METHOD_STORE *store, ALGORITHM *alg,
+    const char *propq, const char *alg_name)
+{
+    int ret = 0;
+    IMPLEMENTATION *best_impl = NULL;
+    FROZEN_CACHE_KEY key;
+    HT_VALUE val = { 0 };
+    const OSSL_PROVIDER *prov = NULL;
+
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING_CASE(&key, name, alg_name);
+    HT_SET_KEY_STRING(&key, propq, propq);
+
+    if (ossl_ht_get(store->frozen_algs, TO_HT_KEY(&key)) != NULL)
+        return 1;
+
+    ret = ossl_method_store_fetch_best_impl(store,
+        alg->nid, propq, &prov, &best_impl);
+    if (ret == 0 || best_impl == NULL
+        || best_impl->method.dup == NULL
+        || best_impl->method.free_dup == NULL)
+        return 1;
+
+    val.value = ossl_method_dup(&best_impl->method);
+    if (val.value == NULL)
+        return ret;
+
+    ret = ossl_ht_insert(store->frozen_algs, TO_HT_KEY(&key), &val, NULL);
+    if (ret <= 0) {
+        frozen_cache_free(&val);
+        return 0;
+    }
+
+    return 1;
+}
+
+static void alg_freeze(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
+{
+    struct alg_freeze_st *af = arg;
+    OSSL_NAMEMAP *nm = ossl_namemap_stored(af->store->ctx);
+    int name_id;
+    const char *name;
+    int i = 0;
+
+    if (alg == NULL) {
+        af->ret = 0;
+        return;
+    }
+    if (!evp_method_id2name_id_op_id(alg->nid, &name_id, NULL)) {
+        af->ret = 0;
+        return;
+    }
+
+    for (;;) {
+        name = ossl_namemap_num2name(nm, name_id, i++);
+        if (name == NULL)
+            break;
+        if (*af->store->frozen_propq != '\0') {
+            af->ret = freeze_alg(af->store, alg, af->store->frozen_propq, name);
+            if (!af->ret)
+                return;
+        }
+        af->ret = freeze_alg(af->store, alg, "", name);
+        if (!af->ret)
+            return;
+    }
+}
+
+/**
+ * @brief Freezes the method store's cache into a hash table.
+ *
+ * This function creates a frozen copy of the method store's cache, storing it
+ * in a hash table for efficient retrieval. Each entry in the cache is duplicated
+ * to ensure that the frozen cache is independent of the original store.
+ *
+ * @param store Pointer to the OSSL_METHOD_STORE to be frozen.
+ *
+ * @return 1 on success, 0 on failure.
+ *
+ * If the store is NULL or if any duplication fails, the function returns 0.
+ * On success, it returns 1 after populating the frozen cache.
+ */
+int ossl_method_store_freeze_cache(OSSL_METHOD_STORE *store, const char *propq)
+{
+    HT_CONFIG ht_conf = {
+        .ht_free_fn = frozen_cache_free,
+        .init_neighborhoods = store->cache_nelem,
+        .collision_check = 1,
+        .no_rcu = 1,
+    };
+    struct alg_freeze_st af = {
+        .store = store,
+        .ret = 1,
+    };
+    propq = propq != NULL ? propq : "";
+
+    if (store == NULL || store->frozen == 1)
+        return 0;
+
+    store->frozen_propq = OPENSSL_strdup(propq);
+    if (store->frozen_propq == NULL)
+        goto err;
+
+    store->frozen_algs = ossl_ht_new(&ht_conf);
+    if (store->frozen_algs == NULL)
+        goto err;
+
+    int r = evp_md_fetch_all(store->ctx);
+    if (r <= 0)
+        goto err;
+
+    ossl_sa_ALGORITHM_doall_arg(store->algs, &alg_freeze, &af);
+    if (af.ret <= 0)
+        goto err;
+
+    store->frozen = 1;
+
+    return 1;
+
+err:
+    OPENSSL_free(store->frozen_propq);
+    ossl_ht_free(store->frozen_algs);
+    store->frozen_algs = NULL;
+    store->frozen_propq = NULL;
+
+    return 0;
+}
+
+int ossl_method_store_is_frozen(OSSL_METHOD_STORE *store)
+{
+    return store != NULL && store->frozen == 1;
+}
+
+const char *ossl_method_store_frozen_propq(OSSL_METHOD_STORE *store)
+{
+    if (store == NULL)
+        return NULL;
+    return store->frozen_propq;
 }

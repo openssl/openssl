@@ -220,13 +220,77 @@ err:
     return ret;
 }
 
-static int test_EVP_MD_fetch_freeze(void)
+static int test_EVP_MD_fetch_freeze_default(void)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    /*
+     * Test does not make sense if cached fetch is disabled.
+     * There's noting to freeze, and test will fail.
+     */
+    return 1;
+#endif
+
     EVP_MD *md = NULL;
     int ret = 0;
-    OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new();
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_LIB_CTX *ctx2 = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
 
-    if (!TEST_ptr(ctx)
+    /* Default ctx was frozen in previous test, skip the test */
+    if (use_default_ctx == 1)
+        return 1;
+
+    if (!load_providers(&ctx, prov))
+        goto err;
+
+    ctx2 = OSSL_LIB_CTX_new();
+
+    if (!TEST_ptr(ctx2)
+        || !TEST_int_eq(OSSL_LIB_CTX_freeze(ctx, NULL), 1)
+        || !TEST_int_eq(OSSL_LIB_CTX_freeze(ctx2, NULL), 1))
+        goto err;
+
+    if (!TEST_ptr(md = EVP_MD_fetch(NULL, "SHA1", NULL))
+        || !TEST_int_eq(md->origin, EVP_ORIG_FROZEN)
+        || !TEST_ptr(md = EVP_MD_fetch(NULL, "SHA1", "?fips=true"))
+        || !TEST_int_ne(md->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_MD_free(md);
+
+    if (!TEST_ptr(md = EVP_MD_fetch(ctx, "SHA1", NULL))
+        || !TEST_int_eq(md->origin, EVP_ORIG_FROZEN)
+        || !TEST_ptr(md = EVP_MD_fetch(ctx, "SHA1", "?fips=true"))
+        || !TEST_int_ne(md->origin, EVP_ORIG_FROZEN))
+        goto err;
+
+    ret = 1;
+err:
+    unload_providers(&ctx, prov);
+    OSSL_LIB_CTX_free(ctx2);
+    EVP_MD_free(md);
+    return ret;
+}
+
+static int test_EVP_MD_fetch_freeze(void)
+{
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    /*
+     * Test does not make sense if cached fetch is disabled.
+     * There's noting to freeze, and test will fail.
+     */
+    return 1;
+#endif
+
+    EVP_MD *md = NULL;
+    int ret = 0;
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_LIB_CTX *ctx2 = OSSL_LIB_CTX_new();
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    if (!TEST_ptr(ctx2)
         || !TEST_ptr(md = EVP_MD_fetch(ctx, "SHA256", NULL))
         || !TEST_true(test_md(md))
         || !TEST_int_ne(md->origin, EVP_ORIG_FROZEN))
@@ -236,6 +300,12 @@ static int test_EVP_MD_fetch_freeze(void)
 
     if (!TEST_int_eq(OSSL_LIB_CTX_freeze(ctx, "?fips=true"), 1)
         || !TEST_ptr(md = EVP_MD_fetch(ctx, "SHA256", NULL))
+        || !TEST_true(test_md(md))
+        || !TEST_int_eq(md->origin, EVP_ORIG_FROZEN)
+        || !TEST_ptr(md = EVP_MD_fetch(ctx, "SHA-256", NULL))
+        || !TEST_true(test_md(md))
+        || !TEST_int_eq(md->origin, EVP_ORIG_FROZEN)
+        || !TEST_ptr(md = EVP_MD_fetch(ctx, "2.16.840.1.101.3.4.2.1", NULL))
         || !TEST_true(test_md(md))
         || !TEST_int_eq(md->origin, EVP_ORIG_FROZEN))
         goto err;
@@ -248,14 +318,30 @@ static int test_EVP_MD_fetch_freeze(void)
         goto err;
     EVP_MD_free(md);
 
+    /* Falls back to slow path */
     if (!TEST_ptr(md = EVP_MD_fetch(ctx, "SHA256", "?provider=default"))
         || !TEST_true(test_md(md))
+        || !TEST_int_ne(md->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_MD_free(md);
+
+    if (!TEST_ptr(md = EVP_MD_fetch(ctx, "SHA1", NULL))
+        || !TEST_int_eq(md->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_MD_free(md);
+
+    if (!TEST_ptr(md = EVP_MD_fetch(ctx2, "SHA1", "?fips=true"))
+        || !TEST_int_ne(md->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_MD_free(md);
+    if (!TEST_ptr(md = EVP_MD_fetch(ctx2, "SHA1", NULL))
         || !TEST_int_ne(md->origin, EVP_ORIG_FROZEN))
         goto err;
 
     ret = 1;
 err:
-    OSSL_LIB_CTX_free(ctx);
+    unload_providers(&ctx, prov);
+    OSSL_LIB_CTX_free(ctx2);
     EVP_MD_free(md);
     return ret;
 }
@@ -444,6 +530,7 @@ int setup_tests(void)
     ADD_TEST(test_legacy_provider_unloaded);
     if (strcmp(alg, "digest") == 0) {
         ADD_TEST(test_EVP_MD_fetch_freeze);
+        ADD_TEST(test_EVP_MD_fetch_freeze_default);
         ADD_TEST(test_implicit_EVP_MD_fetch);
         ADD_TEST(test_explicit_EVP_MD_fetch_by_name);
         ADD_ALL_TESTS_NOSUBTEST(test_explicit_EVP_MD_fetch_by_X509_ALGOR, 2);
