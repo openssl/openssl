@@ -1347,6 +1347,7 @@ static int check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
 {
     time_t *ptime;
     int i;
+    X509_CRL *oldcrl = ctx->current_crl;
 
     if ((ctx->param->flags & X509_V_FLAG_USE_CHECK_TIME) != 0)
         ptime = &ctx->param->check_time;
@@ -1389,7 +1390,7 @@ static int check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
     }
 
     if (notify)
-        ctx->current_crl = NULL;
+        ctx->current_crl = oldcrl;
 
     return 1;
 }
