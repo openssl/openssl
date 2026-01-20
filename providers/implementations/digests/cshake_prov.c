@@ -300,7 +300,7 @@ static int cshake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (ctx == NULL || !cshake_set_ctx_params_decoder(params, &p))
         return 0;
 
-    if (ossl_unlikely(p.xoflen != NULL)) {
+    if (p.xoflen != NULL) {
         size_t xoflen;
 
         if (!OSSL_PARAM_get_size_t(p.xoflen, &xoflen)
