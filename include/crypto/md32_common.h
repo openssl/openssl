@@ -154,8 +154,16 @@
  * Time for some action :-)
  */
 
+#ifdef HASH_UPDATE_THUNK
+int HASH_UPDATE(void *cp, const unsigned char *data_, size_t len);
+int HASH_UPDATE(void *cp, const unsigned char *data_, size_t len)
+#else
 int HASH_UPDATE(HASH_CTX *c, const void *data_, size_t len)
+#endif
 {
+#ifdef HASH_UPDATE_THUNK
+    HASH_CTX *c = (HASH_CTX *)cp;
+#endif
     const unsigned char *data = data_;
     unsigned char *p;
     HASH_LONG l;
