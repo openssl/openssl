@@ -8,6 +8,7 @@
  */
 
 /* We need to use some deprecated APIs */
+#include "openssl/bio.h"
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include "internal/e_os.h"
@@ -34,7 +35,108 @@
 
 static int verbose = 0;
 static const char *select_name = NULL;
+static const char *const disabled_features[] = {
+#ifdef OPENSSL_NO_ASYNC
+    "ASYNC",
+#endif
+#ifdef OPENSSL_NO_ATEXIT
+    "ATEXIT",
+#endif
+#ifdef OPENSSL_NO_AUTOALGINIT
+    "AUTOALGINIT",
+#endif
+#ifdef OPENSSL_NO_AUTOERRINIT
+    "AUTOERRINIT",
+#endif
+#ifdef OPENSSL_NO_AUTOLOAD_CONFIG
+    "AUTOLOAD_CONFIG",
+#endif
+#ifdef OPENSSL_NO_CACHED_FETCH
+    "CACHED_FETCH",
+#endif
+#ifdef OPENSSL_NO_CMP
+    "CRMF",
+#endif
+#ifdef OPENSSL_NO_CMS
+    "CMS",
+#endif
+#ifdef OPENSSL_NO_COMP
+    "COMP",
+#endif
+#ifdef OPENSSL_NO_CT
+    "CT",
+#endif
+#ifdef OPENSSL_NO_DGRAM
+    "DGRAM",
+#endif
+#ifdef OPENSSL_NO_DSO
+    "DSO",
+#endif
+#ifdef OPENSSL_NO_ERR
+    "ERR",
+#endif
+#ifdef OPENSSL_NO_FIPS_SECURITYCHECKS
+    "FIPS_SECURITYCHECKS",
+#endif
+#ifdef OPENSSL_NO_FIPS_POST
+    "FIPS_POST",
+#endif
+#ifdef OPENSSL_NO_MODULE
+    "MODULE",
+#endif
+#ifdef OPENSSL_NO_MULTIBLOCK
+    "MULTIBLOCK",
+#endif
+#ifdef OPENSSL_NO_NEXTPROTONEG
+    "NEXTPROTONEG",
+#endif
+#ifdef OPENSSL_NO_PINSHARED
+    "PINSHARED",
+#endif
+#ifdef OPENSSL_NO_RDRAND
+    "RDRAND",
+#endif
+#ifdef OPENSSL_NO_RFC3779
+    "RFC3779",
+#endif
+#ifdef OPENSSL_NO_SM2_PRECOMP
+    "SM2_PRECOMP",
+#endif
+#ifdef OPENSSL_NO_SSE2
+    "SSE2",
+#endif
+#ifdef OPENSSL_NO_SSL_TRACE
+    "SSL_TRACE",
+#endif
+#ifdef OPENSSL_NO_STDIO
+    "STDIO",
+#endif
+#ifdef OPENSSL_NO_THREADS
+    "THREADS",
+#endif
+#ifdef OPENSSL_NO_THREAD_POOL
+    "THREAD_POOL",
+#endif
+#ifdef OPENSSL_NO_DEFAULT_THREAD_POOL
+    "DEFAULT_THREAD_POOL",
+#endif
+#ifdef OPENSSL_NO_SOCK
+    "SOCK",
+#endif
+#ifdef OPENSSL_NO_TS
+    "TS",
+#endif
+#ifdef OPENSSL_NO_UI_CONSOLE
+    "UI_CONSOLE",
+#endif
+#ifdef OPENSSL_NO_UPLINK
+    "UPLINK",
+#endif
+};
 static const char *const disabled_protocols[] = {
+#ifdef OPENSSL_NO_CMP
+    "CMP",
+#endif
 #ifdef OPENSSL_NO_DTLS
     "DTLS",
 #endif
@@ -43,6 +145,12 @@ static const char *const disabled_protocols[] = {
 #endif
 #ifdef OPENSSL_NO_DTLS1_2
     "DTLS1_2",
+#endif
+#ifdef OPENSSL_NO_HTTP
+    "HTTP",
+#endif
+#ifdef OPENSSL_NO_OCSP
+    "OCSP",
 #endif
 #ifdef OPENSSL_NO_TLS
     "TLS",
@@ -61,6 +169,15 @@ static const char *const disabled_protocols[] = {
 #endif
 #ifdef OPENSSL_NO_QUIC
     "QUIC",
+#endif
+#ifdef OPENSSL_NO_SCTP
+    "SCTP",
+#endif
+#ifdef OPENSSL_NO_SRP
+    "SRP",
+#endif
+#ifdef OPENSSL_NO_SRTP
+    "SRTP",
 #endif
 };
 static const char *const disabled_algorithms[] = {
@@ -157,9 +274,6 @@ static const char *const disabled_algorithms[] = {
 #ifdef OPENSSL_NO_OCB
     "OCB",
 #endif
-#ifdef OPENSSL_NO_OCSP
-    "OSCP",
-#endif
 #ifdef OPENSSL_NO_PSK
     "PSK",
 #endif
@@ -177,9 +291,6 @@ static const char *const disabled_algorithms[] = {
 #endif
 #ifdef OPENSSL_NO_SCRYPT
     "SCRYPT",
-#endif
-#ifdef OPENSSL_NO_SCTP
-    "SCTP",
 #endif
 #ifdef OPENSSL_NO_SEED
     "SEED",
@@ -211,15 +322,7 @@ static const char *const disabled_algorithms[] = {
 #ifdef OPENSSL_NO_SSKDF
     "SSHKDF",
 #endif
-#ifdef OPENSSL_NO_SOCK
-    "SOCK",
-#endif
-#ifdef OPENSSL_NO_SRP
-    "SRP",
-#endif
-#ifdef OPENSSL_NO_SRTP
-    "SRTP",
-#endif
+
 #ifdef OPENSSL_NO_POLY1305
     "POLY1305",
 #endif
@@ -280,9 +383,9 @@ IS_FETCHABLE(encoder, OSSL_ENCODER)
 #define PRINT_DISABLED_FEATURE(disabled_list, message)               \
     do {                                                             \
         if (OSSL_NELEM(disabled_list) > 0) {                         \
-            BIO_puts(bio_out, message ":\n\n");                      \
+            BIO_puts(bio_out, message ":\n");                        \
             for (size_t i = 0; i < OSSL_NELEM(disabled_list); i++) { \
-                BIO_printf(bio_out, "%s\n", disabled_list[i]);       \
+                BIO_printf(bio_out, "\t- %s\n", disabled_list[i]);   \
             }                                                        \
         }                                                            \
     } while (0);
@@ -1617,6 +1720,7 @@ static void list_disabled(void)
 {
     PRINT_DISABLED_FEATURE(disabled_protocols, "Disabled protocol(s)");
     PRINT_DISABLED_FEATURE(disabled_algorithms, "Disabled algorithm(s)");
+    PRINT_DISABLED_FEATURE(disabled_features, "Disabled feature(s)");
 }
 
 /* Unified enum for help and list commands. */
