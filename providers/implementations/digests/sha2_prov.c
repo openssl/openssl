@@ -289,7 +289,7 @@ IMPLEMENT_digest_functions_with_settable_ctx(
 IMPLEMENT_digest_functions_with_serialize(sha224, SHA256_CTX,
     SHA256_CBLOCK, SHA224_DIGEST_LENGTH,
     SHA2_FLAGS, SHA224_Init,
-    SHA224_Update, SHA224_Final,
+    SHA256_Update_thunk, SHA224_Final,
     SHA256_Serialize, SHA256_Deserialize)
 
 /* ossl_sha256_functions */
