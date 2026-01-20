@@ -471,7 +471,7 @@ static int random_data(const uint32_t *key, uint8_t *data, size_t data_len, size
     if (cipher == NULL)
         goto err;
 
-    if (EVP_EncryptInit_ex2(ctx, cipher, (uint8_t *)key, (uint8_t *)counter, NULL) == 0)
+    if (EVP_EncryptInit_ex2(ctx, cipher, (const uint8_t *)key, (uint8_t *)counter, NULL) == 0)
         goto err;
 
     while (data_len > 0) {

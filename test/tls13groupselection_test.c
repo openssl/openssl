@@ -317,7 +317,7 @@ static void server_response_check_cb(int write_p, int version,
     /* Cast arg to SERVER_RESPONSE */
     enum SERVER_RESPONSE *server_response = (enum SERVER_RESPONSE *)arg;
     /* Prepare check for HRR */
-    const uint8_t *incoming_random = (uint8_t *)buf + 6;
+    const uint8_t *incoming_random = (const uint8_t *)buf + 6;
     const uint8_t magic_HRR_random[32] = { 0xCF, 0x21, 0xAD, 0x74, 0xE5, 0x9A, 0x61, 0x11,
         0xBE, 0x1D, 0x8C, 0x02, 0x1E, 0x65, 0xB8, 0x91,
         0xC2, 0xA2, 0x11, 0x16, 0x7A, 0xBB, 0x8C, 0x5E,
@@ -329,7 +329,7 @@ static void server_response_check_cb(int write_p, int version,
         version == TLS1_3_VERSION && /* for TLSv1.3 ... */
         ((uint8_t *)buf)[0] == SSL3_MT_SERVER_HELLO) { /* with message type "ServerHello" */
         /* Check what it is: SH or HRR (compare the 'random' data field with HRR magic number) */
-        if (memcmp((void *)incoming_random, (void *)magic_HRR_random, 32) == 0)
+        if (memcmp(incoming_random, magic_HRR_random, 32) == 0)
             *server_response *= HRR;
         else
             *server_response *= SH;
