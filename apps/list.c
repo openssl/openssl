@@ -37,7 +37,7 @@ static int verbose = 0;
 static const char *select_name = NULL;
 /* The first element is a placeholder to avoid compilation failure on empty array. */
 static const char *const disabled_features[] = {
-    ""
+    "",
 #ifdef OPENSSL_NO_ASYNC
     "ASYNC",
 #endif
