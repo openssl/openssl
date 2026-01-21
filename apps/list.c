@@ -822,7 +822,7 @@ static int list_provider_tls_sigalgs(const OSSL_PARAM params[], void *data)
     if (p != NULL && p->data_type == OSSL_PARAM_UTF8_STRING) {
         if (*((int *)data) > 0)
             BIO_puts(bio_out, ":");
-        BIO_puts(bio_out, (char *)(p->data));
+        BIO_puts(bio_out, (p->data != NULL) ? (char *)(p->data) : "(null)");
         /* mark presence of a provider-based sigalg */
         *((int *)data) = 2;
     }

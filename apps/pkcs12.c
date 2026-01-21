@@ -1176,7 +1176,8 @@ static int alg_print(const X509_ALGOR *alg)
 
     pbenid = OBJ_obj2nid(aoid);
 
-    BIO_puts(bio_err, OBJ_nid2ln(pbenid));
+    const char *ln = OBJ_nid2ln(pbenid);
+    BIO_puts(bio_err, (ln != NULL) ? ln : "(null)");
 
     /*
      * If PBE algorithm is PBES2 decode algorithm parameters
