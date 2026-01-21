@@ -417,6 +417,8 @@ static int write_config_fips_section(BIO *out, const char *section,
                         "%s = %s\n"
                         "%s = %s\n"
                         "%s = %s\n"
+                        "%s = %s\n"
+                        "%s = %s\n"
                         "%s = %s\n",
             section,
             OSSL_PROV_FIPS_PARAM_INSTALL_VERSION, VERSION_VAL,
