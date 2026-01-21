@@ -180,6 +180,12 @@ it must allow for certificate signing (keyCertSign).
 The lookup first searches for issuer certificates in the trust store.
 If it does not find a match there it consults
 the list of untrusted ("intermediate" CA) certificates, if provided.
+If one issuer certificate was found in the trust store, the list of
+untrusted certificates will not be consulted anymore to find further
+issuer certificates. Therefore, either only the root certificate or the
+complete chain to the root certificate must be provided in the trust 
+store for a successful verification, if X509_V_FLAG_PARTIAL_CHAIN
+is not enabled.
 
 =head2 Certification Path Validation
 
