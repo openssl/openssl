@@ -10,6 +10,9 @@ name: "Scan to check for NEWS/CHANGES suggestions"
 on: pull_request
 env:
   NEED_NEWS_CHANGES: "no"
+  SKIP_NEWS_CHECK: "no"
+  PR_NUMBER: ${{ github.event.number }}
+  GH_TOKEN: ${{ github.token }}
 permissions: {}
 
 jobs:
@@ -20,9 +23,19 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
+      - name: "Check if we have the label to skip this test"
+        run: |
+          SKIP_TEST=$(gh pr view $PR_NUMBER --json labels --jq '.labels[] | select(.name == "no_news_changes_needed") | .name')
+          if [ -n "$SKIP_TEST" ]; then
+            echo "SKIP_NEWS_CHECK=yes" >> $GITHUB_ENV
+          fi
+
       - name: "Check if we already have a NEWS/CHANGES entry"
+        if: ${{ env.SKIP_NEWS_CHECK == 'no' }}
         run: |
           git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > ./names.txt
+          echo "changed files between ${{ github.event.pull_request.base.sha }} and ${{ github.event.pull_request.head.sha }}"
+          cat ./names.txt
           set +e
           grep -q "NEWS\.md" names.txt
           if [ $? -eq 0 ]; then
@@ -36,7 +49,7 @@ jobs:
             fi
           fi
       - name: "Check if this PR affects a CVE"
-        if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' }}
+        if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' && env.SKIP_NEWS_CHECK == 'no' }}
         run: |
           git log ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > ./log.txt
           set +e
@@ -46,16 +59,19 @@ jobs:
             echo "NEED_NEWS_CHANGES=yes" >> $GITHUB_ENV
           fi
       - name: "Check if this PR impacts a public API"
-        if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' }}
+        if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' && env.SKIP_NEWS_CHECK == 'no' }}
         run: |
           set +e
+          git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > ./names.txt
+          echo "changed files between ${{ github.event.pull_request.base.sha }} and ${{ github.event.pull_request.head.sha }}"
+          cat ./names.txt
           grep -q "include/openssl" ./names.txt
           if [ $? -eq 0 ]; then
             echo "Changes in this PR may impact public APIS's"
             echo "NEED_NEWS_CHANGES=yes" >> $GITHUB_ENV
           fi
       - name: "Check if this is a feature branch merge"
-        if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' }}
+        if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' && env.SKIP_NEWS_CHECK == 'no' }}
         run: |
           set +e
           echo ${{ github.head_ref }} | grep -q "feature"
@@ -64,7 +80,7 @@ jobs:
             echo "NEED_NEWS_CHANGES=yes" >> $GITHUB_ENV
           fi
       - name: "Check if configuration options have changed"
-        if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' }}
+        if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' && env.SKIP_NEWS_CHECK == 'no' }}
         run: | 
           git checkout ${{ github.event.pull_request.base.sha }}
           set +e
@@ -78,7 +94,7 @@ jobs:
             echo "NEED_NEWS_CHANGES=yes" >> $GITHUB_ENV
           fi
       - name: "Report Results"
-        if: ${{ !(contains(github.event.pull_request.labels.*.name, 'no_news_changes_needed')) }}
+        if: ${{ env.SKIP_NEWS_CHECK == 'no' }}
         run: |
           if [ "${{ env.NEED_NEWS_CHANGES }}" == "yes" ]; then
             echo "Suggest that you add a NEWS/CHANGES entry for this PR"
