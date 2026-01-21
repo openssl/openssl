@@ -3041,13 +3041,13 @@ re_start:
             }
 #endif
 
-            /*
-             * Note: under VMS with SOCKETSHR the second parameter is
-             * currently of type (int *) whereas under other systems it is
-             * (void *) if you don't have a cast it will choke the compiler:
-             * if you do have a cast then you can either go for (int *) or
-             * (void *).
-             */
+                /*
+                 * Note: under VMS with SOCKETSHR the second parameter is
+                 * currently of type (int *) whereas under other systems it is
+                 * (void *) if you don't have a cast it will choke the compiler:
+                 * if you do have a cast then you can either go for (int *) or
+                 * (void *).
+                 */
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
             /*
              * Under Windows/DOS we make the assumption that we can always
@@ -3437,8 +3437,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 
                 BIO_printf(bio, "%2d s:", i);
                 X509_NAME_print_ex(bio, X509_get_subject_name(chain_cert), 0, get_nameopt());
-                BIO_puts(bio, "\n");
-                BIO_puts(bio, "   i:");
+                BIO_puts(bio, "\n   i:");
                 X509_NAME_print_ex(bio, X509_get_issuer_name(chain_cert), 0, get_nameopt());
                 BIO_puts(bio, "\n");
                 print_cert_key_info(bio, chain_cert);
@@ -3544,9 +3543,9 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 #ifndef OPENSSL_NO_COMP
     comp = SSL_get_current_compression(s);
     expansion = SSL_get_current_expansion(s);
-    BIO_printf(bio, "Compression: %s\n",
-        comp ? SSL_COMP_get_name(comp) : "NONE");
-    BIO_printf(bio, "Expansion: %s\n",
+    BIO_printf(bio, "Compression: %s\n"
+                    "Expansion: %s\n",
+        comp ? SSL_COMP_get_name(comp) : "NONE",
         expansion ? SSL_COMP_get_name(expansion) : "NONE");
 #endif
 #ifndef OPENSSL_NO_KTLS
@@ -3631,9 +3630,11 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     }
 
     if (SSL_get_session(s) != NULL && keymatexportlabel != NULL) {
-        BIO_puts(bio, "Keying material exporter:\n");
-        BIO_printf(bio, "    Label: '%s'\n", keymatexportlabel);
-        BIO_printf(bio, "    Length: %i bytes\n", keymatexportlen);
+        BIO_printf(bio, "Keying material exporter:\n"
+                        "    Label: '%s'\n"
+                        "    Length: %i bytes\n",
+            keymatexportlabel,
+            keymatexportlen);
         exportedkeymat = app_malloc(keymatexportlen, "export key");
         if (SSL_export_keying_material(s, exportedkeymat,
                 keymatexportlen,
@@ -3893,20 +3894,20 @@ static int user_data_execute(struct user_data_st *user_data, int cmd, char *arg)
     switch (cmd) {
     case USER_COMMAND_HELP:
         /* This only ever occurs in advanced mode, so just emit advanced help */
-        BIO_puts(bio_err, "Enter text to send to the peer followed by <enter>\n");
-        BIO_puts(bio_err, "To issue a command insert {cmd} or {cmd:arg} anywhere in the text\n");
-        BIO_puts(bio_err, "Entering {{ will send { to the peer\n");
-        BIO_puts(bio_err, "The following commands are available\n");
-        BIO_puts(bio_err, "  {help}: Get this help text\n");
-        BIO_puts(bio_err, "  {quit}: Close the connection to the peer\n");
-        BIO_puts(bio_err, "  {reconnect}: Reconnect to the peer\n");
+        BIO_puts(bio_err, "Enter text to send to the peer followed by <enter>\n"
+                          "To issue a command insert {cmd} or {cmd:arg} anywhere in the text\n"
+                          "Entering {{ will send { to the peer\n"
+                          "The following commands are available\n"
+                          "  {help}: Get this help text\n"
+                          "  {quit}: Close the connection to the peer\n"
+                          "  {reconnect}: Reconnect to the peer\n");
         if (SSL_is_quic(user_data->con)) {
             BIO_puts(bio_err, "  {fin}: Send FIN on the stream. No further writing is possible\n");
         } else if (SSL_version(user_data->con) == TLS1_3_VERSION) {
-            BIO_puts(bio_err, "  {keyup:req|noreq}: Send a Key Update message\n");
-            BIO_puts(bio_err, "                     Arguments:\n");
-            BIO_puts(bio_err, "                     req   = peer update requested (default)\n");
-            BIO_puts(bio_err, "                     noreq = peer update not requested\n");
+            BIO_puts(bio_err, "  {keyup:req|noreq}: Send a Key Update message\n"
+                              "                     Arguments:\n"
+                              "                     req   = peer update requested (default)\n"
+                              "                     noreq = peer update not requested\n");
         } else {
             BIO_puts(bio_err, "  {reneg}: Attempt to renegotiate\n");
         }

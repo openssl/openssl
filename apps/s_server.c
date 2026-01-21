@@ -847,8 +847,8 @@ static int cert_status_cb(SSL *s, void *arg)
     }
 
     if (srctx->verbose) {
-        BIO_puts(bio_err, "cert_status: ocsp response sent:\n");
-        BIO_printf(bio_err, "cert_status: number of responses: %d\n",
+        BIO_printf(bio_err, "cert_status: ocsp response sent:\n"
+                            "cert_status: number of responses: %d\n",
             sk_OCSP_RESPONSE_num(sk_resp));
         for (i = 0; i < sk_OCSP_RESPONSE_num(sk_resp); i++) {
             resp = sk_OCSP_RESPONSE_value(sk_resp, i);
@@ -2706,28 +2706,29 @@ end:
 
 static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
 {
-    BIO_printf(bio, "%4ld items in the session cache\n",
-        SSL_CTX_sess_number(ssl_ctx));
-    BIO_printf(bio, "%4ld client connects (SSL_connect())\n",
-        SSL_CTX_sess_connect(ssl_ctx));
-    BIO_printf(bio, "%4ld client renegotiates (SSL_connect())\n",
-        SSL_CTX_sess_connect_renegotiate(ssl_ctx));
-    BIO_printf(bio, "%4ld client connects that finished\n",
-        SSL_CTX_sess_connect_good(ssl_ctx));
-    BIO_printf(bio, "%4ld server accepts (SSL_accept())\n",
-        SSL_CTX_sess_accept(ssl_ctx));
-    BIO_printf(bio, "%4ld server renegotiates (SSL_accept())\n",
-        SSL_CTX_sess_accept_renegotiate(ssl_ctx));
-    BIO_printf(bio, "%4ld server accepts that finished\n",
-        SSL_CTX_sess_accept_good(ssl_ctx));
-    BIO_printf(bio, "%4ld session cache hits\n", SSL_CTX_sess_hits(ssl_ctx));
-    BIO_printf(bio, "%4ld session cache misses\n",
-        SSL_CTX_sess_misses(ssl_ctx));
-    BIO_printf(bio, "%4ld session cache timeouts\n",
-        SSL_CTX_sess_timeouts(ssl_ctx));
-    BIO_printf(bio, "%4ld callback cache hits\n",
-        SSL_CTX_sess_cb_hits(ssl_ctx));
-    BIO_printf(bio, "%4ld cache full overflows (%ld allowed)\n",
+    BIO_printf(bio, "%4ld items in the session cache\n"
+                    "%4ld client connects (SSL_connect())\n"
+                    "%4ld client renegotiates (SSL_connect())\n"
+                    "%4ld client connects that finished\n"
+                    "%4ld server accepts (SSL_accept())\n"
+                    "%4ld server renegotiates (SSL_accept())\n"
+                    "%4ld server accepts that finished\n"
+                    "%4ld session cache hits\n"
+                    "%4ld session cache misses\n"
+                    "%4ld session cache timeouts\n"
+                    "%4ld callback cache hits\n"
+                    "%4ld cache full overflows (%ld allowed)\n",
+        SSL_CTX_sess_number(ssl_ctx),
+        SSL_CTX_sess_connect(ssl_ctx),
+        SSL_CTX_sess_connect_renegotiate(ssl_ctx),
+        SSL_CTX_sess_connect_good(ssl_ctx),
+        SSL_CTX_sess_accept(ssl_ctx),
+        SSL_CTX_sess_accept_renegotiate(ssl_ctx),
+        SSL_CTX_sess_accept_good(ssl_ctx),
+        SSL_CTX_sess_hits(ssl_ctx),
+        SSL_CTX_sess_misses(ssl_ctx),
+        SSL_CTX_sess_timeouts(ssl_ctx),
+        SSL_CTX_sess_cb_hits(ssl_ctx),
         SSL_CTX_sess_cache_full(ssl_ctx),
         SSL_CTX_sess_get_cache_size(ssl_ctx));
 }
@@ -3436,9 +3437,11 @@ static void print_connection_info(SSL *con)
         BIO_puts(bio_s_out, "Renegotiation is DISABLED\n");
 
     if (keymatexportlabel != NULL && keymatexportlen > 0) {
-        BIO_puts(bio_s_out, "Keying material exporter:\n");
-        BIO_printf(bio_s_out, "    Label: '%s'\n", keymatexportlabel);
-        BIO_printf(bio_s_out, "    Length: %i bytes\n", keymatexportlen);
+        BIO_printf(bio_s_out, "Keying material exporter:\n"
+                              "    Label: '%s'\n"
+                              "    Length: %i bytes\n",
+            keymatexportlabel,
+            keymatexportlen);
         exportedkeymat = app_malloc(keymatexportlen, "export key");
         if (SSL_export_keying_material(con, exportedkeymat,
                 keymatexportlen,
@@ -3670,9 +3673,9 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
             }
 
             BIO_puts(io,
-                "HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n");
-            BIO_puts(io, "<HTML><BODY BGCOLOR=\"#ffffff\">\n");
-            BIO_puts(io, "<pre>\n");
+                "HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n"
+                "<HTML><BODY BGCOLOR=\"#ffffff\">\n"
+                "<pre>\n");
             /* BIO_puts(io, OpenSSL_version(OPENSSL_VERSION)); */
             BIO_puts(io, "\n");
             for (i = 0; i < local_argc; i++) {
@@ -3790,35 +3793,30 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                                               * component */
 
             if (*e == '\0') {
-                BIO_puts(io, text);
-                BIO_printf(io, "'%s' is an invalid file name\r\n", p);
+                BIO_printf(io, "%s'%s' is an invalid file name\r\n", text, p);
                 break;
             }
             *e = '\0';
 
             if (dot) {
-                BIO_puts(io, text);
-                BIO_printf(io, "'%s' contains '..' or ':'\r\n", p);
+                BIO_printf(io, "%s'%s' contains '..' or ':'\r\n", text, p);
                 break;
             }
 
             if (*p == '/' || *p == '\\') {
-                BIO_puts(io, text);
-                BIO_printf(io, "'%s' is an invalid path\r\n", p);
+                BIO_printf(io, "%s'%s' is an invalid path\r\n", text, p);
                 break;
             }
 
             /* if a directory, do the index thang */
             if (app_isdir(p) > 0) {
-                BIO_puts(io, text);
-                BIO_printf(io, "'%s' is a directory\r\n", p);
+                BIO_printf(io, "%s'%s' is a directory\r\n", text, p);
                 break;
             }
 
             opmode = (http_server_binmode == 1) ? "rb" : "r";
             if ((file = BIO_new_file(p, opmode)) == NULL) {
-                BIO_puts(io, text);
-                BIO_printf(io, "Error opening '%s' mode='%s'\r\n", p, opmode);
+                BIO_printf(io, "%sError opening '%s' mode='%s'\r\n", text, p, opmode);
                 ERR_print_errors(io);
                 break;
             }

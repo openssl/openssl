@@ -91,8 +91,7 @@ static int list_builtin_curves(BIO *out)
         if (sname == NULL)
             sname = "";
 
-        BIO_printf(out, "  %-10s: ", sname);
-        BIO_printf(out, "%s\n", comment);
+        BIO_printf(out, "  %-10s: %s\n", sname, comment);
     }
     OPENSSL_free(curves);
     return 1;

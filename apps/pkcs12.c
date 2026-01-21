@@ -747,9 +747,8 @@ int pkcs12_main(int argc, char **argv)
                 }
             } else {
                 if (!PKCS12_set_mac(p12, mpass, -1, NULL, macsaltlen, maciter, macmd)) {
-                    BIO_puts(bio_err, "Error creating PKCS12 MAC; no PKCS12KDF support?\n");
-                    BIO_puts(bio_err,
-                        "Use -nomac or -pbmac1_pbkdf2 if PKCS12KDF support not available\n");
+                    BIO_puts(bio_err, "Error creating PKCS12 MAC; no PKCS12KDF support?\n"
+                                      "Use -nomac or -pbmac1_pbkdf2 if PKCS12KDF support not available\n");
                     goto export_end;
                 }
             }
@@ -1308,8 +1307,7 @@ void print_attribute(BIO *out, const ASN1_TYPE *av)
         if (!ln)
             ln = "";
         OBJ_obj2txt(objbuf, sizeof(objbuf), av->value.object, 1);
-        BIO_printf(out, "%s (%s)", ln, objbuf);
-        BIO_puts(out, "\n");
+        BIO_printf(out, "%s (%s)\n", ln, objbuf);
         break;
 
     default:

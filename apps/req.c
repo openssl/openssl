@@ -1232,8 +1232,7 @@ static int prompt_info(X509_REQ *req,
             if ((attr_sk != NULL) && (sk_CONF_VALUE_num(attr_sk) > 0)
                 && (!batch)) {
                 BIO_puts(bio_err,
-                    "\nPlease enter the following 'extra' attributes\n");
-                BIO_puts(bio_err,
+                    "\nPlease enter the following 'extra' attributes\n"
                     "to be sent with your certificate request\n");
             }
 

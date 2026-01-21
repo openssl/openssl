@@ -416,8 +416,7 @@ static void list_random_generators(void)
         if (select_name != NULL
             && OPENSSL_strcasecmp(EVP_RAND_get0_name(m), select_name) != 0)
             continue;
-        BIO_printf(bio_out, "  %s", EVP_RAND_get0_name(m));
-        BIO_printf(bio_out, " @ %s\n",
+        BIO_printf(bio_out, "  %s @ %s\n", EVP_RAND_get0_name(m),
             OSSL_PROVIDER_get0_name(EVP_RAND_get0_provider(m)));
 
         if (verbose) {
@@ -449,8 +448,7 @@ static void display_random(const char *name, EVP_RAND_CTX *drbg)
     if (drbg != NULL) {
         rand = EVP_RAND_CTX_get0_rand(drbg);
 
-        BIO_printf(bio_out, "  %s", EVP_RAND_get0_name(rand));
-        BIO_printf(bio_out, " @ %s\n",
+        BIO_printf(bio_out, "  %s @ %s\n", EVP_RAND_get0_name(rand),
             OSSL_PROVIDER_get0_name(EVP_RAND_get0_provider(rand)));
 
         switch (EVP_RAND_get_state(drbg)) {
@@ -679,9 +677,9 @@ static void list_keymanagers(void)
                 BIO_puts(bio_out, desc);
             else
                 BIO_puts(bio_out, sk_OPENSSL_CSTRING_value(names, 0));
-            BIO_puts(bio_out, "\n");
-            BIO_puts(bio_out, "    Type: Provider Algorithm\n");
-            BIO_puts(bio_out, "    IDs: ");
+            BIO_puts(bio_out, "\n"
+                              "    Type: Provider Algorithm\n"
+                              "    IDs: ");
             print_names(bio_out, names);
             BIO_printf(bio_out, " @ %s\n",
                 OSSL_PROVIDER_get0_name(EVP_KEYMGMT_get0_provider(k)));
@@ -1239,15 +1237,15 @@ static void list_type(FUNC_TYPE ft, int one)
 
 static void list_pkey(void)
 {
-    BIO_puts(bio_out, "Provided:\n");
-    BIO_puts(bio_out, " Key Managers:\n");
+    BIO_puts(bio_out, "Provided:\n"
+                      " Key Managers:\n");
     list_keymanagers();
 }
 
 static void list_pkey_meth(void)
 {
-    BIO_puts(bio_out, "Provided:\n");
-    BIO_puts(bio_out, " Encryption:\n");
+    BIO_puts(bio_out, "Provided:\n"
+                      " Encryption:\n");
     list_asymciphers();
     BIO_puts(bio_out, " Key Exchange:\n");
     list_keyexchanges();

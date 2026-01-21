@@ -167,9 +167,9 @@ int dsaparam_main(int argc, char **argv)
         EVP_PKEY_CTX_set_app_data(ctx, bio_err);
         if (verbose) {
             EVP_PKEY_CTX_set_cb(ctx, progress_cb);
-            BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n",
+            BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n"
+                                "This could take some time\n",
                 num);
-            BIO_puts(bio_err, "This could take some time\n");
         }
         if (EVP_PKEY_paramgen_init(ctx) <= 0) {
             BIO_puts(bio_err,

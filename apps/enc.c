@@ -826,8 +826,9 @@ int enc_main(int argc, char **argv)
 
     ret = 0;
     if (verbose) {
-        BIO_printf(bio_err, "bytes read   : %8ju\n", BIO_number_read(in));
-        BIO_printf(bio_err, "bytes written: %8ju\n", BIO_number_written(out));
+        BIO_printf(bio_err, "bytes read   : %8ju\n"
+                            "bytes written: %8ju\n",
+            BIO_number_read(in), BIO_number_written(out));
     }
 end:
     ERR_print_errors(bio_err);

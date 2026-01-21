@@ -1052,9 +1052,10 @@ static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
             BIO_puts(out, "WARNING: Status times invalid.\n");
             ERR_print_errors(out);
         }
-        BIO_printf(out, "%s\n", OCSP_cert_status_str(status));
+        BIO_printf(out, "%s\n"
+                        "\tThis Update: ",
+            OCSP_cert_status_str(status));
 
-        BIO_puts(out, "\tThis Update: ");
         ASN1_GENERALIZEDTIME_print(out, thisupd);
         BIO_puts(out, "\n");
 

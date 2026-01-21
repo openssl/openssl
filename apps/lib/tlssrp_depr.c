@@ -65,8 +65,8 @@ static int ssl_srp_verify_param_cb(SSL *s, void *arg)
     if (((N = SSL_get_srp_N(s)) == NULL) || ((g = SSL_get_srp_g(s)) == NULL))
         return 0;
     if (srp_arg->debug || srp_arg->msg || srp_arg->amp == 1) {
-        BIO_puts(bio_err, "SRP parameters:\n");
-        BIO_puts(bio_err, "\tN=");
+        BIO_puts(bio_err, "SRP parameters:\n"
+                          "\tN=");
         BN_print(bio_err, N);
         BIO_puts(bio_err, "\n\tg=");
         BN_print(bio_err, g);

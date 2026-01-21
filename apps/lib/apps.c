@@ -1371,8 +1371,7 @@ void print_name(BIO *out, const char *title, const X509_NAME *nm)
     }
     if (lflags == XN_FLAG_COMPAT) {
         buf = X509_NAME_oneline(nm, 0, 0);
-        BIO_puts(out, buf);
-        BIO_puts(out, "\n");
+        BIO_printf(out, "%s\n", buf);
         OPENSSL_free(buf);
     } else {
         if (mline)

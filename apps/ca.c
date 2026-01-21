@@ -1951,8 +1951,9 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     irow[DB_NUMBER] = NULL;
 
     if (!TXT_DB_insert(db->db, irow)) {
-        BIO_puts(bio_err, "failed to update database\n");
-        BIO_printf(bio_err, "TXT_DB error number %ld\n", db->db->error);
+        BIO_printf(bio_err, "failed to update database\n"
+                            "TXT_DB error number %ld\n",
+            db->db->error);
         goto end;
     }
     irow = NULL;
@@ -2180,8 +2181,9 @@ static int do_revoke(X509 *x509, CA_DB *db, REVINFO_TYPE rev_type,
         irow[DB_NUMBER] = NULL;
 
         if (!TXT_DB_insert(db->db, irow)) {
-            BIO_puts(bio_err, "failed to update database\n");
-            BIO_printf(bio_err, "TXT_DB error number %ld\n", db->db->error);
+            BIO_printf(bio_err, "failed to update database\n"
+                                "TXT_DB error number %ld\n",
+                db->db->error);
             OPENSSL_free(irow);
             goto end;
         }
