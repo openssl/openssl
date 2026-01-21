@@ -300,6 +300,8 @@ DEFINE_RUN_ONCE_STATIC(ossl_comp_zlib_init)
             ossl_comp_zlib_cleanup();
             return 0;
         }
+    } else {
+        return 0;
     }
 #endif
     return 1;
