@@ -435,6 +435,7 @@ int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
 
     rv = 1;
 err:
+    EVP_CIPHER_CTX_free(ctx);
     OPENSSL_cleanse(iv, KDF_SRTP_IV_LEN);
     OPENSSL_cleanse(local_salt, KDF_SRTP_MAX_SALT_LEN);
     OPENSSL_cleanse(master_salt, KDF_SRTP_IV_LEN);
