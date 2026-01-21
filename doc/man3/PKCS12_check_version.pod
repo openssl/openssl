@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-PKCS12_check_version - Checks the version of a PKCS#12 structure
+PKCS12_check_version - Checks the version of a PKCS #12 structure
 
 =head1 SYNOPSIS
 
@@ -12,7 +12,7 @@ PKCS12_check_version - Checks the version of a PKCS#12 structure
 
 =head1 DESCRIPTION
 
-PKCS12_check_version() checks that the version info of a I<p12> PKCS#12 object
+PKCS12_check_version() checks that the version info of a I<p12> PKCS #12 object
 is correct.
 
 =head1 NOTES
@@ -20,11 +20,11 @@ is correct.
 A PKCS12 object can be loaded using d2i_PKC12(), d2i_PKC12_bio() or
 d2i_PKC12_fp(). The loaded object contains a version number which should be the
 value 3 according to RFC 7292.
-As this version number has never been checked previously during loading,
+As this version number was not previously checked on loading,
 adding the check to these functions would potentially break existing
 PKCS12 files. Instead of adding an _ex variant of all these functions, the
 function PKCS12_check_version() has been added instead.
-PKCS12_check_version() should be called after loading a PKCS12
+PKCS12_check_version() should be called after loading a PKCS #12
 object before calling either PKCS12_parse() or PKCS12_unpack_authsafes().
 
 =head1 RETURN VALUES
