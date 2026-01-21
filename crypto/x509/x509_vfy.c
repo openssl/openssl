@@ -1392,6 +1392,8 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
                 goto done;
         }
 
+        ctx->current_crl = NULL;
+
         /*
          * If reasons not updated we won't get anywhere by another iteration,
          * so exit loop.
