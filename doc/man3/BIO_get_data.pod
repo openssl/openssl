@@ -36,7 +36,7 @@ The BIO_set_shutdown() and BIO_get_shutdown() functions set and get the state of
 this BIO's shutdown (i.e. BIO_CLOSE) flag. If set then the underlying resource
 is also closed when the BIO is freed.
 
-=head1 WARNING
+=head1 WARNINGS
 
 Do not use BIO_set_data(), BIO_get_data(), BIO_set_init(), BIO_get_init(), outside
 the implementation of a custom BIO.
