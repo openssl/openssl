@@ -285,7 +285,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_comp_zlib_init)
     zlib_dso = DSO_load(NULL, LIBZ, NULL, 0);
     if (zlib_dso != NULL) {
         p_compress = (compress_ft) DSO_bind_func(zlib_dso, "compress");
-        p_uncompress = (compress_ft) DSO_bind_func(zlib_dso, "uncompress");
+        p_uncompress = (uncompress_ft) DSO_bind_func(zlib_dso, "uncompress");
         p_inflateEnd = (inflateEnd_ft) DSO_bind_func(zlib_dso, "inflateEnd");
         p_inflate = (inflate_ft) DSO_bind_func(zlib_dso, "inflate");
         p_inflateInit_ = (inflateInit__ft) DSO_bind_func(zlib_dso, "inflateInit_");
@@ -293,14 +293,14 @@ DEFINE_RUN_ONCE_STATIC(ossl_comp_zlib_init)
         p_deflate = (deflate_ft) DSO_bind_func(zlib_dso, "deflate");
         p_deflateInit_ = (deflateInit__ft) DSO_bind_func(zlib_dso, "deflateInit_");
         p_zError = (zError__ft) DSO_bind_func(zlib_dso, "zError");
+    }
 
-        if (p_compress == NULL || p_uncompress == NULL || p_inflateEnd == NULL
-                || p_inflate == NULL || p_inflateInit_ == NULL
-                || p_deflateEnd == NULL || p_deflate == NULL
-                || p_deflateInit_ == NULL || p_zError == NULL) {
-            ossl_comp_zlib_cleanup();
-            return 0;
-        }
+    if (p_compress == NULL || p_uncompress == NULL || p_inflateEnd == NULL
+            || p_inflate == NULL || p_inflateInit_ == NULL
+            || p_deflateEnd == NULL || p_deflate == NULL
+            || p_deflateInit_ == NULL || p_zError == NULL) {
+        ossl_comp_zlib_cleanup();
+        return 0;
     }
 # endif
     return 1;
