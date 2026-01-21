@@ -164,6 +164,8 @@ EOF
 # code, so we just tell compiler to be pedantic about everything
 # but 'long long' type.
 
+# -Wdisabled-optimization is also added, but later, after checking
+# asan is not configured, as they don't work together.
 my @gcc_devteam_warn = qw(
     -DPEDANTIC -pedantic -Wno-long-long -DUNUSEDRESULT_DEBUG
     -Wall
@@ -180,7 +182,6 @@ my @gcc_devteam_warn = qw(
     -Werror
     -Wmissing-prototypes
     -Wstrict-prototypes
-    -Wdisabled-optimization
     -Wpointer-arith
 );
 
@@ -1638,8 +1639,11 @@ if (($target{shared_target} // '') eq "")
         disable('no-shared-target', 'pic');
         }
 
-unless ($disabled{asan} || defined $detected_sanitizers{asan}) {
+if (!$disabled{asan} && !defined $detected_sanitizers{asan}) {
     push @{$config{cflags}}, "-fsanitize=address";
+} else {
+    # Check when --strict-warnings and asan is disabled
+    push @gcc_devteam_warn, "-Wdisabled-optimization";
 }
 
 unless ($disabled{ubsan} || defined $detected_sanitizers{ubsan}) {
