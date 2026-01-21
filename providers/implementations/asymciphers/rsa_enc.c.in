@@ -365,6 +365,12 @@ static void *rsa_dupctx(void *vprsactx)
         return NULL;
     }
 
+    if (dstctx->oaep_label != NULL
+        && (dstctx->oaep_label = OPENSSL_memdup(dstctx->oaep_label, dstctx->oaep_labellen)) == NULL) {
+        rsa_freectx(dstctx);
+        return NULL;
+    }
+
     return dstctx;
 }
 
