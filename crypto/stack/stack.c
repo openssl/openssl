@@ -203,6 +203,11 @@ static int sk_reserve(OPENSSL_STACK *st, int n, int exact)
     return 1;
 }
 
+static ossl_inline int cmp_with_thunk(const OPENSSL_STACK *st, const void *a, const void *b)
+{
+    return (st->cmp_thunk == NULL) ? st->comp(a, b) : st->cmp_thunk(st->comp, a, b);
+}
+
 OPENSSL_STACK *OPENSSL_sk_new_reserve(OPENSSL_sk_compfunc c, int n)
 {
     OPENSSL_STACK *st = OPENSSL_zalloc(sizeof(OPENSSL_STACK));
@@ -280,12 +285,12 @@ int OPENSSL_sk_insert(OPENSSL_STACK *st, const void *data, int loc)
     if (st->sorted && st->num > 1) {
         if (st->comp != NULL) {
             if (loc > 0) {
-                cmp_ret = (st->cmp_thunk == NULL) ? st->comp(&st->data[loc - 1], &st->data[loc]) : st->cmp_thunk(st->comp, &st->data[loc - 1], &st->data[loc]);
+                cmp_ret = cmp_with_thunk(st, &st->data[loc - 1], &st->data[loc]);
                 if (cmp_ret > 0)
                     st->sorted = 0;
             }
             if (loc < st->num - 1) {
-                cmp_ret = (st->cmp_thunk == NULL) ? st->comp(&st->data[loc + 1], &st->data[loc]) : st->cmp_thunk(st->comp, &st->data[loc + 1], &st->data[loc]);
+                cmp_ret = cmp_with_thunk(st, &st->data[loc + 1], &st->data[loc]);
                 if (cmp_ret < 0)
                     st->sorted = 0;
             }
@@ -361,7 +366,7 @@ static int internal_find(const OPENSSL_STACK *st, const void *data,
         int res = -1;
 
         for (i = 0; i < st->num; i++) {
-            cmp_ret = (st->cmp_thunk == NULL) ? st->comp(&data, st->data + i) : st->cmp_thunk(st->comp, &data, st->data + i);
+            cmp_ret = cmp_with_thunk(st, &data, st->data + i);
             if (cmp_ret == 0) {
                 if (res == -1)
                     res = i;
@@ -387,7 +392,7 @@ static int internal_find(const OPENSSL_STACK *st, const void *data,
             const void **p = (const void **)r;
 
             while (p < st->data + st->num) {
-                cmp_ret = st->cmp_thunk == NULL ? st->comp(&data, p) : st->cmp_thunk(st->comp, &data, p);
+                cmp_ret = cmp_with_thunk(st, &data, p);
                 if (cmp_ret != 0)
                     break;
                 ++*pnum;
