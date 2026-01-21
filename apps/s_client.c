@@ -3041,13 +3041,13 @@ re_start:
             }
 #endif
 
-                /*
-                 * Note: under VMS with SOCKETSHR the second parameter is
-                 * currently of type (int *) whereas under other systems it is
-                 * (void *) if you don't have a cast it will choke the compiler:
-                 * if you do have a cast then you can either go for (int *) or
-                 * (void *).
-                 */
+            /*
+             * Note: under VMS with SOCKETSHR the second parameter is
+             * currently of type (int *) whereas under other systems it is
+             * (void *) if you don't have a cast it will choke the compiler:
+             * if you do have a cast then you can either go for (int *) or
+             * (void *).
+             */
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
             /*
              * Under Windows/DOS we make the assumption that we can always
