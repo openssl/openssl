@@ -42,6 +42,7 @@ my $no_determinstic_nonce = disabled("hmac-drbg-kdf");
 my $no_kbkdf = disabled("kbkdf");
 my $no_krb5kdf = disabled("krb5kdf");
 my $no_snmpkdf = disabled("snmpkdf");
+my $no_srtpkdf = disabled("srtpkdf");
 my $no_sshkdf = disabled("sshkdf");
 
 # Default config depends on if the legacy module is built or not

@@ -375,7 +375,7 @@ static const OSSL_ALGORITHM deflt_kdfs[] = {
 #ifndef OPENSSL_NO_SNMPKDF
     { PROV_NAMES_SNMPKDF, "provider=default", ossl_kdf_snmpkdf_functions },
 #endif
-#ifdef OPENSSL_NO_SRTPKDF
+#ifndef OPENSSL_NO_SRTPKDF
     { PROV_NAMES_SRTPKDF, "provider=default", ossl_kdf_srtpkdf_functions },
 #endif
 #ifndef OPENSSL_NO_SSHKDF
