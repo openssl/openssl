@@ -1369,7 +1369,7 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
             ok = verify_cb_crl(ctx, X509_V_ERR_UNABLE_TO_GET_CRL);
             goto done;
         }
-        ctx->current_crl = crl;
+
         ok = ctx->check_crl(ctx, crl);
         if (!ok)
             goto done;
@@ -1437,9 +1437,6 @@ int ossl_x509_check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
     if (!get_verification_time(ctx->param, &verification_time))
         return 1;
 
-    if (notify)
-        ctx->current_crl = crl;
-
     if (!certificate_time_to_posix(X509_CRL_get0_lastUpdate(crl),
             &last_update)) {
         err = X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD;
@@ -1465,9 +1462,6 @@ int ossl_x509_check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
                 return 0;
         }
     }
-
-    if (notify)
-        ctx->current_crl = NULL;
 
     return 1;
 }
@@ -1954,6 +1948,8 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
     EVP_PKEY *ikey = NULL;
     int cnum = ctx->error_depth;
     int chnum = sk_X509_num(ctx->chain) - 1;
+
+    ctx->current_crl = crl;
 
     /* If we have an alternative CRL issuer cert use that */
     if (ctx->current_issuer != NULL) {
