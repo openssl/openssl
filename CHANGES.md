@@ -194,6 +194,13 @@ OpenSSL Releases
 
    *Timo Keller*
 
+ * Add `FIPS_mode()` as a convenience define to
+   `EVP_default_properties_is_fips_enabled(NULL)`, which is
+   shorthand to check whether the `fips=yes` property is currently enabled
+   in the default library context.
+
+   *Dimitri John Ledkov*
+
 ### Changes between 3.6 and 4.0.0 [14 Apr 2026]
 
  * Added `-expected-rpks` option to the `openssl s_client`
