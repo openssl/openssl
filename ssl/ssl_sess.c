@@ -680,7 +680,7 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
     if (ret->flags & SSL_SESS_FLAG_EXTMS) {
         /* If old session includes extms, but new does not: abort handshake */
         if (!(s->s3.flags & TLS1_FLAGS_RECEIVED_EXTMS)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_INCONSISTENT_EXTMS);
+            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_INCONSISTENT_EXTMS);
             fatal = 1;
             goto err;
         }
