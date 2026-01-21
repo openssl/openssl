@@ -81,13 +81,12 @@ When it is no longer needed it should be free up using:
 
 X509_STORE_CTX_get0_current_crl() returns an internal pointer to the
 possibly unverified CRL being actively considered during verification
-by the I<ctx>, or NULL.  The returned value be NULL when the
+by the I<ctx>, or NULL.  The returned value may be NULL when the
 verification is not considering a specific CRL, or has finished CRL
 verification. As this pointer is an internal value used only during
 X509 verification, the values seen and order in which they are seen if
 called during the verification callback should not be relied upon to
 be consistent.
-
 
 X509_verify_cert_error_string() returns a human readable error string for
 verification error I<n>.
