@@ -61,8 +61,6 @@ EVP_CIPHER_CTX_get_block_size,
 EVP_CIPHER_CTX_get_key_length,
 EVP_CIPHER_CTX_get_iv_length,
 EVP_CIPHER_CTX_get_tag_length,
-EVP_CIPHER_CTX_get_app_data,
-EVP_CIPHER_CTX_set_app_data,
 EVP_CIPHER_CTX_flags,
 EVP_CIPHER_CTX_set_flags,
 EVP_CIPHER_CTX_clear_flags,
@@ -196,8 +194,6 @@ EVP_CIPHER_CTX_mode
  int EVP_CIPHER_CTX_get_key_length(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_get_iv_length(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_get_tag_length(const EVP_CIPHER_CTX *ctx);
- void *EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx);
- void EVP_CIPHER_CTX_set_app_data(const EVP_CIPHER_CTX *ctx, void *data);
  int EVP_CIPHER_CTX_get_type(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_get_mode(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_get_num(const EVP_CIPHER_CTX *ctx);
