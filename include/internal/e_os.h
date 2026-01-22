@@ -366,3 +366,26 @@ typedef _locale_t locale_t;
 #endif
 
 #endif
+
+/*
+ * Can we use a global destructor?
+ * We can use a global destructor via __attribute__ on anything like a modern gcc/clang.
+ * We can also use it via dllmain on anything win32/win64.
+ * Older things may not do this.
+ *
+ */
+#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN64)
+#define OSSL_CLEANUP_USING_DESTRUCTOR
+#define OSSL_DLLMAIN_DESTRUCTOR
+/* destructor will be installed in dllmain.c */
+void ossl_cleanup_destructor(void);
+#else
+#if defined(__has_feature)
+#define OSSL_CLEANUP_USING_DESTRUCTOR
+/* destructor is installed by compiler */
+void ossl_cleanup_destructor(void) __attribute__((destructor));
+#else
+/* We are not using a destructor */
+void ossl_cleanup_destructor(void);
+#endif /* defined (__has_feature) */
+#endif /* defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN64) */
