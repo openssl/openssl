@@ -590,7 +590,7 @@ static int asn1_ex_i2c(const ASN1_VALUE **pval, unsigned char *cout, int *putype
         break;
 
     case V_ASN1_BIT_STRING:
-        return ossl_i2c_ASN1_BIT_STRING((ASN1_BIT_STRING *)*pval,
+        return ossl_i2c_ASN1_BIT_STRING((const ASN1_BIT_STRING *)*pval,
             cout ? &cout : NULL);
 
     case V_ASN1_INTEGER:
