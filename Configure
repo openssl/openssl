@@ -180,7 +180,6 @@ my @gcc_devteam_warn = qw(
     -Werror
     -Wmissing-prototypes
     -Wstrict-prototypes
-    -Wdisabled-optimization
     -Wpointer-arith
     -Wfloat-conversion
 );
