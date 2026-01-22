@@ -18,5 +18,7 @@ plan tests => 1;
 
 ok(run(test(["cmsapitest", srctop_file("test", "certs", "servercert.pem"),
              srctop_file("test", "certs", "serverkey.pem"),
+             srctop_file("test", "certs", "alt1-cert.pem"),
+             srctop_file("test", "certs", "alt1-key.pem"),
              srctop_file("test", "recipes", "80-test_cmsapi_data", "encryptedData.der")])),
              "running cmsapitest");
