@@ -212,7 +212,9 @@ OpenSSL 4.0
    *Beat Bolli*
 
  * Added `ASN1_BIT_STRING_set1()` to set a bit string to a value including
-   the length in bytes and the number of unused bits.
+   the length in bytes and the number of unused bits. Internally,
+   'ASN1_BIT_STRING_set_bit()' has also been modified to keep the number of
+   unused bits correct when changing an ASN1_BIT_STRING.
 
    * Bob Beck *
 

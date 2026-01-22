@@ -78,7 +78,7 @@ void ossl_asn1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
 
 ASN1_OBJECT *ossl_c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
     long length);
-int ossl_i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp);
+int ossl_i2c_ASN1_BIT_STRING(const ASN1_BIT_STRING *a, unsigned char **pp);
 ASN1_BIT_STRING *ossl_c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
     const unsigned char **pp, long length);
 int ossl_i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp);
