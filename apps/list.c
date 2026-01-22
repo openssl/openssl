@@ -35,7 +35,7 @@
 
 static int verbose = 0;
 static const char *select_name = NULL;
-/* The first element is a placeholder to avoid compilation failure on empty array. */
+
 static const char *const disabled_features[] = {
     "",
 #ifdef OPENSSL_NO_ASYNC
@@ -353,6 +353,19 @@ static const char *const disabled_algorithms[] = {
 #endif
 };
 
+#define PRINT_DISABLED(type)                                           \
+    do {                                                               \
+        if (OSSL_NELEM(disabled_##type) > 1) {                         \
+            BIO_puts(bio_out, "Disabled " #type ":\n");                \
+            for (size_t i = 1; i < OSSL_NELEM(disabled_##type); i++) { \
+                BIO_printf(bio_out, "\t- %s\n", disabled_##type[i]);   \
+            }                                                          \
+        } else {                                                       \
+            BIO_puts(bio_out, "No " #type " disabled.\n");             \
+        }                                                              \
+    } while (0)
+;
+
 /* Checks to see if algorithms are fetchable */
 #define IS_FETCHABLE(type, TYPE)                      \
     static int is_##type##_fetchable(const TYPE *alg) \
@@ -383,16 +396,6 @@ IS_FETCHABLE(asym_cipher, EVP_ASYM_CIPHER)
 IS_FETCHABLE(keyexch, EVP_KEYEXCH)
 IS_FETCHABLE(decoder, OSSL_DECODER)
 IS_FETCHABLE(encoder, OSSL_ENCODER)
-
-#define PRINT_DISABLED_FEATURE(disabled_list, message)               \
-    do {                                                             \
-        if (OSSL_NELEM(disabled_list) > 1) {                         \
-            BIO_puts(bio_out, message ":\n");                        \
-            for (size_t i = 1; i < OSSL_NELEM(disabled_list); i++) { \
-                BIO_printf(bio_out, "\t- %s\n", disabled_list[i]);   \
-            }                                                        \
-        }                                                            \
-    } while (0);
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 static int include_legacy(void)
@@ -1722,9 +1725,9 @@ static void list_provider_info(void)
 
 static void list_disabled(void)
 {
-    PRINT_DISABLED_FEATURE(disabled_protocols, "Disabled protocol(s)");
-    PRINT_DISABLED_FEATURE(disabled_algorithms, "Disabled algorithm(s)");
-    PRINT_DISABLED_FEATURE(disabled_features, "Disabled feature(s)");
+    PRINT_DISABLED(features);
+    PRINT_DISABLED(algorithms);
+    PRINT_DISABLED(protocols);
 }
 
 /* Unified enum for help and list commands. */
@@ -1840,7 +1843,7 @@ const OPTIONS list_options[] = {
 #endif
     { "providers", OPT_PROVIDER_INFO, '-',
         "List of provider information" },
-    { "disabled", OPT_DISABLED, '-', "List of disabled features" },
+    { "disabled", OPT_DISABLED, '-', "List of disabled features, algorithms, and protocols." },
     { "options", OPT_OPTIONS, 's',
         "List options for specified command" },
     { "objects", OPT_OBJECTS, '-',
