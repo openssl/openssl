@@ -66,7 +66,8 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         extlist = tmpextlist;
     }
     if (akeyid->serial) {
-        tmp = i2s_ASN1_OCTET_STRING(NULL, akeyid->serial);
+        tmp = i2s_ASN1_INTEGER(NULL, akeyid->serial);
+
         if (tmp == NULL) {
             ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
             goto err;
