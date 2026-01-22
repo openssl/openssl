@@ -18,55 +18,22 @@ int ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, int len)
     return ASN1_STRING_set(x, d, len);
 }
 
-int ossl_i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
+int ossl_i2c_ASN1_BIT_STRING(const ASN1_BIT_STRING *a, unsigned char **pp)
 {
-    int ret, j, bits, len;
+    int ret = 0, bits = 0, len;
     unsigned char *p, *d;
 
     if (a == NULL)
-        return 0;
+        goto done;
 
     len = a->length;
 
-    if (len > 0) {
-        if (a->flags & ASN1_STRING_FLAG_BITS_LEFT) {
-            bits = (int)a->flags & 0x07;
-        } else {
-            for (; len > 0; len--) {
-                if (a->data[len - 1])
-                    break;
-            }
-
-            if (len == 0) {
-                bits = 0;
-            } else {
-                j = a->data[len - 1];
-                if (j & 0x01)
-                    bits = 0;
-                else if (j & 0x02)
-                    bits = 1;
-                else if (j & 0x04)
-                    bits = 2;
-                else if (j & 0x08)
-                    bits = 3;
-                else if (j & 0x10)
-                    bits = 4;
-                else if (j & 0x20)
-                    bits = 5;
-                else if (j & 0x40)
-                    bits = 6;
-                else if (j & 0x80)
-                    bits = 7;
-                else
-                    bits = 0; /* should not happen */
-            }
-        }
-    } else
-        bits = 0;
+    if ((len > 0) && (a->flags & ASN1_STRING_FLAG_BITS_LEFT))
+        bits = (int)a->flags & 0x07;
 
     ret = 1 + len;
     if (pp == NULL)
-        return ret;
+        goto done;
 
     p = *pp;
 
@@ -78,6 +45,8 @@ int ossl_i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
         p[-1] &= (0xff << bits);
     }
     *pp = p;
+
+done:
     return ret;
 }
 
