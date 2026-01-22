@@ -10,6 +10,7 @@
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct quic_srt_gen_st {
     EVP_MAC *mac;
     EVP_MAC_CTX *mac_ctx;

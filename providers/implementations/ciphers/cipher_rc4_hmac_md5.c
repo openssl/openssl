@@ -31,6 +31,7 @@
 
 #define GET_HW(ctx) ((PROV_CIPHER_HW_RC4_HMAC_MD5 *)ctx->base.hw)
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_FUNC_cipher_encrypt_init_fn rc4_hmac_md5_einit;
 static OSSL_FUNC_cipher_decrypt_init_fn rc4_hmac_md5_dinit;
 static OSSL_FUNC_cipher_newctx_fn rc4_hmac_md5_newctx;

@@ -15,6 +15,7 @@
 
 #include "../testutil.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 X509 *load_cert_pem(const char *file, OSSL_LIB_CTX *libctx)
 {
     X509 *cert = NULL;

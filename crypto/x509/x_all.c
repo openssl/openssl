@@ -30,6 +30,7 @@
 #include "crypto/x509_acert.h"
 #include "crypto/rsa.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int X509_verify(X509 *a, EVP_PKEY *r)
 {
     if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature) != 0)

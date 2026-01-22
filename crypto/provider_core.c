@@ -117,6 +117,7 @@
  *    provider callbacks. No other locks may be held during such callbacks.
  */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_PROVIDER *provider_new(const char *name,
     OSSL_provider_init_fn *init_function,
     STACK_OF(INFOPAIR) *parameters);

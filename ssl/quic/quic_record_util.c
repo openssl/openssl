@@ -19,6 +19,7 @@
  * QUIC Key Derivation Utilities
  * =============================
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int ossl_quic_hkdf_extract(OSSL_LIB_CTX *libctx,
     const char *propq,
     const EVP_MD *md,

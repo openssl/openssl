@@ -38,6 +38,7 @@
 #include <fcntl.h>
 #endif
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int ssl_undefined_function_3(SSL_CONNECTION *sc, unsigned char *r,
     unsigned char *s, size_t t, size_t *u)
 {

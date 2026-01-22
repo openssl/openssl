@@ -17,6 +17,7 @@
 /*
  * Calculate the number of binary trailing zero's in any given number
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static u32 ocb_ntz(u64 n)
 {
     u32 cnt = 0;

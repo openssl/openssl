@@ -34,6 +34,7 @@
 #include "prov/endecoder_local.h"
 #include "providers/implementations/encode_decode/decode_pvk2key.inc"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct pvk2key_ctx_st; /* Forward declaration */
 typedef int check_key_fn(void *, struct pvk2key_ctx_st *ctx);
 typedef void adjust_key_fn(void *, struct pvk2key_ctx_st *ctx);

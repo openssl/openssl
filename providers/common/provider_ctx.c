@@ -12,6 +12,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/bio.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 PROV_CTX *ossl_prov_ctx_new(void)
 {
     return OPENSSL_zalloc(sizeof(PROV_CTX));

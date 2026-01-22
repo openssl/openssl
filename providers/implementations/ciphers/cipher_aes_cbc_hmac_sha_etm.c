@@ -23,6 +23,7 @@
 
 #include "providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.inc"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_FUNC_cipher_encrypt_init_fn aes_einit;
 static OSSL_FUNC_cipher_decrypt_init_fn aes_dinit;
 static OSSL_FUNC_cipher_gettable_ctx_params_fn aes_gettable_ctx_params;

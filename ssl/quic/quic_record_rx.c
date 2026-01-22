@@ -19,6 +19,7 @@
  *
  * pkt_idx: index of packet within datagram.
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static ossl_inline void pkt_mark(uint64_t *bitf, size_t pkt_idx)
 {
     assert(pkt_idx < QUIC_MAX_PKT_PER_URXE);

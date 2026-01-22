@@ -21,6 +21,7 @@
 #include "evp_local.h"
 #include "internal/param_build_set.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf)
 {
     EVP_KDF_CTX *ctx = NULL;

@@ -16,6 +16,7 @@
 #include "crypto/dh.h"
 #include "crypto/evp.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int dh_paramgen_check(EVP_PKEY_CTX *ctx)
 {
     if (ctx == NULL || !EVP_PKEY_CTX_IS_GEN_OP(ctx)) {

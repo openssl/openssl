@@ -30,6 +30,7 @@
 #include "prov/implementations.h"
 #include "prov/endecoder_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct msblob2key_ctx_st; /* Forward declaration */
 typedef void *b2i_of_void_fn(const unsigned char **in, unsigned int bitlen,
     int ispub);

@@ -23,6 +23,7 @@
  *
  * returns ASN1_BIT_STRING representing the protection on success, else NULL
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
     const OSSL_CMP_MSG *msg)
 {

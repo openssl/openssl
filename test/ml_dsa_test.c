@@ -14,6 +14,7 @@
 #include "ml_dsa.inc"
 #include "crypto/ml_dsa.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,

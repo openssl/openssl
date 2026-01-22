@@ -27,6 +27,7 @@
 #include "internal/nelem.h"
 #include "internal/param_build_set.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_FUNC_keymgmt_new_fn dsa_newdata;
 static OSSL_FUNC_keymgmt_free_fn dsa_freedata;
 static OSSL_FUNC_keymgmt_gen_init_fn dsa_gen_init;

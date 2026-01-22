@@ -32,6 +32,7 @@
 #define SECONDS 30
 #define SECONDSSTR "30"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx);
 
 /*

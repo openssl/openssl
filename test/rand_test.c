@@ -15,6 +15,7 @@
 #include "crypto/rand.h"
 #include "testutil.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static char *configfile;
 
 static int test_rand(void)

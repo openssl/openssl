@@ -21,6 +21,7 @@
 #include "internal/nelem.h"
 #include "testutil.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static char *datadir = NULL;
 
 /*

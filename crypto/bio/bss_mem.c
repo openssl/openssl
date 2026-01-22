@@ -12,6 +12,8 @@
 #include "bio_local.h"
 #include "internal/cryptlib.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 static int mem_write(BIO *h, const char *buf, int num);
 static int mem_read(BIO *h, char *buf, int size);
 static int mem_puts(BIO *h, const char *str);

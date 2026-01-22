@@ -102,6 +102,7 @@
  * @var CTX_TABLE_ENTRY::ctx_data
  * Pointer to the data associated with a given library context.
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef void *CTX_TABLE_ENTRY;
 
 /*

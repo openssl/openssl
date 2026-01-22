@@ -29,6 +29,7 @@
 #define SSL3_NUM_SCSVS OSSL_NELEM(ssl3_scsvs)
 
 /* TLSv1.3 downgrade protection sentinel values */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 const unsigned char tls11downgrade[] = {
     0x44, 0x4f, 0x57, 0x4e, 0x47, 0x52, 0x44, 0x00
 };

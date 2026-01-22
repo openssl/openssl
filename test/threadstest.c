@@ -47,6 +47,7 @@
 /* Limit the maximum number of providers loaded into a library context */
 #define MAXIMUM_PROVIDERS 4
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int do_fips = 0;
 static char *privkey;
 static char *storedir;

@@ -13,6 +13,7 @@
 #include <openssl/objects.h>
 #include "asn1_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int ASN1_TYPE_get(const ASN1_TYPE *a)
 {
     if (a->type == V_ASN1_BOOLEAN

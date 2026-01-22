@@ -24,6 +24,7 @@
 #include "prov/securitycheck.h"
 #include "providers/implementations/keymgmt/mlx_kmgmt.inc"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_FUNC_keymgmt_gen_fn mlx_kem_gen;
 static OSSL_FUNC_keymgmt_gen_cleanup_fn mlx_kem_gen_cleanup;
 static OSSL_FUNC_keymgmt_gen_set_params_fn mlx_kem_gen_set_params;

@@ -36,6 +36,7 @@
 #define WARN_NO_EXPORT(opt) \
     BIO_printf(bio_err, "Warning: -%s option ignored without -export\n", opt);
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int get_cert_chain(X509 *cert, X509_STORE *store,
     STACK_OF(X509) *untrusted_certs,
     STACK_OF(X509) **chain);

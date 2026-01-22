@@ -15,6 +15,7 @@
 #include "crypto/ess.h"
 #include "crypto/x509.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static ESS_CERT_ID *ESS_CERT_ID_new_init(const X509 *cert,
     int set_issuer_serial);
 static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,

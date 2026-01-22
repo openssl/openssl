@@ -80,6 +80,7 @@
  * (section 6)
  * returns 1 on success, 0 on error
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int OSSL_CRMF_MSG_push0_regCtrl(OSSL_CRMF_MSG *crm,
     OSSL_CRMF_ATTRIBUTETYPEANDVALUE *ctrl)
 {

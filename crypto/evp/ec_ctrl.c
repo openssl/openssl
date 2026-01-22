@@ -20,6 +20,7 @@
  * keys.
  */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static ossl_inline int evp_pkey_ctx_getset_ecdh_param_checks(const EVP_PKEY_CTX *ctx)
 {
     if (ctx == NULL || !EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {

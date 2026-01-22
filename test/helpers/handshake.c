@@ -26,6 +26,7 @@
 #include <netinet/sctp.h>
 #endif
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 HANDSHAKE_RESULT *HANDSHAKE_RESULT_new(void)
 {
     HANDSHAKE_RESULT *ret;

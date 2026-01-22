@@ -23,6 +23,7 @@
 
 #define X509_NAME_MAX (1024 * 1024)
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int x509_name_ex_d2i(ASN1_VALUE **val,
     const unsigned char **in, long len,
     const ASN1_ITEM *it,

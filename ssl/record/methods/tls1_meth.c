@@ -16,6 +16,7 @@
 #include "../record_local.h"
 #include "recmethod_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     unsigned char *key, size_t keylen,
     unsigned char *iv, size_t ivlen,

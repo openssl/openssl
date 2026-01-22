@@ -43,6 +43,7 @@
  */
 #define IMPL_CACHE_FLUSH_THRESHOLD (CACHE_SIZE / NUM_SHARDS)
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct {
     void *method;
     int (*up_ref)(void *);

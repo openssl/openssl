@@ -30,6 +30,7 @@
 #include "crypto/evp.h"
 #include "testutil.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct evp_test_buffer_st EVP_TEST_BUFFER;
 DEFINE_STACK_OF(EVP_TEST_BUFFER)
 

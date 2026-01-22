@@ -18,6 +18,8 @@
 #include "crypto/asn1.h"
 #include "asn1_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 /*
  * Print routines.
  */

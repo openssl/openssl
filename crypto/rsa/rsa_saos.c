@@ -20,6 +20,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int RSA_sign_ASN1_OCTET_STRING(int type,
     const unsigned char *m, unsigned int m_len,
     unsigned char *sigret, unsigned int *siglen,

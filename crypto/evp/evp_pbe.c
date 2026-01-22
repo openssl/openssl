@@ -21,6 +21,7 @@
 
 /* Setup a cipher context from a PBE algorithm */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct evp_pbe_st {
     int pbe_type;
     int pbe_nid;

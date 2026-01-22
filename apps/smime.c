@@ -19,6 +19,7 @@
 #include <openssl/x509_vfy.h>
 #include <openssl/x509v3.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int smime_cb(int ok, X509_STORE_CTX *ctx);
 

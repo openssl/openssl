@@ -21,6 +21,7 @@
 #include "ec_local.h"
 
 /* Key derivation function from X9.63/SECG */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int ossl_ecdh_kdf_X9_63(unsigned char *out, size_t outlen,
     const unsigned char *Z, size_t Zlen,
     const unsigned char *sinfo, size_t sinfolen,

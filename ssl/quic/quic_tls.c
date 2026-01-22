@@ -24,6 +24,7 @@
             (rl)->qtls->inerror = 1;   \
     } while (0)
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct quic_tls_st {
     QUIC_TLS_ARGS args;
 

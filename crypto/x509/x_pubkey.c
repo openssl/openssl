@@ -27,6 +27,7 @@
 #include "internal/provider.h"
 #include "internal/sizes.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct X509_pubkey_st {
     X509_ALGOR *algor;
     ASN1_BIT_STRING *public_key;

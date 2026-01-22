@@ -19,6 +19,7 @@
 #include "prov/macsignature.h"
 #include "prov/providercommon.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_FUNC_signature_newctx_fn mac_hmac_newctx;
 static OSSL_FUNC_signature_newctx_fn mac_siphash_newctx;
 static OSSL_FUNC_signature_newctx_fn mac_poly1305_newctx;

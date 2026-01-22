@@ -12,6 +12,7 @@
 #include "internal/quic_wire_pkt.h"
 #include "testutil.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct encode_test_case {
     int (*serializer)(WPACKET *pkt);
     const unsigned char *expect_buf;

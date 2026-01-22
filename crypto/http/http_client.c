@@ -42,6 +42,7 @@
 
 /* Opaque HTTP request status structure */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct ossl_http_req_ctx_st {
     int state; /* Current I/O state */
     unsigned char *buf; /* Buffer to write request or read response */

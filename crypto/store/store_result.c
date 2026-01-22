@@ -60,6 +60,7 @@
  * reference.
  */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct extracted_param_data_st {
     int object_type;
     const char *data_type;

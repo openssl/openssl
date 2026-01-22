@@ -24,6 +24,7 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 DEFINE_SPARSE_ARRAY_OF(char);
 
 static int test_sparse_array(void)

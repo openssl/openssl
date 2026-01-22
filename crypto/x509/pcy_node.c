@@ -14,6 +14,7 @@
 
 #include "pcy_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int node_cmp(const X509_POLICY_NODE *const *a,
     const X509_POLICY_NODE *const *b)
 {

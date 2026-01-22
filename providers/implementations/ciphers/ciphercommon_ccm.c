@@ -16,6 +16,7 @@
 
 #include "providers/implementations/ciphers/ciphercommon_ccm.inc"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,
     size_t *padlen, const unsigned char *in,
     size_t len);

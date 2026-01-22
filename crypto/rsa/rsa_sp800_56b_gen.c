@@ -59,6 +59,7 @@
  *     Xp, Xp1, Xp2, Xq, Xq1, Xq2 are optionally passed in.
  *     (Required for CAVS testing).
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int ossl_rsa_fips186_5_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
     int nbits, const BIGNUM *e, BN_CTX *ctx,
     BN_GENCB *cb, uint32_t a, uint32_t b)

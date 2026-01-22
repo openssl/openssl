@@ -30,6 +30,7 @@
 #include "crypto/store.h"
 #include "store_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int ossl_store_close_it(OSSL_STORE_CTX *ctx);
 
 static int loader_set_params(OSSL_STORE_LOADER *loader,

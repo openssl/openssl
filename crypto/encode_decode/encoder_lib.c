@@ -42,6 +42,7 @@
 #define BN_FMTx "%x"
 #endif
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct encoder_process_data_st {
     OSSL_ENCODER_CTX *ctx;
 

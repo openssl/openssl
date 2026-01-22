@@ -21,6 +21,7 @@
  * If we get the "NULL" md then the name comes back as "UNDEF". We want to use
  * NULL for this.
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static const char *canon_mdname(const char *mdname)
 {
     if (mdname != NULL && strcmp(mdname, "UNDEF") == 0)

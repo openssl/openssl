@@ -27,6 +27,7 @@
  * alike.
  */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int ossl_dsa_key_fromdata(DSA *dsa, const OSSL_PARAM params[],
     int include_private)
 {

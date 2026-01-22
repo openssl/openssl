@@ -31,6 +31,8 @@
 #include <openssl/sha.h> /* For SHA512_DIGEST_LENGTH */
 #endif
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 static OSSL_FUNC_keymgmt_new_fn x25519_new_key;
 static OSSL_FUNC_keymgmt_new_fn x448_new_key;
 static OSSL_FUNC_keymgmt_new_fn ed25519_new_key;

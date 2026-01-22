@@ -28,6 +28,8 @@
 #include "crypto/bn.h"
 #include "internal/nelem.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 #if BN_BITS2 == 64
 #define BN_DEF(lo, hi) (BN_ULONG)hi << 32 | lo
 #else

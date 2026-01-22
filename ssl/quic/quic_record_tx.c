@@ -21,6 +21,7 @@
  * Encrypted packets awaiting transmission are kept in TX Entries (TXEs), which
  * are queued in linked lists just like TXEs.
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct txe_st TXE;
 
 struct txe_st {

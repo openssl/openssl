@@ -42,6 +42,7 @@
  */
 #define MAX_CONF_VALUE_LENGTH 65536
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int is_keytype(const CONF *conf, char c, unsigned short type);
 static char *eat_ws(CONF *conf, char *p);
 static void trim_ws(CONF *conf, char *start);

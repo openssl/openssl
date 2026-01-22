@@ -56,6 +56,7 @@
 #endif
 
 /* Defined in tls-provider.c */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int tls_provider_init(const OSSL_CORE_HANDLE *handle,
     const OSSL_DISPATCH *in,
     const OSSL_DISPATCH **out,

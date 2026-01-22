@@ -15,6 +15,7 @@
 #include "internal/numbers.h" /* UINT64_C */
 #include "internal/time.h" /* OSSL_TIME */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static const char *cert_file, *key_file;
 
 /*

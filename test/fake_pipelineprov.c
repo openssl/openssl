@@ -28,6 +28,7 @@
  * for AES GCM.
  */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct fake_pipeline_ctx_st {
     size_t keylen;
     size_t ivlen;

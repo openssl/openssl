@@ -18,6 +18,8 @@
 #include <openssl/aes.h>
 #include "aes_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 /* XXX: probably some better way to do this */
 #if defined(__i386__) || defined(__x86_64__)
 #define UNALIGNED_MEMOPS_ARE_FAST 1

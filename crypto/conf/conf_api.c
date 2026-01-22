@@ -17,6 +17,7 @@
 #include <openssl/conf_api.h>
 #include "conf_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static void value_free_hash(const CONF_VALUE *a, LHASH_OF(CONF_VALUE) *conf);
 static void value_free_stack_doall(CONF_VALUE *a);
 

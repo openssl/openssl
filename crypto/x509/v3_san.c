@@ -15,6 +15,7 @@
 #include <openssl/bio.h>
 #include "ext_dat.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
     X509V3_CTX *ctx,
     STACK_OF(CONF_VALUE) *nval);

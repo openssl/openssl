@@ -17,6 +17,7 @@
 #include <openssl/pem.h>
 #include "x509_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
     long argl, char **ret);
 static int by_file_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argc,

@@ -18,6 +18,7 @@
 #include "testutil.h"
 #include "internal/nelem.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct {
     const char *data;
     int time_result;

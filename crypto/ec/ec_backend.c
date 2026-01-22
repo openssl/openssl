@@ -28,6 +28,7 @@
 #include "internal/param_build_set.h"
 
 /* Mapping between a flag and a name */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static const OSSL_ITEM encoding_nameid_map[] = {
     { OPENSSL_EC_EXPLICIT_CURVE, OSSL_PKEY_EC_ENCODING_EXPLICIT },
     { OPENSSL_EC_NAMED_CURVE, OSSL_PKEY_EC_ENCODING_GROUP },

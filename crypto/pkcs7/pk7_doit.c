@@ -18,6 +18,7 @@
 #include "crypto/evp.h"
 #include "pk7_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
     void *value);
 static ASN1_TYPE *get_attribute(const STACK_OF(X509_ATTRIBUTE) *sk, int nid);

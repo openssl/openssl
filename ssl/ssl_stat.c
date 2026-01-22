@@ -12,6 +12,7 @@
 #include "ssl_local.h"
 #include "internal/ssl_unwrap.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 const char *SSL_state_string_long(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);

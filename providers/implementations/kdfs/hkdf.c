@@ -34,6 +34,8 @@
 #include "internal/params.h"
 #include "internal/sizes.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 #define HKDF_MAXBUF 2048
 #define HKDF_MAXINFO (32 * 1024)
 #define HKDF_MAX_INFOS 5

@@ -25,6 +25,7 @@
 #ifndef FIPS_MODULE
 
 /* some structures needed for the asn1 encoding */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct x9_62_pentanomial_st {
     int32_t k1;
     int32_t k2;

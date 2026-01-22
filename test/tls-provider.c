@@ -45,6 +45,7 @@
 #define XORPROV_R_VERIFY_ERROR 14
 #define XORPROV_R_EVPINFO_MISSING 15
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_FUNC_keymgmt_import_fn xor_import;
 static OSSL_FUNC_keymgmt_import_types_fn xor_import_types;
 static OSSL_FUNC_keymgmt_import_types_ex_fn xor_import_types_ex;

@@ -14,6 +14,8 @@
 #include <openssl/bn.h>
 #include "asn1_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 /*
  * Custom primitive types for handling int32_t, int64_t, uint32_t, uint64_t.
  * This converts between an ASN1_INTEGER and those types directly.

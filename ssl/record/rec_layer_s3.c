@@ -24,6 +24,7 @@
 #include "internal/comp.h"
 #include "internal/ssl_unwrap.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL_CONNECTION *s)
 {
     rl->s = s;

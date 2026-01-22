@@ -37,6 +37,7 @@
 #include "crypto/dh.h"
 #include "crypto/ec.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct translation_ctx_st; /* Forwarding */
 struct translation_st; /* Forwarding */
 

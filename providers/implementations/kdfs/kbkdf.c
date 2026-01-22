@@ -53,6 +53,7 @@
 
 #include "providers/implementations/kdfs/kbkdf.inc"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef enum {
     COUNTER = 0,
     FEEDBACK

@@ -10,6 +10,7 @@
 #include "internal/quic_txpim.h"
 #include <stdlib.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct quic_txpim_pkt_ex_st QUIC_TXPIM_PKT_EX;
 
 struct quic_txpim_pkt_ex_st {

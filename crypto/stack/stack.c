@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <openssl/e_os2.h> /* For ossl_inline */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 OSSL_SAFE_MATH_SIGNED(int, int)
 
 /*

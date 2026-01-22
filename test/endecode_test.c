@@ -45,6 +45,7 @@ OSSL_provider_init_fn ossl_legacy_provider_init;
 #define OPENSSL_NO_KEYPARAMS
 #endif
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int default_libctx = 1;
 static int is_fips = 0;
 static int is_fips_3_0_0 = 0;

@@ -19,6 +19,8 @@
 #include <openssl/x509.h>
 #include "crypto/x509.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 
 int ASN1_digest(i2d_of_void *i2d, const EVP_MD *type, char *data,

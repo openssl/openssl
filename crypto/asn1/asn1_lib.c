@@ -13,6 +13,8 @@
 #include <openssl/asn1.h>
 #include "asn1_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
     long max);
 static void asn1_put_length(unsigned char **pp, int length);

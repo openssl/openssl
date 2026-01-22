@@ -17,6 +17,7 @@
 #include "testutil.h"
 #include "slh_dsa.inc"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,

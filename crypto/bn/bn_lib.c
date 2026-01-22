@@ -15,6 +15,8 @@
 #include <openssl/opensslconf.h>
 #include "internal/constant_time.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 /* This stuff appears to be completely unused, so is deprecated */
 #ifndef OPENSSL_NO_DEPRECATED_0_9_8
 /*-

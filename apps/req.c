@@ -48,6 +48,7 @@
 #define UNSET_DAYS -2 /* -1 may be used for testing expiration checks */
 #define EXT_COPY_UNSET -1
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, X509_NAME *fsubj,
     int mutlirdn, int attribs, unsigned long chtype);
 static int prompt_info(X509_REQ *req,

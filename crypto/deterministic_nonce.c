@@ -25,6 +25,7 @@
  *     in, inlen The input Bit String (in bytes).
  * Returns: 1 if successful, or  0 otherwise.
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int bits2int(BIGNUM *out, int qlen_bits,
     const unsigned char *in, size_t inlen)
 {

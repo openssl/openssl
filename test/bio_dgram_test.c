@@ -16,6 +16,7 @@
 
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int compare_addr(const BIO_ADDR *a, const BIO_ADDR *b)
 {
     struct in_addr xa, xb;

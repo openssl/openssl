@@ -20,6 +20,7 @@
 #define OSSL_PARAM_BUF_SECURE 1
 #define OSSL_PARAM_BUF_MAX (OSSL_PARAM_BUF_SECURE + 1)
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct {
     OSSL_PARAM_ALIGNED_BLOCK *alloc; /* The allocated buffer */
     OSSL_PARAM_ALIGNED_BLOCK *cur; /* Current position in the allocated buf */

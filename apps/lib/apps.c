@@ -959,8 +959,10 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     }
 
     if ((input_type = format2string(format)) != NULL) {
+        OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
         itp[0] = OSSL_PARAM_construct_utf8_string(OSSL_STORE_PARAM_INPUT_TYPE,
             (char *)input_type, 0);
+        OSSL_END_ALLOW_CAST_DISCARD_QUAL
         itp[1] = OSSL_PARAM_construct_end();
         params = itp;
     }
@@ -2677,8 +2679,10 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
             return NULL;
         }
 
+        OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
         if (vpm != NULL)
             SSL_set_tlsext_host_name(ssl, host /* may be NULL */);
+        OSSL_END_ALLOW_CAST_DISCARD_QUAL
 
         SSL_set_connect_state(ssl);
         BIO_set_ssl(sbio, ssl, BIO_CLOSE);

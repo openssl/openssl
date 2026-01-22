@@ -14,6 +14,7 @@
 #include <openssl/rsa.h>
 #include <openssl/ssl.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
 {
     EVP_PKEY *pkey;

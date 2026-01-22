@@ -33,6 +33,8 @@
 #include <openssl/bn.h>
 #include <openssl/x509v3.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 #if defined(OPENSSL_SYS_VXWORKS)
 /* not supported */
 int setpgid(pid_t pid, pid_t pgid)

@@ -23,6 +23,7 @@
 #include "encoder_local.h"
 #include "internal/e_os.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct decoder_process_data_st {
     OSSL_DECODER_CTX *ctx;
 

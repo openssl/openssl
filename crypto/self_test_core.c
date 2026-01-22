@@ -13,6 +13,7 @@
 #include "internal/cryptlib.h"
 #include "crypto/context.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct self_test_cb_st {
     OSSL_CALLBACK *cb;
     void *cbarg;

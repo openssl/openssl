@@ -31,6 +31,7 @@
  * @return Pointer to the updated buffer position after reading the value,
  *         or NULL if the buffer does not contain enough data.
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static uint8_t *consume_uint8_t(const uint8_t *buf, size_t *len, uint8_t *val)
 {
     if (*len < sizeof(uint8_t))

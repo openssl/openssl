@@ -21,6 +21,7 @@
  * A new string will be malloc'd and assigned to |out|. This will be owned by
  * the caller. Do not provide a pre-allocated string in |out|.
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int ct_base64_decode(const char *in, unsigned char **out)
 {
     size_t inlen = strlen(in);

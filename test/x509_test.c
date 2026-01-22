@@ -17,6 +17,7 @@
 #include "crypto/x509.h" /* x509_st definition */
 #include "testutil.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static EVP_PKEY *pubkey = NULL;
 static EVP_PKEY *privkey = NULL;
 static EVP_MD *signmd = NULL;

@@ -10,6 +10,7 @@
 #include "internal/quic_cfq.h"
 #include "internal/numbers.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct quic_cfq_item_ex_st QUIC_CFQ_ITEM_EX;
 
 struct quic_cfq_item_ex_st {

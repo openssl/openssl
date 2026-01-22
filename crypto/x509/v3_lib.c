@@ -16,6 +16,7 @@
 
 #include "ext_dat.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static STACK_OF(X509V3_EXT_METHOD) *ext_list = NULL;
 
 static int ext_cmp(const X509V3_EXT_METHOD *const *a,

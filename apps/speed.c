@@ -48,6 +48,8 @@
 #include <unistd.h>
 #endif
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 #if defined(_WIN32)
 #include <windows.h>
 /*

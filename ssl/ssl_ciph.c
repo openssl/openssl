@@ -30,6 +30,7 @@
 
 /* NB: make sure indices in these tables match values above */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct {
     uint32_t mask;
     int nid;

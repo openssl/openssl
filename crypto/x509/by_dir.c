@@ -31,6 +31,7 @@
 #include "crypto/x509.h"
 #include "x509_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct lookup_dir_hashes_st {
     unsigned long hash;
     int suffix;

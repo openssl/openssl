@@ -26,6 +26,7 @@ static int slh_dsa_fips140_pairwise_test(const SLH_DSA_KEY *key,
     SLH_DSA_HASH_CTX *ctx);
 #endif /* FIPS_MODULE */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_FUNC_keymgmt_free_fn slh_dsa_free_key;
 static OSSL_FUNC_keymgmt_has_fn slh_dsa_has;
 static OSSL_FUNC_keymgmt_match_fn slh_dsa_match;

@@ -12,6 +12,7 @@
 #include <openssl/provider.h>
 #include "testutil.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static const OSSL_ALGORITHM *obj_query(void *provctx, int operation_id,
     int *no_cache)
 {

@@ -13,6 +13,7 @@
 #include "crypto/x509.h"
 #include "x509_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct cached_store_st {
     char *uri;
     OSSL_LIB_CTX *libctx;

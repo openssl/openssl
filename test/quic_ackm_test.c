@@ -12,6 +12,7 @@
 #include "internal/quic_ackm.h"
 #include "internal/quic_cc.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_TIME fake_time = { 0 };
 
 #define TIME_BASE (ossl_ticks2time(123 * OSSL_TIME_SECOND))

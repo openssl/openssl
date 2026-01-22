@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct {
     const char *curvename;
     /* seed */

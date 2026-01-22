@@ -25,6 +25,8 @@
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 struct type_and_structure_st {
     const char *output_type;
     const char *output_structure;

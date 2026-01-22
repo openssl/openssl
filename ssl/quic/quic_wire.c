@@ -14,6 +14,7 @@
 #include "internal/quic_wire.h"
 #include "internal/quic_error.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 OSSL_SAFE_MATH_UNSIGNED(uint64_t, uint64_t)
 
 int ossl_quic_frame_ack_contains_pn(const OSSL_QUIC_FRAME_ACK *ack, QUIC_PN pn)

@@ -18,6 +18,7 @@
 /* The maximum size of the static buffers used to test most things */
 #define MAX_LEN 20
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static void swap_copy(unsigned char *out, const void *in, size_t len)
 {
     size_t j;

@@ -26,6 +26,7 @@
  */
 #define INIT_DCID_LEN 8
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int port_init(QUIC_PORT *port);
 static void port_cleanup(QUIC_PORT *port);
 static OSSL_TIME get_time(void *arg);

@@ -27,6 +27,7 @@
 
 /* functions for EC_GROUP objects */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 EC_GROUP *ossl_ec_group_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     const EC_METHOD *meth)
 {

@@ -169,15 +169,19 @@ void print_param_value(const OSSL_PARAM *p, int indent)
     case OSSL_PARAM_UTF8_PTR:
         print_param_utf8((const char **)p->data, p->return_size);
         break;
+        OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
     case OSSL_PARAM_UTF8_STRING:
         print_param_utf8((const char **)&p->data, p->return_size);
         break;
+        OSSL_END_ALLOW_CAST_DISCARD_QUAL
     case OSSL_PARAM_OCTET_PTR:
         print_param_octet((const unsigned char **)p->data, p->return_size);
         break;
+        OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
     case OSSL_PARAM_OCTET_STRING:
         print_param_octet((const unsigned char **)&p->data, p->return_size);
         break;
+        OSSL_END_ALLOW_CAST_DISCARD_QUAL
     default:
         BIO_printf(bio_out, "unknown type (%u) of %zu bytes\n",
             p->data_type, p->return_size);

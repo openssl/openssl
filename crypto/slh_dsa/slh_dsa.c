@@ -17,6 +17,7 @@
 /* The size of md is (21..40 bytes) - since a is in bits round up to nearest byte */
 #define MD_LEN(params) (((params)->k * (params)->a + 7) >> 3)
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int get_tree_ids(PACKET *pkt, const SLH_DSA_PARAMS *params,
     uint64_t *tree_id, uint32_t *leaf_id);
 

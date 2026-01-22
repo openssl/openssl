@@ -9,6 +9,7 @@
 #include "internal/sockets.h"
 #include <openssl/rand.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static const unsigned char alpn_ossltest[] = {
     /* "\x08ossltest" (hex for EBCDIC resilience) */
     0x08, 0x6f, 0x73, 0x73, 0x6c, 0x74, 0x65, 0x73, 0x74

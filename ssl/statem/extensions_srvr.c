@@ -39,6 +39,7 @@
 /*
  * Parse the client's renegotiation binding and abort if it's not right
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int tls_parse_ctos_renegotiate(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx)

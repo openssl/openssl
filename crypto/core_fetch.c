@@ -16,6 +16,7 @@
 #include "internal/property.h"
 #include "internal/provider.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct construct_data_st {
     OSSL_LIB_CTX *libctx;
     OSSL_METHOD_STORE *store;

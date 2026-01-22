@@ -32,6 +32,7 @@
 #include "prov/endecoder_local.h"
 #include "providers/implementations/encode_decode/decode_pem2der.inc"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int read_pem(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
     char **pem_name, char **pem_header,
     unsigned char **data, long *len)

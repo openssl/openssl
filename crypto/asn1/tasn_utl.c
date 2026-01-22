@@ -17,6 +17,8 @@
 #include <openssl/err.h>
 #include "asn1_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 /* Utility functions for manipulating fields and offsets */
 
 /* Add 'offset' to 'addr' */

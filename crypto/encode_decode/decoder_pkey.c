@@ -23,6 +23,7 @@
 #include "internal/namemap.h"
 #include "internal/sizes.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int OSSL_DECODER_CTX_set_passphrase(OSSL_DECODER_CTX *ctx,
     const unsigned char *kstr,
     size_t klen)

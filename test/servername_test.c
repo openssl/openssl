@@ -26,6 +26,7 @@
 
 #define CLIENT_VERSION_LEN 2
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static const char *host = "dummy-host";
 
 static char *cert = NULL;

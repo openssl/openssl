@@ -15,6 +15,7 @@
 #include <openssl/x509v3.h>
 #include "x509_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int X509_REVOKED_cmp(const X509_REVOKED *const *a,
     const X509_REVOKED *const *b);
 static int setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp);

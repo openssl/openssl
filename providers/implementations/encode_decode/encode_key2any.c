@@ -47,6 +47,7 @@
 #define OPENSSL_NO_KEYPARAMS
 #endif
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct key2any_ctx_st {
     PROV_CTX *provctx;
 

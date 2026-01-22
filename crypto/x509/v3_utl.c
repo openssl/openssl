@@ -22,6 +22,7 @@
 #include "ext_dat.h"
 #include "x509_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static char *strip_spaces(char *name);
 static int sk_strcmp(const char *const *a, const char *const *b);
 static STACK_OF(OPENSSL_STRING) *get_email(const X509_NAME *name,

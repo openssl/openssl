@@ -13,6 +13,8 @@
 #include <errno.h>
 #include "bio_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 #ifndef OPENSSL_NO_SOCK
 
 typedef struct bio_accept_st {

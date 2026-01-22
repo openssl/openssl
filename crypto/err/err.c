@@ -28,6 +28,7 @@
 #include "err_local.h"
 
 /* Forward declaration in case it's not published because of configuration */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 ERR_STATE *ERR_get_state(void);
 
 #ifndef OPENSSL_NO_ERR

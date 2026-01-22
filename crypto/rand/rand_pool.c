@@ -18,6 +18,7 @@
 /*
  * Allocate memory and initialize a new random pool
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 RAND_POOL *ossl_rand_pool_new(int entropy_requested, int secure,
     size_t min_len, size_t max_len)
 {

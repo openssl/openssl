@@ -74,6 +74,7 @@
 
 #include "helpers/predefined_dhparams.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static SSL_CTX *s_ctx = NULL;
 static SSL_CTX *s_ctx2 = NULL;
 

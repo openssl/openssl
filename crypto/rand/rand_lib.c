@@ -31,6 +31,7 @@
 #endif
 /* clang-format on */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct rand_global_st {
     /*
      * The three shared DRBG instances

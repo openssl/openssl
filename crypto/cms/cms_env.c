@@ -28,6 +28,7 @@
 #include "cms_local.h"
 
 /* CMS EnvelopedData Utilities */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static void cms_env_set_version(CMS_EnvelopedData *env);
 
 #define CMS_ENVELOPED_STANDARD 1

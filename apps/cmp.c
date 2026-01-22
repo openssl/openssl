@@ -45,6 +45,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static char *prog;
 static char *opt_config = NULL;
 #define CMP_SECTION "cmp"

@@ -47,6 +47,7 @@
 
 #endif
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct dh_named_group_st {
     const char *name;
     int uid;

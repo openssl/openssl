@@ -12,6 +12,7 @@
 #include "internal/endian.h"
 #include "cipher_chacha20_poly1305.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int chacha_poly1305_tls_init(PROV_CIPHER_CTX *bctx,
     unsigned char *aad, size_t alen)
 {

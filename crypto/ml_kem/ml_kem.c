@@ -88,6 +88,7 @@
 /*
  * Structure of keys
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct ossl_ml_kem_scalar_st {
     /* On every function entry and exit, 0 <= c[i] < ML_KEM_PRIME. */
     uint16_t c[ML_KEM_DEGREE];

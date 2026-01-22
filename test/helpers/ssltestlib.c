@@ -21,6 +21,7 @@
 #include <openssl/bio.h>
 #endif
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int tls_dump_new(BIO *bi);
 static int tls_dump_free(BIO *a);
 static int tls_dump_read(BIO *b, char *out, int outl);

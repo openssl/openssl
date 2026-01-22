@@ -17,6 +17,7 @@
 #include <openssl/proverr.h>
 #include "cipher_camellia.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int cipher_hw_camellia_initkey(PROV_CIPHER_CTX *dat,
     const unsigned char *key, size_t keylen)
 {

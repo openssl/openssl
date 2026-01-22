@@ -11,6 +11,7 @@
 #include <openssl/sha.h>
 #include "testutil.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int test_static_sha_common(const char *input, size_t length,
     const unsigned char *out,
     unsigned char *(*md)(const unsigned char *d,
