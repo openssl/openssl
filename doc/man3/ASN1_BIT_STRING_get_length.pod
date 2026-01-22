@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+ASN1_BIT_STRING_set1,
 ASN1_BIT_STRING_get_length - ASN1_BIT_STRING accessors
 
 =head1 SYNOPSIS
@@ -9,6 +10,7 @@ ASN1_BIT_STRING_get_length - ASN1_BIT_STRING accessors
   #include <openssl/asn1.h>
 
   int ASN1_BIT_STRING_get_length(const ASN1_BIT_STRING *bitstr, size_t *length, int *unused_bits);
+  int ASN1_BIT_STRING_set1(ASN1_BIT_STRING *abs, const uint8_t *data, size_t length, int unused_bits);
 
 =head1 DESCRIPTION
 
@@ -17,15 +19,28 @@ containing bit values in I<length> and the number of unused bits in
 the last octet in I<unused_bits>. The value returned in
 I<unused_bits> is guaranteed to be between 0 and 7, inclusive.
 
+ASN1_BIT_STRING_set1() sets the value of the bit string I<abs> to be a
+copy of I<length> octets from I<data>, with I<unused_bits> of unused
+bits in the last octet of the bit string, ensuring the internal state
+of the bit string is consistent given the length and unused bits
+values. This API should always be used instead of ASN1_STRING_set()
+when setting the value of a bit string.
+
 =head1 RETURN VALUES
 
 ASN1_BIT_STRING_get_length() returns 1 on success or 0 if the encoding
 of I<bitstr> is internally inconsistent, or if one of I<bitstr>,
 I<length>, or I<unused_bits> is NULL.
 
+ASN1_BIT_STRING_set1() returns 1 on success or 0 on failure. It
+will fail if I<abs> is NULL, if <length> or <unused_bits> are out of
+range, if the <length> and <unused_bits>, are not consistent, or if
+the last <unused_bits> in the last octet of <data> are not zero, or
+if memory allocation fails.
+
 =head1 COPYRIGHT
 
-Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

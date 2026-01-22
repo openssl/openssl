@@ -2583,6 +2583,7 @@ ASN1_BIT_STRING_free                    ?	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_new                     ?	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_it                      ?	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_set                     ?	4_0_0	EXIST::FUNCTION:
+ASN1_BIT_STRING_set1                    ?	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_set_bit                 ?	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_get_bit                 ?	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_check                   ?	4_0_0	EXIST::FUNCTION:

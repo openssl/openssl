@@ -32,6 +32,12 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Added accessors for ASN1_BIT_STRING values - ASN1_BIT_STRING_set1 and ASN1_BIT_STRING_get_length()
+   to ensure there are ways to retrieve and set values keeping the unused_bits correct, without
+   touching ASN1_STRING internals.
+
+   *Bob Beck*
+
  * Added configure options to disable KDF algorithms for
    hmac-drbg-kdf, kbkdf, krb5kdf, pvkkdf, snmpkdf, sskdf, sshkdf, x942kdf and x963kdf.
 
