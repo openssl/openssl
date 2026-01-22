@@ -399,9 +399,7 @@ char *X509V3_get_string(X509V3_CTX *ctx, const char *name, const char *section)
         ERR_raise(ERR_LIB_X509V3, X509V3_R_OPERATION_NOT_DEFINED);
         return NULL;
     }
-    if (ctx->db_meth->get_string)
-        return ctx->db_meth->get_string(ctx->db, name, section);
-    return NULL;
+    return ctx->db_meth->get_string(ctx->db, name, section);
 }
 
 STACK_OF(CONF_VALUE) *X509V3_get_section(X509V3_CTX *ctx, const char *section)
@@ -410,9 +408,7 @@ STACK_OF(CONF_VALUE) *X509V3_get_section(X509V3_CTX *ctx, const char *section)
         ERR_raise(ERR_LIB_X509V3, X509V3_R_OPERATION_NOT_DEFINED);
         return NULL;
     }
-    if (ctx->db_meth->get_section)
-        return ctx->db_meth->get_section(ctx->db, section);
-    return NULL;
+    return ctx->db_meth->get_section(ctx->db, section);
 }
 
 void X509V3_string_free(X509V3_CTX *ctx, char *str)
