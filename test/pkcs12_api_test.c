@@ -23,6 +23,12 @@
 
 static OSSL_LIB_CTX *testctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
+static const char *in_file = NULL;
+static const char *in_pass = "";
+static int has_key = 0;
+static int has_cert = 0;
+static int has_ca = 0;
+static int version_pass = 1;
 
 static int test_null_args(void)
 {
@@ -54,12 +60,6 @@ err:
     PKCS12_free(p12);
     return NULL;
 }
-
-static const char *in_file = NULL;
-static const char *in_pass = "";
-static int has_key = 0;
-static int has_cert = 0;
-static int has_ca = 0;
 
 static int changepass(PKCS12 *p12, EVP_PKEY *key, X509 *cert, STACK_OF(X509) *ca)
 {
@@ -113,6 +113,8 @@ static int pkcs12_parse_test(void)
         if (!TEST_ptr(p12))
             goto err;
 
+        if (!TEST_int_eq(PKCS12_check_version(p12), version_pass))
+            goto err;
         if (!TEST_true(PKCS12_parse(p12, in_pass, &key, &cert, &ca)))
             goto err;
 
@@ -226,6 +228,25 @@ err:
     return TEST_true(ret);
 }
 
+static int pkcs12_check_version_test(void)
+{
+    int ret = 0;
+    PKCS12 *p12 = NULL;
+
+    if (in_file != NULL) {
+        p12 = PKCS12_load(in_file);
+        if (!TEST_ptr(p12))
+            goto err;
+
+        if (!TEST_int_eq(PKCS12_check_version(p12), version_pass))
+            goto err;
+    }
+    ret = 1;
+err:
+    PKCS12_free(p12);
+    return ret;
+}
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
@@ -235,6 +256,7 @@ typedef enum OPTION_choice {
     OPT_IN_HAS_CERT,
     OPT_IN_HAS_CA,
     OPT_LEGACY,
+    OPT_BAD_VERSION,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
@@ -248,6 +270,7 @@ const OPTIONS *test_get_options(void)
         { "has-cert", OPT_IN_HAS_CERT, 'n', "Whether the input file does contain an user certificate" },
         { "has-ca", OPT_IN_HAS_CA, 'n', "Whether the input file does contain other certificate" },
         { "legacy", OPT_LEGACY, '-', "Test the legacy APIs" },
+        { "badversion", OPT_BAD_VERSION, '-', "Test is expected to fail the version info check" },
         { NULL }
     };
     return options;
@@ -303,6 +326,9 @@ int setup_tests(void)
         case OPT_IN_HAS_CA:
             has_ca = opt_int_arg();
             break;
+        case OPT_BAD_VERSION:
+            version_pass = 0;
+            break;
         case OPT_TEST_CASES:
             break;
         default:
@@ -315,11 +341,13 @@ int setup_tests(void)
         testctx = NULL;
         return 0;
     }
-
-    ADD_TEST(test_null_args);
-    ADD_TEST(pkcs12_parse_test);
-    ADD_ALL_TESTS(pkcs12_create_ex2_test, 3);
-    ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero);
+    ADD_TEST(pkcs12_check_version_test);
+    if (version_pass) {
+        ADD_TEST(test_null_args);
+        ADD_TEST(pkcs12_parse_test);
+        ADD_ALL_TESTS(pkcs12_create_ex2_test, 3);
+        ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero);
+    }
     return 1;
 }
 

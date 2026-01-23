@@ -32,6 +32,16 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Add PKCS12_check_version() API. There was no check for the version = 3 when
+   loading a PKCS12 file. Rather than adding multiple _ex() functions
+   that support checking the version number a separate API has been
+   added to do the check which can be called after one of the d2i_PKCS12
+   functions.
+   The check has been added to the OpenSSL pkcs12 command line application. It is
+   checked by default and can be disabled by using the option -noversioncheck.
+
+   *Shane Lontis*
+
  * Added configure options to disable KDF algorithms for
    hmac-drbg-kdf, kbkdf, krb5kdf, pvkkdf, snmpkdf, sskdf, sshkdf, x942kdf and x963kdf.
 

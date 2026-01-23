@@ -1,0 +1,56 @@
+=pod
+
+=head1 NAME
+
+PKCS12_check_version - Checks the version of a PKCS #12 structure
+
+=head1 SYNOPSIS
+
+ #include <openssl/pkcs12.h>
+
+ int PKCS12_check_version(const PKCS12 *p12);
+
+=head1 DESCRIPTION
+
+PKCS12_check_version() checks that the version info of a I<p12> PKCS #12 object
+is correct.
+
+=head1 NOTES
+
+A PKCS12 object can be loaded using d2i_PKC12(), d2i_PKC12_bio() or
+d2i_PKC12_fp(). The loaded object contains a version number which should be the
+value 3 according to RFC 7292.
+As this version number was not previously checked on loading,
+adding the check to these functions would potentially break existing
+PKCS12 files. Instead of adding an _ex variant of all these functions, the
+function PKCS12_check_version() has been added instead.
+PKCS12_check_version() should be called after loading a PKCS #12
+object before calling either PKCS12_parse() or PKCS12_unpack_authsafes().
+
+=head1 RETURN VALUES
+
+PKCS12_check_version() returns 1 if the version info of a I<p12> object is
+correct, otherwise it returns 0.
+
+=head1 CONFORMING TO
+
+IETF RFC 7292 (L<https://tools.ietf.org/html/rfc7292>)
+
+=head1 SEE ALSO
+
+L<d2i_PKCS12(3)>,
+
+=head1 HISTORY
+
+PKCS12_check_version() was added in OpenSSL 4.0.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

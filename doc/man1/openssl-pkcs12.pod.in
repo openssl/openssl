@@ -44,6 +44,7 @@ PKCS#12 input (parsing) options:
 [B<-idea>]
 [B<-noenc>]
 [B<-nodes>]
+[B<-noversioncheck>]
 
 PKCS#12 output (export) options:
 
@@ -137,6 +138,11 @@ No certificates will be output.
 
 This option inhibits all credentials output,
 and so the input is just verified.
+
+=item B<-noversioncheck>
+
+This option disables checking of the version information. This should not be
+required, but is supplied for backwards compatibility.
 
 =item B<-legacy>
 
@@ -480,9 +486,12 @@ L<ossl_store-file(7)>
 =head1 HISTORY
 
 The B<-nodes> option was deprecated in OpenSSL 3.0, too; use B<-noenc> instead.
+
 The B<-macsaltlen> option default changed from 8 to 16 bytes in OpenSSL 3.6.
 
 The B<-engine> option was removed in OpenSSL 4.0.
+
+The B<-noversioncheck> option was added in OpenSSL 4.0
 
 =head1 COPYRIGHT
 
