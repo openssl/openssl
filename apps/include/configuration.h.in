@@ -1,0 +1,58 @@
+/*
+ * {- join("\n * ", @autowarntext) -}
+ *
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+#ifndef APPS_CONFIGURATION_H
+#define APPS_CONFIGURATION_H
+
+/* clang-format off */
+{-
+    my $generate_openssl_disable_array = sub {
+      my ($key) = @_;
+      my $data = $config{$key};
+      my $res = "static const char * const \U${key}[] = {\n";
+
+      $res .= "\t\"\",\n";
+
+      if ($data && @$data) {
+
+          foreach (@$data) {
+              $res .= "\t\"$_\",\n";
+          }
+      }
+
+      $res .= "};\n";
+
+      return $res;
+    };
+
+    $OUT .= $generate_openssl_disable_array->('openssl_disabled_protocols');
+    $OUT .= "\n";
+    $OUT .= $generate_openssl_disable_array->('openssl_disabled_algorithms');
+    $OUT .= "\n";
+    $OUT .= $generate_openssl_disable_array->('openssl_disabled_features');
+-}
+/* clang-format on */
+
+#define OPENSSL_HAS_DISABLED(name) (OSSL_NELEM(OPENSSL_DISABLED_##name) > 1)
+
+#define OPENSSL_PRINT_DISABLED(bio, name, str)                                 \
+    do {                                                                       \
+        if (OPENSSL_HAS_DISABLED(name)) {                                      \
+            BIO_puts((bio), "Disabled " str "(s):\n");                         \
+            for (size_t i = 1; i < OSSL_NELEM(OPENSSL_DISABLED_##name); i++) { \
+                BIO_printf((bio), "\t- %s\n", OPENSSL_DISABLED_##name[i]);     \
+            }                                                                  \
+        } else {                                                               \
+            BIO_puts((bio), "No disabled " str "s.\n");                        \
+        }                                                                      \
+    } while (0);
+
+#endif
