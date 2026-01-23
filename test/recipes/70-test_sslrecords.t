@@ -905,31 +905,21 @@ sub empty_app_data
         return;
     }
 
-    my $data = pack "C52",
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, #IV
-        0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f,
-        0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, #One block of empty padded data
-        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-        0x10, 0x11, 0x12, 0x13; #MAC, assume to be 20 bytes
+    # Find the client application record
+    my $client_application_record;
+    for (my $i = @{$proxy->record_list} - 1; $i >= 0; $i--) {
+        if ($proxy->record_list->[$i]->serverissender() == 0
+            && $proxy->record_list->[$i]->content_type() == TLSProxy::Record::RT_APPLICATION_DATA) {
+            $client_application_record = $proxy->record_list->[$i];
+            last;
+        }
+    }
 
-    # Add a zero length app data record at the end
-    # This will have the same sequence number as the subsequent app data record
-    # that s_client will send - which will cause that second record to be
-    # dropped. But that isn't important for this test.
-    my $record = TLSProxy::Record->new_dtls(
-        4,
-        TLSProxy::Record::RT_APPLICATION_DATA,
-        TLSProxy::Record::VERS_DTLS_1_2,
-        1,
-        1,
-        length($data),
-        0,
-        length($data),
-        0,
-        $data,
-        ""
-    );
-    push @{$proxy->record_list}, $record;
+    # If we didn't find the Client Application Data record, just return
+    if (!defined $client_application_record) {
+        return;
+    }
+
+    $client_application_record->decrypt_data("");
+    $client_application_record->decrypt_len(0);
 }
