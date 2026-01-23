@@ -373,9 +373,9 @@ my %params = (
 # n, e, d are the usual public and private key components
 #
 # rsa-num is the number of factors, including p and q
-# rsa-factor is used for each factor: p, q, r_i (i = 3, ...)
-# rsa-exponent is used for each exponent: dP, dQ, d_i (i = 3, ...)
-# rsa-coefficient is used for each coefficient: qInv, t_i (i = 3, ...)
+# rsa-factorX is used for each factor: p, q, r_i (i = 3, ...)
+# rsa-exponentX is used for each exponent: dP, dQ, d_i (i = 3, ...)
+# rsa-coefficientX is used for each coefficient: qInv, t_i (i = 3, ...)
 #
 # The number of rsa-factor items must be equal to the number of rsa-exponent
 # items, and the number of rsa-coefficients must be one less.
@@ -385,9 +385,6 @@ my %params = (
     'OSSL_PKEY_PARAM_RSA_N' =>           "n",
     'OSSL_PKEY_PARAM_RSA_E' =>           "e",
     'OSSL_PKEY_PARAM_RSA_D' =>           "d",
-    'OSSL_PKEY_PARAM_RSA_FACTOR' =>      "rsa-factor",
-    'OSSL_PKEY_PARAM_RSA_EXPONENT' =>    "rsa-exponent",
-    'OSSL_PKEY_PARAM_RSA_COEFFICIENT' => "rsa-coefficient",
     'OSSL_PKEY_PARAM_RSA_FACTOR1' =>      "rsa-factor1",
     'OSSL_PKEY_PARAM_RSA_FACTOR2' =>      "rsa-factor2",
     'OSSL_PKEY_PARAM_RSA_FACTOR3' =>      "rsa-factor3",
