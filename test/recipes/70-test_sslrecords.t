@@ -905,31 +905,44 @@ sub empty_app_data
         return;
     }
 
-    my $data = pack "C52",
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, #IV
-        0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f,
-        0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, #One block of empty padded data
-        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-        0x10, 0x11, 0x12, 0x13; #MAC, assume to be 20 bytes
+    # Find the last client record
+    my $last_client_record;
+    my $last_client_record_idx;
+    for (my $i = @{$proxy->record_list} - 1; $i >= 0; $i--) {
+        if ($proxy->record_list->[$i]->serverissender() == 0
+            && $proxy->record_list->[$i]->content_type() == TLSProxy::Record::RT_APPLICATION_DATA) {
+            $last_client_record = $proxy->record_list->[$i];
+            $last_client_record_idx = $i;
+            last;
+        }
+    }
 
-    # Add a zero length app data record at the end
-    # This will have the same sequence number as the subsequent app data record
-    # that s_client will send - which will cause that second record to be
-    # dropped. But that isn't important for this test.
+    # If we didn't find the Client Application Data record, just return
+    if (!defined $last_client_record) {
+        return;
+    }
+
+    # Add a zero length app data record to replace the last client record
     my $record = TLSProxy::Record->new_dtls(
+        0,
         4,
         TLSProxy::Record::RT_APPLICATION_DATA,
-        TLSProxy::Record::VERS_DTLS_1_2,
-        1,
-        1,
-        length($data),
+        $last_client_record->version(),
+        $last_client_record->epoch(),
+        $last_client_record->seq(),
+        $last_client_record->len(),
         0,
-        length($data),
+        $last_client_record->len_real(),
         0,
-        $data,
+        $last_client_record->data(),
         ""
     );
-    push @{$proxy->record_list}, $record;
+
+    # DTLS 1.3 Application Data used the Unified Header, so mark the record as encrypted
+    $record->encrypted($last_client_record->encrypted());
+    # DTLS 1.3 Application Data uses the outer content type
+    $record->outer_content_type($last_client_record->outer_content_type());
+
+    # Replace the last client record with the new record
+    splice @{$proxy->record_list}, $last_client_record_idx, 1, $record;
 }
