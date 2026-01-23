@@ -5724,3 +5724,6 @@ OPENSSL_sk_set_copy_thunks              ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_new_not_owned               ?	4_1_0	EXIST::FUNCTION:
 EVP_KDF_CTX_get0_kdf                    ?	4_1_0	EXIST::FUNCTION:
 EVP_KDF_CTX_get1_kdf                    ?	4_1_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_cn               ?	4_1_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_add1_cn               ?	4_1_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_cn_input_validation ?	4_1_0	EXIST::FUNCTION:
