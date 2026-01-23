@@ -34,7 +34,23 @@
 #define EVP_MAX_MD_SIZE 64 /* longest known is SHA512 */
 #define EVP_MAX_KEY_LENGTH 64
 #define EVP_MAX_IV_LENGTH 16
+
+/*
+ * EVP_MAX_BLOCK_LENGTH : static upper-bound for cipher blocks
+ *
+ * - Default (32): Two AES blocks are big enough for most ciphers.
+ *
+ * - ETM build (128): When AES-CBC is interleaved with HMAC in the
+ *   Encrypt-then-MAC ciphers (AES_CBC_HMAC_SHA_ETM_CAPABLE), the effective block
+ *   size is not 16B.  It inherits the digest-block size of the SHA variant in
+ *   use: SHA-256 = 64B, SHA-512 = 128B.
+ */
+#ifndef AES_CBC_HMAC_SHA_ETM_CAPABLE
 #define EVP_MAX_BLOCK_LENGTH 32
+#else
+#define EVP_MAX_BLOCK_LENGTH 128
+#endif
+
 #define EVP_MAX_AEAD_TAG_LENGTH 16
 
 /* Maximum pipes in cipher pipelining */

@@ -50,8 +50,8 @@ static int aes_cbc_hmac_sha256_init_key(PROV_CIPHER_CTX *vctx,
     else
         ret = aes_v8_set_decrypt_key(key, keylen * 8, &ctx->ks);
 
-    SHA256_Init(&sctx->head); /* handy when benchmarking */
-    sctx->tail = sctx->head;
+    SHA256_Init(&sctx->head_init); /* handy when benchmarking */
+    sctx->tail_init = sctx->head_init;
 
     return ret < 0 ? 0 : 1;
 }
@@ -66,6 +66,8 @@ static void ciph_digest_arg_init(CIPH_DIGEST *arg, PROV_CIPHER_CTX *vctx)
     arg->cipher.iv = (uint8_t *)&(ctx->base.iv);
     arg->digest.hmac.i_key_pad = (uint8_t *)&(sctx->head);
     arg->digest.hmac.o_key_pad = (uint8_t *)&(sctx->tail);
+    arg->digest.hmac.in_len = ctx->in_len;
+    arg->digest.hmac.hmac_mode = ctx->hmac_mode;
 }
 
 static int hwaes_cbc_hmac_sha256_etm(PROV_CIPHER_CTX *vctx,
@@ -83,19 +85,30 @@ static int hwaes_cbc_hmac_sha256_etm(PROV_CIPHER_CTX *vctx,
     }
     if (ctx->base.enc) {
         HWAES128_ENC_CBC_SHA256_ETM(in, out, len, out, ctx->tag, len, &arg);
-        return 1;
+        if (ctx->hmac_mode == HMAC_MODE_PARTIAL) {
+            memcpy(vctx->iv, out + len - AES_BLOCK_SIZE, AES_BLOCK_SIZE);
+        }
     } else {
         if (ctx->taglen == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             return 0;
         }
-        HWAES128_DEC_CBC_SHA256_ETM(in, out, len, in, ctx->tag, len, &arg);
-        if (CRYPTO_memcmp(ctx->exp_tag, ctx->tag, ctx->taglen)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG);
-            return 0;
+        uint8_t next_iv[AES_BLOCK_SIZE] = { 0 };
+        /* For partial update operation, preserve the last AES block */
+        if (ctx->hmac_mode == HMAC_MODE_PARTIAL) {
+            memcpy(next_iv, in + len - AES_BLOCK_SIZE, AES_BLOCK_SIZE);
         }
-        return 1;
+
+        HWAES128_DEC_CBC_SHA256_ETM(in, out, len, in, ctx->tag, len, &arg);
+        if (ctx->hmac_mode == HMAC_MODE_PARTIAL) {
+            memcpy(vctx->iv, next_iv, AES_BLOCK_SIZE);
+        } else {
+            memcpy(vctx->iv, in + len - AES_BLOCK_SIZE, AES_BLOCK_SIZE);
+        }
     }
+
+    ctx->in_len += len;
+    return 1;
 }
 
 static void sha256_update(SHA256_CTX *c, const void *data, size_t len)
@@ -129,6 +142,14 @@ static void sha256_update(SHA256_CTX *c, const void *data, size_t len)
         SHA256_Update(c, ptr, res);
 }
 
+static void aes_cbc_hmac_sha256_reset_sha_state(void *vctx)
+{
+    PROV_AES_HMAC_SHA256_ETM_CTX *ctx = (PROV_AES_HMAC_SHA256_ETM_CTX *)vctx;
+
+    memcpy(&ctx->head, &ctx->head_init, sizeof(SHA256_CTX));
+    memcpy(&ctx->tail, &ctx->tail_init, sizeof(SHA256_CTX));
+}
+
 static void aes_cbc_hmac_sha256_set_mac_key(void *vctx,
     const unsigned char *mac, size_t len)
 {
@@ -139,24 +160,26 @@ static void aes_cbc_hmac_sha256_set_mac_key(void *vctx,
     memset(hmac_key, 0, sizeof(hmac_key));
 
     if (len > (int)sizeof(hmac_key)) {
-        SHA256_Init(&ctx->head);
-        sha256_update(&ctx->head, mac, len);
-        SHA256_Final(hmac_key, &ctx->head);
+        SHA256_Init(&ctx->head_init);
+        sha256_update(&ctx->head_init, mac, len);
+        SHA256_Final(hmac_key, &ctx->head_init);
     } else {
         memcpy(hmac_key, mac, len);
     }
 
     for (i = 0; i < sizeof(hmac_key); i++)
         hmac_key[i] ^= 0x36; /* ipad */
-    SHA256_Init(&ctx->head);
-    sha256_update(&ctx->head, hmac_key, sizeof(hmac_key));
+    SHA256_Init(&ctx->head_init);
+    sha256_update(&ctx->head_init, hmac_key, sizeof(hmac_key));
 
     for (i = 0; i < sizeof(hmac_key); i++)
         hmac_key[i] ^= 0x36 ^ 0x5c; /* opad */
-    SHA256_Init(&ctx->tail);
-    sha256_update(&ctx->tail, hmac_key, sizeof(hmac_key));
+    SHA256_Init(&ctx->tail_init);
+    sha256_update(&ctx->tail_init, hmac_key, sizeof(hmac_key));
 
     OPENSSL_cleanse(hmac_key, sizeof(hmac_key));
+
+    aes_cbc_hmac_sha256_reset_sha_state(vctx);
 }
 
 static int aes_cbc_hmac_sha256_cipher(PROV_CIPHER_CTX *vctx,
@@ -169,7 +192,8 @@ static int aes_cbc_hmac_sha256_cipher(PROV_CIPHER_CTX *vctx,
 static const PROV_CIPHER_HW_AES_HMAC_SHA_ETM cipher_hw_aes_hmac_sha256_etm = {
     { aes_cbc_hmac_sha256_init_key,
         aes_cbc_hmac_sha256_cipher },
-    aes_cbc_hmac_sha256_set_mac_key
+    aes_cbc_hmac_sha256_set_mac_key,
+    aes_cbc_hmac_sha256_reset_sha_state
 };
 
 const PROV_CIPHER_HW_AES_HMAC_SHA_ETM *ossl_prov_cipher_hw_aes_cbc_hmac_sha256_etm(void)

@@ -32,6 +32,12 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Add partial update support for AES-CBC-HMAC-SHA-ETM cipher, enabling
+   processing of fragmented inputs. Also, add optimizations to the partial update
+   paths to efficiently handle larger buffers.
+
+   *Gowtham Suresh Kumar*
+
  * Added configure options to disable KDF algorithms for
    hmac-drbg-kdf, kbkdf, krb5kdf, pvkkdf, snmpkdf, sskdf, sshkdf, x942kdf and x963kdf.
 
