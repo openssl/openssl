@@ -296,10 +296,6 @@ I<data_size>.
 describes a type, but document checkers still want that section, and
 to have more than just the section title.
 
-=head1 RETURN VALUES
-
-txt
-
 =end comment
 
 =head1 EXAMPLES
