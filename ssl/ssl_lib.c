@@ -2639,13 +2639,12 @@ ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
     return -1;
 #else
     ret = ktls_sendfile(SSL_get_wfd(s), fd, offset, size, &sbytes, flags);
+    BIO_clear_retry_flags(sc->wbio);
     if (ret < 0) {
-#if defined(EAGAIN) && defined(EINTR) && defined(EBUSY)
-        if ((get_last_sys_error() == EAGAIN) || (get_last_sys_error() == EINTR) || (get_last_sys_error() == EBUSY)) {
+        if (BIO_sock_should_retry(ret)) {
             BIO_set_retry_write(sc->wbio);
             return (sbytes > 0 ? sbytes : ret);
         } else
-#endif
             ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
                 "ktls_sendfile failure");
         return ret;
