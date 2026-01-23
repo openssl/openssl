@@ -5715,3 +5715,6 @@ OPENSSL_sk_set_cmp_thunks               ?	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_set1                    ?	4_0_0	EXIST::FUNCTION:
 OSSL_ESS_check_signing_certs_ex         ?	4_0_0	EXIST::FUNCTION:
 X509v3_delete_extension                 ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_cn               ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_add1_cn               ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_cn_input_validation ?	4_0_0	EXIST::FUNCTION:
