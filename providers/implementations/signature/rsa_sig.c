@@ -996,7 +996,6 @@ static void *rsa_dupctx(void *vprsactx)
     dstctx->mdctx = NULL;
     dstctx->tbuf = NULL;
     dstctx->propq = NULL;
-    dstctx->sig = NULL;
 
     if (srcctx->rsa != NULL && !RSA_up_ref(srcctx->rsa))
         goto err;
@@ -1020,12 +1019,6 @@ static void *rsa_dupctx(void *vprsactx)
     if (srcctx->propq != NULL) {
         dstctx->propq = OPENSSL_strdup(srcctx->propq);
         if (dstctx->propq == NULL)
-            goto err;
-    }
-
-    if (srcctx->sig != NULL) {
-        dstctx->sig = OPENSSL_memdup(srcctx->sig, srcctx->siglen);
-        if (dstctx->sig == NULL)
             goto err;
     }
 
