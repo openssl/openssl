@@ -2652,8 +2652,11 @@ int ssl_write_internal(SSL *s, const void *buf, size_t num,
 
 ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
 {
-    ossl_ssize_t ret;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+#ifndef OPENSSL_NO_KTLS
+    ossl_ssize_t sbytes;
+#endif
+    int ret;
 
     if (sc == NULL)
         return 0;
@@ -2701,19 +2704,20 @@ ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
         "can't call ktls_sendfile(), ktls disabled");
     return -1;
 #else
-    ret = ktls_sendfile(SSL_get_wfd(s), fd, offset, size, flags);
+    ret = ktls_sendfile(SSL_get_wfd(s), fd, offset, size, &sbytes, flags);
     if (ret < 0) {
 #if defined(EAGAIN) && defined(EINTR) && defined(EBUSY)
-        if ((get_last_sys_error() == EAGAIN) || (get_last_sys_error() == EINTR) || (get_last_sys_error() == EBUSY))
+        if ((get_last_sys_error() == EAGAIN) || (get_last_sys_error() == EINTR) || (get_last_sys_error() == EBUSY)) {
             BIO_set_retry_write(sc->wbio);
-        else
+            return (sbytes > 0 ? sbytes : ret);
+        } else
 #endif
             ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
                 "ktls_sendfile failure");
         return ret;
     }
     sc->rwstate = SSL_NOTHING;
-    return ret;
+    return sbytes;
 #endif
 }
 
