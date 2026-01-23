@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           repository: 'quic-interop/quic-interop-runner'
           fetch-depth: 0
@@ -50,7 +50,7 @@ jobs:
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           repository: 'quic-interop/quic-interop-runner'
           fetch-depth: 0
