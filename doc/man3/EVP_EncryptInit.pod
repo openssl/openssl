@@ -1472,6 +1472,9 @@ for failure.
 EVP_CIPHER_names_do_all() returns 1 if the callback was called for all names.
 A return value of 0 means that the callback was not called for any names.
 
+All of the other non-void functions return 1 on success and 0
+on error.
+
 =head1 CIPHER LISTING
 
 All algorithms have a fixed key length unless otherwise stated.
