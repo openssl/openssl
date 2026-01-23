@@ -1073,7 +1073,7 @@ PROV_R_INVALID_DIGEST_LENGTH:166:invalid digest length
 PROV_R_INVALID_DIGEST_SIZE:218:invalid digest size
 PROV_R_INVALID_EDDSA_INSTANCE_FOR_ATTEMPTED_OPERATION:243:\
 	invalid eddsa instance for attempted operation
-PROV_R_INVALID_FUNCTION_NAME:256:invalid function name
+PROV_R_INVALID_FUNCTION_NAME:258:invalid function name
 PROV_R_INVALID_INPUT_LENGTH:230:invalid input length
 PROV_R_INVALID_ITERATION_COUNT:123:invalid iteration count
 PROV_R_INVALID_IV_LENGTH:109:invalid iv length
