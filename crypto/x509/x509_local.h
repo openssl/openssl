@@ -41,11 +41,13 @@ struct X509_VERIFY_PARAM_st {
     int auth_level; /* Security level for chain verification */
     STACK_OF(ASN1_OBJECT) *policies; /* Permissible policies */
     /* Peer identity details */
-    STACK_OF(X509_BUFFER) *hosts; /* Set of acceptable names */
-    int (*validate_host)(const char *name, size_t len);
-    STACK_OF(X509_BUFFER) *ips; /* Set of acceptable ip addresses */
+    STACK_OF(X509_BUFFER) *dnsnames; /* Set of acceptable SAN DNSnames */
+    int (*validate_dnsname)(const char *name, size_t len);
+    STACK_OF(X509_BUFFER) *cns; /* Set of acceptable subject CN values */
+    int (*validate_cn)(const char *name, size_t len);
+    STACK_OF(X509_BUFFER) *ips; /* Set of acceptable SAN ip addresses */
     int (*validate_ip)(const uint8_t *name, size_t len);
-    STACK_OF(X509_BUFFER) *rfc822s; /* Set of acceptable RFC 822 names */
+    STACK_OF(X509_BUFFER) *rfc822s; /* Set of acceptable SAN email (RFC 822) names */
     int (*validate_rfc822)(const char *name, size_t len);
     STACK_OF(X509_BUFFER) *smtputf8s; /* Set of acceptable SMTP Utf8 names */
     int (*validate_smtputf8)(const char *name, size_t len);
@@ -189,5 +191,11 @@ STACK_OF(X509_OBJECT) *ossl_x509_store_ht_get_by_name(const X509_STORE *store,
     const X509_NAME *xn);
 int ossl_x509_check_rfc822(X509 *x, const char *chk, size_t chklen,
     unsigned int flags);
+int ossl_x509_check_rfc822_subject(X509 *x, const char *chk, size_t chklen,
+    unsigned int flags);
+int ossl_x509_check_hostname(X509 *x, const char *chk, size_t chklen,
+    unsigned int flags, char **peername);
+int ossl_x509_check_hostname_subject(X509 *x, const char *chk, size_t chklen,
+    unsigned int flags, char **peername);
 int ossl_x509_check_smtputf8(X509 *x, const char *chk, size_t chklen,
     unsigned int flags);

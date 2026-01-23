@@ -760,6 +760,12 @@ int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
     const char *name, size_t namelen);
 void X509_VERIFY_PARAM_set1_host_input_validation(X509_VERIFY_PARAM *param,
     int (*validate_host)(const char *name, size_t len));
+int X509_VERIFY_PARAM_set1_cn(X509_VERIFY_PARAM *param,
+    const char *name, size_t namelen);
+int X509_VERIFY_PARAM_add1_cn(X509_VERIFY_PARAM *param,
+    const char *name, size_t namelen);
+void X509_VERIFY_PARAM_set1_cn_input_validation(X509_VERIFY_PARAM *param,
+    int (*validate_cn)(const char *name, size_t len));
 void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
     unsigned int flags);
 unsigned int X509_VERIFY_PARAM_get_hostflags(const X509_VERIFY_PARAM *param);

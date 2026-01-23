@@ -5712,3 +5712,6 @@ EVP_SIGNATURE_has_message_update        ?	4_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_serialize                    ?	4_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_deserialize                  ?	4_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_ctrl_string            ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_cn               ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_add1_cn               ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_cn_input_validation ?	4_0_0	EXIST::FUNCTION:

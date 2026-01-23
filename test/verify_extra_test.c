@@ -320,7 +320,7 @@ static int test_multiname_selfsigned(void)
             goto err;
         if (!TEST_false(X509_verify_cert(ctx))) {
             TEST_info("Verify succeeded for non-present name bunsen.muppetry.ca\n");
-            goto err;
+            fails++;
         }
         X509_STORE_CTX_cleanup(ctx);
         if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
@@ -352,17 +352,36 @@ static int test_multiname_selfsigned(void)
                 X509_STORE_CTX_cleanup(ctx);
             }
         }
-        /* Try the CN */
-        if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+        X509_STORE_CTX_cleanup(ctx);
+        if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
             goto err;
+
+        /* Try the CN */
         if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "beaker.muppetry.ca", 0)))
             goto err;
+        if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+            goto err;
+        /* The CN should fail to verify when tried for a dns name */
+        if (!TEST_false(X509_verify_cert(ctx))) {
+            TEST_info("Verify unexpectedly succeeded for CN name beaker.muppetry.ca\n");
+            goto err;
+        }
+        X509_STORE_CTX_cleanup(ctx);
+        if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
+            goto err;
+
+        /* Try the CN */
+        if (!TEST_true(X509_VERIFY_PARAM_set1_cn(vpm, "beaker.muppetry.ca", 0)))
+            goto err;
+        if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+            goto err;
+        /* The CN should work the expected way */
         if (!TEST_true(X509_verify_cert(ctx))) {
             TEST_info("Verify failed for CN name beaker.muppetry.ca\n");
             fails++;
         }
         X509_STORE_CTX_cleanup(ctx);
-        if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
+        if (!TEST_true(X509_VERIFY_PARAM_set1_cn(vpm, NULL, 0)))
             goto err;
     }
 

@@ -226,6 +226,15 @@ static ossl_charset_t ossl_name_charset(int c, ossl_charset_t charset)
     return charset == OSSL_CHARSET_NONASCII;
 }
 
+/* Default CN name input validation */
+static int validate_cn_name(const char *name, size_t len)
+{
+    /*
+     * It is a CN, it must be 64 bytes or less long.
+     */
+    return len <= 64;
+}
+
 /*
  * Check for allowed characters in a dns name label.
  * |charset| controls the strictness of the checking.
@@ -375,7 +384,8 @@ void X509_VERIFY_PARAM_free(X509_VERIFY_PARAM *param)
     if (param == NULL)
         return;
     sk_ASN1_OBJECT_pop_free(param->policies, ASN1_OBJECT_free);
-    clear_buffer_stack(&param->hosts);
+    clear_buffer_stack(&param->dnsnames);
+    clear_buffer_stack(&param->cns);
     clear_buffer_stack(&param->ips);
     clear_buffer_stack(&param->rfc822s);
     clear_buffer_stack(&param->smtputf8s);
@@ -470,11 +480,17 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
 
     x509_verify_param_copy(hostflags, 0);
 
-    if (test_x509_verify_param_copy(hosts, NULL)) {
-        if (!replace_buffer_stack(&dest->hosts, &src->hosts))
+    if (test_x509_verify_param_copy(dnsnames, NULL)) {
+        if (!replace_buffer_stack(&dest->dnsnames, &src->dnsnames))
             return 0;
     }
-    x509_verify_param_copy(validate_host, NULL);
+    x509_verify_param_copy(validate_dnsname, NULL);
+
+    if (test_x509_verify_param_copy(cns, NULL)) {
+        if (!replace_buffer_stack(&dest->cns, &src->cns))
+            return 0;
+    }
+    x509_verify_param_copy(validate_cn, NULL);
 
     if (test_x509_verify_param_copy(ips, NULL)) {
         if (!replace_buffer_stack(&dest->ips, &src->ips))
@@ -647,7 +663,7 @@ int X509_VERIFY_PARAM_set1_policies(X509_VERIFY_PARAM *param,
 
 char *X509_VERIFY_PARAM_get0_host(X509_VERIFY_PARAM *param, int idx)
 {
-    X509_BUFFER *buf = sk_X509_BUFFER_value(param->hosts, idx);
+    X509_BUFFER *buf = sk_X509_BUFFER_value(param->dnsnames, idx);
 
     return (buf != NULL) ? (char *)buf->data : NULL;
 }
@@ -655,7 +671,7 @@ char *X509_VERIFY_PARAM_get0_host(X509_VERIFY_PARAM *param, int idx)
 int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
     const char *dnsname, size_t len)
 {
-    clear_buffer_stack(&param->hosts);
+    clear_buffer_stack(&param->dnsnames);
     if (dnsname == NULL)
         return 1;
     if (len == 0)
@@ -676,20 +692,60 @@ int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
         return 1;
     if (!validate_string_name(dnsname, &len))
         return 0;
-    if (param->validate_host != NULL) {
-        if (!param->validate_host(dnsname, len))
+    if (param->validate_dnsname != NULL) {
+        if (!param->validate_dnsname(dnsname, len))
             return 0;
     } else {
         if (!validate_hostname_part(dnsname, len, OSSL_CHARSET_ASCII_ALNUM))
             return 0;
     }
-    return add_string_to_buffer_stack(&param->hosts, (const uint8_t *)dnsname, len);
+    return add_string_to_buffer_stack(&param->dnsnames, (const uint8_t *)dnsname, len);
 }
 
 void X509_VERIFY_PARAM_set1_host_input_validation(X509_VERIFY_PARAM *param,
-    int (*validate_host)(const char *name, size_t len))
+    int (*validate_dnsname)(const char *name, size_t len))
 {
-    param->validate_host = validate_host;
+    param->validate_dnsname = validate_dnsname;
+}
+
+int X509_VERIFY_PARAM_set1_cn(X509_VERIFY_PARAM *param,
+    const char *cn, size_t len)
+{
+    clear_buffer_stack(&param->cns);
+    if (cn == NULL)
+        return 1;
+    if (len == 0)
+        len = strlen(cn);
+    if (len == 0)
+        return 1;
+    return X509_VERIFY_PARAM_add1_cn(param, cn, len);
+}
+
+int X509_VERIFY_PARAM_add1_cn(X509_VERIFY_PARAM *param,
+    const char *cn, size_t len)
+{
+    if (cn == NULL)
+        return 1;
+    if (len == 0)
+        len = strlen(cn);
+    if (len == 0)
+        return 1;
+    if (!validate_string_name(cn, &len))
+        return 0;
+    if (param->validate_cn != NULL) {
+        if (!param->validate_cn(cn, len))
+            return 0;
+    } else {
+        if (!validate_cn_name(cn, len))
+            return 0;
+    }
+    return add_string_to_buffer_stack(&param->cns, (const uint8_t *)cn, len);
+}
+
+void X509_VERIFY_PARAM_set1_cn_input_validation(X509_VERIFY_PARAM *param,
+    int (*validate_cn)(const char *name, size_t len))
+{
+    param->validate_cn = validate_cn;
 }
 
 int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
