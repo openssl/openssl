@@ -127,6 +127,8 @@ ret:
     return rc;
 }
 
+#define MIN_ECDSA_SIGN_ORDERBITS 64
+
 static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
     int dgstlen,
     const BIGNUM *kinv,
@@ -141,11 +143,16 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
     const EC_GROUP *group;
     const BIGNUM *privkey;
     BN_CTX *bn_ctx = NULL;
+    const BIGNUM *order;
+#ifdef FIPS_MODULE
+    int order_bits;
+#endif
     int off;
 
     group = EC_KEY_get0_group(eckey);
+    order = EC_GROUP_get0_order(group);
     privkey = EC_KEY_get0_private_key(eckey);
-    if (group == NULL || privkey == NULL) {
+    if (group == NULL || order == NULL || privkey == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_MISSING_PARAMETERS);
         return NULL;
     }
@@ -183,6 +190,42 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
             ERR_raise(ERR_LIB_EC, EC_R_INVALID_LENGTH);
             goto ret;
         }
+#ifdef FIPS_MODULE
+        /* get random value of k using OpenSSL's RNG */
+        bn_ctx = BN_CTX_secure_new_ex(ossl_ec_key_get_libctx(eckey));
+        if (bn_ctx == NULL)
+            goto ret;
+
+        /* Preallocate space */
+        order_bits = BN_num_bits(order);
+        /* Check the number of bits here so that an infinite loop is not possible */
+        if (order_bits < MIN_ECDSA_SIGN_ORDERBITS
+            || !BN_set_bit(k, order_bits))
+            goto ret;
+
+        do {
+            int res = 0;
+
+            if (dgst != NULL)
+                res = ossl_bn_gen_dsa_nonce_fixed_top(k, order, privkey,
+                    dgst, dgstlen, bn_ctx);
+            else
+                res = ossl_bn_priv_rand_range_fixed_top(k, order, 0, bn_ctx);
+
+            if (!res) {
+                ERR_raise(ERR_LIB_EC, EC_R_RANDOM_NUMBER_GENERATION_FAILED);
+                goto ret;
+            }
+        } while (ossl_bn_is_word_fixed_top(k, 0));
+
+        if (BN_bn2binpad(k, param + S390X_OFF_RN(len), len) == -1) {
+            ERR_raise(ERR_LIB_EC, EC_R_RANDOM_NUMBER_GENERATION_FAILED);
+            goto ret;
+        }
+
+        /* Turns KDSA internal nonce-generation off. */
+        fc |= S390X_KDSA_D;
+#else
         /*
          * Generate random k and copy to param block. RAND_priv_bytes_ex
          * is used instead of BN_priv_rand_range or BN_generate_dsa_nonce
@@ -195,6 +238,7 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
             ERR_raise(ERR_LIB_EC, EC_R_RANDOM_NUMBER_GENERATION_FAILED);
             goto ret;
         }
+#endif
     } else {
         bn_ctx = BN_CTX_secure_new_ex(ossl_ec_key_get_libctx(eckey));
         if (bn_ctx == NULL)
