@@ -38,6 +38,7 @@ OpenSSL 4.0
 
  * Changed the output of the -disabled option for the list command.
    Displaying now disabled features, protocols, and algorithms, in relevant sections.
+   Generated at configure-time instead of hard-coded into source code.
 
    *Paul Louvel*
 
