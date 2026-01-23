@@ -32,7 +32,7 @@ jobs:
     steps:
     - name: install packages
       run: apk --no-cache add build-base perl linux-headers ${{ matrix.cc }}
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
         ref: ${{ matrix.branch }}
@@ -85,7 +85,7 @@ jobs:
     runs-on: ubuntu-latest
     container: ${{ matrix.zoo.image }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
         ref: ${{ matrix.branch }}
@@ -112,7 +112,7 @@ jobs:
         os: [macos-13, macos-14, macos-15]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
         ref: ${{ matrix.branch }}
@@ -139,7 +139,7 @@ jobs:
         os: [windows-2019, windows-2022]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
         ref: ${{ matrix.branch }}
@@ -179,7 +179,7 @@ jobs:
   linux-arm64:
     runs-on: linux-arm64
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: config
@@ -196,7 +196,7 @@ jobs:
   freebsd-x86_64:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: config
