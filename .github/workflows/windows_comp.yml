@@ -22,7 +22,7 @@ jobs:
   zstd:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -69,7 +69,7 @@ jobs:
   brotli:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule

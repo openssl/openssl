@@ -29,7 +29,7 @@ jobs:
             config: --strict-warnings no-fips
     runs-on: ${{ matrix.platform.os }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -83,7 +83,7 @@ jobs:
           - windows-2022
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -121,7 +121,7 @@ jobs:
           - windows-2022
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -172,7 +172,7 @@ jobs:
       MAKE_PARAMS: -j 4
     steps:
 # Checkout before cygwin can mess with PATH...
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - uses: cygwin/cygwin-install-action@f2009323764960f80959895c7bc3bb30210afe4d #v6
