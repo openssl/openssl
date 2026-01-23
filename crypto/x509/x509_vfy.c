@@ -929,20 +929,32 @@ static int check_id_error(X509_STORE_CTX *ctx, int errcode)
 
 static int check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
 {
+    int i;
+    int n = sk_X509_BUFFER_num(vpm->dnsnames);
+    int j = sk_X509_BUFFER_num(vpm->cns);
     const uint8_t *name;
-    int n = sk_X509_BUFFER_num(vpm->hosts);
 
     if (vpm->peername != NULL) {
         OPENSSL_free(vpm->peername);
         vpm->peername = NULL;
     }
-    for (int i = 0; i < n; ++i) {
-        size_t len = sk_X509_BUFFER_value(vpm->hosts, i)->len;
-        name = sk_X509_BUFFER_value(vpm->hosts, i)->data;
-        if (X509_check_host(x, (const char *)name, len, vpm->hostflags, &vpm->peername) > 0)
+    for (i = 0; i < n; ++i) {
+        size_t len = sk_X509_BUFFER_value(vpm->dnsnames, i)->len;
+        name = sk_X509_BUFFER_value(vpm->dnsnames, i)->data;
+        if (ossl_x509_check_hostname(x, (const char *)name, len,
+                vpm->hostflags, &vpm->peername))
             return 1;
     }
-    return n <= 0;
+    j = sk_X509_BUFFER_num(vpm->cns);
+    for (i = 0; i < j; ++i) {
+        size_t len = sk_X509_BUFFER_value(vpm->cns, i)->len;
+        name = sk_X509_BUFFER_value(vpm->cns, i)->data;
+        if (ossl_x509_check_hostname_subject(x, (const char *)name, len,
+                vpm->hostflags, &vpm->peername))
+            return 1;
+    }
+
+    return n <= 0 && j <= 0;
 }
 
 static int check_email(X509 *x, X509_VERIFY_PARAM *vpm)
@@ -985,20 +997,20 @@ static int check_id(X509_STORE_CTX *ctx)
     X509_VERIFY_PARAM *vpm = ctx->param;
     X509 *x = ctx->cert;
 
-    if (vpm->hosts != NULL && check_hosts(x, vpm) <= 0) {
-        if (!check_id_error(ctx, X509_V_ERR_HOSTNAME_MISMATCH))
+    if (!check_hosts(x, vpm)) {
+        if (!check_id_error(ctx, X509_V_ERR_HOSTNAME_MISMATCH)) {
             return 0;
+        }
     }
-
     if (!check_email(x, vpm)) {
         if (!check_id_error(ctx, X509_V_ERR_EMAIL_MISMATCH))
             return 0;
     }
-
     if (vpm->ips != NULL && check_ips(x, vpm) <= 0) {
         if (!check_id_error(ctx, X509_V_ERR_IP_ADDRESS_MISMATCH))
             return 0;
     }
+
     return 1;
 }
 

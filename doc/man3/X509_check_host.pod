@@ -90,8 +90,7 @@ flags:
 The B<X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT> flag causes the function
 to consider the subject DN even if the certificate contains at least
 one subject alternative name of the right type (DNS name or email
-address as appropriate); the default is to ignore the subject DN
-when at least one corresponding subject alternative names is present.
+address as appropriate); the default is to ignore the subject DN.
 
 The B<X509_CHECK_FLAG_NEVER_CHECK_SUBJECT> flag causes the function to never
 consider the subject DN even if the certificate contains no subject alternative
