@@ -8,7 +8,6 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include "crypto/x509.h"
@@ -80,7 +79,6 @@ ASN1_SEQUENCE_enc(X509_CRL_INFO, enc, crl_inf_cb) = {
 
 static int crl_set_issuers(X509_CRL *crl)
 {
-
     int i, j;
     GENERAL_NAMES *most_recent_issuer, *gtmp;
     STACK_OF(X509_REVOKED) *revoked;
@@ -91,6 +89,8 @@ static int crl_set_issuers(X509_CRL *crl)
      */
     if (crl->crl.lastUpdate == NULL) {
         crl->flags |= EXFLAG_INVALID;
+        ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_TIME_VALUE,
+            "lastUpdate in CRL is not well-formed");
         return 0;
     }
 
@@ -121,6 +121,8 @@ static int crl_set_issuers(X509_CRL *crl)
          */
         if ((rev_date = X509_REVOKED_get0_revocationDate(rev)) == NULL) {
             crl->flags |= EXFLAG_INVALID;
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_TIME_VALUE,
+                "revocationDate in CRL is not well-formed");
             return 0;
         }
 
@@ -139,6 +141,8 @@ static int crl_set_issuers(X509_CRL *crl)
              */
             if (crl->idp == NULL || !crl->idp->indirectCRL) {
                 crl->flags |= EXFLAG_INVALID;
+                ERR_raise_data(ERR_LIB_ASN1, ASN1_R_INVALID_VALUE,
+                    "CRL Certificate Issuer extension requires Indirect CRL flag to be set");
                 GENERAL_NAMES_free(gtmp);
                 return 0;
             }
@@ -171,7 +175,6 @@ static int crl_set_issuers(X509_CRL *crl)
             rev->reason = CRL_REASON_NONE;
 
         /* Check for critical CRL entry extensions and validate time. */
-
         exts = rev->extensions;
 
         for (j = 0; j < sk_X509_EXTENSION_num(exts); j++) {
@@ -186,6 +189,8 @@ static int crl_set_issuers(X509_CRL *crl)
             if (nid == NID_invalidity_date) {
                 if ((inv_date = X509V3_EXT_d2i(ext)) == NULL) {
                     crl->flags |= EXFLAG_INVALID;
+                    ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_TIME_VALUE,
+                        "invalidityDate in CRL is not well-formed");
                     return 0;
                 }
                 ASN1_GENERALIZEDTIME_free(inv_date);

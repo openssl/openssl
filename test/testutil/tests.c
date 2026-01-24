@@ -357,6 +357,97 @@ int test_mem_ne(const char *file, int line, const char *st1, const char *st2,
     return 1;
 }
 
+#if defined(OPENSSL_NO_ERR) || defined(OPENSSL_NO_DEPRECATED_3_0) || defined(OPENSSL_SMALL_FOOTPRINT)
+
+int test_err_r(const char *file, int line, int lib, int reason)
+{
+    return 1;
+}
+
+int test_err_s(const char *file, int line, const char *data)
+{
+    return 1;
+}
+
+#else
+
+struct test_err_expect_ctx {
+    struct test_err_expect {
+        char *file, *fn, *data;
+        unsigned long code;
+        int line;
+    } errs[ERR_NUM_ERRORS];
+    int err_count;
+};
+
+static int err_r_cb(int lib, int reason, struct test_err_expect *e)
+{
+    if (ERR_GET_LIB(e->code) == lib && ERR_GET_REASON(e->code) == reason)
+        return 1;
+    return 0;
+}
+
+static int err_s_cb(const char *data, struct test_err_expect *e)
+{
+    if (e->data != NULL && strcmp(e->data, data) == 0)
+        return 1;
+    return 0;
+}
+
+static int test_err_helper(int lib, int reason, const char *str)
+{
+    struct test_err_expect_ctx ctx;
+    int result = 0;
+
+    for (ctx.err_count = 0;; ctx.err_count++) {
+        struct test_err_expect *e = &ctx.errs[ctx.err_count];
+        const char *file = NULL, *fn = NULL, *data = NULL;
+
+        if ((e->code = ERR_get_error_all(&file, &e->line, &fn, &data, NULL)) == 0)
+            break;
+
+        /*
+         * Usage after free won't actually happen in tests, but for greater
+         * robustness, paying for 3 allocations per record in the test is not a
+         * problem and we also gain robustness against future changes in the
+         * error stack.
+         */
+
+        e->file = file != NULL ? OPENSSL_strdup(file) : NULL;
+        e->fn = fn != NULL ? OPENSSL_strdup(fn) : NULL;
+        e->data = data != NULL ? OPENSSL_strdup(data) : NULL;
+    }
+
+    for (int i = 0; i < ctx.err_count; i++) {
+        struct test_err_expect *e = &ctx.errs[i];
+
+        if ((str != NULL ? err_s_cb(str, e) : err_r_cb(lib, reason, e)) == 1)
+            result = 1;
+
+        ERR_new();
+        ERR_set_debug(e->file, e->line, e->fn);
+        ERR_set_error(ERR_GET_LIB(e->code), ERR_GET_REASON(e->code), e->data);
+
+        OPENSSL_free(e->file);
+        OPENSSL_free(e->fn);
+        OPENSSL_free(e->data);
+    }
+
+    return result;
+}
+
+int test_err_r(const char *file, int line, int lib, int reason)
+{
+    return test_err_helper(lib, reason, NULL);
+}
+
+int test_err_s(const char *file, int line, const char *data)
+{
+    return test_err_helper(0, 0, data);
+}
+
+#endif
+
 #define DEFINE_BN_COMPARISONS(opname, op, zero_cond)                 \
     int test_BN_##opname(const char *file, int line,                 \
         const char *s1, const char *s2,                              \
