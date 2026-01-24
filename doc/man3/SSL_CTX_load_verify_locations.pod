@@ -27,18 +27,20 @@ SSL_CTX_set_default_verify_store, SSL_CTX_load_verify_locations
 
 =head1 DESCRIPTION
 
-SSL_CTX_load_verify_locations(), SSL_CTX_load_verify_dir(),
-SSL_CTX_load_verify_file(), SSL_CTX_load_verify_store() specifies the
-locations for B<ctx>, at which CA certificates for verification purposes
-are located. The certificates available via B<CAfile>, B<CApath> and
-B<CAstore> are trusted. B<ctx> B<MUST NOT> be NULL
+SSL_CTX_load_verify_dir(), SSL_CTX_load_verify_file(),
+SSL_CTX_load_verify_store(), and SSL_CTX_load_verify_locations() specify
+the locations at which trusted CA certificates are located.
+For details see the L</NOTES> below.
+The SSL context I<ctx> B<MUST NOT> be NULL.
 
 Details of the certificate verification and chain checking process are
 described in L<openssl-verification-options(1)/Certification Path Validation>.
 
-SSL_CTX_set_default_verify_paths() specifies that the default locations from
-which CA certificates are loaded should be used. There is one default directory,
-one default file and one default store.
+SSL_CTX_set_default_verify_paths() specifies the default locations from
+which trusted CA certificates in PEM format are loaded when needed.
+For details see the L</NOTES> below.
+
+There is one default directory, one default file, and one default store.
 The default CA certificates directory is called F<certs> in the default OpenSSL
 directory, and this is also the default store.
 Alternatively the B<SSL_CERT_DIR> environment variable can be defined to
@@ -47,7 +49,7 @@ The default CA certificates file is called F<cert.pem> in the default
 OpenSSL directory.
 Alternatively the B<SSL_CERT_FILE> environment variable can be defined to
 override this location.
-B<ctx> B<MUST NOT> be NULL.
+I<ctx> B<MUST NOT> be NULL.
 
 SSL_CTX_set_default_verify_dir() is similar to
 SSL_CTX_set_default_verify_paths() except that just the default directory is
@@ -63,7 +65,16 @@ used.
 
 =head1 NOTES
 
-If B<CAfile> is not NULL, it points to a file of CA certificates in PEM
+The CA certificates specified by calling the above functions are used
+as trust anchors for peer certificate verification purposes unless overridden
+by L<SSL_CTX_set0_verify_cert_store(3)>, L<SSL_CTX_set1_verify_cert_store(3)>,
+by L<SSL_set0_verify_cert_store(3)>, or L<SSL_set1_verify_cert_store(3)>.
+They are used as trust anchors for
+building the client or server's own certificate chain unless overridden
+by L<SSL_CTX_set0_chain_cert_store(3)>, L<SSL_CTX_set1_chain_cert_store(3)>,
+L<SSL_set0_chain_cert_store(3)>, or L<SSL_set1_chain_cert_store(3)>.
+
+If I<CAfile> is not NULL, it points to a file of CA certificates in PEM
 format. The file can contain several CA certificates identified by
 
  -----BEGIN CERTIFICATE-----
@@ -73,41 +84,41 @@ format. The file can contain several CA certificates identified by
 sequences. Before, between, and after the certificates text is allowed
 which can be used e.g. for descriptions of the certificates.
 
-The B<CAfile> is processed on execution of the SSL_CTX_load_verify_locations()
+The I<CAfile> is processed on execution of the SSL_CTX_load_verify_locations()
 function.
 
-If B<CApath> is not NULL, it points to a directory containing CA certificates
-in PEM format. The files each contain one CA certificate. The files are
+If I<CApath> is not NULL, it points to a directory containing CA certificates
+in PEM format. The files each contain exactly one CA certificate. The files are
 looked up by the CA subject name hash value, which must hence be available.
-If more than one CA certificate with the same name hash value exist, the
+If more than one CA certificate with the same subject name hash value exist, the
 extension must be different (e.g. 9d66eef0.0, 9d66eef0.1 etc). The search
 is performed in the ordering of the extension number, regardless of other
 properties of the certificates.
-Use the B<openssl rehash> utility to create the necessary links.
+Use the L<openssl-rehash(1)> utility to create the necessary links.
 
-The certificates in B<CApath> are only looked up when required, e.g. when
-building the certificate chain or when actually performing the verification
-of a peer certificate.
+The certificate files in I<CApath> are only looked up when required, e.g., when
+building the  client or server's own certificate chain
+or when verifying a peer certificate.
 
 When looking up CA certificates for chain building, the OpenSSL library
-will search for suitable certificates first in B<CAfile>, then in B<CApath>.
+will search for suitable certificates first in I<CAfile>, then in I<CApath>.
 Details of the chain building process are described in
-L<openssl-verification-options(1)/Certification Path Building>.
+L<openssl-verification-options(1)/Certification Path< Building>.
 
-If B<CAstore> is not NULL, it's a URI for to a store, which may
+I<CAstore> must not be NULL. It must be a URI to a store, which may
 represent a single container or a whole catalogue of containers.
-Apart from the B<CAstore> not necessarily being a local file or
-directory, it's generally treated the same way as a B<CApath>.
+If I<CAstore> starts with the scheme C<file:>, it is treated like a local file
+or directory.
 
 In server mode, when requesting a client certificate, the server must send
 the list of CAs of which it will accept client certificates. This list
-is not influenced by the contents of B<CAfile> or B<CApath> and must
+is not influenced by the contents of I<CAfile> or I<CApath> and must
 explicitly be set using the
 L<SSL_CTX_set_client_CA_list(3)>
 family of functions.
 
 When building its own certificate chain, an OpenSSL client/server will
-try to fill in missing certificates from B<CAfile>/B<CApath>, if the
+try to fill in missing certificates from I<CAfile>/I<CApath>, if the
 certificate chain was not explicitly specified (see
 L<SSL_CTX_add_extra_chain_cert(3)>,
 L<SSL_CTX_use_certificate(3)>.
@@ -129,7 +140,7 @@ For SSL_CTX_load_verify_locations the following return values can occur:
 
 =item Z<>0
 
-The operation failed because B<CAfile> and B<CApath> are NULL or the
+The operation failed because I<CAfile> and I<CApath> are NULL or the
 processing at one of the locations specified failed. Check the error
 stack to find out the reason.
 
@@ -155,14 +166,22 @@ ca1.pem ca2.pem ca3.pem:
  done
 
 Prepare the directory /some/where/certs containing several CA certificates
-for use as B<CApath>:
+for use as I<CApath>:
 
- cd /some/where/certs
- openssl rehash .
+ openssl rehash /some/where/certs
 
 =head1 SEE ALSO
 
+L<openssl-rehash(1)>,
 L<ssl(7)>,
+L<SSL_CTX_set0_verify_cert_store(3)>,
+L<SSL_CTX_set1_verify_cert_store(3)>,
+L<SSL_CTX_set0_chain_cert_store(3)>,
+L<SSL_CTX_set1_chain_cert_store(3)>,
+L<SSL_set0_verify_cert_store(3)>,
+L<SSL_set1_verify_cert_store(3)>,
+L<SSL_set0_chain_cert_store(3)>,
+L<SSL_set1_chain_cert_store(3)>,
 L<SSL_CTX_set_client_CA_list(3)>,
 L<SSL_get_client_CA_list(3)>,
 L<SSL_CTX_use_certificate(3)>,
