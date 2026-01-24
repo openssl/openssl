@@ -112,9 +112,9 @@ static int el_setup_keyslot(OSSL_QRL_ENC_LEVEL_SET *els,
     EVP_CIPHER *cipher = NULL;
     EVP_CIPHER_CTX *cctx = NULL;
 
-    if (!ossl_assert(el != NULL
-            && ossl_qrl_enc_level_set_has_keyslot(els, enc_level,
-                tgt_state, keyslot))) {
+    if (el == NULL
+        || !ossl_assert(ossl_qrl_enc_level_set_has_keyslot(els, enc_level,
+                            tgt_state, keyslot))) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
