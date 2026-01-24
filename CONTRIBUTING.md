@@ -77,8 +77,11 @@ guidelines:
 
  4. Code provided should follow our [coding style] and [documentation policy]
     and compile without warnings.
-    There is a [Perl tool](util/check-format.pl) that helps
-    finding code formatting mistakes and other coding style nits.
+   OpenSSL uses `clang-format` to enforce consistent code formatting.
+   The formatting rules are defined in the `.clang-format` file at the
+   repository root. Contributors should ensure that modified source files
+   are formatted using `clang-format` before submitting patches.
+
     Where `gcc` or `clang` is available, you should use the
     `--strict-warnings` `Configure` option.  OpenSSL compiles on many varied
     platforms: try to ensure you only use portable features.
