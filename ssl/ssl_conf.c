@@ -1123,6 +1123,14 @@ void SSL_CONF_CTX_free(SSL_CONF_CTX *cctx)
 
 unsigned int SSL_CONF_CTX_set_flags(SSL_CONF_CTX *cctx, unsigned int flags)
 {
+    if ((cctx->flags & SSL_CONF_FLAG_CMDLINE)
+        && (flags & SSL_CONF_FLAG_FILE))
+        flags &= ~SSL_CONF_FLAG_FILE;
+
+    if ((cctx->flags & SSL_CONF_FLAG_FILE)
+        && (flags & SSL_CONF_FLAG_CMDLINE))
+        flags &= ~SSL_CONF_FLAG_CMDLINE;
+
     cctx->flags |= flags;
     return cctx->flags;
 }

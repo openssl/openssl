@@ -28,8 +28,9 @@ Currently the following B<flags> values are recognised:
 
 =item SSL_CONF_FLAG_CMDLINE, SSL_CONF_FLAG_FILE
 
-recognise options intended for command line or configuration file use. At
-least one of these flags must be set.
+recognise options intended for command line or configuration file use. One of
+these flags, but not both, must be set. If an attempt is made to set one of
+these flags when the other is already set then the new flag is ignored.
 
 =item SSL_CONF_FLAG_CLIENT, SSL_CONF_FLAG_SERVER
 
