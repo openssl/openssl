@@ -13792,6 +13792,66 @@ err:
 }
 #endif
 
+static int test_ssl_conf_flags(void)
+{
+    SSL_CONF_CTX *cctx = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(cctx = SSL_CONF_CTX_new()))
+        goto err;
+
+    /* Initial flags should be 0 */
+    if (!TEST_uint_eq(SSL_CONF_CTX_set_flags(cctx, 0), 0))
+        goto err;
+
+    /* Setting CMDLINE should succeed */
+    if (!TEST_uint_eq(SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_CMDLINE),
+            SSL_CONF_FLAG_CMDLINE))
+        goto err;
+
+    /*
+     * Setting FILE when CMDLINE is set should fail to set the flag but return
+     * success (return the original flags value).
+     * If we also try to set a non-conflicting flag at the same time it should
+     * succeed.
+     */
+    if (!TEST_uint_eq(SSL_CONF_CTX_set_flags(cctx,
+                          SSL_CONF_FLAG_FILE
+                              | SSL_CONF_FLAG_SHOW_ERRORS),
+            SSL_CONF_FLAG_CMDLINE | SSL_CONF_FLAG_SHOW_ERRORS))
+        goto err;
+
+    SSL_CONF_CTX_free(cctx);
+    cctx = NULL;
+
+    /* Retry in reverse */
+    if (!TEST_ptr(cctx = SSL_CONF_CTX_new()))
+        goto err;
+
+    /* Setting FILE should succeed */
+    if (!TEST_uint_eq(SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_FILE),
+            SSL_CONF_FLAG_FILE))
+        goto err;
+
+    /*
+     * Setting CMDLINE when FILE is set should fail to set the flag but return
+     * success (return the original flags value)
+     * If we also try to set a non-conflicting flag at the same time it should
+     * succeed.
+     */
+    if (!TEST_uint_eq(SSL_CONF_CTX_set_flags(cctx,
+                          SSL_CONF_FLAG_CMDLINE
+                              | SSL_CONF_FLAG_SHOW_ERRORS),
+            SSL_CONF_FLAG_FILE | SSL_CONF_FLAG_SHOW_ERRORS))
+        goto err;
+
+    ret = 1;
+
+err:
+    SSL_CONF_CTX_free(cctx);
+    return ret;
+}
+
 /*
  * Test that SSL_CTX_set1_groups() when called with a list where the first
  * entry is unsupported, will send a key_share that uses the next usable entry.
@@ -14192,6 +14252,7 @@ int setup_tests(void)
         ADD_TEST(test_ssl_trace);
 #endif
     ADD_ALL_TESTS(test_ssl_set_groups_unsupported_keyshare, 2);
+    ADD_TEST(test_ssl_conf_flags);
     return 1;
 
 err:
