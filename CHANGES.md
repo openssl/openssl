@@ -31,6 +31,227 @@ OpenSSL 3.6
 
 ### Changes between 3.6.0 and 3.6.1 [xx XXX xxxx]
 
+ * Fixed Improper validation of PBMAC1 parameters in PKCS#12 MAC verification.
+
+   Severity: Moderate
+
+   Issue summary: PBMAC1 parameters in PKCS#12 files are missing validation
+   which can trigger a stack-based buffer overflow, invalid pointer or NULL
+   pointer dereference during MAC verification.
+
+   Impact summary: The stack buffer overflow or NULL pointer dereference may
+   cause a crash leading to Denial of Service for an application that parses
+   untrusted PKCS#12 files. The buffer overflow may also potentially enable
+   code execution depending on platform mitigations.
+
+   Reported by: Stanislav Fort (Aisle Research) and Petr Šimeček (Aisle
+   Research) and Hamza (Metadust)
+
+   ([CVE-2025-11187])
+
+   *Tomáš Mráz*
+
+ * Fixed Stack buffer overflow in CMS `AuthEnvelopedData` parsing.
+
+   Severity: High
+
+   Issue summary: Parsing CMS `AuthEnvelopedData` message with maliciously
+   crafted AEAD parameters can trigger a stack buffer overflow.
+
+   Impact summary: A stack buffer overflow may lead to a crash, causing Denial
+   of Service, or potentially remote code execution.
+
+   Reported by: Stanislav Fort (Aisle Research)
+
+   ([CVE-2025-15467])
+
+   *Igor Ustinov*
+
+ * Fixed NULL dereference in `SSL_CIPHER_find()` function on unknown cipher ID.
+
+   Severity: Low
+
+   Issue summary: If an application using the `SSL_CIPHER_find()` function
+   in a QUIC protocol client or server receives an unknown cipher suite from
+   the peer, a NULL dereference occurs.
+
+   Impact summary: A NULL pointer dereference leads to abnormal termination
+   of the running process causing Denial of Service.
+
+   Reported by: Stanislav Fort (Aisle Research)
+
+   ([CVE-2025-15468])
+
+   *Stanislav Fort*
+
+ * Fixed `openssl dgst` one-shot codepath silently truncates inputs >16 MiB.
+
+   Severity: Low
+
+   Issue summary: The `openssl dgst` command-line tool silently truncates input
+   data to 16 MiB when using one-shot signing algorithms and reports success
+   instead of an error.
+
+   Impact summary: A user signing or verifying files larger than 16 MiB with
+   one-shot algorithms (such as Ed25519, Ed448, or ML-DSA) may believe the
+   entire file is authenticated while trailing data beyond 16 MiB remains
+   unauthenticated.
+
+   Reported by: Stanislav Fort (Aisle Research)
+
+   ([CVE-2025-15469])
+
+   *Viktor Dukhovni*
+
+ * Fixed TLS 1.3 `CompressedCertificate` excessive memory allocation.
+
+   Severity: Low
+
+   Issue summary: A TLS 1.3 connection using certificate compression can be
+   forced to allocate a large buffer before decompression without checking
+   against the configured certificate size limit.
+
+   Impact summary: An attacker can cause per-connection memory allocations
+   of up to approximately 22 MiB and extra CPU work, potentially leading
+   to service degradation or resource exhaustion (Denial of Service).
+
+   Reported by: Tomas Dulka (Aisle Research) and Stanislav Fort (Aisle
+   Research)
+
+   ([CVE-2025-66199])
+
+   *Tomas Dulka and Stanislav Fort*
+
+ * Fixed Heap out-of-bounds write in `BIO_f_linebuffer` on short writes.
+
+   Severity: Low
+
+   Issue summary: Writing large, newline-free data into a BIO chain using the
+   line-buffering filter where the next BIO performs short writes can trigger
+   a heap-based out-of-bounds write.
+
+   Impact summary: This out-of-bounds write can cause memory corruption
+   which typically results in a crash, leading to Denial of Service for
+   an application.
+
+   Reported by: Petr Simecek (Aisle Research) and Stanislav Fort (Aisle
+   Research)
+
+   ([CVE-2025-68160])
+
+   *Stanislav Fort and Neil Horman*
+
+ * Fixed Unauthenticated/unencrypted trailing bytes with low-level OCB
+   function calls.
+
+   Severity: Low
+
+   Issue summary: When using the low-level OCB API directly with AES-NI or
+   other hardware-accelerated code paths, inputs whose length is not a multiple
+   of 16 bytes can leave the final partial block unencrypted and
+   unauthenticated.
+
+   Impact summary: The trailing 1-15 bytes of a message may be exposed in
+   cleartext on encryption and are not covered by the authentication tag,
+   allowing an attacker to read or tamper with those bytes without detection.
+
+   Reported by: Stanislav Fort (Aisle Research)
+
+   ([CVE-2025-69418])
+
+   *Stanislav Fort*
+
+ * Fixed Out of bounds write in `PKCS12_get_friendlyname()` UTF-8 conversion.
+
+   Severity: Low
+
+   Issue summary: Calling `PKCS12_get_friendlyname()` function on a maliciously
+   crafted PKCS#12 file with a `BMPString` (UTF-16BE) friendly name containing
+   non-ASCII BMP code point can trigger a one byte write before the allocated
+   buffer.
+
+   Impact summary: The out-of-bounds write can cause a memory corruption
+   which can have various consequences including a Denial of Service.
+
+   Reported by: Stanislav Fort (Aisle Research)
+
+   ([CVE-2025-69419])
+
+   *Norbert Pócs*
+
+ * Fixed Missing `ASN1_TYPE` validation in `TS_RESP_verify_response()` function.
+
+   Severity: Low
+
+   Issue summary: A type confusion vulnerability exists in the TimeStamp
+   Response verification code where an `ASN1_TYPE` union member is accessed
+   without first validating the type, causing an invalid or NULL pointer
+   dereference when processing a malformed `TimeStamp` Response file.
+
+   Impact summary: An application calling `TS_RESP_verify_response()`
+   with a malformed TimeStamp Response can be caused to dereference an invalid
+   or NULL pointer when reading, resulting in a Denial of Service.
+
+   Reported by: Luigino Camastra (Aisle Research)
+
+   ([CVE-2025-69420])
+
+   *Bob Beck*
+
+ * Fixed NULL Pointer Dereference in `PKCS12_item_decrypt_d2i_ex()` function.
+
+   Severity: Low
+
+   Issue summary: Processing a malformed PKCS#12 file can trigger a NULL
+   pointer dereference in the `PKCS12_item_decrypt_d2i_ex()` function.
+
+   Impact summary: A NULL pointer dereference can trigger a crash which leads
+   to Denial of Service for an application processing PKCS#12 files.
+
+   Reported by: Luigino Camastra (Aisle Research)
+
+   ([CVE-2025-69421])
+
+   *Luigino Camastra*
+
+ * Fixed Missing `ASN1_TYPE` validation in PKCS#12 parsing.
+
+   Severity: Low
+
+   Issue summary: An invalid or NULL pointer dereference can happen in
+   an application processing a malformed PKCS#12 file.
+
+   Impact summary: An application processing a malformed PKCS#12 file can be
+   caused to dereference an invalid or NULL pointer on memory read, resulting
+   in a Denial of Service.
+
+   Reported by: Luigino Camastra (Aisle Research)
+
+   ([CVE-2026-22795])
+
+   *Bob Beck*
+
+ * Fixed `ASN1_TYPE` Type Confusion in the `PKCS7_digest_from_attributes()`
+   function.
+
+   Severity: Low
+
+   Issue summary: A type confusion vulnerability exists in the signature
+   verification of signed PKCS#7 data where an `ASN1_TYPE` union member
+   is accessed without first validating the type, causing an invalid or NULL
+   pointer dereference when processing malformed PKCS#7 data.
+
+   Impact summary: An application performing signature verification of PKCS#7
+   data or calling directly the `PKCS7_digest_from_attributes()` function can be
+   caused to dereference an invalid or NULL pointer when reading, resulting in
+   a Denial of Service.
+
+   Reported by: Luigino Camastra (Aisle Research)
+
+   ([CVE-2026-22796])
+
+   *Bob Beck*
+
  * RISC-V capabilities string format has changed to include the base
    architecture and the vector length for the V extension.
    <!-- https://github.com/openssl/openssl/pull/28760 -->
@@ -21629,6 +21850,18 @@ ndif
 
 <!-- Links -->
 
+[CVE-2026-22796]: https://www.openssl.org/news/vulnerabilities.html#CVE-2026-22796
+[CVE-2026-22795]: https://www.openssl.org/news/vulnerabilities.html#CVE-2026-22795
+[CVE-2025-69421]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-69421
+[CVE-2025-69420]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-69420
+[CVE-2025-69419]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-69419
+[CVE-2025-69418]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-69418
+[CVE-2025-68160]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-68160
+[CVE-2025-66199]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-66199
+[CVE-2025-15469]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-15469
+[CVE-2025-15468]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-15468
+[CVE-2025-15467]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-15467
+[CVE-2025-11187]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-11187
 [CVE-2025-9232]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-9232
 [CVE-2025-9231]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-9231
 [CVE-2025-9230]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-9230

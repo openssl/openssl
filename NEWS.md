@@ -31,14 +31,50 @@ release is High.
 
 This release incorporates the following bug fixes and mitigations:
 
-  * Fixed a regression in `X509_V_FLAG_CRL_CHECK_ALL` flag handling by restoring
-    its pre-3.6.0 behaviour of being ignored when `X509_V_FLAG_CRL_CHECK` flag
-    is not set, and no longer implying the latter flag instead.
+  * Fixed Improper validation of PBMAC1 parameters in PKCS#12 MAC verification.
+    ([CVE-2025-11187])
 
-  * Fixed a regression that caused generation of empty stapled OCSP responses
-    when at least one certificate in the certificate chain had a stapled OCSP
-    response present, causing handshake failures for OpenSSL 3.6.0 servers
-    with various client implementations, including GnuTLS and BoringSSL.
+  * Fixed Stack buffer overflow in CMS `AuthEnvelopedData` parsing.
+    ([CVE-2025-15467])
+
+  * Fixed NULL dereference in `SSL_CIPHER_find()` function on unknown cipher ID.
+    ([CVE-2025-15468])
+
+  * Fixed `openssl dgst` one-shot codepath silently truncates inputs >16 MiB.
+    ([CVE-2025-15469])
+
+  * Fixed TLS 1.3 `CompressedCertificate` excessive memory allocation.
+    ([CVE-2025-66199])
+
+  * Fixed Heap out-of-bounds write in `BIO_f_linebuffer` on short writes.
+    ([CVE-2025-68160])
+
+  * Fixed Unauthenticated/unencrypted trailing bytes with low-level OCB
+    function calls.
+    ([CVE-2025-69418])
+
+  * Fixed Out of bounds write in `PKCS12_get_friendlyname()` UTF-8 conversion.
+    ([CVE-2025-69419])
+
+  * Fixed Missing `ASN1_TYPE` validation in `TS_RESP_verify_response()`
+    function.
+    ([CVE-2025-69420])
+
+  * Fixed NULL Pointer Dereference in `PKCS12_item_decrypt_d2i_ex()` function.
+    ([CVE-2025-69421])
+
+  * Fixed Missing `ASN1_TYPE` validation in PKCS#12 parsing.
+    ([CVE-2026-22795])
+
+  * Fixed `ASN1_TYPE` Type Confusion in the `PKCS7_digest_from_attributes()`
+    function.
+    ([CVE-2026-22796])
+
+  * Fixed a regression in `X509_V_FLAG_CRL_CHECK_ALL` flag handling by
+    restoring its pre-3.6.0 behaviour.
+
+  * Fixed a regression in handling stapled OCSP responses causing handshake
+    failures for OpenSSL 3.6.0 servers with various client implementations.
 
 ### Major changes between OpenSSL 3.5 and OpenSSL 3.6.0 [1 Oct 2025]
 
@@ -1992,6 +2028,18 @@ OpenSSL 0.9.x
   * Support for various new platforms
 
 <!-- Links -->
+[CVE-2026-22796]: https://www.openssl.org/news/vulnerabilities.html#CVE-2026-22796
+[CVE-2026-22795]: https://www.openssl.org/news/vulnerabilities.html#CVE-2026-22795
+[CVE-2025-69421]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-69421
+[CVE-2025-69420]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-69420
+[CVE-2025-69419]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-69419
+[CVE-2025-69418]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-69418
+[CVE-2025-68160]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-68160
+[CVE-2025-66199]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-66199
+[CVE-2025-15469]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-15469
+[CVE-2025-15468]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-15468
+[CVE-2025-15467]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-15467
+[CVE-2025-11187]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-11187
 [CVE-2025-9232]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-9232
 [CVE-2025-9231]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-9231
 [CVE-2025-9230]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-9230
