@@ -1540,7 +1540,7 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host)
             }
             sk_X509_free(tls_extra);
             if (res == 0) {
-                BIO_printf(bio_err, "error: unable to add TLS extra certs\n");
+                BIO_puts(bio_err, "error: unable to add TLS extra certs\n");
                 goto err;
             }
         }
@@ -3391,12 +3391,12 @@ static void print_keyspec(OSSL_CMP_ATAVS *keySpec)
             const void *param;
 
             X509_ALGOR_get0(&oid, &paramtype, &param, alg);
-            BIO_printf(mem, "Key algorithm: ");
+            BIO_puts(mem, "Key algorithm: ");
             i2a_ASN1_OBJECT(mem, oid);
             if (paramtype == V_ASN1_UNDEF || alg->parameter == NULL) {
-                BIO_printf(mem, "\n");
+                BIO_puts(mem, "\n");
             } else {
-                BIO_printf(mem, " - ");
+                BIO_puts(mem, " - ");
                 ASN1_item_print(mem, (ASN1_VALUE *)alg,
                     0, ASN1_ITEM_rptr(X509_ALGOR), NULL);
             }
@@ -3709,7 +3709,7 @@ int cmp_main(int argc, char **argv)
                 ret = -1;
             if (ret <= 0) {
                 if (ret == -1)
-                    BIO_printf(bio_err, "Use -help for summary.\n");
+                    BIO_puts(bio_err, "Use -help for summary.\n");
                 goto err;
             }
         }

@@ -162,7 +162,7 @@ int kdf_main(int argc, char **argv)
             goto err;
 
         if (!EVP_KDF_CTX_set_params(ctx, params)) {
-            BIO_printf(bio_err, "KDF parameter error\n");
+            BIO_puts(bio_err, "KDF parameter error\n");
             ERR_print_errors(bio_err);
             ok = 0;
         }
@@ -176,7 +176,7 @@ int kdf_main(int argc, char **argv)
         goto err;
 
     if (dkm_len <= 0) {
-        BIO_printf(bio_err, "Invalid derived key length.\n");
+        BIO_puts(bio_err, "Invalid derived key length.\n");
         goto err;
     }
     dkm_bytes = app_malloc(dkm_len, "out buffer");
@@ -184,7 +184,7 @@ int kdf_main(int argc, char **argv)
         goto err;
 
     if (!EVP_KDF_derive(ctx, dkm_bytes, dkm_len, NULL)) {
-        BIO_printf(bio_err, "EVP_KDF_derive failed\n");
+        BIO_puts(bio_err, "EVP_KDF_derive failed\n");
         goto err;
     }
 
@@ -193,7 +193,7 @@ int kdf_main(int argc, char **argv)
     } else {
         hexout = OPENSSL_buf2hexstr(dkm_bytes, dkm_len);
         if (hexout == NULL) {
-            BIO_printf(bio_err, "Memory allocation failure\n");
+            BIO_puts(bio_err, "Memory allocation failure\n");
             goto err;
         }
         BIO_printf(out, "%s\n\n", hexout);

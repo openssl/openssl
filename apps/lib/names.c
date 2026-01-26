@@ -33,14 +33,14 @@ void print_names(BIO *out, STACK_OF(OPENSSL_CSTRING) *names)
 
     sk_OPENSSL_CSTRING_sort(names);
     if (i > 1)
-        BIO_printf(out, "{ ");
+        BIO_puts(out, "{ ");
     for (j = 0; j < i; j++) {
         const char *name = sk_OPENSSL_CSTRING_value(names, j);
 
         if (j > 0)
-            BIO_printf(out, ", ");
+            BIO_puts(out, ", ");
         BIO_printf(out, "%s", name);
     }
     if (i > 1)
-        BIO_printf(out, " }");
+        BIO_puts(out, " }");
 }

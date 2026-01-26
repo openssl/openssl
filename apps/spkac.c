@@ -139,7 +139,7 @@ int spkac_main(int argc, char **argv)
         goto opthelp;
 
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
-        BIO_printf(bio_err, "Error getting password\n");
+        BIO_puts(bio_err, "Error getting password\n");
         goto end;
     }
 
@@ -159,12 +159,12 @@ int spkac_main(int argc, char **argv)
                 challenge, (int)strlen(challenge)))
             goto end;
         if (!NETSCAPE_SPKI_set_pubkey(spki, pkey)) {
-            BIO_printf(bio_err, "Error setting public key\n");
+            BIO_puts(bio_err, "Error setting public key\n");
             goto end;
         }
         i = NETSCAPE_SPKI_sign(spki, pkey, md);
         if (i <= 0) {
-            BIO_printf(bio_err, "Error signing SPKAC\n");
+            BIO_puts(bio_err, "Error signing SPKAC\n");
             goto end;
         }
         spkstr = NETSCAPE_SPKI_b64_encode(spki);
@@ -196,7 +196,7 @@ int spkac_main(int argc, char **argv)
     spki = NETSCAPE_SPKI_b64_decode(spkstr, -1);
 
     if (spki == NULL) {
-        BIO_printf(bio_err, "Error loading SPKAC\n");
+        BIO_puts(bio_err, "Error loading SPKAC\n");
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -211,9 +211,9 @@ int spkac_main(int argc, char **argv)
     if (verify) {
         i = NETSCAPE_SPKI_verify(spki, pkey);
         if (i > 0) {
-            BIO_printf(bio_err, "Signature OK\n");
+            BIO_puts(bio_err, "Signature OK\n");
         } else {
-            BIO_printf(bio_err, "Signature Failure\n");
+            BIO_puts(bio_err, "Signature Failure\n");
             ERR_print_errors(bio_err);
             goto end;
         }

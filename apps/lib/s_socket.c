@@ -176,7 +176,7 @@ int init_client(int *sock, const char *host, const char *port,
         /* Save the address */
         if (tfo || !doconn) {
             if (ba_ret == NULL) {
-                BIO_printf(bio_err, "Internal error\n");
+                BIO_puts(bio_err, "Internal error\n");
                 BIO_closesocket(*sock);
                 *sock = INVALID_SOCKET;
                 goto out;
@@ -248,7 +248,7 @@ int report_server_accept(BIO *out, int asock, int with_address, int with_pid)
 {
     int success = 1;
 
-    if (BIO_printf(out, "ACCEPT") <= 0)
+    if (BIO_puts(out, "ACCEPT") <= 0)
         return 0;
     if (with_address) {
         char *hostname, *service;
@@ -263,13 +263,13 @@ int report_server_accept(BIO *out, int asock, int with_address, int with_pid)
                           hostname, service)
                 > 0;
         else
-            (void)BIO_printf(out, "unknown:error\n");
+            (void)BIO_puts(out, "unknown:error\n");
         OPENSSL_free(hostname);
         OPENSSL_free(service);
     }
     if (with_pid)
         success *= BIO_printf(out, " PID=%d", getpid()) > 0;
-    success *= BIO_printf(out, "\n") > 0;
+    success *= BIO_puts(out, "\n") > 0;
     (void)BIO_flush(out);
 
     return success;

@@ -252,20 +252,20 @@ int crl_main(int argc, char **argv)
             goto end;
         ctx = X509_STORE_CTX_new();
         if (ctx == NULL || !X509_STORE_CTX_init(ctx, store, NULL, NULL)) {
-            BIO_printf(bio_err, "Error initialising X509 store\n");
+            BIO_puts(bio_err, "Error initialising X509 store\n");
             goto end;
         }
 
         xobj = X509_STORE_CTX_get_obj_by_subject(ctx, X509_LU_X509,
             X509_CRL_get_issuer(x));
         if (xobj == NULL) {
-            BIO_printf(bio_err, "Error getting CRL issuer certificate\n");
+            BIO_puts(bio_err, "Error getting CRL issuer certificate\n");
             goto end;
         }
         pkey = X509_get_pubkey(X509_OBJECT_get0_X509(xobj));
         X509_OBJECT_free(xobj);
         if (pkey == NULL) {
-            BIO_printf(bio_err, "Error getting CRL issuer public key\n");
+            BIO_puts(bio_err, "Error getting CRL issuer public key\n");
             goto end;
         }
         i = X509_CRL_verify(x, pkey);
@@ -273,11 +273,10 @@ int crl_main(int argc, char **argv)
         if (i < 0)
             goto end;
         if (i == 0) {
-            BIO_printf(bio_err, "verify failure\n");
+            BIO_puts(bio_err, "verify failure\n");
             goto end;
-        } else {
-            BIO_printf(bio_err, "verify OK\n");
-        }
+        } else
+            BIO_puts(bio_err, "verify OK\n");
     }
 
     if (crldiff != NULL) {
@@ -322,7 +321,7 @@ int crl_main(int argc, char **argv)
                 ASN1_INTEGER *crlnum;
 
                 crlnum = X509_CRL_get_ext_d2i(x, NID_crl_number, NULL, NULL);
-                BIO_printf(bio_out, "crlNumber=");
+                BIO_puts(bio_out, "crlNumber=");
                 if (crlnum) {
                     BIO_puts(bio_out, "0x");
                     i2a_ASN1_INTEGER(bio_out, crlnum);
@@ -330,7 +329,7 @@ int crl_main(int argc, char **argv)
                 } else {
                     BIO_puts(bio_out, "<NONE>");
                 }
-                BIO_printf(bio_out, "\n");
+                BIO_puts(bio_out, "\n");
             }
             if (hash == i) {
                 int ok;
@@ -338,7 +337,7 @@ int crl_main(int argc, char **argv)
                     app_get0_propq(), &ok);
 
                 if (num > 1)
-                    BIO_printf(bio_out, "issuer name hash=");
+                    BIO_puts(bio_out, "issuer name hash=");
                 if (ok) {
                     BIO_printf(bio_out, "%08lx\n", hash_value);
                 } else {
@@ -349,23 +348,23 @@ int crl_main(int argc, char **argv)
 #ifndef OPENSSL_NO_MD5
             if (hash_old == i) {
                 if (num > 1)
-                    BIO_printf(bio_out, "issuer name old hash=");
+                    BIO_puts(bio_out, "issuer name old hash=");
                 BIO_printf(bio_out, "%08lx\n",
                     X509_NAME_hash_old(X509_CRL_get_issuer(x)));
             }
 #endif
             if (lastupdate == i) {
-                BIO_printf(bio_out, "lastUpdate=");
+                BIO_puts(bio_out, "lastUpdate=");
                 ASN1_TIME_print_ex(bio_out, X509_CRL_get0_lastUpdate(x), dateopt);
-                BIO_printf(bio_out, "\n");
+                BIO_puts(bio_out, "\n");
             }
             if (nextupdate == i) {
-                BIO_printf(bio_out, "nextUpdate=");
+                BIO_puts(bio_out, "nextUpdate=");
                 if (X509_CRL_get0_nextUpdate(x))
                     ASN1_TIME_print_ex(bio_out, X509_CRL_get0_nextUpdate(x), dateopt);
                 else
-                    BIO_printf(bio_out, "NONE");
-                BIO_printf(bio_out, "\n");
+                    BIO_puts(bio_out, "NONE");
+                BIO_puts(bio_out, "\n");
             }
             if (fingerprint == i) {
                 int j;
@@ -373,7 +372,7 @@ int crl_main(int argc, char **argv)
                 unsigned char md[EVP_MAX_MD_SIZE];
 
                 if (!X509_CRL_digest(x, digest, md, &n)) {
-                    BIO_printf(bio_err, "out of memory\n");
+                    BIO_puts(bio_err, "out of memory\n");
                     goto end;
                 }
                 BIO_printf(bio_out, "%s Fingerprint=",
@@ -401,7 +400,7 @@ int crl_main(int argc, char **argv)
     else
         i = PEM_write_bio_X509_CRL(out, x);
     if (!i) {
-        BIO_printf(bio_err, "unable to write CRL\n");
+        BIO_puts(bio_err, "unable to write CRL\n");
         goto end;
     }
     ret = 0;

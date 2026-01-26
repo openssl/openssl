@@ -192,7 +192,7 @@ int asn1parse_main(int argc, char **argv)
         goto end;
     if (genconf == NULL && genstr == NULL && informat == FORMAT_PEM) {
         if (PEM_read_bio(in, &name, &header, &str, &num) != 1) {
-            BIO_printf(bio_err, "Error reading PEM file\n");
+            BIO_puts(bio_err, "Error reading PEM file\n");
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -258,7 +258,7 @@ int asn1parse_main(int argc, char **argv)
             at = d2i_ASN1_TYPE(NULL, &ctmpbuf, tmplen);
             ASN1_TYPE_free(atmp);
             if (!at) {
-                BIO_printf(bio_err, "Error parsing structure\n");
+                BIO_puts(bio_err, "Error parsing structure\n");
                 ERR_print_errors(bio_err);
                 goto end;
             }
@@ -279,7 +279,7 @@ int asn1parse_main(int argc, char **argv)
     }
 
     if (offset < 0 || offset >= num) {
-        BIO_printf(bio_err, "Error: offset out of range\n");
+        BIO_puts(bio_err, "Error: offset out of range\n");
         goto end;
     }
 
@@ -289,7 +289,7 @@ int asn1parse_main(int argc, char **argv)
         length = (unsigned int)num;
     if (derout != NULL) {
         if (BIO_write(derout, str + offset, length) != (int)length) {
-            BIO_printf(bio_err, "Error writing output\n");
+            BIO_puts(bio_err, "Error writing output\n");
             ERR_print_errors(bio_err);
             goto end;
         }

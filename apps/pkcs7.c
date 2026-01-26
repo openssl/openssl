@@ -125,7 +125,7 @@ int pkcs7_main(int argc, char **argv)
 
     p7 = PKCS7_new_ex(libctx, app_get0_propq());
     if (p7 == NULL) {
-        BIO_printf(bio_err, "unable to allocate PKCS7 object\n");
+        BIO_puts(bio_err, "unable to allocate PKCS7 object\n");
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -135,7 +135,7 @@ int pkcs7_main(int argc, char **argv)
     else
         p7i = PEM_read_bio_PKCS7(in, &p7, NULL, NULL);
     if (p7i == NULL) {
-        BIO_printf(bio_err, "unable to load PKCS7 object\n");
+        BIO_puts(bio_err, "unable to load PKCS7 object\n");
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -209,7 +209,7 @@ int pkcs7_main(int argc, char **argv)
             i = PEM_write_bio_PKCS7(out, p7);
 
         if (!i) {
-            BIO_printf(bio_err, "unable to write pkcs7 object\n");
+            BIO_puts(bio_err, "unable to write pkcs7 object\n");
             ERR_print_errors(bio_err);
             goto end;
         }

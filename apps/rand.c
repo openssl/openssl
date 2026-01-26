@@ -165,7 +165,7 @@ int rand_main(int argc, char **argv)
             }
             scaled_num = num << shift;
             if (scaled_num > (UINT64_MAX >> 3)) {
-                BIO_printf(bio_err, "Request exceeds max allowed output\n");
+                BIO_puts(bio_err, "Request exceeds max allowed output\n");
                 goto opthelp;
             }
         } else {

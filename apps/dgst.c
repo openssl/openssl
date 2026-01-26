@@ -151,12 +151,12 @@ int dgst_main(int argc, char **argv)
             ret = EXIT_SUCCESS;
             goto end;
         case OPT_LIST:
-            BIO_printf(bio_out, "Supported digests:\n");
+            BIO_puts(bio_out, "Supported digests:\n");
             dec.bio = bio_out;
             dec.n = 0;
             OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MD_METH,
                 show_digests, &dec);
-            BIO_printf(bio_out, "\n");
+            BIO_puts(bio_out, "\n");
             ret = EXIT_SUCCESS;
             goto end;
         case OPT_C:
@@ -282,7 +282,7 @@ int dgst_main(int argc, char **argv)
     }
 
     if (do_verify && sigfile == NULL) {
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "No signature to verify: use the -signature option\n");
         goto end;
     }
@@ -299,7 +299,7 @@ int dgst_main(int argc, char **argv)
     }
 
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
-        BIO_printf(bio_err, "Error getting password\n");
+        BIO_puts(bio_err, "Error getting password\n");
         goto end;
     }
 
@@ -315,7 +315,7 @@ int dgst_main(int argc, char **argv)
         goto end;
 
     if ((!(mac_name == NULL) + !(keyfile == NULL) + !(hmac_key == NULL)) > 1) {
-        BIO_printf(bio_err, "MAC and signing key cannot both be specified\n");
+        BIO_puts(bio_err, "MAC and signing key cannot both be specified\n");
         goto end;
     }
 
@@ -387,7 +387,7 @@ int dgst_main(int argc, char **argv)
         if (oneshot_sign) {
             mctx = signctx;
         } else if (BIO_get_md_ctx(bmd, &mctx) <= 0) {
-            BIO_printf(bio_err, "Error getting context\n");
+            BIO_puts(bio_err, "Error getting context\n");
             goto end;
         }
         if (do_verify)
@@ -399,7 +399,7 @@ int dgst_main(int argc, char **argv)
                 app_get0_libctx(),
                 app_get0_propq(), sigkey, NULL);
         if (res == 0) {
-            BIO_printf(bio_err, "Error setting context\n");
+            BIO_puts(bio_err, "Error setting context\n");
             goto end;
         }
         if (sigopts != NULL) {
@@ -419,17 +419,17 @@ int dgst_main(int argc, char **argv)
         EVP_MD_CTX *mctx = NULL;
 
         if (oneshot_sign) {
-            BIO_printf(bio_err, "Oneshot algorithms don't use a digest\n");
+            BIO_puts(bio_err, "Oneshot algorithms don't use a digest\n");
             goto end;
         }
         if (BIO_get_md_ctx(bmd, &mctx) <= 0) {
-            BIO_printf(bio_err, "Error getting context\n");
+            BIO_puts(bio_err, "Error getting context\n");
             goto end;
         }
         if (md == NULL)
             md = (EVP_MD *)EVP_sha256();
         if (!EVP_DigestInit_ex(mctx, md, NULL)) {
-            BIO_printf(bio_err, "Error setting digest\n");
+            BIO_puts(bio_err, "Error setting digest\n");
             goto end;
         }
     }
@@ -464,7 +464,7 @@ int dgst_main(int argc, char **argv)
     }
     if (xoflen > 0) {
         if (!EVP_MD_xof(md)) {
-            BIO_printf(bio_err, "Length can only be specified for XOF\n");
+            BIO_puts(bio_err, "Length can only be specified for XOF\n");
             goto end;
         }
         /*
@@ -473,7 +473,7 @@ int dgst_main(int argc, char **argv)
          * and verify_final methods.
          */
         if (sigkey != NULL) {
-            BIO_printf(bio_err, "Signing key cannot be specified for XOF\n");
+            BIO_puts(bio_err, "Signing key cannot be specified for XOF\n");
             goto end;
         }
     }
@@ -554,10 +554,10 @@ static void show_digests(const OBJ_NAME *name, void *arg)
 
     BIO_printf(dec->bio, "-%-25s", name->name);
     if (++dec->n == 3) {
-        BIO_printf(dec->bio, "\n");
+        BIO_puts(dec->bio, "\n");
         dec->n = 0;
     } else {
-        BIO_printf(dec->bio, " ");
+        BIO_puts(dec->bio, " ");
     }
 
     EVP_MD_free(md);
@@ -633,21 +633,21 @@ static void print_out(BIO *out, unsigned char *buf, size_t len,
         }
         for (i = 0; i < (int)len; i++) {
             if (sep && (i != 0))
-                BIO_printf(out, ":");
+                BIO_puts(out, ":");
             BIO_printf(out, "%02x", buf[i]);
         }
-        BIO_printf(out, "\n");
+        BIO_puts(out, "\n");
     }
 }
 
 static void print_verify_result(BIO *out, int i)
 {
     if (i > 0)
-        BIO_printf(out, "Verified OK\n");
+        BIO_puts(out, "Verified OK\n");
     else if (i == 0)
-        BIO_printf(out, "Verification failure\n");
+        BIO_puts(out, "Verification failure\n");
     else
-        BIO_printf(bio_err, "Error verifying data\n");
+        BIO_puts(bio_err, "Error verifying data\n");
 }
 
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen,
@@ -683,7 +683,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen
 
         BIO_get_md_ctx(bp, &ctx);
         if (!EVP_DigestSignFinal(ctx, NULL, &tmplen)) {
-            BIO_printf(bio_err, "Error getting maximum length of signed data\n");
+            BIO_puts(bio_err, "Error getting maximum length of signed data\n");
             goto end;
         }
         if (tmplen > BUFSIZE) {
@@ -692,7 +692,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen
             buf = allocated_buf;
         }
         if (!EVP_DigestSignFinal(ctx, buf, &len)) {
-            BIO_printf(bio_err, "Error signing data\n");
+            BIO_puts(bio_err, "Error signing data\n");
             goto end;
         }
     } else if (xoflen > 0) {
@@ -707,7 +707,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen
         BIO_get_md_ctx(bp, &ctx);
 
         if (!EVP_DigestFinalXOF(ctx, buf, len)) {
-            BIO_printf(bio_err, "Error Digesting Data\n");
+            BIO_puts(bio_err, "Error Digesting Data\n");
             goto end;
         }
     } else {
@@ -754,18 +754,18 @@ static int do_fp_oneshot_sign(BIO *out, EVP_MD_CTX *ctx, BIO *in, int sep, int b
     }
     if (key != NULL) {
         if (EVP_DigestSign(ctx, NULL, &len, buf, buflen) != 1) {
-            BIO_printf(bio_err, "Error getting maximum length of signed data\n");
+            BIO_puts(bio_err, "Error getting maximum length of signed data\n");
             goto end;
         }
         sig = app_malloc(len, "Signature buffer");
         if (EVP_DigestSign(ctx, sig, &len, buf, buflen) != 1) {
-            BIO_printf(bio_err, "Error signing data\n");
+            BIO_puts(bio_err, "Error signing data\n");
             goto end;
         }
         print_out(out, sig, len, sep, binout, sig_name, NULL, file);
         ret = EXIT_SUCCESS;
     } else {
-        BIO_printf(bio_err, "key must be set for one-shot algorithms\n");
+        BIO_puts(bio_err, "key must be set for one-shot algorithms\n");
         goto end;
     }
 

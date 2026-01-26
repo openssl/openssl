@@ -28,20 +28,20 @@ static void print_escaped_value(BIO *out, const char *value)
         case '#':
         case '\\':
         case '$':
-            BIO_printf(out, "\\");
+            BIO_puts(out, "\\");
             BIO_write(out, p, 1);
             break;
         case '\n':
-            BIO_printf(out, "%s", "\\n");
+            BIO_puts(out, "\\n");
             break;
         case '\r':
-            BIO_printf(out, "%s", "\\r");
+            BIO_puts(out, "\\r");
             break;
         case '\b':
-            BIO_printf(out, "%s", "\\b");
+            BIO_puts(out, "\\b");
             break;
         case '\t':
-            BIO_printf(out, "%s", "\\t");
+            BIO_puts(out, "\\t");
             break;
         case ' ':
             if (p == value || p[1] == '\0') {
@@ -56,7 +56,7 @@ static void print_escaped_value(BIO *out, const char *value)
                  * more trouble than adding the quotes just around the
                  * first and last leading and trailing space.
                  */
-                BIO_printf(out, "%s", "\" \"");
+                BIO_puts(out, "\" \"");
                 break;
             }
             /* FALLTHROUGH */
@@ -80,7 +80,7 @@ static void print_section(BIO *out, const CONF *cnf, OPENSSL_CSTRING section_nam
 
         BIO_printf(out, "%s = ", value->name);
         print_escaped_value(out, value->value);
-        BIO_printf(out, "\n");
+        BIO_puts(out, "\n");
     }
 }
 
