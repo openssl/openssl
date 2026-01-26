@@ -1947,7 +1947,7 @@ int ossl_ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP *group,
         return 0;
     }
 
-    // Fast check if Z = 1 (point already in affine form)
+    /* Fast check if Z = 1 (point already in affine form) */
     if (BN_is_one(point->Z)) {
         if (x != NULL) {
             if (!BN_copy(x, point->X)) {
