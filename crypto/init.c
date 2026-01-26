@@ -489,7 +489,11 @@ void OPENSSL_cleanup(void)
 #if defined(OSSL_CLEANUP_USING_DESTRUCTOR)
     return;
 #endif /* defined(OSSL_CLEANUP_USING_DESTRUCTOR) */
+
+    /*XXX Do we want this? */
+#if defined(DO_NOT_SKIP_OPENSSL_CLEANUP)
     ossl_cleanup_destructor();
+#endif /* defined(DO_NOT_SKIP_OPENSSL_CLEANUP) */
 }
 
 int OPENSSL_atexit(void (*handler)(void))
