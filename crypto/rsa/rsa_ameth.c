@@ -12,6 +12,7 @@
  * internal use.
  */
 #include "internal/deprecated.h"
+#include "internal/params.h"
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
@@ -696,10 +697,11 @@ static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, const void *asn,
             OSSL_SIGNATURE_PARAM_ALGORITHM_ID, aid, sizeof(aid));
         params[1] = OSSL_PARAM_construct_end();
 
-        if (EVP_PKEY_CTX_get_params(pkctx, params) <= 0)
+        if ((EVP_PKEY_CTX_get_params(pkctx, params) <= 0)
+            || !OSSL_PARAM_modified(params) || !ossl_param_has_content(params))
             return 0;
-        if ((aid_len = params[0].return_size) == 0)
-            return 0;
+
+        aid_len = params[0].return_size;
 
         if (alg1 != NULL) {
             const unsigned char *pp = aid;

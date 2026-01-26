@@ -134,7 +134,8 @@ static int check_verify_message(EVP_PKEY_CTX *pkey_ctx, int expected)
         &verify_message);
     *p = OSSL_PARAM_construct_end();
 
-    if (!TEST_true(EVP_PKEY_CTX_get_params(pkey_ctx, params))
+    if (!TEST_int_gt(EVP_PKEY_CTX_get_params(pkey_ctx, params), 0)
+        || !TEST_true(OSSL_PARAM_modified(params))
         || !TEST_int_eq(verify_message, expected))
         return 0;
     return 1;

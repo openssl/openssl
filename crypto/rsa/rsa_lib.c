@@ -1197,9 +1197,10 @@ int EVP_PKEY_CTX_get0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char **label)
 
     *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL,
         (void **)label, 0);
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
-    if (!EVP_PKEY_CTX_get_params(ctx, rsa_params))
+    if ((EVP_PKEY_CTX_get_params(ctx, rsa_params) <= 0)
+        || !OSSL_PARAM_modified(rsa_params))
         return -1;
 
     labellen = rsa_params[0].return_size;
