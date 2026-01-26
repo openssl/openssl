@@ -59,7 +59,9 @@ int ossl_method_unlock_store(OSSL_METHOD_STORE *store);
 int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     int nid, const char *properties, void *method,
     int (*method_up_ref)(void *),
-    void (*method_destruct)(void *));
+    void (*method_destruct)(void *),
+    void *(*method_dup)(void *),
+    void (*free_frozen)(void *));
 int ossl_method_store_remove(OSSL_METHOD_STORE *store, int nid,
     const void *method);
 void ossl_method_store_do_all(OSSL_METHOD_STORE *store,
@@ -71,11 +73,6 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
 int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
     const OSSL_PROVIDER *prov);
 
-/* Frozen method store related functions */
-int ossl_method_store_freeze(OSSL_METHOD_STORE *store, const char *propq);
-int ossl_method_store_is_frozen(OSSL_METHOD_STORE *store);
-const char *ossl_method_store_frozen_propq(OSSL_METHOD_STORE *store);
-
 /* Get the global properties associate with the specified library context */
 OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OSSL_LIB_CTX *ctx,
     int loadconfig);
@@ -83,13 +80,12 @@ OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OSSL_LIB_CTX *ctx,
 /* property query cache functions */
 int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int nid, const char *prop_query, void **result);
-int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store,
-    OSSL_PROVIDER *prov, int nid,
-    const char *prop_query, void **result);
 int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int nid, const char *prop_query, void *result,
     int (*method_up_ref)(void *),
-    void (*method_destruct)(void *));
+    void (*method_destruct)(void *),
+    void *(*method_dup)(void *),
+    void (*free_frozen)(void *));
 
 __owur int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store);
 
@@ -103,5 +99,12 @@ size_t ossl_property_list_to_string(OSSL_LIB_CTX *ctx,
 
 int ossl_global_properties_no_mirrored(OSSL_LIB_CTX *libctx);
 void ossl_global_properties_stop_mirroring(OSSL_LIB_CTX *libctx);
+
+int ossl_method_store_freeze_cache(OSSL_METHOD_STORE *store, const char *propq);
+int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store,
+    const char *name, const char *prop_query, void **result);
+
+int ossl_method_store_is_frozen(OSSL_METHOD_STORE *store);
+const char *ossl_method_store_frozen_propq(OSSL_METHOD_STORE *store);
 
 #endif

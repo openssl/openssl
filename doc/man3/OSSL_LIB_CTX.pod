@@ -25,7 +25,7 @@ OSSL_LIB_CTX_freeze
  OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void);
  OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *ctx);
  void *OSSL_LIB_CTX_get_data(OSSL_LIB_CTX *ctx, int index);
- void *OSSL_LIB_CTX_freeze(OSSL_LIB_CTX *ctx, const char* propq);
+ void *OSSL_LIB_CTX_freeze(OSSL_LIB_CTX *ctx, const char *propq);
 
 =head1 DESCRIPTION
 
