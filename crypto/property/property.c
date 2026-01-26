@@ -1094,7 +1094,7 @@ static void alg_freeze(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
     OSSL_NAMEMAP *nm = ossl_namemap_stored(af->store->ctx);
     int name_id;
     const char *name;
-    size_t i = 0;
+    int i = 0;
 
     if (alg == NULL) {
         af->ret = 0;
