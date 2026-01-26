@@ -138,13 +138,13 @@ OPENSSL_init_crypto(). For example:
 The OPENSSL_cleanup() function deinitialises OpenSSL (both libcrypto
 and libssl). All resources allocated by OpenSSL are freed.  An application
 using the OpenSSL library may call this function to free library resources
-prior to application exit.  However its use is discouraged, as there are many
+prior to application exit.  Note that there are some
 use cases in which subordinate libraries may also use OpenSSL and may not
 be finished with their references to it at application exit time (for example,
 if a subordinate library attempts to free an OpenSSL resource from a library
 destructor, calling OPENSSL_cleanup() may result in crashes or other unexpected
-behavior.  Instead it is strongly recommended that OPENSSL_cleanup() not be
-called, allowing the operating system to reap all library resources on process
+behavior). If this is likely to be a problem then it is recommended that OPENSSL_cleanup()
+not be called, allowing the operating system to reap all library resources on process
 exit.
 
 Note, this may, on some leak detection tools (like valgrind) result in
