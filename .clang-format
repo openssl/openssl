@@ -883,7 +883,6 @@ TypeNames:
   - "QUIC_URXE"
   - "QUIC_URXE_LIST"
   - "QUIC_XSO"
-  - "RAND_DRBG"
   - "RAND_METHOD"
   - "RAND_POOL"
   - "RAW_EXTENSION"
