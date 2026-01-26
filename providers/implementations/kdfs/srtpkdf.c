@@ -206,7 +206,7 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     struct srtp_set_ctx_params_st p;
     KDF_SRTPKDF *ctx = vctx;
-    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    OSSL_LIB_CTX *libctx;
     const EVP_CIPHER *cipher;
 
     if (params == NULL)
@@ -214,6 +214,8 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if (ctx == NULL || !srtp_set_ctx_params_decoder(params, &p))
         return 0;
+
+    libctx = PROV_LIBCTX_OF(ctx->provctx);
 
     if ((p.cipher != NULL)
         && !ossl_prov_cipher_load(&ctx->cipher, p.cipher, p.propq, libctx))
