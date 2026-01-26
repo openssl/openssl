@@ -1326,6 +1326,24 @@ int ossl_ec_GFp_nistp224_point_get_affine_coordinates(const EC_GROUP *group,
         ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
         return 0;
     }
+
+    // Fast check if Z = 1 (point already in affine form)
+    if (BN_is_one(point->Z)) {
+        if (x != NULL) {
+            if (!BN_copy(x, point->X)) {
+                ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+                return 0;
+            }
+        }
+        if (y != NULL) {
+            if (!BN_copy(y, point->Y)) {
+                ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+                return 0;
+            }
+        }
+        return 1;
+    }
+
     if ((!BN_to_felem(x_in, point->X)) || (!BN_to_felem(y_in, point->Y)) || (!BN_to_felem(z1, point->Z)))
         return 0;
     felem_inv(z2, z1);
