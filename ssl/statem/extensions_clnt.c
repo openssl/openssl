@@ -885,7 +885,10 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
     }
 #endif /* OPENSSL_NO_PSK */
 
-    if (s->psksession != psksess) {
+    if (s->psksession == psksess) {
+        /* Same session returned - release the extra reference from callback */
+        SSL_SESSION_free(psksess);
+    } else {
         SSL_SESSION_free(s->psksession);
         s->psksession = psksess;
     }
