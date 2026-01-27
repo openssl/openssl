@@ -17,7 +17,10 @@ B<ssl> was created with L<SSL_new(3)>.
 
 =head1 RETURN VALUES
 
-The pointer to the SSL_CTX object is returned.
+The pointer to the SSL_CTX object is returned. This is an internal pointer
+and the reference count is not incremented. The returned pointer should not
+be freed. If the caller needs to retain the SSL_CTX for longer than the SSL
+object, it should call L<SSL_CTX_up_ref(3)> to increment the reference count.
 
 =head1 SEE ALSO
 
