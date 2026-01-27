@@ -26,7 +26,7 @@ OpenSSL Releases
 OpenSSL 3.3
 -----------
 
-### Changes between 3.3.5 and 3.3.6 [xx XXX xxxx]
+### Changes between 3.3.5 and 3.3.6 [27 Jan 2026]
 
  * Fixed Stack buffer overflow in CMS `AuthEnvelopedData` parsing.
 
