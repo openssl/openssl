@@ -1,0 +1,63 @@
+=pod
+
+=head1 NAME
+
+ASN1_bn_print, ASN1_buf_print - BIGNUM and buffer printing routines
+
+=head1 SYNOPSIS
+
+ #include <openssl/asn1.h>
+
+ int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
+                   unsigned char *ign, int indent);
+ int ASN1_buf_print(BIO *bp, const unsigned char *buf, size_t buflen,
+                    int indent);
+
+=head1 DESCRIPTION
+
+ASN1_bn_print() prints the BIGNUM I<num> to the BIO I<bp>. If I<num> is NULL,
+nothing is printed. The I<number> parameter is a string that is printed as a
+label before the value. The output is indented by I<indent> spaces. The I<ign>
+parameter is ignored and may be NULL.
+
+For small numbers (up to BN_BYTES bytes), the value is printed in both decimal
+and hexadecimal on a single line. For example:
+
+ exponent: 65537 (0x10001)
+
+For larger numbers, the label is printed on one line, followed by the
+hexadecimal representation of the number printed using ASN1_buf_print().
+
+ASN1_buf_print() prints the contents of I<buf> of length I<buflen> to the BIO
+I<bp>. The output is formatted as colon-separated hexadecimal octets, wrapped
+at 16 octets per line, with each line indented by I<indent> spaces. For example:
+
+     00:c4:40:87:1c:d5:15:c3:e4:fb:6e:55:cd:97:e5:
+     b7:e7:0c:a6:6e:fe:b5:f2:4c:b1:d5:d1:25:6b:8d:
+     f6:9f
+
+=head1 RETURN VALUES
+
+ASN1_bn_print() and ASN1_buf_print() return 1 on success or 0 on error.
+
+=head1 SEE ALSO
+
+L<BN_print(3)>,
+L<ASN1_STRING_print_ex(3)>
+
+=head1 HISTORY
+
+ASN1_bn_print() was added in OpenSSL 0.9.8.
+
+ASN1_buf_print() was added in OpenSSL 1.1.0.
+
+=head1 COPYRIGHT
+
+Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
