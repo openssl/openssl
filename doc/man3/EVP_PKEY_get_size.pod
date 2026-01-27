@@ -40,7 +40,61 @@ receive that length), to avoid bugs.
 
 EVP_PKEY_get_bits() returns the cryptographic length of the cryptosystem
 to which the key in I<pkey> belongs, in bits.  Note that the definition
-of cryptographic length is specific to the key cryptosystem.
+of cryptographic length is specific to the key cryptosystem:
+
+=over 4
+
+=item B<RSA>
+
+The bit length of the modulus B<n>.
+
+=item B<DSA>
+
+The bit length of the prime B<p>.
+
+=item B<DH>
+
+The bit length of the prime B<p>.
+
+=item B<EC>
+
+The bit length of the group order.
+
+=item B<X25519>
+
+253 (fixed for the curve).
+
+=item B<X448>
+
+448 (fixed for the curve).
+
+=item B<Ed25519>
+
+256 (fixed for the curve).
+
+=item B<Ed448>
+
+456 (fixed for the curve).
+
+=item B<ML-DSA>
+
+The bit size of the public key (8 times the public key length in bytes).
+For B<ML-DSA-44>, B<ML-DSA-65>, and B<ML-DSA-87>, this is 10496, 15616, and
+20736 bits respectively.
+
+=item B<SLH-DSA>
+
+The bit size of the public key (8 times the public key length in bytes).
+For B<SLH-DSA*128*>, B<SLH-DSA*192*>, and B<SLH-DSA*256*> variants, this is
+256, 384, and 512 bits respectively.
+
+=item B<ML-KEM>
+
+The security strength indicator from the algorithm name: 512, 768, or 1024
+for B<ML-KEM-512>, B<ML-KEM-768>, and B<ML-KEM-1024> respectively.
+
+=back
+
 This length corresponds to the provider parameter B<OSSL_PKEY_PARAM_BITS>.
 
 EVP_PKEY_get_security_bits() returns the number of security bits of the given
