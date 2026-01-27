@@ -220,6 +220,8 @@ int pkcs8_main(int argc, char **argv)
         goto end;
 
     if (ciphername != NULL) {
+        EVP_CIPHER_free(cipher);
+        cipher = NULL;
         if (!opt_cipher(ciphername, &cipher))
             goto opthelp;
     }

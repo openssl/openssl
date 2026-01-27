@@ -510,6 +510,8 @@ int req_main(int argc, char **argv)
             newreq = precert = 1;
             break;
         case OPT_CIPHER:
+            EVP_CIPHER_free(cipher);
+            cipher = NULL;
             if (!opt_cipher_any(opt_arg(), &cipher))
                 goto opthelp;
             break;
@@ -723,10 +725,10 @@ int req_main(int argc, char **argv)
         p = app_conf_try_string(req_conf, section, "encrypt_rsa_key");
         if (p == NULL)
             p = app_conf_try_string(req_conf, section, "encrypt_key");
-        if (p != NULL && strcmp(p, "no") == 0)
+        if ((p != NULL && strcmp(p, "no") == 0) || noenc) {
+            EVP_CIPHER_free(cipher);
             cipher = NULL;
-        if (noenc)
-            cipher = NULL;
+        }
 
         i = 0;
     loop:
