@@ -1358,6 +1358,9 @@ for failure.
 EVP_CIPHER_names_do_all() returns 1 if the callback was called for all names.
 A return value of 0 means that the callback was not called for any names.
 
+EVP_CIPHER_get_params(), EVP_CIPHER_CTX_get_params() and
+EVP_CIPHER_CTX_set_params() return 1 for success and 0 for failure.
+
 =head1 CIPHER LISTING
 
 All algorithms have a fixed key length unless otherwise stated.
