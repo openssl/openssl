@@ -18,6 +18,10 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
+### Major changes between OpenSSL 3.0.19 and OpenSSL 3.0.20 [under development]
+
+  * none
+
 ### Major changes between OpenSSL 3.0.18 and OpenSSL 3.0.19 [27 Jan 2026]
 
 OpenSSL 3.0.19 is a security patch release. The most severe CVE fixed in this
