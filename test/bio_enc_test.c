@@ -293,7 +293,7 @@ static int do_crypt(FILE *in, FILE *out, int do_encrypt)
 
     /* Don't set key or IV right away; we want to check lengths */
     if (!EVP_CipherInit_ex2(ctx, cipher, NULL, NULL,
-                            do_encrypt, NULL))
+            do_encrypt, NULL))
         goto err;
 
     OPENSSL_assert(EVP_CIPHER_CTX_get_key_length(ctx) == 16);
@@ -426,7 +426,7 @@ static int test_evp_bytes_to_key(void)
     nkey = EVP_CIPHER_get_key_length(cipher);
     niv = EVP_CIPHER_get_iv_length(cipher);
 
-    if (!TEST_uint_eq(nkey, 24)  /* 3DES key length */
+    if (!TEST_uint_eq(nkey, 24) /* 3DES key length */
         || !TEST_uint_eq(niv, 8)) /* 3DES IV length */
         goto err;
 
@@ -436,7 +436,7 @@ static int test_evp_bytes_to_key(void)
 
     memcpy(iv, salt, niv);
     rc = EVP_BytesToKey(cipher, md, iv /*salt*/, (unsigned char *)password,
-                        strlen(password), 1, key, NULL /*iv*/);
+        strlen(password), 1, key, NULL /*iv*/);
     if (!TEST_int_eq(rc, (int)nkey))
         goto err;
 

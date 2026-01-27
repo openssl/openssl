@@ -282,7 +282,7 @@ int req_main(int argc, char **argv)
     LHASH_OF(OPENSSL_STRING) *addexts = NULL;
     X509 *new_x509 = NULL, *CAcert = NULL;
     X509_REQ *req = NULL;
-    const EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER *cipher = NULL;
     int ext_copy = EXT_COPY_UNSET;
     BIO *addext_bio = NULL;
     char *extsect = NULL;
@@ -305,7 +305,7 @@ int req_main(int argc, char **argv)
     long newkey_len = -1;
     unsigned long chtype = MBSTRING_ASC, reqflag = 0;
 
-    cipher = (EVP_CIPHER *)EVP_aes_256_cbc();
+    cipher = EVP_CIPHER_fetch(app_get0_libctx(), "AES-256-CBC", app_get0_propq());
 
     opt_set_unknown_name("digest");
     prog = opt_init(argc, argv, req_options);
@@ -510,11 +510,8 @@ int req_main(int argc, char **argv)
             newreq = precert = 1;
             break;
         case OPT_CIPHER:
-            cipher = EVP_get_cipherbyname(opt_arg());
-            if (cipher == NULL) {
-                BIO_printf(bio_err, "Unknown cipher: %s\n", opt_arg());
+            if (!opt_cipher_any(opt_arg(), &cipher))
                 goto opthelp;
-            }
             break;
         case OPT_MD:
             digest = opt_unknown();
@@ -1076,6 +1073,7 @@ end:
     X509_free(new_x509);
     X509_free(CAcert);
     EVP_PKEY_free(CAkey);
+    EVP_CIPHER_free(cipher);
     ASN1_INTEGER_free(serial);
     if (passin != nofree_passin)
         OPENSSL_free(passin);

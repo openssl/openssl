@@ -503,7 +503,8 @@ int smime_main(int argc, char **argv)
 
     if (operation == SMIME_ENCRYPT) {
         if (cipher == NULL)
-            cipher = (EVP_CIPHER *)EVP_aes_256_cbc();
+            cipher = EVP_CIPHER_fetch(app_get0_libctx(), "AES-256-CBC",
+                app_get0_propq());
         encerts = sk_X509_new_null();
         if (encerts == NULL)
             goto end;
