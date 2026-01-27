@@ -29,6 +29,10 @@ OpenSSL Releases
 OpenSSL 3.6
 -----------
 
+### Changes between 3.6.1 and 3.6.2 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.6.0 and 3.6.1 [27 Jan 2026]
 
  * Fixed Improper validation of PBMAC1 parameters in PKCS#12 MAC verification.
