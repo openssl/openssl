@@ -551,6 +551,7 @@ static int may_still_retry(time_t max_time, int *ptimeout)
 int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 {
     int i, found_expected_ct = 0, found_keep_alive = 0;
+    int http_response_code = 0;
     int got_text = 1;
     long n;
     size_t resp_len = 0;
@@ -751,8 +752,8 @@ next_io:
 
         /* First line in response header */
         if (rctx->state == OHS_FIRSTLINE) {
-            i = parse_http_line1(buf, &found_keep_alive);
-            switch (i) {
+            http_response_code = parse_http_line1(buf, &found_keep_alive);
+            switch (http_response_code) {
             case HTTP_STATUS_CODE_OK:
                 rctx->state = OHS_HEADERS;
                 goto next_line;
@@ -767,7 +768,7 @@ next_io:
                 /* fall through */
             default:
                 /* must return content if status >= 400 */
-                rctx->state = i < HTTP_STATUS_CODES_NONFATAL_ERROR
+                rctx->state = http_response_code < HTTP_STATUS_CODES_NONFATAL_ERROR
                     ? OHS_HEADERS_ERROR
                     : OHS_HEADERS;
                 goto next_line; /* continue parsing, also on HTTP error */
@@ -797,6 +798,18 @@ next_io:
             }
             if (OPENSSL_strcasecmp(key, "Content-Type") == 0) {
                 got_text = HAS_CASE_PREFIX(value, "text/");
+                if (got_text 
+                    && rctx->state == OHS_HEADERS
+                    && rctx->expect_asn1 
+                    && http_response_code >= HTTP_STATUS_CODES_NONFATAL_ERROR) {
+                    
+                    if(OSSL_TRACE_ENABLED(HTTP))
+                        OSSL_TRACE2(HTTP, "Expected asn1 content, but got http code %d"
+                            " with Content-Type: %s. Assuming http-level error\n", http_response_code, value);
+
+                    rctx->state = OHS_HEADERS_ERROR;
+                    goto next_line;
+                } 
                 if (rctx->state == OHS_HEADERS
                     && rctx->expected_ct != NULL) {
                     const char *semicolon;
