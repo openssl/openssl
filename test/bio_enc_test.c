@@ -324,54 +324,39 @@ err:
 
 /*
  * Test the do_crypt() example from EVP_EncryptInit.pod documentation.
+ * Uses tmpfile() for portable temp file handling without security issues.
  */
 static int test_do_crypt_roundtrip(void)
 {
     const char *plaintext = "The quick brown fox jumps over the lazy dog.\n";
     FILE *in_file = NULL, *enc_file = NULL, *dec_file = NULL;
-    char *in_path = NULL, *enc_path = NULL, *dec_path = NULL;
     char decrypted[256];
     size_t plaintext_len, dec_len;
     int ret = 0;
 
-    /* Create temp files */
-    if (!TEST_ptr(in_path = tempnam(NULL, "crypt_in"))
-        || !TEST_ptr(enc_path = tempnam(NULL, "crypt_enc"))
-        || !TEST_ptr(dec_path = tempnam(NULL, "crypt_dec")))
+    /* Create temp files using tmpfile() - portable and secure */
+    if (!TEST_ptr(in_file = tmpfile())
+        || !TEST_ptr(enc_file = tmpfile())
+        || !TEST_ptr(dec_file = tmpfile()))
         goto err;
 
     /* Write plaintext to input file */
-    if (!TEST_ptr(in_file = fopen(in_path, "wb")))
-        goto err;
     plaintext_len = strlen(plaintext);
     if (!TEST_size_t_eq(fwrite(plaintext, 1, plaintext_len, in_file), plaintext_len))
         goto err;
-    fclose(in_file);
-    in_file = NULL;
+    rewind(in_file);
 
     /* Encrypt */
-    if (!TEST_ptr(in_file = fopen(in_path, "rb"))
-        || !TEST_ptr(enc_file = fopen(enc_path, "wb")))
-        goto err;
     if (!TEST_int_eq(do_crypt(in_file, enc_file, ENCRYPT), 1))
         goto err;
-    fclose(in_file);
-    fclose(enc_file);
-    in_file = enc_file = NULL;
+    rewind(enc_file);
 
     /* Decrypt */
-    if (!TEST_ptr(enc_file = fopen(enc_path, "rb"))
-        || !TEST_ptr(dec_file = fopen(dec_path, "wb")))
-        goto err;
     if (!TEST_int_eq(do_crypt(enc_file, dec_file, DECRYPT), 1))
         goto err;
-    fclose(enc_file);
-    fclose(dec_file);
-    enc_file = dec_file = NULL;
+    rewind(dec_file);
 
     /* Read back and verify */
-    if (!TEST_ptr(dec_file = fopen(dec_path, "rb")))
-        goto err;
     dec_len = fread(decrypted, 1, sizeof(decrypted) - 1, dec_file);
     decrypted[dec_len] = '\0';
 
@@ -387,18 +372,6 @@ err:
         fclose(enc_file);
     if (dec_file != NULL)
         fclose(dec_file);
-    if (in_path != NULL) {
-        remove(in_path);
-        free(in_path);
-    }
-    if (enc_path != NULL) {
-        remove(enc_path);
-        free(enc_path);
-    }
-    if (dec_path != NULL) {
-        remove(dec_path);
-        free(dec_path);
-    }
     return ret;
 }
 
