@@ -117,6 +117,76 @@ err:
     return testresult;
 }
 
+/*
+ * Test X509v3_addr_get_afi() and X509v3_addr_get_safi() functions.
+ */
+static int test_addr_afi_safi(void)
+{
+    int ret = 0;
+    IPAddrBlocks *addr = NULL;
+    IPAddressFamily *fam = NULL;
+    ASN1_OCTET_STRING *ip1 = NULL, *ip2 = NULL;
+    unsigned char *safi_ptr;
+    unsigned int afi;
+    unsigned int safi = 1; /* unicast */
+
+    /* Create IPAddrBlocks without SAFI */
+    addr = sk_IPAddressFamily_new_null();
+    if (!TEST_ptr(addr))
+        goto end;
+    ip1 = a2i_IPADDRESS("192.168.0.0");
+    ip2 = a2i_IPADDRESS("192.168.0.255");
+    if (!TEST_ptr(ip1) || !TEST_ptr(ip2))
+        goto end;
+    if (!TEST_true(X509v3_addr_add_range(addr, IANA_AFI_IPV4, NULL,
+                                         ip1->data, ip2->data)))
+        goto end;
+
+    /* Test get_afi without SAFI */
+    fam = sk_IPAddressFamily_value(addr, 0);
+    if (!TEST_ptr(fam))
+        goto end;
+    afi = X509v3_addr_get_afi(fam);
+    if (!TEST_uint_eq(afi, IANA_AFI_IPV4))
+        goto end;
+
+    /* Test get_safi returns NULL when no SAFI */
+    safi_ptr = X509v3_addr_get_safi(fam);
+    if (!TEST_ptr_null(safi_ptr))
+        goto end;
+
+    /* Clean up and create IPAddrBlocks with SAFI */
+    sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
+    addr = sk_IPAddressFamily_new_null();
+    if (!TEST_ptr(addr))
+        goto end;
+    if (!TEST_true(X509v3_addr_add_range(addr, IANA_AFI_IPV4, &safi,
+                                         ip1->data, ip2->data)))
+        goto end;
+
+    /* Test get_afi with SAFI present */
+    fam = sk_IPAddressFamily_value(addr, 0);
+    if (!TEST_ptr(fam))
+        goto end;
+    afi = X509v3_addr_get_afi(fam);
+    if (!TEST_uint_eq(afi, IANA_AFI_IPV4))
+        goto end;
+
+    /* Test get_safi returns correct value when SAFI present */
+    safi_ptr = X509v3_addr_get_safi(fam);
+    if (!TEST_ptr(safi_ptr))
+        goto end;
+    if (!TEST_uint_eq(*safi_ptr, 1))
+        goto end;
+
+    ret = 1;
+end:
+    sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
+    ASN1_OCTET_STRING_free(ip1);
+    ASN1_OCTET_STRING_free(ip2);
+    return ret;
+}
+
 static struct ip_ranges_st {
     const unsigned int afi;
     const char *ip1;
@@ -474,6 +544,7 @@ int setup_tests(void)
     ADD_TEST(test_pathlen);
 #ifndef OPENSSL_NO_RFC3779
     ADD_TEST(test_asid);
+    ADD_TEST(test_addr_afi_safi);
     ADD_TEST(test_addr_ranges);
     ADD_TEST(test_ext_syntax);
     ADD_TEST(test_addr_fam_len);
