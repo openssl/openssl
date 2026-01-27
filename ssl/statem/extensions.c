@@ -630,7 +630,20 @@ int tls_collect_extensions(SSL_CONNECTION *s, PACKET *packet,
             && !((context & SSL_EXT_TLS1_2_SERVER_HELLO) != 0
                 && type == TLSEXT_TYPE_cryptopro_bug)
 #endif
-        ) {
+            /*
+             * Skip the unsolicited extension check for version-specific
+             * extensions when parsing with a combined TLS1.2/TLS1.3 context.
+             * At this point we don't yet know the actual protocol version.
+             * The version-specific validation (tls_validate_all_contexts)
+             * that runs after version selection will catch extensions that
+             * are invalid for the negotiated version and return the correct
+             * SSL_AD_ILLEGAL_PARAMETER alert per RFC 8446 section 4.2.
+             */
+            && !((context & SSL_EXT_TLS1_2_SERVER_HELLO) != 0
+                && (context & SSL_EXT_TLS1_3_SERVER_HELLO) != 0
+                && (ext_defs[idx].context
+                       & (SSL_EXT_TLS1_2_SERVER_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO))
+                    != (SSL_EXT_TLS1_2_SERVER_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO))) {
             SSLfatal(s, SSL_AD_UNSUPPORTED_EXTENSION,
                 SSL_R_UNSOLICITED_EXTENSION);
             goto err;
