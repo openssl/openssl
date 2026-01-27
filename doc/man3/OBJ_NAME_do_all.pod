@@ -1,0 +1,122 @@
+=pod
+
+=head1 NAME
+
+OBJ_NAME_do_all, OBJ_NAME_do_all_sorted - iterate over objects of a given type
+
+=head1 SYNOPSIS
+
+ #include <openssl/objects.h>
+
+ typedef struct obj_name_st {
+     int type;
+     int alias;
+     const char *name;
+     const char *data;
+ } OBJ_NAME;
+
+ void OBJ_NAME_do_all(int type, void (*fn)(const OBJ_NAME *, void *arg),
+                      void *arg);
+ void OBJ_NAME_do_all_sorted(int type,
+                             void (*fn)(const OBJ_NAME *, void *arg),
+                             void *arg);
+
+=head1 DESCRIPTION
+
+OBJ_NAME_do_all() calls the function I<fn> for each object of type I<type>
+in the internal object name table. The I<arg> value is passed as the second
+argument to each call of I<fn>. The order in which objects are iterated is
+undefined.
+
+OBJ_NAME_do_all_sorted() is similar to OBJ_NAME_do_all() except that the
+objects are iterated in sorted order by name.
+
+The I<type> argument specifies which category of objects to iterate over.
+The following type values are defined:
+
+=over 4
+
+=item B<OBJ_NAME_TYPE_MD_METH>
+
+Digest methods (message digests).
+
+=item B<OBJ_NAME_TYPE_CIPHER_METH>
+
+Cipher methods.
+
+=item B<OBJ_NAME_TYPE_PKEY_METH>
+
+Public key methods.
+
+=item B<OBJ_NAME_TYPE_COMP_METH>
+
+Compression methods.
+
+=item B<OBJ_NAME_TYPE_MAC_METH>
+
+MAC methods.
+
+=item B<OBJ_NAME_TYPE_KDF_METH>
+
+KDF methods.
+
+=back
+
+The callback function I<fn> receives a pointer to an B<OBJ_NAME> structure
+containing information about each object. The I<type> field indicates the
+object type. The I<alias> field is nonzero if this name is an alias for
+another name. The I<name> field contains the object name. The I<data> field
+contains type-specific data associated with the object.
+
+=head1 NOTES
+
+These functions are typically used to enumerate available algorithms,
+for example to display a list of supported digest or cipher algorithms.
+
+B<These functions are not thread safe.> They must not be called concurrently
+with functions that modify the object name table, such as OBJ_NAME_add() or
+OBJ_NAME_remove(). The object enumeration functions do not acquire locks,
+whereas the modification functions do. Calling these functions concurrently
+with modifications to the object table may result in undefined behavior.
+
+In practice, this means these functions should only be called during
+single-threaded initialization or after all objects have been added to
+the table.
+
+=head1 RETURN VALUES
+
+OBJ_NAME_do_all() and OBJ_NAME_do_all_sorted() do not return a value.
+
+=head1 EXAMPLES
+
+Print all available digest algorithm names:
+
+ static void print_digest(const OBJ_NAME *name, void *arg)
+ {
+     if (name->alias == 0)
+         printf("%s\n", name->name);
+ }
+
+ void list_digests(void)
+ {
+     OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MD_METH, print_digest, NULL);
+ }
+
+=head1 SEE ALSO
+
+L<OBJ_nid2obj(3)>, L<EVP_MD_do_all_provided(3)>, L<EVP_CIPHER_do_all_provided(3)>
+
+=head1 HISTORY
+
+OBJ_NAME_do_all() and OBJ_NAME_do_all_sorted() were added in OpenSSL 0.9.7.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
