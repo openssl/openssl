@@ -953,6 +953,7 @@ int X509v3_addr_add_range(IPAddrBlocks *addr,
     const unsigned afi, const unsigned *safi,
     unsigned char *min, unsigned char *max);
 unsigned X509v3_addr_get_afi(const IPAddressFamily *f);
+unsigned char *X509v3_addr_get_safi(const IPAddressFamily *f);
 int X509v3_addr_get_range(IPAddressOrRange *aor, const unsigned afi,
     unsigned char *min, unsigned char *max,
     const int length);
