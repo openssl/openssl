@@ -27,7 +27,7 @@ OpenSSL Releases
 OpenSSL 3.4
 -----------
 
-### Changes between 3.4.3 and 3.4.4 [xx XXX xxxx]
+### Changes between 3.4.3 and 3.4.4 [27 Jan 2026]
 
  * Fixed Improper validation of PBMAC1 parameters in PKCS#12 MAC verification.
 
