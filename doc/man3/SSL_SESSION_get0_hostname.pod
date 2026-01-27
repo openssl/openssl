@@ -24,9 +24,10 @@ SSL_SESSION_set1_alpn_selected
 =head1 DESCRIPTION
 
 SSL_SESSION_get0_hostname() retrieves the Server Name Indication (SNI) value
-that was sent by the client when the session was created if the server
-acknowledged the client's SNI extension by including an empty SNI extension
-in response. Otherwise NULL is returned.
+associated with the session. For TLSv1.3, this returns the hostname sent by the
+client. For TLSv1.2 and earlier, this returns the hostname only if the server
+acknowledged the extension. If no hostname is associated with the session,
+NULL is returned.
 
 The value returned is a pointer to memory maintained within B<s> and
 should not be free'd.
