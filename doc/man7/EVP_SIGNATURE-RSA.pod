@@ -3,7 +3,7 @@
 =head1 NAME
 
 EVP_SIGNATURE-RSA
-- The EVP_PKEY RSA signature implementation
+- The EVP_PKEY B<RSA> signature implementation
 
 =head1 DESCRIPTION
 

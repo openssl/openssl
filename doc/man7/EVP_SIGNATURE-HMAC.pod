@@ -4,7 +4,7 @@
 
 EVP_SIGNATURE-HMAC, EVP_SIGNATURE-Siphash, EVP_SIGNATURE-Poly1305,
 EVP_SIGNATURE-CMAC
-- The legacy B<EVP_PKEY> MAC signature implementations
+- The legacy EVP_PKEY B<MAC> signature implementations
 
 =head1 DESCRIPTION
 
