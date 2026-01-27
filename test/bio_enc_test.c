@@ -266,6 +266,141 @@ static int test_bio_enc_chacha20_poly1305(int idx)
 #endif
 #endif
 
+/*
+ * Example function from EVP_EncryptInit.pod documentation.
+ * General encryption and decryption function using FILE I/O and AES128.
+ */
+static int do_crypt(FILE *in, FILE *out, int do_encrypt)
+{
+    /* Allow enough space in output buffer for additional block */
+    unsigned char inbuf[1024], outbuf[1024 + EVP_MAX_BLOCK_LENGTH];
+    int inlen, outlen;
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    int ret = 0;
+    /*
+     * Bogus key and IV: we'd normally set these from
+     * another source.
+     */
+    unsigned char key[] = "0123456789abcdeF";
+    unsigned char iv[] = "1234567887654321";
+
+    ctx = EVP_CIPHER_CTX_new();
+    cipher = EVP_CIPHER_fetch(NULL, "AES-128-CBC", NULL);
+    if (ctx == NULL || cipher == NULL)
+        goto err;
+
+    /* Don't set key or IV right away; we want to check lengths */
+    if (!EVP_CipherInit_ex2(ctx, cipher, NULL, NULL,
+                            do_encrypt, NULL))
+        goto err;
+
+    OPENSSL_assert(EVP_CIPHER_CTX_get_key_length(ctx) == 16);
+    OPENSSL_assert(EVP_CIPHER_CTX_get_iv_length(ctx) == 16);
+
+    /* Now we can set key and IV */
+    if (!EVP_CipherInit_ex2(ctx, NULL, key, iv, do_encrypt, NULL))
+        goto err;
+
+    for (;;) {
+        inlen = fread(inbuf, 1, 1024, in);
+        if (inlen <= 0)
+            break;
+        if (!EVP_CipherUpdate(ctx, outbuf, &outlen, inbuf, inlen))
+            goto err;
+        fwrite(outbuf, 1, outlen, out);
+    }
+    if (!EVP_CipherFinal_ex(ctx, outbuf, &outlen))
+        goto err;
+    fwrite(outbuf, 1, outlen, out);
+
+    ret = 1;
+err:
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
+/*
+ * Test the do_crypt() example from EVP_EncryptInit.pod documentation.
+ */
+static int test_do_crypt_roundtrip(void)
+{
+    const char *plaintext = "The quick brown fox jumps over the lazy dog.\n";
+    FILE *in_file = NULL, *enc_file = NULL, *dec_file = NULL;
+    char *in_path = NULL, *enc_path = NULL, *dec_path = NULL;
+    char decrypted[256];
+    size_t plaintext_len, dec_len;
+    int ret = 0;
+
+    /* Create temp files */
+    if (!TEST_ptr(in_path = tempnam(NULL, "crypt_in"))
+        || !TEST_ptr(enc_path = tempnam(NULL, "crypt_enc"))
+        || !TEST_ptr(dec_path = tempnam(NULL, "crypt_dec")))
+        goto err;
+
+    /* Write plaintext to input file */
+    if (!TEST_ptr(in_file = fopen(in_path, "wb")))
+        goto err;
+    plaintext_len = strlen(plaintext);
+    if (!TEST_size_t_eq(fwrite(plaintext, 1, plaintext_len, in_file), plaintext_len))
+        goto err;
+    fclose(in_file);
+    in_file = NULL;
+
+    /* Encrypt */
+    if (!TEST_ptr(in_file = fopen(in_path, "rb"))
+        || !TEST_ptr(enc_file = fopen(enc_path, "wb")))
+        goto err;
+    if (!TEST_int_eq(do_crypt(in_file, enc_file, ENCRYPT), 1))
+        goto err;
+    fclose(in_file);
+    fclose(enc_file);
+    in_file = enc_file = NULL;
+
+    /* Decrypt */
+    if (!TEST_ptr(enc_file = fopen(enc_path, "rb"))
+        || !TEST_ptr(dec_file = fopen(dec_path, "wb")))
+        goto err;
+    if (!TEST_int_eq(do_crypt(enc_file, dec_file, DECRYPT), 1))
+        goto err;
+    fclose(enc_file);
+    fclose(dec_file);
+    enc_file = dec_file = NULL;
+
+    /* Read back and verify */
+    if (!TEST_ptr(dec_file = fopen(dec_path, "rb")))
+        goto err;
+    dec_len = fread(decrypted, 1, sizeof(decrypted) - 1, dec_file);
+    decrypted[dec_len] = '\0';
+
+    if (!TEST_size_t_eq(dec_len, plaintext_len)
+        || !TEST_mem_eq(decrypted, dec_len, plaintext, plaintext_len))
+        goto err;
+
+    ret = 1;
+err:
+    if (in_file != NULL)
+        fclose(in_file);
+    if (enc_file != NULL)
+        fclose(enc_file);
+    if (dec_file != NULL)
+        fclose(dec_file);
+    if (in_path != NULL) {
+        remove(in_path);
+        free(in_path);
+    }
+    if (enc_path != NULL) {
+        remove(enc_path);
+        free(enc_path);
+    }
+    if (dec_path != NULL) {
+        remove(dec_path);
+        free(dec_path);
+    }
+    return ret;
+}
+
 static int test_bio_enc_eof_read_flush(void)
 {
     /* Length chosen to ensure base64 encoding employs padding */
@@ -340,5 +475,6 @@ int setup_tests(void)
 #endif
 #endif
     ADD_TEST(test_bio_enc_eof_read_flush);
+    ADD_TEST(test_do_crypt_roundtrip);
     return 1;
 }
