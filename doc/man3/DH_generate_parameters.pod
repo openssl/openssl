@@ -3,7 +3,7 @@
 =head1 NAME
 
 DH_generate_parameters_ex, DH_generate_parameters,
-DH_check, DH_check_params,
+DH_check, DH_check_params, DH_check_pub_key,
 DH_check_ex, DH_check_params_ex, DH_check_pub_key_ex
 - generate and check Diffie-Hellman
 parameters
@@ -20,6 +20,7 @@ see L<openssl_user_macros(7)>:
 
  int DH_check(DH *dh, int *codes);
  int DH_check_params(DH *dh, int *codes);
+ int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *codes);
 
  int DH_check_ex(const DH *dh);
  int DH_check_params_ex(const DH *dh);
@@ -132,10 +133,10 @@ If 0 is returned or B<*codes> is set to a nonzero value the supplied
 parameters should not be used for Diffie-Hellman operations otherwise
 the security properties of the key exchange are not guaranteed.
 
-DH_check_ex(), DH_check_params() and DH_check_pub_key_ex() are similar to
-DH_check() and DH_check_params() respectively, but the error reasons are added
-to the thread's error queue instead of provided as return values from the
-function.
+DH_check_ex(), DH_check_params_ex() and DH_check_pub_key_ex() are similar to
+DH_check(), DH_check_params() and DH_check_pub_key() respectively, but the
+error reasons are added to the thread's error queue instead of provided as
+return values from the function.
 
 =head1 RETURN VALUES
 
