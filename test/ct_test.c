@@ -157,8 +157,8 @@ static int compare_extension_printout(X509_EXTENSION *extension,
     int result = 0;
 
     if (!TEST_ptr(text_buffer = BIO_new(BIO_s_mem()))
-        || !TEST_true(X509V3_EXT_print(text_buffer, extension,
-            X509V3_EXT_DEFAULT, 0)))
+        || !TEST_int_gt(X509V3_EXT_print(text_buffer, extension,
+            X509V3_EXT_DEFAULT, 0), 0))
         goto end;
 
     /* Append \n because it's easier to create files that end with one. */

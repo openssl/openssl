@@ -60,7 +60,7 @@ int TS_ext_print_bio(BIO *bio, const STACK_OF(X509_EXTENSION) *extensions)
             return 0;
         critical = X509_EXTENSION_get_critical(ex);
         BIO_printf(bio, ":%s\n", critical ? " critical" : "");
-        if (!X509V3_EXT_print(bio, ex, 0, 4)) {
+        if (X509V3_EXT_print(bio, ex, 0, 4) <= 0) {
             BIO_printf(bio, "%4s", "");
             ASN1_STRING_print(bio, X509_EXTENSION_get_data(ex));
         }
