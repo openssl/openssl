@@ -11,6 +11,7 @@
 #include <openssl/evp.h>
 #include <openssl/bio.h>
 #include <openssl/rand.h>
+#include <openssl/crypto.h>
 
 #include "testutil.h"
 
@@ -401,6 +402,56 @@ err:
     return ret;
 }
 
+/*
+ * Test the EVP_BytesToKey example from PEM_read_bio_PrivateKey.pod documentation.
+ * This tests key derivation using EVP_CIPHER_fetch and EVP_MD_fetch.
+ */
+static int test_evp_bytes_to_key(void)
+{
+    EVP_CIPHER *cipher = NULL;
+    EVP_MD *md = NULL;
+    unsigned char *key = NULL;
+    unsigned int nkey, niv;
+    unsigned char iv[EVP_MAX_IV_LENGTH];
+    unsigned char salt[8] = { 0x3F, 0x17, 0xF5, 0x31, 0x6E, 0x2B, 0xAC, 0x89 };
+    const char *password = "testpassword";
+    int rc;
+    int ret = 0;
+
+    cipher = EVP_CIPHER_fetch(NULL, "DES-EDE3-CBC", NULL);
+    md = EVP_MD_fetch(NULL, "MD5", NULL);
+    if (!TEST_ptr(cipher) || !TEST_ptr(md))
+        goto err;
+
+    nkey = EVP_CIPHER_get_key_length(cipher);
+    niv = EVP_CIPHER_get_iv_length(cipher);
+
+    if (!TEST_uint_eq(nkey, 24)  /* 3DES key length */
+        || !TEST_uint_eq(niv, 8)) /* 3DES IV length */
+        goto err;
+
+    key = OPENSSL_malloc(nkey);
+    if (!TEST_ptr(key))
+        goto err;
+
+    memcpy(iv, salt, niv);
+    rc = EVP_BytesToKey(cipher, md, iv /*salt*/, (unsigned char *)password,
+                        strlen(password), 1, key, NULL /*iv*/);
+    if (!TEST_int_eq(rc, (int)nkey))
+        goto err;
+
+    /* Verify the derived key is non-zero (basic sanity check) */
+    if (!TEST_false(key[0] == 0 && key[1] == 0 && key[2] == 0 && key[3] == 0))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(key);
+    EVP_MD_free(md);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
 static int test_bio_enc_eof_read_flush(void)
 {
     /* Length chosen to ensure base64 encoding employs padding */
@@ -476,5 +527,6 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_bio_enc_eof_read_flush);
     ADD_TEST(test_do_crypt_roundtrip);
+    ADD_TEST(test_evp_bytes_to_key);
     return 1;
 }

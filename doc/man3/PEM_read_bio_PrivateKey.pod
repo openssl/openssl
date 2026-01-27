@@ -443,20 +443,35 @@ the function.
 
 The pseudo code to derive the key would look similar to:
 
- EVP_CIPHER* cipher = EVP_des_ede3_cbc();
- EVP_MD* md = EVP_md5();
+ EVP_CIPHER *cipher = NULL;
+ EVP_MD *md = NULL;
+ unsigned char *key = NULL;
+ unsigned int nkey, niv;
+ unsigned char iv[EVP_MAX_IV_LENGTH];
+ int rc;
 
- unsigned int nkey = EVP_CIPHER_get_key_length(cipher);
- unsigned int niv = EVP_CIPHER_get_iv_length(cipher);
- unsigned char key[nkey];
- unsigned char iv[niv];
+ cipher = EVP_CIPHER_fetch(NULL, "DES-EDE3-CBC", NULL);
+ md = EVP_MD_fetch(NULL, "MD5", NULL);
+ if (cipher == NULL || md == NULL)
+     goto err;
+
+ nkey = EVP_CIPHER_get_key_length(cipher);
+ niv = EVP_CIPHER_get_iv_length(cipher);
+ key = OPENSSL_malloc(nkey);
+ if (key == NULL)
+     goto err;
 
  memcpy(iv, HexToBin("3F17F5316E2BAC89"), niv);
  rc = EVP_BytesToKey(cipher, md, iv /*salt*/, pword, plen, 1, key, NULL /*iv*/);
- if (rc != nkey)
-     /* Error */
+ if (rc != (int)nkey)
+     goto err;
 
  /* On success, use key and iv to initialize the cipher */
+
+ err:
+ OPENSSL_free(key);
+ EVP_MD_free(md);
+ EVP_CIPHER_free(cipher);
 
 =head1 BUGS
 
