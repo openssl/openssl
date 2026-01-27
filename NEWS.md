@@ -23,6 +23,10 @@ OpenSSL Releases
 OpenSSL 3.5
 -----------
 
+### Major changes between OpenSSL 3.5.5 and OpenSSL 3.5.6 [under development]
+
+  * none
+
 ### Major changes between OpenSSL 3.5.4 and OpenSSL 3.5.5 [27 Jan 2026]
 
 OpenSSL 3.5.5 is a security patch release. The most severe CVE fixed in this
