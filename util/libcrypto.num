@@ -1597,6 +1597,7 @@ OSSL_HTTP_close                         ?	4_0_0	EXIST::FUNCTION:HTTP
 OSSL_HTTP_parse_url                     ?	4_0_0	EXIST::FUNCTION:HTTP
 OSSL_HTTP_adapt_proxy                   ?	4_0_0	EXIST::FUNCTION:HTTP
 OSSL_HTTP_REQ_CTX_proxy_connect         ?	4_0_0	EXIST::FUNCTION:HTTP
+OSSL_HTTP_REQ_CTX_get0_server           ?	4_0_0	EXIST::FUNCTION:HTTP
 IDEA_options                            ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,IDEA
 IDEA_ecb_encrypt                        ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,IDEA
 IDEA_set_encrypt_key                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,IDEA

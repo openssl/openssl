@@ -2607,6 +2607,20 @@ void store_setup_crl_download(X509_STORE *st)
 }
 
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
+static int host_is_ip_address(const char *host)
+{
+    ASN1_OCTET_STRING *str;
+
+    if (host == NULL)
+        return 0;
+
+    str = a2i_IPADDRESS(host);
+    ASN1_OCTET_STRING_free(str);
+    return str != NULL;
+}
+#endif
+
+#if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
 static const char *tls_error_hint(void)
 {
     unsigned long err = ERR_peek_error();
@@ -2662,6 +2676,7 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect,
     if (connect) {
         SSL *ssl;
         BIO *sbio = NULL;
+        const char *server = OSSL_HTTP_REQ_CTX_get0_server(rctx); /* may be NULL */
 
         if (detail)
             return NULL; /* need the extended callback style to access rctx */
@@ -2676,8 +2691,15 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect,
             BIO_free(sbio);
             return NULL;
         }
+
         SSL_set_connect_state(ssl);
         BIO_set_ssl(sbio, ssl, BIO_CLOSE);
+        if (host_is_ip_address(server) /* set SNI only on actual hostname */
+            && !SSL_set_tlsext_host_name(ssl, server)) {
+            BIO_free(sbio);
+            SSL_free(ssl);
+            return NULL;
+        }
 
         bio = BIO_push(sbio, bio);
     } else { /* disconnect from TLS */

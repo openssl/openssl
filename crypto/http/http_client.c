@@ -143,6 +143,11 @@ void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx)
     OPENSSL_free(rctx);
 }
 
+const char *OSSL_HTTP_REQ_CTX_get0_server(const OSSL_HTTP_REQ_CTX *rctx)
+{
+    return rctx->server;
+}
+
 BIO *OSSL_HTTP_REQ_CTX_get0_mem_bio(const OSSL_HTTP_REQ_CTX *rctx)
 {
     if (rctx == NULL) {

@@ -137,7 +137,7 @@ OpenSSL 4.0
    *Ryan Hooper*
 
  * Fixed the design of the connection callback function of type `OSSL_HTTP_bio_cb_t`
-   and added `OSSL_HTTP_REQ_CTX_proxy_connect()`.
+   and added `OSSL_HTTP_REQ_CTX_proxy_connect()` and `OSSL_HTTP_REQ_CTX_get0_server()`.
 
    This work was sponsored by Siemens AG.
 
