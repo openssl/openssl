@@ -516,17 +516,25 @@ Write a certificate to a BIO:
      /* Error */
 
 Write a private key (using traditional format) to a BIO using
-triple DES encryption, the pass phrase is prompted for:
+AES-256-CBC encryption, the pass phrase is prompted for:
 
- if (!PEM_write_bio_PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, NULL))
+ EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, "AES-256-CBC", NULL);
+ if (cipher == NULL)
      /* Error */
+ if (!PEM_write_bio_PrivateKey(bp, key, cipher, NULL, 0, 0, NULL))
+     /* Error */
+ EVP_CIPHER_free(cipher);
 
-Write a private key (using PKCS#8 format) to a BIO using triple
-DES encryption, using the pass phrase "hello":
+Write a private key (using PKCS#8 format) to a BIO using
+AES-256-CBC encryption, using the pass phrase "hello":
 
- if (!PEM_write_bio_PKCS8PrivateKey(bp, key, EVP_des_ede3_cbc(),
+ EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, "AES-256-CBC", NULL);
+ if (cipher == NULL)
+     /* Error */
+ if (!PEM_write_bio_PKCS8PrivateKey(bp, key, cipher,
                                     NULL, 0, 0, "hello"))
      /* Error */
+ EVP_CIPHER_free(cipher);
 
 Read a private key from a BIO using a pass phrase callback:
 
