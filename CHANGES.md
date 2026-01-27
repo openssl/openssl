@@ -28,7 +28,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
-### Changes between 3.0.18 and 3.0.19 [xx XXX xxxx]
+### Changes between 3.0.18 and 3.0.19 [27 Jan 2026]
 
  * Fixed Stack buffer overflow in CMS `AuthEnvelopedData` parsing.
 
