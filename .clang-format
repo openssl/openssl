@@ -150,6 +150,7 @@ StatementMacros:
   - "IMPLEMENT_DIGEST"
   - "IMPLEMENT_digest_functions"
   - "IMPLEMENT_digest_functions_with_settable_ctx"
+  - "IMPLEMENT_digest_functions_with_serialize"
   - "IMPLEMENT_dtls1_meth_func"
   - "IMPLEMENT_DYNAMIC_BIND_FN"
   - "IMPLEMENT_DYNAMIC_CHECK_FN"
