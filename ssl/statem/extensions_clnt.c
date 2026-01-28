@@ -892,7 +892,7 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
         SSL_SESSION_free(s->psksession);
         s->psksession = psksess;
     }
-    if (psksess != NULL) {
+    if (s->psksession != NULL) {
         OPENSSL_free(s->psksession_id);
         s->psksession_id = OPENSSL_memdup(id, idlen);
         if (s->psksession_id == NULL) {
@@ -905,11 +905,11 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
 
     if (s->early_data_state != SSL_EARLY_DATA_CONNECTING
         || (s->session->ext.max_early_data == 0
-            && (psksess == NULL || psksess->ext.max_early_data == 0))) {
+            && (s->psksession == NULL || s->psksession->ext.max_early_data == 0))) {
         s->max_early_data = 0;
         return EXT_RETURN_NOT_SENT;
     }
-    edsess = s->session->ext.max_early_data != 0 ? s->session : psksess;
+    edsess = s->session->ext.max_early_data != 0 ? s->session : s->psksession;
     s->max_early_data = edsess->ext.max_early_data;
 
     if (edsess->ext.hostname != NULL) {
