@@ -741,8 +741,8 @@ static int xname_cmp(const X509_NAME *a, const X509_NAME *b)
     /* X509_NAME_cmp() itself casts away constness in this way, so
      * assume it's safe:
      */
-    alen = i2d_X509_NAME((X509_NAME *)a, &abuf);
-    blen = i2d_X509_NAME((X509_NAME *)b, &bbuf);
+    alen = i2d_X509_NAME(a, &abuf);
+    blen = i2d_X509_NAME(b, &bbuf);
 
     if (alen < 0 || blen < 0)
         ret = -2;
@@ -765,7 +765,7 @@ static int xname_sk_cmp(const X509_NAME *const *a, const X509_NAME *const *b)
 static unsigned long xname_hash(const X509_NAME *a)
 {
     /* This returns 0 also if SHA1 is not available */
-    return X509_NAME_hash_ex((X509_NAME *)a, NULL, NULL, NULL);
+    return X509_NAME_hash_ex(a, NULL, NULL, NULL);
 }
 
 STACK_OF(X509_NAME) *SSL_load_client_CA_file_ex(const char *file,
