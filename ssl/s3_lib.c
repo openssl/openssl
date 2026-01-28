@@ -4156,7 +4156,7 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
     switch (cmd) {
 #if !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_DH_CB:
-        s->cert->dh_tmp_cb = (DH * (*)(SSL *, int, int)) fp;
+        s->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
         ret = 1;
         break;
 #endif
@@ -4404,7 +4404,7 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
     switch (cmd) {
 #if !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_DH_CB: {
-        ctx->cert->dh_tmp_cb = (DH * (*)(SSL *, int, int)) fp;
+        ctx->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
     } break;
 #endif
     case SSL_CTRL_SET_TLSEXT_SERVERNAME_CB:
