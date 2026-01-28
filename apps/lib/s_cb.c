@@ -471,7 +471,7 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
     int argi, long argl, int ret, size_t *processed)
 {
     BIO *out;
-    BIO_MMSG_CB_ARGS *mmsgargs;
+    const BIO_MMSG_CB_ARGS *mmsgargs;
     size_t i;
 
     out = (BIO *)BIO_get_callback_arg(bio);
@@ -502,14 +502,14 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
         break;
 
     case (BIO_CB_RECVMMSG | BIO_CB_RETURN):
-        mmsgargs = (BIO_MMSG_CB_ARGS *)argp;
+        mmsgargs = (const BIO_MMSG_CB_ARGS *)argp;
         if (ret > 0) {
             for (i = 0; i < *(mmsgargs->msgs_processed); i++) {
                 BIO_MSG *msg = (BIO_MSG *)((char *)mmsgargs->msg
                     + (i * mmsgargs->stride));
 
                 BIO_printf(out, "read from %p [%p] (%zu bytes => %zu (0x%zX))\n",
-                    (void *)bio, (void *)msg->data, msg->data_len,
+                    (void *)bio, msg->data, msg->data_len,
                     msg->data_len, msg->data_len);
                 if (msg->data_len <= INT_MAX)
                     BIO_dump(out, msg->data, (int)msg->data_len);
@@ -518,19 +518,19 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
             BIO_MSG *msg = mmsgargs->msg;
 
             BIO_printf(out, "read from %p [%p] (%zu bytes => %d)\n",
-                (void *)bio, (void *)msg->data, msg->data_len, ret);
+                (void *)bio, msg->data, msg->data_len, ret);
         }
         break;
 
     case (BIO_CB_SENDMMSG | BIO_CB_RETURN):
-        mmsgargs = (BIO_MMSG_CB_ARGS *)argp;
+        mmsgargs = (const BIO_MMSG_CB_ARGS *)argp;
         if (ret > 0) {
             for (i = 0; i < *(mmsgargs->msgs_processed); i++) {
                 BIO_MSG *msg = (BIO_MSG *)((char *)mmsgargs->msg
                     + (i * mmsgargs->stride));
 
                 BIO_printf(out, "write to %p [%p] (%zu bytes => %zu (0x%zX))\n",
-                    (void *)bio, (void *)msg->data, msg->data_len,
+                    (void *)bio, msg->data, msg->data_len,
                     msg->data_len, msg->data_len);
                 if (msg->data_len <= INT_MAX)
                     BIO_dump(out, msg->data, (int)msg->data_len);
@@ -539,7 +539,7 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
             BIO_MSG *msg = mmsgargs->msg;
 
             BIO_printf(out, "write to %p [%p] (%zu bytes => %d)\n",
-                (void *)bio, (void *)msg->data, msg->data_len, ret);
+                (void *)bio, msg->data, msg->data_len, ret);
         }
         break;
 
