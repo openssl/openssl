@@ -259,7 +259,7 @@ The standard parameter names are:
 Its value is the MAC key as an array of bytes.
 
 For MACs that use an underlying computation algorithm, the algorithm
-must be set first, see parameter names "algorithm" below.
+must be set first, see the "cipher" and "digest" parameters below.
 
 =item "iv" (B<OSSL_MAC_PARAM_IV>) <octet string>
 
