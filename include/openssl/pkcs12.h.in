@@ -101,11 +101,11 @@ typedef struct pkcs12_bag_st PKCS12_BAGS;
 
 #endif
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
-OSSL_DEPRECATEDIN_1_1_0 ASN1_TYPE *PKCS12_get_attr(const PKCS12_SAFEBAG *bag,
+OSSL_DEPRECATEDIN_1_1_0 const ASN1_TYPE *PKCS12_get_attr(const PKCS12_SAFEBAG *bag,
     int attr_nid);
 #endif
 
-ASN1_TYPE *PKCS8_get_attr(PKCS8_PRIV_KEY_INFO *p8, int attr_nid);
+const ASN1_TYPE *PKCS8_get_attr(PKCS8_PRIV_KEY_INFO *p8, int attr_nid);
 int PKCS12_mac_present(const PKCS12 *p12);
 void PKCS12_get0_mac(const ASN1_OCTET_STRING **pmac,
     const X509_ALGOR **pmacalg,
@@ -206,7 +206,7 @@ int PKCS12_add1_attr_by_NID(PKCS12_SAFEBAG *bag, int nid, int type,
 int PKCS12_add1_attr_by_txt(PKCS12_SAFEBAG *bag, const char *attrname, int type,
     const unsigned char *bytes, int len);
 int PKCS8_add_keyusage(PKCS8_PRIV_KEY_INFO *p8, int usage);
-ASN1_TYPE *PKCS12_get_attr_gen(const STACK_OF(X509_ATTRIBUTE) *attrs,
+const ASN1_TYPE *PKCS12_get_attr_gen(const STACK_OF(X509_ATTRIBUTE) *attrs,
     int attr_nid);
 char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag);
 const STACK_OF(X509_ATTRIBUTE) *
