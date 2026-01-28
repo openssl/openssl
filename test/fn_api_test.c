@@ -163,7 +163,7 @@ static int test_add_common(struct test_case_st test_case)
         || !TEST_true(ossl_fn_set_words(fn2, n2, n2_limbs))
         || !TEST_ptr(res = OSSL_FN_new_limbs(res_limbs))
         || !TEST_true(pollute(res, 0, res_limbs))) {
-        res = 0;
+        ret = 0;
         /* There's no way to continue tests in this case */
         goto end;
     }
@@ -341,7 +341,7 @@ static int test_sub_common(struct test_case_st test_case)
         || !TEST_true(ossl_fn_set_words(fn2, n2, n2_limbs))
         || !TEST_ptr(res = OSSL_FN_new_limbs(res_limbs))
         || !TEST_true(pollute(res, 0, res_limbs))) {
-        res = 0;
+        ret = 0;
         /* There's no way to continue tests in this case */
         goto end;
     }
@@ -574,11 +574,11 @@ static int test_mul_feature_r_is_operand(int i)
         if (res == a) {
             if (!TEST_mem_eq(u, ex_limbs * OSSL_FN_BYTES,
                     ex_data, ex_limbs * OSSL_FN_BYTES))
-                res = 0;
+                ret = 0;
         } else {
             if (!TEST_mem_eq(u, a_limbs * OSSL_FN_BYTES,
                     a_data, a_limbs * OSSL_FN_BYTES))
-                res = 0;
+                ret = 0;
         }
     }
 
@@ -586,11 +586,11 @@ static int test_mul_feature_r_is_operand(int i)
         if (res == b) {
             if (!TEST_mem_eq(u, ex_limbs * OSSL_FN_BYTES,
                     ex_data, ex_limbs * OSSL_FN_BYTES))
-                res = 0;
+                ret = 0;
         } else {
             if (!TEST_mem_eq(u, b_limbs * OSSL_FN_BYTES,
                     b_data, b_limbs * OSSL_FN_BYTES))
-                res = 0;
+                ret = 0;
         }
     }
 
@@ -626,7 +626,7 @@ static int test_mul_common(struct test_case_st test_case)
         || !TEST_true(ossl_fn_set_words(fn1, n1, n1_limbs))
         || !TEST_true(ossl_fn_set_words(fn2, n2, n2_limbs))
         || !TEST_ptr(res = OSSL_FN_new_limbs(res_limbs))) {
-        res = 0;
+        ret = 0;
         /* There's no way to continue tests in this case */
         goto end;
     }
