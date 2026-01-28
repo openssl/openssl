@@ -2772,6 +2772,12 @@ __owur int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL_CONNECTION *s);
 
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
+#define TLS1_GROUPS_RETURN_NUMBER -1
+#define TLS1_GROUPS_RETURN_TMP_ID -2
+#define TLS1_GROUPS_FFDHE_GROUPS 0
+#define TLS1_GROUPS_NON_FFDHE_GROUPS 1
+#define TLS1_GROUPS_ALL_GROUPS 2
+
 __owur const TLS_GROUP_INFO *tls1_group_id_lookup(SSL_CTX *ctx, uint16_t curve_id);
 __owur const char *tls1_group_id2name(SSL_CTX *ctx, uint16_t group_id);
 __owur int tls1_group_id2nid(uint16_t group_id, int include_unknown);
@@ -2783,7 +2789,7 @@ __owur int tls1_get0_implemented_groups(int min_proto_version,
     TLS_GROUP_INFO *grps,
     size_t num, long all,
     STACK_OF(OPENSSL_CSTRING) *out);
-__owur uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch);
+__owur uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch, int groups);
 __owur int tls1_set_groups(uint16_t **grpext, size_t *grpextlen,
     uint16_t **ksext, size_t *ksextlen,
     size_t **tplext, size_t *tplextlen,
@@ -2795,10 +2801,11 @@ __owur int tls1_set_groups_list(SSL_CTX *ctx,
     const char *str);
 __owur EVP_PKEY *ssl_generate_pkey_group(SSL_CONNECTION *s, uint16_t id);
 __owur int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id, int minversion,
-    int maxversion, int isec, int *okfortls13);
+    int maxversion, int *okfortls13, const TLS_GROUP_INFO **giptr);
 __owur EVP_PKEY *ssl_generate_param_group(SSL_CONNECTION *s, uint16_t id);
 void tls1_get_formatlist(SSL_CONNECTION *s, const unsigned char **pformats,
     size_t *num_formats);
+__owur int tls1_check_ffdhe_tmp_key(SSL_CONNECTION *s, unsigned long id);
 __owur int tls1_check_ec_tmp_key(SSL_CONNECTION *s, unsigned long id);
 
 __owur int tls_group_allowed(SSL_CONNECTION *s, uint16_t curve, int op);
