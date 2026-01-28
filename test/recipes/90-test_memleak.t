@@ -8,8 +8,12 @@
 
 
 use OpenSSL::Test;
+use OpenSSL::Test::Utils;
 
 setup("test_memleak");
+
+plan skip_all => "This test should not be run under valgrind"
+    if (defined ($ENV{OSSL_USE_VALGRIND}));
 
 plan skip_all => "MacOS currently doesn't support leak sanitizer"
     if $^O eq 'darwin';

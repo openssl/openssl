@@ -23,6 +23,9 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my $config_path = abs_path(srctop_file("test", $no_fips ? "default.cnf"
                                                         : "default-and-fips.cnf"));
 
+plan skip_all => "This test should not be run under valgrind"
+    if (defined $ENV{OSSL_USE_VALGRIND});
+
 plan tests => 3;
 
 if ($no_fips) {
