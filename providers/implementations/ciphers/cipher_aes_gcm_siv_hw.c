@@ -180,7 +180,7 @@ static int aes_gcm_siv_encrypt(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *i
         ossl_polyval_ghash_hash(ctx->Htable, S_s, ctx->aad, UP16(ctx->aad_len));
     }
     if (DOWN16(len) > 0)
-        ossl_polyval_ghash_hash(ctx->Htable, S_s, (uint8_t *)in, DOWN16(len));
+        ossl_polyval_ghash_hash(ctx->Htable, S_s, in, DOWN16(len));
     if (!IS16(len)) {
         /* deal with padding - probably easier to memset the padding first rather than calculate */
         memset(padding, 0, sizeof(padding));
