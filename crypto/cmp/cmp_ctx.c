@@ -734,7 +734,7 @@ DEFINE_OSSL_set1_up_ref(OSSL_CMP_CTX, oldCert, X509)
      */
     DEFINE_OSSL_set0(ossl_cmp_ctx, newCert, X509)
 
-    /* Get successfully validated server cert, if any, of current transaction */
+    /* Get successfully validated sender cert, if any, of current transaction */
     DEFINE_OSSL_CMP_CTX_get0(validatedSrvCert, X509)
 
     /*
