@@ -16,11 +16,34 @@
  */
 int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 {
-    int ret = bn_sqr_fixed_top(r, a, ctx);
+    /* TODO(FIXNUM): TO BE REMOVED */
+    if (r->data == NULL || a->data == NULL) {
+        int ret = bn_sqr_fixed_top(r, a, ctx);
 
-    bn_correct_top(r);
+        bn_correct_top(r);
+        bn_check_top(r);
+
+        return ret;
+    }
+
+    bn_check_top(a);
     bn_check_top(r);
 
+    size_t top = a->top * 2;
+    size_t max = a->dmax * 2;
+
+    /*
+     * Unfortunately, OSSL_FN_CTX and BN_CTX are too wildly different to
+     * be interchangeable.  We must therefore create an OSSL_FN_CTX here.
+     * (OSSL_FN_CTX is only really useful within OSSL_FN functionality)
+     */
+    OSSL_FN_CTX *fnctx = OSSL_FN_CTX_new(NULL, 1, 2, max * 4);
+    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
+    int ret = OSSL_FN_sqr(rf, a->data, fnctx);
+    bn_release(r, (int)top);
+    r->neg = 0;
+
+    OSSL_FN_CTX_free(fnctx);
     return ret;
 }
 
