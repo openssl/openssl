@@ -122,6 +122,7 @@ typedef struct ossl_ex_data_global_st {
 
 OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx);
+int ossl_lib_ctx_is_default_nocreate(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_is_global_default(OSSL_LIB_CTX *ctx);
 
 /* Functions to retrieve pointers to data by index */
