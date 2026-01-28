@@ -278,6 +278,21 @@ int OSSL_FN_sub_word(OSSL_FN *a, const OSSL_FN_ULONG *w);
 int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_CTX *ctx);
 
+/**
+ * Calculate the square of one OSSL_FN number.  Truncates the result to fit in r.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that the OSSL_FN_CTX has free
+ * space for two temporary OSSL_FNs, a->dsize * 2 limbs each, plus one
+ * frame (currently 32 bytes).
+ */
+int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx);
+
 #ifdef __cplusplus
 }
 #endif

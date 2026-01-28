@@ -73,6 +73,17 @@ static const OSSL_FN_ULONG num6[] = {
     OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
     OSSL_FN_ULONG64_C(0x10000000, 0x00000000),
 };
+static const OSSL_FN_ULONG num7[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+#if OSSL_FN_BYTES == 4
+    OSSL_FN_ULONG_C(0xffffffff)
+#elif OSSL_FN_BYTES == 8
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff)
+#else
+#error "OpenSSL doesn't support large numbers on this platform"
+#endif
+};
 
 /*
  * For each test function using predefined numbers, set up an
@@ -756,6 +767,216 @@ static int test_mul_truncated(int i)
     return test_mul_common(test_mul_truncate_cases[i]);
 }
 
+/* All sqr tests reuse selected mul result numbers (ex_mul_num{n}_num{n}), except one */
+#define ex_sqr_num0 ex_mul_num0_num0
+#define ex_sqr_num1 ex_mul_num1_num1
+#define ex_sqr_num2 ex_mul_num2_num2
+#define ex_sqr_num3 ex_mul_num3_num3
+#define ex_sqr_num4 ex_mul_num4_num4
+#define ex_sqr_num5 ex_mul_num5_num5
+#define ex_sqr_num6 ex_mul_num6_num6
+static const OSSL_FN_ULONG ex_sqr_num7[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+#if OSSL_FN_BYTES == 4
+    OSSL_FN_ULONG64_C(0xFFFFFFFE, 0x00000001),
+#elif OSSL_FN_BYTES == 8
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000001),
+    OSSL_FN_ULONG64_C(0xFFFFFFFF, 0xFFFFFFFE),
+#endif
+};
+
+static int test_sqr_feature_r_is_operand(int i)
+{
+    int ret = 1;
+    const OSSL_FN_ULONG *a_data = num0;
+    size_t a_limbs = sizeof(num0) / OSSL_FN_BYTES;
+    OSSL_FN *a = NULL, *res = NULL;
+
+    OSSL_FN_CTX *ctx = NULL;
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 1, 2, a_limbs * 4))
+        || !TEST_ptr(a = OSSL_FN_new_limbs(a_limbs))
+        || !TEST_true(ossl_fn_set_words(a, a_data, a_limbs))) {
+        ret = 0;
+        /* There's no way to continue tests in this case */
+        goto end;
+    }
+
+    switch (i) {
+    case 0:
+        /* a ** 2, result in separate OSSL_FN */
+        if (!TEST_ptr(res = OSSL_FN_new_limbs(a_limbs * 2))) {
+            ret = 0;
+            goto end;
+        }
+        break;
+    case 1:
+        /* a ** 2, result in a */
+        res = a;
+        break;
+    default:
+        /* Invalid call */
+        ret = 0;
+        goto end;
+    }
+
+    const OSSL_FN_ULONG *u = NULL;
+    const OSSL_FN_ULONG *ex_data = ex_mul_num0_num0;
+    size_t ex_limbs = ossl_fn_get_dsize(res);
+
+    if (!TEST_true(OSSL_FN_sqr(res, a, ctx))
+        || !TEST_ptr(u = ossl_fn_get_words(res))
+        || !TEST_mem_eq(u, ex_limbs * OSSL_FN_BYTES,
+            ex_data, ex_limbs * OSSL_FN_BYTES))
+        ret = 0;
+
+    if (TEST_ptr(u = ossl_fn_get_words(a))) {
+        if (res == a) {
+            if (!TEST_mem_eq(u, ex_limbs * OSSL_FN_BYTES,
+                    ex_data, ex_limbs * OSSL_FN_BYTES))
+                ret = 0;
+        } else {
+            if (!TEST_mem_eq(u, a_limbs * OSSL_FN_BYTES,
+                    a_data, a_limbs * OSSL_FN_BYTES))
+                ret = 0;
+        }
+    }
+
+end:
+    OSSL_FN_CTX_free(ctx);
+    if (res != a)
+        OSSL_FN_free(res);
+    OSSL_FN_free(a);
+    return ret;
+}
+
+static int test_sqr_common(struct test_case_st test_case)
+{
+    int ret = 1;
+    const OSSL_FN_ULONG *n1 = test_case.op1;
+    size_t n1_limbs = test_case.op1_size;
+    const OSSL_FN_ULONG *ex = test_case.ex;
+    size_t n1_new_limbs = test_case.op1_live_size;
+    size_t res_limbs = test_case.res_live_size;
+    size_t check_limbs = test_case.check_size;
+    OSSL_FN_ULONG extended_value = test_case.extended_limb_value;
+    OSSL_FN *fn1 = NULL, *res = NULL;
+    const OSSL_FN_ULONG *u = NULL;
+
+    OSSL_FN_CTX *ctx = NULL;
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 1, 2, n1_new_limbs * 4))
+        || !TEST_ptr(fn1 = OSSL_FN_new_limbs(n1_new_limbs))
+        || !TEST_true(ossl_fn_set_words(fn1, n1, n1_limbs))
+        || !TEST_ptr(res = OSSL_FN_new_limbs(res_limbs))) {
+        ret = 0;
+        /* There's no way to continue tests in this case */
+        goto end;
+    }
+
+    /* To test that OSSL_FN_sqr() does a complete job, 'res' is pre-polluted */
+
+    if (!TEST_true(pollute(res, 0, res_limbs))
+        || !TEST_true(OSSL_FN_sqr(res, fn1, ctx))
+        || !TEST_ptr(u = ossl_fn_get_words(res))
+        || !TEST_mem_eq(u, check_limbs * OSSL_FN_BYTES,
+            ex, check_limbs * OSSL_FN_BYTES)
+        || !TEST_true(check_limbs_value(res, check_limbs, res_limbs,
+            extended_value)))
+        ret = 0;
+
+end:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fn1);
+    OSSL_FN_free(res);
+
+    return ret;
+}
+
+/* i should be set to match the iteration number that's displayed when testing */
+#define SQR_CASE(i, op1, ex)                                  \
+    {                                                         \
+        /* op1 */ op1,                                        \
+        /* op1_size */ LIMBSOF(op1),                          \
+        /* op2 */ NULL,                                       \
+        /* op2_size */ 0,                                     \
+        /* ex */ ex,                                          \
+        /* ex_size */ LIMBSOF(ex),                            \
+        /* op1_live_size */ LIMBSOF(op1) + 1,                 \
+        /* op2_live_size */ 0,                                \
+        /* res_live_size */ LIMBSOF(op1) * 2 + ((i - 1) % 4), \
+        /* check_size */ LIMBSOF(ex),                         \
+        /* extended_limb_value */ EXTENDED_LIMB_ZERO,         \
+    }
+
+static struct test_case_st test_sqr_cases[] = {
+    SQR_CASE(1, num0, ex_sqr_num0),
+    SQR_CASE(2, num1, ex_sqr_num1),
+    SQR_CASE(3, num2, ex_sqr_num2),
+    SQR_CASE(4, num3, ex_sqr_num3),
+
+    /* Edge cases */
+    SQR_CASE(5, num4, ex_sqr_num4),
+    SQR_CASE(6, num5, ex_sqr_num5),
+    SQR_CASE(7, num6, ex_sqr_num6),
+    SQR_CASE(8, num7, ex_sqr_num7),
+};
+
+static int test_sqr(int i)
+{
+    return test_sqr_common(test_sqr_cases[i]);
+}
+
+/* i should be set to match the iteration number that's displayed when testing */
+#define SQR_TRUNCATED_CASE(i, op1, ex)                \
+    {                                                 \
+        /* op1 */ op1,                                \
+        /* op1_size */ LIMBSOF(op1),                  \
+        /* op2 */ NULL,                               \
+        /* op2_size */ 0,                             \
+        /* ex */ ex,                                  \
+        /* ex_size */ LIMBSOF(ex),                    \
+        /* op1_live_size */ LIMBSOF(op1) + 1,         \
+        /* op2_live_size */ 0,                        \
+        /* res_live_size */ LIMBSOF(ex) / 2,          \
+        /* check_size */ LIMBSOF(ex) / 2,             \
+        /* extended_limb_value */ EXTENDED_LIMB_ZERO, \
+    }
+/* A special case, where the truncation is set to the size of ex minus 64 bits */
+#define SQR_TRUNCATED_SPECIAL_CASE1(i, op1, ex)              \
+    {                                                        \
+        /* op1 */ op1,                                       \
+        /* op1_size */ LIMBSOF(op1),                         \
+        /* op2 */ NULL,                                      \
+        /* op2_size */ 0,                                    \
+        /* ex */ ex,                                         \
+        /* ex_size */ LIMBSOF(ex),                           \
+        /* op1_live_size */ LIMBSOF(op1) + 1,                \
+        /* op2_live_size */ 0,                               \
+        /* res_live_size */ LIMBSOF(ex) - 8 / OSSL_FN_BYTES, \
+        /* check_size */ LIMBSOF(ex) - 8 / OSSL_FN_BYTES,    \
+        /* extended_limb_value */ EXTENDED_LIMB_ZERO,        \
+    }
+
+static struct test_case_st test_sqr_truncate_cases[] = {
+    SQR_TRUNCATED_CASE(1, num0, ex_sqr_num0),
+    SQR_TRUNCATED_CASE(2, num1, ex_sqr_num1),
+    SQR_TRUNCATED_CASE(3, num2, ex_sqr_num2),
+    SQR_TRUNCATED_CASE(4, num3, ex_sqr_num3),
+
+    /* Edge cases */
+    SQR_TRUNCATED_CASE(5, num4, ex_sqr_num4),
+    SQR_TRUNCATED_CASE(6, num5, ex_sqr_num5),
+    SQR_TRUNCATED_SPECIAL_CASE1(7, num6, ex_sqr_num6),
+    SQR_TRUNCATED_CASE(7, num7, ex_sqr_num7),
+};
+
+static int test_sqr_truncated(int i)
+{
+    return test_sqr_common(test_sqr_truncate_cases[i]);
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 16);
@@ -765,6 +986,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_mul_feature_r_is_operand, 4);
     ADD_ALL_TESTS(test_mul, OSSL_NELEM(test_mul_cases));
     ADD_ALL_TESTS(test_mul_truncated, OSSL_NELEM(test_mul_truncate_cases));
+    ADD_ALL_TESTS(test_sqr_feature_r_is_operand, 2);
+    ADD_ALL_TESTS(test_sqr, OSSL_NELEM(test_sqr_cases));
+    ADD_ALL_TESTS(test_sqr_truncated, OSSL_NELEM(test_sqr_truncate_cases));
 
     return 1;
 }
