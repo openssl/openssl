@@ -45,7 +45,7 @@ int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx
         if (OSSL_FN_copy(r, rr) == NULL)
             goto err;
 
-#if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
+#ifdef BN_MUL_COMBA
 end:
 #endif
 
