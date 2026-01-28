@@ -807,6 +807,18 @@ static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
     if (RSA_get0_n(rsa) == NULL || RSA_get0_e(rsa) == NULL)
         goto err;
 
+    if (rsa->meth != RSA_get_default_method()) {
+        /*
+         * Warning! This parameter is for internal use only. This breaks the
+         * normal rules about passing complex objects across the provider
+         * boundary. It only works when we are using this with the "built-in"
+         * default provider. Third party providers must not use this.
+         */
+        if (!OSSL_PARAM_BLD_push_octet_ptr(tmpl, OSSL_PKEY_PARAM_LEGACY_METHOD,
+                (void *)rsa->meth, sizeof(*rsa->meth)))
+            goto err;
+    }
+
     if (!ossl_rsa_todata(rsa, tmpl, NULL, 1))
         goto err;
 

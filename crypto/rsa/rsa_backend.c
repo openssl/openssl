@@ -66,6 +66,9 @@ int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[], int include_private)
     const OSSL_PARAM *param_n, *param_e, *param_d = NULL;
     const OSSL_PARAM *param_p, *param_q = NULL;
     const OSSL_PARAM *param_derive = NULL;
+#ifndef FIPS_MODULE
+    const OSSL_PARAM *param_method = NULL;
+#endif
     BIGNUM *p = NULL, *q = NULL, *n = NULL, *e = NULL, *d = NULL;
     STACK_OF(BIGNUM) *factors = NULL, *exps = NULL, *coeffs = NULL;
     int is_private = 0;
@@ -113,6 +116,30 @@ int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[], int include_private)
             }
         }
     }
+
+#ifndef FIPS_MODULE
+    /*
+     * Warning! This parameter is for internal use only. This breaks the
+     * normal rules about passing complex objects across the provider boundary.
+     * It only works because we are using this with the "built-in" default
+     * provider.
+     */
+    param_method = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_LEGACY_METHOD);
+    if (param_method != NULL) {
+        const void *meth;
+
+        if (!OSSL_PARAM_get_octet_ptr(param_method, &meth, NULL)) {
+            ERR_raise(ERR_LIB_RSA, ERR_R_PASSED_INVALID_ARGUMENT);
+            goto err;
+        }
+        if (meth != NULL) {
+            if (!RSA_set_method(rsa, meth)) {
+                ERR_raise(ERR_LIB_RSA, ERR_R_RSA_LIB);
+                goto err;
+            }
+        }
+    }
+#endif
 
     is_private = (d != NULL);
 
