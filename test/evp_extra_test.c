@@ -6288,6 +6288,85 @@ end:
     return testresult;
 }
 
+static int priv_enc_hits = 0;
+static int (*orig_priv_enc)(int, const unsigned char *, unsigned char *, RSA *, int);
+
+static int tst_priv_enc(int flen, const unsigned char *from, unsigned char *to,
+    RSA *rsa, int padding)
+{
+    priv_enc_hits++;
+    return orig_priv_enc(flen, from, to, rsa, padding);
+}
+
+/* Test that a low level method still gets used even with a provider */
+static int test_low_level_method(void)
+{
+    const unsigned char msg[] = "Hello, World!";
+    unsigned char sig[128];
+    unsigned int siglen;
+    BIGNUM *e = BN_new();
+    RSA *rsa = NULL;
+    const RSA_METHOD *def = RSA_get_default_method();
+    RSA_METHOD *method = RSA_meth_dup(def);
+    EVP_PKEY *pkey = NULL;
+    EVP_MD_CTX *ctx = NULL;
+    int testresult = 0;
+
+    if (nullprov != NULL) {
+        testresult = TEST_skip("Test does not support a non-default library context");
+        goto err;
+    }
+
+    if (!TEST_ptr(e) || !TEST_ptr(method))
+        goto err;
+
+    if (!TEST_true(BN_set_word(e, RSA_F4)))
+        goto err;
+
+    rsa = RSA_new();
+    if (!TEST_ptr(rsa))
+        goto err;
+    if (!TEST_true(RSA_generate_key_ex(rsa, 1024, e, NULL)))
+        goto err;
+
+    orig_priv_enc = RSA_meth_get_priv_enc(def);
+    if (!TEST_true(RSA_meth_set_priv_enc(method, tst_priv_enc)))
+        goto err;
+    if (!TEST_true(RSA_set_method(rsa, method)))
+        goto err;
+
+    pkey = EVP_PKEY_new();
+    if (!TEST_ptr(pkey))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_assign_RSA(pkey, rsa), 0))
+        goto err;
+    rsa = NULL;
+
+    priv_enc_hits = 0;
+    ctx = EVP_MD_CTX_new();
+    if (!TEST_ptr(ctx))
+        goto err;
+    if (!TEST_true(EVP_SignInit(ctx, EVP_sha256())))
+        goto err;
+    if (!TEST_true(EVP_SignUpdate(ctx, msg, sizeof(msg) - 1)))
+        goto err;
+    if (!TEST_true(EVP_SignFinal(ctx, sig, &siglen, pkey)))
+        goto err;
+
+    /* We expect to see our custom private encryption function called once */
+    if (!TEST_int_eq(priv_enc_hits, 1))
+        goto err;
+
+    testresult = 1;
+err:
+    BN_free(e);
+    RSA_free(rsa);
+    EVP_PKEY_free(pkey);
+    RSA_meth_free(method);
+    EVP_MD_CTX_free(ctx);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     char *config_file = NULL;
@@ -6459,6 +6538,8 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_ML_DSA
     ADD_ALL_TESTS(test_ml_dsa_seed_only, 2);
 #endif
+
+    ADD_TEST(test_low_level_method);
 
     return 1;
 }
