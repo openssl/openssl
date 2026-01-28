@@ -115,7 +115,7 @@ OpenSSL 4.0
    *Bob Beck*
 
  * various function parameters have been constified,
-   in particular for X509-related functions.
+   in particular for X509, OCSP, CMS, PKCS7, and TS.
 
    *David von Oheimb*
 

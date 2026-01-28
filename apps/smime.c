@@ -438,8 +438,7 @@ int smime_main(int argc, char **argv)
         goto opthelp;
     }
     if (!operation) {
-        BIO_puts(bio_err,
-            "No operation (-encrypt|-sign|...) specified\n");
+        BIO_puts(bio_err, "No operation (-encrypt|-sign|...) specified\n");
         goto opthelp;
     }
 
@@ -519,11 +518,10 @@ int smime_main(int argc, char **argv)
         }
     }
 
-    if (certfile != NULL) {
-        if (!load_certs(certfile, 0, &other, NULL, "certificates")) {
-            ERR_print_errors(bio_err);
-            goto end;
-        }
+    if (certfile != NULL
+        && !load_certs(certfile, 0, &other, NULL, "certificates")) {
+        ERR_print_errors(bio_err);
+        goto end;
     }
 
     if (recipfile != NULL && (operation == SMIME_DECRYPT)) {
@@ -609,6 +607,7 @@ int smime_main(int argc, char **argv)
         p7 = PKCS7_encrypt_ex(encerts, in, cipher, flags, libctx, app_get0_propq());
     } else if (operation & SMIME_SIGNERS) {
         int i;
+
         /*
          * If detached data content we only enable streaming if S/MIME output
          * format.
@@ -624,12 +623,9 @@ int smime_main(int argc, char **argv)
             p7 = PKCS7_sign_ex(NULL, NULL, other, in, flags, libctx, app_get0_propq());
             if (p7 == NULL)
                 goto end;
-            if (flags & PKCS7_NOCERTS) {
-                for (i = 0; i < sk_X509_num(other); i++) {
-                    X509 *x = sk_X509_value(other, i);
-                    PKCS7_add_certificate(p7, x);
-                }
-            }
+            if ((flags & PKCS7_NOCERTS) != 0)
+                for (i = 0; i < sk_X509_num(other); i++)
+                    PKCS7_add_certificate(p7, sk_X509_value(other, i));
         } else {
             flags |= PKCS7_REUSE_DIGEST;
         }
@@ -670,9 +666,10 @@ int smime_main(int argc, char **argv)
         }
     } else if (operation == SMIME_VERIFY) {
         STACK_OF(X509) *signers;
-        if (PKCS7_verify(p7, other, store, indata, out, flags))
+
+        if (PKCS7_verify(p7, other, store, indata, out, flags)) {
             BIO_printf(bio_err, "Verification successful\n");
-        else {
+        } else {
             BIO_printf(bio_err, "Verification failure\n");
             goto end;
         }
