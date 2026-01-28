@@ -15,14 +15,14 @@
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
     const BN_ULONG *np, const BN_ULONG *n0, int num)
 {
-    int bn_mul_mont_int(BN_ULONG * rp, const BN_ULONG *ap, const BN_ULONG *bp,
+    int bn_mul_mont_int(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
         const BN_ULONG *np, const BN_ULONG *n0, int num);
-    int bn_mul4x_mont_int(BN_ULONG * rp, const BN_ULONG *ap, const BN_ULONG *bp,
+    int bn_mul4x_mont_int(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
         const BN_ULONG *np, const BN_ULONG *n0, int num);
-    int bn_mul_mont_fixed_n6(BN_ULONG * rp, const BN_ULONG *ap,
+    int bn_mul_mont_fixed_n6(BN_ULONG *rp, const BN_ULONG *ap,
         const BN_ULONG *bp, const BN_ULONG *np,
         const BN_ULONG *n0, int num);
-    int bn_mul_mont_300_fixed_n6(BN_ULONG * rp, const BN_ULONG *ap,
+    int bn_mul_mont_300_fixed_n6(BN_ULONG *rp, const BN_ULONG *ap,
         const BN_ULONG *bp, const BN_ULONG *np,
         const BN_ULONG *n0, int num);
 

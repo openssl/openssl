@@ -102,9 +102,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         init();
         break;
     case DLL_PROCESS_DETACH:
-# ifndef __CYGWIN__
+#ifndef __CYGWIN__
         cleanup();
-# endif
+#endif
         break;
     default:
         break;
