@@ -29,7 +29,7 @@
 #include "internal/nelem.h"
 
 #if BN_BITS2 == 64
-#define BN_DEF(lo, hi) (BN_ULONG) hi << 32 | lo
+#define BN_DEF(lo, hi) (BN_ULONG)hi << 32 | lo
 #else
 #define BN_DEF(lo, hi) lo, hi
 #endif
