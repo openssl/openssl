@@ -39,7 +39,7 @@ static const ERR_STRING_DATA OSSL_STORE_str_reasons[] = {
     { ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_NOT_A_PUBLIC_KEY),
         "not a public key" },
     { ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_NOT_A_SYMMETRIC_KEY),
-     "not a symmetric key" },
+        "not a symmetric key" },
     { ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_NOT_PARAMETERS),
         "not parameters" },
     { ERR_PACK(ERR_LIB_OSSL_STORE, 0, OSSL_STORE_R_NO_LOADERS_FOUND),
