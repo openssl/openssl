@@ -2010,6 +2010,14 @@ A = ca6c51ba2f410d09bf71d60fe
 B = 8bdfa8fe5ef3b2ad02bc63c4d
 M = 84daecf412b8c50ad6dfdb546c3eb783dcc6f32003eda914bb
 
+# These test vectors satisfy A ^ 2 = ModSqr (mod M) and 0 <= ModSqr < M.
+
+Title = ModSqr tests
+
+# Regression test for https://github.com/openssl/openssl/issues/15587
+ModSqr = 166794ed50cb31b6e6a319f7474416c266d5c3f3115ea2a7ed9638367d1f955f66a7179ee3ce5ee5e04e63c46781f1192beac3abb26ff238f5ed2f5505ae06003ff
+A = 1407833bd4c893195cc32f56a507f15140be687a1994febe0bdbe793125f010a3c1c814737b10ab690498b7990ce4e625ad2f32cbf42626cb9649da38a5c9c76a99
+M = 1ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 
 # These test vectors satisfy A ^ E = ModExp (mod M) and 0 <= ModExp < M.
 
