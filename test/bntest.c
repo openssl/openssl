@@ -1664,6 +1664,52 @@ err:
     return st;
 }
 
+static int file_modsqr(STANZA *s)
+{
+    BIGNUM *a = NULL, *m = NULL, *mod_sqr = NULL, *ret = NULL;
+    int st = 0;
+
+    if (!TEST_ptr(a = getBN(s, "A"))
+        || !TEST_ptr(m = getBN(s, "M"))
+        || !TEST_ptr(mod_sqr = getBN(s, "ModSqr"))
+        || !TEST_ptr(ret = BN_new()))
+        goto err;
+
+    if (!TEST_true(BN_mod_sqr(ret, a, m, ctx))
+        || !equalBN("A^2 (mod M)", mod_sqr, ret))
+        goto err;
+
+    if (BN_is_odd(m)) {
+        /* Reduce |a| and test the Montgomery version. */
+        BN_MONT_CTX *mont = BN_MONT_CTX_new();
+        BIGNUM *a_tmp = BN_new();
+
+        if (mont == NULL || a_tmp == NULL
+            || !TEST_true(BN_MONT_CTX_set(mont, m, ctx))
+            || !TEST_true(BN_nnmod(a_tmp, a, m, ctx))
+            || !TEST_true(BN_to_montgomery(a_tmp, a_tmp, mont, ctx))
+            || !TEST_true(BN_mod_mul_montgomery(ret, a_tmp, a_tmp,
+                mont, ctx))
+            || !TEST_true(BN_from_montgomery(ret, ret, mont, ctx))
+            || !equalBN("A^2 (mod M) (mont)", mod_sqr, ret))
+            st = 0;
+        else
+            st = 1;
+        BN_MONT_CTX_free(mont);
+        BN_free(a_tmp);
+        if (st == 0)
+            goto err;
+    }
+
+    st = 1;
+err:
+    BN_free(a);
+    BN_free(m);
+    BN_free(mod_sqr);
+    BN_free(ret);
+    return st;
+}
+
 static int file_modexp(STANZA *s)
 {
     BIGNUM *a = NULL, *e = NULL, *m = NULL, *mod_exp = NULL, *ret = NULL;
@@ -3274,6 +3320,7 @@ static int file_test_run(STANZA *s)
         { "Product", file_product },
         { "Quotient", file_quotient },
         { "ModMul", file_modmul },
+        { "ModSqr", file_modsqr },
         { "ModExp", file_modexp },
         { "Exp", file_exp },
         { "ModSqrt", file_modsqrt },
