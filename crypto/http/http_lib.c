@@ -80,14 +80,12 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
 
     /* check for optional prefix "<scheme>://" */
     scheme = scheme_end = url;
-    p = strstr(url, "://");
-    if (p == NULL) {
-        p = url;
+    OSSL_SKIP_SCHEME(scheme_end);
+    if (scheme_end != scheme && HAS_PREFIX(scheme_end, "://")) {
+        p = scheme_end + strlen("://");
     } else {
-        scheme_end = p;
-        if (scheme_end == scheme)
-            goto parse_err;
-        p += strlen("://");
+        scheme_end = scheme;
+        p = url;
     }
 
     /* parse optional "userinfo@" */
