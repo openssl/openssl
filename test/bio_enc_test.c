@@ -304,9 +304,11 @@ static int do_crypt(FILE *in, FILE *out, int do_encrypt)
         goto err;
 
     for (;;) {
-        inlen = fread(inbuf, 1, 1024, in);
-        if (inlen <= 0)
+        size_t nread = fread(inbuf, 1, 1024, in);
+
+        if (nread == 0)
             break;
+        inlen = (int)nread;
         if (!EVP_CipherUpdate(ctx, outbuf, &outlen, inbuf, inlen))
             goto err;
         fwrite(outbuf, 1, outlen, out);
@@ -389,6 +391,7 @@ static int test_evp_bytes_to_key(void)
     unsigned char iv[EVP_MAX_IV_LENGTH];
     unsigned char salt[8] = { 0x3F, 0x17, 0xF5, 0x31, 0x6E, 0x2B, 0xAC, 0x89 };
     const char *password = "testpassword";
+    int passlen = (int)strlen(password);
     int rc;
     int ret = 0;
 
@@ -410,7 +413,7 @@ static int test_evp_bytes_to_key(void)
 
     memcpy(iv, salt, niv);
     rc = EVP_BytesToKey(cipher, md, iv /*salt*/, (unsigned char *)password,
-        strlen(password), 1, key, NULL /*iv*/);
+        passlen, 1, key, NULL /*iv*/);
     if (!TEST_int_eq(rc, (int)nkey))
         goto err;
 
