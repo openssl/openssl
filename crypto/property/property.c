@@ -717,7 +717,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
         return 0;
 
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_AUTOLOAD_CONFIG)
-    if (ossl_lib_ctx_is_default(store->ctx)
+    if (ossl_lib_ctx_is_default(store->ctx, 1)
         && !OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL))
         return 0;
 #endif

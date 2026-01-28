@@ -414,7 +414,7 @@ OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
          * them.
          */
         if (!noconfig) {
-            if (ossl_lib_ctx_is_default(libctx))
+            if (ossl_lib_ctx_is_default(libctx, 1))
                 OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
         }
 #endif
@@ -1540,7 +1540,7 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
      * Make sure any providers are loaded from config before we try to use
      * them.
      */
-    if (ossl_lib_ctx_is_default(ctx))
+    if (ossl_lib_ctx_is_default(ctx, 1))
         OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
 #endif
 
