@@ -15,6 +15,7 @@
 #include "internal/provider.h"
 #include "internal/core.h"
 #include "crypto/evp.h"
+#include "crypto/aarch64_dit.h"
 #include "evp_local.h"
 
 static void evp_asym_cipher_free(void *data)
@@ -216,6 +217,8 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
     const char *desc;
     int ret;
 
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
@@ -258,6 +261,8 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
     EVP_ASYM_CIPHER *cipher;
     const char *desc;
     int ret;
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
