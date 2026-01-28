@@ -393,6 +393,11 @@ int EVP_DigestSqueeze(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
         return 0;
     }
 
+    /* Squeeze should not be called after final() */
+    if (ossl_unlikely((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
+        return 0;
+    }
     return ctx->digest->dsqueeze(ctx->algctx, md, &size, size);
 }
 
