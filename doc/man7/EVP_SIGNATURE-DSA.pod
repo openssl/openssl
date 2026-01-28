@@ -3,7 +3,7 @@
 =head1 NAME
 
 EVP_SIGNATURE-DSA
-- The B<EVP_PKEY> DSA signature implementation
+- The EVP_PKEY B<DSA> signature implementation
 
 =head1 DESCRIPTION
 
