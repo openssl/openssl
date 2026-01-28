@@ -21,18 +21,6 @@
 
 #if OSSL_FN_BYTES == 4
 /* 32-bit systems */
-#define OSSL_FN_MASK UINT32_MAX
-#elif OSSL_FN_BYTES == 8
-/* 64-bit systems */
-#define OSSL_FN_MASK UINT64_MAX
-#else
-#error "OpenSSL doesn't support large numbers on this platform"
-#endif
-
-#define OSSL_FN_HIGH_BIT_MASK (OSSL_FN_ULONG_C(1) << (OSSL_FN_BYTES * 8 - 1))
-
-#if OSSL_FN_BYTES == 4
-/* 32-bit systems */
 #define OSSL_FN_ULONG_C(n) UINT32_C(n)
 #define OSSL_FN_MASK UINT32_MAX
 #elif OSSL_FN_BYTES == 8
