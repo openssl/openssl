@@ -867,7 +867,7 @@ static int do_check_string(const ASN1_STRING *a, int cmp_type, equal_fn equal,
 }
 
 static int do_x509_check(X509 *x, const char *chk, size_t chklen,
-    unsigned int flags, int check_type, int check_nid, char **peername)
+    unsigned int flags, int check_type, int othername_nid, char **peername)
 {
     GENERAL_NAMES *gens = NULL;
     const X509_NAME *name = NULL;
