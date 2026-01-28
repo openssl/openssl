@@ -2606,6 +2606,22 @@ void store_setup_crl_download(X509_STORE *st)
     X509_STORE_set_lookup_crls_cb(st, crls_http_cb);
 }
 
+#ifndef OPENSSL_NO_SOCK
+int host_is_ip_address(const char *host)
+{
+    ASN1_OCTET_STRING *str;
+
+    if (host == NULL)
+        return 0;
+
+    ERR_set_mark();
+    str = a2i_IPADDRESS(host);
+    ERR_pop_to_mark();
+    ASN1_OCTET_STRING_free(str);
+    return str != NULL;
+}
+#endif
+
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
 static const char *tls_error_hint(void)
 {
@@ -2655,15 +2671,12 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
 {
     APP_HTTP_TLS_INFO *info = (APP_HTTP_TLS_INFO *)arg;
     SSL_CTX *ssl_ctx = info->ssl_ctx;
+    BIO *sbio = NULL;
 
     if (ssl_ctx == NULL) /* not using TLS */
         return bio;
     if (connect) {
         SSL *ssl;
-        BIO *sbio = NULL;
-        X509_STORE *ts = SSL_CTX_get_cert_store(ssl_ctx);
-        X509_VERIFY_PARAM *vpm = X509_STORE_get0_param(ts);
-        const char *host = vpm == NULL ? NULL : X509_VERIFY_PARAM_get0_host(vpm, 0 /* first hostname */);
 
         /* adapt after fixing callback design flaw, see #17088 */
         if ((info->use_proxy
@@ -2673,27 +2686,32 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
             || (sbio = BIO_new(BIO_f_ssl())) == NULL) {
             return NULL;
         }
-        if ((ssl = SSL_new(ssl_ctx)) == NULL) {
-            BIO_free(sbio);
-            return NULL;
-        }
-
-        if (vpm != NULL)
-            SSL_set_tlsext_host_name(ssl, host /* may be NULL */);
+        if ((ssl = SSL_new(ssl_ctx)) == NULL)
+            goto err;
 
         SSL_set_connect_state(ssl);
         BIO_set_ssl(sbio, ssl, BIO_CLOSE);
+        if (!host_is_ip_address(info->server)) {
+            if (!SSL_set_tlsext_host_name(ssl, info->server)) /* set SNI */
+                goto err;
+        }
 
         bio = BIO_push(sbio, bio);
     } else { /* disconnect from TLS */
         bio = http_tls_shutdown(bio);
     }
     return bio;
+
+err:
+    BIO_free(sbio);
+    return NULL;
 }
 
 void APP_HTTP_TLS_INFO_free(APP_HTTP_TLS_INFO *info)
 {
     if (info != NULL) {
+        OPENSSL_free((char *)info->server);
+        OPENSSL_free((char *)info->port);
         SSL_CTX_free(info->ssl_ctx);
         OPENSSL_free(info);
     }

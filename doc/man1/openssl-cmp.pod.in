@@ -116,7 +116,7 @@ TLS connection options:
 [B<-tls_keypass> I<arg>]
 [B<-tls_extra> I<filenames>|I<uris>]
 [B<-tls_trusted> I<filenames>|I<uris>]
-[B<-tls_host> I<name>]
+[B<-tls_host> I<host>]
 
 Client-side debugging options:
 
@@ -527,9 +527,14 @@ Reason numbers defined in RFC 5280 are:
 =item B<-server> I<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>
 
 The I<host> domain name or IP address and optionally I<port>
-of the CMP server to connect to using HTTP(S).
-IP address may be for v4 or v6, such as C<127.0.0.1> or C<[::1]> for localhost.
-If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
+of the CMP server to connect to via HTTP(S).
+An IP address may be for v4 or v6, such as C<127.0.0.1> or C<[::1]> for C<localhost>.
+If the I<host> string is an IPv6 address, it must be enclosed in C<[> and C<]>.
+
+For TLS connections the I<host> is verified in TLS server certificate
+unless the B<-tls_host> option is given.
+If I<host> is a DNS name, it is also used for
+TLS Server Name Indication (SNI) according to RFC 3546 section 3.1.
 
 This option excludes I<-port> and I<-use_mock_srv>.
 It is ignored if I<-rspin> is given with enough filename arguments.
@@ -1031,11 +1036,10 @@ The certificate verification options
 B<-verify_hostname>, B<-verify_ip>, and B<-verify_email>
 have no effect on the certificate verification enabled via this option.
 
-=item B<-tls_host> I<name>
+=item B<-tls_host> I<host>
 
-Address to be checked during hostname validation.
-This may be a DNS name or an IP address.
-If not given it defaults to the B<-server> address.
+Hostname or IP address to be checked in the TLS server certificate.
+If not given it defaults to the host part of the B<-server> option URL argument.
 
 =back
 

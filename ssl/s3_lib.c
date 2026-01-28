@@ -3989,8 +3989,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
          * from the server, but we currently allow it to be used on servers
          * as well, which is a programming error.  Currently we just clear
          * the field in SSL_do_handshake() for server SSLs, but when we can
-         * make ABI-breaking changes, we may want to make use of this API
-         * an error on server SSLs.
+         * make ABI-breaking changes, we may want to return an error in this case.
          */
         if (larg == TLSEXT_NAMETYPE_host_name) {
             size_t len;
