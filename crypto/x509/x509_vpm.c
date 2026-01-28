@@ -70,8 +70,8 @@ static X509_BUFFER *buffer_from_string(const uint8_t *bytes, size_t length)
     data = NULL;
 
 err:
-    free(buf);
-    free(data);
+    OPENSSL_free(buf);
+    OPENSSL_free(data);
 
     return ret;
 }
