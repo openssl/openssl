@@ -944,7 +944,7 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
                      * choose to turn it off, doing so is at this time a best
                      * practice.
                      */
-                    if (check_nid != NID_id_on_SmtpUTF8Mailbox
+                    if (othername_nid != NID_id_on_SmtpUTF8Mailbox
                         || gen->d.otherName->value->type != V_ASN1_UTF8STRING)
                         continue;
                     alt_type = 0;
