@@ -21,7 +21,7 @@ static void print_signingTime(CMS_ContentInfo *cms)
     STACK_OF(CMS_SignerInfo) *sis;
     CMS_SignerInfo *si;
     X509_ATTRIBUTE *attr;
-    ASN1_TYPE *t;
+    const ASN1_TYPE *t;
     ASN1_UTCTIME *utctime;
     ASN1_GENERALIZEDTIME *gtime;
     BIO *b;

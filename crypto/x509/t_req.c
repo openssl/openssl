@@ -112,10 +112,10 @@ int X509_REQ_print_ex(BIO *bp, const X509_REQ *x, unsigned long nmflags, unsigne
                 goto err;
         } else {
             for (i = 0; i < X509_REQ_get_attr_count(x); i++) {
-                ASN1_TYPE *at;
+                const ASN1_TYPE *at;
                 X509_ATTRIBUTE *a;
                 ASN1_BIT_STRING *bs = NULL;
-                ASN1_OBJECT *aobj;
+                const ASN1_OBJECT *aobj;
                 int j, type = 0, count = 1, ii = 0;
 
                 a = X509_REQ_get_attr(x, i);
