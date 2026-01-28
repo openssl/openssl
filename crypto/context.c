@@ -435,17 +435,19 @@ void ossl_lib_ctx_default_deinit(void)
     default_context_inited = 0;
 }
 
-static OSSL_LIB_CTX *get_thread_default_context(void)
+static OSSL_LIB_CTX *get_thread_default_context(int create_default)
 {
-    if (!RUN_ONCE(&default_context_init, default_context_do_init))
-        return NULL;
+    if (create_default == 1) {
+        if (!RUN_ONCE(&default_context_init, default_context_do_init))
+            return NULL;
+    }
 
     return CRYPTO_THREAD_get_local(&default_context_thread_local);
 }
 
-static OSSL_LIB_CTX *get_default_context(void)
+static OSSL_LIB_CTX *get_default_context(int create_default)
 {
-    OSSL_LIB_CTX *current_defctx = get_thread_default_context();
+    OSSL_LIB_CTX *current_defctx = get_thread_default_context(create_default);
 
     if (current_defctx == NULL && default_context_inited)
         current_defctx = &default_context_int;
@@ -514,7 +516,7 @@ int OSSL_LIB_CTX_load_config(OSSL_LIB_CTX *ctx, const char *config_file)
 
 void OSSL_LIB_CTX_free(OSSL_LIB_CTX *ctx)
 {
-    if (ctx == NULL || ossl_lib_ctx_is_default(ctx))
+    if (ctx == NULL || ossl_lib_ctx_is_default(ctx, 0))
         return;
 
 #ifndef FIPS_MODULE
@@ -538,7 +540,7 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx)
 {
     OSSL_LIB_CTX *current_defctx;
 
-    if ((current_defctx = get_default_context()) != NULL) {
+    if ((current_defctx = get_default_context(1)) != NULL) {
         if (libctx != NULL)
             set_default_context(libctx);
         return current_defctx;
@@ -561,15 +563,15 @@ OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx)
 {
 #ifndef FIPS_MODULE
     if (ctx == NULL)
-        return get_default_context();
+        return get_default_context(1);
 #endif
     return ctx;
 }
 
-int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx)
+int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx, int create_default)
 {
 #ifndef FIPS_MODULE
-    if (ctx == NULL || ctx == get_default_context())
+    if (ctx == NULL || ctx == get_default_context(create_default))
         return 1;
 #endif
     return 0;
@@ -668,7 +670,7 @@ const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx)
 #else
     if (ossl_lib_ctx_is_global_default(libctx))
         return "Global default library context";
-    if (ossl_lib_ctx_is_default(libctx))
+    if (ossl_lib_ctx_is_default(libctx, 1))
         return "Thread-local default library context";
     return "Non-default library context";
 #endif
