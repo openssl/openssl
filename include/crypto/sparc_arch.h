@@ -80,9 +80,9 @@
 #if defined(__arch64__)
 
 #define SPARC_LOAD_ADDRESS(SYM, reg) \
-    setx SYM, % o7, reg;
+    setx SYM, %o7, reg;
 #define LDPTR ldx
-#define SIZE_T_CC % xcc
+#define SIZE_T_CC %xcc
 #define STACK_FRAME 192
 #define STACK_BIAS 2047
 #define STACK_7thARG (STACK_BIAS + 176)
@@ -92,7 +92,7 @@
 #define SPARC_LOAD_ADDRESS(SYM, reg) \
     set SYM, reg;
 #define LDPTR ld
-#define SIZE_T_CC % icc
+#define SIZE_T_CC %icc
 #define STACK_FRAME 112
 #define STACK_BIAS 0
 #define STACK_7thARG 92
