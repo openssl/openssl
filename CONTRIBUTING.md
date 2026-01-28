@@ -77,8 +77,13 @@ guidelines:
 
  4. Code provided should follow our [coding style] and [documentation policy]
     and compile without warnings.
-    There is a [Perl tool](util/check-format.pl) that helps
-    finding code formatting mistakes and other coding style nits.
+    Consistent formatting is enforced by using `clang-format` with configuration
+    stored in [.clang-format](.clang-format). OpenSSL uses `WebKit` style.
+    You can configure git pre-commit to automatically reformat your code with
+    [.pre-commit-config.yaml](.pre-commit-config.yaml) configuration.
+    There is also a [Perl tool](util/reformat-patches.sh) to help with
+    reformatting existing patches.
+
     Where `gcc` or `clang` is available, you should use the
     `--strict-warnings` `Configure` option.  OpenSSL compiles on many varied
     platforms: try to ensure you only use portable features.
