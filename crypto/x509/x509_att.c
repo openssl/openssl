@@ -411,7 +411,7 @@ int X509_ATTRIBUTE_count(const X509_ATTRIBUTE *attr)
     return sk_ASN1_TYPE_num(attr->set);
 }
 
-ASN1_OBJECT *X509_ATTRIBUTE_get0_object(X509_ATTRIBUTE *attr)
+const ASN1_OBJECT *X509_ATTRIBUTE_get0_object(const X509_ATTRIBUTE *attr)
 {
     if (attr == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
@@ -420,10 +420,10 @@ ASN1_OBJECT *X509_ATTRIBUTE_get0_object(X509_ATTRIBUTE *attr)
     return attr->object;
 }
 
-void *X509_ATTRIBUTE_get0_data(X509_ATTRIBUTE *attr, int idx,
+const void *X509_ATTRIBUTE_get0_data(const X509_ATTRIBUTE *attr, int idx,
     int atrtype, void *data)
 {
-    ASN1_TYPE *ttmp = X509_ATTRIBUTE_get0_type(attr, idx);
+    const ASN1_TYPE *ttmp = X509_ATTRIBUTE_get0_type(attr, idx);
 
     if (ttmp == NULL)
         return NULL;
@@ -436,7 +436,7 @@ void *X509_ATTRIBUTE_get0_data(X509_ATTRIBUTE *attr, int idx,
     return ttmp->value.ptr;
 }
 
-ASN1_TYPE *X509_ATTRIBUTE_get0_type(X509_ATTRIBUTE *attr, int idx)
+const ASN1_TYPE *X509_ATTRIBUTE_get0_type(const X509_ATTRIBUTE *attr, int idx)
 {
     if (attr == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);

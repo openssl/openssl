@@ -121,7 +121,7 @@ static STACK_OF(X509_EXTENSION) *get_extensions_by_nid(const X509_REQ *req,
     int nid)
 {
     X509_ATTRIBUTE *attr;
-    ASN1_TYPE *ext = NULL;
+    const ASN1_TYPE *ext = NULL;
     const unsigned char *p;
     int idx = X509_REQ_get_attr_by_NID(req, nid, -1);
 
