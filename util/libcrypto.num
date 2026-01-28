@@ -2908,6 +2908,7 @@ BIO_get_wpoll_descriptor                ?	4_0_0	EXIST::FUNCTION:
 BIO_puts                                ?	4_0_0	EXIST::FUNCTION:
 BIO_indent                              ?	4_0_0	EXIST::FUNCTION:
 BIO_ctrl                                ?	4_0_0	EXIST::FUNCTION:
+BIO_eof                                 ?	4_0_0	EXIST::FUNCTION:
 BIO_callback_ctrl                       ?	4_0_0	EXIST::FUNCTION:
 BIO_ptr_ctrl                            ?	4_0_0	EXIST::FUNCTION:
 BIO_int_ctrl                            ?	4_0_0	EXIST::FUNCTION:
