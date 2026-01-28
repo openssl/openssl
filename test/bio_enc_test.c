@@ -375,6 +375,7 @@ err:
     return ret;
 }
 
+#ifndef OPENSSL_NO_DES
 /*
  * Test the EVP_BytesToKey example from PEM_read_bio_PrivateKey.pod documentation.
  * This tests key derivation using EVP_CIPHER_fetch and EVP_MD_fetch.
@@ -424,6 +425,7 @@ err:
     EVP_CIPHER_free(cipher);
     return ret;
 }
+#endif
 
 static int test_bio_enc_eof_read_flush(void)
 {
@@ -500,6 +502,8 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_bio_enc_eof_read_flush);
     ADD_TEST(test_do_crypt_roundtrip);
+#ifndef OPENSSL_NO_DES
     ADD_TEST(test_evp_bytes_to_key);
+#endif
     return 1;
 }
