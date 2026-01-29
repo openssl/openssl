@@ -19,7 +19,8 @@ X509_STORE_CTX_verify_fn,
 X509_STORE_CTX_set_ocsp_resp,
 X509_STORE_CTX_set_purpose,
 X509_STORE_CTX_set_trust,
-X509_STORE_CTX_purpose_inherit
+X509_STORE_CTX_purpose_inherit,
+X509_STORE_CTX_set0_dane
 - X509_STORE_CTX initialisation
 
 =head1 SYNOPSIS
@@ -62,6 +63,10 @@ X509_STORE_CTX_purpose_inherit
  int X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust);
  int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
                                     int purpose, int trust);
+
+ #include <openssl/ssl.h>
+
+ void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, SSL_DANE *dane);
 
 =head1 DESCRIPTION
 
@@ -274,6 +279,17 @@ the default trust id for I<purpose>. If the default trust id for the
 purpose is I<X509_TRUST_DEFAULT> and I<trust> is 0 then the default trust id
 associated with the I<def_purpose> value is used for the trust setting instead.
 
+X509_STORE_CTX_set0_dane() associates DANE verification state with the
+verification context. The I<dane> parameter is a pointer to an B<SSL_DANE>
+structure obtained from L<SSL_get0_dane(3)>. This enables DANE TLSA (RFC6698 and
+RFC7671) peer authentication during certificate verification. The I<dane>
+pointer is stored internally and the caller must ensure the B<SSL_DANE>
+structure remains valid for the duration of the verification operation. This
+function is primarily used by applications that implement custom certificate
+verification callbacks via L<SSL_CTX_set_cert_verify_callback(3)> and need to
+support DANE authentication.
+See L<SSL_CTX_dane_enable(3)> for more information about DANE support.
+
 =head1 NOTES
 
 The certificates and CRLs in a store are used internally and should B<not>
@@ -313,7 +329,9 @@ used.
 =head1 SEE ALSO
 
 L<X509_verify_cert(3)>, L<X509_STORE_CTX_verify(3)>,
-L<X509_VERIFY_PARAM_set_flags(3)>
+L<X509_VERIFY_PARAM_set_flags(3)>,
+L<SSL_CTX_dane_enable(3)>,
+L<SSL_get0_dane(3)>
 
 =head1 HISTORY
 
@@ -323,6 +341,8 @@ The X509_STORE_CTX_new_ex() function was added in OpenSSL 3.0.
 The X509_STORE_CTX_init_rpk(), X509_STORE_CTX_get0_rpk(), and
 X509_STORE_CTX_set0_rpk() functions were added in OpenSSL 3.2.
 X509_STORE_CTX_set_ocsp_resp() function was added in OpenSSL 3.6.
+
+X509_STORE_CTX_set0_dane() was added in OpenSSL 1.1.0.
 
 There is no need to call X509_STORE_CTX_cleanup() explicitly since OpenSSL 3.0.
 
