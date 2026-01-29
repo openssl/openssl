@@ -868,6 +868,13 @@ Note that if this feature is enabled then GOST ciphersuites are only available
 if the GOST algorithms are also available through loading an externally supplied
 engine.
 
+### no-engine, no-static-engine, no-dynamic-engine
+
+The `no-engine` option is always present.  These options are deprecated and do
+nothing, and are retained for backwards compatibility only.  The ENGINE API was
+deprecated in OpenSSL 3.0 and removed in OpenSSL 4.0, so applications should
+transition to using providers instead.
+
 ### no-http
 
 Disable HTTP support.
