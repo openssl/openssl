@@ -20,7 +20,7 @@
 
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
     void *value);
-static ASN1_TYPE *get_attribute(const STACK_OF(X509_ATTRIBUTE) *sk, int nid);
+static const ASN1_TYPE *get_attribute(const STACK_OF(X509_ATTRIBUTE) *sk, int nid);
 
 int PKCS7_type_is_other(PKCS7 *p7)
 {
@@ -1092,7 +1092,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
         unsigned char md_dat[EVP_MAX_MD_SIZE];
         unsigned int md_len;
         int alen;
-        ASN1_OCTET_STRING *message_digest;
+        const ASN1_OCTET_STRING *message_digest;
 
         if (!EVP_DigestFinal_ex(mdc_tmp, md_dat, &md_len))
             goto err;
@@ -1165,17 +1165,17 @@ PKCS7_ISSUER_AND_SERIAL *PKCS7_get_issuer_and_serial(PKCS7 *p7, int idx)
     return ri->issuer_and_serial;
 }
 
-ASN1_TYPE *PKCS7_get_signed_attribute(const PKCS7_SIGNER_INFO *si, int nid)
+const ASN1_TYPE *PKCS7_get_signed_attribute(const PKCS7_SIGNER_INFO *si, int nid)
 {
     return get_attribute(si->auth_attr, nid);
 }
 
-ASN1_TYPE *PKCS7_get_attribute(const PKCS7_SIGNER_INFO *si, int nid)
+const ASN1_TYPE *PKCS7_get_attribute(const PKCS7_SIGNER_INFO *si, int nid)
 {
     return get_attribute(si->unauth_attr, nid);
 }
 
-static ASN1_TYPE *get_attribute(const STACK_OF(X509_ATTRIBUTE) *sk, int nid)
+static const ASN1_TYPE *get_attribute(const STACK_OF(X509_ATTRIBUTE) *sk, int nid)
 {
     int idx = X509at_get_attr_by_NID(sk, nid, -1);
 
@@ -1184,9 +1184,9 @@ static ASN1_TYPE *get_attribute(const STACK_OF(X509_ATTRIBUTE) *sk, int nid)
     return X509_ATTRIBUTE_get0_type(X509at_get_attr(sk, idx), 0);
 }
 
-ASN1_OCTET_STRING *PKCS7_digest_from_attributes(STACK_OF(X509_ATTRIBUTE) *sk)
+const ASN1_OCTET_STRING *PKCS7_digest_from_attributes(STACK_OF(X509_ATTRIBUTE) *sk)
 {
-    ASN1_TYPE *astype;
+    const ASN1_TYPE *astype;
     if ((astype = get_attribute(sk, NID_pkcs9_messageDigest)) == NULL)
         return NULL;
     if (astype->type != V_ASN1_OCTET_STRING)
