@@ -201,16 +201,10 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
  * KTLS enables the sendfile system call to send data from a file over
  * TLS.
  */
-static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off,
-    size_t size, int flags)
+static ossl_inline int ktls_sendfile(int s, int fd, off_t off, size_t size,
+    ossl_ssize_t *sbytes, int flags)
 {
-    off_t sbytes = 0;
-    int ret;
-
-    ret = sendfile(fd, s, off, size, NULL, &sbytes, flags);
-    if (ret == -1 && sbytes == 0)
-        return -1;
-    return sbytes;
+    return sendfile(fd, s, off, size, NULL, sbytes, flags);
 }
 
 #endif /* __FreeBSD__ */
@@ -374,9 +368,18 @@ static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
  * KTLS enables the sendfile system call to send data from a file over TLS.
  * @flags are ignored on Linux. (placeholder for FreeBSD sendfile)
  * */
-static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off, size_t size, int flags)
+static ossl_inline int ktls_sendfile(int s, int fd, off_t off, size_t size, ossl_ssize_t *sbytes, int flags)
 {
-    return sendfile(s, fd, &off, size);
+    ossl_ssize_t sent;
+
+    sent = sendfile(s, fd, &off, size);
+    if (sent >= 0) {
+        *sbytes = sent;
+        return 0;
+    } else {
+        *sbytes = 0;
+        return -1;
+    }
 }
 
 #ifdef OPENSSL_NO_KTLS_RX
