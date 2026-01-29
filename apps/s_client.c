@@ -3925,6 +3925,12 @@ static int user_data_execute(struct user_data_st *user_data, int cmd, char *arg)
         return USER_DATA_PROCESS_RESTART;
 
     case USER_COMMAND_RENEGOTIATE:
+        /* Renegotiation is only supported for TLSv1.2 and below */
+        if (SSL_is_quic(user_data->con)
+                || SSL_version(user_data->con) == TLS1_3_VERSION) {
+            BIO_printf(bio_err, "RENEGOTIATION not supported (TLSv1.3/QUIC)\n");
+            return USER_DATA_PROCESS_NO_DATA;
+        }
         BIO_printf(bio_err, "RENEGOTIATING\n");
         if (!SSL_renegotiate(user_data->con))
             break;
