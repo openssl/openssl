@@ -134,11 +134,11 @@ NULs.
 
 =head1 NOTES
 
-Applications are encouraged to use X509_VERIFY_PARAM_set1_host()
-rather than explicitly calling L<X509_check_host(3)>. Hostname
-checks may be out of scope with the DANE-EE(3) certificate usage,
-and the internal checks will be suppressed as appropriate when
-DANE support is enabled.
+Applications should to use X509_VERIFY_PARAM_set1_host() and
+X509_verify_cert() rather than explicitly calling
+L<X509_check_host(3)>. Hostname checks may be out of scope with the
+DANE-EE(3) certificate usage, and the internal checks will be
+suppressed as appropriate when DANE support is enabled.
 
 =head1 SEE ALSO
 
@@ -147,10 +147,13 @@ L<X509_VERIFY_PARAM_set1_host(3)>,
 L<X509_VERIFY_PARAM_add1_host(3)>,
 L<X509_VERIFY_PARAM_set1_email(3)>,
 L<X509_VERIFY_PARAM_set1_ip(3)>
+L<X509_verify_cert(3)>
 
 =head1 HISTORY
 
 These functions were added in OpenSSL 1.0.2.
+
+These functions were deprecated in OpenSSL 4.1.0.
 
 =head1 COPYRIGHT
 

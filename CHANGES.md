@@ -31,6 +31,13 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * 'X509_check_host()', 'X509_check_email()', 'X509_check_ip()', and 'X509_check_ip_asc()'
+   have been deprecated. Applications should migrate to setting a reference identifier
+   to check using 'X509_VERIFY_PARAM_set1_host()', 'X509_VERIFY_PARAM_set1_email()', or
+   X509_VERIFY_PARAM_set1_ip_asc()', and using 'X509_verify_cert()'.
+
+   *Bob Beck*
+
  * Added AVX2 optimized ML-DSA NTT operations on `x86_64`.
 
    *Marcel Cornu and Tomasz Kantecki*

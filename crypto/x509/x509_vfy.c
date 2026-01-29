@@ -939,7 +939,9 @@ static int check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
     for (int i = 0; i < n; ++i) {
         size_t len = sk_X509_BUFFER_value(vpm->hosts, i)->len;
         name = sk_X509_BUFFER_value(vpm->hosts, i)->data;
-        if (X509_check_host(x, (const char *)name, len, vpm->hostflags, &vpm->peername) > 0)
+        if (ossl_x509_check_host(x, (const char *)name, len, vpm->hostflags,
+                &vpm->peername)
+            > 0)
             return 1;
     }
     return n <= 0;
@@ -974,7 +976,7 @@ static int check_ips(X509 *x, X509_VERIFY_PARAM *vpm)
     for (int i = 0; i < n; ++i) {
         size_t len = sk_X509_BUFFER_value(vpm->ips, i)->len;
         name = sk_X509_BUFFER_value(vpm->ips, i)->data;
-        if (X509_check_ip(x, name, len, vpm->hostflags) > 0)
+        if (ossl_x509_check_ip(x, name, len, vpm->hostflags) > 0)
             return 1;
     }
     return n <= 0;
