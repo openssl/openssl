@@ -87,7 +87,6 @@ static unsigned long lcid_hash(const QUIC_LCID *lcid_obj)
 
     /*
      * Truncate the 64-bit SipHash digest into an unsigned long.
-     * Copy the least significant bytes; this is sufficient for LHASH.
      */
     memcpy(&hashval, digest, sizeof(hashval) < sizeof(digest) ? sizeof(hashval) : sizeof(digest));
 out:
