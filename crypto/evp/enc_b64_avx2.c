@@ -493,6 +493,7 @@ int encode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
 
     /* Process 96 bytes at a time */
     for (; i + 100 <= srclen; i += 96) {
+        _mm_prefetch((const char *)(input + i + 192), _MM_HINT_T0);
         /* We shave off 4 bytes from the beginning and the end */
         const __m128i lo0 = _mm_loadu_si128((const __m128i *)(input + i + 4 * 3 * 0));
         const __m128i hi0 = _mm_loadu_si128((const __m128i *)(input + i + 4 * 3 * 1));
