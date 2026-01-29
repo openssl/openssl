@@ -81,7 +81,7 @@ IF[{- !$disabled{'ml-dsa'} -}]
   DEPEND[$DER_ML_DSA_GEN]=oids_to_c.pm ML_DSA.asn1
 
   DEPEND[${DER_ML_DSA_GEN/.c/.o}]=$DER_ML_DSA_H
-  DEPEND[${DER_ML_DSA_AUX/.c/.o}]=$DER_ML_DSA_H
+  DEPEND[${DER_ML_DSA_AUX/.c/.o}]=$DER_ML_DSA_H $DER_DIGESTS_H
   GENERATE[$DER_ML_DSA_H]=$INCDIR/der_ml_dsa.h.in
   DEPEND[$DER_ML_DSA_H]=oids_to_c.pm ML_DSA.asn1
 ENDIF
