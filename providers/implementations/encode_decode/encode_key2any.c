@@ -43,6 +43,8 @@
 #include "prov/ml_kem_codecs.h"
 #include "providers/implementations/encode_decode/encode_key2any.inc"
 
+#include <crypto/asn1.h>
+
 #if defined(OPENSSL_NO_DH) && defined(OPENSSL_NO_DSA) && defined(OPENSSL_NO_EC)
 #define OPENSSL_NO_KEYPARAMS
 #endif

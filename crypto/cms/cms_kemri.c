@@ -18,6 +18,8 @@
 #include "crypto/evp.h"
 #include "internal/sizes.h"
 
+#include <crypto/asn1.h>
+
 /* KEM Recipient Info (KEMRI) routines */
 
 int ossl_cms_RecipientInfo_kemri_get0_alg(CMS_RecipientInfo *ri,

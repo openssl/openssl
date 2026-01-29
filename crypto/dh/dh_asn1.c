@@ -21,6 +21,8 @@
 #include <openssl/asn1t.h>
 #include "crypto/dh.h"
 
+#include <crypto/asn1.h>
+
 /* Override the default free and new methods */
 static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     void *exarg)

@@ -78,7 +78,7 @@ void wait_for_async(SSL *s);
 int has_stdin_waiting(void);
 #endif
 
-void corrupt_signature(const ASN1_STRING *signature);
+int corrupt_signature(ASN1_STRING *signature);
 
 /* Helpers for setting X509v3 certificate fields notBefore and notAfter */
 int check_cert_time_string(const char *time, const char *desc);

@@ -15,6 +15,8 @@
 #include <openssl/cms.h>
 #include "cms_local.h"
 
+#include <crypto/asn1.h>
+
 /* CMS DigestedData Utilities */
 
 CMS_ContentInfo *ossl_cms_DigestedData_create(const EVP_MD *md,
