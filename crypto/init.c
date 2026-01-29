@@ -48,6 +48,7 @@ static CRYPTO_THREAD_LOCAL in_init_config_local;
 
 static CRYPTO_ONCE base = CRYPTO_ONCE_STATIC_INIT;
 static int base_inited = 0;
+static int do_global_cleanup = 0;
 DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 {
     /* no need to init trace */
@@ -212,7 +213,22 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_async)
     return 1;
 }
 
-void OPENSSL_cleanup(void)
+/*
+ * Global cleanup function. This is optional, and not strictly
+ * necessary to run.
+ *
+ * If we have destructor support, this function is installed and
+ * always run as a global destructor. It only does anything if
+ * someone has called OPENSSL_cleanup() before it is run.
+ *
+ * This ensures that we do the actual cleanup requested by an
+ * OPENSSL_cleanup() only after subordinate library destructors which
+ * may call into OpenSSL have run.
+ *
+ * If we do not have destructor support, then this function is run directly
+ * from OPENSSL_cleanup() when it is called.
+ */
+void ossl_cleanup_destructor(void)
 {
     /*
      * At some point we should consider looking at this function with a view to
@@ -221,6 +237,10 @@ void OPENSSL_cleanup(void)
 
     /* If we've not been inited then no need to deinit */
     if (!base_inited)
+        return;
+
+    /* If we have not been told to clean up, and we are invoked, return */
+    if (!do_global_cleanup)
         return;
 
     /* Might be explicitly called */
@@ -461,6 +481,19 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
 
     return 1;
+}
+
+void OPENSSL_cleanup(void)
+{
+    do_global_cleanup = 1;
+#if defined(OSSL_CLEANUP_USING_DESTRUCTOR)
+    return;
+#endif /* defined(OSSL_CLEANUP_USING_DESTRUCTOR) */
+
+    /*XXX Do we want this? */
+#if defined(DO_NOT_SKIP_OPENSSL_CLEANUP)
+    ossl_cleanup_destructor();
+#endif /* defined(DO_NOT_SKIP_OPENSSL_CLEANUP) */
 }
 
 int OPENSSL_atexit(void (*handler)(void))

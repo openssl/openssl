@@ -366,3 +366,48 @@ typedef _locale_t locale_t;
 #endif
 
 #endif
+
+/*
+ * Can we use a global destructor?  We can use a global destructor via
+ * __attribute__ on anything like a modern gcc/clang.  We can also use
+ * it via dllmain on anything win32/win64.
+ *
+ * Older things may not do this.
+ * The assumption here is then if you don't have destructor support,
+ * it is safe to call OPENSSL_cleanup before an application exits
+ * because no library it is linked with will run code in a destructor
+ * that will call into OpenSSL after exit() happens.
+ *
+ */
+#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN64)
+#define OSSL_CLEANUP_USING_DESTRUCTOR
+#define OSSL_DLLMAIN_DESTRUCTOR
+/*
+ * destructor will be installed in libcrypto's dllmain.c
+ * This means effectively anything not win16 or dos will handle
+ * this.
+ */
+void ossl_cleanup_destructor(void);
+#else
+#if defined(__has_attribute)
+#if __has_attribute(destructor)
+/*
+ * This seems to have been a thing with any gcc or clang since the
+ * early 2000's. So this could pretty much instead be just unconditional
+ * on __GNUC__ or __clang__.
+ */
+#define OSSL_CLEANUP_USING_DESTRUCTOR
+/* destructor is installed by compiler */
+void ossl_cleanup_destructor(void) __attribute__((destructor));
+#else
+/* We are not using a destructor */
+/*
+ * So we are on something that is not close to Windows or being
+ * compiled with a modern GCC/Clang derivative. either way
+ * this probably means something like a toolchain that is
+ * more than 20 years old.
+ */
+void ossl_cleanup_destructor(void);
+#endif /* defined (__has_attribute(destructor) */
+#endif /* defined (__has_attribute) */
+#endif /* defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN64) */
