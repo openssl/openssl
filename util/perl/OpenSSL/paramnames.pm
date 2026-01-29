@@ -536,6 +536,8 @@ my %params = (
 
     'OSSL_ENCODER_PARAM_CIPHER' =>           '*OSSL_ALG_PARAM_CIPHER',
     'OSSL_ENCODER_PARAM_PROPERTIES' =>       '*OSSL_ALG_PARAM_PROPERTIES',
+    'OSSL_PKEY_PARAM_ASN1_CMS_ENVELOPE_ENCRYPT' =>       'asn1-cms-envelope-encrypt',
+    'OSSL_PKEY_PARAM_ASN1_CMS_ENVELOPE_DECRYPT' =>       'asn1-cms-envelope-decrypt',
 # Currently PVK only, but reusable for others as needed
     'OSSL_ENCODER_PARAM_ENCRYPT_LEVEL' =>    "encrypt-level",
     'OSSL_ENCODER_PARAM_SAVE_PARAMETERS' =>  "save-parameters",# integer
