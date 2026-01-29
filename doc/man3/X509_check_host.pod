@@ -134,7 +134,7 @@ NULs.
 
 =head1 NOTES
 
-Applications should to use X509_VERIFY_PARAM_set1_host() and
+Applications should use X509_VERIFY_PARAM_set1_host() and
 X509_verify_cert() rather than explicitly calling
 L<X509_check_host(3)>. Hostname checks may be out of scope with the
 DANE-EE(3) certificate usage, and the internal checks will be
@@ -146,7 +146,7 @@ L<SSL_get_verify_result(3)>,
 L<X509_VERIFY_PARAM_set1_host(3)>,
 L<X509_VERIFY_PARAM_add1_host(3)>,
 L<X509_VERIFY_PARAM_set1_email(3)>,
-L<X509_VERIFY_PARAM_set1_ip(3)>
+L<X509_VERIFY_PARAM_set1_ip(3)>,
 L<X509_verify_cert(3)>
 
 =head1 HISTORY
