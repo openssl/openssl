@@ -912,7 +912,7 @@ static int self_test_mac(const ST_DEFINITION *t, OSSL_SELF_TEST *st,
     OSSL_PARAM *params = NULL;
 
     /* Currently used for integrity */
-    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_INTEGRITY, t->desc);
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_MAC, t->desc);
 
     mac = EVP_MAC_fetch(libctx, t->algorithm, "");
     if (mac == NULL)
