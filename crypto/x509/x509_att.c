@@ -238,11 +238,11 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_txt(STACK_OF(X509_ATTRIBUTE)
     return ret;
 }
 
-void *X509at_get0_data_by_OBJ(const STACK_OF(X509_ATTRIBUTE) *x,
+const void *X509at_get0_data_by_OBJ(const STACK_OF(X509_ATTRIBUTE) *x,
     const ASN1_OBJECT *obj, int lastpos, int type)
 {
     int i = X509at_get_attr_by_OBJ(x, obj, lastpos);
-    X509_ATTRIBUTE *at;
+    const X509_ATTRIBUTE *at;
 
     if (i == -1)
         return NULL;

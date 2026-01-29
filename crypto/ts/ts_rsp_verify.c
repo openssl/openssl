@@ -205,7 +205,7 @@ end:
 
 static ESS_SIGNING_CERT *ossl_ess_get_signing_cert(const PKCS7_SIGNER_INFO *si)
 {
-    ASN1_TYPE *attr;
+    const ASN1_TYPE *attr;
     const unsigned char *p;
 
     attr = PKCS7_get_signed_attribute(si, NID_id_smime_aa_signingCertificate);
@@ -217,7 +217,7 @@ static ESS_SIGNING_CERT *ossl_ess_get_signing_cert(const PKCS7_SIGNER_INFO *si)
 
 static ESS_SIGNING_CERT_V2 *ossl_ess_get_signing_cert_v2(const PKCS7_SIGNER_INFO *si)
 {
-    ASN1_TYPE *attr;
+    const ASN1_TYPE *attr;
     const unsigned char *p;
 
     attr = PKCS7_get_signed_attribute(si, NID_id_smime_aa_signingCertificateV2);
