@@ -22,6 +22,8 @@
 #include "crypto/dh.h"
 #include "dh_local.h"
 
+#include <crypto/asn1.h>
+
 /*
  * The intention with the "backend" source file is to offer backend functions
  * for legacy backends (EVP_PKEY_ASN1_METHOD) and provider implementations

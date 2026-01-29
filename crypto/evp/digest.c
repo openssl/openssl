@@ -21,6 +21,8 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+#include <crypto/asn1.h>
+
 void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force, int keep_fetched)
 {
     if (ctx->algctx != NULL) {

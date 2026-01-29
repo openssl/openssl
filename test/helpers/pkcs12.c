@@ -467,22 +467,22 @@ static int check_asn1_string(const ASN1_TYPE *av, const char *txt)
 
     switch (av->type) {
     case V_ASN1_BMPSTRING:
-        value = OPENSSL_uni2asc(av->value.bmpstring->data,
-            av->value.bmpstring->length);
+        value = OPENSSL_uni2asc(ASN1_STRING_get0_data(av->value.bmpstring),
+            ASN1_STRING_length(av->value.bmpstring));
         if (!TEST_str_eq(txt, (char *)value))
             goto err;
         break;
 
     case V_ASN1_UTF8STRING:
-        if (!TEST_mem_eq(txt, strlen(txt), (char *)av->value.utf8string->data,
-                av->value.utf8string->length))
+        if (!TEST_mem_eq(txt, strlen(txt), ASN1_STRING_get0_data(av->value.utf8string),
+                ASN1_STRING_length(av->value.utf8string)))
             goto err;
         break;
 
     case V_ASN1_OCTET_STRING:
         if (!TEST_mem_eq(txt, strlen(txt),
-                (char *)av->value.octet_string->data,
-                av->value.octet_string->length))
+                (char *)ASN1_STRING_get0_data(av->value.octet_string),
+                ASN1_STRING_length(av->value.octet_string)))
             goto err;
         break;
 

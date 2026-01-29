@@ -11,6 +11,8 @@
 #include "internal/refcount.h"
 #include "internal/hashtable.h"
 
+#include <crypto/asn1.h>
+
 #define X509V3_conf_add_error_name_value(val) \
     ERR_add_error_data(4, "name=", (val)->name, ", value=", (val)->value)
 

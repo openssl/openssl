@@ -26,6 +26,8 @@
 #include "prov/endecoder_local.h"
 #include "providers/implementations/encode_decode/decode_epki2pki.inc"
 
+#include <crypto/asn1.h>
+
 static OSSL_FUNC_decoder_newctx_fn epki2pki_newctx;
 static OSSL_FUNC_decoder_freectx_fn epki2pki_freectx;
 static OSSL_FUNC_decoder_decode_fn epki2pki_decode;

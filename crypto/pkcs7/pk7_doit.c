@@ -18,6 +18,8 @@
 #include "crypto/evp.h"
 #include "pk7_local.h"
 
+#include <crypto/asn1.h>
+
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
     void *value);
 static const ASN1_TYPE *get_attribute(const STACK_OF(X509_ATTRIBUTE) *sk, int nid);

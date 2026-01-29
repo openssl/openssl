@@ -309,7 +309,11 @@ int crl_main(int argc, char **argv)
         const ASN1_BIT_STRING *sig;
 
         X509_CRL_get0_signature(x, &sig, NULL);
-        corrupt_signature(sig);
+        /* XXX Casts away const, because it mutates the value! */
+        if (!corrupt_signature((ASN1_BIT_STRING *)sig)) {
+            BIO_puts(bio_err, "Error corrupting signature\n");
+            goto end;
+        }
     }
 
     if (num) {

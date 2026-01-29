@@ -14,6 +14,8 @@
 #include "x509_local.h"
 #include "ext_dat.h"
 
+#include <crypto/asn1.h>
+
 static STACK_OF(CONF_VALUE) *i2v_OSSL_BASIC_ATTR_CONSTRAINTS(
     X509V3_EXT_METHOD *method,
     OSSL_BASIC_ATTR_CONSTRAINTS *battcons,

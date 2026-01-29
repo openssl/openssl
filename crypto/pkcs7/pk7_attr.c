@@ -17,6 +17,8 @@
 #include <openssl/x509.h>
 #include <openssl/err.h>
 
+#include <crypto/asn1.h>
+
 int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si,
     STACK_OF(X509_ALGOR) *cap)
 {

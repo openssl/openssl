@@ -17,6 +17,8 @@
 #include <openssl/types.h>
 #include "x509_local.h"
 
+#include <crypto/asn1.h>
+
 X509_LOOKUP_METHOD *X509_LOOKUP_meth_new(const char *name)
 {
     X509_LOOKUP_METHOD *method = OPENSSL_zalloc(sizeof(X509_LOOKUP_METHOD));

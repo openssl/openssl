@@ -26,6 +26,8 @@
 #include "internal/nelem.h"
 #include "internal/refcount.h"
 
+#include <crypto/asn1.h>
+
 /* error codes */
 
 /* xorprovider error codes */

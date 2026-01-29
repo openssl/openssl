@@ -19,6 +19,8 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+#include <crypto/asn1.h>
+
 int ossl_pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
     const unsigned char *salt, int saltlen, int iter,
     const EVP_MD *digest, int keylen, unsigned char *out,
