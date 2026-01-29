@@ -124,6 +124,10 @@ configuration file.
 OSSL_PROVIDER_unload() unloads the given provider.
 For a provider added with OSSL_PROVIDER_add_builtin(), this simply
 runs its teardown function.
+When cleaning up, providers must be unloaded before their associated
+library context is freed with OSSL_LIB_CTX_free().
+Calling OSSL_PROVIDER_unload() after OSSL_LIB_CTX_free() has been called
+on the associated library context results in undefined behavior.
 
 OSSL_PROVIDER_available() checks if a named provider is available
 for use.
