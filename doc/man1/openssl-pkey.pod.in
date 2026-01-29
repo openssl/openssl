@@ -130,10 +130,12 @@ See L<EVP_PKEY-ML-DSA(7)> and L<EVP_PKEY-ML-KEM(7)> for details.
 
 =item B<-I<cipher>>
 
-Encrypt the PEM encoded private key with the supplied cipher. Any algorithm
-name accepted by EVP_get_cipherbyname() is acceptable such as B<aes128>.
+Encrypt the PEM encoded private key with the supplied cipher. This option is
+specified by prepending a hyphen to the cipher name (e.g., B<-aes-256-cbc>
+or B<-aes128>), not as an argument to a C<-cipher> flag.
 In B<DER> output form encryption is supported only in the default B<PKCS#8>
-form and and is not available when the B<-traditional> option is used.
+form and is not available when the B<-traditional> option is used.
+Use C<openssl list -cipher-algorithms> to see the available ciphers.
 
 =item B<-passout> I<arg>
 
