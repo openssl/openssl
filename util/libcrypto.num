@@ -5702,3 +5702,8 @@ EVP_SIGNATURE_has_message_update        ?	4_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_serialize                    ?	4_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_deserialize                  ?	4_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_ctrl_string            ?	4_0_0	EXIST::FUNCTION:
+d2i_IPAddrBlocks                        ?	4_0_0	EXIST::FUNCTION:RFC3779
+i2d_IPAddrBlocks                        ?	4_0_0	EXIST::FUNCTION:RFC3779
+IPAddrBlocks_free                       ?	4_0_0	EXIST::FUNCTION:RFC3779
+IPAddrBlocks_new                        ?	4_0_0	EXIST::FUNCTION:RFC3779
+IPAddrBlocks_it                         ?	4_0_0	EXIST::FUNCTION:RFC3779
