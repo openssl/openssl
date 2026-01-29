@@ -126,7 +126,7 @@ static int test_addr_afi_safi(void)
     IPAddrBlocks *addr = NULL;
     IPAddressFamily *fam = NULL;
     ASN1_OCTET_STRING *ip1 = NULL, *ip2 = NULL;
-    unsigned char *safi_ptr;
+    const unsigned char *safi_ptr;
     unsigned int afi;
     unsigned int safi = 1; /* unicast */
 
@@ -139,7 +139,7 @@ static int test_addr_afi_safi(void)
     if (!TEST_ptr(ip1) || !TEST_ptr(ip2))
         goto end;
     if (!TEST_true(X509v3_addr_add_range(addr, IANA_AFI_IPV4, NULL,
-                                         ip1->data, ip2->data)))
+            ip1->data, ip2->data)))
         goto end;
 
     /* Test get_afi without SAFI */
@@ -161,7 +161,7 @@ static int test_addr_afi_safi(void)
     if (!TEST_ptr(addr))
         goto end;
     if (!TEST_true(X509v3_addr_add_range(addr, IANA_AFI_IPV4, &safi,
-                                         ip1->data, ip2->data)))
+            ip1->data, ip2->data)))
         goto end;
 
     /* Test get_afi with SAFI present */
