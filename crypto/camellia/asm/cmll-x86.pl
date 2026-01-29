@@ -549,7 +549,7 @@ my $bias=int(@T[0])?shift(@T):0;
 }
 
 # void Camellia_Ekeygen(
-#		const int keyBitLength,
+#		int keyBitLength,
 #		const Byte *rawKey,
 #		KEY_TABLE_TYPE keyTable)
 &function_begin("Camellia_Ekeygen");
@@ -807,7 +807,7 @@ for ($i=0;$i<256;$i++) { &data_word(&S0222($i),&S3033($i)); }
 
 # void Camellia_cbc_encrypt (const void char *inp, unsigned char *out,
 #			size_t length, const CAMELLIA_KEY *key,
-#			unsigned char *ivp,const int enc);
+#			unsigned char *ivp, int enc);
 {
 # stack frame layout
 #             -4(%esp)		# return address	 0(%esp)

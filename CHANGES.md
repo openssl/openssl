@@ -114,7 +114,11 @@ OpenSSL 4.0
 
    *Bob Beck*
 
- * various function parameters have been constified,
+ * Remove needless 'const' from scalar types in the public API, mostly for AES and Camellia
+
+   *David von Oheimb*
+
+ * Various function parameters have been constified,
    in particular for X509-related functions.
 
    *David von Oheimb*

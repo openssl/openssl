@@ -2022,7 +2022,7 @@ sub declast()
 
 # void AES_cbc_encrypt (const void char *inp, unsigned char *out,
 #			size_t length, const AES_KEY *key,
-#			unsigned char *ivp,const int enc);
+#			unsigned char *ivp, int enc);
 {
 # stack frame layout
 #             -4(%esp)		# return address	 0(%esp)
@@ -2870,8 +2870,7 @@ sub enckey()
     &set_label("exit");
 &function_end("_x86_AES_set_encrypt_key");
 
-# int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
-#                        AES_KEY *key)
+# int AES_set_encrypt_key(const unsigned char *userKey, int bits, AES_KEY *key)
 &function_begin_B("AES_set_encrypt_key");
 	&call	("_x86_AES_set_encrypt_key");
 	&ret	();
@@ -2932,8 +2931,7 @@ sub deckey()
 	&mov	(&DWP(4*$i,$key),$tp1);
 }
 
-# int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
-#                        AES_KEY *key)
+# int AES_set_decrypt_key(const unsigned char *userKey, int bits, AES_KEY *key)
 &function_begin_B("AES_set_decrypt_key");
 	&call	("_x86_AES_set_encrypt_key");
 	&cmp	("eax",0);

@@ -544,7 +544,7 @@ err:
  * Add an inheritance element.
  */
 int X509v3_addr_add_inherit(IPAddrBlocks *addr,
-    const unsigned afi, const unsigned *safi)
+    unsigned afi, const unsigned *safi)
 {
     IPAddressFamily *f = make_IPAddressFamily(addr, afi, safi);
 
@@ -595,7 +595,7 @@ static IPAddressOrRanges *make_prefix_or_range(IPAddrBlocks *addr,
 int X509v3_addr_add_prefix(IPAddrBlocks *addr,
     const unsigned afi,
     const unsigned *safi,
-    unsigned char *a, const int prefixlen)
+    unsigned char *a, int prefixlen)
 {
     IPAddressOrRanges *aors = make_prefix_or_range(addr, afi, safi);
     IPAddressOrRange *aor;
@@ -613,7 +613,7 @@ int X509v3_addr_add_prefix(IPAddrBlocks *addr,
  * Add a range.
  */
 int X509v3_addr_add_range(IPAddrBlocks *addr,
-    const unsigned afi,
+    unsigned afi,
     const unsigned *safi,
     unsigned char *min, unsigned char *max)
 {
@@ -652,9 +652,9 @@ static int extract_min_max(IPAddressOrRange *aor,
  * Public wrapper for extract_min_max().
  */
 int X509v3_addr_get_range(IPAddressOrRange *aor,
-    const unsigned afi,
+    unsigned afi,
     unsigned char *min,
-    unsigned char *max, const int length)
+    unsigned char *max, int length)
 {
     int afi_length = length_from_afi(afi);
 
