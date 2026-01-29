@@ -79,7 +79,7 @@ void ossl_quic_reactor_cleanup(QUIC_REACTOR *rtor)
 
 /* Work around for MinGW builds. */
 #if defined(__MINGW32__) && !defined(SIO_UDP_NETRESET)
-#  define SIO_UDP_NETRESET _WSAIOW(IOC_VENDOR, 15)
+#define SIO_UDP_NETRESET _WSAIOW(IOC_VENDOR, 15)
 #endif
 
 /*
