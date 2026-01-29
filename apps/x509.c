@@ -910,7 +910,7 @@ cert_loop:
         X509_EXTENSION *ex = X509_get_ext(x, i);
         const char *sn = OBJ_nid2sn(OBJ_obj2nid(X509_EXTENSION_get_object(ex)));
 
-        if (clrext || (ext_names != NULL && strstr(ext_names, sn) == NULL))
+        if (clrext && (ext_names != NULL && strstr(ext_names, sn) == NULL))
             X509_EXTENSION_free(X509_delete_ext(x, i));
     }
 
