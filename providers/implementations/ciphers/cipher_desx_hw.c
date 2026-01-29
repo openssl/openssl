@@ -24,6 +24,7 @@
 #define ks2 tks.ks[1].ks[0].cblock
 #define ks3 tks.ks[2].ks[0].cblock
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int cipher_hw_desx_cbc_initkey(PROV_CIPHER_CTX *ctx,
     const unsigned char *key, size_t keylen)
 {

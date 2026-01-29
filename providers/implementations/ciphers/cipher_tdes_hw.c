@@ -20,6 +20,7 @@
 #define ks2 tks.ks[1]
 #define ks3 tks.ks[2]
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int ossl_cipher_hw_tdes_ede3_initkey(PROV_CIPHER_CTX *ctx,
     const unsigned char *key, size_t keylen)
 {

@@ -18,6 +18,8 @@
 #include "crypto/asn1.h"
 #include "asn1_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 int i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
 {
     unsigned char *p, *allocated = NULL;

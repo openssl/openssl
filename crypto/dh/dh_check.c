@@ -26,6 +26,7 @@
  * p is odd
  * 1 < g < p - 1
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int DH_check_params_ex(const DH *dh)
 {
     int errflags = 0;

@@ -16,6 +16,7 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 OSSL_provider_init_fn ossl_null_provider_init;
 
 /* Parameters we provide to the core */

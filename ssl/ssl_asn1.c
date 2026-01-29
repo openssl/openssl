@@ -15,6 +15,7 @@
 #include <openssl/encoder.h>
 #include <openssl/x509.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct {
     uint32_t version;
     int32_t ssl_version;

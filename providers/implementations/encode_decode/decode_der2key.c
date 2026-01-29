@@ -51,6 +51,7 @@ typedef struct {
     ASN1_OBJECT *oid;
 } BARE_ALGOR;
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct {
     BARE_ALGOR algor;
     ASN1_BIT_STRING *pubkey;

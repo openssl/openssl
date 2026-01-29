@@ -56,6 +56,7 @@
  */
 
 /* Sub state machine return values */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef enum {
     /* Something bad happened or NBIO */
     SUB_STATE_ERROR,

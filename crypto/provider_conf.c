@@ -18,6 +18,7 @@
 #include "provider_local.h"
 #include "crypto/context.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 DEFINE_STACK_OF(OSSL_PROVIDER)
 
 /* PROVIDER config module */

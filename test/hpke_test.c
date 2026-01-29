@@ -16,6 +16,7 @@
 /* a size to use for stack buffers */
 #define OSSL_HPKE_TSTSIZE 512
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_LIB_CTX *testctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
 static OSSL_PROVIDER *deflprov = NULL;

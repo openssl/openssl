@@ -66,6 +66,7 @@
  * @return void.
  */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static void ossltest_teardown(void *provctx)
 {
     OSSL_LIB_CTX_free(PROV_LIBCTX_OF(provctx));

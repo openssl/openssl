@@ -16,6 +16,7 @@
 #include <openssl/proverr.h>
 #include "cipher_aes.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int cipher_hw_aes_initkey(PROV_CIPHER_CTX *dat,
     const unsigned char *key, size_t keylen)
 {

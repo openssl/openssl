@@ -18,6 +18,7 @@
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_INFORM,

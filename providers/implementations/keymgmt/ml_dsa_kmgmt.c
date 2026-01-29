@@ -22,6 +22,7 @@
 #include "prov/ml_dsa.h"
 #include "providers/implementations/keymgmt/ml_dsa_kmgmt.inc"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_FUNC_keymgmt_free_fn ml_dsa_free_key;
 static OSSL_FUNC_keymgmt_has_fn ml_dsa_has;
 static OSSL_FUNC_keymgmt_match_fn ml_dsa_match;

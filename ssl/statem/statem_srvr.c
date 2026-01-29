@@ -36,6 +36,7 @@
 
 #define TICKET_NONCE_SIZE 8
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct {
     ASN1_TYPE *kxBlob;
     ASN1_TYPE *opaqueBlob;

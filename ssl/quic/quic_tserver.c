@@ -20,6 +20,7 @@
  * QUIC Test Server Module
  * =======================
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct quic_tserver_st {
     QUIC_TSERVER_ARGS args;
 

@@ -21,6 +21,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/cms.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int cms_cb(int ok, X509_STORE_CTX *ctx);
 static void receipt_request_print(CMS_ContentInfo *cms);

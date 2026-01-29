@@ -22,6 +22,7 @@
  * The special cases are for prefix where "ERROR" is assumed and for left
  * and right where a non-failure message is produced if either is NULL.
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 void test_fail_message_prefix(const char *prefix, const char *file,
     int line, const char *type,
     const char *left, const char *right,

@@ -19,6 +19,8 @@
 #include "internal/bio.h"
 #include "asn1_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 /*
  * Generalised MIME like utilities for streaming ASN1. Although many have a
  * PKCS7/CMS like flavour others are more general purpose.

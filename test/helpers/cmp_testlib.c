@@ -12,6 +12,7 @@
 #include "cmp_testlib.h"
 #include <openssl/rsa.h> /* needed in case config no-deprecated */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 OSSL_CMP_MSG *load_pkimsg(const char *file, OSSL_LIB_CTX *libctx)
 {
     OSSL_CMP_MSG *msg;

@@ -17,6 +17,7 @@
  * Sets a socket as close-on-exec, except that this is a no-op if we are certain
  * we do not need to do this or the OS does not support the concept.
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int set_cloexec(int fd)
 {
 #if !defined(SOCK_CLOEXEC) && defined(FD_CLOEXEC)

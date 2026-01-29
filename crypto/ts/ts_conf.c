@@ -40,6 +40,7 @@
 
 /* Function definitions for certificate and key loading. */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 X509 *TS_CONF_load_cert(const char *file)
 {
     BIO *cert = NULL;

@@ -21,6 +21,8 @@
 
 #include <string.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 #ifndef OPENSSL_NO_SECURE_MEMORY
 #if defined(_WIN32)
 #include <windows.h>

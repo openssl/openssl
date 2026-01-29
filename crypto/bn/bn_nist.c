@@ -10,6 +10,8 @@
 #include "bn_local.h"
 #include "internal/cryptlib.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 #define BN_NIST_192_TOP (192 + BN_BITS2 - 1) / BN_BITS2
 #define BN_NIST_224_TOP (224 + BN_BITS2 - 1) / BN_BITS2
 #define BN_NIST_256_TOP (256 + BN_BITS2 - 1) / BN_BITS2

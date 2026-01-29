@@ -69,6 +69,7 @@ typedef unsigned int u_int;
 #define USER_DATA_PROCESS_NO_DATA 3
 #define USER_DATA_PROCESS_CONTINUE 4
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct user_data_st {
     /* SSL connection we are processing commands for */
     SSL *con;

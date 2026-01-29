@@ -16,6 +16,8 @@
 #include "internal/cryptlib.h"
 #include <openssl/err.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 long BIO_debug_callback_ex(BIO *bio, int cmd, const char *argp, size_t len,
     int argi, long argl, int ret, size_t *processed)
 {

@@ -28,6 +28,7 @@
 #include "internal/fips.h"
 #include "internal/sizes.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_FUNC_keymgmt_new_fn dh_newdata;
 static OSSL_FUNC_keymgmt_free_fn dh_freedata;
 static OSSL_FUNC_keymgmt_gen_init_fn dh_gen_init;

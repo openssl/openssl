@@ -19,6 +19,7 @@
 #include "fake_rsaprov.h"
 #include "internal/asn1.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_FUNC_keymgmt_new_fn fake_rsa_keymgmt_new;
 static OSSL_FUNC_keymgmt_free_fn fake_rsa_keymgmt_free;
 static OSSL_FUNC_keymgmt_has_fn fake_rsa_keymgmt_has;

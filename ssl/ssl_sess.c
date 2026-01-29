@@ -20,6 +20,7 @@
 #include "ssl_local.h"
 #include "statem/statem_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
 static void SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s);
 static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck);

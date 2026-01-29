@@ -21,6 +21,7 @@ typedef size_t size_t_aX __attribute((__aligned__(1)));
 typedef size_t size_t_aX;
 #endif
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 void CRYPTO_cbc128_encrypt(const unsigned char *in, unsigned char *out,
     size_t len, const void *key,
     unsigned char ivec[16], block128_f block)

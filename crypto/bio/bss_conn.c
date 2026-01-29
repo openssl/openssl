@@ -16,6 +16,7 @@
 
 #ifndef OPENSSL_NO_SOCK
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct bio_connect_st {
     int state;
     int connect_family;

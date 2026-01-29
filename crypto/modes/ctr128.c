@@ -24,6 +24,7 @@ typedef size_t size_t_aX;
  */
 
 /* increment counter (128-bit int) by 1 */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static void ctr128_inc(unsigned char *counter)
 {
     u32 n = 16, c = 1;

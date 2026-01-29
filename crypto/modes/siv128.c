@@ -19,6 +19,7 @@
 
 #ifndef OPENSSL_NO_SIV
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 __owur static ossl_inline uint32_t rotl8(uint32_t x)
 {
     return (x << 8) | (x >> 24);

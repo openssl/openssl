@@ -34,6 +34,7 @@
 
 #include "providers/implementations/storemgmt/file_store.inc"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 DEFINE_STACK_OF(OSSL_STORE_INFO)
 
 #ifdef _WIN32

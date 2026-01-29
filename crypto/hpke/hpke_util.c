@@ -34,6 +34,7 @@
  * a hex string with a leading zero and a decimal string - more
  * could be added but that seems like enough
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct {
     uint16_t id;
     char *synonyms[4];

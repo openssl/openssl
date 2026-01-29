@@ -15,6 +15,7 @@
 
 #include <internal/cms.h> /* for ossl_cms_sign_encrypt() */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 OSSL_CMP_MSG *OSSL_CMP_MSG_new(OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_CMP_MSG *msg = NULL;

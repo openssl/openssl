@@ -11,6 +11,7 @@
 #include "internal/common.h"
 #include "internal/quic_wire_pkt.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int ossl_quic_hdr_protector_init(QUIC_HDR_PROTECTOR *hpr,
     OSSL_LIB_CTX *libctx,
     const char *propq,

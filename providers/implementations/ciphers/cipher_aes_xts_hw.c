@@ -36,6 +36,7 @@
         xctx->stream = ctx->enc ? fn_stream_enc : fn_stream_dec; \
     }
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int cipher_hw_aes_xts_generic_initkey(PROV_CIPHER_CTX *ctx,
     const unsigned char *key,
     size_t keylen)

@@ -45,6 +45,7 @@
         memcpy(c, ctext_ex, sizeof(ctext_ex) - 1); \
     return sizeof(ctext_ex) - 1;
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int key1(RSA *key, unsigned char *c)
 {
     static unsigned char n[] = "\x00\xAA\x36\xAB\xCE\x88\xAC\xFD\xFF\x55\x52\x3C\x7F\xC4\x52\x3F"

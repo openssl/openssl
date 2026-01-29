@@ -47,6 +47,7 @@
  * process-level state primarily revolves around a global dictionary of SSL
  * objects.
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct radix_obj_st {
     char *name; /* owned, zero-terminated */
     SSL *ssl; /* owns one reference */

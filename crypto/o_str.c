@@ -19,6 +19,7 @@
 #define DEFAULT_SEPARATOR ':'
 #define CH_ZERO '\0'
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 char *CRYPTO_strdup(const char *str, const char *file, int line)
 {
     char *ret;

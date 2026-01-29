@@ -46,6 +46,7 @@
  * oblige.
  */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_FUNC_decoder_newctx_fn any2obj_newctx;
 static OSSL_FUNC_decoder_freectx_fn any2obj_freectx;
 

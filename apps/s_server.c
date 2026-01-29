@@ -59,6 +59,7 @@ typedef unsigned int u_int;
 #include "internal/sockets.h"
 #include "internal/statem.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
 static int sv_body(int s, int stype, int prot, unsigned char *context);
 static int www_body(int s, int stype, int prot, unsigned char *context);

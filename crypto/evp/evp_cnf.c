@@ -18,6 +18,7 @@
 
 /* Algorithm configuration module. */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
 {
     int i;

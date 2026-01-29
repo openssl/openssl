@@ -23,6 +23,7 @@
 #define SET_HOST 0
 #define ADD_HOST 1
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static char *str_copy(const char *s)
 {
     return OPENSSL_strdup(s);

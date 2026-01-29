@@ -17,6 +17,7 @@
 #include "prov/providercommon.h"
 #include "prov/provider_util.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 void ossl_prov_cipher_reset(PROV_CIPHER *pc)
 {
     EVP_CIPHER_free(pc->alloc_cipher);

@@ -26,6 +26,7 @@
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 DEFINE_SPARSE_ARRAY_OF(BN_BLINDING);
 
 static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,

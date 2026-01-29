@@ -47,6 +47,7 @@
 /* ASCII: "KEM", in hex for EBCDIC compatibility */
 static const char LABEL_KEM[] = "\x4b\x45\x4d";
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct {
     ECX_KEY *recipient_key;
     ECX_KEY *sender_authkey;

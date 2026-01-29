@@ -20,6 +20,7 @@
  * use trace API for CMP-specific logging, prefixed by "CMP " and severity
  */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int OSSL_CMP_log_open(void) /* is designed to be idempotent */
 {
 #ifdef OPENSSL_NO_TRACE

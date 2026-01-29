@@ -32,6 +32,7 @@
 #define md5_off 0
 #endif
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int cipher_hw_rc4_hmac_md5_initkey(PROV_CIPHER_CTX *bctx,
     const uint8_t *key, size_t keylen)
 {

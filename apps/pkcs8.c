@@ -20,6 +20,7 @@
 #define STR(a) XSTR(a)
 #define XSTR(a) #a
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_INFORM,

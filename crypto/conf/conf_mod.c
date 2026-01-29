@@ -21,6 +21,7 @@
 #include <openssl/trace.h>
 #include "conf_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 DEFINE_STACK_OF(CONF_MODULE)
 DEFINE_STACK_OF(CONF_IMODULE)
 

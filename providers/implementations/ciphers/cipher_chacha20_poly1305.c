@@ -23,6 +23,7 @@
 #define CHACHA20_POLY1305_FLAGS (PROV_CIPHER_FLAG_AEAD \
     | PROV_CIPHER_FLAG_CUSTOM_IV)
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_FUNC_cipher_newctx_fn chacha20_poly1305_newctx;
 static OSSL_FUNC_cipher_freectx_fn chacha20_poly1305_freectx;
 static OSSL_FUNC_cipher_dupctx_fn chacha20_poly1305_dupctx;

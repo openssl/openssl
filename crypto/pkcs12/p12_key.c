@@ -16,6 +16,7 @@
 #include <openssl/core_names.h>
 #include "internal/provider.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int PKCS12_key_gen_asc_ex(const char *pass, int passlen, unsigned char *salt,
     int saltlen, int id, int iter, int n,
     unsigned char *out, const EVP_MD *md_type,

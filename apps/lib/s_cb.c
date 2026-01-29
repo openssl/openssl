@@ -467,6 +467,7 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
     return 1;
 }
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
     int argi, long argl, int ret, size_t *processed)
 {
@@ -549,6 +550,7 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
     }
     return ret;
 }
+OSSL_END_ALLOW_CAST_DISCARD_QUAL
 
 void apps_ssl_info_callback(const SSL *s, int where, int ret)
 {

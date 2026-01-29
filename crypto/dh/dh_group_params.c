@@ -24,6 +24,7 @@
 #include "internal/nelem.h"
 #include "crypto/dh.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static DH *dh_param_init(OSSL_LIB_CTX *libctx, const DH_NAMED_GROUP *group)
 {
     DH *dh = ossl_dh_new_ex(libctx);

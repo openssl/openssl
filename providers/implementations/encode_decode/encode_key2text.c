@@ -34,6 +34,7 @@
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 
 /* ---------------------------------------------------------------------- */

@@ -45,6 +45,7 @@
  * shift a larger integral value to determine if it will exactly fit into a
  * double.
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static unsigned int real_shift(void)
 {
     return sizeof(double) == 4 ? 24 : 53;

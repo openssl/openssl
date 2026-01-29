@@ -19,6 +19,7 @@
 #include "testutil.h"
 #include "helpers/pkcs12.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int default_libctx = 1;
 
 static OSSL_LIB_CTX *testctx = NULL;

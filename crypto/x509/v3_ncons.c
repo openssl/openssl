@@ -22,6 +22,7 @@
 #include "crypto/punycode.h"
 #include "ext_dat.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 OSSL_SAFE_MATH_SIGNED(int, int)
 
 static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,

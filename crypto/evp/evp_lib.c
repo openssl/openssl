@@ -32,6 +32,7 @@
 #if !defined(FIPS_MODULE)
 #include "crypto/asn1.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 {
     return evp_cipher_param_to_asn1_ex(c, type, NULL);

@@ -21,6 +21,7 @@
 #include "../ssl/ssl_local.h"
 #include "internal/quic_error.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *defctxnull = NULL;
 static char *certsdir = NULL;

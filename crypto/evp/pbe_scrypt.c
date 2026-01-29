@@ -34,6 +34,7 @@
 #define SCRYPT_MAX_MEM (1024 * 1024 * 32)
 #endif
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int EVP_PBE_scrypt_ex(const char *pass, size_t passlen,
     const unsigned char *salt, size_t saltlen,
     uint64_t N, uint64_t r, uint64_t p, uint64_t maxmem,

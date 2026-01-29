@@ -11,6 +11,7 @@
 
 #include "cipher_chacha20.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int chacha20_initkey(PROV_CIPHER_CTX *bctx, const uint8_t *key,
     size_t keylen)
 {

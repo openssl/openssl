@@ -58,6 +58,7 @@
 
 #include "testutil.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef int PEM_write_bio_of_void_protected(BIO *out, const void *obj,
     const EVP_CIPHER *enc,
     unsigned char *kstr, int klen,

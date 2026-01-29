@@ -22,6 +22,7 @@
 #include "internal/quic_reactor_wait_ctx.h"
 #include "internal/time.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct qctx_st QCTX;
 
 static void qc_cleanup(QUIC_CONNECTION *qc, int have_lock);

@@ -17,6 +17,7 @@
  * wbuf
  * ====
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int wbuf_flush(struct json_write_buf *wbuf, int full);
 
 static int wbuf_init(struct json_write_buf *wbuf, BIO *bio, size_t alloc)

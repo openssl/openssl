@@ -20,6 +20,7 @@
 #include "internal/sizes.h"
 #include "testutil.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static EVP_KDF_CTX *get_kdfbyname_libctx(OSSL_LIB_CTX *libctx, const char *name)
 {
     EVP_KDF *kdf = EVP_KDF_fetch(libctx, name, NULL);

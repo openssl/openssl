@@ -20,6 +20,7 @@
 
 #ifndef OPENSSL_NO_SRTP
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static const SRTP_PROTECTION_PROFILE srtp_known_profiles[] = {
     {
         "SRTP_AES128_CM_SHA1_80",

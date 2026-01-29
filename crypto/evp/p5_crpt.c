@@ -19,6 +19,7 @@
  * Doesn't do anything now: Builtin PBE algorithms in static table.
  */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 void PKCS5_PBE_add(void)
 {
 }

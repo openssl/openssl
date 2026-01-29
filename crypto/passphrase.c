@@ -13,6 +13,7 @@
 #include "internal/cryptlib.h"
 #include "internal/passphrase.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 void ossl_pw_clear_passphrase_data(struct ossl_passphrase_data_st *data)
 {
     if (data != NULL) {

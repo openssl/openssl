@@ -21,6 +21,7 @@
 #include "../record_local.h"
 #include "recmethod_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static void tls_int_free(OSSL_RECORD_LAYER *rl);
 
 void ossl_tls_buffer_release(TLS_BUFFER *b)

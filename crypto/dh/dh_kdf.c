@@ -24,6 +24,7 @@
 #include "crypto/dh.h"
 
 /* Key derivation function from X9.63/SECG */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int ossl_dh_kdf_X9_42_asn1(unsigned char *out, size_t outlen,
     const unsigned char *Z, size_t Zlen,
     const char *cek_alg,

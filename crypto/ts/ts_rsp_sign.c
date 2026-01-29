@@ -19,6 +19,7 @@
 #include "crypto/ess.h"
 #include "ts_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 DEFINE_STACK_OF_CONST(EVP_MD)
 
 static ASN1_INTEGER *def_serial_cb(struct TS_resp_ctx *, void *);

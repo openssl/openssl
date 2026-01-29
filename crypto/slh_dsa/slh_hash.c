@@ -18,6 +18,7 @@
 
 #define MAX_DIGEST_SIZE 64 /* SHA-512 is used for security category 3 & 5 */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_SLH_HASHFUNC_H_MSG slh_hmsg_sha2;
 static OSSL_SLH_HASHFUNC_PRF slh_prf_sha2;
 static OSSL_SLH_HASHFUNC_PRF_MSG slh_prf_msg_sha2;

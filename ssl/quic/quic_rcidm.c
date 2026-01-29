@@ -33,6 +33,7 @@
  *
  * We use a priority queue for this purpose.
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static void rcidm_update(QUIC_RCIDM *rcidm);
 static void rcidm_set_preferred_rcid(QUIC_RCIDM *rcidm,
     const QUIC_CONN_ID *rcid);
