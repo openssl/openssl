@@ -99,7 +99,7 @@ unsigned int X509v3_addr_get_afi(const IPAddressFamily *f)
  * Extract the SAFI from an IPAddressFamily, or return NULL if not present.
  * The SAFI is optional and only present when addressFamily length > 2.
  */
-unsigned char *X509v3_addr_get_safi(const IPAddressFamily *f)
+const unsigned char *X509v3_addr_get_safi(const IPAddressFamily *f)
 {
     if (f == NULL
         || f->addressFamily == NULL
