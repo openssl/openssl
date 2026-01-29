@@ -5,7 +5,8 @@
 BIO_s_bio, BIO_make_bio_pair, BIO_destroy_bio_pair, BIO_shutdown_wr,
 BIO_set_write_buf_size, BIO_get_write_buf_size, BIO_new_bio_pair,
 BIO_get_write_guarantee, BIO_ctrl_get_write_guarantee, BIO_get_read_request,
-BIO_ctrl_get_read_request, BIO_ctrl_reset_read_request - BIO pair BIO
+BIO_ctrl_get_read_request, BIO_ctrl_reset_read_request,
+BIO_nread0, BIO_nread, BIO_nwrite0, BIO_nwrite - BIO pair BIO
 
 =head1 SYNOPSIS
 
@@ -27,6 +28,11 @@ BIO_ctrl_get_read_request, BIO_ctrl_reset_read_request - BIO pair BIO
  int BIO_get_read_request(BIO *b);
  size_t BIO_ctrl_get_read_request(BIO *b);
  int BIO_ctrl_reset_read_request(BIO *b);
+
+ int BIO_nread0(BIO *bio, char **buf);
+ int BIO_nread(BIO *bio, char **buf, int num);
+ int BIO_nwrite0(BIO *bio, char **buf);
+ int BIO_nwrite(BIO *bio, char **buf, int num);
 
 =head1 DESCRIPTION
 
@@ -98,6 +104,61 @@ than that returned by BIO_get_write_guarantee().
 BIO_ctrl_reset_read_request() can also be used to reset the value returned by
 BIO_get_read_request() to zero.
 
+=head2 Non-copying Interface
+
+BIO_nread0(), BIO_nread(), BIO_nwrite0(), and BIO_nwrite() provide a non-copying
+interface for reading from and writing to BIO pairs. These functions allow
+direct access to the internal buffer, avoiding the overhead of copying data.
+
+BIO_nread0() returns in B<*buf> a pointer to the start of the available data
+in the peer's write buffer and returns the number of bytes available.
+This allows reading directly from the buffer without copying.
+It does not consume the data; a subsequent call to BIO_nread() is needed
+to advance the buffer position.
+
+BIO_nread() is similar to BIO_nread0() but also advances the read position
+by up to B<num> bytes. The actual number of bytes consumed is returned.
+The B<*buf> pointer is set to the start of the data that was consumed.
+
+BIO_nwrite0() returns in B<*buf> a pointer to the start of the available
+space in the write buffer and returns the number of bytes that can be written.
+This allows writing directly to the buffer without copying.
+It does not commit the data; a subsequent call to BIO_nwrite() is needed
+to update the buffer length.
+
+BIO_nwrite() is similar to BIO_nwrite0() but also commits up to B<num> bytes
+as written. The actual number of bytes committed is returned.
+The B<*buf> pointer is set to the start of the region that was committed.
+
+Note that due to the ring buffer implementation, if wrapping around would be
+required, BIO_nread0() and BIO_nwrite0() may return less than the total
+available space. In such cases, a second call may be needed to access the
+remaining data or space.
+
+The typical usage pattern for writing is:
+
+ int ret;
+ char *buf;
+
+ ret = BIO_nwrite0(bio, &buf);
+ if (ret > 0) {
+     /* write up to 'ret' bytes directly to 'buf' */
+     memcpy(buf, data, len);
+     BIO_nwrite(bio, &buf, len);  /* commit the write */
+ }
+
+The typical usage pattern for reading is:
+
+ int ret;
+ char *buf;
+
+ ret = BIO_nread0(bio, &buf);
+ if (ret > 0) {
+     /* read up to 'ret' bytes directly from 'buf' */
+     process_data(buf, ret);
+     BIO_nread(bio, &buf, ret);  /* consume the data */
+ }
+
 =head1 NOTES
 
 Both halves of a BIO pair should be freed. That is even if one half is implicit
@@ -131,7 +192,13 @@ BIO_new_bio_pair() returns 1 on success, with the new BIOs available in
 B<bio1> and B<bio2>, or 0 on failure, with NULL pointers stored into the
 locations for B<bio1> and B<bio2>. Check the error stack for more information.
 
-[XXXXX: More return values need to be added here]
+BIO_nread0() and BIO_nwrite0() return the number of bytes available for
+reading or writing respectively, 0 if no data is available or no space
+is available, or -1 on error. If the BIO is not initialized, -2 is returned.
+
+BIO_nread() and BIO_nwrite() return the number of bytes consumed or committed
+respectively, 0 if no data is available or no space is available, or -1 on
+error. If the BIO is not initialized, -2 is returned.
 
 =head1 EXAMPLES
 
