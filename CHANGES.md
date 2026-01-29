@@ -136,6 +136,13 @@ OpenSSL 4.0
 
    *Ryan Hooper*
 
+ * Fixed the design of the connection callback function of type `OSSL_HTTP_bio_cb_t`
+   and added `OSSL_HTTP_REQ_CTX_proxy_connect()` and `OSSL_HTTP_REQ_CTX_get0_server()`.
+
+   This work was sponsored by Siemens AG.
+
+   *David von Oheimb*
+
  * Fixed CRLs with invalid ASN1_TIME in invalidityDate extensions,
    where verification incorrectly succeeded. Enforced proper
    handling of ASN1_TIME validation results so that any CRL
