@@ -79,7 +79,7 @@ both deterministic and not.
 If you just want to generate random bytes then you don't need to use
 these functions: just call RAND_bytes() or RAND_priv_bytes().
 If you want to do more, these calls should be used instead of the older
-RAND and RAND_DRBG functions.
+RAND functions.
 
 After creating a B<EVP_RAND_CTX> for the required algorithm using
 EVP_RAND_CTX_new(), inputs to the algorithm are supplied either by
