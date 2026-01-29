@@ -152,6 +152,7 @@ struct evp_mac_st {
     OSSL_FUNC_mac_init_fn *init;
     OSSL_FUNC_mac_update_fn *update;
     OSSL_FUNC_mac_final_fn *final;
+    OSSL_FUNC_mac_squeeze_fn *squeeze;
     OSSL_FUNC_mac_gettable_params_fn *gettable_params;
     OSSL_FUNC_mac_gettable_ctx_params_fn *gettable_ctx_params;
     OSSL_FUNC_mac_settable_ctx_params_fn *settable_ctx_params;

@@ -88,6 +88,12 @@ set before it instead.
 
 =head1 EXAMPLES
 
+Errors are not handled in the following example.
+
+This example generates a MAC in 'out' of size 'out_len' using KMAC-128 using
+inputs for the 'key', 'in' and 'custom' string. If 'out_len' is not known
+before the final() is called 'xof_enabled' should be set to 1.
+
   #include <openssl/evp.h>
   #include <openssl/params.h>
 
@@ -98,57 +104,33 @@ set before it instead.
   {
       EVP_MAC_CTX *ctx = NULL;
       EVP_MAC *mac = NULL;
-      OSSL_PARAM params[4], *p;
-      int ret = 0;
+      OSSL_PARAM params[4], *p = params;
       size_t l = 0;
 
       mac = EVP_MAC_fetch(NULL, "KMAC-128", NULL);
-      if (mac == NULL)
-          goto err;
       ctx = EVP_MAC_CTX_new(mac);
       /* The mac can be freed after it is used by EVP_MAC_CTX_new */
       EVP_MAC_free(mac);
-      if (ctx == NULL)
-          goto err;
 
-      /*
-       * Setup parameters required before calling EVP_MAC_init()
-       * The parameters OSSL_MAC_PARAM_XOF and OSSL_MAC_PARAM_SIZE may also be
-       * used at this point.
-       */
-      p = params;
-      *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                               (void *)key, key_len);
-      if (custom != NULL && custom_len != 0)
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_CUSTOM,
-                                                 (void *)custom, custom_len);
-      *p = OSSL_PARAM_construct_end();
-      if (!EVP_MAC_CTX_set_params(ctx, params))
-          goto err;
-
-      if (!EVP_MAC_init(ctx))
-          goto err;
-
-      /*
-       * Note: the following optional parameters can be set any time
-       * before EVP_MAC_final().
-       */
-      p = params;
+      /* Setup any optional parameters */
+      *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_CUSTOM,
+          (void *)custom, custom_len);
+      /* Optionally set xof_enabled to 1 if the output length is not known */
       *p++ = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_XOF, &xof_enabled);
+      /* Set the out_len if it is not the default size, or use EVP_MAC_finalXOF */
       *p++ = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_SIZE, &out_len);
       *p = OSSL_PARAM_construct_end();
-      if (!EVP_MAC_CTX_set_params(ctx, params))
-          goto err;
+      EVP_MAC_init(ctx, key, key_len, params);
 
       /* The update may be called multiple times here for streamed input */
-      if (!EVP_MAC_update(ctx, in, in_len))
-          goto err;
-      if (!EVP_MAC_final(ctx, out, &l, out_len))
-          goto err;
-      ret = 1;
-  err:
+      EVP_MAC_update(ctx, in, in_len);
+      /*
+       * At this point you can use either EVP_MAC_final(), EVP_MAC_finalXOF()
+       * or one or more calls to EVP_MAC_squeeze().
+       */
+      EVP_MAC_final(ctx, out, &l, out_len))
+
       EVP_MAC_CTX_free(ctx);
-      return ret;
   }
 
 =head1 SEE ALSO
@@ -159,7 +141,7 @@ L<SP 800-185 8.4.2|https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP
 
 =head1 COPYRIGHT
 
-Copyright 2018-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
