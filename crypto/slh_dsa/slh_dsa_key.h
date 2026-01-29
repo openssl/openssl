@@ -44,7 +44,7 @@ struct slh_dsa_key_st {
     const SLH_HASH_FUNC *hash_func;
     /* See FIPS 205 Section 11.1 */
 
-    EVP_MD *md; /* Used for SHAKE and SHA-256 */
-    EVP_MD *md_big; /* Used for SHA-256 or SHA-512 */
+    EVP_MD *md; /* Used for general SHAKE and SHA-256 hashes */
+    EVP_MD *md_sha512; /* Used for SHA-512 hashes */
     EVP_MAC *hmac;
 };

@@ -60,10 +60,11 @@ unsigned char *SHA1(const unsigned char *d, size_t n, unsigned char *md);
                                         * big-endian values. */
 
 typedef struct SHA256state_st {
-    SHA_LONG h[8];
-    SHA_LONG Nl, Nh;
-    SHA_LONG data[SHA_LBLOCK];
-    unsigned int num, md_len;
+    SHA_LONG h[8]; /* Hash values (32 bytes) */
+    SHA_LONG Nl, Nh; /* The length of the message in bits is stored into 64 bits */
+    SHA_LONG data[SHA_LBLOCK]; /* Buffer used to store input less than 512 bits */
+    unsigned int num; /* The size of the partial buffered input in data[] */
+    unsigned int md_len; /* The output size (used for truncation) */
 } SHA256_CTX;
 
 OSSL_DEPRECATEDIN_3_0 int SHA224_Init(SHA256_CTX *c);

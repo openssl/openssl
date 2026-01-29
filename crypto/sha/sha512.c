@@ -196,6 +196,20 @@ int SHA512_Final(unsigned char *md, SHA512_CTX *c)
         return 0;
 
     switch (c->md_len) {
+    case SHA256_192_DIGEST_LENGTH:
+        for (n = 0; n < SHA256_192_DIGEST_LENGTH / 8; n++) {
+            SHA_LONG64 t = c->h[n];
+
+            *(md++) = (unsigned char)(t >> 56);
+            *(md++) = (unsigned char)(t >> 48);
+            *(md++) = (unsigned char)(t >> 40);
+            *(md++) = (unsigned char)(t >> 32);
+            *(md++) = (unsigned char)(t >> 24);
+            *(md++) = (unsigned char)(t >> 16);
+            *(md++) = (unsigned char)(t >> 8);
+            *(md++) = (unsigned char)(t);
+        }
+        break;
     /* Let compiler decide if it's appropriate to unroll... */
     case SHA224_DIGEST_LENGTH:
         for (n = 0; n < SHA224_DIGEST_LENGTH / 8; n++) {
