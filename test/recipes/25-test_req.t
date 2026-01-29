@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 116;
+plan tests => 117;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -452,6 +452,32 @@ subtest "generating certificate requests with -cipher flag" => sub {
     close $fh_aes128;
     ok($first_line_aes128 =~ /^-----BEGIN ENCRYPTED PRIVATE KEY-----/,
        "Check that the key file is encrypted (AES-128-CBC)");
+};
+
+subtest "generating certificate requests with default cipher" => sub {
+    plan tests => 3;
+
+    diag("Testing key encryption with default cipher (no -cipher flag)...");
+    ok(run(app(["openssl", "req",
+                "-config", srctop_file("test", "test.cnf"),
+                "-newkey", "rsa:2048",
+                "-keyout", "privatekey-default-cipher.pem",
+                "-out", "testreq-rsa-default-cipher.pem",
+                "-utf8",
+                "-passout", "pass:password"])),
+       "Generating request with default cipher");
+
+    diag("Verifying signature...");
+    ok(run(app(["openssl", "req",
+                "-config", srctop_file("test", "test.cnf"),
+                "-verify", "-in", "testreq-rsa-default-cipher.pem", "-noout"])),
+       "Verifying signature on request with default cipher");
+
+    open my $fh, '<', "privatekey-default-cipher.pem" or BAIL_OUT("Could not open key file: $!");
+    my $first_line = <$fh>;
+    close $fh;
+    ok($first_line =~ /^-----BEGIN ENCRYPTED PRIVATE KEY-----/,
+       "Check that the key file is encrypted with default cipher");
 };
 
 subtest "generating certificate requests with SLH-DSA" => sub {

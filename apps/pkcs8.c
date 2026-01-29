@@ -170,7 +170,8 @@ int pkcs8_main(int argc, char **argv)
                 goto opthelp;
             }
             if (cipher == NULL)
-                cipher = (EVP_CIPHER *)EVP_aes_256_cbc();
+                cipher = EVP_CIPHER_fetch(app_get0_libctx(), "AES-256-CBC",
+                    app_get0_propq());
             break;
         case OPT_ITER:
             iter = opt_int_arg();
@@ -187,7 +188,8 @@ int pkcs8_main(int argc, char **argv)
             scrypt_r = 8;
             scrypt_p = 1;
             if (cipher == NULL)
-                cipher = (EVP_CIPHER *)EVP_aes_256_cbc();
+                cipher = EVP_CIPHER_fetch(app_get0_libctx(), "AES-256-CBC",
+                    app_get0_propq());
             break;
         case OPT_SCRYPT_N:
             if (!opt_long(opt_arg(), &scrypt_N) || scrypt_N <= 0)
@@ -218,6 +220,8 @@ int pkcs8_main(int argc, char **argv)
         goto end;
 
     if (ciphername != NULL) {
+        EVP_CIPHER_free(cipher);
+        cipher = NULL;
         if (!opt_cipher(ciphername, &cipher))
             goto opthelp;
     }
@@ -228,7 +232,8 @@ int pkcs8_main(int argc, char **argv)
     }
 
     if ((pbe_nid == -1) && cipher == NULL)
-        cipher = (EVP_CIPHER *)EVP_aes_256_cbc();
+        cipher = EVP_CIPHER_fetch(app_get0_libctx(), "AES-256-CBC",
+            app_get0_propq());
 
     in = bio_open_default(infile, 'r',
         informat == FORMAT_UNDEF ? FORMAT_PEM : informat);
