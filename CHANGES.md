@@ -31,6 +31,11 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added EVP_MAC_squeeze() which can be used by KMAC.
+   KMAC uses the CSHAKE XOF digest.
+
+   *Shane Lontis*
+
  * The `openssl pkeyutl` command now uses memory-mapped I/O when reading
    raw input from a file for oneshot sign/verify operations (such as Ed25519,
    Ed448, and ML-DSA) on platforms that support it (Unix-like). The
