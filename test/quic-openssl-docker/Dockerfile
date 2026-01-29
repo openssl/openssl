@@ -35,8 +35,11 @@ RUN git clone --depth 1 -b $OPENSSL_BRANCH $OPENSSL_URL && \
     rm -rf /openssl
 
 # Build curl
-RUN git clone --depth 1 https://github.com/curl/curl.git && \
+# Note we have to build from commit 5a4cd758634d194ed280112a53e5ce5dc258b77a
+# or earlier here, as curl has dropped quic support with openssl
+RUN git clone https://github.com/curl/curl.git && \
     cd curl && \
+    git checkout 5a4cd758634d194ed280112a53e5ce5dc258b77a && \
     autoreconf -fi && ./configure --with-openssl-quic --with-openssl --with-nghttp3 --prefix=/usr && \
     make -j 4 && \
     make install && \
