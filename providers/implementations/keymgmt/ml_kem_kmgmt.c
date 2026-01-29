@@ -396,9 +396,9 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key,
      */
     if (p.seed != NULL && include_private) {
         /*
-         * When a seed is provided, the private and public keys may be ignored,
-         * after validating just their lengths.  Comparing encodings or hashes
-         * when applicable is possible, but not currently implemented.
+         * When a seed is provided, any explicit public key is ignored after
+         * validating its length.  If a private key is also provided, it is
+         * checked for consistency with the seed.
          */
         if (OSSL_PARAM_get_octet_string_ptr(p.seed, &seedenc, &seedlen) != 1)
             return 0;
