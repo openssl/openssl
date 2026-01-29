@@ -418,6 +418,7 @@ skip =
     */runtime/*,
     */searchindex.js,
     */test*/*,
+    test/tuplehash.inc,
     */test/danetest.in,
     */test/data2.bin,
     */test/recipes/30-test_evp_data/evppkey_kas.txt,

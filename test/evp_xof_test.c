@@ -624,6 +624,106 @@ static int xof_fail_test(void)
     return ret;
 }
 
+#include "tuplehash.inc"
+
+static EVP_MD_CTX *tuplehash_digest_setup(const TUPLEHASH_TEST *td)
+{
+    EVP_MD_CTX *ctx = NULL;
+    EVP_MD *md = NULL;
+    OSSL_PARAM params[4], *p = params;
+    size_t sz = td->outlen;
+    int xof = td->xof;
+
+    if (!TEST_ptr(md = EVP_MD_fetch(NULL, td->alg, NULL)))
+        return NULL;
+    if (!TEST_true(EVP_MD_xof(md)))
+        goto err;
+
+    if (!TEST_ptr(ctx = EVP_MD_CTX_new()))
+        goto err;
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &sz);
+    *p++ = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_XOF, &xof);
+    if (td->custom != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_CUSTOMIZATION,
+            (char *)td->custom, 0);
+    *p = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_DigestInit_ex2(ctx, md, params)))
+        goto err;
+    EVP_MD_free(md);
+    return ctx;
+err:
+    EVP_MD_free(md);
+    EVP_MD_CTX_free(ctx);
+    return NULL;
+}
+
+enum {
+    THS_FINAL,
+    THS_FINALXOF,
+    THS_SQUEEZE
+};
+
+static int do_tuplehash_tuple_test(int tstid, int state)
+{
+    const TUPLEHASH_TEST *td = tuplehash_tests + tstid;
+    int i, ret = 0;
+    EVP_MD_CTX *ctx = NULL;
+    uint8_t *out = NULL;
+
+    if (!TEST_ptr(ctx = tuplehash_digest_setup(td)))
+        return 0;
+    if (!TEST_ptr(out = OPENSSL_zalloc(td->outlen)))
+        goto err;
+    /* Apply the list of tuples */
+    for (i = 0; i < td->num_tuples; ++i) {
+        if (!TEST_true(EVP_DigestUpdate(ctx, td->tuples[i].in,
+                td->tuples[i].inlen)))
+            goto err;
+    }
+
+    switch (state) {
+    case THS_FINALXOF:
+        if (!TEST_true(EVP_DigestFinalXOF(ctx, out, td->outlen))
+            || !TEST_mem_eq(out, td->outlen, td->out, td->outlen)
+            /* Test that a second call to EVP_DigestFinalXOF fails */
+            || !TEST_false(EVP_DigestFinalXOF(ctx, out, sizeof(out)))
+            /* Test that a call to EVP_DigestSqueeze fails */
+            || !TEST_false(EVP_DigestSqueeze(ctx, out, sizeof(out))))
+            goto err;
+        break;
+    case THS_SQUEEZE:
+        if (!TEST_true(EVP_DigestSqueeze(ctx, out, sizeof(out))))
+            goto err;
+        break;
+    case THS_FINAL:
+        if (!TEST_true(EVP_DigestFinal_ex(ctx, out, NULL))
+            || !TEST_false(EVP_DigestSqueeze(ctx, out, sizeof(out))))
+            goto err;
+        break;
+    }
+    ret = 1;
+err:
+    OPENSSL_free(out);
+    EVP_MD_CTX_free(ctx);
+    return ret;
+}
+
+static int tuplehash_tuple_finalxof_test(int tstid)
+{
+    return do_tuplehash_tuple_test(tstid, THS_FINALXOF);
+}
+
+static int tuplehash_tuple_squeeze_test(int tstid)
+{
+    return do_tuplehash_tuple_test(tstid, THS_SQUEEZE);
+}
+
+/* This test assumes the default value is used for the output length */
+static int tuplehash_tuple_final_test(void)
+{
+    return do_tuplehash_tuple_test(0, THS_FINAL);
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(xof_kat_test, OSSL_NELEM(xof_test_data));
@@ -634,6 +734,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(xof_squeeze_kat_test, OSSL_NELEM(stride_test_data));
     ADD_ALL_TESTS(xof_squeeze_large_test, OSSL_NELEM(stride_test_data));
     ADD_ALL_TESTS(xof_squeeze_dup_test, OSSL_NELEM(dupoffset_test_data));
+    ADD_ALL_TESTS(tuplehash_tuple_finalxof_test, OSSL_NELEM(tuplehash_tests));
+    ADD_ALL_TESTS(tuplehash_tuple_squeeze_test, OSSL_NELEM(tuplehash_tests));
+    ADD_TEST(tuplehash_tuple_final_test);
     ADD_TEST(xof_fail_test);
     return 1;
 }

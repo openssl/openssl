@@ -32,7 +32,7 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
- * Added CSHAKE as per [SP 800-185]
+ * Added CSHAKE and TUPLEHASH digest algorithms as per [SP 800-185]
 
    *Shane Lontis*
 
