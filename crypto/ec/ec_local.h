@@ -393,6 +393,8 @@ int ossl_ec_GFp_simple_get_Jprojective_coordinates_GFp(const EC_GROUP *,
 int ossl_ec_GFp_simple_point_set_affine_coordinates(const EC_GROUP *, EC_POINT *,
     const BIGNUM *x,
     const BIGNUM *y, BN_CTX *);
+int ossl_ec_GFp_check_affine_point(const EC_GROUP *, const EC_POINT *, 
+    BIGNUM *x, BIGNUM *y, BIGNUM *decoded_z, int *zisone, BN_CTX*);
 int ossl_ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *,
     const EC_POINT *, BIGNUM *x,
     BIGNUM *y, BN_CTX *);
