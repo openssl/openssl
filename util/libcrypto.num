@@ -5439,10 +5439,10 @@ X509_get1_email                         5436	4_0_0	EXIST::FUNCTION:
 X509_REQ_get1_email                     5437	4_0_0	EXIST::FUNCTION:
 X509_email_free                         5438	4_0_0	EXIST::FUNCTION:
 X509_get1_ocsp                          5439	4_0_0	EXIST::FUNCTION:
-X509_check_host                         5440	4_0_0	EXIST::FUNCTION:
-X509_check_email                        5441	4_0_0	EXIST::FUNCTION:
-X509_check_ip                           5442	4_0_0	EXIST::FUNCTION:
-X509_check_ip_asc                       5443	4_0_0	EXIST::FUNCTION:
+X509_check_host                         5440	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
+X509_check_email                        5441	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
+X509_check_ip                           5442	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
+X509_check_ip_asc                       5443	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
 a2i_IPADDRESS                           5444	4_0_0	EXIST::FUNCTION:
 a2i_IPADDRESS_NC                        5445	4_0_0	EXIST::FUNCTION:
 X509V3_NAME_from_section                5446	4_0_0	EXIST::FUNCTION:
