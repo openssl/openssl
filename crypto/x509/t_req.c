@@ -181,7 +181,7 @@ int X509_REQ_print_ex(BIO *bp, const X509_REQ *x, unsigned long nmflags, unsigne
                 critical = X509_EXTENSION_get_critical(ex);
                 if (BIO_printf(bp, ": %s\n", critical ? "critical" : "") <= 0)
                     goto err;
-                if (!X509V3_EXT_print(bp, ex, cflag, 20)) {
+                if (X509V3_EXT_print(bp, ex, cflag, 20) <= 0) {
                     if (BIO_printf(bp, "%20s", "") <= 0
                         || ASN1_STRING_print(bp,
                                X509_EXTENSION_get_data(ex))
