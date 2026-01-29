@@ -7,6 +7,8 @@ ENV LD_LIBRARY_PATH=/usr/lib64:/usr/lib:/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PA
 # The branch of openssl to clone
 ARG OPENSSL_URL=https://github.com/openssl/openssl.git
 ARG OPENSSL_BRANCH=master
+# The version of curl to clone
+ARG CURL_VERSION=curl-8_18_0
 
 # Install needed tools
 RUN apt-get update && apt-get install -y \
@@ -35,7 +37,7 @@ RUN git clone --depth 1 -b $OPENSSL_BRANCH $OPENSSL_URL && \
     rm -rf /openssl
 
 # Build curl
-RUN git clone --depth 1 https://github.com/curl/curl.git && \
+RUN git clone --depth 1 -b $CURL_VERSION https://github.com/curl/curl.git && \
     cd curl && \
     autoreconf -fi && ./configure --with-openssl-quic --with-openssl --with-nghttp3 --prefix=/usr && \
     make -j 4 && \
