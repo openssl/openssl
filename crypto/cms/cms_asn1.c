@@ -13,6 +13,8 @@
 #include <openssl/cms.h>
 #include "cms_local.h"
 
+#include <crypto/asn1.h>
+
 ASN1_SEQUENCE(CMS_IssuerAndSerialNumber) = {
     ASN1_SIMPLE(CMS_IssuerAndSerialNumber, issuer, X509_NAME),
     ASN1_SIMPLE(CMS_IssuerAndSerialNumber, serialNumber, ASN1_INTEGER)

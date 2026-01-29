@@ -13,6 +13,8 @@
 
 #include <openssl/x509_acert.h>
 
+#include <crypto/asn1.h>
+
 #define OSSL_ODI_TYPE_PUBLIC_KEY 0
 #define OSSL_ODI_TYPE_PUBLIC_KEY_CERT 1
 #define OSSL_ODI_TYPE_OTHER 2

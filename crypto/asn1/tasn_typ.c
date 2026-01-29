@@ -11,6 +11,8 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 
+#include <crypto/asn1.h>
+
 /* Declarations for string types */
 
 #define IMPLEMENT_ASN1_STRING_FUNCTIONS(sname)                 \

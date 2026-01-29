@@ -12,6 +12,8 @@
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
 
+#include <crypto/asn1.h>
+
 /* Add a local keyid to a safebag */
 
 int PKCS12_add_localkeyid(PKCS12_SAFEBAG *bag, unsigned char *name,

@@ -15,6 +15,8 @@
 #include <openssl/core_names.h>
 #include <openssl/kdf.h>
 
+#include <crypto/asn1.h>
+
 /*
  * Doesn't do anything now: Builtin PBE algorithms in static table.
  */

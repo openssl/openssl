@@ -25,6 +25,8 @@
 #include <openssl/asn1t.h>
 #include <string.h>
 
+#include <crypto/asn1.h>
+
 typedef struct SM2_Ciphertext_st SM2_Ciphertext;
 DECLARE_ASN1_FUNCTIONS(SM2_Ciphertext)
 

@@ -3399,12 +3399,23 @@ int has_stdin_waiting(void)
 }
 #endif
 
-/* Corrupt a signature by modifying final byte */
-void corrupt_signature(const ASN1_STRING *signature)
+/*
+ * Corrupt a signature by modifying final byte
+ * (mutates signature)
+ */
+int corrupt_signature(ASN1_STRING *signature)
 {
-    unsigned char *s = signature->data;
+    const unsigned char *valid = ASN1_STRING_get0_data(signature);
+    int length = ASN1_STRING_length(signature);
+    unsigned char *s = OPENSSL_memdup(valid, length);
 
-    s[signature->length - 1] ^= 0x1;
+    if (s == NULL)
+        return 0;
+
+    s[length - 1] ^= 0x1;
+
+    ASN1_STRING_set0(signature, s, length);
+    return 1;
 }
 
 int check_cert_time_string(const char *time, const char *desc)

@@ -16,6 +16,8 @@
 #include "internal/sizes.h" /* for OSSL_MAX_NAME_SIZE */
 #include <openssl/err.h>
 
+#include <crypto/asn1.h>
+
 /*-
  * creates and initializes OSSL_CRMF_PBMPARAMETER (section 4.4)
  * |slen| SHOULD be at least 8 (16 is common)

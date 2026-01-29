@@ -17,6 +17,8 @@
 #define ASN1_PARSE_MAXDEPTH 128
 #endif
 
+#include <crypto/asn1.h>
+
 static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
     int offset, int depth, int indent, int dump);
 static int asn1_print_info(BIO *bp, long offset, int depth, int hl, long len,

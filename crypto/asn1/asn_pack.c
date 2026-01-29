@@ -11,6 +11,8 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 
+#include <crypto/asn1.h>
+
 /* ASN1 packing and unpacking functions */
 
 ASN1_STRING *ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)

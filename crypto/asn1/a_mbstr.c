@@ -13,6 +13,8 @@
 #include "internal/unicode.h"
 #include <openssl/asn1.h>
 
+#include <crypto/asn1.h>
+
 static int traverse_string(const unsigned char *p, int len, int inform,
     int (*rfunc)(unsigned long value, void *in),
     void *arg);

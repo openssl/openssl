@@ -14,6 +14,8 @@
 #include <openssl/objects.h>
 #include <openssl/x509_acert.h>
 
+#include <crypto/asn1.h>
+
 static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
 {
     const ASN1_OBJECT *aobj;

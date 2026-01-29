@@ -17,6 +17,8 @@
 #include <openssl/conf.h>
 #include "crypto/types.h"
 
+#include <crypto/asn1.h>
+
 /* Internal X509 structures and functions: not for application use */
 
 /* Note: unless otherwise stated a field pointer is mandatory and should

@@ -20,6 +20,42 @@
 
 #include <openssl/core.h>
 
+#define ASN1_STRING_FLAG_BITS_LEFT 0x08 /* Set if 0x07 has bits left value */
+/*
+ * This indicates that the ASN1_STRING is not a real value but just a place
+ * holder for the location where indefinite length constructed data should be
+ * inserted in the memory buffer
+ */
+#define ASN1_STRING_FLAG_NDEF 0x010
+
+/*
+ * This flag is used by the CMS code to indicate that a string is not
+ * complete and is a place holder for content when it had all been accessed.
+ * The flag will be reset when content has been written to it.
+ */
+
+#define ASN1_STRING_FLAG_CONT 0x020
+/*
+ * This flag is used by ASN1 code to indicate an ASN1_STRING is an MSTRING
+ * type.
+ */
+#define ASN1_STRING_FLAG_MSTRING 0x040
+/* String is embedded and only content should be freed */
+#define ASN1_STRING_FLAG_EMBED 0x080
+
+/* This is the base type that holds just about everything :-) */
+struct asn1_string_st {
+    int length;
+    int type;
+    unsigned char *data;
+    /*
+     * The value of the following field depends on the type being held.  It
+     * is mostly being used for BIT_STRING so if the input data has a
+     * non-zero 'unused bits' value, it will be handled correctly
+     */
+    long flags;
+};
+
 struct evp_pkey_asn1_method_st {
     int pkey_id;
     int pkey_base_id;

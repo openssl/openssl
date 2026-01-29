@@ -1012,7 +1012,9 @@ cert_loop:
         const ASN1_BIT_STRING *signature;
 
         X509_get0_signature(&signature, NULL, x);
-        corrupt_signature(signature);
+        /* XXX Casts away const, because it mutates the value! */
+        if (!corrupt_signature(((ASN1_STRING *)signature)))
+            goto err;
     }
 
     /* Process print options in the given order, as indicated by index i */
