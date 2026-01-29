@@ -32,9 +32,8 @@ I<size> is ignored.
 Otherwise, at most I<size> bytes will be written, including the ending '\0',
 and I<buf> is returned.
 
-X509_NAME_print() prints out I<name> to I<bp> indenting each line by I<obase>
-characters. Multiple lines are used if the output (including indent) exceeds
-80 characters.
+X509_NAME_print() prints out I<name> to I<bp>. The parameter I<obase> is
+ignored. Multiple lines are used if the output exceeds 80 characters.
 
 =head1 NOTES
 
