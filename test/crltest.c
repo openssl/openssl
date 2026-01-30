@@ -628,27 +628,23 @@ static int test_crl_cert_issuer_ext(void)
     return test;
 }
 
-/*
- * This function clears the error stack before parsing and delegates the actual
- * decoding to CRL_from_strings().
- */
-static X509_CRL *crl_clear_err_parse(const char **pem)
-{
-    ERR_clear_error();
-    return CRL_from_strings(pem);
-}
-
 static int test_crl_date_invalid(void)
 {
     X509_CRL *tmm = NULL, *tss = NULL, *utc = NULL;
     int test = 0;
 
-    test = TEST_ptr_null((tmm = crl_clear_err_parse(kInvalidDateMM)))
-        && TEST_true(err_chk(ERR_LIB_ASN1, ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT))
-        && TEST_ptr_null((tss = crl_clear_err_parse(kInvalidDateSS)))
-        && TEST_true(err_chk(ERR_LIB_ASN1, ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT))
-        && TEST_ptr_null((utc = crl_clear_err_parse(kInvalidDateUTC)))
-        && TEST_true(err_chk(ERR_LIB_ASN1, ASN1_R_WRONG_TAG));
+    test = TEST_ptr_null((tmm = CRL_from_strings(kInvalidDateMM)))
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT)
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_ILLEGAL_TIME_VALUE)
+        && TEST_err_s("invalidityDate in CRL is not well-formed")
+        && TEST_ptr_null((tss = CRL_from_strings(kInvalidDateSS)))
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT)
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_ILLEGAL_TIME_VALUE)
+        && TEST_err_s("invalidityDate in CRL is not well-formed")
+        && TEST_ptr_null((utc = CRL_from_strings(kInvalidDateUTC)))
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_WRONG_TAG)
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_ILLEGAL_TIME_VALUE)
+        && TEST_err_s("invalidityDate in CRL is not well-formed");
 
     X509_CRL_free(tmm);
     X509_CRL_free(utc);
