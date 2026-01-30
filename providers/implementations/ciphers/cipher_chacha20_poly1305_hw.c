@@ -406,5 +406,5 @@ static const PROV_CIPHER_HW_CHACHA20_POLY1305 chacha20poly1305_hw = {
 
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_chacha20_poly1305(size_t keybits)
 {
-    return (PROV_CIPHER_HW *)&chacha20poly1305_hw;
+    return (const PROV_CIPHER_HW *)&chacha20poly1305_hw;
 }
