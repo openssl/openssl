@@ -247,7 +247,7 @@ int SSL_set_tlsext_max_fragment_length(SSL *ssl, uint8_t mode);
 
 #define TLSEXT_MAXLEN_host_name 255
 
-__owur const char *SSL_get_servername(const SSL *s, const int type);
+__owur const char *SSL_get_servername(const SSL *s, int type);
 __owur int SSL_get_servername_type(const SSL *s);
 /*
  * SSL_export_keying_material exports a value derived from the master secret,

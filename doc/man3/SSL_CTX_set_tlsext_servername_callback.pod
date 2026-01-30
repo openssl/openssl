@@ -14,7 +14,7 @@ SSL_set_tlsext_host_name - handle server name indication (SNI)
                                    int (*cb)(SSL *s, int *al, void *arg));
  long SSL_CTX_set_tlsext_servername_arg(SSL_CTX *ctx, void *arg);
 
- const char *SSL_get_servername(const SSL *s, const int type);
+ const char *SSL_get_servername(const SSL *s, int type);
  int SSL_get_servername_type(const SSL *s);
 
  int SSL_set_tlsext_host_name(const SSL *s, const char *name);

@@ -1337,8 +1337,7 @@ $code.=<<___;
 ___
 }
 
-# int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
-#                        AES_KEY *key)
+# int AES_set_encrypt_key(const unsigned char *userKey, int bits, AES_KEY *key)
 $code.=<<___;
 .globl	AES_set_encrypt_key
 .type	AES_set_encrypt_key,\@function,3
@@ -1618,8 +1617,7 @@ $code.=<<___;
 ___
 }
 
-# int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
-#                        AES_KEY *key)
+# int AES_set_decrypt_key(const unsigned char *userKey, int bits, AES_KEY *key)
 $code.=<<___;
 .globl	AES_set_decrypt_key
 .type	AES_set_decrypt_key,\@function,3
@@ -1715,7 +1713,7 @@ ___
 
 # void AES_cbc_encrypt (const void char *inp, unsigned char *out,
 #			size_t length, const AES_KEY *key,
-#			unsigned char *ivp,const int enc);
+#			unsigned char *ivp, int enc);
 {
 # stack frame layout
 # -8(%rsp)		return address

@@ -18,7 +18,7 @@
 
 void Camellia_cbc_encrypt(const unsigned char *in, unsigned char *out,
     size_t len, const CAMELLIA_KEY *key,
-    unsigned char *ivec, const int enc)
+    unsigned char *ivec, int enc)
 {
 
     if (enc)
