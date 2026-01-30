@@ -38,7 +38,15 @@ use constant {
     UNSOLICITED_SERVER_NAME => 0,
     UNSOLICITED_SERVER_NAME_TLS13 => 1,
     UNSOLICITED_SCT => 2,
-    NONCOMPLIANT_SUPPORTED_GROUPS => 3
+    NONCOMPLIANT_SUPPORTED_GROUPS => 3,
+    # Test for RFC 8446 section 4.2: extensions invalid for message type
+    TLS12_ONLY_EXTENSION_IN_TLS13 => 4
+};
+
+# Alert description codes from RFC 8446
+use constant {
+    AL_ILLEGAL_PARAMETER => 47,
+    AL_UNSUPPORTED_EXTENSION => 110
 };
 
 my $testtype;
@@ -191,9 +199,43 @@ sub inject_cryptopro_extension
     $message->repack();
 }
 
+# Filter to inject an extension that is valid for TLS 1.2 ServerHello but not
+# TLS 1.3 ServerHello. Per RFC 8446 section 4.2, the client should respond with
+# illegal_parameter (not unsupported_extension).
+sub inject_tls12_only_extension
+{
+    my $proxy = shift;
+    state $sent_invalid_extension;
+
+    if ($proxy->flight == 0) {
+        $sent_invalid_extension = 0;
+        return;
+    }
+
+    # We're only interested in the ServerHello
+    if ($proxy->flight != 1) {
+        if ($sent_invalid_extension) {
+            my $last_record = @{$proxy->record_list}[-1];
+            # Check for alert from client (flight is even for client messages)
+            $fatal_alert = $last_record->is_fatal_alert(0);
+        }
+        return;
+    }
+
+    my $message = ${$proxy->message_list}[1];
+    return if !defined($message);
+    return if $message->mt != TLSProxy::Message::MT_SERVER_HELLO;
+
+    # Inject status_request extension - valid for TLS 1.2 but not TLS 1.3
+    my $ext = pack "C2", 0x00, 0x00;  # Empty extension data
+    $message->set_extension(TLSProxy::Message::EXT_STATUS_REQUEST, $ext);
+    $message->repack();
+    $sent_invalid_extension = 1;
+}
+
 # Test 1-2: Sending a duplicate extension should fail.
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 8;
+plan tests => 9;
 ok($fatal_alert, "Duplicate ClientHello extension");
 
 SKIP: {
@@ -270,4 +312,20 @@ SKIP: {
     $proxy->clientflags("-noservername");
     $proxy->start();
     ok($fatal_alert, "Unsolicited server name extension (TLSv1.3)");
+}
+
+SKIP: {
+    skip "TLS 1.3 or OCSP disabled", 1
+        if disabled("tls1_3") || disabled("ocsp") || (disabled("ec") && disabled("dh"));
+    #Test 9: Inject a TLS 1.2-only extension into TLS 1.3 ServerHello
+    # Per RFC 8446 section 4.2, this should return illegal_parameter (47),
+    # not unsupported_extension (110).
+    # This test uses status_request extension which requires OCSP support.
+    $fatal_alert = 0;
+    $proxy->clear();
+    $proxy->filter(\&inject_tls12_only_extension);
+    $testtype = TLS12_ONLY_EXTENSION_IN_TLS13;
+    $proxy->start();
+    ok($fatal_alert == AL_ILLEGAL_PARAMETER,
+       "TLS 1.2-only extension in TLS 1.3 ServerHello returns illegal_parameter (got $fatal_alert)");
 }
