@@ -357,6 +357,76 @@ int test_mem_ne(const char *file, int line, const char *st1, const char *st2,
     return 1;
 }
 
+#if defined(OPENSSL_NO_ERR) || defined(OPENSSL_NO_DEPRECATED_3_0) || defined(OPENSSL_SMALL_FOOTPRINT)
+
+#define TEST_ERR_EXPECT_DECLARE(ctx) return 1;
+#define TEST_ERR_EXPECT_EXTRACT(ctx)
+#define TEST_ERR_EXPECT_VISIT(ctx, obj, block)
+
+#else
+
+#define TEST_ERR_EXPECT_DECLARE(obj) \
+    struct test_err_expect_ctx {     \
+        struct test_err_expect {     \
+            const char *f, *fn, *d;  \
+            unsigned long code;      \
+            int l;                   \
+        } errs[ERR_NUM_ERRORS];      \
+        int err_count;               \
+    }(obj)
+
+#define TEST_ERR_EXPECT_VISIT(ctx, err, block)                        \
+    for (int i = 0; i < (ctx).err_count && (ctx).errs[i].code; i++) { \
+        struct test_err_expect *(err) = &ctx.errs[i];                 \
+        block                                                         \
+    }
+
+#define TEST_ERR_EXPECT_LOAD(ctx)                                           \
+    TEST_ERR_EXPECT_VISIT((ctx), e, {                                       \
+        ERR_new();                                                          \
+        ERR_set_debug(e->f, e->l, e->fn);                                   \
+        ERR_set_error(ERR_GET_LIB(e->code), ERR_GET_REASON(e->code), e->d); \
+    });
+
+#define TEST_ERR_EXPECT_SAVE(ctx)                                              \
+    for ((ctx).err_count = 0;; (ctx).err_count++) {                            \
+        struct test_err_expect *e = &(ctx).errs[(ctx).err_count];              \
+        if (!(e->code = ERR_get_error_all(&e->f, &e->l, &e->fn, &e->d, NULL))) \
+            break;                                                             \
+    };
+
+#define TEST_ERR_EXPECT_EXTRACT(ctx) \
+    TEST_ERR_EXPECT_SAVE(ctx);       \
+    TEST_ERR_EXPECT_LOAD(ctx);
+
+#endif
+
+int test_err_r(const char *file, int line, int lib, int reason)
+{
+    TEST_ERR_EXPECT_DECLARE(ctx);
+    TEST_ERR_EXPECT_EXTRACT(ctx);
+
+    TEST_ERR_EXPECT_VISIT(ctx, e, {
+        if (ERR_GET_LIB(e->code) == lib && ERR_GET_REASON(e->code) == reason)
+            return 1;
+    });
+
+    return 0;
+}
+
+int test_err_s(const char *file, int line, const char *data)
+{
+    TEST_ERR_EXPECT_DECLARE(ctx);
+    TEST_ERR_EXPECT_EXTRACT(ctx);
+
+    TEST_ERR_EXPECT_VISIT(ctx, e, {
+        if (e->d != NULL && strcmp(e->d, data) == 0)
+            return 1;
+    });
+
+    return 0;
+}
+
 #define DEFINE_BN_COMPARISONS(opname, op, zero_cond)                 \
     int test_BN_##opname(const char *file, int line,                 \
         const char *s1, const char *s2,                              \
