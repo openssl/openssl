@@ -2,8 +2,19 @@
 
 =head1 NAME
 
-ASN1_STRING_new, ASN1_STRING_type_new, ASN1_STRING_free -
-ASN1_STRING allocation functions
+ASN1_STRING_new, ASN1_STRING_type_new, ASN1_STRING_free,
+ASN1_OCTET_STRING_new, ASN1_OCTET_STRING_free,
+ASN1_BIT_STRING_new, ASN1_BIT_STRING_free,
+ASN1_ENUMERATED_new, ASN1_ENUMERATED_free,
+ASN1_UTF8STRING_new, ASN1_UTF8STRING_free,
+ASN1_IA5STRING_new, ASN1_IA5STRING_free,
+ASN1_GENERALSTRING_new, ASN1_GENERALSTRING_free,
+ASN1_PRINTABLESTRING_new, ASN1_PRINTABLESTRING_free,
+ASN1_T61STRING_new, ASN1_T61STRING_free,
+ASN1_VISIBLESTRING_new, ASN1_VISIBLESTRING_free,
+ASN1_UNIVERSALSTRING_new, ASN1_UNIVERSALSTRING_free,
+ASN1_BMPSTRING_new, ASN1_BMPSTRING_free
+- ASN1_STRING allocation functions
 
 =head1 SYNOPSIS
 
@@ -12,6 +23,29 @@ ASN1_STRING allocation functions
  ASN1_STRING *ASN1_STRING_new(void);
  ASN1_STRING *ASN1_STRING_type_new(int type);
  void ASN1_STRING_free(ASN1_STRING *a);
+
+ ASN1_OCTET_STRING *ASN1_OCTET_STRING_new(void);
+ void ASN1_OCTET_STRING_free(ASN1_OCTET_STRING *a);
+ ASN1_BIT_STRING *ASN1_BIT_STRING_new(void);
+ void ASN1_BIT_STRING_free(ASN1_BIT_STRING *a);
+ ASN1_ENUMERATED *ASN1_ENUMERATED_new(void);
+ void ASN1_ENUMERATED_free(ASN1_ENUMERATED *a);
+ ASN1_UTF8STRING *ASN1_UTF8STRING_new(void);
+ void ASN1_UTF8STRING_free(ASN1_UTF8STRING *a);
+ ASN1_IA5STRING *ASN1_IA5STRING_new(void);
+ void ASN1_IA5STRING_free(ASN1_IA5STRING *a);
+ ASN1_GENERALSTRING *ASN1_GENERALSTRING_new(void);
+ void ASN1_GENERALSTRING_free(ASN1_GENERALSTRING *a);
+ ASN1_PRINTABLESTRING *ASN1_PRINTABLESTRING_new(void);
+ void ASN1_PRINTABLESTRING_free(ASN1_PRINTABLESTRING *a);
+ ASN1_T61STRING *ASN1_T61STRING_new(void);
+ void ASN1_T61STRING_free(ASN1_T61STRING *a);
+ ASN1_VISIBLESTRING *ASN1_VISIBLESTRING_new(void);
+ void ASN1_VISIBLESTRING_free(ASN1_VISIBLESTRING *a);
+ ASN1_UNIVERSALSTRING *ASN1_UNIVERSALSTRING_new(void);
+ void ASN1_UNIVERSALSTRING_free(ASN1_UNIVERSALSTRING *a);
+ ASN1_BMPSTRING *ASN1_BMPSTRING_new(void);
+ void ASN1_BMPSTRING_free(ASN1_BMPSTRING *a);
 
 =head1 DESCRIPTION
 
@@ -26,8 +60,42 @@ If I<a> is NULL nothing is done.
 
 =head1 NOTES
 
-Other string types call the B<ASN1_STRING> functions. For example
-ASN1_OCTET_STRING_new() calls ASN1_STRING_type_new(V_ASN1_OCTET_STRING).
+Almost all ASN.1 types in OpenSSL are represented as an B<ASN1_STRING>
+structure. The type-specific variants such as B<ASN1_OCTET_STRING>,
+B<ASN1_BIT_STRING>, B<ASN1_INTEGER>, and others are typedef aliases for
+B<ASN1_STRING>.
+
+The type-specific I<new> functions call ASN1_STRING_type_new() with the
+appropriate type constant. For example, ASN1_OCTET_STRING_new() is equivalent
+to calling ASN1_STRING_type_new(V_ASN1_OCTET_STRING).
+
+The type-specific I<free> functions are all equivalent to ASN1_STRING_free().
+
+Type-specific utility functions also exist for common operations:
+
+=over 4
+
+=item *
+
+B<ASN1_OCTET_STRING_set>, B<ASN1_OCTET_STRING_cmp>, B<ASN1_OCTET_STRING_dup>
+(see L<ASN1_STRING_length(3)>)
+
+=item *
+
+B<ASN1_BIT_STRING_set_bit>, B<ASN1_BIT_STRING_get_bit>, etc.
+(see L<ASN1_STRING_length(3)>)
+
+=item *
+
+B<ASN1_INTEGER_set>, B<ASN1_INTEGER_get>, B<ASN1_INTEGER_cmp>, etc.
+(see L<ASN1_INTEGER_get_int64(3)>)
+
+=item *
+
+B<ASN1_ENUMERATED_set>, B<ASN1_ENUMERATED_get>, etc.
+(see L<ASN1_INTEGER_get_int64(3)>)
+
+=back
 
 =head1 RETURN VALUES
 
