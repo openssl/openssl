@@ -160,10 +160,16 @@ Reference Implementation:
  {
      OSSL_PARAM params[3];
      your_type_t *key; /* something that you need to implement */
+     EVP_CIPHER *cipher = NULL;
+     int ret = -1;
+
+     cipher = EVP_CIPHER_fetch(NULL, "AES-256-CBC", NULL);
+     if (cipher == NULL)
+         return -1;
 
      if (enc) { /* create new session */
          if (RAND_bytes(iv, EVP_MAX_IV_LENGTH) <= 0)
-             return -1; /* insufficient random */
+             goto err; /* insufficient random */
 
          key = currentkey(); /* something that you need to implement */
          if (key == NULL) {
@@ -174,14 +180,15 @@ Reference Implementation:
                                  * an aes_key, a hmac_key and optionally
                                  * an expire time.
                                  */
-             if (key == NULL) /* key couldn't be created */
-                 return 0;
+             if (key == NULL) { /* key couldn't be created */
+                 ret = 0;
+                 goto err;
+             }
          }
          memcpy(key_name, key->name, 16);
 
-         if (EVP_EncryptInit_ex(&ctx, EVP_aes_256_cbc(), NULL, key->aes_key,
-                                iv) == 0)
-            return -1; /* error in cipher initialisation */
+         if (EVP_EncryptInit_ex(ctx, cipher, NULL, key->aes_key, iv) == 0)
+            goto err; /* error in cipher initialisation */
 
          params[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
                                                        key->hmac_key, 32);
@@ -189,16 +196,18 @@ Reference Implementation:
                                                       "sha256", 0);
          params[2] = OSSL_PARAM_construct_end();
          if (EVP_MAC_CTX_set_params(hctx, params) == 0)
-            return -1; /* error in mac initialisation */
+            goto err; /* error in mac initialisation */
 
-         return 1;
+         ret = 1;
 
      } else { /* retrieve session */
          time_t t = time(NULL);
          key = findkey(key_name); /* something that you need to implement */
 
-         if (key == NULL || key->expire < t)
-             return 0;
+         if (key == NULL || key->expire < t) {
+             ret = 0;
+             goto err;
+         }
 
          params[0] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
                                                        key->hmac_key, 32);
@@ -206,21 +215,25 @@ Reference Implementation:
                                                       "sha256", 0);
          params[2] = OSSL_PARAM_construct_end();
          if (EVP_MAC_CTX_set_params(hctx, params) == 0)
-            return -1; /* error in mac initialisation */
+            goto err; /* error in mac initialisation */
 
-         if (EVP_DecryptInit_ex(&ctx, EVP_aes_256_cbc(), NULL, key->aes_key,
-                                iv) == 0)
-            return -1; /* error in cipher initialisation */
+         if (EVP_DecryptInit_ex(ctx, cipher, NULL, key->aes_key, iv) == 0)
+            goto err; /* error in cipher initialisation */
 
          if (key->expire < t - RENEW_TIME) { /* RENEW_TIME: implement */
              /*
               * return 2 - This session will get a new ticket even though the
               * current one is still valid.
               */
-             return 2;
+             ret = 2;
+         } else {
+             ret = 1;
          }
-         return 1;
      }
+
+ err:
+     EVP_CIPHER_free(cipher);
+     return ret;
  }
 
 =head1 SEE ALSO
