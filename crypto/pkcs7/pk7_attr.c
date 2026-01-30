@@ -42,7 +42,7 @@ int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si,
 
 STACK_OF(X509_ALGOR) *PKCS7_get_smimecap(PKCS7_SIGNER_INFO *si)
 {
-    ASN1_TYPE *cap;
+    const ASN1_TYPE *cap;
     const unsigned char *p;
 
     cap = PKCS7_get_signed_attribute(si, NID_SMIMECapabilities);
