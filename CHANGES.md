@@ -32,6 +32,10 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * FIPS self tests are now always deferred and run as needed.
+
+   *Simo Sorce*
+
  * Added CSHAKE as per [SP 800-185]
 
    *Shane Lontis*
