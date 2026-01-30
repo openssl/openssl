@@ -30,7 +30,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 212;
+plan tests => 215;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -49,6 +49,15 @@ ok(!verify("ee-cert", "sslserver", [qw(root-cert2)], [qw(ca-cert)]),
    "fail wrong root key");
 ok(!verify("ee-cert", "sslserver", [qw(root-name2)], [qw(ca-cert)]),
    "fail wrong root DN");
+
+# Root CA update
+
+ok(verify("root-cert2", "", [qw(root-cert)], [qw(newwithold)]), "newwithold");
+ok(verify("root-cert", "", [qw(root-cert2)], [qw(oldwithnew)]), "oldwithnew");
+
+# other non-typical use of self-signed certs
+ok(verify("root-cert2", "", [qw(newwithold)], [], "-partial_chain"),
+   "accept self-signed cert as target in partial chain");
 
 # Critical extensions
 

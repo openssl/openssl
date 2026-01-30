@@ -3777,7 +3777,15 @@ static int build_chain(X509_STORE_CTX *ctx)
                         dane->pdpth = -1;
                 }
 
-                if (!self_signed) { /* untrusted not self-signed certificate */
+                if (self_signed && X509_cmp(curr, issuer) == 0) {
+                    /*
+                     * Replace self-signed untrusted certificate
+                     * by its trusted matching issuer.
+                     */
+                    X509_free(curr);
+                    ctx->num_untrusted = --num;
+                    (void)sk_X509_set(ctx->chain, num, issuer);
+                } else {
                     /* Grow the chain by trusted issuer */
                     if (!sk_X509_push(ctx->chain, issuer)) {
                         X509_free(issuer);
@@ -3786,26 +3794,6 @@ static int build_chain(X509_STORE_CTX *ctx)
                     }
                     if ((self_signed = X509_self_signed(issuer, 0)) < 0)
                         goto int_err;
-                } else {
-                    /*
-                     * We have a self-signed untrusted cert that has the same
-                     * subject name (and perhaps keyid and/or serial number) as
-                     * a trust anchor.  We must have an exact match to avoid
-                     * possible impersonation via key substitution etc.
-                     */
-                    if (X509_cmp(curr, issuer) != 0) {
-                        /* Self-signed untrusted mimic. */
-                        X509_free(issuer);
-                        ok = 0;
-                    } else { /* curr "==" issuer */
-                        /*
-                         * Replace self-signed untrusted certificate
-                         * by its trusted matching issuer.
-                         */
-                        X509_free(curr);
-                        ctx->num_untrusted = --num;
-                        (void)sk_X509_set(ctx->chain, num, issuer);
-                    }
                 }
 
                 /*
@@ -3860,10 +3848,10 @@ static int build_chain(X509_STORE_CTX *ctx)
             if (!ossl_assert(num == ctx->num_untrusted))
                 goto int_err;
             curr = sk_X509_value(ctx->chain, num - 1);
-            issuer = (X509_self_signed(curr, 0) > 0 || num > max_depth) ? NULL : get0_best_issuer_sk(ctx, 0, 1 /* no_dup */, sk_untrusted, curr);
+            issuer = num > max_depth ? NULL : get0_best_issuer_sk(ctx, 0, 1 /* no_dup */, sk_untrusted, curr);
             if (issuer == NULL) {
                 /*
-                 * Once we have reached a self-signed cert or num > max_depth
+                 * Once we have reached num > max_depth
                  * or can't find an issuer in the untrusted list we stop looking
                  * there and start looking only in the trust store if enabled.
                  */
@@ -3894,8 +3882,8 @@ static int build_chain(X509_STORE_CTX *ctx)
         return trust;
 
     /*
-     * Last chance to make a trusted chain, either bare DANE-TA public-key
-     * signers, or else direct leaf PKIX trust.
+     * Last chances to make a trusted chain:
+     * bare DANE-TA public-key or else direct leaf PKIX trust.
      */
     num = sk_X509_num(ctx->chain);
     if (num <= max_depth) {
