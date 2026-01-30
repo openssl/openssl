@@ -391,6 +391,8 @@ This includes consulting the L<ossl-guide-migration(7)> documentation.
 
 =item EVP_PKEY_asn1_set_security_bits (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
 
+=item OPENSSL_atexit - No longer used, use libc atexit() if you must use this.
+
 =back
 
 =head1 SEE ALSO

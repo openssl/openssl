@@ -32,6 +32,10 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+* OPENSSL_atexit() was removed.
+
+   *Bob Beck*
+
  * OPENSSL_cleanup() now runs in a global destructor, or not at all by default.
 
    OpenSSL_cleanup() will no longer by default free global objects when run from
@@ -39,8 +43,6 @@ OpenSSL 4.0
    the process exits, and after subordinate libraries using OpenSSL have run their
    destructors. If destructor support is not available, OpenSSL_cleanup() will do
    nothing, leaving the global objects to be cleaned up by the Operating System.
-
-   *Bob Beck*
 
  * Added CSHAKE as per [SP 800-185]
 

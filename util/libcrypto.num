@@ -3601,7 +3601,6 @@ OPENSSL_gmtime_diff                     ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_memcmp                           ?	4_0_0	EXIST::FUNCTION:
 OPENSSL_cleanup                         ?	4_0_0	EXIST::FUNCTION:
 OPENSSL_init_crypto                     ?	4_0_0	EXIST::FUNCTION:
-OPENSSL_atexit                          ?	4_0_0	EXIST::FUNCTION:
 OPENSSL_thread_stop                     ?	4_0_0	EXIST::FUNCTION:
 OPENSSL_thread_stop_ex                  ?	4_0_0	EXIST::FUNCTION:
 OPENSSL_INIT_new                        ?	4_0_0	EXIST::FUNCTION:
