@@ -147,8 +147,6 @@ sha256_block_data_order_zvkb_zvknha_or_zvknhb:
     @{[vmv_v_i $V0, 0x01]}
 
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
-
-L_round_loop:
     # Decrement length by 1
     add $LEN, $LEN, -1
 
@@ -159,128 +157,279 @@ L_round_loop:
     # Load the 512-bits of the message block in v1-v4 and perform
     # an endian swap on each 4 bytes element.
     @{[vle32_v $V1, $INP]}
-    @{[vrev8_v $V1, $V1]}
-    add $INP, $INP, 16
+    addi $INP, $INP, 16
     @{[vle32_v $V2, $INP]}
-    @{[vrev8_v $V2, $V2]}
-    add $INP, $INP, 16
+    addi $INP, $INP, 16
     @{[vle32_v $V3, $INP]}
-    @{[vrev8_v $V3, $V3]}
-    add $INP, $INP, 16
+    addi $INP, $INP, 16
     @{[vle32_v $V4, $INP]}
+    addi $INP, $INP, 16
+
+    @{[vrev8_v $V1, $V1]}
+    @{[vrev8_v $V2, $V2]}
+    @{[vrev8_v $V3, $V3]}
     @{[vrev8_v $V4, $V4]}
-    add $INP, $INP, 16
+
+    @{[vadd_vv $V5, $V10, $V1]}
+    @{[vadd_vv $V8, $V11, $V2]}
+
+    ble $LEN, zero, _L_round_LPND
+_L_round_LPST:
+
+    # Decrement length by 1
+    add $LEN, $LEN, -1
+
+    # Keep the current state as we need it later: H' = H+{a',b',c',...,h'}.
+    # remove vmv_v_v $V31, $V7
 
     # Quad-round 0 (+0, Wt from oldest to newest in v1->v2->v3->v4)
-    @{[vadd_vv $V5, $V10, $V1]}
     @{[vsha2cl_vv $V7, $V6, $V5]}
+    @{[vmv_v_v $V30, $V6]}
+    @{[vmerge_vvm $V27, $V3, $V2, $V0]}
     @{[vsha2ch_vv $V6, $V7, $V5]}
-    @{[vmerge_vvm $V5, $V3, $V2, $V0]}
-    @{[vsha2ms_vv $V1, $V5, $V4]}  # Generate W[19:16]
+    @{[vadd_vv $V9, $V12, $V3]}
+    @{[vsha2ms_vv $V1, $V27, $V4]}  # Generate W[19:16]
 
     # Quad-round 1 (+1, v2->v3->v4->v1)
-    @{[vadd_vv $V5, $V11, $V2]}
-    @{[vsha2cl_vv $V7, $V6, $V5]}
-    @{[vsha2ch_vv $V6, $V7, $V5]}
-    @{[vmerge_vvm $V5, $V4, $V3, $V0]}
-    @{[vsha2ms_vv $V2, $V5, $V1]}  # Generate W[23:20]
+    @{[vsha2cl_vv $V7, $V6, $V8]}
+    @{[vmerge_vvm $V29, $V4, $V3, $V0]}
+    @{[vadd_vv $V28, $V13, $V4]}
+    @{[vsha2ch_vv $V6, $V7, $V8]}
+    @{[vsha2ms_vv $V2, $V29, $V1]}  # Generate W[23:20]
 
     # Quad-round 2 (+2, v3->v4->v1->v2)
-    @{[vadd_vv $V5, $V12, $V3]}
-    @{[vsha2cl_vv $V7, $V6, $V5]}
-    @{[vsha2ch_vv $V6, $V7, $V5]}
-    @{[vmerge_vvm $V5, $V1, $V4, $V0]}
-    @{[vsha2ms_vv $V3, $V5, $V2]}  # Generate W[27:24]
+    @{[vsha2cl_vv $V7, $V6, $V9]}
+    @{[vmerge_vvm $V27, $V1, $V4, $V0]}
+    @{[vadd_vv $V5, $V14, $V1]}
+    @{[vsha2ch_vv $V6, $V7, $V9]}
+    @{[vsha2ms_vv $V3, $V27, $V2]}  # Generate W[27:24]
 
     # Quad-round 3 (+3, v4->v1->v2->v3)
-    @{[vadd_vv $V5, $V13, $V4]}
-    @{[vsha2cl_vv $V7, $V6, $V5]}
-    @{[vsha2ch_vv $V6, $V7, $V5]}
-    @{[vmerge_vvm $V5, $V2, $V1, $V0]}
-    @{[vsha2ms_vv $V4, $V5, $V3]}  # Generate W[31:28]
+    @{[vsha2cl_vv $V7, $V6, $V28]}
+    @{[vmerge_vvm $V29, $V2, $V1, $V0]}
+    @{[vadd_vv $V8, $V15, $V2]}
+    @{[vsha2ch_vv $V6, $V7, $V28]}
+    @{[vsha2ms_vv $V4, $V29, $V3]}  # Generate W[31:28]
 
     # Quad-round 4 (+0, v1->v2->v3->v4)
-    @{[vadd_vv $V5, $V14, $V1]}
     @{[vsha2cl_vv $V7, $V6, $V5]}
+    @{[vmerge_vvm $V27, $V3, $V2, $V0]}
+    @{[vadd_vv $V9, $V16, $V3]}
     @{[vsha2ch_vv $V6, $V7, $V5]}
-    @{[vmerge_vvm $V5, $V3, $V2, $V0]}
-    @{[vsha2ms_vv $V1, $V5, $V4]}  # Generate W[35:32]
+    @{[vsha2ms_vv $V1, $V27, $V4]}  # Generate W[35:32]
 
     # Quad-round 5 (+1, v2->v3->v4->v1)
-    @{[vadd_vv $V5, $V15, $V2]}
-    @{[vsha2cl_vv $V7, $V6, $V5]}
-    @{[vsha2ch_vv $V6, $V7, $V5]}
-    @{[vmerge_vvm $V5, $V4, $V3, $V0]}
-    @{[vsha2ms_vv $V2, $V5, $V1]}  # Generate W[39:36]
+    @{[vsha2cl_vv $V7, $V6, $V8]}
+    @{[vmerge_vvm $V29, $V4, $V3, $V0]}
+    @{[vadd_vv $V28, $V17, $V4]}
+    @{[vsha2ch_vv $V6, $V7, $V8]}
+    @{[vsha2ms_vv $V2, $V29, $V1]}  # Generate W[39:36]
 
     # Quad-round 6 (+2, v3->v4->v1->v2)
-    @{[vadd_vv $V5, $V16, $V3]}
-    @{[vsha2cl_vv $V7, $V6, $V5]}
-    @{[vsha2ch_vv $V6, $V7, $V5]}
-    @{[vmerge_vvm $V5, $V1, $V4, $V0]}
-    @{[vsha2ms_vv $V3, $V5, $V2]}  # Generate W[43:40]
+    @{[vsha2cl_vv $V7, $V6, $V9]}
+    @{[vmerge_vvm $V29, $V1, $V4, $V0]}
+    @{[vadd_vv $V5, $V18, $V1]}
+    @{[vsha2ch_vv $V6, $V7, $V9]}
+    @{[vsha2ms_vv $V3, $V29, $V2]}  # Generate W[43:40]
 
     # Quad-round 7 (+3, v4->v1->v2->v3)
-    @{[vadd_vv $V5, $V17, $V4]}
-    @{[vsha2cl_vv $V7, $V6, $V5]}
-    @{[vsha2ch_vv $V6, $V7, $V5]}
-    @{[vmerge_vvm $V5, $V2, $V1, $V0]}
-    @{[vsha2ms_vv $V4, $V5, $V3]}  # Generate W[47:44]
+    @{[vsha2cl_vv $V7, $V6, $V28]}
+    @{[vmerge_vvm $V29, $V2, $V1, $V0]}
+    @{[vadd_vv $V8, $V19, $V2]}
+    @{[vsha2ch_vv $V6, $V7, $V28]}
+    @{[vsha2ms_vv $V4, $V29, $V3]}  # Generate W[47:44]
 
     # Quad-round 8 (+0, v1->v2->v3->v4)
-    @{[vadd_vv $V5, $V18, $V1]}
     @{[vsha2cl_vv $V7, $V6, $V5]}
+    @{[vmerge_vvm $V29, $V3, $V2, $V0]}
+    @{[vadd_vv $V9, $V20, $V3]}
     @{[vsha2ch_vv $V6, $V7, $V5]}
-    @{[vmerge_vvm $V5, $V3, $V2, $V0]}
-    @{[vsha2ms_vv $V1, $V5, $V4]}  # Generate W[51:48]
+    @{[vsha2ms_vv $V1, $V29, $V4]}  # Generate W[51:48]
 
     # Quad-round 9 (+1, v2->v3->v4->v1)
-    @{[vadd_vv $V5, $V19, $V2]}
-    @{[vsha2cl_vv $V7, $V6, $V5]}
-    @{[vsha2ch_vv $V6, $V7, $V5]}
-    @{[vmerge_vvm $V5, $V4, $V3, $V0]}
-    @{[vsha2ms_vv $V2, $V5, $V1]}  # Generate W[55:52]
+    @{[vsha2cl_vv $V7, $V6, $V8]}
+    @{[vmerge_vvm $V29, $V4, $V3, $V0]}
+    @{[vadd_vv $V28, $V21, $V4]}
+    @{[vsha2ch_vv $V6, $V7, $V8]}
+    @{[vsha2ms_vv $V2, $V29, $V1]}  # Generate W[55:52]
 
     # Quad-round 10 (+2, v3->v4->v1->v2)
-    @{[vadd_vv $V5, $V20, $V3]}
-    @{[vsha2cl_vv $V7, $V6, $V5]}
-    @{[vsha2ch_vv $V6, $V7, $V5]}
-    @{[vmerge_vvm $V5, $V1, $V4, $V0]}
-    @{[vsha2ms_vv $V3, $V5, $V2]}  # Generate W[59:56]
+    @{[vsha2cl_vv $V7, $V6, $V9]}
+    @{[vmerge_vvm $V29, $V1, $V4, $V0]}
+    @{[vadd_vv $V5, $V22, $V1]}
+    @{[vsha2ch_vv $V6, $V7, $V9]}
+    @{[vsha2ms_vv $V3, $V29, $V2]}  # Generate W[59:56]
 
     # Quad-round 11 (+3, v4->v1->v2->v3)
-    @{[vadd_vv $V5, $V21, $V4]}
-    @{[vsha2cl_vv $V7, $V6, $V5]}
-    @{[vsha2ch_vv $V6, $V7, $V5]}
-    @{[vmerge_vvm $V5, $V2, $V1, $V0]}
-    @{[vsha2ms_vv $V4, $V5, $V3]}  # Generate W[63:60]
+    @{[vsha2cl_vv $V7, $V6, $V28]}
+    @{[vmerge_vvm $V29, $V2, $V1, $V0]}
+    @{[vadd_vv $V8, $V23, $V2]}
+    @{[vsha2ch_vv $V6, $V7, $V28]}
+    @{[vsha2ms_vv $V4, $V29, $V3]}  # Generate W[63:60]
 
     # Quad-round 12 (+0, v1->v2->v3->v4)
     # Note that we stop generating new message schedule words (Wt, v1-13)
     # as we already generated all the words we end up consuming (i.e., W[63:60]).
+    @{[vadd_vv $V9, $V24, $V3]}
+    @{[vsha2cl_vv $V7, $V6, $V5]}
+    @{[vle32_v $V1, $INP]}
+    addi $INP, $INP, 16
+    @{[vsha2ch_vv $V6, $V7, $V5]}
+
+    # Quad-round 13 (+1, v2->v3->v4->v1)
+    @{[vadd_vv $V28, $V25, $V4]}
+    @{[vrev8_v $V1, $V1]}
+    @{[vsha2cl_vv $V7, $V6, $V8]}
+    @{[vle32_v $V2, $INP]}
+    addi $INP, $INP, 16
+    @{[vsha2ch_vv $V6, $V7, $V8]}
+
+    # Quad-round 14 (+2, v3->v4->v1->v2)
+
+    @{[vrev8_v $V2, $V2]}
+    @{[vsha2cl_vv $V7, $V6, $V9]}
+    @{[vle32_v $V3, $INP]}
+    addi $INP, $INP, 16
+    @{[vadd_vv $V5, $V10, $V1]}
+    @{[vsha2ch_vv $V6, $V7, $V9]}
+
+    # Quad-round 15 (+3, v4->v1->v2->v3)
+    @{[vrev8_v $V3, $V3]}
+    @{[vsha2cl_vv $V7, $V6, $V28]}
+    @{[vle32_v $V4, $INP]}
+    addi $INP, $INP, 16
+    @{[vadd_vv $V8, $V11, $V2]}
+    @{[vsha2ch_vv $V6, $V7, $V28]}
+
+    # H' = H+{a',b',c',...,h'}
+    @{[vrev8_v $V4, $V4]}
+    @{[vadd_vv $V31, $V31, $V7]}
+    @{[vadd_vv $V6, $V30, $V6]}
+    bnez $LEN, _L_round_LPST
+
+    _L_round_LPND:
+
+    # Keep the current state as we need it later: H' = H+{a',b',c',...,h'}.
+    @{[vmv_v_v $V30, $V6]}
+    # remove vmv_v_v $V31, $V7
+
+    # Load the 512-bits of the message block in v1-v4 and perform
+    # an endian swap on each 4 bytes element.
+
+    # Quad-round 0 (+0, Wt from oldest to newest in v1->v2->v3->v4)
+
+
+    @{[vsha2cl_vv $V7, $V6, $V5]}
+    @{[vmerge_vvm $V29, $V3, $V2, $V0]}
+    @{[vadd_vv $V9, $V12, $V3]}
+    @{[vsha2ch_vv $V6, $V7, $V5]}
+    @{[vsha2ms_vv $V1, $V29, $V4]}  # Generate W[19:16]
+
+    # Quad-round 1 (+1, v2->v3->v4->v1)
+
+    @{[vsha2cl_vv $V7, $V6, $V8]}
+    @{[vmerge_vvm $V29, $V4, $V3, $V0]}
+    @{[vadd_vv $V28, $V13, $V4]}
+    @{[vsha2ch_vv $V6, $V7, $V8]}
+    @{[vsha2ms_vv $V2, $V29, $V1]}  # Generate W[23:20]
+
+    # Quad-round 2 (+2, v3->v4->v1->v2)
+
+    @{[vsha2cl_vv $V7, $V6, $V9]}
+    @{[vmerge_vvm $V29, $V1, $V4, $V0]}
+    @{[vadd_vv $V5, $V14, $V1]}
+    @{[vsha2ch_vv $V6, $V7, $V9]}
+    @{[vsha2ms_vv $V3, $V29, $V2]}  # Generate W[27:24]
+
+    # Quad-round 3 (+3, v4->v1->v2->v3)
+
+    @{[vsha2cl_vv $V7, $V6, $V28]}
+    @{[vmerge_vvm $V29, $V2, $V1, $V0]}
+    @{[vadd_vv $V8, $V15, $V2]}
+    @{[vsha2ch_vv $V6, $V7, $V28]}
+    @{[vsha2ms_vv $V4, $V29, $V3]}  # Generate W[31:28]
+
+    # Quad-round 4 (+0, v1->v2->v3->v4)
+    @{[vsha2cl_vv $V7, $V6, $V5]}
+    @{[vmerge_vvm $V29, $V3, $V2, $V0]}
+    @{[vadd_vv $V9, $V16, $V3]}
+    @{[vsha2ch_vv $V6, $V7, $V5]}
+    @{[vsha2ms_vv $V1, $V29, $V4]}  # Generate W[35:32]
+
+    # Quad-round 5 (+1, v2->v3->v4->v1)
+    @{[vsha2cl_vv $V7, $V6, $V8]}
+    @{[vmerge_vvm $V29, $V4, $V3, $V0]}
+    @{[vadd_vv $V28, $V17, $V4]}
+    @{[vsha2ch_vv $V6, $V7, $V8]}
+    @{[vsha2ms_vv $V2, $V29, $V1]}  # Generate W[39:36]
+
+    # Quad-round 6 (+2, v3->v4->v1->v2)
+    @{[vsha2cl_vv $V7, $V6, $V9]}
+    @{[vmerge_vvm $V29, $V1, $V4, $V0]}
+    @{[vadd_vv $V5, $V18, $V1]}
+    @{[vsha2ch_vv $V6, $V7, $V9]}
+    @{[vsha2ms_vv $V3, $V29, $V2]}  # Generate W[43:40]
+
+    # Quad-round 7 (+3, v4->v1->v2->v3)
+    @{[vsha2cl_vv $V7, $V6, $V28]}
+    @{[vmerge_vvm $V29, $V2, $V1, $V0]}
+    @{[vadd_vv $V8, $V19, $V2]}
+    @{[vsha2ch_vv $V6, $V7, $V28]}
+    @{[vsha2ms_vv $V4, $V29, $V3]}  # Generate W[47:44]
+
+    # Quad-round 8 (+0, v1->v2->v3->v4)
+    @{[vsha2cl_vv $V7, $V6, $V5]}
+    @{[vmerge_vvm $V29, $V3, $V2, $V0]}
+    @{[vadd_vv $V9, $V20, $V3]}
+    @{[vsha2ch_vv $V6, $V7, $V5]}
+    @{[vsha2ms_vv $V1, $V29, $V4]}  # Generate W[51:48]
+
+    # Quad-round 9 (+1, v2->v3->v4->v1)
+    @{[vsha2cl_vv $V7, $V6, $V8]}
+    @{[vmerge_vvm $V29, $V4, $V3, $V0]}
+    @{[vadd_vv $V28, $V21, $V4]}
+    @{[vsha2ch_vv $V6, $V7, $V8]}
+    @{[vsha2ms_vv $V2, $V29, $V1]}  # Generate W[55:52]
+
+    # Quad-round 10 (+2, v3->v4->v1->v2)
+    @{[vsha2cl_vv $V7, $V6, $V9]}
+    @{[vmerge_vvm $V29, $V1, $V4, $V0]}
     @{[vadd_vv $V5, $V22, $V1]}
+    @{[vsha2ch_vv $V6, $V7, $V9]}
+    @{[vsha2ms_vv $V3, $V29, $V2]}  # Generate W[59:56]
+
+    # Quad-round 11 (+3, v4->v1->v2->v3)
+    @{[vsha2cl_vv $V7, $V6, $V28]}
+    @{[vmerge_vvm $V29, $V2, $V1, $V0]}
+    @{[vadd_vv $V8, $V23, $V2]}
+    @{[vsha2ch_vv $V6, $V7, $V28]}
+    @{[vsha2ms_vv $V4, $V29, $V3]}  # Generate W[63:60]
+
+    # Quad-round 12 (+0, v1->v2->v3->v4)
+    # Note that we stop generating new message schedule words (Wt, v1-13)
+    # as we already generated all the words we end up consuming (i.e., W[63:60]).
+    @{[vadd_vv $V9, $V24, $V3]}
     @{[vsha2cl_vv $V7, $V6, $V5]}
     @{[vsha2ch_vv $V6, $V7, $V5]}
 
     # Quad-round 13 (+1, v2->v3->v4->v1)
-    @{[vadd_vv $V5, $V23, $V2]}
-    @{[vsha2cl_vv $V7, $V6, $V5]}
-    @{[vsha2ch_vv $V6, $V7, $V5]}
+    @{[vadd_vv $V28, $V25, $V4]}
+    @{[vsha2cl_vv $V7, $V6, $V8]}
+    @{[vsha2ch_vv $V6, $V7, $V8]}
 
     # Quad-round 14 (+2, v3->v4->v1->v2)
-    @{[vadd_vv $V5, $V24, $V3]}
-    @{[vsha2cl_vv $V7, $V6, $V5]}
-    @{[vsha2ch_vv $V6, $V7, $V5]}
+
+    @{[vsha2cl_vv $V7, $V6, $V9]}
+    @{[vsha2ch_vv $V6, $V7, $V9]}
 
     # Quad-round 15 (+3, v4->v1->v2->v3)
-    @{[vadd_vv $V5, $V25, $V4]}
-    @{[vsha2cl_vv $V7, $V6, $V5]}
-    @{[vsha2ch_vv $V6, $V7, $V5]}
+
+    @{[vsha2cl_vv $V7, $V6, $V28]}
+    @{[vsha2ch_vv $V6, $V7, $V28]}
 
     # H' = H+{a',b',c',...,h'}
     @{[vadd_vv $V6, $V30, $V6]}
     @{[vadd_vv $V7, $V31, $V7]}
-    bnez $LEN, L_round_loop
 
     # Store {f,e,b,a},{h,g,d,c} back to {a,b,c,d},{e,f,g,h}.
     @{[vsuxei8_v $V6, $H, $V26]}
