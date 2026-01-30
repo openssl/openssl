@@ -22,7 +22,7 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 use platform;
 
-plan skip_all => "Test only supported in a fips build" if disabled("fips");
+plan skip_all => "Test only supported in a fips build" if disabled("fips") || !disabled("fips-pedanticonly");
 
 # Compatible options for pedantic FIPS compliance
 my @pedantic_okay =

@@ -33,5 +33,5 @@ my $fipsmoduleconf = bldtop_file('test', 'fipsmodule.cnf');
 
 # verify the $fipsconf file
 ok(run(app(['openssl', 'fipsinstall',
-            '-in',  $fipsmoduleconf, '-module', $fipsmodule, '-verify'])),
+            '-in',  $fipsmoduleconf, '-module', $fipsmodule, '-pedantic', '-verify'])),
    "fipsinstall verify");
