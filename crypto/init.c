@@ -463,6 +463,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     return 1;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_0)
 int OPENSSL_atexit(void (*handler)(void))
 {
 #if defined(__TANDEM)
@@ -471,3 +472,4 @@ int OPENSSL_atexit(void (*handler)(void))
     return atexit(handler) == 0;
 #endif
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_0) */

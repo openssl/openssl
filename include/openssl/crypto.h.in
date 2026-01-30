@@ -516,7 +516,9 @@ int CRYPTO_memcmp(const void *in_a, const void *in_b, size_t len);
 /* Library initialisation functions */
 void OPENSSL_cleanup(void);
 int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
-int OPENSSL_atexit(void (*handler)(void));
+#if !defined(OPENSSL_NO_DEPRECATED_4_0)
+OSSL_DEPRECATEDIN_4_0 int OPENSSL_atexit(void (*handler)(void));
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_0) */
 void OPENSSL_thread_stop(void);
 void OPENSSL_thread_stop_ex(OSSL_LIB_CTX *ctx);
 

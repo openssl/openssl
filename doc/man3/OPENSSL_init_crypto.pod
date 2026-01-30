@@ -14,7 +14,6 @@ and deinitialisation functions
 
  void OPENSSL_cleanup(void);
  int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
- int OPENSSL_atexit(void (*handler)(void));
  void OPENSSL_thread_stop_ex(OSSL_LIB_CTX *ctx);
  void OPENSSL_thread_stop(void);
 
@@ -26,6 +25,11 @@ and deinitialisation functions
  int OPENSSL_INIT_set_config_appname(OPENSSL_INIT_SETTINGS *init,
                                      const char* name);
  void OPENSSL_INIT_free(OPENSSL_INIT_SETTINGS *init);
+
+ The following functions have been deprecated since OpenSSL 4.0:
+
+ int OPENSSL_atexit(void (*handler)(void));
+
 
 =head1 DESCRIPTION
 
@@ -160,6 +164,8 @@ be put through the openssl errstr command line application to produce a human
 readable error (see L<openssl-errstr(1)>).
 
 The OPENSSL_atexit() is a wrapper on atexit(3) provided by the platform's libc.
+It was deprecated in OpenSSL 4.0. If you require atexit() you should get it from
+libc.
 
 The OPENSSL_thread_stop_ex() function deallocates resources associated
 with the current thread for the given OSSL_LIB_CTX B<ctx>. The B<ctx> parameter
