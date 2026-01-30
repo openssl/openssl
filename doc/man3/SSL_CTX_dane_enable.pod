@@ -5,13 +5,16 @@
 SSL_CTX_dane_enable, SSL_CTX_dane_mtype_set, SSL_dane_enable,
 SSL_dane_tlsa_add, SSL_get0_dane_authority, SSL_get0_dane_tlsa,
 SSL_CTX_dane_set_flags, SSL_CTX_dane_clear_flags,
-SSL_dane_set_flags, SSL_dane_clear_flags
+SSL_dane_set_flags, SSL_dane_clear_flags,
+SSL_get0_dane, SSL_DANE
 - enable DANE TLS authentication of the remote TLS server in the local
 TLS client
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
+
+ typedef struct ssl_dane_st SSL_DANE;
 
  int SSL_CTX_dane_enable(SSL_CTX *ctx);
  int SSL_CTX_dane_mtype_set(SSL_CTX *ctx, const EVP_MD *md,
@@ -27,11 +30,17 @@ TLS client
  unsigned long SSL_CTX_dane_clear_flags(SSL_CTX *ctx, unsigned long flags);
  unsigned long SSL_dane_set_flags(SSL *ssl, unsigned long flags);
  unsigned long SSL_dane_clear_flags(SSL *ssl, unsigned long flags);
+ SSL_DANE *SSL_get0_dane(SSL *ssl);
 
 =head1 DESCRIPTION
 
 These functions implement support for DANE TLSA (RFC6698 and RFC7671)
 peer authentication.
+
+B<SSL_DANE> is an opaque structure that holds DANE verification state
+for an SSL connection. It is used internally by OpenSSL during DANE
+authentication and can be passed to L<X509_STORE_CTX_set0_dane(3)> for
+custom certificate verification callbacks.
 
 SSL_CTX_dane_enable() must be called first to initialize the shared state
 required for DANE support.
@@ -159,6 +168,14 @@ records already make it possible for a remote domain to redirect client
 connections to any server of its choice, and in any case SMTP and XMPP clients
 do not execute scripts downloaded from remote servers.
 
+SSL_get0_dane() returns a pointer to the B<SSL_DANE> structure associated with
+the B<SSL> connection I<ssl>. This can be used to pass DANE verification state
+to custom certificate verification callbacks via
+L<X509_STORE_CTX_set0_dane(3)>. The returned pointer is an internal reference
+and must not be freed by the caller. It remains valid for the lifetime of the
+SSL connection. Returns NULL if I<ssl> is not a valid SSL connection (e.g., for
+QUIC stream objects).
+
 =head1 RETURN VALUES
 
 The functions SSL_CTX_dane_enable(), SSL_CTX_dane_mtype_set(),
@@ -180,6 +197,10 @@ record is a full public key that is its signer.
 The functions SSL_CTX_dane_set_flags(), SSL_CTX_dane_clear_flags(),
 SSL_dane_set_flags() and SSL_dane_clear_flags() return the B<flags> in effect
 before they were called.
+
+SSL_get0_dane() returns a pointer to the B<SSL_DANE> structure associated with
+the SSL connection, or NULL if the connection is not a regular SSL connection
+(e.g., for QUIC stream objects).
 
 =head1 EXAMPLES
 
