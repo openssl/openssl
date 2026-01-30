@@ -335,20 +335,24 @@ Download CRLs from distribution points given in CDP extensions of certificates
 
 =item B<-verifyCAfile> I<filename>
 
-A file in PEM format CA containing trusted certificates to use
-for verifying client certificates.
+A file in PEM format containing trusted CA certificates to use
+as trust anchors when verifying client certificates.
+Typically this file contains the specific issuing CA certificates that are
+authorized to issue client authentication certificates.
+If root CA certificates are included, then any certificate issued under
+that root CA's PKI hierarchy may be accepted for client authentication.
 
 =item B<-verifyCApath> I<dir>
 
-A directory containing trusted certificates to use
-for verifying client certificates.
+A directory containing trusted CA certificates to use
+as trust anchors when verifying client certificates.
 This directory must be in "hash format",
 see L<openssl-verify(1)> for more information.
 
 =item B<-verifyCAstore> I<uri>
 
-The URI of a store containing trusted certificates to use
-for verifying client certificates.
+The URI of a store containing trusted CA certificates to use
+as trust anchors when verifying client certificates.
 
 =item B<-chainCAfile> I<file>
 
