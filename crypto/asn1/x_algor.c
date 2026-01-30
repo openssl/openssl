@@ -85,12 +85,12 @@ void X509_ALGOR_get0(const ASN1_OBJECT **paobj, int *pptype,
 }
 
 /* Set up an X509_ALGOR DigestAlgorithmIdentifier from an EVP_MD */
-void X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md)
+int X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md)
 {
     int type = md->flags & EVP_MD_FLAG_DIGALGID_ABSENT ? V_ASN1_UNDEF
                                                        : V_ASN1_NULL;
 
-    (void)X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_MD_get_type(md)), type, NULL);
+    return X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_MD_get_type(md)), type, NULL);
 }
 
 int X509_ALGOR_cmp(const X509_ALGOR *a, const X509_ALGOR *b)
@@ -148,7 +148,10 @@ int ossl_x509_algor_new_from_md(X509_ALGOR **palg, const EVP_MD *md)
         return 1;
     if ((alg = X509_ALGOR_new()) == NULL)
         return 0;
-    X509_ALGOR_set_md(alg, md);
+    if (!X509_ALGOR_set_md(alg, md)) {
+        X509_ALGOR_free(alg);
+        return 0;
+    }
     *palg = alg;
     return 1;
 }
