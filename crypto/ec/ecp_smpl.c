@@ -497,6 +497,77 @@ int ossl_ec_GFp_simple_point_set_affine_coordinates(const EC_GROUP *group,
         BN_value_one(), ctx);
 }
 
+int ossl_ec_GFp_check_affine_point(const EC_GROUP *group, 
+    const EC_POINT *pt,
+    BIGNUM *x,
+    BIGNUM *y,
+    BIGNUM *decoded_z,
+    int *zisone,
+    BN_CTX* ctx)
+{
+    BN_CTX *new_ctx = NULL;
+    BIGNUM *Z;
+    const BIGNUM *Z_;
+    int ret = 0;
+
+    if (EC_POINT_is_at_infinity(group, pt)) {
+        ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
+        return 0;
+    }
+
+    if (ctx == NULL) {
+        ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+        if (ctx == NULL)
+            return 0;
+    }
+
+    BN_CTX_start(ctx);
+    Z = BN_CTX_get(ctx);
+
+    /* Fast check if Z = 1 (point already in affine form) */
+    if (group->meth->field_decode != NULL) {
+        if (!group->meth->field_decode(group, Z, pt->Z, ctx))
+            goto err;
+        Z_ = Z;
+    } else {
+        Z_ = pt->Z;
+    }
+
+    if (decoded_z) {
+        BN_copy(decoded_z, Z_);
+    }
+
+    if (BN_is_one(Z_)) {
+        
+        if (group->meth->field_decode != NULL) {
+            if (x != NULL) {
+                if (!group->meth->field_decode(group, x, pt->X, ctx))
+                    goto err;
+            }
+            if (y != NULL) {
+                if (!group->meth->field_decode(group, y, pt->Y, ctx))
+                    goto err;
+            }
+        } else {
+            if (x != NULL) {
+                if (!BN_copy(x, pt->X))
+                    goto err;
+            }
+            if (y != NULL) {
+                if (!BN_copy(y, pt->Y))
+                    goto err;
+            }
+        }
+        *zisone = 1;
+    }
+    ret = 1;
+
+err:
+    BN_CTX_end(ctx);
+    BN_CTX_free(new_ctx);
+    return ret;
+}
+
 int ossl_ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
     const EC_POINT *point,
     BIGNUM *x, BIGNUM *y,
@@ -504,8 +575,8 @@ int ossl_ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
 {
     BN_CTX *new_ctx = NULL;
     BIGNUM *Z, *Z_1, *Z_2, *Z_3;
-    const BIGNUM *Z_;
     int ret = 0;
+    int zisone = 0;
 
     if (EC_POINT_is_at_infinity(group, point)) {
         ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
@@ -527,37 +598,15 @@ int ossl_ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
         goto err;
 
     /* transform  (X, Y, Z)  into  (x, y) := (X/Z^2, Y/Z^3) */
-
-    if (group->meth->field_decode != NULL) {
-        if (!group->meth->field_decode(group, Z, point->Z, ctx))
-            goto err;
-        Z_ = Z;
+    if (!ossl_ec_GFp_check_affine_point(group, point,  x, y, Z, &zisone, ctx))
+        goto err;
+    if (zisone) {
+        /* In this case, point is already in affine form, and 
+           coordinates were extracted. */
+        ret = 1;
+        goto err;
     } else {
-        Z_ = point->Z;
-    }
-
-    if (BN_is_one(Z_)) {
-        if (group->meth->field_decode != NULL) {
-            if (x != NULL) {
-                if (!group->meth->field_decode(group, x, point->X, ctx))
-                    goto err;
-            }
-            if (y != NULL) {
-                if (!group->meth->field_decode(group, y, point->Y, ctx))
-                    goto err;
-            }
-        } else {
-            if (x != NULL) {
-                if (!BN_copy(x, point->X))
-                    goto err;
-            }
-            if (y != NULL) {
-                if (!BN_copy(y, point->Y))
-                    goto err;
-            }
-        }
-    } else {
-        if (!group->meth->field_inv(group, Z_1, Z_, ctx)) {
+        if (!group->meth->field_inv(group, Z_1, Z, ctx)) {
             ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             goto err;
         }
