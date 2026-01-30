@@ -1507,6 +1507,10 @@ DEPEND[html/man3/NCONF_new_ex.html]=man3/NCONF_new_ex.pod
 GENERATE[html/man3/NCONF_new_ex.html]=man3/NCONF_new_ex.pod
 DEPEND[man/man3/NCONF_new_ex.3]=man3/NCONF_new_ex.pod
 GENERATE[man/man3/NCONF_new_ex.3]=man3/NCONF_new_ex.pod
+DEPEND[html/man3/OBJ_NAME_do_all.html]=man3/OBJ_NAME_do_all.pod
+GENERATE[html/man3/OBJ_NAME_do_all.html]=man3/OBJ_NAME_do_all.pod
+DEPEND[man/man3/OBJ_NAME_do_all.3]=man3/OBJ_NAME_do_all.pod
+GENERATE[man/man3/OBJ_NAME_do_all.3]=man3/OBJ_NAME_do_all.pod
 DEPEND[html/man3/OBJ_nid2obj.html]=man3/OBJ_nid2obj.pod
 GENERATE[html/man3/OBJ_nid2obj.html]=man3/OBJ_nid2obj.pod
 DEPEND[man/man3/OBJ_nid2obj.3]=man3/OBJ_nid2obj.pod
@@ -3422,6 +3426,7 @@ html/man3/HMAC.html \
 html/man3/MD5.html \
 html/man3/MDC2_Init.html \
 html/man3/NCONF_new_ex.html \
+html/man3/OBJ_NAME_do_all.html \
 html/man3/OBJ_nid2obj.html \
 html/man3/OCSP_REQUEST_new.html \
 html/man3/OCSP_cert_to_id.html \
@@ -4094,6 +4099,7 @@ man/man3/HMAC.3 \
 man/man3/MD5.3 \
 man/man3/MDC2_Init.3 \
 man/man3/NCONF_new_ex.3 \
+man/man3/OBJ_NAME_do_all.3 \
 man/man3/OBJ_nid2obj.3 \
 man/man3/OCSP_REQUEST_new.3 \
 man/man3/OCSP_cert_to_id.3 \
