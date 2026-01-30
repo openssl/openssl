@@ -143,7 +143,7 @@ jobs:
             name: master,
             dir: branch-master,
             tgz: branch-master.tar.gz,
-            extra_config: "enable-lms",
+            extra_config: "enable-lms enable-tls-deprecated-ec",
           },
         ]
 
