@@ -295,30 +295,27 @@ int check_cert_attributes(BIO *bio, X509 *x,
 
 void store_setup_crl_download(X509_STORE *st);
 
-typedef struct app_http_tls_info_st {
-    const char *server;
-    const char *port;
-    int use_proxy;
-    long timeout;
-    SSL_CTX *ssl_ctx;
-} APP_HTTP_TLS_INFO;
+#if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
+typedef struct app_http_tls_info_st APP_HTTP_TLS_INFO;
+APP_HTTP_TLS_INFO *APP_HTTP_TLS_INFO_new(const char *server, const char *port,
+    int use_proxy, const char *proxy_user, const char *proxy_pass,
+    int expect_asn1, long timeout, SSL_CTX *ssl_ctx /* owned by struct */);
+void APP_HTTP_TLS_INFO_free(APP_HTTP_TLS_INFO *info);
 BIO *app_http_tls_cb(BIO *hbio, /* APP_HTTP_TLS_INFO */ void *arg,
     int connect, int detail);
-void APP_HTTP_TLS_INFO_free(APP_HTTP_TLS_INFO *info);
-#ifndef OPENSSL_NO_SOCK
-ASN1_VALUE *app_http_get_asn1(const char *url, const char *proxy,
-    const char *no_proxy, SSL_CTX *ssl_ctx,
-    const STACK_OF(CONF_VALUE) *headers,
-    long timeout, const char *expected_content_type,
-    const ASN1_ITEM *it);
-ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
-    const char *path, const char *proxy,
-    const char *no_proxy, SSL_CTX *ctx,
-    const STACK_OF(CONF_VALUE) *headers,
-    const char *content_type,
-    ASN1_VALUE *req, const ASN1_ITEM *req_it,
-    const char *expected_content_type,
-    long timeout, const ASN1_ITEM *rsp_it);
+BIO *app_http_tls_close(BIO *bio);
+BIO *app_http_get(const char *url, const char *proxy, const char *no_proxy,
+    const char *proxy_user, const char *proxy_pass,
+    SSL_CTX *ssl_ctx, const STACK_OF(CONF_VALUE) *headers,
+    const char *expected_content_type, int expect_asn1, long timeout);
+BIO *app_http_post(const char *server /* full URL if port == path == NULL */,
+    const char *port, const char *path,
+    const char *proxy, const char *no_proxy,
+    const char *proxy_user, const char *proxy_pass,
+    SSL_CTX *ssl_ctx, const STACK_OF(CONF_VALUE) *headers,
+    const char *content_type, BIO *req,
+    const char *expected_content_type, int expect_asn1, long timeout);
+void app_http_close(BIO *bio);
 #endif
 
 #define EXT_COPY_NONE 0
