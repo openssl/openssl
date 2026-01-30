@@ -787,6 +787,7 @@ EVP_R_SETTING_XOF_FAILED:227:setting xof failed
 EVP_R_SET_DEFAULT_PROPERTY_FAILURE:209:set default property failure
 EVP_R_SIGNATURE_TYPE_AND_KEY_TYPE_INCOMPATIBLE:228:\
 	signature type and key type incompatible
+EVP_R_SQUEEZE_ERROR:240:squeeze error
 EVP_R_TOO_MANY_PIPES:231:too many pipes
 EVP_R_TOO_MANY_RECORDS:183:too many records
 EVP_R_UNABLE_TO_ENABLE_LOCKING:212:unable to enable locking

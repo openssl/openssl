@@ -32,6 +32,11 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Added EVP_MAC_squeeze() which can be used by KMAC.
+   KMAC uses the CSHAKE XOF digest.
+
+   *Shane Lontis*
+
  * Added CSHAKE as per [SP 800-185]
 
    *Shane Lontis*

@@ -8,7 +8,8 @@ EVP_MAC_get0_provider, EVP_MAC_get_params, EVP_MAC_gettable_params,
 EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_free, EVP_MAC_CTX_dup,
 EVP_MAC_CTX_get0_mac, EVP_MAC_CTX_get_params, EVP_MAC_CTX_set_params,
 EVP_MAC_CTX_get_mac_size, EVP_MAC_CTX_get_block_size, EVP_Q_mac,
-EVP_MAC_init, EVP_MAC_init_SKEY, EVP_MAC_update, EVP_MAC_final, EVP_MAC_finalXOF,
+EVP_MAC_init, EVP_MAC_init_SKEY, EVP_MAC_update, EVP_MAC_final,
+EVP_MAC_finalXOF, EVP_MAC_squeeze,
 EVP_MAC_gettable_ctx_params, EVP_MAC_settable_ctx_params,
 EVP_MAC_CTX_gettable_params, EVP_MAC_CTX_settable_params,
 EVP_MAC_do_all_provided - EVP MAC routines
@@ -54,6 +55,7 @@ EVP_MAC_do_all_provided - EVP MAC routines
  int EVP_MAC_final(EVP_MAC_CTX *ctx,
                    unsigned char *out, size_t *outl, size_t outsize);
  int EVP_MAC_finalXOF(EVP_MAC_CTX *ctx, unsigned char *out, size_t outsize);
+ int EVP_MAC_squeeze(EVP_MAC_CTX *ctx, unsigned char *out, size_t outsize);
 
  const OSSL_PARAM *EVP_MAC_gettable_params(const EVP_MAC *mac);
  const OSSL_PARAM *EVP_MAC_gettable_ctx_params(const EVP_MAC *mac);
@@ -169,6 +171,11 @@ call with I<out> pointing at the allocated space.
 
 EVP_MAC_finalXOF() does the final computation for an XOF based MAC and stores
 the result in the memory pointed at by I<out> of size I<outsize>.
+The B<xof> parameter should be set to 1 if the output size is not known before
+EVP_MAC_finalXOF() is called.
+
+EVP_MAC_squeeze() is similar to EVP_MAC_finalXOF() but may be called multiple
+times.
 
 EVP_MAC_get_params() retrieves details about the implementation
 I<mac>.
@@ -388,8 +395,8 @@ success, 0 on error.
 
 EVP_Q_mac() returns a pointer to the computed MAC value, or NULL on error.
 
-EVP_MAC_init(), EVP_MAC_init_SKEY(), EVP_MAC_update(), EVP_MAC_final(), and
-EVP_MAC_finalXOF() return 1 on success, 0 on error.
+EVP_MAC_init(), EVP_MAC_init_SKEY(), EVP_MAC_update(), EVP_MAC_final(),
+EVP_MAC_finalXOF() and EVP_MAC_squeeze() return 1 on success, 0 on error.
 
 EVP_MAC_CTX_get_mac_size() returns the expected output size, or 0 if it isn't
 set.  If it isn't set, a call to EVP_MAC_init() will set it.
@@ -496,10 +503,11 @@ L<life_cycle-mac(7)>
 These functions were added in OpenSSL 3.0.
 
 The EVP_MAC_init_SKEY() function was added in OpenSSL 3.5.
+The EVP_MAC_squeeze() function was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
-Copyright 2018-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
