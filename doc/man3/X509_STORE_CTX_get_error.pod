@@ -6,6 +6,7 @@ X509_STORE_CTX_get_error, X509_STORE_CTX_set_error,
 X509_STORE_CTX_get_error_depth, X509_STORE_CTX_set_error_depth,
 X509_STORE_CTX_get_current_cert, X509_STORE_CTX_set_current_cert,
 X509_STORE_CTX_get0_cert, X509_STORE_CTX_get1_chain,
+X509_STORE_CTX_get0_current_crl,
 X509_verify_cert_error_string - get or set certificate verification status
 information
 
@@ -20,8 +21,8 @@ information
  X509 *X509_STORE_CTX_get_current_cert(const X509_STORE_CTX *ctx);
  void  X509_STORE_CTX_set_current_cert(X509_STORE_CTX *ctx, X509 *x);
  X509 *X509_STORE_CTX_get0_cert(const X509_STORE_CTX *ctx);
-
  STACK_OF(X509) *X509_STORE_CTX_get1_chain(const X509_STORE_CTX *ctx);
+ X509_CRL *X509_STORE_CTX_get0_current_crl(const X509_STORE_CTX *ctx);
 
  const char *X509_verify_cert_error_string(long n);
 
@@ -78,6 +79,15 @@ When it is no longer needed it should be free up using:
 
  OSSL_STACK_OF_X509_free(chain);
 
+X509_STORE_CTX_get0_current_crl() returns an internal pointer to the
+possibly unverified CRL being actively considered during verification
+by the I<ctx>, or NULL.  The returned value is NULL when the
+verification is not considering a specific CRL, or has finished CRL
+verification. As this pointer is an internal value used only during
+X509 verification, the values seen and order in which they are seen if
+called during the verification callback should not be relied upon to
+be consistent.
+
 X509_verify_cert_error_string() returns a human readable error string for
 verification error I<n>.
 
@@ -89,6 +99,9 @@ X509_STORE_CTX_get_error_depth() returns a nonnegative error depth.
 
 X509_STORE_CTX_get_current_cert() returns the certificate which caused the
 error or NULL if no certificate is relevant to the error.
+
+X509_STORE_CTX_get_current_crl() returns the CRL which caused the error
+or NULL if no CRL is relevant to the error.
 
 X509_verify_cert_error_string() returns a human readable error string for
 verification error I<n>.
