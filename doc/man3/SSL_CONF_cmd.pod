@@ -107,8 +107,41 @@ Equivalent to B<SSL_OP_PREFER_NO_DHE_KEX>. Only used by servers.
 
 =item B<-strict>
 
-Enables strict mode protocol handling. Equivalent to setting
+Enables strict certificate chain checking. Equivalent to setting
 B<SSL_CERT_FLAG_TLS_STRICT>.
+
+When enabled, this enforces additional TLS certificate chain requirements that
+many implementations ignore:
+
+=over 4
+
+=item *
+
+All certificates in the chain must use signature algorithms that are in the
+configured or negotiated list. Without strict mode, SHA1-based signatures are
+permitted as a fallback even if not explicitly configured.
+
+=item *
+
+The parameters (such as EC curves) of CA certificates in the chain are
+validated against the supported list, not just the end-entity certificate.
+
+=item *
+
+For client authentication in TLS 1.2 and earlier, the certificate type must
+match one of the types requested by the server in the CertificateRequest
+message.
+
+=item *
+
+For client authentication, the certificate chain must contain a certificate
+issued by one of the CAs in the server's CertificateRequest CA list (if
+provided).
+
+=back
+
+Suite B modes (enabled via B<SSL_CERT_FLAG_SUITEB_128_LOS> or
+B<SSL_CERT_FLAG_SUITEB_192_LOS>) always imply strict mode.
 
 =item B<-sigalgs> I<algs>
 
@@ -635,8 +668,13 @@ B<KTLS>: Enables kernel TLS if support has been compiled in, and it is supported
 by the negotiated ciphersuites and extensions. Equivalent to
 B<SSL_OP_ENABLE_KTLS>.
 
-B<StrictCertCheck>: Enable strict certificate checking. Equivalent to
-setting B<SSL_CERT_FLAG_TLS_STRICT> with SSL_CTX_set_cert_flags().
+B<StrictCertCheck>: Enable strict certificate chain checking. This enforces
+that all certificates in the chain use configured signature algorithms (no
+SHA1 fallback), validates CA certificate parameters against the supported
+list, and for client authentication requires matching certificate types and
+issuer names. Equivalent to setting B<SSL_CERT_FLAG_TLS_STRICT> with
+SSL_CTX_set_cert_flags(). See the B<-strict> command line option for full
+details.
 
 B<TxCertificateCompression>: support sending compressed certificates, enabled by
 default. Inverse of B<SSL_OP_NO_TX_CERTIFICATE_COMPRESSION>: that is,
