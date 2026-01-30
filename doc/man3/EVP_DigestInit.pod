@@ -386,8 +386,9 @@ L<OSSL_LIB_CTX(3)>) will be considered.
 
 =item EVP_MD_xof()
 
-Returns 1 if I<md> is an Extendable-output Function (XOF) otherwise it returns
-0. SHAKE128, SHAKE256, CSHAKE128 and CSHAKE256 are XOF functions.
+Returns 1 if I<md> is an Extendable-output Function (XOF) otherwise it returns 0.
+SHAKE-128, SHAKE-256, CSHAKE-128, CSHAKE-256, TUPLEHASH-128 and TUPLEHASH-256 are
+XOF functions.
 It returns 0 for BLAKE2B algorithms.
 
 =item EVP_MD_get0_name(),
@@ -532,8 +533,9 @@ following OSSL_PARAM keys:
 
 Sets or gets the digest length for extendable output functions.
 The value should not exceed what can be given using a B<size_t>.
-It may be used by SHAKE-128, CSHAKE-128, SHAKE-256 and CSHAKE-256, to set the
-output length used by EVP_DigestFinal_ex() and EVP_DigestFinal().
+It may be used by SHAKE-128, CSHAKE-128, TUPLEHASH-128, SHAKE-256, CSHAKE-256
+and TUPLEHASH-256 to set the output length used by EVP_DigestFinal_ex() and
+EVP_DigestFinal().
 
 =item "size" (B<OSSL_DIGEST_PARAM_SIZE>) <unsigned integer>
 
@@ -561,7 +563,7 @@ It is used by L<EVP_MD-CSHAKE(7)>.
 =item "customization" (B<OSSL_DIGEST_PARAM_CUSTOMIZATION>)<UTF8 string>
 
 Sets a customisation string.
-It is used by L<EVP_MD-CSHAKE(7)>.
+It is used by L<EVP_MD-CSHAKE(7)> and L<EVP_MD-TUPLEHASH(7)>.
 
 =item "properties" (B<OSSL_DIGEST_PARAM_PROPERTIES>)<UTF8 string>
 
