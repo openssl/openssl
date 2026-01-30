@@ -78,7 +78,7 @@ $code .= <<___;
 .globl sha512_block_data_order_zvkb_zvknhb
 .type sha512_block_data_order_zvkb_zvknhb,\@function
 sha512_block_data_order_zvkb_zvknhb:
-    @{[vsetivli "zero", 4, "e64", "m2", "ta", "ma"]}
+    @{[vsetivli "zero", 4, "e64", "m1", "ta", "ma"]}
 
     # H is stored as {a,b,c,d},{e,f,g,h}, but we need {f,e,b,a},{h,g,d,c}
     # The dst vtype is e64m2 and the index vtype is e8mf4.
@@ -96,7 +96,7 @@ sha512_block_data_order_zvkb_zvknhb:
     addi $H2, $H, 16
 
     # Use index-load to get {f,e,b,a},{h,g,d,c}
-    @{[vsetivli "zero", 4, "e64", "m2", "ta", "ma"]}
+    @{[vsetivli "zero", 4, "e64", "m1", "ta", "ma"]}
     @{[vluxei8_v $V22, $H, $V1]}
     @{[vluxei8_v $V24, $H2, $V1]}
 
@@ -105,7 +105,7 @@ sha512_block_data_order_zvkb_zvknhb:
     @{[vsetivli "zero", 1, "e8", "m1", "ta", "ma"]}
     @{[vmv_v_i $V0, 0x01]}
 
-    @{[vsetivli "zero", 4, "e64", "m2", "ta", "ma"]}
+    @{[vsetivli "zero", 4, "e64", "m1", "ta", "ma"]}
 
 L_round_loop:
     # Load round constants K512
