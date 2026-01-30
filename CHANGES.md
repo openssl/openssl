@@ -32,6 +32,13 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Add Support for Data Independent Timing (DIT) on AArch64 chipsets that
+   support it (Armv8.4-A or newer). This flag tells the CPU to avoid
+   optimisations that may change instruction timing based on the values of the
+   data being operated on.
+
+   *Paul Elliott / Tom Cosgrove*
+
  * Added CSHAKE as per [SP 800-185]
 
    *Shane Lontis*
