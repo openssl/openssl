@@ -32,6 +32,10 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * OPENSSL_atexit() was removed.
+
+   *Bob Beck*
+
  * Added CSHAKE as per [SP 800-185]
 
    *Shane Lontis*
