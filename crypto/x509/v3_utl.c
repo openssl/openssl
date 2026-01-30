@@ -866,13 +866,21 @@ static int do_check_string(const ASN1_STRING *a, int cmp_type, equal_fn equal,
     return rv;
 }
 
+static int check_subject(int flags)
+{
+    if (flags & X509_CHECK_FLAG_NEVER_CHECK_SUBJECT)
+        return 0;
+    if (flags & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT)
+        return 1;
+    return 1;
+}
+
 static int do_x509_check(X509 *x, const char *chk, size_t chklen,
-    unsigned int flags, int check_type, char **peername)
+    unsigned int flags, int check_type, int othername_nid, int check_cnid, char **peername)
 {
     GENERAL_NAMES *gens = NULL;
     const X509_NAME *name = NULL;
     int i;
-    int cnid = NID_undef;
     int alt_type;
     int san_present = 0;
     int rv = 0;
@@ -881,11 +889,9 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
     /* See below, this flag is internal-only */
     flags &= ~_X509_CHECK_FLAG_DOT_SUBDOMAINS;
     if (check_type == GEN_EMAIL) {
-        cnid = NID_pkcs9_emailAddress;
         alt_type = V_ASN1_IA5STRING;
         equal = equal_email;
     } else if (check_type == GEN_DNS) {
-        cnid = NID_commonName;
         /* Implicit client-side DNS sub-domain pattern */
         if (chklen > 1 && chk[0] == '.')
             flags |= _X509_CHECK_FLAG_DOT_SUBDOMAINS;
@@ -902,91 +908,96 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
     if (chklen == 0)
         chklen = strlen(chk);
 
-    gens = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
-    if (gens) {
-        for (i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
-            GENERAL_NAME *gen;
-            ASN1_STRING *cstr;
+    if (check_cnid == NID_undef) {
+        gens = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
+        if (gens) {
+            for (i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
+                GENERAL_NAME *gen;
+                ASN1_STRING *cstr;
 
-            gen = sk_GENERAL_NAME_value(gens, i);
-            switch (gen->type) {
-            default:
-                continue;
-            case GEN_OTHERNAME:
-                switch (OBJ_obj2nid(gen->d.otherName->type_id)) {
+                gen = sk_GENERAL_NAME_value(gens, i);
+                switch (gen->type) {
                 default:
                     continue;
-                case NID_id_on_SmtpUTF8Mailbox:
-                    /*-
-                     * https://datatracker.ietf.org/doc/html/rfc8398#section-3
-                     *
-                     *   Due to name constraint compatibility reasons described
-                     *   in Section 6, SmtpUTF8Mailbox subjectAltName MUST NOT
-                     *   be used unless the local-part of the email address
-                     *   contains non-ASCII characters. When the local-part is
-                     *   ASCII, rfc822Name subjectAltName MUST be used instead
-                     *   of SmtpUTF8Mailbox. This is compatible with legacy
-                     *   software that supports only rfc822Name (and not
-                     *   SmtpUTF8Mailbox). [...]
-                     *
-                     *   SmtpUTF8Mailbox is encoded as UTF8String.
-                     *
-                     * If it is not a UTF8String then that is unexpected, and
-                     * we ignore the invalid SAN (neither set san_present nor
-                     * consider it a candidate for equality).  This does mean
-                     * that the subject CN may be considered, as would be the
-                     * case when the malformed SmtpUtf8Mailbox SAN is instead
-                     * simply absent.
-                     *
-                     * When CN-ID matching is not desirable, applications can
-                     * choose to turn it off, doing so is at this time a best
-                     * practice.
-                     */
-                    if (check_type != GEN_EMAIL
-                        || gen->d.otherName->value->type != V_ASN1_UTF8STRING)
+                case GEN_OTHERNAME:
+                    if (check_type != GEN_OTHERNAME)
                         continue;
-                    alt_type = 0;
-                    cstr = gen->d.otherName->value->value.utf8string;
+                    switch (OBJ_obj2nid(gen->d.otherName->type_id)) {
+                    default:
+                        continue;
+                    case NID_id_on_SmtpUTF8Mailbox:
+                        /*-
+                         * https://datatracker.ietf.org/doc/html/rfc8398#section-3
+                         *
+                         *   Due to name constraint compatibility reasons described
+                         *   in Section 6, SmtpUTF8Mailbox subjectAltName MUST NOT
+                         *   be used unless the local-part of the email address
+                         *   contains non-ASCII characters. When the local-part is
+                         *   ASCII, rfc822Name subjectAltName MUST be used instead
+                         *   of SmtpUTF8Mailbox. This is compatible with legacy
+                         *   software that supports only rfc822Name (and not
+                         *   SmtpUTF8Mailbox). [...]
+                         *
+                         *   SmtpUTF8Mailbox is encoded as UTF8String.
+                         *
+                         * If it is not a UTF8String then that is unexpected, and
+                         * we ignore the invalid SAN (neither set san_present nor
+                         * consider it a candidate for equality).  This does mean
+                         * that the subject CN may be considered, as would be the
+                         * case when the malformed SmtpUtf8Mailbox SAN is instead
+                         * simply absent.
+                         *
+                         * When CN-ID matching is not desirable, applications can
+                         * choose to turn it off, doing so is at this time a best
+                         * practice.
+                         */
+                        if (othername_nid != NID_id_on_SmtpUTF8Mailbox
+                            || gen->d.otherName->value->type != V_ASN1_UTF8STRING)
+                            continue;
+                        alt_type = 0;
+                        cstr = gen->d.otherName->value->value.utf8string;
+                        break;
+                    }
+                    break;
+                case GEN_EMAIL:
+                    /* If we have requested to check the subject, skip the SANs */
+                    if (check_type != GEN_EMAIL)
+                        continue;
+                    cstr = gen->d.rfc822Name;
+                    break;
+                case GEN_DNS:
+                    if (check_type != GEN_DNS)
+                        continue;
+                    cstr = gen->d.dNSName;
+                    break;
+                case GEN_IPADD:
+                    if (check_type != GEN_IPADD)
+                        continue;
+                    cstr = gen->d.iPAddress;
                     break;
                 }
-                break;
-            case GEN_EMAIL:
-                if (check_type != GEN_EMAIL)
-                    continue;
-                cstr = gen->d.rfc822Name;
-                break;
-            case GEN_DNS:
-                if (check_type != GEN_DNS)
-                    continue;
-                cstr = gen->d.dNSName;
-                break;
-            case GEN_IPADD:
-                if (check_type != GEN_IPADD)
-                    continue;
-                cstr = gen->d.iPAddress;
-                break;
+                san_present = 1;
+                /* Positive on success, negative on error! */
+                if ((rv = do_check_string(cstr, alt_type, equal, flags,
+                         chk, chklen, peername))
+                    != 0)
+                    break;
             }
-            san_present = 1;
-            /* Positive on success, negative on error! */
-            if ((rv = do_check_string(cstr, alt_type, equal, flags,
-                     chk, chklen, peername))
-                != 0)
-                break;
+            GENERAL_NAMES_free(gens);
+            if (rv != 0)
+                return rv;
+            if (san_present)
+                return 0;
         }
-        GENERAL_NAMES_free(gens);
-        if (rv != 0)
-            return rv;
-        if (san_present && !(flags & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT))
-            return 0;
     }
 
     /* We're done if CN-ID is not pertinent */
-    if (cnid == NID_undef || (flags & X509_CHECK_FLAG_NEVER_CHECK_SUBJECT))
+    if (check_cnid == NID_undef)
         return 0;
 
     i = -1;
     name = X509_get_subject_name(x);
-    while ((i = X509_NAME_get_index_by_NID(name, cnid, i)) >= 0) {
+    while ((i = X509_NAME_get_index_by_NID(name, check_cnid, i)) >= 0) {
         const X509_NAME_ENTRY *ne = X509_NAME_get_entry(name, i);
         const ASN1_STRING *str = X509_NAME_ENTRY_get_data(ne);
 
@@ -997,6 +1008,36 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
             return rv;
     }
     return 0;
+}
+
+int ossl_x509_check_hostname(X509 *x, const char *chk, size_t chklen,
+    unsigned int flags, char **peername)
+{
+    return do_x509_check(x, chk, chklen, flags, GEN_DNS, 0, NID_undef, peername) == 1;
+}
+
+int ossl_x509_check_hostname_subject(X509 *x, const char *chk, size_t chklen,
+    unsigned int flags, char **peername)
+{
+    return do_x509_check(x, chk, chklen, flags, GEN_DNS, 0, NID_commonName, peername) == 1;
+}
+
+int ossl_x509_check_rfc822(X509 *x, const char *chk, size_t chklen, unsigned int flags)
+{
+    return do_x509_check(x, chk, chklen, flags, GEN_EMAIL, 0, NID_undef, NULL) == 1;
+}
+
+int ossl_x509_check_rfc822_subject(X509 *x, const char *chk, size_t chklen, unsigned int flags)
+{
+    return do_x509_check(x, chk, chklen, flags, GEN_EMAIL, 0, NID_pkcs9_emailAddress, NULL) == 1;
+}
+
+int ossl_x509_check_smtputf8(X509 *x, const char *chk, size_t chklen,
+    unsigned int flags)
+{
+    return do_x509_check(x, chk, chklen, flags, GEN_OTHERNAME,
+               NID_id_on_SmtpUTF8Mailbox, NID_undef, NULL)
+        == 1;
 }
 
 int X509_check_host(X509 *x, const char *chk, size_t chklen,
@@ -1015,7 +1056,12 @@ int X509_check_host(X509 *x, const char *chk, size_t chklen,
         return -2;
     if (chklen > 1 && chk[chklen - 1] == '\0')
         --chklen;
-    return do_x509_check(x, chk, chklen, flags, GEN_DNS, peername);
+    if (ossl_x509_check_hostname(x, chk, chklen, flags, peername))
+        return 1;
+    if (check_subject(flags))
+        return do_x509_check(x, chk, chklen, flags, GEN_DNS, 0, NID_commonName, peername);
+
+    return 0;
 }
 
 int X509_check_email(X509 *x, const char *chk, size_t chklen,
@@ -1034,7 +1080,17 @@ int X509_check_email(X509 *x, const char *chk, size_t chklen,
         return -2;
     if (chklen > 1 && chk[chklen - 1] == '\0')
         --chklen;
-    return do_x509_check(x, chk, chklen, flags, GEN_EMAIL, NULL);
+    /*
+     * As this is public API, historically it has supported checking
+     * whatever is supplied against both SAN email, cert subject, and SMTPUTF8.
+     */
+    if (ossl_x509_check_rfc822(x, chk, chklen, flags))
+        return 1;
+    if (check_subject(flags)
+        && (ossl_x509_check_rfc822_subject(x, chk, chklen, flags)))
+        return 1;
+    return do_x509_check(x, chk, chklen, flags, GEN_OTHERNAME,
+        NID_id_on_SmtpUTF8Mailbox, NID_undef, NULL);
 }
 
 int X509_check_ip(X509 *x, const unsigned char *chk, size_t chklen,
@@ -1042,7 +1098,7 @@ int X509_check_ip(X509 *x, const unsigned char *chk, size_t chklen,
 {
     if (chk == NULL)
         return -2;
-    return do_x509_check(x, (char *)chk, chklen, flags, GEN_IPADD, NULL);
+    return do_x509_check(x, (char *)chk, chklen, flags, GEN_IPADD, 0, NID_undef, NULL);
 }
 
 int X509_check_ip_asc(X509 *x, const char *ipasc, unsigned int flags)
@@ -1055,7 +1111,7 @@ int X509_check_ip_asc(X509 *x, const char *ipasc, unsigned int flags)
     iplen = (size_t)ossl_a2i_ipadd(ipout, ipasc);
     if (iplen == 0)
         return -2;
-    return do_x509_check(x, (char *)ipout, iplen, flags, GEN_IPADD, NULL);
+    return do_x509_check(x, (char *)ipout, iplen, flags, GEN_IPADD, 0, NID_undef, NULL);
 }
 
 char *ossl_ipaddr_to_asc(unsigned char *p, int len)
