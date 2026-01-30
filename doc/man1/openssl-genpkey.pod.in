@@ -74,10 +74,15 @@ see L<openssl-passphrase-options(1)>.
 
 =item B<-I<cipher>>
 
-Encrypts the private key using the specified algorithm. The algorithm can be
-specified using a name that is accepted by the EVP_get_cipherbyname() function.
-For example, use the syntax B<-aes-128-cbc> to specify the AES encryption
-algorithm with a 128-bit key in CBC mode.
+Encrypts the private key with the specified cipher. This option is specified
+by prepending a hyphen to the cipher name. For example, to encrypt with
+AES-128 in CBC mode, use B<-aes-128-cbc>. To encrypt with AES-256 in CBC mode,
+use B<-aes-256-cbc>.
+
+Note: the cipher name is used directly as the option (e.g., B<-aes-256-cbc>),
+not as an argument to a C<-cipher> flag.
+
+Use C<openssl list -cipher-algorithms> to see the available ciphers.
 
 =item B<-algorithm> I<alg>
 

@@ -61,7 +61,9 @@ either by itself or in addition to the encryption or decryption.
 
 =item B<-I<cipher>>
 
-The cipher to use.
+The cipher to use. This option is specified by prepending a hyphen to the
+cipher name (e.g., B<-aes-256-cbc>), not as an argument to a C<-cipher> flag.
+Use C<openssl list -cipher-algorithms> to see the available ciphers.
 
 =item B<-help>
 
