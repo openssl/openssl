@@ -135,22 +135,28 @@ OPENSSL_init_crypto(). For example:
  OPENSSL_init_crypto(OPENSSL_INIT_NO_ADD_ALL_CIPHERS
                      | OPENSSL_INIT_NO_ADD_ALL_DIGESTS, NULL);
 
-The OPENSSL_cleanup() function deinitialises OpenSSL (both libcrypto
-and libssl). All resources allocated by OpenSSL are freed.  An application
-using the OpenSSL library may call this function to free library resources
-prior to application exit.  Note that there are some
-use cases in which subordinate libraries may also use OpenSSL and may not
-be finished with their references to it at application exit time (for example,
-if a subordinate library attempts to free an OpenSSL resource from a library
-destructor, calling OPENSSL_cleanup() may result in crashes or other unexpected
-behavior). If this is likely to be a problem then it is recommended that OPENSSL_cleanup()
-not be called, allowing the operating system to reap all library resources on process
-exit.
+The OPENSSL_cleanup() function requests deinitialization of OpenSSL
+(both libcrypto and libssl). OpenSSL installs a global destructor
+function at initialization time if the toolchain supports this. This
+destructor is run after exit and after subordinate library destructors
+have run. By default the destructor does nothing. If deinitialization
+has been requested by a call to OPENSSL_cleanup(), then the destructor
+frees all global resources allocated by OpenSSL.
 
-Note, this may, on some leak detection tools (like valgrind) result in
-reports that indicate reachable memory remains on exit in certain
-configurations.  As these are not formally leaks, it is recommended that
-reachable memory reports be suppressed when running such tools.
+If the toolchain building OpenSSL does not support a global
+destructor, by default OPENSSL_cleanup will do nothing, as this is the
+safest option, allowing the operating system to then reap all library
+resources on process exit. Note, this may, on some leak detection
+tools (like valgrind) result in reports that indicate reachable memory
+remains on exit in certain configurations.  As these are not formally
+leaks, it is recommended that reachable memory reports be suppressed
+when running such tools.
+
+If OpenSSL is compiled with the compile time option of DO_NOT_SKIP_OPENSSL_CLEANUP
+OPENSSL_cleanup() will deinitialize the library immediately when called. This
+is not normally recommended unless you are certain that the global resources
+will not be used by something after the point at which OPENSSL_cleanup() is
+called.
 
 Once OPENSSL_cleanup() has been called the library cannot be reinitialised.
 Attempts to call OPENSSL_init_crypto() will fail and an ERR_R_INIT_FAIL error
