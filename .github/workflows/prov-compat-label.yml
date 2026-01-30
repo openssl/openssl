@@ -134,7 +134,7 @@ jobs:
             name: openssl-3.6,
             dir: branch-3.6,
             tgz: branch-3.6.tar.gz,
-            extra_config: "",
+            extra_config: "enable-lms",
           }, {
             name: master,
             dir: branch-master,
