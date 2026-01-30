@@ -14,6 +14,8 @@
 #include <openssl/cms.h>
 #include "cms_local.h"
 
+#include <crypto/asn1.h>
+
 /* unfortunately cannot constify BIO_new_NDEF() due to this and PKCS7_stream() */
 int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)
 {

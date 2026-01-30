@@ -17,6 +17,8 @@
 #include <openssl/pem.h>
 #include "x509_local.h"
 
+#include <crypto/asn1.h>
+
 static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
     long argl, char **ret);
 static int by_file_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argc,

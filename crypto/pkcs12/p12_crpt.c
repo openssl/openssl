@@ -14,6 +14,8 @@
 #include "crypto/evp.h"
 #include <openssl/pkcs12.h>
 
+#include <crypto/asn1.h>
+
 /* PKCS#12 PBE algorithms now in static table */
 
 void PKCS12_PBE_add(void)

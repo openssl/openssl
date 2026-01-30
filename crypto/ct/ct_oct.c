@@ -21,6 +21,8 @@
 
 #include "ct_local.h"
 
+#include <crypto/asn1.h>
+
 int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
 {
     size_t siglen;

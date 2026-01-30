@@ -15,6 +15,8 @@
 #include <openssl/dsa.h>
 #include <openssl/bn.h>
 
+#include <crypto/asn1.h>
+
 /* Print out an SPKI */
 
 int NETSCAPE_SPKI_print(BIO *out, const NETSCAPE_SPKI *spki)

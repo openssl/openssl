@@ -15,6 +15,8 @@
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
 
+#include <crypto/asn1.h>
+
 /* PKCS#12 password change routine */
 
 static int newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass);
