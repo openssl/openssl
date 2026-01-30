@@ -500,12 +500,3 @@ void OPENSSL_cleanup(void)
     ossl_cleanup_destructor();
 #endif /* defined(DO_NOT_SKIP_OPENSSL_CLEANUP) */
 }
-
-int OPENSSL_atexit(void (*handler)(void))
-{
-#if defined(__TANDEM)
-    return 0;
-#else
-    return atexit(handler) == 0;
-#endif
-}

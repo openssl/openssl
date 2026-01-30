@@ -56,6 +56,10 @@ OpenSSL 4.0
 
    *Shane Lontis*
 
+ * OPENSSL_atexit() was removed.
+
+   *Bob Beck*
+
  * Support of deprecated elliptic curves in TLS according to RFC 8422 was
    disabled at compile-time by default. To enable it, use the
    `enable-tls-deprecated-ec` compilation option.
