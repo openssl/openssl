@@ -222,6 +222,7 @@ static const struct int_data {
     { { .i = 0x5ad }, AT_INT, "%#67.x",
         "                                                              0",
         .skip_libc_ret_check = true, .exp_ret = -1 },
+#ifndef OPENSSL_NO_SLOW_TESTS
     { { .i = 0x1337 }, AT_INT, "|%2147483639.x|",
         "|                                                              ",
         .skip_libc_check = true, .exp_ret = -1 },
@@ -239,6 +240,7 @@ static const struct int_data {
     { { .i = 0x1337 }, AT_INT, "|%2147483647.x|", "|",
         .skip_libc_check = true, .exp_ret = -1 },
 #endif
+#endif /* OPENSSL_NO_SLOW_TESTS */
     { { .i = 0x1337 }, AT_INT,
         "abcdefghijklmnopqrstuvwxyz0123456789ZYXWVUTSRQPONMLKJIHGFEDCBA"
         "|%4294967295.x|",
@@ -371,6 +373,7 @@ static const struct wp_data {
     { { .i = 0 }, "|%#*.*" PRIxPTR "|", "|            |", 2, 12, 0 },
     { { .i = 1234 }, "|%*.*" PRIuPTR "|", "|      001234|", 2, 12, 6 },
 
+#ifndef OPENSSL_NO_SLOW_TESTS
     /* FreeBSD's libc bails out on the following three */
     { { .i = 1337 }, "|%*" PRIuPTR "|",
         "|                                                              ",
@@ -383,6 +386,7 @@ static const struct wp_data {
         "|                                                             0",
         2, 2147483647, 2147483586, .skip_libc_check = true, .exp_ret = -1 },
 #endif
+#endif /* OPENSSL_NO_SLOW_TESTS */
 
     /* String width/precision checks */
     { { .s = "01234" }, "%12s", "       01234" },
@@ -407,7 +411,7 @@ static const struct wp_data {
     { { .s = "0123456789" }, "|%62s|",
         "|                                                    0123456789",
         .skip_libc_ret_check = true, .exp_ret = -1 },
-
+#ifndef OPENSSL_NO_SLOW_TESTS
     { { .s = "DEF" }, "%-2147483639s",
         "DEF                                                            ",
         .skip_libc_check = true, .exp_ret = -1 },
@@ -416,6 +420,7 @@ static const struct wp_data {
     { { .s = "DEF" }, "%*s",
         "                                                               ",
         1, 2147483647, .skip_libc_check = true, .exp_ret = -1 },
+#endif /* OPENSSL_NO_SLOW_TESTS */
 };
 
 static int test_width_precision(int i)
@@ -507,6 +512,7 @@ static const struct n_data {
         .skip_libc_ret_check = true, .exp_ret = -1 },
     { "%.0s%hn0987654321", "0987654321",
         AT_SHORT, 0, AT_INT, { .s = "1234567890" } },
+#ifndef OPENSSL_NO_SLOW_TESTS
     { "%-123456s%hn0987654321",
         "1234567890                                                     ",
         AT_SHORT, -7616, AT_INT, { .s = "1234567890" },
@@ -517,7 +523,7 @@ static const struct n_data {
         AT_INT, 1234567898, AT_INT, { .i = 0xbadc0ded },
         /* MS CRT can't handle this one, snprintf() causes access violation. */
         .skip_libc_ret_check = true, .exp_ret = -1 },
-#endif
+#endif /* OPENSSL_NO_SLOW_TESTS */
     { "%s|%n",
         "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ|",
         AT_INT, 63, AT_STR, { .s = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" } },
@@ -551,6 +557,7 @@ static const struct n_data {
         AT_PTRDIFF, sizeof(ptrdiff_t) == 8 ? 3036372530LL : -1258594766LL,
         AT_STR, { .s = NULL }, AT_INT, { .i = 0xdead },
         .skip_libc_check = true, .exp_ret = -1 },
+#endif
 };
 
 static int test_n(int i)
