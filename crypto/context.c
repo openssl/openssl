@@ -406,24 +406,24 @@ static int context_deinit(OSSL_LIB_CTX *ctx)
 static OSSL_LIB_CTX default_context_int;
 
 static CRYPTO_ONCE default_context_init = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_ONCE default_context_thread_key_init = CRYPTO_ONCE_STATIC_INIT;
 static CRYPTO_THREAD_LOCAL default_context_thread_local;
 static int default_context_inited = 0;
 
-DEFINE_RUN_ONCE_STATIC(default_context_do_init)
+DEFINE_RUN_ONCE_STATIC(default_context_do_thread_key_init)
 {
     if (!CRYPTO_THREAD_init_local(&default_context_thread_local, NULL))
-        goto err;
+        return 0;
+    return 1;
+}
 
+DEFINE_RUN_ONCE_STATIC(default_context_do_init)
+{
     if (!context_init(&default_context_int))
-        goto deinit_thread;
+        return 0;
 
     default_context_inited = 1;
     return 1;
-
-deinit_thread:
-    CRYPTO_THREAD_cleanup_local(&default_context_thread_local);
-err:
-    return 0;
 }
 
 void ossl_lib_ctx_default_deinit(void)
@@ -437,7 +437,18 @@ void ossl_lib_ctx_default_deinit(void)
 
 static OSSL_LIB_CTX *get_thread_default_context(void)
 {
+    if (!RUN_ONCE(&default_context_thread_key_init, default_context_do_thread_key_init))
+        return NULL;
+
     if (!RUN_ONCE(&default_context_init, default_context_do_init))
+        return NULL;
+
+    return CRYPTO_THREAD_get_local(&default_context_thread_local);
+}
+
+static OSSL_LIB_CTX *check_thread_default_context(void)
+{
+    if (!RUN_ONCE(&default_context_thread_key_init, default_context_do_thread_key_init))
         return NULL;
 
     return CRYPTO_THREAD_get_local(&default_context_thread_local);
@@ -446,6 +457,15 @@ static OSSL_LIB_CTX *get_thread_default_context(void)
 static OSSL_LIB_CTX *get_default_context(void)
 {
     OSSL_LIB_CTX *current_defctx = get_thread_default_context();
+
+    if (current_defctx == NULL && default_context_inited)
+        current_defctx = &default_context_int;
+    return current_defctx;
+}
+
+static OSSL_LIB_CTX *check_default_context(void)
+{
+    OSSL_LIB_CTX *current_defctx = check_thread_default_context();
 
     if (current_defctx == NULL && default_context_inited)
         current_defctx = &default_context_int;
@@ -514,7 +534,7 @@ int OSSL_LIB_CTX_load_config(OSSL_LIB_CTX *ctx, const char *config_file)
 
 void OSSL_LIB_CTX_free(OSSL_LIB_CTX *ctx)
 {
-    if (ctx == NULL || ossl_lib_ctx_is_default(ctx))
+    if (ctx == NULL || ossl_lib_ctx_is_default_nocreate(ctx))
         return;
 
 #ifndef FIPS_MODULE
@@ -528,6 +548,9 @@ void OSSL_LIB_CTX_free(OSSL_LIB_CTX *ctx)
 #ifndef FIPS_MODULE
 OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void)
 {
+    if (!RUN_ONCE(&default_context_thread_key_init, default_context_do_thread_key_init))
+        return NULL;
+
     if (!RUN_ONCE(&default_context_init, default_context_do_init))
         return NULL;
 
@@ -570,6 +593,15 @@ int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx)
 {
 #ifndef FIPS_MODULE
     if (ctx == NULL || ctx == get_default_context())
+        return 1;
+#endif
+    return 0;
+}
+
+int ossl_lib_ctx_is_default_nocreate(OSSL_LIB_CTX *ctx)
+{
+#ifndef FIPS_MODULE
+    if (ctx == NULL || ctx == check_default_context())
         return 1;
 #endif
     return 0;
