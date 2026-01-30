@@ -24,7 +24,7 @@ long BIO_debug_callback_ex(BIO *bio, int cmd, const char *argp, size_t len,
     char *p;
     int left;
     size_t l = 0;
-    BIO_MMSG_CB_ARGS *args;
+    const BIO_MMSG_CB_ARGS *args;
     long ret_ = ret;
 
     if (processed != NULL)
@@ -72,12 +72,12 @@ long BIO_debug_callback_ex(BIO *bio, int cmd, const char *argp, size_t len,
             bio->method->name);
         break;
     case BIO_CB_RECVMMSG:
-        args = (BIO_MMSG_CB_ARGS *)argp;
+        args = (const BIO_MMSG_CB_ARGS *)argp;
         BIO_snprintf(p, left, "recvmmsg(%zu) - %s",
             args->num_msg, bio->method->name);
         break;
     case BIO_CB_SENDMMSG:
-        args = (BIO_MMSG_CB_ARGS *)argp;
+        args = (const BIO_MMSG_CB_ARGS *)argp;
         BIO_snprintf(p, left, "sendmmsg(%zu) - %s",
             args->num_msg, bio->method->name);
         break;
