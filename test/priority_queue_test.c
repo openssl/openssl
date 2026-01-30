@@ -35,12 +35,12 @@ static int size_t_compare(const size_t *a, const size_t *b)
 
 static int qsort_size_t_compare(const void *a, const void *b)
 {
-    return size_t_compare((size_t *)a, (size_t *)b);
+    return size_t_compare((const size_t *)a, (const size_t *)b);
 }
 
 static int qsort_size_t_compare_rev(const void *a, const void *b)
 {
-    return size_t_compare((size_t *)b, (size_t *)a);
+    return size_t_compare((const size_t *)b, (const size_t *)a);
 }
 
 static void free_checker(ossl_unused size_t *p)

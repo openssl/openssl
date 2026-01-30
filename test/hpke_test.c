@@ -411,7 +411,7 @@ static int x25519kdfsha256_hkdfsha256_aes128gcm_psk_test(void)
         first_expected_shared_secret, sizeof(first_expected_shared_secret),
         ksinfo, sizeof(ksinfo),
         NULL, 0, /* No Auth */
-        psk, sizeof(psk), (char *)pskid
+        psk, sizeof(psk), (const char *)pskid
     };
     const TEST_AEADDATA aeaddata[] = {
         { 0,
