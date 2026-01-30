@@ -496,7 +496,7 @@ Set policy variable inhibit-policy-mapping (see RFC5280).
 
 A high-level specification of the intended use of the target certificate.
 Currently predefined purposes are C<sslclient>, C<sslserver>, C<nssslserver>,
-C<smimesign>, C<smimeencrypt>, C<crlsign>, C<ocsphelper>, C<timestampsign>,
+C<smime_sign>, C<smime_encrypt>, C<crlsign>, C<ocsphelper>, C<timestampsign>,
 C<codesign> and C<any>.
 If peer certificate verification is enabled, by default the TLS implementation
 and thus the commands L<openssl-s_client(1)> and L<openssl-s_server(1)>
@@ -537,7 +537,7 @@ the subject certificate.
 
 Use a set of verification parameters, also known as verification method,
 identified by I<name>. The currently predefined methods are named C<ssl_client>,
-C<ssl_server>, C<smime_sign> with alias C<pkcs7>, C<code_sign>, and C<default>.
+C<ssl_server>, C<smime_sign> with alias C<pkcs7>, B<smime_encrypt>, C<code_sign>, and C<default>.
 These mimic the combinations of purpose and trust settings used in SSL/(D)TLS,
 CMS/PKCS7 (including S/MIME), and code signing.
 
