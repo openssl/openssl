@@ -2824,7 +2824,8 @@ static int test_EVP_SM2(void)
                 0))
             goto done;
 
-        if (!TEST_true(EVP_PKEY_CTX_get_params(cctx, gparams)))
+        if (!TEST_int_gt(EVP_PKEY_CTX_get_params(cctx, gparams), 0)
+            || !TEST_true(OSSL_PARAM_modified(gparams)))
             goto done;
 
         /*
@@ -3763,7 +3764,8 @@ static int test_EVP_PKEY_CTX_get_set_params(EVP_PKEY *pkey)
     mdname[0] = '\0';
     *param_md = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
         mdname, sizeof(mdname));
-    if (!TEST_true(EVP_PKEY_CTX_get_params(ctx, ourparams))
+    if (!TEST_int_gt(EVP_PKEY_CTX_get_params(ctx, ourparams), 0)
+        || !TEST_true(OSSL_PARAM_modified(ourparams))
         || !TEST_str_eq(mdname, "SHA512"))
         goto err;
 
@@ -3970,7 +3972,10 @@ static int test_RSA_OAEP_set_get_params(void)
             mgf1md, sizeof(mgf1md));
         params[2] = OSSL_PARAM_construct_end();
 
-        if (!TEST_true(EVP_PKEY_CTX_get_params(key_ctx, params)))
+        if (!TEST_int_gt(EVP_PKEY_CTX_get_params(key_ctx, params), 0)
+            || !TEST_true(OSSL_PARAM_modified(params))
+            || !TEST_true(OSSL_PARAM_modified(&params[1]))
+            || !TEST_true(OSSL_PARAM_modified(&params[2])))
             goto err;
 
         if (!TEST_str_eq(oaepmd, OSSL_DIGEST_NAME_SHA2_256)

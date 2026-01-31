@@ -39,3 +39,11 @@ int ossl_param_get1_octet_string(const OSSL_PARAM *params, const char *name,
  */
 int ossl_param_get1_concat_octet_string(size_t n, OSSL_PARAM *params[],
     unsigned char **out, size_t *out_len);
+
+/*
+ * A provider could set the return size to zero to signify that while they do
+ * support the parameter per se, it may not have a value in the particular
+ * context where get_params was called. This function checks this
+ * see https://github.com/openssl/openssl/pull/28685#discussion_r2385919264
+ */
+int ossl_param_has_content(const OSSL_PARAM *p);

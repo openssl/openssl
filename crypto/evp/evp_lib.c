@@ -979,9 +979,10 @@ int EVP_PKEY_CTX_get_group_name(EVP_PKEY_CTX *ctx, char *name, size_t namelen)
     if (name == NULL)
         return -1;
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
+    *p = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
         name, namelen);
-    if (!EVP_PKEY_CTX_get_params(ctx, params))
+    if ((EVP_PKEY_CTX_get_params(ctx, params) <= 0)
+        || !OSSL_PARAM_modified(params))
         return -1;
     return 1;
 }
@@ -1208,7 +1209,7 @@ int EVP_PKEY_CTX_get_algor_params(EVP_PKEY_CTX *ctx, X509_ALGOR *alg)
     params[0] = OSSL_PARAM_construct_octet_string(k, NULL, 0);
     params[1] = OSSL_PARAM_construct_end();
 
-    if (!EVP_PKEY_CTX_get_params(ctx, params))
+    if (EVP_PKEY_CTX_get_params(ctx, params) <= 0)
         goto err;
 
     /*
