@@ -108,8 +108,9 @@ BN_gcd() computes the greatest common divisor of I<a> and I<b> and
 places the result in I<r>. I<r> may be the same B<BIGNUM> as I<a> or
 I<b>.
 
-For all functions, I<ctx> is a previously allocated B<BN_CTX> used for
-temporary variables; see L<BN_CTX_new(3)>.
+For all functions that take a I<ctx> parameter, it must be a previously
+allocated B<BN_CTX> used for temporary variables; see L<BN_CTX_new(3)>.
+The I<ctx> parameter must not be NULL.
 
 Unless noted otherwise, the result B<BIGNUM> must be different from
 the arguments.
