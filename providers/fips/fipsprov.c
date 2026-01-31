@@ -36,6 +36,7 @@
 #include "internal/threads_common.h"
 
 static const char FIPS_DEFAULT_PROPERTIES[] = "provider=fips,fips=yes";
+static const char CNSA_GENERAL_PROPERTIES[] = "provider=fips,fips=yes,fips.cnsa=yes";
 static const char FIPS_UNAPPROVED_PROPERTIES[] = "provider=fips,fips=no";
 
 /*
@@ -54,6 +55,12 @@ static OSSL_FUNC_provider_random_bytes_fn fips_random_bytes;
         { NAMES, FIPS_DEFAULT_PROPERTIES, FUNC }, CHECK \
     }
 #define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
+
+#define CALGC(NAMES, FUNC, CHECK)                        \
+    {                                                   \
+        { NAMES, CNSA_GENERAL_PROPERTIES, FUNC }, CHECK \
+    }
+#define CALG(NAMES, FUNC) CALGC(NAMES, FUNC, NULL)
 
 extern OSSL_FUNC_core_thread_start_fn *c_thread_start;
 
@@ -285,8 +292,8 @@ static int fips_self_test(void *provctx)
     { PROV_NAMES_SHA1, FIPS_DEFAULT_PROPERTIES, ossl_sha1_functions },                 \
         { PROV_NAMES_SHA2_224, FIPS_DEFAULT_PROPERTIES, ossl_sha224_functions },       \
         { PROV_NAMES_SHA2_256, FIPS_DEFAULT_PROPERTIES, ossl_sha256_functions },       \
-        { PROV_NAMES_SHA2_384, FIPS_DEFAULT_PROPERTIES, ossl_sha384_functions },       \
-        { PROV_NAMES_SHA2_512, FIPS_DEFAULT_PROPERTIES, ossl_sha512_functions },       \
+        { PROV_NAMES_SHA2_384, CNSA_GENERAL_PROPERTIES, ossl_sha384_functions },       \
+        { PROV_NAMES_SHA2_512, CNSA_GENERAL_PROPERTIES, ossl_sha512_functions },       \
         { PROV_NAMES_SHA2_512_224, FIPS_DEFAULT_PROPERTIES,                            \
             ossl_sha512_224_functions },                                               \
         { PROV_NAMES_SHA2_512_256, FIPS_DEFAULT_PROPERTIES,                            \
@@ -323,48 +330,48 @@ static const OSSL_ALGORITHM fips_digests_internal[] = {
 
 static const OSSL_ALGORITHM_CAPABLE fips_ciphers[] = {
     /* Our primary name[:ASN.1 OID name][:our older names] */
-    ALG(PROV_NAMES_AES_256_ECB, ossl_aes256ecb_functions),
+    CALG(PROV_NAMES_AES_256_ECB, ossl_aes256ecb_functions),
     ALG(PROV_NAMES_AES_192_ECB, ossl_aes192ecb_functions),
     ALG(PROV_NAMES_AES_128_ECB, ossl_aes128ecb_functions),
-    ALG(PROV_NAMES_AES_256_CBC, ossl_aes256cbc_functions),
+    CALG(PROV_NAMES_AES_256_CBC, ossl_aes256cbc_functions),
     ALG(PROV_NAMES_AES_192_CBC, ossl_aes192cbc_functions),
     ALG(PROV_NAMES_AES_128_CBC, ossl_aes128cbc_functions),
-    ALG(PROV_NAMES_AES_256_CBC_CTS, ossl_aes256cbc_cts_functions),
+    CALG(PROV_NAMES_AES_256_CBC_CTS, ossl_aes256cbc_cts_functions),
     ALG(PROV_NAMES_AES_192_CBC_CTS, ossl_aes192cbc_cts_functions),
     ALG(PROV_NAMES_AES_128_CBC_CTS, ossl_aes128cbc_cts_functions),
-    ALG(PROV_NAMES_AES_256_OFB, ossl_aes256ofb_functions),
+    CALG(PROV_NAMES_AES_256_OFB, ossl_aes256ofb_functions),
     ALG(PROV_NAMES_AES_192_OFB, ossl_aes192ofb_functions),
     ALG(PROV_NAMES_AES_128_OFB, ossl_aes128ofb_functions),
-    ALG(PROV_NAMES_AES_256_CFB, ossl_aes256cfb_functions),
+    CALG(PROV_NAMES_AES_256_CFB, ossl_aes256cfb_functions),
     ALG(PROV_NAMES_AES_192_CFB, ossl_aes192cfb_functions),
     ALG(PROV_NAMES_AES_128_CFB, ossl_aes128cfb_functions),
-    ALG(PROV_NAMES_AES_256_CFB1, ossl_aes256cfb1_functions),
+    CALG(PROV_NAMES_AES_256_CFB1, ossl_aes256cfb1_functions),
     ALG(PROV_NAMES_AES_192_CFB1, ossl_aes192cfb1_functions),
     ALG(PROV_NAMES_AES_128_CFB1, ossl_aes128cfb1_functions),
-    ALG(PROV_NAMES_AES_256_CFB8, ossl_aes256cfb8_functions),
+    CALG(PROV_NAMES_AES_256_CFB8, ossl_aes256cfb8_functions),
     ALG(PROV_NAMES_AES_192_CFB8, ossl_aes192cfb8_functions),
     ALG(PROV_NAMES_AES_128_CFB8, ossl_aes128cfb8_functions),
-    ALG(PROV_NAMES_AES_256_CTR, ossl_aes256ctr_functions),
+    CALG(PROV_NAMES_AES_256_CTR, ossl_aes256ctr_functions),
     ALG(PROV_NAMES_AES_192_CTR, ossl_aes192ctr_functions),
     ALG(PROV_NAMES_AES_128_CTR, ossl_aes128ctr_functions),
-    ALG(PROV_NAMES_AES_256_XTS, ossl_aes256xts_functions),
+    CALG(PROV_NAMES_AES_256_XTS, ossl_aes256xts_functions),
     ALG(PROV_NAMES_AES_128_XTS, ossl_aes128xts_functions),
-    ALG(PROV_NAMES_AES_256_GCM, ossl_aes256gcm_functions),
+    CALG(PROV_NAMES_AES_256_GCM, ossl_aes256gcm_functions),
     ALG(PROV_NAMES_AES_192_GCM, ossl_aes192gcm_functions),
     ALG(PROV_NAMES_AES_128_GCM, ossl_aes128gcm_functions),
-    ALG(PROV_NAMES_AES_256_CCM, ossl_aes256ccm_functions),
+    CALG(PROV_NAMES_AES_256_CCM, ossl_aes256ccm_functions),
     ALG(PROV_NAMES_AES_192_CCM, ossl_aes192ccm_functions),
     ALG(PROV_NAMES_AES_128_CCM, ossl_aes128ccm_functions),
-    ALG(PROV_NAMES_AES_256_WRAP, ossl_aes256wrap_functions),
+    CALG(PROV_NAMES_AES_256_WRAP, ossl_aes256wrap_functions),
     ALG(PROV_NAMES_AES_192_WRAP, ossl_aes192wrap_functions),
     ALG(PROV_NAMES_AES_128_WRAP, ossl_aes128wrap_functions),
-    ALG(PROV_NAMES_AES_256_WRAP_PAD, ossl_aes256wrappad_functions),
+    CALG(PROV_NAMES_AES_256_WRAP_PAD, ossl_aes256wrappad_functions),
     ALG(PROV_NAMES_AES_192_WRAP_PAD, ossl_aes192wrappad_functions),
     ALG(PROV_NAMES_AES_128_WRAP_PAD, ossl_aes128wrappad_functions),
-    ALG(PROV_NAMES_AES_256_WRAP_INV, ossl_aes256wrapinv_functions),
+    CALG(PROV_NAMES_AES_256_WRAP_INV, ossl_aes256wrapinv_functions),
     ALG(PROV_NAMES_AES_192_WRAP_INV, ossl_aes192wrapinv_functions),
     ALG(PROV_NAMES_AES_128_WRAP_INV, ossl_aes128wrapinv_functions),
-    ALG(PROV_NAMES_AES_256_WRAP_PAD_INV, ossl_aes256wrappadinv_functions),
+    CALG(PROV_NAMES_AES_256_WRAP_PAD_INV, ossl_aes256wrappadinv_functions),
     ALG(PROV_NAMES_AES_192_WRAP_PAD_INV, ossl_aes192wrappadinv_functions),
     ALG(PROV_NAMES_AES_128_WRAP_PAD_INV, ossl_aes128wrappadinv_functions),
     ALGC(PROV_NAMES_AES_128_CBC_HMAC_SHA1, ossl_aes128cbc_hmac_sha1_functions,
@@ -373,7 +380,7 @@ static const OSSL_ALGORITHM_CAPABLE fips_ciphers[] = {
         ossl_cipher_capable_aes_cbc_hmac_sha1),
     ALGC(PROV_NAMES_AES_128_CBC_HMAC_SHA256, ossl_aes128cbc_hmac_sha256_functions,
         ossl_cipher_capable_aes_cbc_hmac_sha256),
-    ALGC(PROV_NAMES_AES_256_CBC_HMAC_SHA256, ossl_aes256cbc_hmac_sha256_functions,
+    CALGC(PROV_NAMES_AES_256_CBC_HMAC_SHA256, ossl_aes256cbc_hmac_sha256_functions,
         ossl_cipher_capable_aes_cbc_hmac_sha256),
     ALGC(PROV_NAMES_AES_128_CBC_HMAC_SHA1_ETM, ossl_aes128cbc_hmac_sha1_etm_functions,
         ossl_cipher_capable_aes_cbc_hmac_sha1_etm),
@@ -385,13 +392,13 @@ static const OSSL_ALGORITHM_CAPABLE fips_ciphers[] = {
         ossl_cipher_capable_aes_cbc_hmac_sha256_etm),
     ALGC(PROV_NAMES_AES_192_CBC_HMAC_SHA256_ETM, ossl_aes192cbc_hmac_sha256_etm_functions,
         ossl_cipher_capable_aes_cbc_hmac_sha256_etm),
-    ALGC(PROV_NAMES_AES_256_CBC_HMAC_SHA256_ETM, ossl_aes256cbc_hmac_sha256_etm_functions,
+    CALGC(PROV_NAMES_AES_256_CBC_HMAC_SHA256_ETM, ossl_aes256cbc_hmac_sha256_etm_functions,
         ossl_cipher_capable_aes_cbc_hmac_sha256_etm),
     ALGC(PROV_NAMES_AES_128_CBC_HMAC_SHA512_ETM, ossl_aes128cbc_hmac_sha512_etm_functions,
         ossl_cipher_capable_aes_cbc_hmac_sha512_etm),
     ALGC(PROV_NAMES_AES_192_CBC_HMAC_SHA512_ETM, ossl_aes192cbc_hmac_sha512_etm_functions,
         ossl_cipher_capable_aes_cbc_hmac_sha512_etm),
-    ALGC(PROV_NAMES_AES_256_CBC_HMAC_SHA512_ETM, ossl_aes256cbc_hmac_sha512_etm_functions,
+    CALGC(PROV_NAMES_AES_256_CBC_HMAC_SHA512_ETM, ossl_aes256cbc_hmac_sha512_etm_functions,
         ossl_cipher_capable_aes_cbc_hmac_sha512_etm),
 #ifndef OPENSSL_NO_DES
     ALG(PROV_NAMES_DES_EDE3_ECB, ossl_tdes_ede3_ecb_functions),
@@ -406,7 +413,7 @@ static const OSSL_ALGORITHM fips_macs[] = {
     { PROV_NAMES_CMAC, FIPS_DEFAULT_PROPERTIES, ossl_cmac_functions },
 #endif
     { PROV_NAMES_GMAC, FIPS_DEFAULT_PROPERTIES, ossl_gmac_functions },
-    { PROV_NAMES_HMAC, FIPS_DEFAULT_PROPERTIES, ossl_hmac_functions },
+    { PROV_NAMES_HMAC, CNSA_GENERAL_PROPERTIES, ossl_hmac_functions },
     { PROV_NAMES_KMAC_128, FIPS_DEFAULT_PROPERTIES, ossl_kmac128_functions },
     { PROV_NAMES_KMAC_256, FIPS_DEFAULT_PROPERTIES, ossl_kmac256_functions },
     { NULL, NULL, NULL }
@@ -416,7 +423,7 @@ static const OSSL_ALGORITHM fips_macs_internal[] = {
 #ifndef OPENSSL_NO_CMAC
     { PROV_NAMES_CMAC, FIPS_DEFAULT_PROPERTIES, ossl_cmac_functions },
 #endif
-    { PROV_NAMES_HMAC, FIPS_DEFAULT_PROPERTIES, ossl_hmac_internal_functions },
+    { PROV_NAMES_HMAC, CNSA_GENERAL_PROPERTIES, ossl_hmac_internal_functions },
     { PROV_NAMES_KMAC_128, FIPS_DEFAULT_PROPERTIES, ossl_kmac128_internal_functions },
     { PROV_NAMES_KMAC_256, FIPS_DEFAULT_PROPERTIES, ossl_kmac256_internal_functions },
     { NULL, NULL, NULL }
@@ -426,9 +433,9 @@ static const OSSL_ALGORITHM fips_macs_internal[] = {
 #define FIPS_KDFS_COMMON()                                                               \
     { PROV_NAMES_HKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_functions },               \
     { PROV_NAMES_HKDF_SHA256, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_sha256_functions }, \
-    { PROV_NAMES_HKDF_SHA384, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_sha384_functions }, \
-    { PROV_NAMES_HKDF_SHA512, FIPS_DEFAULT_PROPERTIES, ossl_kdf_hkdf_sha512_functions }, \
-    { PROV_NAMES_TLS1_3_KDF, FIPS_DEFAULT_PROPERTIES,  ossl_kdf_tls1_3_kdf_functions },  \
+    { PROV_NAMES_HKDF_SHA384, CNSA_GENERAL_PROPERTIES, ossl_kdf_hkdf_sha384_functions }, \
+    { PROV_NAMES_HKDF_SHA512, CNSA_GENERAL_PROPERTIES, ossl_kdf_hkdf_sha512_functions }, \
+    { PROV_NAMES_TLS1_3_KDF, CNSA_GENERAL_PROPERTIES,  ossl_kdf_tls1_3_kdf_functions },  \
     { PROV_NAMES_PBKDF2, FIPS_DEFAULT_PROPERTIES, ossl_kdf_pbkdf2_functions },           \
     { PROV_NAMES_TLS1_PRF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_tls1_prf_functions }
 /* clang-format on */
@@ -499,10 +506,10 @@ static const OSSL_ALGORITHM fips_kdfs_internal[] = {
 static const OSSL_ALGORITHM fips_rands[] = {
     { PROV_NAMES_CRNG_TEST, FIPS_UNAPPROVED_PROPERTIES, ossl_crng_test_functions },
     { PROV_NAMES_CTR_DRBG, FIPS_DEFAULT_PROPERTIES, ossl_drbg_ctr_functions },
-    { PROV_NAMES_HASH_DRBG, FIPS_DEFAULT_PROPERTIES, ossl_drbg_hash_functions },
-    { PROV_NAMES_HMAC_DRBG, FIPS_DEFAULT_PROPERTIES, ossl_drbg_ossl_hmac_functions },
+    { PROV_NAMES_HASH_DRBG, CNSA_GENERAL_PROPERTIES, ossl_drbg_hash_functions },
+    { PROV_NAMES_HMAC_DRBG, CNSA_GENERAL_PROPERTIES, ossl_drbg_ossl_hmac_functions },
 #ifndef OPENSSL_NO_FIPS_JITTER
-    { PROV_NAMES_JITTER, FIPS_DEFAULT_PROPERTIES, ossl_jitter_functions },
+    { PROV_NAMES_JITTER, CNSA_GENERAL_PROPERTIES, ossl_jitter_functions },
 #endif
     { PROV_NAMES_TEST_RAND, FIPS_UNAPPROVED_PROPERTIES, ossl_test_rng_functions },
     { NULL, NULL, NULL }
@@ -586,7 +593,7 @@ static const OSSL_ALGORITHM fips_signature[] = {
 #ifndef OPENSSL_NO_ML_DSA
     { PROV_NAMES_ML_DSA_44, FIPS_DEFAULT_PROPERTIES, ossl_ml_dsa_44_signature_functions },
     { PROV_NAMES_ML_DSA_65, FIPS_DEFAULT_PROPERTIES, ossl_ml_dsa_65_signature_functions },
-    { PROV_NAMES_ML_DSA_87, FIPS_DEFAULT_PROPERTIES, ossl_ml_dsa_87_signature_functions },
+    { PROV_NAMES_ML_DSA_87, CNSA_GENERAL_PROPERTIES, ossl_ml_dsa_87_signature_functions },
 #endif
     { PROV_NAMES_HMAC, FIPS_DEFAULT_PROPERTIES,
         ossl_mac_legacy_hmac_signature_functions },
@@ -636,7 +643,7 @@ static const OSSL_ALGORITHM fips_asym_kem[] = {
 #ifndef OPENSSL_NO_ML_KEM
     { PROV_NAMES_ML_KEM_512, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_asym_kem_functions },
     { PROV_NAMES_ML_KEM_768, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_asym_kem_functions },
-    { PROV_NAMES_ML_KEM_1024, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_asym_kem_functions },
+    { PROV_NAMES_ML_KEM_1024, CNSA_GENERAL_PROPERTIES, ossl_ml_kem_asym_kem_functions },
 #if !defined(OPENSSL_NO_ECX)
     { "X25519MLKEM768", FIPS_DEFAULT_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
     { "X448MLKEM1024", FIPS_DEFAULT_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
@@ -705,7 +712,7 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
         PROV_DESCS_ML_KEM_512 },
     { PROV_NAMES_ML_KEM_768, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_768_keymgmt_functions,
         PROV_DESCS_ML_KEM_768 },
-    { PROV_NAMES_ML_KEM_1024, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_1024_keymgmt_functions,
+    { PROV_NAMES_ML_KEM_1024, CNSA_GENERAL_PROPERTIES, ossl_ml_kem_1024_keymgmt_functions,
         PROV_DESCS_ML_KEM_1024 },
 #if !defined(OPENSSL_NO_ECX)
     { PROV_NAMES_X25519MLKEM768, FIPS_DEFAULT_PROPERTIES, ossl_mlx_x25519_kem_kmgmt_functions,
