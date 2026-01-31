@@ -542,6 +542,7 @@ my %params = (
 
 # Passphrase callback parameters
     'OSSL_PASSPHRASE_PARAM_INFO' =>          "info",
+    'OSSL_PASSPHRASE_PARAM_MIN_LENGTH' =>    "min-length",
 
 # Keygen callback parameters, from provider to libcrypto
     'OSSL_GEN_PARAM_POTENTIAL' =>            "potential",# integer
