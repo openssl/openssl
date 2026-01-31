@@ -45,7 +45,7 @@ long bio_dump_callback(BIO *bio, int cmd, const char *argp, size_t len,
     int argi, long argl, int ret, size_t *processed);
 
 void apps_ssl_info_callback(const SSL *s, int where, int ret);
-void msg_cb(int write_p, int version, int content_type, const void *buf,
+void msg_hex_cb(int write_p, int version, int content_type, const void *buf,
     size_t len, SSL *ssl, void *arg);
 void tlsext_cb(SSL *s, int client_server, int type, const unsigned char *data,
     int len, void *arg);

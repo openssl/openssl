@@ -517,9 +517,9 @@ typedef enum OPTION_choice {
     OPT_STATUS_OCSP_CHECK_LEAF,
     OPT_STATUS_OCSP_CHECK_ALL,
 #endif
-    OPT_MSG,
-    OPT_MSGFILE,
-    OPT_TRACE,
+    OPT_TRACE_HEX,
+    OPT_TRACE_TEXT,
+    OPT_TRACE_FILE,
     OPT_SECURITY_DEBUG,
     OPT_SECURITY_DEBUG_VERBOSE,
     OPT_SHOWCERTS,
@@ -726,9 +726,12 @@ const OPTIONS s_client_options[] = {
     { "showcerts", OPT_SHOWCERTS, '-',
         "Show all certificates sent by the server" },
     { "debug", OPT_DEBUG, '-', "Extra output" },
-    { "msg", OPT_MSG, '-', "Show protocol messages" },
-    { "msgfile", OPT_MSGFILE, '>',
-        "File to send output of -msg or -trace, instead of stdout" },
+    { "trace_hex", OPT_TRACE_HEX, '-', "Show protocol messages with hex-dump" },
+#ifndef OPENSSL_NO_SSL_TRACE
+    { "trace_text", OPT_TRACE_TEXT, '-', "Show protocol messages in human-readable format" },
+#endif
+     { "trace_file", OPT_TRACE_FILE, '>',
+        "File to send output of -trace_hex or -trace_text, instead of stdout" },
     { "nbio_test", OPT_NBIO_TEST, '-', "More ssl protocol testing" },
     { "state", OPT_STATE, '-', "Print the ssl states" },
     { "keymatexport", OPT_KEYMATEXPORT, 's',
@@ -739,9 +742,6 @@ const OPTIONS s_client_options[] = {
         "Enable security debug messages" },
     { "security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-',
         "Output more security debug output" },
-#ifndef OPENSSL_NO_SSL_TRACE
-    { "trace", OPT_TRACE, '-', "Show trace output of protocol messages" },
-#endif
 #ifdef WATT32
     { "wdebug", OPT_WDEBUG, '-', "WATT-32 tcp debugging" },
 #endif
@@ -1029,12 +1029,12 @@ int s_client_main(int argc, char **argv)
         = use_unknown;
     int count4or6 = 0;
     uint8_t maxfraglen = 0;
-    int c_nbio = 0, c_msg = 0, c_ign_eof = 0, c_brief = 0;
+    int c_nbio = 0, c_trace = 0, c_ign_eof = 0, c_brief = 0;
     int c_tlsextdebug = 0;
 #ifndef OPENSSL_NO_OCSP
     int c_status_req = 0;
 #endif
-    BIO *bio_c_msg = NULL;
+    BIO *bio_c_trace = NULL;
     const char *keylog_file = NULL, *early_data_file = NULL;
     int isdtls = 0, isquic = 0;
     char *psksessf = NULL;
@@ -1294,19 +1294,19 @@ int s_client_main(int argc, char **argv)
             dbug_init();
 #endif
             break;
-        case OPT_MSG:
-            c_msg = 1;
+        case OPT_TRACE_HEX:
+            c_trace = 1;
             break;
-        case OPT_MSGFILE:
-            bio_c_msg = BIO_new_file(opt_arg(), "w");
-            if (bio_c_msg == NULL) {
+        case OPT_TRACE_FILE:
+            bio_c_trace = BIO_new_file(opt_arg(), "w");
+            if (bio_c_trace == NULL) {
                 BIO_printf(bio_err, "Error writing file %s\n", opt_arg());
                 goto end;
             }
             break;
-        case OPT_TRACE:
+        case OPT_TRACE_TEXT:
 #ifndef OPENSSL_NO_SSL_TRACE
-            c_msg = 2;
+            c_trace = 2;
 #endif
             break;
         case OPT_SECURITY_DEBUG:
@@ -1861,9 +1861,9 @@ int s_client_main(int argc, char **argv)
     if (bio_c_out == NULL) {
         if (c_quiet && !c_debug) {
             bio_c_out = BIO_new(BIO_s_null());
-            if (c_msg && bio_c_msg == NULL) {
-                bio_c_msg = dup_bio_out(FORMAT_TEXT);
-                if (bio_c_msg == NULL) {
+            if (c_trace && bio_c_trace == NULL) {
+                bio_c_trace = dup_bio_out(FORMAT_TEXT);
+                if (bio_c_trace == NULL) {
                     BIO_printf(bio_err, "Out of memory\n");
                     goto end;
                 }
@@ -2093,7 +2093,7 @@ int s_client_main(int argc, char **argv)
     }
 #ifndef OPENSSL_NO_SRP
     if (srp_arg.srplogin != NULL
-        && !set_up_srp_arg(ctx, &srp_arg, srp_lateuser, c_msg, c_debug))
+        && !set_up_srp_arg(ctx, &srp_arg, srp_lateuser, c_trace, c_debug))
         goto end;
 #endif
 
@@ -2341,14 +2341,14 @@ re_start:
         BIO_set_callback_ex(sbio, bio_dump_callback);
         BIO_set_callback_arg(sbio, (char *)bio_c_out);
     }
-    if (c_msg) {
+    if (c_trace) {
 #ifndef OPENSSL_NO_SSL_TRACE
-        if (c_msg == 2)
+        if (c_trace == 2)
             SSL_set_msg_callback(con, SSL_trace);
         else
 #endif
-            SSL_set_msg_callback(con, msg_cb);
-        SSL_set_msg_callback_arg(con, bio_c_msg ? bio_c_msg : bio_c_out);
+            SSL_set_msg_callback(con, msg_hex_cb);
+        SSL_set_msg_callback_arg(con, bio_c_trace ? bio_c_trace : bio_c_out);
     }
 
     if (c_tlsextdebug) {
@@ -3365,8 +3365,8 @@ end:
     clear_free(proxypass);
     BIO_free(bio_c_out);
     bio_c_out = NULL;
-    BIO_free(bio_c_msg);
-    bio_c_msg = NULL;
+    BIO_free(bio_c_trace);
+    bio_c_trace = NULL;
     return ret;
 }
 
