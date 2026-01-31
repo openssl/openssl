@@ -909,6 +909,9 @@ DEFINE_set1_ASN1_OCTET_STRING(OSSL_CMP_CTX, transactionID)
     case OSSL_CMP_OPT_UNPROTECTED_ERRORS:
         ctx->unprotectedErrors = val;
         break;
+    case OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES:
+        ctx->nonmatchedErrorNonces = val;
+        break;
     case OSSL_CMP_OPT_NO_CACHE_EXTRACERTS:
         ctx->noCacheExtraCerts = val;
         break;
@@ -997,6 +1000,8 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
         return ctx->unprotectedSend;
     case OSSL_CMP_OPT_UNPROTECTED_ERRORS:
         return ctx->unprotectedErrors;
+    case OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES:
+        return ctx->nonmatchedErrorNonces;
     case OSSL_CMP_OPT_NO_CACHE_EXTRACERTS:
         return ctx->noCacheExtraCerts;
     case OSSL_CMP_OPT_VALIDITY_DAYS:
