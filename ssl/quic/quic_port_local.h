@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -90,6 +90,20 @@ struct quic_port_st {
     unsigned char rx_short_dcid_len;
     /* For clients, CID length used for outgoing Initial packets. */
     unsigned char tx_init_dcid_len;
+
+    /* Transport parameter values for the port. */
+    uint64_t max_idle_timeout;
+    uint64_t max_udp_payload_size;
+    uint64_t init_max_data;
+    uint64_t init_max_stream_data_bidi_local;
+    uint64_t init_max_stream_data_bidi_remote;
+    uint64_t init_max_stream_data_uni;
+    uint64_t init_max_streams_bidi;
+    uint64_t init_max_streams_uni;
+    unsigned char ack_delay_exponent;
+    uint64_t max_ack_delay;
+    unsigned char disable_active_migration;
+    uint64_t active_conn_id_limit;
 
     /* Port state (QUIC_PORT_STATE_*). */
     unsigned int state : 1;

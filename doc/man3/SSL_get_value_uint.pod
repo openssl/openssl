@@ -176,7 +176,7 @@ documentation for a specific value specifies otherwise.
 
 =over 4
 
-=item B<SSL_VALUE_QUIC_IDLE_TIMEOUT> (connection object)
+=item B<SSL_VALUE_QUIC_IDLE_TIMEOUT> (connection/listener object)
 
 Negotiated feature value. This configures the desired QUIC idle timeout in
 milliseconds, where 0 represents a lack of an idle timeout. This feature can
@@ -186,7 +186,7 @@ changed.
 This release of OpenSSL uses a default value of 30 seconds. This default value
 may change between releases of OpenSSL.
 
-=item B<SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX> (connection object)
+=item B<SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX> (connection/listener object)
 
 Feature (peer) request value. This configures the maximum UDP payload size in
 bytes. This feature can only be configured prior to connection establishment and
@@ -196,7 +196,7 @@ transport parameters.
 This release of OpenSSL uses a default value of 1200 bytes. This default value
 may change between releases of OpenSSL.
 
-=item B<SSL_VALUE_QUIC_DATA_MAX> (connection object)
+=item B<SSL_VALUE_QUIC_DATA_MAX> (connection/listener object)
 
 Feature (peer) request value. This configures the initial maximum amount of data
 in bytes that can be sent on the connection. This feature can only be configured
@@ -206,7 +206,7 @@ will be sent to the peer in the transport parameters.
 This release of OpenSSL uses a default value of 768 * 1024 bytes. This default
 value may change between releases of OpenSSL.
 
-=item B<SSL_VALUE_QUIC_STREAM_DATA_BIDI_LOCAL_MAX> (connection object)
+=item B<SSL_VALUE_QUIC_STREAM_DATA_BIDI_LOCAL_MAX> (connection/listener object)
 
 Feature (peer) request value. This configures the initial maximum amount of data
 in bytes that can be received in terms of QUIC stream flow control on a
@@ -217,19 +217,19 @@ This value will be sent to the peer in the transport parameters.
 This release of OpenSSL uses a default value of 512 * 1024 bytes. This default
 value may change between releases of OpenSSL.
 
-=item B<SSL_VALUE_QUIC_STREAM_DATA_BIDI_REMOTE_MAX> (connection object)
+=item B<SSL_VALUE_QUIC_STREAM_DATA_BIDI_REMOTE_MAX> (connection/listener object)
 
 As above, but provides the initial maximum amount of data in bytes that can be
 received in terms of QUIC stream flow control on a bidirectional stream created
 by the remote endpoint.
 
-=item B<SSL_VALUE_QUIC_STREAM_DATA_UNI_REMOTE_MAX> (connection object)
+=item B<SSL_VALUE_QUIC_STREAM_DATA_UNI_REMOTE_MAX> (connection/listener object)
 
 As above, but provides the initial maximum amount of data in bytes that can be
 received in terms of QUIC stream flow control on a unidirectional stream created
 by the remote endpoint.
 
-=item B<SSL_VALUE_QUIC_STREAM_BIDI_REMOTE_MAX> (connection object)
+=item B<SSL_VALUE_QUIC_STREAM_BIDI_REMOTE_MAX> (connection/listener object)
 
 Feature (peer) request value. This configures the initial maximum number of
 bidirectional streams the peer is permitted to initiate. This feature can only
@@ -239,12 +239,12 @@ changed. This value will be sent to the peer in the transport parameters.
 This release of OpenSSL uses a default value of 100 streams. This default
 value may change between releases of OpenSSL.
 
-=item B<SSL_VALUE_QUIC_STREAM_UNI_REMOTE_MAX> (connection object)
+=item B<SSL_VALUE_QUIC_STREAM_UNI_REMOTE_MAX> (connection/listener object)
 
 As above, but provides the initial maximum number of unidirectional streams the
 peer is permitted to initiate.
 
-=item B<SSL_VALUE_QUIC_ACK_DELAY_EXPONENT> (connection object)
+=item B<SSL_VALUE_QUIC_ACK_DELAY_EXPONENT> (connection/listener object)
 
 Feature (peer) request value. This configures the ACK delay exponent. This
 feature can only be configured prior to connection establishment and cannot be
@@ -254,7 +254,7 @@ parameters.
 This release of OpenSSL uses a default value of 3. This default value may change
 between releases of OpenSSL.
 
-=item B<SSL_VALUE_QUIC_ACK_DELAY_MAX> (connection object)
+=item B<SSL_VALUE_QUIC_ACK_DELAY_MAX> (connection/listener object)
 
 Feature (peer) request value. This configures the maximum ACK delay in
 milliseconds. This feature can only be configured prior to connection
@@ -264,7 +264,7 @@ peer in the transport parameters.
 This release of OpenSSL uses a default value of 25 milliseconds. This default
 value may change between releases of OpenSSL.
 
-=item B<SSL_VALUE_QUIC_DISABLE_ACTIVE_MIGRATION> (connection object)
+=item B<SSL_VALUE_QUIC_DISABLE_ACTIVE_MIGRATION> (connection/listener object)
 
 Feature (peer) request value. This configures whether to signal to the peer that
 we do not support active migration. This feature can only be configured prior to
@@ -274,7 +274,7 @@ sent to the peer in the transport parameters.
 This release of OpenSSL uses a default value of 1 (i.e., active migration is
 disabled). This default value may change between releases of OpenSSL.
 
-=item B<SSL_VALUE_QUIC_ACTIVE_CONN_ID_LIMIT> (connection object)
+=item B<SSL_VALUE_QUIC_ACTIVE_CONN_ID_LIMIT> (connection/listener object)
 
 Feature (peer) request value. This configures the maximum number of active
 connection IDs that can be used by the peer on the connection. This feature can
