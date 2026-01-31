@@ -165,7 +165,7 @@ int X509V3_extensions_print(BIO *bp, const char *title,
         j = X509_EXTENSION_get_critical(ex);
         if (BIO_printf(bp, ": %s\n", j ? "critical" : "") <= 0)
             return 0;
-        if (!X509V3_EXT_print(bp, ex, flag, indent + 4)) {
+        if (X509V3_EXT_print(bp, ex, flag, indent + 4) <= 0) {
             BIO_printf(bp, "%*s", indent + 4, "");
             ASN1_STRING_print(bp, X509_EXTENSION_get_data(ex));
         }
