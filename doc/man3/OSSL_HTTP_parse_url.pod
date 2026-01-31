@@ -58,15 +58,19 @@ The port component is optional and defaults to C<0>.
 If given, it must be in decimal form.  If the I<pport_num> argument is not NULL
 the integer value of the port number is assigned to I<*pport_num> on success.
 The path component is also optional and defaults to C</>.
+
 Each non-NULL result pointer argument I<pscheme>, I<puser>, I<phost>, I<pport>,
 I<ppath>, I<pquery>, and I<pfrag>, is assigned the respective url component.
+On success, these are string pointers in case the respective element is present;
+an empty string (with only the terminating NUL char)
+is provided for absent scheme, userinfo, and port;
+NULL is provided for absent query and fragment components.
 Any IPv6 address in I<*phost> is enclosed in C<[> and C<]>.
-On success, they are guaranteed to contain non-NULL string pointers, else NULL.
-It is the responsibility of the caller to free them using L<OPENSSL_free(3)>.
-If I<pquery> is NULL, any given query component is handled as part of the path.
 A string returned via I<*ppath> is guaranteed to begin with a C</> character.
-For absent scheme, userinfo, port, query, and fragment components
-an empty string is provided.
+If I<pquery> is NULL, any given query component is handled as part of the path.
+On success is the responsibility of the caller
+to free the obtained string pointers using L<OPENSSL_free(3)>,
+while on failure, all of them are guaranteed to be to NULL.
 
 OSSL_HTTP_parse_url() is a special form of OSSL_parse_url()
 where the scheme, if given, must be C<http> or C<https>.
