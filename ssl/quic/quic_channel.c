@@ -35,25 +35,6 @@
  */
 #define MAX_NAT_INTERVAL (ossl_ms2time(25000))
 
-/* Arbitrary choice of default idle timeout (not an RFC value). */
-#define DEFAULT_IDLE_TIMEOUT 30000
-
-#define DEFAULT_MAX_UDP_PAYLOAD_SIZE QUIC_MIN_INITIAL_DGRAM_LEN
-
-#define DEFAULT_ACK_DELAY_EXP QUIC_DEFAULT_ACK_DELAY_EXP
-
-/*
- * Our maximum ACK delay on the TX side. This is up to us to choose. Note that
- * this could differ from QUIC_DEFAULT_MAX_DELAY in future as that is a protocol
- * value which determines the value of the maximum ACK delay if the
- * max_ack_delay transport parameter is not set.
- */
-#define DEFAULT_MAX_ACK_DELAY QUIC_DEFAULT_MAX_ACK_DELAY
-
-#define DEFAULT_DISABLE_ACTIVE_MIGRATION 1
-
-#define DEFAULT_ACTIVE_CONN_ID_LIMIT QUIC_MIN_ACTIVE_CONN_ID_LIMIT
-
 DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
 
 static void ch_save_err_state(QUIC_CHANNEL *ch);
@@ -157,13 +138,9 @@ static QLOG *ch_get_qlog_cb(void *arg)
  * QUIC Channel Initialization and Teardown
  * ========================================
  */
-#define DEFAULT_INIT_CONN_RXFC_WND (768 * 1024)
 #define DEFAULT_CONN_RXFC_MAX_WND_MUL 20
 
-#define DEFAULT_INIT_STREAM_RXFC_WND (512 * 1024)
 #define DEFAULT_STREAM_RXFC_MAX_WND_MUL 12
-
-#define DEFAULT_INIT_CONN_MAX_STREAMS 100
 
 static int ch_init(QUIC_CHANNEL *ch)
 {
@@ -194,13 +171,6 @@ static int ch_init(QUIC_CHANNEL *ch)
     qtx_args.mdpl = QUIC_MIN_INITIAL_DGRAM_LEN;
     ch->rx_max_udp_payload_size = QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE;
 
-    /*
-     * We tell the peer we can handle at most this many bytes in a datagram payload.
-     * However, currently the QUIC_DEMUX in the QRX uses the BIO's MTU as upper bound
-     * on an incoming datagram size.
-     */
-    ch->tx_max_udp_payload_size = DEFAULT_MAX_UDP_PAYLOAD_SIZE;
-
     ch->ping_deadline = ossl_time_infinite();
 
     ch->qtx = ossl_qtx_new(&qtx_args);
@@ -218,17 +188,6 @@ static int ch_init(QUIC_CHANNEL *ch)
     if (!ossl_quic_txfc_init(&ch->conn_txfc, NULL))
         goto err;
 
-    /*
-     * Note: The TP we transmit governs what the peer can transmit and thus
-     * applies to the RXFC.
-     */
-    ch->tx_init_max_data = DEFAULT_INIT_CONN_RXFC_WND;
-    ch->tx_init_max_stream_data_bidi_local = DEFAULT_INIT_STREAM_RXFC_WND;
-    ch->tx_init_max_stream_data_bidi_remote = DEFAULT_INIT_STREAM_RXFC_WND;
-    ch->tx_init_max_stream_data_uni = DEFAULT_INIT_STREAM_RXFC_WND;
-    ch->tx_init_max_streams_bidi = DEFAULT_INIT_CONN_MAX_STREAMS;
-    ch->tx_init_max_streams_uni = DEFAULT_INIT_CONN_MAX_STREAMS;
-
     ch->rx_init_max_data = 0;
     ch->rx_init_max_stream_data_bidi_local = 0;
     ch->rx_init_max_stream_data_bidi_remote = 0;
@@ -239,6 +198,10 @@ static int ch_init(QUIC_CHANNEL *ch)
     ch->max_local_streams_bidi = 0;
     ch->max_local_streams_uni = 0;
 
+    /*
+     * Note: The TP we transmit governs what the peer can transmit and thus
+     * applies to the RXFC.
+     */
     if (!ossl_quic_rxfc_init(&ch->conn_rxfc, NULL,
             ch->tx_init_max_data,
             DEFAULT_CONN_RXFC_MAX_WND_MUL * ch->tx_init_max_data,
@@ -287,7 +250,6 @@ static int ch_init(QUIC_CHANNEL *ch)
         && !ossl_quic_lcidm_generate_initial(ch->lcidm, ch, &ch->init_scid))
         goto err;
 
-    ch->tx_ack_delay_exp = DEFAULT_ACK_DELAY_EXP;
     ch->rx_ack_delay_exp = QUIC_DEFAULT_ACK_DELAY_EXP;
 
     txp_args.cur_scid = ch->init_scid;
@@ -394,17 +356,13 @@ static int ch_init(QUIC_CHANNEL *ch)
     if ((ch->qtls = ossl_quic_tls_new(&tls_args)) == NULL)
         goto err;
 
-    ch->tx_max_ack_delay = DEFAULT_MAX_ACK_DELAY;
     ch->rx_max_ack_delay = QUIC_DEFAULT_MAX_ACK_DELAY;
-    ch->tx_disable_active_migration = DEFAULT_DISABLE_ACTIVE_MIGRATION;
     ch->rx_disable_active_migration = QUIC_DEFAULT_DISABLE_ACTIVE_MIGRATION;
     ch->rx_active_conn_id_limit = QUIC_MIN_ACTIVE_CONN_ID_LIMIT;
-    ch->tx_active_conn_id_limit = DEFAULT_ACTIVE_CONN_ID_LIMIT;
     ch->tx_enc_level = QUIC_ENC_LEVEL_INITIAL;
     ch->rx_enc_level = QUIC_ENC_LEVEL_INITIAL;
     ch->txku_threshold_override = UINT64_MAX;
 
-    ch->max_idle_timeout_local_req = DEFAULT_IDLE_TIMEOUT;
     ch->max_idle_timeout_remote_req = 0;
     ch->max_idle_timeout = ch->max_idle_timeout_local_req;
 
@@ -520,6 +478,19 @@ QUIC_CHANNEL *ossl_quic_channel_alloc(const QUIC_CHANNEL_ARGS *args)
         }
     }
 #endif
+
+    ch->max_idle_timeout_local_req = args->max_idle_timeout;
+    ch->tx_max_udp_payload_size = args->max_udp_payload_size;
+    ch->tx_init_max_data = args->init_max_data;
+    ch->tx_init_max_stream_data_bidi_local = args->init_max_stream_data_bidi_local;
+    ch->tx_init_max_stream_data_bidi_remote = args->init_max_stream_data_bidi_remote;
+    ch->tx_init_max_stream_data_uni = args->init_max_stream_data_uni;
+    ch->tx_init_max_streams_bidi = args->init_max_streams_bidi;
+    ch->tx_init_max_streams_uni = args->init_max_streams_uni;
+    ch->tx_ack_delay_exp = args->ack_delay_exponent;
+    ch->tx_max_ack_delay = args->max_ack_delay;
+    ch->tx_disable_active_migration = args->disable_active_migration;
+    ch->tx_active_conn_id_limit = args->active_conn_id_limit;
 
     return ch;
 }
@@ -1921,7 +1892,7 @@ static int ch_on_transport_params(const unsigned char *params,
         QLOG_CID("connection_id", &pfa.cid);
         QLOG_END()
     }
-    QLOG_BOOL("disable_active_migration", got_disable_active_migration);
+    QLOG_BOOL("disable_active_migration", ch->rx_disable_active_migration);
     QLOG_EVENT_END()
 #endif
 

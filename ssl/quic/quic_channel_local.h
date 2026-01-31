@@ -168,7 +168,7 @@ struct quic_channel_st {
     unsigned char tx_disable_active_migration;
     uint64_t tx_active_conn_id_limit;
 
-    /* Transport parameter values received from server. */
+    /* Transport parameter values received from peer. */
     uint64_t rx_init_max_data;
     uint64_t rx_init_max_stream_data_bidi_local;
     uint64_t rx_init_max_stream_data_bidi_remote;

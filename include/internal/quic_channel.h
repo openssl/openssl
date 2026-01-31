@@ -128,6 +128,20 @@ typedef struct quic_channel_args_st {
 
     /* Title to use for the qlog session, or NULL. */
     const char *qlog_title;
+
+    /* Transport parameter values for the channel. */
+    uint64_t max_idle_timeout;
+    uint64_t max_udp_payload_size;
+    uint64_t init_max_data;
+    uint64_t init_max_stream_data_bidi_local;
+    uint64_t init_max_stream_data_bidi_remote;
+    uint64_t init_max_stream_data_uni;
+    uint64_t init_max_streams_bidi;
+    uint64_t init_max_streams_uni;
+    unsigned char ack_delay_exponent;
+    uint64_t max_ack_delay;
+    unsigned char disable_active_migration;
+    uint64_t active_conn_id_limit;
 } QUIC_CHANNEL_ARGS;
 
 /* Represents the cause for a connection's termination. */
@@ -462,67 +476,67 @@ int ossl_quic_channel_have_generated_transport_params(const QUIC_CHANNEL *ch);
 
 /* Configures the idle timeout to request from peer (milliseconds, 0=no timeout). */
 void ossl_quic_channel_set_max_idle_timeout_request(QUIC_CHANNEL *ch, uint64_t ms);
-/* Get the configured idle timeout to request from peer. */
+/* Gets the configured idle timeout to request from peer. */
 uint64_t ossl_quic_channel_get_max_idle_timeout_request(const QUIC_CHANNEL *ch);
-/* Get the idle timeout requested by the peer. */
+/* Gets the idle timeout requested by the peer. */
 uint64_t ossl_quic_channel_get_max_idle_timeout_peer_request(const QUIC_CHANNEL *ch);
-/* Get the idle timeout actually negotiated. */
+/* Gets the idle timeout actually negotiated. */
 uint64_t ossl_quic_channel_get_max_idle_timeout_actual(const QUIC_CHANNEL *ch);
 
 /* Configures the maximum UDP payload size to advertise to the peer (bytes). */
 void ossl_quic_channel_set_max_udp_payload_size_request(QUIC_CHANNEL *ch, uint64_t size);
-/* Get the configured maximum UDP payload size to advertise to the peer. */
+/* Gets the configured maximum UDP payload size to advertise to the peer. */
 uint64_t ossl_quic_channel_get_max_udp_payload_size_request(const QUIC_CHANNEL *ch);
-/* Get the maximum UDP payload size advertised by the peer. */
+/* Gets the maximum UDP payload size advertised by the peer. */
 uint64_t ossl_quic_channel_get_max_udp_payload_size_peer_request(const QUIC_CHANNEL *ch);
 
 /* Configures the maximum data to advertise to the peer (bytes). */
 void ossl_quic_channel_set_max_data_request(QUIC_CHANNEL *ch, uint64_t max_data);
-/* Get the configured maximum data to advertise to the peer. */
+/* Gets the configured maximum data to advertise to the peer. */
 uint64_t ossl_quic_channel_get_max_data_request(const QUIC_CHANNEL *ch);
-/* Get the maximum data advertised by the peer. */
+/* Gets the maximum data advertised by the peer. */
 uint64_t ossl_quic_channel_get_max_data_peer_request(const QUIC_CHANNEL *ch);
 
 /* Configures the maximum stream data for a bidi/uni remote/local stream to advertise to the peer (bytes). */
 void ossl_quic_channel_set_max_stream_data_request(QUIC_CHANNEL *ch, uint64_t max_data, int is_uni, int is_remote);
-/* Get the configured maximum stream data for a bidi/uni remote/local stream to advertise to the peer. */
+/* Gets the configured maximum stream data for a bidi/uni remote/local stream to advertise to the peer. */
 uint64_t ossl_quic_channel_get_max_stream_data_request(const QUIC_CHANNEL *ch, int is_uni, int is_remote);
-/* Get the maximum stream data for a bidi/uni remote/local stream advertised by the peer. */
+/* Gets the maximum stream data for a bidi/uni remote/local stream advertised by the peer. */
 uint64_t ossl_quic_channel_get_max_stream_data_peer_request(const QUIC_CHANNEL *ch, int is_uni, int is_remote);
 
 /* Configures the maximum bidi/uni streams to advertise to the peer. */
 void ossl_quic_channel_set_max_streams_request(QUIC_CHANNEL *ch, uint64_t max_streams, int is_uni);
-/* Get the configured maximum bidi/uni streams to advertise to the peer. */
+/* Gets the configured maximum bidi/uni streams to advertise to the peer. */
 uint64_t ossl_quic_channel_get_max_streams_request(const QUIC_CHANNEL *ch, int is_uni);
-/* Get the maximum bidi/uni streams advertised by the peer. */
+/* Gets the maximum bidi/uni streams advertised by the peer. */
 uint64_t ossl_quic_channel_get_max_streams_peer_request(const QUIC_CHANNEL *ch, int is_uni);
 
 /* Configures the ACK delay exponent to advertise to the peer. */
 void ossl_quic_channel_set_ack_delay_exponent_request(QUIC_CHANNEL *ch, uint64_t exp);
-/* Get the configured ACK delay exponent to advertise to the peer. */
+/* Gets the configured ACK delay exponent to advertise to the peer. */
 uint64_t ossl_quic_channel_get_ack_delay_exponent_request(const QUIC_CHANNEL *ch);
-/* Get the ACK delay exponent advertised by the peer. */
+/* Gets the ACK delay exponent advertised by the peer. */
 uint64_t ossl_quic_channel_get_ack_delay_exponent_peer_request(const QUIC_CHANNEL *ch);
 
 /* Configures the maximum ACK delay to advertise to the peer (milliseconds). */
 void ossl_quic_channel_set_max_ack_delay_request(QUIC_CHANNEL *ch, uint64_t ms);
-/* Get the configured maximum ACK delay to advertise to the peer. */
+/* Gets the configured maximum ACK delay to advertise to the peer. */
 uint64_t ossl_quic_channel_get_max_ack_delay_request(const QUIC_CHANNEL *ch);
-/* Get the maximum ACK delay advertised by the peer. */
+/* Gets the maximum ACK delay advertised by the peer. */
 uint64_t ossl_quic_channel_get_max_ack_delay_peer_request(const QUIC_CHANNEL *ch);
 
 /* Configures the disable active migration flag to advertise to the peer. */
 void ossl_quic_channel_set_disable_active_migration_request(QUIC_CHANNEL *ch, uint64_t disable);
-/* Get the configured disable active migration flag to advertise to the peer. */
+/* Gets the configured disable active migration flag to advertise to the peer. */
 uint64_t ossl_quic_channel_get_disable_active_migration_request(const QUIC_CHANNEL *ch);
-/* Get the disable active migration flag advertised by the peer. */
+/* Gets the disable active migration flag advertised by the peer. */
 uint64_t ossl_quic_channel_get_disable_active_migration_peer_request(const QUIC_CHANNEL *ch);
 
 /* Configures the active connection ID limit to advertise to the peer. */
 void ossl_quic_channel_set_active_conn_id_limit_request(QUIC_CHANNEL *ch, uint64_t limit);
-/* Get the configured active connection ID limit to advertise to the peer. */
+/* Gets the configured active connection ID limit to advertise to the peer. */
 uint64_t ossl_quic_channel_get_active_conn_id_limit_request(const QUIC_CHANNEL *ch);
-/* Get the active connection ID limit advertised by the peer. */
+/* Gets the active connection ID limit advertised by the peer. */
 uint64_t ossl_quic_channel_get_active_conn_id_limit_peer_request(const QUIC_CHANNEL *ch);
 
 int ossl_quic_bind_channel(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
