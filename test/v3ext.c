@@ -415,6 +415,63 @@ static int test_ext_syntax(void)
     return testresult;
 }
 
+/*
+ * Test IPAddrBlocks_new(), IPAddrBlocks_free(), d2i_IPAddrBlocks(),
+ * and i2d_IPAddrBlocks() functions.
+ */
+static int test_addr_funcs(void)
+{
+    int ret = 0;
+    IPAddrBlocks *addr = NULL, *addr2 = NULL;
+    ASN1_OCTET_STRING *ip1 = NULL, *ip2 = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    int derlen;
+
+    /* Test IPAddrBlocks_new() and IPAddrBlocks_free() */
+    if (!TEST_ptr(addr = IPAddrBlocks_new()))
+        goto end;
+
+    /* Add some data to it */
+    ip1 = a2i_IPADDRESS("192.168.0.0");
+    ip2 = a2i_IPADDRESS("192.168.0.255");
+    if (!TEST_ptr(ip1) || !TEST_ptr(ip2))
+        goto end;
+    if (!TEST_true(X509v3_addr_add_range(addr, IANA_AFI_IPV4, NULL,
+                                         ip1->data, ip2->data)))
+        goto end;
+    if (!TEST_true(X509v3_addr_canonize(addr)))
+        goto end;
+
+    /* Test i2d_IPAddrBlocks() */
+    derlen = i2d_IPAddrBlocks(addr, &der);
+    if (!TEST_int_gt(derlen, 0))
+        goto end;
+    if (!TEST_ptr(der))
+        goto end;
+
+    /* Test d2i_IPAddrBlocks() */
+    p = der;
+    addr2 = d2i_IPAddrBlocks(NULL, &p, derlen);
+    if (!TEST_ptr(addr2))
+        goto end;
+
+    /* Verify the decoded structure matches */
+    if (!TEST_int_eq(sk_IPAddressFamily_num(addr), sk_IPAddressFamily_num(addr2)))
+        goto end;
+    if (!TEST_int_eq(sk_IPAddressFamily_num(addr2), 1))
+        goto end;
+
+    ret = 1;
+end:
+    IPAddrBlocks_free(addr);
+    IPAddrBlocks_free(addr2);
+    ASN1_OCTET_STRING_free(ip1);
+    ASN1_OCTET_STRING_free(ip2);
+    OPENSSL_free(der);
+    return ret;
+}
+
 static int test_addr_subset(void)
 {
     int i;
@@ -478,6 +535,7 @@ int setup_tests(void)
     ADD_TEST(test_ext_syntax);
     ADD_TEST(test_addr_fam_len);
     ADD_TEST(test_addr_subset);
+    ADD_TEST(test_addr_funcs);
 #endif /* OPENSSL_NO_RFC3779 */
     return 1;
 }
