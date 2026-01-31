@@ -44,6 +44,10 @@ int bread_conv(BIO *bio, char *data, size_t datal, size_t *read);
 #define BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG 75
 #define BIO_CTRL_SET_KTLS_TX_ZEROCOPY_SENDFILE 90
 
+/* Internal BIO flags */
+
+#define BIO_FLAGS_AUTO_EOF 0x80
+
 /*
  * This is used with memory BIOs:
  * BIO_FLAGS_MEM_LEGACY_EOF means legacy behaviour of BIO_eof()
