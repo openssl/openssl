@@ -857,25 +857,25 @@ void tls1_get_group_tuples(SSL_CONNECTION *s, const size_t **ptuples,
 }
 
 int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id,
-    int minversion, int maxversion,
-    int isec, int *okfortls13)
+    int minversion, int maxversion, int *okfortls13,
+    const TLS_GROUP_INFO **giptr)
 {
     const TLS_GROUP_INFO *ginfo = tls1_group_id_lookup(SSL_CONNECTION_GET_CTX(s),
         group_id);
-    int ret;
+    int ret = 0;
     int group_minversion, group_maxversion;
 
     if (okfortls13 != NULL)
         *okfortls13 = 0;
 
     if (ginfo == NULL)
-        return 0;
+        goto end;
 
     group_minversion = SSL_CONNECTION_IS_DTLS(s) ? ginfo->mindtls : ginfo->mintls;
     group_maxversion = SSL_CONNECTION_IS_DTLS(s) ? ginfo->maxdtls : ginfo->maxtls;
 
     if (group_minversion < 0 || group_maxversion < 0)
-        return 0;
+        goto end;
     if (group_maxversion == 0)
         ret = 1;
     else
@@ -888,11 +888,9 @@ int tls_valid_group(SSL_CONNECTION *s, uint16_t group_id,
             *okfortls13 = (group_maxversion == 0)
                 || (group_maxversion >= TLS1_3_VERSION);
     }
-    ret &= !isec
-        || strcmp(ginfo->algorithm, "EC") == 0
-        || strcmp(ginfo->algorithm, "X25519") == 0
-        || strcmp(ginfo->algorithm, "X448") == 0;
-
+end:
+    if (giptr != NULL)
+        *giptr = ginfo;
     return ret;
 }
 
@@ -1001,11 +999,18 @@ end:
 /*-
  * For nmatch >= 0, return the id of the |nmatch|th shared group or 0
  * if there is no match.
- * For nmatch == -1, return number of matches
- * For nmatch == -2, return the id of the group to use for
- * a tmp key, or 0 if there is no match.
+ * For nmatch == TLS1_GROUPS_RETURN_NUMBER, return number of matches
+ * For nmatch == TLS1_GROUPS_RETURN_TMP_ID, return the id of the group to use
+ * for a tmp key, or 0 if there is no match.
+ * If groups == TLS1_GROUPS_FFDHE_GROUPS, only shared groups that are FFDHE
+ * groups (i.e., between OSSL_TLS_GROUP_ID_FFDHE_START and
+ * OSSL_TLS_GROUP_ID_FFDHE_END, inclusive) will be included in the search.
+ * If groups == TLS1_GROUPS_NON_FFDHE_GROUPS, only shared groups that are not
+ * FFDHE groups will be included in the search.
+ * If groups == TLS1_GROUPS_ALL_GROUPS, all groups will be included in the
+ * search.
  */
-uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
+uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch, int groups)
 {
     const uint16_t *pref, *supp;
     size_t num_pref, num_supp, i;
@@ -1015,8 +1020,8 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
     /* Can't do anything on client side */
     if (s->server == 0)
         return 0;
-    if (nmatch == -2) {
-        if (tls1_suiteb(s)) {
+    if (nmatch == TLS1_GROUPS_RETURN_TMP_ID) {
+        if (groups != TLS1_GROUPS_FFDHE_GROUPS && tls1_suiteb(s)) {
             /*
              * For Suite B ciphersuite determines curve: we already know
              * these are acceptable due to previous checks.
@@ -1051,6 +1056,8 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
         int minversion, maxversion;
 
         if (!tls1_in_list(id, supp, num_supp)
+            || (groups == TLS1_GROUPS_NON_FFDHE_GROUPS && is_ffdhe_group(id))
+            || (groups == TLS1_GROUPS_FFDHE_GROUPS && !is_ffdhe_group(id))
             || !tls_group_allowed(s, id, SSL_SECOP_CURVE_SHARED))
             continue;
         inf = tls1_group_id_lookup(ctx, id);
@@ -1074,7 +1081,7 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch)
             return id;
         k++;
     }
-    if (nmatch == -1)
+    if (nmatch == TLS1_GROUPS_RETURN_NUMBER)
         return k;
     /* Out of range (nmatch > k). */
     return 0;
@@ -1894,6 +1901,46 @@ static int tls1_check_cert_param(SSL_CONNECTION *s, X509 *x, int check_ee_md)
 }
 
 /*
+ * tls1_check_ffdhe_tmp_key - Check FFDHE temporary key compatibility
+ * @s: SSL connection
+ * @cid: Cipher ID we're considering using
+ *
+ * Checks that the kDHE cipher suite we're considering using
+ * is compatible with the client extensions.
+ *
+ * Returns 0 when the cipher can't be used or 1 when it can.
+ */
+int tls1_check_ffdhe_tmp_key(SSL_CONNECTION *s, unsigned long cid)
+{
+    const uint16_t *peer_groups;
+    size_t num_peer_groups;
+
+    /* If we have a shared FFDHE group, we can certainly use it. */
+    if (tls1_shared_group(s, 0, TLS1_GROUPS_FFDHE_GROUPS) != 0)
+        return 1;
+
+    /*
+     * Otherwise, we follow RFC 7919:
+     *     If a compatible TLS server receives a Supported Groups extension from
+     *     a client that includes any FFDHE group (i.e., any codepoint between
+     *     256 and 511, inclusive, even if unknown to the server), and if none
+     *     of the client-proposed FFDHE groups are known and acceptable to the
+     *     server, then the server MUST NOT select an FFDHE cipher suite.
+     */
+    tls1_get_peer_groups(s, &peer_groups, &num_peer_groups);
+    for (size_t i = 0; i < num_peer_groups; i++) {
+        if (is_ffdhe_group(peer_groups[i]))
+            return 0;
+    }
+
+    /*
+     * The client did not send any FFDHE groups, so we can use this ciphersuite
+     * using any group we like.
+     */
+    return 1;
+}
+
+/*
  * tls1_check_ec_tmp_key - Check EC temporary key compatibility
  * @s: SSL connection
  * @cid: Cipher ID we're considering using
@@ -1907,7 +1954,7 @@ int tls1_check_ec_tmp_key(SSL_CONNECTION *s, unsigned long cid)
 {
     /* If not Suite B just need a shared group */
     if (!tls1_suiteb(s))
-        return tls1_shared_group(s, 0) != 0;
+        return tls1_shared_group(s, 0, TLS1_GROUPS_NON_FFDHE_GROUPS) != 0;
     /*
      * If Suite B, AES128 MUST use P-256 and AES256 MUST use P-384, no other
      * curves permitted.
