@@ -1781,6 +1781,9 @@ static int encap(uint8_t *ctext, uint8_t secret[ML_KEM_SHARED_SECRET_BYTES],
         ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR,
             "internal error while performing %s encapsulation",
             key->vinfo->algorithm_name);
+#ifdef OPENSSL_PEDANTIC_ZEROIZATION
+    OPENSSL_cleanse(Kr, sizeof(Kr));
+#endif
     return ret;
 }
 
@@ -1827,6 +1830,9 @@ static int decap(uint8_t secret[ML_KEM_SHARED_SECRET_BYTES],
         ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR,
             "internal error while performing %s decapsulation",
             vinfo->algorithm_name);
+#ifdef OPENSSL_PEDANTIC_ZEROIZATION
+        OPENSSL_cleanse(failure_key, ML_KEM_RANDOM_BYTES);
+#endif
         return 0;
     }
     decrypt_cpa(decrypted, ctext, tmp, key);
@@ -1835,6 +1841,9 @@ static int decap(uint8_t secret[ML_KEM_SHARED_SECRET_BYTES],
         || !encrypt_cpa(tmp_ctext, decrypted, r, tmp, mdctx, key)) {
         memcpy(secret, failure_key, ML_KEM_SHARED_SECRET_BYTES);
         OPENSSL_cleanse(decrypted, ML_KEM_SHARED_SECRET_BYTES);
+#ifdef OPENSSL_PEDANTIC_ZEROIZATION
+        OPENSSL_cleanse(failure_key, ML_KEM_RANDOM_BYTES);
+#endif
         return 1;
     }
     mask = constant_time_eq_int_8(0,
@@ -1842,6 +1851,9 @@ static int decap(uint8_t secret[ML_KEM_SHARED_SECRET_BYTES],
     for (i = 0; i < ML_KEM_SHARED_SECRET_BYTES; i++)
         secret[i] = constant_time_select_8(mask, Kr[i], failure_key[i]);
     OPENSSL_cleanse(decrypted, ML_KEM_SHARED_SECRET_BYTES);
+#ifdef OPENSSL_PEDANTIC_ZEROIZATION
+    OPENSSL_cleanse(failure_key, ML_KEM_RANDOM_BYTES);
+#endif
     OPENSSL_cleanse(Kr, sizeof(Kr));
     return 1;
 }
