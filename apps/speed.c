@@ -781,13 +781,22 @@ static int mac_setup(const char *name,
     for (i = 0; i < loopargs_len; i++) {
         loopargs[i].mctx = EVP_MAC_CTX_new(*mac);
         if (loopargs[i].mctx == NULL)
-            return 0;
+            goto err;
 
-        if (!EVP_MAC_CTX_set_params(loopargs[i].mctx, params))
-            return 0;
+        if (!EVP_MAC_CTX_set_params(loopargs[i].mctx, params)) {
+            i++;  /* Include current ctx in cleanup */
+            goto err;
+        }
     }
 
     return 1;
+err:
+    /* Clean up already created contexts on error */
+    while (i > 0)
+        EVP_MAC_CTX_free(loopargs[--i].mctx);
+    EVP_MAC_free(*mac);
+    *mac = NULL;
+    return 0;
 }
 
 static void mac_teardown(EVP_MAC **mac,

@@ -3045,12 +3045,20 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                     goto err;
                 }
                 if ((buf[0] == 'r') && ((buf[1] == '\n') || (buf[1] == '\r'))) {
+                    if (SSL_version(con) == TLS1_3_VERSION) {
+                        printf("Renegotiation not supported on TLSv1.3\n");
+                        continue;
+                    }
                     SSL_renegotiate(con);
                     i = SSL_do_handshake(con);
                     printf("SSL_do_handshake -> %d\n", i);
                     continue;
                 }
                 if ((buf[0] == 'R') && ((buf[1] == '\n') || (buf[1] == '\r'))) {
+                    if (SSL_version(con) == TLS1_3_VERSION) {
+                        printf("Renegotiation not supported on TLSv1.3\n");
+                        continue;
+                    }
                     SSL_set_verify(con,
                         SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE,
                         NULL);
@@ -3636,6 +3644,12 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
             static const char *space = "                          ";
 
             if (www == 1 && HAS_PREFIX(buf, "GET /reneg")) {
+                /* Renegotiation is only supported for TLSv1.2 and below */
+                if (SSL_version(con) == TLS1_3_VERSION) {
+                    BIO_printf(bio_s_out,
+                               "Renegotiation not supported on TLSv1.3\n");
+                    goto err;
+                }
                 if (HAS_PREFIX(buf, "GET /renegcert"))
                     SSL_set_verify(con,
                         SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE,
