@@ -21,6 +21,7 @@
 #include "cms_local.h"
 #include "internal/cms.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static STACK_OF(CMS_CertificateChoices)
     **
     cms_get0_certificate_choices(CMS_ContentInfo *cms);

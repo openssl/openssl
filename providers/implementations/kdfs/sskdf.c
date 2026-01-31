@@ -56,6 +56,7 @@
 #define SSKDF_MAX_INLEN (1 << 30)
 #define SSKDF_MAX_INFOS 5
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct {
     void *provctx;
     EVP_MAC_CTX *macctx; /* H(x) = HMAC_hash OR H(x) = KMAC */

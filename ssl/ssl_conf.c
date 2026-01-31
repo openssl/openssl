@@ -23,6 +23,7 @@
  * such as TLSv1.
  */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct {
     const char *name;
     int namelen;

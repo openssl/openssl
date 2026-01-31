@@ -16,6 +16,7 @@
 #include "prov/ciphercommon.h"
 #include "cipher_des.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int cipher_hw_des_initkey(PROV_CIPHER_CTX *ctx,
     const unsigned char *key, size_t keylen)
 {

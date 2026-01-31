@@ -19,6 +19,7 @@
 #include <prov/implementations.h>
 #include "cipher_aes_gcm_siv.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static ossl_inline void mulx_ghash(uint64_t *a)
 {
     uint64_t t[2], mask;

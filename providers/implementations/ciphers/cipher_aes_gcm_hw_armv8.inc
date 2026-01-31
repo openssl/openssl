@@ -12,6 +12,7 @@
  * This file is included by cipher_aes_gcm_hw.c
  */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 size_t armv8_aes_gcm_encrypt(const unsigned char *in, unsigned char *out, size_t len,
                              const void *key, unsigned char ivec[16], u64 *Xi)
 {

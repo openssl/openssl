@@ -18,6 +18,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int ssl_set_cert(CERT *c, X509 *x509, SSL_CTX *ctx);
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey, SSL_CTX *ctx);
 

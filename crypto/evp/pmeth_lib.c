@@ -35,6 +35,7 @@
 
 #ifndef FIPS_MODULE
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int evp_pkey_ctx_store_cached_data(EVP_PKEY_CTX *ctx,
     int keytype, int optype,
     int cmd, const char *name,

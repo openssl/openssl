@@ -15,6 +15,7 @@
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 void ssl3_cleanup_key_block(SSL_CONNECTION *s)
 {
     OPENSSL_clear_free(s->s3.tmp.key_block, s->s3.tmp.key_block_length);

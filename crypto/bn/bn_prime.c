@@ -12,6 +12,8 @@
 #include "internal/cryptlib.h"
 #include "bn_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 /*
  * The quick sieve algorithm approach to weeding out primes is Philip
  * Zimmermann's, as implemented in PGP.  I have had a read of his comments

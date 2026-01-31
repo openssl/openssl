@@ -13,6 +13,7 @@
 #include "internal/thread_once.h"
 #include <openssl/err.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static STACK_OF(nid_triple) *sig_app, *sigx_app;
 static CRYPTO_RWLOCK *sig_lock;
 

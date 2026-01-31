@@ -37,6 +37,7 @@
 #endif
 #endif
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
     int op, int bits, int nid, void *other,
     void *ex);

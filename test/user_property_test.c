@@ -17,6 +17,7 @@
 
 #define MYPROPERTIES "foo.bar=yes"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_FUNC_provider_query_operation_fn testprov_query;
 static OSSL_FUNC_digest_get_params_fn tmpmd_get_params;
 static OSSL_FUNC_digest_digest_fn tmpmd_digest;

@@ -38,6 +38,7 @@
 #include "prov/eckem.h"
 #include "providers/implementations/kem/ec_kem.inc"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct {
     EC_KEY *recipient_key;
     EC_KEY *sender_authkey;

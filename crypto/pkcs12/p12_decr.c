@@ -16,6 +16,7 @@
  * Encrypt/Decrypt a buffer based on password and algor, result in a
  * OPENSSL_malloc'ed buffer
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 unsigned char *PKCS12_pbe_crypt_ex(const X509_ALGOR *algor,
     const char *pass, int passlen,
     const unsigned char *in, int inlen,

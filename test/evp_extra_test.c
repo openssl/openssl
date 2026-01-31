@@ -45,6 +45,7 @@
 OSSL_provider_init_fn ossl_legacy_provider_init;
 #endif
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_LIB_CTX *testctx = NULL;
 static char *testpropq = NULL;
 

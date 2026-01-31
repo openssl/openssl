@@ -22,6 +22,7 @@ typedef size_t size_t_aX;
  * The extra state information to record how much of the 128bit block we have
  * used is contained in *num;
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
     size_t len, const void *key,
     unsigned char ivec[16], int *num,

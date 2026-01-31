@@ -17,6 +17,7 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static void evp_asym_cipher_free(void *data)
 {
     EVP_ASYM_CIPHER_free(data);

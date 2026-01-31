@@ -34,6 +34,7 @@
 #define STR(a) XSTR(a)
 #define XSTR(a) #a
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int set_hex(const char *in, unsigned char *out, int size);
 static void show_ciphers(const OBJ_NAME *name, void *bio_);
 

@@ -24,6 +24,7 @@ int RSA_print_fp(FILE *fp, const RSA *x, int off)
     BIO *b;
     int ret;
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
     if ((b = BIO_new(BIO_s_file())) == NULL) {
         ERR_raise(ERR_LIB_RSA, ERR_R_BUF_LIB);
         return 0;

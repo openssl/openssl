@@ -22,6 +22,7 @@
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int pkcs12_pbmac1_pbkdf2_key_gen(const char *pass, int passlen,
     unsigned char *salt, int saltlen,
     int id, int iter, int keylen,

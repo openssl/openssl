@@ -20,6 +20,7 @@
 #include "internal/ffc.h"
 
 /* FIPS186-4 A.2.2 Unverifiable partial validation of Generator g */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int ossl_ffc_params_validate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont,
     const BIGNUM *p, const BIGNUM *q,
     const BIGNUM *g, BIGNUM *tmp,

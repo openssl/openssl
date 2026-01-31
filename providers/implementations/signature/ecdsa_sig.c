@@ -33,6 +33,7 @@
 #include "prov/der_ec.h"
 #include "crypto/ec.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct ecdsa_all_set_ctx_params_st {
     OSSL_PARAM *digest; /* ecdsa_set_ctx_params */
     OSSL_PARAM *propq; /* ecdsa_set_ctx_params */

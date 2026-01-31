@@ -45,6 +45,7 @@
         sk_##evp##_pop_free(name##_collection, evp##_free);              \
     }
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 DEFINE_ALGORITHMS(digests, EVP_MD)
 
 DEFINE_ALGORITHMS(kdf, EVP_KDF)

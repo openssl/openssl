@@ -36,6 +36,7 @@
 #include <openssl/sha.h>
 #include "rsa_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
     const unsigned char *from, int flen,
     const unsigned char *param, int plen)

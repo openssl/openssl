@@ -18,6 +18,7 @@
 #include "slh_dsa_key.h"
 #include "internal/encoder.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int slh_dsa_compute_pk_root(SLH_DSA_HASH_CTX *ctx, SLH_DSA_KEY *out, int verify);
 
 static void slh_dsa_key_hash_cleanup(SLH_DSA_KEY *key)

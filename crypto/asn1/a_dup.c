@@ -11,6 +11,8 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 #ifndef NO_OLD_ASN1
 
 void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, const void *x)

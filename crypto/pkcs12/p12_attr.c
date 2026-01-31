@@ -14,6 +14,7 @@
 
 /* Add a local keyid to a safebag */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int PKCS12_add_localkeyid(PKCS12_SAFEBAG *bag, unsigned char *name,
     int namelen)
 {

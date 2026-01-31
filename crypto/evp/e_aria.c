@@ -13,6 +13,7 @@
 #ifndef OPENSSL_NO_ARIA
 #include "crypto/evp.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 IMPLEMENT_BLOCK_CIPHER(aria_128, ks, aria, EVP_ARIA_KEY,
     NID_aria_128, 16, 16, 16, 128,
     0)

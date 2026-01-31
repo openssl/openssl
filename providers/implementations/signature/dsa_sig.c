@@ -33,6 +33,7 @@
 #include "prov/der_dsa.h"
 #include "crypto/dsa.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_FUNC_signature_newctx_fn dsa_newctx;
 static OSSL_FUNC_signature_sign_init_fn dsa_sign_init;
 static OSSL_FUNC_signature_verify_init_fn dsa_verify_init;

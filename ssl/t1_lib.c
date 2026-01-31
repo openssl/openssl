@@ -29,6 +29,7 @@
 #include "quic/quic_local.h"
 #include <openssl/ct.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static const SIGALG_LOOKUP *find_sig_alg(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pkey);
 static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op, const SIGALG_LOOKUP *lu);
 

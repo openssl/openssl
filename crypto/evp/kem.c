@@ -17,6 +17,7 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static void evp_kem_free(void *data)
 {
     EVP_KEM_free(data);

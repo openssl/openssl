@@ -22,6 +22,7 @@
 #include "crypto/dh.h"
 
 /* Override the default free and new methods */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     void *exarg)
 {

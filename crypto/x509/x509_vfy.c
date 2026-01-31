@@ -44,6 +44,7 @@
 #define CRL_SCORE_AKID 0x004 /* CRL issuer matches CRL AKID */
 #define CRL_SCORE_TIME_DELTA 0x002 /* Have a delta CRL with valid times */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int x509_verify_x509(X509_STORE_CTX *ctx);
 static int x509_verify_rpk(X509_STORE_CTX *ctx);
 static int build_chain(X509_STORE_CTX *ctx);

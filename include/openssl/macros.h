@@ -96,6 +96,16 @@
 #define OSSL_DEPRECATED_MESSAGE(message)
 #endif
 
+#if defined(__GNUC__)
+#define OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL \
+    _Pragma("GCC diagnostic push")         \
+        _Pragma("GCC diagnostic ignored \"-Wcast-qual\"")
+#define OSSL_END_ALLOW_CAST_DISCARD_QUAL _Pragma("GCC diagnostic pop")
+#else
+#define OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+#define OSSL_END_ALLOW_CAST_DISCARD_QUAL
+#endif /* defined(__GNUC__) */
+
 /*
  * Applications should use -DOPENSSL_API_COMPAT=<version> to suppress the
  * declarations of functions deprecated in or before <version>.  If this is

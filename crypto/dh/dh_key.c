@@ -26,6 +26,7 @@
 #define MIN_STRENGTH 80
 #endif
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int generate_key(DH *dh);
 static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
     const BIGNUM *a, const BIGNUM *p,

@@ -27,6 +27,7 @@
 #include "crypto/security_bits.h"
 #include "rsa_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static RSA *rsa_new_intern(OSSL_LIB_CTX *libctx);
 
 #ifndef FIPS_MODULE

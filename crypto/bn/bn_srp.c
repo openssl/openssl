@@ -29,6 +29,7 @@
 #error "unsupported BN_BYTES"
 #endif
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static const BN_ULONG bn_group_1024_value[] = {
     bn_pack4(0x9FC6, 0x1D2F, 0xC0EB, 0x06E3),
     bn_pack4(0xFD51, 0x38FE, 0x8376, 0x435B),

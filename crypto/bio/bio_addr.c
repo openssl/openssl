@@ -10,7 +10,6 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
-
 /*
  * VC configurations may define UNICODE, to indicate to the C RTL that
  * WCHAR functions are preferred.
@@ -31,6 +30,8 @@
 #include <openssl/err.h>
 #include <openssl/buffer.h>
 #include "internal/thread_once.h"
+
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 
 CRYPTO_RWLOCK *bio_lookup_lock;
 static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;

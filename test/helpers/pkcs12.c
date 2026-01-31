@@ -22,6 +22,7 @@
 #include "pkcs12.h" /* from the same directory */
 
 /* Set this to > 0 write test data to file */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int write_files = 0;
 
 static int legacy = 0;

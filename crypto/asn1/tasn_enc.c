@@ -16,6 +16,8 @@
 #include "crypto/asn1.h"
 #include "asn1_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 static int asn1_i2d_ex_primitive(const ASN1_VALUE **pval, unsigned char **out,
     const ASN1_ITEM *it, int tag, int aclass);
 static int asn1_set_seq_out(STACK_OF(const_ASN1_VALUE) *sk,

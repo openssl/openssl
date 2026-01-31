@@ -21,6 +21,7 @@
 #define CHACHA20_IVLEN (CHACHA_CTR_SIZE)
 #define CHACHA20_FLAGS (PROV_CIPHER_FLAG_CUSTOM_IV)
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_FUNC_cipher_newctx_fn chacha20_newctx;
 static OSSL_FUNC_cipher_freectx_fn chacha20_freectx;
 static OSSL_FUNC_cipher_dupctx_fn chacha20_dupctx;

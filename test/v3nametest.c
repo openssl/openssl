@@ -15,6 +15,7 @@
 #include "internal/nelem.h"
 #include "testutil.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static const char *const names[] = {
     "a", "b", ".", "*", "@",
     ".a", "a.", ".b", "b.", ".*", "*.", "*@", "@*", "a@", "@a", "b@", "..",

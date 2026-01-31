@@ -18,6 +18,8 @@
 
 #include "charmap.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 /*
  * ASN1_STRING_print_ex() and X509_NAME_print_ex(). Enhanced string and name
  * printing routines handling multibyte characters, RFC2253 and a host of

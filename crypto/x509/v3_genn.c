@@ -13,6 +13,7 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 ASN1_SEQUENCE(OTHERNAME) = {
     ASN1_SIMPLE(OTHERNAME, type_id, ASN1_OBJECT),
     /* Maybe have a true ANY DEFINED BY later */

@@ -19,6 +19,7 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int ossl_pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
     const unsigned char *salt, int saltlen, int iter,
     const EVP_MD *digest, int keylen, unsigned char *out,

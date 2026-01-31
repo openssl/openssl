@@ -14,6 +14,8 @@
 #include "asn1_local.h"
 #include <openssl/asn1t.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 IMPLEMENT_ASN1_DUP_FUNCTION(ASN1_UTCTIME)
 
 /* This is the primary function used to parse ASN1_UTCTIME */

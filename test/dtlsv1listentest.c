@@ -18,6 +18,7 @@
 #ifndef OPENSSL_NO_SOCK
 
 /* Just a ClientHello without a cookie */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static const unsigned char clienthello_nocookie[] = {
     0x16, /* Handshake */
     0xFE, 0xFF, /* DTLSv1.0 */

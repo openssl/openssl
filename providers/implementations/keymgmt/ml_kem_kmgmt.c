@@ -30,6 +30,7 @@
 #include "prov/ml_kem.h"
 #include "providers/implementations/keymgmt/ml_kem_kmgmt.inc"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_FUNC_keymgmt_new_fn ml_kem_512_new;
 static OSSL_FUNC_keymgmt_new_fn ml_kem_768_new;
 static OSSL_FUNC_keymgmt_new_fn ml_kem_1024_new;

@@ -34,6 +34,7 @@
  * format
  */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static unsigned int read_ledword(const unsigned char **in)
 {
     const unsigned char *p = *in;

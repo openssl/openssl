@@ -17,6 +17,7 @@
 #include <openssl/asn1.h> /* ossl_ffc_params_print */
 #endif
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 void ossl_ffc_params_init(FFC_PARAMS *params)
 {
     memset(params, 0, sizeof(*params));

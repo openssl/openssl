@@ -35,6 +35,7 @@
  * which the parameters are associated.  This structure is a cheap
  * simulation.
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct object_st {
     /*
      * Documented as a native integer, of the size given by sizeof(int).

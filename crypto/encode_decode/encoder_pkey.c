@@ -21,6 +21,7 @@
 #include "crypto/evp.h"
 #include "encoder_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 DEFINE_STACK_OF(OSSL_ENCODER)
 
 int OSSL_ENCODER_CTX_set_cipher(OSSL_ENCODER_CTX *ctx,

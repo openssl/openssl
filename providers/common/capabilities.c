@@ -46,6 +46,7 @@ typedef struct tls_group_constants_st {
  * BN_security_bits().  For the ML-KEM hybrids these are the ML-KEM security
  * bits.
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static const TLS_GROUP_CONSTANTS group_list[] = {
     /*  0 */ { OSSL_TLS_GROUP_ID_sect163k1, 80, TLS1_VERSION, TLS1_2_VERSION, DTLS1_VERSION, DTLS1_2_VERSION, 0 },
     /*  1 */ { OSSL_TLS_GROUP_ID_sect163r1, 80, TLS1_VERSION, TLS1_2_VERSION, DTLS1_VERSION, DTLS1_2_VERSION, 0 },

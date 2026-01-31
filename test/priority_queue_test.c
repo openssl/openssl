@@ -20,6 +20,7 @@
 
 #define MAX_SAMPLES 500000
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 DEFINE_PRIORITY_QUEUE_OF(size_t);
 
 static size_t num_rec_freed;

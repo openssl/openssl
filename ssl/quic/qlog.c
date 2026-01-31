@@ -17,6 +17,7 @@
 #define BITS_PER_WORD (sizeof(size_t) * 8)
 #define NUM_ENABLED_W ((QLOG_EVENT_TYPE_NUM + BITS_PER_WORD - 1) / BITS_PER_WORD)
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static ossl_unused ossl_inline int bit_get(const size_t *p, uint32_t bit_no)
 {
     return p[bit_no / BITS_PER_WORD] & (((size_t)1) << (bit_no % BITS_PER_WORD));

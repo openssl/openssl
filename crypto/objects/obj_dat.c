@@ -23,6 +23,7 @@
 /* obj_dat.h is generated from objects.txt and obj_mac.{num,h} by obj_dat.pl */
 #include "obj_dat.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, sn);
 DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, ln);
 DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, obj);

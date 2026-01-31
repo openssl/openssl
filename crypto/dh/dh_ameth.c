@@ -31,6 +31,7 @@
  * PKCS#3 DH or X9.42 DH.
  */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static DH *d2i_dhp(const EVP_PKEY *pkey, const unsigned char **pp,
     long length)
 {

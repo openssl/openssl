@@ -21,6 +21,7 @@
  * ================================
  */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct quic_lcidm_conn_st QUIC_LCIDM_CONN;
 
 enum {

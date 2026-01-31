@@ -30,6 +30,7 @@ static const unsigned char label_prefix[] = "\x74\x6C\x73\x31\x33\x20";
  * |fatal| is set. Returns 1 on success  0 on failure.
  * If |raise_error| is set, ERR_raise is called on failure.
  */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int tls13_hkdf_expand_ex(OSSL_LIB_CTX *libctx, const char *propq,
     const EVP_MD *md,
     const unsigned char *secret,

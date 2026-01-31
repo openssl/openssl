@@ -39,6 +39,7 @@
 
 #define RSA_DEFAULT_DIGEST_NAME OSSL_DIGEST_NAME_SHA1
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_FUNC_signature_newctx_fn rsa_newctx;
 static OSSL_FUNC_signature_sign_init_fn rsa_sign_init;
 static OSSL_FUNC_signature_verify_init_fn rsa_verify_init;

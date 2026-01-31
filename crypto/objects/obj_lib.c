@@ -13,6 +13,7 @@
 #include <openssl/buffer.h>
 #include "crypto/asn1.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o)
 {
     ASN1_OBJECT *r;

@@ -15,6 +15,7 @@
 #include <openssl/err.h>
 #include "ui_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 UI *UI_new(void)
 {
     return UI_new_method(NULL);

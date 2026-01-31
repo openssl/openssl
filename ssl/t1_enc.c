@@ -23,6 +23,7 @@
 #include <openssl/trace.h>
 
 /* seed1 through seed5 are concatenated */
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int tls1_PRF(SSL_CONNECTION *s,
     const void *seed1, size_t seed1_len,
     const void *seed2, size_t seed2_len,

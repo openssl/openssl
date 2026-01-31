@@ -12,6 +12,8 @@
 #include <openssl/asn1t.h>
 #include <openssl/bn.h>
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 /*
  * Custom primitive type for BIGNUM handling. This reads in an ASN1_INTEGER
  * as a BIGNUM directly. Currently it ignores the sign which isn't a problem

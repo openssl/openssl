@@ -26,6 +26,7 @@
 
 #define GROWTH_ALLOWANCE 1024
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct noise_args_data_st {
     BIO *cbio;
     BIO *sbio;

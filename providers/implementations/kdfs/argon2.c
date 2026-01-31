@@ -131,6 +131,7 @@
             *(base + 96), *(base + 97), *(base + 112), *(base + 113)); \
     } while ((void)0, 0)
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef struct {
     uint64_t v[ARGON2_QWORDS_IN_BLOCK];
 } BLOCK;

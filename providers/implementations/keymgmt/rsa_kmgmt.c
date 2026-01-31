@@ -28,6 +28,7 @@
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static OSSL_FUNC_keymgmt_new_fn rsa_newdata;
 static OSSL_FUNC_keymgmt_new_fn rsapss_newdata;
 static OSSL_FUNC_keymgmt_gen_init_fn rsa_gen_init;

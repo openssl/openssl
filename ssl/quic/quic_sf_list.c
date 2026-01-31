@@ -11,6 +11,7 @@
 #include "internal/common.h"
 #include "internal/quic_sf_list.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 struct stream_frame_st {
     struct stream_frame_st *prev, *next;
     UINT_RANGE range;

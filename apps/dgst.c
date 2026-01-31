@@ -24,6 +24,7 @@
 #undef BUFSIZE
 #define BUFSIZE 1024 * 8
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int do_fp_oneshot_sign(BIO *out, EVP_MD_CTX *ctx, BIO *in, int sep, int binout,
     EVP_PKEY *key, unsigned char *sigin, int siglen,
     const char *sig_name, const char *file);

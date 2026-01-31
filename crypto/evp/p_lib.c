@@ -48,6 +48,7 @@
 #include "internal/common.h"
 #include "evp_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str,
     int len, EVP_KEYMGMT *keymgmt);
 static void evp_pkey_free_it(EVP_PKEY *key);

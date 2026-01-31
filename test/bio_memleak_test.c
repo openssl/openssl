@@ -13,6 +13,7 @@
 
 #include "testutil.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 static int test_bio_memleak(void)
 {
     int ok = 0;

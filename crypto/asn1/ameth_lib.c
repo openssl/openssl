@@ -16,6 +16,7 @@
 
 #include "standard_methods.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
 
 DECLARE_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_ASN1_METHOD *,

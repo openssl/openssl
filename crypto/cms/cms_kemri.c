@@ -20,6 +20,7 @@
 
 /* KEM Recipient Info (KEMRI) routines */
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int ossl_cms_RecipientInfo_kemri_get0_alg(CMS_RecipientInfo *ri,
     uint32_t **pkekLength,
     X509_ALGOR **pwrap)

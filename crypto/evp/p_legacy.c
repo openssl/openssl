@@ -22,6 +22,7 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
 int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
 {
     int ret;

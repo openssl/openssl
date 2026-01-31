@@ -12,6 +12,8 @@
 #include "internal/cryptlib.h"
 #include "crypto/asn1.h"
 
+OSSL_BEGIN_ALLOW_CAST_DISCARD_QUAL
+
 #define ASN1_GEN_FLAG 0x10000
 #define ASN1_GEN_FLAG_IMP (ASN1_GEN_FLAG | 1)
 #define ASN1_GEN_FLAG_EXP (ASN1_GEN_FLAG | 2)
