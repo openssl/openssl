@@ -3850,6 +3850,79 @@ err:
 }
 
 QUIC_TAKES_LOCK
+static int qc_getset_max_stream_data(QCTX *ctx, uint32_t class_,
+    uint64_t *p_value_out, int is_uni, int is_remote, uint64_t *p_value_in)
+{
+    int ret = 0;
+    uint64_t value_out = 0, value_in;
+
+    qctx_lock(ctx);
+
+    switch (class_) {
+    case SSL_VALUE_CLASS_FEATURE_REQUEST:
+        value_out = ctx->is_listener
+            ? ossl_quic_port_get_init_max_stream_data(ctx->ql->port, is_uni, is_remote)
+            : ossl_quic_channel_get_max_stream_data_request(ctx->qc->ch, is_uni, is_remote);
+
+        if (p_value_in != NULL) {
+            value_in = *p_value_in;
+            if (value_in > OSSL_QUIC_VLINT_MAX) {
+                QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_PASSED_INVALID_ARGUMENT,
+                    NULL);
+                goto err;
+            }
+
+            if (ctx->is_listener) {
+                ossl_quic_port_set_init_max_stream_data(ctx->ql->port, value_in, is_uni, is_remote);
+            } else {
+                if (ossl_quic_channel_have_generated_transport_params(ctx->qc->ch)) {
+                    QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_FEATURE_NOT_RENEGOTIABLE,
+                        NULL);
+                    goto err;
+                }
+                ossl_quic_channel_set_max_stream_data_request(ctx->qc->ch, value_in, is_uni, is_remote);
+            }
+        }
+        break;
+
+    case SSL_VALUE_CLASS_FEATURE_PEER_REQUEST:
+        if (p_value_in != NULL) {
+            QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_UNSUPPORTED_CONFIG_VALUE_OP,
+                NULL);
+            goto err;
+        }
+
+        if (ctx->is_listener) {
+            QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_UNSUPPORTED_CONFIG_VALUE_OP,
+                NULL);
+            goto err;
+        }
+
+        if (!ossl_quic_channel_is_handshake_complete(ctx->qc->ch)) {
+            QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_FEATURE_NEGOTIATION_NOT_COMPLETE,
+                NULL);
+            goto err;
+        }
+
+        value_out = ossl_quic_channel_get_max_stream_data_peer_request(ctx->qc->ch, is_uni, is_remote);
+        break;
+
+    default:
+        QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_UNSUPPORTED_CONFIG_VALUE_CLASS,
+            NULL);
+        goto err;
+    }
+
+    ret = 1;
+err:
+    qctx_unlock(ctx);
+    if (ret && p_value_out != NULL)
+        *p_value_out = value_out;
+
+    return ret;
+}
+
+QUIC_TAKES_LOCK
 static int qc_getset_max_streams(QCTX *ctx, uint32_t class_,
     uint64_t *p_value_out, int is_uni, uint64_t *p_value_in)
 {
@@ -4337,79 +4410,6 @@ static int qc_get_stream_write_buf_stat(QCTX *ctx, uint32_t class_,
 err:
     qctx_unlock(ctx);
     *p_value_out = (uint64_t)value;
-    return ret;
-}
-
-QUIC_TAKES_LOCK
-static int qc_getset_max_stream_data(QCTX *ctx, uint32_t class_,
-    uint64_t *p_value_out, int is_uni, int is_remote, uint64_t *p_value_in)
-{
-    int ret = 0;
-    uint64_t value_out = 0, value_in;
-
-    qctx_lock(ctx);
-
-    switch (class_) {
-    case SSL_VALUE_CLASS_FEATURE_REQUEST:
-        value_out = ctx->is_listener
-            ? ossl_quic_port_get_init_max_stream_data(ctx->ql->port, is_uni, is_remote)
-            : ossl_quic_channel_get_max_stream_data_request(ctx->qc->ch, is_uni, is_remote);
-
-        if (p_value_in != NULL) {
-            value_in = *p_value_in;
-            if (value_in > OSSL_QUIC_VLINT_MAX) {
-                QUIC_RAISE_NON_NORMAL_ERROR(ctx, ERR_R_PASSED_INVALID_ARGUMENT,
-                    NULL);
-                goto err;
-            }
-
-            if (ctx->is_listener) {
-                ossl_quic_port_set_init_max_stream_data(ctx->ql->port, value_in, is_uni, is_remote);
-            } else {
-                if (ossl_quic_channel_have_generated_transport_params(ctx->qc->ch)) {
-                    QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_FEATURE_NOT_RENEGOTIABLE,
-                        NULL);
-                    goto err;
-                }
-                ossl_quic_channel_set_max_stream_data_request(ctx->qc->ch, value_in, is_uni, is_remote);
-            }
-        }
-        break;
-
-    case SSL_VALUE_CLASS_FEATURE_PEER_REQUEST:
-        if (p_value_in != NULL) {
-            QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_UNSUPPORTED_CONFIG_VALUE_OP,
-                NULL);
-            goto err;
-        }
-
-        if (ctx->is_listener) {
-            QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_UNSUPPORTED_CONFIG_VALUE_OP,
-                NULL);
-            goto err;
-        }
-
-        if (!ossl_quic_channel_is_handshake_complete(ctx->qc->ch)) {
-            QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_FEATURE_NEGOTIATION_NOT_COMPLETE,
-                NULL);
-            goto err;
-        }
-
-        value_out = ossl_quic_channel_get_max_stream_data_peer_request(ctx->qc->ch, is_uni, is_remote);
-        break;
-
-    default:
-        QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_UNSUPPORTED_CONFIG_VALUE_CLASS,
-            NULL);
-        goto err;
-    }
-
-    ret = 1;
-err:
-    qctx_unlock(ctx);
-    if (ret && p_value_out != NULL)
-        *p_value_out = value_out;
-
     return ret;
 }
 
