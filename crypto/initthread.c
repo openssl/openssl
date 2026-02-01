@@ -200,7 +200,11 @@ static void init_thread_destructor(void *hands)
 }
 
 static CRYPTO_ONCE ossl_init_thread_runonce = CRYPTO_ONCE_STATIC_INIT;
+#if defined(OPENSSL_SYS_TANDEM) && (defined(_PUT_MODEL_) || defined(_KLT_MODEL_))
+static CRYPTO_THREAD_ID recursion_guard = { (void *)-1, (short)-1, (short)-1 };
+#else
 static CRYPTO_THREAD_ID recursion_guard = (CRYPTO_THREAD_ID)-1;
+#endif
 
 DEFINE_RUN_ONCE_STATIC(ossl_init_thread_once)
 {
@@ -209,7 +213,11 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_thread_once)
             init_thread_destructor))
         return 0;
 
+#if defined(OPENSSL_SYS_TANDEM)
+    memset(&recursion_guard, 0, sizeof(recursion_guard));
+#else
     recursion_guard = (CRYPTO_THREAD_ID)0;
+#endif
     return 1;
 }
 
