@@ -213,7 +213,7 @@ int EVP_MAC_squeeze(EVP_MAC_CTX *ctx, unsigned char *out, size_t outlen)
         return 0;
     }
     if (ossl_unlikely(ctx->meth->squeeze == NULL)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_SQUEEZE_ERROR);
+        ERR_raise(ERR_LIB_EVP, ERR_R_UNSUPPORTED);
         return 0;
     }
     if (ossl_unlikely(out == NULL)) {
