@@ -3698,6 +3698,8 @@ static int tls_construct_cke_gost(SSL_CONNECTION *s, WPACKET *pkt)
     unsigned char *pms = NULL;
     size_t pmslen = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    EVP_MD *md = NULL;
+    OSSL_PARAM params[2], *p = params;
 
     if ((s->s3.tmp.new_cipher->algorithm_auth & SSL_aGOST12) != 0)
         dgst_nid = NID_id_GostR3411_2012_256;
@@ -3739,13 +3741,19 @@ static int tls_construct_cke_gost(SSL_CONNECTION *s, WPACKET *pkt)
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     };
+
+    md = EVP_MD_fetch(sctx->libctx, OBJ_nid2sn(dgst_nid), sctx->propq);
+    if (md == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     /*
      * Compute shared IV and store it in algorithm-specific context
      * data
      */
     ukm_hash = EVP_MD_CTX_new();
     if (ukm_hash == NULL
-        || EVP_DigestInit(ukm_hash, EVP_get_digestbynid(dgst_nid)) <= 0
+        || EVP_DigestInit(ukm_hash, md) <= 0
         || EVP_DigestUpdate(ukm_hash, s->s3.client_random,
                SSL3_RANDOM_SIZE)
             <= 0
@@ -3758,9 +3766,12 @@ static int tls_construct_cke_gost(SSL_CONNECTION *s, WPACKET *pkt)
     }
     EVP_MD_CTX_free(ukm_hash);
     ukm_hash = NULL;
-    if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, EVP_PKEY_OP_ENCRYPT,
-            EVP_PKEY_CTRL_SET_IV, 8, shared_ukm)
-        <= 0) {
+    EVP_MD_free(md);
+    md = NULL;
+
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_EXCHANGE_PARAM_KDF_UKM, shared_ukm, 8);
+    *p++ = OSSL_PARAM_construct_end();
+    if (EVP_PKEY_CTX_set_params(pkey_ctx, params) != 1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
         goto err;
     }
@@ -3788,6 +3799,7 @@ static int tls_construct_cke_gost(SSL_CONNECTION *s, WPACKET *pkt)
     return 1;
 err:
     EVP_PKEY_CTX_free(pkey_ctx);
+    EVP_MD_free(md);
     OPENSSL_clear_free(pms, pmslen);
     EVP_MD_CTX_free(ukm_hash);
     return 0;
@@ -3846,9 +3858,16 @@ static int tls_construct_cke_gost18(SSL_CONNECTION *s, WPACKET *pkt)
     size_t pmslen = 0;
     size_t msglen;
     int cipher_nid = ossl_gost18_cke_cipher_nid(s);
+    const char *cipher_sn;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    OSSL_PARAM params[3], *p = params;
 
     if (cipher_nid == NID_undef) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if ((cipher_sn = OBJ_nid2sn(cipher_nid)) == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -3892,16 +3911,15 @@ static int tls_construct_cke_gost18(SSL_CONNECTION *s, WPACKET *pkt)
     };
 
     /* Reuse EVP_PKEY_CTRL_SET_IV */
-    if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, EVP_PKEY_OP_ENCRYPT,
-            EVP_PKEY_CTRL_SET_IV, 32, rnd_dgst)
-        <= 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
-        goto err;
-    }
-
-    if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, EVP_PKEY_OP_ENCRYPT,
-            EVP_PKEY_CTRL_CIPHER, cipher_nid, NULL)
-        <= 0) {
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_EXCHANGE_PARAM_KDF_UKM, rnd_dgst, 32);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_CIPHER,
+        /*
+         * Cast away the const. This is read
+         * only so should be safe
+         */
+        (char *)cipher_sn, 0);
+    *p++ = OSSL_PARAM_construct_end();
+    if (EVP_PKEY_CTX_set_params(pkey_ctx, params) != 1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
         goto err;
     }

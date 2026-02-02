@@ -3591,11 +3591,6 @@ static int tls_process_cke_gost(SSL_CONNECTION *s, PACKET *pkt)
         /* SSLfatal() already called */
         goto err;
     }
-    /* Check if pubkey from client certificate was used */
-    if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2,
-            NULL)
-        > 0)
-        s->statem.no_cert_verify = 1;
 
     ret = 1;
 err:
@@ -3620,9 +3615,16 @@ static int tls_process_cke_gost18(SSL_CONNECTION *s, PACKET *pkt)
     size_t outlen = sizeof(premaster_secret), inlen = 0;
     int ret = 0;
     int cipher_nid = ossl_gost18_cke_cipher_nid(s);
+    const char *cipher_sn;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    OSSL_PARAM params[3], *p = params;
 
     if (cipher_nid == NID_undef) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if ((cipher_sn = OBJ_nid2sn(cipher_nid)) == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -3649,16 +3651,15 @@ static int tls_process_cke_gost18(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
     }
 
-    if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, EVP_PKEY_OP_DECRYPT,
-            EVP_PKEY_CTRL_SET_IV, 32, rnd_dgst)
-        <= 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
-        goto err;
-    }
-
-    if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, EVP_PKEY_OP_DECRYPT,
-            EVP_PKEY_CTRL_CIPHER, cipher_nid, NULL)
-        <= 0) {
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_EXCHANGE_PARAM_KDF_UKM, rnd_dgst, 32);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_CIPHER,
+        /*
+         * Cast away the const. This is read
+         * only so should be safe
+         */
+        (char *)cipher_sn, 0);
+    *p++ = OSSL_PARAM_construct_end();
+    if (EVP_PKEY_CTX_set_params(pkey_ctx, params) != 1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_LIBRARY_BUG);
         goto err;
     }

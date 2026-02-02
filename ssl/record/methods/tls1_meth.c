@@ -336,6 +336,7 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
 
     if (!rl->isdtls && rl->tlstree) {
         int decrement_seq = 0;
+        OSSL_PARAM params[2], *p = params;
 
         /*
          * When sending, seq is incremented after MAC calculation.
@@ -345,10 +346,9 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         if (sending && !rl->use_etm)
             decrement_seq = 1;
 
-        if (EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_TLSTREE, decrement_seq,
-                rl->sequence)
-            <= 0) {
-
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_TLSTREE, rl->sequence, decrement_seq);
+        *p++ = OSSL_PARAM_construct_end();
+        if (EVP_CIPHER_CTX_set_params(ds, params) != 1) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -436,10 +436,14 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
         mac_ctx = hmac;
     }
 
-    if (!rl->isdtls
-        && rl->tlstree
-        && EVP_MD_CTX_ctrl(mac_ctx, EVP_MD_CTRL_TLSTREE, 0, seq) <= 0)
-        goto end;
+    if (!rl->isdtls && rl->tlstree) {
+        OSSL_PARAM params[2], *p = params;
+
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_TLSTREE, seq, 0);
+        *p++ = OSSL_PARAM_construct_end();
+        if (EVP_MD_CTX_set_params(mac_ctx, params) != 1)
+            goto end;
+    }
 
     if (rl->isdtls) {
         unsigned char dtlsseq[8], *p = dtlsseq;
