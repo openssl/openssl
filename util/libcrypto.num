@@ -5703,3 +5703,4 @@ EVP_MD_CTX_serialize                    ?	4_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_deserialize                  ?	4_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_ctrl_string            ?	4_0_0	EXIST::FUNCTION:
 OPENSSL_sk_set_cmp_thunks               ?	4_0_0	EXIST::FUNCTION:
+ASN1_BIT_STRING_set1                    ?	4_0_0	EXIST::FUNCTION:

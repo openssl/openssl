@@ -13,6 +13,26 @@
 #include <openssl/asn1.h>
 #include "asn1_local.h"
 
+#include <crypto/asn1.h>
+
+static void
+asn1_abs_clear_unused_bits(ASN1_BIT_STRING *abs)
+{
+    abs->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
+}
+
+static int asn1_abs_set_unused_bits(ASN1_BIT_STRING *abs, uint8_t unused_bits)
+{
+    if (unused_bits > 7)
+        return 0;
+
+    asn1_abs_clear_unused_bits(abs);
+
+    abs->flags |= ASN1_STRING_FLAG_BITS_LEFT | unused_bits;
+
+    return 1;
+}
+
 int ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, int len)
 {
     return ASN1_STRING_set(x, d, len);
@@ -252,4 +272,32 @@ int ASN1_BIT_STRING_get_length(const ASN1_BIT_STRING *abs, size_t *out_length,
     *out_unused_bits = unused_bits;
 
     return 1;
+}
+
+int ASN1_BIT_STRING_set1(ASN1_BIT_STRING *abs, const uint8_t *data, size_t length,
+    int unused_bits)
+{
+    if (abs == NULL)
+        return 0;
+
+    if (length > INT_MAX || unused_bits < 0 || unused_bits > 7)
+        return 0;
+
+    if (length == 0 && unused_bits != 0)
+        return 0;
+
+    if (length > 0 && (data[length - 1] & ((1 << unused_bits) - 1)) != 0)
+        return 0;
+
+    /*
+     * XXX - ASN1_STRING_set() and asn1_abs_set_unused_bits() preserve the
+     * state of flags irrelevant to ASN1_BIT_STRING. Should we explicitly
+     * clear them?
+     */
+
+    abs->type = V_ASN1_BIT_STRING;
+    if (!ASN1_STRING_set(abs, data, (int)length))
+        return 0;
+
+    return asn1_abs_set_unused_bits(abs, unused_bits);
 }

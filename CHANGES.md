@@ -121,6 +121,11 @@ OpenSSL 4.0
 
    *Beat Bolli*
 
+ * Added ASN1_BIT_STRING_set1() to set a bit string to a value including
+   the length in bytes and the number of unused bits.
+
+   * Bob Beck *
+
  * The deprecated function `ASN1_STRING_data` has been removed.
 
    *Bob Beck*
