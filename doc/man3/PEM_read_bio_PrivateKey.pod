@@ -416,7 +416,7 @@ The private key (or other data) takes the following form:
 
  -----BEGIN RSA PRIVATE KEY-----
  Proc-Type: 4,ENCRYPTED
- DEK-Info: DES-EDE3-CBC,3F17F5316E2BAC89
+ DEK-Info: AES-256-CBC,3F17F5316E2BAC893F17F5316E2BAC89
 
  ...base64 encoded data...
  -----END RSA PRIVATE KEY-----
@@ -443,7 +443,7 @@ the function.
 
 The pseudo code to derive the key would look similar to:
 
- EVP_CIPHER* cipher = EVP_des_ede3_cbc();
+ EVP_CIPHER* cipher = EVP_aes_256_cbc();
  EVP_MD* md = EVP_md5();
 
  unsigned int nkey = EVP_CIPHER_get_key_length(cipher);
@@ -451,7 +451,7 @@ The pseudo code to derive the key would look similar to:
  unsigned char key[nkey];
  unsigned char iv[niv];
 
- memcpy(iv, HexToBin("3F17F5316E2BAC89"), niv);
+ memcpy(iv, HexToBin("3F17F5316E2BAC893F17F5316E2BAC89"), niv);
  rc = EVP_BytesToKey(cipher, md, iv /*salt*/, pword, plen, 1, key, NULL /*iv*/);
  if (rc != nkey)
      /* Error */
@@ -516,15 +516,15 @@ Write a certificate to a BIO:
      /* Error */
 
 Write a private key (using traditional format) to a BIO using
-triple DES encryption, the pass phrase is prompted for:
+AES-256-CBC encryption, the pass phrase is prompted for:
 
- if (!PEM_write_bio_PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, NULL))
+ if (!PEM_write_bio_PrivateKey(bp, key, EVP_aes_256_cbc(), NULL, 0, 0, NULL))
      /* Error */
 
-Write a private key (using PKCS#8 format) to a BIO using triple
-DES encryption, using the pass phrase "hello":
+Write a private key (using PKCS#8 format) to a BIO using
+AES-256-CBC encryption, using the pass phrase "hello":
 
- if (!PEM_write_bio_PKCS8PrivateKey(bp, key, EVP_des_ede3_cbc(),
+ if (!PEM_write_bio_PKCS8PrivateKey(bp, key, EVP_aes_256_cbc(),
                                     NULL, 0, 0, "hello"))
      /* Error */
 
@@ -591,7 +591,7 @@ were added in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 
-Copyright 2001-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
