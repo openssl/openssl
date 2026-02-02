@@ -138,10 +138,10 @@ typedef struct quic_channel_args_st {
     uint64_t init_max_stream_data_uni;
     uint64_t init_max_streams_bidi;
     uint64_t init_max_streams_uni;
-    unsigned char ack_delay_exponent;
     uint64_t max_ack_delay;
-    unsigned char disable_active_migration;
     uint64_t active_conn_id_limit;
+    unsigned char ack_delay_exponent;
+    unsigned char disable_active_migration;
 } QUIC_CHANNEL_ARGS;
 
 /* Represents the cause for a connection's termination. */
