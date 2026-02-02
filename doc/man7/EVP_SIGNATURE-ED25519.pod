@@ -6,7 +6,7 @@ EVP_SIGNATURE-ED25519,
 EVP_SIGNATURE-ED448,
 Ed25519,
 Ed448
-- EVP_PKEY Ed25519 and Ed448 support
+- The EVP_PKEY B<Ed25519> and B<Ed448> signature implementation
 
 =head1 DESCRIPTION
 
