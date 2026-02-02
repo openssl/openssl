@@ -30,11 +30,13 @@ X509_NAME_ENTRY_create_by_OBJ - X509_NAME_ENTRY utility functions
 
 =head1 DESCRIPTION
 
-X509_NAME_ENTRY_get_object() retrieves the field name of B<ne> in
-and B<ASN1_OBJECT> structure.
+X509_NAME_ENTRY_get_object() retrieves the field name of B<ne> as
+an B<ASN1_OBJECT> structure. The returned pointer is an internal
+pointer and must not be freed by the caller.
 
-X509_NAME_ENTRY_get_data() retrieves the field value of B<ne> in
-and B<ASN1_STRING> structure.
+X509_NAME_ENTRY_get_data() retrieves the field value of B<ne> as
+an B<ASN1_STRING> structure. The returned pointer is an internal
+pointer and must not be freed by the caller.
 
 X509_NAME_ENTRY_set_object() sets the field name of B<ne> to B<obj>.
 
@@ -86,7 +88,7 @@ L<OBJ_nid2obj(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
