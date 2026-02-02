@@ -5210,11 +5210,6 @@ i2d_SXNETID                             ?	4_0_0	EXIST::FUNCTION:
 SXNETID_free                            ?	4_0_0	EXIST::FUNCTION:
 SXNETID_new                             ?	4_0_0	EXIST::FUNCTION:
 SXNETID_it                              ?	4_0_0	EXIST::FUNCTION:
-d2i_ISSUER_SIGN_TOOL                    ?	4_0_0	EXIST::FUNCTION:
-i2d_ISSUER_SIGN_TOOL                    ?	4_0_0	EXIST::FUNCTION:
-ISSUER_SIGN_TOOL_free                   ?	4_0_0	EXIST::FUNCTION:
-ISSUER_SIGN_TOOL_new                    ?	4_0_0	EXIST::FUNCTION:
-ISSUER_SIGN_TOOL_it                     ?	4_0_0	EXIST::FUNCTION:
 SXNET_add_id_asc                        ?	4_0_0	EXIST::FUNCTION:
 SXNET_add_id_ulong                      ?	4_0_0	EXIST::FUNCTION:
 SXNET_add_id_INTEGER                    ?	4_0_0	EXIST::FUNCTION:

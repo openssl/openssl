@@ -1454,9 +1454,6 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_EC2M
     BIO_puts(bio_out, "EC2M\n");
 #endif
-#ifdef OPENSSL_NO_GOST
-    BIO_puts(bio_out, "GOST\n");
-#endif
 #ifdef OPENSSL_NO_IDEA
     BIO_puts(bio_out, "IDEA\n");
 #endif

@@ -38,6 +38,14 @@ OpenSSL 4.0
 
   * Support for the SSLv2 Client Hello was removed
 
+  * Obsolete and incomplete support for gost & dstu NIDs and TLS
+    extensions removed. This code is unmaintained, relies on the now
+    removed engine support; or require patches and additional work to
+    support current and up to date modes, extensions and NIDs. Such
+    support has not been contributed upstream. The most popular
+    website that used to use this cryptopgraphy supports IETF/NIST
+    prime256r1 curve.
+
 OpenSSL 3.6
 -----------
 

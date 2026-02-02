@@ -355,27 +355,6 @@ Cipher suites using SHA1.
 
 Cipher suites using SHA256 or SHA384.
 
-=item B<aGOST>
-
-Cipher suites using GOST R 34.10 (either 2001 or 94) for authentication
-(needs a provider that supports GOST algorithms).
-
-=item B<aGOST01>
-
-Cipher suites using GOST R 34.10-2001 authentication.
-
-=item B<kGOST>
-
-Cipher suites, using VKO 34.10 key exchange, specified in the RFC 4357.
-
-=item B<GOST94>
-
-Cipher suites, using HMAC based on GOST R 34.11-94.
-
-=item B<GOST89MAC>
-
-Cipher suites using GOST 28147-89 MAC B<instead of> HMAC.
-
 =item B<PSK>
 
 All cipher suites using pre-shared keys (PSK).
@@ -508,30 +487,6 @@ is used.
  TLS_DHE_RSA_WITH_SEED_CBC_SHA          DHE-RSA-SEED-SHA
 
  TLS_DH_anon_WITH_SEED_CBC_SHA          ADH-SEED-SHA
-
-=head2 GOST cipher suites from draft-chudov-cryptopro-cptls, extending TLS v1.0
-
-Note: these ciphers require a provider that supports GOST cryptographic
-algorithms, such as the B<gostprov> provider, which isn't part of the OpenSSL
-distribution.
-
- TLS_GOSTR341094_WITH_28147_CNT_IMIT GOST94-GOST89-GOST89
- TLS_GOSTR341001_WITH_28147_CNT_IMIT GOST2001-GOST89-GOST89
- TLS_GOSTR341094_WITH_NULL_GOSTR3411 GOST94-NULL-GOST94
- TLS_GOSTR341001_WITH_NULL_GOSTR3411 GOST2001-NULL-GOST94
-
-=head2 GOST cipher suites, extending TLS v1.2
-
-Note: these ciphers require a provider that supports GOST cryptographic
-algorithms, such as the B<gostprov> provider, which isn't part of the OpenSSL
-distribution.
-
- TLS_GOSTR341112_256_WITH_28147_CNT_IMIT GOST2012-GOST8912-GOST8912
- TLS_GOSTR341112_256_WITH_NULL_GOSTR3411 GOST2012-NULL-GOST12
-
-Note: GOST2012-GOST8912-GOST8912 is an alias for two ciphers ID
-old LEGACY-GOST2012-GOST8912-GOST8912 and new IANA-GOST2012-GOST8912-GOST8912
-
 
 =head2 Additional Export 1024 and other cipher suites
 

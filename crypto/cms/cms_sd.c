@@ -1581,20 +1581,9 @@ static int cms_add_cipher_smcap(STACK_OF(X509_ALGOR) **sk, int nid, int arg)
     return 1;
 }
 
-static int cms_add_digest_smcap(STACK_OF(X509_ALGOR) **sk, int nid, int arg)
-{
-    if (EVP_get_digestbynid(nid))
-        return CMS_add_simple_smimecap(sk, nid, arg);
-    return 1;
-}
-
 int CMS_add_standard_smimecap(STACK_OF(X509_ALGOR) **smcap)
 {
     if (!cms_add_cipher_smcap(smcap, NID_aes_256_cbc, -1)
-        || !cms_add_digest_smcap(smcap, NID_id_GostR3411_2012_256, -1)
-        || !cms_add_digest_smcap(smcap, NID_id_GostR3411_2012_512, -1)
-        || !cms_add_digest_smcap(smcap, NID_id_GostR3411_94, -1)
-        || !cms_add_cipher_smcap(smcap, NID_id_Gost28147_89, -1)
         || !cms_add_cipher_smcap(smcap, NID_aes_192_cbc, -1)
         || !cms_add_cipher_smcap(smcap, NID_aes_128_cbc, -1)
         || !cms_add_cipher_smcap(smcap, NID_des_ede3_cbc, -1)

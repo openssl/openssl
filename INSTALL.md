@@ -847,14 +847,6 @@ should never be used in production environments.
 
 See the file [fuzz/README.md](fuzz/README.md) for further details.
 
-### no-gost
-
-Don't build support for GOST based ciphersuites.
-
-Note that if this feature is enabled then GOST ciphersuites are only available
-if the GOST algorithms are also available through loading an externally supplied
-engine.
-
 ### no-http
 
 Disable HTTP support.

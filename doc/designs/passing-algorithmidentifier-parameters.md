@@ -162,8 +162,6 @@ encouraged to research further usages.
 - [3DES-CBC](https://www.rfc-editor.org/rfc/rfc3370#section-5.1)
 - [RC2-CBC](https://www.rfc-editor.org/rfc/rfc3370#section-5.2)
 
-- [GOST 28147-89](https://www.rfc-editor.org/rfc/rfc4490.html#section-5.1)
-
 - [RSA-OAEP](https://www.rfc-editor.org/rfc/rfc8017#appendix-A.2.1)
 - [RSA-PSS](https://www.rfc-editor.org/rfc/rfc8017#appendix-A.2.3)
 

@@ -2973,140 +2973,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
         256,
         256,
     },
-
-#ifndef OPENSSL_NO_GOST
-    {
-        1,
-        "GOST2001-GOST89-GOST89",
-        "TLS_GOSTR341001_WITH_28147_CNT_IMIT",
-        0x3000081,
-        SSL_kGOST,
-        SSL_aGOST01,
-        SSL_eGOST2814789CNT,
-        SSL_GOST89MAC,
-        TLS1_VERSION,
-        TLS1_2_VERSION,
-        0,
-        0,
-        SSL_HIGH,
-        SSL_HANDSHAKE_MAC_GOST94 | TLS1_PRF_GOST94 | TLS1_STREAM_MAC,
-        256,
-        256,
-    },
-#ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHERS
-    {
-        1,
-        "GOST2001-NULL-GOST94",
-        "TLS_GOSTR341001_WITH_NULL_GOSTR3411",
-        0x3000083,
-        SSL_kGOST,
-        SSL_aGOST01,
-        SSL_eNULL,
-        SSL_GOST94,
-        TLS1_VERSION,
-        TLS1_2_VERSION,
-        0,
-        0,
-        SSL_STRONG_NONE,
-        SSL_HANDSHAKE_MAC_GOST94 | TLS1_PRF_GOST94,
-        0,
-        0,
-    },
-#endif
-    {
-        1,
-        "IANA-GOST2012-GOST8912-GOST8912",
-        NULL,
-        0x0300c102,
-        SSL_kGOST,
-        SSL_aGOST12 | SSL_aGOST01,
-        SSL_eGOST2814789CNT12,
-        SSL_GOST89MAC12,
-        TLS1_VERSION,
-        TLS1_2_VERSION,
-        0,
-        0,
-        SSL_HIGH,
-        SSL_HANDSHAKE_MAC_GOST12_256 | TLS1_PRF_GOST12_256 | TLS1_STREAM_MAC,
-        256,
-        256,
-    },
-    {
-        1,
-        "LEGACY-GOST2012-GOST8912-GOST8912",
-        NULL,
-        0x0300ff85,
-        SSL_kGOST,
-        SSL_aGOST12 | SSL_aGOST01,
-        SSL_eGOST2814789CNT12,
-        SSL_GOST89MAC12,
-        TLS1_VERSION,
-        TLS1_2_VERSION,
-        0,
-        0,
-        SSL_HIGH,
-        SSL_HANDSHAKE_MAC_GOST12_256 | TLS1_PRF_GOST12_256 | TLS1_STREAM_MAC,
-        256,
-        256,
-    },
-#ifndef OPENSSL_NO_INTEGRITY_ONLY_CIPHERS
-    {
-        1,
-        "GOST2012-NULL-GOST12",
-        NULL,
-        0x0300ff87,
-        SSL_kGOST,
-        SSL_aGOST12 | SSL_aGOST01,
-        SSL_eNULL,
-        SSL_GOST12_256,
-        TLS1_VERSION,
-        TLS1_2_VERSION,
-        0,
-        0,
-        SSL_STRONG_NONE,
-        SSL_HANDSHAKE_MAC_GOST12_256 | TLS1_PRF_GOST12_256 | TLS1_STREAM_MAC,
-        0,
-        0,
-    },
-#endif
-    {
-        1,
-        "GOST2012-KUZNYECHIK-KUZNYECHIKOMAC",
-        NULL,
-        0x0300C100,
-        SSL_kGOST18,
-        SSL_aGOST12,
-        SSL_KUZNYECHIK,
-        SSL_KUZNYECHIKOMAC,
-        TLS1_2_VERSION,
-        TLS1_2_VERSION,
-        0,
-        0,
-        SSL_HIGH,
-        SSL_HANDSHAKE_MAC_GOST12_256 | TLS1_PRF_GOST12_256 | TLS1_TLSTREE,
-        256,
-        256,
-    },
-    {
-        1,
-        "GOST2012-MAGMA-MAGMAOMAC",
-        NULL,
-        0x0300C101,
-        SSL_kGOST18,
-        SSL_aGOST12,
-        SSL_MAGMA,
-        SSL_MAGMAOMAC,
-        TLS1_2_VERSION,
-        TLS1_2_VERSION,
-        0,
-        0,
-        SSL_HIGH,
-        SSL_HANDSHAKE_MAC_GOST12_256 | TLS1_PRF_GOST12_256 | TLS1_TLSTREE,
-        256,
-        256,
-    },
-#endif /* OPENSSL_NO_GOST */
-
     {
         1,
         SSL3_TXT_RSA_IDEA_128_SHA,
@@ -4942,9 +4808,6 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
 
 int ssl3_get_req_cert_type(SSL_CONNECTION *s, WPACKET *pkt)
 {
-#ifndef OPENSSL_NO_GOST
-    uint32_t alg_k;
-#endif
     uint32_t alg_a = 0;
 
     /* If we have custom certificate types set, use them */
@@ -4952,23 +4815,6 @@ int ssl3_get_req_cert_type(SSL_CONNECTION *s, WPACKET *pkt)
         return WPACKET_memcpy(pkt, s->cert->ctype, s->cert->ctype_len);
     /* Get mask of algorithms disabled by signature list */
     ssl_set_sig_mask(&alg_a, s, SSL_SECOP_SIGALG_MASK);
-
-#ifndef OPENSSL_NO_GOST
-    alg_k = s->s3.tmp.new_cipher->algorithm_mkey;
-
-    if (s->version >= TLS1_VERSION && (alg_k & SSL_kGOST))
-        if (!WPACKET_put_bytes_u8(pkt, TLS_CT_GOST01_SIGN)
-            || !WPACKET_put_bytes_u8(pkt, TLS_CT_GOST12_IANA_SIGN)
-            || !WPACKET_put_bytes_u8(pkt, TLS_CT_GOST12_IANA_512_SIGN)
-            || !WPACKET_put_bytes_u8(pkt, TLS_CT_GOST12_LEGACY_SIGN)
-            || !WPACKET_put_bytes_u8(pkt, TLS_CT_GOST12_LEGACY_512_SIGN))
-            return 0;
-
-    if (s->version >= TLS1_2_VERSION && (alg_k & SSL_kGOST18))
-        if (!WPACKET_put_bytes_u8(pkt, TLS_CT_GOST12_IANA_SIGN)
-            || !WPACKET_put_bytes_u8(pkt, TLS_CT_GOST12_IANA_512_SIGN))
-            return 0;
-#endif
 
     if (!(alg_a & SSL_aRSA) && !WPACKET_put_bytes_u8(pkt, SSL3_CT_RSA_SIGN))
         return 0;

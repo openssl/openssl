@@ -625,12 +625,7 @@ int tls_collect_extensions(SSL_CONNECTION *s, PACKET *packet,
             && type != TLSEXT_TYPE_cookie
             && type != TLSEXT_TYPE_renegotiate
             && type != TLSEXT_TYPE_signed_certificate_timestamp
-            && (s->ext.extflags[idx] & SSL_EXT_FLAG_SENT) == 0
-#ifndef OPENSSL_NO_GOST
-            && !((context & SSL_EXT_TLS1_2_SERVER_HELLO) != 0
-                && type == TLSEXT_TYPE_cryptopro_bug)
-#endif
-        ) {
+            && (s->ext.extflags[idx] & SSL_EXT_FLAG_SENT) == 0) {
             SSLfatal(s, SSL_AD_UNSUPPORTED_EXTENSION,
                 SSL_R_UNSOLICITED_EXTENSION);
             goto err;

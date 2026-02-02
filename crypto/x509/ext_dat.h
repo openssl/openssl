@@ -23,8 +23,6 @@ extern const X509V3_EXT_METHOD ossl_v3_addr, ossl_v3_asid;
 extern const X509V3_EXT_METHOD ossl_v3_ct_scts[3];
 extern const X509V3_EXT_METHOD ossl_v3_tls_feature;
 extern const X509V3_EXT_METHOD ossl_v3_ext_admission;
-extern const X509V3_EXT_METHOD ossl_v3_utf8_list[1];
-extern const X509V3_EXT_METHOD ossl_v3_issuer_sign_tool;
 extern const X509V3_EXT_METHOD ossl_v3_group_ac;
 extern const X509V3_EXT_METHOD ossl_v3_soa_identifier;
 extern const X509V3_EXT_METHOD ossl_v3_no_assertion;

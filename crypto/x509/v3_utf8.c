@@ -14,17 +14,6 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
-/*
- * Subject Sign Tool (1.2.643.100.111) The name of the tool used to signs the subject (UTF8String)
- * This extension is required to obtain the status of a qualified certificate at Russian Federation.
- * RFC-style description is available here: https://tools.ietf.org/html/draft-deremin-rfc4491-bis-04#section-5
- * Russian Federal Law 63 "Digital Sign" is available here:  http://www.consultant.ru/document/cons_doc_LAW_112701/
- */
-
-const X509V3_EXT_METHOD ossl_v3_utf8_list[1] = {
-    EXT_UTF8STRING(NID_subjectSignTool),
-};
-
 char *i2s_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
     ASN1_UTF8STRING *utf8)
 {
