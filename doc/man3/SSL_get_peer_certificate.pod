@@ -21,6 +21,9 @@ version value, see L<openssl_user_macros(7)>:
 
 =head1 DESCRIPTION
 
+SSL_get_peer_certificate() is deprecated. Use SSL_get0_peer_certificate() or
+SSL_get1_peer_certificate() instead.
+
 These functions return a pointer to the X509 certificate the
 peer presented. If the peer did not present a certificate, NULL is returned.
 

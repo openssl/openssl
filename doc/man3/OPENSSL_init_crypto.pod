@@ -36,8 +36,7 @@ application is multi-threaded), and these resources must be freed prior to the
 thread closing.
 
 As of version 1.1.0 OpenSSL will automatically allocate all resources that it
-needs so no explicit initialisation is required. Similarly it will also
-automatically deinitialise as required.
+needs so no explicit initialisation is required.
 
 However, there may be situations when explicit initialisation is desirable or
 needed, for example when some nondefault initialisation is required. The
@@ -137,16 +136,21 @@ OPENSSL_init_crypto(). For example:
                      | OPENSSL_INIT_NO_ADD_ALL_DIGESTS, NULL);
 
 The OPENSSL_cleanup() function deinitialises OpenSSL (both libcrypto
-and libssl). All resources allocated by OpenSSL are freed. Typically there
-should be no need to call this function directly as it is initiated
-automatically on application exit. This is done via the standard C library
-atexit() function. In the event that the application will close in a manner
-that will not call the registered atexit() handlers then the application should
-call OPENSSL_cleanup() directly. Developers of libraries using OpenSSL
-are discouraged from calling this function and should instead, typically, rely
-on auto-deinitialisation. This is to avoid error conditions where both an
-application and a library it depends on both use OpenSSL, and the library
-deinitialises it before the application has finished using it.
+and libssl). All resources allocated by OpenSSL are freed.  An application
+using the OpenSSL library may call this function to free library resources
+prior to application exit.  Note that there are some
+use cases in which subordinate libraries may also use OpenSSL and may not
+be finished with their references to it at application exit time (for example,
+if a subordinate library attempts to free an OpenSSL resource from a library
+destructor, calling OPENSSL_cleanup() may result in crashes or other unexpected
+behavior). If this is likely to be a problem then it is recommended that OPENSSL_cleanup()
+not be called, allowing the operating system to reap all library resources on process
+exit.
+
+Note, this may, on some leak detection tools (like valgrind) result in
+reports that indicate reachable memory remains on exit in certain
+configurations.  As these are not formally leaks, it is recommended that
+reachable memory reports be suppressed when running such tools.
 
 Once OPENSSL_cleanup() has been called the library cannot be reinitialised.
 Attempts to call OPENSSL_init_crypto() will fail and an ERR_R_INIT_FAIL error

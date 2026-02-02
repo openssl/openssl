@@ -184,3 +184,19 @@ To randomise the test ordering:
 To run the tests using the order defined by the random seed `42`:
 
     $ make OPENSSL_TEST_RAND_ORDER=42 test
+
+Running Tests under Valgrind
+----------------------------
+
+Normally, testing for memory leaks is accomplished by building Openssl with the
+enable-asan option, which links the library with the compiler asan library.  However
+some people prefer to use valgrind to do dynamic instrumentation for memory leak checking.
+OpenSSL also offers a suppression file to suppress reachable memory leaks, that are often
+inappropriately considered to be true leaks.  In order to maintain and test this
+suppression file, OpenSSL tests can be run under valgrind automatically.
+
+To run the test suite under valgrind:
+
+    $ make OSSL_USE_VALGRIND=yes test
+
+Doing so will create valgrind.log file for each test under the test-runs subdirectory.
