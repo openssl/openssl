@@ -138,9 +138,7 @@ and RSA_get_method() return pointers to the respective RSA_METHODs.
 
 RSA_set_default_method() returns no value.
 
-RSA_set_method() returns a pointer to the old RSA_METHOD implementation
-that was replaced. The return type may be replaced with a B<void>
-declaration in a future release.
+RSA_set_method() returns 1 for success. It always succeeds.
 
 RSA_new_method() returns NULL and sets an error code that can be obtained
 by L<ERR_get_error(3)> if the allocation fails. Otherwise
