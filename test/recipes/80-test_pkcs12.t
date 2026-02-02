@@ -56,7 +56,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => $no_fips ? 53 : 59;
+plan tests => $no_fips ? 58 : 69;
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -199,7 +199,7 @@ for my $instance (sort keys %pbmac1_tests) {
                 "-passin", "pass:1234"], stderr => "${pbmac1_id}_info.txt")),
         "test_export_pkcs12_${pbmac1_id}_info");
         open DATA, "${pbmac1_id}_info.txt";
-        my @match = grep /$lookup/, <DATA>;
+        @match = grep /$lookup/, <DATA>;
         close DATA;
         ok(scalar @match > 0 ? 1 : 0, "test_export_pkcs12_${pbmac1_id}_info");
     }
@@ -360,5 +360,119 @@ ok(run(test(["pkcs12_api_test",
              "-has-key", 1,
              "-has-cert", 1,
              ])), "Test pkcs12_parse()");
+
+# Test against CVE-2025-69421, octet parameter is expected, but
+# NULL is being received and dereferenced
+
+unless ($no_fips) {
+    my $file = "sha256mac_cert.oct-is-null.p12";
+    my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+    with({ exit_checker => sub { return shift == 1; } },
+        sub {
+            my @output = run(app(["openssl", "storeutl", "-certs", "-text",
+                                  "-passin", "pass:RedHatEnterpriseLinux10.0", $path]),
+                                  capture => 1, stderr => "outerr.txt");
+            open DATA, "outerr.txt";
+            my @match = grep /PKCS12_item_decrypt_d2i_ex:passed a null parameter/, <DATA>;
+            close DATA;
+            ok(scalar @match > 0 ? 0 : 1, "Test against CVE-2025-69421 - null parameter, sha256mac");
+            }
+        );
+}
+
+{
+    my $file = "pbmac1_cert.oct-is-null.p12";
+    my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+     with({ exit_checker => sub { return shift == 1; } },
+        sub {
+            my @output = run(app(["openssl", "storeutl", "-certs", "-text",
+                                  "-passin", "pass:RedHatEnterpriseLinux10.0", $path]),
+                                  capture => 1, stderr => "outerr.txt");
+            open DATA, "outerr.txt";
+            my @match = grep /PKCS12_item_decrypt_d2i_ex:passed a null parameter/, <DATA>;
+            close DATA;
+            ok(scalar @match > 0 ? 0 : 1, "Test against CVE-2025-69421 - null parameter, pbmac1");
+            }
+        );
+}
+
+# Test against CVE-2026-22795 , missing ASN1_TYPE validation in cert
+unless ($no_fips) {
+    for my $file ("BOOLEAN-in-friendlyName-of-cert-pkcs12-sha256mac.p12",
+                  "BOOLEAN-in-localKeyID-of-cert-pkcs12-sha256mac.p12"
+                  )
+    {
+        my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+        with({ exit_checker => sub { return shift == 1; } },
+        sub {
+            my @output = run(app(["openssl", "storeutl", "-certs", "-text",
+                        "-passin", "pass:RedHatEnterpriseLinux10.0", $path]),
+                        capture => 1, stderr => "outerr.txt");
+            open DATA, "outerr.txt";
+            my @match = grep /:PKCS12_parse:parse error:/, <DATA>;
+            close DATA;
+            ok(scalar @match > 0 ? 0 : 1, "Test against CVE-2026-22795 , missing ASN1_TYPE validation in cert, sha256mac");
+            }
+        );
+    }
+}
+
+for my $file ("BOOLEAN-in-friendlyName-of-cert-pbmac1.p12",
+              "BOOLEAN-in-localKeyID-of-cert-pbmac1.p12"
+              )
+{
+    my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+    with({ exit_checker => sub { return shift == 1; } },
+        sub {
+            my @output = run(app(["openssl", "storeutl", "-certs", "-text",
+                        "-passin", "pass:RedHatEnterpriseLinux10.0", $path]),
+                        capture => 1, stderr => "outerr.txt");
+            open DATA, "outerr.txt";
+            my @match = grep /:PKCS12_parse:parse error:/, <DATA>;
+            close DATA;
+            ok(scalar @match > 0 ? 0 : 1, "Test against CVE-2026-22795 , missing ASN1_TYPE validation in cert, pbmac1");
+        }
+    );
+}
+
+# Test against CVE-2026-22795, missing ASN1_TYPE validation in keys
+unless ($no_fips) {
+    for my $file ("BOOLEAN-in-friendlyName-of-key-pkcs12-sha256mac.p12",
+                  "BOOLEAN-in-localKeyID-of-key-pkcs12-sha256mac.p12"
+                  )
+    {
+        my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+        with({ exit_checker => sub { return shift == 1; } },
+            sub {
+
+                my @output = run(app(["openssl", "storeutl", "-keys", "-text",
+                            "-passin", "pass:RedHatEnterpriseLinux10.0", $path]),
+                            capture => 1, stderr => "outerr.txt");
+                open DATA, "outerr.txt";
+                my @match = grep /:PKCS12_parse:parse error:/, <DATA>;
+                close DATA;
+                ok(scalar @match > 0 ? 0 : 1, "Test against CVE-2026-22795 , missing ASN1_TYPE validation in keys, sha256mac");
+            }
+        );
+    }
+}
+
+for my $file ("BOOLEAN-in-friendlyName-of-key-pbmac1.p12",
+              "BOOLEAN-in-localKeyID-of-key-pbmac1.p12"
+              )
+{
+    my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
+    with({ exit_checker => sub { return shift == 1; } },
+        sub {
+            my @output = run(app(["openssl", "storeutl", "-keys", "-text",
+                        "-passin", "pass:RedHatEnterpriseLinux10.0", $path]),
+                        capture => 1, stderr => "outerr.txt");
+            open DATA, "outerr.txt";
+            my @match = grep /:PKCS12_parse:parse error:/, <DATA>;
+            close DATA;
+            ok(scalar @match > 0 ? 0 : 1, "Test against CVE-2026-22795 , missing ASN1_TYPE validation in keys, pbmac1");
+        }
+    );
+}
 
 SetConsoleOutputCP($savedcp) if (defined($savedcp));
