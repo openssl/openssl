@@ -2,31 +2,58 @@
 
 =head1 NAME
 
-DTLS_get_data_mtu - Get maximum data payload size
+DTLS_get_data_mtu, DTLS_set_link_mtu, DTLS_get_link_min_mtu, SSL_set_mtu
+- DTLS MTU handling
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
  size_t DTLS_get_data_mtu(const SSL *ssl);
+ long DTLS_set_link_mtu(SSL *ssl, long mtu);
+ long DTLS_get_link_min_mtu(SSL *ssl);
+ long SSL_set_mtu(SSL *ssl, long mtu);
 
 =head1 DESCRIPTION
 
-This function obtains the maximum data payload size for the established
-DTLS connection B<ssl>, based on the DTLS record MTU and the overhead
+DTLS_get_data_mtu() obtains the maximum data payload size for the established
+DTLS connection I<ssl>, based on the DTLS record MTU and the overhead
 of the DTLS record header, encryption and authentication currently in use.
+
+DTLS_set_link_mtu() sets the link layer MTU for the DTLS connection I<ssl>
+to I<mtu>. This is the maximum size of a complete DTLS record including
+headers that can be transmitted over the underlying transport. OpenSSL uses
+this value to determine how to fragment handshake messages and limit the
+size of application data records.
+
+DTLS_get_link_min_mtu() returns the minimum link MTU that OpenSSL will use
+for the DTLS connection I<ssl>. This is the smallest MTU that still allows
+DTLS to function properly.
+
+SSL_set_mtu() is similar to DTLS_set_link_mtu() but sets the maximum
+transmission unit for the SSL connection I<ssl>. For DTLS connections, this
+effectively sets the link MTU. This function is provided for compatibility.
 
 =head1 RETURN VALUES
 
-Returns the maximum data payload size on success, or 0 on failure.
+DTLS_get_data_mtu() returns the maximum data payload size on success, or 0
+on failure.
+
+DTLS_set_link_mtu() and SSL_set_mtu() return 1 on success or a value <= 0
+on failure.
+
+DTLS_get_link_min_mtu() returns the minimum link MTU value.
 
 =head1 HISTORY
 
-The DTLS_get_data_mtu() function was added in OpenSSL 1.1.1.
+DTLS_get_data_mtu() was added in OpenSSL 1.1.1.
+
+SSL_set_mtu(), DTLS_set_link_mtu(), and DTLS_get_link_min_mtu() were added
+in OpenSSL 1.0.2.
 
 =head1 COPYRIGHT
 
-Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
