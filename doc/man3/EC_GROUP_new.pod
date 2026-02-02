@@ -22,7 +22,9 @@ EC_GROUP_get_curve_GFp,
 EC_GROUP_set_curve_GF2m,
 EC_GROUP_get_curve_GF2m,
 EC_get_builtin_curves,
-OSSL_EC_curve_nid2name -
+OSSL_EC_curve_nid2name,
+EC_curve_nid2nist,
+EC_curve_nist2nid -
 Functions for creating and destroying EC_GROUP objects
 
 =head1 SYNOPSIS
@@ -57,6 +59,8 @@ Functions for creating and destroying EC_GROUP objects
 
  size_t EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems);
  const char *OSSL_EC_curve_nid2name(int nid);
+ const char *EC_curve_nid2nist(int nid);
+ int EC_curve_nist2nid(const char *name);
 
 The following functions have been deprecated since OpenSSL 3.0, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
@@ -188,7 +192,15 @@ in the EC_GROUP is public anyway, this function is unnecessary.
 Its use can be safely replaced with EC_GROUP_free().
 If I<group> is NULL nothing is done.
 
-OSSL_EC_curve_nid2name() converts a curve I<nid> into the corresponding name.
+OSSL_EC_curve_nid2name() converts a curve I<nid> into the corresponding
+OpenSSL name.
+
+EC_curve_nid2nist() converts a curve I<nid> into the corresponding NIST name
+(e.g., "P-256", "P-384", "P-521"). This is useful when interacting with
+systems that use NIST curve names rather than OpenSSL curve names.
+
+EC_curve_nist2nid() performs the reverse conversion, taking a NIST curve
+I<name> (e.g., "P-256") and returning the corresponding OpenSSL NID.
 
 =head1 RETURN VALUES
 
@@ -203,6 +215,12 @@ EC_GROUP_get_curve_GF2m() return 1 on success or 0 on error.
 
 OSSL_EC_curve_nid2name() returns a character string constant, or NULL on error.
 
+EC_curve_nid2nist() returns a character string constant containing the NIST
+name, or NULL if the curve does not have a NIST name.
+
+EC_curve_nist2nid() returns the NID of the curve, or B<NID_undef> if the
+name is not recognized as a NIST curve name.
+
 =head1 SEE ALSO
 
 L<crypto(7)>, L<EC_GROUP_copy(3)>,
@@ -211,6 +229,8 @@ L<EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)>,
 L<OSSL_LIB_CTX(3)>, L<EVP_PKEY-EC(7)>
 
 =head1 HISTORY
+
+EC_curve_nid2nist() and EC_curve_nist2nid() were added in OpenSSL 1.1.0.
 
 EC_GROUP_to_params() was added in OpenSSL 3.2.
 
@@ -238,7 +258,7 @@ instead.
 
 =head1 COPYRIGHT
 
-Copyright 2013-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
