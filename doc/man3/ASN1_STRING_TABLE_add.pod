@@ -3,7 +3,8 @@
 =head1 NAME
 
 ASN1_STRING_TABLE, ASN1_STRING_TABLE_add, ASN1_STRING_TABLE_get,
-ASN1_STRING_TABLE_cleanup - ASN1_STRING_TABLE manipulation functions
+ASN1_STRING_TABLE_cleanup, ASN1_add_stable_module
+- ASN1_STRING_TABLE manipulation functions
 
 =head1 SYNOPSIS
 
@@ -15,6 +16,8 @@ ASN1_STRING_TABLE_cleanup - ASN1_STRING_TABLE manipulation functions
                            unsigned long mask, unsigned long flags);
  ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid);
  void ASN1_STRING_TABLE_cleanup(void);
+
+ void ASN1_add_stable_module(void);
 
 =head1 DESCRIPTION
 
@@ -40,6 +43,11 @@ on I<nid>. It will search the local table first, then the standard one.
 ASN1_STRING_TABLE_cleanup() frees all B<ASN1_STRING_TABLE> items added
 by ASN1_STRING_TABLE_add().
 
+ASN1_add_stable_module() registers the "stbl_section" configuration module
+which enables the use of L<config(5)/ASN1 String Table Configuration Module>
+in OpenSSL configuration files to customize ASN.1 string table entries.
+This function is automatically called by L<OPENSSL_load_builtin_modules(3)>.
+
 =head1 RETURN VALUES
 
 ASN1_STRING_TABLE_add() returns 1 on success, 0 if an error occurred.
@@ -49,13 +57,15 @@ or NULL if nothing is found.
 
 ASN1_STRING_TABLE_cleanup() does not return a value.
 
+ASN1_add_stable_module() does not return a value.
+
 =head1 SEE ALSO
 
-L<ERR_get_error(3)>
+L<config(5)>, L<OPENSSL_load_builtin_modules(3)>, L<ERR_get_error(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
