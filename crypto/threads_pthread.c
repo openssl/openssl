@@ -95,7 +95,7 @@
  * implementation
  * Likewise is there a problem with the glibc implementation on riscv.
  */
-#if defined(PTHREAD_RWLOCK_INITIALIZER) && !defined(_KLT_MODEL_) \
+#if defined(PTHREAD_RWLOCK_INITIALIZER) && !defined(_KLT_MODEL_) && !defined(_PUT_MODEL_) \
     && !defined(__riscv)
 #define USE_RWLOCK
 #endif
@@ -852,6 +852,7 @@ static ossl_inline int ossl_rwlock_unlock(pthread_rwlock_t *lock)
 
 #else /* !REPORT_RWLOCK_CONTENTION */
 
+#if defined(USE_RWLOCK)
 static ossl_inline void ossl_init_rwlock_contention_data(void)
 {
 }
@@ -870,6 +871,7 @@ static ossl_inline int ossl_rwlock_unlock(pthread_rwlock_t *rwlock)
 {
     return pthread_rwlock_unlock(rwlock);
 }
+#endif /* USE_RWLOCK */
 #endif /* REPORT_RWLOCK_CONTENTION */
 
 CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
