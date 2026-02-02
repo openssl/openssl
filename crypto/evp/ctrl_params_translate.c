@@ -2445,6 +2445,13 @@ static const struct translation_st evp_pkey_ctx_translations[] = {
         EVP_PKEY_CTRL_GET_MD, NULL, NULL,
         OSSL_SIGNATURE_PARAM_DIGEST, OSSL_PARAM_UTF8_STRING, fix_md },
 
+    { OSSL_ACTION_SET, -1, -1, EVP_PKEY_OP_TYPE_CRYPT,
+        EVP_PKEY_CTRL_SET_IV, NULL, NULL,
+        OSSL_EXCHANGE_PARAM_KDF_UKM, OSSL_PARAM_OCTET_STRING, NULL },
+    { OSSL_ACTION_GET, -1, -1, EVP_PKEY_OP_TYPE_CRYPT,
+        EVP_PKEY_CTRL_SET_IV, NULL, NULL,
+        OSSL_EXCHANGE_PARAM_KDF_UKM, OSSL_PARAM_OCTET_PTR, NULL },
+
     /*-
      * ECX
      * ===
