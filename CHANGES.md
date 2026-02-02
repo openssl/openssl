@@ -47,6 +47,15 @@ OpenSSL 4.0
 
    *Bob Beck*
 
+ * Made X509_ATTRIBUTE accessor functions const-correct. The functions
+   X509_ATTRIBUTE_get0_object(), X509_ATTRIBUTE_get0_type(), and
+   X509_ATTRIBUTE_get0_data() now accept `const X509_ATTRIBUTE *` and
+   return const pointers. Related PKCS12 functions PKCS12_get_attr_gen(),
+   PKCS12_get_attr(), and PKCS8_get_attr() have also been updated to
+   return `const ASN1_TYPE *`.
+
+   *kovan*
+
  * Added CSHAKE as per [SP 800-185]
 
    *Shane Lontis*
