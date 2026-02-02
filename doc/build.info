@@ -2867,6 +2867,10 @@ DEPEND[html/man3/TS_RESP_CTX_new.html]=man3/TS_RESP_CTX_new.pod
 GENERATE[html/man3/TS_RESP_CTX_new.html]=man3/TS_RESP_CTX_new.pod
 DEPEND[man/man3/TS_RESP_CTX_new.3]=man3/TS_RESP_CTX_new.pod
 GENERATE[man/man3/TS_RESP_CTX_new.3]=man3/TS_RESP_CTX_new.pod
+DEPEND[html/man3/TS_STATUS_INFO_get0_status.html]=man3/TS_STATUS_INFO_get0_status.pod
+GENERATE[html/man3/TS_STATUS_INFO_get0_status.html]=man3/TS_STATUS_INFO_get0_status.pod
+DEPEND[man/man3/TS_STATUS_INFO_get0_status.3]=man3/TS_STATUS_INFO_get0_status.pod
+GENERATE[man/man3/TS_STATUS_INFO_get0_status.3]=man3/TS_STATUS_INFO_get0_status.pod
 DEPEND[html/man3/TS_VERIFY_CTX.html]=man3/TS_VERIFY_CTX.pod
 GENERATE[html/man3/TS_VERIFY_CTX.html]=man3/TS_VERIFY_CTX.pod
 DEPEND[man/man3/TS_VERIFY_CTX.3]=man3/TS_VERIFY_CTX.pod
@@ -3762,6 +3766,7 @@ html/man3/SSL_stream_reset.html \
 html/man3/SSL_want.html \
 html/man3/SSL_write.html \
 html/man3/TS_RESP_CTX_new.html \
+html/man3/TS_STATUS_INFO_get0_status.html \
 html/man3/TS_VERIFY_CTX.html \
 html/man3/UI_STRING.html \
 html/man3/UI_UTIL_read_pw.html \
@@ -4434,6 +4439,7 @@ man/man3/SSL_stream_reset.3 \
 man/man3/SSL_want.3 \
 man/man3/SSL_write.3 \
 man/man3/TS_RESP_CTX_new.3 \
+man/man3/TS_STATUS_INFO_get0_status.3 \
 man/man3/TS_VERIFY_CTX.3 \
 man/man3/UI_STRING.3 \
 man/man3/UI_UTIL_read_pw.3 \
