@@ -35,7 +35,7 @@ OpenSSL 4.0
  * ASN1_STRING has been made opaque
 
    Access to values from ASN1_STRING and related types should be done with the
-   appropritate accessor functions.
+   appropriate accessor functions.
 
    *Bob Beck *
 
