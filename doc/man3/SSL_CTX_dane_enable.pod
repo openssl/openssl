@@ -4,8 +4,9 @@
 
 SSL_CTX_dane_enable, SSL_CTX_dane_mtype_set, SSL_dane_enable,
 SSL_dane_tlsa_add, SSL_get0_dane_authority, SSL_get0_dane_tlsa,
-SSL_CTX_dane_set_flags, SSL_CTX_dane_clear_flags,
-SSL_dane_set_flags, SSL_dane_clear_flags
+SSL_get0_dane, SSL_CTX_dane_set_flags, SSL_CTX_dane_clear_flags,
+SSL_dane_set_flags, SSL_dane_clear_flags,
+X509_STORE_CTX_set0_dane
 - enable DANE TLS authentication of the remote TLS server in the local
 TLS client
 
@@ -23,10 +24,15 @@ TLS client
  int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
                         uint8_t *mtype, const unsigned char **data,
                         size_t *dlen);
+ SSL_DANE *SSL_get0_dane(SSL *ssl);
  unsigned long SSL_CTX_dane_set_flags(SSL_CTX *ctx, unsigned long flags);
  unsigned long SSL_CTX_dane_clear_flags(SSL_CTX *ctx, unsigned long flags);
  unsigned long SSL_dane_set_flags(SSL *ssl, unsigned long flags);
  unsigned long SSL_dane_clear_flags(SSL *ssl, unsigned long flags);
+
+ #include <openssl/x509_vfy.h>
+
+ void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, SSL_DANE *dane);
 
 =head1 DESCRIPTION
 
@@ -132,6 +138,23 @@ The B<data> parameter is set to a short-term internal-copy of the associated
 data field and must not be freed by the application.
 Applications that need long-term access to this field need to copy the content.
 
+SSL_get0_dane() returns a pointer to the B<SSL_DANE> structure associated with
+the SSL connection.
+This structure contains the DANE verification state and can be passed to
+X509_STORE_CTX_set0_dane() for use in custom certificate verification callbacks.
+The B<SSL_DANE> type is an opaque structure that holds DANE-related data
+including the TLSA records, matching information, and verification flags.
+
+X509_STORE_CTX_set0_dane() associates a B<SSL_DANE> structure with an
+X509_STORE_CTX.
+This allows the X509 certificate verification to use DANE/TLSA authentication
+during the chain verification process.
+This function is typically used when implementing a custom certificate
+verification callback via L<SSL_CTX_set_cert_verify_callback(3)>.
+The B<dane> pointer is stored directly without copying; the caller must
+ensure the B<SSL_DANE> structure remains valid for the lifetime of the
+X509_STORE_CTX.
+
 SSL_CTX_dane_set_flags() and SSL_dane_set_flags() can be used to enable
 optional DANE verification features.
 SSL_CTX_dane_clear_flags() and SSL_dane_clear_flags() can be used to disable
@@ -176,6 +199,12 @@ negative value when DANE authentication failed or was not enabled, a
 nonnegative value indicates the chain depth at which the TLSA record matched a
 chain certificate, or the depth of the top-most certificate, when the TLSA
 record is a full public key that is its signer.
+
+SSL_get0_dane() returns a pointer to the B<SSL_DANE> structure, or NULL if
+the connection is not associated with a valid SSL_CONNECTION (e.g., for QUIC
+connections).
+
+X509_STORE_CTX_set0_dane() does not return a value.
 
 The functions SSL_CTX_dane_set_flags(), SSL_CTX_dane_clear_flags(),
 SSL_dane_set_flags() and SSL_dane_clear_flags() return the B<flags> in effect
