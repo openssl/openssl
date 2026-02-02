@@ -172,10 +172,12 @@ The following is a list of all permitted cipher strings and their meanings.
 
 =item B<COMPLEMENTOFDEFAULT>
 
-The ciphers included in B<ALL>, but not enabled by default. Currently
-this includes all RC4 and anonymous ciphers. Note that this rule does
-not cover B<eNULL>, which is not included by B<ALL> (use B<COMPLEMENTOFALL> if
-necessary). Note that RC4 based cipher suites are not built into OpenSSL by
+The ciphers included in B<ALL>, but not enabled by default. This includes
+anonymous ciphers, CCM and CCM8 mode ciphers, ARIA ciphers, CAMELLIA ciphers,
+and other cipher suites not considered suitable for general use.
+Note that this rule does not cover B<eNULL>, which is not included by B<ALL>
+(use B<COMPLEMENTOFALL> if necessary).
+Note that RC4 based cipher suites are not built into OpenSSL by
 default (see the enable-weak-ssl-ciphers option to Configure).
 
 =item B<ALL>
