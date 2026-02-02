@@ -10,23 +10,6 @@ CURLRC=~/testcase_curlrc
 # - SERVER_PARAMS contains user-supplied command line parameters
 # - CLIENT_PARAMS contains user-supplied command line parameters
 
-generate_outputs_http3() {
-    for i in $REQUESTS
-    do
-        OUTFILE=$(basename $i)
-        echo -e "--http3-only\n-o /downloads/$OUTFILE\n--url $i" >> $CURLRC
-        echo "--next" >> $CURLRC
-    done
-    # Remove the last --next
-    head -n -1 $CURLRC > $CURLRC.tmp
-    mv $CURLRC.tmp $CURLRC 
-}
-
-dump_curlrc() {
-    echo "Using curlrc:"
-    cat $CURLRC
-}
-
 if [ "$ROLE" == "client" ]; then
     # Wait for the simulator to start up.
     echo "Waiting for simulator"
@@ -36,10 +19,19 @@ if [ "$ROLE" == "client" ]; then
 
     case "$TESTCASE" in
     "http3")
-        echo -e "--verbose\n--parallel" >> $CURLRC
-        generate_outputs_http3
-        dump_curlrc
-        SSL_CERT_FILE=/certs/ca.pem curl --config $CURLRC || exit 1
+	    HOSTNAME=none
+	    for req in $REQUESTS
+	    do
+	        OUTFILE=$(basename $req)
+	        if [ "$HOSTNAME" == "none" ]
+                then
+                    HOSTNAME=$(printf "%s\n" "$req" | sed -ne 's,^https://\([^/:]*\).*,\1,p')
+                    HOSTPORT=$(printf "%s\n" "$req" | sed -ne 's,^https://[^:/]*:\([^/]*\).*,\1,p')
+                fi
+	        echo "/$OUTFILE" >> ./reqfile.txt
+	    done
+	    cat ./reqfile.txt
+        SSL_CERT_FILE=/certs/ca.pem ossl-nghttp3-demo $HOSTNAME:$HOSTPORT ./reqfile.txt /downloads || exit 1
         exit 0
         ;;
     "handshake"|"transfer"|"retry"|"ipv6")
