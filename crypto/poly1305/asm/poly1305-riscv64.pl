@@ -280,8 +280,6 @@ poly1305_emit:
     sw                      t6, 4(a1)          # h1
     sw                      a7, 8(a1)          # h2
     sw                      a3, 12(a1)         # h3
-    sw                      t5, 16(a1)         # h3
-    sw                      t5, 16(a1)         # h3
 
 
     ld                      s2, 0(sp)
