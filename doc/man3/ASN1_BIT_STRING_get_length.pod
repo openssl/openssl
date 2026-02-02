@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+ASN1_BIT_STRING_set1,
 ASN1_BIT_STRING_get_length - ASN1_BIT_STRING accessors
 
 =head1 SYNOPSIS
@@ -9,19 +10,36 @@ ASN1_BIT_STRING_get_length - ASN1_BIT_STRING accessors
   #include <openssl/asn1.h>
 
   int ASN1_BIT_STRING_get_length(const ASN1_BIT_STRING *bitstr, size_t *length, int *unused_bits);
+  int ASN1_BIT_STRING_set1(ASN1_BIT_STRING *bitstr, const uint8_t *data, size_t length, int unused_bits);
 
 =head1 DESCRIPTION
+
+The ASN.1 BIT STRING type holds a bit string of arbitrary bit length.
+In the distinguished encoding rules DER, its bits are encoded in
+groups of eight, leaving between zero and seven bits of the
+last octet unused. If there are unused bits, they must all be set to zero.
 
 ASN1_BIT_STRING_get_length() returns the number of octets in I<bitstr>
 containing bit values in I<length> and the number of unused bits in
 the last octet in I<unused_bits>. The value returned in
 I<unused_bits> is guaranteed to be between 0 and 7, inclusive.
 
+ASN1_BIT_STRING_set1() sets the type of I<bitstr> to
+I<V_ASN1_BIT_STRING> and its octets to the bits in the byte string
+I<data> of length I<length> octets, making sure that the last
+I<unused_bits> bits in the last byte are zero.
+
 =head1 RETURN VALUES
 
 ASN1_BIT_STRING_get_length() returns 1 on success or 0 if the encoding
 of I<bitstr> is internally inconsistent, or if one of I<bitstr>,
 I<length>, or I<unused_bits> is NULL.
+
+ASN1_BIT_STRING_set1() returns 1 on success or 0 if memory allocation
+fails or if I<bitstr> is NULL , I<length> is too large, I<length>is
+zero and I<unused_bits> is nonzero, I<unused_bits> is less than 0 or
+greater than 7, or any unused bit in the last octet of I<data> is
+nonzero.
 
 =head1 COPYRIGHT
 
