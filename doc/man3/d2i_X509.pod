@@ -251,7 +251,6 @@ i2d_ASN1_UNIVERSALSTRING,
 i2d_ASN1_UTCTIME,
 i2d_ASN1_UTF8STRING,
 i2d_ASN1_VISIBLESTRING,
-i2d_ASN1_bio_stream,
 i2d_ASRange,
 i2d_AUTHORITY_INFO_ACCESS,
 i2d_AUTHORITY_KEYID,
@@ -588,8 +587,7 @@ freed in the event of error and I<*a> is set to NULL.
 B<i2d_I<TYPE>>() returns the number of bytes successfully encoded or a negative
 value if an error occurs.
 
-B<i2d_I<TYPE>_bio>() and B<i2d_I<TYPE>_fp>(),
-as well as i2d_ASN1_bio_stream(),
+B<i2d_I<TYPE>_bio>() and B<i2d_I<TYPE>_fp>()
 return 1 for success and 0 if an error occurs.
 
 On error, these functions may record the error in the OpenSSL error queue.
