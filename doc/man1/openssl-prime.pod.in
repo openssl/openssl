@@ -36,7 +36,10 @@ Display an option summary.
 
 =item B<-hex>
 
-Enable hex format for output from prime generation or input to primality checking.
+When used with B<-generate>, output the generated prime in hexadecimal
+format instead of decimal. When checking primality, interpret the input
+numbers as hexadecimal instead of decimal. Note that the output when
+checking primality is always in hexadecimal regardless of this option.
 
 =item B<-in>
 
