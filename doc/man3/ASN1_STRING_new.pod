@@ -3,7 +3,7 @@
 =head1 NAME
 
 ASN1_STRING_new, ASN1_STRING_type_new, ASN1_STRING_free,
-ASN1_OCTET_STRING_new, ASN1_OCTET_STRING_free,
+ASN1_OCTET_STRING_new, ASN1_OCTET_STRING_free, ASN1_OCTET_STRING_dup,
 ASN1_BIT_STRING_new, ASN1_BIT_STRING_free,
 ASN1_ENUMERATED_new, ASN1_ENUMERATED_free,
 ASN1_UTF8STRING_new, ASN1_UTF8STRING_free,
@@ -26,6 +26,7 @@ ASN1_BMPSTRING_new, ASN1_BMPSTRING_free
 
  ASN1_OCTET_STRING *ASN1_OCTET_STRING_new(void);
  void ASN1_OCTET_STRING_free(ASN1_OCTET_STRING *a);
+ ASN1_OCTET_STRING *ASN1_OCTET_STRING_dup(const ASN1_OCTET_STRING *a);
  ASN1_BIT_STRING *ASN1_BIT_STRING_new(void);
  void ASN1_BIT_STRING_free(ASN1_BIT_STRING *a);
  ASN1_ENUMERATED *ASN1_ENUMERATED_new(void);
@@ -58,6 +59,9 @@ type I<type>.
 ASN1_STRING_free() frees up I<a>.
 If I<a> is NULL nothing is done.
 
+ASN1_OCTET_STRING_dup() is equivalent to ASN1_STRING_dup() and is provided
+for type safety when working with B<ASN1_OCTET_STRING> values.
+
 =head1 NOTES
 
 Almost all ASN.1 types in OpenSSL are represented as an B<ASN1_STRING>
@@ -77,7 +81,7 @@ Type-specific utility functions also exist for common operations:
 
 =item *
 
-B<ASN1_OCTET_STRING_set>, B<ASN1_OCTET_STRING_cmp>, B<ASN1_OCTET_STRING_dup>
+B<ASN1_OCTET_STRING_set>, B<ASN1_OCTET_STRING_cmp>
 (see L<ASN1_STRING_length(3)>)
 
 =item *
@@ -99,8 +103,8 @@ B<ASN1_ENUMERATED_set>, B<ASN1_ENUMERATED_get>, etc.
 
 =head1 RETURN VALUES
 
-ASN1_STRING_new() and ASN1_STRING_type_new() return a valid
-B<ASN1_STRING> structure or NULL if an error occurred.
+ASN1_STRING_new(), ASN1_STRING_type_new(), and ASN1_OCTET_STRING_dup()
+return a valid B<ASN1_STRING> structure or NULL if an error occurred.
 
 ASN1_STRING_free() does not return a value.
 
