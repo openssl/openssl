@@ -545,7 +545,8 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
     }
 #ifndef OPENSSL_NO_GOST
     {
-        int pktype = EVP_PKEY_get_id(pkey);
+        const char *typename = EVP_PKEY_get0_type_name(pkey);
+        int pktype = OBJ_txt2nid(typename);
         if (pktype == NID_id_GostR3410_2001
             || pktype == NID_id_GostR3410_2012_256
             || pktype == NID_id_GostR3410_2012_512) {
