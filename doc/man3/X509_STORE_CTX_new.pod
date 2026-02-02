@@ -19,7 +19,8 @@ X509_STORE_CTX_verify_fn,
 X509_STORE_CTX_set_ocsp_resp,
 X509_STORE_CTX_set_purpose,
 X509_STORE_CTX_set_trust,
-X509_STORE_CTX_purpose_inherit
+X509_STORE_CTX_purpose_inherit,
+X509_STORE_CTX_set_time
 - X509_STORE_CTX initialisation
 
 =head1 SYNOPSIS
@@ -62,6 +63,9 @@ X509_STORE_CTX_purpose_inherit
  int X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust);
  int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
                                     int purpose, int trust);
+
+ void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, unsigned long flags,
+                              time_t t);
 
 =head1 DESCRIPTION
 
@@ -274,6 +278,14 @@ the default trust id for I<purpose>. If the default trust id for the
 purpose is I<X509_TRUST_DEFAULT> and I<trust> is 0 then the default trust id
 associated with the I<def_purpose> value is used for the trust setting instead.
 
+X509_STORE_CTX_set_time() sets the verification time in I<ctx> to I<t>.
+This is a convenience function that calls L<X509_VERIFY_PARAM_set_time(3)>
+on the verification parameters associated with I<ctx>.
+By default, the current system time is used for certificate verification.
+Setting a specific time is useful for testing or when verifying historical
+certificates.
+The I<flags> parameter is currently ignored and should be set to 0.
+
 =head1 NOTES
 
 The certificates and CRLs in a store are used internally and should B<not>
@@ -302,8 +314,8 @@ present, or NULL if absent.
 X509_STORE_CTX_cleanup(), X509_STORE_CTX_free(),
 X509_STORE_CTX_set0_trusted_stack(),
 X509_STORE_CTX_set_cert(),
-X509_STORE_CTX_set0_crls() and X509_STORE_CTX_set0_param() do not return
-values.
+X509_STORE_CTX_set0_crls(), X509_STORE_CTX_set0_param() and
+X509_STORE_CTX_set_time() do not return values.
 
 X509_STORE_CTX_set_default() returns 1 for success or 0 if an error occurred.
 
@@ -313,7 +325,7 @@ used.
 =head1 SEE ALSO
 
 L<X509_verify_cert(3)>, L<X509_STORE_CTX_verify(3)>,
-L<X509_VERIFY_PARAM_set_flags(3)>
+L<X509_VERIFY_PARAM_set_flags(3)>, L<X509_VERIFY_PARAM_set_time(3)>
 
 =head1 HISTORY
 
@@ -328,7 +340,7 @@ There is no need to call X509_STORE_CTX_cleanup() explicitly since OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2009-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
