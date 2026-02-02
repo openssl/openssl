@@ -161,6 +161,8 @@ See L<RAND_load_file(3)>.
 =item B<SSL_CERT_DIR>, B<SSL_CERT_FILE>
 
 Specify the default directory or file containing CA certificates.
+B<SSL_CERT_DIR> can contain multiple directories separated by colons
+(or semicolons on Windows).
 See L<SSL_CTX_load_verify_locations(3)>.
 
 =item B<TSGET>
