@@ -2060,7 +2060,6 @@ static int ch_generate_transport_params(QUIC_CHANNEL *ch)
         QLOG_U64("ack_delay_exponent", ch->tx_ack_delay_exp);
     if (ch->tx_max_ack_delay != QUIC_DEFAULT_MAX_ACK_DELAY)
         QLOG_U64("max_ack_delay", ch->tx_max_ack_delay);
-    QLOG_U64("max_ack_delay", ch->tx_max_ack_delay);
     QLOG_U64("initial_max_data", ossl_quic_rxfc_get_cwm(&ch->conn_rxfc));
     QLOG_U64("initial_max_stream_data_bidi_local",
         ch->tx_init_max_stream_data_bidi_local);
