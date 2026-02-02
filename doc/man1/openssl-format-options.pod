@@ -75,7 +75,7 @@ A password or PIN may be supplied to the engine using the B<-passin> option.
 
 A DER-encoded file containing a PKCS#12 object.
 It might be necessary to provide a decryption password to retrieve
-the private key.
+the private key or certificate.
 
 =item B<PEM>
 
