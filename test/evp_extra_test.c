@@ -6440,6 +6440,72 @@ err:
 }
 #endif
 
+#ifndef OPENSSL_NO_EC
+static int (*orig_ec_sign)(int type, const unsigned char *dgst,
+    int dlen, unsigned char *sig,
+    unsigned int *siglen,
+    const BIGNUM *kinv, const BIGNUM *r,
+    EC_KEY *eckey);
+static int (*orig_ec_sign_setup)(EC_KEY *eckey, BN_CTX *ctx_in,
+    BIGNUM **kinvp, BIGNUM **rp);
+static ECDSA_SIG *(*orig_ec_sign_sig)(const unsigned char *dgst,
+    int dgst_len, const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey);
+static int tst_ec_sign(int type, const unsigned char *dgst,
+    int dlen, unsigned char *sig,
+    unsigned int *siglen,
+    const BIGNUM *kinv, const BIGNUM *r,
+    EC_KEY *eckey)
+{
+    sign_hits++;
+    return orig_ec_sign(type, dgst, dlen, sig, siglen, kinv, r, eckey);
+}
+
+/* Test that a low level EC_KEY method still gets used even with a provider */
+static int test_low_level_ec_method(void)
+{
+    EC_KEY *ec = NULL;
+    const EC_KEY_METHOD *def = EC_KEY_get_default_method();
+    EC_KEY_METHOD *method = EC_KEY_METHOD_new(def);
+    EVP_PKEY *pkey = NULL;
+    int testresult = 0;
+
+    if (nullprov != NULL) {
+        testresult = TEST_skip("Test does not support a non-default library context");
+        goto err;
+    }
+
+    if (!TEST_ptr(method))
+        goto err;
+
+    if (!TEST_ptr(ec = EC_KEY_new_by_curve_name_ex(NULL, NULL, NID_X9_62_prime256v1)))
+        goto err;
+    if (!TEST_true(EC_KEY_generate_key(ec)))
+        goto err;
+
+    EC_KEY_METHOD_get_sign(def, &orig_ec_sign, &orig_ec_sign_setup, &orig_ec_sign_sig);
+    EC_KEY_METHOD_set_sign(method, tst_ec_sign, orig_ec_sign_setup, orig_ec_sign_sig);
+    if (!TEST_true(EC_KEY_set_method(ec, method)))
+        goto err;
+
+    pkey = EVP_PKEY_new();
+    if (!TEST_ptr(pkey))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_assign_EC_KEY(pkey, ec), 0))
+        goto err;
+    ec = NULL;
+
+    if (!do_sign_with_method(pkey))
+        goto err;
+
+    testresult = 1;
+err:
+    EC_KEY_free(ec);
+    EVP_PKEY_free(pkey);
+    EC_KEY_METHOD_free(method);
+    return testresult;
+}
+#endif
+
 int setup_tests(void)
 {
     char *config_file = NULL;
@@ -6615,6 +6681,9 @@ int setup_tests(void)
     ADD_TEST(test_low_level_rsa_method);
 #ifndef OPENSSL_NO_DSA
     ADD_TEST(test_low_level_dsa_method);
+#endif
+#ifndef OPENSSL_NO_EC
+    ADD_TEST(test_low_level_ec_method);
 #endif
 
     return 1;
