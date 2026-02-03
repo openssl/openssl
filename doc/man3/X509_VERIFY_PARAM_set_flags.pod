@@ -236,7 +236,8 @@ peer's certificate.  Any previous names set via
 X509_VERIFY_PARAM_set1_rfc822(), X509_VERIFY_PARAM_add1_rfc822(), or
 X509_VERIFY_PARAM_set1_email() are
 retained on success, no change is made on failure. It is a failure if
-email is NULL or the empty string.The peer is considered verified
+email is NULL or the empty string.
+The peer is considered verified
 when any one of the specified RFC822 or SMTPUTF8 names matches a corresponding email
 address SAN in the certificate.
 
