@@ -93,6 +93,14 @@ be used as the basis for a PSK.
 Ownership of the SSL_SESSION object is passed to the OpenSSL library and so it
 should not be freed by the application.
 
+Note that as described above, the callback may be called a second time during a
+handshake. Since ownership of the SSL_SESSION is transferred to OpenSSL on each
+call, if the callback wishes to return the same SSL_SESSION pointer on a
+subsequent invocation, it must first call L<SSL_SESSION_up_ref(3)> to increment
+the reference count. Failure to do so will result in a use-after-free error.
+Alternatively, the callback may return a different SSL_SESSION object on each
+call (e.g., by calling L<SSL_SESSION_dup(3)>).
+
 It is also possible for the callback to succeed but not supply a PSK. In this
 case no PSK will be sent to the server but the handshake will continue. To do
 this the callback should return successfully and ensure that B<*sess> is
