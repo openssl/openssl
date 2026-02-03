@@ -222,6 +222,12 @@ the return value.
 
 X509_VERIFY_PARAM_get0_email() returns the expected RFC822 email address.
 
+The _rfc822() family of functions is used for email names that have
+ASCII localpart addresses, in which case the domain part of the
+address must be represented in A-label form. They are used to
+manipulate values to match against the SAN Email names in
+certificates.
+
 X509_VERIFY_PARAM_set1_rfc822() clears all expected RFC822 email
 addresses, and sets the expected RFC822 email address to I<email>.  If
 I<email> is NULL no expected address is set. Otherwise, if
@@ -232,7 +238,7 @@ invokes L<X509_check_email(3)>.
 
 X509_VERIFY_PARAM_add1_rfc822() adds I<email> as an additional
 reference identifier that can match RFC822 email addresses in the
-peer's certificate.  Any previous names set via
+peer's certificate. Any previous names set via
 X509_VERIFY_PARAM_set1_rfc822(), X509_VERIFY_PARAM_add1_rfc822(), or
 X509_VERIFY_PARAM_set1_email() are
 retained on success, no change is made on failure. It is a failure if
@@ -240,6 +246,12 @@ email is NULL or the empty string.
 The peer is considered verified
 when any one of the specified RFC822 or SMTPUTF8 names matches a corresponding email
 address SAN in the certificate.
+
+The _smtputf8() family of functions is used for email names that have
+a non-ASCII localpart addresses, in which case the domain part of the
+address must be represented in U-label form. They are used to
+manipulate values to match against the OTHERNAME SMTPUTF8 names in
+certificates.
 
 X509_VERIFY_PARAM_set1_smtputf8() sets the expected SMTPUTF8 email address to
 I<email>.
