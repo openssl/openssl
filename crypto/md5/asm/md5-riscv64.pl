@@ -275,9 +275,7 @@ _MD5_LOOP:
     addw                    x9, x9, x13         # Add constant 0x49b40821
     addw                    x9, x9, x6          # Add aux function result
     roriw                   x9, x9, 10          # Rotate left s=22 bits
-    #not                    x28, x17            # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
-    #and                    x6, x8, x28
-    andn                    x6, x8, x17
+    andn                    x6, x8, x17         # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     addw                    x9, x8, x9          # round 1 B=FF(B, C, D, A, 0x49b40821, s=22, M[15])
     and                     x13, x9, x17        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     or                      x6, x6, x13         # End aux function round 2 G(x,y,z)=((x&z)|(~z&y))
@@ -289,9 +287,7 @@ _MD5_LOOP:
     addw                    x18, x18, x13       # Add constant 0xf61e2562
     addw                    x18, x18, x6        # Add aux function result
     roriw                   x18, x18, 27        # Rotate left s=5 bits
-    #not                    x28, x8             # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
-    #and                    x6, x9, x28
-    andn                    x6, x9, x8
+    andn                    x6, x9, x8          # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     addw                    x18, x9, x18        # round 2 A=GG(A, B, C, D, 0xf61e2562, s=5, M[1])
     and                     x13, x18, x8        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     or                      x6, x6, x13         # End aux function round 2 G(x,y,z)=((x&z)|(~z&y))
@@ -303,9 +299,7 @@ _MD5_LOOP:
     addw                    x17, x17, x13       # Add constant 0xc040b340
     addw                    x17, x17, x6        # Add aux function result
     roriw                   x17, x17, 23        # Rotate left s=9 bits
-    #not                    x28, x9             # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
-    #and                    x6, x18, x28
-    andn                    x6, x18, x9
+    andn                    x6, x18, x9         # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     addw                    x17, x18, x17       # round 2 D=GG(D, A, B, C, 0xc040b340, s=9, M[6])
     and                     x13, x17, x9        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     or                      x6, x6, x13         # End aux function round 2 G(x,y,z)=((x&z)|(~z&y))
@@ -318,9 +312,7 @@ _MD5_LOOP:
     addw                    x8, x8, x13         # Add constant 0x265e5a51
     addw                    x8, x8, x6          # Add aux function result
     roriw                   x8, x8, 18          # Rotate left s=14 bits
-    #not                    x28, x18            # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
-    #and                    x6, x17, x28
-    andn                    x6, x17, x18
+    andn                    x6, x17, x18        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     addw                    x8, x17, x8         # round 2 C=GG(C, D, A, B, 0x265e5a51, s=14, M[11])
     and                     x13, x8, x18        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     or                      x6, x6, x13         # End aux function round 2 G(x,y,z)=((x&z)|(~z&y))
@@ -333,9 +325,7 @@ _MD5_LOOP:
     addw                    x9, x9, x6          # Add aux function result
     roriw                   x9, x9, 12          # Rotate left s=20 bits
 
-    #not                    x28, x17            # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
-    #and                    x6, x8, x28
-    andn                    x6, x8, x17
+    andn                    x6, x8, x17         # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     addw                    x9, x8, x9          # round 2 B=GG(B, C, D, A, 0xe9b6c7aa, s=20, M[0])
     and                     x13, x9, x17        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     or                      x6, x6, x13         # End aux function round 2 G(x,y,z)=((x&z)|(~z&y))
@@ -347,9 +337,7 @@ _MD5_LOOP:
     addw                    x18, x18, x13       # Add constant 0xd62f105d
     addw                    x18, x18, x6        # Add aux function result
     roriw                   x18, x18, 27        # Rotate left s=5 bits
-    #not                    x28, x8             # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
-    #and                    x6, x9, x28
-    andn                    x6, x9, x8
+    andn                    x6, x9, x8          # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     addw                    x18, x9, x18        # round 2 A=GG(A, B, C, D, 0xd62f105d, s=5, M[5])
     and                     x13, x18, x8        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     or                      x6, x6, x13         # End aux function round 2 G(x,y,z)=((x&z)|(~z&y))
@@ -361,9 +349,7 @@ _MD5_LOOP:
     addw                    x17, x17, x13       # Add constant 0x2441453
     addw                    x17, x17, x6        # Add aux function result
     roriw                   x17, x17, 23        # Rotate left s=9 bits
-    #not                    x28, x9             # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
-    #and                    x6, x18, x28
-    andn                    x6, x18, x9
+    andn                    x6, x18, x9         # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     addw                    x17, x18, x17       # round 2 D=GG(D, A, B, C, 0x2441453, s=9, M[10])
     and                     x13, x17, x9        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     or                      x6, x6, x13         # End aux function round 2 G(x,y,z)=((x&z)|(~z&y))
@@ -375,9 +361,7 @@ _MD5_LOOP:
     addw                    x8, x8, x13         # Add constant 0xd8a1e681
     addw                    x8, x8, x6          # Add aux function result
     roriw                   x8, x8, 18          # Rotate left s=14 bits
-    #not                    x28, x18            # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
-    #and                    x6, x17, x28
-    andn                    x6, x17, x18
+    andn                    x6, x17, x18        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     addw                    x8, x17, x8         # round 2 C=GG(C, D, A, B, 0xd8a1e681, s=14, M[15])
     and                     x13, x8, x18        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     or                      x6, x6, x13         # End aux function round 2 G(x,y,z)=((x&z)|(~z&y))
@@ -389,9 +373,7 @@ _MD5_LOOP:
     addw                    x9, x9, x13         # Add constant 0xe7d3fbc8
     addw                    x9, x9, x6          # Add aux function result
     roriw                   x9, x9, 12          # Rotate left s=20 bits
-    #not                    x28, x17            # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
-    #and                    x6, x8, x28
-    andn                    x6, x8, x17
+    andn                    x6, x8, x17         # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     addw                    x9, x8, x9          # round 2 B=GG(B, C, D, A, 0xe7d3fbc8, s=20, M[4])
     and                     x13, x9, x17        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     or                      x6, x6, x13         # End aux function round 2 G(x,y,z)=((x&z)|(~z&y))
@@ -403,9 +385,7 @@ _MD5_LOOP:
     addw                    x18, x18, x13       # Add constant 0x21e1cde6
     addw                    x18, x18, x6        # Add aux function result
     roriw                   x18, x18, 27        # Rotate left s=5 bits
-    #not                    x28, x8             # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
-    #and                    x6, x9, x28
-    andn                    x6, x9, x8
+    andn                    x6, x9, x8          # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     addw                    x18, x9, x18        # round 2 A=GG(A, B, C, D, 0x21e1cde6, s=5, M[9])
     and                     x13, x18, x8        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     or                      x6, x6, x13         # End aux function round 2 G(x,y,z)=((x&z)|(~z&y))
@@ -417,9 +397,7 @@ _MD5_LOOP:
     addw                    x17, x17, x13       # Add constant 0xc33707d6
     addw                    x17, x17, x6        # Add aux function result
     roriw                   x17, x17, 23        # Rotate left s=9 bits
-    #not                    x28, x9             # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
-    #and                    x6, x18, x28
-    andn                    x6, x18, x9
+    andn                    x6, x18, x9         # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     addw                    x17, x18, x17       # round 2 D=GG(D, A, B, C, 0xc33707d6, s=9, M[14])
     and                     x13, x17, x9        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     or                      x6, x6, x13         # End aux function round 2 G(x,y,z)=((x&z)|(~z&y))
@@ -431,9 +409,7 @@ _MD5_LOOP:
     addw                    x8, x8, x13         # Add constant 0xf4d50d87
     addw                    x8, x8, x6          # Add aux function result
     roriw                   x8, x8, 18          # Rotate left s=14 bits
-    #not                    x28, x18            # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
-    #and                    x6, x17, x28
-    andn                    x6, x17, x18
+    andn                    x6, x17, x18        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     addw                    x8, x17, x8         # round 2 C=GG(C, D, A, B, 0xf4d50d87, s=14, M[3])
     and                     x13, x8, x18        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     or                      x6, x6, x13         # End aux function round 2 G(x,y,z)=((x&z)|(~z&y))
@@ -445,9 +421,7 @@ _MD5_LOOP:
     addw                    x9, x9, x13         # Add constant 0x455a14ed
     addw                    x9, x9, x6          # Add aux function result
     roriw                   x9, x9, 12          # Rotate left s=20 bits
-    #not                    x28, x17            # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
-    #and                    x6, x8, x28
-    andn                    x6, x8, x17
+    andn                    x6, x8, x17         # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     addw                    x9, x8, x9          # round 2 B=GG(B, C, D, A, 0x455a14ed, s=20, M[8])
     and                     x13, x9, x17        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     or                      x6, x6, x13         # End aux function round 2 G(x,y,z)=((x&z)|(~z&y))
@@ -459,9 +433,7 @@ _MD5_LOOP:
     addw                    x18, x18, x13       # Add constant 0xa9e3e905
     addw                    x18, x18, x6        # Add aux function result
     roriw                   x18, x18, 27        # Rotate left s=5 bits
-    #not                    x28, x8             # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
-    #and                    x6, x9, x28
-    andn                    x6, x9, x8
+    andn                    x6, x9, x8          # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     addw                    x18, x9, x18        # round 2 A=GG(A, B, C, D, 0xa9e3e905, s=5, M[13])
     and                     x13, x18, x8        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     or                      x6, x6, x13         # End aux function round 2 G(x,y,z)=((x&z)|(~z&y))
@@ -473,9 +445,7 @@ _MD5_LOOP:
     addw                    x17, x17, x13       # Add constant 0xfcefa3f8
     addw                    x17, x17, x6        # Add aux function result
     roriw                   x17, x17, 23        # Rotate left s=9 bits
-    #not                    x28, x9             # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
-    #and                    x6, x18, x28
-    andn                    x6, x18, x9
+    andn                    x6, x18, x9         # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     addw                    x17, x18, x17       # round 2 D=GG(D, A, B, C, 0xfcefa3f8, s=9, M[2])
     and                     x13, x17, x9        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     or                      x6, x6, x13         # End aux function round 2 G(x,y,z)=((x&z)|(~z&y))
@@ -487,9 +457,7 @@ _MD5_LOOP:
     addw                    x8, x8, x13         # Add constant 0x676f02d9
     addw                    x8, x8, x6          # Add aux function result
     roriw                   x8, x8, 18          # Rotate left s=14 bits
-    #not                    x28, x18            # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
-    #and                    x6, x17, x28
-    andn                    x6, x17, x18
+    andn                    x6, x17, x18        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     addw                    x8, x17, x8         # round 2 C=GG(C, D, A, B, 0x676f02d9, s=14, M[7])
     and                     x13, x8, x18        # Aux function round 2 G(x,y,z)=((x&z)|(~z&y))
     or                      x6, x6, x13         # End aux function round 2 G(x,y,z)=((x&z)|(~z&y))
@@ -685,9 +653,7 @@ _MD5_LOOP:
     add                     x6, x28, x6
     addw                    x9, x8, x9          # round 3 B=HH(B, C, D, A, 0xc4ac5665, s=23, M[2])
     addw                    x18, x18, x15       # Add dest value
-    #not                    x28, x17            # aux function round 4 I(x,y,z)=((~z|x)^y)
-    #or                     x13, x9, x28
-    orn                     x13, x9, x17
+    orn                     x13, x9, x17        # aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x18, x18, x6        # Add constant 0xf4292244
     xor                     x6, x8, x13         # End aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x18, x18, x6        # Add aux function result
@@ -697,9 +663,7 @@ _MD5_LOOP:
     slli                    x28, x28, 16
     add                     x6, x28, x6
     addw                    x18, x9, x18        # round 4 A=II(A, B, C, D, 0xf4292244, s=6, M[0])
-    #not                    x28, x8             # aux function round 4 I(x,y,z)=((~z|x)^y)
-    #or                     x10, x18, x28
-    orn                     x10, x18, x8
+    orn                     x10, x18, x8        # aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x17, x17, x23       # Add dest value
     xor                     x10, x9, x10        # End aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x17, x17, x6        # Add constant 0x432aff97
@@ -711,9 +675,7 @@ _MD5_LOOP:
     add                     x17, x28, x17
     addw                    x6, x18, x6         # round 4 D=II(D, A, B, C, 0x432aff97, s=10, M[7])
     addw                    x8, x8, x12         # Add dest value
-    #not                    x28, x9             # aux function round 4 I(x,y,z)=((~z|x)^y)
-    #or                     x10, x6, x28
-    orn                     x10, x6, x9
+    orn                     x10, x6, x9         # aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x8, x8, x17         # Add constant 0xab9423a7
     xor                     x17, x18, x10       # End aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x8, x8, x17         # Add aux function result
@@ -723,9 +685,7 @@ _MD5_LOOP:
     slli                    x28, x28, 16
     add                     x17, x28, x17
     addw                    x8, x6, x8          # round 4 C=II(C, D, A, B, 0xab9423a7, s=15, M[14])
-    #not                    x28, x18            # aux function round 4 I(x,y,z)=((~z|x)^y)
-    #or                     x13, x8, x28
-    orn                     x13, x8, x18
+    orn                     x13, x8, x18        # aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x9, x9, x22         # Add dest value
     xor                     x13, x6, x13        # End aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x9, x9, x17         # Add constant 0xfc93a039
@@ -737,9 +697,7 @@ _MD5_LOOP:
     add                     x9, x28, x9
     addw                    x17, x8, x17        # round 4 B=II(B, C, D, A, 0xfc93a039, s=21, M[5])
     addw                    x18, x18, x11       # Add dest value
-    #not                    x28, x6             # aux function round 4 I(x,y,z)=((~z|x)^y)
-    #or                     x13, x17, x28
-    orn                     x13, x17, x6
+    orn                     x13, x17, x6        # aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x9, x18, x9         # Add constant 0x655b59c3
     xor                     x18, x8, x13        # End aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x9, x9, x18         # Add aux function result
@@ -749,9 +707,7 @@ _MD5_LOOP:
     slli                    x28, x28, 16
     add                     x18, x28, x18
     addw                    x9, x17, x9         # round 4 A=II(A, B, C, D, 0x655b59c3, s=6, M[12])
-    #not                    x28, x8             # aux function round 4 I(x,y,z)=((~z|x)^y)
-    #or                     x10, x9, x28
-    orn                     x10, x9, x8
+    orn                     x10, x9, x8         # aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x6, x6, x21         # Add dest value
     xor                     x10, x17, x10       # End aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x18, x6, x18        # Add constant 0x8f0ccc92
@@ -763,9 +719,7 @@ _MD5_LOOP:
     add                     x18, x28, x18
     addw                    x6, x9, x6          # round 4 D=II(D, A, B, C, 0x8f0ccc92, s=10, M[3])
     addw                    x8, x8, x16         # Add dest value
-    #not                    x28, x17            # aux function round 4 I(x,y,z)=((~z|x)^y)
-    #or                     x10, x6, x28
-    orn                     x10, x6, x17
+    orn                     x10, x6, x17        # aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x8, x8, x18         # Add constant 0xffeff47d
     xor                     x18, x9, x10        # End aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x8, x8, x18         # Add aux function result
@@ -775,9 +729,7 @@ _MD5_LOOP:
     slli                    x28, x28, 16
     add                     x18, x28, x18
     addw                    x8, x6, x8          # round 4 C=II(C, D, A, B, 0xffeff47d, s=15, M[10])
-    #not                    x28, x9             # aux function round 4 I(x,y,z)=((~z|x)^y)
-    #or                     x10, x8, x28
-    orn                     x10, x8, x9
+    orn                     x10, x8, x9         # aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x15, x17, x20       # Add dest value
     xor                     x17, x6, x10        # End aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x15, x15, x18       # Add constant 0x85845dd1
@@ -789,9 +741,7 @@ _MD5_LOOP:
     add                     x15, x28, x15
     addw                    x17, x8, x18        # round 4 B=II(B, C, D, A, 0x85845dd1, s=21, M[1])
     addw                    x18, x9, x5         # Add dest value
-    #not                    x28, x6             # aux function round 4 I(x,y,z)=((~z|x)^y)
-    #or                     x9, x17, x28
-    orn                     x9, x17, x6
+    orn                     x9, x17, x6         # aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x15, x18, x15       # Add constant 0x6fa87e4f
     xor                     x18, x8, x9         # End aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x9, x15, x18        # Add aux function result
@@ -801,9 +751,7 @@ _MD5_LOOP:
     slli                    x28, x28, 16
     add                     x15, x28, x15
     addw                    x18, x17, x9        # round 4 A=II(A, B, C, D, 0x6fa87e4f, s=6, M[8])
-    #not                    x28, x8             # aux function round 4 I(x,y,z)=((~z|x)^y)
-    #or                     x9, x18, x28
-    orn                     x9, x18, x8
+    orn                     x9, x18, x8         # aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x6, x6, x27         # Add dest value
     xor                     x9, x17, x9         # End aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x15, x6, x15        # Add constant 0xfe2ce6e0
@@ -815,9 +763,7 @@ _MD5_LOOP:
     add                     x9, x28, x9
     addw                    x15, x18, x6        # round 4 D=II(D, A, B, C, 0xfe2ce6e0, s=10, M[15])
     addw                    x6, x8, x7          # Add dest value
-    #not                    x28, x17            # aux function round 4 I(x,y,z)=((~z|x)^y)
-    #or                     x7, x15, x28
-    orn                     x7, x15, x17
+    orn                     x7, x15, x17        # aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x8, x6, x9          # Add constant 0xa3014314
     xor                     x9, x18, x7         # End aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x6, x8, x9          # Add aux function result
@@ -827,9 +773,7 @@ _MD5_LOOP:
     slli                    x28, x28, 16
     add                     x7, x28, x7
     addw                    x8, x15, x6         # round 4 C=II(C, D, A, B, 0xa3014314, s=15, M[6])
-    #not                    x28, x18            # aux function round 4 I(x,y,z)=((~z|x)^y)
-    #or                     x9, x8, x28
-    orn                     x9, x8, x18
+    orn                     x9, x8, x18         # aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x6, x17, x26        # Add dest value
     xor                     x17, x15, x9        # End aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x9, x6, x7          # Add constant 0x4e0811a1
@@ -841,9 +785,7 @@ _MD5_LOOP:
     add                     x6, x28, x6
     addw                    x9, x8, x7          # round 4 B=II(B, C, D, A, 0x4e0811a1, s=21, M[13])
     addw                    x17, x18, x14       # Add dest value
-    #not                    x28, x15            # aux function round 4 I(x,y,z)=((~z|x)^y)
-    #or                     x7, x9, x28
-    orn                     x7, x9, x15
+    orn                     x7, x9, x15         # aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x14, x17, x6        # Add constant 0xf7537e82
     xor                     x18, x8, x7         # End aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x17, x14, x18       # Add aux function result
@@ -853,9 +795,7 @@ _MD5_LOOP:
     slli                    x28, x28, 16
     add                     x6, x28, x6
     addw                    x7, x9, x17         # round 4 A=II(A, B, C, D, 0xf7537e82, s=6, M[4])
-    #not                    x28, x8             # aux function round 4 I(x,y,z)=((~z|x)^y)
-    #or                     x14, x7, x28
-    orn                     x14, x7, x8
+    orn                     x14, x7, x8         # aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x18, x15, x25       # Add dest value
     xor                     x17, x9, x14        # End aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x15, x18, x6        # Add constant 0xbd3af235
@@ -867,9 +807,7 @@ _MD5_LOOP:
     add                     x14, x28, x14
     addw                    x18, x7, x16        # round 4 D=II(D, A, B, C, 0xbd3af235, s=10, M[11])
     addw                    x6, x8, x31         # Add dest value
-    #not                    x28, x9             # aux function round 4 I(x,y,z)=((~z|x)^y)
-    #or                     x15, x18, x28
-    orn                     x15, x18, x9
+    orn                     x15, x18, x9        # aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x17, x6, x14        # Add constant 0x2ad7d2bb
     xor                     x16, x7, x15        # End aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x8, x17, x16        # Add aux function result
@@ -879,9 +817,7 @@ _MD5_LOOP:
     slli                    x28, x28, 16
     add                     x31, x28, x31
     addw                    x14, x18, x8        # round 4 C=II(C, D, A, B, 0x2ad7d2bb, s=15, M[2])
-    #not                    x28, x7             # aux function round 4 I(x,y,z)=((~z|x)^y)
-    #or                     x6, x14, x28
-    orn                     x6, x14, x7
+    orn                     x6, x14, x7         # aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x15, x9, x24        # Add dest value
     xor                     x17, x18, x6        # End aux function round 4 I(x,y,z)=((~z|x)^y)
     addw                    x16, x15, x31       # Add constant 0xeb86d391
