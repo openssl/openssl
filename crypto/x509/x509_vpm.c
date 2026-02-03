@@ -226,22 +226,6 @@ static ossl_charset_t ossl_name_charset(int c, ossl_charset_t charset)
     return charset == OSSL_CHARSET_NONASCII;
 }
 
-/*
- * Check for allowed characters in a dns name label.
- * |charset| controls the strictness of the checking.
- *
- * if |charset|is OSSL_CHARSET_NONASCII, anything is allowed
- * except the forbidden characters of '.' and '-'. This
- * will make minimally valid structure be checked but nothing
- * else.
- *
- * if |charset| is OSSL_CHARSET_ASCII all ascii characters
- * are allowed except the forbidden characters of '.' and '-'.
- *
- * if |charset| is OSSL_CHARSET_ASCII_ALNUM all alphanumeric
- * characters plus the character '_' are allowed except the forbidden
- * characters of '.' and '-'.
- */
 static int is_label_ok(int c, ossl_charset_t charset)
 {
     if (!ossl_name_charset(c, charset) && c != '_')
@@ -273,13 +257,12 @@ static int validate_hostname_part(const char *name, size_t len,
                 return 0;
             part_len = 0;
         } else {
+            /* Can not start a label with a - */
+            if (part_len == 0 && c == '_') {
+                return 0;
+            }
             if (!is_label_ok(c, charset) && c != '-')
                 return 0;
-            if (c == '-') {
-                /* Can not start a label with a - */
-                if (part_len == 0)
-                    return 0;
-            }
         }
         part_len++;
         if (part_len > 63)
