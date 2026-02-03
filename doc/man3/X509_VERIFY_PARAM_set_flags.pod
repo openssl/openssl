@@ -306,9 +306,11 @@ X509_VERIFY_PARAM_set1_rfc822_input_validation(),
 X509_VERIFY_PARAM_set1_smtputf8_input_validation(), and
 X509_VERIFY_PARAM_set1_ip_input_validation() set a verification
 function to validate the input on setting the corresponding validation
-parameter expected values. These functions bypass OpenSSL's input validation
-to these commands. if the provided function succeeds, the corresponding
-input will be accepted and attempted to be used when verifying certificates.
+parameter expected values.
+These functions make it possible to override OpenSSL's built-in input validation of
+the corresponding verification parameters.
+If the provided function succeeds, the corresponding
+input will be accepted for use in certificate verification.
 
 =head1 RETURN VALUES
 
