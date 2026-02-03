@@ -96,6 +96,20 @@ unsigned int X509v3_addr_get_afi(const IPAddressFamily *f)
 }
 
 /*
+ * Extract the SAFI from an IPAddressFamily, or return NULL if not present.
+ * The SAFI is optional and only present when addressFamily length > 2.
+ */
+const unsigned char *X509v3_addr_get_safi(const IPAddressFamily *f)
+{
+    if (f == NULL
+        || f->addressFamily == NULL
+        || f->addressFamily->data == NULL
+        || f->addressFamily->length <= 2)
+        return NULL;
+    return &f->addressFamily->data[2];
+}
+
+/*
  * Expand the bitstring form of an address into a raw byte array.
  * At the moment this is coded for simplicity, not speed.
  */
