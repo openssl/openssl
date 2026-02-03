@@ -27,7 +27,7 @@ SSL server verification parameters
 =head1 DESCRIPTION
 
 These functions maintain lists of expected matches for peer
-certificate subject alternate name (SAN) values is peer certificates
+certificate subject alternative name (SAN) values is peer certificates
 presented in an SSL connection.  A peer certificate will be considered
 a match for validation purposes if all of the following is true:
 
