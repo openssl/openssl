@@ -29,7 +29,7 @@ SSL server verification parameters
 These functions maintain lists of expected matches for peer
 certificate subject alternative name (SAN) values is peer certificates
 presented in an SSL connection.  A peer certificate will be considered
-a match for validation purposes if all of the following is true:
+a match for validation purposes if all of the following are true:
 
 * Any name in the dnsname list, if not empty, matches any SAN dnsname
   in the certificate.  If verification flags allow it, these will also
