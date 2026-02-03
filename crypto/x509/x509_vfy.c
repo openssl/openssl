@@ -981,7 +981,7 @@ static int check_email(X509 *x, X509_VERIFY_PARAM *vpm)
             return 1;
     }
 
-    return n == 0 && i == 0;
+    return n == 0 && j == 0;
 }
 
 static int check_ips(X509 *x, X509_VERIFY_PARAM *vpm)
