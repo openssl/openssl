@@ -41,6 +41,10 @@
 #include "fake_rsaprov.h"
 #include "fake_pipelineprov.h"
 
+#ifndef OPENSSL_NO_DSA
+#include "helpers/predefined_dsaparams.h"
+#endif
+
 #ifdef STATIC_LEGACY
 OSSL_provider_init_fn ossl_legacy_provider_init;
 #endif
@@ -6288,28 +6292,53 @@ end:
     return testresult;
 }
 
-static int priv_enc_hits = 0;
-static int (*orig_priv_enc)(int, const unsigned char *, unsigned char *, RSA *, int);
+static int sign_hits = 0;
 
-static int tst_priv_enc(int flen, const unsigned char *from, unsigned char *to,
-    RSA *rsa, int padding)
-{
-    priv_enc_hits++;
-    return orig_priv_enc(flen, from, to, rsa, padding);
-}
-
-/* Test that a low level method still gets used even with a provider */
-static int test_low_level_method(void)
+static int do_sign_with_method(EVP_PKEY *pkey)
 {
     const unsigned char msg[] = "Hello, World!";
     unsigned char sig[128];
     unsigned int siglen;
+    EVP_MD_CTX *ctx = NULL;
+    int ret = 0;
+
+    sign_hits = 0;
+    ctx = EVP_MD_CTX_new();
+    if (!TEST_ptr(ctx))
+        return 0;
+    if (!TEST_true(EVP_SignInit(ctx, EVP_sha256())))
+        goto err;
+    if (!TEST_true(EVP_SignUpdate(ctx, msg, sizeof(msg) - 1)))
+        goto err;
+    if (!TEST_true(EVP_SignFinal(ctx, sig, &siglen, pkey)))
+        goto err;
+    /* We expect to see our custom sign function called once */
+    if (!TEST_int_eq(sign_hits, 1))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_MD_CTX_free(ctx);
+    return ret;
+}
+
+static int (*orig_rsa_priv_enc)(int, const unsigned char *, unsigned char *, RSA *, int);
+
+static int tst_rsa_priv_enc(int flen, const unsigned char *from, unsigned char *to,
+    RSA *rsa, int padding)
+{
+    sign_hits++;
+    return orig_rsa_priv_enc(flen, from, to, rsa, padding);
+}
+
+/* Test that a low level RSA method still gets used even with a provider */
+static int test_low_level_rsa_method(void)
+{
     BIGNUM *e = BN_new();
     RSA *rsa = NULL;
     const RSA_METHOD *def = RSA_get_default_method();
     RSA_METHOD *method = RSA_meth_dup(def);
     EVP_PKEY *pkey = NULL;
-    EVP_MD_CTX *ctx = NULL;
     int testresult = 0;
 
     if (nullprov != NULL) {
@@ -6329,8 +6358,8 @@ static int test_low_level_method(void)
     if (!TEST_true(RSA_generate_key_ex(rsa, 1024, e, NULL)))
         goto err;
 
-    orig_priv_enc = RSA_meth_get_priv_enc(def);
-    if (!TEST_true(RSA_meth_set_priv_enc(method, tst_priv_enc)))
+    orig_rsa_priv_enc = RSA_meth_get_priv_enc(def);
+    if (!TEST_true(RSA_meth_set_priv_enc(method, tst_rsa_priv_enc)))
         goto err;
     if (!TEST_true(RSA_set_method(rsa, method)))
         goto err;
@@ -6342,19 +6371,7 @@ static int test_low_level_method(void)
         goto err;
     rsa = NULL;
 
-    priv_enc_hits = 0;
-    ctx = EVP_MD_CTX_new();
-    if (!TEST_ptr(ctx))
-        goto err;
-    if (!TEST_true(EVP_SignInit(ctx, EVP_sha256())))
-        goto err;
-    if (!TEST_true(EVP_SignUpdate(ctx, msg, sizeof(msg) - 1)))
-        goto err;
-    if (!TEST_true(EVP_SignFinal(ctx, sig, &siglen, pkey)))
-        goto err;
-
-    /* We expect to see our custom private encryption function called once */
-    if (!TEST_int_eq(priv_enc_hits, 1))
+    if (!do_sign_with_method(pkey))
         goto err;
 
     testresult = 1;
@@ -6363,9 +6380,65 @@ err:
     RSA_free(rsa);
     EVP_PKEY_free(pkey);
     RSA_meth_free(method);
-    EVP_MD_CTX_free(ctx);
     return testresult;
 }
+
+#ifndef OPENSSL_NO_DSA
+static DSA_SIG *(*orig_dsa_sign)(const unsigned char *, int, DSA *);
+
+static DSA_SIG *tst_dsa_sign(const unsigned char *buf, int len, DSA *dsa)
+{
+    sign_hits++;
+    return orig_dsa_sign(buf, len, dsa);
+}
+
+/* Test that a low level DSA method still gets used even with a provider */
+static int test_low_level_dsa_method(void)
+{
+    DSA *dsa = NULL;
+    const DSA_METHOD *def = DSA_get_default_method();
+    DSA_METHOD *method = DSA_meth_dup(def);
+    EVP_PKEY *pkey = NULL;
+    int testresult = 0;
+
+    if (nullprov != NULL) {
+        testresult = TEST_skip("Test does not support a non-default library context");
+        goto err;
+    }
+
+    if (!TEST_ptr(method))
+        goto err;
+
+    dsa = load_dsa_params();
+    if (!TEST_ptr(dsa))
+        goto err;
+    if (!TEST_true(DSA_generate_key(dsa)))
+        goto err;
+
+    orig_dsa_sign = DSA_meth_get_sign(def);
+    if (!TEST_true(DSA_meth_set_sign(method, tst_dsa_sign)))
+        goto err;
+    if (!TEST_true(DSA_set_method(dsa, method)))
+        goto err;
+
+    pkey = EVP_PKEY_new();
+    if (!TEST_ptr(pkey))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_assign_DSA(pkey, dsa), 0))
+        goto err;
+    dsa = NULL;
+
+    if (!do_sign_with_method(pkey))
+        goto err;
+
+    testresult = 1;
+err:
+    DSA_free(dsa);
+    EVP_PKEY_free(pkey);
+    DSA_meth_free(method);
+    return testresult;
+}
+#endif
 
 int setup_tests(void)
 {
@@ -6539,7 +6612,10 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ml_dsa_seed_only, 2);
 #endif
 
-    ADD_TEST(test_low_level_method);
+    ADD_TEST(test_low_level_rsa_method);
+#ifndef OPENSSL_NO_DSA
+    ADD_TEST(test_low_level_dsa_method);
+#endif
 
     return 1;
 }

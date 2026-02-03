@@ -203,7 +203,7 @@ IF[{- !$disabled{tests} -}]
     DEFINE[evp_test]=NO_LEGACY_MODULE
   ENDIF
 
-  SOURCE[evp_extra_test]=evp_extra_test.c fake_rsaprov.c fake_pipelineprov.c
+  SOURCE[evp_extra_test]=evp_extra_test.c fake_rsaprov.c fake_pipelineprov.c helpers/predefined_dsaparams.c
   INCLUDE[evp_extra_test]=../include ../apps/include \
                           ../providers/common/include \
                           ../providers/implementations/include
@@ -913,7 +913,7 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[dsatest]=../include ../apps/include
     DEPEND[dsatest]=../libcrypto.a libtestutil.a
 
-    SOURCE[dsa_no_digest_size_test]=dsa_no_digest_size_test.c
+    SOURCE[dsa_no_digest_size_test]=dsa_no_digest_size_test.c helpers/predefined_dsaparams.c
     INCLUDE[dsa_no_digest_size_test]=../include ../apps/include
     DEPEND[dsa_no_digest_size_test]=../libcrypto.a libtestutil.a
 
