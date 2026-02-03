@@ -16,7 +16,6 @@
 #include <openssl/symhacks.h>
 #include <openssl/cryptoerr_legacy.h>
 
-#ifndef OPENSSL_NO_HTTP
 /*
  * HTTP reason codes.
  */
@@ -53,5 +52,4 @@
 #define HTTP_R_TOO_MANY_REDIRECTIONS 115
 #define HTTP_R_UNEXPECTED_CONTENT_TYPE 118
 
-#endif
 #endif
