@@ -277,7 +277,9 @@ identifier that can match the peer's certificate on success.  Any
 previous names set via X509_VERIFY_PARAM_set1_ip(),
 X509_VERIFY_PARAM_add1_ip(), X509_VERIFY_PARAM_set1_ip_asc(), or
 X509_VERIFY_PARAM_add1_ip_asc() are retained. No change is made on
-failure. It is a failure if <ip> is NULL or the empty string. When
+failure.
+It is a failure if I<ip> is NULL or the value I<iplen> is neither 4 nor 16 bytes.
+When
 multiple names are configured, the peer is considered verified when
 any name matches.
 
