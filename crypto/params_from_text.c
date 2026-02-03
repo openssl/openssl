@@ -198,6 +198,7 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
     return 1;
 }
 
+#ifndef FIPS_MODULE
 /**
  * OSSL_PARAM_print_to_bio - Print OSSL_PARAM array to a bio
  *
@@ -302,6 +303,7 @@ int OSSL_PARAM_print_to_bio(const OSSL_PARAM *p, BIO *bio, int print_values)
 end:
     return ok == -1 ? 0 : 1;
 }
+#endif /* FIPS_MODULE */
 
 int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
     const OSSL_PARAM *paramdefs,
