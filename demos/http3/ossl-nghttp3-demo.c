@@ -112,6 +112,7 @@ static int try_conn(OSSL_DEMO_H3_CONN *conn, const char *bare_hostname, const ch
     size_t num_nv = 0;
     struct stream_user_data *sdata;
     size_t needed_size;
+    int pathsize;
 
     /* Build HTTP headers. */
     make_nv(&nva[num_nv++], ":method", "GET");
@@ -121,7 +122,12 @@ static int try_conn(OSSL_DEMO_H3_CONN *conn, const char *bare_hostname, const ch
     make_nv(&nva[num_nv++], "user-agent", "OpenSSL-Demo/nghttp3");
 
     needed_size = sizeof(struct stream_user_data);
-    needed_size += snprintf(NULL, 0, "%s/%s", dlpath, path);
+    pathsize = snprintf(NULL, 0, "%s/%s", dlpath, path);
+    if (pathsize < 0) {
+        fprintf(stderr, "Unable to format path string\n");
+        return 0;
+    }
+    needed_size += pathsize;
 
     sdata = malloc(needed_size + 1);
     if (sdata == NULL)
