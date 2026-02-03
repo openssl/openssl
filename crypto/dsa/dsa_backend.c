@@ -32,6 +32,9 @@ int ossl_dsa_key_fromdata(DSA *dsa, const OSSL_PARAM params[],
 {
     const OSSL_PARAM *param_priv_key = NULL, *param_pub_key;
     BIGNUM *priv_key = NULL, *pub_key = NULL;
+#ifndef FIPS_MODULE
+    const OSSL_PARAM *param_method;
+#endif
 
     if (dsa == NULL)
         return 0;
@@ -49,6 +52,30 @@ int ossl_dsa_key_fromdata(DSA *dsa, const OSSL_PARAM params[],
         goto err;
     if (param_priv_key != NULL && !OSSL_PARAM_get_BN(param_priv_key, &priv_key))
         goto err;
+
+#ifndef FIPS_MODULE
+    /*
+     * Warning! This parameter is for internal use only. This breaks the
+     * normal rules about passing complex objects across the provider boundary.
+     * It only works because we are using this with the "built-in" default
+     * provider.
+     */
+    param_method = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_LEGACY_METHOD);
+    if (param_method != NULL) {
+        const void *meth;
+
+        if (!OSSL_PARAM_get_octet_ptr(param_method, &meth, NULL)) {
+            ERR_raise(ERR_LIB_DSA, ERR_R_PASSED_INVALID_ARGUMENT);
+            goto err;
+        }
+        if (meth != NULL) {
+            if (!DSA_set_method(dsa, meth)) {
+                ERR_raise(ERR_LIB_DSA, ERR_R_DSA_LIB);
+                goto err;
+            }
+        }
+    }
+#endif
 
     if (!DSA_set0_key(dsa, pub_key, priv_key))
         goto err;
