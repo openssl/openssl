@@ -39,7 +39,7 @@ a match for validation purposes if all of the following are true:
   address SAN in the certificate.
 
 The set1 family of functions clears the list, and sets the first value
-to a the provided parameter if the provided parameter is not NULL.
+to the provided parameter if the provided parameter is not NULL.
 
 The add1 family of functions adds a single entry to the list.
 
