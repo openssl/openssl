@@ -232,9 +232,16 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         && !srtpkdf_set_membuf(&ctx->key, &ctx->key_len, p.key))
         return 0;
 
-    if ((p.salt != NULL)
-        && !srtpkdf_set_membuf(&ctx->salt, &ctx->salt_len, p.salt))
-        return 0;
+    if (p.salt != NULL) {
+        if (!srtpkdf_set_membuf(&ctx->salt, &ctx->salt_len, p.salt))
+            return 0;
+        if (ctx->salt_len < KDF_SRTP_SALT_LEN) {
+            OPENSSL_free(ctx->salt);
+            ctx->salt = NULL;
+            ctx->salt_len = 0;
+            return 0;
+        }
+    }
 
     if ((p.index != NULL)
         && !srtpkdf_set_membuf(&ctx->index, &ctx->index_len, p.index))
