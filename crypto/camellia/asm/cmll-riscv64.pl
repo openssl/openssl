@@ -1,7 +1,7 @@
 # The generated code of this file depends on the following RISC-V extensions:
 # - RV64I
+# - RISC-V Bit-manipulation extension ('Zbb')
 # Applied condition:
-# POLY1305_BLOCK_SIZE was supposed to be 16
 
 use strict;
 use warnings;
@@ -86,12 +86,12 @@ sub Camellia_Feistel {
     xor                     $T_0, $S_0, $KEY_0        # t0
     xor                     $T_1, $S_1, $KEY_1        # t1
 
-    srli                    $p1, $T_0, 8
-    srli                    $p2, $T_0, 16
-    srli                    $p3, $T_0, 24
     and                     $p0, $T_0, $CONST
+    srli                    $p1, $T_0, 8
     and                     $p1, $p1, $CONST
+    srli                    $p2, $T_0, 16
     and                     $p2, $p2, $CONST
+    srli                    $p3, $T_0, 24
     and                     $p3, $p3, $CONST
 
     sh2add                  $p0, $p0, $TBL_1         # offset_t0_0_4Byte + SBOX4_4404 TBL_1
@@ -108,12 +108,12 @@ sub Camellia_Feistel {
     xor                     $T_3, $T_3, $tmp2
     xor                     $T_3, $T_3, $tmp3
 
-    srli                    $p1, $T_1, 8
-    srli                    $p2, $T_1, 16
-    srli                    $p3, $T_1, 24
     and                     $p0, $T_1, $CONST
+    srli                    $p1, $T_1, 8
     and                     $p1, $p1, $CONST
+    srli                    $p2, $T_1, 16
     and                     $p2, $p2, $CONST
+    srli                    $p3, $T_1, 24
     and                     $p3, $p3, $CONST
 
     sh2add                  $p0, $p0, $TBL_0          # offset_t0_4Byte + SBOX1_1110 TBL_0
@@ -298,13 +298,12 @@ $code.=<<___;
     and                     $s3, $s3, $CONST
 
     slli                    $T_0, $s0, 32
-    slli                    $T_1, $s1, 32
-    slli                    $T_2, $s2, 32
-    slli                    $T_3, $s3, 32
-
     or                      $T_0, $T_0, $s1    # s0 | s1
+    slli                    $T_1, $s1, 32
     or                      $T_1, $T_1, $s2    # s1 | s2
+    slli                    $T_2, $s2, 32
     or                      $T_2, $T_2, $s3    # s2 | s3
+    slli                    $T_3, $s3, 32
     or                      $T_3, $T_3, $s0    # s3 | s0
 
     srli                    $p0, $T_0, 17
@@ -373,13 +372,12 @@ $code.=<<___;
     and                     $s3, $s3, $CONST
 
     slli                    $T_0, $s0, 32
-    slli                    $T_1, $s1, 32
-    slli                    $T_2, $s2, 32
-    slli                    $T_3, $s3, 32
-
     or                      $T_0, $T_0, $s1     # s0 | s1
+    slli                    $T_1, $s1, 32
     or                      $T_1, $T_1, $s2     # s1 | s2
+    slli                    $T_2, $s2, 32
     or                      $T_2, $T_2, $s3     # s2 | s3
+    slli                    $T_3, $s3, 32
     or                      $T_3, $T_3, $s0     # s3 | s0
 
     srli                    $p0, $T_0, 17
@@ -491,13 +489,12 @@ $code.=<<___;
     and                     $s3, $s3, $CONST
 
     slli                    $T_0, $s0, 32
-    slli                    $T_1, $s1, 32
-    slli                    $T_2, $s2, 32
-    slli                    $T_3, $s3, 32
-
     or                      $T_0, $T_0, $s1    # s0 | s1
+    slli                    $T_1, $s1, 32
     or                      $T_1, $T_1, $s2    # s1 | s2
+    slli                    $T_2, $s2, 32
     or                      $T_2, $T_2, $s3    # s2 | s3
+    slli                    $T_3, $s3, 32
     or                      $T_3, $T_3, $s0    # s3 | s0
 
     srli                    $p0, $T_0, 2
@@ -537,13 +534,12 @@ $code.=<<___;
 
     # s0 = k[8], s1 = k[9], s2 = k[10], s3 = k[11];
     slli                    $T_0, $s0, 32
-    slli                    $T_1, $s1, 32
-    slli                    $T_2, $s2, 32
-    slli                    $T_3, $s3, 32
-
     or                      $T_0, $T_0, $s1    # s0 | s1
+    slli                    $T_1, $s1, 32
     or                      $T_1, $T_1, $s2    # s1 | s2
+    slli                    $T_2, $s2, 32
     or                      $T_2, $T_2, $s3    # s2 | s3
+    slli                    $T_3, $s3, 32
     or                      $T_3, $T_3, $s0    # s3 | s0
 
     srli                    $p0, $T_0, 17
@@ -593,13 +589,12 @@ $code.=<<___;
 
     # s0 = k[12], s1 = k[13], s2 = k[14], s3 = k[15];
     slli                    $T_0, $s0, 32
-    slli                    $T_1, $s1, 32
-    slli                    $T_2, $s2, 32
-    slli                    $T_3, $s3, 32
-
     or                      $T_0, $T_0, $s1    # s0 | s1
+    slli                    $T_1, $s1, 32
     or                      $T_1, $T_1, $s2    # s1 | s2
+    slli                    $T_2, $s2, 32
     or                      $T_2, $T_2, $s3    # s2 | s3
+    slli                    $T_3, $s3, 32
     or                      $T_3, $T_3, $s0    # s3 | s0
 
     srli                    $p0, $T_0, 17
@@ -644,13 +639,12 @@ $code.=<<___;
 
     # s0 = k[0], s1 = k[1], s2 = k[2], s3 = k[3];
     slli                    $T_0, $s0, 32
-    slli                    $T_1, $s1, 32
-    slli                    $T_2, $s2, 32
-    slli                    $T_3, $s3, 32
-
     or                      $T_0, $T_0, $s1    # s0 | s1
+    slli                    $T_1, $s1, 32
     or                      $T_1, $T_1, $s2    # s1 | s2
+    slli                    $T_2, $s2, 32
     or                      $T_2, $T_2, $s3    # s2 | s3
+    slli                    $T_3, $s3, 32
     or                      $T_3, $T_3, $s0    # s3 | s0
 
     srli                    $p0, $T_1, 19
