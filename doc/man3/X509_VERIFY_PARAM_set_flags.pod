@@ -294,8 +294,9 @@ condensed "::" notation is supported for IPv6 addresses.  Any previous
 names set via X509_VERIFY_PARAM_set1_ip(),
 X509_VERIFY_PARAM_add1_ip(), X509_VERIFY_PARAM_set1_ip_asc(), or
 X509_VERIFY_PARAM_add1_ip_asc() are retained. No change is made on
-failure. It is a failure if I<ip_asc> is NULL or the empty string.
-When multiple names are configured, the peer is considered verified
+failure.
+It is a failure if I<ip_asc> is NULL or the empty string.
+When multiple addresses are configured, the peer is considered verified
 when any one of the specified addresses matches a corresponding IP address SAN in the certificate.
 
 X509_VERIFY_PARAM_set1_host_input_validation(),
