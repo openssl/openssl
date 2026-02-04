@@ -230,7 +230,8 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         key_len = EVP_CIPHER_get_key_length(cipher);
         if (!srtpkdf_set_membuf(&ctx->key, &ctx->key_len, p.key))
             return 0;
-        if (ctx->key_len != key_len)
+        fprintf(stderr, "Comparing key sizes %lu and %d\n", ctx->key_len, key_len);
+        if (ctx->key_len != (size_t)key_len)
             return 0;
     }
 
