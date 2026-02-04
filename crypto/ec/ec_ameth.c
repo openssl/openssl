@@ -481,6 +481,18 @@ static int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     if (tmpl == NULL)
         return 0;
 
+    if (eckey->meth != EC_KEY_get_default_method()) {
+        /*
+         * Warning! This parameter is for internal use only. This breaks the
+         * normal rules about passing complex objects across the provider
+         * boundary. It only works when we are using this with the "built-in"
+         * default provider. Third party providers must not use this.
+         */
+        if (!OSSL_PARAM_BLD_push_octet_ptr(tmpl, OSSL_PKEY_PARAM_LEGACY_METHOD,
+                (void *)eckey->meth, sizeof(*eckey->meth)))
+            goto err;
+    }
+
     /*
      * EC_POINT_point2buf() can generate random numbers in some
      * implementations so we need to ensure we use the correct libctx.
