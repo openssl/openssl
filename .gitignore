@@ -329,3 +329,6 @@ doc-nits
 compile_commands.json
 
 .z.cache
+
+# Nanvix build marker
+.nanvix-configured
