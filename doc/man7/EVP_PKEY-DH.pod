@@ -59,6 +59,12 @@ Used for getting and setting the encoding of the DH public key used in a key
 exchange message for the TLS protocol.
 See EVP_PKEY_set1_encoded_public_key() and EVP_PKEY_get1_encoded_public_key().
 
+=item "legacy-method" (B<OSSL_PKEY_PARAM_LEGACY_METHOD>) <octet pointer>
+
+Reserved for internal use only. Applications and provider implementations should
+not use this parameter, although it may be passed to providers. Provider
+implementations should ignore this parameter if it is received.
+
 =back
 
 =head2 DH additional domain parameters

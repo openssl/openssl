@@ -123,6 +123,12 @@ RSA CRT (Chinese Remainder Theorem) coefficients. The coefficients are known as
 "qInv" and "t_i".
 Up to eight additional "t_i" exponents are supported.
 
+=item "legacy-method" (B<OSSL_PKEY_PARAM_LEGACY_METHOD>) <octet pointer>
+
+Reserved for internal use only. Applications and provider implementations should
+not use this parameter, although it may be passed to providers. Provider
+implementations should ignore this parameter if it is received.
+
 =back
 
 =head2 RSA key generation parameters

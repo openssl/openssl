@@ -155,6 +155,12 @@ This value should not be reused for other purposes. It can only be used
 for the curves "P-256", "P-384" and "P-521" and should have a length of at least
 the size of the encoded private key (i.e. 32, 48 and 66 for the listed curves).
 
+=item "legacy-method" (B<OSSL_PKEY_PARAM_LEGACY_METHOD>) <octet pointer>
+
+Reserved for internal use only. Applications and provider implementations should
+not use this parameter, although it may be passed to providers. Provider
+implementations should ignore this parameter if it is received.
+
 =back
 
 The following Gettable types are also available for the built-in EC algorithm:
