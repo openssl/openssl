@@ -503,7 +503,7 @@ and thus the commands L<openssl-s_client(1)> and L<openssl-s_server(1)>
 check for consistency with
 TLS server (C<sslserver>) or TLS client use (C<sslclient>), respectively.
 By default, CMS signature validation, which can be done via L<openssl-cms(1)>,
-checks for consistency with S/MIME signing use (C<smimesign>).
+checks for consistency with the S/MIME signing purpose (C<smimesign>).
 
 While IETF RFC 5280 says that B<id-kp-serverAuth> and B<id-kp-clientAuth>
 are only for WWW use, in practice they are used for all kinds of TLS clients
