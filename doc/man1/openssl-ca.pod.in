@@ -229,6 +229,12 @@ Don't output the text form of a certificate to the output file.
 Specify the date output format. Values are: rfc_822 and iso_8601.
 Defaults to rfc_822.
 
+Note that despite its name, the rfc_822 format does not strictly conform to
+RFC 822. It outputs dates in the format "Mmm DD HH:MM:SS YYYY GMT" where Mmm
+is a 3-letter month abbreviation (e.g., "Jul 31 22:20:50 2017 GMT"). This is
+similar to the C asctime() format with a timezone suffix. True RFC 822 format
+would be "DD Mon YYYY HH:MM:SS GMT".
+
 =item B<-startdate> I<date>, B<-not_before> I<date>
 
 This allows the start date to be explicitly set. The format of the
