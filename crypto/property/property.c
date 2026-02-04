@@ -817,9 +817,10 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
         return 0;
 
     ret = ossl_method_store_fetch_best_impl(store, nid, prop_query, prov_rw, &best_impl);
-    if (ret && ossl_method_up_ref(&best_impl->method)) {
+    if (ret && ossl_method_up_ref(&best_impl->method))
         *method = best_impl->method.method;
-    }
+    else
+        ret = 0;
 
     return ret;
 }
