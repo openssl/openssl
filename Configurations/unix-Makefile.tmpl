@@ -639,7 +639,7 @@ clean: libclean ## Clean the workspace, keep the configuration
 	$(RM) tags TAGS doc-nits md-nits
 	$(RM) -r test/test-runs
 	$(RM) providers/fips*.new
-	-find . -type l \! -name '.*' \! -wholename './pkcs11-provider/*' -exec $(RM) {} \;
+	-find . -type l \! -name '.*' \! -path './pkcs11-provider/*' -exec $(RM) {} \;
 
 distclean: clean ## Clean and remove the configuration
 	$(RM) include/openssl/configuration.h
