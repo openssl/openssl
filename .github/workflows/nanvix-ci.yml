@@ -66,6 +66,9 @@ jobs:
     defaults:
       run:
         shell: bash
+    env:
+      NANVIX_SHA: ${{ needs.get-nanvix-info.outputs.sha }}
+      NANVIX_SHA_FULL: ${{ needs.get-nanvix-info.outputs.sha_full }}
     steps:
       - uses: actions/checkout@v4
 
@@ -125,6 +128,9 @@ jobs:
     needs: [get-nanvix-info, build]
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    env:
+      NANVIX_SHA: ${{ needs.get-nanvix-info.outputs.sha }}
+      NANVIX_SHA_FULL: ${{ needs.get-nanvix-info.outputs.sha_full }}
     steps:
       - uses: actions/checkout@v4
 
@@ -145,11 +151,9 @@ jobs:
         id: nanvix-release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NANVIX_SHA: ${{ needs.get-nanvix-info.outputs.sha }}
-          NANVIX_SHA_FULL: ${{ needs.get-nanvix-info.outputs.sha_full }}
         run: |
           set -euo pipefail
-          echo "Using Nanvix SHA: $NANVIX_SHA (full: $NANVIX_SHA_FULL)"
+          echo "Using Nanvix SHA from job outputs: $NANVIX_SHA (full: $NANVIX_SHA_FULL)"
 
           # Query Nanvix release API for additional metadata
           API_URL="https://api.github.com/repos/nanvix/nanvix/releases/tags/latest"
@@ -159,16 +163,12 @@ jobs:
 
           echo "name=${NANVIX_NAME}" >> "$GITHUB_OUTPUT"
           echo "published=${NANVIX_PUBLISHED}" >> "$GITHUB_OUTPUT"
-          echo "sha=${NANVIX_SHA}" >> "$GITHUB_OUTPUT"
-          echo "sha_full=${NANVIX_SHA_FULL}" >> "$GITHUB_OUTPUT"
 
       - name: Create Latest Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NANVIX_NAME: ${{ steps.nanvix-release.outputs.name }}
           NANVIX_PUBLISHED: ${{ steps.nanvix-release.outputs.published }}
-          NANVIX_SHA: ${{ steps.nanvix-release.outputs.sha }}
-          NANVIX_SHA_FULL: ${{ steps.nanvix-release.outputs.sha_full }}
         run: |
           # Release tag format: {commit-sha}-nanvix-{nanvix-sha}
           # This enables easy lookup of releases built with a specific Nanvix version
