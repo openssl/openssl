@@ -193,7 +193,6 @@ jobs:
           - Name: ${NANVIX_NAME}
           - Published: ${NANVIX_PUBLISHED}
           - Commit: [${NANVIX_SHA_FULL}](https://github.com/nanvix/nanvix/commit/${NANVIX_SHA_FULL})
-          - Nanvix SHA: \`${NANVIX_SHA}\`
 
           **Dependencies:**
           - None (base library)" \
