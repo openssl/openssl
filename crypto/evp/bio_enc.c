@@ -22,7 +22,12 @@ static long enc_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int enc_new(BIO *h);
 static int enc_free(BIO *data);
 static long enc_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fps);
-#define ENC_BLOCK_SIZE (1024 * 4)
+/*
+ * ENC_BLOCK_SIZE has been sized to handle ciphers that do not support streaming.
+ * i.e. For AES Key wrapping of larger PQ private keys the buffer needs to be
+ * large enough to process the input/output in one EVP_CipherUpdate() call.
+ */
+#define ENC_BLOCK_SIZE (1024 * 8)
 #define ENC_MIN_CHUNK (256)
 #define BUF_OFFSET (ENC_MIN_CHUNK + EVP_MAX_BLOCK_LENGTH)
 
