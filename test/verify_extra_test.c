@@ -364,6 +364,18 @@ static int test_multiname_selfsigned(void)
         X509_STORE_CTX_cleanup(ctx);
         if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
             goto err;
+        /* Try the domain with . */
+        if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+            goto err;
+        if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, ".muppetry.ca", 0)))
+            goto err;
+        if (!TEST_true(X509_verify_cert(ctx))) {
+            TEST_info("Verify failed for domain name .muppetry.ca\n");
+            fails++;
+        }
+        X509_STORE_CTX_cleanup(ctx);
+        if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
+            goto err;
     }
 
     for (size_t i = 0; multiname_emails[i] != NULL; i++) {
