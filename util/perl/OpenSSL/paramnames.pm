@@ -164,6 +164,9 @@ my %params = (
     'OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN' =>             "tls1multi_encin",     # octet_string
     'OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN' =>            "tls1multi_enclen",    # size_t
 
+    'OSSL_CIPHER_PARAM_PROCESS_UNPROTECTED_ENCRYPT' =>        "unprotected_enc",     # ptr
+    'OSSL_CIPHER_PARAM_PROCESS_UNPROTECTED_DECRYPT' =>        "unprotected_dec",     # ptr
+
 # digest parameters
     'OSSL_DIGEST_PARAM_XOFLEN' =>       "xoflen",       # size_t
     'OSSL_DIGEST_PARAM_SSL3_MS' =>      "ssl3-ms",      # octet string
