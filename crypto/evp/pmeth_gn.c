@@ -398,7 +398,7 @@ int EVP_PKEY_export(const EVP_PKEY *pkey, int selection,
          * interested in the resulting OSSL_PARAM array.
          */
         return pkey->ameth->export_to(pkey, &data, pkey_fake_import,
-            NULL, NULL);
+            0, NULL, NULL);
     }
 #endif
     return evp_keymgmt_util_export(pkey, selection, export_cb, export_cbarg);

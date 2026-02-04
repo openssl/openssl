@@ -31,6 +31,7 @@
 #include <openssl/param_build.h>
 #include <openssl/encoder.h>
 #include <openssl/core_names.h>
+#include <openssl/provider.h>
 
 #include "internal/numbers.h" /* includes SIZE_MAX */
 #include "internal/ffc.h"
@@ -1859,6 +1860,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
 #ifndef FIPS_MODULE
     if (pk->pkey.ptr != NULL) {
         OP_CACHE_ELEM *op;
+        int isdefault = 0;
 
         /*
          * If the legacy "origin" hasn't changed since last time, we try
@@ -1900,8 +1902,10 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
         if ((keydata = evp_keymgmt_newdata(tmp_keymgmt)) == NULL)
             goto end;
 
+        if (strcmp(OSSL_PROVIDER_get0_name(EVP_KEYMGMT_get0_provider(tmp_keymgmt)), "default") == 0)
+            isdefault = 1;
         if (!pk->ameth->export_to(pk, keydata, tmp_keymgmt->import,
-                libctx, propquery)) {
+                isdefault, libctx, propquery)) {
             evp_keymgmt_freedata(tmp_keymgmt, keydata);
             keydata = NULL;
             goto end;

@@ -450,7 +450,7 @@ static size_t dh_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-    OSSL_FUNC_keymgmt_import_fn *importer,
+    OSSL_FUNC_keymgmt_import_fn *importer, int isdefault,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
     DH *dh = from->pkey.dh;
@@ -470,7 +470,7 @@ static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     if (tmpl == NULL)
         return 0;
 
-    if (dh->meth != DH_get_default_method()) {
+    if (isdefault && dh->meth != DH_get_default_method()) {
         /*
          * Warning! This parameter is for internal use only. This breaks the
          * normal rules about passing complex objects across the provider
