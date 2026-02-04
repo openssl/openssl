@@ -6295,6 +6295,8 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+
 static int sign_hits = 0;
 
 static int do_sign_with_method(EVP_PKEY *pkey)
@@ -6441,7 +6443,7 @@ err:
     DSA_meth_free(method);
     return testresult;
 }
-#endif
+#endif /* OPENSSL_NO_DSA */
 
 #ifndef OPENSSL_NO_EC
 static int (*orig_ec_sign)(int type, const unsigned char *dgst,
@@ -6507,7 +6509,7 @@ err:
     EC_KEY_METHOD_free(method);
     return testresult;
 }
-#endif
+#endif /* OPENSSL_NO_EC */
 
 #ifndef OPENSSL_NO_DH
 
@@ -6619,7 +6621,8 @@ err:
     OPENSSL_free(buf);
     return testresult;
 }
-#endif
+#endif /* OPENSSL_NO_DH */
+#endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
 int setup_tests(void)
 {
@@ -6793,6 +6796,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ml_dsa_seed_only, 2);
 #endif
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_low_level_rsa_method);
 #ifndef OPENSSL_NO_DSA
     ADD_TEST(test_low_level_dsa_method);
@@ -6803,6 +6807,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DH
     ADD_TEST(test_low_level_dh_method);
 #endif
+#endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
     return 1;
 }
