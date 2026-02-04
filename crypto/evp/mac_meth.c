@@ -177,7 +177,7 @@ EVP_MAC *EVP_MAC_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
 {
     return evp_generic_fetch(libctx, OSSL_OP_MAC, algorithm, properties,
         evp_mac_from_algorithm, evp_mac_up_ref,
-        evp_mac_free);
+        evp_mac_free, NULL, NULL);
 }
 
 int EVP_MAC_up_ref(EVP_MAC *mac)
