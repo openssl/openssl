@@ -19,7 +19,34 @@ permissions:
   issues: write
 
 jobs:
+  # Extract Nanvix SHA once - all matrix builds use the same Nanvix release
+  get-nanvix-info:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.extract.outputs.sha }}
+      sha_full: ${{ steps.extract.outputs.sha_full }}
+    steps:
+      - name: Download Nanvix Release Info
+        id: extract
+        run: |
+          set -euo pipefail
+          # Download Nanvix release artifacts list
+          curl -fsSL https://raw.githubusercontent.com/nanvix/nanvix/refs/heads/dev/scripts/get-nanvix.sh | bash -s -- --force nanvix-artifacts
+          # Find any artifact to extract the SHA
+          ARTIFACT_FILE=$(find nanvix-artifacts -maxdepth 1 -type f -name "*.tar.bz2" | head -1)
+          if [[ -z "$ARTIFACT_FILE" ]]; then
+            echo "::error::No Nanvix artifact found"
+            exit 1
+          fi
+          # Extract Nanvix commit SHA from artifact filename
+          NANVIX_SHA_FULL=$(basename "$ARTIFACT_FILE" | sed -E 's/.*-([a-f0-9]{40})\.tar\.bz2$/\1/')
+          NANVIX_SHA="${NANVIX_SHA_FULL::7}"
+          echo "Nanvix commit SHA: $NANVIX_SHA_FULL (short: $NANVIX_SHA)"
+          echo "sha=$NANVIX_SHA" >> "$GITHUB_OUTPUT"
+          echo "sha_full=$NANVIX_SHA_FULL" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: get-nanvix-info
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -95,7 +122,7 @@ jobs:
           retention-days: 7
 
   release:
-    needs: build
+    needs: [get-nanvix-info, build]
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
@@ -118,18 +145,22 @@ jobs:
         id: nanvix-release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NANVIX_SHA: ${{ needs.get-nanvix-info.outputs.sha }}
+          NANVIX_SHA_FULL: ${{ needs.get-nanvix-info.outputs.sha_full }}
         run: |
           set -euo pipefail
+          echo "Using Nanvix SHA: $NANVIX_SHA (full: $NANVIX_SHA_FULL)"
+
+          # Query Nanvix release API for additional metadata
           API_URL="https://api.github.com/repos/nanvix/nanvix/releases/tags/latest"
           RELEASE_INFO=$(curl -fsSL -H "Authorization: Bearer ${GH_TOKEN}" "$API_URL")
           NANVIX_NAME=$(echo "$RELEASE_INFO" | jq -r '.name // "latest"')
           NANVIX_PUBLISHED=$(echo "$RELEASE_INFO" | jq -r '.published_at')
-          NANVIX_SHA=$(echo "$RELEASE_INFO" | jq -r '.target_commitish')
-          NANVIX_ID=$(echo "$RELEASE_INFO" | jq -r '.id')
+
           echo "name=${NANVIX_NAME}" >> "$GITHUB_OUTPUT"
           echo "published=${NANVIX_PUBLISHED}" >> "$GITHUB_OUTPUT"
           echo "sha=${NANVIX_SHA}" >> "$GITHUB_OUTPUT"
-          echo "id=${NANVIX_ID}" >> "$GITHUB_OUTPUT"
+          echo "sha_full=${NANVIX_SHA_FULL}" >> "$GITHUB_OUTPUT"
 
       - name: Create Latest Release
         env:
@@ -137,10 +168,13 @@ jobs:
           NANVIX_NAME: ${{ steps.nanvix-release.outputs.name }}
           NANVIX_PUBLISHED: ${{ steps.nanvix-release.outputs.published }}
           NANVIX_SHA: ${{ steps.nanvix-release.outputs.sha }}
+          NANVIX_SHA_FULL: ${{ steps.nanvix-release.outputs.sha_full }}
         run: |
-          RELEASE_TAG="${GITHUB_SHA::7}"
+          # Release tag format: {commit-sha}-nanvix-{nanvix-sha}
+          # This enables easy lookup of releases built with a specific Nanvix version
+          RELEASE_TAG="${GITHUB_SHA::7}-nanvix-${NANVIX_SHA}"
           gh release create "$RELEASE_TAG" \
-            --title "Build ${RELEASE_TAG}" \
+            --title "Build ${GITHUB_SHA::7} (Nanvix ${NANVIX_SHA})" \
             --notes "Automated build from branch ${{ github.ref_name }} at commit ${{ github.sha }}.
 
           **Build Information:**
@@ -151,7 +185,11 @@ jobs:
           **Nanvix Release:**
           - Name: ${NANVIX_NAME}
           - Published: ${NANVIX_PUBLISHED}
-          - Commit: [${NANVIX_SHA}](https://github.com/nanvix/nanvix/commit/${NANVIX_SHA})" \
+          - Commit: [${NANVIX_SHA_FULL}](https://github.com/nanvix/nanvix/commit/${NANVIX_SHA_FULL})
+          - Nanvix SHA: \`${NANVIX_SHA}\`
+
+          **Dependencies (exact tags for reproducibility):**
+          - None (base library)" \
             --latest \
             release-assets/*.tar.bz2
 
