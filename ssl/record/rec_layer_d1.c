@@ -277,7 +277,7 @@ start:
                  * Change the Read Record Layer to next read epoch
                  */
                 if (!s->method->ssl3_enc->change_cipher_state(sc,
-                    which)) {
+                        which)) {
                     SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     return -1;
                 }
