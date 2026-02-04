@@ -312,6 +312,11 @@ IF[{- !$disabled{tests} -}]
     DEPEND[ml_dsa_test]=../libcrypto.a libtestutil.a
   ENDIF
 
+  PROGRAMS{noinst}=aeswrap_test
+  SOURCE[aeswrap_test]=aeswrap_test.c
+  INCLUDE[aeswrap_test]=../include ../apps/include
+  DEPEND[aeswrap_test]=../libcrypto.a libtestutil.a
+
   SOURCE[v3nametest]=v3nametest.c
   INCLUDE[v3nametest]=../include ../apps/include
   DEPEND[v3nametest]=../libcrypto libtestutil.a
