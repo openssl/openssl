@@ -249,8 +249,11 @@ static int validate_hostname_part(const char *name, size_t len,
     for (i = 0; i < len; i++) {
         c = name[i];
         if (c == '.') {
-            /* Can not start a label with a . */
-            if (part_len == 0)
+            /*
+             * Can not start a label with a .
+             * unless it is the very first character.
+             */
+            if (part_len == 0 && i != 0)
                 return 0;
             /* Can not end a label with a - */
             if (prev == '-')
