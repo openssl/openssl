@@ -44,6 +44,9 @@
 #ifndef OPENSSL_NO_DSA
 #include "helpers/predefined_dsaparams.h"
 #endif
+#ifndef OPENSSL_NO_DH
+#include "helpers/predefined_dhparams.h"
+#endif
 
 #ifdef STATIC_LEGACY
 OSSL_provider_init_fn ossl_legacy_provider_init;
@@ -6506,6 +6509,118 @@ err:
 }
 #endif
 
+#ifndef OPENSSL_NO_DH
+
+static int compute_key_hits = 0;
+
+static int (*orig_dh_compute_key)(unsigned char *key, const BIGNUM *pub_key,
+    DH *dh);
+static int tst_dh_compute_key(unsigned char *key, const BIGNUM *pub_key,
+    DH *dh)
+{
+    compute_key_hits++;
+    return orig_dh_compute_key(key, pub_key, dh);
+}
+
+/* Test that a low level DH method still gets used even with a provider */
+static int test_low_level_dh_method(void)
+{
+    DH *dh = NULL;
+    const DH *cdh = NULL;
+    const DH_METHOD *def = DH_get_default_method();
+    DH_METHOD *method = DH_meth_dup(def);
+    EVP_PKEY *pkey = NULL, *pkeyb = NULL;
+    int testresult = 0;
+    EVP_PKEY_CTX *ctx = NULL;
+    BIGNUM *p = NULL, *g = NULL;
+    unsigned char *buf = NULL;
+    size_t len;
+
+    if (nullprov != NULL) {
+        testresult = TEST_skip("Test does not support a non-default library context");
+        goto err;
+    }
+
+    if (!TEST_ptr(method))
+        goto err;
+
+    pkey = get_dh512(NULL);
+    if (!TEST_ptr(pkey))
+        goto err;
+    cdh = EVP_PKEY_get0_DH(pkey);
+    if (!TEST_ptr(cdh))
+        goto err;
+    dh = DH_new();
+    if (!TEST_ptr(dh))
+        goto err;
+
+    orig_dh_compute_key = DH_meth_get_compute_key(def);
+    if (!TEST_true(DH_meth_set_compute_key(method, tst_dh_compute_key)))
+        goto err;
+    if (!TEST_true(DH_set_method(dh, method)))
+        goto err;
+
+    p = BN_dup(DH_get0_p(cdh));
+    g = BN_dup(DH_get0_g(cdh));
+    if (!TEST_ptr(p) || !TEST_ptr(g))
+        goto err;
+    if (!TEST_true(DH_set0_pqg(dh, p, NULL, g)))
+        goto err;
+    p = g = NULL;
+
+    if (!TEST_true(DH_generate_key(dh)))
+        goto err;
+
+    ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
+    if (!TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_keygen(ctx, &pkeyb), 0))
+        goto err;
+    EVP_PKEY_free(pkey);
+    pkey = NULL;
+
+    pkey = EVP_PKEY_new();
+    if (!TEST_ptr(pkey))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_assign_DH(pkey, dh), 0))
+        goto err;
+    dh = NULL;
+
+    compute_key_hits = 0;
+    EVP_PKEY_CTX_free(ctx);
+    ctx = EVP_PKEY_CTX_new(pkey, NULL);
+    if (!TEST_ptr(ctx))
+        return 0;
+    if (!TEST_int_gt(EVP_PKEY_derive_init(ctx), 0))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_derive_set_peer(ctx, pkeyb), 0))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_derive(ctx, NULL, &len), 0))
+        goto err;
+    buf = OPENSSL_malloc(len);
+    if (!TEST_ptr(buf))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_derive(ctx, buf, &len), 0))
+        goto err;
+
+    /* We expect to see our custom compute key function called once */
+    if (!TEST_int_eq(compute_key_hits, 1))
+        goto err;
+
+    testresult = 1;
+err:
+    BN_free(p);
+    BN_free(g);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_free(pkeyb);
+    DH_meth_free(method);
+    DH_free(dh);
+    OPENSSL_free(buf);
+    return testresult;
+}
+#endif
+
 int setup_tests(void)
 {
     char *config_file = NULL;
@@ -6684,6 +6799,9 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_low_level_ec_method);
+#endif
+#ifndef OPENSSL_NO_DH
+    ADD_TEST(test_low_level_dh_method);
 #endif
 
     return 1;
