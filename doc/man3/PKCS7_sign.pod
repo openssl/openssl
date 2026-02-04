@@ -19,8 +19,9 @@ PKCS7_sign_ex, PKCS7_sign
 
 PKCS7_sign_ex() creates and returns a PKCS#7 signedData structure.
 I<signcert> is the certificate to sign with, I<pkey> is the corresponding
-private key. I<certs> is an optional set of extra certificates to include
-in the PKCS#7 structure (for example any intermediate CAs in the chain).
+private key. I<certs> is an optional additional set of certificates to include,
+unless B<PKCS7_NOCERTS> is set, in the B<PKCS7> structure. They may be used as
+untrusted CA certificates for chain building or as extra signer certificates.
 The library context I<libctx> and property query I<propq> are used when
 retrieving algorithms from providers.
 
@@ -35,14 +36,14 @@ Many S/MIME clients expect the signed content to include valid MIME headers. If
 the B<PKCS7_TEXT> flag is set MIME headers for type C<text/plain> are prepended
 to the data.
 
-If B<PKCS7_NOCERTS> is set the signer's certificate and the extra I<certs>
-will not be included in the PKCS7 structure.
-The signer's certificate must still be supplied in the I<signcert> parameter
-though. This can reduce the size of the signatures if the signer's certificates
+If B<PKCS7_NOCERTS> is set, the signer's certificate and extra certificates
+given in the I<certs> parameter will not be included in the B<PKCS7> structure.
+The signer's certificate must still be supplied in the B<signcert> parameter
+though. This can reduce the size of the signatures if the signer certificates
 can be obtained by other means: for example a previously signed message.
 
-The data being signed is included in the PKCS7 structure, unless
-B<PKCS7_DETACHED> is set in which case it is omitted. This is used for PKCS7
+The data being signed is included in the B<PKCS7> structure, unless
+B<PKCS7_DETACHED> is set in which case it is omitted. This is used for PKCS#7
 detached signatures which are used in S/MIME plaintext signed messages for
 example.
 
@@ -89,7 +90,7 @@ called to finalize the structure if streaming is not enabled. Alternative
 signing digests can also be specified using this method.
 
 If I<signcert> and I<pkey> are NULL then a certificates only
-PKCS#7 structure is output.
+B<PKCS7> structure is output.
 
 In versions of OpenSSL before 1.0.0 the I<signcert> and I<pkey> parameters must
 not be NULL.
@@ -104,7 +105,7 @@ Some advanced attributes such as counter signatures are not supported.
 
 =head1 RETURN VALUES
 
-PKCS7_sign_ex() and PKCS7_sign() return either a valid PKCS7 structure
+PKCS7_sign_ex() and PKCS7_sign() return either a valid B<PKCS7> structure
 or NULL if an error occurred.  The error can be obtained from ERR_get_error(3).
 
 =head1 SEE ALSO
