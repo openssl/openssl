@@ -44,6 +44,7 @@ typedef struct prov_aes_wrap_ctx_st {
         AES_KEY ks;
     } ks;
     aeswrap_fn wrapfn;
+    int updated;
 
 } PROV_AES_WRAP_CTX;
 
@@ -107,6 +108,7 @@ static int aes_wrap_init(void *vctx, const unsigned char *key,
     if (!ossl_prov_is_running())
         return 0;
 
+    wctx->updated = 0;
     ctx->enc = enc;
     if (ctx->pad)
         wctx->wrapfn = enc ? CRYPTO_128_wrap_pad : CRYPTO_128_unwrap_pad;
@@ -209,6 +211,16 @@ static int aes_wrap_cipher_internal(void *vctx, unsigned char *out,
         }
     }
 
+    /*
+     * Multiple calls to update are not allowed, since the algorithm
+     * relies on all fields being present.
+     */
+    if (wctx->updated) {
+        ERR_raise(ERR_LIB_PROV, EVP_R_UPDATE_ERROR);
+        return -1;
+    }
+    wctx->updated = 1;
+
     rv = wctx->wrapfn(&wctx->ks.ks, ctx->iv_set ? ctx->iv : NULL, out, in,
         inlen, ctx->block);
     if (!rv) {
@@ -237,7 +249,7 @@ static int aes_wrap_cipher(void *vctx,
     const unsigned char *in, size_t inl)
 {
     PROV_AES_WRAP_CTX *ctx = (PROV_AES_WRAP_CTX *)vctx;
-    size_t len;
+    int len;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -256,7 +268,7 @@ static int aes_wrap_cipher(void *vctx,
     if (len <= 0)
         return 0;
 
-    *outl = len;
+    *outl = (size_t)len;
     return 1;
 }
 
