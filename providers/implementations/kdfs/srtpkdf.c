@@ -226,6 +226,10 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (cipher == NULL)
         return 0;
 
+    if (!EVP_CIPHER_is_a(cipher, "AES-128-CTR") && !EVP_CIPHER_is_a(cipher, "AES-192-CTR")
+        && !EVP_CIPHER_is_a(cipher, "AES-256-CTR"))
+        return 0;
+
     if (p.key != NULL) {
         key_len = EVP_CIPHER_get_key_length(cipher);
         if (!srtpkdf_set_membuf(&ctx->key, &ctx->key_len, p.key))
