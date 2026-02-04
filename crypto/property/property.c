@@ -1104,11 +1104,8 @@ static void alg_freeze(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
     const char *name;
     int i = 0;
 
-    if (alg == NULL) {
-        af->ret = 0;
-        return;
-    }
-    if (!evp_method_id2name_id_op_id(alg->nid, &name_id, NULL)) {
+    if (alg == NULL
+        || !evp_method_id2name_id_op_id(alg->nid, &name_id, NULL)) {
         af->ret = 0;
         return;
     }
@@ -1167,8 +1164,7 @@ int ossl_method_store_freeze_cache(OSSL_METHOD_STORE *store, const char *propq)
     if (store->frozen_algs == NULL)
         goto err;
 
-    int r = evp_md_fetch_all(store->ctx);
-    if (r <= 0)
+    if (evp_md_fetch_all(store->ctx) <= 0)
         goto err;
 
     ossl_sa_ALGORITHM_doall_arg(store->algs, &alg_freeze, &af);

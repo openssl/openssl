@@ -276,7 +276,7 @@ static int test_EVP_MD_fetch_freeze(void)
 #if defined(OPENSSL_NO_CACHED_FETCH)
     /*
      * Test does not make sense if cached fetch is disabled.
-     * There's noting to freeze, and test will fail.
+     * There's nothing to freeze, and test will fail.
      */
     return 1;
 #endif

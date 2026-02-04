@@ -20,6 +20,7 @@
 #include "internal/common.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+#include "openssl/crypto.h"
 
 static void cleanup_old_md_data(EVP_MD_CTX *ctx, int force)
 {
@@ -1080,7 +1081,7 @@ static void *evp_md_dup_frozen(void *vin)
     EVP_MD *in = vin;
     EVP_MD *out;
 
-    out = evp_md_new();
+    out = OPENSSL_malloc(sizeof(*out));
     if (out == NULL)
         return NULL;
     memcpy(out, in, sizeof(*out));
