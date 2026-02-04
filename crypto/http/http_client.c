@@ -801,12 +801,11 @@ next_io:
                 if (got_text
                     && rctx->state == OHS_HEADERS
                     && rctx->expect_asn1
-                    && status_code >= HTTP_STATUS_CODES_NONFATAL_ERROR) {
-
+                    && (status_code >= HTTP_STATUS_CODES_NONFATAL_ERROR
+                        || status_code == HTTP_STATUS_CODE_OK)) {
                     ERR_raise_data(ERR_LIB_HTTP, HTTP_R_CONTENT_TYPE_MISMATCH,
                         "expected ASN.1 content but got http code %d with Content-Type: %s",
                         status_code, value);
-
                     rctx->state = OHS_HEADERS_ERROR;
                     goto next_line;
                 }
