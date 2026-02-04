@@ -688,8 +688,7 @@ again:
 
     /* match epochs.  NULL means the packet is dropped on the floor */
     bitmap = dtls_get_bitmap(rl, rr, &is_next_epoch);
-    if (bitmap == NULL && !(rl->version == DTLS1_3_VERSION
-        && rl->in_init && rr->epoch <= 2)) {
+    if (bitmap == NULL && !(rl->version == DTLS1_3_VERSION && rl->in_init && rr->epoch <= 2)) {
         rr->length = 0;
         rl->packet_length = 0; /* dump this record */
         goto again; /* get another record */
@@ -729,7 +728,7 @@ again:
          */
         if ((rl->in_init && rl->version != DTLS1_3_VERSION)
             || (rl->version == DTLS1_3_VERSION && rr->epoch == 2
-            && (rl->epoch == 1 || (rl->in_init && rl->epoch == 0)))) {
+                && (rl->epoch == 1 || (rl->in_init && rl->epoch == 0)))) {
             if (dtls_rlayer_buffer_record(rl, &rl->unprocessed_rcds,
                     rr->seq_num)
                 < 0) {
