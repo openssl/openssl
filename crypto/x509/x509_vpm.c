@@ -298,45 +298,49 @@ static int validate_local_part(const char *name, size_t len,
 static int validate_email_name(const char *name, size_t len, int rfc822)
 {
     size_t dns_len, local_len;
-    char *at, *dnsname;
+    char *at, *next, *dnsname;
     ossl_charset_t local_charset;
 
     /*
      * 64 for local part, 1 for @, 255 for domain name
      */
     if (len > 320)
-        return 0;
+        goto err;
 
     /* Reject it if there is no @ */
     if ((at = memchr(name, '@', len)) == NULL)
-        return 0;
+        goto err;
+
+    /* Go to the last @ */
+    while ((next = memchr(at + 1, '@', len - (at - name - 1))) != NULL)
+        at = next;
 
     /* Ensure the local part is not oversize */
     local_len = len - (at - name);
     if (local_len > 64)
-        return 0;
+        goto err;
 
     if (!validate_local_part(name, len, &local_charset))
-        return 0;
+        goto err;
 
     if (rfc822 && local_charset == OSSL_CHARSET_NONASCII)
-        return 0;
+        goto err;
 
     if (!rfc822 && local_charset == OSSL_CHARSET_ASCII)
-        return 0;
+        goto err;
 
     /* What is after the @ must be valid as a dns name */
     dnsname = at + 1;
     dns_len = len - local_len - 1;
 
-    /* It may not have another @ */
-    if ((at = memchr(dnsname, '@', dns_len)) != NULL)
-        return 0;
-
     if (rfc822)
         return validate_hostname_part(dnsname, dns_len, OSSL_CHARSET_ASCII_ALNUM);
 
     return validate_hostname_part(dnsname, dns_len, OSSL_CHARSET_NONASCII);
+
+err:
+    ERR_raise(ERR_LIB_X509, ERR_R_PASSED_INVALID_ARGUMENT);
+    return 0;
 }
 
 X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
