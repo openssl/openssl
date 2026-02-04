@@ -188,7 +188,7 @@ jobs:
           - Commit: [${NANVIX_SHA_FULL}](https://github.com/nanvix/nanvix/commit/${NANVIX_SHA_FULL})
           - Nanvix SHA: \`${NANVIX_SHA}\`
 
-          **Dependencies (exact tags for reproducibility):**
+          **Dependencies:**
           - None (base library)" \
             --latest \
             release-assets/*.tar.bz2
