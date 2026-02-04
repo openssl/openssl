@@ -1810,7 +1810,9 @@ with a 128-bit key:
      /* Allow enough space in output buffer for additional block */
      unsigned char inbuf[1024], outbuf[1024 + EVP_MAX_BLOCK_LENGTH];
      int inlen, outlen;
-     EVP_CIPHER_CTX *ctx;
+     EVP_CIPHER_CTX *ctx = NULL;
+     EVP_CIPHER *cipher = NULL;
+     int ret = 0;
      /*
       * Bogus key and IV: we'd normally set these from
       * another source.
@@ -1818,44 +1820,40 @@ with a 128-bit key:
      unsigned char key[] = "0123456789abcdeF";
      unsigned char iv[] = "1234567887654321";
 
-     /* Don't set key or IV right away; we want to check lengths */
      ctx = EVP_CIPHER_CTX_new();
-     if (!EVP_CipherInit_ex2(ctx, EVP_aes_128_cbc(), NULL, NULL,
-                             do_encrypt, NULL)) {
-         /* Error */
-         EVP_CIPHER_CTX_free(ctx);
-         return 0;
-     }
+     cipher = EVP_CIPHER_fetch(NULL, "AES-128-CBC", NULL);
+     if (ctx == NULL || cipher == NULL)
+         goto err;
+
+     /* Don't set key or IV right away; we want to check lengths */
+     if (!EVP_CipherInit_ex2(ctx, cipher, NULL, NULL,
+                             do_encrypt, NULL))
+         goto err;
+
      OPENSSL_assert(EVP_CIPHER_CTX_get_key_length(ctx) == 16);
      OPENSSL_assert(EVP_CIPHER_CTX_get_iv_length(ctx) == 16);
 
      /* Now we can set key and IV */
-     if (!EVP_CipherInit_ex2(ctx, NULL, key, iv, do_encrypt, NULL)) {
-         /* Error */
-         EVP_CIPHER_CTX_free(ctx);
-         return 0;
-     }
+     if (!EVP_CipherInit_ex2(ctx, NULL, key, iv, do_encrypt, NULL))
+         goto err;
 
      for (;;) {
          inlen = fread(inbuf, 1, 1024, in);
          if (inlen <= 0)
              break;
-         if (!EVP_CipherUpdate(ctx, outbuf, &outlen, inbuf, inlen)) {
-             /* Error */
-             EVP_CIPHER_CTX_free(ctx);
-             return 0;
-         }
+         if (!EVP_CipherUpdate(ctx, outbuf, &outlen, inbuf, inlen))
+             goto err;
          fwrite(outbuf, 1, outlen, out);
      }
-     if (!EVP_CipherFinal_ex(ctx, outbuf, &outlen)) {
-         /* Error */
-         EVP_CIPHER_CTX_free(ctx);
-         return 0;
-     }
+     if (!EVP_CipherFinal_ex(ctx, outbuf, &outlen))
+         goto err;
      fwrite(outbuf, 1, outlen, out);
 
+     ret = 1;
+ err:
+     EVP_CIPHER_free(cipher);
      EVP_CIPHER_CTX_free(ctx);
-     return 1;
+     return ret;
  }
 
 Encryption using AES-CBC with a 256-bit key with "CS1" ciphertext stealing.

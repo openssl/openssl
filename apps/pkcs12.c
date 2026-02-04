@@ -222,8 +222,7 @@ int pkcs12_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL;
     PKCS12 *p12 = NULL;
     STACK_OF(OPENSSL_STRING) *canames = NULL;
-    EVP_CIPHER *default_enc = (EVP_CIPHER *)EVP_aes_256_cbc();
-    EVP_CIPHER *enc = (EVP_CIPHER *)default_enc;
+    EVP_CIPHER *enc = NULL;
     OPTION_CHOICE o;
 
     opt_set_unknown_name("cipher");
@@ -429,7 +428,7 @@ int pkcs12_main(int argc, char **argv)
             WARN_EXPORT("clcerts");
         if ((options & CACERTS) != 0)
             WARN_EXPORT("cacerts");
-        if (enc != default_enc)
+        if (enc_name != NULL)
             BIO_printf(bio_err,
                 "Warning: output encryption option -%s ignored with -export\n", enc_name);
     } else {
@@ -503,8 +502,9 @@ int pkcs12_main(int argc, char **argv)
 
         if (key_pbe == NID_undef)
             key_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
-        if (enc == default_enc)
-            enc = (EVP_CIPHER *)EVP_des_ede3_cbc();
+        if (enc_name == NULL)
+            enc = EVP_CIPHER_fetch(app_get0_libctx(), "DES-EDE3-CBC",
+                app_get0_propq());
         if (macalg == NULL)
             macalg = "sha1";
     }
@@ -941,6 +941,7 @@ end:
     BIO_free(in);
     BIO_free_all(out);
     sk_OPENSSL_STRING_free(canames);
+    EVP_CIPHER_free(enc);
     OPENSSL_free(badpass);
     OPENSSL_free(passcerts);
     OPENSSL_free(passin);

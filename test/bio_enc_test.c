@@ -11,6 +11,7 @@
 #include <openssl/evp.h>
 #include <openssl/bio.h>
 #include <openssl/rand.h>
+#include <openssl/crypto.h>
 
 #include "testutil.h"
 
@@ -266,6 +267,169 @@ static int test_bio_enc_chacha20_poly1305(int idx)
 #endif
 #endif
 
+/*
+ * Example function from EVP_EncryptInit.pod documentation.
+ * General encryption and decryption function using FILE I/O and AES128.
+ */
+static int do_crypt(FILE *in, FILE *out, int do_encrypt)
+{
+    /* Allow enough space in output buffer for additional block */
+    unsigned char inbuf[1024], outbuf[1024 + EVP_MAX_BLOCK_LENGTH];
+    int inlen, outlen;
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    int ret = 0;
+    /*
+     * Bogus key and IV: we'd normally set these from
+     * another source.
+     */
+    unsigned char key[] = "0123456789abcdeF";
+    unsigned char iv[] = "1234567887654321";
+
+    ctx = EVP_CIPHER_CTX_new();
+    cipher = EVP_CIPHER_fetch(NULL, "AES-128-CBC", NULL);
+    if (ctx == NULL || cipher == NULL)
+        goto err;
+
+    /* Don't set key or IV right away; we want to check lengths */
+    if (!EVP_CipherInit_ex2(ctx, cipher, NULL, NULL,
+            do_encrypt, NULL))
+        goto err;
+
+    OPENSSL_assert(EVP_CIPHER_CTX_get_key_length(ctx) == 16);
+    OPENSSL_assert(EVP_CIPHER_CTX_get_iv_length(ctx) == 16);
+
+    /* Now we can set key and IV */
+    if (!EVP_CipherInit_ex2(ctx, NULL, key, iv, do_encrypt, NULL))
+        goto err;
+
+    for (;;) {
+        size_t nread = fread(inbuf, 1, 1024, in);
+
+        if (nread == 0)
+            break;
+        inlen = (int)nread;
+        if (!EVP_CipherUpdate(ctx, outbuf, &outlen, inbuf, inlen))
+            goto err;
+        fwrite(outbuf, 1, outlen, out);
+    }
+    if (!EVP_CipherFinal_ex(ctx, outbuf, &outlen))
+        goto err;
+    fwrite(outbuf, 1, outlen, out);
+
+    ret = 1;
+err:
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
+/*
+ * Test the do_crypt() example from EVP_EncryptInit.pod documentation.
+ * Uses tmpfile() for portable temp file handling without security issues.
+ */
+static int test_do_crypt_roundtrip(void)
+{
+    const char *plaintext = "The quick brown fox jumps over the lazy dog.\n";
+    FILE *in_file = NULL, *enc_file = NULL, *dec_file = NULL;
+    char decrypted[256];
+    size_t plaintext_len, dec_len;
+    int ret = 0;
+
+    /* Create temp files using tmpfile() - portable and secure */
+    if (!TEST_ptr(in_file = tmpfile())
+        || !TEST_ptr(enc_file = tmpfile())
+        || !TEST_ptr(dec_file = tmpfile()))
+        goto err;
+
+    /* Write plaintext to input file */
+    plaintext_len = strlen(plaintext);
+    if (!TEST_size_t_eq(fwrite(plaintext, 1, plaintext_len, in_file), plaintext_len))
+        goto err;
+    rewind(in_file);
+
+    /* Encrypt */
+    if (!TEST_int_eq(do_crypt(in_file, enc_file, ENCRYPT), 1))
+        goto err;
+    rewind(enc_file);
+
+    /* Decrypt */
+    if (!TEST_int_eq(do_crypt(enc_file, dec_file, DECRYPT), 1))
+        goto err;
+    rewind(dec_file);
+
+    /* Read back and verify */
+    dec_len = fread(decrypted, 1, sizeof(decrypted) - 1, dec_file);
+    decrypted[dec_len] = '\0';
+
+    if (!TEST_size_t_eq(dec_len, plaintext_len)
+        || !TEST_mem_eq(decrypted, dec_len, plaintext, plaintext_len))
+        goto err;
+
+    ret = 1;
+err:
+    if (in_file != NULL)
+        fclose(in_file);
+    if (enc_file != NULL)
+        fclose(enc_file);
+    if (dec_file != NULL)
+        fclose(dec_file);
+    return ret;
+}
+
+#ifndef OPENSSL_NO_DES
+/*
+ * Test the EVP_BytesToKey example from PEM_read_bio_PrivateKey.pod documentation.
+ * This tests key derivation using EVP_CIPHER_fetch and EVP_MD_fetch.
+ */
+static int test_evp_bytes_to_key(void)
+{
+    EVP_CIPHER *cipher = NULL;
+    EVP_MD *md = NULL;
+    unsigned char *key = NULL;
+    unsigned int nkey, niv;
+    unsigned char iv[EVP_MAX_IV_LENGTH];
+    unsigned char salt[8] = { 0x3F, 0x17, 0xF5, 0x31, 0x6E, 0x2B, 0xAC, 0x89 };
+    const char *password = "testpassword";
+    int passlen = (int)strlen(password);
+    int rc;
+    int ret = 0;
+
+    cipher = EVP_CIPHER_fetch(NULL, "DES-EDE3-CBC", NULL);
+    md = EVP_MD_fetch(NULL, "MD5", NULL);
+    if (!TEST_ptr(cipher) || !TEST_ptr(md))
+        goto err;
+
+    nkey = EVP_CIPHER_get_key_length(cipher);
+    niv = EVP_CIPHER_get_iv_length(cipher);
+
+    if (!TEST_uint_eq(nkey, 24) /* 3DES key length */
+        || !TEST_uint_eq(niv, 8)) /* 3DES IV length */
+        goto err;
+
+    key = OPENSSL_malloc(nkey);
+    if (!TEST_ptr(key))
+        goto err;
+
+    memcpy(iv, salt, niv);
+    rc = EVP_BytesToKey(cipher, md, iv /*salt*/, (unsigned char *)password,
+        passlen, 1, key, NULL /*iv*/);
+    if (!TEST_int_eq(rc, (int)nkey))
+        goto err;
+
+    /* Verify the derived key is non-zero (basic sanity check) */
+    if (!TEST_false(key[0] == 0 && key[1] == 0 && key[2] == 0 && key[3] == 0))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(key);
+    EVP_MD_free(md);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+#endif
+
 static int test_bio_enc_eof_read_flush(void)
 {
     /* Length chosen to ensure base64 encoding employs padding */
@@ -340,5 +504,9 @@ int setup_tests(void)
 #endif
 #endif
     ADD_TEST(test_bio_enc_eof_read_flush);
+    ADD_TEST(test_do_crypt_roundtrip);
+#ifndef OPENSSL_NO_DES
+    ADD_TEST(test_evp_bytes_to_key);
+#endif
     return 1;
 }

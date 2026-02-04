@@ -32,6 +32,12 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Updated documentation examples and command-line apps to use modern cipher
+   fetching with AES-256-CBC instead of the deprecated 3DES cipher. The apps
+   affected are `cms`, `pkcs8`, `pkcs12`, `req`, and `smime`.
+
+   *Koray Onen*
+
  * Added CSHAKE as per [SP 800-185]
 
    *Shane Lontis*
