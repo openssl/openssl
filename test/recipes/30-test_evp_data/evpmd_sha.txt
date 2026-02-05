@@ -481,3 +481,37 @@ Output = A7FFC6F8BF1ED76651C14756A061D662F580FF4DE43B49FA82D80A4B80F8434A
 Digest = shA512
 Input = "abc"
 Output = ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f
+
+# Test Vectors extracted from
+# https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/TupleHash-128/internalProjection.json
+# https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/TupleHash-256/internalProjection.json
+# Only single tuples are tested here.
+# Rather than support multiple input lines here, tuples with multiple entries are tested in evp_xof_test.
+
+FIPSversion = >=4.0.0
+Digest = TUPLEHASH-128
+Input = 256d4e9641
+Output = a5fc1bae37d4bdb94637ae55725193634f8788677c55d1e1ddc0f62fb39ef88972b7e3
+Ctrl = customization:$PdKk
+Ctrl = xof:1
+
+FIPSversion = >=4.0.0
+Digest = TUPLEHASH-128
+Input = db04b54a3ade1357802badeb7ac89402984586e38c5eca71a8
+Output = e518442067d467c1272f203cef88a3b5ae50f673b7264e7575ee3467faff17db067554b4612fa3ef1424824d6c
+Ctrl = customization:bgQf(|!lhD=~uH%f]gg'%7)-8,uXi r(IWm|GWzh[2! 7$g%B}&wtN!J_EM{'H#gQ5
+Ctrl = xof:0
+
+FIPSversion = >=4.0.0
+Digest = TUPLEHASH-256
+Input = 993eaf06750fafe46b2efa1d7b81ba819668532e075c
+Output = 97ffabaf8584f9c3c01999fcff4c7b5207d40832282a689a6f911e6242f5577e5a745ca609882b9526cca46a331776d39a2d8c216264b9c7dbf91a0e87d9
+Ctrl = customization: 9^}&03%1Xv`d:$SQlp*SX;9r7oE2zyX(KA0k-TU)XYm.Y5O5m0X/9kG|E,m?mr6_>W8xrgE8; z~M+8#@0Cj@In_y3F!f6;fD/o#{UB'jAs9pGO;sk~]NJ>
+Ctrl = xof:1
+
+FIPSversion = >=4.0.0
+Digest = TUPLEHASH-256
+Input = 2ca261eadd7767acd8979dd60047109e6653f0a6d1f4e2a6e5d244ea553e2d80c5a2d39d3d82bd4aae20e136
+Output = 2ab273c6e20d9103a1b00a926df831f81dbb4da37c7f828cde846a8b08619d79d1ec0a7430a3e9be2f1f6d0d4600ab4f0be4d7a9ecfb
+Ctrl = customization:-QUW&9 2r3(@zQ}M-H`Ez<Lsi P=EpM{U1$!d.vRTq]Hj;2M3h|,Sl
+Ctrl = xof:0
