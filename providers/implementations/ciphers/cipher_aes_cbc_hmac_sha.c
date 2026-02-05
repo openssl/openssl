@@ -289,10 +289,10 @@ static void *aes_cbc_hmac_sha1_newctx(void *provctx, size_t kbits,
 
 #ifdef FIPS_MODULE
     if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
-        ST_ID_CIPHER_AES_128_ECB))
+            ST_ID_CIPHER_AES_128_ECB))
         return NULL;
     if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
-        ST_ID_DIGEST_SHA1))
+            ST_ID_DIGEST_SHA1))
         return NULL;
 #endif
 
@@ -338,10 +338,10 @@ static void *aes_cbc_hmac_sha256_newctx(void *provctx, size_t kbits,
 
 #ifdef FIPS_MODULE
     if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
-        ST_ID_CIPHER_AES_128_ECB))
+            ST_ID_CIPHER_AES_128_ECB))
         return NULL;
     if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
-        ST_ID_DIGEST_SHA256))
+            ST_ID_DIGEST_SHA256))
         return NULL;
 #endif
 
