@@ -1507,6 +1507,8 @@ static int rsa_x931_padding_allowed(PROV_RSA_CTX *ctx)
 }
 #endif
 
+static struct rsa_set_ctx_params_st pzero;
+
 static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
@@ -1531,6 +1533,8 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
         if (!rsa_set_ctx_params_no_digest_decoder(params, &p))
             return 0;
     }
+    if (memcmp(&p, &pzero, sizeof(p)) == 0)
+        return 1;
 
     if (!OSSL_FIPS_IND_SET_CTX_FROM_PARAM(prsactx, OSSL_FIPS_IND_SETTABLE0,
             p.ind_k))

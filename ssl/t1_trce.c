@@ -606,13 +606,14 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     { TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384, TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_name },
     { TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512, TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_name },
     /*
-     * Well known groups that we happen to know about, but only come from
+     * Well known sigalgs that we happen to know about, but only come from
      * provider capability declarations (hence no macros for the
      * codepoints/names)
      */
     { 0x0904, "mldsa44" },
     { 0x0905, "mldsa65" },
-    { 0x0906, "mldsa87" }
+    { 0x0906, "mldsa87" },
+    { 0x0708, "sm2sig_sm3" },
 };
 
 static const ssl_trace_tbl ssl_ctype_tbl[] = {

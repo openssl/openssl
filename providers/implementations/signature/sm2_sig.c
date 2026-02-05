@@ -21,6 +21,7 @@
 #include <openssl/params.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/prov_ssl.h>
 #include <openssl/proverr.h>
 #include "internal/nelem.h"
 #include "internal/sizes.h"
@@ -131,6 +132,7 @@ static void *sm2sig_newctx(void *provctx, const char *propq)
         return NULL;
     }
     ctx->mdsize = SM3_DIGEST_LENGTH;
+    ctx->flag_compute_z_digest = 1;
     strcpy(ctx->mdname, OSSL_DIGEST_NAME_SM3);
     return ctx;
 }
@@ -247,8 +249,6 @@ static int sm2sig_digest_signverify_init(void *vpsm2ctx, const char *mdname,
 
     if (!EVP_DigestInit_ex2(ctx->mdctx, ctx->md, params))
         goto error;
-
-    ctx->flag_compute_z_digest = 1;
 
     ret = 1;
 
@@ -451,6 +451,18 @@ static int sm2sig_set_ctx_params(void *vpsm2ctx, const OSSL_PARAM params[])
         OPENSSL_free(psm2ctx->id);
         psm2ctx->id = tmp_id;
         psm2ctx->id_len = tmp_idlen;
+    } else if (p.tlsver != NULL) {
+        static const char sm2_tls13_id[] = "TLSv1.3+GM+Cipher+Suite";
+        unsigned int ver = 0;
+
+        if (!psm2ctx->flag_compute_z_digest
+            || !OSSL_PARAM_get_uint(p.tlsver, &ver))
+            return 0;
+        if (ver == TLS1_3_VERSION) {
+            OPENSSL_free(psm2ctx->id);
+            psm2ctx->id_len = sizeof(sm2_tls13_id) - 1;
+            psm2ctx->id = OPENSSL_memdup(sm2_tls13_id, psm2ctx->id_len);
+        }
     }
 
     /*
