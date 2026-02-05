@@ -17,7 +17,7 @@ SSL server verification parameters
  int SSL_set1_dnsname(SSL *s, const char *dnsname);
  int SSL_add1_dnsname(SSL *s, const char *dnsname);
  int SSL_set1_ipaddr(SSL *s, const uint8_t *ip, size_t len);
- int SSL_add1_ipaddr(SSL *s, const uint8_t *ip size_t len);
+ int SSL_add1_ipaddr(SSL *s, const char *ip_asc);
  void SSL_set_hostflags(SSL *s, unsigned int flags);
  const char *SSL_get0_peername(SSL *s);
 
