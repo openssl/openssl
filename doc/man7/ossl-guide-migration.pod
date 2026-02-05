@@ -37,6 +37,12 @@ features available in OpenSSL 4.0.
 Some functions have been removed that were deprecated in previous
 versions of OpenSSL. See L<ossl-removed-api(7)>.
 
+The ASN1_STRING type has been made opaque, and the various ASN1_STRING
+flags have been made private. Accessors for the needed
+values from this type have been present since OpenSSL 1.1, Code
+which directly attempts to access internals of ASN1_STRING should be
+converted to use the accessors. 
+
 =head2 Upgrading from OpenSSL 3.x
 
 =head3 Removal of atexit() usage
