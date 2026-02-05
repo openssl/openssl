@@ -237,7 +237,11 @@ static void init_thread_destructor(void *hands)
 }
 
 static CRYPTO_ONCE ossl_init_thread_runonce = CRYPTO_ONCE_STATIC_INIT;
+#if defined(__NetBSD__) && defined(OPENSSL_THREADS)
+static CRYPTO_THREAD_ID recursion_guard = (CRYPTO_THREAD_ID)0;
+#else
 static CRYPTO_THREAD_ID recursion_guard = (CRYPTO_THREAD_ID)-1;
+#endif
 
 DEFINE_RUN_ONCE_STATIC(ossl_init_thread_once)
 {
