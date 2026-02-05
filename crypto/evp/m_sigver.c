@@ -12,6 +12,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include "crypto/evp.h"
+#include "crypto/aarch64_dit.h"
 #include "internal/provider.h"
 #include "internal/numbers.h" /* includes SIZE_MAX */
 #include "internal/common.h"
@@ -337,6 +338,8 @@ int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
     EVP_PKEY_CTX *pctx = ctx->pctx;
     int ret;
 
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
     if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
         return 0;
@@ -412,6 +415,8 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
     int r = 0;
     EVP_PKEY_CTX *dctx = NULL, *pctx = ctx->pctx;
 
+    OSSL_ENABLE_DIT_FOR_SCOPE
+
     if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
         return 0;
@@ -464,6 +469,8 @@ int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         return 0;
     }
+
+    OSSL_ENABLE_DIT_FOR_SCOPE
 
     if ((ctx->flags & EVP_MD_CTX_FLAG_FINALISED) != 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
