@@ -75,8 +75,7 @@ sub run_tests
     if ($run_test_as_dtls == 1) {
         if (disabled("ec")) {
             $proxy->clientflags("-groups ffdhe2048:ffdhe3072");
-        }
-        else {
+        } else {
             $proxy->clientflags("-groups P-256:P-384");
         }
     }
