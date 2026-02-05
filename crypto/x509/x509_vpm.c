@@ -261,7 +261,7 @@ static int validate_hostname_part(const char *name, size_t len,
             part_len = 0;
         } else {
             /* Can not start a label with a - */
-            if (part_len == 0 && c == '_') {
+            if (part_len == 0 && c == '-') {
                 return 0;
             }
             if (!is_label_ok(c, charset) && c != '-')
