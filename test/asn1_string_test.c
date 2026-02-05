@@ -261,8 +261,401 @@ asn1_bit_string_get_length_test(int idx)
     return abs_get_length_test(abs_get_length_tests, idx);
 }
 
+struct abs_set1_test {
+    const char *descr;
+    int valid;
+    const uint8_t data[20];
+    size_t length;
+    int unused_bits;
+    const unsigned char der[20];
+    int der_len;
+};
+
+static const struct abs_set1_test abs_set1_tests[] = {
+    { .descr = "length too large",
+        .valid = 0,
+        .length = (size_t)INT_MAX + 1 },
+    {
+        .descr = "negative unused bits",
+        .valid = 0,
+        .unused_bits = -1,
+    },
+    {
+        .descr = "8 unused bits",
+        .valid = 0,
+        .unused_bits = 8,
+    },
+    {
+        .descr = "empty with unused bits",
+        .valid = 0,
+        .data = {
+            0x00,
+        },
+        .length = 0,
+        .unused_bits = 1,
+    },
+    {
+        .descr = "empty",
+        .valid = 1,
+        .data = {
+            0x00,
+        },
+        .length = 0,
+        .unused_bits = 0,
+        .der = {
+            0x03,
+            0x01,
+            0x00,
+        },
+        .der_len = 3,
+    },
+    {
+        .descr = "single zero bit",
+        .valid = 1,
+        .data = {
+            0x00,
+        },
+        .length = 1,
+        .unused_bits = 7,
+        .der = {
+            0x03,
+            0x02,
+            0x07,
+            0x00,
+        },
+        .der_len = 4,
+    },
+    {
+        .descr = "single zero bit, with non-zero unused bit 6",
+        .valid = 0,
+        .data = {
+            0x40,
+        },
+        .length = 1,
+        .unused_bits = 7,
+    },
+    {
+        .descr = "single zero bit, with non-zero unused bit 0",
+        .valid = 0,
+        .data = {
+            0x01,
+        },
+        .length = 1,
+        .unused_bits = 7,
+    },
+    {
+        .descr = "single one bit",
+        .valid = 1,
+        .data = {
+            0x80,
+        },
+        .length = 1,
+        .unused_bits = 7,
+        .der = {
+            0x03,
+            0x02,
+            0x07,
+            0x80,
+        },
+        .der_len = 4,
+    },
+    {
+        .descr = "single one bit, with non-zero unused-bit 6",
+        .valid = 0,
+        .data = {
+            0xc0,
+        },
+        .length = 1,
+        .unused_bits = 7,
+    },
+    {
+        .descr = "single one bit, with non-zero unused-bit 0",
+        .valid = 0,
+        .data = {
+            0x81,
+        },
+        .length = 1,
+        .unused_bits = 7,
+    },
+    {
+        .descr = "RFC 3779, 2.1.1, IPv4 address 10.5.0.4",
+        .valid = 1,
+        .data = {
+            0x0a,
+            0x05,
+            0x00,
+            0x04,
+        },
+        .length = 4,
+        .unused_bits = 0,
+        .der = {
+            0x03,
+            0x05,
+            0x00,
+            0x0a,
+            0x05,
+            0x00,
+            0x04,
+        },
+        .der_len = 7,
+    },
+    {
+        .descr = "RFC 3779, 2.1.1, IPv4 address 10.5.0/23",
+        .valid = 1,
+        .data = {
+            0x0a,
+            0x05,
+            0x00,
+        },
+        .length = 3,
+        .unused_bits = 1,
+        .der = {
+            0x03,
+            0x04,
+            0x01,
+            0x0a,
+            0x05,
+            0x00,
+        },
+        .der_len = 6,
+    },
+    {
+        .descr = "RFC 3779, 2.1.1, IPv4 address 10.5.0/23, unused bit",
+        .valid = 0,
+        .data = {
+            0x0a,
+            0x05,
+            0x01,
+        },
+        .length = 3,
+        .unused_bits = 1,
+    },
+    {
+        .descr = "RFC 3779, IPv4 address 10.5.0/17",
+        .valid = 1,
+        .data = {
+            0x0a,
+            0x05,
+            0x00,
+        },
+        .length = 3,
+        .unused_bits = 7,
+        .der = {
+            0x03,
+            0x04,
+            0x07,
+            0x0a,
+            0x05,
+            0x00,
+        },
+        .der_len = 6,
+    },
+    {
+        .descr = "RFC 3779, IPv4 address 10.5.0/18, unused bit set",
+        .valid = 0,
+        .data = {
+            0x0a,
+            0x05,
+            0x20,
+        },
+        .length = 3,
+        .unused_bits = 6,
+    },
+    {
+        .descr = "RFC 3779, 2.1.1, IPv6 address 2001:0:200:3::1",
+        .valid = 1,
+        .data = {
+            0x20,
+            0x01,
+            0x00,
+            0x00,
+            0x02,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x03,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x01,
+        },
+        .length = 16,
+        .unused_bits = 0,
+        .der = {
+            0x03,
+            0x11,
+            0x00,
+            0x20,
+            0x01,
+            0x00,
+            0x00,
+            0x02,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x03,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x01,
+        },
+        .der_len = 19,
+    },
+    {
+        .descr = "RFC 3779, IPv6 address 2001:0:200:3::/127",
+        .valid = 1,
+        .data = {
+            0x20,
+            0x01,
+            0x00,
+            0x00,
+            0x02,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x03,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+        },
+        .length = 16,
+        .unused_bits = 1,
+        .der = {
+            0x03,
+            0x11,
+            0x01,
+            0x20,
+            0x01,
+            0x00,
+            0x00,
+            0x02,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x03,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+        },
+        .der_len = 19,
+    },
+    {
+        .descr = "RFC 3779, IPv6 address 2001:0:200:3::/127, unused bit",
+        .valid = 0,
+        .data = {
+            0x20,
+            0x01,
+            0x00,
+            0x00,
+            0x02,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x03,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x01,
+        },
+        .length = 16,
+        .unused_bits = 1,
+    },
+    { .descr = "RFC 3779, 2.1.1, IPv6 address 2001:0:200:3::/39", .valid = 1, .data = {
+                                                                                  0x20,
+                                                                                  0x01,
+                                                                                  0x00,
+                                                                                  0x00,
+                                                                                  0x02,
+                                                                              },
+        .length = 5,
+        .unused_bits = 1,
+        .der = {
+            0x03,
+            0x06,
+            0x01,
+            0x20,
+            0x01,
+            0x00,
+            0x00,
+            0x02,
+        },
+        .der_len = 8 },
+};
+
+static int
+abs_set1_test(const struct abs_set1_test *tbl, int idx)
+{
+    const struct abs_set1_test *test = &tbl[idx];
+    ASN1_BIT_STRING *abs = NULL;
+    unsigned char *der = NULL;
+    int ret, der_len = 0;
+    int success = 0;
+
+    if (!TEST_ptr(abs = ASN1_BIT_STRING_new())) {
+        TEST_info("%s: (idx = %d) %s ASN1_BIT_STRING_new()", __func__, idx, test->descr);
+        goto err;
+    }
+
+    ret = ASN1_BIT_STRING_set1(abs, test->data, test->length, test->unused_bits);
+    if (!TEST_int_eq(ret, test->valid)) {
+        TEST_info("%s: (idx = %d) %s ASN1_BIT_STRING_set1(): want %d, got %d",
+            __func__, idx, test->descr, test->valid, ret);
+        goto err;
+    }
+
+    if (!test->valid)
+        goto done;
+
+    der = NULL;
+    if (!TEST_int_eq((der_len = i2d_ASN1_BIT_STRING(abs, &der)), test->der_len)) {
+        TEST_info("%s: (idx=%d), %s i2d_ASN1_BIT_STRING(): want %d, got %d",
+            __func__, idx, test->descr, test->der_len, der_len);
+        if (der_len < 0)
+            der_len = 0;
+        goto err;
+    }
+
+    if (!TEST_mem_eq(der, der_len, test->der, test->der_len)) {
+        TEST_info("%s: (idx = %d)  %s DER mismatch", __func__, idx, test->descr);
+        goto err;
+    }
+
+done:
+    success = 1;
+
+err:
+    ASN1_BIT_STRING_free(abs);
+    OPENSSL_clear_free(der, der_len);
+
+    return success;
+}
+
+static int
+asn1_bit_string_set1_test(int idx)
+{
+    return abs_set1_test(abs_set1_tests, idx);
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(asn1_bit_string_get_length_test, OSSL_NELEM(abs_get_length_tests));
+    ADD_ALL_TESTS(asn1_bit_string_set1_test, OSSL_NELEM(abs_set1_tests));
     return 1;
 }

@@ -32,6 +32,11 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Added ASN1_BIT_STRING_set1() to set a bit string to a value including
+   the length in bytes and the number of unused bits.
+
+   *Bob Beck*
+
  * Added CSHAKE as per [SP 800-185]
 
    *Shane Lontis*
