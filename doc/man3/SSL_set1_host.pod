@@ -64,7 +64,7 @@ It is recommended that TLS clients use SSL_set1_dnsname() to configure server
 hostname validation and L<SSL_set_tlsext_host_name(3)> to configure
 Server Name Indication (SNI), which may be crucial also for correct
 server certificate selection and/or routing of the connection request.
-SSL_set1_ip(), or SSL_set1_ip_asc()
+SSL_set1_ipaddr()
 should be used for server IP address validation,
 
 SSL_set_hostflags() sets the I<flags> that will be passed to
