@@ -210,10 +210,6 @@ SKIP: {
 }
 
 SKIP: {
-    # TODO(DTLSv1.3): This test currently does not work for DTLS. It fails
-    # checking the extensions for ENCRYPTED_EXTENSIONS message type.
-    skip "Test does not work correctly currently", $testcount;
-
     skip "DTLS 1.3 is disabled", $testcount if disabled("dtls1_3");
     skip "DTLSProxy does not work on Windows", $testcount if $^O =~ /^(MSWin32)$/;
     run_tests(1);
@@ -223,7 +219,6 @@ sub run_tests
 {
     my $run_test_as_dtls = shift;
     my $proxy_start_success = 0;
-    my $dflt_client_flags = "";
 
     (undef, my $session) = tempfile();
     my $proxy;
@@ -244,37 +239,33 @@ sub run_tests
         );
     }
 
-    if ($run_test_as_dtls == 1) {
-        $dflt_client_flags = " -groups DEFAULT:-?X25519MLKEM768";
-    }
-
     $proxy->clear();
 
-    SKIP: {
-        skip "TODO(DTLSv1.3): When enabling sessionfile and dtls TLSProxy hangs"
-            ." after the handshake.", 2 if $run_test_as_dtls == 1;
-        #Test 1: Check we get all the right messages for a default handshake
-        $proxy->serverconnects(2);
-        $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-        $proxy->clientflags("-no_rx_cert_comp -sess_out " . $session);
-        $proxy->sessionfile($session);
-        $proxy_start_success = $proxy->start();
-        skip "TLSProxy did not start correctly", $testcount if $proxy_start_success == 0;
-        checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-            checkhandshake::DEFAULT_EXTENSIONS,
-            "Default handshake test");
+    #Test 1: Check we get all the right messages for a default handshake
+    $proxy->serverconnects(2);
+    $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
+    $proxy->clientflags("-no_rx_cert_comp -sess_out " . $session);
+    $proxy->sessionfile($session);
+    $proxy_start_success = $proxy->start();
+    skip "TLSProxy did not start correctly", $testcount if $proxy_start_success == 0;
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+        checkhandshake::DEFAULT_EXTENSIONS,
+        "Default handshake test");
 
-        #Test 2: Resumption handshake
-        $proxy->clearClient();
-        $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-        $proxy->clientflags("-no_rx_cert_comp -sess_in " . $session);
-        $proxy->clientstart();
-        checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
-            (checkhandshake::DEFAULT_EXTENSIONS
-                | checkhandshake::PSK_CLI_EXTENSION
-                | checkhandshake::PSK_SRV_EXTENSION),
-            "Resumption handshake test");
+    #Test 2: Resumption handshake
+    $proxy->clearClient();
+    $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
+    $proxy->clientflags("-no_rx_cert_comp -sess_in " . $session);
+    if ($run_test_as_dtls == 1) {
+        $proxy->reopenUDPSocket();
     }
+    $proxy->clientstart();
+    checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
+        (checkhandshake::DEFAULT_EXTENSIONS
+            | checkhandshake::PSK_CLI_EXTENSION
+            | checkhandshake::PSK_SRV_EXTENSION),
+        "Resumption handshake test");
+
 
     SKIP: {
         skip "No OCSP support in this OpenSSL build", 4
@@ -282,7 +273,7 @@ sub run_tests
         #Test 3: A status_request handshake (client request only)
         $proxy->clear();
         $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-        $proxy->clientflags("-no_rx_cert_comp -status".$dflt_client_flags);
+        $proxy->clientflags("-no_rx_cert_comp -status");
         $proxy_start_success = $proxy->start();
         skip "TLSProxy did not start correctly", 4 if $proxy_start_success == 0;
         checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
@@ -293,7 +284,7 @@ sub run_tests
         #Test 4: A status_request handshake (server support only)
         $proxy->clear();
         $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-        $proxy->clientflags("-no_rx_cert_comp".$dflt_client_flags);
+        $proxy->clientflags("-no_rx_cert_comp");
         $proxy->serverflags("-no_rx_cert_comp -status_file "
             . srctop_file("test", "recipes", "ocsp-response.der"));
         $proxy->start();
@@ -304,7 +295,7 @@ sub run_tests
         #Test 5: A status_request handshake (client and server)
         $proxy->clear();
         $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-        $proxy->clientflags("-no_rx_cert_comp -status".$dflt_client_flags);
+        $proxy->clientflags("-no_rx_cert_comp -status");
         $proxy->serverflags("-no_rx_cert_comp -status_file "
             . srctop_file("test", "recipes", "ocsp-response.der"));
         $proxy->start();
@@ -318,7 +309,7 @@ sub run_tests
         $proxy->clear();
         $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
         $proxy->clientflags("-no_rx_cert_comp -status -enable_pha -cert "
-            . srctop_file("apps", "server.pem").$dflt_client_flags);
+            . srctop_file("apps", "server.pem"));
         $proxy->serverflags("-no_rx_cert_comp -Verify 5 -status_file "
             . srctop_file("test", "recipes", "ocsp-response.der"));
         $proxy->start();
@@ -333,7 +324,7 @@ sub run_tests
     #Test 7: A client auth handshake
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -enable_pha".$dflt_client_flags
+    $proxy->clientflags("-no_rx_cert_comp -enable_pha"
                         ." -cert ".srctop_file("apps", "server.pem"));
     $proxy->serverflags("-no_rx_cert_comp -Verify 5");
     $proxy_start_success = $proxy->start();
@@ -346,7 +337,7 @@ sub run_tests
     #Test 8: Server name handshake (no client request)
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -noservername".$dflt_client_flags);
+    $proxy->clientflags("-no_rx_cert_comp -noservername");
     $proxy->start();
     checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
         checkhandshake::DEFAULT_EXTENSIONS
@@ -356,7 +347,7 @@ sub run_tests
     #Test 9: Server name handshake (server support only)
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -noservername".$dflt_client_flags);
+    $proxy->clientflags("-no_rx_cert_comp -noservername");
     $proxy->serverflags("-no_rx_cert_comp -servername testhost");
     $proxy->start();
     checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
@@ -367,7 +358,7 @@ sub run_tests
     #Test 10: Server name handshake (client and server)
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -servername testhost".$dflt_client_flags);
+    $proxy->clientflags("-no_rx_cert_comp -servername testhost");
     $proxy->serverflags("-no_rx_cert_comp -servername testhost");
     $proxy->start();
     checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
@@ -378,7 +369,7 @@ sub run_tests
     #Test 11: ALPN handshake (client request only)
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -alpn test".$dflt_client_flags);
+    $proxy->clientflags("-no_rx_cert_comp -alpn test");
     $proxy->start();
     checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
         checkhandshake::DEFAULT_EXTENSIONS
@@ -388,7 +379,7 @@ sub run_tests
     #Test 12: ALPN handshake (server support only)
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp".$dflt_client_flags);
+    $proxy->clientflags("-no_rx_cert_comp");
     $proxy->serverflags("-no_rx_cert_comp -alpn test");
     $proxy->start();
     checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
@@ -398,7 +389,7 @@ sub run_tests
     #Test 13: ALPN handshake (client and server)
     $proxy->clear();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-    $proxy->clientflags("-no_rx_cert_comp -alpn test".$dflt_client_flags);
+    $proxy->clientflags("-no_rx_cert_comp -alpn test");
     $proxy->serverflags("-no_rx_cert_comp -alpn test");
     $proxy->start();
     checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
@@ -408,17 +399,14 @@ sub run_tests
         "ALPN handshake test");
 
     SKIP: {
-        # TODO(DTLSv1.3): When ecx is disabled the test reports "Invalid
-        # CertificateVerify signature length" when running with DTLS.
         skip "No CT, EC or OCSP support in this OpenSSL build", 1
-            if disabled("ct") || disabled("ec") || disabled("ocsp")
-               || ($run_test_as_dtls == 1 && disabled("ecx"));
+            if disabled("ct") || disabled("ec") || disabled("ocsp");
 
         #Test 14: SCT handshake (client request only)
         $proxy->clear();
         $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
         #Note: -ct also sends status_request
-        $proxy->clientflags("-no_rx_cert_comp -ct".$dflt_client_flags);
+        $proxy->clientflags("-no_rx_cert_comp -ct");
         $proxy->serverflags("-no_rx_cert_comp -status_file "
             . srctop_file("test", "recipes", "ocsp-response.der")
             . " -serverinfo " . srctop_file("test", "serverinfo2.pem"));
@@ -432,37 +420,30 @@ sub run_tests
             "SCT handshake test");
     }
 
-    SKIP: {
-        skip "TODO(DTLSv1.3): Re-enable when #26465 is merged.", 1
-            if $run_test_as_dtls == 1;
-        #Test 15: HRR Handshake
-        $proxy->clear();
-        $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-        $proxy->clientflags("-no_rx_cert_comp");
-        $proxy->serverflags("-no_rx_cert_comp -curves P-384");
-        $proxy->start();
-        checkhandshake($proxy, checkhandshake::HRR_HANDSHAKE,
-            checkhandshake::DEFAULT_EXTENSIONS
-                | checkhandshake::KEY_SHARE_HRR_EXTENSION,
-            "HRR handshake test");
-    }
+    #Test 15: HRR Handshake
+    $proxy->clear();
+    $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
+    $proxy->clientflags("-no_rx_cert_comp");
+    $proxy->serverflags("-no_rx_cert_comp -curves P-384");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::HRR_HANDSHAKE,
+        checkhandshake::DEFAULT_EXTENSIONS
+            | checkhandshake::KEY_SHARE_HRR_EXTENSION,
+        "HRR handshake test");
 
-    SKIP: {
-        skip "TODO(DTLSv1.3): When enabling sessionfile and dtls TLSProxy hangs"
-            . " after the handshake.", 1 if $run_test_as_dtls == 1;
-        #Test 16: Resumption handshake with HRR
-        $proxy->clear();
-        $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-        $proxy->clientflags("-no_rx_cert_comp -sess_in " . $session);
-        $proxy->serverflags("-no_rx_cert_comp -curves P-384");
-        $proxy->start();
-        checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
-            (checkhandshake::DEFAULT_EXTENSIONS
-                | checkhandshake::KEY_SHARE_HRR_EXTENSION
-                | checkhandshake::PSK_CLI_EXTENSION
-                | checkhandshake::PSK_SRV_EXTENSION),
-            "Resumption handshake with HRR test");
-    }
+
+    #Test 16: Resumption handshake with HRR
+    $proxy->clear();
+    $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
+    $proxy->clientflags("-no_rx_cert_comp -sess_in " . $session);
+    $proxy->serverflags("-no_rx_cert_comp -curves P-384");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
+        (checkhandshake::DEFAULT_EXTENSIONS
+            | checkhandshake::KEY_SHARE_HRR_EXTENSION
+            | checkhandshake::PSK_CLI_EXTENSION
+            | checkhandshake::PSK_SRV_EXTENSION),
+        "Resumption handshake with HRR test");
 
     #Test 17: Acceptable but non preferred key_share
     $proxy->clear();
