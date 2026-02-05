@@ -58,7 +58,7 @@ function is required for DANE TLSA in the presence of service name
 indirection via CNAME, MX or SRV records as specified in RFCs 7671,
 7672, and 7673.
 
-SSL_add1_ipaddr() adds I<ip> to the list of IP addresses, if it parses as an IP address.
+SSL_add1_ipaddr() adds I<ip_asc> to the list of IP addresses, if it parses as an IP address.
 
 It is recommended that TLS clients use SSL_set1_dnsname() to configure server
 hostname validation and L<SSL_set_tlsext_host_name(3)> to configure
