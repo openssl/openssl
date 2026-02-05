@@ -69,8 +69,7 @@ sub run_tests
             srctop_file("apps", "server.pem"),
             (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
         );
-    }
-    else {
+    } else {
         $proxy = TLSProxy::Proxy->new(
             \&hrr_filter,
             cmdstr(app([ "openssl" ]), display => 1),
@@ -87,19 +86,15 @@ sub run_tests
         if ($run_test_as_dtls == 1) {
             $proxy->clientflags("-groups ffdhe2048:ffdhe3072");
         }
-    }
-    else {
+    } else {
         $proxy->serverflags("-curves P-256");
         if ($run_test_as_dtls == 1) {
             $proxy->clientflags("-groups P-384:P-256");
         }
     }
     $testtype = CHANGE_HRR_CIPHERSUITE;
-    $proxy->start();
-    # # Skip tests if TLSProxy if it fails to start. For DTLS this return is always
-    # # false when the handshake fails so we skip the check.
-    # skip "TLSProxy did not start correctly", $testcount if $proxy->start() == 0
-    #     && $run_test_as_dtls == 0;
+    # Skip tests if TLSProxy if it fails to start.
+    skip "TLSProxy did not start correctly", $testcount if $proxy->start() == 0;
     ok(TLSProxy::Message->fail(), "Server ciphersuite changes");
 
     #Test 2: It is an error if the client changes the offered ciphersuites so that
@@ -110,8 +105,7 @@ sub run_tests
         if ($run_test_as_dtls == 1) {
             $proxy->clientflags("-groups ffdhe2048:ffdhe3072");
         }
-    }
-    else {
+    } else {
         $proxy->serverflags("-curves P-384");
         if ($run_test_as_dtls == 1) {
             $proxy->clientflags("-groups P-256:P-384");
@@ -131,8 +125,7 @@ sub run_tests
         if ($run_test_as_dtls == 1) {
             $proxy->clientflags("-groups ffdhe2048:ffdhe3072");
         }
-    }
-    else {
+    } else {
         $proxy->serverflags("-curves P-384");
         if ($run_test_as_dtls == 1) {
             $proxy->clientflags("-groups P-256:P-384");
