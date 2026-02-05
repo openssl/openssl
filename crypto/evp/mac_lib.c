@@ -15,6 +15,7 @@
 #include <openssl/core_names.h>
 #include <openssl/types.h>
 #include "internal/nelem.h"
+#include "internal/common.h" /* ossl_unlikely() */
 #include "crypto/evp.h"
 #include "internal/provider.h"
 #include "evp_local.h"
@@ -115,6 +116,7 @@ size_t EVP_MAC_CTX_get_block_size(EVP_MAC_CTX *ctx)
 int EVP_MAC_init(EVP_MAC_CTX *ctx, const unsigned char *key, size_t keylen,
     const OSSL_PARAM params[])
 {
+    ctx->finalized = ctx->squeezed = 0;
     if (ctx->meth->init == NULL) {
         ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
         return 0;
@@ -124,6 +126,7 @@ int EVP_MAC_init(EVP_MAC_CTX *ctx, const unsigned char *key, size_t keylen,
 
 int EVP_MAC_init_SKEY(EVP_MAC_CTX *ctx, EVP_SKEY *skey, const OSSL_PARAM params[])
 {
+    ctx->finalized = ctx->squeezed = 0;
     if (ctx->meth->init_skey == NULL
         || skey->skeymgmt->prov != ctx->meth->prov
         || ctx->meth->init_skey == NULL) {
@@ -135,6 +138,10 @@ int EVP_MAC_init_SKEY(EVP_MAC_CTX *ctx, EVP_SKEY *skey, const OSSL_PARAM params[
 
 int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen)
 {
+    if (ossl_unlikely(ctx->finalized || ctx->squeezed)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
+        return 0;
+    }
     return ctx->meth->update(ctx->algctx, data, datalen);
 }
 
@@ -146,11 +153,15 @@ static int evp_mac_final(EVP_MAC_CTX *ctx, int xof,
     OSSL_PARAM params[2];
     size_t macsize;
 
-    if (ctx == NULL || ctx->meth == NULL) {
+    if (ossl_unlikely(ctx == NULL || ctx->meth == NULL)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_NULL_ALGORITHM);
         return 0;
     }
-    if (ctx->meth->final == NULL) {
+    if (ossl_unlikely(ctx->meth->final == NULL)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
+        return 0;
+    }
+    if (ossl_unlikely(ctx->finalized || ctx->squeezed)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
         return 0;
     }
@@ -180,6 +191,7 @@ static int evp_mac_final(EVP_MAC_CTX *ctx, int xof,
     res = ctx->meth->final(ctx->algctx, out, &l, outsize);
     if (outl != NULL)
         *outl = l;
+    ctx->finalized = 1;
     return res;
 }
 
@@ -192,6 +204,28 @@ int EVP_MAC_final(EVP_MAC_CTX *ctx,
 int EVP_MAC_finalXOF(EVP_MAC_CTX *ctx, unsigned char *out, size_t outsize)
 {
     return evp_mac_final(ctx, 1, out, NULL, outsize);
+}
+
+int EVP_MAC_squeeze(EVP_MAC_CTX *ctx, unsigned char *out, size_t outlen)
+{
+    if (ossl_unlikely(ctx == NULL || ctx->meth == NULL)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_NULL_ALGORITHM);
+        return 0;
+    }
+    if (ossl_unlikely(ctx->meth->squeeze == NULL)) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_UNSUPPORTED);
+        return 0;
+    }
+    if (ossl_unlikely(out == NULL)) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (ossl_unlikely(ctx->finalized)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_SQUEEZE_ERROR);
+        return 0;
+    }
+    ctx->squeezed = 1;
+    return ctx->meth->squeeze(ctx->algctx, out, outlen);
 }
 
 /*

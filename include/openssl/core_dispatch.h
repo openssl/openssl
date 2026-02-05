@@ -435,6 +435,7 @@ OSSL_CORE_MAKE_FUNC(int, cipher_decrypt_skey_init, (void *cctx, void *skeydata, 
 #define OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS 11
 #define OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS 12
 #define OSSL_FUNC_MAC_INIT_SKEY 13
+#define OSSL_FUNC_MAC_SQUEEZE 14
 
 OSSL_CORE_MAKE_FUNC(void *, mac_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(void *, mac_dupctx, (void *src))
@@ -443,8 +444,9 @@ OSSL_CORE_MAKE_FUNC(int, mac_init, (void *mctx, const unsigned char *key, size_t
 OSSL_CORE_MAKE_FUNC(int, mac_update,
     (void *mctx, const unsigned char *in, size_t inl))
 OSSL_CORE_MAKE_FUNC(int, mac_final,
-    (void *mctx,
-        unsigned char *out, size_t *outl, size_t outsize))
+    (void *mctx, unsigned char *out, size_t *outl, size_t outsize))
+OSSL_CORE_MAKE_FUNC(int, mac_squeeze,
+    (void *mctx, unsigned char *out, size_t outl))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, mac_gettable_params, (void *provctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, mac_gettable_ctx_params,
     (void *mctx, void *provctx))
