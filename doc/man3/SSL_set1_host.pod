@@ -117,7 +117,7 @@ IP address, if present, matches.
 
 =head1 RETURN VALUES
 
-SSL_set1_dnsname, SSL_set1_ip, SSL_set1_ip_asc,
+SSL_set1_dnsname(), SSL_set1_ipaddr(),
 SSL_add1_dnsname, SSL_add1_ip, SSL_add1_ip_asc,
 SSL_set1_host() and SSL_add1_host() return 1 for success and 0 for
 failure.
