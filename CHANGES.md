@@ -32,6 +32,14 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * ASN1_STRING has been made opaque
+
+   Access to values from ASN1_STRING and related types should be done with the
+   appropriate accessor functions. The various ASN1_STRING_FLAG values have
+   been made private
+
+   *Bob Beck *
+
  * Added CSHAKE as per [SP 800-185]
 
    *Shane Lontis*

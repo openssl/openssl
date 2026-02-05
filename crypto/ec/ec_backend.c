@@ -27,6 +27,8 @@
 #include "internal/nelem.h"
 #include "internal/param_build_set.h"
 
+#include <crypto/asn1.h>
+
 /* Mapping between a flag and a name */
 static const OSSL_ITEM encoding_nameid_map[] = {
     { OPENSSL_EC_EXPLICIT_CURVE, OSSL_PKEY_EC_ENCODING_EXPLICIT },

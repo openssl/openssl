@@ -17,6 +17,8 @@
 #include "testutil.h"
 #include "internal/nelem.h"
 
+#include <crypto/asn1.h>
+
 typedef struct {
     const char *data;
     int type;

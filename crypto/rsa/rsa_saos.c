@@ -19,6 +19,7 @@
 #include <openssl/rsa.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include <crypto/asn1.h>
 
 int RSA_sign_ASN1_OCTET_STRING(int type,
     const unsigned char *m, unsigned int m_len,

@@ -83,7 +83,7 @@ int asn1parse_main(int argc, char **argv)
     int indent = 0, noout = 0, dump = 0, informat = FORMAT_PEM;
     int offset = 0, ret = 1, i, j;
     long num, tmplen;
-    unsigned char *tmpbuf;
+    const unsigned char *tmpbuf;
     unsigned int length = 0;
     OPTION_CHOICE o;
     const ASN1_ITEM *it = NULL;
@@ -271,10 +271,11 @@ int asn1parse_main(int argc, char **argv)
                 goto end;
             }
             /* hmm... this is a little evil but it works */
-            tmpbuf = at->value.asn1_string->data;
-            tmplen = at->value.asn1_string->length;
+            tmpbuf = ASN1_STRING_get0_data(at->value.asn1_string);
+            tmplen = ASN1_STRING_length(at->value.asn1_string);
         }
-        str = tmpbuf;
+        /* XXX casts away const */
+        str = (unsigned char *)tmpbuf;
         num = tmplen;
     }
 
