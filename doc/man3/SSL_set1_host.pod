@@ -93,7 +93,7 @@ enabled.
 ==head1 DEPRECATED FUNCTIONS
 
 SSL_set1_host and SSL_add1_host are deprecated as of OpenSSL 4.0.0.
-SSL_add1_dnsame and SSL_add1_ip should be used instead.
+SSL_set1_dnsname(), SSL_add1_dnsname(), SSL_set1_ipaddr() and SSL_add1_ipaddr() should be used instead.
 
 SSL_set1_host() sets in the verification parameters of I<s>
 the expected DNS hostname or IP address to I<host>,
