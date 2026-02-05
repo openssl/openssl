@@ -315,7 +315,7 @@ static int validate_email_name(const char *name, size_t len, int rfc822)
         goto err;
 
     /* Go to the last @ */
-    while ((next = memchr(at + 1, '@', len - (at - name - 1))) != NULL)
+    while ((next = memchr(at + 1, '@', len - (at - name + 1))) != NULL)
         at = next;
 
     /* Ensure the local part is not oversize */
