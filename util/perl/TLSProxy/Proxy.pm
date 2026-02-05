@@ -752,7 +752,6 @@ sub seen_session_ticket_ack
 {
     my $self = shift;
     my $record = shift;
-    my $start_time = time();
 
     my $ack_hash = $self->{saw_session_ticket_ack};
     return if !$self->{saw_session_ticket} || scalar(keys %{$ack_hash}) == 2;
