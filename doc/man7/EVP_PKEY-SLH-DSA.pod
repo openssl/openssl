@@ -13,13 +13,13 @@ EVP_PKEY-SLH-DSA-SHAKE-256s, EVP_PKEY-SLH-DSA-SHAKE-256f
 
 =head1 DESCRIPTION
 
-The B<SLH-DSA-SHA2-128s>, B<EVP_PKEY-SLH-DSA-SHA2-128f>,
-B<SLH-DSA-SHA2-192s>, B<EVP_PKEY-SLH-DSA-SHA2-192f>,
-B<SLH-DSA-SHA2-256s>, B<EVP_PKEY-SLH-DSA-SHA2-256f>,
-B<SLH-DSA-SHAKE-128s>, B<EVP_PKEY-SLH-DSA-SHAKE-128f>,
-B<SLH-DSA-SHAKE-192s>, B<EVP_PKEY-SLH-DSA-SHAKE-192f>,
-B<SLH-DSA-SHAKE-256s> and B<EVP_PKEY-SLH-DSA-SHAKE-256f> key types are
-implemented in OpenSSL's default and FIPS providers.  These implementations
+SLH-DSA implements the algorithms B<SLH-DSA-SHA2-128s>, B<SLH-DSA-SHA2-128f>,
+B<SLH-DSA-SHA2-192s>, B<SLH-DSA-SHA2-192f>,
+B<SLH-DSA-SHA2-256s>, B<SLH-DSA-SHA2-256f>,
+B<SLH-DSA-SHAKE-128s>, B<SLH-DSA-SHAKE-128f>,
+B<SLH-DSA-SHAKE-192s>, B<SLH-DSA-SHAKE-192f>,
+B<SLH-DSA-SHAKE-256s> and B<SLH-DSA-SHAKE-256f>.
+These key types are implemented in OpenSSL's default and FIPS providers.  These implementations
 support the associated key, containing the public key I<pub> and the
 private key I<priv>.
 
