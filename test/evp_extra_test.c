@@ -6327,11 +6327,15 @@ err:
     return ret;
 }
 
+static int rsa_ex_idx = -1;
+
 static int (*orig_rsa_priv_enc)(int, const unsigned char *, unsigned char *, RSA *, int);
 
 static int tst_rsa_priv_enc(int flen, const unsigned char *from, unsigned char *to,
     RSA *rsa, int padding)
 {
+    if (strcmp(RSA_get_ex_data(rsa, rsa_ex_idx), "test") != 0)
+        return 0;
     sign_hits++;
     return orig_rsa_priv_enc(flen, from, to, rsa, padding);
 }
@@ -6354,11 +6358,15 @@ static int test_low_level_rsa_method(void)
     if (!TEST_ptr(e) || !TEST_ptr(method))
         goto err;
 
+    rsa_ex_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+
     if (!TEST_true(BN_set_word(e, RSA_F4)))
         goto err;
 
     rsa = RSA_new();
     if (!TEST_ptr(rsa))
+        goto err;
+    if (!TEST_true(RSA_set_ex_data(rsa, rsa_ex_idx, (void *)"test")))
         goto err;
     if (!TEST_true(RSA_generate_key_ex(rsa, 1024, e, NULL)))
         goto err;
@@ -6389,10 +6397,14 @@ err:
 }
 
 #ifndef OPENSSL_NO_DSA
+static int dsa_ex_idx = -1;
+
 static DSA_SIG *(*orig_dsa_sign)(const unsigned char *, int, DSA *);
 
 static DSA_SIG *tst_dsa_sign(const unsigned char *buf, int len, DSA *dsa)
 {
+    if (strcmp(DSA_get_ex_data(dsa, dsa_ex_idx), "test") != 0)
+        return 0;
     sign_hits++;
     return orig_dsa_sign(buf, len, dsa);
 }
@@ -6414,8 +6426,12 @@ static int test_low_level_dsa_method(void)
     if (!TEST_ptr(method))
         goto err;
 
+    dsa_ex_idx = DSA_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+
     dsa = load_dsa_params();
     if (!TEST_ptr(dsa))
+        goto err;
+    if (!TEST_true(DSA_set_ex_data(dsa, dsa_ex_idx, (void *)"test")))
         goto err;
     if (!TEST_true(DSA_generate_key(dsa)))
         goto err;
@@ -6446,6 +6462,8 @@ err:
 #endif /* OPENSSL_NO_DSA */
 
 #ifndef OPENSSL_NO_EC
+static int ec_ex_idx = -1;
+
 static int (*orig_ec_sign)(int type, const unsigned char *dgst,
     int dlen, unsigned char *sig,
     unsigned int *siglen,
@@ -6461,6 +6479,8 @@ static int tst_ec_sign(int type, const unsigned char *dgst,
     const BIGNUM *kinv, const BIGNUM *r,
     EC_KEY *eckey)
 {
+    if (strcmp(EC_KEY_get_ex_data(eckey, ec_ex_idx), "test") != 0)
+        return 0;
     sign_hits++;
     return orig_ec_sign(type, dgst, dlen, sig, siglen, kinv, r, eckey);
 }
@@ -6482,7 +6502,11 @@ static int test_low_level_ec_method(void)
     if (!TEST_ptr(method))
         goto err;
 
+    ec_ex_idx = EC_KEY_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+
     if (!TEST_ptr(ec = EC_KEY_new_by_curve_name_ex(NULL, NULL, NID_X9_62_prime256v1)))
+        goto err;
+    if (!TEST_true(EC_KEY_set_ex_data(ec, ec_ex_idx, (void *)"test")))
         goto err;
     if (!TEST_true(EC_KEY_generate_key(ec)))
         goto err;
@@ -6512,6 +6536,7 @@ err:
 #endif /* OPENSSL_NO_EC */
 
 #ifndef OPENSSL_NO_DH
+static int dh_ex_idx = -1;
 
 static int compute_key_hits = 0;
 
@@ -6520,6 +6545,8 @@ static int (*orig_dh_compute_key)(unsigned char *key, const BIGNUM *pub_key,
 static int tst_dh_compute_key(unsigned char *key, const BIGNUM *pub_key,
     DH *dh)
 {
+    if (strcmp(DH_get_ex_data(dh, dh_ex_idx), "test") != 0)
+        return 0;
     compute_key_hits++;
     return orig_dh_compute_key(key, pub_key, dh);
 }
@@ -6546,6 +6573,8 @@ static int test_low_level_dh_method(void)
     if (!TEST_ptr(method))
         goto err;
 
+    dh_ex_idx = DH_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+
     pkey = get_dh512(NULL);
     if (!TEST_ptr(pkey))
         goto err;
@@ -6554,6 +6583,8 @@ static int test_low_level_dh_method(void)
         goto err;
     dh = DH_new();
     if (!TEST_ptr(dh))
+        goto err;
+    if (!TEST_true(DH_set_ex_data(dh, dh_ex_idx, (void *)"test")))
         goto err;
 
     orig_dh_compute_key = DH_meth_get_compute_key(def);
