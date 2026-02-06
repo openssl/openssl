@@ -1095,6 +1095,7 @@ static int set_kat_drbg(OSSL_LIB_CTX *ctx,
     EVP_RAND *rand;
     unsigned int strength = 256;
     EVP_RAND_CTX *parent_rand = NULL;
+    int reseed_time_interval = 0;
     OSSL_PARAM drbg_params[3] = {
         OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END
     };
@@ -1141,7 +1142,13 @@ static int set_kat_drbg(OSSL_LIB_CTX *ctx,
     EVP_RAND_CTX_free(parent_rand);
     parent_rand = NULL;
 
-    if (!EVP_RAND_instantiate(kat_rand, strength, 0, persstr, persstr_len, NULL))
+    /* Disable time-based reseed for KAT DRBG to make selftests robust against
+     * wall-clock changes */
+    drbg_params[0] =
+	OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL,
+                                 &reseed_time_interval);
+    drbg_params[1] = OSSL_PARAM_construct_end();
+    if (!EVP_RAND_instantiate(kat_rand, strength, 0, persstr, persstr_len, drbg_params))
         goto err;
 
     /* When we set the new private generator this one is freed, so upref it */
