@@ -107,8 +107,9 @@ B<X509_STORE> from a given directory path.
 The certificates in the directory must be in hashed form, as
 documented in L<X509_LOOKUP_hash_dir(3)>.
 
-X509_STORE_load_store_ex() loads trusted certificate(s) into an
-B<X509_STORE> from a store at a given URI. The library context I<libctx> and
+X509_STORE_load_store_ex() passes a filename or URI I<uri> for a directory-like
+structure from which one or more trusted certificates are loaded on demand
+in the trust store I<ctx>. The library context I<libctx> and
 property query I<propq> are used when fetching algorithms from providers.
 
 X509_STORE_load_store() is similar to X509_STORE_load_store_ex() but

@@ -8,12 +8,11 @@
  */
 
 #include <string.h>
-#include "crypto/ctype.h"
 #include <assert.h>
 
 #include <openssl/err.h>
 #include <openssl/lhash.h>
-#include "internal/common.h"
+#include "internal/common.h" /* for OSSL_SKIP_SCHEME() */
 #include "store_local.h"
 
 static CRYPTO_RWLOCK *registry_lock;
@@ -165,13 +164,8 @@ int ossl_store_register_loader_int(OSSL_STORE_LOADER *loader)
      *
      * scheme        = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
      */
-    if (ossl_isalpha(*scheme))
-        while (*scheme != '\0'
-            && (ossl_isalpha(*scheme)
-                || ossl_isdigit(*scheme)
-                || strchr("+-.", *scheme) != NULL))
-            scheme++;
-    if (*scheme != '\0') {
+    OSSL_SKIP_SCHEME(scheme);
+    if (*loader->scheme == '\0' || *scheme != '\0') {
         ERR_raise_data(ERR_LIB_OSSL_STORE, OSSL_STORE_R_INVALID_SCHEME,
             "scheme=%s", loader->scheme);
         return 0;
