@@ -8,23 +8,26 @@ ASN1_buf_print, ASN1_bn_print - print key components
 
  #include <openssl/asn1.h>
 
- int ASN1_buf_print(BIO *bp, const unsigned char *buf, size_t buflen, int indent);
+ int ASN1_buf_print(BIO *bp, const unsigned char *buf, size_t buflen, int off);
  int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
-                   unsigned char *ign, int indent);
+                   unsigned char *buf, int off);
 
 =head1 DESCRIPTION
 
 ASN1_buf_print() prints the contents of the buffer I<buf> of length I<buflen>
 to the BIO I<bp>. The output is formatted as colon-separated hexadecimal bytes,
-with each line indented by I<indent> spaces. Lines wrap at 16 bytes.
+with each line indented by I<off> spaces. Lines wrap at 16 bytes.
 
 ASN1_bn_print() prints the B<BIGNUM> I<num> to the BIO I<bp>, preceded by
-the label I<number>. The output is indented by I<indent> spaces. For small
-values that fit in a single word, the output shows both decimal and hexadecimal
-representations. For larger values, the output is formatted as colon-separated
-hexadecimal bytes similar to ASN1_buf_print().
+the label I<number>. The output is indented by I<off> spaces. If I<num> is
+NULL, the function returns 1 without printing anything. For the value zero,
+only the decimal representation is shown. For other small values that fit in a
+single word, the output shows both decimal and hexadecimal representations.
+For larger values, the output is formatted as colon-separated hexadecimal bytes
+similar to ASN1_buf_print().
 
-The I<ign> parameter is ignored and should be passed as NULL.
+The I<buf> parameter of ASN1_bn_print() is ignored and should be passed as
+NULL.
 
 These functions are primarily used internally for printing key components in
 human-readable format. Their output format should not be considered stable,
