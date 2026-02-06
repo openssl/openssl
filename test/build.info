@@ -35,6 +35,7 @@ IF[{- !$disabled{tests} -}]
           versions \
           aborttest test_test pkcs12_format_test \
           sanitytest rsa_complex exdatatest bntest \
+		  sparcv9_mont_sqr_test \
           ecstresstest gmdifftest pbelutest \
           destest mdc2test sha_test \
           exptest pbetest localetest evp_pkey_ctx_new_from_name\
@@ -101,6 +102,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[bntest]=bntest.c
   INCLUDE[bntest]=../include ../apps/include
   DEPEND[bntest]=../libcrypto libtestutil.a
+
+  SOURCE[sparcv9_mont_sqr_test]=sparcv9_mont_sqr_test.c
+  INCLUDE[sparcv9_mont_sqr_test]=.. ../include ../apps/include
+  DEPEND[sparcv9_mont_sqr_test]=../libcrypto libtestutil.a
 
   SOURCE[ectest]=ectest.c
   INCLUDE[ectest]=../include ../apps/include
