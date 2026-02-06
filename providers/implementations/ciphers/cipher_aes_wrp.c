@@ -48,15 +48,13 @@ typedef struct prov_aes_wrap_ctx_st {
 
 } PROV_AES_WRAP_CTX;
 
-static void *aes_wrap_newctx(size_t kbits, size_t blkbits,
+static void *aes_wrap_newctx(void *provctx, size_t kbits, size_t blkbits,
     size_t ivbits, unsigned int mode, uint64_t flags)
 {
     PROV_AES_WRAP_CTX *wctx;
     PROV_CIPHER_CTX *ctx;
 
-    if (!ossl_prov_is_running())
-        return NULL;
-
+    CIPHER_PROV_CHECK(provctx, AES_128_WRP);
     wctx = OPENSSL_zalloc(sizeof(*wctx));
     ctx = (PROV_CIPHER_CTX *)wctx;
     if (ctx != NULL) {
@@ -310,7 +308,7 @@ static int aes_wrap_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     static OSSL_FUNC_cipher_newctx_fn aes_##kbits##fname##_newctx;              \
     static void *aes_##kbits##fname##_newctx(void *provctx)                     \
     {                                                                           \
-        return aes_##mode##_newctx(kbits, blkbits, ivbits,                      \
+        return aes_##mode##_newctx(provctx, kbits, blkbits, ivbits,             \
             EVP_CIPH_##UCMODE##_MODE, flags);                                   \
     }                                                                           \
     const OSSL_DISPATCH ossl_##aes##kbits##fname##_functions[] = {              \

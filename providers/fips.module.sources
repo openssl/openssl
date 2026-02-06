@@ -641,7 +641,7 @@ providers/fips/include/fips_selftest_params.inc
 providers/fips/include/fipscommon.h
 providers/fips/self_test.c
 providers/fips/self_test.h
-providers/fips/self_test_data.inc
+providers/fips/self_test_data.c
 providers/fips/self_test_kats.c
 providers/implementations/asymciphers/rsa_enc.c
 providers/implementations/ciphers/cipher_aes.c
