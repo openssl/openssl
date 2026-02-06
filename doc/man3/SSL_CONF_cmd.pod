@@ -793,17 +793,26 @@ B<X509_CHECK_FLAG_NEVER_CHECK_SUBJECT>.
 =item B<SetExpectedDNSName>
 
 The B<value> argument is the expected DNS hostname to use for certificate
-verification.  Any previous value is cleared.
+verification.  Any previous value is cleared.  This option is intended for
+configurations that are dedicated to connecting to a single server or
+cluster of servers, and not appropriate for configurations that are used
+to connect to a diverse set of destinations.
 
 =item B<AddExpectedDNSName>
 
 The B<value> argument is an expected DNS hostname to use for certificate
-verification, in addition to any previously set value.
+verification, in addition to any previously set value.  This option is intended for
+configurations that are dedicated to connecting to a single server or
+cluster of servers, and not appropriate for configurations that are used
+to connect to a diverse set of destinations.
 
 =item B<SetExpectedIPAddress>
 
 The B<value> argument is the expected IPv4 or IPv6 address to use for
-certificate verification.  Any previous value is cleared.
+certificate verification.  Any previous value is cleared.  This option is intended for
+configurations that are dedicated to connecting to a single server or
+cluster of servers, and not appropriate for configurations that are used
+to connect to a diverse set of destinations.
 
 =back
 
