@@ -187,8 +187,12 @@ Invalid input also includes malformed data, either a digest length that does
 not match the digest algorithm, or a C<Full(0)> (binary ASN.1 DER form)
 certificate or a public key that fails to parse.
 
-SSL_get0_dane() returns a pointer to the B<SSL_DANE> structure or NULL if
-DANE has not been enabled for the connection.
+SSL_get0_dane() returns a pointer to the B<SSL_DANE> structure associated with
+the SSL connection, or NULL if I<ssl> does not represent a connection (e.g., a
+QUIC stream SSL object). The returned structure is always present for valid
+connections regardless of whether DANE has been enabled; applications should
+use other means (such as checking for TLSA records) to determine whether DANE
+is active.
 
 The functions SSL_get0_dane_authority() and SSL_get0_dane_tlsa() return a
 negative value when DANE authentication failed or was not enabled, a
