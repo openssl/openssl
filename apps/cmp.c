@@ -2222,7 +2222,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx)
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
     int portnum, use_ssl;
     static char server_port[32] = { '\0' };
-    const char *proxy_host = NULL;
+    const char *proxy, *proxy_host;
 #endif
     char server_buf[200] = "mock server";
     char proxy_buf[200] = "";
@@ -2274,9 +2274,16 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx)
         opt_tls_used ? "s" : "", host, port,
         *used_path == '/' ? used_path + 1 : used_path);
 
-    proxy_host = OSSL_HTTP_adapt_proxy(opt_proxy, opt_no_proxy, host, use_ssl);
-    if (proxy_host != NULL)
+    proxy = OSSL_HTTP_adapt_proxy(opt_proxy, opt_no_proxy, host, opt_tls_used);
+    if (proxy != NULL) {
+        /* show proxy without any given user:pass@ prefix */
+        proxy_host = strchr(proxy, '@');
+        if (proxy_host == NULL)
+            proxy_host = proxy;
+        else
+            proxy_host++;
         (void)BIO_snprintf(proxy_buf, sizeof(proxy_buf), " via %s", proxy_host);
+    }
 
 set_path:
 #endif
