@@ -980,7 +980,7 @@ static int EVP_Update_loop(void *args)
         rc = EVP_EncryptFinal_ex(ctx, buf, &outl);
 
     if (rc == 0)
-        BIO_printf(bio_err, "Error finalizing cipher loop\n");
+        BIO_puts(bio_err, "Error finalizing cipher loop\n");
     return count;
 }
 
@@ -1005,7 +1005,7 @@ static int EVP_Update_loop_aead_enc(void *args)
         if (mode_op != EVP_CIPH_SIV_MODE) {
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
                     sizeof(aead_iv), NULL)) {
-                BIO_printf(bio_err, "\nFailed to set iv length\n");
+                BIO_puts(bio_err, "\nFailed to set iv length\n");
                 dofail();
                 exit(1);
             }
@@ -1016,13 +1016,13 @@ static int EVP_Update_loop_aead_enc(void *args)
             && mode_op != EVP_CIPH_GCM_SIV_MODE) {
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                     TAG_LEN, NULL)) {
-                BIO_printf(bio_err, "\nFailed to set tag length\n");
+                BIO_puts(bio_err, "\nFailed to set tag length\n");
                 dofail();
                 exit(1);
             }
         }
         if (!EVP_CipherInit_ex(ctx, NULL, NULL, key, aead_iv, -1)) {
-            BIO_printf(bio_err, "\nFailed to set key and iv\n");
+            BIO_puts(bio_err, "\nFailed to set key and iv\n");
             dofail();
             exit(1);
         }
@@ -1030,20 +1030,20 @@ static int EVP_Update_loop_aead_enc(void *args)
         if (mode_op == EVP_CIPH_CCM_MODE) {
             if (!EVP_EncryptUpdate(ctx, NULL, &outl,
                     NULL, lengths[testnum])) {
-                BIO_printf(bio_err, "\nCouldn't set input text length\n");
+                BIO_puts(bio_err, "\nCouldn't set input text length\n");
                 dofail();
                 exit(1);
             }
         }
         if (aead) {
             if (!EVP_EncryptUpdate(ctx, NULL, &outl, aad, sizeof(aad))) {
-                BIO_printf(bio_err, "\nCouldn't insert AAD when encrypting\n");
+                BIO_puts(bio_err, "\nCouldn't insert AAD when encrypting\n");
                 dofail();
                 exit(1);
             }
         }
         if (!EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum])) {
-            BIO_printf(bio_err, "\nFailed to encrypt the data\n");
+            BIO_puts(bio_err, "\nFailed to encrypt the data\n");
             dofail();
             exit(1);
         }
@@ -1077,7 +1077,7 @@ static int EVP_Update_loop_aead_dec(void *args)
         if (mode_op != EVP_CIPH_SIV_MODE) {
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
                     sizeof(aead_iv), NULL)) {
-                BIO_printf(bio_err, "\nFailed to set iv length\n");
+                BIO_puts(bio_err, "\nFailed to set iv length\n");
                 dofail();
                 exit(1);
             }
@@ -1089,20 +1089,20 @@ static int EVP_Update_loop_aead_dec(void *args)
             && mode_op != EVP_CIPH_GCM_SIV_MODE) {
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                     TAG_LEN, NULL)) {
-                BIO_printf(bio_err, "\nFailed to set tag length\n");
+                BIO_puts(bio_err, "\nFailed to set tag length\n");
                 dofail();
                 exit(1);
             }
         }
         if (!EVP_CipherInit_ex(ctx, NULL, NULL, key, aead_iv, -1)) {
-            BIO_printf(bio_err, "\nFailed to set key and iv\n");
+            BIO_puts(bio_err, "\nFailed to set key and iv\n");
             dofail();
             exit(1);
         }
         /* Set iv before decryption (Doesn't apply to SIV mode) */
         if (mode_op != EVP_CIPH_SIV_MODE) {
             if (!EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, aead_iv)) {
-                BIO_printf(bio_err, "\nFailed to set iv\n");
+                BIO_puts(bio_err, "\nFailed to set iv\n");
                 dofail();
                 exit(1);
             }
@@ -1111,7 +1111,7 @@ static int EVP_Update_loop_aead_dec(void *args)
 
         if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                 TAG_LEN, tag)) {
-            BIO_printf(bio_err, "\nFailed to set tag\n");
+            BIO_puts(bio_err, "\nFailed to set tag\n");
             dofail();
             exit(1);
         }
@@ -1119,20 +1119,20 @@ static int EVP_Update_loop_aead_dec(void *args)
         if (mode_op == EVP_CIPH_CCM_MODE) {
             if (!EVP_DecryptUpdate(ctx, NULL, &outl,
                     NULL, lengths[testnum])) {
-                BIO_printf(bio_err, "\nCouldn't set cipher text length\n");
+                BIO_puts(bio_err, "\nCouldn't set cipher text length\n");
                 dofail();
                 exit(1);
             }
         }
         if (aead) {
             if (!EVP_DecryptUpdate(ctx, NULL, &outl, aad, sizeof(aad))) {
-                BIO_printf(bio_err, "\nCouldn't insert AAD when decrypting\n");
+                BIO_puts(bio_err, "\nCouldn't insert AAD when decrypting\n");
                 dofail();
                 exit(1);
             }
         }
         if (!EVP_DecryptUpdate(ctx, outbuf, &outl, buf, lengths[testnum])) {
-            BIO_printf(bio_err, "\nFailed to decrypt the data\n");
+            BIO_puts(bio_err, "\nFailed to decrypt the data\n");
             dofail();
             exit(1);
         }
@@ -1155,7 +1155,7 @@ static int RSA_sign_loop(void *args)
         *rsa_num = tempargs->buflen;
         ret = EVP_PKEY_sign(rsa_sign_ctx[testnum], buf2, rsa_num, buf, 36);
         if (ret <= 0) {
-            BIO_printf(bio_err, "RSA sign failure\n");
+            BIO_puts(bio_err, "RSA sign failure\n");
             dofail();
             count = -1;
             break;
@@ -1176,7 +1176,7 @@ static int RSA_verify_loop(void *args)
     for (count = 0; COND(rsa_c[testnum][1]); count++) {
         ret = EVP_PKEY_verify(rsa_verify_ctx[testnum], buf2, rsa_num, buf, 36);
         if (ret <= 0) {
-            BIO_printf(bio_err, "RSA verify failure\n");
+            BIO_puts(bio_err, "RSA verify failure\n");
             dofail();
             count = -1;
             break;
@@ -1198,7 +1198,7 @@ static int RSA_encrypt_loop(void *args)
         *rsa_num = tempargs->buflen;
         ret = EVP_PKEY_encrypt(rsa_encrypt_ctx[testnum], buf2, rsa_num, buf, 36);
         if (ret <= 0) {
-            BIO_printf(bio_err, "RSA encrypt failure\n");
+            BIO_puts(bio_err, "RSA encrypt failure\n");
             dofail();
             count = -1;
             break;
@@ -1220,7 +1220,7 @@ static int RSA_decrypt_loop(void *args)
         rsa_num = tempargs->buflen;
         ret = EVP_PKEY_decrypt(rsa_decrypt_ctx[testnum], buf, &rsa_num, buf2, tempargs->encsize);
         if (ret <= 0) {
-            BIO_printf(bio_err, "RSA decrypt failure\n");
+            BIO_puts(bio_err, "RSA decrypt failure\n");
             dofail();
             count = -1;
             break;
@@ -1262,7 +1262,7 @@ static int DSA_sign_loop(void *args)
         *dsa_num = tempargs->buflen;
         ret = EVP_PKEY_sign(dsa_sign_ctx[testnum], buf2, dsa_num, buf, 20);
         if (ret <= 0) {
-            BIO_printf(bio_err, "DSA sign failure\n");
+            BIO_puts(bio_err, "DSA sign failure\n");
             dofail();
             count = -1;
             break;
@@ -1283,7 +1283,7 @@ static int DSA_verify_loop(void *args)
     for (count = 0; COND(dsa_c[testnum][1]); count++) {
         ret = EVP_PKEY_verify(dsa_verify_ctx[testnum], buf2, dsa_num, buf, 20);
         if (ret <= 0) {
-            BIO_printf(bio_err, "DSA verify failure\n");
+            BIO_puts(bio_err, "DSA verify failure\n");
             dofail();
             count = -1;
             break;
@@ -1306,7 +1306,7 @@ static int ECDSA_sign_loop(void *args)
         *ecdsa_num = tempargs->buflen;
         ret = EVP_PKEY_sign(ecdsa_sign_ctx[testnum], buf2, ecdsa_num, buf, 20);
         if (ret <= 0) {
-            BIO_printf(bio_err, "ECDSA sign failure\n");
+            BIO_puts(bio_err, "ECDSA sign failure\n");
             dofail();
             count = -1;
             break;
@@ -1328,7 +1328,7 @@ static int ECDSA_verify_loop(void *args)
         ret = EVP_PKEY_verify(ecdsa_verify_ctx[testnum], buf2, ecdsa_num,
             buf, 20);
         if (ret <= 0) {
-            BIO_printf(bio_err, "ECDSA verify failure\n");
+            BIO_puts(bio_err, "ECDSA verify failure\n");
             dofail();
             count = -1;
             break;
@@ -1366,14 +1366,14 @@ static int EdDSA_sign_loop(void *args)
     for (count = 0; COND(eddsa_c[testnum][0]); count++) {
         ret = EVP_DigestSignInit(edctx[testnum], NULL, NULL, NULL, NULL);
         if (ret == 0) {
-            BIO_printf(bio_err, "EdDSA sign init failure\n");
+            BIO_puts(bio_err, "EdDSA sign init failure\n");
             dofail();
             count = -1;
             break;
         }
         ret = EVP_DigestSign(edctx[testnum], eddsasig, eddsasigsize, buf, 20);
         if (ret == 0) {
-            BIO_printf(bio_err, "EdDSA sign failure\n");
+            BIO_puts(bio_err, "EdDSA sign failure\n");
             dofail();
             count = -1;
             break;
@@ -1394,14 +1394,14 @@ static int EdDSA_verify_loop(void *args)
     for (count = 0; COND(eddsa_c[testnum][1]); count++) {
         ret = EVP_DigestVerifyInit(edctx[testnum], NULL, NULL, NULL, NULL);
         if (ret == 0) {
-            BIO_printf(bio_err, "EdDSA verify init failure\n");
+            BIO_puts(bio_err, "EdDSA verify init failure\n");
             dofail();
             count = -1;
             break;
         }
         ret = EVP_DigestVerify(edctx[testnum], eddsasig, eddsasigsize, buf, 20);
         if (ret != 1) {
-            BIO_printf(bio_err, "EdDSA verify failure\n");
+            BIO_puts(bio_err, "EdDSA verify failure\n");
             dofail();
             count = -1;
             break;
@@ -1428,7 +1428,7 @@ static int SM2_sign_loop(void *args)
 
         if (!EVP_DigestSignInit(sm2ctx[testnum], NULL, EVP_sm3(),
                 NULL, sm2_pkey[testnum])) {
-            BIO_printf(bio_err, "SM2 init sign failure\n");
+            BIO_puts(bio_err, "SM2 init sign failure\n");
             dofail();
             count = -1;
             break;
@@ -1436,7 +1436,7 @@ static int SM2_sign_loop(void *args)
         ret = EVP_DigestSign(sm2ctx[testnum], sm2sig, &sm2sigsize,
             buf, 20);
         if (ret == 0) {
-            BIO_printf(bio_err, "SM2 sign failure\n");
+            BIO_puts(bio_err, "SM2 sign failure\n");
             dofail();
             count = -1;
             break;
@@ -1461,7 +1461,7 @@ static int SM2_verify_loop(void *args)
     for (count = 0; COND(sm2_c[testnum][1]); count++) {
         if (!EVP_DigestVerifyInit(sm2ctx[testnum], NULL, EVP_sm3(),
                 NULL, sm2_pkey[testnum])) {
-            BIO_printf(bio_err, "SM2 verify init failure\n");
+            BIO_puts(bio_err, "SM2 verify init failure\n");
             dofail();
             count = -1;
             break;
@@ -1469,7 +1469,7 @@ static int SM2_verify_loop(void *args)
         ret = EVP_DigestVerify(sm2ctx[testnum], sm2sig, sm2sigsize,
             buf, 20);
         if (ret != 1) {
-            BIO_printf(bio_err, "SM2 verify failure\n");
+            BIO_puts(bio_err, "SM2 verify failure\n");
             dofail();
             count = -1;
             break;
@@ -1607,7 +1607,7 @@ static int check_block_size(EVP_CIPHER_CTX *ctx, int length)
     int blocksize = EVP_CIPHER_CTX_get_block_size(ctx);
 
     if (ciph == NULL || blocksize <= 0) {
-        BIO_printf(bio_err, "\nInvalid cipher!\n");
+        BIO_puts(bio_err, "\nInvalid cipher!\n");
         return 0;
     }
     if (length % blocksize != 0) {
@@ -1653,7 +1653,7 @@ static int run_benchmark(int async_jobs,
             break;
         case ASYNC_NO_JOBS:
         case ASYNC_ERR:
-            BIO_printf(bio_err, "Failure in the job\n");
+            BIO_puts(bio_err, "Failure in the job\n");
             dofail();
             error = 1;
             break;
@@ -1676,7 +1676,7 @@ static int run_benchmark(int async_jobs,
 
             if (!ASYNC_WAIT_CTX_get_all_fds(loopargs[i].wait_ctx, NULL, &num_job_fds)
                 || num_job_fds > 1) {
-                BIO_printf(bio_err, "Too many fds in ASYNC_WAIT_CTX\n");
+                BIO_puts(bio_err, "Too many fds in ASYNC_WAIT_CTX\n");
                 dofail();
                 error = 1;
                 break;
@@ -1703,7 +1703,7 @@ static int run_benchmark(int async_jobs,
             continue;
 
         if (select_result == -1) {
-            BIO_printf(bio_err, "Failure in the select\n");
+            BIO_puts(bio_err, "Failure in the select\n");
             dofail();
             error = 1;
             break;
@@ -1719,7 +1719,7 @@ static int run_benchmark(int async_jobs,
 
             if (!ASYNC_WAIT_CTX_get_all_fds(loopargs[i].wait_ctx, NULL, &num_job_fds)
                 || num_job_fds > 1) {
-                BIO_printf(bio_err, "Too many fds in ASYNC_WAIT_CTX\n");
+                BIO_puts(bio_err, "Too many fds in ASYNC_WAIT_CTX\n");
                 dofail();
                 error = 1;
                 break;
@@ -1757,7 +1757,7 @@ static int run_benchmark(int async_jobs,
             case ASYNC_ERR:
                 --num_inprogress;
                 loopargs[i].inprogress_job = NULL;
-                BIO_printf(bio_err, "Failure in the job\n");
+                BIO_puts(bio_err, "Failure in the job\n");
                 dofail();
                 error = 1;
                 break;
@@ -1782,7 +1782,7 @@ static EVP_PKEY *get_ecdsa(const EC_CURVE *curve)
 
     /* Ensure that the error queue is empty */
     if (ERR_peek_error()) {
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "WARNING: the error queue contains previous unhandled errors.\n");
         dofail();
     }
@@ -1814,7 +1814,7 @@ static EVP_PKEY *get_ecdsa(const EC_CURVE *curve)
                 || ERR_GET_REASON(error) == ERR_R_UNSUPPORTED))
             ERR_get_error(); /* pop error from queue */
         if (ERR_peek_error()) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "Unhandled error in the error queue during EC key setup.\n");
             dofail();
             return NULL;
@@ -1827,7 +1827,7 @@ static EVP_PKEY *get_ecdsa(const EC_CURVE *curve)
                    curve->nid)
                 <= 0
             || EVP_PKEY_paramgen(pctx, &params) <= 0) {
-            BIO_printf(bio_err, "EC params init failure.\n");
+            BIO_puts(bio_err, "EC params init failure.\n");
             dofail();
             EVP_PKEY_CTX_free(pctx);
             return NULL;
@@ -1841,7 +1841,7 @@ static EVP_PKEY *get_ecdsa(const EC_CURVE *curve)
     if (kctx == NULL
         || EVP_PKEY_keygen_init(kctx) <= 0
         || EVP_PKEY_keygen(kctx, &key) <= 0) {
-        BIO_printf(bio_err, "EC key generation failure.\n");
+        BIO_puts(bio_err, "EC key generation failure.\n");
         dofail();
         key = NULL;
     }
@@ -2303,7 +2303,7 @@ int speed_main(int argc, char **argv)
 
         if (strcmp(EVP_KEM_get0_name(kem), "RSA") == 0) {
             if (kems_algs_len + OSSL_NELEM(rsa_choices) >= MAX_KEM_NUM) {
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "Too many KEMs registered. Change MAX_KEM_NUM.\n");
                 goto end;
             }
@@ -2313,7 +2313,7 @@ int speed_main(int argc, char **argv)
             }
         } else if (strcmp(EVP_KEM_get0_name(kem), "EC") == 0) {
             if (kems_algs_len + 3 >= MAX_KEM_NUM) {
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "Too many KEMs registered. Change MAX_KEM_NUM.\n");
                 goto end;
             }
@@ -2325,7 +2325,7 @@ int speed_main(int argc, char **argv)
             kems_algname[kems_algs_len++] = OPENSSL_strdup("ECP-521");
         } else {
             if (kems_algs_len + 1 >= MAX_KEM_NUM) {
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "Too many KEMs registered. Change MAX_KEM_NUM.\n");
                 goto end;
             }
@@ -2348,7 +2348,7 @@ int speed_main(int argc, char **argv)
 
         if (strcmp(sig_name, "RSA") == 0) {
             if (sigs_algs_len + OSSL_NELEM(rsa_choices) >= MAX_SIG_NUM) {
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "Too many signatures registered. Change MAX_SIG_NUM.\n");
                 goto end;
             }
@@ -2360,7 +2360,7 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_DSA
         else if (strcmp(sig_name, "DSA") == 0) {
             if (sigs_algs_len + DSA_NUM >= MAX_SIG_NUM) {
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "Too many signatures registered. Change MAX_SIG_NUM.\n");
                 goto end;
             }
@@ -2373,7 +2373,7 @@ int speed_main(int argc, char **argv)
         /* skipping these algs as tested elsewhere - and b/o setup is a pain */
         else if (strncmp(sig_name, "RSA", 3) && strncmp(sig_name, "DSA", 3) && strncmp(sig_name, "ED25519", 7) && strncmp(sig_name, "ED448", 5) && strncmp(sig_name, "ECDSA", 5) && strcmp(sig_name, "HMAC") && strcmp(sig_name, "SIPHASH") && strcmp(sig_name, "POLY1305") && strcmp(sig_name, "CMAC") && strcmp(sig_name, "SM2")) { /* skip alg */
             if (sigs_algs_len + 1 >= MAX_SIG_NUM) {
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "Too many signatures registered. Change MAX_SIG_NUM.\n");
                 goto end;
             }
@@ -2522,7 +2522,7 @@ int speed_main(int argc, char **argv)
     /* Sanity checks */
     if (aead) {
         if (evp_cipher == NULL) {
-            BIO_printf(bio_err, "-aead can be used only with an AEAD cipher\n");
+            BIO_puts(bio_err, "-aead can be used only with an AEAD cipher\n");
             goto end;
         } else if (!(EVP_CIPHER_get_flags(evp_cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
             BIO_printf(bio_err, "%s is not an AEAD cipher\n",
@@ -2554,15 +2554,15 @@ int speed_main(int argc, char **argv)
     }
     if (multiblock) {
         if (evp_cipher == NULL) {
-            BIO_printf(bio_err, "-mb can be used only with a multi-block"
-                                " capable cipher\n");
+            BIO_puts(bio_err, "-mb can be used only with a multi-block"
+                              " capable cipher\n");
             goto end;
         } else if (!(EVP_CIPHER_get_flags(evp_cipher) & EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
             BIO_printf(bio_err, "%s is not a multi-block capable\n",
                 EVP_CIPHER_get0_name(evp_cipher));
             goto end;
         } else if (async_jobs > 0) {
-            BIO_printf(bio_err, "Async mode is not supported with -mb");
+            BIO_puts(bio_err, "Async mode is not supported with -mb");
             goto end;
         }
     }
@@ -2571,7 +2571,7 @@ int speed_main(int argc, char **argv)
     if (async_jobs > 0) {
         async_init = ASYNC_init_thread(async_jobs, async_jobs);
         if (!async_init) {
-            BIO_printf(bio_err, "Error creating the ASYNC job pool\n");
+            BIO_puts(bio_err, "Error creating the ASYNC job pool\n");
             goto end;
         }
     }
@@ -2584,7 +2584,7 @@ int speed_main(int argc, char **argv)
     if (buflen < 36) /* size of random vector in RSA benchmark */
         buflen = 36;
     if (INT_MAX - (MAX_MISALIGNMENT + 1) < buflen) {
-        BIO_printf(bio_err, "Error: buffer size too large\n");
+        BIO_puts(bio_err, "Error: buffer size too large\n");
         goto end;
     }
     buflen += MAX_MISALIGNMENT + 1;
@@ -2592,7 +2592,7 @@ int speed_main(int argc, char **argv)
         if (async_jobs > 0) {
             loopargs[i].wait_ctx = ASYNC_WAIT_CTX_new();
             if (loopargs[i].wait_ctx == NULL) {
-                BIO_printf(bio_err, "Error creating the ASYNC_WAIT_CTX\n");
+                BIO_puts(bio_err, "Error creating the ASYNC_WAIT_CTX\n");
                 goto end;
             }
         }
@@ -2688,7 +2688,7 @@ int speed_main(int argc, char **argv)
             pr_header++;
 
     if (usertime == 0 && !mr)
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "You have chosen to measure elapsed time "
             "instead of user CPU time.\n");
 
@@ -3046,7 +3046,7 @@ int speed_main(int argc, char **argv)
                 for (k = 0; k < loopargs_len; k++) {
                     loopargs[k].ctx = EVP_CIPHER_CTX_new();
                     if (loopargs[k].ctx == NULL) {
-                        BIO_printf(bio_err, "\nEVP_CIPHER_CTX_new failure\n");
+                        BIO_puts(bio_err, "\nEVP_CIPHER_CTX_new failure\n");
                         exit(1);
                     }
 
@@ -3058,7 +3058,7 @@ int speed_main(int argc, char **argv)
                      */
                     if (!EVP_CipherInit_ex(loopargs[k].ctx, evp_cipher, NULL,
                             NULL, NULL, ae_mode ? 1 : !decrypt)) {
-                        BIO_printf(bio_err, "\nCouldn't init the context\n");
+                        BIO_puts(bio_err, "\nCouldn't init the context\n");
                         dofail();
                         exit(1);
                     }
@@ -3073,7 +3073,7 @@ int speed_main(int argc, char **argv)
                     if (!ae_mode) {
                         if (!EVP_CipherInit_ex(loopargs[k].ctx, NULL, NULL,
                                 loopargs[k].key, iv, -1)) {
-                            BIO_printf(bio_err, "\nFailed to set the key\n");
+                            BIO_puts(bio_err, "\nFailed to set the key\n");
                             dofail();
                             exit(1);
                         }
@@ -3088,7 +3088,7 @@ int speed_main(int argc, char **argv)
                             if (!EVP_CIPHER_CTX_ctrl(loopargs[k].ctx,
                                     EVP_CTRL_AEAD_SET_IVLEN,
                                     sizeof(aead_iv), NULL)) {
-                                BIO_printf(bio_err, "\nFailed to set iv length\n");
+                                BIO_puts(bio_err, "\nFailed to set iv length\n");
                                 dofail();
                                 exit(1);
                             }
@@ -3100,7 +3100,7 @@ int speed_main(int argc, char **argv)
                             if (!EVP_CIPHER_CTX_ctrl(loopargs[k].ctx,
                                     EVP_CTRL_AEAD_SET_TAG,
                                     TAG_LEN, NULL)) {
-                                BIO_printf(bio_err,
+                                BIO_puts(bio_err,
                                     "\nFailed to set tag length\n");
                                 dofail();
                                 exit(1);
@@ -3108,7 +3108,7 @@ int speed_main(int argc, char **argv)
                         }
                         if (!EVP_CipherInit_ex(loopargs[k].ctx, NULL, NULL,
                                 loopargs[k].key, aead_iv, -1)) {
-                            BIO_printf(bio_err, "\nFailed to set the key\n");
+                            BIO_puts(bio_err, "\nFailed to set the key\n");
                             dofail();
                             exit(1);
                         }
@@ -3117,7 +3117,7 @@ int speed_main(int argc, char **argv)
                             if (!EVP_EncryptUpdate(loopargs[k].ctx, NULL,
                                     &outlen, NULL,
                                     lengths[testnum])) {
-                                BIO_printf(bio_err,
+                                BIO_puts(bio_err,
                                     "\nCouldn't set input text length\n");
                                 dofail();
                                 exit(1);
@@ -3126,7 +3126,7 @@ int speed_main(int argc, char **argv)
                         if (aead) {
                             if (!EVP_EncryptUpdate(loopargs[k].ctx, NULL,
                                     &outlen, aad, sizeof(aad))) {
-                                BIO_printf(bio_err,
+                                BIO_puts(bio_err,
                                     "\nCouldn't insert AAD when encrypting\n");
                                 dofail();
                                 exit(1);
@@ -3135,7 +3135,7 @@ int speed_main(int argc, char **argv)
                         if (!EVP_EncryptUpdate(loopargs[k].ctx, loopargs[k].buf,
                                 &outlen, loopargs[k].buf,
                                 lengths[testnum])) {
-                            BIO_printf(bio_err,
+                            BIO_puts(bio_err,
                                 "\nFailed to to encrypt the data\n");
                             dofail();
                             exit(1);
@@ -3143,7 +3143,7 @@ int speed_main(int argc, char **argv)
 
                         if (!EVP_EncryptFinal_ex(loopargs[k].ctx,
                                 loopargs[k].buf, &outlen)) {
-                            BIO_printf(bio_err,
+                            BIO_puts(bio_err,
                                 "\nFailed finalize the encryption\n");
                             dofail();
                             exit(1);
@@ -3151,7 +3151,7 @@ int speed_main(int argc, char **argv)
 
                         if (!EVP_CIPHER_CTX_ctrl(loopargs[k].ctx, EVP_CTRL_AEAD_GET_TAG,
                                 TAG_LEN, &loopargs[k].tag)) {
-                            BIO_printf(bio_err, "\nFailed to get the tag\n");
+                            BIO_puts(bio_err, "\nFailed to get the tag\n");
                             dofail();
                             exit(1);
                         }
@@ -3159,7 +3159,7 @@ int speed_main(int argc, char **argv)
                         EVP_CIPHER_CTX_free(loopargs[k].ctx);
                         loopargs[k].ctx = EVP_CIPHER_CTX_new();
                         if (loopargs[k].ctx == NULL) {
-                            BIO_printf(bio_err,
+                            BIO_puts(bio_err,
                                 "\nEVP_CIPHER_CTX_new failure\n");
                             exit(1);
                         }
@@ -3216,7 +3216,7 @@ int speed_main(int argc, char **argv)
         keylen = EVP_CIPHER_get_key_length(cipher);
         EVP_CIPHER_free(cipher);
         if (keylen <= 0 || keylen > (int)sizeof(key32)) {
-            BIO_printf(bio_err, "\nRequested CMAC cipher with unsupported key length.\n");
+            BIO_puts(bio_err, "\nRequested CMAC cipher with unsupported key length.\n");
             goto end;
         }
         evp_cmac_name = app_malloc(len, "CMAC name");
@@ -3331,7 +3331,7 @@ int speed_main(int argc, char **argv)
                 st = 0;
         }
         if (!st) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "RSA sign setup failure.  No RSA sign will be done.\n");
             dofail();
             op_count = 1;
@@ -3363,7 +3363,7 @@ int speed_main(int argc, char **argv)
                 st = 0;
         }
         if (!st) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "RSA verify setup failure.  No RSA verify will be done.\n");
             dofail();
             rsa_doit[testnum] = 0;
@@ -3393,7 +3393,7 @@ int speed_main(int argc, char **argv)
                 st = 0;
         }
         if (!st) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "RSA encrypt setup failure.  No RSA encrypt will be done.\n");
             dofail();
             op_count = 1;
@@ -3426,7 +3426,7 @@ int speed_main(int argc, char **argv)
                 st = 0;
         }
         if (!st) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "RSA decrypt setup failure.  No RSA decrypt will be done.\n");
             dofail();
             op_count = 1;
@@ -3476,7 +3476,7 @@ int speed_main(int argc, char **argv)
                 st = 0;
         }
         if (!st) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "DSA sign setup failure.  No DSA sign will be done.\n");
             dofail();
             op_count = 1;
@@ -3507,7 +3507,7 @@ int speed_main(int argc, char **argv)
                 st = 0;
         }
         if (!st) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "DSA verify setup failure.  No DSA verify will be done.\n");
             dofail();
             dsa_doit[testnum] = 0;
@@ -3555,7 +3555,7 @@ int speed_main(int argc, char **argv)
                 st = 0;
         }
         if (!st) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "ECDSA sign setup failure.  No ECDSA sign will be done.\n");
             dofail();
             op_count = 1;
@@ -3586,7 +3586,7 @@ int speed_main(int argc, char **argv)
                 st = 0;
         }
         if (!st) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "ECDSA verify setup failure.  No ECDSA verify will be done.\n");
             dofail();
             ecdsa_doit[testnum] = 0;
@@ -3633,7 +3633,7 @@ int speed_main(int argc, char **argv)
                 || outlen == 0 /* ensure outlen is a valid size */
                 || outlen > MAX_ECDH_SIZE /* avoid buffer overflow */) {
                 ecdh_checks = 0;
-                BIO_printf(bio_err, "ECDH key generation failure.\n");
+                BIO_puts(bio_err, "ECDH key generation failure.\n");
                 dofail();
                 op_count = 1;
                 break;
@@ -3653,7 +3653,7 @@ int speed_main(int argc, char **argv)
                 || EVP_PKEY_derive(test_ctx, loopargs[i].secret_b, &test_outlen) <= 0 /* compute b*A */
                 || test_outlen != outlen /* compare output length */) {
                 ecdh_checks = 0;
-                BIO_printf(bio_err, "ECDH computation failure.\n");
+                BIO_puts(bio_err, "ECDH computation failure.\n");
                 dofail();
                 op_count = 1;
                 break;
@@ -3663,7 +3663,7 @@ int speed_main(int argc, char **argv)
             if (CRYPTO_memcmp(loopargs[i].secret_a,
                     loopargs[i].secret_b, outlen)) {
                 ecdh_checks = 0;
-                BIO_printf(bio_err, "ECDH computations don't match.\n");
+                BIO_puts(bio_err, "ECDH computations don't match.\n");
                 dofail();
                 op_count = 1;
                 break;
@@ -3744,7 +3744,7 @@ int speed_main(int argc, char **argv)
             ed_pkey = NULL;
         }
         if (st == 0) {
-            BIO_printf(bio_err, "EdDSA failure.\n");
+            BIO_puts(bio_err, "EdDSA failure.\n");
             dofail();
             op_count = 1;
         } else {
@@ -3758,7 +3758,7 @@ int speed_main(int argc, char **argv)
                     break;
             }
             if (st == 0) {
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "EdDSA sign failure.  No EdDSA sign will be done.\n");
                 dofail();
                 op_count = 1;
@@ -3785,7 +3785,7 @@ int speed_main(int argc, char **argv)
                     break;
             }
             if (st != 1) {
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "EdDSA verify failure.  No EdDSA verify will be done.\n");
                 dofail();
                 eddsa_doit[testnum] = 0;
@@ -3876,7 +3876,7 @@ int speed_main(int argc, char **argv)
             st = 1; /* mark loop as succeeded */
         }
         if (st == 0) {
-            BIO_printf(bio_err, "SM2 init failure.\n");
+            BIO_puts(bio_err, "SM2 init failure.\n");
             dofail();
             op_count = 1;
         } else {
@@ -3889,7 +3889,7 @@ int speed_main(int argc, char **argv)
                     break;
             }
             if (st == 0) {
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "SM2 sign failure.  No SM2 sign will be done.\n");
                 dofail();
                 op_count = 1;
@@ -3917,7 +3917,7 @@ int speed_main(int argc, char **argv)
                     break;
             }
             if (st != 1) {
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "SM2 verify failure.  No SM2 verify will be done.\n");
                 dofail();
                 sm2_doit[testnum] = 0;
@@ -3961,14 +3961,14 @@ int speed_main(int argc, char **argv)
 
             /* Ensure that the error queue is empty */
             if (ERR_peek_error()) {
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "WARNING: the error queue contains previous unhandled errors.\n");
                 dofail();
             }
 
             pkey_A = EVP_PKEY_new();
             if (!pkey_A) {
-                BIO_printf(bio_err, "Error while initialising EVP_PKEY (out of memory?).\n");
+                BIO_puts(bio_err, "Error while initialising EVP_PKEY (out of memory?).\n");
                 dofail();
                 op_count = 1;
                 ffdh_checks = 0;
@@ -3976,7 +3976,7 @@ int speed_main(int argc, char **argv)
             }
             pkey_B = EVP_PKEY_new();
             if (!pkey_B) {
-                BIO_printf(bio_err, "Error while initialising EVP_PKEY (out of memory?).\n");
+                BIO_puts(bio_err, "Error while initialising EVP_PKEY (out of memory?).\n");
                 dofail();
                 op_count = 1;
                 ffdh_checks = 0;
@@ -3985,7 +3985,7 @@ int speed_main(int argc, char **argv)
 
             ffdh_ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_DH, NULL);
             if (!ffdh_ctx) {
-                BIO_printf(bio_err, "Error while allocating EVP_PKEY_CTX.\n");
+                BIO_puts(bio_err, "Error while allocating EVP_PKEY_CTX.\n");
                 dofail();
                 op_count = 1;
                 ffdh_checks = 0;
@@ -3993,14 +3993,14 @@ int speed_main(int argc, char **argv)
             }
 
             if (EVP_PKEY_keygen_init(ffdh_ctx) <= 0) {
-                BIO_printf(bio_err, "Error while initialising EVP_PKEY_CTX.\n");
+                BIO_puts(bio_err, "Error while initialising EVP_PKEY_CTX.\n");
                 dofail();
                 op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
             if (EVP_PKEY_CTX_set_dh_nid(ffdh_ctx, ffdh_params[testnum].nid) <= 0) {
-                BIO_printf(bio_err, "Error setting DH key size for keygen.\n");
+                BIO_puts(bio_err, "Error setting DH key size for keygen.\n");
                 dofail();
                 op_count = 1;
                 ffdh_checks = 0;
@@ -4008,7 +4008,7 @@ int speed_main(int argc, char **argv)
             }
 
             if (EVP_PKEY_keygen(ffdh_ctx, &pkey_A) <= 0 || EVP_PKEY_keygen(ffdh_ctx, &pkey_B) <= 0) {
-                BIO_printf(bio_err, "FFDH key generation failure.\n");
+                BIO_puts(bio_err, "FFDH key generation failure.\n");
                 dofail();
                 op_count = 1;
                 ffdh_checks = 0;
@@ -4024,35 +4024,35 @@ int speed_main(int argc, char **argv)
              */
             ffdh_ctx = EVP_PKEY_CTX_new(pkey_A, NULL);
             if (ffdh_ctx == NULL) {
-                BIO_printf(bio_err, "Error while allocating EVP_PKEY_CTX.\n");
+                BIO_puts(bio_err, "Error while allocating EVP_PKEY_CTX.\n");
                 dofail();
                 op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
             if (EVP_PKEY_derive_init(ffdh_ctx) <= 0) {
-                BIO_printf(bio_err, "FFDH derivation context init failure.\n");
+                BIO_puts(bio_err, "FFDH derivation context init failure.\n");
                 dofail();
                 op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
             if (EVP_PKEY_derive_set_peer(ffdh_ctx, pkey_B) <= 0) {
-                BIO_printf(bio_err, "Assigning peer key for derivation failed.\n");
+                BIO_puts(bio_err, "Assigning peer key for derivation failed.\n");
                 dofail();
                 op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
             if (EVP_PKEY_derive(ffdh_ctx, NULL, &secret_size) <= 0) {
-                BIO_printf(bio_err, "Checking size of shared secret failed.\n");
+                BIO_puts(bio_err, "Checking size of shared secret failed.\n");
                 dofail();
                 op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
             if (secret_size > MAX_FFDH_SIZE) {
-                BIO_printf(bio_err, "Assertion failure: shared secret too large.\n");
+                BIO_puts(bio_err, "Assertion failure: shared secret too large.\n");
                 op_count = 1;
                 ffdh_checks = 0;
                 break;
@@ -4061,7 +4061,7 @@ int speed_main(int argc, char **argv)
                     loopargs[i].secret_ff_a,
                     &secret_size)
                 <= 0) {
-                BIO_printf(bio_err, "Shared secret derive failure.\n");
+                BIO_puts(bio_err, "Shared secret derive failure.\n");
                 dofail();
                 op_count = 1;
                 ffdh_checks = 0;
@@ -4070,14 +4070,14 @@ int speed_main(int argc, char **argv)
             /* Now check from side B */
             test_ctx = EVP_PKEY_CTX_new(pkey_B, NULL);
             if (!test_ctx) {
-                BIO_printf(bio_err, "Error while allocating EVP_PKEY_CTX.\n");
+                BIO_puts(bio_err, "Error while allocating EVP_PKEY_CTX.\n");
                 dofail();
                 op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
             if (EVP_PKEY_derive_init(test_ctx) <= 0 || EVP_PKEY_derive_set_peer(test_ctx, pkey_A) <= 0 || EVP_PKEY_derive(test_ctx, NULL, &test_out) <= 0 || EVP_PKEY_derive(test_ctx, loopargs[i].secret_ff_b, &test_out) <= 0 || test_out != secret_size) {
-                BIO_printf(bio_err, "FFDH computation failure.\n");
+                BIO_puts(bio_err, "FFDH computation failure.\n");
                 op_count = 1;
                 ffdh_checks = 0;
                 break;
@@ -4086,7 +4086,7 @@ int speed_main(int argc, char **argv)
             /* compare the computed secrets */
             if (CRYPTO_memcmp(loopargs[i].secret_ff_a,
                     loopargs[i].secret_ff_b, secret_size)) {
-                BIO_printf(bio_err, "FFDH computations don't match.\n");
+                BIO_puts(bio_err, "FFDH computations don't match.\n");
                 dofail();
                 op_count = 1;
                 ffdh_checks = 0;
@@ -4160,7 +4160,7 @@ int speed_main(int argc, char **argv)
                 kem_type = 0;
 
             if (ERR_peek_error()) {
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "WARNING: the error queue contains previous unhandled errors.\n");
                 dofail();
             }
@@ -4189,7 +4189,7 @@ int speed_main(int argc, char **argv)
                 goto kem_err_break;
             }
             if (EVP_PKEY_keygen(kem_gen_ctx, &pkey) <= 0) {
-                BIO_printf(bio_err, "Error while generating KEM EVP_PKEY.\n");
+                BIO_puts(bio_err, "Error while generating KEM EVP_PKEY.\n");
                 goto kem_err_break;
             }
             /* Now prepare encaps data structs */
@@ -4340,7 +4340,7 @@ int speed_main(int argc, char **argv)
             memset(md, 0, SHA256_DIGEST_LENGTH);
 
             if (ERR_peek_error()) {
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "WARNING: the error queue contains previous unhandled errors.\n");
                 dofail();
             }
@@ -4957,7 +4957,7 @@ static int do_multi(int multi, int size_num)
     fds = app_malloc_array(multi, sizeof(*fds), "fd buffer for do_multi");
     for (n = 0; n < multi; ++n) {
         if (pipe(fd) == -1) {
-            BIO_printf(bio_err, "pipe failure\n");
+            BIO_puts(bio_err, "pipe failure\n");
             exit(1);
         }
         fflush(stdout);
@@ -4969,7 +4969,7 @@ static int do_multi(int multi, int size_num)
             close(fd[0]);
             close(1);
             if (dup(fd[1]) == -1) {
-                BIO_printf(bio_err, "dup failed\n");
+                BIO_puts(bio_err, "dup failed\n");
                 exit(1);
             }
             close(fd[1]);
@@ -5243,7 +5243,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
         d = Time_F(STOP);
         BIO_printf(bio_err, mr ? "+R:%d:%s:%f\n" : "%d %s ops in %.2fs\n", count, "evp", d);
         if ((ciph_success <= 0) && (mr == 0))
-            BIO_printf(bio_err, "Error performing cipher op\n");
+            BIO_puts(bio_err, "Error performing cipher op\n");
         results[D_EVP][j] = ((double)count) / d * mblengths[j];
     }
 

@@ -199,13 +199,13 @@ int ciphers_main(int argc, char **argv)
 #endif
 
     if (ciphersuites != NULL && !SSL_CTX_set_ciphersuites(ctx, ciphersuites)) {
-        BIO_printf(bio_err, "Error setting TLSv1.3 ciphersuites\n");
+        BIO_puts(bio_err, "Error setting TLSv1.3 ciphersuites\n");
         goto err;
     }
 
     if (ciphers != NULL) {
         if (!SSL_CTX_set_cipher_list(ctx, ciphers)) {
-            BIO_printf(bio_err, "Error in cipher list\n");
+            BIO_puts(bio_err, "Error in cipher list\n");
             goto err;
         }
     }
@@ -229,10 +229,10 @@ int ciphers_main(int argc, char **argv)
             if (p == NULL)
                 break;
             if (i != 0)
-                BIO_printf(bio_out, ":");
-            BIO_printf(bio_out, "%s", p);
+                BIO_puts(bio_out, ":");
+            BIO_puts(bio_out, p);
         }
-        BIO_printf(bio_out, "\n");
+        BIO_puts(bio_out, "\n");
     } else {
 
         for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {

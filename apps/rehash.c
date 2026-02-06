@@ -168,7 +168,7 @@ static int add_entry(enum Type type, unsigned int hash, const char *filename,
         if (ep->filename == NULL) {
             OPENSSL_free(ep);
             ep = NULL;
-            BIO_printf(bio_err, "out of memory\n");
+            BIO_puts(bio_err, "out of memory\n");
             return 1;
         }
         if (bp->last_entry)
@@ -278,7 +278,7 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
         type = TYPE_CERT;
         name = X509_get_subject_name(x->x509);
         if (!X509_digest(x->x509, evpmd, digest, NULL)) {
-            BIO_printf(bio_err, "out of memory\n");
+            BIO_puts(bio_err, "out of memory\n");
             ++errs;
             goto end;
         }
@@ -286,7 +286,7 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
         type = TYPE_CRL;
         name = X509_CRL_get_issuer(x->crl);
         if (!X509_CRL_digest(x->crl, evpmd, digest, NULL)) {
-            BIO_printf(bio_err, "out of memory\n");
+            BIO_puts(bio_err, "out of memory\n");
             ++errs;
             goto end;
         }
@@ -587,7 +587,7 @@ const OPTIONS rehash_options[] = {
 
 int rehash_main(int argc, char **argv)
 {
-    BIO_printf(bio_err, "Not available\n");
+    BIO_puts(bio_err, "Not available\n");
     return 1;
 }
 

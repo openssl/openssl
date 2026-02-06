@@ -256,7 +256,7 @@ int passwd_main(int argc, char **argv)
             passwds[0] = passwd_malloc;
         } else {
 #endif
-            BIO_printf(bio_err, "password required\n");
+            BIO_puts(bio_err, "password required\n");
             goto end;
         }
     }

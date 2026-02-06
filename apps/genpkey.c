@@ -108,7 +108,7 @@ static void show_gen_pkeyopt(const char *algname, OSSL_LIB_CTX *libctx, const ch
     if (params == NULL)
         goto cleanup;
 
-    BIO_printf(bio_err, "\nThe possible -pkeyopt arguments are:\n");
+    BIO_puts(bio_err, "\nThe possible -pkeyopt arguments are:\n");
     for (i = 0; params[i].key != NULL; ++i) {
         const char *name = param_datatype_2name(params[i].data_type, &ishex);
 
@@ -245,7 +245,7 @@ int genpkey_main(int argc, char **argv)
     if (!opt_cipher(ciphername, &cipher))
         goto opthelp;
     if (ciphername != NULL && do_param == 1) {
-        BIO_printf(bio_err, "Cannot use cipher with -genparam option\n");
+        BIO_puts(bio_err, "Cannot use cipher with -genparam option\n");
         goto opthelp;
     }
 
@@ -290,7 +290,7 @@ int genpkey_main(int argc, char **argv)
         if (rv > 0 && mem_outpubkey != NULL)
             rv = i2d_PUBKEY_bio(mem_outpubkey, pkey);
     } else {
-        BIO_printf(bio_err, "Bad format specified for key\n");
+        BIO_puts(bio_err, "Bad format specified for key\n");
         goto end;
     }
 

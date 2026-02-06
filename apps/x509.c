@@ -284,7 +284,7 @@ static X509_REQ *x509_to_req(X509 *cert, int ext_copy, const char *names)
     if (sk_X509_EXTENSION_num(exts) > 0) {
         if (ext_copy != EXT_COPY_UNSET && ext_copy != EXT_COPY_NONE
             && !X509_REQ_add_extensions(req, exts)) {
-            BIO_printf(bio_err, "Error copying extensions from certificate\n");
+            BIO_puts(bio_err, "Error copying extensions from certificate\n");
             goto err;
         }
     }
@@ -303,7 +303,7 @@ static int self_signed(X509_STORE *ctx, X509 *cert)
     int ret = 0;
 
     if (xsc == NULL || !X509_STORE_CTX_init(xsc, ctx, cert, NULL)) {
-        BIO_printf(bio_err, "Error initialising X509 store\n");
+        BIO_puts(bio_err, "Error initialising X509 store\n");
     } else {
         X509_STORE_CTX_set_flags(xsc, X509_V_FLAG_CHECK_SS_SIGNATURE);
         ret = X509_verify_cert(xsc) > 0;
@@ -497,7 +497,7 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_SET_SERIAL:
             if (sno != NULL) {
-                BIO_printf(bio_err, "Serial number supplied twice\n");
+                BIO_puts(bio_err, "Serial number supplied twice\n");
                 goto opthelp;
             }
             if ((sno = s2i_ASN1_INTEGER(NULL, opt_arg())) == NULL)
@@ -680,24 +680,24 @@ int x509_main(int argc, char **argv)
         goto opthelp;
 
     if (preserve_dates && not_before != NULL) {
-        BIO_printf(bio_err, "Cannot use -preserve_dates with -not_before option\n");
+        BIO_puts(bio_err, "Cannot use -preserve_dates with -not_before option\n");
         goto err;
     }
     if (preserve_dates && not_after != NULL) {
-        BIO_printf(bio_err, "Cannot use -preserve_dates with -not_after option\n");
+        BIO_puts(bio_err, "Cannot use -preserve_dates with -not_after option\n");
         goto err;
     }
     if (preserve_dates && days != UNSET_DAYS) {
-        BIO_printf(bio_err, "Cannot use -preserve_dates with -days option\n");
+        BIO_puts(bio_err, "Cannot use -preserve_dates with -days option\n");
         goto err;
     }
     if (days == UNSET_DAYS)
         days = DEFAULT_DAYS;
     else if (not_after != NULL)
-        BIO_printf(bio_err, "Warning: -not_after option overriding -days option\n");
+        BIO_puts(bio_err, "Warning: -not_after option overriding -days option\n");
 
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
-        BIO_printf(bio_err, "Error getting password\n");
+        BIO_puts(bio_err, "Error getting password\n");
         goto err;
     }
 
@@ -706,11 +706,11 @@ int x509_main(int argc, char **argv)
         goto err;
 
     if (newcert && infile != NULL) {
-        BIO_printf(bio_err, "The -in option cannot be used with -new\n");
+        BIO_puts(bio_err, "The -in option cannot be used with -new\n");
         goto err;
     }
     if (newcert && reqfile) {
-        BIO_printf(bio_err, "The -req option cannot be used with -new\n");
+        BIO_puts(bio_err, "The -req option cannot be used with -new\n");
         goto err;
     }
     if (privkeyfile != NULL) {
@@ -727,12 +727,12 @@ int x509_main(int argc, char **argv)
 
     if (newcert) {
         if (subj == NULL) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "The -new option requires a subject to be set using -subj\n");
             goto err;
         }
         if (privkeyfile == NULL && pubkeyfile == NULL) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "The -new option requires using the -key or -force_pubkey option\n");
             goto err;
         }
@@ -748,11 +748,11 @@ int x509_main(int argc, char **argv)
         CAkeyfile = CAfile;
     if (CAfile != NULL) {
         if (privkeyfile != NULL) {
-            BIO_printf(bio_err, "Cannot use both -key/-signkey and -CA option\n");
+            BIO_puts(bio_err, "Cannot use both -key/-signkey and -CA option\n");
             goto err;
         }
     } else {
-#define WARN_NO_CA(opt) BIO_printf(bio_err, \
+#define WARN_NO_CA(opt) BIO_puts(bio_err, \
     "Warning: ignoring " opt " option since -CA option is not given\n");
         if (CAkeyfile != NULL)
             WARN_NO_CA("-CAkey");
@@ -768,7 +768,7 @@ int x509_main(int argc, char **argv)
 
     if (extfile == NULL) {
         if (extsect != NULL)
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "Warning: ignoring -extensions option without -extfile\n");
     } else {
         X509V3_CTX ctx2;
@@ -790,13 +790,13 @@ int x509_main(int argc, char **argv)
     }
 
     if (multi && (reqfile || newcert)) {
-        BIO_printf(bio_err, "Error: -multi cannot be used with -req or -new\n");
+        BIO_puts(bio_err, "Error: -multi cannot be used with -req or -new\n");
         goto err;
     }
 
     if (reqfile) {
         if (infile == NULL && isatty(fileno_stdin()))
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "Warning: Reading cert request from stdin since no -in option is given\n");
         req = load_csr_autofmt(infile, informat, vfyopts,
             "certificate request input");
@@ -804,28 +804,28 @@ int x509_main(int argc, char **argv)
             goto err;
 
         if ((pkey = X509_REQ_get0_pubkey(req)) == NULL) {
-            BIO_printf(bio_err, "Error unpacking public key from CSR\n");
+            BIO_puts(bio_err, "Error unpacking public key from CSR\n");
             goto err;
         }
         i = do_X509_REQ_verify(req, pkey, vfyopts);
         if (i <= 0) {
-            BIO_printf(bio_err, i < 0 ? "Error while verifying certificate request self-signature\n" : "Certificate request self-signature did not match the contents\n");
+            BIO_puts(bio_err, i < 0 ? "Error while verifying certificate request self-signature\n" : "Certificate request self-signature did not match the contents\n");
             goto err;
         }
-        BIO_printf(bio_err, "Certificate request self-signature ok\n");
+        BIO_puts(bio_err, "Certificate request self-signature ok\n");
 
         print_name(bio_err, "subject=", X509_REQ_get_subject_name(req));
     } else if (!x509toreq && ext_copy != EXT_COPY_UNSET) {
-        BIO_printf(bio_err, "Warning: ignoring -copy_extensions since neither -x509toreq nor -req is given\n");
+        BIO_puts(bio_err, "Warning: ignoring -copy_extensions since neither -x509toreq nor -req is given\n");
     }
 
     if (reqfile || newcert) {
         if (preserve_dates)
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "Warning: ignoring -preserve_dates option with -req or -new\n");
         preserve_dates = 0;
         if (privkeyfile == NULL && CAkeyfile == NULL) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "We need a private key to sign with, use -key or -CAkey or -CA with private key\n");
             goto err;
         }
@@ -838,16 +838,16 @@ int x509_main(int argc, char **argv)
         }
         if (req != NULL && ext_copy != EXT_COPY_UNSET) {
             if (clrext && ext_copy != EXT_COPY_NONE) {
-                BIO_printf(bio_err, "Must not use -clrext together with -copy_extensions\n");
+                BIO_puts(bio_err, "Must not use -clrext together with -copy_extensions\n");
                 goto err;
             } else if (!copy_extensions(x, req, ext_copy)) {
-                BIO_printf(bio_err, "Error copying extensions from request\n");
+                BIO_puts(bio_err, "Error copying extensions from request\n");
                 goto err;
             }
         }
     } else {
         if (infile == NULL && isatty(fileno_stdin()))
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "Warning: Reading certificate(s) from stdin since no -in or -new option is given\n");
         if (multi) {
             certs = sk_X509_new_null();
@@ -905,7 +905,7 @@ cert_loop:
     }
 
     if (clrext && ext_names != NULL)
-        BIO_printf(bio_err, "Warning: Ignoring -ext since -clrext is given\n");
+        BIO_puts(bio_err, "Warning: Ignoring -ext since -clrext is given\n");
     for (i = X509_get_ext_count(x) - 1; i >= 0; i--) {
         X509_EXTENSION *ex = X509_get_ext(x, i);
         const char *sn = OBJ_nid2sn(OBJ_obj2nid(X509_EXTENSION_get_object(ex)));
@@ -925,7 +925,7 @@ cert_loop:
             goto err;
     } else {
         if (privkey != NULL && !cert_matches_key(x, privkey))
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "Warning: Signature key and public key of cert do not match\n");
     }
 
@@ -963,17 +963,17 @@ cert_loop:
 
     pkey = X509_get0_pubkey(x);
     if ((print_pubkey != 0 || modulus != 0) && pkey == NULL) {
-        BIO_printf(bio_err, "Error getting public key\n");
+        BIO_puts(bio_err, "Error getting public key\n");
         goto err;
     }
 
     if (x509toreq) { /* also works in conjunction with -req */
         if (privkey == NULL) {
-            BIO_printf(bio_err, "Must specify request signing key using -key\n");
+            BIO_puts(bio_err, "Must specify request signing key using -key\n");
             goto err;
         }
         if (clrext && ext_copy != EXT_COPY_NONE) {
-            BIO_printf(bio_err, "Must not use -clrext together with -copy_extensions\n");
+            BIO_puts(bio_err, "Must not use -clrext together with -copy_extensions\n");
             goto err;
         }
         if ((rq = x509_to_req(x, ext_copy, ext_names)) == NULL)
@@ -996,7 +996,7 @@ cert_loop:
                 i = PEM_write_bio_X509_REQ(out, rq);
             }
             if (!i) {
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "Unable to write certificate request\n");
                 goto err;
             }
@@ -1008,7 +1008,7 @@ cert_loop:
             == NULL)
             goto err;
         if (!X509_check_private_key(xca, CAkey)) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "CA certificate and CA private key do not match\n");
             goto err;
         }
@@ -1033,9 +1033,9 @@ cert_loop:
         } else if (i == subject) {
             print_name(out, "subject=", X509_get_subject_name(x));
         } else if (i == serial) {
-            BIO_printf(out, "serial=");
+            BIO_puts(out, "serial=");
             i2a_ASN1_INTEGER(out, X509_get0_serialNumber(x));
-            BIO_printf(out, "\n");
+            BIO_puts(out, "\n");
         } else if (i == next_serial) {
             ASN1_INTEGER *ser;
             BIGNUM *bnser = ASN1_INTEGER_to_BN(X509_get0_serialNumber(x), NULL);
@@ -1077,11 +1077,11 @@ cert_loop:
             BIO_printf(out, "%08lx\n", X509_issuer_name_hash_old(x));
 #endif
         } else if (i == pprint) {
-            BIO_printf(out, "Certificate purposes:\n");
+            BIO_puts(out, "Certificate purposes:\n");
             for (j = 0; j < X509_PURPOSE_get_count(); j++)
                 purpose_print(out, x, X509_PURPOSE_get0(j));
         } else if (i == modulus) {
-            BIO_printf(out, "Modulus=");
+            BIO_puts(out, "Modulus=");
             if (EVP_PKEY_is_a(pkey, "RSA") || EVP_PKEY_is_a(pkey, "RSA-PSS")) {
                 BIGNUM *n = NULL;
 
@@ -1097,9 +1097,9 @@ cert_loop:
                 BN_print(out, dsapub);
                 BN_free(dsapub);
             } else {
-                BIO_printf(out, "No modulus for this public key type");
+                BIO_puts(out, "No modulus for this public key type");
             }
-            BIO_printf(out, "\n");
+            BIO_puts(out, "\n");
         } else if (i == print_pubkey) {
             PEM_write_bio_PUBKEY(out, pkey);
         } else if (i == text) {
@@ -1125,13 +1125,13 @@ cert_loop:
             if ((fdig = EVP_MD_fetch(app_get0_libctx(), fdigname,
                      app_get0_propq()))
                 == NULL) {
-                BIO_printf(bio_err, "Unknown digest\n");
+                BIO_puts(bio_err, "Unknown digest\n");
                 goto err;
             }
             digres = X509_digest(x, fdig, md, &n);
             EVP_MD_free(fdig);
             if (!digres) {
-                BIO_printf(bio_err, "Out of memory\n");
+                BIO_puts(bio_err, "Out of memory\n");
                 goto err;
             }
 
@@ -1152,7 +1152,7 @@ cert_loop:
         int error, valid;
 
         if ((vpm = X509_VERIFY_PARAM_new()) == NULL) {
-            BIO_printf(out, "Malloc failed\n");
+            BIO_puts(out, "Malloc failed\n");
             goto end_cert_loop;
         }
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_USE_CHECK_TIME);
@@ -1166,10 +1166,10 @@ cert_loop:
             BIO_printf(out, "%s\n", msg);
         }
         if (error == X509_V_ERR_CERT_HAS_EXPIRED) {
-            BIO_printf(out, "Certificate will expire\n");
+            BIO_puts(out, "Certificate will expire\n");
             expired = 1;
         } else {
-            BIO_printf(out, "Certificate will not expire\n");
+            BIO_puts(out, "Certificate will not expire\n");
         }
         if (multi && k > 0)
             ret |= expired;
@@ -1199,11 +1199,11 @@ cert_loop:
         else
             i = PEM_write_bio_X509(out, x);
     } else {
-        BIO_printf(bio_err, "Bad output format specified for outfile\n");
+        BIO_puts(bio_err, "Bad output format specified for outfile\n");
         goto err;
     }
     if (!i) {
-        BIO_printf(bio_err, "Unable to write certificate\n");
+        BIO_puts(bio_err, "Unable to write certificate\n");
         goto err;
     }
 
@@ -1267,7 +1267,7 @@ static ASN1_INTEGER *x509_load_serial(const char *CAfile,
         goto end;
 
     if (!BN_add_word(serial, 1)) {
-        BIO_printf(bio_err, "Serial number increment failure\n");
+        BIO_puts(bio_err, "Serial number increment failure\n");
         goto end;
     }
 
@@ -1318,9 +1318,9 @@ static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt)
         idret = X509_check_purpose(cert, id, i);
         BIO_printf(bio, "%s%s : ", pname, i ? " CA" : "");
         if (idret == 1)
-            BIO_printf(bio, "Yes\n");
+            BIO_puts(bio, "Yes\n");
         else if (idret == 0)
-            BIO_printf(bio, "No\n");
+            BIO_puts(bio, "No\n");
         else
             BIO_printf(bio, "Yes (WARNING code=%d)\n", idret);
     }
@@ -1366,7 +1366,7 @@ static int print_x509v3_exts(BIO *bio, X509 *x, const char *ext_names)
 
     exts = X509_get0_extensions(x);
     if ((num = sk_X509_EXTENSION_num(exts)) <= 0) {
-        BIO_printf(bio_err, "No extensions in certificate\n");
+        BIO_puts(bio_err, "No extensions in certificate\n");
         ret = 1;
         goto end;
     }

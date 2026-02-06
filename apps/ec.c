@@ -172,7 +172,7 @@ int ec_main(int argc, char **argv)
     private = !pubin && (text || (!param_out && !pubout));
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
-        BIO_printf(bio_err, "Error getting passwords\n");
+        BIO_puts(bio_err, "Error getting passwords\n");
         goto end;
     }
 
@@ -182,7 +182,7 @@ int ec_main(int argc, char **argv)
         eckey = load_key(infile, informat, 1, passin, "private key");
 
     if (eckey == NULL) {
-        BIO_printf(bio_err, "unable to load Key\n");
+        BIO_puts(bio_err, "unable to load Key\n");
         goto end;
     }
 
@@ -194,25 +194,25 @@ int ec_main(int argc, char **argv)
         && !EVP_PKEY_set_utf8_string_param(
             eckey, OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
             point_format)) {
-        BIO_printf(bio_err, "unable to set point conversion format\n");
+        BIO_puts(bio_err, "unable to set point conversion format\n");
         goto end;
     }
 
     if (asn1_encoding != NULL
         && !EVP_PKEY_set_utf8_string_param(
             eckey, OSSL_PKEY_PARAM_EC_ENCODING, asn1_encoding)) {
-        BIO_printf(bio_err, "unable to set asn1 encoding format\n");
+        BIO_puts(bio_err, "unable to set asn1 encoding format\n");
         goto end;
     }
 
     if (no_public) {
         if (!EVP_PKEY_set_int_param(eckey, OSSL_PKEY_PARAM_EC_INCLUDE_PUBLIC, 0)) {
-            BIO_printf(bio_err, "unable to disable public key encoding\n");
+            BIO_puts(bio_err, "unable to disable public key encoding\n");
             goto end;
         }
     } else {
         if (!EVP_PKEY_set_int_param(eckey, OSSL_PKEY_PARAM_EC_INCLUDE_PUBLIC, 1)) {
-            BIO_printf(bio_err, "unable to enable public key encoding\n");
+            BIO_puts(bio_err, "unable to enable public key encoding\n");
             goto end;
         }
     }
@@ -221,7 +221,7 @@ int ec_main(int argc, char **argv)
         assert(pubin || private);
         if ((pubin && EVP_PKEY_print_public(out, eckey, 0, NULL) <= 0)
             || (!pubin && EVP_PKEY_print_private(out, eckey, 0, NULL) <= 0)) {
-            BIO_printf(bio_err, "unable to print EC key\n");
+            BIO_puts(bio_err, "unable to print EC key\n");
             goto end;
         }
     }
@@ -229,13 +229,13 @@ int ec_main(int argc, char **argv)
     if (check) {
         pctx = EVP_PKEY_CTX_new_from_pkey(NULL, eckey, NULL);
         if (pctx == NULL) {
-            BIO_printf(bio_err, "unable to check EC key\n");
+            BIO_puts(bio_err, "unable to check EC key\n");
             goto end;
         }
         if (EVP_PKEY_check(pctx) <= 0)
-            BIO_printf(bio_err, "EC Key Invalid!\n");
+            BIO_puts(bio_err, "EC Key Invalid!\n");
         else
-            BIO_printf(bio_err, "EC Key valid.\n");
+            BIO_puts(bio_err, "EC Key valid.\n");
         ERR_print_errors(bio_err);
     }
 
@@ -269,7 +269,7 @@ int ec_main(int argc, char **argv)
                     strlen(passout));
         }
         if (!OSSL_ENCODER_to_bio(ectx, out)) {
-            BIO_printf(bio_err, "unable to write EC key\n");
+            BIO_puts(bio_err, "unable to write EC key\n");
             goto end;
         }
     }

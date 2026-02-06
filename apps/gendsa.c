@@ -117,7 +117,7 @@ int gendsa_main(int argc, char **argv)
     private = 1;
 
     if (!app_passwd(NULL, passoutarg, NULL, &passout)) {
-        BIO_printf(bio_err, "Error getting password\n");
+        BIO_puts(bio_err, "Error getting password\n");
         goto end;
     }
 
@@ -136,13 +136,13 @@ int gendsa_main(int argc, char **argv)
 
     ctx = EVP_PKEY_CTX_new_from_pkey(app_get0_libctx(), pkey, app_get0_propq());
     if (ctx == NULL) {
-        BIO_printf(bio_err, "unable to create PKEY context\n");
+        BIO_puts(bio_err, "unable to create PKEY context\n");
         goto end;
     }
     EVP_PKEY_free(pkey);
     pkey = NULL;
     if (EVP_PKEY_keygen_init(ctx) <= 0) {
-        BIO_printf(bio_err, "unable to set up for key generation\n");
+        BIO_puts(bio_err, "unable to set up for key generation\n");
         goto end;
     }
     pkey = app_keygen(ctx, "DSA", nbits, verbose);
@@ -151,7 +151,7 @@ int gendsa_main(int argc, char **argv)
 
     assert(private);
     if (!PEM_write_bio_PrivateKey(out, pkey, enc, NULL, 0, NULL, passout)) {
-        BIO_printf(bio_err, "unable to output generated key\n");
+        BIO_puts(bio_err, "unable to output generated key\n");
         goto end;
     }
     ret = 0;

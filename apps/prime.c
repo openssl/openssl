@@ -67,7 +67,7 @@ static void process_num(const char *s, const int is_hex)
     r = BN_check_prime(bn, NULL, NULL);
     BN_free(bn);
     if (r < 0) {
-        BIO_printf(bio_err, "Error checking prime\n");
+        BIO_puts(bio_err, "Error checking prime\n");
         return;
     }
 
@@ -150,7 +150,7 @@ int prime_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
     if (!generate && argc == 0) {
-        BIO_printf(bio_err, "Missing number (s) to check\n");
+        BIO_puts(bio_err, "Missing number (s) to check\n");
         goto opthelp;
     }
 
@@ -158,21 +158,21 @@ int prime_main(int argc, char **argv)
         char *s;
 
         if (!bits) {
-            BIO_printf(bio_err, "Specify the number of bits.\n");
+            BIO_puts(bio_err, "Specify the number of bits.\n");
             goto end;
         }
         bn = BN_new();
         if (bn == NULL) {
-            BIO_printf(bio_err, "Out of memory.\n");
+            BIO_puts(bio_err, "Out of memory.\n");
             goto end;
         }
         if (!BN_generate_prime_ex(bn, bits, safe, NULL, NULL, NULL)) {
-            BIO_printf(bio_err, "Failed to generate prime.\n");
+            BIO_puts(bio_err, "Failed to generate prime.\n");
             goto end;
         }
         s = hex ? BN_bn2hex(bn) : BN_bn2dec(bn);
         if (s == NULL) {
-            BIO_printf(bio_err, "Out of memory.\n");
+            BIO_puts(bio_err, "Out of memory.\n");
             goto end;
         }
         BIO_printf(bio_out, "%s\n", s);

@@ -191,10 +191,10 @@ int pkey_main(int argc, char **argv)
         goto opthelp;
 
     if (text && text_pub)
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "Warning: The -text option is ignored with -text_pub\n");
     if (traditional && (noout || pubout))
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "Warning: -traditional is ignored with no private key output\n");
 
     /* -pubout and -text is the same as -text_pub */
@@ -209,7 +209,7 @@ int pkey_main(int argc, char **argv)
         goto opthelp;
     if (cipher == NULL) {
         if (passoutarg != NULL)
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "Warning: The -passout option is ignored without a cipher option\n");
     } else if (noout) {
         EVP_CIPHER_free(cipher);
@@ -223,14 +223,14 @@ int pkey_main(int argc, char **argv)
                 break;
             /* FALLTHROUGH */
         default:
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "Error: Cipher options are supported only in PEM "
                 "and non-traditional DER output forms\n");
             goto end;
         }
     }
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
-        BIO_printf(bio_err, "Error getting passwords\n");
+        BIO_puts(bio_err, "Error getting passwords\n");
         goto end;
     }
 
@@ -280,13 +280,13 @@ int pkey_main(int argc, char **argv)
             r = EVP_PKEY_public_check(ctx);
 
         if (r == 1) {
-            BIO_printf(out, "Key is valid\n");
+            BIO_puts(out, "Key is valid\n");
         } else {
             /*
              * Note: at least for RSA keys if this function returns
              * -1, there will be no error reasons.
              */
-            BIO_printf(bio_err, "Key is invalid\n");
+            BIO_puts(bio_err, "Key is invalid\n");
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -311,7 +311,7 @@ int pkey_main(int argc, char **argv)
             }
         } else if (outformat == FORMAT_ASN1) {
             if (text || text_pub) {
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "Error: Text output cannot be combined with DER output\n");
                 goto end;
             }
@@ -329,7 +329,7 @@ int pkey_main(int argc, char **argv)
                 }
             }
         } else {
-            BIO_printf(bio_err, "Bad format specified for key\n");
+            BIO_puts(bio_err, "Bad format specified for key\n");
             goto end;
         }
     }

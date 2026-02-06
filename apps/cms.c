@@ -323,7 +323,7 @@ static CMS_ContentInfo *load_content_info(int informat, BIO *in, int flags,
 
     ret = CMS_ContentInfo_new_ex(app_get0_libctx(), app_get0_propq());
     if (ret == NULL) {
-        BIO_printf(bio_err, "Error allocating CMS_contentinfo\n");
+        BIO_puts(bio_err, "Error allocating CMS_contentinfo\n");
         return NULL;
     }
     switch (informat) {
@@ -791,7 +791,7 @@ int cms_main(int argc, char **argv)
                     keyidx += sk_OPENSSL_STRING_num(skkeys);
             }
             if (keyidx < 0) {
-                BIO_printf(bio_err, "No key specified\n");
+                BIO_puts(bio_err, "No key specified\n");
                 goto opthelp;
             }
             if (key_param == NULL || key_param->idx != keyidx) {
@@ -908,7 +908,7 @@ int cms_main(int argc, char **argv)
                 goto end;
         }
         if (sksigners == NULL) {
-            BIO_printf(bio_err, "No signer certificate specified\n");
+            BIO_puts(bio_err, "No signer certificate specified\n");
             goto opthelp;
         }
         signerfile = NULL;
@@ -916,23 +916,23 @@ int cms_main(int argc, char **argv)
     } else if (operation == SMIME_DECRYPT) {
         if (recipfile == NULL && keyfile == NULL
             && secret_key == NULL && pwri_pass == NULL) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "No recipient certificate or key specified\n");
             goto opthelp;
         }
     } else if (operation == SMIME_ENCRYPT) {
         if (*argv == NULL && secret_key == NULL
             && pwri_pass == NULL && sk_X509_num(encerts) <= 0) {
-            BIO_printf(bio_err, "No recipient(s) certificate(s) specified\n");
+            BIO_puts(bio_err, "No recipient(s) certificate(s) specified\n");
             goto opthelp;
         }
     } else if (!operation) {
-        BIO_printf(bio_err, "No operation option (-encrypt|-decrypt|-sign|-verify|...) specified.\n");
+        BIO_puts(bio_err, "No operation option (-encrypt|-decrypt|-sign|-verify|...) specified.\n");
         goto opthelp;
     }
 
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
-        BIO_printf(bio_err, "Error getting password\n");
+        BIO_puts(bio_err, "Error getting password\n");
         goto end;
     }
 
@@ -940,19 +940,19 @@ int cms_main(int argc, char **argv)
 
     if ((operation & SMIME_SIGNERS) == 0) {
         if ((flags & CMS_DETACHED) == 0)
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "Warning: -nodetach option is ignored for non-signing operation\n");
 
         flags &= ~CMS_DETACHED;
     }
     if ((operation & SMIME_IP) == 0 && contfile != NULL)
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "Warning: -contfile option is ignored for the given operation\n");
     if (operation != SMIME_ENCRYPT && *argv != NULL)
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "Warning: recipient certificate file parameters ignored for operation other than -encrypt\n");
     if (operation != SMIME_ENCRYPT && recip_first != NULL)
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "Warning: -recip_kdf and -recip_ukm parameters ignored for operation other than -encrypt\n");
 
     if ((flags & CMS_BINARY) != 0) {
@@ -970,7 +970,7 @@ int cms_main(int argc, char **argv)
         if (!cipher)
             cipher = (EVP_CIPHER *)EVP_aes_256_cbc();
         if (secret_key && !secret_keyid) {
-            BIO_printf(bio_err, "No secret key id\n");
+            BIO_puts(bio_err, "No secret key id\n");
             goto end;
         }
 
@@ -1025,20 +1025,20 @@ int cms_main(int argc, char **argv)
 
     if (digesthex != NULL) {
         if (operation != SMIME_SIGN) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "Cannot use -digest for non-signing operation\n");
             goto end;
         }
         if (infile != NULL
             || (flags & CMS_DETACHED) == 0
             || (flags & CMS_STREAM) != 0) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "Cannot use -digest when -in, -nodetach or streaming is used\n");
             goto end;
         }
         digestbin = OPENSSL_hexstr2buf(digesthex, &digestlen);
         if (digestbin == NULL) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "Invalid hex value after -digest\n");
             goto end;
         }
@@ -1213,7 +1213,7 @@ int cms_main(int argc, char **argv)
                 if (originator != NULL
                     && ERR_GET_REASON(ERR_peek_error())
                         == CMS_R_ERROR_UNSUPPORTED_STATIC_KEY_AGREEMENT) {
-                    BIO_printf(bio_err, "Cannot use originator for encryption\n");
+                    BIO_puts(bio_err, "Cannot use originator for encryption\n");
                     goto end;
                 }
                 goto end;
@@ -1327,7 +1327,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (cms == NULL) {
-        BIO_printf(bio_err, "Error creating CMS structure\n");
+        BIO_puts(bio_err, "Error creating CMS structure\n");
         goto end;
     }
 
@@ -1360,7 +1360,7 @@ int cms_main(int argc, char **argv)
         }
 
         if (!CMS_decrypt(cms, NULL, NULL, indata, out, flags)) {
-            BIO_printf(bio_err, "Error decrypting CMS structure\n");
+            BIO_puts(bio_err, "Error decrypting CMS structure\n");
             goto end;
         }
     } else if (operation == SMIME_DATA_OUT) {
@@ -1371,9 +1371,9 @@ int cms_main(int argc, char **argv)
             goto end;
     } else if (operation == SMIME_DIGEST_VERIFY) {
         if (CMS_digest_verify(cms, indata, out, flags) > 0) {
-            BIO_printf(bio_err, "Verification successful\n");
+            BIO_puts(bio_err, "Verification successful\n");
         } else {
-            BIO_printf(bio_err, "Verification failure\n");
+            BIO_puts(bio_err, "Verification failure\n");
             goto end;
         }
     } else if (operation == SMIME_ENCRYPTED_DECRYPT) {
@@ -1407,9 +1407,9 @@ int cms_main(int argc, char **argv)
 
     } else if (operation == SMIME_VERIFY_RECEIPT) {
         if (CMS_verify_receipt(rcms, cms, other, store, flags) > 0) {
-            BIO_printf(bio_err, "Verification successful\n");
+            BIO_puts(bio_err, "Verification successful\n");
         } else {
-            BIO_printf(bio_err, "Verification failure\n");
+            BIO_puts(bio_err, "Verification failure\n");
             goto end;
         }
     } else {
@@ -1445,11 +1445,11 @@ int cms_main(int argc, char **argv)
         } else if (outformat == FORMAT_ASN1) {
             ret = i2d_CMS_bio_stream(out, cms, in, flags);
         } else {
-            BIO_printf(bio_err, "Bad output format for CMS file\n");
+            BIO_puts(bio_err, "Bad output format for CMS file\n");
             goto end;
         }
         if (ret <= 0) {
-            BIO_printf(bio_err, "Error writing CMS output\n");
+            BIO_puts(bio_err, "Error writing CMS output\n");
             ret = 6;
             goto end;
         }
