@@ -656,7 +656,7 @@ static STRINT_PAIR handshakes[] = {
     { NULL }
 };
 
-void msg_cb(int write_p, int version, int content_type, const void *buf,
+void msg_hex_cb(int write_p, int version, int content_type, const void *buf,
     size_t len, SSL *ssl, void *arg)
 {
     BIO *bio = arg;

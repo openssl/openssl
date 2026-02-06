@@ -86,10 +86,10 @@ static SSL_CTX *ctx2 = NULL;
 static int www = 0;
 
 static BIO *bio_s_out = NULL;
-static BIO *bio_s_msg = NULL;
+static BIO *bio_s_trace = NULL;
 static int s_debug = 0;
 static int s_tlsextdebug = 0;
-static int s_msg = 0;
+static int s_trace = 0;
 static int s_quiet = 0;
 static int s_ign_eof = 0;
 static int s_brief = 0;
@@ -998,9 +998,9 @@ typedef enum OPTION_choice {
     OPT_NO_PROXY,
     OPT_STATUS_URL,
     OPT_STATUS_FILE,
-    OPT_MSG,
-    OPT_MSGFILE,
-    OPT_TRACE,
+    OPT_TRACE_HEX,
+    OPT_TRACE_TEXT,
+    OPT_TRACE_FILE,
     OPT_SECURITY_DEBUG,
     OPT_SECURITY_DEBUG_VERBOSE,
     OPT_STATE,
@@ -1077,9 +1077,6 @@ const OPTIONS s_server_options[] = {
     { "help", OPT_HELP, '-', "Display this summary" },
     { "ssl_config", OPT_SSL_CONFIG, 's',
         "Configure SSL_CTX using the given configuration value" },
-#ifndef OPENSSL_NO_SSL_TRACE
-    { "trace", OPT_TRACE, '-', "trace protocol messages" },
-#endif
 
     OPT_SECTION("Network"),
     { "port", OPT_PORT, 'p',
@@ -1222,9 +1219,12 @@ const OPTIONS s_server_options[] = {
     { "rev", OPT_REV, '-',
         "act as an echo server that sends back received text reversed" },
     { "debug", OPT_DEBUG, '-', "Print more output" },
-    { "msg", OPT_MSG, '-', "Show protocol messages" },
-    { "msgfile", OPT_MSGFILE, '>',
-        "File to send output of -msg or -trace, instead of stdout" },
+    { "trace_hex", OPT_TRACE_HEX, '-', "Show protocol messages with hex-dump" },
+#ifndef OPENSSL_NO_SSL_TRACE
+    { "trace_text", OPT_TRACE_TEXT, '-', "Show protocol messages in human-readable format" },
+#endif
+     { "trace_file", OPT_TRACE_FILE, '>',
+        "File to send output of -trace_hex or -trace_text, instead of stdout" },
     { "state", OPT_STATE, '-', "Print the SSL states" },
     { "async", OPT_ASYNC, '-', "Operate in asynchronous mode" },
     { "max_pipelines", OPT_MAX_PIPELINES, 'p',
@@ -1421,7 +1421,7 @@ int s_server_main(int argc, char *argv[])
     www = 0;
     bio_s_out = NULL;
     s_debug = 0;
-    s_msg = 0;
+    s_trace = 0;
     s_quiet = 0;
     s_brief = 0;
     async = 0;
@@ -1765,19 +1765,19 @@ int s_server_main(int argc, char *argv[])
             sk_OPENSSL_STRING_push(tlscstatp.sk_resp_in, opt_arg());
 #endif
             break;
-        case OPT_MSG:
-            s_msg = 1;
+        case OPT_TRACE_HEX:
+            s_trace = 1;
             break;
-        case OPT_MSGFILE:
-            bio_s_msg = BIO_new_file(opt_arg(), "w");
-            if (bio_s_msg == NULL) {
+        case OPT_TRACE_FILE:
+            bio_s_trace = BIO_new_file(opt_arg(), "w");
+            if (bio_s_trace == NULL) {
                 BIO_printf(bio_err, "Error writing file %s\n", opt_arg());
                 goto end;
             }
             break;
-        case OPT_TRACE:
+        case OPT_TRACE_TEXT:
 #ifndef OPENSSL_NO_SSL_TRACE
-            s_msg = 2;
+            s_trace = 2;
 #endif
             break;
         case OPT_SECURITY_DEBUG:
@@ -2216,9 +2216,9 @@ int s_server_main(int argc, char *argv[])
     if (bio_s_out == NULL) {
         if (s_quiet && !s_debug) {
             bio_s_out = BIO_new(BIO_s_null());
-            if (s_msg && bio_s_msg == NULL) {
-                bio_s_msg = dup_bio_out(FORMAT_TEXT);
-                if (bio_s_msg == NULL) {
+            if (s_trace && bio_s_trace == NULL) {
+                bio_s_trace = dup_bio_out(FORMAT_TEXT);
+                if (bio_s_trace == NULL) {
                     BIO_printf(bio_err, "Out of memory\n");
                     goto end;
                 }
@@ -2696,8 +2696,8 @@ end:
     SSL_CONF_CTX_free(cctx);
     BIO_free(bio_s_out);
     bio_s_out = NULL;
-    BIO_free(bio_s_msg);
-    bio_s_msg = NULL;
+    BIO_free(bio_s_trace);
+    bio_s_trace = NULL;
 #ifdef CHARSET_EBCDIC
     BIO_meth_free(methods_ebcdic);
 #endif
@@ -2885,14 +2885,14 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
     /* SSL_set_fd(con,s); */
 
     BIO_set_callback_ex(SSL_get_rbio(con), count_reads_callback);
-    if (s_msg) {
+    if (s_trace) {
 #ifndef OPENSSL_NO_SSL_TRACE
-        if (s_msg == 2)
+        if (s_trace == 2)
             SSL_set_msg_callback(con, SSL_trace);
         else
 #endif
-            SSL_set_msg_callback(con, msg_cb);
-        SSL_set_msg_callback_arg(con, bio_s_msg ? bio_s_msg : bio_s_out);
+            SSL_set_msg_callback(con, msg_hex_cb);
+        SSL_set_msg_callback_arg(con, bio_s_trace ? bio_s_trace : bio_s_out);
     }
 
     if (s_tlsextdebug) {
@@ -3564,14 +3564,14 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
         BIO_set_callback_ex(SSL_get_rbio(con), bio_dump_callback);
         BIO_set_callback_arg(SSL_get_rbio(con), (char *)bio_s_out);
     }
-    if (s_msg) {
+    if (s_trace) {
 #ifndef OPENSSL_NO_SSL_TRACE
-        if (s_msg == 2)
+        if (s_trace == 2)
             SSL_set_msg_callback(con, SSL_trace);
         else
 #endif
-            SSL_set_msg_callback(con, msg_cb);
-        SSL_set_msg_callback_arg(con, bio_s_msg ? bio_s_msg : bio_s_out);
+            SSL_set_msg_callback(con, msg_hex_cb);
+        SSL_set_msg_callback_arg(con, bio_s_trace ? bio_s_trace : bio_s_out);
     }
 
     if (early_data) {
@@ -3991,14 +3991,14 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
         BIO_set_callback_ex(SSL_get_rbio(con), bio_dump_callback);
         BIO_set_callback_arg(SSL_get_rbio(con), (char *)bio_s_out);
     }
-    if (s_msg) {
+    if (s_trace) {
 #ifndef OPENSSL_NO_SSL_TRACE
-        if (s_msg == 2)
+        if (s_trace == 2)
             SSL_set_msg_callback(con, SSL_trace);
         else
 #endif
-            SSL_set_msg_callback(con, msg_cb);
-        SSL_set_msg_callback_arg(con, bio_s_msg ? bio_s_msg : bio_s_out);
+            SSL_set_msg_callback(con, msg_hex_cb);
+        SSL_set_msg_callback_arg(con, bio_s_trace ? bio_s_trace : bio_s_out);
     }
 
     for (;;) {
