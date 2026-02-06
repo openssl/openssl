@@ -247,9 +247,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     case ASN1_OP_D2I_POST:
         if (!X509_CRL_digest(crl, EVP_sha1(), crl->sha1_hash, NULL))
             crl->flags |= EXFLAG_NO_FINGERPRINT;
-        crl->idp = X509_CRL_get_ext_d2i(crl,
-            NID_issuing_distribution_point, &i,
-            NULL);
+        crl->idp = X509_CRL_get_ext_d2i(crl, NID_issuing_distribution_point, &i, NULL);
         if (crl->idp != NULL) {
             if (!setup_idp(crl, crl->idp))
                 crl->flags |= EXFLAG_INVALID;
@@ -257,11 +255,21 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             crl->flags |= EXFLAG_INVALID;
         }
 
-        crl->akid = X509_CRL_get_ext_d2i(crl,
-            NID_authority_key_identifier, &i,
-            NULL);
+        crl->akid = X509_CRL_get_ext_d2i(crl, NID_authority_key_identifier, &i, NULL);
         if (crl->akid == NULL && i != -1)
             crl->flags |= EXFLAG_INVALID;
+
+        /*
+         * RFC 5280 §4.2.1.1 (Authority Key Identifier):
+         * The authorityCertIssuer and authorityCertSerialNumber fields are
+         * paired and MUST either both be present or both be absent.
+         */
+        if (crl->akid != NULL
+            && (crl->akid->issuer == NULL) != (crl->akid->serial == NULL)) {
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
+                "Authority Key Identifier's Issuer and serial number in CRL must be paired");
+            return 0;
+        }
 
         crl->crl_number = X509_CRL_get_ext_d2i(crl,
             NID_crl_number, &i, NULL);
