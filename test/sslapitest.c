@@ -5687,6 +5687,7 @@ static int test_negotiated_group(int idx)
     int testresult = 0;
     int kexch_alg;
     int max_version = TLS1_3_VERSION;
+    int fips_too_old = fips_provider_version_le(libctx, 4, 0, 0);
 
     numec = OSSL_NELEM(ecdhe_kexch_groups);
     numff = OSSL_NELEM(ffdhe_kexch_groups);
@@ -5704,6 +5705,12 @@ static int test_negotiated_group(int idx)
     else
         kexch_alg = ffdhe_kexch_groups[idx];
     expectednid = kexch_alg;
+
+    if (is_fips && fips_too_old) {
+        if ((!isecdhe && kexch_alg != NID_ffdhe2048) ||
+            (isecdhe && kexch_alg == NID_X9_62_prime256v1))
+            return TEST_skip("NID %d is not supported with this libcrypto and fips provider", kexch_alg);
+    }
 
     if (is_fips && (kexch_alg == NID_X25519 || kexch_alg == NID_X448))
         return TEST_skip("X25519 and X448 might not be available in fips provider.");
