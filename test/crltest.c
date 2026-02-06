@@ -365,6 +365,27 @@ static const char *kInvalidDateUTC[] = {
     NULL
 };
 
+/*
+ * CRL file with an invalid AKI extension
+ * https://github.com/openssl/openssl/issues/27114
+ */
+static const char *kAKIInvalid[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIIB/DCB5QIBATANBgkqhkiG9w0BAQsFADBOMQswCQYDVQQGEwJVUzELMAkGA1UE\n",
+    "CAwCVVMxCzAJBgNVBAcMAlVTMQswCQYDVQQKDAJVUzELMAkGA1UEAwwCVVMxCzAJ\n",
+    "BgNVBAsMAlVTFw0yNTAxMDEwMDAwMDBaFw0yNTEyMDEwMDAwMDBaMDUwMwIUHIAC\n",
+    "LvgfJAXulqYS3LYf4KxwHl4XDTI1MDMxMzAyNDQ0MFowDDAKBgNVHRUEAwoBBqAs\n",
+    "MCowDgYDVR0jBAcwBYIDAeJAMBgGA1UdFAQRAg8Zz//e2nTt8vakRgzO4UAwDQYJ\n",
+    "KoZIhvcNAQELBQADggEBAGg2PYwXQCYgLo1JGi2C1bczVhf9EsQ+QgeHWCHGTKrT\n",
+    "yi5+cpHMZF750W1YoSfipwAL/RZJ+YsI++xBsMTY8mZLUOIAJnDIQkwRHAB25ovd\n",
+    "rR7baLfUq+OPgjftDWmkAzn5SHlcO2Yq/dE1rn40nMvP3uxZFZvmg+QonK2yVqqH\n",
+    "ttaQdUNY0uPYja2c6mdr8By4qjQM6XnMcFIof2D3ufggZOTauLyAnonhlQvyTva+\n",
+    "UpHQ8FkE5dCN5Eiup+CYe+dxZiHp/NBdmWbmbuP34SewuK5a+lvYuhaytOrOZpNT\n",
+    "3mBRyoQpMCPMKfHCLnSUA5S7CtruAk3LkynWwy7LM2A=\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
 static X509 *test_root = NULL;
 static X509 *test_leaf = NULL;
 static X509 *test_root2 = NULL;
@@ -713,6 +734,19 @@ err:
     return status == X509_V_OK;
 }
 
+static int test_crl_aki_check(void)
+{
+    X509_CRL *crl;
+    int test;
+
+    test = TEST_ptr_null((crl = CRL_from_strings(kAKIInvalid)))
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT)
+        && TEST_err_s("Authority Key Identifier's Issuer and serial number in CRL must be paired");
+
+    X509_CRL_free(crl);
+    return test;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(test_root = X509_from_strings(kCRLTestRoot))
@@ -729,6 +763,7 @@ int setup_tests(void)
     ADD_TEST(test_crl_cert_issuer_ext);
     ADD_TEST(test_crl_date_invalid);
     ADD_TEST(test_get_crl_fn_score);
+    ADD_TEST(test_crl_aki_check);
     ADD_ALL_TESTS(test_unknown_critical_crl, OSSL_NELEM(unknown_critical_crls));
     ADD_ALL_TESTS(test_reuse_crl, 6);
 
