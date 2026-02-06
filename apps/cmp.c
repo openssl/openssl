@@ -2349,7 +2349,7 @@ set_path:
 
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
     if (opt_tls_used) {
-        APP_HTTP_TLS_INFO *info;
+        SSL_CTX *ssl_ctx;
 
         if (opt_tls_cert != NULL
             || opt_tls_key != NULL || opt_tls_keypass != NULL) {
@@ -2362,21 +2362,10 @@ set_path:
             }
         }
 
-        if ((info = OPENSSL_zalloc(sizeof(*info))) == NULL)
+        if ((ssl_ctx = setup_ssl_ctx(ctx, host)) == NULL)
             goto err;
-        APP_HTTP_TLS_INFO_free(OSSL_CMP_CTX_get_http_cb_arg(ctx));
-        (void)OSSL_CMP_CTX_set_http_cb_arg(ctx, info);
-        info->ssl_ctx = setup_ssl_ctx(ctx, host);
-        info->server = host;
-        host = NULL; /* prevent deallocation */
-        if ((info->port = OPENSSL_strdup(server_port)) == NULL)
-            goto err;
-        /* workaround for callback design flaw, see #17088: */
-        info->use_proxy = proxy_host != NULL;
-        info->timeout = OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_MSG_TIMEOUT);
-
-        if (info->ssl_ctx == NULL)
-            goto err;
+        SSL_CTX_free(OSSL_CMP_CTX_get_http_cb_arg(ctx));
+        (void)OSSL_CMP_CTX_set_http_cb_arg(ctx, ssl_ctx);
         (void)OSSL_CMP_CTX_set_http_cb(ctx, app_http_tls_cb);
     }
 #endif
@@ -3978,21 +3967,11 @@ err:
 
     if (cmp_ctx != NULL) {
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
-        APP_HTTP_TLS_INFO *info = OSSL_CMP_CTX_get_http_cb_arg(cmp_ctx);
-
-        (void)OSSL_CMP_CTX_set_http_cb_arg(cmp_ctx, NULL);
+        SSL_CTX_free(OSSL_CMP_CTX_get_http_cb_arg(cmp_ctx));
 #endif
         ossl_cmp_mock_srv_free(OSSL_CMP_CTX_get_transfer_cb_arg(cmp_ctx));
         X509_STORE_free(OSSL_CMP_CTX_get_certConf_cb_arg(cmp_ctx));
-        /* cannot free info already here, as it may be used indirectly by: */
         OSSL_CMP_CTX_free(cmp_ctx);
-#if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
-        if (info != NULL) {
-            OPENSSL_free((char *)info->server);
-            OPENSSL_free((char *)info->port);
-            APP_HTTP_TLS_INFO_free(info);
-        }
-#endif
     }
     X509_VERIFY_PARAM_free(vpm);
 

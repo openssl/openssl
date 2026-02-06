@@ -5,6 +5,7 @@
 OSSL_HTTP_open,
 OSSL_HTTP_bio_cb_t,
 OSSL_HTTP_proxy_connect,
+OSSL_HTTP_REQ_CTX_proxy_connect,
 OSSL_HTTP_set1_request,
 OSSL_HTTP_exchange,
 OSSL_HTTP_get,
@@ -16,8 +17,8 @@ OSSL_HTTP_close
 
  #include <openssl/http.h>
 
- typedef BIO *(*OSSL_HTTP_bio_cb_t)(BIO *bio, void *arg,
-                                    int connect, int detail);
+ typedef BIO *(*OSSL_HTTP_bio_cb_t)(BIO *bio, void *arg, int connect,
+                                    int detail, OSSL_HTTP_REQ_CTX *rctx);
  OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
                                    const char *proxy, const char *no_proxy,
                                    int use_ssl, BIO *bio, BIO *rbio,
@@ -26,6 +27,9 @@ OSSL_HTTP_close
  int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
                              const char *proxyuser, const char *proxypass,
                              int timeout, BIO *bio_err, const char *prog);
+ int OSSL_HTTP_REQ_CTX_proxy_connect(OSSL_HTTP_REQ_CTX *rctx,
+                                     const char *user, const char *pass,
+                                     BIO *bio_err, const char *prog);
  int OSSL_HTTP_set1_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
                             const STACK_OF(CONF_VALUE) *headers,
                             const char *content_type, BIO *req,
@@ -90,7 +94,7 @@ separated by C<,> and/or whitespace (if not NULL;
 default is the environment variable C<no_proxy> if set, else C<NO_PROXY>).
 Proxying plain HTTP is supported directly,
 while using a proxy for HTTPS connections requires a suitable callback function
-such as OSSL_HTTP_proxy_connect(), described below.
+such as OSSL_HTTP_REQ_CTX_proxy_connect(), described below.
 
 If I<use_ssl> is nonzero a TLS connection is requested
 and the I<bio_update_fn> parameter must be provided.
@@ -100,15 +104,22 @@ may be used to modify the connection BIO used by the HTTP client,
 but cannot be used when both I<bio> and I<rbio> are given.
 I<bio_update_fn> is a BIO connect/disconnect callback function with prototype
 
- BIO *(*OSSL_HTTP_bio_cb_t)(BIO *bio, void *arg, int connect, int detail)
+ BIO *(*OSSL_HTTP_bio_cb_t)(BIO *bio, void *arg, int connect,
+                            int detail, OSSL_HTTP_REQ_CTX *rctx)
 
 The callback function may modify the BIO provided in the I<bio> argument,
 whereby it may use an optional custom defined argument I<arg>,
 which can for instance point to an B<SSL_CTX> structure.
-During connection establishment, just after calling BIO_do_connect_retry(), the
-callback function is invoked with the I<connect> argument being 1 and
-I<detail> being 1 if I<use_ssl> is nonzero (i.e., HTTPS is requested), else 0.
+During connection establishment, just after calling BIO_do_connect_retry(),
+the callback function is invoked with the I<connect> argument being 1.
+Since OpenSSL 4.0 this is done at first with the I<detail> argument being 1,
+which is for backward compatibility with OpenSSL 3.x.
+If the callback function needs to use I<rctx>, it must return NULL;
+in reaction it is called again with the I<detail> argument being 0,
+which indicates that the I<rctx> argument may be accessed.
 On disconnect I<connect> is 0 and I<detail> is 1 if no error occurred, else 0.
+The I<rctx> argument may be accessed on disconnect only since OpenSSL 4.0.
+
 For instance, on connect the callback may push an SSL BIO to implement HTTPS;
 after disconnect it may do some diagnostic output and pop and free the SSL BIO.
 
@@ -117,11 +128,15 @@ or NULL to indicate failure, in which case it should not modify the BIO.
 
 Here is a simple example that supports TLS connections (but not via a proxy):
 
- BIO *http_tls_cb(BIO *bio, void *arg, int connect, int detail)
+ BIO *http_tls_cb(BIO *bio, void *arg, int connect,
+                  int detail, OSSL_HTTP_REQ_CTX *rctx)
  {
-     if (connect && detail) { /* connecting with TLS */
-         SSL_CTX *ctx = (SSL_CTX *)arg;
-         BIO *sbio = BIO_new_ssl(ctx, 1);
+     SSL_CTX *ssl_ctx = (SSL_CTX *)arg;
+
+     if (ssl_ctx == NULL)
+         return bio; /* not using TLS */
+     if (connect) {
+         BIO *sbio = BIO_new_ssl(ssl_ctx, 1);
 
          bio = sbio != NULL ? BIO_push(sbio, bio) : NULL;
      } else if (!connect) { /* disconnecting */
@@ -164,6 +179,11 @@ A value <= 0 enables waiting indefinitely, i.e., no timeout.
 Since this function is typically called by applications such as
 L<openssl-s_client(1)> it uses the I<bio_err> and I<prog> parameters (unless
 NULL) to print additional diagnostic information in a user-oriented way.
+
+OSSL_HTTP_REQ_CTX_proxy_connect() improves OSSL_HTTP_proxy_connect() as follows.
+It does nothing if the new I<rctx> parameter indicates that no proxy is used.
+Otherwise it calls OSSL_HTTP_proxy_connect(),
+taking the needed BIO, server, port, and timeout information from I<rctx>.
 
 OSSL_HTTP_set1_request() sets up in I<rctx> the request header and content data
 and expectations on the response using the following parameters.
@@ -248,7 +268,8 @@ See also L<OSSL_trace_enabled(3)> and L<openssl-env(7)>.
 
 OSSL_HTTP_open() returns on success a B<OSSL_HTTP_REQ_CTX>, else NULL.
 
-OSSL_HTTP_proxy_connect() and OSSL_HTTP_set1_request()
+OSSL_HTTP_proxy_connect(), OSSL_HTTP_REQ_CTX_proxy_connect(),
+and OSSL_HTTP_set1_request()
 return 1 on success, 0 on error.
 
 On success, OSSL_HTTP_exchange(), OSSL_HTTP_get(), and OSSL_HTTP_transfer()
@@ -272,6 +293,9 @@ L<OSSL_trace_enabled(3)>, and L<openssl-env(7)>.
 =head1 HISTORY
 
 All the functions described here were added in OpenSSL 3.0.
+
+In OpenSSL 4.0 the design of the connection callback function of type
+B<OSSL_HTTP_bio_cb_t> was fixed and OSSL_HTTP_REQ_CTX_proxy_connect() added.
 
 =head1 COPYRIGHT
 

@@ -12,6 +12,7 @@ OSSL_HTTP_REQ_CTX_set1_req,
 OSSL_HTTP_REQ_CTX_nbio,
 OSSL_HTTP_REQ_CTX_nbio_d2i,
 OSSL_HTTP_REQ_CTX_exchange,
+OSSL_HTTP_REQ_CTX_get0_server,
 OSSL_HTTP_REQ_CTX_get0_mem_bio,
 OSSL_HTTP_REQ_CTX_get_resp_len,
 OSSL_HTTP_REQ_CTX_set_max_response_length,
@@ -44,6 +45,7 @@ OSSL_HTTP_is_alive
                                 ASN1_VALUE **pval, const ASN1_ITEM *it);
  BIO *OSSL_HTTP_REQ_CTX_exchange(OSSL_HTTP_REQ_CTX *rctx);
 
+ const char *OSSL_HTTP_REQ_CTX_get0_server(const OSSL_HTTP_REQ_CTX *rctx);
  BIO *OSSL_HTTP_REQ_CTX_get0_mem_bio(const OSSL_HTTP_REQ_CTX *rctx);
  size_t OSSL_HTTP_REQ_CTX_get_resp_len(const OSSL_HTTP_REQ_CTX *rctx);
  void OSSL_HTTP_REQ_CTX_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx,
@@ -178,6 +180,9 @@ When this BIO is returned, it has been read past the end of the response header,
 such that the actual response body can be read from it.
 The returned BIO pointer MUST NOT be freed by the caller.
 
+OSSL_HTTP_REQ_CTX_get0_server returns the server hostname or IP address in I<rctx>,
+or NULL if unset.
+
 OSSL_HTTP_REQ_CTX_get0_mem_bio() returns the internal memory B<BIO>.
 Before the HTTP request is sent, this could be used to adapt its header lines.
 I<Use with caution!>
@@ -268,6 +273,8 @@ return 1 for success and 0 for failure.
 OSSL_HTTP_REQ_CTX_nbio() and OSSL_HTTP_REQ_CTX_nbio_d2i()
 return 1 for success, 0 on error or redirection, -1 if retry is needed.
 
+OSSL_HTTP_REQ_CTX_get0_server() returns string, which must not be freed, or NULL.
+
 OSSL_HTTP_REQ_CTX_exchange() and OSSL_HTTP_REQ_CTX_get0_mem_bio()
 return a pointer to a B<BIO> on success as described above or NULL on failure.
 The returned BIO must not be freed by the caller.
@@ -294,6 +301,8 @@ L<OSSL_trace_enabled(3)>, and L<openssl-env(7)>.
 =head1 HISTORY
 
 OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines() was added in OpenSSL 3.3.
+
+OSSL_HTTP_REQ_CTX_get0_server() was added in OpenSSL 4.0.
 
 All other functions described here were added in OpenSSL 3.0.
 

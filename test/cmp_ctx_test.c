@@ -326,7 +326,7 @@ static int test_cmp_ctx_log_cb(void)
 }
 
 #ifndef OPENSSL_NO_HTTP
-static BIO *test_http_cb(BIO *bio, void *arg, int use_ssl, int detail)
+static BIO *test_http_cb(BIO *bio, void *arg, int use_ssl, int detail, OSSL_HTTP_REQ_CTX *rctx)
 {
     return NULL;
 }
