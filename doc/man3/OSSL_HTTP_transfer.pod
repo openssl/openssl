@@ -85,7 +85,9 @@ If I<use_ssl> != 0 it defaults to C<https_proxy> if set, else C<HTTPS_PROXY>.
 An empty proxy string C<""> forbids using a proxy.
 Otherwise, the format is
 C<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>,
-where any userinfo, path, query, and fragment given is ignored.
+where any path, query, and fragment given is ignored
+and any given userinfo is taken as HTTP(S) proxy client credentials by calling
+OSSL_HTTP_REQ_CTX_proxy_connect() on SSL connection setup just before using I<bio_update_fn>.
 If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
 The default proxy port number is 80, or 443 in case "https:" is given.
 The HTTP client functions connect via the given proxy unless the I<server>
@@ -161,7 +163,7 @@ OSSL_HTTP_proxy_connect() may be used by an above BIO connect callback function
 to set up an SSL/TLS connection via an HTTPS proxy.
 It promotes the given BIO I<bio> representing a connection
 pre-established with a TLS proxy using the HTTP CONNECT method,
-optionally using proxy client credentials I<proxyuser> and I<proxypass>,
+optionally using HTTPS proxy client credentials I<proxyuser> and I<proxypass>,
 to connect with TLS protection ultimately to I<server> and I<port>.
 If the I<port> argument is NULL or the empty string it defaults to "443".
 If the I<timeout> parameter is > 0 this indicates the maximum number of
@@ -174,13 +176,17 @@ NULL) to print diagnostic information in a user-oriented way.
 OSSL_HTTP_REQ_CTX_proxy_connect() improves OSSL_HTTP_proxy_connect() as follows.
 It does nothing if I<rctx> indicates that no proxy is used or SSL/TLS is not used.
 Otherwise it calls OSSL_HTTP_proxy_connect(),
-taking the needed BIO, server, port, and timeout information from I<rctx>.
+taking the needed BIO, server, port, and timeout information from I<rctx>
+and passing on the I<bio_err> and I<prog> parameters.
+The proxy user and password information is taken if present from the proxy URL
+in I<rctx> and otherwise defaults to the optional I<user> and I<pass> parameters.
 
 OSSL_HTTP_set1_request() sets up in I<rctx> the request header and content data
 and expectations on the response using the following parameters.
 If <rctx> indicates using a proxy for HTTP (but not HTTPS), the server host
 (and optionally port) needs to be placed in the header; thus it must be present
-in I<rctx>.
+in I<rctx>. When an HTTP proxy is used, any userinfo given as part of the proxy URL
+is placed in the HTTP request header as proxy client credentials.
 For backward compatibility, the server (and optional port) may also be given in
 the I<path> argument beginning with C<http://> (thus giving an absoluteURI).
 If I<path> is NULL it defaults to "/".
