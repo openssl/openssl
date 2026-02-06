@@ -324,7 +324,7 @@ LIBDIR={- our $libdir = $config{libdir};
 # $(libdir) is chosen to be compatible with the GNU coding standards
 libdir={- file_name_is_absolute($libdir)
           ? $libdir : '$(INSTALLTOP)/$(LIBDIR)' -}
-MODULESDIR=$(libdir)/ossl-modules
+MODULESDIR=$(libdir)/ossl-modules-{- $sover_dirname -}
 
 # Convenience variable for those who want to set the rpath in shared
 # libraries and applications
