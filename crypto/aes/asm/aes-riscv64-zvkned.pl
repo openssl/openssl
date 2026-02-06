@@ -386,7 +386,7 @@ ___
 #                               size_t length, const AES_KEY *key,
 #                               unsigned char *ivec, const int enc);
 my ($INP, $OUTP, $LEN, $KEYP, $IVP, $ENC) = ("a0", "a1", "a2", "a3", "a4", "a5");
-my ($T0, $T1, $ROUNDS) = ("t0", "t1", "t2");
+my ($T0, $T1, $ROUNDS, $VL, $LEN32) = ("t0", "t1", "t2", "t3", "t4");
 
 $code .= <<___;
 .p2align 3
@@ -539,7 +539,7 @@ rv64i_zvkned_cbc_decrypt:
 
     # Load number of rounds
     lwu $ROUNDS, 240($KEYP)
-
+    srli $LEN32, $LEN, 2
     # Get proper routine for key size
     li $T0, 10
     beq $ROUNDS, $T0, L_cbc_dec_128
@@ -651,34 +651,30 @@ $code .= <<___;
 L_cbc_dec_192:
     # Load all 13 round keys to v1-v13 registers.
     @{[aes_192_load_key $KEYP]}
-
     # Load IV.
     @{[vle32_v $V16, $IVP]}
 
-    @{[vle32_v $V24, $INP]}
-    @{[vmv_v_v $V17, $V24]}
-    j 2f
-
 1:
+    @{[vsetvli $VL, $LEN32, "e32", "m4", "ta", "ma"]}
+    slli $T0, $VL, 2
+    sub $LEN32, $LEN32, $VL
+    addi $VL, $VL, -4
     @{[vle32_v $V24, $INP]}
-    @{[vmv_v_v $V17, $V24]}
-    addi $OUTP, $OUTP, 16
+    @{[vslideup_vi $V16, $V24, 4]}
+    @{[vslidedown_vx $V20, $V24, $VL]}
 
-2:
     # AES body
     @{[aes_192_decrypt]}
-
     @{[vxor_vv $V24, $V24, $V16]}
+    @{[vmv_v_v $V16, $V20]}
     @{[vse32_v $V24, $OUTP]}
-    @{[vmv_v_v $V16, $V17]}
 
-    addi $LEN, $LEN, -16
-    addi $INP, $INP, 16
+    add $INP, $INP, $T0
+    add $OUTP, $OUTP, $T0
 
-    bnez $LEN, 1b
-
-    @{[vse32_v $V16, $IVP]}
-
+    bnez $LEN32, 1b
+    @{[vsetivli "zero", 4, "e32", "m4", "ta", "ma"]}
+    @{[vse32_v $V20, $IVP]}
     ret
 .size L_cbc_dec_192,.-L_cbc_dec_192
 ___
@@ -688,34 +684,30 @@ $code .= <<___;
 L_cbc_dec_256:
     # Load all 15 round keys to v1-v15 registers.
     @{[aes_256_load_key $KEYP]}
-
     # Load IV.
     @{[vle32_v $V16, $IVP]}
 
-    @{[vle32_v $V24, $INP]}
-    @{[vmv_v_v $V17, $V24]}
-    j 2f
-
 1:
+    @{[vsetvli $VL, $LEN32, "e32", "m4", "ta", "ma"]}
+    slli $T0, $VL, 2
+    sub $LEN32, $LEN32, $VL
+    addi $VL, $VL, -4
     @{[vle32_v $V24, $INP]}
-    @{[vmv_v_v $V17, $V24]}
-    addi $OUTP, $OUTP, 16
+    @{[vslideup_vi $V16, $V24, 4]}
+    @{[vslidedown_vx $V20, $V24, $VL]}
 
-2:
     # AES body
     @{[aes_256_decrypt]}
-
     @{[vxor_vv $V24, $V24, $V16]}
+    @{[vmv_v_v $V16, $V20]}
     @{[vse32_v $V24, $OUTP]}
-    @{[vmv_v_v $V16, $V17]}
 
-    addi $LEN, $LEN, -16
-    addi $INP, $INP, 16
+    add $INP, $INP, $T0
+    add $OUTP, $OUTP, $T0
 
-    bnez $LEN, 1b
-
-    @{[vse32_v $V16, $IVP]}
-
+    bnez $LEN32, 1b
+    @{[vsetivli "zero", 4, "e32", "m4", "ta", "ma"]}
+    @{[vse32_v $V20, $IVP]}
     ret
 .size L_cbc_dec_256,.-L_cbc_dec_256
 ___
