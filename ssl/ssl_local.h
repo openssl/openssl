@@ -1982,6 +1982,7 @@ typedef struct dtls1_state_st {
     unsigned int timeout_duration_us;
 
     unsigned int retransmitting;
+    unsigned int has_change_cipher_spec;
 #ifndef OPENSSL_NO_SCTP
     int shutdown_received;
 #endif
