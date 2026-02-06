@@ -102,8 +102,9 @@ If I<type> is C<RSA>,
 a B<size_t> parameter must be given to specify the size of the RSA key.
 If I<type> is C<EC>,
 a string parameter must be given to specify the name of the EC curve.
-The list of built-in curve names can be obtained programmatically using
-L<EC_get_builtin_curves(3)>.
+The list of built-in curves can be obtained programmatically using
+L<EC_get_builtin_curves(3)>, and their names can be retrieved using
+L<OSSL_EC_curve_nid2name(3)>.
 If I<type> is:
 C<ED25519>,
 C<ED448>,
