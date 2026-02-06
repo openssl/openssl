@@ -223,6 +223,11 @@ int DSA_up_ref(DSA *r)
     return ((i > 1) ? 1 : 0);
 }
 
+OSSL_LIB_CTX *ossl_dsa_get0_libctx(const DSA *d)
+{
+    return d->libctx;
+}
+
 void ossl_dsa_set0_libctx(DSA *d, OSSL_LIB_CTX *libctx)
 {
     d->libctx = libctx;
