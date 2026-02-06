@@ -24,6 +24,7 @@
 #include "internal/sockets.h"
 #include "internal/common.h" /* for ossl_assert() */
 
+#define OSSL_HTTP_DEFAULT_PORT(use_ssl) ((use_ssl) ? OSSL_HTTPS_PORT : OSSL_HTTP_PORT)
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */
 #define HTTP_VERSION_STR_LEN sizeof(HTTP_VERSION_PATT) /* == strlen("1.0") */
@@ -202,7 +203,8 @@ int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx, int method_POST,
          */
         if (BIO_printf(rctx->mem, OSSL_HTTP_PREFIX "%s", server) <= 0)
             return 0;
-        if (port != NULL && BIO_printf(rctx->mem, ":%s", port) <= 0)
+        if (port != NULL && strcmp(port, OSSL_HTTP_DEFAULT_PORT(rctx->use_ssl)) != 0
+            && BIO_printf(rctx->mem, ":%s", port) <= 0)
             return 0;
     }
 
@@ -375,22 +377,41 @@ void OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines(OSSL_HTTP_REQ_CTX *rctx,
 }
 
 static int add1_headers(OSSL_HTTP_REQ_CTX *rctx,
-    const STACK_OF(CONF_VALUE) *headers, const char *host)
+    const STACK_OF(CONF_VALUE) *headers, const char *host, const char *port)
 {
     int i;
-    int add_host = host != NULL && *host != '\0';
+    char buf[300];
+    size_t len;
     CONF_VALUE *hdr;
+
+    /* according to RFC 7230 section 5.4, should place Host header first */
+    for (i = 0; i < sk_CONF_VALUE_num(headers); i++) {
+        hdr = sk_CONF_VALUE_value(headers, i);
+        if (OPENSSL_strcasecmp("Host", hdr->name) == 0) {
+            host = hdr->value; /* user-supplied header value takes precedence */
+            port = NULL;
+        }
+    }
+    if (host != NULL
+        && port != NULL && strcmp(port, OSSL_HTTP_DEFAULT_PORT(rctx->use_ssl)) != 0) {
+        len = strlen(host) + 1 + strlen(port);
+        if (len > INT_MAX
+            || BIO_snprintf(buf, sizeof(buf), "%s:%s", host, port) != (int)len) {
+            ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_INVALID_ARGUMENT);
+            return 0;
+        }
+        host = buf;
+    }
+    if (host != NULL && *host != '\0'
+        && !OSSL_HTTP_REQ_CTX_add1_header(rctx, "Host", host))
+        return 0;
 
     for (i = 0; i < sk_CONF_VALUE_num(headers); i++) {
         hdr = sk_CONF_VALUE_value(headers, i);
-        if (add_host && OPENSSL_strcasecmp("host", hdr->name) == 0)
-            add_host = 0;
-        if (!OSSL_HTTP_REQ_CTX_add1_header(rctx, hdr->name, hdr->value))
+        if (OPENSSL_strcasecmp("Host", hdr->name) != 0
+            && !OSSL_HTTP_REQ_CTX_add1_header(rctx, hdr->name, hdr->value))
             return 0;
     }
-
-    if (add_host && !OSSL_HTTP_REQ_CTX_add1_header(rctx, "Host", host))
-        return 0;
     return 1;
 }
 
@@ -983,7 +1004,7 @@ static const char *explict_or_default_port(const char *hostserv, const char *por
         if (!BIO_parse_hostserv(hostserv, NULL, &service, BIO_PARSE_PRIO_HOST))
             return NULL;
         if (service == NULL) /* implicit port */
-            port = use_ssl ? OSSL_HTTPS_PORT : OSSL_HTTP_PORT;
+            port = OSSL_HTTP_DEFAULT_PORT(use_ssl);
         OPENSSL_free(service);
     } /* otherwise take the explicitly given port */
     return port;
@@ -1123,9 +1144,12 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
     rctx = http_req_ctx_new(bio == NULL, cbio, rbio != NULL ? rbio : cbio,
         bio_update_fn, arg, use_ssl, proxy, server, port,
         buf_size, overall_timeout);
-    if (rctx != NULL && use_ssl
-        && !OSSL_HTTP_REQ_CTX_proxy_connect(rctx, NULL, NULL, /* no default proxy user and passwd */
-            NULL, NULL))
+    if (rctx == NULL) {
+        if (bio == NULL) /* cbio was not provided by caller */
+            BIO_free(cbio);
+        goto err;
+    }
+    if (use_ssl && !OSSL_HTTP_REQ_CTX_proxy_connect(rctx, NULL, NULL /* no default proxy user and passwd */, NULL, NULL))
         goto err;
 
     /* callback can be used to wrap or prepend TLS session */
@@ -1180,11 +1204,15 @@ int OSSL_HTTP_set1_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
     if (!OSSL_HTTP_REQ_CTX_set_request_line(rctx, req != NULL,
             use_http_proxy ? rctx->server : NULL, rctx->port, path))
         return 0;
+    if (!add1_headers(rctx, headers, rctx->server, rctx->port))
+        return 0;
     if (use_http_proxy) {
         char *userinfo = NULL, *enc;
         size_t len = 0;
         int ret = 1;
 
+        if (BIO_printf(rctx->mem, "Proxy-Connection: Keep-Alive\r\n") <= 0)
+            return 0;
         if (!OSSL_HTTP_parse_url(rctx->proxy, NULL, &userinfo, NULL, NULL, NULL, NULL, NULL, NULL))
             return 0;
         if (userinfo != NULL && *userinfo != '\0') {
@@ -1200,9 +1228,8 @@ int OSSL_HTTP_set1_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
         if (ret <= 0)
             return 0;
     }
-    return add1_headers(rctx, headers, rctx->server)
-        && OSSL_HTTP_REQ_CTX_set_expected(rctx, expected_content_type,
-            expect_asn1, timeout, keep_alive)
+    return OSSL_HTTP_REQ_CTX_set_expected(rctx, expected_content_type,
+               expect_asn1, timeout, keep_alive)
         && set1_content(rctx, content_type, req);
 }
 
