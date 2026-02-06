@@ -120,8 +120,8 @@ We use OpenSSL 3.6.0 here, (but you could also use the latest 3.6.X)
 Use the OpenSSL FIPS provider for testing
 -----------------------------------------
 
-We do this by replacing the artifact for the OpenSSL 3.5.0 FIPS provider.
-Note that the OpenSSL 3.5.0 FIPS provider has not been validated
+We do this by replacing the artifact for the OpenSSL 3.6.0 FIPS provider.
+Note that the OpenSSL 3.6.0 FIPS provider has not been validated
 so it must not be used for FIPS purposes.
 
     $ cp ../openssl-3.1.2/providers/fips.so providers/.
