@@ -46,6 +46,12 @@ OpenSSL 4.0
 
    *Shane Lontis*
 
+ * Changed the output of the -disabled option for the list command.
+   Displaying now disabled features, protocols, and algorithms, in relevant sections.
+   Generated at configure-time instead of hard-coded into source code.
+
+   *Paul Louvel*
+
  * Added configure options to disable KDF algorithms for
    hmac-drbg-kdf, kbkdf, krb5kdf, pvkkdf, snmpkdf, sskdf, sshkdf, x942kdf and x963kdf.
 
