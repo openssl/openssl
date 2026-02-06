@@ -27,6 +27,8 @@
 #include "crypto/dh.h"
 #include "internal/fips.h"
 #include "internal/sizes.h"
+#include "internal/threads_common.h"
+#include "internal/cryptlib.h"
 
 static OSSL_FUNC_keymgmt_new_fn dh_newdata;
 static OSSL_FUNC_keymgmt_free_fn dh_freedata;
@@ -99,17 +101,51 @@ static int dh_gen_type_name2id_w_default(const char *name, int type)
     return ossl_dh_gen_type_name2id(name, type);
 }
 
+/*
+ * If the application actually created a legacy DH object and assigned it to
+ * the EVP_PKEY, then we get hold of that object here. We return 0 if we hit
+ * a fatal error or 1 otherwise. We may return 1 but with *dh set to NULL.
+ */
+static int get_legacy_dh_object(OSSL_LIB_CTX *libctx, DH **dh)
+{
+#ifndef FIPS_MODULE
+    /*
+     * This only works because we are in the default provider. We are not
+     * normally allowed to pass complex objects across the provider boundary
+     * like this.
+     */
+    *dh = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_LOW_LEVEL_OBJECT, libctx);
+    if (*dh != NULL) {
+        if (ossl_lib_ctx_get_concrete(ossl_dh_get0_libctx(*dh)) != ossl_lib_ctx_get_concrete(libctx)) {
+            *dh = NULL;
+            return 1;
+        }
+        if (!DH_up_ref(*dh))
+            return 0;
+    }
+#endif
+
+    return 1;
+}
+
 static void *dh_newdata(void *provctx)
 {
     DH *dh = NULL;
 
-    if (ossl_prov_is_running()) {
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    if (!get_legacy_dh_object(PROV_LIBCTX_OF(provctx), &dh))
+        return NULL;
+
+    if (dh == NULL) {
         dh = ossl_dh_new_ex(PROV_LIBCTX_OF(provctx));
         if (dh != NULL) {
             DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
             DH_set_flags(dh, DH_FLAG_TYPE_DH);
         }
     }
+
     return dh;
 }
 
@@ -117,11 +153,20 @@ static void *dhx_newdata(void *provctx)
 {
     DH *dh = NULL;
 
-    dh = ossl_dh_new_ex(PROV_LIBCTX_OF(provctx));
-    if (dh != NULL) {
-        DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
-        DH_set_flags(dh, DH_FLAG_TYPE_DHX);
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    if (!get_legacy_dh_object(PROV_LIBCTX_OF(provctx), &dh))
+        return NULL;
+
+    if (dh == NULL) {
+        dh = ossl_dh_new_ex(PROV_LIBCTX_OF(provctx));
+        if (dh != NULL) {
+            DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
+            DH_set_flags(dh, DH_FLAG_TYPE_DHX);
+        }
     }
+
     return dh;
 }
 
