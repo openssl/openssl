@@ -1081,6 +1081,44 @@ int OSSL_HTTP_is_alive(const OSSL_HTTP_REQ_CTX *rctx)
 
 /* High-level HTTP API implementation */
 
+static void http_add_error_data(OSSL_HTTP_REQ_CTX *rctx)
+{
+    char buf[200];
+    unsigned long err = ERR_peek_error();
+    int lib = ERR_GET_LIB(err);
+    int reason = ERR_GET_REASON(err);
+
+    if (lib == ERR_LIB_SSL || lib == ERR_LIB_HTTP
+        || (lib == ERR_LIB_BIO && (reason == BIO_R_CONNECT_TIMEOUT || reason == BIO_R_CONNECT_ERROR || reason == BIO_R_TRANSFER_TIMEOUT || reason == BIO_R_TRANSFER_ERROR))
+#ifndef OPENSSL_NO_CMP
+        || (lib == ERR_LIB_CMP
+            && reason == CMP_R_POTENTIALLY_INVALID_CERTIFICATE)
+#endif
+    ) {
+        if (rctx->server != NULL && *rctx->server != '\0') {
+            BIO_snprintf(buf, sizeof(buf), "server=http%s://%s%s%s",
+                rctx->use_ssl ? "s" : "", rctx->server,
+                rctx->port != NULL ? ":" : "",
+                rctx->port != NULL ? rctx->port : "");
+            ERR_add_error_data(1, buf);
+        }
+        if (rctx->proxy != NULL) {
+            /* show proxy without any given user:pass@ prefix */
+            char *proxy_host = strchr(rctx->proxy, '@');
+
+            if (proxy_host == NULL)
+                proxy_host = rctx->proxy;
+            else
+                proxy_host++;
+            ERR_add_error_data(2, " proxy=", proxy_host);
+        }
+    } else if (err == 0) {
+        BIO_snprintf(buf, sizeof(buf), " peer has disconnected%s",
+            rctx->use_ssl ? " violating the protocol" : ", likely because it requires the use of TLS");
+        ERR_add_error_data(1, buf);
+    }
+}
+
 /* Initiate an HTTP session using bio, else use given server, proxy, etc. */
 OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
     const char *proxy, const char *no_proxy,
@@ -1132,23 +1170,20 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
         return NULL;
 #endif
     }
-
-    (void)ERR_set_mark(); /* prepare removing any spurious libssl errors */
-    if (rbio == NULL && BIO_do_connect_retry(cbio, overall_timeout, -1) <= 0) {
-        if (bio == NULL) /* cbio was not provided by caller */
-            BIO_free(cbio);
-        goto err;
-    }
-    /* now overall_timeout is guaranteed to be >= 0 */
-
     rctx = http_req_ctx_new(bio == NULL, cbio, rbio != NULL ? rbio : cbio,
         bio_update_fn, arg, use_ssl, proxy, server, port,
         buf_size, overall_timeout);
     if (rctx == NULL) {
         if (bio == NULL) /* cbio was not provided by caller */
             BIO_free(cbio);
-        goto err;
+        return NULL;
     }
+
+    (void)ERR_set_mark(); /* prepare removing any spurious libssl errors */
+    if (rbio == NULL && BIO_do_connect_retry(cbio, overall_timeout, -1) <= 0)
+        goto err;
+    /* now overall_timeout is guaranteed to be >= 0 */
+
     if (use_ssl && !OSSL_HTTP_REQ_CTX_proxy_connect(rctx, NULL, NULL /* no default proxy user and passwd */, NULL, NULL))
         goto err;
 
@@ -1169,6 +1204,7 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
     goto end;
 
 err:
+    http_add_error_data(rctx);
     OSSL_HTTP_REQ_CTX_free(rctx);
     rctx = NULL;
 
@@ -1259,34 +1295,7 @@ BIO *OSSL_HTTP_exchange(OSSL_HTTP_REQ_CTX *rctx, char **redirection_url)
                 /* may be NULL if out of memory: */
                 *redirection_url = OPENSSL_strdup(rctx->redirection_url);
         } else {
-            char buf[200];
-            unsigned long err = ERR_peek_error();
-            int lib = ERR_GET_LIB(err);
-            int reason = ERR_GET_REASON(err);
-
-            if (lib == ERR_LIB_SSL || lib == ERR_LIB_HTTP
-                || (lib == ERR_LIB_BIO && reason == BIO_R_CONNECT_TIMEOUT)
-                || (lib == ERR_LIB_BIO && reason == BIO_R_CONNECT_ERROR)
-#ifndef OPENSSL_NO_CMP
-                || (lib == ERR_LIB_CMP
-                    && reason == CMP_R_POTENTIALLY_INVALID_CERTIFICATE)
-#endif
-            ) {
-                if (rctx->server != NULL && *rctx->server != '\0') {
-                    BIO_snprintf(buf, sizeof(buf), "server=http%s://%s%s%s",
-                        rctx->use_ssl ? "s" : "", rctx->server,
-                        rctx->port != NULL ? ":" : "",
-                        rctx->port != NULL ? rctx->port : "");
-                    ERR_add_error_data(1, buf);
-                }
-                if (rctx->proxy != NULL)
-                    ERR_add_error_data(2, " proxy=", rctx->proxy);
-                if (err == 0) {
-                    BIO_snprintf(buf, sizeof(buf), " peer has disconnected%s",
-                        rctx->use_ssl ? " violating the protocol" : ", likely because it requires the use of TLS");
-                    ERR_add_error_data(1, buf);
-                }
-            }
+            http_add_error_data(rctx);
         }
     }
 
