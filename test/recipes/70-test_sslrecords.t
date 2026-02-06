@@ -905,44 +905,21 @@ sub empty_app_data
         return;
     }
 
-    # Find the last client record
-    my $last_client_record;
-    my $last_client_record_idx;
+    # Find the client application record
+    my $client_application_record;
     for (my $i = @{$proxy->record_list} - 1; $i >= 0; $i--) {
         if ($proxy->record_list->[$i]->serverissender() == 0
             && $proxy->record_list->[$i]->content_type() == TLSProxy::Record::RT_APPLICATION_DATA) {
-            $last_client_record = $proxy->record_list->[$i];
-            $last_client_record_idx = $i;
+            $client_application_record = $proxy->record_list->[$i];
             last;
         }
     }
 
     # If we didn't find the Client Application Data record, just return
-    if (!defined $last_client_record) {
+    if (!defined $client_application_record) {
         return;
     }
 
-    # Add a zero length app data record to replace the last client record
-    my $record = TLSProxy::Record->new_dtls(
-        0,
-        4,
-        TLSProxy::Record::RT_APPLICATION_DATA,
-        $last_client_record->version(),
-        $last_client_record->epoch(),
-        $last_client_record->seq(),
-        $last_client_record->len(),
-        0,
-        $last_client_record->len_real(),
-        0,
-        $last_client_record->data(),
-        ""
-    );
-
-    # DTLS 1.3 Application Data used the Unified Header, so mark the record as encrypted
-    $record->encrypted($last_client_record->encrypted());
-    # DTLS 1.3 Application Data uses the outer content type
-    $record->outer_content_type($last_client_record->outer_content_type());
-
-    # Replace the last client record with the new record
-    splice @{$proxy->record_list}, $last_client_record_idx, 1, $record;
+    $client_application_record->decrypt_data("");
+    $client_application_record->decrypt_len(0);
 }
