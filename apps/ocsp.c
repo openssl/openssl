@@ -1296,8 +1296,13 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req, const char *host,
     int req_timeout)
 {
     SSL_CTX *ctx = NULL;
-    OCSP_RESPONSE *resp = NULL;
+    OCSP_RESPONSE *rsp = NULL;
+    BIO *resp, *requ = ASN1_item_i2d_mem_bio(ASN1_ITEM_rptr(OCSP_REQUEST), (const ASN1_VALUE *)req);
 
+    if (requ == NULL) {
+        BIO_printf(bio_err, "Error encoding OCSP request.\n");
+        return NULL;
+    }
     if (use_ssl == 1) {
         ctx = SSL_CTX_new(TLS_client_method());
         if (ctx == NULL) {
@@ -1306,18 +1311,22 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req, const char *host,
         }
     }
 
-    resp = (OCSP_RESPONSE *)
-        app_http_post_asn1(host, port, path, proxy, no_proxy,
-            ctx, headers, "application/ocsp-request",
-            (ASN1_VALUE *)req, ASN1_ITEM_rptr(OCSP_REQUEST),
-            "application/ocsp-response",
-            req_timeout, ASN1_ITEM_rptr(OCSP_RESPONSE));
-
-    if (resp == NULL)
+    resp = app_http_post(host, port, path, proxy, no_proxy,
+        NULL /* proxy_user */, NULL /* proxy_pass */,
+        ctx, headers, "application/ocsp-request",
+        requ, "application/ocsp-response", 1 /* expect_asn1 */, req_timeout);
+    if (resp == NULL) {
         BIO_printf(bio_err, "Error querying OCSP responder\n");
+    } else {
+        rsp = ASN1_item_d2i_bio(ASN1_ITEM_rptr(OCSP_RESPONSE), resp, NULL);
+        if (rsp == NULL)
+            BIO_printf(bio_err, "Error parsing OCSP response\n");
+        BIO_free(resp);
+    }
 
 end:
+    BIO_free(requ);
     SSL_CTX_free(ctx);
-    return resp;
+    return rsp;
 }
 #endif
