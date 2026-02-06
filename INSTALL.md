@@ -948,6 +948,10 @@ Do not create shared libraries, only static ones.
 
 See [Notes on shared libraries](#notes-on-shared-libraries) below.
 
+### enable-slow-tests
+
+Enable tests that are slower to run.
+
 ### no-sm2-precomp
 
 Disable using the SM2 precomputed table on aarch64 to make the library smaller.
