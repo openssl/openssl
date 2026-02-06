@@ -1507,14 +1507,13 @@ static int rsa_x931_padding_allowed(PROV_RSA_CTX *ctx)
 }
 #endif
 
-static struct rsa_set_ctx_params_st pzero;
-
 static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     struct rsa_set_ctx_params_st p;
     int pad_mode;
     int saltlen;
+    int count = 0;
     char mdname[OSSL_MAX_NAME_SIZE] = "", *pmdname = NULL;
     char mdprops[OSSL_MAX_PROPQUERY_SIZE] = "", *pmdprops = NULL;
     char mgf1mdname[OSSL_MAX_NAME_SIZE] = "", *pmgf1mdname = NULL;
@@ -1527,13 +1526,13 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
         return 1;
 
     if (prsactx->flag_allow_md) {
-        if (!rsa_set_ctx_params_decoder(params, &p))
+        if (!rsa_set_ctx_params_decoder(params, &p, &count))
             return 0;
     } else {
-        if (!rsa_set_ctx_params_no_digest_decoder(params, &p))
+        if (!rsa_set_ctx_params_no_digest_decoder(params, &p, &count))
             return 0;
     }
-    if (memcmp(&p, &pzero, sizeof(p)) == 0)
+    if (count == 0)
         return 1;
 
     if (!OSSL_FIPS_IND_SET_CTX_FROM_PARAM(prsactx, OSSL_FIPS_IND_SETTABLE0,
