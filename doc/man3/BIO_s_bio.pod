@@ -192,13 +192,16 @@ BIO_new_bio_pair() returns 1 on success, with the new BIOs available in
 B<bio1> and B<bio2>, or 0 on failure, with NULL pointers stored into the
 locations for B<bio1> and B<bio2>. Check the error stack for more information.
 
-BIO_nread0() and BIO_nwrite0() return the number of bytes available for
-reading or writing respectively, 0 if no data is available or no space
-is available, or -1 on error. If the BIO is not initialized, -2 is returned.
+BIO_nread0() returns the number of bytes available for reading, 0 if the peer
+has closed and no data remains (EOF), or -1 if no data is currently available
+(retry may be appropriate). If the BIO is not initialized, -2 is returned.
+
+BIO_nwrite0() returns the number of bytes of space available for writing, or -1
+if no space is currently available (retry may be appropriate) or the BIO has
+been closed. If the BIO is not initialized, -2 is returned.
 
 BIO_nread() and BIO_nwrite() return the number of bytes consumed or committed
-respectively, 0 if no data is available or no space is available, or -1 on
-error. If the BIO is not initialized, -2 is returned.
+respectively, or the same error values as BIO_nread0() and BIO_nwrite0().
 
 =head1 EXAMPLES
 
