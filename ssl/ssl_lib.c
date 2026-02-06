@@ -1135,6 +1135,47 @@ int SSL_set_trust(SSL *s, int trust)
     return X509_VERIFY_PARAM_set_trust(sc->param, trust);
 }
 
+int SSL_set1_dnsname(SSL *s, const char *host)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL)
+        return 0;
+
+    return X509_VERIFY_PARAM_set1_host(sc->param, host, 0);
+}
+
+int SSL_add1_dnsname(SSL *s, const char *host)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL)
+        return 0;
+
+    return X509_VERIFY_PARAM_add1_host(sc->param, host, strlen(host));
+}
+
+int SSL_set1_ipaddr(SSL *s, const char *ipaddr)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL)
+        return 0;
+
+    return X509_VERIFY_PARAM_set1_ip_asc(sc->param, ipaddr);
+}
+
+int SSL_add1_ipaddr(SSL *s, const char *ipaddr)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL)
+        return 0;
+
+    return X509_VERIFY_PARAM_add1_ip_asc(sc->param, ipaddr);
+}
+
+#if !defined(OPENSSL_NO_DEPRECATED_4_0)
 int SSL_set1_host(SSL *s, const char *host)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
@@ -1185,6 +1226,7 @@ int SSL_add1_host(SSL *s, const char *host)
 
     return X509_VERIFY_PARAM_add1_host(sc->param, host, 0);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_0) */
 
 void SSL_set_hostflags(SSL *s, unsigned int flags)
 {

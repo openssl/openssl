@@ -6,10 +6,12 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-
 #include <string.h>
 
+#include "internal/deprecated.h"
+
 #include <openssl/e_os2.h>
+#include <openssl/macros.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "internal/nelem.h"
