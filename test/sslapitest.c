@@ -11220,7 +11220,7 @@ static int test_set_tmp_dh(int idx)
 
     if (fips_provider_version_le(libctx, 4, 0, 0)) {
         if (idx >= 3) {
-            TEST_skip("Tests can't be preformed with older fips providers");
+            TEST_skip("Tests can't be performed with older fips providers");
             return 1;
         }
     }
@@ -11339,7 +11339,7 @@ static int test_dh_auto(int idx)
     if (!TEST_ptr(sctx) || !TEST_ptr(cctx))
         goto end;
 
-    if (is_fips && fips_too_old && (idx >= 1 || idx <= 4)) {
+    if (is_fips && fips_too_old && (idx >= 1 && idx <= 4)) {
         TEST_skip("Test unsupported on this fips version");
         testresult = 1;
         goto end;
