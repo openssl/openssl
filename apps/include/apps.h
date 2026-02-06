@@ -275,6 +275,10 @@ int init_gen_str(EVP_PKEY_CTX **pctx,
     const char *algname, int do_param,
     OSSL_LIB_CTX *libctx, const char *propq);
 int cert_matches_key(const X509 *cert, const EVP_PKEY *pkey);
+int do_EXT_add_nconf(CONF *conf1, CONF *conf2, X509V3_CTX *ctx, const char *sect,
+    X509 *cert, const char *msg);
+int do_EXT_REQ_add_nconf(CONF *conf1, CONF *conf2, X509V3_CTX *ctx, const char *sect,
+    X509_REQ *req, const char *msg);
 int do_X509_sign(X509 *x, int force_v1, EVP_PKEY *pkey, const char *md,
     STACK_OF(OPENSSL_STRING) *sigopts, X509V3_CTX *ext_ctx);
 int do_X509_verify(X509 *x, EVP_PKEY *pkey, STACK_OF(OPENSSL_STRING) *vfyopts);
