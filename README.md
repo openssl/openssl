@@ -150,6 +150,7 @@ The manual pages for the master branch and all current stable releases are
 available online.
 
 - [OpenSSL master](https://docs.openssl.org/master/)
+- [OpenSSL 3.6](https://docs.openssl.org/3.6/)
 - [OpenSSL 3.5](https://docs.openssl.org/3.5/)
 - [OpenSSL 3.4](https://docs.openssl.org/3.4/)
 - [OpenSSL 3.3](https://docs.openssl.org/3.3/)
