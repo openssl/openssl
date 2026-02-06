@@ -69,7 +69,9 @@ The name of the object.
 
 =item I<alias>
 
-If this is an alias, the name it refers to; otherwise NULL.
+An integer flag indicating whether this entry is an alias. Set to
+B<OBJ_NAME_ALIAS> (0x8000) if this is an alias, 0 otherwise. When this is an
+alias, the I<data> field contains the name that the alias resolves to.
 
 =item I<data>
 
@@ -99,7 +101,7 @@ L<EVP_get_digestbyname(3)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 0.9.7.
+These functions were added in OpenSSL 0.9.6a.
 
 =head1 COPYRIGHT
 
