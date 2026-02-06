@@ -507,8 +507,9 @@ OSSL_CMP_MSG *OSSL_CMP_CTX_server_perform(OSSL_CMP_CTX *client_ctx,
     const OSSL_CMP_MSG *req);
 OSSL_CMP_SRV_CTX *OSSL_CMP_SRV_CTX_new(OSSL_LIB_CTX *libctx, const char *propq);
 void OSSL_CMP_SRV_CTX_free(OSSL_CMP_SRV_CTX *srv_ctx);
-typedef OSSL_CMP_PKISI *(*OSSL_CMP_SRV_cert_request_cb_t)(OSSL_CMP_SRV_CTX *srv_ctx, const OSSL_CMP_MSG *req, int certReqId,
-    const OSSL_CRMF_MSG *crm, const X509_REQ *p10cr,
+typedef OSSL_CMP_PKISI *(*OSSL_CMP_SRV_cert_request_cb_t)(OSSL_CMP_SRV_CTX *srv_ctx,
+    const OSSL_CMP_MSG *req, int certReqId,
+    const OSSL_CRMF_MSG *crm, const X509_REQ *p10,
     X509 **certOut, STACK_OF(X509) **chainOut, STACK_OF(X509) **caPubs);
 typedef OSSL_CMP_PKISI *(*OSSL_CMP_SRV_rr_cb_t)(OSSL_CMP_SRV_CTX *srv_ctx,
     const OSSL_CMP_MSG *req,
