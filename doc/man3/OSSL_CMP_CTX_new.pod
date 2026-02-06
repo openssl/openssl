@@ -403,7 +403,8 @@ Otherwise defaults to the value of C<https_proxy> if set, else C<HTTPS_PROXY>.
 An empty proxy string specifies not to use a proxy.
 Otherwise the format is
 C<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>,
-where any given userinfo, path, query, and fragment is ignored.
+where any given path, query, and fragment is ignored.
+Any given userinfo will be taken as HTTP(S) proxy client credentials.
 If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
 The default port number is 80, or 443 in case C<https:> is given.
 

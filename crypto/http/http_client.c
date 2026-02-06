@@ -95,6 +95,8 @@ struct ossl_http_req_ctx_st {
 
 /* Low-level HTTP API implementation */
 
+static char *base64encode(const void *buf, size_t len);
+
 OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int buf_size)
 {
     OSSL_HTTP_REQ_CTX *rctx;
@@ -136,7 +138,8 @@ void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx)
     BIO_free(rctx->mem);
     BIO_free(rctx->req);
     OPENSSL_free(rctx->buf);
-    OPENSSL_free(rctx->proxy);
+    if (rctx->proxy != NULL)
+        OPENSSL_clear_free(rctx->proxy, strlen(rctx->proxy));
     OPENSSL_free(rctx->server);
     OPENSSL_free(rctx->port);
     OPENSSL_free(rctx->expected_ct);
@@ -1174,11 +1177,30 @@ int OSSL_HTTP_set1_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
     }
     rctx->max_resp_len = max_resp_len; /* allows for 0: indefinite */
 
-    return OSSL_HTTP_REQ_CTX_set_request_line(rctx, req != NULL,
-               use_http_proxy ? rctx->server
-                              : NULL,
-               rctx->port, path)
-        && add1_headers(rctx, headers, rctx->server)
+    if (!OSSL_HTTP_REQ_CTX_set_request_line(rctx, req != NULL,
+            use_http_proxy ? rctx->server : NULL, rctx->port, path))
+        return 0;
+    if (use_http_proxy) {
+        char *userinfo = NULL, *enc;
+        size_t len = 0;
+        int ret = 1;
+
+        if (!OSSL_HTTP_parse_url(rctx->proxy, NULL, &userinfo, NULL, NULL, NULL, NULL, NULL, NULL))
+            return 0;
+        if (userinfo != NULL && *userinfo != '\0') {
+            len = strlen(userinfo);
+            enc = base64encode(userinfo, len);
+            ret = 0;
+            if (enc != NULL) {
+                ret = BIO_printf(rctx->mem, "Proxy-Authorization: Basic %s\r\n", enc);
+                OPENSSL_clear_free(enc, strlen(enc));
+            }
+        }
+        OPENSSL_clear_free(userinfo, len);
+        if (ret <= 0)
+            return 0;
+    }
+    return add1_headers(rctx, headers, rctx->server)
         && OSSL_HTTP_REQ_CTX_set_expected(rctx, expected_content_type,
             expect_asn1, timeout, keep_alive)
         && set1_content(rctx, content_type, req);
@@ -1493,17 +1515,19 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
             goto proxy_end;
         proxyauthenc = base64encode(proxyauth, len);
         if (proxyauthenc != NULL) {
-            BIO_printf(fbio, "Proxy-Authorization: Basic %s\r\n", proxyauthenc);
+            ret = BIO_printf(fbio, "Proxy-Authorization: Basic %s\r\n", proxyauthenc);
             OPENSSL_clear_free(proxyauthenc, strlen(proxyauthenc));
         }
     proxy_end:
         OPENSSL_clear_free(proxyauth, len);
-        if (proxyauthenc == NULL)
+        if (ret <= 0)
             goto end;
     }
+    ret = 0;
 
     /* Terminate the HTTP CONNECT request */
-    BIO_printf(fbio, "\r\n");
+    if (BIO_printf(fbio, "\r\n") <= 0)
+        goto end;
 
     for (;;) {
         if (BIO_flush(fbio) != 0)
@@ -1603,6 +1627,9 @@ int OSSL_HTTP_REQ_CTX_proxy_connect(OSSL_HTTP_REQ_CTX *rctx,
 {
     time_t time_diff = 0;
     int timeout = 0;
+    char *userinfo = NULL, *colon;
+    size_t len = 0;
+    int ret;
 
     if (rctx == NULL) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
@@ -1621,6 +1648,20 @@ int OSSL_HTTP_REQ_CTX_proxy_connect(OSSL_HTTP_REQ_CTX *rctx,
         ERR_raise(ERR_LIB_BIO, BIO_R_CONNECT_TIMEOUT);
         return 0;
     }
-    return OSSL_HTTP_proxy_connect(rctx->wbio, rctx->server, rctx->port,
+
+    if (!OSSL_HTTP_parse_url(rctx->proxy, NULL, &userinfo, NULL, NULL, NULL, NULL, NULL, NULL))
+        return 0;
+    if (userinfo != NULL && *userinfo != '\0') {
+        len = strlen(userinfo);
+        user = userinfo;
+        pass = colon = strchr(userinfo, ':');
+        if (colon != NULL) {
+            *colon = '\0';
+            pass = colon + 1;
+        }
+    }
+    ret = OSSL_HTTP_proxy_connect(rctx->wbio, rctx->server, rctx->port,
         user, pass, timeout, bio_err, prog);
+    OPENSSL_clear_free(userinfo, len);
+    return ret;
 }
