@@ -3,9 +3,10 @@
 =head1 NAME
 
 SSL_CTX_dane_enable, SSL_CTX_dane_mtype_set, SSL_dane_enable,
-SSL_dane_tlsa_add, SSL_get0_dane_authority, SSL_get0_dane_tlsa,
+SSL_dane_tlsa_add, SSL_get0_dane, SSL_get0_dane_authority, SSL_get0_dane_tlsa,
 SSL_CTX_dane_set_flags, SSL_CTX_dane_clear_flags,
-SSL_dane_set_flags, SSL_dane_clear_flags
+SSL_dane_set_flags, SSL_dane_clear_flags,
+X509_STORE_CTX_set0_dane
 - enable DANE TLS authentication of the remote TLS server in the local
 TLS client
 
@@ -19,10 +20,12 @@ TLS client
  int SSL_dane_enable(SSL *s, const char *basedomain);
  int SSL_dane_tlsa_add(SSL *s, uint8_t usage, uint8_t selector,
                        uint8_t mtype, const unsigned char *data, size_t dlen);
+ SSL_DANE *SSL_get0_dane(SSL *ssl);
  int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki);
  int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
                         uint8_t *mtype, const unsigned char **data,
                         size_t *dlen);
+ void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, SSL_DANE *dane);
  unsigned long SSL_CTX_dane_set_flags(SSL_CTX *ctx, unsigned long flags);
  unsigned long SSL_CTX_dane_clear_flags(SSL_CTX *ctx, unsigned long flags);
  unsigned long SSL_dane_set_flags(SSL *ssl, unsigned long flags);
@@ -90,6 +93,19 @@ If no TLSA records are added successfully, DANE authentication is not enabled,
 and authentication will be based on any configured traditional trust-anchors;
 authentication success in this case does not mean that the peer was
 DANE-authenticated.
+
+SSL_get0_dane() returns a pointer to the B<SSL_DANE> structure associated with
+the SSL connection I<ssl>. This structure contains the DANE verification state
+and can be used with X509_STORE_CTX_set0_dane() when implementing custom
+certificate verification callbacks.
+
+X509_STORE_CTX_set0_dane() associates the B<SSL_DANE> structure I<dane> with
+the certificate verification context I<ctx>. This function is declared in
+B<openssl/x509_vfy.h>. It is used internally by the SSL library to enable
+DANE verification during certificate chain validation. Applications that
+override the default certificate verification via
+L<SSL_CTX_set_cert_verify_callback(3)> may need to call this function to
+enable DANE verification in their custom callback.
 
 SSL_get0_dane_authority() can be used to get more detailed information about
 the matched DANE trust-anchor after successful connection completion.
@@ -171,11 +187,20 @@ Invalid input also includes malformed data, either a digest length that does
 not match the digest algorithm, or a C<Full(0)> (binary ASN.1 DER form)
 certificate or a public key that fails to parse.
 
+SSL_get0_dane() returns a pointer to the B<SSL_DANE> structure associated with
+the SSL connection, or NULL if I<ssl> does not represent a connection (e.g., a
+QUIC stream SSL object). The returned structure is always present for valid
+connections regardless of whether DANE has been enabled; applications should
+use other means (such as checking for TLSA records) to determine whether DANE
+is active.
+
 The functions SSL_get0_dane_authority() and SSL_get0_dane_tlsa() return a
 negative value when DANE authentication failed or was not enabled, a
 nonnegative value indicates the chain depth at which the TLSA record matched a
 chain certificate, or the depth of the top-most certificate, when the TLSA
 record is a full public key that is its signer.
+
+X509_STORE_CTX_set0_dane() does not return a value.
 
 The functions SSL_CTX_dane_set_flags(), SSL_CTX_dane_clear_flags(),
 SSL_dane_set_flags() and SSL_dane_clear_flags() return the B<flags> in effect
@@ -376,7 +401,7 @@ These functions were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
