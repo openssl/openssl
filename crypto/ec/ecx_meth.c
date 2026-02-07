@@ -344,7 +344,7 @@ static size_t ecx_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-    OSSL_FUNC_keymgmt_import_fn *importer,
+    OSSL_FUNC_keymgmt_import_fn *importer, int isdefault,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
     const ECX_KEY *key = from->pkey.ecx;

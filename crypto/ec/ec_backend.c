@@ -395,6 +395,9 @@ int ossl_ec_set_ecdh_cofactor_mode(EC_KEY *ec, int mode)
 int ossl_ec_key_fromdata(EC_KEY *ec, const OSSL_PARAM params[], int include_private)
 {
     const OSSL_PARAM *param_priv_key = NULL, *param_pub_key = NULL;
+#ifndef FIPS_MODULE
+    const OSSL_PARAM *param_method;
+#endif
     BN_CTX *ctx = NULL;
     BIGNUM *priv_key = NULL;
     unsigned char *pub_key = NULL;
@@ -406,6 +409,30 @@ int ossl_ec_key_fromdata(EC_KEY *ec, const OSSL_PARAM params[], int include_priv
     ecg = EC_KEY_get0_group(ec);
     if (ecg == NULL)
         return 0;
+
+#ifndef FIPS_MODULE
+    /*
+     * Warning! This parameter is for internal use only. This breaks the
+     * normal rules about passing complex objects across the provider boundary.
+     * It only works because we are using this with the "built-in" default
+     * provider.
+     */
+    param_method = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_LEGACY_METHOD);
+    if (param_method != NULL) {
+        const void *meth;
+
+        if (!OSSL_PARAM_get_octet_ptr(param_method, &meth, NULL)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_PASSED_INVALID_ARGUMENT);
+            goto err;
+        }
+        if (meth != NULL) {
+            if (!EC_KEY_set_method(ec, meth)) {
+                ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
+                goto err;
+            }
+        }
+    }
+#endif
 
     param_pub_key = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
     if (include_private)

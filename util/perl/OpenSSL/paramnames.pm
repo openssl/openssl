@@ -313,6 +313,7 @@ my %params = (
     'OSSL_PKEY_PARAM_PAD_MODE' =>            "pad-mode",
     'OSSL_PKEY_PARAM_DIGEST_SIZE' =>         "digest-size",
     'OSSL_PKEY_PARAM_MASKGENFUNC' =>         "mgf",
+    'OSSL_PKEY_PARAM_LEGACY_METHOD' =>       "legacy-method",
     'OSSL_PKEY_PARAM_MGF1_DIGEST' =>         "mgf1-digest",
     'OSSL_PKEY_PARAM_MGF1_PROPERTIES' =>     "mgf1-properties",
     'OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY' =>  "encoded-pub-key",

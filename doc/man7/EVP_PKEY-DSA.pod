@@ -31,6 +31,12 @@ It also supports the following parameters:
 
 See L<provider-keymgmt(7)/Common Information Parameters> for more information.
 
+=item "legacy-method" (B<OSSL_PKEY_PARAM_LEGACY_METHOD>) <octet pointer>
+
+Reserved for internal use only. Applications and provider implementations should
+not use this parameter, although it may be passed to providers. Provider
+implementations should ignore this parameter if it is received.
+
 =back
 
 =head2 DSA key generation parameters

@@ -450,7 +450,7 @@ static size_t dh_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-    OSSL_FUNC_keymgmt_import_fn *importer,
+    OSSL_FUNC_keymgmt_import_fn *importer, int isdefault,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
     DH *dh = from->pkey.dh;
@@ -469,6 +469,19 @@ static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     tmpl = OSSL_PARAM_BLD_new();
     if (tmpl == NULL)
         return 0;
+
+    if (isdefault && dh->meth != DH_get_default_method()) {
+        /*
+         * Warning! This parameter is for internal use only. This breaks the
+         * normal rules about passing complex objects across the provider
+         * boundary. It only works when we are using this with the "built-in"
+         * default provider. Third party providers must not use this.
+         */
+        if (!OSSL_PARAM_BLD_push_octet_ptr(tmpl, OSSL_PKEY_PARAM_LEGACY_METHOD,
+                (void *)dh->meth, sizeof(*dh->meth)))
+            goto err;
+    }
+
     if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_P, p)
         || !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_G, g))
         goto err;

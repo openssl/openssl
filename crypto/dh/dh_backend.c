@@ -43,6 +43,31 @@ int ossl_dh_params_fromdata(DH *dh, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *param_priv_len;
     long priv_len;
+#ifndef FIPS_MODULE
+    const OSSL_PARAM *param_method = NULL;
+
+    /*
+     * Warning! This parameter is for internal use only. This breaks the
+     * normal rules about passing complex objects across the provider boundary.
+     * It only works because we are using this with the "built-in" default
+     * provider.
+     */
+    param_method = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_LEGACY_METHOD);
+    if (param_method != NULL) {
+        const void *meth;
+
+        if (!OSSL_PARAM_get_octet_ptr(param_method, &meth, NULL)) {
+            ERR_raise(ERR_LIB_DH, ERR_R_PASSED_INVALID_ARGUMENT);
+            return 0;
+        }
+        if (meth != NULL) {
+            if (!DH_set_method(dh, meth)) {
+                ERR_raise(ERR_LIB_DH, ERR_R_DH_LIB);
+                return 0;
+            }
+        }
+    }
+#endif
 
     if (!dh_ffc_params_fromdata(dh, params))
         return 0;

@@ -792,7 +792,7 @@ static size_t rsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
  */
 static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
     void *to_keydata,
-    OSSL_FUNC_keymgmt_import_fn *importer,
+    OSSL_FUNC_keymgmt_import_fn *importer, int isdefault,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
     RSA *rsa = from->pkey.rsa;
@@ -806,6 +806,18 @@ static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
     /* Public parameters must always be present */
     if (RSA_get0_n(rsa) == NULL || RSA_get0_e(rsa) == NULL)
         goto err;
+
+    if (isdefault && rsa->meth != RSA_get_default_method()) {
+        /*
+         * Warning! This parameter is for internal use only. This breaks the
+         * normal rules about passing complex objects across the provider
+         * boundary. It only works when we are using this with the "built-in"
+         * default provider. Third party providers must not use this.
+         */
+        if (!OSSL_PARAM_BLD_push_octet_ptr(tmpl, OSSL_PKEY_PARAM_LEGACY_METHOD,
+                (void *)rsa->meth, sizeof(*rsa->meth)))
+            goto err;
+    }
 
     if (!ossl_rsa_todata(rsa, tmpl, NULL, 1))
         goto err;
@@ -922,19 +934,19 @@ err:
 }
 
 static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-    OSSL_FUNC_keymgmt_import_fn *importer,
+    OSSL_FUNC_keymgmt_import_fn *importer, int isdefault,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
     return rsa_int_export_to(from, RSA_FLAG_TYPE_RSA, to_keydata,
-        importer, libctx, propq);
+        importer, isdefault, libctx, propq);
 }
 
 static int rsa_pss_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-    OSSL_FUNC_keymgmt_import_fn *importer,
+    OSSL_FUNC_keymgmt_import_fn *importer, int isdefault,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
     return rsa_int_export_to(from, RSA_FLAG_TYPE_RSASSAPSS, to_keydata,
-        importer, libctx, propq);
+        importer, isdefault, libctx, propq);
 }
 
 static int rsa_pkey_import_from(const OSSL_PARAM params[], void *vpctx)

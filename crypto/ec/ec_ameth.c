@@ -457,7 +457,7 @@ static size_t ec_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 static int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-    OSSL_FUNC_keymgmt_import_fn *importer,
+    OSSL_FUNC_keymgmt_import_fn *importer, int isdefault,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
     const EC_KEY *eckey = NULL;
@@ -480,6 +480,18 @@ static int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     tmpl = OSSL_PARAM_BLD_new();
     if (tmpl == NULL)
         return 0;
+
+    if (isdefault && eckey->meth != EC_KEY_get_default_method()) {
+        /*
+         * Warning! This parameter is for internal use only. This breaks the
+         * normal rules about passing complex objects across the provider
+         * boundary. It only works when we are using this with the "built-in"
+         * default provider. Third party providers must not use this.
+         */
+        if (!OSSL_PARAM_BLD_push_octet_ptr(tmpl, OSSL_PKEY_PARAM_LEGACY_METHOD,
+                (void *)eckey->meth, sizeof(*eckey->meth)))
+            goto err;
+    }
 
     /*
      * EC_POINT_point2buf() can generate random numbers in some
