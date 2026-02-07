@@ -29,6 +29,7 @@
 #include "prov/securitycheck.h"
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
+#include "internal/threads_common.h"
 
 #ifndef FIPS_MODULE
 #ifndef OPENSSL_NO_SM2
@@ -276,9 +277,35 @@ static ossl_inline int otherparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *t
 
 static void *ec_newdata(void *provctx)
 {
+    EC_KEY *eckey = NULL;
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
+
     if (!ossl_prov_is_running())
         return NULL;
-    return EC_KEY_new_ex(PROV_LIBCTX_OF(provctx), NULL);
+
+#ifndef FIPS_MODULE
+    /*
+     * This only works because we are in the default provider. We are not
+     * normally allowed to pass complex objects across the provider boundary
+     * like this.
+     */
+    eckey = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_LOW_LEVEL_OBJECT, libctx);
+    if (eckey != NULL) {
+#ifdef OPENSSL_NO_EC_EXPLICIT_CURVES
+        if (EC_GROUP_check_named_curve(EC_KEY_get0_group(eckey), 0, NULL) == NID_undef)
+            return NULL;
+#endif
+        if (ossl_lib_ctx_get_concrete(ossl_ec_key_get_libctx(eckey)) != ossl_lib_ctx_get_concrete(libctx))
+            eckey = NULL;
+        else if (!EC_KEY_up_ref(eckey))
+            return NULL;
+    }
+#endif
+
+    if (eckey == NULL)
+        eckey = EC_KEY_new_ex(libctx, NULL);
+
+    return eckey;
 }
 
 #ifndef FIPS_MODULE

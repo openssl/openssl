@@ -46,6 +46,7 @@
 #endif
 #include "internal/provider.h"
 #include "internal/common.h"
+#include "internal/threads_common.h"
 #include "evp_local.h"
 
 static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str,
@@ -1897,11 +1898,23 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
         if (!EVP_KEYMGMT_is_a(tmp_keymgmt, OBJ_nid2sn(pk->type)))
             goto end;
 
-        if ((keydata = evp_keymgmt_newdata(tmp_keymgmt)) == NULL)
+        /* We attempt to pass the low-level object to the keymgmt via a thread
+         * local. This will actually only succeed in the case that we are using
+         * the default provider. Otherwise it will export in the normal way.
+         */
+        if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_LOW_LEVEL_OBJECT, libctx, pk->pkey.ptr))
+            goto end;
+        keydata = evp_keymgmt_newdata(tmp_keymgmt);
+        if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_LOW_LEVEL_OBJECT, libctx, NULL))
+            goto end;
+        if (keydata == NULL)
             goto end;
 
-        if (!pk->ameth->export_to(pk, keydata, tmp_keymgmt->import,
-                libctx, propquery)) {
+        /*
+         * We skip the export if the key data we got back is actually the same
+         * as the low level object we passed in
+         */
+        if (keydata != pk->pkey.ptr && !pk->ameth->export_to(pk, keydata, tmp_keymgmt->import, libctx, propquery)) {
             evp_keymgmt_freedata(tmp_keymgmt, keydata);
             keydata = NULL;
             goto end;

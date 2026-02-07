@@ -26,6 +26,7 @@
 #include "internal/sizes.h"
 #include "internal/nelem.h"
 #include "internal/param_build_set.h"
+#include "internal/threads_common.h"
 
 static OSSL_FUNC_keymgmt_new_fn dsa_newdata;
 static OSSL_FUNC_keymgmt_free_fn dsa_freedata;
@@ -121,9 +122,33 @@ static int dsa_key_todata(DSA *dsa, OSSL_PARAM_BLD *bld, OSSL_PARAM *pubkey,
 
 static void *dsa_newdata(void *provctx)
 {
+    DSA *dsa = NULL;
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
+
     if (!ossl_prov_is_running())
         return NULL;
-    return ossl_dsa_new(PROV_LIBCTX_OF(provctx));
+
+#ifndef FIPS_MODULE
+    /*
+     * This only works because we are in the default provider. We are not
+     * normally allowed to pass complex objects across the provider boundary
+     * like this.
+     */
+    dsa = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_LOW_LEVEL_OBJECT, libctx);
+    if (dsa != NULL) {
+        if (ossl_lib_ctx_get_concrete(ossl_dsa_get0_libctx(dsa)) != ossl_lib_ctx_get_concrete(libctx))
+            dsa = NULL;
+        else if (!DSA_up_ref(dsa))
+            return NULL;
+    }
+    if (dsa != NULL && !DSA_up_ref(dsa))
+        return NULL;
+#endif
+
+    if (dsa == NULL)
+        dsa = ossl_dsa_new(libctx);
+
+    return dsa;
 }
 
 static void dsa_freedata(void *keydata)

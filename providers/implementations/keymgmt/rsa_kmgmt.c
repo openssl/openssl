@@ -27,6 +27,7 @@
 #include "crypto/cryptlib.h"
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
+#include "internal/threads_common.h"
 
 static OSSL_FUNC_keymgmt_new_fn rsa_newdata;
 static OSSL_FUNC_keymgmt_new_fn rsapss_newdata;
@@ -75,35 +76,74 @@ static int pss_params_fromdata(RSA_PSS_PARAMS_30 *pss_params, int *defaults_set,
     return 1;
 }
 
+/*
+ * If the application actually created a legacy RSA object and assigned it to
+ * the EVP_PKEY, then we get hold of that object here. We return 0 if we hit
+ * a fatal error or 1 otherwise. We may return 1 but with *rsa set to NULL.
+ */
+static int get_legacy_rsa_object(OSSL_LIB_CTX *libctx, RSA **rsa)
+{
+#ifndef FIPS_MODULE
+    /*
+     * This only works because we are in the default provider. We are not
+     * normally allowed to pass complex objects across the provider boundary
+     * like this.
+     */
+    *rsa = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_LOW_LEVEL_OBJECT, libctx);
+    if (*rsa != NULL) {
+        if (ossl_lib_ctx_get_concrete(ossl_rsa_get0_libctx(*rsa)) != ossl_lib_ctx_get_concrete(libctx)) {
+            *rsa = NULL;
+            return 1;
+        }
+        if (!RSA_up_ref(*rsa))
+            return 0;
+    }
+#endif
+
+    return 1;
+}
+
 static void *rsa_newdata(void *provctx)
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
-    RSA *rsa;
+    RSA *rsa = NULL;
 
     if (!ossl_prov_is_running())
         return NULL;
 
-    rsa = ossl_rsa_new_with_ctx(libctx);
-    if (rsa != NULL) {
-        RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
-        RSA_set_flags(rsa, RSA_FLAG_TYPE_RSA);
+    if (!get_legacy_rsa_object(libctx, &rsa))
+        return NULL;
+
+    if (rsa == NULL) {
+        rsa = ossl_rsa_new_with_ctx(libctx);
+        if (rsa != NULL) {
+            RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
+            RSA_set_flags(rsa, RSA_FLAG_TYPE_RSA);
+        }
     }
+
     return rsa;
 }
 
 static void *rsapss_newdata(void *provctx)
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
-    RSA *rsa;
+    RSA *rsa = NULL;
 
     if (!ossl_prov_is_running())
         return NULL;
 
-    rsa = ossl_rsa_new_with_ctx(libctx);
-    if (rsa != NULL) {
-        RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
-        RSA_set_flags(rsa, RSA_FLAG_TYPE_RSASSAPSS);
+    if (!get_legacy_rsa_object(libctx, &rsa))
+        return NULL;
+
+    if (rsa == NULL) {
+        rsa = ossl_rsa_new_with_ctx(libctx);
+        if (rsa != NULL) {
+            RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
+            RSA_set_flags(rsa, RSA_FLAG_TYPE_RSASSAPSS);
+        }
     }
+
     return rsa;
 }
 

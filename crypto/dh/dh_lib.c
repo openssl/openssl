@@ -150,6 +150,11 @@ int DH_up_ref(DH *r)
     return ((i > 1) ? 1 : 0);
 }
 
+OSSL_LIB_CTX *ossl_dh_get0_libctx(const DH *dh)
+{
+    return dh->libctx;
+}
+
 void ossl_dh_set0_libctx(DH *d, OSSL_LIB_CTX *libctx)
 {
     d->libctx = libctx;
