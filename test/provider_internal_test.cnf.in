@@ -8,9 +8,16 @@ openssl_conf = openssl_init
 providers = providers
 
 [providers]
-p_test_configured = p_test_configured
+0.modulesdir = ./active
+p_test_active = p_test_active
+1.modulesdir = ./passive
+p_test_passive = p_test_passive
 
-[p_test_configured]
-module = {- platform->dso('p_test') -}
+[p_test_active]
+module = {- platform->dso('p_test_active') -}
 activate = 1
 greeting = Hello OpenSSL, greetings from Test Provider
+
+[p_test_passive]
+module = {- platform->dso('p_test_passive') -}
+activate = 0

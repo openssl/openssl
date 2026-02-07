@@ -242,10 +242,25 @@ showing that the OID "newoid1" has been added as "1.2.3.4.1".
 =head2 Provider Configuration
 
 The name B<providers> in the initialization section names the section
-containing cryptographic provider configuration. The name/value assignments
-in this section each name a provider, and point to the configuration section
-for that provider. The provider-specific section is used to specify how
-to load the module, activate it, and set other parameters.
+containing cryptographic provider configuration.
+
+The name C<modulesdir> has a reserved meaning in this section.
+If the assigned value is nonempty, for the providers that immedlately follow,
+it overrides both the C<OPENSSL_MODULES> environment variable and the default
+B<MODULESDIR> (as reported with the C<-m> option of L<openssl-version(1)>).
+This can be set multiple times, by adding a unique prefix followed by a C<.> to each
+instance (except perhaps one); each time affecting the immediately following
+providers.
+If set to an empty value, any previous setting is cleared and for the
+immediately following providers the C<OPENSSL_MODULES> environment variable or
+failing that the default B<MODULESDIR> are used instead.
+Providers that that are not activated by default store the value for use with
+later explicit activation.
+
+All other name/value assignments in this section each name a provider, and
+point to the configuration section for that provider.
+The provider-specific section is used to specify how to load the module,
+activate it, and set other parameters.
 
 Within a provider section, the following names have meaning:
 

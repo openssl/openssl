@@ -1652,6 +1652,8 @@ EOF
           return <<"EOF";
 $args{src}: $gen0 $deps
 	if [ -r "\$@" ]; then chmod u+w \$@; fi
+	SRCTOP=\$(SRCDIR) \\
+	BLDTOP=\$(BLDDIR) \\
 	\$(PERL)$perlmodules "$dofile" "-o$target{build_file}" $gen0$gen_args > \$@
 	chmod a-w \$@
 EOF
@@ -2012,6 +2014,8 @@ EOF
 $script: $sources configdata.pm
 	if [ -r "$script" ]; then chmod u+w $script; fi
 	\$(RM) "$script"
+	SRCTOP=\$(SRCDIR) \\
+	BLDTOP=\$(BLDDIR) \\
 	\$(PERL) "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
 	    "-o$target{build_file}" $sources > "$script"
 	chmod a+x,a-w $script
