@@ -1199,7 +1199,17 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
 
     case TLS_ST_SW_SESSION_TICKET:
         clear_sys_error();
+        ERR_set_mark();
+        st->error_state = ERROR_STATE_NOERROR;
         if (SSL_CONNECTION_IS_TLS13(s) && statem_flush(s) != 1) {
+            if (ERR_count_to_mark() > 0) {
+                unsigned long l = ERR_peek_error();
+                if (ERR_GET_LIB(l) == ERR_LIB_SYS)
+                    st->error_state = ERROR_STATE_SYSCALL;
+                else
+                    st->error_state = ERROR_STATE_SSL;
+            }
+            ERR_clear_last_mark();
             if (SSL_get_error(ssl, 0) == SSL_ERROR_SYSCALL
                 && conn_is_closed()) {
                 /*
@@ -1215,6 +1225,7 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
 
             return WORK_MORE_A;
         }
+        ERR_clear_last_mark();
         break;
     }
 

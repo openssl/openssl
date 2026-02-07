@@ -833,6 +833,7 @@ typedef enum {
     PEER_SUCCESS,
     PEER_RETRY,
     PEER_ERROR,
+    PEER_FINAL_ERROR,
     PEER_WAITING,
     PEER_TEST_FAILURE
 } peer_status_t;
@@ -1028,6 +1029,10 @@ static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
              */
             if (SSL_is_server(peer->ssl)) {
                 ret = SSL_renegotiate(peer->ssl);
+                if (!ret) {
+                    peer->status = PEER_FINAL_ERROR;
+                    return;
+                }
             } else {
                 int full_reneg = 0;
 
@@ -1047,10 +1052,10 @@ static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
                     ret = SSL_renegotiate(peer->ssl);
                 else
                     ret = SSL_renegotiate_abbreviated(peer->ssl);
-            }
-            if (!ret) {
-                peer->status = PEER_ERROR;
-                return;
+                if (!ret) {
+                    peer->status = PEER_FINAL_ERROR;
+                    return;
+                }
             }
             do_handshake_step(peer);
             /*
@@ -1311,6 +1316,7 @@ static handshake_status_t handshake_status(peer_status_t last_status,
             /* Let the first peer finish. */
             return HANDSHAKE_RETRY;
         case PEER_ERROR:
+        case PEER_FINAL_ERROR:
             /*
              * Second peer succeeded despite the fact that the first peer
              * already errored. This shouldn't happen.
@@ -1321,6 +1327,9 @@ static handshake_status_t handshake_status(peer_status_t last_status,
 
     case PEER_RETRY:
         return HANDSHAKE_RETRY;
+
+    case PEER_FINAL_ERROR:
+        return client_spoke_last ? CLIENT_ERROR : SERVER_ERROR;
 
     case PEER_ERROR:
         switch (previous_status) {
@@ -1336,6 +1345,7 @@ static handshake_status_t handshake_status(peer_status_t last_status,
             /* We errored; let the peer finish. */
             return HANDSHAKE_RETRY;
         case PEER_ERROR:
+        case PEER_FINAL_ERROR:
             /* Both peers errored. Return the one that errored first. */
             return client_spoke_last ? SERVER_ERROR : CLIENT_ERROR;
         }

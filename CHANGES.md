@@ -51,6 +51,12 @@ OpenSSL 4.0
 
    *Neil Horman*
 
+ * SSL_get_error() no longer depends on the state of the error stack,
+   so it is no longer necessary to empty the error queue before the
+   TLS/SSL I/O operations.
+
+   *Igor Ustinov*
+
  * Added configure options to disable KDF algorithms for
    hmac-drbg-kdf, kbkdf, krb5kdf, pvkkdf, snmpkdf, sskdf, sshkdf, x942kdf and x963kdf.
 

@@ -131,6 +131,7 @@ void ossl_statem_clear(SSL_CONNECTION *s)
 {
     s->statem.state = MSG_FLOW_UNINITED;
     s->statem.hand_state = TLS_ST_BEFORE;
+    s->statem.error_state = ERROR_STATE_NOERROR;
     ossl_statem_set_in_init(s, 1);
     s->statem.no_cert_verify = 0;
 }
@@ -288,6 +289,7 @@ void ossl_statem_set_hello_verify_done(SSL_CONNECTION *s)
      * sensible.
      */
     s->statem.hand_state = TLS_ST_SR_CLNT_HELLO;
+    s->statem.error_state = ERROR_STATE_NOERROR;
 }
 
 int ossl_statem_connect(SSL *s)

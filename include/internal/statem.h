@@ -81,6 +81,12 @@ typedef enum {
     CON_FUNC_DONT_SEND
 } CON_FUNC_RETURN;
 
+typedef enum {
+    ERROR_STATE_NOERROR = 0,
+    ERROR_STATE_SSL,
+    ERROR_STATE_SYSCALL
+} ERROR_STATE;
+
 typedef int (*ossl_statem_mutate_handshake_cb)(const unsigned char *msgin,
     size_t inlen,
     unsigned char **msgout,
@@ -106,6 +112,7 @@ struct ossl_statem_st {
     OSSL_HANDSHAKE_STATE hand_state;
     /* The handshake state requested by an API call (e.g. HelloRequest) */
     OSSL_HANDSHAKE_STATE request_state;
+    ERROR_STATE error_state;
     int in_init;
     int read_state_first_init;
     /* true when we are actually in SSL_accept() or SSL_connect() */
