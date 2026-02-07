@@ -327,6 +327,15 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
+
+    if (ginf->group_id >= OSSL_TLS_GROUP_ID_ffdhe2048
+        && ginf->group_id <= OSSL_TLS_GROUP_ID_ffdhe8192) {
+        if (ginf->mintls > TLS1_2_VERSION)
+            ginf->mintls = TLS1_VERSION;
+        if (DTLS_VERSION_GT(ginf->mindtls, DTLS1_2_VERSION))
+            ginf->mindtls = DTLS1_VERSION;
+    }
+
     /*
      * Now check that the algorithm is actually usable for our property query
      * string. Regardless of the result we still return success because we have
