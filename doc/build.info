@@ -531,6 +531,10 @@ DEPEND[html/man3/ASN1_aux_cb.html]=man3/ASN1_aux_cb.pod
 GENERATE[html/man3/ASN1_aux_cb.html]=man3/ASN1_aux_cb.pod
 DEPEND[man/man3/ASN1_aux_cb.3]=man3/ASN1_aux_cb.pod
 GENERATE[man/man3/ASN1_aux_cb.3]=man3/ASN1_aux_cb.pod
+DEPEND[html/man3/ASN1_buf_print.html]=man3/ASN1_buf_print.pod
+GENERATE[html/man3/ASN1_buf_print.html]=man3/ASN1_buf_print.pod
+DEPEND[man/man3/ASN1_buf_print.3]=man3/ASN1_buf_print.pod
+GENERATE[man/man3/ASN1_buf_print.3]=man3/ASN1_buf_print.pod
 DEPEND[html/man3/ASN1_generate_nconf.html]=man3/ASN1_generate_nconf.pod
 GENERATE[html/man3/ASN1_generate_nconf.html]=man3/ASN1_generate_nconf.pod
 DEPEND[man/man3/ASN1_generate_nconf.3]=man3/ASN1_generate_nconf.pod
@@ -3178,6 +3182,7 @@ html/man3/ASN1_STRING_print_ex.html \
 html/man3/ASN1_TIME_set.html \
 html/man3/ASN1_TYPE_get.html \
 html/man3/ASN1_aux_cb.html \
+html/man3/ASN1_buf_print.html \
 html/man3/ASN1_generate_nconf.html \
 html/man3/ASN1_item_d2i_bio.html \
 html/man3/ASN1_item_new.html \
@@ -3850,6 +3855,7 @@ man/man3/ASN1_STRING_print_ex.3 \
 man/man3/ASN1_TIME_set.3 \
 man/man3/ASN1_TYPE_get.3 \
 man/man3/ASN1_aux_cb.3 \
+man/man3/ASN1_buf_print.3 \
 man/man3/ASN1_generate_nconf.3 \
 man/man3/ASN1_item_d2i_bio.3 \
 man/man3/ASN1_item_new.3 \
