@@ -18,14 +18,6 @@ SSL_read_ex(), SSL_read(), SSL_peek_ex(), SSL_peek(), SSL_shutdown(),
 SSL_write_ex() or SSL_write() on B<ssl>.  The value returned by that TLS/SSL I/O
 function must be passed to SSL_get_error() in parameter B<ret>.
 
-In addition to B<ssl> and B<ret>, SSL_get_error() inspects the
-current thread's OpenSSL error queue.  Thus, SSL_get_error() must be
-used in the same thread that performed the TLS/SSL I/O operation, and no
-other OpenSSL function calls should appear in between.  The current
-thread's error queue must be empty before the TLS/SSL I/O operation is
-attempted, or SSL_get_error() will not work reliably.  Emptying the
-current thread's error queue is done with L<ERR_clear_error(3)>.
-
 =head1 NOTES
 
 Some TLS implementations do not send a close_notify alert on shutdown.
@@ -194,6 +186,10 @@ L<ERR_clear_error(3)>, ERR_print_errors(3), ERR_peek_last_error_all(3)
 
 The SSL_ERROR_WANT_ASYNC error code was added in OpenSSL 1.1.0.
 The SSL_ERROR_WANT_CLIENT_HELLO_CB error code was added in OpenSSL 1.1.1.
+
+Since OpenSSL 4.0 SSL_get_error() no longer depends on the state of the
+error stack, so it is no longer necessary to empty the error queue
+before the TLS/SSL I/O operations.
 
 =head1 COPYRIGHT
 
