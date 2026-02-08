@@ -208,6 +208,7 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     KDF_SRTPKDF *ctx = vctx;
     OSSL_LIB_CTX *libctx;
     const EVP_CIPHER *cipher;
+    int key_len;
 
     if (params == NULL)
         return 1;
@@ -224,17 +225,25 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     cipher = ossl_prov_cipher_cipher(&ctx->cipher);
     if (cipher == NULL)
         return 0;
+
     if (!EVP_CIPHER_is_a(cipher, "AES-128-CTR") && !EVP_CIPHER_is_a(cipher, "AES-192-CTR")
         && !EVP_CIPHER_is_a(cipher, "AES-256-CTR"))
         return 0;
 
-    if ((p.key != NULL)
-        && !srtpkdf_set_membuf(&ctx->key, &ctx->key_len, p.key))
-        return 0;
+    if (p.key != NULL) {
+        key_len = EVP_CIPHER_get_key_length(cipher);
+        if (!srtpkdf_set_membuf(&ctx->key, &ctx->key_len, p.key))
+            return 0;
+        if (ctx->key_len != (size_t)key_len)
+            return 0;
+    }
 
-    if ((p.salt != NULL)
-        && !srtpkdf_set_membuf(&ctx->salt, &ctx->salt_len, p.salt))
-        return 0;
+    if (p.salt != NULL) {
+        if (!srtpkdf_set_membuf(&ctx->salt, &ctx->salt_len, p.salt))
+            return 0;
+        if (ctx->salt_len < KDF_SRTP_SALT_LEN)
+            return 0;
+    }
 
     if ((p.index != NULL)
         && !srtpkdf_set_membuf(&ctx->index, &ctx->index_len, p.index))
