@@ -146,11 +146,13 @@ static OSSL_DECODER_CLEANUP file_load_cleanup;
  * On success it populates the file stat buffer pointed at by |st|
  * (unless |st| is NULL) and returns the derived pathname, otherwise NULL.
  */
-
+#define OSSL_is_abs_drive_prefix(p) (OSSL_is_drive_letter(*(p)) && *((p) + 1) == ':' && *((p) + 2) == '/')
 static const char *ossl_file_stat(const char *uri, struct stat *st)
 {
     const char *path = uri, *q;
     struct stat local_st;
+
+    ERR_set_mark();
 
     if (st == NULL)
         st = &local_st;
@@ -160,14 +162,18 @@ static const char *ossl_file_stat(const char *uri, struct stat *st)
      * try and see if the full URI can be taken as a local file path name.
      */
     if (!HAS_CASE_PREFIX(uri, "file://")) {
-        if (stat(path, st) == 0)
+        if (stat(path, st) == 0) {
+            ERR_pop_to_mark();
             return uri;
+        }
         ERR_raise_data(ERR_LIB_SYS, errno, "calling stat(%s)", path);
     }
 
     /* Do a second attempt only if the URI appears to start with the "file" scheme. */
-    if (!CHECK_AND_SKIP_CASE_PREFIX(path, "file:"))
+    if (!CHECK_AND_SKIP_CASE_PREFIX(path, "file:")) {
+        ERR_clear_last_mark();
         return NULL;
+    }
 
     /*
      * Extract the alternative path to check.
@@ -184,8 +190,8 @@ static const char *ossl_file_stat(const char *uri, struct stat *st)
              */
             path = q - 1;
 #ifdef _WIN32
-        } else if (OSSL_is_drive_letter(path[2]) && path[3] == ':' && path[4] == '/') {
-            /* Support also Windows "file://" URIs starting with a drive letter before a '/' */
+        } else if (OSSL_is_abs_drive_prefix(q)) {
+            /* Support also "file://" URIs starting with a Windows drive letter not preceded by an extra '/' */
             path = q;
 #endif
         } else {
@@ -194,18 +200,22 @@ static const char *ossl_file_stat(const char *uri, struct stat *st)
 
             ERR_raise_data(ERR_LIB_OSSL_STORE, OSSL_STORE_R_URI_AUTHORITY_UNSUPPORTED,
                 "%.*s", len, q);
+            ERR_clear_last_mark();
             return NULL;
         }
     }
 #ifdef _WIN32
-    /* Windows "file:" URIs with a drive letter are required to start with a '/' */
-    if (path[0] == '/' && OSSL_is_drive_letter(path[1]) && path[2] == ':' && path[3] == '/')
+    /* Windows "file://" URIs with a drive letter are usually required to have an extra '/' before the drive letter */
+    if (path[0] == '/' && OSSL_is_abs_drive_prefix(path + 1))
         path++; /* Skip past the slash, making the path a normal Windows path */
 #endif
 
-    if (stat(path, st) == 0)
+    if (stat(path, st) == 0) {
+        ERR_pop_to_mark();
         return path;
+    }
     ERR_raise_data(ERR_LIB_SYS, errno, "calling stat(%s)", path);
+    ERR_clear_last_mark();
     return NULL;
 }
 
