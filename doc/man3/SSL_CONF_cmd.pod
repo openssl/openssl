@@ -865,12 +865,12 @@ added in OpenSSL 3.2.
 
 B<PreferNoDHEKEX> was added in OpenSSL 3.3.
 
-OpenSSL 3.5 introduces support for post-quantum (PQ) TLS key exchange via the
+OpenSSL 3.5 introduced support for post-quantum (PQ) TLS key exchange via the
 B<MLKEM512>, B<MLKEM768> and B<MLKEM1024> TLS groups.
 These are based on the underlying B<ML-KEM-512>, B<ML-KEM-768> and
 B<ML-KEM-1024> algorithms from FIPS 203.
 
-OpenSSL 3.5 also introduces support for three B<hybrid> ECDH PQ key exchange
+OpenSSL 3.5 also introduced support for three B<hybrid> ECDH PQ key exchange
 TLS groups: B<X25519MLKEM768>, B<SecP256r1MLKEM768> and
 B<SecP384r1MLKEM1024>.
 They offer CPU performance comparable to the associated ECDH group, though at
@@ -880,6 +880,10 @@ largely as a result of the high CPU cost of ECDH for the underlying B<P-384>
 group.
 Also its key exchange messages at close to 1700 bytes are larger than the
 roughly 1200 bytes for the first two groups.
+
+OpenSSL 4.0 introduced the B<curveSM2> (also known as C<ECDHE over SM2>) key
+exchange group as specified in RFC8998, and B<curveSM2MLKEM768>, which is a
+hybrid of the B<curveSM2> group with B<ML-KEM-768>.
 
 As of OpenSSL 3.5 key exchange group names are case-insensitive.
 

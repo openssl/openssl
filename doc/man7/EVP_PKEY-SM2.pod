@@ -7,13 +7,33 @@ EVP_PKEY-SM2, EVP_KEYMGMT-SM2, SM2
 
 =head1 DESCRIPTION
 
-The B<SM2> algorithm was first defined by the Chinese national standard GM/T
-0003-2012 and was later standardized by ISO as ISO/IEC 14888. B<SM2> is actually
-an elliptic curve based algorithm. The current implementation in OpenSSL supports
-both signature and encryption schemes via the EVP interface.
+The B<SM2> algorithm was first defined by the Chinese national standard C<GM/T
+0003-2012> and was later standardized by ISO as ISO/IEC 14888.
+B<SM2> is an elliptic curve-based algorithm.
+Its implementation in OpenSSL supports both signature and encryption schemes
+via the EVP interface.
+Under the name C<curveSM2> it also supports C<ECDH over SM2> as described in
+L<EVP_KEYEXCH-ECDH(7)>.
 
-When doing the B<SM2> signature algorithm, it requires a distinguishing identifier
-to form the message prefix which is hashed before the real message is hashed.
+The B<SM2> signature algorithm takes an optional I<distinguishing identifier>
+parameter (B<OSSL_PKEY_PARAM_DIST_ID>), which is used as part of a message
+prefix before hashing with B<SM3>.
+As specified in L<RFC 8998|https://www.rfc-editor.org/rfc/rfc8998.html>,
+when B<SM2> is used as part of the B<sm2sig_sm3> TLS signature scheme,
+this identifier must be set to the constant string C<TLSv1.3+GM+Cipher+Suite>.
+The OpenSSL TLS stack passes a protocol version parameter
+(B<OSSL_SIGNATURE_PARAM_TLS_VERSION>) to the signature algorithm, which then
+in the case of B<SM2> internally sets the distinguishing identifier to the
+expected constant.
+When B<SM2> is used for other purposes (e.g. in certificate signing or
+verification), and no explicit value of the distinguishing identifier is
+specified, a default value of C<1234567812345678> is used.
+
+An explicit empty distinguishing identifier value may need to be used to verify
+or create signatures that are compatible with versions of OpenSSL prior to 4.0.
+With the commandline tools an empty value can be specified with the use of
+either the B<-pkeyopt> (L<openssl-pkeyutl(1)>) or B<-sigopt>
+(L<openssl-dgst(1)>) option with a value of C<distid:>.
 
 =head2 Common SM2 parameters
 
@@ -84,6 +104,13 @@ L<EVP_DigestSignInit(3)>,
 L<EVP_DigestVerifyInit(3)>,
 L<EVP_PKEY_CTX_set1_id(3)>,
 L<EVP_MD_CTX_set_pkey_ctx(3)>
+
+=head1 HISTORY
+
+Support for the B<sm2sig_sm3> TLS signature scheme was added in OpenSSL 4.0.
+
+The default value of the SM2 distinguishing identifier changed from empty to
+C<1234567812345678> as of OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

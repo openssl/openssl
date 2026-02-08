@@ -8,6 +8,25 @@ EVP_KEYEXCH-ECDH - ECDH Key Exchange algorithm support
 
 Key exchange support for the B<ECDH> key type.
 
+This algorithm supports B<ECDH> key agreement for general elliptic curves.
+Specialised support for the B<X25519> and B<X448> curves is documented in
+L<EVP_KEYEXCH-X25519(7)> and L<EVP_KEYEXCH-X448(7)>.
+
+As specified in L<RFC 8998|https://www.rfc-editor.org/rfc/rfc8998.html>, when
+B<curveSM2> is the negotiated key agreement group in TLS, B<ECDH> shared secret
+derivation is used instead of the normal key agreement protocol (KAP) specified
+in the C<GB/T 32918.3-2016> standard for the B<SM2> elliptic curve.
+This B<SM2> key agreement variant is also sometimes called C<ECDH over SM2>.
+When a B<curveSM2> key is generated or imported, the EC group name parameter to
+specify remains C<SM2>.
+The resulting B<curveSM2> key can only be used for C<ECDH over SM2> key
+agreement.
+C<ECDH over SM2> is TLS-specific, it should not be used in other protocols,
+absent a specification of its use in the protocol in question.
+
+The B<curveSM2MLKEM768> hybrid post-quantum key exchange algorithm
+uses C<ECDH over SM2> for its C<classical> component.
+
 =head2 ECDH Key Exchange parameters
 
 =over 4
@@ -120,6 +139,10 @@ L<provider-keyexch(7)>,
 L<provider-keymgmt(7)>,
 L<OSSL_PROVIDER-default(7)>,
 L<OSSL_PROVIDER-FIPS(7)>,
+
+=head1 HISTORY
+
+Support for C<ECDH over SM2> via B<curveSM2> was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
