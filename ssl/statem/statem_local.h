@@ -239,12 +239,6 @@ __owur CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s,
 MSG_PROCESS_RETURN tls_process_end_of_early_data(SSL_CONNECTION *s,
     PACKET *pkt);
 
-#ifndef OPENSSL_NO_GOST
-/* These functions are used in GOST18 CKE, both for client and server */
-int ossl_gost18_cke_cipher_nid(const SSL_CONNECTION *s);
-int ossl_gost_ukm(const SSL_CONNECTION *s, unsigned char *dgst_buf);
-#endif
-
 /* Extension processing */
 
 typedef enum ext_return_en {

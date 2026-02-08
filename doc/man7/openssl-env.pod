@@ -37,13 +37,6 @@ See L<OSSL_HTTP_parse_url(3)>.
 
 These variables are considered security-sensitive environment variables.
 
-=item B<LEGACY_GOST_PKCS12>
-
-Affects the way MAC is generated in PKCS#12 containers for GOST algorithms.
-See L<PKCS12_gen_mac(3)>.
-
-This variable is considered a security-sensitive environment variable.
-
 =item B<OPENSSL>
 
 Specifies the path to the B<openssl> executable. Used by

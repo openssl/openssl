@@ -65,14 +65,6 @@ static int tls1_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
             mac_key = EVP_PKEY_new_raw_private_key_ex(rl->libctx, "HMAC",
                 rl->propq, mackey,
                 mackeylen);
-        } else {
-            /*
-             * If its not HMAC then the only other types of MAC we support are
-             * the GOST MACs, so we need to use the old style way of creating
-             * a MAC key.
-             */
-            mac_key = EVP_PKEY_new_mac_key(mactype, NULL, mackey,
-                (int)mackeylen);
         }
 
         /*
@@ -334,26 +326,6 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         }
     }
 
-    if (!rl->isdtls && rl->tlstree) {
-        int decrement_seq = 0;
-
-        /*
-         * When sending, seq is incremented after MAC calculation.
-         * So if we are in ETM mode, we use seq 'as is' in the ctrl-function.
-         * Otherwise we have to decrease it in the implementation
-         */
-        if (sending && !rl->use_etm)
-            decrement_seq = 1;
-
-        if (EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_TLSTREE, decrement_seq,
-                rl->sequence)
-            <= 0) {
-
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-    }
-
     /* Provided cipher - we do not support pipelining on this path */
     if (n_recs > 1) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -425,20 +397,11 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
         return 0;
     md_size = t;
 
-    if (rl->stream_mac) {
-        mac_ctx = hash;
-    } else {
-        hmac = EVP_MD_CTX_new();
-        if (hmac == NULL || !EVP_MD_CTX_copy(hmac, hash)) {
-            goto end;
-        }
-        mac_ctx = hmac;
-    }
-
-    if (!rl->isdtls
-        && rl->tlstree
-        && EVP_MD_CTX_ctrl(mac_ctx, EVP_MD_CTRL_TLSTREE, 0, seq) <= 0)
+    hmac = EVP_MD_CTX_new();
+    if (hmac == NULL || !EVP_MD_CTX_copy(hmac, hash)) {
         goto end;
+    }
+    mac_ctx = hmac;
 
     if (rl->isdtls) {
         unsigned char dtlsseq[8], *p = dtlsseq;

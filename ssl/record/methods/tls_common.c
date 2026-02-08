@@ -1295,20 +1295,6 @@ int tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                     ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
                     goto err;
                 }
-            } else if (strcmp(p->key,
-                           OSSL_LIBSSL_RECORD_LAYER_PARAM_STREAM_MAC)
-                == 0) {
-                if (!OSSL_PARAM_get_int(p, &rl->stream_mac)) {
-                    ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
-                    goto err;
-                }
-            } else if (strcmp(p->key,
-                           OSSL_LIBSSL_RECORD_LAYER_PARAM_TLSTREE)
-                == 0) {
-                if (!OSSL_PARAM_get_int(p, &rl->tlstree)) {
-                    ERR_raise(ERR_LIB_SSL, SSL_R_FAILED_TO_GET_PARAMETER);
-                    goto err;
-                }
             } else {
                 ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_MANDATORY_PARAMETER);
                 goto err;

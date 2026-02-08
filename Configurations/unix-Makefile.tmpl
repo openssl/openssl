@@ -1218,7 +1218,6 @@ generate_crypto_objects:
 				crypto/objects/obj_mac.num \
 				crypto/objects/obj_xref.txt \
 				> crypto/objects/obj_xref.h )
-	( cd $(SRCDIR);	sed -e '1,8d' crypto/objects/obj_compat.h >> include/openssl/obj_mac.h )
 
 generate_crypto_conf:
 	( cd $(SRCDIR); $(PERL) crypto/conf/keysets.pl \

@@ -204,21 +204,6 @@ static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
                 goto err;
             break;
 
-        case NID_id_GostR3411_94:
-            if (BIO_puts(out, "gostr3411-94") < 0)
-                goto err;
-            break;
-
-        case NID_id_GostR3411_2012_256:
-            if (BIO_puts(out, "gostr3411-2012-256") < 0)
-                goto err;
-            break;
-
-        case NID_id_GostR3411_2012_512:
-            if (BIO_puts(out, "gostr3411-2012-512") < 0)
-                goto err;
-            break;
-
         default:
             if (have_unknown) {
                 write_comma = 0;

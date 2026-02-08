@@ -51,11 +51,6 @@ int X509_certificate_type(const X509 *x, const EVP_PKEY *pkey)
     case EVP_PKEY_DH:
         ret = EVP_PK_DH | EVP_PKT_EXCH;
         break;
-    case NID_id_GostR3410_2001:
-    case NID_id_GostR3410_2012_256:
-    case NID_id_GostR3410_2012_512:
-        ret = EVP_PKT_EXCH | EVP_PKT_SIGN;
-        break;
     default:
         break;
     }

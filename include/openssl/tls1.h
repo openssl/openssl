@@ -184,9 +184,6 @@ extern "C" {
 #define TLSEXT_signature_rsa 1
 #define TLSEXT_signature_dsa 2
 #define TLSEXT_signature_ecdsa 3
-#define TLSEXT_signature_gostr34102001 237
-#define TLSEXT_signature_gostr34102012_256 238
-#define TLSEXT_signature_gostr34102012_512 239
 
 /* Total number of different signature algorithms */
 #define TLSEXT_signature_num 7
@@ -198,9 +195,6 @@ extern "C" {
 #define TLSEXT_hash_sha256 4
 #define TLSEXT_hash_sha384 5
 #define TLSEXT_hash_sha512 6
-#define TLSEXT_hash_gostr3411 237
-#define TLSEXT_hash_gostr34112012_256 238
-#define TLSEXT_hash_gostr34112012_512 239
 
 /* Total number of different digest algorithms */
 
@@ -1155,16 +1149,6 @@ int SSL_CTX_set_tlsext_ticket_key_evp_cb(SSL_CTX *ctx, int (*fp)(SSL *, unsigned
 #define TLS_CT_ECDSA_SIGN 64
 #define TLS_CT_RSA_FIXED_ECDH 65
 #define TLS_CT_ECDSA_FIXED_ECDH 66
-#define TLS_CT_GOST01_SIGN 22
-#define TLS_CT_GOST12_IANA_SIGN 67
-#define TLS_CT_GOST12_IANA_512_SIGN 68
-#define TLS_CT_GOST12_LEGACY_SIGN 238
-#define TLS_CT_GOST12_LEGACY_512_SIGN 239
-
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-#define TLS_CT_GOST12_SIGN TLS_CT_GOST12_LEGACY_SIGN
-#define TLS_CT_GOST12_512_SIGN TLS_CT_GOST12_LEGACY_512_SIGN
-#endif
 
 /*
  * when correcting this number, correct also SSL3_CT_NUMBER in ssl3.h (see

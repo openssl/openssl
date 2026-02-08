@@ -148,7 +148,6 @@ static ASN1_ITEM_EXP *asn1_item_list[] = {
 #endif
     ASN1_ITEM_ref(SXNETID),
     ASN1_ITEM_ref(SXNET),
-    ASN1_ITEM_ref(ISSUER_SIGN_TOOL),
     ASN1_ITEM_ref(USERNOTICE),
     ASN1_ITEM_ref(X509_ACERT),
     ASN1_ITEM_ref(X509_ALGORS),

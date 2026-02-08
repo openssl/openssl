@@ -192,7 +192,6 @@ providers/implementations/rands/test_rng.inc
 /apps/openssl
 /test/sha256t
 /test/sha512t
-/test/gost2814789t
 /test/ssltest_old
 /test/*test
 /test/fips_aesavs
