@@ -2226,6 +2226,7 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512 0xefef
 #define TLSEXT_SIGALG_gostr34102001_gostr3411 0xeded
 
+#define TLSEXT_SIGALG_sm2sig_sm3 0x0708
 #define TLSEXT_SIGALG_ed25519 0x0807
 #define TLSEXT_SIGALG_ed448 0x0808
 #define TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256 0x081a
@@ -2265,6 +2266,7 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512_name "gost2012_512"
 #define TLSEXT_SIGALG_gostr34102001_gostr3411_name "gost2001_gost94"
 
+#define TLSEXT_SIGALG_sm2sig_sm3_name "sm2sig_sm3"
 #define TLSEXT_SIGALG_ed25519_name "ed25519"
 #define TLSEXT_SIGALG_ed448_name "ed448"
 #define TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256_name "ecdsa_brainpoolP256r1tls13_sha256"

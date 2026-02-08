@@ -40,10 +40,11 @@ static SSL_CTX *create_server_ctx(void);
 static int qc_init(SSL *qconn, BIO_ADDR *dst_addr);
 
 /* The ssltrace test assumes some options are switched on/off */
-#if !defined(OPENSSL_NO_SSL_TRACE)                            \
-    && defined(OPENSSL_NO_BROTLI) && defined(OPENSSL_NO_ZSTD) \
-    && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_DH)    \
-    && !defined(OPENSSL_NO_ML_DSA) && !defined(OPENSSL_NO_ML_KEM)
+#if !defined(OPENSSL_NO_SSL_TRACE)                                \
+    && defined(OPENSSL_NO_BROTLI) && defined(OPENSSL_NO_ZSTD)     \
+    && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_DH)        \
+    && !defined(OPENSSL_NO_ML_DSA) && !defined(OPENSSL_NO_ML_KEM) \
+    && !defined(OPENSSL_NO_SM2)
 #define DO_SSL_TRACE_TEST
 #endif
 
