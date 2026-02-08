@@ -523,7 +523,7 @@ static const struct n_data {
         AT_INT, 1234567898, AT_INT, { .i = 0xbadc0ded },
         /* MS CRT can't handle this one, snprintf() causes access violation. */
         .skip_libc_ret_check = true, .exp_ret = -1 },
-#endif /* OPENSSL_NO_SLOW_TESTS */
+#endif
     { "%s|%n",
         "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ|",
         AT_INT, 63, AT_STR, { .s = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" } },
@@ -557,7 +557,7 @@ static const struct n_data {
         AT_PTRDIFF, sizeof(ptrdiff_t) == 8 ? 3036372530LL : -1258594766LL,
         AT_STR, { .s = NULL }, AT_INT, { .i = 0xdead },
         .skip_libc_check = true, .exp_ret = -1 },
-#endif
+#endif /* OPENSSL_NO_SLOW_TESTS */
 };
 
 static int test_n(int i)
