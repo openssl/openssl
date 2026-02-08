@@ -1101,6 +1101,21 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         params[0] = OSSL_PARAM_construct_octet_string(
             OSSL_CIPHER_PARAM_AEAD_MAC_KEY, ptr, sz);
         break;
+    case EVP_CTRL_TLSTREE: {
+        if (arg < 0 || arg > 1) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
+            return -1;
+        }
+
+        static uint64_t sequence;
+        sequence = 0;
+        for (size_t j = 0; j < sizeof(sequence); ++j)
+            sequence = ((uint8_t *)ptr)[j] + (sequence << 8);
+        sequence -= arg;
+
+        params[0] = OSSL_PARAM_construct_uint64(OSSL_CIPHER_PARAM_TLSTREE, &sequence);
+        break;
+    }
     }
 
     if (set_params)
