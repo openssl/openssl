@@ -188,6 +188,7 @@ will be allowed but the desired configuration will B<not> be used.
 
  [openssl_init]
  oid_section = oids
+ stbl_section = string_table
  providers = providers
  alg_section = evp_properties
  ssl_conf = ssl_configuration
@@ -195,6 +196,9 @@ will be allowed but the desired configuration will B<not> be used.
 
  [oids]
  ... new oids here ...
+
+ [string_table]
+ ... string table entries here ...
 
  [providers]
  ... provider stuff here ...
@@ -238,6 +242,58 @@ will output:
  0:d=0  hl=2 l=   4 prim: OBJECT            :newoid1
 
 showing that the OID "newoid1" has been added as "1.2.3.4.1".
+
+=head2 ASN.1 String Table Configuration
+
+The name B<stbl_section> in the initialization section names the section
+containing ASN.1 string table entries. This allows customization of the
+minimum and maximum sizes, as well as the permitted character types, for
+various ASN.1 string types used in X.509 certificates.
+
+Each entry in the section has the form:
+
+ oid_name = min:N, max:N, mask:XXX, flags:YYY
+
+where I<oid_name> is the short or long name of an ASN.1 object identifier.
+The parameters are:
+
+=over 4
+
+=item B<min>
+
+The minimum length of the string (default: -1, meaning no minimum).
+
+=item B<max>
+
+The maximum length of the string (default: -1, meaning no maximum).
+
+=item B<mask>
+
+The permitted character types, specified as one or more ASN.1 string type names
+separated by C<|>. Valid names include:
+B<UTF8>, B<UTF8String>, B<BMP>, B<BMPSTRING>, B<PRINTABLE>, B<PRINTABLESTRING>,
+B<IA5>, B<IA5STRING>, B<T61>, B<T61STRING>, B<TELETEXSTRING>,
+B<VISIBLE>, B<VISIBLESTRING>, B<UNIV>, B<UNIVERSALSTRING>,
+B<NUMERIC>, B<NUMERICSTRING>, B<GENSTR>, B<GeneralString>,
+and B<DIR> (for directory string types). Names are case-insensitive, except
+for B<DIR> which is case-sensitive.
+
+=item B<flags>
+
+Optional flags. The value B<nomask> means no mask is enforced, and B<none>
+clears all flags.
+
+=back
+
+For example, to allow longer common names:
+
+ openssl_conf = openssl_init
+
+ [openssl_init]
+ stbl_section = string_table
+
+ [string_table]
+ commonName = min:1, max:128
 
 =head2 Provider Configuration
 
@@ -533,7 +589,7 @@ L<x509v3_config(5)>.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
