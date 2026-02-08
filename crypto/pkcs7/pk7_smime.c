@@ -185,7 +185,7 @@ static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si)
     int i;
     STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
     PKCS7_SIGNER_INFO *sitmp;
-    ASN1_OCTET_STRING *osdig = NULL;
+    const ASN1_OCTET_STRING *osdig = NULL;
     sinfos = PKCS7_get_signer_info(p7);
     for (i = 0; i < sk_PKCS7_SIGNER_INFO_num(sinfos); i++) {
         sitmp = sk_PKCS7_SIGNER_INFO_value(sinfos, i);

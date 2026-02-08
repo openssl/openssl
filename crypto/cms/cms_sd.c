@@ -141,7 +141,7 @@ static int cms_copy_messageDigest(CMS_ContentInfo *cms, CMS_SignerInfo *si)
 
     sinfos = CMS_get0_SignerInfos(cms);
     for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
-        ASN1_OCTET_STRING *messageDigest;
+        const ASN1_OCTET_STRING *messageDigest;
 
         sitmp = sk_CMS_SignerInfo_value(sinfos, i);
         if (sitmp == si)
@@ -1387,7 +1387,7 @@ int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
 
 int CMS_SignerInfo_verify_ex(CMS_SignerInfo *si, BIO *chain, BIO *data)
 {
-    ASN1_OCTET_STRING *os = NULL;
+    const ASN1_OCTET_STRING *os = NULL;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
     EVP_PKEY_CTX *pkctx = NULL;
     int r = -1;
