@@ -1,8 +1,8 @@
 Running with Valgrind
 =====================
 
-OpenSSL 4.0 no longer arms `OPENSSL_cleanup()` function as `atexi(3)`
-handler. So unless application calls `OPENSSL_cleanup()` valgrind and
+OpenSSL 4.0 no longer arms `OPENSSL_cleanup()` function as an `atexit(3)`
+handler. So unless the application explicitly calls `OPENSSL_cleanup()` valgrind and
 similar memory leak detectors may report `still reachable` memory blocks
 as memory leak. Example of valgrind report reads as follows:
 
