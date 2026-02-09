@@ -68,7 +68,7 @@ If changing application source code is not an option, then you need
 to use a valgrind suppression file [1]. The suppression file for
 openssl is shipped with OpenSSL sources. It is found at
 `$OPENSSL_SRCS/util/valgrind.suppressions`. To use it just add
-`--suppression` option to valgrind command:
+`--suppression` option to the valgrind command:
 `valgrind --suppressions=`OPENSSL_SRCS/util/valgrind.suppression ...`
 For `pkeyread` the command and output reads as follows:
 
