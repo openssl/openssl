@@ -65,7 +65,7 @@ application call `OPENSSL_cleanup()` directly.
 The only remaining concern is the valgrind report itself, because it may
 cause disruption in environments where test automation is deployed.
 If changing application source code is not an option, then you need
-to use valgrind suppression file [1]. The suppression file for
+to use a valgrind suppression file [1]. The suppression file for
 openssl is shipped with OpenSSL sources. It is found at
 `$OPENSSL_SRCS/util/valgrind.suppressions`. To use it just add
 `--suppression` option to valgrind command:
