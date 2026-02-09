@@ -104,6 +104,7 @@ struct evp_keymgmt_st {
 
     /* Constructor(s), destructor, information */
     OSSL_FUNC_keymgmt_new_fn *new;
+    OSSL_FUNC_keymgmt_new_ex_fn *new_ex;
     OSSL_FUNC_keymgmt_free_fn *free;
     OSSL_FUNC_keymgmt_get_params_fn *get_params;
     OSSL_FUNC_keymgmt_gettable_params_fn *gettable_params;

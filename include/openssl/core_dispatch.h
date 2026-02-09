@@ -663,6 +663,8 @@ OSSL_CORE_MAKE_FUNC(void, rand_clear_seed,
 /* Basic key object creation */
 #define OSSL_FUNC_KEYMGMT_NEW 1
 OSSL_CORE_MAKE_FUNC(void *, keymgmt_new, (void *provctx))
+#define OSSL_FUNC_KEYMGMT_NEW_EX 17
+OSSL_CORE_MAKE_FUNC(void *, keymgmt_new_ex, (void *provctx, const OSSL_PARAM params[]))
 
 /* Generation, a more complex constructor */
 #define OSSL_FUNC_KEYMGMT_GEN_INIT 2
