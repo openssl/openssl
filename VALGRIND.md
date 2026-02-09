@@ -62,7 +62,7 @@ considered as optimization to save CPU cycles, because the OS is going
 to reclaim memory way faster when the application exits than making the
 application call `OPENSSL_cleanup()` directly.
 
-The only remaining concern is valgrind report itself, because it may
+The only remaining concern is the valgrind report itself, because it may
 cause disruption in environments where test automation is deployed.
 If changing application source code is not an option, then you need
 to use valgrind suppression file [1]. The suppression file for
