@@ -97,10 +97,8 @@ int EVP_PBE_CipherInit_ex(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
     ASN1_TYPE *param, EVP_CIPHER_CTX *ctx, int en_de,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
-    const EVP_CIPHER *cipher = NULL;
-    EVP_CIPHER *cipher_fetch = NULL;
-    const EVP_MD *md = NULL;
-    EVP_MD *md_fetch = NULL;
+    EVP_CIPHER *cipher = NULL;
+    EVP_MD *md = NULL;
     int ret = 0, cipher_nid, md_nid;
     EVP_PBE_KEYGEN_EX *keygen_ex;
     EVP_PBE_KEYGEN *keygen;
@@ -125,10 +123,7 @@ int EVP_PBE_CipherInit_ex(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 
     if (cipher_nid != -1) {
         (void)ERR_set_mark();
-        cipher = cipher_fetch = EVP_CIPHER_fetch(libctx, OBJ_nid2sn(cipher_nid), propq);
-        /* Fallback to legacy method */
-        if (cipher == NULL)
-            cipher = EVP_get_cipherbynid(cipher_nid);
+        cipher = EVP_CIPHER_fetch(libctx, OBJ_nid2sn(cipher_nid), propq);
         if (cipher == NULL) {
             (void)ERR_clear_last_mark();
             ERR_raise_data(ERR_LIB_EVP, EVP_R_UNKNOWN_CIPHER,
@@ -140,10 +135,7 @@ int EVP_PBE_CipherInit_ex(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 
     if (md_nid != -1) {
         (void)ERR_set_mark();
-        md = md_fetch = EVP_MD_fetch(libctx, OBJ_nid2sn(md_nid), propq);
-        /* Fallback to legacy method */
-        if (md == NULL)
-            md = EVP_get_digestbynid(md_nid);
+        md = EVP_MD_fetch(libctx, OBJ_nid2sn(md_nid), propq);
 
         if (md == NULL) {
             (void)ERR_clear_last_mark();
@@ -160,8 +152,8 @@ int EVP_PBE_CipherInit_ex(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
         ret = keygen(ctx, pass, passlen, param, cipher, md, en_de);
 
 err:
-    EVP_CIPHER_free(cipher_fetch);
-    EVP_MD_free(md_fetch);
+    EVP_CIPHER_free(cipher);
+    EVP_MD_free(md);
 
     return ret;
 }

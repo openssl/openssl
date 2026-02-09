@@ -1065,8 +1065,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
 {
     ASN1_OCTET_STRING *os;
     EVP_MD_CTX *mdc_tmp, *mdc;
-    const EVP_MD *md;
-    EVP_MD *fetched_md = NULL;
+    EVP_MD *md = NULL;
     int ret = 0, i;
     int md_type;
     STACK_OF(X509_ATTRIBUTE) *sk;
@@ -1140,12 +1139,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
         }
 
         (void)ERR_set_mark();
-        fetched_md = EVP_MD_fetch(libctx, OBJ_nid2sn(md_type), propq);
-
-        if (fetched_md != NULL)
-            md = fetched_md;
-        else
-            md = EVP_get_digestbynid(md_type);
+        md = EVP_MD_fetch(libctx, OBJ_nid2sn(md_type), propq);
 
         if (md == NULL || !EVP_VerifyInit_ex(mdc_tmp, md, NULL)) {
             (void)ERR_clear_last_mark();
@@ -1181,7 +1175,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
 err:
     OPENSSL_free(abuf);
     EVP_MD_CTX_free(mdc_tmp);
-    EVP_MD_free(fetched_md);
+    EVP_MD_free(md);
     return ret;
 }
 
