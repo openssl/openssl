@@ -105,41 +105,19 @@ Average time per pem(dh) call: 506329.113924us
 ```
 
 The valgrind output above reports there are 239,521 of reachable memory
-when process exits. The memory is accounted to missing call
-to`OPENSSL_cleanup()`before process exits. Indeed adding a call to
-`OPENSSL_cleanup()` just before `main()` exits makes valgrind happy:
+when process exits. OpenSSL project sees that memory as not a memory leak.
+The process is going to exit anyway and OS will reclaim that memory way
+faster than `OPENSSL_cleanup()` making calls to libc `free()`. Also
+call `to OPENSSL_cleanup()` is discouraged when libcrypto is being linked
+with process to satisfy more than one dependency paths. If it is the
+case then call to `OPENSS_cleanup()` may lead to spurious application
+crashes during exit.
 
-```shell
-# valgrind ./pkeyread -f pem -k dh 8
-==280595== Memcheck, a memory error detector
-==280595== Copyright (C) 2002-2024, and GNU GPL'd, by Julian Seward et al.
-==280595== Using Valgrind-3.24.0 and LibVEX; rerun with -h for copyright info
-==280595== Command: ./pkeyread -f pem -k dh 8
-==280595==
-Average time per pem(dh) call: 493827.160494us
-==280595==
-==280595== HEAP SUMMARY:
-==280595==     in use at exit: 0 bytes in 0 blocks
-==280595==   total heap usage: 22,239 allocs, 22,239 frees, 4,185,044 bytes allocated
-==280595==
-==280595== All heap blocks were freed -- no leaks are possible
-==280595==
-==280595== For lists of detected and suppressed errors, rerun with: -s
-==280595== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
-
-```
-
-It is matter of opinion whether a missing call to `OPENSSL_cleanup()` is
-is an error or not. For example not calling `OPENSSL_cleanup()` can be
-considered as optimization to save CPU cycles, because the OS is going
-to reclaim memory way faster when the application exits than making the
-application call `OPENSSL_cleanup()` directly.
-
-The only remaining concern is the valgrind report itself, because it may
-cause disruption in environments where test automation is deployed.
-If changing application source code is not an option, then you need
-to use a valgrind suppression file [1]. The suppression file for
-openssl is shipped with OpenSSL sources. It is found at
+If memory leaks caused by _still reachable memory_ are still issue
+in your build/ci environment, then preferred way is to suppress
+those reports using suppression file [1] instead of changing exiting
+code by adding call to `OPENSSL_cleanup()`.  The suppression file for
+OpenSSL is shipped with OpenSSL sources. It is found at
 `$OPENSSL_SRCS/util/valgrind.suppressions`. To use it just add
 `--suppression` option to the valgrind command:
 `valgrind --suppressions=`OPENSSL_SRCS/util/valgrind.suppression ...`
