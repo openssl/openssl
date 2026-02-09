@@ -150,6 +150,6 @@ static const PROV_GCM_HW aes_ppc_gcm = {
 
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
 {
-    return PPC_AES_GCM_CAPABLE ? &aes_ppc_gcm : &aes_gcm;
+    return (OPENSSL_ppccap_P & PPC_MADD300) ? &aes_ppc_gcm : &aes_gcm;
 }
 
