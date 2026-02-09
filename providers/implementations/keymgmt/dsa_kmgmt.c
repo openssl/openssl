@@ -29,6 +29,7 @@
 #include "internal/threads_common.h"
 
 static OSSL_FUNC_keymgmt_new_fn dsa_newdata;
+static OSSL_FUNC_keymgmt_new_ex_fn dsa_newdata_ex;
 static OSSL_FUNC_keymgmt_free_fn dsa_freedata;
 static OSSL_FUNC_keymgmt_gen_init_fn dsa_gen_init;
 static OSSL_FUNC_keymgmt_gen_set_template_fn dsa_gen_set_template;
@@ -120,7 +121,7 @@ static int dsa_key_todata(DSA *dsa, OSSL_PARAM_BLD *bld, OSSL_PARAM *pubkey,
     return 1;
 }
 
-static void *dsa_newdata(void *provctx)
+static void *dsa_newdata_ex(void *provctx, const OSSL_PARAM params[])
 {
     DSA *dsa = NULL;
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
@@ -129,13 +130,17 @@ static void *dsa_newdata(void *provctx)
         return NULL;
 
 #ifndef FIPS_MODULE
+    const OSSL_PARAM *p = NULL;
+
+    if (params != NULL)
+        p = OSSL_PARAM_locate_const(params, "legacy-object");
+
     /*
      * This only works because we are in the default provider. We are not
      * normally allowed to pass complex objects across the provider boundary
      * like this.
      */
-    dsa = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_LOW_LEVEL_OBJECT, libctx);
-    if (dsa != NULL) {
+    if (p != NULL && OSSL_PARAM_get_octet_ptr(p, (const void **)&dsa, NULL) && dsa != NULL) {
         if (ossl_lib_ctx_get_concrete(ossl_dsa_get0_libctx(dsa)) != ossl_lib_ctx_get_concrete(libctx))
             dsa = NULL;
         else if (!DSA_up_ref(dsa))
@@ -149,6 +154,11 @@ static void *dsa_newdata(void *provctx)
         dsa = ossl_dsa_new(libctx);
 
     return dsa;
+}
+
+static void *dsa_newdata(void *provctx)
+{
+    return dsa_newdata_ex(provctx, NULL);
 }
 
 static void dsa_freedata(void *keydata)
@@ -732,6 +742,7 @@ static void *dsa_dup(const void *keydata_from, int selection)
 
 const OSSL_DISPATCH ossl_dsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))dsa_newdata },
+    { OSSL_FUNC_KEYMGMT_NEW_EX, (void (*)(void))dsa_newdata_ex },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))dsa_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE, (void (*)(void))dsa_gen_set_template },
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))dsa_gen_set_params },

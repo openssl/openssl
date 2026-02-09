@@ -31,6 +31,7 @@
 #include <openssl/param_build.h>
 #include <openssl/encoder.h>
 #include <openssl/core_names.h>
+#include <openssl/provider.h>
 
 #include "internal/numbers.h" /* includes SIZE_MAX */
 #include "internal/ffc.h"
@@ -1860,6 +1861,8 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
 #ifndef FIPS_MODULE
     if (pk->pkey.ptr != NULL) {
         OP_CACHE_ELEM *op;
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+        OSSL_PARAM *p = NULL;
 
         /*
          * If the legacy "origin" hasn't changed since last time, we try
@@ -1898,15 +1901,19 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
         if (!EVP_KEYMGMT_is_a(tmp_keymgmt, OBJ_nid2sn(pk->type)))
             goto end;
 
-        /* We attempt to pass the low-level object to the keymgmt via a thread
-         * local. This will actually only succeed in the case that we are using
-         * the default provider. Otherwise it will export in the normal way.
-         */
-        if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_LOW_LEVEL_OBJECT, libctx, pk->pkey.ptr))
-            goto end;
-        keydata = evp_keymgmt_newdata(tmp_keymgmt);
-        if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_LOW_LEVEL_OBJECT, libctx, NULL))
-            goto end;
+        if (strcmp(OSSL_PROVIDER_get0_name(EVP_KEYMGMT_get0_provider(tmp_keymgmt)), "default") == 0) {
+            /*
+             * We attempt to pass the low-level object to the keymgmt. We only
+             * support this via an internal use only parameter. We break the
+             * normal rules that prevent passing complex objects via OSSL_PARAM,
+             * but this is only for the default provider where we can get away
+             * with this. This is necessary here for backwards compatibility
+             * reasons.
+             */
+            params[0] = OSSL_PARAM_construct_octet_ptr("legacy-object", &pk->pkey.ptr, sizeof(pk->pkey.ptr));
+            p = params;
+        }
+        keydata = evp_keymgmt_newdata(tmp_keymgmt, p);
         if (keydata == NULL)
             goto end;
 

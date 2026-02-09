@@ -38,6 +38,7 @@
 #endif
 
 static OSSL_FUNC_keymgmt_new_fn ec_newdata;
+static OSSL_FUNC_keymgmt_new_ex_fn ec_newdata_ex;
 static OSSL_FUNC_keymgmt_gen_init_fn ec_gen_init;
 static OSSL_FUNC_keymgmt_gen_set_template_fn ec_gen_set_template;
 static OSSL_FUNC_keymgmt_gen_set_params_fn ec_gen_set_params;
@@ -275,7 +276,7 @@ static ossl_inline int otherparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *t
         ecdh_cofactor_mode);
 }
 
-static void *ec_newdata(void *provctx)
+static void *ec_newdata_ex(void *provctx, const OSSL_PARAM params[])
 {
     EC_KEY *eckey = NULL;
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
@@ -284,13 +285,17 @@ static void *ec_newdata(void *provctx)
         return NULL;
 
 #ifndef FIPS_MODULE
+    const OSSL_PARAM *p = NULL;
+
+    if (params != NULL)
+        p = OSSL_PARAM_locate_const(params, "legacy-object");
+
     /*
      * This only works because we are in the default provider. We are not
      * normally allowed to pass complex objects across the provider boundary
      * like this.
      */
-    eckey = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_LOW_LEVEL_OBJECT, libctx);
-    if (eckey != NULL) {
+    if (p != NULL && OSSL_PARAM_get_octet_ptr(p, (const void **)&eckey, NULL) && eckey != NULL) {
 #ifdef OPENSSL_NO_EC_EXPLICIT_CURVES
         if (EC_GROUP_check_named_curve(EC_KEY_get0_group(eckey), 0, NULL) == NID_undef)
             return NULL;
@@ -306,6 +311,11 @@ static void *ec_newdata(void *provctx)
         eckey = EC_KEY_new_ex(libctx, NULL);
 
     return eckey;
+}
+
+static void *ec_newdata(void *provctx)
+{
+    return ec_newdata_ex(provctx, NULL);
 }
 
 #ifndef FIPS_MODULE
@@ -1440,6 +1450,7 @@ static void *ec_dup(const void *keydata_from, int selection)
 
 const OSSL_DISPATCH ossl_ec_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))ec_newdata },
+    { OSSL_FUNC_KEYMGMT_NEW_EX, (void (*)(void))ec_newdata_ex },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))ec_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE,
         (void (*)(void))ec_gen_set_template },

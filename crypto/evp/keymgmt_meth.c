@@ -88,6 +88,10 @@ static void *keymgmt_from_algorithm(int name_id,
             if (keymgmt->new == NULL)
                 keymgmt->new = OSSL_FUNC_keymgmt_new(fns);
             break;
+        case OSSL_FUNC_KEYMGMT_NEW_EX:
+            if (keymgmt->new_ex == NULL)
+                keymgmt->new_ex = OSSL_FUNC_keymgmt_new_ex(fns);
+            break;
         case OSSL_FUNC_KEYMGMT_GEN_INIT:
             if (keymgmt->gen_init == NULL)
                 keymgmt->gen_init = OSSL_FUNC_keymgmt_gen_init(fns);
@@ -236,6 +240,7 @@ static void *keymgmt_from_algorithm(int name_id,
      */
     if (keymgmt->free == NULL
         || (keymgmt->new == NULL
+            && keymgmt->new_ex == NULL
             && keymgmt->gen == NULL
             && keymgmt->load == NULL)
         || keymgmt->has == NULL
@@ -365,18 +370,20 @@ int EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
 /*
  * Internal API that interfaces with the method function pointers
  */
-void *evp_keymgmt_newdata(const EVP_KEYMGMT *keymgmt)
+void *evp_keymgmt_newdata(const EVP_KEYMGMT *keymgmt, const OSSL_PARAM params[])
 {
     void *provctx = ossl_provider_ctx(EVP_KEYMGMT_get0_provider(keymgmt));
 
     /*
-     * 'new' is currently mandatory on its own, but when new
-     * constructors appear, it won't be quite as mandatory,
-     * so we have a check for future cases.
+     * Some providers may have a new_ex which accepts parameters. Otherwise we
+     * fall back to the old "new" which doesn't accept params.
      */
-    if (keymgmt->new == NULL)
-        return NULL;
-    return keymgmt->new(provctx);
+    if (keymgmt->new_ex == NULL) {
+        if (keymgmt->new == NULL)
+            return NULL;
+        return keymgmt->new(provctx);
+    }
+    return keymgmt->new_ex(provctx, params);
 }
 
 void evp_keymgmt_freedata(const EVP_KEYMGMT *keymgmt, void *keydata)

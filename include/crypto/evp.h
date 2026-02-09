@@ -555,7 +555,7 @@ const char *evp_keymgmt_util_query_operation_name(EVP_KEYMGMT *keymgmt,
 /*
  * KEYMGMT provider interface functions
  */
-void *evp_keymgmt_newdata(const EVP_KEYMGMT *keymgmt);
+void *evp_keymgmt_newdata(const EVP_KEYMGMT *keymgmt, const OSSL_PARAM params[]);
 void evp_keymgmt_freedata(const EVP_KEYMGMT *keymgmt, void *keyddata);
 int evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt,
     void *keydata, OSSL_PARAM params[]);
