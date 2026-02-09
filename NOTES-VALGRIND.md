@@ -79,7 +79,7 @@ handler. So unless the application explicitly calls `OPENSSL_cleanup()` valgrind
 similar memory leak detectors may report `still reachable` memory blocks
 as memory leaks. An example of a valgrind report reads as follows:
 
-```output
+```shell
 # valgrind ./pkeyread -f pem -k dh 8
 ==280439== Memcheck, a memory error detector
 ==280439== Copyright (C) 2002-2024, and GNU GPL'd, by Julian Seward et al.
@@ -109,7 +109,7 @@ when process exits. The memory is accounted to missing call
 to`OPENSSL_cleanup()`before process exits. Indeed adding a call to
 `OPENSSL_cleanup()` just before `main()` exits makes valgrind happy:
 
-```output
+```shell
 # valgrind ./pkeyread -f pem -k dh 8
 ==280595== Memcheck, a memory error detector
 ==280595== Copyright (C) 2002-2024, and GNU GPL'd, by Julian Seward et al.
@@ -145,7 +145,7 @@ openssl is shipped with OpenSSL sources. It is found at
 `valgrind --suppressions=`OPENSSL_SRCS/util/valgrind.suppression ...`
 For `pkeyread` the command and output reads as follows:
 
-```output
+```shell
 # valgrind --suppressions=$OPENSSL_SRCS/util/valgrind.suppression  ./pkeyread -f pem -k dh 8
 ==280896== Memcheck, a memory error detector
 ==280896== Copyright (C) 2002-2024, and GNU GPL'd, by Julian Seward et al.
