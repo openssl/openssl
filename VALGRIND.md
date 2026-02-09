@@ -34,7 +34,7 @@ Average time per pem(dh) call: 506329.113924us
 The valgrind output above reports there are 239,521 of reachable memory
 when process exits. The memory is accounted to missing call
 to`OPENSSL_cleanup()`before process exits. Indeed adding a call to
-`OPENSSL\cleanup()` just before `main()` exits makes valgrind happy:
+`OPENSSL_cleanup()` just before `main()` exits makes valgrind happy:
 
 ```output
 # valgrind ./pkeyread -f pem -k dh 8
