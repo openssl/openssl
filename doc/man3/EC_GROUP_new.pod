@@ -22,7 +22,9 @@ EC_GROUP_get_curve_GFp,
 EC_GROUP_set_curve_GF2m,
 EC_GROUP_get_curve_GF2m,
 EC_get_builtin_curves,
-OSSL_EC_curve_nid2name -
+OSSL_EC_curve_nid2name,
+EC_curve_nid2nist,
+EC_curve_nist2nid -
 Functions for creating and destroying EC_GROUP objects
 
 =head1 SYNOPSIS
@@ -57,6 +59,8 @@ Functions for creating and destroying EC_GROUP objects
 
  size_t EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems);
  const char *OSSL_EC_curve_nid2name(int nid);
+ const char *EC_curve_nid2nist(int nid);
+ int EC_curve_nist2nid(const char *name);
 
 The following functions have been deprecated since OpenSSL 3.0, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
@@ -190,6 +194,20 @@ If I<group> is NULL nothing is done.
 
 OSSL_EC_curve_nid2name() converts a curve I<nid> into the corresponding name.
 
+EC_curve_nid2nist() converts a curve I<nid> into the corresponding NIST name.
+NIST names are standardized curve names defined by NIST, such as "P-192", "P-224",
+"P-256", "P-384", and "P-521" for prime field curves, and "B-163", "B-233",
+"B-283", "B-409", "B-571", "K-163", "K-233", "K-283", "K-409", and "K-571" for
+binary field curves.
+If the curve specified by I<nid> does not have a NIST name, this function returns
+NULL.
+
+EC_curve_nist2nid() converts a NIST curve name I<name> to the corresponding NID.
+The I<name> argument should be a string containing a NIST curve name such as
+"P-256" or "B-163".
+If the name does not correspond to a known NIST curve, this function returns
+NID_undef.
+
 =head1 RETURN VALUES
 
 All EC_GROUP_new* functions return a pointer to the newly constructed group, or
@@ -202,6 +220,12 @@ EC_GROUP_set_curve_GFp(), EC_GROUP_get_curve_GFp(), EC_GROUP_set_curve_GF2m(),
 EC_GROUP_get_curve_GF2m() return 1 on success or 0 on error.
 
 OSSL_EC_curve_nid2name() returns a character string constant, or NULL on error.
+
+EC_curve_nid2nist() returns a pointer to a constant string containing the NIST
+name for the specified curve, or NULL if the curve does not have a NIST name.
+
+EC_curve_nist2nid() returns the NID of the curve with the given NIST name, or
+NID_undef if the name does not correspond to a known NIST curve.
 
 =head1 SEE ALSO
 
