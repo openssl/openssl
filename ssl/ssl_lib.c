@@ -964,6 +964,7 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
 #endif
 
     s->ssl_pkey_num = SSL_PKEY_NUM + ctx->sigalg_list_len;
+    s->dtls13_process_hello = 0;
     return ssl;
 cerr:
     ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);

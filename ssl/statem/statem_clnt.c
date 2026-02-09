@@ -929,8 +929,7 @@ WORK_STATE ossl_statem_client_post_work(SSL_CONNECTION *s, WORK_STATE wst)
             /* SSLfatal() already called */
             return WORK_ERROR;
         }
-        if (!SSL_CONNECTION_IS_DTLS13(s)
-            && !ssl->method->ssl3_enc->change_cipher_state(s,
+        if (!ssl->method->ssl3_enc->change_cipher_state(s,
                 SSL3_CHANGE_CIPHER_CLIENT_WRITE)) {
             /* SSLfatal() already called */
             return WORK_ERROR;
@@ -1936,7 +1935,8 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
                 SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_READ)) {
             /* SSLfatal() already called */
             goto err;
-        }
+        } else
+            s->dtls13_process_hello = 1;
     }
 
     OPENSSL_free(extensions);
