@@ -1925,6 +1925,9 @@ struct ssl_connection_st {
     size_t client_cert_type_len;
     unsigned char *server_cert_type;
     size_t server_cert_type_len;
+
+    /* DTLS 1.3 needs to know when we have processed the Client/Server Hello */
+    int dtls13_process_hello;
 };
 
 /*

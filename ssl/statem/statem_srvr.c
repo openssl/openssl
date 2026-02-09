@@ -1227,7 +1227,8 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
                     SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_READ)) {
                 /* SSLfatal() already called */
                 return WORK_ERROR;
-            }
+            } else
+                s->dtls13_process_hello = 1;
             /*
              * We don't yet know whether the next record we are going to receive
              * is an unencrypted alert, an encrypted alert, or an encrypted

@@ -2225,6 +2225,7 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     NULL,
     NULL,
     NULL,
+    NULL,
     tls_alloc_buffers,
     tls_free_buffers
 };
