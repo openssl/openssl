@@ -56,11 +56,11 @@ Average time per pem(dh) call: 493827.160494us
 
 ```
 
-It is matter of opinion whether missing call to `OPENSSL_clenaup()` is
-is error or not. For example not calling `OPENSSL_cleanup()` can be
-considered as optimization to save CPU cycles, because OS is going
-to reclaim memory way faster when application exits than making the
-application to call `free()` from libc.
+It is matter of opinion whether a missing call to `OPENSSL_cleanup()` is
+is an error or not. For example not calling `OPENSSL_cleanup()` can be
+considered as optimization to save CPU cycles, because the OS is going
+to reclaim memory way faster when the application exits than making the
+application call `OPENSSL_cleanup()` directly.
 
 The only remaining concern is valgrind report itself, because it may
 cause disruption in environments where test automation is deployed.
