@@ -584,8 +584,7 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
         }
     } else if ((md = EVP_MD_fetch(cert->libctx, OBJ_nid2sn(mdnid),
                     cert->propq))
-            == NULL
-        && (md = (EVP_MD *)EVP_get_digestbynid(mdnid)) == NULL) {
+        == NULL) {
         ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
         return NULL;
     }
