@@ -60,6 +60,14 @@ OpenSSL 4.0
 
    *Bob Beck*
 
+ * Added AKID verification checks when X509_V_FLAG_X509_STRICT is set.
+   Raise X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER when AKID is not present.
+   Raise X509_V_ERR_EMPTY_AUTHORITY_KEY_IDENTIFIER when AKID has no attributes.
+   Raise X509_V_ERR_AKID_ISSUER_SERIAL_NOT_PAIRED when authorityCertIssuer and
+   authorityCertSerialNumber fields are not paired.
+
+   *Daniel Kubec*
+
  * Support of deprecated elliptic curves in TLS according to RFC 8422 was
    disabled at compile-time by default. To enable it, use the
    `enable-tls-deprecated-ec` compilation option.

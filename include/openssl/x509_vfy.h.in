@@ -333,6 +333,10 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define X509_V_ERR_OCSP_NO_RESPONSE 100
 #define X509_V_ERR_CRL_VERIFY_FAILED 101
 
+/* additional AKID errors */
+#define X509_V_ERR_EMPTY_AUTHORITY_KEY_IDENTIFIER 102
+#define X509_V_ERR_AKID_ISSUER_SERIAL_NOT_PAIRED 103
+
 /* Certificate verify flags */
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #define X509_V_FLAG_CB_ISSUER_CHECK 0x0 /* Deprecated */
