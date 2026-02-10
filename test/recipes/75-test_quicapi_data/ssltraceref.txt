@@ -19,8 +19,10 @@ Header:
           000f - 01 02 04 04 80 0c 00 00-05 04 80 08 00 00 06   ...............
           001e - 04 80 08 00 00 07 04 80-08 00 00 08 02 40 64   .............@d
           002d - 09 02 40 64                                    ..@d
-        extension_type=supported_groups(10), length=18
+        extension_type=supported_groups(10), length=22
           X25519MLKEM768 (4588)
+          SecP256r1MLKEM768 (4587)
+          curveSM2MLKEM768 (4590)
           ecdh_x25519 (29)
           secp256r1 (P-256) (23)
           ecdh_x448 (30)
@@ -52,6 +54,7 @@ Header:
           rsa_pkcs1_sha256 (0x0401)
           rsa_pkcs1_sha384 (0x0501)
           rsa_pkcs1_sha512 (0x0601)
+          sm2sig_sm3 (0x0708)
         extension_type=supported_versions(43), length=3
           TLS 1.3 (772)
         extension_type=psk_key_exchange_modes(45), length=2

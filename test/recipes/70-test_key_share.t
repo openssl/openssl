@@ -148,6 +148,15 @@ SKIP: {
     #Test 7: An acceptable key_share after a list of non-acceptable ones should
     #succeed
     $proxy->clear();
+    # The test assumes that one of the client initial keyshares includes
+    # either X25519 if ECX is enabled or P-256 otherwise.  While the default
+    # groups have been adjusted to make it true for now, the test was brittle,
+    # best to set the client groups explicitly.
+    if (disabled("ecx")) {
+        $proxy->clientflags("-groups P-256");
+    } else {
+        $proxy->clientflags("-groups X25519:P-256");
+    }
     $testtype = ACCEPTABLE_AT_END;
     $proxy->start();
     ok(TLSProxy::Message->success(), "Acceptable key_share at end of list");

@@ -16,6 +16,7 @@
 #include <openssl/params.h>
 #include "internal/nelem.h"
 #include "internal/tlsgroups.h"
+#include "internal/tlssigalgs.h"
 #include "prov/providercommon.h"
 #include "internal/e_os.h"
 #include "crypto/ml_kem.h"
@@ -91,6 +92,8 @@ static const TLS_GROUP_CONSTANTS group_list[] = {
     /* 41 */ { OSSL_TLS_GROUP_ID_X25519MLKEM768, ML_KEM_768_SECBITS, TLS1_3_VERSION, 0, -1, -1, 1 },
     /* 42 */ { OSSL_TLS_GROUP_ID_SecP256r1MLKEM768, ML_KEM_768_SECBITS, TLS1_3_VERSION, 0, -1, -1, 1 },
     /* 43 */ { OSSL_TLS_GROUP_ID_SecP384r1MLKEM1024, ML_KEM_1024_SECBITS, TLS1_3_VERSION, 0, -1, -1, 1 },
+    /* 44 */ { OSSL_TLS_GROUP_ID_curveSM2, 128, TLS1_3_VERSION, 0, -1, -1, 0 },
+    /* 45 */ { OSSL_TLS_GROUP_ID_curveSM2MLKEM768, ML_KEM_768_SECBITS, TLS1_3_VERSION, 0, -1, -1, 1 },
 };
 
 #define TLS_GROUP_ENTRY(tlsname, realname, algorithm, idx)              \
@@ -187,6 +190,12 @@ static const OSSL_PARAM param_group_list[][11] = {
     TLS_GROUP_ENTRY("brainpoolP256r1tls13", "brainpoolP256r1", "EC", 30),
     TLS_GROUP_ENTRY("brainpoolP384r1tls13", "brainpoolP384r1", "EC", 31),
     TLS_GROUP_ENTRY("brainpoolP512r1tls13", "brainpoolP512r1", "EC", 32),
+#ifndef OPENSSL_NO_SM2
+    TLS_GROUP_ENTRY("curveSM2", "SM2", "curveSM2", 44),
+#if !defined(OPENSSL_NO_ML_KEM)
+    TLS_GROUP_ENTRY("curveSM2MLKEM768", "", "curveSM2MLKEM768", 45),
+#endif
+#endif
 #endif
 #ifndef OPENSSL_NO_ML_KEM
     TLS_GROUP_ENTRY("SecP256r1MLKEM768", "", "SecP256r1MLKEM768", 42),
@@ -272,7 +281,8 @@ static int tls_group_capability(OSSL_CALLBACK *cb, void *arg)
 
 /* --------------------------------------------------------------- */
 
-#if !defined(OPENSSL_NO_ML_DSA)
+#if !defined(OPENSSL_NO_ML_DSA) \
+    || (!defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2) && !defined(OPENSSL_NO_SM3))
 
 typedef struct tls_sigalg_constants_st {
     unsigned int code_point;
@@ -283,10 +293,11 @@ typedef struct tls_sigalg_constants_st {
     int max_dtls; /* Maximum DTLS version (or 0 for undefined) */
 } TLS_SIGALG_CONSTANTS;
 
-static const TLS_SIGALG_CONSTANTS sigalg_constants_list[3] = {
-    { 0x0904, 128, TLS1_3_VERSION, 0, -1, -1 },
-    { 0x0905, 192, TLS1_3_VERSION, 0, -1, -1 },
-    { 0x0906, 256, TLS1_3_VERSION, 0, -1, -1 },
+static const TLS_SIGALG_CONSTANTS sigalg_constants_list[] = {
+    { TLSEXT_SIGALG_mldsa44, 128, TLS1_3_VERSION, 0, -1, -1 },
+    { TLSEXT_SIGALG_mldsa65, 192, TLS1_3_VERSION, 0, -1, -1 },
+    { TLSEXT_SIGALG_mldsa87, 256, TLS1_3_VERSION, 0, -1, -1 },
+    { TLSEXT_SIGALG_sm2sig_sm3, 128, TLS1_3_VERSION, 0, -1, -1 },
 };
 
 #define TLS_SIGALG_ENTRY(tlsname, algorithm, oid, idx)               \
@@ -313,15 +324,20 @@ static const TLS_SIGALG_CONSTANTS sigalg_constants_list[3] = {
     }
 
 static const OSSL_PARAM param_sigalg_list[][10] = {
+#ifndef OPENSSL_NO_ML_DSA
     TLS_SIGALG_ENTRY("mldsa44", "ML-DSA-44", "2.16.840.1.101.3.4.3.17", 0),
     TLS_SIGALG_ENTRY("mldsa65", "ML-DSA-65", "2.16.840.1.101.3.4.3.18", 1),
     TLS_SIGALG_ENTRY("mldsa87", "ML-DSA-87", "2.16.840.1.101.3.4.3.19", 2),
+#endif
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2) && !defined(OPENSSL_NO_SM3)
+    TLS_SIGALG_ENTRY("sm2sig_sm3", "SM2", "1.2.156.10197.1 501", 3),
+#endif
 };
-#endif /* OPENSSL_NO_ML_DSA */
+#endif
 
 static int tls_sigalg_capability(OSSL_CALLBACK *cb, void *arg)
 {
-#if !defined(OPENSSL_NO_ML_DSA)
+#if defined(TLS_SIGALG_ENTRY)
     size_t i;
 
     for (i = 0; i < OSSL_NELEM(param_sigalg_list); i++)
