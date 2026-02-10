@@ -32,26 +32,38 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * New `SSL_get0_sigalg()` and `SSL_get0_shared_sigalg()` functions report the
+   TLS signature algorithm name and codepoint for the peer advertised and shared
+   algorithms respectively.  These supersede the existing `SSL_get_sigalgs()` and
+   `SSL_get_shared_sigalgs()` functions which are only a good for TLS 1.2.
+   The names reported are the IANA names, and are expected to consistently match
+   the names expected in `SignatureAlgorithms` configuration settings, see
+   `SSL_CONF_cmd(3)` for details.  Previously reported names were not always directly
+   usable or configurations, and were mostly OpenSSL-specific aliases that
+   rarely matched the official IANA codepoint names.
+
+   *Viktor Dukhovni*
+
  * FIPS self tests can now be deferred and run as needed when installing
-   the fips module with the -defer_tests option.
+   the fips module with the -`defer_tests` option.
 
    *Simo Sorce*
 
- * OPENSSL_cleanup() now runs in a global destructor, or not at all by default.
+ * `OPENSSL_cleanup()` now runs in a global destructor, or not at all by default.
 
-   OpenSSL_cleanup() will no longer by default free global objects when run from
+   `OpenSSL_cleanup()` will no longer by default free global objects when run from
    an application. Instead it sets a flag for a global destructor to do this after
    the process exits, and after subordinate libraries using OpenSSL have run their
-   destructors. If destructor support is not available, OpenSSL_cleanup() will do
+   destructors. If destructor support is not available, `OpenSSL_cleanup()` will do
    nothing, leaving the global objects to be cleaned up by the Operating System.
 
    *Bob Beck*
 
- * Made X509_ATTRIBUTE accessor functions const-correct. The functions
-   X509_ATTRIBUTE_get0_object(), X509_ATTRIBUTE_get0_type(), and
-   X509_ATTRIBUTE_get0_data() now accept `const X509_ATTRIBUTE *` and
-   return const pointers. Related PKCS12 functions PKCS12_get_attr_gen(),
-   PKCS12_get_attr(), and PKCS8_get_attr() have also been updated to
+ * Made `X509_ATTRIBUTE` accessor functions const-correct. The functions
+   `X509_ATTRIBUTE_get0_object()`, `X509_ATTRIBUTE_get0_type()`, and
+   `X509_ATTRIBUTE_get0_data()` now accept `const X509_ATTRIBUTE *` and
+   return const pointers. Related PKCS12 functions `PKCS12_get_attr_gen()`,
+   `PKCS12_get_attr()`, and `PKCS8_get_attr()` have also been updated to
    return `const ASN1_TYPE *`.
 
    *kovan*
@@ -70,7 +82,7 @@ OpenSSL 4.0
 
    *Shane Lontis*
 
- * OPENSSL_atexit() was removed.
+ * `OPENSSL_atexit()` was removed.
 
    *Bob Beck*
 
@@ -85,7 +97,7 @@ OpenSSL 4.0
    send an SSLv2 Client Hello. SSLv2 support itself was removed in version
    1.1.0, but there was still compatibility code for clients sending an SSLv2
    Client Hello. Since we no longer support SSLv2 Client Hello,
-   SSL_client_hello_isv2() is now deprecated and always returns 0.
+   `SSL_client_hello_isv2()` is now deprecated and always returns 0.
 
    *Kurt Roeckx*
 
@@ -139,7 +151,7 @@ OpenSSL 4.0
 
    *Beat Bolli*
 
- * Added ASN1_BIT_STRING_set1() to set a bit string to a value including
+ * Added `ASN1_BIT_STRING_set1()` to set a bit string to a value including
    the length in bytes and the number of unused bits.
 
    * Bob Beck *
@@ -148,7 +160,7 @@ OpenSSL 4.0
 
    *Bob Beck*
 
- * The ASN1_STRING_FLAG_X509_TIME define has been removed.
+ * The `ASN1_STRING_FLAG_X509_TIME` define has been removed.
 
    *Bob Beck*
 
@@ -173,18 +185,18 @@ OpenSSL 4.0
 
    *Igor Ustinov*
 
- * Added SSL_CTX_get0_alpn_protos() and SSL_get0_alpn_protos().
+ * Added `SSL_CTX_get0_alpn_protos()` and `SSL_get0_alpn_protos()`.
 
    *Daniel Kubec*
 
- * Enabled Server verification by default in `s_server` when option
-   verify_return_error is enabled.
+ * Enabled Server verification by default in `s_server` when the
+   `verify_return_error` option is enabled.
 
    *Ryan Hooper*
 
- * Fixed CRLs with invalid ASN1_TIME in invalidityDate extensions,
+ * Fixed CRLs with invalid `ASN1_TIME` in invalidityDate extensions,
    where verification incorrectly succeeded. Enforced proper
-   handling of ASN1_TIME validation results so that any CRL
+   handling of `ASN1_TIME` validation results so that any CRL
    containing invalid time fields is rejected immediately,
    preventing the error from propagating to verification.
 
@@ -204,7 +216,7 @@ OpenSSL 4.0
 
    *Milan Broz*, *Neil Horman*, *Norbert Pocs*
 
- * BIO_f_reliable() implementation was removed without replacement.
+ * `BIO_f_reliable()` implementation was removed without replacement.
    It was broken since 3.0 release without any complaints.
 
    *Tomáš Mráz*
@@ -214,7 +226,7 @@ OpenSSL 4.0
 
    *Tomáš Mráz*
 
- * Added SNMP KDF (EVP_KDF_SNMPKDF) to EVP_KDF
+ * Added SNMP KDF (`EVP_KDF_SNMPKDF`) to `EVP_KDF`
 
    *Barry Fussell and Helen Zhang*
 
@@ -226,7 +238,7 @@ OpenSSL 4.0
 
    *Simo Sorce*
 
- * Added SRTP KDF (EVP_KDF_SRTPKDF) to EVP_KDF
+ * Added SRTP KDF (`EVP_KDF_SRTPKDF`) to `EVP_KDF`
 
    *Barry Fussell and Helen Zhang*
 
