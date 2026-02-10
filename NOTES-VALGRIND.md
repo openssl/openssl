@@ -111,7 +111,7 @@ with process to satisfy more than one dependency paths. If it is the
 case then calling `OPENSSL_cleanup()` may lead to spurious application
 crashes during exit.
 
-If memory leaks caused by _still reachable memory_ are still issue
+If memory leaks caused by _still reachable memory_ are still an issue
 in your build/ci environment, then preferred way is to suppress
 those reports using suppression file [1] instead of changing exiting
 code by adding call to `OPENSSL_cleanup()`.  The suppression file for
