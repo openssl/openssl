@@ -1042,5 +1042,17 @@ permx:
 .long 0x4c5d6e7f, 0x08192a3b, 0xc4d5e6f7, 0x8091a2b3
 ___
 
-print $code;
-close STDOUT or die "error closing STDOUT: $!";
+foreach (split("\n",$code)) {
+       s/\`([^\`]*)\`/eval $1/geo;
+
+       if ($flavour =~ /le$/o) {       # little-endian
+           s/le\?//o           or
+           s/be\?/#be#/o;
+       } else {
+           s/le\?/#le#/o       or
+           s/be\?//o;
+       }
+       print $_,"\n";
+}
+
+close STDOUT or die "error closing STDOUT: $!"; # enforce flush
