@@ -118,7 +118,7 @@ code by adding call to `OPENSSL_cleanup()`.  The suppression file for
 OpenSSL is shipped with OpenSSL sources. It is found at
 `$OPENSSL_SRCS/util/valgrind.suppressions`. To use it just add
 `--suppression` option to the valgrind command:
-`valgrind --suppressions=`OPENSSL_SRCS/util/valgrind.suppression ...`
+`valgrind --suppressions="$OPENSSL_SRCS/util/valgrind.suppression" ...`
 For `pkeyread` the command and output reads as follows:
 
     # valgrind --suppressions=$OPENSSL_SRCS/util/valgrind.suppression  ./pkeyread -f pem -k dh 8
