@@ -164,7 +164,7 @@ void *ossl_method_construct(OSSL_LIB_CTX *libctx, int operation_id,
 
     if (mcm->get != NULL) {
         /* If there is a temporary store, try there first */
-        if (cbdata.store != NULL && mcm->get)
+        if (cbdata.store != NULL)
             method = mcm->get(cbdata.store, (const OSSL_PROVIDER **)provider_rw,
                 mcm_data);
 

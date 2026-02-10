@@ -359,6 +359,7 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
 
     if (ossl_method_store_is_frozen(store)) {
         const char *store_propq = ossl_method_store_frozen_propq(store);
+
         if (*propq == '\0' || strcmp(store_propq, propq) == 0) {
             ossl_frozen_method_store_cache_get(store, name, propq, &method);
             return method;
