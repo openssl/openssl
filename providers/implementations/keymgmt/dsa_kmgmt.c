@@ -146,8 +146,6 @@ static void *dsa_newdata_ex(void *provctx, const OSSL_PARAM params[])
         else if (!DSA_up_ref(dsa))
             return NULL;
     }
-    if (dsa != NULL && !DSA_up_ref(dsa))
-        return NULL;
 #endif
 
     if (dsa == NULL)
