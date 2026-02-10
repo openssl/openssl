@@ -19,6 +19,7 @@ OCSP_REQ_CTX_set1_req
 
  OSSL_HTTP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path,
                                      const OCSP_REQUEST *req, int buf_size);
+ int OCSP_REQ_CTX_set_http11(OSSL_HTTP_REQ_CTX *rctx, const char *host);
  OCSP_RESPONSE *OCSP_sendreq_bio(BIO *io, const char *path, OCSP_REQUEST *req);
 
 The following functions have been deprecated since OpenSSL 3.0, and can be
@@ -66,6 +67,11 @@ response header maximum line length 4k. It waits indefinitely on a response.
 It does not support setting a timeout or adding headers and is retained
 for compatibility; use L<OSSL_HTTP_transfer(3)> instead.
 
+OCSP_REQ_CTX_set_http11() is a convenience function that updates an
+OSSL_HTTP_REQ_CTX created by OCSP_sendreq_new() to use HTTP/1.1 and adds
+the required C<Host> header with the given I<host> value.
+It must be called before adding any other headers or request content.
+
 OCSP_REQ_CTX_i2d(rctx, it, req) is equivalent to the following:
 
   OSSL_HTTP_REQ_CTX_set1_req(rctx, "application/ocsp-request", it, req)
@@ -112,6 +118,8 @@ OCSP_REQ_CTX_free(),
 OCSP_set_max_response_length(),
 and OCSP_REQ_CTX_set1_req()
 were deprecated in OpenSSL 3.0.
+
+OCSP_REQ_CTX_set_http11() was added in OpenSSL 3.6.
 
 =head1 COPYRIGHT
 
