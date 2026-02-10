@@ -116,7 +116,9 @@ in your build/ci environment, then preferred way is to suppress
 those reports using suppression file [1] instead of changing exiting
 code by adding call to `OPENSSL_cleanup()`.  The suppression file for
 OpenSSL is shipped within the OpenSSL sources and can be found at
-`$OPENSSL_SRCS/util/valgrind.suppressions`. To use it just add
+`$OPENSSL_SRCS/util/valgrind.suppressions` where `OPENSSL_SRCS`
+is an environment variable containing path to the OpenSSL source
+tree. To use it just add
 `--suppressions` option to the valgrind command:
 `valgrind --suppressions="$OPENSSL_SRCS/util/valgrind.suppression" ...`
 For `pkeyread` the command and output reads as follows:
