@@ -135,8 +135,7 @@ context, before any worker threads have been dispatched.
 If propq is NULL, it will only speed up method store operations with a NULL
 property query. If propq is not NULL, it will also speed up method store
 operations when given that exact property query. Other property queries will go
-through the normal, slower lookup method. When ctx is not NULL, and propq is NULL,
-default context is frozen as well.
+through the normal, slower lookup method.
 
 =head1 RETURN VALUES
 

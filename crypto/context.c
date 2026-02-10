@@ -465,17 +465,6 @@ int OSSL_LIB_CTX_freeze(OSSL_LIB_CTX *ctx, const char *propq)
 {
     OSSL_METHOD_STORE *store;
 
-    if (ctx != NULL && propq == NULL) {
-        store = ossl_lib_ctx_get_data(NULL, OSSL_LIB_CTX_EVP_METHOD_STORE_INDEX);
-        if (store == NULL) {
-            ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
-            return 0;
-        }
-        if (!ossl_method_store_is_frozen(store)
-            && ossl_method_store_freeze_cache(store, propq) == 0)
-            return 0;
-    }
-
     store = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_EVP_METHOD_STORE_INDEX);
     if (store == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
