@@ -157,7 +157,7 @@ const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
   * a run time check to confirm that the hardware we are
   * running on has the proper isa extension to use our
   * optimized asm code
-  /
+  */
 #ifdef PPC_AES_GCM_CAPABLE
     return (OPENSSL_ppccap_P & PPC_MADD300) ? &aes_ppc_gcm : &aes_gcm;
 #else
