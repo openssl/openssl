@@ -21,4 +21,5 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                          (['OSSL_SIGNATURE_PARAM_DIGEST_SIZE', 'size',   'size_t'],
                           ['OSSL_SIGNATURE_PARAM_DIGEST',      'digest', 'utf8_string'],
                           ['OSSL_PKEY_PARAM_DIST_ID',          'distid', 'octet_string'],
+                          ['OSSL_SIGNATURE_PARAM_TLS_VERSION', 'tlsver', 'uint'],
                          )); -}

@@ -513,6 +513,7 @@ my %params = (
     'OSSL_SIGNATURE_PARAM_MU' =>                 "mu", # int
     'OSSL_SIGNATURE_PARAM_TEST_ENTROPY' =>       "test-entropy",
     'OSSL_SIGNATURE_PARAM_ADD_RANDOM' =>         "additional-random",
+    'OSSL_SIGNATURE_PARAM_TLS_VERSION' =>        "tls-version",
 
 # Asym cipher parameters
     'OSSL_ASYM_CIPHER_PARAM_DIGEST' =>                   '*OSSL_PKEY_PARAM_DIGEST',
