@@ -108,7 +108,7 @@ The process is going to exit anyway and OS will reclaim that memory way
 faster than `OPENSSL_cleanup()` making calls to libc `free()`. Also
 call `to OPENSSL_cleanup()` is discouraged when libcrypto is being linked
 with process to satisfy more than one dependency paths. If it is the
-case then call to `OPENSS_cleanup()` may lead to spurious application
+case then calling `OPENSSL_cleanup()` may lead to spurious application
 crashes during exit.
 
 If memory leaks caused by _still reachable memory_ are still issue
