@@ -106,7 +106,7 @@ The valgrind output above reports there are 239,521 of reachable memory
 when process exits. OpenSSL project sees that memory as not a memory leak.
 The process is going to exit anyway and OS will reclaim that memory way
 faster than `OPENSSL_cleanup()` making calls to libc `free()`. Also
-call `to OPENSSL_cleanup()` is discouraged when libcrypto is being linked
+calling `OPENSSL_cleanup()` is discouraged when libcrypto is being linked
 with process to satisfy more than one dependency paths. If it is the
 case then calling `OPENSSL_cleanup()` may lead to spurious application
 crashes during exit.
