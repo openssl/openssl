@@ -115,7 +115,7 @@ If memory leaks caused by _still reachable memory_ are still an issue
 in your build/ci environment, then preferred way is to suppress
 those reports using suppression file [1] instead of changing exiting
 code by adding call to `OPENSSL_cleanup()`.  The suppression file for
-OpenSSL is shipped with OpenSSL sources. It is found at
+OpenSSL is shipped within the OpenSSL sources and can be found at
 `$OPENSSL_SRCS/util/valgrind.suppressions`. To use it just add
 `--suppressions` option to the valgrind command:
 `valgrind --suppressions="$OPENSSL_SRCS/util/valgrind.suppression" ...`
