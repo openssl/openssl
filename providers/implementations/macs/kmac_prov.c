@@ -80,6 +80,7 @@ static OSSL_FUNC_mac_set_ctx_params_fn kmac_set_ctx_params;
 static OSSL_FUNC_mac_init_fn kmac_init;
 static OSSL_FUNC_mac_update_fn kmac_update;
 static OSSL_FUNC_mac_final_fn kmac_final;
+static OSSL_FUNC_mac_squeeze_fn kmac_squeeze;
 
 #define KMAC_MAX_BLOCKSIZE ((1600 - 128 * 2) / 8) /* 168 */
 
@@ -129,6 +130,7 @@ struct kmac_data_st {
     /* key and custom are stored in encoded form */
     unsigned char key[KMAC_MAX_KEY_ENCODED];
     unsigned char custom[KMAC_MAX_CUSTOM_ENCODED];
+    int squeezed;
 #ifdef FIPS_MODULE
     /*
      * 'internal' is set to 1 if KMAC is used inside another algorithm such as a
@@ -245,6 +247,7 @@ static void *kmac_dup(void *vsrc)
 #ifdef FIPS_MODULE
     dst->internal = src->internal;
 #endif
+    dst->squeezed = src->squeezed;
     dst->out_len = src->out_len;
     dst->key_len = src->key_len;
     dst->custom_len = src->custom_len;
@@ -386,6 +389,30 @@ static int kmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     return ok;
 }
 
+static int kmac_squeeze(void *vmacctx, unsigned char *out, size_t outlen)
+{
+    struct kmac_data_st *kctx = vmacctx;
+    EVP_MD_CTX *ctx = kctx->ctx;
+    size_t lbits, len;
+    unsigned char encoded_outlen[KMAC_MAX_ENCODED_HEADER_LEN];
+    int ret = 0;
+
+    if (!ossl_prov_is_running())
+        return 0;
+
+    if (!kctx->squeezed) {
+        /* KMAC XOF mode sets the encoded length to 0 */
+        lbits = (kctx->xof_mode ? 0 : (kctx->out_len * 8));
+        if (!ossl_sp800_185_right_encode(encoded_outlen, sizeof(encoded_outlen), &len, lbits)
+            || !EVP_DigestUpdate(ctx, encoded_outlen, len))
+            goto err;
+        kctx->squeezed = 1;
+    }
+    ret = EVP_DigestSqueeze(ctx, out, outlen);
+err:
+    return ret;
+}
+
 static const OSSL_PARAM *kmac_gettable_ctx_params(ossl_unused void *ctx,
     ossl_unused void *provctx)
 {
@@ -515,6 +542,7 @@ static int kmac_bytepad_encode_key(unsigned char *out, size_t out_max_len,
         { OSSL_FUNC_MAC_INIT, (void (*)(void))kmac_init },                     \
         { OSSL_FUNC_MAC_UPDATE, (void (*)(void))kmac_update },                 \
         { OSSL_FUNC_MAC_FINAL, (void (*)(void))kmac_final },                   \
+        { OSSL_FUNC_MAC_SQUEEZE, (void (*)(void))kmac_squeeze },               \
         { OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS,                                   \
             (void (*)(void))kmac_gettable_ctx_params },                        \
         { OSSL_FUNC_MAC_GET_CTX_PARAMS, (void (*)(void))kmac_get_ctx_params }, \

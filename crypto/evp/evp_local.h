@@ -68,6 +68,8 @@ struct evp_mac_ctx_st {
      * OSSL_FUNC_mac_newctx()
      */
     void *algctx;
+    int finalized;
+    int squeezed;
 } /* EVP_MAC_CTX */;
 
 struct evp_kdf_ctx_st {

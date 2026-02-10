@@ -32,6 +32,11 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Added EVP_MAC_squeeze() which can be used by KMAC.
+   KMAC uses the CSHAKE XOF digest.
+
+   *Shane Lontis*
+
  * OPENSSL_cleanup() now runs in a global destructor, or not at all by default.
 
    OpenSSL_cleanup() will no longer by default free global objects when run from
