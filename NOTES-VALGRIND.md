@@ -104,22 +104,19 @@ as memory leaks. An example of a valgrind report reads as follows:
 
 The valgrind output above reports there are 239,521 of reachable memory
 when process exits. That memory is not regarded as a true memory leak
-as the OS will reclaim that memory on process exit way faster than
-`OPENSSL_cleanup()` making calls to libc `free()`. Also
-calling `OPENSSL_cleanup()` is discouraged when libcrypto is being linked
-with process to satisfy more than one dependency paths. If it is the
-case then calling `OPENSSL_cleanup()` may lead to spurious application
-crashes during exit.
+as the OS will reclaim that memory on process exit, rendering calls to libc
+`free()` within `OPENSSL_cleanup()` useless. Also calling `OPENSSL_cleanup()`
+is discouraged when libcrypto is being linked with process to satisfy more
+than one dependency paths. If it is the case then calling `OPENSSL_cleanup()`
+may lead to spurious application crashes during exit.
 
-If memory leaks caused by _still reachable memory_ are still an issue
-in your build/ci environment, then preferred way is to suppress
-those reports using suppression file [1] instead of changing exiting
-code by adding call to `OPENSSL_cleanup()`.  The suppression file for
-OpenSSL is shipped within the OpenSSL sources and can be found at
-`$OPENSSL_SRCS/util/valgrind.suppressions` where `OPENSSL_SRCS`
+If memory leaks caused by _still reachable memory_ are still an issue,
+then preferred way is to suppress those reports using the suppression
+file [1] instead of changing exiting code by adding a call to `OPENSSL_cleanup()`.
+The suppression file for OpenSSL is shipped within the OpenSSL sources and
+can be found at`$OPENSSL_SRCS/util/valgrind.suppressions` where `OPENSSL_SRCS`
 is an environment variable containing path to the OpenSSL source
-tree. To use it just add
-`--suppressions` option to the valgrind command:
+tree. To use it, just add `--suppressions` option to the valgrind command:
 `valgrind --suppressions="$OPENSSL_SRCS/util/valgrind.suppression" ...`
 For `pkeyread` the command and output reads as follows:
 
