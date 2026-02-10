@@ -150,6 +150,18 @@ static const PROV_GCM_HW aes_ppc_gcm = {
 
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
 {
+ /*
+  * The PPC_AES_GCM_CAPABLE tells us that the target system
+  * we are building for can do AES-GCM (i.e. that the target
+  * system is power64le), and the ppccap check gives us
+  * a run time check to confirm that the hardware we are
+  * running on has the proper isa extension to use our
+  * optimized asm code
+  /
+#ifdef PPC_AES_GCM_CAPABLE
     return (OPENSSL_ppccap_P & PPC_MADD300) ? &aes_ppc_gcm : &aes_gcm;
+#else
+    return &aes_gcm;
+#endif
 }
 
