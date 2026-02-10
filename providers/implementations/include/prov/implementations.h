@@ -337,6 +337,7 @@ extern const OSSL_DISPATCH ossl_ed448_keymgmt_functions[];
 #endif
 #ifndef OPENSSL_NO_SM2
 extern const OSSL_DISPATCH ossl_sm2_keymgmt_functions[];
+extern const OSSL_DISPATCH ossl_curve_sm2_keymgmt_functions[];
 #endif
 #endif
 #ifndef OPENSSL_NO_LMS
@@ -356,6 +357,9 @@ extern const OSSL_DISPATCH ossl_mlx_x448_kem_kmgmt_functions[];
 #endif
 extern const OSSL_DISPATCH ossl_mlx_p256_kem_kmgmt_functions[];
 extern const OSSL_DISPATCH ossl_mlx_p384_kem_kmgmt_functions[];
+#ifndef OPENSSL_NO_SM2
+extern const OSSL_DISPATCH ossl_mlx_curve_sm2_kem_kmgmt_functions[];
+#endif
 #endif
 #endif
 #ifndef OPENSSL_NO_SLH_DSA

@@ -180,11 +180,17 @@ static const struct tls13groupselection_test_st tls13groupselection_tests[] = {
      * (I) Check handling of the "DEFAULT" 'pseudo group name'
      */
     { "*X25519:DEFAULT:-prime256v1:-X448", /* test 18 */
-        "DEFAULT:-X25519:-?X25519MLKEM768",
+        "DEFAULT:-X25519"
+        ":-?X25519MLKEM768"
+        ":-?SecP256r1MLKEM768"
+        ":-?curveSM2MLKEM768",
         CLIENT_PREFERENCE,
         "secp384r1", HRR },
     { "*X25519:DEFAULT:-prime256v1:-X448", /* test 19 */
-        "DEFAULT:-X25519:-?X25519MLKEM768",
+        "DEFAULT:-X25519"
+        ":-?X25519MLKEM768"
+        ":-?SecP256r1MLKEM768"
+        ":-?curveSM2MLKEM768",
         SERVER_PREFERENCE,
         "secp384r1", HRR },
     /*

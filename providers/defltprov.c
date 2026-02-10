@@ -570,6 +570,9 @@ static const OSSL_ALGORITHM deflt_asym_kem[] = {
     { PROV_NAMES_SecP256r1MLKEM768, "provider=default", ossl_mlx_kem_asym_kem_functions },
     { PROV_NAMES_SecP384r1MLKEM1024, "provider=default", ossl_mlx_kem_asym_kem_functions },
 #endif
+#if !defined(OPENSSL_NO_SM2)
+    { PROV_NAMES_curveSM2MLKEM768, "provider=default", ossl_mlx_kem_asym_kem_functions },
+#endif
 #endif
     { NULL, NULL, NULL }
 };
@@ -632,6 +635,8 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
 #ifndef OPENSSL_NO_SM2
     { PROV_NAMES_SM2, "provider=default", ossl_sm2_keymgmt_functions,
         PROV_DESCS_SM2 },
+    { PROV_NAMES_curveSM2, "provider=default", ossl_curve_sm2_keymgmt_functions,
+        PROV_DESCS_curveSM2 },
 #endif
 #ifndef OPENSSL_NO_LMS
     { PROV_NAMES_LMS, "provider=default", ossl_lms_keymgmt_functions,
@@ -655,6 +660,10 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
         PROV_DESCS_SecP256r1MLKEM768 },
     { PROV_NAMES_SecP384r1MLKEM1024, "provider=default", ossl_mlx_p384_kem_kmgmt_functions,
         PROV_DESCS_SecP384r1MLKEM1024 },
+#endif
+#if !defined(OPENSSL_NO_SM2)
+    { PROV_NAMES_curveSM2MLKEM768, "provider=default", ossl_mlx_curve_sm2_kem_kmgmt_functions,
+        PROV_DESCS_curveSM2MLKEM768 },
 #endif
 #endif
 #ifndef OPENSSL_NO_SLH_DSA

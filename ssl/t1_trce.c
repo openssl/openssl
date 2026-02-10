@@ -542,6 +542,7 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     { 38, "GC512A" },
     { 39, "GC512B" },
     { 40, "GC512C" },
+    { 41, "curveSM2" },
     { 256, "ffdhe2048" },
     { 257, "ffdhe3072" },
     { 258, "ffdhe4096" },
@@ -553,6 +554,7 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     { 4587, "SecP256r1MLKEM768" },
     { 4588, "X25519MLKEM768" },
     { 4589, "SecP384r1MLKEM1024" },
+    { 4590, "curveSM2MLKEM768" },
     { 25497, "X25519Kyber768Draft00" },
     { 25498, "SecP256r1Kyber768Draft00" },
     { 0xFF01, "arbitrary_explicit_prime_curves" },
@@ -606,13 +608,14 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     { TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384, TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_name },
     { TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512, TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_name },
     /*
-     * Well known groups that we happen to know about, but only come from
+     * Well known sigalgs that we happen to know about, but only come from
      * provider capability declarations (hence no macros for the
      * codepoints/names)
      */
     { 0x0904, "mldsa44" },
     { 0x0905, "mldsa65" },
-    { 0x0906, "mldsa87" }
+    { 0x0906, "mldsa87" },
+    { 0x0708, "sm2sig_sm3" },
 };
 
 static const ssl_trace_tbl ssl_ctype_tbl[] = {
