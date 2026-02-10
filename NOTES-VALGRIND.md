@@ -103,9 +103,9 @@ as memory leaks. An example of a valgrind report reads as follows:
     ==280439== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
 
 The valgrind output above reports there are 239,521 of reachable memory
-when process exits. OpenSSL project sees that memory as not a memory leak.
-The process is going to exit anyway and OS will reclaim that memory way
-faster than `OPENSSL_cleanup()` making calls to libc `free()`. Also
+when process exits. That memory is not regarded as a true memory leak
+as the OS will reclaim that memory on process exit way faster than
+`OPENSSL_cleanup()` making calls to libc `free()`. Also
 calling `OPENSSL_cleanup()` is discouraged when libcrypto is being linked
 with process to satisfy more than one dependency paths. If it is the
 case then calling `OPENSSL_cleanup()` may lead to spurious application
