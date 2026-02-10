@@ -121,12 +121,22 @@ separately freed.
 
 =head1 THREADING
 
-L<BIO_recvmmsg(3)>, L<BIO_sendmmsg(3)>, L<BIO_read(3)>, L<BIO_write(3)>,
-L<BIO_pending(3)>, L<BIO_get_write_guarantee(3)> and L<BIO_flush(3)> may be used
-by multiple threads simultaneously on the same BIO datagram pair. Specific
-L<BIO_ctrl(3)> operations (namely BIO_CTRL_PENDING, BIO_CTRL_FLUSH and
-BIO_C_GET_WRITE_GUARANTEE) may also be used. Invoking any other BIO call, or any
-other L<BIO_ctrl(3)> operation, on either half of a BIO datagram pair while any
+L<BIO_recvmmsg(3)> and L<BIO_sendmmsg(3)> may be used simultaneously on the
+same BIO datagram pair, with one thread calling BIO_sendmmsg() and another
+thread calling BIO_recvmmsg() on the opposite half of the pair.
+
+L<BIO_pending(3)> and L<BIO_get_write_guarantee(3)> are also internally
+thread-safe and may be called concurrently with other operations on the pair.
+
+L<BIO_read(3)> and L<BIO_write(3)> are individually internally locked, but
+the BIO API stores retry flags on the BIO object itself. This means there is a
+race condition between calling L<BIO_read(3)> and then checking
+L<BIO_should_retry(3)> if another thread can call L<BIO_read(3)> on the same
+BIO in between. Applications requiring multi-threaded use of these functions
+should use L<BIO_recvmmsg(3)> and L<BIO_sendmmsg(3)> instead, which do not
+touch retry flags.
+
+Invoking any other BIO call on either half of a BIO datagram pair while any
 other BIO call is also in progress to either half of the same BIO datagram pair
 results in undefined behaviour.
 
