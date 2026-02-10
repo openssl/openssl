@@ -2505,21 +2505,25 @@ char *SSL_get1_builtin_sigalgs(OSSL_LIB_CTX *libctx)
     return retval;
 }
 
-/* Lookup TLS signature algorithm */
+/* Find known TLS signature algorithm */
+static const SIGALG_LOOKUP *tls1_find_sigalg(const SSL_CTX *ctx,
+    uint16_t sigalg)
+{
+    const SIGALG_LOOKUP *lu = ctx->sigalg_lookup_cache;
+
+    for (size_t i = 0; i < ctx->sigalg_lookup_cache_len; lu++, i++)
+        if (lu->sigalg == sigalg)
+            return lu;
+    return NULL;
+}
+
+/* Look up available TLS signature algorithm */
 static const SIGALG_LOOKUP *tls1_lookup_sigalg(const SSL_CTX *ctx,
     uint16_t sigalg)
 {
-    size_t i;
-    const SIGALG_LOOKUP *lu = ctx->sigalg_lookup_cache;
+    const SIGALG_LOOKUP *lu = tls1_find_sigalg(ctx, sigalg);
 
-    for (i = 0; i < ctx->sigalg_lookup_cache_len; lu++, i++) {
-        if (lu->sigalg == sigalg) {
-            if (!lu->available)
-                return NULL;
-            return lu;
-        }
-    }
-    return NULL;
+    return (lu != NULL && lu->available) ? lu : NULL;
 }
 
 /* Lookup hash: return 0 if invalid or not enabled */
@@ -3750,22 +3754,20 @@ int SSL_get_sigalgs(SSL *s, int idx,
     unsigned char *rsig, unsigned char *rhash)
 {
     uint16_t *psig;
-    size_t numsigalgs;
+    int numsigalgs;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
     if (sc == NULL)
         return 0;
 
-    psig = sc->s3.tmp.peer_sigalgs;
-    numsigalgs = sc->s3.tmp.peer_sigalgslen;
-
-    if (psig == NULL || numsigalgs > INT_MAX)
+    /* A TLS peer can't propose more sigalgs than would fit in an int. */
+    numsigalgs = (int)sc->s3.tmp.peer_sigalgslen;
+    if (idx >= numsigalgs || (psig = sc->s3.tmp.peer_sigalgs) == NULL)
         return 0;
+
     if (idx >= 0) {
         const SIGALG_LOOKUP *lu;
 
-        if (idx >= (int)numsigalgs)
-            return 0;
         psig += idx;
         if (rhash != NULL)
             *rhash = (unsigned char)((*psig >> 8) & 0xff);
@@ -3809,6 +3811,57 @@ int SSL_get_shared_sigalgs(SSL *s, int idx,
     if (rhash != NULL)
         *rhash = (unsigned char)((shsigalgs->sigalg >> 8) & 0xff);
     return (int)sc->shared_sigalgslen;
+}
+
+int SSL_get0_sigalg(SSL *s, int idx, unsigned int *codepoint,
+    const char **name)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    const SIGALG_LOOKUP *lu;
+    uint16_t *psig;
+    int numsigalgs;
+
+    if (sc == NULL)
+        return 0;
+
+    /* A TLS peer can't propose more sigalgs than would fit in an int. */
+    numsigalgs = (int)sc->s3.tmp.peer_sigalgslen;
+    if (idx >= numsigalgs || (psig = sc->s3.tmp.peer_sigalgs) == NULL)
+        return 0;
+
+    if (idx >= 0) {
+        if (codepoint != NULL)
+            *codepoint = psig[idx];
+        lu = tls1_find_sigalg(SSL_CONNECTION_GET_CTX(sc), psig[idx]);
+        if (name != NULL)
+            *name = lu == NULL ? NULL : lu->name;
+    }
+    return numsigalgs;
+}
+
+int SSL_get0_shared_sigalg(SSL *s, int idx, unsigned int *codepoint,
+    const char **name)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    const SIGALG_LOOKUP *lu;
+    int numsigalgs;
+
+    if (sc == NULL)
+        return 0;
+
+    /* A TLS peer can't propose more sigalgs than would fit in an int. */
+    numsigalgs = (int)sc->shared_sigalgslen;
+    if (idx >= numsigalgs || sc->shared_sigalgs == NULL)
+        return 0;
+
+    if (idx >= 0) {
+        lu = sc->shared_sigalgs[idx];
+        if (codepoint != NULL)
+            *codepoint = lu->sigalg;
+        if (name != NULL)
+            *name = lu->name;
+    }
+    return numsigalgs;
 }
 
 /* Maximum possible number of unique entries in sigalgs array */

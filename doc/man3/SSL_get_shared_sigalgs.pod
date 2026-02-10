@@ -2,11 +2,19 @@
 
 =head1 NAME
 
-SSL_get_shared_sigalgs, SSL_get_sigalgs - get supported signature algorithms
+SSL_get0_shared_sigalg, SSL_get0_sigalg,
+SSL_get_shared_sigalgs, SSL_get_sigalgs -
+get shared or peer signature algorithms
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
+
+ int SSL_get0_sigalg(SSL *s, int idx, unsigned int *codepoint,
+     const char **name);
+
+ int SSL_get0_shared_sigalg(SSL *s, int idx, unsigned int *codepoint,
+     const char **name);
 
  int SSL_get_shared_sigalgs(SSL *s, int idx,
                             int *psign, int *phash, int *psignhash,
@@ -18,21 +26,62 @@ SSL_get_shared_sigalgs, SSL_get_sigalgs - get supported signature algorithms
 
 =head1 DESCRIPTION
 
-SSL_get_shared_sigalgs() returns information about the shared signature
-algorithms supported by peer B<s>. The parameter B<idx> indicates the index
-of the shared signature algorithm to return starting from zero. The signature
-algorithm NID is written to B<*psign>, the hash NID to B<*phash> and the
-sign and hash NID to B<*psignhash>. The raw signature and hash values
-are written to B<*rsig> and B<*rhash>.
+SSL_get0_shared_sigalg() returns the names and codepoints of signature
+algorithms shared with the peer in the SSL connection I<s>.
+When I<idx> is negative, the number of algorithms is returned, and the output
+parameters remain unmodified.
+Otherwise, when I<idx> is nonnegative, it is the index of the shared
+signature algorithm to return starting from zero.
+The signature algorithm name is written to I<*name> (if I<name>) is not NULL).
+The name reported is the IANA registered name for that algorithm, and is
+expected to work verbatim if used in a B<SignatureAlgorithms> configuration
+setting (see L<SSL_CONF_cmd(3)>).
+The signature algorithm codepoint is written to I<*codepoint> (if I<codepoint>
+is not NULL).
+This function is better suited for inspecting TLS 1.3 signature algorithms than
+the older SSL_get_shared_sigalgs().
+
+SSL_get0_sigalg() returns the names and codepoints of signature
+algorithms advertised by the peer in the SSL connection I<s>.
+When I<idx> is negative, the number of algorithms is returned, and the output
+parameters remain unmodified.
+Otherwise, when I<idx> is nonnegative, it is the index of the peer
+signature algorithm to return starting from zero.
+For signature algorithms that are locally known, the name reported is the IANA
+registered name for that algorithm, and is expected to work verbatim if used in
+a B<SignatureAlgorithms> configuration setting (see L<SSL_CONF_cmd(3)>).
+The signature algorithm codepoint is written to I<*codepoint> (if I<codepoint>
+is not NULL).
+If the signature algorithm is known, its name is written to I<*name> (if
+I<name>) is not NULL).
+This function is better suited for inspecting TLS 1.3 signature algorithms than
+the older SSL_get_sigalgs().
+
+SSL_get_shared_sigalgs() returns information about the supported signature
+algorithms shared with the peer in the SSL connection I<s>.
+When I<idx> is negative, the number of shared algorithms is returned, and
+the output parameters remain unmodified.
+Otherwise, when I<idx> is nonnegative, it is the index of the shared
+signature algorithm to return starting from zero.
+The signature algorithm NID is written to I<*psign>, the hash NID to I<*phash>
+and the sign and hash NID to I<*psignhash>.
+As of TLS 1.3 signature algorithms are not always a pairing of of a separate
+public key algorithm and a digest algorithm, and so I<*phash> and I<*psignhash>
+may not always be meaningful.
+The raw B<hash> and B<signature> bytes of the signature algorithm codepoint are
+written to I<*rhash> and I<*rsig>.
+For example, the B<rsa_pkcs1_sha256> signature algorithm, with codepoint B<0x0401>,
+gives B<0x04> for I<*rhash> and B<0x01> for I<*rsig>.
 
 SSL_get_sigalgs() is similar to SSL_get_shared_sigalgs() except it returns
-information about all signature algorithms supported by B<s> in the order
+information about all signature algorithms advertised by the peer in the order
 they were sent by the peer.
 
 =head1 RETURN VALUES
 
-SSL_get_shared_sigalgs() and SSL_get_sigalgs() return the number of
-signature algorithms or B<0> if the B<idx> parameter is out of range.
+SSL_get0_sigalg(), SSL_get0_shared_sigalg(), SSL_get_shared_sigalgs() and
+SSL_get_sigalgs() return the number of signature algorithms or B<0> if the
+I<idx> parameter is out of range (too large).
 
 =head1 NOTES
 
@@ -45,8 +94,8 @@ If an application is only interested in the highest preference shared
 signature algorithm it can just set B<idx> to zero.
 
 Any or all of the parameters B<psign>, B<phash>, B<psignhash>, B<rsig> or
-B<rhash> can be set to B<NULL> if the value is not required. By setting
-them all to B<NULL> and setting B<idx> to zero the total number of
+B<rhash> can be set to NULL if the value is not required. By setting
+them all to NULL and setting B<idx> to zero the total number of
 signature algorithms can be determined: which can be zero.
 
 These functions must be called after the peer has sent a list of supported
@@ -75,6 +124,14 @@ signature algorithm does not use a hash (for example Ed25519).
 
 L<SSL_CTX_set_cert_cb(3)>,
 L<ssl(7)>
+
+=head1 HISTORY
+
+Prior to OpenSSL 4.0 SSL_get_shared_sigalgs() treated negative I<idx> values
+the same way as out-of-range (too large positive) values, and returned 0.
+
+SSL_get0_shared_sigalg() and SSL_get0_sigalg() were added in OpenSSL
+4.0.
 
 =head1 COPYRIGHT
 

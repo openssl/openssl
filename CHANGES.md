@@ -32,6 +32,27 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * New `SSL_get0_sigalg()` and `SSL_get0_shared_sigalg()` functions report the
+   TLS signature algorithm name and codepoint for the peer advertised and shared
+   algorithms respectively.  These supersede the existing `SSL_get_sigalgs()` and
+   `SSL_get_shared_sigalgs()` functions which are only a good fit for TLS 1.2.
+   The names reported are the IANA names, and are expected to consistently match
+   the names expected in `SignatureAlgorithms` configuration settings, see
+   `SSL_CONF_cmd(3)` for details.  Previously reported names were not always directly
+   usable or configurations, and were mostly OpenSSL-specific aliases that
+   rarely matched the official IANA codepoint names.
+
+   There is an associated change in how signature algorithms are reported by the
+   `openssl-s_client(1)` and `openssl-s_server(1)` command-line tools.  They
+   now use the new functions and report the IANA registered names of each
+   signature scheme.  Example new output:
+
+    ```
+    Signature Algorithms: mldsa65:mldsa87:mldsa44:ecdsa_secp256r1_sha256:ecdsa_secp384r1_sha384:ecdsa_secp521r1_sha512:ed25519:ed448:ecdsa_brainpoolP256r1tls13_sha256:ecdsa_brainpoolP384r1tls13_sha384:ecdsa_brainpoolP512r1tls13_sha512:rsa_pss_pss_sha256:rsa_pss_pss_sha384:rsa_pss_pss_sha512:rsa_pss_rsae_sha256:rsa_pss_rsae_sha384:rsa_pss_rsae_sha512:rsa_pkcs1_sha256:rsa_pkcs1_sha384:rsa_pkcs1_sha512:ecdsa_sha224:rsa_pkcs1_sha224:dsa_sha224:dsa_sha256:dsa_sha384:dsa_sha512
+    ```
+
+   *Viktor Dukhovni*
+
  * Updated the default group list to append `SecP256r1MKEM768` and
    `curveSM2MLKEM768` to the first tuple in that order after `*X25519MLKEM768`.
    Also inserted a penultimate tuple with `curveSM2` (just before the `FFDHE`

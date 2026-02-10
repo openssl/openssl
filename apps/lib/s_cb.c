@@ -274,9 +274,9 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
 
     client = SSL_is_server(s) ? 0 : 1;
     if (shared)
-        nsig = SSL_get_shared_sigalgs(s, 0, NULL, NULL, NULL, NULL, NULL);
+        nsig = SSL_get0_shared_sigalg(s, -1, NULL, NULL);
     else
-        nsig = SSL_get_sigalgs(s, -1, NULL, NULL, NULL, NULL, NULL);
+        nsig = SSL_get0_sigalg(s, -1, NULL, NULL);
     if (nsig == 0)
         return 1;
 
@@ -287,45 +287,19 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
         BIO_puts(out, "Requested ");
     BIO_puts(out, "Signature Algorithms: ");
     for (i = 0; i < nsig; i++) {
-        int hash_nid, sign_nid;
-        unsigned char rhash, rsign;
-        const char *sstr = NULL;
+        const char *name = NULL;
+        unsigned int codepoint;
+
         if (shared)
-            SSL_get_shared_sigalgs(s, i, &sign_nid, &hash_nid, NULL,
-                &rsign, &rhash);
+            SSL_get0_shared_sigalg(s, i, &codepoint, &name);
         else
-            SSL_get_sigalgs(s, i, &sign_nid, &hash_nid, NULL, &rsign, &rhash);
-        if (i)
+            SSL_get0_sigalg(s, i, &codepoint, &name);
+        if (i > 0)
             BIO_puts(out, ":");
-        switch (rsign | rhash << 8) {
-        case 0x0809:
-            BIO_puts(out, "rsa_pss_pss_sha256");
-            continue;
-        case 0x080a:
-            BIO_puts(out, "rsa_pss_pss_sha384");
-            continue;
-        case 0x080b:
-            BIO_puts(out, "rsa_pss_pss_sha512");
-            continue;
-        case 0x081a:
-            BIO_puts(out, "ecdsa_brainpoolP256r1_sha256");
-            continue;
-        case 0x081b:
-            BIO_puts(out, "ecdsa_brainpoolP384r1_sha384");
-            continue;
-        case 0x081c:
-            BIO_puts(out, "ecdsa_brainpoolP512r1_sha512");
-            continue;
-        }
-        sstr = get_sigtype(sign_nid);
-        if (sstr)
-            BIO_puts(out, sstr);
+        if (name != NULL)
+            BIO_puts(out, name);
         else
-            BIO_printf(out, "0x%02X", (int)rsign);
-        if (hash_nid != NID_undef)
-            BIO_printf(out, "+%s", OBJ_nid2sn(hash_nid));
-        else if (sstr == NULL)
-            BIO_printf(out, "+0x%02X", (int)rhash);
+            BIO_printf(out, "0x%04X", codepoint);
     }
     BIO_puts(out, "\n");
     return 1;
@@ -1319,6 +1293,7 @@ void print_ssl_summary(SSL *s)
     const SSL_CIPHER *c;
     X509 *peer = SSL_get0_peer_certificate(s);
     EVP_PKEY *peer_rpk = SSL_get0_peer_rpk(s);
+    const char *local_sigalg = NULL;
     int nid;
 
     BIO_printf(bio_err, "Protocol version: %s\n", SSL_get_version(s));
@@ -1326,6 +1301,9 @@ void print_ssl_summary(SSL *s)
     c = SSL_get_current_cipher(s);
     BIO_printf(bio_err, "Ciphersuite: %s\n", SSL_CIPHER_get_name(c));
     do_print_sigalgs(bio_err, s, 0);
+    if (SSL_get0_signature_name(s, &local_sigalg) > 0
+        && local_sigalg != NULL)
+        BIO_printf(bio_err, "Own signature type: %s\n", local_sigalg);
     if (peer != NULL) {
         BIO_puts(bio_err, "Peer certificate: ");
         X509_NAME_print_ex(bio_err, X509_get_subject_name(peer),
