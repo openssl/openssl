@@ -494,6 +494,10 @@ B<-x963kdf_key_check>,
 B<-x942kdf_key_check>,
 B<-ecdh_cofactor_check>
 
+The following options was added in OpenSSL 4.0:
+
+B<-defer_tests>
+
 =head1 COPYRIGHT
 
 Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
