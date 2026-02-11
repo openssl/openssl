@@ -114,3 +114,32 @@
    fun:ssl_release_record
    ...
 }
+{
+   provider_activate_strdup 
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   ...
+   fun:OSSL_provider_init
+   fun:provider_activate
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:bcmp
+   fun:test_mem_eq
+   ...
+}
+{
+   false_positive_conditional_check
+   Memcheck:Cond
+   fun:ossl_gcm_stream_final
+   ...
+}
+{
+   false_positive_conditional_check
+   Memcheck:Cond
+   fun:gcm_cipher_internal
+   ...
+}
