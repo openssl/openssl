@@ -449,7 +449,7 @@ static int sm2sig_set_ctx_params(void *vpsm2ctx, const OSSL_PARAM params[])
         if (!psm2ctx->flag_compute_z_digest)
             return 0;
 
-        if (p.distid->data_size != 0
+        if ((p.distid->data != NULL)
             && !OSSL_PARAM_get_octet_string(p.distid, &tmp_id, 0, &tmp_idlen))
             return 0;
         OPENSSL_free(psm2ctx->id);

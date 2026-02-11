@@ -665,12 +665,6 @@ Sign a certificate request:
 
  openssl ca -in req.pem -out newcert.pem
 
-Sign an SM2 certificate request:
-
- openssl ca -in sm2.csr -out sm2.crt -md sm3 \
-         -sigopt "distid:1234567812345678" \
-         -vfyopt "distid:1234567812345678"
-
 Sign a certificate request, using CA extensions:
 
  openssl ca -in req.pem -extensions v3_ca -out newcert.pem

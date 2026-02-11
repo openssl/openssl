@@ -669,15 +669,6 @@ Generate a self-signed root certificate:
 
  openssl req -x509 -newkey rsa:2048 -keyout key.pem -out req.pem
 
-Create an SM2 private key and then generate a certificate request from it:
-
- openssl ecparam -genkey -name SM2 -out sm2.key
- openssl req -new -key sm2.key -out sm2.csr -sm3 -sigopt "distid:1234567812345678"
-
-Examine and verify an SM2 certificate request:
-
- openssl req -verify -in sm2.csr -sm3 -vfyopt "distid:1234567812345678"
-
 Example of a file pointed to by the B<oid_file> option:
 
  1.2.3.4        shortName       A longer Name
