@@ -1989,6 +1989,58 @@ static void evp_cipher_free(void *cipher)
     EVP_CIPHER_free(cipher);
 }
 
+static void *evp_cipher_dup_frozen(void *vin)
+{
+    EVP_CIPHER *in = vin;
+    EVP_CIPHER *out;
+
+    out = OPENSSL_malloc(sizeof(*out));
+    if (out == NULL)
+        return NULL;
+    memcpy(out, in, sizeof(*out));
+    if (!CRYPTO_NEW_REF(&out->refcnt, 1))
+        goto err;
+    out->type_name = OPENSSL_strdup(in->type_name);
+    if (out->type_name == NULL)
+        goto err;
+    out->origin = EVP_ORIG_FROZEN;
+    if (!ossl_provider_up_ref(out->prov)) {
+        OPENSSL_free(out->type_name);
+        goto err;
+    }
+    return out;
+err:
+    OPENSSL_free(out);
+    return NULL;
+}
+
+static void evp_cipher_frozen_free(void *vin)
+{
+    EVP_CIPHER *cipher = vin;
+    int i;
+
+    if (cipher == NULL || cipher->origin != EVP_ORIG_FROZEN)
+        return;
+
+    CRYPTO_DOWN_REF(&cipher->refcnt, &i);
+    if (i > 0)
+        return;
+    evp_cipher_free_int(cipher);
+}
+
+int evp_cipher_fetch_all(OSSL_LIB_CTX *ctx)
+{
+    int ret = evp_generic_fetch_all(ctx,
+        OSSL_OP_CIPHER,
+        evp_cipher_from_algorithm,
+        evp_cipher_up_ref,
+        evp_cipher_free,
+        evp_cipher_dup_frozen,
+        evp_cipher_frozen_free);
+
+    return ret;
+}
+
 EVP_CIPHER *EVP_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
     const char *properties)
 {
