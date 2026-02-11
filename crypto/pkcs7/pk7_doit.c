@@ -432,10 +432,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     BIO *out = NULL, *btmp = NULL, *etmp = NULL, *bio = NULL;
     X509_ALGOR *xa;
     ASN1_OCTET_STRING *data_body = NULL;
-    EVP_MD *evp_md = NULL;
-    const EVP_MD *md;
-    EVP_CIPHER *evp_cipher = NULL;
-    const EVP_CIPHER *cipher = NULL;
+    EVP_MD *md = NULL;
+    EVP_CIPHER *cipher = NULL;
     EVP_CIPHER_CTX *evp_ctx = NULL;
     X509_ALGOR *enc_alg = NULL;
     STACK_OF(X509_ALGOR) *md_sk = NULL;
@@ -489,19 +487,12 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 
         OBJ_obj2txt(name, sizeof(name), enc_alg->algorithm, 0);
 
-        (void)ERR_set_mark();
-        evp_cipher = EVP_CIPHER_fetch(libctx, name, propq);
-        if (evp_cipher != NULL)
-            cipher = evp_cipher;
-        else
-            cipher = EVP_get_cipherbyname(name);
+        cipher = EVP_CIPHER_fetch(libctx, name, propq);
 
         if (cipher == NULL) {
-            (void)ERR_clear_last_mark();
             ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
             goto err;
         }
-        (void)ERR_pop_to_mark();
         break;
     case NID_pkcs7_enveloped:
         rsk = p7->d.enveloped->recipientinfo;
@@ -510,19 +501,12 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
         data_body = p7->d.enveloped->enc_data->enc_data;
         OBJ_obj2txt(name, sizeof(name), enc_alg->algorithm, 0);
 
-        (void)ERR_set_mark();
-        evp_cipher = EVP_CIPHER_fetch(libctx, name, propq);
-        if (evp_cipher != NULL)
-            cipher = evp_cipher;
-        else
-            cipher = EVP_get_cipherbyname(name);
+        cipher = EVP_CIPHER_fetch(libctx, name, propq);
 
         if (cipher == NULL) {
-            (void)ERR_clear_last_mark();
             ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
             goto err;
         }
-        (void)ERR_pop_to_mark();
         break;
     default:
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
@@ -546,26 +530,19 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 
             OBJ_obj2txt(name, sizeof(name), xa->algorithm, 0);
 
-            (void)ERR_set_mark();
-            evp_md = EVP_MD_fetch(libctx, name, propq);
-            if (evp_md != NULL)
-                md = evp_md;
-            else
-                md = EVP_get_digestbyname(name);
+            md = EVP_MD_fetch(libctx, name, propq);
 
             if (md == NULL) {
-                (void)ERR_clear_last_mark();
                 ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNKNOWN_DIGEST_TYPE);
                 goto err;
             }
-            (void)ERR_pop_to_mark();
 
             if (BIO_set_md(btmp, md) <= 0) {
-                EVP_MD_free(evp_md);
+                EVP_MD_free(md);
                 ERR_raise(ERR_LIB_PKCS7, ERR_R_BIO_LIB);
                 goto err;
             }
-            EVP_MD_free(evp_md);
+            EVP_MD_free(md);
             if (out == NULL)
                 out = btmp;
             else
@@ -695,11 +672,11 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     }
     BIO_push(out, bio);
     bio = NULL;
-    EVP_CIPHER_free(evp_cipher);
+    EVP_CIPHER_free(cipher);
     return out;
 
 err:
-    EVP_CIPHER_free(evp_cipher);
+    EVP_CIPHER_free(cipher);
     OPENSSL_clear_free(ek, eklen);
     OPENSSL_clear_free(tkey, tkeylen);
     BIO_free_all(out);
