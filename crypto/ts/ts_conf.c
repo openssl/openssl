@@ -226,14 +226,14 @@ int TS_CONF_set_signer_digest(CONF *conf, const char *section,
     const char *md, TS_RESP_CTX *ctx)
 {
     int ret = 0;
-    EVP_MD *sign_md = NULL;
+    const EVP_MD *sign_md = NULL;
     if (md == NULL)
         md = NCONF_get_string(conf, section, ENV_SIGNER_DIGEST);
     if (md == NULL) {
         ts_CONF_lookup_fail(section, ENV_SIGNER_DIGEST);
         goto err;
     }
-    sign_md = EVP_MD_fetch(NULL, md, NULL);
+    sign_md = EVP_get_digestbyname(md);
     if (sign_md == NULL) {
         ts_CONF_invalid(section, ENV_SIGNER_DIGEST);
         goto err;
@@ -243,7 +243,6 @@ int TS_CONF_set_signer_digest(CONF *conf, const char *section,
 
     ret = 1;
 err:
-    EVP_MD_free(sign_md);
     return ret;
 }
 
@@ -328,17 +327,14 @@ int TS_CONF_set_digests(CONF *conf, const char *section, TS_RESP_CTX *ctx)
     for (i = 0; i < sk_CONF_VALUE_num(list); ++i) {
         CONF_VALUE *val = sk_CONF_VALUE_value(list, i);
         const char *extval = val->value ? val->value : val->name;
-        EVP_MD *md;
+        const EVP_MD *md;
 
-        if ((md = EVP_MD_fetch(NULL, extval, NULL)) == NULL) {
+        if ((md = EVP_get_digestbyname(extval)) == NULL) {
             ts_CONF_invalid(section, ENV_DIGESTS);
             goto err;
         }
-        if (!TS_RESP_CTX_add_md(ctx, md)) {
-            EVP_MD_free(md);
+        if (!TS_RESP_CTX_add_md(ctx, md))
             goto err;
-        }
-        EVP_MD_free(md);
     }
 
     ret = 1;
@@ -445,13 +441,13 @@ int TS_CONF_set_ess_cert_id_digest(CONF *conf, const char *section,
     TS_RESP_CTX *ctx)
 {
     int ret = 0;
-    EVP_MD *cert_md = NULL;
+    const EVP_MD *cert_md = NULL;
     const char *md = NCONF_get_string(conf, section, ENV_ESS_CERT_ID_ALG);
 
     if (md == NULL)
         md = "sha256";
 
-    cert_md = EVP_MD_fetch(NULL, md, NULL);
+    cert_md = EVP_get_digestbyname(md);
     if (cert_md == NULL) {
         ts_CONF_invalid(section, ENV_ESS_CERT_ID_ALG);
         goto err;
@@ -462,6 +458,5 @@ int TS_CONF_set_ess_cert_id_digest(CONF *conf, const char *section,
 
     ret = 1;
 err:
-    EVP_MD_free(cert_md);
     return ret;
 }
