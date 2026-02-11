@@ -73,6 +73,8 @@ my $no_dsa = disabled("dsa");
 my $no_ec2m = disabled("ec2m");
 my $no_ocsp = disabled("ocsp");
 my $no_ml_dsa = disabled("ml-dsa");
+my $no_sm2 = disabled("sm2");
+my $no_ml_kem = disabled("ml-kem");
 
 # Add your test here if the test conf.in generates test cases and/or
 # expectations dynamically based on the OpenSSL compile-time config.
@@ -84,12 +86,12 @@ my %conf_dependent_tests = (
   "07-dtls-protocol-version.cnf" => !$is_default_dtls || !disabled("sctp"),
   "10-resumption.cnf" => !$is_default_tls || $no_ec,
   "11-dtls_resumption.cnf" => !$is_default_dtls || !disabled("sctp"),
-  "14-curves.cnf" => disabled("tls-deprecated-ec"),
+  "14-curves.cnf" => disabled("tls-deprecated-ec") || $no_ecx || $no_sm2 || $no_ml_kem,
   "16-dtls-certstatus.cnf" => !$is_default_dtls || !disabled("sctp"),
   "17-renegotiate.cnf" => disabled("tls1_2"),
   "18-dtls-renegotiate.cnf" => disabled("dtls1_2") || !disabled("sctp"),
   "19-mac-then-encrypt.cnf" => !$is_default_tls,
-  "20-cert-select.cnf" => !$is_default_tls || $no_dh || $no_dsa || $no_ml_dsa,
+  "20-cert-select.cnf" => !$is_default_tls || $no_dh || $no_dsa || $no_ml_dsa || $no_sm2,
   "22-compression.cnf" => !$is_default_tls,
   "25-cipher.cnf" => disabled("poly1305") || disabled("chacha"),
   "27-ticket-appdata.cnf" => !$is_default_tls,
