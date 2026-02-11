@@ -161,7 +161,7 @@ and freeing up the accept BIO after the initial connection.
 
 If the underlying accept socket is nonblocking and BIO_do_accept() is
 called to await an incoming connection it is possible for
-BIO_should_io_special() to return true with the reason BIO_RR_ACCEPT. If this happens
+BIO_should_io_special() to return true with the reason B<BIO_RR_ACCEPT>. If this happens
 then it is an indication that an accept attempt would block: the application
 should take appropriate action to wait until the underlying socket has
 accepted a connection and retry the call.
