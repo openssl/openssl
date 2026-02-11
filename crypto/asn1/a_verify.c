@@ -28,7 +28,7 @@ int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *a, ASN1_BIT_STRING *signature,
     char *data, EVP_PKEY *pkey)
 {
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
-    const EVP_MD *type;
+    EVP_MD *type = NULL;
     unsigned char *p, *buf_in = NULL;
     int ret = -1, i, inl;
 
@@ -37,7 +37,7 @@ int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *a, ASN1_BIT_STRING *signature,
         goto err;
     }
     i = OBJ_obj2nid(a->algorithm);
-    type = EVP_get_digestbyname(OBJ_nid2sn(i));
+    type = EVP_MD_fetch(NULL, OBJ_nid2sn(i), NULL);
     if (type == NULL) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM);
         goto err;
@@ -79,6 +79,7 @@ int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *a, ASN1_BIT_STRING *signature,
     }
     ret = 1;
 err:
+    EVP_MD_free(type);
     EVP_MD_CTX_free(ctx);
     return ret;
 }
