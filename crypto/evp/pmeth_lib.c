@@ -1216,7 +1216,7 @@ static int evp_pkey_ctx_store_cached_data(EVP_PKEY_CTX *ctx,
             if (ctx->cached_parameters.dist_id_name == NULL)
                 return 0;
         }
-        if (data_len > 0) {
+        if (data != NULL) {
             ctx->cached_parameters.dist_id = OPENSSL_memdup(data, data_len);
             if (ctx->cached_parameters.dist_id == NULL)
                 return 0;

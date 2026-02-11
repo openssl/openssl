@@ -298,7 +298,8 @@ done:
 #endif /* OPENSSL_NO_X963KDF */
 
 static int test_sm2_sign(const EC_GROUP *group,
-    const char *userid,
+    const uint8_t *userid,
+    size_t userid_len,
     const char *privkey_hex,
     const char *message,
     const char *k_hex,
@@ -335,8 +336,8 @@ static int test_sm2_sign(const EC_GROUP *group,
     }
 
     start_fake_rand(k_hex);
-    sig = ossl_sm2_do_sign(key, EVP_sm3(), (const uint8_t *)userid,
-        strlen(userid), (const uint8_t *)message, msg_len);
+    sig = ossl_sm2_do_sign(key, EVP_sm3(), userid,
+        userid_len, (const uint8_t *)message, msg_len);
     if (!TEST_ptr(sig)) {
         restore_rand();
         goto done;
@@ -351,8 +352,8 @@ static int test_sm2_sign(const EC_GROUP *group,
         || !TEST_BN_eq(s, sig_s))
         goto done;
 
-    ok = ossl_sm2_do_verify(key, EVP_sm3(), sig, (const uint8_t *)userid,
-        strlen(userid), (const uint8_t *)message, msg_len);
+    ok = ossl_sm2_do_verify(key, EVP_sm3(), sig, userid,
+        userid_len, (const uint8_t *)message, msg_len);
 
     /* We goto done whether this passes or fails */
     TEST_true(ok);
@@ -372,6 +373,11 @@ static int sm2_sig_test(void)
 {
     int testresult = 0;
     EC_GROUP *gm_group = NULL;
+    /* ALICE123@YAHOO.COM */
+    static const uint8_t test_alice_id[] = {
+        0x41, 0x4c, 0x49, 0x43, 0x45, 0x31, 0x32, 0x33, 0x40,
+        0x59, 0x41, 0x48, 0x4f, 0x4f, 0x2e, 0x43, 0x4f, 0x4d
+    };
     /* From draft-shen-sm2-ecdsa-02 */
     EC_GROUP *test_group = create_EC_group("8542D69E4C044F18E8B92435BF6FF7DE457283915C45517D722EDB8B08F1DFC3",
         "787968B4FA32C3FD2417842E73BBFEFF2F3C848B6831D7E0EC65228B3937E498",
@@ -386,7 +392,7 @@ static int sm2_sig_test(void)
 
     if (!TEST_true(test_sm2_sign(
             test_group,
-            "ALICE123@YAHOO.COM",
+            test_alice_id, sizeof(test_alice_id),
             "128B2FA8BD433C6C068C8D803DFF79792A519A55171B1B650C23661D15897263",
             "message digest",
             "006CB28D99385C175C94F94E934817663FC176D925DD72B727260DBAAE1FB2F96F"
@@ -410,8 +416,8 @@ static int sm2_sig_test(void)
 
     if (!TEST_true(test_sm2_sign(
             gm_group,
-            /* the default ID specified in GM/T 0009-2012 (Sec. 10).*/
-            SM2_DEFAULT_USERID,
+            /* Use the default ID. */
+            NULL, 0,
             /* privkey */
             "3945208F7B2144B13F36E38AC6D39F95889393692860B51A42FB81EF4DF7C5B8",
             /* plaintext message */
@@ -429,8 +435,8 @@ static int sm2_sig_test(void)
     /* Make sure we fail if we omit the public portion of the key */
     if (!TEST_false(test_sm2_sign(
             gm_group,
-            /* the default ID specified in GM/T 0009-2012 (Sec. 10).*/
-            SM2_DEFAULT_USERID,
+            /* Use the default ID. */
+            NULL, 0,
             /* privkey */
             "3945208F7B2144B13F36E38AC6D39F95889393692860B51A42FB81EF4DF7C5B8",
             /* plaintext message */

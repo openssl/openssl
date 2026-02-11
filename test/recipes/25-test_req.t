@@ -330,27 +330,25 @@ subtest "generating SM2 certificate requests" => sub {
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-key", srctop_file(@certs, "sm2.key"),
-                    "-sigopt", "distid:1234567812345678",
-                    "-out", "testreq-sm2.pem", "-sm3"])),
+                    "-out", "testreq-sm2.pem"])),
            "Generating SM2 certificate request");
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
-                    "-verify", "-in", "testreq-sm2.pem", "-noout",
-                    "-vfyopt", "distid:1234567812345678", "-sm3"])),
+                    "-verify", "-in", "testreq-sm2.pem", "-noout"])),
            "Verifying signature on SM2 certificate request");
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-key", srctop_file(@certs, "sm2.key"),
                     "-sigopt", "hexdistid:DEADBEEF",
-                    "-out", "testreq-sm2.pem", "-sm3"])),
+                    "-out", "testreq-sm2.pem"])),
            "Generating SM2 certificate request with hex id");
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-verify", "-in", "testreq-sm2.pem", "-noout",
-                    "-vfyopt", "hexdistid:DEADBEEF", "-sm3"])),
+                    "-vfyopt", "hexdistid:DEADBEEF"])),
            "Verifying signature on SM2 certificate request");
     }
 };
