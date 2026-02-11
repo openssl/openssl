@@ -26,7 +26,6 @@
 #include "internal/sizes.h"
 #include "internal/nelem.h"
 #include "internal/param_build_set.h"
-#include "internal/threads_common.h"
 
 static OSSL_FUNC_keymgmt_new_fn dsa_newdata;
 static OSSL_FUNC_keymgmt_new_ex_fn dsa_newdata_ex;

@@ -29,7 +29,6 @@
 #include "prov/securitycheck.h"
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
-#include "internal/threads_common.h"
 
 #ifndef FIPS_MODULE
 #ifndef OPENSSL_NO_SM2

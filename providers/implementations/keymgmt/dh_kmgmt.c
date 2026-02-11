@@ -27,7 +27,6 @@
 #include "crypto/dh.h"
 #include "internal/fips.h"
 #include "internal/sizes.h"
-#include "internal/threads_common.h"
 #include "internal/cryptlib.h"
 
 static OSSL_FUNC_keymgmt_new_fn dh_newdata;

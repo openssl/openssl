@@ -47,7 +47,6 @@
 #endif
 #include "internal/provider.h"
 #include "internal/common.h"
-#include "internal/threads_common.h"
 #include "evp_local.h"
 
 static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str,
@@ -1910,7 +1909,8 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
              * with this. This is necessary here for backwards compatibility
              * reasons.
              */
-            params[0] = OSSL_PARAM_construct_octet_ptr("legacy-object", &pk->pkey.ptr, sizeof(pk->pkey.ptr));
+            params[0] = OSSL_PARAM_construct_octet_ptr("legacy-object",
+                &pk->pkey.ptr, sizeof(pk->pkey.ptr));
             p = params;
         }
         keydata = evp_keymgmt_newdata(tmp_keymgmt, p);
@@ -1921,7 +1921,8 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
          * We skip the export if the key data we got back is actually the same
          * as the low level object we passed in
          */
-        if (keydata != pk->pkey.ptr && !pk->ameth->export_to(pk, keydata, tmp_keymgmt->import, libctx, propquery)) {
+        if (keydata != pk->pkey.ptr
+            && !pk->ameth->export_to(pk, keydata, tmp_keymgmt->import, libctx, propquery)) {
             evp_keymgmt_freedata(tmp_keymgmt, keydata);
             keydata = NULL;
             goto end;
