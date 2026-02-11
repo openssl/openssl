@@ -1,0 +1,66 @@
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: Test valgrind suppression file
+# Jobs run daily
+
+on:
+  schedule:
+    - cron: '30 02 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+    check-valgrind-suppressions:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v6
+          with:
+            persist-credentials: false
+        - name: Install valgrind
+          run: |
+            sudo apt-get -y update
+            sudo apt-get -y install valgrind
+        - name: Get parse suppressions script
+          run: |
+            wget https://raw.githubusercontent.com/coqui-ai/STT/refs/tags/v1.4.0/parse_valgrind_suppressions.sh
+            echo "7414fcb9405f8bd1632442a0b66ffb35457994c6b8b49b2aa91530cf9a7ff645  ./parse_valgrind_suppressions.sh" > ./valgrind_suppressions.sha256
+            sha256sum -c ./valgrind_suppressions.sha256
+            chmod 755 ./parse_valgrind_suppressions.sh
+        - name: Configure
+          run: |
+            ./Configure -DOPENSSL_VALGRIND_TEST
+            ./configdata.pm --dump
+        - name: Make
+          run: |
+            make -j
+        - name: Make test
+          run: |
+            # The quic radix and multistream test times out under valgrind in ci
+            make TESTS="-test_quic_radix -test_quic_multistream" OSSL_USE_VALGRIND=yes test
+        - name: Check for leaks
+          run: |
+            set +e
+            NUM_LOGS=$(find . -name 'valgrind.log.*' | wc -l)
+            echo "Found $NUM_LOGS valgrind logs"
+            if [ $NUM_LOGS == 0 ]; then
+              echo "No logs found!"
+              exit 1
+            fi
+            for i in $(find . -name 'valgrind.log.*'); do
+              ./parse_valgrind_suppressions.sh $i >> ./new_suppressions.txt
+            done
+            NEW_SUPPRESSION_LINES=$(cat ./new_suppressions.txt | wc -l)
+            if [ $NEW_SUPPRESSION_LINES != 0 ]; then
+              echo "New Suppressions Found that need to be addressed!"
+              cat ./new_suppressions.txt
+              exit 1
+            fi
+            echo "No new suppressions found"
+            exit 0
