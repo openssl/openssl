@@ -337,7 +337,7 @@ int TS_CONF_set_digests(CONF *conf, const char *section, TS_RESP_CTX *ctx)
         if (!TS_RESP_CTX_add_md(ctx, md)) {
             EVP_MD_free(md);
             goto err;
-	}
+        }
         EVP_MD_free(md);
     }
 
