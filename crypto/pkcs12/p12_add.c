@@ -109,9 +109,7 @@ PKCS7 *PKCS12_pack_p7encdata_ex(int pbe_nid, const char *pass, int passlen,
         goto err;
     }
 
-    ERR_set_mark();
     pbe_ciph = EVP_CIPHER_fetch(ctx, OBJ_nid2sn(pbe_nid), propq);
-    ERR_pop_to_mark();
 
     if (pbe_ciph != NULL) {
         pbe = PKCS5_pbe2_set_iv_ex(pbe_ciph, iter, salt, saltlen, NULL, -1, ctx);

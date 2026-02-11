@@ -96,8 +96,7 @@ static int pkcs7_bio_add_digest(BIO **pbio, X509_ALGOR *alg,
 {
     BIO *btmp;
     char name[OSSL_MAX_NAME_SIZE];
-    EVP_MD *fetched = NULL;
-    const EVP_MD *md;
+    EVP_MD *md = NULL;
 
     if ((btmp = BIO_new(BIO_f_md())) == NULL) {
         ERR_raise(ERR_LIB_PKCS7, ERR_R_BIO_LIB);
@@ -106,27 +105,20 @@ static int pkcs7_bio_add_digest(BIO **pbio, X509_ALGOR *alg,
 
     OBJ_obj2txt(name, sizeof(name), alg->algorithm, 0);
 
-    (void)ERR_set_mark();
-    fetched = EVP_MD_fetch(ossl_pkcs7_ctx_get0_libctx(ctx), name,
+    md = EVP_MD_fetch(ossl_pkcs7_ctx_get0_libctx(ctx), name,
         ossl_pkcs7_ctx_get0_propq(ctx));
-    if (fetched != NULL)
-        md = fetched;
-    else
-        md = EVP_get_digestbyname(name);
 
     if (md == NULL) {
-        (void)ERR_clear_last_mark();
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNKNOWN_DIGEST_TYPE);
         goto err;
     }
-    (void)ERR_pop_to_mark();
 
     if (BIO_set_md(btmp, md) <= 0) {
         ERR_raise(ERR_LIB_PKCS7, ERR_R_BIO_LIB);
-        EVP_MD_free(fetched);
+        EVP_MD_free(md);
         goto err;
     }
-    EVP_MD_free(fetched);
+    EVP_MD_free(md);
     if (*pbio == NULL)
         *pbio = btmp;
     else if (!BIO_push(*pbio, btmp)) {
@@ -1138,14 +1130,11 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
             goto err;
         }
 
-        (void)ERR_set_mark();
         md = EVP_MD_fetch(libctx, OBJ_nid2sn(md_type), propq);
 
         if (md == NULL || !EVP_VerifyInit_ex(mdc_tmp, md, NULL)) {
-            (void)ERR_clear_last_mark();
             goto err;
         }
-        (void)ERR_pop_to_mark();
 
         alen = ASN1_item_i2d((ASN1_VALUE *)sk, &abuf,
             ASN1_ITEM_rptr(PKCS7_ATTR_VERIFY));

@@ -220,15 +220,12 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
         if (OBJ_obj2txt(md_name, sizeof(md_name), macoid, 0) < 0)
             return 0;
     }
-    (void)ERR_set_mark();
     md = EVP_MD_fetch(libctx, md_name, propq);
 
     if (md == NULL) {
-        (void)ERR_clear_last_mark();
         ERR_raise(ERR_LIB_PKCS12, PKCS12_R_UNKNOWN_DIGEST_ALGORITHM);
         return 0;
     }
-    (void)ERR_pop_to_mark();
 
     keylen = EVP_MD_get_size(md);
     md_nid = EVP_MD_get_type(md);
