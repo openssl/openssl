@@ -107,6 +107,8 @@ present in an SVCB or HTTPS RR retrieved from the DNS. The resulting set of
 ECHConfig values, are associated with the I<es> store, and can then be
 associated with an B<SSL_CTX> or B<SSL> structure for TLS client connections.
 
+Input B<BIO> values (such a I<in> above) must not use unterminated B<BIO>'s.
+
 OSSL_ECHSTORE_get1_info() queries the store provided by I<es> and finds the
 entry within the store specified by I<index>. The number of seconds since that
 entry was first generated or loaded/decoded is stored in I<loaded_secs>, and
@@ -116,7 +118,7 @@ L</String form of ECHConfig> section) and stores that in I<*echconfig>.  It is
 the callers responsibility to free the strings returned in I<public_name> and
 I<echconfig> after they have been returned. If the specified entry has a
 private key associated with it then I<has_private> will be set to 1, otherwise
-it will be set to 0. Simiarly if the ECHConfig for this entry will be included
+it will be set to 0. Similarly if the ECHConfig for this entry will be included
 in "retry-configs" then the I<for_retry> will be set to 1 or zero if that
 ECHConfig will not be included in retry-configs.
 
