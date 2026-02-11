@@ -272,9 +272,11 @@ struct abs_set1_test {
 };
 
 static const struct abs_set1_test abs_set1_tests[] = {
-    { .descr = "length too large",
+    {
+        .descr = "length too large",
         .valid = 0,
-        .length = (size_t)INT_MAX + 1 },
+        .length = (size_t)INT_MAX + 1,
+    },
     {
         .descr = "negative unused bits",
         .valid = 0,
@@ -577,13 +579,16 @@ static const struct abs_set1_test abs_set1_tests[] = {
         .length = 16,
         .unused_bits = 1,
     },
-    { .descr = "RFC 3779, 2.1.1, IPv6 address 2001:0:200:3::/39", .valid = 1, .data = {
-                                                                                  0x20,
-                                                                                  0x01,
-                                                                                  0x00,
-                                                                                  0x00,
-                                                                                  0x02,
-                                                                              },
+    {
+        .descr = "RFC 3779, 2.1.1, IPv6 address 2001:0:200:3::/39",
+        .valid = 1,
+        .data = {
+            0x20,
+            0x01,
+            0x00,
+            0x00,
+            0x02,
+        },
         .length = 5,
         .unused_bits = 1,
         .der = {
@@ -596,7 +601,8 @@ static const struct abs_set1_test abs_set1_tests[] = {
             0x00,
             0x02,
         },
-        .der_len = 8 },
+        .der_len = 8,
+    },
 };
 
 static int
