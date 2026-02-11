@@ -434,17 +434,10 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
 
     OBJ_obj2txt(name, sizeof(name), md_alg_resp->algorithm, 0);
 
-    (void)ERR_set_mark();
     md = EVP_MD_fetch(NULL, name, NULL);
-
-    if (md == NULL)
-        md = (EVP_MD *)EVP_get_digestbyname(name);
-
     if (md == NULL) {
-        (void)ERR_clear_last_mark();
         goto err;
     }
-    (void)ERR_pop_to_mark();
 
     length = EVP_MD_get_size(md);
     if (length <= 0)
