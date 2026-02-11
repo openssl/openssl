@@ -16,17 +16,18 @@
 #include <crypto/asn1.h>
 
 static void
-asn1_abs_clear_unused_bits(ASN1_BIT_STRING *abs)
+asn1_bit_string_clear_unused_bits(ASN1_BIT_STRING *abs)
 {
     abs->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
 }
 
-static int asn1_abs_set_unused_bits(ASN1_BIT_STRING *abs, uint8_t unused_bits)
+static int asn1_bit_string_set_unused_bits(ASN1_BIT_STRING *abs,
+    uint8_t unused_bits)
 {
     if (unused_bits > 7)
         return 0;
 
-    asn1_abs_clear_unused_bits(abs);
+    asn1_bit_string_clear_unused_bits(abs);
 
     abs->flags |= ASN1_STRING_FLAG_BITS_LEFT | unused_bits;
 
@@ -290,14 +291,14 @@ int ASN1_BIT_STRING_set1(ASN1_BIT_STRING *abs, const uint8_t *data, size_t lengt
         return 0;
 
     /*
-     * XXX - ASN1_STRING_set() and asn1_abs_set_unused_bits() preserve the
+     * XXX - ASN1_STRING_set() and asn1_bit_string_set_unused_bits() preserve the
      * state of flags irrelevant to ASN1_BIT_STRING. Should we explicitly
      * clear them?
      */
 
-    abs->type = V_ASN1_BIT_STRING;
     if (!ASN1_STRING_set(abs, data, (int)length))
         return 0;
+    abs->type = V_ASN1_BIT_STRING;
 
-    return asn1_abs_set_unused_bits(abs, unused_bits);
+    return asn1_bit_string_set_unused_bits(abs, unused_bits);
 }
