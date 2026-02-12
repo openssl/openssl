@@ -1,0 +1,346 @@
+{
+  "$schema": "https://raw.githubusercontent.com/openssl/openssl/refs/heads/master/REVIEWERS.json#",
+  "groups": [
+    {
+      "name": "committers",
+      "description": "OpenSSL Committers",
+      "github_ids": [
+        "@openssl/committers"
+      ]
+    },
+    {
+      "name": "CMS Code",
+      "description": "Cryptographic Message Syntax experts",
+      "github_ids": [
+        "@DDvO"
+      ]
+    },
+    {
+      "name": "linux-aarch64-platform",
+      "description": "Community maintainers for linux aarch64",
+      "github_ids": [
+        "@tom-cosgrove-arm",
+        "@zorrorffm",
+        "@xkqian"
+      ]
+    },
+    {
+      "name": "nonstop-platform",
+      "description": "Community maintainers for nonstop",
+      "github_ids": [
+        "@rsbeckerca"
+      ]
+    },
+    {
+      "name": "loongarch64",
+      "description": "Community maintainers for loongarch64",
+      "github_ids": [
+        "@shipujin"
+      ]
+    },
+    {
+      "name": "bsd community",
+      "description": "Community maintainrs for BSD platforms",
+      "github_ids": [
+        "@pkubaj"
+      ]
+    },
+    {
+      "name": "solaris community",
+      "description": "Community maintainers for Solaris platforms",
+      "github_ids": [
+        "@orcl-jlana",
+        "@cernoseka"
+      ]
+    },
+    {
+      "name": "s390x community",
+      "description": "Community maintainers for s390x platforms",
+      "github_ids": [
+        "@holger-dengler",
+        "@ifranzki"
+      ]
+    },
+    {
+      "name": "hurd community",
+      "description": "Community maintainers for hurd platforms",
+      "github_ids": [
+        "@sthibaul"
+      ]
+    },
+    {
+      "name": "ios community",
+      "description": "Community maintainers for ios platforms",
+      "github_ids": [
+        "@fwh-dc"
+      ]
+    },
+    {
+      "name": "ppc64le community",
+      "description": "Community maintainers for ppc64le platforms",
+      "github_ids": [
+        "@dannytsen",
+        "@erichte-ibm",
+        "@naynajain"
+      ]
+    },
+    {
+      "name": "riscv community",
+      "description": "Community maintainers for riscv platforms",
+      "github_ids": [
+        "@ZenithalHourlyRate"
+      ]
+    },
+    {
+      "name": "aix community",
+      "description": "Community maintainers for aix platforms",
+      "github_ids": [
+        "@sanumesh"
+      ]
+    },
+    {
+      "name": "BC64 community",
+      "description": "Community maintainers for Windows/Embarcadero platforms",
+      "github_ids": [
+        "@GermanAizek"
+      ]
+    }
+  ],
+  "platforms": [
+    {
+      "name": "All Primary Platforms",
+      "regexs": [
+        "linux-x86.*",
+        "linux-generic.*",
+        "BSD-x86.*",
+        "VC-WIN.*",
+        "mingw64",
+        "darwin64-.*"
+      ],
+      "groups": [
+        "committers"
+      ]
+    },
+    {
+      "name": "Linux AARCH64 Platform",
+      "regexs": [
+        "linux-aarch64"
+      ],
+      "groups": [
+        "committers",
+        "linux-aarch64-platform"
+      ]
+    },
+    {
+      "name": "Nonstop Platforms",
+      "regexs": [
+        "nonstop*"
+      ],
+      "groups": [
+        "committers",
+        "nonstop-platform"
+      ]
+    },
+    {
+      "name": "Loongarch64 Platform",
+      "regexs": [
+        ".*loongarch.*"
+      ],
+      "groups": [
+        "loongarch64",
+        "committers"
+      ]
+    },
+    {
+      "name": "BSD platforms",
+      "regexs": [
+        "BSD-ppc*",
+        "BSD-risc*",
+        "BSD-arm*"
+      ],
+      "groups": [
+        "bsd community",
+        "committers"
+      ]
+    },
+    {
+      "name": "Solaris platforms",
+      "regexs": [
+        "solaris64-*"
+      ],
+      "groups": [
+        "solaris community",
+        "committers"
+      ]
+    },
+    {
+      "name": "s390x platforms",
+      "regexs": [
+        "linux-s390x*"
+      ],
+      "groups": [
+        "s390x community",
+        "committers"
+      ]
+    },
+    {
+      "name": "hurd platforms",
+      "regexs": [
+        "hurd-*"
+      ],
+      "groups": [
+        "hurd community",
+        "committers"
+      ]
+    },
+    {
+      "name": "ios platforms",
+      "regexs": [
+        "ios*",
+        "iphone*"
+      ],
+      "groups": [
+        "ios community",
+        "committers"
+      ]
+    },
+    {
+      "name": "ppc64le platforms",
+      "regexs": [
+        "linux-ppc64le*"
+      ],
+      "groups": [
+        "ppc64le community",
+        "committers"
+      ]
+    },
+    {
+      "name": "aix platforms",
+      "regexs": [
+        "aix*"
+      ],
+      "groups": [
+        "aix community",
+        "committers"
+      ]
+    },
+    {
+      "name": "aix platforms",
+      "regexs": [
+        "BC-64"
+      ],
+      "groups": [
+        "BC64 community",
+        "committers"
+      ]
+    }
+  ],
+  "codegroups": [
+    {
+      "name": "All OpenSSL Code",
+      "groups": [
+        "committers"
+      ],
+      "filepathregexs": [
+        ".*"
+      ],
+      "filecontentregexs": [
+        ".*"
+      ]
+    },
+    {
+      "name": "CMS Specific code",
+      "groups": [
+        "CMS Code"
+      ],
+      "filepathregexs": [
+        ".*cms.*"
+      ],
+      "filecontentregexs": [
+        ".*cms_.*",
+        ".*CMS_.*"
+      ]
+    },
+    {
+      "name": "RISCV Specific code",
+      "groups": [
+        "riscv community"
+      ],
+      "filepathregexs": [
+        ".*riscv.*"
+      ],
+      "filecontentregexs": [
+        ".*RISCV.*",
+        ".*riscv.*"
+      ]
+    },
+    {
+      "name": "s390x Specific code",
+      "groups": [
+        "s390x community"
+      ],
+      "filepathregexs": [
+        ".*s390.*"
+      ],
+      "filecontentregexs": [
+        ".*s390.*",
+        ".*S390.*"
+      ]
+    },
+    {
+      "name": "loongarch64 specific code",
+      "groups": [
+        "loongarch64"
+      ],
+      "filepathregexs": [
+        ".*loongarch.*"
+      ],
+      "filecontentregexs": [
+        ".*loongarch.*",
+        ".*LOONGARCH.*"
+      ]
+    },
+    {
+      "name": "ARM/AARCH64 specific code",
+      "groups": [
+        "linux-aarch64-platform"
+      ],
+      "filepathregexs": [
+        ".*arm.*",
+        ".*aarch64.*"
+      ],
+      "filecontentregexs": [
+        ".*ARM.*",
+        "_.*arm.*",
+        ".*aarch64.*"
+      ]
+    },
+    {
+      "name": "NonStop specific code",
+      "groups": [
+        "nonstop-platform"
+      ],
+      "filepathregexs": [],
+      "filecontentregexs": [
+        ".*TANDEM.*",
+        ".*Non-Stop.*",
+        ".*NONSTOP.*",
+        ".*_PUT_MODEL_.*",
+        ".*_KLT_MODEL_.*"
+      ]
+    },
+    {
+      "name": "ppc specific code",
+      "groups": [
+        "ppc64le community"
+      ],
+      "filepathregexs": [
+        ".*ppc.*"
+      ],
+      "filecontentregexs": [
+        ".*ppc.*",
+        ".*PPC.*"
+      ]
+    }
+  ]
+}
