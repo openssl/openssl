@@ -69,7 +69,8 @@ for compatibility; use L<OSSL_HTTP_transfer(3)> instead.
 
 OCSP_REQ_CTX_set_http11() is a convenience function that updates an
 OSSL_HTTP_REQ_CTX created by OCSP_sendreq_new() to use HTTP/1.1 and adds
-the required C<Host> header with the given I<host> value.
+the required C<Host> header with the given I<host> value. The I<host> value
+must not include CR or LF characters.
 It must be called before adding any other headers or request content.
 
 OCSP_REQ_CTX_i2d(rctx, it, req) is equivalent to the following:

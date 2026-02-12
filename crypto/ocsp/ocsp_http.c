@@ -10,6 +10,7 @@
 #include <openssl/ocsp.h>
 #include <openssl/http.h>
 #include <openssl/err.h>
+#include <string.h>
 
 #ifndef OPENSSL_NO_OCSP
 
@@ -53,6 +54,10 @@ int OCSP_REQ_CTX_set_http11(OSSL_HTTP_REQ_CTX *rctx, const char *host)
 {
     if (rctx == NULL || host == NULL || *host == '\0') {
         ERR_raise(ERR_LIB_OCSP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (strpbrk(host, "\r\n") != NULL) {
+        ERR_raise(ERR_LIB_OCSP, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
     if (!OSSL_HTTP_REQ_CTX_set_http_version(rctx, 1, 1))
