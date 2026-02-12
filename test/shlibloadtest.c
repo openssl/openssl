@@ -38,23 +38,8 @@ typedef enum test_types_en {
 static TEST_TYPE test_type;
 static const char *path_crypto;
 static const char *path_ssl;
-static const char *path_atexit;
 
 #ifdef SD_INIT
-
-static int atexit_handler_done = 0;
-
-static void atexit_handler(void)
-{
-    FILE *atexit_file = fopen(path_atexit, "w");
-
-    if (atexit_file == NULL)
-        return;
-
-    fprintf(atexit_file, "atexit() run\n");
-    fclose(atexit_file);
-    atexit_handler_done++;
-}
 
 static int test_lib(void)
 {
@@ -143,23 +128,17 @@ static int test_lib(void)
         goto end;
     }
 
-    if (atexit(atexit_handler) != 0) {
-        fprintf(stderr, "Failed to register atexit handler\n");
-        goto end;
-    }
-
     if (test_type == DSO_REFTEST) {
 #ifdef DSO_DLFCN
         DSO_dsobyaddr_t myDSO_dsobyaddr;
         DSO_free_t myDSO_free;
 
         /*
-         * This is resembling the code used in ossl_init_base() and
-         * atexit() to block unloading the library after dlclose().
-         * We are not testing this on Windows, because it is done there in a
-         * completely different way. Especially as a call to DSO_dsobyaddr()
-         * will always return an error, because DSO_pathbyaddr() is not
-         * implemented there.
+	 * This is resembling the code used in ossl_init_base() to block
+	 * unloading the library after dlclose().  We are not testing this on
+	 * Windows, because it is done there in a completely different way.
+	 * Especially as a call to DSO_dsobyaddr() will always return an error,
+	 * because DSO_pathbyaddr() is not implemented there.
          */
         if (!sd_sym(cryptolib, "DSO_dsobyaddr", &symbols[0].sym)
             || !sd_sym(cryptolib, "DSO_free", &symbols[1].sym)) {
@@ -197,22 +176,6 @@ static int test_lib(void)
         ssllib = SD_INIT;
     }
 
-#if defined(OPENSSL_NO_PINSHARED) \
-    && defined(__GLIBC__)         \
-    && defined(__GLIBC_PREREQ)    \
-    && defined(OPENSSL_SYS_LINUX)
-#if __GLIBC_PREREQ(2, 3)
-    /*
-     * If we didn't pin the so then we are hopefully on a platform that supports
-     * running atexit() on so unload. If not we might crash. We know this is
-     * true on linux since glibc 2.2.3
-     */
-    if (atexit_handler_done != 1) {
-        fprintf(stderr, "atexit() handler did not run\n");
-        goto end;
-    }
-#endif
-#endif
 
     result = 1;
 end:
@@ -233,7 +196,7 @@ int main(int argc, char *argv[])
 {
     const char *p;
 
-    if (argc != 5) {
+    if (argc != 4) {
         fprintf(stderr, "Incorrect number of arguments\n");
         return 1;
     }
@@ -254,7 +217,6 @@ int main(int argc, char *argv[])
     }
     path_crypto = argv[2];
     path_ssl = argv[3];
-    path_atexit = argv[4];
     if (path_crypto == NULL || path_ssl == NULL) {
         fprintf(stderr, "Invalid libcrypto/libssl path\n");
         return 1;
