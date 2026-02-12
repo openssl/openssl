@@ -384,9 +384,16 @@ static int test_EVP_CIPHER_fetch_freeze(void)
     OSSL_LIB_CTX *ctx2 = OSSL_LIB_CTX_new();
     OSSL_PROVIDER *prov[2] = { NULL, NULL };
 
+    TEST_info("TEST_info");
+    fprintf(stderr, "fprintf\n");
+
+    TEST_info("ANDREW 01");
+    fprintf(stderr, "ANDREW 01\n");
     if (use_default_ctx == 0 && !load_providers(&ctx, prov))
         goto err;
 
+    TEST_info("ANDREW 02");
+    fprintf(stderr, "ANDREW 02\n");
     if (!TEST_ptr(ctx2)
         || !TEST_ptr(cipher = EVP_CIPHER_fetch(ctx, "AES-128-CBC", NULL))
         || !TEST_true(test_cipher(cipher))
@@ -394,6 +401,8 @@ static int test_EVP_CIPHER_fetch_freeze(void)
         goto err;
     EVP_CIPHER_free(cipher);
 
+    TEST_info("ANDREW 03");
+    fprintf(stderr, "ANDREW 03\n");
     if (!TEST_ptr(cipher = EVP_CIPHER_fetch(ctx, "AES-128-CBC", "?provider=default"))
         || !TEST_true(test_cipher(cipher))
         || !TEST_int_ne(cipher->origin, EVP_ORIG_FROZEN))
@@ -401,6 +410,8 @@ static int test_EVP_CIPHER_fetch_freeze(void)
     EVP_CIPHER_free(cipher);
     cipher = NULL;
 
+    TEST_info("ANDREW 04");
+    fprintf(stderr, "ANDREW 04\n");
     if (!TEST_int_eq(OSSL_LIB_CTX_freeze(ctx, "?fips=true"), 1)
         || !TEST_ptr(cipher = EVP_CIPHER_fetch(ctx, "AES-128-CBC", NULL))
         || !TEST_true(test_cipher(cipher))
@@ -409,12 +420,16 @@ static int test_EVP_CIPHER_fetch_freeze(void)
     /* Technically, frozen version doesn't need to be freed */
     EVP_CIPHER_free(cipher);
 
+    TEST_info("ANDREW 05");
+    fprintf(stderr, "ANDREW 05\n");
     if (!TEST_ptr(cipher = EVP_CIPHER_fetch(ctx, "AES-128-CBC", "?fips=true"))
         || !TEST_true(test_cipher(cipher))
         || !TEST_int_eq(cipher->origin, EVP_ORIG_FROZEN))
         goto err;
     EVP_CIPHER_free(cipher);
 
+    TEST_info("ANDREW 06");
+    fprintf(stderr, "ANDREW 06\n");
     /* Falls back to slow path */
     if (!TEST_ptr(cipher = EVP_CIPHER_fetch(ctx, "AES-128-CBC", "?fips=true"))
         || !TEST_true(test_cipher(cipher))
@@ -422,11 +437,15 @@ static int test_EVP_CIPHER_fetch_freeze(void)
         goto err;
     EVP_CIPHER_free(cipher);
 
+    TEST_info("ANDREW 07");
+    fprintf(stderr, "ANDREW 07\n");
     if (!TEST_ptr(cipher = EVP_CIPHER_fetch(ctx, "AES-128-CBC", "?provider=default"))
         || !TEST_true(test_cipher(cipher))
         || !TEST_int_ne(cipher->origin, EVP_ORIG_FROZEN))
         goto err;
 
+    TEST_info("ANDREW 08");
+    fprintf(stderr, "ANDREW 08\n");
     ret = 1;
 err:
     unload_providers(&ctx, prov);
