@@ -155,7 +155,9 @@ typedef struct dsa_method DSA_METHOD;
 typedef struct rsa_st RSA;
 typedef struct rsa_meth_st RSA_METHOD;
 #endif
+
 typedef struct rsa_pss_params_st RSA_PSS_PARAMS;
+typedef struct rsa_oaep_params_st RSA_OAEP_PARAMS;
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 typedef struct ec_key_st EC_KEY;
