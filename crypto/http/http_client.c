@@ -58,6 +58,7 @@ struct ossl_http_req_ctx_st {
     BIO *mem; /* Mem BIO holding request header or response */
     BIO *req; /* BIO holding the request provided by caller */
     int method_POST; /* HTTP method is POST (else GET) */
+    int http_minor; /* HTTP version minor (0 for 1.0, 1 for 1.1) */
     int text; /* Request content type is (likely) text */
     char *expected_ct; /* Optional expected Content-Type */
     int expect_asn1; /* Response content must be ASN.1-encoded */
@@ -70,6 +71,10 @@ struct ossl_http_req_ctx_st {
     time_t max_total_time; /* Maximum end time of total transfer, or 0 */
     char *redirection_url; /* Location obtained from HTTP status 301/302 */
     size_t max_hdr_lines; /* Max. number of response header lines, or 0 */
+    char *req_server; /* server set in request line, if any */
+    char *req_port; /* port set in request line, if any */
+    char *req_path; /* path set in request line */
+    int headers_added; /* number of headers added */
 };
 
 /* HTTP client OSSL_HTTP_REQ_CTX_nbio() internal states, in typical order */
@@ -112,6 +117,8 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int buf_size)
     rctx->wbio = wbio;
     rctx->rbio = rbio;
     rctx->max_hdr_lines = OSSL_HTTP_DEFAULT_MAX_RESP_HDR_LINES;
+    rctx->http_minor = 0;
+    rctx->headers_added = 0;
     if (rctx->buf == NULL) {
         OPENSSL_free(rctx);
         return NULL;
@@ -140,6 +147,9 @@ void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx)
     OPENSSL_free(rctx->server);
     OPENSSL_free(rctx->port);
     OPENSSL_free(rctx->expected_ct);
+    OPENSSL_free(rctx->req_server);
+    OPENSSL_free(rctx->req_port);
+    OPENSSL_free(rctx->req_path);
     OPENSSL_free(rctx);
 }
 
@@ -171,6 +181,54 @@ void OSSL_HTTP_REQ_CTX_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx,
     rctx->max_resp_len = len != 0 ? (size_t)len : OSSL_HTTP_DEFAULT_MAX_RESP_LEN;
 }
 
+int OSSL_HTTP_REQ_CTX_set_http_version(OSSL_HTTP_REQ_CTX *rctx,
+    int major, int minor)
+{
+    int method_post;
+    char *server = NULL, *port = NULL, *path = NULL;
+
+    if (rctx == NULL) {
+        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (major != 1 || minor < 0 || minor > 1) {
+        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+    if (rctx->state == OHS_ERROR) {
+        rctx->http_minor = minor;
+        return 1;
+    }
+    if (rctx->state != OHS_ADD_HEADERS || rctx->headers_added != 0 || rctx->req != NULL) {
+        ERR_raise(ERR_LIB_HTTP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+    if (rctx->req_path == NULL) {
+        ERR_raise(ERR_LIB_HTTP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+    if (rctx->req_server != NULL && (server = OPENSSL_strdup(rctx->req_server)) == NULL)
+        return 0;
+    if (rctx->req_port != NULL && (port = OPENSSL_strdup(rctx->req_port)) == NULL)
+        goto err;
+    if ((path = OPENSSL_strdup(rctx->req_path)) == NULL)
+        goto err;
+    rctx->http_minor = minor;
+    method_post = rctx->method_POST;
+    if (!OSSL_HTTP_REQ_CTX_set_request_line(rctx, method_post, server, port, path))
+        goto err;
+    OPENSSL_free(server);
+    OPENSSL_free(port);
+    OPENSSL_free(path);
+    return 1;
+
+err:
+    OPENSSL_free(server);
+    OPENSSL_free(port);
+    OPENSSL_free(path);
+    return 0;
+}
+
 /*
  * Create request line using |rctx| and |path| (or "/" in case |path| is NULL).
  * Server name (and optional port) must be given if and only if
@@ -180,6 +238,9 @@ int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx, int method_POST,
     const char *server, const char *port,
     const char *path)
 {
+    const char *path_to_use = NULL;
+    char *path_buf = NULL;
+
     if (rctx == NULL) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
@@ -187,6 +248,14 @@ int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx, int method_POST,
     BIO_free(rctx->mem);
     if ((rctx->mem = BIO_new(BIO_s_mem())) == NULL)
         return 0;
+
+    OPENSSL_free(rctx->req_server);
+    OPENSSL_free(rctx->req_port);
+    OPENSSL_free(rctx->req_path);
+    rctx->req_server = NULL;
+    rctx->req_port = NULL;
+    rctx->req_path = NULL;
+    rctx->headers_added = 0;
 
     rctx->method_POST = method_POST != 0;
     if (BIO_printf(rctx->mem, "%s ", rctx->method_POST ? "POST" : "GET") <= 0)
@@ -205,25 +274,51 @@ int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx, int method_POST,
 
     /* Make sure path includes a forward slash (abs_path) */
     if (path == NULL) {
-        path = "/";
+        path_to_use = "/";
     } else if (HAS_PREFIX(path, "http://")) { /* absoluteURI for proxy use */
         if (server != NULL) {
             ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
-    } else if (path[0] != '/' && BIO_printf(rctx->mem, "/") <= 0) {
-        return 0;
+        path_to_use = path;
+    } else if (path[0] != '/') {
+        size_t len = strlen(path);
+
+        if ((path_buf = OPENSSL_malloc(len + 2)) == NULL)
+            return 0;
+        path_buf[0] = '/';
+        memcpy(path_buf + 1, path, len + 1);
+        path_to_use = path_buf;
+    } else {
+        path_to_use = path;
     }
-    /*
-     * Add (the rest of) the path and the HTTP version,
-     * which is fixed to 1.0 for straightforward implementation of keep-alive
-     */
-    if (BIO_printf(rctx->mem, "%s " HTTP_1_0 "\r\n", path) <= 0)
-        return 0;
+
+    if (server != NULL && (rctx->req_server = OPENSSL_strdup(server)) == NULL)
+        goto err;
+    if (port != NULL && (rctx->req_port = OPENSSL_strdup(port)) == NULL)
+        goto err;
+    if ((rctx->req_path = OPENSSL_strdup(path_to_use)) == NULL)
+        goto err;
+
+    /* Add (the rest of) the path and the HTTP version */
+    if (BIO_printf(rctx->mem, "%s " HTTP_PREFIX_VERSION "%d\r\n",
+            path_to_use, rctx->http_minor) <= 0)
+        goto err;
 
     rctx->resp_len = 0;
     rctx->state = OHS_ADD_HEADERS;
+    OPENSSL_free(path_buf);
     return 1;
+
+err:
+    OPENSSL_free(path_buf);
+    OPENSSL_free(rctx->req_server);
+    OPENSSL_free(rctx->req_port);
+    OPENSSL_free(rctx->req_path);
+    rctx->req_server = NULL;
+    rctx->req_port = NULL;
+    rctx->req_path = NULL;
+    return 0;
 }
 
 int OSSL_HTTP_REQ_CTX_add1_header(OSSL_HTTP_REQ_CTX *rctx,
@@ -246,7 +341,10 @@ int OSSL_HTTP_REQ_CTX_add1_header(OSSL_HTTP_REQ_CTX *rctx,
         if (BIO_puts(rctx->mem, value) <= 0)
             return 0;
     }
-    return BIO_write(rctx->mem, "\r\n", 2) == 2;
+    if (BIO_write(rctx->mem, "\r\n", 2) != 2)
+        return 0;
+    rctx->headers_added++;
+    return 1;
 }
 
 int OSSL_HTTP_REQ_CTX_set_expected(OSSL_HTTP_REQ_CTX *rctx,
