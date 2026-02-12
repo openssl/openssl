@@ -134,11 +134,11 @@ static int test_lib(void)
         DSO_free_t myDSO_free;
 
         /*
-	 * This is resembling the code used in ossl_init_base() to block
-	 * unloading the library after dlclose().  We are not testing this on
-	 * Windows, because it is done there in a completely different way.
-	 * Especially as a call to DSO_dsobyaddr() will always return an error,
-	 * because DSO_pathbyaddr() is not implemented there.
+         * This is resembling the code used in ossl_init_base() to block
+         * unloading the library after dlclose().  We are not testing this on
+         * Windows, because it is done there in a completely different way.
+         * Especially as a call to DSO_dsobyaddr() will always return an error,
+         * because DSO_pathbyaddr() is not implemented there.
          */
         if (!sd_sym(cryptolib, "DSO_dsobyaddr", &symbols[0].sym)
             || !sd_sym(cryptolib, "DSO_free", &symbols[1].sym)) {
@@ -175,7 +175,6 @@ static int test_lib(void)
         }
         ssllib = SD_INIT;
     }
-
 
     result = 1;
 end:
