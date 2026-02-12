@@ -34,7 +34,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     case DLL_THREAD_ATTACH:
         break;
     case DLL_THREAD_DETACH:
+# ifndef __CYGWIN__
         OPENSSL_thread_stop();
+# endif
         break;
     case DLL_PROCESS_DETACH:
 #if defined(OSSL_DLLMAIN_DESTRUCTOR)
