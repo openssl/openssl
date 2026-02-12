@@ -78,7 +78,7 @@ void AES_xts_decrypt(const unsigned char *inp, unsigned char *out, size_t len,
 #endif /* OPENSSL_SYS_MACOSX */
 #if !defined(OPENSSL_SYS_AIX) && !defined(OPENSSL_SYS_MACOSX)
 #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-#define PPC_AES_GCM_CAPABLE
+#define PPC_AES_GCM_CAPABLE (OPENSSL_ppccap_P & PPC_MADD300)
 #endif
 #define AES_GCM_ENC_BYTES 128
 #define AES_GCM_DEC_BYTES 128
