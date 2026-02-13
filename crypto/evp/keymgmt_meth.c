@@ -274,7 +274,9 @@ EVP_KEYMGMT *evp_keymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
         name, properties,
         keymgmt_from_algorithm,
         evp_keymgmt_up_ref,
-        evp_keymgmt_free);
+        evp_keymgmt_free,
+        NULL,
+        NULL);
 }
 
 EVP_KEYMGMT *EVP_KEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,

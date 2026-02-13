@@ -203,7 +203,9 @@ EVP_KEYEXCH *evp_keyexch_fetch_from_prov(OSSL_PROVIDER *prov,
         algorithm, properties,
         evp_keyexch_from_algorithm,
         evp_keyexch_up_ref,
-        evp_keyexch_free);
+        evp_keyexch_free,
+        NULL,
+        NULL);
 }
 
 int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)

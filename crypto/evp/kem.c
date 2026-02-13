@@ -472,7 +472,9 @@ EVP_KEM *evp_kem_fetch_from_prov(OSSL_PROVIDER *prov, const char *algorithm,
     return evp_generic_fetch_from_prov(prov, OSSL_OP_KEM, algorithm, properties,
         evp_kem_from_algorithm,
         evp_kem_up_ref,
-        evp_kem_free);
+        evp_kem_free,
+        NULL,
+        NULL);
 }
 
 int EVP_KEM_is_a(const EVP_KEM *kem, const char *name)
