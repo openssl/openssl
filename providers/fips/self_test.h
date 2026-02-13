@@ -34,10 +34,13 @@ typedef struct self_test_post_params_st {
 
 } SELF_TEST_POST_PARAMS;
 
-int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test);
+int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, void *fips_global,
+    int on_demand_test);
 int SELF_TEST_kats_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
     self_test_id_t id, int switch_rand);
 int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx);
+int SELF_TEST_lock_deferred(void *fips_global);
+void SELF_TEST_unlock_deferred(void *fips_global);
 
 void SELF_TEST_disable_conditional_error_state(void);
 

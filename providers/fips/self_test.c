@@ -255,7 +255,8 @@ int ossl_fips_self_testing(void)
 }
 
 /* This API is triggered either on loading of the FIPS module or on demand */
-int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
+int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, void *fips_global,
+    int on_demand_test)
 {
     int loclstate;
 #if !defined(OPENSSL_NO_FIPS_POST)
@@ -316,34 +317,50 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
     }
     bio_module = (*st->bio_new_file_cb)(st->module_filename, "rb");
 
-    /* Always check the integrity of the fips module */
-    if (bio_module == NULL
-        || !verify_integrity(bio_module, st->bio_read_ex_cb,
-            module_checksum, checksum_len, st->libctx,
-            ev, OSSL_SELF_TEST_TYPE_MODULE_INTEGRITY)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_MODULE_INTEGRITY_FAILURE);
-        goto end;
-    }
+    /* This section can be called on demand and that could race with deferred
+     * tests being executed in another thread, so we use use helpers to get
+     * proper locking around this critical section */
 
-    if ((st->defer_tests != NULL)
-        && strcmp(st->defer_tests, "1") == 0) {
-        /* Mark all non executed tests as deferred */
-        for (int i = 0; i < ST_ID_MAX; i++) {
-            if (st_all_tests[i].state == SELF_TEST_STATE_INIT)
-                st_all_tests[i].state = SELF_TEST_STATE_DEFER;
+    if (SELF_TEST_lock_deferred(fips_global)) {
+        int errored = 0;
+
+        /* Always check the integrity of the fips module */
+        if (bio_module == NULL
+            || !verify_integrity(bio_module, st->bio_read_ex_cb,
+                module_checksum, checksum_len, st->libctx,
+                ev, OSSL_SELF_TEST_TYPE_MODULE_INTEGRITY)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_MODULE_INTEGRITY_FAILURE);
+            errored = 1;
+            goto locked_end;
         }
-    }
 
-    if (on_demand_test) {
-        /* ensure all states are cleared so all tests are forcibly
-         * repeated */
-        for (int i = 0; i < ST_ID_MAX; i++) {
-            st_all_tests[i].state = SELF_TEST_STATE_INIT;
+        if ((st->defer_tests != NULL)
+            && strcmp(st->defer_tests, "1") == 0) {
+            /* Mark all non executed tests as deferred */
+            for (int i = 0; i < ST_ID_MAX; i++) {
+                if (st_all_tests[i].state == SELF_TEST_STATE_INIT)
+                    st_all_tests[i].state = SELF_TEST_STATE_DEFER;
+            }
         }
-    }
 
-    if (!SELF_TEST_kats(ev, st->libctx)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
+        if (on_demand_test) {
+            /* ensure all states are cleared so all tests are forcibly
+             * repeated */
+            for (int i = 0; i < ST_ID_MAX; i++) {
+                st_all_tests[i].state = SELF_TEST_STATE_INIT;
+            }
+        }
+
+        if (!SELF_TEST_kats(ev, st->libctx)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
+            errored = 1;
+        }
+
+    locked_end:
+        SELF_TEST_unlock_deferred(fips_global);
+        if (errored)
+            goto end;
+    } else {
         goto end;
     }
 
