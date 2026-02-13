@@ -20,6 +20,7 @@
 
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
+#include <openssl/pkcs12.h>
 #include <openssl/objects.h>
 #include "testutil.h"
 #include "internal/nelem.h"
@@ -206,6 +207,22 @@ static int test_mbstring_ncopy(void)
     return 1;
 }
 
+static int test_ossl_uni2utf8(void)
+{
+    const unsigned char in[] = { 0x21, 0x92 }; /* unicode right arrow */
+    int inlen = 2;
+    char *out = NULL;
+    int ok = 0;
+
+    /* reproducer for CVE-2025-69419 */
+    out = OPENSSL_uni2utf8(in, inlen);
+    if (TEST_str_eq(out, "\xe2\x86\x92"))
+        ok = 1;
+
+    OPENSSL_free(out);
+    return ok;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_tbl_standard);
@@ -213,5 +230,6 @@ int setup_tests(void)
     ADD_TEST(test_empty_nonoptional_content);
     ADD_TEST(test_unicode_range);
     ADD_TEST(test_mbstring_ncopy);
+    ADD_TEST(test_ossl_uni2utf8);
     return 1;
 }
