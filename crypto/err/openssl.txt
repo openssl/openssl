@@ -1063,6 +1063,7 @@ PROV_R_INIT_CALL_OUT_OF_ORDER:238:init call out of order
 PROV_R_INSUFFICIENT_DRBG_STRENGTH:181:insufficient drbg strength
 PROV_R_INVALID_AAD:108:invalid aad
 PROV_R_INVALID_AEAD:231:invalid aead
+PROV_R_INVALID_CIPHER:260:invalid cipher
 PROV_R_INVALID_CONFIG_DATA:211:invalid config data
 PROV_R_INVALID_CONSTANT_LENGTH:157:invalid constant length
 PROV_R_INVALID_CURVE:176:invalid curve
@@ -1074,6 +1075,7 @@ PROV_R_INVALID_DIGEST_SIZE:218:invalid digest size
 PROV_R_INVALID_EDDSA_INSTANCE_FOR_ATTEMPTED_OPERATION:243:\
 	invalid eddsa instance for attempted operation
 PROV_R_INVALID_FUNCTION_NAME:258:invalid function name
+PROV_R_INVALID_INDEX_LENGTH:259:invalid index length
 PROV_R_INVALID_INPUT_LENGTH:230:invalid input length
 PROV_R_INVALID_ITERATION_COUNT:123:invalid iteration count
 PROV_R_INVALID_IV_LENGTH:109:invalid iv length
