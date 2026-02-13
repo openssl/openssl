@@ -322,7 +322,7 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, void *fips_global,
      * proper lockign around this critical section */
 
     if (SELF_TEST_lock_deferred(fips_global)) {
-        bool errored = false;
+        int errored = 0;
 
         /* Always check the integrity of the fips module */
         if (bio_module == NULL
@@ -330,7 +330,7 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, void *fips_global,
                 module_checksum, checksum_len, st->libctx,
                 ev, OSSL_SELF_TEST_TYPE_MODULE_INTEGRITY)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_MODULE_INTEGRITY_FAILURE);
-            errored = true;
+            errored = 1;
             goto locked_end;
         }
 
@@ -353,10 +353,10 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, void *fips_global,
 
         if (!SELF_TEST_kats(ev, st->libctx)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
-            errored = true;
+            errored = 1;
         }
 
-locked_end:
+    locked_end:
         SELF_TEST_unlock_deferred(fips_global);
         if (errored)
             goto end;
