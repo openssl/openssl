@@ -330,17 +330,17 @@ const OSSL_DISPATCH ossl_kdf_srtpkdf_functions[] = {
     { 0, NULL }
 };
 
-static bool is_srtp(uint32_t label) {
-    static const bool strp_table[] =
-    {
-        true,  /* 0 */
-        true,  /* 1 */
-        true,  /* 2 */
+static bool is_srtp(uint32_t label)
+{
+    static const bool strp_table[] = {
+        true, /* 0 */
+        true, /* 1 */
+        true, /* 2 */
         false, /* 3 */
         false, /* 4 */
         false, /* 5 */
-        true,  /* 6 */
-        true,  /* 7 */
+        true, /* 6 */
+        true, /* 7 */
     };
     return strp_table[label];
 }
