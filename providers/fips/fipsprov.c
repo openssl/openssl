@@ -254,7 +254,7 @@ static int fips_self_test(void *provctx)
         OSSL_LIB_CTX_FIPS_PROV_INDEX);
 
     set_self_test_cb(fgbl);
-    return SELF_TEST_post(&fgbl->selftest_params, 1) ? 1 : 0;
+    return SELF_TEST_post(&fgbl->selftest_params, fgbl, 1) ? 1 : 0;
 }
 
 /*
@@ -1067,7 +1067,7 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
         goto err;
     }
 
-    if (!SELF_TEST_post(&fgbl->selftest_params, 0)) {
+    if (!SELF_TEST_post(&fgbl->selftest_params, fgbl, 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_POST_FAILURE);
         goto err;
     }
@@ -1304,6 +1304,38 @@ void OSSL_INDICATOR_get_callback(OSSL_LIB_CTX *libctx,
     }
 }
 
+/* This function should ever be called from SELF_TEST_post() otherwise
+ * deadlocks may arise */
+int SELF_TEST_lock_deferred(void *fips_global)
+{
+    FIPS_GLOBAL *fgbl = (FIPS_GLOBAL *)fips_global;
+    int ret = 0;
+
+    /* First get the lock */
+    if (CRYPTO_THREAD_write_lock(fgbl->deferred_lock))
+        /* then mark that we are executing tests on this thread */
+        if (CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_FIPS_DEFERRED_KEY,
+                fgbl->selftest_params.libctx, (void *)0xC001))
+            ret = 1;
+        else
+            CRYPTO_THREAD_unlock(fgbl->deferred_lock);
+    else
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_STATE);
+
+    return ret;
+}
+
+void SELF_TEST_unlock_deferred(void *fips_global)
+{
+    FIPS_GLOBAL *fgbl = (FIPS_GLOBAL *)fips_global;
+
+    /* clear thread local mark before exiting block */
+    CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_FIPS_DEFERRED_KEY,
+        fgbl->selftest_params.libctx, NULL);
+    /* release lock before returning */
+    CRYPTO_THREAD_unlock(fgbl->deferred_lock);
+}
+
 static int FIPS_kat_deferred(OSSL_LIB_CTX *libctx, self_test_id_t id)
 {
     FIPS_GLOBAL *fgbl = ossl_lib_ctx_get_data(libctx,
@@ -1344,7 +1376,10 @@ static int FIPS_kat_deferred(OSSL_LIB_CTX *libctx, self_test_id_t id)
 
         /*
          * check again as another thread may have just performed this
-         * test and marked it as passed
+         * test and marked it as passed.
+         * NOTE: SELF_TEST_STATE_INIT is not a vald state here,
+         * deferred testing is only valid when SELF_TEST_post
+         * marks tests with SELF_TEST_STATE_DEFER, under lock.
          */
         switch (st_all_tests[id].state) {
         case SELF_TEST_STATE_DEFER:
@@ -1431,17 +1466,6 @@ int ossl_deferred_self_test(OSSL_LIB_CTX *libctx, self_test_id_t id)
     /* return immediately if the test is marked as passed */
     if (st_all_tests[id].state == SELF_TEST_STATE_PASSED)
         return 1;
-
-    /*
-     * During the initial selftest a call into this function means
-     * a higher level algorithm test is exercising a lower one.
-     * Immediately mark it and return.
-     */
-    if (ossl_fips_self_testing()) {
-        if (st_all_tests[id].state == SELF_TEST_STATE_DEFER)
-            st_all_tests[id].state = SELF_TEST_STATE_IMPLICIT;
-        return 1;
-    }
 
     /*
      * NOTE: that the order in which we check the 'state' here is not important,
