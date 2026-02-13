@@ -5,7 +5,7 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-name: Test valgrind supression file 
+name: Test valgrind suppression file
 # Jobs run daily
 
 on:
@@ -25,7 +25,7 @@ jobs:
           run: |
             sudo apt-get -y update
             sudo apt-get -y install valgrind
-        - name: Get parse supressions script
+        - name: Get parse suppressions script
           run: |
             wget https://raw.githubusercontent.com/coqui-ai/STT/refs/heads/main/parse_valgrind_suppressions.sh
             echo "7414fcb9405f8bd1632442a0b66ffb35457994c6b8b49b2aa91530cf9a7ff645  ./parse_valgrind_suppressions.sh" > ./valgrind_suppressions.sha256
