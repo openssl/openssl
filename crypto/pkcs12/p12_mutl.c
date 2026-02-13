@@ -58,28 +58,6 @@ void PKCS12_get0_mac(const ASN1_OCTET_STRING **pmac,
     }
 }
 
-#define TK26_MAC_KEY_LEN 32
-
-static int pkcs12_gen_gost_mac_key(const char *pass, int passlen,
-    const unsigned char *salt, int saltlen,
-    int iter, int keylen, unsigned char *key,
-    const EVP_MD *digest)
-{
-    unsigned char out[96];
-
-    if (keylen != TK26_MAC_KEY_LEN) {
-        return 0;
-    }
-
-    if (!PKCS5_PBKDF2_HMAC(pass, passlen, salt, saltlen, iter,
-            digest, sizeof(out), out)) {
-        return 0;
-    }
-    memcpy(key, out + sizeof(out) - TK26_MAC_KEY_LEN, TK26_MAC_KEY_LEN);
-    OPENSSL_cleanse(out, sizeof(out));
-    return 1;
-}
-
 PBKDF2PARAM *PBMAC1_get1_pbkdf2_param(const X509_ALGOR *macalg)
 {
     PBMAC1PARAM *param = NULL;
@@ -187,7 +165,6 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     int saltlen, iter;
     char md_name[80];
     int keylen = 0;
-    int md_nid = NID_undef;
     const X509_ALGOR *macalg;
     const ASN1_OBJECT *macoid;
     OSSL_LIB_CTX *libctx;
@@ -228,7 +205,6 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     }
 
     keylen = EVP_MD_get_size(md);
-    md_nid = EVP_MD_get_type(md);
     if (keylen <= 0)
         goto err;
 
@@ -237,16 +213,6 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
         keylen = PBMAC1_PBKDF2_HMAC(libctx, propq, pass, passlen, macalg, key);
         if (keylen < 0)
             goto err;
-    } else if ((md_nid == NID_id_GostR3411_94
-                   || md_nid == NID_id_GostR3411_2012_256
-                   || md_nid == NID_id_GostR3411_2012_512)
-        && ossl_safe_getenv("LEGACY_GOST_PKCS12") == NULL) {
-        keylen = TK26_MAC_KEY_LEN;
-        if (!pkcs12_gen_gost_mac_key(pass, passlen, salt, saltlen, iter,
-                keylen, key, md)) {
-            ERR_raise(ERR_LIB_PKCS12, PKCS12_R_KEY_GEN_ERROR);
-            goto err;
-        }
     } else {
         EVP_MD *hmac_md = md;
         int fetched = 0;

@@ -99,8 +99,6 @@ extern "C" {
 #define SSL_TXT_kRSAPSK "kRSAPSK"
 #define SSL_TXT_kECDHEPSK "kECDHEPSK"
 #define SSL_TXT_kDHEPSK "kDHEPSK"
-#define SSL_TXT_kGOST "kGOST"
-#define SSL_TXT_kGOST18 "kGOST18"
 #define SSL_TXT_kSRP "kSRP"
 
 #define SSL_TXT_aRSA "aRSA"
@@ -109,10 +107,6 @@ extern "C" {
 #define SSL_TXT_aECDH "aECDH" /* this cipher class has been removed */
 #define SSL_TXT_aECDSA "aECDSA"
 #define SSL_TXT_aPSK "aPSK"
-#define SSL_TXT_aGOST94 "aGOST94"
-#define SSL_TXT_aGOST01 "aGOST01"
-#define SSL_TXT_aGOST12 "aGOST12"
-#define SSL_TXT_aGOST "aGOST"
 #define SSL_TXT_aSRP "aSRP"
 
 #define SSL_TXT_DSS "DSS"
@@ -145,21 +139,15 @@ extern "C" {
 #define SSL_TXT_CAMELLIA256 "CAMELLIA256"
 #define SSL_TXT_CAMELLIA "CAMELLIA"
 #define SSL_TXT_CHACHA20 "CHACHA20"
-#define SSL_TXT_GOST "GOST89"
 #define SSL_TXT_ARIA "ARIA"
 #define SSL_TXT_ARIA_GCM "ARIAGCM"
 #define SSL_TXT_ARIA128 "ARIA128"
 #define SSL_TXT_ARIA256 "ARIA256"
-#define SSL_TXT_GOST2012_GOST8912_GOST8912 "GOST2012-GOST8912-GOST8912"
 #define SSL_TXT_CBC "CBC"
 
 #define SSL_TXT_MD5 "MD5"
 #define SSL_TXT_SHA1 "SHA1"
 #define SSL_TXT_SHA "SHA" /* same as "SHA1" */
-#define SSL_TXT_GOST94 "GOST94"
-#define SSL_TXT_GOST89MAC "GOST89MAC"
-#define SSL_TXT_GOST12 "GOST12"
-#define SSL_TXT_GOST89MAC12 "GOST89MAC12"
 #define SSL_TXT_SHA256 "SHA256"
 #define SSL_TXT_SHA384 "SHA384"
 
@@ -410,11 +398,7 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 #define SSL_OP_NO_DTLSv1_2 SSL_OP_BIT(27)
 /* Disallow all renegotiation */
 #define SSL_OP_NO_RENEGOTIATION SSL_OP_BIT(30)
-/*
- * Make server add server-hello extension from early version of
- * cryptopro draft, when GOST ciphersuite is negotiated. Required for
- * interoperability with CryptoPro CSP 3.x
- */
+/* Used in testsuite as duplicate or unsolicited extension */
 #define SSL_OP_CRYPTOPRO_TLSEXT_BUG SSL_OP_BIT(31)
 /*
  * Disable RFC8879 certificate compression
@@ -440,8 +424,8 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
     (SSL_OP_NO_DTLSv1 | SSL_OP_NO_DTLSv1_2)
 
 /* Various bug workarounds that should be rather harmless. */
-#define SSL_OP_ALL                                                    \
-    (SSL_OP_CRYPTOPRO_TLSEXT_BUG | SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS \
+#define SSL_OP_ALL                      \
+    (SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS \
         | SSL_OP_TLSEXT_PADDING | SSL_OP_SAFARI_ECDHE_ECDSA_BUG)
 
 /*

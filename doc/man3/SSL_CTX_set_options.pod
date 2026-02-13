@@ -63,12 +63,6 @@ The following B<bug workaround> options are available:
 
 =over 4
 
-=item SSL_OP_CRYPTOPRO_TLSEXT_BUG
-
-Add server-hello extension from the early version of cryptopro draft
-when GOST ciphersuite is negotiated. Required for interoperability with CryptoPro
-CSP 3.x.
-
 =item SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
 
 Disables a countermeasure against an SSL 3.0/TLS 1.0 protocol

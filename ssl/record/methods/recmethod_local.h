@@ -329,10 +329,6 @@ struct ossl_record_layer_st {
     /* TLSv1.0/TLSv1.1/TLSv1.2 */
     int use_etm;
 
-    /* Flags for GOST ciphers */
-    int stream_mac;
-    int tlstree;
-
     /* TLSv1.3 fields */
     unsigned char *iv; /* static IV */
     unsigned char *nonce; /* part of static IV followed by sequence number */

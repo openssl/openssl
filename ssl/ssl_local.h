@@ -85,16 +85,12 @@
 #define SSL_kECDHE 0x00000004U
 /* PSK */
 #define SSL_kPSK 0x00000008U
-/* GOST key exchange */
-#define SSL_kGOST 0x00000010U
 /* SRP */
 #define SSL_kSRP 0x00000020U
 
 #define SSL_kRSAPSK 0x00000040U
 #define SSL_kECDHEPSK 0x00000080U
 #define SSL_kDHEPSK 0x00000100U
-/* GOST KDF key exchange, draft-smyshlyaev-tls12-gost-suites */
-#define SSL_kGOST18 0x00000200U
 
 /* all PSK */
 
@@ -114,17 +110,13 @@
 #define SSL_aECDSA 0x00000008U
 /* PSK auth */
 #define SSL_aPSK 0x00000010U
-/* GOST R 34.10-2001 signature auth */
-#define SSL_aGOST01 0x00000020U
 /* SRP auth */
 #define SSL_aSRP 0x00000040U
-/* GOST R 34.10-2012 signature auth */
-#define SSL_aGOST12 0x00000080U
 /* Any appropriate signature auth (for TLS 1.3 ciphersuites) */
 #define SSL_aANY 0x00000000U
 /* All bits requiring a certificate */
 #define SSL_aCERT \
-    (SSL_aRSA | SSL_aDSS | SSL_aECDSA | SSL_aGOST01 | SSL_aGOST12)
+    (SSL_aRSA | SSL_aDSS | SSL_aECDSA)
 
 /* Bits for algorithm_enc (symmetric encryption) */
 #define SSL_DES 0x00000001U
@@ -137,7 +129,6 @@
 #define SSL_AES256 0x00000080U
 #define SSL_CAMELLIA128 0x00000100U
 #define SSL_CAMELLIA256 0x00000200U
-#define SSL_eGOST2814789CNT 0x00000400U
 #define SSL_SEED 0x00000800U
 #define SSL_AES128GCM 0x00001000U
 #define SSL_AES256GCM 0x00002000U
@@ -145,12 +136,9 @@
 #define SSL_AES256CCM 0x00008000U
 #define SSL_AES128CCM8 0x00010000U
 #define SSL_AES256CCM8 0x00020000U
-#define SSL_eGOST2814789CNT12 0x00040000U
 #define SSL_CHACHA20POLY1305 0x00080000U
 #define SSL_ARIA128GCM 0x00100000U
 #define SSL_ARIA256GCM 0x00200000U
-#define SSL_MAGMA 0x00400000U
-#define SSL_KUZNYECHIK 0x00800000U
 
 #define SSL_AESGCM (SSL_AES128GCM | SSL_AES256GCM)
 #define SSL_AESCCM (SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8)
@@ -167,17 +155,10 @@
 
 #define SSL_MD5 0x00000001U
 #define SSL_SHA1 0x00000002U
-#define SSL_GOST94 0x00000004U
-#define SSL_GOST89MAC 0x00000008U
 #define SSL_SHA256 0x00000010U
 #define SSL_SHA384 0x00000020U
 /* Not a real MAC, just an indication it is part of cipher */
 #define SSL_AEAD 0x00000040U
-#define SSL_GOST12_256 0x00000080U
-#define SSL_GOST89MAC12 0x00000100U
-#define SSL_GOST12_512 0x00000200U
-#define SSL_MAGMAOMAC 0x00000400U
-#define SSL_KUZNYECHIKOMAC 0x00000800U
 
 /*
  * When adding new digest in the ssl_ciph.c and increment SSL_MD_NUM_IDX make
@@ -186,18 +167,11 @@
 
 #define SSL_MD_MD5_IDX 0
 #define SSL_MD_SHA1_IDX 1
-#define SSL_MD_GOST94_IDX 2
-#define SSL_MD_GOST89MAC_IDX 3
 #define SSL_MD_SHA256_IDX 4
 #define SSL_MD_SHA384_IDX 5
-#define SSL_MD_GOST12_256_IDX 6
-#define SSL_MD_GOST89MAC12_IDX 7
-#define SSL_MD_GOST12_512_IDX 8
 #define SSL_MD_MD5_SHA1_IDX 9
 #define SSL_MD_SHA224_IDX 10
 #define SSL_MD_SHA512_IDX 11
-#define SSL_MD_MAGMAOMAC_IDX 12
-#define SSL_MD_KUZNYECHIKOMAC_IDX 13
 #define SSL_MAX_DIGEST 14
 
 #define SSL_MD_NUM_IDX SSL_MAX_DIGEST
@@ -209,9 +183,6 @@
 #define SSL_HANDSHAKE_MAC_MD5_SHA1 SSL_MD_MD5_SHA1_IDX
 #define SSL_HANDSHAKE_MAC_SHA256 SSL_MD_SHA256_IDX
 #define SSL_HANDSHAKE_MAC_SHA384 SSL_MD_SHA384_IDX
-#define SSL_HANDSHAKE_MAC_GOST94 SSL_MD_GOST94_IDX
-#define SSL_HANDSHAKE_MAC_GOST12_256 SSL_MD_GOST12_256_IDX
-#define SSL_HANDSHAKE_MAC_GOST12_512 SSL_MD_GOST12_512_IDX
 #define SSL_HANDSHAKE_MAC_DEFAULT SSL_HANDSHAKE_MAC_MD5_SHA1
 
 /* Bits 8-15 bits are PRF */
@@ -219,21 +190,7 @@
 #define TLS1_PRF_SHA1_MD5 (SSL_MD_MD5_SHA1_IDX << TLS1_PRF_DGST_SHIFT)
 #define TLS1_PRF_SHA256 (SSL_MD_SHA256_IDX << TLS1_PRF_DGST_SHIFT)
 #define TLS1_PRF_SHA384 (SSL_MD_SHA384_IDX << TLS1_PRF_DGST_SHIFT)
-#define TLS1_PRF_GOST94 (SSL_MD_GOST94_IDX << TLS1_PRF_DGST_SHIFT)
-#define TLS1_PRF_GOST12_256 (SSL_MD_GOST12_256_IDX << TLS1_PRF_DGST_SHIFT)
-#define TLS1_PRF_GOST12_512 (SSL_MD_GOST12_512_IDX << TLS1_PRF_DGST_SHIFT)
 #define TLS1_PRF (SSL_MD_MD5_SHA1_IDX << TLS1_PRF_DGST_SHIFT)
-
-/*
- * Stream MAC for GOST ciphersuites from cryptopro draft (currently this also
- * goes into algorithm2)
- */
-#define TLS1_STREAM_MAC 0x10000
-/*
- * TLSTREE cipher/mac key derivation from draft-smyshlyaev-tls12-gost-suites
- * (currently this also  goes into algorithm2)
- */
-#define TLS1_TLSTREE 0x20000
 
 /* Ciphersuite supported in QUIC */
 #define SSL_QUIC 0x00040000U
@@ -320,9 +277,6 @@
 #define SSL_PKEY_RSA_PSS_SIGN 1
 #define SSL_PKEY_DSA_SIGN 2
 #define SSL_PKEY_ECC 3
-#define SSL_PKEY_GOST01 4
-#define SSL_PKEY_GOST12_256 5
-#define SSL_PKEY_GOST12_512 6
 #define SSL_PKEY_ED25519 7
 #define SSL_PKEY_ED448 8
 #define SSL_PKEY_NUM 9
@@ -337,7 +291,6 @@
 #define SSL_ENC_AES256_IDX 7
 #define SSL_ENC_CAMELLIA128_IDX 8
 #define SSL_ENC_CAMELLIA256_IDX 9
-#define SSL_ENC_GOST89_IDX 10
 #define SSL_ENC_SEED_IDX 11
 #define SSL_ENC_AES128GCM_IDX 12
 #define SSL_ENC_AES256GCM_IDX 13
@@ -345,12 +298,9 @@
 #define SSL_ENC_AES256CCM_IDX 15
 #define SSL_ENC_AES128CCM8_IDX 16
 #define SSL_ENC_AES256CCM8_IDX 17
-#define SSL_ENC_GOST8912_IDX 18
 #define SSL_ENC_CHACHA_IDX 19
 #define SSL_ENC_ARIA128GCM_IDX 20
 #define SSL_ENC_ARIA256GCM_IDX 21
-#define SSL_ENC_MAGMA_IDX 22
-#define SSL_ENC_KUZNYECHIK_IDX 23
 #define SSL_ENC_NUM_IDX 24
 
 /*-
@@ -2220,11 +2170,6 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_dsa_sha512 0x0602
 #define TLSEXT_SIGALG_dsa_sha224 0x0302
 #define TLSEXT_SIGALG_dsa_sha1 0x0202
-#define TLSEXT_SIGALG_gostr34102012_256_intrinsic 0x0840
-#define TLSEXT_SIGALG_gostr34102012_512_intrinsic 0x0841
-#define TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256 0xeeee
-#define TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512 0xefef
-#define TLSEXT_SIGALG_gostr34102001_gostr3411 0xeded
 
 #define TLSEXT_SIGALG_ed25519 0x0807
 #define TLSEXT_SIGALG_ed448 0x0808
@@ -2257,13 +2202,6 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_dsa_sha512_name "dsa_sha512"
 #define TLSEXT_SIGALG_dsa_sha224_name "dsa_sha224"
 #define TLSEXT_SIGALG_dsa_sha1_name "dsa_sha1"
-#define TLSEXT_SIGALG_gostr34102012_256_intrinsic_name "gostr34102012_256"
-#define TLSEXT_SIGALG_gostr34102012_512_intrinsic_name "gostr34102012_512"
-#define TLSEXT_SIGALG_gostr34102012_256_intrinsic_alias "gost2012_256"
-#define TLSEXT_SIGALG_gostr34102012_512_intrinsic_alias "gost2012_512"
-#define TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256_name "gost2012_256"
-#define TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512_name "gost2012_512"
-#define TLSEXT_SIGALG_gostr34102001_gostr3411_name "gost2001_gost94"
 
 #define TLSEXT_SIGALG_ed25519_name "ed25519"
 #define TLSEXT_SIGALG_ed448_name "ed448"

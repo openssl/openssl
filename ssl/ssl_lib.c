@@ -4614,21 +4614,6 @@ void ssl_set_masks(SSL_CONNECTION *s)
     OSSL_TRACE4(TLS_CIPHER, "dh_tmp=%d rsa_enc=%d rsa_sign=%d dsa_sign=%d\n",
         dh_tmp, rsa_enc, rsa_sign, dsa_sign);
 
-#ifndef OPENSSL_NO_GOST
-    if (ssl_has_cert(s, SSL_PKEY_GOST12_512)) {
-        mask_k |= SSL_kGOST | SSL_kGOST18;
-        mask_a |= SSL_aGOST12;
-    }
-    if (ssl_has_cert(s, SSL_PKEY_GOST12_256)) {
-        mask_k |= SSL_kGOST | SSL_kGOST18;
-        mask_a |= SSL_aGOST12;
-    }
-    if (ssl_has_cert(s, SSL_PKEY_GOST01)) {
-        mask_k |= SSL_kGOST;
-        mask_a |= SSL_aGOST01;
-    }
-#endif
-
     if (rsa_enc)
         mask_k |= SSL_kRSA;
 

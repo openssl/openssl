@@ -270,13 +270,6 @@ typedef struct SXNET_st {
     STACK_OF(SXNETID) *ids;
 } SXNET;
 
-typedef struct ISSUER_SIGN_TOOL_st {
-    ASN1_UTF8STRING *signTool;
-    ASN1_UTF8STRING *cATool;
-    ASN1_UTF8STRING *signToolCert;
-    ASN1_UTF8STRING *cAToolCert;
-} ISSUER_SIGN_TOOL;
-
 typedef struct NOTICEREF_st {
     ASN1_STRING *organization;
     STACK_OF(ASN1_INTEGER) *noticenos;
@@ -418,7 +411,6 @@ struct ISSUING_DIST_POINT_st {
     (X509V3_EXT_S2I)s2i_ASN1_UTF8STRING,                              \
     0, 0, 0, 0,                                                       \
     NULL }
-
 /* clang-format off */
 # define EXT_END { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 /* clang-format on */
@@ -541,8 +533,6 @@ DECLARE_ASN1_FUNCTIONS(OSSL_BASIC_ATTR_CONSTRAINTS)
 
 DECLARE_ASN1_FUNCTIONS(SXNET)
 DECLARE_ASN1_FUNCTIONS(SXNETID)
-
-DECLARE_ASN1_FUNCTIONS(ISSUER_SIGN_TOOL)
 
 int SXNET_add_id_asc(SXNET **psx, const char *zone, const char *user, int userlen);
 int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, const char *user,

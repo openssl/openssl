@@ -202,11 +202,7 @@ any necessary parameters should be specified via the B<-pkeyopt> option.
 
 B<dsa:>I<filename> generates a DSA key using the parameters
 in the file I<filename>. B<ec:>I<filename> generates EC key (usable both with
-ECDSA or ECDH algorithms), B<gost2001:>I<filename>, B<gost2012_256:>I<filename>
-and B<gost2012_512:>I<filename> generate GOST R 34.10-2001 and GOST R 34.10-2012
-keys with a 256 and 512 bit modulus respectively (these require the B<gostprov>
-provider). If just B<gost2001> is specified, a parameter set should be specified
-by B<-pkeyopt> I<paramset:X>.
+ECDSA or ECDH algorithms).
 
 =item B<-pkeyopt> I<opt>:I<value>
 
@@ -258,8 +254,7 @@ This overrides the digest algorithm specified in
 the configuration file.
 
 Some public key algorithms may override this choice. For instance, DSA
-signatures always use SHA1, GOST R 34.10 signatures always use
-GOST R 34.11-94 (B<-md_gost94>), Ed25519 and Ed448 never use any digest.
+signatures always use SHA1, Ed25519 and Ed448 never use any digest.
 
 =item B<-config> I<filename>
 
