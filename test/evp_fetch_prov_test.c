@@ -417,6 +417,17 @@ static int test_EVP_CIPHER_fetch_freeze(void)
         || !TEST_true(test_cipher(cipher))
         || !TEST_int_ne(cipher->origin, EVP_ORIG_FROZEN))
         goto err;
+    EVP_CIPHER_free(cipher);
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(ctx, "AES-128-ECB", "?fips=true"))
+        || !TEST_true(test_cipher(cipher))
+        || !TEST_int_eq(cipher->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_CIPHER_free(cipher);
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(ctx, "AES-128-ECB", NULL))
+        || !TEST_true(test_cipher(cipher))
+        || !TEST_int_eq(cipher->origin, EVP_ORIG_FROZEN))
+        goto err;
 
     ret = 1;
 err:
