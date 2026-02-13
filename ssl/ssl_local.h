@@ -63,6 +63,8 @@
 #define DTLS_VERSION_GE(v1, v2) (dtls_ver_ordinal(v1) <= dtls_ver_ordinal(v2))
 #define DTLS_VERSION_LT(v1, v2) (dtls_ver_ordinal(v1) > dtls_ver_ordinal(v2))
 #define DTLS_VERSION_LE(v1, v2) (dtls_ver_ordinal(v1) >= dtls_ver_ordinal(v2))
+/* TLS/DTLS version for the given SSL object: XTLS(ssl, 1, 2) == TLS 1.2 or DTLS 1.2 */
+#define XTLS(ssl, m, n) (SSL_is_dtls(ssl) ? (((0xFF - m) << 8) | (0xFF - n)) : (((0x02 + m) << 8) | (0x01 + n)))
 
 #define SSL_AD_NO_ALERT -1
 
