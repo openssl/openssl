@@ -535,7 +535,9 @@ void *evp_generic_fetch_from_prov(OSSL_PROVIDER *prov, int operation_id,
         const OSSL_ALGORITHM *algodef,
         OSSL_PROVIDER *prov),
     int (*up_ref_method)(void *),
-    void (*free_method)(void *))
+    void (*free_method)(void *),
+    void *(*dup_method)(void *),
+    void (*dup_free_method)(void *))
 {
     struct evp_method_data_st methdata;
     void *method;
@@ -544,7 +546,11 @@ void *evp_generic_fetch_from_prov(OSSL_PROVIDER *prov, int operation_id,
     methdata.tmp_store = NULL;
     method = inner_evp_generic_fetch(&methdata, prov, operation_id,
         name, properties,
-        new_method, up_ref_method, free_method, NULL, NULL);
+        new_method,
+        up_ref_method,
+        free_method,
+        dup_method,
+        dup_free_method);
     dealloc_tmp_evp_method_store(methdata.tmp_store);
     return method;
 }

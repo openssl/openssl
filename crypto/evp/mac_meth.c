@@ -259,5 +259,7 @@ EVP_MAC *evp_mac_fetch_from_prov(OSSL_PROVIDER *prov,
         algorithm, properties,
         evp_mac_from_algorithm,
         evp_mac_up_ref,
-        evp_mac_free);
+        evp_mac_free,
+        NULL,
+        NULL);
 }
