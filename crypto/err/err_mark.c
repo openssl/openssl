@@ -7,8 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#define OSSL_FORCE_ERR_STATE
-
 #include <openssl/err.h>
 #include "err_local.h"
 

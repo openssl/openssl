@@ -12,6 +12,7 @@
 
 #include <stdarg.h>
 #include "internal/common.h" /* for HAS_PREFIX */
+#include "internal/err.h" /* for ERR_NUM_ERRORS */
 
 #include <openssl/provider.h>
 #include <openssl/err.h>

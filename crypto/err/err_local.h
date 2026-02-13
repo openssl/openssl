@@ -10,6 +10,23 @@
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/e_os2.h>
+#include "internal/err.h"
+
+#define ERR_FLAG_MARK 0x01
+#define ERR_FLAG_CLEAR 0x02
+
+struct err_state_st {
+    int err_flags[ERR_NUM_ERRORS];
+    int err_marks[ERR_NUM_ERRORS];
+    unsigned long err_buffer[ERR_NUM_ERRORS];
+    char *err_data[ERR_NUM_ERRORS];
+    size_t err_data_size[ERR_NUM_ERRORS];
+    int err_data_flags[ERR_NUM_ERRORS];
+    char *err_file[ERR_NUM_ERRORS];
+    int err_line[ERR_NUM_ERRORS];
+    char *err_func[ERR_NUM_ERRORS];
+    int top, bottom;
+};
 
 static ossl_inline void err_get_slot(ERR_STATE *es)
 {

@@ -209,6 +209,11 @@ OpenSSL 4.0
 
    *Tomáš Mráz*
 
+ * Removed deprecated functions `ERR_get_state()`, `ERR_remove_state()` and
+   `ERR_remove_thread_state()`. The `ERR_STATE` object is now always opaque.
+
+   *Tomáš Mráz*
+
  * Added SNMP KDF (EVP_KDF_SNMPKDF) to EVP_KDF
 
    *Barry Fussell and Helen Zhang*

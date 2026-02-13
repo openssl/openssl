@@ -1107,10 +1107,6 @@ DEPEND[html/man3/ERR_put_error.html]=man3/ERR_put_error.pod
 GENERATE[html/man3/ERR_put_error.html]=man3/ERR_put_error.pod
 DEPEND[man/man3/ERR_put_error.3]=man3/ERR_put_error.pod
 GENERATE[man/man3/ERR_put_error.3]=man3/ERR_put_error.pod
-DEPEND[html/man3/ERR_remove_state.html]=man3/ERR_remove_state.pod
-GENERATE[html/man3/ERR_remove_state.html]=man3/ERR_remove_state.pod
-DEPEND[man/man3/ERR_remove_state.3]=man3/ERR_remove_state.pod
-GENERATE[man/man3/ERR_remove_state.3]=man3/ERR_remove_state.pod
 DEPEND[html/man3/ERR_set_mark.html]=man3/ERR_set_mark.pod
 GENERATE[html/man3/ERR_set_mark.html]=man3/ERR_set_mark.pod
 DEPEND[man/man3/ERR_set_mark.3]=man3/ERR_set_mark.pod
@@ -3310,7 +3306,6 @@ html/man3/ERR_load_strings.html \
 html/man3/ERR_new.html \
 html/man3/ERR_print_errors.html \
 html/man3/ERR_put_error.html \
-html/man3/ERR_remove_state.html \
 html/man3/ERR_set_mark.html \
 html/man3/EVP_ASYM_CIPHER_free.html \
 html/man3/EVP_BytesToKey.html \
@@ -3982,7 +3977,6 @@ man/man3/ERR_load_strings.3 \
 man/man3/ERR_new.3 \
 man/man3/ERR_print_errors.3 \
 man/man3/ERR_put_error.3 \
-man/man3/ERR_remove_state.3 \
 man/man3/ERR_set_mark.3 \
 man/man3/EVP_ASYM_CIPHER_free.3 \
 man/man3/EVP_BytesToKey.3 \
