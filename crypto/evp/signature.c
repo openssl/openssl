@@ -497,7 +497,9 @@ EVP_SIGNATURE *evp_signature_fetch_from_prov(OSSL_PROVIDER *prov,
         algorithm, properties,
         evp_signature_from_algorithm,
         evp_signature_up_ref,
-        evp_signature_free);
+        evp_signature_free,
+        NULL,
+        NULL);
 }
 
 int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name)

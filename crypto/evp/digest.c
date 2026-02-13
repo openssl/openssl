@@ -1178,7 +1178,9 @@ EVP_MD *evp_digest_fetch_from_prov(OSSL_PROVIDER *prov,
         algorithm, properties,
         evp_md_from_algorithm,
         evp_md_up_ref,
-        evp_md_free);
+        evp_md_free,
+        evp_md_dup_frozen,
+        (void (*)(void *))evp_md_frozen_free);
 }
 
 typedef struct {

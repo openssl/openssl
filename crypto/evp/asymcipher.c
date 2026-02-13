@@ -525,7 +525,9 @@ EVP_ASYM_CIPHER *evp_asym_cipher_fetch_from_prov(OSSL_PROVIDER *prov,
         algorithm, properties,
         evp_asym_cipher_from_algorithm,
         evp_asym_cipher_up_ref,
-        evp_asym_cipher_free);
+        evp_asym_cipher_free,
+        NULL,
+        NULL);
 }
 
 int EVP_ASYM_CIPHER_is_a(const EVP_ASYM_CIPHER *cipher, const char *name)
