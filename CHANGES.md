@@ -37,6 +37,14 @@ OpenSSL 4.0
 
    *Simo Sorce*
 
+ * Windows targets support static/dynamic vcruntime linkage
+
+   Using the `enable-static-vcruntime` option OpenSSL can now be configured
+   to use the static or dynamic vcruntime.dll linkage.  The multithreaded or
+   single threaded static vcruntime is selected based on the enable-threads option.
+
+   *Neil Horman*
+
  * OPENSSL_cleanup() now runs in a global destructor, or not at all by default.
 
    OpenSSL_cleanup() will no longer by default free global objects when run from
