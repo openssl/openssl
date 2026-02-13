@@ -3724,9 +3724,6 @@ ERR_add_error_mem_bio                   ?	4_0_0	EXIST::FUNCTION:
 ERR_load_strings                        ?	4_0_0	EXIST::FUNCTION:
 ERR_load_strings_const                  ?	4_0_0	EXIST::FUNCTION:
 ERR_unload_strings                      ?	4_0_0	EXIST::FUNCTION:
-ERR_remove_thread_state                 ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
-ERR_remove_state                        ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_0_0
-ERR_get_state                           ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 ERR_get_next_error_library              ?	4_0_0	EXIST::FUNCTION:
 ERR_set_mark                            ?	4_0_0	EXIST::FUNCTION:
 ERR_pop_to_mark                         ?	4_0_0	EXIST::FUNCTION:
