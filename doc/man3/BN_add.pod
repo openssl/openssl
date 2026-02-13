@@ -110,7 +110,8 @@ I<b>.
 
 For all functions that take a I<ctx> parameter, it must be a previously
 allocated B<BN_CTX> used for temporary variables; see L<BN_CTX_new(3)>.
-The I<ctx> parameter must not be NULL.
+Unless stated otherwise in the documentation for a specific function,
+the I<ctx> parameter must not be NULL.
 
 Unless noted otherwise, the result B<BIGNUM> must be different from
 the arguments.
