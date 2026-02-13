@@ -3,8 +3,10 @@
 =head1 NAME
 
 CMS_SignerInfo_set1_signer_cert,
+CMS_SignerInfo_get0_signer_cert,
 CMS_get0_SignerInfos, CMS_SignerInfo_get0_signer_id,
-CMS_SignerInfo_get0_signature, CMS_SignerInfo_cert_cmp
+CMS_SignerInfo_get0_signature, CMS_SignerInfo_cert_cmp,
+CMS_SignerInfo_get_verification_result
 - CMS signedData signer functions
 
 =head1 SYNOPSIS
@@ -18,6 +20,8 @@ CMS_SignerInfo_get0_signature, CMS_SignerInfo_cert_cmp
  ASN1_OCTET_STRING *CMS_SignerInfo_get0_signature(CMS_SignerInfo *si);
  int CMS_SignerInfo_cert_cmp(CMS_SignerInfo *si, X509 *cert);
  void CMS_SignerInfo_set1_signer_cert(CMS_SignerInfo *si, X509 *signer);
+ X509 *CMS_SignerInfo_get0_signer_cert(CMS_SignerInfo *si);
+ int CMS_SignerInfo_get_verification_result(CMS_SignerInfo *si, int type);
 
 =head1 DESCRIPTION
 
@@ -40,6 +44,16 @@ if not.
 
 CMS_SignerInfo_set1_signer_cert() sets the signer's certificate of B<si> to
 B<signer>.
+
+CMS_SignerInfo_get0_signer_cert() returns the signer's certificate associated
+with I<si>. This pointer should not be freed by the caller.
+
+CMS_SignerInfo_get_verification_result() returns whether a specific aspect of
+the signature verification was successful after calling L<CMS_verify(3)> with
+the flag B<CMS_VERIFY_PARTIAL>. Pass B<CMS_VERIFY_RESULT> as I<type> to get
+the overall result, B<CMS_VERIFY_CERT> for certificate verification,
+B<CMS_VERIFY_ATTR> for attribute verification and B<CMS_VERIFY_CONTENT> for
+content verification.
 
 =head1 NOTES
 
@@ -77,6 +91,11 @@ Any error can be obtained from L<ERR_get_error(3)>
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>, L<CMS_verify(3)>
+
+=head1 HISTORY
+
+B<CMS_SignerInfo_get0_signer_cert> and
+B<CMS_SignerInfo_get_verification_result> were added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

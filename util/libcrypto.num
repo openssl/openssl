@@ -3300,6 +3300,7 @@ CMS_add1_signer                         ?	4_0_0	EXIST::FUNCTION:CMS
 CMS_SignerInfo_get0_pkey_ctx            ?	4_0_0	EXIST::FUNCTION:CMS
 CMS_SignerInfo_get0_md_ctx              ?	4_0_0	EXIST::FUNCTION:CMS
 CMS_get0_SignerInfos                    ?	4_0_0	EXIST::FUNCTION:CMS
+CMS_SignerInfo_get0_signer_cert         ?	4_0_0	EXIST::FUNCTION:CMS
 CMS_SignerInfo_set1_signer_cert         ?	4_0_0	EXIST::FUNCTION:CMS
 CMS_SignerInfo_get0_signer_id           ?	4_0_0	EXIST::FUNCTION:CMS
 CMS_SignerInfo_cert_cmp                 ?	4_0_0	EXIST::FUNCTION:CMS
@@ -3309,6 +3310,7 @@ CMS_SignerInfo_get0_signature           ?	4_0_0	EXIST::FUNCTION:CMS
 CMS_SignerInfo_sign                     ?	4_0_0	EXIST::FUNCTION:CMS
 CMS_SignerInfo_verify                   ?	4_0_0	EXIST::FUNCTION:CMS
 CMS_SignerInfo_verify_content           ?	4_0_0	EXIST::FUNCTION:CMS
+CMS_SignerInfo_get_verification_result  ?	4_0_0	EXIST::FUNCTION:CMS
 CMS_SignedData_verify                   ?	4_0_0	EXIST::FUNCTION:CMS
 CMS_add_smimecap                        ?	4_0_0	EXIST::FUNCTION:CMS
 CMS_add_simple_smimecap                 ?	4_0_0	EXIST::FUNCTION:CMS

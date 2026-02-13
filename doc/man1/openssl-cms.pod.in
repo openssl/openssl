@@ -104,6 +104,7 @@ Verification options:
 [B<-noverify>]
 [B<-nointern>]
 [B<-cades>]
+[B<-verify_partial>]
 [B<-verify_retcode>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
 
@@ -586,6 +587,12 @@ The supplied certificates can still be used as untrusted CAs however.
 
 When used with B<-verify>, require and check signer certificate digest.
 See the NOTES section for more details.
+
+=item B<-verify_partial>
+
+Succeed if at least one signature can be verified.
+Print info which signature verifications succeeded or failed in which
+aspect(s).
 
 =item B<-verify_retcode>
 
