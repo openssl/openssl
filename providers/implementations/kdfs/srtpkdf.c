@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdbool.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/bn.h>
@@ -50,9 +51,10 @@ static OSSL_FUNC_kdf_gettable_ctx_params_fn kdf_srtpkdf_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn kdf_srtpkdf_get_ctx_params;
 
 static int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
-    const unsigned char *mkey, const unsigned char *msalt, const unsigned char *index,
+    const uint8_t *mkey, const uint8_t *msalt,
+    const uint8_t *index, size_t index_len,
     const uint32_t kdr, const uint32_t kdr_n,
-    const uint32_t label, unsigned char *obuffer, const size_t keylen);
+    const uint32_t label, uint8_t *obuffer, const size_t keylen);
 
 typedef struct {
     /* Warning: Any changes to this structure may require you to update kdf_srtpkdf_dup */
@@ -168,6 +170,23 @@ static int is_power_of_two(uint32_t x, uint32_t *n)
     return 1;
 }
 
+static int kdf_srtpkdf_check_key(KDF_SRTPKDF *ctx)
+{
+    const EVP_CIPHER *cipher = cipher = ossl_prov_cipher_cipher(&ctx->cipher);
+
+    if (cipher != NULL) {
+        if (ctx->key == NULL) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
+            return 0;
+        }
+        if (ctx->key_len != (size_t)EVP_CIPHER_get_key_length(cipher)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static int kdf_srtpkdf_derive(void *vctx, unsigned char *key, size_t keylen,
     const OSSL_PARAM params[])
 {
@@ -183,30 +202,15 @@ static int kdf_srtpkdf_derive(void *vctx, unsigned char *key, size_t keylen,
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CIPHER);
         return 0;
     }
-    if (ctx->key == NULL) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
+    if (!kdf_srtpkdf_check_key(ctx))
         return 0;
-    }
     if (ctx->salt == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SALT);
         return 0;
     }
-    if (ctx->kdr > 0) {
-        uint32_t n = 0;
-        if (!is_power_of_two(ctx->kdr, &n)
-            || n > KDF_SRTP_MAX_KDR) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KDR);
-            return 0;
-        }
-        ctx->kdr_n = n;
-    }
-    if (ctx->label > KDF_SRTP_MAX_LABEL) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_LABEL);
-        return 0;
-    }
-
-    return SRTPKDF(libctx, cipher, ctx->key, ctx->salt, ctx->index,
-        ctx->kdr, ctx->kdr_n, ctx->label, key, keylen);
+    return SRTPKDF(libctx, cipher, ctx->key, ctx->salt,
+        ctx->index, ctx->index_len, ctx->kdr, ctx->kdr_n, ctx->label,
+        key, keylen);
 }
 
 static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
@@ -214,8 +218,6 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     struct srtp_set_ctx_params_st p;
     KDF_SRTPKDF *ctx = vctx;
     OSSL_LIB_CTX *libctx;
-    const EVP_CIPHER *cipher;
-    int key_len;
 
     if (params == NULL)
         return 1;
@@ -225,45 +227,65 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     libctx = PROV_LIBCTX_OF(ctx->provctx);
 
-    if ((p.cipher != NULL)
-        && !ossl_prov_cipher_load(&ctx->cipher, p.cipher, p.propq, libctx))
-        return 0;
+    if (p.cipher != NULL) {
+        const EVP_CIPHER *cipher = NULL;
 
-    cipher = ossl_prov_cipher_cipher(&ctx->cipher);
-    if (cipher == NULL)
-        return 0;
-
-    if (!EVP_CIPHER_is_a(cipher, "AES-128-CTR") && !EVP_CIPHER_is_a(cipher, "AES-192-CTR")
-        && !EVP_CIPHER_is_a(cipher, "AES-256-CTR"))
-        return 0;
-
+        if (!ossl_prov_cipher_load(&ctx->cipher, p.cipher, p.propq, libctx))
+            return 0;
+        cipher = ossl_prov_cipher_cipher(&ctx->cipher);
+        if (cipher == NULL)
+            return 0;
+        if (!EVP_CIPHER_is_a(cipher, "AES-128-CTR")
+            && !EVP_CIPHER_is_a(cipher, "AES-192-CTR")
+            && !EVP_CIPHER_is_a(cipher, "AES-256-CTR")) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CIPHER);
+            return 0;
+        }
+    }
     if (p.key != NULL) {
-        key_len = EVP_CIPHER_get_key_length(cipher);
         if (!srtpkdf_set_membuf(&ctx->key, &ctx->key_len, p.key))
             return 0;
-        if (ctx->key_len != (size_t)key_len)
+        if (!kdf_srtpkdf_check_key(ctx))
             return 0;
     }
-
     if (p.salt != NULL) {
         if (!srtpkdf_set_membuf(&ctx->salt, &ctx->salt_len, p.salt))
             return 0;
-        if (ctx->salt_len < KDF_SRTP_SALT_LEN)
+        if (ctx->salt_len < KDF_SRTP_SALT_LEN) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SALT_LENGTH);
             return 0;
+        }
     }
-
-    if ((p.index != NULL)
-        && !srtpkdf_set_membuf(&ctx->index, &ctx->index_len, p.index))
-        return 0;
-
     if (p.kdr != NULL) {
         if (!OSSL_PARAM_get_uint32(p.kdr, &ctx->kdr))
             return 0;
+        if (ctx->kdr > 0) {
+            uint32_t n = 0;
+
+            if (!is_power_of_two(ctx->kdr, &n)
+                || n > KDF_SRTP_MAX_KDR) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KDR);
+                return 0;
+            }
+            ctx->kdr_n = n;
+        }
     }
 
     if (p.label != NULL) {
         if (!OSSL_PARAM_get_uint32(p.label, &ctx->label))
             return 0;
+        if (ctx->label > KDF_SRTP_MAX_LABEL) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_LABEL);
+            return 0;
+        }
+    }
+    if (p.index != NULL) {
+        if (!srtpkdf_set_membuf(&ctx->index, &ctx->index_len, p.index))
+            return 0;
+        /*
+         * Defer checking the index until the derive() since it is dependant
+         * on values of kdr and label.
+         */
     }
 
     return 1;
@@ -315,6 +337,21 @@ const OSSL_DISPATCH ossl_kdf_srtpkdf_functions[] = {
     { 0, NULL }
 };
 
+static bool is_srtp(uint32_t label)
+{
+    static const bool strp_table[] = {
+        true, /* 0 */
+        true, /* 1 */
+        true, /* 2 */
+        false, /* 3 */
+        false, /* 4 */
+        false, /* 5 */
+        true, /* 6 */
+        true, /* 7 */
+    };
+    return strp_table[label];
+}
+
 /*
  * SRTPKDF - In compliance with SP800-135 and RFC3711, calculate
  *           various keys defined by label using a master key,
@@ -343,76 +380,63 @@ const OSSL_DISPATCH ossl_kdf_srtpkdf_functions[] = {
  *   cipher - AES cipher
  *   mkey - pointer to master key
  *   msalt - pointer to master salt
- *   idx - pointer to index
+ *   index - pointer to index
+ *   idxlen - size of the index buffer
  *   kdr - key derivation rate
  *   kdr_n - power of kdr (2**kdr_n = kdr)
  *   label - 8-bit label
- *   obuffer - buffer for output
- *   keylen - length of output buffer
+ *   keylen - size of obuffer
  * Output:
  *   obuffer - filled with derived key
  *   return - 1 on pass, 0 fail
  */
 int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
-    const unsigned char *mkey, const unsigned char *msalt, const unsigned char *index,
+    const uint8_t *mkey, const uint8_t *msalt,
+    const uint8_t *index, size_t idxlen,
     const uint32_t kdr, const uint32_t kdr_n,
-    const uint32_t label, unsigned char *obuffer, const size_t keylen)
+    const uint32_t label, uint8_t *obuffer, const size_t keylen)
 {
     EVP_CIPHER_CTX *ctx = NULL;
     int outl, i, index_len = 0, o_len = 0, salt_len = 0;
-    unsigned char buf[EVP_MAX_KEY_LENGTH];
-    unsigned char iv[KDF_SRTP_IV_LEN];
-    unsigned char local_salt[KDF_SRTP_MAX_SALT_LEN];
-    unsigned char master_salt[KDF_SRTP_MAX_SALT_LEN];
+    uint8_t buf[EVP_MAX_KEY_LENGTH];
+    uint8_t iv[KDF_SRTP_IV_LEN];
+    uint8_t local_salt[KDF_SRTP_MAX_SALT_LEN];
+    uint8_t master_salt[KDF_SRTP_MAX_SALT_LEN];
     BIGNUM *bn_index = NULL, *bn_salt = NULL;
     int ret, iv_len = KDF_SRTP_IV_LEN, rv = 0;
 
-    salt_len = KDF_SRTP_SALT_LEN;
-
+    if (obuffer == NULL || keylen > INT_MAX)
+        return rv;
     /* get label-specific lengths */
     switch (label) {
     case 0:
-        index_len = KDF_SRTP_IDX_LEN;
+    case 3:
+    case 6:
         o_len = EVP_CIPHER_key_length(cipher);
         break;
     case 1:
-        index_len = KDF_SRTP_IDX_LEN;
         o_len = KDF_SRTP_AUTH_KEY_LEN;
         break;
-    case 2:
-        index_len = KDF_SRTP_IDX_LEN;
-        o_len = KDF_SRTP_SALT_KEY_LEN;
-        break;
-    case 3:
-        index_len = KDF_SRTCP_IDX_LEN;
-        o_len = EVP_CIPHER_key_length(cipher);
-        break;
     case 4:
-        index_len = KDF_SRTCP_IDX_LEN;
         o_len = KDF_SRTCP_AUTH_KEY_LEN;
         break;
-    case 5:
-        index_len = KDF_SRTCP_IDX_LEN;
-        o_len = KDF_SRTCP_SALT_KEY_LEN;
-        break;
-    case 6:
-        index_len = KDF_SRTP_IDX_LEN;
-        o_len = EVP_CIPHER_key_length(cipher);
-        break;
+    case 2:
     case 7:
-        index_len = KDF_SRTP_IDX_LEN;
         o_len = KDF_SRTP_SALT_KEY_LEN;
+        break;
+    case 5:
+        o_len = KDF_SRTCP_SALT_KEY_LEN;
         break;
     default:
         return rv;
     }
-
-    if ((obuffer == NULL) || (keylen > INT_MAX) || (o_len > (int)keylen))
+    if (o_len > (int)keylen)
         return rv;
 
     /* set up a couple of work areas for the final logic on the salt */
+    salt_len = KDF_SRTP_SALT_LEN;
     memset(iv, 0, KDF_SRTP_IV_LEN);
-    memset(master_salt, 0, KDF_SRTP_MAX_SALT_LEN);
+    memset(master_salt, 0, sizeof(master_salt));
     memcpy(master_salt, msalt, salt_len);
 
     /* gather some bignums for some math */
@@ -424,8 +448,13 @@ int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
         return rv;
     }
 
+    index_len = is_srtp(label) ? KDF_SRTP_IDX_LEN : KDF_SRTCP_IDX_LEN;
     /* if index is NULL or kdr=0, then index and kdr are not in play */
-    if ((index != NULL) && (kdr > 0)) {
+    if (index != NULL && idxlen > 0 && kdr > 0) {
+        if ((int)idxlen < index_len) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INDEX_LENGTH);
+            goto err;
+        }
         if (!BN_bin2bn(index, index_len, bn_index))
             goto err;
 
