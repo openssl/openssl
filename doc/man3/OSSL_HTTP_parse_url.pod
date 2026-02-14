@@ -35,14 +35,14 @@ see L<openssl_user_macros(7)>:
 OSSL_HTTP_adapt_proxy() determines whether a proxy should be used
 when connecting to the given I<server>.
 It takes an optional proxy hostname I<proxy>
-and returns it transformed according to the optional I<no_proxy> parameter,
-I<server>, I<use_ssl>, and the applicable environment variable, as follows.
+and returns it transformed according to the optional I<no_proxy> and I<server>
+parameters, I<use_ssl>, and the applicable environment variable, as follows.
 If I<proxy> is NULL, take any default value from the C<http_proxy>
 environment variable, or from C<https_proxy> if I<use_ssl> is nonzero.
 If this still does not yield a proxy hostname,
 take any further default value from the C<HTTP_PROXY>
 environment variable, or from C<HTTPS_PROXY> if I<use_ssl> is nonzero.
-Return the determined proxy host if I<server> is the empty string
+Return the determined proxy host if I<server> is NULL or the empty string
 or I<server> is not in the exclusion list.
 The exclusion list is a list of server hosts separated by C<,>
 and/or whitespace.
