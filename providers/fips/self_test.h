@@ -66,7 +66,6 @@ enum st_test_state {
     SELF_TEST_STATE_FAILED, /* Test failed */
     SELF_TEST_STATE_IMPLICIT, /* Marks test as implicitly handled */
     SELF_TEST_STATE_DEFER, /* Like INIT, but mark test as deferred */
-    _FORCE_TO_UINT32 = 0xFFFFFFFF,
 };
 
 /* used to store raw parameters for keys and algorithms */
