@@ -81,6 +81,13 @@ is no longer useful. It always returns NULL, so should simply be removed from
 applications that call it. Applications wishing to use a custom digest
 implementation should instead use the provider API.
 
+=head3 Deprecation of ASN1_OBJECT_new()
+
+The function ASN1_OBJECT_new() has been deprecated in 4.0. The function is only
+useful internally because the type is opaque and there exist no setter functions.
+Hence, there never was a real use case for the function and calls to it can
+simply be removed.
+
 =head1 OPENSSL 3.6
 
 =head2 Main Changes from OpenSSL 3.5
