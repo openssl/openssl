@@ -51,7 +51,7 @@ static OSSL_FUNC_kdf_get_ctx_params_fn kdf_srtpkdf_get_ctx_params;
 
 static int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
     const unsigned char *mkey, const unsigned char *msalt, const unsigned char *index,
-    const uint32_t index_len, const uint32_t kdr, const uint32_t kdr_n,
+    const size_t index_len, const uint32_t kdr, const uint32_t kdr_n,
     const uint32_t label, unsigned char *obuffer, const size_t keylen);
 
 typedef struct {
@@ -382,7 +382,7 @@ const OSSL_DISPATCH ossl_kdf_srtpkdf_functions[] = {
  */
 int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
     const unsigned char *mkey, const unsigned char *msalt, const unsigned char *index,
-    const uint32_t index_len, const uint32_t kdr, const uint32_t kdr_n,
+    const size_t index_len, const uint32_t kdr, const uint32_t kdr_n,
     const uint32_t label, unsigned char *obuffer, const size_t keylen)
 {
     EVP_CIPHER_CTX *ctx = NULL;
@@ -445,7 +445,12 @@ int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
 
     /* if index is NULL or kdr=0, then index and kdr are not in play */
     if ((index != NULL) && (kdr > 0)) {
-        if (!BN_bin2bn(index, index_len, bn_index))
+        /*
+         * Safe to case index_len here to an int from size_t
+         * as the index_len value will only ever be
+         * KDF_SRTCP_IDX_LEN (4) or KDF_SRTP_IDX_LEN (6)
+         */
+        if (!BN_bin2bn(index, (int)index_len, bn_index))
             goto err;
 
         ret = BN_rshift(bn_salt, bn_index, kdr_n);
