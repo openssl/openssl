@@ -69,6 +69,27 @@ DEFINE_RUN_ONCE_STATIC(do_fips_self_test_init)
     return self_test_lock != NULL;
 }
 
+static CRYPTO_RWLOCK *self_test_states_lock = NULL;
+static CRYPTO_ONCE fips_self_test_states_lock_init = CRYPTO_ONCE_STATIC_INIT;
+
+DEFINE_RUN_ONCE_STATIC(do_fips_self_test_states_lock_init)
+{
+    self_test_states_lock = CRYPTO_THREAD_lock_new();
+    return self_test_states_lock != NULL;
+}
+
+int ossl_get_self_test_state(self_test_id_t id, enum st_test_state *state)
+{
+    return CRYPTO_atomic_load_int((int *)&st_all_tests[id].state, (int *)state,
+        self_test_states_lock);
+}
+
+int ossl_set_self_test_state(self_test_id_t id, enum st_test_state state)
+{
+    return CRYPTO_atomic_store_int((int *)&st_all_tests[id].state, state,
+        self_test_states_lock);
+}
+
 /*
  * Declarations for the DEP entry/exit points.
  * Ones not required or incorrect need to be undefined or redefined respectively.
@@ -272,6 +293,9 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, void *fips_global,
     if (!RUN_ONCE(&fips_self_test_init, do_fips_self_test_init))
         return 0;
 
+    if (!RUN_ONCE(&fips_self_test_states_lock_init, do_fips_self_test_states_lock_init))
+        return 0;
+
     loclstate = tsan_load(&FIPS_state);
 
     if (loclstate == FIPS_STATE_RUNNING) {
@@ -338,8 +362,17 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, void *fips_global,
             && strcmp(st->defer_tests, "1") == 0) {
             /* Mark all non executed tests as deferred */
             for (int i = 0; i < ST_ID_MAX; i++) {
-                if (st_all_tests[i].state == SELF_TEST_STATE_INIT)
-                    st_all_tests[i].state = SELF_TEST_STATE_DEFER;
+                enum st_test_state state;
+                if (!ossl_get_self_test_state(i, &state)) {
+                    errored = 1;
+                    goto locked_end;
+                }
+                if (state == SELF_TEST_STATE_INIT) {
+                    if (!ossl_set_self_test_state(i, SELF_TEST_STATE_DEFER)) {
+                        errored = 1;
+                        goto locked_end;
+                    }
+                }
             }
         }
 
@@ -347,7 +380,10 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, void *fips_global,
             /* ensure all states are cleared so all tests are forcibly
              * repeated */
             for (int i = 0; i < ST_ID_MAX; i++) {
-                st_all_tests[i].state = SELF_TEST_STATE_INIT;
+                if (!ossl_set_self_test_state(i, SELF_TEST_STATE_INIT)) {
+                    errored = 1;
+                    goto locked_end;
+                }
             }
         }
 

@@ -3521,6 +3521,7 @@ CRYPTO_atomic_or                        ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_atomic_load                      ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_atomic_load_int                  ?	4_0_0	EXIST::FUNCTION:
 CRYPTO_atomic_store                     ?	4_0_0	EXIST::FUNCTION:
+CRYPTO_atomic_store_int                 ?	4_0_0	EXIST::FUNCTION:
 OPENSSL_strlcpy                         ?	4_0_0	EXIST::FUNCTION:
 OPENSSL_strlcat                         ?	4_0_0	EXIST::FUNCTION:
 OPENSSL_strnlen                         ?	4_0_0	EXIST::FUNCTION:
