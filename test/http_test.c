@@ -239,53 +239,30 @@ err:
     return res;
 }
 
+/*
+ * Workaround for strnstr() not being available on all platforms.
+ * This variant searches also past any intermediate '\0' in haystack.
+ */
+static const char *my_strnstr(const char *haystack, const char *needle, size_t len)
+{
+    size_t needle_len = strlen(needle);
+    size_t i;
+
+    if (len < needle_len)
+        return NULL;
+    for (i = 0; i <= len - needle_len; i++) {
+        if (memcmp(haystack, needle, needle_len) == 0)
+            return haystack;
+        haystack++;
+    }
+    return NULL;
+}
+
+#define HTTP_TEST_SERVER "dummy-server.com"
 /* test proxy user credentials as in the example in RFC 7617 section 2.1 */
 #define HTTP_TEST_PROXY_USER "test"
 #define HTTP_TEST_PROXY_PASS "123\xC2\xA3" /* last char is UTF8-encoded pound symbol */
 #define HTTP_TEST_PROXY_AUTH "Proxy-Authorization: Basic dGVzdDoxMjPCow=="
-
-/* Initiate a dummy HTTP session, basically following OSSL_HTTP_open(), with focus on initialization of proxy use */
-static BIO *dummy_HTTP_open(const char *server, const char *port,
-    const char *proxy, const char *no_proxy, int use_ssl,
-    OSSL_HTTP_bio_cb_t bio_update_fn, void *arg)
-{
-    BIO *cbio;
-    char *proxy_host = NULL, *proxy_port = NULL;
-
-    proxy = OSSL_HTTP_adapt_proxy(proxy, no_proxy, server, use_ssl);
-    if (proxy != NULL
-        && !OSSL_HTTP_parse_url(proxy, NULL /* use_ssl */, NULL /* user */,
-            &proxy_host, &proxy_port, NULL /* num */,
-            NULL /* path */, NULL, NULL))
-        return NULL;
-    cbio = BIO_new(BIO_s_mem());
-    OPENSSL_free(proxy_host);
-    OPENSSL_free(proxy_port);
-    if (cbio == NULL)
-        return NULL;
-    if (use_ssl) {
-        BIO_puts(cbio, "HTTP/1.0 200\r\n\r\n"); /* fake HTTPS proxy CONNECT response */
-
-        if (!OSSL_HTTP_proxy_connect(cbio, server, port, HTTP_TEST_PROXY_USER,
-                HTTP_TEST_PROXY_PASS, 0, NULL, NULL))
-            goto err;
-    }
-
-    if (bio_update_fn != NULL) {
-        BIO *orig_bio = cbio;
-
-        cbio = (*bio_update_fn)(cbio, arg, 1 /* connect */, use_ssl != 0);
-        if (cbio == NULL) {
-            cbio = orig_bio;
-            goto err;
-        }
-    }
-    return cbio;
-
-err:
-    BIO_free(cbio);
-    return NULL;
-}
 
 static int bio_update_fn_detail = -1; /* initial value indicates function not yet called */
 static BIO *bio_update_fn(BIO *bio, void *arg, int connect, int detail)
@@ -297,19 +274,66 @@ static BIO *bio_update_fn(BIO *bio, void *arg, int connect, int detail)
     return connect == 1 && use_ssl == (my_ctx != NULL) ? bio : NULL;
 }
 
-static int test_http_open_requesting_proxy(int use_ssl)
+static long https_proxy_cb_ex(BIO *bio, int oper, const char *argp, size_t len,
+    int argi, long argl, int ret, size_t *processed)
+{
+    int *found_https_proxy_auth = (int *)BIO_get_callback_arg(bio);
+
+    if ((oper & BIO_CB_WRITE) == BIO_CB_WRITE && ((oper & BIO_CB_RETURN) == 0)
+        && my_strnstr(argp, HTTP_TEST_PROXY_AUTH, len) != NULL)
+        *found_https_proxy_auth = 1;
+    return ret;
+}
+
+static int test_http_using_proxy(int use_ssl)
 {
     int dummy_ctx[1];
     void *my_ctx = use_ssl ? dummy_ctx : NULL;
-    BIO *bio = dummy_HTTP_open("dummy-server.com", NULL /* port */,
+    BIO *mbio, *wbio = BIO_new(BIO_s_mem()), *rbio = BIO_new(BIO_s_mem());
+    OSSL_HTTP_REQ_CTX *rctx = NULL;
+    char buf[1000];
+    int len, found_https_proxy_auth = 0, ret = 0;
+
+    if (wbio == NULL || rbio == NULL)
+        goto err;
+    if (use_ssl) {
+        BIO_puts(wbio, "HTTP/1.0 200\r\n\r\n"); /* fake HTTPS proxy CONNECT response */
+        BIO_set_callback_ex(wbio, https_proxy_cb_ex);
+        BIO_set_callback_arg(wbio, (char *)&found_https_proxy_auth);
+    }
+    rctx = OSSL_HTTP_open(HTTP_TEST_SERVER, NULL /* port */,
         HTTP_TEST_PROXY_USER ":" HTTP_TEST_PROXY_PASS "@dummy-proxy.org",
-        "dummy-no_proxy.com", use_ssl, bio_update_fn, my_ctx);
+        "dummy-no_proxy.com", use_ssl, wbio, rbio, bio_update_fn, my_ctx, 0, 0);
+    if (!TEST_ptr(rctx) || !TEST_int_eq(bio_update_fn_detail, use_ssl))
+        goto err;
 
-    if (TEST_ptr(bio) == 0 || !TEST_int_eq(bio_update_fn_detail, use_ssl))
-        return 0;
+    if (!OSSL_HTTP_set1_request(rctx, "path", NULL /* headers */, NULL /* content_type */,
+            NULL /* req */, NULL /* expected_ct */, 0 /* expect_asn1 */,
+            0 /* max_resp_len */, -1 /* timeout */, 0 /* no keep_alive */))
+        goto err;
 
-    BIO_free(bio);
-    return 1;
+    mbio = OSSL_HTTP_REQ_CTX_get0_mem_bio(rctx);
+    if (!TEST_ptr(mbio))
+        goto err;
+
+    len = BIO_read(mbio, buf, sizeof(buf) - 1);
+    if (!TEST_int_gt(len, 0))
+        goto err;
+    buf[len] = '\0';
+    if (!TEST_ptr(strstr(buf, "Host: " HTTP_TEST_SERVER)))
+        goto err;
+    if (use_ssl
+            ? !TEST_true(found_https_proxy_auth)
+            : !TEST_ptr(strstr(buf, HTTP_TEST_PROXY_AUTH)))
+        goto err;
+
+    ret = 1;
+
+err:
+    OSSL_HTTP_REQ_CTX_free(rctx);
+    BIO_free(wbio);
+    BIO_free(rbio);
+    return ret;
 }
 
 static int test_http_keep_alive(char version, int keep_alive, int kept_alive)
@@ -526,14 +550,14 @@ static int test_http_post_x509_error_status(void)
     return test_http_method(0 /* POST */, 0, HTTP_STATUS_CODES_NONFATAL_ERROR);
 }
 
-static int test_http_open_requesting_HTTP_proxy(void)
+static int test_http_using_HTTP_proxy(void)
 {
-    return test_http_open_requesting_proxy(0);
+    return test_http_using_proxy(0);
 }
 
-static int test_http_open_requesting_HTTPS_proxy(void)
+static int test_http_using_HTTPS_proxy(void)
 {
-    return test_http_open_requesting_proxy(1);
+    return test_http_using_proxy(1);
 }
 
 static int test_http_keep_alive_0_no_no(void)
@@ -676,8 +700,8 @@ int setup_tests(void)
     ADD_TEST(test_http_post_x509_fatal_status);
     ADD_TEST(test_http_post_x509_error_status);
 
-    ADD_TEST(test_http_open_requesting_HTTP_proxy);
-    ADD_TEST(test_http_open_requesting_HTTPS_proxy);
+    ADD_TEST(test_http_using_HTTP_proxy);
+    ADD_TEST(test_http_using_HTTPS_proxy);
 
     ADD_TEST(test_http_keep_alive_0_no_no);
     ADD_TEST(test_http_keep_alive_1_no_no);

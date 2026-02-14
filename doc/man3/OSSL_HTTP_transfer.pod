@@ -74,10 +74,9 @@ I<bio> and I<rbio> may be memory BIOs for instance.
 As soon as the client has finished writing to I<bio> and flushed I<bio>,
 the server must be ready to provide a response or indicate a waiting condition
 because then the client starts reading from I<rbio> (or from I<bio> taken as its default).
+Even when I<bio> is given, the I<server> (and the optional I<port>) argument should
+still be given for supporting proper HTTP request header setup and diagnostic output.
 
-If I<bio> is given,
-it is an error to provide non-NULL I<proxy> or I<no_proxy> arguments,
-while I<server> and I<port> arguments may be given to support diagnostic output.
 If I<bio> is NULL the optional I<proxy> parameter can be used to set an
 HTTP(S) proxy to use (unless overridden by "no_proxy" settings).
 If TLS is not used this defaults to the environment variable C<http_proxy>

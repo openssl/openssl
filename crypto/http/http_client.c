@@ -1133,17 +1133,17 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
         ERR_raise(ERR_LIB_HTTP, HTTP_R_TLS_NOT_ENABLED);
         return NULL;
     }
-    if (rbio != NULL && (bio == NULL || bio_update_fn != NULL)) {
+    if (bio == NULL && rbio != NULL) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
     }
 
+    if (port != NULL && *port == '\0')
+        port = NULL;
+    proxy = OSSL_HTTP_adapt_proxy(proxy, no_proxy, server, use_ssl);
+
     if (bio != NULL) {
         cbio = bio;
-        if (proxy != NULL || no_proxy != NULL) {
-            ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_INVALID_ARGUMENT);
-            return NULL;
-        }
     } else {
 #ifndef OPENSSL_NO_SOCK
         char *proxy_host = NULL, *proxy_port = NULL;
@@ -1152,9 +1152,6 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
             ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
             return NULL;
         }
-        if (port != NULL && *port == '\0')
-            port = NULL;
-        proxy = OSSL_HTTP_adapt_proxy(proxy, no_proxy, server, use_ssl);
         if (proxy != NULL
             && !OSSL_HTTP_parse_url(proxy, NULL /* use_ssl */, NULL /* user */,
                 &proxy_host, &proxy_port, NULL /* num */,

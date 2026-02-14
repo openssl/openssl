@@ -256,8 +256,8 @@ static int use_proxy(const char *no_proxy, const char *server)
     const char *found = NULL;
     char host[NI_MAXHOST];
 
-    if (!ossl_assert(server != NULL))
-        return 0;
+    if (server == NULL)
+        return 1;
     sl = strlen(server);
     if (sl >= 2 && sl < sizeof(host) + 2 && server[0] == '[' && server[sl - 1] == ']') {
         /* strip leading '[' and trailing ']' from escaped IPv6 address */
