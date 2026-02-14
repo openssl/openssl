@@ -252,10 +252,9 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
     }
 
-    if (p.index != NULL) {
-        if (!srtpkdf_set_membuf(&ctx->index, &ctx->index_len, p.index))
-            return 0;
-    }
+    if ((p.index != NULL)
+        && !srtpkdf_set_membuf(&ctx->index, &ctx->index_len, p.index))
+        return 0;
 
     if (p.kdr != NULL) {
         if (!OSSL_PARAM_get_uint32(p.kdr, &ctx->kdr))
