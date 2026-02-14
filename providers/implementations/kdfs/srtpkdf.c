@@ -51,7 +51,7 @@ static OSSL_FUNC_kdf_get_ctx_params_fn kdf_srtpkdf_get_ctx_params;
 
 static int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
     const unsigned char *mkey, const unsigned char *msalt, const unsigned char *index,
-    const uint32_t kdr, const uint32_t kdr_n,
+    const uint32_t index_len, const uint32_t kdr, const uint32_t kdr_n,
     const uint32_t label, unsigned char *obuffer, const size_t keylen);
 
 typedef struct {
@@ -206,7 +206,7 @@ static int kdf_srtpkdf_derive(void *vctx, unsigned char *key, size_t keylen,
     }
 
     return SRTPKDF(libctx, cipher, ctx->key, ctx->salt, ctx->index,
-        ctx->kdr, ctx->kdr_n, ctx->label, key, keylen);
+        ctx->index_len, ctx->kdr, ctx->kdr_n, ctx->label, key, keylen);
 }
 
 static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
@@ -252,9 +252,10 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
     }
 
-    if ((p.index != NULL)
-        && !srtpkdf_set_membuf(&ctx->index, &ctx->index_len, p.index))
-        return 0;
+    if (p.index != NULL) {
+        if (!srtpkdf_set_membuf(&ctx->index, &ctx->index_len, p.index))
+            return 0;
+    }
 
     if (p.kdr != NULL) {
         if (!OSSL_PARAM_get_uint32(p.kdr, &ctx->kdr))
@@ -266,6 +267,32 @@ static int kdf_srtpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
     }
 
+    /*
+     * We need to ensure the index_length is the appropriate
+     * minimal value if both label and index are set
+     */
+    if (p.label != NULL && p.index != NULL) {
+        switch (ctx->label) {
+        case 3:
+        case 4:
+        case 5:
+            /*
+             * labels 3, 4, and 5 require an index length of
+             * exactly KDF_SRTCP_IDX_LEN bytes
+             */
+            if (ctx->index_len != KDF_SRTCP_IDX_LEN)
+                return 0;
+            break;
+        default:
+            /*
+             * All other labels require an index length of
+             * exactly KDF_SRTP_IDX_LEN bytes
+             */
+            if (ctx->index_len != KDF_SRTP_IDX_LEN)
+                return 0;
+            break;
+        }
+    }
     return 1;
 }
 
@@ -355,11 +382,11 @@ const OSSL_DISPATCH ossl_kdf_srtpkdf_functions[] = {
  */
 int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
     const unsigned char *mkey, const unsigned char *msalt, const unsigned char *index,
-    const uint32_t kdr, const uint32_t kdr_n,
+    const uint32_t index_len, const uint32_t kdr, const uint32_t kdr_n,
     const uint32_t label, unsigned char *obuffer, const size_t keylen)
 {
     EVP_CIPHER_CTX *ctx = NULL;
-    int outl, i, index_len = 0, o_len = 0, salt_len = 0;
+    int outl, i, o_len = 0, salt_len = 0;
     unsigned char buf[EVP_MAX_KEY_LENGTH];
     unsigned char iv[KDF_SRTP_IV_LEN];
     unsigned char local_salt[KDF_SRTP_MAX_SALT_LEN];
@@ -372,35 +399,27 @@ int SRTPKDF(OSSL_LIB_CTX *provctx, const EVP_CIPHER *cipher,
     /* get label-specific lengths */
     switch (label) {
     case 0:
-        index_len = KDF_SRTP_IDX_LEN;
         o_len = EVP_CIPHER_key_length(cipher);
         break;
     case 1:
-        index_len = KDF_SRTP_IDX_LEN;
         o_len = KDF_SRTP_AUTH_KEY_LEN;
         break;
     case 2:
-        index_len = KDF_SRTP_IDX_LEN;
         o_len = KDF_SRTP_SALT_KEY_LEN;
         break;
     case 3:
-        index_len = KDF_SRTCP_IDX_LEN;
         o_len = EVP_CIPHER_key_length(cipher);
         break;
     case 4:
-        index_len = KDF_SRTCP_IDX_LEN;
         o_len = KDF_SRTCP_AUTH_KEY_LEN;
         break;
     case 5:
-        index_len = KDF_SRTCP_IDX_LEN;
         o_len = KDF_SRTCP_SALT_KEY_LEN;
         break;
     case 6:
-        index_len = KDF_SRTP_IDX_LEN;
         o_len = EVP_CIPHER_key_length(cipher);
         break;
     case 7:
-        index_len = KDF_SRTP_IDX_LEN;
         o_len = KDF_SRTP_SALT_KEY_LEN;
         break;
     default:
