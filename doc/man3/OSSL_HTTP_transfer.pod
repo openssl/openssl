@@ -67,12 +67,13 @@ defaulting to 80 for HTTP or 443 for HTTPS.
 Then this internal BIO is used for setting up a connection
 and for exchanging one or more request and response.
 
-If I<bio> is given and I<rbio> is NULL then this I<bio> is used instead.
-If both I<bio> and I<rbio> are given (which may be memory BIOs for instance)
-then no explicit connection is set up, but
-I<bio> is used for writing requests and I<rbio> for reading responses.
-As soon as the client has flushed I<bio> the server must be ready to provide
-a response or indicate a waiting condition via I<rbio>.
+Alternatively, if I<bio> is given, OSSL_HTTP_open() does not set up a socket connection
+but uses I<bio> for writing requests and I<rbio> for reading responses,
+where in case I<rbio> is NULL it defaults to I<bio>.
+I<bio> and I<rbio> may be memory BIOs for instance.
+As soon as the client has finished writing to I<bio> and flushed I<bio>,
+the server must be ready to provide a response or indicate a waiting condition
+because then the client starts reading from I<rbio> (or from I<bio> taken as its default).
 
 If I<bio> is given,
 it is an error to provide non-NULL I<proxy> or I<no_proxy> arguments,
