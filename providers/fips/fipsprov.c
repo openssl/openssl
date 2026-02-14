@@ -1354,12 +1354,16 @@ static int FIPS_kat_deferred(OSSL_LIB_CTX *libctx, self_test_id_t id)
     if (CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_FIPS_DEFERRED_KEY,
             libctx)
         != NULL) {
+        enum st_test_state state;
         /*
          * record this test as invoked by the original test, for marking
          * it later as also satisfied
          */
-        if (st_all_tests[id].state == SELF_TEST_STATE_DEFER)
-            st_all_tests[id].state = SELF_TEST_STATE_IMPLICIT;
+        if (!ossl_get_self_test_state(id, &state))
+            return 0;
+        if (state == SELF_TEST_STATE_DEFER)
+            /* ignore errors, worst case we do additional testing */
+            ossl_set_self_test_state(id, SELF_TEST_STATE_IMPLICIT);
         /*
          * A self test is in progress for this thread so we let this
          * thread continue and perform the test while all other
@@ -1373,6 +1377,7 @@ static int FIPS_kat_deferred(OSSL_LIB_CTX *libctx, self_test_id_t id)
         bool unset_key = false;
         OSSL_CALLBACK *cb = NULL;
         void *cb_arg = NULL;
+        enum st_test_state state;
 
         /*
          * check again as another thread may have just performed this
@@ -1381,7 +1386,9 @@ static int FIPS_kat_deferred(OSSL_LIB_CTX *libctx, self_test_id_t id)
          * deferred testing is only valid when SELF_TEST_post
          * marks tests with SELF_TEST_STATE_DEFER, under lock.
          */
-        switch (st_all_tests[id].state) {
+        if (!ossl_get_self_test_state(id, &state))
+            goto done;
+        switch (state) {
         case SELF_TEST_STATE_DEFER:
             break;
         case SELF_TEST_STATE_PASSED:
@@ -1456,6 +1463,7 @@ static void deferred_test_error(int category)
 
 int ossl_deferred_self_test(OSSL_LIB_CTX *libctx, self_test_id_t id)
 {
+    enum st_test_state state;
     int ret;
 
     if (id >= ST_ID_MAX) {
@@ -1464,7 +1472,11 @@ int ossl_deferred_self_test(OSSL_LIB_CTX *libctx, self_test_id_t id)
     }
 
     /* return immediately if the test is marked as passed */
-    if (st_all_tests[id].state == SELF_TEST_STATE_PASSED)
+    if (!ossl_get_self_test_state(id, &state)) {
+        ossl_set_error_state(NULL);
+        return 0;
+    }
+    if (state == SELF_TEST_STATE_PASSED)
         return 1;
 
     /*
@@ -1475,7 +1487,11 @@ int ossl_deferred_self_test(OSSL_LIB_CTX *libctx, self_test_id_t id)
      * in FIPS_kat_deferred() so this race is of no real consequence.
      */
     ret = FIPS_kat_deferred(libctx, id);
-    if (!ret || st_all_tests[id].state == SELF_TEST_STATE_FAILED)
+    if (!ossl_get_self_test_state(id, &state)) {
+        ossl_set_error_state(NULL);
+        return 0;
+    }
+    if (!ret || state == SELF_TEST_STATE_FAILED)
         deferred_test_error(st_all_tests[id].category);
     return ret;
 }

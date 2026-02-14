@@ -66,6 +66,7 @@ enum st_test_state {
     SELF_TEST_STATE_FAILED, /* Test failed */
     SELF_TEST_STATE_IMPLICIT, /* Marks test as implicitly handled */
     SELF_TEST_STATE_DEFER, /* Like INIT, but mark test as deferred */
+    _FORCE_TO_UINT64 = 0xFFFFFFFFFFFFFFFFULL
 };
 
 /* used to store raw parameters for keys and algorithms */
@@ -178,3 +179,5 @@ typedef struct self_test_st {
 } ST_DEFINITION;
 
 extern ST_DEFINITION st_all_tests[ST_ID_MAX];
+int ossl_get_self_test_state(self_test_id_t id, enum st_test_state *state);
+int ossl_set_self_test_state(self_test_id_t id, enum st_test_state state);
