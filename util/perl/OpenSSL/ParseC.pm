@@ -467,6 +467,15 @@ DECLARE_ASN1_ITEM($2)
 EOF
       },
     },
+    { regexp   => qr/DECLARE_ASN1_ENCODE_FUNCTIONS_name_attr<<<\((.*),\s*(.*)\)>>>/,
+      massager => sub {
+          return (<<"EOF");
+int d2i_$2(void);
+int i2d_$2(void);
+DECLARE_ASN1_ITEM($2)
+EOF
+      },
+    },
     { regexp   => qr/DECLARE_ASN1_FUNCTIONS<<<\((.*)\)>>>/,
       massager => sub { return (<<"EOF");
 int d2i_$1(void);
