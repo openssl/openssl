@@ -2562,7 +2562,7 @@ ASN1_TYPE_unpack_sequence               ?	4_0_0	EXIST::FUNCTION:
 d2i_ASN1_OBJECT                         ?	4_0_0	EXIST::FUNCTION:
 i2d_ASN1_OBJECT                         ?	4_0_0	EXIST::FUNCTION:
 ASN1_OBJECT_free                        ?	4_0_0	EXIST::FUNCTION:
-ASN1_OBJECT_new                         ?	4_0_0	EXIST::FUNCTION:
+ASN1_OBJECT_new                         ?	4_0_0	EXIST::FUNCTION:OSSL_DEPRECATEDIN_4_0
 ASN1_OBJECT_it                          ?	4_0_0	EXIST::FUNCTION:
 ASN1_STRING_new                         ?	4_0_0	EXIST::FUNCTION:
 ASN1_STRING_free                        ?	4_0_0	EXIST::FUNCTION:
