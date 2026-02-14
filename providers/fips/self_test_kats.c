@@ -1182,7 +1182,7 @@ int SELF_TEST_kats_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
     case SELF_TEST_STATE_DEFER:
         break;
     case SELF_TEST_STATE_FAILED:
-    case _FORCE_TO_UINT64:
+    case _FORCE_TO_UINT32:
         return 0;
     case SELF_TEST_STATE_IN_PROGRESS:
     case SELF_TEST_STATE_PASSED:

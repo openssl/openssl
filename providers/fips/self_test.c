@@ -80,13 +80,13 @@ DEFINE_RUN_ONCE_STATIC(do_fips_self_test_states_lock_init)
 
 int ossl_get_self_test_state(self_test_id_t id, enum st_test_state *state)
 {
-    return CRYPTO_atomic_load(&st_all_tests[id].state, state,
+    return CRYPTO_atomic_load_int((int *)&st_all_tests[id].state, (int *)state,
         self_test_states_lock);
 }
 
 int ossl_set_self_test_state(self_test_id_t id, enum st_test_state state)
 {
-    return CRYPTO_atomic_store(&st_all_tests[id].state, state,
+    return CRYPTO_atomic_store_int((int *)&st_all_tests[id].state, state,
         self_test_states_lock);
 }
 
