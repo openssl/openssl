@@ -59,8 +59,10 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
     { SSL_CHACHA20POLY1305, NID_chacha20_poly1305 }, /* SSL_ENC_CHACHA_IDX 19 */
     { SSL_ARIA128GCM, NID_aria_128_gcm }, /* SSL_ENC_ARIA128GCM_IDX 20 */
     { SSL_ARIA256GCM, NID_aria_256_gcm }, /* SSL_ENC_ARIA256GCM_IDX 21 */
-    { SSL_MAGMA, NID_magma_ctr_acpkm }, /* SSL_ENC_MAGMA_IDX */
-    { SSL_KUZNYECHIK, NID_kuznyechik_ctr_acpkm }, /* SSL_ENC_KUZNYECHIK_IDX */
+    { SSL_MAGMA, NID_magma_ctr_acpkm }, /* SSL_ENC_MAGMA_IDX 22 */
+    { SSL_KUZNYECHIK, NID_kuznyechik_ctr_acpkm }, /* SSL_ENC_KUZNYECHIK_IDX 23 */
+    { SSL_SM4GCM, NID_sm4_gcm }, /* SSL_ENC_SM4GCM_IDX 24 */
+    { SSL_SM4CCM, NID_sm4_ccm }, /* SSL_ENC_SM4CCM_IDX 25 */
 };
 
 /* NB: make sure indices in this table matches values above */
@@ -77,8 +79,9 @@ static const ssl_cipher_table ssl_cipher_table_mac[SSL_MD_NUM_IDX] = {
     { 0, NID_md5_sha1 }, /* SSL_MD_MD5_SHA1_IDX 9 */
     { 0, NID_sha224 }, /* SSL_MD_SHA224_IDX 10 */
     { 0, NID_sha512 }, /* SSL_MD_SHA512_IDX 11 */
-    { SSL_MAGMAOMAC, NID_magma_mac }, /* sSL_MD_MAGMAOMAC_IDX */
-    { SSL_KUZNYECHIKOMAC, NID_kuznyechik_mac } /* SSL_MD_KUZNYECHIKOMAC_IDX */
+    { SSL_MAGMAOMAC, NID_magma_mac }, /* sSL_MD_MAGMAOMAC_IDX 12 */
+    { SSL_KUZNYECHIKOMAC, NID_kuznyechik_mac }, /* SSL_MD_KUZNYECHIKOMAC_IDX 13 */
+    { 0, NID_sm3 }, /* SSL_MD_SM3_IDX 14 */
 };
 
 /* *INDENT-OFF* */
@@ -1786,6 +1789,12 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         break;
     case SSL_CHACHA20POLY1305:
         enc = "CHACHA20/POLY1305(256)";
+        break;
+    case SSL_SM4GCM:
+        enc = "SM4GCM";
+        break;
+    case SSL_SM4CCM:
+        enc = "SM4CCM";
         break;
     default:
         enc = "unknown";

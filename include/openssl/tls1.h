@@ -661,6 +661,10 @@ int SSL_CTX_set_tlsext_ticket_key_evp_cb(SSL_CTX *ctx, int (*fp)(SSL *, unsigned
 #define TLS1_CK_RSA_PSK_WITH_ARIA_128_GCM_SHA256 0x0300C06E
 #define TLS1_CK_RSA_PSK_WITH_ARIA_256_GCM_SHA384 0x0300C06F
 
+/* SM ciphersuites from RFC8998 */
+#define TLS1_3_CK_SM4_GCM_SM3 0x030000C6
+#define TLS1_3_CK_SM4_CCM_SM3 0x030000C7
+
 /* a bundle of RFC standard cipher names, generated from ssl3_ciphers[] */
 #define TLS1_RFC_RSA_WITH_AES_128_SHA "TLS_RSA_WITH_AES_128_CBC_SHA"
 #define TLS1_RFC_DHE_DSS_WITH_AES_128_SHA "TLS_DHE_DSS_WITH_AES_128_CBC_SHA"
@@ -853,6 +857,8 @@ int SSL_CTX_set_tlsext_ticket_key_evp_cb(SSL_CTX *ctx, int (*fp)(SSL *, unsigned
 #define TLS1_RFC_DHE_PSK_WITH_ARIA_256_GCM_SHA384 "TLS_DHE_PSK_WITH_ARIA_256_GCM_SHA384"
 #define TLS1_RFC_RSA_PSK_WITH_ARIA_128_GCM_SHA256 "TLS_RSA_PSK_WITH_ARIA_128_GCM_SHA256"
 #define TLS1_RFC_RSA_PSK_WITH_ARIA_256_GCM_SHA384 "TLS_RSA_PSK_WITH_ARIA_256_GCM_SHA384"
+#define TLS1_3_RFC_SM4_GCM_SM3 "TLS_SM4_GCM_SM3"
+#define TLS1_3_RFC_SM4_CCM_SM3 "TLS_SM4_CCM_SM3"
 
 /*
  * XXX Backward compatibility alert: Older versions of OpenSSL gave some DHE
