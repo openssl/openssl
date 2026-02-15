@@ -7,14 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * RC2 low level APIs are deprecated for public use, but still ok for internal
- * use.
- */
-#include "internal/deprecated.h"
-
 #include <openssl/rc2.h>
-#include "rc2_local.h"
+#include "internal/common.h"
 
 /*
  * The input and output encrypted as though 64bit cfb mode is being used.
