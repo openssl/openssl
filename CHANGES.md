@@ -37,7 +37,7 @@ OpenSSL 4.0
 
    *Simo Sorce*
 
- * Const correct time parameter for X509_cmp_time(), X509_time_adj() and 
+ * Const correct time parameter for X509_cmp_time(), X509_time_adj() and
    X509_time_adj_ex().
 
    *Frederik Wedel-Heinen*
