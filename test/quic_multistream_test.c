@@ -6154,47 +6154,42 @@ static int cannot_change_stream_data_bidi_local_max(struct helper *h, struct hel
 
 /* 95. Max stream data bidi local configuration */
 static const struct script_op script_95[] = {
-    OP_C_SET_ALPN("ossltest")
-        OP_CHECK(modify_stream_data_bidi_local_max, 600000)
-            OP_C_CONNECT_WAIT()
+    OP_C_SET_ALPN("ossltest"),
+    OP_CHECK(modify_stream_data_bidi_local_max, 600000),
+    OP_C_CONNECT_WAIT(),
 
-                OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
 
-                    OP_CHECK2(check_stream_data_bidi_local_max,
-                        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024)
-                        OP_CHECK2(check_stream_data_bidi_local_max,
-                            SSL_VALUE_CLASS_FEATURE_REQUEST, 600000)
+    OP_CHECK2(check_stream_data_bidi_local_max, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024),
+    OP_CHECK2(check_stream_data_bidi_local_max, SSL_VALUE_CLASS_FEATURE_REQUEST, 600000),
 
-                            OP_END
+    OP_END
 };
 
 /* 96. Negotiated default max stream data bidi local if not configured */
 static const struct script_op script_96[] = {
-    OP_C_SET_ALPN("ossltest")
-        OP_C_CONNECT_WAIT()
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
 
-            OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
 
-                OP_CHECK2(check_stream_data_bidi_local_max,
-                    SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024)
-                    OP_CHECK2(check_stream_data_bidi_local_max,
-                        SSL_VALUE_CLASS_FEATURE_REQUEST, 512 * 1024)
+    OP_CHECK2(check_stream_data_bidi_local_max, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024),
+    OP_CHECK2(check_stream_data_bidi_local_max, SSL_VALUE_CLASS_FEATURE_REQUEST, 512 * 1024),
 
-                        OP_END
+    OP_END
 };
 
 /* 97. No late changes to max stream data bidi local */
 static const struct script_op script_97[] = {
-    OP_C_SET_ALPN("ossltest")
-        OP_C_CONNECT_WAIT()
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
 
-            OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
 
-                OP_CHECK2(cannot_change_stream_data_bidi_local_max, 512 * 1024, 600000)
-                    OP_CHECK2(check_stream_data_bidi_local_max,
-                        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024)
+    OP_CHECK2(cannot_change_stream_data_bidi_local_max, 512 * 1024, 600000),
+    OP_CHECK2(check_stream_data_bidi_local_max, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024),
 
-                        OP_END
+    OP_END
 };
 
 static int modify_stream_data_bidi_remote_max(struct helper *h, struct helper_local *hl)
@@ -6214,47 +6209,42 @@ static int cannot_change_stream_data_bidi_remote_max(struct helper *h, struct he
 
 /* 98. Max stream data bidi remote configuration */
 static const struct script_op script_98[] = {
-    OP_C_SET_ALPN("ossltest")
-        OP_CHECK(modify_stream_data_bidi_remote_max, 600000)
-            OP_C_CONNECT_WAIT()
+    OP_C_SET_ALPN("ossltest"),
+    OP_CHECK(modify_stream_data_bidi_remote_max, 600000),
+    OP_C_CONNECT_WAIT(),
 
-                OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
 
-                    OP_CHECK2(check_stream_data_bidi_remote_max,
-                        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024)
-                        OP_CHECK2(check_stream_data_bidi_remote_max,
-                            SSL_VALUE_CLASS_FEATURE_REQUEST, 600000)
+    OP_CHECK2(check_stream_data_bidi_remote_max, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024),
+    OP_CHECK2(check_stream_data_bidi_remote_max, SSL_VALUE_CLASS_FEATURE_REQUEST, 600000),
 
-                            OP_END
+    OP_END
 };
 
 /* 99. Negotiated default max stream data bidi remote if not configured */
 static const struct script_op script_99[] = {
-    OP_C_SET_ALPN("ossltest")
-        OP_C_CONNECT_WAIT()
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
 
-            OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
 
-                OP_CHECK2(check_stream_data_bidi_remote_max,
-                    SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024)
-                    OP_CHECK2(check_stream_data_bidi_remote_max,
-                        SSL_VALUE_CLASS_FEATURE_REQUEST, 512 * 1024)
+    OP_CHECK2(check_stream_data_bidi_remote_max, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024),
+    OP_CHECK2(check_stream_data_bidi_remote_max, SSL_VALUE_CLASS_FEATURE_REQUEST, 512 * 1024),
 
-                        OP_END
+    OP_END
 };
 
 /* 100. No late changes to max stream data bidi remote */
 static const struct script_op script_100[] = {
-    OP_C_SET_ALPN("ossltest")
-        OP_C_CONNECT_WAIT()
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
 
-            OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
 
-                OP_CHECK2(cannot_change_stream_data_bidi_remote_max, 512 * 1024, 600000)
-                    OP_CHECK2(check_stream_data_bidi_remote_max,
-                        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024)
+    OP_CHECK2(cannot_change_stream_data_bidi_remote_max, 512 * 1024, 600000),
+    OP_CHECK2(check_stream_data_bidi_remote_max, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024),
 
-                        OP_END
+    OP_END
 };
 
 static int modify_stream_data_uni_remote_max(struct helper *h, struct helper_local *hl)
@@ -6274,47 +6264,42 @@ static int cannot_change_stream_data_uni_remote_max(struct helper *h, struct hel
 
 /* 101. Max stream data uni remote configuration */
 static const struct script_op script_101[] = {
-    OP_C_SET_ALPN("ossltest")
-        OP_CHECK(modify_stream_data_uni_remote_max, 600000)
-            OP_C_CONNECT_WAIT()
+    OP_C_SET_ALPN("ossltest"),
+    OP_CHECK(modify_stream_data_uni_remote_max, 600000),
+    OP_C_CONNECT_WAIT(),
 
-                OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
 
-                    OP_CHECK2(check_stream_data_uni_remote_max,
-                        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024)
-                        OP_CHECK2(check_stream_data_uni_remote_max,
-                            SSL_VALUE_CLASS_FEATURE_REQUEST, 600000)
+    OP_CHECK2(check_stream_data_uni_remote_max, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024),
+    OP_CHECK2(check_stream_data_uni_remote_max, SSL_VALUE_CLASS_FEATURE_REQUEST, 600000),
 
-                            OP_END
+    OP_END
 };
 
 /* 102. Negotiated default max stream data uni remote if not configured */
 static const struct script_op script_102[] = {
-    OP_C_SET_ALPN("ossltest")
-        OP_C_CONNECT_WAIT()
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
 
-            OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
 
-                OP_CHECK2(check_stream_data_uni_remote_max,
-                    SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024)
-                    OP_CHECK2(check_stream_data_uni_remote_max,
-                        SSL_VALUE_CLASS_FEATURE_REQUEST, 512 * 1024)
+    OP_CHECK2(check_stream_data_uni_remote_max, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024),
+    OP_CHECK2(check_stream_data_uni_remote_max, SSL_VALUE_CLASS_FEATURE_REQUEST, 512 * 1024),
 
-                        OP_END
+    OP_END
 };
 
 /* 103. No late changes to max stream data uni remote */
 static const struct script_op script_103[] = {
-    OP_C_SET_ALPN("ossltest")
-        OP_C_CONNECT_WAIT()
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
 
-            OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE)
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
 
-                OP_CHECK2(cannot_change_stream_data_uni_remote_max, 512 * 1024, 600000)
-                    OP_CHECK2(check_stream_data_uni_remote_max,
-                        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024)
+    OP_CHECK2(cannot_change_stream_data_uni_remote_max, 512 * 1024, 600000),
+    OP_CHECK2(check_stream_data_uni_remote_max, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024),
 
-                        OP_END
+    OP_END
 };
 
 static int modify_streams_bidi_remote_max(struct helper *h, struct helper_local *hl)
