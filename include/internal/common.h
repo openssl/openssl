@@ -232,32 +232,31 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
         }                                                    \
     }
 
-
 #define l2cn(l1, l2, c, n)                                   \
     {                                                        \
         c += n;                                              \
         switch (n) {                                         \
         case 8:                                              \
             *(--(c)) = (unsigned char)(((l2) >> 24) & 0xff); \
-        /* fall through */                           \
+        /* fall through */                                   \
         case 7:                                              \
             *(--(c)) = (unsigned char)(((l2) >> 16) & 0xff); \
-        /* fall through */                           \
+        /* fall through */                                   \
         case 6:                                              \
             *(--(c)) = (unsigned char)(((l2) >> 8) & 0xff);  \
-        /* fall through */                           \
+        /* fall through */                                   \
         case 5:                                              \
             *(--(c)) = (unsigned char)(((l2)) & 0xff);       \
-        /* fall through */                           \
+        /* fall through */                                   \
         case 4:                                              \
             *(--(c)) = (unsigned char)(((l1) >> 24) & 0xff); \
-        /* fall through */                           \
+        /* fall through */                                   \
         case 3:                                              \
             *(--(c)) = (unsigned char)(((l1) >> 16) & 0xff); \
-        /* fall through */                           \
+        /* fall through */                                   \
         case 2:                                              \
             *(--(c)) = (unsigned char)(((l1) >> 8) & 0xff);  \
-        /* fall through */                           \
+        /* fall through */                                   \
         case 1:                                              \
             *(--(c)) = (unsigned char)(((l1)) & 0xff);       \
         }                                                    \
