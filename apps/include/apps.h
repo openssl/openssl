@@ -219,7 +219,7 @@ typedef struct ca_db_st {
 #endif
 } CA_DB;
 
-extern int do_updatedb(CA_DB *db, time_t *now);
+extern int do_updatedb(CA_DB *db, const time_t *now);
 
 void app_bail_out(char *fmt, ...);
 /**

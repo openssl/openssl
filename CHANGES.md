@@ -58,6 +58,11 @@ OpenSSL 4.0
 
    *Neil Horman*
 
+ * Const correct time parameter for X509_cmp_time(), X509_time_adj() and
+   X509_time_adj_ex().
+
+   *Frederik Wedel-Heinen*
+
  * OPENSSL_cleanup() now runs in a global destructor, or not at all by default.
 
    OpenSSL_cleanup() will no longer by default free global objects when run from
