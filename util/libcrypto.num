@@ -5701,4 +5701,5 @@ d2i_ASN1_OBJECT                         ?	4_0_0	EXIST::FUNCTION:
 i2d_ASN1_OBJECT                         ?	4_0_0	EXIST::FUNCTION:
 ASN1_OBJECT_it                          ?	4_0_0	EXIST::FUNCTION:
 ASN1_STRING_new                         ?	4_0_0	EXIST::FUNCTION:
+ASN1_OBJECT_free                        ?	4_0_0	EXIST::FUNCTION:
 OSSL_ESS_check_signing_certs_ex         ?	4_0_0	EXIST::FUNCTION:
