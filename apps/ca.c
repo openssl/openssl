@@ -2296,7 +2296,7 @@ end:
     return ok;
 }
 
-int do_updatedb(CA_DB *db, time_t *now)
+int do_updatedb(CA_DB *db, const time_t *now)
 {
     ASN1_TIME *a_tm = NULL;
     int i, cnt = 0;

@@ -496,7 +496,7 @@ DECLARE_ASN1_DUP_FUNCTION(X509_NAME)
 DECLARE_ASN1_DUP_FUNCTION(X509_NAME_ENTRY)
 
 #ifndef OPENSSL_NO_DEPRECATED_4_0
-OSSL_DEPRECATEDIN_4_0 int X509_cmp_time(const ASN1_TIME *s, time_t *t);
+OSSL_DEPRECATEDIN_4_0 int X509_cmp_time(const ASN1_TIME *s, const time_t *t);
 OSSL_DEPRECATEDIN_4_0 int X509_cmp_current_time(const ASN1_TIME *s);
 OSSL_DEPRECATEDIN_4_0 int X509_cmp_timeframe(const X509_VERIFY_PARAM *vpm,
     const ASN1_TIME *start,
@@ -504,9 +504,9 @@ OSSL_DEPRECATEDIN_4_0 int X509_cmp_timeframe(const X509_VERIFY_PARAM *vpm,
 #endif
 int X509_check_certificate_times(const X509_VERIFY_PARAM *vpm, const X509 *x,
     int *error);
-ASN1_TIME *X509_time_adj(ASN1_TIME *s, long adj, time_t *t);
+ASN1_TIME *X509_time_adj(ASN1_TIME *s, long adj, const time_t *t);
 ASN1_TIME *X509_time_adj_ex(ASN1_TIME *s,
-    int offset_day, long offset_sec, time_t *t);
+    int offset_day, long offset_sec, const time_t *t);
 ASN1_TIME *X509_gmtime_adj(ASN1_TIME *s, long adj);
 
 const char *X509_get_default_cert_area(void);

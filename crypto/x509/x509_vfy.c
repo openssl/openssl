@@ -2360,7 +2360,7 @@ int X509_cmp_current_time(const ASN1_TIME *ctm)
 }
 
 /* returns 0 on error, otherwise 1 if ctm > cmp_time, else -1 */
-int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
+int X509_cmp_time(const ASN1_TIME *ctm, const time_t *cmp_time)
 {
     int64_t cert_time, posix_time = cmp_time == NULL ? (int64_t)time(NULL) : (int64_t)*cmp_time;
 
@@ -2430,13 +2430,13 @@ ASN1_TIME *X509_gmtime_adj(ASN1_TIME *s, long adj)
     return X509_time_adj(s, adj, NULL);
 }
 
-ASN1_TIME *X509_time_adj(ASN1_TIME *s, long offset_sec, time_t *in_tm)
+ASN1_TIME *X509_time_adj(ASN1_TIME *s, long offset_sec, const time_t *in_tm)
 {
     return X509_time_adj_ex(s, 0, offset_sec, in_tm);
 }
 
 ASN1_TIME *X509_time_adj_ex(ASN1_TIME *s,
-    int offset_day, long offset_sec, time_t *in_tm)
+    int offset_day, long offset_sec, const time_t *in_tm)
 {
     time_t t;
 
