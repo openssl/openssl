@@ -364,6 +364,40 @@ static const struct tls13groupselection_test_st tls13groupselection_tests[] = {
         SERVER_PREFERENCE,
         "ffdhe4096", HRR },
 #endif
+
+    /* Sole unknown keyshare inherited by first remaining tuple group */
+    { "?*BOGUS:X25519 / *secp256r1", /* test 49 */
+        "X25519 / secp256r1",
+        SERVER_PREFERENCE,
+        "x25519", SH },
+    { "X25519:?*BOGUS / *secp256r1", /* test 50 */
+        "X25519 / secp256r1",
+        SERVER_PREFERENCE,
+        "x25519", SH },
+    { "?*BOGUS:X25519:*X448 / *secp256r1", /* test 51 */
+        "X25519:X448 / secp256r1",
+        SERVER_PREFERENCE,
+        "x448", SH },
+    { "X25519:?*BOGUS:*X448 / *secp256r1", /* test 52 */
+        "X25519:X448 / secp256r1",
+        SERVER_PREFERENCE,
+        "x448", SH },
+
+    /* Sole removed keyshares inherited by first remaining tuple group */
+    { "X25519:*X448:secp384r1 / *secp256r1:-X448", /* test 53 */
+        "secp384r1:X448:X25519 / secp256r1",
+        SERVER_PREFERENCE,
+        "x25519", SH },
+    { "X25519:*X448:*secp384r1 / *secp256r1:-X448", /* test 54 */
+        "X25519:secp384r1 / secp256r1",
+        SERVER_PREFERENCE,
+        "secp384r1", SH },
+
+    /* DEFAULT retains tuple structure and inheritance */
+    { "secp256r1:DEFAULT:-?X25519MLKEM768", /* test 55 */
+        "x25519:secp256r1",
+        CLIENT_PREFERENCE,
+        "secp256r1", SH },
 };
 
 static void server_response_check_cb(int write_p, int version,
