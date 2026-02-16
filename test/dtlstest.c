@@ -1049,7 +1049,9 @@ int setup_tests(void)
     ADD_TEST(test_dtls_duplicate_records);
     ADD_TEST(test_just_finished);
     ADD_ALL_TESTS(test_swap_records_dtls1, 4);
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_ECX) || !defined(OPENSSL_NO_ML_KEM)
     ADD_ALL_TESTS(test_swap_records_dtls13, 4);
+#endif
     ADD_TEST(test_listen);
     ADD_TEST(test_duplicate_app_data_dtls1);
     ADD_TEST(test_duplicate_app_data_dtls13);
