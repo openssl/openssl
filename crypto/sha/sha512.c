@@ -153,9 +153,9 @@ void sha512_block_data_order_c(SHA512_CTX *ctx, const void *in, size_t num);
 #endif
     void sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num);
 
-#define OUTPUT_RESULT(md, len) \
+#define OUTPUT_RESULT(md, len)      \
     for (n = 0; n < (len / 8); n++) \
-        md = OPENSSL_store_u64_be(md, (uint64_t)c->h[n])
+    md = OPENSSL_store_u64_be(md, (uint64_t)c->h[n])
 
 int SHA512_Final(unsigned char *out, SHA512_CTX *c)
 {
