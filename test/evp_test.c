@@ -998,7 +998,7 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
     }
 
     ERR_set_mark();
-    if ((cipher = fetched_cipher = EVP_CIPHER_fetch(libctx, alg, propquery)) == NULL) {
+    if ((fetched_cipher = EVP_CIPHER_fetch(libctx, alg, propquery)) == NULL) {
         /* a stitched cipher might not be available */
         if (strstr(alg, "HMAC") != NULL) {
             ERR_pop_to_mark();
@@ -1015,11 +1015,9 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
         return 0;
 
     cdat->init_controls = sk_OPENSSL_STRING_new_null();
-    cdat->cipher = cipher;
     cdat->fetched_cipher = fetched_cipher;
     cdat->enc = -1;
-    m = EVP_CIPHER_get_mode(cipher);
-    if (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
+    if (EVP_CIPHER_get_flags(fetched_cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
         cdat->aead = m != 0 ? m : -1;
     else
         cdat->aead = 0;
@@ -1193,7 +1191,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
             goto err;
         in = memcpy(tmp + out_misalign + in_len + 2 * EVP_MAX_BLOCK_LENGTH + inp_misalign, in, in_len);
     }
-    if (!EVP_CipherInit_ex2(ctx_base, expected->cipher, NULL, NULL, enc,
+    if (!EVP_CipherInit_ex2(ctx_base, expected->fetched_cipher, NULL, NULL, enc,
             initparams)) {
         t->err = "CIPHERINIT_ERROR";
         goto err;
@@ -1275,7 +1273,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
         /* Some (e.g., GCM) tests use IVs longer than EVP_MAX_IV_LENGTH. */
         unsigned char iv[128];
         if (!TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx_base, iv, sizeof(iv)))
-            || ((EVP_CIPHER_get_flags(expected->cipher) & EVP_CIPH_CUSTOM_IV) == 0
+            || ((EVP_CIPHER_get_flags(expected->fetched_cipher) & EVP_CIPH_CUSTOM_IV) == 0
                 && !TEST_mem_eq(expected->iv, expected->iv_len, iv,
                     expected->iv_len))) {
             t->err = "INVALID_IV";
@@ -1293,7 +1291,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     if (!EVP_CIPHER_CTX_copy(ctx, ctx_base)) {
         if (fips_dupctx_supported) {
             TEST_info("Doing a copy of Cipher %s Fails!\n",
-                EVP_CIPHER_get0_name(expected->cipher));
+                EVP_CIPHER_get0_name(expected->fetched_cipher));
             ERR_print_errors_fp(stderr);
             goto err;
         } else {
@@ -1313,7 +1311,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     } else {
         if (fips_dupctx_supported) {
             TEST_info("Doing a dup of Cipher %s Fails!\n",
-                EVP_CIPHER_get0_name(expected->cipher));
+                EVP_CIPHER_get0_name(expected->fetched_cipher));
             ERR_print_errors_fp(stderr);
             goto err;
         } else {
@@ -1490,8 +1488,8 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
 
     if (!enc && expected->tls_aad) {
         if (expected->tls_version >= TLS1_1_VERSION
-            && (EVP_CIPHER_is_a(expected->cipher, "AES-128-CBC-HMAC-SHA1")
-                || EVP_CIPHER_is_a(expected->cipher, "AES-256-CBC-HMAC-SHA1"))) {
+            && (EVP_CIPHER_is_a(expected->fetched_cipher, "AES-128-CBC-HMAC-SHA1")
+                || EVP_CIPHER_is_a(expected->fetched_cipher, "AES-256-CBC-HMAC-SHA1"))) {
             tmplen -= (int)expected->iv_len;
             expected_out += expected->iv_len;
             out_misalign += expected->iv_len;
@@ -1521,30 +1519,30 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
             goto err;
     }
     if (enc && expected->tag) {
-        if (EVP_CIPHER_is_a(expected->cipher, "AES-128-CBC-HMAC-SHA1-ETM")
-            || EVP_CIPHER_is_a(expected->cipher, "AES-128-CBC-HMAC-SHA256-ETM")
-            || EVP_CIPHER_is_a(expected->cipher, "AES-128-CBC-HMAC-SHA512-ETM")
-            || EVP_CIPHER_is_a(expected->cipher, "AES-192-CBC-HMAC-SHA1-ETM")
-            || EVP_CIPHER_is_a(expected->cipher, "AES-192-CBC-HMAC-SHA256-ETM")
-            || EVP_CIPHER_is_a(expected->cipher, "AES-192-CBC-HMAC-SHA512-ETM")
-            || EVP_CIPHER_is_a(expected->cipher, "AES-256-CBC-HMAC-SHA1-ETM")
-            || EVP_CIPHER_is_a(expected->cipher, "AES-256-CBC-HMAC-SHA256-ETM")
-            || EVP_CIPHER_is_a(expected->cipher, "AES-256-CBC-HMAC-SHA512-ETM")) {
+        if (EVP_CIPHER_is_a(expected->fetched_cipher, "AES-128-CBC-HMAC-SHA1-ETM")
+            || EVP_CIPHER_is_a(expected->fetched_cipher, "AES-128-CBC-HMAC-SHA256-ETM")
+            || EVP_CIPHER_is_a(expected->fetched_cipher, "AES-128-CBC-HMAC-SHA512-ETM")
+            || EVP_CIPHER_is_a(expected->fetched_cipher, "AES-192-CBC-HMAC-SHA1-ETM")
+            || EVP_CIPHER_is_a(expected->fetched_cipher, "AES-192-CBC-HMAC-SHA256-ETM")
+            || EVP_CIPHER_is_a(expected->fetched_cipher, "AES-192-CBC-HMAC-SHA512-ETM")
+            || EVP_CIPHER_is_a(expected->fetched_cipher, "AES-256-CBC-HMAC-SHA1-ETM")
+            || EVP_CIPHER_is_a(expected->fetched_cipher, "AES-256-CBC-HMAC-SHA256-ETM")
+            || EVP_CIPHER_is_a(expected->fetched_cipher, "AES-256-CBC-HMAC-SHA512-ETM")) {
             unsigned char rtag[64] = { 0 };
             unsigned tag_len = 0;
             OSSL_PARAM params[2];
 
-            if (EVP_CIPHER_is_a(expected->cipher, "AES-128-CBC-HMAC-SHA1-ETM")
-                || EVP_CIPHER_is_a(expected->cipher, "AES-192-CBC-HMAC-SHA1-ETM")
-                || EVP_CIPHER_is_a(expected->cipher, "AES-256-CBC-HMAC-SHA1-ETM"))
+            if (EVP_CIPHER_is_a(expected->fetched_cipher, "AES-128-CBC-HMAC-SHA1-ETM")
+                || EVP_CIPHER_is_a(expected->fetched_cipher, "AES-192-CBC-HMAC-SHA1-ETM")
+                || EVP_CIPHER_is_a(expected->fetched_cipher, "AES-256-CBC-HMAC-SHA1-ETM"))
                 tag_len = 20;
-            else if (EVP_CIPHER_is_a(expected->cipher, "AES-128-CBC-HMAC-SHA256-ETM")
-                || EVP_CIPHER_is_a(expected->cipher, "AES-192-CBC-HMAC-SHA256-ETM")
-                || EVP_CIPHER_is_a(expected->cipher, "AES-256-CBC-HMAC-SHA256-ETM"))
+            else if (EVP_CIPHER_is_a(expected->fetched_cipher, "AES-128-CBC-HMAC-SHA256-ETM")
+                || EVP_CIPHER_is_a(expected->fetched_cipher, "AES-192-CBC-HMAC-SHA256-ETM")
+                || EVP_CIPHER_is_a(expected->fetched_cipher, "AES-256-CBC-HMAC-SHA256-ETM"))
                 tag_len = 32;
-            else if (EVP_CIPHER_is_a(expected->cipher, "AES-128-CBC-HMAC-SHA512-ETM")
-                || EVP_CIPHER_is_a(expected->cipher, "AES-192-CBC-HMAC-SHA512-ETM")
-                || EVP_CIPHER_is_a(expected->cipher, "AES-256-CBC-HMAC-SHA512-ETM"))
+            else if (EVP_CIPHER_is_a(expected->fetched_cipher, "AES-128-CBC-HMAC-SHA512-ETM")
+                || EVP_CIPHER_is_a(expected->fetched_cipher, "AES-192-CBC-HMAC-SHA512-ETM")
+                || EVP_CIPHER_is_a(expected->fetched_cipher, "AES-256-CBC-HMAC-SHA512-ETM"))
                 tag_len = 64;
 
             if (!TEST_size_t_le(expected->tag_len, tag_len) || !TEST_size_t_le(tag_len, sizeof(rtag))) {
@@ -1603,14 +1601,14 @@ static int cipher_test_run(EVP_TEST *t)
     OSSL_PARAM initparams[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     size_t params_n = 0;
 
-    TEST_info("RUNNING TEST FOR CIPHER %s\n", EVP_CIPHER_get0_name(cdat->cipher));
+    TEST_info("RUNNING TEST FOR CIPHER %s\n", EVP_CIPHER_get0_name(cdat->fetched_cipher));
     if (!cdat->key) {
         t->err = "NO_KEY";
         return 0;
     }
-    if (!cdat->iv && EVP_CIPHER_get_iv_length(cdat->cipher) > 0) {
+    if (!cdat->iv && EVP_CIPHER_get_iv_length(cdat->fetched_cipher) > 0) {
         /* IV is optional and usually omitted in wrap mode */
-        if (EVP_CIPHER_get_mode(cdat->cipher) != EVP_CIPH_WRAP_MODE) {
+        if (EVP_CIPHER_get_mode(cdat->fetched_cipher) != EVP_CIPH_WRAP_MODE) {
             t->err = "NO_IV";
             return 0;
         }
