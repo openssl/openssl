@@ -122,6 +122,10 @@ OpenSSL 4.0
 
    *Alexandr Nedvedicky*
 
+ * The X509_verify function now takes a const X509 * argument
+
+   * Bob Beck *
+
  * The crypto-mdebug-backtrace configuration option has been entirely removed.
    The option has been a no-op since 1.0.2.
 
