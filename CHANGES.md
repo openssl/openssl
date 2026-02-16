@@ -217,6 +217,10 @@ OpenSSL 4.0
 
    *Daniel Kubec and Eugene Syromiatnikov*
 
+ * X509_get0_distinguishing_id now takes and returns const objects.
+
+   * Bob Beck *
+
  * Added `-hmac-env` and `-hmac-stdin` options to openssl-dgst.
 
    *Igor Ustinov*

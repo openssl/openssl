@@ -19,7 +19,7 @@ get X509_NAME hashes or get and set issuer or subject names
 
  X509_NAME *X509_get_subject_name(const X509 *x);
  int X509_set_subject_name(X509 *x, const X509_NAME *name);
- unsigned long X509_subject_name_hash(X509 *x);
+ unsigned long X509_subject_name_hash(const X509 *x);
 
  X509_NAME *X509_get_issuer_name(const X509 *x);
  int X509_set_issuer_name(X509 *x, const X509_NAME *name);

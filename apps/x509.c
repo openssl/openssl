@@ -1058,7 +1058,7 @@ cert_loop:
                 BIO_printf(out, "%s\n", sk_OPENSSL_STRING_value(emlst, j));
             X509_email_free(emlst);
         } else if (i == aliasout) {
-            unsigned char *alstr = X509_alias_get0(x, NULL);
+            const unsigned char *alstr = X509_alias_get0(x, NULL);
 
             if (alstr)
                 BIO_printf(out, "%s\n", alstr);

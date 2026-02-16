@@ -14,7 +14,7 @@
 
 /* Add a local keyid to a safebag */
 
-int PKCS12_add_localkeyid(PKCS12_SAFEBAG *bag, unsigned char *name,
+int PKCS12_add_localkeyid(PKCS12_SAFEBAG *bag, const unsigned char *name,
     int namelen)
 {
     if (X509at_add1_attr_by_NID(&bag->attrib, NID_localKeyID,

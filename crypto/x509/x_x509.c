@@ -304,7 +304,7 @@ void X509_set0_distinguishing_id(X509 *x, ASN1_OCTET_STRING *d_id)
     x->distinguishing_id = d_id;
 }
 
-ASN1_OCTET_STRING *X509_get0_distinguishing_id(X509 *x)
+const ASN1_OCTET_STRING *X509_get0_distinguishing_id(const X509 *x)
 {
     return x->distinguishing_id;
 }
