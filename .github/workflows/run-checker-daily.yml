@@ -100,6 +100,7 @@ jobs:
           no-shared,
           no-siphash,
           no-siv,
+          enable-slow-tests,
           no-sm2-precomp,
           no-sm3,
           no-sm4,
