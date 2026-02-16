@@ -96,6 +96,10 @@ B<OPENSSLDIR> and B<MODULESDIR> can be set to various paths
 underneath this key to break the requirement to predict the installation path at
 build time.
 
+Since OpenSSL 4.0 the registry keys can be used without setting the
+B<OSSL_WINCTX> value.  If unset a key name openssl-<version> is going to be
+used, otherwise the abovementioned openssl-<version>-<ctx>.
+
 =head1 NOTES
 
 The output of C<openssl version -a> would typically be used when sending
