@@ -48,7 +48,7 @@ const char *OPENSSL_version_build_metadata(void)
 
 extern char ossl_cpu_info_str[];
 
-#if defined(_WIN32) && defined(OSSL_WINCTX)
+#if defined(_WIN32)
 /* size: MAX_PATH + sizeof("OPENSSLDIR: \"\"") */
 static char openssldir[MAX_PATH + 15];
 
@@ -65,15 +65,16 @@ DEFINE_RUN_ONCE_STATIC(version_strings_setup)
         ossl_get_modulesdir());
     return 1;
 }
+#endif
 
+#if defined(_WIN32) && defined(OSSL_WINCTX)
 #define TOSTR(x) #x
 #define OSSL_WINCTX_STRING "OSSL_WINCTX: \"" TOSTR(OSSL_WINCTX) "\""
-
 #endif
 
 const char *OpenSSL_version(int t)
 {
-#if defined(_WIN32) && defined(OSSL_WINCTX)
+#if defined(_WIN32)
     /* Cannot really fail but we would return empty strings anyway */
     (void)RUN_ONCE(&version_strings_once, version_strings_setup);
 #endif
@@ -91,7 +92,7 @@ const char *OpenSSL_version(int t)
         return compiler_flags;
     case OPENSSL_PLATFORM:
         return PLATFORM;
-#if defined(_WIN32) && defined(OSSL_WINCTX)
+#if defined(_WIN32)
     case OPENSSL_DIR:
         return openssldir;
     case OPENSSL_MODULES_DIR:

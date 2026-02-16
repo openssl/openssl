@@ -13,7 +13,7 @@
 #include "internal/cryptlib.h"
 #include "internal/e_os.h"
 
-#if defined(_WIN32) && defined(OSSL_WINCTX)
+#if defined(_WIN32)
 
 #define TOSTR(x) #x
 #define MAKESTR(x) TOSTR(x)
@@ -21,6 +21,9 @@
 #if defined(OSSL_WINCTX)
 #define REGISTRY_KEY "SOFTWARE\\WOW6432Node\\OpenSSL" \
                      "-" MAKESTR(OPENSSL_VERSION_MAJOR) "." MAKESTR(OPENSSL_VERSION_MINOR) "-" MAKESTR(OSSL_WINCTX)
+#else
+#define REGISTRY_KEY "SOFTWARE\\WOW6432Node\\OpenSSL" \
+                     "-" MAKESTR(OPENSSL_VERSION_MAJOR) "." MAKESTR(OPENSSL_VERSION_MINOR) "." MAKESTR(OPENSSL_VERSION_PATCH)
 #endif
 
 /**
@@ -53,7 +56,6 @@ static char *modulesdirptr = NULL;
 static char *get_windows_regdirs(char *dst, DWORD dstsizebytes, LPCWSTR valuename)
 {
     char *retval = NULL;
-#ifdef REGISTRY_KEY
     DWORD keysizebytes;
     DWORD ktype;
     HKEY hkey;
@@ -99,7 +101,6 @@ static char *get_windows_regdirs(char *dst, DWORD dstsizebytes, LPCWSTR valuenam
 out:
     OPENSSL_free(tempstr);
     RegCloseKey(hkey);
-#endif /* REGISTRY_KEY */
     return retval;
 }
 
@@ -120,13 +121,17 @@ DEFINE_RUN_ONCE_STATIC(do_defaults_setup)
      */
     if (strlen(openssldir) > 0)
         openssldirptr = openssldir;
+    else
+        openssldirptr = OPENSSLDIR;
 
     if (strlen(modulesdir) > 0)
         modulesdirptr = modulesdir;
+    else
+        modulesdirptr = MODULESDIR;
 
     return 1;
 }
-#endif /* defined(_WIN32) && defined(OSSL_WINCTX) */
+#endif /* defined(_WIN32) */
 
 /**
  * @brief Get the directory where OpenSSL is installed.
@@ -135,7 +140,7 @@ DEFINE_RUN_ONCE_STATIC(do_defaults_setup)
  */
 const char *ossl_get_openssldir(void)
 {
-#if defined(_WIN32) && defined(OSSL_WINCTX)
+#if defined(_WIN32)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
     return (const char *)openssldirptr;
@@ -151,7 +156,7 @@ const char *ossl_get_openssldir(void)
  */
 const char *ossl_get_modulesdir(void)
 {
-#if defined(_WIN32) && defined(OSSL_WINCTX)
+#if defined(_WIN32)
     if (!RUN_ONCE(&defaults_setup_init, do_defaults_setup))
         return NULL;
     return (const char *)modulesdirptr;
