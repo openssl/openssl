@@ -1304,8 +1304,8 @@ void OSSL_INDICATOR_get_callback(OSSL_LIB_CTX *libctx,
     }
 }
 
-/* This function should ever be called from SELF_TEST_post() otherwise
- * deadlocks may arise */
+/* These functions should only ever be called from SELF_TEST_post()
+ * otherwise deadlocks may arise */
 int SELF_TEST_lock_deferred(void *fips_global)
 {
     FIPS_GLOBAL *fgbl = (FIPS_GLOBAL *)fips_global;
