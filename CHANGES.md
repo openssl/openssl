@@ -32,6 +32,11 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Added support for TLS 1.3 SM cipher suites `TLS_SM4_GCM_SM3` and `TLS_SM4_CCM_SM3`
+   from [RFC8998].
+
+   *Milan Broz*
+
  * The `OSSL_ESS_check_signing_certs_ex()` call has been added.
 
    This api call is an extention to `OSSL_ESS_check_signing_certs()` to add
