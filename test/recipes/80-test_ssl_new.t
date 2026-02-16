@@ -91,7 +91,9 @@ my %conf_dependent_tests = (
   "19-mac-then-encrypt.cnf" => !$is_default_tls,
   "20-cert-select.cnf" => !$is_default_tls || $no_dh || $no_dsa || $no_ml_dsa,
   "22-compression.cnf" => !$is_default_tls,
-  "25-cipher.cnf" => disabled("poly1305") || disabled("chacha"),
+  "25-cipher.cnf" => disabled("poly1305") || disabled("chacha")
+                     || disabled("sm3") || disabled("sm4")
+                     || disabled("tls1_3"),
   "27-ticket-appdata.cnf" => !$is_default_tls,
   "28-seclevel.cnf" => disabled("tls1_2") || $no_ecx,
   "30-extended-master-secret.cnf" => disabled("tls1_2"),
