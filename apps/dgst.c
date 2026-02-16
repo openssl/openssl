@@ -133,7 +133,7 @@ int dgst_main(int argc, char **argv)
     int oneshot_sign = 0;
 
     buf = app_malloc(BUFSIZE, "I/O buffer");
-    md = (EVP_MD *)EVP_get_digestbyname(argv[0]);
+    md = EVP_MD_fetch(app_get0_libctx(), argv[0], app_get0_propq());
     if (md != NULL)
         digestname = argv[0];
 

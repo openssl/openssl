@@ -780,16 +780,11 @@ unsigned char *OSSL_CRMF_ENCRYPTEDVALUE_decrypt(const OSSL_CRMF_ENCRYPTEDVALUE *
 
     /* select symmetric cipher based on algorithm given in message */
     OBJ_obj2txt(name, sizeof(name), enc->symmAlg->algorithm, 0);
-    (void)ERR_set_mark();
     cipher = EVP_CIPHER_fetch(libctx, name, propq);
-    if (cipher == NULL)
-        cipher = (EVP_CIPHER *)EVP_get_cipherbyobj(enc->symmAlg->algorithm);
     if (cipher == NULL) {
-        (void)ERR_clear_last_mark();
         ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_CIPHER);
         goto end;
     }
-    (void)ERR_pop_to_mark();
 
     cikeysize = EVP_CIPHER_get_key_length(cipher);
     /* first the symmetric key needs to be decrypted */

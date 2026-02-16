@@ -854,18 +854,20 @@ end:
 static void show_ciphers(const OBJ_NAME *name, void *arg)
 {
     struct doall_enc_ciphers *dec = (struct doall_enc_ciphers *)arg;
-    const EVP_CIPHER *cipher;
+    EVP_CIPHER *cipher;
 
     if (!islower((unsigned char)*name->name))
         return;
 
     /* Filter out ciphers that we cannot use */
-    cipher = EVP_get_cipherbyname(name->name);
+    cipher = EVP_CIPHER_fetch(app_get0_libctx(), name->name, app_get0_propq());
     if (cipher == NULL
         || (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0
         || (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_ENC_THEN_MAC) != 0
-        || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_XTS_MODE)
+        || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_XTS_MODE) {
+        EVP_CIPHER_free(cipher);
         return;
+    }
 
     BIO_printf(dec->bio, "-%-25s", name->name);
     if (++dec->n == 3) {
@@ -873,6 +875,8 @@ static void show_ciphers(const OBJ_NAME *name, void *arg)
         dec->n = 0;
     } else
         BIO_puts(dec->bio, " ");
+
+    EVP_CIPHER_free(cipher);
 }
 
 static int set_hex(const char *in, unsigned char *out, int size)

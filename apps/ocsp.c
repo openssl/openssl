@@ -1117,7 +1117,7 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
         int jj;
         int found = 0;
         ASN1_OBJECT *cert_id_md_oid;
-        const EVP_MD *cert_id_md;
+        EVP_MD *cert_id_md;
         OCSP_CERTID *cid_resp_md = NULL;
 
         one = OCSP_request_onereq_get0(req, i);
@@ -1125,7 +1125,8 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
 
         OCSP_id_get0_info(NULL, &cert_id_md_oid, NULL, NULL, cid);
 
-        cert_id_md = EVP_get_digestbyobj(cert_id_md_oid);
+        cert_id_md = EVP_MD_fetch(app_get0_libctx(), OBJ_nid2sn(OBJ_obj2nid(cert_id_md_oid)),
+            app_get0_propq());
         if (cert_id_md == NULL) {
             *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR,
                 NULL);
@@ -1138,6 +1139,7 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
             if (ca_id == NULL) {
                 *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR,
                     NULL);
+                EVP_MD_free(cert_id_md);
                 goto end;
             }
 
@@ -1148,6 +1150,7 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
             }
             OCSP_CERTID_free(ca_id);
         }
+        EVP_MD_free(cert_id_md);
         OCSP_id_get0_info(NULL, NULL, NULL, &serial, cid);
         inf = lookup_serial(db, serial);
 
