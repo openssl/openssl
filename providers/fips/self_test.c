@@ -343,7 +343,7 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, void *fips_global,
 
     /* This section can be called on demand and that could race with deferred
      * tests being executed in another thread, so we use use helpers to get
-     * proper lockign around this critical section */
+     * proper locking around this critical section */
 
     if (SELF_TEST_lock_deferred(fips_global)) {
         int errored = 0;
