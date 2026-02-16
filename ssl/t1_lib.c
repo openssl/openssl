@@ -1264,6 +1264,7 @@ typedef struct {
     size_t ksidcnt; /* Number of key shares */
     uint16_t *ksid_arr; /* The IDs of the key share groups (flat list) */
     /* Variable to keep state between execution of callback or helper functions */
+    int want_keyshare; /* If positive, pending keyshare from unrecognised group */
     int inner; /* Are we expanding a DEFAULT list */
     int first; /* First tuple of possibly nested expansion? */
 } gid_cb_st;
@@ -1451,6 +1452,9 @@ static int gid_cb(const char *elem, int len, void *arg)
             }
         }
         if (gid == 0) { /* still not found */
+            /* If unknown, next known tuple element gets a keyshare */
+            if (add_keyshare && !remove_group && garg->want_keyshare == 0)
+                garg->want_keyshare = 1;
             /* Unknown group - ignore if ignore_unknown; trigger error otherwise */
             retval = ignore_unknown;
             goto done;
@@ -1470,12 +1474,16 @@ static int gid_cb(const char *elem, int len, void *arg)
      * ignore_unknown; trigger error otherwise
      */
     if (found_group == 0) {
+        /* If unknown, next known tuple element gets a keyshare */
+        if (add_keyshare && !remove_group && garg->want_keyshare == 0)
+            garg->want_keyshare = 1;
         retval = ignore_unknown;
         goto done;
     }
     /* Remove group (and keyshare) from anywhere in the list if present, ignore if not present */
     if (remove_group) {
         size_t n = 0; /* tuple size */
+        size_t ij = 0, ik = 0;
 
         /* Skip to first non-empty closed tuple 'j' */
         for (j = 0; j < garg->tplcnt; ++j)
@@ -1487,13 +1495,19 @@ static int gid_cb(const char *elem, int len, void *arg)
             if (garg->gid_arr[i] == gid)
                 break;
             /* Skip keyshare slots associated with groups prior to that removed */
-            if (k < garg->ksidcnt && garg->gid_arr[i] == garg->ksid_arr[k])
+            if (k < garg->ksidcnt && garg->gid_arr[i] == garg->ksid_arr[k]) {
                 ++k;
-            /* Skip to next non-empty closed tuple 'j' */
-            if (j < garg->tplcnt && --n == 0)
+                /* Save index following last retained keyshare */
+                ik = i + 1;
+            }
+            if (--n == 0) {
+                /* Skip to next non-empty closed tuple 'j' */
                 while (++j < garg->tplcnt)
                     if ((n = garg->tuplcnt_arr[j]) > 0)
                         break;
+                /* Save first index of tuple */
+                ij = i + 1;
+            }
         }
 
         /* Nothing to remove? */
@@ -1510,9 +1524,28 @@ static int gid_cb(const char *elem, int len, void *arg)
 
         /* Handle keyshare removal */
         if (k < garg->ksidcnt && garg->ksid_arr[k] == gid) {
-            garg->ksidcnt--;
-            memmove(garg->ksid_arr + k, garg->ksid_arr + k + 1,
-                (garg->ksidcnt - k) * sizeof(gid));
+            int drop_ks = ik > ij || j >= garg->tplcnt;
+
+            if (!drop_ks
+                && garg->tuplcnt_arr[j] > 0) {
+                /* Removing the first keyshare of an already completed tuple */
+                for (ik = ij + garg->tuplcnt_arr[j]; i < ik; ++i) {
+                    /* Any other keyshares for the same tuple? */
+                    if (k + 1 < garg->ksidcnt
+                        && garg->gid_arr[i] == garg->ksid_arr[k + 1])
+                        break;
+                }
+                /* Choose first group when none */
+                if (i >= ik)
+                    garg->ksid_arr[k] = garg->gid_arr[ij];
+                else
+                    drop_ks = 1;
+            }
+            if (drop_ks) {
+                garg->ksidcnt--;
+                memmove(garg->ksid_arr + k, garg->ksid_arr + k + 1,
+                    (garg->ksidcnt - k) * sizeof(gid));
+            }
         }
     } else { /* Processing addition of a single new group */
 
@@ -1529,8 +1562,10 @@ static int gid_cb(const char *elem, int len, void *arg)
         garg->tuplcnt_arr[garg->tplcnt]++;
 
         /* We want to add a key share for the current group */
-        if (add_keyshare)
+        if (add_keyshare) {
             garg->ksid_arr[garg->ksidcnt++] = gid;
+            garg->want_keyshare = -1;
+        }
     }
 
 done:
@@ -1555,6 +1590,18 @@ static int grow_tuples(gid_cb_st *garg)
 static int close_tuple(gid_cb_st *garg)
 {
     size_t gidcnt = garg->tuplcnt_arr[garg->tplcnt];
+
+    if (gidcnt > 0 && garg->want_keyshare > 0) {
+        uint16_t gid = garg->gid_arr[garg->gidcnt - gidcnt];
+
+        /*
+         * All groups in tuple marked for keyshare prediction were unknown
+         * select the first known group in the tuple.
+         */
+        garg->ksid_arr[garg->ksidcnt++] = gid;
+    }
+    /* Reset for the next tuple */
+    garg->want_keyshare = 0;
 
     if (gidcnt == 0)
         return 1;
