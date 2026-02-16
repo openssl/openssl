@@ -32,6 +32,14 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * The `OSSL_ESS_check_signing_certs_ex()` call has been added.
+
+   This api call is an extention to `OSSL_ESS_check_signing_certs()` to add
+   the ability to specify a library context and property query when fetching
+   algorithms to validate a given certificate.
+
+   *Neil Horman*
+
  * FIPS self tests can now be deferred and run as needed when installing
    the fips module with the -defer_tests option.
 
