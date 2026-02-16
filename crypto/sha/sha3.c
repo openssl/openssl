@@ -168,7 +168,7 @@ int ossl_sha3_absorb(KECCAK1600_CTX *ctx, const unsigned char *inp, size_t len)
     /* Absorb the input - rem = leftover part of the input < blocksize) */
     rem = ctx->meth.absorb(ctx, inp, len);
     /* Copy the leftover bit of the input into the buffer */
-    if (ossl_likely(rem)) {
+    if (ossl_likely(rem > 0)) {
         memcpy(ctx->buf, inp + len - rem, rem);
         ctx->bufsz = rem;
     }
