@@ -611,3 +611,5 @@ SSL_CTX_is_quic                         ?	4_0_0	EXIST::FUNCTION:
 SSL_CTX_is_server                       ?	4_0_0	EXIST::FUNCTION:
 OSSL_QUIC_method                        ?	4_0_0	EXIST::FUNCTION:QUIC
 SSL_listen_ex                           ?	4_0_0	EXIST::FUNCTION:
+SSL_get0_sigalg                         ?	4_0_0	EXIST::FUNCTION:
+SSL_get0_shared_sigalg                  ?	4_0_0	EXIST::FUNCTION:

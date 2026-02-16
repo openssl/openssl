@@ -10559,6 +10559,8 @@ static int test_sigalgs_available(int idx)
     OSSL_LIB_CTX *clientctx = libctx, *serverctx = libctx;
     OSSL_PROVIDER *filterprov = NULL;
     int sig, hash, numshared, numshared_expected, hash_expected, sig_expected;
+    unsigned char rsig, rhash;
+    unsigned int sigalg;
     const char *sigalg_name, *signame_expected;
 
     if (!TEST_ptr(tmpctx))
@@ -10679,7 +10681,7 @@ static int test_sigalgs_available(int idx)
 
     /* For tests 0 and 3 we expect 2 shared sigalgs, otherwise exactly 1 */
     numshared = SSL_get_shared_sigalgs(serverssl, 0, &sig, &hash,
-        NULL, NULL, NULL);
+        NULL, &rsig, &rhash);
     numshared_expected = 1;
     hash_expected = NID_sha256;
     sig_expected = NID_rsassaPss;
@@ -10703,6 +10705,9 @@ static int test_sigalgs_available(int idx)
         || !TEST_int_eq(sig, sig_expected)
         || !TEST_true(SSL_get0_peer_signature_name(clientssl, &sigalg_name))
         || !TEST_ptr(sigalg_name)
+        || !TEST_str_eq(sigalg_name, signame_expected)
+        || !TEST_int_gt(SSL_get0_shared_sigalg(serverssl, 0, &sigalg, &sigalg_name), 0)
+        || !TEST_int_eq(sigalg, (((int)rhash) << 8) | rsig)
         || !TEST_str_eq(sigalg_name, signame_expected))
         goto end;
 
