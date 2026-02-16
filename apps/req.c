@@ -282,7 +282,7 @@ int req_main(int argc, char **argv)
     LHASH_OF(OPENSSL_STRING) *addexts = NULL;
     X509 *new_x509 = NULL, *CAcert = NULL;
     X509_REQ *req = NULL;
-    const EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER *cipher = NULL;
     int ext_copy = EXT_COPY_UNSET;
     BIO *addext_bio = NULL;
     char *extsect = NULL;
@@ -304,8 +304,6 @@ int req_main(int argc, char **argv)
     int noenc = 0, newhdr = 0, subject = 0, pubkey = 0, precert = 0, x509v1 = 0;
     long newkey_len = -1;
     unsigned long chtype = MBSTRING_ASC, reqflag = 0;
-
-    cipher = (EVP_CIPHER *)EVP_aes_256_cbc();
 
     opt_set_unknown_name("digest");
     prog = opt_init(argc, argv, req_options);
@@ -521,6 +519,9 @@ int req_main(int argc, char **argv)
             break;
         }
     }
+
+    if (cipher == NULL)
+        cipher = EVP_CIPHER_fetch(app_get0_libctx(), "AES-256-CBC", app_get0_propq());
 
     /* No extra arguments. */
     if (!opt_check_rest_arg(NULL))
@@ -1063,6 +1064,7 @@ end:
     NCONF_free(addext_conf);
     BIO_free(addext_bio);
     BIO_free_all(out);
+    EVP_CIPHER_free(cipher);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(genctx);
     sk_OPENSSL_STRING_free(pkeyopts);
