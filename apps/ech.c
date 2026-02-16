@@ -173,14 +173,6 @@ int ech_main(int argc, char **argv)
         BIO_printf(bio_err, "Un-supported version (0x%04x)\n", ech_version);
         goto end;
     }
-    if (max_name_length > OSSL_ECH_MAX_MAXNAMELEN) {
-        BIO_printf(bio_err, "Weird max name length (0x%04x) - biggest is "
-                            "(0x%04x) - exiting\n",
-            max_name_length,
-            OSSL_ECH_MAX_MAXNAMELEN);
-        ERR_print_errors(bio_err);
-        goto end;
-    }
     if (suitestr != NULL) {
         if (OSSL_HPKE_str2suite(suitestr, &hpke_suite) != 1) {
             BIO_printf(bio_err, "Bad OSSL_HPKE_SUITE (%s)\n", suitestr);
