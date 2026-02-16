@@ -843,10 +843,12 @@ int X509_REQ_print_ex(BIO *bp, const X509_REQ *x, unsigned long nmflag, unsigned
 int X509_REQ_print(BIO *bp, const X509_REQ *req);
 
 int X509_NAME_entry_count(const X509_NAME *name);
-int X509_NAME_get_text_by_NID(const X509_NAME *name, int nid,
-    char *buf, int len);
-int X509_NAME_get_text_by_OBJ(const X509_NAME *name, const ASN1_OBJECT *obj,
-    char *buf, int len);
+#if !defined(OPENSSL_NO_DEPRECATED_4_0)
+OSSL_DEPRECATEDIN_4_0 int X509_NAME_get_text_by_NID(const X509_NAME *name,
+    int nid, char *buf, int len);
+OSSL_DEPRECATEDIN_4_0 int X509_NAME_get_text_by_OBJ(const X509_NAME *name,
+    const ASN1_OBJECT *obj, char *buf, int len);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_0) */
 
 /*
  * NOTE: you should be passing -1, not 0 as lastpos. The functions that use

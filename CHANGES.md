@@ -203,6 +203,12 @@ OpenSSL 4.0
 
    *Daniel Kubec*
 
+ * Rather than being documented as "should be considered deprecated",
+   X509_NAME_get_text_by_NID, and X509_NAME_get_text_by_OBJ are now
+   actually deprecated, and documented as such.
+
+   * Bob Beck *
+
  * ENGINE support was removed. The `no-engine` build option and the
    `OPENSSL_NO_ENGINE` macro is always present.
    Applications using `ENGINE_` functions unguarded with `OPENSSL_NO_ENGINE`
