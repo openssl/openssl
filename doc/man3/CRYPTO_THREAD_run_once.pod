@@ -7,6 +7,7 @@ CRYPTO_THREAD_lock_new, CRYPTO_THREAD_read_lock, CRYPTO_THREAD_write_lock,
 CRYPTO_THREAD_unlock, CRYPTO_THREAD_lock_free,
 CRYPTO_atomic_add, CRYPTO_atomic_add64, CRYPTO_atomic_and, CRYPTO_atomic_or,
 CRYPTO_atomic_load, CRYPTO_atomic_store, CRYPTO_atomic_load_int,
+CRYPTO_atomic_store_int,
 OSSL_set_max_threads, OSSL_get_max_threads,
 OSSL_get_thread_support_flags, OSSL_THREAD_SUPPORT_FLAG_THREAD_POOL,
 OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN - OpenSSL thread support
