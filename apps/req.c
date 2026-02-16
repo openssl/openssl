@@ -727,10 +727,14 @@ int req_main(int argc, char **argv)
         p = app_conf_try_string(req_conf, section, "encrypt_rsa_key");
         if (p == NULL)
             p = app_conf_try_string(req_conf, section, "encrypt_key");
-        if (p != NULL && strcmp(p, "no") == 0)
+        if (p != NULL && strcmp(p, "no") == 0) {
+            EVP_CIPHER_free(cipher);
             cipher = NULL;
-        if (noenc)
+        }
+        if (noenc) {
+            EVP_CIPHER_free(cipher);
             cipher = NULL;
+        }
 
         i = 0;
     loop:
