@@ -365,6 +365,44 @@ static const char *kInvalidDateUTC[] = {
     NULL
 };
 
+/* https://github.com/openssl/openssl/issues/27374 */
+static const char *kCrlDeltaIndicatorString[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICPzCCAScCAQEwDQYJKoZIhvcNAQELBQAweTELMAkGA1UEBhMCVVMxEzARBgNV\n",
+    "BAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xEzARBgNVBAoM\n",
+    "Ck15IENvbXBhbnkxEzARBgNVBAMMCk15IFJvb3QgQ0ExEzARBgNVBAsMCk15IFJv\n",
+    "b3QgQ0EXDTI1MDEwMTAwMDAwMFoXDTI1MTIwMTAwMDAwMFowJzAlAhQcgAIu+B8k\n",
+    "Be6WphLcth/grHAeXhcNMjUwNDE3MTAxNjUxWqBRME8wGAYDVR0UBBECDxnP/97a\n",
+    "dO3y9qRGDM7hQDAfBgNVHSMEGDAWgBTXYYkfk5aLdlQW6eV33Hy3ZRuAJDASBgNV\n",
+    "HRsECwQJRzYzMjg3NTEwMA0GCSqGSIb3DQEBCwUAA4IBAQCUvLefNHqdQdJC8gbp\n",
+    "QME2dQM6C8yLBjcykeNImrW0Ah1fpNTcT3XP+Gc9O5i1OIrCfQ8bDmvBNryrqZfC\n",
+    "43CsQsW1YBwNIa5oWjgaRwOzqng8Q6ITYpuLDnc7n20ejft8XmgdiTFNflgGM/Hx\n",
+    "p/a+xhIQAgqfgFH7ocm5DInDS5VFTHTtbPHMPiY4EUy9FnUTenkbFpVA47mswCXd\n",
+    "5p1QJGrDJR/sx7lmP/W77dhIWNtbmpUUo61AqcO1JdF2RUkc1yg2UBuzkgV1WU3t\n",
+    "UcQuw9IXm62Io2pRgNeiqOTz5daA1OVlDRaMNEVFvlMs0NgKDx0MGPT9p3KIzSoW\n",
+    "dbXQ\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+static const char *kCrlNumberString[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICJTCCAQ0CAQEwDQYJKoZIhvcNAQELBQAweTELMAkGA1UEBhMCVVMxEzARBgNV\n",
+    "BAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xEzARBgNVBAoM\n",
+    "Ck15IENvbXBhbnkxEzARBgNVBAMMCk15IFJvb3QgQ0ExEzARBgNVBAsMCk15IFJv\n",
+    "b3QgQ0EXDTI1MDEwMTAwMDAwMFoXDTI1MTIwMTAwMDAwMFowJzAlAhQcgAIu+B8k\n",
+    "Be6WphLcth/grHAeXhcNMjUwNTI4MDMwOTE4WqA3MDUwEgYDVR0UBAsECUc2MzI4\n",
+    "NzUxMDAfBgNVHSMEGDAWgBTXYYkfk5aLdlQW6eV33Hy3ZRuAJDANBgkqhkiG9w0B\n",
+    "AQsFAAOCAQEAU+jupFC7puUTELqIipJuywX2NWiA9kZIGSZM8k7gE8UZicsDy77F\n",
+    "hnpyY8ATvRXTaFL/QKipowNlGUf9LsS9vo36XKBOb4mJQQRUV2MLBqMacG9/t1/t\n",
+    "KBbNe+zxE9edfs+gco8K0pR/UWCjo0hKvqohEZ2S2Yl7FjSB6SuPMQA58+CkGdTM\n",
+    "P9k+LlqnPFl9Csm/2XUt1Fmw9AG2K5RN2fLC1NzMG1COo6g4LX8Sj4d7WW1LQUY5\n",
+    "cgd8PXFHW27u6F2c+xl5a7depdYKKDeWf01soQjjnT3e9OXZuBDM/vXBjl8T3YLF\n",
+    "s2kylOJHvGL3sxwWVCpboTmSUTEbf/tbOA==\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
 static X509 *test_root = NULL;
 static X509 *test_leaf = NULL;
 static X509 *test_root2 = NULL;
@@ -713,6 +751,34 @@ err:
     return status == X509_V_OK;
 }
 
+static int test_crl_delta_indicator(void)
+{
+    X509_CRL *crl;
+    int test;
+
+    test = TEST_ptr_null((crl = CRL_from_strings(kCrlDeltaIndicatorString)))
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_WRONG_TAG)
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT)
+        && TEST_err_s("CRL: malformed Delta CRL Indicator");
+
+    X509_CRL_free(crl);
+    return test;
+}
+
+static int test_crl_number(void)
+{
+    X509_CRL *crl;
+    int test;
+
+    test = TEST_ptr_null((crl = CRL_from_strings(kCrlNumberString)))
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_WRONG_TAG)
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT)
+        && TEST_err_s("CRL: malformed CRL number extension");
+
+    X509_CRL_free(crl);
+    return test;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(test_root = X509_from_strings(kCRLTestRoot))
@@ -729,6 +795,8 @@ int setup_tests(void)
     ADD_TEST(test_crl_cert_issuer_ext);
     ADD_TEST(test_crl_date_invalid);
     ADD_TEST(test_get_crl_fn_score);
+    ADD_TEST(test_crl_delta_indicator);
+    ADD_TEST(test_crl_number);
     ADD_ALL_TESTS(test_unknown_critical_crl, OSSL_NELEM(unknown_critical_crls));
     ADD_ALL_TESTS(test_reuse_crl, 6);
 
