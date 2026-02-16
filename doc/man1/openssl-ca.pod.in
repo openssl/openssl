@@ -55,7 +55,6 @@ B<openssl> B<ca>
 [B<-preserveDN>]
 [B<-noemailDN>]
 [B<-batch>]
-[B<-msie_hack>]
 [B<-extensions> I<section>]
 [B<-extfile> I<section>]
 [B<-subj> I<arg>]
@@ -269,13 +268,6 @@ This option defines the CA "policy" to use. This is a section in
 the configuration file which decides which fields should be mandatory
 or match the CA certificate. Check out the B<POLICY FORMAT> section
 for more information.
-
-=item B<-msie_hack>
-
-This is a deprecated option to make this command work with very old versions
-of the IE certificate enrollment control "certenr3". It used UniversalStrings
-for almost everything. Since the old control has various security bugs
-its use is strongly discouraged.
 
 =item B<-preserveDN>
 

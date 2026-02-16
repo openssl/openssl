@@ -230,6 +230,10 @@ OpenSSL 4.0
 
    *Barry Fussell and Helen Zhang*
 
+ * The deprecated "msie-hack" option was removed from the "openssl ca" command.
+
+   * Bob Beck *
+
  * Implemented RFC7919, adding support for negotiated FFDHE key exchange
    in TLS 1.2.
 
