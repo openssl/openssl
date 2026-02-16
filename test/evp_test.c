@@ -1017,6 +1017,7 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
     cdat->init_controls = sk_OPENSSL_STRING_new_null();
     cdat->fetched_cipher = fetched_cipher;
     cdat->enc = -1;
+    m = EVP_CIPHER_get_mode(fetched_cipher);
     if (EVP_CIPHER_get_flags(fetched_cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
         cdat->aead = m != 0 ? m : -1;
     else
