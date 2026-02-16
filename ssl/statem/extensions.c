@@ -556,7 +556,7 @@ int ossl_ech_2bcompressed(size_t ind)
 #ifdef DUPEMALL
     return 0;
 #endif
-    if (ind < 0 || ind >= nexts)
+    if (ind >= nexts)
         return -1;
     return ext_defs[ind].ech_handling == OSSL_ECH_HANDLING_COMPRESS;
 }
