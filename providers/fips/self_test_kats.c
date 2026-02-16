@@ -1163,7 +1163,6 @@ int SELF_TEST_kats_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
     self_test_id_t id, int switch_rand)
 {
     EVP_RAND_CTX *saved_rand = NULL;
-    enum st_test_state state;
     int ret;
 
     if (id >= ST_ID_MAX || st_all_tests[id].id != id) {
@@ -1174,10 +1173,12 @@ int SELF_TEST_kats_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
     /*
      * Dependency chains may cause a test to be referenced multiple times,
      * immediately return if not in initial state.
+     * NOTE: In this function state can be read w/o atomics because this
+     * function is always executed under lock. However we need to use
+     * atomics to set the state so that other threads reading state always
+     * read a correct value.
      */
-    if (!ossl_get_self_test_state(id, &state))
-        return 0;
-    switch (state) {
+    switch (st_all_tests[id].state) {
     case SELF_TEST_STATE_INIT:
     case SELF_TEST_STATE_DEFER:
         break;
@@ -1217,9 +1218,7 @@ int SELF_TEST_kats_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
     }
 
     /* may have already been run through dependency chains */
-    if (!ossl_get_self_test_state(id, &state))
-        return 0;
-    switch (state) {
+    switch (st_all_tests[id].state) {
     case SELF_TEST_STATE_IN_PROGRESS:
         ret = SELF_TEST_kats_single(st, libctx, id);
         break;
@@ -1237,14 +1236,9 @@ int SELF_TEST_kats_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
      * ensure they are all executed as well otherwise we could not
      * mark it as passed.
      */
-    if (!ossl_get_self_test_state(id, &state))
-        return 0;
-    if (state == SELF_TEST_STATE_PASSED)
+    if (st_all_tests[id].state == SELF_TEST_STATE_PASSED)
         for (int i = 0; i < ST_ID_MAX; i++) {
-            enum st_test_state istate;
-            if (!ossl_get_self_test_state(i, &istate))
-                return 0;
-            if (istate == SELF_TEST_STATE_IMPLICIT
+            if (st_all_tests[i].state == SELF_TEST_STATE_IMPLICIT
                 && st_all_tests[i].depends_on != NULL)
                 if (!(ret = SELF_TEST_kat_deps(st, libctx, &st_all_tests[i])))
                     break;
@@ -1255,14 +1249,9 @@ done:
      * now mark (pass or fail) all the algorithm tests that have been marked
      * by this test implicitly tested.
      */
-    if (!ossl_get_self_test_state(id, &state))
-        return 0;
     for (int i = 0; i < ST_ID_MAX; i++) {
-        enum st_test_state istate;
-        if (!ossl_get_self_test_state(i, &istate))
-            return 0;
-        if (istate == SELF_TEST_STATE_IMPLICIT)
-            ossl_set_self_test_state(i, state);
+        if (st_all_tests[i].state == SELF_TEST_STATE_IMPLICIT)
+            ossl_set_self_test_state(i, st_all_tests[id].state);
     }
 
     if (switch_rand) {
@@ -1297,10 +1286,7 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     }
 
     for (i = 0; i < ST_ID_MAX; i++) {
-        enum st_test_state state;
-        if (!ossl_get_self_test_state(i, &state))
-            return 0;
-        if (state == SELF_TEST_STATE_INIT)
+        if (st_all_tests[i].state == SELF_TEST_STATE_INIT)
             if (!SELF_TEST_kats_execute(st, libctx, i, 0))
                 ret = 0;
     }

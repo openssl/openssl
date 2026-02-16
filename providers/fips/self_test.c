@@ -362,12 +362,7 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, void *fips_global,
             && strcmp(st->defer_tests, "1") == 0) {
             /* Mark all non executed tests as deferred */
             for (int i = 0; i < ST_ID_MAX; i++) {
-                enum st_test_state state;
-                if (!ossl_get_self_test_state(i, &state)) {
-                    errored = 1;
-                    goto locked_end;
-                }
-                if (state == SELF_TEST_STATE_INIT) {
+                if (st_all_tests[i].state == SELF_TEST_STATE_INIT) {
                     if (!ossl_set_self_test_state(i, SELF_TEST_STATE_DEFER)) {
                         errored = 1;
                         goto locked_end;
