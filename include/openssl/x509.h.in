@@ -327,7 +327,7 @@ void *X509_CRL_get_meth_data(X509_CRL *crl);
 
 const char *X509_verify_cert_error_string(long n);
 
-int X509_verify(X509 *a, EVP_PKEY *r);
+int X509_verify(const X509 *a, EVP_PKEY *r);
 int X509_self_signed(X509 *cert, int verify_signature);
 
 int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
