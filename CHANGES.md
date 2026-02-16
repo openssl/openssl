@@ -191,6 +191,10 @@ OpenSSL 4.0
 
    *Bob Beck*
 
+ * Reject CRLs with malformed CRL Number or Delta CRL Indicator extensions.
+
+   *Daniel Kubec*
+
  * Remove needless 'const' from scalar types in the public API, mostly for AES and Camellia
 
    *David von Oheimb*
