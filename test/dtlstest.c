@@ -830,13 +830,16 @@ static int test_swap_records_dtls13(int idx)
          * scenario where the server must resend the New Session Tickets.
          */
         OSSL_sleep(1000);
-        SSL_read(cssl, buf, sizeof(buf));
+        if (!TEST_int_le(ret = SSL_read(cssl, buf, sizeof(buf)), 0))
+            goto end;
 
         /* Have the server resend the New Session Tickets */
-        SSL_read(sssl, buf, sizeof(buf));
+        if (!TEST_int_le(ret = SSL_read(sssl, buf, sizeof(buf)), 0))
+            goto end;
 
         /* Client can should now read the new Session Ticket */
-        SSL_read(cssl, buf, sizeof(buf));
+        if (!TEST_int_le(ret = SSL_read(cssl, buf, sizeof(buf)), 0))
+            goto end;
 
         if (!TEST_int_eq(SSL_write(sssl, msg, sizeof(msg)), (int)sizeof(msg)))
             goto end;
