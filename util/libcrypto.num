@@ -4685,8 +4685,8 @@ X509_CRL_print                          ?	4_0_0	EXIST::FUNCTION:
 X509_REQ_print_ex                       ?	4_0_0	EXIST::FUNCTION:
 X509_REQ_print                          ?	4_0_0	EXIST::FUNCTION:
 X509_NAME_entry_count                   ?	4_0_0	EXIST::FUNCTION:
-X509_NAME_get_text_by_NID               ?	4_0_0	EXIST::FUNCTION:
-X509_NAME_get_text_by_OBJ               ?	4_0_0	EXIST::FUNCTION:
+X509_NAME_get_text_by_NID               ?	4_0_0	EXIST::FUNCTION:DEPRECATED_4_0
+X509_NAME_get_text_by_OBJ               ?	4_0_0	EXIST::FUNCTION:DEPRECATED_4_0
 X509_NAME_get_index_by_NID              ?	4_0_0	EXIST::FUNCTION:
 X509_NAME_get_index_by_OBJ              ?	4_0_0	EXIST::FUNCTION:
 X509_NAME_get_entry                     ?	4_0_0	EXIST::FUNCTION:

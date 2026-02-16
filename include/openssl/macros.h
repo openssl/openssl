@@ -94,6 +94,8 @@
 #define OSSL_DEPRECATED(since) extern
 #define OSSL_DEPRECATED_FOR(since, message) extern
 #define OSSL_DEPRECATED_MESSAGE(message)
+#define OSSL_BEGIN_ALLOW_DEPRECATED
+#define OSSL_END_ALLOW_DEPRECATED
 #endif
 
 /*
