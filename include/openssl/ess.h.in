@@ -77,7 +77,11 @@ int OSSL_ESS_check_signing_certs(const ESS_SIGNING_CERT *ss,
     const ESS_SIGNING_CERT_V2 *ssv2,
     const STACK_OF(X509) *chain,
     int require_signing_cert);
-
+int OSSL_ESS_check_signing_certs_ex(const ESS_SIGNING_CERT *ss,
+    const ESS_SIGNING_CERT_V2 *ssv2,
+    const STACK_OF(X509) *chain,
+    OSSL_LIB_CTX *libctx,
+    int require_signing_cert);
 #ifdef __cplusplus
 }
 #endif

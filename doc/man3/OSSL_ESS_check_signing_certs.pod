@@ -4,7 +4,8 @@
 
 OSSL_ESS_signing_cert_new_init,
 OSSL_ESS_signing_cert_v2_new_init,
-OSSL_ESS_check_signing_certs
+OSSL_ESS_check_signing_certs,
+OSSL_ESS_check_signing_certs_ex
 - Enhanced Security Services (ESS) functions
 
 =head1 SYNOPSIS
@@ -24,6 +25,11 @@ OSSL_ESS_check_signing_certs
                                   const STACK_OF(X509) *chain,
                                   int require_signing_cert);
 
+ int OSSL_ESS_check_signing_certs_ex(const ESS_SIGNING_CERT *ss,
+                                     const ESS_SIGNING_CERT_V2 *ssv2,
+                                     const STACK_OF(X509) *chain,
+                                     OSSL_LIB_CTX *libctx,
+                                     int require_signing_cert);
 =head1 DESCRIPTION
 
 OSSL_ESS_signing_cert_new_init() generates a new B<ESS_SIGNING_CERT> structure
@@ -51,6 +57,10 @@ The matching is done using the given certificate hash algorithm and value.
 In addition to the checks required by RFCs 2624 and 5035,
 if the B<issuerSerial> field is included in an B<ESSCertID> or B<ESSCertIDv2>
 it must match the certificate issuer and serial number attributes.
+
+OSSL_EXX_check_signing_certs_ex() functions identically to OSSL_EXX_check_signing_certs(),
+but offers an additional parameter, libctx, for users who wish to specify a nondefault library
+context when the function fetches digests to validate the certs.
 
 =head1 NOTES
 
