@@ -4115,9 +4115,13 @@ int ossl_quic_channel_have_generated_transport_params(const QUIC_CHANNEL *ch)
     return ch->got_local_transport_params;
 }
 
-void ossl_quic_channel_set_max_idle_timeout_request(QUIC_CHANNEL *ch, uint64_t ms)
+int ossl_quic_channel_set_max_idle_timeout_request(QUIC_CHANNEL *ch, uint64_t ms)
 {
+    if (ossl_quic_channel_have_generated_transport_params(ch))
+        return 0;
+
     ch->max_idle_timeout_local_req = ms;
+    return 1;
 }
 
 uint64_t ossl_quic_channel_get_max_idle_timeout_request(const QUIC_CHANNEL *ch)
@@ -4135,9 +4139,13 @@ uint64_t ossl_quic_channel_get_max_idle_timeout_actual(const QUIC_CHANNEL *ch)
     return ch->max_idle_timeout;
 }
 
-void ossl_quic_channel_set_max_udp_payload_size_request(QUIC_CHANNEL *ch, uint64_t size)
+int ossl_quic_channel_set_max_udp_payload_size_request(QUIC_CHANNEL *ch, uint64_t size)
 {
+    if (ossl_quic_channel_have_generated_transport_params(ch))
+        return 0;
+
     ch->tx_max_udp_payload_size = size;
+    return 1;
 }
 
 uint64_t ossl_quic_channel_get_max_udp_payload_size_request(const QUIC_CHANNEL *ch)
@@ -4150,11 +4158,15 @@ uint64_t ossl_quic_channel_get_max_udp_payload_size_peer_request(const QUIC_CHAN
     return ch->rx_max_udp_payload_size;
 }
 
-void ossl_quic_channel_set_max_data_request(QUIC_CHANNEL *ch, uint64_t max_data)
+int ossl_quic_channel_set_max_data_request(QUIC_CHANNEL *ch, uint64_t max_data)
 {
+    if (ossl_quic_channel_have_generated_transport_params(ch))
+        return 0;
+
     ch->tx_init_max_data = max_data;
     ossl_quic_rxfc_init(&ch->conn_rxfc, NULL,
         max_data, DEFAULT_CONN_RXFC_MAX_WND_MUL * max_data, get_time, ch);
+    return 1;
 }
 
 uint64_t ossl_quic_channel_get_max_data_request(const QUIC_CHANNEL *ch)
@@ -4167,8 +4179,11 @@ uint64_t ossl_quic_channel_get_max_data_peer_request(const QUIC_CHANNEL *ch)
     return ch->rx_init_max_data;
 }
 
-void ossl_quic_channel_set_max_stream_data_request(QUIC_CHANNEL *ch, uint64_t max_data, int is_uni, int is_remote)
+int ossl_quic_channel_set_max_stream_data_request(QUIC_CHANNEL *ch, uint64_t max_data, int is_uni, int is_remote)
 {
+    if (ossl_quic_channel_have_generated_transport_params(ch))
+        return 0;
+
     /* no need to update fc here since no stream is created yet */
     if (is_uni) {
         ch->tx_init_max_stream_data_uni = max_data;
@@ -4178,6 +4193,8 @@ void ossl_quic_channel_set_max_stream_data_request(QUIC_CHANNEL *ch, uint64_t ma
         else
             ch->tx_init_max_stream_data_bidi_local = max_data;
     }
+
+    return 1;
 }
 
 uint64_t ossl_quic_channel_get_max_stream_data_request(const QUIC_CHANNEL *ch, int is_uni, int is_remote)
@@ -4196,8 +4213,11 @@ uint64_t ossl_quic_channel_get_max_stream_data_peer_request(const QUIC_CHANNEL *
         return is_remote ? ch->rx_init_max_stream_data_bidi_remote : ch->rx_init_max_stream_data_bidi_local;
 }
 
-void ossl_quic_channel_set_max_streams_request(QUIC_CHANNEL *ch, uint64_t max_streams, int is_uni)
+int ossl_quic_channel_set_max_streams_request(QUIC_CHANNEL *ch, uint64_t max_streams, int is_uni)
 {
+    if (ossl_quic_channel_have_generated_transport_params(ch))
+        return 0;
+
     if (is_uni) {
         ch->tx_init_max_streams_uni = max_streams;
         ossl_quic_rxfc_init_standalone(&ch->max_streams_uni_rxfc, max_streams, get_time, ch);
@@ -4205,6 +4225,8 @@ void ossl_quic_channel_set_max_streams_request(QUIC_CHANNEL *ch, uint64_t max_st
         ch->tx_init_max_streams_bidi = max_streams;
         ossl_quic_rxfc_init_standalone(&ch->max_streams_bidi_rxfc, max_streams, get_time, ch);
     }
+
+    return 1;
 }
 
 uint64_t ossl_quic_channel_get_max_streams_request(const QUIC_CHANNEL *ch, int is_uni)
@@ -4217,10 +4239,14 @@ uint64_t ossl_quic_channel_get_max_streams_peer_request(const QUIC_CHANNEL *ch, 
     return is_uni ? ch->rx_init_max_streams_uni : ch->rx_init_max_streams_bidi;
 }
 
-void ossl_quic_channel_set_ack_delay_exponent_request(QUIC_CHANNEL *ch, uint64_t exp)
+int ossl_quic_channel_set_ack_delay_exponent_request(QUIC_CHANNEL *ch, uint64_t exp)
 {
+    if (ossl_quic_channel_have_generated_transport_params(ch))
+        return 0;
+
     ch->tx_ack_delay_exp = (unsigned char)exp;
     ossl_quic_tx_packetiser_set_ack_delay_exponent(ch->txp, (uint32_t)exp);
+    return 1;
 }
 
 uint64_t ossl_quic_channel_get_ack_delay_exponent_request(const QUIC_CHANNEL *ch)
@@ -4233,10 +4259,14 @@ uint64_t ossl_quic_channel_get_ack_delay_exponent_peer_request(const QUIC_CHANNE
     return ch->rx_ack_delay_exp;
 }
 
-void ossl_quic_channel_set_max_ack_delay_request(QUIC_CHANNEL *ch, uint64_t ms)
+int ossl_quic_channel_set_max_ack_delay_request(QUIC_CHANNEL *ch, uint64_t ms)
 {
+    if (ossl_quic_channel_have_generated_transport_params(ch))
+        return 0;
+
     ch->tx_max_ack_delay = ms;
     ossl_ackm_set_tx_max_ack_delay(ch->ackm, ossl_ms2time(ch->tx_max_ack_delay));
+    return 1;
 }
 
 uint64_t ossl_quic_channel_get_max_ack_delay_request(const QUIC_CHANNEL *ch)
@@ -4249,9 +4279,13 @@ uint64_t ossl_quic_channel_get_max_ack_delay_peer_request(const QUIC_CHANNEL *ch
     return ch->rx_max_ack_delay;
 }
 
-void ossl_quic_channel_set_disable_active_migration_request(QUIC_CHANNEL *ch, uint64_t disable)
+int ossl_quic_channel_set_disable_active_migration_request(QUIC_CHANNEL *ch, uint64_t disable)
 {
+    if (ossl_quic_channel_have_generated_transport_params(ch))
+        return 0;
+
     ch->tx_disable_active_migration = (unsigned char)disable;
+    return 1;
 }
 
 uint64_t ossl_quic_channel_get_disable_active_migration_request(const QUIC_CHANNEL *ch)
@@ -4264,9 +4298,13 @@ uint64_t ossl_quic_channel_get_disable_active_migration_peer_request(const QUIC_
     return ch->rx_disable_active_migration;
 }
 
-void ossl_quic_channel_set_active_conn_id_limit_request(QUIC_CHANNEL *ch, uint64_t limit)
+int ossl_quic_channel_set_active_conn_id_limit_request(QUIC_CHANNEL *ch, uint64_t limit)
 {
+    if (ossl_quic_channel_have_generated_transport_params(ch))
+        return 0;
+
     ch->tx_active_conn_id_limit = limit;
+    return 1;
 }
 
 uint64_t ossl_quic_channel_get_active_conn_id_limit_request(const QUIC_CHANNEL *ch)
