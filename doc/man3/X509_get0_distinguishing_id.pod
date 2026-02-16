@@ -10,7 +10,7 @@ X509_REQ_get0_distinguishing_id, X509_REQ_set0_distinguishing_id
 
  #include <openssl/x509.h>
 
- ASN1_OCTET_STRING *X509_get0_distinguishing_id(X509 *x);
+ const ASN1_OCTET_STRING *X509_get0_distinguishing_id(const X509 *x);
  void X509_set0_distinguishing_id(X509 *x, ASN1_OCTET_STRING *distid);
  ASN1_OCTET_STRING *X509_REQ_get0_distinguishing_id(X509_REQ *x);
  void X509_REQ_set0_distinguishing_id(X509_REQ *x, ASN1_OCTET_STRING *distid);

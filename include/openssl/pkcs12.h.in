@@ -191,7 +191,7 @@ STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass,
 int PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes);
 STACK_OF(PKCS7) *PKCS12_unpack_authsafes(const PKCS12 *p12);
 
-int PKCS12_add_localkeyid(PKCS12_SAFEBAG *bag, unsigned char *name,
+int PKCS12_add_localkeyid(PKCS12_SAFEBAG *bag, const unsigned char *name,
     int namelen);
 int PKCS12_add_friendlyname_asc(PKCS12_SAFEBAG *bag, const char *name,
     int namelen);
