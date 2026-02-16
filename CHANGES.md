@@ -235,6 +235,11 @@ OpenSSL 4.0
 
    *Joachim Vandersmissen* (with additional support from *Viktor Dukhovni*)
 
+ * The default TLS client keyshares have been changed to offer SecP256r1MLKEM768
+   at the same priority as X25519MLKEM768.
+
+   *Dimitri John Ledkov*
+
 OpenSSL 3.6
 -----------
 

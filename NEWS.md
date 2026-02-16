@@ -40,6 +40,9 @@ OpenSSL 4.0
 
   * Support for the SSLv2 Client Hello was removed
 
+  * The default TLS client keyshares have been changed to offer SecP256r1MLKEM768
+    at the same priority as X25519MLKEM768.
+
 OpenSSL 3.6
 -----------
 
