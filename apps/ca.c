@@ -70,7 +70,6 @@
 #define ENV_POLICY "policy"
 #define ENV_EXTENSIONS "x509_extensions"
 #define ENV_CRLEXT "crl_extensions"
-#define ENV_MSIE_HACK "msie_hack"
 #define ENV_NAMEOPT "name_opt"
 #define ENV_CERTOPT "cert_opt"
 #define ENV_EXTCOPY "copy_extensions"
@@ -141,7 +140,6 @@ static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext);
 
 static CONF *extfile_conf = NULL;
 static int preserve = 0;
-static int msie_hack = 0;
 
 typedef enum OPTION_choice {
     OPT_COMMON,
@@ -176,7 +174,6 @@ typedef enum OPTION_choice {
     OPT_PRESERVEDN,
     OPT_NOEMAILDN,
     OPT_GENCRL,
-    OPT_MSIE_HACK,
     OPT_CRL_LASTUPDATE,
     OPT_CRL_NEXTUPDATE,
     OPT_CRLDAYS,
@@ -221,8 +218,6 @@ const OPTIONS ca_options[] = {
     { "dateopt", OPT_DATEOPT, 's', "Datetime format used for printing. (rfc_822/iso_8601). Default is rfc_822." },
     { "notext", OPT_NOTEXT, '-', "Do not print the generated certificate" },
     { "batch", OPT_BATCH, '-', "Don't ask questions" },
-    { "msie_hack", OPT_MSIE_HACK, '-',
-        "msie modifications to handle all Universal Strings" },
     { "ss_cert", OPT_SS_CERT, '<', "File contains a self signed cert to sign" },
     { "spkac", OPT_SPKAC, '<',
         "File contains DN and signed public key and challenge" },
@@ -480,9 +475,6 @@ int ca_main(int argc, char **argv)
         case OPT_GENCRL:
             gencrl = 1;
             break;
-        case OPT_MSIE_HACK:
-            msie_hack = 1;
-            break;
         case OPT_CRL_LASTUPDATE:
             crl_lastupdate = opt_arg();
             break;
@@ -656,9 +648,6 @@ end_of_options:
     f = app_conf_try_string(conf, BASE_SECTION, ENV_PRESERVE);
     if (f != NULL && (*f == 'y' || *f == 'Y'))
         preserve = 1;
-    f = app_conf_try_string(conf, BASE_SECTION, ENV_MSIE_HACK);
-    if (f != NULL && (*f == 'y' || *f == 'Y'))
-        msie_hack = 1;
 
     f = app_conf_try_string(conf, section, ENV_NAMEOPT);
     if (f != NULL) {
@@ -1523,20 +1512,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         str = X509_NAME_ENTRY_get_data(ne);
         obj = X509_NAME_ENTRY_get_object(ne);
         nid = OBJ_obj2nid(obj);
-
-        if (msie_hack) {
-            /* assume all type should be strings */
-
-            if (str->type == V_ASN1_UNIVERSALSTRING)
-                ASN1_UNIVERSALSTRING_to_string(str);
-
-            if (str->type == V_ASN1_IA5STRING && nid != NID_pkcs9_emailAddress)
-                str->type = V_ASN1_T61STRING;
-
-            if (nid == NID_pkcs9_emailAddress
-                && str->type == V_ASN1_PRINTABLESTRING)
-                str->type = V_ASN1_IA5STRING;
-        }
 
         /* If no EMAIL is wanted in the subject */
         if (nid == NID_pkcs9_emailAddress && !email_dn)
