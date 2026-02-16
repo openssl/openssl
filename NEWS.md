@@ -40,6 +40,8 @@ OpenSSL 4.0
 
   * Support for the SSLv2 Client Hello was removed
 
+  * Enabled searching registry entries on Windows by default.
+
 OpenSSL 3.6
 -----------
 

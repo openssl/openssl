@@ -235,6 +235,10 @@ OpenSSL 4.0
 
    *Joachim Vandersmissen* (with additional support from *Viktor Dukhovni*)
 
+ * Enabled searching registry entries on Windows by default.
+
+   *Norbert Pocs*
+
 OpenSSL 3.6
 -----------
 
