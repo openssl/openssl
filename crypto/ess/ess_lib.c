@@ -286,18 +286,12 @@ static int find(const ESS_CERT_ID *cid, const ESS_CERT_ID_V2 *cid_v2,
     else
         OBJ_obj2txt(name, sizeof(name), cid_v2->hash_alg->algorithm, 0);
 
-    (void)ERR_set_mark();
     md = EVP_MD_fetch(NULL, name, NULL);
 
-    if (md == NULL)
-        md = (EVP_MD *)EVP_get_digestbyname(name);
-
     if (md == NULL) {
-        (void)ERR_clear_last_mark();
         ERR_raise(ERR_LIB_ESS, ESS_R_ESS_DIGEST_ALG_UNKNOWN);
         goto end;
     }
-    (void)ERR_pop_to_mark();
 
     for (i = 0; i < sk_X509_num(certs); ++i) {
         cert = sk_X509_value(certs, i);

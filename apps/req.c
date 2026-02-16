@@ -510,7 +510,7 @@ int req_main(int argc, char **argv)
             newreq = precert = 1;
             break;
         case OPT_CIPHER:
-            cipher = EVP_get_cipherbyname(opt_arg());
+            cipher = EVP_CIPHER_fetch(app_get0_libctx(), opt_arg(), app_get0_propq());
             if (cipher == NULL) {
                 BIO_printf(bio_err, "Unknown cipher: %s\n", opt_arg());
                 goto opthelp;

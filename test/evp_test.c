@@ -698,8 +698,6 @@ static int parse_bin_chunk(const char *value, size_t offset, size_t max,
  **/
 
 typedef struct digest_data_st {
-    /* Digest this test is for */
-    const EVP_MD *digest;
     EVP_MD *fetched_digest;
     /* Input to digest */
     STACK_OF(EVP_TEST_BUFFER) *input;
@@ -718,7 +716,6 @@ typedef struct digest_data_st {
 static int digest_test_init(EVP_TEST *t, const char *alg)
 {
     DIGEST_DATA *mdat;
-    const EVP_MD *digest;
     EVP_MD *fetched_digest;
 
     if (is_digest_disabled(alg)) {
@@ -727,15 +724,13 @@ static int digest_test_init(EVP_TEST *t, const char *alg)
         return 1;
     }
 
-    if ((digest = fetched_digest = EVP_MD_fetch(libctx, alg, propquery)) == NULL
-        && (digest = EVP_get_digestbyname(alg)) == NULL)
+    if ((fetched_digest = EVP_MD_fetch(libctx, alg, propquery)) == NULL)
         return 0;
     if (!TEST_ptr(mdat = OPENSSL_zalloc(sizeof(*mdat)))) {
         EVP_MD_free(fetched_digest);
         return 0;
     }
     t->data = mdat;
-    mdat->digest = digest;
     mdat->fetched_digest = fetched_digest;
     mdat->pad_type = 0;
     mdat->xof = 0;
@@ -822,7 +817,7 @@ static int digest_test_run(EVP_TEST *t)
     int xof = 0;
     OSSL_PARAM params[6], *p = &params[0];
     size_t params_n = 0, params_allocated_n = 0;
-    const OSSL_PARAM *defined_params = EVP_MD_settable_ctx_params(expected->digest);
+    const OSSL_PARAM *defined_params = EVP_MD_settable_ctx_params(expected->fetched_digest);
 
     t->err = "TEST_FAILURE";
     if (!TEST_ptr(mctx = EVP_MD_CTX_new()))
@@ -853,7 +848,7 @@ static int digest_test_run(EVP_TEST *t)
             &expected->pad_type);
     *p++ = OSSL_PARAM_construct_end();
 
-    if (!EVP_DigestInit_ex2(mctx, expected->digest, params)) {
+    if (!EVP_DigestInit_ex2(mctx, expected->fetched_digest, params)) {
         t->err = "DIGESTINIT_ERROR";
         goto err;
     }
@@ -863,7 +858,7 @@ static int digest_test_run(EVP_TEST *t)
         goto err;
     }
 
-    xof |= EVP_MD_xof(expected->digest);
+    xof |= EVP_MD_xof(expected->fetched_digest);
     if (xof) {
         EVP_MD_CTX *mctx_cpy;
 
@@ -940,7 +935,6 @@ static const EVP_TEST_METHOD digest_test_method = {
 **/
 
 typedef struct cipher_data_st {
-    const EVP_CIPHER *cipher;
     EVP_CIPHER *fetched_cipher;
     int enc;
     /* EVP_CIPH_GCM_MODE, EVP_CIPH_CCM_MODE or EVP_CIPH_OCB_MODE if AEAD */
@@ -980,20 +974,19 @@ static int cipher_test_valid_fragmentation(CIPHER_DATA *cdat)
     return (cdat->aead == EVP_CIPH_CCM_MODE
                || cdat->aead == EVP_CIPH_CBC_MODE
                || (cdat->aead == -1
-                   && EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_STREAM_CIPHER)
-               || ((EVP_CIPHER_get_flags(cdat->cipher) & EVP_CIPH_FLAG_CTS) != 0)
-               || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_SIV_MODE
-               || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_GCM_SIV_MODE
-               || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_XTS_MODE
-               || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE
-               || EVP_CIPHER_get_mode(cdat->cipher) == EVP_CIPH_CBC_MODE)
+                   && EVP_CIPHER_get_mode(cdat->fetched_cipher) == EVP_CIPH_STREAM_CIPHER)
+               || ((EVP_CIPHER_get_flags(cdat->fetched_cipher) & EVP_CIPH_FLAG_CTS) != 0)
+               || EVP_CIPHER_get_mode(cdat->fetched_cipher) == EVP_CIPH_SIV_MODE
+               || EVP_CIPHER_get_mode(cdat->fetched_cipher) == EVP_CIPH_GCM_SIV_MODE
+               || EVP_CIPHER_get_mode(cdat->fetched_cipher) == EVP_CIPH_XTS_MODE
+               || EVP_CIPHER_get_mode(cdat->fetched_cipher) == EVP_CIPH_WRAP_MODE
+               || EVP_CIPHER_get_mode(cdat->fetched_cipher) == EVP_CIPH_CBC_MODE)
         ? 0
         : 1;
 }
 
 static int cipher_test_init(EVP_TEST *t, const char *alg)
 {
-    const EVP_CIPHER *cipher;
     EVP_CIPHER *fetched_cipher;
     CIPHER_DATA *cdat;
     int m;
@@ -1005,8 +998,7 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
     }
 
     ERR_set_mark();
-    if ((cipher = fetched_cipher = EVP_CIPHER_fetch(libctx, alg, propquery)) == NULL
-        && (cipher = EVP_get_cipherbyname(alg)) == NULL) {
+    if ((cipher = fetched_cipher = EVP_CIPHER_fetch(libctx, alg, propquery)) == NULL) {
         /* a stitched cipher might not be available */
         if (strstr(alg, "HMAC") != NULL) {
             ERR_pop_to_mark();

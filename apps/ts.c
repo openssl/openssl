@@ -311,6 +311,8 @@ int ts_main(int argc, char **argv)
     if (!app_RAND_load())
         goto end;
 
+    if (digestname == NULL)
+        digestname = "sha256";
     if (!opt_md(digestname, &md))
         goto opthelp;
     if (mode == OPT_REPLY && passin && !app_passwd(passin, NULL, &password, NULL)) {
@@ -462,8 +464,6 @@ static TS_REQ *create_query(BIO *data_bio, const char *digest, const EVP_MD *md,
     ASN1_OBJECT *policy_obj = NULL;
     ASN1_INTEGER *nonce_asn1 = NULL;
 
-    if (md == NULL && (md = EVP_get_digestbyname("sha256")) == NULL)
-        goto err;
     if ((ts_req = TS_REQ_new()) == NULL)
         goto err;
     if (!TS_REQ_set_version(ts_req, 1))
