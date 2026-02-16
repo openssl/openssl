@@ -42,6 +42,15 @@ OpenSSL 4.0
    usable or configurations, and were mostly OpenSSL-specific aliases that
    rarely matched the official IANA codepoint names.
 
+   There is an associated change in how signature algorithms are reported by the
+   `openssl-s_client(1)` and `openssl-s_server(1)` command-line tools.  They
+   now use the new functions and report the IANA registered names of each
+   signature scheme.  Example new output:
+
+    ```
+    Signature Algorithms: mldsa65:mldsa87:mldsa44:ecdsa_secp256r1_sha256:ecdsa_secp384r1_sha384:ecdsa_secp521r1_sha512:ed25519:ed448:ecdsa_brainpoolP256r1tls13_sha256:ecdsa_brainpoolP384r1tls13_sha384:ecdsa_brainpoolP512r1tls13_sha512:rsa_pss_pss_sha256:rsa_pss_pss_sha384:rsa_pss_pss_sha512:rsa_pss_rsae_sha256:rsa_pss_rsae_sha384:rsa_pss_rsae_sha512:rsa_pkcs1_sha256:rsa_pkcs1_sha384:rsa_pkcs1_sha512:ecdsa_sha224:rsa_pkcs1_sha224:dsa_sha224:dsa_sha256:dsa_sha384:dsa_sha512
+    ```
+
    *Viktor Dukhovni*
 
  * FIPS self tests can now be deferred and run as needed when installing
