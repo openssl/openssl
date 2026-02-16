@@ -513,5 +513,6 @@ FIPSversion = >=4.0.0
 Digest = TUPLEHASH-256
 Input = 2ca261eadd7767acd8979dd60047109e6653f0a6d1f4e2a6e5d244ea553e2d80c5a2d39d3d82bd4aae20e136
 Output = 2ab273c6e20d9103a1b00a926df831f81dbb4da37c7f828cde846a8b08619d79d1ec0a7430a3e9be2f1f6d0d4600ab4f0be4d7a9ecfb
+Ctrl = properties:?fips
 Ctrl = customization:-QUW&9 2r3(@zQ}M-H`Ez<Lsi P=EpM{U1$!d.vRTq]Hj;2M3h|,Sl
 Ctrl = xof:0

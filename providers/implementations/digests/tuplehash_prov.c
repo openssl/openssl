@@ -190,6 +190,7 @@ static void tuplehash_freectx(void *vctx)
 {
     TUPLEHASH_CTX *ctx = (TUPLEHASH_CTX *)vctx;
 
+    OPENSSL_free(ctx->propq);
     EVP_MD_CTX_free(ctx->mdctx);
     OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
