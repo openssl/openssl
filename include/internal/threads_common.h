@@ -21,7 +21,7 @@
 extern void AnnotateBenignRaceSized(const char *f, int l,
     const volatile void *mem, unsigned int size, const char *desc);
 #define TSAN_BENIGN(x, desc) \
-    AnnotateBenignRaceSized(__FILE__, __LINE__, &(x), xizeof(x), desc);
+    AnnotateBenignRaceSized(__FILE__, __LINE__, &(x), sizeof(x), desc);
 #else
 #define TSAN_BENIGN(x, desc)
 #endif
