@@ -1455,7 +1455,7 @@ dopsksess:
         }
         /* set agems from random buffer */
         rndbufp = rndbuf;
-        agems = *((uint32_t *)(rndbufp));
+        memcpy(&agems, rndbufp, sizeof(agems));
         rndbufp += sizeof(agems);
         if (dores != 0) {
             if (!WPACKET_sub_memcpy_u16(pkt, rndbufp,
