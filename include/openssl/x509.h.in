@@ -328,7 +328,7 @@ void *X509_CRL_get_meth_data(X509_CRL *crl);
 const char *X509_verify_cert_error_string(long n);
 
 int X509_verify(const X509 *a, EVP_PKEY *r);
-int X509_self_signed(X509 *cert, int verify_signature);
+int X509_self_signed(const X509 *cert, int verify_signature);
 
 int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
     const char *propq);
@@ -807,7 +807,7 @@ unsigned long X509_subject_name_hash_old(X509 *x);
 #define X509_ADD_FLAG_PREPEND 0x2
 #define X509_ADD_FLAG_NO_DUP 0x4
 #define X509_ADD_FLAG_NO_SS 0x8
-int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags);
+int X509_add_cert(STACK_OF(X509) *sk, const X509 *cert, int flags);
 int X509_add_certs(STACK_OF(X509) *sk, const STACK_OF(X509) *certs, int flags);
 
 int X509_cmp(const X509 *a, const X509 *b);
