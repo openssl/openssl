@@ -151,7 +151,19 @@ It is used internally as a sub algorithm of CSHAKE.
 
 =item X448, see L<EVP_KEYEXCH-X448(7)>
 
-=item ML-KEM, see L<EVP_KEM-ML-KEM(7)>
+=item ML-KEM-512, see L<EVP_KEM-ML-KEM-512(7)>
+
+=item ML-KEM-768, see L<EVP_KEM-ML-KEM-768(7)>
+
+=item ML-KEM-1024, see L<EVP_KEM-ML-KEM-1024(7)>
+
+=item X25519MLKEM768, see L<EVP_PKEY-MLX-KEM(7)>
+
+=item X448MLKEM1024, see L<EVP_PKEY-MLX-KEM(7)>
+
+=item SecP256r1MLKEM768, see L<EVP_PKEY-MLX-KEM(7)>
+
+=item SecP384r1MLKEM1024, see L<EVP_PKEY-MLX-KEM(7)>
 
 =item TLS1-PRF
 
@@ -254,6 +266,20 @@ included in SP 800-56Arev3 are not approved for key agreement".
 =item ML-DSA-65, see L<EVP_KEYMGMT-ML-DSA(7)>
 
 =item ML-DSA-87, see L<EVP_KEYMGMT-ML-DSA(7)>
+
+=item MK-KEM-512, see L<EVP_KEYMGMT-ML-KEM-512(7)>
+
+=item MK-KEM-768, see L<EVP_KEYMGMT-ML-KEM-768(7)>
+
+=item MK-KEM-1024, see L<EVP_KEYMGMT-ML-KEM-1024(7)>
+
+=item X25519MLKEM768, see L<EVP_KEYMGMT-MLX-KEM(7)>
+
+=item X448MLKEM1024, see L<EVP_KEYMGMT-MLX-KEM(7)>
+
+=item SecP256r1MLKEM768, see L<EVP_KEYMGMT-MLX-KEM(7)>
+
+=item SecP384r1MLKEM1024, see L<EVP_KEYMGMT-MLX-KEM(7)>
 
 =item SLH-DSA-SHA2-128s, see L<EVP_KEYMGMT-SLH-DSA(7)>
 
