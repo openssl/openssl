@@ -390,9 +390,9 @@ which (unusually for OpenSSL) return 0 on success and 1 on error.
 
 =over 4
 
-=item Encrypted ClientHello specification: L<https://datatracker.ietf.org/doc/rfc9849/>
+=item Encrypted ClientHello specification: L<https://datatracker.ietf.org/doc/rfc9849>
 
-=item ECH PEM file format specification: L<https://datatracker.ietf.org/doc/draft-farrell-tls-pemesni/>
+=item ECH PEM file format specification: L<https://datatracker.ietf.org/doc/rfc9934>
 
 =item RFC8701: L<https://datatracker.ietf.org/doc/rfc8701>
 

@@ -75,12 +75,8 @@ ECH PEM file format
 
 Servers supporting ECH need to read a set of ECH private keys and
 ECHConfigLists from storage. There is a specification for a
-[PEM file format for ECH](https://datatracker.ietf.org/doc/draft-farrell-tls-pemesni/)
-that is supported by the library. That specification was
-processed within the IETF as an area-director sponsored draft,
-so is not a TLS WG work item, but has completed IETF last call and is
-currently in the RFC editor queue for publication as a standards-track
-RFC.
+[PEM file format for ECH](https://datatracker.ietf.org/doc/rfc9934)
+that is supported by the library.
 
 This PEM file format is supported by code for a number of TLS servers,
 including (at the time of writing) lighttpd, freenginx, nginx, apache2 and haproxy.
