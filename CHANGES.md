@@ -235,6 +235,12 @@ OpenSSL 4.0
 
    *Joachim Vandersmissen* (with additional support from *Viktor Dukhovni*)
 
+ * Added BIO_set_send_flags() function that allows setting flags passed to
+   send(), sendto(), and sendmsg(). The main intention is to allow setting
+   the MSG_NOSIGNAL flag to avoid a crash on receiving the SIGPIPE signal.
+
+   *Igor Ustinov*
+
 OpenSSL 3.6
 -----------
 

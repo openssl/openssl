@@ -118,6 +118,7 @@ recvfrom
 recvmmsg
 secure_getenv
 select
+send
 sendmmsg
 sendto
 setbuf

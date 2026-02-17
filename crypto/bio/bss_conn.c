@@ -415,7 +415,7 @@ static int conn_write(BIO *b, const char *in, int inl)
     clear_socket_error();
 #ifndef OPENSSL_NO_KTLS
     if (BIO_should_ktls_ctrl_msg_flag(b)) {
-        ret = ktls_send_ctrl_message(b->num, data->record_type, in, inl);
+        ret = ktls_send_ctrl_message(b->num, data->record_type, in, inl, 0);
         if (ret >= 0) {
             ret = inl;
             BIO_clear_ktls_ctrl_msg_flag(b);
