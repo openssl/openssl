@@ -1483,7 +1483,7 @@ int ossl_deferred_self_test(OSSL_LIB_CTX *libctx, self_test_id_t id)
      * and then it will recheck this value and immediately exit.
      */
 
-    ANNOTATE_BENIGN_RACE(&st_all_tests[id].state, "Benign, avoids contention")
+    TSAN_BENIGN(st_all_tests[id].state, "Fails safe, avoids contention")
     if (st_all_tests[id].state == SELF_TEST_STATE_PASSED)
         return 1;
 
