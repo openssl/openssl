@@ -187,7 +187,7 @@ int ossl_x509_add_cert_new(STACK_OF(X509) **p_sk, X509 *cert, int flags)
     return X509_add_cert(*p_sk, cert, flags);
 }
 
-int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
+int X509_add_cert(STACK_OF(X509) *sk, const X509 *cert, int flags)
 {
     if (sk == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
@@ -213,12 +213,16 @@ int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
         if (ret != 0)
             return ret > 0 ? 1 : 0;
     }
-    if ((flags & X509_ADD_FLAG_UP_REF) != 0 && !X509_up_ref(cert))
+    /*
+     * Note: We're technically mutating the cert here, but its just to up
+     * the reference count, so that should be safe, so cast away
+     */
+    if ((flags & X509_ADD_FLAG_UP_REF) != 0 && !X509_up_ref((X509 *)cert))
         return 0;
-    if (!sk_X509_insert(sk, cert,
+    if (!sk_X509_insert(sk, (X509 *)cert,
             (flags & X509_ADD_FLAG_PREPEND) != 0 ? 0 : -1)) {
         if ((flags & X509_ADD_FLAG_UP_REF) != 0)
-            X509_free(cert);
+            X509_free((X509 *)cert);
         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         return 0;
     }

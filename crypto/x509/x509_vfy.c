@@ -99,7 +99,7 @@ static int null_callback(int ok, X509_STORE_CTX *e)
  * to match issuer and subject names (i.e., the cert being self-issued) and any
  * present authority key identifier to match the subject key identifier, etc.
  */
-int X509_self_signed(X509 *cert, int verify_signature)
+int X509_self_signed(const X509 *cert, int verify_signature)
 {
     EVP_PKEY *pkey;
 
@@ -107,7 +107,7 @@ int X509_self_signed(X509 *cert, int verify_signature)
         ERR_raise(ERR_LIB_X509, X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
         return -1;
     }
-    if (!ossl_x509v3_cache_extensions(cert))
+    if (!ossl_x509v3_cache_extensions((X509 *)cert))
         return -1;
     if ((cert->ex_flags & EXFLAG_SS) == 0)
         return 0;
