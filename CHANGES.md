@@ -252,6 +252,14 @@ OpenSSL 4.0
 
    *Ryan Hooper*
 
+ * Constify Various X509 functions:
+   X509_get_pathlen X509_check_ca X509_check_purpose X509_get_proxy_pathlen
+   X509_get_extension_flags X509_get_key_usage X509_get_extended_key_usage
+   X509_get0_subject_key_id X509_get0_authority_key_id X509_get0_authority_issuer
+   X509_get0_authority_serial.
+
+   * Bob Beck *
+
  * Fixed CRLs with invalid `ASN1_TIME` in invalidityDate extensions,
    where verification incorrectly succeeded. Enforced proper
    handling of `ASN1_TIME` validation results so that any CRL
