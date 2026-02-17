@@ -97,8 +97,8 @@ static ossl_inline int ktls_enable_tx_zerocopy_sendfile(int fd)
  * the entire record is pushed to TCP. It is impossible to send a partial
  * record using this control message.
  */
-static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
-    const void *data, size_t length)
+static ossl_inline int ktls_send_ctrl_message(int fd,
+    unsigned char record_type, const void *data, size_t lengthi, int flags)
 {
     struct msghdr msg = { 0 };
     int cmsg_len = sizeof(record_type);
@@ -120,7 +120,7 @@ static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
     msg.msg_iov = &msg_iov;
     msg.msg_iovlen = 1;
 
-    return sendmsg(fd, &msg, 0);
+    return sendmsg(fd, &msg, flags);
 }
 
 #ifdef OPENSSL_NO_KTLS_RX
@@ -334,8 +334,8 @@ static ossl_inline int ktls_enable_tx_zerocopy_sendfile(int fd)
  * the entire record is pushed to TCP. It is impossible to send a partial
  * record using this control message.
  */
-static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
-    const void *data, size_t length)
+static ossl_inline int ktls_send_ctrl_message(int fd,
+    unsigned char record_type, const void *data, size_t length, int flags)
 {
     struct msghdr msg;
     int cmsg_len = sizeof(record_type);
@@ -361,7 +361,7 @@ static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
     msg.msg_iov = &msg_iov;
     msg.msg_iovlen = 1;
 
-    return sendmsg(fd, &msg, 0);
+    return sendmsg(fd, &msg, flags);
 }
 
 /*

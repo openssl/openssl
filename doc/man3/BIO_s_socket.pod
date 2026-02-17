@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BIO_s_socket, BIO_new_socket - socket BIO
+BIO_s_socket, BIO_new_socket, BIO_set_send_flags - socket BIO
 
 =head1 SYNOPSIS
 
@@ -11,6 +11,8 @@ BIO_s_socket, BIO_new_socket - socket BIO
  const BIO_METHOD *BIO_s_socket(void);
 
  BIO *BIO_new_socket(int sock, int close_flag);
+
+ long BIO_set_send_flags(BIO *b, int flags);
 
 =head1 DESCRIPTION
 
@@ -24,6 +26,11 @@ If the close flag is set then the socket is shut down and closed
 when the BIO is freed.
 
 BIO_new_socket() returns a socket BIO using B<sock> and B<close_flag>.
+
+BIO_set_send_flags() sets flags passed to send(), sendto() and sendmsg().
+The set of available flags is platform-dependent. The main intention is to
+allow setting the MSG_NOSIGNAL flag to avoid a crash on receiving the SIGPIPE
+signal.
 
 =head1 NOTES
 
@@ -42,9 +49,15 @@ BIO_s_socket() returns the socket BIO method.
 BIO_new_socket() returns the newly allocated BIO or NULL is an error
 occurred.
 
+BIO_set_send_flags() returns 1 on success, 0 on errors.
+
+=head1 HISTORY
+
+BIO_set_send_flags() was added in OpenSSL 4.0.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

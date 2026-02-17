@@ -211,6 +211,11 @@ void BIO_set_flags(BIO *b, int flags)
     b->flags |= flags;
 }
 
+long BIO_set_send_flags(BIO *b, int flags)
+{
+    return BIO_ctrl(b, BIO_C_SET_SEND_FLAGS, (long)flags, NULL);
+}
+
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 BIO_callback_fn BIO_get_callback(const BIO *b)
 {

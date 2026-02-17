@@ -2857,6 +2857,7 @@ BIO_get_new_index                       ?	4_0_0	EXIST::FUNCTION:
 BIO_set_flags                           ?	4_0_0	EXIST::FUNCTION:
 BIO_test_flags                          ?	4_0_0	EXIST::FUNCTION:
 BIO_clear_flags                         ?	4_0_0	EXIST::FUNCTION:
+BIO_set_send_flags                      ?	4_0_0	EXIST::FUNCTION:
 BIO_get_callback                        ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 BIO_set_callback                        ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 BIO_debug_callback                      ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0

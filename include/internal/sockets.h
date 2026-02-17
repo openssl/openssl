@@ -176,23 +176,40 @@ typedef size_t socklen_t; /* Currently appears to be missing on VMS */
 #define get_last_socket_error_is_eintr() (get_last_socket_error() == WSAEINTR)
 #define readsocket(s, b, n) recv((s), (b), (n), 0)
 #define writesocket(s, b, n) send((s), (b), (n), 0)
+#define writesocket_ex(s, b, n, f) send((s), (b), (n), (f))
 #elif defined(__DJGPP__)
 #define closesocket(s) close_s(s)
 #define readsocket(s, b, n) read_s(s, b, n)
 #define writesocket(s, b, n) send(s, b, n, 0)
+#define writesocket_ex(s, b, n, f) send(s, b, n, f)
 #elif defined(OPENSSL_SYS_VMS)
 #define ioctlsocket(a, b, c) ioctl(a, b, c)
 #define closesocket(s) close(s)
 #define readsocket(s, b, n) recv((s), (b), (n), 0)
 #define writesocket(s, b, n) send((s), (b), (n), 0)
+#define writesocket_ex(s, b, n, f) send((s), (b), (n), (f))
 #elif defined(OPENSSL_SYS_VXWORKS)
 #define ioctlsocket(a, b, c) ioctl((a), (b), (int)(c))
 #define closesocket(s) close(s)
 #define readsocket(s, b, n) read((s), (b), (n))
 #define writesocket(s, b, n) write((s), (char *)(b), (n))
+static ossl_inline int writesocket_ex(int s, char *b, int n, int f)
+{
+    if (f == 0)
+        return writesocket(s, b, n);
+    errno = EINVAL;
+    return -1;
+}
 #elif defined(OPENSSL_SYS_TANDEM)
 #define readsocket(s, b, n) read((s), (b), (n))
 #define writesocket(s, b, n) write((s), (b), (n))
+static ossl_inline int writesocket_ex(int s, const void *b, int n, int f)
+{
+    if (f == 0)
+        return writesocket(s, b, n);
+    errno = EINVAL;
+    return -1;
+}
 #define ioctlsocket(a, b, c) ioctl(a, b, c)
 #define closesocket(s) close(s)
 #else
@@ -200,6 +217,7 @@ typedef size_t socklen_t; /* Currently appears to be missing on VMS */
 #define closesocket(s) close(s)
 #define readsocket(s, b, n) read((s), (b), (n))
 #define writesocket(s, b, n) write((s), (b), (n))
+#define writesocket_ex(s, b, n, f) ((f) == 0) ? write((s), (b), (n)) : send((s), (b), (n), (f))
 #endif
 
 /* also in apps/include/apps.h */
