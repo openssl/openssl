@@ -29,6 +29,7 @@ OSSL_ESS_check_signing_certs_ex
                                      const ESS_SIGNING_CERT_V2 *ssv2,
                                      const STACK_OF(X509) *chain,
                                      OSSL_LIB_CTX *libctx,
+                                     const char *propq,
                                      int require_signing_cert);
 =head1 DESCRIPTION
 
