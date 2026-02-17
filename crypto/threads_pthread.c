@@ -45,14 +45,7 @@
 #endif
 #include "rcu_internal.h"
 
-#if defined(__clang__) && defined(__has_feature)
-#if __has_feature(thread_sanitizer)
-#define __SANITIZE_THREAD__
-#endif
-#endif
-
 #if defined(__SANITIZE_THREAD__)
-#include <sanitizer/tsan_interface.h>
 #define TSAN_FAKE_UNLOCK(x)          \
     __tsan_mutex_pre_unlock((x), 0); \
     __tsan_mutex_post_unlock((x), 0)

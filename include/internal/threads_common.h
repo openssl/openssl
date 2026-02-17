@@ -10,6 +10,18 @@
 #ifndef _CRYPTO_THREADS_COMMON_H_
 #define _CRYPTO_THREADS_COMMON_H_
 
+#if defined(__clang__) && defined(__has_feature)
+#if __has_feature(thread_sanitizer)
+#define __SANITIZE_THREAD__
+#endif
+#endif
+
+#if defined(__SANITIZE_THREAD__)
+#include <sanitizer/tsan_interface.h>
+#else
+#define ANNOTATE_BENIGN_RACE(x, y)
+#endif
+
 typedef enum {
     CRYPTO_THREAD_LOCAL_RCU_KEY = 0,
     CRYPTO_THREAD_LOCAL_DRBG_PRIV_KEY,
