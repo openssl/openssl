@@ -266,6 +266,15 @@ static int kdf_pkcs12_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_ITER)) != NULL)
         if (!OSSL_PARAM_get_uint64(p, &ctx->iter))
             return 0;
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    /*
+     * If we're running the fuzzer, limit iteration count to
+     * 100 so we don't time out running the derivation for
+     * a really long time
+     */
+    if (p != NULL && ctx->iter > 100)
+        ctx->iter = 100;
+#endif
     return 1;
 }
 
