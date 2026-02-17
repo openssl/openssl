@@ -448,20 +448,17 @@ static TEST_ECHINNER test_inners[] = {
     { NULL, 0,
       outer_short_encoded_inner, sizeof(outer_short_encoded_inner),
       NULL, 0,
-      0, /* expected result */
-      SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC},
+      0, /* expected result */ SSL_R_BAD_EXTENSION},
     /* 3. otherwise-correct case that fails only due to client random */
     { NULL, 0,
       entire_encoded_inner, sizeof(entire_encoded_inner),
       NULL, 0,
-      0, /* expected result */
-      SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC},
+      0, /* expected result */ SSL_R_BAD_EXTENSION},
     /* 4. otherwise-correct case that fails only due to client random */
     { encoded_inner_pre, sizeof(encoded_inner_pre),
       encoded_inner_outers, sizeof(encoded_inner_outers),
       encoded_inner_post, sizeof(encoded_inner_post),
-      0, /* expected result */
-      SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC},
+      0, /* expected result */ SSL_R_BAD_EXTENSION},
     /* 5. fails HPKE decryption due to bad padding so treated as GREASE */
     { encoded_inner_pre, sizeof(encoded_inner_pre),
       encoded_inner_outers, sizeof(encoded_inner_outers),
@@ -596,7 +593,7 @@ static TEST_ECHINNER test_inners[] = {
       no_supported_exts, sizeof(no_supported_exts),
       NULL, 0,
       0, /* expected result */
-      SSL_R_UNSUPPORTED_PROTOCOL},
+      SSL_R_BAD_EXTENSION},
     /*
      * 23. no supported_versions hence TLSv1.2, with server set to
      * allow max tlsv1.2
@@ -614,13 +611,13 @@ static TEST_ECHINNER test_inners[] = {
       no_supported_exts, sizeof(no_supported_exts),
       NULL, 0,
       0, /* expected result */
-      SSL_R_UNSUPPORTED_PROTOCOL},
+      SSL_R_BAD_EXTENSION},
     /* 25. smuggled TLSv1.2 CH */
     { NULL, 0,
       tlsv12_inner, sizeof(tlsv12_inner),
       NULL, 0,
       0, /* expected result */
-      SSL_R_UNSUPPORTED_PROTOCOL},
+      SSL_R_BAD_EXTENSION},
 
 };
 
