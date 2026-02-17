@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -49,51 +49,35 @@ echo "   PEM ECH Config file: $ECHCONFIGFILE"
 
 echo "------------------------------------------------------------------"
 
-if [ ! -d $SRCTOP/nss ]; then
-    mkdir -p $SRCTOP/nss
+LATEST='non-existent-directory'
+if [ -f $SRCTOP/nss/dist/latest ]; then
+    LATEST=`cat $SRCTOP/nss/dist/latest`
 fi
-# clone our NSS and NSPR
-if [ ! -d $SRCTOP/nss/nss ]; then
-    (
-       cd $SRCTOP/nss \
-           && git clone https://github.com/nss-dev/nss.git
-    )
-fi
-if [ ! -d $SRCTOP/nss/nspr ]; then
-    (
-       cd $SRCTOP/nss \
-           && hg clone https://hg.mozilla.org/projects/nspr
-    )
-fi
-
-# build - used to use build.sh but there's some problem with an
-# tmp awk script running within the make environment so we'll do
-# things in a more basic fashion
-TPATH=""
-if [ -d "$SRCTOP/nss/dist" ]
-then
-    TPATH="$(find $SRCTOP/nss/dist -name tstclnt)"
-fi
-if [ -z "$TPATH" ]
-then
-    ( cd $SRCTOP/nss/nss && USE_64=1 make nss_build_all )
-    ( cd $SRCTOP/nss/nss && USE_64=1 make install )
-fi
-TPATH="$(find $SRCTOP/nss/dist -name tstclnt)"
-if [ -z "$TPATH" ]
-then
-    echo "Build failed - exiting"
-    exit 99
-fi
-LDIR=$(dirname "$TPATH")
-LLIB="$LDIR/../lib"
+LDIR=$SRCTOP/nss/dist/$LATEST/bin
+NLIB=$SRCTOP/nss/dist/$LATEST/lib
 
 if [ ! -f $LDIR/selfserv ]; then
-    echo "Failed to build NSS - exiting"
+    # clone our NSS and NSPR
+    echo "You need to have built NSS before running this test."
+    echo "To do that, run the following commands:"
+    cat <<EOF
+        mkdir $SRCTOP/nss
+        cd $SRCTOP/nss
+        git clone https://github.com/nss-dev/nss.git
+        hg clone https://hg.mozilla.org/projects/nspr
+        cd $SRCTOP/nss/nss
+        USE_64=1 make nss_build_all
+        USE_64=1 make install
+EOF
+    exit 1
+fi 
+
+if [ ! -f $LDIR/selfserv ]; then
+    echo "Bad NSS build - exiting"
     exit 99
 fi
 if [ ! -f $LDIR/certutil ]; then
-    echo "Failed to build NSS - exiting"
+    echo "Bad NSS build - exiting"
     exit 99
 fi
 
@@ -102,7 +86,7 @@ fi
 if [ ! -d $SRCTOP/nss/server ]
 then
     mkdir -p $SRCTOP/nss/server
-	LD_LIBRARY_PATH=$LLIB $LDIR/certutil -A \
+	LD_LIBRARY_PATH=$NLIB $LDIR/certutil -A \
         -i $SRCTOP/test/certs/rootcert.pem \
         -n "oe" -t "CT,C,C" -d $SRCTOP/nss/server/
     sillypass="sillypass"
@@ -111,7 +95,7 @@ then
         -in $SRCTOP/test/certs/echserver.pem \
         -password "pass:$sillypass"
     echo -n $sillypass >sillypassfile
-	LD_LIBRARY_PATH=$LLIB $LDIR/pk12util \
+	LD_LIBRARY_PATH=$NLIB $LDIR/pk12util \
         -i tmp.p12 -d $SRCTOP/nss/server -w sillypassfile 
     cat sillypassfile
     # rm -f sillypassfile tmp.p12
@@ -125,7 +109,7 @@ echo "   CWD:                $PWD"
 
 # need to use ``stdbuf -o0`` so that we don't get buffering and
 # can grab echconfig immediately...
-LD_LIBRARY_PATH=$LLIB stdbuf -o0 $LDIR/selfserv -p 8443 -d $SRCTOP/nss/server \
+LD_LIBRARY_PATH=$NLIB stdbuf -o0 $LDIR/selfserv -p 8443 -d $SRCTOP/nss/server \
     -n server.example -X "publicname:example.com" >ss-echfile &
 if [ -s ss-echfile ]
 then
