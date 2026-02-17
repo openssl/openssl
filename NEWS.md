@@ -27,6 +27,8 @@ OpenSSL 4.0
 
 ### Major changes between OpenSSL 3.6 and OpenSSL 4.0 [under development]
 
+  * The `OSSL_ESS_check_signing_certs_ex()` call has been added.
+
   * Windows supports the use of staic or dynamic vcruntime linkage
 
   * The `OPENSSL_sk_set_cmp_thunks()` call was added to the `STACK_OF` api

@@ -263,7 +263,7 @@ static int ess_issuer_serial_cmp(const ESS_ISSUER_SERIAL *is, const X509 *cert)
  * Return 0 on not found, -1 on error, else 1 + the position in |certs|.
  */
 static int find(const ESS_CERT_ID *cid, const ESS_CERT_ID_V2 *cid_v2,
-    int index, const STACK_OF(X509) *certs, OSSL_LIB_CTX *libctx)
+    int index, const STACK_OF(X509) *certs, OSSL_LIB_CTX *libctx, const char *propq)
 {
     const X509 *cert;
     EVP_MD *md = NULL;
@@ -286,7 +286,7 @@ static int find(const ESS_CERT_ID *cid, const ESS_CERT_ID_V2 *cid_v2,
     else
         OBJ_obj2txt(name, sizeof(name), cid_v2->hash_alg->algorithm, 0);
 
-    md = EVP_MD_fetch(libctx, name, NULL);
+    md = EVP_MD_fetch(libctx, name, propq);
     if (md == NULL) {
         ERR_raise(ERR_LIB_ESS, ESS_R_ESS_DIGEST_ALG_UNKNOWN);
         goto end;
@@ -329,6 +329,7 @@ int OSSL_ESS_check_signing_certs_ex(const ESS_SIGNING_CERT *ss,
     const ESS_SIGNING_CERT_V2 *ssv2,
     const STACK_OF(X509) *chain,
     OSSL_LIB_CTX *libctx,
+    const char *propq,
     int require_signing_cert)
 {
     int n_v1 = ss == NULL ? -1 : sk_ESS_CERT_ID_num(ss->cert_ids);
@@ -345,12 +346,12 @@ int OSSL_ESS_check_signing_certs_ex(const ESS_SIGNING_CERT *ss,
     }
     /* If both ss and ssv2 exist, as required evaluate them independently. */
     for (i = 0; i < n_v1; i++) {
-        ret = find(sk_ESS_CERT_ID_value(ss->cert_ids, i), NULL, i, chain, libctx);
+        ret = find(sk_ESS_CERT_ID_value(ss->cert_ids, i), NULL, i, chain, libctx, propq);
         if (ret <= 0)
             return ret;
     }
     for (i = 0; i < n_v2; i++) {
-        ret = find(NULL, sk_ESS_CERT_ID_V2_value(ssv2->cert_ids, i), i, chain, libctx);
+        ret = find(NULL, sk_ESS_CERT_ID_V2_value(ssv2->cert_ids, i), i, chain, libctx, propq);
         if (ret <= 0)
             return ret;
     }
@@ -363,5 +364,5 @@ int OSSL_ESS_check_signing_certs(const ESS_SIGNING_CERT *ss,
     int require_signing_cert)
 {
     return OSSL_ESS_check_signing_certs_ex(ss, ssv2, chain, NULL,
-        require_signing_cert);
+        NULL, require_signing_cert);
 }

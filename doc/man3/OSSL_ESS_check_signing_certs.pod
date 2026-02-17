@@ -58,9 +58,9 @@ In addition to the checks required by RFCs 2624 and 5035,
 if the B<issuerSerial> field is included in an B<ESSCertID> or B<ESSCertIDv2>
 it must match the certificate issuer and serial number attributes.
 
-OSSL_EXX_check_signing_certs_ex() functions identically to OSSL_EXX_check_signing_certs(),
-but offers an additional parameter, libctx, for users who wish to specify a nondefault library
-context when the function fetches digests to validate the certs.
+OSSL_ESS_check_signing_certs_ex() functions identically to OSSL_ESS_check_signing_certs(),
+but offers additional parameters, I<libctx> and I<propq>, for users who wish to specify a nondefault
+library context and property query, when the function fetches digests to validate the certs.
 
 =head1 NOTES
 
@@ -73,7 +73,7 @@ This is used for TSP (RFC 3161) and CAdES-BES (informational RFC 5126).
 OSSL_ESS_signing_cert_new_init() and OSSL_ESS_signing_cert_v2_new_init()
 return a pointer to the new structure or NULL on malloc failure.
 
-OSSL_ESS_check_signing_certs() returns 1 on success,
+OSSL_ESS_check_signing_certs() and OSSL_ESS_check_signing_certs_ex() return 1 on success,
 0 if a required certificate cannot be found, -1 on other error.
 
 =head1 SEE ALSO
@@ -85,6 +85,8 @@ L<CMS_verify(3)>
 
 OSSL_ESS_signing_cert_new_init(), OSSL_ESS_signing_cert_v2_new_init(), and
 OSSL_ESS_check_signing_certs() were added in OpenSSL 3.0.
+
+OSSL_ESS_check_signing_certs_ex() was added in OpenSSL 4.0
 
 =head1 COPYRIGHT
 
