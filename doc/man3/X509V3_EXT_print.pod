@@ -13,7 +13,7 @@ X509V3_EXT_print, X509V3_EXT_print_fp - pretty print X509 certificate extensions
 
 =head1 DESCRIPTION
 
-X509V3_EXT_print() and X509V3_EXT_print_fp() parses and prints the extension
+X509V3_EXT_print() and X509V3_EXT_print_fp() parse and print the extension
 info from I<ext> to I<bio> or I<out> with indentation set via I<indent>.
 I<flag> determines the behaviour if an extension could not be parsed and can be
 one of:
