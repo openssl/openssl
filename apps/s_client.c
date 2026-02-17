@@ -3697,10 +3697,6 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 #ifndef OPENSSL_NO_CT
     const SSL_CTX *ctx = SSL_get_SSL_CTX(s);
 #endif
-# ifndef OPENSSL_NO_ECH
-    char *inner = NULL, *outer = NULL;
-    int estat = 0;
-# endif
 
     if (full) {
         int got_a_chain = 0;

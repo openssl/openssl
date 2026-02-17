@@ -1540,10 +1540,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
-    if (tls_psk_do_binder(s, md, (const unsigned char *)s->init_buf->data,
-            binderoffset, PACKET_data(&binder), NULL, sess, 0,
-            ext)
-        != 1) {
+    if (tls_psk_do_binder(s, md, PACKET_msg_start(pkt), binderoffset,
+            PACKET_data(&binder), NULL, sess, 0, ext) != 1) {
         /* SSLfatal() already called */
         goto err;
     }
