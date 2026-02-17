@@ -106,7 +106,6 @@ void ossl_echstore_entry_free(OSSL_ECHSTORE_ENTRY *ee)
  *
  * This is intended for small inputs, either files or buffers and
  * not other kinds of BIO.
- * TODO(ECH): is there really a way to check for oddball input BIOs?
  */
 static int ech_bio2buf(BIO *in, unsigned char **buf, size_t *len)
 {
@@ -148,14 +147,15 @@ err:
 
 /*
  * @brief Figure out ECHConfig encoding
- * @param encodedval is a buffer with the encoding
- * @param encodedlen is the length of that buffer
- * @param guessedfmt is the detected format
+ * @param val is a buffer with the encoding
+ * @param len is the length of that buffer
+ * @param fmt is the detected format
  * @return 1 for success, 0 for error
  */
 static int ech_check_format(const unsigned char *val, size_t len, int *fmt)
 {
     size_t span = 0;
+    char *copy_with_NUL = NULL;
 
     if (fmt == NULL || len <= 4 || val == NULL)
         return 0;
@@ -166,7 +166,14 @@ static int ech_check_format(const unsigned char *val, size_t len, int *fmt)
         *fmt = OSSL_ECH_FMT_BIN;
         return 1;
     }
-    span = strspn((char *)val, B64_alphabet);
+    /* ensure we always end with a NUL so strspn is safe */
+    copy_with_NUL = OPENSSL_malloc(len + 1);
+    if (copy_with_NUL == NULL)
+        return 0;
+    memcpy(copy_with_NUL, val, len);
+    copy_with_NUL[len] = '\0';
+    span = strspn(copy_with_NUL, B64_alphabet);
+    OPENSSL_free(copy_with_NUL);
     if (len <= span) {
         *fmt = OSSL_ECH_FMT_B64TXT;
         return 1;
