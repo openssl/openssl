@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -49,20 +49,20 @@ echo "   PEM ECH Config file: $ECHCONFIGFILE"
 
 echo "------------------------------------------------------------------"
 
-if [ ! -d $SRCTOP/boringssl ]; then
-    mkdir -p $SRCTOP/boringssl
-fi
-if [ ! -d $SRCTOP/boringssl/.local ]; then
-(
-       cd $SRCTOP \
-           && git clone https://boringssl.googlesource.com/boringssl \
-           && cd boringssl \
-           && mkdir build \
-           && cd build \
-           && cmake -DOPENSSL_ROOT_DIR=$OPENSSL_ROOT_DIR -DCMAKE_INSTALL_PREFIX=$SRCTOP/boringssl/.local .. \
-           && make \
-           && make install
-   )
+if [ ! -f $BTOOL/bssl ]; then
+    echo "You need to have built boringssl before running this test."
+    echo "To do that, run the following commands:"
+    cat <<EOF
+        cd $SRCTOP
+        git clone https://boringssl.googlesource.com/boringssl
+        cd boringssl
+        mkdir build
+        cd build
+        cmake -DCMAKE_INSTALL_PREFIX=$SRCTOP/boringssl/.local ..
+        make
+        make install
+EOF
+    exit 1
 fi
 
 echo "   CWD:                $PWD"

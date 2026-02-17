@@ -564,12 +564,14 @@ the output from those command may require changes to these tests as
 they use pattern matching on the outputs to detect expected successes
 or failures.
 
-The external tests check that the library correctly interoperates,
-as a client or server, with NSS or BoringSSL. These require a build
-configured with `enable-external-tests` and are quite time consuming
-when first run, as they need to download and build the relevant
-NSS or BoringSSL library. The client/server tests here are not very
-extensive and just check that a basic configuration interoperates.
+The external tests check that the library correctly interoperates, as a client
+or server, with NSS or BoringSSL. These require a build configured with
+`enable-external-tests`.  In order to avoid potential supply-chain issues, you
+need to download and build the relevant NSS or BoringSSL library manually in
+the correct location. When you first attempt to run these external tests, they
+will provide instructions for how to download and build NSS or BoringSSL in the
+correct manner. The client/server tests here are not very extensive and just
+check that a basic configuration interoperates.
 
 How to measure coverage of ECH tests
 ------------------------------------
