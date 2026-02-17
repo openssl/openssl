@@ -172,7 +172,7 @@ static int is_power_of_two(uint32_t x, uint32_t *n)
 
 static int kdf_srtpkdf_check_key(KDF_SRTPKDF *ctx)
 {
-    const EVP_CIPHER *cipher = cipher = ossl_prov_cipher_cipher(&ctx->cipher);
+    const EVP_CIPHER *cipher = ossl_prov_cipher_cipher(&ctx->cipher);
 
     if (cipher != NULL) {
         if (ctx->key == NULL) {
