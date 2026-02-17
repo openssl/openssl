@@ -3384,26 +3384,37 @@ static void print_keyspec(OSSL_CMP_ATAVS *keySpec)
             int paramtype;
             const void *param;
 
+            /* NULL check to prevent dereferencing a NULL pointer when print_keyspec is called */
+            if (alg == NULL) {
+                BIO_puts(mem, "Key algorithm: <absent>\n");
+                break;
+            }
+
             X509_ALGOR_get0(&oid, &paramtype, &param, alg);
+
             BIO_puts(mem, "Key algorithm: ");
             i2a_ASN1_OBJECT(mem, oid);
+
             if (paramtype == V_ASN1_UNDEF || alg->parameter == NULL) {
                 BIO_puts(mem, "\n");
             } else {
                 BIO_puts(mem, " - ");
                 ASN1_item_print(mem, (ASN1_VALUE *)alg,
-                    0, ASN1_ITEM_rptr(X509_ALGOR), NULL);
+                                0, ASN1_ITEM_rptr(X509_ALGOR), NULL);
             }
         } break;
+
         case NID_id_regCtrl_rsaKeyLen:
             BIO_printf(mem, "Key algorithm: RSA %d\n",
-                OSSL_CMP_ATAV_get_rsaKeyLen(atav));
+                       OSSL_CMP_ATAV_get_rsaKeyLen(atav));
             break;
+
         default:
             BIO_printf(mem, "Invalid key spec: %s\n", nid_name(nid));
             break;
         }
     }
+
     BIO_printf(mem, "End of key %s", desc);
 
     len = BIO_get_mem_data(mem, &p);
@@ -3411,8 +3422,8 @@ static void print_keyspec(OSSL_CMP_ATAVS *keySpec)
         CMP_err1("Info too large - cannot dump key %s", desc);
     else
         CMP_info2("%.*s", (int)len, p);
+
     BIO_free(mem);
-    return;
 }
 
 static void print_status(void)
