@@ -161,13 +161,13 @@ static int lookup_cert_match(X509 **result, X509_STORE_CTX *ctx, X509 *x)
  *
  * Returns 0 to abort verification with an error, non-zero to continue.
  */
-static int verify_cb_cert(X509_STORE_CTX *ctx, X509 *x, int depth, int err)
+static int verify_cb_cert(X509_STORE_CTX *ctx, const X509 *x, int depth, int err)
 {
     if (depth < 0)
         depth = ctx->error_depth;
     else
         ctx->error_depth = depth;
-    ctx->current_cert = x != NULL ? x : sk_X509_value(ctx->chain, depth);
+    ctx->current_cert = x != NULL ? (X509 *)x : sk_X509_value(ctx->chain, depth);
     if (err != X509_V_OK)
         ctx->error = err;
     return ctx->verify_cb(0, ctx);
@@ -786,7 +786,7 @@ static int check_extensions(X509_STORE_CTX *ctx)
     return 1;
 }
 
-static int has_san_id(X509 *x, int gtype)
+static int has_san_id(const X509 *x, int gtype)
 {
     int i;
     int ret = 0;
@@ -817,7 +817,7 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
 
     /* Check name constraints for all certificates */
     for (i = sk_X509_num(ctx->chain) - 1; i >= 0; i--) {
-        X509 *x = sk_X509_value(ctx->chain, i);
+        const X509 *x = sk_X509_value(ctx->chain, i);
         int j;
 
         /* Ignore self-issued certs unless last in chain */
