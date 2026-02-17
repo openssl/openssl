@@ -61,8 +61,6 @@ SSL_CTX_ech_set_callback,SSL_set1_ech_config_list
 
 =head1 DESCRIPTION
 
-TODO(ECH): Replace XXXX and links to I-D when RFC issued.
-
 The Encrypted Client Hello (ECH) APIs described here are built around
 the concept of an B<OSSL_ECHSTORE> which contains ECH configuration
 information relevant for an B<SSL_CTX> or B<SSL> connection.
@@ -122,14 +120,8 @@ it will be set to 0. Similarly if the ECHConfig for this entry will be included
 in "retry-configs" then the I<for_retry> will be set to 1 or zero if that
 ECHConfig will not be included in retry-configs.
 
-The ECH fallback scheme involving retry-configs is described at
-L<https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni-25#section-6.1.6>.
-
-=begin comment
-
-TODO(ECH): The I-D above should be replaced with the RFC when published.
-
-=end comment
+The ECH fallback scheme involving retry-configs is described
+in Section 6.1.1 of RFC 9849.
 
 OSSL_ECHSTORE_downselect() provides the caller a way to select one particular
 ECHConfig value based on the zero-based I<index> from those stored in the
@@ -301,9 +293,9 @@ ECH version - the only supported version is 0xfe0d currently.
 
 =over 4
 
-=item B<OSSL_ECH_RFCXXXX_VERSION> 0xfe0d, official ECHConfig version
+=item B<OSSL_ECH_RFC9849_VERSION> 0xfe0d, official ECHConfig version
 
-=item B<OSSL_ECH_CURRENT_VERSION> OSSL_ECH_RFCXXXX_VERSION
+=item B<OSSL_ECH_CURRENT_VERSION> OSSL_ECH_RFC9849_VERSION
 
 =back
 
@@ -398,11 +390,11 @@ which (unusually for OpenSSL) return 0 on success and 1 on error.
 
 =over 4
 
-=item Encrypted ClientHello specification: L<https://datatracker.ietf.org/doc/draft-ietf-tls-esni/>
+=item Encrypted ClientHello specification: L<https://datatracker.ietf.org/doc/rfc9849/>
 
 =item ECH PEM file format specification: L<https://datatracker.ietf.org/doc/draft-farrell-tls-pemesni/>
 
-=item RFC8701: L<https://datatracker.ietf.org/doc/html/rfc8701>
+=item RFC8701: L<https://datatracker.ietf.org/doc/rfc8701>
 
 =back
 

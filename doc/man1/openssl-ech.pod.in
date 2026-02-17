@@ -24,7 +24,6 @@ B<openssl> B<ech>
 The L<openssl-ech(1)> command generates Encrypted Client Hello (ECH) key pairs
 in the ECHConfig PEM file format as specified in
 L<https://datatracker.ietf.org/doc/draft-farrell-tls-pemesni/>.
-TODO(ECH): update I-D reference to RFC when possible.
 
 That format consists of an optional private key in PKCS#8 format and a base64
 encoded ECHConfigList containing an entry with a matching public value (and

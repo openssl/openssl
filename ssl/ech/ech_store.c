@@ -45,11 +45,7 @@ static const char B64_alphabet[] = "\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4a\x4b
                                    "\x32\x33\x34\x35\x36\x37\x38\x39\x2b\x2f\x3d\x3b";
 
 #ifndef TLSEXT_MINLEN_host_name
-/*
- * TODO(ECH): Decide this. The shortest DNS name we allow, e.g. "a.bc" - maybe
- * that should be defined elsewhere, or should the check be skipped in case
- * there's a local deployment that uses shorter names?
- */
+/* The shortest DNS name we allow, e.g. "a.bc" */
 #define TLSEXT_MINLEN_host_name 4
 #endif
 
@@ -106,7 +102,6 @@ void ossl_echstore_entry_free(OSSL_ECHSTORE_ENTRY *ee)
  *
  * This is intended for small inputs, either files or buffers and
  * not other kinds of BIO.
- * TODO(ECH): is there really a way to check for oddball input BIOs?
  */
 static int ech_bio2buf(BIO *in, unsigned char **buf, size_t *len)
 {
@@ -161,8 +156,8 @@ static int ech_check_format(const unsigned char *val, size_t len, int *fmt)
         return 0;
     /* binary encoding starts with two octet length and ECH version */
     if (len == 2 + ((size_t)(val[0]) * 256 + (size_t)(val[1]))
-        && val[2] == ((OSSL_ECH_RFCXXXX_VERSION / 256) & 0xff)
-        && val[3] == ((OSSL_ECH_RFCXXXX_VERSION % 256) & 0xff)) {
+        && val[2] == ((OSSL_ECH_RFC9849_VERSION / 256) & 0xff)
+        && val[3] == ((OSSL_ECH_RFC9849_VERSION % 256) & 0xff)) {
         *fmt = OSSL_ECH_FMT_BIN;
         return 1;
     }
@@ -331,7 +326,7 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
     }
     ech_content_length = (unsigned int)PACKET_remaining(&ver_pkt);
     switch (ee->version) {
-    case OSSL_ECH_RFCXXXX_VERSION:
+    case OSSL_ECH_RFC9849_VERSION:
         break;
     default:
         /* skip over in case we get something we can handle later */
@@ -659,7 +654,7 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
     }
     /* this used have more versions and will again in future */
     switch (echversion) {
-    case OSSL_ECH_RFCXXXX_VERSION:
+    case OSSL_ECH_RFC9849_VERSION:
         break;
     default:
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -934,7 +929,7 @@ int OSSL_ECHSTORE_get1_info(OSSL_ECHSTORE *es, int index, time_t *loaded_secs,
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    if (ee->version != OSSL_ECH_RFCXXXX_VERSION) {
+    if (ee->version != OSSL_ECH_RFC9849_VERSION) {
         /* just note we don't support that one today */
         BIO_printf(out, "[Unsupported version (%04x)]", ee->version);
     } else {
