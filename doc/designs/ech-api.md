@@ -49,7 +49,7 @@ ECH Specification
 
 RFC 9849 is an IETF TLS WG specification. It has been stable since
 [draft-13](https://datatracker.ietf.org/doc/draft-ietf-tls-esni/13/), published
-in August 2021. 
+in August 2021.
 
 The only current ECHConfig version defined is 0xfe0d which is the value used in
 RFC 9849.
