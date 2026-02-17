@@ -782,7 +782,7 @@ int X509_REQ_check_private_key(const X509_REQ *req, EVP_PKEY *pkey);
 
 int X509_check_private_key(const X509 *cert, const EVP_PKEY *pkey);
 int X509_chain_check_suiteb(int *perror_depth,
-    X509 *x, STACK_OF(X509) *chain,
+    const X509 *x, STACK_OF(X509) *chain,
     unsigned long flags);
 int X509_CRL_check_suiteb(X509_CRL *crl, EVP_PKEY *pk, unsigned long flags);
 void OSSL_STACK_OF_X509_free(STACK_OF(X509) *certs);
