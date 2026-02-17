@@ -192,10 +192,12 @@ static int kdf_srtpkdf_derive(void *vctx, unsigned char *key, size_t keylen,
 {
     KDF_SRTPKDF *ctx = (KDF_SRTPKDF *)vctx;
     const EVP_CIPHER *cipher;
-    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    OSSL_LIB_CTX *libctx;
 
     if (!ossl_prov_is_running() || !kdf_srtpkdf_set_ctx_params(ctx, params))
         return 0;
+
+    libctx = PROV_LIBCTX_OF(ctx->provctx);
 
     cipher = ossl_prov_cipher_cipher(&ctx->cipher);
     if (cipher == NULL) {
