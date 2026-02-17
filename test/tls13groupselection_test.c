@@ -40,6 +40,12 @@ typedef enum SERVER_RESPONSE {
     SH = 2
 } SERVER_RESPONSE;
 
+static const char *response_desc[] = {
+    "HRR",
+    "INIT",
+    "SH",
+};
+
 static char *cert = NULL;
 static char *privkey = NULL;
 
@@ -307,7 +313,23 @@ static const struct tls13groupselection_test_st tls13groupselection_tests[] = {
     { "*brainpoolP256r1:X25519", /* test 43 */
         "X25519",
         SERVER_PREFERENCE,
-        NEGOTIATION_FAILURE, INIT }
+        NEGOTIATION_FAILURE, INIT },
+
+    /* DEFAULT retains tuple structure */
+    { "*X25519:secp256r1",
+        "secp256r1:DEFAULT", /* test 44 */
+        SERVER_PREFERENCE,
+        "secp256r1", HRR },
+#ifndef OPENSSL_NO_DH
+    { "*ffdhe2048:secp256r1",
+        "DEFAULT:ffdhe4096", /* test 45 */
+        CLIENT_PREFERENCE,
+        "secp256r1", HRR },
+    { "x25519:ffdhe2048:*ffdhe4096",
+        "DEFAULT:ffdhe4096", /* test 46 */
+        SERVER_PREFERENCE,
+        "x25519", HRR },
+#endif
 };
 
 static void server_response_check_cb(int write_p, int version,
@@ -318,10 +340,12 @@ static void server_response_check_cb(int write_p, int version,
     enum SERVER_RESPONSE *server_response = (enum SERVER_RESPONSE *)arg;
     /* Prepare check for HRR */
     const uint8_t *incoming_random = (uint8_t *)buf + 6;
-    const uint8_t magic_HRR_random[32] = { 0xCF, 0x21, 0xAD, 0x74, 0xE5, 0x9A, 0x61, 0x11,
+    const uint8_t magic_HRR_random[32] = {
+        0xCF, 0x21, 0xAD, 0x74, 0xE5, 0x9A, 0x61, 0x11,
         0xBE, 0x1D, 0x8C, 0x02, 0x1E, 0x65, 0xB8, 0x91,
         0xC2, 0xA2, 0x11, 0x16, 0x7A, 0xBB, 0x8C, 0x5E,
-        0x07, 0x9E, 0x09, 0xE2, 0xC8, 0xA8, 0x33, 0x9C };
+        0x07, 0x9E, 0x09, 0xE2, 0xC8, 0xA8, 0x33, 0x9C
+    };
 
     /* Did a server hello arrive? */
     if (write_p == 0 && /* Incoming data... */
@@ -450,13 +474,16 @@ static int test_groupnegotiation(const struct tls13groupselection_test_st *curre
         group_name_client = SSL_group_to_name(clientssl, negotiated_group_client);
         if (!TEST_int_eq(negotiated_group_client, negotiated_group_server))
             goto end;
-        if (!TEST_int_eq((int)current_test_vector->expected_server_response, (int)server_response))
+        if (!TEST_str_eq(response_desc[current_test_vector->expected_server_response],
+                response_desc[server_response]))
             goto end;
         if (TEST_str_eq(group_name_client, current_test_vector->expected_group))
             ok = 1;
     } else {
         TEST_false_or_end(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE));
-        if (test_type == TEST_NEGOTIATION_FAILURE && !TEST_int_eq((int)current_test_vector->expected_server_response, (int)server_response))
+        if (test_type == TEST_NEGOTIATION_FAILURE
+            && !TEST_str_eq(response_desc[current_test_vector->expected_server_response],
+                response_desc[server_response]))
             goto end;
         ok = 1;
     }
