@@ -71,6 +71,11 @@ ifdef CONFIG_NANVIX
     TOOLCHAIN_PREFIX := $(NANVIX_TOOLCHAIN)
     SYSROOT_PATH := $(abspath $(NANVIX_HOME))
   endif
+
+  # INSTALL_PREFIX: the prefix baked into compiled artifacts (OPENSSLDIR, etc.).
+  # Local builds default to SYSROOT_PATH; CI overrides to /sysroot so that
+  # release artifacts don't contain ephemeral runner paths.
+  INSTALL_PREFIX ?= $(SYSROOT_PATH)
 else
   # Allow clean target without CONFIG_NANVIX
   ifneq ($(MAKECMDGOALS),clean)
@@ -91,8 +96,8 @@ CONFIGURE_ENV = \
 # Configure options for Nanvix
 # The 'nanvix' target is defined in Configurations/10-main.conf
 CONFIGURE_OPTS = \
-	--openssldir="$(SYSROOT_PATH)" \
-	--prefix="$(SYSROOT_PATH)" \
+	--openssldir="$(INSTALL_PREFIX)" \
+	--prefix="$(INSTALL_PREFIX)" \
 	nanvix \
 	no-shared \
 	threads \
@@ -160,11 +165,12 @@ distclean: clean
 	git clean -fdx -e Makefile.nanvix -e NANVIX.md -e .github -e nanvix-artifacts -e z 2>/dev/null || true
 
 # Install target (for Nanvix sysroot)
+# Use DESTDIR for staged installs: make install DESTDIR=/path/to/staging
 install: build
 ifdef CONFIG_NANVIX_DOCKER
-	$(DOCKER_RUN) make install_sw install_ssldirs
+	$(DOCKER_RUN) make install_sw install_ssldirs DESTDIR="$(DESTDIR)"
 else
-	make install_sw install_ssldirs
+	make install_sw install_ssldirs DESTDIR="$(DESTDIR)"
 endif
 
 .PHONY: all configure build clean distclean test install

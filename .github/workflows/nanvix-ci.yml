@@ -93,7 +93,7 @@ jobs:
 
       - name: Build
         run: |
-          make -f Makefile.nanvix CONFIG_NANVIX=y NANVIX_HOME="$NANVIX_HOME" NANVIX_TOOLCHAIN="/opt/nanvix" all
+          make -f Makefile.nanvix CONFIG_NANVIX=y NANVIX_HOME="$NANVIX_HOME" NANVIX_TOOLCHAIN="/opt/nanvix" INSTALL_PREFIX="/sysroot" all
 
       - name: Test
         run: |
@@ -103,20 +103,10 @@ jobs:
         run: |
           set -euo pipefail
           ARTIFACT_NAME="openssl-${{ matrix.platform }}-${{ matrix.process-mode }}"
-          DIST_DIR="dist/${ARTIFACT_NAME}"
-          mkdir -p "${DIST_DIR}/lib" "${DIST_DIR}/include/openssl"
-          # Copy libraries
-          cp -f libcrypto.a "${DIST_DIR}/lib/" 2>/dev/null || true
-          cp -f libssl.a "${DIST_DIR}/lib/" 2>/dev/null || true
-          # Copy provider libraries
-          mkdir -p "${DIST_DIR}/lib/ossl-modules"
-          cp -f providers/libcommon.a "${DIST_DIR}/lib/" 2>/dev/null || true
-          cp -f providers/libdefault.a "${DIST_DIR}/lib/" 2>/dev/null || true
-          cp -f providers/liblegacy.a "${DIST_DIR}/lib/" 2>/dev/null || true
-          # Copy headers
-          cp -f include/openssl/*.h "${DIST_DIR}/include/openssl/" 2>/dev/null || true
-          # Create tarball
-          tar -cjf "dist/${ARTIFACT_NAME}.tar.bz2" -C dist "${ARTIFACT_NAME}"
+          STAGING="$(pwd)/staging"
+          make -f Makefile.nanvix CONFIG_NANVIX=y NANVIX_HOME="$NANVIX_HOME" NANVIX_TOOLCHAIN="/opt/nanvix" install DESTDIR="$STAGING"
+          mkdir -p dist
+          tar -cjf "dist/${ARTIFACT_NAME}.tar.bz2" -C "$STAGING" sysroot
           echo "ARTIFACT_TARBALL=dist/${ARTIFACT_NAME}.tar.bz2" >> "$GITHUB_ENV"
 
       - name: Upload Build Artifacts
