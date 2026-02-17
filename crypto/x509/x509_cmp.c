@@ -470,7 +470,7 @@ static int check_suite_b(EVP_PKEY *pkey, int sign_nid, unsigned long *pflags)
     return X509_V_OK;
 }
 
-int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
+int X509_chain_check_suiteb(int *perror_depth, const X509 *x, STACK_OF(X509) *chain,
     unsigned long flags)
 {
     int rv, i, sign_nid;
@@ -556,7 +556,7 @@ int X509_CRL_check_suiteb(X509_CRL *crl, EVP_PKEY *pk, unsigned long flags)
 }
 
 #else
-int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
+int X509_chain_check_suiteb(int *perror_depth, const X509 *x, STACK_OF(X509) *chain,
     unsigned long flags)
 {
     return 0;
