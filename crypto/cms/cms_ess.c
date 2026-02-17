@@ -107,7 +107,8 @@ int ossl_cms_check_signing_certs(const CMS_SignerInfo *si,
     int ret = ossl_cms_signerinfo_get_signing_cert(si, &ss) >= 0
         && ossl_cms_signerinfo_get_signing_cert_v2(si, &ssv2) >= 0
         && OSSL_ESS_check_signing_certs_ex(ss, ssv2, chain,
-               ossl_cms_ctx_get0_libctx(si->cms_ctx), NULL, 1)
+               ossl_cms_ctx_get0_libctx(si->cms_ctx),
+               ossl_cms_ctx_get0_propq(si->cms_ctx), 1)
             > 0;
 
     ESS_SIGNING_CERT_free(ss);

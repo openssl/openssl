@@ -87,7 +87,7 @@ L<CMS_verify(3)>
 OSSL_ESS_signing_cert_new_init(), OSSL_ESS_signing_cert_v2_new_init(), and
 OSSL_ESS_check_signing_certs() were added in OpenSSL 3.0.
 
-OSSL_ESS_check_signing_certs_ex() was added in OpenSSL 4.0
+OSSL_ESS_check_signing_certs_ex() was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
