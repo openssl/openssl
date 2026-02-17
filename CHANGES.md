@@ -279,6 +279,11 @@ OpenSSL 4.0
 
    *Joachim Vandersmissen* (with additional support from *Viktor Dukhovni*)
 
+ * Implemented RFC 9849, adding support for Encrypted Client Hello (ECH).
+   See doc/design/ech-api.md for details.
+
+   *Stephen Farrell* (with much support from *Matt Caswell* and *Tomáš Mráz*)
+
 OpenSSL 3.6
 -----------
 

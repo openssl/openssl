@@ -399,7 +399,7 @@ int ossl_ech_pick_matching_cfg(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY **ee,
     }
     for (cind = 0; cind < num && (suitematch == 0 || namematch == 0); cind++) {
         lee = sk_OSSL_ECHSTORE_ENTRY_value(es->entries, cind);
-        if (lee == NULL || lee->version != OSSL_ECH_RFCXXXX_VERSION)
+        if (lee == NULL || lee->version != OSSL_ECH_RFC9849_VERSION)
             continue;
         if (nameoverride == 1 && hnlen == 0) {
             namematch = 1;
@@ -1829,7 +1829,7 @@ end:
 #endif
     /* we need to remove possible (actually, v. likely) padding */
     *innerlen = clearlen;
-    if (ee->version == OSSL_ECH_RFCXXXX_VERSION) {
+    if (ee->version == OSSL_ECH_RFC9849_VERSION) {
         /* draft-13 pads after the encoded CH with zeros */
         size_t extsoffset = 0;
         size_t extslen = 0;

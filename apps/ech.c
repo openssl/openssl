@@ -165,9 +165,9 @@ int ech_main(int argc, char **argv)
     }
     /* Check ECH-specific inputs */
     switch (ech_version) {
-    case OSSL_ECH_RFCXXXX_VERSION: /* fall through */
+    case OSSL_ECH_RFC9849_VERSION: /* fall through */
     case 13:
-        ech_version = OSSL_ECH_RFCXXXX_VERSION;
+        ech_version = OSSL_ECH_RFC9849_VERSION;
         break;
     default:
         BIO_printf(bio_err, "Un-supported version (0x%04x)\n", ech_version);
