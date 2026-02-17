@@ -842,6 +842,8 @@ and key identifier extensions are included by default.
 
 The B<-engine> option was removed in OpenSSL 4.0.
 
+The B<-msie-hack> option was removed in OpenSSL 4.0.
+
 =head1 SEE ALSO
 
 L<openssl(1)>,
