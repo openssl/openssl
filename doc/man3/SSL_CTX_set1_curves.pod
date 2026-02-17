@@ -40,13 +40,13 @@ SSL_get1_curves, SSL_get_shared_curve, SSL_CTX_get0_implemented_groups
 
 For all of the functions below that set the supported groups there must be at
 least one group in the list. A number of these functions identify groups via a
-unique integer NID value. However, support for some groups may be added by
-external providers. In this case there will be no NID assigned for the group.
+unique integer B<NID> value. However, support for some groups may be added by
+external providers. In this case there will be no B<NID> assigned for the group.
 When setting such groups applications should use the "list" form of these
 functions (i.e. SSL_CTX_set1_groups_list() and SSL_set1_groups_list()).
 
 SSL_CTX_set1_groups() sets the supported groups for B<ctx> to B<glistlen>
-groups in the array B<glist>. The array consist of all NIDs of supported groups.
+groups in the array B<glist>. The array consist of all B<NIDs> of supported groups.
 The supported groups for B<TLSv1.3> include:
 B<NID_X9_62_prime256v1>,
 B<NID_secp384r1>,
@@ -73,20 +73,27 @@ B<SSL_OP_SERVER_PREFERENCE> is set, the order of the elements in the
 array determines the selected group. Otherwise, the order is ignored and the
 client's order determines the selection.
 
-For a TLS 1.3 server, the groups determine the selected group, but
-selection is more complex. A TLS 1.3 client sends both a group list as well as a
-predicted subset of groups. Choosing a group outside the predicted subset incurs
-an extra roundtrip. However, in some situations, the most preferred group may
-not be predicted. OpenSSL considers all supported groups in I<clist> to be comparable
-in security and prioritizes avoiding roundtrips above either client or server
-preference order. If an application uses an external provider to extend OpenSSL
-with, e.g., a post-quantum algorithm, this behavior may allow a network attacker
-to downgrade connections to a weaker algorithm. It is therefore recommended
-to use SSL_CTX_set1_groups_list() with the ability to specify group tuples.
+For a TLS 1.3 server, the groups determine the selected group, but selection is
+more complex.
+A TLS 1.3 client sends both a group list and predicted keyshares for a subset
+of groups.
+A server choosing a group outside the client's predicted subset incurs an extra
+roundtrip.
+However, in some situations, the most preferred group may not be predicted.
+
+When groups are specified via SSL_CTX_set1_groups() as a list of B<NID>
+values, OpenSSL considers all supported groups in I<clist> to be comparable in
+security and prioritises avoiding roundtrips above either client or server
+preference order.
+If an application uses an external provider to extend OpenSSL with, e.g., a
+post-quantum algorithm, this behavior may allow a network attacker to downgrade
+connections to a weaker algorithm.
+It is therefore recommended to use SSL_CTX_set1_groups_list() instead, making
+it possible to specify group tuples as described below.
 
 SSL_CTX_set1_groups_list() sets the supported groups for B<ctx> to
 string I<list>. In contrast to SSL_CTX_set1_groups(), the names of the
-groups, rather than their NIDs, are used.
+groups, rather than their B<NIDs>, are used.
 
 The commands below list the available groups for TLS 1.2 and TLS 1.3,
 respectively:
@@ -102,30 +109,72 @@ The preferred group names are those defined by
 L<IANA|https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8>.
 
 The I<list> can be used to define several group tuples of comparable security
-levels, and can specify which key shares should be sent by a client.
-The specified list elements can optionally be ignored, if not implemented
+levels, and can specify which predicted key shares should be sent by a client.
+Group tuples are used by OpenSSL TLS servers to decide whether to request a
+stronger keyshare than those predicted by sending a Hello Retry Request
+(B<HRR>) even if some of the predicted groups are supported.
+OpenSSL clients ignore tuple boundaries, and pay attenion only to the overall
+order of I<list> elements and which groups are selected as predicted keyshares
+as described below.
+
+The specified list elements can optionally be ignored if not implemented
 (listing unknown groups otherwise results in error).
-It is also possible to specify the built-in default set of groups, and to explicitly
-remove a group from that list.
+It is also possible to specify the built-in default set of groups, and to
+explicitly remove a group from that list.
 
-In its simplest form, the string I<list> is just a colon separated list
-of group names, for example "P-521:P-384:P-256:X25519:ffdhe2048". The first
-group listed will also be used for the B<key_share> sent by a client in a
-TLSv1.3 B<ClientHello>. For servers note the discussion above. The list should
-be in order of preference with the most preferred group first.
+In its simplest legacy form, the string I<list> is just a colon separated list
+of group names, for example "P-521:P-384:P-256:X25519:ffdhe2048".
+The first group listed will in this case be used as the sole predicted
+B<key_share> sent by a client in a TLSv1.3 B<ClientHello>.
+The list should be in order of preference with the most preferred group first.
 
-Group tuples of comparable security are defined by separating them from each
-other by a tuple separator C</>. Keyshares to be sent by a client are specified
-by prepending a C<*> to the group name, while any C<*> will be ignored by a
-server. The following string I<list> for example defines three tuples when
-used on the server-side, and triggers the generation of three key shares
-when used on the client-side: P-521:*P-256/*P-384/*X25519:P-384:ffdhe2048.
+A more expressive syntax supports definition of group tuples of comparable
+security by separating them from each other with C</> characters.
 
-If a group name is preceded with the C<?> character, it will be ignored if an
-implementation is missing. If a group name is preceded with the C<-> character, it
-will be removed from the list of groups if present (including not sending a
-key share for this group), ignored otherwise. The pseudo group name
-C<DEFAULT> can be used to select the OpenSSL built-in default list of groups.
+The predicted keyshares to be sent by clients can be explicitly specified by
+adding a C<*> prefix to the associated group name.
+These C<*> prefixes are ignored by servers.
+
+If a group name is prefixed with the C<?> character, it will be ignored if an
+implementation is missing.
+Otherwise, listing an unknown group name will cause a failure to parse the
+I<list>.
+Note that whether a group is known or not may depend on the OpenSSL version,
+how OpenSSL was compiled and/or which providers are loaded.
+Best practice is to make sure you have the correct spelling of the group name
+and also prefix it with a C<?> to handle configurations in which it might
+nevertheless be unknown.
+
+If a group name is prefixed with the C<-> character, it will be removed from
+the list of groups specified up to that point.
+It can be added again if specified later.
+Removal of groups that have not been included earlier in the list is silently
+ignored.
+
+The pseudo group name C<DEFAULT> can be used to select the OpenSSL built-in
+default list of groups.
+Prepending one or more groups to C<DEFAULT> using only C<:> separators prepends those
+groups to the built-in default list's first tuple.
+Additional tuples can be prepended by use of the C</> separator.
+Appending a set of groups to C<DEFAULT> using only C<:> separators appends those
+groups to the built-in default list's last tuple.
+Additional tuples can be appended by use of the C</> separator.
+
+The B<DEFAULT> list selects B<X25519MLKEM768> as one of the predicted keyshares.
+In rare cases this can lead to failures or timeouts because the resulting
+larger TLS Client Hello message may no longer fit in a single TCP segment and
+firewall software may erroneously disrupt the TLS handshake.
+If this is an issue or concern, prepending C<?X25519MLKEM768:> without a C<*>
+prefix leads to its occurrence in the default list to be ignored as a duplicate,
+and along with that also the keyshare prediction.
+The group will then only be selected by servers that specifically expect it,
+after a Hello Retry Request (HRR).
+Servers that specifically prefer B<X25519MLKEM768>, are much less likely to be
+found behind problematic firewalls.
+
+The following string I<list> for example defines three tuples when used on the
+server-side, and triggers the generation of three key shares when used on the
+client-side: P-521:*P-256/*P-384/*X25519:P-384:ffdhe2048.
 
 For a TLS 1.3 client, all the groups in the string I<list> are added to the
 supported groups extension of a C<ClientHello>, in the order in which they are listed,
