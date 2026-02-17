@@ -25,7 +25,9 @@ OpenSSL 3.5
 
 ### Major changes between OpenSSL 3.5.5 and OpenSSL 3.5.6 [under development]
 
-  * none
+ * Fixed loss of key agreement group tuple structure when the `DEFAULT` keyword
+   is used in the server-side configuration of the key-agreement group list.
+   ([CVE-2026-2673])
 
 ### Major changes between OpenSSL 3.5.4 and OpenSSL 3.5.5 [27 Jan 2026]
 
@@ -1992,6 +1994,7 @@ OpenSSL 0.9.x
   * Support for various new platforms
 
 <!-- Links -->
+[CVE-2026-2673]: https://www.openssl.org/news/vulnerabilities.html#CVE-2026-2673
 [CVE-2026-22796]: https://www.openssl.org/news/vulnerabilities.html#CVE-2026-22796
 [CVE-2026-22795]: https://www.openssl.org/news/vulnerabilities.html#CVE-2026-22795
 [CVE-2025-69421]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-69421
