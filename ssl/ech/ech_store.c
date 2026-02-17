@@ -559,7 +559,7 @@ static int ech_read_priv_echconfiglist(OSSL_ECHSTORE *es, BIO *in,
         binlen = encodedlen;
     }
     if (detfmt == OSSL_ECH_FMT_B64TXT) {
-        btmp = BIO_new_mem_buf(encodedval, encodedlen);
+        btmp = BIO_new_mem_buf(encodedval, (int) encodedlen);
         if (btmp == NULL) {
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
@@ -654,8 +654,7 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
         return 0;
     }
     pnlen = (public_name == NULL ? 0 : strlen(public_name));
-    if (pnlen == 0 || pnlen > OSSL_ECH_MAX_PUBLICNAME
-        || max_name_length > OSSL_ECH_MAX_MAXNAMELEN) {
+    if (pnlen == 0 || pnlen > OSSL_ECH_MAX_PUBLICNAME) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }

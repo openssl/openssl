@@ -535,7 +535,7 @@ int ossl_ech_copy_inner2outer(SSL_CONNECTION *s, uint16_t ext_type,
  * causes two calls to each extension constructor, which'd be the same
  * as making all entries in ext_tab use the CALL_BOTH value
  */
-# undef DUPEMALL
+#undef DUPEMALL
 
 /*
  * Check if we're using the same/different key shares
@@ -543,9 +543,9 @@ int ossl_ech_copy_inner2outer(SSL_CONNECTION *s, uint16_t ext_type,
  */
 int ossl_ech_same_key_share(void)
 {
-# ifdef DUPEMALL
+#ifdef DUPEMALL
     return 0;
-# endif
+#endif
     return ext_defs[TLSEXT_IDX_key_share].ech_handling
         != OSSL_ECH_HANDLING_CALL_BOTH;
 }
@@ -558,10 +558,10 @@ int ossl_ech_2bcompressed(size_t ind)
 {
     const size_t nexts = OSSL_NELEM(ext_defs);
 
-# ifdef DUPEMALL
+#ifdef DUPEMALL
     return 0;
-# endif
-    if (ind < 0 || ind >= nexts)
+#endif
+    if (ind >= nexts)
         return -1;
     return ext_defs[ind].ech_handling == OSSL_ECH_HANDLING_COMPRESS;
 }
