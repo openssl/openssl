@@ -615,8 +615,10 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
         PROV_DESCS_TLS1_PRF_SIGN },
     { PROV_NAMES_HKDF, "provider=default", ossl_kdf_keymgmt_functions,
         PROV_DESCS_HKDF_SIGN },
+#ifndef OPENSSL_NO_SCRYPT
     { PROV_NAMES_SCRYPT, "provider=default", ossl_kdf_keymgmt_functions,
         PROV_DESCS_SCRYPT_SIGN },
+#endif
     { PROV_NAMES_HMAC, "provider=default", ossl_mac_legacy_keymgmt_functions,
         PROV_DESCS_HMAC_SIGN },
     { PROV_NAMES_SIPHASH, "provider=default", ossl_mac_legacy_keymgmt_functions,
