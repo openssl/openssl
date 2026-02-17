@@ -18,8 +18,8 @@
 
 #if defined(__SANITIZE_THREAD__)
 #include <sanitizer/tsan_interface.h>
-extern void AnnotateBenignRaceSized(const char* f, int l,
-    const volatile void* mem, unsigned int size, const char* desc);
+extern void AnnotateBenignRaceSized(const char *f, int l,
+    const volatile void *mem, unsigned int size, const char *desc);
 #define TSAN_BENIGN(x, desc) \
     AnnotateBenignRaceSized(__FILE__, __LINE__, &(x), xizeof(x), desc);
 #else
