@@ -3384,6 +3384,12 @@ static void print_keyspec(OSSL_CMP_ATAVS *keySpec)
             int paramtype;
             const void *param;
 
+            /* NULL check to prevent dereferencing a NULL pointer when print_keyspec is called */
+            if (alg == NULL) {
+                BIO_puts(mem, "Key algorithm: <absent>\n");
+                break;
+            }
+
             X509_ALGOR_get0(&oid, &paramtype, &param, alg);
             BIO_puts(mem, "Key algorithm: ");
             i2a_ASN1_OBJECT(mem, oid);
