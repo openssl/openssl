@@ -178,7 +178,7 @@ int X509_cmp(const X509 *a, const X509 *b)
     return rv < 0 ? -1 : rv > 0;
 }
 
-int ossl_x509_add_cert_new(STACK_OF(X509) **p_sk, X509 *cert, int flags)
+int ossl_x509_add_cert_new(STACK_OF(X509) **p_sk, const X509 *cert, int flags)
 {
     if (*p_sk == NULL && (*p_sk = sk_X509_new_null()) == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);

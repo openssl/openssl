@@ -216,7 +216,7 @@ struct x509_store_ctx_st { /* X509_STORE_CTX */
     X509_STORE *store;
     /* The following are set by the caller */
     /* The cert to check */
-    X509 *cert;
+    X509 *cert; /* XXX should really be made const */
     /* chain of X509s - untrusted - passed in */
     STACK_OF(X509) *untrusted;
     /* set of CRLs passed in */
@@ -264,7 +264,7 @@ struct x509_store_ctx_st { /* X509_STORE_CTX */
     /* When something goes wrong, this is why */
     int error_depth;
     int error;
-    X509 *current_cert;
+    X509 *current_cert; /* XXX should really be made const */
     /* cert currently being tested as valid issuer */
     X509 *current_issuer;
     /* current CRL */
@@ -324,7 +324,7 @@ int ossl_x509_req_set0_libctx(X509_REQ *x, OSSL_LIB_CTX *libctx,
 int ossl_asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *type,
     void *data, unsigned char *md, unsigned int *len,
     OSSL_LIB_CTX *libctx, const char *propq);
-int ossl_x509_add_cert_new(STACK_OF(X509) **sk, X509 *cert, int flags);
+int ossl_x509_add_cert_new(STACK_OF(X509) **sk, const X509 *cert, int flags);
 int ossl_x509_add_certs_new(STACK_OF(X509) **p_sk, const STACK_OF(X509) *certs, int flags);
 
 STACK_OF(X509_ATTRIBUTE) *ossl_x509at_dup(const STACK_OF(X509_ATTRIBUTE) *x);

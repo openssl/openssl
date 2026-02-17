@@ -2847,7 +2847,7 @@ int X509_STORE_CTX_init_rpk(X509_STORE_CTX *ctx, X509_STORE *store, EVP_PKEY *rp
     return 1;
 }
 
-int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
+int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, const X509 *x509,
     STACK_OF(X509) *chain)
 {
     if (ctx == NULL) {
@@ -2857,7 +2857,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     X509_STORE_CTX_cleanup(ctx);
 
     ctx->store = store;
-    ctx->cert = x509;
+    ctx->cert = (X509 *)x509; /* XXX casts away const */
     ctx->untrusted = chain;
     ctx->crls = NULL;
     ctx->num_untrusted = 0;
@@ -3965,7 +3965,7 @@ memerr:
     return -1;
 }
 
-STACK_OF(X509) *X509_build_chain(X509 *target, STACK_OF(X509) *certs,
+STACK_OF(X509) *X509_build_chain(const X509 *target, STACK_OF(X509) *certs,
     X509_STORE *store, int with_self_signed,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
@@ -3985,7 +3985,8 @@ STACK_OF(X509) *X509_build_chain(X509 *target, STACK_OF(X509) *certs,
         goto err;
     if (!finish_chain)
         X509_STORE_CTX_set0_trusted_stack(ctx, certs);
-    if (!ossl_x509_add_cert_new(&ctx->chain, target, X509_ADD_FLAG_UP_REF)) {
+    /* XXX casts away const */
+    if (!ossl_x509_add_cert_new(&ctx->chain, (X509 *)target, X509_ADD_FLAG_UP_REF)) {
         ctx->error = X509_V_ERR_OUT_OF_MEM;
         goto err;
     }

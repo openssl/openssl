@@ -10,7 +10,7 @@ X509_STORE_CTX_verify - build and verify X509 certificate chain
 
  #include <openssl/x509_vfy.h>
 
- STACK_OF(X509) *X509_build_chain(X509 *target, STACK_OF(X509) *certs,
+ STACK_OF(X509) *X509_build_chain(const X509 *target, STACK_OF(X509) *certs,
                                   X509_STORE *store, int with_self_signed,
                                   OSSL_LIB_CTX *libctx, const char *propq);
  int X509_verify_cert(X509_STORE_CTX *ctx);
