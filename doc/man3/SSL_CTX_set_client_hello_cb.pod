@@ -111,7 +111,10 @@ The SSL_client_hello_get0_*() functions return raw ClientHello data, whereas
 SSL_client_hello_get1_extensions_present() returns only recognized extensions
 (so unknown/GREASE-extensions are not included).
 
-TODO(ECH): How ECH is handled here needs to be documented.
+When Encrypted Client Hello (ECH) is used, and ECH decryption has succeeded,
+then the inner ClientHello message is the content visible to the ClientHello
+callback functions. If ECH decryption failed, then the outer ClientHello
+message content will be provided.
 
 =head1 RETURN VALUES
 

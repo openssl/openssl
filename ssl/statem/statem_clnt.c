@@ -1237,7 +1237,7 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_UNSUPPORTED);
             return 0;
         }
-        if (ee->version != OSSL_ECH_RFCXXXX_VERSION) {
+        if (ee->version != OSSL_ECH_RFC9849_VERSION) {
             /* we only support that version for now */
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_UNSUPPORTED);
             return 0;

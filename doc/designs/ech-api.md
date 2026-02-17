@@ -1,11 +1,8 @@
 Encrypted ClientHello (ECH) APIs
 ================================
 
-The ECH [feature branch](https://github.com/openssl/openssl/tree/feature/ech).
-has an implementation of Encrypted Client Hello (ECH) and these are design
-notes for the APIs implemented there.
-
-This text was last updated on 2025-11-20.
+OpenSSL 4.0 includes an implementation of Encrypted Client Hello (ECH), as
+specified in RFC 9849. These are design notes for the APIs implemented for ECH.
 
 The ECH Protocol
 ----------------
@@ -50,25 +47,18 @@ interfaces.
 ECH Specification
 -----------------
 
-ECH is an IETF TLS WG specification. It has been stable since
+RFC 9849 is an IETF TLS WG specification. It has been stable since
 [draft-13](https://datatracker.ietf.org/doc/draft-ietf-tls-esni/13/), published
-in August 2021.  The latest draft can be found
-[here](https://datatracker.ietf.org/doc/draft-ietf-tls-esni/).
-The specification is currently in the RFC editor's queue and is
-part of a [cluster](https://www.rfc-editor.org/cluster_info.php?cid=C430)
-of related drafts that will be published together.
+in August 2021.
 
-The only current ECHConfig version defined is 0xfe0d which will be the
-value to be used in the eventual RFC when that issues. (We'll replace the
-XXXX with the relevant RFC number once that's known.)
-TODO(ECH): Update XXXX when RFC published, and check other occurrences
-of XXXX throughout the source tree.
+The only current ECHConfig version defined is 0xfe0d which is the value used in
+RFC 9849.
 
 ```c
-/* version from RFC XXXX */
-#  define OSSL_ECH_RFCXXXX_VERSION 0xfe0d
+/* version from RFC 9849 */
+#  define OSSL_ECH_RFC9849_VERSION 0xfe0d
 /* latest version from an RFC */
-#  define OSSL_ECH_CURRENT_VERSION OSSL_ECH_RFCXXXX_VERSION
+#  define OSSL_ECH_CURRENT_VERSION OSSL_ECH_RFC9849_VERSION
 ```
 
 Note that 0xfe0d is also the value of the ECH extension codepoint:
@@ -85,14 +75,11 @@ ECH PEM file format
 
 Servers supporting ECH need to read a set of ECH private keys and
 ECHConfigLists from storage. There is a specification for a
-[PEM file format for ECH](https://datatracker.ietf.org/doc/draft-farrell-tls-pemesni/)
-that is supported by the library. That specification is being
-processed within the IETF as an area-director sponsored draft,
-so is not a TLS WG work item, but will be an IETF stream
-RFC when completed.
+[PEM file format for ECH](https://datatracker.ietf.org/doc/rfc9934)
+that is supported by the library.
 
 This PEM file format is supported by code for a number of TLS servers,
-including (at the time of writing) lighttpd, freenginx, apache2 and haproxy.
+including (at the time of writing) lighttpd, freenginx, nginx, apache2 and haproxy.
 ECH support in those servers is currently an experimental feature or similar.
 
 Minimal Sample Code
@@ -134,8 +121,7 @@ ECH), and application data messages (where padding may affect efficiency more).
 ECHConfig Extensions
 --------------------
 
-The ECH protocol supports extensibility [within the ECHConfig
-structure](https://www.ietf.org/archive/id/draft-ietf-tls-esni-25.html#name-configuration-extensions)
+The ECH protocol supports extensibility within the ECHConfig structure
 via a typical TLS type, length, value scheme.  However, to date, there are no
 extensions defined, nor do other implementations provide APIs for adding or
 manipulating ECHConfig extensions. We therefore take the same approach here.
@@ -326,7 +312,7 @@ typedef struct ossl_echext_st {
 DEFINE_STACK_OF(OSSL_ECHEXT)
 
 typedef struct ossl_echstore_entry_st {
-    uint16_t version; /* 0xfe0d for RFC XXXX */
+    uint16_t version; /* 0xfe0d for RFC 9849 */
     char *public_name;
     size_t pub_len;
     unsigned char *pub;
@@ -391,56 +377,19 @@ In addition to the obvious fields from each ECHConfig, we also store:
   This value is useful when servers periodically re-load sets of files
   or PEM structures from memory, e.g. for the haproxy server.
 
-Split-mode handling
--------------------
+ECH Split-mode
+--------------
 
-TODO(ECH): This ECH split-mode API should be considered tentative. It's design
-should be revisited now, and either omitted from the initial release that'd
-only support shared-mode ECH, or else (better:-), agreed and included in the
-same time frame.
+RFC 9849 defines two modes for ECH - 'shared-mode' which is supported in
+this release, and a 'split-mode' which is not yet supported.
 
 ECH split-mode involves a front-end server that only does ECH decryption and
 then passes on the decrypted inner CH to a back-end TLS server that negotiates
-the actual TLS session with the client, based on the inner CH content. The
-function to support this simply takes the outer CH, indicates whether
-decryption has succeeded or not, and if it has, returns the inner CH and SNI
-values (allowing routing to the correct back-end). Both the supplied (outer)
-CH and returned (inner) CH here include the record layer header.
+the actual TLS session with the client, based on the inner CH content.
 
-```c
-int SSL_CTX_ech_raw_decrypt(SSL_CTX *ctx,
-                            int *decrypted_ok,
-                            char **inner_sni, char **outer_sni,
-                            unsigned char *outer_ch, size_t outer_len,
-                            unsigned char *inner_ch, size_t *inner_len,
-                            unsigned char **hrrtok, size_t *toklen);
-```
-
-The caller allocates the `inner_ch` buffer, on input `inner_len` should
-contain the size of the `inner_ch` buffer, on output the size of the actual
-inner CH. Note that, when ECH decryption succeeds, the inner CH will always be
-smaller than the outer CH.
-
-If there is no ECH present in the outer CH then this will return 1 (i.e., the
-call will succeed) but `decrypted_ok` will be zero. The same will result if a
-GREASEd ECH is present or decryption fails for some other (indistinguishable)
-reason.
-
-If the caller wishes to support HelloRetryRequest (HRR), then it must supply
-the same `hrrtok` and `toklen` pointers to both calls to
-`SSL_CTX_ech_raw_decrypt()` (for the initial and second ClientHello
-messages). When done, the caller must free the `hrrtok` using
-`OPENSSL_free()`.  If the caller doesn't need to support HRR, then it can
-supply NULL values for these parameters. The value of the token is the client's
-ephemeral public value, which is not sensitive having being sent in clear in
-the first ClientHello.  This value is missing from the second ClientHello but
-is needed for ECH decryption.
-
-Note that `SSL_CTX_ech_raw_decrypt()` only takes a ClientHello as input. If
-the flight containing the ClientHello contains other messages (e.g. a
-ChangeCipherSuite or Early data), then the caller is responsible for
-disentangling those, and for assembling a new flight containing the inner
-ClientHello.
+This release does however support servers that act as the back-end TLS server
+in an ECH split-mode scenario, as the functionality required is internal and
+also required when using shared-mode.
 
 Different encodings
 -------------------

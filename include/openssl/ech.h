@@ -35,13 +35,12 @@
 #define OSSL_ECH_ALLEXTS_MAX 32 /* max total number of extension we allow */
 
 /*
- * ECH version. We only support RFC XXXX as of now.  As/if new ECHConfig
+ * ECH version. We only support RFC 9849 as of now.  As/if new ECHConfig
  * versions are added, those will be noted here.
- * TODO(ECH): Replace XXXX with the actual RFC number once known.
  */
-#define OSSL_ECH_RFCXXXX_VERSION 0xfe0d /* official ECHConfig version */
+#define OSSL_ECH_RFC9849_VERSION 0xfe0d /* official ECHConfig version */
 /* latest version from an RFC */
-#define OSSL_ECH_CURRENT_VERSION OSSL_ECH_RFCXXXX_VERSION
+#define OSSL_ECH_CURRENT_VERSION OSSL_ECH_RFC9849_VERSION
 
 /* Return codes from SSL_ech_get1_status */
 #define SSL_ECH_STATUS_BACKEND 4 /* ECH backend: saw an ech_is_inner */

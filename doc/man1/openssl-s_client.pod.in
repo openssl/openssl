@@ -191,9 +191,7 @@ If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
 Specifies the ECHConfigList value to use for Encrypted Client Hello (ECH) for
 the TLS session. The value must be a base64 encoded ECHConfigList.
 
-The ECHConfigList structure is defined in RFC XXXX. (That's currently in
-L<https://datatracker.ietf.org/doc/html/draft-ietf-tls-esni/>.)
-TODO(ECH): replace XXXX when RFC published.
+The ECHConfigList structure is defined in RFC 9849.
 
 =item B<-proxy_user> I<userid>
 
