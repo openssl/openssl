@@ -79,13 +79,7 @@ static int xp_cmp(const X509_PURPOSE *const *a, const X509_PURPOSE *const *b)
     return (*a)->purpose - (*b)->purpose;
 }
 
-/*
- * As much as I'd like to make X509_check_purpose use a "const" X509* I really
- * can't because it does recalculate hashes and do other non-const things.
- * If id == -1 it just calls x509v3_cache_extensions() for its side-effect.
- * Returns 1 on success, 0 if x does not allow purpose, -1 on (internal) error.
- */
-int X509_check_purpose(X509 *x, int id, int non_leaf)
+int X509_check_purpose(const X509 *x, int id, int non_leaf)
 {
     int idx;
     const X509_PURPOSE *pt;
@@ -436,8 +430,13 @@ static int check_sig_alg_match(const EVP_PKEY *issuer_key, const X509 *subject)
  * x->sha1_hash is filled in, or else EXFLAG_NO_FINGERPRINT is set in x->flags.
  * X509_SIG_INFO_VALID is set in x->flags if x->siginf was filled successfully.
  * Set EXFLAG_INVALID and return 0 in case the certificate is invalid.
+ *
+ * This is usually called by side-effect on objects, and forces us to keep
+ * mutable X509 objects around. We should really make this go away.
+ * In the interest of being able to do so, this function explicitly takes
+ * a const argument and casts away const.
  */
-int ossl_x509v3_cache_extensions(X509 *x)
+int ossl_x509v3_cache_extensions(const X509 *const_x)
 {
     BASIC_CONSTRAINTS *bs;
     PROXY_CERT_INFO_EXTENSION *pci;
@@ -446,6 +445,16 @@ int ossl_x509v3_cache_extensions(X509 *x)
     EXTENDED_KEY_USAGE *extusage;
     int i;
     int res;
+    X509 *x;
+
+    /*
+     * XXX deliberately cast away const - this is so the
+     * public API may be made const even though we are lying
+     * about it for the moment. This will enable us
+     * to move to where we do not have to cast this away
+     * in the future
+     */
+    x = (X509 *)const_x;
 
 #ifdef tsan_ld_acq
     /* Fast lock-free check, see end of the function for details. */
@@ -729,7 +738,7 @@ void X509_set_proxy_pathlen(X509 *x, long l)
     x->ex_pcpathlen = l;
 }
 
-int X509_check_ca(X509 *x)
+int X509_check_ca(const X509 *x)
 {
     /* Note 0 normally means "not a CA" - but in this case means error. */
     if (!ossl_x509v3_cache_extensions(x))
@@ -1073,14 +1082,14 @@ int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid)
     return X509_V_OK;
 }
 
-uint32_t X509_get_extension_flags(X509 *x)
+uint32_t X509_get_extension_flags(const X509 *x)
 {
     /* Call for side-effect of computing hash and caching extensions */
     X509_check_purpose(x, -1, 0);
     return x->ex_flags;
 }
 
-uint32_t X509_get_key_usage(X509 *x)
+uint32_t X509_get_key_usage(const X509 *x)
 {
     /* Call for side-effect of computing hash and caching extensions */
     if (X509_check_purpose(x, -1, 0) != 1)
@@ -1088,7 +1097,7 @@ uint32_t X509_get_key_usage(X509 *x)
     return (x->ex_flags & EXFLAG_KUSAGE) != 0 ? x->ex_kusage : UINT32_MAX;
 }
 
-uint32_t X509_get_extended_key_usage(X509 *x)
+uint32_t X509_get_extended_key_usage(const X509 *x)
 {
     /* Call for side-effect of computing hash and caching extensions */
     if (X509_check_purpose(x, -1, 0) != 1)
@@ -1096,7 +1105,7 @@ uint32_t X509_get_extended_key_usage(X509 *x)
     return (x->ex_flags & EXFLAG_XKUSAGE) != 0 ? x->ex_xkusage : UINT32_MAX;
 }
 
-const ASN1_OCTET_STRING *X509_get0_subject_key_id(X509 *x)
+const ASN1_OCTET_STRING *X509_get0_subject_key_id(const X509 *x)
 {
     /* Call for side-effect of computing hash and caching extensions */
     if (X509_check_purpose(x, -1, 0) != 1)
@@ -1104,7 +1113,7 @@ const ASN1_OCTET_STRING *X509_get0_subject_key_id(X509 *x)
     return x->skid;
 }
 
-const ASN1_OCTET_STRING *X509_get0_authority_key_id(X509 *x)
+const ASN1_OCTET_STRING *X509_get0_authority_key_id(const X509 *x)
 {
     /* Call for side-effect of computing hash and caching extensions */
     if (X509_check_purpose(x, -1, 0) != 1)
@@ -1112,7 +1121,7 @@ const ASN1_OCTET_STRING *X509_get0_authority_key_id(X509 *x)
     return (x->akid != NULL ? x->akid->keyid : NULL);
 }
 
-const GENERAL_NAMES *X509_get0_authority_issuer(X509 *x)
+const GENERAL_NAMES *X509_get0_authority_issuer(const X509 *x)
 {
     /* Call for side-effect of computing hash and caching extensions */
     if (X509_check_purpose(x, -1, 0) != 1)
@@ -1120,7 +1129,7 @@ const GENERAL_NAMES *X509_get0_authority_issuer(X509 *x)
     return (x->akid != NULL ? x->akid->issuer : NULL);
 }
 
-const ASN1_INTEGER *X509_get0_authority_serial(X509 *x)
+const ASN1_INTEGER *X509_get0_authority_serial(const X509 *x)
 {
     /* Call for side-effect of computing hash and caching extensions */
     if (X509_check_purpose(x, -1, 0) != 1)
@@ -1128,7 +1137,7 @@ const ASN1_INTEGER *X509_get0_authority_serial(X509 *x)
     return (x->akid != NULL ? x->akid->serial : NULL);
 }
 
-long X509_get_pathlen(X509 *x)
+long X509_get_pathlen(const X509 *x)
 {
     /* Called for side effect of caching extensions */
     if (X509_check_purpose(x, -1, 0) != 1
@@ -1137,7 +1146,7 @@ long X509_get_pathlen(X509 *x)
     return x->ex_pathlen;
 }
 
-long X509_get_proxy_pathlen(X509 *x)
+long X509_get_proxy_pathlen(const X509 *x)
 {
     /* Called for side effect of caching extensions */
     if (X509_check_purpose(x, -1, 0) != 1
