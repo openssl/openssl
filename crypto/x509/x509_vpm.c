@@ -198,6 +198,7 @@ static int validate_string_name(const char *name, size_t *name_len)
     if (memchr(name, '\0', len) != NULL)
         return 0;
 
+    *name_len = len;
     return 1;
 }
 
