@@ -189,13 +189,10 @@ may change between releases of OpenSSL.
 
 =item B<SSL_VALUE_QUIC_WINDOWCON> (connection/listener object)
 
-Feature (peer) request value. This configures the QUIC connection-level data
-flow control window in bytes. It sets the initial limit on how much stream data
-this endpoint will accept from the peer before sending acknowledgements, and
-also bounds how much stream data this endpoint may send before the peer
-acknowledges it. This feature can only be configured prior to connection
-establishment and cannot be subsequently changed. This value will be sent to
-the peer in the transport parameters.
+Feature (peer) request value. This configures the initial QUIC connection-level
+flow control receive window in bytes. This feature can only be configured prior
+to connection establishment and cannot be subsequently changed. This value will
+be sent to the peer in the transport parameters.
 
 This release of OpenSSL uses a default value of 768 * 1024 bytes. This default
 value may change between releases of OpenSSL.
