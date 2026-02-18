@@ -317,7 +317,7 @@ int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc);
 int ossl_x509_set1_time(int *modified, ASN1_TIME **ptm, const ASN1_TIME *tm);
 int ossl_x509_print_ex_brief(BIO *bio, const X509 *cert, unsigned long neg_cflags);
 int ossl_x509v3_cache_extensions(const X509 *x);
-int ossl_x509_init_sig_info(X509 *x);
+int ossl_x509_init_sig_info(const X509 *x, X509_SIG_INFO *info);
 
 int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
