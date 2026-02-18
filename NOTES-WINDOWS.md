@@ -92,6 +92,13 @@ Quick start
        dependency feature can speed up build times by up to 50%:
        `perl Configure no-makedepend`
 
+    b. If you want the OpenSSL binaries to be "self contained", usable on any
+       computer running MS Windows, use 'perl Configure enable-static-vcruntime'.
+       Otherwise, build will produce binaries that depend on the VC runtime
+       libraries being installed and available, and will not work on computers
+       that do not have them.  (This option adds 1 MB to the total size of the
+       two dll's.)
+
  6. `nmake`
 
  7. `nmake test`
