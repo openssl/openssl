@@ -494,29 +494,16 @@ int X509_STORE_CTX_get_by_subject(const X509_STORE_CTX *ctx,
 {
     return ossl_x509_store_ctx_get_by_subject(ctx, type, name, ret) > 0;
 }
-
-static int x509_store_add(X509_STORE *store, void *x, int crl)
+static int x509_store_add_obj(X509_STORE *store, X509_OBJECT *obj)
 {
-    X509_OBJECT *obj;
-    int ret = 0, added = 0;
-    X509_NAME *xn;
+    const X509_NAME *xn;
     STACK_OF(X509_OBJECT) *objs = NULL;
+    int ret = 0, added = 0;
 
-    if (x == NULL)
-        return 0;
-    obj = X509_OBJECT_new();
-    if (obj == NULL)
-        return 0;
-
-    if (crl) {
-        obj->type = X509_LU_CRL;
-        obj->data.crl = (X509_CRL *)x;
+    if (obj->type == X509_LU_CRL)
         xn = obj->data.crl->crl.issuer;
-    } else {
-        obj->type = X509_LU_X509;
-        obj->data.x509 = (X509 *)x;
+    else
         xn = obj->data.x509->cert_info.subject;
-    }
 
     if (xn == NULL) {
         obj->type = X509_LU_NONE;
@@ -559,9 +546,45 @@ static int x509_store_add(X509_STORE *store, void *x, int crl)
     return ret;
 }
 
-int X509_STORE_add_cert(X509_STORE *xs, X509 *x)
+static int x509_store_add_x509(X509_STORE *store, const X509 *x)
 {
-    if (!x509_store_add(xs, x, 0)) {
+    X509_OBJECT *obj;
+
+    if (x == NULL)
+        return 0;
+    obj = X509_OBJECT_new();
+    if (obj == NULL)
+        return 0;
+
+    obj->type = X509_LU_X509;
+    /*
+     * XXX Casts away const, get rid of this once we can have the x509
+     * member of OBJECT be const.
+     */
+    obj->data.x509 = (X509 *)x;
+
+    return x509_store_add_obj(store, obj);
+}
+
+static int x509_store_add_crl(X509_STORE *store, X509_CRL *crl)
+{
+    X509_OBJECT *obj;
+
+    if (crl == NULL)
+        return 0;
+    obj = X509_OBJECT_new();
+    if (obj == NULL)
+        return 0;
+
+    obj->type = X509_LU_CRL;
+    obj->data.crl = crl;
+
+    return x509_store_add_obj(store, obj);
+}
+
+int X509_STORE_add_cert(X509_STORE *xs, const X509 *x)
+{
+    if (!x509_store_add_x509(xs, x)) {
         ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
         return 0;
     }
@@ -570,7 +593,7 @@ int X509_STORE_add_cert(X509_STORE *xs, X509 *x)
 
 int X509_STORE_add_crl(X509_STORE *xs, X509_CRL *x)
 {
-    if (!x509_store_add(xs, x, 1)) {
+    if (!x509_store_add_crl(xs, x)) {
         ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
         return 0;
     }
