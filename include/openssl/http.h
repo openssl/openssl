@@ -47,6 +47,8 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
 /* Low-level HTTP API */
 OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int buf_size);
 void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx);
+int OSSL_HTTP_REQ_CTX_set_http_version(OSSL_HTTP_REQ_CTX *rctx,
+    int major, int minor);
 int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx, int method_POST,
     const char *server, const char *port,
     const char *path);

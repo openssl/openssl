@@ -556,6 +556,74 @@ static int test_hdr_resp_hdr_limit_256(void)
     return test_http_resp_hdr_limit(256);
 }
 
+static int test_http_req_ctx_http11(void)
+{
+    BIO *wbio = BIO_new(BIO_s_mem());
+    BIO *rbio = BIO_new(BIO_s_mem());
+    OSSL_HTTP_REQ_CTX *rctx = NULL;
+    BIO *mem = NULL;
+    const char *data = NULL;
+    long len = 0;
+    int res = 0;
+
+    if (TEST_ptr(wbio) == 0 || TEST_ptr(rbio) == 0)
+        goto err;
+
+    rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, 8192);
+    if (TEST_ptr(rctx) == 0)
+        goto err;
+
+    if (!TEST_true(OSSL_HTTP_REQ_CTX_set_http_version(rctx, 1, 1)))
+        goto err;
+    if (!TEST_true(OSSL_HTTP_REQ_CTX_set_request_line(rctx, 0 /* GET */,
+            NULL, NULL, RPATH)))
+        goto err;
+    if (!TEST_true(OSSL_HTTP_REQ_CTX_add1_header(rctx, "Host", "example.com")))
+        goto err;
+
+    mem = OSSL_HTTP_REQ_CTX_exchange(rctx);
+    if (TEST_ptr(mem) == 0)
+        goto err;
+
+    len = BIO_get_mem_data(mem, (unsigned char **)&data);
+    res = TEST_int_gt(len, 0)
+        && TEST_ptr(strstr(data, "HTTP/1.1\r\n"))
+        && TEST_ptr(strstr(data, "Host: example.com\r\n"));
+
+err:
+    BIO_free(mem);
+    OSSL_HTTP_REQ_CTX_free(rctx);
+    BIO_free(wbio);
+    BIO_free(rbio);
+    return res;
+}
+
+static int test_http_req_ctx_http_version_invalid(void)
+{
+    BIO *wbio = BIO_new(BIO_s_mem());
+    BIO *rbio = BIO_new(BIO_s_mem());
+    OSSL_HTTP_REQ_CTX *rctx = NULL;
+    int res = 0;
+
+    if (TEST_ptr(wbio) == 0 || TEST_ptr(rbio) == 0)
+        goto err;
+
+    rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, 8192);
+    if (TEST_ptr(rctx) == 0)
+        goto err;
+
+    if (!TEST_false(OSSL_HTTP_REQ_CTX_set_http_version(rctx, 2, 0)))
+        goto err;
+
+    res = 1;
+
+err:
+    OSSL_HTTP_REQ_CTX_free(rctx);
+    BIO_free(wbio);
+    BIO_free(rbio);
+    return res;
+}
+
 void cleanup_tests(void)
 {
     X509_free(x509);
@@ -605,5 +673,8 @@ int setup_tests(void)
     ADD_TEST(test_hdr_resp_hdr_limit_none);
     ADD_TEST(test_hdr_resp_hdr_limit_short);
     ADD_TEST(test_hdr_resp_hdr_limit_256);
+
+    ADD_TEST(test_http_req_ctx_http11);
+    ADD_TEST(test_http_req_ctx_http_version_invalid);
     return 1;
 }
