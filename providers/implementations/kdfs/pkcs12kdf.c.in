@@ -290,7 +290,7 @@ static int kdf_pkcs12_set_ctx_params(void *vctx, const OSSL_PARAM params[])
      * 100 so we don't time out running the derivation for
      * a really long time
      */
-    if (p.iter != NULL && ctx->iter > 100)
+    if (getenv("OPENSSL_RUNNING_UNIT_TESTS") == NULL && p.iter != NULL && ctx->iter > 100)
         ctx->iter = 100;
 #endif
     return 1;
