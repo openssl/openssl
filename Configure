@@ -486,6 +486,7 @@ my @disablables = (
     "idea",
     "integrity-only-ciphers",
     "jitter",
+    "jitter-dynamic",
     "kbkdf",
     "krb5kdf",
     "ktls",
@@ -621,6 +622,7 @@ our %disabled = ( # "what"         => "comment"
                   "fuzz-libfuzzer"      => "default",
                   "pie"                 => "default",
                   "jitter"              => "default",
+                  "jitter-dynamic"      => "default",
                   "ktls"                => "default",
                   "lms"                 => "default",
                   "md2"                 => "default",
@@ -974,6 +976,10 @@ while (@argvcopy)
                 elsif ($1 eq "fips-jitter")
                         {
                         delete $disabled{"fips"};
+                        delete $disabled{"jitter"};
+                        }
+                elsif ($1 eq "jitter-dynamic")
+                        {
                         delete $disabled{"jitter"};
                         }
                 elsif (exists $deprecated_disablables{$1})
