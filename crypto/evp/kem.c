@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include "internal/cryptlib.h"
@@ -22,9 +23,58 @@ static void evp_kem_free(void *data)
     EVP_KEM_free(data);
 }
 
+static void evp_kem_free_int(EVP_KEM *kem)
+{
+    OPENSSL_free(kem->type_name);
+    ossl_provider_free(kem->prov);
+    CRYPTO_FREE_REF(&kem->refcnt);
+    OPENSSL_free(kem);
+}
+
 static int evp_kem_up_ref(void *data)
 {
     return EVP_KEM_up_ref(data);
+}
+
+static void *evp_kem_dup_frozen(void *vin)
+{
+    EVP_KEM *in = vin;
+    EVP_KEM *out;
+
+    out = OPENSSL_malloc(sizeof(*out));
+    if (out == NULL)
+        return NULL;
+    memcpy(out, in, sizeof(*out));
+    if (!CRYPTO_NEW_REF(&out->refcnt, 1))
+        goto err;
+    out->type_name = OPENSSL_strdup(in->type_name);
+    if (out->type_name == NULL)
+        goto err;
+    out->origin = EVP_ORIG_FROZEN;
+    if (out->prov != NULL && !ossl_provider_up_ref(out->prov)) {
+        OPENSSL_free(out->type_name);
+        goto err;
+    }
+    return out;
+
+err:
+    CRYPTO_FREE_REF(&out->refcnt);
+    OPENSSL_free(out);
+    return NULL;
+}
+
+static void evp_kem_frozen_free(void *vin)
+{
+    EVP_KEM *kem = vin;
+    int ref = 0;
+
+    if (kem == NULL || kem->origin != EVP_ORIG_FROZEN)
+        return;
+
+    CRYPTO_DOWN_REF(&kem->refcnt, &ref);
+    if (ref > 0)
+        return;
+    evp_kem_free_int(kem);
 }
 
 static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
@@ -432,23 +482,21 @@ void EVP_KEM_free(EVP_KEM *kem)
 {
     int i;
 
-    if (kem == NULL)
+    if (kem == NULL || kem->origin != EVP_ORIG_DYNAMIC)
         return;
 
     CRYPTO_DOWN_REF(&kem->refcnt, &i);
     if (i > 0)
         return;
-    OPENSSL_free(kem->type_name);
-    ossl_provider_free(kem->prov);
-    CRYPTO_FREE_REF(&kem->refcnt);
-    OPENSSL_free(kem);
+    evp_kem_free_int(kem);
 }
 
 int EVP_KEM_up_ref(EVP_KEM *kem)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&kem->refcnt, &ref);
+    if (kem->origin == EVP_ORIG_DYNAMIC)
+        CRYPTO_UP_REF(&kem->refcnt, &ref);
     return 1;
 }
 
@@ -463,7 +511,9 @@ EVP_KEM *EVP_KEM_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
     return evp_generic_fetch(ctx, OSSL_OP_KEM, algorithm, properties,
         evp_kem_from_algorithm,
         evp_kem_up_ref,
-        evp_kem_free, NULL, NULL);
+        evp_kem_free,
+        evp_kem_dup_frozen,
+        evp_kem_frozen_free);
 }
 
 EVP_KEM *evp_kem_fetch_from_prov(OSSL_PROVIDER *prov, const char *algorithm,
@@ -473,8 +523,18 @@ EVP_KEM *evp_kem_fetch_from_prov(OSSL_PROVIDER *prov, const char *algorithm,
         evp_kem_from_algorithm,
         evp_kem_up_ref,
         evp_kem_free,
-        NULL,
-        NULL);
+        evp_kem_dup_frozen,
+        evp_kem_frozen_free);
+}
+
+int evp_kem_fetch_all(OSSL_LIB_CTX *ctx)
+{
+    return evp_generic_fetch_all(ctx, OSSL_OP_KEM,
+        evp_kem_from_algorithm,
+        evp_kem_up_ref,
+        evp_kem_free,
+        evp_kem_dup_frozen,
+        evp_kem_frozen_free);
 }
 
 int EVP_KEM_is_a(const EVP_KEM *kem, const char *name)
