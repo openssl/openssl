@@ -11,6 +11,7 @@ name: Test valgrind suppression file
 on:
   schedule:
     - cron: '30 02 * * *'
+  pull_request:
   workflow_dispatch:
 
 permissions:
