@@ -18,7 +18,7 @@ X509_STORE_load_locations_ex, X509_STORE_load_locations
 
  typedef x509_store_st X509_STORE;
 
- int X509_STORE_add_cert(X509_STORE *xs, X509 *x);
+ int X509_STORE_add_cert(X509_STORE *xs, const X509 *x);
  int X509_STORE_add_crl(X509_STORE *xs, X509_CRL *x);
  int X509_STORE_set_depth(X509_STORE *store, int depth);
  int X509_STORE_set_flags(X509_STORE *xs, unsigned long flags);
