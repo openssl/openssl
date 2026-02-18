@@ -84,8 +84,6 @@ my ($res,$a,$b,$m,$k0) = @_6_args_universal_ABI;
 my $mask52     = "%rax";
 my $acc0_0     = "%r9";
 my $acc0_0_low = "%r9d";
-my $acc0_1     = "%r15";
-my $acc0_1_low = "%r15d";
 my $b_ptr      = "%r11";
 
 my $iter = "%ebx";
@@ -834,7 +832,7 @@ $code.=<<___;
     vmovdqu   $R4_0,  `8*32`($res)
     vmovdqu   $R4_0h, `9*32`($res)
 
-    xorl    $acc0_1_low, $acc0_1_low
+    xorl    $acc0_0_low, $acc0_0_low
 
     movq    \$0xfffffffffffff, $mask52
 
