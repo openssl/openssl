@@ -1,4 +1,4 @@
-# Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -29,7 +29,7 @@ jobs:
             sudo apt-get -y install valgrind
         - name: Get parse suppressions script
           run: |
-            wget https://raw.githubusercontent.com/coqui-ai/STT/refs/heads/main/parse_valgrind_suppressions.sh
+            wget https://raw.githubusercontent.com/coqui-ai/STT/refs/tags/v1.4.0/parse_valgrind_suppressions.sh
             echo "7414fcb9405f8bd1632442a0b66ffb35457994c6b8b49b2aa91530cf9a7ff645  ./parse_valgrind_suppressions.sh" > ./valgrind_suppressions.sha256
             sha256sum -c ./valgrind_suppressions.sha256
             chmod 755 ./parse_valgrind_suppressions.sh
