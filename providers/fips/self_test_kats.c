@@ -809,7 +809,7 @@ err:
     OSSL_PARAM_free(params);
     return ret;
 }
-#endif
+#endif /* OPENSSL_NO_ML_KEM */
 
 /*
  * Test an encrypt or decrypt KAT..
@@ -1112,15 +1112,19 @@ static int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
     case SELF_TEST_DRBG:
         ret = self_test_drbg(&st_all_tests[id], st, libctx);
         break;
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
     case SELF_TEST_KAT_KAS:
         ret = self_test_ka(&st_all_tests[id], st, libctx);
         break;
+#endif
     case SELF_TEST_KAT_ASYM_KEYGEN:
         ret = self_test_asym_keygen(&st_all_tests[id], st, libctx);
         break;
+#ifndef OPENSSL_NO_ML_KEM
     case SELF_TEST_KAT_KEM:
         ret = self_test_kem(&st_all_tests[id], st, libctx);
         break;
+#endif
     case SELF_TEST_KAT_ASYM_CIPHER:
         ret = self_test_asym_cipher(&st_all_tests[id], st, libctx);
         break;
