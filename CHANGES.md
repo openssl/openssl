@@ -32,6 +32,28 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Added support for [RFC8998], signature algorithm `sm2sig_sm3`, key exchange
+   group `curveSM2`, and [tls-hybrid-sm2-mlkem] post-quantum group
+   `curveSM2MLKEM768`.
+
+   Verification of SM2-signed certificates required changing the default
+   *distinguishing identifier* from empty to the constant ASCII string
+   "1234567812345678".  An explicit empty distinguishing identifier value may
+   need to be used to verify or create signatures that are compatible with
+   versions of OpenSSL prior to 4.0.  With the command-line tools an empty
+   value can be specified with the use of either the **-pkeyopt**
+   (`openssl-pkeyutl(1)`) or **-sigopt** (`openssl-dgst(1)`) option with a
+   value of "distid:".
+
+   *Viktor Dukhovni*
+
+ * Code cleanup in the `openssl-speed` command-line utility consolidates the
+   processing of SM2 and EdDSA signatures with essentially identical code for
+   ECDSA.  The output format has changed slightly to report the EC curve name
+   rather than its bit size.
+
+   *Viktor Dukhovni*
+
  * Added support for TLS 1.3 SM cipher suites `TLS_SM4_GCM_SM3` and `TLS_SM4_CCM_SM3`
    from [RFC8998].
 
@@ -46,7 +68,7 @@ OpenSSL 4.0
    *Neil Horman*
 
  * FIPS self tests can now be deferred and run as needed when installing
-   the fips module with the -defer_tests option.
+   the fips module with the `-defer_tests` option.
 
    *Simo Sorce*
 
@@ -58,26 +80,26 @@ OpenSSL 4.0
 
    *Neil Horman*
 
- * Const correct time parameter for X509_cmp_time(), X509_time_adj() and
-   X509_time_adj_ex().
+ * Const correct time parameter for `X509_cmp_time()`, `X509_time_adj()` and
+   `X509_time_adj_ex()`.
 
    *Frederik Wedel-Heinen*
 
- * OPENSSL_cleanup() now runs in a global destructor, or not at all by default.
+ * `OPENSSL_cleanup()` now runs in a global destructor, or not at all by default.
 
-   OpenSSL_cleanup() will no longer by default free global objects when run from
+   `OpenSSL_cleanup()` will no longer by default free global objects when run from
    an application. Instead it sets a flag for a global destructor to do this after
    the process exits, and after subordinate libraries using OpenSSL have run their
-   destructors. If destructor support is not available, OpenSSL_cleanup() will do
+   destructors. If destructor support is not available, `OpenSSL_cleanup()` will do
    nothing, leaving the global objects to be cleaned up by the Operating System.
 
    *Bob Beck*
 
- * Made X509_ATTRIBUTE accessor functions const-correct. The functions
-   X509_ATTRIBUTE_get0_object(), X509_ATTRIBUTE_get0_type(), and
-   X509_ATTRIBUTE_get0_data() now accept `const X509_ATTRIBUTE *` and
-   return const pointers. Related PKCS12 functions PKCS12_get_attr_gen(),
-   PKCS12_get_attr(), and PKCS8_get_attr() have also been updated to
+ * Made `X509_ATTRIBUTE` accessor functions const-correct. The functions
+   `X509_ATTRIBUTE_get0_object()`, `X509_ATTRIBUTE_get0_type()`, and
+   `X509_ATTRIBUTE_get0_data()` now accept `const X509_ATTRIBUTE *` and
+   return const pointers. Related PKCS12 functions `PKCS12_get_attr_gen()`,
+   `PKCS12_get_attr()`, and `PKCS8_get_attr()` have also been updated to
    return `const ASN1_TYPE *`.
 
    *kovan*
@@ -91,7 +113,7 @@ OpenSSL 4.0
 
    *Neil Horman*
 
- * SSL_get_error() no longer depends on the state of the error stack,
+ * `SSL_get_error()` no longer depends on the state of the error stack,
    so it is no longer necessary to empty the error queue before the
    TLS/SSL I/O operations.
 
@@ -102,14 +124,14 @@ OpenSSL 4.0
 
    *Shane Lontis*
 
- * OPENSSL_atexit() was removed.
+ * `OPENSSL_atexit()` was removed.
 
    *Bob Beck*
 
- * Added AKID verification checks when X509_V_FLAG_X509_STRICT is set.
-   Raise X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER when AKID is not present.
-   Raise X509_V_ERR_EMPTY_AUTHORITY_KEY_IDENTIFIER when AKID has no attributes.
-   Raise X509_V_ERR_AKID_ISSUER_SERIAL_NOT_PAIRED when authorityCertIssuer and
+ * Added AKID verification checks when `X509_V_FLAG_X509_STRICT` is set.
+   Raise `X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER` when AKID is not present.
+   Raise `X509_V_ERR_EMPTY_AUTHORITY_KEY_IDENTIFIER` when AKID has no attributes.
+   Raise `X509_V_ERR_AKID_ISSUER_SERIAL_NOT_PAIRED` when authorityCertIssuer and
    authorityCertSerialNumber fields are not paired.
 
    *Daniel Kubec*
@@ -125,7 +147,7 @@ OpenSSL 4.0
    send an SSLv2 Client Hello. SSLv2 support itself was removed in version
    1.1.0, but there was still compatibility code for clients sending an SSLv2
    Client Hello. Since we no longer support SSLv2 Client Hello,
-   SSL_client_hello_isv2() is now deprecated and always returns 0.
+   `SSL_client_hello_isv2()` is now deprecated and always returns 0.
 
    *Kurt Roeckx*
 
@@ -162,7 +184,7 @@ OpenSSL 4.0
 
    *Alexandr Nedvedicky*
 
- * The X509_verify function now takes a const X509 * argument
+ * The `X509_verify()` function now takes a `const X509 *` argument
 
    * Bob Beck *
 
@@ -183,7 +205,7 @@ OpenSSL 4.0
 
    *Beat Bolli*
 
- * Added ASN1_BIT_STRING_set1() to set a bit string to a value including
+ * Added `ASN1_BIT_STRING_set1()` to set a bit string to a value including
    the length in bytes and the number of unused bits.
 
    * Bob Beck *
@@ -192,7 +214,7 @@ OpenSSL 4.0
 
    *Bob Beck*
 
- * The ASN1_STRING_FLAG_X509_TIME define has been removed.
+ * The `ASN1_STRING_FLAG_X509_TIME` define has been removed.
 
    *Bob Beck*
 
@@ -221,18 +243,18 @@ OpenSSL 4.0
 
    *Igor Ustinov*
 
- * Added SSL_CTX_get0_alpn_protos() and SSL_get0_alpn_protos().
+ * Added `SSL_CTX_get0_alpn_protos()` and `SSL_get0_alpn_protos()`.
 
    *Daniel Kubec*
 
- * Enabled Server verification by default in `s_server` when option
-   verify_return_error is enabled.
+ * Enabled Server verification by default in `s_server` when the
+   `-verify_return_error` option is enabled.
 
    *Ryan Hooper*
 
- * Fixed CRLs with invalid ASN1_TIME in invalidityDate extensions,
+ * Fixed CRLs with invalid `ASN1_TIME` in invalidityDate extensions,
    where verification incorrectly succeeded. Enforced proper
-   handling of ASN1_TIME validation results so that any CRL
+   handling of `ASN1_TIME` validation results so that any CRL
    containing invalid time fields is rejected immediately,
    preventing the error from propagating to verification.
 
@@ -244,7 +266,7 @@ OpenSSL 4.0
    *Daniel Kubec*
 
  * Rather than being documented as "should be considered deprecated",
-   X509_NAME_get_text_by_NID, and X509_NAME_get_text_by_OBJ are now
+   `X509_NAME_get_text_by_NID()`, and `X509_NAME_get_text_by_OBJ()` are now
    actually deprecated, and documented as such.
 
    * Bob Beck *
@@ -258,7 +280,7 @@ OpenSSL 4.0
 
    *Milan Broz*, *Neil Horman*, *Norbert Pocs*
 
- * BIO_f_reliable() implementation was removed without replacement.
+ * `BIO_f_reliable()` implementation was removed without replacement.
    It was broken since 3.0 release without any complaints.
 
    *Tomáš Mráz*
@@ -268,7 +290,7 @@ OpenSSL 4.0
 
    *Tomáš Mráz*
 
- * Added SNMP KDF (EVP_KDF_SNMPKDF) to EVP_KDF
+ * Added SNMP KDF (`EVP_KDF_SNMPKDF`) to `EVP_KDF`
 
    *Barry Fussell and Helen Zhang*
 
@@ -280,7 +302,7 @@ OpenSSL 4.0
 
    *Simo Sorce*
 
- * Added SRTP KDF (EVP_KDF_SRTPKDF) to EVP_KDF
+ * Added SRTP KDF (`EVP_KDF_SRTPKDF`) to `EVP_KDF`
 
    *Barry Fussell and Helen Zhang*
 
@@ -513,7 +535,7 @@ OpenSSL 3.6
 
    *Dimitri John Ledkov*
 
- * SSL_CTX_is_server() was added.
+ * `SSL_CTX_is_server()` was added.
 
    *Igor Ustinov*
 
@@ -553,10 +575,10 @@ OpenSSL 3.5
 
    *Stanislav Fort and Tomáš Mráz*
 
- * Fix Out-of-bounds read in HTTP client no_proxy handling
+ * Fix Out-of-bounds read in HTTP client `no_proxy` handling
 
    Issue summary: An application using the OpenSSL HTTP client API functions
-   may trigger an out-of-bounds read if the "no_proxy" environment variable is
+   may trigger an out-of-bounds read if the `no_proxy` environment variable is
    set and the host portion of the authority component of the HTTP URL is an
    IPv6 address.
 
@@ -657,10 +679,10 @@ OpenSSL 3.5
 
    *Tomas Mraz*
 
- * Aligned the behaviour of TLS and DTLS in the event of a no_renegotiation
+ * Aligned the behaviour of TLS and DTLS in the event of a `no_renegotiation`
    alert being received. Older versions of OpenSSL failed with DTLS if a
-   no_renegotiation alert was received. All versions of OpenSSL do this for TLS.
-   From 3.2 a bug was exposed that meant that DTLS ignored no_rengotiation. We
+   `no_renegotiation` alert was received. All versions of OpenSSL do this for TLS.
+   From 3.2 a bug was exposed that meant that DTLS ignored `no_rengotiation`. We
    have now restored the original behaviour and brought DTLS back into line with
    TLS.
 
@@ -21881,6 +21903,8 @@ ndif
 [CVE-2023-3446]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-3446
 [CVE-2023-2975]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-2975
 [RFC 2578 (STD 58), section 3.5]: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
+[RFC8998]: https://datatracker.ietf.org/doc/html/rfc8998#name-iana-considerations
+[tls-hybrid-sm2-mlkem]: https://datatracker.ietf.org/doc/html/draft-yang-tls-hybrid-sm2-mlkem-03#name-iana-considerations
 [CVE-2023-2650]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-2650
 [CVE-2023-1255]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-1255
 [CVE-2023-0466]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0466
