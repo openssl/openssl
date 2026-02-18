@@ -96,6 +96,6 @@ echo "Running bssl s_client against localhost"
 rm -f $bechfile
 cat $resfile
 success=`grep -c "Encrypted ClientHello: yes" $resfile`
-rm -f $resfile 
+rm -f $resfile
 # if success==1 we're good so exit with a zero for test success
 exit $((success != 1))

@@ -145,7 +145,7 @@ base64-encoded ECHConfigList in the I<in> B<BIO>. The latter function reads
 both from an ECH PEM file.  Those can be used (by servers) to enable ECH for an
 B<SSL_CTX> or B<SSL> connection. In addition to loading those values, the
 application can also indicate via I<for_retry> which ECHConfig values are to be
-included in the I<retry_configs> fallback scheme defined by the ECH protocol. 
+included in the I<retry_configs> fallback scheme defined by the ECH protocol.
 
 An ECH PEM file may contain a private key and an ECHConfigList with more than
 one ECHConfig, for example if different public keys, I<public_name> values, or

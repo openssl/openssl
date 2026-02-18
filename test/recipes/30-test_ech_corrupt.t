@@ -13,7 +13,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_dir bldtop_file/;
 
 setup("test_ech_corrupt");
 
-# Seeing tls1_2 below may be unexpected but we include a test case 
+# Seeing tls1_2 below may be unexpected but we include a test case
 # where the inner CH is TLSv1.2 and the outer is TLSv1.3, but we
 # don't get the expected error in builds where TLSv1.2 is not supported
 # so we'll skip those
