@@ -467,35 +467,35 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
 
 #ifdef tsan_ld_acq
     /* Fast lock-free check, see end of the function for details. */
-    if (tsan_ld_acq((TSAN_QUALIFIER int *)&x->ex_cached))
-        return (x->ex_flags & EXFLAG_INVALID) == 0;
+    if (tsan_ld_acq((TSAN_QUALIFIER int *)&const_x->ex_cached))
+        return (const_x->ex_flags & EXFLAG_INVALID) == 0;
 #endif
 
-    if (!CRYPTO_THREAD_read_lock(x->lock))
+    if (!CRYPTO_THREAD_read_lock(const_x->lock))
         return 0;
-    tmp_ex_flags = x->ex_flags;
-    tmp_ex_pcpathlen = x->ex_pcpathlen;
-    tmp_ex_kusage = x->ex_kusage;
-    tmp_ex_nscert = x->ex_nscert;
+    tmp_ex_flags = const_x->ex_flags;
+    tmp_ex_pcpathlen = const_x->ex_pcpathlen;
+    tmp_ex_kusage = const_x->ex_kusage;
+    tmp_ex_nscert = const_x->ex_nscert;
 
     if ((tmp_ex_flags & EXFLAG_SET) != 0) { /* Cert has already been processed */
-        CRYPTO_THREAD_unlock(x->lock);
+        CRYPTO_THREAD_unlock(const_x->lock);
         return (tmp_ex_flags & EXFLAG_INVALID) == 0;
     }
 
     ERR_set_mark();
 
     /* Cache the SHA1 digest of the cert */
-    if (!X509_digest(x, EVP_sha1(), tmp_sha1_hash, NULL))
+    if (!X509_digest(const_x, EVP_sha1(), tmp_sha1_hash, NULL))
         tmp_ex_flags |= EXFLAG_NO_FINGERPRINT;
 
     /* V1 should mean no extensions ... */
-    if (X509_get_version(x) == X509_VERSION_1)
+    if (X509_get_version(const_x) == X509_VERSION_1)
         tmp_ex_flags |= EXFLAG_V1;
 
     /* Handle basic constraints */
     tmp_ex_pathlen = -1;
-    if ((bs = X509_get_ext_d2i(x, NID_basic_constraints, &i, NULL)) != NULL) {
+    if ((bs = X509_get_ext_d2i(const_x, NID_basic_constraints, &i, NULL)) != NULL) {
         if (bs->ca)
             tmp_ex_flags |= EXFLAG_CA;
         if (bs->pathlen != NULL) {
@@ -517,10 +517,10 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     }
 
     /* Handle proxy certificates */
-    if ((pci = X509_get_ext_d2i(x, NID_proxyCertInfo, &i, NULL)) != NULL) {
+    if ((pci = X509_get_ext_d2i(const_x, NID_proxyCertInfo, &i, NULL)) != NULL) {
         if ((tmp_ex_flags & EXFLAG_CA) != 0
-            || X509_get_ext_by_NID(x, NID_subject_alt_name, -1) >= 0
-            || X509_get_ext_by_NID(x, NID_issuer_alt_name, -1) >= 0) {
+            || X509_get_ext_by_NID(const_x, NID_subject_alt_name, -1) >= 0
+            || X509_get_ext_by_NID(const_x, NID_issuer_alt_name, -1) >= 0) {
             tmp_ex_flags |= EXFLAG_INVALID;
         }
         if (pci->pcPathLengthConstraint != NULL)
@@ -534,7 +534,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     }
 
     /* Handle (basic) key usage */
-    if ((usage = X509_get_ext_d2i(x, NID_key_usage, &i, NULL)) != NULL) {
+    if ((usage = X509_get_ext_d2i(const_x, NID_key_usage, &i, NULL)) != NULL) {
         tmp_ex_kusage = 0;
         if (usage->length > 0) {
             tmp_ex_kusage = usage->data[0];
@@ -554,7 +554,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
 
     /* Handle extended key usage */
     tmp_ex_xkusage = 0;
-    if ((extusage = X509_get_ext_d2i(x, NID_ext_key_usage, &i, NULL)) != NULL) {
+    if ((extusage = X509_get_ext_d2i(const_x, NID_ext_key_usage, &i, NULL)) != NULL) {
         tmp_ex_flags |= EXFLAG_XKUSAGE;
         for (i = 0; i < sk_ASN1_OBJECT_num(extusage); i++) {
             switch (OBJ_obj2nid(sk_ASN1_OBJECT_value(extusage, i))) {
@@ -597,7 +597,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     }
 
     /* Handle legacy Netscape extension */
-    if ((ns = X509_get_ext_d2i(x, NID_netscape_cert_type, &i, NULL)) != NULL) {
+    if ((ns = X509_get_ext_d2i(const_x, NID_netscape_cert_type, &i, NULL)) != NULL) {
         if (ns->length > 0)
             tmp_ex_nscert = ns->data[0];
         else
@@ -609,47 +609,47 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     }
 
     /* Handle subject key identifier and issuer/authority key identifier */
-    tmp_skid = X509_get_ext_d2i(x, NID_subject_key_identifier, &i, NULL);
+    tmp_skid = X509_get_ext_d2i(const_x, NID_subject_key_identifier, &i, NULL);
     if (tmp_skid == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
 
-    tmp_akid = X509_get_ext_d2i(x, NID_authority_key_identifier, &i, NULL);
+    tmp_akid = X509_get_ext_d2i(const_x, NID_authority_key_identifier, &i, NULL);
     if (tmp_akid == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
 
     /* Check if subject name matches issuer */
-    if (X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x)) == 0) {
+    if (X509_NAME_cmp(X509_get_subject_name(const_x), X509_get_issuer_name(const_x)) == 0) {
         tmp_ex_flags |= EXFLAG_SI; /* Cert is self-issued */
-        if (X509_check_akid(x, tmp_akid) == X509_V_OK /* SKID matches AKID */
+        if (X509_check_akid(const_x, tmp_akid) == X509_V_OK /* SKID matches AKID */
             /* .. and the signature alg matches the PUBKEY alg: */
-            && check_sig_alg_match(X509_get0_pubkey(x), x) == X509_V_OK)
+            && check_sig_alg_match(X509_get0_pubkey(const_x), const_x) == X509_V_OK)
             tmp_ex_flags |= EXFLAG_SS; /* indicate self-signed */
         /* This is very related to ossl_x509_likely_issued(x, x) == X509_V_OK */
     }
 
     /* Handle subject alternative names and various other extensions */
-    tmp_altname = X509_get_ext_d2i(x, NID_subject_alt_name, &i, NULL);
+    tmp_altname = X509_get_ext_d2i(const_x, NID_subject_alt_name, &i, NULL);
     if (tmp_altname == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
-    tmp_nc = X509_get_ext_d2i(x, NID_name_constraints, &i, NULL);
+    tmp_nc = X509_get_ext_d2i(const_x, NID_name_constraints, &i, NULL);
     if (tmp_nc == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
 
     /* Handle CRL distribution point entries */
-    res = setup_crldp(x, &tmp_crldp);
+    res = setup_crldp(const_x, &tmp_crldp);
     if (res == 0)
         tmp_ex_flags |= EXFLAG_INVALID;
 
 #ifndef OPENSSL_NO_RFC3779
-    tmp_rfc3779_addr = X509_get_ext_d2i(x, NID_sbgp_ipAddrBlock, &i, NULL);
+    tmp_rfc3779_addr = X509_get_ext_d2i(const_x, NID_sbgp_ipAddrBlock, &i, NULL);
     if (tmp_rfc3779_addr == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
-    tmp_rfc3779_asid = X509_get_ext_d2i(x, NID_sbgp_autonomousSysNum, &i, NULL);
+    tmp_rfc3779_asid = X509_get_ext_d2i(const_x, NID_sbgp_autonomousSysNum, &i, NULL);
     if (tmp_rfc3779_asid == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
 #endif
-    for (i = 0; i < X509_get_ext_count(x); i++) {
-        X509_EXTENSION *ex = X509_get_ext(x, i);
+    for (i = 0; i < X509_get_ext_count(const_x); i++) {
+        X509_EXTENSION *ex = X509_get_ext(const_x, i);
         int nid = OBJ_obj2nid(X509_EXTENSION_get_object(ex));
 
         if (nid == NID_freshest_crl)
@@ -679,53 +679,53 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     }
 
     /* Set x->siginf, ignoring errors due to unsupported algos */
-    (void)ossl_x509_init_sig_info(x, &tmp_siginf);
+    (void)ossl_x509_init_sig_info(const_x, &tmp_siginf);
 
     tmp_ex_flags |= EXFLAG_SET; /* Indicate that cert has been processed */
     ERR_pop_to_mark();
 
-    CRYPTO_THREAD_unlock(x->lock);
+    CRYPTO_THREAD_unlock(const_x->lock);
     /*
      * Now that we've done all the compute intensive work under read lock
      * do all the updating under a write lock
      */
-    if (!CRYPTO_THREAD_write_lock(x->lock))
+    if (!CRYPTO_THREAD_write_lock(const_x->lock))
         return 0;
-    ((X509 *)x)->ex_flags = tmp_ex_flags;
-    ((X509 *)x)->ex_pathlen = tmp_ex_pathlen;
-    ((X509 *)x)->ex_pcpathlen = tmp_ex_pcpathlen;
+    ((X509 *)const_x)->ex_flags = tmp_ex_flags;
+    ((X509 *)const_x)->ex_pathlen = tmp_ex_pathlen;
+    ((X509 *)const_x)->ex_pcpathlen = tmp_ex_pcpathlen;
     if (!(tmp_ex_flags & EXFLAG_NO_FINGERPRINT))
-        memcpy(((X509 *)x)->sha1_hash, tmp_sha1_hash, SHA_DIGEST_LENGTH);
+        memcpy(((X509 *)const_x)->sha1_hash, tmp_sha1_hash, SHA_DIGEST_LENGTH);
     if (tmp_ex_flags & EXFLAG_KUSAGE)
-        ((X509 *)x)->ex_kusage = tmp_ex_kusage;
-    ((X509 *)x)->ex_xkusage = tmp_ex_xkusage;
+        ((X509 *)const_x)->ex_kusage = tmp_ex_kusage;
+    ((X509 *)const_x)->ex_xkusage = tmp_ex_xkusage;
     if (tmp_ex_flags & EXFLAG_NSCERT)
-        ((X509 *)x)->ex_nscert = tmp_ex_nscert;
-    ASN1_OCTET_STRING_free(((X509 *)x)->skid);
-    ((X509 *)x)->skid = tmp_skid;
-    AUTHORITY_KEYID_free(((X509 *)x)->akid);
-    ((X509 *)x)->akid = tmp_akid;
-    sk_GENERAL_NAME_pop_free(((X509 *)x)->altname, GENERAL_NAME_free);
-    ((X509 *)x)->altname = tmp_altname;
-    NAME_CONSTRAINTS_free(((X509 *)x)->nc);
-    ((X509 *)x)->nc = tmp_nc;
-    sk_DIST_POINT_pop_free(((X509 *)x)->crldp, DIST_POINT_free);
-    ((X509 *)x)->crldp = tmp_crldp;
-    sk_IPAddressFamily_pop_free(((X509 *)x)->rfc3779_addr, IPAddressFamily_free);
-    ((X509 *)x)->rfc3779_addr = tmp_rfc3779_addr;
-    ASIdentifiers_free(((X509 *)x)->rfc3779_asid);
-    ((X509 *)x)->rfc3779_asid = tmp_rfc3779_asid;
-    ((X509 *)x)->siginf = tmp_siginf;
+        ((X509 *)const_x)->ex_nscert = tmp_ex_nscert;
+    ASN1_OCTET_STRING_free(((X509 *)const_x)->skid);
+    ((X509 *)const_x)->skid = tmp_skid;
+    AUTHORITY_KEYID_free(((X509 *)const_x)->akid);
+    ((X509 *)const_x)->akid = tmp_akid;
+    sk_GENERAL_NAME_pop_free(((X509 *)const_x)->altname, GENERAL_NAME_free);
+    ((X509 *)const_x)->altname = tmp_altname;
+    NAME_CONSTRAINTS_free(((X509 *)const_x)->nc);
+    ((X509 *)const_x)->nc = tmp_nc;
+    sk_DIST_POINT_pop_free(((X509 *)const_x)->crldp, DIST_POINT_free);
+    ((X509 *)const_x)->crldp = tmp_crldp;
+    sk_IPAddressFamily_pop_free(((X509 *)const_x)->rfc3779_addr, IPAddressFamily_free);
+    ((X509 *)const_x)->rfc3779_addr = tmp_rfc3779_addr;
+    ASIdentifiers_free(((X509 *)const_x)->rfc3779_asid);
+    ((X509 *)const_x)->rfc3779_asid = tmp_rfc3779_asid;
+    ((X509 *)const_x)->siginf = tmp_siginf;
 
 #ifdef tsan_st_rel
-    tsan_st_rel((TSAN_QUALIFIER int *)&x->ex_cached, 1);
+    tsan_st_rel((TSAN_QUALIFIER int *)&const_x->ex_cached, 1);
     /*
      * Above store triggers fast lock-free check in the beginning of the
      * function. But one has to ensure that the structure is "stable", i.e.
      * all stores are visible on all processors. Hence the release fence.
      */
 #endif
-    CRYPTO_THREAD_unlock(x->lock);
+    CRYPTO_THREAD_unlock(const_x->lock);
     if (tmp_ex_flags & EXFLAG_INVALID) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_CERTIFICATE);
         return 0;
