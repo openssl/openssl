@@ -14,7 +14,7 @@
 #include "internal/deprecated.h"
 
 #include <openssl/rc2.h>
-#include "rc2_local.h"
+#include "internal/common.h"
 
 void RC2_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
     RC2_KEY *ks, unsigned char *iv, int encrypt)
