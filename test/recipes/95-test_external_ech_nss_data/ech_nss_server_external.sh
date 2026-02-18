@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/usr/bin/env bash
+
+set -x
 
 #
 # Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
@@ -111,11 +113,6 @@ echo "   CWD:                $PWD"
 # can grab echconfig immediately...
 LD_LIBRARY_PATH=$NLIB stdbuf -o0 $LDIR/selfserv -p 8443 -d $SRCTOP/nss/server \
     -n server.example -X "publicname:example.com" >ss-echfile &
-if [ -s ss-echfile ]
-then
-    echo "Did you remember to patch NSS? See $0 for details"
-    exit 78
-fi
 
 # For the future, we'd like a provide our private-key/ECHConfig to
 # NSS - looks like there could be some work required to get that
@@ -129,10 +126,12 @@ then
     exit 88
 fi
 
-# to ensure we detect a fail, use the wrong ECHConfig ...
-# ECHCONFIGFILE=$SRCTOP/esnistuff/d13.pem
-# ECH=`cat $ECHCONFIGFILE | tail -2 | head -1`
-ECH=`cat ss-echfile | tail -2 | head -1`
+# TODO(ECH): ss-echfile should have the required ECHConfigList, and this
+# works locally but somehow not in the CI, where we have an empty file
+wait 10
+ls -l ss-echfile
+cat ss-echfile
+ECH=`cat ss-echfile`
 echo "Running openssl s_client against localhost"
 (echo -e $httpreq ; sleep 2) | \
     $SRCTOP/apps/openssl s_client -connect localhost:8443 \
