@@ -122,6 +122,7 @@ B<openssl> B<s_client>
 {- $OpenSSL::safe::opt_v_synopsis -}
 [B<-enable_server_rpk>]
 [B<-enable_client_rpk>]
+[B<-expected-rpks>]
 [I<host>:I<port>]
 [B<-ech_config_list>]
 [B<-ech_outer_alpn> I<protocols>]
@@ -374,7 +375,8 @@ Enable RFC6698/RFC7671 DANE TLSA authentication and specify the
 TLSA base domain which becomes the default SNI hint and the primary
 reference identifier for hostname checks.  This must be used in
 combination with at least one instance of the B<-dane_tlsa_rrdata>
-option below.
+option below, or else at least one B<-expected-rpks> option (from
+which associated TLSA "3 1 0" records are synthesised internally).
 
 When DANE authentication succeeds, the diagnostic output will include
 the lowest (closest to 0) depth at which a TLSA record authenticated
@@ -816,6 +818,28 @@ provided a suitable key and public certificate pair is configured.
 Some servers may nevertheless not request any client credentials,
 or may request a certificate.
 
+=item B<-expected-rpks> I<file>
+
+This option implies the B<-enable_server_rpk> option and can be specified
+multiple times.
+Each PEM I<file> should contain one or more public keys, private keys or
+certificates.
+With a private key or certificate an attempt is made to extract the associated
+public key.
+Each resulting public key is added (via a call to L<SSL_add_expected_rpk(3)> as
+a valid raw public key that the server may present to be considered verified.
+If a server nevertheless presents an X.509 certificate, the enclosed public key
+is validated as though it were presented as a raw public key instead.
+
+If the B<-dane_tlsa_domain> and B<-dane_tlsa_rrdata> options (with certificate
+usage B<DANE-EE(3)> and selector B<SPKI(1)>) are also used then the specified
+TLSA records are used in combination with the keys found via the
+B<-expected-rpks> option(s).
+
+Verification success or failure is reported as a DANE verification success or
+failure, because verification of raw public keys is internally mapped to
+verification of DANE TLSA records derived from the specified keys.
+
 =item I<host>:I<port>
 
 Rather than providing B<-connect>, the target host and optional port may
@@ -1108,6 +1132,8 @@ and B<-ocsp_check_all>
 options were added in OpenSSL 3.6.
 
 The B<ech> options were added in OpenSSL 4.0.
+
+The B<-expected-rpks> option was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

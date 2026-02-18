@@ -32,6 +32,12 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * New `-expected-rpks` option in the `openssl-s_client(1)` and `openssl-s_server(1)`
+   command line utilities.  This makes it possible to specify one more public keys
+   expected from the remote peer that are then used to authenticate the connection.
+
+   *Viktor Dukhovni*
+
  * New `SSL_get0_sigalg()` and `SSL_get0_shared_sigalg()` functions report the
    TLS signature algorithm name and codepoint for the peer advertised and shared
    algorithms respectively.  These supersede the existing `SSL_get_sigalgs()` and
@@ -105,7 +111,7 @@ OpenSSL 4.0
 
    *Neil Horman*
 
- * ASN1_OBJECT_new() has been deprecated.
+ * `ASN1_OBJECT_new()` has been deprecated.
 
    Refer to ossl-migration-guide(7) for more info.
 
@@ -148,10 +154,10 @@ OpenSSL 4.0
 
    *kovan*
 
- * ASN1_STRING has been made opaque.
+ * `ASN1_STRING` has been made opaque.
 
-   Access to values from ASN1_STRING and related types should be done with the
-   appropriate accessor functions. The various ASN1_STRING_FLAG values have
+   Access to values from `ASN1_STRING` and related types should be done with the
+   appropriate accessor functions. The various `ASN1_STRING_FLAG` values have
    been made private.
 
    *Bob Beck*
@@ -265,8 +271,8 @@ OpenSSL 4.0
 
  * Added `ASN1_BIT_STRING_set1()` to set a bit string to a value including
    the length in bytes and the number of unused bits. Internally,
-   'ASN1_BIT_STRING_set_bit()' has also been modified to keep the number of
-   unused bits correct when changing an ASN1_BIT_STRING.
+   `ASN1_BIT_STRING_set_bit()` has also been modified to keep the number of
+   unused bits correct when changing an `ASN1_BIT_STRING`.
 
    * Bob Beck *
 
@@ -299,7 +305,7 @@ OpenSSL 4.0
 
    *Daniel Kubec and Eugene Syromiatnikov*
 
- * X509_get0_distinguishing_id now takes and returns const objects.
+ * `X509_get0_distinguishing_id()` now takes and returns const objects.
 
    * Bob Beck *
 
@@ -317,10 +323,11 @@ OpenSSL 4.0
    *Ryan Hooper*
 
  * Constify Various X509 functions:
-   X509_get_pathlen X509_check_ca X509_check_purpose X509_get_proxy_pathlen
-   X509_get_extension_flags X509_get_key_usage X509_get_extended_key_usage
-   X509_get0_subject_key_id X509_get0_authority_key_id X509_get0_authority_issuer
-   X509_get0_authority_serial.
+   `X509_get_pathlen()`, `X509_check_ca()`, `X509_check_purpose()`,
+   `X509_get_proxy_pathlen()`, `X509_get_extension_flags()`,
+   `X509_get_key_usage()`, `X509_get_extended_key_usage()`,
+   `X509_get0_subject_key_id()`, `X509_get0_authority_key_id()`,
+   `X509_get0_authority_issuer()`, `X509_get0_authority_serial()`.
 
    * Bob Beck *
 
@@ -392,18 +399,18 @@ OpenSSL 4.0
 
    *Stephen Farrell* (with much support from *Matt Caswell* and *Tomáš Mráz*)
 
- * X509_cmp_time, X509_cmp_current_time, and X509_cmp_timeframe have
+ * `X509_cmp_time()`, `X509_cmp_current_time()`, and `X509_cmp_timeframe()` have
    had documentation added, and have then been deprecated.  A new
-   function, X509_check_certificate_times has been added, as well as
-   the <openssl/posix_time.h> interface from BoringSSL/LibreSSL. For
+   function, `X509_check_certificate_times()` has been added, as well as
+   the `<openssl/posix_time.h>` interface from BoringSSL/LibreSSL. For
    details of these functions and non-deprecated replacement
-   strategies, see X509_check_certificate_times(3).
+   strategies, see `X509_check_certificate_times(3)`.
 
    * Bob Beck *
 
- * Added BIO_set_send_flags() function that allows setting flags passed to
+ * Added `BIO_set_send_flags()` function that allows setting flags passed to
    send(), sendto(), and sendmsg(). The main intention is to allow setting
-   the MSG_NOSIGNAL flag to avoid a crash on receiving the SIGPIPE signal.
+   the `MSG_NOSIGNAL` flag to avoid a crash on receiving the SIGPIPE signal.
 
    *Igor Ustinov*
 

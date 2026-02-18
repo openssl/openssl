@@ -614,6 +614,7 @@ typedef enum OPTION_choice {
     OPT_ENABLE_PHA,
     OPT_ENABLE_SERVER_RPK,
     OPT_ENABLE_CLIENT_RPK,
+    OPT_EXPECTED_RPK,
     OPT_SCTP_LABEL_BUG,
     OPT_KTLS,
 #ifndef OPENSSL_NO_ECH
@@ -694,6 +695,8 @@ const OPTIONS s_client_options[] = {
         "Do not load certificates from the default certificates store" },
     { "requestCAfile", OPT_REQCAFILE, '<',
         "PEM format file of CA names to send to the server" },
+    { "expected-rpks", OPT_EXPECTED_RPK, '<',
+        "PEM file with expected server public key(s)" },
 #if defined(TCP_FASTOPEN) && !defined(OPENSSL_NO_TFO)
     { "tfo", OPT_TFO, '-', "Connect using TCP Fast Open" },
 #endif
@@ -986,6 +989,7 @@ int s_client_main(int argc, char **argv)
     SSL_EXCERT *exc = NULL;
     SSL_CONF_CTX *cctx = NULL;
     STACK_OF(OPENSSL_STRING) *ssl_args = NULL;
+    STACK_OF(OPENSSL_STRING) *rpk_files = NULL;
     char *dane_tlsa_domain = NULL;
     STACK_OF(OPENSSL_STRING) *dane_tlsa_rrset = NULL;
     int dane_ee_no_name = 0;
@@ -1727,6 +1731,13 @@ int s_client_main(int argc, char **argv)
         case OPT_ENABLE_CLIENT_RPK:
             enable_client_rpk = 1;
             break;
+        case OPT_EXPECTED_RPK:
+            if ((rpk_files == NULL
+                    && (rpk_files = sk_OPENSSL_STRING_new_null()) == NULL)
+                || !sk_OPENSSL_STRING_push(rpk_files, opt_arg()))
+                goto end;
+            enable_server_rpk = 1;
+            break;
         }
     }
 
@@ -2190,9 +2201,12 @@ int s_client_main(int argc, char **argv)
 
     if (dane_tlsa_domain != NULL) {
         if (SSL_CTX_dane_enable(ctx) <= 0) {
-            BIO_printf(bio_err,
-                "%s: Error enabling DANE TLSA authentication.\n",
-                prog);
+            BIO_printf(bio_err, "%s: Error enabling DANE TLSA authentication.\n", prog);
+            goto end;
+        }
+    } else if (rpk_files != NULL) {
+        if (SSL_CTX_dane_enable(ctx) <= 0) {
+            BIO_printf(bio_err, "%s: Error enabling RPK verification\n", prog);
             goto end;
         }
     }
@@ -2236,16 +2250,15 @@ int s_client_main(int argc, char **argv)
     if (enable_pha)
         SSL_set_post_handshake_auth(con, 1);
 
-    if (enable_client_rpk)
-        if (!SSL_set1_client_cert_type(con, cert_type_rpk, sizeof(cert_type_rpk))) {
-            BIO_puts(bio_err, "Error setting client certificate types\n");
-            goto end;
-        }
-    if (enable_server_rpk) {
-        if (!SSL_set1_server_cert_type(con, cert_type_rpk, sizeof(cert_type_rpk))) {
-            BIO_puts(bio_err, "Error setting server certificate types\n");
-            goto end;
-        }
+    if (enable_client_rpk
+        && !SSL_set1_client_cert_type(con, cert_type_rpk, sizeof(cert_type_rpk))) {
+        BIO_puts(bio_err, "Error setting client certificate types\n");
+        goto end;
+    }
+    if (enable_server_rpk
+        && !SSL_set1_server_cert_type(con, cert_type_rpk, sizeof(cert_type_rpk))) {
+        BIO_puts(bio_err, "Error setting server certificate types\n");
+        goto end;
     }
 
 #ifndef OPENSSL_NO_ECH
@@ -2356,25 +2369,38 @@ int s_client_main(int argc, char **argv)
                 prog);
             goto end;
         }
-        if (dane_tlsa_rrset == NULL) {
+        if (dane_tlsa_rrset != NULL) {
+            if (tlsa_import_rrset(con, dane_tlsa_rrset) <= 0) {
+                BIO_printf(bio_err, "%s: Failed to import any TLSA "
+                                    "records.\n",
+                    prog);
+                goto end;
+            }
+        } else if (rpk_files == NULL) {
             BIO_printf(bio_err, "%s: DANE TLSA authentication requires at "
-                                "least one -dane_tlsa_rrdata option.\n",
-                prog);
-            goto end;
-        }
-        if (tlsa_import_rrset(con, dane_tlsa_rrset) <= 0) {
-            BIO_printf(bio_err, "%s: Failed to import any TLSA "
-                                "records.\n",
+                                "least one -dane_tlsa_rrdata option, or else "
+                                "at least one -expected_rpks option.\n",
                 prog);
             goto end;
         }
         if (dane_ee_no_name)
             SSL_dane_set_flags(con, DANE_FLAG_NO_DANE_EE_NAMECHECKS);
-    } else if (dane_tlsa_rrset != NULL) {
+    } else if (rpk_files == NULL && dane_tlsa_rrset != NULL) {
         BIO_printf(bio_err, "%s: DANE TLSA authentication requires the "
                             "-dane_tlsa_domain option.\n",
             prog);
         goto end;
+    }
+
+    if (rpk_files != NULL) {
+        if (dane_tlsa_domain == NULL
+            && !SSL_dane_enable(con, noservername ? NULL : servername)) {
+            BIO_puts(bio_err, "Error enabling server RPK verification\n");
+            goto end;
+        }
+        for (i = 0; i < sk_OPENSSL_STRING_num(rpk_files); ++i)
+            if (!load_rpk_file(con, sk_OPENSSL_STRING_value(rpk_files, i)))
+                goto end;
     }
 #ifndef OPENSSL_NO_DTLS
     if (isdtls && tfo) {
@@ -3535,6 +3561,7 @@ end:
     X509_VERIFY_PARAM_free(vpm);
     ssl_excert_free(exc);
     sk_OPENSSL_STRING_free(ssl_args);
+    sk_OPENSSL_STRING_free(rpk_files);
     sk_OPENSSL_STRING_free(dane_tlsa_rrset);
     SSL_CONF_CTX_free(cctx);
     OPENSSL_clear_free(cbuf, BUFSIZZ);
