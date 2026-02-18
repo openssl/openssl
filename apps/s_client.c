@@ -3602,7 +3602,7 @@ static void print_ech_retry_configs(BIO *bio, SSL *s)
     BIO *biom = NULL;
 
     if (SSL_ech_get1_retry_config(s, &rtval, &rtlen) != 1) {
-        BIO_printf(bio, "ECH: Error getting retry-configs\n");
+        BIO_puts(bio, "ECH: Error getting retry-configs\n");
         return;
     }
     /*
@@ -3614,7 +3614,7 @@ static void print_ech_retry_configs(BIO *bio, SSL *s)
         || BIO_write(biom, rtval, (int)rtlen) <= 0
         || (es = OSSL_ECHSTORE_new(NULL, NULL)) == NULL
         || OSSL_ECHSTORE_read_echconfiglist(es, biom) != 1) {
-        BIO_printf(bio, "ECH: Error loading retry-configs\n");
+        BIO_puts(bio, "ECH: Error loading retry-configs\n");
         goto end;
     }
     if (OSSL_ECHSTORE_num_entries(es, &cnt) != 1)

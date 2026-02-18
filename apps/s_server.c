@@ -1594,7 +1594,7 @@ static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
         && (es = OSSL_ECHSTORE_new(app_get0_libctx(),
                 app_get0_propq()))
             == NULL) {
-        BIO_printf(bio_err, "internal error\n");
+        BIO_puts(bio_err, "ECH: Internal error\n");
         return 0;
     }
     while ((thisfile = OPENSSL_DIR_read(&d, thedir))) {
@@ -1623,7 +1623,7 @@ static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
         loaded++;
     }
     if (SSL_CTX_set1_echstore(lctx, es) != 1) {
-        BIO_printf(bio_err, "internal error\n");
+        BIO_puts(bio_err, "ECH: Internal error\n");
         return 0;
     }
     if (bio_s_out != NULL)
@@ -2722,7 +2722,7 @@ int s_server_main(int argc, char *argv[])
         if ((in = BIO_new_file(echkeyfile, "r")) == NULL
             || (es = OSSL_ECHSTORE_new(app_get0_libctx(),
                     app_get0_propq()))
-                == 0
+                == NULL
             || OSSL_ECHSTORE_read_pem(es, in, OSSL_ECH_FOR_RETRY) != 1
             || SSL_CTX_set1_echstore(ctx, es) != 1) {
             BIO_printf(bio_err, "Failed reading: %s\n", echkeyfile);
