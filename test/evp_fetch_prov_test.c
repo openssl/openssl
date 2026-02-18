@@ -431,6 +431,66 @@ static int test_keymgmt(OSSL_LIB_CTX *libctx, const char *propq,
         && test_ec_keyexch(libctx, propq);
 }
 
+static int test_ml_kem_keyexch(OSSL_LIB_CTX *libctx, const char *propq)
+{
+    int ret = 0;
+    EVP_PKEY *privkey = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
+    unsigned char *ciphertext = NULL, *secret_enc = NULL, *secret_dec = NULL;
+    size_t ciphertext_len = 0, secret_enc_len = 0, secret_dec_len = 0;
+
+    if (!TEST_ptr(privkey = EVP_PKEY_Q_keygen(libctx, propq, "ML-KEM-768"))
+        || !TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(libctx, privkey, propq))
+        || !TEST_int_eq(EVP_PKEY_encapsulate_init(pctx, NULL), 1)
+        || !TEST_int_eq(EVP_PKEY_encapsulate(pctx, NULL, &ciphertext_len, NULL, &secret_enc_len), 1))
+        goto err;
+
+    ciphertext = OPENSSL_zalloc(ciphertext_len);
+    secret_enc = OPENSSL_zalloc(secret_enc_len);
+    if (!TEST_ptr(ciphertext)
+        || !TEST_ptr(secret_enc)
+        || !TEST_int_gt(EVP_PKEY_encapsulate(pctx, ciphertext, &ciphertext_len,
+                            secret_enc, &secret_enc_len),
+            0))
+        goto err;
+
+    EVP_PKEY_CTX_free(pctx);
+    pctx = NULL;
+
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(libctx, privkey, propq))
+        || !TEST_int_eq(EVP_PKEY_decapsulate_init(pctx, NULL), 1)
+        || !TEST_int_eq(EVP_PKEY_decapsulate(pctx, NULL, &secret_dec_len, ciphertext, ciphertext_len), 1)
+        || !TEST_size_t_eq(secret_dec_len, secret_enc_len))
+        goto err;
+
+    secret_dec = OPENSSL_zalloc(secret_dec_len);
+    if (!TEST_ptr(secret_dec)
+        || !TEST_int_gt(EVP_PKEY_decapsulate(pctx, secret_dec, &secret_dec_len,
+                            ciphertext, ciphertext_len),
+            0)
+        || !TEST_size_t_eq(secret_dec_len, secret_enc_len)
+        || !TEST_mem_eq(secret_dec, secret_dec_len, secret_enc, secret_enc_len))
+        goto err;
+    ret = 1;
+err:
+    EVP_PKEY_free(privkey);
+    OPENSSL_free(ciphertext);
+    OPENSSL_free(secret_enc);
+    OPENSSL_free(secret_dec);
+    EVP_PKEY_CTX_free(pctx);
+
+    return ret;
+}
+
+static int test_kem(OSSL_LIB_CTX *libctx, const char *propq,
+    const EVP_KEM *kem, const char *name)
+{
+    return TEST_ptr(kem)
+        && TEST_ptr(EVP_KEM_get0_provider(kem))
+        && TEST_true(EVP_KEM_is_a(kem, name))
+        && test_ml_kem_keyexch(libctx, propq);
+}
+
 static int test_EVP_KEYMGMT_fetch_freeze(void)
 {
 #if defined(OPENSSL_NO_CACHED_FETCH) || defined(OPENSSL_NO_EC)
@@ -579,6 +639,142 @@ static int test_explicit_EVP_KEYMGMT_fetch_by_X509_ALGOR(int idx)
     }
 
     ret = test_explicit_EVP_KEYMGMT_fetch(id);
+end:
+    X509_ALGOR_free(algor);
+    return ret;
+}
+
+static int test_EVP_KEM_fetch_freeze(void)
+{
+#if defined(OPENSSL_NO_CACHED_FETCH) || defined(OPENSSL_NO_ML_KEM)
+    /*
+     * Test does not make sense if cached fetch is disabled.
+     * There's nothing to freeze, and test will fail.
+     */
+    return 1;
+#endif
+
+    EVP_KEM *kem = NULL;
+    int ret = 0;
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    if (!TEST_ptr(kem = EVP_KEM_fetch(ctx, "ML-KEM-768", NULL))
+        || !TEST_true(test_kem(ctx, NULL, kem, "ML-KEM-768"))
+        || !TEST_int_ne(kem->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_KEM_free(kem);
+    kem = NULL;
+
+    if (!TEST_int_eq(OSSL_LIB_CTX_freeze(ctx, "?fips=true"), 1)
+        || !TEST_ptr(kem = EVP_KEM_fetch(ctx, "ML-KEM-768", NULL))
+        || !TEST_true(test_kem(ctx, NULL, kem, "ML-KEM-768"))
+        || !TEST_int_eq(kem->origin, EVP_ORIG_FROZEN))
+        goto err;
+    /* Technically, frozen version doesn't need to be freed */
+    EVP_KEM_free(kem);
+    kem = NULL;
+
+    if (!TEST_ptr(kem = EVP_KEM_fetch(ctx, "ML-KEM-768", "?fips=true"))
+        || !TEST_true(test_kem(ctx, "?fips=true", kem, "ML-KEM-768"))
+        || !TEST_int_eq(kem->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_KEM_free(kem);
+    kem = NULL;
+
+    /*
+     * A mismatched propq should use the regular fetch path rather than the
+     * frozen fast path.
+     */
+    if (!TEST_ptr(kem = EVP_KEM_fetch(ctx, "ML-KEM-768", "?provider=default"))
+        || !TEST_true(test_kem(ctx, "?provider=default", kem, "ML-KEM-768"))
+        || !TEST_int_ne(kem->origin, EVP_ORIG_FROZEN))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_KEM_free(kem);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_explicit_EVP_KEM_fetch(const char *id)
+{
+#if defined(OPENSSL_NO_ML_KEM)
+    return 1;
+#endif
+
+    OSSL_LIB_CTX *ctx = NULL;
+    EVP_KEM *kem = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+    int ret = 0;
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    kem = EVP_KEM_fetch(ctx, id, fetch_property);
+    if (expected_fetch_result != 0) {
+        if (!test_kem(ctx, fetch_property, kem, id))
+            goto err;
+
+        if (!TEST_true(EVP_KEM_up_ref(kem)))
+            goto err;
+        /* Ref count should now be 2. Release first one here */
+        EVP_KEM_free(kem);
+    } else {
+        if (!TEST_ptr_null(kem))
+            goto err;
+    }
+    ret = 1;
+err:
+    EVP_KEM_free(kem);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_explicit_EVP_KEM_fetch_by_name(void)
+{
+#if defined(OPENSSL_NO_ML_KEM)
+    return 1;
+#endif
+
+    return test_explicit_EVP_KEM_fetch("ML-KEM-768");
+}
+
+/*
+ * idx 0: Allow names from OBJ_obj2txt()
+ * idx 1: Force an OID in text form from OBJ_obj2txt()
+ */
+static int test_explicit_EVP_KEM_fetch_by_X509_ALGOR(int idx)
+{
+#if defined(OPENSSL_NO_ML_KEM)
+    return 1;
+#endif
+
+    int ret = 0;
+    X509_ALGOR *algor = make_algor(NID_ML_KEM_768);
+    const ASN1_OBJECT *obj;
+    char id[OSSL_MAX_NAME_SIZE] = { 0 };
+
+    if (algor == NULL)
+        return 0;
+
+    X509_ALGOR_get0(&obj, NULL, NULL, algor);
+    switch (idx) {
+    case 0:
+        if (!TEST_int_gt(OBJ_obj2txt(id, sizeof(id), obj, 0), 0))
+            goto end;
+        break;
+    case 1:
+        if (!TEST_int_gt(OBJ_obj2txt(id, sizeof(id), obj, 1), 0))
+            goto end;
+        break;
+    }
+
+    ret = test_explicit_EVP_KEM_fetch(id);
 end:
     X509_ALGOR_free(algor);
     return ret;
@@ -776,6 +972,10 @@ int setup_tests(void)
         ADD_TEST(test_implicit_EVP_KEYMGMT_fetch);
         ADD_TEST(test_explicit_EVP_KEYMGMT_fetch_by_name);
         ADD_ALL_TESTS_NOSUBTEST(test_explicit_EVP_KEYMGMT_fetch_by_X509_ALGOR, 2);
+    } else if (strcmp(alg, "kem") == 0) {
+        ADD_TEST(test_EVP_KEM_fetch_freeze);
+        ADD_TEST(test_explicit_EVP_KEM_fetch_by_name);
+        ADD_ALL_TESTS_NOSUBTEST(test_explicit_EVP_KEM_fetch_by_X509_ALGOR, 2);
     } else {
         TEST_error("Unknown fetch type: %s", alg);
         return 0;

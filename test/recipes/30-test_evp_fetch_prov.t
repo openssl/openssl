@@ -21,7 +21,7 @@ use lib bldtop_dir('.');
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-my @types = ( "digest", "cipher", "kmgmt" );
+my @types = ( "digest", "cipher", "kmgmt", "kem" );
 
 my @testdata = (
     { config    => srctop_file("test", "default.cnf"),
