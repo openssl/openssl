@@ -174,25 +174,25 @@ int ossl_sm2_encrypt(const EC_KEY *key,
 
     if (y2 == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
-        goto done;
+        goto end_first;
     }
 
     x2y2 = OPENSSL_calloc(2, field_size);
     C3 = OPENSSL_zalloc(C3_size);
 
     if (x2y2 == NULL || C3 == NULL)
-        goto done;
+        goto end_first;
 
     memset(ciphertext_buf, 0, *ciphertext_len);
 
     msg_mask = OPENSSL_zalloc(msg_len);
     if (msg_mask == NULL)
-        goto done;
+        goto end_first;
 
 again:
     if (!BN_priv_rand_range_ex(k, order, 0, ctx)) {
         ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
-        goto done;
+        goto end_first;
     }
 
     if (!EC_POINT_mul(group, kG, k, NULL, NULL, ctx)
@@ -200,20 +200,20 @@ again:
         || !EC_POINT_mul(group, kP, NULL, P, k, ctx)
         || !EC_POINT_get_affine_coordinates(group, kP, x2, y2, ctx)) {
         ERR_raise(ERR_LIB_SM2, ERR_R_EC_LIB);
-        goto done;
+        goto end_first;
     }
 
     if (BN_bn2binpad(x2, x2y2, field_size) < 0
         || BN_bn2binpad(y2, x2y2 + field_size, field_size) < 0) {
         ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
-        goto done;
+        goto end_first;
     }
 
     /* X9.63 with no salt happens to match the KDF used in SM2 */
     if (!ossl_ecdh_kdf_X9_63(msg_mask, msg_len, x2y2, 2 * field_size, NULL, 0,
             digest, libctx, propq)) {
         ERR_raise(ERR_LIB_SM2, ERR_R_EVP_LIB);
-        goto done;
+        goto end_first;
     }
 
     if (is_all_zeros(msg_mask, msg_len)) {
@@ -227,7 +227,7 @@ again:
     fetched_digest = EVP_MD_fetch(libctx, EVP_MD_get0_name(digest), propq);
     if (fetched_digest == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
-        goto done;
+        goto end_first;
     }
     if (EVP_DigestInit(hash, fetched_digest) == 0
         || EVP_DigestUpdate(hash, x2y2, field_size) == 0
@@ -235,7 +235,7 @@ again:
         || EVP_DigestUpdate(hash, x2y2 + field_size, field_size) == 0
         || EVP_DigestFinal(hash, C3, NULL) == 0) {
         ERR_raise(ERR_LIB_SM2, ERR_R_EVP_LIB);
-        goto done;
+        goto end_first;
     }
 
     ctext_struct.C1x = x1;
@@ -245,24 +245,26 @@ again:
 
     if (ctext_struct.C3 == NULL || ctext_struct.C2 == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_ASN1_LIB);
-        goto done;
+        goto end_first;
     }
     if (!ASN1_OCTET_STRING_set(ctext_struct.C3, C3, C3_size)
         || !ASN1_OCTET_STRING_set(ctext_struct.C2, msg_mask, (int)msg_len)) {
         ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
-        goto done;
+        goto end_first;
     }
 
     ciphertext_leni = i2d_SM2_Ciphertext(&ctext_struct, &ciphertext_buf);
     /* Ensure cast to size_t is safe */
     if (ciphertext_leni < 0) {
         ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
-        goto done;
+        goto end_first;
     }
     *ciphertext_len = (size_t)ciphertext_leni;
 
     rc = 1;
 
+end_first:
+    BN_CTX_end(ctx);
 done:
     EVP_MD_free(fetched_digest);
     ASN1_OCTET_STRING_free(ctext_struct.C2);
@@ -339,7 +341,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
 
     if (y2 == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
-        goto done;
+        goto end_first;
     }
 
     msg_mask = OPENSSL_zalloc(msg_len);
@@ -347,12 +349,12 @@ int ossl_sm2_decrypt(const EC_KEY *key,
     computed_C3 = OPENSSL_zalloc(hash_size);
 
     if (msg_mask == NULL || x2y2 == NULL || computed_C3 == NULL)
-        goto done;
+        goto end_first;
 
     C1 = EC_POINT_new(group);
     if (C1 == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_EC_LIB);
-        goto done;
+        goto end_first;
     }
 
     if (!EC_POINT_set_affine_coordinates(group, C1, sm2_ctext->C1x,
@@ -361,7 +363,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
             ctx)
         || !EC_POINT_get_affine_coordinates(group, C1, x2, y2, ctx)) {
         ERR_raise(ERR_LIB_SM2, ERR_R_EC_LIB);
-        goto done;
+        goto end_first;
     }
 
     if (BN_bn2binpad(x2, x2y2, field_size) < 0
@@ -369,12 +371,12 @@ int ossl_sm2_decrypt(const EC_KEY *key,
         || !ossl_ecdh_kdf_X9_63(msg_mask, msg_len, x2y2, 2 * field_size,
             NULL, 0, digest, libctx, propq)) {
         ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
-        goto done;
+        goto end_first;
     }
 
     if (is_all_zeros(msg_mask, msg_len)) {
         ERR_raise(ERR_LIB_SM2, SM2_R_INVALID_ENCODING);
-        goto done;
+        goto end_first;
     }
 
     for (i = 0; i != msg_len; ++i)
@@ -383,7 +385,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
     hash = EVP_MD_CTX_new();
     if (hash == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_EVP_LIB);
-        goto done;
+        goto end_first;
     }
 
     if (!EVP_DigestInit(hash, digest)
@@ -392,17 +394,19 @@ int ossl_sm2_decrypt(const EC_KEY *key,
         || !EVP_DigestUpdate(hash, x2y2 + field_size, field_size)
         || !EVP_DigestFinal(hash, computed_C3, NULL)) {
         ERR_raise(ERR_LIB_SM2, ERR_R_EVP_LIB);
-        goto done;
+        goto end_first;
     }
 
     if (CRYPTO_memcmp(computed_C3, C3, hash_size) != 0) {
         ERR_raise(ERR_LIB_SM2, SM2_R_INVALID_DIGEST);
-        goto done;
+        goto end_first;
     }
 
     rc = 1;
     *ptext_len = msg_len;
 
+end_first:
+    BN_CTX_end(ctx); 
 done:
     if (rc == 0)
         memset(ptext_buf, 0, *ptext_len);
