@@ -20,7 +20,7 @@ X509_PURPOSE_set - functions related to checking the purpose of a certificate
 
  #include <openssl/x509v3.h>
 
- int X509_check_purpose(X509 *x, int id, int ca);
+ int X509_check_purpose(const X509 *x, int id, int ca);
 
  int X509_PURPOSE_get_count(void);
  int X509_PURPOSE_get_unused_id(OSSL_LIB_CTX *libctx);
@@ -170,6 +170,8 @@ X509_PURPOSE_add() or X509_PURPOSE_cleanup(void) is being called.
 =head1 HISTORY
 
 X509_PURPOSE_get_unused_id() was added in OpensSL 3.5.
+
+X509_check_purpose() had its B<X509> parameter converted to const in OpenSSL 4.0.0.
 
 =head1 COPYRIGHT
 

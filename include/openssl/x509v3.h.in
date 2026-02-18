@@ -745,7 +745,7 @@ int X509V3_extensions_print(BIO *out, const char *title,
     unsigned long flag, int indent);
 
 int X509_check_ca(X509 *x);
-int X509_check_purpose(X509 *x, int id, int ca);
+int X509_check_purpose(const X509 *x, int id, int ca);
 int X509_supported_extension(X509_EXTENSION *ex);
 int X509_check_issued(X509 *issuer, X509 *subject);
 int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid);
