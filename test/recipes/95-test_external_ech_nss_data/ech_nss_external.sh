@@ -98,7 +98,7 @@ fi
 if [ -f $LDIR/certutil ]
 then
     mkdir -p $SRCTOP/nss/ca
-	LD_LIBRARY_PATH=$NLIB $LDIR/certutil -A \
+    LD_LIBRARY_PATH=$NLIB $LDIR/certutil -A \
         -i $SRCTOP/test/certs/rootcert.pem \
         -n "oe" -t "CT,C,C" -d $SRCTOP/nss/ca/
 fi
@@ -126,7 +126,6 @@ ECH=`cat $ECHCONFIGFILE \
         | tail -n+2 | head -n+2 | tr -d '\n'`
 
 NSSPARAMS="-Q -4 -b -d $SRCTOP/nss/ca"
-LD_LIBRARY_PATH="$NLIB" $LDIR/tstclnt $NSSPARAMS -h localhost -p 8443 -a $httphost -N $ECH 
+LD_LIBRARY_PATH="$NLIB" $LDIR/tstclnt $NSSPARAMS -h localhost -p 8443 -a $httphost -N $ECH
 res=$?
 exit $res
-
