@@ -844,12 +844,12 @@ static const unsigned char *int_X509_VERIFY_PARAM_get0_ip(X509_VERIFY_PARAM *par
     if (idx > INT_MAX)
         return NULL;
 
-    buf = sk_X509_BUFFER_value(param->ips, (int)idx);
-
     if (param == NULL || param->ips == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
+
+    buf = sk_X509_BUFFER_value(param->ips, (int)idx);
 
     if (buf != NULL) {
         if (plen != NULL)
