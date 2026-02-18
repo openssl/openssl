@@ -125,7 +125,7 @@
    ...
 }
 {
-   <insert_a_suppression_name_here>
+   false_positive_conditional_check
    Memcheck:Cond
    fun:bcmp
    fun:test_mem_eq
