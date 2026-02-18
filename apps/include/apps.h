@@ -163,6 +163,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     EVP_SKEY **pskey);
 EVP_SKEY *load_skey(const char *uri, int format, int maybe_stdin,
     const char *pass, int quiet);
+int load_rpk_file(SSL *ssl, const char *file);
 X509_STORE *setup_verify(const char *CAfile, int noCAfile,
     const char *CApath, int noCApath,
     const char *CAstore, int noCAstore);

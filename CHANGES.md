@@ -31,6 +31,12 @@ OpenSSL Releases
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * New `-expected-rpks` option in the `openssl-s_client(1)` and `openssl-s_server(1)`
+   command line utilities.  This makes it possible to specify one more public keys
+   expected from the remote peer that are then used to authenticate the connection.
+
+   *Viktor Dukhovni*
+
  * Fixed bug that allowed TLS 1.2 ciphers to be added to the TLS 1.3
    ciphersuites list, and for that list to contain duplicates.
    Cipher configuration strings for both TLS 1.2 and 1.3 are now
