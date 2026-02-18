@@ -85,12 +85,16 @@ static int xp_cmp(const X509_PURPOSE *const *a, const X509_PURPOSE *const *b)
  * If id == -1 it just calls x509v3_cache_extensions() for its side-effect.
  * Returns 1 on success, 0 if x does not allow purpose, -1 on (internal) error.
  */
-int X509_check_purpose(X509 *x, int id, int non_leaf)
+int X509_check_purpose(const X509 *x, int id, int non_leaf)
 {
     int idx;
     const X509_PURPOSE *pt;
 
-    if (!ossl_x509v3_cache_extensions(x))
+    /*
+     * TODO: This cast can be dropped when https://github.com/openssl/openssl/pull/30067
+     * gets merged
+     */
+    if (!ossl_x509v3_cache_extensions((X509 *)x))
         return -1;
     if (id == -1)
         return 1;
