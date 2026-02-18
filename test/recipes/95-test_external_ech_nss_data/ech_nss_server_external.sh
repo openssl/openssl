@@ -102,7 +102,7 @@ fi
 if [ ! -d $SRCTOP/nss/server ]
 then
     mkdir -p $SRCTOP/nss/server
-	LD_LIBRARY_PATH=$LLIB $LDIR/certutil -A \
+    LD_LIBRARY_PATH=$LLIB $LDIR/certutil -A \
         -i $SRCTOP/test/certs/rootcert.pem \
         -n "oe" -t "CT,C,C" -d $SRCTOP/nss/server/
     sillypass="sillypass"
@@ -111,8 +111,8 @@ then
         -in $SRCTOP/test/certs/echserver.pem \
         -password "pass:$sillypass"
     echo -n $sillypass >sillypassfile
-	LD_LIBRARY_PATH=$LLIB $LDIR/pk12util \
-        -i tmp.p12 -d $SRCTOP/nss/server -w sillypassfile 
+    LD_LIBRARY_PATH=$LLIB $LDIR/pk12util \
+        -i tmp.p12 -d $SRCTOP/nss/server -w sillypassfile
     cat sillypassfile
     # rm -f sillypassfile tmp.p12
 fi
@@ -120,7 +120,7 @@ fi
 echo "   CWD:                $PWD"
 
 # Start an NSS server
-# We'll let the server generate the ECH key pair for now (see 
+# We'll let the server generate the ECH key pair for now (see
 # below for why).
 
 # need to use ``stdbuf -o0`` so that we don't get buffering and
