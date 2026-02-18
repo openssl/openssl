@@ -83,6 +83,7 @@ static int s_nbio_test = 0;
 static int s_crlf = 0;
 static SSL_CTX *ctx = NULL;
 static SSL_CTX *ctx2 = NULL;
+static STACK_OF(OPENSSL_STRING) *rpk_files = NULL;
 static int www = 0;
 
 static BIO *bio_s_out = NULL;
@@ -1065,6 +1066,7 @@ typedef enum OPTION_choice {
     OPT_CERT_COMP,
     OPT_ENABLE_SERVER_RPK,
     OPT_ENABLE_CLIENT_RPK,
+    OPT_EXPECTED_RPK,
     OPT_R_ENUM,
     OPT_S_ENUM,
     OPT_V_ENUM,
@@ -1178,6 +1180,8 @@ const OPTIONS s_server_options[] = {
         "use dir as certificate store path to verify CA certificate" },
     { "verifyCAstore", OPT_VERIFYCASTORE, ':',
         "use URI as certificate store to verify CA certificate" },
+    { "expected-rpks", OPT_EXPECTED_RPK, '<',
+        "PEM file with expected client public key(s)" },
     { "no_cache", OPT_NO_CACHE, '-', "Disable session cache" },
     { "ext_cache", OPT_EXT_CACHE, '-',
         "Disable internal cache, set up and use external cache" },
@@ -2033,6 +2037,13 @@ int s_server_main(int argc, char *argv[])
         case OPT_ENABLE_CLIENT_RPK:
             enable_client_rpk = 1;
             break;
+        case OPT_EXPECTED_RPK:
+            if ((rpk_files == NULL
+                    && (rpk_files = sk_OPENSSL_STRING_new_null()) == NULL)
+                || !sk_OPENSSL_STRING_push(rpk_files, opt_arg()))
+                goto end;
+            enable_client_rpk = 1;
+            break;
         }
     }
 
@@ -2635,16 +2646,20 @@ int s_server_main(int argc, char *argv[])
         if (ctx2 != NULL && !SSL_CTX_compress_certs(ctx2, 0))
             BIO_puts(bio_s_out, "Error compressing certs on ctx2\n");
     }
-    if (enable_server_rpk)
-        if (!SSL_CTX_set1_server_cert_type(ctx, cert_type_rpk, sizeof(cert_type_rpk))) {
-            BIO_puts(bio_s_out, "Error setting server certificate types\n");
-            goto end;
-        }
-    if (enable_client_rpk)
-        if (!SSL_CTX_set1_client_cert_type(ctx, cert_type_rpk, sizeof(cert_type_rpk))) {
-            BIO_puts(bio_s_out, "Error setting server certificate types\n");
-            goto end;
-        }
+    if (enable_server_rpk
+        && !SSL_CTX_set1_server_cert_type(ctx, cert_type_rpk, sizeof(cert_type_rpk))) {
+        BIO_puts(bio_err, "Error setting server certificate types\n");
+        goto end;
+    }
+    if (enable_client_rpk
+        && !SSL_CTX_set1_client_cert_type(ctx, cert_type_rpk, sizeof(cert_type_rpk))) {
+        BIO_puts(bio_err, "Error setting client certificate types\n");
+        goto end;
+    }
+    if (rpk_files != NULL && SSL_CTX_dane_enable(ctx) <= 0) {
+        BIO_puts(bio_err, "Error enabling RPK verification\n");
+        goto end;
+    }
 
     if (rev)
         server_cb = rev_body;
@@ -2693,6 +2708,7 @@ end:
     OPENSSL_free(alpn_ctx.data);
     ssl_excert_free(exc);
     sk_OPENSSL_STRING_free(ssl_args);
+    sk_OPENSSL_STRING_free(rpk_files);
     SSL_CONF_CTX_free(cctx);
     BIO_free(bio_s_out);
     bio_s_out = NULL;
@@ -2757,6 +2773,19 @@ static long int count_reads_callback(BIO *bio, int cmd, const char *argp, size_t
     return ret;
 }
 
+static int rpk_enable(SSL *con)
+{
+    if (!SSL_dane_enable(con, NULL))
+        return 0;
+    for (int i = 0; i < sk_OPENSSL_STRING_num(rpk_files); ++i) {
+        const char *file = sk_OPENSSL_STRING_value(rpk_files, i);
+
+        if (!load_rpk_file(con, file))
+            return 0;
+    }
+    return 1;
+}
+
 static int sv_body(int s, int stype, int prot, unsigned char *context)
 {
     char *buf = NULL;
@@ -2810,6 +2839,13 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
         ret = -1;
         goto err;
     }
+
+    if (rpk_files != NULL && !rpk_enable(con)) {
+        BIO_puts(bio_err, "Error enabling client RPK verification\n");
+        ret = -1;
+        goto err;
+    }
+
 #ifndef OPENSSL_NO_DTLS
     if (isdtls) {
 #ifndef OPENSSL_NO_SCTP
@@ -3524,6 +3560,11 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
         goto err;
     }
 
+    if (rpk_files != NULL && !rpk_enable(con)) {
+        BIO_puts(bio_err, "Error enabling client RPK verification\n");
+        goto err;
+    }
+
     sbio = BIO_new_socket(s, BIO_NOCLOSE);
     if (sbio == NULL) {
         SSL_free(con);
@@ -3959,6 +4000,12 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
         && !SSL_set_session_id_context(con, context,
             (unsigned int)strlen((char *)context))) {
         SSL_free(con);
+        ERR_print_errors(bio_err);
+        goto err;
+    }
+
+    if (rpk_files != NULL && !rpk_enable(con)) {
+        BIO_puts(bio_err, "Error enabling client RPK verification\n");
         ERR_print_errors(bio_err);
         goto err;
     }

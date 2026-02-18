@@ -32,6 +32,12 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * New `-expected-rpks` option in the `openssl-s_client(1)` and `openssl-s_server(1)`
+   command line utilities.  This makes it possible to specify one more public keys
+   expected from the remote peer that are then used to authenticate the connection.
+
+   *Viktor Dukhovni*
+
  * Added support for TLS 1.3 SM cipher suites `TLS_SM4_GCM_SM3` and `TLS_SM4_CCM_SM3`
    from [RFC8998].
 
@@ -46,7 +52,7 @@ OpenSSL 4.0
    *Neil Horman*
 
  * FIPS self tests can now be deferred and run as needed when installing
-   the fips module with the -defer_tests option.
+   the fips module with the `-defer_tests` option.
 
    *Simo Sorce*
 
