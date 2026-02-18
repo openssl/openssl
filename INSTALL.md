@@ -584,6 +584,15 @@ In the following list, always the non-default variant is documented: if
 feature `xxxx` is disabled by default then `enable-xxxx` is documented and
 if feature `xxxx` is enabled by default then `no-xxxx` is documented.
 
+### enable-static-vcruntime
+
+Build binaries that do not require that VC runtimes are installed
+
+This option will produce binaries that are "self contained", that do not
+depend upon VC runtime libraries being installed, so can be used on any
+computer running MS Windows.  Without this option, the build will produce
+binaries that rely on the VC runtimes being installed and available.
+
 ### enable-ktls
 
 Build with Kernel TLS support.
