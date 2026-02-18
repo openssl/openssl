@@ -17,10 +17,12 @@
 #include <string.h>
 #include <openssl/sha.h>
 #include <openssl/evp.h>
+#include <openssl/core_names.h>
 #include <openssl/provider.h>
 #include "internal/sizes.h"
 #include "testutil.h"
 #include "crypto/evp.h"
+#include "../crypto/evp/evp_local.h"
 
 static char *config_file = NULL;
 static char *alg = "digest";
@@ -368,6 +370,220 @@ static int test_cipher(const EVP_CIPHER *cipher)
         && TEST_true(encrypt_decrypt(cipher, testmsg, sizeof(testmsg)));
 }
 
+static int test_ec_keyexch(OSSL_LIB_CTX *libctx, const char *propq)
+{
+    EVP_PKEY_CTX *gctx1 = NULL, *gctx2 = NULL, *dctx = NULL;
+    EVP_PKEY *key1 = NULL, *key2 = NULL;
+    unsigned char secret1[256], secret2[256];
+    size_t secret1_len = 0, secret2_len = 0;
+    OSSL_PARAM params[2];
+    int ret = 0;
+
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
+        "prime256v1", 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(gctx1 = EVP_PKEY_CTX_new_from_name(libctx, "EC", propq))
+        || !TEST_true(EVP_PKEY_keygen_init(gctx1))
+        || !TEST_true(EVP_PKEY_CTX_set_params(gctx1, params))
+        || !TEST_true(EVP_PKEY_keygen(gctx1, &key1))
+        || !TEST_ptr(gctx2 = EVP_PKEY_CTX_new_from_name(libctx, "EC", propq))
+        || !TEST_true(EVP_PKEY_keygen_init(gctx2))
+        || !TEST_true(EVP_PKEY_CTX_set_params(gctx2, params))
+        || !TEST_true(EVP_PKEY_keygen(gctx2, &key2))
+        || !TEST_ptr(dctx = EVP_PKEY_CTX_new_from_pkey(libctx, key1, propq))
+        || !TEST_true(EVP_PKEY_derive_init(dctx))
+        || !TEST_true(EVP_PKEY_derive_set_peer(dctx, key2))
+        || !TEST_true(EVP_PKEY_derive(dctx, NULL, &secret1_len))
+        || !TEST_size_t_le(secret1_len, sizeof(secret1))
+        || !TEST_true(EVP_PKEY_derive(dctx, secret1, &secret1_len)))
+        goto end;
+
+    EVP_PKEY_CTX_free(dctx);
+    dctx = NULL;
+
+    if (!TEST_ptr(dctx = EVP_PKEY_CTX_new_from_pkey(libctx, key2, propq))
+        || !TEST_true(EVP_PKEY_derive_init(dctx))
+        || !TEST_true(EVP_PKEY_derive_set_peer(dctx, key1))
+        || !TEST_true(EVP_PKEY_derive(dctx, NULL, &secret2_len))
+        || !TEST_size_t_le(secret2_len, sizeof(secret2))
+        || !TEST_true(EVP_PKEY_derive(dctx, secret2, &secret2_len))
+        || !TEST_size_t_eq(secret1_len, secret2_len)
+        || !TEST_mem_eq(secret1, secret1_len, secret2, secret2_len))
+        goto end;
+
+    ret = 1;
+end:
+    EVP_PKEY_CTX_free(dctx);
+    EVP_PKEY_CTX_free(gctx1);
+    EVP_PKEY_CTX_free(gctx2);
+    EVP_PKEY_free(key1);
+    EVP_PKEY_free(key2);
+    return ret;
+}
+
+static int test_keymgmt(OSSL_LIB_CTX *libctx, const char *propq,
+    const EVP_KEYMGMT *keymgmt, const char *name)
+{
+    return TEST_ptr(keymgmt)
+        && TEST_ptr(EVP_KEYMGMT_get0_provider(keymgmt))
+        && TEST_true(EVP_KEYMGMT_is_a(keymgmt, name))
+        && test_ec_keyexch(libctx, propq);
+}
+
+static int test_EVP_KEYMGMT_fetch_freeze(void)
+{
+#if defined(OPENSSL_NO_CACHED_FETCH) || defined(OPENSSL_NO_EC)
+    /*
+     * Test does not make sense if cached fetch is disabled.
+     * There's nothing to freeze, and test will fail.
+     */
+    return 1;
+#endif
+
+    EVP_KEYMGMT *keymgmt = NULL;
+    int ret = 0;
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    if (!TEST_ptr(keymgmt = EVP_KEYMGMT_fetch(ctx, "EC", NULL))
+        || !TEST_true(test_keymgmt(ctx, NULL, keymgmt, "EC"))
+        || !TEST_int_ne(keymgmt->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_KEYMGMT_free(keymgmt);
+    keymgmt = NULL;
+
+    if (!TEST_int_eq(OSSL_LIB_CTX_freeze(ctx, "?fips=true"), 1)
+        || !TEST_ptr(keymgmt = EVP_KEYMGMT_fetch(ctx, "EC", NULL))
+        || !TEST_true(test_keymgmt(ctx, NULL, keymgmt, "EC"))
+        || !TEST_int_eq(keymgmt->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_KEYMGMT_free(keymgmt);
+    keymgmt = NULL;
+
+    if (!TEST_ptr(keymgmt = EVP_KEYMGMT_fetch(ctx, "EC", "?fips=true"))
+        || !TEST_true(test_keymgmt(ctx, "?fips=true", keymgmt, "EC"))
+        || !TEST_int_eq(keymgmt->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_KEYMGMT_free(keymgmt);
+    keymgmt = NULL;
+
+    if (!TEST_ptr(keymgmt = EVP_KEYMGMT_fetch(ctx, "RSA", "?fips=true"))
+        || !TEST_int_eq(keymgmt->origin, EVP_ORIG_FROZEN))
+        goto err;
+    if (!TEST_ptr(keymgmt = EVP_KEYMGMT_fetch(ctx, "RSA", NULL))
+        || !TEST_int_eq(keymgmt->origin, EVP_ORIG_FROZEN))
+        goto err;
+
+    /*
+     * A mismatched propq should use the regular fetch path rather than the
+     * frozen fast path.
+     */
+    if (!TEST_ptr(keymgmt = EVP_KEYMGMT_fetch(ctx, "EC", "?provider=default"))
+        || !TEST_true(test_keymgmt(ctx, "?provider=default", keymgmt, "EC"))
+        || !TEST_int_ne(keymgmt->origin, EVP_ORIG_FROZEN))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_KEYMGMT_free(keymgmt);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_implicit_EVP_KEYMGMT_fetch(void)
+{
+#if defined(OPENSSL_NO_EC)
+    return 1;
+#endif
+
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+    int ret = 0;
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    ret = test_ec_keyexch(ctx, NULL);
+err:
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_explicit_EVP_KEYMGMT_fetch(const char *id)
+{
+#if defined(OPENSSL_NO_EC)
+    return 1;
+#endif
+
+    OSSL_LIB_CTX *ctx = NULL;
+    EVP_KEYMGMT *keymgmt = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+    int ret = 0;
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    keymgmt = EVP_KEYMGMT_fetch(ctx, id, fetch_property);
+    if (expected_fetch_result != 0) {
+        if (!test_keymgmt(ctx, fetch_property, keymgmt, id))
+            goto err;
+
+        if (!TEST_true(EVP_KEYMGMT_up_ref(keymgmt)))
+            goto err;
+        /* Ref count should now be 2. Release first one here */
+        EVP_KEYMGMT_free(keymgmt);
+    } else {
+        if (!TEST_ptr_null(keymgmt))
+            goto err;
+    }
+    ret = 1;
+err:
+    EVP_KEYMGMT_free(keymgmt);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_explicit_EVP_KEYMGMT_fetch_by_name(void)
+{
+    return test_explicit_EVP_KEYMGMT_fetch("EC");
+}
+
+static int test_explicit_EVP_KEYMGMT_fetch_by_X509_ALGOR(int idx)
+{
+#if defined(OPENSSL_NO_EC)
+    return 1;
+#endif
+
+    int ret = 0;
+    X509_ALGOR *algor = make_algor(NID_X9_62_id_ecPublicKey);
+    const ASN1_OBJECT *obj;
+    char id[OSSL_MAX_NAME_SIZE] = { 0 };
+
+    if (algor == NULL)
+        return 0;
+
+    X509_ALGOR_get0(&obj, NULL, NULL, algor);
+    switch (idx) {
+    case 0:
+        if (!TEST_int_gt(OBJ_obj2txt(id, sizeof(id), obj, 0), 0))
+            goto end;
+        break;
+    case 1:
+        if (!TEST_int_gt(OBJ_obj2txt(id, sizeof(id), obj, 1), 0))
+            goto end;
+        break;
+    }
+
+    ret = test_explicit_EVP_KEYMGMT_fetch(id);
+end:
+    X509_ALGOR_free(algor);
+    return ret;
+}
+
 static int test_EVP_CIPHER_fetch_freeze(void)
 {
 #if defined(OPENSSL_NO_CACHED_FETCH)
@@ -550,11 +766,19 @@ int setup_tests(void)
         ADD_TEST(test_implicit_EVP_MD_fetch);
         ADD_TEST(test_explicit_EVP_MD_fetch_by_name);
         ADD_ALL_TESTS_NOSUBTEST(test_explicit_EVP_MD_fetch_by_X509_ALGOR, 2);
-    } else {
+    } else if (strcmp(alg, "cipher") == 0) {
         ADD_TEST(test_EVP_CIPHER_fetch_freeze);
         ADD_TEST(test_implicit_EVP_CIPHER_fetch);
         ADD_TEST(test_explicit_EVP_CIPHER_fetch_by_name);
         ADD_ALL_TESTS_NOSUBTEST(test_explicit_EVP_CIPHER_fetch_by_X509_ALGOR, 2);
+    } else if (strcmp(alg, "kmgmt") == 0) {
+        ADD_TEST(test_EVP_KEYMGMT_fetch_freeze);
+        ADD_TEST(test_implicit_EVP_KEYMGMT_fetch);
+        ADD_TEST(test_explicit_EVP_KEYMGMT_fetch_by_name);
+        ADD_ALL_TESTS_NOSUBTEST(test_explicit_EVP_KEYMGMT_fetch_by_X509_ALGOR, 2);
+    } else {
+        TEST_error("Unknown fetch type: %s", alg);
+        return 0;
     }
     return 1;
 }
