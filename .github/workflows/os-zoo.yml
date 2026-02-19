@@ -31,4 +31,4 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test TESTS="test_evp" V=1 HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
