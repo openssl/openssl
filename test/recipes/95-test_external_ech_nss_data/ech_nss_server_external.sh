@@ -126,11 +126,6 @@ then
     exit 88
 fi
 
-# TODO(ECH): ss-echfile should have the required ECHConfigList, and this
-# works locally but somehow not in the CI, where we have an empty file
-wait 10
-ls -l ss-echfile
-cat ss-echfile
 ECH=`cat ss-echfile`
 echo "Running openssl s_client against localhost"
 (echo -e $httpreq ; sleep 2) | \

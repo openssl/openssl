@@ -22,10 +22,16 @@ plan skip_all => "External ECH tests not available on Windows or VMS"
 plan skip_all => "External ECH tests not supported in out of tree builds"
     if bldtop_dir() ne srctop_dir();
 
-plan tests => 2;
+if (defined ($ENV{OSSL_RUN_CI_TESTS})) {
+    plan tests => 1;
+} else {
+    plan tests => 2;
+}
 
 ok(run(cmd(["sh", data_file("ech_nss_external.sh")])),
    "running ECH client external NSS tests");
 
-ok(run(cmd(["sh", data_file("ech_nss_server_external.sh")])),
-   "running ECH server external NSS tests");
+if (! defined ($ENV{OSSL_RUN_CI_TESTS})) {
+    ok(run(cmd(["sh", data_file("ech_nss_server_external.sh")])),
+    "running ECH server external NSS tests");
+}
