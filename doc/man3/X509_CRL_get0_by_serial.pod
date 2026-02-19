@@ -105,6 +105,8 @@ L<X509_verify_cert(3)>
 
 =head1 HISTORY
 
+X509_CRL_get0_by_cert() was constified in OpenSSL 4.0.
+
 X509_CRL_get_REVOKED() was constified in OpenSSL 4.0.
 
 X509_CRL_get0_by_cert was constified in OpenSSL 4.0.
