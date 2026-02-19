@@ -1411,8 +1411,10 @@ int ssl_load_stores(SSL_CTX *ctx,
         vfy = X509_STORE_new();
         if (vfy == NULL)
             goto err;
-        if (vfyCAfile != NULL && !X509_STORE_load_file(vfy, vfyCAfile))
+        if (vfyCAfile != NULL && !X509_STORE_load_file(vfy, vfyCAfile)) {
+            BIO_printf(bio_err, "Error loading trusted peer verification cert file %s\n", vfyCAfile);
             goto err;
+        }
         if (vfyCApath != NULL && !X509_STORE_load_path(vfy, vfyCApath))
             goto err;
         if (vfyCAstore != NULL && !X509_STORE_load_store(vfy, vfyCAstore))
@@ -1427,8 +1429,10 @@ int ssl_load_stores(SSL_CTX *ctx,
         ch = X509_STORE_new();
         if (ch == NULL)
             goto err;
-        if (chCAfile != NULL && !X509_STORE_load_file(ch, chCAfile))
+        if (chCAfile != NULL && !X509_STORE_load_file(ch, chCAfile)) {
+            BIO_printf(bio_err, "Error loading trusted chain building cert file %s\n", chCAfile);
             goto err;
+        }
         if (chCApath != NULL && !X509_STORE_load_path(ch, chCApath))
             goto err;
         if (chCAstore != NULL && !X509_STORE_load_store(ch, chCAstore))
