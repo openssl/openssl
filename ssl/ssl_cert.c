@@ -477,8 +477,6 @@ static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *
     X509_VERIFY_PARAM_set_auth_level(param,
         SSL_get_security_level(SSL_CONNECTION_GET_SSL(s)));
 
-    /* Set suite B flags if needed */
-    X509_STORE_CTX_set_flags(ctx, tls1_suiteb(s));
     if (!X509_STORE_CTX_set_ex_data(ctx,
             SSL_get_ex_data_X509_STORE_CTX_idx(),
             SSL_CONNECTION_GET_USER_SSL(s)))
@@ -1136,9 +1134,6 @@ int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags)
         ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         goto err;
     }
-    /* Set suite B flags if needed */
-    X509_STORE_CTX_set_flags(xs_ctx,
-        c->cert_flags & SSL_CERT_FLAG_SUITEB_128_LOS);
 
     i = X509_verify_cert(xs_ctx);
     if (i <= 0 && flags & SSL_BUILD_CHAIN_FLAG_IGNORE_ERROR) {

@@ -49,8 +49,6 @@ meaningful for client authentication.
 B<CERT_PKEY_CERT_TYPE>: the certificate type is acceptable. Only meaningful
 for client authentication.
 
-B<CERT_PKEY_SUITEB>: chain is suitable for Suite B use.
-
 =head1 NOTES
 
 SSL_check_chain() must be called in servers after a client hello message or in

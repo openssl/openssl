@@ -254,7 +254,6 @@ static int verify_rpk(X509_STORE_CTX *ctx)
  */
 static int verify_chain(X509_STORE_CTX *ctx)
 {
-    int err;
     int ok;
 
     if ((ok = build_chain(ctx)) <= 0
@@ -264,10 +263,6 @@ static int verify_chain(X509_STORE_CTX *ctx)
         || (ok = X509_get_pubkey_parameters(NULL, ctx->chain) ? 1 : -1) <= 0
         || (ok = ctx->check_revocation(ctx)) <= 0)
         return ok;
-
-    err = X509_chain_check_suiteb(&ctx->error_depth, NULL, ctx->chain,
-        ctx->param->flags);
-    CB_FAIL_IF(err != X509_V_OK, ctx, NULL, ctx->error_depth, err);
 
     /* Verify chain signatures and expiration times */
     ok = ctx->verify != NULL ? ctx->verify(ctx) : internal_verify(ctx);
@@ -2063,10 +2058,6 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
         return 0;
 
     if (ikey != NULL) {
-        int rv = X509_CRL_check_suiteb(crl, ikey, ctx->param->flags);
-
-        if (rv != X509_V_OK && !verify_cb_crl(ctx, rv))
-            return 0;
         /* Verify CRL signature */
         if (X509_CRL_verify(crl, ikey) <= 0 && !verify_cb_crl(ctx, X509_V_ERR_CRL_SIGNATURE_FAILURE))
             return 0;
@@ -3548,15 +3539,6 @@ static void dane_reset(SSL_DANE *dane)
     dane->pdpth = -1;
 }
 
-/* Sadly, returns 0 also on internal error in ctx->verify_cb(). */
-static int check_leaf_suiteb(X509_STORE_CTX *ctx, X509 *cert)
-{
-    int err = X509_chain_check_suiteb(NULL, cert, NULL, ctx->param->flags);
-
-    CB_FAIL_IF(err != X509_V_OK, ctx, cert, 0, err);
-    return 1;
-}
-
 /* Returns -1 on internal error */
 static int dane_verify_rpk(X509_STORE_CTX *ctx)
 {
@@ -3617,9 +3599,6 @@ static int dane_verify(X509_STORE_CTX *ctx)
 
     if (matched > 0) {
         /* Callback invoked as needed */
-        if (!check_leaf_suiteb(ctx, cert))
-            return 0;
-        /* Callback invoked as needed */
         if ((dane->flags & DANE_FLAG_NO_DANE_EE_NAMECHECKS) == 0 && !check_id(ctx))
             return 0;
         /* Bypass internal_verify(), issue depth 0 success callback */
@@ -3636,9 +3615,6 @@ static int dane_verify(X509_STORE_CTX *ctx)
     }
 
     if (done) {
-        /* Fail early, TA-based success is not possible */
-        if (!check_leaf_suiteb(ctx, cert))
-            return 0;
         return verify_cb_cert(ctx, cert, 0, X509_V_ERR_DANE_NO_MATCH);
     }
 

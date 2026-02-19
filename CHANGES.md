@@ -460,6 +460,10 @@ OpenSSL Releases
 
    *Igor Ustinov*
 
+ * Support for obsolete SUITEB cipher suite configuration strings was removed
+
+   *Dimitri John Ledkov*
+
 OpenSSL 3.6
 -----------
 

@@ -553,13 +553,6 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
  */
 #define SSL_CERT_FLAG_TLS_STRICT 0x00000001U
 
-/* Suite B modes, takes same values as certificate verify flags */
-#define SSL_CERT_FLAG_SUITEB_128_LOS_ONLY 0x10000
-/* Suite B 192 bit only mode */
-#define SSL_CERT_FLAG_SUITEB_192_LOS 0x20000
-/* Suite B 128 bit mode allowing 192 bit algorithms */
-#define SSL_CERT_FLAG_SUITEB_128_LOS 0x30000
-
 /* Perform all sorts of protocol violations for testing purposes */
 #define SSL_CERT_FLAG_BROKEN_PROTOCOL 0x10000000
 
@@ -594,8 +587,6 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 #define CERT_PKEY_ISSUER_NAME 0x200
 /* Cert type matches client types (always set for server cert) */
 #define CERT_PKEY_CERT_TYPE 0x400
-/* Cert chain suitable to Suite B */
-#define CERT_PKEY_SUITEB 0x800
 /* Cert pkey valid for raw public key use */
 #define CERT_PKEY_RPK 0x1000
 

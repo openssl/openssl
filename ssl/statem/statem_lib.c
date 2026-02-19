@@ -1860,8 +1860,6 @@ static int ssl_method_error(const SSL_CONNECTION *s, const SSL_METHOD *method)
 
     if ((s->options & method->mask) != 0)
         return SSL_R_UNSUPPORTED_PROTOCOL;
-    if ((method->flags & SSL_METHOD_NO_SUITEB) != 0 && tls1_suiteb(s))
-        return SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE;
 
     return 0;
 }

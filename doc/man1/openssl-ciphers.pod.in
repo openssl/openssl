@@ -392,21 +392,6 @@ Cipher suites using PSK key exchange, ECDHE_PSK, DHE_PSK or RSA_PSK.
 Cipher suites using PSK authentication (currently all PSK modes apart from
 RSA_PSK).
 
-=item B<SUITEB128>, B<SUITEB128ONLY>, B<SUITEB192>
-
-Enables suite B mode of operation using 128 (permitting 192 bit mode by peer)
-128 bit (not permitting 192 bit by peer) or 192 bit level of security
-respectively.
-If used these cipherstrings should appear first in the cipher
-list and anything after them is ignored.
-Setting Suite B mode has additional consequences required to comply with
-RFC6460.
-In particular the supported signature algorithms is reduced to support only
-ECDSA and SHA256 or SHA384, only the elliptic curves P-256 and P-384 can be
-used and only the two suite B compliant cipher suites
-(ECDHE-ECDSA-AES128-GCM-SHA256 and ECDHE-ECDSA-AES256-GCM-SHA384) are
-permissible.
-
 =item B<CBC>
 
 All cipher suites using encryption algorithm in Cipher Block Chaining (CBC)
@@ -816,6 +801,19 @@ The support for TLS v1.3 integrity-only cipher suites was added in OpenSSL 3.4.
 
 The list of TLS 1.3 ciphersuites I<val> and TLS 1.2 ciphers
 I<cipherlist> were case-sensitive prior to OpenSSL 4.0.
+
+The support for obsolete SUITEB settings removed in OpenSSL 4.0.
+SUITEB was withdrawn in 2018 and replaced by CNSA 1 which allows RSA
+in addition to ECDSA, but limited hashes. Since then, CNSA 1 is now
+deprecated too in favor of CNSA 2. Thus SUITEB setting has been
+actively preventing correct algorithm compliance since 2018. Currently
+OpenSSL does not have aliases for CNSA2, in the mean time (and since
+2018 for all versions of OpenSSL) it is recommendeded to set
+individual groups to configured desired preferred strings. Please see
+published and draft RFC explaining required algorithm compliance for
+National Security Systems. Note in many ways the DEFAULT algorithm
+string at SECLEVEL=2 is actually closer in compliance to the CNSA1 set
+of algorithms than SUITEB string was.
 
 =head1 COPYRIGHT
 

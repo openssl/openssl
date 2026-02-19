@@ -212,15 +212,6 @@ static const unsigned char ecformats_all[] = {
     "?curveSM2 / "                                             \
     "?ffdhe2048:?ffdhe3072"
 
-static const uint16_t suiteb_curves[] = {
-    OSSL_TLS_GROUP_ID_secp256r1,
-    OSSL_TLS_GROUP_ID_secp384r1,
-};
-
-/* Group list string of the built-in pseudo group DEFAULT_SUITE_B */
-#define SUITE_B_GROUP_NAME "DEFAULT_SUITE_B"
-#define SUITE_B_GROUP_LIST "?secp256r1:?secp384r1",
-
 struct provider_ctx_data_st {
     SSL_CTX *ctx;
     OSSL_PROVIDER *provider;
@@ -799,32 +790,12 @@ void tls1_get_supported_groups(SSL_CONNECTION *s, const uint16_t **pgroups,
 {
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
-    /* For Suite B mode only include P-256, P-384 */
-    switch (tls1_suiteb(s)) {
-    case SSL_CERT_FLAG_SUITEB_128_LOS:
-        *pgroups = suiteb_curves;
-        *pgroupslen = OSSL_NELEM(suiteb_curves);
-        break;
-
-    case SSL_CERT_FLAG_SUITEB_128_LOS_ONLY:
-        *pgroups = suiteb_curves;
-        *pgroupslen = 1;
-        break;
-
-    case SSL_CERT_FLAG_SUITEB_192_LOS:
-        *pgroups = suiteb_curves + 1;
-        *pgroupslen = 1;
-        break;
-
-    default:
-        if (s->ext.supportedgroups == NULL) {
-            *pgroups = sctx->ext.supportedgroups;
-            *pgroupslen = sctx->ext.supportedgroups_len;
-        } else {
-            *pgroups = s->ext.supportedgroups;
-            *pgroupslen = s->ext.supportedgroups_len;
-        }
-        break;
+    if (s->ext.supportedgroups == NULL) {
+        *pgroups = sctx->ext.supportedgroups;
+        *pgroupslen = sctx->ext.supportedgroups_len;
+    } else {
+        *pgroups = s->ext.supportedgroups;
+        *pgroupslen = s->ext.supportedgroups_len;
     }
 }
 
@@ -1034,21 +1005,6 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch, int groups)
     if (s->server == 0)
         return 0;
     if (nmatch == TLS1_GROUPS_RETURN_TMP_ID) {
-        if (groups != TLS1_GROUPS_FFDHE_GROUPS && tls1_suiteb(s)) {
-            /*
-             * For Suite B ciphersuite determines curve: we already know
-             * these are acceptable due to previous checks.
-             */
-            unsigned long cid = s->s3.tmp.new_cipher->id;
-
-            if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
-                return OSSL_TLS_GROUP_ID_secp256r1;
-            if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384)
-                return OSSL_TLS_GROUP_ID_secp384r1;
-            /* Should never happen */
-            return 0;
-        }
-        /* If not Suite B just return first preference shared curve */
         nmatch = 0;
     }
     /*
@@ -1182,7 +1138,6 @@ static const char *DEFAULT_GROUPNAME_FIRST_CHARACTER = "D";
 /* The list of all built-in pseudo-group-name structures */
 static const default_group_string_st default_group_strings[] = {
     { DEFAULT_GROUP_NAME, TLS_DEFAULT_GROUP_LIST },
-    { SUITE_B_GROUP_NAME, SUITE_B_GROUP_LIST }
 };
 
 /*
@@ -1813,22 +1768,6 @@ int tls1_check_group_id(SSL_CONNECTION *s, uint16_t group_id,
     if (group_id == 0)
         return 0;
 
-    /* Check for Suite B compliance */
-    if (tls1_suiteb(s) && s->s3.tmp.new_cipher != NULL) {
-        unsigned long cid = s->s3.tmp.new_cipher->id;
-
-        if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256) {
-            if (group_id != OSSL_TLS_GROUP_ID_secp256r1)
-                return 0;
-        } else if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384) {
-            if (group_id != OSSL_TLS_GROUP_ID_secp384r1)
-                return 0;
-        } else {
-            /* Should never happen */
-            return 0;
-        }
-    }
-
     if (check_own_groups) {
         /* Check group is one of our preferences */
         tls1_get_supported_groups(s, &groups, &groups_len);
@@ -1868,11 +1807,7 @@ void tls1_get_formatlist(SSL_CONNECTION *s, const unsigned char **pformats,
         *num_formats = s->ext.ecpointformats_len;
     } else if ((s->options & SSL_OP_LEGACY_EC_POINT_FORMATS) != 0) {
         *pformats = ecformats_all;
-        /* For Suite B we don't support char2 fields */
-        if (tls1_suiteb(s))
-            *num_formats = sizeof(ecformats_all) - 1;
-        else
-            *num_formats = sizeof(ecformats_all);
+        *num_formats = sizeof(ecformats_all);
     } else {
         *pformats = ecformats_default;
         *num_formats = sizeof(ecformats_default);
@@ -1960,27 +1895,6 @@ static int tls1_check_cert_param(SSL_CONNECTION *s, X509 *x, int check_ee_md)
      */
     if (!tls1_check_group_id(s, group_id, !s->server))
         return 0;
-    /*
-     * Special case for suite B. We *MUST* sign using SHA256+P-256 or
-     * SHA384+P-384.
-     */
-    if (check_ee_md && tls1_suiteb(s)) {
-        int check_md;
-        size_t i;
-
-        /* Check to see we have necessary signing algorithm */
-        if (group_id == OSSL_TLS_GROUP_ID_secp256r1)
-            check_md = NID_ecdsa_with_SHA256;
-        else if (group_id == OSSL_TLS_GROUP_ID_secp384r1)
-            check_md = NID_ecdsa_with_SHA384;
-        else
-            return 0; /* Should never happen */
-        for (i = 0; i < s->shared_sigalgslen; i++) {
-            if (check_md == s->shared_sigalgs[i]->sigandhash)
-                return 1;
-        }
-        return 0;
-    }
     return 1;
 }
 
@@ -2036,19 +1950,7 @@ int tls1_check_ffdhe_tmp_key(SSL_CONNECTION *s, unsigned long cid)
  */
 int tls1_check_ec_tmp_key(SSL_CONNECTION *s, unsigned long cid)
 {
-    /* If not Suite B just need a shared group */
-    if (!tls1_suiteb(s))
-        return tls1_shared_group(s, 0, TLS1_GROUPS_NON_FFDHE_GROUPS) != 0;
-    /*
-     * If Suite B, AES128 MUST use P-256 and AES256 MUST use P-384, no other
-     * curves permitted.
-     */
-    if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
-        return tls1_check_group_id(s, OSSL_TLS_GROUP_ID_secp256r1, 1);
-    if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384)
-        return tls1_check_group_id(s, OSSL_TLS_GROUP_ID_secp384r1, 1);
-
-    return 0;
+    return tls1_shared_group(s, 0, TLS1_GROUPS_NON_FFDHE_GROUPS) != 0;
 }
 
 /* Default sigalg schemes */
@@ -2096,11 +1998,6 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512,
     TLSEXT_SIGALG_gostr34102001_gostr3411,
 #endif
-};
-
-static const uint16_t suiteb_sigalgs[] = {
-    TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
-    TLSEXT_SIGALG_ecdsa_secp384r1_sha384
 };
 
 static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
@@ -2667,23 +2564,6 @@ int tls1_set_peer_legacy_sigalg(SSL_CONNECTION *s, const EVP_PKEY *pkey)
 size_t tls12_get_psigalgs(SSL_CONNECTION *s, int sent, const uint16_t **psigs)
 {
     /*
-     * If Suite B mode use Suite B sigalgs only, ignore any other
-     * preferences.
-     */
-    switch (tls1_suiteb(s)) {
-    case SSL_CERT_FLAG_SUITEB_128_LOS:
-        *psigs = suiteb_sigalgs;
-        return OSSL_NELEM(suiteb_sigalgs);
-
-    case SSL_CERT_FLAG_SUITEB_128_LOS_ONLY:
-        *psigs = suiteb_sigalgs;
-        return 1;
-
-    case SSL_CERT_FLAG_SUITEB_192_LOS:
-        *psigs = suiteb_sigalgs + 1;
-        return 1;
-    }
-    /*
      *  We use client_sigalgs (if not NULL) if we're a server
      *  and sending a certificate request or if we're a client and
      *  determining which shared algorithm to use.
@@ -2902,33 +2782,20 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
         }
 
         /* For TLS 1.3 or Suite B check curve matches signature algorithm */
-        if (SSL_CONNECTION_IS_TLS13(s) || tls1_suiteb(s)) {
+        if (SSL_CONNECTION_IS_TLS13(s)) {
             int curve = ssl_get_EC_curve_nid(pkey);
 
             if (lu->curve != NID_undef && curve != lu->curve) {
                 SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_CURVE);
                 return 0;
             }
-        }
-        if (!SSL_CONNECTION_IS_TLS13(s)) {
+        } else {
             /* Check curve matches extensions */
             if (!tls1_check_group_id(s, tls1_get_group_id(pkey), 1)) {
                 SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_CURVE);
                 return 0;
             }
-            if (tls1_suiteb(s)) {
-                /* Check sigalg matches a permissible Suite B value */
-                if (sig != TLSEXT_SIGALG_ecdsa_secp256r1_sha256
-                    && sig != TLSEXT_SIGALG_ecdsa_secp384r1_sha384) {
-                    SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
-                        SSL_R_WRONG_SIGNATURE_TYPE);
-                    return 0;
-                }
-            }
         }
-    } else if (tls1_suiteb(s)) {
-        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_WRONG_SIGNATURE_TYPE);
-        return 0;
     }
 
     /* Check signature matches a type we sent */
@@ -3635,21 +3502,20 @@ static int tls1_set_shared_sigalgs(SSL_CONNECTION *s)
     size_t nmatch;
     const SIGALG_LOOKUP **salgs = NULL;
     CERT *c = s->cert;
-    unsigned int is_suiteb = tls1_suiteb(s);
 
     OPENSSL_free(s->shared_sigalgs);
     s->shared_sigalgs = NULL;
     s->shared_sigalgslen = 0;
     /* If client use client signature algorithms if not NULL */
-    if (!s->server && c->client_sigalgs && !is_suiteb) {
+    if (!s->server && c->client_sigalgs) {
         conf = c->client_sigalgs;
         conflen = c->client_sigalgslen;
-    } else if (c->conf_sigalgs && !is_suiteb) {
+    } else if (c->conf_sigalgs) {
         conf = c->conf_sigalgs;
         conflen = c->conf_sigalgslen;
     } else
         conflen = tls12_get_psigalgs(s, 0, &conf);
-    if (s->options & SSL_OP_SERVER_PREFERENCE || is_suiteb) {
+    if (s->options & SSL_OP_SERVER_PREFERENCE) {
         pref = conf;
         preflen = conflen;
         allow = s->s3.tmp.peer_sigalgs;
@@ -4192,7 +4058,6 @@ int tls1_check_chain(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pk,
     CERT_PKEY *cpk = NULL;
     CERT *c = s->cert;
     uint32_t *pvalid;
-    unsigned int suiteb_flags = tls1_suiteb(s);
 
     /*
      * Meaning of idx:
@@ -4240,17 +4105,6 @@ int tls1_check_chain(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pk,
         else
             check_flags = CERT_PKEY_VALID_FLAGS;
         strict_mode = 1;
-    }
-
-    if (suiteb_flags) {
-        int ok;
-        if (check_flags)
-            check_flags |= CERT_PKEY_SUITEB;
-        ok = X509_chain_check_suiteb(NULL, x, chain, suiteb_flags);
-        if (ok == X509_V_OK)
-            rv |= CERT_PKEY_SUITEB;
-        else if (!check_flags)
-            goto end;
     }
 
     /*
@@ -4844,11 +4698,6 @@ int tls_choose_sigalg(SSL_CONNECTION *s, int fatalerrs)
             if (s->s3.tmp.peer_sigalgs != NULL) {
                 int curve = -1;
                 SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-
-                /* For Suite B need to match signature algorithm to curve */
-                if (tls1_suiteb(s))
-                    curve = ssl_get_EC_curve_nid(s->cert->pkeys[SSL_PKEY_ECC]
-                            .privatekey);
 
                 /*
                  * Find highest preference signature algorithm matching
