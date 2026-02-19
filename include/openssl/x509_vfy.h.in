@@ -158,9 +158,9 @@ typedef int (*X509_STORE_CTX_verify_cb)(int, X509_STORE_CTX *);
 int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx);
 typedef int (*X509_STORE_CTX_verify_fn)(X509_STORE_CTX *);
 typedef int (*X509_STORE_CTX_get_issuer_fn)(X509 **issuer,
-    X509_STORE_CTX *ctx, X509 *x);
+    X509_STORE_CTX *ctx, const X509 *x);
 typedef int (*X509_STORE_CTX_check_issued_fn)(X509_STORE_CTX *ctx,
-    X509 *x, X509 *issuer);
+    const X509 *x, const X509 *issuer);
 typedef int (*X509_STORE_CTX_check_revocation_fn)(X509_STORE_CTX *ctx);
 typedef int (*X509_STORE_CTX_get_crl_fn)(X509_STORE_CTX *ctx,
     X509_CRL **crl, X509 *x);
@@ -494,7 +494,7 @@ void *X509_STORE_get_ex_data(const X509_STORE *xs, int idx);
 X509_STORE_CTX *X509_STORE_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
 X509_STORE_CTX *X509_STORE_CTX_new(void);
 
-int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
+int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, const X509 *x);
 
 void X509_STORE_CTX_free(X509_STORE_CTX *ctx);
 int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *trust_store,
@@ -505,7 +505,7 @@ void X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx);
 
 X509_STORE *X509_STORE_CTX_get0_store(const X509_STORE_CTX *ctx);
-X509 *X509_STORE_CTX_get0_cert(const X509_STORE_CTX *ctx);
+const X509 *X509_STORE_CTX_get0_cert(const X509_STORE_CTX *ctx);
 EVP_PKEY *X509_STORE_CTX_get0_rpk(const X509_STORE_CTX *ctx);
 STACK_OF(X509) *X509_STORE_CTX_get0_untrusted(const X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set0_untrusted(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
@@ -688,14 +688,14 @@ int X509_STORE_CTX_get_error(const X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set_error(X509_STORE_CTX *ctx, int s);
 int X509_STORE_CTX_get_error_depth(const X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set_error_depth(X509_STORE_CTX *ctx, int depth);
-X509 *X509_STORE_CTX_get_current_cert(const X509_STORE_CTX *ctx);
+const X509 *X509_STORE_CTX_get_current_cert(const X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set_current_cert(X509_STORE_CTX *ctx, X509 *x);
-X509 *X509_STORE_CTX_get0_current_issuer(const X509_STORE_CTX *ctx);
+const X509 *X509_STORE_CTX_get0_current_issuer(const X509_STORE_CTX *ctx);
 X509_CRL *X509_STORE_CTX_get0_current_crl(const X509_STORE_CTX *ctx);
 X509_STORE_CTX *X509_STORE_CTX_get0_parent_ctx(const X509_STORE_CTX *ctx);
 STACK_OF(X509) *X509_STORE_CTX_get0_chain(const X509_STORE_CTX *ctx);
 STACK_OF(X509) *X509_STORE_CTX_get1_chain(const X509_STORE_CTX *ctx);
-void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *target);
+void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, const X509 *target);
 void X509_STORE_CTX_set0_rpk(X509_STORE_CTX *ctx, EVP_PKEY *target);
 void X509_STORE_CTX_set0_verified_chain(X509_STORE_CTX *c, STACK_OF(X509) *sk);
 void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk);

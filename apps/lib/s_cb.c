@@ -47,7 +47,7 @@ static const char *lookup(int val, const STRINT_PAIR *list, const char *def)
 
 int verify_callback(int ok, X509_STORE_CTX *ctx)
 {
-    X509 *err_cert;
+    const X509 *err_cert;
     int err, depth;
 
     err_cert = X509_STORE_CTX_get_current_cert(ctx);

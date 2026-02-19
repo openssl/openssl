@@ -1271,7 +1271,7 @@ end:
 static int callb(int ok, X509_STORE_CTX *ctx)
 {
     int err;
-    X509 *err_cert;
+    const X509 *err_cert;
 
     /*
      * It is ok to use a self-signed certificate. This case will catch both
