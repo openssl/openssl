@@ -777,10 +777,10 @@ char *X509_PURPOSE_get0_sname(const X509_PURPOSE *xp);
 int X509_PURPOSE_get_trust(const X509_PURPOSE *xp);
 int X509_PURPOSE_set(int *p, int purpose);
 
-STACK_OF(OPENSSL_STRING) *X509_get1_email(X509 *x);
-STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(X509_REQ *x);
+STACK_OF(OPENSSL_STRING) *X509_get1_email(const X509 *x);
+STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(const X509_REQ *x);
 void X509_email_free(STACK_OF(OPENSSL_STRING) *sk);
-STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(X509 *x);
+STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(const X509 *x);
 
 /* Flags for X509_check_* functions */
 
