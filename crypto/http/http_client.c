@@ -24,6 +24,7 @@
 #include "internal/sockets.h"
 #include "internal/common.h" /* for ossl_assert() */
 
+#define OSSL_HTTP_DEFAULT_PORT(use_ssl) ((use_ssl) ? OSSL_HTTPS_PORT : OSSL_HTTP_PORT)
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */
 #define HTTP_VERSION_STR_LEN sizeof(HTTP_VERSION_PATT) /* == strlen("1.0") */
@@ -95,6 +96,8 @@ struct ossl_http_req_ctx_st {
 
 /* Low-level HTTP API implementation */
 
+static char *base64encode(const void *buf, size_t len);
+
 OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int buf_size)
 {
     OSSL_HTTP_REQ_CTX *rctx;
@@ -136,7 +139,8 @@ void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx)
     BIO_free(rctx->mem);
     BIO_free(rctx->req);
     OPENSSL_free(rctx->buf);
-    OPENSSL_free(rctx->proxy);
+    if (rctx->proxy != NULL)
+        OPENSSL_clear_free(rctx->proxy, strlen(rctx->proxy));
     OPENSSL_free(rctx->server);
     OPENSSL_free(rctx->port);
     OPENSSL_free(rctx->expected_ct);
@@ -199,7 +203,8 @@ int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx, int method_POST,
          */
         if (BIO_printf(rctx->mem, OSSL_HTTP_PREFIX "%s", server) <= 0)
             return 0;
-        if (port != NULL && BIO_printf(rctx->mem, ":%s", port) <= 0)
+        if (port != NULL && strcmp(port, OSSL_HTTP_DEFAULT_PORT(rctx->use_ssl)) != 0
+            && BIO_printf(rctx->mem, ":%s", port) <= 0)
             return 0;
     }
 
@@ -372,22 +377,41 @@ void OSSL_HTTP_REQ_CTX_set_max_response_hdr_lines(OSSL_HTTP_REQ_CTX *rctx,
 }
 
 static int add1_headers(OSSL_HTTP_REQ_CTX *rctx,
-    const STACK_OF(CONF_VALUE) *headers, const char *host)
+    const STACK_OF(CONF_VALUE) *headers, const char *host, const char *port)
 {
     int i;
-    int add_host = host != NULL && *host != '\0';
+    char buf[300];
+    size_t len;
     CONF_VALUE *hdr;
+
+    /* according to RFC 7230 section 5.4, should place Host header first */
+    for (i = 0; i < sk_CONF_VALUE_num(headers); i++) {
+        hdr = sk_CONF_VALUE_value(headers, i);
+        if (OPENSSL_strcasecmp("Host", hdr->name) == 0) {
+            host = hdr->value; /* user-supplied header value takes precedence */
+            port = NULL;
+        }
+    }
+    if (host != NULL
+        && port != NULL && strcmp(port, OSSL_HTTP_DEFAULT_PORT(rctx->use_ssl)) != 0) {
+        len = strlen(host) + 1 + strlen(port);
+        if (len > INT_MAX
+            || BIO_snprintf(buf, sizeof(buf), "%s:%s", host, port) != (int)len) {
+            ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_INVALID_ARGUMENT);
+            return 0;
+        }
+        host = buf;
+    }
+    if (host != NULL && *host != '\0'
+        && !OSSL_HTTP_REQ_CTX_add1_header(rctx, "Host", host))
+        return 0;
 
     for (i = 0; i < sk_CONF_VALUE_num(headers); i++) {
         hdr = sk_CONF_VALUE_value(headers, i);
-        if (add_host && OPENSSL_strcasecmp("host", hdr->name) == 0)
-            add_host = 0;
-        if (!OSSL_HTTP_REQ_CTX_add1_header(rctx, hdr->name, hdr->value))
+        if (OPENSSL_strcasecmp("Host", hdr->name) != 0
+            && !OSSL_HTTP_REQ_CTX_add1_header(rctx, hdr->name, hdr->value))
             return 0;
     }
-
-    if (add_host && !OSSL_HTTP_REQ_CTX_add1_header(rctx, "Host", host))
-        return 0;
     return 1;
 }
 
@@ -980,7 +1004,7 @@ static const char *explict_or_default_port(const char *hostserv, const char *por
         if (!BIO_parse_hostserv(hostserv, NULL, &service, BIO_PARSE_PRIO_HOST))
             return NULL;
         if (service == NULL) /* implicit port */
-            port = use_ssl ? OSSL_HTTPS_PORT : OSSL_HTTP_PORT;
+            port = OSSL_HTTP_DEFAULT_PORT(use_ssl);
         OPENSSL_free(service);
     } /* otherwise take the explicitly given port */
     return port;
@@ -1057,6 +1081,44 @@ int OSSL_HTTP_is_alive(const OSSL_HTTP_REQ_CTX *rctx)
 
 /* High-level HTTP API implementation */
 
+static void http_add_error_data(OSSL_HTTP_REQ_CTX *rctx)
+{
+    char buf[200];
+    unsigned long err = ERR_peek_error();
+    int lib = ERR_GET_LIB(err);
+    int reason = ERR_GET_REASON(err);
+
+    if (lib == ERR_LIB_SSL || lib == ERR_LIB_HTTP
+        || (lib == ERR_LIB_BIO && (reason == BIO_R_CONNECT_TIMEOUT || reason == BIO_R_CONNECT_ERROR || reason == BIO_R_TRANSFER_TIMEOUT || reason == BIO_R_TRANSFER_ERROR))
+#ifndef OPENSSL_NO_CMP
+        || (lib == ERR_LIB_CMP
+            && reason == CMP_R_POTENTIALLY_INVALID_CERTIFICATE)
+#endif
+    ) {
+        if (rctx->server != NULL && *rctx->server != '\0') {
+            BIO_snprintf(buf, sizeof(buf), "server=http%s://%s%s%s",
+                rctx->use_ssl ? "s" : "", rctx->server,
+                rctx->port != NULL ? ":" : "",
+                rctx->port != NULL ? rctx->port : "");
+            ERR_add_error_data(1, buf);
+        }
+        if (rctx->proxy != NULL) {
+            /* show proxy without any given user:pass@ prefix */
+            char *proxy_host = strchr(rctx->proxy, '@');
+
+            if (proxy_host == NULL)
+                proxy_host = rctx->proxy;
+            else
+                proxy_host++;
+            ERR_add_error_data(2, " proxy=", proxy_host);
+        }
+    } else if (err == 0) {
+        BIO_snprintf(buf, sizeof(buf), " peer has disconnected%s",
+            rctx->use_ssl ? " violating the protocol" : ", likely because it requires the use of TLS");
+        ERR_add_error_data(1, buf);
+    }
+}
+
 /* Initiate an HTTP session using bio, else use given server, proxy, etc. */
 OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
     const char *proxy, const char *no_proxy,
@@ -1071,17 +1133,17 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
         ERR_raise(ERR_LIB_HTTP, HTTP_R_TLS_NOT_ENABLED);
         return NULL;
     }
-    if (rbio != NULL && (bio == NULL || bio_update_fn != NULL)) {
+    if (bio == NULL && rbio != NULL) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
     }
 
+    if (port != NULL && *port == '\0')
+        port = NULL;
+    proxy = OSSL_HTTP_adapt_proxy(proxy, no_proxy, server, use_ssl);
+
     if (bio != NULL) {
         cbio = bio;
-        if (proxy != NULL || no_proxy != NULL) {
-            ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_INVALID_ARGUMENT);
-            return NULL;
-        }
     } else {
 #ifndef OPENSSL_NO_SOCK
         char *proxy_host = NULL, *proxy_port = NULL;
@@ -1090,9 +1152,6 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
             ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
             return NULL;
         }
-        if (port != NULL && *port == '\0')
-            port = NULL;
-        proxy = OSSL_HTTP_adapt_proxy(proxy, no_proxy, server, use_ssl);
         if (proxy != NULL
             && !OSSL_HTTP_parse_url(proxy, NULL /* use_ssl */, NULL /* user */,
                 &proxy_host, &proxy_port, NULL /* num */,
@@ -1108,16 +1167,23 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
         return NULL;
 #endif
     }
+    rctx = http_req_ctx_new(bio == NULL, cbio, rbio != NULL ? rbio : cbio,
+        bio_update_fn, arg, use_ssl, proxy, server, port,
+        buf_size, overall_timeout);
+    if (rctx == NULL) {
+        if (bio == NULL) /* cbio was not provided by caller */
+            BIO_free(cbio);
+        return NULL;
+    }
 
     (void)ERR_set_mark(); /* prepare removing any spurious libssl errors */
-    if (rbio == NULL && BIO_do_connect_retry(cbio, overall_timeout, -1) <= 0) {
-        if (bio == NULL) /* cbio was not provided by caller */
-            BIO_free_all(cbio);
-        goto end;
-    }
+    if (rbio == NULL && BIO_do_connect_retry(cbio, overall_timeout, -1) <= 0)
+        goto err;
     /* now overall_timeout is guaranteed to be >= 0 */
 
-    /* adapt in order to fix callback design flaw, see #17088 */
+    if (use_ssl && !OSSL_HTTP_REQ_CTX_proxy_connect(rctx, NULL, NULL /* no default proxy user and passwd */, NULL, NULL))
+        goto err;
+
     /* callback can be used to wrap or prepend TLS session */
     if (bio_update_fn != NULL) {
         BIO *orig_bio = cbio;
@@ -1125,14 +1191,19 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
         cbio = (*bio_update_fn)(cbio, arg, 1 /* connect */, use_ssl != 0);
         if (cbio == NULL) {
             if (bio == NULL) /* cbio was not provided by caller */
-                BIO_free_all(orig_bio);
-            goto end;
+                rctx->wbio = orig_bio;
+            goto err;
         }
+        rctx->wbio = cbio;
+        if (rbio == NULL)
+            rctx->rbio = cbio;
     }
+    goto end;
 
-    rctx = http_req_ctx_new(bio == NULL, cbio, rbio != NULL ? rbio : cbio,
-        bio_update_fn, arg, use_ssl, proxy, server, port,
-        buf_size, overall_timeout);
+err:
+    http_add_error_data(rctx);
+    OSSL_HTTP_REQ_CTX_free(rctx);
+    rctx = NULL;
 
 end:
     if (rctx != NULL)
@@ -1163,13 +1234,35 @@ int OSSL_HTTP_set1_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
     }
     rctx->max_resp_len = max_resp_len; /* allows for 0: indefinite */
 
-    return OSSL_HTTP_REQ_CTX_set_request_line(rctx, req != NULL,
-               use_http_proxy ? rctx->server
-                              : NULL,
-               rctx->port, path)
-        && add1_headers(rctx, headers, rctx->server)
-        && OSSL_HTTP_REQ_CTX_set_expected(rctx, expected_content_type,
-            expect_asn1, timeout, keep_alive)
+    if (!OSSL_HTTP_REQ_CTX_set_request_line(rctx, req != NULL,
+            use_http_proxy ? rctx->server : NULL, rctx->port, path))
+        return 0;
+    if (!add1_headers(rctx, headers, rctx->server, rctx->port))
+        return 0;
+    if (use_http_proxy) {
+        char *userinfo = NULL, *enc;
+        size_t len = 0;
+        int ret = 1;
+
+        if (BIO_printf(rctx->mem, "Proxy-Connection: Keep-Alive\r\n") <= 0)
+            return 0;
+        if (!OSSL_HTTP_parse_url(rctx->proxy, NULL, &userinfo, NULL, NULL, NULL, NULL, NULL, NULL))
+            return 0;
+        if (userinfo != NULL && *userinfo != '\0') {
+            len = strlen(userinfo);
+            enc = base64encode(userinfo, len);
+            ret = 0;
+            if (enc != NULL) {
+                ret = BIO_printf(rctx->mem, "Proxy-Authorization: Basic %s\r\n", enc);
+                OPENSSL_clear_free(enc, strlen(enc));
+            }
+        }
+        OPENSSL_clear_free(userinfo, len);
+        if (ret <= 0)
+            return 0;
+    }
+    return OSSL_HTTP_REQ_CTX_set_expected(rctx, expected_content_type,
+               expect_asn1, timeout, keep_alive)
         && set1_content(rctx, content_type, req);
 }
 
@@ -1199,34 +1292,7 @@ BIO *OSSL_HTTP_exchange(OSSL_HTTP_REQ_CTX *rctx, char **redirection_url)
                 /* may be NULL if out of memory: */
                 *redirection_url = OPENSSL_strdup(rctx->redirection_url);
         } else {
-            char buf[200];
-            unsigned long err = ERR_peek_error();
-            int lib = ERR_GET_LIB(err);
-            int reason = ERR_GET_REASON(err);
-
-            if (lib == ERR_LIB_SSL || lib == ERR_LIB_HTTP
-                || (lib == ERR_LIB_BIO && reason == BIO_R_CONNECT_TIMEOUT)
-                || (lib == ERR_LIB_BIO && reason == BIO_R_CONNECT_ERROR)
-#ifndef OPENSSL_NO_CMP
-                || (lib == ERR_LIB_CMP
-                    && reason == CMP_R_POTENTIALLY_INVALID_CERTIFICATE)
-#endif
-            ) {
-                if (rctx->server != NULL && *rctx->server != '\0') {
-                    BIO_snprintf(buf, sizeof(buf), "server=http%s://%s%s%s",
-                        rctx->use_ssl ? "s" : "", rctx->server,
-                        rctx->port != NULL ? ":" : "",
-                        rctx->port != NULL ? rctx->port : "");
-                    ERR_add_error_data(1, buf);
-                }
-                if (rctx->proxy != NULL)
-                    ERR_add_error_data(2, " proxy=", rctx->proxy);
-                if (err == 0) {
-                    BIO_snprintf(buf, sizeof(buf), " peer has disconnected%s",
-                        rctx->use_ssl ? " violating the protocol" : ", likely because it requires the use of TLS");
-                    ERR_add_error_data(1, buf);
-                }
-            }
+            http_add_error_data(rctx);
         }
     }
 
@@ -1383,10 +1449,9 @@ int OSSL_HTTP_close(OSSL_HTTP_REQ_CTX *rctx, int ok)
     BIO *wbio;
     int ret = 1;
 
-    /* callback can be used to finish TLS session and free its BIO */
+    /* callback can be used to clean up TLS session on disconnect */
     if (rctx != NULL && rctx->upd_fn != NULL) {
-        wbio = (*rctx->upd_fn)(rctx->wbio, rctx->upd_arg,
-            0 /* disconnect */, ok);
+        wbio = (*rctx->upd_fn)(rctx->wbio, rctx->upd_arg, 0 /* disconnect */, ok);
         ret = wbio != NULL;
         if (ret)
             rctx->wbio = wbio;
@@ -1423,8 +1488,8 @@ static char *base64encode(const void *buf, size_t len)
 
 /*
  * Promote the given connection BIO using the CONNECT method for a TLS proxy.
- * This is typically called by an app, so bio_err and prog are used unless NULL
- * to print additional diagnostic information in a user-oriented way.
+ * This can be directly called by an app, so bio_err and prog are used unless NULL
+ * to print diagnostic information in a user-oriented way.
  */
 int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
     const char *proxyuser, const char *proxypass,
@@ -1449,18 +1514,23 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
         port = OSSL_HTTPS_PORT;
 
     if (mbuf == NULL || fbio == NULL) {
-        BIO_printf(bio_err /* may be NULL */, "%s: out of memory", prog);
+        if (bio_err != NULL)
+            BIO_printf(bio_err, "%s: out of memory", prog);
+        else
+            ERR_raise(ERR_LIB_HTTP, ERR_R_MALLOC_FAILURE);
         goto end;
     }
     BIO_push(fbio, bio);
 
-    BIO_printf(fbio, "CONNECT %s:%s " HTTP_1_0 "\r\n", server, port);
+    if (BIO_printf(fbio, "CONNECT %s:%s " HTTP_1_0 "\r\n", server, port) <= 0)
+        goto end;
 
     /*
      * Workaround for broken proxies which would otherwise close
      * the connection when entering tunnel mode (e.g., Squid 2.6)
      */
-    BIO_printf(fbio, "Proxy-Connection: Keep-Alive\r\n");
+    if (BIO_printf(fbio, "Proxy-Connection: Keep-Alive\r\n") <= 0)
+        goto end;
 
     /* Support for basic (base64) proxy authentication */
     if (proxyuser != NULL) {
@@ -1478,17 +1548,19 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
             goto proxy_end;
         proxyauthenc = base64encode(proxyauth, len);
         if (proxyauthenc != NULL) {
-            BIO_printf(fbio, "Proxy-Authorization: Basic %s\r\n", proxyauthenc);
+            ret = BIO_printf(fbio, "Proxy-Authorization: Basic %s\r\n", proxyauthenc);
             OPENSSL_clear_free(proxyauthenc, strlen(proxyauthenc));
         }
     proxy_end:
         OPENSSL_clear_free(proxyauth, len);
-        if (proxyauthenc == NULL)
+        if (ret <= 0)
             goto end;
     }
+    ret = 0;
 
     /* Terminate the HTTP CONNECT request */
-    BIO_printf(fbio, "\r\n");
+    if (BIO_printf(fbio, "\r\n") <= 0)
+        goto end;
 
     for (;;) {
         if (BIO_flush(fbio) != 0)
@@ -1502,8 +1574,12 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
         /* will not actually wait if timeout == 0 */
         rv = BIO_wait(fbio, max_time, 100 /* milliseconds */);
         if (rv <= 0) {
-            BIO_printf(bio_err, "%s: HTTP CONNECT %s\n", prog,
-                rv == 0 ? "timed out" : "failed waiting for data");
+            const char *details = rv == 0 ? "timed out" : "failed waiting for data";
+
+            if (bio_err != NULL)
+                BIO_printf(bio_err, "%s: HTTPS proxy CONNECT %s\n", prog, details);
+            else
+                ERR_raise_data(ERR_LIB_HTTP, HTTP_R_CONNECT_FAILURE, "via HTTPS proxy, %s", details);
             goto end;
         }
 
@@ -1520,17 +1596,21 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
         /* Check for HTTP/1.x */
         mbufp = mbuf;
         if (!CHECK_AND_SKIP_PREFIX(mbufp, HTTP_PREFIX)) {
-            ERR_raise(ERR_LIB_HTTP, HTTP_R_HEADER_PARSE_ERROR);
-            BIO_printf(bio_err, "%s: HTTP CONNECT failed, non-HTTP response\n",
-                prog);
+            if (bio_err != NULL)
+                BIO_printf(bio_err, "%s: HTTPS proxy CONNECT failed, non-HTTP response\n", prog);
+            else
+                ERR_raise_data(ERR_LIB_HTTP, HTTP_R_HEADER_PARSE_ERROR, "non-HTTP response on CONNECT via HTTPS proxy");
             /* Wrong protocol, not even HTTP, so stop reading headers */
             goto end;
         }
         if (!HAS_PREFIX(mbufp, HTTP_VERSION_PATT)) {
-            ERR_raise(ERR_LIB_HTTP, HTTP_R_RECEIVED_WRONG_HTTP_VERSION);
-            BIO_printf(bio_err,
-                "%s: HTTP CONNECT failed, bad HTTP version %.*s\n",
-                prog, (int)HTTP_VERSION_STR_LEN, mbufp);
+            if (bio_err != NULL)
+                BIO_printf(bio_err,
+                    "%s: HTTPS proxy CONNECT failed, bad HTTP version %.*s\n",
+                    prog, (int)HTTP_VERSION_STR_LEN, mbufp);
+            else
+                ERR_raise_data(ERR_LIB_HTTP, HTTP_R_RECEIVED_WRONG_HTTP_VERSION,
+                    "%.*s on HTTPS proxy CONNECT", (int)HTTP_VERSION_STR_LEN, mbufp);
             goto end;
         }
         mbufp += HTTP_VERSION_STR_LEN;
@@ -1543,10 +1623,11 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
             while (read_len > 0 && ossl_isspace(mbuf[read_len - 1]))
                 read_len--;
             mbuf[read_len] = '\0';
-            ERR_raise_data(ERR_LIB_HTTP, HTTP_R_CONNECT_FAILURE,
-                "reason=%s", mbufp);
-            BIO_printf(bio_err, "%s: HTTP CONNECT failed, reason=%s\n",
-                prog, mbufp);
+            if (bio_err != NULL)
+                BIO_printf(bio_err, "%s: HTTP CONNECT failed, reason=%s\n", prog, mbufp);
+            else
+                ERR_raise_data(ERR_LIB_HTTP, HTTP_R_CONNECT_FAILURE,
+                    "via HTTPS proxy, reason=%s", mbufp);
             goto end;
         }
         ret = 1;
@@ -1571,4 +1652,49 @@ end:
     OPENSSL_free(mbuf);
     return ret;
 #undef BUF_SIZE
+}
+
+int OSSL_HTTP_REQ_CTX_proxy_connect(OSSL_HTTP_REQ_CTX *rctx,
+    const char *user, const char *pass,
+    BIO *bio_err, const char *prog)
+{
+    time_t time_diff = 0;
+    int timeout = 0;
+    char *userinfo = NULL, *colon;
+    size_t len = 0;
+    int ret;
+
+    if (rctx == NULL) {
+        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (rctx->proxy == NULL || !rctx->use_ssl) /* proceed only on HTTPS proxy use */
+        return 1;
+
+    if (rctx->max_total_time != 0) {
+        time_diff = rctx->max_total_time - time(NULL);
+        if (time_diff > INT_MAX)
+            time_diff = INT_MAX;
+        timeout = (int)time_diff;
+    }
+    if (timeout < 0) {
+        ERR_raise(ERR_LIB_BIO, BIO_R_CONNECT_TIMEOUT);
+        return 0;
+    }
+
+    if (!OSSL_HTTP_parse_url(rctx->proxy, NULL, &userinfo, NULL, NULL, NULL, NULL, NULL, NULL))
+        return 0;
+    if (userinfo != NULL && *userinfo != '\0') {
+        len = strlen(userinfo);
+        user = userinfo;
+        pass = colon = strchr(userinfo, ':');
+        if (colon != NULL) {
+            *colon = '\0';
+            pass = colon + 1;
+        }
+    }
+    ret = OSSL_HTTP_proxy_connect(rctx->wbio, rctx->server, rctx->port,
+        user, pass, timeout, bio_err, prog);
+    OPENSSL_clear_free(userinfo, len);
+    return ret;
 }

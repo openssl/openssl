@@ -33,8 +33,8 @@ see L<openssl_user_macros(7)>:
 =head1 DESCRIPTION
 
 OSSL_HTTP_adapt_proxy() takes an optional proxy hostname I<proxy>
-and returns it transformed according to the optional I<no_proxy> parameter,
-I<server>, I<use_ssl>, and the applicable environment variable, as follows.
+and returns it transformed according to the optional I<no_proxy> and I<server> parameters,
+I<use_ssl>, and the applicable environment variable, as follows.
 If I<proxy> is NULL, take any default value from the C<http_proxy>
 environment variable, or from C<https_proxy> if I<use_ssl> is nonzero.
 If this still does not yield a proxy hostname,
@@ -42,7 +42,7 @@ take any further default value from the C<HTTP_PROXY>
 environment variable, or from C<HTTPS_PROXY> if I<use_ssl> is nonzero.
 If I<no_proxy> is NULL, take any default exclusion value from the C<no_proxy>
 environment variable, or else from C<NO_PROXY>.
-Return the determined proxy host unless the exclusion value,
+Return the determined proxy host unless I<server> is given and the exclusion value,
 which is a list of proxy hosts separated by C<,> and/or whitespace,
 contains I<server>.
 Otherwise return NULL.

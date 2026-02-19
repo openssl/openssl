@@ -1448,6 +1448,7 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host)
     EVP_PKEY *pkey = NULL;
     X509_STORE *trust_store = NULL;
     SSL_CTX *ssl_ctx;
+    char *host_copy;
     int i;
 
     ssl_ctx = SSL_CTX_new(TLS_client_method());
@@ -1584,12 +1585,18 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host)
                 opt_tls_host != NULL ? opt_tls_host : host))
             goto err;
     }
+    if ((host_copy = OPENSSL_strdup(host)) == NULL)
+        goto err;
+    if (!app_SSL_CTX_set_tls_server_ex_data(ssl_ctx, host_copy)) {
+        OPENSSL_free(host_copy);
+        goto err;
+    }
     return ssl_ctx;
 err:
     SSL_CTX_free(ssl_ctx);
     return NULL;
 }
-#endif /* OPENSSL_NO_SOCK */
+#endif
 
 /*
  * set up protection aspects of OSSL_CMP_CTX based on options from config
@@ -2215,7 +2222,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx)
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
     int portnum, use_ssl;
     static char server_port[32] = { '\0' };
-    const char *proxy_host = NULL;
+    const char *proxy, *proxy_host;
 #endif
     char server_buf[200] = "mock server";
     char proxy_buf[200] = "";
@@ -2267,9 +2274,16 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx)
         opt_tls_used ? "s" : "", host, port,
         *used_path == '/' ? used_path + 1 : used_path);
 
-    proxy_host = OSSL_HTTP_adapt_proxy(opt_proxy, opt_no_proxy, host, use_ssl);
-    if (proxy_host != NULL)
+    proxy = OSSL_HTTP_adapt_proxy(opt_proxy, opt_no_proxy, host, opt_tls_used);
+    if (proxy != NULL) {
+        /* show proxy without any given user:pass@ prefix */
+        proxy_host = strchr(proxy, '@');
+        if (proxy_host == NULL)
+            proxy_host = proxy;
+        else
+            proxy_host++;
         (void)BIO_snprintf(proxy_buf, sizeof(proxy_buf), " via %s", proxy_host);
+    }
 
 set_path:
 #endif
@@ -2349,7 +2363,7 @@ set_path:
 
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
     if (opt_tls_used) {
-        APP_HTTP_TLS_INFO *info;
+        SSL_CTX *ssl_ctx, *old_ssl_ctx;
 
         if (opt_tls_cert != NULL
             || opt_tls_key != NULL || opt_tls_keypass != NULL) {
@@ -2362,21 +2376,14 @@ set_path:
             }
         }
 
-        if ((info = OPENSSL_zalloc(sizeof(*info))) == NULL)
+        if ((ssl_ctx = setup_ssl_ctx(ctx, host)) == NULL)
             goto err;
-        APP_HTTP_TLS_INFO_free(OSSL_CMP_CTX_get_http_cb_arg(ctx));
-        (void)OSSL_CMP_CTX_set_http_cb_arg(ctx, info);
-        info->ssl_ctx = setup_ssl_ctx(ctx, host);
-        info->server = host;
-        host = NULL; /* prevent deallocation */
-        if ((info->port = OPENSSL_strdup(server_port)) == NULL)
-            goto err;
-        /* workaround for callback design flaw, see #17088: */
-        info->use_proxy = proxy_host != NULL;
-        info->timeout = OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_MSG_TIMEOUT);
-
-        if (info->ssl_ctx == NULL)
-            goto err;
+        old_ssl_ctx = OSSL_CMP_CTX_get_http_cb_arg(ctx);
+        if (old_ssl_ctx != NULL) {
+            OPENSSL_free(app_SSL_CTX_get_tls_server_ex_data(old_ssl_ctx));
+            SSL_CTX_free(old_ssl_ctx);
+        }
+        (void)OSSL_CMP_CTX_set_http_cb_arg(ctx, ssl_ctx);
         (void)OSSL_CMP_CTX_set_http_cb(ctx, app_http_tls_cb);
     }
 #endif
@@ -3984,19 +3991,17 @@ err:
 
     if (cmp_ctx != NULL) {
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
-        APP_HTTP_TLS_INFO *info = OSSL_CMP_CTX_get_http_cb_arg(cmp_ctx);
+        SSL_CTX *ssl_ctx = OSSL_CMP_CTX_get_http_cb_arg(cmp_ctx);
 
-        (void)OSSL_CMP_CTX_set_http_cb_arg(cmp_ctx, NULL);
 #endif
         ossl_cmp_mock_srv_free(OSSL_CMP_CTX_get_transfer_cb_arg(cmp_ctx));
         X509_STORE_free(OSSL_CMP_CTX_get_certConf_cb_arg(cmp_ctx));
-        /* cannot free info already here, as it may be used indirectly by: */
+        /* cannot free ssl_ctx already above, as it may be used in OSSL_HTTP_close() called by: */
         OSSL_CMP_CTX_free(cmp_ctx);
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
-        if (info != NULL) {
-            OPENSSL_free((char *)info->server);
-            OPENSSL_free((char *)info->port);
-            APP_HTTP_TLS_INFO_free(info);
+        if (ssl_ctx != NULL) {
+            OPENSSL_free(app_SSL_CTX_get_tls_server_ex_data(ssl_ctx));
+            SSL_CTX_free(ssl_ctx);
         }
 #endif
     }
