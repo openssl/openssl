@@ -365,7 +365,7 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, const STACK_OF(X509) *certs, int f
     STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
     PKCS7_SIGNER_INFO *si;
     PKCS7_ISSUER_AND_SERIAL *ias;
-    X509 *signer;
+    const X509 *signer;
     int i;
 
     if (p7 == NULL) {
@@ -409,7 +409,7 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, const STACK_OF(X509) *certs, int f
             return 0;
         }
 
-        if (!sk_X509_push(signers, signer)) {
+        if (!sk_X509_push(signers, (X509 *)signer)) {
             sk_X509_free(signers);
             return NULL;
         }
