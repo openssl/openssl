@@ -1,0 +1,146 @@
+From 8ab536cf04d9a87a2e87b7bb775563ffb8cc14b2 Mon Sep 17 00:00:00 2001
+From: Bob Beck <beck@openssl.org>
+Date: Fri, 20 Feb 2026 18:38:42 -0700
+Subject: [PATCH] Fix X509_NAME const issues in krb
+
+---
+ .../preauth/pkinit/pkinit_crypto_openssl.c    |  4 +--
+ src/plugins/tls/k5tls/openssl.c               | 27 +++++++++----------
+ 2 files changed, 14 insertions(+), 17 deletions(-)
+
+diff --git a/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c b/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c
+index 2f26197b1..0a4c510f4 100644
+--- a/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c
++++ b/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c
+@@ -4768,7 +4768,7 @@ out:
+ }
+ 
+ static krb5_error_code
+-rfc2253_name(X509_NAME *name, char **str_out)
++rfc2253_name(const X509_NAME *name, char **str_out)
+ {
+     BIO *b = NULL;
+     char *str;
+@@ -5237,7 +5237,7 @@ create_identifiers_from_stack(STACK_OF(X509) *sk,
+     int i = 0, sk_size = sk_X509_num(sk);
+     krb5_external_principal_identifier **krb5_cas = NULL;
+     X509 *x = NULL;
+-    X509_NAME *xn = NULL;
++    const X509_NAME *xn = NULL;
+     unsigned char *p = NULL;
+     int len = 0;
+     PKCS7_ISSUER_AND_SERIAL *is = NULL;
+diff --git a/src/plugins/tls/k5tls/openssl.c b/src/plugins/tls/k5tls/openssl.c
+index aab67c01c..f7db3a11b 100644
+--- a/src/plugins/tls/k5tls/openssl.c
++++ b/src/plugins/tls/k5tls/openssl.c
+@@ -48,8 +48,7 @@ static int ex_handle_id = -1;
+ 
+ MAKE_INIT_FUNCTION(init_openssl);
+ 
+-int
+-init_openssl(void)
++int init_openssl(void)
+ {
+     SSL_library_init();
+     SSL_load_error_strings();
+@@ -89,7 +88,7 @@ ascii_tolower(char p)
+  */
+ static krb5_boolean
+ label_match(const char *presented, size_t plen, const char *expected,
+-            size_t elen, krb5_boolean allow_wildcard, krb5_boolean *wildcard)
++    size_t elen, krb5_boolean allow_wildcard, krb5_boolean *wildcard)
+ {
+     unsigned int i;
+ 
+@@ -158,7 +157,7 @@ get_cert_sans(X509 *x)
+ static int
+ get_cert_cn(X509 *x, char *buf, size_t bufsize)
+ {
+-    X509_NAME *name;
++    const X509_NAME *name;
+ 
+     name = X509_get_subject_name(x);
+     if (name == NULL)
+@@ -217,8 +216,7 @@ check_cert_address(X509 *x, const char *text)
+     name_length = get_cert_cn(x, buf, sizeof(buf));
+     if (name_length >= 0) {
+         /* Do a string compare to check if it's an acceptable value. */
+-        return strlen(text) == (size_t)name_length &&
+-               strncmp(text, buf, name_length) == 0;
++        return strlen(text) == (size_t)name_length && strncmp(text, buf, name_length) == 0;
+     }
+ 
+     /* We didn't find a match. */
+@@ -277,8 +275,7 @@ check_cert_name_or_ip(X509 *x, const char *expected_name)
+     struct in_addr in;
+     struct in6_addr in6;
+ 
+-    if (inet_pton(AF_INET, expected_name, &in) != 0 ||
+-        inet_pton(AF_INET6, expected_name, &in6) != 0) {
++    if (inet_pton(AF_INET, expected_name, &in) != 0 || inet_pton(AF_INET6, expected_name, &in6) != 0) {
+         return check_cert_address(x, expected_name);
+     } else {
+         return check_cert_servername(x, expected_name);
+@@ -298,7 +295,7 @@ verify_callback(int preverify_ok, X509_STORE_CTX *store_ctx)
+     size_t count;
+ 
+     ssl = X509_STORE_CTX_get_ex_data(store_ctx,
+-                                     SSL_get_ex_data_X509_STORE_CTX_idx());
++        SSL_get_ex_data_X509_STORE_CTX_idx());
+     context = SSL_get_ex_data(ssl, ex_context_id);
+     handle = SSL_get_ex_data(ssl, ex_handle_id);
+     assert(context != NULL && handle != NULL);
+@@ -378,7 +375,7 @@ load_anchor_dir(X509_STORE *store, const char *path)
+     while ((dentry = readdir(d)) != NULL) {
+         if (dentry->d_name[0] != '.') {
+             snprintf(filename, sizeof(filename), "%s/%s",
+-                     path, dentry->d_name);
++                path, dentry->d_name);
+             if (load_anchor_file(store, filename) == 0)
+                 found_any = TRUE;
+         }
+@@ -430,7 +427,7 @@ load_anchors(krb5_context context, char **anchors, SSL_CTX *sctx)
+ 
+ static krb5_error_code
+ setup(krb5_context context, SOCKET fd, const char *servername,
+-      char **anchors, k5_tls_handle *handle_out)
++    char **anchors, k5_tls_handle *handle_out)
+ {
+     int e;
+     long options = SSL_OP_NO_SSLv2;
+@@ -503,7 +500,7 @@ error:
+ 
+ static k5_tls_status
+ write_tls(krb5_context context, k5_tls_handle handle, const void *data,
+-          size_t len)
++    size_t len)
+ {
+     int nwritten, e;
+ 
+@@ -526,7 +523,7 @@ write_tls(krb5_context context, k5_tls_handle handle, const void *data,
+ 
+ static k5_tls_status
+ read_tls(krb5_context context, k5_tls_handle handle, void *data,
+-         size_t data_size, size_t *len_out)
++    size_t data_size, size_t *len_out)
+ {
+     ssize_t nread;
+     int e;
+@@ -566,11 +563,11 @@ free_handle(krb5_context context, k5_tls_handle handle)
+ 
+ krb5_error_code
+ tls_k5tls_initvt(krb5_context context, int maj_ver, int min_ver,
+-                 krb5_plugin_vtable vtable);
++    krb5_plugin_vtable vtable);
+ 
+ krb5_error_code
+ tls_k5tls_initvt(krb5_context context, int maj_ver, int min_ver,
+-                 krb5_plugin_vtable vtable)
++    krb5_plugin_vtable vtable)
+ {
+     k5_tls_vtable vt;
+ 
+-- 
+2.52.0
+
