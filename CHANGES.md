@@ -156,6 +156,11 @@ OpenSSL Releases
 
    *Norbert Pócs*
 
+ * Added `BIO_sendfile()` function. The `SSL_sendfile()` function doesn't call
+   `sendfile()` directly and delegates to the BIO instead.
+
+   *Julien Portalier*
+
 ### Changes between 3.6 and 4.0.0 [14 Apr 2026]
 
  * Added `-expected-rpks` option to the `openssl s_client`
