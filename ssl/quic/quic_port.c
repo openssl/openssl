@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -93,6 +93,14 @@ typedef struct validation_token {
  */
 #define ENCRYPTED_TOKEN_MAX_LEN (MARSHALLED_TOKEN_MAX_LEN + 16 + 12)
 
+/* Arbitrary choice of default idle timeout (not an RFC value). */
+#define DEFAULT_IDLE_TIMEOUT 30000
+
+#define DEFAULT_INIT_CONN_RXFC_WND (768 * 1024)
+#define DEFAULT_INIT_STREAM_RXFC_WND (512 * 1024)
+
+#define DEFAULT_INIT_CONN_MAX_STREAMS 100
+
 DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
 DEFINE_LIST_OF_IMPL(incoming_ch, QUIC_CHANNEL);
 DEFINE_LIST_OF_IMPL(port, QUIC_PORT);
@@ -164,6 +172,33 @@ static int port_init(QUIC_PORT *port)
 
     port->rx_short_dcid_len = (unsigned char)rx_short_dcid_len;
     port->tx_init_dcid_len = INIT_DCID_LEN;
+
+    port->max_idle_timeout = DEFAULT_IDLE_TIMEOUT;
+
+    /*
+     * We tell the peer we can handle at most this many bytes in a datagram payload.
+     * However, currently the QUIC_DEMUX in the QRX uses the BIO's MTU as upper bound
+     * on an incoming datagram size.
+     */
+    port->max_udp_payload_size = QUIC_MIN_INITIAL_DGRAM_LEN;
+    port->init_max_data = DEFAULT_INIT_CONN_RXFC_WND;
+    port->init_max_stream_data_bidi_local = DEFAULT_INIT_STREAM_RXFC_WND;
+    port->init_max_stream_data_bidi_remote = DEFAULT_INIT_STREAM_RXFC_WND;
+    port->init_max_stream_data_uni = DEFAULT_INIT_STREAM_RXFC_WND;
+    port->init_max_streams_bidi = DEFAULT_INIT_CONN_MAX_STREAMS;
+    port->init_max_streams_uni = DEFAULT_INIT_CONN_MAX_STREAMS;
+    port->ack_delay_exponent = QUIC_DEFAULT_ACK_DELAY_EXP;
+
+    /*
+     * Our maximum ACK delay on the TX side. This is up to us to choose. Note that
+     * this could differ from QUIC_DEFAULT_MAX_DELAY in future as that is a protocol
+     * value which determines the value of the maximum ACK delay if the
+     * max_ack_delay transport parameter is not set.
+     */
+    port->max_ack_delay = QUIC_DEFAULT_MAX_ACK_DELAY;
+    port->disable_active_migration = 1;
+    port->active_conn_id_limit = QUIC_MIN_ACTIVE_CONN_ID_LIMIT;
+
     port->state = QUIC_PORT_STATE_RUNNING;
 
     ossl_list_port_insert_tail(&port->engine->port_list, port);
@@ -521,6 +556,19 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
     args.srtm = port->srtm;
     args.qrx = qrx;
     args.is_tserver_ch = is_tserver;
+
+    args.max_idle_timeout = port->max_idle_timeout;
+    args.max_udp_payload_size = port->max_udp_payload_size;
+    args.init_max_data = port->init_max_data;
+    args.init_max_stream_data_bidi_local = port->init_max_stream_data_bidi_local;
+    args.init_max_stream_data_bidi_remote = port->init_max_stream_data_bidi_remote;
+    args.init_max_stream_data_uni = port->init_max_stream_data_uni;
+    args.init_max_streams_bidi = port->init_max_streams_bidi;
+    args.init_max_streams_uni = port->init_max_streams_uni;
+    args.ack_delay_exponent = port->ack_delay_exponent;
+    args.max_ack_delay = port->max_ack_delay;
+    args.disable_active_migration = port->disable_active_migration;
+    args.active_conn_id_limit = port->active_conn_id_limit;
 
     /*
      * Creating a new channel is made a bit tricky here as there is a
@@ -1787,4 +1835,108 @@ void ossl_quic_port_restore_err_state(const QUIC_PORT *port)
 {
     ERR_clear_error();
     OSSL_ERR_STATE_restore(port->err_state);
+}
+
+void ossl_quic_port_set_max_idle_timeout(QUIC_PORT *port, uint64_t ms)
+{
+    port->max_idle_timeout = ms;
+}
+
+uint64_t ossl_quic_port_get_max_idle_timeout(const QUIC_PORT *port)
+{
+    return port->max_idle_timeout;
+}
+
+void ossl_quic_port_set_max_udp_payload_size(QUIC_PORT *port, uint64_t size)
+{
+    port->max_udp_payload_size = size;
+}
+
+uint64_t ossl_quic_port_get_max_udp_payload_size(const QUIC_PORT *port)
+{
+    return port->max_udp_payload_size;
+}
+
+void ossl_quic_port_set_init_max_data(QUIC_PORT *port, uint64_t max_data)
+{
+    port->init_max_data = max_data;
+}
+
+uint64_t ossl_quic_port_get_init_max_data(const QUIC_PORT *port)
+{
+    return port->init_max_data;
+}
+
+void ossl_quic_port_set_init_max_stream_data(QUIC_PORT *port, uint64_t max_data, int is_uni, int is_remote)
+{
+    if (is_uni) {
+        port->init_max_stream_data_uni = max_data;
+    } else {
+        if (is_remote)
+            port->init_max_stream_data_bidi_remote = max_data;
+        else
+            port->init_max_stream_data_bidi_local = max_data;
+    }
+}
+
+uint64_t ossl_quic_port_get_init_max_stream_data(const QUIC_PORT *port, int is_uni, int is_remote)
+{
+    if (is_uni)
+        return port->init_max_stream_data_uni;
+    else
+        return is_remote ? port->init_max_stream_data_bidi_remote : port->init_max_stream_data_bidi_local;
+}
+
+void ossl_quic_port_set_init_max_streams(QUIC_PORT *port, uint64_t max_streams, int is_uni)
+{
+    if (is_uni) {
+        port->init_max_streams_uni = max_streams;
+    } else {
+        port->init_max_streams_bidi = max_streams;
+    }
+}
+
+uint64_t ossl_quic_port_get_init_max_streams(const QUIC_PORT *port, int is_uni)
+{
+    return is_uni ? port->init_max_streams_uni : port->init_max_streams_bidi;
+}
+
+void ossl_quic_port_set_ack_delay_exponent(QUIC_PORT *port, uint64_t exp)
+{
+    port->ack_delay_exponent = (unsigned char)exp;
+}
+
+uint64_t ossl_quic_port_get_ack_delay_exponent(const QUIC_PORT *port)
+{
+    return port->ack_delay_exponent;
+}
+
+void ossl_quic_port_set_max_ack_delay(QUIC_PORT *port, uint64_t ms)
+{
+    port->max_ack_delay = ms;
+}
+
+uint64_t ossl_quic_port_get_max_ack_delay(const QUIC_PORT *port)
+{
+    return port->max_ack_delay;
+}
+
+void ossl_quic_port_set_disable_active_migration(QUIC_PORT *port, uint64_t disable)
+{
+    port->disable_active_migration = (unsigned char)disable;
+}
+
+uint64_t ossl_quic_port_get_disable_active_migration(const QUIC_PORT *port)
+{
+    return port->disable_active_migration;
+}
+
+void ossl_quic_port_set_active_conn_id_limit(QUIC_PORT *port, uint64_t limit)
+{
+    port->active_conn_id_limit = limit;
+}
+
+uint64_t ossl_quic_port_get_active_conn_id_limit(const QUIC_PORT *port)
+{
+    return port->active_conn_id_limit;
 }
