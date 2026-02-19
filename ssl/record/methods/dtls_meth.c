@@ -753,7 +753,7 @@ again:
                 && ((rl->in_init && rl->epoch == 0 && rr->epoch == 2)
                     || (rl->in_early_data && rl->epoch == 1 && rr->epoch == 2)
                     || (rl->in_early_data && rl->epoch == 0 && rr->epoch == 1)))) {
-            int unprocessed_record_priority = rr->seq_num;
+            uint64_t unprocessed_record_priority = rr->seq_num;
 
             /*
              * DTLS1.3 uses encrypted sequence numbers so we want to set the
