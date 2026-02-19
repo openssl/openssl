@@ -404,11 +404,21 @@ int ossl_x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags)
         goto err;
 
     if (!X509_check_certificate_times(vpm, cert, &error)) {
-        char msg[128];
-
-        ERR_error_string_n(error, msg, sizeof(msg));
-        if (BIO_printf(bio, "        %s\n", msg) <= 0)
-            goto err;
+        switch (error) {
+        case X509_V_ERR_CERT_NOT_YET_VALID:
+            if (BIO_printf(bio, "        not yet valid\n") <= 0)
+                goto err;
+            break;
+        case X509_V_ERR_CERT_HAS_EXPIRED:
+            if (BIO_printf(bio, "        has expired\n") <= 0)
+                goto err;
+            break;
+        default:
+            if (BIO_printf(bio, "        %s\n",
+                    X509_verify_cert_error_string(error))
+                <= 0)
+                goto err;
+        }
     }
     ret = X509_print_ex(bio, cert, flags,
         ~neg_cflags & ~X509_FLAG_EXTENSIONS_ONLY_KID);
