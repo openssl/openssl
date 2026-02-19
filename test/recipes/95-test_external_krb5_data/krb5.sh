@@ -11,7 +11,15 @@
 LDFLAGS="-L`pwd`/$BLDTOP -Wl,-rpath,`pwd`/$BLDTOP"
 CFLAGS="-I`pwd`/$BLDTOP/include -I`pwd`/$SRCTOP/include"
 
-cd $SRCTOP/krb5/src
+cd $SRCTOP
+SRC_ABS_TOP=$PWD;
+cd $SRC_ABS_TOP/krb5
+set +e
+git am --abort
+git reset --hard origin/HEAD
+set -e
+git am $SRC_ABS_TOP/test/recipes/95-test_external_krb5_data/patches/*
+cd $SRC_ABS_TOP/krb5/src
 autoreconf
 ./configure --with-ldap --with-prng-alg=os --enable-pkinit \
             --with-crypto-impl=openssl --with-tls-impl=openssl \
