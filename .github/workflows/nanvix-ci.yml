@@ -193,6 +193,7 @@ jobs:
           sysroot/
             lib/{libcrypto.a,libssl.a}
             include/openssl/{ssl.h,evp.h,...}
+            bin/openssl_nanvix_test.elf
           \`\`\`
 
           **Dependencies:** None (standalone library)" \

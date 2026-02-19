@@ -279,6 +279,8 @@ package: all
 	         dist/$(ARTIFACT_NAME)/sysroot/include/openssl
 	cp -f libcrypto.a libssl.a dist/$(ARTIFACT_NAME)/sysroot/lib/
 	cp -f include/openssl/*.h dist/$(ARTIFACT_NAME)/sysroot/include/openssl/
+	mkdir -p dist/$(ARTIFACT_NAME)/sysroot/bin
+	-cp -f $(TEST_ELF) dist/$(ARTIFACT_NAME)/sysroot/bin/ 2>/dev/null || true
 	tar -cjf dist/$(ARTIFACT_NAME).tar.bz2 -C dist/$(ARTIFACT_NAME) sysroot
 	@echo "  Package: dist/$(ARTIFACT_NAME).tar.bz2"
 	@echo "  Contents:"
