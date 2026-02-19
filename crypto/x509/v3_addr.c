@@ -1210,7 +1210,7 @@ int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b)
  * X509_V_OK.
  */
 static int addr_validate_path_internal(X509_STORE_CTX *ctx,
-    STACK_OF(X509) *chain,
+    const STACK_OF(X509) *chain,
     IPAddrBlocks *ext)
 {
     IPAddrBlocks *child = NULL;
@@ -1344,7 +1344,7 @@ int X509v3_addr_validate_path(X509_STORE_CTX *ctx)
  * RFC 3779 2.3 path validation of an extension.
  * Test whether chain covers extension.
  */
-int X509v3_addr_validate_resource_set(STACK_OF(X509) *chain,
+int X509v3_addr_validate_resource_set(const STACK_OF(X509) *chain,
     IPAddrBlocks *ext, int allow_inheritance)
 {
     if (ext == NULL)
