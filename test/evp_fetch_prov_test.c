@@ -17,7 +17,9 @@
 #include <string.h>
 #include <openssl/sha.h>
 #include <openssl/evp.h>
+#include <openssl/kdf.h>
 #include <openssl/provider.h>
+#include <openssl/core_names.h>
 #include "internal/sizes.h"
 #include "testutil.h"
 #include "crypto/evp.h"
@@ -332,6 +334,160 @@ end:
     return ret;
 }
 
+static int derive_pbkdf2(EVP_KDF *kdf)
+{
+    int ret = 0;
+    EVP_KDF_CTX *ctx = NULL;
+    unsigned char out[25];
+    static const unsigned char password[] = "passwordPASSWORDpassword";
+    static const unsigned char salt[] = "saltSALTsaltSALTsaltSALTsaltSALTsalt";
+    unsigned int iterations = 4096;
+    int mode = 0;
+    OSSL_PARAM params[6], *p = params;
+    static const unsigned char expected[sizeof(out)] = {
+        0x34, 0x8c, 0x89, 0xdb, 0xcb, 0xd3, 0x2b, 0x2f,
+        0x32, 0xd8, 0x14, 0xb8, 0x11, 0x6e, 0x84, 0xcf,
+        0x2b, 0x17, 0x34, 0x7e, 0xbc, 0x18, 0x00, 0x18,
+        0x1c
+    };
+
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+        (void *)password,
+        sizeof(password) - 1);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+        (void *)salt, sizeof(salt) - 1);
+    *p++ = OSSL_PARAM_construct_uint(OSSL_KDF_PARAM_ITER, &iterations);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, "sha256", 0);
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_PKCS5, &mode);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(ctx = EVP_KDF_CTX_new(kdf))
+        || !TEST_int_gt(EVP_KDF_derive(ctx, out, sizeof(out), params), 0)
+        || !TEST_mem_eq(out, sizeof(out), expected, sizeof(expected)))
+        goto err;
+    ret = 1;
+err:
+    EVP_KDF_CTX_free(ctx);
+    return ret;
+}
+
+static int test_kdf(EVP_KDF *kdf, const char *name)
+{
+    return TEST_ptr(kdf)
+        && TEST_ptr(EVP_KDF_get0_provider(kdf))
+        && TEST_true(EVP_KDF_is_a(kdf, name))
+        && TEST_true(derive_pbkdf2(kdf));
+}
+
+static int test_implicit_EVP_KDF_fetch(void)
+{
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+    EVP_KDF *kdf = NULL;
+    int ret = 0;
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    if (!TEST_ptr(kdf = EVP_KDF_fetch(ctx, OSSL_KDF_NAME_PBKDF2, NULL))
+        || !TEST_true(test_kdf(kdf, OSSL_KDF_NAME_PBKDF2)))
+        goto err;
+    ret = 1;
+err:
+    EVP_KDF_free(kdf);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_explicit_EVP_KDF_fetch(const char *id)
+{
+    OSSL_LIB_CTX *ctx = NULL;
+    EVP_KDF *kdf = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+    int ret = 0;
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    kdf = EVP_KDF_fetch(ctx, id, fetch_property);
+    if (expected_fetch_result != 0) {
+        if (!test_kdf(kdf, id))
+            goto err;
+
+        if (!TEST_true(EVP_KDF_up_ref(kdf)))
+            goto err;
+        /* Ref count should now be 2. Release first one here */
+        EVP_KDF_free(kdf);
+    } else {
+        if (!TEST_ptr_null(kdf))
+            goto err;
+    }
+    ret = 1;
+err:
+    EVP_KDF_free(kdf);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_EVP_KDF_fetch_freeze(void)
+{
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    /*
+     * Test does not make sense if cached fetch is disabled.
+     * There's nothing to freeze, and test will fail.
+     */
+    return 1;
+#endif
+
+    EVP_KDF *kdf = NULL;
+    int ret = 0;
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    if (!TEST_ptr(kdf = EVP_KDF_fetch(ctx, "PBKDF2", NULL))
+        || !TEST_true(test_kdf(kdf, "PBKDF2"))
+        || !TEST_int_ne(kdf->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_KDF_free(kdf);
+    kdf = NULL;
+
+    if (!TEST_int_eq(OSSL_LIB_CTX_freeze(ctx, "?fips=true"), 1)
+        || !TEST_ptr(kdf = EVP_KDF_fetch(ctx, "PBKDF2", NULL))
+        || !TEST_true(test_kdf(kdf, "PBKDF2"))
+        || !TEST_int_eq(kdf->origin, EVP_ORIG_FROZEN))
+        goto err;
+    /* Technically, frozen version doesn't need to be freed */
+    EVP_KDF_free(kdf);
+    kdf = NULL;
+
+    if (!TEST_ptr(kdf = EVP_KDF_fetch(ctx, "PBKDF2", "?fips=true"))
+        || !TEST_true(test_kdf(kdf, "PBKDF2"))
+        || !TEST_int_eq(kdf->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_KDF_free(kdf);
+    kdf = NULL;
+
+    /* Falls back to slow path */
+    if (!TEST_ptr(kdf = EVP_KDF_fetch(ctx, "PBKDF2", "?provider=default"))
+        || !TEST_true(test_kdf(kdf, "PBKDF2"))
+        || !TEST_int_ne(kdf->origin, EVP_ORIG_FROZEN))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_KDF_free(kdf);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_explicit_EVP_KDF_fetch_by_name(void)
+{
+    return test_explicit_EVP_KDF_fetch("PBKDF2");
+}
+
 /*
  * Test EVP_CIPHER_fetch()
  */
@@ -550,11 +706,18 @@ int setup_tests(void)
         ADD_TEST(test_implicit_EVP_MD_fetch);
         ADD_TEST(test_explicit_EVP_MD_fetch_by_name);
         ADD_ALL_TESTS_NOSUBTEST(test_explicit_EVP_MD_fetch_by_X509_ALGOR, 2);
-    } else {
+    } else if (strcmp(alg, "cipher") == 0) {
         ADD_TEST(test_EVP_CIPHER_fetch_freeze);
         ADD_TEST(test_implicit_EVP_CIPHER_fetch);
         ADD_TEST(test_explicit_EVP_CIPHER_fetch_by_name);
         ADD_ALL_TESTS_NOSUBTEST(test_explicit_EVP_CIPHER_fetch_by_X509_ALGOR, 2);
+    } else if (strcmp(alg, "kdf") == 0) {
+        ADD_TEST(test_EVP_KDF_fetch_freeze);
+        ADD_TEST(test_implicit_EVP_KDF_fetch);
+        ADD_TEST(test_explicit_EVP_KDF_fetch_by_name);
+    } else {
+        TEST_error("Unknown fetch type: %s", alg);
+        return 0;
     }
     return 1;
 }

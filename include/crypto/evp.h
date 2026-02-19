@@ -230,6 +230,7 @@ struct evp_mac_st {
 struct evp_kdf_st {
     OSSL_PROVIDER *prov;
     int name_id;
+    int origin;
     char *type_name;
     const char *description;
     CRYPTO_REF_COUNT refcnt;
