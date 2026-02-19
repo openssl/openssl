@@ -1335,8 +1335,6 @@ SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY:291:\
 SSL_R_APP_DATA_IN_HANDSHAKE:100:app data in handshake
 SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT:272:\
 	attempt to reuse session in different context
-SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE:158:\
-	at least (D)TLS 1.2 needed in Suite B mode
 SSL_R_BAD_CERTIFICATE:348:bad certificate
 SSL_R_BAD_CHANGE_CIPHER_SPEC:103:bad change cipher spec
 SSL_R_BAD_CIPHER:186:bad cipher
@@ -1428,7 +1426,6 @@ SSL_R_DOMAIN_USE_ONLY:422:domain use only
 SSL_R_DTLS_MESSAGE_TOO_BIG:334:dtls message too big
 SSL_R_DUPLICATE_COMPRESSION_ID:309:duplicate compression id
 SSL_R_ECC_CERT_NOT_FOR_SIGNING:318:ecc cert not for signing
-SSL_R_ECDH_REQUIRED_FOR_SUITEB_MODE:374:ecdh required for suiteb mode
 SSL_R_ECH_DECODE_ERROR:426:ech decode error
 SSL_R_ECH_REQUIRED:424:ech required
 SSL_R_EE_KEY_TOO_SMALL:399:ee key too small
@@ -1452,7 +1449,6 @@ SSL_R_GOT_A_FIN_BEFORE_A_CCS:154:got a fin before a ccs
 SSL_R_HTTPS_PROXY_REQUEST:155:https proxy request
 SSL_R_HTTP_REQUEST:156:http request
 SSL_R_ILLEGAL_POINT_COMPRESSION:162:illegal point compression
-SSL_R_ILLEGAL_SUITEB_DIGEST:380:illegal Suite B digest
 SSL_R_INAPPROPRIATE_FALLBACK:373:inappropriate fallback
 SSL_R_INCONSISTENT_COMPRESSION:340:inconsistent compression
 SSL_R_INCONSISTENT_EARLY_DATA_ALPN:222:inconsistent early data alpn
