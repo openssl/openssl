@@ -361,7 +361,7 @@ X509 *X509_find_by_issuer_and_serial(const STACK_OF(X509) *sk, const X509_NAME *
     return NULL;
 }
 
-X509 *X509_find_by_subject(const STACK_OF(X509) *sk, const X509_NAME *name)
+const X509 *X509_find_by_subject(const STACK_OF(X509) *sk, const X509_NAME *name)
 {
     X509 *x509;
     int i;
@@ -369,7 +369,7 @@ X509 *X509_find_by_subject(const STACK_OF(X509) *sk, const X509_NAME *name)
     for (i = 0; i < sk_X509_num(sk); i++) {
         x509 = sk_X509_value(sk, i);
         if (X509_NAME_cmp(X509_get_subject_name(x509), name) == 0)
-            return x509;
+            return (const X509 *)x509;
     }
     return NULL;
 }
