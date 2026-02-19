@@ -24,7 +24,7 @@ DATA_ABS_TOP=$SRC_ABS_TOP/test/recipes/95-test_external_krb5_data/
 cd $SRC_ABS_TOP/krb5
 GITLEVEL=$(git rev-parse HEAD)
 
-pushd src
+cd $SRC_ABS_TOP/krb5/src
 git am $DATA_ABS_TOP/patches/*
 
 autoreconf
