@@ -49,9 +49,6 @@
 #define OSSL_DEPRECATED_FOR(since, message) __declspec(deprecated)
 #define OSSL_DEPRECATED_MESSAGE(message) __declspec(deprecated)
 #endif
-#define OSSL_BEGIN_ALLOW_DEPRECATED \
-    __pragma(warning(push)) __pragma(warning(disable : 4996))
-#define OSSL_END_ALLOW_DEPRECATED __pragma(warning(pop))
 #elif defined(__GNUC__)
 /*
  * According to GCC documentation, deprecations with message appeared in
@@ -68,20 +65,12 @@
 #define OSSL_DEPRECATED_FOR(since, message) __attribute__((deprecated))
 #define OSSL_DEPRECATED_MESSAGE(message) __attribute__((deprecated))
 #endif
-#define OSSL_BEGIN_ALLOW_DEPRECATED \
-    _Pragma("GCC diagnostic push")  \
-        _Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"")
-#define OSSL_END_ALLOW_DEPRECATED _Pragma("GCC diagnostic pop")
 #elif defined(__SUNPRO_C)
 #if (__SUNPRO_C >= 0x5130)
 #define OSSL_DEPRECATED(since) __attribute__((deprecated))
 #define OSSL_DEPRECATED_FOR(since, message) __attribute__((deprecated))
 #define OSSL_DEPRECATED_MESSAGE(message) __attribute__((deprecated))
 #endif
-#define OSSL_BEGIN_ALLOW_DEPRECATED \
-    #pragma error_messages(off, E_DEPRECATED_ATT, E_DEPRECATED_ATT_MESS)
-#define OSSL_END_ALLOW_DEPRECATED \
-    #pragma error_messages(on, E_DEPRECATED_ATT, E_DEPRECATED_ATT_MESS)
 #endif
 #endif
 #endif

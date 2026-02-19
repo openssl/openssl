@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#define OPENSSL_SUPPRESS_DEPRECATED
 #include "internal/deprecated.h"
 
 #include <stdio.h>
@@ -2369,7 +2368,6 @@ static int internal_verify(X509_STORE_CTX *ctx)
     return 1;
 }
 
-#if !defined(OPENSSL_NO_DEPRECATED_4_0)
 int X509_cmp_current_time(const ASN1_TIME *ctm)
 {
     return X509_cmp_time(ctm, NULL);
@@ -2439,7 +2437,6 @@ int X509_cmp_timeframe(const X509_VERIFY_PARAM *vpm,
         return -1;
     return 0;
 }
-#endif /* !defined(OPENSSL_NO_DEPRECATED_4_0) */
 
 ASN1_TIME *X509_gmtime_adj(ASN1_TIME *s, long adj)
 {
