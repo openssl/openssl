@@ -11,7 +11,26 @@
 LDFLAGS="-L`pwd`/$BLDTOP -Wl,-rpath,`pwd`/$BLDTOP"
 CFLAGS="-I`pwd`/$BLDTOP/include -I`pwd`/$SRCTOP/include"
 
-cd $SRCTOP/krb5/src
+unpatch() {
+    cd "$SRC_ABS_TOP/krb5" && git reset --hard "$GITLEVEL"
+}
+
+trap unpatch EXIT
+
+cd $SRCTOP
+SRC_ABS_TOP=$PWD;
+DATA_ABS_TOP=$SRC_ABS_TOP/test/recipes/95-test_external_krb5_data
+
+cd $SRC_ABS_TOP/krb5
+GITLEVEL=$(git rev-parse HEAD)
+# "git am" refuses to run without a user configured.
+for FILE in "$DATA_ABS_TOP"/patches/*; do
+    if [ -f "$FILE" ]; then
+	git -c 'user.name=OpenSSL External Tests' -c 'user.email=nonsuch@openssl.org' am $FILE
+    fi
+done
+cd $SRC_ABS_TOP/krb5/src
+
 autoreconf
 ./configure --with-ldap --with-prng-alg=os --enable-pkinit \
             --with-crypto-impl=openssl --with-tls-impl=openssl \
