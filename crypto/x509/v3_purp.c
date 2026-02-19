@@ -1073,17 +1073,23 @@ int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid)
     return X509_V_OK;
 }
 
-uint32_t X509_get_extension_flags(X509 *x)
+uint32_t X509_get_extension_flags(const X509 *x)
 {
     /* Call for side-effect of computing hash and caching extensions */
-    X509_check_purpose(x, -1, 0);
+    /*
+     * TODO: This cast can be dropped when #30055 lands
+     */
+    X509_check_purpose((X509 *)x, -1, 0);
     return x->ex_flags;
 }
 
-uint32_t X509_get_key_usage(X509 *x)
+uint32_t X509_get_key_usage(const X509 *x)
 {
     /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    /*
+     * TODO: This cast can be dropped with #30055 lands
+     */
+    if (X509_check_purpose((X509 *)x, -1, 0) != 1)
         return 0;
     return (x->ex_flags & EXFLAG_KUSAGE) != 0 ? x->ex_kusage : UINT32_MAX;
 }
