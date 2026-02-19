@@ -675,7 +675,7 @@ err:
     return 0;
 }
 
-X509 *PKCS7_cert_from_signer_info(PKCS7 *p7, PKCS7_SIGNER_INFO *si)
+const X509 *PKCS7_cert_from_signer_info(PKCS7 *p7, PKCS7_SIGNER_INFO *si)
 {
     if (PKCS7_type_is_signed(p7))
         return (X509_find_by_issuer_and_serial(p7->d.sign->cert,
