@@ -563,6 +563,9 @@ void ossl_rcu_assign_uptr(void **p, void **v)
 CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers, OSSL_LIB_CTX *ctx)
 {
     struct rcu_lock_st *new;
+    pthread_mutex_t *mutexes[3] = { NULL };
+    pthread_cond_t *conds[2] = { NULL };
+    int i;
 
     /*
      * We need a minimum of 2 qp's
@@ -579,14 +582,22 @@ CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers, OSSL_LIB_CTX *ctx)
         return NULL;
 
     new->ctx = ctx;
-    pthread_mutex_init(&new->write_lock, NULL);
-    pthread_mutex_init(&new->prior_lock, NULL);
-    pthread_mutex_init(&new->alloc_lock, NULL);
-    pthread_cond_init(&new->prior_signal, NULL);
-    pthread_cond_init(&new->alloc_signal, NULL);
+    i = 0;
+    mutexes[i++] = pthread_mutex_init(&new->write_lock, NULL) == 0 ? &new->write_lock : NULL;
+    mutexes[i++] = pthread_mutex_init(&new->prior_lock, NULL) == 0 ? &new->prior_lock : NULL;
+    mutexes[i++] = pthread_mutex_init(&new->alloc_lock, NULL) == 0 ? &new->alloc_lock : NULL;
+    conds[(i++) - 3] = pthread_cond_init(&new->prior_signal, NULL) == 0 ? &new->prior_signal : NULL;
+    conds[(i++) - 3] = pthread_cond_init(&new->alloc_signal, NULL) == 0 ? &new->alloc_signal : NULL;
 
     new->qp_group = allocate_new_qp_group(new, num_writers);
-    if (new->qp_group == NULL) {
+    if (new->qp_group == NULL || i < 5) {
+        for (i = 0; i < 3; i++)
+            if (mutexes[i] != NULL)
+                pthread_mutex_destroy(mutexes[i]);
+        for (i = 0; i < 2; i++)
+            if (conds[i] != NULL)
+                pthread_cond_destroy(conds[i]);
+        OPENSSL_free(new->qp_group);
         OPENSSL_free(new);
         new = NULL;
     }
