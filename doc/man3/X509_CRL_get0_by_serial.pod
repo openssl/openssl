@@ -14,7 +14,7 @@ functions
 
  int X509_CRL_get0_by_serial(X509_CRL *crl,
                              X509_REVOKED **ret, const ASN1_INTEGER *serial);
- int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x);
+ int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, const X509 *x);
 
  STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(const X509_CRL *crl);
 
@@ -104,6 +104,8 @@ L<X509V3_get_d2i(3)>,
 L<X509_verify_cert(3)>
 
 =head1 HISTORY
+
+X509_CRL_get0_by_cert() was constified in OpenSSL 4.0.
 
 X509_CRL_get_REVOKED() was constified in OpenSSL 4.0.
 
