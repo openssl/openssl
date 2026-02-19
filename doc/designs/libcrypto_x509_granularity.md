@@ -1,5 +1,5 @@
 Introducing configuration granularity for X.509 chain verification
-------------------------------------------------------------------
+==================================================================
 
 Currently OpenSSL has a quite limited support of setting the requirements for
 X.509 verification.  SECLEVEL parameter allows this check in TLS context. For
