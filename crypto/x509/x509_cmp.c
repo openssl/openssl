@@ -34,7 +34,7 @@ int X509_issuer_and_serial_cmp(const X509 *a, const X509 *b)
 }
 
 #ifndef OPENSSL_NO_MD5
-unsigned long X509_issuer_and_serial_hash(X509 *a)
+unsigned long X509_issuer_and_serial_hash(const X509 *a)
 {
     unsigned long ret = 0;
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
