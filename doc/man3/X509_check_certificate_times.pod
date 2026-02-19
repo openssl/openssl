@@ -136,7 +136,7 @@ L<ASN1_GENERALIZEDTIME_check(3)>
 L<ASN1_UTCTIME_check(3)>
 L<ASN1_TIME_to_tm(3)>
 L<OPENSSL_tm_to_posix(3)> L<OPENSSL_posix_to_tm(3)>
-L<ERR_error_string_n(3)>
+L<X509_verify_cert_error_string(3)>
 
 =head1 HISTORY
 
