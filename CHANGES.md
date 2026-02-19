@@ -46,10 +46,10 @@ OpenSSL 4.0
    *Neil Horman*
 
  * ASN1_OBJECT_new() has been deprecated.
- 
+
    Refer to ossl-migration-guide(7) for more info.
 
-  *Frederik Wedel-Heinen*
+   *Frederik Wedel-Heinen*
 
  * FIPS self tests can now be deferred and run as needed when installing
    the fips module with the -defer_tests option.
