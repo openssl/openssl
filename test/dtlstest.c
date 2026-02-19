@@ -730,6 +730,7 @@ end:
  * Test 2: Test receiving the second fragment of the New Session Ticket before ACK message on client side
  * Test 3: Test receiving an app data before ACK and the New Session Ticket messages on client side
  */
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ML_KEM)
 static int test_swap_records_dtls13(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -865,6 +866,7 @@ end:
 
     return testresult;
 }
+#endif
 
 static int test_duplicate_app_data(int minversion, int maxversion);
 static int test_duplicate_app_data_dtls1(void)
@@ -1049,7 +1051,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls_duplicate_records);
     ADD_TEST(test_just_finished);
     ADD_ALL_TESTS(test_swap_records_dtls1, 4);
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_ECX) || !defined(OPENSSL_NO_ML_KEM)
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ML_KEM)
     ADD_ALL_TESTS(test_swap_records_dtls13, 4);
 #endif
     ADD_TEST(test_listen);
