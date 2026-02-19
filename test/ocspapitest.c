@@ -112,7 +112,8 @@ err:
 static int test_resp_signer(void)
 {
     OCSP_BASICRESP *bs = NULL;
-    X509 *signer = NULL, *tmp;
+    X509 *signer = NULL;
+    const X509 *tmp;
     EVP_PKEY *key = NULL;
     STACK_OF(X509) *extra_certs = NULL;
     int ret = 0;
