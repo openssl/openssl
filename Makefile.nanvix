@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 #
 # Usage:
-#   make -f Makefile.nanvix CONFIG_NANVIX=y NANVIX_HOME=/path/to/nanvix all
+#   make -f Makefile.nanvix CONFIG_NANVIX=y NANVIX_HOME=/path/to/sysroot all
 #
 # Targets:
 #   all              Build static libraries (libcrypto.a, libssl.a)
@@ -38,7 +38,7 @@ ifdef CONFIG_NANVIX
         ifdef DOCKER_IMAGE_EXISTS
           # Use Docker for cross-compilation
           CONFIG_NANVIX_DOCKER := y
-          $(info [INFO] Native toolchain not found at $(NANVIX_TOOLCHAIN), using Docker image $(NANVIX_DOCKER_IMAGE))
+          $(info [nanvix] Using Docker (native toolchain not found at $(NANVIX_TOOLCHAIN)))
         else
           $(error Docker image $(NANVIX_DOCKER_IMAGE) not found. Run: docker pull $(NANVIX_DOCKER_IMAGE))
         endif
@@ -56,7 +56,7 @@ ifdef CONFIG_NANVIX
     ifndef DOCKER_IMAGE_EXISTS
       $(error Docker image $(NANVIX_DOCKER_IMAGE) not found. Run: docker pull $(NANVIX_DOCKER_IMAGE))
     endif
-    $(info [INFO] Using Docker image $(NANVIX_DOCKER_IMAGE) (explicitly requested))
+    $(info [nanvix] Using Docker (explicitly requested))
   endif
 
   EXE = .elf
@@ -114,7 +114,7 @@ else
   # Allow clean target without CONFIG_NANVIX
   ifneq ($(MAKECMDGOALS),clean)
     ifneq ($(MAKECMDGOALS),distclean)
-      $(error CONFIG_NANVIX must be set to 'y'. Usage: make -f Makefile.nanvix CONFIG_NANVIX=y NANVIX_HOME=/path/to/nanvix)
+      $(error CONFIG_NANVIX must be set to 'y'. Usage: make -f Makefile.nanvix CONFIG_NANVIX=y NANVIX_HOME=/path/to/sysroot)
     endif
   endif
   EXE = .elf
@@ -255,7 +255,7 @@ test-functional: test-integration
 ifdef CONFIG_NANVIX_DOCKER
 	@echo "  Running $(TEST_ELF) via nanvixd.elf (Docker)..."
 	$(DOCKER_RUN_FUNCTIONAL) sh -c \
-	  'timeout 120 ./bin/nanvixd.elf -- $(DOCKER_WORKSPACE_PATH)/$(TEST_ELF)'
+	  'timeout --foreground 120 ./bin/nanvixd.elf -- $(DOCKER_WORKSPACE_PATH)/$(TEST_ELF)'
 	@echo "  PASS: openssl library test (exit code 0)"
 else
 	@echo "  Running $(TEST_ELF) via nanvixd.elf..."
@@ -325,6 +325,6 @@ clean:
 
 distclean: clean
 	-make distclean 2>/dev/null || true
-	git clean -fdx -e Makefile.nanvix -e NANVIX.md -e .github -e nanvix-artifacts -e z 2>/dev/null || true
+	git clean -fdx -e Makefile.nanvix -e NANVIX.md -e .github -e nanvix-artifacts 2>/dev/null || true
 
 .PHONY: all configure build clean distclean test test-smoke test-integration test-functional package verify-package install

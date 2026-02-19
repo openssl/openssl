@@ -88,7 +88,8 @@ jobs:
       - name: Build
         run: |
           make -f Makefile.nanvix CONFIG_NANVIX=y \
-            NANVIX_HOME="$NANVIX_HOME" NANVIX_TOOLCHAIN="/opt/nanvix" all
+            NANVIX_HOME="$NANVIX_HOME" NANVIX_TOOLCHAIN="/opt/nanvix" \
+            INSTALL_PREFIX="/sysroot" all
 
       - name: Smoke Tests
         run: |
@@ -109,6 +110,7 @@ jobs:
         run: |
           make -f Makefile.nanvix CONFIG_NANVIX=y \
             NANVIX_HOME="$NANVIX_HOME" NANVIX_TOOLCHAIN="/opt/nanvix" \
+            INSTALL_PREFIX="/sysroot" \
             PLATFORM="${{ matrix.platform }}" PROCESS_MODE="${{ matrix.process-mode }}" \
             package
           ARTIFACT_NAME="openssl-${{ matrix.platform }}-${{ matrix.process-mode }}"
