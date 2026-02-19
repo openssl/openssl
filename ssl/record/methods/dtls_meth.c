@@ -84,11 +84,26 @@ static DTLS_BITMAP *dtls_get_bitmap(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rr,
         return &rl->bitmap;
 
     /*
+     * DTLS 1.3 uses encrypted sequence numbers. Therefore we
+     * shouldn't be checking bitmaps if they are in the next
+     * epoch. Also the dtls_record_bitmap_update cannot
+     * be called until the right Epoch record layer process
+     * the record. Instead we are concern if DTLS 1.3 receives
+     * a record from a future epoch during the handshake.
+     */
+    else if (rl->version == DTLS1_3_VERSION
+        && ((rl->in_init && rr->epoch == rl->epoch + 2)
+            || (rl->in_early_data && rr->epoch == rl->epoch + 1))) {
+        *is_next_epoch = 1;
+    } else if (rl->in_init && rr->epoch == rl->epoch + 2) {
+        /* During the handshake, we may receive records from future epochs */
+        *is_next_epoch = 1;
+    }
+    /*
      * Check if the message is from the next epoch
      */
     else if (rr->epoch == rl->epoch + 1) {
         *is_next_epoch = 1;
-        return &rl->next_bitmap;
     }
 
     return NULL;
@@ -97,6 +112,11 @@ static DTLS_BITMAP *dtls_get_bitmap(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rr,
 static void dtls_set_in_init(OSSL_RECORD_LAYER *rl, int in_init)
 {
     rl->in_init = in_init;
+}
+
+static void dtls_set_in_early_data(OSSL_RECORD_LAYER *rl, int in_early_data)
+{
+    rl->in_early_data = in_early_data;
 }
 
 size_t dtls_get_rec_header_size(uint8_t hdr_first_byte)
@@ -332,6 +352,16 @@ static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, struct pqueue_st *qu
         return -1;
     }
 
+    /*
+     * DTLS 1.3 if we have more data in the TLS_BUFFER and it doesn't
+     * get copied over in dtls_free lets copy it over here so it doesn't get lost.
+     */
+    if (rdata->rbuf.left > 0) {
+        memcpy(rl->rbuf.buf, rdata->rbuf.buf + rdata->rbuf.offset, rdata->rbuf.left);
+        rl->rbuf.left = rdata->rbuf.left;
+        rl->rbuf.offset = 0;
+    }
+
     if (pqueue_insert(queue, item) == NULL) {
         /* Must be a duplicate so ignore it */
         OPENSSL_free(rdata->rbuf.buf);
@@ -439,6 +469,7 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     size_t recseqnumlen = 0;
     size_t rechdrlen = 0;
     size_t recseqnumoffs = 0;
+    int buffered_record = 0;
 
     rl->num_recs = 0;
     rl->curr_rec = 0;
@@ -469,6 +500,14 @@ again:
         || rl->packet_length < DTLS1_RT_HEADER_LENGTH) {
         PACKET dtlsrecord;
         unsigned int record_type, record_version, epoch, length;
+
+        /*
+         * If we have buffered records and the original BIO READ has all been processed
+         * let's leave and allow the Record Layer to update.
+         */
+        if (rl->version == DTLS1_3_VERSION && buffered_record == 1 && rl->rbuf.left == 0) {
+            return OSSL_RECORD_RETURN_RETRY;
+        }
 
         rret = rl->funcs->read_n(rl, DTLS1_RT_HEADER_LENGTH,
             TLS_BUFFER_get_len(&rl->rbuf), 0, 1, &nread);
@@ -662,6 +701,7 @@ again:
      */
     if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(rr->type)
         && rl->version == DTLS1_3_VERSION
+        && !(rl->in_init && rl->epoch == 0)
         && ((rl->packet_length < rechdrlen + DTLS13_CIPHERTEXT_MINSIZE)
             || (rl->sn_enc_ctx == NULL && rl->mac_ctx == NULL)
             || (rl->sn_enc_ctx != NULL
@@ -686,11 +726,58 @@ again:
 
     /* match epochs.  NULL means the packet is dropped on the floor */
     bitmap = dtls_get_bitmap(rl, rr, &is_next_epoch);
-    if (bitmap == NULL) {
+    if (bitmap == NULL && !is_next_epoch) {
         rr->length = 0;
         rl->packet_length = 0; /* dump this record */
         goto again; /* get another record */
     }
+
+    /*
+     * If this record is from the next epoch (either HM or ALERT), and a
+     * handshake is currently in progress, buffer it since it cannot be
+     * processed at this time.
+     */
+    if (is_next_epoch) {
+        /*
+         * DTLS 1.3 has two scenarios when to buffer the record
+         * from the next epoch
+         * 1) during handshake when rl->in_init is set and
+         *    we got an epoch 0 record and the record layer
+         *    is at epoch 2
+         * 2) during early data when rl-epoch is 1 and we
+         *    got an epoch 2 record
+         */
+        if ((rl->in_init && rl->version != DTLS1_3_VERSION)
+            || (rl->in_init && rl->epoch == 0 && rr->epoch == 2)
+            || (rl->version == DTLS1_3_VERSION
+                && ((rl->in_init && rl->epoch == 0 && rr->epoch == 2)
+                    || (rl->in_early_data && rl->epoch == 1 && rr->epoch == 2)
+                    || (rl->in_early_data && rl->epoch == 0 && rr->epoch == 1)))) {
+            uint64_t unprocessed_record_priority = rr->seq_num;
+
+            /*
+             * DTLS1.3 uses encrypted sequence numbers so we want to set the
+             * priority base off of epoch.
+             */
+            if (rl->version == DTLS1_3_VERSION || (rr->epoch == 2 && rl->epoch == 0)) {
+                if (rr->epoch == 1)
+                    unprocessed_record_priority = rl->dtls13_epoch_1_seq++;
+                else if (rr->epoch == 2)
+                    unprocessed_record_priority = rl->dtls13_epoch_2_seq++;
+            }
+            if (dtls_rlayer_buffer_record(rl, &rl->unprocessed_rcds,
+                    unprocessed_record_priority)
+                < 0) {
+                /* RLAYERfatal() already called */
+                return OSSL_RECORD_RETURN_FATAL;
+            }
+            buffered_record = 1;
+        }
+        rr->length = 0;
+        rl->packet_length = 0;
+        goto again;
+    }
+
 #ifndef OPENSSL_NO_SCTP
     /* Only do replay check if no SCTP bio */
     if (!BIO_dgram_is_sctp(rl->bio)) {
@@ -708,31 +795,6 @@ again:
     /* just read a 0 length packet */
     if (rr->length == 0)
         goto again;
-
-    /*
-     * If this record is from the next epoch (either HM or ALERT), and a
-     * handshake is currently in progress, buffer it since it cannot be
-     * processed at this time.
-     */
-    if (is_next_epoch) {
-        /*
-         * DTLS1.3 if we are are in Early Data (Epoch 1) and
-         * we get an Epoch 2 record, we need to end
-         * Early Data. The record needs to be buffered
-         * for the next record layer.
-         */
-        if (rl->in_init || (rl->version == DTLS1_3_VERSION && rr->epoch == 2 && rl->epoch == 1)) {
-            if (dtls_rlayer_buffer_record(rl, &rl->unprocessed_rcds,
-                    rr->seq_num)
-                < 0) {
-                /* RLAYERfatal() already called */
-                return OSSL_RECORD_RETURN_FATAL;
-            }
-        }
-        rr->length = 0;
-        rl->packet_length = 0;
-        goto again;
-    }
 
     if (!dtls_process_record(rl, bitmap)) {
         if (rl->alert != SSL_AD_NO_ALERT) {
@@ -781,9 +843,11 @@ static int dtls_free(OSSL_RECORD_LAYER *rl)
 
     while ((item = pqueue_pop(&rl->unprocessed_rcds)) != NULL) {
         rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
+
         /* Push to the next record layer */
         ret &= BIO_write_ex(rl->next, rdata->packet, rdata->packet_length,
             &written);
+
         OPENSSL_free(rdata->rbuf.buf);
         OPENSSL_free(item->data);
         pitem_free(item);
@@ -829,6 +893,9 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     (*retrl)->isdtls = 1;
     (*retrl)->epoch = epoch;
     (*retrl)->in_init = 1;
+    (*retrl)->in_early_data = 0;
+    (*retrl)->dtls13_epoch_1_seq = 0;
+    (*retrl)->dtls13_epoch_2_seq = 100;
 
     switch (vers) {
     case DTLS_ANY_VERSION:
@@ -1025,6 +1092,7 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     dtls_get_epoch,
     dtls_set_curr_mtu,
     dtls_unprocessed_records,
+    dtls_set_in_early_data,
     tls_alloc_buffers,
     tls_free_buffers
 };

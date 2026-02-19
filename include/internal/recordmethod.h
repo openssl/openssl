@@ -337,6 +337,11 @@ struct ossl_record_method_st {
     size_t (*unprocessed_records)(OSSL_RECORD_LAYER *rl);
 
     /*
+     * Set whether we are currently in early data or not. Only relevant for
+     * DTLS13
+     */
+    void (*set_in_early_data)(OSSL_RECORD_LAYER *rl, int in_early_data);
+    /*
      * Allocate read or write buffers. Does nothing if already allocated.
      * Assumes default buffer length and 1 pipeline.
      */

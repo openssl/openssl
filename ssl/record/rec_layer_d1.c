@@ -204,7 +204,6 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
     void (*cb)(const SSL *ssl, int type2, int val) = NULL;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
     int is_dtls13;
-    uint16_t curr_epoch;
     int in_early_data;
 
     if (sc == NULL)
@@ -229,8 +228,9 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
 
 start:
     sc->rwstate = SSL_NOTHING;
-    curr_epoch = 0;
-    in_early_data = 0;
+    in_early_data = (sc->early_data_state == SSL_EARLY_DATA_READING);
+    if (in_early_data)
+        sc->rlayer.rrlmethod->set_in_early_data(sc->rlayer.rrl, 1);
 
     /*
      * We are not handshaking and have no data yet, so process data buffered
@@ -261,23 +261,37 @@ start:
                     &rr->epoch, &rr->seq_num));
 
             /*
-             * If Server of DTLS1.3 is currently in Early Data (Epoch 1)
-             * and we get an Epoch 2 record, we need to end Early Data.
+             * DTLS1.3 will move the Server and Client's Read Record
+             * during the handshake once it has received a record
+             * in the new Epoch.
+             *
+             * We cannot move to the next epoch (1 or 2) until we
+             * have read the client/server hello.
              */
-            if (ret <= 0 && sc->server == 1 && is_dtls13 && sc->rlayer.rrlmethod->get_epoch(sc->rlayer.rrl, &curr_epoch)
-                && curr_epoch == 1 && sc->rlayer.rrlmethod->unprocessed_records(sc->rlayer.rrl) > 0) {
+            if (ret <= 0 && is_dtls13
+                && sc->rlayer.rrlmethod->unprocessed_records(sc->rlayer.rrl) > 0
+                && ((SSL_in_init(s) && sc->dtls13_process_hello) || in_early_data)) {
 
+                int which = SSL3_CC_HANDSHAKE;
+
+                if (sc->server)
+                    which |= SSL3_CHANGE_CIPHER_SERVER_READ;
+                else
+                    which |= SSL3_CHANGE_CIPHER_CLIENT_READ;
                 /*
-                 * Change the Read Record Layer to Epoch 2
+                 * Change the Read Record Layer to next read epoch
                  */
                 if (!s->method->ssl3_enc->change_cipher_state(sc,
-                        SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_READ)) {
+                        which)) {
                     SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     return -1;
                 }
 
+                if (in_early_data)
+                    sc->rlayer.rrlmethod->set_in_early_data(sc->rlayer.rrl, 1);
+
                 /*
-                 * Read the Buffered Epoch 2 record
+                 * Read the Buffered epoch
                  */
                 ret = HANDLE_RLAYER_READ_RETURN(sc,
                     sc->rlayer.rrlmethod->read_record(sc->rlayer.rrl,
@@ -408,7 +422,6 @@ start:
         }
 #endif
         *readbytes = n;
-
         return 1;
     }
 
@@ -531,8 +544,6 @@ start:
         goto start;
     }
 
-    in_early_data = (sc->early_data_state == SSL_EARLY_DATA_READING);
-
     /*
      * Unexpected handshake message (Client Hello, or protocol violation)
      */
@@ -599,8 +610,16 @@ start:
 
         i = sc->handshake_func(s);
         /* SSLfatal() called if appropriate */
-        if (i < 0)
+        if (i < 0) {
+            /*
+             * Since DTLS 1.3 introduce a new header with a new seq number we can
+             * end up receiving a retransmit of a Handshake message that has
+             * already been processed.
+             */
+            if (sc->version == DTLS1_3_VERSION)
+                ossl_statem_set_in_init(sc, 0);
             return i;
+        }
         if (i == 0)
             return -1;
 
@@ -684,6 +703,12 @@ start:
          */
         if (sc->s3.in_read_app_data && (sc->s3.total_renegotiations != 0) && ossl_statem_app_data_allowed(sc)) {
             sc->s3.in_read_app_data = 2;
+            return -1;
+        } else if (sc->version == DTLS1_3_VERSION) {
+            /*
+             * Let's let DTLS ACK and retransmits fix this problem.
+             */
+            ssl_release_record(sc, rr, 0);
             return -1;
         } else {
             SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_RECORD);
