@@ -22,6 +22,17 @@ plan skip_all => "External ECH tests not available on Windows or VMS"
 plan skip_all => "External ECH tests not supported in out of tree builds"
     if bldtop_dir() ne srctop_dir();
 
+# There is an issue with running the NSS server test in the CI setup. The
+# NSS server test uses the NSS selfserv test server, which, when ECH is
+# enabled generates an ephemeral ECHConfig and private key and prints the
+# base64 encoded ECHConfigList to stdout, which we then collect and feed
+# into s_client for the ECH test. When run locally this requires setting
+# `stdbuf -o0` on the command line to avoid buffering, but that setting
+# seems not to work in the CI environment. For now, we therefore omit the
+# NSS server test when running in the CI environment, which is ok as we
+# have another test checking ECH between s_client and the BoringSSL test
+# server. As a result, we need to set `OSSL_RUN_CI_TESTS` in the CI
+# environment to signal that the NSS server test is not to be run.
 if (defined ($ENV{OSSL_RUN_CI_TESTS})) {
     plan tests => 1;
 } else {
