@@ -306,6 +306,7 @@ void BIO_clear_flags(BIO *b, int flags);
 #define BIO_CB_CTRL 0x06
 #define BIO_CB_RECVMMSG 0x07
 #define BIO_CB_SENDMMSG 0x08
+#define BIO_CB_SENDFILE 0x09
 
 /*
  * The callback is called before and after the underling operation, The
@@ -738,6 +739,7 @@ __owur int BIO_sendmmsg(BIO *b, BIO_MSG *msg,
     size_t *msgs_processed);
 __owur int BIO_get_rpoll_descriptor(BIO *b, BIO_POLL_DESCRIPTOR *desc);
 __owur int BIO_get_wpoll_descriptor(BIO *b, BIO_POLL_DESCRIPTOR *desc);
+ossl_ssize_t BIO_sendfile(BIO *b, int fd, off_t offset, size_t size, int flags);
 int BIO_puts(BIO *bp, const char *buf);
 int BIO_indent(BIO *b, int indent, int max);
 long BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);
@@ -985,6 +987,8 @@ int BIO_meth_set_destroy(BIO_METHOD *biom, int (*destroy)(BIO *));
 int BIO_meth_set_callback_ctrl(BIO_METHOD *biom,
     long (*callback_ctrl)(BIO *, int,
         BIO_info_cb *));
+int BIO_meth_set_sendfile(BIO_METHOD *biom,
+    ossl_ssize_t (*f)(BIO *, int, off_t, size_t, int));
 #ifndef OPENSSL_NO_DEPRECATED_3_5
 OSSL_DEPRECATEDIN_3_5 int (*BIO_meth_get_write(const BIO_METHOD *biom))(BIO *, const char *,
     int);

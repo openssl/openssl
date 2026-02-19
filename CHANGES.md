@@ -284,6 +284,11 @@ OpenSSL 4.0
 
    *Joachim Vandersmissen* (with additional support from *Viktor Dukhovni*)
 
+ * Added `BIO_sendfile()` function. The `SSL_sendfile()` function doesn't call
+   `sendfile()` directly and delegates to the BIO instead.
+
+   *Julien Portalier*
+
 OpenSSL 3.6
 -----------
 
