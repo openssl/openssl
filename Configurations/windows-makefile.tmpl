@@ -38,6 +38,7 @@
 PLATFORM={- $config{target} -}
 SRCDIR={- $config{sourcedir} -}
 BLDDIR={- $config{builddir} -}
+RESULT_D=$(BLDDIR)\test-runs
 FIPSKEY={- $config{FIPSKEY} -}
 
 VERSION={- "$config{full_version}" -}
@@ -464,7 +465,7 @@ clean: libclean
 	-del /Q /S /F *.d *.obj *.pdb *.ilk *.manifest
 	-del /Q /S /F apps\*.lib apps\*.rc apps\*.res apps\*.exp
 	-del /Q /S /F test\*.exp
-	-rd /Q /S test\test-runs
+	-@if exist "$(RESULT_D)" rd /Q /S "$(RESULT_D)"
 
 distclean: clean
 	-del /Q /F include\openssl\configuration.h
