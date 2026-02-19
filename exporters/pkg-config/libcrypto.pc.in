@@ -10,7 +10,8 @@ libdir={- if (defined $OpenSSL::safe::installdata::LIBDIR_REL_PREFIX[0]) {
           } -}
 includedir={- $OUT = '';
               $OUT .= '${prefix}/' . $_ . ' '
-                  foreach (@OpenSSL::safe::installdata::INCLUDEDIR_REL_PREFIX); -}
+                  foreach (@OpenSSL::safe::installdata::INCLUDEDIR_REL_PREFIX);
+              $OUT =~ s/\s+\z//; -}
 modulesdir=${libdir}/{- $OpenSSL::safe::installdata::MODULESDIR_REL_LIBDIR[0] -}
 
 Name: OpenSSL-libcrypto
@@ -23,4 +24,5 @@ Cflags:{- $OUT = ' -I${includedir}';
               $OUT = '';
               $OUT .= ' -I${prefix}/' . $_ . ' '
                   foreach (@OpenSSL::safe::installdata::INCLUDEDIR_REL_PREFIX);
+              $OUT =~ s/\s+\z//;
           } -}
