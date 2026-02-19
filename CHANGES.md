@@ -275,6 +275,15 @@ OpenSSL 4.0
 
    *Joachim Vandersmissen* (with additional support from *Viktor Dukhovni*)
 
+ * X509_cmp_time, X509_cmp_current_time, and X509_cmp_timeframe have
+   had documentation added, and have then been deprecated.  A new
+   function, X509_check_certificate_times has been added, as well as
+   the <openssl/posix_time.h> interface from BoringSSL/LibreSSL. For
+   details of these functions and non-deprecated replacement
+   strategies, see X509_check_certificate_times(3).
+
+   * Bob Beck *
+
 OpenSSL 3.6
 -----------
 
