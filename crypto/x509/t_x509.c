@@ -404,9 +404,7 @@ int ossl_x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags)
         goto err;
 
     if (!X509_check_certificate_times(vpm, cert, &error)) {
-        if (BIO_printf(bio, "        %s\n",
-                X509_verify_cert_error_string(error))
-            <= 0)
+        if (BIO_printf(bio, "        %s\n", X509_verify_cert_error_string(error)) <= 0)
             goto err;
     }
     ret = X509_print_ex(bio, cert, flags,
