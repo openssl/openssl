@@ -1138,7 +1138,7 @@ cert_loop:
         X509_VERIFY_PARAM *vpm;
         time_t tcheck = time(NULL) + checkoffset;
         int expired = 0;
-        int error, valid;
+        int error;
 
         if ((vpm = X509_VERIFY_PARAM_new()) == NULL) {
             BIO_puts(out, "Malloc failed\n");
@@ -1147,16 +1147,11 @@ cert_loop:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_USE_CHECK_TIME);
         X509_VERIFY_PARAM_set_time(vpm, tcheck);
 
-        valid = X509_check_certificate_times(vpm, x, &error);
-        if (!valid) {
-            char msg[128];
-
-            ERR_error_string_n(error, msg, sizeof(msg));
-            BIO_printf(out, "%s\n", msg);
-        }
-        if (error == X509_V_ERR_CERT_HAS_EXPIRED) {
-            BIO_puts(out, "Certificate will expire\n");
-            expired = 1;
+        if (!X509_check_certificate_times(vpm, x, &error)) {
+            if (error == X509_V_ERR_CERT_HAS_EXPIRED) {
+                BIO_puts(out, "Certificate will expire\n");
+                expired = 1;
+            }
         } else {
             BIO_puts(out, "Certificate will not expire\n");
         }
