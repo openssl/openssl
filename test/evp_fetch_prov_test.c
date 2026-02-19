@@ -707,6 +707,7 @@ int setup_tests(void)
         ADD_TEST(test_explicit_EVP_MD_fetch_by_name);
         ADD_ALL_TESTS_NOSUBTEST(test_explicit_EVP_MD_fetch_by_X509_ALGOR, 2);
     } else if (strcmp(alg, "cipher") == 0) {
+        ADD_TEST(test_EVP_CIPHER_fetch_freeze);
         ADD_TEST(test_implicit_EVP_CIPHER_fetch);
         ADD_TEST(test_explicit_EVP_CIPHER_fetch_by_name);
         ADD_ALL_TESTS_NOSUBTEST(test_explicit_EVP_CIPHER_fetch_by_X509_ALGOR, 2);
