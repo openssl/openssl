@@ -6,6 +6,17 @@
 # Usage:
 #   make -f Makefile.nanvix CONFIG_NANVIX=y NANVIX_HOME=/path/to/nanvix all
 #
+# Targets:
+#   all              Build static libraries (libcrypto.a, libssl.a)
+#   test-smoke       Verify build artifacts exist and are valid (no runtime)
+#   test-integration Build and link a test program against libraries
+#   test-functional  Run test program on nanvixd.elf (requires KVM)
+#   test             Run all test levels
+#   package          Create portable release tarball in dist/
+#   verify-package   Verify package tarball contents
+#   install          Install to PREFIX
+#   clean            Remove build artifacts
+#
 # This Makefile provides Nanvix cross-compilation support similar to QuickJS, zlib and SQLite.
 # It wraps the OpenSSL ./Configure build system with Nanvix cross-compilation settings.
 
@@ -48,6 +59,8 @@ ifdef CONFIG_NANVIX
     $(info [INFO] Using Docker image $(NANVIX_DOCKER_IMAGE) (explicitly requested))
   endif
 
+  EXE = .elf
+
   ifdef CONFIG_NANVIX_DOCKER
     # Docker-based cross-compilation
     # All paths inside Docker
@@ -62,14 +75,35 @@ ifdef CONFIG_NANVIX
       -w $(DOCKER_WORKSPACE_PATH) \
       -e HOME=/tmp \
       $(NANVIX_DOCKER_IMAGE)
+    DOCKER_KVM_GID := $(shell stat -c '%g' /dev/kvm 2>/dev/null || echo 0)
+    DOCKER_RUN_FUNCTIONAL := docker run --rm --device /dev/kvm \
+      --user $(DOCKER_UID):$(DOCKER_GID) --group-add $(DOCKER_KVM_GID) \
+      -v $(CURDIR):$(DOCKER_WORKSPACE_PATH) \
+      -v $(abspath $(NANVIX_HOME)):$(DOCKER_SYSROOT_PATH) \
+      -w $(DOCKER_SYSROOT_PATH) \
+      -e HOME=/tmp \
+      -e USER=$(shell whoami) \
+      $(NANVIX_DOCKER_IMAGE)
 
     # For Docker, use Docker-internal paths in configure
     TOOLCHAIN_PREFIX := $(DOCKER_TOOLCHAIN_PATH)
     SYSROOT_PATH := $(DOCKER_SYSROOT_PATH)
+    NANVIX_LDFLAGS := -T$(DOCKER_SYSROOT_PATH)/lib/user.ld -static -Wl,-z,noexecstack
+    NANVIX_LIBS := -Wl,--start-group \
+      $(DOCKER_SYSROOT_PATH)/lib/libposix.a \
+      $(DOCKER_TOOLCHAIN_PATH)/i686-nanvix/lib/libc.a \
+      $(DOCKER_TOOLCHAIN_PATH)/i686-nanvix/lib/libm.a \
+      -Wl,--end-group
   else
     # Native toolchain paths
     TOOLCHAIN_PREFIX := $(NANVIX_TOOLCHAIN)
     SYSROOT_PATH := $(abspath $(NANVIX_HOME))
+    NANVIX_LDFLAGS := -T$(SYSROOT_PATH)/lib/user.ld -static -Wl,-z,noexecstack
+    NANVIX_LIBS := -Wl,--start-group \
+      $(SYSROOT_PATH)/lib/libposix.a \
+      $(NANVIX_TOOLCHAIN)/i686-nanvix/lib/libc.a \
+      $(NANVIX_TOOLCHAIN)/i686-nanvix/lib/libm.a \
+      -Wl,--end-group
   endif
 
   # INSTALL_PREFIX: the prefix baked into compiled artifacts (OPENSSLDIR, etc.).
@@ -83,6 +117,7 @@ else
       $(error CONFIG_NANVIX must be set to 'y'. Usage: make -f Makefile.nanvix CONFIG_NANVIX=y NANVIX_HOME=/path/to/nanvix)
     endif
   endif
+  EXE = .elf
 endif
 
 # Configure environment variables
@@ -109,8 +144,15 @@ CONFIGURE_OPTS = \
 	no-asm \
 	no-ui-console
 
+PLATFORM ?= unknown
+PROCESS_MODE ?= unknown
+
 # Marker file to track if configure has been run
 CONFIGURED_MARKER = .nanvix-configured
+
+# Test program source (inline)
+TEST_SRC = openssl_nanvix_test.c
+TEST_ELF = openssl_nanvix_test$(EXE)
 
 # Default target
 all: build
@@ -136,36 +178,137 @@ else
 	make -j$$(nproc) all
 endif
 
-# Test target: run tests using nanvixd.elf
-# Note: OpenSSL is built without apps (no-apps), so we test library functionality
-# by verifying the libraries were built correctly and can be linked
-test: build
-	@echo "Running OpenSSL tests on Nanvix..."
-	@echo "Verifying static libraries were built..."
-	@test -f libcrypto.a && echo "  ✓ libcrypto.a exists" || (echo "  ✗ libcrypto.a missing" && exit 1)
-	@test -f libssl.a && echo "  ✓ libssl.a exists" || (echo "  ✗ libssl.a missing" && exit 1)
-	@echo "Verifying library contents..."
+# ===========================================================================
+# Test Targets
+# ===========================================================================
+
+# Generate the inline test program source
+$(TEST_SRC):
+	@echo 'Generating $(TEST_SRC)...'
+	@printf '%s\n' \
+	  '#include <stdio.h>' \
+	  '#include <string.h>' \
+	  '#include <openssl/opensslv.h>' \
+	  '#include <openssl/sha.h>' \
+	  '#include <openssl/bn.h>' \
+	  'int main(void) {' \
+	  '    unsigned char md[SHA256_DIGEST_LENGTH];' \
+	  '    const char *msg = "hello nanvix";' \
+	  '    SHA256((const unsigned char *)msg, strlen(msg), md);' \
+	  '    BIGNUM *bn = BN_new();' \
+	  '    if (!bn) { printf("OPENSSL_TEST: FAIL bn_new\n"); return 1; }' \
+	  '    BN_set_word(bn, 12345);' \
+	  '    char *s = BN_bn2dec(bn);' \
+	  '    if (!s || strcmp(s, "12345") != 0) {' \
+	  '        printf("OPENSSL_TEST: FAIL bn value\n"); return 1; }' \
+	  '    OPENSSL_free(s);' \
+	  '    BN_free(bn);' \
+	  '    printf("OPENSSL_TEST: PASS version=%s\n", OPENSSL_VERSION_TEXT);' \
+	  '    return 0;' \
+	  '}' > $@
+
+# Build the test program
+$(TEST_ELF): $(TEST_SRC) build
 ifdef CONFIG_NANVIX_DOCKER
-	@$(DOCKER_RUN) $(DOCKER_TOOLCHAIN_PATH)/bin/i686-nanvix-ar -t libcrypto.a | head -5 && echo "  ✓ libcrypto.a is valid archive"
-	@$(DOCKER_RUN) $(DOCKER_TOOLCHAIN_PATH)/bin/i686-nanvix-ar -t libssl.a | head -5 && echo "  ✓ libssl.a is valid archive"
+	$(DOCKER_RUN) $(DOCKER_TOOLCHAIN_PATH)/bin/i686-nanvix-gcc -O2 \
+	  -I$(DOCKER_WORKSPACE_PATH)/include \
+	  $(DOCKER_WORKSPACE_PATH)/$(TEST_SRC) \
+	  -L$(DOCKER_WORKSPACE_PATH) -lssl -lcrypto \
+	  $(NANVIX_LDFLAGS) $(NANVIX_LIBS) \
+	  -o $(DOCKER_WORKSPACE_PATH)/$@
 else
-	@$(TOOLCHAIN_PREFIX)/bin/i686-nanvix-ar -t libcrypto.a | head -5 && echo "  ✓ libcrypto.a is valid archive"
-	@$(TOOLCHAIN_PREFIX)/bin/i686-nanvix-ar -t libssl.a | head -5 && echo "  ✓ libssl.a is valid archive"
+	$(TOOLCHAIN_PREFIX)/bin/i686-nanvix-gcc -O2 \
+	  -I$(CURDIR)/include \
+	  $(TEST_SRC) \
+	  -L$(CURDIR) -lssl -lcrypto \
+	  $(NANVIX_LDFLAGS) $(NANVIX_LIBS) \
+	  -o $@
 endif
-	@echo "		*** OpenSSL library verification OK ***"
 
-# Clean target
-clean:
-	-make clean 2>/dev/null || true
-	rm -f $(CONFIGURED_MARKER)
+# --- Smoke tests: verify build artifacts (no runtime needed) ---
+test-smoke: build
+	@echo "=== openssl smoke tests ==="
+	@echo "  Checking libcrypto.a..."
+	@test -f libcrypto.a || { echo "  FAIL: libcrypto.a not found"; exit 1; }
+	@size=$$(wc -c < libcrypto.a); \
+	  if [ "$$size" -lt 1000 ]; then echo "  FAIL: libcrypto.a too small ($$size bytes)"; exit 1; fi
+	@echo "  Checking libssl.a..."
+	@test -f libssl.a || { echo "  FAIL: libssl.a not found"; exit 1; }
+	@size=$$(wc -c < libssl.a); \
+	  if [ "$$size" -lt 1000 ]; then echo "  FAIL: libssl.a too small ($$size bytes)"; exit 1; fi
+	@echo "  Checking headers..."
+	@test -f include/openssl/ssl.h || { echo "  FAIL: include/openssl/ssl.h not found"; exit 1; }
+	@test -f include/openssl/evp.h || { echo "  FAIL: include/openssl/evp.h not found"; exit 1; }
+	@test -f include/openssl/opensslv.h || { echo "  FAIL: include/openssl/opensslv.h not found"; exit 1; }
+	@echo "  PASS: openssl smoke tests"
 
-# Distclean target - full cleanup
-distclean: clean
-	-make distclean 2>/dev/null || true
-	git clean -fdx -e Makefile.nanvix -e NANVIX.md -e .github -e nanvix-artifacts -e z 2>/dev/null || true
+# --- Integration tests: build and link test program ---
+test-integration: $(TEST_ELF)
+	@echo "=== openssl integration tests ==="
+	@test -f $(TEST_ELF) || { echo "  FAIL: $(TEST_ELF) not built"; exit 1; }
+	@echo "  OK: $(TEST_ELF) ($$(wc -c < $(TEST_ELF)) bytes)"
+	@echo "  PASS: openssl integration tests"
 
-# Install target (for Nanvix sysroot)
-# Use DESTDIR for staged installs: make install DESTDIR=/path/to/staging
+# --- Functional tests: run test program on nanvixd.elf ---
+test-functional: test-integration
+	@echo "=== openssl functional tests ==="
+ifdef CONFIG_NANVIX_DOCKER
+	@echo "  Running $(TEST_ELF) via nanvixd.elf (Docker)..."
+	$(DOCKER_RUN_FUNCTIONAL) sh -c \
+	  'timeout 120 ./bin/nanvixd.elf -- $(DOCKER_WORKSPACE_PATH)/$(TEST_ELF)'
+	@echo "  PASS: openssl library test (exit code 0)"
+else
+	@echo "  Running $(TEST_ELF) via nanvixd.elf..."
+	cd "$(SYSROOT_PATH)" && timeout --foreground 120 ./bin/nanvixd.elf -- $(abspath $(TEST_ELF))
+	@echo "  PASS: openssl library test (exit code 0)"
+endif
+	@echo "  PASS: openssl functional tests"
+
+test: test-smoke test-integration test-functional
+	@echo "=== All openssl tests PASSED ==="
+
+# ===========================================================================
+# Package Target
+# ===========================================================================
+
+package: all
+	@echo "=== Packaging openssl release ==="
+	$(eval ARTIFACT_NAME := openssl-$(PLATFORM)-$(PROCESS_MODE))
+	rm -rf dist/$(ARTIFACT_NAME)
+	mkdir -p dist/$(ARTIFACT_NAME)/sysroot/lib \
+	         dist/$(ARTIFACT_NAME)/sysroot/include/openssl
+	cp -f libcrypto.a libssl.a dist/$(ARTIFACT_NAME)/sysroot/lib/
+	cp -f include/openssl/*.h dist/$(ARTIFACT_NAME)/sysroot/include/openssl/
+	tar -cjf dist/$(ARTIFACT_NAME).tar.bz2 -C dist/$(ARTIFACT_NAME) sysroot
+	@echo "  Package: dist/$(ARTIFACT_NAME).tar.bz2"
+	@echo "  Contents:"
+	@tar tjf dist/$(ARTIFACT_NAME).tar.bz2 | head -20
+
+# ===========================================================================
+# Verify Package
+# ===========================================================================
+
+verify-package:
+	@echo "=== Verifying openssl package ==="
+	$(eval ARTIFACT_NAME := openssl-$(PLATFORM)-$(PROCESS_MODE))
+	@TARBALL="dist/$(ARTIFACT_NAME).tar.bz2"; \
+	if [ ! -f "$$TARBALL" ]; then \
+	  echo "FAIL: Package tarball not found: $$TARBALL"; exit 1; \
+	fi; \
+	echo "Package contents:"; \
+	tar tjf "$$TARBALL"; \
+	if ! tar tjf "$$TARBALL" | grep -q 'sysroot/lib/'; then \
+	  echo "FAIL: Package missing sysroot/lib/ entries"; exit 1; \
+	fi; \
+	if ! tar tjf "$$TARBALL" | grep -q 'sysroot/include/openssl/'; then \
+	  echo "FAIL: Package missing sysroot/include/openssl/ entries"; exit 1; \
+	fi; \
+	echo "  PASS: openssl package verification"
+
+# ===========================================================================
+# Install / Clean
+# ===========================================================================
+
 install: build
 ifdef CONFIG_NANVIX_DOCKER
 	$(DOCKER_RUN) make install_sw install_ssldirs DESTDIR="$(DESTDIR)"
@@ -173,4 +316,13 @@ else
 	make install_sw install_ssldirs DESTDIR="$(DESTDIR)"
 endif
 
-.PHONY: all configure build clean distclean test install
+clean:
+	-make clean 2>/dev/null || true
+	rm -f $(CONFIGURED_MARKER) $(TEST_SRC) $(TEST_ELF)
+	rm -rf dist/
+
+distclean: clean
+	-make distclean 2>/dev/null || true
+	git clean -fdx -e Makefile.nanvix -e NANVIX.md -e .github -e nanvix-artifacts -e z 2>/dev/null || true
+
+.PHONY: all configure build clean distclean test test-smoke test-integration test-functional package verify-package install
