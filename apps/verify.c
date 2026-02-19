@@ -330,7 +330,7 @@ end:
 static int cb(int ok, X509_STORE_CTX *ctx)
 {
     int cert_error = X509_STORE_CTX_get_error(ctx);
-    X509 *current_cert = X509_STORE_CTX_get_current_cert(ctx);
+    const X509 *current_cert = X509_STORE_CTX_get_current_cert(ctx);
 
     if (!ok) {
         if (current_cert != NULL) {

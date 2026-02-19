@@ -2584,7 +2584,7 @@ static X509_CRL *load_crl_crldp(STACK_OF(DIST_POINT) *crldp)
 static STACK_OF(X509_CRL) *crls_http_cb(const X509_STORE_CTX *ctx,
     const X509_NAME *nm)
 {
-    X509 *x;
+    const X509 *x;
     STACK_OF(X509_CRL) *crls = NULL;
     X509_CRL *crl;
     STACK_OF(DIST_POINT) *crldp;
