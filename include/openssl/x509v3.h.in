@@ -978,10 +978,10 @@ int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b);
  */
 int X509v3_asid_validate_path(X509_STORE_CTX *);
 int X509v3_addr_validate_path(X509_STORE_CTX *);
-int X509v3_asid_validate_resource_set(STACK_OF(X509) *chain,
+int X509v3_asid_validate_resource_set(const STACK_OF(X509) *chain,
     ASIdentifiers *ext,
     int allow_inheritance);
-int X509v3_addr_validate_resource_set(STACK_OF(X509) *chain,
+int X509v3_addr_validate_resource_set(const STACK_OF(X509) *chain,
     IPAddrBlocks *ext, int allow_inheritance);
 
 #endif /* OPENSSL_NO_RFC3779 */
