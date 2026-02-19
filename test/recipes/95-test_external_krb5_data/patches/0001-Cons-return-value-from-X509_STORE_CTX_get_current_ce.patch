@@ -1,0 +1,57 @@
+From db9d5b69c2987c4aaf0db612d76fb0931b990019 Mon Sep 17 00:00:00 2001
+From: Bob Beck <beck@openssl.org>
+Date: Fri, 20 Feb 2026 17:38:19 -0700
+Subject: [PATCH] Cons return value from X509_STORE_CTX_get_current_cert
+
+---
+ src/plugins/preauth/pkinit/pkinit_crypto_openssl.c | 4 ++--
+ src/plugins/tls/k5tls/openssl.c                    | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c b/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c
+index d1fe18e5a..d5e3f0094 100644
+--- a/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c
++++ b/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c
+@@ -2156,7 +2156,7 @@ cms_signeddata_verify(krb5_context context,
+         i = X509_verify_cert(cert_ctx);
+         if (i <= 0) {
+             int j = X509_STORE_CTX_get_error(cert_ctx);
+-            X509 *cert;
++            const X509 *cert;
+ 
+             cert = X509_STORE_CTX_get_current_cert(cert_ctx);
+             reqctx->received_cert = X509_dup(cert);
+@@ -3355,7 +3355,7 @@ openssl_callback(int ok, X509_STORE_CTX * ctx)
+ {
+ #ifdef DEBUG
+     if (!ok) {
+-        X509 *cert = X509_STORE_CTX_get_current_cert(ctx);
++        const X509 *cert = X509_STORE_CTX_get_current_cert(ctx);
+         int err = X509_STORE_CTX_get_error(ctx);
+         const char *errmsg = X509_verify_cert_error_string(err);
+         char buf[DN_BUF_LEN];
+diff --git a/src/plugins/tls/k5tls/openssl.c b/src/plugins/tls/k5tls/openssl.c
+index aab67c01c..2c7ce0317 100644
+--- a/src/plugins/tls/k5tls/openssl.c
++++ b/src/plugins/tls/k5tls/openssl.c
+@@ -288,7 +288,7 @@ check_cert_name_or_ip(X509 *x, const char *expected_name)
+ static int
+ verify_callback(int preverify_ok, X509_STORE_CTX *store_ctx)
+ {
+-    X509 *x;
++    const X509 *x;
+     SSL *ssl;
+     BIO *bio;
+     krb5_context context;
+@@ -330,7 +330,7 @@ verify_callback(int preverify_ok, X509_STORE_CTX *store_ctx)
+         return 1;
+     /* Check if the name we expect to find is in the certificate. */
+     expected_name = handle->servername;
+-    if (check_cert_name_or_ip(x, expected_name)) {
++    if (check_cert_name_or_ip((X509 *)x, expected_name)) {
+         TRACE_TLS_SERVER_NAME_MATCH(context, expected_name);
+         return 1;
+     } else {
+-- 
+2.52.0
+
