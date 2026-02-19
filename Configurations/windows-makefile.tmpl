@@ -464,7 +464,7 @@ clean: libclean
 	-del /Q /S /F *.d *.obj *.pdb *.ilk *.manifest
 	-del /Q /S /F apps\*.lib apps\*.rc apps\*.res apps\*.exp
 	-del /Q /S /F test\*.exp
-	-rd /Q /S test\test-runs
+	-rd /Q /S test-runs 2>NUL
 
 distclean: clean
 	-del /Q /F include\openssl\configuration.h
