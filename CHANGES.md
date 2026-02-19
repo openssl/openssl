@@ -207,6 +207,12 @@ OpenSSL 4.0
 
    *Igor Ustinov*
 
+ * CMP: added `-ta_in_ip_extracerts` and `-nonmatched_error_nonces` options (also at API level).
+
+   This work was sponsored by Siemens AG.
+
+   *David von Oheimb*
+
  * Added SSL_CTX_get0_alpn_protos() and SSL_get0_alpn_protos().
 
    *Daniel Kubec*

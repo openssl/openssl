@@ -374,6 +374,7 @@ const char *OSSL_CMP_CTX_get0_propq(const OSSL_CMP_CTX *ctx);
 #define OSSL_CMP_OPT_IGNORE_KEYUSAGE 35
 #define OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR 36
 #define OSSL_CMP_OPT_NO_CACHE_EXTRACERTS 37
+#define OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES 38
 int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val);
 int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt);
 /* CMP-specific callback for logging and outputting the error queue: */

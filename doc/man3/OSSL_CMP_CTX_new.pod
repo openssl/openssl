@@ -335,6 +335,12 @@ B<WARNING:> This setting leads to unspecified behavior and it is meant
 exclusively to allow interoperability with server implementations violating
 RFC 9810.
 
+=item B<OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES>
+
+Accept missing or non-matching transactionID or recipNonce in error messages.
+This can be helpful in case the server cannot provide a proper error message,
+for instance if it was unable to parse the ASN.1 encoding of a request message.
+
 =item B<OSSL_CMP_OPT_IGNORE_KEYUSAGE>
 
 Ignore key usage restrictions in the signer's certificate when
@@ -882,10 +888,14 @@ OSSL_CMP_CTX_set1_serialNumber(),
 OSSL_CMP_CTX_get0_libctx(), OSSL_CMP_CTX_get0_propq(), and
 OSSL_CMP_CTX_get0_validatedSrvCert() were added in OpenSSL 3.2.
 
-OSSL_CMP_CTX_get0_geninfo_ITAVs() was added in OpenSSL 3.3.
+The B<OSSL_CMP_OPT_NO_CACHE_EXTRACERTS> option as well as
+OSSL_CMP_CTX_get0_geninfo_ITAVs() were added in OpenSSL 3.3.
 
 Support for central key generation, requested via B<OSSL_CRMF_POPO_NONE>,
 was added in OpenSSL 3.5.
+
+The B<OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR>
+and B<OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES> options were added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
