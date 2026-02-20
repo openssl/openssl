@@ -45,14 +45,7 @@
 #endif
 #include "rcu_internal.h"
 
-#if defined(__clang__) && defined(__has_feature)
-#if __has_feature(thread_sanitizer)
-#define __SANITIZE_THREAD__
-#endif
-#endif
-
 #if defined(__SANITIZE_THREAD__)
-#include <sanitizer/tsan_interface.h>
 #define TSAN_FAKE_UNLOCK(x)          \
     __tsan_mutex_pre_unlock((x), 0); \
     __tsan_mutex_post_unlock((x), 0)
@@ -1195,6 +1188,29 @@ int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
     if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
         return 0;
     *ret = *val;
+    if (!CRYPTO_THREAD_unlock(lock))
+        return 0;
+
+    return 1;
+}
+
+int CRYPTO_atomic_store_int(int *dst, int val, CRYPTO_RWLOCK *lock)
+{
+#if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL) && !defined(BROKEN_CLANG_ATOMICS)
+    if (__atomic_is_lock_free(sizeof(*dst), dst)) {
+        __atomic_store(dst, &val, __ATOMIC_RELEASE);
+        return 1;
+    }
+#elif defined(__sun) && (defined(__SunOS_5_10) || defined(__SunOS_5_11))
+    /* This will work for all future Solaris versions. */
+    if (dst != NULL) {
+        atomic_swap_uint((unsigned int)dst, (unsigned int)val);
+        return 1;
+    }
+#endif
+    if (lock == NULL || !CRYPTO_THREAD_write_lock(lock))
+        return 0;
+    *dst = val;
     if (!CRYPTO_THREAD_unlock(lock))
         return 0;
 

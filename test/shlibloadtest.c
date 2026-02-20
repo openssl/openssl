@@ -21,7 +21,6 @@ typedef const SSL_METHOD *(*TLS_method_t)(void);
 typedef SSL_CTX *(*SSL_CTX_new_t)(const SSL_METHOD *meth);
 typedef void (*SSL_CTX_free_t)(SSL_CTX *);
 typedef int (*OPENSSL_init_crypto_t)(uint64_t, void *);
-typedef int (*OPENSSL_atexit_t)(void (*handler)(void));
 typedef unsigned long (*ERR_get_error_t)(void);
 typedef unsigned long (*OPENSSL_version_major_t)(void);
 typedef unsigned long (*OPENSSL_version_minor_t)(void);
@@ -39,23 +38,8 @@ typedef enum test_types_en {
 static TEST_TYPE test_type;
 static const char *path_crypto;
 static const char *path_ssl;
-static const char *path_atexit;
 
 #ifdef SD_INIT
-
-static int atexit_handler_done = 0;
-
-static void atexit_handler(void)
-{
-    FILE *atexit_file = fopen(path_atexit, "w");
-
-    if (atexit_file == NULL)
-        return;
-
-    fprintf(atexit_file, "atexit() run\n");
-    fclose(atexit_file);
-    atexit_handler_done++;
-}
 
 static int test_lib(void)
 {
@@ -73,7 +57,6 @@ static int test_lib(void)
     OPENSSL_version_major_t myOPENSSL_version_major;
     OPENSSL_version_minor_t myOPENSSL_version_minor;
     OPENSSL_version_patch_t myOPENSSL_version_patch;
-    OPENSSL_atexit_t myOPENSSL_atexit;
     int result = 0;
 
     switch (test_type) {
@@ -124,8 +107,7 @@ static int test_lib(void)
     if (!sd_sym(cryptolib, "ERR_get_error", &symbols[0].sym)
         || !sd_sym(cryptolib, "OPENSSL_version_major", &symbols[1].sym)
         || !sd_sym(cryptolib, "OPENSSL_version_minor", &symbols[2].sym)
-        || !sd_sym(cryptolib, "OPENSSL_version_patch", &symbols[3].sym)
-        || !sd_sym(cryptolib, "OPENSSL_atexit", &symbols[4].sym)) {
+        || !sd_sym(cryptolib, "OPENSSL_version_patch", &symbols[3].sym)) {
         fprintf(stderr, "Failed to load libcrypto symbols\n");
         goto end;
     }
@@ -146,24 +128,17 @@ static int test_lib(void)
         goto end;
     }
 
-    myOPENSSL_atexit = (OPENSSL_atexit_t)symbols[4].func;
-    if (!myOPENSSL_atexit(atexit_handler)) {
-        fprintf(stderr, "Failed to register atexit handler\n");
-        goto end;
-    }
-
     if (test_type == DSO_REFTEST) {
 #ifdef DSO_DLFCN
         DSO_dsobyaddr_t myDSO_dsobyaddr;
         DSO_free_t myDSO_free;
 
         /*
-         * This is resembling the code used in ossl_init_base() and
-         * OPENSSL_atexit() to block unloading the library after dlclose().
-         * We are not testing this on Windows, because it is done there in a
-         * completely different way. Especially as a call to DSO_dsobyaddr()
-         * will always return an error, because DSO_pathbyaddr() is not
-         * implemented there.
+         * This is resembling the code used in ossl_init_base() to block
+         * unloading the library after dlclose().  We are not testing this on
+         * Windows, because it is done there in a completely different way.
+         * Especially as a call to DSO_dsobyaddr() will always return an error,
+         * because DSO_pathbyaddr() is not implemented there.
          */
         if (!sd_sym(cryptolib, "DSO_dsobyaddr", &symbols[0].sym)
             || !sd_sym(cryptolib, "DSO_free", &symbols[1].sym)) {
@@ -201,23 +176,6 @@ static int test_lib(void)
         ssllib = SD_INIT;
     }
 
-#if defined(OPENSSL_NO_PINSHARED) \
-    && defined(__GLIBC__)         \
-    && defined(__GLIBC_PREREQ)    \
-    && defined(OPENSSL_SYS_LINUX)
-#if __GLIBC_PREREQ(2, 3)
-    /*
-     * If we didn't pin the so then we are hopefully on a platform that supports
-     * running atexit() on so unload. If not we might crash. We know this is
-     * true on linux since glibc 2.2.3
-     */
-    if (atexit_handler_done != 1) {
-        fprintf(stderr, "atexit() handler did not run\n");
-        goto end;
-    }
-#endif
-#endif
-
     result = 1;
 end:
     if (cryptolib != SD_INIT)
@@ -237,7 +195,7 @@ int main(int argc, char *argv[])
 {
     const char *p;
 
-    if (argc != 5) {
+    if (argc != 4) {
         fprintf(stderr, "Incorrect number of arguments\n");
         return 1;
     }
@@ -258,7 +216,6 @@ int main(int argc, char *argv[])
     }
     path_crypto = argv[2];
     path_ssl = argv[3];
-    path_atexit = argv[4];
     if (path_crypto == NULL || path_ssl == NULL) {
         fprintf(stderr, "Invalid libcrypto/libssl path\n");
         return 1;

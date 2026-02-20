@@ -190,7 +190,7 @@ static void SubWord(u32 *w)
     a2 = a3;
     a2 ^= (a3 & 0x0C0C0C0Cu) >> 2;
     a4 = a3 & a2;
-    a4 ^= (a4 & 0x0A0A0A0A0Au) >> 1;
+    a4 ^= (a4 & 0x0A0A0A0Au) >> 1;
     a4 ^= (((a3 << 1) & a2) ^ ((a2 << 1) & a3)) & 0x0A0A0A0Au;
     a5 = a4 & 0x08080808u;
     a5 |= a5 >> 1;

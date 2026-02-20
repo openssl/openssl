@@ -181,8 +181,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
         const char *propq))
 {
     int ret = 0;
-    const EVP_MD *md;
-    EVP_MD *md_fetch;
+    EVP_MD *md;
     HMAC_CTX *hmac = NULL;
     unsigned char key[EVP_MAX_MD_SIZE], *salt;
     int saltlen, iter;
@@ -221,17 +220,12 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
         if (OBJ_obj2txt(md_name, sizeof(md_name), macoid, 0) < 0)
             return 0;
     }
-    (void)ERR_set_mark();
-    md = md_fetch = EVP_MD_fetch(libctx, md_name, propq);
-    if (md == NULL)
-        md = EVP_get_digestbynid(OBJ_obj2nid(macoid));
+    md = EVP_MD_fetch(libctx, md_name, propq);
 
     if (md == NULL) {
-        (void)ERR_clear_last_mark();
         ERR_raise(ERR_LIB_PKCS12, PKCS12_R_UNKNOWN_DIGEST_ALGORITHM);
         return 0;
     }
-    (void)ERR_pop_to_mark();
 
     keylen = EVP_MD_get_size(md);
     md_nid = EVP_MD_get_type(md);
@@ -254,7 +248,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
             goto err;
         }
     } else {
-        EVP_MD *hmac_md = (EVP_MD *)md;
+        EVP_MD *hmac_md = md;
         int fetched = 0;
 
         if (pbmac1_kdf_nid != NID_undef) {
@@ -300,7 +294,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
 err:
     OPENSSL_cleanse(key, sizeof(key));
     HMAC_CTX_free(hmac);
-    EVP_MD_free(md_fetch);
+    EVP_MD_free(md);
     return ret;
 }
 

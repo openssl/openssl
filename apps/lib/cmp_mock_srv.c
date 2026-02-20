@@ -614,10 +614,10 @@ static void process_error(OSSL_CMP_SRV_CTX *srv_ctx, const OSSL_CMP_MSG *error,
         return;
     }
 
-    BIO_printf(bio_err, "mock server received error:\n");
+    BIO_puts(bio_err, "mock server received error:\n");
 
     if (statusInfo == NULL) {
-        BIO_printf(bio_err, "pkiStatusInfo absent\n");
+        BIO_puts(bio_err, "pkiStatusInfo absent\n");
     } else {
         sibuf = OSSL_CMP_snprint_PKIStatusInfo(statusInfo, buf, sizeof(buf));
         BIO_printf(bio_err, "pkiStatusInfo: %s\n",
@@ -625,22 +625,22 @@ static void process_error(OSSL_CMP_SRV_CTX *srv_ctx, const OSSL_CMP_MSG *error,
     }
 
     if (errorCode == NULL)
-        BIO_printf(bio_err, "errorCode absent\n");
+        BIO_puts(bio_err, "errorCode absent\n");
     else
         BIO_printf(bio_err, "errorCode: %ld\n", ASN1_INTEGER_get(errorCode));
 
     if (sk_ASN1_UTF8STRING_num(errorDetails) <= 0) {
-        BIO_printf(bio_err, "errorDetails absent\n");
+        BIO_puts(bio_err, "errorDetails absent\n");
     } else {
-        BIO_printf(bio_err, "errorDetails: ");
+        BIO_puts(bio_err, "errorDetails: ");
         for (i = 0; i < sk_ASN1_UTF8STRING_num(errorDetails); i++) {
             if (i > 0)
-                BIO_printf(bio_err, ", ");
+                BIO_puts(bio_err, ", ");
             ASN1_STRING_print_ex(bio_err,
                 sk_ASN1_UTF8STRING_value(errorDetails, i),
                 ASN1_STRFLGS_ESC_QUOTE);
         }
-        BIO_printf(bio_err, "\n");
+        BIO_puts(bio_err, "\n");
     }
 }
 

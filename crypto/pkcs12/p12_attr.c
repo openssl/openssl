@@ -97,7 +97,7 @@ int PKCS12_add1_attr_by_txt(PKCS12_SAFEBAG *bag, const char *attrname, int type,
         return 0;
 }
 
-ASN1_TYPE *PKCS12_get_attr_gen(const STACK_OF(X509_ATTRIBUTE) *attrs,
+const ASN1_TYPE *PKCS12_get_attr_gen(const STACK_OF(X509_ATTRIBUTE) *attrs,
     int attr_nid)
 {
     int i = X509at_get_attr_by_NID(attrs, attr_nid, -1);

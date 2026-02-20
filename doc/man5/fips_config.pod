@@ -52,6 +52,13 @@ Regardless of the value, the operation (e.g., key generation) that called the
 continuous test will return an error code if its continuous test fails. The
 operation may then be retried if the error mode has not been triggered.
 
+=item B<defer-tests>
+
+If set to C<1>, the module will not run the self tests during initialization.
+Instead, the self tests will be run on demand when a particular algorithm is
+used.
+The default value of C<0> runs the self tests during initialization.
+
 =item B<module-mac>
 
 The calculated MAC of the FIPS provider file.

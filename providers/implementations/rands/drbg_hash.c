@@ -25,6 +25,7 @@
 #include "prov/drbg.h"
 #include "crypto/evp.h"
 #include "crypto/evp/evp_local.h"
+#include "internal/fips.h"
 #include "internal/provider.h"
 
 #define drbg_hash_get_ctx_params_st drbg_get_ctx_params_st
@@ -454,6 +455,12 @@ static int drbg_hash_new(PROV_DRBG *ctx)
 static void *drbg_hash_new_wrapper(void *provctx, void *parent,
     const OSSL_DISPATCH *parent_dispatch)
 {
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_DRBG_HASH))
+        return NULL;
+#endif
+
     return ossl_rand_drbg_new(provctx, parent, parent_dispatch,
         &drbg_hash_new, &drbg_hash_free,
         &drbg_hash_instantiate, &drbg_hash_uninstantiate,

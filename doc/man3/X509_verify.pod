@@ -12,7 +12,7 @@ verify certificate, certificate request, or CRL signature
  #include <openssl/x509.h>
 
  int X509_verify(X509 *x, EVP_PKEY *pkey);
- int X509_self_signed(X509 *cert, int verify_signature);
+ int X509_self_signed(const X509 *cert, int verify_signature);
 
  int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *pkey, OSSL_LIB_CTX *libctx,
                         const char *propq);
@@ -76,6 +76,8 @@ functions are available in all versions of OpenSSL.
 X509_REQ_verify_ex(), and X509_self_signed() were added in OpenSSL 3.0.
 
 X509_ACERT_verify() was added in OpenSSL 3.4.
+
+X509_self_signed() had its cert parameter modified to be I<const> in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

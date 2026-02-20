@@ -88,16 +88,13 @@ function, as this is the earliest point at which an application signals its
 intent to use the algorithm.
 
 The self-test state is maintained in a structure of type `FIPS_DEFERRED_TEST`,
-this structure will be augmented with two arrays of pointers to other state
-structures of the same type.
+this structure will be augmented with an array of pointers to other state
+structures of the same type that this test depends on for certification
+reasons but would not be otherwise implicitly exercised by test (or perhaps
+ordering is important).
 
-One will handle test equivalency and will be named 'also_satisfies', the other
-will handle explicit dependencies that are not implicitly handled by
-initialization functions.
-
-Note that the `also_satisfies` list will *not* be used recursively (see the
-Examples section for an explanation of why this can't be done), while the
-`depends_on` list is used in a recursive fashion.
+Note that recursions are cut short by the fact that calling into a "parent"
+test results only in that test being recorded as seen but not processed.
 
 Dependency Handling
 -------------------
@@ -142,7 +139,7 @@ will be removed from this initial sequence.
 Even though these tests will be forcibly executed at module initialization
 they will use the same execution architecture via FIPS_DEFERRED_TEST state,
 so that they can be depended on by other tests and can mark other tests
-passed via equivalency (`also_satisfies` lists).
+passed via equivalency.
 
 Error Handling
 --------------
@@ -180,35 +177,18 @@ satisfying KAT requirements also for the inner algorithm used.
 
 For example the self-test for HMAC is considered sufficient also for testing
 the underlying digest. Therefore the current HMAC test (which uses SHA-256)
-will link to the SHA-256 in the 'also_satisfies' list.
+will invoke the SHA-256 algorithm which will call into the test machinery and
+will be recorded as an algorithm invoked by the test.
 
 When the application invokes EVP_MAC_init() it internally causes the FIPS
 module hmac_init() function to execute. If the HMAC test has not been run yet
-it will be executed. This test lists the SHA-256 test as also satisfied
+it will be executed.
 
 Once the HMAC test is complete the FIPS_KAT_deferred code will check the
-'also_satisfies' list and will mark each test in that list as passed. Note that
-this is not done recursivively because there is no guarantee that a higher
-level test always transitively satisfies lower level test. A high level test
-should list explicitly in `also_satisfies` all the algorithms that can be
-considered tested.
+list of additional algorithms invoked as part of the test and will mark each
+of them as passed.
 
-### Example 3: composite algorithms and equivalence behavior
-
-An example of a high level test that would incorrectly mark `also_satisfies`
-tests if it were allowed to do it recursively is the following:
-
-Let's assume the application invokes the PBKDF2 derivation function. Let's also
-assume, for the sake of argument, that the PBKDF2 test uses HMAC with SHA3-256
-in its KAT.  The PBKDF2 test can list HMAC as also satisfied, but if we were to
-recursively mark the tests in HMAC's `also_satisfies` list as passed, this would
-incorrectly mark the SHA-256 digest as passed because that's the digest used by
-the HMAC's own test.  However this is not what was actually tested.
-
-In order to properly mark the actual test that have been used, the PBKDF2 test
-will explicitly list HMAC and SHA3-256 in the `also_satisfies` list of tests.
-
-### Example 4: simple tests and dependencies behavior
+### Example 3: simple tests and dependencies behavior
 
 Another example is the use of `depends_on` to run equivalent but broader tests
 when that makes sense. For example if we consider the HMAC test as low impact,
@@ -226,14 +206,11 @@ SHA-256 lists the HMAC test as "dependency" in the `depends_on` list.
 When FIPS_KAT_deferred is invoked it checks whether there are tests listed in
 the depends_on list before executing the actual self-test, and if there are
 tests, it executes those first (recursively). It will find the HMAC test and
-execute it.  The HMAC test lists SHA-256 as also satisfied, therefore at the end
-of the test, the SHA-256 test will be marked as passed and control returned back
-up to the calling test. FIPS_KAT_deferred will now check if the SHA-256 test is
-already passed. Finding it already passed just returns and never actually
-executes the SHA-256 test directly. In case of mistakes (for example the HMAC
-test is later changed to use SHA3-256 and marks only that algorithm as also
-satisfied) the SHA-256 self-test is executed, but this hollow test just returns
-failure, catching the fact that a change of dependent self-test broke a promise.
+execute it.  The HMAC test invokes the SHA-256 test and records it, therefore at
+the end of the test, the SHA-256 test will be marked as passed and control
+returned back up to the calling test. FIPS_KAT_deferred will now check if the
+SHA-256 test is already passed. Finding it already passed just returns and never
+actually executes the SHA-256 test directly.
 
 Note that this is a special case of using dependencies to satisfy a test via
 indirection, in some cases dependencies will just be necessary tests that have
@@ -290,7 +267,6 @@ struct fips_deferred_test_st {
     const char *algorithm;
     int category;
     int state;
-    struct fips_deferred_test_st *also_satisfies;
     struct fips_deferred_test_st *depends_on;
 };
 

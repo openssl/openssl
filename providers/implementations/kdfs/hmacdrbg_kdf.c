@@ -15,6 +15,7 @@
 #include <openssl/proverr.h>
 #include <openssl/core_names.h>
 #include "internal/common.h"
+#include "internal/fips.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/hmac_drbg.h"
@@ -42,6 +43,12 @@ typedef struct {
 static void *hmac_drbg_kdf_new(void *provctx)
 {
     KDF_HMAC_DRBG *ctx;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_DRBG_HMAC))
+        return NULL;
+#endif
 
     if (!ossl_prov_is_running())
         return NULL;

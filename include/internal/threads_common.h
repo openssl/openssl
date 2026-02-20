@@ -10,6 +10,22 @@
 #ifndef _CRYPTO_THREADS_COMMON_H_
 #define _CRYPTO_THREADS_COMMON_H_
 
+#if defined(__clang__) && defined(__has_feature)
+#if __has_feature(thread_sanitizer)
+#define __SANITIZE_THREAD__
+#endif
+#endif
+
+#if defined(__SANITIZE_THREAD__)
+#include <sanitizer/tsan_interface.h>
+extern void AnnotateBenignRaceSized(const char *f, int l,
+    const volatile void *mem, unsigned int size, const char *desc);
+#define TSAN_BENIGN(x, desc) \
+    AnnotateBenignRaceSized(__FILE__, __LINE__, &(x), sizeof(x), desc);
+#else
+#define TSAN_BENIGN(x, desc)
+#endif
+
 typedef enum {
     CRYPTO_THREAD_LOCAL_RCU_KEY = 0,
     CRYPTO_THREAD_LOCAL_DRBG_PRIV_KEY,

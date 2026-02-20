@@ -254,10 +254,14 @@ int BIO_method_type(const BIO *b)
 }
 
 /*
- * This is essentially the same as BIO_read_ex() except that it allows
- * 0 or a negative value to indicate failure (retryable or not) in the return.
- * This is for compatibility with the old style BIO_read(), where existing code
- * may make assumptions about the return value that it might get.
+ * Internal BIO read function. Attempts to read dlen bytes from BIO b and
+ * places them in data. If any bytes were successfully read, then the number
+ * of bytes read is stored in readbytes.
+ * For compatibility with the old-style BIO_read() API, the function uses a
+ * return-value convention where a positive value indicates success,
+ * 0 indicates end-of-file, and a negative value indicates an error
+ * (including retryable errors).
+ * It also returns 0 if dlen==0.
  */
 static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
 {
@@ -285,6 +289,13 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
     if (ret > 0)
         b->num_read += (uint64_t)*readbytes;
 
+    /*
+     * If method->bread() returned 0 when dlen>0, it can be either EOF or
+     * an error, and we should distinguish them
+     */
+    if (ret == 0 && dlen > 0 && BIO_eof(b) != 1)
+        ret = -1;
+
     if (HAS_CALLBACK(b))
         ret = (int)bio_call_callback(b, BIO_CB_READ | BIO_CB_RETURN, data,
             dlen, 0, 0L, ret, readbytes);
@@ -303,8 +314,10 @@ int BIO_read(BIO *b, void *data, int dlen)
     size_t readbytes;
     int ret;
 
-    if (dlen < 0)
-        return 0;
+    if (dlen < 0) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_INVALID_ARGUMENT);
+        return -1;
+    }
 
     ret = bio_read_intern(b, data, (size_t)dlen, &readbytes);
 
@@ -677,6 +690,13 @@ long BIO_ctrl(BIO *b, int cmd, long larg, void *parg)
             larg, ret, NULL);
 
     return ret;
+}
+
+int BIO_eof(BIO *b)
+{
+    if ((b->flags & BIO_FLAGS_AUTO_EOF) != 0)
+        return 1;
+    return (int)BIO_ctrl(b, BIO_CTRL_EOF, 0, NULL);
 }
 
 long BIO_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)

@@ -90,7 +90,9 @@ static int ml_kem_pairwise_test(const ML_KEM_KEY *key, int key_flags)
         return 1;
 #ifdef FIPS_MODULE
     /* During self test, it is a waste to do this test */
-    if (ossl_fips_self_testing())
+    if (ossl_fips_self_testing()
+        || ossl_self_test_in_progress(ST_ID_ASYM_KEYGEN_ML_KEM)
+        || ossl_self_test_in_progress(ST_ID_KEM_ML_KEM))
         return 1;
 
     /*
@@ -161,6 +163,13 @@ ML_KEM_KEY *ossl_prov_ml_kem_new(PROV_CTX *ctx, const char *propq, int evp_type)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(ctx),
+            ST_ID_ASYM_KEYGEN_ML_KEM))
+        return NULL;
+#endif
+
     /*
      * When decoding, if the key ends up "loaded" into the same provider, these
      * are the correct config settings, otherwise, new values will be assigned

@@ -39,25 +39,16 @@ static OSSL_FUNC_signature_dupctx_fn slh_dsa_dupctx;
 static OSSL_FUNC_signature_set_ctx_params_fn slh_dsa_set_ctx_params;
 static OSSL_FUNC_signature_settable_ctx_params_fn slh_dsa_settable_ctx_params;
 
-#ifdef FIPS_MODULE
-static FIPS_DEFERRED_TEST slh_sig_deferred_tests[] = {
-    { "SLH-DSA-SHA2-128f",
-        FIPS_DEFERRED_KAT_SIGNATURE,
-        FIPS_DEFERRED_TEST_INIT },
-    { "SLH-DSA-SHAKE-128f",
-        FIPS_DEFERRED_KAT_SIGNATURE,
-        FIPS_DEFERRED_TEST_INIT },
-    { NULL, 0, 0 },
-};
-#endif
-
-static int slh_dsa_self_check(OSSL_LIB_CTX *libctx)
+static int slh_dsa_self_check(OSSL_LIB_CTX *libctx, const char *alg)
 {
     if (!ossl_prov_is_running())
         return 0;
 
 #ifdef FIPS_MODULE
-    return FIPS_deferred_self_tests(libctx, slh_sig_deferred_tests);
+    if (strstr(alg, "SLH-DSA-SHAKE"))
+        return ossl_deferred_self_test(libctx, ST_ID_SIG_SLH_DSA_SHAKE_128F);
+    else
+        return ossl_deferred_self_test(libctx, ST_ID_SIG_SLH_DSA_SHA2_128F);
 #else
     return 1;
 #endif
@@ -97,7 +88,7 @@ static void *slh_dsa_newctx(void *provctx, const char *alg, const char *propq)
 {
     PROV_SLH_DSA_CTX *ctx;
 
-    if (!slh_dsa_self_check(PROV_LIBCTX_OF(provctx)))
+    if (!slh_dsa_self_check(PROV_LIBCTX_OF(provctx), alg))
         return NULL;
 
     ctx = OPENSSL_zalloc(sizeof(PROV_SLH_DSA_CTX));

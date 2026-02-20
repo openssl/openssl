@@ -32,6 +32,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/der_rsa.h"
 #include "prov/securitycheck.h"
+#include "internal/fips.h"
 
 #define rsa_set_ctx_params_no_digest_st rsa_set_ctx_params_st
 
@@ -235,6 +236,12 @@ static void *rsa_newctx(void *provctx, const char *propq)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_SIG_RSA_SHA256))
+        return NULL;
+#endif
 
     if ((prsactx = OPENSSL_zalloc(sizeof(PROV_RSA_CTX))) == NULL
         || (propq != NULL

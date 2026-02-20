@@ -205,7 +205,7 @@ end:
 
 static ESS_SIGNING_CERT *ossl_ess_get_signing_cert(const PKCS7_SIGNER_INFO *si)
 {
-    ASN1_TYPE *attr;
+    const ASN1_TYPE *attr;
     const unsigned char *p;
 
     attr = PKCS7_get_signed_attribute(si, NID_id_smime_aa_signingCertificate);
@@ -217,7 +217,7 @@ static ESS_SIGNING_CERT *ossl_ess_get_signing_cert(const PKCS7_SIGNER_INFO *si)
 
 static ESS_SIGNING_CERT_V2 *ossl_ess_get_signing_cert_v2(const PKCS7_SIGNER_INFO *si)
 {
-    ASN1_TYPE *attr;
+    const ASN1_TYPE *attr;
     const unsigned char *p;
 
     attr = PKCS7_get_signed_attribute(si, NID_id_smime_aa_signingCertificateV2);
@@ -434,17 +434,10 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
 
     OBJ_obj2txt(name, sizeof(name), md_alg_resp->algorithm, 0);
 
-    (void)ERR_set_mark();
     md = EVP_MD_fetch(NULL, name, NULL);
-
-    if (md == NULL)
-        md = (EVP_MD *)EVP_get_digestbyname(name);
-
     if (md == NULL) {
-        (void)ERR_clear_last_mark();
         goto err;
     }
-    (void)ERR_pop_to_mark();
 
     length = EVP_MD_get_size(md);
     if (length <= 0)

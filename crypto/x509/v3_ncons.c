@@ -277,7 +277,7 @@ static int add_lengths(int *out, int a, int b)
  *  X509_V_ERR_UNSUPPORTED_NAME_SYNTAX: bad or unsupported syntax of name
  */
 
-int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
+int NAME_CONSTRAINTS_check(const X509 *x, NAME_CONSTRAINTS *nc)
 {
     int r, i, name_count, constraint_count;
     X509_NAME *nm;
@@ -434,7 +434,7 @@ static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid, size_t *idlen)
 /*
  * Check CN against DNS-ID name constraints.
  */
-int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
+int NAME_CONSTRAINTS_check_CN(const X509 *x, NAME_CONSTRAINTS *nc)
 {
     int r, i;
     const X509_NAME *nm = X509_get_subject_name(x);

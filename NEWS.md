@@ -27,6 +27,11 @@ OpenSSL 4.0
 
 ### Major changes between OpenSSL 3.6 and OpenSSL 4.0 [under development]
 
+  * Support for Encrypted Client Hello (ECH) was added. See `doc/designs/ech-api.md`
+    for details.
+
+  * Windows supports the use of staic or dynamic vcruntime linkage
+
   * The `OPENSSL_sk_set_cmp_thunks()` call was added to the `STACK_OF` api
 
   * The script tool `c_rehash` was removed. Use `openssl rehash` instead.

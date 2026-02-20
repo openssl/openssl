@@ -58,23 +58,8 @@ int ossl_prov_cipher_load(PROV_CIPHER *pc, const OSSL_PARAM *cipher,
         return 0;
 
     EVP_CIPHER_free(pc->alloc_cipher);
-    ERR_set_mark();
     pc->cipher = pc->alloc_cipher = EVP_CIPHER_fetch(ctx, cipher->data,
         propquery);
-#ifndef FIPS_MODULE /* Inside the FIPS module, we don't support legacy ciphers */
-    if (pc->cipher == NULL) {
-        const EVP_CIPHER *evp_cipher;
-
-        evp_cipher = EVP_get_cipherbyname(cipher->data);
-        /* Do not use global EVP_CIPHERs */
-        if (evp_cipher != NULL && evp_cipher->origin != EVP_ORIG_GLOBAL)
-            pc->cipher = evp_cipher;
-    }
-#endif
-    if (pc->cipher != NULL)
-        ERR_pop_to_mark();
-    else
-        ERR_clear_last_mark();
     return pc->cipher != NULL;
 }
 
@@ -121,22 +106,7 @@ int ossl_prov_digest_load(PROV_DIGEST *pd, const OSSL_PARAM *digest,
     if (digest->data_type != OSSL_PARAM_UTF8_STRING)
         return 0;
 
-    ERR_set_mark();
     ossl_prov_digest_fetch(pd, ctx, digest->data, propquery);
-#ifndef FIPS_MODULE /* Inside the FIPS module, we don't support legacy digests */
-    if (pd->md == NULL) {
-        const EVP_MD *md;
-
-        md = EVP_get_digestbyname(digest->data);
-        /* Do not use global EVP_MDs */
-        if (md != NULL && md->origin != EVP_ORIG_GLOBAL)
-            pd->md = md;
-    }
-#endif
-    if (pd->md != NULL)
-        ERR_pop_to_mark();
-    else
-        ERR_clear_last_mark();
     return pd->md != NULL;
 }
 

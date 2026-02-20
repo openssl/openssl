@@ -12,15 +12,12 @@
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
+#include <openssl/proverr.h>
 #include <openssl/rand.h>
 #include "crypto/ml_dsa.h"
 #include "crypto/rand.h"
 #include "internal/cryptlib.h"
-#include "internal/nelem.h"
 #include "self_test.h"
-#include "crypto/ml_kem.h"
-#include "self_test_data.inc"
-#include "internal/fips.h"
 
 static int set_kat_drbg(OSSL_LIB_CTX *ctx,
     const unsigned char *entropy, size_t entropy_len,
@@ -28,7 +25,7 @@ static int set_kat_drbg(OSSL_LIB_CTX *ctx,
     const unsigned char *persstr, size_t persstr_len);
 static int reset_main_drbg(OSSL_LIB_CTX *ctx);
 
-static int self_test_digest(const ST_KAT_DIGEST *t, OSSL_SELF_TEST *st,
+static int self_test_digest(const ST_DEFINITION *t, OSSL_SELF_TEST *st,
     OSSL_LIB_CTX *libctx)
 {
     int ok = 0;
@@ -42,15 +39,15 @@ static int self_test_digest(const ST_KAT_DIGEST *t, OSSL_SELF_TEST *st,
     if (ctx == NULL
         || md == NULL
         || !EVP_DigestInit_ex(ctx, md, NULL)
-        || !EVP_DigestUpdate(ctx, t->pt, t->pt_len)
+        || !EVP_DigestUpdate(ctx, t->pt.buf, t->pt.len)
         || !EVP_DigestFinal(ctx, out, &out_len))
         goto err;
 
     /* Optional corruption */
     OSSL_SELF_TEST_oncorrupt_byte(st, out);
 
-    if (out_len != t->expected_len
-        || memcmp(out, t->expected, out_len) != 0)
+    if (out_len != t->expected.len
+        || memcmp(out, t->expected.buf, out_len) != 0)
         goto err;
     ok = 1;
 err:
@@ -72,29 +69,29 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 
     /* Flag required for Key wrapping */
     EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
-    if (t->tag == NULL) {
+    if (t->tag.buf == NULL) {
         /* Use a normal cipher init */
-        return EVP_CipherInit_ex(ctx, cipher, NULL, t->key, t->iv, enc)
+        return EVP_CipherInit_ex(ctx, cipher, NULL, t->key.buf, t->iv.buf, enc)
             && EVP_CIPHER_CTX_set_padding(ctx, pad);
     }
 
     /* The authenticated cipher init */
     if (!enc)
-        in_tag = (unsigned char *)t->tag;
+        in_tag = (unsigned char *)t->tag.buf;
 
     return EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc)
-        && (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, (int)t->iv_len, NULL) > 0)
+        && (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, (int)t->iv.len, NULL) > 0)
         && (in_tag == NULL
-            || EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)t->tag_len,
+            || EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)t->tag.len,
                    in_tag)
                 > 0)
-        && EVP_CipherInit_ex(ctx, NULL, NULL, t->key, t->iv, enc)
+        && EVP_CipherInit_ex(ctx, NULL, NULL, t->key.buf, t->iv.buf, enc)
         && EVP_CIPHER_CTX_set_padding(ctx, pad)
-        && EVP_CipherUpdate(ctx, NULL, &tmp, t->aad, (int)t->aad_len);
+        && EVP_CipherUpdate(ctx, NULL, &tmp, t->aad.buf, (int)t->aad.len);
 }
 
 /* Test a single KAT for encrypt/decrypt */
-static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_SELF_TEST *st,
+static int self_test_cipher(const ST_DEFINITION *t, OSSL_SELF_TEST *st,
     OSSL_LIB_CTX *libctx)
 {
     int ret = 0, encrypt = 1, len = 0, ct_len = 0, pt_len = 0;
@@ -103,51 +100,51 @@ static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_SELF_TEST *st,
     unsigned char ct_buf[256] = { 0 };
     unsigned char pt_buf[256] = { 0 };
 
-    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_CIPHER, t->base.desc);
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_CIPHER, t->desc);
 
     ctx = EVP_CIPHER_CTX_new();
     if (ctx == NULL)
         goto err;
-    cipher = EVP_CIPHER_fetch(libctx, t->base.algorithm, NULL);
+    cipher = EVP_CIPHER_fetch(libctx, t->algorithm, NULL);
     if (cipher == NULL)
         goto err;
 
     /* Encrypt plain text message */
-    if ((t->mode & CIPHER_MODE_ENCRYPT) != 0) {
-        if (!cipher_init(ctx, cipher, t, encrypt)
-            || !EVP_CipherUpdate(ctx, ct_buf, &len, t->base.pt,
-                (int)t->base.pt_len)
+    if ((t->u.cipher.mode & CIPHER_MODE_ENCRYPT) != 0) {
+        if (!cipher_init(ctx, cipher, &t->u.cipher, encrypt)
+            || !EVP_CipherUpdate(ctx, ct_buf, &len, t->pt.buf,
+                (int)t->pt.len)
             || !EVP_CipherFinal_ex(ctx, ct_buf + len, &ct_len))
             goto err;
 
         OSSL_SELF_TEST_oncorrupt_byte(st, ct_buf);
         ct_len += len;
-        if (ct_len != (int)t->base.expected_len
-            || memcmp(t->base.expected, ct_buf, ct_len) != 0)
+        if (ct_len != (int)t->expected.len
+            || memcmp(t->expected.buf, ct_buf, ct_len) != 0)
             goto err;
 
-        if (t->tag != NULL) {
+        if (t->u.cipher.tag.buf != NULL) {
             unsigned char tag[16] = { 0 };
 
-            if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, (int)t->tag_len,
-                    tag)
+            if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
+                    (int)t->u.cipher.tag.len, tag)
                     <= 0
-                || memcmp(tag, t->tag, t->tag_len) != 0)
+                || memcmp(tag, t->u.cipher.tag.buf, t->u.cipher.tag.len) != 0)
                 goto err;
         }
     }
 
     /* Decrypt cipher text */
-    if ((t->mode & CIPHER_MODE_DECRYPT) != 0) {
-        if (!(cipher_init(ctx, cipher, t, !encrypt)
+    if ((t->u.cipher.mode & CIPHER_MODE_DECRYPT) != 0) {
+        if (!(cipher_init(ctx, cipher, &t->u.cipher, !encrypt)
                 && EVP_CipherUpdate(ctx, pt_buf, &len,
-                    t->base.expected, (int)t->base.expected_len)
+                    t->expected.buf, (int)t->expected.len)
                 && EVP_CipherFinal_ex(ctx, pt_buf + len, &pt_len)))
             goto err;
         OSSL_SELF_TEST_oncorrupt_byte(st, pt_buf);
         pt_len += len;
-        if (pt_len != (int)t->base.pt_len
-            || memcmp(pt_buf, t->base.pt, pt_len) != 0)
+        if (pt_len != (int)t->pt.len
+            || memcmp(pt_buf, t->pt.buf, pt_len) != 0)
             goto err;
     }
 
@@ -247,7 +244,7 @@ err:
     return params;
 }
 
-static int self_test_kdf(const ST_KAT_KDF *t, OSSL_SELF_TEST *st,
+static int self_test_kdf(const ST_DEFINITION *t, OSSL_SELF_TEST *st,
     OSSL_LIB_CTX *libctx)
 {
     int ret = 0;
@@ -266,18 +263,18 @@ static int self_test_kdf(const ST_KAT_KDF *t, OSSL_SELF_TEST *st,
     if (ctx == NULL)
         goto err;
 
-    params = kat_params_to_ossl_params(libctx, t->params, NULL);
+    params = kat_params_to_ossl_params(libctx, t->u.kdf.params, NULL);
     if (params == NULL)
         goto err;
 
-    if (t->expected_len > sizeof(out))
+    if (t->expected.len > sizeof(out))
         goto err;
-    if (EVP_KDF_derive(ctx, out, t->expected_len, params) <= 0)
+    if (EVP_KDF_derive(ctx, out, t->expected.len, params) <= 0)
         goto err;
 
     OSSL_SELF_TEST_oncorrupt_byte(st, out);
 
-    if (memcmp(out, t->expected, t->expected_len) != 0)
+    if (memcmp(out, t->expected.buf, t->expected.len) != 0)
         goto err;
 
     ret = 1;
@@ -289,7 +286,7 @@ err:
     return ret;
 }
 
-static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
+static int self_test_drbg(const ST_DEFINITION *t, OSSL_SELF_TEST *st,
     OSSL_LIB_CTX *libctx)
 {
     int ret = 0;
@@ -329,36 +326,38 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
 
     strength = EVP_RAND_get_strength(drbg);
 
-    drbg_params[0] = OSSL_PARAM_construct_utf8_string(t->param_name,
-        t->param_value, 0);
+    drbg_params[0] = OSSL_PARAM_construct_utf8_string(t->u.drbg.param_name,
+        (char *)t->u.drbg.param_value, 0);
     if (!EVP_RAND_CTX_set_params(drbg, drbg_params))
         goto err;
 
     drbg_params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
-        (void *)t->entropyin,
-        t->entropyinlen);
+        (void *)t->u.drbg.entropyin.buf,
+        t->u.drbg.entropyin.len);
     drbg_params[1] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
-        (void *)t->nonce, t->noncelen);
+        (void *)t->u.drbg.nonce.buf,
+        t->u.drbg.nonce.len);
     if (!EVP_RAND_instantiate(test, strength, 0, NULL, 0, drbg_params))
         goto err;
-    if (!EVP_RAND_instantiate(drbg, strength, 0, t->persstr, t->persstrlen,
-            NULL))
+    if (!EVP_RAND_instantiate(drbg, strength, 0, t->u.drbg.persstr.buf,
+            t->u.drbg.persstr.len, NULL))
         goto err;
 
     drbg_params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
-        (void *)t->entropyinpr1,
-        t->entropyinpr1len);
+        (void *)t->u.drbg.entropyinpr1.buf,
+        t->u.drbg.entropyinpr1.len);
     if (!EVP_RAND_CTX_set_params(test, drbg_params))
         goto err;
 
-    if (!EVP_RAND_generate(drbg, out, t->expectedlen, strength,
+    if (!EVP_RAND_generate(drbg, out, t->expected.len, strength,
             prediction_resistance,
-            t->entropyaddin1, t->entropyaddin1len))
+            t->u.drbg.entropyaddin1.buf,
+            t->u.drbg.entropyaddin1.len))
         goto err;
 
     drbg_params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
-        (void *)t->entropyinpr2,
-        t->entropyinpr2len);
+        (void *)t->u.drbg.entropyinpr2.buf,
+        t->u.drbg.entropyinpr2.len);
     if (!EVP_RAND_CTX_set_params(test, drbg_params))
         goto err;
 
@@ -366,14 +365,15 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
      * This calls ossl_prov_drbg_reseed() internally when
      * prediction_resistance = 1
      */
-    if (!EVP_RAND_generate(drbg, out, t->expectedlen, strength,
+    if (!EVP_RAND_generate(drbg, out, t->expected.len, strength,
             prediction_resistance,
-            t->entropyaddin2, t->entropyaddin2len))
+            t->u.drbg.entropyaddin2.buf,
+            t->u.drbg.entropyaddin2.len))
         goto err;
 
     OSSL_SELF_TEST_oncorrupt_byte(st, out);
 
-    if (memcmp(out, t->expected, t->expectedlen) != 0)
+    if (memcmp(out, t->expected.buf, t->expected.len) != 0)
         goto err;
 
     if (!EVP_RAND_uninstantiate(drbg))
@@ -394,7 +394,7 @@ err:
 }
 
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
-static int self_test_ka(const ST_KAT_KAS *t,
+static int self_test_ka(const ST_DEFINITION *t,
     OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 {
     int ret = 0;
@@ -403,17 +403,17 @@ static int self_test_ka(const ST_KAT_KAS *t,
     OSSL_PARAM *params = NULL;
     OSSL_PARAM *params_peer = NULL;
     unsigned char secret[256];
-    size_t secret_len = t->expected_len;
+    size_t secret_len = t->expected.len;
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_KA, t->desc);
 
     if (secret_len > sizeof(secret))
         goto err;
 
-    params = kat_params_to_ossl_params(libctx, t->key_group,
-        t->key_host_data, NULL);
-    params_peer = kat_params_to_ossl_params(libctx, t->key_group,
-        t->key_peer_data, NULL);
+    params = kat_params_to_ossl_params(libctx, t->u.kas.key_group,
+        t->u.kas.key_host_data, NULL);
+    params_peer = kat_params_to_ossl_params(libctx, t->u.kas.key_group,
+        t->u.kas.key_peer_data, NULL);
     if (params == NULL || params_peer == NULL)
         goto err;
 
@@ -440,8 +440,8 @@ static int self_test_ka(const ST_KAT_KAS *t,
 
     OSSL_SELF_TEST_oncorrupt_byte(st, secret);
 
-    if (secret_len != t->expected_len
-        || memcmp(secret, t->expected, t->expected_len) != 0)
+    if (secret_len != t->expected.len
+        || memcmp(secret, t->expected.buf, t->expected.len) != 0)
         goto err;
     ret = 1;
 err:
@@ -476,54 +476,7 @@ static int digest_signature(const uint8_t *sig, size_t sig_len,
     return ret;
 }
 
-#ifndef OPENSSL_NO_LMS
-static int self_test_LMS(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
-{
-    int ret = 0;
-    OSSL_PARAM pm[2];
-    const ST_KAT_LMS *t = &st_kat_lms_test;
-    EVP_PKEY_CTX *ctx = NULL;
-    EVP_PKEY *pkey = NULL;
-    EVP_SIGNATURE *sig = NULL;
-
-    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_SIGNATURE,
-        OSSL_SELF_TEST_DESC_SIGN_LMS);
-
-    pm[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
-        (unsigned char *)t->pub,
-        t->publen);
-    pm[1] = OSSL_PARAM_construct_end();
-
-    ctx = EVP_PKEY_CTX_new_from_name(libctx, "LMS", "");
-    if (ctx == NULL
-        || EVP_PKEY_fromdata_init(ctx) <= 0
-        || EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_PUBLIC_KEY, pm) <= 0)
-        goto err;
-    EVP_PKEY_CTX_free(ctx);
-    ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, "");
-    if (ctx == NULL)
-        goto err;
-
-    sig = EVP_SIGNATURE_fetch(libctx, "LMS", NULL);
-    if (sig == NULL
-        || EVP_PKEY_verify_message_init(ctx, sig, NULL) <= 0
-        || EVP_PKEY_verify(ctx, t->sig, t->siglen,
-               t->msg, t->msglen)
-            <= 0)
-        goto err;
-
-    ret = 1;
-err:
-    EVP_PKEY_free(pkey);
-    EVP_PKEY_CTX_free(ctx);
-    EVP_SIGNATURE_free(sig);
-
-    OSSL_SELF_TEST_onend(st, ret);
-    return ret;
-}
-#endif /* OPENSSL_NO_LMS */
-
-static int self_test_digest_sign(const ST_KAT_SIGN *t,
+static int self_test_digest_sign(const ST_DEFINITION *t,
     OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 {
     int ret = 0;
@@ -537,25 +490,26 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
     int digested = 0;
     const char *typ = OSSL_SELF_TEST_TYPE_KAT_SIGNATURE;
 
-    if (t->sig_expected_len > sizeof(sig))
+    if (t->expected.len > sizeof(sig))
         goto err;
 
-    if (t->sig_expected == NULL)
+    if (t->expected.buf == NULL)
         typ = OSSL_SELF_TEST_TYPE_PCT_SIGNATURE;
 
     OSSL_SELF_TEST_onbegin(st, typ, t->desc);
 
-    if (t->entropy != NULL) {
-        if (!set_kat_drbg(libctx, t->entropy, t->entropy_len,
-                t->nonce, t->nonce_len, t->persstr, t->persstr_len))
+    if (t->u.sig.entropy.buf != NULL) {
+        if (!set_kat_drbg(libctx, t->u.sig.entropy.buf, t->u.sig.entropy.len,
+                t->u.sig.nonce.buf, t->u.sig.nonce.len,
+                t->u.sig.persstr.buf, t->u.sig.persstr.len))
             goto err;
     }
 
-    paramskey = kat_params_to_ossl_params(libctx, t->key, NULL);
-    paramsinit = kat_params_to_ossl_params(libctx, t->init, NULL);
-    paramsverify = kat_params_to_ossl_params(libctx, t->verify, NULL);
+    paramskey = kat_params_to_ossl_params(libctx, t->u.sig.key, NULL);
+    paramsinit = kat_params_to_ossl_params(libctx, t->u.sig.init, NULL);
+    paramsverify = kat_params_to_ossl_params(libctx, t->u.sig.verify, NULL);
 
-    fromctx = EVP_PKEY_CTX_new_from_name(libctx, t->keytype, NULL);
+    fromctx = EVP_PKEY_CTX_new_from_name(libctx, t->u.sig.keytype, NULL);
     if (fromctx == NULL
         || paramskey == NULL
         || paramsinit == NULL
@@ -565,18 +519,18 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
         || EVP_PKEY_fromdata(fromctx, &pkey, EVP_PKEY_KEYPAIR, paramskey) <= 0)
         goto err;
 
-    sigalg = EVP_SIGNATURE_fetch(libctx, t->sigalgorithm, NULL);
+    sigalg = EVP_SIGNATURE_fetch(libctx, t->algorithm, NULL);
     if (sigalg == NULL)
         goto err;
     ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, NULL);
     if (ctx == NULL)
         goto err;
 
-    digested = ((t->mode & SIGNATURE_MODE_DIGESTED) != 0);
+    digested = ((t->u.sig.mode & SIGNATURE_MODE_DIGESTED) != 0);
 
-    if ((t->mode & SIGNATURE_MODE_VERIFY_ONLY) != 0) {
-        siglen = t->sig_expected_len;
-        memcpy(psig, t->sig_expected, siglen);
+    if ((t->u.sig.mode & SIGNATURE_MODE_VERIFY_ONLY) != 0) {
+        siglen = t->expected.len;
+        memcpy(psig, t->expected.buf, siglen);
     } else {
         if (digested) {
             if (EVP_PKEY_sign_init_ex2(ctx, sigalg, paramsinit) <= 0)
@@ -586,8 +540,8 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
                 goto err;
         }
         siglen = sizeof(sig);
-        if ((t->mode & SIGNATURE_MODE_SIG_DIGESTED) != 0) {
-            if (EVP_PKEY_sign(ctx, NULL, &siglen, t->msg, t->msg_len) <= 0)
+        if ((t->u.sig.mode & SIGNATURE_MODE_SIG_DIGESTED) != 0) {
+            if (EVP_PKEY_sign(ctx, NULL, &siglen, t->pt.buf, t->pt.len) <= 0)
                 goto err;
             if (siglen > sizeof(sig)) {
                 psig = OPENSSL_malloc(siglen);
@@ -595,28 +549,28 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
                     goto err;
             }
         }
-        if (EVP_PKEY_sign(ctx, psig, &siglen, t->msg, t->msg_len) <= 0)
+        if (EVP_PKEY_sign(ctx, psig, &siglen, t->pt.buf, t->pt.len) <= 0)
             goto err;
 
-        if (t->sig_expected != NULL) {
-            if ((t->mode & SIGNATURE_MODE_SIG_DIGESTED) != 0) {
+        if (t->expected.buf != NULL) {
+            if ((t->u.sig.mode & SIGNATURE_MODE_SIG_DIGESTED) != 0) {
                 uint8_t digested_sig[EVP_MAX_MD_SIZE];
                 size_t digested_sig_len = 0;
 
                 if (!digest_signature(psig, siglen, digested_sig,
                         &digested_sig_len, libctx)
-                    || digested_sig_len != t->sig_expected_len
-                    || memcmp(digested_sig, t->sig_expected, t->sig_expected_len) != 0)
+                    || digested_sig_len != t->expected.len
+                    || memcmp(digested_sig, t->expected.buf, t->expected.len) != 0)
                     goto err;
             } else {
-                if (siglen != t->sig_expected_len
-                    || memcmp(psig, t->sig_expected, t->sig_expected_len) != 0)
+                if (siglen != t->expected.len
+                    || memcmp(psig, t->expected.buf, t->expected.len) != 0)
                     goto err;
             }
         }
     }
 
-    if ((t->mode & SIGNATURE_MODE_SIGN_ONLY) == 0) {
+    if ((t->u.sig.mode & SIGNATURE_MODE_SIGN_ONLY) == 0) {
         if (digested) {
             if (EVP_PKEY_verify_init_ex2(ctx, sigalg, paramsverify) <= 0)
                 goto err;
@@ -625,7 +579,7 @@ static int self_test_digest_sign(const ST_KAT_SIGN *t,
                 goto err;
         }
         OSSL_SELF_TEST_oncorrupt_byte(st, psig);
-        if (EVP_PKEY_verify(ctx, psig, siglen, t->msg, t->msg_len) <= 0)
+        if (EVP_PKEY_verify(ctx, psig, siglen, t->pt.buf, t->pt.len) <= 0)
             goto err;
     }
     ret = 1;
@@ -639,7 +593,7 @@ err:
     OSSL_PARAM_free(paramskey);
     OSSL_PARAM_free(paramsinit);
     OSSL_PARAM_free(paramsverify);
-    if (t->entropy != NULL) {
+    if (t->u.sig.entropy.buf != NULL) {
         if (!reset_main_drbg(libctx))
             ret = 0;
     }
@@ -651,7 +605,7 @@ err:
 /*
  * Test that a deterministic key generation produces the correct key
  */
-static int self_test_asym_keygen(const ST_KAT_ASYM_KEYGEN *t, OSSL_SELF_TEST *st,
+static int self_test_asym_keygen(const ST_DEFINITION *t, OSSL_SELF_TEST *st,
     OSSL_LIB_CTX *libctx)
 {
     int ret = 0;
@@ -667,8 +621,9 @@ static int self_test_asym_keygen(const ST_KAT_ASYM_KEYGEN *t, OSSL_SELF_TEST *st
     key_ctx = EVP_PKEY_CTX_new_from_name(libctx, t->algorithm, NULL);
     if (key_ctx == NULL)
         goto err;
-    if (t->keygen_params != NULL) {
-        key_params = kat_params_to_ossl_params(libctx, t->keygen_params, NULL);
+    if (t->u.akgen.keygen_params != NULL) {
+        key_params = kat_params_to_ossl_params(libctx, t->u.akgen.keygen_params,
+            NULL);
         if (key_params == NULL)
             goto err;
     }
@@ -677,7 +632,7 @@ static int self_test_asym_keygen(const ST_KAT_ASYM_KEYGEN *t, OSSL_SELF_TEST *st
         || EVP_PKEY_generate(key_ctx, &key) != 1)
         goto err;
 
-    for (expected = t->expected_params; expected->data != NULL; ++expected) {
+    for (expected = t->u.akgen.expected_params; expected->data != NULL; ++expected) {
         if (expected->type != OSSL_PARAM_OCTET_STRING
             || !EVP_PKEY_get_octet_string_param(key, expected->name,
                 out, sizeof(out), &out_len))
@@ -709,7 +664,7 @@ static int self_test_kem_encapsulate(const ST_KAT_KEM *t, OSSL_SELF_TEST *st,
     int ret = 0;
     EVP_PKEY_CTX *ctx;
     unsigned char *wrapped = NULL, *secret = NULL;
-    size_t wrappedlen = t->cipher_text_len, secretlen = t->secret_len;
+    size_t wrappedlen = t->cipher_text.len, secretlen = t->secret.len;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_KEM,
@@ -720,8 +675,8 @@ static int self_test_kem_encapsulate(const ST_KAT_KEM *t, OSSL_SELF_TEST *st,
         goto err;
 
     *params = OSSL_PARAM_construct_octet_string(OSSL_KEM_PARAM_IKME,
-        (unsigned char *)t->entropy,
-        t->entropy_len);
+        (unsigned char *)t->entropy.buf,
+        t->entropy.len);
     if (EVP_PKEY_encapsulate_init(ctx, params) <= 0)
         goto err;
 
@@ -737,13 +692,13 @@ static int self_test_kem_encapsulate(const ST_KAT_KEM *t, OSSL_SELF_TEST *st,
 
     /* Compare outputs */
     OSSL_SELF_TEST_oncorrupt_byte(st, wrapped);
-    if (wrappedlen != t->cipher_text_len
-        || memcmp(wrapped, t->cipher_text, t->cipher_text_len) != 0)
+    if (wrappedlen != t->cipher_text.len
+        || memcmp(wrapped, t->cipher_text.buf, t->cipher_text.len) != 0)
         goto err;
 
     OSSL_SELF_TEST_oncorrupt_byte(st, secret);
-    if (secretlen != t->secret_len
-        || memcmp(secret, t->secret, t->secret_len) != 0)
+    if (secretlen != t->secret.len
+        || memcmp(secret, t->secret.buf, t->secret.len) != 0)
         goto err;
 
     ret = 1;
@@ -766,19 +721,19 @@ static int self_test_kem_decapsulate(const ST_KAT_KEM *t, OSSL_SELF_TEST *st,
     int ret = 0;
     EVP_PKEY_CTX *ctx = NULL;
     unsigned char *secret = NULL, *alloced = NULL;
-    const unsigned char *test_secret = t->secret;
-    const unsigned char *cipher_text = t->cipher_text;
-    size_t secretlen = t->secret_len;
+    const unsigned char *test_secret = t->secret.buf;
+    const unsigned char *cipher_text = t->cipher_text.buf;
+    size_t secretlen = t->secret.len;
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_KEM,
         reject ? OSSL_SELF_TEST_DESC_DECAP_KEM_FAIL
                : OSSL_SELF_TEST_DESC_DECAP_KEM);
 
     if (reject) {
-        cipher_text = alloced = OPENSSL_zalloc(t->cipher_text_len);
+        cipher_text = alloced = OPENSSL_zalloc(t->cipher_text.len);
         if (alloced == NULL)
             goto err;
-        test_secret = t->reject_secret;
+        test_secret = t->reject_secret.buf;
     }
 
     ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, "");
@@ -795,14 +750,14 @@ static int self_test_kem_decapsulate(const ST_KAT_KEM *t, OSSL_SELF_TEST *st,
 
     /* Decapsulate */
     if (EVP_PKEY_decapsulate(ctx, secret, &secretlen,
-            cipher_text, t->cipher_text_len)
+            cipher_text, t->cipher_text.len)
         <= 0)
         goto err;
 
     /* Compare output */
     OSSL_SELF_TEST_oncorrupt_byte(st, secret);
-    if (secretlen != t->secret_len
-        || memcmp(secret, test_secret, t->secret_len) != 0)
+    if (secretlen != t->secret.len
+        || memcmp(secret, test_secret, t->secret.len) != 0)
         goto err;
 
     ret = 1;
@@ -823,7 +778,7 @@ err:
  * 2b  ML-KEM decapsulation implicit rejection path
  * 3   ML-KEM key generation
  */
-static int self_test_kem(const ST_KAT_KEM *t, OSSL_SELF_TEST *st,
+static int self_test_kem(const ST_DEFINITION *t, OSSL_SELF_TEST *st,
     OSSL_LIB_CTX *libctx)
 {
     int ret = 0;
@@ -834,7 +789,7 @@ static int self_test_kem(const ST_KAT_KEM *t, OSSL_SELF_TEST *st,
     ctx = EVP_PKEY_CTX_new_from_name(libctx, t->algorithm, NULL);
     if (ctx == NULL)
         goto err;
-    params = kat_params_to_ossl_params(libctx, t->key, NULL);
+    params = kat_params_to_ossl_params(libctx, t->u.kem.key, NULL);
     if (params == NULL)
         goto err;
 
@@ -842,9 +797,9 @@ static int self_test_kem(const ST_KAT_KEM *t, OSSL_SELF_TEST *st,
         || EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEYPAIR, params) <= 0)
         goto err;
 
-    if (!self_test_kem_encapsulate(t, st, libctx, pkey)
-        || !self_test_kem_decapsulate(t, st, libctx, pkey, 0)
-        || !self_test_kem_decapsulate(t, st, libctx, pkey, 1))
+    if (!self_test_kem_encapsulate(&t->u.kem, st, libctx, pkey)
+        || !self_test_kem_decapsulate(&t->u.kem, st, libctx, pkey, 0)
+        || !self_test_kem_decapsulate(&t->u.kem, st, libctx, pkey, 1))
         goto err;
 
     ret = 1;
@@ -862,7 +817,7 @@ err:
  * FIPS 140-2 IG D.9 states that separate KAT tests are needed for encrypt
  * and decrypt..
  */
-static int self_test_asym_cipher(const ST_KAT_ASYM_CIPHER *t, OSSL_SELF_TEST *st,
+static int self_test_asym_cipher(const ST_DEFINITION *t, OSSL_SELF_TEST *st,
     OSSL_LIB_CTX *libctx)
 {
     int ret = 0;
@@ -883,7 +838,7 @@ static int self_test_asym_cipher(const ST_KAT_ASYM_CIPHER *t, OSSL_SELF_TEST *st
     /* Load a public or private key from data */
     keybld = OSSL_PARAM_BLD_new();
     if (keybld == NULL
-        || !add_params(keybld, t->key, bnctx))
+        || !add_params(keybld, t->u.ac.key, bnctx))
         goto err;
     keyparams = OSSL_PARAM_BLD_to_param(keybld);
     keyctx = EVP_PKEY_CTX_new_from_name(libctx, t->algorithm, NULL);
@@ -896,16 +851,16 @@ static int self_test_asym_cipher(const ST_KAT_ASYM_CIPHER *t, OSSL_SELF_TEST *st
     /* Create a EVP_PKEY_CTX to use for the encrypt or decrypt operation */
     encctx = EVP_PKEY_CTX_new_from_pkey(libctx, key, NULL);
     if (encctx == NULL
-        || (t->encrypt && EVP_PKEY_encrypt_init(encctx) <= 0)
-        || (!t->encrypt && EVP_PKEY_decrypt_init(encctx) <= 0))
+        || (t->u.ac.encrypt && EVP_PKEY_encrypt_init(encctx) <= 0)
+        || (!t->u.ac.encrypt && EVP_PKEY_decrypt_init(encctx) <= 0))
         goto err;
 
     /* Add any additional parameters such as padding */
-    if (t->postinit != NULL) {
+    if (t->u.ac.postinit != NULL) {
         initbld = OSSL_PARAM_BLD_new();
         if (initbld == NULL)
             goto err;
-        if (!add_params(initbld, t->postinit, bnctx))
+        if (!add_params(initbld, t->u.ac.postinit, bnctx))
             goto err;
         initparams = OSSL_PARAM_BLD_to_param(initbld);
         if (initparams == NULL)
@@ -914,21 +869,21 @@ static int self_test_asym_cipher(const ST_KAT_ASYM_CIPHER *t, OSSL_SELF_TEST *st
             goto err;
     }
 
-    if (t->encrypt) {
+    if (t->u.ac.encrypt) {
         if (EVP_PKEY_encrypt(encctx, out, &outlen,
-                t->in, t->in_len)
+                t->pt.buf, t->pt.len)
             <= 0)
             goto err;
     } else {
         if (EVP_PKEY_decrypt(encctx, out, &outlen,
-                t->in, t->in_len)
+                t->pt.buf, t->pt.len)
             <= 0)
             goto err;
     }
     /* Check the KAT */
     OSSL_SELF_TEST_oncorrupt_byte(st, out);
-    if (outlen != t->expected_len
-        || memcmp(out, t->expected, t->expected_len) != 0)
+    if (outlen != t->expected.len
+        || memcmp(out, t->expected.buf, t->expected.len) != 0)
         goto err;
 
     ret = 1;
@@ -945,127 +900,52 @@ err:
     return ret;
 }
 
-/*
- * Test a data driven list of KAT's for digest algorithms.
- * All tests are run regardless of if they fail or not.
- * Return 0 if any test fails.
- */
-static int self_test_digests(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
-    int do_deferred)
+/* Test MAC algorithms */
+static int self_test_mac(const ST_DEFINITION *t, OSSL_SELF_TEST *st,
+    OSSL_LIB_CTX *libctx)
 {
-    int i, ret = 1;
+    int ret = 0;
+    unsigned char out[EVP_MAX_MD_SIZE];
+    size_t out_len = 0;
+    EVP_MAC *mac = NULL;
+    EVP_MAC_CTX *ctx = NULL;
+    OSSL_PARAM *params = NULL;
 
-    for (i = 0; i < (int)OSSL_NELEM(st_kat_digest_tests); ++i) {
-        if (st_kat_digest_tests[i].deferred && !do_deferred)
-            continue;
-        if (!self_test_digest(&st_kat_digest_tests[i], st, libctx))
-            ret = 0;
-    }
-    return ret;
-}
+    /* Currently used for integrity */
+    OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_MAC, t->desc);
 
-static int self_test_ciphers(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
-    int do_deferred)
-{
-    int i, ret = 1;
+    mac = EVP_MAC_fetch(libctx, t->algorithm, "");
+    if (mac == NULL)
+        goto err;
 
-    for (i = 0; i < (int)OSSL_NELEM(st_kat_cipher_tests); ++i) {
-        if (st_kat_cipher_tests[i].base.deferred && !do_deferred)
-            continue;
-        if (!self_test_cipher(&st_kat_cipher_tests[i], st, libctx))
-            ret = 0;
-    }
-    return ret;
-}
+    ctx = EVP_MAC_CTX_new(mac);
+    if (ctx == NULL)
+        goto err;
 
-static int self_test_kems(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
-    int do_deferred)
-{
-    int ret = 1;
-#ifndef OPENSSL_NO_ML_KEM
-    int i;
+    params = kat_params_to_ossl_params(libctx, t->u.mac.params, NULL);
+    if (params == NULL)
+        goto err;
 
-    for (i = 0; i < (int)OSSL_NELEM(st_kat_kem_tests); ++i) {
-        if (st_kat_kem_tests[i].deferred && !do_deferred)
-            continue;
-        if (!self_test_kem(&st_kat_kem_tests[i], st, libctx))
-            ret = 0;
-    }
-#endif
-    return ret;
-}
+    if (t->expected.len > sizeof(out))
+        goto err;
 
-static int self_test_asym_ciphers(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
-    int do_deferred)
-{
-    int i, ret = 1;
+    if (!EVP_MAC_init(ctx, NULL, 0, params)
+        || !EVP_MAC_update(ctx, t->pt.buf, t->pt.len)
+        || !EVP_MAC_final(ctx, out, &out_len, EVP_MAX_MD_SIZE))
+        goto err;
 
-    for (i = 0; i < (int)OSSL_NELEM(st_kat_asym_cipher_tests); ++i) {
-        if (st_kat_asym_cipher_tests[i].deferred && !do_deferred)
-            continue;
-        if (!self_test_asym_cipher(&st_kat_asym_cipher_tests[i], st, libctx))
-            ret = 0;
-    }
-    return ret;
-}
+    OSSL_SELF_TEST_oncorrupt_byte(st, out);
 
-static int self_test_kdfs(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
-    int do_deferred)
-{
-    int i, ret = 1;
+    if ((out_len != t->expected.len)
+        || memcmp(out, t->expected.buf, t->expected.len) != 0)
+        goto err;
 
-    for (i = 0; i < (int)OSSL_NELEM(st_kat_kdf_tests); ++i) {
-        if (st_kat_kdf_tests[i].deferred && !do_deferred)
-            continue;
-        if (!self_test_kdf(&st_kat_kdf_tests[i], st, libctx))
-            ret = 0;
-    }
-    return ret;
-}
-
-static int self_test_drbgs(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
-    int do_deferred)
-{
-    int i, ret = 1;
-
-    for (i = 0; i < (int)OSSL_NELEM(st_kat_drbg_tests); ++i) {
-        if (st_kat_drbg_tests[i].deferred && !do_deferred)
-            continue;
-        if (!self_test_drbg(&st_kat_drbg_tests[i], st, libctx))
-            ret = 0;
-    }
-    return ret;
-}
-
-static int self_test_kas(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
-    int do_deferred)
-{
-    int ret = 1;
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
-    int i;
-
-    for (i = 0; i < (int)OSSL_NELEM(st_kat_kas_tests); ++i) {
-        if (st_kat_kas_tests[i].deferred && !do_deferred)
-            continue;
-        if (!self_test_ka(&st_kat_kas_tests[i], st, libctx))
-            ret = 0;
-    }
-#endif
-
-    return ret;
-}
-
-static int self_test_signatures(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
-    int do_deferred)
-{
-    int i, ret = 1;
-
-    for (i = 0; i < (int)OSSL_NELEM(st_kat_sign_tests); ++i) {
-        if (st_kat_sign_tests[i].deferred && !do_deferred)
-            continue;
-        if (!self_test_digest_sign(&st_kat_sign_tests[i], st, libctx))
-            ret = 0;
-    }
+    ret = 1;
+err:
+    EVP_MAC_free(mac);
+    EVP_MAC_CTX_free(ctx);
+    OSSL_PARAM_free(params);
+    OSSL_SELF_TEST_onend(st, ret);
     return ret;
 }
 
@@ -1206,37 +1086,192 @@ static int setup_main_random(OSSL_LIB_CTX *libctx)
     return 1;
 err:
     EVP_RAND_CTX_free(main_rand);
+    /* Ensure this global variable does not reference freed memory */
+    main_rand = NULL;
     return 0;
 }
 
-static int self_test_asym_keygens(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
-    int do_deferred)
+static int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+    self_test_id_t id)
 {
-#if !defined(OPENSSL_NO_ML_DSA) || !defined(OPENSSL_NO_SLH_DSA)
-    int i, ret = 1;
+    int ret;
 
-    for (i = 0; i < (int)OSSL_NELEM(st_kat_asym_keygen_tests); ++i) {
-        if (st_kat_asym_keygen_tests[i].deferred && !do_deferred)
-            continue;
-        if (!self_test_asym_keygen(&st_kat_asym_keygen_tests[i], st, libctx))
+    switch (st_all_tests[id].category) {
+    case SELF_TEST_KAT_DIGEST:
+        ret = self_test_digest(&st_all_tests[id], st, libctx);
+        break;
+    case SELF_TEST_KAT_CIPHER:
+        ret = self_test_cipher(&st_all_tests[id], st, libctx);
+        break;
+    case SELF_TEST_KAT_SIGNATURE:
+        ret = self_test_digest_sign(&st_all_tests[id], st, libctx);
+        break;
+    case SELF_TEST_KAT_KDF:
+        ret = self_test_kdf(&st_all_tests[id], st, libctx);
+        break;
+    case SELF_TEST_DRBG:
+        ret = self_test_drbg(&st_all_tests[id], st, libctx);
+        break;
+    case SELF_TEST_KAT_KAS:
+        ret = self_test_ka(&st_all_tests[id], st, libctx);
+        break;
+    case SELF_TEST_KAT_ASYM_KEYGEN:
+        ret = self_test_asym_keygen(&st_all_tests[id], st, libctx);
+        break;
+    case SELF_TEST_KAT_KEM:
+        ret = self_test_kem(&st_all_tests[id], st, libctx);
+        break;
+    case SELF_TEST_KAT_ASYM_CIPHER:
+        ret = self_test_asym_cipher(&st_all_tests[id], st, libctx);
+        break;
+    case SELF_TEST_KAT_MAC:
+        ret = self_test_mac(&st_all_tests[id], st, libctx);
+        break;
+    default:
+        ret = 0;
+        break;
+    }
+    if (ret) {
+        if (!ossl_set_self_test_state(id, SELF_TEST_STATE_PASSED))
+            return 0;
+    } else {
+        ossl_set_self_test_state(id, SELF_TEST_STATE_FAILED);
+        ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
+    }
+
+    return ret;
+}
+
+static int SELF_TEST_kat_deps(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+    ST_DEFINITION *test)
+{
+    if (test->depends_on == NULL)
+        return 0;
+
+    for (int i = 0; test->depends_on[i] != ST_ID_MAX; i++)
+        if (!SELF_TEST_kats_execute(st, libctx, test->depends_on[i], 0))
+            return 0;
+
+    return 1;
+}
+
+/*
+ * Run a single algorithm KAT, and its dependencies.
+ * Return 1 if successful, otherwise return 0.
+ */
+int SELF_TEST_kats_execute(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+    self_test_id_t id, int switch_rand)
+{
+    EVP_RAND_CTX *saved_rand = NULL;
+    int ret;
+
+    if (id >= ST_ID_MAX || st_all_tests[id].id != id) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CONFIG_DATA);
+        return 0;
+    }
+
+    /*
+     * Dependency chains may cause a test to be referenced multiple times,
+     * immediately return if not in initial state.
+     * NOTE: In this function state can be read w/o atomics because this
+     * function is always executed under lock. However we need to use
+     * atomics to set the state so that other threads reading state always
+     * read a correct value.
+     */
+    switch (st_all_tests[id].state) {
+    case SELF_TEST_STATE_INIT:
+    case SELF_TEST_STATE_DEFER:
+        break;
+    case SELF_TEST_STATE_FAILED:
+        return 0;
+    case SELF_TEST_STATE_IN_PROGRESS:
+    case SELF_TEST_STATE_PASSED:
+    case SELF_TEST_STATE_IMPLICIT:
+        return 1;
+    }
+
+    if (switch_rand) {
+        saved_rand = ossl_rand_get0_private_noncreating(libctx);
+        if (saved_rand != NULL && !EVP_RAND_CTX_up_ref(saved_rand))
+            return 0;
+        if (!setup_main_random(libctx)
+            || !RAND_set0_private(libctx, main_rand)) {
+            /* Decrement saved_rand reference counter */
+            EVP_RAND_CTX_free(saved_rand);
+            EVP_RAND_CTX_free(main_rand);
+            /* Ensure this global variable does not reference freed memory */
+            main_rand = NULL;
+            return 0;
+        }
+    }
+
+    /* Mark test as in progress */
+    if (!ossl_set_self_test_state(id, SELF_TEST_STATE_IN_PROGRESS))
+        return 0;
+
+    /* check if there are dependent tests to run */
+    if (st_all_tests[id].depends_on) {
+        if (!SELF_TEST_kat_deps(st, libctx, &st_all_tests[id])) {
             ret = 0;
+            goto done;
+        }
+    }
+
+    /* may have already been run through dependency chains */
+    switch (st_all_tests[id].state) {
+    case SELF_TEST_STATE_IN_PROGRESS:
+        ret = SELF_TEST_kats_single(st, libctx, id);
+        break;
+    case SELF_TEST_STATE_PASSED:
+        ret = 1;
+        break;
+    default:
+        /* ensure all states are set to failed if we get here */
+        ossl_set_self_test_state(id, SELF_TEST_STATE_FAILED);
+        ret = 0;
+    }
+
+    /*
+     * if an implicit algorithm has explicit dependencies we want to
+     * ensure they are all executed as well otherwise we could not
+     * mark it as passed.
+     */
+    if (st_all_tests[id].state == SELF_TEST_STATE_PASSED)
+        for (int i = 0; i < ST_ID_MAX; i++) {
+            if (st_all_tests[i].state == SELF_TEST_STATE_IMPLICIT
+                && st_all_tests[i].depends_on != NULL)
+                if (!(ret = SELF_TEST_kat_deps(st, libctx, &st_all_tests[i])))
+                    break;
+        }
+
+done:
+    /*
+     * now mark (pass or fail) all the algorithm tests that have been marked
+     * by this test implicitly tested.
+     */
+    for (int i = 0; i < ST_ID_MAX; i++) {
+        if (st_all_tests[i].state == SELF_TEST_STATE_IMPLICIT)
+            ossl_set_self_test_state(i, st_all_tests[id].state);
+    }
+
+    if (switch_rand) {
+        RAND_set0_private(libctx, saved_rand);
+        /* The above call will cause main_rand to be freed */
+        main_rand = NULL;
     }
     return ret;
-#else
-    return 1;
-#endif /* OPENSSL_NO_ML_DSA */
 }
 
 /*
  * Run the algorithm KAT's.
  * Return 1 is successful, otherwise return 0.
- * This runs all the tests regardless of if any fail.
- * when do_deferred is 1 also run deferred tests, they are normally skipped
+ * This runs all the tests regardless of if any fail, but it will not forcibly
+ * run tests that have been implicitly satisfied.
  */
-int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int do_deferred)
+int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 {
     EVP_RAND_CTX *saved_rand = ossl_rand_get0_private_noncreating(libctx);
-    int ret = 1;
+    int i, ret = 1;
 
     if (saved_rand != NULL && !EVP_RAND_CTX_up_ref(saved_rand))
         return 0;
@@ -1245,199 +1280,34 @@ int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, int do_deferred)
         /* Decrement saved_rand reference counter */
         EVP_RAND_CTX_free(saved_rand);
         EVP_RAND_CTX_free(main_rand);
+        /* Ensure this global variable does not reference freed memory */
+        main_rand = NULL;
         return 0;
     }
 
-    if (!self_test_digests(st, libctx, do_deferred))
-        ret = 0;
-    if (!self_test_ciphers(st, libctx, do_deferred))
-        ret = 0;
-#ifndef OPENSSL_NO_LMS
-    /*
-     * FIPS 140-3 IG 10.3.A Note 5 mandates a CAST for LMS.
-     *
-     * It permits this to be omitted if HSS is also implemented and has
-     * the relevant self tests.  Once HSS is implemented, this test can be
-     * removed.  This IG permits the digest's CAST to be subsumed into this
-     * test, however, because this will be removed, the underlying digest
-     * test has been retained elsewhere lest it is accidentally omitted.
-     */
-    if (!self_test_LMS(st, libctx))
-        ret = 0;
-#endif /* OPENSSL_NO_LMS */
-    if (!self_test_signatures(st, libctx, do_deferred))
-        ret = 0;
-    if (!self_test_kdfs(st, libctx, do_deferred))
-        ret = 0;
-    if (!self_test_drbgs(st, libctx, do_deferred))
-        ret = 0;
-    if (!self_test_kas(st, libctx, do_deferred))
-        ret = 0;
-    if (!self_test_asym_keygens(st, libctx, do_deferred))
-        ret = 0;
-    if (!self_test_kems(st, libctx, do_deferred))
-        ret = 0;
-    if (!self_test_asym_ciphers(st, libctx, do_deferred))
-        ret = 0;
+    for (i = 0; i < ST_ID_MAX; i++) {
+        if (st_all_tests[i].state == SELF_TEST_STATE_INIT)
+            if (!SELF_TEST_kats_execute(st, libctx, i, 0))
+                ret = 0;
+    }
 
     RAND_set0_private(libctx, saved_rand);
+    /* The above call will cause main_rand to be freed */
+    main_rand = NULL;
     return ret;
 }
 
-/*
- * Run a single algorithm KAT.
- * This is similar to SELF_TEST_kats() but only runs the test for a single
- * algorithm.
- * Return 1 is successful, otherwise return 0. If no test is found for the
- * algorithm it also returns 0.
- * This runs all the tests for the given algorithm regardless of if any fail.
- *
- * NOTE: currently tests that require the TEST RNG will not work, as we can't
- * replace the working DRBG with the TEST DRB after initialization.
- */
-int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
-    int type, const char *alg_name)
+int ossl_self_test_in_progress(self_test_id_t id)
 {
-    int ret = 1;
-    int i, found = 0;
+    enum st_test_state state;
 
-    if (alg_name == NULL)
+    if (id >= ST_ID_MAX)
         return 0;
 
-    switch (type) {
-    case FIPS_DEFERRED_KAT_DIGEST:
-        for (i = 0; i < (int)OSSL_NELEM(st_kat_digest_tests); ++i) {
-            if (strcmp(st_kat_digest_tests[i].algorithm, alg_name) == 0) {
-                found = 1;
-                if (!self_test_digest(&st_kat_digest_tests[i], st, libctx)) {
-                    ret = 0;
-                    goto done;
-                }
-            }
-        }
-        break;
+    if (!ossl_get_self_test_state(id, &state))
+        return 0;
 
-    case FIPS_DEFERRED_KAT_CIPHER:
-        for (i = 0; i < (int)OSSL_NELEM(st_kat_cipher_tests); ++i) {
-            if (strcmp(st_kat_cipher_tests[i].base.algorithm, alg_name) == 0) {
-                found = 1;
-                if (!self_test_cipher(&st_kat_cipher_tests[i], st, libctx)) {
-                    ret = 0;
-                    goto done;
-                }
-            }
-        }
-        break;
-
-    case FIPS_DEFERRED_KAT_SIGNATURE:
-
-#ifndef OPENSSL_NO_LMS
-        if (strcmp("LMS", alg_name) == 0) {
-            found = 1;
-            if (!self_test_LMS(st, libctx)) {
-                ret = 0;
-                goto done;
-            }
-            break;
-        }
-#endif /* OPENSSL_NO_LMS */
-
-        for (i = 0; i < (int)OSSL_NELEM(st_kat_sign_tests); ++i) {
-            if (strcmp(st_kat_sign_tests[i].sigalgorithm, alg_name) == 0
-                || strcmp(st_kat_sign_tests[i].keytype, alg_name) == 0) {
-                found = 1;
-                if (!self_test_digest_sign(&st_kat_sign_tests[i], st, libctx)) {
-                    ret = 0;
-                    goto done;
-                }
-            }
-        }
-        break;
-
-    case FIPS_DEFERRED_KAT_KDF:
-        for (i = 0; i < (int)OSSL_NELEM(st_kat_kdf_tests); ++i) {
-            if (strcmp(st_kat_kdf_tests[i].algorithm, alg_name) == 0) {
-                found = 1;
-                if (!self_test_kdf(&st_kat_kdf_tests[i], st, libctx)) {
-                    ret = 0;
-                    goto done;
-                }
-            }
-        }
-        break;
-
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
-    case FIPS_DEFERRED_KAT_KA:
-        for (i = 0; i < (int)OSSL_NELEM(st_kat_kas_tests); ++i) {
-            if (strcmp(st_kat_kas_tests[i].algorithm, alg_name) == 0) {
-                found = 1;
-                if (!self_test_ka(&st_kat_kas_tests[i], st, libctx)) {
-                    ret = 0;
-                    goto done;
-                }
-            }
-        }
-        break;
-#endif
-
-#if !defined(OPENSSL_NO_ML_DSA) || !defined(OPENSSL_NO_SLH_DSA)
-    case FIPS_DEFERRED_KAT_ASYM_KEYGEN:
-        for (i = 0; i < (int)OSSL_NELEM(st_kat_asym_keygen_tests); ++i) {
-            if (strcmp(st_kat_asym_keygen_tests[i].algorithm, alg_name) == 0) {
-                found = 1;
-                if (!self_test_asym_keygen(&st_kat_asym_keygen_tests[i], st, libctx)) {
-                    ret = 0;
-                    goto done;
-                }
-            }
-        }
-        break;
-#endif /* OPENSSL_NO_ML_DSA */
-
-#ifndef OPENSSL_NO_ML_KEM
-    case FIPS_DEFERRED_KAT_KEM:
-        for (i = 0; i < (int)OSSL_NELEM(st_kat_kem_tests); ++i) {
-            if (strcmp(st_kat_kem_tests[i].algorithm, alg_name) == 0) {
-                found = 1;
-                if (!self_test_kem(&st_kat_kem_tests[i], st, libctx)) {
-                    ret = 0;
-                    goto done;
-                }
-            }
-        }
-        break;
-#endif
-
-    case FIPS_DEFERRED_KAT_ASYM_CIPHER:
-        for (i = 0; i < (int)OSSL_NELEM(st_kat_asym_cipher_tests); ++i) {
-            if (strcmp(st_kat_asym_cipher_tests[i].algorithm, alg_name) == 0) {
-                found = 1;
-                if (!self_test_asym_cipher(&st_kat_asym_cipher_tests[i], st, libctx)) {
-                    ret = 0;
-                    goto done;
-                }
-            }
-        }
-        break;
-
-    case FIPS_DEFERRED_DRBG:
-        for (i = 0; i < (int)OSSL_NELEM(st_kat_drbg_tests); ++i) {
-            if (strcmp(st_kat_drbg_tests[i].algorithm, alg_name) == 0) {
-                found = 1;
-                if (!self_test_drbg(&st_kat_drbg_tests[i], st, libctx)) {
-                    ret = 0;
-                    goto done;
-                }
-            }
-        }
-        break;
-
-    default:
-        /* not tests yet, or bad type */
-        break;
-    }
-
-done:
-    /* If no test was found for alg_name, it is considered a failure */
-    return ret && found;
+    if (state == SELF_TEST_STATE_IN_PROGRESS)
+        return 1;
+    return 0;
 }

@@ -38,6 +38,12 @@ extern "C" {
  */
 #define OSSL_PROV_FIPS_PARAM_CONDITIONAL_ERRORS "conditional-errors"
 
+/*
+ * A boolean that determines if all the FIPS conditional self-test are executed
+ * at module startup or deferred and run only when an algorithm is invoked
+ */
+#define OSSL_PROV_FIPS_PARAM_DEFER_TESTS "defer-tests"
+
 /* The following are provided for backwards compatibility */
 #define OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS OSSL_PROV_PARAM_SECURITY_CHECKS
 #define OSSL_PROV_FIPS_PARAM_TLS1_PRF_EMS_CHECK OSSL_PROV_PARAM_TLS1_PRF_EMS_CHECK

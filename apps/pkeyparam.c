@@ -96,7 +96,7 @@ int pkeyparam_main(int argc, char **argv)
     pkey = PEM_read_bio_Parameters_ex(in, NULL, app_get0_libctx(),
         app_get0_propq());
     if (pkey == NULL) {
-        BIO_printf(bio_err, "Error reading parameters\n");
+        BIO_puts(bio_err, "Error reading parameters\n");
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -115,13 +115,13 @@ int pkeyparam_main(int argc, char **argv)
         r = EVP_PKEY_param_check(ctx);
 
         if (r == 1) {
-            BIO_printf(out, "Parameters are valid\n");
+            BIO_puts(out, "Parameters are valid\n");
         } else {
             /*
              * Note: at least for RSA keys if this function returns
              * -1, there will be no error reasons.
              */
-            BIO_printf(bio_err, "Parameters are invalid\n");
+            BIO_puts(bio_err, "Parameters are invalid\n");
             ERR_print_errors(bio_err);
             goto end;
         }

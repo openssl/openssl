@@ -230,6 +230,17 @@ extern "C" {
 #define BIO_FLAGS_UPLINK 0
 #endif
 
+/* the BIO FLAGS values 0x10 to 0x80 are reserved for internal use */
+
+/*
+ * BIO FLAGS in the range 0x0100..0x8000 are BIO-type specific.
+ * Their meaning is defined by the particular BIO implementation and
+ * is not shared across different BIO types. The same bit value may
+ * have a different meaning or no meaning at all in other BIOs.
+ * Such flags may be part of the public API or internal to the BIO.
+ */
+
+/* This is used with base64 BIO */
 #define BIO_FLAGS_BASE64_NO_NL 0x100
 
 /*
@@ -240,8 +251,6 @@ extern "C" {
 #define BIO_FLAGS_MEM_RDONLY 0x200
 #define BIO_FLAGS_NONCLEAR_RST 0x400
 #define BIO_FLAGS_IN_EOF 0x800
-
-/* the BIO FLAGS values 0x1000 to 0x8000 are reserved for internal KTLS flags */
 
 typedef union bio_addr_st BIO_ADDR;
 typedef struct bio_addrinfo_st BIO_ADDRINFO;
@@ -607,7 +616,6 @@ int BIO_read_filename(BIO *b, const char *name);
 #define BIO_dup_state(b, ret) BIO_ctrl(b, BIO_CTRL_DUP, 0, (char *)(ret))
 
 #define BIO_reset(b) (int)BIO_ctrl(b, BIO_CTRL_RESET, 0, NULL)
-#define BIO_eof(b) (int)BIO_ctrl(b, BIO_CTRL_EOF, 0, NULL)
 #define BIO_set_close(b, c) (int)BIO_ctrl(b, BIO_CTRL_SET_CLOSE, (c), NULL)
 #define BIO_get_close(b) (int)BIO_ctrl(b, BIO_CTRL_GET_CLOSE, 0, NULL)
 #define BIO_pending(b) (int)BIO_ctrl(b, BIO_CTRL_PENDING, 0, NULL)
@@ -733,6 +741,7 @@ __owur int BIO_get_wpoll_descriptor(BIO *b, BIO_POLL_DESCRIPTOR *desc);
 int BIO_puts(BIO *bp, const char *buf);
 int BIO_indent(BIO *b, int indent, int max);
 long BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);
+int BIO_eof(BIO *b);
 long BIO_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp);
 void *BIO_ptr_ctrl(BIO *bp, int cmd, long larg);
 long BIO_int_ctrl(BIO *bp, int cmd, long larg, int iarg);
