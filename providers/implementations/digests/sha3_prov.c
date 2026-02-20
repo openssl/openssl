@@ -55,6 +55,16 @@
 #define SHAKE_PADDING 0x1f
 #define CSHAKE_KECCAK_PADDING 0x04
 
+#if defined(OPENSSL_CPUID_OBJ) && defined(__s390__) && defined(KECCAK1600_ASM)
+/*
+ * IBM S390X support
+ */
+#include "s390x_arch.h"
+#define S390_SHA3 1
+#define S390_SHA3_CAPABLE(name) \
+    ((OPENSSL_s390xcap_P.kimd[0] & S390X_CAPBIT(S390X_##name)) && (OPENSSL_s390xcap_P.klmd[0] & S390X_CAPBIT(S390X_##name)))
+#endif
+
 /*
  * Forward declaration of any unique methods implemented here. This is not strictly
  * necessary for the compiler, but provides an assurance that the signatures
@@ -85,16 +95,6 @@ static PROV_SHA3_METHOD shake_generic_md = {
     ossl_sha3_final_default,
     ossl_shake_squeeze_default
 };
-
-#if defined(OPENSSL_CPUID_OBJ) && defined(__s390__) && defined(KECCAK1600_ASM)
-/*
- * IBM S390X support
- */
-#include "s390x_arch.h"
-#define S390_SHA3 1
-#define S390_SHA3_CAPABLE(name) \
-    ((OPENSSL_s390xcap_P.kimd[0] & S390X_CAPBIT(S390X_##name)) && (OPENSSL_s390xcap_P.klmd[0] & S390X_CAPBIT(S390X_##name)))
-#endif
 
 static int keccak_init(void *vctx, ossl_unused const OSSL_PARAM params[])
 {
@@ -378,14 +378,13 @@ static size_t armsha3_sha3_absorb(KECCAK1600_CTX *ctx, const unsigned char *inp,
 
 static PROV_SHA3_METHOD sha3_ARMSHA3_md = {
     armsha3_sha3_absorb,
-    ossl_sha3_default_final,
+    ossl_sha3_final_default,
     NULL
 };
-IMPLEMENT_SHAKE_functions(256)
 static PROV_SHA3_METHOD shake_ARMSHA3_md = {
     armsha3_sha3_absorb,
-    ossl_sha3_default_final,
-    ossl_sha3_default_squeeze
+    ossl_sha3_final_default,
+    ossl_shake_squeeze_default
 };
 #define SHAKE_SET_MD(uname, typ)                              \
     if (OPENSSL_armcap_P & ARMV8_HAVE_SHA3_AND_WORTH_USING) { \
