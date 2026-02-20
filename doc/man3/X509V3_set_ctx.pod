@@ -19,7 +19,6 @@ X509V3_set_ctx() fills in the basic fields of I<ctx> of type B<X509V3_CTX>,
 providing details potentially needed by functions producing X509 v3 extensions.
 These may make use of fields of the certificate I<subject>, the certification
 request I<req>, or the certificate revocation list I<crl>.
-At most one of these three parameters should be non-NULL.
 When constructing the subject key identifier of a certificate by computing a
 hash value of its public key, the public key is taken from I<subject> or I<req>.
 Similarly, when constructing subject alternative names from any email addresses
