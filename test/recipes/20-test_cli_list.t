@@ -14,7 +14,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_cli_list");
 
-plan tests => 8;
+plan tests => 6;
 
 my $fipsconf = srctop_file("test", "fips-and-base.cnf");
 my $defaultconf = srctop_file("test", "default.cnf");
