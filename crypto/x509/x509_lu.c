@@ -412,7 +412,7 @@ static int obj_ht_foreach_certs(HT_VALUE *v, void *arg)
     int i, r;
 
     for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
-        X509 *cert = X509_OBJECT_get0_X509(sk_X509_OBJECT_value(objs, i));
+        const X509 *cert = X509_OBJECT_get0_X509(sk_X509_OBJECT_value(objs, i));
 
         if (cert == NULL)
             continue;
@@ -590,7 +590,7 @@ int X509_OBJECT_up_ref_count(X509_OBJECT *a)
     return 1;
 }
 
-X509 *X509_OBJECT_get0_X509(const X509_OBJECT *a)
+const X509 *X509_OBJECT_get0_X509(const X509_OBJECT *a)
 {
     if (a == NULL || a->type != X509_LU_X509)
         return NULL;
@@ -635,14 +635,14 @@ static void x509_object_free_internal(X509_OBJECT *a)
     }
 }
 
-int X509_OBJECT_set1_X509(X509_OBJECT *a, X509 *obj)
+int X509_OBJECT_set1_X509(X509_OBJECT *a, const X509 *obj)
 {
-    if (a == NULL || !X509_up_ref(obj))
+    if (a == NULL || !X509_up_ref((X509 *)obj))
         return 0;
 
     x509_object_free_internal(a);
     a->type = X509_LU_X509;
-    a->data.x509 = obj;
+    a->data.x509 = (X509 *)obj;
     return 1;
 }
 
@@ -807,7 +807,7 @@ STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *store)
         ossl_ht_foreach_until(store->objs_ht, obj_ht_foreach_certs, &sk);
     } else {
         for (int i = 0; i < sk_X509_OBJECT_num(store->objs); i++) {
-            X509 *cert = X509_OBJECT_get0_X509(sk_X509_OBJECT_value(store->objs, i));
+            const X509 *cert = X509_OBJECT_get0_X509(sk_X509_OBJECT_value(store->objs, i));
 
             if (cert != NULL
                 && !X509_add_cert(sk, cert, X509_ADD_FLAG_UP_REF))

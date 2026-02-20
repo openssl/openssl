@@ -683,7 +683,7 @@ int X509_get_signature_type(const X509 *x);
 #endif
 
 int X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
-EVP_PKEY *X509_get_pubkey(X509 *x); /* deprecated */
+EVP_PKEY *X509_get_pubkey(const X509 *x); /* deprecated */
 EVP_PKEY *X509_get0_pubkey(const X509 *x);
 /*
  * This one is only used so that a binary form can output, as in
