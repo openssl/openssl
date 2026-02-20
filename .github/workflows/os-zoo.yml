@@ -21,7 +21,7 @@ jobs:
       with:
         persist-credentials: false
     - name: config
-      run: ./config -Werror --strict-warnings enable-fips -no-argon2 -no-aria -no-async -no-atexit -no-autoload-config -no-blake2 -no-bf -no-camellia -no-cast -no-chacha -no-cmac -no-cms -no-cmp -no-comp -no-ct -no-des -no-dgram -no-dh -no-dsa -no-ec -no-hmac-drbg-kdf -no-idea -no-kbkdf -no-krb5kdf -no-ktls -no-lms -no-md4 -no-ml-dsa -no-ml-kem -no-multiblock -no-nextprotoneg -no-ocsp -no-ocb -no-poly1305 -no-psk -no-pvkkdf -no-rc2 -no-rc4 -no-rmd160 -no-scrypt -no-seed -no-siphash -no-siv -no-sm3 -no-sm4 -no-snmpkdf -no-srp -no-srtp -no-srtpkdf -no-sshkdf -no-sskdf -no-ssl-trace -no-tfo -no-ts -no-ui-console -no-whirlpool -no-x942kdf -no-x963kdf
+      run: ./config --strict-warnings enable-fips enable-md2 enable-rc5 enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
