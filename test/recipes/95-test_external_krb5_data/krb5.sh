@@ -24,11 +24,9 @@ DATA_ABS_TOP=$SRC_ABS_TOP/test/recipes/95-test_external_krb5_data
 cd $SRC_ABS_TOP/krb5
 GITLEVEL=$(git rev-parse HEAD)
 # "git am" refuses to run without a user configured.
-git config user.email "beck@openssl.org"
-git config user.name "I do dirty things with Git"
 for FILE in "$DATA_ABS_TOP"/patches/*; do
     if [ -f "$FILE" ]; then
-	git am $FILE
+	git -c 'user.name=OpenSSL External Tests' -c 'user.email=nonsuch@openssl.org' am $FILE
     fi
 done
 cd $SRC_ABS_TOP/krb5/src
