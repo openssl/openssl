@@ -583,26 +583,38 @@ CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers, OSSL_LIB_CTX *ctx)
 
     new->ctx = ctx;
     i = 0;
-    mutexes[i++] = pthread_mutex_init(&new->write_lock, NULL) == 0 ? &new->write_lock : NULL;
-    mutexes[i++] = pthread_mutex_init(&new->prior_lock, NULL) == 0 ? &new->prior_lock : NULL;
-    mutexes[i++] = pthread_mutex_init(&new->alloc_lock, NULL) == 0 ? &new->alloc_lock : NULL;
-    conds[(i++) - 3] = pthread_cond_init(&new->prior_signal, NULL) == 0 ? &new->prior_signal : NULL;
-    conds[(i++) - 3] = pthread_cond_init(&new->alloc_signal, NULL) == 0 ? &new->alloc_signal : NULL;
+    mutexes[i] = pthread_mutex_init(&new->write_lock, NULL) == 0 ? &new->write_lock : NULL;
+    if (mutexes[i++] == NULL)
+        goto err;
+    mutexes[i] = pthread_mutex_init(&new->prior_lock, NULL) == 0 ? &new->prior_lock : NULL;
+    if (mutexes[i++] == NULL)
+        goto err;
+    mutexes[i] = pthread_mutex_init(&new->alloc_lock, NULL) == 0 ? &new->alloc_lock : NULL;
+    if (mutexes[i++] == NULL)
+        goto err;
+    conds[i - 3] = pthread_cond_init(&new->prior_signal, NULL) == 0 ? &new->prior_signal : NULL;
+    if (conds[i++] == NULL)
+        goto err;
+    conds[i - 3] = pthread_cond_init(&new->alloc_signal, NULL) == 0 ? &new->alloc_signal : NULL;
+    if (conds[i++] == NULL)
+        goto err;
 
     new->qp_group = allocate_new_qp_group(new, num_writers);
-    if (new->qp_group == NULL || i < 5) {
-        for (i = 0; i < 3; i++)
-            if (mutexes[i] != NULL)
-                pthread_mutex_destroy(mutexes[i]);
-        for (i = 0; i < 2; i++)
-            if (conds[i] != NULL)
-                pthread_cond_destroy(conds[i]);
-        OPENSSL_free(new->qp_group);
-        OPENSSL_free(new);
-        new = NULL;
-    }
+    if (new->qp_group == NULL)
+        goto err;
 
     return new;
+
+err:
+    for (i = 0; i < 3; i++)
+        if (mutexes[i] != NULL)
+            pthread_mutex_destroy(mutexes[i]);
+    for (i = 0; i < 2; i++)
+        if (conds[i] != NULL)
+            pthread_cond_destroy(conds[i]);
+    OPENSSL_free(new->qp_group);
+    OPENSSL_free(new);
+    return NULL;
 }
 
 void ossl_rcu_lock_free(CRYPTO_RCU_LOCK *lock)
