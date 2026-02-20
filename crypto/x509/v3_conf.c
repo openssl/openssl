@@ -455,6 +455,8 @@ void X509V3_set_nconf(X509V3_CTX *ctx, CONF *conf)
 void X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subject, X509_REQ *req,
     X509_CRL *crl, int flags)
 {
+    if (ctx == NULL)
+        return;
     ctx->flags = flags;
     ctx->issuer_cert = issuer;
     ctx->subject_cert = subject;
