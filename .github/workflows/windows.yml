@@ -205,7 +205,7 @@ jobs:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
-    - uses: cygwin/cygwin-install-action@f2009323764960f80959895c7bc3bb30210afe4d #v6
+    - uses: cygwin/cygwin-install-action@711d29f3da23c9f4a1798e369a6f01198c13b11a #v6
       with:
          packages: perl git make gcc-core
     - name: Check repo
