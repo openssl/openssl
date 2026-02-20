@@ -24,7 +24,14 @@ DATA_ABS_TOP=$SRC_ABS_TOP/test/recipes/95-test_external_krb5_data
 cd $SRC_ABS_TOP/krb5
 GITLEVEL=$(git rev-parse HEAD)
 # "git am" refuses to run without a user configured.
-git config user.email "dirtbag@openssl.org"
+# However, our CLA check then appears to pick up this git
+# username  to decide if it is going to complain, so I need
+# to set this to a user the CLA knows about instead
+# of a made up email address of "dirtbag@openssl.org".
+#
+# I leave it as an exercise to the reader for how to get
+# around the CLA check on arbitrary commits..
+git config user.email "beck@obtuse.com"
 git config user.name "I do dirty things with Git"
 for FILE in "$DATA_ABS_TOP"/patches/*; do
     if [ -f "$FILE" ]; then
