@@ -440,6 +440,9 @@ static const OSSL_ALGORITHM fips_macs_internal[] = {
  */
 static const OSSL_ALGORITHM fips_kdfs[] = {
     FIPS_KDFS_COMMON(),
+#ifndef OPENSSL_NO_IKEV2KDF
+    { PROV_NAMES_IKEV2KDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_ikev2kdf_functions },
+#endif
 #ifndef OPENSSL_NO_SSKDF
     { PROV_NAMES_SSKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_sskdf_functions },
 #endif
@@ -467,6 +470,9 @@ static const OSSL_ALGORITHM fips_kdfs[] = {
 
 static const OSSL_ALGORITHM fips_kdfs_internal[] = {
     FIPS_KDFS_COMMON(),
+#ifndef OPENSSL_NO_IKEV2KDF
+    { PROV_NAMES_IKEV2KDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_ikev2kdf_functions },
+#endif
 #ifndef OPENSSL_NO_SSKDF
     { PROV_NAMES_SSKDF, FIPS_DEFAULT_PROPERTIES, ossl_kdf_sskdf_functions },
 #endif
