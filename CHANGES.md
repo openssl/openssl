@@ -418,6 +418,12 @@ OpenSSL 4.1
 
    *Mounir IDRASSI*
 
+ * Added script to generate CMP test credentials.
+
+   This work was sponsored by Siemens AG.
+
+   *Rajeev Ranjan*
+
  * Fixed TLS 1.3 clients to encrypt 0-RTT early data with the first offered
    PSK identity ([RFC 9846 Section 4.3.10]) when a 0-RTT-capable resumption
    ticket has aged out and an external PSK is offered in its place. The early
