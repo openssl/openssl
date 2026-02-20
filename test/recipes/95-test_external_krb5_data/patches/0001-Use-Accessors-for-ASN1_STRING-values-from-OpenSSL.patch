@@ -1,5 +1,5 @@
 From 77e11f75423e971e1af9e5f8cc971a606adcb01e Mon Sep 17 00:00:00 2001
-From: Gleb Smirnoff <glebius@netflix.com>
+From: Bob Beck <beck@openssl.org>
 Date: Mon, 2 Feb 2026 09:50:36 -0700
 Subject: [PATCH] Use Accessors for ASN1_STRING values from OpenSSL.
 

@@ -23,9 +23,11 @@ DATA_ABS_TOP=$SRC_ABS_TOP/test/recipes/95-test_external_krb5_data/
 
 cd $SRC_ABS_TOP/krb5
 GITLEVEL=$(git rev-parse HEAD)
+git config user.email "dirtbag@openssl.org"
+git config user.name "I do dirty things with Git"
+git am $DATA_ABS_TOP/patches/*
 
 cd $SRC_ABS_TOP/krb5/src
-git am $DATA_ABS_TOP/patches/*
 
 autoreconf
 ./configure --with-ldap --with-prng-alg=os --enable-pkinit \
