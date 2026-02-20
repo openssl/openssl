@@ -11,7 +11,7 @@ X509_REQ_get_X509_PUBKEY
 
  #include <openssl/x509.h>
 
- EVP_PKEY *X509_get_pubkey(X509 *x);
+ EVP_PKEY *X509_get_pubkey(const X509 *x);
  EVP_PKEY *X509_get0_pubkey(const X509 *x);
  int X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
  const X509_PUBKEY *X509_get_X509_PUBKEY(const X509 *x);
@@ -81,6 +81,8 @@ X509_REQ_get0_X509_PUBKEY() was constified in OpenSSL 4.0.
 
 X509_get_pubkey() and X509_REQ_get_pubkey()
 are deprecated but retained for backward compatibility.
+
+X509_get_pubkey() was converted to use a const parameter in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
