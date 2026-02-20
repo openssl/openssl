@@ -317,7 +317,7 @@ size_t SHA3_absorb_cext(uint64_t A[5][5], const unsigned char *inp, size_t len,
 /*-
  * Hardware-assisted ARMv8.2 SHA3 extension version of the absorb()
  */
-static size_t sha3_absorb_arm(KECCAK1600_CTX *ctx, const void *inp, size_t len)
+static size_t sha3_absorb_arm(KECCAK1600_CTX *ctx, const unsigned char *inp, size_t len)
 {
     return SHA3_absorb_cext(ctx->A, inp, len, ctx->block_size);
 }
@@ -325,7 +325,7 @@ static size_t sha3_absorb_arm(KECCAK1600_CTX *ctx, const void *inp, size_t len)
 static PROV_SHA3_METHOD shake_ARMSHA3_meth = {
     sha3_absorb_arm,
     ossl_sha3_final_default,
-    ossl_sha3_squeeze_default
+    ossl_shake_squeeze_default
 };
 #endif
 
