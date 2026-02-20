@@ -13,7 +13,7 @@ use OpenSSL::Test qw/:DEFAULT bldtop_file srctop_file bldtop_dir with/;
 use OpenSSL::Test::Utils;
 
 setup("test_cli_list");
-plan tests => 4;
+plan tests => 6;
 my $fipsconf = srctop_file("test", "fips-and-base.cnf");
 my $defaultconf = srctop_file("test", "default.cnf");
 
@@ -29,7 +29,41 @@ sub check_skey_manager_list {
        "Several skey managers are listed - $provider provider");
 }
 
+# Checks the key manager list for any disabled algorithms
+sub check_key_manager_list {
+    my @keymanagers = run(app(["openssl", "list", "-key-managers"]), capture => 1);
+    my @disabled = run(app(["openssl", "list", "-disabled"]), capture => 1);
+
+    chomp @keymanagers;
+    chomp @disabled;
+    my $unmatched = 1;
+    foreach my $manager (@keymanagers){
+      foreach my $algorithm (@disabled) {
+        $unmatched = $unmatched && !($manager =~ /IDs:.*\Q$algorithm\E/);    
+      }
+    }
+    ok($unmatched, "No disabled algorithms appear in key manager list");
+}
+
+# Checks the public key algorithms list for any disabled algorithms
+sub check_public_key_algorithms_list {
+    my @pkalgorithms = run(app(["openssl", "list", "-public-key-algorithms"]), capture => 1);
+    my @disabled = run(app(["openssl", "list", "-disabled"]), capture => 1);
+
+    chomp @pkalgorithms;
+    chomp @disabled;
+    my $unmatched = 1;
+    foreach my $pkalgorithm (@pkalgorithms){
+      foreach my $algorithm (@disabled) {
+        $unmatched = $unmatched && !($pkalgorithm =~ /IDs:.*\Q$algorithm\E/);    
+      }
+    }
+    ok($unmatched, "No disabled algorithms appear in public key algorithms list");
+}
+
 check_skey_manager_list("default");
+check_key_manager_list();
+check_public_key_algorithms_list();
 
 SKIP: {
     my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
