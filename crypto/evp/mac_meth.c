@@ -11,17 +11,27 @@
 #include <openssl/err.h>
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
+#include <string.h>
 #include "internal/provider.h"
 #include "internal/core.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+
+static void evp_mac_free_int(EVP_MAC *mac)
+{
+    OPENSSL_free(mac->type_name);
+    ossl_provider_free(mac->prov);
+    CRYPTO_FREE_REF(&mac->refcnt);
+    OPENSSL_free(mac);
+}
 
 static int evp_mac_up_ref(void *vmac)
 {
     EVP_MAC *mac = vmac;
     int ref = 0;
 
-    CRYPTO_UP_REF(&mac->refcnt, &ref);
+    if (mac->origin == EVP_ORIG_DYNAMIC)
+        CRYPTO_UP_REF(&mac->refcnt, &ref);
     return 1;
 }
 
@@ -30,16 +40,54 @@ static void evp_mac_free(void *vmac)
     EVP_MAC *mac = vmac;
     int ref = 0;
 
-    if (mac == NULL)
+    if (mac == NULL || mac->origin != EVP_ORIG_DYNAMIC)
         return;
 
     CRYPTO_DOWN_REF(&mac->refcnt, &ref);
     if (ref > 0)
         return;
-    OPENSSL_free(mac->type_name);
-    ossl_provider_free(mac->prov);
-    CRYPTO_FREE_REF(&mac->refcnt);
-    OPENSSL_free(mac);
+    evp_mac_free_int(mac);
+}
+
+static void *evp_mac_dup_frozen(void *vin)
+{
+    EVP_MAC *in = vin;
+    EVP_MAC *out;
+
+    out = OPENSSL_malloc(sizeof(*out));
+    if (out == NULL)
+        return NULL;
+    memcpy(out, in, sizeof(*out));
+    if (!CRYPTO_NEW_REF(&out->refcnt, 1))
+        goto err;
+    out->type_name = OPENSSL_strdup(in->type_name);
+    if (out->type_name == NULL)
+        goto err;
+    out->origin = EVP_ORIG_FROZEN;
+    if (out->prov == NULL || !ossl_provider_up_ref(out->prov)) {
+        OPENSSL_free(out->type_name);
+        goto err;
+    }
+    return out;
+
+err:
+    CRYPTO_FREE_REF(&out->refcnt);
+    OPENSSL_free(out);
+    return NULL;
+}
+
+static void evp_mac_frozen_free(void *vin)
+{
+    EVP_MAC *mac = vin;
+    int ref = 0;
+
+    if (mac == NULL || mac->origin != EVP_ORIG_FROZEN)
+        return;
+
+    CRYPTO_DOWN_REF(&mac->refcnt, &ref);
+    if (ref > 0)
+        return;
+    evp_mac_free_int(mac);
 }
 
 static void *evp_mac_new(void)
@@ -175,9 +223,23 @@ err:
 EVP_MAC *EVP_MAC_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
     const char *properties)
 {
-    return evp_generic_fetch(libctx, OSSL_OP_MAC, algorithm, properties,
-        evp_mac_from_algorithm, evp_mac_up_ref,
-        evp_mac_free, NULL, NULL);
+    return evp_generic_fetch(libctx, OSSL_OP_MAC,
+        algorithm, properties,
+        evp_mac_from_algorithm,
+        evp_mac_up_ref,
+        evp_mac_free,
+        evp_mac_dup_frozen,
+        evp_mac_frozen_free);
+}
+
+int evp_mac_fetch_all(OSSL_LIB_CTX *ctx)
+{
+    return evp_generic_fetch_all(ctx, OSSL_OP_MAC,
+        evp_mac_from_algorithm,
+        evp_mac_up_ref,
+        evp_mac_free,
+        evp_mac_dup_frozen,
+        evp_mac_frozen_free);
 }
 
 int EVP_MAC_up_ref(EVP_MAC *mac)
@@ -260,6 +322,6 @@ EVP_MAC *evp_mac_fetch_from_prov(OSSL_PROVIDER *prov,
         evp_mac_from_algorithm,
         evp_mac_up_ref,
         evp_mac_free,
-        NULL,
-        NULL);
+        evp_mac_dup_frozen,
+        evp_mac_frozen_free);
 }
