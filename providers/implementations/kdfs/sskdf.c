@@ -88,7 +88,9 @@ struct sskdf_all_set_ctx_params_st {
 };
 
 static OSSL_FUNC_kdf_newctx_fn sskdf_common_new;
+#ifndef OPENSSL_NO_SSKDF
 static OSSL_FUNC_kdf_newctx_fn sskdf_new;
+#endif
 static OSSL_FUNC_kdf_newctx_fn x963_new;
 static OSSL_FUNC_kdf_dupctx_fn sskdf_dup;
 static OSSL_FUNC_kdf_freectx_fn sskdf_free;
@@ -334,6 +336,7 @@ static void *sskdf_common_new(void *provctx)
     return ctx;
 }
 
+#ifndef OPENSSL_NO_SSKDF
 static void *sskdf_new(void *provctx)
 {
 #ifdef FIPS_MODULE
@@ -344,6 +347,7 @@ static void *sskdf_new(void *provctx)
 
     return sskdf_common_new(provctx);
 }
+#endif
 
 static void *x963_new(void *provctx)
 {
