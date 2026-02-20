@@ -446,6 +446,8 @@ static X509V3_CONF_METHOD nconf_method = {
 
 void X509V3_set_nconf(X509V3_CTX *ctx, CONF *conf)
 {
+    if (ctx == NULL)
+        return;
     ctx->db_meth = &nconf_method;
     ctx->db = conf;
 }
