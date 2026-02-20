@@ -593,12 +593,13 @@ CRYPTO_RCU_LOCK *ossl_rcu_lock_new(int num_writers, OSSL_LIB_CTX *ctx)
     if (mutexes[i++] == NULL)
         goto err;
     conds[i - 3] = pthread_cond_init(&new->prior_signal, NULL) == 0 ? &new->prior_signal : NULL;
-    if (conds[i++] == NULL)
+    if (conds[i - 3] == NULL)
         goto err;
+    i++;
     conds[i - 3] = pthread_cond_init(&new->alloc_signal, NULL) == 0 ? &new->alloc_signal : NULL;
-    if (conds[i++] == NULL)
+    if (conds[i - 3] == NULL)
         goto err;
-
+    i++;
     new->qp_group = allocate_new_qp_group(new, num_writers);
     if (new->qp_group == NULL)
         goto err;
