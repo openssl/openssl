@@ -207,6 +207,7 @@ const EVP_PKEY_METHOD *ossl_rsa_pss_pkey_method(void);
 struct evp_mac_st {
     OSSL_PROVIDER *prov;
     int name_id;
+    int origin;
     char *type_name;
     const char *description;
 
