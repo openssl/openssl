@@ -135,7 +135,7 @@ SSL_CTX_check_priavte_key() checks the consistency of a priavte key with the cor
 the same check for B<ssl>. If no key/certificate was explicitly added for
 this B<ssl>, the last item added into B<ctx> will be checked.
 
-If multiple key/certificate pairs of different types are installed, this function checks the consistency of	 the most recently configured pair of the corresponding key type. Applications that load multiple certificate types should call this function after configuring each key/certificate pair.
+If multiple key/certificate pairs of different types are installed, this function checks the consistency of the most recently configured pair of the corresponding key type. Applications that load multiple certificate types should call this function after configuring each key/certificate pair.
 
 =head1 NOTES
 
