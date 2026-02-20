@@ -457,3 +457,4 @@ int evp_method_id2name_id_op_id(uint32_t meth_id, int *name_id,
 int evp_md_fetch_all(OSSL_LIB_CTX *ctx);
 int evp_cipher_fetch_all(OSSL_LIB_CTX *ctx);
 int evp_rand_fetch_all(OSSL_LIB_CTX *ctx);
+int evp_mac_fetch_all(OSSL_LIB_CTX *ctx);

@@ -17,6 +17,7 @@
 #include <string.h>
 #include <openssl/sha.h>
 #include <openssl/evp.h>
+#include <openssl/core_names.h>
 #include <openssl/provider.h>
 #include "internal/sizes.h"
 #include "testutil.h"
@@ -331,6 +332,158 @@ static int test_explicit_EVP_MD_fetch_by_X509_ALGOR(int idx)
 end:
     X509_ALGOR_free(algor);
     return ret;
+}
+
+static int calculate_mac(const EVP_MAC *mac, const unsigned char *msg, size_t len,
+    const unsigned char *expected, size_t expected_len)
+{
+    unsigned char out[EVP_MAX_MD_SIZE];
+    const unsigned char key[] = "0123456789abcd";
+    EVP_MAC_CTX *ctx = NULL;
+    OSSL_PARAM params[2], *p = params;
+    size_t out_len = 0;
+    int ret = 0;
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, "SHA256", 0);
+    *p = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(ctx = EVP_MAC_CTX_new((EVP_MAC *)mac))
+        || !TEST_true(EVP_MAC_init(ctx, key, sizeof(key) - 1, params))
+        || !TEST_true(EVP_MAC_update(ctx, msg, len))
+        || !TEST_true(EVP_MAC_final(ctx, out, &out_len, sizeof(out)))
+        || !TEST_size_t_eq(out_len, expected_len)
+        || !TEST_mem_eq(out, out_len, expected, expected_len))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_MAC_CTX_free(ctx);
+    return ret;
+}
+
+static int test_mac(const EVP_MAC *mac)
+{
+    const unsigned char testmsg[] = "Hello world";
+    const unsigned char expected[] = {
+        0xf2, 0x71, 0x5a, 0xad, 0x1d, 0x68, 0x3c, 0xdd,
+        0xbc, 0xa7, 0x5a, 0x1e, 0x79, 0xed, 0xac, 0x57,
+        0xf6, 0xb0, 0xd4, 0xbb, 0x15, 0xe1, 0x7f, 0x6b,
+        0x47, 0x62, 0x58, 0xb1, 0xbc, 0x0d, 0xf4, 0x4f
+    };
+
+    return TEST_ptr(mac)
+        && TEST_true(EVP_MAC_is_a(mac, "HMAC"))
+        && TEST_true(calculate_mac(mac, testmsg, sizeof(testmsg) - 1,
+            expected, sizeof(expected)));
+}
+
+static int test_EVP_MAC_fetch_freeze(void)
+{
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    /*
+     * Test does not make sense if cached fetch is disabled.
+     * There's nothing to freeze, and test will fail.
+     */
+    return 1;
+#endif
+
+    EVP_MAC *mac = NULL;
+    int ret = 0;
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    if (!TEST_ptr(mac = EVP_MAC_fetch(ctx, "HMAC", NULL))
+        || !TEST_true(test_mac(mac))
+        || !TEST_int_ne(mac->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_MAC_free(mac);
+    mac = NULL;
+
+    if (!TEST_int_eq(OSSL_LIB_CTX_freeze(ctx, "?fips=true"), 1)
+        || !TEST_ptr(mac = EVP_MAC_fetch(ctx, "HMAC", NULL))
+        || !TEST_true(test_mac(mac))
+        || !TEST_int_eq(mac->origin, EVP_ORIG_FROZEN))
+        goto err;
+    /* Technically, frozen version doesn't need to be freed */
+    EVP_MAC_free(mac);
+    mac = NULL;
+
+    if (!TEST_ptr(mac = EVP_MAC_fetch(ctx, "HMAC", "?fips=true"))
+        || !TEST_true(test_mac(mac))
+        || !TEST_int_eq(mac->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_MAC_free(mac);
+    mac = NULL;
+
+    /* Falls back to slow path */
+    if (!TEST_ptr(mac = EVP_MAC_fetch(ctx, "HMAC", "?provider=default"))
+        || !TEST_true(test_mac(mac))
+        || !TEST_int_ne(mac->origin, EVP_ORIG_FROZEN))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_MAC_free(mac);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_implicit_EVP_MAC_fetch(void)
+{
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+    EVP_MAC *mac = NULL;
+    int ret = 0;
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    if (!TEST_ptr(mac = EVP_MAC_fetch(ctx, "HMAC", NULL))
+        || !TEST_true(test_mac(mac)))
+        goto err;
+    ret = 1;
+err:
+    EVP_MAC_free(mac);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_explicit_EVP_MAC_fetch(const char *id)
+{
+    OSSL_LIB_CTX *ctx = NULL;
+    EVP_MAC *mac = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+    int ret = 0;
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    mac = EVP_MAC_fetch(ctx, id, fetch_property);
+    if (expected_fetch_result != 0) {
+        if (!test_mac(mac))
+            goto err;
+
+        if (!TEST_true(EVP_MAC_up_ref(mac)))
+            goto err;
+        /* Ref count should now be 2. Release first one here */
+        EVP_MAC_free(mac);
+    } else {
+        if (!TEST_ptr_null(mac))
+            goto err;
+    }
+    ret = 1;
+err:
+    EVP_MAC_free(mac);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_explicit_EVP_MAC_fetch_by_name(void)
+{
+    return test_explicit_EVP_MAC_fetch("HMAC");
 }
 
 /*
@@ -661,6 +814,10 @@ int setup_tests(void)
         ADD_TEST(test_EVP_RAND_fetch_freeze);
         ADD_TEST(test_implicit_EVP_RAND_fetch);
         ADD_TEST(test_explicit_EVP_RAND_fetch_by_name);
+    } else if (strcmp(alg, "mac") == 0) {
+        ADD_TEST(test_EVP_MAC_fetch_freeze);
+        ADD_TEST(test_implicit_EVP_MAC_fetch);
+        ADD_TEST(test_explicit_EVP_MAC_fetch_by_name);
     } else {
         TEST_error("Unknown fetch type: %s", alg);
         return 0;
