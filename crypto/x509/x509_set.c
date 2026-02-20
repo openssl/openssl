@@ -298,8 +298,8 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
 }
 
 /* Returns 1 on success, 0 on failure */
-int ossl_x509_init_sig_info(X509 *x)
+int ossl_x509_init_sig_info(const X509 *x, X509_SIG_INFO *info)
 {
-    return x509_sig_info_init(&x->siginf, &x->sig_alg, &x->signature,
+    return x509_sig_info_init(info, &x->sig_alg, &x->signature,
         X509_PUBKEY_get0(x->cert_info.key));
 }
