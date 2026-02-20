@@ -103,6 +103,17 @@ sub extension_data
     if (@_) {
         $self->{extension_data} = shift;
     }
+    my $exts = $self->{extension_data};
+    if (defined($exts) && defined(my $data = $exts->{TLSProxy::Message::EXT_CLIENT_CERT_TYPE})) {
+        die "Invalid client certificate type extension\n"
+            if length($data) != 1;
+        TLSProxy::Certificate->client_type(unpack("C", $data));
+    }
+    if (defined($exts) && defined(my $data = $exts->{TLSProxy::Message::EXT_SERVER_CERT_TYPE})) {
+        die "Invalid server certificate type extension\n"
+            if length($data) != 1;
+        TLSProxy::Certificate->server_type(unpack("C", $data));
+    }
     return $self->{extension_data};
 }
 sub set_extension

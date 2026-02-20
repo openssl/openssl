@@ -1169,6 +1169,104 @@ end:
     return 1;
 }
 
+int load_rpk_file(SSL *ssl, const char *file)
+{
+    BIO *in = BIO_new_file(file, "r");
+    char *name = NULL;
+    char *header = NULL;
+    unsigned char *buf = NULL;
+    long buflen;
+    int ret = 1;
+    int found = 0;
+
+    if (in == NULL)
+        return ret;
+
+    ERR_set_mark();
+    while (ret != 0) {
+        PKCS8_PRIV_KEY_INFO *p8;
+        EVP_PKEY *pkey = NULL;
+        X509 *cert = NULL;
+        const unsigned char *p;
+        int pkey_type = NID_undef;
+
+        OPENSSL_free(name);
+        OPENSSL_free(header);
+        OPENSSL_free(buf);
+        name = header = NULL;
+        buf = NULL;
+
+        if (!PEM_read_bio(in, &name, &header, &buf, &buflen)) {
+            if (ERR_GET_REASON(ERR_peek_last_error()) != PEM_R_NO_START_LINE)
+                ret = 0;
+            break;
+        }
+
+        if (strcmp(name, PEM_STRING_PUBLIC) == 0) {
+            p = buf;
+            pkey = d2i_PUBKEY(NULL, &p, buflen);
+            if (p - buf != buflen || pkey == NULL) {
+                BIO_printf(bio_err, "Error reading %s in %s\n", name, file);
+                ret = 0;
+            } else if (!SSL_add_expected_rpk(ssl, pkey)) {
+                BIO_printf(bio_err, "Error adding RPK from %s in %s\n", name, file);
+                ret = 0;
+            } else {
+                found = 1;
+            }
+            EVP_PKEY_free(pkey);
+        } else if (strcmp(name, PEM_STRING_X509) == 0
+            || strcmp(name, PEM_STRING_X509_OLD) == 0) {
+            p = buf;
+            cert = d2i_X509(NULL, &p, buflen);
+            if (p - buf != buflen || cert == NULL) {
+                BIO_printf(bio_err, "Error reading %s in %s\n", name, file);
+                ret = 0;
+            } else if ((pkey = X509_get0_pubkey(cert)) != NULL
+                && !SSL_add_expected_rpk(ssl, pkey)) {
+                BIO_printf(bio_err, "Error adding RPK from %s in %s\n", name, file);
+                ret = 0;
+            } else {
+                found = 1;
+            }
+            X509_free(cert);
+        } else if (strcmp(name, PEM_STRING_PKCS8INF) == 0
+            || ((pkey_type = EVP_PKEY_RSA) != NID_undef
+                && strcmp(name, PEM_STRING_RSA) == 0)
+            || ((pkey_type = EVP_PKEY_EC) != NID_undef
+                && strcmp(name, PEM_STRING_ECPRIVATEKEY) == 0)
+            || ((pkey_type = EVP_PKEY_DSA) != NID_undef
+                && strcmp(name, PEM_STRING_DSA) == 0)) {
+            p = buf;
+            if (pkey_type != NID_undef) {
+                pkey = d2i_PrivateKey(pkey_type, 0, &p, buflen);
+            } else {
+                if ((p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, buflen)) != NULL) {
+                    pkey = EVP_PKCS82PKEY(p8);
+                    PKCS8_PRIV_KEY_INFO_free(p8);
+                }
+            }
+            if (p - buf != buflen || pkey == NULL) {
+                BIO_printf(bio_err, "Error reading %s in %s\n", name, file);
+                ret = 0;
+            } else if (!SSL_add_expected_rpk(ssl, pkey)) {
+                BIO_printf(bio_err, "Error adding RPK from %s in %s\n", name, file);
+                ret = 0;
+            } else {
+                found = 1;
+            }
+            EVP_PKEY_free(pkey);
+        }
+    }
+
+    OPENSSL_free(name);
+    OPENSSL_free(header);
+    OPENSSL_free(buf);
+    ERR_pop_to_mark();
+    BIO_free(in);
+    return found && ret;
+}
+
 #define X509V3_EXT_UNKNOWN_MASK (0xfL << 16)
 #define X509V3_EXT_DEFAULT 0 /* Return error for unknown exts */
 #define X509V3_EXT_ERROR_UNKNOWN (1L << 16) /* Print error for unknown exts */

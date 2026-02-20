@@ -128,6 +128,7 @@ sub parse
     $self->extension_data(\%extensions);
 
     $self->process_data();
+    $self->process_extensions();
 
 
     print "    Server Version:".$TLSProxy::Record::tls_version{$server_version}."\n";
@@ -143,6 +144,28 @@ sub process_data
     my $self = shift;
 
     TLSProxy::Message->ciphersuite($self->ciphersuite);
+}
+
+#Perform any actions necessary based on the extensions we've seen
+sub process_extensions
+{
+    my $self = shift;
+    my %extensions = %{$self->extension_data};
+
+    #Clear any state from a previous run
+    TLSProxy::Certificate->client_type(0);
+    TLSProxy::Certificate->server_type(0);
+
+    if (defined(my $data = $extensions{TLSProxy::Message::EXT_CLIENT_CERT_TYPE})) {
+        die "Invalid client certificate type extension\n"
+            if length($data) != 1;
+        TLSProxy::Certificate->client_type(unpack("C", $data));
+    }
+    if (defined(my $data = $extensions{TLSProxy::Message::EXT_SERVER_CERT_TYPE})) {
+        die "Invalid server certificate type extension\n"
+            if length($data) != 1;
+        TLSProxy::Certificate->server_type(unpack("C", $data));
+    }
 }
 
 #Reconstruct the on-the-wire message data following changes
