@@ -739,4 +739,19 @@ int evp_pkey_asn1_get0_info(int *ppkey_id, int *ppkey_base_id,
     const EVP_PKEY_ASN1_METHOD *ameth);
 const EVP_PKEY_ASN1_METHOD *evp_pkey_get0_asn1(const EVP_PKEY *pkey);
 
+/* Base64 encode/decode internal functions */
+int evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
+    const unsigned char *f, int dlen, int *wrap_cnt);
+int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
+    const unsigned char *f, int n, int eof);
+
+#if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
+int encode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
+    const unsigned char *src, int srclen, int ctx_length,
+    int *final_wrap_cnt);
+int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
+    const unsigned char *src, int srclen,
+    int *consumed_out);
+#endif
+
 #endif /* OSSL_CRYPTO_EVP_H */
