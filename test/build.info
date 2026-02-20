@@ -71,7 +71,12 @@ IF[{- !$disabled{tests} -}]
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
           x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
-          engine_stubs_test base64_simdutf_test base64_dec_avx2_test bio_eof_test
+          engine_stubs_test base64_simdutf_test base64_dec_avx2_test bio_eof_test \
+          ech_test
+
+  IF[{- !$disabled{'ech'} -}]
+    PROGRAMS{noinst}=ech_corrupt_test
+  ENDIF
 
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
@@ -227,6 +232,14 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[lms_test]=../include ../apps/include
     DEPEND[lms_test]=../libcrypto.a libtestutil.a
   ENDIF
+
+  SOURCE[ech_test]=ech_test.c helpers/ssltestlib.c
+  INCLUDE[ech_test]=../include ../apps/include
+  DEPEND[ech_test]=../libssl.a ../libcrypto.a libtestutil.a
+
+  SOURCE[ech_corrupt_test]=ech_corrupt_test.c helpers/ssltestlib.c
+  INCLUDE[ech_corrupt_test]=../include ../apps/include
+  DEPEND[ech_corrupt_test]=../libssl.a ../libcrypto.a libtestutil.a
 
   SOURCE[evp_extra_test2]=evp_extra_test2.c $INITSRC tls-provider.c
   INCLUDE[evp_extra_test2]=../include ../apps/include

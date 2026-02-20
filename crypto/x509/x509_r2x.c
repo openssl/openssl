@@ -17,7 +17,7 @@
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
 
-X509 *X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
+const X509 *X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
 {
     X509 *ret = NULL;
     X509_CINF *xi = NULL;
@@ -58,7 +58,7 @@ X509 *X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
 
     if (!X509_sign(ret, pkey, EVP_md5()))
         goto err;
-    return ret;
+    return (const X509 *)ret;
 
 err:
     X509_free(ret);
