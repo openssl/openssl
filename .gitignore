@@ -101,6 +101,7 @@ providers/implementations/encode_decode/encode_key2ms.inc
 providers/implementations/kdfs/argon2.inc
 providers/implementations/kdfs/hkdf.inc
 providers/implementations/kdfs/hmacdrbg_kdf.inc
+providers/implementations/kdfs/ikev2kdf.inc
 providers/implementations/kdfs/kbkdf.inc
 providers/implementations/kdfs/krb5kdf.inc
 providers/implementations/kdfs/pbkdf1.inc

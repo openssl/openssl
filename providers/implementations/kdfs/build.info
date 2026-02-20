@@ -3,6 +3,7 @@
 
 $TLS1_PRF_GOAL=../../libdefault.a ../../libfips.a
 $HKDF_GOAL=../../libdefault.a ../../libfips.a
+$IKEV2_GOAL=../../libdefault.a ../../libfips.a
 $KBKDF_GOAL=../../libdefault.a ../../libfips.a
 $KRB5KDF_GOAL=../../libdefault.a
 $PBKDF1_GOAL=../../liblegacy.a
@@ -22,7 +23,10 @@ SOURCE[$TLS1_PRF_GOAL]=tls1_prf.c
 
 SOURCE[$HKDF_GOAL]=hkdf.c
 
-IF[{- !$disabled{kbkdf} -}]
+IF[{- !$disable{ikev2kdf} -}]
+  SOURCE[$IKEV2_GOAL]=ikev2kdf.c
+ENDIF
+IF[{- !$disable{kbkdf} -}]
   SOURCE[$KBKDF_GOAL]=kbkdf.c
 ENDIF
 

@@ -39,6 +39,7 @@ my $no_sskdf = disabled("sskdf");
 my $no_x942kdf = disabled("x942kdf");
 my $no_x963kdf = disabled("x963kdf");
 my $no_determinstic_nonce = disabled("hmac-drbg-kdf");
+my $no_ikev2kdf = disabled("kev2kdf");
 my $no_kbkdf = disabled("kbkdf");
 my $no_krb5kdf = disabled("krb5kdf");
 my $no_snmpkdf = disabled("snmpkdf");
@@ -75,6 +76,7 @@ my @files = qw(
                 evppkey_rsa_sigalg.txt
                 evprand.txt
               );
+push @files, qw(evpkdf_ikev2.txt) unless $no_ikev2kdf;
 push @files, qw(evpkdf_ssh.txt) unless $no_sshkdf;
 push @files, qw(evpkdf_snmp.txt) unless $no_snmpkdf;
 push @files, qw(evpkdf_srtp.txt) unless $no_srtpkdf;
