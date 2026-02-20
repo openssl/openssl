@@ -613,7 +613,7 @@ X509_CRL *X509_CRL_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
 int X509_CRL_add0_revoked(X509_CRL *crl, X509_REVOKED *rev);
 int X509_CRL_get0_by_serial(X509_CRL *crl,
     X509_REVOKED **ret, const ASN1_INTEGER *serial);
-int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x);
+int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, const X509 *x);
 
 X509_PKEY *X509_PKEY_new(void);
 void X509_PKEY_free(X509_PKEY *a);
