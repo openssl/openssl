@@ -63,6 +63,8 @@ const ASN1_TEMPLATE *ossl_asn1_do_adb(const ASN1_VALUE *val,
     const ASN1_TEMPLATE *tt,
     int nullerr);
 
+ASN1_OBJECT *ossl_asn1_object_new(void);
+
 int ossl_asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it);
 
 void ossl_asn1_enc_init(ASN1_VALUE **pval, const ASN1_ITEM *it);
