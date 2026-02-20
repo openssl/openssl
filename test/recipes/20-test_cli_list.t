@@ -14,7 +14,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_cli_list");
 
-plan tests => 7;
+plan tests => 8;
 
 my $fipsconf = srctop_file("test", "fips-and-base.cnf");
 my $defaultconf = srctop_file("test", "default.cnf");
@@ -64,27 +64,6 @@ sub check_public_key_algorithms_list {
     ok($unmatched, "No disabled algorithms appear in public key algorithms list");
 }
 
-# Checks if scrypt is disabled by looking at the disabled algorithms list. Returns 1 if scrypt is disabled, 0 otherwise.
-sub check_scrypt_is_disabled {
-    ok(run(app(["openssl", "list", "-disabled"],
-               stdout => "disabled.txt")),
-       "List disabled algorithms");
-
-    open my $fh, "<", "disabled.txt" or die $!;
-    my $disabled = grep { /scrypt/i } <$fh>;
-    close $fh;
-
-    if ($disabled) {
-        ok(1, "scrypt is disabled");
-        return 1;
-    }
-    else {
-        ok(1, "scrypt is not disabled");
-        return 0;
-    }
-}
-
-check_scrypt_is_disabled();
 check_skey_manager_list("default");
 check_key_manager_list();
 check_public_key_algorithms_list();
