@@ -40,7 +40,7 @@ static inline uint32_t next_u32(uint32_t *state)
  * Returns the number of base64 characters written (no NUL terminator).
  */
 static int encode_block_srp(const unsigned char *in, int inlen,
-                            unsigned char *out)
+    unsigned char *out)
 {
     EVP_ENCODE_CTX *ctx = EVP_ENCODE_CTX_new();
     int outl = 0, finl = 0, total;
@@ -67,7 +67,7 @@ static int encode_block_srp(const unsigned char *in, int inlen,
  * (needs >= 64 bytes), so this always exercises the scalar loop.
  */
 static int decode_scalar_ref(const unsigned char *in, int inlen,
-                             unsigned char *out, int *outlen, int use_srp)
+    unsigned char *out, int *outlen, int use_srp)
 {
     EVP_ENCODE_CTX *ctx = EVP_ENCODE_CTX_new();
     int partial = 0, final = 0, i;
@@ -111,7 +111,7 @@ static int decode_scalar_ref(const unsigned char *in, int inlen,
  * This exercises the AVX2 path when input >= 64 bytes.
  */
 static int decode_full(const unsigned char *in, int inlen,
-                       unsigned char *out, int *outlen, int use_srp)
+    unsigned char *out, int *outlen, int use_srp)
 {
     EVP_ENCODE_CTX *ctx = EVP_ENCODE_CTX_new();
     int partial = 0, final = 0, ret;
@@ -143,7 +143,7 @@ static int decode_full(const unsigned char *in, int inlen,
  * Returns the total length including newlines.
  */
 static int insert_newlines(const unsigned char *b64, int b64len,
-                           unsigned char *out, int linelen)
+    unsigned char *out, int linelen)
 {
     int si = 0, di = 0;
 
@@ -165,8 +165,8 @@ static int insert_newlines(const unsigned char *b64, int b64len,
  * ws_pct is the approximate percentage of output bytes that are WS.
  */
 static int insert_random_ws(const unsigned char *b64, int b64len,
-                            unsigned char *out, uint32_t *seed,
-                            int ws_pct)
+    unsigned char *out, uint32_t *seed,
+    int ws_pct)
 {
     static const char ws_chars[] = " \t\r\n";
     int di = 0, i;
@@ -186,18 +186,18 @@ static int insert_random_ws(const unsigned char *b64, int b64len,
  * for tests that only make sense with large inputs.
  */
 static const int test_sizes[] = {
-    0,       /* empty */
-    1,       /* single byte - padding */
-    2,       /* two bytes - padding */
-    3,       /* exactly one base64 group */
-    15,      /* small, no AVX2 */
-    47,      /* just under 64 encoded bytes */
-    48,      /* exactly 64 encoded bytes (AVX2 threshold) */
-    96,      /* 128 encoded bytes (128B fast loop) */
-    192,     /* 256 encoded bytes (multiple 128B iterations) */
-    768,     /* ~1KB encoded - exercises all loops */
-    1536,    /* ~2KB - realistic PEM certificate size */
-    4096,    /* 4KB - larger PEM */
+    0, /* empty */
+    1, /* single byte - padding */
+    2, /* two bytes - padding */
+    3, /* exactly one base64 group */
+    15, /* small, no AVX2 */
+    47, /* just under 64 encoded bytes */
+    48, /* exactly 64 encoded bytes (AVX2 threshold) */
+    96, /* 128 encoded bytes (128B fast loop) */
+    192, /* 256 encoded bytes (multiple 128B iterations) */
+    768, /* ~1KB encoded - exercises all loops */
+    1536, /* ~2KB - realistic PEM certificate size */
+    4096, /* 4KB - larger PEM */
 };
 #define NUM_SIZES (int)(sizeof(test_sizes) / sizeof(test_sizes[0]))
 /* Index of first entry >= 48 (for chunked/block tests that skip small sizes) */
@@ -206,11 +206,11 @@ static const int test_sizes[] = {
 
 /* WS pattern types */
 enum {
-    WS_NONE,      /* no whitespace (clean) */
-    WS_PEM64,     /* newline every 64 base64 chars (standard PEM) */
-    WS_PEM76,     /* newline every 76 base64 chars (MIME) */
-    WS_CRLF64,    /* \r\n every 64 chars */
-    WS_RANDOM_5,  /* ~5% random WS insertion */
+    WS_NONE, /* no whitespace (clean) */
+    WS_PEM64, /* newline every 64 base64 chars (standard PEM) */
+    WS_PEM76, /* newline every 76 base64 chars (MIME) */
+    WS_CRLF64, /* \r\n every 64 chars */
+    WS_RANDOM_5, /* ~5% random WS insertion */
     WS_RANDOM_20, /* ~20% random WS insertion */
     WS_COUNT
 };
@@ -223,8 +223,8 @@ static const char *ws_names[] = {
  * Apply a WS pattern to raw base64 data.  Returns the output length.
  */
 static int apply_ws_pattern(const unsigned char *b64, int b64len,
-                            unsigned char *out, int ws_type,
-                            uint32_t *seed)
+    unsigned char *out, int ws_type,
+    uint32_t *seed)
 {
     switch (ws_type) {
     case WS_NONE:
@@ -265,7 +265,7 @@ static int apply_ws_pattern(const unsigned char *b64, int b64len,
  * AVX2 (full-buffer) and scalar (byte-at-a-time), compare outputs.
  */
 static int run_decode_test(int rawlen, int ws_type, int use_srp,
-                           uint32_t seed)
+    uint32_t seed)
 {
     const char *alpha = use_srp ? "srp" : "std";
     unsigned char *raw = NULL;
@@ -285,7 +285,7 @@ static int run_decode_test(int rawlen, int ws_type, int use_srp,
     out_ref = OPENSSL_malloc(rawlen + 256);
 
     if (!TEST_ptr(raw) || !TEST_ptr(b64) || !TEST_ptr(input)
-            || !TEST_ptr(out_full) || !TEST_ptr(out_ref))
+        || !TEST_ptr(out_full) || !TEST_ptr(out_ref))
         goto end;
 
     for (i = 0; i < rawlen; i++)
@@ -304,43 +304,45 @@ static int run_decode_test(int rawlen, int ws_type, int use_srp,
 
     /* Decode with full-buffer path (exercises AVX2) */
     if (!TEST_int_eq(decode_full(input, inputlen, out_full,
-                                 &outlen_full, use_srp), 0)) {
+                         &outlen_full, use_srp),
+            0)) {
         TEST_info("decode_full failed: size=%d ws=%s alpha=%s",
-                  rawlen, ws_names[ws_type], alpha);
+            rawlen, ws_names[ws_type], alpha);
         goto end;
     }
 
     /* Decode with scalar reference (byte-at-a-time) */
     if (!TEST_int_eq(decode_scalar_ref(input, inputlen, out_ref,
-                                       &outlen_ref, use_srp), 0)) {
+                         &outlen_ref, use_srp),
+            0)) {
         TEST_info("decode_scalar_ref failed: size=%d ws=%s alpha=%s",
-                  rawlen, ws_names[ws_type], alpha);
+            rawlen, ws_names[ws_type], alpha);
         goto end;
     }
 
     /* Compare AVX2 vs scalar output */
     if (!TEST_int_eq(outlen_full, outlen_ref)) {
         TEST_info("length mismatch: size=%d ws=%s alpha=%s full=%d ref=%d",
-                  rawlen, ws_names[ws_type], alpha, outlen_full, outlen_ref);
+            rawlen, ws_names[ws_type], alpha, outlen_full, outlen_ref);
         goto end;
     }
 
     if (!TEST_mem_eq(out_full, outlen_full, out_ref, outlen_ref)) {
         TEST_info("data mismatch: size=%d ws=%s alpha=%s",
-                  rawlen, ws_names[ws_type], alpha);
+            rawlen, ws_names[ws_type], alpha);
         goto end;
     }
 
     /* Verify round-trip against original plaintext */
     if (!TEST_int_eq(outlen_full, rawlen)) {
         TEST_info("round-trip length: size=%d ws=%s alpha=%s decoded=%d",
-                  rawlen, ws_names[ws_type], alpha, outlen_full);
+            rawlen, ws_names[ws_type], alpha, outlen_full);
         goto end;
     }
 
     if (rawlen > 0 && !TEST_mem_eq(out_full, outlen_full, raw, rawlen)) {
         TEST_info("round-trip data mismatch: size=%d ws=%s alpha=%s",
-                  rawlen, ws_names[ws_type], alpha);
+            rawlen, ws_names[ws_type], alpha);
         goto end;
     }
 
@@ -361,7 +363,7 @@ static int test_decode_avx2_vs_scalar(int idx)
     int ws_type = idx % WS_COUNT;
 
     return run_decode_test(test_sizes[size_idx], ws_type, 0,
-                           (uint32_t)idx);
+        (uint32_t)idx);
 }
 
 static int test_decode_srp(int idx)
@@ -370,7 +372,7 @@ static int test_decode_srp(int idx)
     int ws_type = idx % WS_COUNT;
 
     return run_decode_test(test_sizes[size_idx], ws_type, 1,
-                           (uint32_t)(idx + NUM_SIZES * WS_COUNT));
+        (uint32_t)(idx + NUM_SIZES * WS_COUNT));
 }
 
 /*
@@ -406,7 +408,7 @@ static int test_decode_chunked(int idx)
     out_ref = OPENSSL_malloc(rawlen + 256);
 
     if (!TEST_ptr(raw) || !TEST_ptr(b64) || !TEST_ptr(pem)
-            || !TEST_ptr(out_chunked) || !TEST_ptr(out_ref))
+        || !TEST_ptr(out_chunked) || !TEST_ptr(out_ref))
         goto end;
 
     for (i = 0; i < rawlen; i++)
@@ -435,7 +437,7 @@ static int test_decode_chunked(int idx)
             r = EVP_DecodeUpdate(ctx, outp, &partial, p, chunk);
             if (r < 0) {
                 TEST_info("chunked DecodeUpdate failed at offset %d, chunk=%d",
-                          (int)(p - pem), chunk);
+                    (int)(p - pem), chunk);
                 goto end;
             }
             outp += partial;
@@ -456,7 +458,7 @@ static int test_decode_chunked(int idx)
         goto end;
     if (!TEST_int_eq(total_chunked, outlen_ref)) {
         TEST_info("chunked vs full length: size=%d chunked=%d full=%d",
-                  rawlen, total_chunked, outlen_ref);
+            rawlen, total_chunked, outlen_ref);
         goto end;
     }
     if (!TEST_mem_eq(out_chunked, total_chunked, out_ref, outlen_ref))
@@ -514,7 +516,7 @@ static int test_decode_partial_ctx(int split)
     out_ref = OPENSSL_malloc(PARTIAL_RAW_LEN + 256);
 
     if (!TEST_ptr(raw) || !TEST_ptr(b64) || !TEST_ptr(pem)
-            || !TEST_ptr(out_split) || !TEST_ptr(out_ref))
+        || !TEST_ptr(out_split) || !TEST_ptr(out_ref))
         goto end;
 
     for (i = 0; i < PARTIAL_RAW_LEN; i++)
@@ -553,7 +555,7 @@ static int test_decode_partial_ctx(int split)
         if (split < pemlen) {
             partial = 0;
             r = EVP_DecodeUpdate(ctx, outp, &partial,
-                                 pem + split, pemlen - split);
+                pem + split, pemlen - split);
             if (!TEST_int_ge(r, 0)) {
                 TEST_info("split=%d part2 failed", split);
                 goto end;
@@ -570,7 +572,7 @@ static int test_decode_partial_ctx(int split)
 
         if (!TEST_int_eq(total, outlen_ref)) {
             TEST_info("split=%d length: got=%d ref=%d", split, total,
-                      outlen_ref);
+                outlen_ref);
             goto end;
         }
         if (!TEST_mem_eq(out_split, total, out_ref, outlen_ref)) {
@@ -594,7 +596,7 @@ end:
 /* EVP_DecodeBlock round-trip for each test size */
 static int test_decode_block(int idx)
 {
-    int rawlen = test_sizes[idx + 1];  /* skip size 0 */
+    int rawlen = test_sizes[idx + 1]; /* skip size 0 */
     uint32_t seed = (uint32_t)idx;
     unsigned char *raw = NULL, *b64 = NULL, *out = NULL;
     int b64len, block_len;

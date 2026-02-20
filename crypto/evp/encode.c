@@ -16,10 +16,10 @@
 #include "evp_local.h"
 
 #if defined(__AVX2__)
-# define HAVE_AVX2() 1
+#define HAVE_AVX2() 1
 #elif defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) \
-      && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
-# define HAVE_AVX2() ((OPENSSL_ia32cap_P[2] & (1u << 5)) != 0)
+    && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
+#define HAVE_AVX2() ((OPENSSL_ia32cap_P[2] & (1u << 5)) != 0)
 #endif
 
 #include "enc_b64_avx2.h"
@@ -531,7 +531,7 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
     if (HAVE_AVX2() && eof == 0 && n == 0 && inl >= 64) {
         int fast_consumed = 0;
         int decoded = decode_base64_avx2(ctx, out, in, inl,
-                                            &fast_consumed);
+            &fast_consumed);
         if (decoded < 0) {
             rv = -1;
             goto end;
@@ -725,7 +725,7 @@ int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
 
             if (tmpctx.num == 0) {
                 int rem = evp_decodeblock_int(NULL, t + result,
-                                              f + consumed, rem_len, 0);
+                    f + consumed, rem_len, 0);
                 return (rem >= 0) ? result + rem : rem;
             }
 
