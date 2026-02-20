@@ -567,6 +567,127 @@ static int tests_x509_check_dpn(void)
     return test;
 }
 
+/* https://github.com/openssl/openssl/issues/20027 */
+static const time_t mendel_verify_time = 1753284700; /* July 23th, 2025 */
+
+static const char *kRootMendelsonAKIDKeyNULL[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIE5zCCA8+gAwIBAgIJAMgskwXwf1MLMA0GCSqGSIb3DQEBBQUAMIIBADELMAkG\n",
+    "A1UEBhMCREUxEDAOBgNVBAgTB0dlcm1hbnkxDzANBgNVBAcTBkJlcmxpbjEiMCAG\n",
+    "A1UEChMZbWVuZGVsc29uLWUtY29tbWVyY2UgR21iSDFFMEMGA1UECxM8KGMpIDIw\n",
+    "MTYgbWVuZGVsc29uLWUtY29tbWVyY2UgR21iSCAtIGZvciBhdXRob3JpemVkIHVz\n",
+    "ZSBvbmx5MT4wPAYDVQQDEzVtZW5kZWxzb24gUHVibGljIFByaW1hcnkgQ2VydGlm\n",
+    "aWNhdGlvbiBBdXRob3JpdHkgLSBSNjEjMCEGCSqGSIb3DQEJARYUY2FAbWVuZGVs\n",
+    "c29uLWUtYy5jb20wHhcNMTYwNjI5MTEwNDMxWhcNMjYwNjI3MTEwNDMxWjCCAQAx\n",
+    "CzAJBgNVBAYTAkRFMRAwDgYDVQQIEwdHZXJtYW55MQ8wDQYDVQQHEwZCZXJsaW4x\n",
+    "IjAgBgNVBAoTGW1lbmRlbHNvbi1lLWNvbW1lcmNlIEdtYkgxRTBDBgNVBAsTPChj\n",
+    "KSAyMDE2IG1lbmRlbHNvbi1lLWNvbW1lcmNlIEdtYkggLSBmb3IgYXV0aG9yaXpl\n",
+    "ZCB1c2Ugb25seTE+MDwGA1UEAxM1bWVuZGVsc29uIFB1YmxpYyBQcmltYXJ5IENl\n",
+    "cnRpZmljYXRpb24gQXV0aG9yaXR5IC0gUjYxIzAhBgkqhkiG9w0BCQEWFGNhQG1l\n",
+    "bmRlbHNvbi1lLWMuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA\n",
+    "9wUk/mmMB1I3G3MdEyWdbhxM1hGNVOhEAvdyY+S2MxRP2W35kQ5HbztUofk/eACU\n",
+    "6tz5PuCp0zIVEW2GJdwkNn9B6OUjKZpOLErXBP6o+KRzqq0NtVLOo5Zy/zQ4NPsN\n",
+    "MNRwHdyoXVbBTZ1PSINb43mhlTTDO8B2oPArCaDFqMfdvvQRtKpD1RRM60Q+dDz8\n",
+    "PV5AbvUTwvfOmCXqEq2IcEzh3bLzAJCRvGOxM5YAkTlfA+M6OED8zDnsgRVuG6E9\n",
+    "Lqioh7zvUpmnA+ghKATtQ8Qwg5b+6TctJmxBbwVctZATuhiYXYSlhu2u06UyjPVj\n",
+    "bnP/kNfd8spvPgI9L3SH/QIDAQABo2AwXjAPBgNVHRMBAf8EBTADAQH/MA4GA1Ud\n",
+    "DwEB/wQEAwIBBjA7BgNVHR8ENDAyMDCgLqAshipodHRwOi8vY2EubWVuZGVsc29u\n",
+    "LWUtYy5jb20vbWVuZGVsc29uNi5jcmwwDQYJKoZIhvcNAQEFBQADggEBAN37IQQ5\n",
+    "rb6TxWczML/cg9cPDa16Jpj/t0yxg97oKRFsqBm0C+rySlWGFzsbj3YKUQVfabKT\n",
+    "DylOwjj2xIi6gsxWYcWz+kWzRDTs8IYLSLs8WQDtZIErI1eQTGfpfj/stH9fQ9D4\n",
+    "0+xDDqPH+6dH8JzQ/OTx0D4apRxcdAaDQUlTI/5U5nRuQqZlI0B9rUgQZN/whl6z\n",
+    "zaaCSj3gmP6AKqGznrvQGzu6W9zg9CezrxlZAeHsa0JDbZOqNvmNk3rsAA07H304\n",
+    "+UXXZovSGVK73OGw5s+KHTKe6+1/dOFkCJfFnX5pLMrihc5UqSig4JdKPoyvpgNJ\n",
+    "3mzVzjn/SyMJWo4=\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+static const char *kLeafMendelsonAKIDKeyNULL[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIGBjCCBO6gAwIBAgIBKjANBgkqhkiG9w0BAQUFADCCAQAxCzAJBgNVBAYTAkRF\n",
+    "MRAwDgYDVQQIEwdHZXJtYW55MQ8wDQYDVQQHEwZCZXJsaW4xIjAgBgNVBAoTGW1l\n",
+    "bmRlbHNvbi1lLWNvbW1lcmNlIEdtYkgxRTBDBgNVBAsTPChjKSAyMDE2IG1lbmRl\n",
+    "bHNvbi1lLWNvbW1lcmNlIEdtYkggLSBmb3IgYXV0aG9yaXplZCB1c2Ugb25seTE+\n",
+    "MDwGA1UEAxM1bWVuZGVsc29uIFB1YmxpYyBQcmltYXJ5IENlcnRpZmljYXRpb24g\n",
+    "QXV0aG9yaXR5IC0gUjYxIzAhBgkqhkiG9w0BCQEWFGNhQG1lbmRlbHNvbi1lLWMu\n",
+    "Y29tMCAXDTE2MDYyOTExMDUwOVoYDzIwMjYwMTAxMDEwMTAxWjCB2zELMAkGA1UE\n",
+    "BhMCREUxEDAOBgNVBAgTB0dlcm1hbnkxDzANBgNVBAcTBkJlcmxpbjEiMCAGA1UE\n",
+    "ChMZbWVuZGVsc29uLWUtY29tbWVyY2UgR21iSDFFMEMGA1UECxM8KGMpIDIwMTYg\n",
+    "bWVuZGVsc29uLWUtY29tbWVyY2UgR21iSCAtIGZvciBhdXRob3JpemVkIHVzZSBv\n",
+    "bmx5MT4wPAYDVQQDEzVtZW5kZWxzb24gUHVibGljIFByaW1hcnkgQ2VydGlmaWNh\n",
+    "dGlvbiBBdXRob3JpdHkgLSBJNjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC\n",
+    "ggEBAN/6W8TW8YYHgKxHxXg6Cy1pZRhXHr6WBqaUwTglNBf788y3XJdaG/e1kwaw\n",
+    "MuYAdOYWt8sm2xYmpmJorcY7m4gTdcuMH8fCarDsRVdT2BMXxZ9JTIG4E9YflzOQ\n",
+    "MvOn+tZ6UyPkgbfX2zfKydSH5FJiY31QNbBb3MI1zAFUYC3mqmMEgrHwm5qTFrYb\n",
+    "p3v8ZBnBiWRR9H72IaV1ZjGP90Hyh6w/pQjo+TJnLIklLaTv6Cd70SWGhnhJwdPP\n",
+    "/9YvzfSXt9sW8wj6PkXT2cqW08o4hkmcc95MoIdsH6re+Gv0d3qt1a3yMnEdHHF8\n",
+    "g+t0P2VezEF+k0Mdib83HC8QAaMCAwEAAaOCAakwggGlMA8GA1UdEwEB/wQFMAMB\n",
+    "Af8wggEkBgNVHSMEggEbMIIBF6GCAQikggEEMIIBADELMAkGA1UEBhMCREUxEDAO\n",
+    "BgNVBAgTB0dlcm1hbnkxDzANBgNVBAcTBkJlcmxpbjEiMCAGA1UEChMZbWVuZGVs\n",
+    "c29uLWUtY29tbWVyY2UgR21iSDFFMEMGA1UECxM8KGMpIDIwMTYgbWVuZGVsc29u\n",
+    "LWUtY29tbWVyY2UgR21iSCAtIGZvciBhdXRob3JpemVkIHVzZSBvbmx5MT4wPAYD\n",
+    "VQQDEzVtZW5kZWxzb24gUHVibGljIFByaW1hcnkgQ2VydGlmaWNhdGlvbiBBdXRo\n",
+    "b3JpdHkgLSBSNjEjMCEGCSqGSIb3DQEJARYUY2FAbWVuZGVsc29uLWUtYy5jb22C\n",
+    "CQDILJMF8H9TCzAdBgNVHQ4EFgQUbPFwN+UTRvxdmehaSgrotrmrMv4wDgYDVR0P\n",
+    "AQH/BAQDAgGGMDsGA1UdHwQ0MDIwMKAuoCyGKmh0dHA6Ly9jYS5tZW5kZWxzb24t\n",
+    "ZS1jLmNvbS9tZW5kZWxzb242LmNybDANBgkqhkiG9w0BAQUFAAOCAQEAV66ufDx8\n",
+    "XusBk+G0z59P8+MYxdTJfnv6Q9ezZJ9zumVzp4CuuUp+8qtlC1+zN7HIgiR7C6eB\n",
+    "fvAopruYUTa8m+7ZMN/vBi7XkmAX7oUM4hZYd/2yoUjL/AXF1p4fgKcCJmgvlctC\n",
+    "tQrG+VdXOAmGGAhbfnOZPg+kRfO7MYKLn2BL266aPeEsBVg/xWw/NWOFYgCXeHb8\n",
+    "2huxL0Ir8yK2Qv3Nqlbt/6irYMAvElCuQCrp7wqX8tXvE7/HmT/JKHTzTW+APp0A\n",
+    "KHq3GiYk+/XgxHxfyVdo55iQOTqZSIigK8Yj2gFhocxCBifF6gbnbo6LTwH+I4Er\n",
+    "TAjrRai7UZlqjw==\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+static int tests_x509_check_akid(void)
+{
+    X509 *root = NULL, *leaf = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_STORE *store = NULL;
+    X509_VERIFY_PARAM *param = NULL;
+    STACK_OF(X509) *x509s = NULL;
+    int test;
+
+    test = TEST_ptr(ctx = X509_STORE_CTX_new())
+        && TEST_ptr(store = X509_STORE_new())
+        && TEST_ptr(param = X509_VERIFY_PARAM_new())
+        && TEST_ptr(x509s = sk_X509_new_null())
+        && TEST_ptr((root = X509_from_strings(kRootMendelsonAKIDKeyNULL)))
+        && TEST_ptr((leaf = X509_from_strings(kLeafMendelsonAKIDKeyNULL)))
+        && TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL));
+
+    if (test != 1)
+        goto err;
+    if (!TEST_true(sk_X509_push(x509s, root)))
+        goto err;
+    root = NULL;
+
+    X509_STORE_CTX_set0_trusted_stack(ctx, x509s);
+    X509_VERIFY_PARAM_set_depth(param, 16);
+    X509_VERIFY_PARAM_set_time(param, mendel_verify_time);
+    X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_X509_STRICT);
+    X509_STORE_CTX_set0_param(ctx, param);
+    param = NULL;
+    ERR_clear_error();
+
+    test = TEST_int_eq(X509_verify_cert(ctx), 0)
+        && TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+            X509_V_ERR_MISSING_SUBJECT_KEY_IDENTIFIER);
+
+err:
+    OSSL_STACK_OF_X509_free(x509s);
+    X509_VERIFY_PARAM_free(param);
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    X509_free(leaf);
+    X509_free(root);
+
+    return test;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_standard_exts);
@@ -575,5 +696,6 @@ int setup_tests(void)
     ADD_TEST(tests_X509_check_time);
     ADD_TEST(tests_X509_check_crypto);
     ADD_TEST(tests_x509_check_dpn);
+    ADD_TEST(tests_x509_check_akid);
     return 1;
 }

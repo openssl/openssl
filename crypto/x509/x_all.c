@@ -30,7 +30,7 @@
 #include "crypto/x509_acert.h"
 #include "crypto/rsa.h"
 
-int X509_verify(X509 *a, EVP_PKEY *r)
+int X509_verify(const X509 *a, EVP_PKEY *r)
 {
     if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature) != 0)
         return 0;
@@ -584,8 +584,7 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
         }
     } else if ((md = EVP_MD_fetch(cert->libctx, OBJ_nid2sn(mdnid),
                     cert->propq))
-            == NULL
-        && (md = (EVP_MD *)EVP_get_digestbynid(mdnid)) == NULL) {
+        == NULL) {
         ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
         return NULL;
     }

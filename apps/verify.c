@@ -108,7 +108,7 @@ int verify_main(int argc, char **argv)
             goto end;
         case OPT_HELP:
             opt_help(verify_options);
-            BIO_printf(bio_err, "\nRecognized certificate chain purposes:\n");
+            BIO_puts(bio_err, "\nRecognized certificate chain purposes:\n");
             for (i = 0; i < X509_PURPOSE_get_count(); i++) {
                 X509_PURPOSE *ptmp = X509_PURPOSE_get0(i);
 
@@ -117,7 +117,7 @@ int verify_main(int argc, char **argv)
                     X509_PURPOSE_get0_name(ptmp));
             }
 
-            BIO_printf(bio_err, "Recognized certificate policy names:\n");
+            BIO_puts(bio_err, "Recognized certificate policy names:\n");
             for (i = 0; i < X509_VERIFY_PARAM_get_count(); i++) {
                 const X509_VERIFY_PARAM *vptmp = X509_VERIFY_PARAM_get0(i);
 
@@ -299,7 +299,7 @@ static int check(X509_STORE *ctx, const char *file,
 
             chain = X509_STORE_CTX_get1_chain(csc);
             num_untrusted = X509_STORE_CTX_get_num_untrusted(csc);
-            BIO_printf(bio_out, "Chain:\n");
+            BIO_puts(bio_out, "Chain:\n");
             for (j = 0; j < sk_X509_num(chain); j++) {
                 X509 *cert = sk_X509_value(chain, j);
                 BIO_printf(bio_out, "depth=%d: ", j);
@@ -307,8 +307,8 @@ static int check(X509_STORE *ctx, const char *file,
                     X509_get_subject_name(cert),
                     0, get_nameopt());
                 if (j < num_untrusted)
-                    BIO_printf(bio_out, " (untrusted)");
-                BIO_printf(bio_out, "\n");
+                    BIO_puts(bio_out, " (untrusted)");
+                BIO_puts(bio_out, "\n");
             }
             OSSL_STACK_OF_X509_free(chain);
         }
@@ -337,7 +337,7 @@ static int cb(int ok, X509_STORE_CTX *ctx)
             X509_NAME_print_ex(bio_err,
                 X509_get_subject_name(current_cert),
                 0, get_nameopt());
-            BIO_printf(bio_err, "\n");
+            BIO_puts(bio_err, "\n");
         }
         BIO_printf(bio_err, "%serror %d at %d depth lookup: %s\n",
             X509_STORE_CTX_get0_parent_ctx(ctx) ? "[CRL path] " : "",

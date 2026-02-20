@@ -310,7 +310,7 @@ int storeutl_main(int argc, char *argv[])
     }
 
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
-        BIO_printf(bio_err, "Error getting passwords\n");
+        BIO_puts(bio_err, "Error getting passwords\n");
         goto end;
     }
     pw_cb_data.password = passin;
@@ -403,10 +403,10 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
             if (OSSL_STORE_eof(store_ctx))
                 break;
 
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "ERROR: OSSL_STORE_load() returned NULL without "
                 "eof or error indications\n");
-            BIO_printf(bio_err, "       This is an error in the loader\n");
+            BIO_puts(bio_err, "       This is an error in the loader\n");
             ERR_print_errors(bio_err);
             ret++;
             break;
@@ -484,7 +484,7 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
             /* Currently there is no universal API allowing to print smth, so no output */
             break;
         default:
-            BIO_printf(bio_err, "!!! Unknown code\n");
+            BIO_puts(bio_err, "!!! Unknown code\n");
             ret++;
             break;
         }

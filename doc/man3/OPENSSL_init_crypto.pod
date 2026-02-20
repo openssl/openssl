@@ -4,7 +4,7 @@
 
 OPENSSL_INIT_new, OPENSSL_INIT_set_config_filename,
 OPENSSL_INIT_set_config_appname, OPENSSL_INIT_set_config_file_flags,
-OPENSSL_INIT_free, OPENSSL_init_crypto, OPENSSL_cleanup, OPENSSL_atexit,
+OPENSSL_INIT_free, OPENSSL_init_crypto, OPENSSL_cleanup,
 OPENSSL_thread_stop_ex, OPENSSL_thread_stop - OpenSSL initialisation
 and deinitialisation functions
 
@@ -14,7 +14,6 @@ and deinitialisation functions
 
  void OPENSSL_cleanup(void);
  int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
- int OPENSSL_atexit(void (*handler)(void));
  void OPENSSL_thread_stop_ex(OSSL_LIB_CTX *ctx);
  void OPENSSL_thread_stop(void);
 
@@ -165,8 +164,6 @@ OpenSSL error strings will not be available, only an error code. This code can
 be put through the openssl errstr command line application to produce a human
 readable error (see L<openssl-errstr(1)>).
 
-The OPENSSL_atexit() is a wrapper on atexit(3) provided by the platform's libc.
-
 The OPENSSL_thread_stop_ex() function deallocates resources associated
 with the current thread for the given OSSL_LIB_CTX B<ctx>. The B<ctx> parameter
 can be NULL in which case the default OSSL_LIB_CTX is used.
@@ -229,7 +226,7 @@ call should use the RTLD_NODELETE flag (where available on the platform).
 
 =head1 RETURN VALUES
 
-The functions OPENSSL_init_crypto, OPENSSL_atexit() and
+The functions OPENSSL_init_crypto, and
 OPENSSL_INIT_set_config_appname() return 1 on success or 0 on error.
 
 =head1 SEE ALSO
@@ -238,7 +235,7 @@ L<OPENSSL_init_ssl(3)>
 
 =head1 HISTORY
 
-The OPENSSL_init_crypto(), OPENSSL_cleanup(), OPENSSL_atexit(),
+The OPENSSL_init_crypto(), OPENSSL_cleanup()
 OPENSSL_thread_stop(), OPENSSL_INIT_new(), OPENSSL_INIT_set_config_appname()
 and OPENSSL_INIT_free() functions were added in OpenSSL 1.1.0.
 

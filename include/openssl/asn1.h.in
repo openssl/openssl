@@ -586,6 +586,8 @@ int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name, int value,
     BIT_STRING_BITNAME *tbl);
 int ASN1_BIT_STRING_get_length(const ASN1_BIT_STRING *abs, size_t *length,
     int *unused_bits);
+int ASN1_BIT_STRING_set1(ASN1_BIT_STRING *abs, const uint8_t *data,
+    size_t length, int unused_bits);
 
 /* clang-format off */
 {-

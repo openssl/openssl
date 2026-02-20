@@ -263,20 +263,21 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (crl->akid == NULL && i != -1)
             crl->flags |= EXFLAG_INVALID;
 
-        crl->crl_number = X509_CRL_get_ext_d2i(crl,
-            NID_crl_number, &i, NULL);
-        if (crl->crl_number == NULL && i != -1)
-            crl->flags |= EXFLAG_INVALID;
-
-        crl->base_crl_number = X509_CRL_get_ext_d2i(crl,
-            NID_delta_crl, &i,
-            NULL);
-        if (crl->base_crl_number == NULL && i != -1)
-            crl->flags |= EXFLAG_INVALID;
+        crl->crl_number = X509_CRL_get_ext_d2i(crl, NID_crl_number, &i, NULL);
+        if (crl->crl_number == NULL && i != -1) {
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
+                "CRL: malformed CRL number extension");
+            return 0;
+        }
+        crl->base_crl_number = X509_CRL_get_ext_d2i(crl, NID_delta_crl, &i, NULL);
+        if (crl->base_crl_number == NULL && i != -1) {
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
+                "CRL: malformed Delta CRL Indicator");
+            return 0;
+        }
         /* Delta CRLs must have CRL number */
         if (crl->base_crl_number && !crl->crl_number)
             crl->flags |= EXFLAG_INVALID;
-
         /*
          * See if we have any unhandled critical CRL extensions and indicate
          * this in a flag. We only currently handle IDP so anything else

@@ -233,11 +233,11 @@ int rsa_main(int argc, char **argv)
     private = (text && !pubin) || (!pubout && !noout);
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
-        BIO_printf(bio_err, "Error getting passwords\n");
+        BIO_puts(bio_err, "Error getting passwords\n");
         goto end;
     }
     if (check && pubin) {
-        BIO_printf(bio_err, "Only private keys can be checked\n");
+        BIO_puts(bio_err, "Only private keys can be checked\n");
         goto end;
     }
 
@@ -263,7 +263,7 @@ int rsa_main(int argc, char **argv)
         goto end;
     }
     if (!EVP_PKEY_is_a(pkey, "RSA") && !EVP_PKEY_is_a(pkey, "RSA-PSS")) {
-        BIO_printf(bio_err, "Not an RSA key\n");
+        BIO_puts(bio_err, "Not an RSA key\n");
         goto end;
     }
 
@@ -286,9 +286,9 @@ int rsa_main(int argc, char **argv)
 
         /* Every RSA key has an 'n' */
         EVP_PKEY_get_bn_param(pkey, "n", &n);
-        BIO_printf(out, "Modulus=");
+        BIO_puts(out, "Modulus=");
         BN_print(out, n);
-        BIO_printf(out, "\n");
+        BIO_puts(out, "\n");
         BN_free(n);
     }
 
@@ -297,7 +297,7 @@ int rsa_main(int argc, char **argv)
 
         pctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
         if (pctx == NULL) {
-            BIO_printf(bio_err, "RSA unable to create PKEY context\n");
+            BIO_puts(bio_err, "RSA unable to create PKEY context\n");
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -305,9 +305,9 @@ int rsa_main(int argc, char **argv)
         EVP_PKEY_CTX_free(pctx);
 
         if (r == 1) {
-            BIO_printf(out, "RSA key ok\n");
+            BIO_puts(out, "RSA key ok\n");
         } else if (r == 0) {
-            BIO_printf(bio_err, "RSA key not ok\n");
+            BIO_puts(bio_err, "RSA key not ok\n");
             ERR_print_errors(bio_err);
         } else if (r < 0) {
             ERR_print_errors(bio_err);
@@ -319,7 +319,7 @@ int rsa_main(int argc, char **argv)
         ret = 0;
         goto end;
     }
-    BIO_printf(bio_err, "writing RSA key\n");
+    BIO_puts(bio_err, "writing RSA key\n");
 
     /* Choose output type for the format */
     if (outformat == FORMAT_ASN1) {
@@ -330,12 +330,12 @@ int rsa_main(int argc, char **argv)
         output_type = "MSBLOB";
     } else if (outformat == FORMAT_PVK) {
         if (pubin) {
-            BIO_printf(bio_err, "PVK form impossible with public key input\n");
+            BIO_puts(bio_err, "PVK form impossible with public key input\n");
             goto end;
         }
         output_type = "PVK";
     } else {
-        BIO_printf(bio_err, "bad output format specified for outfile\n");
+        BIO_puts(bio_err, "bad output format specified for outfile\n");
         goto end;
     }
 
@@ -397,13 +397,13 @@ int rsa_main(int argc, char **argv)
 
         params[0] = OSSL_PARAM_construct_int("encrypt-level", &pvk_encr);
         if (!OSSL_ENCODER_CTX_set_params(ectx, params)) {
-            BIO_printf(bio_err, "invalid PVK encryption level\n");
+            BIO_puts(bio_err, "invalid PVK encryption level\n");
             goto end;
         }
     }
 
     if (!OSSL_ENCODER_to_bio(ectx, out)) {
-        BIO_printf(bio_err, "unable to write key\n");
+        BIO_puts(bio_err, "unable to write key\n");
         ERR_print_errors(bio_err);
         goto end;
     }

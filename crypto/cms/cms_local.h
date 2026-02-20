@@ -389,7 +389,7 @@ struct CMS_ReceiptsFrom_st {
 
 struct CMS_Receipt_st {
     int32_t version;
-    ASN1_OBJECT *contentType;
+    const ASN1_OBJECT *contentType;
     ASN1_OCTET_STRING *signedContentIdentifier;
     ASN1_OCTET_STRING *originatorSignatureValue;
 };

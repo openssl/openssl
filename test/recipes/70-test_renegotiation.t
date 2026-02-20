@@ -39,12 +39,23 @@ my $proxy = TLSProxy::Proxy->new(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
+sub success_or_closenotify
+{
+    return 1 if TLSProxy::Message->success();
+
+    my $alert = TLSProxy::Message->alert();
+    return 0 unless defined $alert;
+
+    return ($alert->level() == TLSProxy::Message::AL_LEVEL_WARN()
+            && $alert->description() == TLSProxy::Message::AL_DESC_CLOSE_NOTIFY());
+}
+
 #Test 1: A basic renegotiation test
 $proxy->clientflags("-no_tls1_3");
 $proxy->serverflags("-client_renegotiation");
 $proxy->reneg(1);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-ok(TLSProxy::Message->success(), "Basic renegotiation");
+ok(success_or_closenotify(), "Basic renegotiation");
 
 #Test 2: Seclevel 0 client does not send the Reneg SCSV. Reneg should fail
 $proxy->clear();
@@ -97,7 +108,7 @@ SKIP: {
             }
         }
     }
-    ok(TLSProxy::Message->success() && $chmatch,
+    ok(success_or_closenotify() && $chmatch,
        "Check ClientHello version is the same");
 }
 

@@ -311,6 +311,9 @@ int BIO_sock_non_fatal_error(int err)
 #if !defined(__DJGPP__) && !defined(OPENSSL_SYS_TANDEM)
         || err == EPROTO
 #endif
+#ifdef __FreeBSD__
+        || err == EBUSY
+#endif
         || err == EINPROGRESS
         || err == EALREADY;
 #endif

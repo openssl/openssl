@@ -41,6 +41,13 @@
 #include "fake_rsaprov.h"
 #include "fake_pipelineprov.h"
 
+#ifndef OPENSSL_NO_DSA
+#include "helpers/predefined_dsaparams.h"
+#endif
+#ifndef OPENSSL_NO_DH
+#include "helpers/predefined_dhparams.h"
+#endif
+
 #ifdef STATIC_LEGACY
 OSSL_provider_init_fn ossl_legacy_provider_init;
 #endif
@@ -5800,6 +5807,52 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_EC
+/*
+ * Test that EVP_PKEY_sign_init_ex2() with a mismatched key/signature algorithm
+ * (e.g. RSA key with ECDSA signature) correctly fails.
+ */
+static int test_EVP_PKEY_sign_init_mismatched_key_alg(void)
+{
+    EVP_PKEY *rsa_key = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY_CTX *pkey_ctx = NULL;
+    EVP_SIGNATURE *ecdsa_sig = NULL;
+    int testresult = 0;
+
+    /* Generate an RSA key */
+    if (!TEST_ptr(pkey_ctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA", NULL))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(pkey_ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_keygen_bits(pkey_ctx, 2048), 0)
+        || !TEST_int_gt(EVP_PKEY_keygen(pkey_ctx, &rsa_key), 0))
+        goto end;
+
+    EVP_PKEY_CTX_free(pkey_ctx);
+    pkey_ctx = NULL;
+
+    /* Fetch ECDSA signature algorithm - incompatible with RSA key */
+    if (!TEST_ptr(ecdsa_sig = EVP_SIGNATURE_fetch(testctx, "ECDSA", NULL)))
+        goto end;
+
+    /* Try to init sign with mismatched key/algorithm - this should fail */
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(testctx, rsa_key, NULL)))
+        goto end;
+
+    /* This should fail with -2 (operation not supported for key type) */
+    if (!TEST_int_eq(EVP_PKEY_sign_init_ex2(ctx, ecdsa_sig, NULL), -2))
+        goto end;
+
+    testresult = 1;
+
+end:
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_CTX_free(pkey_ctx);
+    EVP_SIGNATURE_free(ecdsa_sig);
+    EVP_PKEY_free(rsa_key);
+    return testresult;
+}
+#endif
+
 static int aes_gcm_encrypt(const unsigned char *gcm_key, size_t gcm_key_s,
     const unsigned char *gcm_iv, size_t gcm_ivlen,
     const unsigned char *gcm_pt, size_t gcm_pt_s,
@@ -6288,6 +6341,366 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+
+static int sign_hits = 0;
+
+static int do_sign_with_method(EVP_PKEY *pkey)
+{
+    const unsigned char msg[] = "Hello, World!";
+    unsigned char sig[128];
+    unsigned int siglen;
+    EVP_MD_CTX *ctx = NULL;
+    int ret = 0;
+
+    sign_hits = 0;
+    ctx = EVP_MD_CTX_new();
+    if (!TEST_ptr(ctx))
+        return 0;
+    if (!TEST_true(EVP_SignInit(ctx, EVP_sha256())))
+        goto err;
+    if (!TEST_true(EVP_SignUpdate(ctx, msg, sizeof(msg) - 1)))
+        goto err;
+    if (!TEST_true(EVP_SignFinal(ctx, sig, &siglen, pkey)))
+        goto err;
+    /* We expect to see our custom sign function called once */
+    if (!TEST_int_eq(sign_hits, 1))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_MD_CTX_free(ctx);
+    return ret;
+}
+
+static int rsa_ex_idx = -1;
+
+static int (*orig_rsa_priv_enc)(int, const unsigned char *, unsigned char *, RSA *, int);
+
+static int tst_rsa_priv_enc(int flen, const unsigned char *from, unsigned char *to,
+    RSA *rsa, int padding)
+{
+    if (strcmp(RSA_get_ex_data(rsa, rsa_ex_idx), "test") != 0)
+        return 0;
+    sign_hits++;
+    return orig_rsa_priv_enc(flen, from, to, rsa, padding);
+}
+
+/* Test that a low level RSA method still gets used even with a provider */
+static int test_low_level_rsa_method(void)
+{
+    BIGNUM *e = BN_new();
+    RSA *rsa = NULL;
+    const RSA_METHOD *def = RSA_get_default_method();
+    RSA_METHOD *method = RSA_meth_dup(def);
+    EVP_PKEY *pkey = NULL;
+    int testresult = 0;
+
+    if (nullprov != NULL) {
+        testresult = TEST_skip("Test does not support a non-default library context");
+        goto err;
+    }
+
+    if (!TEST_ptr(e) || !TEST_ptr(method))
+        goto err;
+
+    rsa_ex_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+
+    if (!TEST_true(BN_set_word(e, RSA_F4)))
+        goto err;
+
+    rsa = RSA_new();
+    if (!TEST_ptr(rsa))
+        goto err;
+    if (!TEST_true(RSA_set_ex_data(rsa, rsa_ex_idx, (void *)"test")))
+        goto err;
+    if (!TEST_true(RSA_generate_key_ex(rsa, 1024, e, NULL)))
+        goto err;
+
+    orig_rsa_priv_enc = RSA_meth_get_priv_enc(def);
+    if (!TEST_true(RSA_meth_set_priv_enc(method, tst_rsa_priv_enc)))
+        goto err;
+    if (!TEST_true(RSA_set_method(rsa, method)))
+        goto err;
+
+    pkey = EVP_PKEY_new();
+    if (!TEST_ptr(pkey))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_assign_RSA(pkey, rsa), 0))
+        goto err;
+    rsa = NULL;
+
+    if (!do_sign_with_method(pkey))
+        goto err;
+
+    testresult = 1;
+err:
+    BN_free(e);
+    RSA_free(rsa);
+    EVP_PKEY_free(pkey);
+    RSA_meth_free(method);
+    return testresult;
+}
+
+#ifndef OPENSSL_NO_DSA
+static int dsa_ex_idx = -1;
+
+static DSA_SIG *(*orig_dsa_sign)(const unsigned char *, int, DSA *);
+
+static DSA_SIG *tst_dsa_sign(const unsigned char *buf, int len, DSA *dsa)
+{
+    if (strcmp(DSA_get_ex_data(dsa, dsa_ex_idx), "test") != 0)
+        return 0;
+    sign_hits++;
+    return orig_dsa_sign(buf, len, dsa);
+}
+
+/* Test that a low level DSA method still gets used even with a provider */
+static int test_low_level_dsa_method(void)
+{
+    DSA *dsa = NULL;
+    const DSA_METHOD *def = DSA_get_default_method();
+    DSA_METHOD *method = DSA_meth_dup(def);
+    EVP_PKEY *pkey = NULL;
+    int testresult = 0;
+
+    if (nullprov != NULL) {
+        testresult = TEST_skip("Test does not support a non-default library context");
+        goto err;
+    }
+
+    if (!TEST_ptr(method))
+        goto err;
+
+    dsa_ex_idx = DSA_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+
+    dsa = load_dsa_params();
+    if (!TEST_ptr(dsa))
+        goto err;
+    if (!TEST_true(DSA_set_ex_data(dsa, dsa_ex_idx, (void *)"test")))
+        goto err;
+    if (!TEST_true(DSA_generate_key(dsa)))
+        goto err;
+
+    orig_dsa_sign = DSA_meth_get_sign(def);
+    if (!TEST_true(DSA_meth_set_sign(method, tst_dsa_sign)))
+        goto err;
+    if (!TEST_true(DSA_set_method(dsa, method)))
+        goto err;
+
+    pkey = EVP_PKEY_new();
+    if (!TEST_ptr(pkey))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_assign_DSA(pkey, dsa), 0))
+        goto err;
+    dsa = NULL;
+
+    if (!do_sign_with_method(pkey))
+        goto err;
+
+    testresult = 1;
+err:
+    DSA_free(dsa);
+    EVP_PKEY_free(pkey);
+    DSA_meth_free(method);
+    return testresult;
+}
+#endif /* OPENSSL_NO_DSA */
+
+#ifndef OPENSSL_NO_EC
+static int ec_ex_idx = -1;
+
+static int (*orig_ec_sign)(int type, const unsigned char *dgst,
+    int dlen, unsigned char *sig,
+    unsigned int *siglen,
+    const BIGNUM *kinv, const BIGNUM *r,
+    EC_KEY *eckey);
+static int (*orig_ec_sign_setup)(EC_KEY *eckey, BN_CTX *ctx_in,
+    BIGNUM **kinvp, BIGNUM **rp);
+static ECDSA_SIG *(*orig_ec_sign_sig)(const unsigned char *dgst,
+    int dgst_len, const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey);
+static int tst_ec_sign(int type, const unsigned char *dgst,
+    int dlen, unsigned char *sig,
+    unsigned int *siglen,
+    const BIGNUM *kinv, const BIGNUM *r,
+    EC_KEY *eckey)
+{
+    if (strcmp(EC_KEY_get_ex_data(eckey, ec_ex_idx), "test") != 0)
+        return 0;
+    sign_hits++;
+    return orig_ec_sign(type, dgst, dlen, sig, siglen, kinv, r, eckey);
+}
+
+/* Test that a low level EC_KEY method still gets used even with a provider */
+static int test_low_level_ec_method(void)
+{
+    EC_KEY *ec = NULL;
+    const EC_KEY_METHOD *def = EC_KEY_get_default_method();
+    EC_KEY_METHOD *method = EC_KEY_METHOD_new(def);
+    EVP_PKEY *pkey = NULL;
+    int testresult = 0;
+
+    if (nullprov != NULL) {
+        testresult = TEST_skip("Test does not support a non-default library context");
+        goto err;
+    }
+
+    if (!TEST_ptr(method))
+        goto err;
+
+    ec_ex_idx = EC_KEY_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+
+    if (!TEST_ptr(ec = EC_KEY_new_by_curve_name_ex(NULL, NULL, NID_X9_62_prime256v1)))
+        goto err;
+    if (!TEST_true(EC_KEY_set_ex_data(ec, ec_ex_idx, (void *)"test")))
+        goto err;
+    if (!TEST_true(EC_KEY_generate_key(ec)))
+        goto err;
+
+    EC_KEY_METHOD_get_sign(def, &orig_ec_sign, &orig_ec_sign_setup, &orig_ec_sign_sig);
+    EC_KEY_METHOD_set_sign(method, tst_ec_sign, orig_ec_sign_setup, orig_ec_sign_sig);
+    if (!TEST_true(EC_KEY_set_method(ec, method)))
+        goto err;
+
+    pkey = EVP_PKEY_new();
+    if (!TEST_ptr(pkey))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_assign_EC_KEY(pkey, ec), 0))
+        goto err;
+    ec = NULL;
+
+    if (!do_sign_with_method(pkey))
+        goto err;
+
+    testresult = 1;
+err:
+    EC_KEY_free(ec);
+    EVP_PKEY_free(pkey);
+    EC_KEY_METHOD_free(method);
+    return testresult;
+}
+#endif /* OPENSSL_NO_EC */
+
+#ifndef OPENSSL_NO_DH
+static int dh_ex_idx = -1;
+
+static int compute_key_hits = 0;
+
+static int (*orig_dh_compute_key)(unsigned char *key, const BIGNUM *pub_key,
+    DH *dh);
+static int tst_dh_compute_key(unsigned char *key, const BIGNUM *pub_key,
+    DH *dh)
+{
+    if (strcmp(DH_get_ex_data(dh, dh_ex_idx), "test") != 0)
+        return 0;
+    compute_key_hits++;
+    return orig_dh_compute_key(key, pub_key, dh);
+}
+
+/* Test that a low level DH method still gets used even with a provider */
+static int test_low_level_dh_method(void)
+{
+    DH *dh = NULL;
+    const DH *cdh = NULL;
+    const DH_METHOD *def = DH_get_default_method();
+    DH_METHOD *method = DH_meth_dup(def);
+    EVP_PKEY *pkey = NULL, *pkeyb = NULL;
+    int testresult = 0;
+    EVP_PKEY_CTX *ctx = NULL;
+    BIGNUM *p = NULL, *g = NULL;
+    unsigned char *buf = NULL;
+    size_t len;
+
+    if (nullprov != NULL) {
+        testresult = TEST_skip("Test does not support a non-default library context");
+        goto err;
+    }
+
+    if (!TEST_ptr(method))
+        goto err;
+
+    dh_ex_idx = DH_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+
+    pkey = get_dh512(NULL);
+    if (!TEST_ptr(pkey))
+        goto err;
+    cdh = EVP_PKEY_get0_DH(pkey);
+    if (!TEST_ptr(cdh))
+        goto err;
+    dh = DH_new();
+    if (!TEST_ptr(dh))
+        goto err;
+    if (!TEST_true(DH_set_ex_data(dh, dh_ex_idx, (void *)"test")))
+        goto err;
+
+    orig_dh_compute_key = DH_meth_get_compute_key(def);
+    if (!TEST_true(DH_meth_set_compute_key(method, tst_dh_compute_key)))
+        goto err;
+    if (!TEST_true(DH_set_method(dh, method)))
+        goto err;
+
+    p = BN_dup(DH_get0_p(cdh));
+    g = BN_dup(DH_get0_g(cdh));
+    if (!TEST_ptr(p) || !TEST_ptr(g))
+        goto err;
+    if (!TEST_true(DH_set0_pqg(dh, p, NULL, g)))
+        goto err;
+    p = g = NULL;
+
+    if (!TEST_true(DH_generate_key(dh)))
+        goto err;
+
+    ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
+    if (!TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_keygen(ctx, &pkeyb), 0))
+        goto err;
+    EVP_PKEY_free(pkey);
+    pkey = NULL;
+
+    pkey = EVP_PKEY_new();
+    if (!TEST_ptr(pkey))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_assign_DH(pkey, dh), 0))
+        goto err;
+    dh = NULL;
+
+    compute_key_hits = 0;
+    EVP_PKEY_CTX_free(ctx);
+    ctx = EVP_PKEY_CTX_new(pkey, NULL);
+    if (!TEST_ptr(ctx))
+        return 0;
+    if (!TEST_int_gt(EVP_PKEY_derive_init(ctx), 0))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_derive_set_peer(ctx, pkeyb), 0))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_derive(ctx, NULL, &len), 0))
+        goto err;
+    buf = OPENSSL_malloc(len);
+    if (!TEST_ptr(buf))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_derive(ctx, buf, &len), 0))
+        goto err;
+
+    /* We expect to see our custom compute key function called once */
+    if (!TEST_int_eq(compute_key_hits, 1))
+        goto err;
+
+    testresult = 1;
+err:
+    BN_free(p);
+    BN_free(g);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_free(pkeyb);
+    DH_meth_free(method);
+    DH_free(dh);
+    OPENSSL_free(buf);
+    return testresult;
+}
+#endif /* OPENSSL_NO_DH */
+#endif /* OPENSSL_NO_DEPRECATED_3_0 */
+
 int setup_tests(void)
 {
     char *config_file = NULL;
@@ -6347,6 +6760,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_EVP_PKEY_sign, 3);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_ALL_TESTS(test_EVP_PKEY_sign_with_app_method, 2);
+#endif
+#ifndef OPENSSL_NO_EC
+    ADD_TEST(test_EVP_PKEY_sign_init_mismatched_key_alg);
 #endif
     ADD_ALL_TESTS(test_EVP_Enveloped, 2);
     ADD_ALL_TESTS(test_d2i_AutoPrivateKey, OSSL_NELEM(keydata));
@@ -6459,6 +6875,19 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_ML_DSA
     ADD_ALL_TESTS(test_ml_dsa_seed_only, 2);
 #endif
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    ADD_TEST(test_low_level_rsa_method);
+#ifndef OPENSSL_NO_DSA
+    ADD_TEST(test_low_level_dsa_method);
+#endif
+#ifndef OPENSSL_NO_EC
+    ADD_TEST(test_low_level_ec_method);
+#endif
+#ifndef OPENSSL_NO_DH
+    ADD_TEST(test_low_level_dh_method);
+#endif
+#endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
     return 1;
 }

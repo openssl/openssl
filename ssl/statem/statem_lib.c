@@ -2139,6 +2139,18 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
 
     suppversions = &hello->pre_proc_exts[TLSEXT_IDX_supported_versions];
 
+#ifndef OPENSSL_NO_ECH
+    /*
+     * Check we're dealing with a TLSv1.3 connection when ECH has
+     * succeeded, and not with a smuggled earlier version ClientHello
+     * (which could be a form of attack).
+     * This bit checks there is a supported version present, a little
+     * bit further below, we check that that version is TLSv1.3
+     */
+    if (!suppversions->present && s->ext.ech.success == 1)
+        return SSL_R_UNSUPPORTED_PROTOCOL;
+#endif
+
     /* If we did an HRR then supported versions is mandatory */
     if (!suppversions->present && s->hello_retry_request != SSL_HRR_NONE)
         return SSL_R_UNSUPPORTED_PROTOCOL;
@@ -2180,6 +2192,11 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
         }
 
         if (best_vers > 0) {
+#ifndef OPENSSL_NO_ECH
+            /* ECH needs TLSV1.3 also */
+            if (s->ext.ech.success == 1 && best_vers != TLS1_3_VERSION)
+                return SSL_R_UNSUPPORTED_PROTOCOL;
+#endif
             if (s->hello_retry_request != SSL_HRR_NONE) {
                 /*
                  * This is after a HelloRetryRequest so we better check that we

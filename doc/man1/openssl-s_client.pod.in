@@ -123,6 +123,15 @@ B<openssl> B<s_client>
 [B<-enable_server_rpk>]
 [B<-enable_client_rpk>]
 [I<host>:I<port>]
+[B<-ech_config_list>]
+[B<-ech_outer_alpn> I<protocols>]
+[B<-ech_grease>]
+[B<-ech_grease_suite> I<suite>]
+[B<-ech_grease_type> I<type>]
+[B<-ech_ignore_cid>]
+[B<-ech_outer_sni> I<value>]
+[B<-ech_no_outer_sni>]
+[B<-ech_select> I<config-index>]
 
 =head1 DESCRIPTION
 
@@ -176,6 +185,13 @@ When used with the B<-connect> flag, the program uses the host and port
 specified with this flag and issues an HTTP CONNECT command to connect
 to the desired server.
 If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
+
+=item B<-ech_config_list> I<value>
+
+Specifies the ECHConfigList value to use for Encrypted Client Hello (ECH) for
+the TLS session. The value must be a base64 encoded ECHConfigList.
+
+The ECHConfigList structure is defined in RFC 9849.
 
 =item B<-proxy_user> I<userid>
 
@@ -808,6 +824,63 @@ nor B<-connect> are provided, falls back to attempting to connect to
 I<localhost> on port I<4433>.
 If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
 
+=item B<-ech_outer_alpn> I<protocols>
+
+When doing Encrypted Client Hello (ECH), this allows the caller to specify
+ALPN values to use in the outer ClientHello. (A "normal" ALPN value
+specified via -alpn will be used in the inner ClientHello.)
+
+=item B<-ech_grease>
+
+When not really doing Encrypted Client Hello (ECH), one can emit a so-called
+GREASE value, which is essentially a random value in order to try ensure that
+server code is less likely to ossify.
+
+=item B<-ech_grease_suite> I<suite>
+
+When B<-ech_grease> is specified, one can choose which ECH ciphersuite to use
+via this parameter.
+
+The comma-separated suite string names an HPKE suite in the form of
+I<kem>,I<kdf>,I<aead>, e.g. "x25519,hkdf-sha256,aes256gcm" or can use
+the numeric values (in decimal or hexadecimal form) from the HPKE specification
+so "0x20,0x01,0x02" is the same as the previous example.
+
+KEM values supported: p256 or 0x10; p384 or 0x11, p521 or 0x12, x25519 or 0x20, x448 or 0x21
+
+KDF values supported: hkdf-sha256 or 0x01, hkdf-sha384 or 0x02, hkdf-sha512 or 0x03
+
+AEAD values supported: aes128gcm or 0x01, aes256gcm or 0x02, chachapoly1305 or 0x03
+
+=item B<-ech_grease_type> I<type>
+
+Allows the client to set the TLS extension type for a GREASEd ECH value
+(currently equivalent to the ECH version number).  The current default is
+0xfe0d.
+
+=item B<-ech_ignore_cid>
+
+Encrypted Client Hello (ECH) extensions contain a configuration identifier
+(cid) taken from the ECHConfigList usually found in the domain name system
+(DNS). As those identifiers could be revealing, the client has the option to
+use a random value instead.
+
+=item B<-ech_outer_sni> I<value>
+
+When doing Encrypted Client Hello (ECH), this allows the caller to specify a
+subject name indication (SNI) value to use in the outer ClientHello over-riding
+the public_name value from the relevant ECHConfigList.
+
+=item B<-ech_no_outer_sni>
+
+Setting this flag means no SNI will be emitted in the outer ClientHello.
+
+=item B<-ech_select> I<config-index>
+
+If an ECHConfigList contains more than one ECHConfig then the client will by
+default use the first that works. This allows the caller to specify which
+ECHConfig to use (using a zero-based index).
+
 =back
 
 =head1 CONNECTED COMMANDS (BASIC)
@@ -1033,6 +1106,8 @@ The
 <-ocsp_check_leaf>
 and B<-ocsp_check_all>
 options were added in OpenSSL 3.6.
+
+The B<ech> options were added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

@@ -3489,7 +3489,7 @@ int setup_tests(void)
         goto err;
 
     cprivkey = test_mk_file_path(certsdir, "ee-key.pem");
-    if (privkey == NULL)
+    if (cprivkey == NULL)
         goto err;
 
     ADD_ALL_TESTS(test_quic_write_read, 3);

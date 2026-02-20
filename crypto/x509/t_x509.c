@@ -24,12 +24,12 @@ void OSSL_STACK_OF_X509_free(STACK_OF(X509) *certs)
 }
 
 #ifndef OPENSSL_NO_STDIO
-int X509_print_fp(FILE *fp, X509 *x)
+int X509_print_fp(FILE *fp, const X509 *x)
 {
     return X509_print_ex_fp(fp, x, XN_FLAG_COMPAT, X509_FLAG_COMPAT);
 }
 
-int X509_print_ex_fp(FILE *fp, X509 *x, unsigned long nmflag, unsigned long cflag)
+int X509_print_ex_fp(FILE *fp, const X509 *x, unsigned long nmflag, unsigned long cflag)
 {
     BIO *b;
     int ret;

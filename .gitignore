@@ -108,6 +108,8 @@ providers/implementations/kdfs/pbkdf2.inc
 providers/implementations/kdfs/pkcs12kdf.inc
 providers/implementations/kdfs/pvkkdf.inc
 providers/implementations/kdfs/scrypt.inc
+providers/implementations/kdfs/snmpkdf.inc
+providers/implementations/kdfs/srtpkdf.inc
 providers/implementations/kdfs/sshkdf.inc
 providers/implementations/kdfs/sskdf.inc
 providers/implementations/kdfs/tls1_prf.inc
@@ -165,8 +167,6 @@ providers/implementations/digests/sha3_prov.inc
 providers/implementations/digests/ml_dsa_mu_prov.inc
 providers/implementations/digests/cshake_prov.inc
 providers/implementations/include/prov/blake2_params.inc
-providers/implementations/kdfs/snmpkdf.inc
-providers/implementations/kdfs/srtpkdf.inc
 providers/implementations/macs/cmac_prov.inc
 providers/implementations/macs/gmac_prov.inc
 providers/implementations/macs/hmac_prov.inc
@@ -425,3 +425,11 @@ doc-nits
 # LSP (Language Server Protocol) support
 .cache/
 compile_commands.json
+
+# coverage files
+*.gcda
+*.gcno
+lcov.info
+run_tests
+depend
+

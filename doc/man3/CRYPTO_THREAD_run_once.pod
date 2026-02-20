@@ -7,6 +7,7 @@ CRYPTO_THREAD_lock_new, CRYPTO_THREAD_read_lock, CRYPTO_THREAD_write_lock,
 CRYPTO_THREAD_unlock, CRYPTO_THREAD_lock_free,
 CRYPTO_atomic_add, CRYPTO_atomic_add64, CRYPTO_atomic_and, CRYPTO_atomic_or,
 CRYPTO_atomic_load, CRYPTO_atomic_store, CRYPTO_atomic_load_int,
+CRYPTO_atomic_store_int,
 OSSL_set_max_threads, OSSL_get_max_threads,
 OSSL_get_thread_support_flags, OSSL_THREAD_SUPPORT_FLAG_THREAD_POOL,
 OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN - OpenSSL thread support
@@ -34,6 +35,7 @@ OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN - OpenSSL thread support
  int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock);
  int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock);
  int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock);
+ int CRYPTO_atomic_store_int(int *dst, int val, CRYPTO_RWLOCK *lock);
 
  int OSSL_set_max_threads(OSSL_LIB_CTX *ctx, uint64_t max_threads);
  uint64_t OSSL_get_max_threads(OSSL_LIB_CTX *ctx);
@@ -145,6 +147,11 @@ platform.
 
 CRYPTO_atomic_load_int() works identically to CRYPTO_atomic_load() but operates
 on an I<int> value instead of a I<uint64_t> value.
+
+=item *
+
+CRYPTO_atomic_store_int() works identically to CRYPTO_atomic_store() but
+operates on an I<int> value instead of a I<uint64_t> value.
 
 =item *
 
@@ -272,6 +279,8 @@ OSSL_get_thread_support_flags() were added in OpenSSL 3.2.
 
 CRYPTO_atomic_store(), CRYPTO_atomic_add64(), CRYPTO_atomic_and()
 were added in OpenSSL 3.4.
+
+CRYPTO_atomic_store_int() was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

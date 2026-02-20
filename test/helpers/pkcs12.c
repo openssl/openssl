@@ -500,13 +500,13 @@ static int check_attrs(const STACK_OF(X509_ATTRIBUTE) *bag_attrs, const PKCS12_A
 {
     int ret = 0;
     X509_ATTRIBUTE *attr;
-    ASN1_TYPE *av;
+    const ASN1_TYPE *av;
     int i, j;
     char attr_txt[100];
 
     for (i = 0; i < sk_X509_ATTRIBUTE_num(bag_attrs); i++) {
         const PKCS12_ATTR *p_attr = attrs;
-        ASN1_OBJECT *attr_obj;
+        const ASN1_OBJECT *attr_obj;
 
         attr = sk_X509_ATTRIBUTE_value(bag_attrs, i);
         attr_obj = X509_ATTRIBUTE_get0_object(attr);

@@ -22,6 +22,7 @@
 #include <openssl/core_names.h>
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
+#include "internal/fips.h"
 #include "internal/numbers.h"
 #include "crypto/evp.h"
 #include "prov/provider_ctx.h"
@@ -56,6 +57,7 @@
 #ifndef KDF_PBKDF2_MIN_PASSWORD_LEN
 #ifdef FIPS_MODULE
 #define KDF_PBKDF2_MIN_PASSWORD_LEN (8)
+#define KDF_PBKDF2_FIPS_SELF_TEST_ITERATIONS 2
 #else
 #define KDF_PBKDF2_MIN_PASSWORD_LEN (1)
 #endif
@@ -96,6 +98,12 @@ static void *kdf_pbkdf2_new_no_init(void *provctx)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_KDF_PBKDF2))
+        return NULL;
+#endif
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL)
@@ -210,6 +218,8 @@ static int pbkdf2_lower_bound_check_passed(int saltlen, uint64_t iter,
     size_t keylen, size_t passlen,
     int *error, const char **desc)
 {
+    uint64_t min_iter = KDF_PBKDF2_MIN_ITERATIONS;
+
     if (passlen < KDF_PBKDF2_MIN_PASSWORD_LEN) {
         *error = PROV_R_PASSWORD_STRENGTH_TOO_WEAK;
         if (desc != NULL)
@@ -228,7 +238,13 @@ static int pbkdf2_lower_bound_check_passed(int saltlen, uint64_t iter,
             *desc = "Salt size";
         return 0;
     }
-    if (iter < KDF_PBKDF2_MIN_ITERATIONS) {
+#ifdef FIPS_MODULE
+    /* Modify this check during self-test. See FIPS 140-3 IG 10.3.A.8 */
+    if (ossl_self_test_in_progress(ST_ID_KDF_PBKDF2)) {
+        min_iter = KDF_PBKDF2_FIPS_SELF_TEST_ITERATIONS;
+    }
+#endif
+    if (iter < min_iter) {
         *error = PROV_R_INVALID_ITERATION_COUNT;
         if (desc != NULL)
             *desc = "Iteration count";

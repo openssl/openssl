@@ -109,19 +109,19 @@ which versions are FIPS validated. For this example we use OpenSSL 3.1.2.
 Download and build the latest release of OpenSSL
 ------------------------------------------------
 
-We use OpenSSL 3.5.0 here, (but you could also use the latest 3.5.X)
+We use OpenSSL 3.6.0 here, (but you could also use the latest 3.6.X)
 
-    $ wget https://www.openssl.org/source/openssl-3.5.0.tar.gz
-    $ tar -xf openssl-3.5.0.tar.gz
-    $ cd openssl-3.5.0
+    $ wget https://www.openssl.org/source/openssl-3.6.0.tar.gz
+    $ tar -xf openssl-3.6.0.tar.gz
+    $ cd openssl-3.6.0
     $ ./Configure enable-fips
     $ make
 
 Use the OpenSSL FIPS provider for testing
 -----------------------------------------
 
-We do this by replacing the artifact for the OpenSSL 3.5.0 FIPS provider.
-Note that the OpenSSL 3.5.0 FIPS provider has not been validated
+We do this by replacing the artifact for the OpenSSL 3.6.0 FIPS provider.
+Note that the OpenSSL 3.6.0 FIPS provider has not been validated
 so it must not be used for FIPS purposes.
 
     $ cp ../openssl-3.1.2/providers/fips.so providers/.
@@ -147,7 +147,7 @@ Copy the FIPS provider artifacts (`fips.so` & `fipsmodule.cnf`) to known locatio
 Check that the correct FIPS provider is being used
 --------------------------------------------------
 
-    $ cd ../openssl-3.5.0
+    $ cd ../openssl-3.6.0
     $./util/wrap.pl -fips apps/openssl list -provider-path providers \
     -provider fips -providers
 
@@ -155,7 +155,7 @@ Check that the correct FIPS provider is being used
     Providers:
       base
         name: OpenSSL Base Provider
-        version: 3.5.0
+        version: 3.6.0
         status: active
       fips
         name: OpenSSL FIPS Provider

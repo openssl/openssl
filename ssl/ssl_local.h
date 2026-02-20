@@ -41,6 +41,9 @@
 #include "record/record.h"
 #include "internal/quic_predef.h"
 #include "internal/quic_tls.h"
+#ifndef OPENSSL_NO_ECH
+#include "ech/ech_local.h"
+#endif
 
 #ifdef OPENSSL_BUILD_SHLIBSSL
 #undef OPENSSL_EXTERN
@@ -151,6 +154,8 @@
 #define SSL_ARIA256GCM 0x00200000U
 #define SSL_MAGMA 0x00400000U
 #define SSL_KUZNYECHIK 0x00800000U
+#define SSL_SM4GCM 0x01000000U
+#define SSL_SM4CCM 0x02000000U
 
 #define SSL_AESGCM (SSL_AES128GCM | SSL_AES256GCM)
 #define SSL_AESCCM (SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8)
@@ -198,7 +203,8 @@
 #define SSL_MD_SHA512_IDX 11
 #define SSL_MD_MAGMAOMAC_IDX 12
 #define SSL_MD_KUZNYECHIKOMAC_IDX 13
-#define SSL_MAX_DIGEST 14
+#define SSL_MD_SM3_IDX 14
+#define SSL_MAX_DIGEST 15
 
 #define SSL_MD_NUM_IDX SSL_MAX_DIGEST
 
@@ -212,6 +218,7 @@
 #define SSL_HANDSHAKE_MAC_GOST94 SSL_MD_GOST94_IDX
 #define SSL_HANDSHAKE_MAC_GOST12_256 SSL_MD_GOST12_256_IDX
 #define SSL_HANDSHAKE_MAC_GOST12_512 SSL_MD_GOST12_512_IDX
+#define SSL_HANDSHAKE_MAC_SM3 SSL_MD_SM3_IDX
 #define SSL_HANDSHAKE_MAC_DEFAULT SSL_HANDSHAKE_MAC_MD5_SHA1
 
 /* Bits 8-15 bits are PRF */
@@ -351,7 +358,9 @@
 #define SSL_ENC_ARIA256GCM_IDX 21
 #define SSL_ENC_MAGMA_IDX 22
 #define SSL_ENC_KUZNYECHIK_IDX 23
-#define SSL_ENC_NUM_IDX 24
+#define SSL_ENC_SM4GCM_IDX 24
+#define SSL_ENC_SM4CCM_IDX 25
+#define SSL_ENC_NUM_IDX 26
 
 /*-
  * SSL_kRSA <- RSA_ENC
@@ -685,6 +694,8 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_compress_certificate,
     TLSEXT_IDX_early_data,
     TLSEXT_IDX_certificate_authorities,
+    TLSEXT_IDX_ech,
+    TLSEXT_IDX_outer_extensions,
     TLSEXT_IDX_padding,
     TLSEXT_IDX_psk,
     /* Dummy index - must always be the last entry */
@@ -783,11 +794,6 @@ typedef struct {
 #define TLS_GROUP_ONLY_FOR_TLS1_3 0x00000010U
 
 #define TLS_GROUP_FFDHE_FOR_TLS1_3 (TLS_GROUP_FFDHE | TLS_GROUP_ONLY_FOR_TLS1_3)
-
-/* We limit the number of key shares sent */
-#ifndef OPENSSL_CLIENT_MAX_KEY_SHARES
-#define OPENSSL_CLIENT_MAX_KEY_SHARES 4
-#endif
 
 struct ssl_ctx_st {
     OSSL_LIB_CTX *libctx;
@@ -1068,6 +1074,9 @@ struct ssl_ctx_st {
 #endif
 
         unsigned char cookie_hmac_key[SHA256_DIGEST_LENGTH];
+#ifndef OPENSSL_NO_ECH
+        OSSL_ECH_CTX ech;
+#endif
     } ext;
 
 #ifndef OPENSSL_NO_PSK
@@ -1727,6 +1736,10 @@ struct ssl_connection_st {
         uint8_t client_cert_type_ctos;
         uint8_t server_cert_type;
         uint8_t server_cert_type_ctos;
+
+#ifndef OPENSSL_NO_ECH
+        OSSL_ECH_CONN ech;
+#endif
     } ext;
 
     /*
@@ -2567,6 +2580,8 @@ __owur STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL_CONNECTION *sc);
 __owur int ssl_x509err2alert(int type);
 void ssl_sort_cipher_list(void);
 int ssl_load_ciphers(SSL_CTX *ctx);
+int ssl_cipher_list_to_bytes(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk,
+    WPACKET *pkt);
 __owur int ssl_setup_sigalgs(SSL_CTX *ctx);
 int ssl_load_groups(SSL_CTX *ctx);
 int ssl_load_sigalgs(SSL_CTX *ctx);

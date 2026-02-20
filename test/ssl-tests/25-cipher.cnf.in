@@ -155,5 +155,40 @@ my @tests_poly1305 = (
     },
 );
 
-push @tests, @tests_poly1305
-    unless disabled("poly1305") || disabled("chacha") || $fips_mode;
+my @tests_sm4 = (
+    {
+        name => "cipher-server-sm-1",
+        server => {
+            "MinProtocol" => "TLSv1.3",
+            "CipherSuites" => "TLS_SM4_GCM_SM3",
+        },
+        client => {
+            "MinProtocol" => "TLSv1.3",
+            "CipherSuites" => "TLS_SM4_GCM_SM3",
+        },
+        test => {
+            "ExpectedResult" => "Success",
+            "ExpectedProtocol" => "TLSv1.3",
+            "ExpectedCipher" => "TLS_SM4_GCM_SM3",
+        },
+    },
+    {
+        name => "cipher-server-sm-2",
+        server => {
+            "MinProtocol" => "TLSv1.3",
+            "CipherSuites" => "TLS_SM4_CCM_SM3",
+        },
+        client => {
+            "MinProtocol" => "TLSv1.3",
+            "CipherSuites" => "TLS_SM4_CCM_SM3",
+        },
+        test => {
+            "ExpectedResult" => "Success",
+            "ExpectedProtocol" => "TLSv1.3",
+            "ExpectedCipher" => "TLS_SM4_CCM_SM3",
+        },
+    },
+);
+
+push @tests, @tests_poly1305 unless disabled("poly1305") || disabled("chacha") || $fips_mode;
+push @tests, @tests_sm4 unless disabled("sm3") ||  disabled("sm4") || disabled("tls1_3") || $fips_mode;

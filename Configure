@@ -471,6 +471,7 @@ my @disablables = (
     "ecdh",
     "ecdsa",
     "ecx",
+    "ech",
     "egd",
     "err",
     "external-tests",
@@ -539,6 +540,7 @@ my @disablables = (
     "sshkdf",
     "sskdf",
     "ssl-trace",
+    "static-vcruntime",
     "stdio",
     "sslkeylog",
     "tests",
@@ -627,6 +629,7 @@ our %disabled = ( # "what"         => "comment"
                   "rc5"                 => "default",
                   "sctp"                => "default",
                   "sslkeylog"           => "default",
+                  "static-vcruntime"    => "default",
                   "tfo"                 => "default",
                   "tls-deprecated-ec"   => "default",
                   "trace"               => "default",
@@ -647,7 +650,7 @@ my @disable_cascades = (
                              "blake2", "bf", "camellia", "cast", "chacha",
                              "cmac", "cms", "cmp", "comp", "ct",
                              "des", "dgram", "dh", "dsa",
-                             "ec",
+                             "ec", "ech",
                              "filenames", "hmac-drbg-kdf",
                              "idea", "kbkdf", "krb5kdf", "ktls", "lms",
                              "md4", "ml-dsa", "ml-kem", "multiblock",
@@ -1371,8 +1374,7 @@ at runtime in openssl.cnf or configured at build time with
 -DOPENSSL_DEFAULT_SEED_SRC.
 
 Please read the 'Note on random number generation' section in the
-INSTALL.md instructions and the RAND_DRBG(7) manual page for more
-details.
+INSTALL.md instructions for more details.
 ============================== WARNING ===============================
 
 _____

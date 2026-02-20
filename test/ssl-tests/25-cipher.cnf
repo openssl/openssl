@@ -1,6 +1,6 @@
 # Generated with generate_ssl_tests.pl
 
-num_tests = 9
+num_tests = 11
 
 test-0 = 0-cipher-server-1
 test-1 = 1-cipher-server-2
@@ -11,6 +11,8 @@ test-5 = 5-cipher-server-pref-client-list
 test-6 = 6-cipher-server-pref-not-mobile
 test-7 = 7-cipher-server-pref-mobile
 test-8 = 8-cipher-server-pref-mobile2
+test-9 = 9-cipher-server-sm-1
+test-10 = 10-cipher-server-sm-2
 # ===========================================================
 
 [0-cipher-server-1]
@@ -240,5 +242,63 @@ VerifyMode = Peer
 
 [test-8]
 ExpectedCipher = ECDHE-RSA-CHACHA20-POLY1305
+
+
+# ===========================================================
+
+[9-cipher-server-sm-1]
+ssl_conf = 9-cipher-server-sm-1-ssl
+
+[9-cipher-server-sm-1-ssl]
+server = 9-cipher-server-sm-1-server
+client = 9-cipher-server-sm-1-client
+
+[9-cipher-server-sm-1-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+CipherSuites = TLS_SM4_GCM_SM3
+MinProtocol = TLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[9-cipher-server-sm-1-client]
+CipherString = DEFAULT
+CipherSuites = TLS_SM4_GCM_SM3
+MinProtocol = TLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-9]
+ExpectedCipher = TLS_SM4_GCM_SM3
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+
+
+# ===========================================================
+
+[10-cipher-server-sm-2]
+ssl_conf = 10-cipher-server-sm-2-ssl
+
+[10-cipher-server-sm-2-ssl]
+server = 10-cipher-server-sm-2-server
+client = 10-cipher-server-sm-2-client
+
+[10-cipher-server-sm-2-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+CipherSuites = TLS_SM4_CCM_SM3
+MinProtocol = TLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[10-cipher-server-sm-2-client]
+CipherString = DEFAULT
+CipherSuites = TLS_SM4_CCM_SM3
+MinProtocol = TLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-10]
+ExpectedCipher = TLS_SM4_CCM_SM3
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
 
 

@@ -3,7 +3,7 @@
 =head1 NAME
 
 EVP_SIGNATURE-LMS
-- The EVP_PKEY Leighton-Micali Signature (LMS) implementation
+- The EVP_PKEY B<LMS> signature implementation
 
 =head1 DESCRIPTION
 

@@ -18,6 +18,7 @@
 #include "internal/common.h"
 #include "internal/packet.h"
 #include "internal/der.h"
+#include "internal/fips.h"
 #include "internal/nelem.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
@@ -338,6 +339,12 @@ static void *x942kdf_new(void *provctx)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_KDF_X942KDF))
+        return NULL;
+#endif
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL)

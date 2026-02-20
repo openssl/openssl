@@ -172,7 +172,7 @@ int mac_main(int argc, char **argv)
             goto err;
 
         if (!EVP_MAC_CTX_set_params(ctx, params)) {
-            BIO_printf(bio_err, "MAC parameter error\n");
+            BIO_puts(bio_err, "MAC parameter error\n");
             ERR_print_errors(bio_err);
             ok = 0;
         }
@@ -190,7 +190,7 @@ int mac_main(int argc, char **argv)
         goto err;
 
     if (!EVP_MAC_init(ctx, NULL, 0, NULL)) {
-        BIO_printf(bio_err, "EVP_MAC_Init failed\n");
+        BIO_puts(bio_err, "EVP_MAC_Init failed\n");
         goto err;
     }
 
@@ -204,22 +204,22 @@ int mac_main(int argc, char **argv)
         if (i == 0)
             break;
         if (!EVP_MAC_update(ctx, buf, i)) {
-            BIO_printf(bio_err, "EVP_MAC_update failed\n");
+            BIO_puts(bio_err, "EVP_MAC_update failed\n");
             goto err;
         }
     }
 
     if (!EVP_MAC_final(ctx, NULL, &len, 0)) {
-        BIO_printf(bio_err, "EVP_MAC_final failed\n");
+        BIO_puts(bio_err, "EVP_MAC_final failed\n");
         goto err;
     }
     if (len > BUFSIZE) {
-        BIO_printf(bio_err, "output len is too large\n");
+        BIO_puts(bio_err, "output len is too large\n");
         goto err;
     }
 
     if (!EVP_MAC_final(ctx, buf, &len, BUFSIZE)) {
-        BIO_printf(bio_err, "EVP_MAC_final failed\n");
+        BIO_puts(bio_err, "EVP_MAC_final failed\n");
         goto err;
     }
 
@@ -229,7 +229,7 @@ int mac_main(int argc, char **argv)
         for (i = 0; i < (int)len; ++i)
             BIO_printf(out, "%02X", buf[i]);
         if (outfile == NULL)
-            BIO_printf(out, "\n");
+            BIO_puts(out, "\n");
     }
 
     ret = 0;

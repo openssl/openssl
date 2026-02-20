@@ -16,6 +16,7 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
 
  /* Key object (keydata) creation and destruction */
  void *OSSL_FUNC_keymgmt_new(void *provctx);
+ void *OSSL_FUNC_keymgmt_new_ex(void *provctx, const OSSL_PARAM params[]);
  void OSSL_FUNC_keymgmt_free(void *keydata);
 
  /* Generation, a more complex constructor */
@@ -219,7 +220,9 @@ since a match of one half implies a match of the other half.
 
 OSSL_FUNC_keymgmt_new() should create a provider side key object.  The
 provider context I<provctx> is passed and may be incorporated in the
-key object, but that is not mandatory.
+key object, but that is not mandatory. OSSL_FUNC_keymgmt_new_ex() may optionally
+be defined and does the same as OSSL_FUNC_keymgmt_new(), but also accepts an
+array of parameters. Currently no parameters are defined for this function.
 
 OSSL_FUNC_keymgmt_free() should free the passed I<keydata>.
 

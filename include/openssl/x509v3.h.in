@@ -621,8 +621,8 @@ DECLARE_ASN1_FUNCTIONS(ISSUING_DIST_POINT)
 
 int DIST_POINT_set_dpname(DIST_POINT_NAME *dpn, const X509_NAME *iname);
 
-int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc);
-int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc);
+int NAME_CONSTRAINTS_check(const X509 *x, NAME_CONSTRAINTS *nc);
+int NAME_CONSTRAINTS_check_CN(const X509 *x, NAME_CONSTRAINTS *nc);
 
 DECLARE_ASN1_FUNCTIONS(ACCESS_DESCRIPTION)
 DECLARE_ASN1_FUNCTIONS(AUTHORITY_INFO_ACCESS)
@@ -745,7 +745,7 @@ int X509V3_extensions_print(BIO *out, const char *title,
     unsigned long flag, int indent);
 
 int X509_check_ca(X509 *x);
-int X509_check_purpose(X509 *x, int id, int ca);
+int X509_check_purpose(const X509 *x, int id, int ca);
 int X509_supported_extension(X509_EXTENSION *ex);
 int X509_check_issued(X509 *issuer, X509 *subject);
 int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid);
@@ -777,10 +777,10 @@ char *X509_PURPOSE_get0_sname(const X509_PURPOSE *xp);
 int X509_PURPOSE_get_trust(const X509_PURPOSE *xp);
 int X509_PURPOSE_set(int *p, int purpose);
 
-STACK_OF(OPENSSL_STRING) *X509_get1_email(X509 *x);
-STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(X509_REQ *x);
+STACK_OF(OPENSSL_STRING) *X509_get1_email(const X509 *x);
+STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(const X509_REQ *x);
 void X509_email_free(STACK_OF(OPENSSL_STRING) *sk);
-STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(X509 *x);
+STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(const X509 *x);
 
 /* Flags for X509_check_* functions */
 
@@ -978,10 +978,10 @@ int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b);
  */
 int X509v3_asid_validate_path(X509_STORE_CTX *);
 int X509v3_addr_validate_path(X509_STORE_CTX *);
-int X509v3_asid_validate_resource_set(STACK_OF(X509) *chain,
+int X509v3_asid_validate_resource_set(const STACK_OF(X509) *chain,
     ASIdentifiers *ext,
     int allow_inheritance);
-int X509v3_addr_validate_resource_set(STACK_OF(X509) *chain,
+int X509v3_addr_validate_resource_set(const STACK_OF(X509) *chain,
     IPAddrBlocks *ext, int allow_inheritance);
 
 #endif /* OPENSSL_NO_RFC3779 */

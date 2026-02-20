@@ -29,7 +29,9 @@
 #include "internal/param_build_set.h"
 
 static OSSL_FUNC_keymgmt_new_fn rsa_newdata;
+static OSSL_FUNC_keymgmt_new_ex_fn rsa_newdata_ex;
 static OSSL_FUNC_keymgmt_new_fn rsapss_newdata;
+static OSSL_FUNC_keymgmt_new_ex_fn rsapss_newdata_ex;
 static OSSL_FUNC_keymgmt_gen_init_fn rsa_gen_init;
 static OSSL_FUNC_keymgmt_gen_init_fn rsapss_gen_init;
 static OSSL_FUNC_keymgmt_gen_set_params_fn rsa_gen_set_params;
@@ -75,36 +77,91 @@ static int pss_params_fromdata(RSA_PSS_PARAMS_30 *pss_params, int *defaults_set,
     return 1;
 }
 
-static void *rsa_newdata(void *provctx)
+/*
+ * If the application actually created a legacy RSA object and assigned it to
+ * the EVP_PKEY, then we get hold of that object here. We return 0 if we hit
+ * a fatal error or 1 otherwise. We may return 1 but with *rsa set to NULL.
+ */
+static int get_legacy_rsa_object(OSSL_LIB_CTX *libctx, RSA **rsa, const OSSL_PARAM params[])
+{
+#ifndef FIPS_MODULE
+    const OSSL_PARAM *p;
+
+    if (params == NULL)
+        return 1;
+    p = OSSL_PARAM_locate_const(params, "legacy-object");
+    if (p == NULL)
+        return 1;
+    /*
+     * This only works because we are in the default provider. We are not
+     * normally allowed to pass complex objects across the provider boundary
+     * like this.
+     */
+    if (OSSL_PARAM_get_octet_ptr(p, (const void **)rsa, NULL) && *rsa != NULL) {
+        if (ossl_lib_ctx_get_concrete(ossl_rsa_get0_libctx(*rsa)) != ossl_lib_ctx_get_concrete(libctx)) {
+            *rsa = NULL;
+            return 1;
+        }
+        if (!RSA_up_ref(*rsa))
+            return 0;
+    }
+#endif
+
+    return 1;
+}
+
+static void *rsa_newdata_ex(void *provctx, const OSSL_PARAM params[])
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
-    RSA *rsa;
+    RSA *rsa = NULL;
 
     if (!ossl_prov_is_running())
         return NULL;
 
-    rsa = ossl_rsa_new_with_ctx(libctx);
-    if (rsa != NULL) {
-        RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
-        RSA_set_flags(rsa, RSA_FLAG_TYPE_RSA);
+    if (!get_legacy_rsa_object(libctx, &rsa, params))
+        return NULL;
+
+    if (rsa == NULL) {
+        rsa = ossl_rsa_new_with_ctx(libctx);
+        if (rsa != NULL) {
+            RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
+            RSA_set_flags(rsa, RSA_FLAG_TYPE_RSA);
+        }
     }
+
+    return rsa;
+}
+
+static void *rsa_newdata(void *provctx)
+{
+    return rsa_newdata_ex(provctx, NULL);
+}
+
+static void *rsapss_newdata_ex(void *provctx, const OSSL_PARAM params[])
+{
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
+    RSA *rsa = NULL;
+
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    if (!get_legacy_rsa_object(libctx, &rsa, params))
+        return NULL;
+
+    if (rsa == NULL) {
+        rsa = ossl_rsa_new_with_ctx(libctx);
+        if (rsa != NULL) {
+            RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
+            RSA_set_flags(rsa, RSA_FLAG_TYPE_RSASSAPSS);
+        }
+    }
+
     return rsa;
 }
 
 static void *rsapss_newdata(void *provctx)
 {
-    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
-    RSA *rsa;
-
-    if (!ossl_prov_is_running())
-        return NULL;
-
-    rsa = ossl_rsa_new_with_ctx(libctx);
-    if (rsa != NULL) {
-        RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
-        RSA_set_flags(rsa, RSA_FLAG_TYPE_RSASSAPSS);
-    }
-    return rsa;
+    return rsapss_newdata_ex(provctx, NULL);
 }
 
 static void rsa_freedata(void *keydata)
@@ -716,6 +773,7 @@ static const char *rsa_query_operation_name(int operation_id)
 
 const OSSL_DISPATCH ossl_rsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))rsa_newdata },
+    { OSSL_FUNC_KEYMGMT_NEW_EX, (void (*)(void))rsa_newdata_ex },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))rsa_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS,
         (void (*)(void))rsa_gen_set_params },
@@ -740,6 +798,7 @@ const OSSL_DISPATCH ossl_rsa_keymgmt_functions[] = {
 
 const OSSL_DISPATCH ossl_rsapss_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))rsapss_newdata },
+    { OSSL_FUNC_KEYMGMT_NEW_EX, (void (*)(void))rsapss_newdata_ex },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))rsapss_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))rsa_gen_set_params },
     { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,

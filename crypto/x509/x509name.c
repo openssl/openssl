@@ -6,6 +6,7 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#include "internal/deprecated.h"
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
@@ -16,6 +17,8 @@
 #include <openssl/x509.h>
 #include "crypto/x509.h"
 
+OSSL_BEGIN_ALLOW_DEPRECATED
+#if !defined(OPENSSL_NO_DEPRECATED_4_0)
 int X509_NAME_get_text_by_NID(const X509_NAME *name, int nid,
     char *buf, int len)
 {
@@ -46,6 +49,8 @@ int X509_NAME_get_text_by_OBJ(const X509_NAME *name, const ASN1_OBJECT *obj,
     buf[i] = '\0';
     return i;
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_0) */
+OSSL_END_ALLOW_DEPRECATED
 
 int X509_NAME_entry_count(const X509_NAME *name)
 {

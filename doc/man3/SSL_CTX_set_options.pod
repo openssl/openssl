@@ -370,6 +370,44 @@ only understands up to SSLv3. In this case the client must still use the
 same SSLv3.1=TLSv1 announcement. Some clients step down to SSLv3 with respect
 to the server's answer and violate the version rollback protection.)
 
+=item SSL_OP_ECH_GREASE
+
+If set, TLS ClientHello messages emitted by the client will include GREASE
+Encrypted ClientHello (ECH) extension values, if ECH is not really being
+attempted.
+
+=item SSL_OP_ECH_TRIALDECRYPT
+
+If set, servers will attempt to decrypt ECH extensions using all loaded
+ECH key pairs. By default, servers will only attempt decryption using
+an ECH key pair that matches the config_id in the ECH extension value
+received.
+
+Note that a server that has loaded many ECH configurations and that enables ECH
+trial decryption will attempt decryption with every ECH key when presented with
+a GREASEd ECH, (see B<SSL_OP_ECH_GREASE>) and with possibly that many even
+when presented with a real ECH.  That could easily become an accidental denial
+of service.
+
+Note also that the ECH specification recommends that servers that enable this
+option consider implementing some form of rate limiting mechanism to limit the
+potential damage caused in such scenarios.
+
+If trial decryption is enabled then decryption will be attempted with the ECH
+configurations in the order they were loaded. So, where it is possible to load
+the configuration most likely to be used first, that would improve efficiency.
+
+=item SSL_OP_ECH_GREASE_RETRY_CONFIG
+
+If set, servers will add GREASEy ECHConfig values to those sent to the
+client after the client GREASEd or the client tried and failed to use
+ECH.
+
+=item SSL_OP_ECH_IGNORED_CID
+
+If set, TLS ClientHello messages emitted by the client will ignore the
+ECHConfig config_id chosen by the server and use a random octet.
+
 =back
 
 The following options no longer have any effect but their identifiers are

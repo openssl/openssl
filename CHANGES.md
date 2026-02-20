@@ -32,6 +32,37 @@ OpenSSL 4.0
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Added support for TLS 1.3 SM cipher suites `TLS_SM4_GCM_SM3` and `TLS_SM4_CCM_SM3`
+   from [RFC8998].
+
+   *Milan Broz*
+
+ * The `OSSL_ESS_check_signing_certs_ex()` call has been added.
+
+   This api call is an extention to `OSSL_ESS_check_signing_certs()` to add
+   the ability to specify a library context and property query when fetching
+   algorithms to validate a given certificate.
+
+   *Neil Horman*
+
+ * FIPS self tests can now be deferred and run as needed when installing
+   the fips module with the -defer_tests option.
+
+   *Simo Sorce*
+
+ * Windows targets support static/dynamic vcruntime linkage
+
+   Using the `enable-static-vcruntime` option OpenSSL can now be configured
+   to use the static or dynamic vcruntime.dll linkage.  The multithreaded or
+   single threaded static vcruntime is selected based on the enable-threads option.
+
+   *Neil Horman*
+
+ * Const correct time parameter for X509_cmp_time(), X509_time_adj() and
+   X509_time_adj_ex().
+
+   *Frederik Wedel-Heinen*
+
  * OPENSSL_cleanup() now runs in a global destructor, or not at all by default.
 
    OpenSSL_cleanup() will no longer by default free global objects when run from
@@ -42,6 +73,15 @@ OpenSSL 4.0
 
    *Bob Beck*
 
+ * Made X509_ATTRIBUTE accessor functions const-correct. The functions
+   X509_ATTRIBUTE_get0_object(), X509_ATTRIBUTE_get0_type(), and
+   X509_ATTRIBUTE_get0_data() now accept `const X509_ATTRIBUTE *` and
+   return const pointers. Related PKCS12 functions PKCS12_get_attr_gen(),
+   PKCS12_get_attr(), and PKCS8_get_attr() have also been updated to
+   return `const ASN1_TYPE *`.
+
+   *kovan*
+
  * Added CSHAKE as per [SP 800-185]
 
    *Shane Lontis*
@@ -51,10 +91,28 @@ OpenSSL 4.0
 
    *Neil Horman*
 
+ * SSL_get_error() no longer depends on the state of the error stack,
+   so it is no longer necessary to empty the error queue before the
+   TLS/SSL I/O operations.
+
+   *Igor Ustinov*
+
  * Added configure options to disable KDF algorithms for
    hmac-drbg-kdf, kbkdf, krb5kdf, pvkkdf, snmpkdf, sskdf, sshkdf, x942kdf and x963kdf.
 
    *Shane Lontis*
+
+ * OPENSSL_atexit() was removed.
+
+   *Bob Beck*
+
+ * Added AKID verification checks when X509_V_FLAG_X509_STRICT is set.
+   Raise X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER when AKID is not present.
+   Raise X509_V_ERR_EMPTY_AUTHORITY_KEY_IDENTIFIER when AKID has no attributes.
+   Raise X509_V_ERR_AKID_ISSUER_SERIAL_NOT_PAIRED when authorityCertIssuer and
+   authorityCertSerialNumber fields are not paired.
+
+   *Daniel Kubec*
 
  * Support of deprecated elliptic curves in TLS according to RFC 8422 was
    disabled at compile-time by default. To enable it, use the
@@ -104,6 +162,10 @@ OpenSSL 4.0
 
    *Alexandr Nedvedicky*
 
+ * The X509_verify function now takes a const X509 * argument
+
+   * Bob Beck *
+
  * The crypto-mdebug-backtrace configuration option has been entirely removed.
    The option has been a no-op since 1.0.2.
 
@@ -121,13 +183,22 @@ OpenSSL 4.0
 
    *Beat Bolli*
 
+ * Added ASN1_BIT_STRING_set1() to set a bit string to a value including
+   the length in bytes and the number of unused bits.
+
+   * Bob Beck *
+
  * The deprecated function `ASN1_STRING_data` has been removed.
 
    *Bob Beck*
 
-* The ASN1_STRING_FLAG_X509_TIME define has been removed.
+ * The ASN1_STRING_FLAG_X509_TIME define has been removed.
 
    *Bob Beck*
+
+ * Reject CRLs with malformed CRL Number or Delta CRL Indicator extensions.
+
+   *Daniel Kubec*
 
  * Remove needless 'const' from scalar types in the public API, mostly for AES and Camellia
 
@@ -138,7 +209,7 @@ OpenSSL 4.0
 
    *David von Oheimb*
 
-* `X509_ALGOR_set_md()` now returns a value indicating success or failure.
+ * `X509_ALGOR_set_md()` now returns a value indicating success or failure.
 
    *David von Oheimb*
 
@@ -172,6 +243,12 @@ OpenSSL 4.0
 
    *Daniel Kubec*
 
+ * Rather than being documented as "should be considered deprecated",
+   X509_NAME_get_text_by_NID, and X509_NAME_get_text_by_OBJ are now
+   actually deprecated, and documented as such.
+
+   * Bob Beck *
+
  * ENGINE support was removed. The `no-engine` build option and the
    `OPENSSL_NO_ENGINE` macro is always present.
    Applications using `ENGINE_` functions unguarded with `OPENSSL_NO_ENGINE`
@@ -183,6 +260,11 @@ OpenSSL 4.0
 
  * BIO_f_reliable() implementation was removed without replacement.
    It was broken since 3.0 release without any complaints.
+
+   *Tomáš Mráz*
+
+ * Removed deprecated functions `ERR_get_state()`, `ERR_remove_state()` and
+   `ERR_remove_thread_state()`. The `ERR_STATE` object is now always opaque.
 
    *Tomáš Mráz*
 
@@ -202,10 +284,19 @@ OpenSSL 4.0
 
    *Barry Fussell and Helen Zhang*
 
+ * The deprecated "msie-hack" option was removed from the "openssl ca" command.
+
+   *Bob Beck*
+
  * Implemented RFC7919, adding support for negotiated FFDHE key exchange
    in TLS 1.2.
 
    *Joachim Vandersmissen* (with additional support from *Viktor Dukhovni*)
+
+ * Implemented RFC 9849, adding support for Encrypted Client Hello (ECH).
+   See doc/design/ech-api.md for details.
+
+   *Stephen Farrell* (with much support from *Matt Caswell* and *Tomáš Mráz*)
 
 OpenSSL 3.6
 -----------

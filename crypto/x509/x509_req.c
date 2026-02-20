@@ -19,7 +19,7 @@
 #include <openssl/buffer.h>
 #include <openssl/pem.h>
 
-X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
+X509_REQ *X509_to_X509_REQ(const X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     X509_REQ *ret;
     X509_REQ_INFO *ri;
@@ -121,7 +121,7 @@ static STACK_OF(X509_EXTENSION) *get_extensions_by_nid(const X509_REQ *req,
     int nid)
 {
     X509_ATTRIBUTE *attr;
-    ASN1_TYPE *ext = NULL;
+    const ASN1_TYPE *ext = NULL;
     const unsigned char *p;
     int idx = X509_REQ_get_attr_by_NID(req, nid, -1);
 

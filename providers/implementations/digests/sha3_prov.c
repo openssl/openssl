@@ -103,39 +103,7 @@ static int keccak_init_params(void *vctx, const OSSL_PARAM params[])
 
 static int keccak_update(void *vctx, const unsigned char *inp, size_t len)
 {
-    KECCAK1600_CTX *ctx = vctx;
-    const size_t bsz = ctx->block_size;
-    size_t num, rem;
-
-    if (ossl_unlikely(len == 0))
-        return 1;
-
-    /* Is there anything in the buffer already ? */
-    if (ossl_likely((num = ctx->bufsz) != 0)) {
-        /* Calculate how much space is left in the buffer */
-        rem = bsz - num;
-        /* If the new input does not fill the buffer then just add it */
-        if (len < rem) {
-            memcpy(ctx->buf + num, inp, len);
-            ctx->bufsz += len;
-            return 1;
-        }
-        /* otherwise fill up the buffer and absorb the buffer */
-        memcpy(ctx->buf + num, inp, rem);
-        /* Update the input pointer */
-        inp += rem;
-        len -= rem;
-        ctx->meth.absorb(ctx, ctx->buf, bsz);
-        ctx->bufsz = 0;
-    }
-    /* Absorb the input - rem = leftover part of the input < blocksize) */
-    rem = ctx->meth.absorb(ctx, inp, len);
-    /* Copy the leftover bit of the input into the buffer */
-    if (ossl_likely(rem)) {
-        memcpy(ctx->buf, inp + len - rem, rem);
-        ctx->bufsz = rem;
-    }
-    return 1;
+    return ossl_sha3_absorb((KECCAK1600_CTX *)vctx, inp, len);
 }
 
 static int keccak_final(void *vctx, unsigned char *out, size_t *outl,
@@ -506,48 +474,62 @@ static PROV_SHA3_METHOD shake_ARMSHA3_md = {
 #define SHAKE_SET_MD(uname, typ) ctx->meth = shake_generic_md;
 #endif /* S390_SHA3 */
 
-#define SHA3_newctx(typ, uname, name, bitlen, pad)                                  \
-    static OSSL_FUNC_digest_newctx_fn name##_newctx;                                \
-    static void *name##_newctx(void *provctx)                                       \
-    {                                                                               \
-        KECCAK1600_CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) \
-                                                     : NULL;                        \
-                                                                                    \
-        if (ctx == NULL)                                                            \
-            return NULL;                                                            \
-        ossl_sha3_init(ctx, pad, bitlen);                                           \
-        SHA3_SET_MD(uname, typ)                                                     \
-        return ctx;                                                                 \
+#define SHA3_newctx(typ, uname, name, bitlen, pad)        \
+    static OSSL_FUNC_digest_newctx_fn name##_newctx;      \
+    static void *name##_newctx(void *provctx)             \
+    {                                                     \
+        KECCAK1600_CTX *ctx;                              \
+                                                          \
+        DIGEST_PROV_CHECK(provctx, SHA3_256);             \
+        if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) \
+            return NULL;                                  \
+        ossl_sha3_init(ctx, pad, bitlen);                 \
+        SHA3_SET_MD(uname, typ)                           \
+        return ctx;                                       \
     }
 
-#define SHAKE_newctx(typ, uname, name, bitlen, mdlen, pad)                          \
-    static OSSL_FUNC_digest_newctx_fn name##_newctx;                                \
-    static void *name##_newctx(void *provctx)                                       \
-    {                                                                               \
-        KECCAK1600_CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) \
-                                                     : NULL;                        \
-                                                                                    \
-        if (ctx == NULL)                                                            \
-            return NULL;                                                            \
-        ossl_keccak_init(ctx, pad, bitlen, mdlen);                                  \
-        if (mdlen == 0)                                                             \
-            ctx->md_size = SIZE_MAX;                                                \
-        SHAKE_SET_MD(uname, typ)                                                    \
-        return ctx;                                                                 \
+#define SHAKE_newctx(typ, uname, name, bitlen, mdlen, pad) \
+    static OSSL_FUNC_digest_newctx_fn name##_newctx;       \
+    static void *name##_newctx(void *provctx)              \
+    {                                                      \
+        KECCAK1600_CTX *ctx;                               \
+                                                           \
+        DIGEST_PROV_CHECK(provctx, SHA3_256);              \
+        if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)  \
+            return NULL;                                   \
+        ossl_keccak_init(ctx, pad, bitlen, mdlen);         \
+        if (mdlen == 0)                                    \
+            ctx->md_size = SIZE_MAX;                       \
+        SHAKE_SET_MD(uname, typ)                           \
+        return ctx;                                        \
     }
 
-#define CSHAKE_KECCAK_newctx(uname, bitlen, pad)                                    \
-    static OSSL_FUNC_digest_newctx_fn uname##_newctx;                               \
-    static void *uname##_newctx(void *provctx)                                      \
-    {                                                                               \
-        KECCAK1600_CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) \
-                                                     : NULL;                        \
-                                                                                    \
-        if (ctx == NULL)                                                            \
-            return NULL;                                                            \
-        ossl_keccak_init(ctx, pad, bitlen, 2 * bitlen);                             \
-        CSHAKE_KECCAK_SET_MD(bitlen)                                                \
-        return ctx;                                                                 \
+#define CSHAKE_KECCAK_newctx(uname, bitlen, pad)          \
+    static OSSL_FUNC_digest_newctx_fn uname##_newctx;     \
+    static void *uname##_newctx(void *provctx)            \
+    {                                                     \
+        KECCAK1600_CTX *ctx;                              \
+                                                          \
+        DIGEST_PROV_CHECK(provctx, SHA3_256);             \
+        if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) \
+            return NULL;                                  \
+        ossl_keccak_init(ctx, pad, bitlen, 2 * bitlen);   \
+        CSHAKE_KECCAK_SET_MD(bitlen)                      \
+        return ctx;                                       \
+    }
+
+#define KMAC_newctx(uname, bitlen, pad)                   \
+    static OSSL_FUNC_digest_newctx_fn uname##_newctx;     \
+    static void *uname##_newctx(void *provctx)            \
+    {                                                     \
+        KECCAK1600_CTX *ctx;                              \
+                                                          \
+        DIGEST_PROV_CHECK(provctx, SHA3_256);             \
+        if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) \
+            return NULL;                                  \
+        ossl_keccak_init(ctx, pad, bitlen, 2 * bitlen);   \
+        KMAC_SET_MD(bitlen)                               \
+        return ctx;                                       \
     }
 
 #define PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags)  \

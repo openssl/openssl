@@ -39,10 +39,10 @@ static int i2r_ALLOWED_ATTRIBUTES_CHOICE(X509V3_EXT_METHOD *method,
     OSSL_ALLOWED_ATTRIBUTES_CHOICE *a,
     BIO *out, int indent)
 {
-    ASN1_OBJECT *attr_obj;
+    const ASN1_OBJECT *attr_obj;
     int attr_nid, j;
     X509_ATTRIBUTE *attr;
-    ASN1_TYPE *av;
+    const ASN1_TYPE *av;
 
     switch (a->type) {
     case (OSSL_AAA_ATTRIBUTE_TYPE):

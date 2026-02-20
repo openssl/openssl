@@ -149,7 +149,9 @@ typedef struct dsa_method DSA_METHOD;
 typedef struct rsa_st RSA;
 typedef struct rsa_meth_st RSA_METHOD;
 #endif
+
 typedef struct rsa_pss_params_st RSA_PSS_PARAMS;
+typedef struct rsa_oaep_params_st RSA_OAEP_PARAMS;
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 typedef struct ec_key_st EC_KEY;
@@ -157,7 +159,6 @@ typedef struct ec_key_method_st EC_KEY_METHOD;
 #endif
 
 typedef struct rand_meth_st RAND_METHOD;
-typedef struct rand_drbg_st RAND_DRBG;
 
 typedef struct ssl_dane_st SSL_DANE;
 typedef struct x509_st X509;
@@ -235,6 +236,11 @@ typedef struct ossl_decoder_st OSSL_DECODER;
 typedef struct ossl_decoder_ctx_st OSSL_DECODER_CTX;
 
 typedef struct ossl_self_test_st OSSL_SELF_TEST;
+
+#ifndef OPENSSL_NO_ECH
+/* opaque type for ECH related information */
+typedef struct ossl_echstore_st OSSL_ECHSTORE;
+#endif
 
 #ifdef __cplusplus
 }

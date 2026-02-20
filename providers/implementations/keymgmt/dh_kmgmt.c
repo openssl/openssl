@@ -27,8 +27,12 @@
 #include "crypto/dh.h"
 #include "internal/fips.h"
 #include "internal/sizes.h"
+#include "internal/cryptlib.h"
 
 static OSSL_FUNC_keymgmt_new_fn dh_newdata;
+static OSSL_FUNC_keymgmt_new_ex_fn dh_newdata_ex;
+static OSSL_FUNC_keymgmt_new_fn dhx_newdata;
+static OSSL_FUNC_keymgmt_new_ex_fn dhx_newdata_ex;
 static OSSL_FUNC_keymgmt_free_fn dh_freedata;
 static OSSL_FUNC_keymgmt_gen_init_fn dh_gen_init;
 static OSSL_FUNC_keymgmt_gen_init_fn dhx_gen_init;
@@ -99,30 +103,89 @@ static int dh_gen_type_name2id_w_default(const char *name, int type)
     return ossl_dh_gen_type_name2id(name, type);
 }
 
-static void *dh_newdata(void *provctx)
+/*
+ * If the application actually created a legacy DH object and assigned it to
+ * the EVP_PKEY, then we get hold of that object here. We return 0 if we hit
+ * a fatal error or 1 otherwise. We may return 1 but with *dh set to NULL.
+ */
+static int get_legacy_dh_object(OSSL_LIB_CTX *libctx, DH **dh, const OSSL_PARAM params[])
+{
+#ifndef FIPS_MODULE
+    const OSSL_PARAM *p;
+
+    if (params == NULL)
+        return 1;
+    p = OSSL_PARAM_locate_const(params, "legacy-object");
+    if (p == NULL)
+        return 1;
+    /*
+     * This only works because we are in the default provider. We are not
+     * normally allowed to pass complex objects across the provider boundary
+     * like this.
+     */
+    if (OSSL_PARAM_get_octet_ptr(p, (const void **)dh, NULL) && *dh != NULL) {
+        if (ossl_lib_ctx_get_concrete(ossl_dh_get0_libctx(*dh)) != ossl_lib_ctx_get_concrete(libctx)) {
+            *dh = NULL;
+            return 1;
+        }
+        if (!DH_up_ref(*dh))
+            return 0;
+    }
+#endif
+
+    return 1;
+}
+
+static void *dh_newdata_ex(void *provctx, const OSSL_PARAM params[])
 {
     DH *dh = NULL;
 
-    if (ossl_prov_is_running()) {
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    if (!get_legacy_dh_object(PROV_LIBCTX_OF(provctx), &dh, params))
+        return NULL;
+
+    if (dh == NULL) {
         dh = ossl_dh_new_ex(PROV_LIBCTX_OF(provctx));
         if (dh != NULL) {
             DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
             DH_set_flags(dh, DH_FLAG_TYPE_DH);
         }
     }
+
+    return dh;
+}
+
+static void *dh_newdata(void *provctx)
+{
+    return dh_newdata_ex(provctx, NULL);
+}
+
+static void *dhx_newdata_ex(void *provctx, const OSSL_PARAM params[])
+{
+    DH *dh = NULL;
+
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    if (!get_legacy_dh_object(PROV_LIBCTX_OF(provctx), &dh, params))
+        return NULL;
+
+    if (dh == NULL) {
+        dh = ossl_dh_new_ex(PROV_LIBCTX_OF(provctx));
+        if (dh != NULL) {
+            DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
+            DH_set_flags(dh, DH_FLAG_TYPE_DHX);
+        }
+    }
+
     return dh;
 }
 
 static void *dhx_newdata(void *provctx)
 {
-    DH *dh = NULL;
-
-    dh = ossl_dh_new_ex(PROV_LIBCTX_OF(provctx));
-    if (dh != NULL) {
-        DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
-        DH_set_flags(dh, DH_FLAG_TYPE_DHX);
-    }
-    return dh;
+    return dhx_newdata_ex(provctx, NULL);
 }
 
 static void dh_freedata(void *keydata)
@@ -836,6 +899,7 @@ static void *dh_dup(const void *keydata_from, int selection)
 
 const OSSL_DISPATCH ossl_dh_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))dh_newdata },
+    { OSSL_FUNC_KEYMGMT_NEW_EX, (void (*)(void))dh_newdata_ex },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))dh_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE, (void (*)(void))dh_gen_set_template },
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))dh_gen_set_params },
@@ -868,6 +932,7 @@ static const char *dhx_query_operation_name(int operation_id)
 
 const OSSL_DISPATCH ossl_dhx_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))dhx_newdata },
+    { OSSL_FUNC_KEYMGMT_NEW_EX, (void (*)(void))dhx_newdata_ex },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))dhx_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE, (void (*)(void))dh_gen_set_template },
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))dhx_gen_set_params },

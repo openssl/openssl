@@ -13,7 +13,7 @@ evp_keymgmt_export, evp_keymgmt_export_types
 
  #include "crypto/evp.h"
 
- void *evp_keymgmt_newdata(const EVP_KEYMGMT *keymgmt);
+ void *evp_keymgmt_newdata(const EVP_KEYMGMT *keymgmt, const OSSL_PARAM params[]);
  void evp_keymgmt_freedata(const EVP_KEYMGMT *keymgmt, void *keyddata);
  int evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt,
                             void *keydata, OSSL_PARAM params[]);
@@ -39,7 +39,8 @@ first argument, which they also retrieve a provider context from when
 needed.  The rest of the arguments are simply passed on to the
 function they wrap around.
 
-evp_keymgmt_newdata() calls the method's new() function.
+evp_keymgmt_newdata() calls the method's new() function or new_ex() if there is
+one.
 
 evp_keymgmt_freedata() calls the method's free() function.
 

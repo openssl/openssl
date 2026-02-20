@@ -71,7 +71,11 @@ IF[{- !$disabled{tests} -}]
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
           x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
-          engine_stubs_test base64_simdutf_test
+          engine_stubs_test base64_simdutf_test bio_eof_test ech_test
+
+  IF[{- !$disabled{'ech'} -}]
+    PROGRAMS{noinst}=ech_corrupt_test
+  ENDIF
 
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
@@ -203,7 +207,9 @@ IF[{- !$disabled{tests} -}]
     DEFINE[evp_test]=NO_LEGACY_MODULE
   ENDIF
 
-  SOURCE[evp_extra_test]=evp_extra_test.c fake_rsaprov.c fake_pipelineprov.c
+  SOURCE[evp_extra_test]=evp_extra_test.c fake_rsaprov.c fake_pipelineprov.c \
+                         helpers/predefined_dsaparams.c \
+                         helpers/predefined_dhparams.c
   INCLUDE[evp_extra_test]=../include ../apps/include \
                           ../providers/common/include \
                           ../providers/implementations/include
@@ -225,6 +231,14 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[lms_test]=../include ../apps/include
     DEPEND[lms_test]=../libcrypto.a libtestutil.a
   ENDIF
+
+  SOURCE[ech_test]=ech_test.c helpers/ssltestlib.c
+  INCLUDE[ech_test]=../include ../apps/include
+  DEPEND[ech_test]=../libssl.a ../libcrypto.a libtestutil.a
+
+  SOURCE[ech_corrupt_test]=ech_corrupt_test.c helpers/ssltestlib.c
+  INCLUDE[ech_corrupt_test]=../include ../apps/include
+  DEPEND[ech_corrupt_test]=../libssl.a ../libcrypto.a libtestutil.a
 
   SOURCE[evp_extra_test2]=evp_extra_test2.c $INITSRC tls-provider.c
   INCLUDE[evp_extra_test2]=../include ../apps/include
@@ -544,6 +558,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[bio_meth_test]=bio_meth_test.c
   INCLUDE[bio_meth_test]=../include ../apps/include
   DEPEND[bio_meth_test]=../libcrypto libtestutil.a
+
+  SOURCE[bio_eof_test]=bio_eof_test.c
+  INCLUDE[bio_eof_test]=../include ../apps/include
+  DEPEND[bio_eof_test]=../libcrypto libtestutil.a
 
   SOURCE[bioprinttest]=bioprinttest.c
   INCLUDE[bioprinttest]=../include ../apps/include
@@ -909,7 +927,7 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[dsatest]=../include ../apps/include
     DEPEND[dsatest]=../libcrypto.a libtestutil.a
 
-    SOURCE[dsa_no_digest_size_test]=dsa_no_digest_size_test.c
+    SOURCE[dsa_no_digest_size_test]=dsa_no_digest_size_test.c helpers/predefined_dsaparams.c
     INCLUDE[dsa_no_digest_size_test]=../include ../apps/include
     DEPEND[dsa_no_digest_size_test]=../libcrypto.a libtestutil.a
 

@@ -7,8 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#define OSSL_FORCE_ERR_STATE
-
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -650,18 +648,6 @@ static void err_delete_thread_state(void *unused)
     OSSL_ERR_STATE_free(state);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
-void ERR_remove_thread_state(void *dummy)
-{
-}
-#endif
-
-#ifndef OPENSSL_NO_DEPRECATED_1_0_0
-void ERR_remove_state(unsigned long pid)
-{
-}
-#endif
-
 ERR_STATE *ossl_err_get_state_int(void)
 {
     ERR_STATE *state;
@@ -703,13 +689,6 @@ ERR_STATE *ossl_err_get_state_int(void)
     set_sys_error(saveerrno);
     return state;
 }
-
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-ERR_STATE *ERR_get_state(void)
-{
-    return ossl_err_get_state_int();
-}
-#endif
 
 /*
  * err_shelve_state returns the current thread local error state

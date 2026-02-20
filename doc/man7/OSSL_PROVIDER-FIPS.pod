@@ -327,10 +327,11 @@ Uses HMAC SHA256 on the module file to validate that the module has not been
 modified. The integrity value is compared to a value written to a configuration
 file during installation.
 
-=item "KAT_Integrity" (B<OSSL_SELF_TEST_TYPE_KAT_INTEGRITY>)
+=item "KAT_Mac" (B<OSSL_SELF_TEST_TYPE_KAT_MAC>)
 
 Used during the Module Integrity test to perform a known answer test on
-HMAC SHA256 prior to using it.
+HMAC SHA256 prior to using it. In pre-4.0 versions
+B<OSSL_SELF_TEST_TYPE_KAT_INTEGRITY> ("KAT_Integrity") was used for this.
 
 =item "KAT_Cipher" (B<OSSL_SELF_TEST_TYPE_KAT_CIPHER>)
 

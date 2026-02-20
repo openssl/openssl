@@ -446,7 +446,7 @@ static int sk_strcmp(const char *const *a, const char *const *b)
     return strcmp(*a, *b);
 }
 
-STACK_OF(OPENSSL_STRING) *X509_get1_email(X509 *x)
+STACK_OF(OPENSSL_STRING) *X509_get1_email(const X509 *x)
 {
     GENERAL_NAMES *gens;
     STACK_OF(OPENSSL_STRING) *ret;
@@ -457,7 +457,7 @@ STACK_OF(OPENSSL_STRING) *X509_get1_email(X509 *x)
     return ret;
 }
 
-STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(X509 *x)
+STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(const X509 *x)
 {
     AUTHORITY_INFO_ACCESS *info;
     STACK_OF(OPENSSL_STRING) *ret = NULL;
@@ -479,7 +479,7 @@ STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(X509 *x)
     return ret;
 }
 
-STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(X509_REQ *x)
+STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(const X509_REQ *x)
 {
     GENERAL_NAMES *gens;
     STACK_OF(X509_EXTENSION) *exts;

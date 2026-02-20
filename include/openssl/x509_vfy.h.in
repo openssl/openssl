@@ -83,7 +83,7 @@ typedef enum {
 typedef struct x509_trust_st {
     int trust;
     int flags;
-    int (*check_trust)(struct x509_trust_st *, X509 *, int);
+    int (*check_trust)(struct x509_trust_st *, const X509 *, int);
     char *name;
     int arg1;
     void *arg2;
@@ -127,7 +127,7 @@ int X509_TRUST_set(int *t, int trust);
 int X509_TRUST_get_count(void);
 X509_TRUST *X509_TRUST_get0(int idx);
 int X509_TRUST_get_by_id(int id);
-int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
+int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, const X509 *, int),
     const char *name, int arg1, void *arg2);
 void X509_TRUST_cleanup(void);
 int X509_TRUST_get_flags(const X509_TRUST *xp);
@@ -142,9 +142,9 @@ void X509_reject_clear(X509 *x);
 STACK_OF(ASN1_OBJECT) *X509_get0_trust_objects(const X509 *x);
 STACK_OF(ASN1_OBJECT) *X509_get0_reject_objects(const X509 *x);
 
-int (*X509_TRUST_set_default(int (*trust)(int, X509 *, int)))(int, X509 *,
+int (*X509_TRUST_set_default(int (*trust)(int, const X509 *, int)))(int, const X509 *,
     int);
-int X509_check_trust(X509 *x, int id, int flags);
+int X509_check_trust(const X509 *x, int id, int flags);
 
 int X509_verify_cert(X509_STORE_CTX *ctx);
 int X509_STORE_CTX_verify(X509_STORE_CTX *ctx);
@@ -332,6 +332,10 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define X509_V_ERR_OCSP_HAS_EXPIRED 99
 #define X509_V_ERR_OCSP_NO_RESPONSE 100
 #define X509_V_ERR_CRL_VERIFY_FAILED 101
+
+/* additional AKID errors */
+#define X509_V_ERR_EMPTY_AUTHORITY_KEY_IDENTIFIER 102
+#define X509_V_ERR_AKID_ISSUER_SERIAL_NOT_PAIRED 103
 
 /* Certificate verify flags */
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0

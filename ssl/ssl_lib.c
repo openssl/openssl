@@ -948,6 +948,11 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
         goto sslerr;
 #endif
 
+#ifndef OPENSSL_NO_ECH
+    if (!ossl_ech_conn_init(s, ctx, method))
+        goto sslerr;
+#endif
+
     s->ssl_pkey_num = SSL_PKEY_NUM + ctx->sigalg_list_len;
     return ssl;
 cerr:
@@ -1544,6 +1549,9 @@ void ossl_ssl_connection_free(SSL *ssl)
     BIO_free_all(s->rbio);
     s->rbio = NULL;
     OPENSSL_free(s->s3.tmp.valid_flags);
+#ifndef OPENSSL_NO_ECH
+    ossl_ech_conn_clear(&s->ext.ech);
+#endif
 }
 
 void SSL_set0_rbio(SSL *s, BIO *rbio)
@@ -2185,22 +2193,57 @@ int SSL_get_async_status(SSL *s, int *status)
     return 1;
 }
 
+static void ssl_clear_error_state(SSL *s)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc != NULL)
+        sc->statem.error_state = ERROR_STATE_NOERROR;
+    ERR_set_mark();
+}
+
+static void ssl_check_error_stack(SSL *s)
+{
+    SSL_CONNECTION *sc;
+    unsigned long l;
+    if (ERR_count_to_mark() > 0) {
+        sc = SSL_CONNECTION_FROM_SSL(s);
+        l = ERR_peek_error();
+        if (sc != NULL && l != 0) {
+            if (ERR_GET_LIB(l) == ERR_LIB_SYS)
+                sc->statem.error_state = ERROR_STATE_SYSCALL;
+            else
+                sc->statem.error_state = ERROR_STATE_SSL;
+        }
+    }
+    ERR_clear_last_mark();
+}
+
 int SSL_accept(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
+    ssl_clear_error_state(s);
+
 #ifndef OPENSSL_NO_QUIC
-    if (IS_QUIC(s))
-        return s->method->ssl_accept(s);
+    if (IS_QUIC(s)) {
+        int ret = s->method->ssl_accept(s);
+        ssl_check_error_stack(s);
+        return ret;
+    }
 #endif
 
-    if (sc == NULL)
+    if (sc == NULL) {
+        ERR_clear_last_mark();
         return 0;
+    }
 
     if (sc->handshake_func == NULL) {
         /* Not properly initialized yet */
         SSL_set_accept_state(s);
     }
+
+    ssl_check_error_stack(s);
 
     return SSL_do_handshake(s);
 }
@@ -2209,18 +2252,27 @@ int SSL_connect(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
+    ssl_clear_error_state(s);
+
 #ifndef OPENSSL_NO_QUIC
-    if (IS_QUIC(s))
-        return s->method->ssl_connect(s);
+    if (IS_QUIC(s)) {
+        int ret = s->method->ssl_connect(s);
+        ssl_check_error_stack(s);
+        return ret;
+    }
 #endif
 
-    if (sc == NULL)
+    if (sc == NULL) {
+        ERR_clear_last_mark();
         return 0;
+    }
 
     if (sc->handshake_func == NULL) {
         /* Not properly initialized yet */
         SSL_set_connect_state(s);
     }
+
+    ssl_check_error_stack(s);
 
     return SSL_do_handshake(s);
 }
@@ -2366,8 +2418,11 @@ int SSL_read(SSL *s, void *buf, int num)
     int ret;
     size_t readbytes;
 
+    ssl_clear_error_state(s);
+
     if (num < 0) {
         ERR_raise(ERR_LIB_SSL, SSL_R_BAD_LENGTH);
+        ssl_check_error_stack(s);
         return -1;
     }
 
@@ -2380,15 +2435,23 @@ int SSL_read(SSL *s, void *buf, int num)
     if (ret > 0)
         ret = (int)readbytes;
 
+    ssl_check_error_stack(s);
+
     return ret;
 }
 
 int SSL_read_ex(SSL *s, void *buf, size_t num, size_t *readbytes)
 {
-    int ret = ssl_read_internal(s, buf, num, readbytes);
+    int ret;
 
+    ssl_clear_error_state(s);
+
+    ret = ssl_read_internal(s, buf, num, readbytes);
     if (ret < 0)
         ret = 0;
+
+    ssl_check_error_stack(s);
+
     return ret;
 }
 
@@ -2501,8 +2564,11 @@ int SSL_peek(SSL *s, void *buf, int num)
     int ret;
     size_t readbytes;
 
+    ssl_clear_error_state(s);
+
     if (num < 0) {
         ERR_raise(ERR_LIB_SSL, SSL_R_BAD_LENGTH);
+        ssl_check_error_stack(s);
         return -1;
     }
 
@@ -2515,15 +2581,23 @@ int SSL_peek(SSL *s, void *buf, int num)
     if (ret > 0)
         ret = (int)readbytes;
 
+    ssl_check_error_stack(s);
+
     return ret;
 }
 
 int SSL_peek_ex(SSL *s, void *buf, size_t num, size_t *readbytes)
 {
-    int ret = ssl_peek_internal(s, buf, num, readbytes);
+    int ret;
 
+    ssl_clear_error_state(s);
+
+    ret = ssl_peek_internal(s, buf, num, readbytes);
     if (ret < 0)
         ret = 0;
+
+    ssl_check_error_stack(s);
+
     return ret;
 }
 
@@ -2586,8 +2660,11 @@ int ssl_write_internal(SSL *s, const void *buf, size_t num,
 
 ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
 {
-    ossl_ssize_t ret;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+#ifndef OPENSSL_NO_KTLS
+    ossl_ssize_t sbytes;
+#endif
+    int ret;
 
     if (sc == NULL)
         return 0;
@@ -2635,19 +2712,19 @@ ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
         "can't call ktls_sendfile(), ktls disabled");
     return -1;
 #else
-    ret = ktls_sendfile(SSL_get_wfd(s), fd, offset, size, flags);
+    ret = ktls_sendfile(SSL_get_wfd(s), fd, offset, size, &sbytes, flags);
+    BIO_clear_retry_flags(sc->wbio);
     if (ret < 0) {
-#if defined(EAGAIN) && defined(EINTR) && defined(EBUSY)
-        if ((get_last_sys_error() == EAGAIN) || (get_last_sys_error() == EINTR) || (get_last_sys_error() == EBUSY))
+        if (BIO_sock_should_retry(ret)) {
             BIO_set_retry_write(sc->wbio);
-        else
-#endif
+            return (sbytes > 0 ? sbytes : ret);
+        } else
             ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
                 "ktls_sendfile failure");
         return ret;
     }
     sc->rwstate = SSL_NOTHING;
-    return ret;
+    return sbytes;
 #endif
 }
 
@@ -2656,8 +2733,11 @@ int SSL_write(SSL *s, const void *buf, int num)
     int ret;
     size_t written;
 
+    ssl_clear_error_state(s);
+
     if (num < 0) {
         ERR_raise(ERR_LIB_SSL, SSL_R_BAD_LENGTH);
+        ssl_check_error_stack(s);
         return -1;
     }
 
@@ -2670,6 +2750,8 @@ int SSL_write(SSL *s, const void *buf, int num)
     if (ret > 0)
         ret = (int)written;
 
+    ssl_check_error_stack(s);
+
     return ret;
 }
 
@@ -2681,10 +2763,16 @@ int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written)
 int SSL_write_ex2(SSL *s, const void *buf, size_t num, uint64_t flags,
     size_t *written)
 {
-    int ret = ssl_write_internal(s, buf, num, flags, written);
+    int ret;
 
+    ssl_clear_error_state(s);
+
+    ret = ssl_write_internal(s, buf, num, flags, written);
     if (ret < 0)
         ret = 0;
+
+    ssl_check_error_stack(s);
+
     return ret;
 }
 
@@ -2773,18 +2861,26 @@ int SSL_shutdown(SSL *s)
      * (see ssl3_shutdown).
      */
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    int ret;
+
+    ssl_clear_error_state(s);
 
 #ifndef OPENSSL_NO_QUIC
-    if (IS_QUIC(s))
-        return ossl_quic_conn_shutdown(s, 0, NULL, 0);
+    if (IS_QUIC(s)) {
+        ret = ossl_quic_conn_shutdown(s, 0, NULL, 0);
+        goto end;
+    }
 #endif
 
-    if (sc == NULL)
-        return -1;
+    if (sc == NULL) {
+        ret = -1;
+        goto end;
+    }
 
     if (sc->handshake_func == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_UNINITIALIZED);
-        return -1;
+        ret = -1;
+        goto end;
     }
 
     if (!SSL_in_init(s)) {
@@ -2796,14 +2892,18 @@ int SSL_shutdown(SSL *s)
             args.type = OTHERFUNC;
             args.f.func_other = s->method->ssl_shutdown;
 
-            return ssl_start_async_job(s, &args, ssl_io_intern);
+            ret = ssl_start_async_job(s, &args, ssl_io_intern);
         } else {
-            return s->method->ssl_shutdown(s);
+            ret = s->method->ssl_shutdown(s);
         }
     } else {
         ERR_raise(ERR_LIB_SSL, SSL_R_SHUTDOWN_WHILE_IN_INIT);
-        return -1;
+        ret = -1;
     }
+
+end:
+    ssl_check_error_stack(s);
+    return ret;
 }
 
 int SSL_key_update(SSL *s, int updatetype)
@@ -4488,6 +4588,10 @@ void SSL_CTX_free(SSL_CTX *a)
     ossl_quic_free_token_store(a->tokencache);
 #endif
 
+#ifndef OPENSSL_NO_ECH
+    ossl_ech_ctx_clear(&a->ext.ech);
+#endif
+
     OPENSSL_free(a);
 }
 
@@ -4858,7 +4962,6 @@ int SSL_get_error(const SSL *s, int i)
 int ossl_ssl_get_error(const SSL *s, int i, int check_err)
 {
     int reason;
-    unsigned long l;
     BIO *bio;
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
@@ -4876,15 +4979,11 @@ int ossl_ssl_get_error(const SSL *s, int i, int check_err)
     if (sc == NULL)
         return SSL_ERROR_SSL;
 
-    /*
-     * Make things return SSL_ERROR_SYSCALL when doing SSL_do_handshake etc,
-     * where we do encode the error
-     */
-    if (check_err && (l = ERR_peek_error()) != 0) {
-        if (ERR_GET_LIB(l) == ERR_LIB_SYS)
-            return SSL_ERROR_SYSCALL;
-        else
+    if (check_err != 0) {
+        if (sc->statem.error_state == ERROR_STATE_SSL)
             return SSL_ERROR_SSL;
+        if (sc->statem.error_state == ERROR_STATE_SYSCALL)
+            return SSL_ERROR_SYSCALL;
     }
 
 #ifndef OPENSSL_NO_QUIC
@@ -4976,21 +5075,30 @@ int SSL_do_handshake(SSL *s)
     int ret = 1;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
+    ssl_clear_error_state(s);
+
 #ifndef OPENSSL_NO_QUIC
-    if (IS_QUIC(s))
-        return ossl_quic_do_handshake(s);
+    if (IS_QUIC(s)) {
+        ret = ossl_quic_do_handshake(s);
+        goto end;
+    }
 #endif
 
-    if (sc == NULL)
-        return -1;
+    if (sc == NULL) {
+        ret = -1;
+        goto end;
+    }
 
     if (sc->handshake_func == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_CONNECTION_TYPE_NOT_SET);
-        return -1;
+        ret = -1;
+        goto end;
     }
 
-    if (!ossl_statem_check_finish_init(sc, -1))
-        return -1;
+    if (!ossl_statem_check_finish_init(sc, -1)) {
+        ret = -1;
+        goto end;
+    }
 
     s->method->ssl_renegotiate_check(s, 0);
 
@@ -5007,6 +5115,8 @@ int SSL_do_handshake(SSL *s)
         }
     }
 
+end:
+    ssl_check_error_stack(s);
     return ret;
 }
 
