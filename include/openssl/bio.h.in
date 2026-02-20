@@ -484,6 +484,7 @@ typedef struct bio_poll_descriptor_st {
 #define BIO_C_SET_SOCK_TYPE 157
 #define BIO_C_GET_SOCK_TYPE 158
 #define BIO_C_GET_DGRAM_BIO 159
+#define BIO_C_SET_SEND_FLAGS 160
 
 #define BIO_set_app_data(s, arg) BIO_set_ex_data(s, 0, arg)
 #define BIO_get_app_data(s) BIO_get_ex_data(s, 0)
@@ -806,6 +807,7 @@ int BIO_sock_non_fatal_error(int error);
 int BIO_err_is_non_fatal(unsigned int errcode);
 int BIO_socket_wait(int fd, int for_read, time_t max_time);
 #endif
+long BIO_set_send_flags(BIO *b, int flags);
 int BIO_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds);
 int BIO_do_connect_retry(BIO *bio, int timeout, int nap_milliseconds);
 
