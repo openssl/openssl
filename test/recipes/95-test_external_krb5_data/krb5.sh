@@ -19,14 +19,18 @@ trap unpatch EXIT
 
 cd $SRCTOP
 SRC_ABS_TOP=$PWD;
-DATA_ABS_TOP=$SRC_ABS_TOP/test/recipes/95-test_external_krb5_data/
+DATA_ABS_TOP=$SRC_ABS_TOP/test/recipes/95-test_external_krb5_data
 
 cd $SRC_ABS_TOP/krb5
 GITLEVEL=$(git rev-parse HEAD)
+# "git am" refuses to run without a user configured.
 git config user.email "dirtbag@openssl.org"
 git config user.name "I do dirty things with Git"
-git am $DATA_ABS_TOP/patches/*
-
+for FILE in "$DATA_ABS_TOP"/patches/*; do
+    if [ -f "$FILE" ]; then
+	git am $FILE
+    fi
+done
 cd $SRC_ABS_TOP/krb5/src
 
 autoreconf
