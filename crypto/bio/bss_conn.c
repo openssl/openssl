@@ -59,6 +59,9 @@ static int conn_sendmmsg(BIO *h, BIO_MSG *m, size_t s, size_t n,
     uint64_t f, size_t *mp);
 static int conn_recvmmsg(BIO *h, BIO_MSG *m, size_t s, size_t n,
     uint64_t f, size_t *mp);
+#ifndef OPENSSL_NO_KTLS
+static ossl_ssize_t conn_sendfile(BIO *b, int fd, off_t offset, size_t size, int flags);
+#endif
 
 static int conn_state(BIO *b, BIO_CONNECT *c);
 static void conn_close_socket(BIO *data);
@@ -88,6 +91,9 @@ static const BIO_METHOD methods_connectp = {
     conn_callback_ctrl,
     conn_sendmmsg,
     conn_recvmmsg,
+#ifndef OPENSSL_NO_KTLS
+    conn_sendfile,
+#endif
 };
 
 static int conn_create_dgram_bio(BIO *b, BIO_CONNECT *c)
@@ -875,5 +881,25 @@ BIO *BIO_new_connect(const char *str)
     BIO_free(ret);
     return NULL;
 }
+
+#ifndef OPENSSL_NO_KTLS
+static ossl_ssize_t conn_sendfile(BIO *b, int fd, off_t offset, size_t size, int flags)
+{
+    ossl_ssize_t sbytes;
+    int ret;
+
+    ret = ktls_sendfile(b->num, fd, offset, size, &sbytes, flags);
+    BIO_clear_retry_flags(b);
+    if (ret < 0) {
+        if (BIO_sock_should_retry(ret)) {
+            BIO_set_retry_write(b);
+            return (sbytes > 0 ? sbytes : ret);
+        } else
+            ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
+                "ktls_sendfile failure");
+    }
+    return sbytes;
+}
+#endif
 
 #endif

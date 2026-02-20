@@ -275,3 +275,16 @@ int (*BIO_meth_get_recvmmsg(const BIO_METHOD *biom))(BIO *, BIO_MSG *, size_t, s
     return biom->brecvmmsg;
 }
 #endif
+
+int BIO_meth_set_sendfile(BIO_METHOD *biom,
+    ossl_ssize_t (*bsendfile)(BIO *, int, off_t, size_t, int))
+{
+#ifdef OPENSSL_NO_KTLS
+    ERR_raise_data(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR,
+        "can't set BIO sendfile method, ktls disabled");
+    return 0;
+#else
+    biom->bsendfile = bsendfile;
+    return 1;
+#endif
+}

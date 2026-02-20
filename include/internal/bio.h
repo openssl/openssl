@@ -29,6 +29,9 @@ struct bio_method_st {
     long (*callback_ctrl)(BIO *, int, BIO_info_cb *);
     int (*bsendmmsg)(BIO *, BIO_MSG *, size_t, size_t, uint64_t, size_t *);
     int (*brecvmmsg)(BIO *, BIO_MSG *, size_t, size_t, uint64_t, size_t *);
+#ifndef OPENSSL_NO_KTLS
+    ossl_ssize_t (*bsendfile)(BIO *, int, off_t, size_t, int);
+#endif
 };
 
 void bio_free_ex_data(BIO *bio);

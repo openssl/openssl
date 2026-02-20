@@ -3,7 +3,7 @@
 =head1 NAME
 
 BIO_read_ex, BIO_write_ex, BIO_read, BIO_write,
-BIO_gets, BIO_get_line, BIO_puts
+BIO_gets, BIO_get_line, BIO_puts, BIO_sendfile
 - BIO I/O functions
 
 =head1 SYNOPSIS
@@ -18,6 +18,7 @@ BIO_gets, BIO_get_line, BIO_puts
  int BIO_get_line(BIO *b, char *buf, int size);
  int BIO_write(BIO *b, const void *data, int dlen);
  int BIO_puts(BIO *b, const char *buf);
+ ossl_ssize_t BIO_sendfile(BIO *b, int fd, off_t offset, size_t size, int flags);
 
 =head1 DESCRIPTION
 
@@ -53,6 +54,14 @@ For implementing this, unfortunately the data needs to be read byte-by-byte.
 BIO_write() attempts to write I<len> bytes from I<buf> to BIO I<b>.
 
 BIO_puts() attempts to write a NUL-terminated string I<buf> to BIO I<b>.
+
+BIO_sendfile() writes B<size> bytes from offset B<offset> in the file
+descriptor B<fd> to the specified BIO B<b>. This function provides
+efficient zero-copy semantics. BIO_sendfile() is available only when
+Kernel TLS is enabled, which can be checked by calling BIO_get_ktls_send().
+It is provided here to allow users to maintain the same interface.
+The meaning of B<flags> is platform dependent.
+Currently, under Linux it is ignored.
 
 =head1 RETURN VALUES
 
@@ -121,6 +130,8 @@ BIO_get_line() was added in OpenSSL 3.0.
 
 BIO_write_ex() returns 1 if the size of the data to write is 0 and the
 I<written> parameter of the function can be NULL since OpenSSL 3.0.
+
+BIO_sendfile() was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

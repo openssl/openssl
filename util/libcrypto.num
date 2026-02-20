@@ -2903,6 +2903,7 @@ BIO_get_line                            ?	4_0_0	EXIST::FUNCTION:
 BIO_write                               ?	4_0_0	EXIST::FUNCTION:
 BIO_write_ex                            ?	4_0_0	EXIST::FUNCTION:
 BIO_sendmmsg                            ?	4_0_0	EXIST::FUNCTION:
+BIO_sendfile                            ?	4_0_0	EXIST::FUNCTION:
 BIO_get_rpoll_descriptor                ?	4_0_0	EXIST::FUNCTION:
 BIO_get_wpoll_descriptor                ?	4_0_0	EXIST::FUNCTION:
 BIO_puts                                ?	4_0_0	EXIST::FUNCTION:
@@ -3044,6 +3045,7 @@ BIO_meth_get_ctrl                       ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_5
 BIO_meth_get_create                     ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_5
 BIO_meth_get_destroy                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_5
 BIO_meth_get_callback_ctrl              ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_5
+BIO_meth_set_sendfile                   ?	4_0_0	EXIST::FUNCTION:
 OSSL_CMP_PKISTATUS_it                   ?	4_0_0	EXIST::FUNCTION:CMP
 d2i_OSSL_CMP_PKIHEADER                  ?	4_0_0	EXIST::FUNCTION:CMP
 i2d_OSSL_CMP_PKIHEADER                  ?	4_0_0	EXIST::FUNCTION:CMP

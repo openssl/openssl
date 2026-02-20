@@ -43,6 +43,9 @@ static long sock_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int sock_new(BIO *h);
 static int sock_free(BIO *data);
 int BIO_sock_should_retry(int s);
+#ifndef OPENSSL_NO_KTLS
+static ossl_ssize_t sock_sendfile(BIO *b, int fd, off_t offset, size_t size, int flags);
+#endif
 
 static const BIO_METHOD methods_sockp = {
     BIO_TYPE_SOCKET,
@@ -57,6 +60,11 @@ static const BIO_METHOD methods_sockp = {
     sock_new,
     sock_free,
     NULL, /* sock_callback_ctrl */
+    NULL, /* sock_sendmmsg */
+    NULL, /* sock_recvmmsg */
+#ifndef OPENSSL_NO_KTLS
+    sock_sendfile,
+#endif
 };
 
 const BIO_METHOD *BIO_s_socket(void)
@@ -282,6 +290,26 @@ static int sock_puts(BIO *bp, const char *str)
     ret = sock_write(bp, str, (int)n);
     return ret;
 }
+
+#ifndef OPENSSL_NO_KTLS
+static ossl_ssize_t sock_sendfile(BIO *b, int fd, off_t offset, size_t size, int flags)
+{
+    ossl_ssize_t sbytes;
+    int ret;
+
+    ret = ktls_sendfile(b->num, fd, offset, size, &sbytes, flags);
+    BIO_clear_retry_flags(b);
+    if (ret < 0) {
+        if (BIO_sock_should_retry(ret)) {
+            BIO_set_retry_write(b);
+            return (sbytes > 0 ? sbytes : ret);
+        } else
+            ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
+                "ktls_sendfile failure");
+    }
+    return sbytes;
+}
+#endif
 
 int BIO_sock_should_retry(int i)
 {

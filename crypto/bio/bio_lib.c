@@ -400,6 +400,47 @@ int BIO_write_ex(BIO *b, const void *data, size_t dlen, size_t *written)
         || (b != NULL && dlen == 0); /* order is important for *written */
 }
 
+ossl_ssize_t BIO_sendfile(BIO *b, int fd, off_t offset, size_t size, int flags)
+{
+#ifdef OPENSSL_NO_KTLS
+    ERR_raise_data(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR,
+        "can't call BIO_sendfile method, ktls disabled");
+    return -1;
+#else
+    ossl_ssize_t ret;
+    size_t written = 0;
+
+    if (b->method == NULL || b->method->bsendfile == NULL) {
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
+        return -2;
+    }
+
+    if (!b->init || !BIO_get_ktls_send(b)) {
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
+        return -1;
+    }
+
+    if (HAS_CALLBACK(b)) {
+        ret = (ossl_ssize_t)bio_call_callback(b, BIO_CB_SENDFILE,
+            NULL, size, fd, (long)offset, 1, NULL);
+        if (ret < 0)
+            return 0;
+    }
+
+    ret = b->method->bsendfile(b, fd, offset, size, flags);
+
+    if (ret >= 0)
+        written = ret;
+
+    if (HAS_CALLBACK(b)) {
+        ret = (ossl_ssize_t)bio_call_callback(b, BIO_CB_SENDFILE | BIO_CB_RETURN,
+            NULL, size, fd, (long)offset, (long)ret, &written);
+    }
+
+    return ret;
+#endif
+}
+
 int BIO_sendmmsg(BIO *b, BIO_MSG *msg,
     size_t stride, size_t num_msg, uint64_t flags,
     size_t *msgs_processed)
