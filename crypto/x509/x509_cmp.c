@@ -102,13 +102,13 @@ X509_NAME *X509_get_issuer_name(const X509 *a)
     return a->cert_info.issuer;
 }
 
-unsigned long X509_issuer_name_hash(X509 *x)
+unsigned long X509_issuer_name_hash(const X509 *x)
 {
     return X509_NAME_hash_ex(x->cert_info.issuer, NULL, NULL, NULL);
 }
 
 #ifndef OPENSSL_NO_MD5
-unsigned long X509_issuer_name_hash_old(X509 *x)
+unsigned long X509_issuer_name_hash_old(const X509 *x)
 {
     return X509_NAME_hash_old(x->cert_info.issuer);
 }
@@ -129,13 +129,13 @@ const ASN1_INTEGER *X509_get0_serialNumber(const X509 *a)
     return &a->cert_info.serialNumber;
 }
 
-unsigned long X509_subject_name_hash(X509 *x)
+unsigned long X509_subject_name_hash(const X509 *x)
 {
     return X509_NAME_hash_ex(x->cert_info.subject, NULL, NULL, NULL);
 }
 
 #ifndef OPENSSL_NO_MD5
-unsigned long X509_subject_name_hash_old(X509 *x)
+unsigned long X509_subject_name_hash_old(const X509 *x)
 {
     return X509_NAME_hash_old(x->cert_info.subject);
 }
