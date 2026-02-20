@@ -735,6 +735,11 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
         params[0] = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_SSL3_MS,
             p2, p1);
         break;
+    case EVP_MD_CTRL_TLSTREE:
+        sz = (size_t)p1;
+        params[0] = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_TLSTREE, p2, sz);
+        params[1] = OSSL_PARAM_construct_end();
+        break;
     default:
         goto conclude;
     }

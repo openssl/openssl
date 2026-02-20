@@ -3367,11 +3367,6 @@ static int tls_process_cke_gost(SSL_CONNECTION *s, PACKET *pkt)
         /* SSLfatal() already called */
         goto err;
     }
-    /* Check if pubkey from client certificate was used */
-    if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2,
-            NULL)
-        > 0)
-        s->statem.no_cert_verify = 1;
 
     ret = 1;
 err:
