@@ -2516,7 +2516,7 @@ ASN1_TIME *X509_time_adj_ex(ASN1_TIME *s,
 }
 
 /* Copy any missing public key parameters up the chain towards pkey */
-int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
+int X509_get_pubkey_parameters(EVP_PKEY *pkey, const STACK_OF(X509) *chain)
 {
     EVP_PKEY *ktmp = NULL, *ktmp2;
     int i, j;
