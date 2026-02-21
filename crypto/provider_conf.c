@@ -198,8 +198,8 @@ static int prov_already_activated(const char *name,
  * 0 on failed activation for non-fatal error
  * < 0 on failed activation for fatal errors
  */
-static int provider_conf_activate(OSSL_LIB_CTX *libctx, const char *name,
-    const char *value, const char *path,
+static int provider_conf_activate(OSSL_LIB_CTX *libctx, const char *mdir,
+    const char *name, const char *value, const char *path,
     int soft, const CONF *cnf)
 {
     PROVIDER_CONF_GLOBAL *pcgbl
@@ -236,6 +236,8 @@ static int provider_conf_activate(OSSL_LIB_CTX *libctx, const char *name,
 
         if (path != NULL)
             ossl_provider_set_module_path(prov, path);
+        if (mdir != NULL)
+            ossl_provider_set_module_dir(prov, mdir);
 
         ok = provider_conf_params(prov, NULL, NULL, value, cnf);
 
@@ -308,8 +310,8 @@ static int provider_conf_parse_bool_setting(const char *confname,
     return 1;
 }
 
-static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
-    const char *value, const CONF *cnf)
+static int provider_conf_load(OSSL_LIB_CTX *libctx, char **mdir,
+    const char *name, const char *value, const CONF *cnf)
 {
     int i;
     STACK_OF(CONF_VALUE) *ecmds;
@@ -321,6 +323,16 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
 
     name = skip_dot(name);
     OSSL_TRACE1(CONF, "Configuring provider %s\n", name);
+
+    /* Handle rolling updates of the module search directory */
+    if (strcmp(name, "modulesdir") == 0) {
+        OPENSSL_free(*mdir);
+        if (*value != '\0')
+            return (*mdir = OPENSSL_strdup(value)) != NULL;
+        *mdir = NULL;
+        return 1;
+    }
+
     /* Value is a section containing PROVIDER commands */
     ecmds = NCONF_get_section(cnf, value);
 
@@ -359,7 +371,7 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
     }
 
     if (activate) {
-        ok = provider_conf_activate(libctx, name, value, path, soft, cnf);
+        ok = provider_conf_activate(libctx, *mdir, name, value, path, soft, cnf);
     } else {
         OSSL_PROVIDER_INFO entry;
 
@@ -373,6 +385,11 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
         if (ok && path != NULL) {
             entry.path = OPENSSL_strdup(path);
             if (entry.path == NULL)
+                ok = 0;
+        }
+        if (ok && *mdir != NULL) {
+            entry.mdir = OPENSSL_strdup(*mdir);
+            if (entry.mdir == NULL)
                 ok = 0;
         }
         if (ok)
@@ -400,6 +417,7 @@ static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
 {
     STACK_OF(CONF_VALUE) *elist;
     CONF_VALUE *cval;
+    char *mdir = NULL;
     int i;
 
     OSSL_TRACE1(CONF, "Loading providers module: section %s\n",
@@ -416,9 +434,10 @@ static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
     for (i = 0; i < sk_CONF_VALUE_num(elist); i++) {
         cval = sk_CONF_VALUE_value(elist, i);
         if (!provider_conf_load(NCONF_get0_libctx((CONF *)cnf),
-                cval->name, cval->value, cnf))
+                &mdir, cval->name, cval->value, cnf))
             return 0;
     }
+    OPENSSL_free(mdir);
 
     return 1;
 }
