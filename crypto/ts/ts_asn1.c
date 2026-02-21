@@ -12,6 +12,8 @@
 #include <openssl/asn1t.h>
 #include "ts_local.h"
 
+#include <crypto/asn1.h>
+
 ASN1_SEQUENCE(TS_MSG_IMPRINT) = {
     ASN1_SIMPLE(TS_MSG_IMPRINT, hash_algo, X509_ALGOR),
     ASN1_SIMPLE(TS_MSG_IMPRINT, hashed_msg, ASN1_OCTET_STRING)

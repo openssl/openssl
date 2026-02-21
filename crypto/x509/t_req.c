@@ -17,6 +17,8 @@
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 
+#include <crypto/asn1.h>
+
 #ifndef OPENSSL_NO_STDIO
 int X509_REQ_print_fp(FILE *fp, const X509_REQ *x)
 {

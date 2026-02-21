@@ -20,6 +20,8 @@
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 
+#include <crypto/asn1.h>
+
 static int i2r_ISSUER_SERIAL(X509V3_EXT_METHOD *method,
     OSSL_ISSUER_SERIAL *iss,
     BIO *out, int indent);

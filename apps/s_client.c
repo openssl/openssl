@@ -3039,8 +3039,8 @@ re_start:
         NCONF_free(cnf);
 
         /* Send SSLRequest packet */
-        BIO_write(sbio, atyp->value.sequence->data,
-            atyp->value.sequence->length);
+        BIO_write(sbio, ASN1_STRING_get0_data(atyp->value.sequence),
+            ASN1_STRING_length(atyp->value.sequence));
         (void)BIO_flush(sbio);
         ASN1_TYPE_free(atyp);
 

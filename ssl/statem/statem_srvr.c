@@ -3589,8 +3589,8 @@ static int tls_process_cke_gost(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
     }
 
-    inlen = pKX->kxBlob->value.sequence->length;
-    start = pKX->kxBlob->value.sequence->data;
+    inlen = ASN1_STRING_length(pKX->kxBlob->value.sequence);
+    start = ASN1_STRING_get0_data(pKX->kxBlob->value.sequence);
 
     if (EVP_PKEY_decrypt(pkey_ctx, premaster_secret, &outlen, start,
             inlen)

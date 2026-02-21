@@ -13,6 +13,8 @@
 #include <openssl/asn1t.h>
 #include "x509_local.h"
 
+#include <crypto/asn1.h>
+
 ASN1_SEQUENCE(X509_EXTENSION) = {
     ASN1_SIMPLE(X509_EXTENSION, object, ASN1_OBJECT),
     ASN1_OPT(X509_EXTENSION, critical, ASN1_FBOOLEAN),
