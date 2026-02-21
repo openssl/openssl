@@ -140,12 +140,12 @@ const ASN1_TIME *X509_get0_notAfter(const X509 *x)
     return x->cert_info.validity.notAfter;
 }
 
-ASN1_TIME *X509_getm_notBefore(const X509 *x)
+ASN1_TIME *X509_getm_notBefore(X509 *x)
 {
     return x->cert_info.validity.notBefore;
 }
 
-ASN1_TIME *X509_getm_notAfter(const X509 *x)
+ASN1_TIME *X509_getm_notAfter(X509 *x)
 {
     return x->cert_info.validity.notAfter;
 }

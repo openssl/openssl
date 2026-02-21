@@ -82,7 +82,7 @@ int X509_keyid_set1(X509 *x, const unsigned char *id, int len)
     return ASN1_STRING_set(aux->keyid, id, len);
 }
 
-unsigned char *X509_alias_get0(const X509 *x, int *len)
+const unsigned char *X509_alias_get0(const X509 *x, int *len)
 {
     if (!x->aux || !x->aux->alias)
         return NULL;
@@ -91,7 +91,7 @@ unsigned char *X509_alias_get0(const X509 *x, int *len)
     return x->aux->alias->data;
 }
 
-unsigned char *X509_keyid_get0(const X509 *x, int *len)
+const unsigned char *X509_keyid_get0(const X509 *x, int *len)
 {
     if (!x->aux || !x->aux->keyid)
         return NULL;

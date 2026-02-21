@@ -108,7 +108,8 @@ static int test_distinguishing_id(void)
 {
     X509 *x = NULL;
     int ret = 0;
-    ASN1_OCTET_STRING *v = NULL, *v2 = NULL;
+    ASN1_OCTET_STRING *v = NULL;
+    const ASN1_OCTET_STRING *v2 = NULL;
     char *distid = "this is an ID";
 
     x = load_cert_from_file(bad_f);
