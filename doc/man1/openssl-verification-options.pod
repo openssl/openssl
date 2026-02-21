@@ -392,14 +392,6 @@ Enable support for delta CRLs.
 Enable extended CRL features such as indirect CRLs and alternate CRL
 signing keys.
 
-=item B<-suiteB_128_only>, B<-suiteB_128>, B<-suiteB_192>
-
-Enable the Suite B mode operation at 128 bit Level of Security, 128 bit or
-192 bit, or only 192 bit Level of Security respectively.
-See RFC6460 for details. In particular the supported signature algorithms are
-reduced to support only ECDSA and SHA256 or SHA384 and only the elliptic curves
-P-256 and P-384.
-
 =item B<-auth_level> I<level>
 
 Set the certificate chain authentication security level to I<level>.
@@ -778,6 +770,8 @@ L<openssl-cms(1)>
 Since OpenSSL 1.1.0, the B<-trusted_first> option is always enabled.
 
 The checks enabled by B<-x509_strict> have been extended in OpenSSL 3.0.
+
+Options B<-suiteB_128_only>, B<-suiteB_128>, B<-suiteB_192> were removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

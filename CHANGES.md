@@ -298,6 +298,10 @@ OpenSSL 4.0
 
    *Stephen Farrell* (with much support from *Matt Caswell* and *Tomáš Mráz*)
 
+ * Support for obsolete SUITEB cipher suite configuration strings was removed
+
+   *Dimitri John Ledkov*
+
 OpenSSL 3.6
 -----------
 

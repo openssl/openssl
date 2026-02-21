@@ -45,6 +45,8 @@ OpenSSL 4.0
 
   * Support for the SSLv2 Client Hello was removed
 
+  * Support for obsolete SUITEB cipher suite configuration strings was removed
+
 OpenSSL 3.6
 -----------
 
