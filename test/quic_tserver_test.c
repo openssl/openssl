@@ -131,6 +131,16 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
 
     s_net_bio_own = NULL;
 
+    /*
+     * For the idle test, increase both sides' idle timeout to 90s
+     * (vs. the 30s default) so the 60s simulated idle period does not
+     * cause the connection to be terminated.  Must be set before
+     * transport parameters are generated.
+     */
+    if (use_thread_assist && use_fake_time)
+        ossl_quic_channel_set_max_idle_timeout_request(
+            ossl_quic_tserver_get_channel(tserver), 90000);
+
     if (use_inject) {
         /*
          * In inject mode we create a dgram pair to feed to the QUIC client on
@@ -192,6 +202,17 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
 
     if (!TEST_true(SSL_set_blocking_mode(c_ssl, 0)))
         goto err;
+
+    /*
+     * Request 90s idle timeout from the client side so the negotiated
+     * value is min(90s, 90s) = 90s.  Must be set before SSL_connect()
+     * triggers transport parameter generation.
+     */
+    if (use_thread_assist && use_fake_time) {
+        if (!TEST_true(SSL_set_feature_request_uint(c_ssl,
+                SSL_VALUE_QUIC_IDLE_TIMEOUT, 90000)))
+            goto err;
+    }
 
     /*
      * We use real time for the timeout not fake time. Otherwise with fake time
@@ -332,6 +353,16 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
 
                 ++idle_units_done;
                 ossl_quic_conn_force_assist_thread_wake(c_ssl);
+
+                /*
+                 * Periodically ping to keep the server's idle deadline
+                 * updated.  Every 100 iterations = every 1 simulated second.
+                 */
+                if (idle_units_done % 100 == 0
+                    && ossl_quic_tserver_is_connected(tserver)) {
+                    if (!TEST_true(ossl_quic_tserver_ping(tserver)))
+                        goto err;
+                }
 
                 /*
                  * If the event timeout has expired then give the assistance
