@@ -762,6 +762,8 @@ int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
     const char *name, size_t namelen);
 int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
     const char *name, size_t namelen);
+void X509_VERIFY_PARAM_set1_host_input_validation(X509_VERIFY_PARAM *param,
+    int (*validate_host)(const char *name, size_t len));
 void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
     unsigned int flags);
 unsigned int X509_VERIFY_PARAM_get_hostflags(const X509_VERIFY_PARAM *param);
@@ -770,10 +772,28 @@ void X509_VERIFY_PARAM_move_peername(X509_VERIFY_PARAM *, X509_VERIFY_PARAM *);
 char *X509_VERIFY_PARAM_get0_email(X509_VERIFY_PARAM *param);
 int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
     const char *email, size_t emaillen);
+int X509_VERIFY_PARAM_set1_rfc822(X509_VERIFY_PARAM *param,
+    const char *email, size_t emaillen);
+int X509_VERIFY_PARAM_add1_rfc822(X509_VERIFY_PARAM *param,
+    const char *email, size_t len);
+void X509_VERIFY_PARAM_set1_rfc822_input_validation(X509_VERIFY_PARAM *param,
+    int (*validate_rfc822)(const char *name, size_t len));
+int X509_VERIFY_PARAM_set1_smtputf8(X509_VERIFY_PARAM *param,
+    const char *email, size_t emaillen);
+int X509_VERIFY_PARAM_add1_smtputf8(X509_VERIFY_PARAM *param,
+    const char *email, size_t len);
+void X509_VERIFY_PARAM_set1_smtputf8_input_validation(X509_VERIFY_PARAM *param,
+    int (*validate_smtputf8)(const char *name, size_t len));
 char *X509_VERIFY_PARAM_get1_ip_asc(X509_VERIFY_PARAM *param);
 int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
-    const unsigned char *ip, size_t iplen);
+    const uint8_t *ip, size_t iplen);
+void X509_VERIFY_PARAM_set1_ip_input_validation(X509_VERIFY_PARAM *param,
+    int (*validate_ip)(const uint8_t *name, size_t len));
 int X509_VERIFY_PARAM_set1_ip_asc(X509_VERIFY_PARAM *param,
+    const char *ipasc);
+int X509_VERIFY_PARAM_add1_ip(X509_VERIFY_PARAM *param,
+    const uint8_t *ip, size_t len);
+int X509_VERIFY_PARAM_add1_ip_asc(X509_VERIFY_PARAM *param,
     const char *ipasc);
 
 int X509_VERIFY_PARAM_get_depth(const X509_VERIFY_PARAM *param);
