@@ -37,7 +37,7 @@ OCSP_check_validity, OCSP_basic_verify
  const OCSP_RESPDATA *OCSP_resp_get0_respdata(const OCSP_BASICRESP *bs);
  const STACK_OF(X509) *OCSP_resp_get0_certs(const OCSP_BASICRESP *bs);
 
- int OCSP_resp_get0_signer(OCSP_BASICRESP *bs, X509 **signer,
+ int OCSP_resp_get0_signer(OCSP_BASICRESP *bs, const X509 **signer,
                            STACK_OF(X509) *extra_certs);
 
  int OCSP_resp_get0_id(const OCSP_BASICRESP *bs,
@@ -207,6 +207,10 @@ L<OCSP_REQUEST_new(3)>,
 L<OCSP_response_status(3)>,
 L<OCSP_sendreq_new(3)>,
 L<X509_VERIFY_PARAM_set_flags(3)>
+
+=head1 HISTORY
+
+OCSP_resp_get0_signer() was constified in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

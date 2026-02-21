@@ -13,21 +13,21 @@
 #include "internal/sizes.h"
 #include "ocsp_local.h"
 
-static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs,
+static int ocsp_find_signer(const X509 **psigner, OCSP_BASICRESP *bs,
     const STACK_OF(X509) *certs, unsigned long flags);
-static X509 *ocsp_find_signer_sk(const STACK_OF(X509) *certs, OCSP_RESPID *id);
+static const X509 *ocsp_find_signer_sk(const STACK_OF(X509) *certs, OCSP_RESPID *id);
 static int ocsp_check_issuer(OCSP_BASICRESP *bs, STACK_OF(X509) *chain);
 static int ocsp_check_ids(STACK_OF(OCSP_SINGLERESP) *sresp,
     OCSP_CERTID **ret);
 static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
     STACK_OF(OCSP_SINGLERESP) *sresp);
 static int ocsp_check_delegated(X509 *x);
-static int ocsp_req_find_signer(X509 **psigner, OCSP_REQUEST *req,
+static int ocsp_req_find_signer(const X509 **psigner, OCSP_REQUEST *req,
     const X509_NAME *nm, const STACK_OF(X509) *certs,
     unsigned long flags);
 
 /* Returns 1 on success, 0 on failure, or -1 on fatal error */
-static int ocsp_verify_signer(X509 *signer, int response,
+static int ocsp_verify_signer(const X509 *signer, int response,
     X509_STORE *st, unsigned long flags,
     STACK_OF(X509) *untrusted, STACK_OF(X509) **chain)
 {
@@ -39,7 +39,10 @@ static int ocsp_verify_signer(X509 *signer, int response,
         ERR_raise(ERR_LIB_OCSP, ERR_R_X509_LIB);
         goto end;
     }
-    if (!X509_STORE_CTX_init(ctx, st, signer, untrusted)) {
+    /*
+     * TODO: The cast below can be dropped when #30076 lands
+     */
+    if (!X509_STORE_CTX_init(ctx, st, (X509 *)signer, untrusted)) {
         ERR_raise(ERR_LIB_OCSP, ERR_R_X509_LIB);
         goto end;
     }
@@ -74,7 +77,7 @@ end:
 }
 
 static int ocsp_verify(OCSP_REQUEST *req, OCSP_BASICRESP *bs,
-    X509 *signer, unsigned long flags)
+    const X509 *signer, unsigned long flags)
 {
     EVP_PKEY *skey;
     int ret = 1;
@@ -98,7 +101,7 @@ static int ocsp_verify(OCSP_REQUEST *req, OCSP_BASICRESP *bs,
 int OCSP_basic_verify(OCSP_BASICRESP *bs, const STACK_OF(X509) *certs,
     X509_STORE *st, unsigned long flags)
 {
-    X509 *signer, *x;
+    const X509 *signer, *x;
     STACK_OF(X509) *chain = NULL;
     STACK_OF(X509) *untrusted = NULL;
     int ret = ocsp_find_signer(&signer, bs, certs, flags);
@@ -145,7 +148,10 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, const STACK_OF(X509) *certs,
             goto end;
 
         x = sk_X509_value(chain, sk_X509_num(chain) - 1);
-        if (X509_check_trust(x, NID_OCSP_sign, 0) != X509_TRUST_TRUSTED) {
+        /*
+         * TODO: Cast below can be dropped when #30071 lands
+         */
+        if (X509_check_trust((X509 *)x, NID_OCSP_sign, 0) != X509_TRUST_TRUSTED) {
             ERR_raise(ERR_LIB_OCSP, OCSP_R_ROOT_CA_NOT_TRUSTED);
             ret = 0;
             goto end;
@@ -159,16 +165,16 @@ end:
     return ret;
 }
 
-int OCSP_resp_get0_signer(OCSP_BASICRESP *bs, X509 **signer,
+int OCSP_resp_get0_signer(OCSP_BASICRESP *bs, const X509 **signer,
     const STACK_OF(X509) *extra_certs)
 {
     return ocsp_find_signer(signer, bs, extra_certs, 0) > 0;
 }
 
-static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs,
+static int ocsp_find_signer(const X509 **psigner, OCSP_BASICRESP *bs,
     const STACK_OF(X509) *certs, unsigned long flags)
 {
-    X509 *signer;
+    const X509 *signer;
     OCSP_RESPID *rid = &bs->tbsResponseData.responderId;
 
     if ((signer = ocsp_find_signer_sk(certs, rid)) != NULL) {
@@ -185,7 +191,7 @@ static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs,
     return 0;
 }
 
-static X509 *ocsp_find_signer_sk(const STACK_OF(X509) *certs, OCSP_RESPID *id)
+static const X509 *ocsp_find_signer_sk(const STACK_OF(X509) *certs, OCSP_RESPID *id)
 {
     int i, r;
     unsigned char tmphash[SHA_DIGEST_LENGTH], *keyhash;
@@ -377,7 +383,7 @@ static int ocsp_check_delegated(X509 *x)
 int OCSP_request_verify(OCSP_REQUEST *req, const STACK_OF(X509) *certs,
     X509_STORE *store, unsigned long flags)
 {
-    X509 *signer;
+    const X509 *signer;
     const X509_NAME *nm;
     GENERAL_NAME *gen;
     int ret;
@@ -410,11 +416,11 @@ int OCSP_request_verify(OCSP_REQUEST *req, const STACK_OF(X509) *certs,
     /* using '> 0' here to avoid breaking backward compatibility returning -1 */
 }
 
-static int ocsp_req_find_signer(X509 **psigner, OCSP_REQUEST *req,
+static int ocsp_req_find_signer(const X509 **psigner, OCSP_REQUEST *req,
     const X509_NAME *nm, const STACK_OF(X509) *certs,
     unsigned long flags)
 {
-    X509 *signer;
+    const X509 *signer;
 
     if ((flags & OCSP_NOINTERN) == 0) {
         signer = X509_find_by_subject(req->optionalSignature->certs, nm);
