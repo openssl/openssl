@@ -148,7 +148,7 @@ int X509_check_trust(const X509 *x, int id, int flags);
 
 int X509_verify_cert(X509_STORE_CTX *ctx);
 int X509_STORE_CTX_verify(X509_STORE_CTX *ctx);
-STACK_OF(X509) *X509_build_chain(X509 *target, STACK_OF(X509) *certs,
+STACK_OF(X509) *X509_build_chain(const X509 *target, STACK_OF(X509) *certs,
     X509_STORE *store, int with_self_signed,
     OSSL_LIB_CTX *libctx, const char *propq);
 
@@ -498,7 +498,7 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
 
 void X509_STORE_CTX_free(X509_STORE_CTX *ctx);
 int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *trust_store,
-    X509 *target, STACK_OF(X509) *untrusted);
+    const X509 *target, STACK_OF(X509) *untrusted);
 int X509_STORE_CTX_init_rpk(X509_STORE_CTX *ctx, X509_STORE *trust_store,
     EVP_PKEY *rpk);
 void X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
