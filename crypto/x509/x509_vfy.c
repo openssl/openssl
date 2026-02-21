@@ -52,7 +52,7 @@ static int verify_rpk(X509_STORE_CTX *ctx);
 static int dane_verify(X509_STORE_CTX *ctx);
 static int dane_verify_rpk(X509_STORE_CTX *ctx);
 static int null_callback(int ok, X509_STORE_CTX *e);
-static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
+static int check_issued(X509_STORE_CTX *ctx, const X509 *x, const X509 *issuer);
 static int check_extensions(X509_STORE_CTX *ctx);
 static int check_name_constraints(X509_STORE_CTX *ctx);
 static int check_id(X509_STORE_CTX *ctx);
@@ -412,7 +412,7 @@ static int sk_X509_contains(STACK_OF(X509) *sk, X509 *cert)
  * Maybe not touch X509_STORE_CTX_get1_issuer(), for API backward compatibility.
  */
 static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int check_signing_allowed,
-    int no_dup, STACK_OF(X509) *sk, X509 *x)
+    int no_dup, STACK_OF(X509) *sk, const X509 *x)
 {
     int i;
     X509 *candidate, *issuer = NULL;
@@ -453,7 +453,7 @@ static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int check_signing_allowed,
  *  0 certificate not found.
  * -1 some other error.
  */
-int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
+int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, const X509 *x)
 {
     const X509_NAME *xn = X509_get_issuer_name(x);
     X509_OBJECT *obj = X509_OBJECT_new();
@@ -491,9 +491,10 @@ end:
 }
 
 /* Check that the given certificate |x| is issued by the certificate |issuer| */
-static int check_issued(ossl_unused X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
+static int check_issued(ossl_unused X509_STORE_CTX *ctx, const X509 *x, const X509 *issuer)
 {
-    int err = ossl_x509_likely_issued(issuer, x);
+    /* XXX casts away const, remove cast when #30067 lands */
+    int err = ossl_x509_likely_issued((X509 *)issuer, (X509 *)x);
 
     if (err == X509_V_OK)
         return 1;
@@ -508,7 +509,7 @@ static int check_issued(ossl_unused X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
  * Alternative get_issuer method: look up from a STACK_OF(X509) in other_ctx.
  * Returns -1 on internal error.
  */
-static int get1_best_issuer_other_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
+static int get1_best_issuer_other_sk(X509 **issuer, X509_STORE_CTX *ctx, const X509 *x)
 {
     *issuer = get0_best_issuer_sk(ctx, 0, 1 /* no_dup */, ctx->other_ctx, x);
     if (*issuer == NULL)
@@ -2661,7 +2662,7 @@ void X509_STORE_CTX_set_error_depth(X509_STORE_CTX *ctx, int depth)
     ctx->error_depth = depth;
 }
 
-X509 *X509_STORE_CTX_get_current_cert(const X509_STORE_CTX *ctx)
+const X509 *X509_STORE_CTX_get_current_cert(const X509_STORE_CTX *ctx)
 {
     return ctx->current_cert;
 }
@@ -2683,7 +2684,7 @@ STACK_OF(X509) *X509_STORE_CTX_get1_chain(const X509_STORE_CTX *ctx)
     return X509_chain_up_ref(ctx->chain);
 }
 
-X509 *X509_STORE_CTX_get0_current_issuer(const X509_STORE_CTX *ctx)
+const X509 *X509_STORE_CTX_get0_current_issuer(const X509_STORE_CTX *ctx)
 {
     return ctx->current_issuer;
 }
@@ -2698,9 +2699,10 @@ X509_STORE_CTX *X509_STORE_CTX_get0_parent_ctx(const X509_STORE_CTX *ctx)
     return ctx->parent;
 }
 
-void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *x)
+void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, const X509 *x)
 {
-    ctx->cert = x;
+    /* XXX casts away const - fix by making ctx->cert const */
+    ctx->cert = (X509 *)x;
 }
 
 void X509_STORE_CTX_set0_rpk(X509_STORE_CTX *ctx, EVP_PKEY *rpk)
@@ -2847,7 +2849,7 @@ int X509_STORE_CTX_init_rpk(X509_STORE_CTX *ctx, X509_STORE *store, EVP_PKEY *rp
     return 1;
 }
 
-int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
+int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, const X509 *x509,
     STACK_OF(X509) *chain)
 {
     if (ctx == NULL) {
@@ -2857,7 +2859,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     X509_STORE_CTX_cleanup(ctx);
 
     ctx->store = store;
-    ctx->cert = x509;
+    ctx->cert = (X509 *)x509; /* XXX fix by making ctx->cert const */
     ctx->untrusted = chain;
     ctx->crls = NULL;
     ctx->num_untrusted = 0;
@@ -3042,7 +3044,7 @@ void X509_STORE_CTX_set_current_reasons(X509_STORE_CTX *ctx,
     ctx->current_reasons = current_reasons;
 }
 
-X509 *X509_STORE_CTX_get0_cert(const X509_STORE_CTX *ctx)
+const X509 *X509_STORE_CTX_get0_cert(const X509_STORE_CTX *ctx)
 {
     return ctx->cert;
 }
