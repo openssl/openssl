@@ -739,9 +739,6 @@ SSL_get_stream_write_buf_used           define
 SSL_get_stream_write_buf_avail          define
 SSL_CONN_CLOSE_FLAG_LOCAL               define
 SSL_CONN_CLOSE_FLAG_TRANSPORT           define
-SSLv23_client_method                    define
-SSLv23_method                           define
-SSLv23_server_method                    define
 SSL_POLL_EVENT_NONE                     define
 SSL_POLL_EVENT_EC                       define
 SSL_POLL_EVENT_ECD                      define
