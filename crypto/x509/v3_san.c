@@ -418,7 +418,7 @@ err:
 
 static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
 {
-    X509_NAME *nm;
+    const X509_NAME *nm;
     ASN1_IA5STRING *email = NULL;
     X509_NAME_ENTRY *ne;
     GENERAL_NAME *gen = NULL;
@@ -432,18 +432,22 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
         return 0;
     }
     /* Find the subject name */
-    nm = ctx->subject_cert != NULL ? X509_get_subject_name(ctx->subject_cert) : X509_REQ_get_subject_name(ctx->subject_req);
+    nm = ctx->subject_cert != NULL ? X509_get_subject_name(ctx->subject_cert)
+                                   : X509_REQ_get_subject_name(ctx->subject_req);
 
     /* Now add any email address(es) to STACK */
     while ((i = X509_NAME_get_index_by_NID(nm,
                 NID_pkcs9_emailAddress, i))
         >= 0) {
-        ne = X509_NAME_get_entry(nm, i);
+        /* XXX Casts away const */
+        ne = (X509_NAME_ENTRY *)X509_NAME_get_entry(nm, i);
         email = ASN1_STRING_dup(X509_NAME_ENTRY_get_data(ne));
         if (move_p) {
-            X509_NAME_delete_entry(nm, i);
-            X509_NAME_ENTRY_free(ne);
-            i--;
+            /* We should really not support deleting things in a const object
+             * to rip the pointer out of it. If we truly want a new object
+             * without this in it, we should just construct one without it.
+             */
+            return 0;
         }
         if (email == NULL || (gen = GENERAL_NAME_new()) == NULL) {
             ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
