@@ -37,14 +37,15 @@ int NETSCAPE_SPKI_print(BIO *out, const NETSCAPE_SPKI *spki)
         EVP_PKEY_free(pkey);
     }
     chal = spki->spkac->challenge;
-    if (chal->length)
-        BIO_printf(out, "  Challenge String: %.*s\n", chal->length, chal->data);
+    if (ASN1_STRING_length(chal))
+        BIO_printf(out, "  Challenge String: %.*s\n", ASN1_STRING_length(chal),
+                   ASN1_STRING_get0_data(chal));
     i = OBJ_obj2nid(spki->sig_algor.algorithm);
     BIO_printf(out, "  Signature Algorithm: %s",
         (i == NID_undef) ? "UNKNOWN" : OBJ_nid2ln(i));
 
-    n = spki->signature->length;
-    s = (char *)spki->signature->data;
+    n = ASN1_STRING_length(spki->signature);
+    s = (char *)ASN1_STRING_get0_data(spki->signature);
     for (i = 0; i < n; i++) {
         if ((i % 24) == 0)
             BIO_write(out, "\n      ", 7);

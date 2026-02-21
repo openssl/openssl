@@ -75,8 +75,8 @@ int ASN1_STRING_print(BIO *bp, const ASN1_STRING *v)
     if (v == NULL)
         return 0;
     n = 0;
-    p = (const char *)v->data;
-    for (i = 0; i < v->length; i++) {
+    p = (const char *)ASN1_STRING_get0_data(v);
+    for (i = 0; i < ASN1_STRING_length(v); i++) {
         if ((p[i] > '~') || ((p[i] < ' ') && (p[i] != '\n') && (p[i] != '\r')))
             buf[n] = '.';
         else

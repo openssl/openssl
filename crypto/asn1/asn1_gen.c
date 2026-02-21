@@ -448,8 +448,7 @@ static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf,
         goto bad;
 
     ret->type = utype;
-    ret->value.asn1_string->data = der;
-    ret->value.asn1_string->length = derlen;
+    ASN1_STRING_set0(ret->value.asn1_string, der, derlen);
 
     der = NULL;
 
@@ -702,8 +701,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
                 ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_HEX);
                 goto bad_str;
             }
-            atmp->value.asn1_string->data = rdata;
-            atmp->value.asn1_string->length = rdlen;
+            ASN1_STRING_set0(atmp->value.asn1_string, rdata, rdlen);
             atmp->value.asn1_string->type = utype;
         } else if (format == ASN1_GEN_FORMAT_ASCII) {
             if (!ASN1_STRING_set(atmp->value.asn1_string, str, -1)) {

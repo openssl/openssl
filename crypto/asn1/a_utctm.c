@@ -20,7 +20,7 @@ IMPLEMENT_ASN1_DUP_FUNCTION(ASN1_UTCTIME)
 int ossl_asn1_utctime_to_tm(struct tm *tm, const ASN1_UTCTIME *d)
 {
     /* wrapper around ossl_asn1_time_to_tm */
-    if (d->type != V_ASN1_UTCTIME)
+    if (ASN1_STRING_type(d) != V_ASN1_UTCTIME)
         return 0;
     return ossl_asn1_time_to_tm(tm, d);
 }
@@ -98,7 +98,7 @@ int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
 
 int ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
 {
-    if (tm->type != V_ASN1_UTCTIME)
+    if (ASN1_STRING_type(tm) != V_ASN1_UTCTIME)
         return 0;
     return ASN1_TIME_print(bp, tm);
 }
