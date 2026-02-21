@@ -866,7 +866,7 @@ static int do_check_string(const ASN1_STRING *a, int cmp_type, equal_fn equal,
     return rv;
 }
 
-static int do_x509_check(X509 *x, const char *chk, size_t chklen,
+static int do_x509_check(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags, int check_type, char **peername)
 {
     GENERAL_NAMES *gens = NULL;
@@ -999,7 +999,7 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
     return 0;
 }
 
-int X509_check_host(X509 *x, const char *chk, size_t chklen,
+int X509_check_host(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags, char **peername)
 {
     if (chk == NULL)
@@ -1018,7 +1018,7 @@ int X509_check_host(X509 *x, const char *chk, size_t chklen,
     return do_x509_check(x, chk, chklen, flags, GEN_DNS, peername);
 }
 
-int X509_check_email(X509 *x, const char *chk, size_t chklen,
+int X509_check_email(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags)
 {
     if (chk == NULL)
@@ -1037,7 +1037,7 @@ int X509_check_email(X509 *x, const char *chk, size_t chklen,
     return do_x509_check(x, chk, chklen, flags, GEN_EMAIL, NULL);
 }
 
-int X509_check_ip(X509 *x, const unsigned char *chk, size_t chklen,
+int X509_check_ip(const X509 *x, const unsigned char *chk, size_t chklen,
     unsigned int flags)
 {
     if (chk == NULL)
@@ -1045,7 +1045,7 @@ int X509_check_ip(X509 *x, const unsigned char *chk, size_t chklen,
     return do_x509_check(x, (char *)chk, chklen, flags, GEN_IPADD, NULL);
 }
 
-int X509_check_ip_asc(X509 *x, const char *ipasc, unsigned int flags)
+int X509_check_ip_asc(const X509 *x, const char *ipasc, unsigned int flags)
 {
     unsigned char ipout[16];
     size_t iplen;

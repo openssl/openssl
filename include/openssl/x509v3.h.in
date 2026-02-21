@@ -805,13 +805,13 @@ STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(const X509 *x);
  */
 #define _X509_CHECK_FLAG_DOT_SUBDOMAINS 0x8000
 
-int X509_check_host(X509 *x, const char *chk, size_t chklen,
+int X509_check_host(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags, char **peername);
-int X509_check_email(X509 *x, const char *chk, size_t chklen,
+int X509_check_email(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags);
-int X509_check_ip(X509 *x, const unsigned char *chk, size_t chklen,
+int X509_check_ip(const X509 *x, const unsigned char *chk, size_t chklen,
     unsigned int flags);
-int X509_check_ip_asc(X509 *x, const char *ipasc, unsigned int flags);
+int X509_check_ip_asc(const X509 *x, const char *ipasc, unsigned int flags);
 
 ASN1_OCTET_STRING *a2i_IPADDRESS(const char *ipasc);
 ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc);
