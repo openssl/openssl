@@ -524,7 +524,7 @@ OpenSSL 3.6
    API was added to support checking multiple names against a certificate with
    `X509_VERIFY_PARAM`.  See `X509_VERIFY_PARAM_set_flags(3)` for full details.
 
-   * Bob Beck *
+   *Bob Beck*
 
  * Added `X509_CRL_get0_tbs_sigalg()` accessor for the signature
    `AlgorithmIdentifier` inside CRL's `TBSCertList`.
