@@ -209,8 +209,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
         }
         return -1;
     }
-    dest->length = outlen;
-    dest->data = p;
+    ASN1_STRING_set0(dest, p, outlen);
     p[outlen] = 0;
     traverse_string(in, len, inform, cpyfunc, &p);
     return str_type;

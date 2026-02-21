@@ -70,8 +70,8 @@ int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *a, ASN1_BIT_STRING *signature,
     }
     ret = -1;
 
-    if (EVP_VerifyFinal(ctx, (unsigned char *)signature->data,
-            (unsigned int)signature->length, pkey)
+    if (EVP_VerifyFinal(ctx, ASN1_STRING_get0_data(signature),
+            (unsigned int)ASN1_STRING_length(signature), pkey)
         <= 0) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         ret = 0;
@@ -214,8 +214,8 @@ int ASN1_item_verify_ctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
     }
     inll = inl;
 
-    ret = EVP_DigestVerify(ctx, signature->data, (size_t)signature->length,
-        buf_in, inl);
+    ret = EVP_DigestVerify(ctx, ASN1_STRING_get0_data(signature),
+        (size_t)ASN1_STRING_length(signature), buf_in, inl);
     if (ret <= 0) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         goto err;

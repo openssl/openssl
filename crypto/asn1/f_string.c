@@ -21,18 +21,18 @@ int i2a_ASN1_STRING(BIO *bp, const ASN1_STRING *a, int type)
     if (a == NULL)
         return 0;
 
-    if (a->length == 0) {
+    if (ASN1_STRING_length(a) == 0) {
         if (BIO_write(bp, "0", 1) != 1)
             goto err;
         n = 1;
     } else {
-        for (i = 0; i < a->length; i++) {
+        for (i = 0; i < ASN1_STRING_length(a); i++) {
             if ((i != 0) && (i % 35 == 0)) {
                 if (BIO_write(bp, "\\\n", 2) != 2)
                     goto err;
                 n += 2;
             }
-            ossl_to_hex(buf, a->data[i]);
+            ossl_to_hex(buf, ASN1_STRING_get0_data(a)[i]);
             if (BIO_write(bp, buf, 2) != 2)
                 goto err;
             n += 2;
@@ -121,8 +121,7 @@ int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
         else
             break;
     }
-    bs->length = num;
-    bs->data = s;
+    ASN1_STRING_set0(bs, s, num);
     return 1;
 
 err:

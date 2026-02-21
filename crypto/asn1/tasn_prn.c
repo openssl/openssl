@@ -414,13 +414,14 @@ static int asn1_print_oid(BIO *out, const ASN1_OBJECT *oid)
 
 static int asn1_print_obstring(BIO *out, const ASN1_STRING *str, int indent)
 {
-    if (str->type == V_ASN1_BIT_STRING) {
+    if (ASN1_STRING_type(str) == V_ASN1_BIT_STRING) {
         if (BIO_printf(out, " (%ld unused bits)\n", str->flags & 0x7) <= 0)
             return 0;
     } else if (BIO_puts(out, "\n") <= 0)
         return 0;
-    if ((str->length > 0)
-        && BIO_dump_indent(out, (const char *)str->data, str->length,
+    if ((ASN1_STRING_length(str) > 0)
+        && BIO_dump_indent(out, (const char *)ASN1_STRING_get0_data(str),
+                           ASN1_STRING_length(str),
                indent + 2)
             <= 0)
         return 0;
@@ -444,7 +445,7 @@ static int asn1_primitive_print(BIO *out, const ASN1_VALUE **fld,
         return pf->prim_print(out, fld, it, indent, pctx);
     if (it->itype == ASN1_ITYPE_MSTRING) {
         str = (ASN1_STRING *)*fld;
-        utype = str->type & ~V_ASN1_NEG;
+        utype = ASN1_STRING_type(str) & ~V_ASN1_NEG;
     } else {
         utype = it->utype;
         if (utype == V_ASN1_BOOLEAN)
@@ -517,7 +518,8 @@ static int asn1_primitive_print(BIO *out, const ASN1_VALUE **fld,
     case V_ASN1_OTHER:
         if (BIO_puts(out, "\n") <= 0)
             return 0;
-        if (ASN1_parse_dump(out, str->data, str->length, indent, 0) <= 0)
+        if (ASN1_parse_dump(out, ASN1_STRING_get0_data(str),
+                            ASN1_STRING_length(str), indent, 0) <= 0)
             ret = 0;
         needlf = 0;
         break;

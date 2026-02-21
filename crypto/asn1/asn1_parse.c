@@ -202,12 +202,12 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
 
                 opp = op;
                 os = d2i_ASN1_OCTET_STRING(NULL, &opp, len + hl);
-                if (os != NULL && os->length > 0) {
-                    opp = os->data;
+                if (os != NULL && ASN1_STRING_length(os) > 0) {
+                    opp = ASN1_STRING_get0_data(os);
                     /*
                      * testing whether the octet string is printable
                      */
-                    for (i = 0; i < os->length; i++) {
+                    for (i = 0; i < ASN1_STRING_length(os); i++) {
                         if (((opp[i] < ' ') && (opp[i] != '\n') && (opp[i] != '\r') && (opp[i] != '\t')) || (opp[i] > '~')) {
                             printable = 0;
                             break;
@@ -218,7 +218,8 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                     {
                         if (BIO_write(bp, ":", 1) <= 0)
                             goto end;
-                        if (BIO_write(bp, (const char *)opp, os->length) <= 0)
+                        if (BIO_write(bp, (const char *)opp,
+                                      ASN1_STRING_length(os)) <= 0)
                             goto end;
                     } else if (!dump)
                     /*
@@ -227,7 +228,7 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                     {
                         if (BIO_write(bp, "[HEX DUMP]:", 11) <= 0)
                             goto end;
-                        for (i = 0; i < os->length; i++) {
+                        for (i = 0; i < ASN1_STRING_length(os); i++) {
                             if (BIO_printf(bp, "%02X", opp[i]) <= 0)
                                 goto end;
                         }
@@ -240,7 +241,8 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                         }
                         if (BIO_dump_indent(bp,
                                 (const char *)opp,
-                                ((dump == -1 || dump > os->length) ? os->length : dump),
+                                ((dump == -1 || dump > ASN1_STRING_length(os))
+                                 ? ASN1_STRING_length(os) : dump),
                                 dump_indent)
                             <= 0)
                             goto end;
@@ -257,14 +259,15 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                 if (ai != NULL) {
                     if (BIO_write(bp, ":", 1) <= 0)
                         goto end;
-                    if (ai->type == V_ASN1_NEG_INTEGER)
+                    if (ASN1_STRING_type(ai) == V_ASN1_NEG_INTEGER)
                         if (BIO_write(bp, "-", 1) <= 0)
                             goto end;
-                    for (i = 0; i < ai->length; i++) {
-                        if (BIO_printf(bp, "%02X", ai->data[i]) <= 0)
+                    for (i = 0; i < ASN1_STRING_length(ai); i++) {
+                        if (BIO_printf(bp, "%02X",
+                                       ASN1_STRING_get0_data(ai)[i]) <= 0)
                             goto end;
                     }
-                    if (ai->length == 0) {
+                    if (ASN1_STRING_length(ai) == 0) {
                         if (BIO_write(bp, "00", 2) <= 0)
                             goto end;
                     }
@@ -283,14 +286,15 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                 if (ae != NULL) {
                     if (BIO_write(bp, ":", 1) <= 0)
                         goto end;
-                    if (ae->type == V_ASN1_NEG_ENUMERATED)
+                    if (ASN1_STRING_type(ae) == V_ASN1_NEG_ENUMERATED)
                         if (BIO_write(bp, "-", 1) <= 0)
                             goto end;
-                    for (i = 0; i < ae->length; i++) {
-                        if (BIO_printf(bp, "%02X", ae->data[i]) <= 0)
+                    for (i = 0; i < ASN1_STRING_length(ae); i++) {
+                        if (BIO_printf(bp, "%02X",
+                                       ASN1_STRING_get0_data(ae)[i]) <= 0)
                             goto end;
                     }
-                    if (ae->length == 0) {
+                    if (ASN1_STRING_length(ae) == 0) {
                         if (BIO_write(bp, "00", 2) <= 0)
                             goto end;
                     }

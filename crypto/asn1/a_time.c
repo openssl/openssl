@@ -87,9 +87,9 @@ int ossl_asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
     const char upper_z = 'Z', num_zero = '0', period = '.', minus = '-', plus = '+';
 #endif
 
-    if (d->type == V_ASN1_UTCTIME) {
+    if (ASN1_STRING_type(d) == V_ASN1_UTCTIME) {
         min_l = 13;
-    } else if (d->type == V_ASN1_GENERALIZEDTIME) {
+    } else if (ASN1_STRING_type(d) == V_ASN1_GENERALIZEDTIME) {
         end = 7;
         btz = 6;
         min_l = 15;
@@ -97,8 +97,8 @@ int ossl_asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
         return 0;
     }
 
-    l = d->length;
-    a = (char *)d->data;
+    l = ASN1_STRING_length(d);
+    a = (char *)ASN1_STRING_get0_data(d);
     o = 0;
     memset(&tmp, 0, sizeof(tmp));
 
@@ -129,7 +129,7 @@ int ossl_asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
         if (++o == l)
             goto err;
 
-        i2 = (d->type == V_ASN1_UTCTIME) ? i + 1 : i;
+        i2 = (ASN1_STRING_type(d) == V_ASN1_UTCTIME) ? i + 1 : i;
 
         if ((n < min[i2]) || (n > max[i2]))
             goto err;
@@ -176,7 +176,7 @@ int ossl_asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
      * Optional fractional seconds: decimal point followed by one or more
      * digits.
      */
-    if (d->type == V_ASN1_GENERALIZEDTIME && a[o] == period) {
+    if (ASN1_STRING_type(d) == V_ASN1_GENERALIZEDTIME && a[o] == period) {
         if (++o == l)
             goto err;
         i = o;
@@ -218,7 +218,7 @@ int ossl_asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d)
             if (!ossl_ascii_isdigit(a[o]))
                 goto err;
             n = (n * 10) + a[o] - num_zero;
-            i2 = (d->type == V_ASN1_UTCTIME) ? i + 1 : i;
+            i2 = (ASN1_STRING_type(d) == V_ASN1_UTCTIME) ? i + 1 : i;
             if ((n < min[i2]) || (n > max[i2]))
                 goto err;
             /* if tm is NULL, no need to adjust */
@@ -329,9 +329,9 @@ ASN1_TIME *ASN1_TIME_adj(ASN1_TIME *s, time_t t,
 
 int ASN1_TIME_check(const ASN1_TIME *t)
 {
-    if (t->type == V_ASN1_GENERALIZEDTIME)
+    if (ASN1_STRING_type(t) == V_ASN1_GENERALIZEDTIME)
         return ASN1_GENERALIZEDTIME_check(t);
-    else if (t->type == V_ASN1_UTCTIME)
+    else if (ASN1_STRING_type(t) == V_ASN1_UTCTIME)
         return ASN1_UTCTIME_check(t);
     return 0;
 }
@@ -475,10 +475,10 @@ int ossl_asn1_time_print_ex(BIO *bp, const ASN1_TIME *tm, unsigned long flags)
     if (!ossl_asn1_time_to_tm(&stm, tm))
         return BIO_write(bp, "Bad time value", 14) ? -1 : 0;
 
-    l = tm->length;
-    v = (char *)tm->data;
+    l = ASN1_STRING_length(tm);
+    v = (char *)ASN1_STRING_get0_data(tm);
 
-    if (tm->type == V_ASN1_GENERALIZEDTIME) {
+    if (ASN1_STRING_type(tm) == V_ASN1_GENERALIZEDTIME) {
         char *f = NULL;
         int f_len = 0;
 
@@ -486,7 +486,7 @@ int ossl_asn1_time_print_ex(BIO *bp, const ASN1_TIME *tm, unsigned long flags)
          * Try to parse fractional seconds. '14' is the place of
          * 'fraction point' in a GeneralizedTime string.
          */
-        if (tm->length > 15 && v[14] == period) {
+        if (ASN1_STRING_length(tm) > 15 && v[14] == period) {
             /* exclude the . itself */
             f = &v[15];
             f_len = 0;

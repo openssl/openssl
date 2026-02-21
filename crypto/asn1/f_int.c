@@ -27,18 +27,18 @@ int i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a)
         n = 1;
     }
 
-    if (a->length == 0) {
+    if (ASN1_STRING_length(a) == 0) {
         if (BIO_write(bp, "00", 2) != 2)
             goto err;
         n += 2;
     } else {
-        for (i = 0; i < a->length; i++) {
+        for (i = 0; i < ASN1_STRING_length(a); i++) {
             if ((i != 0) && (i % 35 == 0)) {
                 if (BIO_write(bp, "\\\n", 2) != 2)
                     goto err;
                 n += 2;
             }
-            ossl_to_hex(buf, a->data[i]);
+            ossl_to_hex(buf, ASN1_STRING_get0_data(a)[i]);
             if (BIO_write(bp, buf, 2) != 2)
                 goto err;
             n += 2;
@@ -128,8 +128,7 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
         else
             break;
     }
-    bs->length = num;
-    bs->data = s;
+    ASN1_STRING_set0(bs, s, num);
     return 1;
 err:
     ERR_raise(ERR_LIB_ASN1, ASN1_R_SHORT_LINE);

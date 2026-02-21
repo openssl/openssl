@@ -25,7 +25,7 @@ static int asn1_generalizedtime_to_tm(struct tm *tm,
     const ASN1_GENERALIZEDTIME *d)
 {
     /* wrapper around ossl_asn1_time_to_tm */
-    if (d->type != V_ASN1_GENERALIZEDTIME)
+    if (ASN1_STRING_type(d) != V_ASN1_GENERALIZEDTIME)
         return 0;
     return ossl_asn1_time_to_tm(tm, d);
 }
@@ -84,7 +84,7 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s,
 
 int ASN1_GENERALIZEDTIME_print(BIO *bp, const ASN1_GENERALIZEDTIME *tm)
 {
-    if (tm->type != V_ASN1_GENERALIZEDTIME)
+    if (ASN1_STRING_type(tm) != V_ASN1_GENERALIZEDTIME)
         return 0;
     return ASN1_TIME_print(bp, tm);
 }
