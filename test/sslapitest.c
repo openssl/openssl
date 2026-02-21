@@ -10560,8 +10560,8 @@ static int test_sigalgs_available(int idx)
     OSSL_PROVIDER *filterprov = NULL;
     int sig, hash, numshared, numshared_expected, hash_expected, sig_expected;
     unsigned char rsig, rhash;
-    unsigned int sigalg;
-    const char *sigalg_name, *signame_expected;
+    unsigned int sigalg, csigalg_expected;
+    const char *sigalg_name, *signame_expected, *csigname_expected;
 
     if (!TEST_ptr(tmpctx))
         goto end;
@@ -10686,15 +10686,24 @@ static int test_sigalgs_available(int idx)
     hash_expected = NID_sha256;
     sig_expected = NID_rsassaPss;
     signame_expected = "rsa_pss_rsae_sha256";
+    csigname_expected = "rsa_pss_rsae_sha256";
+    csigalg_expected = 0x0804;
     switch (idx) {
     case 0:
-        hash_expected = NID_sha384;
         signame_expected = "rsa_pss_rsae_sha384";
+        hash_expected = NID_sha384;
+        numshared_expected = 2;
         /* FALLTHROUGH */
+    case 2:
+        csigname_expected = "rsa_pss_rsae_sha384";
+        csigalg_expected = 0x0805;
+        break;
     case 3:
         numshared_expected = 2;
         break;
     case 4:
+        csigname_expected = "ecdsa_secp256r1_sha256";
+        csigalg_expected = 0x0403;
     case 5:
         sig_expected = EVP_PKEY_EC;
         signame_expected = "ecdsa_secp256r1_sha256";
@@ -10708,7 +10717,10 @@ static int test_sigalgs_available(int idx)
         || !TEST_str_eq(sigalg_name, signame_expected)
         || !TEST_int_gt(SSL_get0_shared_sigalg(serverssl, 0, &sigalg, &sigalg_name), 0)
         || !TEST_int_eq(sigalg, (((int)rhash) << 8) | rsig)
-        || !TEST_str_eq(sigalg_name, signame_expected))
+        || !TEST_str_eq(sigalg_name, signame_expected)
+        || !TEST_int_gt(SSL_get0_sigalg(serverssl, 0, &sigalg, &sigalg_name), 0)
+        || !TEST_int_eq(sigalg, csigalg_expected)
+        || !TEST_str_eq(sigalg_name, csigname_expected))
         goto end;
 
     testresult = filter_provider_check_clean_finish();

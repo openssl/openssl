@@ -2430,21 +2430,25 @@ char *SSL_get1_builtin_sigalgs(OSSL_LIB_CTX *libctx)
     return retval;
 }
 
-/* Lookup TLS signature algorithm */
+/* Find known TLS signature algorithm */
+static const SIGALG_LOOKUP *tls1_find_sigalg(const SSL_CTX *ctx,
+    uint16_t sigalg)
+{
+    const SIGALG_LOOKUP *lu = ctx->sigalg_lookup_cache;
+
+    for (size_t i = 0; i < ctx->sigalg_lookup_cache_len; lu++, i++)
+        if (lu->sigalg == sigalg)
+            return lu;
+    return NULL;
+}
+
+/* Look up available TLS signature algorithm */
 static const SIGALG_LOOKUP *tls1_lookup_sigalg(const SSL_CTX *ctx,
     uint16_t sigalg)
 {
-    size_t i;
-    const SIGALG_LOOKUP *lu = ctx->sigalg_lookup_cache;
+    const SIGALG_LOOKUP *lu = tls1_find_sigalg(ctx, sigalg);
 
-    for (i = 0; i < ctx->sigalg_lookup_cache_len; lu++, i++) {
-        if (lu->sigalg == sigalg) {
-            if (!lu->available)
-                return NULL;
-            return lu;
-        }
-    }
-    return NULL;
+    return (lu != NULL && lu->available) ? lu : NULL;
 }
 
 /* Lookup hash: return 0 if invalid or not enabled */
@@ -3753,7 +3757,7 @@ int SSL_get0_sigalg(SSL *s, int idx, unsigned int *codepoint,
     if (idx >= 0) {
         if (codepoint != NULL)
             *codepoint = psig[idx];
-        lu = tls1_lookup_sigalg(SSL_CONNECTION_GET_CTX(sc), psig[idx]);
+        lu = tls1_find_sigalg(SSL_CONNECTION_GET_CTX(sc), psig[idx]);
         if (name != NULL)
             *name = lu == NULL ? NULL : lu->name;
     }
