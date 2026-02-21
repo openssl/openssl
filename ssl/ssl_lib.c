@@ -1177,7 +1177,7 @@ int SSL_add1_ipaddr(SSL *s, const char *ipaddr)
     if (sc == NULL)
         return 0;
 
-    return X509_VERIFY_PARAM_add1_ip_asc(sc->param, ipaddr);
+    return X509_VERIFY_PARAM_add1_ip_asc(sc->param, ip_asc);
 }
 
 #if !defined(OPENSSL_NO_DEPRECATED_4_0)
