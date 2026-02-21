@@ -222,8 +222,7 @@ static int kdf_ikev2kdf_derive(void *vctx, unsigned char *key, size_t keylen,
     case EVP_KDF_IKEV2_MODE_DKM:
         /*
          * if spi_init != NULL and spi_resp != NULL and shared_secret = NULL
-         *.   and seedkey != NULL
-         *    dkm_or_child = 1;
+         *    and seedkey != NULL
          *    calculate DKM
          * else if spi_init == NULL and spi_resp == NULL and shared_secret != NULL
          *    and sk_d != NULL
@@ -280,6 +279,7 @@ static int kdf_ikev2kdf_derive(void *vctx, unsigned char *key, size_t keylen,
             ctx->secret, ctx->secret_len, ctx->sk_d, ctx->sk_d_len));
     default:
         /* This error is already checked in set_ctx_params */
+        ;
     }
     return 0;
 }
@@ -537,7 +537,8 @@ err:
  *             generate the Derived Keying Material(DKM),
  *             DKM(Child SA) and DKM(Child SA DH).
  * algorithm:
- *   if spii != NULL and spir != NULL and shared_secret = NULL
+ *   if spii != NULL and spir != NULL and shared_secret == NULL
+ *     and seedkey != NULL
  *     calculate DKM:
  *       HMAC(seedkey, ni || nr || spii || spir)
  *   else if spii == NULL and spir == NULL and shared_secret == NULL
@@ -576,10 +577,10 @@ static int IKEV2_DKM(OSSL_LIB_CTX *libctx, unsigned char *dkm, size_t len_out,
 {
     EVP_MAC_CTX *ctx = NULL;
     EVP_MAC *mac = NULL;
-    size_t outl = 0, hmac_len = 0;
+    size_t outl = 0, hmac_len = 0, ii;
     unsigned char *hmac = NULL;
     unsigned char *value = NULL;
-    int ii, ret = 0, value_len = 0;
+    int ret = 0, value_len = 0;
     int md_size = 0;
     OSSL_PARAM params[] = {
         OSSL_PARAM_construct_utf8_string("digest", (char *)EVP_MD_name(evp_md), 0),
