@@ -2343,7 +2343,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         return 0;
 
     /* This only fuzzes the initial flow from the client so far. */
-    ctx = SSL_CTX_new(SSLv23_method());
+    ctx = SSL_CTX_new(TLS_method());
     OPENSSL_assert(ctx != NULL);
     ret = SSL_CTX_set_min_proto_version(ctx, 0);
     OPENSSL_assert(ret == 1);
