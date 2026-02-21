@@ -519,7 +519,7 @@ OpenSSL 3.6
 
    *Dimitri John Ledkov*
 
- * SSL_add1_host and SSL_set1_host were deprecated. The new replacement functions
+ * `SSL_add1_host()` and `SSL_set1_host()` were deprecated. The new replacement functions
    SSL_add1_dnsname, SSL_set1_dnsname, SSL_add1_ipaddr, and SSL_set1_ipaddr were added.
    API was added to support checking multiple names against a certificate with
    X509_VERIFY_PARAM.  See X509_VERIFY_PARAM_set_flags(3) for full details.
