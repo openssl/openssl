@@ -35,7 +35,7 @@ X509_ACERT_get_signature_nid - signature information
  int X509_CRL_get_signature_nid(const X509_CRL *crl);
  const X509_ALGOR *X509_CRL_get0_tbs_sigalg(const X509_crl *crl);
 
- int X509_get_signature_info(X509 *x, int *mdnid, int *pknid, int *secbits,
+ int X509_get_signature_info(const X509 *x, int *mdnid, int *pknid, int *secbits,
                              uint32_t *flags);
 
  int X509_SIG_INFO_get(const X509_SIG_INFO *siginf, int *mdnid, int *pknid,
