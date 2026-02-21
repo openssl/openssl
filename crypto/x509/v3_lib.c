@@ -70,7 +70,7 @@ const X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid)
     return sk_X509V3_EXT_METHOD_value(ext_list, idx);
 }
 
-const X509V3_EXT_METHOD *X509V3_EXT_get(X509_EXTENSION *ext)
+const X509V3_EXT_METHOD *X509V3_EXT_get(const X509_EXTENSION *ext)
 {
     int nid;
     if ((nid = OBJ_obj2nid(X509_EXTENSION_get_object(ext))) == NID_undef)
@@ -131,11 +131,11 @@ int X509V3_add_standard_extensions(void)
 
 /* Return an extension internal structure */
 
-void *X509V3_EXT_d2i(X509_EXTENSION *ext)
+void *X509V3_EXT_d2i(const X509_EXTENSION *ext)
 {
     const X509V3_EXT_METHOD *method;
     const unsigned char *p;
-    ASN1_STRING *extvalue;
+    const ASN1_STRING *extvalue;
     int extlen;
 
     if ((method = X509V3_EXT_get(ext)) == NULL)

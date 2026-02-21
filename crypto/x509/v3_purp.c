@@ -310,7 +310,7 @@ static int nid_cmp(const int *a, const int *b)
 DECLARE_OBJ_BSEARCH_CMP_FN(int, int, nid);
 IMPLEMENT_OBJ_BSEARCH_CMP_FN(int, int, nid);
 
-int X509_supported_extension(X509_EXTENSION *ex)
+int X509_supported_extension(const X509_EXTENSION *ex)
 {
     /*
      * This table is a list of the NIDs of supported extensions: that is
@@ -630,7 +630,7 @@ int ossl_x509v3_cache_extensions(X509 *x)
         x->ex_flags |= EXFLAG_INVALID;
 #endif
     for (i = 0; i < X509_get_ext_count(x); i++) {
-        X509_EXTENSION *ex = X509_get_ext(x, i);
+        const X509_EXTENSION *ex = X509_get_ext(x, i);
         int nid = OBJ_obj2nid(X509_EXTENSION_get_object(ex));
 
         if (nid == NID_freshest_crl)
@@ -956,7 +956,7 @@ static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *x,
     if (i_ext < 0)
         return 0;
     if (i_ext >= 0) {
-        X509_EXTENSION *ext = X509_get_ext((X509 *)x, i_ext);
+        const X509_EXTENSION *ext = X509_get_ext((X509 *)x, i_ext);
         if (!X509_EXTENSION_get_critical(ext))
             return 0;
     }

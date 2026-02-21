@@ -106,7 +106,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     GENERAL_NAMES *gens = NULL;
     GENERAL_NAME *gen = NULL;
     ASN1_INTEGER *serial = NULL;
-    X509_EXTENSION *ext;
+    const X509_EXTENSION *ext;
     X509 *issuer_cert;
     int same_issuer, ss;
     AUTHORITY_KEYID *akeyid = AUTHORITY_KEYID_new();

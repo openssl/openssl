@@ -80,7 +80,7 @@ int X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *sk, int crit,
     return -1;
 }
 
-X509_EXTENSION *X509v3_get_ext(const STACK_OF(X509_EXTENSION) *x, int loc)
+const X509_EXTENSION *X509v3_get_ext(const STACK_OF(X509_EXTENSION) *x, int loc)
 {
     if (x == NULL || sk_X509_EXTENSION_num(x) <= loc || loc < 0)
         return NULL;
@@ -99,7 +99,7 @@ X509_EXTENSION *X509v3_delete_ext(STACK_OF(X509_EXTENSION) *x, int loc)
 }
 
 STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
-    X509_EXTENSION *ex, int loc)
+    const X509_EXTENSION *ex, int loc)
 {
     X509_EXTENSION *new_ex = NULL;
     int n;
@@ -154,8 +154,8 @@ STACK_OF(X509_EXTENSION) *X509v3_add_extensions(STACK_OF(X509_EXTENSION) **targe
     }
 
     for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
-        X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
-        ASN1_OBJECT *obj = X509_EXTENSION_get_object(ext);
+        const X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
+        const ASN1_OBJECT *obj = X509_EXTENSION_get_object(ext);
         int idx = X509v3_get_ext_by_OBJ(*target, obj, -1);
 
         /* Does extension exist in target? */
@@ -237,7 +237,7 @@ int X509_EXTENSION_set_critical(X509_EXTENSION *ex, int crit)
     return 1;
 }
 
-int X509_EXTENSION_set_data(X509_EXTENSION *ex, ASN1_OCTET_STRING *data)
+int X509_EXTENSION_set_data(X509_EXTENSION *ex, const ASN1_OCTET_STRING *data)
 {
     int i;
 
@@ -249,14 +249,14 @@ int X509_EXTENSION_set_data(X509_EXTENSION *ex, ASN1_OCTET_STRING *data)
     return 1;
 }
 
-ASN1_OBJECT *X509_EXTENSION_get_object(X509_EXTENSION *ex)
+const ASN1_OBJECT *X509_EXTENSION_get_object(const X509_EXTENSION *ex)
 {
     if (ex == NULL)
         return NULL;
     return ex->object;
 }
 
-ASN1_OCTET_STRING *X509_EXTENSION_get_data(X509_EXTENSION *ex)
+const ASN1_OCTET_STRING *X509_EXTENSION_get_data(const X509_EXTENSION *ex)
 {
     if (ex == NULL)
         return NULL;
