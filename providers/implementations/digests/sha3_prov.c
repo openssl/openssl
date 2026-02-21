@@ -55,6 +55,16 @@
 #define SHAKE_PADDING 0x1f
 #define CSHAKE_KECCAK_PADDING 0x04
 
+#if defined(OPENSSL_CPUID_OBJ) && defined(__s390__) && defined(KECCAK1600_ASM)
+/*
+ * IBM S390X support
+ */
+#include "s390x_arch.h"
+#define S390_SHA3 1
+#define S390_SHA3_CAPABLE(name) \
+    ((OPENSSL_s390xcap_P.kimd[0] & S390X_CAPBIT(S390X_##name)) && (OPENSSL_s390xcap_P.klmd[0] & S390X_CAPBIT(S390X_##name)))
+#endif
+
 /*
  * Forward declaration of any unique methods implemented here. This is not strictly
  * necessary for the compiler, but provides an assurance that the signatures
@@ -68,23 +78,23 @@ static OSSL_FUNC_digest_freectx_fn keccak_freectx;
 static OSSL_FUNC_digest_copyctx_fn keccak_copyctx;
 static OSSL_FUNC_digest_dupctx_fn keccak_dupctx;
 static OSSL_FUNC_digest_squeeze_fn shake_squeeze;
+
 static OSSL_FUNC_digest_get_ctx_params_fn shake_get_ctx_params;
 static OSSL_FUNC_digest_gettable_ctx_params_fn shake_gettable_ctx_params;
 static OSSL_FUNC_digest_set_ctx_params_fn shake_set_ctx_params;
 static OSSL_FUNC_digest_settable_ctx_params_fn shake_settable_ctx_params;
-static sha3_absorb_fn generic_sha3_absorb;
-static sha3_final_fn generic_sha3_final;
-static sha3_squeeze_fn generic_sha3_squeeze;
 
-#if defined(OPENSSL_CPUID_OBJ) && defined(__s390__) && defined(KECCAK1600_ASM)
-/*
- * IBM S390X support
- */
-#include "s390x_arch.h"
-#define S390_SHA3 1
-#define S390_SHA3_CAPABLE(name) \
-    ((OPENSSL_s390xcap_P.kimd[0] & S390X_CAPBIT(S390X_##name)) && (OPENSSL_s390xcap_P.klmd[0] & S390X_CAPBIT(S390X_##name)))
-#endif
+static PROV_SHA3_METHOD sha3_generic_md = {
+    ossl_sha3_absorb_default,
+    ossl_sha3_final_default,
+    NULL
+};
+
+static PROV_SHA3_METHOD shake_generic_md = {
+    ossl_sha3_absorb_default,
+    ossl_sha3_final_default,
+    ossl_shake_squeeze_default
+};
 
 static int keccak_init(void *vctx, ossl_unused const OSSL_PARAM params[])
 {
@@ -118,9 +128,7 @@ static int keccak_final(void *vctx, unsigned char *out, size_t *outl,
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_LENGTH);
         return 0;
     }
-    if (ossl_likely(outlen > 0))
-        ret = ctx->meth.final(ctx, out, ctx->md_size);
-
+    ret = ossl_sha3_final(ctx, out, ctx->md_size);
     *outl = ctx->md_size;
     return ret;
 }
@@ -136,46 +144,11 @@ static int shake_squeeze(void *vctx, unsigned char *out, size_t *outl,
     if (ctx->meth.squeeze == NULL)
         return 0;
     if (outlen > 0)
-        ret = ctx->meth.squeeze(ctx, out, outlen);
-
-    *outl = outlen;
+        ret = ossl_sha3_squeeze(ctx, out, outlen);
+    if (outl != NULL)
+        *outl = outlen;
     return ret;
 }
-
-/*-
- * Generic software version of the absorb() and final().
- */
-static size_t generic_sha3_absorb(void *vctx, const void *inp, size_t len)
-{
-    KECCAK1600_CTX *ctx = vctx;
-
-    if (!(ctx->xof_state == XOF_STATE_INIT || ctx->xof_state == XOF_STATE_ABSORB))
-        return 0;
-    ctx->xof_state = XOF_STATE_ABSORB;
-    return SHA3_absorb(ctx->A, inp, len, ctx->block_size);
-}
-
-static int generic_sha3_final(void *vctx, unsigned char *out, size_t outlen)
-{
-    return ossl_sha3_final((KECCAK1600_CTX *)vctx, out, outlen);
-}
-
-static int generic_sha3_squeeze(void *vctx, unsigned char *out, size_t outlen)
-{
-    return ossl_sha3_squeeze((KECCAK1600_CTX *)vctx, out, outlen);
-}
-
-static PROV_SHA3_METHOD sha3_generic_md = {
-    generic_sha3_absorb,
-    generic_sha3_final,
-    NULL
-};
-
-static PROV_SHA3_METHOD shake_generic_md = {
-    generic_sha3_absorb,
-    generic_sha3_final,
-    generic_sha3_squeeze
-};
 
 #if defined(S390_SHA3)
 
@@ -186,79 +159,56 @@ static sha3_final_fn s390x_shake_final;
 /*-
  * The platform specific parts of the absorb() and final() for S390X.
  */
-static size_t s390x_sha3_absorb(void *vctx, const void *inp, size_t len)
+static size_t s390x_sha3_absorb(KECCAK1600_CTX *ctx, const unsigned char *inp, size_t len)
 {
-    KECCAK1600_CTX *ctx = vctx;
     size_t rem = len % ctx->block_size;
     unsigned int fc;
 
-    if (!(ctx->xof_state == XOF_STATE_INIT || ctx->xof_state == XOF_STATE_ABSORB))
-        return 0;
     if (len - rem > 0) {
         fc = ctx->pad;
         fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KIMD_NIP : 0;
-        ctx->xof_state = XOF_STATE_ABSORB;
         s390x_kimd(inp, len - rem, fc, ctx->A);
     }
     return rem;
 }
 
-static int s390x_sha3_final(void *vctx, unsigned char *out, size_t outlen)
+static int s390x_sha3_final(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
 {
-    KECCAK1600_CTX *ctx = vctx;
     unsigned int fc;
 
-    if (!ossl_prov_is_running())
-        return 0;
-    if (!(ctx->xof_state == XOF_STATE_INIT || ctx->xof_state == XOF_STATE_ABSORB))
-        return 0;
     fc = ctx->pad | S390X_KLMD_DUFOP;
     fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KLMD_NIP : 0;
-    ctx->xof_state = XOF_STATE_FINAL;
     s390x_klmd(ctx->buf, ctx->bufsz, NULL, 0, fc, ctx->A);
     memcpy(out, ctx->A, outlen);
     return 1;
 }
 
-static int s390x_shake_final(void *vctx, unsigned char *out, size_t outlen)
+static int s390x_shake_final(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
 {
-    KECCAK1600_CTX *ctx = vctx;
     unsigned int fc;
 
-    if (!ossl_prov_is_running())
-        return 0;
-    if (!(ctx->xof_state == XOF_STATE_INIT || ctx->xof_state == XOF_STATE_ABSORB))
-        return 0;
     fc = ctx->pad | S390X_KLMD_DUFOP;
     fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KLMD_NIP : 0;
-    ctx->xof_state = XOF_STATE_FINAL;
     s390x_klmd(ctx->buf, ctx->bufsz, out, outlen, fc, ctx->A);
     return 1;
 }
 
-static int s390x_shake_squeeze(void *vctx, unsigned char *out, size_t outlen)
+static int s390x_shake_squeeze(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
 {
-    KECCAK1600_CTX *ctx = vctx;
     unsigned int fc;
     size_t len;
 
-    if (!ossl_prov_is_running())
-        return 0;
-    if (ctx->xof_state == XOF_STATE_FINAL)
-        return 0;
     /*
      * On the first squeeze call, finish the absorb process (incl. padding).
      */
     if (ctx->xof_state != XOF_STATE_SQUEEZE) {
         fc = ctx->pad;
         fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KLMD_NIP : 0;
-        ctx->xof_state = XOF_STATE_SQUEEZE;
         s390x_klmd(ctx->buf, ctx->bufsz, out, outlen, fc, ctx->A);
         ctx->bufsz = outlen % ctx->block_size;
         /* reuse ctx->bufsz to count bytes squeezed from current sponge */
         return 1;
     }
-    ctx->xof_state = XOF_STATE_SQUEEZE;
     if (ctx->bufsz != 0) {
         len = ctx->block_size - ctx->bufsz;
         if (outlen < len)
@@ -278,22 +228,16 @@ static int s390x_shake_squeeze(void *vctx, unsigned char *out, size_t outlen)
     return 1;
 }
 
-static int s390x_keccakc_final(void *vctx, unsigned char *out, size_t outlen,
+static int s390x_keccakc_final(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen,
     int padding)
 {
-    KECCAK1600_CTX *ctx = vctx;
     size_t bsz = ctx->block_size;
     size_t num = ctx->bufsz;
     size_t needed = outlen;
     unsigned int fc;
 
-    if (!ossl_prov_is_running())
-        return 0;
-    if (!(ctx->xof_state == XOF_STATE_INIT || ctx->xof_state == XOF_STATE_ABSORB))
-        return 0;
     fc = ctx->pad;
     fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KIMD_NIP : 0;
-    ctx->xof_state = XOF_STATE_FINAL;
     if (outlen == 0)
         return 1;
     memset(ctx->buf + num, 0, bsz - num);
@@ -310,27 +254,22 @@ static int s390x_keccakc_final(void *vctx, unsigned char *out, size_t outlen,
     return 1;
 }
 
-static int s390x_keccak_final(void *vctx, unsigned char *out, size_t outlen)
+static int s390x_keccak_final(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
 {
-    return s390x_keccakc_final(vctx, out, outlen, 0x01);
+    return s390x_keccakc_final(ctx, out, outlen, 0x01);
 }
 
-static int s390x_cshake_keccak_final(void *vctx, unsigned char *out, size_t outlen)
+static int s390x_cshake_keccak_final(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
 {
-    return s390x_keccakc_final(vctx, out, outlen, 0x04);
+    return s390x_keccakc_final(ctx, out, outlen, 0x04);
 }
 
-static int s390x_keccakc_squeeze(void *vctx, unsigned char *out, size_t outlen,
+static int s390x_keccakc_squeeze(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen,
     int padding)
 {
-    KECCAK1600_CTX *ctx = vctx;
     size_t len;
     unsigned int fc;
 
-    if (!ossl_prov_is_running())
-        return 0;
-    if (ctx->xof_state == XOF_STATE_FINAL)
-        return 0;
     /*
      * On the first squeeze call, finish the absorb process
      * by adding the trailing padding and then doing
@@ -358,7 +297,6 @@ static int s390x_keccakc_squeeze(void *vctx, unsigned char *out, size_t outlen,
         if (ctx->bufsz == ctx->block_size)
             ctx->bufsz = 0;
     }
-    ctx->xof_state = XOF_STATE_SQUEEZE;
     if (outlen == 0)
         return 1;
     s390x_klmd(NULL, 0, out, outlen, ctx->pad | S390X_KLMD_PS, ctx->A);
@@ -367,14 +305,14 @@ static int s390x_keccakc_squeeze(void *vctx, unsigned char *out, size_t outlen,
     return 1;
 }
 
-static int s390x_keccak_squeeze(void *vctx, unsigned char *out, size_t outlen)
+static int s390x_keccak_squeeze(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
 {
-    return s390x_keccakc_squeeze(vctx, out, outlen, KECCAK_PADDING);
+    return s390x_keccakc_squeeze(ctx, out, outlen, KECCAK_PADDING);
 }
 
-static int s390x_cshake_keccak_squeeze(void *vctx, unsigned char *out, size_t outlen)
+static int s390x_cshake_keccak_squeeze(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
 {
-    return s390x_keccakc_squeeze(vctx, out, outlen, CSHAKE_KECCAK_PADDING);
+    return s390x_keccakc_squeeze(ctx, out, outlen, CSHAKE_KECCAK_PADDING);
 }
 
 static PROV_SHA3_METHOD sha3_s390x_md = {
@@ -433,21 +371,20 @@ size_t SHA3_absorb_cext(uint64_t A[5][5], const unsigned char *inp, size_t len,
 /*-
  * Hardware-assisted ARMv8.2 SHA3 extension version of the absorb()
  */
-static size_t armsha3_sha3_absorb(void *vctx, const void *inp, size_t len)
+static size_t armsha3_sha3_absorb(KECCAK1600_CTX *ctx, const unsigned char *inp, size_t len)
 {
-    KECCAK1600_CTX *ctx = vctx;
-
     return SHA3_absorb_cext(ctx->A, inp, len, ctx->block_size);
 }
 
 static PROV_SHA3_METHOD sha3_ARMSHA3_md = {
     armsha3_sha3_absorb,
-    generic_sha3_final
+    ossl_sha3_final_default,
+    NULL
 };
 static PROV_SHA3_METHOD shake_ARMSHA3_md = {
     armsha3_sha3_absorb,
-    generic_sha3_final,
-    generic_sha3_squeeze
+    ossl_sha3_final_default,
+    ossl_shake_squeeze_default
 };
 #define SHAKE_SET_MD(uname, typ)                              \
     if (OPENSSL_armcap_P & ARMV8_HAVE_SHA3_AND_WORTH_USING) { \
