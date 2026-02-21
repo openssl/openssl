@@ -272,7 +272,7 @@ when any one of the specified RFC822 or SMTPUTF8 names matches a corresponding e
 address SAN in the certificate.
 
 X509_VERIFY_PARAM_set1_email() calls X509_VERIFY_PARAM_set_rfc822(), and
-X509_VERIFY_PARAM_set_smtputf8() and succeeds if any call succeeds.
+X509_VERIFY_PARAM_set_smtputf8() and succeeds if either call succeeds.
 
 X509_VERIFY_PARAM_get1_ip_asc() returns the expected IP address as a string.
 The caller is responsible for freeing it.
