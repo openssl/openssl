@@ -250,7 +250,7 @@ address SAN in the certificate.
 The _smtputf8() family of functions is used for email names that have
 a non-ASCII localpart addresses, in which case the domain part of the
 address must be represented in U-label form. They are used to
-manipulate values to match against the OTHERNAME SMTPUTF8 names in
+specify the list of values to match against the OTHERNAME SMTPUTF8 names in
 certificates.
 
 X509_VERIFY_PARAM_set1_smtputf8() sets the expected SMTPUTF8 email address to
