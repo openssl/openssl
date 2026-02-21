@@ -225,7 +225,7 @@ X509_VERIFY_PARAM_get0_email() returns the expected RFC822 email address.
 The _rfc822() family of functions is used for email names that have
 ASCII localpart addresses, in which case the domain part of the
 address must be represented in A-label form. They are used to
-manipulate values to match against the SAN Email names in
+specify the list of values to match against the SAN Email names in
 certificates.
 
 X509_VERIFY_PARAM_set1_rfc822() clears all expected RFC822 email
