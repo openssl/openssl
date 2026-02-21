@@ -2006,63 +2006,10 @@ OSSL_DEPRECATEDIN_3_0
 __owur int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth);
 #endif
 
-#ifndef OPENSSL_NO_SSL3_METHOD
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
-OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *SSLv3_method(void); /* SSLv3 */
-OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *SSLv3_server_method(void);
-OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *SSLv3_client_method(void);
-#endif
-#endif
-
-#define SSLv23_method TLS_method
-#define SSLv23_server_method TLS_server_method
-#define SSLv23_client_method TLS_client_method
-
 /* Negotiate highest available SSL/TLS version */
 __owur const SSL_METHOD *TLS_method(void);
 __owur const SSL_METHOD *TLS_server_method(void);
 __owur const SSL_METHOD *TLS_client_method(void);
-
-#ifndef OPENSSL_NO_TLS1_METHOD
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
-OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *TLSv1_method(void); /* TLSv1.0 */
-OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *TLSv1_server_method(void);
-OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *TLSv1_client_method(void);
-#endif
-#endif
-
-#ifndef OPENSSL_NO_TLS1_1_METHOD
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
-OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *TLSv1_1_method(void); /* TLSv1.1 */
-OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *TLSv1_1_server_method(void);
-OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *TLSv1_1_client_method(void);
-#endif
-#endif
-
-#ifndef OPENSSL_NO_TLS1_2_METHOD
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
-OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *TLSv1_2_method(void); /* TLSv1.2 */
-OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *TLSv1_2_server_method(void);
-OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *TLSv1_2_client_method(void);
-#endif
-#endif
-
-#ifndef OPENSSL_NO_DTLS1_METHOD
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
-OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *DTLSv1_method(void); /* DTLSv1.0 */
-OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *DTLSv1_server_method(void);
-OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *DTLSv1_client_method(void);
-#endif
-#endif
-
-#ifndef OPENSSL_NO_DTLS1_2_METHOD
-/* DTLSv1.2 */
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
-OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *DTLSv1_2_method(void);
-OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *DTLSv1_2_server_method(void);
-OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *DTLSv1_2_client_method(void);
-#endif
-#endif
 
 __owur const SSL_METHOD *DTLS_method(void); /* DTLS 1.0 and 1.2 */
 __owur const SSL_METHOD *DTLS_server_method(void); /* DTLS 1.0 and 1.2 */

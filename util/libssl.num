@@ -341,15 +341,9 @@ SSL_get_error                           ?	4_0_0	EXIST::FUNCTION:
 SSL_get_version                         ?	4_0_0	EXIST::FUNCTION:
 SSL_get_handshake_rtt                   ?	4_0_0	EXIST::FUNCTION:
 SSL_CTX_set_ssl_version                 ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
-SSLv3_method                            ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,SSL3_METHOD
-SSLv3_server_method                     ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,SSL3_METHOD
-SSLv3_client_method                     ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,SSL3_METHOD
 TLS_method                              ?	4_0_0	EXIST::FUNCTION:
 TLS_server_method                       ?	4_0_0	EXIST::FUNCTION:
 TLS_client_method                       ?	4_0_0	EXIST::FUNCTION:
-TLSv1_method                            ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,TLS1_METHOD
-TLSv1_server_method                     ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,TLS1_METHOD
-TLSv1_client_method                     ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,TLS1_METHOD
 TLSv1_1_method                          ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,TLS1_1_METHOD
 TLSv1_1_server_method                   ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,TLS1_1_METHOD
 TLSv1_1_client_method                   ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,TLS1_1_METHOD
@@ -359,9 +353,6 @@ TLSv1_2_client_method                   ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1
 DTLSv1_method                           ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,DTLS1_METHOD
 DTLSv1_server_method                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,DTLS1_METHOD
 DTLSv1_client_method                    ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,DTLS1_METHOD
-DTLSv1_2_method                         ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,DTLS1_2_METHOD
-DTLSv1_2_server_method                  ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,DTLS1_2_METHOD
-DTLSv1_2_client_method                  ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,DTLS1_2_METHOD
 DTLS_method                             ?	4_0_0	EXIST::FUNCTION:
 DTLS_server_method                      ?	4_0_0	EXIST::FUNCTION:
 DTLS_client_method                      ?	4_0_0	EXIST::FUNCTION:
