@@ -286,7 +286,7 @@ L<X509_check_ip(3)>.
 
 X509_VERIFY_PARAM_add1_ip() adds I<ip> as an additional reference
 identifier that can match the peer's certificate on success.  Any
-previous names set via X509_VERIFY_PARAM_set1_ip(),
+previous addresses set via X509_VERIFY_PARAM_set1_ip(),
 X509_VERIFY_PARAM_add1_ip(), X509_VERIFY_PARAM_set1_ip_asc(), or
 X509_VERIFY_PARAM_add1_ip_asc() are retained. No change is made on
 failure.
