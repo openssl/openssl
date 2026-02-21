@@ -529,7 +529,7 @@ X509_PUBKEY *X509_PUBKEY_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
 int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey);
 EVP_PKEY *X509_PUBKEY_get0(const X509_PUBKEY *key);
 EVP_PKEY *X509_PUBKEY_get(const X509_PUBKEY *key);
-int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain);
+int X509_get_pubkey_parameters(EVP_PKEY *pkey, const STACK_OF(X509) *chain);
 long X509_get_pathlen(X509 *x);
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(EVP_PKEY, PUBKEY)
 EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
@@ -588,7 +588,7 @@ int X509_SIG_INFO_get(const X509_SIG_INFO *siginf, int *mdnid, int *pknid,
 void X509_SIG_INFO_set(X509_SIG_INFO *siginf, int mdnid, int pknid,
     int secbits, uint32_t flags);
 
-int X509_get_signature_info(X509 *x, int *mdnid, int *pknid, int *secbits,
+int X509_get_signature_info(const X509 *x, int *mdnid, int *pknid, int *secbits,
     uint32_t *flags);
 
 void X509_get0_signature(const ASN1_BIT_STRING **psig,

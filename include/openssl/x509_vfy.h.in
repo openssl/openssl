@@ -139,8 +139,8 @@ int X509_add1_trust_object(X509 *x, const ASN1_OBJECT *obj);
 int X509_add1_reject_object(X509 *x, const ASN1_OBJECT *obj);
 void X509_trust_clear(X509 *x);
 void X509_reject_clear(X509 *x);
-STACK_OF(ASN1_OBJECT) *X509_get0_trust_objects(const X509 *x);
-STACK_OF(ASN1_OBJECT) *X509_get0_reject_objects(const X509 *x);
+const STACK_OF(ASN1_OBJECT) *X509_get0_trust_objects(const X509 *x);
+const STACK_OF(ASN1_OBJECT) *X509_get0_reject_objects(const X509 *x);
 
 int (*X509_TRUST_set_default(int (*trust)(int, const X509 *, int)))(int, const X509 *,
     int);

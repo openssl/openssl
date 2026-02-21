@@ -319,7 +319,7 @@ int X509_signature_print(BIO *bp, const X509_ALGOR *sigalg,
 int X509_aux_print(BIO *out, const X509 *x, int indent)
 {
     char oidstr[80], first;
-    STACK_OF(ASN1_OBJECT) *trust, *reject;
+    const STACK_OF(ASN1_OBJECT) *trust, *reject;
     const unsigned char *alias, *keyid;
     int keyidlen;
     int i;
