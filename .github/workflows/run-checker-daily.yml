@@ -72,6 +72,7 @@ jobs:
           no-hmac-drbg-kdf,
           no-hw,
           no-idea,
+          no-ikev2kdf,
           no-kbkdf,
           no-krb5kdf,
           enable-lms,

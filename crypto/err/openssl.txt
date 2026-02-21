@@ -1090,6 +1090,7 @@ PROV_R_INVALID_MGF1_MD:167:invalid mgf1 md
 PROV_R_INVALID_MODE:125:invalid mode
 PROV_R_INVALID_OUTPUT_LENGTH:217:invalid output length
 PROV_R_INVALID_PADDING_MODE:168:invalid padding mode
+PROV_R_INVALID_PARAMETERS_FOR_DKM:261:invalid parameters for dkm
 PROV_R_INVALID_PREHASHED_DIGEST_LENGTH:241:invalid prehashed digest length
 PROV_R_INVALID_PUBINFO:198:invalid pubinfo
 PROV_R_INVALID_SALT_LENGTH:112:invalid salt length
@@ -1110,10 +1111,12 @@ PROV_R_MISSING_CEK_ALG:144:missing cek alg
 PROV_R_MISSING_CIPHER:155:missing cipher
 PROV_R_MISSING_CONFIG_DATA:213:missing config data
 PROV_R_MISSING_CONSTANT:156:missing constant
+PROV_R_MISSING_DKM:262:missing dkm
 PROV_R_MISSING_EID:255:missing eid
 PROV_R_MISSING_KEY:128:missing key
 PROV_R_MISSING_MAC:150:missing mac
 PROV_R_MISSING_MESSAGE_DIGEST:129:missing message digest
+PROV_R_MISSING_NONCE:263:missing nonce
 PROV_R_MISSING_OID:209:missing OID
 PROV_R_MISSING_PASS:130:missing pass
 PROV_R_MISSING_SALT:131:missing salt
