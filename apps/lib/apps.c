@@ -682,12 +682,8 @@ static void warn_cert(const char *uri, X509 *cert, int warn_EE,
     int error;
     uint32_t ex_flags = X509_get_extension_flags(cert);
 
-    if (!X509_check_certificate_times(vpm, cert, &error)) {
-        char msg[128];
-
-        ERR_error_string_n(error, msg, sizeof(msg));
-        warn_cert_msg(uri, cert, msg);
-    }
+    if (!X509_check_certificate_times(vpm, cert, &error))
+        warn_cert_msg(uri, cert, X509_verify_cert_error_string(error));
 
     if (warn_EE && (ex_flags & EXFLAG_V1) == 0 && (ex_flags & EXFLAG_CA) == 0)
         warn_cert_msg(uri, cert, "is not a CA cert");
