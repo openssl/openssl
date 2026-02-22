@@ -1475,19 +1475,25 @@ static int gid_cb(const char *elem, int len, void *arg)
     }
     /* Remove group (and keyshare) from anywhere in the list if present, ignore if not present */
     if (remove_group) {
-        size_t n;
+        size_t n = 0; /* tuple size */
 
-        j = 0; /* tuple index */
+        /* Skip to first non-empty closed tuple 'j' */
+        for (j = 0; j < garg->tplcnt; ++j)
+            if ((n = garg->tuplcnt_arr[j]) > 0)
+                break;
         k = 0; /* keyshare index */
-        n = garg->tuplcnt_arr[j];
+
         for (i = 0; i < garg->gidcnt; ++i) {
             if (garg->gid_arr[i] == gid)
                 break;
             /* Skip keyshare slots associated with groups prior to that removed */
             if (k < garg->ksidcnt && garg->gid_arr[i] == garg->ksid_arr[k])
                 ++k;
-            if (--n == 0 && ++j < garg->tplcnt)
-                n = garg->tuplcnt_arr[j];
+            /* Skip to next non-empty closed tuple 'j' */
+            if (j < garg->tplcnt && --n == 0)
+                while (++j < garg->tplcnt)
+                    if ((n = garg->tuplcnt_arr[j]) > 0)
+                        break;
         }
 
         /* Nothing to remove? */
@@ -1498,7 +1504,7 @@ static int gid_cb(const char *elem, int len, void *arg)
         memmove(garg->gid_arr + i, garg->gid_arr + i + 1,
             (garg->gidcnt - i) * sizeof(gid));
 
-        /* Adjust completed tuple's group count? */
+        /* Adjust closed tuple's group count? */
         if (j < garg->tplcnt)
             garg->tuplcnt_arr[j]--;
 
