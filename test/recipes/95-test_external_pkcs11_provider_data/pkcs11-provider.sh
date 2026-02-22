@@ -11,15 +11,36 @@
 # OpenSSL external testing using the pkcs11-provider
 #
 
+unpatch() {
+    cd "$SRC_ABS_TOP/pkcs11-provider" && git reset --hard "$GITLEVEL"
+}
+
+trap unpatch EXIT
+
+
 PWD="$(pwd)"
 
 SRCTOP="$(cd $SRCTOP; pwd)"
+SRC_ABS_TOP="$PWD/../.."
+DATA_ABS_TOP="$SRC_ABS_TOP/test/recipes/95-test_external_pkcs11_provider_data"
+echo "$DATA_ABS_TOP"
 BLDTOP="$(cd $BLDTOP; pwd)"
 
 if [ "$SRCTOP" != "$BLDTOP" ] ; then
     echo "Out of tree builds not supported with pkcsa11-provider test!"
     exit 1
 fi
+
+GITLEVEL=$(git rev-parse HEAD)
+cd "$SRC_ABS_TOP/pkcs11-provider"
+# "git am" refuses to run without a user configured.
+for FILE in "$DATA_ABS_TOP"/patches/*; do
+    if [ -f "$FILE" ]; then
+	git -c 'user.name=OpenSSL External Tests' -c 'user.email=nonsuch@openssl.org' am $FILE
+    fi
+done
+
+cd $BLDTOP
 
 O_EXE="$BLDTOP/apps"
 O_BINC="$BLDTOP/include"
