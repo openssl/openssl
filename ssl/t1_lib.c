@@ -1475,19 +1475,21 @@ static int gid_cb(const char *elem, int len, void *arg)
     }
     /* Remove group (and keyshare) from anywhere in the list if present, ignore if not present */
     if (remove_group) {
-        size_t n;
+        size_t n; /* tuple size */
 
         j = 0; /* tuple index */
         k = 0; /* keyshare index */
         n = garg->tuplcnt_arr[j];
+
         for (i = 0; i < garg->gidcnt; ++i) {
             if (garg->gid_arr[i] == gid)
                 break;
             /* Skip keyshare slots associated with groups prior to that removed */
             if (k < garg->ksidcnt && garg->gid_arr[i] == garg->ksid_arr[k])
                 ++k;
-            if (--n == 0 && ++j < garg->tplcnt)
-                n = garg->tuplcnt_arr[j];
+            /* Skip to next tuple? */
+            if (j < garg->tplcnt && --n == 0)
+                n = garg->tuplcnt_arr[++j];
         }
 
         /* Nothing to remove? */
@@ -1495,18 +1497,26 @@ static int gid_cb(const char *elem, int len, void *arg)
             goto done;
 
         garg->gidcnt--;
+        garg->tuplcnt_arr[j]--;
         memmove(garg->gid_arr + i, garg->gid_arr + i + 1,
             (garg->gidcnt - i) * sizeof(gid));
-
-        /* Adjust completed tuple's group count? */
-        if (j < garg->tplcnt)
-            garg->tuplcnt_arr[j]--;
 
         /* Handle keyshare removal */
         if (k < garg->ksidcnt && garg->ksid_arr[k] == gid) {
             garg->ksidcnt--;
             memmove(garg->ksid_arr + k, garg->ksid_arr + k + 1,
                 (garg->ksidcnt - k) * sizeof(gid));
+        }
+
+        /*
+         * Adjust closed or current tuple's group count, if a closed tuple
+         * count reaches zero excise the resulting empty tuple.  The current
+         * (not yet closed) tuple at the end of the list stays even if empty.
+         */
+        if (garg->tuplcnt_arr[j] == 0 && j < garg->tplcnt) {
+            garg->tplcnt--;
+            memmove(garg->tuplcnt_arr + j, garg->tuplcnt_arr + j + 1,
+                (garg->tplcnt - j) * sizeof(size_t));
         }
     } else { /* Processing addition of a single new group */
 
