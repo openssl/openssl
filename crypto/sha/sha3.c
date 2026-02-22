@@ -76,7 +76,7 @@ int ossl_sha3_absorb(KECCAK1600_CTX *ctx, const unsigned char *inp, size_t len)
         return 0;
 
     /* Is there anything in the buffer already ? */
-    if (ossl_likely((num = ctx->bufsz) != 0)) {
+    if ((num = ctx->bufsz) != 0) {
         /* Calculate how much space is left in the buffer */
         rem = bsz - num;
         /* If the new input does not fill the buffer then just add it */
@@ -106,7 +106,7 @@ int ossl_sha3_absorb(KECCAK1600_CTX *ctx, const unsigned char *inp, size_t len)
 /*
  * Call a platform specific final method.
  * In most cases outlen should be set to ctx->mdlen.
- * This function assumes the called has checked outlen is bounded.
+ * This function assumes the caller has checked outlen is bounded.
  */
 int ossl_sha3_final(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
 {
