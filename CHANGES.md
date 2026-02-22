@@ -30,6 +30,8 @@ OpenSSL Releases
 OpenSSL 4.0
 -----------
 
+B
+
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
  * Added support for [RFC8998], signature algorithm `sm2sig_sm3`, key exchange
