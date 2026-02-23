@@ -1331,6 +1331,7 @@ static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
         if (tmpenc == NULL)
             goto err;
         if (!PACKET_copy_bytes(pkt, tmpenc, pval_tmp)) {
+            OPENSSL_free(tmpenc);
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             goto err;
         }
