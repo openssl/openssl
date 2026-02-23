@@ -311,7 +311,11 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
     unsigned char test_pub[OSSL_ECH_CRYPTO_VAR_SIZE];
     OSSL_ECHSTORE_ENTRY *ee = NULL;
 
-    if (rent == NULL || pkt == NULL) {
+    if (rent == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (pkt == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
