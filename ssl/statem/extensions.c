@@ -503,13 +503,10 @@ int ossl_ech_copy_inner2outer(SSL_CONNECTION *s, uint16_t ext_type,
             ext_type);
     }
     OSSL_TRACE_END(TLS);
+
     /*
-     * This one wasn't in inner, so re-do processing. We don't
-     * actually do this currently, but could.
+     * copy inner value to outer
      */
-    if (myext == NULL)
-        return OSSL_ECH_SAME_EXT_CONTINUE;
-    /* copy inner value to outer */
     if (PACKET_data(&myext->data) != NULL
         && PACKET_remaining(&myext->data) > 0) {
         if (!WPACKET_put_bytes_u16(pkt, ext_type)
