@@ -35,7 +35,7 @@ OpenSSL 4.0
  * New `SSL_get0_sigalg()` and `SSL_get0_shared_sigalg()` functions report the
    TLS signature algorithm name and codepoint for the peer advertised and shared
    algorithms respectively.  These supersede the existing `SSL_get_sigalgs()` and
-   `SSL_get_shared_sigalgs()` functions which are only a good for TLS 1.2.
+   `SSL_get_shared_sigalgs()` functions which are only a good fit for TLS 1.2.
    The names reported are the IANA names, and are expected to consistently match
    the names expected in `SignatureAlgorithms` configuration settings, see
    `SSL_CONF_cmd(3)` for details.  Previously reported names were not always directly
