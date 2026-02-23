@@ -1433,10 +1433,6 @@ dopsksess:
         unsigned char *rndbuf = NULL, *rndbufp = NULL;
         size_t totalrndsize = 0;
 
-        if (s->session == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return EXT_RETURN_FAIL;
-        }
         totalrndsize = s->session->ext.ticklen
             + sizeof(agems)
             + s->psksession_id_len
