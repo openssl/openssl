@@ -171,7 +171,7 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
         if (provauthkey != NULL && kem->auth_decapsulate_init != NULL) {
             ret = kem->auth_decapsulate_init(ctx->op.encap.algctx, provkey,
                 provauthkey, params);
-        } else if (provauthkey == NULL && kem->encapsulate_init != NULL) {
+        } else if (provauthkey == NULL && kem->decapsulate_init != NULL) {
             ret = kem->decapsulate_init(ctx->op.encap.algctx, provkey, params);
         } else {
             ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
