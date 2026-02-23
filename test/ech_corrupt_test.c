@@ -1282,10 +1282,11 @@ static int tls_corrupt_write(BIO *bio, const char *in, int inl)
 
     ret = corrupt_or_copy(in, inl, &copy, &copylen);
     if (ret == 0)
-        return 0;
+        goto out;
     ret = BIO_write(next, copy, inl);
-    OPENSSL_free(copy);
     copy_flags(bio);
+out:
+    OPENSSL_free(copy);
     return ret;
 }
 
