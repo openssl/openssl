@@ -50,7 +50,7 @@ int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
      * ECC domain parameter validation.
      * See SP800-56A R3 5.5.2 "Assurances of Domain-Parameter Validity" Part 1b.
      */
-    return EC_GROUP_check_named_curve(group, 1, ctx) >= 0 ? 1 : 0;
+    return EC_GROUP_check_named_curve(group, 1, ctx) > 0 ? 1 : 0;
 #else
     int ret = 0;
     const BIGNUM *order;
