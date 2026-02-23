@@ -633,7 +633,8 @@ GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
 
 static int do_othername(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx)
 {
-    char *objtmp = NULL, *p;
+    char *objtmp = NULL;
+    const char *p;
     int objlen;
 
     if ((p = strchr(value, ';')) == NULL)

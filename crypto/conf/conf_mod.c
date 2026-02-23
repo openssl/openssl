@@ -373,7 +373,7 @@ static CONF_MODULE *module_find(const char *name)
 {
     CONF_MODULE *tmod;
     int i, nchar;
-    char *p;
+    const char *p;
     p = strrchr(name, '.');
 
     if (p)
