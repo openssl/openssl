@@ -208,7 +208,7 @@ int ossl_i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 {
     unsigned char *ptr = pp != NULL ? *pp : NULL;
     size_t ret = i2c_ibuf(ASN1_STRING_get0_data(a), ASN1_STRING_length(a),
-                          ASN1_STRING_type(a) & V_ASN1_NEG, &ptr);
+        ASN1_STRING_type(a) & V_ASN1_NEG, &ptr);
 
     if (ret > INT_MAX) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LARGE);
@@ -350,7 +350,7 @@ static int asn1_string_get_int64(int64_t *pr, const ASN1_STRING *a, int itype)
         return 0;
     }
     return asn1_get_int64(pr, ASN1_STRING_get0_data(a), ASN1_STRING_length(a),
-                          ASN1_STRING_type(a) & V_ASN1_NEG);
+        ASN1_STRING_type(a) & V_ASN1_NEG);
 }
 
 static int asn1_string_set_int64(ASN1_STRING *a, int64_t r, int itype)

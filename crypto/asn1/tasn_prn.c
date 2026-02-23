@@ -421,7 +421,7 @@ static int asn1_print_obstring(BIO *out, const ASN1_STRING *str, int indent)
         return 0;
     if ((ASN1_STRING_length(str) > 0)
         && BIO_dump_indent(out, (const char *)ASN1_STRING_get0_data(str),
-                           ASN1_STRING_length(str),
+               ASN1_STRING_length(str),
                indent + 2)
             <= 0)
         return 0;
@@ -519,7 +519,8 @@ static int asn1_primitive_print(BIO *out, const ASN1_VALUE **fld,
         if (BIO_puts(out, "\n") <= 0)
             return 0;
         if (ASN1_parse_dump(out, ASN1_STRING_get0_data(str),
-                            ASN1_STRING_length(str), indent, 0) <= 0)
+                ASN1_STRING_length(str), indent, 0)
+            <= 0)
             ret = 0;
         needlf = 0;
         break;

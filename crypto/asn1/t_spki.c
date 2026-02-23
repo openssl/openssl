@@ -39,7 +39,7 @@ int NETSCAPE_SPKI_print(BIO *out, const NETSCAPE_SPKI *spki)
     chal = spki->spkac->challenge;
     if (ASN1_STRING_length(chal))
         BIO_printf(out, "  Challenge String: %.*s\n", ASN1_STRING_length(chal),
-                   ASN1_STRING_get0_data(chal));
+            ASN1_STRING_get0_data(chal));
     i = OBJ_obj2nid(spki->sig_algor.algorithm);
     BIO_printf(out, "  Signature Algorithm: %s",
         (i == NID_undef) ? "UNKNOWN" : OBJ_nid2ln(i));
