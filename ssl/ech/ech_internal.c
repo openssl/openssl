@@ -300,7 +300,10 @@ int ossl_ech_send_grease(SSL_CONNECTION *s, WPACKET *pkt)
     unsigned char cipher[OSSL_ECH_MAX_GREASE_CT];
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
-    WPACKET_get_total_written(pkt, &pp_at_start);
+    if (!WPACKET_get_total_written(pkt, &pp_at_start)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
     /* randomly select cipher_len to be one of 144, 176, 208, 244 */
     if (RAND_bytes_ex(sctx->libctx, &cid, 1, 0) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -345,7 +348,10 @@ int ossl_ech_send_grease(SSL_CONNECTION *s, WPACKET *pkt)
     }
     /* record the ECH sent so we can re-tx same if we hit an HRR */
     OPENSSL_free(s->ext.ech.sent);
-    WPACKET_get_total_written(pkt, &pp_at_end);
+    if (!WPACKET_get_total_written(pkt, &pp_at_end)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
     s->ext.ech.sent_len = pp_at_end - pp_at_start;
     s->ext.ech.sent = OPENSSL_malloc(s->ext.ech.sent_len);
     if (s->ext.ech.sent == NULL) {
