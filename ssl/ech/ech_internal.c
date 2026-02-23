@@ -2083,11 +2083,9 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
         ossl_ech_pbuf("clear", clear, clearlen);
     }
 #endif
-    if (extval != NULL) {
-        ossl_ech_encch_free(extval);
-        OPENSSL_free(extval);
-        extval = NULL;
-    }
+    ossl_ech_encch_free(extval);
+    OPENSSL_free(extval);
+    extval = NULL;
     if (s->ext.ech.grease == OSSL_ECH_IS_GREASE) {
         OPENSSL_free(clear);
         return 1;
