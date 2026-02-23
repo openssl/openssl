@@ -5128,6 +5128,7 @@ static int test_evp_diff_order_init(int idx)
     int blocksz = 0;
 
     char *errmsg = NULL;
+    int testresult = 1;
 
     blocksz = EVP_CIPHER_get_block_size(info->ciph);
     pt_size = (blocksz > 1) ? (size_t)blocksz * 2 : 31;
@@ -5142,7 +5143,11 @@ static int test_evp_diff_order_init(int idx)
         return 1;
     }
 
-    EVP_EncryptInit_ex(ctx_keyiv, info->ciph, NULL, NULL, NULL);
+    if (!TEST_true(EVP_EncryptInit_ex(ctx_keyiv, info->ciph,
+                                        NULL, NULL, NULL))){
+        errmsg = "KEYIV_init";
+        goto err;
+    }
 
     if (info->is_aead) {
         if (info->mode == EVP_CIPH_CCM_MODE) {
@@ -5235,7 +5240,11 @@ static int test_evp_diff_order_init(int idx)
         goto err;
     }
 
-    EVP_EncryptInit_ex(ctx_ivkey, info->ciph, NULL, NULL, NULL);
+    if (!TEST_true(EVP_EncryptInit_ex(ctx_ivkey, info->ciph,
+                                        NULL, NULL, NULL))){
+        errmsg = "IVKEY_init";
+        goto err;
+    }
 
     if (info->is_aead) {
         if (info->mode == EVP_CIPH_CCM_MODE) {
@@ -5315,8 +5324,11 @@ static int test_evp_diff_order_init(int idx)
         goto err;
     }
 
-    EVP_EncryptInit_ex(ctx_onestep, info->ciph, NULL, NULL, NULL);
-
+    if (!TEST_true(EVP_EncryptInit_ex(ctx_onestep, info->ciph,
+                                        NULL, NULL, NULL))){
+        errmsg = "ONESTEP_init";
+        goto err;
+    }
     if (info->is_aead) {
         if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep,
@@ -5414,7 +5426,6 @@ static int test_evp_diff_order_init(int idx)
     }
 
 err:
-    int testresult = 1;
     if (errmsg != NULL) {
         TEST_info("evp_multi_step_integrity_test %d, %s: %s",
             idx, errmsg, info->name);
@@ -5466,6 +5477,7 @@ static int test_evp_stale_key_reinit(int idx)
     int blocksz = 0;
 
     char *errmsg = NULL;
+    int testresult = 1;
 
     blocksz = EVP_CIPHER_get_block_size(info->ciph);
     pt_size = (blocksz > 1) ? (size_t)blocksz * 2 : 31;
@@ -5493,8 +5505,11 @@ static int test_evp_stale_key_reinit(int idx)
         return 1;
     }
 
-    EVP_EncryptInit_ex(ctx_reinit, info->ciph, NULL, NULL, NULL);
-
+    if (!TEST_true(EVP_EncryptInit_ex(ctx_reinit, info->ciph,
+                                        NULL, NULL, NULL))){
+        errmsg = "ONESTEP_first_init";
+        goto err;
+    }
     if (info->is_aead) {
         if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_reinit,
@@ -5569,9 +5584,14 @@ static int test_evp_stale_key_reinit(int idx)
 
     // Use same context with a different key and iv and see if it causes issues
 
-    EVP_EncryptInit_ex(ctx_reinit, NULL, NULL, key2, NULL);
-
-    EVP_EncryptInit_ex(ctx_reinit, NULL, NULL, NULL, iv2);
+    if (!TEST_true(EVP_EncryptInit_ex(ctx_reinit, NULL, NULL, key2, NULL))){
+        errmsg = "REINIT_KEY";
+        goto err;
+    }
+    if (!TEST_true(EVP_EncryptInit_ex(ctx_reinit, NULL, NULL, NULL, iv2))){
+        errmsg = "REINIT_IV";
+        goto err;
+    }
 
     if (info->is_aead && info->mode == EVP_CIPH_CCM_MODE) {
         int tmplen = 0;
@@ -5625,7 +5645,11 @@ static int test_evp_stale_key_reinit(int idx)
         goto err;
     }
 
-    EVP_EncryptInit_ex(ctx_onestep, info->ciph, NULL, NULL, NULL);
+    if (!TEST_true(EVP_EncryptInit_ex(ctx_onestep, info->ciph, NULL, NULL, NULL))){
+        errmsg = "REINIT_IV";
+        goto err;
+    }
+
     if (info->is_aead) {
         if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep,
@@ -5709,7 +5733,6 @@ static int test_evp_stale_key_reinit(int idx)
     }
 
 err:
-    int testresult = 1;
     if (errmsg != NULL) {
         TEST_info("evp_stale_key_integrity_test %d, %s: %s",
             idx, errmsg, info->name);
