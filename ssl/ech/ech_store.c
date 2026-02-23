@@ -745,7 +745,10 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
         goto err;
     }
     /* bp, bblen has encoding */
-    WPACKET_get_total_written(&epkt, &bblen);
+    if (!WPACKET_get_total_written(&epkt, &bblen)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     if ((ee = OPENSSL_zalloc(sizeof(*ee))) == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -873,7 +876,10 @@ int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        WPACKET_get_total_written(&epkt, &allencoded_len);
+        if (!WPACKET_get_total_written(&epkt, &allencoded_len)) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
         if (PEM_write_bio(out, PEM_STRING_ECHCONFIG, NULL,
                 (unsigned char *)epkt_mem->data,
                 (long)allencoded_len)
