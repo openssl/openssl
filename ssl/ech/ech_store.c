@@ -617,6 +617,7 @@ OSSL_ECHSTORE *OSSL_ECHSTORE_new(OSSL_LIB_CTX *libctx, const char *propq)
     if (propq != NULL) {
         es->propq = OPENSSL_strdup(propq);
         if (es->propq == NULL) {
+            OPENSSL_free(es);
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return 0;
         }
