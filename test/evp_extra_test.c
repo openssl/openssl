@@ -5144,7 +5144,7 @@ static int test_evp_diff_order_init(int idx)
     }
 
     if (!TEST_true(EVP_EncryptInit_ex(ctx_keyiv, info->ciph,
-                                        NULL, NULL, NULL))){
+            NULL, NULL, NULL))) {
         errmsg = "KEYIV_init";
         goto err;
     }
@@ -5241,7 +5241,7 @@ static int test_evp_diff_order_init(int idx)
     }
 
     if (!TEST_true(EVP_EncryptInit_ex(ctx_ivkey, info->ciph,
-                                        NULL, NULL, NULL))){
+            NULL, NULL, NULL))) {
         errmsg = "IVKEY_init";
         goto err;
     }
@@ -5325,7 +5325,7 @@ static int test_evp_diff_order_init(int idx)
     }
 
     if (!TEST_true(EVP_EncryptInit_ex(ctx_onestep, info->ciph,
-                                        NULL, NULL, NULL))){
+            NULL, NULL, NULL))) {
         errmsg = "ONESTEP_init";
         goto err;
     }
@@ -5506,7 +5506,7 @@ static int test_evp_stale_key_reinit(int idx)
     }
 
     if (!TEST_true(EVP_EncryptInit_ex(ctx_reinit, info->ciph,
-                                        NULL, NULL, NULL))){
+            NULL, NULL, NULL))) {
         errmsg = "ONESTEP_first_init";
         goto err;
     }
@@ -5584,11 +5584,11 @@ static int test_evp_stale_key_reinit(int idx)
 
     // Use same context with a different key and iv and see if it causes issues
 
-    if (!TEST_true(EVP_EncryptInit_ex(ctx_reinit, NULL, NULL, key2, NULL))){
+    if (!TEST_true(EVP_EncryptInit_ex(ctx_reinit, NULL, NULL, key2, NULL))) {
         errmsg = "REINIT_KEY";
         goto err;
     }
-    if (!TEST_true(EVP_EncryptInit_ex(ctx_reinit, NULL, NULL, NULL, iv2))){
+    if (!TEST_true(EVP_EncryptInit_ex(ctx_reinit, NULL, NULL, NULL, iv2))) {
         errmsg = "REINIT_IV";
         goto err;
     }
@@ -5645,7 +5645,8 @@ static int test_evp_stale_key_reinit(int idx)
         goto err;
     }
 
-    if (!TEST_true(EVP_EncryptInit_ex(ctx_onestep, info->ciph, NULL, NULL, NULL))){
+    if (!TEST_true(EVP_EncryptInit_ex(ctx_onestep, info->ciph,
+            NULL, NULL, NULL))) {
         errmsg = "REINIT_IV";
         goto err;
     }
