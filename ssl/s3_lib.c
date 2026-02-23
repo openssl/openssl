@@ -4725,18 +4725,32 @@ const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id)
     return OBJ_bsearch_ssl_cipher_id(&c, ssl3_scsvs, SSL3_NUM_SCSVS);
 }
 
+const SSL_CIPHER *ssl3_get_tls13_cipher_by_std_name(const char *stdname)
+{
+    SSL_CIPHER *end = &tls13_ciphers[TLS13_NUM_CIPHERS];
+
+    /* this is not efficient, necessary to optimize this? */
+    for (SSL_CIPHER *c = tls13_ciphers; c < end; ++c) {
+        if (c->stdname == NULL)
+            continue;
+        if (OPENSSL_strcasecmp(stdname, c->stdname) == 0)
+            return c;
+    }
+    return NULL;
+}
+
 const SSL_CIPHER *ssl3_get_cipher_by_std_name(const char *stdname)
 {
     SSL_CIPHER *tbl;
-    SSL_CIPHER *alltabs[] = { tls13_ciphers, ssl3_ciphers, ssl3_scsvs };
-    size_t i, j, tblsize[] = { TLS13_NUM_CIPHERS, SSL3_NUM_CIPHERS, SSL3_NUM_SCSVS };
+    SSL_CIPHER *alltabs[] = { ssl3_ciphers, ssl3_scsvs };
+    size_t i, j, tblsize[] = { SSL3_NUM_CIPHERS, SSL3_NUM_SCSVS };
 
     /* this is not efficient, necessary to optimize this? */
     for (j = 0; j < OSSL_NELEM(alltabs); j++) {
         for (i = 0, tbl = alltabs[j]; i < tblsize[j]; i++, tbl++) {
             if (tbl->stdname == NULL)
                 continue;
-            if (strcmp(stdname, tbl->stdname) == 0) {
+            if (OPENSSL_strcasecmp(stdname, tbl->stdname) == 0) {
                 return tbl;
             }
         }

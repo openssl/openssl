@@ -27,13 +27,19 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
-OpenSSL 4.0
 -----------
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
- * Added LMS support for signature verification to `pkeyutl' command.
-   To enable this, LMS 'SubjectPublicKeyInfo' encoder and decoders were
+ * Fixed bug that allowed TLS 1.2 ciphers to be added to the TLS 1.3
+   ciphersuites list, and for that list to contain duplicates.
+   Cipher configuration strings for both TLS 1.2 and 1.3 are now
+   case-insenstive.
+
+   *Viktor Dukhovni*
+
+ * Added LMS support for signature verification to `pkeyutl` command.
+   To enable this, LMS `SubjectPublicKeyInfo` encoder and decoders were
    added, and the LMS keymanager and signature code were updated.
 
    *Shane Lontis*
@@ -111,7 +117,7 @@ OpenSSL 4.0
 
    *Neil Horman*
 
- * ASN1_OBJECT_new() has been deprecated.
+ * `ASN1_OBJECT_new()` has been deprecated.
 
    Refer to ossl-migration-guide(7) for more info.
 
@@ -154,10 +160,10 @@ OpenSSL 4.0
 
    *kovan*
 
- * ASN1_STRING has been made opaque.
+ * `ASN1_STRING` has been made opaque.
 
-   Access to values from ASN1_STRING and related types should be done with the
-   appropriate accessor functions. The various ASN1_STRING_FLAG values have
+   Access to values from `ASN1_STRING` and related types should be done with the
+   appropriate accessor functions. The various `ASN1_STRING_FLAG` values have
    been made private.
 
    *Bob Beck*
@@ -252,10 +258,10 @@ OpenSSL 4.0
 
    *Alexandr Nedvedicky*
 
- * Many functions accepting X509 \* arguments, or returning values
-   from a const X509 \* have been changed to take / return const
+ * Many functions accepting `X509 *` arguments, or returning values
+   from a const `X509 *` have been changed to take/return const
    arguments. The most visible changes are places where pointer values
-   are returned from a const X509 \* object. In many places where
+   are returned from a const `X509 *` object. In many places where
    these were non const values being returned from a const object,
    these pointer values have now been made const. The goal of this
    change is to enable future improvements in X.509 certificate
@@ -283,10 +289,10 @@ OpenSSL 4.0
 
  * Added `ASN1_BIT_STRING_set1()` to set a bit string to a value including
    the length in bytes and the number of unused bits. Internally,
-   'ASN1_BIT_STRING_set_bit()' has also been modified to keep the number of
-   unused bits correct when changing an ASN1_BIT_STRING.
+   `ASN1_BIT_STRING_set_bit()` has also been modified to keep the number of
+   unused bits correct when changing an `ASN1_BIT_STRING`.
 
-   * Bob Beck *
+   *Bob Beck*
 
  * The deprecated function `ASN1_STRING_data` has been removed.
 
@@ -317,9 +323,9 @@ OpenSSL 4.0
 
    *Daniel Kubec and Eugene Syromiatnikov*
 
- * X509_get0_distinguishing_id now takes and returns const objects.
+ * `X509_get0_distinguishing_id()` now takes and returns const objects.
 
-   * Bob Beck *
+   *Bob Beck*
 
  * Added `-hmac-env` and `-hmac-stdin` options to openssl-dgst.
 
@@ -335,12 +341,13 @@ OpenSSL 4.0
    *Ryan Hooper*
 
  * Constify Various X509 functions:
-   X509_get_pathlen X509_check_ca X509_check_purpose X509_get_proxy_pathlen
-   X509_get_extension_flags X509_get_key_usage X509_get_extended_key_usage
-   X509_get0_subject_key_id X509_get0_authority_key_id X509_get0_authority_issuer
-   X509_get0_authority_serial.
+   `X509_get_pathlen()`, `X509_check_ca()`, `X509_check_purpose()`,
+   `X509_get_proxy_pathlen()`, `X509_get_extension_flags()`,
+   `X509_get_key_usage()`, `X509_get_extended_key_usage()`,
+   `X509_get0_subject_key_id()`, `X509_get0_authority_key_id()`,
+   `X509_get0_authority_issuer()`, `X509_get0_authority_serial()`.
 
-   * Bob Beck *
+   *Bob Beck*
 
  * Fixed CRLs with invalid `ASN1_TIME` in invalidityDate extensions,
    where verification incorrectly succeeded. Enforced proper
@@ -359,7 +366,7 @@ OpenSSL 4.0
    `X509_NAME_get_text_by_NID()`, and `X509_NAME_get_text_by_OBJ()` are now
    actually deprecated, and documented as such.
 
-   * Bob Beck *
+   *Bob Beck*
 
  * ENGINE support was removed. The `no-engine` build option and the
    `OPENSSL_NO_ENGINE` macro is always present.
@@ -410,18 +417,18 @@ OpenSSL 4.0
 
    *Stephen Farrell* (with much support from *Matt Caswell* and *Tomáš Mráz*)
 
- * X509_cmp_time, X509_cmp_current_time, and X509_cmp_timeframe have
+ * `X509_cmp_time()`, `X509_cmp_current_time()`, and `X509_cmp_timeframe()` have
    had documentation added, and have then been deprecated.  A new
-   function, X509_check_certificate_times has been added, as well as
-   the <openssl/posix_time.h> interface from BoringSSL/LibreSSL. For
+   function, `X509_check_certificate_times()` has been added, as well as
+   the `<openssl/posix_time.h>` interface from BoringSSL/LibreSSL. For
    details of these functions and non-deprecated replacement
-   strategies, see X509_check_certificate_times(3).
+   strategies, see `X509_check_certificate_times(3)`.
 
-   * Bob Beck *
+   *Bob Beck*
 
- * Added BIO_set_send_flags() function that allows setting flags passed to
+ * Added `BIO_set_send_flags()` function that allows setting flags passed to
    send(), sendto(), and sendmsg(). The main intention is to allow setting
-   the MSG_NOSIGNAL flag to avoid a crash on receiving the SIGPIPE signal.
+   the `MSG_NOSIGNAL` flag to avoid a crash on receiving the SIGPIPE signal.
 
    *Igor Ustinov*
 

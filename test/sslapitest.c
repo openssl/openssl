@@ -782,7 +782,7 @@ static int test_client_hello_cb(void)
     /* Avoid problems where the default seclevel has been changed */
     SSL_CTX_set_security_level(cctx, 2);
     if (!TEST_true(SSL_CTX_set_cipher_list(cctx,
-            "AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384"))
+            "aes256-gcm-sha384:ecdhe-ecdsa-aes256-gcm-sha384"))
         || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
             &clientssl, NULL, NULL))
         || !TEST_false(create_ssl_connection(serverssl, clientssl,
@@ -886,7 +886,7 @@ static int test_ccs_change_cipher(void)
         || !TEST_true(SSL_CTX_set_options(sctx, SSL_OP_NO_TICKET))
         || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
             NULL, NULL))
-        || !TEST_true(SSL_set_cipher_list(clientssl, "AES128-GCM-SHA256"))
+        || !TEST_true(SSL_set_cipher_list(clientssl, "aes128-gcm-sha256"))
         || !TEST_true(create_ssl_connection(serverssl, clientssl,
             SSL_ERROR_NONE))
         || !TEST_ptr(sesspre = SSL_get0_session(serverssl))
@@ -901,7 +901,7 @@ static int test_ccs_change_cipher(void)
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
             NULL, NULL))
         || !TEST_true(SSL_set_session(clientssl, sess))
-        || !TEST_true(SSL_set_cipher_list(clientssl, "AES256-GCM-SHA384:AES128-GCM-SHA256"))
+        || !TEST_true(SSL_set_cipher_list(clientssl, "aes256-gcm-sha384:aes128-gcm-sha256"))
         || !TEST_true(create_ssl_connection(serverssl, clientssl,
             SSL_ERROR_NONE))
         || !TEST_true(SSL_session_reused(clientssl))
@@ -920,11 +920,11 @@ static int test_ccs_change_cipher(void)
      */
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
             NULL, NULL))
-        || !TEST_true(SSL_set_cipher_list(clientssl, "AES128-GCM-SHA256"))
+        || !TEST_true(SSL_set_cipher_list(clientssl, "aes128-gcm-sha256"))
         || !TEST_true(create_ssl_connection(serverssl, clientssl,
             SSL_ERROR_NONE))
         || !TEST_ptr(sesspre = SSL_get0_session(serverssl))
-        || !TEST_true(SSL_set_cipher_list(clientssl, "AES256-GCM-SHA384"))
+        || !TEST_true(SSL_set_cipher_list(clientssl, "aes256-gcm-sha384"))
         || !TEST_true(SSL_renegotiate(clientssl))
         || !TEST_true(SSL_renegotiate_pending(clientssl)))
         goto end;
@@ -4337,18 +4337,18 @@ static int test_early_data_replay(int idx)
 }
 
 static const char *ciphersuites[] = {
-    "TLS_AES_128_CCM_8_SHA256",
-    "TLS_AES_128_GCM_SHA256",
-    "TLS_AES_256_GCM_SHA384",
-    "TLS_AES_128_CCM_SHA256",
+    "tls_aes_128_ccm_8_sha256",
+    "tls_aes_128_gcm_sha256",
+    "tls_aes_256_gcm_sha384",
+    "tls_aes_128_ccm_sha256",
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
-    "TLS_CHACHA20_POLY1305_SHA256",
+    "tls_chacha20_poly1305_sha256",
 #else
     NULL,
 #endif
 #if !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS)
-    "TLS_SHA256_SHA256",
-    "TLS_SHA384_SHA384"
+    "tls_sha256_sha256",
+    "tls_sha384_sha384"
 #endif
 };
 
@@ -5150,12 +5150,12 @@ static int test_set_ciphersuite(int idx)
             TLS_client_method(), TLS1_VERSION, 0,
             &sctx, &cctx, cert, privkey))
         || !TEST_true(SSL_CTX_set_ciphersuites(sctx,
-            "TLS_AES_128_GCM_SHA256:TLS_AES_128_CCM_SHA256")))
+            "tls_aes_128_gcm_sha256:tls_aes_128_ccm_sha256")))
         goto end;
 
     if (idx >= 4 && idx <= 7) {
         /* SSL_CTX explicit cipher list */
-        if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "AES256-GCM-SHA384")))
+        if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "aes256-gcm-sha384")))
             goto end;
     }
 
@@ -5189,7 +5189,7 @@ static int test_set_ciphersuite(int idx)
     } else if (idx == 3 || idx == 7 || idx == 9) {
         /* Non default ciphersuite */
         if (!TEST_true(SSL_set_ciphersuites(clientssl,
-                "TLS_AES_128_CCM_SHA256")))
+                "tls_aes_128_ccm_sha256")))
             goto end;
     }
 
@@ -5220,9 +5220,9 @@ static int test_ciphersuite_change(void)
             TLS_client_method(), TLS1_VERSION, 0,
             &sctx, &cctx, cert, privkey))
         || !TEST_true(SSL_CTX_set_ciphersuites(sctx,
-            "TLS_AES_128_GCM_SHA256:"
+            "tls_aes_128_gcm_sha256:"
             "TLS_AES_256_GCM_SHA384:"
-            "TLS_AES_128_CCM_SHA256"))
+            "tls_aes_128_ccm_sha256"))
         || !TEST_true(SSL_CTX_set_ciphersuites(cctx,
             "TLS_AES_128_GCM_SHA256")))
         goto end;
@@ -7028,7 +7028,9 @@ static int test_export_key_mat(int tst)
     OPENSSL_assert(tst >= 0 && (size_t)tst < OSSL_NELEM(protocols));
     SSL_CTX_set_max_proto_version(cctx, protocols[tst]);
     SSL_CTX_set_min_proto_version(cctx, protocols[tst]);
-    if ((protocols[tst] < TLS1_2_VERSION) && (!SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0") || !SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0")))
+    if ((protocols[tst] < TLS1_2_VERSION)
+        && (!SSL_CTX_set_cipher_list(cctx, "default:@seclevel=0")
+            || !SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0")))
         goto end;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
@@ -8675,9 +8677,9 @@ static int test_ssl_pending(int tst)
          * Default sigalgs are SHA1 based in <DTLS1.2 which is in security
          * level 0
          */
-        if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+        if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@seclevel=0"))
             || !TEST_true(SSL_CTX_set_cipher_list(cctx,
-                "DEFAULT:@SECLEVEL=0")))
+                "default:@SECLEVEL=0")))
             goto end;
 #endif
 #else
@@ -11368,7 +11370,7 @@ static int test_dh_auto(int idx)
     EVP_PKEY *tmpkey = NULL;
     char *thiscert = NULL, *thiskey = NULL;
     size_t expdhsize = 0;
-    const char *ciphersuite = "DHE-RSA-AES128-SHA";
+    const char *ciphersuite = "dhe-rsa-aes128-sha";
 
     if (!TEST_ptr(tlsprov))
         goto end;
@@ -11417,11 +11419,11 @@ static int test_dh_auto(int idx)
             testresult = 1;
             goto end;
         }
-        ciphersuite = "ADH-AES128-SHA256:@SECLEVEL=0";
+        ciphersuite = "adh-aes128-sha256:@seclevel=0";
         expdhsize = 1024;
         break;
     case 6:
-        ciphersuite = "ADH-AES256-SHA256:@SECLEVEL=0";
+        ciphersuite = "adh-aes256-sha256:@seclevel=0";
         expdhsize = 3072;
         break;
     default:
@@ -11499,60 +11501,60 @@ static int test_no_shared_ffdhe_group(int idx)
     case 0:
         clientgroup = "ffdhe2048";
         servergroup = "ffdhe3072";
-        ciphersuite = "DHE-RSA-AES128-SHA256:AES128-SHA256";
+        ciphersuite = "dhe-rsa-aes128-sha256:aes128-sha256";
         break;
     case 1:
         clientgroup = "ffdhe3072";
         servergroup = "ffdhe4096";
-        ciphersuite = "DHE-RSA-AES128-SHA256:AES128-SHA256";
+        ciphersuite = "dhe-rsa-aes128-sha256:aes128-sha256";
         break;
     case 2:
         clientgroup = "ffdhe4096";
         servergroup = "ffdhe6144";
-        ciphersuite = "DHE-RSA-AES128-SHA256:AES128-SHA256";
+        ciphersuite = "dhe-rsa-aes128-sha256:aes128-sha256";
         break;
     case 3:
         clientgroup = "ffdhe6144";
         servergroup = "ffdhe8192";
-        ciphersuite = "DHE-RSA-AES128-SHA256:AES128-SHA256";
+        ciphersuite = "dhe-rsa-aes128-sha256:aes128-sha256";
         break;
     case 4:
         clientgroup = "ffdhe8192";
         servergroup = "ffdhe2048";
-        ciphersuite = "DHE-RSA-AES128-SHA256:AES128-SHA256";
+        ciphersuite = "dhe-rsa-aes128-sha256:aes128-sha256";
         break;
     case 5:
         clientgroup = "ffdhe2048";
         servergroup = "ffdhe3072";
-        ciphersuite = "DHE-RSA-AES128-SHA256";
+        ciphersuite = "dhe-rsa-aes128-sha256";
         expected = 0;
         want_error = SSL_ERROR_SSL;
         break;
     case 6:
         clientgroup = "ffdhe3072";
         servergroup = "ffdhe4096";
-        ciphersuite = "DHE-RSA-AES128-SHA256";
+        ciphersuite = "dhe-rsa-aes128-sha256";
         expected = 0;
         want_error = SSL_ERROR_SSL;
         break;
     case 7:
         clientgroup = "ffdhe4096";
         servergroup = "ffdhe6144";
-        ciphersuite = "DHE-RSA-AES128-SHA256";
+        ciphersuite = "dhe-rsa-aes128-sha256";
         expected = 0;
         want_error = SSL_ERROR_SSL;
         break;
     case 8:
         clientgroup = "ffdhe6144";
         servergroup = "ffdhe8192";
-        ciphersuite = "DHE-RSA-AES128-SHA256";
+        ciphersuite = "dhe-rsa-aes128-sha256";
         expected = 0;
         want_error = SSL_ERROR_SSL;
         break;
     case 9:
         clientgroup = "ffdhe8192";
         servergroup = "ffdhe2048";
-        ciphersuite = "DHE-RSA-AES128-SHA256";
+        ciphersuite = "dhe-rsa-aes128-sha256";
         expected = 0;
         want_error = SSL_ERROR_SSL;
         break;
@@ -12528,9 +12530,9 @@ static int test_version(int idx)
             version, &sctx, &cctx, cert, privkey)))
         goto end;
 
-    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "default:@SECLEVEL=0"))
         || !TEST_true(SSL_CTX_set_cipher_list(cctx,
-            "DEFAULT:@SECLEVEL=0")))
+            "DEFAULT:@seclevel=0")))
         goto end;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
