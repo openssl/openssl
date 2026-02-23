@@ -1264,7 +1264,7 @@ static int gid_cb(const char *elem, int len, void *arg)
     int found_group = 0;
     char etmp[GROUP_NAME_BUFFER_LENGTH];
     int retval = 1; /* We assume success */
-    char *current_prefix;
+    const char *current_prefix;
     int ignore_unknown = 0;
     int add_keyshare = 0;
     int remove_group = 0;
