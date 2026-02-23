@@ -415,10 +415,18 @@ static int test_handshake(int idx)
 
 #ifndef OPENSSL_NO_DTLS
     if (test_ctx->method == SSL_TEST_METHOD_DTLS) {
+#if !defined(OPENSSL_NO_DTLS1_3) \
+    && defined(OPENSSL_NO_EC)    \
+    && defined(OPENSSL_NO_DH)
+        /* Without ec or dh there are no built-in groups for DTLSv1.3 */
+        int maxversion = DTLS1_2_VERSION;
+#else
+        int maxversion = 0;
+#endif
         server_ctx = SSL_CTX_new_ex(libctx, NULL, DTLS_server_method());
         if (!TEST_true(SSL_CTX_set_options(server_ctx,
                 SSL_OP_ALLOW_CLIENT_RENEGOTIATION))
-            || !TEST_true(SSL_CTX_set_max_proto_version(server_ctx, 0)))
+            || !TEST_true(SSL_CTX_set_max_proto_version(server_ctx, maxversion)))
             goto err;
         if (test_ctx->extra.server.servername_callback != SSL_TEST_SERVERNAME_CB_NONE) {
             if (!TEST_ptr(server2_ctx = SSL_CTX_new_ex(libctx, NULL, DTLS_server_method()))
@@ -427,18 +435,18 @@ static int test_handshake(int idx)
                 goto err;
         }
         client_ctx = SSL_CTX_new_ex(libctx, NULL, DTLS_client_method());
-        if (!TEST_true(SSL_CTX_set_max_proto_version(client_ctx, 0)))
+        if (!TEST_true(SSL_CTX_set_max_proto_version(client_ctx, maxversion)))
             goto err;
         if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME) {
             resume_server_ctx = SSL_CTX_new_ex(libctx, NULL,
                 DTLS_server_method());
-            if (!TEST_true(SSL_CTX_set_max_proto_version(resume_server_ctx, 0))
+            if (!TEST_true(SSL_CTX_set_max_proto_version(resume_server_ctx, maxversion))
                 || !TEST_true(SSL_CTX_set_options(resume_server_ctx,
                     SSL_OP_ALLOW_CLIENT_RENEGOTIATION)))
                 goto err;
             resume_client_ctx = SSL_CTX_new_ex(libctx, NULL,
                 DTLS_client_method());
-            if (!TEST_true(SSL_CTX_set_max_proto_version(resume_client_ctx, 0)))
+            if (!TEST_true(SSL_CTX_set_max_proto_version(resume_client_ctx, maxversion)))
                 goto err;
             if (!TEST_ptr(resume_server_ctx)
                 || !TEST_ptr(resume_client_ctx))

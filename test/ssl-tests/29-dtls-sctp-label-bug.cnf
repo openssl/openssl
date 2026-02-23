@@ -28,6 +28,7 @@ VerifyMode = Peer
 [test-0]
 EnableClientSCTPLabelBug = No
 EnableServerSCTPLabelBug = No
+ExpectedProtocol = DTLSv1.2
 ExpectedResult = Success
 Method = DTLS
 UseSCTP = Yes
@@ -55,6 +56,7 @@ VerifyMode = Peer
 [test-1]
 EnableClientSCTPLabelBug = Yes
 EnableServerSCTPLabelBug = Yes
+ExpectedProtocol = DTLSv1.2
 ExpectedResult = Success
 Method = DTLS
 UseSCTP = Yes
@@ -72,7 +74,6 @@ client = 2-SCTPLabelBug-bad1-client
 [2-SCTPLabelBug-bad1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
-MaxProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [2-SCTPLabelBug-bad1-client]
@@ -100,7 +101,6 @@ client = 3-SCTPLabelBug-bad2-client
 [3-SCTPLabelBug-bad2-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
-MaxProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [3-SCTPLabelBug-bad2-client]
