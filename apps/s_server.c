@@ -1623,6 +1623,8 @@ static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
             BIO_printf(bio_s_out, "Added ECH key pair from: %s\n", thisfile);
         loaded++;
     }
+    OPENSSL_DIR_end(&d);
+
     if (SSL_CTX_set1_echstore(lctx, es) != 1) {
         BIO_puts(bio_err, "ECH: Internal error\n");
         goto end;
