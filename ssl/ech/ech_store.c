@@ -575,10 +575,8 @@ static int ech_read_priv_echconfiglist(OSSL_ECHSTORE *es, BIO *in,
         btmp = BIO_push(btmp1, btmp);
         /* overestimate but good enough */
         binbuf = OPENSSL_malloc(encodedlen);
-        if (binbuf == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        if (binbuf == NULL)
             goto err;
-        }
         tdeclen = BIO_read(btmp, binbuf, (int)encodedlen);
         if (tdeclen <= 0) { /* need int for -1 return in failure case */
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -609,17 +607,13 @@ OSSL_ECHSTORE *OSSL_ECHSTORE_new(OSSL_LIB_CTX *libctx, const char *propq)
     OSSL_ECHSTORE *es = NULL;
 
     es = OPENSSL_zalloc(sizeof(*es));
-    if (es == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+    if (es == NULL)
         return 0;
-    }
     es->libctx = libctx;
     if (propq != NULL) {
         es->propq = OPENSSL_strdup(propq);
-        if (es->propq == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        if (es->propq == NULL)
             return 0;
-        }
     }
 
     return es;
@@ -746,29 +740,21 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
     }
     /* bp, bblen has encoding */
     WPACKET_get_total_written(&epkt, &bblen);
-    if ((ee = OPENSSL_zalloc(sizeof(*ee))) == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+    if ((ee = OPENSSL_zalloc(sizeof(*ee))) == NULL)
         goto err;
-    }
     ee->suites = OPENSSL_malloc(sizeof(*ee->suites));
-    if (ee->suites == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+    if (ee->suites == NULL)
         goto err;
-    }
     ee->version = echversion;
     ee->pub_len = publen;
     ee->pub = OPENSSL_memdup(pub, publen);
-    if (ee->pub == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+    if (ee->pub == NULL)
         goto err;
-    }
     ee->nsuites = 1;
     ee->suites[0] = suite;
     ee->public_name = OPENSSL_strdup(public_name);
-    if (ee->public_name == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+    if (ee->public_name == NULL)
         goto err;
-    }
     ee->max_name_length = max_name_length;
     ee->config_id = config_id;
     ee->keyshare = privp;
