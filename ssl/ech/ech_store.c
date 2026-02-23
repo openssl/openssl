@@ -364,7 +364,7 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
     }
     thiskemid = (uint16_t)tmpi;
     ee->nsuites = (unsigned int)(suiteoctets / OSSL_ECH_CIPHER_LEN);
-    ee->suites = OPENSSL_malloc(ee->nsuites * sizeof(*ee->suites));
+    ee->suites = OPENSSL_malloc_array(ee->nsuites, sizeof(*ee->suites));
     if (ee->suites == NULL)
         goto err;
     while (PACKET_copy_bytes(&cipher_suites, cipher,
