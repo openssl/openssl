@@ -54,7 +54,8 @@ my $is_default_tls = (disabled("ssl3") && !disabled("tls1") &&
                       !disabled("tls1_1") && !disabled("tls1_2") &&
                       !disabled("tls1_3") && (!disabled("ec") || !disabled("dh")));
 
-my $is_default_dtls = (!disabled("dtls1") && !disabled("dtls1_2"));
+my $is_default_dtls = (!disabled("dtls1") && !disabled("dtls1_2") &&
+                        !disabled("dtls1_3"));
 
 my @all_pre_tls1_3 = ("ssl3", "tls1", "tls1_1", "tls1_2");
 my $no_tls = alldisabled(available_protocols("tls"));

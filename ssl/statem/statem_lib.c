@@ -2295,6 +2295,18 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
                 || (best_vers != best_vers_init
                     && ssl_version_cmp(s, candidate_vers, best_vers) <= 0))
                 continue;
+#ifndef OPENSSL_NO_SCTP
+            /*
+             * DTLS 1.3 is not supported over SCTP.  If the client offers
+             * DTLSv1.3 but the transport is SCTP, thus fall back to
+             * DTLSv1.2 (or lower) during server-version selection.
+             */
+            if (SSL_CONNECTION_IS_DTLS(s)
+                && candidate_vers == DTLS1_3_VERSION
+                && BIO_dgram_is_sctp(SSL_get_wbio(
+                    SSL_CONNECTION_GET_SSL(s))))
+                continue;
+#endif
             if (ssl_version_supported(s, candidate_vers, &best_method))
                 best_vers = candidate_vers;
         }
@@ -2395,6 +2407,21 @@ int ssl_choose_client_version(SSL_CONNECTION *s, int version,
         SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_R_WRONG_SSL_VERSION);
         return 0;
     }
+
+#ifndef OPENSSL_NO_SCTP
+    /*
+     * DTLS 1.3 over SCTP is not supported.  If the server selected
+     * DTLSv1.3 but the transport is SCTP, treat it as a protocol
+     * version mismatch so the handshake is aborted cleanly.
+     */
+    if (SSL_CONNECTION_IS_DTLS(s)
+        && s->version == DTLS1_3_VERSION
+        && BIO_dgram_is_sctp(SSL_get_wbio(ssl))) {
+        s->version = origv;
+        SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_R_UNSUPPORTED_PROTOCOL);
+        return 0;
+    }
+#endif
 
     switch (ssl->method->version) {
     default:
@@ -2575,6 +2602,16 @@ int ssl_get_min_max_version(const SSL_CONNECTION *s, int *min_version,
             tmp_real_max = 0;
             continue;
         }
+/*
+ * DTLS 1.3 over SCTP is not supported.  RFC 6083 and its successors only
+ * define key-material export for DTLS 1.2 and below.
+ */
+#ifndef OPENSSL_NO_SCTP
+        if (SSL_CONNECTION_IS_DTLS(s) && DTLS_VERSION_GT(vent->version, DTLS1_2_VERSION)
+            && BIO_dgram_is_sctp(SSL_get_wbio(SSL_CONNECTION_GET_SSL(s)))) {
+            continue;
+        }
+#endif
         method = vent->cmeth();
 
         if (hole == 1 && tmp_real_max == 0)
