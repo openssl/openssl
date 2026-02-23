@@ -87,8 +87,8 @@ X509_VERIFY_PARAM_set1_ip_input_validation
                                const unsigned char *ip, size_t iplen);
  int X509_VERIFY_PARAM_add1_ip(X509_VERIFY_PARAM *param,
                                const unsigned char *ip, size_t iplen);
- int X509_VERIFY_PARAM_set1_ip_asc(X509_VERIFY_PARAM *param, const char *ipasc);
- int X509_VERIFY_PARAM_add1_ip_asc(X509_VERIFY_PARAM *param, const char *ipasc);
+ int X509_VERIFY_PARAM_set1_ip_asc(X509_VERIFY_PARAM *param, const char *ip_asc);
+ int X509_VERIFY_PARAM_add1_ip_asc(X509_VERIFY_PARAM *param, const char *ip_asc);
  void X509_VERIFY_PARAM_set1_ip_input_validation(X509_VERIFY_PARAM *param,
     int (*validate_ip)(const uint8_t *name, size_t len));
  void X509_VERIFY_PARAM_set1_host_input_validation(X509_VERIFY_PARAM *param,
@@ -296,13 +296,13 @@ multiple names are configured, the peer is considered verified when
 any name matches.
 
 X509_VERIFY_PARAM_set1_ip_asc() sets the expected IP address to
-I<ipasc>.  The I<ipasc> argument must be a NUL-terminated ASCII string:
+I<ip_asc>.  The I<ip_asc> argument must be a NUL-terminated ASCII string:
 dotted decimal quad for IPv4 and colon-separated hexadecimal for
 IPv6.  The condensed "::" notation is supported for IPv6 addresses.
 
 X509_VERIFY_PARAM_add1_ip_asc() adds I<ip_asc> as an additional
 reference identifier that can match the peer's certificate on success.
-The I<ipasc> argument must be a NUL-terminated ASCII string: dotted
+The I<ip_asc> argument must be a NUL-terminated ASCII string: dotted
 decimal quad for IPv4 and colon-separated hexadecimal for IPv6.  The
 condensed "::" notation is supported for IPv6 addresses.  Any previous
 names set via X509_VERIFY_PARAM_set1_ip(),
