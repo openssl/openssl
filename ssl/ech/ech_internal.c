@@ -804,8 +804,8 @@ void ossl_ech_status_print(BIO *out, SSL_CONNECTION *s, int selector)
                 OPENSSL_free(ec);
                 continue;
             }
-            BIO_printf(out, "ECH entry: %d public_name: %s age: %d%s\n",
-                i, pn, (int)secs, has_priv ? " (has private key)" : "");
+            BIO_printf(out, "ECH entry: %d public_name: %s age: %lld%s\n",
+                i, pn, (long long)secs, has_priv ? " (has private key)" : "");
             BIO_printf(out, "\t%s\n", ec);
             OPENSSL_free(pn);
             OPENSSL_free(ec);
