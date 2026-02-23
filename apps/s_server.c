@@ -1574,6 +1574,7 @@ static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
     OSSL_ECHSTORE *es = NULL;
     BIO *in = NULL;
     int loaded = 0;
+    int ret = 0;
 
     /*
      * If you change the output to bio_s_out here you may
@@ -1624,13 +1625,18 @@ static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
     }
     if (SSL_CTX_set1_echstore(lctx, es) != 1) {
         BIO_puts(bio_err, "ECH: Internal error\n");
-        return 0;
+        goto end;
     }
     if (bio_s_out != NULL)
         BIO_printf(bio_s_out, "Added %d ECH key pairs from: %s\n",
             loaded, thedir);
     *nloaded = loaded;
-    return 1;
+    ret = 1;
+
+end:
+    OSSL_ECHSTORE_free(es);
+
+    return ret;
 }
 #endif
 
