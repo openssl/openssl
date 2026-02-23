@@ -1691,11 +1691,15 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
                 goto err;
             }
             if (!WPACKET_init_static_len(&inner, s->ext.ech.innerch,
-                    s->ext.ech.innerch_len, 0)
-                || !WPACKET_put_bytes_u8(&inner, SSL3_MT_CLIENT_HELLO)
+                    s->ext.ech.innerch_len, 0)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            if (!WPACKET_put_bytes_u8(&inner, SSL3_MT_CLIENT_HELLO)
                 || !WPACKET_put_bytes_u24(&inner, s->ext.ech.innerch_len - SSL3_HM_HEADER_LENGTH)
                 || !WPACKET_memcpy(&inner, pbuf, s->ext.ech.innerch_len - SSL3_HM_HEADER_LENGTH)
                 || !WPACKET_finish(&inner)) {
+                WPACKET_cleanup(&inner);
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
