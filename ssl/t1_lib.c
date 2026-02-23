@@ -205,18 +205,12 @@ static const unsigned char ecformats_all[] = {
 
 /* Group list string of the built-in pseudo group DEFAULT */
 #define DEFAULT_GROUP_NAME "DEFAULT"
-#ifndef OPENSSL_NO_ECX
 #define TLS_DEFAULT_GROUP_LIST                                 \
     "?*X25519MLKEM768:?SecP256r1MLKEM768:?curveSM2MLKEM768 / " \
     "?*X25519:?secp256r1 / "                                   \
     "?X448:?secp384r1:?secp521r1 / "                           \
+    "?curveSM2 / "                                             \
     "?ffdhe2048:?ffdhe3072"
-#else
-#define TLS_DEFAULT_GROUP_LIST                 \
-    "?*SecP256r1MLKEM768:?curveSM2MLKEM768 / " \
-    "?*secp256r1 / ?secp384r1:?secp521r1 / "   \
-    "?ffdhe2048:?ffdhe3072"
-#endif
 
 static const uint16_t suiteb_curves[] = {
     OSSL_TLS_GROUP_ID_secp256r1,
