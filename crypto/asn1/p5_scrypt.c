@@ -243,7 +243,8 @@ int PKCS5_v2_scrypt_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
     const EVP_CIPHER *c, const EVP_MD *md, int en_de,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
-    unsigned char *salt, key[EVP_MAX_KEY_LENGTH];
+    const unsigned char *salt;
+    unsigned char key[EVP_MAX_KEY_LENGTH];
     uint64_t p, r, N;
     size_t saltlen;
     size_t keylen = 0;

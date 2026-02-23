@@ -221,7 +221,8 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                         if (BIO_write(bp, ":", 1) <= 0)
                             goto end;
                         if (BIO_write(bp, (const char *)opp,
-                                      ASN1_STRING_length(os)) <= 0)
+                                ASN1_STRING_length(os))
+                            <= 0)
                             goto end;
                     } else if (!dump)
                     /*
@@ -244,7 +245,8 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                         if (BIO_dump_indent(bp,
                                 (const char *)opp,
                                 ((dump == -1 || dump > ASN1_STRING_length(os))
-                                 ? ASN1_STRING_length(os) : dump),
+                                        ? ASN1_STRING_length(os)
+                                        : dump),
                                 dump_indent)
                             <= 0)
                             goto end;
@@ -266,7 +268,8 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                             goto end;
                     for (i = 0; i < ASN1_STRING_length(ai); i++) {
                         if (BIO_printf(bp, "%02X",
-                                       ASN1_STRING_get0_data(ai)[i]) <= 0)
+                                ASN1_STRING_get0_data(ai)[i])
+                            <= 0)
                             goto end;
                     }
                     if (ASN1_STRING_length(ai) == 0) {
@@ -293,7 +296,8 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                             goto end;
                     for (i = 0; i < ASN1_STRING_length(ae); i++) {
                         if (BIO_printf(bp, "%02X",
-                                       ASN1_STRING_get0_data(ae)[i]) <= 0)
+                                ASN1_STRING_get0_data(ae)[i])
+                            <= 0)
                             goto end;
                     }
                     if (ASN1_STRING_length(ae) == 0) {
