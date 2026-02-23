@@ -25,7 +25,8 @@ our @tests = (
             "UseSCTP" => "Yes",
             "EnableClientSCTPLabelBug" => "No",
             "EnableServerSCTPLabelBug" => "No",
-            "ExpectedResult" => "Success"
+            "ExpectedResult" => "Success",
+            "ExpectedProtocol" => "DTLSv1.2"
         }
     },
     {
@@ -37,15 +38,13 @@ our @tests = (
             "UseSCTP" => "Yes",
             "EnableClientSCTPLabelBug" => "Yes",
             "EnableServerSCTPLabelBug" => "Yes",
-            "ExpectedResult" => "Success"
+            "ExpectedResult" => "Success",
+            "ExpectedProtocol" => "DTLSv1.2"
         }
     },
     {
         name => "SCTPLabelBug-bad1",
-        # TODO(DTLSv1.3): Fix SCTP support
-        server => {
-            MaxProtocol => "DTLSv1.2"
-        },
+        server => {},
         client => {},
         test => {
             "Method" => "DTLS",
@@ -57,10 +56,7 @@ our @tests = (
     },
     {
         name => "SCTPLabelBug-bad2",
-        # TODO(DTLSv1.3): Fix SCTP support
-        server => {
-            MaxProtocol => "DTLSv1.2"
-        },
+        server => {},
         client => {},
         test => {
             "Method" => "DTLS",
