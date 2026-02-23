@@ -2591,6 +2591,7 @@ EXT_RETURN tls_construct_stoc_ech(SSL_CONNECTION *s, WPACKET *pkt,
                                 "I've no configs set to be returned\n");
         }
         OSSL_TRACE_END(TLS);
+        OPENSSL_free(rcfgs);
         return EXT_RETURN_NOT_SENT;
     }
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_ech)
