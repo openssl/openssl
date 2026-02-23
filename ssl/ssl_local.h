@@ -2532,6 +2532,7 @@ __owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc);
 
 __owur const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id);
 __owur const SSL_CIPHER *ssl3_get_cipher_by_std_name(const char *stdname);
+__owur const SSL_CIPHER *ssl3_get_tls13_cipher_by_std_name(const char *stdname);
 __owur const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 __owur int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt,
     size_t *len);

@@ -1016,17 +1016,17 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
              * has the correct length. We can save a strlen() call:
              * just checking for the '\0' at the right place is
              * sufficient, we have to strncmp() anyway. (We cannot
-             * use strcmp(), because buf is not '\0' terminated.)
+             * use strcasecmp(), because buf is not '\0' terminated.)
              */
             j = found = 0;
             cipher_id = 0;
             while (ca_list[j]) {
-                if (strncmp(buf, ca_list[j]->name, buflen) == 0
+                if (OPENSSL_strncasecmp(buf, ca_list[j]->name, buflen) == 0
                     && (ca_list[j]->name[buflen] == '\0')) {
                     found = 1;
                     break;
                 } else if (ca_list[j]->stdname != NULL
-                    && strncmp(buf, ca_list[j]->stdname, buflen) == 0
+                    && OPENSSL_strncasecmp(buf, ca_list[j]->stdname, buflen) == 0
                     && ca_list[j]->stdname[buflen] == '\0') {
                     found = 1;
                     break;
@@ -1141,9 +1141,10 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
          */
         if (rule == CIPHER_SPECIAL) { /* special command */
             ok = 0;
-            if ((buflen == 8) && HAS_PREFIX(buf, "STRENGTH")) {
+            if ((buflen == 8) && HAS_CASE_PREFIX(buf, "STRENGTH")) {
                 ok = ssl_cipher_strength_sort(head_p, tail_p);
-            } else if (buflen == 10 && CHECK_AND_SKIP_PREFIX(buf, "SECLEVEL=")) {
+            } else if (buflen == 10
+                && CHECK_AND_SKIP_CASE_PREFIX(buf, "SECLEVEL=")) {
                 int level = *buf - '0';
                 if (level < 0 || level > 5) {
                     ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_COMMAND);
@@ -1184,14 +1185,14 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
     const char **prule_str)
 {
     unsigned int suiteb_flags = 0, suiteb_comb2 = 0;
-    if (HAS_PREFIX(*prule_str, "SUITEB128ONLY")) {
+    if (HAS_CASE_PREFIX(*prule_str, "SUITEB128ONLY")) {
         suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS_ONLY;
-    } else if (HAS_PREFIX(*prule_str, "SUITEB128C2")) {
+    } else if (HAS_CASE_PREFIX(*prule_str, "SUITEB128C2")) {
         suiteb_comb2 = 1;
         suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS;
-    } else if (HAS_PREFIX(*prule_str, "SUITEB128")) {
+    } else if (HAS_CASE_PREFIX(*prule_str, "SUITEB128")) {
         suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS;
-    } else if (HAS_PREFIX(*prule_str, "SUITEB192")) {
+    } else if (HAS_CASE_PREFIX(*prule_str, "SUITEB192")) {
         suiteb_flags = SSL_CERT_FLAG_SUITEB_192_LOS;
     }
 
@@ -1242,10 +1243,15 @@ static int ciphersuite_cb(const char *elem, int len, void *arg)
     memcpy(name, elem, len);
     name[len] = '\0';
 
-    cipher = ssl3_get_cipher_by_std_name(name);
+    cipher = ssl3_get_tls13_cipher_by_std_name(name);
     if (cipher == NULL)
         /* Ciphersuite not found but return 1 to parse rest of the list */
         return 1;
+
+    /* Suppress duplicates */
+    for (int i = 0; i < sk_SSL_CIPHER_num(ciphersuites); ++i)
+        if (sk_SSL_CIPHER_value(ciphersuites, i)->id == cipher->id)
+            return 1;
 
     if (!sk_SSL_CIPHER_push(ciphersuites, cipher)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -1542,7 +1548,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
      */
     ok = 1;
     rule_p = rule_str;
-    if (HAS_PREFIX(rule_str, "DEFAULT")) {
+    if (HAS_CASE_PREFIX(rule_str, "DEFAULT")) {
         ok = ssl_cipher_process_rulestr(OSSL_default_cipher_list(),
             &head, &tail, ca_list, c);
         rule_p += 7;
@@ -1875,7 +1881,8 @@ const char *OPENSSL_cipher_name(const char *stdname)
 
     if (stdname == NULL)
         return "(NONE)";
-    c = ssl3_get_cipher_by_std_name(stdname);
+    if ((c = ssl3_get_tls13_cipher_by_std_name(stdname)) == NULL)
+        c = ssl3_get_cipher_by_std_name(stdname);
     return SSL_CIPHER_get_name(c);
 }
 

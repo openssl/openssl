@@ -30,6 +30,9 @@ This command converts textual OpenSSL cipher lists into
 ordered SSL cipher preference lists. It can be used to
 determine the appropriate cipherlist.
 
+As of OpenSSL 4.0 the list of TLS 1.3 ciphersuites I<val> and TLS 1.2 ciphers
+I<cipherlist> are processed case-insensitively.
+
 =head1 OPTIONS
 
 =over 4
@@ -810,6 +813,9 @@ Support for standard IANA names in cipher lists was added in
 OpenSSL 3.2.0.
 
 The support for TLS v1.3 integrity-only cipher suites was added in OpenSSL 3.4.
+
+The list of TLS 1.3 ciphersuites I<val> and TLS 1.2 ciphers
+I<cipherlist> were case-sensitive prior to OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
