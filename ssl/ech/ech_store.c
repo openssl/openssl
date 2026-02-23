@@ -215,8 +215,10 @@ static int ech_decode_echconfig_exts(OSSL_ECHSTORE_ENTRY *ee, PACKET *exts)
             goto err;
         }
         oe = OPENSSL_malloc(sizeof(*oe));
-        if (oe == NULL)
+        if (oe == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
+        }
         oe->type = (uint16_t)exttype;
         oe->val = extval;
         extval = NULL; /* avoid double free */
@@ -316,8 +318,10 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
         goto err;
     }
     ee = OPENSSL_zalloc(sizeof(*ee));
-    if (ee == NULL)
+    if (ee == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
+    }
     /* note start of encoding so we can make a copy later */
     tmpeclen = PACKET_remaining(pkt);
     if (PACKET_peek_bytes(pkt, &tmpecp, tmpeclen) != 1
@@ -361,8 +365,10 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
     thiskemid = (uint16_t)tmpi;
     ee->nsuites = (unsigned int)(suiteoctets / OSSL_ECH_CIPHER_LEN);
     ee->suites = OPENSSL_malloc(ee->nsuites * sizeof(*ee->suites));
-    if (ee->suites == NULL)
+    if (ee->suites == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
+    }
     while (PACKET_copy_bytes(&cipher_suites, cipher,
         OSSL_ECH_CIPHER_LEN)) {
         ee->suites[ci].kem_id = thiskemid;
@@ -402,8 +408,10 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
     ee->encoded_len = PACKET_data(&ver_pkt) - tmpecp;
     /* copy encoded as it might get free'd if a reduce happens */
     ee->encoded = OPENSSL_memdup(tmpecp, ee->encoded_len);
-    if (ee->encoded == NULL)
+    if (ee->encoded == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
+    }
     if (priv != NULL) {
         if (EVP_PKEY_get_octet_string_param(priv,
                 OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
@@ -556,8 +564,10 @@ static int ech_read_priv_echconfiglist(OSSL_ECHSTORE *es, BIO *in,
     }
     if (detfmt == OSSL_ECH_FMT_BIN) { /* copy buffer if binary format */
         binbuf = OPENSSL_memdup(encodedval, encodedlen);
-        if (binbuf == NULL)
+        if (binbuf == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
+        }
         binlen = encodedlen;
     }
     if (detfmt == OSSL_ECH_FMT_B64TXT) {
@@ -963,8 +973,10 @@ int OSSL_ECHSTORE_get1_info(OSSL_ECHSTORE *es, int index, time_t *loaded_secs,
     if (ehlen > INT_MAX)
         goto err;
     *echconfig = OPENSSL_malloc(ehlen + 1);
-    if (*echconfig == NULL)
+    if (*echconfig == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
+    }
     if (BIO_read(out, *echconfig, (int)ehlen) <= 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
