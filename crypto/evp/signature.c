@@ -17,6 +17,7 @@
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
 #include "internal/core.h"
+#include <string.h>
 #include "crypto/evp.h"
 #include "evp_local.h"
 
@@ -28,6 +29,54 @@ static void evp_signature_free(void *data)
 static int evp_signature_up_ref(void *data)
 {
     return EVP_SIGNATURE_up_ref(data);
+}
+
+static void evp_signature_free_int(EVP_SIGNATURE *signature)
+{
+    OPENSSL_free(signature->type_name);
+    ossl_provider_free(signature->prov);
+    CRYPTO_FREE_REF(&signature->refcnt);
+    OPENSSL_free(signature);
+}
+
+static void *evp_signature_dup_frozen(void *vin)
+{
+    EVP_SIGNATURE *in = vin;
+    EVP_SIGNATURE *out;
+
+    out = OPENSSL_malloc(sizeof(*out));
+    if (out == NULL)
+        return NULL;
+    memcpy(out, in, sizeof(*out));
+    if (!CRYPTO_NEW_REF(&out->refcnt, 1))
+        goto err;
+    out->type_name = OPENSSL_strdup(in->type_name);
+    if (out->type_name == NULL)
+        goto err;
+    out->origin = EVP_ORIG_FROZEN;
+    if (out->prov != NULL && !ossl_provider_up_ref(out->prov)) {
+        OPENSSL_free(out->type_name);
+        goto err;
+    }
+    return out;
+err:
+    CRYPTO_FREE_REF(&out->refcnt);
+    OPENSSL_free(out);
+    return NULL;
+}
+
+static void evp_signature_frozen_free(void *vin)
+{
+    EVP_SIGNATURE *signature = vin;
+    int i;
+
+    if (signature == NULL || signature->origin != EVP_ORIG_FROZEN)
+        return;
+
+    CRYPTO_DOWN_REF(&signature->refcnt, &i);
+    if (i > 0)
+        return;
+    evp_signature_free_int(signature);
 }
 
 static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
@@ -456,22 +505,20 @@ void EVP_SIGNATURE_free(EVP_SIGNATURE *signature)
 {
     int i;
 
-    if (signature == NULL)
+    if (signature == NULL || signature->origin != EVP_ORIG_DYNAMIC)
         return;
     CRYPTO_DOWN_REF(&signature->refcnt, &i);
     if (i > 0)
         return;
-    OPENSSL_free(signature->type_name);
-    ossl_provider_free(signature->prov);
-    CRYPTO_FREE_REF(&signature->refcnt);
-    OPENSSL_free(signature);
+    evp_signature_free_int(signature);
 }
 
 int EVP_SIGNATURE_up_ref(EVP_SIGNATURE *signature)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&signature->refcnt, &ref);
+    if (signature->origin == EVP_ORIG_DYNAMIC)
+        CRYPTO_UP_REF(&signature->refcnt, &ref);
     return 1;
 }
 
@@ -486,7 +533,19 @@ EVP_SIGNATURE *EVP_SIGNATURE_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
     return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
         evp_signature_from_algorithm,
         evp_signature_up_ref,
-        evp_signature_free, NULL, NULL);
+        evp_signature_free,
+        evp_signature_dup_frozen,
+        evp_signature_frozen_free);
+}
+
+int evp_signature_fetch_all(OSSL_LIB_CTX *ctx)
+{
+    return evp_generic_fetch_all(ctx, OSSL_OP_SIGNATURE,
+        evp_signature_from_algorithm,
+        evp_signature_up_ref,
+        evp_signature_free,
+        evp_signature_dup_frozen,
+        evp_signature_frozen_free);
 }
 
 EVP_SIGNATURE *evp_signature_fetch_from_prov(OSSL_PROVIDER *prov,
@@ -498,8 +557,8 @@ EVP_SIGNATURE *evp_signature_fetch_from_prov(OSSL_PROVIDER *prov,
         evp_signature_from_algorithm,
         evp_signature_up_ref,
         evp_signature_free,
-        NULL,
-        NULL);
+        evp_signature_dup_frozen,
+        evp_signature_frozen_free);
 }
 
 int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name)
