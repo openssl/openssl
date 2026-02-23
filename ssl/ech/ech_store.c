@@ -705,7 +705,7 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
         || !BUF_MEM_grow(epkt_mem, OSSL_ECH_MAX_ECHCONFIG_LEN)
         || !WPACKET_init(&epkt, epkt_mem)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        goto err;
+        goto err_no_epkt;
     }
     /* random config_id */
     if (RAND_bytes_ex(es->libctx, (unsigned char *)&config_id, 1, 0) <= 0) {
@@ -799,10 +799,11 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
     return 1;
 
 err:
+    ossl_echstore_entry_free(ee);
     EVP_PKEY_free(privp);
     WPACKET_cleanup(&epkt);
+err_no_epkt:
     BUF_MEM_free(epkt_mem);
-    ossl_echstore_entry_free(ee);
     return rv;
 }
 
