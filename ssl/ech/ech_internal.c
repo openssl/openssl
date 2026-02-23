@@ -1132,7 +1132,9 @@ int ossl_ech_get_ch_offsets(SSL_CONNECTION *s, PACKET *pkt, size_t *sessid_off,
     const unsigned char *ch = NULL;
     size_t ch_len = 0, exts_len = 0, sni_len = 0, ech_len = 0;
 
-    if (s == NULL || pkt == NULL || sessid_off == NULL || exts_off == NULL
+    if (s == NULL)
+        return 0;
+    if (pkt == NULL || sessid_off == NULL || exts_off == NULL
         || ech_off == NULL || echtype == NULL || inner == NULL
         || sni_off == NULL) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
