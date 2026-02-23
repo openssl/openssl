@@ -385,7 +385,7 @@ static CONF_MODULE *module_find(const char *name)
 {
     CONF_MODULE *tmod;
     int i, nchar;
-    char *p;
+    const char *p;
     STACK_OF(CONF_MODULE) *mods;
 
     p = strrchr(name, '.');
