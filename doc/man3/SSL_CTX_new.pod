@@ -3,7 +3,8 @@
 =head1 NAME
 
 SSL_CTX_new, SSL_CTX_new_ex, SSL_CTX_up_ref, TLS_method, TLS_server_method,
-TLS_client_method, DTLS_method, DTLS_server_method, DTLS_client_method
+TLS_client_method, SSLv23_method, SSLv23_server_method, SSLv23_client_method,
+DTLS_method, DTLS_server_method, DTLS_client_method
 - create a new SSL_CTX object as framework for TLS/SSL or DTLS enabled
 functions
 
@@ -19,6 +20,10 @@ functions
  const SSL_METHOD *TLS_method(void);
  const SSL_METHOD *TLS_server_method(void);
  const SSL_METHOD *TLS_client_method(void);
+
+ const SSL_METHOD *SSLv23_method(void);
+ const SSL_METHOD *SSLv23_server_method(void);
+ const SSL_METHOD *SSLv23_client_method(void);
 
  const SSL_METHOD *DTLS_method(void);
  const SSL_METHOD *DTLS_server_method(void);
@@ -72,6 +77,15 @@ The I<method> parameter of SSL_CTX_new_ex() and SSL_CTX_new()
 can be one of the following:
 
 =over 4
+
+=item SSLv23_method(), SSLv23_server_method(), SSLv23_client_method()
+
+These functions do not exist anymore, they have been renamed to
+TLS_method(), TLS_server_method() and TLS_client_method() respectively.
+Currently, the old function calls are renamed to the corresponding new
+ones by preprocessor macros, to ensure that existing code which uses the
+old function names still compiles. However, using the old function names
+is deprecated and new code should call the new functions instead.
 
 =item TLS_method(), TLS_server_method(), TLS_client_method()
 

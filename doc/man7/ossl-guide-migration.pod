@@ -48,7 +48,6 @@ application must call OPENSSL_cleanup() explicitly before main() returns.
 
 =head3 Removal of fixed (D)TLS version method functions
 
-SSLv23_method(), SSLv23_server_method(), SSLv23_client_method(),
 SSLv3_method(), SSLv3_server_method(), SSLv3_client_method(),
 TLSv1_method(), TLSv1_server_method(), TLSv1_client_method(),
 TLSv1_1_method(), TLSv1_1_server_method(), TLSv1_1_client_method(),

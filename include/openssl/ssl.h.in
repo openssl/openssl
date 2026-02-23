@@ -2006,6 +2006,10 @@ OSSL_DEPRECATEDIN_3_0
 __owur int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth);
 #endif
 
+#define SSLv23_method TLS_method
+#define SSLv23_server_method TLS_server_method
+#define SSLv23_client_method TLS_client_method
+
 /* Negotiate highest available SSL/TLS version */
 __owur const SSL_METHOD *TLS_method(void);
 __owur const SSL_METHOD *TLS_server_method(void);
