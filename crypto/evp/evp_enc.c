@@ -1536,6 +1536,7 @@ static void *evp_cipher_dup_frozen(void *vin)
     }
     return out;
 err:
+    CRYPTO_FREE_REF(&out->refcnt);
     OPENSSL_free(out);
     return NULL;
 }
