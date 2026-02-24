@@ -92,10 +92,12 @@ int ossl_sha3_absorb(KECCAK1600_CTX *ctx, const unsigned char *inp, size_t len)
         len -= rem;
         ctx->meth.absorb(ctx, ctx->buf, bsz);
         ctx->bufsz = 0;
+        ctx->xof_state = XOF_STATE_ABSORB;
     }
-    ctx->xof_state = XOF_STATE_ABSORB;
     /* Absorb the input - rem = leftover part of the input < blocksize) */
     rem = ctx->meth.absorb(ctx, inp, len);
+    if (len >= bsz)
+        ctx->xof_state = XOF_STATE_ABSORB;
     /* Copy the leftover bit of the input into the buffer */
     if (ossl_likely(rem > 0)) {
         memcpy(ctx->buf, inp + len - rem, rem);
@@ -306,7 +308,7 @@ static int shake_squeeze_s390x(KECCAK1600_CTX *ctx, unsigned char *out, size_t o
     return 1;
 }
 
-static PROV_SHA3_METHOD ossl_shake_s390x_meth = {
+static PROV_SHA3_METHOD shake_s390x_meth = {
     sha3_absorb_s390x,
     shake_final_s390x,
     shake_squeeze_s390x
