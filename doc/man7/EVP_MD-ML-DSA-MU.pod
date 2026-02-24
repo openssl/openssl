@@ -136,7 +136,7 @@ L<OSSL_PROVIDER-default(7)>
 
 =head1 HISTORY
 
-EVP_MD-ML-DSA-MU was added in OpenSSL 4.0.0.
+The B<ML-DSA-MU> pseudo-digest was added in OpenSSL 4.0.0.
 
 =head1 COPYRIGHT
 
