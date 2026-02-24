@@ -21,41 +21,20 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-struct evp_rand_st {
-    OSSL_PROVIDER *prov;
-    int name_id;
-    char *type_name;
-    const char *description;
-    CRYPTO_REF_COUNT refcnt;
-
-    const OSSL_DISPATCH *dispatch;
-    OSSL_FUNC_rand_newctx_fn *newctx;
-    OSSL_FUNC_rand_freectx_fn *freectx;
-    OSSL_FUNC_rand_instantiate_fn *instantiate;
-    OSSL_FUNC_rand_uninstantiate_fn *uninstantiate;
-    OSSL_FUNC_rand_generate_fn *generate;
-    OSSL_FUNC_rand_reseed_fn *reseed;
-    OSSL_FUNC_rand_nonce_fn *nonce;
-    OSSL_FUNC_rand_enable_locking_fn *enable_locking;
-    OSSL_FUNC_rand_lock_fn *lock;
-    OSSL_FUNC_rand_unlock_fn *unlock;
-    OSSL_FUNC_rand_gettable_params_fn *gettable_params;
-    OSSL_FUNC_rand_gettable_ctx_params_fn *gettable_ctx_params;
-    OSSL_FUNC_rand_settable_ctx_params_fn *settable_ctx_params;
-    OSSL_FUNC_rand_get_params_fn *get_params;
-    OSSL_FUNC_rand_get_ctx_params_fn *get_ctx_params;
-    OSSL_FUNC_rand_set_ctx_params_fn *set_ctx_params;
-    OSSL_FUNC_rand_verify_zeroization_fn *verify_zeroization;
-    OSSL_FUNC_rand_get_seed_fn *get_seed;
-    OSSL_FUNC_rand_clear_seed_fn *clear_seed;
-} /* EVP_RAND */;
+static void evp_rand_free_int(EVP_RAND *rand)
+{
+    OPENSSL_free(rand->type_name);
+    ossl_provider_free(rand->prov);
+    CRYPTO_FREE_REF(&rand->refcnt);
+    OPENSSL_free(rand);
+}
 
 static int evp_rand_up_ref(void *vrand)
 {
     EVP_RAND *rand = (EVP_RAND *)vrand;
     int ref = 0;
 
-    if (rand != NULL)
+    if (rand != NULL && rand->origin == EVP_ORIG_DYNAMIC)
         return CRYPTO_UP_REF(&rand->refcnt, &ref);
     return 1;
 }
@@ -65,15 +44,12 @@ static void evp_rand_free(void *vrand)
     EVP_RAND *rand = (EVP_RAND *)vrand;
     int ref = 0;
 
-    if (rand == NULL)
+    if (rand == NULL || rand->origin != EVP_ORIG_DYNAMIC)
         return;
     CRYPTO_DOWN_REF(&rand->refcnt, &ref);
     if (ref > 0)
         return;
-    OPENSSL_free(rand->type_name);
-    ossl_provider_free(rand->prov);
-    CRYPTO_FREE_REF(&rand->refcnt);
-    OPENSSL_free(rand);
+    evp_rand_free_int(rand);
 }
 
 static void *evp_rand_new(void)
@@ -88,6 +64,47 @@ static void *evp_rand_new(void)
         return NULL;
     }
     return rand;
+}
+
+static void *evp_rand_dup_frozen(void *vin)
+{
+    EVP_RAND *in = vin;
+    EVP_RAND *out;
+
+    out = OPENSSL_malloc(sizeof(*out));
+    if (out == NULL)
+        return NULL;
+    memcpy(out, in, sizeof(*out));
+    if (!CRYPTO_NEW_REF(&out->refcnt, 1))
+        goto err;
+    out->type_name = OPENSSL_strdup(in->type_name);
+    if (out->type_name == NULL)
+        goto err;
+    out->origin = EVP_ORIG_FROZEN;
+    if (out->prov == NULL || !ossl_provider_up_ref(out->prov)) {
+        OPENSSL_free(out->type_name);
+        goto err;
+    }
+    return out;
+
+err:
+    CRYPTO_FREE_REF(&out->refcnt);
+    OPENSSL_free(out);
+    return NULL;
+}
+
+static void evp_rand_frozen_free(void *vin)
+{
+    EVP_RAND *rand = vin;
+    int ref = 0;
+
+    if (rand == NULL || rand->origin != EVP_ORIG_FROZEN)
+        return;
+
+    CRYPTO_DOWN_REF(&rand->refcnt, &ref);
+    if (ref > 0)
+        return;
+    evp_rand_free_int(rand);
 }
 
 /* Enable locking of the underlying DRBG/RAND if available */
@@ -282,9 +299,23 @@ static void *evp_rand_from_algorithm(int name_id,
 EVP_RAND *EVP_RAND_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
     const char *properties)
 {
-    return evp_generic_fetch(libctx, OSSL_OP_RAND, algorithm, properties,
-        evp_rand_from_algorithm, evp_rand_up_ref,
-        evp_rand_free, NULL, NULL);
+    return evp_generic_fetch(libctx, OSSL_OP_RAND,
+        algorithm, properties,
+        evp_rand_from_algorithm,
+        evp_rand_up_ref,
+        evp_rand_free,
+        evp_rand_dup_frozen,
+        evp_rand_frozen_free);
+}
+
+int evp_rand_fetch_all(OSSL_LIB_CTX *ctx)
+{
+    return evp_generic_fetch_all(ctx, OSSL_OP_RAND,
+        evp_rand_from_algorithm,
+        evp_rand_up_ref,
+        evp_rand_free,
+        evp_rand_dup_frozen,
+        evp_rand_frozen_free);
 }
 
 int EVP_RAND_up_ref(EVP_RAND *rand)

@@ -21,6 +21,7 @@
 #include "internal/sizes.h"
 #include "testutil.h"
 #include "crypto/evp.h"
+#include "../crypto/evp/evp_local.h"
 
 static char *config_file = NULL;
 static char *alg = "digest";
@@ -516,6 +517,107 @@ end:
     return ret;
 }
 
+static int test_EVP_RAND_fetch_freeze(void)
+{
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    /*
+     * Test does not make sense if cached fetch is disabled.
+     * There's nothing to freeze, and test will fail.
+     */
+    return 1;
+#endif
+
+    EVP_RAND *rand = NULL;
+    int ret = 0;
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    if (!TEST_ptr(rand = EVP_RAND_fetch(ctx, "HASH-DRBG", NULL))
+        || !TEST_int_ne(rand->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_RAND_free(rand);
+    rand = NULL;
+
+    if (!TEST_int_eq(OSSL_LIB_CTX_freeze(ctx, "?fips=true"), 1)
+        || !TEST_ptr(rand = EVP_RAND_fetch(ctx, "HASH-DRBG", NULL))
+        || !TEST_int_eq(rand->origin, EVP_ORIG_FROZEN))
+        goto err;
+    /* Technically, frozen version doesn't need to be freed */
+    EVP_RAND_free(rand);
+    rand = NULL;
+
+    if (!TEST_ptr(rand = EVP_RAND_fetch(ctx, "HASH-DRBG", "?fips=true"))
+        || !TEST_int_eq(rand->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_RAND_free(rand);
+    rand = NULL;
+
+    /* Falls back to slow path */
+    if (!TEST_ptr(rand = EVP_RAND_fetch(ctx, "HASH-DRBG", "?provider=default"))
+        || !TEST_int_ne(rand->origin, EVP_ORIG_FROZEN))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_RAND_free(rand);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_implicit_EVP_RAND_fetch(void)
+{
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+    EVP_RAND *rand = NULL;
+    int ret = 0;
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    if (!TEST_ptr(rand = EVP_RAND_fetch(ctx, "HASH-DRBG", NULL)))
+        goto err;
+    ret = 1;
+err:
+    EVP_RAND_free(rand);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_explicit_EVP_RAND_fetch(const char *id)
+{
+    OSSL_LIB_CTX *ctx = NULL;
+    EVP_RAND *rand = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+    int ret = 0;
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    rand = EVP_RAND_fetch(ctx, id, fetch_property);
+    if (expected_fetch_result != 0) {
+        if (!TEST_true(EVP_RAND_up_ref(rand)))
+            goto err;
+        /* Ref count should now be 2. Release first one here */
+        EVP_RAND_free(rand);
+    } else {
+        if (!TEST_ptr_null(rand))
+            goto err;
+    }
+    ret = 1;
+err:
+    EVP_RAND_free(rand);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_explicit_EVP_RAND_fetch_by_name(void)
+{
+    return test_explicit_EVP_RAND_fetch("HASH-DRBG");
+}
+
 int setup_tests(void)
 {
     OPTION_CHOICE o;
@@ -550,11 +652,18 @@ int setup_tests(void)
         ADD_TEST(test_implicit_EVP_MD_fetch);
         ADD_TEST(test_explicit_EVP_MD_fetch_by_name);
         ADD_ALL_TESTS_NOSUBTEST(test_explicit_EVP_MD_fetch_by_X509_ALGOR, 2);
-    } else {
+    } else if (strcmp(alg, "cipher") == 0) {
         ADD_TEST(test_EVP_CIPHER_fetch_freeze);
         ADD_TEST(test_implicit_EVP_CIPHER_fetch);
         ADD_TEST(test_explicit_EVP_CIPHER_fetch_by_name);
         ADD_ALL_TESTS_NOSUBTEST(test_explicit_EVP_CIPHER_fetch_by_X509_ALGOR, 2);
+    } else if (strcmp(alg, "rand") == 0) {
+        ADD_TEST(test_EVP_RAND_fetch_freeze);
+        ADD_TEST(test_implicit_EVP_RAND_fetch);
+        ADD_TEST(test_explicit_EVP_RAND_fetch_by_name);
+    } else {
+        TEST_error("Unknown fetch type: %s", alg);
+        return 0;
     }
     return 1;
 }

@@ -1165,9 +1165,9 @@ int ossl_method_store_freeze_cache(OSSL_METHOD_STORE *store, const char *propq)
     if (store->frozen_algs == NULL)
         goto err;
 
-    if (evp_md_fetch_all(store->ctx) <= 0)
-        goto err;
-    if (evp_cipher_fetch_all(store->ctx) <= 0)
+    if (evp_md_fetch_all(store->ctx) <= 0
+        || evp_cipher_fetch_all(store->ctx) <= 0
+        || evp_rand_fetch_all(store->ctx) <= 0)
         goto err;
 
     ossl_sa_ALGORITHM_doall_arg(store->algs, &alg_freeze, &af);
