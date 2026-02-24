@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-ossl-guide-migration, migration_guide
+ossl-guide-migration, migration_guide, ossl-migration-guide
 - OpenSSL Guide: Migrating from older OpenSSL versions
 
 =head1 SYNOPSIS
@@ -94,7 +94,7 @@ to the B<X509> layer to reduce the number of memory allocations and copies
 that are made. These changes can impact code which uses these functions if
 a returned pointer value which was not const in previous versions of OpenSSL
 has now been made const. When such a value is assigned to a non-const pointer
-variable you will get a compiler warning. .
+variable you will get a compiler warning.
 
 The returned values being const is an indication that you may not mutate these
 values safely.
