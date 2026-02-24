@@ -471,21 +471,32 @@ encoding.  Unlike the C structures which can have pointers to sub-objects
 within, the DER is a serialized encoding, suitable for sending over the
 network, writing to a file, and so on.
 
-B<d2i_I<TYPE>>() attempts to decode I<len> bytes at I<*ppin>. If successful a
-pointer to the B<I<TYPE>> structure is returned and I<*ppin> is incremented to
-the byte following the parsed data.  If I<a> is not NULL then a pointer
-to the returned structure is also written to I<*a>.  If an error occurred
-then NULL is returned. The caller retains ownership of the
-returned object and needs to free it when it is no longer needed, e.g.
-using X509_free() for X509 objects or DSA_SIG_free() for DSA_SIG objects.
+B<d2i_I<TYPE>>() attempts to decode I<len> bytes at I<*ppin>.
+A NULL pointer is returned on error.
 
-On a successful return, if I<*a> is not NULL then it is assumed that I<*a>
-contains a valid B<I<TYPE>> structure and an attempt is made to reuse it.
-For B<I<TYPE>> structures where it matters it is possible to set up a library
-context on the decoded structure this way (see the B<EXAMPLES> section).
-However using the "reuse" capability for other purposes is B<strongly
-discouraged> (see B<BUGS> below, and the discussion in the B<RETURN VALUES>
-section).
+Otherwise, a pointer to a B<I<TYPE>> object is returned and I<*ppin> is
+incremented to the byte following the parsed data.
+The caller retains ownership of the returned object and needs to free it when
+it is no longer needed, e.g. via X509_free() for X509 objects or
+DSA_SIG_free() for DSA_SIG objects.
+
+If either I<a> or else I<*a> is NULL, then fresh storage is allocated for the
+returned object, and if I<a> is not NULL then I<*a> is set equal to the
+returned pointer.
+
+Finally, when both I<a> and I<*a> are not NULL, I<*a> MUST be a pointer to an
+existing I<TYPE> object, which is reused to hold the decoded result.
+On error (NULL return value), the object is freed and I<*a> is set to NULL.
+
+From OpenSSL 3.x onwards, reuse is only supported when I<*a> points to a newly
+allocated, and not otherwise modified, I<TYPE> object.
+Allocation can be via one of the various _ex() routines, which make it possible
+to associate the allocated object with a chosen I<libctx> (library context)
+or I<propq> (property query), see the B<EXAMPLES> section.
+No other reuse is supported (see B<BUGS> below, and the discussion in the
+B<RETURN VALUES> section).
+The returned object is not suitable for another reuse: each reuse attempt MUST
+start with a newly allocated object.
 
 B<d2i_I<TYPE>_bio>() is similar to B<d2i_I<TYPE>>() except it attempts
 to parse data from BIO I<bp>.
