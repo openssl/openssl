@@ -35,6 +35,8 @@ without needing to reference related issues or having prior knowledge. Commit
 messages should include all relevant details to help future contributors
 follow the git history, with clear explanations of what is changing
 and why. Long descriptions are encouraged if they aid understanding.
+Commit message titles (their first line) should be kept to 50 - 70 characters
+if reasonable.
 
 To make it easier to review and accept your pull request, please follow these
 guidelines:
