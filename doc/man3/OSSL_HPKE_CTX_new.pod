@@ -451,12 +451,12 @@ OSSL_HPKE_get_ciphertext_size() and OSSL_HPKE_get_public_encap_size().
 
 OSSL_HPKE_str2suite() maps input I<str> strings to an B<OSSL_HPKE_SUITE> object.
 The input I<str> should be a comma-separated string with a KEM,
-KDF and AEAD name in that order, for example "x25519,hkdf-sha256,aes128gcm".
+KDF and AEAD name in that order, for example "x25519,hkdf-sha256,aes-128-gcm".
 This can be used by command line tools that accept string form names for HPKE
 codepoints. Valid (case-insensitive) names are:
 "p-256", "p-384", "p-521", "x25519" and "x448" for KEM,
 "hkdf-sha256", "hkdf-sha384" and "hkdf-sha512" for KDF, and
-"aes-gcm-128", "aes-gcm-256", "chacha20-poly1305" and "exporter" for AEAD.
+"aes-128-gcm", "aes-256-gcm", "chacha20-poly1305" and "exporter" for AEAD.
 String variants of the numbers listed in L</OSSL_HPKE_SUITE Identifiers>
 can also be used.
 
