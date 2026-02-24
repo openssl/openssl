@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-PKCS7_verify, PKCS7_get0_signers - verify a PKCS#7 signedData structure
+PKCS7_verify, PKCS7_dataVerify, PKCS7_get0_signers - verify a PKCS#7 signedData structure
 
 =head1 SYNOPSIS
 
@@ -10,6 +10,9 @@ PKCS7_verify, PKCS7_get0_signers - verify a PKCS#7 signedData structure
 
  int PKCS7_verify(PKCS7 *p7, const STACK_OF(X509) *certs, X509_STORE *store,
                   BIO *indata, BIO *out, int flags);
+
+ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx,
+                  BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si);
 
  STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, const STACK_OF(X509) *certs,
                                     int flags);
@@ -34,6 +37,23 @@ I<flags> is an optional set of flags, which can be used to modify the operation.
 PKCS7_get0_signers() retrieves the signer certificates from I<p7>, it does
 B<not> check their validity or whether any signatures are valid. The I<certs>
 and I<flags> parameters have the same meanings as in PKCS7_verify().
+
+PKCS7_dataVerify() operates in a simmilar fashion to PKCS7_verify, with a few
+notable exceptions:
+
+=over 4
+
+=item PKCS7_dataVerify does not support the passing of the I<flags> parameter.
+
+=item PKCS7_dataVerify obtains its signer info from the passed in signer data
+via the I<si> parameter, rather than parsing the signers from the PKCS7 object
+directly.
+
+=back
+
+PKCS7_dataVerify() is available for backwards compatibility with older versions
+of OpenSSL, but it is generally recommended that users use the PKCS7_verify()
+API instead, as it offers greater flexibility in the verification process.
 
 =head1 VERIFY PROCESS
 
@@ -112,7 +132,8 @@ timestamp).
 
 =head1 RETURN VALUES
 
-PKCS7_verify() returns 1 for a successful verification and 0 if an error occurs.
+PKCS7_verify() and PKCS7_dataVerify() return 1 for a successful verification
+and 0 if an error occurs.
 
 PKCS7_get0_signers() returns all signers or NULL if an error occurred.
 
