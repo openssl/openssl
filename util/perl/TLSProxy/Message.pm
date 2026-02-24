@@ -259,8 +259,16 @@ sub get_messages
                     $payload = "";
                 } else {
                     #This is just part of the total message
-                    $payload .= $record->decrypt_data;
-                    $recoffset = $record->decrypt_len;
+                    if ($isdtls) {
+                        # DTLS 1.3 has a unified header before the handshake header.
+                        # We have processed the unified header and need to skip the
+                        # handshake header.
+                        $payload .= substr($record->decrypt_data, DTLS_MESSAGE_HEADER_LENGTH, length($record->decrypt_data) - DTLS_MESSAGE_HEADER_LENGTH);
+                        $recoffset = $record->decrypt_len;
+                    } else {
+                        $payload .= $record->decrypt_data;
+                        $recoffset = $record->decrypt_len;
+                    }
                     push @message_frag_lens, $record->decrypt_len;
                 }
                 print "  Partial message data read: ".$recoffset." bytes\n";

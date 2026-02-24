@@ -201,6 +201,38 @@ sub DESTROY
     $self->{proxy_sock}->close() if $self->{proxy_sock};
 }
 
+sub reopenUDPSocket()
+{
+    my $self = shift;
+
+    if ($self->{proxy_sock})
+    {
+        if (!$self->{proxy_sock}->opened) {
+            my $clientaddr = $self->{client_addr};
+            $clientaddr =~ s/[\[\]]//g; # Remove [ and ]
+            my $proxaddr = $self->{proxy_addr};
+            $proxaddr =~ s/[\[\]]//g; # Remove [ and ]
+
+            my @proxyargs = (
+                LocalHost   => $proxaddr,
+                LocalPort   => $self->{proxy_port},
+                PeerHost    => $clientaddr,
+                PeerPort    => $self->{client_port},
+                Proto       => "udp",
+            );
+
+            if (my $sock = $IP_factory->(@proxyargs)) {
+                $self->{proxy_sock} = $sock;
+            } else {
+                warn "Failed creating proxy socket (".$self->{proxy_addr}.",0): $!\n";
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+}
+
 sub clearClient
 {
     my $self = shift;
@@ -514,6 +546,8 @@ sub clientstart
     $self->{saw_session_ticket_ack} = 0;
     $self->{server_epoch} = 0;
     $self->{server_sequence_number} = 0;
+    $self->{client_epoch} = 0;
+    $self->{client_sequence_number} = 0;
 
     while($fdset->count && $ctr < 10) {
         if (defined($self->{sessionfile})) {
@@ -565,6 +599,10 @@ sub clientstart
     END:
     print "Connection closed\n";
     if($server_sock) {
+        if ($self->{isdtls} && $self->is_tls13()) {
+            my $alert_message = $self->construct_alert_message($self->{client_epoch}, $self->{client_sequence_number} + 1);
+            $server_sock->syswrite($alert_message) or warn "Failed to send close_notify alert: $!\n";
+        }
         $server_sock->close();
         $self->{server_sock} = undef;
     }
@@ -572,9 +610,8 @@ sub clientstart
         # For DTLSv1.3 tests that are using sessionfile we need to send a close_notify
         # this is because closing the socket does not result in a FIN being sent as in TCP.
         if ($self->{isdtls} && $self->is_tls13() && defined($self->{sessionfile})) {
-            my $alert_message = $self->construct_alert_message();
+            my $alert_message = $self->construct_alert_message($self->{client_epoch}, $self->{client_sequence_number} + 1);
             $client_sock->syswrite($alert_message) or warn "Failed to send close_notify alert: $!\n";
-            sleep(1);
         }
 
         #Closing this also kills the child process
@@ -620,13 +657,11 @@ sub clientstart
 
 sub construct_alert_message
 {
-    my ($self) = @_;
+    my ($self, $epoch, $sequence_number) = @_;
 
     die "construct_alert_message only valid for DTLSv1.3 tests\n"
         if !$self->{isdtls} || !$self->is_tls13();
 
-    my $epoch = $self->{server_epoch};
-    my $sequence_number = $self->{server_sequence_number} + 1;
     my $seqhi = ($sequence_number >> 32) & 0xffff;
     my $seqmi = ($sequence_number >> 16) & 0xffff;
     my $seqlo = ($sequence_number >> 0) & 0xffff;
@@ -726,12 +761,16 @@ sub process_packet
         if ($self->{isdtls} && $self->is_tls13()) {
             $self->seen_session_ticket_ack($record);
 
-            if ($record->epoch() > $self->{server_epoch}) {
-                $self->{server_epoch} = $record->epoch();
-                $self->{server_sequence_number} = $record->seq();
-            } elsif ($record->epoch() == $self->{server_epoch} &&
-                     $record->seq() > $self->{server_sequence_number}) {
-                $self->{server_sequence_number} = $record->seq();
+            my $epoch_key = $serverissender ? 'server_epoch' : 'client_epoch';
+            my $seq_key = $serverissender ? 'server_sequence_number' : 'client_sequence_number';
+            my $rec_epoch = $record->epoch();
+            my $rec_seq = $record->seq();
+
+            if ($rec_epoch > $self->{$epoch_key}) {
+                $self->{$epoch_key} = $rec_epoch;
+                $self->{$seq_key} = $rec_seq;
+            } elsif ($rec_epoch == $self->{$epoch_key} && $rec_seq > $self->{$seq_key}) {
+                $self->{$seq_key} = $rec_seq;
             }
         }
     }
