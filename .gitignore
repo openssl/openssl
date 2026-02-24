@@ -135,6 +135,7 @@ providers/implementations/keymgmt/mlx_kmgmt.inc
 providers/implementations/keymgmt/slh_dsa_kmgmt.inc
 providers/implementations/keymgmt/template_kmgmt.inc
 providers/implementations/signature/eddsa_sig.inc
+providers/implementations/signature/mac_legacy_sig.inc
 providers/implementations/signature/ml_dsa_sig.inc
 providers/implementations/signature/rsa_sig.inc
 providers/implementations/signature/slh_dsa_sig.inc
