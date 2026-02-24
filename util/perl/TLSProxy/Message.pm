@@ -260,6 +260,9 @@ sub get_messages
                 } else {
                     #This is just part of the total message
                     if ($isdtls) {
+                        # DTLS 1.3 has a unified header before the handshake header.
+                        # We have processed the unified header and need to skip the
+                        # handshake header.
                         $payload .= substr($record->decrypt_data, DTLS_MESSAGE_HEADER_LENGTH, length($record->decrypt_data) - DTLS_MESSAGE_HEADER_LENGTH);
                         $recoffset = $record->decrypt_len;
                     } else {
