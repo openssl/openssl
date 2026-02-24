@@ -123,19 +123,31 @@ If ctx is NULL then the function operates on the default library context.
 OSSL_LIB_CTX_get_data() returns a memory address whose interpretation
 depends on the index.
 
-OSSL_LIB_CTX_freeze() freezes the method store associated with the library
-context. A frozen context will speed up ONLY isolated, uncached algorithm
-lookups. This is specifically designed to benefit legacy high-throughput
-applications with worker threads doing isolated computations, without requiring
-a code restructuring. Existing and new applications are generally recommended to
-not use this feature and instead structure the application to pre-initialize
-contexts where possible. This function should only be called from a non-threaded
-context, before any worker threads have been dispatched.
+OSSL_LIB_CTX_freeze() freezes the method store associated with the
+library context, and builds a fast lookup cache which will be used by
+subsequent EVP calls to fetch implementations. A frozen method store
+may no longer be modified, and operations attempting to do so (such as
+loading a new provider) will fail. This function must only be called
+from a non-threaded context, before any worker threads have been
+dispatched. A frozen method store can not be un-frozen, or frozen again.
 
-If propq is NULL, it will only speed up method store operations with a NULL
-property query. If propq is not NULL, it will also speed up method store
-operations when given that exact property query. Other property queries will go
-through the normal, slower lookup method.
+OSSL_LIB_CTX_freeze() builds the lookup cache using an optional propq
+query string argument.  OSSL_LIB_CTX_freeze() will build a cache of
+methods for all algorithms for the NULL property query, and if propq
+is non-NULL, it will also cache the methods for all algorithms
+matching the propq query string. Once frozen, future method store
+lookups  using the the NULL propq or the provided propq will be
+answered from the cache. Any method store lookups for an algorithm
+using a different propq query string will not be answered from the
+cache, and will be looked up by the normal slower method.
+
+OSSL_LIB_CTX_freeze() is intended for use where applications with
+worker threads are not able to be structured to pre-fetch and retain
+the algorithm methods from the method store prior to use, and which
+therefore may pay a considerable performance penalty for the method
+store lookup every time an algorithm is used. Applications which can
+pre-fetch the methods they need before their use should not use
+OSSL_LIB_CTX_freeze().
 
 =head1 RETURN VALUES
 
