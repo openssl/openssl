@@ -32,7 +32,7 @@ static void evp_rand_free_int(EVP_RAND *rand)
 static int evp_rand_up_ref(void *vrand)
 {
     EVP_RAND *rand = (EVP_RAND *)vrand;
-    int ref;
+    int ref = 0;
 
     if (rand != NULL && rand->origin == EVP_ORIG_DYNAMIC)
         return CRYPTO_UP_REF(&rand->refcnt, &ref);
@@ -88,6 +88,7 @@ static void *evp_rand_dup_frozen(void *vin)
     return out;
 
 err:
+    CRYPTO_FREE_REF(&out->refcnt);
     OPENSSL_free(out);
     return NULL;
 }
@@ -95,7 +96,7 @@ err:
 static void evp_rand_frozen_free(void *vin)
 {
     EVP_RAND *rand = vin;
-    int ref;
+    int ref = 0;
 
     if (rand == NULL || rand->origin != EVP_ORIG_FROZEN)
         return;
