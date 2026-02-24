@@ -254,7 +254,8 @@ Do not load the default file of trusted certificates.
 
 Use the specified directory as a collection of trusted certificates,
 i.e., a trust store.
-Files should be named with the hash value of the X.509 SubjectName of each
+Each file should contain exactly one certificate in PEM format.
+It should be named with the hash value of the X.509 SubjectName of the
 certificate. This is so that the library can extract the IssuerName,
 hash it, and directly lookup the file to get the issuer certificate.
 See L<openssl-rehash(1)> for information on creating this type of directory.
@@ -265,11 +266,11 @@ Do not use the default directory of trusted certificates.
 
 =item B<-CAstore> I<uri>
 
-Use I<uri> as a store of CA certificates.
-The URI may indicate a single certificate, as well as a collection of them.
-With URIs in the C<file:> scheme, this acts as B<-CAfile> or
-B<-CApath>, depending on if the URI indicates a single file or
-directory.
+Use I<uri> as a store of trusted certificates.
+The URI may indicate a single certificate or a collection of them.
+When the URI references a file, only the PEM format is supported.
+With URIs in the C<file:> scheme, this is generally treated like B<-CApath> or
+B<-CAfile>, depending on whether the URI indicates a directory or a single file.
 See L<ossl_store-file(7)> for more information on the C<file:> scheme.
 
 These certificates are also used when building the server certificate
@@ -278,7 +279,7 @@ chain (for example with L<openssl-s_time(1)>).
 
 =item B<-no-CAstore>
 
-Do not use the default store of trusted CA certificates.
+Do not use the default store of trusted certificates.
 
 =back
 
@@ -450,7 +451,7 @@ Since B<-trusted_first> is always on, this option has no effect.
 
 =item B<-trusted> I<file>
 
-Parse I<file> as a set of one or more certificates.
+Parse I<file> as a set of one or more certificates in PEM format.
 Each of them qualifies as trusted if has a suitable positive trust attribute
 or it is self-signed or the B<-partial_chain> option is specified.
 This option implies the B<-no-CAfile>, B<-no-CApath>, and B<-no-CAstore> options
@@ -460,7 +461,7 @@ This option may be used multiple times.
 
 =item B<-untrusted> I<file>
 
-Parse I<file> as a set of one or more certificates.
+Parse I<file> as a set of one or more certificates in PEM format.
 All certificates (typically of intermediate CAs) are considered untrusted
 and may be used to
 construct a certificate chain from the target certificate to a trust anchor.
