@@ -38,7 +38,7 @@ PKCS7_get0_signers() retrieves the signer certificates from I<p7>, it does
 B<not> check their validity or whether any signatures are valid. The I<certs>
 and I<flags> parameters have the same meanings as in PKCS7_verify().
 
-PKCS7_dataVerify() operates in a simmilar fashion to PKCS7_verify, with a few
+PKCS7_dataVerify() operates in a similar fashion to PKCS7_verify, with a few
 notable exceptions:
 
 =over 4
