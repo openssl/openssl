@@ -281,6 +281,10 @@ static int ec_group_explicit_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
     }
     ret = 1;
 err:
+    if (ret == 0 && genbuf != NULL && *genbuf != NULL) {
+        OPENSSL_free(*genbuf);
+        *genbuf = NULL;
+    }
     return ret;
 }
 
