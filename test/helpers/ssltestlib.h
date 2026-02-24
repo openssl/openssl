@@ -73,6 +73,8 @@ void bio_s_maybe_retry_free(void);
 #define MEMPACKET_CTRL_SET_DUPLICATE_REC (4 << 15)
 
 int mempacket_swap_epoch(BIO *bio);
+int mempacket_swap_epoch_dtls13(BIO *bio);
+int mempacket_iterate(BIO *bio);
 int mempacket_move_packet(BIO *bio, int d, int s);
 int mempacket_dup_last_packet(BIO *bio);
 int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,

@@ -599,6 +599,7 @@ static const OSSL_RECORD_METHOD quic_tls_record_method = {
     NULL,
     NULL,
     NULL,
+    NULL,
     quic_alloc_buffers,
     quic_free_buffers
 };
