@@ -137,6 +137,12 @@ containing additional information on specific topics.
  * [Information about the OpenSSL Provider architecture](README-PROVIDERS.md)
  * [Information about using the OpenSSL FIPS validated module](README-FIPS.md)
 
+For Contributors and Developers
+------------------------------
+
+ * [Overview of the OpenSSL repository structure](doc/directory-structure.md) -
+   A guide to the organization of the codebase
+
 The OpenSSL Guide
 -----------------
 
