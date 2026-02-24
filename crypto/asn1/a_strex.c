@@ -268,12 +268,14 @@ static int do_dump(unsigned long lflags, char_io *io_ch, void *arg,
         return -1;
     /* If we don't dump DER encoding just dump content octets */
     if (!(lflags & ASN1_STRFLGS_DUMP_DER)) {
-        outlen = do_hex_dump(io_ch, arg, str->data, str->length);
+        outlen = do_hex_dump(io_ch, arg,
+            (unsigned char *)ASN1_STRING_get0_data(str),
+            ASN1_STRING_length(str));
         if (outlen < 0)
             return -1;
         return outlen + 1;
     }
-    t.type = str->type;
+    t.type = ASN1_STRING_type(str);
     t.value.ptr = (char *)str;
     der_len = i2d_ASN1_TYPE(&t, NULL);
     if (der_len <= 0)
@@ -333,7 +335,7 @@ static int do_print_ex(char_io *io_ch, void *arg, unsigned long lflags,
     /* Keep a copy of escape flags */
     flags = (unsigned short)(lflags & ESC_FLAGS);
 
-    type = str->type;
+    type = ASN1_STRING_type(str);
 
     outlen = 0;
 
@@ -386,7 +388,8 @@ static int do_print_ex(char_io *io_ch, void *arg, unsigned long lflags,
             type |= BUF_TYPE_CONVUTF8;
     }
 
-    len = do_buf(str->data, str->length, type, flags, &quotes, io_ch, NULL);
+    len = do_buf((unsigned char *)ASN1_STRING_get0_data(str),
+        ASN1_STRING_length(str), type, flags, &quotes, io_ch, NULL);
     if (len < 0 || len > INT_MAX - 2 - outlen)
         return -1;
     outlen += len;
@@ -396,7 +399,9 @@ static int do_print_ex(char_io *io_ch, void *arg, unsigned long lflags,
         return outlen;
     if (quotes && !io_ch(arg, "\"", 1))
         return -1;
-    if (do_buf(str->data, str->length, type, flags, NULL, io_ch, arg) < 0)
+    if (do_buf((unsigned char *)ASN1_STRING_get0_data(str),
+            ASN1_STRING_length(str), type, flags, NULL, io_ch, arg)
+        < 0)
         return -1;
     if (quotes && !io_ch(arg, "\"", 1))
         return -1;
@@ -604,7 +609,7 @@ int ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in)
     int mbflag, type, ret;
     if (!in)
         return -1;
-    type = in->type;
+    type = ASN1_STRING_type(in);
     if ((type < 0) || (type > 30))
         return -1;
     mbflag = tag2nbyte[type];
@@ -614,8 +619,8 @@ int ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in)
     stmp.data = NULL;
     stmp.length = 0;
     stmp.flags = 0;
-    ret = ASN1_mbstring_copy(&str, in->data, in->length, mbflag,
-        B_ASN1_UTF8STRING);
+    ret = ASN1_mbstring_copy(&str, ASN1_STRING_get0_data(in),
+        ASN1_STRING_length(in), mbflag, B_ASN1_UTF8STRING);
     if (ret < 0)
         return ret;
     *out = stmp.data;

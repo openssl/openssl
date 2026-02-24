@@ -24,8 +24,8 @@ int ASN1_INTEGER_cmp(const ASN1_INTEGER *x, const ASN1_INTEGER *y)
 {
     int neg, ret;
     /* Compare signs */
-    neg = x->type & V_ASN1_NEG;
-    if (neg != (y->type & V_ASN1_NEG)) {
+    neg = ASN1_STRING_type(x) & V_ASN1_NEG;
+    if (neg != (ASN1_STRING_type(y) & V_ASN1_NEG)) {
         if (neg)
             return -1;
         else
@@ -207,7 +207,8 @@ static size_t c2i_ibuf(unsigned char *b, int *pneg,
 int ossl_i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 {
     unsigned char *ptr = pp != NULL ? *pp : NULL;
-    size_t ret = i2c_ibuf(a->data, a->length, a->type & V_ASN1_NEG, &ptr);
+    size_t ret = i2c_ibuf(ASN1_STRING_get0_data(a), ASN1_STRING_length(a),
+        ASN1_STRING_type(a) & V_ASN1_NEG, &ptr);
 
     if (ret > INT_MAX) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LARGE);
@@ -344,11 +345,12 @@ static int asn1_string_get_int64(int64_t *pr, const ASN1_STRING *a, int itype)
         ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if ((a->type & ~V_ASN1_NEG) != itype) {
+    if ((ASN1_STRING_type(a) & ~V_ASN1_NEG) != itype) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_WRONG_INTEGER_TYPE);
         return 0;
     }
-    return asn1_get_int64(pr, a->data, a->length, a->type & V_ASN1_NEG);
+    return asn1_get_int64(pr, ASN1_STRING_get0_data(a), ASN1_STRING_length(a),
+        ASN1_STRING_type(a) & V_ASN1_NEG);
 }
 
 static int asn1_string_set_int64(ASN1_STRING *a, int64_t r, int itype)
@@ -381,15 +383,15 @@ static int asn1_string_get_uint64(uint64_t *pr, const ASN1_STRING *a,
         ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if ((a->type & ~V_ASN1_NEG) != itype) {
+    if ((ASN1_STRING_type(a) & ~V_ASN1_NEG) != itype) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_WRONG_INTEGER_TYPE);
         return 0;
     }
-    if (a->type & V_ASN1_NEG) {
+    if (ASN1_STRING_type(a) & V_ASN1_NEG) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_NEGATIVE_VALUE);
         return 0;
     }
-    return asn1_get_uint64(pr, a->data, a->length);
+    return asn1_get_uint64(pr, ASN1_STRING_get0_data(a), ASN1_STRING_length(a));
 }
 
 static int asn1_string_set_uint64(ASN1_STRING *a, uint64_t r, int itype)
@@ -520,17 +522,17 @@ static BIGNUM *asn1_string_to_bn(const ASN1_INTEGER *ai, BIGNUM *bn,
 {
     BIGNUM *ret;
 
-    if ((ai->type & ~V_ASN1_NEG) != itype) {
+    if ((ASN1_STRING_type(ai) & ~V_ASN1_NEG) != itype) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_WRONG_INTEGER_TYPE);
         return NULL;
     }
 
-    ret = BN_bin2bn(ai->data, ai->length, bn);
+    ret = BN_bin2bn(ASN1_STRING_get0_data(ai), ASN1_STRING_length(ai), bn);
     if (ret == NULL) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_BN_LIB);
         return NULL;
     }
-    if (ai->type & V_ASN1_NEG)
+    if (ASN1_STRING_type(ai) & V_ASN1_NEG)
         BN_set_negative(ret, 1);
     return ret;
 }
@@ -605,9 +607,9 @@ long ASN1_ENUMERATED_get(const ASN1_ENUMERATED *a)
     int64_t r;
     if (a == NULL)
         return 0;
-    if ((a->type & ~V_ASN1_NEG) != V_ASN1_ENUMERATED)
+    if ((ASN1_STRING_type(a) & ~V_ASN1_NEG) != V_ASN1_ENUMERATED)
         return -1;
-    if (a->length > (int)sizeof(long))
+    if (ASN1_STRING_length(a) > (int)sizeof(long))
         return 0xffffffffL;
     i = ASN1_ENUMERATED_get_int64(&r, a);
     if (i == 0)

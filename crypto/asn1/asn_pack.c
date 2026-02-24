@@ -54,8 +54,8 @@ void *ASN1_item_unpack(const ASN1_STRING *oct, const ASN1_ITEM *it)
     const unsigned char *p;
     void *ret;
 
-    p = oct->data;
-    if ((ret = ASN1_item_d2i(NULL, &p, oct->length, it)) == NULL)
+    p = ASN1_STRING_get0_data(oct);
+    if ((ret = ASN1_item_d2i(NULL, &p, ASN1_STRING_length(oct), it)) == NULL)
         ERR_raise(ERR_LIB_ASN1, ASN1_R_DECODE_ERROR);
     return ret;
 }
@@ -66,8 +66,8 @@ void *ASN1_item_unpack_ex(const ASN1_STRING *oct, const ASN1_ITEM *it,
     const unsigned char *p;
     void *ret;
 
-    p = oct->data;
-    if ((ret = ASN1_item_d2i_ex(NULL, &p, oct->length, it,
+    p = ASN1_STRING_get0_data(oct);
+    if ((ret = ASN1_item_d2i_ex(NULL, &p, ASN1_STRING_length(oct), it,
              libctx, propq))
         == NULL)
         ERR_raise(ERR_LIB_ASN1, ASN1_R_DECODE_ERROR);
