@@ -8760,6 +8760,13 @@ static struct {
         NULL,
         "AES128-SHA",
         "AES128-SHA" },
+    { TLS1_2_VERSION,
+        "AES256-SHA",
+        NULL,
+        "AES128-SHA",
+        NULL,
+        "",
+        "" },
 #endif
 /*
  * This test combines TLSv1.3 and TLSv1.2 ciphersuites so they must both be
@@ -8784,6 +8791,13 @@ static struct {
         "TLS_AES_256_GCM_SHA384",
         "TLS_AES_256_GCM_SHA384",
         "TLS_AES_256_GCM_SHA384" },
+    { TLS1_3_VERSION,
+        "AES128-SHA",
+        "TLS_AES_128_GCM_SHA256",
+        "AES256-SHA",
+        "TLS_AES_256_GCM_SHA384",
+        "",
+        "" },
 #endif
 };
 
@@ -8794,6 +8808,9 @@ static int int_test_ssl_get_shared_ciphers(int tst, int clnt)
     int testresult = 0;
     char buf[1024];
     OSSL_LIB_CTX *tmplibctx = OSSL_LIB_CTX_new();
+    const char *expbuf = is_fips ? shared_ciphers_data[tst].fipsshared
+                                 : shared_ciphers_data[tst].shared;
+    int handshakeok = strcmp(expbuf, "") != 0;
 
     if (!TEST_ptr(tmplibctx))
         goto end;
@@ -8834,18 +8851,22 @@ static int int_test_ssl_get_shared_ciphers(int tst, int clnt)
                 shared_ciphers_data[tst].srvrtls13ciphers))))
         goto end;
 
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-            NULL, NULL))
-        || !TEST_true(create_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_NONE)))
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+            NULL)))
         goto end;
 
+    if (handshakeok) {
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_NONE)))
+            goto end;
+    } else {
+        if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_NONE)))
+            goto end;
+    }
+
     if (!TEST_ptr(SSL_get_shared_ciphers(serverssl, buf, sizeof(buf)))
-        || !TEST_int_eq(strcmp(buf,
-                            is_fips
-                                ? shared_ciphers_data[tst].fipsshared
-                                : shared_ciphers_data[tst].shared),
-            0)) {
+        || !TEST_int_eq(strcmp(buf, expbuf), 0)) {
         TEST_info("Shared ciphers are: %s\n", buf);
         goto end;
     }
