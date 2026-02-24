@@ -1822,7 +1822,7 @@ static int ech_grease_test(int idx)
         goto end;
     /* for 4th test, set a real but wrong ECHConfig which'll override GREASE setting */
     if (idx == 3) {
-        if(!TEST_true(SSL_set1_ech_config_list(clientssl, (unsigned char *)ec_kp1,
+        if (!TEST_true(SSL_set1_ech_config_list(clientssl, (unsigned char *)ec_kp1,
                 ec_kp1len)))
             goto end;
         /* real but wrong => failure, due to ECH */
