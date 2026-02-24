@@ -1024,7 +1024,9 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
         goto err;
     }
 
-    return PKCS7_signatureVerify(bio, p7, si, signer);
+    if (PKCS7_signatureVerify(bio, p7, si, signer) <= 0)
+        goto err;
+    ret = 1;
 err:
     return ret;
 }
