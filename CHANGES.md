@@ -31,7 +31,9 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
- * none yet
+ * Added AVX2 optimized ML-DSA NTT operations on `x86_64`.
+
+   *Marcel Cornu and Tomasz Kantecki*
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
