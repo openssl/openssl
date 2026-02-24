@@ -91,6 +91,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/signature/dsa_sig.inc \
          providers/implementations/signature/ecdsa_sig.inc \
          providers/implementations/signature/eddsa_sig.inc \
+         providers/implementations/signature/mac_legacy_sig.inc \
          providers/implementations/signature/ml_dsa_sig.inc \
          providers/implementations/signature/rsa_sig.inc \
          providers/implementations/signature/slh_dsa_sig.inc \
@@ -214,6 +215,7 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/signature/dsa_sig.inc \
        providers/implementations/signature/ecdsa_sig.inc \
        providers/implementations/signature/eddsa_sig.inc \
+       providers/implementations/signature/mac_legacy_sig.inc \
        providers/implementations/signature/ml_dsa_sig.inc \
        providers/implementations/signature/rsa_sig.inc \
        providers/implementations/signature/slh_dsa_sig.inc \
@@ -352,6 +354,8 @@ GENERATE[providers/implementations/signature/ecdsa_sig.inc]=\
     providers/implementations/signature/ecdsa_sig.inc.in
 GENERATE[providers/implementations/signature/eddsa_sig.inc]=\
     providers/implementations/signature/eddsa_sig.inc.in
+GENERATE[providers/implementations/signature/mac_legacy_sig.inc]=\
+    providers/implementations/signature/mac_legacy_sig.inc.in
 GENERATE[providers/implementations/signature/ml_dsa_sig.inc]=\
     providers/implementations/signature/ml_dsa_sig.inc.in
 GENERATE[providers/implementations/signature/rsa_sig.inc]=\
