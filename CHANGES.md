@@ -30,7 +30,9 @@ OpenSSL 3.5
 
 ### Changes between 3.5.9 and 3.5.10 [xx XXX xxxx]
 
- * none yet
+ * Added AVX2 optimized ML-DSA NTT operations on `x86_64`.
+
+   *Marcel Cornu and Tomasz Kantecki*
 
 ### Changes between 3.5.8 and 3.5.9 [29 Sep 2026]
 
