@@ -168,6 +168,8 @@ static const char pem_kp1[] = "-----BEGIN PRIVATE KEY-----\n"
                               "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEA\n"
                               "AQALZXhhbXBsZS5jb20AAA==\n"
                               "-----END ECHCONFIG-----\n";
+static const char ec_kp1[] = "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEAAQALZXhhbXBsZS5jb20AAA==";
+static size_t ec_kp1len = sizeof(ec_kp1) - 1;
 
 /*
  * x25519 ech key pair with public key front.server.example, used for
@@ -1767,7 +1769,7 @@ static int ech_grease_test(int idx)
         goto end;
     if (idx == 2) {
         /*
-         * In our last test iteration set various other ECH configs, to make
+         * In our third test iteration set various other ECH configs, to make
          * for a bigger retry-config. (It's ok that we set the same key pair
          * a few times here.)
          */
@@ -1818,9 +1820,21 @@ static int ech_grease_test(int idx)
         goto end;
     if (idx == 2 && !TEST_true(SSL_ech_set1_grease_suite(clientssl, "x25519,2,3")))
         goto end;
-    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_NONE)))
-        goto end;
+    /* for 4th test, set a real but wrong ECHConfig which'll override GREASE setting */
+    if (idx == 3) {
+        if(!TEST_true(SSL_set1_ech_config_list(clientssl, (unsigned char *)ec_kp1,
+            ec_kp1len)))
+            goto end;
+        /* real but wrong => failure, due to ECH */
+        if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+                SSL_R_ECH_REQUIRED)))
+            goto end;
+    } else {
+        /* asked for GREASE => should work */
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_NONE)))
+            goto end;
+    }
     serverstatus = SSL_ech_get1_status(serverssl, &sinner, &souter);
     if (verbose)
         TEST_info("ech_grease_test: server status %d, %s, %s",
@@ -1833,7 +1847,9 @@ static int ech_grease_test(int idx)
     if (verbose)
         TEST_info("ech_grease_test: client status %d, %s, %s",
             clientstatus, cinner, couter);
-    if (!TEST_int_eq(clientstatus, SSL_ECH_STATUS_GREASE_ECH))
+    if (idx != 3 && !TEST_int_eq(clientstatus, SSL_ECH_STATUS_GREASE_ECH))
+        goto end;
+    if (idx == 3 && !TEST_int_eq(clientstatus, SSL_ECH_STATUS_FAILED_ECH))
         goto end;
     if (!TEST_true(SSL_ech_get1_retry_config(clientssl, &retryconfig,
             &retryconfiglen)))
@@ -1990,7 +2006,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(ech_cb_test, suite_combos);
     ADD_ALL_TESTS(ech_v12_test, suite_combos);
     ADD_ALL_TESTS(ech_in_out_test, 14);
-    ADD_ALL_TESTS(ech_grease_test, 3);
+    ADD_ALL_TESTS(ech_grease_test, 4);
     ADD_ALL_TESTS(test_ech_no_inner, suite_combos);
     return 1;
 err:
