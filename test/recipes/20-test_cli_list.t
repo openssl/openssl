@@ -14,7 +14,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_cli_list");
 
-plan tests => 6;
+plan tests => 7;
 
 my $fipsconf = srctop_file("test", "fips-and-base.cnf");
 my $defaultconf = srctop_file("test", "default.cnf");
@@ -64,9 +64,26 @@ sub check_public_key_algorithms_list {
     ok($unmatched, "No disabled algorithms appear in public key algorithms list");
 }
 
+# Checks the key exchange algorithms list for any disabled algorithms
+sub check_key_exchange_algorithms_list {
+    my @pkalgorithms = run(app(["openssl", "list", "-key-exchange-algorithms"]), capture => 1);
+    my @disabled = run(app(["openssl", "list", "-disabled"]), capture => 1);
+
+    chomp @pkalgorithms;
+    chomp @disabled;
+    my $unmatched = 1;
+    foreach my $pkalgorithm (@pkalgorithms){
+      foreach my $algorithm (@disabled) {
+        $unmatched = $unmatched && !($pkalgorithm =~ /{.*[0-9],.*\Q$algorithm\E/);    
+      }
+    }
+    ok($unmatched, "No disabled algorithms appear in key exchange algorithms list");
+}
+
 check_skey_manager_list("default");
 check_key_manager_list();
 check_public_key_algorithms_list();
+check_key_exchange_algorithms_list();
 
 SKIP: {
     my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
