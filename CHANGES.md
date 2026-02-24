@@ -184,9 +184,17 @@ OpenSSL 4.0
 
    *Alexandr Nedvedicky*
 
- * The `X509_verify()` function now takes a `const X509 *` argument
+ * Many functions accepting X509 \* arguments, or returning values
+   from a const X509 \* have been changed to take / return const
+   arguments. The most visible changes are places where pointer values
+   are returned from a const X509 \* object. In many places where
+   these were non const values being returned from a const object,
+   these pointer values have now been made const. The goal of this
+   change is to enable future improvements in X.509 certificate
+   handling. For full details see the relevant section in
+   ossl-migration-guide(7).
 
-   * Bob Beck *
+   *Bob Beck*
 
  * The crypto-mdebug-backtrace configuration option has been entirely removed.
    The option has been a no-op since 1.0.2.

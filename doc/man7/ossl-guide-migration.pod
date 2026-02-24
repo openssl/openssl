@@ -39,6 +39,134 @@ versions of OpenSSL. See L<ossl-removed-api(7)>.
 
 =head2 Upgrading from OpenSSL 3.x
 
+=head3 The ASN1_STRING type is now opaque
+
+ASN1_STRING is the basis for many types in OpenSSL. Since OpenSSL 1.1.1
+accessor functions have been available to access and create ASN1_STRING
+values of various types. See ASN1_STRING_type_new(3),
+ASN1_STRING_get0_data(3), ASN1_STRING_set(3) and ASN1_STRING_length(3).
+
+If your code uses direct access to ASN1_STRING structure members you will
+need to convert it allocate the correct type ASN1_STRING, and use accessors.
+
+If your code has in the past used an ASN1_STRING as a stack allocated
+object you will need to allocate it from the heap with
+ASN1_STRING_new(3) or ASN1_STRING_type_new(3).
+
+The flags member of ASN1_STRING has become inaccessible, and the definitions
+of the flags are no longer public. This includes the public definition
+of the flags:
+
+ASN1_STRING_FLAG_NDEF
+ASN1_STRING_FLAG_CONT
+ASN1_STRING_FLAG_MSTRING
+ASN1_STRING_FLAG_EMBED
+ASN1_STRING_FLAG_BITS_LEFT
+
+For the first four values, these were internal use flags which were never
+user settable in a way that would not cause things to break.
+
+The final flag was used to indicate that an ASN1_BIT_STRING has a
+value of unused bits left - Most applications do not touch this.
+You should not use ASN1_STRING_set() to set the value of an
+ASN1_BIT_STRING that may have unused bits on the end.
+To ensure the number of unused bits is correctly set in an
+ASN1_BIT_STRING type, use the functions ASN1_BIT_STRING_set_bit(3) or
+ASN1_BIT_STRING_set1(3) to set the value of a BIT_STRING, and ensure
+that the number of unused bits is correctly set. The function
+ASN1_BIT_STRING_get_length(3) may be used to retrieve the length in
+bytes, and the number of unused bits of an ASN1_BIT_STRING.
+
+=head3 Constification X509 functions
+
+A large number of public API functions that access an X509 * object have
+been constified. This change has been made to allow for future improvements
+to the X509 layer to reduce the number of memory allocations and copies
+that are made. These changes can impact code which uses these functions if
+a returned pointer value which was not const in previous versions of OpenSSL
+has now been made const. When such a value is assigned to a non-const pointer
+variable you will get a compiler warning. .
+
+The returned values being const is an indication that you may not mutate these
+values safely.
+
+Typically, you will need to change any variables holding these values
+to be const. If for some reason you need to mutate the returned object, you should
+make a copy of the returned const object into a mutable non-const object,
+bearing in mind that your copy has no effect on the original X509* object itself.
+
+The following functions have had arguments / return values related to X509* access
+constified. For full details see their relevant manual pages.
+
+NAME_CONSTRAINTS_check
+NAME_CONSTRAINTS_check_CN
+X509_add_cert
+X509_add_ext
+X509_alias_get0
+X509_build_chain
+X509_chain_check_suiteb
+X509_check_ca
+X509_check_email
+X509_check_host
+X509_check_ip
+X509_check_ip_asc
+X509_check_issued
+X509_check_purpose
+X509_check_trust
+X509_CRL_get0_by_cert
+X509_find_by_issuer_and_serial
+X509_find_by_subject
+X509_get_ext
+X509_get_extended_key_usage
+X509_get_extension_flags
+X509_get_key_usage
+X509_get_pathlen
+X509_get_proxy_pathlen
+X509_get_pubkey
+X509_get_pubkey_parameters
+X509_get_signature_info
+X509_get0_authority_issuer
+X509_get0_authority_key_id
+X509_get0_authority_serial
+X509_get0_pubkey
+X509_get0_reject_objects
+X509_get0_subject_key_id
+X509_get0_subject_key_id
+X509_get0_trust_objects
+X509_get1_email
+X509_get1_ocsp
+X509_issuer_and_serial_hash
+X509_issuer_name_hash
+X509_issuer_name_hash_old
+X509_keyid_get0
+X509_load_http
+X509_OBJECT_get0_X509
+X509_OBJECT_set1_X509
+X509_print_ex_fp
+X509_print_fp
+X509_REQ_get1_email
+X509_REQ_to_X509
+X509_self_signed
+X509_STORE_add_cert
+X509_STORE_CTX_get_current_cert
+X509_STORE_CTX_get0_cert
+X509_STORE_CTX_get0_current_issuer
+X509_STORE_CTX_get1_issuer
+X509_STORE_CTX_init
+X509_STORE_CTX_set_cert
+X509_subject_name_hash
+X509_subject_name_hash_old
+X509_to_X509_REQ
+X509_TRUST_add
+X509v3_addr_validate_resource_set
+X509v3_asid_validate_resource_set
+
+The following two functions we "un-constified" As they were documented as returning
+an explicitly mutable pointer from within an X509 object:
+
+X509_getm_notAfter
+X509_getm_notBefore
+
 =head3 Removal of atexit() usage
 
 libcrypto no longer arms OPENSSL_cleanup() function as atexit(3) handler.
