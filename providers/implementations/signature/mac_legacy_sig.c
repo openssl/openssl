@@ -18,6 +18,15 @@
 #include "prov/provider_ctx.h"
 #include "prov/macsignature.h"
 #include "prov/providercommon.h"
+#include "prov/securitycheck.h"
+#include "internal/fips.h"
+#include "internal/common.h"
+
+#ifndef FIPS_MODULE
+#define mac_legacy_get_ctx_params_decoder
+#define mac_legacy_set_ctx_params_decoder
+#endif
+#include "providers/implementations/signature/mac_legacy_sig.inc"
 
 static OSSL_FUNC_signature_newctx_fn mac_hmac_newctx;
 static OSSL_FUNC_signature_newctx_fn mac_siphash_newctx;
@@ -34,14 +43,22 @@ static OSSL_FUNC_signature_settable_ctx_params_fn mac_siphash_settable_ctx_param
 static OSSL_FUNC_signature_settable_ctx_params_fn mac_poly1305_settable_ctx_params;
 static OSSL_FUNC_signature_settable_ctx_params_fn mac_cmac_settable_ctx_params;
 
-typedef struct {
+typedef struct prov_mac_ctx_st PROV_MAC_CTX;
+typedef int(SETKEY_FUNC)(PROV_MAC_CTX *macctx, const unsigned char *key, size_t keylen);
+
+struct prov_mac_ctx_st {
     OSSL_LIB_CTX *libctx;
     char *propq;
     MAC_KEY *key;
     EVP_MAC_CTX *macctx;
-} PROV_MAC_CTX;
+#ifdef FIPS_MODULE
+    SETKEY_FUNC *on_setkey;
+    OSSL_FIPS_IND_DECLARE
+#endif
+};
 
-static void *mac_newctx(void *provctx, const char *propq, const char *macname)
+static void *mac_newctx(void *provctx, const char *propq, const char *macname,
+    SETKEY_FUNC func)
 {
     PROV_MAC_CTX *pmacctx;
     EVP_MAC *mac = NULL;
@@ -66,7 +83,11 @@ static void *mac_newctx(void *provctx, const char *propq, const char *macname)
         goto err;
 
     EVP_MAC_free(mac);
-
+#ifdef FIPS_MODULE
+    pmacctx->on_setkey = func;
+    /* Set FIPS indicator to approved */
+    OSSL_FIPS_IND_INIT(pmacctx)
+#endif
     return pmacctx;
 
 err:
@@ -76,16 +97,32 @@ err:
     return NULL;
 }
 
-#define MAC_NEWCTX(funcname, macname)                                      \
+#define MAC_NEWCTX(funcname, macname, func)                                \
     static void *mac_##funcname##_newctx(void *provctx, const char *propq) \
     {                                                                      \
-        return mac_newctx(provctx, propq, macname);                        \
+        return mac_newctx(provctx, propq, macname, func);                  \
     }
 
-MAC_NEWCTX(hmac, "HMAC")
-MAC_NEWCTX(siphash, "SIPHASH")
-MAC_NEWCTX(poly1305, "POLY1305")
-MAC_NEWCTX(cmac, "CMAC")
+static int hmac_setkey(PROV_MAC_CTX *macctx, const unsigned char *key, size_t keylen)
+{
+#ifdef FIPS_MODULE
+    int approved = ossl_mac_check_key_size(keylen);
+
+    if (!approved) {
+        if (!OSSL_FIPS_IND_ON_UNAPPROVED(macctx, OSSL_FIPS_IND_SETTABLE0,
+                macctx->libctx, "HMAC", "keysize", ossl_fips_config_hmac_key_check)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+    }
+#endif
+    return 1;
+}
+
+MAC_NEWCTX(hmac, "HMAC", hmac_setkey)
+MAC_NEWCTX(siphash, "SIPHASH", NULL)
+MAC_NEWCTX(poly1305, "POLY1305", NULL)
+MAC_NEWCTX(cmac, "CMAC", NULL)
 
 static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey,
     const OSSL_PARAM params[])
@@ -118,6 +155,12 @@ static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey,
             pmacctx->key->properties, params))
         return 0;
 
+#ifdef FIPS_MODULE
+    if (pmacctx->on_setkey != NULL) {
+        if (!pmacctx->on_setkey(pmacctx, pmacctx->key->priv_key, pmacctx->key->priv_key_len))
+            return 0;
+    }
+#endif
     if (!EVP_MAC_init(pmacctx->macctx, pmacctx->key->priv_key,
             pmacctx->key->priv_key_len, NULL))
         return 0;
@@ -197,6 +240,20 @@ static int mac_set_ctx_params(void *vpmacctx, const OSSL_PARAM params[])
 {
     PROV_MAC_CTX *ctx = (PROV_MAC_CTX *)vpmacctx;
 
+#ifdef FIPS_MODULE
+    if (ctx->on_setkey != NULL) {
+        struct mac_legacy_set_ctx_params_st p;
+
+        if (!mac_legacy_set_ctx_params_decoder(params, &p))
+            return 0;
+        if (p.key != NULL) {
+            if (p.key->data_type != OSSL_PARAM_OCTET_STRING)
+                return 0;
+            if (!ctx->on_setkey(ctx, p.key->data, p.key->data_size))
+                return 0;
+        }
+    }
+#endif
     return EVP_MAC_CTX_set_params(ctx->macctx, params);
 }
 
@@ -215,6 +272,33 @@ static const OSSL_PARAM *mac_settable_ctx_params(ossl_unused void *ctx,
     EVP_MAC_free(mac);
 
     return params;
+}
+
+static const OSSL_PARAM *mac_gettable_ctx_params(ossl_unused void *vctx,
+    ossl_unused void *provctx)
+{
+    return mac_legacy_get_ctx_params_list;
+}
+
+static int mac_get_ctx_params(void *vctx, OSSL_PARAM params[])
+{
+    PROV_MAC_CTX *ctx = vctx;
+
+    if (ctx == NULL)
+        return 0;
+
+#ifdef FIPS_MODULE
+    struct mac_legacy_get_ctx_params_st p;
+
+    if (!mac_legacy_get_ctx_params_decoder(params, &p))
+        return 0;
+    if (p.ind != NULL) {
+        int approved = OSSL_FIPS_IND_GET(ctx)->approved;
+        if (!OSSL_PARAM_set_int(p.ind, approved))
+            return 0;
+    }
+#endif
+    return 1;
 }
 
 #define MAC_SETTABLE_CTX_PARAMS(funcname, macname)                           \
@@ -244,6 +328,10 @@ MAC_SETTABLE_CTX_PARAMS(cmac, "CMAC")
             (void (*)(void))mac_set_ctx_params },                                \
         { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS,                               \
             (void (*)(void))mac_##funcname##_settable_ctx_params },              \
+        { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS,                                    \
+            (void (*)(void))mac_get_ctx_params },                                \
+        { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,                               \
+            (void (*)(void))mac_gettable_ctx_params },                           \
         OSSL_DISPATCH_END                                                        \
     };
 
