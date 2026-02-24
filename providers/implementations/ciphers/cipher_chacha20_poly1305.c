@@ -118,10 +118,13 @@ static int chacha20_poly1305_get_ctx_params(void *vctx, OSSL_PARAM params[])
         return 0;
     }
 
-    if (p.taglen != NULL
-        && !OSSL_PARAM_set_size_t(p.taglen, ctx->tag_len)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-        return 0;
+    if (p.taglen != NULL) {
+        size_t taglen = ctx->tag_len == 0 ? sizeof(ctx->tag) : ctx->tag_len;
+
+        if (!OSSL_PARAM_set_size_t(p.taglen, taglen)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
     }
 
     if (p.pad != NULL
@@ -131,19 +134,42 @@ static int chacha20_poly1305_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
 
     if (p.tag != NULL) {
-        if (p.tag->data_type != OSSL_PARAM_OCTET_STRING) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-            return 0;
-        }
+        size_t taglen = ctx->tag_len == 0 ? sizeof(ctx->tag) : ctx->tag_len;
+
+        if (p.tag->data != NULL && taglen > p.tag->data_size)
+            taglen = p.tag->data_size;
+
         if (!ctx->base.enc) {
             ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             return 0;
         }
-        if (p.tag->data_size == 0 || p.tag->data_size > POLY1305_BLOCK_SIZE) {
+        if (p.tag->data != NULL && taglen == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
             return 0;
         }
-        memcpy(p.tag->data, ctx->tag, p.tag->data_size);
+        if (!OSSL_PARAM_set_octet_string_or_ptr(p.tag, ctx->tag, taglen)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+    }
+
+    if (p.iv != NULL) {
+        size_t ivlen = CHACHA20_POLY1305_IVLEN;
+
+        if (p.iv->data == NULL || CHACHA20_POLY1305_IVLEN < p.iv->data_size)
+            ivlen = CHACHA20_POLY1305_IVLEN;
+        else
+            ivlen = p.iv->data_size;
+
+        if (p.iv->data != NULL && ivlen == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
+            return 0;
+        }
+
+        if (!OSSL_PARAM_set_octet_string_or_ptr(p.iv, ctx->base.oiv + CHACHA_CTR_SIZE - ivlen, ivlen)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
     }
     return 1;
 }

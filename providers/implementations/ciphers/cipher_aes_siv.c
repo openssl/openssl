@@ -160,11 +160,20 @@ static int aes_siv_get_ctx_params(void *vctx, OSSL_PARAM params[])
     sctx = &ctx->siv;
 
     if (p.tag != NULL) {
-        if (!ctx->enc
-            || p.tag->data_type != OSSL_PARAM_OCTET_STRING
-            || p.tag->data_size != ctx->taglen
-            || !OSSL_PARAM_set_octet_string(p.tag, &sctx->tag.byte,
-                ctx->taglen)) {
+        size_t taglen = ctx->taglen;
+
+        if (p.tag->data != NULL && taglen > p.tag->data_size)
+            taglen = p.tag->data_size;
+
+        if (!ctx->enc) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
+            return 0;
+        }
+        if (p.tag->data != NULL && taglen == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
+            return 0;
+        }
+        if (!OSSL_PARAM_set_octet_string_or_ptr(p.tag, &sctx->tag.byte, taglen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
