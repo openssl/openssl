@@ -25,7 +25,7 @@ or
 
 "Hosted" OpenSSL relies on an external POSIX compatibility layer
 for building (using GNU/Unix shell, compiler, and tools) and at run time.
-For this option, you can use Cygwin.
+For this option, you can use Cygwin or the Windows Subsystem for Linux (WSL).
 
 Native builds using Visual C++
 ==============================
@@ -357,4 +357,3 @@ affected files before building:
 dos2unix can be installed via:
 
     sudo apt install dos2unix
-    
