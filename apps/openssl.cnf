@@ -245,7 +245,8 @@ keyUsage = nonRepudiation, digitalSignature, keyEncipherment
 
 subjectKeyIdentifier=hash
 
-authorityKeyIdentifier=keyid:always,issuer
+# Use defaults here: "none" for trust root, "keyid,issuer" otherwise
+# authorityKeyIdentifier=keyid
 
 basicConstraints = critical,CA:true
 
