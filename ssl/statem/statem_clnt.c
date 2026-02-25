@@ -3395,6 +3395,7 @@ int tls_process_initial_server_flight(SSL_CONNECTION *s)
         && s->ext.ech.attempted == 1
         && s->ext.ech.success != 1
         && s->ext.ech.grease != OSSL_ECH_IS_GREASE) {
+        s->ext.ech.retry_configs_ok = 1; /* note those are good */
         SSLfatal(s, SSL_AD_ECH_REQUIRED, SSL_R_ECH_REQUIRED);
         return 0;
     }

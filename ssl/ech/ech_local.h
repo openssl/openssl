@@ -235,6 +235,13 @@ typedef struct ossl_ech_conn_st {
      * calculation based on the SH (or 2nd SH in case of HRR)
      */
     int success;
+    /*
+     * we set this when we've gotten to the end of the handshake and
+     * the only thing that went wrong was ECH - in that case we're
+     * ok to provide the retry-configs to the client, otherwise better
+     * not.
+     */
+    int retry_configs_ok;
     int grease; /* 1 if we're GREASEing, 0 otherwise */
     char *grease_suite; /* HPKE suite string for GREASEing */
     unsigned char *sent; /* GREASEy ECH value sent, in case needed for re-tx */
