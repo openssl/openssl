@@ -1047,61 +1047,41 @@ end:
     return res;
 }
 
-/*
- * Returns 0 if name is too big to be in cache, otherwise returns 1 and sets *method
- * to the result (which may be NULL)
- */
-static int ossl_frozen_ht_bucket_fetch(HT **buckets, const char *alg_name, void **method)
+static void ossl_frozen_ht_bucket_fetch(HT **buckets, const char *alg_name, void **method)
 {
     size_t alg_len = strlen(alg_name);
     HT_VALUE *val = NULL;
-    int ret = 1;
 
     /* Pick the right bucket based on key length (I can haz bukkit!) */
-    if (alg_len <= 8) {
+    if (alg_len < 8) {
         FROZEN_CACHE_8_KEY key;
         HT_INIT_KEY(&key);
         HT_SET_KEY_STRING_CASE(&key, name, alg_name);
         val = ossl_ht_get(buckets[0], TO_HT_KEY(&key));
-    } else if (alg_len <= 16) {
+    } else if (alg_len < 16) {
         FROZEN_CACHE_16_KEY key;
         HT_INIT_KEY(&key);
         HT_SET_KEY_STRING_CASE(&key, name, alg_name);
         val = ossl_ht_get(buckets[1], TO_HT_KEY(&key));
         if (val != NULL)
             *method = ((METHOD *)val->value)->method;
-    } else if (alg_len <= 32) {
+    } else if (alg_len < 32) {
         FROZEN_CACHE_32_KEY key;
         HT_INIT_KEY(&key);
         HT_SET_KEY_STRING_CASE(&key, name, alg_name);
         val = ossl_ht_get(buckets[2], TO_HT_KEY(&key));
         if (val != NULL)
             *method = ((METHOD *)val->value)->method;
-    } else if (alg_len <= 64) {
+    } else {
         FROZEN_CACHE_64_KEY key;
         HT_INIT_KEY(&key);
         HT_SET_KEY_STRING_CASE(&key, name, alg_name);
         val = ossl_ht_get(buckets[3], TO_HT_KEY(&key));
         if (val != NULL)
             *method = ((METHOD *)val->value)->method;
-    } else {
-        /*
-         * We don't keep this algorithm in the cache because it
-         * has a giant name.
-         *
-         * We could decide anyone who writes an essay for algorithm
-         * name doesn't get it cached? is > 32 even too big?  at least
-         * if they are separated into key size bags they don't hurt
-         * the performance of the typical lookups by having a
-         * Reptar-sized name.
-         */
-        ret = 0;
-        goto done;
     }
     if (val != NULL)
         *method = ((METHOD *)val->value)->method;
-done:
-    return ret;
 }
 
 /*
@@ -1153,13 +1133,12 @@ static int ossl_frozen_ht_bucket_insert(HT **buckets, const char *alg_name, HT_V
 int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store,
     const char *alg_name, const char *prop_query, void **method)
 {
-    int pq_match = 0;
-
     int ret = 0;
 
     if (store == NULL
         || alg_name == NULL
-        || store->frozen_algs[0] == NULL)
+        || store->frozen_algs[0] == NULL
+        || store->frozen_algs_pq[0] == NULL)
         goto done;
 
     /*
@@ -1167,18 +1146,14 @@ int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store,
      * the moment because of HT. perhaps switch to only NULL?
      */
     if (prop_query == NULL || *prop_query == '\0') {
-        ret = 1; /* Cache will have the answer for default */
         *method = NULL;
+        ossl_frozen_ht_bucket_fetch(store->frozen_algs, alg_name, method);
+        ret = 1;
     } else if (strcmp(prop_query, store->frozen_propq) == 0) {
-        pq_match = 1; /* Use the pq cache */
-        ret = 1; /* Cache will have the answer for prop_query */
         *method = NULL;
+        ossl_frozen_ht_bucket_fetch(store->frozen_algs_pq, alg_name, method);
+        ret = 1;
     }
-
-    if (pq_match)
-        ret = ossl_frozen_ht_bucket_fetch(store->frozen_algs_pq, alg_name, method);
-    else
-        ret = ossl_frozen_ht_bucket_fetch(store->frozen_algs, alg_name, method);
 
 done:
     return ret;
