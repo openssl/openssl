@@ -101,17 +101,19 @@ static int print_pubkey(BIO *out, X509_PUBKEY *pubkey, int indent)
     return 1;
 }
 
-#define TRY_PRINT_SEQ_FUNC(local, type, name, printer) value = av->value.sequence->data; \
-    if ((local = d2i_##type(NULL, (const unsigned char **)&value,\
-                            av->value.sequence->length)) == NULL) {\
-        BIO_printf(out, "(COULD NOT DECODE %s)\n", name);\
-        return 0;\
-    }\
-    if (printer(out, local, indent) <= 0) {\
-        type##_free(local);\
-        return 0;\
-    }\
-    type##_free(local);\
+#define TRY_PRINT_SEQ_FUNC(local, type, name, printer)            \
+    value = av->value.sequence->data;                             \
+    if ((local = d2i_##type(NULL, (const unsigned char **)&value, \
+             av->value.sequence->length))                         \
+        == NULL) {                                                \
+        BIO_printf(out, "(COULD NOT DECODE %s)\n", name);         \
+        return 0;                                                 \
+    }                                                             \
+    if (printer(out, local, indent) <= 0) {                       \
+        type##_free(local);                                       \
+        return 0;                                                 \
+    }                                                             \
+    type##_free(local);                                           \
     return 1;
 
 #define TRY_PRINT_SEQ(local, type, name) TRY_PRINT_SEQ_FUNC(local, type, name, type##_print)
@@ -253,8 +255,9 @@ int ossl_print_attribute_value(BIO *out,
                 return 0;
             value = av->value.sequence->data;
             if ((ps = d2i_OSSL_TCG_PLATFORM_SPEC(NULL,
-                                                 (const unsigned char **)&value,
-                                                 av->value.sequence->length)) == NULL) {
+                     (const unsigned char **)&value,
+                     av->value.sequence->length))
+                == NULL) {
                 BIO_puts(out, "(COULD NOT DECODE TCG Platform Specification)\n");
                 return 0;
             }

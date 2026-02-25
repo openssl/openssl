@@ -120,9 +120,9 @@ ASN1_SEQUENCE(OSSL_COMPONENT_IDENTIFIER) = {
     ASN1_IMP_OPT(OSSL_COMPONENT_IDENTIFIER, componentManufacturerId, ASN1_OBJECT, 2),
     ASN1_IMP_OPT(OSSL_COMPONENT_IDENTIFIER, fieldReplaceable, ASN1_BOOLEAN, 3),
     ASN1_IMP_SEQUENCE_OF_OPT(OSSL_COMPONENT_IDENTIFIER, componentAddresses,
-                             OSSL_COMPONENT_ADDRESS, 4),
+        OSSL_COMPONENT_ADDRESS, 4),
     ASN1_IMP_OPT(OSSL_COMPONENT_IDENTIFIER, componentPlatformCert,
-                 OSSL_PCV2_CERTIFICATE_IDENTIFIER, 5),
+        OSSL_PCV2_CERTIFICATE_IDENTIFIER, 5),
     ASN1_IMP_OPT(OSSL_COMPONENT_IDENTIFIER, componentPlatformCertUri, OSSL_URI_REFERENCE, 6),
     ASN1_IMP_OPT(OSSL_COMPONENT_IDENTIFIER, status, ASN1_ENUMERATED, 7)
 } ASN1_SEQUENCE_END(OSSL_COMPONENT_IDENTIFIER)
@@ -131,7 +131,7 @@ IMPLEMENT_ASN1_FUNCTIONS(OSSL_COMPONENT_IDENTIFIER)
 
 ASN1_SEQUENCE(OSSL_PLATFORM_CONFIG) = {
     ASN1_IMP_SEQUENCE_OF_OPT(OSSL_PLATFORM_CONFIG, componentIdentifiers,
-                             OSSL_COMPONENT_IDENTIFIER, 0),
+        OSSL_COMPONENT_IDENTIFIER, 0),
     ASN1_IMP_OPT(OSSL_PLATFORM_CONFIG, componentIdentifiersUri, OSSL_URI_REFERENCE, 1),
     ASN1_IMP_SEQUENCE_OF_OPT(OSSL_PLATFORM_CONFIG, platformProperties, OSSL_PLATFORM_PROPERTY, 2),
     ASN1_IMP_OPT(OSSL_PLATFORM_CONFIG, platformPropertiesUri, OSSL_URI_REFERENCE, 3)
@@ -150,8 +150,7 @@ ASN1_SEQUENCE(OSSL_PCV2_TRAIT) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_PCV2_TRAIT)
 
-ASN1_ITEM_TEMPLATE(OSSL_PCV2_TRAITS) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, OSSL_PCV2_TRAITS, OSSL_PCV2_TRAIT)
+ASN1_ITEM_TEMPLATE(OSSL_PCV2_TRAITS) = ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, OSSL_PCV2_TRAITS, OSSL_PCV2_TRAIT)
 ASN1_ITEM_TEMPLATE_END(OSSL_PCV2_TRAITS)
 
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_PCV2_TRAITS)
@@ -165,7 +164,7 @@ IMPLEMENT_ASN1_FUNCTIONS(OSSL_HASHED_CERTIFICATE_IDENTIFIER)
 
 ASN1_SEQUENCE(OSSL_PCV2_CERTIFICATE_IDENTIFIER) = {
     ASN1_IMP_OPT(OSSL_PCV2_CERTIFICATE_IDENTIFIER, hashedCertIdentifier,
-                 OSSL_HASHED_CERTIFICATE_IDENTIFIER, 0),
+        OSSL_HASHED_CERTIFICATE_IDENTIFIER, 0),
     ASN1_IMP_OPT(OSSL_PCV2_CERTIFICATE_IDENTIFIER, genericCertIdentifier, OSSL_ISSUER_SERIAL, 1)
 } ASN1_SEQUENCE_END(OSSL_PCV2_CERTIFICATE_IDENTIFIER)
 
@@ -177,9 +176,9 @@ ASN1_SEQUENCE(OSSL_COMMON_CRITERIA_EVALUATION) = {
     ASN1_SIMPLE(OSSL_COMMON_CRITERIA_EVALUATION, cCCertificateAuthority, ASN1_UTF8STRING),
     ASN1_IMP_OPT(OSSL_COMMON_CRITERIA_EVALUATION, evaluationScheme, ASN1_UTF8STRING, 0),
     ASN1_IMP_OPT(OSSL_COMMON_CRITERIA_EVALUATION, cCCertificateIssuanceDate,
-                 ASN1_GENERALIZEDTIME, 1),
+        ASN1_GENERALIZEDTIME, 1),
     ASN1_IMP_OPT(OSSL_COMMON_CRITERIA_EVALUATION, cCCertificateExpiryDate,
-                 ASN1_GENERALIZEDTIME, 2)
+        ASN1_GENERALIZEDTIME, 2)
 } ASN1_SEQUENCE_END(OSSL_COMMON_CRITERIA_EVALUATION)
 
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_COMMON_CRITERIA_EVALUATION)
@@ -191,13 +190,11 @@ ASN1_SEQUENCE(OSSL_ISO9000_CERTIFICATION) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_ISO9000_CERTIFICATION)
 
-ASN1_ITEM_TEMPLATE(OSSL_COMPONENT_IDENTIFIER_V2) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, Traits, OSSL_PCV2_TRAIT)
+ASN1_ITEM_TEMPLATE(OSSL_COMPONENT_IDENTIFIER_V2) = ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, Traits, OSSL_PCV2_TRAIT)
 ASN1_ITEM_TEMPLATE_END(OSSL_COMPONENT_IDENTIFIER_V2)
 
-ASN1_ITEM_TEMPLATE(OSSL_PLATFORM_COMPONENTS) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, PlatformComponents,
-                          OSSL_COMPONENT_IDENTIFIER_V2)
+ASN1_ITEM_TEMPLATE(OSSL_PLATFORM_COMPONENTS) = ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, PlatformComponents,
+    OSSL_COMPONENT_IDENTIFIER_V2)
 ASN1_ITEM_TEMPLATE_END(OSSL_PLATFORM_COMPONENTS)
 
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_COMPONENT_IDENTIFIER_V2)
@@ -205,9 +202,9 @@ IMPLEMENT_ASN1_FUNCTIONS(OSSL_PLATFORM_COMPONENTS)
 
 ASN1_SEQUENCE(OSSL_PLATFORM_CONFIG_V3) = {
     ASN1_IMP_SEQUENCE_OF_OPT(OSSL_PLATFORM_CONFIG_V3, platformComponents,
-                             OSSL_COMPONENT_IDENTIFIER_V2, 0),
+        OSSL_COMPONENT_IDENTIFIER_V2, 0),
     ASN1_IMP_SEQUENCE_OF_OPT(OSSL_PLATFORM_CONFIG_V3, platformProperties,
-                             OSSL_PLATFORM_PROPERTY, 1),
+        OSSL_PLATFORM_PROPERTY, 1),
 } ASN1_SEQUENCE_END(OSSL_PLATFORM_CONFIG_V3)
 
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_PLATFORM_CONFIG_V3)
@@ -217,7 +214,7 @@ static int X509_ALGOR_print_bio(BIO *bio, const X509_ALGOR *alg)
     int i = OBJ_obj2nid(alg->algorithm);
 
     return BIO_printf(bio, "Hash Algorithm: %s\n",
-                      (i == NID_undef) ? "UNKNOWN" : OBJ_nid2ln(i));
+        (i == NID_undef) ? "UNKNOWN" : OBJ_nid2ln(i));
 }
 
 int OSSL_URI_REFERENCE_print(BIO *out, OSSL_URI_REFERENCE *value, int indent)
@@ -225,8 +222,8 @@ int OSSL_URI_REFERENCE_print(BIO *out, OSSL_URI_REFERENCE *value, int indent)
     int rc;
 
     rc = BIO_printf(out, "%*sURI: %.*s\n", indent, "",
-                    value->uniformResourceIdentifier->length,
-                    value->uniformResourceIdentifier->data);
+        value->uniformResourceIdentifier->length,
+        value->uniformResourceIdentifier->data);
     if (rc <= 0)
         return rc;
     if (value->hashAlgorithm != NULL) {
@@ -249,53 +246,53 @@ int OSSL_URI_REFERENCE_print(BIO *out, OSSL_URI_REFERENCE *value, int indent)
 }
 
 static const ENUMERATED_NAMES measurement_root_types[] = {
-    {OSSL_MEASUREMENT_ROOT_TYPE_STATIC, "Static (0)", "static"},
-    {OSSL_MEASUREMENT_ROOT_TYPE_DYNAMIC, "Dynamic (1)", "dynamic"},
-    {OSSL_MEASUREMENT_ROOT_TYPE_NONHOST, "Non-Host (2)", "nonHost"},
-    {OSSL_MEASUREMENT_ROOT_TYPE_HYBRID, "Hybrid (3)", "hybrid"},
-    {OSSL_MEASUREMENT_ROOT_TYPE_PHYSICAL, "Physical (4)", "physical"},
-    {OSSL_MEASUREMENT_ROOT_TYPE_VIRTUAL, "Virtual (5)", "virtual"},
-    {-1, NULL, NULL},
+    { OSSL_MEASUREMENT_ROOT_TYPE_STATIC, "Static (0)", "static" },
+    { OSSL_MEASUREMENT_ROOT_TYPE_DYNAMIC, "Dynamic (1)", "dynamic" },
+    { OSSL_MEASUREMENT_ROOT_TYPE_NONHOST, "Non-Host (2)", "nonHost" },
+    { OSSL_MEASUREMENT_ROOT_TYPE_HYBRID, "Hybrid (3)", "hybrid" },
+    { OSSL_MEASUREMENT_ROOT_TYPE_PHYSICAL, "Physical (4)", "physical" },
+    { OSSL_MEASUREMENT_ROOT_TYPE_VIRTUAL, "Virtual (5)", "virtual" },
+    { -1, NULL, NULL },
 };
 
 static const ENUMERATED_NAMES evaluation_assurance_levels[] = {
-    {OSSL_EVALUATION_ASSURANCE_LEVEL_1, "Level 1", "level1"},
-    {OSSL_EVALUATION_ASSURANCE_LEVEL_2, "Level 2", "level2"},
-    {OSSL_EVALUATION_ASSURANCE_LEVEL_3, "Level 3", "level3"},
-    {OSSL_EVALUATION_ASSURANCE_LEVEL_4, "Level 4", "level4"},
-    {OSSL_EVALUATION_ASSURANCE_LEVEL_5, "Level 5", "level5"},
-    {OSSL_EVALUATION_ASSURANCE_LEVEL_6, "Level 6", "level6"},
-    {OSSL_EVALUATION_ASSURANCE_LEVEL_7, "Level 7", "level7"},
-    {-1, NULL, NULL},
+    { OSSL_EVALUATION_ASSURANCE_LEVEL_1, "Level 1", "level1" },
+    { OSSL_EVALUATION_ASSURANCE_LEVEL_2, "Level 2", "level2" },
+    { OSSL_EVALUATION_ASSURANCE_LEVEL_3, "Level 3", "level3" },
+    { OSSL_EVALUATION_ASSURANCE_LEVEL_4, "Level 4", "level4" },
+    { OSSL_EVALUATION_ASSURANCE_LEVEL_5, "Level 5", "level5" },
+    { OSSL_EVALUATION_ASSURANCE_LEVEL_6, "Level 6", "level6" },
+    { OSSL_EVALUATION_ASSURANCE_LEVEL_7, "Level 7", "level7" },
+    { -1, NULL, NULL },
 };
 
 static const ENUMERATED_NAMES evaluation_statuses[] = {
-    {OSSL_EVALUATION_STATUS_DESIGNED_TO_MEET, "Designed To Meet (0)", "designedToMeet"},
-    {OSSL_EVALUATION_STATUS_EVAL_IN_PROGRESS, "Evaluation In Progress (1)", "evaluationInProgress"},
-    {OSSL_EVALUATION_STATUS_EVAL_COMPLETED, "Evaluation Completed (2)", "evaluationCompleted"},
-    {-1, NULL, NULL},
+    { OSSL_EVALUATION_STATUS_DESIGNED_TO_MEET, "Designed To Meet (0)", "designedToMeet" },
+    { OSSL_EVALUATION_STATUS_EVAL_IN_PROGRESS, "Evaluation In Progress (1)", "evaluationInProgress" },
+    { OSSL_EVALUATION_STATUS_EVAL_COMPLETED, "Evaluation Completed (2)", "evaluationCompleted" },
+    { -1, NULL, NULL },
 };
 
 static const ENUMERATED_NAMES strengths_of_function[] = {
-    {OSSL_STRENGTH_OF_FUNCTION_BASIC, "Basic (0)", "basic"},
-    {OSSL_STRENGTH_OF_FUNCTION_MEDIUM, "Medium (1)", "medium"},
-    {OSSL_STRENGTH_OF_FUNCTION_HIGH, "High (2)", "high"},
-    {-1, NULL, NULL},
+    { OSSL_STRENGTH_OF_FUNCTION_BASIC, "Basic (0)", "basic" },
+    { OSSL_STRENGTH_OF_FUNCTION_MEDIUM, "Medium (1)", "medium" },
+    { OSSL_STRENGTH_OF_FUNCTION_HIGH, "High (2)", "high" },
+    { -1, NULL, NULL },
 };
 
 static const ENUMERATED_NAMES security_levels[] = {
-    {OSSL_SECURITY_LEVEL_1, "Level 1", "level1"},
-    {OSSL_SECURITY_LEVEL_2, "Level 2", "level2"},
-    {OSSL_SECURITY_LEVEL_3, "Level 3", "level3"},
-    {OSSL_SECURITY_LEVEL_4, "Level 4", "level4"},
-    {-1, NULL, NULL},
+    { OSSL_SECURITY_LEVEL_1, "Level 1", "level1" },
+    { OSSL_SECURITY_LEVEL_2, "Level 2", "level2" },
+    { OSSL_SECURITY_LEVEL_3, "Level 3", "level3" },
+    { OSSL_SECURITY_LEVEL_4, "Level 4", "level4" },
+    { -1, NULL, NULL },
 };
 
 static const ENUMERATED_NAMES attribute_statuses[] = {
-    {OSSL_ATTRIBUTE_STATUS_ADDED, "Added (0)", "added"},
-    {OSSL_ATTRIBUTE_STATUS_MODIFIED, "Modified (1)", "modified"},
-    {OSSL_ATTRIBUTE_STATUS_REMOVED, "Removed (2)", "removed"},
-    {-1, NULL, NULL},
+    { OSSL_ATTRIBUTE_STATUS_ADDED, "Added (0)", "added" },
+    { OSSL_ATTRIBUTE_STATUS_MODIFIED, "Modified (1)", "modified" },
+    { OSSL_ATTRIBUTE_STATUS_REMOVED, "Removed (2)", "removed" },
+    { -1, NULL, NULL },
 };
 
 static int print_oid(BIO *out, const ASN1_OBJECT *oid)
@@ -330,23 +327,23 @@ int OSSL_COMPONENT_CLASS_print(BIO *out, OSSL_COMPONENT_CLASS *value, int indent
     if (rc <= 0)
         return rc;
     rc = ossl_bio_print_hex(out,
-                            value->componentClassValue->data,
-                            value->componentClassValue->length);
+        value->componentClassValue->data,
+        value->componentClassValue->length);
     if (rc <= 0)
         return rc;
     return BIO_puts(out, "\n");
 }
 
 int OSSL_COMMON_CRITERIA_MEASURES_print(BIO *out,
-                                        OSSL_COMMON_CRITERIA_MEASURES *value,
-                                        int indent)
+    OSSL_COMMON_CRITERIA_MEASURES *value,
+    int indent)
 {
     int rc;
     int64_t i64val;
 
     rc = BIO_printf(out, "%*sVersion: %.*s\n", indent, "",
-                    value->version->length,
-                    value->version->data);
+        value->version->length,
+        value->version->data);
     if (rc <= 0)
         return rc;
     rc = BIO_printf(out, "%*sAssurance Level: ", indent, "");
@@ -371,7 +368,7 @@ int OSSL_COMMON_CRITERIA_MEASURES_print(BIO *out,
         rc = BIO_printf(out, "%*sEvaluation Status: %lld\n", indent, "", (long long int)i64val);
     } else {
         rc = BIO_printf(out, "%*sEvaluation Status: %s\n", indent, "",
-                        evaluation_statuses[i64val].lname);
+            evaluation_statuses[i64val].lname);
     }
     if (rc <= 0)
         return rc;
@@ -448,8 +445,8 @@ int OSSL_FIPS_LEVEL_print(BIO *out, OSSL_FIPS_LEVEL *value, int indent)
     int64_t i64val;
 
     rc = BIO_printf(out, "%*sVersion: %.*s\n", indent, "",
-                    value->version->length,
-                    value->version->data);
+        value->version->length,
+        value->version->data);
     if (rc <= 0)
         return rc;
     if (value->level != NULL) {
@@ -528,10 +525,10 @@ int OSSL_TBB_SECURITY_ASSERTIONS_print(BIO *out, OSSL_TBB_SECURITY_ASSERTIONS *v
         return rc;
     if (value->iso9000Uri) {
         rc = BIO_printf(out, "%*sISO 9001 URI: %.*s",
-                        indent,
-                        "",
-                        value->iso9000Uri->length,
-                        value->iso9000Uri->data);
+            indent,
+            "",
+            value->iso9000Uri->length,
+            value->iso9000Uri->data);
     }
     return rc;
 }
@@ -563,9 +560,9 @@ int OSSL_TCG_SPEC_VERSION_print(BIO *out, OSSL_TCG_SPEC_VERSION *value, int inde
         || rev > INT_MAX)
         return -1;
     return BIO_printf(out, "%*s%lld.%lld.%lld", indent, "",
-                      (long long int)major,
-                      (long long int)minor,
-                      (long long int)rev);
+        (long long int)major,
+        (long long int)minor,
+        (long long int)rev);
 }
 
 int OSSL_TCG_PLATFORM_SPEC_print(BIO *out, OSSL_TCG_PLATFORM_SPEC *value)
@@ -579,8 +576,8 @@ int OSSL_TCG_PLATFORM_SPEC_print(BIO *out, OSSL_TCG_PLATFORM_SPEC *value)
     if (rc <= 0)
         return rc;
     return ossl_bio_print_hex(out,
-                              value->platformClass->data,
-                              value->platformClass->length);
+        value->platformClass->data,
+        value->platformClass->length);
 }
 
 int OSSL_TCG_CRED_TYPE_print(BIO *out, OSSL_TCG_CRED_TYPE *value, int indent)
@@ -604,7 +601,7 @@ int OSSL_COMPONENT_ADDRESS_print(BIO *out, OSSL_COMPONENT_ADDRESS *value, int in
     if (rc <= 0)
         return rc;
     rc = BIO_printf(out, "%*sAddress Value: %.*s", indent, "",
-                    value->addressValue->length, value->addressValue->data);
+        value->addressValue->length, value->addressValue->data);
     if (rc <= 0)
         return rc;
     return BIO_puts(out, "\n");
@@ -616,11 +613,11 @@ int OSSL_PLATFORM_PROPERTY_print(BIO *out, OSSL_PLATFORM_PROPERTY *value, int in
     int64_t i64val;
 
     rc = BIO_printf(out, "%*sProperty Name: %.*s\n", indent, "",
-                    value->propertyName->length, value->propertyName->data);
+        value->propertyName->length, value->propertyName->data);
     if (rc <= 0)
         return rc;
     rc = BIO_printf(out, "%*sProperty Value: %.*s\n", indent, "",
-                    value->propertyValue->length, value->propertyValue->data);
+        value->propertyValue->length, value->propertyValue->data);
     if (rc <= 0)
         return rc;
     if (value->status != NULL) {
@@ -643,8 +640,8 @@ int OSSL_PLATFORM_PROPERTY_print(BIO *out, OSSL_PLATFORM_PROPERTY *value, int in
 }
 
 int OSSL_HASHED_CERTIFICATE_IDENTIFIER_print(BIO *out,
-                                             OSSL_HASHED_CERTIFICATE_IDENTIFIER *value,
-                                             int indent)
+    OSSL_HASHED_CERTIFICATE_IDENTIFIER *value,
+    int indent)
 {
     int rc;
 
@@ -658,16 +655,16 @@ int OSSL_HASHED_CERTIFICATE_IDENTIFIER_print(BIO *out,
     if (rc <= 0)
         return rc;
     rc = ossl_bio_print_hex(out,
-                            value->hashOverSignatureValue->data,
-                            value->hashOverSignatureValue->length);
+        value->hashOverSignatureValue->data,
+        value->hashOverSignatureValue->length);
     if (rc <= 0)
         return rc;
     return BIO_puts(out, "\n");
 }
 
 int OSSL_PCV2_CERTIFICATE_IDENTIFIER_print(BIO *out,
-                                           OSSL_PCV2_CERTIFICATE_IDENTIFIER *value,
-                                           int indent)
+    OSSL_PCV2_CERTIFICATE_IDENTIFIER *value,
+    int indent)
 {
     int rc;
     OSSL_ISSUER_SERIAL *iss;
@@ -677,8 +674,8 @@ int OSSL_PCV2_CERTIFICATE_IDENTIFIER_print(BIO *out,
         if (rc <= 0)
             return rc;
         rc = OSSL_HASHED_CERTIFICATE_IDENTIFIER_print(out,
-                                                      value->hashedCertIdentifier,
-                                                      indent + 4);
+            value->hashedCertIdentifier,
+            indent + 4);
         if (rc <= 0)
             return rc;
         rc = BIO_puts(out, "\n");
@@ -734,26 +731,26 @@ int OSSL_COMPONENT_IDENTIFIER_print(BIO *out, OSSL_COMPONENT_IDENTIFIER *value, 
     if (rc <= 0)
         return rc;
     rc = BIO_printf(out, "%*sComponent Manufacturer: %.*s\n", indent, "",
-                    value->componentManufacturer->length,
-                    value->componentManufacturer->data);
+        value->componentManufacturer->length,
+        value->componentManufacturer->data);
     if (rc <= 0)
         return rc;
     rc = BIO_printf(out, "%*sComponent Model: %.*s\n", indent, "",
-                    value->componentModel->length,
-                    value->componentModel->data);
+        value->componentModel->length,
+        value->componentModel->data);
     if (rc <= 0)
         return rc;
     if (value->componentSerial != NULL) {
         rc = BIO_printf(out, "%*sComponent Serial: %.*s\n", indent, "",
-                        value->componentSerial->length,
-                        value->componentSerial->data);
+            value->componentSerial->length,
+            value->componentSerial->data);
         if (rc <= 0)
             return rc;
     }
     if (value->componentRevision != NULL) {
         rc = BIO_printf(out, "%*sComponent Revision: %.*s\n", indent, "",
-                        value->componentRevision->length,
-                        value->componentRevision->data);
+            value->componentRevision->length,
+            value->componentRevision->data);
         if (rc <= 0)
             return rc;
     }
@@ -917,8 +914,9 @@ static int print_trait(BIO *out, OSSL_PCV2_TRAIT *trait, int indent)
         if (BIO_printf(out, "%*sTrait Description: ", indent, "") <= 0)
             return -1;
         if (BIO_printf(out, "%.*s",
-                       trait->description->length,
-                       trait->description->data) <= 0)
+                trait->description->length,
+                trait->description->data)
+            <= 0)
             return -1;
         if (BIO_puts(out, "\n") <= 0)
             return -1;
@@ -928,8 +926,9 @@ static int print_trait(BIO *out, OSSL_PCV2_TRAIT *trait, int indent)
         if (BIO_printf(out, "%*sTrait Description URI: ", indent, "") <= 0)
             return -1;
         if (BIO_printf(out, "%.*s",
-                       trait->descriptionURI->length,
-                       trait->descriptionURI->data) <= 0)
+                trait->descriptionURI->length,
+                trait->descriptionURI->data)
+            <= 0)
             return -1;
         if (BIO_puts(out, "\n") <= 0)
             return -1;
@@ -1009,18 +1008,20 @@ int OSSL_PLATFORM_CONFIG_V3_print(BIO *out, OSSL_PLATFORM_CONFIG_V3 *value, int 
 int OSSL_ISO9000_CERTIFICATION_print(BIO *out, OSSL_ISO9000_CERTIFICATION *value, int indent)
 {
     if (BIO_printf(out, "%*sISO 9000 Certified: %s\n", indent, "",
-                   value->iso9000Certified ? "TRUE" : "FALSE") <= 0)
+            value->iso9000Certified ? "TRUE" : "FALSE")
+        <= 0)
         return -1;
     if (value->iso9000Uri == NULL)
         return 1;
     return BIO_printf(out, "%*sISO 9000 Certification URI: %.*s\n", indent, "",
-                      value->iso9000Uri->length,
-                      value->iso9000Uri->data) > 0;
+               value->iso9000Uri->length,
+               value->iso9000Uri->data)
+        > 0;
 }
 
 int OSSL_COMMON_CRITERIA_EVALUATION_print(BIO *out,
-                                          OSSL_COMMON_CRITERIA_EVALUATION *value,
-                                          int indent)
+    OSSL_COMMON_CRITERIA_EVALUATION *value,
+    int indent)
 {
     int rc;
 
@@ -1029,20 +1030,20 @@ int OSSL_COMMON_CRITERIA_EVALUATION_print(BIO *out,
     if (OSSL_COMMON_CRITERIA_MEASURES_print(out, value->cCMeasures, indent + 4) <= 0)
         return -1;
     rc = BIO_printf(out, "%*sCommon Criteria Cert. No.: %.*s\n", indent, "",
-                    value->cCCertificateNumber->length,
-                    value->cCCertificateNumber->data);
+        value->cCCertificateNumber->length,
+        value->cCCertificateNumber->data);
     if (rc <= 0)
         return rc;
     rc = BIO_printf(out, "%*sCommon Criteria Cert. Authority: %.*s\n", indent, "",
-                    value->cCCertificateAuthority->length,
-                    value->cCCertificateAuthority->data);
+        value->cCCertificateAuthority->length,
+        value->cCCertificateAuthority->data);
     if (rc <= 0)
         return rc;
 
     if (value->evaluationScheme != NULL) {
         rc = BIO_printf(out, "%*sEvaluation Scheme: %.*s\n", indent, "",
-                        value->evaluationScheme->length,
-                        value->evaluationScheme->data);
+            value->evaluationScheme->length,
+            value->evaluationScheme->data);
         if (rc <= 0)
             return rc;
     }
