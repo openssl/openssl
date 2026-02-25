@@ -7806,7 +7806,7 @@ int setup_tests(void)
 
     ADD_TEST(test_names_do_all);
 
-    ADD_TEST(setup_cipher_list);
+    setup_cipher_list();
     ADD_ALL_TESTS(test_evp_diff_order_init, cipher_list_n);
     ADD_ALL_TESTS(test_evp_stale_key_reinit, cipher_list_n);
     ADD_ALL_TESTS(test_evp_decrypt_roundtrip_multistep, cipher_list_n);
