@@ -10728,6 +10728,7 @@ static int test_sigalgs_available(int idx)
     case 4:
         csigname_expected = "ecdsa_secp256r1_sha256";
         csigalg_expected = 0x0403;
+        /* FALLTHROUGH */
     case 5:
         sig_expected = EVP_PKEY_EC;
         signame_expected = "ecdsa_secp256r1_sha256";
