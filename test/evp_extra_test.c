@@ -5017,7 +5017,7 @@ typedef struct {
 } EVP_CIPHER_TEST_INFO;
 
 static EVP_CIPHER_TEST_INFO *cipher_list = NULL;
-static size_t cipher_list_n = 0;
+static int cipher_list_n = 0;
 
 static int seen_name(const char *name)
 {
@@ -5025,7 +5025,7 @@ static int seen_name(const char *name)
     if (name == NULL) {
         return 1;
     }
-    for (size_t i = 0; i < cipher_list_n; i++) {
+    for (int i = 0; i < cipher_list_n; i++) {
         if (OPENSSL_strcasecmp(cipher_list[i].name, name) == 0)
             return 1;
     }
@@ -5040,7 +5040,6 @@ static void collect_cipher_cb(EVP_CIPHER *ciph, void *arg)
         return;
 
     const char *name0 = EVP_CIPHER_get0_name(ciph);
-    // aparently NID is not reliable
 
     if (name0 == NULL || seen_name(name0))
         return;
@@ -5079,7 +5078,7 @@ static int setup_cipher_list(void)
 
 static void cleanup_cipher_list(void)
 {
-    size_t i;
+    int i;
 
     if (cipher_list == NULL)
         return;
@@ -5093,7 +5092,7 @@ static void cleanup_cipher_list(void)
     cipher_list = NULL;
     cipher_list_n = 0;
 }
-/* This test verifies that initializing a cipher with a key and IV in
+/*  This test verifies that initializing a cipher with a key and IV in
     different steps is the same as initializing the cipher in a single step */
 static int test_evp_diff_order_init(int idx)
 {
@@ -5169,7 +5168,7 @@ static int test_evp_diff_order_init(int idx)
     for (int i = 0; i < info->ivlen && i < (int)sizeof(iv); i++)
         iv[i] = (unsigned char)(0xB0 + i);
 
-    // Initialize first with key
+    /* Initialize first with key->IV */
     if (!TEST_true(EVP_EncryptInit_ex(ctx_keyiv, NULL, NULL, key, NULL))) {
         errmsg = "INIT_KEY_ONLY";
         goto err;
@@ -5234,7 +5233,7 @@ static int test_evp_diff_order_init(int idx)
         }
     }
 
-    // INIT IV then KEY ctx_ivkey
+    /* INIT IV then KEY ctx_ivkey */
     if (!TEST_ptr(ctx_ivkey = EVP_CIPHER_CTX_new())) {
         errmsg = "CTX_ALLOC";
         goto err;
@@ -5260,7 +5259,7 @@ static int test_evp_diff_order_init(int idx)
             }
         }
     }
-    // Initialize first with IV
+    /* Initialize first with IV */
     if (!TEST_true(EVP_EncryptInit_ex(ctx_ivkey, NULL, NULL, NULL, iv))) {
         errmsg = "INIT_KEY_ONLY";
         goto err;
@@ -5318,7 +5317,7 @@ static int test_evp_diff_order_init(int idx)
             }
         }
     }
-    // single step initialization
+    /* single step initialization */
     if (!TEST_ptr(ctx_onestep = EVP_CIPHER_CTX_new())) {
         errmsg = "CTX_ALLOC";
         goto err;
@@ -5344,7 +5343,7 @@ static int test_evp_diff_order_init(int idx)
         }
     }
 
-    // Initialize in a single step
+    /* Initialize in a single step */
     if (!TEST_true(EVP_EncryptInit_ex(ctx_onestep, NULL, NULL, key, iv))) {
         errmsg = "SINGLE_STEP_IV";
         goto err;
@@ -5398,7 +5397,6 @@ static int test_evp_diff_order_init(int idx)
         }
     }
 
-    // Comparison
     /* Compare single-call vs key->iv */
     if (!TEST_size_t_eq(ct_onestep_len, ct_keyiv_len)
         || !TEST_mem_eq(ct_onestep, ct_onestep_len, ct_keyiv, ct_keyiv_len)) {
@@ -5434,7 +5432,6 @@ err:
     EVP_CIPHER_CTX_free(ctx_keyiv);
     EVP_CIPHER_CTX_free(ctx_ivkey);
     EVP_CIPHER_CTX_free(ctx_onestep);
-    // EVP_CIPHER_free(type);
     return testresult;
 }
 
@@ -5446,8 +5443,8 @@ err:
 static int test_evp_stale_key_reinit(int idx)
 {
     const EVP_CIPHER_TEST_INFO *info = &cipher_list[idx];
-    EVP_CIPHER_CTX *ctx_reinit = NULL; // used to test multi step init KEY->IV
-    EVP_CIPHER_CTX *ctx_onestep = NULL; // base test with single step init
+    EVP_CIPHER_CTX *ctx_reinit = NULL; /* used to test multi step init KEY->IV */
+    EVP_CIPHER_CTX *ctx_onestep = NULL; /* base test with single step init */
 
     unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
     unsigned char key2[EVP_MAX_KEY_LENGTH] = { 0 };
@@ -5525,7 +5522,7 @@ static int test_evp_stale_key_reinit(int idx)
         }
     }
 
-    // Initialize first with key
+    /* Initialize first with key */
     if (!TEST_true(EVP_EncryptInit_ex(ctx_reinit, NULL, NULL, key, iv))) {
         errmsg = "INIT_KEY_ONLY";
         goto err;
@@ -5582,8 +5579,8 @@ static int test_evp_stale_key_reinit(int idx)
         }
     }
 
-    // Use same context with a different key and iv and see if it causes issues
-
+    /* Use same context with a change of different key and iv
+        in multiple steps to see if it causes issues */
     if (!TEST_true(EVP_EncryptInit_ex(ctx_reinit, NULL, NULL, key2, NULL))) {
         errmsg = "REINIT_KEY";
         goto err;
@@ -5639,7 +5636,7 @@ static int test_evp_stale_key_reinit(int idx)
         }
     }
 
-    // Initialize in a single step
+    /* Initialize in a single step */
     if (!TEST_ptr(ctx_onestep = EVP_CIPHER_CTX_new())) {
         errmsg = "CTX_ALLOC";
         goto err;
@@ -5718,7 +5715,7 @@ static int test_evp_stale_key_reinit(int idx)
             }
         }
     }
-    // Comparison
+
     /* Compare single-call vs key->iv */
     if (!TEST_size_t_eq(ct_reinit_len, ct_onestep_len)
         || !TEST_mem_eq(ct_reinit, ct_reinit_len, ct_onestep, ct_onestep_len)) {
@@ -5741,7 +5738,6 @@ err:
     }
     EVP_CIPHER_CTX_free(ctx_reinit);
 
-    // EVP_CIPHER_free(type);
     return testresult;
 }
 
@@ -5775,6 +5771,7 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
 
     int blocksz = 0;
     char *errmsg = NULL;
+    int testresult = 1;
 
     if (info->mode == EVP_CIPH_SIV_MODE) {
         TEST_info("Skipping %s (SIV MODE)", info->name);
@@ -5881,22 +5878,22 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
         goto err;
     }
 
-    if (info->is_aead && info->mode == EVP_CIPH_CCM_MODE) {
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_dec, EVP_CTRL_CCM_SET_IVLEN,
-                info->ivlen, NULL))) {
-            errmsg = "DEC_CCM_SET_IVLEN";
-            goto err;
-        }
-        /* For CCM, you typically set expected tag before
-            final/verify (or before update) */
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_dec, EVP_CTRL_CCM_SET_TAG,
-                TAGLEN, tag))) {
-            errmsg = "DEC_CCM_SET_TAG";
-            goto err;
-        }
-    } else if (info->is_aead) {
-        /* For GCM and many AEADs, set tag via ctrl before Final */
-        if (info->mode == EVP_CIPH_GCM_MODE) {
+    if (info->is_aead) {
+        if (info->mode == EVP_CIPH_CCM_MODE) {
+            if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_dec, EVP_CTRL_CCM_SET_IVLEN,
+                    info->ivlen, NULL))) {
+                errmsg = "DEC_CCM_SET_IVLEN";
+                goto err;
+            }
+            /* For CCM, you typically set expected tag before
+                final/verify (or before update) */
+            if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_dec, EVP_CTRL_CCM_SET_TAG,
+                    TAGLEN, tag))) {
+                errmsg = "DEC_CCM_SET_TAG";
+                goto err;
+            }
+        } else if (info->mode == EVP_CIPH_GCM_MODE) {
+            /* For GCM and many AEADs, set tag via ctrl before Final */
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_dec, EVP_CTRL_GCM_SET_TAG,
                     TAGLEN, tag))) {
                 errmsg = "DEC_GCM_SET_TAG";
@@ -5910,7 +5907,6 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
             }
         }
     }
-
     /* key-only then iv-only */
     if (!TEST_true(EVP_DecryptInit_ex(ctx_dec, NULL, NULL, key, NULL))) {
         errmsg = "DEC_INIT_KEY_ONLY";
@@ -5954,8 +5950,7 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
         goto err;
     }
 
-err: {
-    int testresult = 1;
+err:
     if (errmsg != NULL) {
         TEST_info("evp_decrypt_roundtrip_multistep %d, %s: %s",
             idx, errmsg, info->name);
@@ -5965,7 +5960,7 @@ err: {
     EVP_CIPHER_CTX_free(ctx_dec);
     return testresult;
 }
-}
+
 /*
  * Test step-wise cipher initialization via EVP_CipherInit_ex where the
  * arguments are given one at a time and a final adjustment to the enc
@@ -7811,7 +7806,7 @@ int setup_tests(void)
 
     ADD_TEST(test_names_do_all);
 
-    setup_cipher_list();
+    ADD_TEST(setup_cipher_list);
     ADD_ALL_TESTS(test_evp_diff_order_init, cipher_list_n);
     ADD_ALL_TESTS(test_evp_stale_key_reinit, cipher_list_n);
     ADD_ALL_TESTS(test_evp_decrypt_roundtrip_multistep, cipher_list_n);
