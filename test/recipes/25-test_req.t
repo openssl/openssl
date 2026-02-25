@@ -572,21 +572,21 @@ subtest "generating certificate requests with -pkeyopt" => sub {
         my $req = "testreq-pkeyopt.pem";
         my $text = "testreq-pkeyopt.txt";
 
-        ok(run(app([ "openssl", "req", "-new",
-            "-config", srctop_file("test", "test.cnf"),
-            "-newkey", "ec", "-pkeyopt", "ec_paramgen_curve:P-384",
-            "-nodes", "-keyout", $key, "-out", $req ])),
-            "Generating request with -pkeyopt ec_paramgen_curve:P-384");
+        ok(run(app(["openssl", "req", "-new",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-newkey", "ec", "-pkeyopt", "ec_paramgen_curve:P-384",
+                    "-nodes", "-keyout", $key, "-out", $req])),
+           "Generating request with -pkeyopt ec_paramgen_curve:P-384");
 
-        run(app([ "openssl", "req", "-in", $req, "-noout", "-text",
-            "-out", $text ]));
+        run(app(["openssl", "req", "-in", $req, "-noout", "-text",
+                 "-out", $text]));
         test_file_contains("request", $text, "ASN1 OID: secp384r1", 1);
 
-        ok(!run(app([ "openssl", "req", "-new",
-            "-config", srctop_file("test", "test.cnf"),
-            "-newkey", "ec", "-pkeyopt", "bogus_opt:1",
-            "-nodes", "-keyout", $key, "-out", $req ])),
-            "Supplying an unknown -pkeyopt fails");
+        ok(!run(app(["openssl", "req", "-new",
+                     "-config", srctop_file("test", "test.cnf"),
+                     "-newkey", "ec", "-pkeyopt", "bogus_opt:1",
+                     "-nodes", "-keyout", $key, "-out", $req])),
+           "Supplying an unknown -pkeyopt fails");
     }
 };
 
@@ -595,17 +595,17 @@ subtest "Generate cert without system config" => sub {
     plan tests => 3;
 
     ok(run(app(["openssl", "genrsa", "-out", "testreq-key.key", "2048"])),
-                "generate a private key");
+        "generate a private key");
 
     ok(run(app(["openssl", "req",
-                "-new", "-config", srctop_file("test", "test.cnf"),
-                "-key", "testreq-key.key", "-out", "testreq-csr.pem"])),
-                "generate CSR");
+        "-new", "-config", srctop_file("test", "test.cnf"),
+        "-key", "testreq-key.key", "-out", "testreq-csr.pem"])),
+        "generate CSR");
 
     # No system config file. Expect to not segfault/fail
     ok(run(app(["openssl", "req", "-in", "testreq-csr.pem", "-noout"],
-                env => { OPENSSL_CONF => "/dev/null" })),
-                "attempt to read the CSR without a config");
+        env => { OPENSSL_CONF => "/dev/null" })),
+        "attempt to read the CSR without a config");
 };
 
 my @openssl_args = ("req", "-config", srctop_file("apps", "openssl.cnf"));
