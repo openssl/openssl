@@ -47,6 +47,16 @@ void OPENSSL_crypto207_probe(void);
 void OPENSSL_madd300_probe(void);
 void OPENSSL_brd31_probe(void);
 
+#if defined(_AIX)
+static int check_vmx(void)
+{
+    if (_system_configuration.implementation >= 0x10000u &&
+        _system_configuration.vmx_version > 1)
+        return 1;
+    return 0;
+}
+#endif
+
 long OPENSSL_rdtsc_mftb(void);
 long OPENSSL_rdtsc_mfspr268(void);
 
@@ -180,19 +190,24 @@ void OPENSSL_cpuid_setup(void)
         if (__power_set(0x1U << 14)) /* POWER6 */
             OPENSSL_ppccap_P |= PPC_FPU64;
     }
+#if defined(_AIX)
+    if (check_vmx())
+    {
+#endif
+        if (__power_set(0xffffffffU << 14)) /* POWER6 and later */
+                OPENSSL_ppccap_P |= PPC_ALTIVEC;
 
-    if (__power_set(0xffffffffU << 14)) /* POWER6 and later */
-        OPENSSL_ppccap_P |= PPC_ALTIVEC;
+        if (__power_set(0xffffffffU << 16)) /* POWER8 and later */
+            OPENSSL_ppccap_P |= PPC_CRYPTO207;
 
-    if (__power_set(0xffffffffU << 16)) /* POWER8 and later */
-        OPENSSL_ppccap_P |= PPC_CRYPTO207;
+        if (__power_set(0xffffffffU << 17)) /* POWER9 and later */
+            OPENSSL_ppccap_P |= PPC_MADD300;
 
-    if (__power_set(0xffffffffU << 17)) /* POWER9 and later */
-        OPENSSL_ppccap_P |= PPC_MADD300;
-
-    if (__power_set(0xffffffffU << 18)) /* POWER10 and later */
-        OPENSSL_ppccap_P |= PPC_BRD31;
-
+        if (__power_set(0xffffffffU << 18)) /* POWER10 and later */
+            OPENSSL_ppccap_P |= PPC_BRD31;
+#if defined(_AIX)
+    }
+#endif
     return;
 #endif
 #endif
