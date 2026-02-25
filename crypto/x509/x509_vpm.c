@@ -36,10 +36,12 @@ static X509_BUFFER *buffer_from_bytes(const uint8_t *bytes, size_t length)
     X509_BUFFER *buf;
 
     if ((buf = OPENSSL_zalloc(sizeof *buf)) != NULL
-        && (buf->data = OPENSSL_memdup(bytes, length)) != NULL)
+        && (buf->data = OPENSSL_memdup(bytes, length)) != NULL) {
         buf->len = length;
-    else
+    } else {
         OPENSSL_free(buf);
+        buf = NULL;
+    }
     return buf;
 }
 
