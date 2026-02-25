@@ -60,21 +60,6 @@ typedef struct {
 DEFINE_LHASH_OF_EX(QUERY);
 
 typedef struct {
-    const char *name;
-    void *meth;
-} FROZEN;
-
-DEFINE_STACK_OF(FROZEN)
-
-int sk_FROZEN_comp(const FROZEN *const *a, const FROZEN *const *b);
-
-int sk_FROZEN_comp(const FROZEN *const *a, const FROZEN *const *b)
-{
-    /* XXX it seems bizzaro that we want string insensitive name matches */
-    return strcmp((*a)->name, (*b)->name);
-}
-
-typedef struct {
     int nid;
     STACK_OF(IMPLEMENTATION) *impls;
     LHASH_OF(QUERY) *cache;
@@ -83,10 +68,6 @@ typedef struct {
 struct ossl_method_store_st {
     OSSL_LIB_CTX *ctx;
     SPARSE_ARRAY_OF(ALGORITHM) * algs;
-
-    int use_stack;
-    STACK_OF(FROZEN) *fr_sk;
-    STACK_OF(FROZEN) *fr_pq;
 
     /*
      * Frozen HT's kept separate by key length
@@ -1172,10 +1153,6 @@ static int ossl_frozen_ht_bucket_insert(HT **buckets, const char *alg_name, HT_V
 int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store,
     const char *alg_name, const char *prop_query, void **method)
 {
-    int idx = -1;
-    FROZEN f = {
-        .name = alg_name,
-    };
     int pq_match = 0;
 
     int ret = 0;
@@ -1196,21 +1173,6 @@ int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store,
         pq_match = 1; /* Use the pq cache */
         ret = 1; /* Cache will have the answer for prop_query */
         *method = NULL;
-    }
-
-    if (store->use_stack) {
-        if (!pq_match) {
-            idx = sk_FROZEN_find(store->fr_sk, &f);
-            if (idx >= 0) {
-                *method = sk_FROZEN_value(store->fr_sk, idx)->meth;
-            }
-        } else {
-            idx = sk_FROZEN_find(store->fr_pq, &f);
-            if (idx >= 0) {
-                *method = sk_FROZEN_value(store->fr_pq, idx)->meth;
-            }
-        }
-        goto done;
     }
 
     if (pq_match)
@@ -1261,16 +1223,6 @@ static int freeze_alg(OSSL_METHOD_STORE *store, ALGORITHM *alg,
     val.value = ossl_method_dup(&best_impl->method);
     if (val.value == NULL)
         return ret;
-
-    if (store->use_stack) {
-        FROZEN *f = OPENSSL_malloc(sizeof(FROZEN));
-        f->name = strdup(alg_name);
-        f->meth = ((METHOD *)val.value)->method;
-        if (propq == NULL || *propq == '\0')
-            sk_FROZEN_push(store->fr_sk, f);
-        else
-            sk_FROZEN_push(store->fr_pq, f);
-    }
 
     if (propq == NULL || *propq == '\0')
         ret = ossl_frozen_ht_bucket_insert(store->frozen_algs, alg_name, &val);
@@ -1345,26 +1297,9 @@ int ossl_method_store_freeze_cache(OSSL_METHOD_STORE *store, const char *propq)
     if (store == NULL || store->frozen == 1)
         return 0;
 
-    if (getenv("USE_STACK_OF_FREEZE_HACK") != NULL) {
-        fprintf(stderr, "Using stack hack\n");
-        store->use_stack = 1;
-    } else {
-        fprintf(stderr, "Using HT");
-        store->use_stack = 0;
-    }
-
     store->frozen_propq = OPENSSL_strdup(propq);
     if (store->frozen_propq == NULL)
         goto err;
-
-    if (store->use_stack) {
-        store->fr_sk = sk_FROZEN_new(sk_FROZEN_comp);
-        if (store->fr_sk == NULL)
-            goto err;
-        store->fr_pq = sk_FROZEN_new(sk_FROZEN_comp);
-        if (store->fr_pq == NULL)
-            goto err;
-    }
 
     for (size_t i = 0; i < 4; i++) {
         store->frozen_algs[i] = ossl_ht_new(&ht_conf);
