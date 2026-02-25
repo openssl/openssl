@@ -626,9 +626,9 @@ err:
  *   seekkey - pointer to seedkey (seekkey for DKM, sk_d for Child_SA/DH)
  *   seedkey_len - length of seedkey(in bytes)
  *   ni - pointer to initiator nonce
- *   ni_len - initiator nonce legnth(in bytes)
+ *   ni_len - initiator nonce length(in bytes)
  *   nr - pointer to responder nonce
- *   nr_len - responder nonce legnth(in bytes)
+ *   nr_len - responder nonce length(in bytes)
  *   shared_secret - pointer to secret input
  *   shared_secret_len - secret length(in bytes)
  * Outputs:

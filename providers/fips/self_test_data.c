@@ -308,6 +308,7 @@ static const ST_KAT_PARAM hkdf_params[] = {
 };
 
 #ifndef OPENSSL_NO_IKEV2KDF
+/* clang-format off */
 static const char ikev2kdf_digest[] = "SHA256";
 
 static const unsigned char ikev2kdf_ni[] = {
@@ -468,6 +469,7 @@ static const unsigned char ikev2kdf_expected_rekey[] = {
     0x0F, 0xA8, 0x29, 0x5D, 0xE6, 0xF0, 0x33, 0x8D,
     0xAF, 0xC3, 0x03, 0xA9, 0xEC, 0x10, 0x4F, 0x12
 };
+/* clang-format on */
 
 static const int ikev2kdf_mode_gen = EVP_KDF_IKEV2_MODE_GEN;
 static const ST_KAT_PARAM ikev2kdf_gen_params[] = {

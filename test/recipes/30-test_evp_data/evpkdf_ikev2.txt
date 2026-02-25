@@ -7,7 +7,7 @@
 # https://www.openssl.org/source/license.html
 
 # Tests start with one of these keywords
-#       digest, ni, nr, gir, girnew, spi_init, spi_resp, mode
+#       digest, ni, nr, secret, new secret, spi_init, spi_resp, mode
 # and continue until a blank line. Lines starting with a pound sign are ignored.
 # https://github.com/usnistgov/ACVP-Server/tree/master/gen-val/json-files/kdf-components-ikev2-1.0
 
