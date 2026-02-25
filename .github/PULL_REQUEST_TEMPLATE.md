@@ -3,8 +3,9 @@ Thank you for your pull request. Please review these requirements:
 
 Contributors guide: https://github.com/openssl/openssl/blob/master/CONTRIBUTING.md
 
-Include a clear description of the issue or feature above this comment if not already provided. This should briefly outline the issue or feature being addressed, along with any relevant implementation details. For performance improvements, include benchmark results as well. Commit message titles (their first line) should be kept to 50 - 70 characters if reasonable.
+Include a clear description of the issue or feature above this comment if not already provided. This should briefly outline the issue or feature being addressed, along with any relevant implementation details. For performance improvements, include benchmark results as well.
 
+Please always add meaningful commit messages.  Commit message titles (the first line of each commit message which should be separated by an empty line from the rest of the message) should be kept to 50-70 characters if possible.  Further details and Fixes #issue number annotations should be placed in the commit message body (i.e, after the empty line).
 
 Pull requests and commits should be self-contained, allowing readers to understand what changed and why without needing to reference related issues or having prior knowledge. Individual commit messages should include all relevant details to ensure future contributors can easily follow the git history. Clearly explain what is changing and why, and feel free to include detailed (long) descriptions when beneficial to understanding.
 
