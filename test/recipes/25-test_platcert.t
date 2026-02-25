@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_platcert");
 
-plan tests => 164;
+plan tests => 253;
 
 require_ok(srctop_file("test", "recipes", "tconversion.pl"));
 
@@ -188,24 +188,22 @@ my @pkc2_expectations = (
 "\QPublic Key Algorithm: rsaEncryption\E",
 "\QPublic-Key: (2048 bit)\E",
 "\QModulus:\E",
-"\Q00:8e:4e:08:1b:96:e5:8f:15:4e:1d:fc:13:66:1f:\E",
-"\Q8b:5c:5f:63:c8:69:5a:2c:b8:86:da:35:c3:42:8f:\E",
-"\Qd9:a7:f5:aa:8d:0b:d2:a9:90:84:16:95:9c:74:e9:\E",
-"\Qe0:cd:f4:75:a2:cc:ee:1c:2c:40:f4:07:39:54:c9:\E",
-"\Q93:13:d2:99:15:44:5f:86:3d:58:19:26:ac:8b:c9:\E",
-"\Qc4:4e:83:fb:27:f7:55:99:03:96:12:fe:5a:17:25:\E",
-"\Qd5:aa:4b:39:f6:fc:e1:08:18:bc:cf:6b:01:7c:83:\E",
-"\Qf4:05:e3:3b:f6:33:32:87:ed:24:8a:01:f6:9a:8b:\E",
-"\Q5b:ef:a6:90:3a:5a:99:e4:04:18:a3:d4:ac:15:06:\E",
-"\Qe4:ae:76:42:f9:27:ba:6e:ac:f2:72:f7:55:d0:5d:\E",
-"\Qcb:b6:4c:5a:20:2b:25:c0:bf:2b:75:9b:a8:08:41:\E",
-"\Q8e:16:9f:a4:68:90:52:60:22:cb:60:4a:22:e7:e7:\E",
-"\Q00:f9:27:af:72:17:9c:17:45:de:c7:cf:19:ec:b9:\E",
-"\Q36:86:9a:61:82:e0:fc:f7:06:d9:1f:9d:4b:e1:16:\E",
-"\Q03:ff:6e:44:94:f4:bf:51:e4:a8:a2:7d:11:86:7e:\E",
-"\Qfa:c4:f7:b0:79:40:10:33:76:b2:eb:d0:89:79:86:\E",
-"\Q71:65:49:21:e1:70:f1:5f:3b:5a:55:0f:cf:c8:01:\E",
-"\Q0f:c7\E",
+"\Q8e:4e:08:1b:96:e5:8f:15:4e:1d:fc:13:66:1f:8b:5c:\E",
+"\Q5f:63:c8:69:5a:2c:b8:86:da:35:c3:42:8f:d9:a7:f5:\E",
+"\Qaa:8d:0b:d2:a9:90:84:16:95:9c:74:e9:e0:cd:f4:75:\E",
+"\Qa2:cc:ee:1c:2c:40:f4:07:39:54:c9:93:13:d2:99:15:\E",
+"\Q44:5f:86:3d:58:19:26:ac:8b:c9:c4:4e:83:fb:27:f7:\E",
+"\Q55:99:03:96:12:fe:5a:17:25:d5:aa:4b:39:f6:fc:e1:\E",
+"\Q08:18:bc:cf:6b:01:7c:83:f4:05:e3:3b:f6:33:32:87:\E",
+"\Qed:24:8a:01:f6:9a:8b:5b:ef:a6:90:3a:5a:99:e4:04:\E",
+"\Q18:a3:d4:ac:15:06:e4:ae:76:42:f9:27:ba:6e:ac:f2:\E",
+"\Q72:f7:55:d0:5d:cb:b6:4c:5a:20:2b:25:c0:bf:2b:75:\E",
+"\Q9b:a8:08:41:8e:16:9f:a4:68:90:52:60:22:cb:60:4a:\E",
+"\Q22:e7:e7:00:f9:27:af:72:17:9c:17:45:de:c7:cf:19:\E",
+"\Qec:b9:36:86:9a:61:82:e0:fc:f7:06:d9:1f:9d:4b:e1:\E",
+"\Q16:03:ff:6e:44:94:f4:bf:51:e4:a8:a2:7d:11:86:7e:\E",
+"\Qfa:c4:f7:b0:79:40:10:33:76:b2:eb:d0:89:79:86:71:\E",
+"\Q65:49:21:e1:70:f1:5f:3b:5a:55:0f:cf:c8:01:0f:c7\E",
 "\QExponent: 65537 (0x10001)\E",
 "\QPlatform Configuration Version 3:\E",
 "\QPlatform Components:\E",

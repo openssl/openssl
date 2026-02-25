@@ -8,11 +8,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-
-{
-    -use OpenSSL::stackhash qw(generate_stack_macros);
-    -
-}
+/* clang-format off */
+{-
+    use OpenSSL::stackhash qw(generate_stack_macros);
+-}
+/* clang-format on */
 
 #ifndef OPENSSL_PLATCERT_H
 #define OPENSSL_PLATCERT_H
@@ -169,22 +169,25 @@ DECLARE_ASN1_FUNCTIONS(OSSL_PLATFORM_CONFIG)
 #define OSSL_ATTRIBUTE_STATUS_REMOVED 2
 
 DECLARE_ASN1_FUNCTIONS(OSSL_URI_REFERENCE)
-{
-    -generate_stack_macros("OSSL_URI_REFERENCE");
-    -
-}
+/* clang-format off */
+{-
+    generate_stack_macros("OSSL_URI_REFERENCE");
+-}
+/* clang-format on */
 
 DECLARE_ASN1_FUNCTIONS(OSSL_COMPONENT_ADDRESS)
-{
-    -generate_stack_macros("OSSL_COMPONENT_ADDRESS");
-    -
-}
+/* clang-format off */
+{-
+    generate_stack_macros("OSSL_COMPONENT_ADDRESS");
+-}
+/* clang-format on */
 
 DECLARE_ASN1_FUNCTIONS(OSSL_PLATFORM_PROPERTY)
-{
-    -generate_stack_macros("OSSL_PLATFORM_PROPERTY");
-    -
-}
+/* clang-format off */
+{-
+    generate_stack_macros("OSSL_PLATFORM_PROPERTY");
+-}
+/* clang-format on */
 
 typedef struct OSSL_COMPONENT_IDENTIFIER_st {
     OSSL_COMPONENT_CLASS *componentClass;
@@ -201,10 +204,11 @@ typedef struct OSSL_COMPONENT_IDENTIFIER_st {
 } OSSL_COMPONENT_IDENTIFIER;
 
 DECLARE_ASN1_FUNCTIONS(OSSL_COMPONENT_IDENTIFIER)
-{
-    -generate_stack_macros("OSSL_COMPONENT_IDENTIFIER");
-    -
-}
+/* clang-format off */
+{-
+    generate_stack_macros("OSSL_COMPONENT_IDENTIFIER");
+-}
+/* clang-format on */
 
 typedef struct OSSL_PCV2_TRAIT_st {
     ASN1_OBJECT *traitId;
@@ -216,10 +220,11 @@ typedef struct OSSL_PCV2_TRAIT_st {
 } OSSL_PCV2_TRAIT;
 
 DECLARE_ASN1_FUNCTIONS(OSSL_PCV2_TRAIT)
-{
-    -generate_stack_macros("OSSL_PCV2_TRAIT");
-    -
-}
+/* clang-format off */
+{-
+    generate_stack_macros("OSSL_PCV2_TRAIT");
+-}
+/* clang-format on */
 
 typedef STACK_OF(OSSL_PCV2_TRAIT) OSSL_PCV2_TRAITS;
 
@@ -267,11 +272,11 @@ typedef STACK_OF(OSSL_COMPONENT_IDENTIFIER_V2) OSSL_PLATFORM_COMPONENTS;
 
 DECLARE_ASN1_FUNCTIONS(OSSL_PLATFORM_COMPONENTS)
 DECLARE_ASN1_FUNCTIONS(OSSL_COMPONENT_IDENTIFIER_V2)
-
-{
-    -generate_stack_macros("OSSL_COMPONENT_IDENTIFIER_V2");
-    -
-}
+/* clang-format off */
+{-
+    generate_stack_macros("OSSL_COMPONENT_IDENTIFIER_V2");
+-}
+/* clang-format on */
 
 typedef struct OSSL_PLATFORM_CONFIG_V3_st {
     OSSL_PLATFORM_COMPONENTS *platformComponents;
