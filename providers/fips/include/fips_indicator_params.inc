@@ -1,3 +1,25 @@
+/*
+ * Handles the loading of FIPS algorithm conditional options from a config file
+ * passed from the core using OSSL_PARAM.
+ *
+ * The following lines are of the form:
+ *   OSSL_FIPS_PARAM(security_checks, SECURITY_CHECKS, 1)
+ *
+ * The first parameter is used to create a function of the form:
+ *   int ossl_fips_config_security_checks(OSSL_LIB_CTX *libctx)
+ * that can be accessed by FIPS algorithms to tell if an option is enabled.
+ * The function returns 1 if enabled or 0 otherwise.
+ *
+ * The second parameter is converted to OSSL_PROV_PARAM_SECURITY_CHECKS and is used
+ * to optionally retrieve a FIPS module configuration option using an OSSL_PARAM
+ * from the core. If the option is not available then the third parameter is
+ * used as the default value. (which is 1 in this case).
+ * NOTE: fipsinstall.c uses the OSSL_PROV_PARAM_SECURITY_CHECKS value.
+ *
+ * These options are used to either cause an error when a FIPS related check fails,
+ * or flag that the check failed using a FIPS indicator.
+ * See L<fips_module(7)/FIPS indicators for further information.
+ */
 OSSL_FIPS_PARAM(security_checks, SECURITY_CHECKS, 1)
 OSSL_FIPS_PARAM(tls1_prf_ems_check, TLS1_PRF_EMS_CHECK, 0)
 OSSL_FIPS_PARAM(no_short_mac, NO_SHORT_MAC, 1)
