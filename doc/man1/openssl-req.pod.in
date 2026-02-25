@@ -312,15 +312,15 @@ X.509 extensions to be added can be specified in the configuration file,
 possibly using the B<-config> and B<-extensions> options,
 and/or using the B<-addext> option.
 
-Unless B<-x509v1> is given, generated certificates bear X.509 version 3.
-Unless specified otherwise,
-key identifier extensions are included as described in L<x509v3_config(5)>.
+Unless B<-x509v1> is given, generated certificates bear X.509 version 3
+even if no extensions are added.
 
 =item B<-x509v1>
 
 Request generation of certificates with X.509 version 1.
 This implies B<-x509>.
-If X.509 extensions are given, anyway X.509 version 3 is set.
+If X.509 extensions are added, X.509 version 3 is used regardless of this
+option.
 
 =item B<-CA> I<filename>|I<uri>
 
@@ -387,23 +387,39 @@ values for certain extensions such as subjectAltName.
 =item B<-extensions> I<section>,
 B<-reqexts> I<section>
 
-Can be used to override the name of the configuration file section
-from which X.509 extensions are included
-in the certificate (when B<-x509> is in use) or certificate request.
+Can be used to override the name of the configuration file section from which
+X.509 extensions are included in certificates (when B<-x509> is in use) or
+certificate requests.
 This allows several different sections to be used in the same configuration
 file to specify requests for a variety of purposes.
 
+OpenSSL 4.0 removed built-in generation of the B<subjectKeyIdentifier> and
+B<authorityKeyIdentifier> extensions when generating certificates.
+Any desired extensions need to be listed either in the configuration file or
+via the B<-addext> option described below.
+
 =item B<-addext> I<ext>
 
-Add a specific extension to the certificate (if B<-x509> is in use)
-or certificate request.  The argument must have the form of
-a C<key=value> pair as it would appear in a config file.
+Add a specific extension to the certificate (if B<-x509> is in use) or
+certificate request.
+The argument must have the form of a C<key=value> pair as it would appear in a
+configuration file.
 
-If an extension is added using this option that has the same OID as one
-defined in the extension section of the config file, it overrides that one.
+Each extension can appear at most once in a certificate or certificate request.
+Extensions listed via the option on the command-line override any corresponding
+extensions in the configuration file.
 
-This option can be given multiple times.
-Doing so, the same key must not be given more than once.
+This option can be given multiple times, but any given extension can be
+specified through this option at most once.
+
+To drop any unwanted B<subjectKeyIdentifier> or B<authorityKeyIdentifier>
+extensions that may be added by default via the configuration file use either
+or both of the options below:
+
+  -addext subjectKeyIdentifier=none
+  -addext authorityKeyIdentifier=none
+
+These work as expected even if the extensions were not there to begin with.
 
 =item B<-precert>
 
@@ -837,6 +853,10 @@ and key identifier extensions are included by default.
 Since OpenSSL 3.3, the B<-verify> option will exit with 1 on failure.
 
 The B<-engine> option was removed in OpenSSL 4.0.
+
+As of OpenSSL 4.0, the B<req> utility no longer has specialised built-in logic
+to add the SKID or AKID extensions, they are handled through configuration
+files and command-line options just like any other extension.
 
 =head1 COPYRIGHT
 

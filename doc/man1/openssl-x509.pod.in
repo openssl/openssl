@@ -483,19 +483,44 @@ neither subject identifier nor authority key identifier extensions are included.
 
 Configuration file containing certificate and request X.509 extensions to add.
 
+When both of the B<-extfile> I<filename> and B<-extensions> I<section> options
+are given, the extensions to add are taken from the named I<section> of the
+file named I<filename>.
+This file must exist, be readable, and all the listed extensions must be valid.
+
+If only the B<-extfile> I<filename> option is given, the section name to use is
+taken from the value of the variable named C<extensions> in the file's unnamed
+(C<default>) section.
+If no B<extensions> setting is found, the file's C<default> section itself is
+instead used as the list of extensions to add.
+As before, the file must be readable and all the extensions must be valid.
+
+Prior to OpenSSL 4.0, the B<-extensions> option required that the B<-extfile>
+option be also specified.
+As of OpenSSL 4.0 the default configuration file is used instead as described
+below.
+
+If only the B<-extensions> I<section> option is given, the named I<section> of
+the default configuration file, whether from the C<OPENSSL_CONF> environment
+variable, or the built-in default, is used as list of extensions to add.
+As before, the file must be readable and all the extensions must be valid.
+
+If neither of the options are given, an attempt is made to open the default
+configuration file (as detailed above).
+If the file does not exist or cannot be opened, no extensions are added.
+If the unnamed (C<default>) section of the file does not list an B<extensions>
+variable, no extensions are added.
+Otherwise, the section named by the B<extensions> variable is taken to be the
+list of extensions to add.
+The extensions listed there must all be valid.
+
 =item B<-extensions> I<section>
 
 The section in the extfile to add X.509 extensions from.
-If this option is not
-specified then the extensions should either be contained in the unnamed
-(default) section or the default section should contain a variable called
-"extensions" which contains the section to use.
+See the description of B<-extfile> above for details.
 
 See the L<x509v3_config(5)> manual page for details of the
 extension section format.
-
-Unless specified otherwise,
-key identifier extensions are included as described in L<x509v3_config(5)>.
 
 =item B<-sigopt> I<nm>:I<v>
 
@@ -847,6 +872,14 @@ Since OpenSSL 3.2, generated certificates bear X.509 version 3,
 and key identifier extensions are included by default.
 
 The B<-engine> option was removed in OpenSSL 4.0.
+
+OpenSSL 4.0 added support for specifying extensions to add via the default
+configuration file.
+See B<-extfile> above for details.
+
+As of OpenSSL 4.0, the B<x509> utility no longer has specialised built-in logic
+to add the SKID or AKID extensions, they are handled through configuration
+files and command-line options just like any other extension.
 
 =head1 COPYRIGHT
 
