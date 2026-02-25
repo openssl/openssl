@@ -39,6 +39,8 @@ If a value is already set, the contents are replaced.
 =item "secret" (B<OSSL_KDF_PARAM_SECRET>) <octet string>
 
 This parameter sets the shared secret (g^ir) used as generating SEEDKEY.
+It is represented as a string of octets in big endian order padded with zeros
+if necessary to make it the length of the modulus.
 This parameter sets the shared secret (new g^ir) used as deriving DKM(Child_SA)
 or deriving REKEY.
 If a value is already set, the contents are replaced.
@@ -46,11 +48,15 @@ If a value is already set, the contents are replaced.
 =item "ni" (B<OSSL_KDF_PARAM_IKEV2_NI>) <octet string>
 
 This parameter sets the initiator's nonce (Ni) value for the KDF.
+The nonce is in the range of 8 to 256 bytes as specified in NIST
+ACVP draft (L<https://pages.nist.gov/ACVP/draft-celi-acvp-kdf-ikev2.html>).
 If a value is already set, the contents are replaced.
 
 =item "nr" (B<OSSL_KDF_PARAM_IKEV2_NR>) <octet string>
 
 This parameter sets the responder's nonce (Nr) value for the KDF.
+The nonce is in the range of 8 to 256 bytes as specified in NIST
+ACVP draft (L<https://pages.nist.gov/ACVP/draft-celi-acvp-kdf-ikev2.html>).
 If a value is already set, the contents are replaced.
 
 =item "spii" (B<OSSL_KDF_PARAM_IKEV2_SPII>) <octet string>
@@ -117,128 +123,176 @@ algorithms being used.
 This example derives a 32-byte SEEDKEY using SHA-256 with the appropriate
 shared secret, and nonces:
 
- EVP_KDF *kdf;
- EVP_KDF_CTX *kctx;
- unsigned char secret[32] = "0123456789abcdef...";
- unsigned char ni[16] = "initiator_nonce...";
- unsigned char nr[16] = "responder_nonce...";
- int mode = 0; /* generating SEEDKEY */
- unsigned char out[32];
- size_t outlen = sizeof(out);
- OSSL_PARAM params[6], *p = params;
+    EVP_KDF *kdf = NULL;
+    EVP_KDF_CTX *kctx = NULL;
+    unsigned char secret[32] = "0123456789abcdef0123456789abcdef"; /* g^ir */
+    unsigned char ni[8] = "01234567";
+    unsigned char nr[8] = "89abcdef";
+    int mode = 0; /* generating SEEDKEY */
+    unsigned char out[32];
+    size_t outlen = sizeof(out);
+    OSSL_PARAM params[6], *p = params;
 
- kdf = EVP_KDF_fetch(NULL, "IKEV2KDF", NULL);
- kctx = EVP_KDF_CTX_new(kdf);
- EVP_KDF_free(kdf);
+    kdf = EVP_KDF_fetch(NULL, "IKEV2KDF", NULL);
+    kctx = EVP_KDF_CTX_new(kdf);
+    if (!kctx) {
+        /* Error handling */
+    }
 
- *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                         SN_sha256, strlen(SN_sha256));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
-                                          secret, sizeof(secret));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NI,
-                                          ni, sizeof(ni));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NR,
-                                          nr, sizeof(nr));
- *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
- *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_derive(kctx, out, outlen, params) <= 0)
-     /* Error */
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+        SN_sha256, strlen(SN_sha256));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+        secret, sizeof(secret));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2KDF_NI,
+        ni, sizeof(ni));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2KDF_NR,
+        nr, sizeof(nr));
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+    *p = OSSL_PARAM_construct_end();
+    if (EVP_KDF_derive(kctx, out, outlen, params) <= 0) {
+        /* Error */
+        ;
+    }
 
-=head2 Example of the parameters deriving DKM(Initial SA)
+=head2 Example of generating deriving key material DKM(Initial SA)
 
- unsigned char ni[16] = "initiator_nonce...";
- unsigned char nr[16] = "responder_nonce...";
- unsigned char spii[8] = "init_spi";
- unsigned char spir[8] = "resp_spi";
- unsigned char skeyseed[32] = "derived_sekey_from_previous_step...";
- int mode = 1; /* deriving DKM */
- unsigned char out["user can specify the size"];
- size_t outlen = sizeof(out);
- OSSL_PARAM params[8], *p = params;
+    EVP_KDF *kdf = NULL;
+    EVP_KDF_CTX *kctx = NULL;
+    unsigned char ni[8] = "01234567";
+    unsigned char nr[8] = "89abcdef";
+    unsigned char spii[8] = "01234567";
+    unsigned char spir[8] = "89abcdef";
+    unsigned char skeyseed[32] = "0123456789abcdef0123456789abcdef";
+    int mode = 1; /* deriving DKM */
+    unsigned char out[224];
+    OSSL_PARAM params[8], *p = params;
 
- *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                         SN_sha256, strlen(SN_sha256));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEEDKEY,
-                                          skeyseed, sizeof(skeyseed));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NI,
-                                          ni, sizeof(ni));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NR,
-                                          nr, sizeof(nr));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_SPII,
-                                          spii, sizeof(spii));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_SPIR,
-                                          spir, sizeof(spir));
- *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
- *p = OSSL_PARAM_construct_end();
+    kdf = EVP_KDF_fetch(NULL, "IKEV2KDF", NULL);
+    kctx = EVP_KDF_CTX_new(kdf);
+    if (!kctx) {
+        /* Error handling */
+    }
 
-=head2 Example of the parameters used for deriving DKM(Child_SA)
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+        SN_sha256, strlen(SN_sha256));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
+        skeyseed, sizeof(skeyseed));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2KDF_NI,
+        ni, sizeof(ni));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2KDF_NR,
+        nr, sizeof(nr));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2KDF_SPII,
+        spii, sizeof(spii));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2KDF_SPIR,
+        spir, sizeof(spir));
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+    *p = OSSL_PARAM_construct_end();
+    if (EVP_KDF_derive(kctx, out, sizeof(out), params) <= 0) {
+        /* Error handling */
+        ;
+    }
 
- unsigned char ni[16] = "initiator_nonce...";
- unsigned char nr[16] = "responder_nonce...";
- unsigned char sk_d[32] = "the sk_d from DKM";
- int mode = 1; /* deriving DKM */
- unsigned char out["user can specify the size"];
- size_t outlen = sizeof(out);
- OSSL_PARAM params[6], *p = params;
+=head2 Example of generating DKM(Child_SA)
 
- *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                         SN_sha256, strlen(SN_sha256));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-                                          sk_d, sizeof(sk_d));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NI,
-                                          ni, sizeof(ni));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NR,
-                                          nr, sizeof(nr));
- *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
- *p = OSSL_PARAM_construct_end();
+    EVP_KDF *kdf = NULL;
+    EVP_KDF_CTX *kctx = NULL;
+    unsigned char ni[8] = "01234567";
+    unsigned char nr[8] = "89abcdef";
+    unsigned char sk_d[32] = "0123456789abcdef0123456789abcdef";
+    int mode = 1;
+    unsigned char out[224];
+    OSSL_PARAM params[6], *p = params;
 
-=head2 Example of the parameters used for deriving DKM(Child_DH)
+    kdf = EVP_KDF_fetch(NULL, "IKEV2KDF", NULL);
+    kctx = EVP_KDF_CTX_new(kdf);
+    if (!kctx) {
+        /* Error handling */
+    }
 
- uint8_t ni[16] = "initiator_nonce...";
- uint8_t nr[16] = "responder_nonce...";
- unsigned char sk_d[32] = "the sk_d from DKM";
- int mode = 1; /* deriving DKM */
- unsigned char out["user can specify the size"];
- size_t outlen = sizeof(out);
- OSSL_PARAM params[7], *p = params;
- unsigned char new_secret[32] = "0123456789abcdef...";
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+        SN_sha256, strlen(SN_sha256));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        sk_d, sizeof(sk_d));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2KDF_NI,
+        ni, sizeof(ni));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2KDF_NR,
+        nr, sizeof(nr));
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+    *p = OSSL_PARAM_construct_end();
+    if (EVP_KDF_derive(kctx, out, sizeof(out), params) <= 0) {
+        /* Error handling */
+        ;
+    }
 
- *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                         SN_sha256, strlen(SN_sha256));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-                                          sk_d, sizeof(sk_d));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NI,
-                                          ni, sizeof(ni));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NR,
-                                          nr, sizeof(nr));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_SECRET,
-                                          new_secret, sizeof(new_secret));
- *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
- *p = OSSL_PARAM_construct_end();
+=head2 Example of generating DKM(Child_DH)
 
-=head2 Example of the parameters used for rekeying the IKE SA
+    EVP_KDF *kdf = NULL;
+    EVP_KDF_CTX *kctx = NULL;
+    unsigned char ni[8] = "01234567";
+    unsigned char nr[8] = "89abcdef";
+    unsigned char sk_d[32] = "0123456789abcdef0123456789abcdef";
+    unsigned char new_secret[32] = "0123456789abcdef0123456789abcdef"; /* new g^ir */
+    int mode = 1;
+    unsigned char out[224];
+    OSSL_PARAM params[7], *p = params;
 
- unsigned char ni[16] = "initiator_nonce...";
- unsigned char nr[16] = "responder_nonce...";
- unsigned char sk_d[32] = "the sk_d from DKM";
- int mode = 2; /* REKEY */
- unsigned char out[32];
- size_t outlen = sizeof(out);
- OSSL_PARAM params[7], *p = params;
- unsigned char new_secret[32] = "0123456789abcdef...";
+    kdf = EVP_KDF_fetch(NULL, "IKEV2KDF", NULL);
+    kctx = EVP_KDF_CTX_new(kdf);
+    if (!kctx) {
+        /* error handling */
+    }
 
- *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                         SN_sha256, strlen(SN_sha256));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-                                          sk_d, sizeof(sk_d));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NI,
-                                          ni, sizeof(ni));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NR,
-                                          nr, sizeof(nr));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_SECRET,
-                                          new_secret, sizeof(new_secret));
- *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
- *p = OSSL_PARAM_construct_end();
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+        SN_sha256, strlen(SN_sha256));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        sk_d, sizeof(sk_d));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+        new_secret, sizeof(new_secret));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2KDF_NI,
+        ni, sizeof(ni));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2KDF_NR,
+        nr, sizeof(nr));
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+    *p = OSSL_PARAM_construct_end();
+    if (EVP_KDF_derive(kctx, out, sizeof(out), params) <= 0) {
+        /* Error */
+        ;
+    }
+
+=head2 Example of rekeying the IKE SA
+
+    EVP_KDF *kdf = NULL;
+    EVP_KDF_CTX *kctx = NULL;
+    unsigned char ni[8] = "01234567";
+    unsigned char nr[8] = "89abcdef";
+    unsigned char sk_d[32] = "0123456789abcdef0123456789abcdef";
+    unsigned char new_secret[32] = "0123456789abcdef0123456789abcdef"; /* new g^ir */
+    int mode = 2;
+    unsigned char out[32];
+    OSSL_PARAM params[7], *p = params;
+
+    kdf = EVP_KDF_fetch(NULL, "IKEV2KDF", NULL);
+    kctx = EVP_KDF_CTX_new(kdf);
+    if (!kctx) {
+        /* Error handling */
+    }
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+        SN_sha256, strlen(SN_sha256));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+        sk_d, sizeof(sk_d));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+        new_secret, sizeof(new_secret));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2KDF_NI,
+        ni, sizeof(ni));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2KDF_NR,
+        nr, sizeof(nr));
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+    *p = OSSL_PARAM_construct_end();
+    if (EVP_KDF_derive(kctx, out, sizeof(out), params) <= 0) {
+        /* Error handling */
+        ;
+    }
 
 =head1 CONFORMING TO
 

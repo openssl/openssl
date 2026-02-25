@@ -1088,12 +1088,14 @@ PROV_R_INVALID_MAC:151:invalid mac
 PROV_R_INVALID_MEMORY_SIZE:235:invalid memory size
 PROV_R_INVALID_MGF1_MD:167:invalid mgf1 md
 PROV_R_INVALID_MODE:125:invalid mode
+PROV_R_INVALID_NONCE_LENGTH:264:invalid nonce length
 PROV_R_INVALID_OUTPUT_LENGTH:217:invalid output length
 PROV_R_INVALID_PADDING_MODE:168:invalid padding mode
 PROV_R_INVALID_PARAMETERS_FOR_DKM:261:invalid parameters for dkm
 PROV_R_INVALID_PREHASHED_DIGEST_LENGTH:241:invalid prehashed digest length
 PROV_R_INVALID_PUBINFO:198:invalid pubinfo
 PROV_R_INVALID_SALT_LENGTH:112:invalid salt length
+PROV_R_INVALID_SECRET_LENGTH:265:invalid secret length
 PROV_R_INVALID_SEED_LENGTH:154:invalid seed length
 PROV_R_INVALID_SIGNATURE_SIZE:179:invalid signature size
 PROV_R_INVALID_STATE:212:invalid state
