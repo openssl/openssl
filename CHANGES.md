@@ -411,7 +411,6 @@ OpenSSL 4.0
    `SSL_get_value_uint`/`SSL_set_value_uint` functions. Now also configurable:
    max_udp_payload_size, initial_max_data, initial_max_stream_data_bidi_local,
    initial_max_stream_data_uni, ack_delay_exponent, max_ack_delay.
-   We now also respect the peer's max_udp_payload_size when sending packets.
 
    *Nikolas Gauder*
 

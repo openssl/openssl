@@ -169,7 +169,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     qtx_args.get_qlog_cb = ch_get_qlog_cb;
     qtx_args.get_qlog_cb_arg = ch;
     qtx_args.mdpl = QUIC_MIN_INITIAL_DGRAM_LEN;
-    ch->rx_max_udp_payload_size = QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE;
+    ch->rx_max_udp_payload_size = qtx_args.mdpl;
 
     ch->ping_deadline = ossl_time_infinite();
 
@@ -186,26 +186,6 @@ static int ch_init(QUIC_CHANNEL *ch)
         goto err;
 
     if (!ossl_quic_txfc_init(&ch->conn_txfc, NULL))
-        goto err;
-
-    ch->rx_init_max_data = 0;
-    ch->rx_init_max_stream_data_bidi_local = 0;
-    ch->rx_init_max_stream_data_bidi_remote = 0;
-    ch->rx_init_max_stream_data_uni = 0;
-
-    ch->rx_init_max_streams_bidi = 0;
-    ch->rx_init_max_streams_uni = 0;
-    ch->max_local_streams_bidi = 0;
-    ch->max_local_streams_uni = 0;
-
-    /*
-     * Note: The TP we transmit governs what the peer can transmit and thus
-     * applies to the RXFC.
-     */
-    if (!ossl_quic_rxfc_init(&ch->conn_rxfc, NULL,
-            ch->tx_init_max_data,
-            DEFAULT_CONN_RXFC_MAX_WND_MUL * ch->tx_init_max_data,
-            get_time, ch))
         goto err;
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space)
@@ -357,13 +337,11 @@ static int ch_init(QUIC_CHANNEL *ch)
         goto err;
 
     ch->rx_max_ack_delay = QUIC_DEFAULT_MAX_ACK_DELAY;
-    ch->rx_disable_active_migration = QUIC_DEFAULT_DISABLE_ACTIVE_MIGRATION;
     ch->rx_active_conn_id_limit = QUIC_MIN_ACTIVE_CONN_ID_LIMIT;
     ch->tx_enc_level = QUIC_ENC_LEVEL_INITIAL;
     ch->rx_enc_level = QUIC_ENC_LEVEL_INITIAL;
     ch->txku_threshold_override = UINT64_MAX;
 
-    ch->max_idle_timeout_remote_req = 0;
     ch->max_idle_timeout = ch->max_idle_timeout_local_req;
 
     ossl_ackm_set_tx_max_ack_delay(ch->ackm, ossl_ms2time(ch->tx_max_ack_delay));
@@ -491,6 +469,12 @@ QUIC_CHANNEL *ossl_quic_channel_alloc(const QUIC_CHANNEL_ARGS *args)
     ch->tx_max_ack_delay = args->max_ack_delay;
     ch->tx_disable_active_migration = args->disable_active_migration;
     ch->tx_active_conn_id_limit = args->active_conn_id_limit;
+
+    if (!ossl_quic_rxfc_init(&ch->conn_rxfc, NULL,
+            ch->tx_init_max_data,
+            DEFAULT_CONN_RXFC_MAX_WND_MUL * ch->tx_init_max_data,
+            get_time, ch))
+        return NULL;
 
     return ch;
 }
@@ -1691,8 +1675,6 @@ static int ch_on_transport_params(const unsigned char *params,
             }
 
             ch->rx_max_udp_payload_size = v;
-
-            ossl_qtx_set_mdpl(ch->qtx, (size_t)ch->rx_max_udp_payload_size);
             got_max_udp_payload_size = 1;
             break;
 
