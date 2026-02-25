@@ -119,6 +119,10 @@ OpenSSL 4.0
 
    *Igor Ustinov*
 
+ * CRLs with a malformed Issuing Distribution Point are now rejected.
+
+   *Daniel Kubec*
+
  * Added configure options to disable KDF algorithms for
    hmac-drbg-kdf, kbkdf, krb5kdf, pvkkdf, snmpkdf, sskdf, sshkdf, x942kdf and x963kdf.
 
