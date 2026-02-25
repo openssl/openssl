@@ -55,8 +55,8 @@ B<openssl> B<ca>
 [B<-preserveDN>]
 [B<-noemailDN>]
 [B<-batch>]
+[B<-extfile> I<file>]
 [B<-extensions> I<section>]
-[B<-extfile> I<section>]
 [B<-subj> I<arg>]
 [B<-utf8>]
 [B<-sigopt> I<nm>:I<v>]
@@ -302,9 +302,9 @@ extension section format.
 
 =item B<-extfile> I<file>
 
-An additional configuration file to read certificate extensions from
-(using the default section unless the B<-extensions> option is also
-used).
+An additional configuration I<file> to read certificate extensions from
+(using its unnamed (C<default>) section unless the B<-extensions> option is
+also used).
 
 =item B<-subj> I<arg>
 
@@ -837,6 +837,10 @@ and key identifier extensions are included by default.
 The B<-engine> option was removed in OpenSSL 4.0.
 
 The B<-msie-hack> option was removed in OpenSSL 4.0.
+
+As of OpenSSL 4.0, the B<ca> utility no longer has specialised built-in logic
+to add the SKID or AKID extensions, they are handled through configuration
+files and command-line options just like any other extension.
 
 =head1 SEE ALSO
 

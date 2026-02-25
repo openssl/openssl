@@ -80,7 +80,7 @@ SKIP: {
 }
 
 my $v3_cert = "v3-test.crt";
-ok(run(app(["openssl", "ca", "-batch", "-config", $cnf, "-extensions", "empty",
+ok(run(app(["openssl", "ca", "-batch", "-config", $cnf, "-extensions", "minimal",
             "-in", src_file("x509-check.csr"), "-out", $v3_cert])));
 # although no explicit extensions given:
 has_version($v3_cert, 3);

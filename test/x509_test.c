@@ -10,6 +10,7 @@
 #define OPENSSL_SUPPRESS_DEPRECATED /* EVP_PKEY_get1/set1_RSA */
 
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
@@ -284,6 +285,122 @@ err:
     return ret;
 }
 
+static int test_drop_empty_cert_keyids(void)
+{
+    static const unsigned char commonName[] = "test";
+    X509 *x = NULL;
+    X509_NAME *subject = NULL;
+    X509_NAME_ENTRY *name_entry = NULL;
+    X509_EXTENSION *ext = NULL;
+    X509V3_CTX ctx;
+    int ret = 0;
+
+    if (!TEST_ptr(x = X509_new())
+        || !TEST_int_eq(X509_set_version(x, X509_VERSION_3), 1)
+        || !TEST_int_eq(ASN1_INTEGER_set(X509_get_serialNumber(x), 1), 1)
+        || !TEST_ptr(subject = X509_NAME_new()))
+        goto err;
+
+    name_entry = X509_NAME_ENTRY_create_by_NID(NULL, NID_commonName,
+        MBSTRING_ASC, commonName, -1);
+    if (!TEST_ptr(name_entry)
+        || !TEST_int_eq(X509_NAME_add_entry(subject, name_entry, -1, 0), 1)
+        || !TEST_int_eq(X509_set_subject_name(x, subject), 1)
+        || !TEST_int_eq(X509_set_issuer_name(x, subject), 1)
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(x), 0))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(x), 24 * 3600))
+        || !TEST_int_eq(X509_set_pubkey(x, pubkey), 1))
+        goto err;
+
+    X509V3_set_ctx(&ctx, x, x, NULL, NULL, 0);
+    if (!TEST_ptr(ext = X509V3_EXT_conf(NULL, &ctx, "subjectKeyIdentifier",
+                      "none"))
+        || !TEST_int_eq(X509_add_ext(x, ext, -1), 1)
+        || !TEST_ptr_null(X509_get0_extensions(x)))
+        goto err;
+
+    X509_EXTENSION_free(ext);
+    if (!TEST_ptr(ext = X509V3_EXT_conf(NULL, &ctx, "authorityKeyIdentifier",
+                      "none"))
+        || !TEST_int_eq(X509_add_ext(x, ext, -1), 1)
+        || !TEST_ptr_null(X509_get0_extensions(x))
+        || !TEST_int_gt(X509_sign(x, privkey, signmd), 0))
+        goto err;
+
+    ret = 1;
+err:
+    X509_NAME_ENTRY_free(name_entry);
+    X509_NAME_free(subject);
+    X509_EXTENSION_free(ext);
+    X509_free(x);
+    return ret;
+}
+
+static int test_drop_empty_csr_keyids(void)
+{
+    static const unsigned char commonName[] = "test";
+    X509_REQ *x = NULL;
+    X509_NAME *subject = NULL;
+    X509_NAME_ENTRY *name_entry = NULL;
+    X509_EXTENSION *ext = NULL;
+    STACK_OF(X509_EXTENSION) *exts = NULL;
+    X509V3_CTX ctx;
+    int ret = 0;
+
+    if (!TEST_ptr(x = X509_REQ_new())
+        || !TEST_int_eq(X509_REQ_set_version(x, X509_REQ_VERSION_1), 1)
+        || !TEST_ptr(subject = X509_NAME_new()))
+        goto err;
+
+    name_entry = X509_NAME_ENTRY_create_by_NID(NULL, NID_commonName,
+        MBSTRING_ASC, commonName, -1);
+    if (!TEST_ptr(name_entry)
+        || !TEST_int_eq(X509_NAME_add_entry(subject, name_entry, -1, 0), 1)
+        || !TEST_int_eq(X509_REQ_set_subject_name(x, subject), 1)
+        || !TEST_int_eq(X509_REQ_set_pubkey(x, pubkey), 1))
+        goto err;
+
+    X509V3_set_ctx(&ctx, NULL, NULL, x, NULL, 0);
+    if (!TEST_ptr(ext = X509V3_EXT_conf(NULL, &ctx, "subjectKeyIdentifier",
+                      "none"))
+        || !TEST_ptr(X509v3_add_ext(&exts, ext, -1))
+        || !TEST_int_eq(sk_X509_EXTENSION_num(exts), 0))
+        goto err;
+    X509_EXTENSION_free(ext);
+
+    if (!TEST_ptr(ext = X509V3_EXT_conf(NULL, &ctx, "authorityKeyIdentifier",
+                      "none"))
+        || !TEST_ptr(X509v3_add_ext(&exts, ext, -1)))
+        goto err;
+
+    if (!TEST_int_eq(X509_REQ_add_extensions(x, exts), 1)
+        || !TEST_int_eq(sk_X509_EXTENSION_num(exts), 0))
+        goto err;
+    sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+
+    if (!TEST_ptr(exts = X509_REQ_get_extensions(x))
+        || !TEST_int_eq(sk_X509_EXTENSION_num(exts), 0))
+        goto err;
+    sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+    exts = NULL;
+
+    if (!TEST_int_gt(X509_REQ_sign(x, privkey, signmd), 0))
+        goto err;
+
+    if (!TEST_ptr(exts = X509_REQ_get_extensions(x))
+        || !TEST_int_eq(sk_X509_EXTENSION_num(exts), 0))
+        goto err;
+
+    ret = 1;
+err:
+    X509_NAME_ENTRY_free(name_entry);
+    X509_NAME_free(subject);
+    X509_EXTENSION_free(ext);
+    sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+    X509_REQ_free(x);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("<pss-self-signed-cert.pem>\n")
 
 int setup_tests(void)
@@ -321,6 +438,8 @@ int setup_tests(void)
     ADD_TEST(test_x509_delete_last_extension);
     ADD_TEST(test_x509_crl_delete_last_extension);
     ADD_TEST(test_x509_revoked_delete_last_extension);
+    ADD_TEST(test_drop_empty_cert_keyids);
+    ADD_TEST(test_drop_empty_csr_keyids);
     return 1;
 }
 

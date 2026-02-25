@@ -175,7 +175,7 @@ Examples:
 
 =head2 Subject Key Identifier
 
-The SKID extension specification has a value with three choices.
+The Subject Key Identifier (SKID) extension takes three possible forms:
 
 =over 4
 
@@ -191,12 +191,13 @@ STRING subjectPublicKey (excluding the tag, length, and number of unused bits).
 
 =item A hex string (possibly with C<:> separating bytes)
 
-The provided value is output directly.
+The specified value is used directly.
 This choice is strongly discouraged.
 
 =back
 
-By default the B<x509>, B<req>, and B<ca> apps behave as if B<hash> was given.
+See L<openssl-x509(1)>, L<openssl-req(1)>, and L<openssl-ca(1)> documentation
+for further details relevant to each of the command-line utilities.
 
 Example:
 
@@ -204,34 +205,57 @@ Example:
 
 =head2 Authority Key Identifier
 
-The AKID extension specification may have the value B<none>
-indicating that no AKID shall be included.
-Otherwise it may have the value B<keyid> or B<issuer>
-or both of them, separated by C<,>.
-Either or both can have the option B<always>,
-indicated by putting a colon C<:> between the value and this option.
-For self-signed certificates the AKID is suppressed unless B<always> is present.
+The Authority Key Identifier (SKID) extension takes two different forms.
 
-By default the B<x509>, B<req>, and B<ca> apps behave as if B<none> was given
-for self-signed certificates and B<keyid>C<,> B<issuer> otherwise.
+The value B<none> indicates that no AKID shall be included.
 
-If B<keyid> is present, an attempt is made to
-copy the subject key identifier (SKID) from the issuer certificate except if
-the issuer certificate is the same as the current one and it is not self-signed.
-The hash of the public key related to the signing key is taken as fallback
-if the issuer certificate is the same as the current certificate.
-If B<always> is present but no value can be obtained, an error is returned.
+Otherwise, the value syntax is that of a comma-separated list of either or both
+of the B<keyid> or B<issuer> keywords.
 
-If B<issuer> is present, and in addition it has the option B<always> specified
-or B<keyid> is not present,
-then the issuer DN and serial number are copied from the issuer certificate.
-If this fails, an error is returned.
+The B<keyid> keyword asks that the AKID include the issuer's subject key
+identifier.
+
+The B<issuer> keyword asks that the AKID include the serial number and issuer
+distinguished name (grandparent name of subject certificate) of the issuer
+certificate.
+By default these are added only as a fallback when no SKID is available in the
+issuer certificate.
+
+Either or both keywords can be suffixed with an optional qualifier, which can
+be either C<always> or C<nonss>.
+If the qualifier is present, it is separated from the keyword by a colon
+(C<:>).
+
+The C<always> qualifier makes that AKID element mandatory, an error is raised
+if that element cannot be included.
+The B<issuer> certificate's issuer name and serial number are no longer a
+fallback when the B<always> qualifier is used.
+The C<nonss> qualifier makes that AKID element further conditional on the
+certificate not being self-signed.
+
+When creating a self-signed certificate, be sure to specify a SKID extension if
+you want to have a mandatory (C<always> qualified) B<keyid> in the AKID
+extension.
+
+If an empty AKID would otherwise be generated, the extension is instead skipped
+entirely, just as with C<none>.
+
+See L<openssl-x509(1)>, L<openssl-req(1)>, and L<openssl-ca(1)> for further
+details relevant to that specific command-line utility.
 
 Examples:
 
+ # Keyid preferred, otherwise issuer name & serial
  authorityKeyIdentifier = keyid, issuer
 
+ # As above, but skip the extension entirely if self-signed
+ authorityKeyIdentifier = keyid:nonss, issuer:nonss
+
+ # Keyid when possible, issuer name & serial always
  authorityKeyIdentifier = keyid, issuer:always
+
+ # Keyid when possible, issuer as fallback when not self-signed
+ authorityKeyIdentifier = keyid, issuer:nonss
 
 =head2 Subject Alternative Name
 
@@ -605,6 +629,15 @@ invalid extensions if they are not used carefully.
 
 L<openssl-req(1)>, L<openssl-ca(1)>, L<openssl-x509(1)>,
 L<ASN1_generate_nconf(3)>
+
+=head1 HISTORY
+
+OpenSSL 4.0 updated the syntax of the B<subjectKeyIdentifier> (SKID) and
+B<authorityKeyIdentifier> (AKID) extensions, described above, to introduce the
+C<nonss> qualifier for the B<keyid> and B<issuer> keywords.
+The command-line utilities no longer have specialised built-in logic to add
+these extensions, they are handled through configuration files and command-line
+options just like any other extension.
 
 =head1 COPYRIGHT
 
