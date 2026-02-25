@@ -152,9 +152,9 @@ static inline long tsan_add_fallback32(int32_t *ptr, int32_t n)
     return old;
 }
 
-#define tsan_add(ptr, n) \
-    (sizeof(*(ptr)) == 8 ? tsan_add_fallback64((int64_t *)(ptr), (n)) \
-        : tsan_add_fallback32((int32_t *)(ptr), (n)))
+#define tsan_add(ptr, n)                                                \
+    (sizeof(*(ptr)) == 8 ? tsan_add_fallback64((int64_t *)(ptr), (n))   \
+                         : tsan_add_fallback32((int32_t *)(ptr), (n)))
 /*
  * Lack of tsan_ld_acq and tsan_ld_rel means that compiler support is not
  * sophisticated enough to support them. Code that relies on them should be
