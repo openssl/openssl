@@ -5736,6 +5736,7 @@ err:
             idx, errmsg, info->name);
         testresult = 0;
     }
+    EVP_CIPHER_CTX_free(ctx_onestep);
     EVP_CIPHER_CTX_free(ctx_reinit);
 
     return testresult;
