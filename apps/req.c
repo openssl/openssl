@@ -552,15 +552,18 @@ int req_main(int argc, char **argv)
         goto end;
     }
 
-    if ((req_conf = app_load_config_verbose(template, verbose)) == NULL)
-        goto end;
-    if (addext_bio != NULL) {
-        if (verbose)
-            BIO_puts(bio_err,
-                "Using additional configuration from -addext options\n");
-        if ((addext_conf = app_load_config_bio(addext_bio, NULL)) == NULL)
+    if (outfile != NULL) {
+        if ((req_conf = app_load_config_verbose(template, verbose)) == NULL)
             goto end;
+        if (addext_bio != NULL) {
+            if (verbose)
+                BIO_puts(bio_err,
+                    "Using additional configuration from -addext options\n");
+            if ((addext_conf = app_load_config_bio(addext_bio, NULL)) == NULL)
+                goto end;
+        }
     }
+
     if (template != default_config_file && !app_load_modules(req_conf))
         goto end;
 
