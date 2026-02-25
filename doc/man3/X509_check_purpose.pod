@@ -62,6 +62,8 @@ Below are the potential ID's that can be checked:
 The checks performed take into account the X.509 extensions
 keyUsage, extendedKeyUsage, and basicConstraints.
 
+No actual check is performed if I<id> is -1.
+
 X509_PURPOSE_get_count() returns the number of currently defined purposes.
 
 X509_PURPOSE_get_unused_id() returns the smallest purpose id not yet used,
@@ -98,6 +100,12 @@ X509_PURPOSE_get_trust() returns the trust id of the given B<X509_PURPOSE>.
 X509_PURPOSE_set() assigns the given I<purpose> id to the location pointed at by
 I<p>.
 This resets to the any purpose if I<purpose> is B<X509_PURPOSE_DEFAULT_ANY>.
+
+=head1 NOTES
+
+X509_check_purpose() uses the internal B<ossl_x509v3_cache_extensions()>
+function to fill in various internal fields of the certificate structure I<x>.
+This is why its I<x> argument cannot be of type I<const X509 *>.
 
 =head1 RETURN VALUES
 

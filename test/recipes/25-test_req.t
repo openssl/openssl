@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 116;
+plan tests => 129;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -554,14 +554,23 @@ sub has_keyUsage {
     my $expect = shift @_;
     cert_contains($cert, "Key Usage", $expect);
 }
-sub strict_verify {
+sub verify {
+    my $strict = shift @_;
     my $cert = shift @_;
     my $expect = shift @_;
     my $trusted = shift @_;
     $trusted = $cert unless $trusted;
-    ok(run(app(["openssl", "verify", "-x509_strict", "-trusted", $trusted,
+    my @cmd = ("openssl", "verify");
+    push(@cmd, "-x509_strict") if $strict;
+    ok(run(app([@cmd, "-trusted", $trusted,
                 "-partial_chain", $cert])) == $expect,
-       "strict verify allow $cert");
+       ($strict ? "strict " : "")." verify ".
+       ($expect ? "accept" : "reject")." $cert");
+}
+
+sub strict_verify {
+    unshift @_, 1;
+    return verify(@_);
 }
 
 my @v3_ca = ("-addext", "basicConstraints = critical,CA:true",
@@ -578,6 +587,7 @@ has_AKID($cert, 0);
 
 my $cert = "self-signed_v3_CA_hash_SKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "subjectKeyIdentifier = hash");
+has_version($cert, 3);
 has_SKID($cert, 1); # explicit hash SKID
 
 $cert = "self-signed_v3_CA_no_SKID.pem";
@@ -600,6 +610,7 @@ cert_ext_has_n_different_lines($cert, 0, $SKID_AKID); # no SKID and no AKID
 
 $ca_cert = "self-signed_v3_CA_default_SKID.pem"; # will also be used below
 generate_cert($ca_cert, @v3_ca);
+has_version($ca_cert, 3);
 has_SKID($ca_cert, 1); # default SKID
 has_AKID($ca_cert, 0); # no default AKID
 strict_verify($ca_cert, 1);
@@ -673,6 +684,15 @@ has_SKID($cert, 1); # SKID added, though no explicit extensions given
 has_AKID($cert, 0);
 strict_verify($cert, 1);
 
+$cert = "self-issued_v3_CA_no_KIDs.pem";
+generate_cert($cert, "-addext", "subjectKeyIdentifier = none",
+              "-addext", "authorityKeyIdentifier = none",
+              "-in", srctop_file(@certs, "x509-check.csr"));
+has_version($cert, 3);
+has_SKID($cert, 0);
+has_AKID($cert, 0);
+strict_verify($cert, 1);
+
 $cert = "self-issued_v3_CA_explicit_AKID.pem";
 generate_cert($cert, "-addext", "authorityKeyIdentifier = keyid",
     "-in", srctop_file(@certs, "x509-check.csr"));
@@ -709,7 +729,7 @@ generate_cert($cert, "-addext", "authorityKeyIdentifier = keyid:always, issuer:a
     "-in", srctop_file(@certs, "x509-check.csr"));
 cert_ext_has_n_different_lines($cert, 6, $SKID_AKID); # SKID != AKID, both forced
 
-# AKID of not self-issued certs
+# AKID of not self-issued end-entity certs
 
 $cert = "regular_v3_EE_default_KIDs_no_other_exts.pem";
 generate_cert($cert, "-key", srctop_file(@certs, "ee-key.pem"));
@@ -734,6 +754,21 @@ generate_cert($cert, "-addext", "authorityKeyIdentifier = none",
 has_SKID($cert, 1);
 has_AKID($cert, 0);
 strict_verify($cert, 0, $ca_cert);
+
+# weird self-issued end-entity cert without SKID/AKID signed by CA, as in #19095
+$cert = "self-issued_v3_EE_no_KIDs_signed_by_CA.pem";
+generate_cert($cert, "-addext", "subjectKeyIdentifier = none",
+              "-addext", "authorityKeyIdentifier = none",
+              "-key", srctop_file(@certs, "ee-key.pem"));
+has_version($cert, 3);
+cert_ext_has_n_different_lines($cert, 0, $SKID_AKID); # no SKID and no AKID
+verify(0, $cert, 0, $ca_cert); # expecting failure because we won't fix #19095
+
+# variant self-issued end-entity cert with only AKID signed by CA, which conforms to RFC 5280
+$cert = "self-issued_v3_EE_only_AKID_signed_by_CA.pem";
+generate_cert($cert, "-addext", "subjectKeyIdentifier = none",
+              "-key", srctop_file(@certs, "ee-key.pem"));
+verify(0, $cert, 0, $ca_cert); # expecting failure because we won't fix #19095
 
 
 # Key Usage
