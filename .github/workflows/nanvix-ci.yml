@@ -224,7 +224,7 @@ jobs:
       - name: Trigger Dependent Workflows
         if: success()
         env:
-          GH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           RELEASE_TAG="${GITHUB_SHA::7}-nanvix-${NANVIX_SHA}"
           echo "Triggering cpython workflow..."
