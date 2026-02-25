@@ -99,7 +99,7 @@ input.
 
 Note that the first parameter that does not begin with a B<-> ends the list
 of options and starts the list of certificates. If you place any options
-after a certificate file name, they will be interpreted not as options
+after a certificate filename, they will be interpreted not as options
 but as certificates.
 
 =head1 DIAGNOSTICS
