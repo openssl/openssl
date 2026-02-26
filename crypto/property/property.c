@@ -1094,22 +1094,22 @@ static int ossl_frozen_ht_bucket_insert(HT **buckets, const char *alg_name, HT_V
     int ret = 0;
 
     /* Pick the right bucket based on key length (I can haz bukkit!) */
-    if (alg_len <= 8) {
+    if (alg_len < 8) {
         FROZEN_CACHE_8_KEY key;
         HT_INIT_KEY(&key);
         HT_SET_KEY_STRING_CASE(&key, name, alg_name);
         ret = ossl_ht_insert(buckets[0], TO_HT_KEY(&key), val, NULL);
-    } else if (alg_len <= 16) {
+    } else if (alg_len < 16) {
         FROZEN_CACHE_16_KEY key;
         HT_INIT_KEY(&key);
         HT_SET_KEY_STRING_CASE(&key, name, alg_name);
         ret = ossl_ht_insert(buckets[1], TO_HT_KEY(&key), val, NULL);
-    } else if (alg_len <= 32) {
+    } else if (alg_len < 32) {
         FROZEN_CACHE_32_KEY key;
         HT_INIT_KEY(&key);
         HT_SET_KEY_STRING_CASE(&key, name, alg_name);
         ret = ossl_ht_insert(buckets[2], TO_HT_KEY(&key), val, NULL);
-    } else if (alg_len <= 64) {
+    } else if (alg_len < 64) {
         FROZEN_CACHE_64_KEY key;
         HT_INIT_KEY(&key);
         HT_SET_KEY_STRING_CASE(&key, name, alg_name);
