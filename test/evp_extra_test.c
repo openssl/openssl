@@ -5002,9 +5002,9 @@ err:
 
 /*
  * Dynamically discover all applicable ciphers and verifies multi-step
- * init correctly. This test should require zero manteinance when new
+ * init correctly. This test should require zero maintenance when new
  * ciphers are added as the discovery loop handles it.
- * This test focuses stale key-regresion.
+ * This test focuses stale key-regression.
  */
 
 /* maximum AEAD tag buffer size, exceeds AES-CBC-HMAC-SHA512 */
@@ -5027,7 +5027,6 @@ static int cipher_list_n = 0;
 
 static int seen_name(const char *name)
 {
-
     if (name == NULL) {
         return 1;
     }
@@ -5069,7 +5068,8 @@ static void collect_cipher_cb(EVP_CIPHER *ciph, void *arg)
     info->ivlen = EVP_CIPHER_get_iv_length(ciph);
     info->mode = EVP_CIPHER_get_mode(ciph);
     info->taglen = (EVP_CIPHER_get_flags(ciph) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0
-                   ? EVPTEST_TAG_LEN_DEFAULT : 0;
+        ? EVPTEST_TAG_LEN_DEFAULT
+        : 0;
 
     cipher_list_n++;
 }
@@ -5136,22 +5136,23 @@ static int test_evp_diff_order_init(int idx)
     char *errmsg = NULL;
     int testresult = 1;
 
-    blocksz = EVP_CIPHER_get_block_size(info->ciph);
-    pt_size = (blocksz > 1) ? (size_t)blocksz * 2 : 31;
-
-    if (!TEST_ptr(ctx_keyiv = EVP_CIPHER_CTX_new())) {
-        errmsg = "CTX_ALLOC";
-        goto err;
-    }
-
+    /* Placed it before CTX initialization to avoid having to free it */
     if (info->mode == EVP_CIPH_SIV_MODE) {
         TEST_info("Skipping %s (SIV MODE)", info->name);
         return 1;
     }
 
+    blocksz = EVP_CIPHER_get_block_size(info->ciph);
+    pt_size = (blocksz > 1) ? (size_t)blocksz * 2 : 31;
+
+    if (!TEST_ptr(ctx_keyiv = EVP_CIPHER_CTX_new())) {
+        errmsg = "CTX_KEYIV_ALLOC";
+        goto err;
+    }
+
     if (!TEST_true(EVP_EncryptInit_ex(ctx_keyiv, info->ciph,
             NULL, NULL, NULL))) {
-        errmsg = "KEYIV_init";
+        errmsg = "KEYIV_INIT";
         goto err;
     }
 
@@ -5206,7 +5207,6 @@ static int test_evp_diff_order_init(int idx)
 
     if (!TEST_true(EVP_EncryptUpdate(ctx_keyiv, ct_keyiv, &ct_keyiv_len,
             pt, (int)pt_size))) {
-
         errmsg = "ENCRYPT_UPDATE";
         goto err;
     }
@@ -5248,13 +5248,13 @@ static int test_evp_diff_order_init(int idx)
 
     /* INIT IV then KEY ctx_ivkey */
     if (!TEST_ptr(ctx_ivkey = EVP_CIPHER_CTX_new())) {
-        errmsg = "CTX_ALLOC";
+        errmsg = "CTX_IVKEY_ALLOC";
         goto err;
     }
 
     if (!TEST_true(EVP_EncryptInit_ex(ctx_ivkey, info->ciph,
             NULL, NULL, NULL))) {
-        errmsg = "IVKEY_init";
+        errmsg = "IVKEY_INIT";
         goto err;
     }
 
@@ -5274,12 +5274,12 @@ static int test_evp_diff_order_init(int idx)
     }
     /* Initialize first with IV */
     if (!TEST_true(EVP_EncryptInit_ex(ctx_ivkey, NULL, NULL, NULL, iv))) {
-        errmsg = "INIT_KEY_ONLY";
+        errmsg = "INIT_IV_ONLY";
         goto err;
     }
 
     if (!TEST_true(EVP_EncryptInit_ex(ctx_ivkey, NULL, NULL, key, NULL))) {
-        errmsg = "INIT_IV_ONLY";
+        errmsg = "INIT_KEY_ONLY";
         goto err;
     }
 
@@ -5332,13 +5332,13 @@ static int test_evp_diff_order_init(int idx)
     }
     /* single step initialization */
     if (!TEST_ptr(ctx_onestep = EVP_CIPHER_CTX_new())) {
-        errmsg = "CTX_ALLOC";
+        errmsg = "CTX_ONESTEP_ALLOC";
         goto err;
     }
 
     if (!TEST_true(EVP_EncryptInit_ex(ctx_onestep, info->ciph,
             NULL, NULL, NULL))) {
-        errmsg = "ONESTEP_init";
+        errmsg = "ONESTEP_INIT";
         goto err;
     }
     if (info->taglen > 0) {
@@ -5398,7 +5398,7 @@ static int test_evp_diff_order_init(int idx)
         } else if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep,
                     EVP_CTRL_CCM_GET_TAG, taglen, tag_onestep))) {
-                errmsg = "GCM_TAG";
+                errmsg = "CCM_TAG";
                 goto err;
             }
         } else {
@@ -5411,14 +5411,14 @@ static int test_evp_diff_order_init(int idx)
     }
 
     /* Compare single-call vs key->iv */
-    if (!TEST_size_t_eq(ct_onestep_len, ct_keyiv_len)
+    if (!TEST_int_eq(ct_onestep_len, ct_keyiv_len)
         || !TEST_mem_eq(ct_onestep, ct_onestep_len, ct_keyiv, ct_keyiv_len)) {
         errmsg = "CT_MISMATCH_SINGLE_vs_KEYIV";
         goto err;
     }
 
     /* Compare single-call vs iv->key */
-    if (!TEST_size_t_eq(ct_onestep_len, ct_ivkey_len)
+    if (!TEST_int_eq(ct_onestep_len, ct_ivkey_len)
         || !TEST_mem_eq(ct_onestep, ct_onestep_len, ct_ivkey, ct_ivkey_len)) {
         errmsg = "CT_MISMATCH_SINGLE_vs_IVKEY";
         goto err;
@@ -5489,6 +5489,11 @@ static int test_evp_stale_key_reinit(int idx)
     char *errmsg = NULL;
     int testresult = 1;
 
+    if (info->mode == EVP_CIPH_SIV_MODE) {
+        TEST_info("Skipping %s (SIV MODE)", info->name);
+        return 1;
+    }
+
     blocksz = EVP_CIPHER_get_block_size(info->ciph);
     pt_size = (blocksz > 1) ? (size_t)blocksz * 2 : 31;
 
@@ -5506,20 +5511,16 @@ static int test_evp_stale_key_reinit(int idx)
         pt[i] = (unsigned char)(0xA7);
 
     if (!TEST_ptr(ctx_reinit = EVP_CIPHER_CTX_new())) {
-        errmsg = "CTX_ALLOC";
+        errmsg = "CTX_REINIT_ALLOC";
         goto err;
-    }
-
-    if (info->mode == EVP_CIPH_SIV_MODE) {
-        TEST_info("Skipping %s (SIV MODE)", info->name);
-        return 1;
     }
 
     if (!TEST_true(EVP_EncryptInit_ex(ctx_reinit, info->ciph,
             NULL, NULL, NULL))) {
-        errmsg = "ONESTEP_first_init";
+        errmsg = "CTX_FIRST_INIT";
         goto err;
     }
+
     if (info->taglen > 0) {
         if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_reinit,
@@ -5537,7 +5538,7 @@ static int test_evp_stale_key_reinit(int idx)
 
     /* Initialize first with key */
     if (!TEST_true(EVP_EncryptInit_ex(ctx_reinit, NULL, NULL, key, iv))) {
-        errmsg = "INIT_KEY_ONLY";
+        errmsg = "FIRST_KEY_INIT";
         goto err;
     }
 
@@ -5558,7 +5559,6 @@ static int test_evp_stale_key_reinit(int idx)
 
     if (!TEST_true(EVP_EncryptUpdate(ctx_reinit, ct, &ct_len,
             pt, (int)pt_size))) {
-
         errmsg = "ENCRYPT_UPDATE";
         goto err;
     }
@@ -5621,7 +5621,6 @@ static int test_evp_stale_key_reinit(int idx)
 
     if (!TEST_true(EVP_EncryptUpdate(ctx_reinit, ct_reinit, &ct_reinit_len,
             pt, (int)pt_size))) {
-
         errmsg = "ENCRYPT_UPDATE";
         goto err;
     }
@@ -5657,13 +5656,13 @@ static int test_evp_stale_key_reinit(int idx)
 
     /* Initialize in a single step */
     if (!TEST_ptr(ctx_onestep = EVP_CIPHER_CTX_new())) {
-        errmsg = "CTX_ALLOC";
+        errmsg = "CTX_ALLOC_BASE_CASE";
         goto err;
     }
 
     if (!TEST_true(EVP_EncryptInit_ex(ctx_onestep, info->ciph,
             NULL, NULL, NULL))) {
-        errmsg = "REINIT_IV";
+        errmsg = "BASE_CASE_INIT";
         goto err;
     }
 
@@ -5683,7 +5682,7 @@ static int test_evp_stale_key_reinit(int idx)
     }
 
     if (!TEST_true(EVP_EncryptInit_ex(ctx_onestep, NULL, NULL, key2, iv2))) {
-        errmsg = "SINGLE_STEP_IV";
+        errmsg = "SINGLE_STEP_INIT";
         goto err;
     }
 
@@ -5723,7 +5722,7 @@ static int test_evp_stale_key_reinit(int idx)
         } else if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep,
                     EVP_CTRL_CCM_GET_TAG, taglen, tag_onestep))) {
-                errmsg = "GCM_TAG";
+                errmsg = "CCM_TAG";
                 goto err;
             }
         } else {
@@ -5736,15 +5735,15 @@ static int test_evp_stale_key_reinit(int idx)
     }
 
     /* Compare single-call vs key->iv */
-    if (!TEST_size_t_eq(ct_reinit_len, ct_onestep_len)
+    if (!TEST_int_eq(ct_reinit_len, ct_onestep_len)
         || !TEST_mem_eq(ct_reinit, ct_reinit_len, ct_onestep, ct_onestep_len)) {
-        errmsg = "CT_MISMATCH_SINGLE_vs_KEYIV";
+        errmsg = "CT_MISMATCH_SINGLE_vs_REINIT";
         goto err;
     }
 
     if (info->taglen > 0) {
         if (!TEST_mem_eq(tag_onestep, taglen, tag_reinit, taglen)) {
-            errmsg = "TAG_MISMATCH_SINGLE_vs_KEYIV";
+            errmsg = "TAG_MISMATCH_SINGLE_vs_REINIT";
             goto err;
         }
     }
@@ -5970,7 +5969,7 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
     rt_len += rt_fin_len;
 
     /* Compare recovered plaintext */
-    if (!TEST_size_t_eq((size_t)rt_len, pt_size)
+    if (!TEST_int_eq((size_t)rt_len, pt_size)
         || !TEST_mem_eq(rt, (size_t)rt_len, pt, pt_size)) {
         errmsg = "PLAINTEXT_MISMATCH";
         goto err;
@@ -6799,8 +6798,7 @@ end:
 
 #ifndef OPENSSL_NO_EC
 /*
- * Tlslslslsls
-st that EVP_PKEY_sign_init_ex2() with a mismatched key/signature algorithm
+ * Test that EVP_PKEY_sign_init_ex2() with a mismatched key/signature algorithm
  * (e.g. RSA key with ECDSA signature) correctly fails.
  */
 static int test_EVP_PKEY_sign_init_mismatched_key_alg(void)
