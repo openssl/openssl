@@ -238,6 +238,8 @@ L<openssl-core_dispatch.h(7)>, L<provider(7)>
 
 This functionality was added in OpenSSL 3.0.
 
+Support for B<ML-DSA> and B<ML-KEM> was added in OpenSSL 3.5.
+
 Support for B<LMS> Public Key (SubjectPublicKeyInfo) encoders and decoders
 was added in OpenSSL 4.0.
 
