@@ -8,9 +8,10 @@ regular X.509 verification it is not granular enough.
 This document describes possible configuration mechanism providing a better
 granularity and level of system control.
 
-We propose new section, [crypto_algorithm_limits] with the following parameters:
+We propose new sections, [OPNAME_algorithm_limits] to specify the parameters
+for particular algorithms. OPNAME as of now can be `sign` or `verify`.
 
-**PermittedAlgorithms** enumerates the algorithms that are only permitted in the
+This sections contain the algorithms that are only permitted in the
 chain.  If present, the certificates having a different algorithm should be
 considered invalid in the context of chain building.  If absent, any algorithm
 is permitted.
@@ -22,14 +23,25 @@ present, the alg-specific limitations are applied.
 Example configuration
 ---------------------
 
-[crypto_algorithm_limits]
-PermittedAlgorithm = RSA,EC,ML-DSA-65,SOME-UNKNOWN-ALGORITHM
+[sign_algorithm_limits]
+RSA = @RSA_limits
+EC = @EC_limits
+MLDSA65 = @MLDSA65_limits
+UNKNOWN = @UNKNOWN_limits
 
-[crypto_algorithm_limits_RSA]
+[RSA_limits]
 MinBits=2048
 
-[crypto_algorithm_limits_EC]
+[EC_limits]
 Curves=P-521
+
+[MLDSA65_limits]
+# Override the name given in @crypto_algorithm_limits
+id = ML-DSA-65
+
+[UNKNOWN_limits]
+# Override the name given in @crypto_algorithm_limits
+id = SOME-UNKNOWN-ALGORITHM
 
 Limitations of the proposed design
 ----------------------------------
@@ -40,7 +52,7 @@ providers in case when the algorithms are parameterized.
 
 In theory syntax like
 
-[crypto_algorithm_limits_SOME-UNKNOWN-ALGORITHM]
+[UNKNOWN_limits]
 ParamName1=PARAM1
 ParamLimit1=LIMIT1
 ParamLimitType=MinValue|enum-values
