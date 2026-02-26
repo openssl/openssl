@@ -39,47 +39,47 @@ versions of OpenSSL. See L<ossl-removed-api(7)>.
 
 =head2 Upgrading from OpenSSL 3.x
 
-=head3 The ASN1_STRING type is now opaque
+=head3 The B<ASN1_STRING> type is now opaque
 
-ASN1_STRING is the basis for many types in OpenSSL. Since OpenSSL 1.1.1
-accessor functions have been available to access and create ASN1_STRING
+B<ASN1_STRING> is the basis for many types in OpenSSL. Since OpenSSL 1.1.1
+accessor functions have been available to access and create B<ASN1_STRING>
 values of various types. See ASN1_STRING_type_new(3),
 ASN1_STRING_get0_data(3), ASN1_STRING_set(3) and ASN1_STRING_length(3).
 
-If your code uses direct access to ASN1_STRING structure members you will
-need to convert it to allocate the correct type ASN1_STRING, and use accessors.
+If your code uses direct access to B<ASN1_STRING> structure members you will
+need to convert it to allocate the correct type B<ASN1_STRING>, and use accessors.
 
-If your code has in the past used an ASN1_STRING as a stack allocated
+If your code has in the past used an B<ASN1_STRING> as a stack allocated
 object, you will need to allocate it from the heap with
 ASN1_STRING_new(3) or ASN1_STRING_type_new(3).
 
-The flags member of ASN1_STRING has become inaccessible, and the definitions
+The flags member of B<ASN1_STRING> has become inaccessible, and the definitions
 of the flags are no longer public. This includes the public definition
 of the flags:
 
-ASN1_STRING_FLAG_NDEF
-ASN1_STRING_FLAG_CONT
-ASN1_STRING_FLAG_MSTRING
-ASN1_STRING_FLAG_EMBED
-ASN1_STRING_FLAG_BITS_LEFT
+B<ASN1_STRING_FLAG_NDEF>
+B<ASN1_STRING_FLAG_CONT>
+B<ASN1_STRING_FLAG_MSTRING>
+B<ASN1_STRING_FLAG_EMBED>
+B<ASN1_STRING_FLAG_BITS_LEFT>
 
 For the first four values, these were internal use flags which were never
 user settable in a way that would not cause things to break.
 
-The final flag was used to indicate that an ASN1_BIT_STRING has a
-value of unused bits left - Most applications do not touch this.
-You should not use ASN1_STRING_set() to set the value of an
-ASN1_BIT_STRING that may have unused bits on the end.
-To ensure the number of unused bits is correctly set in an
-ASN1_BIT_STRING type, use the functions ASN1_BIT_STRING_set_bit(3) or
-ASN1_BIT_STRING_set1(3) to set the value of a BIT_STRING, and ensure
-that the number of unused bits is correctly set. The function
+The final flag was used to indicate that an B<ASN1_BIT_STRING> has a
+value of unused bits left - Most applications do not touch this.  You
+should not use ASN1_STRING_set() to set the value of an
+B<ASN1_BIT_STRING> that may have unused bits on the end.  To ensure
+the number of unused bits is correctly set in an B<ASN1_BIT_STRING>
+type, use the functions ASN1_BIT_STRING_set_bit(3) or
+ASN1_BIT_STRING_set1(3) to set the value of an B<ASN1_BIT_STRING>, and
+ensure that the number of unused bits is correctly set. The function
 ASN1_BIT_STRING_get_length(3) may be used to retrieve the length in
-bytes, and the number of unused bits of an ASN1_BIT_STRING.
+bytes, and the number of unused bits of an B<ASN1_BIT_STRING>.
 
-=head3 Constification of X509 functions
+=head3 Constification of B<X509> functions
 
-A large number of public API functions that access an X509 * object have
+A large number of public API functions that access an B<X509> * object have
 been constified. This change has been made to allow for future improvements
 to the X509 layer to reduce the number of memory allocations and copies
 that are made. These changes can impact code which uses these functions if
@@ -162,7 +162,7 @@ X509v3_addr_validate_resource_set
 X509v3_asid_validate_resource_set
 
 The following two functions we "un-constified" As they were documented as returning
-an explicitly mutable pointer from within an X509 object:
+an explicitly mutable pointer from within an B<X509> object:
 
 X509_getm_notAfter
 X509_getm_notBefore
