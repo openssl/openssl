@@ -281,15 +281,21 @@ static int lms_digest_verify_fail_test(void)
     LMS_ACVP_TEST_DATA *td = &lms_testdata[0];
     EVP_PKEY *pub = NULL;
     EVP_MD_CTX *vctx = NULL;
+    int expected = 0;
 
     if (!TEST_ptr(pub = lms_pubkey_from_data(td->pub, td->publen)))
         return 0;
     if (!TEST_ptr(vctx = EVP_MD_CTX_new()))
         goto err;
+
+    /* Prior to OpenSSL 4.0, EVP_DigestVerify is not supported for LMS */
+    if (OSSL_PROVIDER_available(libctx, "fips")
+        && fips_provider_version_match(libctx, ">=4.0.0"))
+        expected = 1;
     /* Only one shot mode is supported, streaming fails to initialise */
     if (!TEST_int_eq(EVP_DigestVerifyInit_ex(vctx, NULL, NULL, libctx, NULL,
                          pub, NULL),
-            0))
+            expected))
         goto err;
     ret = 1;
 err:
