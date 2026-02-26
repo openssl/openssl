@@ -23,25 +23,25 @@ present, the alg-specific limitations are applied.
 Example configuration
 ---------------------
 
-[sign_algorithm_limits]
-RSA = @RSA_limits
-EC = @EC_limits
-MLDSA65 = @MLDSA65_limits
-UNKNOWN = @UNKNOWN_limits
+    [sign_algorithm_limits]
+    RSA = @RSA_limits
+    EC = @EC_limits
+    MLDSA65 = @MLDSA65_limits
+    UNKNOWN = @UNKNOWN_limits
 
-[RSA_limits]
-MinBits=2048
+    [RSA_limits]
+    MinBits=2048
 
-[EC_limits]
-Curves=P-521
+    [EC_limits]
+    Curves=P-521
 
-[MLDSA65_limits]
-# Override the name given in @crypto_algorithm_limits
-id = ML-DSA-65
+    [MLDSA65_limits]
+    # Override the name given in @crypto_algorithm_limits
+    id = ML-DSA-65
 
-[UNKNOWN_limits]
-# Override the name given in @crypto_algorithm_limits
-id = SOME-UNKNOWN-ALGORITHM
+    [UNKNOWN_limits]
+    # Override the name given in @crypto_algorithm_limits
+    id = SOME-UNKNOWN-ALGORITHM
 
 Limitations of the proposed design
 ----------------------------------
