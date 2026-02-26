@@ -2607,9 +2607,9 @@ int ssl_get_min_max_version(const SSL_CONNECTION *s, int *min_version,
  * define key-material export for DTLS 1.2 and below.
  */
 #ifndef OPENSSL_NO_SCTP
-        if (SSL_CONNECTION_IS_DTLS(s) && BIO_dgram_is_sctp(SSL_get_wbio(SSL_CONNECTION_GET_SSL(s)))) {
-            if (DTLS_VERSION_GT(vent->version, DTLS1_2_VERSION))
-                continue;
+        if (SSL_CONNECTION_IS_DTLS(s) && DTLS_VERSION_GT(vent->version, DTLS1_2_VERSION)
+            && BIO_dgram_is_sctp(SSL_get_wbio(SSL_CONNECTION_GET_SSL(s)))) {
+            continue;
         }
 #endif
         method = vent->cmeth();
