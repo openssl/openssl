@@ -407,6 +407,11 @@ OpenSSL 4.0
 
    *Igor Ustinov*
 
+ * A flag indicating that TLS ciphersuite is FIPS-140-2 approved turned to
+   noop.
+
+   *Dmitry Belyavskiy*
+
 OpenSSL 3.6
 -----------
 
