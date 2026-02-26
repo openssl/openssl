@@ -11,10 +11,16 @@
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
 
-{- produce_param_decoder('ml_kem_key_type_params',
+{- produce_param_decoder('ml_kem_import_params',
                          (['OSSL_PKEY_PARAM_ML_KEM_SEED', 'seed',    'octet_string'],
                           ['OSSL_PKEY_PARAM_PRIV_KEY',    'privkey', 'octet_string'],
                           ['OSSL_PKEY_PARAM_PUB_KEY',     'pubkey',  'octet_string'],
+                          ['OSSL_PKEY_PARAM_PROPERTIES',  'propq', 'utf8_string']
+                         )); -}
+{- produce_param_decoder('ml_kem_export_params',
+                         (['OSSL_PKEY_PARAM_ML_KEM_SEED', 'seed',    'octet_string'],
+                          ['OSSL_PKEY_PARAM_PRIV_KEY',    'privkey', 'octet_string'],
+                          ['OSSL_PKEY_PARAM_PUB_KEY',     'pubkey',  'octet_string']
                          )); -}
 
 {- produce_param_decoder('ml_kem_get_params',

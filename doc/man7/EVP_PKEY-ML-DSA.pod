@@ -96,6 +96,11 @@ respective key type of B<ML-DSA-44>, B<ML-DSA-65> or B<ML-DSA-87>.
 The encoded private key value of size 2560, 4032 or 4896 bytes depending on the
 respective key type of B<ML-DSA-44>, B<ML-DSA-65> or B<ML-DSA-87>.
 
+=item "properties" (B<OSSL_PKEY_PARAM_PROPERTIES>) <UTF8 string>
+
+Can be used when importing raw keys using L<EVP_PKEY_fromdata(3)>,
+to fetch internal digest algorithms.
+
 =back
 
 =head2 Provider configuration parameters
