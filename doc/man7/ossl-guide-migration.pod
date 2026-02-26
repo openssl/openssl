@@ -77,7 +77,7 @@ that the number of unused bits is correctly set. The function
 ASN1_BIT_STRING_get_length(3) may be used to retrieve the length in
 bytes, and the number of unused bits of an ASN1_BIT_STRING.
 
-=head3 Constification X509 functions
+=head3 Constification of X509 functions
 
 A large number of public API functions that access an X509 * object have
 been constified. This change has been made to allow for future improvements
