@@ -5969,7 +5969,7 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
     rt_len += rt_fin_len;
 
     /* Compare recovered plaintext */
-    if (!TEST_int_eq((size_t)rt_len, pt_size)
+    if (!TEST_size_t_eq((size_t)rt_len, pt_size)
         || !TEST_mem_eq(rt, (size_t)rt_len, pt, pt_size)) {
         errmsg = "PLAINTEXT_MISMATCH";
         goto err;
