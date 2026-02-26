@@ -212,7 +212,7 @@ static int ikev2_common_check_ctx_params(KDF_IKEV2KDF *ctx)
  */
 static int ikev2_check_secret_and_pad(KDF_IKEV2KDF *ctx)
 {
-    int pad_len = 0;
+    size_t pad_len = 0;
 
     if (ctx->secret_len == 0)
         return 1;
@@ -234,7 +234,7 @@ static int ikev2_check_secret_and_pad(KDF_IKEV2KDF *ctx)
             ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             return 0;
         }
-        memcpy(new_secret, ctx->secret, ctx->secret_len);
+        memcpy(new_secret + pad_len, ctx->secret, ctx->secret_len);
         OPENSSL_clear_free(ctx->secret, ctx->secret_len);
         ctx->secret = new_secret;
         ctx->secret_len += pad_len;
