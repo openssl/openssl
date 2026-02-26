@@ -12,17 +12,27 @@
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/kdf.h>
+#include <string.h>
 #include "internal/provider.h"
 #include "internal/core.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+
+static void evp_kdf_free_int(EVP_KDF *kdf)
+{
+    OPENSSL_free(kdf->type_name);
+    ossl_provider_free(kdf->prov);
+    CRYPTO_FREE_REF(&kdf->refcnt);
+    OPENSSL_free(kdf);
+}
 
 static int evp_kdf_up_ref(void *vkdf)
 {
     EVP_KDF *kdf = (EVP_KDF *)vkdf;
     int ref = 0;
 
-    CRYPTO_UP_REF(&kdf->refcnt, &ref);
+    if (kdf->origin == EVP_ORIG_DYNAMIC)
+        CRYPTO_UP_REF(&kdf->refcnt, &ref);
     return 1;
 }
 
@@ -31,16 +41,52 @@ static void evp_kdf_free(void *vkdf)
     EVP_KDF *kdf = (EVP_KDF *)vkdf;
     int ref = 0;
 
-    if (kdf == NULL)
+    if (kdf == NULL || kdf->origin != EVP_ORIG_DYNAMIC)
         return;
 
     CRYPTO_DOWN_REF(&kdf->refcnt, &ref);
     if (ref > 0)
         return;
-    OPENSSL_free(kdf->type_name);
-    ossl_provider_free(kdf->prov);
-    CRYPTO_FREE_REF(&kdf->refcnt);
-    OPENSSL_free(kdf);
+    evp_kdf_free_int(kdf);
+}
+
+static void *evp_kdf_dup_frozen(void *vin)
+{
+    EVP_KDF *in = vin;
+    EVP_KDF *out;
+
+    out = OPENSSL_malloc(sizeof(*out));
+    if (out == NULL)
+        return NULL;
+    memcpy(out, in, sizeof(*out));
+    if (!CRYPTO_NEW_REF(&out->refcnt, 1))
+        goto err;
+    out->type_name = OPENSSL_strdup(in->type_name);
+    if (out->type_name == NULL)
+        goto err;
+    out->origin = EVP_ORIG_FROZEN;
+    if (out->prov == NULL || !ossl_provider_up_ref(out->prov)) {
+        OPENSSL_free(out->type_name);
+        goto err;
+    }
+    return out;
+err:
+    CRYPTO_FREE_REF(&out->refcnt);
+    OPENSSL_free(out);
+    return NULL;
+}
+
+static void evp_kdf_frozen_free(EVP_KDF *kdf)
+{
+    int ref;
+
+    if (kdf == NULL || kdf->origin != EVP_ORIG_FROZEN)
+        return;
+
+    CRYPTO_DOWN_REF(&kdf->refcnt, &ref);
+    if (ref > 0)
+        return;
+    evp_kdf_free_int(kdf);
 }
 
 static void *evp_kdf_new(void)
@@ -171,7 +217,18 @@ EVP_KDF *EVP_KDF_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
 {
     return evp_generic_fetch(libctx, OSSL_OP_KDF, algorithm, properties,
         evp_kdf_from_algorithm, evp_kdf_up_ref,
-        evp_kdf_free, NULL, NULL);
+        evp_kdf_free, evp_kdf_dup_frozen,
+        (void (*)(void *))evp_kdf_frozen_free);
+}
+
+int evp_kdf_fetch_all(OSSL_LIB_CTX *ctx)
+{
+    return evp_generic_fetch_all(ctx, OSSL_OP_KDF,
+        evp_kdf_from_algorithm,
+        evp_kdf_up_ref,
+        evp_kdf_free,
+        evp_kdf_dup_frozen,
+        (void (*)(void *))evp_kdf_frozen_free);
 }
 
 int EVP_KDF_up_ref(EVP_KDF *kdf)
