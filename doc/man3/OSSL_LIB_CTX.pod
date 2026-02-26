@@ -142,7 +142,7 @@ using a different propq query string will not be answered from the
 cache, and will be looked up by the normal slower method.
 
 OSSL_LIB_CTX_freeze() is intended for use where applications with
-worker threads are not able to be structure to pre-fetch and retain
+worker threads are not able to be structured to pre-fetch and retain
 the algorithm methods from the method store prior to use, and which
 therefore may pay a considerable performance penalty for the method
 store lookup every time an algorithm is used. Applications which can
