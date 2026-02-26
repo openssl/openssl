@@ -13,7 +13,7 @@ X509_REVOKED_get_ext, X509_REVOKED_get_ext_by_NID, X509_REVOKED_get_ext_by_OBJ,
 X509_REVOKED_get_ext_by_critical, X509_REVOKED_delete_ext,
 X509_REVOKED_add_ext, X509_ACERT_get_ext_count, X509_ACERT_get_ext,
 X509_ACERT_get_ext_by_NID, X509_ACERT_get_ext_by_OBJ,
-X509_ACERT_get_ext_by_critical, X509_ACERT_add_ext, X509_ACERT_delete_ext
+X509_ACERT_get_ext_by_critical, X509_ACERT_add1_ext, X509_ACERT_delete_ext
 - extension stack utility functions
 
 =head1 SYNOPSIS
@@ -65,11 +65,11 @@ X509_ACERT_get_ext_by_critical, X509_ACERT_add_ext, X509_ACERT_delete_ext
  #include <openssl/x509_acert.h>
 
  int X509_ACERT_get_ext_count(const X509_ACERT *x);
- X509_EXTENSION *X509_ACERT_get_ext(const X509_ACERT *x, int loc);
+ X509_EXTENSION *X509_ACERT_get0_ext(const X509_ACERT *x, int loc);
  int X509_ACERT_get_ext_by_NID(const X509_ACERT *x, int nid, int lastpos);
  int X509_ACERT_get_ext_by_OBJ(const X509_ACERT *x, const ASN1_OBJECT *obj, int lastpos);
  int X509_ACERT_get_ext_by_critical(const X509_ACERT *x, int crit, int lastpos);
- int X509_ACERT_add_ext(X509_ACERT *x, X509_EXTENSION *ex, int loc);
+ int X509_ACERT_add1_ext(X509_ACERT *x, const X509_EXTENSION *ex, int loc);
  X509_EXTENSION *X509_ACERT_delete_ext(X509_ACERT *x, int loc);
 
 =head1 DESCRIPTION
@@ -111,9 +111,9 @@ X509_get_ext_by_OBJ(), X509_get_ext_by_critical(), X509_delete_ext()
 and X509_add_ext() operate on the extensions of certificate I<x>. They are
 otherwise identical to the X509v3 functions.
 
-X509_ACERT_get_ext_count(), X509_ACERT_get_ext(),
+X509_ACERT_get_ext_count(), X509_ACERT_get0_ext(),
 X509_ACERT_get_ext_by_NID(), X509_ACERT_get_ext_by_OBJ(),
-X509_ACERT_get_ext_by_critical(), X509_ACERT_add_ext(), and
+X509_ACERT_get_ext_by_critical(), X509_ACERT_add1_ext(), and
 X509_ACERT_delete_ext() work like their non-"acert" analogs, except they operate
 on an X.509 attribute certificate instead of a public key certificate.
 
@@ -175,14 +175,14 @@ L<X509V3_get_d2i(3)>
 
 X509v3_add_extensions() was added in OpenSSL 3.4.
 
-X509_ACERT_add_ext(), X509_ACERT_delete_ext(), X509_ACERT_get_ext(),
+X509_ACERT_add1_ext(), X509_ACERT_delete_ext(), X509_ACERT_get0_ext(),
 X509_ACERT_get_ext_by_NID(), X509_ACERT_get_ext_by_OBJ(),
 X509_ACERT_get_ext_by_critical(), and X509_ACERT_get_ext_count() were added in
-OpenSSL 3.5.
+OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
-Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -294,11 +294,11 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
     /* index of the first attribute certificate in attr_certs that was invalid */
     int invalid_acert_index;
     /* retrieve CRL for an attribute certificate */
-    int (*get_acrl) (X509_STORE_CTX *ctx, X509_CRL **crl, X509_ACERT *x);
+    int (*get_acrl) (const X509_STORE_CTX *ctx, X509_CRL **crl, const X509_ACERT *x);
     /* Check CRL validity */
-    int (*check_acrl) (X509_STORE_CTX *ctx, X509_CRL *crl);
+    int (*check_acrl) (const X509_STORE_CTX *ctx, const X509_CRL *crl);
     /* Check attribute certificate against CRL */
-    int (*acert_crl) (X509_STORE_CTX *ctx, X509_CRL *crl, X509_ACERT *x);
+    int (*acert_crl) (const X509_STORE_CTX *ctx, const X509_CRL *crl, const X509_ACERT *x);
 };
 
 /* PKCS#8 private key info structure */
