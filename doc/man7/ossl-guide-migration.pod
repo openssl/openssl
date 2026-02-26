@@ -50,7 +50,7 @@ If your code uses direct access to ASN1_STRING structure members you will
 need to convert it to allocate the correct type ASN1_STRING, and use accessors.
 
 If your code has in the past used an ASN1_STRING as a stack allocated
-object you will need to allocate it from the heap with
+object, you will need to allocate it from the heap with
 ASN1_STRING_new(3) or ASN1_STRING_type_new(3).
 
 The flags member of ASN1_STRING has become inaccessible, and the definitions
