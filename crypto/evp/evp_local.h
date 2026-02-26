@@ -97,6 +97,7 @@ struct evp_keymgmt_st {
     const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
+    int origin;
 
     /* Constructor(s), destructor, information */
     OSSL_FUNC_keymgmt_new_fn *new;
@@ -242,6 +243,7 @@ struct evp_asym_cipher_st {
 
 struct evp_kem_st {
     int name_id;
+    int origin;
     char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
@@ -426,3 +428,5 @@ int evp_method_id2name_id_op_id(uint32_t meth_id, int *name_id,
     unsigned int *operation_id);
 int evp_md_fetch_all(OSSL_LIB_CTX *ctx);
 int evp_cipher_fetch_all(OSSL_LIB_CTX *ctx);
+int evp_keymgmt_fetch_all(OSSL_LIB_CTX *ctx);
+int evp_kem_fetch_all(OSSL_LIB_CTX *ctx);

@@ -115,6 +115,7 @@ HT_START_KEY_DEFN(frozen_cache_key)
 HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
 /* TODO(FREEZE): allow variable length propq */
 HT_DEF_KEY_FIELD_CHAR_ARRAY(propq, 64)
+HT_DEF_KEY_FIELD(op_id, unsigned int)
 HT_END_KEY_DEFN(FROZEN_CACHE_KEY)
 
 typedef struct ossl_global_properties_st {
@@ -1021,7 +1022,8 @@ end:
 }
 
 int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store,
-    const char *alg_name, const char *prop_query, void **method)
+    const char *alg_name, const char *prop_query, unsigned int operation_id,
+    void **method)
 {
     FROZEN_CACHE_KEY key;
     HT_VALUE *val;
@@ -1035,6 +1037,7 @@ int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store,
     HT_INIT_KEY(&key);
     HT_SET_KEY_STRING_CASE(&key, name, alg_name);
     HT_SET_KEY_STRING(&key, propq, prop_query);
+    HT_SET_KEY_FIELD(&key, op_id, operation_id);
 
     val = ossl_ht_get(store->frozen_algs, TO_HT_KEY(&key));
     if (val == NULL)
@@ -1062,7 +1065,7 @@ static void frozen_cache_free(HT_VALUE *val)
 }
 
 static int freeze_alg(OSSL_METHOD_STORE *store, ALGORITHM *alg,
-    const char *propq, const char *alg_name)
+    const char *propq, const char *alg_name, int operation_id)
 {
     int ret = 0;
     IMPLEMENTATION *best_impl = NULL;
@@ -1073,6 +1076,7 @@ static int freeze_alg(OSSL_METHOD_STORE *store, ALGORITHM *alg,
     HT_INIT_KEY(&key);
     HT_SET_KEY_STRING_CASE(&key, name, alg_name);
     HT_SET_KEY_STRING(&key, propq, propq);
+    HT_SET_KEY_FIELD(&key, op_id, operation_id);
 
     if (ossl_ht_get(store->frozen_algs, TO_HT_KEY(&key)) != NULL)
         return 1;
@@ -1102,11 +1106,12 @@ static void alg_freeze(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
     struct alg_freeze_st *af = arg;
     OSSL_NAMEMAP *nm = ossl_namemap_stored(af->store->ctx);
     int name_id;
+    unsigned int op_id;
     const char *name;
     int i = 0;
 
     if (alg == NULL
-        || !evp_method_id2name_id_op_id(alg->nid, &name_id, NULL)) {
+        || !evp_method_id2name_id_op_id(alg->nid, &name_id, &op_id)) {
         af->ret = 0;
         return;
     }
@@ -1116,11 +1121,11 @@ static void alg_freeze(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
         if (name == NULL)
             break;
         if (*af->store->frozen_propq != '\0') {
-            af->ret = freeze_alg(af->store, alg, af->store->frozen_propq, name);
+            af->ret = freeze_alg(af->store, alg, af->store->frozen_propq, name, op_id);
             if (!af->ret)
                 return;
         }
-        af->ret = freeze_alg(af->store, alg, "", name);
+        af->ret = freeze_alg(af->store, alg, "", name, op_id);
         if (!af->ret)
             return;
     }
@@ -1168,6 +1173,10 @@ int ossl_method_store_freeze_cache(OSSL_METHOD_STORE *store, const char *propq)
     if (evp_md_fetch_all(store->ctx) <= 0)
         goto err;
     if (evp_cipher_fetch_all(store->ctx) <= 0)
+        goto err;
+    if (evp_keymgmt_fetch_all(store->ctx) <= 0)
+        goto err;
+    if (evp_kem_fetch_all(store->ctx) <= 0)
         goto err;
 
     ossl_sa_ALGORITHM_doall_arg(store->algs, &alg_freeze, &af);

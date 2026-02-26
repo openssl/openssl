@@ -102,7 +102,8 @@ void ossl_global_properties_stop_mirroring(OSSL_LIB_CTX *libctx);
 
 int ossl_method_store_freeze_cache(OSSL_METHOD_STORE *store, const char *propq);
 int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store,
-    const char *name, const char *prop_query, void **result);
+    const char *name, const char *prop_query, unsigned int operation_id,
+    void **result);
 
 int ossl_method_store_is_frozen(OSSL_METHOD_STORE *store);
 const char *ossl_method_store_frozen_propq(OSSL_METHOD_STORE *store);
