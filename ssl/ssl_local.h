@@ -253,7 +253,7 @@
 #define SSL_LOW 0x00000002U
 #define SSL_MEDIUM 0x00000004U
 #define SSL_HIGH 0x00000008U
-#define SSL_FIPS 0x00000010U
+/* #define SSL_FIPS 0x00000010U obsolete FIPS canister remnant */
 #define SSL_NOT_DEFAULT 0x00000020U
 
 /* we have used 0000003f - 26 bits left to go */

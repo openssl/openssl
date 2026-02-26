@@ -266,13 +266,13 @@ static const SSL_CIPHER cipher_aliases[] = {
     { 0, SSL_TXT_MEDIUM, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_MEDIUM },
     { 0, SSL_TXT_HIGH, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_HIGH },
     /* FIPS 140-2 approved ciphersuite */
-    { 0, SSL_TXT_FIPS, NULL, 0, 0, 0, ~SSL_eNULL, 0, 0, 0, 0, 0, SSL_FIPS },
+    { 0, SSL_TXT_FIPS, NULL, 0, 0, 0, ~SSL_eNULL, 0, 0, 0, 0, 0, 0 },
 
     /* "EDH-" aliases to "DHE-" labels (for backward compatibility) */
     { 0, SSL3_TXT_EDH_DSS_DES_192_CBC3_SHA, NULL, 0,
-        SSL_kDHE, SSL_aDSS, SSL_3DES, SSL_SHA1, 0, 0, 0, 0, SSL_HIGH | SSL_FIPS },
+        SSL_kDHE, SSL_aDSS, SSL_3DES, SSL_SHA1, 0, 0, 0, 0, SSL_HIGH },
     { 0, SSL3_TXT_EDH_RSA_DES_192_CBC3_SHA, NULL, 0,
-        SSL_kDHE, SSL_aRSA, SSL_3DES, SSL_SHA1, 0, 0, 0, 0, SSL_HIGH | SSL_FIPS },
+        SSL_kDHE, SSL_aRSA, SSL_3DES, SSL_SHA1, 0, 0, 0, 0, SSL_HIGH },
 
 };
 
