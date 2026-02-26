@@ -69,17 +69,10 @@ struct ossl_method_store_st {
     OSSL_LIB_CTX *ctx;
     SPARSE_ARRAY_OF(ALGORITHM) * algs;
 
-    /*
-     * Frozen HT's kept separate by key length
-     * 0 == 8
-     * 1 == 16
-     * 2 == 32
-     * 3 == 64
-     */
     /* (nid) -> method  */
-    HT *frozen_algs[4];
+    HT *frozen_algs;
     /* (nid) -> method for store's frozen_propq */
-    HT *frozen_algs_pq[4];
+    HT *frozen_algs_pq;
     /*
      * Lock to protect the |algs| array from concurrent writing, when
      * individual implementations or queries are inserted.  This is used
@@ -121,24 +114,8 @@ DEFINE_SPARSE_ARRAY_OF(ALGORITHM);
 DEFINE_STACK_OF(ALGORITHM)
 
 /*
- * Larger size keys destroy performance, because we
- * always need hash to the max size.
- *
- * Currently the longest algorithm is 26 chars.
- * A large number are < 16.. hmmm.
+ * Larger size keys destroy performance.
  */
-HT_START_KEY_DEFN(frozen_cache_64_key)
-HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
-HT_END_KEY_DEFN(FROZEN_CACHE_64_KEY)
-
-HT_START_KEY_DEFN(frozen_cache_32_key)
-HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 32)
-HT_END_KEY_DEFN(FROZEN_CACHE_32_KEY)
-
-HT_START_KEY_DEFN(frozen_cache_16_key)
-HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 16)
-HT_END_KEY_DEFN(FROZEN_CACHE_16_KEY)
-
 HT_START_KEY_DEFN(frozen_cache_8_key)
 HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 8)
 HT_END_KEY_DEFN(FROZEN_CACHE_8_KEY)
@@ -330,9 +307,8 @@ void ossl_method_store_free(OSSL_METHOD_STORE *store)
     if (store != NULL) {
         if (store->algs != NULL)
             ossl_sa_ALGORITHM_doall_arg(store->algs, &alg_cleanup, store);
-        for (size_t i = 0; i < 4; i++)
-            if (store->frozen_algs[i] != NULL)
-                ossl_ht_free(store->frozen_algs[i]);
+        ossl_ht_free(store->frozen_algs);
+        ossl_ht_free(store->frozen_algs_pq);
         ossl_sa_ALGORITHM_free(store->algs);
         CRYPTO_THREAD_lock_free(store->lock);
         CRYPTO_THREAD_lock_free(store->biglock);
@@ -1047,75 +1023,24 @@ end:
     return res;
 }
 
-static void ossl_frozen_ht_bucket_fetch(HT **buckets, const char *alg_name, void **method)
+static void ossl_frozen_ht_fetch(HT *ht, const char *alg_name, void **method)
 {
-    size_t alg_len = strlen(alg_name);
     HT_VALUE *val = NULL;
 
-    /* Pick the right bucket based on key length (I can haz bukkit!) */
-    if (alg_len < 8) {
-        FROZEN_CACHE_8_KEY key;
-        HT_INIT_KEY(&key);
-        HT_SET_KEY_STRING_CASE(&key, name, alg_name);
-        val = ossl_ht_get(buckets[0], TO_HT_KEY(&key));
-    } else if (alg_len < 16) {
-        FROZEN_CACHE_16_KEY key;
-        HT_INIT_KEY(&key);
-        HT_SET_KEY_STRING_CASE(&key, name, alg_name);
-        val = ossl_ht_get(buckets[1], TO_HT_KEY(&key));
-        if (val != NULL)
-            *method = ((METHOD *)val->value)->method;
-    } else if (alg_len < 32) {
-        FROZEN_CACHE_32_KEY key;
-        HT_INIT_KEY(&key);
-        HT_SET_KEY_STRING_CASE(&key, name, alg_name);
-        val = ossl_ht_get(buckets[2], TO_HT_KEY(&key));
-        if (val != NULL)
-            *method = ((METHOD *)val->value)->method;
-    } else {
-        FROZEN_CACHE_64_KEY key;
-        HT_INIT_KEY(&key);
-        HT_SET_KEY_STRING_CASE(&key, name, alg_name);
-        val = ossl_ht_get(buckets[3], TO_HT_KEY(&key));
-        if (val != NULL)
-            *method = ((METHOD *)val->value)->method;
-    }
+    FROZEN_CACHE_8_KEY key;
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING_CASE(&key, name, alg_name);
+    val = ossl_ht_get(ht, TO_HT_KEY(&key));
     if (val != NULL)
         *method = ((METHOD *)val->value)->method;
 }
 
-/*
- * Returns 0 if name is too big to be in cache, otherwise returns 1 and
- * adds entry to the correct bucket.
- */
-static int ossl_frozen_ht_bucket_insert(HT **buckets, const char *alg_name, HT_VALUE *val)
+static int ossl_frozen_ht_insert(HT *ht, const char *alg_name, HT_VALUE *val)
 {
-    size_t alg_len = strlen(alg_name);
-    int ret = 0;
-
-    /* Pick the right bucket based on key length (I can haz bukkit!) */
-    if (alg_len < 8) {
-        FROZEN_CACHE_8_KEY key;
-        HT_INIT_KEY(&key);
-        HT_SET_KEY_STRING_CASE(&key, name, alg_name);
-        ret = ossl_ht_insert(buckets[0], TO_HT_KEY(&key), val, NULL);
-    } else if (alg_len < 16) {
-        FROZEN_CACHE_16_KEY key;
-        HT_INIT_KEY(&key);
-        HT_SET_KEY_STRING_CASE(&key, name, alg_name);
-        ret = ossl_ht_insert(buckets[1], TO_HT_KEY(&key), val, NULL);
-    } else if (alg_len < 32) {
-        FROZEN_CACHE_32_KEY key;
-        HT_INIT_KEY(&key);
-        HT_SET_KEY_STRING_CASE(&key, name, alg_name);
-        ret = ossl_ht_insert(buckets[2], TO_HT_KEY(&key), val, NULL);
-    } else if (alg_len < 64) {
-        FROZEN_CACHE_64_KEY key;
-        HT_INIT_KEY(&key);
-        HT_SET_KEY_STRING_CASE(&key, name, alg_name);
-        ret = ossl_ht_insert(buckets[3], TO_HT_KEY(&key), val, NULL);
-    }
-    return ret;
+    FROZEN_CACHE_8_KEY key;
+    HT_INIT_KEY(&key);
+    HT_SET_KEY_STRING_CASE(&key, name, alg_name);
+    return ossl_ht_insert(ht, TO_HT_KEY(&key), val, NULL);
 }
 
 /*
@@ -1137,8 +1062,8 @@ int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store,
 
     if (store == NULL
         || alg_name == NULL
-        || store->frozen_algs[0] == NULL
-        || store->frozen_algs_pq[0] == NULL)
+        || store->frozen_algs == NULL
+        || store->frozen_algs_pq == NULL)
         goto done;
 
     /*
@@ -1147,11 +1072,11 @@ int ossl_frozen_method_store_cache_get(OSSL_METHOD_STORE *store,
      */
     if (prop_query == NULL || *prop_query == '\0') {
         *method = NULL;
-        ossl_frozen_ht_bucket_fetch(store->frozen_algs, alg_name, method);
+        ossl_frozen_ht_fetch(store->frozen_algs, alg_name, method);
         ret = 1;
     } else if (strcmp(prop_query, store->frozen_propq) == 0) {
         *method = NULL;
-        ossl_frozen_ht_bucket_fetch(store->frozen_algs_pq, alg_name, method);
+        ossl_frozen_ht_fetch(store->frozen_algs_pq, alg_name, method);
         ret = 1;
     }
 
@@ -1200,9 +1125,9 @@ static int freeze_alg(OSSL_METHOD_STORE *store, ALGORITHM *alg,
         return ret;
 
     if (propq == NULL || *propq == '\0')
-        ret = ossl_frozen_ht_bucket_insert(store->frozen_algs, alg_name, &val);
+        ret = ossl_frozen_ht_insert(store->frozen_algs, alg_name, &val);
     else
-        ret = ossl_frozen_ht_bucket_insert(store->frozen_algs_pq, alg_name, &val);
+        ret = ossl_frozen_ht_insert(store->frozen_algs_pq, alg_name, &val);
 
     if (ret <= 0) {
         frozen_cache_free(&val);
@@ -1276,14 +1201,12 @@ int ossl_method_store_freeze_cache(OSSL_METHOD_STORE *store, const char *propq)
     if (store->frozen_propq == NULL)
         goto err;
 
-    for (size_t i = 0; i < 4; i++) {
-        store->frozen_algs[i] = ossl_ht_new(&ht_conf);
-        if (store->frozen_algs[i] == NULL)
-            goto err;
-        store->frozen_algs_pq[i] = ossl_ht_new(&ht_conf);
-        if (store->frozen_algs[i] == NULL)
-            goto err;
-    }
+    store->frozen_algs = ossl_ht_new(&ht_conf);
+    if (store->frozen_algs == NULL)
+        goto err;
+    store->frozen_algs_pq = ossl_ht_new(&ht_conf);
+    if (store->frozen_algs == NULL)
+        goto err;
 
     if (evp_md_fetch_all(store->ctx) <= 0)
         goto err;
@@ -1301,12 +1224,10 @@ int ossl_method_store_freeze_cache(OSSL_METHOD_STORE *store, const char *propq)
 err:
     OPENSSL_free(store->frozen_propq);
     store->frozen_propq = NULL;
-    for (size_t i = 0; i < 4; i++) {
-        ossl_ht_free(store->frozen_algs[i]);
-        store->frozen_algs[i] = NULL;
-        ossl_ht_free(store->frozen_algs_pq[i]);
-        store->frozen_algs_pq[i] = NULL;
-    }
+    ossl_ht_free(store->frozen_algs);
+    store->frozen_algs = NULL;
+    ossl_ht_free(store->frozen_algs_pq);
+    store->frozen_algs_pq = NULL;
 
     return 0;
 }
