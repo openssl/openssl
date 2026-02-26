@@ -5007,13 +5007,19 @@ err:
  * This test focuses stale key-regresion.
  */
 
+/* maximum AEAD tag buffer size, exceeds AES-CBC-HMAC-SHA512 */
+#define EVPTEST_TAG_LEN_MAX EVP_MAX_MD_SIZE
+
+/* default AEAD tag length for standard modes (GCM, CCM, OCB, etc.) */
+#define EVPTEST_TAG_LEN_DEFAULT 16
+
 typedef struct {
     const EVP_CIPHER *ciph;
     const char *name;
     int keylen;
     int ivlen;
     int mode;
-    int is_aead;
+    int taglen;
 } EVP_CIPHER_TEST_INFO;
 
 static EVP_CIPHER_TEST_INFO *cipher_list = NULL;
@@ -5062,7 +5068,8 @@ static void collect_cipher_cb(EVP_CIPHER *ciph, void *arg)
     info->keylen = EVP_CIPHER_get_key_length(ciph);
     info->ivlen = EVP_CIPHER_get_iv_length(ciph);
     info->mode = EVP_CIPHER_get_mode(ciph);
-    info->is_aead = (EVP_CIPHER_get_flags(ciph) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0;
+    info->taglen = (EVP_CIPHER_get_flags(ciph) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0
+                   ? EVPTEST_TAG_LEN_DEFAULT : 0;
 
     cipher_list_n++;
 }
@@ -5119,10 +5126,10 @@ static int test_evp_diff_order_init(int idx)
     int ct_onestep_len = 0;
     int ct_onestep_fin_len = 0;
 
-    const int TAGLEN = 16;
-    unsigned char tag_keyiv[16] = { 0 };
-    unsigned char tag_ivkey[16] = { 0 };
-    unsigned char tag_onestep[16] = { 0 };
+    int taglen = info->taglen;
+    unsigned char tag_keyiv[EVPTEST_TAG_LEN_MAX] = { 0 };
+    unsigned char tag_ivkey[EVPTEST_TAG_LEN_MAX] = { 0 };
+    unsigned char tag_onestep[EVPTEST_TAG_LEN_MAX] = { 0 };
 
     int blocksz = 0;
 
@@ -5148,7 +5155,7 @@ static int test_evp_diff_order_init(int idx)
         goto err;
     }
 
-    if (info->is_aead) {
+    if (info->taglen > 0) {
         if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_keyiv,
                     EVP_CTRL_CCM_SET_IVLEN, info->ivlen, NULL))) {
@@ -5156,7 +5163,7 @@ static int test_evp_diff_order_init(int idx)
                 goto err;
             }
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_keyiv, EVP_CTRL_CCM_SET_TAG,
-                    TAGLEN, NULL))) {
+                    taglen, NULL))) {
                 errmsg = "CCM_SET_TAGLEN";
                 goto err;
             }
@@ -5181,13 +5188,13 @@ static int test_evp_diff_order_init(int idx)
 
     /* disable padding for non-aead ciphers for
         comparison to work with block aligned pt */
-    if (!(info->is_aead) && blocksz > 1)
+    if (info->taglen == 0 && blocksz > 1)
         EVP_CIPHER_CTX_set_padding(ctx_keyiv, 0);
 
     for (size_t i = 0; i < pt_size; i++)
         pt[i] = (unsigned char)(0xA0);
 
-    if (info->is_aead && info->mode == EVP_CIPH_CCM_MODE) {
+    if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE) {
         int tmplen = 0;
 
         if (!TEST_true(EVP_EncryptUpdate(ctx_keyiv, NULL,
@@ -5211,22 +5218,28 @@ static int test_evp_diff_order_init(int idx)
     }
 
     ct_keyiv_len += ct_keyiv_fin_len;
-    if (info->is_aead) {
+    if (info->taglen > 0) {
+        /* override taglen from context if available */
+        int tl = EVP_CIPHER_CTX_get_tag_length(ctx_keyiv);
+
+        if (tl > 0)
+            taglen = tl;
+
         if (info->mode == EVP_CIPH_GCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_keyiv,
-                    EVP_CTRL_GCM_GET_TAG, TAGLEN, tag_keyiv))) {
+                    EVP_CTRL_GCM_GET_TAG, taglen, tag_keyiv))) {
                 errmsg = "GCM_TAG";
                 goto err;
             }
         } else if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_keyiv,
-                    EVP_CTRL_CCM_GET_TAG, TAGLEN, tag_keyiv))) {
+                    EVP_CTRL_CCM_GET_TAG, taglen, tag_keyiv))) {
                 errmsg = "CCM_TAG";
                 goto err;
             }
         } else {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_keyiv, EVP_CTRL_AEAD_GET_TAG,
-                    TAGLEN, tag_keyiv))) {
+                    taglen, tag_keyiv))) {
                 errmsg = "GET_TAG";
                 goto err;
             }
@@ -5245,7 +5258,7 @@ static int test_evp_diff_order_init(int idx)
         goto err;
     }
 
-    if (info->is_aead) {
+    if (info->taglen > 0) {
         if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_ivkey,
                     EVP_CTRL_CCM_SET_IVLEN, info->ivlen, NULL))) {
@@ -5253,7 +5266,7 @@ static int test_evp_diff_order_init(int idx)
                 goto err;
             }
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_ivkey, EVP_CTRL_CCM_SET_TAG,
-                    TAGLEN, NULL))) {
+                    taglen, NULL))) {
                 errmsg = "CCM_SET_TAGLEN";
                 goto err;
             }
@@ -5270,10 +5283,10 @@ static int test_evp_diff_order_init(int idx)
         goto err;
     }
 
-    if (!(info->is_aead) && blocksz > 1)
+    if (info->taglen == 0 && blocksz > 1)
         EVP_CIPHER_CTX_set_padding(ctx_ivkey, 0);
 
-    if (info->is_aead && info->mode == EVP_CIPH_CCM_MODE) {
+    if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE) {
         int tmplen = 0;
 
         if (!TEST_true(EVP_EncryptUpdate(ctx_ivkey,
@@ -5296,22 +5309,22 @@ static int test_evp_diff_order_init(int idx)
     }
 
     ct_ivkey_len += ct_ivkey_fin_len;
-    if (info->is_aead) {
+    if (info->taglen > 0) {
         if (info->mode == EVP_CIPH_GCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_ivkey,
-                    EVP_CTRL_GCM_GET_TAG, TAGLEN, tag_ivkey))) {
+                    EVP_CTRL_GCM_GET_TAG, taglen, tag_ivkey))) {
                 errmsg = "GCM_TAG";
                 goto err;
             }
         } else if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_ivkey,
-                    EVP_CTRL_CCM_GET_TAG, TAGLEN, tag_ivkey))) {
+                    EVP_CTRL_CCM_GET_TAG, taglen, tag_ivkey))) {
                 errmsg = "CCM_TAG";
                 goto err;
             }
         } else {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_ivkey, EVP_CTRL_AEAD_GET_TAG,
-                    TAGLEN, tag_ivkey))) {
+                    taglen, tag_ivkey))) {
                 errmsg = "GET_TAG";
                 goto err;
             }
@@ -5328,7 +5341,7 @@ static int test_evp_diff_order_init(int idx)
         errmsg = "ONESTEP_init";
         goto err;
     }
-    if (info->is_aead) {
+    if (info->taglen > 0) {
         if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep,
                     EVP_CTRL_CCM_SET_IVLEN, info->ivlen, NULL))) {
@@ -5336,7 +5349,7 @@ static int test_evp_diff_order_init(int idx)
                 goto err;
             }
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep, EVP_CTRL_CCM_SET_TAG,
-                    TAGLEN, NULL))) {
+                    taglen, NULL))) {
                 errmsg = "CCM_SET_TAGLEN";
                 goto err;
             }
@@ -5349,10 +5362,10 @@ static int test_evp_diff_order_init(int idx)
         goto err;
     }
 
-    if (!(info->is_aead) && blocksz > 1)
+    if (info->taglen == 0 && blocksz > 1)
         EVP_CIPHER_CTX_set_padding(ctx_onestep, 0);
 
-    if (info->is_aead && info->mode == EVP_CIPH_CCM_MODE) {
+    if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE) {
         int tmplen = 0;
 
         if (!TEST_true(EVP_EncryptUpdate(ctx_onestep,
@@ -5375,22 +5388,22 @@ static int test_evp_diff_order_init(int idx)
     }
 
     ct_onestep_len += ct_onestep_fin_len;
-    if (info->is_aead) {
+    if (info->taglen > 0) {
         if (info->mode == EVP_CIPH_GCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep,
-                    EVP_CTRL_GCM_GET_TAG, TAGLEN, tag_onestep))) {
+                    EVP_CTRL_GCM_GET_TAG, taglen, tag_onestep))) {
                 errmsg = "GCM_TAG";
                 goto err;
             }
         } else if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep,
-                    EVP_CTRL_CCM_GET_TAG, TAGLEN, tag_onestep))) {
+                    EVP_CTRL_CCM_GET_TAG, taglen, tag_onestep))) {
                 errmsg = "GCM_TAG";
                 goto err;
             }
         } else {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep,
-                    EVP_CTRL_AEAD_GET_TAG, TAGLEN, tag_onestep))) {
+                    EVP_CTRL_AEAD_GET_TAG, taglen, tag_onestep))) {
                 errmsg = "GET_TAG";
                 goto err;
             }
@@ -5411,13 +5424,13 @@ static int test_evp_diff_order_init(int idx)
         goto err;
     }
 
-    if (info->is_aead) {
-        if (!TEST_mem_eq(tag_onestep, TAGLEN, tag_keyiv, TAGLEN)) {
+    if (info->taglen > 0) {
+        if (!TEST_mem_eq(tag_onestep, taglen, tag_keyiv, taglen)) {
             errmsg = "TAG_MISMATCH_SINGLE_vs_KEYIV";
             goto err;
         }
 
-        if (!TEST_mem_eq(tag_onestep, TAGLEN, tag_ivkey, TAGLEN)) {
+        if (!TEST_mem_eq(tag_onestep, taglen, tag_ivkey, taglen)) {
             errmsg = "TAG_MISMATCH_SINGLE_vs_IVKEY";
             goto err;
         }
@@ -5466,10 +5479,10 @@ static int test_evp_stale_key_reinit(int idx)
     int ct_onestep_len = 0;
     int ct_onestep_fin_len = 0;
 
-    const int TAGLEN = 16;
-    unsigned char tag[16] = { 0 };
-    unsigned char tag_reinit[16] = { 0 };
-    unsigned char tag_onestep[16] = { 0 };
+    int taglen = info->taglen;
+    unsigned char tag[EVPTEST_TAG_LEN_MAX] = { 0 };
+    unsigned char tag_reinit[EVPTEST_TAG_LEN_MAX] = { 0 };
+    unsigned char tag_onestep[EVPTEST_TAG_LEN_MAX] = { 0 };
 
     int blocksz = 0;
 
@@ -5507,7 +5520,7 @@ static int test_evp_stale_key_reinit(int idx)
         errmsg = "ONESTEP_first_init";
         goto err;
     }
-    if (info->is_aead) {
+    if (info->taglen > 0) {
         if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_reinit,
                     EVP_CTRL_CCM_SET_IVLEN, info->ivlen, NULL))) {
@@ -5515,7 +5528,7 @@ static int test_evp_stale_key_reinit(int idx)
                 goto err;
             }
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_reinit, EVP_CTRL_CCM_SET_TAG,
-                    TAGLEN, NULL))) {
+                    taglen, NULL))) {
                 errmsg = "CCM_SET_TAGLEN";
                 goto err;
             }
@@ -5530,10 +5543,10 @@ static int test_evp_stale_key_reinit(int idx)
 
     /* disable padding for non-aead ciphers for
         comparison to work with block aligned pt */
-    if (!(info->is_aead) && blocksz > 1)
+    if (info->taglen == 0 && blocksz > 1)
         EVP_CIPHER_CTX_set_padding(ctx_reinit, 0);
 
-    if (info->is_aead && info->mode == EVP_CIPH_CCM_MODE) {
+    if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE) {
         int tmplen = 0;
 
         if (!TEST_true(EVP_EncryptUpdate(ctx_reinit,
@@ -5557,22 +5570,28 @@ static int test_evp_stale_key_reinit(int idx)
     }
 
     ct_len += ct_fin_len;
-    if (info->is_aead) {
+    if (info->taglen > 0) {
+        /* override taglen from context if available */
+        int tl = EVP_CIPHER_CTX_get_tag_length(ctx_reinit);
+
+        if (tl > 0)
+            taglen = tl;
+
         if (info->mode == EVP_CIPH_GCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_reinit,
-                    EVP_CTRL_GCM_GET_TAG, TAGLEN, tag))) {
+                    EVP_CTRL_GCM_GET_TAG, taglen, tag))) {
                 errmsg = "GCM_TAG";
                 goto err;
             }
         } else if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_reinit,
-                    EVP_CTRL_CCM_GET_TAG, TAGLEN, tag))) {
+                    EVP_CTRL_CCM_GET_TAG, taglen, tag))) {
                 errmsg = "CCM_TAG";
                 goto err;
             }
         } else {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_reinit,
-                    EVP_CTRL_AEAD_GET_TAG, TAGLEN, tag))) {
+                    EVP_CTRL_AEAD_GET_TAG, taglen, tag))) {
                 errmsg = "GET_TAG";
                 goto err;
             }
@@ -5590,7 +5609,7 @@ static int test_evp_stale_key_reinit(int idx)
         goto err;
     }
 
-    if (info->is_aead && info->mode == EVP_CIPH_CCM_MODE) {
+    if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE) {
         int tmplen = 0;
 
         if (!TEST_true(EVP_EncryptUpdate(ctx_reinit,
@@ -5614,22 +5633,22 @@ static int test_evp_stale_key_reinit(int idx)
     }
 
     ct_reinit_len += ct_reinit_fin_len;
-    if (info->is_aead) {
+    if (info->taglen > 0) {
         if (info->mode == EVP_CIPH_GCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_reinit,
-                    EVP_CTRL_GCM_GET_TAG, TAGLEN, tag_reinit))) {
+                    EVP_CTRL_GCM_GET_TAG, taglen, tag_reinit))) {
                 errmsg = "GCM_TAG";
                 goto err;
             }
         } else if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_reinit,
-                    EVP_CTRL_CCM_GET_TAG, TAGLEN, tag_reinit))) {
+                    EVP_CTRL_CCM_GET_TAG, taglen, tag_reinit))) {
                 errmsg = "CCM_TAG";
                 goto err;
             }
         } else {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_reinit,
-                    EVP_CTRL_AEAD_GET_TAG, TAGLEN, tag_reinit))) {
+                    EVP_CTRL_AEAD_GET_TAG, taglen, tag_reinit))) {
                 errmsg = "GET_TAG";
                 goto err;
             }
@@ -5648,7 +5667,7 @@ static int test_evp_stale_key_reinit(int idx)
         goto err;
     }
 
-    if (info->is_aead) {
+    if (info->taglen > 0) {
         if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep,
                     EVP_CTRL_CCM_SET_IVLEN, info->ivlen, NULL))) {
@@ -5656,7 +5675,7 @@ static int test_evp_stale_key_reinit(int idx)
                 goto err;
             }
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep,
-                    EVP_CTRL_CCM_SET_TAG, TAGLEN, NULL))) {
+                    EVP_CTRL_CCM_SET_TAG, taglen, NULL))) {
                 errmsg = "CCM_SET_TAGLEN";
                 goto err;
             }
@@ -5668,10 +5687,10 @@ static int test_evp_stale_key_reinit(int idx)
         goto err;
     }
 
-    if (!(info->is_aead) && blocksz > 1)
+    if (info->taglen == 0 && blocksz > 1)
         EVP_CIPHER_CTX_set_padding(ctx_onestep, 0);
 
-    if (info->is_aead && info->mode == EVP_CIPH_CCM_MODE) {
+    if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE) {
         int tmplen = 0;
 
         if (!TEST_true(EVP_EncryptUpdate(ctx_onestep,
@@ -5694,22 +5713,22 @@ static int test_evp_stale_key_reinit(int idx)
     }
 
     ct_onestep_len += ct_onestep_fin_len;
-    if (info->is_aead) {
+    if (info->taglen > 0) {
         if (info->mode == EVP_CIPH_GCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep,
-                    EVP_CTRL_GCM_GET_TAG, TAGLEN, tag_onestep))) {
+                    EVP_CTRL_GCM_GET_TAG, taglen, tag_onestep))) {
                 errmsg = "GCM_TAG";
                 goto err;
             }
         } else if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep,
-                    EVP_CTRL_CCM_GET_TAG, TAGLEN, tag_onestep))) {
+                    EVP_CTRL_CCM_GET_TAG, taglen, tag_onestep))) {
                 errmsg = "GCM_TAG";
                 goto err;
             }
         } else {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep,
-                    EVP_CTRL_AEAD_GET_TAG, TAGLEN, tag_onestep))) {
+                    EVP_CTRL_AEAD_GET_TAG, taglen, tag_onestep))) {
                 errmsg = "GET_TAG";
                 goto err;
             }
@@ -5723,8 +5742,8 @@ static int test_evp_stale_key_reinit(int idx)
         goto err;
     }
 
-    if (info->is_aead) {
-        if (!TEST_mem_eq(tag_onestep, TAGLEN, tag_reinit, TAGLEN)) {
+    if (info->taglen > 0) {
+        if (!TEST_mem_eq(tag_onestep, taglen, tag_reinit, taglen)) {
             errmsg = "TAG_MISMATCH_SINGLE_vs_KEYIV";
             goto err;
         }
@@ -5767,8 +5786,8 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
     int rt_len = 0;
     int rt_fin_len = 0;
 
-    const int TAGLEN = 16;
-    unsigned char tag[16] = { 0 };
+    int taglen = info->taglen;
+    unsigned char tag[EVPTEST_TAG_LEN_MAX] = { 0 };
 
     int blocksz = 0;
     char *errmsg = NULL;
@@ -5802,14 +5821,14 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
         goto err;
     }
 
-    if (info->is_aead && info->mode == EVP_CIPH_CCM_MODE) {
+    if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE) {
         if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_enc, EVP_CTRL_CCM_SET_IVLEN,
                 info->ivlen, NULL))) {
             errmsg = "ENC_CCM_SET_IVLEN";
             goto err;
         }
         if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_enc, EVP_CTRL_CCM_SET_TAG,
-                TAGLEN, NULL))) {
+                taglen, NULL))) {
             errmsg = "ENC_CCM_SET_TAGLEN";
             goto err;
         }
@@ -5822,11 +5841,11 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
 
     /* disable padding for non-aead ciphers for
         comparison to work with block aligned pt */
-    if (!info->is_aead && blocksz > 1)
+    if (info->taglen == 0 && blocksz > 1)
         EVP_CIPHER_CTX_set_padding(ctx_enc, 0);
 
     /* CCM requires declaring plaintext length before actual EncryptUpdate */
-    if (info->is_aead && info->mode == EVP_CIPH_CCM_MODE) {
+    if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE) {
         int tmplen = 0;
         if (!TEST_true(EVP_EncryptUpdate(ctx_enc, NULL, &tmplen,
                 NULL, (int)pt_size))) {
@@ -5846,22 +5865,28 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
     }
     ct_len += ct_fin_len;
 
-    if (info->is_aead) {
+    if (info->taglen > 0) {
+        /* override taglen from context if available */
+        int tl = EVP_CIPHER_CTX_get_tag_length(ctx_enc);
+
+        if (tl > 0)
+            taglen = tl;
+
         if (info->mode == EVP_CIPH_GCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_enc, EVP_CTRL_GCM_GET_TAG,
-                    TAGLEN, tag))) {
+                    taglen, tag))) {
                 errmsg = "ENC_GCM_GET_TAG";
                 goto err;
             }
         } else if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_enc, EVP_CTRL_CCM_GET_TAG,
-                    TAGLEN, tag))) {
+                    taglen, tag))) {
                 errmsg = "ENC_CCM_GET_TAG";
                 goto err;
             }
         } else {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_enc, EVP_CTRL_AEAD_GET_TAG,
-                    TAGLEN, tag))) {
+                    taglen, tag))) {
                 errmsg = "ENC_AEAD_GET_TAG";
                 goto err;
             }
@@ -5879,7 +5904,7 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
         goto err;
     }
 
-    if (info->is_aead) {
+    if (info->taglen > 0) {
         if (info->mode == EVP_CIPH_CCM_MODE) {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_dec, EVP_CTRL_CCM_SET_IVLEN,
                     info->ivlen, NULL))) {
@@ -5889,20 +5914,20 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
             /* For CCM, you typically set expected tag before
                 final/verify (or before update) */
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_dec, EVP_CTRL_CCM_SET_TAG,
-                    TAGLEN, tag))) {
+                    taglen, tag))) {
                 errmsg = "DEC_CCM_SET_TAG";
                 goto err;
             }
         } else if (info->mode == EVP_CIPH_GCM_MODE) {
             /* For GCM and many AEADs, set tag via ctrl before Final */
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_dec, EVP_CTRL_GCM_SET_TAG,
-                    TAGLEN, tag))) {
+                    taglen, tag))) {
                 errmsg = "DEC_GCM_SET_TAG";
                 goto err;
             }
         } else {
             if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_dec, EVP_CTRL_AEAD_SET_TAG,
-                    TAGLEN, tag))) {
+                    taglen, tag))) {
                 errmsg = "DEC_AEAD_SET_TAG";
                 goto err;
             }
@@ -5918,12 +5943,12 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
         goto err;
     }
 
-    if (!info->is_aead && blocksz > 1)
+    if (info->taglen == 0 && blocksz > 1)
         EVP_CIPHER_CTX_set_padding(ctx_dec, 0);
 
     /* CCM requires declaring ciphertext length
         (or plaintext length) before DecryptUpdate */
-    if (info->is_aead && info->mode == EVP_CIPH_CCM_MODE) {
+    if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE) {
         int tmplen = 0;
         if (!TEST_true(EVP_DecryptUpdate(ctx_dec, NULL, &tmplen,
                 NULL, ct_len))) {
