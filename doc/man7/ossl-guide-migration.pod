@@ -81,7 +81,7 @@ bytes, and the number of unused bits of an B<ASN1_BIT_STRING>.
 
 A large number of public API functions that access an B<X509> * object have
 been constified. This change has been made to allow for future improvements
-to the X509 layer to reduce the number of memory allocations and copies
+to the B<X509> layer to reduce the number of memory allocations and copies
 that are made. These changes can impact code which uses these functions if
 a returned pointer value which was not const in previous versions of OpenSSL
 has now been made const. When such a value is assigned to a non-const pointer
