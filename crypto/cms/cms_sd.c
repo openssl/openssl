@@ -488,7 +488,7 @@ static const char *cms_mdless_signing(EVP_PKEY *pkey)
     return NULL;
 }
 
-static const EVP_MD *ossl_cms_get_default_md(EVP_PKEY *pk, int *md_a_must)
+static const EVP_MD *ossl_cms_get_default_md(const CMS_CTX *ctx, EVP_PKEY *pk, int *md_a_must)
 {
     const EVP_MD *md;
     unsigned int i;
@@ -509,27 +509,27 @@ static const EVP_MD *ossl_cms_get_default_md(EVP_PKEY *pk, int *md_a_must)
             "pkey nid=%d", EVP_PKEY_get_id(pk));
         return NULL;
     }
-    md = EVP_get_digestbynid(def_nid);
+    md = EVP_MD_fetch(ossl_cms_ctx_get0_libctx(ctx), OBJ_nid2sn(def_nid), ossl_cms_ctx_get0_propq(ctx));
     if (md == NULL)
         ERR_raise_data(ERR_LIB_CMS, CMS_R_NO_DEFAULT_DIGEST,
             "default md nid=%d", def_nid);
     return md;
 }
 
-static const EVP_MD *ossl_cms_get_noattr_md(EVP_PKEY *pk, int *noattr_md_a_must)
+static const EVP_MD *ossl_cms_get_noattr_md(const CMS_CTX *ctx, EVP_PKEY *pk, int *noattr_md_a_must)
 {
     unsigned int i;
 
     for (i = 0; key2data[i].name != NULL; i++) {
         if (EVP_PKEY_is_a(pk, key2data[i].name)) {
             *noattr_md_a_must = key2data[i].noattr_md_a_must;
-            return EVP_get_digestbynid(key2data[i].noattr_md_nid);
+            return EVP_MD_fetch(ossl_cms_ctx_get0_libctx(ctx), OBJ_nid2sn(key2data[i].noattr_md_nid), ossl_cms_ctx_get0_propq(ctx));
         }
     }
     return NULL;
 }
 
-static int ossl_cms_adjust_md(EVP_PKEY *pk, const EVP_MD **md, unsigned int flags)
+static int ossl_cms_adjust_md(const CMS_CTX *ctx, EVP_PKEY *pk, const EVP_MD **md, unsigned int flags)
 {
     const EVP_MD *tmp_md;
     int md_a_must = 0;
@@ -542,7 +542,7 @@ static int ossl_cms_adjust_md(EVP_PKEY *pk, const EVP_MD **md, unsigned int flag
          */
         int noattr_md_a_must = 0;
 
-        tmp_md = ossl_cms_get_noattr_md(pk, &noattr_md_a_must);
+        tmp_md = ossl_cms_get_noattr_md(ctx, pk, &noattr_md_a_must);
         if (tmp_md == NULL)
             break; /* key type not listed - use the default */
 
@@ -553,7 +553,7 @@ static int ossl_cms_adjust_md(EVP_PKEY *pk, const EVP_MD **md, unsigned int flag
         return 1;
     }
 
-    tmp_md = ossl_cms_get_default_md(pk, &md_a_must);
+    tmp_md = ossl_cms_get_default_md(ctx, pk, &md_a_must);
     if (md_a_must)
         *md = tmp_md;
     else if (*md == NULL)
@@ -622,7 +622,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     if (!ossl_cms_set1_SignerIdentifier(si->sid, signer, type, ctx))
         goto err;
 
-    if (ossl_cms_adjust_md(pk, &md, flags) != 1)
+    if (ossl_cms_adjust_md(ctx, pk, &md, flags) != 1)
         goto err;
 
     if (!X509_ALGOR_set_md(si->digestAlgorithm, md))
