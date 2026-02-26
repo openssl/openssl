@@ -47,7 +47,7 @@ values of various types. See ASN1_STRING_type_new(3),
 ASN1_STRING_get0_data(3), ASN1_STRING_set(3) and ASN1_STRING_length(3).
 
 If your code uses direct access to ASN1_STRING structure members you will
-need to convert it allocate the correct type ASN1_STRING, and use accessors.
+need to convert it to allocate the correct type ASN1_STRING, and use accessors.
 
 If your code has in the past used an ASN1_STRING as a stack allocated
 object you will need to allocate it from the heap with
