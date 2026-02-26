@@ -155,7 +155,7 @@ sub generate_version_tests {
                     foreach my $s_max ($s_max_min..$#max_protocols) {
                         my ($result, $protocol) =
                             expected_result($c_min, $c_max, $s_min, $s_max,
-                                            $min_enabled, $max_enabled,
+                                            $min_enabled, $max_enabled, $sctp,
                                             \@protocols);
                         push @tests, {
                             "name" => "version-negotiation",
@@ -405,9 +405,23 @@ sub generate_resumption_tests {
 }
 
 sub expected_result {
-    my ($c_min, $c_max, $s_min, $s_max, $min_enabled, $max_enabled,
+    my ($c_min, $c_max, $s_min, $s_max, $min_enabled, $max_enabled, $sctp,
         $protocols) = @_;
     my @prots = @$protocols;
+
+    # For DTLS over SCTP, DTLSv1.3 is not supported. Cap max_enabled to the
+    # highest SCTP-compatible protocol (DTLSv1.2 or below).
+    if ($sctp) {
+        my $sctp_max_enabled = $max_enabled;
+        for (my $i = $max_enabled; $i >= 0; $i--) {
+            if ($prots[$i] ne "DTLSv1.3") {
+                $sctp_max_enabled = $i;
+                last;
+            }
+        }
+        $c_max = min $c_max, $sctp_max_enabled;
+        $s_max = min $s_max, $sctp_max_enabled;
+    }
 
     my $orig_c_max = $c_max;
     # Adjust for "undef" (no limit).
