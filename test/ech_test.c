@@ -1761,7 +1761,6 @@ static int ech_grease_test(int idx)
     char *cinner = NULL, *couter = NULL, *sinner = NULL, *souter = NULL;
     unsigned char *retryconfig = NULL;
     size_t retryconfiglen = 0;
-    X509_STORE *ch = NULL;
     OSSL_ECHSTORE *es = NULL;
     BIO *in;
 
@@ -1956,7 +1955,6 @@ end:
     OPENSSL_free(retryconfig);
     SSL_free(clientssl);
     SSL_free(serverssl);
-    X509_STORE_free(ch);
     SSL_CTX_free(cctx);
     SSL_CTX_free(sctx);
     OSSL_ECHSTORE_free(es);
