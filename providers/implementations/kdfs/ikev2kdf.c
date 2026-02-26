@@ -15,6 +15,7 @@
 #include "internal/fips.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
+#include "prov/implementations.h"
 #include "prov/provider_util.h"
 #include "providers/implementations/kdfs/ikev2kdf.inc"
 
