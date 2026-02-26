@@ -1941,6 +1941,27 @@ const ML_KEM_VINFO *ossl_ml_kem_get_vinfo(int evp_type)
     return NULL;
 }
 
+/*
+ * @brief Fetch digest algorithms based on a propq.
+ * For the import case ossl_ml_kem_key_new() gets passed a NULL propq,
+ * so the propq is optionally deferred to the import using OSSL_PARAM.
+ */
+int ossl_ml_kem_key_fetch_digest(ML_KEM_KEY *key, const char *propq)
+{
+    if (key->shake128_md != NULL) {
+        EVP_MD_free(key->shake128_md);
+        EVP_MD_free(key->shake256_md);
+        EVP_MD_free(key->sha3_256_md);
+        EVP_MD_free(key->sha3_512_md);
+    }
+    key->shake128_md = EVP_MD_fetch(key->libctx, "SHAKE128", propq);
+    key->shake256_md = EVP_MD_fetch(key->libctx, "SHAKE256", propq);
+    key->sha3_256_md = EVP_MD_fetch(key->libctx, "SHA3-256", propq);
+    key->sha3_512_md = EVP_MD_fetch(key->libctx, "SHA3-512", propq);
+    return (key->shake128_md != NULL && key->shake256_md != NULL
+        && key->sha3_256_md != NULL && key->sha3_512_md != NULL);
+}
+
 ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
     int evp_type)
 {
@@ -1959,17 +1980,10 @@ ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
     key->vinfo = vinfo;
     key->libctx = libctx;
     key->prov_flags = ML_KEM_KEY_PROV_FLAGS_DEFAULT;
-    key->shake128_md = EVP_MD_fetch(libctx, "SHAKE128", properties);
-    key->shake256_md = EVP_MD_fetch(libctx, "SHAKE256", properties);
-    key->sha3_256_md = EVP_MD_fetch(libctx, "SHA3-256", properties);
-    key->sha3_512_md = EVP_MD_fetch(libctx, "SHA3-512", properties);
     key->d = key->z = key->rho = key->pkhash = key->encoded_dk = key->seedbuf = NULL;
     key->s = key->m = key->t = NULL;
-
-    if (key->shake128_md != NULL
-        && key->shake256_md != NULL
-        && key->sha3_256_md != NULL
-        && key->sha3_512_md != NULL)
+    key->shake128_md = key->shake256_md = key->sha3_256_md = key->sha3_512_md = NULL;
+    if (ossl_ml_kem_key_fetch_digest(key, properties))
         return key;
 
     ossl_ml_kem_key_free(key);
@@ -2036,10 +2050,10 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
         return NULL;
     }
 
-    EVP_MD_up_ref(ret->shake128_md);
-    EVP_MD_up_ref(ret->shake256_md);
-    EVP_MD_up_ref(ret->sha3_256_md);
-    EVP_MD_up_ref(ret->sha3_512_md);
+    EVP_MD_up_ref(key->shake128_md);
+    EVP_MD_up_ref(key->shake256_md);
+    EVP_MD_up_ref(key->sha3_256_md);
+    EVP_MD_up_ref(key->sha3_512_md);
 
     return ret;
 }

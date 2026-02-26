@@ -20,6 +20,9 @@
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/ml_dsa.h"
+
+#define ml_dsa_export_params
+#define ml_dsa_export_params_decoder
 #include "providers/implementations/keymgmt/ml_dsa_kmgmt.inc"
 
 static OSSL_FUNC_keymgmt_free_fn ml_dsa_free_key;
@@ -27,8 +30,8 @@ static OSSL_FUNC_keymgmt_has_fn ml_dsa_has;
 static OSSL_FUNC_keymgmt_match_fn ml_dsa_match;
 static OSSL_FUNC_keymgmt_import_fn ml_dsa_import;
 static OSSL_FUNC_keymgmt_export_fn ml_dsa_export;
-static OSSL_FUNC_keymgmt_import_types_fn ml_dsa_imexport_types;
-static OSSL_FUNC_keymgmt_export_types_fn ml_dsa_imexport_types;
+static OSSL_FUNC_keymgmt_import_types_fn ml_dsa_import_types;
+static OSSL_FUNC_keymgmt_export_types_fn ml_dsa_export_types;
 static OSSL_FUNC_keymgmt_dup_fn ml_dsa_dup_key;
 static OSSL_FUNC_keymgmt_gettable_params_fn ml_dsa_gettable_params;
 static OSSL_FUNC_keymgmt_validate_fn ml_dsa_validate;
@@ -204,9 +207,9 @@ static int ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM params[],
     const ML_DSA_PARAMS *key_params = ossl_ml_dsa_key_params(key);
     const uint8_t *pk = NULL, *sk = NULL, *seed = NULL;
     size_t pk_len = 0, sk_len = 0, seed_len = 0;
-    struct ml_dsa_key_type_params_st p;
+    struct ml_dsa_import_params_st p;
 
-    if (!ml_dsa_key_type_params_decoder(params, &p))
+    if (!ml_dsa_import_params_decoder(params, &p))
         return 0;
 
     if (p.pubkey != NULL) {
@@ -249,6 +252,12 @@ static int ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM params[],
         return 0;
     }
 
+    if (p.propq != NULL) {
+        if (p.propq->data_type != OSSL_PARAM_UTF8_STRING)
+            return 0;
+        if (!ossl_ml_dsa_key_fetch_digests(key, p.propq->data))
+            return 0;
+    }
     if (seed_len != 0
         && (sk_len == 0
             || (ossl_ml_dsa_key_get_prov_flags(key) & ML_DSA_KEY_PREFER_SEED))) {
@@ -304,11 +313,18 @@ static int ml_dsa_import(void *keydata, int selection, const OSSL_PARAM params[]
     return res;
 }
 
-static const OSSL_PARAM *ml_dsa_imexport_types(int selection)
+static const OSSL_PARAM *ml_dsa_import_types(int selection)
 {
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return NULL;
-    return ml_dsa_key_type_params_list;
+    return ml_dsa_import_params_list;
+}
+
+static const OSSL_PARAM *ml_dsa_export_types(int selection)
+{
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
+        return NULL;
+    return ml_dsa_export_params_list;
 }
 
 static const OSSL_PARAM *ml_dsa_gettable_params(void *provctx)
@@ -572,9 +588,9 @@ static void ml_dsa_gen_cleanup(void *genctx)
         { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ml_dsa_has },                                \
         { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))ml_dsa_match },                            \
         { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))ml_dsa_import },                          \
-        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))ml_dsa_imexport_types },            \
+        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))ml_dsa_import_types },              \
         { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ml_dsa_export },                          \
-        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))ml_dsa_imexport_types },            \
+        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))ml_dsa_export_types },              \
         DISPATCH_LOAD_FN { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*)(void))ml_dsa_get_params }, \
         { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*)(void))ml_dsa_gettable_params },        \
         { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))ml_dsa_validate },                      \
