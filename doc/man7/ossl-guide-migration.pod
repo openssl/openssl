@@ -93,9 +93,9 @@ values safely.
 Typically, you will need to change any variables holding these values
 to be const. If for some reason you need to mutate the returned object, you should
 make a copy of the returned const object into a mutable non-const object,
-bearing in mind that your copy has no effect on the original X509* object itself.
+bearing in mind that your copy has no effect on the original B<X509> object itself.
 
-The following functions have had arguments / return values related to X509* access
+The following functions have had arguments / return values related to B<X509>
 constified. For full details see their relevant manual pages.
 
 NAME_CONSTRAINTS_check
