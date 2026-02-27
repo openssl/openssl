@@ -24,6 +24,7 @@ typedef struct ht_internal_st HT;
  */
 typedef struct ht_key_header_st {
     size_t keysize;
+    size_t bufsize;
     uint8_t *keybuf;
 } HT_KEY;
 
@@ -107,11 +108,62 @@ typedef struct ht_config_st {
 /*
  * Initializes a key
  */
-#define HT_INIT_KEY(key)                                                \
-    do {                                                                \
-        memset((key), 0, sizeof(*(key)));                               \
-        (key)->key_header.keysize = (sizeof(*(key)) - sizeof(HT_KEY));  \
-        (key)->key_header.keybuf = (((uint8_t *)key) + sizeof(HT_KEY)); \
+#define HT_INIT_KEY(key)                                                                           \
+    do {                                                                                           \
+        memset((key), 0, sizeof(*(key)));                                                          \
+        (key)->key_header.keysize = (key)->key_header.bufsize = (sizeof(*(key)) - sizeof(HT_KEY)); \
+        (key)->key_header.keybuf = (((uint8_t *)key) + sizeof(HT_KEY));                            \
+    } while (0)
+
+/*
+ * Initalizes a key as a raw buffer
+ * This operates identically to HT_INIT_KEY
+ * but it treats the provided key as a raw buffer
+ * and iteratively accounts the running amount of
+ * data copied into the key from the caller.
+ *
+ * This MUST be used with the RAW macros below:
+ * HT_COPY_RAW_KEY
+ * HT_COPY_RAW_KEY_CASE
+ */
+#define HT_INIT_RAW_KEY(key)           \
+    do {                               \
+        HT_INIT_KEY((key));            \
+        (key)->key_header.keysize = 0; \
+    } while (0)
+
+/*
+ * Helper function to copy raw data into a key
+ * This should not be called independently
+ * use the HT_COPY_RAW_KEY macro instead
+ */
+static ossl_inline ossl_unused int ossl_key_raw_copy(HT_KEY *key, const uint8_t *buf, size_t len)
+{
+    if (key->keysize + len > key->bufsize)
+        return 0;
+    memcpy(&key->keybuf[key->keysize], buf, len);
+    key->keysize += len;
+    return 1;
+}
+
+/*
+ * Copy data directly into a key
+ * When initialized with HT_INIT_RAW_KEY, this macro
+ * can be used to copy packed data into a key for hashtable usage
+ * It is adventageous as it limits the amount of data that needs to
+ * be hashed when doing inserts/lookups/deletes, as it tracks how much
+ * key data is actually valid
+ */
+#define HT_COPY_RAW_KEY(key, buf, len) ossl_key_raw_copy(key, buf, len)
+
+/*
+ * Similar to HT_COPY_RAW_KEY but accepts a character buffer, and copies
+ * data while converting case for case insensitive matches
+ */
+#define HT_COPY_RAW_KEY_CASE(key, buf, len)                                         \
+    do {                                                                            \
+        ossl_ht_strcase((key), (char *)&((key)->keybuf[(key)->keysize]), buf, len); \
+        (key)->keysize += len;                                                      \
     } while (0)
 
 /*
@@ -140,9 +192,9 @@ typedef struct ht_config_st {
  * This is useful for instances in which we want upper and lower case
  * key value to hash to the same entry
  */
-#define HT_SET_KEY_STRING_CASE(key, member, value)                                            \
-    do {                                                                                      \
-        ossl_ht_strcase((key)->keyfields.member, value, sizeof((key)->keyfields.member) - 1); \
+#define HT_SET_KEY_STRING_CASE(key, member, value)                                                  \
+    do {                                                                                            \
+        ossl_ht_strcase(NULL, (key)->keyfields.member, value, sizeof((key)->keyfields.member) - 1); \
     } while (0)
 
 /*
@@ -159,12 +211,12 @@ typedef struct ht_config_st {
     } while (0)
 
 /* Same as HT_SET_KEY_STRING_CASE but also takes length of the string. */
-#define HT_SET_KEY_STRING_CASE_N(key, member, value, len)                                         \
-    do {                                                                                          \
-        if ((size_t)len < sizeof((key)->keyfields.member))                                        \
-            ossl_ht_strcase((key)->keyfields.member, value, len);                                 \
-        else                                                                                      \
-            ossl_ht_strcase((key)->keyfields.member, value, sizeof((key)->keyfields.member) - 1); \
+#define HT_SET_KEY_STRING_CASE_N(key, member, value, len)                                               \
+    do {                                                                                                \
+        if ((size_t)len < sizeof((key)->keyfields.member))                                              \
+            ossl_ht_strcase(NULL, (key)->keyfields.member, value, len);                                 \
+        else                                                                                            \
+            ossl_ht_strcase(NULL, (key)->keyfields.member, value, sizeof((key)->keyfields.member) - 1); \
     } while (0)
 
 /*
@@ -261,7 +313,7 @@ typedef struct ht_config_st {
 /*
  * Helper function to construct case insensitive keys
  */
-static void ossl_unused ossl_ht_strcase(char *tgt, const char *src, int len)
+static ossl_inline ossl_unused void ossl_ht_strcase(HT_KEY *key, char *tgt, const char *src, int len)
 {
     int i;
 #if defined(CHARSET_EBCDIC) && !defined(CHARSET_EBCDIC_TEST)
@@ -272,6 +324,14 @@ static void ossl_unused ossl_ht_strcase(char *tgt, const char *src, int len)
 
     if (src == NULL)
         return;
+
+    /*
+     * If we're passed a key, we're doing raw key copies
+     * so check that we don't overflow here, and truncate if
+     * we copy more space than we have available
+     */
+    if (key != NULL && key->keysize + len > key->bufsize)
+        len = key->bufsize - key->keysize;
 
     for (i = 0; src[i] != '\0' && i < len; i++)
         tgt[i] = case_adjust & src[i];
