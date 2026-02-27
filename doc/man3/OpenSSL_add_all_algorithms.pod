@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-OpenSSL_add_all_algorithms, OpenSSL_add_all_ciphers, OpenSSL_add_all_digests, EVP_cleanup -
+OpenSSL_add_all_algorithms, OpenSSL_add_all_ciphers, OpenSSL_add_all_digests -
 add algorithms to internal table
 
 =head1 SYNOPSIS
@@ -17,8 +17,6 @@ see L<openssl_user_macros(7)>:
  void OpenSSL_add_all_ciphers(void);
  void OpenSSL_add_all_digests(void);
 
- void EVP_cleanup(void);
-
 =head1 DESCRIPTION
 
 OpenSSL keeps an internal table of digest algorithms and ciphers. It uses
@@ -32,9 +30,6 @@ ciphers).
 OpenSSL_add_all_ciphers() adds all encryption algorithms to the table including
 password based encryption algorithms.
 
-In versions prior to 1.1.0 EVP_cleanup() removed all ciphers and digests from
-the table. It no longer has any effect in OpenSSL 1.1.0.
-
 =head1 RETURN VALUES
 
 None of the functions return a value.
@@ -47,7 +42,7 @@ L<EVP_EncryptInit(3)>
 =head1 HISTORY
 
 The OpenSSL_add_all_algorithms(), OpenSSL_add_all_ciphers(),
-OpenSSL_add_all_digests(), and EVP_cleanup(), functions
+and OpenSSL_add_all_digests(), functions
 were deprecated in OpenSSL 1.1.0 by OPENSSL_init_crypto() and should
 not be used.
 

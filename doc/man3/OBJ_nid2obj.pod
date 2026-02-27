@@ -5,7 +5,7 @@
 i2t_ASN1_OBJECT,
 OBJ_length, OBJ_get0_data, OBJ_nid2obj, OBJ_nid2ln,
 OBJ_nid2sn, OBJ_obj2nid, OBJ_txt2nid, OBJ_ln2nid, OBJ_sn2nid, OBJ_cmp,
-OBJ_dup, OBJ_txt2obj, OBJ_obj2txt, OBJ_create, OBJ_cleanup, OBJ_add_sigid
+OBJ_dup, OBJ_txt2obj, OBJ_obj2txt, OBJ_create, OBJ_add_sigid
 - ASN1 object utility functions
 
 =head1 SYNOPSIS
@@ -36,12 +36,6 @@ OBJ_dup, OBJ_txt2obj, OBJ_obj2txt, OBJ_create, OBJ_cleanup, OBJ_add_sigid
  const unsigned char *OBJ_get0_data(const ASN1_OBJECT *obj);
 
  int OBJ_add_sigid(int signid, int dig_id, int pkey_id);
-
-The following function has been deprecated since OpenSSL 1.1.0, and can be
-hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
-see L<openssl_user_macros(7)>:
-
- void OBJ_cleanup(void);
 
 =head1 DESCRIPTION
 
@@ -104,8 +98,6 @@ conjunction with it. I<signid> represents the NID for the composite "Signature
 Algorithm", I<dig_id> is the NID for the digest algorithm and I<pkey_id> is the
 NID for the underlying signature algorithm. As there are signature algorithms
 that do not require a digest, NID_undef is a valid I<dig_id>.
-
-OBJ_cleanup() releases any resources allocated by creating new objects.
 
 =head1 NOTES
 
@@ -186,11 +178,6 @@ Create a new object directly:
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>
-
-=head1 HISTORY
-
-OBJ_cleanup() was deprecated in OpenSSL 1.1.0 by L<OPENSSL_init_crypto(3)>
-and should not be used.
 
 =head1 COPYRIGHT
 

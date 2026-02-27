@@ -103,6 +103,15 @@ OpenSSL 4.0
 
    *Milan Broz*
 
+* Removal of no-op macros.
+
+  CONF_modules_free(), ENGINE_cleanup(), OBJ_cleanup(),
+  EVP_cleanup(), BIO_sock_cleanup(), CRYPTO_cleanup_all_ex_data(),
+  RAND_cleanup(), SSL_COMP_free_compression_methods(), ERR_free_strings() and
+  COMP_zlib_cleanup() were removed and can simply be removed by migrating apps.
+
+  *Frederik Wedel-Heinen*
+
  * The `OSSL_ESS_check_signing_certs_ex()` call has been added.
 
    This api call is an extention to `OSSL_ESS_check_signing_certs()` to add

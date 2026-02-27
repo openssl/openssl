@@ -2031,10 +2031,6 @@ DEPEND[html/man3/RAND_bytes.html]=man3/RAND_bytes.pod
 GENERATE[html/man3/RAND_bytes.html]=man3/RAND_bytes.pod
 DEPEND[man/man3/RAND_bytes.3]=man3/RAND_bytes.pod
 GENERATE[man/man3/RAND_bytes.3]=man3/RAND_bytes.pod
-DEPEND[html/man3/RAND_cleanup.html]=man3/RAND_cleanup.pod
-GENERATE[html/man3/RAND_cleanup.html]=man3/RAND_cleanup.pod
-DEPEND[man/man3/RAND_cleanup.3]=man3/RAND_cleanup.pod
-GENERATE[man/man3/RAND_cleanup.3]=man3/RAND_cleanup.pod
 DEPEND[html/man3/RAND_egd.html]=man3/RAND_egd.pod
 GENERATE[html/man3/RAND_egd.html]=man3/RAND_egd.pod
 DEPEND[man/man3/RAND_egd.3]=man3/RAND_egd.pod
@@ -3547,7 +3543,6 @@ html/man3/PKCS8_encrypt.html \
 html/man3/PKCS8_pkey_add1_attr.html \
 html/man3/RAND_add.html \
 html/man3/RAND_bytes.html \
-html/man3/RAND_cleanup.html \
 html/man3/RAND_egd.html \
 html/man3/RAND_get0_primary.html \
 html/man3/RAND_load_file.html \
@@ -4219,7 +4214,6 @@ man/man3/PKCS8_encrypt.3 \
 man/man3/PKCS8_pkey_add1_attr.3 \
 man/man3/RAND_add.3 \
 man/man3/RAND_bytes.3 \
-man/man3/RAND_cleanup.3 \
 man/man3/RAND_egd.3 \
 man/man3/RAND_get0_primary.3 \
 man/man3/RAND_load_file.3 \
