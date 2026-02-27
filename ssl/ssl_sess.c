@@ -745,7 +745,7 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
      * case, s == c should hold (then we did not really modify
      * ctx->sessions), or we're in trouble.
      */
-    if (s != NULL && s != c) {
+    if (s != NULL) {
         /* We *are* in trouble ... */
         SSL_SESSION_list_remove(ctx, s);
         SSL_SESSION_free(s);
@@ -764,6 +764,8 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
          * the session to the SSL_SESSION_list at this time
          */
         s = c;
+    } else {
+        ret = 1; /* new entry is successfully inserted */
     }
 
     /* Adjust last used time, and add back into the cache at the appropriate spot */
@@ -774,23 +776,29 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
 
     if (s == NULL) {
         /*
-         * new cache entry -- remove old ones if cache has become too large
-         * delete cache entry *before* add, so we don't remove the one we're adding!
+         * new cache entry (or out of memory), either  way we try to remove old
+         * ones if cache has become too large delete cache entry.
          */
-
-        ret = 1;
 
         if (SSL_CTX_sess_get_cache_size(ctx) > 0) {
             while (SSL_CTX_sess_number(ctx) >= SSL_CTX_sess_get_cache_size(ctx)) {
+                /*
+                 * very unlikely we happen to remove entry we just inserted,
+                 * but better safe than sorry?
+                 */
+                if (ctx->session_cache_tail == c) {
+                    ret = 0;
+                    s = c; /* drop reference on failure */
+                }
                 if (!remove_session_lock(ctx, ctx->session_cache_tail, 0))
                     break;
                 else
                     ssl_tsan_counter(ctx, &ctx->stats.sess_cache_full);
             }
         }
+        if (ret == 1)
+            SSL_SESSION_list_add(ctx, c);
     }
-
-    SSL_SESSION_list_add(ctx, c);
 
     if (s != NULL) {
         /*
