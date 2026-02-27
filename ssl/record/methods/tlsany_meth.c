@@ -43,75 +43,64 @@ static int tls_any_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
 
 static int tls_validate_record_header(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
 {
-    if (rec->rec_version == SSL2_VERSION) {
-        /* SSLv2 format ClientHello */
-        if (!ossl_assert(rl->version == TLS_ANY_VERSION)) {
-            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-        if (rec->length < MIN_SSL2_RECORD_LEN) {
-            RLAYERfatal(rl, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_TOO_SHORT);
-            return 0;
-        }
-    } else {
-        if (rl->version == TLS_ANY_VERSION) {
-            if ((rec->rec_version >> 8) != SSL3_VERSION_MAJOR) {
-                if (rl->is_first_record) {
-                    unsigned char *p;
+    if (rl->version == TLS_ANY_VERSION) {
+        if ((rec->rec_version >> 8) != SSL3_VERSION_MAJOR) {
+            if (rl->is_first_record) {
+                unsigned char *p;
 
-                    /*
-                     * Go back to start of packet, look at the five bytes that
-                     * we have.
-                     */
-                    p = rl->packet;
-                    if (HAS_PREFIX((char *)p, "GET ") || HAS_PREFIX((char *)p, "POST ") || HAS_PREFIX((char *)p, "HEAD ") || HAS_PREFIX((char *)p, "PATCH") || HAS_PREFIX((char *)p, "OPTIO") || HAS_PREFIX((char *)p, "DELET") || HAS_PREFIX((char *)p, "TRACE") || HAS_PREFIX((char *)p, "PUT ")) {
-                        RLAYERfatal(rl, SSL_AD_NO_ALERT, SSL_R_HTTP_REQUEST);
-                        return 0;
-                    } else if (HAS_PREFIX((char *)p, "CONNE")) {
-                        RLAYERfatal(rl, SSL_AD_NO_ALERT,
-                            SSL_R_HTTPS_PROXY_REQUEST);
-                        return 0;
-                    }
-
-                    /* Doesn't look like TLS - don't send an alert */
-                    RLAYERfatal(rl, SSL_AD_NO_ALERT,
-                        SSL_R_WRONG_VERSION_NUMBER);
+                /*
+                 * Go back to start of packet, look at the five bytes that
+                 * we have.
+                 */
+                p = rl->packet;
+                if (HAS_PREFIX((char *)p, "GET ") || HAS_PREFIX((char *)p, "POST ") || HAS_PREFIX((char *)p, "HEAD ") || HAS_PREFIX((char *)p, "PATCH") || HAS_PREFIX((char *)p, "OPTIO") || HAS_PREFIX((char *)p, "DELET") || HAS_PREFIX((char *)p, "TRACE") || HAS_PREFIX((char *)p, "PUT ")) {
+                    RLAYERfatal(rl, SSL_AD_NO_ALERT, SSL_R_HTTP_REQUEST);
                     return 0;
-                } else {
-                    RLAYERfatal(rl, SSL_AD_PROTOCOL_VERSION,
-                        SSL_R_WRONG_VERSION_NUMBER);
+                } else if (HAS_PREFIX((char *)p, "CONNE")) {
+                    RLAYERfatal(rl, SSL_AD_NO_ALERT,
+                        SSL_R_HTTPS_PROXY_REQUEST);
                     return 0;
                 }
+
+                /* Doesn't look like TLS - don't send an alert */
+                RLAYERfatal(rl, SSL_AD_NO_ALERT,
+                    SSL_R_WRONG_VERSION_NUMBER);
+                return 0;
+            } else {
+                RLAYERfatal(rl, SSL_AD_PROTOCOL_VERSION,
+                    SSL_R_WRONG_VERSION_NUMBER);
+                return 0;
             }
-        } else if (rl->version == TLS1_3_VERSION) {
-            /*
-             * In this case we know we are going to negotiate TLSv1.3, but we've
-             * had an HRR, so we haven't actually done so yet. In TLSv1.3 we
-             * must ignore the legacy record version in plaintext records.
-             */
-        } else if (rec->rec_version != rl->version) {
-            if ((rl->version & 0xFF00) == (rec->rec_version & 0xFF00)) {
-                if (rec->type == SSL3_RT_ALERT) {
-                    /*
-                     * The record is using an incorrect version number,
-                     * but what we've got appears to be an alert. We
-                     * haven't read the body yet to check whether its a
-                     * fatal or not - but chances are it is. We probably
-                     * shouldn't send a fatal alert back. We'll just
-                     * end.
-                     */
-                    RLAYERfatal(rl, SSL_AD_NO_ALERT,
-                        SSL_R_WRONG_VERSION_NUMBER);
-                    return 0;
-                }
-                /* Send back error using their minor version number */
-                rl->version = (unsigned short)rec->rec_version;
-            }
-            RLAYERfatal(rl, SSL_AD_PROTOCOL_VERSION,
-                SSL_R_WRONG_VERSION_NUMBER);
-            return 0;
         }
+    } else if (rl->version == TLS1_3_VERSION) {
+        /*
+         * In this case we know we are going to negotiate TLSv1.3, but we've
+         * had an HRR, so we haven't actually done so yet. In TLSv1.3 we
+         * must ignore the legacy record version in plaintext records.
+         */
+    } else if (rec->rec_version != rl->version) {
+        if ((rl->version & 0xFF00) == (rec->rec_version & 0xFF00)) {
+            if (rec->type == SSL3_RT_ALERT) {
+                /*
+                 * The record is using an incorrect version number,
+                 * but what we've got appears to be an alert. We
+                 * haven't read the body yet to check whether its a
+                 * fatal or not - but chances are it is. We probably
+                 * shouldn't send a fatal alert back. We'll just
+                 * end.
+                 */
+                RLAYERfatal(rl, SSL_AD_NO_ALERT,
+                    SSL_R_WRONG_VERSION_NUMBER);
+                return 0;
+            }
+            /* Send back error using their minor version number */
+            rl->version = (unsigned short)rec->rec_version;
+        }
+        RLAYERfatal(rl, SSL_AD_PROTOCOL_VERSION,
+            SSL_R_WRONG_VERSION_NUMBER);
+        return 0;
     }
+
     if (rec->length > SSL3_RT_MAX_PLAIN_LENGTH) {
         /*
          * We use SSL_R_DATA_LENGTH_TOO_LONG instead of
