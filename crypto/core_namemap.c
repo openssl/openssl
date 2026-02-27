@@ -154,7 +154,7 @@ int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name)
         return 0;
 
     HT_INIT_RAW_KEY(&key);
-    HT_COPY_RAW_KEY_CASE(TO_HT_KEY(&key), name, strlen(name));
+    HT_COPY_RAW_KEY_CASE(TO_HT_KEY(&key), name, (int)strlen(name));
 
     val = ossl_ht_get(namemap->namenum_ht, TO_HT_KEY(&key));
 
@@ -184,7 +184,7 @@ int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
         name_len = NAMEMAP_NAME_LEN;
 
     HT_INIT_RAW_KEY(&key);
-    HT_COPY_RAW_KEY_CASE(TO_HT_KEY(&key), name, name_len);
+    HT_COPY_RAW_KEY_CASE(TO_HT_KEY(&key), name, (int)name_len);
 
     val = ossl_ht_get(namemap->namenum_ht, TO_HT_KEY(&key));
 
@@ -276,7 +276,7 @@ static int namemap_add_name(OSSL_NAMEMAP *namemap, int number,
     tsan_store(&namemap->max_number, number);
 
     HT_INIT_RAW_KEY(&key);
-    HT_COPY_RAW_KEY_CASE(TO_HT_KEY(&key), name, strlen(name));
+    HT_COPY_RAW_KEY_CASE(TO_HT_KEY(&key), name, (int)strlen(name));
 
     val.value = (void *)(intptr_t)number;
     ret = ossl_ht_insert(namemap->namenum_ht, TO_HT_KEY(&key), &val, NULL);
