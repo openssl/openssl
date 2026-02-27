@@ -478,7 +478,8 @@ int ossl_cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
              * Workaround for broken implementations that use signature
              * algorithm OID instead of digest.
              */
-            || EVP_MD_get_pkey_type(EVP_MD_CTX_get0_md(mtmp)) == nid)
+            || EVP_MD_get_pkey_type(EVP_MD_CTX_get0_md(mtmp)) == nid
+            || OBJ_sn2nid(EVP_MD_CTX_get0_name(mtmp)) == nid)
             return EVP_MD_CTX_copy_ex(mctx, mtmp);
         chain = BIO_next(chain);
     }

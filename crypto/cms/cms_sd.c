@@ -529,7 +529,7 @@ static EVP_MD *ossl_cms_get_noattr_md(const CMS_CTX *ctx, EVP_PKEY *pk, int *noa
     return NULL;
 }
 
-static int ossl_cms_adjust_md(const CMS_CTX *ctx, EVP_PKEY *pk, const EVP_MD **md, EVP_MD** fetched_md, unsigned int flags)
+static int ossl_cms_adjust_md(const CMS_CTX *ctx, EVP_PKEY *pk, const EVP_MD **md, EVP_MD **fetched_md, unsigned int flags)
 {
     int md_a_must = 0;
 
