@@ -11,7 +11,7 @@ Support for computing the B<IKEV2KDF> KDF through the B<EVP_KDF> API.
 The EVP_KDF-IKEV2KDF algorithm implements the IKEv2 key derivation function.
 It is defined in RFC 7296, section 2.13, 2.14, 2.17, 2.18 and is used by the
 Internet Key Exchange version 2 (IKEv2) protocol to derive various keys from
-the shared secretestablished during the Diffie-Hellman exchange.
+the shared secret established during the Diffie-Hellman exchange.
 The key derivation requires several inputs including the hashing function,
 the shared secret (g^ir), nonces from both parties, the Security
 Parameter Index (SPI) values from both parties, and new shared secret (new g^ir).
@@ -32,17 +32,16 @@ The supported parameters are:
 =item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
 
 These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
-It must be set to one of "SHA1", "SHA224", SHA256", "SHA384", or
+It must be set to one of "SHA1", "SHA224", "SHA256", "SHA384", or
 "SHA512" for the IKEV2KDF implementation.
 If a value is already set, the contents are replaced.
 
 =item "secret" (B<OSSL_KDF_PARAM_SECRET>) <octet string>
 
-This parameter sets the shared secret (g^ir) used as generating SEEDKEY.
-It is represented as a string of octets in big endian order padded with zeros
-if necessary to make it the length of the modulus.
-This parameter sets the shared secret (new g^ir) used as deriving DKM(Child_SA)
-or deriving REKEY.
+This parameter sets the shared secret (g^ir) used for generating SEEDKEY,
+or the new shared secret (new g^ir) used for deriving DKM(Child_SA) or REKEY.
+The shared secret is represented as a string of octets in big endian order,
+padded with zeros if necessary to make it the length of the modulus.
 If a value is already set, the contents are replaced.
 
 =item "ni" (B<OSSL_KDF_PARAM_IKEV2_NI>) <octet string>
@@ -76,31 +75,31 @@ three different modes of operation:
 
 =over 8
 
-=item * Mode 0: generating SKEYSEED used in deriving key material
+=item EVP_KDF_IKEV2_MODE_GEN
 
-=item * Mode 1: deriving key materials. It has 3 stages.
+It generates SKEYSEED used in deriving key material
 
-Initial key derivation - derives the initial set of keys
-(SK_d, SK_ai, SK_ar, SK_ei, SK_er, SK_pi, SK_pr) from SKEYSEED using the
-nonces (from both sides), and security parameter index (SPI) values (from both
-sides).
+=item EVP_KDF_IKEV2_MODE_DKM
 
-2nd stage key derivation - derives keying material for the Child_SA
+It has 3 stages, based on the input parameter sets.
 
-3rd stage key derivation - derives keying material for the Child_DH
+It first performs initial key derivation - derives the initial set of keys
+(SK_d, SK_ai, SK_ar, SK_ei, SK_er, SK_pi, SK_pr) using SKEYSEED generated in
+"EVP_KDF_IKEV2_MODE_GEN", the nonces (from both sides), and security parameter
+index (SPI) values (from both sides).
 
-=item * Mode 2: Rekey derivation - derives a new SKEYSEED when rekeying the
-IKE SA, using the existing SK_d as input along with new nonces and SPIs.
+Then it derives keying material for the Child_SA, using the SK_d as input
+along with new nonces.
+
+Finally, it derives keying material for the Child_DH, using the SK_d as input
+along with new nonces and new shared secret (new g^ir).
+
+=item EVP_KDF_IKEV2_MODE_REKEY
+
+It derives a new SKEYSEED when rekeying the IKE SA, using the existing SK_d as
+input along with new nonces and new shared secret (new g^ir).
 
 =back
-
-If a value is already set, the contents are replaced.
-
-=item "type" (B<OSSL_KDF_PARAM_IKEV2KDF_TYPE>) <int>
-
-This parameter specifies the type of key being derived within the selected mode.
-When type=1, a new secret is used for the key derivation process DKM(Child_DH).
-If a value is already set, the contents are replaced.
 
 =back
 
@@ -153,8 +152,10 @@ shared secret, and nonces:
         /* Error */
         ;
     }
+    EVP_KDF_CTX_free(kctx);
+    EVP_KDF_free(kdf);
 
-=head2 Example of generating deriving key material DKM(Initial SA)
+=head2 Example of deriving key material DKM(Initial SA)
 
     EVP_KDF *kdf = NULL;
     EVP_KDF_CTX *kctx = NULL;
@@ -191,6 +192,8 @@ shared secret, and nonces:
         /* Error handling */
         ;
     }
+    EVP_KDF_CTX_free(kctx);
+    EVP_KDF_free(kdf);
 
 =head2 Example of generating DKM(Child_SA)
 
@@ -223,6 +226,8 @@ shared secret, and nonces:
         /* Error handling */
         ;
     }
+    EVP_KDF_CTX_free(kctx);
+    EVP_KDF_free(kdf);
 
 =head2 Example of generating DKM(Child_DH)
 
@@ -239,7 +244,7 @@ shared secret, and nonces:
     kdf = EVP_KDF_fetch(NULL, "IKEV2KDF", NULL);
     kctx = EVP_KDF_CTX_new(kdf);
     if (!kctx) {
-        /* error handling */
+        /* Error handling */
     }
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
@@ -258,6 +263,8 @@ shared secret, and nonces:
         /* Error */
         ;
     }
+    EVP_KDF_CTX_free(kctx);
+    EVP_KDF_free(kdf);
 
 =head2 Example of rekeying the IKE SA
 
@@ -293,6 +300,8 @@ shared secret, and nonces:
         /* Error handling */
         ;
     }
+    EVP_KDF_CTX_free(kctx);
+    EVP_KDF_free(kdf);
 
 =head1 CONFORMING TO
 
