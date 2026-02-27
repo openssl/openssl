@@ -608,14 +608,14 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
             if (rl->msg_callback != NULL)
                 rl->msg_callback(0, version, SSL3_RT_HEADER, p, 5, rl->cbarg);
 
-            if (thisrr->length > TLS_BUFFER_get_len(rbuf) - SSL3_RT_HEADER_LENGTH) {
-                RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW,
-                    SSL_R_PACKET_LENGTH_TOO_LONG);
+            if (!rl->funcs->validate_record_header(rl, thisrr)) {
+                /* RLAYERfatal already called */
                 return OSSL_RECORD_RETURN_FATAL;
             }
 
-            if (!rl->funcs->validate_record_header(rl, thisrr)) {
-                /* RLAYERfatal already called */
+            if (thisrr->length > TLS_BUFFER_get_len(rbuf) - SSL3_RT_HEADER_LENGTH) {
+                RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW,
+                    SSL_R_PACKET_LENGTH_TOO_LONG);
                 return OSSL_RECORD_RETURN_FATAL;
             }
 
