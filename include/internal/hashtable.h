@@ -116,7 +116,7 @@ typedef struct ht_config_st {
     } while (0)
 
 /*
- * Initalizes a key as a raw buffer
+ * Initializes a key as a raw buffer
  * This operates identically to HT_INIT_KEY
  * but it treats the provided key as a raw buffer
  * and iteratively accounts the running amount of
@@ -150,7 +150,7 @@ static ossl_inline ossl_unused int ossl_key_raw_copy(HT_KEY *key, const uint8_t 
  * Copy data directly into a key
  * When initialized with HT_INIT_RAW_KEY, this macro
  * can be used to copy packed data into a key for hashtable usage
- * It is adventageous as it limits the amount of data that needs to
+ * It is advantageous as it limits the amount of data that needs to
  * be hashed when doing inserts/lookups/deletes, as it tracks how much
  * key data is actually valid
  */
