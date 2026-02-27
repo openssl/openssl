@@ -16,8 +16,9 @@
 
 #define NAMEMAP_HT_BUCKETS 512
 
+#define NAMEMAP_NAME_LEN 64
 HT_START_KEY_DEFN(namenum_key)
-HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, NAMEMAP_NAME_LEN)
 HT_END_KEY_DEFN(NAMENUM_KEY)
 
 /*-
@@ -152,8 +153,8 @@ int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name)
     if (namemap == NULL)
         return 0;
 
-    HT_INIT_KEY(&key);
-    HT_SET_KEY_STRING_CASE(&key, name, name);
+    HT_INIT_RAW_KEY(&key);
+    HT_COPY_RAW_KEY_CASE(TO_HT_KEY(&key), name, strlen(name));
 
     val = ossl_ht_get(namemap->namenum_ht, TO_HT_KEY(&key));
 
@@ -179,8 +180,11 @@ int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
     if (namemap == NULL)
         return 0;
 
-    HT_INIT_KEY(&key);
-    HT_SET_KEY_STRING_CASE_N(&key, name, name, (int)name_len);
+    if (name_len > NAMEMAP_NAME_LEN)
+        name_len = NAMEMAP_NAME_LEN;
+
+    HT_INIT_RAW_KEY(&key);
+    HT_COPY_RAW_KEY_CASE(TO_HT_KEY(&key), name, name_len);
 
     val = ossl_ht_get(namemap->namenum_ht, TO_HT_KEY(&key));
 
@@ -271,8 +275,9 @@ static int namemap_add_name(OSSL_NAMEMAP *namemap, int number,
     /* Using tsan_store alone here is safe since we're under lock */
     tsan_store(&namemap->max_number, number);
 
-    HT_INIT_KEY(&key);
-    HT_SET_KEY_STRING_CASE(&key, name, name);
+    HT_INIT_RAW_KEY(&key);
+    HT_COPY_RAW_KEY_CASE(TO_HT_KEY(&key), name, strlen(name));
+
     val.value = (void *)(intptr_t)number;
     ret = ossl_ht_insert(namemap->namenum_ht, TO_HT_KEY(&key), &val, NULL);
     if (ret <= 0) {
