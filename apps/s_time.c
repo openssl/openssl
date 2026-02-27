@@ -249,9 +249,6 @@ int s_time_main(int argc, char **argv)
     if (!opt_check_rest_arg(NULL))
         goto opthelp;
 
-    if (cipher == NULL)
-        cipher = getenv("SSL_CIPHER");
-
     if ((ctx = SSL_CTX_new(meth)) == NULL)
         goto end;
 

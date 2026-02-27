@@ -105,11 +105,19 @@ OpenSSL 4.0
 
  * The `OSSL_ESS_check_signing_certs_ex()` call has been added.
 
-   This api call is an extention to `OSSL_ESS_check_signing_certs()` to add
+   This api call is an extension to `OSSL_ESS_check_signing_certs()` to add
    the ability to specify a library context and property query when fetching
    algorithms to validate a given certificate.
 
    *Neil Horman*
+
+* s_time: `SSL_CIPHER` environment variable support removed.
+
+  s_time supported setting the TLSv1.2 and below cipher list to be used through
+  and undocumented environment variable. Applications should use the `-cipher`
+  instead.
+
+  *Frederik Wedel-Heinen*
 
  * ASN1_OBJECT_new() has been deprecated.
 
