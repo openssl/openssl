@@ -92,6 +92,11 @@ OpenSSL 4.0
 
    *Viktor Dukhovni*
 
+ * The SSL_TXT_FIPS option has been removed.  This was a remnant of
+   the old FIPS canister and wasn't used anymore.
+
+   * Dr Paul Dale *
+
  * Added support for TLS 1.3 SM cipher suites `TLS_SM4_GCM_SM3` and `TLS_SM4_CCM_SM3`
    from [RFC8998].
 
