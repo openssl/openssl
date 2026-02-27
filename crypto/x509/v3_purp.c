@@ -461,8 +461,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     STACK_OF(GENERAL_NAME) *tmp_altname;
     NAME_CONSTRAINTS *tmp_nc;
     STACK_OF(DIST_POINT) *tmp_crldp = NULL;
-    STACK_OF(IPAddressFamily) *tmp_rfc3779_addr;
-    struct ASIdentifiers_st *tmp_rfc3779_asid;
     X509_SIG_INFO tmp_siginf;
 
 #ifdef tsan_ld_acq
@@ -641,13 +639,17 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
         tmp_ex_flags |= EXFLAG_INVALID;
 
 #ifndef OPENSSL_NO_RFC3779
-    tmp_rfc3779_addr = X509_get_ext_d2i(const_x, NID_sbgp_ipAddrBlock, &i, NULL);
+    STACK_OF(IPAddressFamily) *tmp_rfc3779_addr
+        = X509_get_ext_d2i(const_x, NID_sbgp_ipAddrBlock, &i, NULL);
     if (tmp_rfc3779_addr == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
-    tmp_rfc3779_asid = X509_get_ext_d2i(const_x, NID_sbgp_autonomousSysNum, &i, NULL);
+
+    struct ASIdentifiers_st *tmp_rfc3779_asid
+        = X509_get_ext_d2i(const_x, NID_sbgp_autonomousSysNum, &i, NULL);
     if (tmp_rfc3779_asid == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
 #endif
+
     for (i = 0; i < X509_get_ext_count(const_x); i++) {
         const X509_EXTENSION *ex = X509_get_ext(const_x, i);
         int nid = OBJ_obj2nid(X509_EXTENSION_get_object(ex));
@@ -711,10 +713,12 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     ((X509 *)const_x)->nc = tmp_nc;
     sk_DIST_POINT_pop_free(((X509 *)const_x)->crldp, DIST_POINT_free);
     ((X509 *)const_x)->crldp = tmp_crldp;
+#ifndef OPENSSL_NO_RFC3779
     sk_IPAddressFamily_pop_free(((X509 *)const_x)->rfc3779_addr, IPAddressFamily_free);
     ((X509 *)const_x)->rfc3779_addr = tmp_rfc3779_addr;
     ASIdentifiers_free(((X509 *)const_x)->rfc3779_asid);
     ((X509 *)const_x)->rfc3779_asid = tmp_rfc3779_asid;
+#endif
     ((X509 *)const_x)->siginf = tmp_siginf;
 
 #ifdef tsan_st_rel
