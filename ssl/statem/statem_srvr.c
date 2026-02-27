@@ -1703,6 +1703,12 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
+            if (ossl_ech_intbuf_add(s, s->ext.ech.innerch,
+                    s->ext.ech.innerch_len, 0)
+                != 1) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
         } else if (s->ext.ech.es != NULL) {
             PACKET newpkt;
 
