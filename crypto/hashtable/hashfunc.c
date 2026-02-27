@@ -21,3 +21,54 @@ ossl_unused uint64_t ossl_fnv1a_hash(uint8_t *key, size_t len)
     }
     return hash;
 }
+
+uint64_t ossl_murmur2_64(uint8_t *key, size_t len)
+{
+    const uint64_t m = 0xc6a4a7935bd1e995ULL;
+    uint64_t *key64 = (uint64_t *)key;
+    uint64_t hash;
+    size_t i;
+
+    hash = 0 ^ (len * m);
+    for (i = 0; i < len / 8; i++) {
+        uint64_t k;
+
+        k = key64[i] * m;
+        k = k ^ (k >> 47);
+        k = k * m;
+        hash = hash ^ k;
+        hash = hash * m;
+    }
+
+    key = (uint8_t *)&key64[i];
+    switch (len & 7) {
+    case 7:
+        hash = hash ^ (uint64_t)key[6] << 48;
+        /* FALLTHRU */
+    case 6:
+        hash = hash ^ (uint64_t)key[5] << 40;
+        /* FALLTHRU */
+    case 5:
+        hash = hash ^ (uint64_t)key[4] << 32;
+        /* FALLTHRU */
+    case 4:
+        hash = hash ^ (uint64_t)key[3] << 24;
+        /* FALLTHRU */
+    case 3:
+        hash = hash ^ (uint64_t)key[2] << 16;
+        /* FALLTHRU */
+    case 2:
+        hash = hash ^ (uint64_t)key[1] << 8;
+        /* FALLTHRU */
+    case 1:
+        hash = hash ^ (uint64_t)key[0];
+        hash = hash * m;
+        /* FALLTHRU */
+    }
+
+    hash = hash ^ (hash >> 47);
+    hash = hash * m;
+    hash = hash ^ (hash >> 47);
+
+    return hash;
+}

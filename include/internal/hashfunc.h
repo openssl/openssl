@@ -17,4 +17,10 @@
  */
 ossl_unused uint64_t ossl_fnv1a_hash(uint8_t *key, size_t len);
 
+/**
+ * murmur2_64, as found here:
+ *     https://github.com/abrandoned/murmur2
+ * tailored for OpenSSL
+ */
+uint64_t ossl_murmur2_64(uint8_t *key, size_t len);
 #endif
