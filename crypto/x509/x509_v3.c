@@ -122,7 +122,11 @@ STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
 
     /*
      * Empty OCTET STRINGs and empty SEQUENCEs encode to just two bytes of tag
-     * (0x04 or 0x30) and length (0x00).
+     * (0x04 or 0x30) and length (0x00).  We use this fact to suppress empty
+     * AKID and SKID extensions that may be briefly generated when processing
+     * the "= none" value or only ":nonss"-qualified AKIDs when the subject is
+     * self-signed.  The resulting extension is empty, and must not be retained,
+     * but does serve to drop any previous value of the same extension.
      */
     if (ex->value.length == 2
         && (ex->value.data[0] == 0x30 || ex->value.data[0] == 0x04)) {
