@@ -49,6 +49,7 @@
 /include/openssl/opensslv.h
 /include/openssl/pkcs12.h
 /include/openssl/pkcs7.h
+/include/openssl/platcert.h
 /include/openssl/safestack.h
 /include/openssl/srp.h
 /include/openssl/ssl.h
