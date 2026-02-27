@@ -553,7 +553,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     size_t mac_size = 0;
     int imac_size;
     size_t num_recs = 0, max_recs, j;
-    PACKET pkt, sslv2pkt;
+    PACKET pkt;
     SSL_MAC_BUF *macbufs = NULL;
     int ret = OSSL_RECORD_RETURN_FATAL;
 
@@ -576,7 +576,6 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
 
         /* check if we have the header */
         if ((rl->rstate != SSL_ST_READ_BODY) || (rl->packet_length < SSL3_RT_HEADER_LENGTH)) {
-            size_t sslv2len;
             unsigned int type;
 
             rret = rl->funcs->read_n(rl, SSL3_RT_HEADER_LENGTH,
@@ -593,74 +592,26 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
                 RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return OSSL_RECORD_RETURN_FATAL;
             }
-            sslv2pkt = pkt;
-            if (!PACKET_get_net_2_len(&sslv2pkt, &sslv2len)
-                || !PACKET_get_1(&sslv2pkt, &type)) {
+
+            /* Pull apart the header into the TLS_RL_RECORD */
+            if (!PACKET_get_1(&pkt, &type)
+                || !PACKET_get_net_2(&pkt, &version)
+                || !PACKET_get_net_2_len(&pkt, &thisrr->length)) {
+                if (rl->msg_callback != NULL)
+                    rl->msg_callback(0, 0, SSL3_RT_HEADER, p, 5, rl->cbarg);
                 RLAYERfatal(rl, SSL_AD_DECODE_ERROR, ERR_R_INTERNAL_ERROR);
                 return OSSL_RECORD_RETURN_FATAL;
             }
-            /*
-             * The first record received by the server may be a V2ClientHello.
-             */
-            if (rl->role == OSSL_RECORD_ROLE_SERVER
-                && rl->is_first_record
-                && (sslv2len & 0x8000) != 0
-                && (type == SSL2_MT_CLIENT_HELLO)) {
-                /*
-                 *  SSLv2 style record
-                 *
-                 * |num_recs| here will actually always be 0 because
-                 * |num_recs > 0| only ever occurs when we are processing
-                 * multiple app data records - which we know isn't the case here
-                 * because it is an SSLv2ClientHello. We keep it using
-                 * |num_recs| for the sake of consistency
-                 */
-                thisrr->type = SSL3_RT_HANDSHAKE;
-                thisrr->rec_version = SSL2_VERSION;
+            thisrr->type = type;
+            thisrr->rec_version = version;
 
-                thisrr->length = sslv2len & 0x7fff;
+            if (rl->msg_callback != NULL)
+                rl->msg_callback(0, version, SSL3_RT_HEADER, p, 5, rl->cbarg);
 
-                if (thisrr->length > TLS_BUFFER_get_len(rbuf)
-                        - SSL2_RT_HEADER_LENGTH) {
-                    RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW,
-                        SSL_R_PACKET_LENGTH_TOO_LONG);
-                    return OSSL_RECORD_RETURN_FATAL;
-                }
-            } else {
-                /* SSLv3+ style record */
-
-                /* Pull apart the header into the TLS_RL_RECORD */
-                if (!PACKET_get_1(&pkt, &type)
-                    || !PACKET_get_net_2(&pkt, &version)
-                    || !PACKET_get_net_2_len(&pkt, &thisrr->length)) {
-                    if (rl->msg_callback != NULL)
-                        rl->msg_callback(0, 0, SSL3_RT_HEADER, p, 5, rl->cbarg);
-                    RLAYERfatal(rl, SSL_AD_DECODE_ERROR, ERR_R_INTERNAL_ERROR);
-                    return OSSL_RECORD_RETURN_FATAL;
-                }
-                thisrr->type = type;
-                thisrr->rec_version = version;
-
-                /*
-                 * When we call validate_record_header() only records actually
-                 * received in SSLv2 format should have the record version set
-                 * to SSL2_VERSION. This way validate_record_header() can know
-                 * what format the record was in based on the version.
-                 */
-                if (thisrr->rec_version == SSL2_VERSION) {
-                    RLAYERfatal(rl, SSL_AD_PROTOCOL_VERSION,
-                        SSL_R_WRONG_VERSION_NUMBER);
-                    return OSSL_RECORD_RETURN_FATAL;
-                }
-
-                if (rl->msg_callback != NULL)
-                    rl->msg_callback(0, version, SSL3_RT_HEADER, p, 5, rl->cbarg);
-
-                if (thisrr->length > TLS_BUFFER_get_len(rbuf) - SSL3_RT_HEADER_LENGTH) {
-                    RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW,
-                        SSL_R_PACKET_LENGTH_TOO_LONG);
-                    return OSSL_RECORD_RETURN_FATAL;
-                }
+            if (thisrr->length > TLS_BUFFER_get_len(rbuf) - SSL3_RT_HEADER_LENGTH) {
+                RLAYERfatal(rl, SSL_AD_RECORD_OVERFLOW,
+                    SSL_R_PACKET_LENGTH_TOO_LONG);
+                return OSSL_RECORD_RETURN_FATAL;
             }
 
             if (!rl->funcs->validate_record_header(rl, thisrr)) {
