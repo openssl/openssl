@@ -525,6 +525,7 @@ my @disablables_features = (
     "deprecated",
     "docs",
     "dso",
+    "ech",
     "ec_explicit_curves",
     "ec_nistp_64_gcc_128",
     "egd",
