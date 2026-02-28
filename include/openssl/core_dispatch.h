@@ -155,16 +155,16 @@ OSSL_CORE_MAKE_FUNC(void,
 
 OSSL_CORE_MAKE_FUNC(OSSL_CORE_BIO *, BIO_new_file, (const char *filename, const char *mode))
 OSSL_CORE_MAKE_FUNC(OSSL_CORE_BIO *, BIO_new_membuf, (const void *buf, int len))
-OSSL_CORE_MAKE_FUNC(int, BIO_read_ex, (OSSL_CORE_BIO * bio, void *data, size_t data_len, size_t *bytes_read))
-OSSL_CORE_MAKE_FUNC(int, BIO_write_ex, (OSSL_CORE_BIO * bio, const void *data, size_t data_len, size_t *written))
-OSSL_CORE_MAKE_FUNC(int, BIO_gets, (OSSL_CORE_BIO * bio, char *buf, int size))
-OSSL_CORE_MAKE_FUNC(int, BIO_puts, (OSSL_CORE_BIO * bio, const char *str))
-OSSL_CORE_MAKE_FUNC(int, BIO_up_ref, (OSSL_CORE_BIO * bio))
-OSSL_CORE_MAKE_FUNC(int, BIO_free, (OSSL_CORE_BIO * bio))
-OSSL_CORE_MAKE_FUNC(int, BIO_vprintf, (OSSL_CORE_BIO * bio, const char *format, va_list args))
+OSSL_CORE_MAKE_FUNC(int, BIO_read_ex, (OSSL_CORE_BIO *bio, void *data, size_t data_len, size_t *bytes_read))
+OSSL_CORE_MAKE_FUNC(int, BIO_write_ex, (OSSL_CORE_BIO *bio, const void *data, size_t data_len, size_t *written))
+OSSL_CORE_MAKE_FUNC(int, BIO_gets, (OSSL_CORE_BIO *bio, char *buf, int size))
+OSSL_CORE_MAKE_FUNC(int, BIO_puts, (OSSL_CORE_BIO *bio, const char *str))
+OSSL_CORE_MAKE_FUNC(int, BIO_up_ref, (OSSL_CORE_BIO *bio))
+OSSL_CORE_MAKE_FUNC(int, BIO_free, (OSSL_CORE_BIO *bio))
+OSSL_CORE_MAKE_FUNC(int, BIO_vprintf, (OSSL_CORE_BIO *bio, const char *format, va_list args))
 OSSL_CORE_MAKE_FUNC(int, BIO_vsnprintf,
     (char *buf, size_t n, const char *fmt, va_list args))
-OSSL_CORE_MAKE_FUNC(int, BIO_ctrl, (OSSL_CORE_BIO * bio, int cmd, long num, void *ptr))
+OSSL_CORE_MAKE_FUNC(int, BIO_ctrl, (OSSL_CORE_BIO *bio, int cmd, long num, void *ptr))
 
 /* New seeding functions prototypes with the 101-104 series */
 #define OSSL_FUNC_CLEANUP_USER_ENTROPY 96
@@ -173,9 +173,9 @@ OSSL_CORE_MAKE_FUNC(int, BIO_ctrl, (OSSL_CORE_BIO * bio, int cmd, long num, void
 #define OSSL_FUNC_GET_USER_NONCE 99
 
 #define OSSL_FUNC_INDICATOR_CB 95
-OSSL_CORE_MAKE_FUNC(void, indicator_cb, (OPENSSL_CORE_CTX * ctx, OSSL_INDICATOR_CALLBACK **cb))
+OSSL_CORE_MAKE_FUNC(void, indicator_cb, (OPENSSL_CORE_CTX *ctx, OSSL_INDICATOR_CALLBACK **cb))
 #define OSSL_FUNC_SELF_TEST_CB 100
-OSSL_CORE_MAKE_FUNC(void, self_test_cb, (OPENSSL_CORE_CTX * ctx, OSSL_CALLBACK **cb, void **cbarg))
+OSSL_CORE_MAKE_FUNC(void, self_test_cb, (OPENSSL_CORE_CTX *ctx, OSSL_CALLBACK **cb, void **cbarg))
 
 /* Functions to get seed material from the operating system */
 #define OSSL_FUNC_GET_ENTROPY 101
