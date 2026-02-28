@@ -490,8 +490,8 @@ This file must exist, be readable, and all the listed extensions must be valid.
 
 If only the B<-extfile> I<filename> option is given, the section name to use is
 taken from the value of the variable named C<extensions> in the file's unnamed
-(C<default>) section.
-If no B<extensions> setting is found, the file's C<default> section itself is
+section (also called its B<default> section, see L<config(5)>).
+If no B<extensions> setting is found, the file's B<default> section itself is
 instead used as the list of extensions to add.
 As before, the file must be readable and all the extensions must be valid.
 
@@ -508,8 +508,8 @@ As before, the file must be readable and all the extensions must be valid.
 If neither of the options are given, an attempt is made to open the default
 configuration file (as detailed above).
 If the file does not exist or cannot be opened, no extensions are added.
-If the unnamed (C<default>) section of the file does not list an B<extensions>
-variable, no extensions are added.
+If the unnamed section (B<default>, see L<config(5)>) of the file does not list
+an B<extensions> variable, no extensions are added.
 Otherwise, the section named by the B<extensions> variable is taken to be the
 list of extensions to add.
 The extensions listed there must all be valid.
@@ -853,6 +853,7 @@ L<openssl-ca(1)>,
 L<openssl-genrsa(1)>,
 L<openssl-gendsa(1)>,
 L<openssl-verify(1)>,
+L<config(5)>,
 L<x509v3_config(5)>
 
 =head1 HISTORY
