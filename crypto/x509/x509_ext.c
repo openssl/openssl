@@ -117,10 +117,17 @@ int X509_add_ext(X509 *x, const X509_EXTENSION *ex, int loc)
 
     if (X509v3_add_ext(&exts, ex, loc) == NULL)
         return 0;
+    /*
+     * A duplicate empty SKID/AKID extension can displace a prior non-empty
+     * one, but is then not itself added, so, somewhat counter-intutively,  the
+     * the extension list can become empty after an "add", in which case we must
+     * drop the extension stack entirely, setting it to NULL.  The extensions
+     * list is either non-empty or absent.
+     */
     if (sk_X509_EXTENSION_num(exts) != 0) {
         x->cert_info.extensions = exts;
     } else {
-        sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+        sk_X509_EXTENSION_free(exts);
         sk_X509_EXTENSION_pop_free(x->cert_info.extensions, X509_EXTENSION_free);
         x->cert_info.extensions = NULL;
     }

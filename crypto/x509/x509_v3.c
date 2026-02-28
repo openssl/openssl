@@ -120,23 +120,8 @@ STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
     } else
         sk = *x;
 
-    /*
-     * Empty OCTET STRINGs and empty SEQUENCEs encode to just two bytes of tag
-     * (0x04 or 0x30) and length (0x00).  We use this fact to suppress empty
-     * AKID and SKID extensions that may be briefly generated when processing
-     * the "= none" value or only ":nonss"-qualified AKIDs when the subject is
-     * self-signed.  The resulting extension is empty, and must not be retained,
-     * but does serve to drop any previous value of the same extension.
-     */
-    if (ex->value.length == 2
-        && (ex->value.data[0] == 0x30 || ex->value.data[0] == 0x04)) {
-        ASN1_OBJECT *obj = ex->object;
-        ASN1_OBJECT *skid = OBJ_nid2obj(NID_subject_key_identifier);
-        ASN1_OBJECT *akid = OBJ_nid2obj(NID_authority_key_identifier);
-
-        if (OBJ_cmp(obj, skid) == 0 || OBJ_cmp(obj, akid) == 0)
-            goto done;
-    }
+    if (ossl_ignored_x509_extension(ex, X509V3_ADD_SILENT))
+        goto done;
 
     n = sk_X509_EXTENSION_num(sk);
     if (loc > n)

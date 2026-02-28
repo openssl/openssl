@@ -393,6 +393,16 @@ certificate requests.
 This allows several different sections to be used in the same configuration
 file to specify requests for a variety of purposes.
 
+When signing a new CSR or X.509 certificate, if neither the the B<-extensions>
+option nor its alias B<-reqexts> are specified, the name of the extension
+section is taken from from C<req> section of the configuration file.
+Specifically, from the value of that section's C<req_extensions> variable (for
+a CSR) or its C<x509_extensions> variable (for a certificate).
+If there is no setting for the variable (name/value assignment, see
+L<config(5)>) in question, the configuration file does not add any extensions.
+The B<-section> option can be used to override C<req> with a custom section in
+which to look for the above C<req_extensions> and C<x509_extensions> variables.
+
 OpenSSL 4.0 removed built-in generation of the B<subjectKeyIdentifier> and
 B<authorityKeyIdentifier> extensions when generating certificates.
 Any desired extensions need to be listed either in the configuration file or

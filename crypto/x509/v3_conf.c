@@ -396,11 +396,12 @@ update_req_extensions(X509_REQ *req, int *pnid, STACK_OF(X509_EXTENSION) *exts)
 
         if (att == NULL)
             goto end;
-        X509at_delete_attr(req->req_info.attributes, loc);
         X509_ATTRIBUTE_free(att);
     }
-    ret = X509_REQ_add1_attr_by_NID(req, *pnid, V_ASN1_SEQUENCE, ext, extlen);
-
+    if (sk_X509_EXTENSION_num(exts) > 0)
+        ret = X509_REQ_add1_attr_by_NID(req, *pnid, V_ASN1_SEQUENCE, ext, extlen);
+    else
+        ret = 1;
 end:
     OPENSSL_free(ext);
     return ret;

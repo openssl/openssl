@@ -30,6 +30,7 @@
 #include "crypto/x509.h"
 #include "crypto/x509_acert.h"
 #include "crypto/rsa.h"
+#include "x509_local.h"
 
 int X509_verify(const X509 *a, EVP_PKEY *r)
 {
@@ -83,23 +84,9 @@ static int bad_keyid_exts(const STACK_OF(X509_EXTENSION) *exts)
 
     for (i = 0; i < n; ++i) {
         X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
-        const ASN1_STRING *der = X509_EXTENSION_get_data(ext);
 
-        /*
-         * Empty OCTET STRINGs and empty SEQUENCEs encode to just two bytes of
-         * tag (0x04 or 0x30) and length (0x00).
-         */
-        if (der->length == 2 && (der->data[0] == 0x04 || der->data[0] == 0x30)) {
-            const ASN1_OBJECT *obj = X509_EXTENSION_get_object(ext);
-            const ASN1_OBJECT *skid = OBJ_nid2obj(NID_subject_key_identifier);
-            const ASN1_OBJECT *akid = OBJ_nid2obj(NID_authority_key_identifier);
-
-            if (OBJ_cmp(obj, skid) != 0 && OBJ_cmp(obj, akid) != 0)
-                continue;
-            ERR_raise_data(ERR_LIB_X509, X509_R_INVALID_EXTENSION,
-                "Invalid empty X.509 %s extension", obj->sn);
+        if (ossl_ignored_x509_extension(ext, X509V3_ADD_DEFAULT))
             return 1;
-        }
     }
     return 0;
 }

@@ -82,7 +82,7 @@ SKIP: {
 my $v3_cert = "v3-test.crt";
 ok(run(app(["openssl", "ca", "-batch", "-config", $cnf, "-extensions", "minimal",
             "-in", src_file("x509-check.csr"), "-out", $v3_cert])));
-# although no explicit extensions given:
+# The "minimal" extensions include SKID and AKID.
 has_version($v3_cert, 3);
 has_SKID($v3_cert, 1);
 has_AKID($v3_cert, 1);

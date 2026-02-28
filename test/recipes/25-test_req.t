@@ -570,7 +570,7 @@ my $SKID_AKID = "subjectKeyIdentifier,authorityKeyIdentifier";
 
 # # SKID
 
-my $cert = "self-signed_default_SKID_no_explicit_exts.pem";
+my $cert = "self-signed_default_SKID_minimal_exts.pem";
 generate_cert($cert);
 has_version($cert, 3);
 has_SKID($cert, 1);
@@ -618,7 +618,7 @@ has_AKID($cert, 0); # forced no AKID
 
 $cert = "self-signed_v3_CA_explicit_AKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = keyid:nonss");
-has_AKID($cert, 0); # for self-signed cert, AKID suppressed and not forced
+has_AKID($cert, 0); # for self-signed cert, AKID suppressed since self-signed
 
 $cert = "self-signed_v3_CA_forced_AKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = keyid:always");
@@ -627,7 +627,7 @@ strict_verify($cert, 1);
 
 $cert = "self-signed_v3_CA_issuer_AKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = issuer:nonss");
-has_AKID($cert, 0); # suppressed AKID since not forced
+has_AKID($cert, 0); # suppressed AKID since self-signed
 
 $cert = "self-signed_v3_CA_forced_issuer_AKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = issuer:always");

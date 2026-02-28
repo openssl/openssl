@@ -218,7 +218,8 @@ identifier.
 The B<issuer> keyword asks that the AKID include the serial number and issuer
 distinguished name (grandparent name of subject certificate) of the issuer
 certificate.
-By default these are added only as a fallback when no SKID is available in the
+Unless qualified with C<always> (as described below), these are added only as a
+fallback if the B<keyid> is not requested, or no SKID was available in the
 issuer certificate.
 
 Either or both keywords can be suffixed with an optional qualifier, which can
@@ -236,9 +237,6 @@ certificate not being self-signed.
 When creating a self-signed certificate, be sure to specify a SKID extension if
 you want to have a mandatory (C<always> qualified) B<keyid> in the AKID
 extension.
-
-If an empty AKID would otherwise be generated, the extension is instead skipped
-entirely, just as with C<none>.
 
 See L<openssl-x509(1)>, L<openssl-req(1)>, and L<openssl-ca(1)> for further
 details relevant to that specific command-line utility.
