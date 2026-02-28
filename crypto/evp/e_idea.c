@@ -54,8 +54,8 @@ BLOCK_CIPHER_func_cbc(idea, IDEA, EVP_IDEA_KEY, ks)
                 0, idea_init_key, NULL,
                 EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, NULL)
 
-                static int idea_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                    const unsigned char *iv, int enc)
+static int idea_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+    const unsigned char *iv, int enc)
 {
     if (!enc) {
         if (EVP_CIPHER_CTX_get_mode(ctx) == EVP_CIPH_OFB_MODE)
