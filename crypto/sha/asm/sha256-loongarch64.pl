@@ -51,32 +51,38 @@ ___
 my $K256 = "K256";
 
 # Function arguments
-my ($zero,$ra,$tp,$sp,$fp)=map("\$r$_",(0..3,22));
-my ($a0,$a1,$a2,$a3,$a4,$a5,$a6,$a7)=map("\$r$_",(4..11));
-my ($t0,$t1,$t2,$t3,$t4,$t5,$t6,$t7,$t8,$x)=map("\$r$_",(12..21));
-my ($s0,$s1,$s2,$s3,$s4,$s5,$s6,$s7,$s8)=map("\$r$_",(23..31));
+my ($zero,$ra,$tp,$sp,$fp)=("\$zero", "\$ra", "\$tp", "\$sp", "\$fp");
+my ($a0,$a1,$a2,$a3,$a4,$a5,$a6,$a7)=map("\$a$_",(0..7));
+my ($t0,$t1,$t2,$t3,$t4,$t5,$t6,$t7,$t8)=map("\$t$_",(0..8));
+my ($s0,$s1,$s2,$s3,$s4,$s5,$s6,$s7,$s8)=map("\$s$_",(0..8));
 
 my ($INP, $LEN, $ADDR) = ($a1, $a2, $sp);
 my ($KT, $T1, $T2, $T3, $T4, $T5, $T6) = ($t0, $t1, $t2, $t3, $t4, $t5, $t6);
-my ($A, $B, $C, $D ,$E ,$F ,$G ,$H) = ($s0, $s1, $s2, $s3, $s4, $s5, $s6, $s7);
+my ($A, $B, $C, $D, $E, $F, $G, $H) = ($s0, $s1, $s2, $s3, $s4, $s5, $s6, $s7);
+
+sub strip {
+    my ($str) = @_;
+    $str =~ s/^\s+|\s+$//g;
+    return $str;
+}
 
 sub MSGSCHEDULE0 {
     my ($index) = @_;
     my $code=<<___;
-    ld.w $T1, $INP, 4*$index
+    ld.w $T1, $INP, @{[4*$index]}
     revb.2w $T1, $T1
-    st.w $T1, $ADDR, 4*$index
+    st.w $T1, $ADDR, @{[4*$index]}
 ___
-    return $code;
+    return strip($code);
 }
 
 sub MSGSCHEDULE1 {
     my ($index) = @_;
     my $code=<<___;
-    ld.w $T1, $ADDR, (($index-2)&0x0f)*4
-    ld.w $T2, $ADDR, (($index-15)&0x0f)*4
-    ld.w $T3, $ADDR, (($index-7)&0x0f)*4
-    ld.w $T4, $ADDR, ($index&0x0f)*4
+    ld.w $T1, $ADDR, @{[(($index-2)&0x0f)*4]}
+    ld.w $T2, $ADDR, @{[(($index-15)&0x0f)*4]}
+    ld.w $T3, $ADDR, @{[(($index-7)&0x0f)*4]}
+    ld.w $T4, $ADDR, @{[($index&0x0f)*4]}
     rotri.w $T5, $T1, 17
     rotri.w $T6, $T1, 19
     srli.w $T1, $T1, 10
@@ -90,15 +96,15 @@ sub MSGSCHEDULE1 {
     xor $T2, $T2, $T6
     add.w $T1, $T1, $T2
     add.w $T1, $T1, $T4
-    st.w $T1, $ADDR, ($index&0x0f)*4
+    st.w $T1, $ADDR, @{[($index&0x0f)*4]}
 ___
-    return $code;
+    return strip($code);
 }
 
 sub sha256_T1 {
     my ($index, $e, $f, $g, $h) = @_;
     my $code=<<___;
-    ld.w $T4, $KT, 4*$index
+    ld.w $T4, $KT, @{[4*$index]}
     add.w $h, $h, $T1
     add.w $h, $h, $T4
     rotri.w $T2, $e, 6
@@ -112,7 +118,7 @@ sub sha256_T1 {
     xor $T1, $T1, $g
     add.w $T1, $T1, $h
 ___
-    return $code;
+    return strip($code);
 }
 
 sub sha256_T2 {
@@ -129,36 +135,20 @@ sub sha256_T2 {
     xor $T4, $T4, $T3
     add.w $T2, $T2, $T4
 ___
-    return $code;
+    return strip($code);
 }
 
 sub SHA256ROUND {
     my ($index, $a, $b, $c, $d, $e, $f, $g, $h) = @_;
+    my $ms = $index < 16 ? \&MSGSCHEDULE0 : \&MSGSCHEDULE1;
     my $code=<<___;
+    @{[$ms->($index)]}
     @{[sha256_T1 $index, $e, $f, $g, $h]}
     @{[sha256_T2 $a, $b, $c]}
     add.w $d, $d, $T1
     add.w $h, $T2, $T1
 ___
-    return $code;
-}
-
-sub SHA256ROUND0 {
-    my ($index, $a, $b, $c, $d, $e, $f, $g, $h) = @_;
-    my $code=<<___;
-    @{[MSGSCHEDULE0 $index]}
-    @{[SHA256ROUND $index, $a, $b, $c, $d, $e, $f, $g, $h]}
-___
-    return $code;
-}
-
-sub SHA256ROUND1 {
-    my ($index, $a, $b, $c, $d, $e, $f, $g, $h) = @_;
-    my $code=<<___;
-    @{[MSGSCHEDULE1 $index]}
-    @{[SHA256ROUND $index, $a, $b, $c, $d, $e, $f, $g, $h]}
-___
-    return $code;
+    return strip($code);
 }
 
 ################################################################################
@@ -199,87 +189,22 @@ sha256_block_data_order:
 L_round_loop:
     # Decrement length by 1
     addi.d $LEN, $LEN, -1
+___
 
-    @{[SHA256ROUND0 0, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA256ROUND0 1, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA256ROUND0 2, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA256ROUND0 3, $F, $G, $H, $A, $B, $C, $D, $E]}
+for (my $i = 0; $i < 64; $i += 8) {
+    $code .= <<___;
+    @{[SHA256ROUND $i, $A, $B, $C, $D, $E, $F, $G, $H]}
+    @{[SHA256ROUND $i+1, $H, $A, $B, $C, $D, $E, $F, $G]}
+    @{[SHA256ROUND $i+2, $G, $H, $A, $B, $C, $D, $E, $F]}
+    @{[SHA256ROUND $i+3, $F, $G, $H, $A, $B, $C, $D, $E]}
+    @{[SHA256ROUND $i+4, $E, $F, $G, $H, $A, $B, $C, $D]}
+    @{[SHA256ROUND $i+5, $D, $E, $F, $G, $H, $A, $B, $C]}
+    @{[SHA256ROUND $i+6, $C, $D, $E, $F, $G, $H, $A, $B]}
+    @{[SHA256ROUND $i+7, $B, $C, $D, $E, $F, $G, $H, $A]}
+___
+}
 
-    @{[SHA256ROUND0 4, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA256ROUND0 5, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA256ROUND0 6, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA256ROUND0 7, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA256ROUND0 8, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA256ROUND0 9, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA256ROUND0 10, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA256ROUND0 11, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA256ROUND0 12, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA256ROUND0 13, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA256ROUND0 14, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA256ROUND0 15, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA256ROUND1 16, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA256ROUND1 17, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA256ROUND1 18, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA256ROUND1 19, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA256ROUND1 20, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA256ROUND1 21, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA256ROUND1 22, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA256ROUND1 23, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA256ROUND1 24, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA256ROUND1 25, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA256ROUND1 26, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA256ROUND1 27, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA256ROUND1 28, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA256ROUND1 29, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA256ROUND1 30, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA256ROUND1 31, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA256ROUND1 32, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA256ROUND1 33, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA256ROUND1 34, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA256ROUND1 35, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA256ROUND1 36, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA256ROUND1 37, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA256ROUND1 38, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA256ROUND1 39, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA256ROUND1 40, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA256ROUND1 41, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA256ROUND1 42, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA256ROUND1 43, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA256ROUND1 44, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA256ROUND1 45, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA256ROUND1 46, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA256ROUND1 47, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA256ROUND1 48, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA256ROUND1 49, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA256ROUND1 50, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA256ROUND1 51, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA256ROUND1 52, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA256ROUND1 53, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA256ROUND1 54, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA256ROUND1 55, $B, $C, $D, $E, $F, $G, $H, $A]}
-
-    @{[SHA256ROUND1 56, $A, $B, $C, $D, $E, $F, $G, $H]}
-    @{[SHA256ROUND1 57, $H, $A, $B, $C, $D, $E, $F, $G]}
-    @{[SHA256ROUND1 58, $G, $H, $A, $B, $C, $D, $E, $F]}
-    @{[SHA256ROUND1 59, $F, $G, $H, $A, $B, $C, $D, $E]}
-
-    @{[SHA256ROUND1 60, $E, $F, $G, $H, $A, $B, $C, $D]}
-    @{[SHA256ROUND1 61, $D, $E, $F, $G, $H, $A, $B, $C]}
-    @{[SHA256ROUND1 62, $C, $D, $E, $F, $G, $H, $A, $B]}
-    @{[SHA256ROUND1 63, $B, $C, $D, $E, $F, $G, $H, $A]}
-
+$code .= <<___;
     ld.w $T1, $a0, 0
     ld.w $T2, $a0, 4
     ld.w $T3, $a0, 8
