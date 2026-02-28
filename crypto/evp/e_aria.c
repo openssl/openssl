@@ -194,13 +194,13 @@ static int aria_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 }
 
 BLOCK_CIPHER_generic(NID_aria, 128, 1, 16, ctr, ctr, CTR, 0)
-    BLOCK_CIPHER_generic(NID_aria, 192, 1, 16, ctr, ctr, CTR, 0)
-        BLOCK_CIPHER_generic(NID_aria, 256, 1, 16, ctr, ctr, CTR, 0)
+BLOCK_CIPHER_generic(NID_aria, 192, 1, 16, ctr, ctr, CTR, 0)
+BLOCK_CIPHER_generic(NID_aria, 256, 1, 16, ctr, ctr, CTR, 0)
 
-    /* Authenticated cipher modes (GCM/CCM) */
+/* Authenticated cipher modes (GCM/CCM) */
 
-    /* increment counter (64-bit int) by 1 */
-    static void ctr64_inc(unsigned char *counter)
+/* increment counter (64-bit int) by 1 */
+static void ctr64_inc(unsigned char *counter)
 {
     int n = 8;
     unsigned char c;
@@ -782,11 +782,11 @@ static int aria_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
 
 BLOCK_CIPHER_aead(NID_aria, 128, 1, 12, gcm, gcm, GCM, 0)
-    BLOCK_CIPHER_aead(NID_aria, 192, 1, 12, gcm, gcm, GCM, 0)
-        BLOCK_CIPHER_aead(NID_aria, 256, 1, 12, gcm, gcm, GCM, 0)
+BLOCK_CIPHER_aead(NID_aria, 192, 1, 12, gcm, gcm, GCM, 0)
+BLOCK_CIPHER_aead(NID_aria, 256, 1, 12, gcm, gcm, GCM, 0)
 
-            BLOCK_CIPHER_aead(NID_aria, 128, 1, 12, ccm, ccm, CCM, 0)
-                BLOCK_CIPHER_aead(NID_aria, 192, 1, 12, ccm, ccm, CCM, 0)
-                    BLOCK_CIPHER_aead(NID_aria, 256, 1, 12, ccm, ccm, CCM, 0)
+BLOCK_CIPHER_aead(NID_aria, 128, 1, 12, ccm, ccm, CCM, 0)
+BLOCK_CIPHER_aead(NID_aria, 192, 1, 12, ccm, ccm, CCM, 0)
+BLOCK_CIPHER_aead(NID_aria, 256, 1, 12, ccm, ccm, CCM, 0)
 
 #endif
