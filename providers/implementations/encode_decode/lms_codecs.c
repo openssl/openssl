@@ -152,13 +152,16 @@ static const char *get_digest(const char *name)
 
 int ossl_lms_key_to_text(BIO *out, const LMS_KEY *key, int selection)
 {
-    const LMS_PARAMS *lms_params = key->lms_params;
-    const LM_OTS_PARAMS *ots_params = key->ots_params;
+    const LMS_PARAMS *lms_params;
+    const LM_OTS_PARAMS *ots_params;
 
     if (out == NULL || key == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    lms_params = key->lms_params;
+    ots_params = key->ots_params;
+
     if (key->pub.encoded == NULL || key->pub.encodedlen == 0) {
         /* Regardless of the |selection|, there must be a public key */
         ERR_raise_data(ERR_LIB_PROV, PROV_R_MISSING_KEY,
