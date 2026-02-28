@@ -891,10 +891,10 @@ DEPEND[html/man3/COMP_CTX_new.html]=man3/COMP_CTX_new.pod
 GENERATE[html/man3/COMP_CTX_new.html]=man3/COMP_CTX_new.pod
 DEPEND[man/man3/COMP_CTX_new.3]=man3/COMP_CTX_new.pod
 GENERATE[man/man3/COMP_CTX_new.3]=man3/COMP_CTX_new.pod
-DEPEND[html/man3/CONF_modules_free.html]=man3/CONF_modules_free.pod
-GENERATE[html/man3/CONF_modules_free.html]=man3/CONF_modules_free.pod
-DEPEND[man/man3/CONF_modules_free.3]=man3/CONF_modules_free.pod
-GENERATE[man/man3/CONF_modules_free.3]=man3/CONF_modules_free.pod
+DEPEND[html/man3/CONF_modules_finish.html]=man3/CONF_modules_finish.pod
+GENERATE[html/man3/CONF_modules_finish.html]=man3/CONF_modules_finish.pod
+DEPEND[man/man3/CONF_modules_finish.3]=man3/CONF_modules_finish.pod
+GENERATE[man/man3/CONF_modules_finish.3]=man3/CONF_modules_finish.pod
 DEPEND[html/man3/CONF_modules_load_file.html]=man3/CONF_modules_load_file.pod
 GENERATE[html/man3/CONF_modules_load_file.html]=man3/CONF_modules_load_file.pod
 DEPEND[man/man3/CONF_modules_load_file.3]=man3/CONF_modules_load_file.pod
@@ -3258,7 +3258,7 @@ html/man3/CMS_uncompress.html \
 html/man3/CMS_verify.html \
 html/man3/CMS_verify_receipt.html \
 html/man3/COMP_CTX_new.html \
-html/man3/CONF_modules_free.html \
+html/man3/CONF_modules_finish.html \
 html/man3/CONF_modules_load_file.html \
 html/man3/CRYPTO_THREAD_run_once.html \
 html/man3/CRYPTO_get_ex_new_index.html \
@@ -3929,7 +3929,7 @@ man/man3/CMS_uncompress.3 \
 man/man3/CMS_verify.3 \
 man/man3/CMS_verify_receipt.3 \
 man/man3/COMP_CTX_new.3 \
-man/man3/CONF_modules_free.3 \
+man/man3/CONF_modules_finish.3 \
 man/man3/CONF_modules_load_file.3 \
 man/man3/CRYPTO_THREAD_run_once.3 \
 man/man3/CRYPTO_get_ex_new_index.3 \

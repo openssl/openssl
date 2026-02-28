@@ -32,7 +32,6 @@ L<CONF_modules_load_file_ex(3)>
 
 =head1 HISTORY
 
-CONF_modules_free() was deprecated in OpenSSL 1.1.0; do not use it.
 For more information see L<OPENSSL_init_crypto(3)>.
 
 =head1 COPYRIGHT
