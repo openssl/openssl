@@ -263,10 +263,10 @@ See L<openssl-rehash(1)> for information on creating this type of directory.
 
 Do not use the default directory of trusted certificates.
 
-=item B<-CAstore> I<uri>
+=item B<-CAstore> I<filename>|I<uri>
 
-Use I<uri> as a store of CA certificates.
-The URI may indicate a single certificate, as well as a collection of them.
+Use I<filename> or I<uri> as a store of CA certificates.
+May indicate a single certificate, as well as a collection of them.
 With URIs in the C<file:> scheme, this acts as B<-CAfile> or
 B<-CApath>, depending on if the URI indicates a single file or
 directory.
