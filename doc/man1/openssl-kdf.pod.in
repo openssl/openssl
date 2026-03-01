@@ -140,7 +140,7 @@ This option is identical to the B<-mac> option.
 =item I<kdf_name>
 
 Specifies the name of a supported KDF algorithm which will be used.
-The supported algorithms names include TLS1-PRF, HKDF, SSKDF, PBKDF2,
+The supported algorithms names include TLS1-PRF, HKDF, IKEV2KDF, SSKDF, PBKDF2,
 SNMPKDF, SRTPKDF, SSHKDF, X942KDF-ASN1, X942KDF-CONCAT, X963KDF and SCRYPT.
 
 =back
@@ -156,6 +156,55 @@ Use HKDF to create a hex-encoded derived key from a secret key, salt and info:
 
     openssl kdf -keylen 10 -kdfopt digest:SHA2-256 -kdfopt key:secret \
                 -kdfopt salt:salt -kdfopt info:label HKDF
+
+Use IKEV2KDF to create a hex-encded SEEDKEY from initiator_nonce,
+    responder_nonce, and shared secret:
+
+    openssl kdf -keylen 32 -kdfopt digest:SHA256 \
+                -kdfopt hexni:3651FEF5C9C35E93 \
+                -kdfopt hexnr:C09A8B90A3F04D59 \
+                -kdfopt hexsecret:D084A30166A50FB7325C3960874A839449EF9741C2F4F947D0201DD8C1269273D79509F37E3CA3EB4FA2FE2A28254E289CD3F34DAD4EB4DF1A07685A4B8A94FA61E2491F7598B3CE65547FF133B3F63D1AC4175EAA695033F3CEDB026A6873A36455172A8540B8A5D23A0143BED0390EE49B168269D75FFFEE9FB62BE965993C \
+                -kdfopt mode:0 IKEV2KDF
+
+Use IKEV2KDF to create a hex-encded Derived Key Material (DKM) from initiator_nonce,
+    responder_nonce, SPI_initiator, SPI_responder and SEEDKEY(seed):
+
+    openssl kdf -keylen 224 -kdfopt digest:SHA256 \
+                -kdfopt hexni:3651FEF5C9C35E93 \
+                -kdfopt hexnr:C09A8B90A3F04D59 \
+                -kdfopt hexspii:8E5C3AE507221684 \
+                -kdfopt hexspir:B1F201BB155C3ACD \
+                -kdfopt hexseed:EFAA7AB0EAA85A3D0BE2100CD4B6FE00FF5025A9EAFDDB3EF518E9F0D3FE60E6 \
+                -kdfopt mode:1 IKEV2KDF
+
+Use IKEV2KDF to create a hex-encded DKM(Child_SA) from initiator_nonce,
+    responder_nonce and sk_d(key):
+
+    openssl kdf -keylen 224 -kdfopt digest:SHA256 \
+                -kdfopt hexni:3651FEF5C9C35E93 \
+                -kdfopt hexnr:C09A8B90A3F04D59 \
+                -kdfopt hexkey:462B9DD525D4FD71169174272779E704BAF62C6231779AE9EFE8C58B21916B42 \
+                -kdfopt mode:1 IKEV2KDF
+
+Use IKEV2KDF to create a hex-encded DKM(Child_DH) from initiator_nonce,
+    responder_nonce, sk_d(key) and new shared secret:
+
+    openssl kdf -keylen 224 -kdfopt digest:SHA256 \
+                -kdfopt hexni:3651FEF5C9C35E93 \
+                -kdfopt hexnr:C09A8B90A3F04D59 \
+                -kdfopt hexkey:462B9DD525D4FD71169174272779E704BAF62C6231779AE9EFE8C58B21916B42 \
+                -kdfopt hexsecret:52F00AB174C25D5B7139AE5FF4E8E9EDDEE5992D2E36ADF8A559FFD90DAB1442E4FBE429D320C0F33552A17D1557FA41EA70E8FB916C4FA27ED52B5F8EBD8461AFA78F1159159A64055AC5F6319E29C28EAE58CBC6847770F32C3FED1D04750484F854790F95E9EC01BC5BC461F24966462E359511329305038E94DEB6DD42C2 \
+                -kdfopt mode:1 IKEV2KDF
+
+Use IKEV2KDF to create a hex-encded REKEY from initiator_nonce,
+    responder_nonce, sk_d(key) and new shared secret:
+
+    openssl kdf -keylen 32 -kdfopt digest:SHA256 \
+                -kdfopt hexni:3651FEF5C9C35E93 \
+                -kdfopt hexnr:C09A8B90A3F04D59 \
+                -kdfopt hexkey:462B9DD525D4FD71169174272779E704BAF62C6231779AE9EFE8C58B21916B42 \
+                -kdfopt hexsecret:52F00AB174C25D5B7139AE5FF4E8E9EDDEE5992D2E36ADF8A559FFD90DAB1442E4FBE429D320C0F33552A17D1557FA41EA70E8FB916C4FA27ED52B5F8EBD8461AFA78F1159159A64055AC5F6319E29C28EAE58CBC6847770F32C3FED1D04750484F854790F95E9EC01BC5BC461F24966462E359511329305038E94DEB6DD42C2 \
+                -kdfopt mode:2 IKEV2KDF
 
 Use SSKDF with KMAC to create a hex-encoded derived key from a secret key, salt and info:
 
@@ -177,9 +226,10 @@ Use SSKDF with Hash to create a hex-encoded derived key from a secret key, salt 
 
 Use SNMPKDF to create a hex-encoded derived key from an engine ID, hash and password:
 
-    openssl kdf -keylen 20 -kdfopt digest:SHA1 \
+    openssl kdf -keylen 32 -kdfopt digest:SHA256 \
                 -kdfopt pass:IFUcNbMl \
-                -kdfopt hexeid:800002b805123456789abcdef0123456789abcdef0123456789abcdef0123456 SNMPKDF
+                -kdfopt hexeid:800002b805123456789abcdef0123456789abcdef0123456789abcdef0123456
+                SNMPKDF
 
 Use SRTPKDF to create a SRTP authentication derived key from a cipher, mkey, msalt,
     kdr, index and label:

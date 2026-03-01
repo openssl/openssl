@@ -7,9 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
 #include <stdbool.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
@@ -18,8 +15,6 @@
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "internal/fips.h"
-#include "internal/numbers.h"
-#include "crypto/evp.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"

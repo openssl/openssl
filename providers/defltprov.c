@@ -372,6 +372,9 @@ static const OSSL_ALGORITHM deflt_kdfs[] = {
     { PROV_NAMES_TLS1_PRF, "provider=default", ossl_kdf_tls1_prf_functions },
     { PROV_NAMES_PBKDF2, "provider=default", ossl_kdf_pbkdf2_functions },
     { PROV_NAMES_PKCS12KDF, "provider=default", ossl_kdf_pkcs12_functions },
+#ifndef OPENSSL_NO_IKEV2KDF
+    { PROV_NAMES_IKEV2KDF, "provider=default", ossl_kdf_ikev2kdf_functions },
+#endif
 #ifndef OPENSSL_NO_SSKDF
     { PROV_NAMES_SSKDF, "provider=default", ossl_kdf_sskdf_functions },
 #endif

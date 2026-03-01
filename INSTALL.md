@@ -1177,7 +1177,7 @@ The `lms` algorithm support is currently limited to verification only as per
 
     no-{aria|bf|blake2|camellia|cast|chacha|cmac|
         des|dh|dsa|
-        ec|ec2m|ecdh|ecdsa|hmac-drbg-kdf|idea|kbkdf|krb5kdf|
+        ec|ec2m|ecdh|ecdsa|hmac-drbg-kdf|idea|ikev2kdf|kbkdf|krb5kdf|
         md4|mdc2|
         ml-dsa|ml-kem|
         ocb|poly1305|pvkkdf|rc2|rc4|rmd160|scrypt|
