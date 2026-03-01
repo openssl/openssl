@@ -24,6 +24,7 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+my $no_fips_pedanticonly = disabled('fips_pedanticonly');
 my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_psk,
     $no_tls1, $no_tls1_1, $no_tls1_2, $no_tls1_3,
     $no_dtls, $no_dtls1, $no_dtls1_2, $no_ct) =
@@ -498,7 +499,7 @@ sub testssl {
         my @protocols = ();
         # We only use the flags that ssl_old_test understands
         push @protocols, "-tls1_3" unless $no_tls1_3;
-        push @protocols, "-tls1_2" unless $no_tls1_2;
+        push @protocols, "-tls1_2" unless $no_tls1_2 || !$no_fips_pedanticonly;
         push @protocols, "-tls1" unless $no_tls1 || $provider eq "fips";
         my $protocolciphersuitecount = 0;
         my %ciphersuites = ();
