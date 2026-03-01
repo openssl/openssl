@@ -19,8 +19,6 @@
 #include "crypto/ess.h"
 #include "ts_local.h"
 
-#include <crypto/asn1.h>
-
 DEFINE_STACK_OF_CONST(EVP_MD)
 
 static ASN1_INTEGER *def_serial_cb(struct TS_resp_ctx *, void *);
@@ -489,7 +487,7 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
         return 0;
     }
     digest = msg_imprint->hashed_msg;
-    if (digest->length != md_size) {
+    if (ASN1_STRING_length(digest) != md_size) {
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
             "Bad message digest.");
         TS_RESP_CTX_add_failure_info(ctx, TS_INFO_BAD_DATA_FORMAT);
