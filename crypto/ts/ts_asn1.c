@@ -12,8 +12,6 @@
 #include <openssl/asn1t.h>
 #include "ts_local.h"
 
-#include <crypto/asn1.h>
-
 ASN1_SEQUENCE(TS_MSG_IMPRINT) = {
     ASN1_SIMPLE(TS_MSG_IMPRINT, hash_algo, X509_ALGOR),
     ASN1_SIMPLE(TS_MSG_IMPRINT, hashed_msg, ASN1_OCTET_STRING)
@@ -231,6 +229,6 @@ TS_TST_INFO *PKCS7_to_TS_TST_INFO(PKCS7 *token)
         return NULL;
     }
     tst_info_der = tst_info_wrapper->value.octet_string;
-    p = tst_info_der->data;
-    return d2i_TS_TST_INFO(NULL, &p, tst_info_der->length);
+    p = ASN1_STRING_get0_data(tst_info_der);
+    return d2i_TS_TST_INFO(NULL, &p, ASN1_STRING_length(tst_info_der));
 }
