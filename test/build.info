@@ -10,7 +10,7 @@ IF[{- !$disabled{hqinterop} -}]
 ENDIF
 
 # Auxiliary program source (copied from ../apps/build.info)
-IF[{- $config{target} =~ /^(?:VC-|mingw|BC-)/ -}]
+IF[{- $config{target} =~ /^(?:VC-|mingw|BC-|win64-)/ -}]
   # It's called 'init', but doesn't have much 'init' in it...
   $AUXLIBAPPSSRC=../apps/lib/win32_init.c
 ENDIF
@@ -575,7 +575,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[bioprinttest]=bioprinttest.c
   INCLUDE[bioprinttest]=../include ../apps/include
-  IF[{- $config{target} =~ /^VC/ -}]
+  IF[{- $config{target} =~ /^(?:VC-|win64-)/ -}]
     DEPEND[bioprinttest]=../libcrypto.a libtestutil.a
   ELSE
     DEPEND[bioprinttest]=../libcrypto libtestutil.a

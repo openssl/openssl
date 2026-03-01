@@ -91,6 +91,7 @@ if    ($flavour eq "mingw64")	{ $gas=1; $elf=0; $win64=1;
 				  $prefix=`echo __USER_LABEL_PREFIX__ | $ENV{CC} -E -P -`;
 				  $prefix =~ s|\R$||; # Better chomp
 				}
+elsif ($flavour eq "win64")	{ $gas=1; $elf=0; $win64=1; }
 elsif ($flavour eq "macosx")	{ $gas=1; $elf=0; $prefix="_"; $decor="L\$"; }
 elsif ($flavour eq "masm")	{ $gas=0; $elf=0; $masm=$masmref; $win64=1; $decor="\$L\$"; }
 elsif ($flavour eq "nasm")	{ $gas=0; $elf=0; $nasm=$nasmref; $win64=1; $decor="\$L\$"; $PTR=""; }
@@ -419,7 +420,7 @@ my %globals;
 	}
 
 	if ($gas) {
-	    $self->{label} =~ s/^___imp_/__imp__/   if ($flavour eq "mingw64");
+	    $self->{label} =~ s/^___imp_/__imp__/   if ($flavour =~ /^(mingw64|win64)$/);
 
 	    if (defined($self->{index})) {
 		sprintf "%s%s(%s,%%%s,%d)%s",
@@ -945,11 +946,11 @@ my %globals;
                     push(@segment_stack, $current_segment);
 		    if (!$elf && $current_segment eq ".rodata") {
 			if	($flavour eq "macosx") { $self->{value} = ".section\t__DATA,__const"; }
-			elsif	($flavour eq "mingw64")	{ $self->{value} = ".section\t.rodata"; }
+			elsif	($flavour =~ /^(mingw64|win64)$/) { $self->{value} = ".section\t.rodata"; }
 		    }
 		    if (!$elf && $current_segment eq ".init") {
 			if	($flavour eq "macosx")	{ $self->{value} = ".mod_init_func"; }
-			elsif	($flavour eq "mingw64")	{ $self->{value} = ".section\t.ctors"; }
+			elsif	($flavour =~ /^(mingw64|win64)$/) { $self->{value} = ".section\t.ctors"; }
 		    }
 		} elsif ($dir =~ /\.(text|data)/) {
                     $current_segment = pop(@segment_stack);
@@ -963,7 +964,7 @@ my %globals;
 		    push(@segment_stack, $current_segment);
 		} elsif ($dir =~ /\.hidden/) {
 		    if    ($flavour eq "macosx")  { $self->{value} = ".private_extern\t$prefix$$line"; }
-		    elsif ($flavour eq "mingw64") { $self->{value} = ""; }
+		    elsif ($flavour =~ /^(mingw64|win64)$/) { $self->{value} = ""; }
 		} elsif ($dir =~ /\.comm/) {
 		    $self->{value} = "$dir\t$prefix$$line";
 		    $self->{value} =~ s|,([0-9]+),([0-9]+)$|",$1,".log($2)/log(2)|e if ($flavour eq "macosx");
@@ -977,7 +978,7 @@ my %globals;
                         $current_segment = ".text";
                         push(@segment_stack, $current_segment);
                     }
-                    if ($flavour eq "mingw64" || $flavour eq "macosx") {
+                    if ($flavour eq "mingw64" || $flavour eq "win64" || $flavour eq "macosx") {
 		        $self->{value} = $current_segment;
                     }
 		}
