@@ -90,7 +90,9 @@ int X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md)
     int type = md->flags & EVP_MD_FLAG_DIGALGID_ABSENT ? V_ASN1_UNDEF
                                                        : V_ASN1_NULL;
 
-    return X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_MD_get_type(md)), type, NULL);
+    int md_type = EVP_MD_type(md);
+    md_type = (md_type == 0) ? OBJ_sn2nid(EVP_MD_get0_name(md)) : md_type;
+    return X509_ALGOR_set0(alg, OBJ_nid2obj(md_type), type, NULL);
 }
 
 int X509_ALGOR_cmp(const X509_ALGOR *a, const X509_ALGOR *b)
