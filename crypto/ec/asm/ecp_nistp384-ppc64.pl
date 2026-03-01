@@ -19,9 +19,12 @@
 use strict;
 use warnings;
 
-my $flavour = shift;
-my $output = "";
-while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
+my ($flavour, $output);
+
+# $flavour is the first argument if it doesn't look like a file
+# $output is the last argument if it looks like a file (it has an extension)
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
 if (!$output) {
         $output = "-";
 }
