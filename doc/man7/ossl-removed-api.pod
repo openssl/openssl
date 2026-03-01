@@ -4,6 +4,12 @@
 
 ASN1_STRING_data,
 BIO_f_reliable,
+BIO_sock_cleanup,
+COMP_zlib_cleanup
+CONF_modules_free,
+CRYPTO_cleanup_all_ex_data,
+ENGINE_cleanup,
+ERR_free_strings,
 ERR_get_state,
 ERR_remove_state,
 ERR_remove_thread_state,
@@ -25,6 +31,7 @@ EVP_CIPHER_meth_get_cleanup,
 EVP_CIPHER_meth_get_set_asn1_params,
 EVP_CIPHER_meth_get_get_asn1_params,
 EVP_CIPHER_meth_get_ctrl,
+EVP_cleanup,
 EVP_MD_meth_new,
 EVP_MD_meth_dup,
 EVP_MD_meth_free,
@@ -125,6 +132,10 @@ EVP_PKEY_asn1_set_set_pub_key,
 EVP_PKEY_asn1_set_get_priv_key,
 EVP_PKEY_asn1_set_get_pub_key,
 EVP_PKEY_asn1_set_security_bits,
+OBJ_cleanup,
+OPENSSL_atexit,
+RAND_cleanup,
+SSL_COMP_free_compression_methods,
 ossl-removed-api - API that has been removed from OpenSSL
 
 =head1 SYNOPSIS
