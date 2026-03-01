@@ -244,7 +244,6 @@ static int test_engine_stubs(void)
 #endif
 
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
-    ENGINE_cleanup();
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)
     ENGINE_setup_bsd_cryptodev();
 #endif
