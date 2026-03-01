@@ -839,15 +839,6 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
     case OPT_V_TRUSTED_FIRST:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_TRUSTED_FIRST);
         break;
-    case OPT_V_SUITEB_128_ONLY:
-        X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_SUITEB_128_LOS_ONLY);
-        break;
-    case OPT_V_SUITEB_128:
-        X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_SUITEB_128_LOS);
-        break;
-    case OPT_V_SUITEB_192:
-        X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_SUITEB_192_LOS);
-        break;
     case OPT_V_PARTIAL_CHAIN:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_PARTIAL_CHAIN);
         break;

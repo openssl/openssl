@@ -963,11 +963,6 @@ static void print_chain_flags(SSL *s, int flags)
         BIO_printf(bio_err, "\t%s: %s\n",
             pp->name,
             (flags & pp->retval) ? "OK" : "NOT OK");
-    BIO_puts(bio_err, "\tSuite B: ");
-    if (SSL_set_cert_flags(s, 0) & SSL_CERT_FLAG_SUITEB_128_LOS)
-        BIO_puts(bio_err, flags & CERT_PKEY_SUITEB ? "OK\n" : "NOT OK\n");
-    else
-        BIO_puts(bio_err, "not tested\n");
 }
 
 /*

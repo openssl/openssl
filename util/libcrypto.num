@@ -4650,8 +4650,6 @@ X509_REVOKED_get0_extensions            ?	4_0_0	EXIST::FUNCTION:
 X509_CRL_diff                           ?	4_0_0	EXIST::FUNCTION:
 X509_REQ_check_private_key              ?	4_0_0	EXIST::FUNCTION:
 X509_check_private_key                  ?	4_0_0	EXIST::FUNCTION:
-X509_chain_check_suiteb                 ?	4_0_0	EXIST::FUNCTION:
-X509_CRL_check_suiteb                   ?	4_0_0	EXIST::FUNCTION:
 OSSL_STACK_OF_X509_free                 ?	4_0_0	EXIST::FUNCTION:
 X509_chain_up_ref                       ?	4_0_0	EXIST::FUNCTION:
 X509_issuer_and_serial_cmp              ?	4_0_0	EXIST::FUNCTION:

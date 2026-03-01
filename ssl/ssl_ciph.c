@@ -1179,54 +1179,6 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
     return retval;
 }
 
-static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
-    const char **prule_str)
-{
-    unsigned int suiteb_flags = 0, suiteb_comb2 = 0;
-    if (HAS_CASE_PREFIX(*prule_str, "SUITEB128ONLY")) {
-        suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS_ONLY;
-    } else if (HAS_CASE_PREFIX(*prule_str, "SUITEB128C2")) {
-        suiteb_comb2 = 1;
-        suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS;
-    } else if (HAS_CASE_PREFIX(*prule_str, "SUITEB128")) {
-        suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS;
-    } else if (HAS_CASE_PREFIX(*prule_str, "SUITEB192")) {
-        suiteb_flags = SSL_CERT_FLAG_SUITEB_192_LOS;
-    }
-
-    if (suiteb_flags) {
-        c->cert_flags &= ~SSL_CERT_FLAG_SUITEB_128_LOS;
-        c->cert_flags |= suiteb_flags;
-    } else {
-        suiteb_flags = c->cert_flags & SSL_CERT_FLAG_SUITEB_128_LOS;
-    }
-
-    if (!suiteb_flags)
-        return 1;
-    /* Check version: if TLS 1.2 ciphers allowed we can use Suite B */
-
-    if (!(meth->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE);
-        return 0;
-    }
-
-    switch (suiteb_flags) {
-    case SSL_CERT_FLAG_SUITEB_128_LOS:
-        if (suiteb_comb2)
-            *prule_str = "ECDHE-ECDSA-AES256-GCM-SHA384";
-        else
-            *prule_str = "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384";
-        break;
-    case SSL_CERT_FLAG_SUITEB_128_LOS_ONLY:
-        *prule_str = "ECDHE-ECDSA-AES128-GCM-SHA256";
-        break;
-    case SSL_CERT_FLAG_SUITEB_192_LOS:
-        *prule_str = "ECDHE-ECDSA-AES256-GCM-SHA384";
-        break;
-    }
-    return 1;
-}
-
 static int ciphersuite_cb(const char *elem, int len, void *arg)
 {
     STACK_OF(SSL_CIPHER) *ciphersuites = (STACK_OF(SSL_CIPHER) *)arg;
@@ -1397,9 +1349,6 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
      * Return with error if nothing to do.
      */
     if (rule_str == NULL || cipher_list == NULL || cipher_list_by_id == NULL)
-        return NULL;
-
-    if (!check_suiteb_cipher_list(ssl_method, c, &rule_str))
         return NULL;
 
     /*

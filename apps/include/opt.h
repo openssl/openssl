@@ -28,7 +28,6 @@
     OPT_V_EXPLICIT_POLICY, OPT_V_INHIBIT_ANY, OPT_V_INHIBIT_MAP,        \
     OPT_V_X509_STRICT, OPT_V_EXTENDED_CRL, OPT_V_USE_DELTAS,            \
     OPT_V_POLICY_PRINT, OPT_V_CHECK_SS_SIG, OPT_V_TRUSTED_FIRST,        \
-    OPT_V_SUITEB_128_ONLY, OPT_V_SUITEB_128, OPT_V_SUITEB_192,          \
     OPT_V_PARTIAL_CHAIN, OPT_V_NO_ALT_CHAINS, OPT_V_NO_CHECK_TIME,      \
     OPT_V_VERIFY_AUTH_LEVEL, OPT_V_ALLOW_PROXY_CERTS,                   \
     OPT_V__LAST
@@ -74,10 +73,6 @@
             "check root CA self-signatures" },                                             \
         { "trusted_first", OPT_V_TRUSTED_FIRST, '-',                                       \
             "search trust store first (default)" },                                        \
-        { "suiteB_128_only", OPT_V_SUITEB_128_ONLY, '-', "Suite B 128-bit-only mode" },    \
-        { "suiteB_128", OPT_V_SUITEB_128, '-',                                             \
-            "Suite B 128-bit mode allowing 192-bit algorithms" },                          \
-        { "suiteB_192", OPT_V_SUITEB_192, '-', "Suite B 192-bit-only mode" },              \
         { "partial_chain", OPT_V_PARTIAL_CHAIN, '-',                                       \
             "accept chains anchored by intermediate trust-store CAs" },                    \
         { "no_alt_chains", OPT_V_NO_ALT_CHAINS, '-', "(deprecated)" },                     \
@@ -111,9 +106,6 @@
     case OPT_V_POLICY_PRINT:      \
     case OPT_V_CHECK_SS_SIG:      \
     case OPT_V_TRUSTED_FIRST:     \
-    case OPT_V_SUITEB_128_ONLY:   \
-    case OPT_V_SUITEB_128:        \
-    case OPT_V_SUITEB_192:        \
     case OPT_V_PARTIAL_CHAIN:     \
     case OPT_V_NO_ALT_CHAINS:     \
     case OPT_V_NO_CHECK_TIME:     \

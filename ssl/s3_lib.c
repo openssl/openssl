@@ -4826,11 +4826,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
     }
     OSSL_TRACE_END(TLS_CIPHER);
 
-    /* SUITE-B takes precedence over server preference and ChaCha priortiy */
-    if (tls1_suiteb(s)) {
-        prio = srvr;
-        allow = clnt;
-    } else if (s->options & SSL_OP_SERVER_PREFERENCE) {
+    if (s->options & SSL_OP_SERVER_PREFERENCE) {
         prio = srvr;
         allow = clnt;
 

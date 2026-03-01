@@ -2031,11 +2031,8 @@ struct cert_pkey_st {
     int cert_comp_used;
 #endif
 };
-/* Retrieve Suite B flags */
-#define tls1_suiteb(s) (s->cert->cert_flags & SSL_CERT_FLAG_SUITEB_128_LOS)
-/* Uses to check strict mode: suite B modes are always strict */
-#define SSL_CERT_FLAGS_CHECK_TLS_STRICT \
-    (SSL_CERT_FLAG_SUITEB_128_LOS | SSL_CERT_FLAG_TLS_STRICT)
+/* Uses to check strict mode */
+#define SSL_CERT_FLAGS_CHECK_TLS_STRICT SSL_CERT_FLAG_TLS_STRICT
 
 typedef enum {
     ENDPOINT_CLIENT = 0,
@@ -2262,7 +2259,6 @@ extern const SSL3_ENC_METHOD DTLSv1_2_enc_data;
  * Flags for SSL methods
  */
 #define SSL_METHOD_NO_FIPS (1U << 0)
-#define SSL_METHOD_NO_SUITEB (1U << 1)
 
 #define IMPLEMENT_tls_meth_func(version, flags, mask, func_name, s_accept, \
     s_connect, enc_data)                                                   \
