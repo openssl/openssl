@@ -27,6 +27,8 @@ OpenSSL 4.0
 
 ### Major changes between OpenSSL 3.6 and OpenSSL 4.0 [under development]
 
+  * A REVIEWERS.json file has been added to drive greater participation in reviews
+
   * Support for Encrypted Client Hello (ECH) was added. See `doc/designs/ech-api.md`
     for details.
 

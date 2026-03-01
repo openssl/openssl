@@ -67,6 +67,15 @@ OpenSSL Releases
 
    *Shane Lontis*
 
+ * A REVIEWERS.json file and utility has been added to drive PR review participation
+
+   In an effort to increase community participation in PR reviews, we have
+   added an in-tree file, REVIEWERS.json, that allows people to select areas of
+   the codebase that interest them, so their Github user IDs can be attached to relevant
+   PRs.
+
+   *Neil Horman*
+
  * New `SSL_get0_sigalg()` and `SSL_get0_shared_sigalg()` functions report the
    TLS signature algorithm name and codepoint for the peer advertised and shared
    algorithms respectively.  These supersede the existing `SSL_get_sigalgs()` and
