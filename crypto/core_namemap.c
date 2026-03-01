@@ -16,9 +16,18 @@
 
 #define NAMEMAP_HT_BUCKETS 512
 
-HT_START_KEY_DEFN(namenum_key)
+HT_START_KEY_DEFN(namenum_64_key)
 HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
-HT_END_KEY_DEFN(NAMENUM_KEY)
+HT_END_KEY_DEFN(NAMENUM_64_KEY)
+HT_START_KEY_DEFN(namenum_32_key)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 32)
+HT_END_KEY_DEFN(NAMENUM_32_KEY)
+HT_START_KEY_DEFN(namenum_16_key)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 16)
+HT_END_KEY_DEFN(NAMENUM_16_KEY)
+HT_START_KEY_DEFN(namenum_8_key)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 8)
+HT_END_KEY_DEFN(NAMENUM_8_KEY)
 
 /*-
  * The namemap itself
@@ -33,7 +42,7 @@ struct ossl_namemap_st {
     /* Flags */
     unsigned int stored : 1; /* If 1, it's stored in a library context */
 
-    HT *namenum_ht; /* Name->number mapping */
+    HT *namenum_ht[4]; /* Name->number mapping, in key size buckets */
 
     CRYPTO_RWLOCK *lock;
     STACK_OF(NAMES) *numnames;
@@ -138,11 +147,62 @@ int ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
     return i > 0;
 }
 
+static HT_VALUE *namemap_ht_get(HT *const *namenum_ht, const char *name, size_t len)
+{
+    if (len < 8) {
+        NAMENUM_8_KEY key;
+        HT_INIT_KEY(&key);
+        HT_SET_KEY_STRING_CASE_N(&key, name, name, (int)len);
+        return ossl_ht_get(namenum_ht[0], TO_HT_KEY(&key));
+    } else if (len < 16) {
+        NAMENUM_16_KEY key;
+        HT_INIT_KEY(&key);
+        HT_SET_KEY_STRING_CASE_N(&key, name, name, (int)len);
+        return ossl_ht_get(namenum_ht[1], TO_HT_KEY(&key));
+    } else if (len < 32) {
+        NAMENUM_32_KEY key;
+        HT_INIT_KEY(&key);
+        HT_SET_KEY_STRING_CASE_N(&key, name, name, (int)len);
+        return ossl_ht_get(namenum_ht[2], TO_HT_KEY(&key));
+    } else {
+        NAMENUM_64_KEY key;
+        HT_INIT_KEY(&key);
+        HT_SET_KEY_STRING_CASE_N(&key, name, name, (int)len);
+        return ossl_ht_get(namenum_ht[3], TO_HT_KEY(&key));
+    }
+}
+
+static int namemap_ht_insert(HT **namenum_ht, const char *name, HT_VALUE *val)
+{
+    size_t len = strlen(name);
+
+    if (len < 8) {
+        NAMENUM_8_KEY key;
+        HT_INIT_KEY(&key);
+        HT_SET_KEY_STRING_CASE(&key, name, name);
+        return ossl_ht_insert(namenum_ht[0], TO_HT_KEY(&key), val, NULL);
+    } else if (len < 16) {
+        NAMENUM_16_KEY key;
+        HT_INIT_KEY(&key);
+        HT_SET_KEY_STRING_CASE(&key, name, name);
+        return ossl_ht_insert(namenum_ht[1], TO_HT_KEY(&key), val, NULL);
+    } else if (len < 32) {
+        NAMENUM_32_KEY key;
+        HT_INIT_KEY(&key);
+        HT_SET_KEY_STRING_CASE(&key, name, name);
+        return ossl_ht_insert(namenum_ht[2], TO_HT_KEY(&key), val, NULL);
+    } else {
+        NAMENUM_64_KEY key;
+        HT_INIT_KEY(&key);
+        HT_SET_KEY_STRING_CASE(&key, name, name);
+        return ossl_ht_insert(namenum_ht[3], TO_HT_KEY(&key), val, NULL);
+    }
+}
+
 int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name)
 {
     int number = 0;
     HT_VALUE *val;
-    NAMENUM_KEY key;
 
 #ifndef FIPS_MODULE
     if (namemap == NULL)
@@ -152,10 +212,7 @@ int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name)
     if (namemap == NULL)
         return 0;
 
-    HT_INIT_KEY(&key);
-    HT_SET_KEY_STRING_CASE(&key, name, name);
-
-    val = ossl_ht_get(namemap->namenum_ht, TO_HT_KEY(&key));
+    val = namemap_ht_get(namemap->namenum_ht, name, strlen(name));
 
     if (val != NULL)
         /* We store a (small) int directly instead of a pointer to it. */
@@ -167,9 +224,8 @@ int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name)
 int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
     const char *name, size_t name_len)
 {
-    int number = 0;
     HT_VALUE *val;
-    NAMENUM_KEY key;
+    int number = 0;
 
 #ifndef FIPS_MODULE
     if (namemap == NULL)
@@ -179,10 +235,7 @@ int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
     if (namemap == NULL)
         return 0;
 
-    HT_INIT_KEY(&key);
-    HT_SET_KEY_STRING_CASE_N(&key, name, name, (int)name_len);
-
-    val = ossl_ht_get(namemap->namenum_ht, TO_HT_KEY(&key));
+    val = namemap_ht_get(namemap->namenum_ht, name, name_len);
 
     if (val != NULL)
         /* We store a (small) int directly instead of a pointer to it. */
@@ -259,7 +312,6 @@ static int namemap_add_name(OSSL_NAMEMAP *namemap, int number,
 {
     int ret;
     HT_VALUE val = { 0 };
-    NAMENUM_KEY key;
 
     /* If it already exists, we don't add it */
     if ((ret = ossl_namemap_name2num(namemap, name)) != 0)
@@ -271,10 +323,8 @@ static int namemap_add_name(OSSL_NAMEMAP *namemap, int number,
     /* Using tsan_store alone here is safe since we're under lock */
     tsan_store(&namemap->max_number, number);
 
-    HT_INIT_KEY(&key);
-    HT_SET_KEY_STRING_CASE(&key, name, name);
     val.value = (void *)(intptr_t)number;
-    ret = ossl_ht_insert(namemap->namenum_ht, TO_HT_KEY(&key), &val, NULL);
+    ret = namemap_ht_insert(namemap->namenum_ht, name, &val);
     if (ret <= 0) {
         /*
          * We either got an allocation failure (INTERNAL_ERROR), or
@@ -552,8 +602,10 @@ OSSL_NAMEMAP *ossl_namemap_new(OSSL_LIB_CTX *libctx)
     if ((namemap->lock = CRYPTO_THREAD_lock_new()) == NULL)
         goto err;
 
-    if ((namemap->namenum_ht = ossl_ht_new(&htconf)) == NULL)
-        goto err;
+    for (size_t i = 0; i < 4; i++) {
+        if ((namemap->namenum_ht[i] = ossl_ht_new(&htconf)) == NULL)
+            goto err;
+    }
 
     if ((namemap->numnames = sk_NAMES_new_null()) == NULL)
         goto err;
@@ -572,7 +624,9 @@ void ossl_namemap_free(OSSL_NAMEMAP *namemap)
 
     sk_NAMES_pop_free(namemap->numnames, names_free);
 
-    ossl_ht_free(namemap->namenum_ht);
+    for (size_t i = 0; i < 4; i++) {
+        ossl_ht_free(namemap->namenum_ht[i]);
+    }
 
     CRYPTO_THREAD_lock_free(namemap->lock);
     OPENSSL_free(namemap);
