@@ -15,19 +15,22 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-#if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
-
-#define HAS_IA32CAP_IS_64
+#if defined(__AVX2__)
+#define HAVE_AVX2() 1
+#elif defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) \
+    && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
+#define HAVE_AVX2() ((OPENSSL_ia32cap_P[2] & (1u << 5)) != 0)
 #endif
 
 #include "enc_b64_avx2.h"
+#include "dec_b64_avx2.h"
 #include "enc_b64_scalar.h"
 
 static unsigned char conv_ascii2bin(unsigned char a,
     const unsigned char *table);
 int evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     const unsigned char *f, int dlen, int *wrap_cnt);
-static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
+int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     const unsigned char *f, int n, int eof);
 /*-
  * 64 char lines
@@ -403,29 +406,20 @@ int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
         j = evp_encodeblock_int(ctx, out, in, inl - (inl % EVP_ENCODE_B64_LENGTH),
             &wrap_cnt);
     } else {
-#if defined(__AVX2__)
-        const int newlines = !(ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) ? EVP_ENCODE_B64_LENGTH : 0;
-
-        j = encode_base64_avx2(ctx,
-            (unsigned char *)out,
-            (const unsigned char *)in,
-            inl - (inl % EVP_ENCODE_B64_LENGTH), newlines, &wrap_cnt);
-#elif defined(HAS_IA32CAP_IS_64)
-        if ((OPENSSL_ia32cap_P[2] & (1u << 5)) != 0) {
+#ifdef HAVE_AVX2
+        if (HAVE_AVX2()) {
             const int newlines = !(ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) ? EVP_ENCODE_B64_LENGTH : 0;
 
             j = encode_base64_avx2(ctx,
                 (unsigned char *)out,
                 (const unsigned char *)in,
                 inl - (inl % EVP_ENCODE_B64_LENGTH), newlines, &wrap_cnt);
-        } else {
+        } else
+#endif
+        {
             j = evp_encodeblock_int(ctx, out, in, inl - (inl % EVP_ENCODE_B64_LENGTH),
                 &wrap_cnt);
         }
-#else
-        j = evp_encodeblock_int(ctx, out, in, inl - (inl % EVP_ENCODE_B64_LENGTH),
-            &wrap_cnt);
-#endif
     }
     in += inl - (inl % EVP_ENCODE_B64_LENGTH);
     inl -= inl - (inl % EVP_ENCODE_B64_LENGTH);
@@ -471,16 +465,11 @@ int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
 {
     int wrap_cnt = 0;
 
-#if defined(__AVX2__)
-    return encode_base64_avx2(NULL, t, f, dlen, 0, &wrap_cnt);
-#elif defined(HAS_IA32CAP_IS_64)
-    if ((OPENSSL_ia32cap_P[2] & (1u << 5)) != 0)
+#ifdef HAVE_AVX2
+    if (HAVE_AVX2())
         return encode_base64_avx2(NULL, t, f, dlen, 0, &wrap_cnt);
-    else
-        return evp_encodeblock_int(NULL, t, f, dlen, &wrap_cnt);
-#else
-    return evp_encodeblock_int(NULL, t, f, dlen, &wrap_cnt);
 #endif
+    return evp_encodeblock_int(NULL, t, f, dlen, &wrap_cnt);
 }
 
 void EVP_DecodeInit(EVP_ENCODE_CTX *ctx)
@@ -537,6 +526,24 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
         table = srpdata_ascii2bin;
     else
         table = data_ascii2bin;
+
+#ifdef HAVE_AVX2
+    if (HAVE_AVX2() && eof == 0 && n == 0 && inl >= 64) {
+        int fast_consumed = 0;
+        int decoded = decode_base64_avx2(ctx, out, in, inl,
+            &fast_consumed);
+        if (decoded < 0) {
+            rv = -1;
+            goto end;
+        }
+        ret += decoded;
+        out += decoded;
+        in += fast_consumed;
+        inl -= fast_consumed;
+        n = ctx->num;
+        d = ctx->enc_data;
+    }
+#endif
 
     for (i = 0; i < inl; i++) {
         tmp = *(in++);
@@ -621,7 +628,7 @@ end:
     return rv;
 }
 
-static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
+int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     const unsigned char *f, int n,
     int eof)
 {
@@ -703,6 +710,33 @@ static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
 
 int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
 {
+#ifdef HAVE_AVX2
+    if (HAVE_AVX2() && n >= 64) {
+        EVP_ENCODE_CTX tmpctx;
+        int consumed = 0, result;
+
+        memset(&tmpctx, 0, sizeof(tmpctx));
+        result = decode_base64_avx2(&tmpctx, t, f, n, &consumed);
+        if (result >= 0) {
+            int rem_len = n - consumed;
+
+            if (tmpctx.num == 0 && rem_len == 0)
+                return result;
+
+            if (tmpctx.num == 0) {
+                int rem = evp_decodeblock_int(NULL, t + result,
+                    f + consumed, rem_len, 0);
+                return (rem >= 0) ? result + rem : rem;
+            }
+
+            /*
+             * Leftover in compress buffer means internal whitespace was
+             * present, which is invalid for EVP_DecodeBlock (see docs).
+             */
+            return -1;
+        }
+    }
+#endif
     return evp_decodeblock_int(NULL, t, f, n, 0);
 }
 
