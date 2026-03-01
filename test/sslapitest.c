@@ -14235,6 +14235,52 @@ end:
 #endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 }
 
+/*
+ * Test that if we attempt to send HTTP to a TLS server that we get the expected
+ * failure reason code.
+ */
+static int test_http_verbs(int idx)
+{
+    SSL_CTX *sctx = NULL;
+    SSL *serverssl = NULL;
+    int testresult = 0;
+    const char *verbs[] = { "GET", "POST", "HEAD" };
+    const char *http_trailer = " / HTTP/1.0\r\n\r\n";
+    BIO *b = BIO_new(BIO_s_mem());
+
+    if (!TEST_true((unsigned int)idx < OSSL_NELEM(verbs)))
+        goto end;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            NULL, 0, 0, &sctx, NULL, cert, privkey)))
+        goto end;
+
+    serverssl = SSL_new(sctx);
+    if (!TEST_ptr(serverssl))
+        goto end;
+
+    if (!TEST_int_gt(BIO_write(b, verbs[idx], (int)strlen(verbs[idx])), 0))
+        goto end;
+    if (!TEST_int_gt(BIO_write(b, http_trailer, (int)strlen(http_trailer)), 0))
+        goto end;
+    SSL_set_bio(serverssl, b, b);
+    b = NULL;
+
+    ERR_clear_error();
+    if (!TEST_int_le(SSL_accept(serverssl), 0))
+        goto end;
+    if (!TEST_int_eq(ERR_GET_REASON(ERR_get_error()), SSL_R_HTTP_REQUEST))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_CTX_free(sctx);
+    BIO_free(b);
+
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
 int setup_tests(void)
@@ -14577,6 +14623,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_ssl_set_groups_unsupported_keyshare, 2);
     ADD_TEST(test_ssl_conf_flags);
+    ADD_ALL_TESTS(test_http_verbs, 3);
     return 1;
 
 err:
