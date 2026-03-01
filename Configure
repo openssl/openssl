@@ -421,11 +421,87 @@ my @dtls = qw(dtls1 dtls1_2);
 # be regexps, and will be used like this: /^no-${option}$/
 # For developers: keep it sorted alphabetically
 
-my @disablables = (
-    "acvp-tests",
-    "apps",
+my @disablables_protocols = (
+  "cmp",
+  "dtls",
+  "http",
+  "ocsp",
+  "ktls",
+  "tls",
+  "tls-deprecated-ec",
+  "quic",
+  "sctp",
+  "srp",
+  "srtp"
+);
+
+foreach my $proto ((@tls, @dtls))
+        {
+        push(@disablables_protocols, $proto);
+        push(@disablables_protocols, "$proto-method") unless $proto eq "tls1_3";
+        }
+
+my @disablables_algorithms = (
     "argon2",
     "aria",
+    "bf",
+    "blake2",
+    "brotli",
+    "camellia",
+    "cast",
+    "chacha",
+    "cmac",
+    "cms",
+    "comp",
+    "des",
+    "dh",
+    "dsa",
+    "hmac-drbg-kdf",
+    "ec",
+    "ec2m",
+    "ecdh",
+    "ecdsa",
+    "ecx",
+    "kbkdf",
+    "krb5kdf",
+    "gost",
+    "idea",
+    "md2",
+    "md4",
+    "md5",
+    "mdc2",
+    "ml-dsa",
+    "ml-kem",
+    "lms",
+    "ocb",
+    "poly1305",
+    "psk",
+    "pvkkdf",
+    "rc2",
+    "rc4",
+    "rc5",
+    "rmd160",
+    "scrypt",
+    "seed",
+    "siphash",
+    "slh-dsa",
+    "siv",
+    "snmpkdf",
+    "sm2",
+    "sm3",
+    "sm4",
+    "sshkdf",
+    "sskdf",
+    "x942kdf",
+    "x963kdf",
+    "whirlpool",
+    "zlib",
+    "zstd",
+);
+
+my @disablables_features = (
+    "acvp-tests",
+    "apps",
     "asan",
     "asm",
     "async",
@@ -433,21 +509,12 @@ my @disablables = (
     "autoalginit",
     "autoerrinit",
     "autoload-config",
-    "bf",
-    "blake2",
-    "brotli",
     "brotli-dynamic",
     "buildtest-c++",
     "bulk",
     "cached-fetch",
-    "camellia",
+    "dgram",
     "winstore",
-    "cast",
-    "chacha",
-    "cmac",
-    "cmp",
-    "cms",
-    "comp",
     "crypto-mdebug",
     "allocfail-tests",
     "ct",
@@ -455,23 +522,12 @@ my @disablables = (
     "demos",
     "h3demo",
     "hqinterop",
-    "hmac-drbg-kdf",
     "deprecated",
-    "des",
-    "dgram",
-    "dh",
     "docs",
-    "dsa",
     "dso",
-    "dtls",
-    "ec",
-    "ec2m",
+    "ech",
     "ec_explicit_curves",
     "ec_nistp_64_gcc_128",
-    "ecdh",
-    "ecdsa",
-    "ecx",
-    "ech",
     "egd",
     "err",
     "external-tests",
@@ -482,63 +538,26 @@ my @disablables = (
     "fips-jitter",
     "fuzz-afl",
     "fuzz-libfuzzer",
-    "gost",
-    "http",
-    "idea",
     "integrity-only-ciphers",
     "jitter",
-    "kbkdf",
-    "krb5kdf",
-    "ktls",
     "legacy",
-    "lms",
     "makedepend",
-    "md2",
-    "md4",
-    "mdc2",
-    "ml-dsa",
-    "ml-kem",
     "module",
     "msan",
     "multiblock",
     "nextprotoneg",
-    "ocb",
-    "ocsp",
     "pic",
     "pie",
     "pinshared",
-    "poly1305",
     "posix-io",
-    "psk",
-    "pvkkdf",
-    "quic",
     "unstable-qlog",
-    "rc2",
-    "rc4",
-    "rc5",
     "rdrand",
     "rfc3779",
-    "rmd160",
-    "scrypt",
-    "sctp",
     "secure-memory",
-    "seed",
     "shared",
-    "siphash",
-    "siv",
-    "slh-dsa",
-    "sm2",
     "sm2-precomp",
-    "sm3",
-    "sm4",
-    "snmpkdf",
     "sock",
-    "srp",
-    "srtp",
-    "srtpkdf",
     "sse2",
-    "sshkdf",
-    "sskdf",
     "ssl-trace",
     "static-vcruntime",
     "stdio",
@@ -547,8 +566,6 @@ my @disablables = (
     "tfo",
     "thread-pool",
     "threads",
-    "tls",
-    "tls-deprecated-ec",
     "trace",
     "ts",
     "ubsan",
@@ -556,19 +573,12 @@ my @disablables = (
     "unit-test",
     "uplink",
     "weak-ssl-ciphers",
-    "whirlpool",
-    "x942kdf",
-    "x963kdf",
-    "zlib",
     "zlib-dynamic",
-    "zstd",
     "zstd-dynamic",
-    );
-foreach my $proto ((@tls, @dtls))
-        {
-        push(@disablables, $proto);
-        push(@disablables, "$proto-method") unless $proto eq "tls1_3";
-        }
+
+);
+
+my @disablables = sort (@disablables_protocols,@disablables_algorithms,@disablables_features);
 
 # Internal disablables, for aliasing purposes.  They serve no special
 # purpose here, but allow scripts to get to know them through configdata.pm,
@@ -839,6 +849,11 @@ $config{ex_libs} = [ env('__CNF_LDLIBS') || () ];
 $config{openssl_api_defines}=[];
 $config{openssl_sys_defines}=[];
 $config{openssl_feature_defines}=[];
+
+$config{openssl_disabled_protocols}=[];
+$config{openssl_disabled_algorithms}=[];
+$config{openssl_disabled_features}=[];
+
 $config{options}="";
 $config{build_type} = "release";
 my $target="";
@@ -1925,6 +1940,20 @@ foreach my $what (sort keys %disabled) {
 
         my $macro = $disabled_info{$what}->{macro} = "OPENSSL_NO_$WHAT";
         push @{$config{openssl_feature_defines}}, $macro;
+
+        my @rules = (
+            [ \@disablables_protocols,  'openssl_disabled_protocols'  ],
+            [ \@disablables_algorithms, 'openssl_disabled_algorithms' ],
+            [ \@disablables_features,   'openssl_disabled_features'   ],
+        );
+
+        for my $r (@rules) {
+            my ($list, $target) = @$r;
+
+            if (grep { $what eq $_ } @$list) {
+              push @{$config{$target}}, uc $what;
+            }
+        }
 
         $skipdir{"crypto/$skipdir"} = $what
             unless $what eq 'async' || $what eq 'err' || $what eq 'dso' || $what eq 'http';

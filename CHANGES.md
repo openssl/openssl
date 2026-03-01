@@ -215,6 +215,12 @@ OpenSSL Releases
 
    *Daniel Kubec*
 
+ * Changed the output of the -disabled option for the list command.
+   Displaying now disabled features, protocols, and algorithms, in relevant sections.
+   Disabled features are now generated at configuration time.
+
+   *Paul Louvel*
+
  * Added configure options to disable KDF algorithms for
    hmac-drbg-kdf, kbkdf, krb5kdf, pvkkdf, snmpkdf, sskdf, sshkdf, x942kdf and x963kdf.
 

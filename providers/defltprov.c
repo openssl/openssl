@@ -416,7 +416,9 @@ static const OSSL_ALGORITHM deflt_keyexch[] = {
     { PROV_NAMES_DH, "provider=default", ossl_dh_keyexch_functions },
 #endif
 #ifndef OPENSSL_NO_EC
+#ifndef OPENSSL_NO_ECDH
     { PROV_NAMES_ECDH, "provider=default", ossl_ecdh_keyexch_functions },
+#endif
 #ifndef OPENSSL_NO_ECX
     { PROV_NAMES_X25519, "provider=default", ossl_x25519_keyexch_functions },
     { PROV_NAMES_X448, "provider=default", ossl_x448_keyexch_functions },
@@ -424,8 +426,10 @@ static const OSSL_ALGORITHM deflt_keyexch[] = {
 #endif
     { PROV_NAMES_TLS1_PRF, "provider=default", ossl_kdf_tls1_prf_keyexch_functions },
     { PROV_NAMES_HKDF, "provider=default", ossl_kdf_hkdf_keyexch_functions },
+#ifndef OPENSSL_NO_SCRYPT
     { PROV_NAMES_SCRYPT, "provider=default",
         ossl_kdf_scrypt_keyexch_functions },
+#endif
     { NULL, NULL, NULL }
 };
 
@@ -480,6 +484,7 @@ static const OSSL_ALGORITHM deflt_signature[] = {
     { PROV_NAMES_ED448, "provider=default", ossl_ed448_signature_functions },
     { PROV_NAMES_ED448ph, "provider=default", ossl_ed448ph_signature_functions },
 #endif
+#ifndef OPENSSL_NO_ECDSA
     { PROV_NAMES_ECDSA, "provider=default", ossl_ecdsa_signature_functions },
     { PROV_NAMES_ECDSA_SHA1, "provider=default", ossl_ecdsa_sha1_signature_functions },
     { PROV_NAMES_ECDSA_SHA224, "provider=default", ossl_ecdsa_sha224_signature_functions },
@@ -490,6 +495,7 @@ static const OSSL_ALGORITHM deflt_signature[] = {
     { PROV_NAMES_ECDSA_SHA3_256, "provider=default", ossl_ecdsa_sha3_256_signature_functions },
     { PROV_NAMES_ECDSA_SHA3_384, "provider=default", ossl_ecdsa_sha3_384_signature_functions },
     { PROV_NAMES_ECDSA_SHA3_512, "provider=default", ossl_ecdsa_sha3_512_signature_functions },
+#endif
 #ifndef OPENSSL_NO_SM2
     { PROV_NAMES_SM2, "provider=default", ossl_sm2_signature_functions },
 #endif
@@ -500,8 +506,10 @@ static const OSSL_ALGORITHM deflt_signature[] = {
     { PROV_NAMES_ML_DSA_87, "provider=default", ossl_ml_dsa_87_signature_functions },
 #endif
     { PROV_NAMES_HMAC, "provider=default", ossl_mac_legacy_hmac_signature_functions },
+#ifndef OPENSSL_NO_SIPHASH
     { PROV_NAMES_SIPHASH, "provider=default",
         ossl_mac_legacy_siphash_signature_functions },
+#endif
 #ifndef OPENSSL_NO_POLY1305
     { PROV_NAMES_POLY1305, "provider=default",
         ossl_mac_legacy_poly1305_signature_functions },
@@ -618,12 +626,16 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
         PROV_DESCS_TLS1_PRF_SIGN },
     { PROV_NAMES_HKDF, "provider=default", ossl_kdf_keymgmt_functions,
         PROV_DESCS_HKDF_SIGN },
+#ifndef OPENSSL_NO_SCRYPT
     { PROV_NAMES_SCRYPT, "provider=default", ossl_kdf_keymgmt_functions,
         PROV_DESCS_SCRYPT_SIGN },
+#endif
     { PROV_NAMES_HMAC, "provider=default", ossl_mac_legacy_keymgmt_functions,
         PROV_DESCS_HMAC_SIGN },
+#ifndef OPENSSL_NO_SIPHASH
     { PROV_NAMES_SIPHASH, "provider=default", ossl_mac_legacy_keymgmt_functions,
         PROV_DESCS_SIPHASH_SIGN },
+#endif
 #ifndef OPENSSL_NO_POLY1305
     { PROV_NAMES_POLY1305, "provider=default", ossl_mac_legacy_keymgmt_functions,
         PROV_DESCS_POLY1305_SIGN },
