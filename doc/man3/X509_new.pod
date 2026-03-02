@@ -72,6 +72,8 @@ Otherwise it returns a pointer to the newly allocated structure.
 X509_up_ref() returns 1 for success and 0 for failure.
 
 X509_dup_ref() returns a non const copy of B<a> for success and NULL for failure.
+The returned value should also not be modified, but you may call X509_free()
+on the returned value to lower the reference count when you are done with B<a>.
 
 X509_chain_up_ref() returns a copy of the stack or NULL if an error occurred.
 
