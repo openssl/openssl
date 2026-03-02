@@ -110,6 +110,13 @@ I<iter> less than 1 is treated as a single iteration.
 
 I<digest> is the message digest function used in the derivation.
 
+I<aiv> is the initialization vector (IV) to use for the encryption algorithm. 
+If I<aiv> is NULL, then a random IV will be generated.
+
+I<prf_nid> is the numeric identifier (NID) for the pseudo-random function to
+use with PBKDF2. If I<prf_nid> is not specified (for example, I<prf_nid> is set to 0),
+a default PRF is used, which is currently set to SHA-256 (NID_hmacWithSHA256).
+
 Functions ending in _ex() take optional parameters I<libctx> and I<propq> which
 are used to select appropriate algorithm implementations.
 
@@ -118,7 +125,9 @@ are used to select appropriate algorithm implementations.
 PKCS5_pbe_set(), PKCS5_pbe_set_ex(), PKCS5_pbe2_set(), PKCS5_pbe2_set_iv(),
 PKCS5_pbe2_set_iv_ex() and PKCS5_pbe2_set_scrypt() generate an B<X509_ALGOR>
 object which represents an AlgorithmIdentifier containing the algorithm OID and
-associated parameters for the PBE algorithm.
+associated parameters for the PBE algorithm. These functions encode the 
+key derivation parameters (such as salt and iteration count) and the 
+encryption parameters (such as the IV) into the ASN.1 structure.
 
 PKCS5_pbkdf2_set() and PKCS5_pbkdf2_set_ex() generate an B<X509_ALGOR>
 object which represents an AlgorithmIdentifier containing the algorithm OID and
