@@ -17,7 +17,7 @@
     my $generate_openssl_disable_array = sub {
       my ($key) = @_;
       my $data = $config{$key};
-      my $res = "static const char * const \U${key}[] = {\n";
+      my $res = "static const char * const ${key}[] = {\n";
 
       $res .= "\t\"\",\n";
 
@@ -41,14 +41,14 @@
 -}
 /* clang-format on */
 
-#define OPENSSL_HAS_DISABLED(name) (OSSL_NELEM(OPENSSL_DISABLED_##name) > 1)
+#define OPENSSL_HAS_DISABLED(name) (OSSL_NELEM(openssl_disabled_##name) > 1)
 
 #define OPENSSL_PRINT_DISABLED(bio, name, str)                                 \
     do {                                                                       \
         if (OPENSSL_HAS_DISABLED(name)) {                                      \
             BIO_puts((bio), "Disabled " str "(s):\n");                         \
-            for (size_t i = 1; i < OSSL_NELEM(OPENSSL_DISABLED_##name); i++) { \
-                BIO_printf((bio), "\t- %s\n", OPENSSL_DISABLED_##name[i]);     \
+            for (size_t i = 1; i < OSSL_NELEM(openssl_disabled_##name); i++) { \
+                BIO_printf((bio), "\t- %s\n", openssl_disabled_##name[i]);     \
             }                                                                  \
         } else {                                                               \
             BIO_puts((bio), "No disabled " str "s.\n");                        \

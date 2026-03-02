@@ -1397,9 +1397,9 @@ static void list_provider_info(void)
 
 static void list_disabled(void)
 {
-    OPENSSL_PRINT_DISABLED(bio_out, PROTOCOLS, "protocol");
-    OPENSSL_PRINT_DISABLED(bio_out, ALGORITHMS, "algorithm");
-    OPENSSL_PRINT_DISABLED(bio_out, FEATURES, "feature");
+    OPENSSL_PRINT_DISABLED(bio_out, protocols, "protocol");
+    OPENSSL_PRINT_DISABLED(bio_out, algorithms, "algorithm");
+    OPENSSL_PRINT_DISABLED(bio_out, features, "feature");
 }
 
 /* Unified enum for help and list commands. */
