@@ -380,7 +380,7 @@ static int test_drop_empty_csr_keyids(void)
     sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
     exts = NULL;
 
-    /* Add empty AKID and SKID */
+    /* Request an "empty" SKID in order to drop the previous SKID */
     NCONF_free(conf);
     if (!TEST_ptr(conf = NCONF_new(NULL))
         || !TEST_int_ge(BIO_printf(bio, "subjectKeyIdentifier = none\n"), 0)

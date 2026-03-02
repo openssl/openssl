@@ -491,8 +491,8 @@ This file must exist, be readable, and all the listed extensions must be valid.
 If only the B<-extfile> I<filename> option is given, the section name to use is
 taken from the value of the variable named C<extensions> in the file's unnamed
 section (also called its B<default> section, see L<config(5)>).
-If no B<extensions> setting is found, the file's B<default> section itself is
-instead used as the list of extensions to add.
+If no B<extensions> setting is found, the file's B<default> (unnamed) section
+itself is instead used as the list of extensions to add.
 As before, the file must be readable and all the extensions must be valid.
 
 Prior to OpenSSL 4.0, the B<-extensions> option required that the B<-extfile>
