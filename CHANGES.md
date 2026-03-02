@@ -31,6 +31,10 @@ OpenSSL Releases
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Added AVX2 optimized ML-DSA NTT operations on x86_64.
+
+   *Marcel Cornu and Tomasz Kantecki*
+
  * The `openssl-x509(1)`, `openssl-req(1)` and `openssl-ca(1)` command-line
    utilities no longer have specialised built-in logic to add the SKID and AKID
    extensions, they are handled through configuration files and command-line
