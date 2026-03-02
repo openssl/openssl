@@ -32,7 +32,7 @@ void OSSL_ERR_STATE_save(ERR_STATE *es)
     for (i = 0; i < ERR_NUM_ERRORS; i++)
         err_clear(es, i, 1);
 
-    thread_es = ossl_err_get_state_int();
+    thread_es = ossl_err_get_state_int(1);
     if (thread_es == NULL)
         return;
 
@@ -50,7 +50,7 @@ void OSSL_ERR_STATE_save_to_mark(ERR_STATE *es)
     if (es == NULL)
         return;
 
-    thread_es = ossl_err_get_state_int();
+    thread_es = ossl_err_get_state_int(1);
     if (thread_es == NULL) {
         for (i = 0; i < ERR_NUM_ERRORS; ++i)
             err_clear(es, i, 1);
@@ -116,7 +116,7 @@ void OSSL_ERR_STATE_restore(const ERR_STATE *es)
     if (es == NULL || es->bottom == es->top)
         return;
 
-    thread_es = ossl_err_get_state_int();
+    thread_es = ossl_err_get_state_int(0);
     if (thread_es == NULL)
         return;
 
