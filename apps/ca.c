@@ -1489,11 +1489,15 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
     if (subj) {
         X509_NAME *n = parse_name(subj, chtype, multirdn, "subject");
+        int ok_local;
 
         if (!n)
             goto end;
-        X509_REQ_set_subject_name(req, n);
+
+        ok_local = X509_REQ_set_subject_name(req, n);
         X509_NAME_free(n);
+        if (ok_local == 0)
+            goto end;
     }
 
     if (default_op)
