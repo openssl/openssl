@@ -54,7 +54,7 @@ static SSL_SESSION *load_sess_id(char *file, int format);
 int sess_id_main(int argc, char **argv)
 {
     SSL_SESSION *x = NULL;
-    X509 *peer = NULL;
+    const X509 *peer = NULL;
     BIO *out = NULL;
     char *infile = NULL, *outfile = NULL, *context = NULL, *prog;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM;

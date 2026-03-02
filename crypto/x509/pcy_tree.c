@@ -123,13 +123,13 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
      * certificates with invalid policy extensions.
      */
     for (i = n - 1; i >= 0; i--) {
-        X509 *x = sk_X509_value(certs, i);
+        const X509 *x = sk_X509_value(certs, i);
 
         /* Call for side-effect of computing hash and caching extensions */
         X509_check_purpose(x, -1, 0);
 
         /* If cache is NULL, likely ENOMEM: return immediately */
-        if (ossl_policy_cache_set(x) == NULL)
+        if (ossl_policy_cache_set((X509 *)x) == NULL) /* !!! breaks_const_X509 !!! */
             return X509_PCY_TREE_INTERNAL;
     }
 
@@ -147,7 +147,7 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
     for (i = n - 1;
         i >= 0 && (explicit_policy > 0 || (ret & X509_PCY_TREE_EMPTY) == 0);
         i--) {
-        X509 *x = sk_X509_value(certs, i);
+        const X509 *x = sk_X509_value(certs, i);
         uint32_t ex_flags = X509_get_extension_flags(x);
 
         /* All the policies are already cached, we can return early */
@@ -155,7 +155,7 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
             return X509_PCY_TREE_INVALID;
 
         /* Access the cache which we now know exists */
-        cache = ossl_policy_cache_set(x);
+        cache = ossl_policy_cache_set((X509 *)x); /* !!! breaks_const_X509 !!! */
 
         if ((ret & X509_PCY_TREE_VALID) && cache->data == NULL)
             ret = X509_PCY_TREE_EMPTY;
@@ -207,11 +207,11 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
      * policy mapping are inhibited at each level.
      */
     for (i = n - 1; i >= 0; i--) {
-        X509 *x = sk_X509_value(certs, i);
+        const X509 *x = sk_X509_value(certs, i);
         uint32_t ex_flags = X509_get_extension_flags(x);
 
         /* Access the cache which we now know exists */
-        cache = ossl_policy_cache_set(x);
+        cache = ossl_policy_cache_set((X509 *)x); /* !!! breaks_const_X509 !!! */
 
         if (!X509_up_ref(x))
             goto bad_tree;
@@ -604,7 +604,7 @@ static int tree_evaluate(X509_POLICY_TREE *tree)
     const X509_POLICY_CACHE *cache;
 
     for (i = 1; i < tree->nlevel; i++, curr++) {
-        cache = ossl_policy_cache_set(curr->cert);
+        cache = ossl_policy_cache_set((X509 *)curr->cert); /* !!! breaks_const_X509 !!! */
         if (!tree_link_nodes(curr, cache, tree))
             return X509_PCY_TREE_INTERNAL;
 

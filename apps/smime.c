@@ -626,7 +626,7 @@ int smime_main(int argc, char **argv)
                 goto end;
             if (flags & PKCS7_NOCERTS) {
                 for (i = 0; i < sk_X509_num(other); i++) {
-                    X509 *x = sk_X509_value(other, i);
+                    const X509 *x = sk_X509_value(other, i);
                     PKCS7_add_certificate(p7, x);
                 }
             }

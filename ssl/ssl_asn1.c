@@ -27,7 +27,7 @@ typedef struct {
     ASN1_OCTET_STRING *key_arg;
     int64_t time;
     int64_t timeout;
-    X509 *peer;
+    const X509 *peer;
     ASN1_OCTET_STRING *session_id_context;
     int32_t verify_result;
     ASN1_OCTET_STRING *tlsext_hostname;

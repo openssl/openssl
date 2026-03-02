@@ -722,7 +722,7 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
 {
     ASIdOrRanges *child_as = NULL, *child_rdi = NULL;
     int i, ret = 1, inherit_as = 0, inherit_rdi = 0;
-    X509 *x;
+    const X509 *x;
 
     if (!ossl_assert(chain != NULL && sk_X509_num(chain) > 0)
         || !ossl_assert(ctx != NULL || ext != NULL)

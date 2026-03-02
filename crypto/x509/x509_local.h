@@ -57,7 +57,7 @@ struct X509_VERIFY_PARAM_st {
 };
 
 /* No error callback if depth < 0 */
-int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth);
+int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, const X509 *x, int depth);
 
 /* a sequence of these are used */
 struct x509_attributes_st {
@@ -159,11 +159,11 @@ struct x509_store_st {
     /* Check revocation status of chain */
     int (*check_revocation)(X509_STORE_CTX *ctx);
     /* retrieve CRL */
-    int (*get_crl)(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x);
+    int (*get_crl)(X509_STORE_CTX *ctx, X509_CRL **crl, const X509 *x);
     /* Check CRL validity */
     int (*check_crl)(X509_STORE_CTX *ctx, X509_CRL *crl);
     /* Check certificate against CRL */
-    int (*cert_crl)(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x);
+    int (*cert_crl)(X509_STORE_CTX *ctx, X509_CRL *crl, const X509 *x);
     /* Check policy status of the chain */
     int (*check_policy)(X509_STORE_CTX *ctx);
     STACK_OF(X509) *(*lookup_certs)(const X509_STORE_CTX *ctx,
@@ -191,7 +191,7 @@ int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TY
 __owur int ossl_x509_store_read_lock(X509_STORE *xs);
 STACK_OF(X509_OBJECT) *ossl_x509_store_ht_get_by_name(const X509_STORE *store,
     const X509_NAME *xn);
-int ossl_x509_check_rfc822(X509 *x, const char *chk, size_t chklen,
+int ossl_x509_check_rfc822(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags);
-int ossl_x509_check_smtputf8(X509 *x, const char *chk, size_t chklen,
+int ossl_x509_check_smtputf8(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags);

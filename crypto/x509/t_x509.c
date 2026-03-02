@@ -424,7 +424,7 @@ static int print_certs(BIO *bio, const STACK_OF(X509) *certs)
         return BIO_printf(bio, "    (no certificates)\n") >= 0;
 
     for (i = 0; i < sk_X509_num(certs); i++) {
-        X509 *cert = sk_X509_value(certs, i);
+        const X509 *cert = sk_X509_value(certs, i);
 
         if (cert != NULL) {
             if (!ossl_x509_print_ex_brief(bio, cert, 0))

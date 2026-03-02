@@ -20,7 +20,7 @@
 
 static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si);
 
-PKCS7 *PKCS7_sign_ex(X509 *signcert, EVP_PKEY *pkey, const STACK_OF(X509) *certs,
+PKCS7 *PKCS7_sign_ex(const X509 *signcert, EVP_PKEY *pkey, const STACK_OF(X509) *certs,
     BIO *data, int flags, OSSL_LIB_CTX *libctx, const char *propq)
 {
     PKCS7 *p7;
@@ -63,7 +63,7 @@ err:
     return NULL;
 }
 
-PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, const STACK_OF(X509) *certs,
+PKCS7 *PKCS7_sign(const X509 *signcert, EVP_PKEY *pkey, const STACK_OF(X509) *certs,
     BIO *data, int flags)
 {
     return PKCS7_sign_ex(signcert, pkey, certs, data, flags, NULL, NULL);
@@ -111,7 +111,7 @@ static int add_digest_smcap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
     return 1;
 }
 
-PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
+PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, const X509 *signcert,
     EVP_PKEY *pkey, const EVP_MD *md,
     int flags)
 {
@@ -213,7 +213,7 @@ int PKCS7_verify(PKCS7 *p7, const STACK_OF(X509) *certs, X509_STORE *store,
     STACK_OF(X509) *signers;
     STACK_OF(X509) *included_certs;
     STACK_OF(X509) *untrusted = NULL;
-    X509 *signer;
+    const X509 *signer;
     STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
     PKCS7_SIGNER_INFO *si;
     X509_STORE_CTX *cert_ctx = NULL;
@@ -409,7 +409,7 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, const STACK_OF(X509) *certs, int f
             return 0;
         }
 
-        if (!sk_X509_push(signers, (X509 *)signer)) {
+        if (!sk_X509_push(signers, signer)) {
             sk_X509_free(signers);
             return NULL;
         }
@@ -426,7 +426,7 @@ PKCS7 *PKCS7_encrypt_ex(const STACK_OF(X509) *certs, BIO *in,
     PKCS7 *p7;
     BIO *p7bio = NULL;
     int i;
-    X509 *x509;
+    const X509 *x509;
 
     if ((p7 = PKCS7_new_ex(libctx, propq)) == NULL) {
         ERR_raise(ERR_LIB_PKCS7, ERR_R_PKCS7_LIB);
@@ -442,7 +442,7 @@ PKCS7 *PKCS7_encrypt_ex(const STACK_OF(X509) *certs, BIO *in,
 
     for (i = 0; i < sk_X509_num(certs); i++) {
         x509 = sk_X509_value(certs, i);
-        if (!PKCS7_add_recipient(p7, x509)) {
+        if (!PKCS7_add_recipient(p7, (X509 *)x509)) { /* !!! breaks_const_X509 !!! */
             ERR_raise(ERR_LIB_PKCS7, PKCS7_R_ERROR_ADDING_RECIPIENT);
             goto err;
         }
@@ -466,7 +466,7 @@ PKCS7 *PKCS7_encrypt(const STACK_OF(X509) *certs, BIO *in, const EVP_CIPHER *cip
     return PKCS7_encrypt_ex(certs, in, cipher, flags, NULL, NULL);
 }
 
-int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
+int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, const X509 *cert, BIO *data, int flags)
 {
     BIO *tmpmem;
     int ret = 0, i;

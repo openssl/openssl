@@ -24,6 +24,17 @@
         return ctx->FIELD;                                  \
     }
 
+#define DEFINE_OSSL_CMP_CTX_get0_const(FIELD, TYPE) \
+    DEFINE_OSSL_CMP_CTX_get0_NAME_const(FIELD, FIELD, TYPE)
+#define DEFINE_OSSL_CMP_CTX_get0_NAME_const(NAME, FIELD, TYPE)    \
+    const TYPE *OSSL_CMP_CTX_get0_##NAME(const OSSL_CMP_CTX *ctx) \
+    {                                                             \
+        if (ctx == NULL) {                                        \
+            ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);          \
+            return NULL;                                          \
+        }                                                         \
+        return ctx->FIELD;                                        \
+    }
 /*
  * Get current certificate store containing trusted root CA certs
  */
@@ -41,6 +52,20 @@ DEFINE_OSSL_CMP_CTX_get0_NAME(trusted, trusted, X509_STORE)
         TYPE##_free(ctx->FIELD);                             \
         ctx->FIELD = val;                                    \
         return 1;                                            \
+    }
+
+#define DEFINE_OSSL_set0_const(PREFIX, FIELD, TYPE) \
+    DEFINE_OSSL_set0_NAME_const(PREFIX, FIELD, FIELD, TYPE)
+#define DEFINE_OSSL_set0_NAME_const(PREFIX, NAME, FIELD, TYPE)     \
+    int PREFIX##_set0##_##NAME(OSSL_CMP_CTX *ctx, const TYPE *val) \
+    {                                                              \
+        if (ctx == NULL) {                                         \
+            ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);           \
+            return 0;                                              \
+        }                                                          \
+        TYPE##_free(ctx->FIELD);                                   \
+        ctx->FIELD = val;                                          \
+        return 1;                                                  \
     }
 
     /*
@@ -605,7 +630,27 @@ DEFINE_OSSL_CMP_CTX_get1_certs(caPubs)
         return 1;                                                                \
     }
 
-        DEFINE_OSSL_set1_up_ref(ossl_cmp_ctx, validatedSrvCert, X509)
+#define DEFINE_OSSL_set1_up_ref_const(PREFIX, FIELD, TYPE)                       \
+    int PREFIX##_set1_##FIELD(OSSL_CMP_CTX *ctx, const TYPE *val)                \
+    {                                                                            \
+        if (ctx == NULL) {                                                       \
+            ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);                         \
+            return 0;                                                            \
+        }                                                                        \
+                                                                                 \
+        /* prevent misleading error later on malformed cert or provider issue */ \
+        if (val != NULL && TYPE##_invalid(val)) {                                \
+            ERR_raise(ERR_LIB_CMP, CMP_R_POTENTIALLY_INVALID_CERTIFICATE);       \
+            return 0;                                                            \
+        }                                                                        \
+        if (val != NULL && !TYPE##_up_ref((TYPE *)val))                          \
+            return 0;                                                            \
+        TYPE##_free(ctx->FIELD);                                                 \
+        ctx->FIELD = val;                                                        \
+        return 1;                                                                \
+    }
+
+        DEFINE_OSSL_set1_up_ref_const(ossl_cmp_ctx, validatedSrvCert, X509)
 
     /*
      * Pins the server certificate to be directly trusted (even if it is expired)
@@ -698,7 +743,7 @@ int OSSL_CMP_CTX_push1_subjectAltName(OSSL_CMP_CTX *ctx,
  * Set our own client certificate, used for example in KUR and when
  * doing the IR with existing certificate.
  */
-DEFINE_OSSL_set1_up_ref(OSSL_CMP_CTX, cert, X509)
+DEFINE_OSSL_set1_up_ref_const(OSSL_CMP_CTX, cert, X509)
 
     int OSSL_CMP_CTX_build_cert_chain(OSSL_CMP_CTX *ctx, X509_STORE *own_trusted,
         STACK_OF(X509) *candidates)
@@ -744,13 +789,13 @@ DEFINE_OSSL_set1_up_ref(OSSL_CMP_CTX, oldCert, X509)
     DEFINE_OSSL_set0(ossl_cmp_ctx, newCert, X509)
 
     /* Get successfully validated server cert, if any, of current transaction */
-    DEFINE_OSSL_CMP_CTX_get0(validatedSrvCert, X509)
+    DEFINE_OSSL_CMP_CTX_get0_const(validatedSrvCert, X509)
 
     /*
      * Get the (newly received in IP/KUP/CP) client certificate from the context
      * This only permits for one client cert to be received...
      */
-    DEFINE_OSSL_CMP_CTX_get0(newCert, X509)
+    DEFINE_OSSL_CMP_CTX_get0_const(newCert, X509)
 
     /* Set the client's current private key */
     DEFINE_OSSL_set1_up_ref(OSSL_CMP_CTX, pkey, EVP_PKEY)

@@ -703,7 +703,7 @@ static tlsextstatusctx tlscstatp = { -1, NULL };
  * the OCSP certificate IDs and minimise the number of OCSP responses by caching
  * them until they were considered "expired".
  */
-static int get_ocsp_resp_from_responder_single(SSL *s, X509 *x,
+static int get_ocsp_resp_from_responder_single(SSL *s, const X509 *x,
     tlsextstatusctx *srctx,
     OCSP_RESPONSE **resp)
 {
@@ -711,7 +711,7 @@ static int get_ocsp_resp_from_responder_single(SSL *s, X509 *x,
     char *proxy = NULL, *no_proxy = NULL;
     int use_ssl;
     STACK_OF(OPENSSL_STRING) *aia = NULL;
-    X509 *cert;
+    const X509 *cert;
     const X509_NAME *iname;
     STACK_OF(X509) *chain = NULL;
     SSL_CTX *ssl_ctx;
@@ -826,8 +826,8 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
     STACK_OF(OCSP_RESPONSE) **sk_resp)
 {
     STACK_OF(X509) *server_chain = NULL;
-    X509 *ssl_cert = NULL;
-    X509 *issuer = NULL;
+    const X509 *ssl_cert = NULL;
+    const X509 *issuer = NULL;
     OCSP_RESPONSE *resp = NULL;
     OCSP_BASICRESP *bs = NULL;
     OCSP_CERTID *cert_id = NULL;
@@ -984,7 +984,7 @@ err:
 static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
     STACK_OF(OCSP_RESPONSE) **sk_resp)
 {
-    X509 *ssl_cert = NULL;
+    const X509 *ssl_cert = NULL;
     int i, num = 0;
     STACK_OF(X509) *server_chain = NULL;
     OCSP_RESPONSE *resp = NULL;
@@ -3840,7 +3840,7 @@ static int init_ssl_connection(SSL *con)
 static void print_connection_info(SSL *con)
 {
     const char *str;
-    X509 *peer;
+    const X509 *peer;
     char buf[BUFSIZ];
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     const unsigned char *next_proto_neg;
@@ -4115,7 +4115,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
         /* else we have data */
         if ((www == 1 && HAS_PREFIX(buf, "GET "))
             || (www == 2 && HAS_PREFIX(buf, "GET /stats "))) {
-            X509 *peer = NULL;
+            const X509 *peer = NULL;
             STACK_OF(SSL_CIPHER) *sk;
             static const char *space = "                          ";
 #ifndef OPENSSL_NO_ECH

@@ -775,7 +775,7 @@ static void print_details(SSL *c_ssl, const char *prefix)
 {
     const SSL_CIPHER *ciph;
     int mdnid;
-    X509 *cert;
+    const X509 *cert;
     EVP_PKEY *pkey;
 
     ciph = SSL_get_current_cipher(c_ssl);

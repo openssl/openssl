@@ -45,7 +45,7 @@ ESS_SIGNING_CERT *OSSL_ESS_signing_cert_new_init(const X509 *signcert,
         goto err;
     }
     for (i = 0; i < sk_X509_num(certs); ++i) {
-        X509 *cert = sk_X509_value(certs, i);
+        const X509 *cert = sk_X509_value(certs, i);
 
         if ((cid = ESS_CERT_ID_new_init(cert, 1)) == NULL) {
             ERR_raise(ERR_LIB_ESS, ERR_R_ESS_LIB);
@@ -147,7 +147,7 @@ ESS_SIGNING_CERT_V2 *OSSL_ESS_signing_cert_v2_new_init(const EVP_MD *hash_alg,
     cid = NULL;
 
     for (i = 0; i < sk_X509_num(certs); ++i) {
-        X509 *cert = sk_X509_value(certs, i);
+        const X509 *cert = sk_X509_value(certs, i);
 
         if ((cid = ESS_CERT_ID_V2_new_init(hash_alg, cert, 1)) == NULL) {
             ERR_raise(ERR_LIB_ESS, ERR_R_ESS_LIB);

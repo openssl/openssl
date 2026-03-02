@@ -599,7 +599,7 @@ static const OSSL_RECORD_METHOD quic_tls_record_method = {
 static int add_transport_params_cb(SSL *s, unsigned int ext_type,
     unsigned int context,
     const unsigned char **out, size_t *outlen,
-    X509 *x, size_t chainidx, int *al,
+    const X509 *x, size_t chainidx, int *al,
     void *add_arg)
 {
     QUIC_TLS *qtls = add_arg;
@@ -620,7 +620,7 @@ static void free_transport_params_cb(SSL *s, unsigned int ext_type,
 static int parse_transport_params_cb(SSL *s, unsigned int ext_type,
     unsigned int context,
     const unsigned char *in,
-    size_t inlen, X509 *x,
+    size_t inlen, const X509 *x,
     size_t chainidx,
     int *al, void *parse_arg)
 {

@@ -99,7 +99,7 @@ struct TS_status_info_st {
 };
 
 struct TS_resp_ctx {
-    X509 *signer_cert;
+    const X509 *signer_cert;
     EVP_PKEY *signer_key;
     const EVP_MD *signer_md;
     const EVP_MD *ess_cert_id_digest;

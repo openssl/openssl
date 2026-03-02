@@ -303,7 +303,7 @@ typedef int (*custom_ext_parse_cb)(SSL *s, unsigned int ext_type,
 typedef int (*SSL_custom_ext_add_cb_ex)(SSL *s, unsigned int ext_type,
     unsigned int context,
     const unsigned char **out,
-    size_t *outlen, X509 *x,
+    size_t *outlen, const X509 *x,
     size_t chainidx,
     int *al, void *add_arg);
 
@@ -315,7 +315,7 @@ typedef void (*SSL_custom_ext_free_cb_ex)(SSL *s, unsigned int ext_type,
 typedef int (*SSL_custom_ext_parse_cb_ex)(SSL *s, unsigned int ext_type,
     unsigned int context,
     const unsigned char *in,
-    size_t inlen, X509 *x,
+    size_t inlen, const X509 *x,
     size_t chainidx,
     int *al, void *parse_arg);
 
@@ -771,9 +771,9 @@ void SSL_CTX_set_info_callback(SSL_CTX *ctx,
 void (*SSL_CTX_get_info_callback(SSL_CTX *ctx))(const SSL *ssl, int type,
     int val);
 void SSL_CTX_set_client_cert_cb(SSL_CTX *ctx,
-    int (*client_cert_cb)(SSL *ssl, X509 **x509,
+    int (*client_cert_cb)(SSL *ssl, const X509 **x509,
         EVP_PKEY **pkey));
-int (*SSL_CTX_get_client_cert_cb(SSL_CTX *ctx))(SSL *ssl, X509 **x509,
+int (*SSL_CTX_get_client_cert_cb(SSL_CTX *ctx))(SSL *ssl, const X509 **x509,
     EVP_PKEY **pkey);
 void SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx,
     int (*app_gen_cookie_cb)(SSL *ssl,
@@ -1674,9 +1674,9 @@ __owur int SSL_use_RSAPrivateKey_ASN1(SSL *ssl,
 __owur int SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey);
 __owur int SSL_use_PrivateKey_ASN1(int pk, SSL *ssl, const unsigned char *d,
     long len);
-__owur int SSL_use_certificate(SSL *ssl, X509 *x);
+__owur int SSL_use_certificate(SSL *ssl, const X509 *x);
 __owur int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len);
-__owur int SSL_use_cert_and_key(SSL *ssl, X509 *x509, EVP_PKEY *privatekey,
+__owur int SSL_use_cert_and_key(SSL *ssl, const X509 *x509, EVP_PKEY *privatekey,
     STACK_OF(X509) *chain, int override);
 
 /* serverinfo file format versions */
@@ -1765,7 +1765,7 @@ __owur uint32_t SSL_SESSION_get_max_early_data(const SSL_SESSION *s);
 __owur int SSL_SESSION_set_max_early_data(SSL_SESSION *s,
     uint32_t max_early_data);
 __owur int SSL_copy_session_id(SSL *to, const SSL *from);
-__owur X509 *SSL_SESSION_get0_peer(SSL_SESSION *s);
+__owur const X509 *SSL_SESSION_get0_peer(SSL_SESSION *s);
 __owur int SSL_SESSION_set1_id_context(SSL_SESSION *s,
     const unsigned char *sid_ctx,
     unsigned int sid_ctx_len);
@@ -1803,8 +1803,8 @@ SSL_SESSION *d2i_SSL_SESSION_ex(SSL_SESSION **a, const unsigned char **pp,
     const char *propq);
 
 #ifdef OPENSSL_X509_H
-__owur X509 *SSL_get0_peer_certificate(const SSL *s);
-__owur X509 *SSL_get1_peer_certificate(const SSL *s);
+__owur const X509 *SSL_get0_peer_certificate(const SSL *s);
+__owur const X509 *SSL_get1_peer_certificate(const SSL *s);
 /* Deprecated in 3.0.0 */
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 #define SSL_get_peer_certificate SSL_get1_peer_certificate
@@ -1833,10 +1833,10 @@ __owur int SSL_CTX_use_RSAPrivateKey_ASN1(SSL_CTX *ctx, const unsigned char *d,
 __owur int SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey);
 __owur int SSL_CTX_use_PrivateKey_ASN1(int pk, SSL_CTX *ctx,
     const unsigned char *d, long len);
-__owur int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x);
+__owur int SSL_CTX_use_certificate(SSL_CTX *ctx, const X509 *x);
 __owur int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len,
     const unsigned char *d);
-__owur int SSL_CTX_use_cert_and_key(SSL_CTX *ctx, X509 *x509, EVP_PKEY *privatekey,
+__owur int SSL_CTX_use_cert_and_key(SSL_CTX *ctx, const X509 *x509, EVP_PKEY *privatekey,
     STACK_OF(X509) *chain, int override);
 
 void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb);
@@ -1888,7 +1888,7 @@ __owur int SSL_CTX_dane_mtype_set(SSL_CTX *ctx, const EVP_MD *md,
 __owur int SSL_dane_enable(SSL *s, const char *basedomain);
 __owur int SSL_dane_tlsa_add(SSL *s, uint8_t usage, uint8_t selector,
     uint8_t mtype, const unsigned char *data, size_t dlen);
-__owur int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki);
+__owur int SSL_get0_dane_authority(SSL *s, const X509 **mcert, EVP_PKEY **mspki);
 __owur int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
     uint8_t *mtype, const unsigned char **data,
     size_t *dlen);
@@ -2090,8 +2090,8 @@ void SSL_set_client_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list);
 void SSL_CTX_set_client_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *name_list);
 __owur STACK_OF(X509_NAME) *SSL_get_client_CA_list(const SSL *s);
 __owur STACK_OF(X509_NAME) *SSL_CTX_get_client_CA_list(const SSL_CTX *s);
-__owur int SSL_add_client_CA(SSL *ssl, X509 *x);
-__owur int SSL_CTX_add_client_CA(SSL_CTX *ctx, X509 *x);
+__owur int SSL_add_client_CA(SSL *ssl, const X509 *x);
+__owur int SSL_CTX_add_client_CA(SSL_CTX *ctx, const X509 *x);
 
 void SSL_set_connect_state(SSL *s);
 void SSL_set_accept_state(SSL *s);
@@ -2107,13 +2107,13 @@ __owur STACK_OF(X509_NAME) *SSL_dup_CA_list(const STACK_OF(X509_NAME) *sk);
 
 __owur SSL *SSL_dup(SSL *ssl);
 
-__owur X509 *SSL_get_certificate(const SSL *ssl);
+__owur const X509 *SSL_get_certificate(const SSL *ssl);
 /*
  * EVP_PKEY
  */
 struct evp_pkey_st *SSL_get_privatekey(const SSL *ssl);
 
-__owur X509 *SSL_CTX_get0_certificate(const SSL_CTX *ctx);
+__owur const X509 *SSL_CTX_get0_certificate(const SSL_CTX *ctx);
 __owur EVP_PKEY *SSL_CTX_get0_privatekey(const SSL_CTX *ctx);
 
 void SSL_CTX_set_quiet_shutdown(SSL_CTX *ctx, int mode);

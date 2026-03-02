@@ -1291,7 +1291,7 @@ void print_ssl_summary(SSL *s)
 {
     const char *sigalg;
     const SSL_CIPHER *c;
-    X509 *peer = SSL_get0_peer_certificate(s);
+    const X509 *peer = SSL_get0_peer_certificate(s);
     EVP_PKEY *peer_rpk = SSL_get0_peer_rpk(s);
     const char *local_sigalg = NULL;
     int nid;

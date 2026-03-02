@@ -32,7 +32,7 @@ typedef struct test_fixture {
     int expected;
     OSSL_CMP_CTX *cmp_ctx;
     OSSL_CMP_MSG *msg;
-    X509 *cert;
+    const X509 *cert;
     ossl_cmp_allow_unprotected_cb_t allow_unprotected_cb;
     int additional_arg;
 } CMP_VFY_TEST_FIXTURE;
@@ -137,7 +137,7 @@ static int execute_validate_msg_test(CMP_VFY_TEST_FIXTURE *fixture)
     int res = TEST_int_eq(fixture->expected,
         ossl_cmp_msg_check_update(fixture->cmp_ctx,
             fixture->msg, NULL, 0));
-    X509 *validated = OSSL_CMP_CTX_get0_validatedSrvCert(fixture->cmp_ctx);
+    const X509 *validated = OSSL_CMP_CTX_get0_validatedSrvCert(fixture->cmp_ctx);
 
     return res && (!fixture->expected || TEST_ptr_eq(validated, fixture->cert));
 }

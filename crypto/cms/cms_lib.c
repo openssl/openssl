@@ -726,7 +726,7 @@ int ossl_cms_get1_crls_ex(CMS_ContentInfo *cms, STACK_OF(X509_CRL) **crls)
     return 1;
 }
 
-int ossl_cms_ias_cert_cmp(CMS_IssuerAndSerialNumber *ias, X509 *cert)
+int ossl_cms_ias_cert_cmp(CMS_IssuerAndSerialNumber *ias, const X509 *cert)
 {
     int ret;
     ret = X509_NAME_cmp(ias->issuer, X509_get_issuer_name(cert));
@@ -735,7 +735,7 @@ int ossl_cms_ias_cert_cmp(CMS_IssuerAndSerialNumber *ias, X509 *cert)
     return ASN1_INTEGER_cmp(ias->serialNumber, X509_get0_serialNumber(cert));
 }
 
-int ossl_cms_keyid_cert_cmp(ASN1_OCTET_STRING *keyid, X509 *cert)
+int ossl_cms_keyid_cert_cmp(ASN1_OCTET_STRING *keyid, const X509 *cert)
 {
     const ASN1_OCTET_STRING *cert_keyid = X509_get0_subject_key_id(cert);
 
@@ -744,7 +744,7 @@ int ossl_cms_keyid_cert_cmp(ASN1_OCTET_STRING *keyid, X509 *cert)
     return ASN1_OCTET_STRING_cmp(keyid, cert_keyid);
 }
 
-int ossl_cms_set1_ias(CMS_IssuerAndSerialNumber **pias, X509 *cert)
+int ossl_cms_set1_ias(CMS_IssuerAndSerialNumber **pias, const X509 *cert)
 {
     CMS_IssuerAndSerialNumber *ias;
     ias = M_ASN1_new_of(CMS_IssuerAndSerialNumber);
@@ -768,7 +768,7 @@ err:
     return 0;
 }
 
-int ossl_cms_set1_keyid(ASN1_OCTET_STRING **pkeyid, X509 *cert)
+int ossl_cms_set1_keyid(ASN1_OCTET_STRING **pkeyid, const X509 *cert)
 {
     ASN1_OCTET_STRING *keyid = NULL;
     const ASN1_OCTET_STRING *cert_keyid;

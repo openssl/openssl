@@ -32,11 +32,11 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
  * if non-NULL the variables they point to can be passed uninitialised.
  */
 
-int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
+int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, const X509 **cert,
     STACK_OF(X509) **ca)
 {
     STACK_OF(X509) *ocerts = NULL;
-    X509 *x = NULL;
+    const X509 *x = NULL;
 
     if (pkey != NULL)
         *pkey = NULL;

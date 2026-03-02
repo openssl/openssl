@@ -1350,7 +1350,7 @@ unsigned long SSL_dane_clear_flags(SSL *ssl, unsigned long flags)
     return orig;
 }
 
-int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki)
+int SSL_get0_dane_authority(SSL *s, const X509 **mcert, EVP_PKEY **mspki)
 {
     SSL_DANE *dane;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
@@ -2028,9 +2028,9 @@ int SSL_has_pending(const SSL *s)
     return RECORD_LAYER_read_pending(&sc->rlayer);
 }
 
-X509 *SSL_get1_peer_certificate(const SSL *s)
+const X509 *SSL_get1_peer_certificate(const SSL *s)
 {
-    X509 *r = SSL_get0_peer_certificate(s);
+    const X509 *r = SSL_get0_peer_certificate(s);
 
     if (r != NULL && !X509_up_ref(r))
         return NULL;
@@ -2038,7 +2038,7 @@ X509 *SSL_get1_peer_certificate(const SSL *s)
     return r;
 }
 
-X509 *SSL_get0_peer_certificate(const SSL *s)
+const X509 *SSL_get0_peer_certificate(const SSL *s)
 {
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
 
@@ -4853,7 +4853,7 @@ void ssl_set_masks(SSL_CONNECTION *s)
     s->s3.tmp.mask_a = mask_a;
 }
 
-int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL_CONNECTION *s)
+int ssl_check_srvr_ecc_cert_and_alg(const X509 *x, SSL_CONNECTION *s)
 {
     if (s->s3.tmp.new_cipher->algorithm_auth & SSL_aECDSA) {
         /* key usage, if present, must allow signing */
@@ -5417,7 +5417,7 @@ err:
     return NULL;
 }
 
-X509 *SSL_get_certificate(const SSL *s)
+const X509 *SSL_get_certificate(const SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
@@ -5443,7 +5443,7 @@ EVP_PKEY *SSL_get_privatekey(const SSL *s)
         return NULL;
 }
 
-X509 *SSL_CTX_get0_certificate(const SSL_CTX *ctx)
+const X509 *SSL_CTX_get0_certificate(const SSL_CTX *ctx)
 {
     if (ctx->cert != NULL)
         return ctx->cert->key->x509;
@@ -6642,7 +6642,7 @@ err:
 static int ct_extract_x509v3_extension_scts(SSL_CONNECTION *s)
 {
     int scts_extracted = 0;
-    X509 *cert = s->session != NULL ? s->session->peer : NULL;
+    const X509 *cert = s->session != NULL ? s->session->peer : NULL;
 
     if (cert != NULL) {
         STACK_OF(SCT) *scts = X509_get_ext_d2i(cert, NID_ct_precert_scts, NULL, NULL);
@@ -6767,8 +6767,8 @@ int SSL_CTX_ct_is_enabled(const SSL_CTX *ctx)
 int ssl_validate_ct(SSL_CONNECTION *s)
 {
     int ret = 0;
-    X509 *cert = s->session != NULL ? s->session->peer : NULL;
-    X509 *issuer;
+    const X509 *cert = s->session != NULL ? s->session->peer : NULL;
+    const X509 *issuer;
     SSL_DANE *dane = &s->dane;
     CT_POLICY_EVAL_CTX *ctx = NULL;
     const STACK_OF(SCT) *scts;

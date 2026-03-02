@@ -110,7 +110,7 @@ static const unsigned char encoded_ech_val[] = {
 };
 
 static int new_add_cb(SSL *s, unsigned int ext_type, unsigned int context,
-    const unsigned char **out, size_t *outlen, X509 *x,
+    const unsigned char **out, size_t *outlen, const X509 *x,
     size_t chainidx, int *al, void *add_arg)
 {
     int *server = (int *)add_arg;
@@ -147,7 +147,7 @@ static void new_free_cb(SSL *s, unsigned int ext_type, unsigned int context,
 }
 
 static int new_parse_cb(SSL *s, unsigned int ext_type, unsigned int context,
-    const unsigned char *in, size_t inlen, X509 *x,
+    const unsigned char *in, size_t inlen, const X509 *x,
     size_t chainidx, int *al, void *parse_arg)
 {
     int *server = (int *)parse_arg;

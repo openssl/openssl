@@ -416,7 +416,7 @@ err:
     return NULL;
 }
 
-static int pkcs7_cmp_ri(PKCS7_RECIP_INFO *ri, X509 *pcert)
+static int pkcs7_cmp_ri(PKCS7_RECIP_INFO *ri, const X509 *pcert)
 {
     int ret;
     ret = X509_NAME_cmp(ri->issuer_and_serial->issuer,
@@ -428,7 +428,7 @@ static int pkcs7_cmp_ri(PKCS7_RECIP_INFO *ri, X509 *pcert)
 }
 
 /* int */
-BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
+BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, const X509 *pcert)
 {
     int i, len;
     BIO *out = NULL, *btmp = NULL, *etmp = NULL, *bio = NULL;

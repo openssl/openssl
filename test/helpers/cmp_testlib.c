@@ -35,7 +35,7 @@ int valid_asn1_encoding(const OSSL_CMP_MSG *msg)
 int STACK_OF_X509_cmp(const STACK_OF(X509) *sk1, const STACK_OF(X509) *sk2)
 {
     int i, res;
-    X509 *a, *b;
+    const X509 *a, *b;
 
     if (sk1 == sk2)
         return 0;
@@ -62,7 +62,7 @@ int STACK_OF_X509_cmp(const STACK_OF(X509) *sk1, const STACK_OF(X509) *sk2)
 int STACK_OF_X509_cmp_deep(const STACK_OF(X509) *sk1, const STACK_OF(X509) *sk2)
 {
     int i, res, idx;
-    X509 *a, *b;
+    const X509 *a, *b;
 
     if (sk1 == sk2)
         return 0;

@@ -57,7 +57,7 @@ void SCT_CTX_free(SCT_CTX *sctx)
  * If there is more than one extension with that NID, *is_duplicated is set to
  * 1, otherwise 0 (unless it is NULL).
  */
-static int ct_x509_get_ext(X509 *cert, int nid, int *is_duplicated)
+static int ct_x509_get_ext(const X509 *cert, int nid, int *is_duplicated)
 {
     int ret = X509_get_ext_by_NID(cert, nid, -1);
 
@@ -72,7 +72,7 @@ static int ct_x509_get_ext(X509 *cert, int nid, int *is_duplicated)
  * AKID from the presigner certificate, if necessary.
  * Returns 1 on success, 0 otherwise.
  */
-__owur static int ct_x509_cert_fixup(X509 *cert, X509 *presigner)
+__owur static int ct_x509_cert_fixup(X509 *cert, const X509 *presigner)
 {
     int ret = 0;
     int preidx, certidx;
@@ -128,7 +128,7 @@ done:
     return ret;
 }
 
-int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner)
+int SCT_CTX_set1_cert(SCT_CTX *sctx, const X509 *cert, const X509 *presigner)
 {
     unsigned char *certder = NULL, *preder = NULL;
     X509 *pretmp = NULL;

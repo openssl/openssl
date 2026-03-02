@@ -18,7 +18,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
 
-static int ssl_set_cert(CERT *c, X509 *x509, SSL_CTX *ctx);
+static int ssl_set_cert(CERT *c, const X509 *x509, SSL_CTX *ctx);
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey, SSL_CTX *ctx);
 
 #define SYNTHV1CONTEXT (SSL_EXT_TLS1_2_AND_BELOW_ONLY \
@@ -29,7 +29,7 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey, SSL_CTX *ctx);
 #define NAME_PREFIX1 "SERVERINFO FOR "
 #define NAME_PREFIX2 "SERVERINFOV2 FOR "
 
-int SSL_use_certificate(SSL *ssl, X509 *x)
+int SSL_use_certificate(SSL *ssl, const X509 *x)
 {
     int rv;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
@@ -239,7 +239,7 @@ int SSL_use_PrivateKey_ASN1(int type, SSL *ssl, const unsigned char *d,
     return ret;
 }
 
-int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
+int SSL_CTX_use_certificate(SSL_CTX *ctx, const X509 *x)
 {
     int rv;
     if (x == NULL) {
@@ -255,7 +255,7 @@ int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
     return ssl_set_cert(ctx->cert, x, ctx);
 }
 
-static int ssl_set_cert(CERT *c, X509 *x, SSL_CTX *ctx)
+static int ssl_set_cert(CERT *c, const X509 *x, SSL_CTX *ctx)
 {
     EVP_PKEY *pkey;
     size_t i;
@@ -637,7 +637,7 @@ static int serverinfo_find_extension(const unsigned char *serverinfo,
 static int serverinfoex_srv_parse_cb(SSL *s, unsigned int ext_type,
     unsigned int context,
     const unsigned char *in,
-    size_t inlen, X509 *x, size_t chainidx,
+    size_t inlen, const X509 *x, size_t chainidx,
     int *al, void *arg)
 {
 
@@ -660,7 +660,7 @@ static int serverinfo_srv_parse_cb(SSL *s, unsigned int ext_type,
 static int serverinfoex_srv_add_cb(SSL *s, unsigned int ext_type,
     unsigned int context,
     const unsigned char **out,
-    size_t *outlen, X509 *x, size_t chainidx,
+    size_t *outlen, const X509 *x, size_t chainidx,
     int *al, void *arg)
 {
     const unsigned char *serverinfo = NULL;
@@ -976,7 +976,7 @@ end:
     return ret;
 }
 
-static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *privatekey,
+static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, const X509 *x509, EVP_PKEY *privatekey,
     STACK_OF(X509) *chain, int override)
 {
     int ret = 0;
@@ -1086,13 +1086,13 @@ out:
     return ret;
 }
 
-int SSL_use_cert_and_key(SSL *ssl, X509 *x509, EVP_PKEY *privatekey,
+int SSL_use_cert_and_key(SSL *ssl, const X509 *x509, EVP_PKEY *privatekey,
     STACK_OF(X509) *chain, int override)
 {
     return ssl_set_cert_and_key(ssl, NULL, x509, privatekey, chain, override);
 }
 
-int SSL_CTX_use_cert_and_key(SSL_CTX *ctx, X509 *x509, EVP_PKEY *privatekey,
+int SSL_CTX_use_cert_and_key(SSL_CTX *ctx, const X509 *x509, EVP_PKEY *privatekey,
     STACK_OF(X509) *chain, int override)
 {
     return ssl_set_cert_and_key(NULL, ctx, x509, privatekey, chain, override);

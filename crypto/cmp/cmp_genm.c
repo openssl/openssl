@@ -20,7 +20,7 @@ static const X509_VERIFY_PARAM *get0_trustedStore_vpm(const OSSL_CMP_CTX *ctx)
 
 static void cert_msg(const char *func, const char *file, int lineno,
     OSSL_CMP_severity level, OSSL_CMP_CTX *ctx,
-    const char *source, X509 *cert, const char *msg)
+    const char *source, const X509 *cert, const char *msg)
 {
     char *subj = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
 
@@ -32,7 +32,7 @@ static void cert_msg(const char *func, const char *file, int lineno,
 }
 
 /* use |type_CA| -1 (no CA type check) or 0 (must be EE) or 1 (must be CA) */
-static int ossl_X509_check(OSSL_CMP_CTX *ctx, const char *source, X509 *cert,
+static int ossl_X509_check(OSSL_CMP_CTX *ctx, const char *source, const X509 *cert,
     int type_CA, const X509_VERIFY_PARAM *vpm)
 {
     uint32_t ex_flags = X509_get_extension_flags(cert);
@@ -208,8 +208,8 @@ static int selfsigned_verify_cb(int ok, X509_STORE_CTX *store_ctx)
         STACK_OF(X509) *chain = X509_STORE_CTX_get0_chain(store_ctx);
         STACK_OF(X509) *untrusted = X509_STORE_CTX_get0_untrusted(store_ctx);
         X509_STORE_CTX_check_issued_fn check_issued = X509_STORE_CTX_get_check_issued(store_ctx);
-        X509 *cert = sk_X509_value(chain, 0); /* target cert */
-        X509 *issuer;
+        const X509 *cert = sk_X509_value(chain, 0); /* target cert */
+        const X509 *issuer;
 
         for (i = 0; i < sk_X509_num(untrusted); i++) {
             cert = sk_X509_value(untrusted, i);

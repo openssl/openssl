@@ -64,23 +64,23 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx);
 static int check_cert_crl(X509_STORE_CTX *ctx);
 static int check_policy(X509_STORE_CTX *ctx);
 static int check_dane_issuer(X509_STORE_CTX *ctx, int depth);
-static int check_cert_key_level(X509_STORE_CTX *ctx, X509 *cert);
+static int check_cert_key_level(X509_STORE_CTX *ctx, const X509 *cert);
 static int check_key_level(X509_STORE_CTX *ctx, EVP_PKEY *pkey);
-static int check_sig_level(X509_STORE_CTX *ctx, X509 *cert);
-static int check_curve(X509 *cert);
+static int check_sig_level(X509_STORE_CTX *ctx, const X509 *cert);
+static int check_curve(const X509 *cert);
 
-static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
-    unsigned int *preasons, X509_CRL *crl, X509 *x);
+static int get_crl_score(X509_STORE_CTX *ctx, const X509 **pissuer,
+    unsigned int *preasons, X509_CRL *crl, const X509 *x);
 static int get_crl_delta(X509_STORE_CTX *ctx,
-    X509_CRL **pcrl, X509_CRL **pdcrl, X509 *x);
+    X509_CRL **pcrl, X509_CRL **pdcrl, const X509 *x);
 static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl,
     int *pcrl_score, X509_CRL *base,
     STACK_OF(X509_CRL) *crls);
-static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer,
+static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, const X509 **pissuer,
     int *pcrl_score);
-static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
+static int crl_crldp_check(const X509 *x, X509_CRL *crl, int crl_score,
     unsigned int *preasons);
-static int check_crl_path(X509_STORE_CTX *ctx, X509 *x);
+static int check_crl_path(X509_STORE_CTX *ctx, const X509 *x);
 static int check_crl_chain(X509_STORE_CTX *ctx,
     STACK_OF(X509) *cert_path,
     STACK_OF(X509) *crl_path);
@@ -120,10 +120,10 @@ int X509_self_signed(const X509 *cert, int verify_signature)
  * Given a certificate, try and find an exact match in the store.
  * Returns 1 on success, 0 on not found, -1 on internal error.
  */
-static int lookup_cert_match(X509 **result, X509_STORE_CTX *ctx, X509 *x)
+static int lookup_cert_match(const X509 **result, X509_STORE_CTX *ctx, const X509 *x)
 {
     STACK_OF(X509) *certs;
-    X509 *xtmp = NULL;
+    const X509 *xtmp = NULL;
     int i, ret;
 
     *result = NULL;
@@ -167,7 +167,7 @@ static int verify_cb_cert(X509_STORE_CTX *ctx, const X509 *x, int depth, int err
         depth = ctx->error_depth;
     else
         ctx->error_depth = depth;
-    ctx->current_cert = x != NULL ? (X509 *)x : sk_X509_value(ctx->chain, depth);
+    ctx->current_cert = x != NULL ? x : sk_X509_value(ctx->chain, depth);
     if (err != X509_V_OK)
         ctx->error = err;
     return ctx->verify_cb(0, ctx);
@@ -217,7 +217,7 @@ static int check_auth_level(X509_STORE_CTX *ctx)
         return 1;
 
     for (i = 0; i < num; ++i) {
-        X509 *cert = sk_X509_value(ctx->chain, i);
+        const X509 *cert = sk_X509_value(ctx->chain, i);
 
         /*
          * We've already checked the security of the leaf key, so here we only
@@ -323,7 +323,7 @@ static int x509_verify_rpk(X509_STORE_CTX *ctx)
 
     /* If the peer's public key is too weak, we can stop early. */
     if (!check_key_level(ctx, ctx->rpk)
-        && verify_cb_cert(ctx, NULL, 0, X509_V_ERR_EE_KEY_TOO_SMALL) == 0)
+        && verify_cb_cert(ctx, (const X509 *)NULL, 0, X509_V_ERR_EE_KEY_TOO_SMALL) == 0)
         return 0;
 
     /* Barring any data to verify the RPK, simply report it as untrusted */
@@ -387,7 +387,7 @@ static int x509_verify_x509(X509_STORE_CTX *ctx)
     return ret;
 }
 
-static int sk_X509_contains(STACK_OF(X509) *sk, X509 *cert)
+static int sk_X509_contains(STACK_OF(X509) *sk, const X509 *cert)
 {
     int i, n = sk_X509_num(sk);
 
@@ -411,11 +411,11 @@ static int sk_X509_contains(STACK_OF(X509) *sk, X509 *cert)
  * better not set |check_signing_allowed|.
  * Maybe not touch X509_STORE_CTX_get1_issuer(), for API backward compatibility.
  */
-static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int check_signing_allowed,
+static const X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int check_signing_allowed,
     int no_dup, STACK_OF(X509) *sk, const X509 *x)
 {
     int i;
-    X509 *candidate, *issuer = NULL;
+    const X509 *candidate, *issuer = NULL;
 
     for (i = 0; i < sk_X509_num(sk); i++) {
         candidate = sk_X509_value(sk, i);
@@ -453,7 +453,7 @@ static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int check_signing_allowed,
  *  0 certificate not found.
  * -1 some other error.
  */
-int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, const X509 *x)
+int X509_STORE_CTX_get1_issuer(const X509 **issuer, X509_STORE_CTX *ctx, const X509 *x)
 {
     const X509_NAME *xn = X509_get_issuer_name(x);
     X509_OBJECT *obj = X509_OBJECT_new();
@@ -509,7 +509,7 @@ static int check_issued(ossl_unused X509_STORE_CTX *ctx, const X509 *x, const X5
  * Alternative get_issuer method: look up from a STACK_OF(X509) in other_ctx.
  * Returns -1 on internal error.
  */
-static int get1_best_issuer_other_sk(X509 **issuer, X509_STORE_CTX *ctx, const X509 *x)
+static int get1_best_issuer_other_sk(const X509 **issuer, X509_STORE_CTX *ctx, const X509 *x)
 {
     *issuer = get0_best_issuer_sk(ctx, 0, 1 /* no_dup */, ctx->other_ctx, x);
     if (*issuer == NULL)
@@ -524,7 +524,7 @@ static int get1_best_issuer_other_sk(X509 **issuer, X509_STORE_CTX *ctx, const X
 static STACK_OF(X509) *lookup_certs_sk(const X509_STORE_CTX *ctx, const X509_NAME *nm)
 {
     STACK_OF(X509) *sk = sk_X509_new_null();
-    X509 *x;
+    const X509 *x;
     int i;
 
     if (sk == NULL)
@@ -546,7 +546,7 @@ static STACK_OF(X509) *lookup_certs_sk(const X509_STORE_CTX *ctx, const X509_NAM
  * auxiliary trust can be used to override EKU-restrictions.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
-static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
+static int check_purpose(X509_STORE_CTX *ctx, const X509 *x, int purpose, int depth,
     int must_be_ca)
 {
     int tr_ok = X509_TRUST_UNTRUSTED;
@@ -600,7 +600,7 @@ static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
 static int check_extensions(X509_STORE_CTX *ctx)
 {
     int i, must_be_ca, plen = 0;
-    X509 *x;
+    const X509 *x;
     int ret, proxy_path_length = 0;
     int purpose, allow_proxy_certs, num = sk_X509_num(ctx->chain);
 
@@ -939,7 +939,7 @@ static int check_id_error(X509_STORE_CTX *ctx, int errcode)
     return verify_cb_cert(ctx, ctx->cert, 0, errcode);
 }
 
-static int check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
+static int check_hosts(const X509 *x, X509_VERIFY_PARAM *vpm)
 {
     int i;
     int n = sk_X509_BUFFER_num(vpm->hosts);
@@ -958,7 +958,7 @@ static int check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
     return n == 0;
 }
 
-static int check_email(X509 *x, X509_VERIFY_PARAM *vpm)
+static int check_email(const X509 *x, X509_VERIFY_PARAM *vpm)
 {
     int i, n, j;
     const uint8_t *name;
@@ -986,7 +986,7 @@ static int check_email(X509 *x, X509_VERIFY_PARAM *vpm)
     return n == 0 && j == 0;
 }
 
-static int check_ips(X509 *x, X509_VERIFY_PARAM *vpm)
+static int check_ips(const X509 *x, X509_VERIFY_PARAM *vpm)
 {
     int i;
     int n = sk_X509_BUFFER_num(vpm->ips);
@@ -1004,7 +1004,7 @@ static int check_ips(X509 *x, X509_VERIFY_PARAM *vpm)
 static int check_id(X509_STORE_CTX *ctx)
 {
     X509_VERIFY_PARAM *vpm = ctx->param;
-    X509 *x = ctx->cert;
+    const X509 *x = ctx->cert;
 
     if (vpm->hosts != NULL && check_hosts(x, vpm) <= 0) {
         if (!check_id_error(ctx, X509_V_ERR_HOSTNAME_MISMATCH))
@@ -1097,8 +1097,8 @@ static int certificate_time_to_posix(const ASN1_TIME *ctm, int64_t *out_time)
 static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
 {
     int i, res;
-    X509 *x = NULL;
-    X509 *mx;
+    const X509 *x = NULL;
+    const X509 *mx;
     SSL_DANE *dane = ctx->dane;
     int num = sk_X509_num(ctx->chain);
     int trust;
@@ -1396,7 +1396,7 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
     X509_CRL *crl = NULL, *dcrl = NULL;
     int ok = 0;
     int cnum = ctx->error_depth;
-    X509 *x = sk_X509_value(ctx->chain, cnum);
+    const X509 *x = sk_X509_value(ctx->chain, cnum);
 
     ctx->current_cert = x;
     ctx->current_issuer = NULL;
@@ -1414,7 +1414,7 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
 
         /* Try to retrieve relevant CRL */
         if (ctx->get_crl != NULL) {
-            X509 *crl_issuer = NULL;
+            const X509 *crl_issuer = NULL;
             unsigned int reasons = 0;
 
             ok = ctx->get_crl(ctx, &crl, x);
@@ -1531,14 +1531,14 @@ int ossl_x509_check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
 }
 
 static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
-    X509 **pissuer, int *pscore, unsigned int *preasons,
+    const X509 **pissuer, int *pscore, unsigned int *preasons,
     STACK_OF(X509_CRL) *crls)
 {
     int i, crl_score, best_score = *pscore;
     unsigned int reasons, best_reasons = 0;
-    X509 *x = ctx->current_cert;
+    const X509 *x = ctx->current_cert;
     X509_CRL *crl, *best_crl = NULL;
-    X509 *crl_issuer = NULL, *best_crl_issuer = NULL;
+    const X509 *crl_issuer = NULL, *best_crl_issuer = NULL;
 
     for (i = 0; i < sk_X509_CRL_num(crls); i++) {
         crl = sk_X509_CRL_value(crls, i);
@@ -1684,8 +1684,8 @@ static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl, int *pscore,
  * also used to determine if the CRL is suitable: if no new reasons the CRL
  * is rejected, otherwise reasons is updated.
  */
-static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
-    unsigned int *preasons, X509_CRL *crl, X509 *x)
+static int get_crl_score(X509_STORE_CTX *ctx, const X509 **pissuer,
+    unsigned int *preasons, X509_CRL *crl, const X509 *x)
 {
     int crl_score = 0;
     unsigned int tmp_reasons = *preasons, crl_reasons;
@@ -1743,9 +1743,9 @@ static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
 }
 
 static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl,
-    X509 **pissuer, int *pcrl_score)
+    const X509 **pissuer, int *pcrl_score)
 {
-    X509 *crl_issuer = NULL;
+    const X509 *crl_issuer = NULL;
     const X509_NAME *cnm = X509_CRL_get_issuer(crl);
     int cidx = ctx->error_depth;
     int i;
@@ -1800,7 +1800,7 @@ static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl,
  * parent. This could be optimised somewhat since a lot of path checking will
  * be duplicated by the parent, but this will rarely be used in practice.
  */
-static int check_crl_path(X509_STORE_CTX *ctx, X509 *x)
+static int check_crl_path(X509_STORE_CTX *ctx, const X509 *x)
 {
     X509_STORE_CTX crl_ctx = { 0 };
     int ret;
@@ -1842,8 +1842,8 @@ static int check_crl_chain(X509_STORE_CTX *ctx,
     STACK_OF(X509) *cert_path,
     STACK_OF(X509) *crl_path)
 {
-    X509 *cert_ta = sk_X509_value(cert_path, sk_X509_num(cert_path) - 1);
-    X509 *crl_ta = sk_X509_value(crl_path, sk_X509_num(crl_path) - 1);
+    const X509 *cert_ta = sk_X509_value(cert_path, sk_X509_num(cert_path) - 1);
+    const X509 *crl_ta = sk_X509_value(crl_path, sk_X509_num(crl_path) - 1);
 
     return X509_cmp(cert_ta, crl_ta) == 0;
 }
@@ -1930,7 +1930,7 @@ static int crldp_check_crlissuer(DIST_POINT *dp, X509_CRL *crl, int crl_score)
 }
 
 /* Check CRLDP and IDP */
-static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
+static int crl_crldp_check(const X509 *x, X509_CRL *crl, int crl_score,
     unsigned int *preasons)
 {
     int i;
@@ -1965,10 +1965,10 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
  * to find a delta CRL too
  */
 static int get_crl_delta(X509_STORE_CTX *ctx,
-    X509_CRL **pcrl, X509_CRL **pdcrl, X509 *x)
+    X509_CRL **pcrl, X509_CRL **pdcrl, const X509 *x)
 {
     int ok;
-    X509 *issuer = NULL;
+    const X509 *issuer = NULL;
     int crl_score = 0;
     unsigned int reasons;
     X509_CRL *crl = NULL, *dcrl = NULL;
@@ -2008,7 +2008,7 @@ done:
 /* Check CRL validity */
 static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 {
-    X509 *issuer = NULL;
+    const X509 *issuer = NULL;
     EVP_PKEY *ikey = NULL;
     int cnum = ctx->error_depth;
     int chnum = sk_X509_num(ctx->chain) - 1;
@@ -2075,7 +2075,7 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 }
 
 /* Check certificate against CRL */
-static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
+static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, const X509 *x)
 {
     X509_REVOKED *rev;
 
@@ -2139,7 +2139,7 @@ static int check_policy(X509_STORE_CTX *ctx)
 
         /* Locate certificates with bad extensions and notify callback. */
         for (i = 0; i < sk_X509_num(ctx->chain); i++) {
-            X509 *x = sk_X509_value(ctx->chain, i);
+            const X509 *x = sk_X509_value(ctx->chain, i);
 
             if ((x->ex_flags & EXFLAG_INVALID_POLICY) != 0)
                 cbcalled = 1;
@@ -2251,7 +2251,7 @@ done:
  * Return 1 on success, 0 otherwise.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
-int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
+int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, const X509 *x, int depth)
 {
     const X509_VERIFY_PARAM *vpm = ctx->param;
     int64_t notafter_seconds, notbefore_seconds, verification_time;
@@ -2300,8 +2300,8 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 static int internal_verify(X509_STORE_CTX *ctx)
 {
     int n;
-    X509 *xi;
-    X509 *xs;
+    const X509 *xi;
+    const X509 *xs;
 
     /* For RPK: just do the verify callback */
     if (ctx->rpk != NULL) {
@@ -2712,7 +2712,7 @@ const X509 *X509_STORE_CTX_get_current_cert(const X509_STORE_CTX *ctx)
     return ctx->current_cert;
 }
 
-void X509_STORE_CTX_set_current_cert(X509_STORE_CTX *ctx, X509 *x)
+void X509_STORE_CTX_set_current_cert(X509_STORE_CTX *ctx, const X509 *x)
 {
     ctx->current_cert = x;
 }
@@ -3244,7 +3244,7 @@ void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, SSL_DANE *dane)
     ctx->dane = dane;
 }
 
-static unsigned char *dane_i2d(X509 *cert, uint8_t selector,
+static unsigned char *dane_i2d(const X509 *cert, uint8_t selector,
     unsigned int *i2dlen)
 {
     unsigned char *buf = NULL;
@@ -3277,7 +3277,7 @@ static unsigned char *dane_i2d(X509 *cert, uint8_t selector,
 #define DANETLS_NONE 256 /* impossible uint8_t */
 
 /* Returns -1 on internal error */
-static int dane_match_cert(X509_STORE_CTX *ctx, X509 *cert, int depth)
+static int dane_match_cert(X509_STORE_CTX *ctx, const X509 *cert, int depth)
 {
     SSL_DANE *dane = ctx->dane;
     unsigned usage = DANETLS_NONE;
@@ -3408,7 +3408,7 @@ static int dane_match_cert(X509_STORE_CTX *ctx, X509 *cert, int depth)
                     break;
                 }
 
-                OPENSSL_free(dane->mcert);
+                X509_free(dane->mcert);
                 dane->mcert = cert;
                 dane->mdpth = depth;
                 dane->mtlsa = t;
@@ -3427,7 +3427,7 @@ static int check_dane_issuer(X509_STORE_CTX *ctx, int depth)
 {
     SSL_DANE *dane = ctx->dane;
     int matched = 0;
-    X509 *cert;
+    const X509 *cert;
 
     if (!DANETLS_HAS_TA(dane) || depth == 0)
         return X509_TRUST_UNTRUSTED;
@@ -3453,7 +3453,7 @@ static int check_dane_pkeys(X509_STORE_CTX *ctx)
     SSL_DANE *dane = ctx->dane;
     danetls_record *t;
     int num = ctx->num_untrusted;
-    X509 *cert = sk_X509_value(ctx->chain, num - 1);
+    const X509 *cert = sk_X509_value(ctx->chain, num - 1);
     int recnum = sk_danetls_record_num(dane->trecs);
     int i;
 
@@ -3549,7 +3549,7 @@ static void dane_reset(SSL_DANE *dane)
 }
 
 /* Sadly, returns 0 also on internal error in ctx->verify_cb(). */
-static int check_leaf_suiteb(X509_STORE_CTX *ctx, X509 *cert)
+static int check_leaf_suiteb(X509_STORE_CTX *ctx, const X509 *cert)
 {
     int err = X509_chain_check_suiteb(NULL, cert, NULL, ctx->param->flags);
 
@@ -3590,7 +3590,7 @@ static int dane_verify_rpk(X509_STORE_CTX *ctx)
 /* Returns -1 on internal error */
 static int dane_verify(X509_STORE_CTX *ctx)
 {
-    X509 *cert = ctx->cert;
+    const X509 *cert = ctx->cert;
     SSL_DANE *dane = ctx->dane;
     int matched;
     int done;
@@ -3653,7 +3653,7 @@ static int dane_verify(X509_STORE_CTX *ctx)
  * Get trusted issuer, without duplicate suppression
  * Returns -1 on internal error.
  */
-static int get1_trusted_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *cert)
+static int get1_trusted_issuer(const X509 **issuer, X509_STORE_CTX *ctx, const X509 *cert)
 {
     STACK_OF(X509) *saved_chain = ctx->chain;
     int ok;
@@ -3748,7 +3748,7 @@ static int build_chain(X509_STORE_CTX *ctx)
     max_depth = ctx->param->depth + 1;
 
     while (search != 0) {
-        X509 *curr, *issuer = NULL;
+        const X509 *curr, *issuer = NULL;
 
         num = sk_X509_num(ctx->chain);
         ctx->error_depth = num - 1;
@@ -4093,7 +4093,7 @@ static int check_key_level(X509_STORE_CTX *ctx, EVP_PKEY *pkey)
  * Check whether the public key of `cert` meets the security level of `ctx`.
  * Returns 1 on success, 0 otherwise.
  */
-static int check_cert_key_level(X509_STORE_CTX *ctx, X509 *cert)
+static int check_cert_key_level(X509_STORE_CTX *ctx, const X509 *cert)
 {
     return check_key_level(ctx, X509_get0_pubkey(cert));
 }
@@ -4104,7 +4104,7 @@ static int check_cert_key_level(X509_STORE_CTX *ctx, X509 *cert)
  *
  * Returns 1 on success, 0 if check fails, -1 for other errors.
  */
-static int check_curve(X509 *cert)
+static int check_curve(const X509 *cert)
 {
     EVP_PKEY *pkey = X509_get0_pubkey(cert);
     int ret, val;
@@ -4128,7 +4128,7 @@ static int check_curve(X509 *cert)
  *
  * Returns 1 on success, 0 otherwise.
  */
-static int check_sig_level(X509_STORE_CTX *ctx, X509 *cert)
+static int check_sig_level(X509_STORE_CTX *ctx, const X509 *cert)
 {
     int secbits = -1;
     int level = ctx->param->auth_level;

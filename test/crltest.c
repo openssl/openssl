@@ -743,7 +743,7 @@ static int test_crl_date_invalid(void)
  * CRL score of the CRLs it gets from X509_STORE_CTX->get_crl
  */
 
-static int get_crl_fn(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x)
+static int get_crl_fn(X509_STORE_CTX *ctx, X509_CRL **crl, const X509 *x)
 {
     *crl = CRL_from_strings(kBasicCRL);
     return 1;

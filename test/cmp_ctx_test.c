@@ -496,6 +496,147 @@ typedef OSSL_CMP_CTX CMP_CTX; /* prevents rewriting type name by below macro */
         return result;                                                                                 \
     }
 
+#define DEFINE_SET_GET_BASE_TEST_const(PREFIX, SETN, GETN, DUP, FIELD, TYPE, ERR,                                  \
+    DEFAULT, NEW, FREE)                                                                                            \
+    static int                                                                                                     \
+    execute_CTX_##SETN##_##GETN##_##FIELD(OSSL_CMP_CTX_TEST_FIXTURE *fixture)                                      \
+    {                                                                                                              \
+        CMP_CTX *ctx = fixture->ctx;                                                                               \
+        int (*set_fn)(CMP_CTX * ctx, const TYPE) = (int (*)(CMP_CTX * ctx, const TYPE)) PREFIX##_##SETN##_##FIELD; \
+        /* need type cast in above assignment as TYPE arg sometimes is const */                                    \
+        const TYPE (*get_fn)(const CMP_CTX *ctx) = OSSL_CMP_CTX_##GETN##_##FIELD;                                  \
+        const TYPE val1_to_free = NEW;                                                                             \
+        const TYPE val1 = val1_to_free;                                                                            \
+        const TYPE val1_read = 0; /* 0 works for any type */                                                       \
+        const TYPE val2_to_free = NEW;                                                                             \
+        const TYPE val2 = val2_to_free;                                                                            \
+        const TYPE val2_read = 0;                                                                                  \
+        const TYPE val3_read = 0;                                                                                  \
+        int res = 1;                                                                                               \
+                                                                                                                   \
+        if (!TEST_int_eq(ERR_peek_error(), 0))                                                                     \
+            res = 0;                                                                                               \
+        if (PREFIX == 1) { /* exported setter functions must test ctx == NULL */                                   \
+            if ((*set_fn)(NULL, val1) || ERR_peek_error() == 0) {                                                  \
+                TEST_error("setter did not return error on ctx == NULL");                                          \
+                res = 0;                                                                                           \
+            }                                                                                                      \
+        }                                                                                                          \
+        ERR_clear_error();                                                                                         \
+                                                                                                                   \
+        if ((*get_fn)(NULL) != ERR || ERR_peek_error() == 0) {                                                     \
+            TEST_error("getter did not return error on ctx == NULL");                                              \
+            res = 0;                                                                                               \
+        }                                                                                                          \
+        ERR_clear_error();                                                                                         \
+                                                                                                                   \
+        val1_read = (*get_fn)(ctx);                                                                                \
+        if (!DEFAULT(val1_read)) {                                                                                 \
+            TEST_error("did not get default value");                                                               \
+            res = 0;                                                                                               \
+        }                                                                                                          \
+        if (!(*set_fn)(ctx, val1)) {                                                                               \
+            TEST_error("setting first value failed");                                                              \
+            res = 0;                                                                                               \
+        }                                                                                                          \
+        if (SETN == 0)                                                                                             \
+            val1_to_free = 0; /* 0 works for any type */                                                           \
+                                                                                                                   \
+        if (GETN == 1)                                                                                             \
+            FREE(val1_read);                                                                                       \
+        val1_read = (*get_fn)(ctx);                                                                                \
+        if (SETN == 0) {                                                                                           \
+            if (val1_read != val1) {                                                                               \
+                TEST_error("set/get first value did not match");                                                   \
+                res = 0;                                                                                           \
+            }                                                                                                      \
+        } else {                                                                                                   \
+            if (DUP && val1_read == val1) {                                                                        \
+                TEST_error("first set did not dup the value");                                                     \
+                val1_read = 0;                                                                                     \
+                res = 0;                                                                                           \
+            }                                                                                                      \
+            if (DEFAULT(val1_read)) {                                                                              \
+                TEST_error("first set had no effect");                                                             \
+                res = 0;                                                                                           \
+            }                                                                                                      \
+        }                                                                                                          \
+                                                                                                                   \
+        if (!(*set_fn)(ctx, val2)) {                                                                               \
+            TEST_error("setting second value failed");                                                             \
+            res = 0;                                                                                               \
+        }                                                                                                          \
+        if (SETN == 0)                                                                                             \
+            val2_to_free = 0;                                                                                      \
+                                                                                                                   \
+        val2_read = (*get_fn)(ctx);                                                                                \
+        if (DEFAULT(val2_read)) {                                                                                  \
+            TEST_error("second set reset the value");                                                              \
+            res = 0;                                                                                               \
+        }                                                                                                          \
+        if (SETN == 0 && GETN == 0) {                                                                              \
+            if (val2_read != val2) {                                                                               \
+                TEST_error("set/get second value did not match");                                                  \
+                res = 0;                                                                                           \
+            }                                                                                                      \
+        } else {                                                                                                   \
+            if (DUP && val2_read == val2) {                                                                        \
+                TEST_error("second set did not dup the value");                                                    \
+                val2_read = 0;                                                                                     \
+                res = 0;                                                                                           \
+            }                                                                                                      \
+            if (val2 == val1) {                                                                                    \
+                TEST_error("second value is same as first value");                                                 \
+                res = 0;                                                                                           \
+            }                                                                                                      \
+            if (GETN == 1 && val2_read == val1_read) {                                                             \
+                /*                                                                                                 \
+                 * Note that if GETN == 0 then possibly val2_read == val1_read                                     \
+                 * because set1 may allocate the new copy at the same location.                                    \
+                 */                                                                                                \
+                TEST_error("second get returned same as first get");                                               \
+                res = 0;                                                                                           \
+            }                                                                                                      \
+        }                                                                                                          \
+                                                                                                                   \
+        val3_read = (*get_fn)(ctx);                                                                                \
+        if (DEFAULT(val3_read)) {                                                                                  \
+            TEST_error("third set reset the value");                                                               \
+            res = 0;                                                                                               \
+        }                                                                                                          \
+        if (GETN == 0) {                                                                                           \
+            if (val3_read != val2_read) {                                                                          \
+                TEST_error("third get gave different value");                                                      \
+                res = 0;                                                                                           \
+            }                                                                                                      \
+        } else {                                                                                                   \
+            if (DUP && val3_read == val2_read) {                                                                   \
+                TEST_error("third get did not create a new dup");                                                  \
+                val3_read = 0;                                                                                     \
+                res = 0;                                                                                           \
+            }                                                                                                      \
+        }                                                                                                          \
+        /* this does not check that all remaining fields are untouched */                                          \
+                                                                                                                   \
+        if (!TEST_int_eq(ERR_peek_error(), 0))                                                                     \
+            res = 0;                                                                                               \
+                                                                                                                   \
+        FREE(val1_to_free);                                                                                        \
+        FREE(val2_to_free);                                                                                        \
+        if (GETN == 1) {                                                                                           \
+            FREE(val1_read);                                                                                       \
+            FREE(val2_read);                                                                                       \
+            FREE(val3_read);                                                                                       \
+        }                                                                                                          \
+        return TEST_true(res);                                                                                     \
+    }                                                                                                              \
+                                                                                                                   \
+    static int test_CTX_##SETN##_##GETN##_##FIELD(void)                                                            \
+    {                                                                                                              \
+        SETUP_TEST_FIXTURE(OSSL_CMP_CTX_TEST_FIXTURE, set_up);                                                     \
+        EXECUTE_TEST(execute_CTX_##SETN##_##GETN##_##FIELD, tear_down);                                            \
+        return result;                                                                                             \
+    }
 static char *char_new(void)
 {
     return OPENSSL_strdup("test");
@@ -533,6 +674,11 @@ static X509_STORE *X509_STORE_new_1(void)
 /* cannot use PREFIX instead of OSSL_CMP and CTX due to #define OSSL_CMP_CTX */
 #define DEFINE_SET_GET_TEST(OSSL_CMP, CTX, N, M, DUP, FIELD, TYPE)         \
     DEFINE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get##M, DUP, FIELD, \
+        TYPE *, NULL, IS_0, TYPE##_new(), TYPE##_free)
+
+/* cannot use PREFIX instead of OSSL_CMP and CTX due to #define OSSL_CMP_CTX */
+#define DEFINE_SET_GET_TEST_const(OSSL_CMP, CTX, N, M, DUP, FIELD, TYPE)         \
+    DEFINE_SET_GET_BASE_TEST_const(OSSL_CMP##_##CTX, set##N, get##M, DUP, FIELD, \
         TYPE *, NULL, IS_0, TYPE##_new(), TYPE##_free)
 
 #define DEFINE_SET_GET_SK_TEST_DEFAULT(OSSL_CMP, CTX, N, M, FIELD, ELEM_TYPE, \
@@ -765,57 +911,57 @@ DEFINE_SET_CB_TEST(transfer_cb)
 DEFINE_SET_GET_P_VOID_TEST(transfer_cb_arg)
 
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, srvCert, X509)
-DEFINE_SET_GET_TEST(ossl_cmp, ctx, 1, 0, 0, validatedSrvCert, X509)
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, expected_sender, X509_NAME)
-DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set0, get0, 0, trusted,
-    X509_STORE *, NULL,
-    DEFAULT_STORE, X509_STORE_new_1(), X509_STORE_free)
-DEFINE_SET_GET_SK_X509_TEST(OSSL_CMP, CTX, 1, 0, untrusted)
+DEFINE_SET_GET_TEST_const(ossl_cmp, ctx, 1, 0, 0, validatedSrvCert, X509)
+    DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, expected_sender, X509_NAME)
+        DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set0, get0, 0, trusted,
+            X509_STORE *, NULL,
+            DEFAULT_STORE, X509_STORE_new_1(), X509_STORE_free)
+            DEFINE_SET_GET_SK_X509_TEST(OSSL_CMP, CTX, 1, 0, untrusted)
 
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, cert, X509)
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, pkey, EVP_PKEY)
+                DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, cert, X509)
+                    DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, pkey, EVP_PKEY)
 
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, recipient, X509_NAME)
-DEFINE_PUSH_TEST(0, 0, geninfo_ITAVs, geninfo_ITAV, OSSL_CMP_ITAV)
-DEFINE_SET_SK_TEST(OSSL_CMP, CTX, 1, extraCertsOut, X509)
-DEFINE_SET_GET_ARG_FN(set0, get0, newPkey, 1, EVP_PKEY *) /* priv == 1 */
-DEFINE_SET_GET_TEST(OSSL_CMP, CTX, 0, 0, 0, newPkey_1, EVP_PKEY)
-DEFINE_SET_GET_ARG_FN(set0, get0, newPkey, 0, EVP_PKEY *) /* priv == 0 */
-DEFINE_SET_GET_TEST(OSSL_CMP, CTX, 0, 0, 0, newPkey_0, EVP_PKEY)
-DEFINE_SET_GET1_STR_FN(set1, referenceValue)
-DEFINE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, 1, referenceValue_str, char,
-    IS_0)
-DEFINE_SET_GET1_STR_FN(set1, secretValue)
-DEFINE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, 1, secretValue_str, char, IS_0)
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, issuer, X509_NAME)
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, subjectName, X509_NAME)
+                        DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, recipient, X509_NAME)
+                            DEFINE_PUSH_TEST(0, 0, geninfo_ITAVs, geninfo_ITAV, OSSL_CMP_ITAV)
+                                DEFINE_SET_SK_TEST(OSSL_CMP, CTX, 1, extraCertsOut, X509)
+                                    DEFINE_SET_GET_ARG_FN(set0, get0, newPkey, 1, EVP_PKEY *) /* priv == 1 */
+    DEFINE_SET_GET_TEST(OSSL_CMP, CTX, 0, 0, 0, newPkey_1, EVP_PKEY)
+        DEFINE_SET_GET_ARG_FN(set0, get0, newPkey, 0, EVP_PKEY *) /* priv == 0 */
+    DEFINE_SET_GET_TEST(OSSL_CMP, CTX, 0, 0, 0, newPkey_0, EVP_PKEY)
+        DEFINE_SET_GET1_STR_FN(set1, referenceValue)
+            DEFINE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, 1, referenceValue_str, char,
+                IS_0)
+                DEFINE_SET_GET1_STR_FN(set1, secretValue)
+                    DEFINE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, 1, secretValue_str, char, IS_0)
+                        DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, issuer, X509_NAME)
+                            DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, subjectName, X509_NAME)
 #ifdef ISSUE_9504_RESOLVED
-DEFINE_PUSH_TEST(1, 1, subjectAltNames, subjectAltName, GENERAL_NAME)
+                                DEFINE_PUSH_TEST(1, 1, subjectAltNames, subjectAltName, GENERAL_NAME)
 #endif
-DEFINE_SET_SK_TEST(OSSL_CMP, CTX, 0, reqExtensions, X509_EXTENSION)
-DEFINE_PUSH_TEST(0, 0, policies, policy, POLICYINFO)
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, oldCert, X509)
+                                    DEFINE_SET_SK_TEST(OSSL_CMP, CTX, 0, reqExtensions, X509_EXTENSION)
+                                        DEFINE_PUSH_TEST(0, 0, policies, policy, POLICYINFO)
+                                            DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, oldCert, X509)
 #ifdef ISSUE_9504_RESOLVED
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, p10CSR, X509_REQ)
+                                                DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, p10CSR, X509_REQ)
 #endif
-DEFINE_PUSH_TEST(0, 0, genm_ITAVs, genm_ITAV, OSSL_CMP_ITAV)
-DEFINE_SET_CB_TEST(certConf_cb)
-DEFINE_SET_GET_P_VOID_TEST(certConf_cb_arg)
+                                                    DEFINE_PUSH_TEST(0, 0, genm_ITAVs, genm_ITAV, OSSL_CMP_ITAV)
+                                                        DEFINE_SET_CB_TEST(certConf_cb)
+                                                            DEFINE_SET_GET_P_VOID_TEST(certConf_cb_arg)
 
-DEFINE_SET_GET_INT_TEST(ossl_cmp, ctx, status)
-DEFINE_SET_GET_SK_TEST(ossl_cmp, ctx, 0, 0, statusString, ASN1_UTF8STRING)
-DEFINE_SET_GET_INT_TEST(ossl_cmp, ctx, failInfoCode)
-DEFINE_SET_GET_TEST(ossl_cmp, ctx, 0, 0, 0, newCert, X509)
-DEFINE_SET_GET_SK_X509_TEST(ossl_cmp, ctx, 1, 1, newChain)
-DEFINE_SET_GET_SK_X509_TEST(ossl_cmp, ctx, 1, 1, caPubs)
-DEFINE_SET_GET_SK_X509_TEST(ossl_cmp, ctx, 1, 1, extraCertsIn)
+                                                                DEFINE_SET_GET_INT_TEST(ossl_cmp, ctx, status)
+                                                                    DEFINE_SET_GET_SK_TEST(ossl_cmp, ctx, 0, 0, statusString, ASN1_UTF8STRING)
+                                                                        DEFINE_SET_GET_INT_TEST(ossl_cmp, ctx, failInfoCode)
+                                                                            DEFINE_SET_GET_TEST_const(ossl_cmp, ctx, 0, 0, 0, newCert, X509)
+                                                                                DEFINE_SET_GET_SK_X509_TEST(ossl_cmp, ctx, 1, 1, newChain)
+                                                                                    DEFINE_SET_GET_SK_X509_TEST(ossl_cmp, ctx, 1, 1, caPubs)
+                                                                                        DEFINE_SET_GET_SK_X509_TEST(ossl_cmp, ctx, 1, 1, extraCertsIn)
 
-DEFINE_SET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, transactionID, ASN1_OCTET_STRING,
-    IS_0)
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, senderNonce, ASN1_OCTET_STRING)
-DEFINE_SET_TEST(ossl_cmp, ctx, 1, 1, recipNonce, ASN1_OCTET_STRING)
+                                                                                            DEFINE_SET_TEST_DEFAULT(OSSL_CMP, CTX, 1, 1, transactionID, ASN1_OCTET_STRING,
+                                                                                                IS_0)
+                                                                                                DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, senderNonce, ASN1_OCTET_STRING)
+                                                                                                    DEFINE_SET_TEST(ossl_cmp, ctx, 1, 1, recipNonce, ASN1_OCTET_STRING)
 
-int setup_tests(void)
+                                                                                                        int setup_tests(void)
 {
     if (!test_skip_common_options()) {
         TEST_error("Error parsing test options\n");

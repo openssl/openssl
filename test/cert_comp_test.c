@@ -38,7 +38,7 @@ static char *certsdir = NULL;
 static char *cert = NULL;
 static char *privkey = NULL;
 
-static int client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
+static int client_cert_cb(SSL *ssl, const X509 **x509, EVP_PKEY **pkey)
 {
     X509 *xcert;
     EVP_PKEY *privpkey;

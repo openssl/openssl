@@ -32,7 +32,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     PKCS12 *p12;
     BIO *in;
     EVP_PKEY *pkey = NULL;
-    X509 *cert = NULL;
+    const X509 *cert = NULL;
     STACK_OF(X509) *ca = NULL;
 
     if (len == 0 || len > INT_MAX)

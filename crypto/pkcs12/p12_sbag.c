@@ -91,7 +91,7 @@ const ASN1_TYPE *PKCS12_SAFEBAG_get0_bag_obj(const PKCS12_SAFEBAG *bag)
     return bag->value.bag->value.other;
 }
 
-X509 *PKCS12_SAFEBAG_get1_cert(const PKCS12_SAFEBAG *bag)
+const X509 *PKCS12_SAFEBAG_get1_cert(const PKCS12_SAFEBAG *bag)
 {
     if (PKCS12_SAFEBAG_get_nid(bag) != NID_certBag)
         return NULL;
@@ -147,9 +147,9 @@ X509_CRL *PKCS12_SAFEBAG_get1_crl_ex(const PKCS12_SAFEBAG *bag,
     return ret;
 }
 
-PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_cert(X509 *x509)
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_cert(const X509 *x509)
 {
-    return PKCS12_item_pack_safebag(x509, ASN1_ITEM_rptr(X509),
+    return PKCS12_item_pack_safebag((void *)x509, ASN1_ITEM_rptr(X509), /* wnat to have (const void *) */
         NID_x509Certificate, NID_certBag);
 }
 

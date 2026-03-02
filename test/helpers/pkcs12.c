@@ -72,9 +72,9 @@ void PKCS12_helper_set_propq(const char *propq)
  * Test data load functions
  */
 
-static X509 *load_cert_asn1(const unsigned char *bytes, int len)
+static const X509 *load_cert_asn1(const unsigned char *bytes, int len)
 {
-    X509 *cert = NULL;
+    const X509 *cert = NULL;
 
     cert = d2i_X509(NULL, &bytes, len);
     if (!TEST_ptr(cert))
@@ -371,7 +371,7 @@ void add_certbag(PKCS12_BUILDER *pb, const unsigned char *bytes, int len,
     const PKCS12_ATTR *attrs)
 {
     PKCS12_SAFEBAG *bag = NULL;
-    X509 *cert = NULL;
+    const X509 *cert = NULL;
     char *name;
 
     if (!pb->success)
@@ -536,8 +536,8 @@ err:
 void check_certbag(PKCS12_BUILDER *pb, const unsigned char *bytes, int len,
     const PKCS12_ATTR *attrs)
 {
-    X509 *x509 = NULL;
-    X509 *ref_x509 = NULL;
+    const X509 *x509 = NULL;
+    const X509 *ref_x509 = NULL;
     const PKCS12_SAFEBAG *bag;
 
     if (!pb->success)

@@ -1855,7 +1855,7 @@ static int test_cleanse_plaintext(void)
 }
 
 #ifndef OPENSSL_NO_OCSP
-static OCSP_RESPONSE *create_ocsp_resp(X509 *ssl_cert, X509 *issuer, int status,
+static OCSP_RESPONSE *create_ocsp_resp(const X509 *ssl_cert, const X509 *issuer, int status,
     char *signer_key_files, char *signer_cert_files)
 {
     ASN1_TIME *thisupd = X509_gmtime_adj(NULL, 0);
@@ -1904,8 +1904,8 @@ static int ocsp_server_cb_single(SSL *s, void *arg)
 {
     int *argi = (int *)arg;
     STACK_OF(X509) *server_certs = NULL;
-    X509 *ssl_cert = NULL;
-    X509 *issuer = NULL;
+    const X509 *ssl_cert = NULL;
+    const X509 *issuer = NULL;
     OCSP_RESPONSE *ocsp_resp;
     STACK_OF(OCSP_RESPID) *ids = NULL;
     OCSP_RESPID *id = NULL;
@@ -2118,8 +2118,8 @@ static int ocsp_server_cb_multi(SSL *s, void *arg)
 {
     int *argi = (int *)arg;
     const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(s);
-    X509 *ssl_cert = NULL;
-    X509 *issuer = NULL;
+    const X509 *ssl_cert = NULL;
+    const X509 *issuer = NULL;
     int i, num = 0;
     STACK_OF(X509) *server_certs = NULL;
     OCSP_RESPONSE *ocsp_resp;
@@ -2195,7 +2195,7 @@ static int ocsp_client_cb_multi(SSL *s, void *arg)
     STACK_OF(OCSP_RESPONSE) *sk_resp = NULL;
     OCSP_RESPONSE *resp = NULL;
     STACK_OF(X509) *server_certs = NULL;
-    X509 *ssl_cert = NULL, *issuer_cert = NULL;
+    const X509 *ssl_cert = NULL, *issuer_cert = NULL;
     OCSP_BASICRESP *bs = NULL;
     OCSP_CERTID *cert_id = NULL;
     OCSP_SINGLERESP *sr = NULL;
@@ -6543,7 +6543,7 @@ static int old_parse_cb(SSL *s, unsigned int ext_type, const unsigned char *in,
 }
 
 static int new_add_cb(SSL *s, unsigned int ext_type, unsigned int context,
-    const unsigned char **out, size_t *outlen, X509 *x,
+    const unsigned char **out, size_t *outlen, const X509 *x,
     size_t chainidx, int *al, void *add_arg)
 {
     int *server = (int *)add_arg;
@@ -6571,7 +6571,7 @@ static void new_free_cb(SSL *s, unsigned int ext_type, unsigned int context,
 }
 
 static int new_parse_cb(SSL *s, unsigned int ext_type, unsigned int context,
-    const unsigned char *in, size_t inlen, X509 *x,
+    const unsigned char *in, size_t inlen, const X509 *x,
     size_t chainidx, int *al, void *parse_arg)
 {
     int *server = (int *)parse_arg;
@@ -6874,7 +6874,7 @@ static const size_t serverinfo_custom_v1_len = sizeof(serverinfo_custom_v1);
 static int serverinfo_custom_parse_cb(SSL *s, unsigned int ext_type,
     unsigned int context,
     const unsigned char *in,
-    size_t inlen, X509 *x,
+    size_t inlen, const X509 *x,
     size_t chainidx, int *al,
     void *parse_arg)
 {
@@ -9771,7 +9771,7 @@ static int test_cert_cb(int tst)
     return testresult;
 }
 
-static int client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
+static int client_cert_cb(SSL *ssl, const X509 **x509, EVP_PKEY **pkey)
 {
     X509 *xcert;
     EVP_PKEY *privpkey;

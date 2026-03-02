@@ -36,7 +36,7 @@
 #define WARN_NO_EXPORT(opt) \
     BIO_printf(bio_err, "Warning: -%s option ignored without -export\n", opt);
 
-static int get_cert_chain(X509 *cert, X509_STORE *store,
+static int get_cert_chain(const X509 *cert, X509_STORE *store,
     STACK_OF(X509) *untrusted_certs,
     STACK_OF(X509) **chain);
 int dump_certs_keys_p12(BIO *out, const PKCS12 *p12,
@@ -569,7 +569,7 @@ int pkcs12_main(int argc, char **argv)
 
     if (export_pkcs12) {
         EVP_PKEY *key = NULL;
-        X509 *ee_cert = NULL, *x = NULL;
+        const X509 *ee_cert = NULL, *x = NULL;
         STACK_OF(X509) *certs = NULL;
         STACK_OF(X509) *untrusted_certs = NULL;
         EVP_MD *macmd = NULL;
@@ -612,8 +612,8 @@ int pkcs12_main(int argc, char **argv)
                     if (cert_matches_key(x, key)) {
                         ee_cert = x;
                         /* Zero keyid and alias */
-                        X509_keyid_set1(ee_cert, NULL, 0);
-                        X509_alias_set1(ee_cert, NULL, 0);
+                        X509_keyid_set1((X509 *)ee_cert /* !!! breaks_const_X509 !!! */, NULL, 0);
+                        X509_alias_set1((X509 *)ee_cert /* !!! breaks_const_X509 !!! */, NULL, 0);
                         /* Remove from list */
                         (void)sk_X509_delete(certs, i);
                         break;
@@ -640,7 +640,7 @@ int pkcs12_main(int argc, char **argv)
             int vret;
             STACK_OF(X509) *chain2;
             X509_STORE *store;
-            X509 *ee_cert_tmp = ee_cert;
+            const X509 *ee_cert_tmp = ee_cert;
 
             /* Assume the first cert if we haven't got anything else */
             if (ee_cert_tmp == NULL && certs != NULL)
@@ -687,7 +687,8 @@ int pkcs12_main(int argc, char **argv)
         /* Add any CA names */
         for (i = 0; i < sk_OPENSSL_STRING_num(canames); i++) {
             catmp = (unsigned char *)sk_OPENSSL_STRING_value(canames, i);
-            X509_alias_set1(sk_X509_value(certs, i), catmp, -1);
+            /* !!! breaks const !!! */
+            X509_alias_set1((X509 *)sk_X509_value(certs, i), catmp, -1);
         }
 
         if (csp_name != NULL && key != NULL)
@@ -1042,7 +1043,7 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
     EVP_PKEY *pkey;
     PKCS8_PRIV_KEY_INFO *p8;
     const PKCS8_PRIV_KEY_INFO *p8c;
-    X509 *x509;
+    const X509 *x509;
     const STACK_OF(X509_ATTRIBUTE) *attrs;
     int ret = 0;
 
@@ -1136,7 +1137,7 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
 
 /* Given a single certificate return a verified chain or NULL if error */
 
-static int get_cert_chain(X509 *cert, X509_STORE *store,
+static int get_cert_chain(const X509 *cert, X509_STORE *store,
     STACK_OF(X509) *untrusted_certs,
     STACK_OF(X509) **chain)
 {

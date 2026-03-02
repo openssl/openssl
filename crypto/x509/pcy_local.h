@@ -98,7 +98,7 @@ struct X509_POLICY_NODE_st {
 
 struct X509_POLICY_LEVEL_st {
     /* Cert for this level */
-    X509 *cert;
+    const X509 *cert;
     /* nodes at this level */
     STACK_OF(X509_POLICY_NODE) *nodes;
     /* anyPolicy node */

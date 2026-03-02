@@ -289,7 +289,7 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
     OSSL_CRMF_MSG *crm = NULL;
     int central_keygen = OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_POPO_METHOD)
         == OSSL_CRMF_POPO_NONE;
-    X509 *refcert = ctx->oldCert != NULL ? ctx->oldCert : ctx->cert;
+    const X509 *refcert = ctx->oldCert != NULL ? ctx->oldCert : ctx->cert;
     /* refcert defaults to current client cert */
     EVP_PKEY *rkey = ossl_cmp_ctx_get0_newPubkey(ctx);
     STACK_OF(GENERAL_NAME) *default_sans = NULL;
@@ -470,7 +470,7 @@ static OSSL_CRMF_ENCRYPTEDKEY *enc_privkey(OSSL_CMP_CTX *ctx, const EVP_PKEY *pk
     CMS_EnvelopedData *envData = NULL;
     BIO *privbio = NULL;
     EVP_CIPHER *cipher = NULL;
-    X509 *recip = ctx->validatedSrvCert; /* this is the client cert */
+    const X509 *recip = ctx->validatedSrvCert; /* this is the client cert */
     STACK_OF(X509) *encryption_recips = sk_X509_new_reserve(NULL, 1);
 
     if (encryption_recips == NULL
@@ -482,8 +482,8 @@ static OSSL_CRMF_ENCRYPTEDKEY *enc_privkey(OSSL_CMP_CTX *ctx, const EVP_PKEY *pk
         goto err;
     ossl_cmp_set_own_chain(ctx);
     cipher = EVP_CIPHER_fetch(ctx->libctx, SN_aes_256_cbc, ctx->propq);
-    envData = ossl_cms_sign_encrypt(privbio, ctx->cert, ctx->chain, ctx->pkey, CMS_BINARY,
-        encryption_recips, cipher, CMS_BINARY,
+    envData = ossl_cms_sign_encrypt(privbio, (X509 *)ctx->cert /* !!! breaks_const_X509 !!! */,
+        ctx->chain, ctx->pkey, CMS_BINARY, encryption_recips, cipher, CMS_BINARY,
         ctx->libctx, ctx->propq);
     EVP_CIPHER_free(cipher);
     if (envData == NULL)
@@ -1140,7 +1140,7 @@ X509 *ossl_cmp_certresponse_get1_cert(const OSSL_CMP_CTX *ctx, const OSSL_CMP_CE
         /* found encrypted private key, try to extract */
         pkey = OSSL_CRMF_ENCRYPTEDKEY_get1_pkey(encr_key, ctx->trusted,
             ctx->untrusted,
-            ctx->pkey, ctx->cert,
+            ctx->pkey, (X509 *)ctx->cert,
             ctx->secretValue,
             ctx->libctx, ctx->propq);
         if (pkey == NULL) {

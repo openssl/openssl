@@ -292,7 +292,7 @@ void CMS_SignerInfo_set1_signer_cert(CMS_SignerInfo *si, X509 *signer);
 int CMS_SignerInfo_get0_signer_id(CMS_SignerInfo *si,
     ASN1_OCTET_STRING **keyid,
     X509_NAME **issuer, ASN1_INTEGER **sno);
-int CMS_SignerInfo_cert_cmp(CMS_SignerInfo *si, X509 *cert);
+int CMS_SignerInfo_cert_cmp(CMS_SignerInfo *si, const X509 *cert);
 int CMS_set1_signers_certs(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
     unsigned int flags);
 void CMS_SignerInfo_get0_algs(CMS_SignerInfo *si, EVP_PKEY **pk,

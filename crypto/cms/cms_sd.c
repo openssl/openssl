@@ -213,7 +213,7 @@ int ossl_cms_SignerIdentifier_get0_signer_id(CMS_SignerIdentifier *sid,
     return 1;
 }
 
-int ossl_cms_SignerIdentifier_cert_cmp(CMS_SignerIdentifier *sid, X509 *cert)
+int ossl_cms_SignerIdentifier_cert_cmp(CMS_SignerIdentifier *sid, const X509 *cert)
 {
     if (sid->type == CMS_SIGNERINFO_ISSUER_SERIAL)
         return ossl_cms_ias_cert_cmp(sid->d.issuerAndSerialNumber, cert);
@@ -866,7 +866,7 @@ int CMS_SignerInfo_get0_signer_id(CMS_SignerInfo *si,
     return ossl_cms_SignerIdentifier_get0_signer_id(si->sid, keyid, issuer, sno);
 }
 
-int CMS_SignerInfo_cert_cmp(CMS_SignerInfo *si, X509 *cert)
+int CMS_SignerInfo_cert_cmp(CMS_SignerInfo *si, const X509 *cert)
 {
     return ossl_cms_SignerIdentifier_cert_cmp(si->sid, cert);
 }
@@ -878,7 +878,7 @@ int CMS_set1_signers_certs(CMS_ContentInfo *cms, const STACK_OF(X509) *scerts,
     CMS_SignerInfo *si;
     CMS_CertificateChoices *cch;
     STACK_OF(CMS_CertificateChoices) *certs;
-    X509 *x;
+    const X509 *x;
     int i, j;
     int ret = 0;
 
@@ -894,7 +894,7 @@ int CMS_set1_signers_certs(CMS_ContentInfo *cms, const STACK_OF(X509) *scerts,
         for (j = 0; j < sk_X509_num(scerts); j++) {
             x = sk_X509_value(scerts, j);
             if (CMS_SignerInfo_cert_cmp(si, x) == 0) {
-                CMS_SignerInfo_set1_signer_cert(si, x);
+                CMS_SignerInfo_set1_signer_cert(si, (X509 *)x); /* !!! breaks_const_X509 !!! */
                 ret++;
                 break;
             }
@@ -909,7 +909,7 @@ int CMS_set1_signers_certs(CMS_ContentInfo *cms, const STACK_OF(X509) *scerts,
                 continue;
             x = cch->d.certificate;
             if (CMS_SignerInfo_cert_cmp(si, x) == 0) {
-                CMS_SignerInfo_set1_signer_cert(si, x);
+                CMS_SignerInfo_set1_signer_cert(si, (X509 *)x); /* !!! breaks_const_X509 !!! */
                 ret++;
                 break;
             }
@@ -1512,7 +1512,7 @@ BIO *CMS_SignedData_verify(CMS_SignedData *sd, BIO *detached_data,
     ci->d.signedData = sd;
 
     for (i = 0; i < sk_X509_num(extra); i++)
-        if (!CMS_add1_cert(ci, sk_X509_value(extra, i)))
+        if (!CMS_add1_cert(ci, (X509 *)sk_X509_value(extra, i))) /* !!! breaks_const_X509 !!! */
             goto end;
     for (i = 0; i < sk_X509_CRL_num(crls); i++)
         if (!CMS_add1_crl(ci, sk_X509_CRL_value(crls, i)))

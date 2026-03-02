@@ -3593,7 +3593,7 @@ static char *ec_curve_name(EVP_PKEY *pkey)
     return (curve);
 }
 
-static void print_cert_key_info(BIO *bio, X509 *cert)
+static void print_cert_key_info(BIO *bio, const X509 *cert)
 {
     EVP_PKEY *pkey = X509_get0_pubkey(cert);
     char *curve = NULL;
@@ -3718,7 +3718,7 @@ static void print_ech_status(BIO *bio, SSL *s, int estat)
 
 static void print_stuff(BIO *bio, SSL *s, int full)
 {
-    X509 *peer = NULL;
+    const X509 *peer = NULL;
     STACK_OF(X509) *sk;
     const SSL_CIPHER *c;
     int i, istls13 = (SSL_version(s) == TLS1_3_VERSION);
@@ -3744,7 +3744,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 
             BIO_puts(bio, "---\nCertificate chain\n");
             for (i = 0; i < sk_X509_num(sk); i++) {
-                X509 *chain_cert = sk_X509_value(sk, i);
+                const X509 *chain_cert = sk_X509_value(sk, i);
 
                 BIO_printf(bio, "%2d s:", i);
                 X509_NAME_print_ex(bio, X509_get_subject_name(chain_cert), 0, get_nameopt());
