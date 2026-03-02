@@ -3135,14 +3135,10 @@ DEPEND[html/man3/d2i_X509.html]=man3/d2i_X509.pod
 GENERATE[html/man3/d2i_X509.html]=man3/d2i_X509.pod
 DEPEND[man/man3/d2i_X509.3]=man3/d2i_X509.pod
 GENERATE[man/man3/d2i_X509.3]=man3/d2i_X509.pod
-DEPEND[html/man3/i2d_CMS_bio_stream.html]=man3/i2d_CMS_bio_stream.pod
-GENERATE[html/man3/i2d_CMS_bio_stream.html]=man3/i2d_CMS_bio_stream.pod
-DEPEND[man/man3/i2d_CMS_bio_stream.3]=man3/i2d_CMS_bio_stream.pod
-GENERATE[man/man3/i2d_CMS_bio_stream.3]=man3/i2d_CMS_bio_stream.pod
-DEPEND[html/man3/i2d_PKCS7_bio_stream.html]=man3/i2d_PKCS7_bio_stream.pod
-GENERATE[html/man3/i2d_PKCS7_bio_stream.html]=man3/i2d_PKCS7_bio_stream.pod
-DEPEND[man/man3/i2d_PKCS7_bio_stream.3]=man3/i2d_PKCS7_bio_stream.pod
-GENERATE[man/man3/i2d_PKCS7_bio_stream.3]=man3/i2d_PKCS7_bio_stream.pod
+DEPEND[html/man3/i2d_ASN1_bio_stream.html]=man3/i2d_ASN1_bio_stream.pod
+GENERATE[html/man3/i2d_ASN1_bio_stream.html]=man3/i2d_ASN1_bio_stream.pod
+DEPEND[man/man3/i2d_ASN1_bio_stream.3]=man3/i2d_ASN1_bio_stream.pod
+GENERATE[man/man3/i2d_ASN1_bio_stream.3]=man3/i2d_ASN1_bio_stream.pod
 DEPEND[html/man3/i2d_re_X509_tbs.html]=man3/i2d_re_X509_tbs.pod
 GENERATE[html/man3/i2d_re_X509_tbs.html]=man3/i2d_re_X509_tbs.pod
 DEPEND[man/man3/i2d_re_X509_tbs.3]=man3/i2d_re_X509_tbs.pod
@@ -3823,8 +3819,7 @@ html/man3/d2i_PrivateKey.html \
 html/man3/d2i_RSAPrivateKey.html \
 html/man3/d2i_SSL_SESSION.html \
 html/man3/d2i_X509.html \
-html/man3/i2d_CMS_bio_stream.html \
-html/man3/i2d_PKCS7_bio_stream.html \
+html/man3/i2d_ASN1_bio_stream.html \
 html/man3/i2d_re_X509_tbs.html \
 html/man3/o2i_SCT_LIST.html \
 html/man3/s2i_ASN1_IA5STRING.html
@@ -4495,8 +4490,7 @@ man/man3/d2i_PrivateKey.3 \
 man/man3/d2i_RSAPrivateKey.3 \
 man/man3/d2i_SSL_SESSION.3 \
 man/man3/d2i_X509.3 \
-man/man3/i2d_CMS_bio_stream.3 \
-man/man3/i2d_PKCS7_bio_stream.3 \
+man/man3/i2d_ASN1_bio_stream.3 \
 man/man3/i2d_re_X509_tbs.3 \
 man/man3/o2i_SCT_LIST.3 \
 man/man3/s2i_ASN1_IA5STRING.3
