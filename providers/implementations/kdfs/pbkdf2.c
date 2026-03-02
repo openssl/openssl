@@ -268,7 +268,7 @@ static int fips_lower_bound_check_passed(KDF_PBKDF2 *ctx, int saltlen,
     if (!approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0, libctx,
                 "PBKDF2", desc,
-                ossl_fips_config_pbkdf2_lower_bound_check)) {
+                FIPS_CONFIG_PBKDF2_LOWER_BOUND_CHECK)) {
             ERR_raise(ERR_LIB_PROV, error);
             return 0;
         }

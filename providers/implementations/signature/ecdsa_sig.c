@@ -248,7 +248,7 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx,
                 OSSL_FIPS_IND_SETTABLE1,
                 ctx->libctx,
                 md_nid, sha1_allowed, 0, desc,
-                ossl_fips_config_signature_digest_check))
+                FIPS_CONFIG_SIGNATURE_DIGEST_CHECK))
             goto err;
     }
 #endif

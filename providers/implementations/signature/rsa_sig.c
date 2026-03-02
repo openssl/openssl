@@ -424,7 +424,7 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
                     OSSL_FIPS_IND_SETTABLE1,
                     ctx->libctx,
                     md_nid, sha1_allowed, 1, desc,
-                    ossl_fips_config_signature_digest_check))
+                    FIPS_CONFIG_SIGNATURE_DIGEST_CHECK))
                 goto err;
         }
 #endif
@@ -656,7 +656,7 @@ static int rsa_pss_saltlen_check_passed(PROV_RSA_CTX *ctx, const char *algoname,
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE3,
                 ctx->libctx,
                 algoname, "PSS Salt Length",
-                ossl_fips_config_rsa_pss_saltlen_check)) {
+                FIPS_CONFIG_RSA_PSS_SALTLEN_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SALT_LENGTH);
             return 0;
         }
@@ -1504,7 +1504,7 @@ static int rsa_x931_padding_allowed(PROV_RSA_CTX *ctx)
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE2,
                 ctx->libctx,
                 "RSA Sign set ctx", "X931 Padding",
-                ossl_fips_config_rsa_sign_x931_disallowed)) {
+                FIPS_CONFIG_RSA_SIGN_X931_PAD_DISABLED)) {
             ERR_raise(ERR_LIB_PROV,
                 PROV_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
             return 0;

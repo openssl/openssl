@@ -89,30 +89,22 @@ static OSSL_FUNC_self_test_cb_fn *c_stcbfn = NULL;
 static OSSL_FUNC_indicator_cb_fn *c_indcbfn = NULL;
 static OSSL_FUNC_core_get_libctx_fn *c_get_libctx = NULL;
 
-typedef struct {
-    const char *option;
-    unsigned char enabled;
-} FIPS_OPTION;
-
-typedef struct fips_global_st FIPS_GLOBAL;
-typedef struct fips_indicators_st FIPS_INDICATORS;
-static FIPS_INDICATORS *get_fips_indicators(FIPS_GLOBAL *fgbl);
-#include "fipsparams.inc"
+#include "providers/fips/fipsparams.inc"
 
 typedef struct fips_global_st {
     const OSSL_CORE_HANDLE *handle;
     SELF_TEST_POST_PARAMS selftest_params;
 
-    FIPS_INDICATORS fips_indicators;
+    FIPS_PARAMS fips_params;
 
     /* Guards access to deferred self-test */
     CRYPTO_RWLOCK *deferred_lock;
 
 } FIPS_GLOBAL;
 
-static inline FIPS_INDICATORS *get_fips_indicators(FIPS_GLOBAL *fgbl)
+static inline FIPS_PARAMS *get_fips_params(FIPS_GLOBAL *fgbl)
 {
-    return &fgbl->fips_indicators;
+    return &fgbl->fips_params;
 }
 
 void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
@@ -122,7 +114,7 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
     if (fgbl == NULL)
         return NULL;
 
-    init_fips_indicators(&fgbl->fips_indicators);
+    init_fips_params(&fgbl->fips_params);
 
     return fgbl;
 }
@@ -148,31 +140,6 @@ static int fips_random_bytes(ossl_unused void *vprov, int which,
     return RAND_bytes_ex(libctx, buf, n, strength);
 }
 
-/*
- * Parameters to retrieve from the core provider
- * NOTE: inside core_get_params() these will be loaded from config items
- * stored inside prov->parameters
- */
-static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
-{
-    OSSL_PARAM core_params[33], *p = core_params;
-
-    /* Parameters required for self testing */
-    p = get_fips_selftest_params_from_core(p, &fgbl->selftest_params);
-
-    /* FIPS indicator options can be enabled or disabled independently */
-    p = get_fips_indicator_params_from_core(p, &fgbl->fips_indicators);
-
-    *p = OSSL_PARAM_construct_end();
-
-    if (!c_get_params(fgbl->handle, core_params)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
-        return 0;
-    }
-
-    return set_fips_indicators_from_core(&fgbl->fips_indicators);
-}
-
 static const OSSL_PARAM *fips_gettable_params(void *provctx)
 {
     /* Parameters we provide to the core */
@@ -181,7 +148,7 @@ static const OSSL_PARAM *fips_gettable_params(void *provctx)
         OSSL_PARAM_DEFN(OSSL_PROV_PARAM_VERSION, OSSL_PARAM_UTF8_PTR, NULL, 0),
         OSSL_PARAM_DEFN(OSSL_PROV_PARAM_BUILDINFO, OSSL_PARAM_UTF8_PTR, NULL, 0),
         OSSL_PARAM_DEFN(OSSL_PROV_PARAM_STATUS, OSSL_PARAM_INTEGER, NULL, 0),
-        OSSL_FIPS_INDICATOR_PARAM_TYPES,
+        OSSL_FIPS_PARAMS_DEFN_TYPES,
         OSSL_PARAM_END
     };
     return fips_param_types;
@@ -206,7 +173,7 @@ static int fips_get_params(void *provctx, OSSL_PARAM params[])
     if (p != NULL && !OSSL_PARAM_set_int(p, ossl_prov_is_running()))
         return 0;
 
-    return get_fips_indicator_params(params, &fgbl->fips_indicators);
+    return return_fips_params(params, &fgbl->fips_params);
 }
 
 static void set_self_test_cb(FIPS_GLOBAL *fgbl)
@@ -997,27 +964,34 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
     if (!ossl_provider_activate_fallbacks(libctx))
         goto err;
 
+    /* Retrieve all FIPS parameters from core so they can be used later */
+    if (!fips_get_params_from_core(fgbl->handle, &fgbl->fips_params)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+        goto err;
+    }
+
+    /* disable security_checks if needed */
+#ifdef OPENSSL_NO_FIPS_SECURITYCHECKS
+    fgbl->fips_params.security_checks = 0;
+#endif
+
     /*
      * We did initial set up of selftest_params in a local copy, because we
      * could not create fgbl until c_CRYPTO_zalloc was defined in the loop
      * above.
      */
     fgbl->selftest_params = selftest_params;
-
+    fgbl->selftest_params.module_filename = fgbl->fips_params.module_filename;
+    fgbl->selftest_params.module_checksum_data = fgbl->fips_params.module_checksum_data;
+    fgbl->selftest_params.defer_tests = fgbl->fips_params.defer_tests;
     fgbl->selftest_params.libctx = libctx;
 
     set_self_test_cb(fgbl);
-
-    if (!fips_get_params_from_core(fgbl)) {
-        /* Error already raised */
-        goto err;
-    }
     /*
      * Disable the conditional error check if it's disabled in the fips config
      * file.
      */
-    if (fgbl->selftest_params.conditional_error_check != NULL
-        && strcmp(fgbl->selftest_params.conditional_error_check, "0") == 0)
+    if (fgbl->fips_params.conditional_error_check == 0)
         SELF_TEST_disable_conditional_error_state();
 
     ossl_prov_cache_exported_algorithms(fips_ciphers, exported_fips_ciphers);

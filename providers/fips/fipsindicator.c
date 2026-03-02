@@ -58,7 +58,7 @@ int ossl_FIPS_IND_get_settable(const OSSL_FIPS_IND *ind, int id)
 int ossl_FIPS_IND_on_unapproved(OSSL_FIPS_IND *ind, int id,
     OSSL_LIB_CTX *libctx,
     const char *algname, const char *opname,
-    OSSL_FIPS_IND_CHECK_CB *config_check_fn)
+    enum fips_config_id config_id)
 {
     /* Set to unapproved. Once unapproved mode is set this will not be reset */
     ind->approved = 0;
@@ -69,8 +69,7 @@ int ossl_FIPS_IND_on_unapproved(OSSL_FIPS_IND *ind, int id,
      * assumed to be strict.
      */
     if (ossl_FIPS_IND_get_settable(ind, id) == OSSL_FIPS_IND_STATE_TOLERANT
-        || (config_check_fn != NULL
-            && config_check_fn(libctx) == OSSL_FIPS_IND_STATE_TOLERANT)) {
+        || (ossl_fips_config(libctx, config_id) == OSSL_FIPS_IND_STATE_TOLERANT)) {
         return ossl_FIPS_IND_callback(libctx, algname, opname);
     }
     /* Strict mode gets here: This returns an error */

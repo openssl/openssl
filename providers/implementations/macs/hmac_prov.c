@@ -171,7 +171,7 @@ static int hmac_setkey(struct hmac_data_st *macctx,
         if (!approved) {
             if (!OSSL_FIPS_IND_ON_UNAPPROVED(macctx, OSSL_FIPS_IND_SETTABLE0,
                     libctx, "HMAC", "keysize",
-                    ossl_fips_config_hmac_key_check)) {
+                    FIPS_CONFIG_HMAC_KEY_CHECK)) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
                 return 0;
             }
