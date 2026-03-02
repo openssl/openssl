@@ -383,6 +383,27 @@ static int check_prvenc(const uint8_t *prvenc, ML_KEM_KEY *key)
     return 0;
 }
 
+static int check_pubenc(const uint8_t *pubenc, ML_KEM_KEY *key)
+{
+    size_t len = key->vinfo->pubkey_bytes;
+    uint8_t *buf = OPENSSL_malloc(len);
+    int ret = 0;
+
+    if (buf != NULL
+        && ossl_ml_kem_encode_public_key(buf, len, key))
+        ret = memcmp(buf, pubenc, len) == 0;
+    OPENSSL_free(buf);
+    if (ret)
+        return 1;
+
+    if (buf != NULL)
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+            "explicit %s public key does not match seed",
+            key->vinfo->algorithm_name);
+    ossl_ml_kem_key_reset(key);
+    return 0;
+}
+
 static int ml_kem_key_fromdata(ML_KEM_KEY *key,
     const OSSL_PARAM params[],
     int include_private)
@@ -399,16 +420,7 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key,
         return 0;
     v = ossl_ml_kem_key_vinfo(key);
 
-    /*
-     * When a private key is provided, without a seed, any public key also
-     * provided will be ignored (apart from length), just as with the seed.
-     */
     if (p.seed != NULL && include_private) {
-        /*
-         * When a seed is provided, the private and public keys may be ignored,
-         * after validating just their lengths.  Comparing encodings or hashes
-         * when applicable is possible, but not currently implemented.
-         */
         if (OSSL_PARAM_get_octet_string_ptr(p.seed, &seedenc, &seedlen) != 1)
             return 0;
         if (seedlen != 0 && seedlen != ML_KEM_SEED_BYTES) {
@@ -426,7 +438,7 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key,
         }
     }
 
-    /* Used only when no seed or private key is provided. */
+    /* Used only for validation when a seed or private key is provided. */
     if (p.pubkey != NULL) {
         if (OSSL_PARAM_get_octet_string_ptr(p.pubkey, &pubenc, &publen) != 1)
             return 0;
@@ -461,10 +473,15 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key,
         if (!ossl_ml_kem_set_seed(seedenc, seedlen, key)
             || !ossl_ml_kem_genkey(NULL, 0, key))
             return 0;
-        return prvlen == 0 || check_prvenc(prvenc, key);
-    } else if (prvlen != 0) {
-        return ossl_ml_kem_parse_private_key(prvenc, prvlen, key);
+        if (prvlen != 0)
+            return check_prvenc(prvenc, key);
+        if (publen != 0)
+            return check_pubenc(pubenc, key);
+        return 1;
     }
+    /* Public key consistency already checked above */
+    if (prvlen != 0)
+        return ossl_ml_kem_parse_private_key(prvenc, prvlen, key);
     return ossl_ml_kem_parse_public_key(pubenc, publen, key);
 }
 
