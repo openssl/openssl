@@ -289,14 +289,6 @@ These variables are considered security-sensitive environment variables,
 except in L<openssl-rehash(1)>, where B<SSL_CERT_DIR> is not considered
 security-sensitive.
 
-=item B<SSL_CIPHER>
-
-Used by L<openssl-s_time(1)> in case B<-cipher> option (that allows modifying
-TLSv1.2 and below cipher list sent by the client) is not provided,
-for specification of the aforementioned ciphers.
-
-This variable is not considered security-sensitive.
-
 =item B<TSGET>
 
 Additional arguments for the L<tsget(1)> command.

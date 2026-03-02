@@ -105,7 +105,7 @@ OpenSSL 4.0
 
  * The `OSSL_ESS_check_signing_certs_ex()` call has been added.
 
-   This api call is an extension to `OSSL_ESS_check_signing_certs()` to add
+   This api call is an extention to `OSSL_ESS_check_signing_certs()` to add
    the ability to specify a library context and property query when fetching
    algorithms to validate a given certificate.
 
