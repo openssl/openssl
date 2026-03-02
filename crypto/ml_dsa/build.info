@@ -1,10 +1,33 @@
 LIBS=../../libcrypto
 
+$MLDSAASM=
+IF[{- !$disabled{asm} -}]
+  $MLDSADEF_ppc64=MLDSA_NTT_ASM MLDSA_POLY_ADD_ASM
+
+  IF[{- $target{sys_id} ne "AIX" && $target{sys_id} ne "MACOSX" -}]
+    $MLDSAASM_ppc64=ppc64/mldsa_ntt_ppc_4x.S \
+                    ppc64/mldsa_intt_ppc_4x.S ppc64/mldsa_poly_ntt_mul.S \
+                    ppc64/mldsa_poly_add.S
+  ENDIF
+
+  # Now that we have defined all the arch specific variables, use the
+  # appropriate one, and define the appropriate macros
+  IF[$MLDSAASM_{- $target{asm_arch} -}]
+    $MLDSAASM=$MLDSAASM_{- $target{asm_arch} -}
+    $MLDSADEF=$MLDSADEF_{- $target{asm_arch} -}
+  ENDIF
+ENDIF
+
 $COMMON=ml_dsa_encoders.c ml_dsa_key_compress.c ml_dsa_key.c \
         ml_dsa_matrix.c ml_dsa_ntt.c ml_dsa_params.c ml_dsa_sample.c \
-        ml_dsa_sign.c
+        ml_dsa_sign.c $MLDSAASM
 
 IF[{- !$disabled{'ml-dsa'} -}]
   SOURCE[../../libcrypto]=$COMMON
   SOURCE[../../providers/libfips.a]=$COMMON
 ENDIF
+
+# Implementations are now spread across several libraries, so the defines
+# need to be applied to all affected libraries and modules.
+DEFINE[../../libcrypto]=$MLDSADEF
+DEFINE[../../providers/libfips.a]=$MLDSADEF

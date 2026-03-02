@@ -21,6 +21,21 @@ poly_zero(POLY *p)
     memset(p->coeff, 0, sizeof(*p));
 }
 
+#ifdef MLDSA_POLY_ADD_ASM
+extern void mldsa_poly_add(const POLY *lhs, const POLY *rhs, POLY *out);
+extern void mldsa_poly_sub(const POLY *lhs, const POLY *rhs, POLY *out);
+static ossl_inline ossl_unused void
+poly_add(const POLY *lhs, const POLY *rhs, POLY *out)
+{
+    mldsa_poly_add(lhs, rhs, out);
+}
+
+static ossl_inline ossl_unused void
+poly_sub(const POLY *lhs, const POLY *rhs, POLY *out)
+{
+    mldsa_poly_sub(lhs, rhs, out);
+}
+#else
 /**
  * @brief Polynomial addition.
  *
@@ -56,6 +71,7 @@ poly_sub(const POLY *lhs, const POLY *rhs, POLY *out)
     for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; i++)
         out->coeff[i] = mod_sub(lhs->coeff[i], rhs->coeff[i]);
 }
+#endif
 
 /* @returns 1 if the polynomials are equal, or 0 otherwise */
 static ossl_inline ossl_unused int
