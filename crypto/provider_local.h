@@ -18,6 +18,7 @@ DEFINE_STACK_OF(INFOPAIR)
 typedef struct {
     char *name;
     char *path;
+    char *mdir;
     OSSL_provider_init_fn *init;
     STACK_OF(INFOPAIR) *parameters;
     unsigned int is_fallback : 1;
