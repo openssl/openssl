@@ -291,6 +291,7 @@ basicConstraints=CA:FALSE
 
 # PKIX recommendations harmless if included in all certificates.
 subjectKeyIdentifier=hash
+# The issuer of a proxy certificate should have SKID.
 authorityKeyIdentifier=keyid:always
 
 # This stuff is for subjectAltName and issuerAltname.

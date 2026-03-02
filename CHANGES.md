@@ -37,6 +37,10 @@ OpenSSL Releases
    options just like any other extension.  See their documentation and also
    `x509v3_config(5)` for additional details.
 
+   Updated the syntax of the `subjectKeyIdentifier` (SKID) and
+   `authorityKeyIdentifier` (AKID) extensions, introducing the `nonss` qualifier
+   for the `keyid` and `issuer` keywords.
+
    The x509 "mini-CA" now attempts to find extension settings in the default
    configuration file even if neither the `-extfile` nor the `-extensions`
    option is explicitly specified.  Failure to open the default configuration

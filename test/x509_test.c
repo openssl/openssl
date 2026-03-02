@@ -339,6 +339,8 @@ err:
 static int test_drop_empty_csr_keyids(void)
 {
     static const unsigned char commonName[] = "test";
+    BIO *bio = NULL;
+    CONF *conf = NULL;
     X509_REQ *x = NULL;
     X509_NAME *subject = NULL;
     X509_NAME_ENTRY *name_entry = NULL;
@@ -360,39 +362,42 @@ static int test_drop_empty_csr_keyids(void)
         || !TEST_int_eq(X509_REQ_set_pubkey(x, pubkey), 1))
         goto err;
 
-    X509V3_set_ctx(&ctx, NULL, NULL, x, NULL, 0);
-    if (!TEST_ptr(ext = X509V3_EXT_conf(NULL, &ctx, "subjectKeyIdentifier",
-                      "none"))
-        || !TEST_ptr(X509v3_add_ext(&exts, ext, -1))
-        || !TEST_int_eq(sk_X509_EXTENSION_num(exts), 0))
+    /* Add non-empty SKID, CSRs have no issuer, so no AKID */
+    if (!TEST_ptr(bio = BIO_new(BIO_s_mem()))
+        || !TEST_int_ge(BIO_printf(bio, "subjectKeyIdentifier = hash\n"), 0)
+        || !TEST_ptr(conf = NCONF_new(NULL))
+        || !TEST_int_gt(NCONF_load_bio(conf, bio, NULL), 0))
         goto err;
-    X509_EXTENSION_free(ext);
+    (void)BIO_reset(bio);
 
-    if (!TEST_ptr(ext = X509V3_EXT_conf(NULL, &ctx, "authorityKeyIdentifier",
-                      "none"))
-        || !TEST_ptr(X509v3_add_ext(&exts, ext, -1)))
-        goto err;
-
-    if (!TEST_int_eq(X509_REQ_add_extensions(x, exts), 1)
-        || !TEST_int_eq(sk_X509_EXTENSION_num(exts), 0))
-        goto err;
-    sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
-
-    if (!TEST_ptr(exts = X509_REQ_get_extensions(x))
-        || !TEST_int_eq(sk_X509_EXTENSION_num(exts), 0))
+    X509V3_set_ctx(&ctx, NULL, NULL, x, NULL, X509V3_CTX_REPLACE);
+    X509V3_set_nconf(&ctx, conf);
+    if (!TEST_true(X509V3_EXT_REQ_add_nconf(conf, &ctx, "default", x))
+        || !TEST_int_eq(X509_REQ_get_attr_count(x), 1)
+        || !TEST_ptr(exts = X509_REQ_get_extensions(x))
+        || !TEST_int_eq(sk_X509_EXTENSION_num(exts), 1))
         goto err;
     sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
     exts = NULL;
 
-    if (!TEST_int_gt(X509_REQ_sign(x, privkey, signmd), 0))
+    /* Request an "empty" SKID in order to drop the previous SKID */
+    NCONF_free(conf);
+    if (!TEST_ptr(conf = NCONF_new(NULL))
+        || !TEST_int_ge(BIO_printf(bio, "subjectKeyIdentifier = none\n"), 0)
+        || !TEST_int_gt(NCONF_load_bio(conf, bio, NULL), 0))
         goto err;
 
-    if (!TEST_ptr(exts = X509_REQ_get_extensions(x))
-        || !TEST_int_eq(sk_X509_EXTENSION_num(exts), 0))
+    X509V3_set_nconf(&ctx, conf);
+    if (!TEST_true(X509V3_EXT_REQ_add_nconf(conf, &ctx, "default", x))
+        || !TEST_int_gt(X509_REQ_sign(x, privkey, signmd), 0)
+        || !TEST_int_eq(X509_REQ_get_attr_count(x), 0))
         goto err;
 
     ret = 1;
+
 err:
+    BIO_free(bio);
+    NCONF_free(conf);
     X509_NAME_ENTRY_free(name_entry);
     X509_NAME_free(subject);
     X509_EXTENSION_free(ext);
