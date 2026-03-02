@@ -199,9 +199,10 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_SET_CLOSE:
         b->shutdown = (int)num;
         break;
+    case BIO_CTRL_PUSH:
+    case BIO_CTRL_POP:
     case BIO_CTRL_DUP:
     case BIO_CTRL_FLUSH:
-        ret = 1;
         break;
     case BIO_CTRL_GET_RPOLL_DESCRIPTOR:
     case BIO_CTRL_GET_WPOLL_DESCRIPTOR: {
@@ -278,6 +279,7 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = 1;
         break;
     default:
+        ERR_raise_data(ERR_LIB_BIO, ERR_R_UNSUPPORTED, "cmd=%d", cmd);
         ret = 0;
         break;
     }
