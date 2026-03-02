@@ -227,6 +227,8 @@ const char *X509_verify_cert_error_string(long n)
         return "Empty Authority Key Identifier";
     case X509_V_ERR_AKID_ISSUER_SERIAL_NOT_PAIRED:
         return "Authority Key Identifier issuer and serial number must be paired";
+    case X509_V_ERR_DUPLICATE_EXTENSION:
+        return "Certificate includes more than one instance of a particular extension";
 
         /*
          * Entries must be kept consistent with include/openssl/x509_vfy.h.in

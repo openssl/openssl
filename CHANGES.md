@@ -35,6 +35,12 @@ OpenSSL Releases
 
    *Marcel Cornu and Tomasz Kantecki*
 
+ * Add new verification error `X509_V_ERR_DUPLICATE_EXTENSION` with descriptive
+   message for certificates containing duplicate X.509 extensions, which are
+   explicitly prohibited by [RFC 5280].
+
+   *Daniel Kubec*
+
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
  * Added `-expected-rpks` option to the `openssl s_client`

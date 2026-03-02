@@ -625,6 +625,9 @@ static int check_extensions(X509_STORE_CTX *ctx)
 
     for (i = 0; i < num; i++) {
         x = sk_X509_value(ctx->chain, i);
+        /* RFC 5280, 4.2: a given extension MUST NOT appear more than once */
+        CB_FAIL_IF((x->ex_flags & EXFLAG_DUPLICATE) != 0,
+            ctx, x, i, X509_V_ERR_DUPLICATE_EXTENSION);
         CB_FAIL_IF((ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) == 0
                 && (x->ex_flags & EXFLAG_CRITICAL) != 0,
             ctx, x, i, X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION);

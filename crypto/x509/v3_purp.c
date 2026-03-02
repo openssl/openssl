@@ -15,6 +15,8 @@
 #include "crypto/x509.h"
 #include "internal/tsan_assist.h"
 #include "x509_local.h"
+#include "crypto/objects/obj_dat.h"
+#include "internal/hashfunc.h"
 
 static int check_ssl_ca(const X509 *x);
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
@@ -420,6 +422,90 @@ static int check_sig_alg_match(const EVP_PKEY *issuer_key, const X509 *subject)
     return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
 }
 
+static unsigned long oid_hash(const void *p)
+{
+    const ASN1_OBJECT *a = p;
+
+    return (unsigned long)ossl_fnv1a_hash((uint8_t *)a->data, a->length);
+}
+
+static int oid_cmp(const void *a, const void *b)
+{
+    return OBJ_cmp((const ASN1_OBJECT *)a, (const ASN1_OBJECT *)b);
+}
+
+/*
+ * Scan all extensions of a certificate to collect extension-related flags.
+ * Detects duplicate extensions (RFC 5280 section 4.2), the presence of a
+ * freshest CRL extension and unsupported critical extensions.
+ *
+ * In the future, if needed, this scanning function could return the index
+ * of the offending extension on error, allowing the caller to identify which
+ * extension caused the problem and report it via ERR_raise_data().
+ */
+static void scan_ext_flags(const X509 *x509, uint32_t *flags)
+{
+    OPENSSL_LHASH *h = NULL;
+    uint8_t ex_bitset[(NUM_NID + 7) / 8];
+
+    memset(ex_bitset, 0, sizeof(ex_bitset));
+    /* A certificate MUST NOT include more than one instance of an extension. */
+    for (int i = 0; i < X509_get_ext_count(x509); i++) {
+        const X509_EXTENSION *ex = X509_get_ext(x509, i);
+        const ASN1_OBJECT *a = X509_EXTENSION_get_object(ex);
+        int nid = OBJ_obj2nid(a);
+
+        /*
+         * Known NIDs within the build-time bitset limit are checked for
+         * duplicates in constant time. Unknown OIDs and dynamically registered
+         * NIDs that exceed the limit fall back to duplicate detection via a
+         * hash table.
+         */
+        if (nid > NID_undef && nid < NUM_NID) {
+            unsigned int ex_bit = nid;
+
+            if ((ex_bitset[ex_bit >> 3] & (1u << (ex_bit & 7))) != 0) {
+                *flags |= EXFLAG_DUPLICATE;
+                break;
+            }
+            ex_bitset[ex_bit >> 3] |= (1u << (ex_bit & 7));
+        } else {
+            /*
+             * Extensions with unknown NID (NID_undef) and dynamically
+             * registered NIDs are handled here by hashing the OID (data/length).
+             * A zero-length OID should not reach this point, but we check for
+             * it anyway and assign the EXFLAG_INVALID flag if it does.
+             */
+            if (a->length < 1) {
+                *flags |= EXFLAG_INVALID;
+                break;
+            }
+            /*
+             * Hashing the OID should be manageable more cheaply as well, and
+             * without additional dynamic allocations. In the case of this
+             * corner case, it’s not a problem at all, but the other duplicate
+             * detections also require hashing, so for the sake of consistency
+             * it would make sense to use a cheaper construct here later as well.
+             */
+            if (h == NULL && (h = OPENSSL_LH_new(oid_hash, oid_cmp)) == NULL)
+                break;
+            if (OPENSSL_LH_insert(h, (void *)a) != NULL) {
+                *flags |= EXFLAG_DUPLICATE;
+                break;
+            }
+        }
+        if (nid == NID_freshest_crl)
+            *flags |= EXFLAG_FRESHEST;
+        if (!X509_EXTENSION_get_critical(ex))
+            continue;
+        if (!X509_supported_extension(ex)) {
+            *flags |= EXFLAG_CRITICAL;
+            break;
+        }
+    }
+    OPENSSL_LH_free(h);
+}
+
 #define V1_ROOT (EXFLAG_V1 | EXFLAG_SS)
 #define ku_reject(x, usage) \
     (((x)->ex_flags & EXFLAG_KUSAGE) != 0 && ((x)->ex_kusage & (usage)) == 0)
@@ -660,19 +746,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
         tmp_ex_flags |= EXFLAG_INVALID;
 #endif
 
-    for (i = 0; i < X509_get_ext_count(const_x); i++) {
-        const X509_EXTENSION *ex = X509_get_ext(const_x, i);
-        int nid = OBJ_obj2nid(X509_EXTENSION_get_object(ex));
-
-        if (nid == NID_freshest_crl)
-            tmp_ex_flags |= EXFLAG_FRESHEST;
-        if (!X509_EXTENSION_get_critical(ex))
-            continue;
-        if (!X509_supported_extension(ex)) {
-            tmp_ex_flags |= EXFLAG_CRITICAL;
-            break;
-        }
-    }
+    scan_ext_flags(const_x, &tmp_ex_flags);
 
     /* Set x->siginf, ignoring errors due to unsupported algos */
     (void)ossl_x509_init_sig_info(const_x, &tmp_siginf);
