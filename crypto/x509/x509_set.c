@@ -113,16 +113,23 @@ int X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
     return 1;
 }
 
-int X509_up_ref(X509 *x)
+int X509_up_ref(const X509 *x)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&x->references, &i) <= 0)
+    if (CRYPTO_UP_REF(&((X509 *)x)->references, &i) <= 0)
         return 0;
 
     REF_PRINT_COUNT("X509", i, x);
     REF_ASSERT_ISNT(i < 2);
     return i > 1;
+}
+
+X509 *X509_dup_ref(const X509 *x)
+{
+    if (X509_up_ref(x))
+        return (X509 *)x;
+    return NULL;
 }
 
 long X509_get_version(const X509 *x)
