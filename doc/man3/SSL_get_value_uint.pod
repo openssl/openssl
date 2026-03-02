@@ -12,6 +12,9 @@ SSL_VALUE_CLASS_FEATURE_REQUEST, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST,
 SSL_VALUE_CLASS_FEATURE_NEGOTIATED, SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL,
 SSL_VALUE_QUIC_STREAM_BIDI_REMOTE_AVAIL, SSL_VALUE_QUIC_STREAM_UNI_LOCAL_AVAIL,
 SSL_VALUE_QUIC_STREAM_UNI_REMOTE_AVAIL, SSL_VALUE_QUIC_IDLE_TIMEOUT,
+SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX, SSL_VALUE_QUIC_WINDOWCON,
+SSL_VALUE_QUIC_WINDOWBSTR, SSL_VALUE_QUIC_WINDOWUSTR,
+SSL_VALUE_QUIC_ACK_DELAY_EXPONENT, SSL_VALUE_QUIC_ACK_DELAY_MAX,
 SSL_VALUE_EVENT_HANDLING_MODE,
 SSL_VALUE_EVENT_HANDLING_MODE_INHERIT,
 SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT,
@@ -45,6 +48,12 @@ manage negotiable features and configuration values for an SSL object
  #define SSL_VALUE_QUIC_STREAM_UNI_LOCAL_AVAIL
  #define SSL_VALUE_QUIC_STREAM_UNI_REMOTE_AVAIL
  #define SSL_VALUE_QUIC_IDLE_TIMEOUT
+ #define SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX
+ #define SSL_VALUE_QUIC_WINDOWCON
+ #define SSL_VALUE_QUIC_WINDOWBSTR
+ #define SSL_VALUE_QUIC_WINDOWUSTR
+ #define SSL_VALUE_QUIC_ACK_DELAY_EXPONENT
+ #define SSL_VALUE_QUIC_ACK_DELAY_MAX
 
  #define SSL_VALUE_EVENT_HANDLING_MODE
  #define SSL_VALUE_EVENT_HANDLING_MODE_INHERIT
@@ -158,7 +167,7 @@ documentation for a specific value specifies otherwise.
 
 =over 4
 
-=item B<SSL_VALUE_QUIC_IDLE_TIMEOUT> (connection object)
+=item B<SSL_VALUE_QUIC_IDLE_TIMEOUT> (connection/listener object)
 
 Negotiated feature value. This configures the desired QUIC idle timeout in
 milliseconds, where 0 represents a lack of an idle timeout. This feature can
@@ -167,6 +176,65 @@ changed.
 
 This release of OpenSSL uses a default value of 30 seconds. This default value
 may change between releases of OpenSSL.
+
+=item B<SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX> (connection/listener object)
+
+Feature (peer) request value. This configures the maximum UDP payload size in
+bytes, corresponding to the QUIC max_udp_payload_size transport parameter
+as defined in RFC 9000, Section 18.2. It limits the size of UDP datagrams the
+local QUIC stack is willing to receive from the peer. It does not change the
+maximum datagram payload size used on the transmit path. This feature can only
+be configured prior to connection establishment and cannot be subsequently
+changed. This value will be sent to the peer in the transport parameters.
+
+This release of OpenSSL uses a default value of 1200 bytes. This default value
+may change between releases of OpenSSL.
+
+=item B<SSL_VALUE_QUIC_WINDOWCON> (connection/listener object)
+
+Feature (peer) request value. This configures the initial QUIC connection-level
+flow control receive window in bytes. This feature can only be configured prior
+to connection establishment and cannot be subsequently changed. This value will
+be sent to the peer in the transport parameters.
+
+This release of OpenSSL uses a default value of 768 * 1024 bytes. This default
+value may change between releases of OpenSSL.
+
+=item B<SSL_VALUE_QUIC_WINDOWBSTR> (connection/listener object)
+
+Feature (peer) request value. This sets the initial receive window size, in
+bytes, for QUIC stream flow control on a bidirectional stream created by the
+local endpoint. This feature can only be configured prior to connection
+establishment and cannot be subsequently changed. This value will be sent to the
+peer in the transport parameters.
+
+This release of OpenSSL uses a default value of 512 * 1024 bytes. This default
+value may change between releases of OpenSSL.
+
+=item B<SSL_VALUE_QUIC_WINDOWUSTR> (connection/listener object)
+
+As above, but configures the initial receive window size for QUIC stream flow
+control on a unidirectional stream created by the remote endpoint.
+
+=item B<SSL_VALUE_QUIC_ACK_DELAY_EXPONENT> (connection/listener object)
+
+Feature (peer) request value. This configures the ACK delay exponent. This
+feature can only be configured prior to connection establishment and cannot be
+subsequently changed. This value will be sent to the peer in the transport
+parameters.
+
+This release of OpenSSL uses a default value of 3. This default value may change
+between releases of OpenSSL.
+
+=item B<SSL_VALUE_QUIC_ACK_DELAY_MAX> (connection/listener object)
+
+Feature (peer) request value. This configures the maximum ACK delay in
+milliseconds. This feature can only be configured prior to connection
+establishment and cannot be subsequently changed. This value will be sent to the
+peer in the transport parameters.
+
+This release of OpenSSL uses a default value of 25 milliseconds. This default
+value may change between releases of OpenSSL.
 
 =item B<SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL> (connection object)
 
@@ -339,11 +407,16 @@ L<SSL_set_default_stream_mode(3)>, L<SSL_set_incoming_stream_policy(3)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 3.3.
+The values SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX, SSL_VALUE_QUIC_WINDOWCON,
+SSL_VALUE_QUIC_WINDOWBSTR, SSL_VALUE_QUIC_WINDOWUSTR,
+SSL_VALUE_QUIC_ACK_DELAY_EXPONENT, and SSL_VALUE_QUIC_ACK_DELAY_MAX
+were added in OpenSSL 4.0.
+
+The remaining functions and values described here were all added in OpenSSL 3.3.
 
 =head1 COPYRIGHT
 
-Copyright 2002-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

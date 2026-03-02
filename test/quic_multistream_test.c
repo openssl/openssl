@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -5350,25 +5350,24 @@ static const struct script_op script_80[] = {
     OP_END
 };
 
-/* 81. Idle timeout configuration */
-static int modify_idle_timeout(struct helper *h, struct helper_local *hl)
+static int modify_static_tp(struct helper *h, struct helper_local *hl, int ssl_value)
 {
     uint64_t v = 0;
 
     /* Test bad value is rejected. */
     if (!TEST_false(SSL_set_feature_request_uint(h->c_conn,
-            SSL_VALUE_QUIC_IDLE_TIMEOUT,
-            (1ULL << 62))))
+            ssl_value,
+            OSSL_QUIC_VLINT_MAX + 1)))
         return 0;
 
     /* Set value. */
     if (!TEST_true(SSL_set_feature_request_uint(h->c_conn,
-            SSL_VALUE_QUIC_IDLE_TIMEOUT,
+            ssl_value,
             hl->check_op->arg2)))
         return 0;
 
     if (!TEST_true(SSL_get_feature_request_uint(h->c_conn,
-            SSL_VALUE_QUIC_IDLE_TIMEOUT,
+            ssl_value,
             &v)))
         return 0;
 
@@ -5378,12 +5377,12 @@ static int modify_idle_timeout(struct helper *h, struct helper_local *hl)
     return 1;
 }
 
-static int check_idle_timeout(struct helper *h, struct helper_local *hl)
+static int check_static_tp(struct helper *h, struct helper_local *hl, int ssl_value)
 {
     uint64_t v = 0;
 
     if (!TEST_true(SSL_get_value_uint(h->c_conn, (uint32_t)hl->check_op->arg1,
-            SSL_VALUE_QUIC_IDLE_TIMEOUT,
+            ssl_value,
             &v)))
         return 0;
 
@@ -5393,6 +5392,42 @@ static int check_idle_timeout(struct helper *h, struct helper_local *hl)
     return 1;
 }
 
+static int cannot_change_static_tp(struct helper *h, struct helper_local *hl, int ssl_value)
+{
+    uint64_t v = 0;
+
+    if (!TEST_true(SSL_get_feature_request_uint(h->c_conn,
+            ssl_value,
+            &v)))
+        return 0;
+
+    if (!TEST_uint64_t_eq(v, hl->check_op->arg1))
+        return 0;
+
+    if (!TEST_false(SSL_set_feature_request_uint(h->c_conn,
+            ssl_value,
+            hl->check_op->arg2)))
+        return 0;
+
+    return 1;
+}
+
+static int modify_idle_timeout(struct helper *h, struct helper_local *hl)
+{
+    return modify_static_tp(h, hl, SSL_VALUE_QUIC_IDLE_TIMEOUT);
+}
+
+static int check_idle_timeout(struct helper *h, struct helper_local *hl)
+{
+    return check_static_tp(h, hl, SSL_VALUE_QUIC_IDLE_TIMEOUT);
+}
+
+static int cannot_change_idle_timeout(struct helper *h, struct helper_local *hl)
+{
+    return cannot_change_static_tp(h, hl, SSL_VALUE_QUIC_IDLE_TIMEOUT);
+}
+
+/* 81. Idle timeout configuration */
 static const struct script_op script_81[] = {
     OP_C_SET_ALPN("ossltest"),
     OP_CHECK(modify_idle_timeout, 25000),
@@ -5420,33 +5455,13 @@ static const struct script_op script_82[] = {
 };
 
 /* 83. No late changes to idle timeout */
-static int cannot_change_idle_timeout(struct helper *h, struct helper_local *hl)
-{
-    uint64_t v = 0;
-
-    if (!TEST_true(SSL_get_feature_request_uint(h->c_conn,
-            SSL_VALUE_QUIC_IDLE_TIMEOUT,
-            &v)))
-        return 0;
-
-    if (!TEST_uint64_t_eq(v, 30000))
-        return 0;
-
-    if (!TEST_false(SSL_set_feature_request_uint(h->c_conn,
-            SSL_VALUE_QUIC_IDLE_TIMEOUT,
-            5000)))
-        return 0;
-
-    return 1;
-}
-
 static const struct script_op script_83[] = {
     OP_C_SET_ALPN("ossltest"),
     OP_C_CONNECT_WAIT(),
 
     OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
 
-    OP_CHECK(cannot_change_idle_timeout, 0),
+    OP_CHECK2(cannot_change_idle_timeout, 30000, 5000),
     OP_CHECK2(check_idle_timeout, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 30000),
     OP_CHECK2(check_idle_timeout, SSL_VALUE_CLASS_FEATURE_NEGOTIATED, 30000),
 
@@ -5996,6 +6011,375 @@ static const struct script_op script_87[] = {
     OP_END
 };
 
+static int modify_udp_payload_size_max(struct helper *h, struct helper_local *hl)
+{
+    if (!TEST_false(SSL_set_feature_request_uint(h->c_conn,
+            SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
+            QUIC_MIN_INITIAL_DGRAM_LEN - 1)))
+        return 0;
+
+    if (!TEST_false(SSL_set_feature_request_uint(h->c_conn,
+            SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX,
+            QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE + 1)))
+        return 0;
+
+    return modify_static_tp(h, hl, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX);
+}
+
+static int check_udp_payload_size_max(struct helper *h, struct helper_local *hl)
+{
+    return check_static_tp(h, hl, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX);
+}
+
+static int cannot_change_udp_payload_size_max(struct helper *h, struct helper_local *hl)
+{
+    return cannot_change_static_tp(h, hl, SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX);
+}
+
+/* 89. Max udp payload size configuration */
+static const struct script_op script_89[] = {
+    OP_C_SET_ALPN("ossltest"),
+    OP_CHECK(modify_udp_payload_size_max, QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
+
+    OP_CHECK2(check_udp_payload_size_max,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_MIN_INITIAL_DGRAM_LEN),
+    OP_CHECK2(check_udp_payload_size_max,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE),
+
+    OP_END
+};
+
+/* 90. Negotiated default max udp payload size if not configured */
+static const struct script_op script_90[] = {
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
+
+    OP_CHECK2(check_udp_payload_size_max,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_MIN_INITIAL_DGRAM_LEN),
+    OP_CHECK2(check_udp_payload_size_max,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_MIN_INITIAL_DGRAM_LEN),
+
+    OP_END
+};
+
+/* 91. No late changes to max udp payload size */
+static const struct script_op script_91[] = {
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
+
+    OP_CHECK2(cannot_change_udp_payload_size_max, QUIC_MIN_INITIAL_DGRAM_LEN,
+        QUIC_DEFAULT_MAX_UDP_PAYLOAD_SIZE),
+    OP_CHECK2(check_udp_payload_size_max,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_MIN_INITIAL_DGRAM_LEN),
+
+    OP_END
+};
+
+static int modify_window_con(struct helper *h, struct helper_local *hl)
+{
+    return modify_static_tp(h, hl, SSL_VALUE_QUIC_WINDOWCON);
+}
+
+static int check_window_con(struct helper *h, struct helper_local *hl)
+{
+    return check_static_tp(h, hl, SSL_VALUE_QUIC_WINDOWCON);
+}
+
+static int cannot_change_window_con(struct helper *h, struct helper_local *hl)
+{
+    return cannot_change_static_tp(h, hl, SSL_VALUE_QUIC_WINDOWCON);
+}
+
+/* 92. Connection window configuration */
+static const struct script_op script_92[] = {
+    OP_C_SET_ALPN("ossltest"),
+    OP_CHECK(modify_window_con, 800000),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
+
+    OP_CHECK2(check_window_con, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 768 * 1024),
+    OP_CHECK2(check_window_con, SSL_VALUE_CLASS_FEATURE_REQUEST, 800000),
+
+    OP_END
+};
+
+/* 93. Negotiated default connection window if not configured */
+static const struct script_op script_93[] = {
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
+
+    OP_CHECK2(check_window_con, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 768 * 1024),
+    OP_CHECK2(check_window_con, SSL_VALUE_CLASS_FEATURE_REQUEST, 768 * 1024),
+
+    OP_END
+};
+
+/* 94. No late changes to connection window */
+static const struct script_op script_94[] = {
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
+
+    OP_CHECK2(cannot_change_window_con, 768 * 1024, 800000),
+    OP_CHECK2(check_window_con, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 768 * 1024),
+
+    OP_END
+};
+
+static int modify_window_bidi_stream(struct helper *h, struct helper_local *hl)
+{
+    return modify_static_tp(h, hl, SSL_VALUE_QUIC_WINDOWBSTR);
+}
+
+static int check_window_bidi_stream(struct helper *h, struct helper_local *hl)
+{
+    return check_static_tp(h, hl, SSL_VALUE_QUIC_WINDOWBSTR);
+}
+
+static int cannot_change_window_bidi_stream(struct helper *h, struct helper_local *hl)
+{
+    return cannot_change_static_tp(h, hl, SSL_VALUE_QUIC_WINDOWBSTR);
+}
+
+/* 95. Bidi stream window configuration */
+static const struct script_op script_95[] = {
+    OP_C_SET_ALPN("ossltest"),
+    OP_CHECK(modify_window_bidi_stream, 600000),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
+
+    OP_CHECK2(check_window_bidi_stream, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024),
+    OP_CHECK2(check_window_bidi_stream, SSL_VALUE_CLASS_FEATURE_REQUEST, 600000),
+
+    OP_END
+};
+
+/* 96. Negotiated default bidi stream window if not configured */
+static const struct script_op script_96[] = {
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
+
+    OP_CHECK2(check_window_bidi_stream, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024),
+    OP_CHECK2(check_window_bidi_stream, SSL_VALUE_CLASS_FEATURE_REQUEST, 512 * 1024),
+
+    OP_END
+};
+
+/* 97. No late changes to bidi stream window */
+static const struct script_op script_97[] = {
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
+
+    OP_CHECK2(cannot_change_window_bidi_stream, 512 * 1024, 600000),
+    OP_CHECK2(check_window_bidi_stream, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024),
+
+    OP_END
+};
+
+static int modify_window_uni_stream(struct helper *h, struct helper_local *hl)
+{
+    return modify_static_tp(h, hl, SSL_VALUE_QUIC_WINDOWUSTR);
+}
+
+static int check_window_uni_stream(struct helper *h, struct helper_local *hl)
+{
+    return check_static_tp(h, hl, SSL_VALUE_QUIC_WINDOWUSTR);
+}
+
+static int cannot_change_window_uni_stream(struct helper *h, struct helper_local *hl)
+{
+    return cannot_change_static_tp(h, hl, SSL_VALUE_QUIC_WINDOWUSTR);
+}
+
+/* 98. Uni stream window configuration */
+static const struct script_op script_98[] = {
+    OP_C_SET_ALPN("ossltest"),
+    OP_CHECK(modify_window_uni_stream, 600000),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
+
+    OP_CHECK2(check_window_uni_stream, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024),
+    OP_CHECK2(check_window_uni_stream, SSL_VALUE_CLASS_FEATURE_REQUEST, 600000),
+
+    OP_END
+};
+
+/* 99. Negotiated default uni stream window if not configured */
+static const struct script_op script_99[] = {
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
+
+    OP_CHECK2(check_window_uni_stream, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024),
+    OP_CHECK2(check_window_uni_stream, SSL_VALUE_CLASS_FEATURE_REQUEST, 512 * 1024),
+
+    OP_END
+};
+
+/* 100. No late changes to uni stream window */
+static const struct script_op script_100[] = {
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
+
+    OP_CHECK2(cannot_change_window_uni_stream, 512 * 1024, 600000),
+    OP_CHECK2(check_window_uni_stream, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, 512 * 1024),
+
+    OP_END
+};
+
+static int
+modify_ack_delay_exponent(struct helper *h, struct helper_local *hl)
+{
+    if (!TEST_false(SSL_set_feature_request_uint(h->c_conn,
+            SSL_VALUE_QUIC_ACK_DELAY_EXPONENT,
+            QUIC_MAX_ACK_DELAY_EXP + 1)))
+        return 0;
+
+    return modify_static_tp(h, hl, SSL_VALUE_QUIC_ACK_DELAY_EXPONENT);
+}
+
+static int check_ack_delay_exponent(struct helper *h, struct helper_local *hl)
+{
+    return check_static_tp(h, hl, SSL_VALUE_QUIC_ACK_DELAY_EXPONENT);
+}
+
+static int cannot_change_ack_delay_exponent(struct helper *h, struct helper_local *hl)
+{
+    return cannot_change_static_tp(h, hl, SSL_VALUE_QUIC_ACK_DELAY_EXPONENT);
+}
+
+/* 101. Ack delay exponent configuration */
+static const struct script_op script_101[] = {
+    OP_C_SET_ALPN("ossltest"),
+    OP_CHECK(modify_ack_delay_exponent, QUIC_DEFAULT_ACK_DELAY_EXP + 1),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
+
+    OP_CHECK2(check_ack_delay_exponent,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_ACK_DELAY_EXP),
+    OP_CHECK2(check_ack_delay_exponent,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_ACK_DELAY_EXP + 1),
+
+    OP_END
+};
+
+/* 102. Negotiated default ack delay exponent if not configured */
+static const struct script_op script_102[] = {
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
+
+    OP_CHECK2(check_ack_delay_exponent,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_ACK_DELAY_EXP),
+    OP_CHECK2(check_ack_delay_exponent,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_ACK_DELAY_EXP),
+
+    OP_END
+};
+
+/* 103. No late changes to ack delay exponent */
+static const struct script_op script_103[] = {
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
+
+    OP_CHECK2(cannot_change_ack_delay_exponent, QUIC_DEFAULT_ACK_DELAY_EXP,
+        QUIC_DEFAULT_ACK_DELAY_EXP + 1),
+    OP_CHECK2(check_ack_delay_exponent,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_ACK_DELAY_EXP),
+
+    OP_END
+};
+
+static int modify_ack_delay_max(struct helper *h, struct helper_local *hl)
+{
+    if (!TEST_false(SSL_set_feature_request_uint(h->c_conn,
+            SSL_VALUE_QUIC_ACK_DELAY_MAX,
+            QUIC_MAX_MAX_ACK_DELAY + 1)))
+        return 0;
+
+    return modify_static_tp(h, hl, SSL_VALUE_QUIC_ACK_DELAY_MAX);
+}
+
+static int check_ack_delay_max(struct helper *h, struct helper_local *hl)
+{
+    return check_static_tp(h, hl, SSL_VALUE_QUIC_ACK_DELAY_MAX);
+}
+
+static int cannot_change_ack_delay_max(struct helper *h, struct helper_local *hl)
+{
+    return cannot_change_static_tp(h, hl, SSL_VALUE_QUIC_ACK_DELAY_MAX);
+}
+
+/* 104. Max ack delay configuration */
+static const struct script_op script_104[] = {
+    OP_C_SET_ALPN("ossltest"),
+    OP_CHECK(modify_ack_delay_max, QUIC_DEFAULT_MAX_ACK_DELAY / 2),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
+
+    OP_CHECK2(check_ack_delay_max,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_MAX_ACK_DELAY),
+    OP_CHECK2(check_ack_delay_max,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_MAX_ACK_DELAY / 2),
+
+    OP_END
+};
+
+/* 105. Negotiated default max ack delay if not configured */
+static const struct script_op script_105[] = {
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
+
+    OP_CHECK2(check_ack_delay_max,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_MAX_ACK_DELAY),
+    OP_CHECK2(check_ack_delay_max,
+        SSL_VALUE_CLASS_FEATURE_REQUEST, QUIC_DEFAULT_MAX_ACK_DELAY),
+
+    OP_END
+};
+
+/* 106. No late changes to max ack delay */
+static const struct script_op script_106[] = {
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
+
+    OP_CHECK2(cannot_change_ack_delay_max, QUIC_DEFAULT_MAX_ACK_DELAY,
+        QUIC_DEFAULT_MAX_ACK_DELAY / 2),
+    OP_CHECK2(check_ack_delay_max,
+        SSL_VALUE_CLASS_FEATURE_PEER_REQUEST, QUIC_DEFAULT_MAX_ACK_DELAY),
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -6085,6 +6469,24 @@ static const struct script_op *const scripts[] = {
     script_86,
     script_87,
     script_88,
+    script_89,
+    script_90,
+    script_91,
+    script_92,
+    script_93,
+    script_94,
+    script_95,
+    script_96,
+    script_97,
+    script_98,
+    script_99,
+    script_100,
+    script_101,
+    script_102,
+    script_103,
+    script_104,
+    script_105,
+    script_106,
 };
 
 static int test_script(int idx)

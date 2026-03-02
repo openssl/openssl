@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -706,6 +706,18 @@ int ossl_quic_tx_packetiser_set_peer(OSSL_QUIC_TX_PACKETISER *txp,
     }
 
     return BIO_ADDR_copy(&txp->args.peer, peer);
+}
+
+int ossl_quic_tx_packetiser_set_ack_delay_exponent(OSSL_QUIC_TX_PACKETISER *txp,
+    uint32_t exp)
+{
+    if (exp > QUIC_MAX_ACK_DELAY_EXP) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    txp->args.ack_delay_exponent = exp;
+    return 1;
 }
 
 void ossl_quic_tx_packetiser_set_ack_tx_cb(OSSL_QUIC_TX_PACKETISER *txp,
