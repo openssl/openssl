@@ -979,7 +979,7 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
     int ret = 0, i;
     STACK_OF(X509) *untrusted;
     STACK_OF(X509_CRL) *crls;
-    const X509 *signer;
+    X509 *signer;
 
     if (p7 == NULL) {
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_INVALID_NULL_POINTER);
@@ -1015,10 +1015,7 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
     }
 
     /* Lets verify */
-    /*
-     * TODO: This cast can be removed when #30076 is merged
-     */
-    if (!X509_STORE_CTX_init(ctx, cert_store, (X509 *)signer, untrusted)) {
+    if (!X509_STORE_CTX_init(ctx, cert_store, signer, untrusted)) {
         ERR_raise(ERR_LIB_PKCS7, ERR_R_X509_LIB);
         goto err;
     }
