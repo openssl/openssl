@@ -159,6 +159,12 @@ struct ossl_param_st {
  */
 #define OSSL_PARAM_OCTET_PTR 7
 
+/*-
+ * OSSL_PARAM_PTR
+
+ */
+#define OSSL_PARAM_PTR 8
+
 /*
  * Typedef for the thread stop handling callback. Used both internally and by
  * providers.

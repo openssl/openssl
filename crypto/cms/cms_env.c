@@ -115,27 +115,21 @@ cms_auth_enveloped_data_init(CMS_ContentInfo *cms)
 int ossl_cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd)
 {
     EVP_PKEY *pkey;
+    EVP_PKEY_CTX *pctx;
     int i;
-
-    switch (ri->type) {
-    case CMS_RECIPINFO_TRANS:
+    if (ri->type == CMS_RECIPINFO_TRANS) {
         pkey = ri->d.ktri->pkey;
-        break;
-    case CMS_RECIPINFO_AGREE: {
-        EVP_PKEY_CTX *pctx = ri->d.kari->pctx;
+        pctx = ri->d.ktri->pctx;
+    } else if (ri->type == CMS_RECIPINFO_AGREE) {
+        pctx = ri->d.kari->pctx;
 
         if (pctx == NULL)
             return 0;
         pkey = EVP_PKEY_CTX_get0_pkey(pctx);
         if (pkey == NULL)
             return 0;
-        break;
-    }
-    case CMS_RECIPINFO_KEM:
-        return ossl_cms_kem_envelope(ri, cmd);
-    default:
+    } else
         return 0;
-    }
 
     if (EVP_PKEY_is_a(pkey, "DHX") || EVP_PKEY_is_a(pkey, "DH"))
         return ossl_cms_dh_envelope(ri, cmd);
@@ -144,17 +138,26 @@ int ossl_cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd)
     else if (EVP_PKEY_is_a(pkey, "RSA"))
         return ossl_cms_rsa_envelope(ri, cmd);
 
-    /* Something else? We'll give engines etc a chance to handle this */
-    if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
-        return 1;
-    i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_ENVELOPE, cmd, ri);
-    if (i == -2) {
-        ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
-        return 0;
-    }
-    if (i <= 0) {
-        ERR_raise(ERR_LIB_CMS, CMS_R_CTRL_FAILURE);
-        return 0;
+    /* Now give engines, providers, etc a chance to handle this */
+    if (pkey->ameth != NULL && pkey->ameth->pkey_ctrl != NULL) {
+        i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_ENVELOPE, cmd, ri);
+        if (i == -2) {
+            ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+            return 0;
+        }
+        if (i <= 0) {
+            ERR_raise(ERR_LIB_CMS, CMS_R_CTRL_FAILURE);
+            return 0;
+        }
+    } else {
+         OSSL_PARAM params[2] = { { (cmd) ? OSSL_PKEY_PARAM_ASN1_CMS_ENVELOPE_DECRYPT : OSSL_PKEY_PARAM_ASN1_CMS_ENVELOPE_ENCRYPT,
+                                     OSSL_PARAM_PTR, ri, sizeof(ri), OSSL_PARAM_UNMODIFIED },
+                                     OSSL_PARAM_END };
+
+        if (!EVP_PKEY_CTX_set_params(pctx, params)) {
+            ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+            return 0;
+        }
     }
     return 1;
 }
