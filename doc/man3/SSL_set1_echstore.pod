@@ -207,6 +207,16 @@ and can then access the ECH retry config values via SSL_ech_get1_retry_config()
 where the I<ec> value returned will contain a binary-encoded ECHConfigList
 of length I<eclen>.
 
+If a client makes a real attempt at ECH that fails then the server can also
+return retry config values, and those can be used if they were authenticated
+under the outer SNI used for the session. In this case the TLS session fails
+returning the error B<SSL_R_ECH_REQUIRED>, and the ECH status of
+B<SSL_ECH_STATUS_FAILED_ECH> indicates that retry config values can be
+accessed using SSL_ech_get1_retry_config().  The application can then choose to
+use those in a subsequent attempt to establish a TLS session with the server.
+If the TLS session fails for some other reason (e.g. a bad server Finished
+message), then the retry config values will not be returned to the application.
+
 "GREASEing" (defined in RFC8701) is a mechanism intended to discourage protocol
 ossification that can be used for ECH.
 
