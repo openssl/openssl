@@ -5044,6 +5044,7 @@ static void collect_cipher_cb(EVP_CIPHER *ciph, void *arg)
     const char *name0 = NULL;
     EVP_CIPHER_TEST_INFO *tmp = NULL;
     EVP_CIPHER_TEST_INFO *info = NULL;
+    size_t n = 0;
 
     (void)arg;
 
@@ -5057,6 +5058,10 @@ static void collect_cipher_cb(EVP_CIPHER *ciph, void *arg)
     if (EVP_CIPHER_get_iv_length(ciph) <= 0)
         return;
     if (EVP_CIPHER_get_mode(ciph) == EVP_CIPH_SIV_MODE)
+        return;
+
+    n = strlen(name0);
+    if (n >= 4 && OPENSSL_strcasecmp(name0 + n - 4, "-ETM") == 0)
         return;
 
     tmp = OPENSSL_realloc(cipher_list,
