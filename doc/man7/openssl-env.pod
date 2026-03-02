@@ -77,6 +77,15 @@ than 1, outputs information about every processed feature.
 
 This variable is not considered security-sensitive.
 
+=item B<OPENSSL_LOCK_CONTENTION_DIR>
+
+Specifies the directory where lock contention log files are written
+when OpenSSL is built with the B<enable-report-rwlock-contention> option.
+If not set, log files are written to the current working directory.
+The log files are named C<lock-contention-log.E<lt>pidE<gt>.txt>.
+
+This variable is not considered security-sensitive.
+
 =item B<OPENSSL_MALLOC_FAILURES>, B<OPENSSL_MALLOC_FD>, B<OPENSSL_MALLOC_SEED>
 
 If built with debugging, this allows memory allocation to fail.
