@@ -127,6 +127,8 @@ int X509_up_ref(const X509 *x)
 
 X509 *X509_dup_ref(const X509 *x)
 {
+    if (x == NULL)
+        return NULL;
     if (X509_up_ref(x))
         return (X509 *)x;
     return NULL;
