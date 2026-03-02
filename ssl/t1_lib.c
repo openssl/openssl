@@ -2315,7 +2315,7 @@ int ssl_setup_sigalgs(SSL_CTX *ctx)
     uint16_t *tls12_sigalgs_list = NULL;
     EVP_PKEY *tmpkey = EVP_PKEY_new();
     int istls;
-    int ret = 0;
+    int ret = 0, tmpret = 0;
 
     if (ctx == NULL)
         goto err;
@@ -2354,9 +2354,21 @@ int ssl_setup_sigalgs(SSL_CTX *ctx)
             continue;
         }
 
+        /* Try to use legacy key initialization */
         if (!EVP_PKEY_set_type(tmpkey, lu->sig)) {
-            cache[i].available = 0;
-            continue;
+            /* Otherwise initialization with provider */
+            EVP_KEYMGMT *keymgmt = EVP_KEYMGMT_fetch(ctx->libctx, OBJ_nid2sn(lu->sig), ctx->propq);
+            if (!keymgmt) {
+                cache[i].available = 0;
+                continue;
+            }
+
+            tmpret = EVP_PKEY_set_type_by_keymgmt(tmpkey, keymgmt);
+            EVP_KEYMGMT_free(keymgmt);
+            if (!tmpret) {
+                cache[i].available = 0;
+                continue;
+            }
         }
         pctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx, tmpkey, ctx->propq);
         /* If unable to create pctx we assume the sig algorithm is unavailable */

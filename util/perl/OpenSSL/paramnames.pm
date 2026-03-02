@@ -164,6 +164,8 @@ my %params = (
     'OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN' =>             "tls1multi_encin",     # octet_string
     'OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN' =>            "tls1multi_enclen",    # size_t
 
+    'OSSL_CIPHER_PARAM_TLSTREE' => "tlstree", # uint64
+
 # digest parameters
     'OSSL_DIGEST_PARAM_XOFLEN' =>       "xoflen",       # size_t
     'OSSL_DIGEST_PARAM_SSL3_MS' =>      "ssl3-ms",      # octet string
@@ -182,6 +184,8 @@ my %params = (
     'OSSL_DIGEST_PARAM_MU_CONTEXT_STRING' => "context-string",             # octet string
     'OSSL_DIGEST_PARAM_MU_DIGEST' =>         '*OSSL_ALG_PARAM_DIGEST',     # utf8 string
     'OSSL_DIGEST_PARAM_MU_PROPERTIES' =>     '*OSSL_ALG_PARAM_PROPERTIES', # utf8 string
+
+    'OSSL_DIGEST_PARAM_TLSTREE' => "tlstree", # uint64
 
 # MAC parameters
     'OSSL_MAC_PARAM_KEY' =>            "key",           # octet string

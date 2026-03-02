@@ -3711,6 +3711,7 @@ static int tls_construct_cke_gost(SSL_CONNECTION *s, WPACKET *pkt)
     unsigned char *pms = NULL;
     size_t pmslen = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    EVP_MD *md = NULL;
 
     if ((s->s3.tmp.new_cipher->algorithm_auth & SSL_aGOST12) != 0)
         dgst_nid = NID_id_GostR3411_2012_256;
@@ -3752,13 +3753,19 @@ static int tls_construct_cke_gost(SSL_CONNECTION *s, WPACKET *pkt)
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     };
+
+    md = EVP_MD_fetch(sctx->libctx, OBJ_nid2sn(dgst_nid), sctx->propq);
+    if (md == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     /*
      * Compute shared IV and store it in algorithm-specific context
      * data
      */
     ukm_hash = EVP_MD_CTX_new();
     if (ukm_hash == NULL
-        || EVP_DigestInit(ukm_hash, EVP_get_digestbynid(dgst_nid)) <= 0
+        || EVP_DigestInit(ukm_hash, md) <= 0
         || EVP_DigestUpdate(ukm_hash, s->s3.client_random,
                SSL3_RANDOM_SIZE)
             <= 0
@@ -3771,6 +3778,8 @@ static int tls_construct_cke_gost(SSL_CONNECTION *s, WPACKET *pkt)
     }
     EVP_MD_CTX_free(ukm_hash);
     ukm_hash = NULL;
+    EVP_MD_free(md);
+    md = NULL;
     if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, EVP_PKEY_OP_ENCRYPT,
             EVP_PKEY_CTRL_SET_IV, 8, shared_ukm)
         <= 0) {
@@ -3801,6 +3810,7 @@ static int tls_construct_cke_gost(SSL_CONNECTION *s, WPACKET *pkt)
     return 1;
 err:
     EVP_PKEY_CTX_free(pkey_ctx);
+    EVP_MD_free(md);
     OPENSSL_clear_free(pms, pmslen);
     EVP_MD_CTX_free(ukm_hash);
     return 0;
