@@ -672,7 +672,8 @@ int X509_set1_notBefore(X509 *x, const ASN1_TIME *tm);
 const ASN1_TIME *X509_get0_notAfter(const X509 *x);
 ASN1_TIME *X509_getm_notAfter(X509 *x);
 int X509_set1_notAfter(X509 *x, const ASN1_TIME *tm);
-int X509_up_ref(X509 *x);
+int X509_up_ref(const X509 *x);
+X509 *X509_dup_ref(const X509 *x);
 int X509_get_signature_type(const X509 *x);
 
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
