@@ -388,6 +388,8 @@ struct ISSUING_DIST_POINT_st {
 #define IDP_INDIRECT 0x20
 /* onlysomereasons present */
 #define IDP_REASONS 0x40
+/* onlyUser, onlyCA, and onlyAttr flags in IDP are mutually exclusive */
+#define IDP_ONLY_USER_CA_ATTR_EXCLUSIVE 0x80
 
 #define X509V3_conf_err(val) ERR_add_error_data(6, \
     "section:", (val)->section,                    \
