@@ -169,6 +169,8 @@ X509_to_X509_REQ
 X509_TRUST_add
 X509v3_addr_validate_resource_set
 X509v3_asid_validate_resource_set
+X509_up_ref
+X509_free
 
 The following two functions we "un-constified" As they were documented as returning
 an explicitly mutable pointer from within an B<X509> object:
