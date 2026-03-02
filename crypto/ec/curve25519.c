@@ -21,6 +21,12 @@
 
 #include "internal/numbers.h"
 
+#if defined(__has_feature)
+# if __has_feature(memory_sanitizer)
+#  include <sanitizer/msan_interface.h>
+# endif
+#endif
+
 #if defined(X25519_ASM) && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
 
 #define BASE_2_64_IMPLEMENTED
@@ -5846,6 +5852,12 @@ int ossl_x25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
 {
     static const uint8_t kZeros[32] = { 0 };
     x25519_scalar_mult(out_shared_key, private_key, peer_public_value);
+#if defined(__has_feature)
+# if __has_feature(memory_sanitizer)
+    /* x25519_scalar_mult may use assembly that MSan cannot instrument. */
+    __msan_unpoison(out_shared_key, 32);
+# endif
+#endif
     /* The all-zero output results when the input is a point of small order. */
     return CRYPTO_memcmp(kZeros, out_shared_key, 32) != 0;
 }
@@ -5874,6 +5886,12 @@ void ossl_x25519_public_from_private(uint8_t out_public_value[32],
     fe_invert(zminusy_inv, zminusy);
     fe_mul(zplusy, zplusy, zminusy_inv);
     fe_tobytes(out_public_value, zplusy);
+
+#if defined(__has_feature)
+# if __has_feature(memory_sanitizer)
+    __msan_unpoison(out_public_value, 32);
+# endif
+#endif
 
     OPENSSL_cleanse(e, sizeof(e));
 }
