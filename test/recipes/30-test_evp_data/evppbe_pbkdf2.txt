@@ -13,6 +13,7 @@
 
 Title = PBKDF2 tests (using PBE)
 
+Availablein = default
 PBE = pbkdf2
 Password = "password"
 Salt = "salt"
@@ -20,6 +21,7 @@ iter = 1
 MD = sha1
 Key = 0c60c80f961f0e71f3a9b524af6012062fe037a6
 
+Availablein = default
 PBE = pbkdf2
 Password = "password"
 Salt = "salt"
@@ -27,6 +29,17 @@ iter = 1
 MD = sha256
 Key = 120fb6cffcf8b32c43e7225256c4f837a86548c92ccc35480805987cb70be17b
 
+Availablein = fips
+PBE = pbkdf2
+Password = "password"
+Salt = "salt"
+iter = 1
+MD = sha256
+Key = 120fb6cffcf8b32c43e7225256c4f837a86548c92ccc35480805987cb70be17b
+Result = PBKDF2_ERROR
+Reason = invalid salt length
+
+Availablein = default
 PBE = pbkdf2
 Password = "password"
 Salt = "salt"
@@ -34,6 +47,7 @@ iter = 1
 MD = sha512
 Key = 867f70cf1ade02cff3752599a3a53dc4af34c7a669815ae5d513554e1c8cf252c02d470a285a0501bad999bfe943c08f050235d7d68b1da55e63f73b60a57fce
 
+Availablein = default
 PBE = pbkdf2
 Password = "password"
 Salt = "salt"
@@ -41,6 +55,7 @@ iter = 2
 MD = sha1
 Key = ea6c014dc72d6f8ccd1ed92ace1d41f0d8de8957
 
+Availablein = default
 PBE = pbkdf2
 Password = "password"
 Salt = "salt"
@@ -48,6 +63,7 @@ iter = 2
 MD = sha256
 Key = ae4d0c95af6b46d32d0adff928f06dd02a303f8ef3c251dfd6e2d85a95474c43
 
+Availablein = default
 PBE = pbkdf2
 Password = "password"
 Salt = "salt"
@@ -55,6 +71,7 @@ iter = 2
 MD = sha512
 Key = e1d9c16aa681708a45f5c7c4e215ceb66e011a2e9f0040713f18aefdb866d53cf76cab2868a39b9f7840edce4fef5a82be67335c77a6068e04112754f27ccf4e
 
+Availablein = default
 PBE = pbkdf2
 Password = "password"
 Salt = "salt"
@@ -62,6 +79,7 @@ iter = 4096
 MD = sha1
 Key = 4b007901b765489abead49d926f721d065a429c1
 
+Availablein = default
 PBE = pbkdf2
 Password = "password"
 Salt = "salt"
@@ -69,6 +87,7 @@ iter = 4096
 MD = sha256
 Key = c5e478d59288c841aa530db6845c4c8d962893a001ce4e11a4963873aa98134a
 
+Availablein = default
 PBE = pbkdf2
 Password = "password"
 Salt = "salt"
@@ -97,6 +116,7 @@ iter = 4096
 MD = sha512
 Key = 8c0511f4c6e597c6ac6315d8f0362e225f3c501495ba23b868c005174dc4ee71115b59f9e60cd9532fa33e0f75aefe30225c583a186cd82bd4daea9724a3d3b8
 
+Availablein = default
 PBE = pbkdf2
 Password = 7061737300776f7264
 Salt = 7361006c74
@@ -104,6 +124,7 @@ iter = 4096
 MD = sha1
 Key = 56fa6aa75548099dcc37d7f03425e0c3
 
+Availablein = default
 PBE = pbkdf2
 Password = 7061737300776f7264
 Salt = 7361006c74
@@ -111,6 +132,7 @@ iter = 4096
 MD = sha256
 Key = 89b69d0516f829893c696226650a8687
 
+Availablein = default
 PBE = pbkdf2
 Password = 7061737300776f7264
 Salt = 7361006c74
@@ -118,6 +140,7 @@ iter = 4096
 MD = sha512
 Key = 9d9e9c4cd21fe4be24d5b8244c759665
 
+Availablein = default
 PBE = pbkdf2
 Password = "password"
 Salt = "salt"
@@ -125,6 +148,7 @@ iter = 4096
 MD = sha3-224
 Key = 691292bc3683d7d41ea2910f5b3eed23
 
+Availablein = default
 PBE = pbkdf2
 Password = "password"
 Salt = "salt"
@@ -132,6 +156,7 @@ iter = 4096
 MD = sha3-256
 Key = 778b6e237a0f49621549ff70d218d208
 
+Availablein = default
 PBE = pbkdf2
 Password = "password"
 Salt = "salt"
@@ -139,6 +164,7 @@ iter = 4096
 MD = sha3-384
 Key = 9a5f1e45e8b83f1b259ba72d11c59087
 
+Availablein = default
 PBE = pbkdf2
 Password = "password"
 Salt = "salt"
@@ -148,6 +174,7 @@ Key = 2bfaf2d5ceb6d10f5e262cd902488cfd
 
 Title = PBKDF2 tests for empty and NULL inputs
 
+Availablein = default
 PBE = pbkdf2
 Password = ""
 Salt = "salt"
@@ -155,6 +182,7 @@ iter = 1
 MD = sha1
 Key = a33dddc30478185515311f8752895d36ea4363a2
 
+Availablein = default
 PBE = pbkdf2
 Password = ""
 Salt = "salt"
@@ -162,6 +190,7 @@ iter = 1
 MD = sha256
 Key = f135c27993baf98773c5cdb40a5706ce6a345cde
 
+Availablein = default
 PBE = pbkdf2
 Password = ""
 Salt = "salt"
@@ -169,6 +198,7 @@ iter = 1
 MD = sha512
 Key = 00ef42cdbfc98d29db20976608e455567fdddf14
 
+Availablein = default
 PBE = pbkdf2
 Password = NULL
 Salt = "salt"
@@ -176,6 +206,7 @@ iter = 1
 MD = sha1
 Key = a33dddc30478185515311f8752895d36ea4363a2
 
+Availablein = default
 PBE = pbkdf2
 Password = NULL
 Salt = "salt"
@@ -183,6 +214,7 @@ iter = 1
 MD = sha256
 Key = f135c27993baf98773c5cdb40a5706ce6a345cde
 
+Availablein = default
 PBE = pbkdf2
 Password = NULL
 Salt = "salt"
