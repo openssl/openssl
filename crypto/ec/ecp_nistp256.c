@@ -1941,11 +1941,17 @@ int ossl_ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP *group,
     felem z1, z2, x_in, y_in;
     smallfelem x_out, y_out;
     longfelem tmp;
+    int zisone = 0;
 
-    if (EC_POINT_is_at_infinity(group, point)) {
-        ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
+    /* Fast check if Z = 1 (point already in affine form) */
+    if (!ossl_ec_GFp_check_affine_point(group, point,  x, y, NULL, &zisone, ctx))
         return 0;
+    if (zisone) {
+        /* In this case, point is already in affine form, and 
+           coordinates were extracted. */
+        return 1;
     }
+
     if ((!BN_to_felem(x_in, point->X)) || (!BN_to_felem(y_in, point->Y)) || (!BN_to_felem(z1, point->Z)))
         return 0;
     felem_inv(z2, z1);
