@@ -42,8 +42,11 @@ nothing is done.
 
 X509_up_ref() increments the reference count of B<a>.
 
-X509_dup_ref() increments the reference count of B<a>, returning
-an "owned" shallow copy that may be freed
+X509_dup_ref() increments the reference count of B<a>, returning an
+owned non-const "shallow copy" of B<a> by virtue of having increased
+the reference count. The returned value should be also considered not
+mutable, but once finished with B<a> you may lower the reference count
+by calling X509_free() on the returned value.
 
 X509_chain_up_ref() increases the reference count of all certificates in
 chain B<x> and returns a copy of the stack, or an empty stack if B<a> is NULL.
@@ -72,8 +75,6 @@ Otherwise it returns a pointer to the newly allocated structure.
 X509_up_ref() returns 1 for success and 0 for failure.
 
 X509_dup_ref() returns a non const copy of B<a> for success and NULL for failure.
-The returned value should also not be modified, but you may call X509_free()
-on the returned value to lower the reference count when you are done with B<a>.
 
 X509_chain_up_ref() returns a copy of the stack or NULL if an error occurred.
 
