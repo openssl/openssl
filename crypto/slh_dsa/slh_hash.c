@@ -73,7 +73,7 @@ slh_hmsg_shake(SLH_DSA_HASH_CTX *hctx, const uint8_t *r,
     ossl_sha3_absorb(sctx, pk_seed, n);
     ossl_sha3_absorb(sctx, pk_root, n);
     ossl_sha3_absorb(sctx, msg, msg_len);
-    ossl_sha3_final(sctx, out, m);
+    ossl_sha3_squeeze(sctx, out, m);
     return 1;
 }
 
@@ -91,7 +91,7 @@ slh_prf_msg_shake(SLH_DSA_HASH_CTX *hctx, const uint8_t *sk_prf,
     ossl_sha3_absorb(sctx, sk_prf, n);
     ossl_sha3_absorb(sctx, opt_rand, n);
     ossl_sha3_absorb(sctx, msg, msg_len);
-    ossl_sha3_final(sctx, out, n);
+    ossl_sha3_squeeze(sctx, out, n);
     return WPACKET_memcpy(pkt, out, n);
 }
 
@@ -105,7 +105,7 @@ slh_f_shake(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs,
 
     ossl_sha3_absorb(&sctx, adrs, SLH_ADRS_SIZE);
     ossl_sha3_absorb(&sctx, m1, m1_len);
-    ossl_sha3_final(&sctx, out, n);
+    ossl_sha3_squeeze(&sctx, out, n);
     return 1;
 }
 
@@ -120,7 +120,7 @@ slh_prf_shake(SLH_DSA_HASH_CTX *hctx,
 
     ossl_sha3_absorb(&sctx, adrs, SLH_ADRS_SIZE);
     ossl_sha3_absorb(&sctx, sk_seed, n);
-    ossl_sha3_final(&sctx, out, n);
+    ossl_sha3_squeeze(&sctx, out, n);
     return 1;
 }
 
@@ -135,7 +135,7 @@ slh_h_shake(SLH_DSA_HASH_CTX *hctx, const uint8_t *pk_seed, const uint8_t *adrs,
     ossl_sha3_absorb(sctx, adrs, SLH_ADRS_SIZE);
     ossl_sha3_absorb(sctx, m1, n);
     ossl_sha3_absorb(sctx, m2, n);
-    ossl_sha3_final(sctx, out, n);
+    ossl_sha3_squeeze(sctx, out, n);
     return 1;
 }
 
@@ -315,7 +315,7 @@ int slh_wots_pk_gen_shake(SLH_DSA_HASH_CTX *hctx,
         ctx = *sctx;
         ossl_sha3_absorb(&ctx, sk_adrs, SLH_ADRS_SIZE);
         ossl_sha3_absorb(&ctx, sk_seed, n);
-        ossl_sha3_final(&ctx, sk, n);
+        ossl_sha3_squeeze(&ctx, sk, n);
 
         set_chain_address(adrs, (uint32_t)i);
         for (j = 0; j < NIBBLE_MASK; ++j) {
@@ -324,7 +324,7 @@ int slh_wots_pk_gen_shake(SLH_DSA_HASH_CTX *hctx,
             ctx = *sctx;
             ossl_sha3_absorb(&ctx, adrs, SLH_ADRS_SIZE);
             ossl_sha3_absorb(&ctx, sk, n);
-            ossl_sha3_final(&ctx, sk, n);
+            ossl_sha3_squeeze(&ctx, sk, n);
         }
         memcpy(pk_out, sk, n);
         pk_out += n;
