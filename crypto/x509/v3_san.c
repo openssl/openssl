@@ -439,9 +439,6 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
     while ((i = X509_NAME_get_index_by_NID(nm,
                 NID_pkcs9_emailAddress, i))
         >= 0) {
-        /* XXX Casts away const */
-        ne = (X509_NAME_ENTRY *)X509_NAME_get_entry(nm, i);
-        email = ASN1_STRING_dup(X509_NAME_ENTRY_get_data(ne));
         if (move_p) {
             /* We should really not support deleting things in a const object
              * to rip the pointer out of it. If we truly want a new object
@@ -449,6 +446,9 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
              */
             return 0;
         }
+        /* XXX Casts away const */
+        ne = (X509_NAME_ENTRY *)X509_NAME_get_entry(nm, i);
+        email = ASN1_STRING_dup(X509_NAME_ENTRY_get_data(ne));
         if (email == NULL || (gen = GENERAL_NAME_new()) == NULL) {
             ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
             goto err;
