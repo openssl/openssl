@@ -40,7 +40,7 @@ OpenSSL Releases
  * Fixed bug that allowed TLS 1.2 ciphers to be added to the TLS 1.3
    ciphersuites list, and for that list to contain duplicates.
    Cipher configuration strings for both TLS 1.2 and 1.3 are now
-   case-insenstive.
+   case-insensitive.
 
    *Viktor Dukhovni*
 
@@ -117,7 +117,7 @@ OpenSSL Releases
 
  * The `OSSL_ESS_check_signing_certs_ex()` call has been added.
 
-   This api call is an extention to `OSSL_ESS_check_signing_certs()` to add
+   This api call is an extension to `OSSL_ESS_check_signing_certs()` to add
    the ability to specify a library context and property query when fetching
    algorithms to validate a given certificate.
 
