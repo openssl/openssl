@@ -173,7 +173,7 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
         && !OSSL_FIPS_IND_ON_UNAPPROVED(prsactx, OSSL_FIPS_IND_SETTABLE1,
             prsactx->libctx, "RSA Encrypt",
             "PKCS#1 v1.5 padding",
-            ossl_fips_config_rsa_pkcs15_padding_disabled)) {
+            FIPS_CONFIG_RSA_PKCS15_PAD_DISABLED)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PADDING_MODE);
         return 0;
     }

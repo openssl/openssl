@@ -10,33 +10,37 @@
 #ifdef FIPS_MODULE
 #include <openssl/types.h>
 
-int ossl_fips_config_security_checks(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_tls1_prf_ems_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_no_short_mac(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_hmac_key_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_kmac_key_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_restricted_drbg_digests(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_signature_digest_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_hkdf_digest_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_tls13_kdf_digest_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_tls1_prf_digest_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_sshkdf_digest_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_sskdf_digest_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_x963kdf_digest_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_dsa_sign_disallowed(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_tdes_encrypt_disallowed(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_rsa_pkcs15_padding_disabled(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_rsa_pss_saltlen_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_rsa_sign_x931_disallowed(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_hkdf_key_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_kbkdf_key_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_tls13_kdf_key_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_tls1_prf_key_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_sshkdf_key_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_sskdf_key_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_x963kdf_key_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_x942kdf_key_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_pbkdf2_lower_bound_check(OSSL_LIB_CTX *libctx);
-int ossl_fips_config_ecdh_cofactor_check(OSSL_LIB_CTX *libctx);
+enum fips_config_id {
+    FIPS_CONFIG_SECURITY_CHECKS = 1,
+    FIPS_CONFIG_TLS1_PRF_EMS_CHECK,
+    FIPS_CONFIG_NO_SHORT_MAC,
+    FIPS_CONFIG_HMAC_KEY_CHECK,
+    FIPS_CONFIG_KMAC_KEY_CHECK,
+    FIPS_CONFIG_DRBG_TRUNC_DIGEST,
+    FIPS_CONFIG_SIGNATURE_DIGEST_CHECK,
+    FIPS_CONFIG_HKDF_DIGEST_CHECK,
+    FIPS_CONFIG_TLS13_KDF_DIGEST_CHECK,
+    FIPS_CONFIG_TLS1_PRF_DIGEST_CHECK,
+    FIPS_CONFIG_SSHKDF_DIGEST_CHECK,
+    FIPS_CONFIG_SSKDF_DIGEST_CHECK,
+    FIPS_CONFIG_X963KDF_DIGEST_CHECK,
+    FIPS_CONFIG_DSA_SIGN_DISABLED,
+    FIPS_CONFIG_TDES_ENCRYPT_DISABLED,
+    FIPS_CONFIG_RSA_PKCS15_PAD_DISABLED,
+    FIPS_CONFIG_RSA_PSS_SALTLEN_CHECK,
+    FIPS_CONFIG_RSA_SIGN_X931_PAD_DISABLED,
+    FIPS_CONFIG_HKDF_KEY_CHECK,
+    FIPS_CONFIG_KBKDF_KEY_CHECK,
+    FIPS_CONFIG_TLS13_KDF_KEY_CHECK,
+    FIPS_CONFIG_TLS1_PRF_KEY_CHECK,
+    FIPS_CONFIG_SSHKDF_KEY_CHECK,
+    FIPS_CONFIG_SSKDF_KEY_CHECK,
+    FIPS_CONFIG_X963KDF_KEY_CHECK,
+    FIPS_CONFIG_X942KDF_KEY_CHECK,
+    FIPS_CONFIG_PBKDF2_LOWER_BOUND_CHECK,
+    FIPS_CONFIG_ECDH_COFACTOR_CHECK,
+};
+
+int ossl_fips_config(OSSL_LIB_CTX *libctx, enum fips_config_id id);
 
 #endif

@@ -156,7 +156,7 @@ static int fips_digest_check_passed(KDF_SSHKDF *ctx, const EVP_MD *md)
     if (digest_unapproved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
                 libctx, "SSHKDF", "Digest",
-                ossl_fips_config_sshkdf_digest_check)) {
+                FIPS_CONFIG_SSHKDF_DIGEST_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
             return 0;
         }
@@ -172,7 +172,7 @@ static int fips_key_check_passed(KDF_SSHKDF *ctx)
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE1,
                 libctx, "SSHKDF", "Key size",
-                ossl_fips_config_sshkdf_key_check)) {
+                FIPS_CONFIG_SSHKDF_KEY_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
