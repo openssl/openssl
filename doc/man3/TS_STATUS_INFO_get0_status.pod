@@ -1,0 +1,130 @@
+=pod
+
+=head1 NAME
+
+TS_STATUS_INFO_get0_status, TS_STATUS_INFO_get0_text,
+TS_STATUS_INFO_get0_failure_info
+- TS_STATUS_INFO accessor functions
+
+=head1 SYNOPSIS
+
+ #include <openssl/ts.h>
+
+ const ASN1_INTEGER *TS_STATUS_INFO_get0_status(const TS_STATUS_INFO *a);
+ const STACK_OF(ASN1_UTF8STRING) *TS_STATUS_INFO_get0_text(const TS_STATUS_INFO *a);
+ const ASN1_BIT_STRING *TS_STATUS_INFO_get0_failure_info(const TS_STATUS_INFO *a);
+
+=head1 DESCRIPTION
+
+These functions provide access to the fields of a B<TS_STATUS_INFO> structure,
+which represents the status information in a Time-Stamp Protocol (TSP)
+response as defined in RFC 3161.
+
+TS_STATUS_INFO_get0_status() returns the status field, which is an
+B<ASN1_INTEGER> containing the PKIStatus value. The possible values are:
+
+=over 4
+
+=item B<TS_STATUS_GRANTED> (0)
+
+The request was granted and a timestamp token is present.
+
+=item B<TS_STATUS_GRANTED_WITH_MODS> (1)
+
+The request was granted with modifications.
+
+=item B<TS_STATUS_REJECTION> (2)
+
+The request was rejected.
+
+=item B<TS_STATUS_WAITING> (3)
+
+The request is pending.
+
+=item B<TS_STATUS_REVOCATION_WARNING> (4)
+
+A revocation warning is present.
+
+=item B<TS_STATUS_REVOCATION_NOTIFICATION> (5)
+
+A revocation notification is present.
+
+=back
+
+TS_STATUS_INFO_get0_text() returns a stack of B<ASN1_UTF8STRING> values
+containing human-readable status text, or NULL if no text is present.
+This text provides additional information about the status.
+
+TS_STATUS_INFO_get0_failure_info() returns the failure information as an
+B<ASN1_BIT_STRING>, which is present when the status indicates a failure.
+The bits correspond to PKIFailureInfo values defined in RFC 3161:
+
+=over 4
+
+=item B<TS_INFO_BAD_ALG> (0)
+
+Unrecognized or unsupported algorithm identifier.
+
+=item B<TS_INFO_BAD_REQUEST> (2)
+
+Transaction not permitted or supported.
+
+=item B<TS_INFO_BAD_DATA_FORMAT> (5)
+
+The data submitted has the wrong format.
+
+=item B<TS_INFO_TIME_NOT_AVAILABLE> (14)
+
+The TSA's time source is not available.
+
+=item B<TS_INFO_UNACCEPTED_POLICY> (15)
+
+The requested TSA policy is not supported.
+
+=item B<TS_INFO_UNACCEPTED_EXTENSION> (16)
+
+The requested extension is not supported.
+
+=item B<TS_INFO_ADD_INFO_NOT_AVAILABLE> (17)
+
+The additional information requested could not be understood or is not available.
+
+=item B<TS_INFO_SYSTEM_FAILURE> (25)
+
+The request cannot be handled due to system failure.
+
+=back
+
+=head1 RETURN VALUES
+
+TS_STATUS_INFO_get0_status() returns a pointer to the status B<ASN1_INTEGER>.
+
+TS_STATUS_INFO_get0_text() returns a pointer to the stack of status text
+strings, or NULL if no text is present.
+
+TS_STATUS_INFO_get0_failure_info() returns a pointer to the failure
+information B<ASN1_BIT_STRING>, or NULL if no failure information is present.
+
+All returned pointers are internal references that must not be freed by the
+caller.
+
+=head1 SEE ALSO
+
+L<TS_RESP_CTX_new(3)>,
+L<TS_VERIFY_CTX(3)>,
+RFC 3161 (Internet X.509 Public Key Infrastructure Time-Stamp Protocol)
+
+=head1 HISTORY
+
+These functions were added in OpenSSL 1.1.0.
+
+=head1 COPYRIGHT
+
+Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
