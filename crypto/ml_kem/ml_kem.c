@@ -2294,6 +2294,67 @@ int ossl_ml_kem_encap_seed(uint8_t *ctext, size_t clen,
     return ret;
 }
 
+#ifdef FIPS_MODULE
+/*
+ * FIPS 203, Section 7.2: Input validation for ML-KEM.Encaps
+ * Performs type check and modulus check on the encapsulation key.
+ */
+static int validate_encapsulation_key(const ML_KEM_KEY *key)
+{
+    uint8_t *pubkey_enc = NULL;
+    uint8_t *test_buf = NULL;
+    scalar *decoded_t = NULL;
+    size_t vector_bytes_384k;
+    const ML_KEM_VINFO *vinfo;
+    int ret = 0;
+
+    if (key == NULL)
+        return 0;
+
+    vinfo = key->vinfo;
+    if (vinfo == NULL)
+        return 0;
+
+    /* Type check: Ensure the key is a valid ML-KEM variant */
+    if (vinfo->evp_type != EVP_PKEY_ML_KEM_512 &&
+        vinfo->evp_type != EVP_PKEY_ML_KEM_768 &&
+        vinfo->evp_type != EVP_PKEY_ML_KEM_1024)
+        return 0;
+
+    /* Modulus check: test <- ByteEncode12(ByteDecode12(ek[0 : 384k])) */
+    vector_bytes_384k = 384 * vinfo->rank;
+
+    pubkey_enc = OPENSSL_malloc(vinfo->pubkey_bytes);
+    test_buf = OPENSSL_malloc(vector_bytes_384k);
+    decoded_t = OPENSSL_malloc(vinfo->rank * sizeof(scalar));
+
+    if (pubkey_enc == NULL || test_buf == NULL || decoded_t == NULL)
+        goto cleanup;
+
+    /* Get the encoded public key */
+    if (!ossl_ml_kem_encode_public_key(pubkey_enc, vinfo->pubkey_bytes, key))
+        goto cleanup;
+
+    /* Decode the first 384*k bytes and re-encode them */
+    if (!vector_decode_12(decoded_t, pubkey_enc, vinfo->rank))
+        goto cleanup;
+
+    vector_encode(test_buf, decoded_t, 12, vinfo->rank);
+
+    /* Compare the re-encoded bytes with the original */
+    if (memcmp(test_buf, pubkey_enc, vector_bytes_384k) != 0)
+        goto cleanup;
+
+    ret = 1;
+
+cleanup:
+    OPENSSL_free(pubkey_enc);
+    OPENSSL_free(test_buf);
+    OPENSSL_free(decoded_t);
+    return ret;
+}
+#endif /* FIPS_MODULE */
+
 int ossl_ml_kem_encap_rand(uint8_t *ctext, size_t clen,
     uint8_t *shared_secret, size_t slen,
     const ML_KEM_KEY *key)
@@ -2303,6 +2364,12 @@ int ossl_ml_kem_encap_rand(uint8_t *ctext, size_t clen,
     if (key == NULL)
         return 0;
 
+#ifdef FIPS_MODULE
+    /* FIPS 203, Section 7.2: Validate encapsulation key */
+    if (!validate_encapsulation_key(key))
+        return 0;
+#endif /* FIPS_MODULE */
+
     if (RAND_bytes_ex(key->libctx, r, ML_KEM_RANDOM_BYTES,
             key->vinfo->secbits)
         < 1)
@@ -2311,6 +2378,68 @@ int ossl_ml_kem_encap_rand(uint8_t *ctext, size_t clen,
     return ossl_ml_kem_encap_seed(ctext, clen, shared_secret, slen,
         r, sizeof(r), key);
 }
+
+#ifdef FIPS_MODULE
+/*
+ * FIPS 203, Section 7.3: Input validation for ML-KEM.Decaps
+ * Performs ciphertext type check, decapsulation key type check, and hash check.
+ */
+static int validate_decapsulation_inputs(const uint8_t *ctext, size_t clen,
+                                         const ML_KEM_KEY *key, EVP_MD_CTX *mdctx)
+{
+    uint8_t *prvkey_enc = NULL;
+    uint8_t computed_hash[ML_KEM_PKHASH_BYTES];
+    const ML_KEM_VINFO *vinfo;
+    const uint8_t *pubkey_start, *stored_hash;
+    int ret = 0;
+
+    if (key == NULL || ctext == NULL || mdctx == NULL)
+        return 0;
+
+    vinfo = key->vinfo;
+    if (vinfo == NULL)
+        return 0;
+
+    /* Ciphertext type check */
+    if (clen != vinfo->ctext_bytes)
+        return 0;
+
+    /* Decapsulation key type check */
+    if (vinfo->evp_type != EVP_PKEY_ML_KEM_512 &&
+        vinfo->evp_type != EVP_PKEY_ML_KEM_768 &&
+        vinfo->evp_type != EVP_PKEY_ML_KEM_1024)
+        return 0;
+
+    /* Hash check: test <- H(dk[384k : 768k + 32]) vs dk[768k+32 : 768k+64] */
+    prvkey_enc = OPENSSL_malloc(vinfo->prvkey_bytes);
+    if (prvkey_enc == NULL)
+        goto cleanup;
+
+    /* Get the encoded private key */
+    if (!ossl_ml_kem_encode_private_key(prvkey_enc, vinfo->prvkey_bytes, key))
+        goto cleanup;
+
+    /* Extract public key portion: dk[384k : 768k + 32] */
+    pubkey_start = prvkey_enc + vinfo->vector_bytes;
+
+    /* Extract stored hash: dk[768k+32 : 768k+64] */
+    stored_hash = prvkey_enc + vinfo->vector_bytes + vinfo->pubkey_bytes;
+
+    /* Compute hash of public key portion */
+    if (!hash_h(computed_hash, pubkey_start, vinfo->pubkey_bytes, mdctx, key))
+        goto cleanup;
+
+    /* Compare computed hash with stored hash */
+    if (memcmp(computed_hash, stored_hash, ML_KEM_PKHASH_BYTES) != 0)
+        goto cleanup;
+
+    ret = 1;
+
+cleanup:
+    OPENSSL_clear_free(prvkey_enc, vinfo->prvkey_bytes);
+    return ret;
+}
+#endif /* FIPS_MODULE */
 
 int ossl_ml_kem_decap(uint8_t *shared_secret, size_t slen,
     const uint8_t *ctext, size_t clen,
@@ -2335,6 +2464,17 @@ int ossl_ml_kem_decap(uint8_t *shared_secret, size_t slen,
             ML_KEM_SHARED_SECRET_BYTES, vinfo->secbits);
         return 0;
     }
+
+#ifdef FIPS_MODULE
+    /* FIPS 203, Section 7.3: Validate decapsulation inputs */
+    if (!validate_decapsulation_inputs(ctext, clen, key, mdctx)) {
+        (void)RAND_bytes_ex(key->libctx, shared_secret,
+                            ML_KEM_SHARED_SECRET_BYTES, vinfo->secbits);
+        EVP_MD_CTX_free(mdctx);
+        return 0;
+    }
+#endif /* FIPS_MODULE */
+
 #if defined(OPENSSL_CONSTANT_TIME_VALIDATION)
     /*
      * Data derived from |s| and |z| defaults secret, and to avoid side-channel
