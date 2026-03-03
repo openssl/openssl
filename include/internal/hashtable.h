@@ -173,6 +173,13 @@ static ossl_inline ossl_unused int ossl_key_raw_copy(HT_KEY *key, const uint8_t 
         (key)->key_header.cached_hash = hash; \
     } while (0)
 
+#define HT_INIT_KEY_EXTERNAL(key, buf, len) \
+    do {                                    \
+        HT_INIT_KEY((key));                 \
+        (key)->key_header.keybuf = (buf);   \
+        (key)->key_header.keysize = (len);  \
+    } while (0)
+
 #define HT_KEY_GET_HASH(key) (key)->key_header.cached_hash
 
 /*
