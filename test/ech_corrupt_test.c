@@ -52,6 +52,11 @@ static const char pem_kp1[] = "-----BEGIN PRIVATE KEY-----\n"
 static const char echconfig[] = "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEA"
                                 "AQALZXhhbXBsZS5jb20AAA==";
 static size_t echconfiglen = sizeof(echconfig) - 1;
+
+/* a second ECHConfig for when we want to use the wrong one */
+static const char ec_kp2[] = "AEf+DQBDvQAgACCr9pErR7E/gNeoni+0YpDZaMd7XN+hFnCN+H0Xnm1EHQAEAAEAAQAUZnJvbnQuc2VydmVyLmV4YW1wbGUAAA==";
+static size_t ec_kp2len = sizeof(ec_kp2) - 1;
+
 static unsigned char bin_echconfig[] = {
     0x00, 0x3e, 0xfe, 0x0d, 0x00, 0x3a, 0x6c, 0x00,
     0x20, 0x00, 0x20, 0x98, 0xec, 0x1d, 0x1f, 0xff,
@@ -1208,7 +1213,7 @@ static int corrupt_or_copy(const char *msg, const int msglen,
         return 1;
     }
 
-    if (is_sh == 1) {
+    if (testcase == TESTCASE_SH && is_sh == 1) {
         if (testiter >= (int)OSSL_NELEM(test_shs))
             return 0;
         ts = &test_shs[testiter];
@@ -1252,6 +1257,7 @@ static int corrupt_or_copy(const char *msg, const int msglen,
             return 1;
         }
     }
+
     /* if doing nothing, do that... */
     if (!TEST_ptr(*msgout = OPENSSL_memdup(msg, msglen)))
         return 0;
@@ -1616,6 +1622,130 @@ end:
     return testresult;
 }
 
+/*
+ * Callback that corrupts a server Finished message.
+ * This doesn't seem to be documented, but the buffer here is the actual
+ * message and not a copy just for the callback, so we can corrupt it by
+ * flipping bits in the last octet of the server Finished.  Presumably changing
+ * lengths would cause other breakage, but the below currently causes the
+ * `memcmp()` to fail in the client's call of `tls_process_finished()` which
+ * produces the desired effect of causing the TLS session to fail both because
+ * of ECH-required and subsequently because of a later handshake failure
+ * resulting in us not making the retry-configs available to the client.
+ */
+static void corrupt_server_finished(int write_p, int version, int content_type,
+    const void *buf, size_t msglen, SSL *ssl, void *arg)
+{
+    unsigned char *msg = (unsigned char *)buf;
+
+    if (write_p == 0 && content_type == SSL3_RT_HANDSHAKE
+        && msg[0] == SSL3_MT_FINISHED)
+        msg[msglen - 1] ^= 0xAA;
+}
+
+/*
+ * Test roundtrip with wrong ECHConfig, with and without corrupting
+ * the server Finished to check that retry-configs are not made
+ * available to the client in the latter case.
+ */
+static int ech_retry_config_test(int idx)
+{
+    int res = 0, clientstatus, serverstatus;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    char *cinner = NULL, *couter = NULL, *sinner = NULL, *souter = NULL;
+    unsigned char *retryconfig = NULL;
+    size_t retryconfiglen = 0;
+    int err = 0, err_reason = 0, exp_err = ERR_R_OSSL_STORE_LIB;
+    const char *err_str = NULL;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(),
+            TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+    if (!TEST_true(SSL_CTX_set1_echstore(sctx, es)))
+        goto end;
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+            &clientssl, NULL, NULL)))
+        goto end;
+    if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "foo.example.com")))
+        goto end;
+    /* set a real but wrong ECHConfig */
+    if (!TEST_true(SSL_set1_ech_config_list(clientssl, (unsigned char *)ec_kp2,
+            ec_kp2len)))
+        goto end;
+    if (idx == 1) /* corrupt as desired */
+        SSL_set_msg_callback(clientssl, corrupt_server_finished);
+    /* real but wrong => failure, due to ECH */
+    if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_R_ECH_REQUIRED)))
+        goto end;
+    serverstatus = SSL_ech_get1_status(serverssl, &sinner, &souter);
+    if (verbose)
+        TEST_info("ech_retry_config_test: server status %d, %s, %s",
+            serverstatus, sinner, souter);
+    if (!TEST_int_eq(serverstatus, SSL_ECH_STATUS_GREASE))
+        goto end;
+    /* override cert verification */
+    SSL_set_verify_result(clientssl, X509_V_OK);
+    clientstatus = SSL_ech_get1_status(clientssl, &cinner, &couter);
+    if (verbose)
+        TEST_info("ech_retry_config_test: client status %d, %s, %s",
+            clientstatus, cinner, couter);
+    if (!TEST_int_eq(clientstatus, SSL_ECH_STATUS_FAILED_ECH))
+        goto end;
+    if (idx == 0) { /* no corruption, retry-configs made available */
+        if (!TEST_true(SSL_ech_get1_retry_config(clientssl, &retryconfig,
+                &retryconfiglen)))
+            goto end;
+        if (!TEST_ptr(retryconfig))
+            goto end;
+        if (!TEST_int_ne((int)retryconfiglen, 0))
+            goto end;
+        if (verbose)
+            TEST_info("ech_retry_config_test: retryconfglen: %d\n", (int)retryconfiglen);
+        /* we kow the size to expect as the configs are hard-coded above */
+        if (!TEST_size_t_eq(retryconfiglen, 64))
+            goto end;
+    } else { /* corruption, retry-configs NOT made available */
+        if (!TEST_false(SSL_ech_get1_retry_config(clientssl, &retryconfig,
+                &retryconfiglen)))
+            goto end;
+        /* check we got the specific error expected */
+        err_str = ERR_reason_error_string(exp_err);
+        err_reason = ERR_GET_REASON(exp_err);
+        TEST_info("ech_retry_config_test Expected error: %d/%s",
+            err_reason, err_str);
+        do {
+            err = ERR_get_error();
+            if (err == 0) {
+                TEST_error("ech_retry_config_test: Unexpected error");
+                goto end;
+            }
+            err_reason = ERR_GET_REASON(err);
+            err_str = ERR_reason_error_string(err);
+            if (verbose)
+                TEST_info("ech_retry_config_test Actual error: %d/%s",
+                    err_reason, err_str);
+        } while (err_reason != exp_err);
+        if (verbose)
+            TEST_info("ech_retry_config_test: retry configs withheld\n");
+    }
+    res = 1;
+end:
+    OPENSSL_free(sinner);
+    OPENSSL_free(souter);
+    OPENSSL_free(cinner);
+    OPENSSL_free(couter);
+    OPENSSL_free(retryconfig);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return res;
+}
+
 const OPTIONS *test_get_options(void)
 {
     static const OPTIONS test_options[] = {
@@ -1676,6 +1806,18 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ch_corrupt, OSSL_NELEM(test_inners));
     ADD_ALL_TESTS(test_sh_corrupt, OSSL_NELEM(test_shs));
     ADD_ALL_TESTS(test_ech_corrupt, OSSL_NELEM(test_echs));
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    ADD_ALL_TESTS(ech_retry_config_test, 2);
+#else
+    /*
+     * It seems fuzz tests cause our corruption to not work so we'll skip doing
+     * that. There's an ifdef'd code fragment in `tls_process_finished()` for
+     * when fuzzing that I guess causes that, but it's ok that we only do the
+     * corruption test when not fuzzing. We still do the (first) non-corrupt
+     * test to avoid a warning that `ech_retry_config_test()` isn't called.
+     */
+    ADD_ALL_TESTS(ech_retry_config_test, 1);
+#endif
     return 1;
 err:
     BIO_free_all(in);
