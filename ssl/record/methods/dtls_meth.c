@@ -80,18 +80,17 @@ static DTLS_BITMAP *dtls_get_bitmap(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rr,
     *is_next_epoch = 0;
 
     /* In current epoch, accept HM, CCS, DATA, & ALERT */
-    if (rr->epoch == rl->epoch)
+    if (rr->epoch == rl->epoch) {
         return &rl->bitmap;
-
-    /*
-     * DTLS 1.3 uses encrypted sequence numbers. Therefore we
-     * shouldn't be checking bitmaps if they are in the next
-     * epoch. Also the dtls_record_bitmap_update cannot
-     * be called until the right Epoch record layer process
-     * the record. Instead we are concern if DTLS 1.3 receives
-     * a record from a future epoch during the handshake.
-     */
-    else if (rl->version == DTLS1_3_VERSION
+        /*
+         * DTLS 1.3 uses encrypted sequence numbers. Therefore we
+         * shouldn't be checking bitmaps if they are in the next
+         * epoch. Also the dtls_record_bitmap_update cannot
+         * be called until the right Epoch record layer process
+         * the record. Instead we are concern if DTLS 1.3 receives
+         * a record from a future epoch during the handshake.
+         */
+    } else if (rl->version == DTLS1_3_VERSION
         && ((rl->in_init && rr->epoch == rl->epoch + 2)
             || (rl->in_early_data && rr->epoch == rl->epoch + 1))) {
         *is_next_epoch = 1;
