@@ -1641,7 +1641,7 @@ static void corrupt_server_finished(int write_p, int version, int content_type,
     unsigned char *msg = (unsigned char *)buf;
 
     if (write_p == 0 && content_type == SSL3_RT_HANDSHAKE
-            && msg[0] == SSL3_MT_FINISHED)
+        && msg[0] == SSL3_MT_FINISHED)
         msg[msglen - 1] ^= 0xAA;
 }
 
