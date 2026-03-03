@@ -160,10 +160,13 @@ static ossl_inline ossl_unused int ossl_key_raw_copy(HT_KEY *key, const uint8_t 
  * Similar to HT_COPY_RAW_KEY but accepts a character buffer, and copies
  * data while converting case for case insensitive matches
  */
-#define HT_COPY_RAW_KEY_CASE(key, buf, len)                                         \
-    do {                                                                            \
-        ossl_ht_strcase((key), (char *)&((key)->keybuf[(key)->keysize]), buf, len); \
-        (key)->keysize += len;                                                      \
+#define HT_COPY_RAW_KEY_CASE(key, buf, len)                                            \
+    do {                                                                               \
+        size_t tmplen = (size_t)(len);                                                 \
+        if (tmplen > (key)->bufsize - (key)->keysize)                                  \
+            tmplen = (key)->bufsize - (key)->keysize;                                  \
+        ossl_ht_strcase((key), (char *)&((key)->keybuf[(key)->keysize]), buf, tmplen); \
+        (key)->keysize += tmplen;                                                      \
     } while (0)
 
 /*
@@ -313,9 +316,9 @@ static ossl_inline ossl_unused int ossl_key_raw_copy(HT_KEY *key, const uint8_t 
 /*
  * Helper function to construct case insensitive keys
  */
-static ossl_inline ossl_unused void ossl_ht_strcase(HT_KEY *key, char *tgt, const char *src, int len)
+static ossl_inline ossl_unused void ossl_ht_strcase(HT_KEY *key, char *tgt, const char *src, size_t len)
 {
-    int i;
+    size_t i;
 #if defined(CHARSET_EBCDIC) && !defined(CHARSET_EBCDIC_TEST)
     const long int case_adjust = ~0x40;
 #else
@@ -331,7 +334,7 @@ static ossl_inline ossl_unused void ossl_ht_strcase(HT_KEY *key, char *tgt, cons
      * we copy more space than we have available
      */
     if (key != NULL && key->keysize + len > key->bufsize)
-        len = (int)(key->bufsize - key->keysize);
+        len = (size_t)(key->bufsize - key->keysize);
 
     for (i = 0; src[i] != '\0' && i < len; i++)
         tgt[i] = case_adjust & src[i];
