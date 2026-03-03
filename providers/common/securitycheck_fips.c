@@ -19,15 +19,6 @@
 #include <openssl/obj_mac.h>
 #include "prov/securitycheck.h"
 
-int ossl_fips_config_securitycheck_enabled(OSSL_LIB_CTX *libctx)
-{
-#if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
-    return ossl_fips_config(libctx, FIPS_CONFIG_SECURITY_CHECKS);
-#else
-    return 0;
-#endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */
-}
-
 int ossl_digest_rsa_sign_get_md_nid(const EVP_MD *md)
 {
     return ossl_digest_get_approved_nid(md);

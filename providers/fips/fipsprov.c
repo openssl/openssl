@@ -970,6 +970,11 @@ int OSSL_provider_init_int(const OSSL_CORE_HANDLE *handle,
         goto err;
     }
 
+    /* disable security_checks if needed */
+#ifdef OPENSSL_NO_FIPS_SECURITYCHECKS
+    fgbl->fips_params.security_checks = 0;
+#endif
+
     /*
      * We did initial set up of selftest_params in a local copy, because we
      * could not create fgbl until c_CRYPTO_zalloc was defined in the loop
