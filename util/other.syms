@@ -292,7 +292,6 @@ BN_mod                                  define
 BN_num_bytes                            define
 BN_one                                  define
 BN_zero                                 define deprecated 0.9.8
-CONF_modules_free                       define deprecated 1.1.0
 DES_ecb2_encrypt                        define deprecated 3.0
 DES_ede2_cbc_encrypt                    define deprecated 3.0
 DES_ede2_cfb64_encrypt                  define deprecated 3.0
@@ -301,12 +300,10 @@ DTLS_get_link_min_mtu                   define
 DTLS_set_link_mtu                       define
 DTLSv1_get_timeout                      define
 DTLSv1_handle_timeout                   define
-ENGINE_cleanup                          define deprecated 1.1.0
 ERR_FATAL_ERROR                         define
 ERR_GET_LIB                             define
 ERR_GET_REASON                          define
 ERR_PACK                                define
-ERR_free_strings                        define deprecated 1.1.0
 ERR_put_error                           define deprecated 3.0
 ERR_load_crypto_strings                 define deprecated 1.1.0
 ERR_raise                               define
@@ -401,7 +398,6 @@ EVP_VerifyInit_ex                       define
 EVP_VerifyUpdate                        define
 EVP_bf_cfb                              define
 EVP_cast5_cfb                           define
-EVP_cleanup                             define deprecated 1.1.0
 EVP_EC_gen                              define
 EVP_get_digestbynid                     define
 EVP_get_digestbyobj                     define
@@ -414,7 +410,6 @@ EVP_RSA_gen                             define
 EVP_seed_cfb                            define
 EVP_sm4_cfb                             define
 EXT_UTF8STRING                          define
-OBJ_cleanup                             define deprecated 1.1.0
 OCSP_parse_url                          define
 OCSP_REQ_CTX                            datatype deprecated 3.0.0
 OCSP_REQ_CTX_add1_header                define deprecated 3.0.0
@@ -551,8 +546,6 @@ OSSL_QUIC_LOCAL_ERR_IDLE_TIMEOUT        define
 PEM_FLAG_EAY_COMPATIBLE                 define
 PEM_FLAG_ONLY_B64                       define
 PEM_FLAG_SECURE                         define
-RAND_cleanup                            define deprecated 1.1.0
-SSL_COMP_free_compression_methods       define deprecated 1.1.0
 SSL_CTX_add0_chain_cert                 define
 SSL_CTX_add1_chain_cert                 define
 SSL_CTX_add_extra_chain_cert            define

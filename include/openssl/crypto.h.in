@@ -282,14 +282,6 @@ void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx);
 
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
 /*
- * This function cleans up all "ex_data" state. It mustn't be called under
- * potential race-conditions.
- */
-#define CRYPTO_cleanup_all_ex_data() \
-    while (0)                        \
-    continue
-
-/*
  * The old locking functions have been removed completely without compatibility
  * macros. This is because the old functions either could not properly report
  * errors, or the returned error values were not clearly documented.

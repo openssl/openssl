@@ -1119,10 +1119,6 @@ const EVP_CIPHER *EVP_sm4_ctr(void);
     OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS, NULL)
 #define OpenSSL_add_all_digests() \
     OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL)
-
-#define EVP_cleanup() \
-    while (0)         \
-    continue
 #endif
 
 int EVP_add_cipher(const EVP_CIPHER *cipher);

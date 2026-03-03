@@ -52,11 +52,6 @@ OSSL_DEPRECATEDIN_3_0 const RAND_METHOD *RAND_get_rand_method(void);
 OSSL_DEPRECATEDIN_3_0 RAND_METHOD *RAND_OpenSSL(void);
 #endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#define RAND_cleanup() \
-    while (0)          \
-    continue
-#endif
 int RAND_bytes(unsigned char *buf, int num);
 int RAND_priv_bytes(unsigned char *buf, int num);
 

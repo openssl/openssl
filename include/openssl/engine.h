@@ -737,16 +737,6 @@ ENGINE_FUNC(int, ENGINE_set_ex_data, (ENGINE *e, int idx, void *arg), 0)
 ENGINE_FUNC(void *, ENGINE_get_ex_data, (ENGINE *e, int idx), NULL)
 #endif
 
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
-/*
- * This function previously cleaned up anything that needs it. Auto-deinit will
- * now take care of it so it is no longer required to call this function.
- */
-#define ENGINE_cleanup() \
-    while (0)            \
-    continue
-#endif
-
 /*
  * These return values from within the ENGINE structure. These can be useful
  * with functional references as well as structural references - it depends

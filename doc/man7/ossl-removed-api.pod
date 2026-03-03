@@ -4,6 +4,12 @@
 
 ASN1_STRING_data,
 BIO_f_reliable,
+BIO_sock_cleanup,
+COMP_zlib_cleanup
+CONF_modules_free,
+CRYPTO_cleanup_all_ex_data,
+ENGINE_cleanup,
+ERR_free_strings,
 ERR_get_state,
 ERR_remove_state,
 ERR_remove_thread_state,
@@ -25,6 +31,7 @@ EVP_CIPHER_meth_get_cleanup,
 EVP_CIPHER_meth_get_set_asn1_params,
 EVP_CIPHER_meth_get_get_asn1_params,
 EVP_CIPHER_meth_get_ctrl,
+EVP_cleanup,
 EVP_MD_meth_new,
 EVP_MD_meth_dup,
 EVP_MD_meth_free,
@@ -125,6 +132,10 @@ EVP_PKEY_asn1_set_set_pub_key,
 EVP_PKEY_asn1_set_get_priv_key,
 EVP_PKEY_asn1_set_get_pub_key,
 EVP_PKEY_asn1_set_security_bits,
+OBJ_cleanup,
+OPENSSL_atexit,
+RAND_cleanup,
+SSL_COMP_free_compression_methods,
 ossl-removed-api - API that has been removed from OpenSSL
 
 =head1 SYNOPSIS
@@ -157,6 +168,18 @@ This includes consulting the L<ossl-guide-migration(7)> documentation.
 =item ASN1_STRING_data (Deprecated in 1.1.1) - see L<ASN1_STRING_get0_data(3)>
 
 =item BIO_f_reliable (Broken since 3.0.0) - removed without replacement
+
+=item BIO_sock_cleanup (Deprecated in 1.1.0) - removed, no-op
+
+=item COMP_zlib_cleanup (Deprecated in 1.1.0) - removed, no-op
+
+=item CONF_modules_free (Deprecated in 1.1.0) - removed, no-op
+
+=item CRYPTO_cleanup_all_ex_data (Deprecated in 1.1.0) - removed, no-op
+
+=item ENGINE_cleanup (Deprecated in 1.1.0) - removed, no-op
+
+=item ERR_free_strings (Deprecated in 1.1.0) - removed, no-op
 
 =item ERR_get_state (Deprecated in 3.0.0) - removed, no use with opaque ERR_STATE
 
@@ -199,6 +222,8 @@ This includes consulting the L<ossl-guide-migration(7)> documentation.
 =item EVP_CIPHER_meth_get_get_asn1_params (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
 
 =item EVP_CIPHER_meth_get_ctrl (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
+
+=item EVP_cleanup (Deprecated in 1.1.0) - removed, no-op
 
 =item EVP_MD_meth_new (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
 
@@ -400,7 +425,13 @@ This includes consulting the L<ossl-guide-migration(7)> documentation.
 
 =item EVP_PKEY_asn1_set_security_bits (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
 
+=item OBJ_cleanup (Deprecated in 1.1.0) - removed, no-op
+
 =item OPENSSL_atexit - No longer used, use libc atexit() if you must use this.
+
+=item RAND_cleanup (Deprecated in 1.1.0) - removed, no-op
+
+=item SSL_COMP_free_compression_methods (Deprecated in 1.1.0) - removed, no-op
 
 =back
 

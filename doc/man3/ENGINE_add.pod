@@ -31,7 +31,7 @@ ENGINE_set_default_string, ENGINE_set_destroy_function,
 ENGINE_set_digests, ENGINE_set_finish_function, ENGINE_set_flags,
 ENGINE_set_id, ENGINE_set_init_function, ENGINE_set_load_privkey_function,
 ENGINE_set_load_pubkey_function, ENGINE_set_name, ENGINE_up_ref,
-ENGINE_get_table_flags, ENGINE_cleanup,
+ENGINE_get_table_flags,
 ENGINE_load_builtin_engines, ENGINE_register_all_DH,
 ENGINE_register_all_DSA,
 ENGINE_register_all_RAND,
@@ -157,7 +157,6 @@ used instead.
                                    UI_METHOD *ui_method, void *callback_data);
  EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
                                   UI_METHOD *ui_method, void *callback_data);
- void ENGINE_cleanup(void);
  void ENGINE_add_conf_module(void);
  int ENGINE_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
                              CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
@@ -194,9 +193,6 @@ L<openssl_user_macros(7)>
 =head1 HISTORY
 
 All of these functions were deprecated in OpenSSL 3.0.
-
-ENGINE_cleanup() was deprecated in OpenSSL 1.1.0 by the automatic cleanup
-done by OPENSSL_cleanup() and should not be used.
 
 All of these functions were removed in OpenSSL 4.0.
 
