@@ -3222,7 +3222,7 @@ static int dane_match_cert(X509_STORE_CTX *ctx, X509 *cert, int depth)
                     break;
                 }
 
-                OPENSSL_free(dane->mcert);
+                X509_free(dane->mcert);
                 dane->mcert = cert;
                 dane->mdpth = depth;
                 dane->mtlsa = t;
