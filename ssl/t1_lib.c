@@ -3673,7 +3673,7 @@ static int tls1_set_shared_sigalgs(SSL_CONNECTION *s)
     return 1;
 }
 
-int tls1_save_u16(PACKET *pkt, uint16_t **pdest, size_t *pdestlen)
+int tls1_save_u16(PACKET *pkt, uint16_t **pdest, size_t *pdestlen, size_t maxnum)
 {
     unsigned int stmp;
     size_t size, i;
@@ -3686,6 +3686,13 @@ int tls1_save_u16(PACKET *pkt, uint16_t **pdest, size_t *pdestlen)
         return 0;
 
     size >>= 1;
+
+    /*
+     * We ignore any entries in the list larger than the maximum number we
+     * will accept.
+     */
+    if (size > maxnum)
+        size = maxnum;
 
     if ((buf = OPENSSL_malloc_array(size, sizeof(*buf))) == NULL)
         return 0;
@@ -3713,12 +3720,16 @@ int tls1_save_sigalgs(SSL_CONNECTION *s, PACKET *pkt, int cert)
     if (s->cert == NULL)
         return 0;
 
+    /*
+     * We restrict the number of signature algorithms we are willing to process
+     * to 128. Any beyond this number are simply ignored.
+     */
     if (cert)
         return tls1_save_u16(pkt, &s->s3.tmp.peer_cert_sigalgs,
-            &s->s3.tmp.peer_cert_sigalgslen);
+            &s->s3.tmp.peer_cert_sigalgslen, 128);
     else
         return tls1_save_u16(pkt, &s->s3.tmp.peer_sigalgs,
-            &s->s3.tmp.peer_sigalgslen);
+            &s->s3.tmp.peer_sigalgslen, 128);
 }
 
 /* Set preferred digest for each key type */
