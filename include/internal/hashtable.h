@@ -162,8 +162,11 @@ static ossl_inline ossl_unused int ossl_key_raw_copy(HT_KEY *key, const uint8_t 
  */
 #define HT_COPY_RAW_KEY_CASE(key, buf, len)                                         \
     do {                                                                            \
-        ossl_ht_strcase((key), (char *)&((key)->keybuf[(key)->keysize]), buf, len); \
-        (key)->keysize += len;                                                      \
+        size_t tmplen = (len);                                                      \
+        if ((key)->keysize + tmplen > (key)->bufsize)                               \
+            tmplen = (key)->bufsize - (key)->keysize;                               \
+        ossl_ht_strcase((key), (char *)&((key)->keybuf[(key)->keysize]), buf, tmplen); \
+        (key)->keysize += tmplen;                                                   \
     } while (0)
 
 /*
