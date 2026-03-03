@@ -288,10 +288,13 @@ err:
 static int test_drop_empty_cert_keyids(void)
 {
     static const unsigned char commonName[] = "test";
+    BIO *bio = NULL;
+    CONF *conf = NULL;
     X509 *x = NULL;
     X509_NAME *subject = NULL;
     X509_NAME_ENTRY *name_entry = NULL;
     X509_EXTENSION *ext = NULL;
+    const STACK_OF(X509_EXTENSION) *exts;
     X509V3_CTX ctx;
     int ret = 0;
 
@@ -312,23 +315,59 @@ static int test_drop_empty_cert_keyids(void)
         || !TEST_int_eq(X509_set_pubkey(x, pubkey), 1))
         goto err;
 
-    X509V3_set_ctx(&ctx, x, x, NULL, NULL, 0);
-    if (!TEST_ptr(ext = X509V3_EXT_conf(NULL, &ctx, "subjectKeyIdentifier",
-                      "none"))
+    /*
+     * Check that X509_add_ext() does not create non-NULL empty stack when
+     * adding an ignored extension (from initial NULL state).
+     */
+    X509V3_set_ctx(&ctx, x, x, NULL, NULL, X509V3_CTX_REPLACE);
+    if (!TEST_ptr(ext = X509V3_EXT_conf(NULL, &ctx, "subjectKeyIdentifier", "none"))
         || !TEST_int_eq(X509_add_ext(x, ext, -1), 1)
         || !TEST_ptr_null(X509_get0_extensions(x)))
         goto err;
 
+    /* Add non-empty SKID */
+    if (!TEST_ptr(bio = BIO_new(BIO_s_mem()))
+        || !TEST_int_ge(BIO_printf(bio, "subjectKeyIdentifier = hash\n"), 0)
+        || !TEST_ptr(conf = NCONF_new(NULL))
+        || !TEST_int_gt(NCONF_load_bio(conf, bio, NULL), 0))
+        goto err;
+    (void)BIO_reset(bio);
+
+    X509V3_set_nconf(&ctx, conf);
+    if (!TEST_true(X509V3_EXT_add_nconf(conf, &ctx, "default", x))
+        || !TEST_ptr(exts = X509_get0_extensions(x))
+        || !TEST_int_eq(sk_X509_EXTENSION_num(exts), 1))
+        goto err;
+
+    /* Request "empty" SKID and AKID in order to drop any previous values */
+    NCONF_free(conf);
+    if (!TEST_ptr(conf = NCONF_new(NULL))
+        || !TEST_int_ge(BIO_printf(bio, "subjectKeyIdentifier = none\n"), 0)
+        || !TEST_int_gt(NCONF_load_bio(conf, bio, NULL), 0))
+        goto err;
+
+    X509V3_set_nconf(&ctx, conf);
+    if (!TEST_true(X509V3_EXT_add_nconf(conf, &ctx, "default", x))
+        || !TEST_int_gt(X509_sign(x, privkey, signmd), 0)
+        || !TEST_ptr_null(X509_get0_extensions(x)))
+        goto err;
+
+    /*
+     * Now check that a non-empty extension is actually added via
+     * X509_add_ext().
+     */
     X509_EXTENSION_free(ext);
-    if (!TEST_ptr(ext = X509V3_EXT_conf(NULL, &ctx, "authorityKeyIdentifier",
-                      "none"))
+    if (!TEST_ptr(ext = X509V3_EXT_conf(NULL, &ctx, "subjectKeyIdentifier", "hash"))
         || !TEST_int_eq(X509_add_ext(x, ext, -1), 1)
-        || !TEST_ptr_null(X509_get0_extensions(x))
-        || !TEST_int_gt(X509_sign(x, privkey, signmd), 0))
+        || !TEST_int_gt(X509_sign(x, privkey, signmd), 0)
+        || !TEST_ptr(exts = X509_get0_extensions(x))
+        || !TEST_int_eq(sk_X509_EXTENSION_num(exts), 1))
         goto err;
 
     ret = 1;
 err:
+    BIO_free(bio);
+    NCONF_free(conf);
     X509_NAME_ENTRY_free(name_entry);
     X509_NAME_free(subject);
     X509_EXTENSION_free(ext);

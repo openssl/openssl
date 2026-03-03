@@ -100,6 +100,22 @@ X509_EXTENSION *X509v3_delete_ext(STACK_OF(X509_EXTENSION) *x, int loc)
     return ret;
 }
 
+X509_EXTENSION *X509v3_delete_extension(STACK_OF(X509_EXTENSION) **x, int loc)
+{
+    X509_EXTENSION *ext;
+
+    if (x == NULL)
+        return NULL;
+
+    /* Set extensions to NULL when last element dropped */
+    if ((ext = X509v3_delete_ext(*x, loc)) != NULL
+        && sk_X509_EXTENSION_num(*x) == 0) {
+        sk_X509_EXTENSION_free(*x);
+        *x = NULL;
+    }
+    return ext;
+}
+
 STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
     const X509_EXTENSION *ex, int loc)
 {

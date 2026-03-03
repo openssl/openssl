@@ -169,7 +169,7 @@ const X509_EXTENSION *TS_REQ_get_ext(TS_REQ *a, int loc)
 
 X509_EXTENSION *TS_REQ_delete_ext(TS_REQ *a, int loc)
 {
-    return X509v3_delete_ext(a->extensions, loc);
+    return X509v3_delete_extension(&a->extensions, loc);
 }
 
 int TS_REQ_add_ext(TS_REQ *a, X509_EXTENSION *ex, int loc)

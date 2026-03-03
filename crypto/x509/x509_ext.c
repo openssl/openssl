@@ -104,32 +104,28 @@ X509_EXTENSION *X509_delete_ext(X509 *x, int loc)
 {
     X509_EXTENSION *ret;
 
-    if (x->cert_info.extensions == NULL)
-        return NULL;
-    if ((ret = delete_ext(&x->cert_info.extensions, loc)) != NULL)
+    ret = X509v3_delete_extension(&x->cert_info.extensions, loc);
+    if (ret != NULL)
         x->cert_info.enc.modified = 1;
     return ret;
 }
 
 int X509_add_ext(X509 *x, const X509_EXTENSION *ex, int loc)
 {
-    STACK_OF(X509_EXTENSION) *exts = x->cert_info.extensions;
+    STACK_OF(X509_EXTENSION) **exts = &x->cert_info.extensions;
 
-    if (X509v3_add_ext(&exts, ex, loc) == NULL)
+    /* x->cert_info.extensions might initially be NULL */
+    if (X509v3_add_ext(exts, ex, loc) == NULL)
         return 0;
     /*
-     * A duplicate empty SKID/AKID extension can displace a prior non-empty
-     * one, but is then not itself added, so, somewhat counter-intutively,  the
-     * the extension list can become empty after an "add", in which case we must
-     * drop the extension stack entirely, setting it to NULL.  The extensions
-     * list is either non-empty or absent.
+     * An ignored "empty" SKID or AKID extension will appear to be successfully
+     * added, even though nothing is pushed onto the resulting stack.  However,
+     * if the stack was initially NULL or empty, it will now be non-NULL, but
+     * empty, deallocate and make it NULL in that case.
      */
-    if (sk_X509_EXTENSION_num(exts) != 0) {
-        x->cert_info.extensions = exts;
-    } else {
-        sk_X509_EXTENSION_free(exts);
-        sk_X509_EXTENSION_pop_free(x->cert_info.extensions, X509_EXTENSION_free);
-        x->cert_info.extensions = NULL;
+    if (sk_X509_EXTENSION_num(*exts) == 0) {
+        sk_X509_EXTENSION_free(*exts);
+        *exts = NULL;
     }
     x->cert_info.enc.modified = 1;
     return 1;
