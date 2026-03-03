@@ -127,7 +127,6 @@ int X509_add_ext(X509 *x, const X509_EXTENSION *ex, int loc)
     if (sk_X509_EXTENSION_num(exts) != 0) {
         x->cert_info.extensions = exts;
     } else {
-        sk_X509_EXTENSION_free(exts);
         sk_X509_EXTENSION_pop_free(x->cert_info.extensions, X509_EXTENSION_free);
         x->cert_info.extensions = NULL;
     }
