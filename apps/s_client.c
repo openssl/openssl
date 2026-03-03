@@ -1343,7 +1343,7 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_OCSP_VERIFY_OTHER:
             if (!load_certs(opt_arg(), 0, &verify_other, NULL,
-                            "validator certificates")) {
+                    "validator certificates")) {
                 BIO_printf(bio_err, "Error reading file %s\n", opt_arg());
                 goto end;
             }

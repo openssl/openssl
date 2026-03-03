@@ -947,7 +947,8 @@ int X509_VERIFY_PARAM_set1_ocsp_verify_other(X509_VERIFY_PARAM *param,
     return 1;
 }
 
-STACK_OF(X509) *X509_VERIFY_PARAM_get0_ocsp_verify_other(const X509_VERIFY_PARAM *param) {
+STACK_OF(X509) *X509_VERIFY_PARAM_get0_ocsp_verify_other(const X509_VERIFY_PARAM *param)
+{
     return param->ocsp_verify_other;
 }
 
