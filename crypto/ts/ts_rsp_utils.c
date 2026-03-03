@@ -330,7 +330,7 @@ const X509_EXTENSION *TS_TST_INFO_get_ext(TS_TST_INFO *a, int loc)
 
 X509_EXTENSION *TS_TST_INFO_delete_ext(TS_TST_INFO *a, int loc)
 {
-    return X509v3_delete_ext(a->extensions, loc);
+    return X509v3_delete_extension(&a->extensions, loc);
 }
 
 int TS_TST_INFO_add_ext(TS_TST_INFO *a, X509_EXTENSION *ex, int loc)

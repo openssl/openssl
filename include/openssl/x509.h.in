@@ -901,6 +901,7 @@ int X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *x,
     int crit, int lastpos);
 const X509_EXTENSION *X509v3_get_ext(const STACK_OF(X509_EXTENSION) *x, int loc);
 X509_EXTENSION *X509v3_delete_ext(STACK_OF(X509_EXTENSION) *x, int loc);
+X509_EXTENSION *X509v3_delete_extension(STACK_OF(X509_EXTENSION) **x, int loc);
 STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
     const X509_EXTENSION *ex, int loc);
 STACK_OF(X509_EXTENSION) *X509v3_add_extensions(STACK_OF(X509_EXTENSION) **target,

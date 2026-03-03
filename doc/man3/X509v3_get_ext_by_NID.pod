@@ -4,14 +4,15 @@
 
 X509v3_get_ext_count, X509v3_get_ext, X509v3_get_ext_by_NID,
 X509v3_get_ext_by_OBJ, X509v3_get_ext_by_critical, X509v3_delete_ext,
-X509v3_add_ext, X509v3_add_extensions, X509_get_ext_count, X509_get_ext,
-X509_get_ext_by_NID, X509_get_ext_by_OBJ, X509_get_ext_by_critical,
-X509_delete_ext, X509_add_ext, X509_CRL_get_ext_count, X509_CRL_get_ext,
-X509_CRL_get_ext_by_NID, X509_CRL_get_ext_by_OBJ, X509_CRL_get_ext_by_critical,
-X509_CRL_delete_ext, X509_CRL_add_ext, X509_REVOKED_get_ext_count,
-X509_REVOKED_get_ext, X509_REVOKED_get_ext_by_NID, X509_REVOKED_get_ext_by_OBJ,
-X509_REVOKED_get_ext_by_critical, X509_REVOKED_delete_ext,
-X509_REVOKED_add_ext - extension stack utility functions
+X509v3_delete_extension, X509v3_add_ext, X509v3_add_extensions,
+X509_get_ext_count, X509_get_ext, X509_get_ext_by_NID, X509_get_ext_by_OBJ,
+X509_get_ext_by_critical, X509_delete_ext, X509_add_ext,
+X509_CRL_get_ext_count, X509_CRL_get_ext, X509_CRL_get_ext_by_NID,
+X509_CRL_get_ext_by_OBJ, X509_CRL_get_ext_by_critical, X509_CRL_delete_ext,
+X509_CRL_add_ext, X509_REVOKED_get_ext_count, X509_REVOKED_get_ext,
+X509_REVOKED_get_ext_by_NID, X509_REVOKED_get_ext_by_OBJ,
+X509_REVOKED_get_ext_by_critical, X509_REVOKED_delete_ext, X509_REVOKED_add_ext
+- extension stack utility functions
 
 =head1 SYNOPSIS
 
@@ -27,6 +28,7 @@ X509_REVOKED_add_ext - extension stack utility functions
  int X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *x,
                                 int crit, int lastpos);
  X509_EXTENSION *X509v3_delete_ext(STACK_OF(X509_EXTENSION) *x, int loc);
+ X509_EXTENSION *X509v3_delete_extension(STACK_OF(X509_EXTENSION) **x, int loc);
  STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
                                           X509_EXTENSION *ex, int loc);
  STACK_OF(X509_EXTENSION)
@@ -81,6 +83,12 @@ extension.
 X509v3_delete_ext() deletes the extension with index I<loc> from I<x>.
 The deleted extension is returned and must be freed by the caller.
 If I<loc> is an invalid index value, NULL is returned.
+
+X509v3_delete_extension() extends X509v3_delete_ext() by deallocating the
+extension stack I<*x> if it becomes empty, and in that case also setting I<*x>
+to NULL.
+This is a convenience wrapper for cases in which extensions are optional and
+should be omitted if the stack becomes empty.
 
 X509v3_add_ext() inserts extension I<ex> to STACK I<*x> at position I<loc>.
 If I<loc> is -1, the new extension is added to the end.
@@ -140,8 +148,9 @@ that case.
 
 X509v3_get_ext_count() returns the extension count or 0 for failure.
 
-X509v3_get_ext(), X509v3_delete_ext() and X509_delete_ext() return an
-B<X509_EXTENSION> structure or NULL if an error occurs.
+X509v3_get_ext(), X509v3_delete_ext(), X509v3_delete_extension() and
+X509_delete_ext() return an B<X509_EXTENSION> structure or NULL if an error
+occurs.
 
 X509v3_get_ext_by_OBJ() and X509v3_get_ext_by_critical() return
 the extension index or -1 if an error occurs.
@@ -163,6 +172,8 @@ L<X509V3_get_d2i(3)>
 =head1 HISTORY
 
 X509v3_add_extensions() was added in OpenSSL 3.4.
+
+X509v3_delete_extension() was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

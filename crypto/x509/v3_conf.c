@@ -346,6 +346,10 @@ int X509V3_EXT_add_nconf_sk(CONF *conf, X509V3_CTX *ctx, const char *section,
         }
         X509_EXTENSION_free(ext);
     }
+    if (sk != NULL && sk_X509_EXTENSION_num(*sk) == 0) {
+        sk_X509_EXTENSION_free(*sk);
+        *sk = NULL;
+    }
     return 1;
 }
 
@@ -357,6 +361,7 @@ int X509V3_EXT_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
     X509 *cert)
 {
     STACK_OF(X509_EXTENSION) **sk = NULL;
+
     if (cert != NULL)
         sk = &cert->cert_info.extensions;
     return X509V3_EXT_add_nconf_sk(conf, ctx, section, sk);
@@ -379,17 +384,19 @@ static int
 update_req_extensions(X509_REQ *req, int *pnid, STACK_OF(X509_EXTENSION) *exts)
 {
     unsigned char *ext = NULL;
-    int ret = 0, loc = -1, extlen;
+    int ret = 0, loc = -1, extlen = 0;
 
     if (pnid == NULL || *pnid == NID_undef)
         if ((pnid = X509_REQ_get_extension_nids()) == NULL)
             return 0;
     loc = X509at_get_attr_by_NID(req->req_info.attributes, *pnid, -1);
 
-    extlen = ASN1_item_i2d((const ASN1_VALUE *)exts,
-        &ext, ASN1_ITEM_rptr(X509_EXTENSIONS));
-    if (extlen <= 0)
-        return ret;
+    if (exts != NULL) {
+        extlen = ASN1_item_i2d((const ASN1_VALUE *)exts,
+            &ext, ASN1_ITEM_rptr(X509_EXTENSIONS));
+        if (extlen <= 0)
+            return ret;
+    }
 
     if (loc != -1) {
         X509_ATTRIBUTE *att = X509at_delete_attr(req->req_info.attributes, loc);
@@ -433,7 +440,7 @@ int X509V3_EXT_REQ_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
 
     ret = X509V3_EXT_add_nconf_sk(conf, ctx, section, &exts);
     /* Replace original extension list (stack) with updated stack */
-    if (ret && req != NULL && exts != NULL)
+    if (ret && req != NULL)
         ret = update_req_extensions(req, pnid, exts);
     sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
     return ret;
