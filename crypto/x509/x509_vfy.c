@@ -1286,7 +1286,7 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
     ASN1_OBJECT *cert_id_md_oid;
     EVP_MD *cert_id_md;
     OCSP_CERTID *cert_id = NULL;
-    STACK_OF(X509) *verify_other =  NULL;
+    STACK_OF(X509) *verify_other = NULL;
     int ret = V_OCSP_CERTSTATUS_UNKNOWN;
     int num;
 

@@ -97,6 +97,7 @@ B<openssl> B<s_client>
 [B<-status>]
 [B<-ocsp_check_leaf>]
 [B<-ocsp_check_all>]
+[B<-ocsp_verify_other>]
 [B<-alpn> I<protocols>]
 [B<-nextprotoneg> I<protocols>]
 [B<-ct>]
@@ -710,6 +711,14 @@ for the issuer chain of the server certificate (i.e., intermediate CA certificat
 excluding the trust anchor).
 
 This implies the B<-status> and B<-ocsp_check_leaf>.
+
+=item B<-ocsp_verify_other>
+
+File or URI containing additional certificates to search when attempting to
+locate the OCSP response signing certificate. Some responders omit the actual
+signer's certificate from the response: this option can be used to supply the
+necessary certificate in such cases.
+The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-alpn> I<protocols>, B<-nextprotoneg> I<protocols>
 
