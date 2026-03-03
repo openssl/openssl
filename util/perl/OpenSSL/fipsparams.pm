@@ -88,9 +88,11 @@ sub produce_fips_params {
         if ($type eq 'const char *') {
             print "                fp->$field = $field;\n";
         } elsif ($type eq 'unsigned char') {
-            print "                if (strcmp($field, \"1\") == 0)\n";
+            print "                if ($field != NULL\n";
+            print "                    && strcmp($field, \"1\") == 0)\n";
             print "                    fp->$field = 1;\n";
-            print "                else if (strcmp($field, \"0\") == 0)\n";
+            print "                else if ($field != NULL\n";
+            print "                    && strcmp($field, \"0\") == 0)\n";
             print "                    fp->$field = 0;\n";
             print "                else\n";
             print "                    return 0;\n";
