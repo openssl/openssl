@@ -373,6 +373,7 @@ void X509_VERIFY_PARAM_free(X509_VERIFY_PARAM *param)
     clear_buffer_stack(&param->rfc822s);
     clear_buffer_stack(&param->smtputf8s);
     OPENSSL_free(param->peername);
+    sk_X509_pop_free(param->ocsp_verify_other, X509_free);
     OPENSSL_free(param);
 }
 
@@ -486,6 +487,11 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
             return 0;
     }
     x509_verify_param_copy(validate_smtputf8, NULL);
+
+    if (test_x509_verify_param_copy(ocsp_verify_other, NULL)) {
+        if (!X509_VERIFY_PARAM_set1_ocsp_verify_other(dest, src->ocsp_verify_other))
+            return 0;
+    }
 
     return 1;
 }
@@ -905,6 +911,44 @@ int X509_VERIFY_PARAM_get_auth_level(const X509_VERIFY_PARAM *param)
 const char *X509_VERIFY_PARAM_get0_name(const X509_VERIFY_PARAM *param)
 {
     return param->name;
+}
+
+int X509_VERIFY_PARAM_set1_ocsp_verify_other(X509_VERIFY_PARAM *param,
+    STACK_OF(X509) *ocsp_verify_other)
+{
+    int i;
+    X509 *x509, *dx509;
+
+    if (param == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    sk_X509_pop_free(param->ocsp_verify_other, X509_free);
+
+    if (ocsp_verify_other == NULL) {
+        param->ocsp_verify_other = NULL;
+        return 1;
+    }
+
+    param->ocsp_verify_other = sk_X509_new_null();
+    if (param->ocsp_verify_other == NULL)
+        return 0;
+
+    for (i = 0; i < sk_X509_num(ocsp_verify_other); i++) {
+        x509 = sk_X509_value(ocsp_verify_other, i);
+        dx509 = X509_dup(x509);
+        if (dx509 == NULL)
+            return 0;
+        if (!sk_X509_push(param->ocsp_verify_other, dx509)) {
+            X509_free(dx509);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+STACK_OF(X509) *X509_VERIFY_PARAM_get0_ocsp_verify_other(const X509_VERIFY_PARAM *param) {
+    return param->ocsp_verify_other;
 }
 
 /*
