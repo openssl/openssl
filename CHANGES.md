@@ -183,6 +183,15 @@ OpenSSL Releases
 
    *Bob Beck*
 
+ * Critical extension enforcement for EXFLAG_BCONS_CRITICAL,
+   EXFLAG_AKID_CRITICAL, EXFLAG_SKID_CRITICAL, and EXFLAG_SAN_CRITICAL is
+   incorrect. These checks were intended as CA requirements to prevent
+   misinterpretation by verifiers that don't support certain extensions
+   However, since we do support these extensions, there is no requirement for
+   them to be marked as critical. Enforcing that on X509_V_FLAG_X509_STRICT was a mistake.
+
+   *Daniel Kubec*
+
  * Made `X509_ATTRIBUTE` accessor functions const-correct. The functions
    `X509_ATTRIBUTE_get0_object()`, `X509_ATTRIBUTE_get0_type()`, and
    `X509_ATTRIBUTE_get0_data()` now accept `const X509_ATTRIBUTE *` and

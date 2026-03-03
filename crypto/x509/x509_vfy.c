@@ -674,10 +674,6 @@ static int check_extensions(X509_STORE_CTX *ctx)
                 CB_FAIL_IF((x->ex_kusage & KU_KEY_CERT_SIGN) == 0, ctx,
                     x, i, X509_V_ERR_PATHLEN_WITHOUT_KU_KEY_CERT_SIGN);
             }
-            CB_FAIL_IF((x->ex_flags & EXFLAG_CA) != 0
-                    && (x->ex_flags & EXFLAG_BCONS) != 0
-                    && (x->ex_flags & EXFLAG_BCONS_CRITICAL) == 0,
-                ctx, x, i, X509_V_ERR_CA_BCONS_NOT_CRITICAL);
             /* Check Key Usage according to RFC 5280 section 4.2.1.3 */
             if ((x->ex_flags & EXFLAG_CA) != 0) {
                 CB_FAIL_IF((x->ex_flags & EXFLAG_KUSAGE) == 0,
@@ -695,10 +691,6 @@ static int check_extensions(X509_STORE_CTX *ctx)
                            || x->altname == NULL)
                     && X509_NAME_entry_count(X509_get_subject_name(x)) == 0,
                 ctx, x, i, X509_V_ERR_SUBJECT_NAME_EMPTY);
-            CB_FAIL_IF(X509_NAME_entry_count(X509_get_subject_name(x)) == 0
-                    && x->altname != NULL
-                    && (x->ex_flags & EXFLAG_SAN_CRITICAL) == 0,
-                ctx, x, i, X509_V_ERR_EMPTY_SUBJECT_SAN_NOT_CRITICAL);
             /* Check SAN is non-empty according to RFC 5280 section 4.2.1.6 */
             CB_FAIL_IF(x->altname != NULL
                     && sk_GENERAL_NAME_num(x->altname) <= 0,
@@ -706,12 +698,6 @@ static int check_extensions(X509_STORE_CTX *ctx)
             /* Check sig alg consistency acc. to RFC 5280 section 4.1.1.2 */
             CB_FAIL_IF(X509_ALGOR_cmp(&x->sig_alg, &x->cert_info.signature) != 0,
                 ctx, x, i, X509_V_ERR_SIGNATURE_ALGORITHM_INCONSISTENCY);
-            CB_FAIL_IF(x->akid != NULL
-                    && (x->ex_flags & EXFLAG_AKID_CRITICAL) != 0,
-                ctx, x, i, X509_V_ERR_AUTHORITY_KEY_IDENTIFIER_CRITICAL);
-            CB_FAIL_IF(x->skid != NULL
-                    && (x->ex_flags & EXFLAG_SKID_CRITICAL) != 0,
-                ctx, x, i, X509_V_ERR_SUBJECT_KEY_IDENTIFIER_CRITICAL);
             if (X509_get_version(x) >= X509_VERSION_3) {
                 /* Check AKID presence acc. to RFC 5280 section 4.2.1.1 */
                 /*
