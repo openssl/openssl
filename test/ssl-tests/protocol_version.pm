@@ -283,9 +283,6 @@ sub generate_resumption_tests {
         $max_enabled = $dtls ? $max_dtls_enabled : $max_tls_enabled;
     }
 
-    # TODO(DTLSv1.3): Resumption tests fails
-    return if($dtls == 1);
-
     if (no_tests($dtls)) {
         return;
     }
