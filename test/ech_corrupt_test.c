@@ -69,8 +69,6 @@ static unsigned char bin_echconfig[] = {
 };
 static size_t bin_echconfiglen = sizeof(bin_echconfig);
 
-
-
 /*
  * We can grab the CH and SH and manipulate those to check good
  * behaviour in the face of various errors. The most important
