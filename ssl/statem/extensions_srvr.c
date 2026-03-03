@@ -12,7 +12,6 @@
 #include "statem_local.h"
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
-
 #ifndef OPENSSL_NO_ECH
 #include <openssl/rand.h>
 #include <openssl/trace.h>
@@ -657,28 +656,42 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
     const uint16_t *clntgroups, size_t clnt_num_groups,
     const uint16_t *srvrgroups, size_t srvr_num_groups,
     uint16_t **keyshares_arr, PACKET **encoded_pubkey_arr,
-    size_t *keyshares_cnt, size_t *keyshares_max)
+    size_t *keyshares_cnt)
 {
     PACKET encoded_pubkey;
     size_t key_share_pos = 0;
     size_t previous_key_share_pos = 0;
     unsigned int group_id = 0;
+    unsigned int i;
+
+    /*
+     * Theoretically there is no limit on the number of keyshares as long as
+     * they are less than 2^16 bytes in total. It costs us something for each
+     * keyshare to confirm the groups are valid, so we restrict this to a
+     * sensible number. Any keyshares over this limit are simply ignored.
+     */
+    const size_t keyshares_max = 16;
 
     /* Prepare memory to hold the extracted key share groups and related pubkeys */
-    *keyshares_arr = OPENSSL_malloc_array(*keyshares_max,
+    *keyshares_arr = OPENSSL_malloc_array(keyshares_max,
         sizeof(**keyshares_arr));
     if (*keyshares_arr == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto failure;
     }
-    *encoded_pubkey_arr = OPENSSL_malloc_array(*keyshares_max,
+    *encoded_pubkey_arr = OPENSSL_malloc_array(keyshares_max,
         sizeof(**encoded_pubkey_arr));
     if (*encoded_pubkey_arr == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto failure;
     }
 
-    while (PACKET_remaining(key_share_list) > 0) {
+    /*
+     * We limit the number of key shares we are willing to process to
+     * keyshares_max regardless of whether we include them in keyshares_arr or
+     * not.
+     */
+    for (i = 0; PACKET_remaining(key_share_list) > 0 && i < keyshares_max; i++) {
         /* Get the group_id for the current share and its encoded_pubkey */
         if (!PACKET_get_net_2(key_share_list, &group_id)
             || !PACKET_get_length_prefixed_2(key_share_list, &encoded_pubkey)
@@ -744,35 +757,6 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
         /* Memorize this key share group ID and its encoded point */
         (*keyshares_arr)[*keyshares_cnt] = group_id;
         (*encoded_pubkey_arr)[(*keyshares_cnt)++] = encoded_pubkey;
-
-        /*
-         * Memory management (remark: While limiting the client to only allow
-         * a maximum of OPENSSL_CLIENT_MAX_KEY_SHARES to be sent, the server can
-         * handle any number of key shares)
-         */
-        if (*keyshares_cnt == *keyshares_max) {
-            PACKET *tmp_pkt;
-            uint16_t *tmp = OPENSSL_realloc_array(*keyshares_arr,
-                *keyshares_max + GROUPLIST_INCREMENT,
-                sizeof(**keyshares_arr));
-
-            if (tmp == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto failure;
-            }
-
-            *keyshares_arr = tmp;
-            tmp_pkt = OPENSSL_realloc_array(*encoded_pubkey_arr,
-                *keyshares_max + GROUPLIST_INCREMENT,
-                sizeof(**encoded_pubkey_arr));
-            if (tmp_pkt == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto failure;
-            }
-
-            *encoded_pubkey_arr = tmp_pkt;
-            *keyshares_max += GROUPLIST_INCREMENT;
-        }
     }
 
     return EXTRACTION_SUCCESS;
@@ -842,7 +826,6 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
     PACKET *encoded_pubkey_arr = NULL;
     uint16_t *keyshares_arr = NULL;
     size_t keyshares_cnt = 0;
-    size_t keyshares_max = GROUPLIST_INCREMENT;
     /* We conservatively assume that we did not find a suitable group */
     uint16_t group_id_candidate = 0;
     KS_EXTRACTION_RESULT ks_extraction_result;
@@ -897,7 +880,7 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
         clntgroups, clnt_num_groups,
         srvrgroups, srvr_num_groups,
         &keyshares_arr, &encoded_pubkey_arr,
-        &keyshares_cnt, &keyshares_max);
+        &keyshares_cnt);
 
     if (ks_extraction_result == EXTRACTION_FAILURE) /* Fatal error during tests */
         return 0; /* Memory already freed and SSLfatal already called */
