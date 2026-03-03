@@ -316,9 +316,9 @@ static ossl_inline ossl_unused int ossl_key_raw_copy(HT_KEY *key, const uint8_t 
 /*
  * Helper function to construct case insensitive keys
  */
-static ossl_inline ossl_unused void ossl_ht_strcase(HT_KEY *key, char *tgt, const char *src, int len)
+static ossl_inline ossl_unused void ossl_ht_strcase(HT_KEY *key, char *tgt, const char *src, size_t len)
 {
-    int i;
+    size_t i;
 #if defined(CHARSET_EBCDIC) && !defined(CHARSET_EBCDIC_TEST)
     const long int case_adjust = ~0x40;
 #else
@@ -334,7 +334,7 @@ static ossl_inline ossl_unused void ossl_ht_strcase(HT_KEY *key, char *tgt, cons
      * we copy more space than we have available
      */
     if (key != NULL && key->keysize + len > key->bufsize)
-        len = (int)(key->bufsize - key->keysize);
+        len = (size_t)(key->bufsize - key->keysize);
 
     for (i = 0; src[i] != '\0' && i < len; i++)
         tgt[i] = case_adjust & src[i];
