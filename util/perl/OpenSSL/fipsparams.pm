@@ -105,11 +105,13 @@ sub produce_fips_params {
     print "\n";
     print "#define OSSL_FIPS_PARAMS_DEFN_TYPES \\\n";
     my $cnt = 0;
+    my $sep = "";
     foreach my $p (@params) {
         my $use = $p->[4];
         if ($use eq 'indicator') {
             my $name  = "OSSL_PROV_PARAM_" . $p->[1];
-            print "    OSSL_PARAM_DEFN($name, OSSL_PARAM_INTEGER, NULL, 0), \\\n";
+            print "$sep    OSSL_PARAM_DEFN($name, OSSL_PARAM_INTEGER, NULL, 0)";
+            $sep = ", \\\n";
         }
     }
     print "\n";
