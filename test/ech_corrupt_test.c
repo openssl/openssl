@@ -1730,7 +1730,7 @@ static int ech_retry_config_test(int idx)
                     err_reason, err_str);
         } while (err_reason != exp_err);
         if (verbose)
-            TEST_info("ech_retry_config_test: retry configs witheld\n");
+            TEST_info("ech_retry_config_test: retry configs withheld\n");
     }
     res = 1;
 end:
