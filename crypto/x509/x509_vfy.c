@@ -1286,6 +1286,7 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
     ASN1_OBJECT *cert_id_md_oid;
     EVP_MD *cert_id_md;
     OCSP_CERTID *cert_id = NULL;
+    STACK_OF(X509) *verify_other =  NULL;
     int ret = V_OCSP_CERTSTATUS_UNKNOWN;
     int num;
 
@@ -1305,7 +1306,13 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
         goto end;
     }
 
-    if (OCSP_basic_verify(bs, ctx->chain, ctx->store, OCSP_TRUSTOTHER) <= 0) {
+    verify_other = X509_VERIFY_PARAM_get0_ocsp_verify_other(ctx->param);
+
+    i = OCSP_basic_verify(bs, ctx->chain, ctx->store, 0);
+    if (i <= 0 && verify_other != NULL)
+        i = OCSP_basic_verify(bs, verify_other, ctx->store, OCSP_TRUSTOTHER);
+
+    if (i <= 0) {
         ret = X509_V_ERR_OCSP_SIGNATURE_FAILURE;
         goto end;
     }
