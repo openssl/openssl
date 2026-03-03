@@ -2938,7 +2938,7 @@ static int dane_match_cert(X509_STORE_CTX *ctx, X509 *cert, int depth)
             if (matched || dane->mdpth < 0) {
                 dane->mdpth = depth;
                 dane->mtlsa = t;
-                OPENSSL_free(dane->mcert);
+                X509_free(dane->mcert);
                 dane->mcert = cert;
                 X509_up_ref(cert);
             }
