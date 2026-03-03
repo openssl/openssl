@@ -662,22 +662,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
             tmp_ex_flags |= EXFLAG_CRITICAL;
             break;
         }
-        switch (nid) {
-        case NID_basic_constraints:
-            tmp_ex_flags |= EXFLAG_BCONS_CRITICAL;
-            break;
-        case NID_authority_key_identifier:
-            tmp_ex_flags |= EXFLAG_AKID_CRITICAL;
-            break;
-        case NID_subject_key_identifier:
-            tmp_ex_flags |= EXFLAG_SKID_CRITICAL;
-            break;
-        case NID_subject_alt_name:
-            tmp_ex_flags |= EXFLAG_SAN_CRITICAL;
-            break;
-        default:
-            break;
-        }
     }
 
     /* Set x->siginf, ignoring errors due to unsupported algos */

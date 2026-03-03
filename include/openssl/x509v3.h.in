@@ -443,11 +443,17 @@ struct ISSUING_DIST_POINT_st {
 #define EXFLAG_FRESHEST 0x1000
 #define EXFLAG_SS 0x2000 /* cert is apparently self-signed */
 
+#define EXFLAG_NO_FINGERPRINT 0x100000
+
+/*
+ * The following flags are no longer used. On X509_V_FLAG_X509_STRICT they were
+ * previously enforced as checks on critical extensions but this behavior has
+ * been removed.
+ */
 #define EXFLAG_BCONS_CRITICAL 0x10000
 #define EXFLAG_AKID_CRITICAL 0x20000
 #define EXFLAG_SKID_CRITICAL 0x40000
 #define EXFLAG_SAN_CRITICAL 0x80000
-#define EXFLAG_NO_FINGERPRINT 0x100000
 
 /* https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.3 */
 #define KU_DIGITAL_SIGNATURE X509v3_KU_DIGITAL_SIGNATURE
