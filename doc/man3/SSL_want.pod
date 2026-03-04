@@ -31,7 +31,7 @@ by SSL_want().
 
 SSL_want() examines the internal state information of the SSL object. Its
 return values are similar to that of L<SSL_get_error(3)>.
-Unlike L<SSL_get_error(3)>, which also evaluates the
+Unlike L<SSL_get_error(3)>, which also evaluates (indirectly) the
 error queue, the results are obtained by examining an internal state flag
 only. The information must therefore only be used for normal operation under
 nonblocking I/O. Error conditions are not handled and must be treated
