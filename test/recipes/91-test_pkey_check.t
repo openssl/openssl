@@ -58,7 +58,7 @@ push(@negative_tests, (
     )) unless disabled("ec");
 
 push(@negative_tests, (
-    "version_17_bad_1.pem"
+    "version_17_bad_1.pem" # malformed rsa pubkey version 1
     )) unless disabled("rsa");
 
 push(@negative_tests, (
@@ -75,7 +75,7 @@ push(@positive_tests, (
     )) unless disabled("dh");
 
 push(@positive_tests, (
-    "version_1_valid_0.pem"
+    "version_1_valid_0.pem" # properly formed rsa pubkey version 1
     )) unless disabled("rsa");
 
 my @negative_pubtests = ("rsapub_17k.pem");  # Too big RSA public key
