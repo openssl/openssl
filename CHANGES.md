@@ -31,6 +31,13 @@ OpenSSL Releases
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Added restrictions on the maximum number of TLS key_shares (16) that a server
+   will pay attention to, as well as the maximum number of supported groups
+   (128) and sig algs (128). Any sent beyond this number are ignored in order
+   to avoid clients sending excessively long lists in these extensions.
+
+   *Matt Caswell*
+
  * The `openssl-x509(1)`, `openssl-req(1)` and `openssl-ca(1)` command-line
    utilities no longer have specialised built-in logic to add the SKID and AKID
    extensions, they are handled through configuration files and command-line
