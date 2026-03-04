@@ -29,6 +29,8 @@
 #include "quic/quic_local.h"
 #include <openssl/ct.h>
 
+#define MAX_SIGALGS 128
+
 static const SIGALG_LOOKUP *find_sig_alg(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pkey);
 static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op, const SIGALG_LOOKUP *lu);
 
@@ -3726,10 +3728,10 @@ int tls1_save_sigalgs(SSL_CONNECTION *s, PACKET *pkt, int cert)
      */
     if (cert)
         return tls1_save_u16(pkt, &s->s3.tmp.peer_cert_sigalgs,
-            &s->s3.tmp.peer_cert_sigalgslen, 128);
+            &s->s3.tmp.peer_cert_sigalgslen, MAX_SIGALGS);
     else
         return tls1_save_u16(pkt, &s->s3.tmp.peer_sigalgs,
-            &s->s3.tmp.peer_sigalgslen, 128);
+            &s->s3.tmp.peer_sigalgslen, MAX_SIGALGS);
 }
 
 /* Set preferred digest for each key type */

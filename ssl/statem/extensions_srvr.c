@@ -19,6 +19,7 @@
 
 #define COOKIE_STATE_FORMAT_VERSION 1
 
+#define MAX_SUPPORTED_GROUPS 128
 #define MAX_KEY_SHARES 16
 
 /*
@@ -1234,7 +1235,7 @@ int tls_parse_ctos_supported_groups(SSL_CONNECTION *s, PACKET *pkt,
          */
         if (!tls1_save_u16(&supported_groups_list,
                 &s->ext.peer_supportedgroups,
-                &s->ext.peer_supportedgroups_len, 128)) {
+                &s->ext.peer_supportedgroups_len, MAX_SUPPORTED_GROUPS)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
