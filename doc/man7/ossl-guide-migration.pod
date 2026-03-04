@@ -170,6 +170,12 @@ X509_TRUST_add
 X509v3_addr_validate_resource_set
 X509v3_asid_validate_resource_set
 
+X509_up_ref will take a const X509* pointer. However of note, like C free
+functions, X509_free() will not. If you are keeping an owning "shallow copy"
+of a const X509 somewhere that you wish to up_ref and then free, use X509_dup_ref()
+instead. The resulting X509 * is a non-const shallow copy which should not be
+modified, but you may then call X509_free.
+
 The following two functions we "un-constified" As they were documented as returning
 an explicitly mutable pointer from within an B<X509> object:
 
