@@ -305,7 +305,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "TLSv1.3 disabled", 5
+    skip "TLSv1.3 disabled", 6
         if disabled("tls1_3") || (disabled("ec") && disabled("dh"));
     #Test 23: Insert signature_algorithms_cert that match normal sigalgs
     $testtype = SIGALGS_CERT_ALL;
