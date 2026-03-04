@@ -14,6 +14,9 @@
 #include <openssl/x509.h>
 #include "x509_local.h"
 #include <crypto/x509.h>
+#include <openssl/platcert.h>
+#include <crypto/platcert.h>
+#include <openssl/x509v3.h>
 
 #include <crypto/asn1.h>
 
@@ -75,6 +78,48 @@ static int print_oid(BIO *out, const ASN1_OBJECT *oid)
     return (rc >= 0);
 }
 
+static int print_pubkey(BIO *out, X509_PUBKEY *pubkey, int indent)
+{
+    ASN1_OBJECT *xpoid;
+    EVP_PKEY *pkey;
+
+    X509_PUBKEY_get0_param(&xpoid, NULL, NULL, NULL, pubkey);
+    if (BIO_printf(out, "%*sPublic Key Algorithm: ", indent, "") <= 0)
+        return -1;
+    if (i2a_ASN1_OBJECT(out, xpoid) <= 0)
+        return -1;
+    if (BIO_puts(out, "\n") <= 0)
+        return -1;
+
+    pkey = X509_PUBKEY_get0(pubkey);
+    if (pkey == NULL) {
+        BIO_printf(out, "%*sUnable to load Public Key\n", indent, "");
+        ERR_print_errors(out);
+    } else {
+        EVP_PKEY_print_public(out, pkey, indent, NULL);
+    }
+    return 1;
+}
+
+#define TRY_PRINT_SEQ_FUNC(local, type, name, printer)            \
+    value = av->value.sequence->data;                             \
+    if ((local = d2i_##type(NULL, (const unsigned char **)&value, \
+             av->value.sequence->length))                         \
+        == NULL) {                                                \
+        BIO_printf(out, "(COULD NOT DECODE %s)\n", name);         \
+        return 0;                                                 \
+    }                                                             \
+    if (printer(out, local, indent) <= 0) {                       \
+        type##_free(local);                                       \
+        return 0;                                                 \
+    }                                                             \
+    type##_free(local);                                           \
+    return 1;
+
+#define TRY_PRINT_SEQ(local, type, name) TRY_PRINT_SEQ_FUNC(local, type, name, type##_print)
+
+#define PRINT_STR(s, out, indent) BIO_printf(out, "%*s%.*s", indent, "", s->length, s->data) >= 0
+
 int ossl_print_attribute_value(BIO *out,
     int obj_nid,
     const ASN1_TYPE *av,
@@ -85,6 +130,26 @@ int ossl_print_attribute_value(BIO *out,
     X509_NAME *xn = NULL;
     int64_t int_val;
     int ret = 1;
+    /*
+     * XXX: Should these just be a single void pointer? We'd lose type safety,
+     * but gain a smaller stack frame and a slight performance increase.
+     */
+    OSSL_PLATFORM_CONFIG *pc = NULL;
+    OSSL_TCG_PLATFORM_SPEC *ps = NULL;
+    OSSL_TCG_CRED_TYPE *ct = NULL;
+    OSSL_TCG_SPEC_VERSION *sv = NULL;
+    OSSL_MANUFACTURER_ID *mid = NULL;
+    OSSL_TBB_SECURITY_ASSERTIONS *tbb = NULL;
+    OSSL_URI_REFERENCE *uri = NULL;
+    STACK_OF(OSSL_PCV2_TRAIT) *traits = NULL;
+    OSSL_PLATFORM_CONFIG_V3 *platconf3 = NULL;
+    OSSL_FIPS_LEVEL *fips = NULL;
+    OSSL_PCV2_CERTIFICATE_IDENTIFIER *certid = NULL;
+    OSSL_COMPONENT_IDENTIFIER *compid = NULL;
+    OSSL_COMPONENT_ADDRESS *compaddr = NULL;
+    OSSL_ISO9000_CERTIFICATION *iso9000 = NULL;
+    X509_PUBKEY *pubkey = NULL;
+    OSSL_COMMON_CRITERIA_EVALUATION *cce = NULL;
 
     switch (av->type) {
     case V_ASN1_BOOLEAN:
@@ -133,19 +198,13 @@ int ossl_print_attribute_value(BIO *out,
     case V_ASN1_GENERALSTRING:
     case V_ASN1_GRAPHICSTRING:
     case V_ASN1_OBJECT_DESCRIPTOR:
-        return BIO_printf(out, "%*s%.*s", indent, "",
-                   av->value.generalstring->length,
-                   av->value.generalstring->data)
-            >= 0;
+        return PRINT_STR(av->value.generalstring, out, indent);
 
         /* EXTERNAL would go here. */
         /* EMBEDDED PDV would go here. */
 
     case V_ASN1_UTF8STRING:
-        return BIO_printf(out, "%*s%.*s", indent, "",
-                   av->value.utf8string->length,
-                   av->value.utf8string->data)
-            >= 0;
+        return PRINT_STR(av->value.utf8string, out, indent);
 
     case V_ASN1_REAL:
         return BIO_printf(out, "%*sREAL", indent, "") >= 4;
@@ -185,6 +244,62 @@ int ossl_print_attribute_value(BIO *out,
             X509_NAME_free(xn);
             return ret;
 
+        case NID_tcg_at_platformConfiguration_v2:
+            TRY_PRINT_SEQ(pc, OSSL_PLATFORM_CONFIG, "TCG Platform Configuration-v2")
+        case NID_tcg_at_tcgPlatformSpecification:
+            /*
+             * This one is only handled differently because it does not print
+             * on a newline.
+             */
+            if (indent && BIO_printf(out, "%*s", indent, "") <= 0)
+                return 0;
+            value = av->value.sequence->data;
+            if ((ps = d2i_OSSL_TCG_PLATFORM_SPEC(NULL,
+                     (const unsigned char **)&value,
+                     av->value.sequence->length))
+                == NULL) {
+                BIO_puts(out, "(COULD NOT DECODE TCG Platform Specification)\n");
+                return 0;
+            }
+            if (OSSL_TCG_PLATFORM_SPEC_print(out, ps) <= 0)
+                return 0;
+            OSSL_TCG_PLATFORM_SPEC_free(ps);
+            return 1;
+
+        case NID_tcg_at_tcgCredentialType:
+            TRY_PRINT_SEQ(ct, OSSL_TCG_CRED_TYPE, "TCG Platform Certificate Credential Type")
+        case NID_tcg_at_platformManufacturerId:
+            TRY_PRINT_SEQ(mid, OSSL_MANUFACTURER_ID, "TCG Manufacturer ID")
+        case NID_tcg_at_tbbSecurityAssertions:
+            TRY_PRINT_SEQ(tbb, OSSL_TBB_SECURITY_ASSERTIONS, "Trusted Building Block (TBB) Assertions")
+        case NID_tcg_at_platformConfigUri:
+        case NID_tcg_tr_ID_URI:
+            TRY_PRINT_SEQ(uri, OSSL_URI_REFERENCE, "TCG URI Reference")
+        case NID_tcg_at_tcgCredentialSpecification:
+            TRY_PRINT_SEQ(sv, OSSL_TCG_SPEC_VERSION, "TCG PlatformConfiguration-v3")
+        case NID_tcg_at_platformIdentifier:
+        case NID_tcg_at_platformConfigUri_v3:
+        case NID_tcg_at_previousPlatformCertificates:
+        case NID_tcg_at_tbbSecurityAssertions_v3:
+        case NID_tcg_at_cryptographicAnchors:
+            TRY_PRINT_SEQ_FUNC(traits, OSSL_PCV2_TRAITS, "TCG Traits", print_traits)
+        case NID_tcg_at_platformConfiguration_v3:
+            TRY_PRINT_SEQ(platconf3, OSSL_PLATFORM_CONFIG_V3, "TCG PlatformConfiguration-v3")
+        /* Below here are not attributes per se, but it's the same idea. */
+        case NID_tcg_tr_ID_FIPSLevel:
+            TRY_PRINT_SEQ(fips, OSSL_FIPS_LEVEL, "FIPSLevel")
+        case NID_tcg_tr_ID_CertificateIdentifier:
+            TRY_PRINT_SEQ(certid, OSSL_PCV2_CERTIFICATE_IDENTIFIER, "TCG Certificate Identifier")
+        case NID_tcg_tr_ID_componentIdentifierV11:
+            TRY_PRINT_SEQ(compid, OSSL_COMPONENT_IDENTIFIER, "TCG Platform Certificate Component Identifier")
+        case NID_tcg_tr_ID_networkMAC:
+            TRY_PRINT_SEQ(compaddr, OSSL_COMPONENT_ADDRESS, "TCG Platform Certificate Component Address")
+        case NID_tcg_tr_ID_ISO9000Level:
+            TRY_PRINT_SEQ(iso9000, OSSL_ISO9000_CERTIFICATION, "TCG Platform Certificate ISO 9000 Certification")
+        case NID_tcg_tr_ID_PublicKey:
+            TRY_PRINT_SEQ_FUNC(pubkey, X509_PUBKEY, "TCG Public Key Trait", print_pubkey)
+        case NID_tcg_tr_ID_CommonCriteria:
+            TRY_PRINT_SEQ(cce, OSSL_COMMON_CRITERIA_EVALUATION, "Common Criteria Evaluation")
         default:
             break;
         }
@@ -206,28 +321,13 @@ int ossl_print_attribute_value(BIO *out,
     case V_ASN1_UTCTIME:
     case V_ASN1_GENERALIZEDTIME:
     case V_ASN1_NUMERICSTRING:
-        return BIO_printf(out, "%*s%.*s", indent, "",
-                   av->value.visiblestring->length,
-                   av->value.visiblestring->data)
-            >= 0;
-
+        return PRINT_STR(av->value.visiblestring, out, indent);
     case V_ASN1_PRINTABLESTRING:
-        return BIO_printf(out, "%*s%.*s", indent, "",
-                   av->value.printablestring->length,
-                   av->value.printablestring->data)
-            >= 0;
-
+        return PRINT_STR(av->value.printablestring, out, indent);
     case V_ASN1_T61STRING:
-        return BIO_printf(out, "%*s%.*s", indent, "",
-                   av->value.t61string->length,
-                   av->value.t61string->data)
-            >= 0;
-
+        return PRINT_STR(av->value.t61string, out, indent);
     case V_ASN1_IA5STRING:
-        return BIO_printf(out, "%*s%.*s", indent, "",
-                   av->value.ia5string->length,
-                   av->value.ia5string->data)
-            >= 0;
+        return PRINT_STR(av->value.ia5string, out, indent);
 
     /* UniversalString would go here. */
     /* CHARACTER STRING would go here. */

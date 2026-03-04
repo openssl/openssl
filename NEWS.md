@@ -45,6 +45,9 @@ OpenSSL 4.0
 
   * Support for the SSLv2 Client Hello was removed
 
+  * Support for encoding, decoding, and displaying various platform certificate
+    attributes and traits
+
 OpenSSL 3.6
 -----------
 
