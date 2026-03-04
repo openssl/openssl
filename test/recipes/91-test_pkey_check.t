@@ -58,6 +58,10 @@ push(@negative_tests, (
     )) unless disabled("ec");
 
 push(@negative_tests, (
+    "version_17_bad_1.pem"
+    )) unless disabled("rsa");
+
+push(@negative_tests, (
     # For SM2 keys the range for the secret scalar `k` is `1 <= k < n-1`
     "sm2_bad_neg1.pem", # `k` set to `n-1` (invalid, because SM2 range)
     "sm2_bad_0.pem", # `k` set to `n` (equivalent to `0 mod n`, invalid)
@@ -69,6 +73,10 @@ my @positive_tests = ();
 push(@positive_tests, (
     "dhpkey.pem"
     )) unless disabled("dh");
+
+push(@positive_tests, (
+    "version_1_valid_0.pem"
+    )) unless disabled("rsa");
 
 my @negative_pubtests = ("rsapub_17k.pem");  # Too big RSA public key
 
