@@ -19,6 +19,8 @@
 
 #define COOKIE_STATE_FORMAT_VERSION 1
 
+#define MAX_KEY_SHARES 16
+
 /*
  * 2 bytes for packet length, 2 bytes for format version, 2 bytes for
  * protocol version, 2 bytes for group id, 2 bytes for cipher id, 1 byte for
@@ -668,18 +670,18 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
      * Theoretically there is no limit on the number of keyshares as long as
      * they are less than 2^16 bytes in total. It costs us something for each
      * keyshare to confirm the groups are valid, so we restrict this to a
-     * sensible number. Any keyshares over this limit are simply ignored.
+     * sensible number (MAX_KEY_SHARES == 16). Any keyshares over this limit are
+     * simply ignored.
      */
-    const size_t keyshares_max = 16;
 
     /* Prepare memory to hold the extracted key share groups and related pubkeys */
-    *keyshares_arr = OPENSSL_malloc_array(keyshares_max,
+    *keyshares_arr = OPENSSL_malloc_array(MAX_KEY_SHARES,
         sizeof(**keyshares_arr));
     if (*keyshares_arr == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto failure;
     }
-    *encoded_pubkey_arr = OPENSSL_malloc_array(keyshares_max,
+    *encoded_pubkey_arr = OPENSSL_malloc_array(MAX_KEY_SHARES,
         sizeof(**encoded_pubkey_arr));
     if (*encoded_pubkey_arr == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -688,10 +690,10 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
 
     /*
      * We limit the number of key shares we are willing to process to
-     * keyshares_max regardless of whether we include them in keyshares_arr or
+     * MAX_KEY_SHARES regardless of whether we include them in keyshares_arr or
      * not.
      */
-    for (i = 0; PACKET_remaining(key_share_list) > 0 && i < keyshares_max; i++) {
+    for (i = 0; PACKET_remaining(key_share_list) > 0 && i < MAX_KEY_SHARES; i++) {
         /* Get the group_id for the current share and its encoded_pubkey */
         if (!PACKET_get_net_2(key_share_list, &group_id)
             || !PACKET_get_length_prefixed_2(key_share_list, &encoded_pubkey)
