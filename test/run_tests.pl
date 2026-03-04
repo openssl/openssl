@@ -167,7 +167,7 @@ foreach my $arg (@ARGV ? @ARGV : ('alltests')) {
             warn "Test $test found no match, skipping ",
                 ($sign eq '-' ? "removal" : "addition"),
                 "...\n";
-                $has_null_tests = 1;
+            $has_null_tests = 1;
         } else {
             foreach $test (@matches) {
                 if ($sign eq '-') {
@@ -394,15 +394,11 @@ if (ref($ret) ne "TAP::Parser::Aggregator" || !$ret->has_errors) {
 # If this is a TAP::Parser::Aggregator, $ret->has_errors is the count of
 # tests that failed.  We don't bother with that exact number, just exit
 # with an appropriate exit code when it isn't zero. We also make sure 
-# that no non-existant tests are run without signaling an error to the
+# that no non-existent tests are run without signaling an error to the
 # user, so we verify has_null_tests is 0.
 if (ref($ret) eq "TAP::Parser::Aggregator") {
-    unless($has_null_tests == 1){
-        exit 0 unless $ret->has_errors;
-        exit 1 unless $^O eq 'VMS';
-    }else{
-        exit 2 unless $^O eq 'VMS';
-    }
+    exit 0 unless $ret->has_errors || $ret->has_null_tests;
+    exit 1 unless $^O eq 'VMS';
     # On VMS, perl converts an exit 1 to SS$_ABORT (%SYSTEM-F-ABORT), which
     # is a bit harsh.  As per perl recommendations, we explicitly use the
     # same VMS status code as typical C programs would for exit(1), except
