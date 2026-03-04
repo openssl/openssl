@@ -78,7 +78,6 @@ end:
  * For the import case ossl_ml_dsa_key_new() gets passed a NULL propq,
  * so the propq is optionally deferred to the import using OSSL_PARAM.
  */
-
 int ossl_ml_dsa_key_fetch_digests(ML_DSA_KEY *key, const char *propq)
 {
     EVP_MD_free(key->shake128_md);

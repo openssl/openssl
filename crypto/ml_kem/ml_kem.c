@@ -2050,10 +2050,10 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
         return NULL;
     }
 
-    EVP_MD_up_ref(key->shake128_md);
-    EVP_MD_up_ref(key->shake256_md);
-    EVP_MD_up_ref(key->sha3_256_md);
-    EVP_MD_up_ref(key->sha3_512_md);
+    EVP_MD_up_ref(ret->shake128_md);
+    EVP_MD_up_ref(ret->shake256_md);
+    EVP_MD_up_ref(ret->sha3_256_md);
+    EVP_MD_up_ref(ret->sha3_512_md);
 
     return ret;
 }
