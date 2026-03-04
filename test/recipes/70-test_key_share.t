@@ -304,7 +304,7 @@ $proxy->start();
 ok(TLSProxy::Message->fail(), "Server sends HRR with no key_shares");
 
 SKIP: {
-    skip "No EC support in this OpenSSL build", 1 if disabled("ec");
+    skip "No EC support in this OpenSSL build", 3 if disabled("ec");
     #Test 23: Trailing data on key_share in ServerHello should fail
     $proxy->clear();
     $direction = CLIENT_TO_SERVER;
