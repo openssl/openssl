@@ -464,6 +464,12 @@ OpenSSL Releases
 
    *Igor Ustinov*
 
+ * Add parameter `-ocsp_verify_other` to `s_client` application and new field
+   in `X509_VERIFY_PARAM` to provide additional certificates for checking
+   OCSP responses e.g., during TLS handshake.
+
+   *Martin Rauch*
+
 OpenSSL 3.6
 -----------
 
