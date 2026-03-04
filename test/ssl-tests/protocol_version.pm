@@ -295,16 +295,10 @@ sub generate_resumption_tests {
         # Upgrade or downgrade the server/client max version support and test
         # that it upgrades, downgrades or resumes the session as well.
         foreach my $resume_protocol($min_enabled..$max_enabled) {
-            my $resumption_expected;
-            # We should only resume on exact version match.
-            if ($original_protocol eq $resume_protocol) {
-                $resumption_expected = "Yes";
-            } else {
-                $resumption_expected = "No";
-            }
-
             for (my $sctp = 0; $sctp < ($dtls && !disabled("sctp") ? 2 : 1);
                  $sctp++) {
+                my ($expected_resume_protocol, $expected_result, $resumption_expected) = expected_resume_result($original_protocol, $resume_protocol, $sctp, \@protocols);
+
                 foreach my $ticket ("SessionTicket", "-SessionTicket") {
                     # Client is flexible, server upgrades/downgrades.
                     push @server_tests, {
@@ -324,13 +318,16 @@ sub generate_resumption_tests {
                             "Options" => $ticket,
                         },
                         "test" => {
-                            "ExpectedProtocol" => $protocols[$resume_protocol],
+                            "ExpectedProtocol" => $protocols[$expected_resume_protocol],
                             "Method" => $method,
                             "HandshakeMode" => "Resume",
                             "ResumptionExpected" => $resumption_expected,
                         }
                     };
-                    $server_tests[-1]{"test"}{"UseSCTP"} = "Yes" if $sctp;
+                    if ($sctp) {
+                        $server_tests[-1]{"test"}{"ExpectedResult"} = $expected_result;
+                        $server_tests[-1]{"test"}{"UseSCTP"} = "Yes";
+                    }
                     # Server is flexible, client upgrades/downgrades.
                     push @client_tests, {
                         "name" => "resumption",
@@ -348,13 +345,16 @@ sub generate_resumption_tests {
                             "MaxProtocol" => $protocols[$resume_protocol],
                         },
                         "test" => {
-                            "ExpectedProtocol" => $protocols[$resume_protocol],
+                            "ExpectedProtocol" => $protocols[$expected_resume_protocol],
                             "Method" => $method,
                             "HandshakeMode" => "Resume",
                             "ResumptionExpected" => $resumption_expected,
                         }
                     };
-                    $client_tests[-1]{"test"}{"UseSCTP"} = "Yes" if $sctp;
+                    if ($sctp) {
+                        $client_tests[-1]{"test"}{"ExpectedResult"} = $expected_result;
+                        $client_tests[-1]{"test"}{"UseSCTP"} = "Yes";
+                    }
                 }
             }
         }
@@ -467,6 +467,37 @@ sub expected_result {
         my $max_common = $s_max < $c_max ? $s_max : $c_max;
         return ("Success", $protocols->[$max_common]);
     }
+}
+
+sub expected_resume_result {
+    my ($original_protocol, $max_resume_enabled, $sctp, $protocols) = @_;
+    my @prots = @$protocols;
+    my $expected_max_enabled = $max_resume_enabled;
+    my $resumption_expected;
+    my $expected_result = "Success";
+
+    # For DTLS over SCTP, DTLSv1.3 is not supported. Cap max_enabled to the
+    # highest SCTP-compatible protocol (DTLSv1.2 or below).
+    if ($sctp) {
+        for (my $i = $max_resume_enabled; $i >= 0; $i--) {
+            if ($prots[$i] ne "DTLSv1.3") {
+                $expected_max_enabled = $i;
+                last;
+            }
+        }
+        if ($prots[$original_protocol] eq "DTLSv1.3") {
+            $expected_result = "FirstHandshakeFailed";
+        }
+    }
+
+    # We should only resume on exact version match.
+    if ($original_protocol eq $expected_max_enabled) {
+        $resumption_expected = "Yes";
+    } else {
+        $resumption_expected = "No";
+    }
+
+    return ($expected_max_enabled, $expected_result, $resumption_expected);
 }
 
 1;
