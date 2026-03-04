@@ -1592,6 +1592,16 @@ ml_dsa_inverse_degree_montgomery:
 .align 32
 ml_dsa_poly_ntt_mult_avx2:
 .cfi_startproc
+___
+$code .= <<___ if ($win64);
+    sub     \$88, %rsp
+    vmovaps %xmm8,  0(%rsp)
+    vmovaps %xmm9,  16(%rsp)
+    vmovaps %xmm10, 32(%rsp)
+    vmovaps %xmm14, 48(%rsp)
+    vmovaps %xmm15, 64(%rsp)
+___
+$code .= <<___;
     vpbroadcastq ml_dsa_q_neg_inv(%rip), %ymm14
     vpbroadcastd ml_dsa_q(%rip), %ymm15
     xor %r10d, %r10d
@@ -1618,7 +1628,18 @@ $code .= <<___;
     cmp \$256*4, %r10d
     jb .Lmult_loop
 
+    # clear and restore registers
     vzeroall
+___
+$code .= <<___ if ($win64);
+    vmovaps 0(%rsp),  %xmm8
+    vmovaps 16(%rsp), %xmm9
+    vmovaps 32(%rsp), %xmm10
+    vmovaps 48(%rsp), %xmm14
+    vmovaps 64(%rsp), %xmm15
+    add     \$88, %rsp
+___
+$code .= <<___;
     ret
 .cfi_endproc
 .size   ml_dsa_poly_ntt_mult_avx2, .-ml_dsa_poly_ntt_mult_avx2
@@ -1657,6 +1678,21 @@ $code .= <<___;
 .align 32
 ml_dsa_poly_ntt_avx2:
 .cfi_startproc
+___
+$code .= <<___ if ($win64);
+    sub     \$168, %rsp
+    vmovaps %xmm6,   0(%rsp)
+    vmovaps %xmm7,   16(%rsp)
+    vmovaps %xmm8,   32(%rsp)
+    vmovaps %xmm9,   48(%rsp)
+    vmovaps %xmm10,  64(%rsp)
+    vmovaps %xmm11,  80(%rsp)
+    vmovaps %xmm12,  96(%rsp)
+    vmovaps %xmm13,  112(%rsp)
+    vmovaps %xmm14,  128(%rsp)
+    vmovaps %xmm15,  144(%rsp)
+___
+$code .= <<___;
 
     # move p_zetas to r11
     mov %rsi, %r11
@@ -1701,7 +1737,23 @@ ___
 
 $code .= <<___;
 
+    # clear and restore registers
     vzeroall
+___
+$code .= <<___ if ($win64);
+    vmovaps 0(%rsp),   %xmm6
+    vmovaps 16(%rsp),  %xmm7
+    vmovaps 32(%rsp),  %xmm8
+    vmovaps 48(%rsp),  %xmm9
+    vmovaps 64(%rsp),  %xmm10
+    vmovaps 80(%rsp),  %xmm11
+    vmovaps 96(%rsp),  %xmm12
+    vmovaps 112(%rsp), %xmm13
+    vmovaps 128(%rsp), %xmm14
+    vmovaps 144(%rsp), %xmm15
+    add     \$168, %rsp
+___
+$code .= <<___;
     ret
 .cfi_endproc
 .size   ml_dsa_poly_ntt_avx2, .-ml_dsa_poly_ntt_avx2
@@ -1738,6 +1790,21 @@ $code .= <<___;
 .align 32
 ml_dsa_poly_ntt_inverse_avx2:
 .cfi_startproc
+___
+$code .= <<___ if ($win64);
+    sub     \$168, %rsp
+    vmovaps %xmm6,   0(%rsp)
+    vmovaps %xmm7,   16(%rsp)
+    vmovaps %xmm8,   32(%rsp)
+    vmovaps %xmm9,   48(%rsp)
+    vmovaps %xmm10,  64(%rsp)
+    vmovaps %xmm11,  80(%rsp)
+    vmovaps %xmm12,  96(%rsp)
+    vmovaps %xmm13,  112(%rsp)
+    vmovaps %xmm14,  128(%rsp)
+    vmovaps %xmm15,  144(%rsp)
+___
+$code .= <<___;
     lea zetas_inverse(%rip), %r11
 
     vpbroadcastq ml_dsa_q_neg_inv(%rip), %ymm14
@@ -1787,7 +1854,23 @@ ___
     &intt_levels5to7(24*4);
     $code .= <<___;
 
+    # clear and restore registers
     vzeroall
+___
+$code .= <<___ if ($win64);
+    vmovaps 0(%rsp),   %xmm6
+    vmovaps 16(%rsp),  %xmm7
+    vmovaps 32(%rsp),  %xmm8
+    vmovaps 48(%rsp),  %xmm9
+    vmovaps 64(%rsp),  %xmm10
+    vmovaps 80(%rsp),  %xmm11
+    vmovaps 96(%rsp),  %xmm12
+    vmovaps 112(%rsp), %xmm13
+    vmovaps 128(%rsp), %xmm14
+    vmovaps 144(%rsp), %xmm15
+    add     \$168, %rsp
+___
+$code .= <<___;
     ret
 .cfi_endproc
 .size   ml_dsa_poly_ntt_inverse_avx2, .-ml_dsa_poly_ntt_inverse_avx2
