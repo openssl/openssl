@@ -1006,7 +1006,7 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int nid, const char *prop_query, void **method)
 {
     ALGORITHM *alg;
-    QUERY *r;
+    QUERY *r = NULL;
     int res = 0;
     int do_insert = 0;
     STORED_ALGORITHMS *sa;
