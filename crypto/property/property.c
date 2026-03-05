@@ -273,7 +273,8 @@ static void impl_cache_flush_alg(ALGORITHM *alg, STORED_ALGORITHMS *sa)
      * linked list, as it much faster this way, as we avoid having
      * to visit lots of potentially empty nodes
      */
-    OSSL_LIST_FOREACH_DELSAFE(q, qn, lru_entry, &sa->lru_list) {
+    OSSL_LIST_FOREACH_DELSAFE(q, qn, lru_entry, &sa->lru_list)
+    {
         /*
          * Check for a match by nid, as we're only deleting QUERY elements
          * that are for the nid specified in alg
@@ -963,7 +964,8 @@ static void QUERY_cache_select_cull(ALGORITHM *alg, STORED_ALGORITHMS *sa, size_
     QUERY *q, *qn;
     QUERY_KEY key;
 
-    OSSL_LIST_FOREACH_DELSAFE(q, qn, lru_entry, &sa->lru_list) {
+    OSSL_LIST_FOREACH_DELSAFE(q, qn, lru_entry, &sa->lru_list)
+    {
         /*
          * Skip QUERY elements that have been recently used
          * reset this flag so all elements have to continuously
@@ -982,7 +984,7 @@ static void QUERY_cache_select_cull(ALGORITHM *alg, STORED_ALGORITHMS *sa, size_
              * given, generic otherwise
              */
             hash = (q->specific_hash != 0) ? q->specific_hash : q->generic_hash;
-            HT_INIT_KEY_CACHED(&key, hash); 
+            HT_INIT_KEY_CACHED(&key, hash);
             if (ossl_ht_delete(sa->cache, TO_HT_KEY(&key))) {
                 culled++;
                 sa->cache_nelem--;
@@ -1063,7 +1065,8 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
          * to scan the lru list for a good match
          */
         generic_hash = HT_KEY_GET_HASH(&key);
-        OSSL_LIST_FOREACH(r, lru_entry, &sa->lru_list) {
+        OSSL_LIST_FOREACH(r, lru_entry, &sa->lru_list)
+        {
             if (r->generic_hash == generic_hash) {
                 /*
                  * We found an entry for which the generic_hash
@@ -1185,7 +1188,7 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
          * in the STORED_ALGORITHMS shard, don't bother culling
          * Just wait until we try to add to a larger cache
          */
-        if (cullcount >= 4) { 
+        if (cullcount >= 4) {
             cullcount = sa->seed % (cullcount / 4);
             cullcount = (cullcount < 1) ? 1 : cullcount;
             QUERY_cache_select_cull(alg, sa, cullcount);
