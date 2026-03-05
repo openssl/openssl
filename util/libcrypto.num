@@ -4495,6 +4495,11 @@ i2d_X509_CINF                           ?	4_0_0	EXIST::FUNCTION:
 X509_CINF_free                          ?	4_0_0	EXIST::FUNCTION:
 X509_CINF_new                           ?	4_0_0	EXIST::FUNCTION:
 X509_CINF_it                            ?	4_0_0	EXIST::FUNCTION:
+d2i_X509                                ?	4_0_0	EXIST::FUNCTION:
+i2d_X509                                ?	4_0_0	EXIST::FUNCTION:
+X509_free                               ?	4_0_0	EXIST::FUNCTION:
+X509_new                                ?	4_0_0	EXIST::FUNCTION:
+X509_it                                 ?	4_0_0	EXIST::FUNCTION:
 X509_new_ex                             ?	4_0_0	EXIST::FUNCTION:
 d2i_X509_CERT_AUX                       ?	4_0_0	EXIST::FUNCTION:
 i2d_X509_CERT_AUX                       ?	4_0_0	EXIST::FUNCTION:
@@ -5710,8 +5715,3 @@ OPENSSL_sk_set_cmp_thunks               ?	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_set1                    ?	4_0_0	EXIST::FUNCTION:
 OSSL_ESS_check_signing_certs_ex         ?	4_0_0	EXIST::FUNCTION:
 X509v3_delete_extension                 ?	4_0_0	EXIST::FUNCTION:
-X509_new                                ?	4_0_0	EXIST::FUNCTION:
-X509_free                               ?	4_0_0	EXIST::FUNCTION:
-d2i_X509                                ?	4_0_0	EXIST::FUNCTION:
-i2d_X509                                ?	4_0_0	EXIST::FUNCTION:
-X509_it                                 ?	4_0_0	EXIST::FUNCTION:
