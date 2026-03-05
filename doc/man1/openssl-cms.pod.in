@@ -881,7 +881,7 @@ Use SHA256 KDF with an ECDH certificate:
 
 Print CMS signed binary data in human-readable form:
 
-openssl cms -in signed.cms -binary -inform DER -cmsout -print
+ openssl cms -in signed.cms -binary -inform DER -cmsout -print
 
 =head1 BUGS
 
