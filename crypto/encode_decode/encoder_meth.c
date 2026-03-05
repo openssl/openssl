@@ -359,13 +359,12 @@ inner_ossl_encoder_fetch(struct encoder_data_st *methdata,
     void *method = NULL;
     int unsupported, id;
 
-    if (store == NULL || namemap == NULL) {
+    if (store == NULL || namemap == NULL || name == NULL) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
     }
 
-    id = name != NULL ? ossl_namemap_name2num(namemap, name) : 0;
-
+    id = ossl_namemap_name2num(namemap, name);
     /*
      * If we haven't found the name yet, chances are that the algorithm to
      * be fetched is unsupported.
