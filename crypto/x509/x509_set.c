@@ -125,13 +125,6 @@ int X509_up_ref(const X509 *x)
     return i > 1;
 }
 
-void X509_down_ref(const X509 *x)
-{
-    int i;
-
-    X509_free((X509 *)x);
-}
-
 X509 *X509_dup_ref(const X509 *x)
 {
     if (x == NULL)

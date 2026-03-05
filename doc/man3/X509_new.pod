@@ -16,7 +16,6 @@ OSSL_STACK_OF_X509_free
  X509 *X509_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
  void X509_free(X509 *a);
  int X509_up_ref(const X509 *a);
- void X509_down_ref(const X509 *a);
  X509 * X509_dup_ref(const X509 *a);
  STACK_OF(X509) *X509_chain_up_ref(STACK_OF(X509) *x);
  void OSSL_STACK_OF_X509_free(STACK_OF(X509) *certs);
@@ -48,10 +47,6 @@ owned non-const "shallow copy" of B<a> by virtue of having increased
 the reference count. The returned value should be also considered not
 mutable, but once finished with B<a> you may lower the reference count
 by calling X509_free() on the returned value.
-
-X509_down_ref() decrements the reference count of B<a>. This should be used
-when you have retained a reference on a const X509 where you expect the owner
-to call X509_free();
 
 X509_chain_up_ref() increases the reference count of all certificates in
 chain B<x> and returns a copy of the stack, or an empty stack if B<a> is NULL.
