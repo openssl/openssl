@@ -15,7 +15,7 @@ OSSL_STACK_OF_X509_free
  X509 *X509_new(void);
  X509 *X509_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
  void X509_free(X509 *a);
- int X509_up_ref(const X509 *a);
+ int X509_up_ref(X509 *a);
  X509 * X509_dup_ref(const X509 *a);
  STACK_OF(X509) *X509_chain_up_ref(STACK_OF(X509) *x);
  void OSSL_STACK_OF_X509_free(STACK_OF(X509) *certs);
