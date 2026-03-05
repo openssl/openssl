@@ -55,6 +55,21 @@ static const char *select_name = NULL;
         TYPE##_free(impl);                            \
         return 1;                                     \
     }
+
+#define OPENSSL_HAS_DISABLED(name) (OSSL_NELEM(openssl_disabled_##name) > 1)
+
+#define OPENSSL_PRINT_DISABLED(bio, name, str)                                 \
+    do {                                                                       \
+        if (OPENSSL_HAS_DISABLED(name)) {                                      \
+            BIO_puts((bio), "Disabled " str "(s):\n");                         \
+            for (size_t i = 1; i < OSSL_NELEM(openssl_disabled_##name); i++) { \
+                BIO_printf((bio), "\t- %s\n", openssl_disabled_##name[i]);     \
+            }                                                                  \
+        } else {                                                               \
+            BIO_puts((bio), "No disabled " str "s.\n");                        \
+        }                                                                      \
+    } while (0);
+
 IS_FETCHABLE(cipher, EVP_CIPHER)
 IS_FETCHABLE(digest, EVP_MD)
 IS_FETCHABLE(mac, EVP_MAC)
