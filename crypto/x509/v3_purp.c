@@ -1060,6 +1060,10 @@ int X509_check_issued(const X509 *issuer, const X509 *subject)
 {
     int ret;
 
+    /*
+     * Using here 0 for the use_ss parameter of ossl_x509_likely_issued()
+     * because we must not change the semantics of this API function.
+     */
     if ((ret = ossl_x509_likely_issued(issuer, subject, 0)) != X509_V_OK)
         return ret;
     return ossl_x509_signing_allowed(issuer, subject);
