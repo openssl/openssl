@@ -157,12 +157,7 @@ X509_REQ_get1_email
 X509_REQ_to_X509
 X509_self_signed
 X509_STORE_add_cert
-X509_STORE_CTX_get_current_cert
-X509_STORE_CTX_get0_cert
-X509_STORE_CTX_get0_current_issuer
 X509_STORE_CTX_get1_issuer
-X509_STORE_CTX_init
-X509_STORE_CTX_set_cert
 X509_subject_name_hash
 X509_subject_name_hash_old
 X509_to_X509_REQ
