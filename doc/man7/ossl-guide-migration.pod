@@ -149,8 +149,6 @@ X509_issuer_name_hash
 X509_issuer_name_hash_old
 X509_keyid_get0
 X509_load_http
-X509_OBJECT_get0_X509
-X509_OBJECT_set1_X509
 X509_print_ex_fp
 X509_print_fp
 X509_REQ_get1_email
