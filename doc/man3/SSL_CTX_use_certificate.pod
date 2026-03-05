@@ -100,15 +100,20 @@ SSL_CTX_use_PrivateKey() or SSL_use_PrivateKey().
 On success the reference counter of the B<pkey>/B<rsa> is incremented.
 
 SSL_CTX_use_cert_and_key() and SSL_use_cert_and_key() assign the X.509
-certificate B<x>, private key B<key>, and certificate B<chain> onto the
-corresponding B<ssl> or B<ctx>. The B<pkey> argument must be the private
-key of the X.509 certificate B<x>. If the B<override> argument is 0, then
-B<x>, B<pkey> and B<chain> are set only if all were not previously set.
-If B<override> is non-0, then the certificate, private key and chain certs
-are always set. If B<pkey> is NULL, then the public key of B<x> is used as
-the private key. This is intended to be used with hardware
-that stores the private key securely, such that it cannot be
-accessed by OpenSSL.
+certificate B<x>, private key B<pkey>, and certificate chain B<chain> onto
+the corresponding B<ctx> or B<ssl>.
+If B<pkey> is not NULL, a check is performed to verify that B<pkey> matches
+the public key of B<x>.
+If the B<override> argument is 0, the function fails if a certificate of the
+same public key type has already been set.
+If B<override> is non-0, any previously set certificate, private key, and
+chain of the same type are replaced.
+If B<pkey> is NULL, then the public key of B<x> is used as the private key.
+This is intended to be used with hardware that stores the private key
+securely, such that it cannot be accessed by OpenSSL.
+The reference counts of B<x>, B<pkey>, and the certificates in B<chain> are
+incremented; the caller should free its own references when they are no
+longer needed.
 
 SSL_CTX_use_PrivateKey_ASN1() adds the private key of type B<pk>
 stored at memory location B<d> (length B<len>) to B<ctx>.
