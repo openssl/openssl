@@ -493,8 +493,7 @@ end:
 /* Check that the given certificate |x| is issued by the certificate |issuer| */
 static int check_issued(ossl_unused X509_STORE_CTX *ctx, const X509 *x, const X509 *issuer)
 {
-    /* XXX casts away const, remove cast when #30067 lands */
-    int err = ossl_x509_likely_issued((X509 *)issuer, (X509 *)x);
+    int err = ossl_x509_likely_issued(issuer, x);
 
     if (err == X509_V_OK)
         return 1;
@@ -2693,7 +2692,7 @@ void X509_STORE_CTX_set_error_depth(X509_STORE_CTX *ctx, int depth)
     ctx->error_depth = depth;
 }
 
-const X509 *X509_STORE_CTX_get_current_cert(const X509_STORE_CTX *ctx)
+X509 *X509_STORE_CTX_get_current_cert(const X509_STORE_CTX *ctx)
 {
     return ctx->current_cert;
 }
@@ -2715,7 +2714,7 @@ STACK_OF(X509) *X509_STORE_CTX_get1_chain(const X509_STORE_CTX *ctx)
     return X509_chain_up_ref(ctx->chain);
 }
 
-const X509 *X509_STORE_CTX_get0_current_issuer(const X509_STORE_CTX *ctx)
+X509 *X509_STORE_CTX_get0_current_issuer(const X509_STORE_CTX *ctx)
 {
     return ctx->current_issuer;
 }
@@ -2730,10 +2729,9 @@ X509_STORE_CTX *X509_STORE_CTX_get0_parent_ctx(const X509_STORE_CTX *ctx)
     return ctx->parent;
 }
 
-void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, const X509 *x)
+void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *x)
 {
-    /* XXX casts away const - fix by making ctx->cert const */
-    ctx->cert = (X509 *)x;
+    ctx->cert = x;
 }
 
 void X509_STORE_CTX_set0_rpk(X509_STORE_CTX *ctx, EVP_PKEY *rpk)
@@ -3075,7 +3073,7 @@ void X509_STORE_CTX_set_current_reasons(X509_STORE_CTX *ctx,
     ctx->current_reasons = current_reasons;
 }
 
-const X509 *X509_STORE_CTX_get0_cert(const X509_STORE_CTX *ctx)
+X509 *X509_STORE_CTX_get0_cert(const X509_STORE_CTX *ctx)
 {
     return ctx->cert;
 }

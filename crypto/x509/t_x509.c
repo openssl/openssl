@@ -391,8 +391,7 @@ int ossl_x509_print_ex_brief(BIO *bio, const X509 *cert, unsigned long neg_cflag
     if (BIO_printf(bio, "    certificate\n") <= 0
         || !X509_print_ex(bio, cert, flags, ~X509_FLAG_NO_SUBJECT))
         goto err;
-    /* XXX casts away const - remove cast once #30067 lands */
-    if (X509_check_issued((X509 *)cert, (X509 *)cert) == X509_V_OK) {
+    if (X509_check_issued(cert, cert) == X509_V_OK) {
         if (BIO_printf(bio, "        self-issued\n") <= 0)
             goto err;
     } else {
