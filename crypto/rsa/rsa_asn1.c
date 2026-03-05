@@ -45,13 +45,13 @@ static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             return 0;
         }
         if (((RSA *)*pval)->version == RSA_ASN1_VERSION_DEFAULT) {
-        /* Version 0: Must have exactly 2 primes (otherPrimeInfos must be empty/absent) */
+            /* Must have exactly 2 primes (otherPrimeInfos must be empty/absent) */
             if (sk_RSA_PRIME_INFO_num(((RSA *)*pval)->prime_infos) > 0) {
                 ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_RSA_KEY_VERSION);
                 return 0;
             }
         } else if (((RSA *)*pval)->version == RSA_ASN1_VERSION_MULTI) {
-            /* Version 1: Must have 3+ primes (otherPrimeInfos must be present) */
+            /* Must have 3+ primes (otherPrimeInfos must be present) */
             if (sk_RSA_PRIME_INFO_num(((RSA *)*pval)->prime_infos) <= 0) {
                 ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_RSA_KEY_VERSION);
                 return 0;
