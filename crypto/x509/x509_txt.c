@@ -227,7 +227,8 @@ const char *X509_verify_cert_error_string(long n)
         return "Empty Authority Key Identifier";
     case X509_V_ERR_AKID_ISSUER_SERIAL_NOT_PAIRED:
         return "Authority Key Identifier issuer and serial number must be paired";
-
+    case X509_V_ERR_IDP_ONLY_USER_CA_ATTR_EXCLUSIVE:
+        return "CRL onlyUser, onlyCA, and onlyAttr in IDP are mutually exclusive";
         /*
          * Entries must be kept consistent with include/openssl/x509_vfy.h.in
          * and with doc/man3/X509_STORE_CTX_get_error.pod

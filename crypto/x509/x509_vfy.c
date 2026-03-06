@@ -2036,7 +2036,11 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
         if ((ctx->current_crl_score & CRL_SCORE_SAME_PATH) == 0 && check_crl_path(ctx, ctx->current_issuer) <= 0 && !verify_cb_crl(ctx, X509_V_ERR_CRL_PATH_VALIDATION_ERROR))
             return 0;
 
-        if ((crl->idp_flags & IDP_INVALID) != 0 && !verify_cb_crl(ctx, X509_V_ERR_INVALID_EXTENSION))
+        if ((crl->idp_flags & IDP_ONLY_USER_CA_ATTR_EXCLUSIVE) != 0
+            && !verify_cb_crl(ctx, X509_V_ERR_IDP_ONLY_USER_CA_ATTR_EXCLUSIVE))
+            return 0;
+        else if ((crl->idp_flags & IDP_INVALID) != 0
+            && !verify_cb_crl(ctx, X509_V_ERR_INVALID_EXTENSION))
             return 0;
     }
 

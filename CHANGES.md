@@ -225,6 +225,12 @@ OpenSSL Releases
 
    *Neil Horman*
 
+ * Added a check to ensure that the IDP (Issuing Distribution Point) flags
+   onlyUser, onlyCA, and onlyAttr are mutually exclusive. If multiple flags are
+   set simultaneously, X509_V_ERR_IDP_ONLY_USER_CA_ATTR_EXCLUSIVE is now raised.
+
+   *Daniel Kubec*
+
  * `SSL_get_error()` no longer depends on the state of the error stack,
    so it is no longer necessary to empty the error queue before the
    TLS/SSL I/O operations.

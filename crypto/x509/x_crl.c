@@ -362,8 +362,9 @@ static int setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp)
         crl->idp_flags |= IDP_ONLYATTR;
     }
 
+    /* onlyUser, onlyCA, and onlyAttr flags in IDP are mutually exclusive */
     if (idp_only > 1)
-        crl->idp_flags |= IDP_INVALID;
+        crl->idp_flags |= (IDP_INVALID | IDP_ONLY_USER_CA_ATTR_EXCLUSIVE);
 
     if (idp->indirectCRL > 0)
         crl->idp_flags |= IDP_INDIRECT;
