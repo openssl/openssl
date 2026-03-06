@@ -111,7 +111,7 @@ struct ht_internal_value_st {
 struct ht_neighborhood_entry_st {
     uint64_t hash;
     struct ht_internal_value_st *value;
-};
+} __attribute__((aligned(8)));
 
 struct ht_neighborhood_st {
     struct ht_neighborhood_entry_st entries[NEIGHBORHOOD_LEN];
