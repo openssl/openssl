@@ -55,8 +55,8 @@
  * performance reasons, as moving the stack pointer is
  * way faster than getting memory from heap.  This introduces
  * the potential for stack overflows, but we check for that
- * by capping the size of the buffer to a large value 2048 bytes
- * as there shouldn't be any property queries that long.
+ * by capping the size of the buffer to a large value
+ * MAX_PROP_QUERY as there shouldn't be any property queries that long.
  */
 #define ALLOW_VLA
 #endif
@@ -64,7 +64,7 @@
 /*
  * Max allowed length of our property query
  */
-#define MAX_PROP_QUERY 2048
+#define MAX_PROP_QUERY 4096
 
 typedef struct {
     void *method;
@@ -1022,31 +1022,24 @@ static void QUERY_cache_select_cull(ALGORITHM *alg, STORED_ALGORITHMS *sa, size_
     sa->seed = sa->seed ^ hash;
 }
 
-int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
-    int nid, const char *prop_query, void **method)
+static ossl_inline int ossl_method_store_cache_get_locked(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
+    int nid, const char *prop_query, size_t keylen, STORED_ALGORITHMS *sa, QUERY **post_insert,
+    void **method)
 {
     ALGORITHM *alg;
     QUERY *r = NULL;
     int res = 0;
-    int do_insert = 0;
-    STORED_ALGORITHMS *sa;
     QUERY_KEY key;
     HT_VALUE *v = NULL;
     uint64_t generic_hash;
-    size_t keylen = sizeof(int) + ((prop_query == NULL) ? 1 : strlen(prop_query))
-        + sizeof(OSSL_PROVIDER *);
 #ifdef ALLOW_VLA
     uint8_t keybuf[keylen];
 #else
     uint8_t *keybuf;
 #endif
 
-    if (nid <= 0 || store == NULL || prop_query == NULL)
-        return 0;
+    *post_insert = NULL;
 
-    sa = stored_algs_shard(store, nid);
-    if (!ossl_property_read_lock(sa))
-        return 0;
 #ifndef ALLOW_VLA
     keybuf = OPENSSL_malloc(keylen);
     if (keybuf == NULL)
@@ -1058,7 +1051,7 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
         goto err;
 
     /*
-     * Marshall out lookup key.
+     * Marshall our lookup key.
      * the key is always [nid,prop_query] and may include
      * the address of the provider on the end if given
      */
@@ -1110,7 +1103,13 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
                     impl_cache_free(r);
                     r = NULL;
                 }
-                do_insert = 1;
+                /*
+                 * Inform the caller that we need to insert this newly created
+                 * QUERY into the hash table.  We do this because we only
+                 * hold the read lock here, so after the caller drops it, we
+                 * can then take the write lock to do the insert
+                 */
+                *post_insert = r;
                 break;
             }
         }
@@ -1126,62 +1125,82 @@ err:
 #ifndef ALLOW_VLA
     OPENSSL_free(keybuf);
 #endif
-    ossl_property_unlock(sa);
+    return res;
+}
+
+int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
+    int nid, const char *prop_query, void **method)
+{
+    size_t keylen = sizeof(int) + ((prop_query == NULL) ? 1 : strlen(prop_query))
+        + sizeof(OSSL_PROVIDER *);
+    int ret;
+    STORED_ALGORITHMS *sa;
+    QUERY *post_insert = NULL;
+    QUERY_KEY key;
+
+    if (nid <= 0 || store == NULL || prop_query == NULL)
+        return 0;
+
+    if (keylen > MAX_PROP_QUERY)
+        return 0;
+
+    sa = stored_algs_shard(store, nid);
+    if (!ossl_property_read_lock(sa))
+        return 0;
+
     /*
-     * If we rebuilt a providerless entry above, now that we have
-     * unlocked the hash table, we can add it here under the write lock
+     * Note: We've bifurcated this function into a locked and unlocked variant
+     * Not because of any specific need to do the locked work from some other location,
+     * but rather because in the interests of performance, we allocate a buffer on the
+     * stack which can be an aribtrary size.  In order to allow for clamping of that
+     * value, we check the keylen above for size limit, and then use this call to create
+     * a new stack frame in which we can safely do that stack allocation.
      */
-    if (do_insert) {
+    ret = ossl_method_store_cache_get_locked(store, prov, nid, prop_query, keylen, sa,
+        &post_insert, method);
+
+    ossl_property_unlock(sa);
+
+    if (ret == 1 && post_insert != NULL) {
         if (!ossl_property_write_lock(sa)) {
-            impl_cache_free(r);
+            impl_cache_free(post_insert);
             *method = NULL;
-            res = 0;
+            ret = 0;
         } else {
-            if (!ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), r, NULL)) {
+            HT_INIT_KEY_CACHED(&key, post_insert->generic_hash);
+
+            if (!ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), post_insert, NULL)) {
                 /*
                  * We raced with another thread that added the same QUERY, pitch this one
                  */
-                impl_cache_free(r);
+                impl_cache_free(post_insert);
                 *method = NULL;
-                res = 0;
+                ret = 0;
             } else {
-                ossl_list_lru_entry_insert_tail(&sa->lru_list, r);
+                ossl_list_lru_entry_insert_tail(&sa->lru_list, post_insert);
                 sa->cache_nelem++;
             }
             ossl_property_unlock(sa);
         }
     }
-    return res;
+    return ret;
 }
 
-int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
-    int nid, const char *prop_query, void *method,
+static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
+    int nid, const char *prop_query, size_t keylen, STORED_ALGORITHMS *sa, void *method,
     int (*method_up_ref)(void *),
     void (*method_destruct)(void *))
 {
     QUERY *old = NULL, *p = NULL;
     ALGORITHM *alg;
     QUERY_KEY key;
-    STORED_ALGORITHMS *sa;
     int res = 1;
     size_t cullcount;
-    size_t keylen = sizeof(int) + ((prop_query == NULL) ? 1 : strlen(prop_query))
-        + sizeof(OSSL_PROVIDER *);
 #ifdef ALLOW_VLA
     uint8_t keybuf[keylen];
 #else
     uint8_t *keybuf;
 #endif
-
-    if (nid <= 0 || store == NULL || prop_query == NULL)
-        return 0;
-
-    if (!ossl_assert(prov != NULL))
-        return 0;
-
-    sa = stored_algs_shard(store, nid);
-    if (!ossl_property_write_lock(sa))
-        return 0;
 
 #ifndef ALLOW_VLA
     keybuf = OPENSSL_malloc(keylen);
@@ -1301,6 +1320,39 @@ end:
 #ifndef ALLOW_VLA
     OPENSSL_free(keybuf);
 #endif
+    return res;
+}
+
+int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
+    int nid, const char *prop_query, void *method,
+    int (*method_up_ref)(void *),
+    void (*method_destruct)(void *))
+{
+    STORED_ALGORITHMS *sa;
+    int res = 1;
+    size_t keylen = sizeof(int) + ((prop_query == NULL) ? 1 : strlen(prop_query))
+        + sizeof(OSSL_PROVIDER *);
+
+    if (nid <= 0 || store == NULL || prop_query == NULL)
+        return 0;
+
+    if (!ossl_assert(prov != NULL))
+        return 0;
+
+    if (keylen > MAX_PROP_QUERY)
+        return 0;
+
+    sa = stored_algs_shard(store, nid);
+    if (!ossl_property_write_lock(sa))
+        return 0;
+
+    /*
+     * As with cache_get_locked, we do this to allow ourselves the opportunity to make sure
+     * keylen isn't so large that the stack allocation of keylen bytes will case a stack
+     * overflow
+     */
+    res = ossl_method_store_cache_set_locked(store, prov, nid, prop_query, keylen, sa, method,
+        method_up_ref, method_destruct);
     ossl_property_unlock(sa);
     return res;
 }
