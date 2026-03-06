@@ -13,7 +13,7 @@ Repository Tree Overview
 
 Here is a high-level view of the repository structure:
 
-```
+```text
 openssl/
 ├── apps/             # Command-line application source
 ├── Configurations/   # Build platform definitions and templates
