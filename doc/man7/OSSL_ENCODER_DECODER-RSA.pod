@@ -1,0 +1,145 @@
+=pod
+
+=head1 NAME
+
+OSSL_ENCODER_DECODER-RSA, OSSL_ENCODER-RSA, OSSL_DECODER-RSA,
+OSSL_ENCODER-RSA-PSS, OSSL_DECODER-RSA-PSS
+- RSA and RSA-PSS encoder and decoder
+
+=head1 DESCRIPTION
+
+The RSA and RSA-PSS encoder and decoder implementations are available in the
+default and base providers.
+
+=head2 Encoding
+
+The following output types are supported by the RSA encoder:
+
+=over 4
+
+=item text
+
+Human-readable text representation of the key fields.
+
+=item DER
+
+Binary DER encoding.
+
+=item PEM
+
+PEM (base64-encoded DER with header/footer) encoding.
+
+=item MSBLOB
+
+Microsoft BLOB format for key import/export (RSA only, not RSA-PSS).
+
+=item PVK
+
+Microsoft PVK format for private keys (RSA only, not RSA-PSS).
+
+=back
+
+The following output structures are supported:
+
+=over 4
+
+=item PrivateKeyInfo (PKCS#8)
+
+Standard PKCS#8 unencrypted private key format.
+
+=item EncryptedPrivateKeyInfo (PKCS#8)
+
+Standard PKCS#8 encrypted private key format.
+Requires a cipher to be specified via the B<cipher> parameter.
+
+=item SubjectPublicKeyInfo
+
+Standard X.509 public key format.
+
+=item type-specific, rsa, pkcs1
+
+Legacy RSA-specific format (private key and public key only).
+The structure names "type-specific", "rsa", and "pkcs1" are equivalent aliases
+for this format.
+RSA-PSS supports "pkcs1" as an alias for its type-specific format.
+
+=back
+
+=head2 Decoding
+
+The following input types are supported by the RSA decoder:
+
+=over 4
+
+=item DER
+
+Binary DER input.
+
+=item PEM
+
+PEM input (automatically handled via the general PEM-to-DER decoder).
+
+=item MSBLOB
+
+Microsoft BLOB format (RSA only, not RSA-PSS).
+
+=item PVK
+
+Microsoft PVK format (RSA only, not RSA-PSS).
+
+=back
+
+The following input structures are supported for DER decoding:
+
+=over 4
+
+=item PrivateKeyInfo
+
+=item SubjectPublicKeyInfo
+
+=item type-specific, rsa
+
+For RSA only.  The structure names "type-specific" and "rsa" are equivalent
+aliases.
+RSA-PSS does not support type-specific decoding.
+
+=back
+
+=head2 Encoder Parameters
+
+=over 4
+
+=item "cipher" (B<OSSL_ENCODER_PARAM_CIPHER>) <UTF8 string>
+
+The name of the cipher to use when encrypting the private key in
+EncryptedPrivateKeyInfo format.  If not specified, no encryption is performed.
+
+=item "properties" (B<OSSL_ENCODER_PARAM_PROPERTIES>) <UTF8 string>
+
+Property query string used when fetching the cipher.
+
+=item "encrypt-level" (B<OSSL_ENCODER_PARAM_ENCRYPT_LEVEL>) <integer>
+
+Encryption level for PVK output only.  The default is 2 (strongest).
+
+=back
+
+=head1 SEE ALSO
+
+L<EVP_PKEY-RSA(7)>, L<provider-encoder(7)>, L<provider-decoder(7)>,
+L<OSSL_PROVIDER-default(7)>, L<OSSL_PROVIDER-base(7)>
+
+=head1 HISTORY
+
+This functionality was added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
