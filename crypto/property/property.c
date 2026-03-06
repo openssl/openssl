@@ -1152,7 +1152,7 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
      * Note: We've bifurcated this function into a locked and unlocked variant
      * Not because of any specific need to do the locked work from some other location,
      * but rather because in the interests of performance, we allocate a buffer on the
-     * stack which can be an aribtrary size.  In order to allow for clamping of that
+     * stack which can be an arbitrary size.  In order to allow for clamping of that
      * value, we check the keylen above for size limit, and then use this call to create
      * a new stack frame in which we can safely do that stack allocation.
      */
