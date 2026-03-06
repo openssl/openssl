@@ -59,7 +59,7 @@ Major Directories
 
 ### crypto/ - The Cryptographic Library (libcrypto)
 
-The source for `libcrypto`, organized into about 60 subdirectories
+The source for `libcrypto`, organized into many subdirectories
 by algorithm family or subsystem. Each subdirectory has its own
 `build.info` file. Inside you will find subdirectories for
 different cryptographic functions as well as other supporting
@@ -67,8 +67,8 @@ code. Some notable examples (not an exhaustive list):
 
 * `crypto/aes/` - AES encryption
 * `crypto/bn/` - Big number arithmetic
-* `crypto/evp/` - The EVP high-level cryptographic API (~90 source
-  files). This is the main API through which applications access
+* `crypto/evp/` - The EVP high-level cryptographic API. This is
+  the main API through which applications access
   ciphers, digests, signatures, key exchange, KDFs, MACs, and key
   management. It dispatches to provider implementations.
 * `crypto/bio/` - The BIO (Basic I/O) abstraction layer. Files
@@ -90,7 +90,7 @@ code. Some notable examples (not an exhaustive list):
 * `crypto/modes/` - Block cipher mode implementations (GCM, CCM,
   XTS, CTR, OCB, SIV) shared across ciphers
 
-About 70 C files sit directly in `crypto/` providing core
+Many C files sit directly in `crypto/` providing core
 infrastructure: `context.c` (OSSL_LIB_CTX management),
 `provider.c` (provider loading), `core_fetch.c` (algorithm
 fetching), `init.c` (library initialization), `mem.c` (memory
@@ -118,8 +118,8 @@ Notable subdirectories:
   protocol features are added.
 * `ssl/record/` - The TLS record layer: framing, encryption, and
   MAC operations.
-* `ssl/quic/` - The QUIC protocol implementation (40+ source
-  files). This is the newest and most actively evolving part of
+* `ssl/quic/` - The QUIC protocol implementation. This is the
+  newest and most actively evolving part of
   libssl. Key files include `quic_impl.c` (main connection logic),
   `quic_channel.c` (connection context), and `quic_txp.c` (packet
   builder). Also includes flow control, stream management,
@@ -145,7 +145,7 @@ are loaded as modules. Five providers are built from this directory:
 * **null** (`nullprov.c`) - A minimal stub provider for testing.
 
 `providers/implementations/` contains all algorithm code, organized
-into subdirectories: `ciphers/` (75+ files), `digests/`,
+into subdirectories: `ciphers/`, `digests/`,
 `signatures/`, `exchange/`, `kem/`, `kdfs/`, `macs/`, `keymgmt/`,
 `encode_decode/`, `rands/`, and `storemgmt/`.
 
@@ -159,8 +159,8 @@ in its query function.
 Source for the `openssl` command-line tool. Each subcommand has
 its own file: `ca.c`, `req.c`, `x509.c`, `dgst.c`, `enc.c`,
 `s_client.c`, `s_server.c`, `cms.c`, `pkcs12.c`, `genpkey.c`,
-`pkey.c`, `pkeyutl.c`, `fipsinstall.c`, `speed.c`, and about
-40 more. `openssl.c` is the main entry point.
+`pkey.c`, `pkeyutl.c`, `fipsinstall.c`, `speed.c`, and many
+more. `openssl.c` is the main entry point.
 
 * `apps/lib/` - Shared utility code: `opt.c` (command-line option
   parsing), `apps.c` (common helpers), `s_cb.c` (SSL callbacks for
@@ -181,14 +181,14 @@ its own file: `ca.c`, `req.c`, `x509.c`, `dgst.c`, `enc.c`,
 
 ### doc/
 
-* `doc/man1/` - Manual pages for command-line tools (61 pages)
-* `doc/man3/` - Manual pages for library functions (672 pages)
-* `doc/man5/` - Manual pages for file formats (3 pages)
-* `doc/man7/` - Overviews, concepts, and guides (163 pages).
+* `doc/man1/` - Manual pages for command-line tools
+* `doc/man3/` - Manual pages for library functions
+* `doc/man5/` - Manual pages for file formats
+* `doc/man7/` - Overviews, concepts, and guides.
   Includes the OpenSSL Guide (`ossl-guide-*` pages) and provider
   interface documentation (`provider-*` pages).
 * `doc/internal/` - Internal developer documentation. `man3/`
-  has about 50 pages documenting internal APIs; `man7/` has
+  documents internal APIs; `man7/` has
   architectural overviews.
 * `doc/designs/` - Design documents for features including
   post-quantum algorithms, QUIC (`quic-design/` subdirectory),
@@ -208,9 +208,9 @@ by the OpenSSL Guide (`ossl-guide-*` man pages).
 
 ### test/
 
-About 358 C test source files compiled into test binaries.
+C test source files compiled into test binaries.
 
-* `test/recipes/` - About 417 Perl test scripts following the
+* `test/recipes/` - Perl test scripts following the
   naming convention `NN-test_name.t` (e.g., `01-test_sanity.t`).
   These are invoked by `make test` and orchestrate running the
   compiled test binaries.
