@@ -97,6 +97,12 @@ The pages in the guide are as follows:
 
 =back
 
+=head1 REPOSITORY STRUCTURE
+
+For an overview of the OpenSSL source tree layout, see the
+B<directory-structure.md> file. This file is available in the source
+distribution of OpenSSL in the B<doc> directory.
+
 =head1 COPYRIGHT
 
 Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
