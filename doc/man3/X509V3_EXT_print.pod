@@ -22,7 +22,7 @@ X509V3_EXT_val_prn - X509 extension printing functions
 =head1 DESCRIPTION
 
 X509V3_EXT_print() prints the extension I<ext> to the BIO I<out>.
-The I<flag> argument controls the display of unknown or unparseable extensions.
+The I<flag> argument controls the display of unknown or unparsable extensions.
 The I<indent> argument specifies the number of spaces to indent the output.
 If the extension is supported and can be parsed, its contents are printed
 in a human-readable form. If parsing fails or the extension is unknown,
@@ -32,11 +32,11 @@ the behaviour depends on I<flag>:
 
 =item B<X509V3_EXT_DEFAULT>
 
-Return 0 (failure) for unknown or unparseable extensions.
+Return 0 (failure) for unknown or unparsable extensions.
 
 =item B<X509V3_EXT_ERROR_UNKNOWN>
 
-Print "<Parse Error>" for known but unparseable extensions and
+Print "<Parse Error>" for known but unparsable extensions and
 "<Not Supported>" for unknown extensions, and return 1.
 
 =item B<X509V3_EXT_PARSE_UNKNOWN>
