@@ -40,7 +40,7 @@ const OPTIONS nseq_options[] = {
 int nseq_main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
-    X509 *x509 = NULL;
+    const X509 *x509 = NULL;
     NETSCAPE_CERT_SEQUENCE *seq = NULL;
     OPTION_CHOICE o;
     int toseq = 0, ret = 1, i;

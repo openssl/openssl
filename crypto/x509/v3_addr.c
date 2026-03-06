@@ -1215,7 +1215,7 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
 {
     IPAddrBlocks *child = NULL;
     int i, j, ret = 0, rv;
-    X509 *x;
+    const X509 *x;
 
     if (!ossl_assert(chain != NULL && sk_X509_num(chain) > 0)
         || !ossl_assert(ctx != NULL || ext != NULL)

@@ -19,7 +19,7 @@
 #include <crypto/asn1.h>
 
 static int ts_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted,
-    X509 *signer, STACK_OF(X509) **chain);
+    const X509 *signer, STACK_OF(X509) **chain);
 static int ts_check_signing_certs(const PKCS7_SIGNER_INFO *si,
     const STACK_OF(X509) *chain);
 
@@ -36,7 +36,7 @@ static int ts_check_imprints(X509_ALGOR *algor_a,
     const unsigned char *imprint_a, unsigned len_a,
     TS_TST_INFO *tst_info);
 static int ts_check_nonces(const ASN1_INTEGER *a, TS_TST_INFO *tst_info);
-static int ts_check_signer_name(GENERAL_NAME *tsa_name, X509 *signer);
+static int ts_check_signer_name(GENERAL_NAME *tsa_name, const X509 *signer);
 static int ts_find_name(STACK_OF(GENERAL_NAME) *gen_names,
     GENERAL_NAME *name);
 
@@ -87,13 +87,13 @@ static const struct {
  *      - Returns the signer certificate in 'signer', if 'signer' is not NULL.
  */
 int TS_RESP_verify_signature(PKCS7 *token, const STACK_OF(X509) *certs,
-    X509_STORE *store, X509 **signer_out)
+    X509_STORE *store, const X509 **signer_out)
 {
     STACK_OF(PKCS7_SIGNER_INFO) *sinfos = NULL;
     PKCS7_SIGNER_INFO *si;
     STACK_OF(X509) *untrusted = NULL;
     STACK_OF(X509) *signers = NULL;
-    X509 *signer;
+    const X509 *signer;
     STACK_OF(X509) *chain = NULL;
     char buf[4096];
     int i, j = 0, ret = 0;
@@ -171,7 +171,7 @@ err:
  * freeing the vector.
  */
 static int ts_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted,
-    X509 *signer, STACK_OF(X509) **chain)
+    const X509 *signer, STACK_OF(X509) **chain)
 {
     X509_STORE_CTX *cert_ctx = NULL;
     int i;
@@ -293,7 +293,7 @@ int TS_RESP_verify_token(TS_VERIFY_CTX *ctx, PKCS7 *token)
 static int int_ts_RESP_verify_token(TS_VERIFY_CTX *ctx,
     PKCS7 *token, TS_TST_INFO *tst_info)
 {
-    X509 *signer = NULL;
+    const X509 *signer = NULL;
     GENERAL_NAME *tsa_name = tst_info->tsa;
     X509_ALGOR *md_alg = NULL;
     unsigned char *imprint = NULL;
@@ -526,7 +526,7 @@ static int ts_check_nonces(const ASN1_INTEGER *a, TS_TST_INFO *tst_info)
  * Check if the specified TSA name matches either the subject or one of the
  * subject alternative names of the TSA certificate.
  */
-static int ts_check_signer_name(GENERAL_NAME *tsa_name, X509 *signer)
+static int ts_check_signer_name(GENERAL_NAME *tsa_name, const X509 *signer)
 {
     STACK_OF(GENERAL_NAME) *gen_names = NULL;
     int idx = -1;

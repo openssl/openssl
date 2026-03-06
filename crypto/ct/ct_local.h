@@ -108,8 +108,8 @@ struct sct_ctx_st {
 
 /* Context when evaluating whether a Certificate Transparency policy is met */
 struct ct_policy_eval_ctx_st {
-    X509 *cert;
-    X509 *issuer;
+    const X509 *cert;
+    const X509 *issuer;
     CTLOG_STORE *log_store;
     /* milliseconds since epoch (to check that SCTs aren't from the future) */
     uint64_t epoch_time_in_ms;
@@ -136,7 +136,7 @@ void SCT_CTX_free(SCT_CTX *sctx);
  * extension, both must have one.
  * Returns 1 on success, 0 on failure.
  */
-__owur int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner);
+__owur int SCT_CTX_set1_cert(SCT_CTX *sctx, const X509 *cert, const X509 *presigner);
 
 /*
  * Sets the issuer of the certificate that the SCT was created for.

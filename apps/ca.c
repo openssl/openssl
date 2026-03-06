@@ -138,7 +138,7 @@ static int do_revoke(X509 *x509, CA_DB *db, REVINFO_TYPE rev_type,
 static char *make_revocation_str(REVINFO_TYPE rev_type, const char *rev_arg);
 static int make_revoked(X509_REVOKED *rev, const char *str);
 static int old_entry_print(const ASN1_OBJECT *obj, const ASN1_STRING *str);
-static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext);
+static void write_new_certificate(BIO *bp, const X509 *x, int output_der, int notext);
 
 static CONF *extfile_conf = NULL;
 static int preserve = 0;
@@ -1074,7 +1074,7 @@ end_of_options:
 
         for (i = 0; i < sk_X509_num(cert_sk); i++) {
             BIO *Cout = NULL;
-            X509 *xi = sk_X509_value(cert_sk, i);
+            const X509 *xi = sk_X509_value(cert_sk, i);
             const ASN1_INTEGER *serialNumber = X509_get0_serialNumber(xi);
             const unsigned char *psn = ASN1_STRING_get0_data(serialNumber);
             const int snl = ASN1_STRING_length(serialNumber);
@@ -1936,7 +1936,7 @@ end:
     return ok;
 }
 
-static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext)
+static void write_new_certificate(BIO *bp, const X509 *x, int output_der, int notext)
 {
 
     if (output_der) {

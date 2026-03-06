@@ -301,7 +301,7 @@ static int check(X509_STORE *ctx, const char *file,
             num_untrusted = X509_STORE_CTX_get_num_untrusted(csc);
             BIO_puts(bio_out, "Chain:\n");
             for (j = 0; j < sk_X509_num(chain); j++) {
-                X509 *cert = sk_X509_value(chain, j);
+                const X509 *cert = sk_X509_value(chain, j);
                 BIO_printf(bio_out, "depth=%d: ", j);
                 X509_NAME_print_ex_fp(stdout,
                     X509_get_subject_name(cert),

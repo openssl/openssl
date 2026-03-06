@@ -29,7 +29,7 @@
 #include "quic/quic_local.h"
 #include <openssl/ct.h>
 
-static const SIGALG_LOOKUP *find_sig_alg(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pkey);
+static const SIGALG_LOOKUP *find_sig_alg(SSL_CONNECTION *s, const X509 *x, EVP_PKEY *pkey);
 static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op, const SIGALG_LOOKUP *lu);
 
 SSL3_ENC_METHOD const TLSv1_enc_data = {
@@ -1940,7 +1940,7 @@ static uint16_t tls1_get_group_id(EVP_PKEY *pkey)
  * Check cert parameters compatible with extensions: currently just checks EC
  * certificates have compatible curves and compression.
  */
-static int tls1_check_cert_param(SSL_CONNECTION *s, X509 *x, int check_ee_md)
+static int tls1_check_cert_param(SSL_CONNECTION *s, const X509 *x, int check_ee_md)
 {
     uint16_t group_id;
     EVP_PKEY *pkey;
@@ -4087,7 +4087,7 @@ err:
     return 0;
 }
 
-static int tls1_check_sig_alg(SSL_CONNECTION *s, X509 *x, int default_nid)
+static int tls1_check_sig_alg(SSL_CONNECTION *s, const X509 *x, int default_nid)
 {
     int sig_nid, use_pc_sigalgs = 0;
     size_t i;
@@ -4155,7 +4155,7 @@ static int tls1_check_sig_alg(SSL_CONNECTION *s, X509 *x, int default_nid)
 }
 
 /* Check to see if a certificate issuer name matches list of CA names */
-static int ssl_check_ca_name(STACK_OF(X509_NAME) *names, X509 *x)
+static int ssl_check_ca_name(STACK_OF(X509_NAME) *names, const X509 *x)
 {
     const X509_NAME *nm;
     int i;
@@ -4183,7 +4183,7 @@ static int ssl_check_ca_name(STACK_OF(X509_NAME) *names, X509 *x)
     (CERT_PKEY_VALID_FLAGS | CERT_PKEY_CA_SIGNATURE | CERT_PKEY_CA_PARAM \
         | CERT_PKEY_ISSUER_NAME | CERT_PKEY_CERT_TYPE)
 
-int tls1_check_chain(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pk,
+int tls1_check_chain(SSL_CONNECTION *s, const X509 *x, EVP_PKEY *pk,
     STACK_OF(X509) *chain, int idx)
 {
     int i;
@@ -4362,7 +4362,7 @@ skip_sigs:
     else if (strict_mode) {
         rv |= CERT_PKEY_CA_PARAM;
         for (i = 0; i < sk_X509_num(chain); i++) {
-            X509 *ca = sk_X509_value(chain, i);
+            const X509 *ca = sk_X509_value(chain, i);
             if (!tls1_check_cert_param(s, ca, 0)) {
                 if (check_flags) {
                     rv &= ~CERT_PKEY_CA_PARAM;
@@ -4407,7 +4407,7 @@ skip_sigs:
             rv |= CERT_PKEY_ISSUER_NAME;
         else
             for (i = 0; i < sk_X509_num(chain); i++) {
-                X509 *xtmp = sk_X509_value(chain, i);
+                const X509 *xtmp = sk_X509_value(chain, i);
 
                 if (ssl_check_ca_name(ca_dn, xtmp)) {
                     rv |= CERT_PKEY_ISSUER_NAME;
@@ -4537,7 +4537,7 @@ err:
     return dhp;
 }
 
-static int ssl_security_cert_key(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x,
+static int ssl_security_cert_key(SSL_CONNECTION *s, SSL_CTX *ctx, const X509 *x,
     int op)
 {
     int secbits = -1;
@@ -4553,12 +4553,12 @@ static int ssl_security_cert_key(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x,
         secbits = EVP_PKEY_get_security_bits(pkey);
     }
     if (s != NULL)
-        return ssl_security(s, op, secbits, 0, x);
+        return ssl_security(s, op, secbits, 0, (void *)x);
     else
-        return ssl_ctx_security(ctx, op, secbits, 0, x);
+        return ssl_ctx_security(ctx, op, secbits, 0, (void *)x);
 }
 
-static int ssl_security_cert_sig(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x,
+static int ssl_security_cert_sig(SSL_CONNECTION *s, SSL_CTX *ctx, const X509 *x,
     int op)
 {
     /* Lookup signature algorithm digest */
@@ -4573,12 +4573,12 @@ static int ssl_security_cert_sig(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x,
     if (nid == NID_undef)
         nid = pknid;
     if (s != NULL)
-        return ssl_security(s, op, secbits, nid, x);
+        return ssl_security(s, op, secbits, nid, (void *)x); /* should be(const void *) */
     else
-        return ssl_ctx_security(ctx, op, secbits, nid, x);
+        return ssl_ctx_security(ctx, op, secbits, nid, (void *)x); /* should be(const void *) */
 }
 
-int ssl_security_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x, int vfy,
+int ssl_security_cert(SSL_CONNECTION *s, SSL_CTX *ctx, const X509 *x, int vfy,
     int is_ee)
 {
     if (vfy)
@@ -4602,7 +4602,7 @@ int ssl_security_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x, int vfy,
  */
 
 int ssl_security_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk,
-    X509 *x, int vfy)
+    const X509 *x, int vfy)
 {
     int rv, start_idx, i;
 
@@ -4660,7 +4660,7 @@ static int tls12_get_cert_sigalg_idx(const SSL_CONNECTION *s,
  * Returns true if the cert is usable and false otherwise.
  */
 static int check_cert_usable(SSL_CONNECTION *s, const SIGALG_LOOKUP *sig,
-    X509 *x, EVP_PKEY *pkey)
+    const X509 *x, EVP_PKEY *pkey)
 {
     const SIGALG_LOOKUP *lu;
     int mdnid, pknid, supported;
@@ -4735,7 +4735,7 @@ static int has_usable_cert(SSL_CONNECTION *s, const SIGALG_LOOKUP *sig, int idx)
  * Returns true if the supplied cert |x| and key |pkey| is usable with the
  * specified signature scheme |sig|, or false otherwise.
  */
-static int is_cert_usable(SSL_CONNECTION *s, const SIGALG_LOOKUP *sig, X509 *x,
+static int is_cert_usable(SSL_CONNECTION *s, const SIGALG_LOOKUP *sig, const X509 *x,
     EVP_PKEY *pkey)
 {
     size_t idx;
@@ -4755,7 +4755,7 @@ static int is_cert_usable(SSL_CONNECTION *s, const SIGALG_LOOKUP *sig, X509 *x,
  * |pkey|. |x| and |pkey| may be NULL in which case we additionally look at our
  * available certs/keys to find one that works.
  */
-static const SIGALG_LOOKUP *find_sig_alg(SSL_CONNECTION *s, X509 *x,
+static const SIGALG_LOOKUP *find_sig_alg(SSL_CONNECTION *s, const X509 *x,
     EVP_PKEY *pkey)
 {
     const SIGALG_LOOKUP *lu = NULL;

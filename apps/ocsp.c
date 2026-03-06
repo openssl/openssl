@@ -1133,7 +1133,7 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
             goto end;
         }
         for (jj = 0; jj < sk_X509_num(ca) && !found; jj++) {
-            X509 *ca_cert = sk_X509_value(ca, jj);
+            const X509 *ca_cert = sk_X509_value(ca, jj);
             OCSP_CERTID *ca_id = OCSP_cert_to_id(cert_id_md, NULL, ca_cert);
 
             if (ca_id == NULL) {

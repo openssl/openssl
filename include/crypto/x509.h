@@ -219,7 +219,7 @@ struct x509_store_ctx_st { /* X509_STORE_CTX */
     X509_STORE *store;
     /* The following are set by the caller */
     /* The cert to check */
-    X509 *cert; /* XXX should really be made const */
+    const X509 *cert;
     /* chain of X509s - untrusted - passed in */
     STACK_OF(X509) *untrusted;
     /* set of CRLs passed in */
@@ -240,11 +240,11 @@ struct x509_store_ctx_st { /* X509_STORE_CTX */
     /* Check revocation status of chain */
     int (*check_revocation)(X509_STORE_CTX *ctx);
     /* retrieve CRL */
-    int (*get_crl)(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x);
+    int (*get_crl)(X509_STORE_CTX *ctx, X509_CRL **crl, const X509 *x);
     /* Check CRL validity */
     int (*check_crl)(X509_STORE_CTX *ctx, X509_CRL *crl);
     /* Check certificate against CRL */
-    int (*cert_crl)(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x);
+    int (*cert_crl)(X509_STORE_CTX *ctx, X509_CRL *crl, const X509 *x);
     /* Check policy status of the chain */
     int (*check_policy)(X509_STORE_CTX *ctx);
     STACK_OF(X509) *(*lookup_certs)(const X509_STORE_CTX *ctx,
@@ -267,9 +267,9 @@ struct x509_store_ctx_st { /* X509_STORE_CTX */
     /* When something goes wrong, this is why */
     int error_depth;
     int error;
-    X509 *current_cert; /* XXX should really be made const */
+    const X509 *current_cert; /* XXX should really be made const */
     /* cert currently being tested as valid issuer */
-    X509 *current_issuer;
+    const X509 *current_issuer;
     /* current CRL */
     X509_CRL *current_crl;
     /* score of current CRL */
@@ -404,7 +404,7 @@ int ossl_bio_print_hex(BIO *out, unsigned char *buf, int len);
 int ossl_x509_compare_asn1_time(const X509_VERIFY_PARAM *vpm,
     const ASN1_TIME *time, int *comparison);
 /* No error callback if depth < 0 */
-int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth);
+int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, const X509 *x, int depth);
 int ossl_x509_check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify);
 int ossl_posix_to_asn1_time(int64_t posix_time, ASN1_TIME **out_time);
 void ossl_x509_verify_param_set_time_posix(X509_VERIFY_PARAM *param, int64_t t);

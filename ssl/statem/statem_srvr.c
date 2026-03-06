@@ -450,7 +450,7 @@ OCSP_RESPONSE *ossl_get_ocsp_response(SSL_CONNECTION *s, int chainidx)
 #ifndef OPENSSL_NO_OCSP
     int i = 0, num = 0;
     unsigned int len;
-    X509 *x = NULL;
+    const X509 *x = NULL;
     STACK_OF(X509) *chain_certs = NULL;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     OCSP_BASICRESP *bs = NULL;

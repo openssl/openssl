@@ -929,7 +929,7 @@ int x509_main(int argc, char **argv)
 
 cert_loop:
     if (multi)
-        x = sk_X509_value(certs, k);
+        x = (X509 *)sk_X509_value(certs, k); /* !!! breaks const !!! */
 
     if ((fsubj != NULL || req != NULL)
         && !X509_set_subject_name(x, fsubj != NULL ? fsubj : X509_REQ_get_subject_name(req)))

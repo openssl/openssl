@@ -1090,7 +1090,7 @@ int SSL_SESSION_set1_alpn_selected(SSL_SESSION *s, const unsigned char *alpn,
     return 1;
 }
 
-X509 *SSL_SESSION_get0_peer(SSL_SESSION *s)
+const X509 *SSL_SESSION_get0_peer(SSL_SESSION *s)
 {
     return s->peer;
 }
@@ -1396,13 +1396,13 @@ void (*SSL_CTX_get_info_callback(SSL_CTX *ctx))(const SSL *ssl, int type,
 }
 
 void SSL_CTX_set_client_cert_cb(SSL_CTX *ctx,
-    int (*cb)(SSL *ssl, X509 **x509,
+    int (*cb)(SSL *ssl, const X509 **x509,
         EVP_PKEY **pkey))
 {
     ctx->client_cert_cb = cb;
 }
 
-int (*SSL_CTX_get_client_cert_cb(SSL_CTX *ctx))(SSL *ssl, X509 **x509,
+int (*SSL_CTX_get_client_cert_cb(SSL_CTX *ctx))(SSL *ssl, const X509 **x509,
     EVP_PKEY **pkey)
 {
     return ctx->client_cert_cb;

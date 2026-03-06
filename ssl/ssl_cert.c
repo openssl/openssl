@@ -304,7 +304,7 @@ int ssl_cert_set0_chain(SSL_CONNECTION *s, SSL_CTX *ctx, STACK_OF(X509) *chain)
     if (!cpk)
         return 0;
     for (i = 0; i < sk_X509_num(chain); i++) {
-        X509 *x = sk_X509_value(chain, i);
+        const X509 *x = sk_X509_value(chain, i);
 
         r = ssl_security_cert(s, ctx, x, 0, 0);
         if (r != 1) {
@@ -333,7 +333,7 @@ int ssl_cert_set1_chain(SSL_CONNECTION *s, SSL_CTX *ctx, STACK_OF(X509) *chain)
     return 1;
 }
 
-int ssl_cert_add0_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x)
+int ssl_cert_add0_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, const X509 *x)
 {
     int r;
     CERT_PKEY *cpk = s ? s->cert->key : ctx->cert->key;
@@ -352,7 +352,7 @@ int ssl_cert_add0_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x)
     return 1;
 }
 
-int ssl_cert_add1_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x)
+int ssl_cert_add1_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, const X509 *x)
 {
     if (!X509_up_ref(x))
         return 0;
@@ -363,7 +363,7 @@ int ssl_cert_add1_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x)
     return 1;
 }
 
-int ssl_cert_select_current(CERT *c, X509 *x)
+int ssl_cert_select_current(CERT *c, const X509 *x)
 {
     size_t i;
 
@@ -426,7 +426,7 @@ void ssl_cert_set_cert_cb(CERT *c, int (*cb)(SSL *ssl, void *arg), void *arg)
  */
 static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *rpk)
 {
-    X509 *x;
+    const X509 *x;
     int i = 0;
     X509_STORE *verify_store;
     X509_STORE_CTX *ctx = NULL;
@@ -718,7 +718,7 @@ int SSL_CTX_add1_to_CA_list(SSL_CTX *ctx, const X509 *x)
  * The following two are older names are to be replaced with
  * SSL(_CTX)_add1_to_CA_list
  */
-int SSL_add_client_CA(SSL *ssl, X509 *x)
+int SSL_add_client_CA(SSL *ssl, const X509 *x)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
 
@@ -728,7 +728,7 @@ int SSL_add_client_CA(SSL *ssl, X509 *x)
     return add_ca_name(&sc->client_ca_names, x);
 }
 
-int SSL_CTX_add_client_CA(SSL_CTX *ctx, X509 *x)
+int SSL_CTX_add_client_CA(SSL_CTX *ctx, const X509 *x)
 {
     return add_ca_name(&ctx->client_ca_names, x);
 }
@@ -1096,7 +1096,7 @@ int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags)
     X509_STORE *chain_store = NULL;
     X509_STORE_CTX *xs_ctx = NULL;
     STACK_OF(X509) *chain = NULL, *untrusted = NULL;
-    X509 *x;
+    const X509 *x;
     SSL_CTX *real_ctx = (s == NULL) ? ctx : SSL_CONNECTION_GET_CTX(s);
     int i, rv = 0;
 

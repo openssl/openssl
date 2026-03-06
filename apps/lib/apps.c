@@ -141,7 +141,7 @@ unsigned long get_nameopt(void)
     return nmflag_set ? nmflag : XN_FLAG_SEP_CPLUS_SPC | XN_FLAG_FN_SN | ASN1_STRFLGS_ESC_CTRL | ASN1_STRFLGS_UTF8_CONVERT | ASN1_STRFLGS_DUMP_UNKNOWN | ASN1_STRFLGS_DUMP_DER;
 }
 
-void dump_cert_text(BIO *out, X509 *x)
+void dump_cert_text(BIO *out, const X509 *x)
 {
     print_name(out, "subject=", X509_get_subject_name(x));
     print_name(out, "issuer=", X509_get_issuer_name(x));
@@ -667,7 +667,7 @@ char *next_item(char *opt) /* in list separated by comma and/or spaces */
     return *opt == '\0' ? NULL : opt; /* NULL indicates end of input */
 }
 
-static void warn_cert_msg(const char *uri, X509 *cert, const char *msg)
+static void warn_cert_msg(const char *uri, const X509 *cert, const char *msg)
 {
     char *subj = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
 
@@ -676,7 +676,7 @@ static void warn_cert_msg(const char *uri, X509 *cert, const char *msg)
     OPENSSL_free(subj);
 }
 
-static void warn_cert(const char *uri, X509 *cert, int warn_EE,
+static void warn_cert(const char *uri, const X509 *cert, int warn_EE,
     X509_VERIFY_PARAM *vpm)
 {
     int error;

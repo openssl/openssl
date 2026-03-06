@@ -1020,13 +1020,13 @@ int X509_check_host(const X509 *x, const char *chk, size_t chklen,
     return do_x509_check(x, chk, chklen, flags, GEN_DNS, 0, peername);
 }
 
-int ossl_x509_check_rfc822(X509 *x, const char *chk, size_t chklen,
+int ossl_x509_check_rfc822(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags)
 {
     return do_x509_check(x, chk, chklen, flags, GEN_EMAIL, 0, NULL) == 1;
 }
 
-int ossl_x509_check_smtputf8(X509 *x, const char *chk, size_t chklen,
+int ossl_x509_check_smtputf8(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags)
 {
     return do_x509_check(x, chk, chklen, flags, GEN_OTHERNAME,

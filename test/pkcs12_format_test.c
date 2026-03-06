@@ -3509,8 +3509,8 @@ err:
 static int pkcs12_recreate_test(void)
 {
     int ret = 0;
-    X509 *cert = NULL;
-    X509 *cert_parsed = NULL;
+    const X509 *cert = NULL;
+    const X509 *cert_parsed = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY *pkey_parsed = NULL;
     PKCS12 *p12 = NULL;

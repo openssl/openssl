@@ -570,7 +570,7 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
             char tpass[PEM_BUFSIZE + 1];
             size_t tpass_len;
             EVP_PKEY *pkey = NULL;
-            X509 *cert = NULL;
+            const X509 *cert = NULL;
             STACK_OF(X509) *chain = NULL;
 
             data->object_type = OSSL_OBJECT_PKCS12;
@@ -640,7 +640,7 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
                             ok = 0;
                     }
                     while (ok && sk_X509_num(chain) > 0) {
-                        X509 *ca = sk_X509_value(chain, 0);
+                        const X509 *ca = sk_X509_value(chain, 0);
 
                         if ((osi_ca = OSSL_STORE_INFO_new_CERT(ca)) != NULL
                             && sk_X509_shift(chain) != NULL

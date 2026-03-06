@@ -61,12 +61,12 @@ static int has_key = 0;
 static int has_cert = 0;
 static int has_ca = 0;
 
-static int changepass(PKCS12 *p12, EVP_PKEY *key, X509 *cert, STACK_OF(X509) *ca)
+static int changepass(PKCS12 *p12, EVP_PKEY *key, const X509 *cert, STACK_OF(X509) *ca)
 {
     int ret = 0;
     PKCS12 *p12new = NULL;
     EVP_PKEY *key2 = NULL;
-    X509 *cert2 = NULL;
+    const X509 *cert2 = NULL;
     STACK_OF(X509) *ca2 = NULL;
     BIO *bio = NULL;
 
@@ -105,7 +105,7 @@ static int pkcs12_parse_test(void)
     int ret = 0;
     PKCS12 *p12 = NULL;
     EVP_PKEY *key = NULL;
-    X509 *cert = NULL;
+    const X509 *cert = NULL;
     STACK_OF(X509) *ca = NULL;
 
     if (in_file != NULL) {
@@ -140,7 +140,7 @@ static int pkcs12_create_cb(PKCS12_SAFEBAG *bag, void *cbarg)
     return cb_ret;
 }
 
-static PKCS12 *pkcs12_create_ex2_setup(EVP_PKEY **key, X509 **cert, STACK_OF(X509) **ca)
+static PKCS12 *pkcs12_create_ex2_setup(EVP_PKEY **key, const X509 **cert, STACK_OF(X509) **ca)
 {
     PKCS12 *p12 = NULL;
     p12 = PKCS12_load("out6.p12");
@@ -161,7 +161,7 @@ static int pkcs12_create_ex2_test(int test)
     int ret = 0, cb_ret = 0;
     PKCS12 *ptr = NULL, *p12 = NULL;
     EVP_PKEY *key = NULL;
-    X509 *cert = NULL;
+    const X509 *cert = NULL;
     STACK_OF(X509) *ca = NULL;
 
     p12 = pkcs12_create_ex2_setup(&key, &cert, &ca);
@@ -257,7 +257,7 @@ static int test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero(void)
 {
     int ret = 0;
     EVP_PKEY *key = NULL;
-    X509 *cert = NULL;
+    const X509 *cert = NULL;
     STACK_OF(X509) *ca = NULL;
     PKCS12 *p12 = NULL;
 

@@ -253,7 +253,7 @@ int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
     return 1;
 }
 
-int PKCS7_add_certificate(PKCS7 *p7, X509 *x509)
+int PKCS7_add_certificate(PKCS7 *p7, const X509 *x509)
 {
     int i;
     STACK_OF(X509) **sk;
@@ -342,7 +342,7 @@ static int pkcs7_rsa_sign_verify_setup(PKCS7_SIGNER_INFO *si, int verify)
     return 1;
 }
 
-int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
+int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, const X509 *x509, EVP_PKEY *pkey,
     const EVP_MD *dgst)
 {
     int ret;
@@ -392,7 +392,7 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
     return 0;
 }
 
-PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509, EVP_PKEY *pkey,
+PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, const X509 *x509, EVP_PKEY *pkey,
     const EVP_MD *dgst)
 {
     PKCS7_SIGNER_INFO *si = NULL;
@@ -464,7 +464,7 @@ void ossl_pkcs7_resolve_libctx(PKCS7 *p7)
     certs = pkcs7_get0_certificates(p7);
 
     for (i = 0; i < sk_X509_num(certs); i++)
-        ossl_x509_set0_libctx(sk_X509_value(certs, i), libctx, propq);
+        ossl_x509_set0_libctx((X509 *)sk_X509_value(certs, i), libctx, propq); /* !!! breaks_const_X509 !!! */
 
     for (i = 0; i < sk_PKCS7_RECIP_INFO_num(rinfos); i++) {
         PKCS7_RECIP_INFO *ri = sk_PKCS7_RECIP_INFO_value(rinfos, i);

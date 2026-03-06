@@ -2446,7 +2446,7 @@ err:
 WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
     WORK_STATE wst)
 {
-    X509 *x;
+    const X509 *x;
     EVP_PKEY *pkey = NULL;
     const SSL_CERT_LOOKUP *clu;
     size_t certidx;
@@ -4119,7 +4119,7 @@ static int ssl3_check_client_certificate(SSL_CONNECTION *s)
 
 WORK_STATE tls_prepare_client_certificate(SSL_CONNECTION *s, WORK_STATE wst)
 {
-    X509 *x509 = NULL;
+    const X509 *x509 = NULL;
     EVP_PKEY *pkey = NULL;
     int i;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
@@ -4488,7 +4488,7 @@ err:
     return MSG_PROCESS_ERROR;
 }
 
-int ssl_do_client_cert_cb(SSL_CONNECTION *s, X509 **px509, EVP_PKEY **ppkey)
+int ssl_do_client_cert_cb(SSL_CONNECTION *s, const X509 **px509, EVP_PKEY **ppkey)
 {
     int i = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);

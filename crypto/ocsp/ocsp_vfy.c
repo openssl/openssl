@@ -19,9 +19,9 @@ static const X509 *ocsp_find_signer_sk(const STACK_OF(X509) *certs, OCSP_RESPID 
 static int ocsp_check_issuer(OCSP_BASICRESP *bs, STACK_OF(X509) *chain);
 static int ocsp_check_ids(STACK_OF(OCSP_SINGLERESP) *sresp,
     OCSP_CERTID **ret);
-static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
+static int ocsp_match_issuerid(const X509 *cert, OCSP_CERTID *cid,
     STACK_OF(OCSP_SINGLERESP) *sresp);
-static int ocsp_check_delegated(X509 *x);
+static int ocsp_check_delegated(const X509 *x);
 static int ocsp_req_find_signer(const X509 **psigner, OCSP_REQUEST *req,
     const X509_NAME *nm, const STACK_OF(X509) *certs,
     unsigned long flags);
@@ -196,7 +196,7 @@ static const X509 *ocsp_find_signer_sk(const STACK_OF(X509) *certs, OCSP_RESPID 
     int i, r;
     unsigned char tmphash[SHA_DIGEST_LENGTH], *keyhash;
     EVP_MD *md;
-    X509 *x;
+    const X509 *x;
 
     /* Easy if lookup by name */
     if (id->type == V_OCSP_RESPID_NAME)
@@ -227,7 +227,7 @@ static const X509 *ocsp_find_signer_sk(const STACK_OF(X509) *certs, OCSP_RESPID 
 static int ocsp_check_issuer(OCSP_BASICRESP *bs, STACK_OF(X509) *chain)
 {
     STACK_OF(OCSP_SINGLERESP) *sresp = bs->tbsResponseData.responses;
-    X509 *signer, *sca;
+    const X509 *signer, *sca;
     OCSP_CERTID *caid = NULL;
     int ret;
 
@@ -305,7 +305,7 @@ static int ocsp_check_ids(STACK_OF(OCSP_SINGLERESP) *sresp, OCSP_CERTID **ret)
  * Match the certificate issuer ID.
  * Returns -1 on fatal error, 0 if there is no match and 1 if there is a match.
  */
-static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
+static int ocsp_match_issuerid(const X509 *cert, OCSP_CERTID *cid,
     STACK_OF(OCSP_SINGLERESP) *sresp)
 {
     int ret = -1;
@@ -366,7 +366,7 @@ end:
     return ret;
 }
 
-static int ocsp_check_delegated(X509 *x)
+static int ocsp_check_delegated(const X509 *x)
 {
     if ((X509_get_extension_flags(x) & EXFLAG_XKUSAGE)
         && (X509_get_extended_key_usage(x) & XKU_OCSP_SIGN))

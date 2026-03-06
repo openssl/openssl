@@ -332,7 +332,7 @@ err:
 
 /* Initialise a kari based on passed certificate and key */
 
-int ossl_cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri, X509 *recip,
+int ossl_cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri, const X509 *recip,
     EVP_PKEY *recipPubKey, X509 *originator,
     EVP_PKEY *originatorPrivKey,
     unsigned int flags, const CMS_CTX *ctx)

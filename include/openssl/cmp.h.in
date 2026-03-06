@@ -407,7 +407,7 @@ X509_STORE *OSSL_CMP_CTX_get0_trustedStore(const OSSL_CMP_CTX *ctx);
 int OSSL_CMP_CTX_set1_untrusted(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs);
 STACK_OF(X509) *OSSL_CMP_CTX_get0_untrusted(const OSSL_CMP_CTX *ctx);
 /* client authentication: */
-int OSSL_CMP_CTX_set1_cert(OSSL_CMP_CTX *ctx, X509 *cert);
+int OSSL_CMP_CTX_set1_cert(OSSL_CMP_CTX *ctx, const X509 *cert);
 int OSSL_CMP_CTX_build_cert_chain(OSSL_CMP_CTX *ctx, X509_STORE *own_trusted,
     STACK_OF(X509) *candidates);
 int OSSL_CMP_CTX_set1_pkey(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey);
@@ -451,8 +451,8 @@ int OSSL_CMP_CTX_get_status(const OSSL_CMP_CTX *ctx);
 OSSL_CMP_PKIFREETEXT *OSSL_CMP_CTX_get0_statusString(const OSSL_CMP_CTX *ctx);
 int OSSL_CMP_CTX_get_failInfoCode(const OSSL_CMP_CTX *ctx);
 #define OSSL_CMP_PKISI_BUFLEN 1024
-X509 *OSSL_CMP_CTX_get0_validatedSrvCert(const OSSL_CMP_CTX *ctx);
-X509 *OSSL_CMP_CTX_get0_newCert(const OSSL_CMP_CTX *ctx);
+const X509 *OSSL_CMP_CTX_get0_validatedSrvCert(const OSSL_CMP_CTX *ctx);
+const X509 *OSSL_CMP_CTX_get0_newCert(const OSSL_CMP_CTX *ctx);
 STACK_OF(X509) *OSSL_CMP_CTX_get1_newChain(const OSSL_CMP_CTX *ctx);
 STACK_OF(X509) *OSSL_CMP_CTX_get1_caPubs(const OSSL_CMP_CTX *ctx);
 STACK_OF(X509) *OSSL_CMP_CTX_get1_extraCertsIn(const OSSL_CMP_CTX *ctx);
@@ -491,7 +491,7 @@ int i2d_OSSL_CMP_MSG_bio(BIO *bio, const OSSL_CMP_MSG *msg);
 /* from cmp_vfy.c */
 int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg);
 int OSSL_CMP_validate_cert_path(const OSSL_CMP_CTX *ctx,
-    X509_STORE *trusted_store, X509 *cert);
+    X509_STORE *trusted_store, const X509 *cert);
 
 /* from cmp_http.c */
 #ifndef OPENSSL_NO_HTTP

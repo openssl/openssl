@@ -17,7 +17,7 @@ static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
 static int pkcs12_remove_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
     PKCS12_SAFEBAG *bag);
 static PKCS12_SAFEBAG *pkcs12_add_cert_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
-    X509 *cert,
+    const X509 *cert,
     const char *name,
     int namelen,
     const unsigned char *keyid,
@@ -33,7 +33,7 @@ static int copy_bag_attr(PKCS12_SAFEBAG *bag, EVP_PKEY *pkey, int nid)
 }
 
 PKCS12 *PKCS12_create_ex2(const char *pass, const char *name, EVP_PKEY *pkey,
-    X509 *cert, STACK_OF(X509) *ca, int nid_key, int nid_cert,
+    const X509 *cert, STACK_OF(X509) *ca, int nid_key, int nid_cert,
     int iter, int mac_iter, int keytype,
     OSSL_LIB_CTX *ctx, const char *propq,
     PKCS12_create_cb *cb, void *cbarg)
@@ -168,7 +168,7 @@ err:
     return NULL;
 }
 
-PKCS12 *PKCS12_create_ex(const char *pass, const char *name, EVP_PKEY *pkey, X509 *cert,
+PKCS12 *PKCS12_create_ex(const char *pass, const char *name, EVP_PKEY *pkey, const X509 *cert,
     STACK_OF(X509) *ca, int nid_key, int nid_cert, int iter,
     int mac_iter, int keytype,
     OSSL_LIB_CTX *ctx, const char *propq)
@@ -178,7 +178,7 @@ PKCS12 *PKCS12_create_ex(const char *pass, const char *name, EVP_PKEY *pkey, X50
         NULL, NULL);
 }
 
-PKCS12 *PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey, X509 *cert,
+PKCS12 *PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey, const X509 *cert,
     STACK_OF(X509) *ca, int nid_key, int nid_cert, int iter,
     int mac_iter, int keytype)
 {
@@ -187,7 +187,7 @@ PKCS12 *PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey, X509 *
 }
 
 static PKCS12_SAFEBAG *pkcs12_add_cert_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
-    X509 *cert,
+    const X509 *cert,
     const char *name,
     int namelen,
     const unsigned char *keyid,
@@ -215,7 +215,7 @@ err:
     return NULL;
 }
 
-PKCS12_SAFEBAG *PKCS12_add_cert(STACK_OF(PKCS12_SAFEBAG) **pbags, X509 *cert)
+PKCS12_SAFEBAG *PKCS12_add_cert(STACK_OF(PKCS12_SAFEBAG) **pbags, const X509 *cert)
 {
     char *name = NULL;
     int namelen = -1;

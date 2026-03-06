@@ -970,7 +970,7 @@ CON_FUNC_RETURN tls_construct_change_cipher_spec(SSL_CONNECTION *s, WPACKET *pkt
 
 /* Add a certificate to the WPACKET */
 static int ssl_add_cert_to_wpacket(SSL_CONNECTION *s, WPACKET *pkt,
-    X509 *x, int chain, int for_comp)
+    const X509 *x, int chain, int for_comp)
 {
     int len;
     unsigned char *outbytes;
@@ -1005,7 +1005,7 @@ static int ssl_add_cert_to_wpacket(SSL_CONNECTION *s, WPACKET *pkt,
 static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, int for_comp)
 {
     int i, chain_count;
-    X509 *x;
+    const X509 *x;
     STACK_OF(X509) *extra_certs;
     STACK_OF(X509) *chain = NULL;
     X509_STORE *chain_store;
@@ -1315,7 +1315,7 @@ unsigned long tls_output_rpk(SSL_CONNECTION *sc, WPACKET *pkt, CERT_PKEY *cpk)
     unsigned char *pdata = NULL;
     const X509_PUBKEY *xpk = NULL;
     unsigned long ret = 0;
-    X509 *x509 = NULL;
+    const X509 *x509 = NULL;
 
     if (cpk != NULL && cpk->x509 != NULL) {
         x509 = cpk->x509;

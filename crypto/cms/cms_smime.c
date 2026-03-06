@@ -532,9 +532,9 @@ CMS_ContentInfo *CMS_sign_ex(X509 *signcert, EVP_PKEY *pkey,
     }
 
     for (i = 0; i < sk_X509_num(certs); i++) {
-        X509 *x = sk_X509_value(certs, i);
+        const X509 *x = sk_X509_value(certs, i);
 
-        if (!CMS_add1_cert(cms, x)) {
+        if (!CMS_add1_cert(cms, (X509 *)x)) { /* !!! breaks_const_X509 !!! */
             ERR_raise(ERR_LIB_CMS, ERR_R_CMS_LIB);
             goto err;
         }
@@ -638,7 +638,7 @@ CMS_ContentInfo *CMS_encrypt_ex(const STACK_OF(X509) *certs, BIO *data,
 {
     CMS_ContentInfo *cms;
     int i;
-    X509 *recip;
+    const X509 *recip;
 
     cms = (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
         ? CMS_AuthEnvelopedData_create_ex(cipher, libctx, propq)
@@ -649,7 +649,7 @@ CMS_ContentInfo *CMS_encrypt_ex(const STACK_OF(X509) *certs, BIO *data,
     }
     for (i = 0; i < sk_X509_num(certs); i++) {
         recip = sk_X509_value(certs, i);
-        if (!CMS_add1_recipient_cert(cms, recip, flags)) {
+        if (!CMS_add1_recipient_cert(cms, (X509 *)recip, flags)) { /* !!! breaks_const_X509 !!! */
             ERR_raise(ERR_LIB_CMS, CMS_R_RECIPIENT_ERROR);
             goto err;
         }

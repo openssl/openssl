@@ -1489,8 +1489,8 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host)
             goto err;
         }
         for (i = 0; i < sk_X509_num(untrusted); i++) {
-            cert = sk_X509_value(untrusted, i);
-            if (!SSL_CTX_add1_chain_cert(ssl_ctx, cert)) {
+            const X509 *const_cert = sk_X509_value(untrusted, i);
+            if (!SSL_CTX_add1_chain_cert(ssl_ctx, const_cert)) {
                 CMP_err("Could not add untrusted cert to TLS client cert chain");
                 goto err;
             }
@@ -1533,11 +1533,11 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host)
             if (tls_extra == NULL)
                 goto err;
             for (i = 0; i < sk_X509_num(tls_extra); i++) {
-                cert = sk_X509_value(tls_extra, i);
+                const X509 *const_cert = sk_X509_value(tls_extra, i);
                 if (res != 0)
-                    res = SSL_CTX_add_extra_chain_cert(ssl_ctx, cert);
+                    res = SSL_CTX_add_extra_chain_cert(ssl_ctx, const_cert);
                 if (res == 0)
-                    X509_free(cert);
+                    X509_free(const_cert);
             }
             sk_X509_free(tls_extra);
             if (res == 0) {
@@ -2421,7 +2421,7 @@ oom:
  * Depending on options use either PEM or DER format.
  * Returns 1 on success, 0 on error
  */
-static int write_cert(BIO *bio, X509 *cert)
+static int write_cert(BIO *bio, const X509 *cert)
 {
     if ((opt_certform == FORMAT_PEM && PEM_write_bio_X509(bio, cert))
         || (opt_certform == FORMAT_ASN1 && i2d_X509_bio(bio, cert)))
@@ -2532,7 +2532,7 @@ static int delete_file(const char *file, const char *desc)
     return 1;
 }
 
-static int save_cert_or_delete(X509 *cert, const char *file, const char *desc)
+static int save_cert_or_delete(const X509 *cert, const char *file, const char *desc)
 {
     if (file == NULL)
         return 1;

@@ -724,7 +724,7 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
         PKCS7_add_certificate(p7, ctx->signer_cert);
         if (ctx->certs) {
             for (i = 0; i < sk_X509_num(ctx->certs); ++i) {
-                X509 *cert = sk_X509_value(ctx->certs, i);
+                const X509 *cert = sk_X509_value(ctx->certs, i);
                 PKCS7_add_certificate(p7, cert);
             }
         }

@@ -170,7 +170,7 @@ int pkcs7_main(int argc, char **argv)
         }
 
         if (certs != NULL) {
-            X509 *x;
+            const X509 *x;
 
             for (i = 0; i < sk_X509_num(certs); i++) {
                 x = sk_X509_value(certs, i);

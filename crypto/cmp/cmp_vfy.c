@@ -15,7 +15,7 @@
 
 /* Verify a message protected by signature according to RFC section 5.1.3.3 */
 static int verify_signature(const OSSL_CMP_CTX *cmp_ctx,
-    const OSSL_CMP_MSG *msg, X509 *cert)
+    const OSSL_CMP_MSG *msg, const X509 *cert)
 {
     OSSL_CMP_PROTECTEDPART prot_part;
     EVP_PKEY *pubkey = NULL;
@@ -98,7 +98,7 @@ static int verify_PBMAC(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
  * Returns 1 on successful validation and 0 otherwise.
  */
 int OSSL_CMP_validate_cert_path(const OSSL_CMP_CTX *ctx,
-    X509_STORE *trusted_store, X509 *cert)
+    X509_STORE *trusted_store, const X509 *cert)
 {
     int valid = 0;
     X509_STORE_CTX *csc = NULL;
@@ -133,7 +133,7 @@ err:
     return valid;
 }
 
-static int verify_cb_cert(X509_STORE *ts, X509 *cert, int err)
+static int verify_cb_cert(X509_STORE *ts, const X509 *cert, int err)
 {
     X509_STORE_CTX_verify_cb verify_cb;
     X509_STORE_CTX *csc;
@@ -236,7 +236,7 @@ static int already_checked(const X509 *cert,
  * Returns 0 on error or not acceptable, else 1.
  */
 static int cert_acceptable(const OSSL_CMP_CTX *ctx,
-    const char *desc1, const char *desc2, X509 *cert,
+    const char *desc1, const char *desc2, const X509 *cert,
     const STACK_OF(X509) *already_checked1,
     const STACK_OF(X509) *already_checked2,
     const OSSL_CMP_MSG *msg)
@@ -314,7 +314,7 @@ static int cert_acceptable(const OSSL_CMP_CTX *ctx,
 }
 
 static int check_cert_path(const OSSL_CMP_CTX *ctx, X509_STORE *store,
-    X509 *scrt)
+    const X509 *scrt)
 {
     if (OSSL_CMP_validate_cert_path(ctx, store, scrt))
         return 1;
@@ -334,7 +334,7 @@ static int check_cert_path(const OSSL_CMP_CTX *ctx, X509_STORE *store,
  * the newly enrolled certificate received in the IP message.
  */
 static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
-    const OSSL_CMP_MSG *msg, X509 *scrt)
+    const OSSL_CMP_MSG *msg, const X509 *scrt)
 {
     int valid = 0;
     X509_STORE *store;
@@ -380,7 +380,7 @@ err:
     return valid;
 }
 
-static int check_msg_given_cert(const OSSL_CMP_CTX *ctx, X509 *cert,
+static int check_msg_given_cert(const OSSL_CMP_CTX *ctx, const X509 *cert,
     const OSSL_CMP_MSG *msg)
 {
     return cert_acceptable(ctx, "previously validated", "sender cert",
@@ -410,7 +410,7 @@ static int check_msg_with_certs(OSSL_CMP_CTX *ctx, const STACK_OF(X509) *certs,
     }
 
     for (i = 0; i < sk_X509_num(certs); i++) { /* certs may be NULL */
-        X509 *cert = sk_X509_value(certs, i);
+        const X509 *cert = sk_X509_value(certs, i);
 
         if (!ossl_assert(cert != NULL))
             return 0;
@@ -473,7 +473,7 @@ static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
  */
 static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
 {
-    X509 *scrt = ctx->validatedSrvCert; /* previous successful sender cert */
+    const X509 *scrt = ctx->validatedSrvCert; /* previous successful sender cert */
     GENERAL_NAME *sender = msg->header->sender;
     char *sname = NULL;
     char *skid_str = NULL;
@@ -575,7 +575,7 @@ end:
  */
 int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
 {
-    X509 *scrt;
+    const X509 *scrt;
 
     ossl_cmp_debug(ctx, "validating CMP message");
     if (ctx == NULL || msg == NULL
@@ -781,7 +781,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
         - num_untrusted;
     if (!res) {
         while (num_added-- > 0)
-            X509_free(sk_X509_shift(ctx->untrusted));
+            X509_free(sk_X509_shift(ctx->untrusted)); /* ignore warning, Bob will fix it */
         return 0;
     }
 

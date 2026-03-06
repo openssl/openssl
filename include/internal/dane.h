@@ -69,7 +69,7 @@ struct ssl_dane_st {
     STACK_OF(danetls_record) *trecs;
     STACK_OF(X509) *certs; /* DANE-TA(2) Cert(0) Full(0) certs */
     danetls_record *mtlsa; /* Matching TLSA record */
-    X509 *mcert; /* DANE matched cert */
+    const X509 *mcert; /* DANE matched cert */
     uint32_t umask; /* Usages present */
     int mdpth; /* Depth of matched cert */
     int pdpth; /* Depth of PKIX trust */

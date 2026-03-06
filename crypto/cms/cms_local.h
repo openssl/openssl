@@ -445,7 +445,7 @@ int ossl_cms_SignerIdentifier_get0_signer_id(CMS_SignerIdentifier *sid,
     ASN1_OCTET_STRING **keyid,
     X509_NAME **issuer,
     ASN1_INTEGER **sno);
-int ossl_cms_SignerIdentifier_cert_cmp(CMS_SignerIdentifier *sid, X509 *cert);
+int ossl_cms_SignerIdentifier_cert_cmp(CMS_SignerIdentifier *sid, const X509 *cert);
 
 CMS_ContentInfo *ossl_cms_CompressedData_create(int comp_nid,
     OSSL_LIB_CTX *libctx,
@@ -457,10 +457,10 @@ BIO *ossl_cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
 int ossl_cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
     X509_ALGOR *mdalg);
 
-int ossl_cms_ias_cert_cmp(CMS_IssuerAndSerialNumber *ias, X509 *cert);
-int ossl_cms_keyid_cert_cmp(ASN1_OCTET_STRING *keyid, X509 *cert);
-int ossl_cms_set1_ias(CMS_IssuerAndSerialNumber **pias, X509 *cert);
-int ossl_cms_set1_keyid(ASN1_OCTET_STRING **pkeyid, X509 *cert);
+int ossl_cms_ias_cert_cmp(CMS_IssuerAndSerialNumber *ias, const X509 *cert);
+int ossl_cms_keyid_cert_cmp(ASN1_OCTET_STRING *keyid, const X509 *cert);
+int ossl_cms_set1_ias(CMS_IssuerAndSerialNumber **pias, const X509 *cert);
+int ossl_cms_set1_keyid(ASN1_OCTET_STRING **pkeyid, const X509 *cert);
 
 BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     const CMS_CTX *ctx, int auth);
@@ -491,7 +491,7 @@ void ossl_cms_RecipientInfos_set_cmsctx(CMS_ContentInfo *cms);
 int ossl_cms_RecipientInfo_wrap_init(CMS_RecipientInfo *ri, const EVP_CIPHER *cipher);
 
 /* KARI routines */
-int ossl_cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri, X509 *recip,
+int ossl_cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri, const X509 *recip,
     EVP_PKEY *recipPubKey, X509 *originator,
     EVP_PKEY *originatorPrivKey,
     unsigned int flags,

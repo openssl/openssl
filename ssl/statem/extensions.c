@@ -78,10 +78,10 @@ static int init_certificate_authorities(SSL_CONNECTION *s,
 static EXT_RETURN tls_construct_certificate_authorities(SSL_CONNECTION *s,
     WPACKET *pkt,
     unsigned int context,
-    X509 *x,
+    const X509 *x,
     size_t chainidx);
 static int tls_parse_certificate_authorities(SSL_CONNECTION *s, PACKET *pkt,
-    unsigned int context, X509 *x,
+    unsigned int context, const X509 *x,
     size_t chainidx);
 #ifndef OPENSSL_NO_SRP
 static int init_srp(SSL_CONNECTION *s, unsigned int context);
@@ -106,10 +106,10 @@ static int final_psk(SSL_CONNECTION *s, unsigned int context, int sent);
 static int tls_init_compress_certificate(SSL_CONNECTION *sc, unsigned int context);
 static EXT_RETURN tls_construct_compress_certificate(SSL_CONNECTION *sc, WPACKET *pkt,
     unsigned int context,
-    X509 *x, size_t chainidx);
+    const X509 *x, size_t chainidx);
 static int tls_parse_compress_certificate(SSL_CONNECTION *sc, PACKET *pkt,
     unsigned int context,
-    X509 *x, size_t chainidx);
+    const X509 *x, size_t chainidx);
 
 /* Structure to define a built-in extension */
 typedef struct extensions_definition_st {
@@ -132,18 +132,18 @@ typedef struct extensions_definition_st {
     int (*init)(SSL_CONNECTION *s, unsigned int context);
     /* Parse extension sent from client to server */
     int (*parse_ctos)(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
-        X509 *x, size_t chainidx);
+        const X509 *x, size_t chainidx);
     /* Parse extension send from server to client */
     int (*parse_stoc)(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
-        X509 *x, size_t chainidx);
+        const X509 *x, size_t chainidx);
     /* Construct extension sent from server to client */
     EXT_RETURN (*construct_stoc)(SSL_CONNECTION *s, WPACKET *pkt,
         unsigned int context,
-        X509 *x, size_t chainidx);
+        const X509 *x, size_t chainidx);
     /* Construct extension sent from client to server */
     EXT_RETURN (*construct_ctos)(SSL_CONNECTION *s, WPACKET *pkt,
         unsigned int context,
-        X509 *x, size_t chainidx);
+        const X509 *x, size_t chainidx);
     /*
      * Finalise extension after parsing. Always called where an extensions was
      * initialised even if the extension was not present. |sent| is set to 1 if
@@ -912,10 +912,10 @@ err:
  * present this counted as success.
  */
 int tls_parse_extension(SSL_CONNECTION *s, TLSEXT_INDEX idx, int context,
-    RAW_EXTENSION *exts, X509 *x, size_t chainidx)
+    RAW_EXTENSION *exts, const X509 *x, size_t chainidx)
 {
     RAW_EXTENSION *currext = &exts[idx];
-    int (*parser)(SSL_CONNECTION *s, PACKET *pkt, unsigned int context, X509 *x,
+    int (*parser)(SSL_CONNECTION *s, PACKET *pkt, unsigned int context, const X509 *x,
         size_t chainidx)
         = NULL;
 
@@ -963,7 +963,7 @@ int tls_parse_extension(SSL_CONNECTION *s, TLSEXT_INDEX idx, int context,
  * its position in the |chainidx|, with 0 being the first certificate.
  */
 int tls_parse_all_extensions(SSL_CONNECTION *s, int context,
-    RAW_EXTENSION *exts, X509 *x,
+    RAW_EXTENSION *exts, const X509 *x,
     size_t chainidx, int fin)
 {
     size_t i, numexts = OSSL_NELEM(ext_defs);
@@ -1025,7 +1025,7 @@ int should_add_extension(SSL_CONNECTION *s, unsigned int extctx,
  */
 int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context,
-    X509 *x, size_t chainidx)
+    const X509 *x, size_t chainidx)
 {
     size_t i;
     int min_version, max_version = 0, reason;
@@ -1084,7 +1084,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
             i++, thisexd++) {
             EXT_RETURN (*construct)(SSL_CONNECTION *s, WPACKET *pkt,
                 unsigned int context,
-                X509 *x, size_t chainidx);
+                const X509 *x, size_t chainidx);
             EXT_RETURN ret;
 
 #ifndef OPENSSL_NO_ECH
@@ -1523,7 +1523,7 @@ static int init_certificate_authorities(SSL_CONNECTION *s, unsigned int context)
 static EXT_RETURN tls_construct_certificate_authorities(SSL_CONNECTION *s,
     WPACKET *pkt,
     unsigned int context,
-    X509 *x,
+    const X509 *x,
     size_t chainidx)
 {
     const STACK_OF(X509_NAME) *ca_sk = get_ca_names(s);
@@ -1551,7 +1551,7 @@ static EXT_RETURN tls_construct_certificate_authorities(SSL_CONNECTION *s,
 }
 
 static int tls_parse_certificate_authorities(SSL_CONNECTION *s, PACKET *pkt,
-    unsigned int context, X509 *x,
+    unsigned int context, const X509 *x,
     size_t chainidx)
 {
     if (!parse_ca_names(s, pkt))
@@ -2035,7 +2035,7 @@ static int tls_init_compress_certificate(SSL_CONNECTION *sc, unsigned int contex
 /* The order these are put into the packet imply a preference order: [brotli, zlib, zstd] */
 static EXT_RETURN tls_construct_compress_certificate(SSL_CONNECTION *sc, WPACKET *pkt,
     unsigned int context,
-    X509 *x, size_t chainidx)
+    const X509 *x, size_t chainidx)
 {
 #ifndef OPENSSL_NO_COMP_ALG
     int i;
@@ -2110,7 +2110,7 @@ static int tls_comp_in_pref(SSL_CONNECTION *sc, int alg)
 #endif
 
 int tls_parse_compress_certificate(SSL_CONNECTION *sc, PACKET *pkt, unsigned int context,
-    X509 *x, size_t chainidx)
+    const X509 *x, size_t chainidx)
 {
 #ifndef OPENSSL_NO_COMP_ALG
     PACKET supported_comp_algs;

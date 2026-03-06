@@ -1123,7 +1123,7 @@ int cms_main(int argc, char **argv)
             int tflags = flags | CMS_KEY_PARAM;
             /* This flag enforces allocating the EVP_PKEY_CTX for the recipient here */
             EVP_PKEY_CTX *pctx;
-            X509 *x = sk_X509_value(encerts, i);
+            const X509 *x = sk_X509_value(encerts, i);
             int res;
 
             for (kparam = key_first; kparam; kparam = kparam->next) {
@@ -1134,7 +1134,8 @@ int cms_main(int argc, char **argv)
                 if (ropt->idx == i)
                     break;
             }
-            ri = CMS_add1_recipient(cms, x, key, originator, tflags);
+            ri = CMS_add1_recipient(cms, (X509 *)x /*!!! breaks_const_X509 !!! */,
+                key, originator, tflags);
             if (ri == NULL)
                 goto end;
 

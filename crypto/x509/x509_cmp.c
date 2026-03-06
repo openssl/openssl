@@ -349,7 +349,8 @@ const X509 *X509_find_by_issuer_and_serial(const STACK_OF(X509) *sk, const X509_
     const ASN1_INTEGER *serial)
 {
     int i;
-    X509 x, *x509 = NULL;
+    X509 x;
+    const X509 *x509 = NULL;
 
     if (!sk)
         return NULL;
@@ -367,7 +368,7 @@ const X509 *X509_find_by_issuer_and_serial(const STACK_OF(X509) *sk, const X509_
 
 const X509 *X509_find_by_subject(const STACK_OF(X509) *sk, const X509_NAME *name)
 {
-    X509 *x509;
+    const X509 *x509;
     int i;
 
     for (i = 0; i < sk_X509_num(sk); i++) {
@@ -582,7 +583,7 @@ STACK_OF(X509) *X509_chain_up_ref(STACK_OF(X509) *chain)
     if (ret == NULL)
         return NULL;
     for (i = 0; i < sk_X509_num(ret); i++) {
-        X509 *x = sk_X509_value(ret, i);
+        const X509 *x = sk_X509_value(ret, i);
 
         if (!X509_up_ref(x))
             goto err;

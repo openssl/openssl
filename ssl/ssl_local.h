@@ -518,7 +518,7 @@ struct ssl_session_st {
     /* Peer raw public key, if available */
     EVP_PKEY *peer_rpk;
     /* This is the cert and type for the other end. */
-    X509 *peer;
+    const X509 *peer;
     /* Certificate chain peer sent. */
     STACK_OF(X509) *peer_chain;
     /*
@@ -880,7 +880,7 @@ struct ssl_ctx_st {
     void *default_passwd_callback_userdata;
 
     /* get client cert callback */
-    int (*client_cert_cb)(SSL *ssl, X509 **x509, EVP_PKEY **pkey);
+    int (*client_cert_cb)(SSL *ssl, const X509 **x509, EVP_PKEY **pkey);
 
     /* cookie generate callback */
     int (*app_gen_cookie_cb)(SSL *ssl, unsigned char *cookie,
@@ -2012,7 +2012,7 @@ int OSSL_COMP_CERT_up_ref(OSSL_COMP_CERT *c);
 #endif
 
 struct cert_pkey_st {
-    X509 *x509;
+    const X509 *x509;
     EVP_PKEY *privatekey;
     /* Chain for this certificate */
     STACK_OF(X509) *chain;
@@ -2466,9 +2466,9 @@ __owur int ssl_cert_set0_chain(SSL_CONNECTION *s, SSL_CTX *ctx,
     STACK_OF(X509) *chain);
 __owur int ssl_cert_set1_chain(SSL_CONNECTION *s, SSL_CTX *ctx,
     STACK_OF(X509) *chain);
-__owur int ssl_cert_add0_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x);
-__owur int ssl_cert_add1_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x);
-__owur int ssl_cert_select_current(CERT *c, X509 *x);
+__owur int ssl_cert_add0_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, const X509 *x);
+__owur int ssl_cert_add1_chain_cert(SSL_CONNECTION *s, SSL_CTX *ctx, const X509 *x);
+__owur int ssl_cert_select_current(CERT *c, const X509 *x);
 __owur int ssl_cert_set_current(CERT *c, long arg);
 void ssl_cert_set_cert_cb(CERT *c, int (*cb)(SSL *ssl, void *arg), void *arg);
 
@@ -2706,7 +2706,7 @@ __owur int tls13_export_keying_material_early(SSL_CONNECTION *s,
 __owur int tls1_alert_code(int code);
 __owur int tls13_alert_code(int code);
 
-__owur int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL_CONNECTION *s);
+__owur int ssl_check_srvr_ecc_cert_and_alg(const X509 *x, SSL_CONNECTION *s);
 
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
@@ -2774,7 +2774,7 @@ __owur int tls1_set_raw_sigalgs(CERT *c, const uint16_t *psigs, size_t salglen,
     int client);
 __owur int tls1_set_sigalgs(CERT *c, const int *salg, size_t salglen,
     int client);
-int tls1_check_chain(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pk,
+int tls1_check_chain(SSL_CONNECTION *s, const X509 *x, EVP_PKEY *pk,
     STACK_OF(X509) *chain, int idx);
 void tls1_set_cert_validity(SSL_CONNECTION *s);
 
@@ -2784,10 +2784,10 @@ __owur int ssl_validate_ct(SSL_CONNECTION *s);
 
 __owur EVP_PKEY *ssl_get_auto_dh(SSL_CONNECTION *s);
 
-__owur int ssl_security_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x, int vfy,
+__owur int ssl_security_cert(SSL_CONNECTION *s, SSL_CTX *ctx, const X509 *x, int vfy,
     int is_ee);
 __owur int ssl_security_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk,
-    X509 *ex, int vfy);
+    const X509 *ex, int vfy);
 
 int tls_choose_sigalg(SSL_CONNECTION *s, int fatalerrs);
 
@@ -2879,8 +2879,8 @@ int ossl_tls_add_custom_ext_intern(SSL_CTX *ctx, custom_ext_methods *exts,
 __owur int custom_ext_parse(SSL_CONNECTION *s, unsigned int context,
     unsigned int ext_type,
     const unsigned char *ext_data, size_t ext_size,
-    X509 *x, size_t chainidx);
-__owur int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
+    const X509 *x, size_t chainidx);
+__owur int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, const X509 *x,
     size_t chainidx, int maxversion);
 
 __owur int custom_exts_copy(custom_ext_methods *dst,

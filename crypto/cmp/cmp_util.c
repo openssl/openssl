@@ -209,7 +209,7 @@ int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
     if (certs == NULL)
         return 1;
     for (i = 0; i < sk_X509_num(certs); i++) {
-        X509 *cert = sk_X509_value(certs, i);
+        const X509 *cert = sk_X509_value(certs, i);
 
         if (!only_self_signed || X509_self_signed(cert, 0) == 1)
             if (!X509_STORE_add_cert(store, cert)) /* ups cert ref counter */
