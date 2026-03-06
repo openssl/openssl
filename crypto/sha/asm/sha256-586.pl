@@ -99,6 +99,13 @@ if ($xmm && !$avx && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|based on LLV
 	$avx = ($2>=3.0) + ($2>3.0);
 }
 
+if ($xmm && !$avx && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__`
+	=~ /#define __clang_major__.([0-9]+)/) {
+	if ($1) {
+		$avx = ($1>=11); #icx started with clang 11
+	}
+}
+
 $shaext=$xmm;	### set to zero if compiling for 1.0.1
 
 $unroll_after = 64*4;	# If pre-evicted from L1P cache first spin of
