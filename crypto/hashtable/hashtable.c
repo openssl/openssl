@@ -81,9 +81,11 @@
 #if defined(__GNUC__) || defined(__CLANG__)
 #define PREFETCH_NEIGHBORHOOD(x) __builtin_prefetch(x.entries)
 #define PREFETCH(x) __builtin_prefetch(x)
+#define ALIGN __attribute__((aligned(8)))
 #else
 #define PREFETCH_NEIGHBORHOOD(x)
 #define PREFETCH(x)
+#define ALIGN
 #endif
 
 /*
@@ -111,7 +113,7 @@ struct ht_internal_value_st {
 struct ht_neighborhood_entry_st {
     uint64_t hash;
     struct ht_internal_value_st *value;
-} __attribute__((aligned(8)));
+} ALIGN;
 
 struct ht_neighborhood_st {
     struct ht_neighborhood_entry_st entries[NEIGHBORHOOD_LEN];
