@@ -286,12 +286,13 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
         }
     }
     if (EVP_Q_mac(libctx, "HMAC", propq, md_name, NULL, key, keylen,
-            p12->authsafes->d.data->data,  p12->authsafes->d.data->length,
-            mac, md_sz, &outlen) == NULL)
+            p12->authsafes->d.data->data, p12->authsafes->d.data->length,
+            mac, md_sz, &outlen)
+        == NULL)
         goto err;
     if (outlen > UINT_MAX)
         goto err;
-    *maclen = outlen;
+    *maclen = (unsigned int)outlen;
     ret = 1;
 err:
     OPENSSL_cleanse(key, sizeof(key));
