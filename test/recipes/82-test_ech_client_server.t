@@ -131,6 +131,8 @@ sub start_ech_client_server
                 ;
             } elsif (/^Setting secondary/) {
                 ;
+            } elsif (/^Failed reading from/) {
+                ;
             } else {
                 last;
             }
