@@ -18,7 +18,8 @@
 #include "internal/hashtable.h"
 #include "internal/tsan_assist.h"
 #include "internal/list.h"
-#include "internal/refcount.h"
+#include "internal/hashfunc.h"
+#include "internal/time.h"
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
 #include <openssl/trace.h>
@@ -48,8 +49,22 @@
 #define IMPL_CACHE_FLUSH_THRESHOLD (CACHE_SIZE / NUM_SHARDS)
 
 #if defined(__GNUC__) || defined(__clang__)
+/*
+ * ALLOW_VLA enables the use of dynamically sized arrays
+ * in ossl_method_store_cache_[get|set].  This is done for
+ * performance reasons, as moving the stack pointer is
+ * way faster than getting memory from heap.  This introduces
+ * the potential for stack overflows, but we check for that
+ * by capping the size of the buffer to a large value 2048 bytes
+ * as there shouldn't be any property queries that long.
+ */
 #define ALLOW_VLA
 #endif
+
+/*
+ * Max allowed length of our property query
+ */
+#define MAX_PROP_QUERY 2048
 
 typedef struct {
     void *method;
@@ -1182,8 +1197,18 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
          * If this is our first pass, we need to generate a random seed
          * for the culling
          */
-        if (sa->seed == 0)
-            RAND_bytes_ex(store->ctx, (unsigned char *)&sa->seed, sizeof(uint64_t), 0);
+        if (sa->seed == 0) {
+            /*
+             * We should just call RAND_bytes_ex here, to get some random data, but
+             * unfortunately, we're to early in the setup to do so, as calling RAND_BYTES_ex
+             * will have to fetch a DRBG, which will recurse into this path, causing all
+             * sorts of lock issues.  On the up side, we don't actually need cryptographically
+             * validated random data, we just need something that would be hard for an
+             * attacker to guess, so lets use a hashed time stamp.
+             */
+            OSSL_TIME ts = ossl_time_now();
+            sa->seed = ossl_fnv1a_hash((uint8_t *)&ts, sizeof(OSSL_TIME));
+        }
         /*
          * Cull between 1 and 25% of this cache
          */
