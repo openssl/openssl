@@ -1093,7 +1093,7 @@ int ossl_x509_likely_issued(const X509 *issuer, const X509 *subject)
          * are semantically the same cert because they are identical
          * or at least have the same issuer and serial number,
          * which (for any sane cert issuer) implies equality of the two certs.
-         * In this case, for consisisteny with chain building and validation,
+         * In this case, for consistency with chain building and validation,
          * we make our issuance judgment depend on the presence of EXFLAG_SS.
          * This is used for corrected chain building in the corner case of
          * a self-issued but not actually self-signed trust anchor cert
