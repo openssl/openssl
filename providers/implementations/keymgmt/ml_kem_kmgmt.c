@@ -383,16 +383,15 @@ static int check_pubenc(const uint8_t *pubenc, ML_KEM_KEY *key)
     if (buf != NULL
         && ossl_ml_kem_encode_public_key(buf, len, key))
         ret = memcmp(buf, pubenc, len) == 0;
+    if (!ret) {
+        if (buf != NULL)
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
+                "explicit %s public key does not match seed",
+                key->vinfo->algorithm_name);
+        ossl_ml_kem_key_reset(key);
+    }
     OPENSSL_free(buf);
-    if (ret)
-        return 1;
-
-    if (buf != NULL)
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
-            "explicit %s public key does not match seed",
-            key->vinfo->algorithm_name);
-    ossl_ml_kem_key_reset(key);
-    return 0;
+    return ret;
 }
 
 static int ml_kem_key_fromdata(ML_KEM_KEY *key,
