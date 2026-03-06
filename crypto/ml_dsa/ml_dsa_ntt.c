@@ -34,6 +34,25 @@
  * which is then Montgomery reduced, removing the excess factor of R = 2^32.
  */
 
+#ifdef MLDSA_NTT_ASM
+extern void mldsa_poly_ntt_mult(POLY *out, const POLY *lhs, const POLY *rhs);
+void ossl_ml_dsa_poly_ntt_mult(const POLY *lhs, const POLY *rhs, POLY *out)
+{
+    mldsa_poly_ntt_mult(out, lhs, rhs);
+}
+
+extern void mldsa_poly_ntt(uint32_t *p);
+void ossl_ml_dsa_poly_ntt(POLY *p)
+{
+    mldsa_poly_ntt(p->coeff);
+}
+
+extern void mldsa_poly_ntt_inverse(uint32_t *p);
+void ossl_ml_dsa_poly_ntt_inverse(POLY *p)
+{
+    mldsa_poly_ntt_inverse(p->coeff);
+}
+#else
 /*
  * The table in FIPS 204 Appendix B uses the following formula
  * zeta[k]= 1753^bitrev(k) mod q for (k = 1..255) (The first value is not used).
@@ -191,3 +210,4 @@ void ossl_ml_dsa_poly_ntt_inverse(POLY *p)
     for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS; i++)
         p->coeff[i] = reduce_montgomery((uint64_t)p->coeff[i] * (uint64_t)inverse_degree_montgomery);
 }
+#endif
