@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-X509_check_issued,
-X509_check_akid - check if certificate is apparently issued by another one
+X509_check_issued, X509_check_akid
+- helper functions for checking the certificate issuing relation
 
 =head1 SYNOPSIS
 
@@ -26,9 +26,8 @@ It does not actually check the certificate signature. An error is returned
 if the I<issuer> or the I<subject> are incomplete certificates.
 
 X509_check_akid() is a more low-level function.
-It assumes that the internal B<ossl_x509v3_cache_extensions()> function
-(or equivalently, L<X509_check_purpose(3)> with its I<id> parameter being -1)
-has already been called to fill in various internal fields of I<issuer>.
+It assumes that various internal fields of I<issuer> have already been filled in,
+for instance by calling L<X509_check_purpose(3)> with its I<id> parameter being -1.
 It checks if all sub-fields of the authority key identifier information I<akid>,
 as far as present, match the respective B<subjectKeyIdentifier> extension (if
 present in I<issuer>), B<serialNumber> field, and B<issuer> fields of I<issuer>.
