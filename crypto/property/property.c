@@ -1092,6 +1092,7 @@ static ossl_inline int ossl_method_store_cache_get_locked(OSSL_METHOD_STORE *sto
                     goto err;
                 r->generic_hash = generic_hash;
                 r->specific_hash = 0;
+                r->used = 0;
                 ossl_list_lru_entry_init_elem(r);
                 HT_INIT_KEY_CACHED(&key, generic_hash);
                 /*
@@ -1267,6 +1268,7 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
     if (p != NULL) {
         p->saptr = sa;
         p->nid = nid;
+        p->used = 0;
         ossl_list_lru_entry_init_elem(p);
         p->method.method = method;
         p->method.up_ref = method_up_ref;
