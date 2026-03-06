@@ -245,7 +245,8 @@ static ossl_inline void impl_cache_free(QUERY *elem)
     STORED_ALGORITHMS *sa = elem->saptr;
 
     if (elem != NULL) {
-        ossl_list_lru_entry_remove(&sa->lru_list, elem);
+        if (elem->ossl_list_lru_entry.list != NULL)
+            ossl_list_lru_entry_remove(&sa->lru_list, elem);
         ossl_method_free(&elem->method);
         OPENSSL_free(elem);
     }
