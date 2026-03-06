@@ -151,7 +151,8 @@ static int PBMAC1_PBKDF2_HMAC(OSSL_LIB_CTX *ctx, const char *propq,
     if (pbkdf2_param->keylength != NULL)
         keylen = ASN1_INTEGER_get(pbkdf2_param->keylength);
     if (keylen <= 0 || keylen > EVP_MAX_MD_SIZE) {
-        ERR_raise_data(ERR_LIB_PKCS12, PKCS12_R_PARSE_ERROR, "Invalid Key length");
+        ERR_raise_data(ERR_LIB_PKCS12, PKCS12_R_PARSE_ERROR,
+            "Invalid Key length (%d is not in the range 1..64)", keylen);
         goto err;
     }
 

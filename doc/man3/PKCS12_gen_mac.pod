@@ -37,6 +37,8 @@ The default key generation mechanism used is PKCS12KDF.
 
 PKCS12_verify_mac() verifies the PKCS#12 object's HMAC using the supplied
 password.
+If the PKCS12 macdata contains PBMAC1 an error will occur if the related PBKDF2
+parameters are missing, or if the associated key length is not in the range 1 to 64.
 
 PKCS12_setup_mac() sets the MAC part of the PKCS#12 structure with the supplied
 parameters.
