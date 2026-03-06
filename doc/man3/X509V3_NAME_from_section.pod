@@ -1,0 +1,55 @@
+=pod
+
+=head1 NAME
+
+X509V3_NAME_from_section - build an X509_NAME from a config file section
+
+=head1 SYNOPSIS
+
+ #include <openssl/x509v3.h>
+
+ int X509V3_NAME_from_section(X509_NAME *nm,
+                              STACK_OF(CONF_VALUE) *dn_sk,
+                              unsigned long chtype);
+
+=head1 DESCRIPTION
+
+X509V3_NAME_from_section() builds an B<X509_NAME> structure I<nm> from
+a stack of B<CONF_VALUE> entries I<dn_sk>. Each entry's I<name> specifies
+a distinguished name component (such as "CN" or "O") and its I<value>
+supplies the value for that component. The I<chtype> parameter specifies
+the ASN.1 string type to use (typically B<MBSTRING_ASC> or B<MBSTRING_UTF8>).
+
+In each B<CONF_VALUE>, any characters up to and including the first
+C<:>, C<,>, or C<.> in I<name> are skipped, allowing multiple entries
+with the same attribute type to be specified in a configuration file section.
+For example, the names "1.CN", "2.CN", "O" would all be valid, where
+the prefixes "1." and "2." are stripped before processing.
+
+If the attribute name (after stripping) starts with C<+>, the component is
+added as a multi-valued RDN (relative distinguished name) to the previous
+entry, rather than as a new RDN.
+
+=head1 RETURN VALUES
+
+X509V3_NAME_from_section() returns 1 on success and 0 on error.
+
+=head1 SEE ALSO
+
+L<X509_NAME_add_entry_by_txt(3)>,
+L<X509V3_set_ctx(3)>
+
+=head1 HISTORY
+
+This function has been available since OpenSSL 0.9.7.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
