@@ -480,10 +480,15 @@ static const struct {
 static const char *cms_mdless_signing(EVP_PKEY *pkey)
 {
     unsigned int i;
+    int def_nid = NID_undef;
 
     for (i = 0; key2data[i].name != NULL; i++) {
         if (EVP_PKEY_is_a(pkey, key2data[i].name))
             return key2data[i].name;
+    }
+    if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) <= 0) {
+        /* Key doesn't have default digest, it's mdless */
+        return EVP_PKEY_get0_type_name(pkey);
     }
     return NULL;
 }
@@ -553,7 +558,11 @@ static int ossl_cms_adjust_md(EVP_PKEY *pk, const EVP_MD **md, unsigned int flag
         return 1;
     }
 
+    if (*md != NULL)
+        (void)ERR_set_mark(); /* No error if no default md and user-supplied md is set */
     tmp_md = ossl_cms_get_default_md(pk, &md_a_must);
+    if (*md != NULL)
+        (void)ERR_pop_to_mark();
     if (md_a_must)
         *md = tmp_md;
     else if (*md == NULL)
