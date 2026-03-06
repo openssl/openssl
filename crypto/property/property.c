@@ -980,7 +980,7 @@ static void QUERY_cache_select_cull(ALGORITHM *alg, STORED_ALGORITHMS *sa, size_
     uint64_t seed = sa->seed;
     size_t culled = 0;
     uint64_t hash = 0;
-    uint32_t used;
+    uint32_t used = 0;
     QUERY *q, *qn;
     QUERY_KEY key;
 
