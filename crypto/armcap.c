@@ -145,7 +145,9 @@ static unsigned long getauxval(unsigned long key)
 /* AT_HWCAP2 */
 #define OSSL_HWCAP2 26
 #define OSSL_HWCAP2_SVE2 (1 << 1)
+#define OSSL_HWCAP2_SVEAES (1 << 2)    /* FEAT_SVE_AES - AES in SVE/SSVE mode */
 #define OSSL_HWCAP2_RNG (1 << 16)
+#define OSSL_HWCAP2_SME (1 << 23)     /* FEAT_SME - Scalable Matrix Extension */
 #endif
 
 uint32_t _armv7_tick(void);
@@ -217,6 +219,7 @@ void _armv8_eor3_probe(void);
 void _armv8_sve_probe(void);
 void _armv8_sve2_probe(void);
 void _armv8_rng_probe(void);
+void _armv9_sme_probe(void);
 #endif
 #endif /* !__APPLE__ && !OSSL_IMPLEMENT_GETAUXVAL */
 
@@ -346,11 +349,26 @@ void OPENSSL_cpuid_setup(void)
     if (getauxval(OSSL_HWCAP) & OSSL_HWCAP_SVE)
         OPENSSL_armcap_P |= ARMV8_SVE;
 
-    if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_SVE2)
-        OPENSSL_armcap_P |= ARMV9_SVE2;
+    {
+        unsigned long hwcap2 = getauxval(OSSL_HWCAP2);
 
-    if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_RNG)
-        OPENSSL_armcap_P |= ARMV8_RNG;
+        if (hwcap2 & OSSL_HWCAP2_SVE2)
+            OPENSSL_armcap_P |= ARMV9_SVE2;
+
+        if (hwcap2 & OSSL_HWCAP2_RNG)
+            OPENSSL_armcap_P |= ARMV8_RNG;
+
+        if (hwcap2 & OSSL_HWCAP2_SME)
+            OPENSSL_armcap_P |= ARMV9_SME;
+
+        /*
+         * FEAT_SME_AES: AES instructions (AESE/AESD) available in streaming
+         * SVE mode.  Requires both SME (for streaming mode itself) and
+         * FEAT_SVE_AES (for the z-register AES instructions).
+         */
+        if ((hwcap2 & OSSL_HWCAP2_SME) && (hwcap2 & OSSL_HWCAP2_SVEAES))
+            OPENSSL_armcap_P |= ARMV9_SME_AES;
+    }
 #endif
 
 #else /* !__APPLE__ && !OSSL_IMPLEMENT_GETAUXVAL */
@@ -394,6 +412,15 @@ void OPENSSL_cpuid_setup(void)
     OPENSSL_armcap_P |= arm_probe_for(_armv8_sve_probe, ARMV8_SVE);
     OPENSSL_armcap_P |= arm_probe_for(_armv8_sve2_probe, ARMV9_SVE2);
     OPENSSL_armcap_P |= arm_probe_for(_armv8_rng_probe, ARMV8_RNG);
+    OPENSSL_armcap_P |= arm_probe_for(_armv9_sme_probe, ARMV9_SME);
+    /*
+     * For FEAT_SME_AES in the SIGILL path, conservatively require both
+     * FEAT_SME and FEAT_AES (hardware AES crypto extension) to be present.
+     * We cannot safely probe AESE in streaming SVE mode via SIGILL since
+     * SMSTART/SMSTOP would be needed around it.
+     */
+    if ((OPENSSL_armcap_P & ARMV9_SME) && (OPENSSL_armcap_P & ARMV8_AES))
+        OPENSSL_armcap_P |= ARMV9_SME_AES;
 #endif
 
     /*

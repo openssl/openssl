@@ -867,7 +867,7 @@ IF[{- !$disabled{tests} -}]
   IF[1]
     PROGRAMS{noinst}=asn1_internal_test modes_internal_test x509_internal_test \
                      tls13encryptiontest wpackettest ctype_internal_test \
-                     rdcpu_sanitytest property_test ideatest rsa_mp_test \
+                     rdcpu_sanitytest arm_sme_test property_test ideatest rsa_mp_test \
                      rsa_sp800_56b_test bn_internal_test ecdsatest rsa_test \
                      rc2test rc4test rc5test hmactest ffc_internal_test \
                      asn1_dsa_internal_test dsatest dsa_no_digest_size_test \
@@ -1060,6 +1060,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[rdcpu_sanitytest]=rdcpu_sanitytest.c
     INCLUDE[rdcpu_sanitytest]=../include ../apps/include ../crypto
     DEPEND[rdcpu_sanitytest]=../libcrypto libtestutil.a
+
+    SOURCE[arm_sme_test]=arm_sme_test.c
+    INCLUDE[arm_sme_test]=../include ../apps/include ../crypto
+    DEPEND[arm_sme_test]=../libcrypto.a libtestutil.a
 
     SOURCE[rsa_sp800_56b_test]=rsa_sp800_56b_test.c
     INCLUDE[rsa_sp800_56b_test]=.. ../include ../crypto/rsa ../apps/include
