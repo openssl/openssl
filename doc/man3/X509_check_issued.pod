@@ -3,7 +3,7 @@
 =head1 NAME
 
 X509_check_issued, X509_check_akid
-- helper functions for checking the certificate issuing relation
+- helper functions to check whether one certificate is a potential issuer of another certificate
 
 =head1 SYNOPSIS
 
@@ -28,9 +28,8 @@ if the I<issuer> or the I<subject> are incomplete certificates.
 X509_check_akid() is a more low-level function.
 It assumes that various internal fields of I<issuer> have already been filled in,
 for instance by calling L<X509_check_purpose(3)> with its I<id> parameter being -1.
-It checks if all sub-fields of the authority key identifier information I<akid>,
-as far as present, match the respective B<subjectKeyIdentifier> extension (if
-present in I<issuer>), B<serialNumber> field, and B<issuer> fields of I<issuer>.
+It checks whether the fields of the subject certificate's authority key identifier I<akid>,
+match the corresponding fields of the I<issuer> certificate.
 In more detail:
 It returns B<X509_V_OK> if I<akid> is NULL (because this means no restriction)
 or all the following conditions are met:

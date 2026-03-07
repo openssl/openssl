@@ -104,7 +104,7 @@ This resets to the any purpose if I<purpose> is B<X509_PURPOSE_DEFAULT_ANY>.
 =head1 NOTES
 
 X509_check_purpose() fills in various internal fields of the certificate structure I<x>.
-Despite this, since OpenSSL 4.0 its I<x> argument is of type I<const X509 *>.
+This is safe despite the I<x> argument's type change to I<const X509 *> as of OpenSSL 4.0.
 
 =head1 RETURN VALUES
 
