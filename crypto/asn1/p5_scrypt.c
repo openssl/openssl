@@ -17,6 +17,8 @@
 #include <openssl/rand.h>
 #include "crypto/evp.h"
 
+#include <crypto/asn1.h>
+
 #ifndef OPENSSL_NO_SCRYPT
 /* PKCS#5 scrypt password based encryption structures */
 

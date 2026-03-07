@@ -17,6 +17,8 @@
 
 #include "testutil.h"
 
+#include <crypto/asn1.h>
+
 static const char *infile;
 
 static int test_pathlen(void)

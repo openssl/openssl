@@ -258,15 +258,15 @@ static char *app_get_pass(const char *arg, int keepbio)
             }
         } else {
             /* argument syntax error; do not reveal too much about arg */
-            tmp = strchr(arg, ':');
-            if (tmp == NULL || tmp - arg > PASS_SOURCE_SIZE_MAX)
+            const char *arg_ptr = strchr(arg, ':');
+            if (arg_ptr == NULL || arg_ptr - arg > PASS_SOURCE_SIZE_MAX)
                 BIO_printf(bio_err,
                     "Invalid password argument, missing ':' within the first %d chars\n",
                     PASS_SOURCE_SIZE_MAX + 1);
             else
                 BIO_printf(bio_err,
                     "Invalid password argument, starting with \"%.*s\"\n",
-                    (int)(tmp - arg + 1), arg);
+                    (int)(arg_ptr - arg + 1), arg);
             return NULL;
         }
     }
@@ -682,12 +682,8 @@ static void warn_cert(const char *uri, X509 *cert, int warn_EE,
     int error;
     uint32_t ex_flags = X509_get_extension_flags(cert);
 
-    if (!X509_check_certificate_times(vpm, cert, &error)) {
-        char msg[128];
-
-        ERR_error_string_n(error, msg, sizeof(msg));
-        warn_cert_msg(uri, cert, msg);
-    }
+    if (!X509_check_certificate_times(vpm, cert, &error))
+        warn_cert_msg(uri, cert, X509_verify_cert_error_string(error));
 
     if (warn_EE && (ex_flags & EXFLAG_V1) == 0 && (ex_flags & EXFLAG_CA) == 0)
         warn_cert_msg(uri, cert, "is not a CA cert");
@@ -1169,6 +1165,112 @@ end:
     return 1;
 }
 
+int load_rpk_file(SSL *ssl, const char *file)
+{
+    BIO *in = BIO_new_file(file, "r");
+    char *name = NULL;
+    char *header = NULL;
+    unsigned char *buf = NULL;
+    long buflen;
+    int ret = 1;
+    int found = 0;
+
+    if (in == NULL)
+        return ret;
+
+    ERR_set_mark();
+    while (ret != 0) {
+        PKCS8_PRIV_KEY_INFO *p8;
+        EVP_PKEY *pkey = NULL;
+        X509 *cert = NULL;
+        const unsigned char *p;
+        int pkey_type = NID_undef;
+        X509 *(*d2i)(X509 **, const unsigned char **, long);
+
+        OPENSSL_free(name);
+        OPENSSL_free(header);
+        OPENSSL_free(buf);
+        name = header = NULL;
+        buf = NULL;
+
+        if (!PEM_read_bio(in, &name, &header, &buf, &buflen)) {
+            if (ERR_GET_REASON(ERR_peek_last_error()) != PEM_R_NO_START_LINE)
+                ret = 0;
+            break;
+        }
+        p = buf;
+
+#define WHEN_PEM_X509(name, f)                \
+    ((d2i = f),                               \
+        (strcmp((name), PEM_STRING_X509) == 0 \
+            || strcmp((name), PEM_STRING_X509_OLD) == 0))
+
+#define WHEN_PEM_X509_AUX(name, f) \
+    ((d2i = f),                    \
+        (strcmp((name), PEM_STRING_X509_TRUSTED) == 0))
+
+#define WHEN_PKEY_TYPE(name, str, type) \
+    ((pkey_type = type), (strcmp((name), str) == 0))
+
+        if (strcmp(name, PEM_STRING_PUBLIC) == 0) {
+            pkey = d2i_PUBKEY(NULL, &p, buflen);
+            if (p - buf != buflen || pkey == NULL) {
+                BIO_printf(bio_err, "Error reading %s in %s\n", name, file);
+                ret = 0;
+            } else if (!SSL_add_expected_rpk(ssl, pkey)) {
+                BIO_printf(bio_err, "Error adding RPK from %s in %s\n", name, file);
+                ret = 0;
+            } else {
+                found = 1;
+            }
+            EVP_PKEY_free(pkey);
+        } else if (WHEN_PEM_X509(name, d2i_X509)
+            || WHEN_PEM_X509_AUX(name, d2i_X509_AUX)) {
+            cert = d2i(NULL, &p, buflen);
+            if (p - buf != buflen || cert == NULL) {
+                BIO_printf(bio_err, "Error reading %s in %s\n", name, file);
+                ret = 0;
+            } else if ((pkey = X509_get0_pubkey(cert)) == NULL
+                || !SSL_add_expected_rpk(ssl, pkey)) {
+                BIO_printf(bio_err, "Error adding RPK from %s in %s\n", name, file);
+                ret = 0;
+            } else {
+                found = 1;
+            }
+            X509_free(cert);
+        } else if (WHEN_PKEY_TYPE(name, PEM_STRING_PKCS8INF, NID_undef) == 0
+            || WHEN_PKEY_TYPE(name, PEM_STRING_RSA, EVP_PKEY_RSA)
+            || WHEN_PKEY_TYPE(name, PEM_STRING_ECPRIVATEKEY, EVP_PKEY_EC)
+            || WHEN_PKEY_TYPE(name, PEM_STRING_DSA, EVP_PKEY_DSA)) {
+            if (pkey_type != NID_undef) {
+                pkey = d2i_PrivateKey(pkey_type, 0, &p, buflen);
+            } else {
+                if ((p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, buflen)) != NULL) {
+                    pkey = EVP_PKCS82PKEY(p8);
+                    PKCS8_PRIV_KEY_INFO_free(p8);
+                }
+            }
+            if (p - buf != buflen || pkey == NULL) {
+                BIO_printf(bio_err, "Error reading %s in %s\n", name, file);
+                ret = 0;
+            } else if (!SSL_add_expected_rpk(ssl, pkey)) {
+                BIO_printf(bio_err, "Error adding RPK from %s in %s\n", name, file);
+                ret = 0;
+            } else {
+                found = 1;
+            }
+            EVP_PKEY_free(pkey);
+        }
+    }
+
+    OPENSSL_free(name);
+    OPENSSL_free(header);
+    OPENSSL_free(buf);
+    ERR_pop_to_mark();
+    BIO_free(in);
+    return found && ret;
+}
+
 #define X509V3_EXT_UNKNOWN_MASK (0xfL << 16)
 #define X509V3_EXT_DEFAULT 0 /* Return error for unknown exts */
 #define X509V3_EXT_ERROR_UNKNOWN (1L << 16) /* Print error for unknown exts */
@@ -1280,8 +1382,8 @@ int copy_extensions(X509 *x, X509_REQ *req, int copy_type)
     exts = X509_REQ_get_extensions(req);
 
     for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
-        X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
-        ASN1_OBJECT *obj = X509_EXTENSION_get_object(ext);
+        const X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
+        const ASN1_OBJECT *obj = X509_EXTENSION_get_object(ext);
         int idx = X509_get_ext_by_OBJ(x, obj, -1);
 
         /* Does extension exist in target? */
@@ -2386,32 +2488,24 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
         && do_pkey_ctx_init(pkctx, sigopts);
 }
 
-static int adapt_keyid_ext(X509 *cert, X509V3_CTX *ext_ctx,
-    const char *name, const char *value, int add_default)
+int do_EXT_add_nconf(CONF *conf1, CONF *conf2, X509V3_CTX *ctx,
+    X509 *cert, const char *msg, const char *sect)
 {
-    const STACK_OF(X509_EXTENSION) *exts = X509_get0_extensions(cert);
-    X509_EXTENSION *new_ext = X509V3_EXT_nconf(NULL, ext_ctx, name, value);
-    int idx, rv = 0;
+    X509V3_set_nconf(ctx, conf1);
+    if (X509V3_EXT_add_nconf(conf2, ctx, sect != NULL ? sect : "default", cert))
+        return 1;
+    BIO_printf(bio_err, msg, sect);
+    return 0;
+}
 
-    if (new_ext == NULL)
-        return rv;
-
-    idx = X509v3_get_ext_by_OBJ(exts, X509_EXTENSION_get_object(new_ext), -1);
-    if (idx >= 0) {
-        X509_EXTENSION *found_ext = X509v3_get_ext(exts, idx);
-        ASN1_OCTET_STRING *encoded = X509_EXTENSION_get_data(found_ext);
-        int disabled = ASN1_STRING_length(encoded) <= 2; /* indicating "none" */
-
-        if (disabled) {
-            X509_delete_ext(cert, idx);
-            X509_EXTENSION_free(found_ext);
-        } /* else keep existing key identifier, which might be outdated */
-        rv = 1;
-    } else {
-        rv = !add_default || X509_add_ext(cert, new_ext, -1);
-    }
-    X509_EXTENSION_free(new_ext);
-    return rv;
+int do_EXT_REQ_add_nconf(CONF *conf1, CONF *conf2, X509V3_CTX *ctx,
+    X509_REQ *req, const char *msg, const char *sect)
+{
+    X509V3_set_nconf(ctx, conf1);
+    if (X509V3_EXT_REQ_add_nconf(conf2, ctx, sect, req))
+        return 1;
+    BIO_printf(bio_err, msg, sect);
+    return 0;
 }
 
 int cert_matches_key(const X509 *cert, const EVP_PKEY *pkey)
@@ -2428,32 +2522,14 @@ int cert_matches_key(const X509 *cert, const EVP_PKEY *pkey)
 int do_X509_sign(X509 *cert, int force_v1, EVP_PKEY *pkey, const char *md,
     STACK_OF(OPENSSL_STRING) *sigopts, X509V3_CTX *ext_ctx)
 {
-    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
-    int self_sign;
+    EVP_MD_CTX *mctx;
     int rv = 0;
 
-    if (!force_v1) {
-        if (!X509_set_version(cert, X509_VERSION_3))
-            goto end;
-
-        /*
-         * Add default SKID before AKID such that AKID can make use of it
-         * in case the certificate is self-signed
-         */
-        /* Prevent X509_V_ERR_MISSING_SUBJECT_KEY_IDENTIFIER */
-        if (!adapt_keyid_ext(cert, ext_ctx, "subjectKeyIdentifier", "hash", 1))
-            goto end;
-        /* Prevent X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER */
-        self_sign = cert_matches_key(cert, pkey);
-        if (!adapt_keyid_ext(cert, ext_ctx, "authorityKeyIdentifier",
-                "keyid, issuer", !self_sign))
-            goto end;
-    }
-    /* May add further measures for ensuring RFC 5280 compliance, see #19805 */
-
-    if (mctx != NULL && do_sign_init(mctx, pkey, md, sigopts) > 0)
+    if (!force_v1 && !X509_set_version(cert, X509_VERSION_3))
+        return 0;
+    if ((mctx = EVP_MD_CTX_new()) != NULL
+        && do_sign_init(mctx, pkey, md, sigopts) > 0)
         rv = (X509_sign_ctx(cert, mctx) > 0);
-end:
     EVP_MD_CTX_free(mctx);
     return rv;
 }
@@ -2568,7 +2644,7 @@ static X509_CRL *load_crl_crldp(STACK_OF(DIST_POINT) *crldp)
 static STACK_OF(X509_CRL) *crls_http_cb(const X509_STORE_CTX *ctx,
     const X509_NAME *nm)
 {
-    X509 *x;
+    const X509 *x;
     STACK_OF(X509_CRL) *crls = NULL;
     X509_CRL *crl;
     STACK_OF(DIST_POINT) *crldp;
@@ -3383,12 +3459,23 @@ int has_stdin_waiting(void)
 }
 #endif
 
-/* Corrupt a signature by modifying final byte */
-void corrupt_signature(const ASN1_STRING *signature)
+/*
+ * Corrupt a signature by modifying final byte
+ * (mutates signature)
+ */
+int corrupt_signature(ASN1_STRING *signature)
 {
-    unsigned char *s = signature->data;
+    const unsigned char *valid = ASN1_STRING_get0_data(signature);
+    int length = ASN1_STRING_length(signature);
+    unsigned char *s = OPENSSL_memdup(valid, length);
 
-    s[signature->length - 1] ^= 0x1;
+    if (s == NULL)
+        return 0;
+
+    s[length - 1] ^= 0x1;
+
+    ASN1_STRING_set0(signature, s, length);
+    return 1;
 }
 
 int check_cert_time_string(const char *time, const char *desc)

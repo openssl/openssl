@@ -48,7 +48,7 @@
 #define UNSET_DAYS -2 /* -1 may be used for testing expiration checks */
 #define EXT_COPY_UNSET -1
 
-static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, X509_NAME *fsubj,
+static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, const X509_NAME *fsubj,
     int mutlirdn, int attribs, unsigned long chtype);
 static int prompt_info(X509_REQ *req,
     STACK_OF(CONF_VALUE) *dn_sk, const char *dn_sect,
@@ -292,7 +292,7 @@ int req_main(int argc, char **argv)
     char *passin = NULL, *passout = NULL;
     char *nofree_passin = NULL, *nofree_passout = NULL;
     char *subj = NULL;
-    X509_NAME *fsubj = NULL;
+    const X509_NAME *fsubj = NULL;
     char *template = default_config_file, *keyout = NULL;
     const char *keyalg = NULL;
     OPTION_CHOICE o;
@@ -593,7 +593,7 @@ int req_main(int argc, char **argv)
             digest = p;
     }
 
-    if (extsect == NULL)
+    if (extsect == NULL && !x509v1)
         extsect = app_conf_try_string(req_conf, section,
             gen_x509 ? V3_EXTENSIONS : REQ_EXTENSIONS);
     if (extsect != NULL) {
@@ -601,24 +601,21 @@ int req_main(int argc, char **argv)
         X509V3_CTX ctx;
 
         X509V3_set_ctx_test(&ctx);
-        X509V3_set_nconf(&ctx, req_conf);
-        if (!X509V3_EXT_add_nconf(req_conf, &ctx, extsect, NULL)) {
-            BIO_printf(bio_err,
-                "Error checking %s extension section %s\n",
-                gen_x509 ? "x509" : "request", extsect);
+        if (!do_EXT_add_nconf(req_conf, req_conf, &ctx, NULL,
+                !gen_x509
+                    ? "Error checking request extension section %s\n"
+                    : "Error checking x509 extension section %s\n",
+                extsect))
             goto end;
-        }
     }
     if (addext_conf != NULL) {
         /* Check syntax of command line extensions */
         X509V3_CTX ctx;
 
         X509V3_set_ctx_test(&ctx);
-        X509V3_set_nconf(&ctx, req_conf);
-        if (!X509V3_EXT_add_nconf(addext_conf, &ctx, "default", NULL)) {
-            BIO_puts(bio_err, "Error checking extensions defined using -addext\n");
+        if (!do_EXT_add_nconf(req_conf, addext_conf, &ctx, NULL,
+                "Error checking x509 extensions defined via -addext\n", NULL))
             goto end;
-        }
     }
 
     if (passin == NULL)
@@ -819,9 +816,10 @@ int req_main(int argc, char **argv)
             EVP_PKEY *pub_key = X509_REQ_get0_pubkey(req);
             EVP_PKEY *issuer_key = CAcert != NULL ? CAkey : pkey;
             X509V3_CTX ext_ctx;
-            X509_NAME *issuer = CAcert != NULL ? X509_get_subject_name(CAcert) : X509_REQ_get_subject_name(req);
-            X509_NAME *n_subj = fsubj != NULL ? fsubj : X509_REQ_get_subject_name(req);
 
+            const X509_NAME *n_subj = fsubj != NULL ? fsubj : X509_REQ_get_subject_name(req);
+            const X509_NAME *issuer = CAcert != NULL ? X509_get_subject_name(CAcert)
+                                                     : X509_REQ_get_subject_name(req);
             if (CAcert != NULL && keyfile != NULL)
                 BIO_puts(bio_err,
                     "Warning: Not using -key or -newkey for signing since -CA option is given\n");
@@ -862,6 +860,7 @@ int req_main(int argc, char **argv)
             /* Set up V3 context struct */
             X509V3_set_ctx(&ext_ctx, CAcert != NULL ? CAcert : new_x509,
                 new_x509, NULL, NULL, X509V3_CTX_REPLACE);
+
             /* prepare fallback for AKID, but only if issuer cert == new_x509 */
             if (CAcert == NULL) {
                 if (!X509V3_set_issuer_pkey(&ext_ctx, issuer_key))
@@ -870,21 +869,16 @@ int req_main(int argc, char **argv)
                     BIO_puts(bio_err,
                         "Warning: Signature key and public key of cert do not match\n");
             }
-            X509V3_set_nconf(&ext_ctx, req_conf);
 
             /* Add extensions */
             if (extsect != NULL
-                && !X509V3_EXT_add_nconf(req_conf, &ext_ctx, extsect, new_x509)) {
-                BIO_printf(bio_err, "Error adding x509 extensions from section %s\n",
-                    extsect);
+                && !do_EXT_add_nconf(req_conf, req_conf, &ext_ctx, new_x509,
+                    "Error adding x509 extensions from section %s\n", extsect))
                 goto end;
-            }
             if (addext_conf != NULL
-                && !X509V3_EXT_add_nconf(addext_conf, &ext_ctx, "default",
-                    new_x509)) {
-                BIO_puts(bio_err, "Error adding x509 extensions defined via -addext\n");
+                && !do_EXT_add_nconf(addext_conf, addext_conf, &ext_ctx, new_x509,
+                    "Error adding x509 extensions defined via -addext\n", NULL))
                 goto end;
-            }
 
             /* If a pre-cert was requested, we need to add a poison extension */
             if (precert) {
@@ -909,21 +903,16 @@ int req_main(int argc, char **argv)
             }
             /* Set up V3 context struct */
             X509V3_set_ctx(&ext_ctx, NULL, NULL, req, NULL, X509V3_CTX_REPLACE);
-            X509V3_set_nconf(&ext_ctx, req_conf);
 
             /* Add extensions */
             if (extsect != NULL
-                && !X509V3_EXT_REQ_add_nconf(req_conf, &ext_ctx, extsect, req)) {
-                BIO_printf(bio_err, "Error adding request extensions from section %s\n",
-                    extsect);
+                && !do_EXT_REQ_add_nconf(req_conf, req_conf, &ext_ctx, req,
+                    "Error adding request extensions from section %s\n", extsect))
                 goto end;
-            }
             if (addext_conf != NULL
-                && !X509V3_EXT_REQ_add_nconf(addext_conf, &ext_ctx, "default",
-                    req)) {
-                BIO_puts(bio_err, "Error adding request extensions defined via -addext\n");
+                && !do_EXT_REQ_add_nconf(req_conf, addext_conf, &ext_ctx, req,
+                    "Error adding request extensions defined via -addext\n", "default"))
                 goto end;
-            }
             i = do_X509_REQ_sign(req, pkey, digest, sigopts);
             if (!i)
                 goto end;
@@ -1072,7 +1061,7 @@ end:
     lh_OPENSSL_STRING_free(addexts);
     OPENSSL_free(keyalgstr);
     X509_REQ_free(req);
-    X509_NAME_free(fsubj);
+    X509_NAME_free((X509_NAME *)fsubj);
     X509_free(new_x509);
     X509_free(CAcert);
     EVP_PKEY_free(CAkey);
@@ -1084,7 +1073,7 @@ end:
     return ret;
 }
 
-static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, X509_NAME *fsubj,
+static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, const X509_NAME *fsubj,
     int multirdn, int attribs, unsigned long chtype)
 {
     int ret = 0, i;
@@ -1149,7 +1138,11 @@ static int prompt_info(X509_REQ *req,
     char *type, *value;
     const char *def;
     CONF_VALUE *v;
-    X509_NAME *subj = X509_REQ_get_subject_name(req);
+    X509_NAME *subj;
+    int ret = 0;
+
+    if ((subj = X509_NAME_new()) == NULL)
+        goto err;
 
     if (!batch) {
         BIO_puts(bio_err,
@@ -1200,32 +1193,37 @@ static int prompt_info(X509_REQ *req,
             if ((nid = OBJ_txt2nid(type)) == NID_undef)
                 goto start;
             if (!join(buf, sizeof(buf), v->name, "_default", "Name"))
-                return 0;
+                goto err;
             if ((def = app_conf_try_string(req_conf, dn_sect, buf)) == NULL)
                 def = "";
 
             if (!join(buf, sizeof(buf), v->name, "_value", "Name"))
-                return 0;
+                goto err;
             if ((value = app_conf_try_string(req_conf, dn_sect, buf)) == NULL)
                 value = NULL;
 
             if (!join(buf, sizeof(buf), v->name, "_min", "Name"))
-                return 0;
+                goto err;
             if (!app_conf_try_number(req_conf, dn_sect, buf, &n_min))
                 n_min = -1;
 
             if (!join(buf, sizeof(buf), v->name, "_max", "Name"))
-                return 0;
+                goto err;
             if (!app_conf_try_number(req_conf, dn_sect, buf, &n_max))
                 n_max = -1;
 
             if (!add_DN_object(subj, v->value, def, value, nid,
                     n_min, n_max, chtype, mval))
-                return 0;
+                goto err;
         }
         if (X509_NAME_entry_count(subj) == 0) {
             BIO_puts(bio_err, "Error: No objects specified in config file\n");
-            return 0;
+            goto err;
+        }
+
+        if (X509_REQ_set_subject_name(req, subj) == 0) {
+            BIO_printf(bio_err, "Error: Can't set subject name\n");
+            goto err;
         }
 
         if (attribs) {
@@ -1255,31 +1253,38 @@ static int prompt_info(X509_REQ *req,
                     def = "";
 
                 if (!join(buf, sizeof(buf), type, "_value", "Name"))
-                    return 0;
+                    goto err;
+                ;
                 value = app_conf_try_string(req_conf, attr_sect, buf);
 
                 if (!join(buf, sizeof(buf), type, "_min", "Name"))
-                    return 0;
+                    goto err;
+                ;
                 if (!app_conf_try_number(req_conf, attr_sect, buf, &n_min))
                     n_min = -1;
 
                 if (!join(buf, sizeof(buf), type, "_max", "Name"))
-                    return 0;
+                    goto err;
+                ;
                 if (!app_conf_try_number(req_conf, attr_sect, buf, &n_max))
                     n_max = -1;
-
                 if (!add_attribute_object(req,
                         v->value, def, value, nid, n_min,
                         n_max, chtype))
-                    return 0;
+                    goto err;
+                ;
             }
         }
     } else {
         BIO_puts(bio_err, "No template, please set one up.\n");
-        return 0;
+        goto err;
     }
 
-    return 1;
+    ret = 1;
+
+err:
+    X509_NAME_free(subj);
+    return ret;
 }
 
 static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
@@ -1291,8 +1296,10 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
     char *type;
     CONF_VALUE *v;
     X509_NAME *subj;
+    int ret = 0;
 
-    subj = X509_REQ_get_subject_name(req);
+    if ((subj = X509_NAME_new()) == NULL)
+        goto err;
 
     for (i = 0; i < sk_CONF_VALUE_num(dn_sk); i++) {
         int mval;
@@ -1330,7 +1337,7 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
         if (!X509_NAME_add_entry_by_txt(subj, type, chtype,
                 (unsigned char *)v->value, -1, -1,
                 mval))
-            return 0;
+            goto err;
     }
 
     if (!X509_NAME_entry_count(subj)) {
@@ -1342,10 +1349,20 @@ static int auto_info(X509_REQ *req, STACK_OF(CONF_VALUE) *dn_sk,
             v = sk_CONF_VALUE_value(attr_sk, i);
             if (!X509_REQ_add1_attr_by_txt(req, v->name, chtype,
                     (unsigned char *)v->value, -1))
-                return 0;
+                goto err;
         }
     }
-    return 1;
+
+    if (X509_REQ_set_subject_name(req, subj) == 0) {
+        BIO_printf(bio_err, "Error: Can't set subject name\n");
+        goto err;
+    }
+
+    ret = 1;
+
+err:
+    X509_NAME_free(subj);
+    return ret;
 }
 
 static int add_DN_object(X509_NAME *n, char *text, const char *def,

@@ -71,6 +71,7 @@ static OSSL_FUNC_keymgmt_gettable_params_fn sm2_gettable_params;
 static OSSL_FUNC_keymgmt_settable_params_fn sm2_settable_params;
 static OSSL_FUNC_keymgmt_import_fn sm2_import;
 static OSSL_FUNC_keymgmt_query_operation_name_fn sm2_query_operation_name;
+static OSSL_FUNC_keymgmt_query_operation_name_fn curve_sm2_query_operation_name;
 static OSSL_FUNC_keymgmt_validate_fn sm2_validate;
 #endif
 #endif
@@ -91,8 +92,7 @@ static const char *ec_query_operation_name(int operation_id)
     return NULL;
 }
 
-#ifndef FIPS_MODULE
-#ifndef OPENSSL_NO_SM2
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2)
 static const char *sm2_query_operation_name(int operation_id)
 {
     switch (operation_id) {
@@ -101,7 +101,14 @@ static const char *sm2_query_operation_name(int operation_id)
     }
     return NULL;
 }
-#endif
+static const char *curve_sm2_query_operation_name(int operation_id)
+{
+    switch (operation_id) {
+    case OSSL_OP_KEYEXCH:
+        return "ECDH";
+    }
+    return NULL;
+}
 #endif
 
 /*
@@ -1482,33 +1489,36 @@ const OSSL_DISPATCH ossl_ec_keymgmt_functions[] = {
 
 #ifndef FIPS_MODULE
 #ifndef OPENSSL_NO_SM2
-const OSSL_DISPATCH ossl_sm2_keymgmt_functions[] = {
-    { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))sm2_newdata },
-    { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))sm2_gen_init },
-    { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE,
-        (void (*)(void))ec_gen_set_template },
-    { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))ec_gen_set_params },
-    { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
-        (void (*)(void))ec_gen_settable_params },
-    { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))sm2_gen },
-    { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))ec_gen_cleanup },
-    { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))sm2_load },
-    { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ec_freedata },
-    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*)(void))sm2_get_params },
-    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*)(void))sm2_gettable_params },
-    { OSSL_FUNC_KEYMGMT_SET_PARAMS, (void (*)(void))ec_set_params },
-    { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (void (*)(void))sm2_settable_params },
-    { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ec_has },
-    { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))ec_match },
-    { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))sm2_validate },
-    { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))sm2_import },
-    { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))ec_import_types },
-    { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ec_export },
-    { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))ec_export_types },
-    { OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME,
-        (void (*)(void))sm2_query_operation_name },
-    { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))ec_dup },
-    OSSL_DISPATCH_END
-};
+#define SM2_FUNCS(variant)                                                          \
+    const OSSL_DISPATCH ossl_##variant##_keymgmt_functions[] = {                    \
+        { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))sm2_newdata },                     \
+        { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))sm2_gen_init },               \
+        { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE,                                       \
+            (void (*)(void))ec_gen_set_template },                                  \
+        { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))ec_gen_set_params },    \
+        { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,                                    \
+            (void (*)(void))ec_gen_settable_params },                               \
+        { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))sm2_gen },                         \
+        { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))ec_gen_cleanup },          \
+        { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))sm2_load },                       \
+        { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ec_freedata },                    \
+        { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*)(void))sm2_get_params },           \
+        { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*)(void))sm2_gettable_params }, \
+        { OSSL_FUNC_KEYMGMT_SET_PARAMS, (void (*)(void))ec_set_params },            \
+        { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (void (*)(void))sm2_settable_params }, \
+        { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ec_has },                          \
+        { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))ec_match },                      \
+        { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))sm2_validate },               \
+        { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))sm2_import },                   \
+        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))ec_import_types },        \
+        { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ec_export },                    \
+        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))ec_export_types },        \
+        { OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME,                                   \
+            (void (*)(void))variant##_query_operation_name },                       \
+        { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))ec_dup },                          \
+        OSSL_DISPATCH_END                                                           \
+    }
+SM2_FUNCS(sm2);
+SM2_FUNCS(curve_sm2);
 #endif
 #endif

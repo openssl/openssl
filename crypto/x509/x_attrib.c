@@ -15,6 +15,8 @@
 #include "x509_local.h"
 #include <crypto/x509.h>
 
+#include <crypto/asn1.h>
+
 /*-
  * X509_ATTRIBUTE: this has the following form:
  *

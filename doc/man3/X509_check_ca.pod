@@ -8,7 +8,7 @@ X509_check_ca - check if given certificate is CA certificate
 
  #include <openssl/x509v3.h>
 
- int X509_check_ca(X509 *cert);
+ int X509_check_ca(const X509 *cert);
 
 =head1 DESCRIPTION
 

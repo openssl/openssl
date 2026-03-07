@@ -274,7 +274,7 @@ static X509_REQ *x509_to_req(X509 *cert, int ext_copy, const char *names)
         goto err;
     for (i = 0; i < n; i++) {
         X509_EXTENSION *ex = sk_X509_EXTENSION_value(cert_exts, i);
-        ASN1_OBJECT *obj = X509_EXTENSION_get_object(ex);
+        const ASN1_OBJECT *obj = X509_EXTENSION_get_object(ex);
 
         if (OBJ_cmp(obj, skid) != 0 && OBJ_cmp(obj, akid) != 0
             && !sk_X509_EXTENSION_push(exts, ex))
@@ -330,6 +330,40 @@ static int add_object(STACK_OF(ASN1_OBJECT) **sk, const char *name,
     return 0;
 }
 
+static CONF *load_ext_conf(const char *file, const char *sect, int quiet)
+{
+    BIO *bio = NULL;
+    CONF *conf;
+
+    if (file == NULL)
+        file = default_config_file;
+    if (file != NULL && *file != '\0')
+        bio = bio_open_default_quiet(file, 'r', FORMAT_TEXT);
+    else if (!quiet) {
+        BIO_puts(bio_err, "The -extfile option, or else the default "
+                          "configuration filename must be nonempty");
+        return NULL;
+    }
+
+    if (bio == NULL) {
+        if (!quiet)
+            BIO_printf(bio_err, "Error opening: %s\n", file);
+        return NULL;
+    }
+
+    conf = NCONF_new_ex(app_get0_libctx(), NULL);
+    if (conf != NULL && NCONF_load_bio(conf, bio, NULL) <= 0) {
+        NCONF_free(conf);
+        conf = NULL;
+    }
+    BIO_free(bio);
+    if (conf != NULL)
+        return conf;
+    if (!quiet)
+        BIO_printf(bio_err, "Error loading configuration from: %s\n", file);
+    return conf;
+}
+
 int x509_main(int argc, char **argv)
 {
     ASN1_INTEGER *sno = NULL;
@@ -339,7 +373,7 @@ int x509_main(int argc, char **argv)
     X509V3_CTX ext_ctx;
     EVP_PKEY *privkey = NULL, *CAkey = NULL, *pubkey = NULL;
     EVP_PKEY *pkey;
-    int newcert = 0;
+    int newcert = 0, newout = 0;
     char *issu = NULL, *subj = NULL, *digest = NULL;
     X509_NAME *fissu = NULL, *fsubj = NULL;
     const unsigned long chtype = MBSTRING_ASC;
@@ -679,6 +713,29 @@ int x509_main(int argc, char **argv)
     if (!opt_check_md(digest))
         goto opthelp;
 
+    if (reqfile || newcert || privkey != NULL || CAfile != NULL)
+        newout = 1;
+    else if (sno != NULL
+        || not_before != NULL
+        || not_after != NULL
+        || days != UNSET_DAYS
+        || preserve_dates
+        || issu != NULL
+        || subj != NULL
+        || pubkeyfile != NULL
+        || clrext
+        || extfile != NULL
+        || extsect != NULL
+        || sigopts != NULL) {
+        BIO_printf(bio_err,
+            "The %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s and %s "
+            "options are only valid when signing a new certificate\n",
+            "set_serial", "not_before", "not_after", "days",
+            "preserve_dates", "set_issuer", "set_subject", "subj",
+            "force_pubkey", "clrext", "extfile", "extensions", "sigopt");
+        goto err;
+    }
+
     if (preserve_dates && not_before != NULL) {
         BIO_puts(bio_err, "Cannot use -preserve_dates with -not_before option\n");
         goto err;
@@ -766,27 +823,29 @@ int x509_main(int argc, char **argv)
             WARN_NO_CA("-CAcreateserial");
     }
 
-    if (extfile == NULL) {
-        if (extsect != NULL)
-            BIO_puts(bio_err,
-                "Warning: ignoring -extensions option without -extfile\n");
-    } else {
+    /*
+     * Failure to find or process the default config file is silent, when no
+     * `-extensions` was specified.  Otherwise, the requested extensions
+     * section must be present.
+     */
+    int confquiet = extsect == NULL && extfile == NULL;
+    if (newout)
+        extconf = load_ext_conf(extfile, extsect, confquiet);
+
+    if (extconf != NULL) {
         X509V3_CTX ctx2;
 
-        if ((extconf = app_load_config(extfile)) == NULL)
-            goto err;
         if (extsect == NULL) {
             extsect = app_conf_try_string(extconf, "default", "extensions");
-            if (extsect == NULL)
+            if (extfile != NULL && extsect == NULL)
                 extsect = "default";
         }
         X509V3_set_ctx_test(&ctx2);
-        X509V3_set_nconf(&ctx2, extconf);
-        if (!X509V3_EXT_add_nconf(extconf, &ctx2, extsect, NULL)) {
-            BIO_printf(bio_err,
-                "Error checking extension section %s\n", extsect);
+        if (!do_EXT_add_nconf(extconf, extconf, &ctx2, NULL,
+                "Error checking extension section %s\n", extsect))
             goto err;
-        }
+    } else if (newout && !confquiet) {
+        goto err;
     }
 
     if (multi && (reqfile || newcert)) {
@@ -907,7 +966,7 @@ cert_loop:
     if (clrext && ext_names != NULL)
         BIO_puts(bio_err, "Warning: Ignoring -ext since -clrext is given\n");
     for (i = X509_get_ext_count(x) - 1; i >= 0; i--) {
-        X509_EXTENSION *ex = X509_get_ext(x, i);
+        const X509_EXTENSION *ex = X509_get_ext(x, i);
         const char *sn = OBJ_nid2sn(OBJ_obj2nid(X509_EXTENSION_get_object(ex)));
 
         if (clrext || (ext_names != NULL && strstr(ext_names, sn) == NULL))
@@ -951,12 +1010,9 @@ cert_loop:
             goto err;
     }
     if (extconf != NULL && !x509toreq) {
-        X509V3_set_nconf(&ext_ctx, extconf);
-        if (!X509V3_EXT_add_nconf(extconf, &ext_ctx, extsect, x)) {
-            BIO_printf(bio_err,
-                "Error adding extensions from section %s\n", extsect);
+        if (!do_EXT_add_nconf(extconf, extconf, &ext_ctx, x,
+                "Error adding extensions from section %s\n", extsect))
             goto err;
-        }
     }
 
     /* At this point the contents of the certificate x have been finished. */
@@ -979,12 +1035,9 @@ cert_loop:
         if ((rq = x509_to_req(x, ext_copy, ext_names)) == NULL)
             goto err;
         if (extconf != NULL) {
-            X509V3_set_nconf(&ext_ctx, extconf);
-            if (!X509V3_EXT_REQ_add_nconf(extconf, &ext_ctx, extsect, rq)) {
-                BIO_printf(bio_err,
-                    "Error adding request extensions from section %s\n", extsect);
+            if (!do_EXT_REQ_add_nconf(extconf, extconf, &ext_ctx, rq,
+                    "Error adding request extensions from section %s\n", extsect))
                 goto err;
-            }
         }
         if (!do_X509_REQ_sign(rq, privkey, digest, sigopts))
             goto err;
@@ -1023,7 +1076,9 @@ cert_loop:
         const ASN1_BIT_STRING *signature;
 
         X509_get0_signature(&signature, NULL, x);
-        corrupt_signature(signature);
+        /* XXX Casts away const, because it mutates the value! */
+        if (!corrupt_signature(((ASN1_STRING *)signature)))
+            goto err;
     }
 
     /* Process print options in the given order, as indicated by index i */
@@ -1058,7 +1113,7 @@ cert_loop:
                 BIO_printf(out, "%s\n", sk_OPENSSL_STRING_value(emlst, j));
             X509_email_free(emlst);
         } else if (i == aliasout) {
-            unsigned char *alstr = X509_alias_get0(x, NULL);
+            const unsigned char *alstr = X509_alias_get0(x, NULL);
 
             if (alstr)
                 BIO_printf(out, "%s\n", alstr);
@@ -1149,7 +1204,7 @@ cert_loop:
         X509_VERIFY_PARAM *vpm;
         time_t tcheck = time(NULL) + checkoffset;
         int expired = 0;
-        int error, valid;
+        int error;
 
         if ((vpm = X509_VERIFY_PARAM_new()) == NULL) {
             BIO_puts(out, "Malloc failed\n");
@@ -1158,16 +1213,11 @@ cert_loop:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_USE_CHECK_TIME);
         X509_VERIFY_PARAM_set_time(vpm, tcheck);
 
-        valid = X509_check_certificate_times(vpm, x, &error);
-        if (!valid) {
-            char msg[128];
-
-            ERR_error_string_n(error, msg, sizeof(msg));
-            BIO_printf(out, "%s\n", msg);
-        }
-        if (error == X509_V_ERR_CERT_HAS_EXPIRED) {
-            BIO_puts(out, "Certificate will expire\n");
-            expired = 1;
+        if (!X509_check_certificate_times(vpm, x, &error)) {
+            if (error == X509_V_ERR_CERT_HAS_EXPIRED) {
+                BIO_puts(out, "Certificate will expire\n");
+                expired = 1;
+            }
         } else {
             BIO_puts(out, "Certificate will not expire\n");
         }
@@ -1285,7 +1335,7 @@ end:
 static int callb(int ok, X509_STORE_CTX *ctx)
 {
     int err;
-    X509 *err_cert;
+    const X509 *err_cert;
 
     /*
      * It is ok to use a self-signed certificate. This case will catch both
@@ -1359,7 +1409,7 @@ static int print_x509v3_exts(BIO *bio, X509 *x, const char *ext_names)
     const STACK_OF(X509_EXTENSION) *exts = NULL;
     STACK_OF(X509_EXTENSION) *exts2 = NULL;
     X509_EXTENSION *ext = NULL;
-    ASN1_OBJECT *obj;
+    const ASN1_OBJECT *obj;
     int i, j, ret = 0, num, nn = 0;
     const char *sn, **names = NULL;
     char *tmp_ext_names = NULL;

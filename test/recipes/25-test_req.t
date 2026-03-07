@@ -330,27 +330,25 @@ subtest "generating SM2 certificate requests" => sub {
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-key", srctop_file(@certs, "sm2.key"),
-                    "-sigopt", "distid:1234567812345678",
-                    "-out", "testreq-sm2.pem", "-sm3"])),
+                    "-out", "testreq-sm2.pem"])),
            "Generating SM2 certificate request");
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
-                    "-verify", "-in", "testreq-sm2.pem", "-noout",
-                    "-vfyopt", "distid:1234567812345678", "-sm3"])),
+                    "-verify", "-in", "testreq-sm2.pem", "-noout"])),
            "Verifying signature on SM2 certificate request");
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-key", srctop_file(@certs, "sm2.key"),
                     "-sigopt", "hexdistid:DEADBEEF",
-                    "-out", "testreq-sm2.pem", "-sm3"])),
+                    "-out", "testreq-sm2.pem"])),
            "Generating SM2 certificate request with hex id");
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-verify", "-in", "testreq-sm2.pem", "-noout",
-                    "-vfyopt", "hexdistid:DEADBEEF", "-sm3"])),
+                    "-vfyopt", "hexdistid:DEADBEEF"])),
            "Verifying signature on SM2 certificate request");
     }
 };
@@ -544,8 +542,8 @@ sub generate_cert {
     my $cn = $is_ca ? "CA" : "EE";
     my $ca_key = srctop_file(@certs, "ca-key.pem");
     my $key = $is_ca ? $ca_key : srctop_file(@certs, "ee-key.pem");
-    my @cmd = ("openssl", "req", "-config", "", "-x509",
-               "-subj", "/CN=$cn", @_, "-out", $cert);
+    my @cmd = ("openssl", "req", "-config", srctop_file("test", "ca-and-certs.cnf"),
+               "-x509", "-subj", "/CN=$cn", @_, "-out", $cert);
     push(@cmd, ("-key", $key)) if $ss;
     push(@cmd, ("-CA", $ca_cert, "-CAkey", $ca_key)) unless $ss;
     ok(run(app([@cmd])), "generate $cert");
@@ -572,18 +570,22 @@ my $SKID_AKID = "subjectKeyIdentifier,authorityKeyIdentifier";
 
 # # SKID
 
-my $cert = "self-signed_default_SKID_no_explicit_exts.pem";
+my $cert = "self-signed_default_SKID_minimal_exts.pem";
 generate_cert($cert);
 has_version($cert, 3);
-has_SKID($cert, 1); # SKID added, though no explicit extensions given
+has_SKID($cert, 1);
 has_AKID($cert, 0);
 
-my $cert = "self-signed_v3_CA_hash_SKID.pem";
+$cert = "self-signed_v3_CA_hash_SKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "subjectKeyIdentifier = hash");
 has_SKID($cert, 1); # explicit hash SKID
 
 $cert = "self-signed_v3_CA_no_SKID.pem";
-generate_cert($cert, @v3_ca, "-addext", "subjectKeyIdentifier = none");
+generate_cert($cert, @v3_ca,
+              # Add SKID
+              "-extensions", "v3_skid",
+              # And explicitly drop it
+              "-addext", "subjectKeyIdentifier = none");
 cert_ext_has_n_different_lines($cert, 0, $SKID_AKID); # no SKID and no AKID
 #TODO strict_verify($cert, 0);
 
@@ -607,12 +609,16 @@ has_AKID($ca_cert, 0); # no default AKID
 strict_verify($ca_cert, 1);
 
 $cert = "self-signed_v3_CA_no_AKID.pem";
-generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = none");
+generate_cert($cert, @v3_ca,
+              # Add AKID
+              "-extensions", "v3_akid",
+              # Explicitly drop it
+              "-addext", "authorityKeyIdentifier = none");
 has_AKID($cert, 0); # forced no AKID
 
 $cert = "self-signed_v3_CA_explicit_AKID.pem";
-generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = keyid");
-has_AKID($cert, 0); # for self-signed cert, AKID suppressed and not forced
+generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = keyid:nonss");
+has_AKID($cert, 0); # for self-signed cert, AKID suppressed since self-signed
 
 $cert = "self-signed_v3_CA_forced_AKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = keyid:always");
@@ -620,23 +626,23 @@ cert_ext_has_n_different_lines($cert, 3, $SKID_AKID); # forced AKID, AKID == SKI
 strict_verify($cert, 1);
 
 $cert = "self-signed_v3_CA_issuer_AKID.pem";
-generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = issuer");
-has_AKID($cert, 0); # suppressed AKID since not forced
+generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = issuer:nonss");
+has_AKID($cert, 0); # suppressed AKID since self-signed
 
 $cert = "self-signed_v3_CA_forced_issuer_AKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = issuer:always");
 cert_contains($cert, "Authority Key Identifier: DirName:/CN=CA serial:", 1); # forced issuer AKID
 
 $cert = "self-signed_v3_CA_nonforced_keyid_issuer_AKID.pem";
-generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = keyid, issuer");
+generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = keyid:nonss, issuer:nonss");
 has_AKID($cert, 0); # AKID not present because not forced and cert self-signed
 
 $cert = "self-signed_v3_CA_keyid_forced_issuer_AKID.pem";
-generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = keyid, issuer:always");
+generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = keyid:nonss, issuer:always");
 cert_contains($cert, "Authority Key Identifier: DirName:/CN=CA serial:", 1); # issuer AKID forced, with keyid not forced
 
 $cert = "self-signed_v3_CA_forced_keyid_issuer_AKID.pem";
-generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = keyid:always, issuer");
+generate_cert($cert, @v3_ca, "-addext", "authorityKeyIdentifier = keyid:always, issuer:nonss");
 has_AKID($cert, 1); # AKID with keyid forced
 cert_contains($cert, "Authority Key Identifier: DirName:/CN=CA serial:", 0); # no issuer AKID
 
@@ -668,10 +674,14 @@ cert_ext_has_n_different_lines($cert, 4, $SKID_AKID); # SKID != AKID
 strict_verify($cert, 1);
 
 $cert = "self-issued_v3_CA_no_AKID.pem";
-generate_cert($cert, "-addext", "authorityKeyIdentifier = none",
-    "-in", srctop_file(@certs, "x509-check.csr"));
+generate_cert($cert,
+              # Add SKID and AKID
+              "-extensions", "v3_askid",
+              # Explicitly drop the AKID
+              "-addext", "authorityKeyIdentifier = none",
+              "-in", srctop_file(@certs, "x509-check.csr"));
 has_version($cert, 3);
-has_SKID($cert, 1); # SKID added, though no explicit extensions given
+has_SKID($cert, 1);
 has_AKID($cert, 0);
 strict_verify($cert, 1);
 
@@ -768,7 +778,7 @@ ok(run(app(["openssl", "x509", "-in", "testreq-cert.pem",
 
 # Generate cert with explicit start and end dates
 my %today = (strftime("%Y-%m-%d", gmtime) => 1);
-my $cert = "self-signed_explicit_date.pem";
+$cert = "self-signed_explicit_date.pem";
 ok(run(app(["openssl", "req", "-x509", "-new", "-text",
             "-config", srctop_file('test', 'test.cnf'),
             "-key", srctop_file("test", "testrsa.pem"),

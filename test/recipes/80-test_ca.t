@@ -72,10 +72,7 @@ SKIP: {
     is(yes(cmdstr(app(["openssl", "ca", "-config",
                        $cnf,
                        "-in", src_file("sm2-csr.pem"),
-                       "-out", "sm2-test.crt",
-                       "-sigopt", "distid:1234567812345678",
-                       "-vfyopt", "distid:1234567812345678",
-                       "-md", "sm3",
+                       "-out", "sm2-test.crt", "-md", "sm3",
                        "-cert", src_file("sm2-root.crt"),
                        "-keyfile", src_file("sm2-root.key")]))),
        0,
@@ -83,9 +80,9 @@ SKIP: {
 }
 
 my $v3_cert = "v3-test.crt";
-ok(run(app(["openssl", "ca", "-batch", "-config", $cnf, "-extensions", "empty",
+ok(run(app(["openssl", "ca", "-batch", "-config", $cnf, "-extensions", "minimal",
             "-in", src_file("x509-check.csr"), "-out", $v3_cert])));
-# although no explicit extensions given:
+# The "minimal" extensions include SKID and AKID.
 has_version($v3_cert, 3);
 has_SKID($v3_cert, 1);
 has_AKID($v3_cert, 1);

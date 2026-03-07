@@ -64,10 +64,52 @@ zyzSqbo//+SSFHZG
 EOF
 gpg --verify $RPKI_TARBALL.asc $RPKI_TARBALL || exit 1
 
-cd $RPKI_SRC
+cd $RPKI_SRC/src
 
+cat <<EOF | patch -p0
+--- ip.c.orig	2026-02-22 09:51:22.467916100 -0700
++++ ip.c	2026-02-22 09:55:25.332258656 -0700
+@@ -173,16 +173,20 @@
+     enum afi afi, const char *fn, struct ip_addr *addr)
+ {
+ 	const unsigned char *data;
+-	int length, unused = 0;
++        size_t length;
++	int unused = 0;
+ 
+ 	data = ASN1_STRING_get0_data(abs);
++#if defined(ASN1_STRING_FLAG_BITS_LEFT)
+ 	length = ASN1_STRING_length(abs);
+ 
+ 	/* Weird OpenSSL-ism to get unused bit count. */
+-
+ 	if ((abs->flags & ASN1_STRING_FLAG_BITS_LEFT))
+ 		unused = abs->flags & 0x07;
+-
++#else
++	if (!ASN1_BIT_STRING_get_length(abs, &length, &unused))
++		return 0;
++#endif
+ 	if (length == 0 && unused != 0) {
+ 		warnx("%s: RFC 3779 section 2.2.3.8: "
+ 		    "unused bit count must be zero if length is zero", fn);
+--- ccr.c.orig	2026-02-22 09:51:29.076899178 -0700
++++ ccr.c	2026-02-22 09:55:27.678095938 -0700
+@@ -398,8 +398,10 @@
+ 	if (!ASN1_BIT_STRING_set(ripa->address, vrp->addr.addr, num_bytes))
+ 		errx(1, "ASN1_BIT_STRING_set");
+ 
++#if defined(ASN1_STRING_FLAGS_BITS_LEFT)
+ 	/* ip_addr_parse() handles unused bits, no need to clear them here. */
+ 	ripa->address->flags |= ASN1_STRING_FLAG_BITS_LEFT | unused_bits;
++#endif
+ 
+ 	/* XXX - assert that unused bits are zero */
+ 
+EOF
+cd ..
 ./configure --with-openssl-cflags="$CFLAGS" --with-openssl-ldflags="$LDFLAGS" \
-            CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS"
+            CFLAGS="$CFLAGS -w" LDFLAGS="$LDFLAGS"
 
 # quiet make so that Travis doesn't overflow
 make

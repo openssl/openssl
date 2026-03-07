@@ -21,6 +21,7 @@
 #include <openssl/params.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/prov_ssl.h>
 #include <openssl/proverr.h>
 #include "internal/nelem.h"
 #include "internal/sizes.h"
@@ -215,6 +216,12 @@ static int sm2sig_digest_signverify_init(void *vpsm2ctx, const char *mdname,
     int ret = 0;
     unsigned char *aid = NULL;
 
+    /*
+     * Each EVP_Digest{Sign,Verify}Init_ex(3) starts with fresh content, that
+     * needs to recompute the "Z" digest.
+     */
+    ctx->flag_compute_z_digest = 1;
+
     if (!sm2sig_signature_init(vpsm2ctx, ec, params)
         || !sm2sig_set_mdname(ctx, mdname))
         return ret;
@@ -247,8 +254,6 @@ static int sm2sig_digest_signverify_init(void *vpsm2ctx, const char *mdname,
 
     if (!EVP_DigestInit_ex2(ctx->mdctx, ctx->md, params))
         goto error;
-
-    ctx->flag_compute_z_digest = 1;
 
     ret = 1;
 
@@ -428,6 +433,22 @@ static const OSSL_PARAM *sm2sig_gettable_ctx_params(ossl_unused void *vpsm2ctx,
 
 static int sm2sig_set_ctx_params(void *vpsm2ctx, const OSSL_PARAM params[])
 {
+    /*
+     * (https://datatracker.ietf.org/doc/html/rfc8998#section-3.2.1)
+     *
+     * The SM2 signature algorithm requests an identifier value when generating
+     * or verifying a signature. In all uses except when a client of a server
+     * needs to verify a peer's SM2 certificate in the Certificate message, an
+     * implementation of this document MUST use the following ASCII string
+     * value as the SM2 identifier when doing a TLS 1.3 key exchange:
+     *
+     * TLSv1.3+GM+Cipher+Suite
+     */
+    static const uint8_t sm2_tls_id[] = {
+        0x54, 0x4c, 0x53, 0x76, 0x31, 0x2e, 0x33, 0x2b,
+        0x47, 0x4d, 0x2b, 0x43, 0x69, 0x70, 0x68, 0x65,
+        0x72, 0x2b, 0x53, 0x75, 0x69, 0x74, 0x65
+    };
     PROV_SM2_CTX *psm2ctx = (PROV_SM2_CTX *)vpsm2ctx;
     struct sm2sig_set_ctx_params_st p;
     size_t mdsize;
@@ -445,12 +466,23 @@ static int sm2sig_set_ctx_params(void *vpsm2ctx, const OSSL_PARAM params[])
         if (!psm2ctx->flag_compute_z_digest)
             return 0;
 
-        if (p.distid->data_size != 0
+        if ((p.distid->data != NULL)
             && !OSSL_PARAM_get_octet_string(p.distid, &tmp_id, 0, &tmp_idlen))
             return 0;
         OPENSSL_free(psm2ctx->id);
         psm2ctx->id = tmp_id;
         psm2ctx->id_len = tmp_idlen;
+    } else if (p.tlsver != NULL) {
+        unsigned int ver = 0;
+
+        if (!psm2ctx->flag_compute_z_digest
+            || !OSSL_PARAM_get_uint(p.tlsver, &ver))
+            return 0;
+        if (ver == TLS1_3_VERSION) {
+            OPENSSL_free(psm2ctx->id);
+            psm2ctx->id_len = sizeof(sm2_tls_id);
+            psm2ctx->id = OPENSSL_memdup(sm2_tls_id, psm2ctx->id_len);
+        }
     }
 
     /*

@@ -13,6 +13,8 @@
 #include <openssl/buffer.h>
 #include <openssl/asn1.h>
 
+#include <crypto/asn1.h>
+
 int i2a_ASN1_STRING(BIO *bp, const ASN1_STRING *a, int type)
 {
     int i, n = 0;

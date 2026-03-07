@@ -275,6 +275,8 @@ end:
 opthelp:
     BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
     BIO_printf(bio_err, "\tup to %d -in instances allowed\n", OSSL_ECH_MAXINFILES);
+    OSSL_ECHSTORE_free(es);
+    BIO_free_all(ecf);
     return rv;
 }
 

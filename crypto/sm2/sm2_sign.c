@@ -20,10 +20,25 @@
 #include <openssl/bn.h>
 #include <string.h>
 
+/*
+ * [SM2 Signature Scheme]
+ * (https://datatracker.ietf.org/doc/html/rfc8998#section-3.2.1)
+ *
+ * If either a client or a server needs to verify the peer's SM2 certificate
+ * contained in the Certificate message, then the following ASCII string value
+ * MUST be used as the SM2 identifier according to [GMT.0009-2012]:
+ *
+ * 1234567812345678
+ */
+static const uint8_t default_sm2_id[] = {
+    0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38,
+    0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38
+};
+
 int ossl_sm2_compute_z_digest(uint8_t *out,
     const EVP_MD *digest,
     const uint8_t *id,
-    const size_t id_len,
+    size_t id_len,
     const EC_KEY *key)
 {
     int rc = 0;
@@ -79,6 +94,11 @@ int ossl_sm2_compute_z_digest(uint8_t *out,
     }
 
     /* Z = h(ENTL || ID || a || b || xG || yG || xA || yA) */
+
+    if (id == NULL) {
+        id = default_sm2_id;
+        id_len = sizeof(default_sm2_id);
+    }
 
     if (id_len >= (UINT16_MAX / 8)) {
         /* too large */

@@ -50,7 +50,8 @@ int i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
 
 int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 {
-    int i, first, len = 0, c, use_bn;
+    int i, first, len = 0, use_bn;
+    char c;
     char ftmp[24], *tmp = ftmp;
     int tmpsize = sizeof(ftmp);
     const char *p;
@@ -292,7 +293,7 @@ ASN1_OBJECT *ossl_c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
     }
 
     if ((a == NULL) || ((*a) == NULL) || !((*a)->flags & ASN1_OBJECT_FLAG_DYNAMIC)) {
-        if ((ret = ASN1_OBJECT_new()) == NULL)
+        if ((ret = ossl_asn1_object_new()) == NULL)
             return NULL;
     } else {
         ret = (*a);
@@ -337,7 +338,14 @@ err:
     return NULL;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_4_0
 ASN1_OBJECT *ASN1_OBJECT_new(void)
+{
+    return NULL;
+}
+#endif /* OPENSSL_NO_DEPRECATED_4_0 */
+
+ASN1_OBJECT *ossl_asn1_object_new(void)
 {
     ASN1_OBJECT *ret;
 

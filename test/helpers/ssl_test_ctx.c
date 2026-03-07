@@ -18,6 +18,7 @@
 #include <openssl/crypto.h>
 
 #include "internal/nelem.h"
+#include "internal/tlsgroups.h"
 #include "ssl_test_ctx.h"
 #include "../testutil.h"
 
@@ -539,6 +540,16 @@ __owur static int parse_expected_key_type(int *ptype, const char *value)
         nid = OBJ_sn2nid("ED25519");
     } else if (strcmp("EC", value) == 0) {
         nid = OBJ_sn2nid("id-ecPublicKey");
+    } else if (strcmp("curveSM2", value) == 0) {
+        nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_curveSM2;
+    } else if (strcmp("X25519MLKEM768", value) == 0) {
+        nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_X25519MLKEM768;
+    } else if (strcmp("SecP256r1MLKEM768", value) == 0) {
+        nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_SecP256r1MLKEM768;
+    } else if (strcmp("SecP384r1MLKEM1024", value) == 0) {
+        nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_SecP384r1MLKEM1024;
+    } else if (strcmp("curveSM2MLKEM768", value) == 0) {
+        nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_curveSM2MLKEM768;
     } else {
         nid = OBJ_ln2nid(value);
     }

@@ -563,6 +563,16 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[bio_eof_test]=../include ../apps/include
   DEPEND[bio_eof_test]=../libcrypto libtestutil.a
 
+  IF[{- !$disabled{sock}
+        && $config{target} !~ /djgpp/i
+        && $config{target} !~ /^(?:VC-|mingw|BC-|Cygwin)/i
+  -}]
+    PROGRAMS{noinst}=bio_socket_sigpipe_test
+    SOURCE[bio_socket_sigpipe_test]=bio_socket_sigpipe_test.c
+    INCLUDE[bio_socket_sigpipe_test]=../include ../apps/include
+    DEPEND[bio_socket_sigpipe_test]=../libcrypto libtestutil.a
+  ENDIF
+
   SOURCE[bioprinttest]=bioprinttest.c
   INCLUDE[bioprinttest]=../include ../apps/include
   IF[{- $config{target} =~ /^VC/ -}]

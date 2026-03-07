@@ -89,13 +89,11 @@ A configuration file is divided into a number of I<sections>.  A section
 begins with the section name in square brackets, and ends when a new
 section starts, or at the end of the file.  The section name can consist
 of alphanumeric characters and underscores.
-Whitespace between the name and the brackets is removed.
+Whitespace between the name and the brackets is ignored.
 
-The first section of a configuration file is special and is referred to
-as the B<default> section. This section is usually unnamed and spans from
-the start of file until the first named section. When a name is being
-looked up, it is first looked up in the current or named section,
-and then the default section if necessary.
+The content at the start of the configuration file that precedes its first
+named section is special and is referred to as the B<default> or B<unnamed>
+section.
 
 The environment is mapped onto a section called B<ENV>.
 

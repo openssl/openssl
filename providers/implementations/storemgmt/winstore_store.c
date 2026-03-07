@@ -267,8 +267,10 @@ static int winstore_load_using(struct winstore_ctx_st *ctx,
     const unsigned char *der_ = der;
     size_t der_len_ = der_len;
 
-    if (setup_decoder(ctx) == 0)
+    if (setup_decoder(ctx) == 0) {
+        ctx->state = STATE_EOF;
         return 0;
+    }
 
     data.object_cb = object_cb;
     data.object_cbarg = object_cbarg;

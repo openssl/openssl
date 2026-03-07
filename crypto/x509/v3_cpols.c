@@ -18,6 +18,8 @@
 #include "pcy_local.h"
 #include "ext_dat.h"
 
+#include <crypto/asn1.h>
+
 /* Certificate policies extension support: this one is a bit complex... */
 
 static int i2r_certpol(X509V3_EXT_METHOD *method, STACK_OF(POLICYINFO) *pol,
@@ -256,7 +258,7 @@ err:
 
 static int displaytext_get_tag_len(const char *tagstr)
 {
-    char *colon = strchr(tagstr, ':');
+    const char *colon = strchr(tagstr, ':');
 
     return (colon == NULL) ? -1 : (int)(colon - tagstr);
 }

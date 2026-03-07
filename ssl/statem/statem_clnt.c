@@ -1899,7 +1899,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     goto err;
                 }
-                if (SSL_set1_host(ssl, s->ext.ech.outer_hostname) != 1) {
+                if (SSL_set1_dnsname(ssl, s->ext.ech.outer_hostname) != 1) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     goto err;
                 }
@@ -3395,6 +3395,7 @@ int tls_process_initial_server_flight(SSL_CONNECTION *s)
         && s->ext.ech.attempted == 1
         && s->ext.ech.success != 1
         && s->ext.ech.grease != OSSL_ECH_IS_GREASE) {
+        s->ext.ech.retry_configs_ok = 1; /* note those are good */
         SSLfatal(s, SSL_AD_ECH_REQUIRED, SSL_R_ECH_REQUIRED);
         return 0;
     }

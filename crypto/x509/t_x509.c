@@ -319,7 +319,7 @@ int X509_signature_print(BIO *bp, const X509_ALGOR *sigalg,
 int X509_aux_print(BIO *out, const X509 *x, int indent)
 {
     char oidstr[80], first;
-    STACK_OF(ASN1_OBJECT) *trust, *reject;
+    const STACK_OF(ASN1_OBJECT) *trust, *reject;
     const unsigned char *alias, *keyid;
     int keyidlen;
     int i;
@@ -374,7 +374,7 @@ int X509_aux_print(BIO *out, const X509 *x, int indent)
  * Helper functions for improving certificate verification error diagnostics
  */
 
-int ossl_x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags)
+int ossl_x509_print_ex_brief(BIO *bio, const X509 *cert, unsigned long neg_cflags)
 {
     unsigned long flags = ASN1_STRFLGS_RFC2253 | ASN1_STRFLGS_ESC_QUOTE | XN_FLAG_SEP_CPLUS_SPC | XN_FLAG_FN_SN;
     X509_VERIFY_PARAM *vpm = X509_VERIFY_PARAM_new();
@@ -391,7 +391,7 @@ int ossl_x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags)
     if (BIO_printf(bio, "    certificate\n") <= 0
         || !X509_print_ex(bio, cert, flags, ~X509_FLAG_NO_SUBJECT))
         goto err;
-    if (X509_check_issued((X509 *)cert, cert) == X509_V_OK) {
+    if (X509_check_issued(cert, cert) == X509_V_OK) {
         if (BIO_printf(bio, "        self-issued\n") <= 0)
             goto err;
     } else {
@@ -404,10 +404,7 @@ int ossl_x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags)
         goto err;
 
     if (!X509_check_certificate_times(vpm, cert, &error)) {
-        char msg[128];
-
-        ERR_error_string_n(error, msg, sizeof(msg));
-        if (BIO_printf(bio, "        %s\n", msg) <= 0)
+        if (BIO_printf(bio, "        %s\n", X509_verify_cert_error_string(error)) <= 0)
             goto err;
     }
     ret = X509_print_ex(bio, cert, flags,

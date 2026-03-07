@@ -4,6 +4,12 @@
 
 ASN1_STRING_data,
 BIO_f_reliable,
+DTLSv1_method,
+DTLSv1_server_method,
+DTLSv1_client_method,
+DTLSv1_2_method,
+DTLSv1_2_server_method,
+DTLSv1_2_client_method,
 ERR_get_state,
 ERR_remove_state,
 ERR_remove_thread_state,
@@ -125,6 +131,19 @@ EVP_PKEY_asn1_set_set_pub_key,
 EVP_PKEY_asn1_set_get_priv_key,
 EVP_PKEY_asn1_set_get_pub_key,
 EVP_PKEY_asn1_set_security_bits,
+OPENSSL_atexit,
+SSLv3_method,
+SSLv3_server_method,
+SSLv3_client_method,
+TLSv1_method,
+TLSv1_server_method,
+TLSv1_client_method,
+TLSv1_1_method,
+TLSv1_1_server_method,
+TLSv1_1_client_method,
+TLSv1_2_method,
+TLSv1_2_server_method,
+TLSv1_2_client_method,
 ossl-removed-api - API that has been removed from OpenSSL
 
 =head1 SYNOPSIS
@@ -157,6 +176,18 @@ This includes consulting the L<ossl-guide-migration(7)> documentation.
 =item ASN1_STRING_data (Deprecated in 1.1.1) - see L<ASN1_STRING_get0_data(3)>
 
 =item BIO_f_reliable (Broken since 3.0.0) - removed without replacement
+
+=item DTLSv1_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item DTLSv1_client_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item DTLSv1_server_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item DTLSv1_2_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item DTLSv1_2_client_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item DTLSv1_2_server_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
 
 =item ERR_get_state (Deprecated in 3.0.0) - removed, no use with opaque ERR_STATE
 
@@ -401,6 +432,30 @@ This includes consulting the L<ossl-guide-migration(7)> documentation.
 =item EVP_PKEY_asn1_set_security_bits (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
 
 =item OPENSSL_atexit - No longer used, use libc atexit() if you must use this.
+
+=item SSLv3_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item SSLv3_server_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item SSLv3_client_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item TLSv1_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item TLSv1_server_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item TLSv1_client_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item TLSv1_1_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item TLSv1_1_server_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item TLSv1_1_client_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item TLSv1_2_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item TLSv1_2_server_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item TLSv1_2_client_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
 
 =back
 

@@ -2,15 +2,9 @@
 
 =head1 NAME
 
-TLSv1_2_method, TLSv1_2_server_method, TLSv1_2_client_method,
-SSL_CTX_new, SSL_CTX_new_ex, SSL_CTX_up_ref, SSLv3_method,
-SSLv3_server_method, SSLv3_client_method, TLSv1_method, TLSv1_server_method,
-TLSv1_client_method, TLSv1_1_method, TLSv1_1_server_method,
-TLSv1_1_client_method, TLS_method, TLS_server_method, TLS_client_method,
-SSLv23_method, SSLv23_server_method, SSLv23_client_method, DTLS_method,
-DTLS_server_method, DTLS_client_method, DTLSv1_method, DTLSv1_server_method,
-DTLSv1_client_method, DTLSv1_2_method, DTLSv1_2_server_method,
-DTLSv1_2_client_method
+SSL_CTX_new, SSL_CTX_new_ex, SSL_CTX_up_ref, TLS_method, TLS_server_method,
+TLS_client_method, SSLv23_method, SSLv23_server_method, SSLv23_client_method,
+DTLS_method, DTLS_server_method, DTLS_client_method
 - create a new SSL_CTX object as framework for TLS/SSL or DTLS enabled
 functions
 
@@ -31,45 +25,9 @@ functions
  const SSL_METHOD *SSLv23_server_method(void);
  const SSL_METHOD *SSLv23_client_method(void);
 
- #ifndef OPENSSL_NO_SSL3_METHOD
- const SSL_METHOD *SSLv3_method(void);
- const SSL_METHOD *SSLv3_server_method(void);
- const SSL_METHOD *SSLv3_client_method(void);
- #endif
-
- #ifndef OPENSSL_NO_TLS1_METHOD
- const SSL_METHOD *TLSv1_method(void);
- const SSL_METHOD *TLSv1_server_method(void);
- const SSL_METHOD *TLSv1_client_method(void);
- #endif
-
- #ifndef OPENSSL_NO_TLS1_1_METHOD
- const SSL_METHOD *TLSv1_1_method(void);
- const SSL_METHOD *TLSv1_1_server_method(void);
- const SSL_METHOD *TLSv1_1_client_method(void);
- #endif
-
- #ifndef OPENSSL_NO_TLS1_2_METHOD
- const SSL_METHOD *TLSv1_2_method(void);
- const SSL_METHOD *TLSv1_2_server_method(void);
- const SSL_METHOD *TLSv1_2_client_method(void);
- #endif
-
  const SSL_METHOD *DTLS_method(void);
  const SSL_METHOD *DTLS_server_method(void);
  const SSL_METHOD *DTLS_client_method(void);
-
- #ifndef OPENSSL_NO_DTLS1_METHOD
- const SSL_METHOD *DTLSv1_method(void);
- const SSL_METHOD *DTLSv1_server_method(void);
- const SSL_METHOD *DTLSv1_client_method(void);
- #endif
-
- #ifndef OPENSSL_NO_DTLS1_2_METHOD
- const SSL_METHOD *DTLSv1_2_method(void);
- const SSL_METHOD *DTLSv1_2_server_method(void);
- const SSL_METHOD *DTLSv1_2_client_method(void);
- #endif
 
 =head1 DESCRIPTION
 
@@ -120,15 +78,6 @@ can be one of the following:
 
 =over 4
 
-=item TLS_method(), TLS_server_method(), TLS_client_method()
-
-These are the general-purpose I<version-flexible> SSL/TLS methods.
-The actual protocol version used will be negotiated to the highest version
-mutually supported by the client and the server.
-The supported protocols are TLSv1, TLSv1.1, TLSv1.2 and TLSv1.3.
-Applications should use these methods, and avoid the version-specific
-methods described below, which are deprecated.
-
 =item SSLv23_method(), SSLv23_server_method(), SSLv23_client_method()
 
 These functions do not exist anymore, they have been renamed to
@@ -138,39 +87,17 @@ ones by preprocessor macros, to ensure that existing code which uses the
 old function names still compiles. However, using the old function names
 is deprecated and new code should call the new functions instead.
 
-=item TLSv1_2_method(), TLSv1_2_server_method(), TLSv1_2_client_method()
+=item TLS_method(), TLS_server_method(), TLS_client_method()
 
-A TLS/SSL connection established with these methods will only understand the
-TLSv1.2 protocol. These methods are deprecated.
-
-=item TLSv1_1_method(), TLSv1_1_server_method(), TLSv1_1_client_method()
-
-A TLS/SSL connection established with these methods will only understand the
-TLSv1.1 protocol.  These methods are deprecated.
-
-=item TLSv1_method(), TLSv1_server_method(), TLSv1_client_method()
-
-A TLS/SSL connection established with these methods will only understand the
-TLSv1 protocol. These methods are deprecated.
-
-=item SSLv3_method(), SSLv3_server_method(), SSLv3_client_method()
-
-Starting in version 3.6 those functions always return NULL.
+These are the general-purpose I<version-flexible> SSL/TLS methods.
+The actual protocol version used will be negotiated to the highest version
+mutually supported by the client and the server.
+The supported protocols are TLSv1, TLSv1.1, TLSv1.2 and TLSv1.3.
 
 =item DTLS_method(), DTLS_server_method(), DTLS_client_method()
 
 These are the version-flexible DTLS methods.
-Currently supported protocols are DTLS 1.0 and DTLS 1.2.
-
-=item DTLSv1_2_method(), DTLSv1_2_server_method(), DTLSv1_2_client_method()
-
-These are the version-specific methods for DTLSv1.2.
-These methods are deprecated.
-
-=item DTLSv1_method(), DTLSv1_server_method(), DTLSv1_client_method()
-
-These are the version-specific methods for DTLSv1.
-These methods are deprecated.
+The supported protocols are DTLS 1.0 and DTLS 1.2.
 
 =back
 
@@ -180,8 +107,6 @@ callbacks, the keys and certificates and the options to their default values.
 TLS_method(), TLS_server_method(), TLS_client_method(), DTLS_method(),
 DTLS_server_method() and DTLS_client_method() are the I<version-flexible>
 methods.
-All other methods only support one specific protocol version.
-Use the I<version-flexible> methods instead of the version specific methods.
 
 If you want to limit the supported protocols for the version flexible
 methods you can use L<SSL_CTX_set_min_proto_version(3)>,
@@ -246,6 +171,8 @@ and TLS_client_method() functions were added in OpenSSL 1.1.0.
 All version-specific methods were deprecated in OpenSSL 1.1.0.
 
 SSL_CTX_new_ex() was added in OpenSSL 3.0.
+
+All version-specific methods were removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

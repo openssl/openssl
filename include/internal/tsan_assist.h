@@ -137,7 +137,25 @@
 
 #define tsan_load(ptr) (*(ptr))
 #define tsan_store(ptr, val) (*(ptr) = (val))
-#define tsan_add(ptr, n) (*(ptr) += (n))
+
+static ossl_inline ossl_unused int64_t tsan_add_fallback64(int64_t *ptr, int64_t n)
+{
+    int64_t old = *ptr;
+    *ptr = old + n;
+    return old;
+}
+
+static ossl_inline ossl_unused int32_t tsan_add_fallback32(int32_t *ptr, int32_t n)
+{
+    int32_t old = *ptr;
+    *ptr = old + n;
+    return old;
+}
+
+#define tsan_add(ptr, n)                                              \
+    (sizeof(*(ptr)) == 8 ? tsan_add_fallback64((int64_t *)(ptr), (n)) \
+                         : tsan_add_fallback32((int32_t *)(ptr), (n)))
+
 /*
  * Lack of tsan_ld_acq and tsan_ld_rel means that compiler support is not
  * sophisticated enough to support them. Code that relies on them should be

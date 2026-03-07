@@ -313,6 +313,17 @@ int SSL_ech_get1_retry_config(SSL *ssl, unsigned char **ec, size_t *eclen)
         return 1;
     }
     /*
+     * before returning retry-configs check we're in a good
+     * state - either the session has worked, or else it
+     * failed but ECH was the only failure (we only set the
+     * retry_configs_ok flag when all else worked and we're
+     * about to send the ECH required alert)
+     */
+    if (SSL_is_init_finished(ssl) != 1 && s->ext.ech.retry_configs_ok != 1) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_OSSL_STORE_LIB);
+        goto err;
+    }
+    /*
      * To not hand rubbish to application, we'll decode the value we have
      * so only syntactically good things are passed up. We won't insist
      * though that every entry in the retry_config list seems good - it

@@ -254,7 +254,7 @@ int ossl_ech_get_retry_configs(SSL_CONNECTION *s, unsigned char **rcfgs,
         ee = sk_OSSL_ECHSTORE_ENTRY_value(es->entries, i);
         if (ee != NULL && ee->for_retry == OSSL_ECH_FOR_RETRY) {
             if (ee->encoded_len > SIZE_MAX - retslen)
-                return 0;
+                goto err;
             tmp = (unsigned char *)OPENSSL_realloc(rets,
                 retslen + ee->encoded_len);
             if (tmp == NULL)
@@ -300,7 +300,10 @@ int ossl_ech_send_grease(SSL_CONNECTION *s, WPACKET *pkt)
     unsigned char cipher[OSSL_ECH_MAX_GREASE_CT];
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
-    WPACKET_get_total_written(pkt, &pp_at_start);
+    if (!WPACKET_get_total_written(pkt, &pp_at_start)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
     /* randomly select cipher_len to be one of 144, 176, 208, 244 */
     if (RAND_bytes_ex(sctx->libctx, &cid, 1, 0) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -345,7 +348,10 @@ int ossl_ech_send_grease(SSL_CONNECTION *s, WPACKET *pkt)
     }
     /* record the ECH sent so we can re-tx same if we hit an HRR */
     OPENSSL_free(s->ext.ech.sent);
-    WPACKET_get_total_written(pkt, &pp_at_end);
+    if (!WPACKET_get_total_written(pkt, &pp_at_end)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
     s->ext.ech.sent_len = pp_at_end - pp_at_start;
     s->ext.ech.sent = OPENSSL_malloc(s->ext.ech.sent_len);
     if (s->ext.ech.sent == NULL) {
@@ -798,8 +804,8 @@ void ossl_ech_status_print(BIO *out, SSL_CONNECTION *s, int selector)
                 OPENSSL_free(ec);
                 continue;
             }
-            BIO_printf(out, "ECH entry: %d public_name: %s age: %d%s\n",
-                i, pn, (int)secs, has_priv ? " (has private key)" : "");
+            BIO_printf(out, "ECH entry: %d public_name: %s age: %lld%s\n",
+                i, pn, (long long)secs, has_priv ? " (has private key)" : "");
             BIO_printf(out, "\t%s\n", ec);
             OPENSSL_free(pn);
             OPENSSL_free(ec);
@@ -1126,7 +1132,9 @@ int ossl_ech_get_ch_offsets(SSL_CONNECTION *s, PACKET *pkt, size_t *sessid_off,
     const unsigned char *ch = NULL;
     size_t ch_len = 0, exts_len = 0, sni_len = 0, ech_len = 0;
 
-    if (s == NULL || pkt == NULL || sessid_off == NULL || exts_off == NULL
+    if (s == NULL)
+        return 0;
+    if (pkt == NULL || sessid_off == NULL || exts_off == NULL
         || ech_off == NULL || echtype == NULL || inner == NULL
         || sni_off == NULL) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
@@ -1323,6 +1331,7 @@ static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
         if (tmpenc == NULL)
             goto err;
         if (!PACKET_copy_bytes(pkt, tmpenc, pval_tmp)) {
+            OPENSSL_free(tmpenc);
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             goto err;
         }
@@ -2083,11 +2092,9 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
         ossl_ech_pbuf("clear", clear, clearlen);
     }
 #endif
-    if (extval != NULL) {
-        ossl_ech_encch_free(extval);
-        OPENSSL_free(extval);
-        extval = NULL;
-    }
+    ossl_ech_encch_free(extval);
+    OPENSSL_free(extval);
+    extval = NULL;
     if (s->ext.ech.grease == OSSL_ECH_IS_GREASE) {
         OPENSSL_free(clear);
         return 1;

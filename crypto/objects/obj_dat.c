@@ -15,6 +15,7 @@
 #include "internal/tsan_assist.h"
 #include <openssl/lhash.h>
 #include <openssl/asn1.h>
+#include "crypto/asn1/asn1_local.h"
 #include "crypto/objects.h"
 #include <openssl/bn.h>
 #include "crypto/asn1.h"
@@ -721,7 +722,7 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
             return NID_undef;
     } else {
         /* Create a no-OID ASN1_OBJECT */
-        tmpoid = ASN1_OBJECT_new();
+        tmpoid = ossl_asn1_object_new();
         if (tmpoid == NULL) {
             ERR_raise(ERR_LIB_OBJ, ERR_R_ASN1_LIB);
             return NID_undef;

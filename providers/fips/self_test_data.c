@@ -578,13 +578,13 @@ static const ST_KAT_PARAM kbkdf_kmac_params[] = {
     ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_INFO, kbkdf_kmac_context),
     ST_KAT_PARAM_END()
 };
-#endif /* OPENSSL_NO_KBKDF */
 
 static const self_test_id_t kbkdf_depends_on[] = {
     ST_ID_KDF_KBKDF,
     ST_ID_KDF_KBKDF_KMAC,
     ST_ID_MAX
 };
+#endif /* OPENSSL_NO_KBKDF */
 
 static const char tls13_kdf_digest[] = "SHA256";
 static int tls13_kdf_extract_mode = EVP_KDF_HKDF_MODE_EXTRACT_ONLY;
@@ -643,7 +643,9 @@ static const ST_KAT_PARAM tls13_kdf_client_early_secret_params[] = {
  * the variants will be used, so we just test them all at once
  */
 static const self_test_id_t hkdf_depends_on[] = {
+#ifndef OPENSSL_NO_KBKDF
     ST_ID_KDF_KBKDF,
+#endif
     ST_ID_KDF_TLS13_EXTRACT,
     ST_ID_KDF_TLS13_EXPAND,
     ST_ID_MAX

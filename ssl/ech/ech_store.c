@@ -311,7 +311,11 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
     unsigned char test_pub[OSSL_ECH_CRYPTO_VAR_SIZE];
     OSSL_ECHSTORE_ENTRY *ee = NULL;
 
-    if (rent == NULL || pkt == NULL) {
+    if (rent == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (pkt == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -360,7 +364,7 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
     }
     thiskemid = (uint16_t)tmpi;
     ee->nsuites = (unsigned int)(suiteoctets / OSSL_ECH_CIPHER_LEN);
-    ee->suites = OPENSSL_malloc(ee->nsuites * sizeof(*ee->suites));
+    ee->suites = OPENSSL_malloc_array(ee->nsuites, sizeof(*ee->suites));
     if (ee->suites == NULL)
         goto err;
     while (PACKET_copy_bytes(&cipher_suites, cipher,
@@ -575,10 +579,8 @@ static int ech_read_priv_echconfiglist(OSSL_ECHSTORE *es, BIO *in,
         btmp = BIO_push(btmp1, btmp);
         /* overestimate but good enough */
         binbuf = OPENSSL_malloc(encodedlen);
-        if (binbuf == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        if (binbuf == NULL)
             goto err;
-        }
         tdeclen = BIO_read(btmp, binbuf, (int)encodedlen);
         if (tdeclen <= 0) { /* need int for -1 return in failure case */
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -609,15 +611,13 @@ OSSL_ECHSTORE *OSSL_ECHSTORE_new(OSSL_LIB_CTX *libctx, const char *propq)
     OSSL_ECHSTORE *es = NULL;
 
     es = OPENSSL_zalloc(sizeof(*es));
-    if (es == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+    if (es == NULL)
         return 0;
-    }
     es->libctx = libctx;
     if (propq != NULL) {
         es->propq = OPENSSL_strdup(propq);
         if (es->propq == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            OPENSSL_free(es);
             return 0;
         }
     }
@@ -704,7 +704,7 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
         || !BUF_MEM_grow(epkt_mem, OSSL_ECH_MAX_ECHCONFIG_LEN)
         || !WPACKET_init(&epkt, epkt_mem)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
-        goto err;
+        goto err_no_epkt;
     }
     /* random config_id */
     if (RAND_bytes_ex(es->libctx, (unsigned char *)&config_id, 1, 0) <= 0) {
@@ -745,30 +745,25 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
         goto err;
     }
     /* bp, bblen has encoding */
-    WPACKET_get_total_written(&epkt, &bblen);
-    if ((ee = OPENSSL_zalloc(sizeof(*ee))) == NULL) {
+    if (!WPACKET_get_total_written(&epkt, &bblen)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
+    if ((ee = OPENSSL_zalloc(sizeof(*ee))) == NULL)
+        goto err;
     ee->suites = OPENSSL_malloc(sizeof(*ee->suites));
-    if (ee->suites == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+    if (ee->suites == NULL)
         goto err;
-    }
     ee->version = echversion;
     ee->pub_len = publen;
     ee->pub = OPENSSL_memdup(pub, publen);
-    if (ee->pub == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+    if (ee->pub == NULL)
         goto err;
-    }
     ee->nsuites = 1;
     ee->suites[0] = suite;
     ee->public_name = OPENSSL_strdup(public_name);
-    if (ee->public_name == NULL) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+    if (ee->public_name == NULL)
         goto err;
-    }
     ee->max_name_length = max_name_length;
     ee->config_id = config_id;
     ee->keyshare = privp;
@@ -795,10 +790,11 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
     return 1;
 
 err:
+    ossl_echstore_entry_free(ee);
     EVP_PKEY_free(privp);
     WPACKET_cleanup(&epkt);
+err_no_epkt:
     BUF_MEM_free(epkt_mem);
-    ossl_echstore_entry_free(ee);
     return rv;
 }
 
@@ -873,7 +869,10 @@ int OSSL_ECHSTORE_write_pem(OSSL_ECHSTORE *es, int index, BIO *out)
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        WPACKET_get_total_written(&epkt, &allencoded_len);
+        if (!WPACKET_get_total_written(&epkt, &allencoded_len)) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
         if (PEM_write_bio(out, PEM_STRING_ECHCONFIG, NULL,
                 (unsigned char *)epkt_mem->data,
                 (long)allencoded_len)

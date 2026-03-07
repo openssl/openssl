@@ -78,7 +78,7 @@ void wait_for_async(SSL *s);
 int has_stdin_waiting(void);
 #endif
 
-void corrupt_signature(const ASN1_STRING *signature);
+int corrupt_signature(ASN1_STRING *signature);
 
 /* Helpers for setting X509v3 certificate fields notBefore and notAfter */
 int check_cert_time_string(const char *time, const char *desc);
@@ -163,6 +163,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     EVP_SKEY **pskey);
 EVP_SKEY *load_skey(const char *uri, int format, int maybe_stdin,
     const char *pass, int quiet);
+int load_rpk_file(SSL *ssl, const char *file);
 X509_STORE *setup_verify(const char *CAfile, int noCAfile,
     const char *CApath, int noCApath,
     const char *CAstore, int noCAstore);
@@ -275,6 +276,10 @@ int init_gen_str(EVP_PKEY_CTX **pctx,
     const char *algname, int do_param,
     OSSL_LIB_CTX *libctx, const char *propq);
 int cert_matches_key(const X509 *cert, const EVP_PKEY *pkey);
+int do_EXT_add_nconf(CONF *conf1, CONF *conf2, X509V3_CTX *ctx,
+    X509 *cert, const char *msg, const char *sect);
+int do_EXT_REQ_add_nconf(CONF *conf1, CONF *conf2, X509V3_CTX *ctx,
+    X509_REQ *req, const char *msg, const char *sect);
 int do_X509_sign(X509 *x, int force_v1, EVP_PKEY *pkey, const char *md,
     STACK_OF(OPENSSL_STRING) *sigopts, X509V3_CTX *ext_ctx);
 int do_X509_verify(X509 *x, EVP_PKEY *pkey, STACK_OF(OPENSSL_STRING) *vfyopts);

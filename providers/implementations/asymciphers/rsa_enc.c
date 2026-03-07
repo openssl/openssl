@@ -458,9 +458,12 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
     char mdname[OSSL_MAX_NAME_SIZE];
     char mdprops[OSSL_MAX_PROPQUERY_SIZE] = { '\0' };
     char *str = NULL;
+    int count = 0;
 
-    if (prsactx == NULL || !rsa_set_ctx_params_decoder(params, &p))
+    if (prsactx == NULL || !rsa_set_ctx_params_decoder(params, &p, &count))
         return 0;
+    if (count == 0)
+        return 1;
 
     if (!OSSL_FIPS_IND_SET_CTX_FROM_PARAM(prsactx, OSSL_FIPS_IND_SETTABLE0, p.ind_k))
         return 0;

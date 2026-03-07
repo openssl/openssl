@@ -39,7 +39,7 @@ tests against the local OpenSSL build.
 
 You will need a git checkout of krb5 at the top level:
 
-    $ git clone https://github.com/krb5/krb5
+    $ git submodule update --init
 
 krb5's master has to pass this same CI, but a known-good version is
 krb5-1.15.1-final if you want to be sure.

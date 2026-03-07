@@ -548,6 +548,7 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     { 38, "GC512A" },
     { 39, "GC512B" },
     { 40, "GC512C" },
+    { 41, "curveSM2" },
     { 256, "ffdhe2048" },
     { 257, "ffdhe3072" },
     { 258, "ffdhe4096" },
@@ -559,6 +560,7 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     { 4587, "SecP256r1MLKEM768" },
     { 4588, "X25519MLKEM768" },
     { 4589, "SecP384r1MLKEM1024" },
+    { 4590, "curveSM2MLKEM768" },
     { 25497, "X25519Kyber768Draft00" },
     { 25498, "SecP256r1Kyber768Draft00" },
     { 0xFF01, "arbitrary_explicit_prime_curves" },
@@ -612,13 +614,14 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     { TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384, TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_name },
     { TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512, TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_name },
     /*
-     * Well known groups that we happen to know about, but only come from
+     * Well known sigalgs that we happen to know about, but only come from
      * provider capability declarations (hence no macros for the
      * codepoints/names)
      */
     { 0x0904, "mldsa44" },
     { 0x0905, "mldsa65" },
-    { 0x0906, "mldsa87" }
+    { 0x0906, "mldsa87" },
+    { 0x0708, "sm2sig_sm3" },
 };
 
 static const ssl_trace_tbl ssl_ctype_tbl[] = {
@@ -1327,33 +1330,46 @@ static int ssl_print_certificate(BIO *bio, const SSL_CONNECTION *sc, int indent,
     return 1;
 }
 
-static int ssl_print_raw_public_key(BIO *bio, const SSL *ssl, int server,
-    int indent, const unsigned char **pmsg,
-    size_t *pmsglen)
+static int ssl_print_raw_public_key(BIO *bio, const SSL_CONNECTION *sc,
+    int server, int indent, const unsigned char **pmsg, size_t *pmsglen)
 {
     EVP_PKEY *pkey;
     size_t clen;
     const unsigned char *msg = *pmsg;
     size_t msglen = *pmsglen;
+    int has_spki_len;
 
-    if (msglen < 3)
-        return 0;
-    clen = (msg[0] << 16) | (msg[1] << 8) | msg[2];
-    if (msglen < clen + 3)
-        return 0;
-
-    msg += 3;
+    /*
+     * In TLS 1.2 and prior the SPKI is the entire payload of the extension,
+     * and does not have a separate length prefix
+     */
+    has_spki_len = SSL_CONNECTION_IS_DTLS(sc)
+        ? DTLS_VERSION_GT(sc->version, DTLS1_2_VERSION)
+        : sc->version > TLS1_2_VERSION;
+    if (has_spki_len) {
+        if (msglen < 3)
+            return 0;
+        clen = (msg[0] << 16) | (msg[1] << 8) | msg[2];
+        if (msglen < clen + 3)
+            return 0;
+        msg += 3;
+        *pmsg += clen + 3;
+        *pmsglen -= clen + 3;
+    } else {
+        clen = msglen;
+        *pmsg += msglen;
+        *pmsglen -= msglen;
+    }
 
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "raw_public_key, length=%d\n", (int)clen);
 
-    pkey = d2i_PUBKEY_ex(NULL, &msg, (long)clen, ssl->ctx->libctx, ssl->ctx->propq);
+    pkey = d2i_PUBKEY_ex(NULL, &msg, (long)clen,
+        sc->ssl.ctx->libctx, sc->ssl.ctx->propq);
     if (pkey == NULL)
         return 0;
     EVP_PKEY_print_public(bio, pkey, indent + 2, NULL);
     EVP_PKEY_free(pkey);
-    *pmsg += clen + 3;
-    *pmsglen -= clen + 3;
     return 1;
 }
 
@@ -1375,7 +1391,7 @@ static int ssl_print_certificates(BIO *bio, const SSL_CONNECTION *sc, int server
     msg += 3;
     if ((server && sc->ext.server_cert_type == TLSEXT_cert_type_rpk)
         || (!server && sc->ext.client_cert_type == TLSEXT_cert_type_rpk)) {
-        if (!ssl_print_raw_public_key(bio, &sc->ssl, server, indent, &msg, &clen))
+        if (!ssl_print_raw_public_key(bio, sc, server, indent, &msg, &clen))
             return 0;
         if (SSL_CONNECTION_IS_TLS13(sc)
             && !ssl_print_extensions(bio, indent + 2, server,

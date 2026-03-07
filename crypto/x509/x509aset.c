@@ -12,6 +12,8 @@
 #include <openssl/x509v3.h>
 #include "x509_acert.h"
 
+#include <crypto/asn1.h>
+
 static int replace_gentime(ASN1_STRING **dest, const ASN1_GENERALIZEDTIME *src)
 {
     ASN1_STRING *s;

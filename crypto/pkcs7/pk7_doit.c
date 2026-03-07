@@ -18,6 +18,8 @@
 #include "crypto/evp.h"
 #include "pk7_local.h"
 
+#include <crypto/asn1.h>
+
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
     void *value);
 static const ASN1_TYPE *get_attribute(const STACK_OF(X509_ATTRIBUTE) *sk, int nid);
@@ -1024,13 +1026,15 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
         goto err;
     }
 
-    return PKCS7_signatureVerify(bio, p7, si, signer);
+    if (PKCS7_signatureVerify(bio, p7, si, signer) <= 0)
+        goto err;
+    ret = 1;
 err:
     return ret;
 }
 
 int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
-    X509 *signer)
+    const X509 *signer)
 {
     ASN1_OCTET_STRING *os;
     EVP_MD_CTX *mdc_tmp, *mdc;

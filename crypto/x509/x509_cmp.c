@@ -97,24 +97,24 @@ int X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
     return rv < 0 ? -1 : rv > 0;
 }
 
-X509_NAME *X509_get_issuer_name(const X509 *a)
+const X509_NAME *X509_get_issuer_name(const X509 *a)
 {
     return a->cert_info.issuer;
 }
 
-unsigned long X509_issuer_name_hash(X509 *x)
+unsigned long X509_issuer_name_hash(const X509 *x)
 {
     return X509_NAME_hash_ex(x->cert_info.issuer, NULL, NULL, NULL);
 }
 
 #ifndef OPENSSL_NO_MD5
-unsigned long X509_issuer_name_hash_old(X509 *x)
+unsigned long X509_issuer_name_hash_old(const X509 *x)
 {
     return X509_NAME_hash_old(x->cert_info.issuer);
 }
 #endif
 
-X509_NAME *X509_get_subject_name(const X509 *a)
+const X509_NAME *X509_get_subject_name(const X509 *a)
 {
     return a->cert_info.subject;
 }
@@ -129,13 +129,13 @@ const ASN1_INTEGER *X509_get0_serialNumber(const X509 *a)
     return &a->cert_info.serialNumber;
 }
 
-unsigned long X509_subject_name_hash(X509 *x)
+unsigned long X509_subject_name_hash(const X509 *x)
 {
     return X509_NAME_hash_ex(x->cert_info.subject, NULL, NULL, NULL);
 }
 
 #ifndef OPENSSL_NO_MD5
-unsigned long X509_subject_name_hash_old(X509 *x)
+unsigned long X509_subject_name_hash_old(const X509 *x)
 {
     return X509_NAME_hash_old(x->cert_info.subject);
 }
@@ -178,7 +178,7 @@ int X509_cmp(const X509 *a, const X509 *b)
     return rv < 0 ? -1 : rv > 0;
 }
 
-int ossl_x509_add_cert_new(STACK_OF(X509) **p_sk, X509 *cert, int flags)
+int ossl_x509_add_cert_new(STACK_OF(X509) **p_sk, const X509 *cert, int flags)
 {
     if (*p_sk == NULL && (*p_sk = sk_X509_new_null()) == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
@@ -385,7 +385,7 @@ EVP_PKEY *X509_get0_pubkey(const X509 *x)
     return X509_PUBKEY_get0(x->cert_info.key);
 }
 
-EVP_PKEY *X509_get_pubkey(X509 *x)
+EVP_PKEY *X509_get_pubkey(const X509 *x)
 {
     if (x == NULL)
         return NULL;
@@ -470,7 +470,7 @@ static int check_suite_b(EVP_PKEY *pkey, int sign_nid, unsigned long *pflags)
     return X509_V_OK;
 }
 
-int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
+int X509_chain_check_suiteb(int *perror_depth, const X509 *x, STACK_OF(X509) *chain,
     unsigned long flags)
 {
     int rv, i, sign_nid;
@@ -556,7 +556,7 @@ int X509_CRL_check_suiteb(X509_CRL *crl, EVP_PKEY *pk, unsigned long flags)
 }
 
 #else
-int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
+int X509_chain_check_suiteb(int *perror_depth, const X509 *x, STACK_OF(X509) *chain,
     unsigned long flags)
 {
     return 0;

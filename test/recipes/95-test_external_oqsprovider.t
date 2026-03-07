@@ -20,6 +20,8 @@ plan skip_all => "oqsprovider tests not available on Windows or VMS"
 plan skip_all => "oqsprovider tests only available in a shared build"
     if disabled("shared");
 
+plan skip_all => "oqsprovider HEAD is currently broken - skipping test";
+    
 plan tests => 1;
 
 $ENV{SHLIB_VERSION_NUMBER} = config('shlib_version');

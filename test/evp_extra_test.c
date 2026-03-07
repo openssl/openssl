@@ -2683,7 +2683,9 @@ static int test_EVP_SM2(void)
     EVP_MD_CTX *md_ctx_verify = NULL;
     EVP_PKEY_CTX *cctx = NULL;
     EVP_MD *check_md = NULL;
-    uint8_t sm2_id[] = { 1, 2, 3, 4, 'l', 'e', 't', 't', 'e', 'r' };
+    uint8_t sm2_id[] = {
+        0x01, 0x02, 0x03, 0x04, 0x6c, 0x65, 0x74, 0x74, 0x65, 0x72
+    };
 #ifndef OPENSSL_NO_X963KDF
     uint8_t ciphertext[128];
     size_t ctext_len = sizeof(ciphertext);

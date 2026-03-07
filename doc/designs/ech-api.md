@@ -34,10 +34,10 @@ General Approach
 ----------------
 
 This ECH implementation was prototyped via integrations with curl, apache2,
-lighttpd, nginx, freenginx and haproxy. The implementation interoperates with all other
+lighttpd, nginx, freenginx and HAProxy. The implementation interoperates with all other
 known ECH implementations, including browsers, the libraries they use
 (NSS/BoringSSL), a closed-source server implementation (Cloudflare's test
-server) and with wolfssl and rusttls.
+server) and with wolfSSL and Rustls.
 
 The approach taken has been to minimise the application layer code
 changes required to ECH-enable those applications. There is of course a tension
@@ -79,7 +79,7 @@ ECHConfigLists from storage. There is a specification for a
 that is supported by the library.
 
 This PEM file format is supported by code for a number of TLS servers,
-including (at the time of writing) lighttpd, freenginx, nginx, apache2 and haproxy.
+including (at the time of writing) lighttpd, freenginx, nginx, apache2 and HAProxy.
 ECH support in those servers is currently an experimental feature or similar.
 
 Minimal Sample Code
@@ -375,7 +375,7 @@ In addition to the obvious fields from each ECHConfig, we also store:
 
 - The time at which a private key value and/or ECHConfigList were loaded.
   This value is useful when servers periodically re-load sets of files
-  or PEM structures from memory, e.g. for the haproxy server.
+  or PEM structures from memory, e.g. for the HAProxy server.
 
 ECH Split-mode
 --------------

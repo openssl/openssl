@@ -22,6 +22,8 @@
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
 
+#include <crypto/asn1.h>
+
 static int pkcs12_pbmac1_pbkdf2_key_gen(const char *pass, int passlen,
     unsigned char *salt, int saltlen,
     int id, int iter, int keylen,

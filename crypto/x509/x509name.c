@@ -94,7 +94,7 @@ int X509_NAME_get_index_by_OBJ(const X509_NAME *name, const ASN1_OBJECT *obj,
     return -1;
 }
 
-X509_NAME_ENTRY *X509_NAME_get_entry(const X509_NAME *name, int loc)
+const X509_NAME_ENTRY *X509_NAME_get_entry(const X509_NAME *name, int loc)
 {
     if (name == NULL || sk_X509_NAME_ENTRY_num(name->entries) <= loc
         || loc < 0)
@@ -346,14 +346,14 @@ int X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
     return 1;
 }
 
-ASN1_OBJECT *X509_NAME_ENTRY_get_object(const X509_NAME_ENTRY *ne)
+const ASN1_OBJECT *X509_NAME_ENTRY_get_object(const X509_NAME_ENTRY *ne)
 {
     if (ne == NULL)
         return NULL;
     return ne->object;
 }
 
-ASN1_STRING *X509_NAME_ENTRY_get_data(const X509_NAME_ENTRY *ne)
+const ASN1_STRING *X509_NAME_ENTRY_get_data(const X509_NAME_ENTRY *ne)
 {
     if (ne == NULL)
         return NULL;

@@ -31,6 +31,7 @@
 #include "internal/packet.h"
 #include "internal/dane.h"
 #include "internal/refcount.h"
+#include "internal/tlssigalgs.h"
 #include "internal/tsan_assist.h"
 #include "internal/bio.h"
 #include "internal/ktls.h"
@@ -252,7 +253,7 @@
 #define SSL_LOW 0x00000002U
 #define SSL_MEDIUM 0x00000004U
 #define SSL_HIGH 0x00000008U
-#define SSL_FIPS 0x00000010U
+/* #define SSL_FIPS 0x00000010U obsolete FIPS canister remnant */
 #define SSL_NOT_DEFAULT 0x00000020U
 
 /* we have used 0000003f - 26 bits left to go */
@@ -2211,85 +2212,6 @@ typedef enum downgrade_en {
  */
 #define TLSEXT_STATUSTYPE_nothing -1
 
-/* Sigalgs values */
-#define TLSEXT_SIGALG_ecdsa_secp256r1_sha256 0x0403
-#define TLSEXT_SIGALG_ecdsa_secp384r1_sha384 0x0503
-#define TLSEXT_SIGALG_ecdsa_secp521r1_sha512 0x0603
-#define TLSEXT_SIGALG_ecdsa_sha224 0x0303
-#define TLSEXT_SIGALG_ecdsa_sha1 0x0203
-#define TLSEXT_SIGALG_rsa_pss_rsae_sha256 0x0804
-#define TLSEXT_SIGALG_rsa_pss_rsae_sha384 0x0805
-#define TLSEXT_SIGALG_rsa_pss_rsae_sha512 0x0806
-#define TLSEXT_SIGALG_rsa_pss_pss_sha256 0x0809
-#define TLSEXT_SIGALG_rsa_pss_pss_sha384 0x080a
-#define TLSEXT_SIGALG_rsa_pss_pss_sha512 0x080b
-#define TLSEXT_SIGALG_rsa_pkcs1_sha256 0x0401
-#define TLSEXT_SIGALG_rsa_pkcs1_sha384 0x0501
-#define TLSEXT_SIGALG_rsa_pkcs1_sha512 0x0601
-#define TLSEXT_SIGALG_rsa_pkcs1_sha224 0x0301
-#define TLSEXT_SIGALG_rsa_pkcs1_sha1 0x0201
-#define TLSEXT_SIGALG_dsa_sha256 0x0402
-#define TLSEXT_SIGALG_dsa_sha384 0x0502
-#define TLSEXT_SIGALG_dsa_sha512 0x0602
-#define TLSEXT_SIGALG_dsa_sha224 0x0302
-#define TLSEXT_SIGALG_dsa_sha1 0x0202
-#define TLSEXT_SIGALG_gostr34102012_256_intrinsic 0x0840
-#define TLSEXT_SIGALG_gostr34102012_512_intrinsic 0x0841
-#define TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256 0xeeee
-#define TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512 0xefef
-#define TLSEXT_SIGALG_gostr34102001_gostr3411 0xeded
-
-#define TLSEXT_SIGALG_ed25519 0x0807
-#define TLSEXT_SIGALG_ed448 0x0808
-#define TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256 0x081a
-#define TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384 0x081b
-#define TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512 0x081c
-#define TLSEXT_SIGALG_mldsa44 0x0904
-#define TLSEXT_SIGALG_mldsa65 0x0905
-#define TLSEXT_SIGALG_mldsa87 0x0906
-
-/* Sigalgs names */
-#define TLSEXT_SIGALG_ecdsa_secp256r1_sha256_name "ecdsa_secp256r1_sha256"
-#define TLSEXT_SIGALG_ecdsa_secp384r1_sha384_name "ecdsa_secp384r1_sha384"
-#define TLSEXT_SIGALG_ecdsa_secp521r1_sha512_name "ecdsa_secp521r1_sha512"
-#define TLSEXT_SIGALG_ecdsa_sha224_name "ecdsa_sha224"
-#define TLSEXT_SIGALG_ecdsa_sha1_name "ecdsa_sha1"
-#define TLSEXT_SIGALG_rsa_pss_rsae_sha256_name "rsa_pss_rsae_sha256"
-#define TLSEXT_SIGALG_rsa_pss_rsae_sha384_name "rsa_pss_rsae_sha384"
-#define TLSEXT_SIGALG_rsa_pss_rsae_sha512_name "rsa_pss_rsae_sha512"
-#define TLSEXT_SIGALG_rsa_pss_pss_sha256_name "rsa_pss_pss_sha256"
-#define TLSEXT_SIGALG_rsa_pss_pss_sha384_name "rsa_pss_pss_sha384"
-#define TLSEXT_SIGALG_rsa_pss_pss_sha512_name "rsa_pss_pss_sha512"
-#define TLSEXT_SIGALG_rsa_pkcs1_sha256_name "rsa_pkcs1_sha256"
-#define TLSEXT_SIGALG_rsa_pkcs1_sha384_name "rsa_pkcs1_sha384"
-#define TLSEXT_SIGALG_rsa_pkcs1_sha512_name "rsa_pkcs1_sha512"
-#define TLSEXT_SIGALG_rsa_pkcs1_sha224_name "rsa_pkcs1_sha224"
-#define TLSEXT_SIGALG_rsa_pkcs1_sha1_name "rsa_pkcs1_sha1"
-#define TLSEXT_SIGALG_dsa_sha256_name "dsa_sha256"
-#define TLSEXT_SIGALG_dsa_sha384_name "dsa_sha384"
-#define TLSEXT_SIGALG_dsa_sha512_name "dsa_sha512"
-#define TLSEXT_SIGALG_dsa_sha224_name "dsa_sha224"
-#define TLSEXT_SIGALG_dsa_sha1_name "dsa_sha1"
-#define TLSEXT_SIGALG_gostr34102012_256_intrinsic_name "gostr34102012_256"
-#define TLSEXT_SIGALG_gostr34102012_512_intrinsic_name "gostr34102012_512"
-#define TLSEXT_SIGALG_gostr34102012_256_intrinsic_alias "gost2012_256"
-#define TLSEXT_SIGALG_gostr34102012_512_intrinsic_alias "gost2012_512"
-#define TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256_name "gost2012_256"
-#define TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512_name "gost2012_512"
-#define TLSEXT_SIGALG_gostr34102001_gostr3411_name "gost2001_gost94"
-
-#define TLSEXT_SIGALG_ed25519_name "ed25519"
-#define TLSEXT_SIGALG_ed448_name "ed448"
-#define TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256_name "ecdsa_brainpoolP256r1tls13_sha256"
-#define TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_name "ecdsa_brainpoolP384r1tls13_sha384"
-#define TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_name "ecdsa_brainpoolP512r1tls13_sha512"
-#define TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256_alias "ecdsa_brainpoolP256r1_sha256"
-#define TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_alias "ecdsa_brainpoolP384r1_sha384"
-#define TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_alias "ecdsa_brainpoolP512r1_sha512"
-#define TLSEXT_SIGALG_mldsa44_name "mldsa44"
-#define TLSEXT_SIGALG_mldsa65_name "mldsa65"
-#define TLSEXT_SIGALG_mldsa87_name "mldsa87"
-
 /* Known PSK key exchange modes */
 #define TLSEXT_KEX_MODE_KE 0x00
 #define TLSEXT_KEX_MODE_KE_DHE 0x01
@@ -2610,6 +2532,7 @@ __owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc);
 
 __owur const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id);
 __owur const SSL_CIPHER *ssl3_get_cipher_by_std_name(const char *stdname);
+__owur const SSL_CIPHER *ssl3_get_tls13_cipher_by_std_name(const char *stdname);
 __owur const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 __owur int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt,
     size_t *len);
@@ -2871,7 +2794,7 @@ int tls_choose_sigalg(SSL_CONNECTION *s, int fatalerrs);
 __owur long ssl_get_algorithm2(SSL_CONNECTION *s);
 __owur int tls12_copy_sigalgs(SSL_CONNECTION *s, WPACKET *pkt,
     const uint16_t *psig, size_t psiglen);
-__owur int tls1_save_u16(PACKET *pkt, uint16_t **pdest, size_t *pdestlen);
+__owur int tls1_save_u16(PACKET *pkt, uint16_t **pdest, size_t *pdestlen, size_t maxnum);
 __owur int tls1_save_sigalgs(SSL_CONNECTION *s, PACKET *pkt, int cert);
 __owur int tls1_process_sigalgs(SSL_CONNECTION *s);
 __owur int tls1_set_peer_legacy_sigalg(SSL_CONNECTION *s, const EVP_PKEY *pkey);

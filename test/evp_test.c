@@ -2737,7 +2737,7 @@ static int pkey_test_ctrl(EVP_TEST *t, EVP_PKEY_CTX *pctx,
 static int pkey_add_control(EVP_TEST *t, STACK_OF(OPENSSL_STRING) *controls,
     const char *value)
 {
-    char *p;
+    const char *p;
 
     if (controls == NULL)
         return 0;

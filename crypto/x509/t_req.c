@@ -17,6 +17,8 @@
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 
+#include <crypto/asn1.h>
+
 #ifndef OPENSSL_NO_STDIO
 int X509_REQ_print_fp(FILE *fp, const X509_REQ *x)
 {
@@ -169,8 +171,8 @@ int X509_REQ_print_ex(BIO *bp, const X509_REQ *x, unsigned long nmflags, unsigne
             if (BIO_printf(bp, "%12sRequested Extensions:\n", "") <= 0)
                 goto err;
             for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
-                ASN1_OBJECT *obj;
-                X509_EXTENSION *ex;
+                const ASN1_OBJECT *obj;
+                const X509_EXTENSION *ex;
                 int critical;
                 ex = sk_X509_EXTENSION_value(exts, i);
                 if (BIO_printf(bp, "%16s", "") <= 0)

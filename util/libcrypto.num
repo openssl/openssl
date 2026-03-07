@@ -2562,7 +2562,7 @@ ASN1_TYPE_unpack_sequence               ?	4_0_0	EXIST::FUNCTION:
 d2i_ASN1_OBJECT                         ?	4_0_0	EXIST::FUNCTION:
 i2d_ASN1_OBJECT                         ?	4_0_0	EXIST::FUNCTION:
 ASN1_OBJECT_free                        ?	4_0_0	EXIST::FUNCTION:
-ASN1_OBJECT_new                         ?	4_0_0	EXIST::FUNCTION:
+ASN1_OBJECT_new                         ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_0
 ASN1_OBJECT_it                          ?	4_0_0	EXIST::FUNCTION:
 ASN1_STRING_new                         ?	4_0_0	EXIST::FUNCTION:
 ASN1_STRING_free                        ?	4_0_0	EXIST::FUNCTION:
@@ -2857,6 +2857,7 @@ BIO_get_new_index                       ?	4_0_0	EXIST::FUNCTION:
 BIO_set_flags                           ?	4_0_0	EXIST::FUNCTION:
 BIO_test_flags                          ?	4_0_0	EXIST::FUNCTION:
 BIO_clear_flags                         ?	4_0_0	EXIST::FUNCTION:
+BIO_set_send_flags                      ?	4_0_0	EXIST::FUNCTION:
 BIO_get_callback                        ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 BIO_set_callback                        ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 BIO_debug_callback                      ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
@@ -5148,15 +5149,25 @@ X509_VERIFY_PARAM_get_inh_flags         ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get0_host             ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set1_host             ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_add1_host             ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_host_input_validation ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set_hostflags         ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get_hostflags         ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get0_peername         ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_move_peername         ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get0_email            ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set1_email            ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_rfc822           ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_add1_rfc822           ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_rfc822_input_validation ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_smtputf8         ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_add1_smtputf8         ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_smtputf8_input_validation ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get1_ip_asc           ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set1_ip               ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set1_ip_asc           ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_add1_ip               ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_add1_ip_asc           ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_ip_input_validation ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get_depth             ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get_auth_level        ?	4_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get0_name             ?	4_0_0	EXIST::FUNCTION:
@@ -5703,3 +5714,4 @@ OSSL_ENCODER_CTX_ctrl_string            ?	4_0_0	EXIST::FUNCTION:
 OPENSSL_sk_set_cmp_thunks               ?	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_set1                    ?	4_0_0	EXIST::FUNCTION:
 OSSL_ESS_check_signing_certs_ex         ?	4_0_0	EXIST::FUNCTION:
+X509v3_delete_extension                 ?	4_0_0	EXIST::FUNCTION:

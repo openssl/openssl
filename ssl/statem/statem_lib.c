@@ -16,6 +16,7 @@
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
 #include <openssl/buffer.h>
+#include <openssl/core_names.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
@@ -322,6 +323,7 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
     unsigned char tls13tbs[TLS13_TBS_PREAMBLE_SIZE + EVP_MAX_MD_SIZE];
     const SIGALG_LOOKUP *lu = s->s3.tmp.sigalg;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    OSSL_PARAM params[3], *p = params;
 
     if (lu == NULL || s->s3.tmp.cert == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -351,10 +353,19 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
         goto err;
     }
 
+    /*
+     * To avoid problems with older RSA providers we must also pass the digest
+     * name when passing any other parameters.
+     */
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_TLS_VERSION, &s->version);
+    if (md != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
+            (char *)EVP_MD_get0_name(md), 0);
+    *p = OSSL_PARAM_construct_end();
+
     if (EVP_DigestSignInit_ex(mctx, &pctx,
             md == NULL ? NULL : EVP_MD_get0_name(md),
-            sctx->libctx, sctx->propq, pkey,
-            NULL)
+            sctx->libctx, sctx->propq, pkey, params)
         <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
@@ -433,6 +444,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
     EVP_PKEY_CTX *pctx = NULL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    OSSL_PARAM params[3], *p = params;
 
     if (mctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
@@ -514,10 +526,19 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
     OSSL_TRACE1(TLS, "Using client verify alg %s\n",
         md == NULL ? "n/a" : EVP_MD_get0_name(md));
 
+    /*
+     * To avoid problems with older RSA providers we must also pass the digest
+     * name when passing any other parameters.
+     */
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_TLS_VERSION, &s->version);
+    if (md != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
+            (char *)EVP_MD_get0_name(md), 0);
+    *p = OSSL_PARAM_construct_end();
+
     if (EVP_DigestVerifyInit_ex(mctx, &pctx,
             md == NULL ? NULL : EVP_MD_get0_name(md),
-            sctx->libctx, sctx->propq, pkey,
-            NULL)
+            sctx->libctx, sctx->propq, pkey, params)
         <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;

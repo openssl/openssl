@@ -25,18 +25,24 @@ OSSL_default_ciphersuites
 
 =head1 DESCRIPTION
 
-SSL_CTX_set_cipher_list() sets the list of available ciphers (TLSv1.2 and below)
-for B<ctx> using the control string B<str>. The format of the string is described
-in L<openssl-ciphers(1)>. The list of ciphers is inherited by all
-B<ssl> objects created from B<ctx>. This function does not impact TLSv1.3
-ciphersuites. Use SSL_CTX_set_ciphersuites() to configure those. B<ctx> B<MUST NOT> be NULL.
+SSL_CTX_set_cipher_list() sets the list of available ciphers (TLSv1.2 and
+below) for B<ctx> using the control string B<str>.
+The format of the string is described in L<openssl-ciphers(1)>.
+As of OpenSSL 4.0, B<str> is processed case-insensitively.
+The list of ciphers is inherited by all B<ssl> objects created from B<ctx>.
+This function does not affect TLSv1.3 ciphersuites.
+Use SSL_CTX_set_ciphersuites() to configure those.
+B<ctx> B<MUST NOT> be NULL.
 
 SSL_set_cipher_list() sets the list of ciphers (TLSv1.2 and below) only for
 B<ssl>.
 
 SSL_CTX_set_ciphersuites() is used to configure the available TLSv1.3
-ciphersuites for B<ctx>. This is a simple colon (":") separated list of TLSv1.3
-ciphersuite names in order of preference. Valid TLSv1.3 ciphersuite names are:
+ciphersuites for B<ctx>.
+This is a simple colon (":") separated list of TLSv1.3 ciphersuite names in
+order of preference.
+As of OpenSSL 4.0, B<str> is processed case-insensitively.
+Valid TLSv1.3 ciphersuite names are:
 
 =over 4
 
@@ -124,6 +130,8 @@ L<openssl-ciphers(1)>
 =head1 HISTORY
 
 OSSL_default_cipher_list() and OSSL_default_ciphersites() are new in 3.0.
+
+Cipher names were case-sensitive prior to OpenSSL 4.0.
 
 =head1 COPYRIGHT
 

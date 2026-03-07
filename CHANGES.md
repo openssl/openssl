@@ -27,10 +27,121 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
-OpenSSL 4.0
 -----------
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
+
+ * Added restrictions on the maximum number of TLS key_shares (16) that a server
+   will pay attention to, as well as the maximum number of supported groups
+   (128) and sig algs (128). Any sent beyond this number are ignored in order
+   to avoid clients sending excessively long lists in these extensions.
+
+   *Matt Caswell*
+
+ * The `openssl-x509(1)`, `openssl-req(1)` and `openssl-ca(1)` command-line
+   utilities no longer have specialised built-in logic to add the SKID and AKID
+   extensions, they are handled through configuration files and command-line
+   options just like any other extension.  See their documentation and also
+   `x509v3_config(5)` for additional details.
+
+   Updated the syntax of the `subjectKeyIdentifier` (SKID) and
+   `authorityKeyIdentifier` (AKID) extensions, introducing the `nonss` qualifier
+   for the `keyid` and `issuer` keywords.
+
+   The x509 "mini-CA" now attempts to find extension settings in the default
+   configuration file even if neither the `-extfile` nor the `-extensions`
+   option is explicitly specified.  Failure to open the default configuration
+   is silently ignored.
+
+   The settings in the stock OpenSSL 4.0 configuration file arrange for
+   addition of the requisite SKID and AKID extensions.  Other configuration
+   files may need to be adjusted if desired.
+
+   *Viktor Dukhovni*
+
+ * New `-expected-rpks` option in the `openssl-s_client(1)` and `openssl-s_server(1)`
+   command line utilities.  This makes it possible to specify one more public keys
+   expected from the remote peer that are then used to authenticate the connection.
+
+   *Viktor Dukhovni*
+
+ * Fixed bug that allowed TLS 1.2 ciphers to be added to the TLS 1.3
+   ciphersuites list, and for that list to contain duplicates.
+   Cipher configuration strings for both TLS 1.2 and 1.3 are now
+   case-insensitive.
+
+   *Viktor Dukhovni*
+
+ * Added LMS support for signature verification to `pkeyutl` command.
+   To enable this, LMS `SubjectPublicKeyInfo` encoder and decoders were
+   added, and the LMS keymanager and signature code were updated.
+
+   *Shane Lontis*
+
+ * New `SSL_get0_sigalg()` and `SSL_get0_shared_sigalg()` functions report the
+   TLS signature algorithm name and codepoint for the peer advertised and shared
+   algorithms respectively.  These supersede the existing `SSL_get_sigalgs()` and
+   `SSL_get_shared_sigalgs()` functions which are only a good fit for TLS 1.2.
+   The names reported are the IANA names, and are expected to consistently match
+   the names expected in `SignatureAlgorithms` configuration settings, see
+   `SSL_CONF_cmd(3)` for details.  Previously reported names were not always directly
+   usable or configurations, and were mostly OpenSSL-specific aliases that
+   rarely matched the official IANA codepoint names.
+
+   There is an associated change in how signature algorithms are reported by the
+   `openssl-s_client(1)` and `openssl-s_server(1)` command-line tools.  They
+   now use the new functions and report the IANA registered names of each
+   signature scheme.  Example new output:
+
+    ```
+    Signature Algorithms: mldsa65:mldsa87:mldsa44:ecdsa_secp256r1_sha256:ecdsa_secp384r1_sha384:ecdsa_secp521r1_sha512:ed25519:ed448:ecdsa_brainpoolP256r1tls13_sha256:ecdsa_brainpoolP384r1tls13_sha384:ecdsa_brainpoolP512r1tls13_sha512:rsa_pss_pss_sha256:rsa_pss_pss_sha384:rsa_pss_pss_sha512:rsa_pss_rsae_sha256:rsa_pss_rsae_sha384:rsa_pss_rsae_sha512:rsa_pkcs1_sha256:rsa_pkcs1_sha384:rsa_pkcs1_sha512:ecdsa_sha224:rsa_pkcs1_sha224:dsa_sha224:dsa_sha256:dsa_sha384:dsa_sha512
+    ```
+
+   *Viktor Dukhovni*
+
+ * Updated the default group list to append `SecP256r1MKEM768` and
+   `curveSM2MLKEM768` to the first tuple in that order after `*X25519MLKEM768`.
+   Also inserted a penultimate tuple with `curveSM2` (just before the `FFDHE`
+   groups).
+
+   *Viktor Dukhovni*
+
+ * Implemented client-side predicted keyshare floating.  When a tuple loses
+   the last element that was tagged for transmission of a predicted client
+   keyshare (by default `*X25519MLKEM768` and `*X25519` in their respective
+   tuples), either because the group is not enabled at compile-time, or
+   because it is removed by configuration (e.g. `DEFAULT:-<groupname>`), if
+   the tuple remains non-empty, the keyshare is inherited by the first (i.e.
+   most preferred) remaining element of the tuple.
+
+   *Viktor Dukhovni*
+
+ * Added support for [RFC8998], signature algorithm `sm2sig_sm3`, key exchange
+   group `curveSM2`, and [tls-hybrid-sm2-mlkem] post-quantum group
+   `curveSM2MLKEM768`.
+
+   Verification of SM2-signed certificates required changing the default
+   *distinguishing identifier* from empty to the constant ASCII string
+   "1234567812345678".  An explicit empty distinguishing identifier value may
+   need to be used to verify or create signatures that are compatible with
+   versions of OpenSSL prior to 4.0.  With the command-line tools an empty
+   value can be specified with the use of either the **-pkeyopt**
+   (`openssl-pkeyutl(1)`) or **-sigopt** (`openssl-dgst(1)`) option with a
+   value of "distid:".
+
+   *Viktor Dukhovni*
+
+ * Code cleanup in the `openssl-speed` command-line utility consolidates the
+   processing of SM2 and EdDSA signatures with essentially identical code for
+   ECDSA.  The output format has changed slightly to report the EC curve name
+   rather than its bit size.
+
+   *Viktor Dukhovni*
+
+ * The SSL_TXT_FIPS option has been removed.  This was a remnant of
+   the old FIPS canister and wasn't used anymore.
+
+   * Dr Paul Dale *
 
  * Added support for TLS 1.3 SM cipher suites `TLS_SM4_GCM_SM3` and `TLS_SM4_CCM_SM3`
    from [RFC8998].
@@ -39,14 +150,20 @@ OpenSSL 4.0
 
  * The `OSSL_ESS_check_signing_certs_ex()` call has been added.
 
-   This api call is an extention to `OSSL_ESS_check_signing_certs()` to add
+   This api call is an extension to `OSSL_ESS_check_signing_certs()` to add
    the ability to specify a library context and property query when fetching
    algorithms to validate a given certificate.
 
    *Neil Horman*
 
+ * `ASN1_OBJECT_new()` has been deprecated.
+
+   Refer to ossl-migration-guide(7) for more info.
+
+   *Frederik Wedel-Heinen*
+
  * FIPS self tests can now be deferred and run as needed when installing
-   the fips module with the -defer_tests option.
+   the fips module with the `-defer_tests` option.
 
    *Simo Sorce*
 
@@ -58,29 +175,46 @@ OpenSSL 4.0
 
    *Neil Horman*
 
- * Const correct time parameter for X509_cmp_time(), X509_time_adj() and
-   X509_time_adj_ex().
+ * Const correct time parameter for `X509_cmp_time()`, `X509_time_adj()` and
+   `X509_time_adj_ex()`.
 
    *Frederik Wedel-Heinen*
 
- * OPENSSL_cleanup() now runs in a global destructor, or not at all by default.
+ * `OPENSSL_cleanup()` now runs in a global destructor, or not at all by default.
 
-   OpenSSL_cleanup() will no longer by default free global objects when run from
+   `OpenSSL_cleanup()` will no longer by default free global objects when run from
    an application. Instead it sets a flag for a global destructor to do this after
    the process exits, and after subordinate libraries using OpenSSL have run their
-   destructors. If destructor support is not available, OpenSSL_cleanup() will do
+   destructors. If destructor support is not available, `OpenSSL_cleanup()` will do
    nothing, leaving the global objects to be cleaned up by the Operating System.
 
    *Bob Beck*
 
- * Made X509_ATTRIBUTE accessor functions const-correct. The functions
-   X509_ATTRIBUTE_get0_object(), X509_ATTRIBUTE_get0_type(), and
-   X509_ATTRIBUTE_get0_data() now accept `const X509_ATTRIBUTE *` and
-   return const pointers. Related PKCS12 functions PKCS12_get_attr_gen(),
-   PKCS12_get_attr(), and PKCS8_get_attr() have also been updated to
+ * Critical extension enforcement for EXFLAG_BCONS_CRITICAL,
+   EXFLAG_AKID_CRITICAL, EXFLAG_SKID_CRITICAL, and EXFLAG_SAN_CRITICAL is
+   incorrect. These checks were intended as CA requirements to prevent
+   misinterpretation by verifiers that don't support certain extensions
+   However, since we do support these extensions, there is no requirement for
+   them to be marked as critical. Enforcing that on X509_V_FLAG_X509_STRICT was a mistake.
+
+   *Daniel Kubec*
+
+ * Made `X509_ATTRIBUTE` accessor functions const-correct. The functions
+   `X509_ATTRIBUTE_get0_object()`, `X509_ATTRIBUTE_get0_type()`, and
+   `X509_ATTRIBUTE_get0_data()` now accept `const X509_ATTRIBUTE *` and
+   return const pointers. Related PKCS12 functions `PKCS12_get_attr_gen()`,
+   `PKCS12_get_attr()`, and `PKCS8_get_attr()` have also been updated to
    return `const ASN1_TYPE *`.
 
    *kovan*
+
+ * `ASN1_STRING` has been made opaque.
+
+   Access to values from `ASN1_STRING` and related types should be done with the
+   appropriate accessor functions. The various `ASN1_STRING_FLAG` values have
+   been made private.
+
+   *Bob Beck*
 
  * Added CSHAKE as per [SP 800-185]
 
@@ -91,25 +225,29 @@ OpenSSL 4.0
 
    *Neil Horman*
 
- * SSL_get_error() no longer depends on the state of the error stack,
+ * `SSL_get_error()` no longer depends on the state of the error stack,
    so it is no longer necessary to empty the error queue before the
    TLS/SSL I/O operations.
 
    *Igor Ustinov*
+
+ * CRLs with a malformed Issuing Distribution Point are now rejected.
+
+   *Daniel Kubec*
 
  * Added configure options to disable KDF algorithms for
    hmac-drbg-kdf, kbkdf, krb5kdf, pvkkdf, snmpkdf, sskdf, sshkdf, x942kdf and x963kdf.
 
    *Shane Lontis*
 
- * OPENSSL_atexit() was removed.
+ * `OPENSSL_atexit()` was removed.
 
    *Bob Beck*
 
- * Added AKID verification checks when X509_V_FLAG_X509_STRICT is set.
-   Raise X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER when AKID is not present.
-   Raise X509_V_ERR_EMPTY_AUTHORITY_KEY_IDENTIFIER when AKID has no attributes.
-   Raise X509_V_ERR_AKID_ISSUER_SERIAL_NOT_PAIRED when authorityCertIssuer and
+ * Added AKID verification checks when `X509_V_FLAG_X509_STRICT` is set.
+   Raise `X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER` when AKID is not present.
+   Raise `X509_V_ERR_EMPTY_AUTHORITY_KEY_IDENTIFIER` when AKID has no attributes.
+   Raise `X509_V_ERR_AKID_ISSUER_SERIAL_NOT_PAIRED` when authorityCertIssuer and
    authorityCertSerialNumber fields are not paired.
 
    *Daniel Kubec*
@@ -125,7 +263,7 @@ OpenSSL 4.0
    send an SSLv2 Client Hello. SSLv2 support itself was removed in version
    1.1.0, but there was still compatibility code for clients sending an SSLv2
    Client Hello. Since we no longer support SSLv2 Client Hello,
-   SSL_client_hello_isv2() is now deprecated and always returns 0.
+   `SSL_client_hello_isv2()` is now deprecated and always returns 0.
 
    *Kurt Roeckx*
 
@@ -150,6 +288,12 @@ OpenSSL 4.0
 
    *Kurt Roeckx*
 
+ * Various function return values have been constified, particularly in X509
+   and related areas, and when functions were returning non-const objects
+   owned by a const parameter.
+
+   *Bob Beck*
+
  * The script tool `c_rehash` was removed. Use `openssl rehash` instead.
 
    *Norbert Pocs*
@@ -162,9 +306,17 @@ OpenSSL 4.0
 
    *Alexandr Nedvedicky*
 
- * The X509_verify function now takes a const X509 * argument
+ * Many functions accepting `X509 *` arguments, or returning values
+   from a const `X509 *` have been changed to take/return const
+   arguments. The most visible changes are places where pointer values
+   are returned from a const `X509 *` object. In many places where
+   these were non const values being returned from a const object,
+   these pointer values have now been made const. The goal of this
+   change is to enable future improvements in X.509 certificate
+   handling. For full details see the relevant section in
+   ossl-migration-guide(7).
 
-   * Bob Beck *
+   *Bob Beck*
 
  * The crypto-mdebug-backtrace configuration option has been entirely removed.
    The option has been a no-op since 1.0.2.
@@ -183,16 +335,18 @@ OpenSSL 4.0
 
    *Beat Bolli*
 
- * Added ASN1_BIT_STRING_set1() to set a bit string to a value including
-   the length in bytes and the number of unused bits.
+ * Added `ASN1_BIT_STRING_set1()` to set a bit string to a value including
+   the length in bytes and the number of unused bits. Internally,
+   `ASN1_BIT_STRING_set_bit()` has also been modified to keep the number of
+   unused bits correct when changing an `ASN1_BIT_STRING`.
 
-   * Bob Beck *
+   *Bob Beck*
 
  * The deprecated function `ASN1_STRING_data` has been removed.
 
    *Bob Beck*
 
- * The ASN1_STRING_FLAG_X509_TIME define has been removed.
+ * The `ASN1_STRING_FLAG_X509_TIME` define has been removed.
 
    *Bob Beck*
 
@@ -217,22 +371,35 @@ OpenSSL 4.0
 
    *Daniel Kubec and Eugene Syromiatnikov*
 
+ * `X509_get0_distinguishing_id()` now takes and returns const objects.
+
+   *Bob Beck*
+
  * Added `-hmac-env` and `-hmac-stdin` options to openssl-dgst.
 
    *Igor Ustinov*
 
- * Added SSL_CTX_get0_alpn_protos() and SSL_get0_alpn_protos().
+ * Added `SSL_CTX_get0_alpn_protos()` and `SSL_get0_alpn_protos()`.
 
    *Daniel Kubec*
 
- * Enabled Server verification by default in `s_server` when option
-   verify_return_error is enabled.
+ * Enabled Server verification by default in `s_server` when the
+   `-verify_return_error` option is enabled.
 
    *Ryan Hooper*
 
- * Fixed CRLs with invalid ASN1_TIME in invalidityDate extensions,
+ * Constify Various X509 functions:
+   `X509_get_pathlen()`, `X509_check_ca()`, `X509_check_purpose()`,
+   `X509_get_proxy_pathlen()`, `X509_get_extension_flags()`,
+   `X509_get_key_usage()`, `X509_get_extended_key_usage()`,
+   `X509_get0_subject_key_id()`, `X509_get0_authority_key_id()`,
+   `X509_get0_authority_issuer()`, `X509_get0_authority_serial()`.
+
+   *Bob Beck*
+
+ * Fixed CRLs with invalid `ASN1_TIME` in invalidityDate extensions,
    where verification incorrectly succeeded. Enforced proper
-   handling of ASN1_TIME validation results so that any CRL
+   handling of `ASN1_TIME` validation results so that any CRL
    containing invalid time fields is rejected immediately,
    preventing the error from propagating to verification.
 
@@ -244,10 +411,10 @@ OpenSSL 4.0
    *Daniel Kubec*
 
  * Rather than being documented as "should be considered deprecated",
-   X509_NAME_get_text_by_NID, and X509_NAME_get_text_by_OBJ are now
+   `X509_NAME_get_text_by_NID()`, and `X509_NAME_get_text_by_OBJ()` are now
    actually deprecated, and documented as such.
 
-   * Bob Beck *
+   *Bob Beck*
 
  * ENGINE support was removed. The `no-engine` build option and the
    `OPENSSL_NO_ENGINE` macro is always present.
@@ -258,7 +425,7 @@ OpenSSL 4.0
 
    *Milan Broz*, *Neil Horman*, *Norbert Pocs*
 
- * BIO_f_reliable() implementation was removed without replacement.
+ * `BIO_f_reliable()` implementation was removed without replacement.
    It was broken since 3.0 release without any complaints.
 
    *Tomáš Mráz*
@@ -268,7 +435,7 @@ OpenSSL 4.0
 
    *Tomáš Mráz*
 
- * Added SNMP KDF (EVP_KDF_SNMPKDF) to EVP_KDF
+ * Added SNMP KDF (`EVP_KDF_SNMPKDF`) to `EVP_KDF`
 
    *Barry Fussell and Helen Zhang*
 
@@ -280,7 +447,7 @@ OpenSSL 4.0
 
    *Simo Sorce*
 
- * Added SRTP KDF (EVP_KDF_SRTPKDF) to EVP_KDF
+ * Added SRTP KDF (`EVP_KDF_SRTPKDF`) to `EVP_KDF`
 
    *Barry Fussell and Helen Zhang*
 
@@ -297,6 +464,26 @@ OpenSSL 4.0
    See doc/design/ech-api.md for details.
 
    *Stephen Farrell* (with much support from *Matt Caswell* and *Tomáš Mráz*)
+
+ * `X509_cmp_time()`, `X509_cmp_current_time()`, and `X509_cmp_timeframe()` have
+   had documentation added, and have then been deprecated.  A new
+   function, `X509_check_certificate_times()` has been added, as well as
+   the `<openssl/posix_time.h>` interface from BoringSSL/LibreSSL. For
+   details of these functions and non-deprecated replacement
+   strategies, see `X509_check_certificate_times(3)`.
+
+   *Bob Beck*
+
+ * Added `BIO_set_send_flags()` function that allows setting flags passed to
+   send(), sendto(), and sendmsg(). The main intention is to allow setting
+   the `MSG_NOSIGNAL` flag to avoid a crash on receiving the SIGPIPE signal.
+
+   *Igor Ustinov*
+
+  * Enforce lower bounds checks when using PKCS5_PBKDF2_HMAC API with
+    FIPS provider.
+
+    *Dimitri John Ledkov*
 
 OpenSSL 3.6
 -----------
@@ -474,6 +661,13 @@ OpenSSL 3.6
 
    *Dimitri John Ledkov*
 
+ * `SSL_add1_host()` and `SSL_set1_host()` were deprecated. The new replacement functions
+   `SSL_add1_dnsname()`, `SSL_set1_dnsname()`, `SSL_add1_ipaddr()`, and `SSL_set1_ipaddr()` were added.
+   API was added to support checking multiple names against a certificate with
+   `X509_VERIFY_PARAM`.  See `X509_VERIFY_PARAM_set_flags(3)` for full details.
+
+   *Bob Beck*
+
  * Added `X509_CRL_get0_tbs_sigalg()` accessor for the signature
    `AlgorithmIdentifier` inside CRL's `TBSCertList`.
 
@@ -513,7 +707,7 @@ OpenSSL 3.6
 
    *Dimitri John Ledkov*
 
- * SSL_CTX_is_server() was added.
+ * `SSL_CTX_is_server()` was added.
 
    *Igor Ustinov*
 
@@ -553,10 +747,10 @@ OpenSSL 3.5
 
    *Stanislav Fort and Tomáš Mráz*
 
- * Fix Out-of-bounds read in HTTP client no_proxy handling
+ * Fix Out-of-bounds read in HTTP client `no_proxy` handling
 
    Issue summary: An application using the OpenSSL HTTP client API functions
-   may trigger an out-of-bounds read if the "no_proxy" environment variable is
+   may trigger an out-of-bounds read if the `no_proxy` environment variable is
    set and the host portion of the authority component of the HTTP URL is an
    IPv6 address.
 
@@ -657,10 +851,10 @@ OpenSSL 3.5
 
    *Tomas Mraz*
 
- * Aligned the behaviour of TLS and DTLS in the event of a no_renegotiation
+ * Aligned the behaviour of TLS and DTLS in the event of a `no_renegotiation`
    alert being received. Older versions of OpenSSL failed with DTLS if a
-   no_renegotiation alert was received. All versions of OpenSSL do this for TLS.
-   From 3.2 a bug was exposed that meant that DTLS ignored no_rengotiation. We
+   `no_renegotiation` alert was received. All versions of OpenSSL do this for TLS.
+   From 3.2 a bug was exposed that meant that DTLS ignored `no_rengotiation`. We
    have now restored the original behaviour and brought DTLS back into line with
    TLS.
 
@@ -21881,6 +22075,8 @@ ndif
 [CVE-2023-3446]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-3446
 [CVE-2023-2975]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-2975
 [RFC 2578 (STD 58), section 3.5]: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
+[RFC8998]: https://datatracker.ietf.org/doc/html/rfc8998#name-iana-considerations
+[tls-hybrid-sm2-mlkem]: https://datatracker.ietf.org/doc/html/draft-yang-tls-hybrid-sm2-mlkem-03#name-iana-considerations
 [CVE-2023-2650]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-2650
 [CVE-2023-1255]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-1255
 [CVE-2023-0466]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0466

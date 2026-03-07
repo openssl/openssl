@@ -16,6 +16,8 @@
 #include "ext_dat.h"
 #include "x509_local.h"
 
+#include <crypto/asn1.h>
+
 static STACK_OF(CONF_VALUE) *i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
     BASIC_CONSTRAINTS *bcons,
     STACK_OF(CONF_VALUE)
