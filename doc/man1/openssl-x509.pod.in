@@ -88,7 +88,7 @@ B<openssl> B<x509>
 
 This command is a multi-purposes certificate handling command.
 It can be used to print certificate information,
-convert certificates to various forms, edit certificate trust settings,
+convert certificates to various forms, edit certificate trust attributes,
 assign to it an alias ("nickname"),
 generate certificates from scratch or from certification requests
 and then self-signing them or signing them like a "micro CA".
@@ -229,7 +229,7 @@ but an alias may be overridden by setting a different one.
 =head2 Certificate Printing Options
 
 Note: the B<-alias> and B<-purpose> options are also printing options
-but are described in the L</Trust Settings> section.
+but are described in the L</Trust Attributes> section.
 
 =over 4
 
@@ -242,7 +242,7 @@ Defaults to rfc_822.
 
 Prints out the certificate in text form. Full details are printed including the
 public key, signature algorithms, issuer and subject names, serial number
-any extensions present and any trust settings.
+any extensions present and any trust attributes.
 
 =item B<-certopt> I<option>
 
@@ -613,7 +613,7 @@ and saved into the serial number file determined as described above.
 
 =back
 
-=head2 Trust Settings
+=head2 Trust Attributes
 
 When a certificate is validated w.r.t. a given trust store, a chain of
 certificates is built until a suitably trusted certificate is reached.
@@ -621,22 +621,23 @@ By default a CA certificate is trusted when it is in the trust store
 and is a self-signed (root) CA certificate.
 A CA certificate having no explicit trust attributes is usable for any purpose.
 
-To provide a finer control over the purposes a CA certificate can be used for,
+To provide finer control over the purposes a CA certificate can be used for,
 explicit trust attributes may be set for it.
-For example, a CA may be trusted for SSL client but not SSL server use.
+For example, a CA may be trusted to issue only SSL client certificates,
+or to issue any kind of certificate other than an SSL server certificate.
 
 A B<trusted certificate> is an ordinary certificate which has several
-additional trust attributes attached to it such as the permitted
-and prohibited uses of the certificate.
+additional trust attributes attached to it, namely,
+the permitted and prohibited uses of the certificate.
 
-Trust attributes names typically coincide with the names of extended key usages
+Trust attributes names should coincide with the names of extended key usages
 (EKUs) as defined in RFC 5280 section 4.2.1.12. Valid names include
 B<clientAuth>, B<serverAuth>, B<emailProtection>, and B<anyExtendedKeyUsage>.
 Further ones may be defined by applications of OpenSSL.
 B<anyExtendedKeyUsage> enables all purposes when added to the trust list
 and blocks all purposes when added to the rejection list.
 
-Trust settings can be used with any CA certificates, not just for root CAs.
+Trust attributes can be added to any CA certificate, not just not just to a self-signed CA certificate.
 
 See L<openssl-verification-options(1)> for more information
 on certificate validation and on the meaning of trust attribute settings.
@@ -647,9 +648,9 @@ on certificate validation and on the meaning of trust attribute settings.
 
 Mark any certificate PEM output as <trusted> certificate rather than ordinary.
 An ordinary or trusted certificate can be input but by default an ordinary
-certificate is output and any trust settings are discarded.
+certificate is output and any trust attributes are discarded.
 With the B<-trustout> option a trusted certificate is output. A trusted
-certificate is automatically output if any trust settings are modified.
+certificate is automatically output if any trust attributes are modified.
 
 =item B<-clrtrust>
 

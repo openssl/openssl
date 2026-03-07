@@ -566,10 +566,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     tmp_ex_kusage = const_x->ex_kusage;
     tmp_ex_nscert = const_x->ex_nscert;
 
-    /*
-     * The following check could be done much more efficiently without acquiring
-     * a lock first, as simply done by many other functions in crypto/x509/
-     */
     if ((tmp_ex_flags & EXFLAG_SET) != 0) { /* Cert has already been processed */
         CRYPTO_THREAD_unlock(const_x->lock);
         return (tmp_ex_flags & EXFLAG_INVALID) == 0;
@@ -596,11 +592,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
             tmp_ex_flags |= EXFLAG_CA;
         if (bs->pathlen != NULL) {
             if (bs->pathlen->type == V_ASN1_NEG_INTEGER) {
-                /*
-                 * This should better be checked by check_extensions()
-                 * and should not directly use the low-level DER TLV stuff but
-                 * compare the result of ASN1_INTEGER_get(bs->pathlen) for < 0
-                 */
                 ERR_raise(ERR_LIB_X509V3, X509V3_R_NEGATIVE_PATHLEN);
                 tmp_ex_flags |= EXFLAG_INVALID;
             } else {
@@ -934,7 +925,7 @@ static int check_purpose_ns_ssl_server(const X509_PURPOSE *xp, const X509 *x,
 {
     int ret = check_purpose_ssl_server(xp, x, non_leaf);
 
-    if (!ret || non_leaf) /* should check for CA if non_leaf */
+    if (!ret || non_leaf)
         return ret;
     /* We need to encipher or Netscape complains */
     return ku_reject(x, KU_KEY_ENCIPHERMENT) ? 0 : ret;
@@ -1111,7 +1102,7 @@ static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *x,
 static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
     int non_leaf)
 {
-    return 1; /* bug? should anyway check for CA if non_leaf */
+    return 1;
 }
 
 /*-
