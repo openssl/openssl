@@ -305,6 +305,10 @@ The B<-verify> command is for verifying if a timestamp response or
 timestamp token is valid and matches a particular timestamp request or
 data file. The B<-verify> command does not use the configuration file.
 
+Validation of the signing certificates and their chain
+is done w.r.t. the Timestamp signing (C<timestampsign>) purpose.
+For details see L<openssl-verification-options(1)/Certificate Extensions>.
+
 =over 4
 
 =item B<-data> I<file_to_hash>
