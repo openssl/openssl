@@ -49,7 +49,7 @@ const OPTIONS verify_options[] = {
     { OPT_HELP_STR, 1, '-', "Usage: %s [options] [cert...]\n" },
 
     OPT_SECTION("General"),
-    { "help", OPT_HELP, '-', "Display this summary and possible values for -purpose and -verify_name" },
+    { "help", OPT_HELP, '-', "Display this summary and the supported values for -purpose and -verify_name" },
     { "verbose", OPT_VERBOSE, '-',
         "Print extra information about the operations being performed." },
     { "nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options" },
@@ -79,7 +79,7 @@ const OPTIONS verify_options[] = {
     OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
-    { "certs", 0, 0, "Target certificate(s) to verify (optional; stdin used otherwise)" },
+    { "cert", 0, 0, "Target certificate(s) to verify (optional; stdin used otherwise)" },
     { NULL }
 };
 
