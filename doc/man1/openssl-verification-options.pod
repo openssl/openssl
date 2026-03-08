@@ -34,7 +34,7 @@ and is acceptable to use for the verification purpose (see L</Purposes>), if any
 In a nutshell, a valid chain of certificates needs
 to be built up and verified starting from the target certificate
 and ending in a certificate having a signature that can be verified
-using a so-called trust anchor (see L</Trust Anchors> below).
+using a trust anchor.
 
 Certificate validation can be performed in the context of a I<purpose>, which
 is a high-level specification of the intended use of the target certificate,
@@ -83,11 +83,11 @@ which directly correspond to extended key usages (EKUs)
 that may be placed by the respective CA in X.509v3 certificate extensions.
 For instance,
 the purpose C<sslserver> maps to SSL Server trust,
-which corresponds to the EKU B<id-kp-serverAuth>.
+which corresponds to the EKU B<serverAuth>.
 Both purposes C<smimesign> and C<smimeencrypt> map to S/MIME email trust,
-which corresponds to the EKU B<id-emailProtection>.
+which corresponds to the EKU B<emailProtection>.
 
-While IETF RFC 5280 contains comments that EKUs B<id-kp-serverAuth> and B<id-kp-clientAuth>
+While IETF RFC 5280 contains comments that EKUs B<serverAuth> and B<clientAuth>
 are for TLS WWW server or client authentication, respectively,
 in fact they are used for all kinds of TLS servers and clients.
 
@@ -96,25 +96,40 @@ For the list of recognized EKUs see the L</Extended Key Usage> section below.
 
 =head2 Verification Methods
 
-Verification methods determine a set verification parameters,
-such as the verification purpose (if any),
-the maximum verification depth (i.e., the number of subordinate CA certificates
-allowed in a chain),
-the trust model, and any required certificate policies.
+A verification method determines a set verification parameters,
+such as the verification purpose and flags,
+the trust id, the maximum verification depth
+(i.e., the number of subordinate CA certificates allowed in a chain),
+and the authentication security level.
 
-By default, no purpose is given, the maximum verification depth is 100,
+By default, no purpose and trust id are set,
+only the flag B<X509_V_FLAG_TRUSTED_FIRST> is set,
+the maximum verification depth is 100,
+the authentication security level is unset,
 and certificate policy processing is not enabled.
 
-The trust model determines which auxiliary trust or reject attributes are applicable
-to verifying the given certificate chain.
-They can be given using the B<-addtrust> and B<-addreject> options
+The I<trust id> determines which trust anchors are acceptable
+depending on their auxiliary trust or reject attributes (see L</Trust Anchors> below).
+The trust attributes can be set using the B<-addtrust> and B<-addreject> options
 for L<openssl-x509(1)>.
 
-The currently predefined verification methods are C<ssl_client>,
-C<ssl_server>, C<smime_sign> with alias C<pkcs7>, C<code_sign>, and C<default>.
-These can be given using the B<-verify_name> option of various OpenSSL commands.
-They mimic the combinations of purpose and trust attributes used in SSL/(D)TLS,
-CMS/PKCS7 (including S/MIME), and code signing.
+Verification methods can be given using the B<-verify_name> option of various OpenSSL commands.
+The currently predefined verification methods are:
+
+=over 4
+
+=item C<ssl_client> for SSL/(D)TLS clients with purpose C<sslclient> and trust C<clientAuth>
+
+=item C<ssl_server> for SSL/(D)TLS servers with purpose C<sslservert> and trust C<serverAuth>
+
+=item C<smime_sign> with alias C<pkcs7> for CMS/PKCS7 (including S/MIME)
+with purpose C<smimesign> and trust C<emailProtection>
+
+=item C<code_sign> for code signing with purpose C<codesign> and trust C<codeSign>
+
+=item C<default> for general validation, without specific purpose etc.
+
+=back
 
 
 =head2 Trust Anchors
@@ -693,7 +708,7 @@ it checks that any present EKU extension (that does not contain
 B<anyExtendedKeyUsage>) contains the respective EKU as detailed below.
 Moreover, it does these checks even for trust anchor certificates.
 
-=head3 Checks Implied by Specific Predefined Policies
+=head3 Checks Implied by Specific Predefined Purposes
 
 A specific description of each check is given below. The comments about
 basicConstraints and keyUsage and X.509v1 certificates above apply to B<all>

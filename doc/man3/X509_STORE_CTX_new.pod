@@ -191,7 +191,7 @@ X509_STORE_CTX_set_default() looks up and sets the default verification method
 in I<ctx> using the function L<X509_VERIFY_PARAM_inherit(3)>.
 This uses the function L<X509_VERIFY_PARAM_lookup(3)> to find the set of
 verification parameters associated with the given verification method I<name>.
-Among others, the parameters determine the trust model and verification purpose,
+Among others, the parameters determine the trust id and verification purpose,
 unless the purpose was already set before and B<X509_VP_FLAG_OVERWRITE> is not set.
 More detail, including the list of currently predefined methods,
 is described in L<openssl-verification-options(1)/Verification Methods>.
@@ -208,19 +208,20 @@ following signature:
 This function should receive the current X509_STORE_CTX as a parameter and
 return 1 on success or 0 on failure.
 
-X509 certificates may contain information about what purposes keys contained
-within them can be used for. For example "TLS WWW Server Authentication" or
-"Email Protection". This extended key usage information is held internally to the
-certificate itself. In addition the trust store containing trusted certificates
-can declare what purposes we trust different certificates for. This "trust"
+An X.509 certificate may include information about what the key contained in it
+is allowed to be used for. For example "TLS Server Authentication" or
+"Email Protection". This extended key usage (EKU) information, as defined in
+ RFC 5280 section 4.2.1.12, is held internally to the certificate itself
+in the form of an X.509v3 certificate extension.
+In addition, the trust store containing trusted certificates
+can declare the specific uses these certificates are trusted for. This "trust"
 information is not held within the certificate itself but is "meta" information
 held alongside it. This "meta" information is associated with the certificate
 after it is issued and could be determined by a system administrator. For
 example a certificate might declare that it is suitable for use for both
-"TLS WWW Server Authentication" and "TLS Client Authentication", but a system
-administrator might only trust it for the former. An X.509 certificate extension
-exists that can record extended key usage information to supplement the purpose
-information described above. This extended mechanism is arbitrarily extensible
+"TLS Server Authentication" and "TLS Client Authentication", but a system
+administrator might only trust it for the former.
+This extended mechanism is arbitrarily extensible
 and not well suited for a generic library API; applications that need to
 validate extended key usage information in certificates will need to define a
 custom "purpose" (see below) or supply a nondefault verification callback
