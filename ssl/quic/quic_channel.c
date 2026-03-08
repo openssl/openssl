@@ -3331,7 +3331,7 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
     if (!ossl_quic_channel_is_active(ch))
         return;
 
-    /* First check some constraints */
+    /* We allow only two active connection ids; first check some constraints */
     if (ch->cur_remote_dcid.id_len == 0) {
         /* Changing from 0 length connection id is disallowed */
         ossl_quic_channel_raise_protocol_error(ch,
@@ -3357,7 +3357,7 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
      * parameter, an endpoint MUST close the connection with an error of
      * type CONNECTION_ID_LIMIT_ERROR.
      */
-    if (new_remote_seq_num - new_retire_prior_to + 1 > ch->tx_active_conn_id_limit) {
+    if (new_remote_seq_num - new_retire_prior_to > 1) {
         ossl_quic_channel_raise_protocol_error(ch,
             OSSL_QUIC_ERR_CONNECTION_ID_LIMIT_ERROR,
             OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
@@ -3380,7 +3380,7 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
      *
      * We are a little bit more liberal than the minimum mandated.
      */
-    if (new_retire_prior_to - ch->cur_retire_prior_to > ch->tx_active_conn_id_limit * 3) {
+    if (new_retire_prior_to - ch->cur_retire_prior_to > 10) {
         ossl_quic_channel_raise_protocol_error(ch,
             OSSL_QUIC_ERR_CONNECTION_ID_LIMIT_ERROR,
             OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID,
