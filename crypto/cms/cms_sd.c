@@ -372,7 +372,7 @@ static const struct {
     {
         "ED25519",
         NID_sha512,
-        0,
+        1,
         NID_sha512,
         1,
     }, /* RFC 8419 */
