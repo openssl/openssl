@@ -228,9 +228,6 @@ but an alias may be overridden by setting a different one.
 
 =head2 Certificate Printing Options
 
-Note: the B<-alias> and B<-purpose> options are also printing options
-but are described in the L</Trust Attributes> section.
-
 =over 4
 
 =item B<-dateopt>
@@ -336,8 +333,8 @@ Prints the OCSP responder address(es) if any.
 =item B<-purpose>
 
 This option performs tests on the certificate extensions and outputs
-the results. For a more complete description see
-L<openssl-verification-options(1)/Certificate Extensions>.
+the results, listing the purposes the certificate may be used for.
+For a description of purposes see L<openssl-verification-options(1)/Purposes>.
 
 =item B<-pubkey>
 
@@ -619,28 +616,28 @@ When a certificate is validated w.r.t. a given trust store, a chain of
 certificates is built until a suitably trusted certificate is reached.
 By default a CA certificate is trusted when it is in the trust store
 and is a self-signed (root) CA certificate.
-A CA certificate having no explicit trust attributes is usable for any purpose.
+A CA certificate having no explicit trust attributes is trusted for any use.
 
-To provide finer control over the purposes a CA certificate can be used for,
+To provide finer control over the uses CA certificate is trusted for,
 explicit trust attributes may be set for it.
 For example, a CA may be trusted to issue only SSL client certificates,
 or to issue any kind of certificate other than an SSL server certificate.
 
-A B<trusted certificate> is an ordinary certificate which has several
-additional trust attributes attached to it, namely,
+A B<trusted certificate> is a certificate that has
+one more more trust attributes attached to it, namely,
 the permitted and prohibited uses of the certificate.
 
 Trust attributes names should coincide with the names of extended key usages
 (EKUs) as defined in RFC 5280 section 4.2.1.12. Valid names include
 B<clientAuth>, B<serverAuth>, B<emailProtection>, and B<anyExtendedKeyUsage>.
 Further ones may be defined by applications of OpenSSL.
-B<anyExtendedKeyUsage> enables all purposes when added to the trust list
-and blocks all purposes when added to the rejection list.
+B<anyExtendedKeyUsage> enables all uses when added to the trust list
+and blocks all uses when added to the rejection list.
 
 Trust attributes can be added to any CA certificate, not just not just to a self-signed CA certificate.
 
-See L<openssl-verification-options(1)> for more information
-on certificate validation and on the meaning of trust attribute settings.
+See L<openssl-verification-options(1)/Trust Anchors> for more information
+on the meaning of trust attributes in certificate validation.
 
 =over 4
 
@@ -649,8 +646,8 @@ on certificate validation and on the meaning of trust attribute settings.
 Mark any certificate PEM output as <trusted> certificate rather than ordinary.
 An ordinary or trusted certificate can be input but by default an ordinary
 certificate is output and any trust attributes are discarded.
-With the B<-trustout> option a trusted certificate is output. A trusted
-certificate is automatically output if any trust attributes are modified.
+The B<-trustout> option is implied when
+the B<-addtrust>, B<-addreject>, or B<-setalias> options are given.
 
 =item B<-clrtrust>
 
