@@ -4738,7 +4738,7 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
     SSL *conn_ssl = NULL;
     SSL_CONNECTION *conn = NULL;
     QUIC_CHANNEL *new_ch = NULL;
-    QUIC_CONNECTION *qc;
+    QUIC_CONNECTION *qc = NULL;
     int no_block = ((flags & SSL_ACCEPT_CONNECTION_NO_BLOCK) != 0);
 
     if (!expect_quic_listener(ssl, &ctx))
