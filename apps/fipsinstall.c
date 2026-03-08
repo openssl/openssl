@@ -781,6 +781,13 @@ int fipsinstall_main(int argc, char **argv)
         }
     }
 
+#ifndef OPENSSL_NO_FIPS_PEDANTICONLY
+    if (!pedantic) {
+        BIO_printf(bio_err, "This build requires use of -pedantic\n");
+        goto opthelp;
+    }
+#endif
+
     /* No extra arguments. */
     if (!opt_check_rest_arg(NULL))
         goto opthelp;
