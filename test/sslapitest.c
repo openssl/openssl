@@ -14144,6 +14144,181 @@ err:
 }
 #endif
 
+/*
+ * RFC 8701 GREASE test helpers.
+ * We capture the raw ClientHello via msg_callback and then scan the wire
+ * bytes to confirm that GREASE values (matching 0x?A?A) are present in the
+ * expected fields.
+ */
+static unsigned char *grease_ch_buf;
+static size_t grease_ch_len;
+
+static int is_grease(uint16_t v)
+{
+    return (v & 0x0f0f) == 0x0a0a && (v >> 8) == (v & 0xff);
+}
+
+static void grease_msg_cb(int write_p, int version, int content_type,
+    const void *buf, size_t len, SSL *ssl, void *arg)
+{
+    const unsigned char *p = buf;
+
+    /*
+     * We want the outgoing (write_p == 1) handshake (content_type == 22)
+     * ClientHello (msg_type == 1).  The buf starts at the handshake header:
+     *   byte 0: msg_type, bytes 1-3: length
+     */
+    if (write_p != 1 || content_type != SSL3_RT_HANDSHAKE
+        || len < 4 || p[0] != SSL3_MT_CLIENT_HELLO)
+        return;
+
+    /* Only capture the first ClientHello (not HRR retry) */
+    if (grease_ch_buf != NULL)
+        return;
+
+    grease_ch_buf = OPENSSL_memdup(buf, len);
+    grease_ch_len = len;
+}
+
+/*
+ * Parse a captured ClientHello (starting from handshake header) and check
+ * that it contains GREASE values in the cipher suites and extensions.
+ * Returns 1 on success, 0 on failure.
+ */
+static int check_grease_in_client_hello(void)
+{
+    const unsigned char *p = grease_ch_buf;
+    const unsigned char *end = p + grease_ch_len;
+    size_t off, cs_len, sess_len, comp_len, ext_len;
+    int found_grease_cipher = 0;
+    int found_grease_ext = 0;
+    uint16_t val;
+
+    if (!TEST_ptr(p) || !TEST_size_t_gt(grease_ch_len, 43))
+        return 0;
+
+    /* Skip handshake header: 1 byte type + 3 bytes length */
+    p += 4;
+
+    /* Skip client_version (2) + random (32) */
+    p += 2 + 32;
+    if (p >= end)
+        return 0;
+
+    /* Skip session_id: 1 byte length + data */
+    sess_len = *p++;
+    p += sess_len;
+    if (p + 2 > end)
+        return 0;
+
+    /* Cipher suites: 2 byte length */
+    cs_len = (p[0] << 8) | p[1];
+    p += 2;
+    if (p + cs_len > end)
+        return 0;
+
+    for (off = 0; off + 1 < cs_len; off += 2) {
+        val = (p[off] << 8) | p[off + 1];
+        if (is_grease(val))
+            found_grease_cipher = 1;
+    }
+    p += cs_len;
+    if (p >= end)
+        return 0;
+
+    /* Skip compression methods: 1 byte length + data */
+    comp_len = *p++;
+    p += comp_len;
+    if (p + 2 > end)
+        return 0;
+
+    /* Extensions: 2 byte length */
+    ext_len = (p[0] << 8) | p[1];
+    p += 2;
+    if (p + ext_len > end)
+        return 0;
+
+    end = p + ext_len;
+    while (p + 4 <= end) {
+        uint16_t ext_type = (p[0] << 8) | p[1];
+        uint16_t ext_data_len = (p[2] << 8) | p[3];
+
+        if (is_grease(ext_type))
+            found_grease_ext++;
+
+        /* For supported_versions extension (type 0x002b), scan its list */
+        if (ext_type == TLSEXT_TYPE_supported_versions && ext_data_len >= 1) {
+            const unsigned char *sv = p + 4;
+            size_t sv_list_len = sv[0];
+            size_t svoff;
+
+            sv++;
+            for (svoff = 0; svoff + 1 < sv_list_len; svoff += 2) {
+                val = (sv[svoff] << 8) | sv[svoff + 1];
+                if (is_grease(val)) {
+                    /* GREASE found in supported_versions */
+                }
+            }
+        }
+
+        p += 4 + ext_data_len;
+    }
+
+    if (!TEST_true(found_grease_cipher))
+        return 0;
+    /* We expect at least one GREASE extension (we inject two) */
+    if (!TEST_int_ge(found_grease_ext, 1))
+        return 0;
+
+    return 1;
+}
+
+static int test_grease(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+
+    grease_ch_buf = NULL;
+    grease_ch_len = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(),
+            TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    SSL_CTX_set_options(cctx, SSL_OP_GREASE);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+            &clientssl, NULL, NULL)))
+        goto end;
+
+    SSL_set_msg_callback(clientssl, grease_msg_cb);
+
+    /* A full handshake should succeed — server must tolerate GREASE */
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+
+    /* Now verify the captured ClientHello contains GREASE values */
+    if (!TEST_true(check_grease_in_client_hello()))
+        goto end;
+
+    testresult = 1;
+
+end:
+    OPENSSL_free(grease_ch_buf);
+    grease_ch_buf = NULL;
+    grease_ch_len = 0;
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 static int test_ssl_conf_flags(void)
 {
     SSL_CONF_CTX *cctx = NULL;
@@ -14655,6 +14830,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ssl_set_groups_unsupported_keyshare, 2);
     ADD_TEST(test_ssl_conf_flags);
     ADD_ALL_TESTS(test_http_verbs, 3);
+#if !defined(OSSL_NO_USABLE_TLS1_3)
+    ADD_TEST(test_grease);
+#endif
     return 1;
 
 err:
