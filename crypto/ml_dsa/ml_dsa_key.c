@@ -496,7 +496,7 @@ int ossl_ml_dsa_generate_key(ML_DSA_KEY *out)
                 "explicit %s private key does not match seed",
                 out->params->alg);
         }
-        OPENSSL_free(sk);
+        OPENSSL_secure_clear_free(sk, out->params->sk_len);
     }
     return ret;
 }
