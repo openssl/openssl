@@ -335,6 +335,14 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL_CONNECTION *s, WPACKET *pkt,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
+    /* RFC 8701: prepend a GREASE group value */
+    if ((s->options & SSL_OP_GREASE) && !s->server) {
+        if (!WPACKET_put_bytes_u16(pkt,
+                ossl_grease_value(s, OSSL_GREASE_GROUP))) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+    }
     /* Copy group ID if supported */
     for (i = 0; i < num_groups; i++) {
         const TLS_GROUP_INFO *ginfo = NULL;
@@ -452,8 +460,19 @@ EXT_RETURN tls_construct_ctos_sig_algs(SSL_CONNECTION *s, WPACKET *pkt,
         || !WPACKET_start_sub_packet_u16(pkt)
         /* Sub-packet for the actual list */
         || !WPACKET_start_sub_packet_u16(pkt)
-        || !tls12_copy_sigalgs(s, pkt, salg, salglen)
-        || !WPACKET_close(pkt)
+        || !tls12_copy_sigalgs(s, pkt, salg, salglen)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+    /* RFC 8701: append a GREASE signature algorithm value */
+    if ((s->options & SSL_OP_GREASE) && !s->server) {
+        if (!WPACKET_put_bytes_u16(pkt,
+                ossl_grease_value(s, OSSL_GREASE_SIGALG))) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+    }
+    if (!WPACKET_close(pkt)
         || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
@@ -740,6 +759,14 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
         return EXT_RETURN_FAIL;
     }
 
+    /* RFC 8701: prepend a GREASE version value */
+    if ((s->options & SSL_OP_GREASE) && !s->server) {
+        if (!WPACKET_put_bytes_u16(pkt,
+                ossl_grease_value(s, OSSL_GREASE_VERSION))) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+    }
     for (currv = max_version; currv >= min_version; currv--) {
         if (!WPACKET_put_bytes_u16(pkt, currv)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -871,6 +898,19 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         || !WPACKET_start_sub_packet_u16(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
+    }
+
+    /* RFC 8701: prepend a GREASE key share entry (1 byte of 0x00) */
+    if ((s->options & SSL_OP_GREASE) && !s->server) {
+        uint16_t grease_group = ossl_grease_value(s, OSSL_GREASE_GROUP);
+
+        if (!WPACKET_put_bytes_u16(pkt, grease_group)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u8(pkt, 0)
+            || !WPACKET_close(pkt)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
     }
 
     tls1_get_requested_keyshare_groups(s, &pgroups, &num_groups);
@@ -2174,6 +2214,12 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
+    /* RFC 8701: reject GREASE values selected by the server */
+    if (ossl_is_grease_value(group_id)) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
+        return 0;
+    }
+
     if ((context & SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0) {
         const uint16_t *pgroups = NULL;
         size_t num_groups;
@@ -2818,3 +2864,55 @@ int tls_parse_stoc_ech(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     return 1;
 }
 #endif /* END_OPENSSL_NO_ECH */
+
+/*
+ * RFC 8701 GREASE extension constructors.  Each writes an empty extension
+ * whose type is a GREASE value (0x?A?A pattern).
+ */
+EXT_RETURN tls_construct_ctos_grease1(SSL_CONNECTION *s, WPACKET *pkt,
+    unsigned int context, X509 *x,
+    size_t chainidx)
+{
+    uint16_t grease_type;
+
+    if (!(s->options & SSL_OP_GREASE) || s->server)
+        return EXT_RETURN_NOT_SENT;
+
+    grease_type = ossl_grease_value(s, OSSL_GREASE_EXT1);
+
+    if (!WPACKET_put_bytes_u16(pkt, grease_type)
+        || !WPACKET_put_bytes_u16(pkt, 0)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    return EXT_RETURN_SENT;
+}
+
+EXT_RETURN tls_construct_ctos_grease2(SSL_CONNECTION *s, WPACKET *pkt,
+    unsigned int context, X509 *x,
+    size_t chainidx)
+{
+    uint16_t grease_type;
+
+    if (!(s->options & SSL_OP_GREASE) || s->server)
+        return EXT_RETURN_NOT_SENT;
+
+    grease_type = ossl_grease_value(s, OSSL_GREASE_EXT2);
+
+    /*
+     * RFC 8701 recommends "varying length and contents" for GREASE
+     * extensions.  Extension 1 is empty; extension 2 carries one zero byte
+     * so that servers are tested against both empty and non-empty unknown
+     * extensions.  This mirrors the BoringSSL behaviour.
+     */
+    if (!WPACKET_put_bytes_u16(pkt, grease_type)
+        || !WPACKET_start_sub_packet_u16(pkt)
+        || !WPACKET_put_bytes_u8(pkt, 0)
+        || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    return EXT_RETURN_SENT;
+}
