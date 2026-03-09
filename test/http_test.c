@@ -331,6 +331,18 @@ static int test_http_url_path_query_ok(const char *url, const char *exp_path_qu)
     return res;
 }
 
+static int test_http_url_host_ok(const char *url, const char *exp_host)
+{
+    char *host;
+    int res;
+
+    res = TEST_true(OSSL_HTTP_parse_url(url, NULL, NULL, &host, NULL, NULL,
+              NULL, NULL, NULL))
+        && TEST_str_eq(host, exp_host);
+    OPENSSL_free(host);
+    return res;
+}
+
 static int test_http_url_dns(void)
 {
     return test_http_url_ok("host:65535/path", 0, "host", "65535", "/path");
@@ -356,6 +368,13 @@ static int test_http_url_path_query(void)
 static int test_http_url_userinfo_query_fragment(void)
 {
     return test_http_url_ok("user:pass@host/p?q#fr", 0, "host", "80", "/p");
+}
+
+static int test_http_url_at_sign_outside_authority(void)
+{
+    return test_http_url_host_ok("http://host/p@attacker.test", "host")
+        && test_http_url_host_ok("http://host/p?q=@attacker.test", "host")
+        && test_http_url_host_ok("http://host/p?q#fr@attacker.test", "host");
 }
 
 static int test_http_url_ipv4(void)
@@ -576,6 +595,7 @@ int setup_tests(void)
     ADD_TEST(test_http_url_timestamp);
     ADD_TEST(test_http_url_path_query);
     ADD_TEST(test_http_url_userinfo_query_fragment);
+    ADD_TEST(test_http_url_at_sign_outside_authority);
     ADD_TEST(test_http_url_ipv4);
     ADD_TEST(test_http_url_ipv6);
     ADD_TEST(test_http_url_invalid_prefix);
