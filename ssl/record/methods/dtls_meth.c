@@ -84,24 +84,19 @@ static DTLS_BITMAP *dtls_get_bitmap(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rr,
         return &rl->bitmap;
         /*
          * DTLS 1.3 uses encrypted sequence numbers. Therefore we
-         * shouldn't be checking bitmaps if they are in the next
-         * epoch. Also the dtls_record_bitmap_update cannot
-         * be called until the right Epoch record layer process
-         * the record. Instead we are concern if DTLS 1.3 receives
-         * a record from a future epoch during the handshake.
+         * cannot check future bitmaps since the sequence number
+         * is encrypted. The dtls_record_bitmap_update is only called
+         * once the record layer with the correct epoch has
+         * processed the record.
+         * We are concerned during the DTLS 1.3 handshake if a record
+         * from a future handshake epoch is received.
          */
-    } else if (rl->version == DTLS1_3_VERSION
-        && ((rl->in_init && rr->epoch == rl->epoch + 2)
-            || (rl->in_early_data && rr->epoch == rl->epoch + 1))) {
+    } else if ((rl->version == DTLS1_3_VERSION || rl->version == DTLS_ANY_VERSION) && rl->epoch == 0 && rr->epoch == 2) {
         *is_next_epoch = 1;
-    } else if (rl->in_init && rr->epoch == rl->epoch + 2) {
-        /* During the handshake, we may receive records from future epochs */
-        *is_next_epoch = 1;
-    }
-    /*
-     * Check if the message is from the next epoch
-     */
-    else if (rr->epoch == rl->epoch + 1) {
+        /*
+         * Check if the message is from the next epoch
+         */
+    } else if (rr->epoch == rl->epoch + 1) {
         *is_next_epoch = 1;
     }
 
@@ -750,8 +745,8 @@ again:
             || (rl->in_init && rl->epoch == 0 && rr->epoch == 2)
             || (rl->version == DTLS1_3_VERSION
                 && ((rl->in_init && rl->epoch == 0 && rr->epoch == 2)
-                    || (rl->in_early_data && rl->epoch == 1 && rr->epoch == 2)
-                    || (rl->in_early_data && rl->epoch == 0 && rr->epoch == 1)))) {
+                    || (rl->epoch == 1 && rr->epoch == 2)))) {
+
             uint64_t unprocessed_record_priority = rr->seq_num;
 
             /*
