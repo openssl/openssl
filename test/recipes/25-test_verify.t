@@ -30,7 +30,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 205;
+plan tests => 206;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -467,6 +467,10 @@ ok(!verify("badalt10-cert", "", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
 
 ok(!verify("bad-othername-cert", "", ["root-cert"], ["nccaothername-cert"], ),
    "CVE-2022-4203 type confusion test");
+
+ok(!verify("eai-nc-othername-leaf", "", ["eai-nc-othername-root"],
+           ["eai-nc-othername-int"], "-no_check_time"),
+   "Name constraints SmtpUTF8Mailbox otherName excluded");
 
 ok(verify("nc-uri-cert", "", ["root-cert"], ["ncca4-cert"], ),
    "Name constraints URI with userinfo");

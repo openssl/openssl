@@ -498,20 +498,33 @@ static int nc_minmax_valid(GENERAL_SUBTREE *sub)
     return ok;
 }
 
+static int nc_effective_type(const GENERAL_NAME *gen)
+{
+    int effective_type = gen->type;
+
+    /*
+     * SmtpUTF8Mailbox otherName values are matched as email constraints
+     * per RFC 8398, section 6.
+     */
+    if (effective_type == GEN_OTHERNAME
+            && OBJ_obj2nid(gen->d.otherName->type_id)
+               == NID_id_on_SmtpUTF8Mailbox)
+        effective_type = GEN_EMAIL;
+
+    return effective_type;
+}
+
 static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 {
     GENERAL_SUBTREE *sub;
     int i, r, match = 0;
-    int effective_type = gen->type;
+    int effective_type = nc_effective_type(gen);
 
     /*
      * We need to compare not gen->type field but an "effective" type because
      * the otherName field may contain EAI email address treated specially
      * according to RFC 8398, section 6
      */
-    if (effective_type == GEN_OTHERNAME && (OBJ_obj2nid(gen->d.otherName->type_id) == NID_id_on_SmtpUTF8Mailbox)) {
-        effective_type = GEN_EMAIL;
-    }
 
     /*
      * Permitted subtrees: if any subtrees exist of matching the type at
@@ -520,7 +533,7 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 
     for (i = 0; i < sk_GENERAL_SUBTREE_num(nc->permittedSubtrees); i++) {
         sub = sk_GENERAL_SUBTREE_value(nc->permittedSubtrees, i);
-        if (effective_type != sub->base->type
+        if (effective_type != nc_effective_type(sub->base)
             || (effective_type == GEN_OTHERNAME && OBJ_cmp(gen->d.otherName->type_id, sub->base->d.otherName->type_id) != 0))
             continue;
         if (!nc_minmax_valid(sub))
@@ -544,7 +557,7 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 
     for (i = 0; i < sk_GENERAL_SUBTREE_num(nc->excludedSubtrees); i++) {
         sub = sk_GENERAL_SUBTREE_value(nc->excludedSubtrees, i);
-        if (effective_type != sub->base->type
+        if (effective_type != nc_effective_type(sub->base)
             || (effective_type == GEN_OTHERNAME && OBJ_cmp(gen->d.otherName->type_id, sub->base->d.otherName->type_id) != 0))
             continue;
         if (!nc_minmax_valid(sub))
