@@ -14144,6 +14144,7 @@ err:
 }
 #endif
 
+#if !defined(OSSL_NO_USABLE_TLS1_3)
 /*
  * RFC 8701 GREASE test helpers.
  * We capture the raw ClientHello via msg_callback and then scan the wire
@@ -14318,6 +14319,7 @@ end:
 
     return testresult;
 }
+#endif /* !defined(OSSL_NO_USABLE_TLS1_3) */
 
 static int test_ssl_conf_flags(void)
 {
