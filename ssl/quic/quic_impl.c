@@ -4820,7 +4820,7 @@ out:
      * to avoid the deadlock that would occur when ossl_quic_free attempts to
      * re-acquire this mutex.  We also do the gymnastics with conn_ssl and
      * conn_ssl_tmp above so that we only actually do the free on the SSL
-     * object if the up-ref above fails, in such a way that we don't imbalance
+     * object if the up-ref above fails, in such a way that we don't unbalance
      * the listener refcount (i.e. if the up-ref fails above, we don't set the
      * listener pointer so that we don't then drop the ref-count erroneously
      * during the free operation.
