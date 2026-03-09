@@ -570,7 +570,7 @@ void *EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data);
 #define EVP_CIPHER_CTX_get_mode(c) EVP_CIPHER_get_mode(EVP_CIPHER_CTX_get0_cipher(c))
 #define EVP_CIPHER_CTX_mode EVP_CIPHER_CTX_get_mode
 
-#define EVP_ENCODE_LENGTH(l) ((((l) + 2) / 3 * 4) + ((l) / 48 + 1) * 2 + 80)
+#define EVP_ENCODE_LENGTH(l) (((((size_t)(l)) + 2) / 3 * 4) + (((size_t)(l)) / 48 + 1) * 2 + 80)
 #define EVP_DECODE_LENGTH(l) (((l) + 3) / 4 * 3 + 80)
 
 #define EVP_SignInit_ex(a, b, c) EVP_DigestInit_ex(a, b, c)
