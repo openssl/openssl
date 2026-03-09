@@ -1985,7 +1985,7 @@ static int ocsp_server_cb_leaf_signer(SSL *s, void *arg)
     issuer = sk_X509_value(server_certs, 0);
 
     ocsp_resp = create_ocsp_resp(ssl_cert, issuer, V_OCSP_CERTSTATUS_GOOD,
-                                 "leaf.key", "leaf.pem");
+        "leaf.key", "leaf.pem");
     if (!TEST_ptr(ocsp_resp))
         return SSL_TLSEXT_ERR_ALERT_FATAL;
 
@@ -2052,7 +2052,7 @@ static int test_tlsext_status_type_unauthorized_signer(void)
             SSL_ERROR_SSL))
         || !TEST_int_eq(ocsp_server_called, 1)
         || !TEST_true(ocsp_verify_error == X509_V_ERR_OCSP_VERIFY_FAILED
-                      || ocsp_verify_error == X509_V_ERR_OCSP_SIGNATURE_FAILURE))
+            || ocsp_verify_error == X509_V_ERR_OCSP_SIGNATURE_FAILURE))
         goto end;
 
     testresult = 1;
