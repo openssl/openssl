@@ -498,19 +498,24 @@ static int nc_minmax_valid(GENERAL_SUBTREE *sub)
     return ok;
 }
 
-static int nc_check_subtree_type(const GENERAL_NAME *base)
+static int nc_check_invalid_email_subtree(int effective_type,
+    const GENERAL_NAME *base)
 {
-    switch (base->type) {
-    case GEN_DIRNAME:
-    case GEN_DNS:
-    case GEN_EMAIL:
-    case GEN_URI:
-    case GEN_IPADD:
+    if (effective_type != GEN_EMAIL)
         return X509_V_OK;
 
-    default:
-        return X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE;
-    }
+    if (base->type != GEN_OTHERNAME)
+        return X509_V_OK;
+
+    /*
+     * RFC 9598 requires email name constraints to use rfc822Name subtrees.
+     * Treat otherName:SmtpUTF8Mailbox subtrees as malformed for the email
+     * matching path, but leave unrelated otherName constraints untouched.
+     */
+    if (OBJ_obj2nid(base->d.otherName->type_id) == NID_id_on_SmtpUTF8Mailbox)
+        return X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX;
+
+    return X509_V_OK;
 }
 
 static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
@@ -536,7 +541,7 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 
     for (i = 0; i < sk_GENERAL_SUBTREE_num(nc->permittedSubtrees); i++) {
         sub = sk_GENERAL_SUBTREE_value(nc->permittedSubtrees, i);
-        r = nc_check_subtree_type(sub->base);
+        r = nc_check_invalid_email_subtree(effective_type, sub->base);
         if (r != X509_V_OK)
             return r;
         if (effective_type != sub->base->type
@@ -563,7 +568,7 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 
     for (i = 0; i < sk_GENERAL_SUBTREE_num(nc->excludedSubtrees); i++) {
         sub = sk_GENERAL_SUBTREE_value(nc->excludedSubtrees, i);
-        r = nc_check_subtree_type(sub->base);
+        r = nc_check_invalid_email_subtree(effective_type, sub->base);
         if (r != X509_V_OK)
             return r;
         if (effective_type != sub->base->type
