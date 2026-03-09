@@ -287,9 +287,6 @@ start:
                     return -1;
                 }
 
-                if (in_early_data)
-                    sc->rlayer.rrlmethod->set_in_early_data(sc->rlayer.rrl, 1);
-
                 /*
                  * Read the Buffered epoch
                  */

@@ -338,7 +338,7 @@ struct ossl_record_method_st {
 
     /*
      * Set whether we are currently in early data or not. Only relevant for
-     * DTLS13
+     * DTLSv1.3
      */
     void (*set_in_early_data)(OSSL_RECORD_LAYER *rl, int in_early_data);
     /*
