@@ -174,6 +174,8 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
     dest->libctx = src->libctx;
     dest->curve_name = src->curve_name;
 
+    EC_pre_comp_free(dest);
+
     /* Copy precomputed */
     dest->pre_comp_type = src->pre_comp_type;
     switch (src->pre_comp_type) {
