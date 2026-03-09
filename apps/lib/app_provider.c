@@ -47,6 +47,7 @@ int app_provider_load(OSSL_LIB_CTX *libctx, const char *provider_name)
         app_providers = sk_OSSL_PROVIDER_new_null();
     if (app_providers == NULL
         || !sk_OSSL_PROVIDER_push(app_providers, prov)) {
+        OSSL_PROVIDER_unload(prov);
         app_providers_cleanup();
         return 0;
     }
