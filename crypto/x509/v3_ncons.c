@@ -513,7 +513,7 @@ static int nc_check_invalid_email_subtree(int effective_type,
      * matching path, but leave unrelated otherName constraints untouched.
      */
     if (OBJ_obj2nid(base->d.otherName->type_id) == NID_id_on_SmtpUTF8Mailbox)
-        return X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX;
+        return X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE;
 
     return X509_V_OK;
 }
