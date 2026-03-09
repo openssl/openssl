@@ -498,10 +498,19 @@ static int nc_minmax_valid(GENERAL_SUBTREE *sub)
     return ok;
 }
 
-static int nc_is_invalid_email_subtree(const GENERAL_NAME *base)
+static int nc_check_subtree_type(const GENERAL_NAME *base)
 {
-    return base->type == GEN_OTHERNAME
-        && OBJ_obj2nid(base->d.otherName->type_id) == NID_id_on_SmtpUTF8Mailbox;
+    switch (base->type) {
+    case GEN_DIRNAME:
+    case GEN_DNS:
+    case GEN_EMAIL:
+    case GEN_URI:
+    case GEN_IPADD:
+        return X509_V_OK;
+
+    default:
+        return X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE;
+    }
 }
 
 static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
@@ -527,8 +536,9 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 
     for (i = 0; i < sk_GENERAL_SUBTREE_num(nc->permittedSubtrees); i++) {
         sub = sk_GENERAL_SUBTREE_value(nc->permittedSubtrees, i);
-        if (nc_is_invalid_email_subtree(sub->base))
-            return X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX;
+        r = nc_check_subtree_type(sub->base);
+        if (r != X509_V_OK)
+            return r;
         if (effective_type != sub->base->type
             || (effective_type == GEN_OTHERNAME && OBJ_cmp(gen->d.otherName->type_id, sub->base->d.otherName->type_id) != 0))
             continue;
@@ -553,8 +563,9 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 
     for (i = 0; i < sk_GENERAL_SUBTREE_num(nc->excludedSubtrees); i++) {
         sub = sk_GENERAL_SUBTREE_value(nc->excludedSubtrees, i);
-        if (nc_is_invalid_email_subtree(sub->base))
-            return X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX;
+        r = nc_check_subtree_type(sub->base);
+        if (r != X509_V_OK)
+            return r;
         if (effective_type != sub->base->type
             || (effective_type == GEN_OTHERNAME && OBJ_cmp(gen->d.otherName->type_id, sub->base->d.otherName->type_id) != 0))
             continue;

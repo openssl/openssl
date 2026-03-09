@@ -497,9 +497,9 @@ ok(!verify("bad-othername-cert", "", ["root-cert"], ["nccaothername-cert"], ),
         verify_capture("eai-nc-othername-leaf", "", ["eai-nc-othername-root"],
                        ["eai-nc-othername-int"], "-no_check_time");
 
-    ok(!$exit, "reject invalid SmtpUTF8Mailbox otherName name constraint");
-    like($out, qr/unsupported or invalid name constraint syntax/i,
-         "report invalid SmtpUTF8Mailbox otherName name constraint");
+    ok(!$exit, "reject unsupported SmtpUTF8Mailbox otherName name constraint");
+    like($out, qr/unsupported name constraint type/i,
+         "report unsupported SmtpUTF8Mailbox otherName name constraint");
 }
 
 ok(verify("nc-uri-cert", "", ["root-cert"], ["ncca4-cert"], ),
