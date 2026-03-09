@@ -208,9 +208,6 @@ struct quic_conn_st {
     /* Flag to indicate waiting on accept queue */
     unsigned int pending : 1;
 
-    /* Flag to indicate up ref failed, so don't drop the listener ref later */
-    unsigned int listener_ref_failed : 1;
-
     /* Default stream type. Defaults to SSL_DEFAULT_STREAM_MODE_AUTO_BIDI. */
     uint32_t default_stream_mode;
 

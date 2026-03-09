@@ -847,7 +847,7 @@ void ossl_quic_free(SSL *s)
     qc_cleanup(ctx.qc, /*have_lock=*/1);
     /* Note: SSL_free calls OPENSSL_free(qc) for us */
 
-    if (ctx.qc->listener != NULL && ctx.qc->listener_ref_failed == 0)
+    if (ctx.qc->listener != NULL)
         SSL_free(&ctx.qc->listener->obj.ssl);
     if (ctx.qc->domain != NULL)
         SSL_free(&ctx.qc->domain->obj.ssl);
@@ -4736,6 +4736,7 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
     int ret;
     QCTX ctx;
     SSL *conn_ssl = NULL;
+    SSL *conn_ssl_tmp = NULL;
     SSL_CONNECTION *conn = NULL;
     QUIC_CHANNEL *new_ch = NULL;
     QUIC_CONNECTION *qc = NULL;
@@ -4793,34 +4794,38 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
      * bound to new_ch. If channel constructor fails to create any item here
      * it just fails to create channel.
      */
-    if (!ossl_assert((conn_ssl = ossl_quic_channel_get0_tls(new_ch)) != NULL)
-        || !ossl_assert((conn = SSL_CONNECTION_FROM_SSL(conn_ssl)) != NULL)
-        || !ossl_assert((conn_ssl = SSL_CONNECTION_GET_USER_SSL(conn)) != NULL))
+    if (!ossl_assert((conn_ssl_tmp = ossl_quic_channel_get0_tls(new_ch)) != NULL)
+        || !ossl_assert((conn = SSL_CONNECTION_FROM_SSL(conn_ssl_tmp)) != NULL)
+        || !ossl_assert((conn_ssl_tmp = SSL_CONNECTION_GET_USER_SSL(conn)) != NULL))
         goto out;
 
-    qc = (QUIC_CONNECTION *)conn_ssl;
-    qc->listener = ctx.ql;
-    qc->pending = 0;
-    if (!SSL_up_ref(&ctx.ql->obj.ssl)) {
-        /*
-         * You might expect ossl_quic_channel_free() to be called here. Be
-         * assured it happens, The process goes as follows:
-         *    - The SSL_free() here is being handled by ossl_quic_free().
-         *    - The very last step of ossl_quic_free() is call to qc_cleanup()
-         *      where channel gets freed.
-         * NOTE: We need to defer the freeing of conn_ssl here until
-         * after we unlock the ctx mutex, to avoid a deadlock
-         */
-        qc->listener_ref_failed = 1;
+    qc = (QUIC_CONNECTION *)conn_ssl_tmp;
+    if (SSL_up_ref(&ctx.ql->obj.ssl)) {
+        qc->listener = ctx.ql;
+        conn_ssl = conn_ssl_tmp;
+        conn_ssl_tmp = NULL;
+        qc->pending = 0;
     }
 
 out:
 
     qctx_unlock(&ctx);
-    if (qc != NULL && qc->listener_ref_failed == 1) {
-        SSL_free(conn_ssl);
-        conn_ssl = NULL;
-    }
+    /*
+     * You might expect ossl_quic_channel_free() to be called here. Be
+     * assured it happens, The process goes as follows:
+     *    - The SSL_free() here is being handled by ossl_quic_free().
+     *    - The very last step of ossl_quic_free() is call to qc_cleanup()
+     *      where channel gets freed.
+     * NOTE: We defer this SSL_free until after the call to qctx_unlock above
+     * to avoid the deadlock that would occur when ossl_quic_free attempts to
+     * re-acquire this mutex.  We also do the gymnastics with conn_ssl and
+     * conn_ssl_tmp above so that we only actually do the free on the SSL
+     * object if the up-ref above fails, in such a way that we don't imbalance
+     * the listener refcount (i.e. if the up-ref fails above, we don't set the
+     * listener pointer so that we don't then drop the ref-count erroneously
+     * during the free operation.
+     */
+    SSL_free(conn_ssl_tmp);
     return conn_ssl;
 }
 
