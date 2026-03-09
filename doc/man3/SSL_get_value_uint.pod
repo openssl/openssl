@@ -410,7 +410,7 @@ L<SSL_set_default_stream_mode(3)>, L<SSL_set_incoming_stream_policy(3)>
 The values SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX, SSL_VALUE_QUIC_WINDOWCON,
 SSL_VALUE_QUIC_WINDOWBSTR, SSL_VALUE_QUIC_WINDOWUSTR,
 SSL_VALUE_QUIC_ACK_DELAY_EXPONENT, and SSL_VALUE_QUIC_ACK_DELAY_MAX
-were added in OpenSSL 4.0.
+were added in OpenSSL 4.1.
 
 The remaining functions and values described here were all added in OpenSSL 3.3.
 
