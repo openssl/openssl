@@ -463,21 +463,49 @@ static int do_evp_cipher(const EVP_CIPHER *evp_cipher, const OSSL_PARAM param[])
 {
     unsigned char outbuf[1024];
     int outlen, tmplen;
-    unsigned char key[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-    unsigned char iv[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+    int key_len = EVP_CIPHER_get_key_length(evp_cipher);
+    int iv_len = EVP_CIPHER_get_iv_length(evp_cipher);
+    unsigned char *key, *iv;
     const char intext[] = "text";
     EVP_CIPHER_CTX *ctx;
+    int i;
+
+    if (key_len <= 0)
+        key_len = 16;
+    if (iv_len <= 0)
+        iv_len = 16;
+
+    key = OPENSSL_zalloc(key_len);
+    iv = OPENSSL_zalloc(iv_len);
+    if (key == NULL || iv == NULL) {
+        OPENSSL_free(key);
+        OPENSSL_free(iv);
+        return 0;
+    }
+    for (i = 0; i < key_len && i < 16; i++)
+        key[i] = (unsigned char)i;
+    for (i = 0; i < iv_len && i < 8; i++)
+        iv[i] = (unsigned char)(i + 1);
 
     ctx = EVP_CIPHER_CTX_new();
-
-    if (!EVP_CIPHER_CTX_set_params(ctx, param)) {
-        EVP_CIPHER_CTX_free(ctx);
+    if (ctx == NULL) {
+        OPENSSL_free(key);
+        OPENSSL_free(iv);
         return 0;
     }
 
+    /* Initialize cipher before setting params so ctx has an algorithm */
     if (!EVP_EncryptInit_ex2(ctx, evp_cipher, key, iv, NULL)) {
-        /* Error */
         EVP_CIPHER_CTX_free(ctx);
+        OPENSSL_free(key);
+        OPENSSL_free(iv);
+        return 0;
+    }
+
+    if (!EVP_CIPHER_CTX_set_params(ctx, param)) {
+        EVP_CIPHER_CTX_free(ctx);
+        OPENSSL_free(key);
+        OPENSSL_free(iv);
         return 0;
     }
 
@@ -485,6 +513,8 @@ static int do_evp_cipher(const EVP_CIPHER *evp_cipher, const OSSL_PARAM param[])
             (int)strlen(intext))) {
         /* Error */
         EVP_CIPHER_CTX_free(ctx);
+        OPENSSL_free(key);
+        OPENSSL_free(iv);
         return 0;
     }
     /*
@@ -494,10 +524,14 @@ static int do_evp_cipher(const EVP_CIPHER *evp_cipher, const OSSL_PARAM param[])
     if (!EVP_EncryptFinal_ex(ctx, outbuf + outlen, &tmplen)) {
         /* Error */
         EVP_CIPHER_CTX_free(ctx);
+        OPENSSL_free(key);
+        OPENSSL_free(iv);
         return 0;
     }
     outlen += tmplen;
     EVP_CIPHER_CTX_free(ctx);
+    OPENSSL_free(key);
+    OPENSSL_free(iv);
     return 1;
 }
 
@@ -628,15 +662,17 @@ static int do_evp_md(EVP_MD *evp_md, const OSSL_PARAM params[])
         goto end;
     }
 
+    /* Initialize digest before setting params so ctx has an algorithm */
+    if (!EVP_DigestInit_ex2(mdctx, evp_md, NULL)) {
+        r = 0;
+        goto end;
+    }
+
     if (!EVP_MD_CTX_set_params(mdctx, params)) {
         r = 0;
         goto end;
     }
 
-    if (!EVP_DigestInit_ex2(mdctx, evp_md, NULL)) {
-        r = 0;
-        goto end;
-    }
     if (!EVP_DigestUpdate(mdctx, "Test", strlen("Test"))) {
         r = 0;
         goto end;
