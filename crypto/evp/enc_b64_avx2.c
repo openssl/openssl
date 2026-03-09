@@ -477,7 +477,7 @@ static inline size_t insert_nl_str8(const __m256i v0, uint8_t *output)
 OPENSSL_UNTARGET_AVX2
 
 OPENSSL_TARGET_AVX2
-int encode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
+size_t encode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
     const unsigned char *src, int srclen, int ctx_length,
     int *final_wrap_cnt)
 {
@@ -665,7 +665,7 @@ int encode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
         *out++ = '\n';
     }
 
-    return (int)(out - (uint8_t *)dst) + +evp_encodeblock_int(ctx, out, src + i, srclen - i, final_wrap_cnt);
+    return (size_t)(out - (uint8_t *)dst) + evp_encodeblock_int(ctx, out, src + i, srclen - i, final_wrap_cnt);
 }
 OPENSSL_UNTARGET_AVX2
 #endif /* !defined(_M_ARM64EC) */

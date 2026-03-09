@@ -124,11 +124,11 @@ static const unsigned char base64_std_bin2ascii_2[256] = {
     '/'
 };
 
-int evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
+size_t evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     const unsigned char *f, int dlen, int *wrap_cnt)
 {
     int i = 0;
-    int ret = 0;
+    size_t ret = 0;
     uint8_t t1, t2, t3;
     const unsigned char *e0, *e1, *e2;
     int srp = (ctx != NULL
