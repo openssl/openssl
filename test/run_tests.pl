@@ -397,7 +397,7 @@ if (ref($ret) ne "TAP::Parser::Aggregator" || !$ret->has_errors) {
 # that no non-existent tests are run without signaling an error to the
 # user, so we verify has_null_tests is 0.
 if (ref($ret) eq "TAP::Parser::Aggregator") {
-    exit 0 unless $ret->has_errors || $ret->has_null_tests;
+    exit 0 unless $ret->has_errors || $has_null_tests;
     exit 1 unless $^O eq 'VMS';
     # On VMS, perl converts an exit 1 to SS$_ABORT (%SYSTEM-F-ABORT), which
     # is a bit harsh.  As per perl recommendations, we explicitly use the
