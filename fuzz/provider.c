@@ -479,9 +479,9 @@ static int do_evp_cipher(const EVP_CIPHER *evp_cipher, const OSSL_PARAM param[])
     iv = OPENSSL_zalloc(iv_len);
     if (key == NULL || iv == NULL)
         goto err;
-    for (i = 0; i < key_len && i < 16; i++)
+    for (i = 0; i < key_len; i++)
         key[i] = (unsigned char)i;
-    for (i = 0; i < iv_len && i < 8; i++)
+    for (i = 0; i < iv_len; i++)
         iv[i] = (unsigned char)(i + 1);
 
     ctx = EVP_CIPHER_CTX_new();
