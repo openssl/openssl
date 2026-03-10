@@ -399,7 +399,7 @@ update_req_extensions(X509_REQ *req, int *pnid, STACK_OF(X509_EXTENSION) *exts)
     }
 
     if (loc != -1) {
-        X509_ATTRIBUTE *att = X509at_delete_attr(req->req_info.attributes, loc);
+        X509_ATTRIBUTE *att = X509_REQ_delete_attr(req, loc);
 
         if (att == NULL)
             goto end;
