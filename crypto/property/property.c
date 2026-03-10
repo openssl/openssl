@@ -134,7 +134,6 @@ typedef struct {
     /* Count of the query cache entries for all algs */
     size_t cache_nelem;
 
-    uint64_t seed;
 } STORED_ALGORITHMS;
 
 struct ossl_method_store_st {
@@ -975,15 +974,16 @@ int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
  * 5) Repeat steps 1-4 until the number of requested entries have been removed
  * 6) Update our sa->seed by xoring the current sa->seed with the last hash that was eliminated.
  */
-static void QUERY_cache_select_cull(ALGORITHM *alg, STORED_ALGORITHMS *sa, size_t cullcount)
+static void QUERY_cache_select_cull(ALGORITHM *alg, STORED_ALGORITHMS *sa,
+    size_t cullcount, uint64_t seed)
 {
-    uint64_t seed = sa->seed;
     size_t culled = 0;
     uint64_t hash = 0;
     uint32_t used = 0;
     QUERY *q, *qn;
     QUERY_KEY key;
 
+cull_again:
     OSSL_LIST_FOREACH_DELSAFE(q, qn, lru_entry, &sa->lru_list)
     {
         /*
@@ -1014,12 +1014,13 @@ static void QUERY_cache_select_cull(ALGORITHM *alg, STORED_ALGORITHMS *sa, size_
         }
         seed = seed >> 1;
     }
-    if (hash == 0)
-        hash = seed;
     /*
-     * Update our seed so we use a new random value next time around
+     * If we didn't cull our requested number of entries
+     * try again.  Note that the used flag is cleared on
+     * all entries now, so every entry is fair game
      */
-    sa->seed = sa->seed ^ hash;
+    if (cullcount != cullcount)
+        goto cull_again;
 }
 
 static ossl_inline int ossl_method_store_cache_get_locked(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
@@ -1213,22 +1214,8 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
     if (alg == NULL)
         goto err;
     if (sa->cache_nelem > IMPL_CACHE_FLUSH_THRESHOLD) {
-        /*
-         * If this is our first pass, we need to generate a random seed
-         * for the culling
-         */
-        if (sa->seed == 0) {
-            /*
-             * We should just call RAND_bytes_ex here, to get some random data, but
-             * unfortunately, we're to early in the setup to do so, as calling RAND_BYTES_ex
-             * will have to fetch a DRBG, which will recurse into this path, causing all
-             * sorts of lock issues.  On the up side, we don't actually need cryptographically
-             * validated random data, we just need something that would be hard for an
-             * attacker to guess, so lets use a hashed time stamp.
-             */
-            OSSL_TIME ts = ossl_time_now();
-            sa->seed = ossl_fnv1a_hash((uint8_t *)&ts, sizeof(OSSL_TIME));
-        }
+        OSSL_TIME ts = ossl_time_now();
+        uint64_t seed = ossl_fnv1a_hash((uint8_t *)&ts, sizeof(OSSL_TIME));
         /*
          * Cull between 1 and 25% of this cache
          */
@@ -1239,9 +1226,9 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
          * Just wait until we try to add to a larger cache
          */
         if (cullcount >= 4) {
-            cullcount = sa->seed % (cullcount / 4);
+            cullcount = seed % (cullcount / 4);
             cullcount = (cullcount < 1) ? 1 : cullcount;
-            QUERY_cache_select_cull(alg, sa, cullcount);
+            QUERY_cache_select_cull(alg, sa, cullcount, seed);
         }
     }
 
