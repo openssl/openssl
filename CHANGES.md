@@ -64,9 +64,7 @@ OpenSSL Releases
    the new functions and report the IANA registered names of each signature
    scheme.  Example new output:
 
-   ```
-   Signature Algorithms: mldsa65:mldsa87:mldsa44:ecdsa_secp256r1_sha256:ecdsa_secp384r1_sha384:ecdsa_secp521r1_sha512:ed25519:ed448:ecdsa_brainpoolP256r1tls13_sha256:ecdsa_brainpoolP384r1tls13_sha384:ecdsa_brainpoolP512r1tls13_sha512:rsa_pss_pss_sha256:rsa_pss_pss_sha384:rsa_pss_pss_sha512:rsa_pss_rsae_sha256:rsa_pss_rsae_sha384:rsa_pss_rsae_sha512:rsa_pkcs1_sha256:rsa_pkcs1_sha384:rsa_pkcs1_sha512:ecdsa_sha224:rsa_pkcs1_sha224:dsa_sha224:dsa_sha256:dsa_sha384:dsa_sha512
-   ```
+       Signature Algorithms: mldsa65:mldsa87:mldsa44:ecdsa_secp256r1_sha256:ecdsa_secp384r1_sha384:ecdsa_secp521r1_sha512:ed25519:ed448:ecdsa_brainpoolP256r1tls13_sha256:ecdsa_brainpoolP384r1tls13_sha384:ecdsa_brainpoolP512r1tls13_sha512:rsa_pss_pss_sha256:rsa_pss_pss_sha384:rsa_pss_pss_sha512:rsa_pss_rsae_sha256:rsa_pss_rsae_sha384:rsa_pss_rsae_sha512:rsa_pkcs1_sha256:rsa_pkcs1_sha384:rsa_pkcs1_sha512:ecdsa_sha224:rsa_pkcs1_sha224:dsa_sha224:dsa_sha256:dsa_sha384:dsa_sha512
 
    *Viktor Dukhovni*
 
@@ -98,9 +96,9 @@ OpenSSL Releases
  * Added support for TLS 1.3 SM cipher suites `TLS_SM4_GCM_SM3`
    and `TLS_SM4_CCM_SM3` from [RFC 8998].
 
-   *Milan Broz*
+   *Milan Brož*
 
- * Added CSHAKE as per [SP 800-185].
+ * Added cSHAKE function support as per [SP 800-185].
 
    *Shane Lontis*
 
@@ -173,7 +171,8 @@ OpenSSL Releases
    *Igor Ustinov*
 
  * FIPS self tests can now be deferred and run as needed when installing
-   the FIPS module with the `-defer_tests` option.
+   the FIPS module with the `-defer_tests` option of the `openssl fipsinstall`
+   command.
 
    *Simo Sorce*
 
@@ -446,11 +445,11 @@ OpenSSL Releases
 
    *Dmitry Belyavskiy*
 
- * The script tool `c_rehash` was removed. Use `openssl rehash` instead.
+ * Removed `c_rehash` script tool. Use `openssl rehash` instead.
 
-   *Norbert Pocs*
+   *Norbert Pócs*
 
- * libcrypto no longer cleans up globally allocated data on process exit.
+ * `libcrypto` no longer cleans up globally allocated data via `atexit()`.
    This data is cleaned up automatically by the OS.  Some memory leak detectors
    may report spurious allocated and reachable memory at application exit.
    To avoid such spurious leak detection reports the application may call
@@ -483,7 +482,7 @@ OpenSSL Releases
    will return error when called.  Provider API should be used to replace
    engine functionality.
 
-   *Milan Broz*, *Neil Horman*, *Norbert Pócs*
+   *Milan Brož*, *Neil Horman*, *Norbert Pócs*
 
  * Removed `BIO_f_reliable()` implementation without replacement.
    It was broken since 3.0 release without any complaints.
