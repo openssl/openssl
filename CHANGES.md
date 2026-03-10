@@ -29,6 +29,10 @@ OpenSSL Releases
 
 -----------
 
+### Changes between 4.0 and 4.1 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
  * Added `-expected-rpks` option to the `openssl s_client`
