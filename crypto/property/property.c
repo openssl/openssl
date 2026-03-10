@@ -924,12 +924,6 @@ static void ossl_method_cache_flush(STORED_ALGORITHMS *sa, int nid)
         ossl_method_cache_flush_alg(sa, alg);
 }
 
-static void impl_cache_flush_this_alg(ossl_uintmax_t idx, ALGORITHM *a, void *arg)
-{
-    STORED_ALGORITHMS *sa = arg;
-    impl_cache_flush_alg(a, sa);
-}
-
 int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
 {
     for (int i = 0; i < NUM_SHARDS; ++i) {
@@ -937,7 +931,7 @@ int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
 
         if (!ossl_property_write_lock(sa))
             return 0;
-        ossl_sa_ALGORITHM_doall_arg(sa->algs, &impl_cache_flush_this_alg, sa);
+        ossl_ht_flush(sa->cache);
         ossl_property_unlock(sa);
     }
 
