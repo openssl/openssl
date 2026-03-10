@@ -555,6 +555,10 @@ OpenSSL Releases
 
    *Bob Beck*
 
+ * Add IKEV2 KDF (EVP_KDF-IKEV2KDF) to EVP_KDF
+
+   *Helen Zhang*
+
 OpenSSL 3.6
 -----------
 
