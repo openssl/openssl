@@ -131,9 +131,6 @@ typedef struct {
 
     /* query cache specific values */
 
-    /* Count of the query cache entries for all algs */
-    size_t cache_nelem;
-
 } STORED_ALGORITHMS;
 
 struct ossl_method_store_st {
@@ -312,7 +309,6 @@ static void impl_cache_flush_alg(ALGORITHM *alg, STORED_ALGORITHMS *sa)
             hash = (q->specific_hash != 0) ? q->specific_hash : q->generic_hash;
             HT_INIT_KEY_CACHED(&key, hash);
             ossl_ht_delete(sa->cache, TO_HT_KEY(&key));
-            sa->cache_nelem--;
         }
     }
 }
@@ -949,7 +945,6 @@ int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
         if (!ossl_property_write_lock(sa))
             return 0;
         ossl_sa_ALGORITHM_doall_arg(sa->algs, &impl_cache_flush_this_alg, sa);
-        sa->cache_nelem = 0;
         ossl_property_unlock(sa);
     }
 
@@ -1007,7 +1002,6 @@ cull_again:
             HT_INIT_KEY_CACHED(&key, hash);
             if (ossl_ht_delete(sa->cache, TO_HT_KEY(&key))) {
                 culled++;
-                sa->cache_nelem--;
                 if (culled == cullcount)
                     break;
             }
@@ -1180,7 +1174,6 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
                 ret = 0;
             } else {
                 ossl_list_lru_entry_insert_tail(&sa->lru_list, post_insert);
-                sa->cache_nelem++;
             }
             ossl_property_unlock(sa);
         }
@@ -1213,7 +1206,7 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
     alg = ossl_method_store_retrieve(sa, nid);
     if (alg == NULL)
         goto err;
-    if (sa->cache_nelem > IMPL_CACHE_FLUSH_THRESHOLD) {
+    if (ossl_ht_count(sa->cache) > IMPL_CACHE_FLUSH_THRESHOLD) {
         OSSL_TIME ts = ossl_time_now();
         uint64_t seed = ossl_fnv1a_hash((uint8_t *)&ts, sizeof(OSSL_TIME));
         /*
@@ -1247,8 +1240,7 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
     HT_INIT_KEY_EXTERNAL(&key, keybuf, keylen);
 
     if (method == NULL) {
-        if (ossl_ht_delete(sa->cache, TO_HT_KEY(&key)))
-            sa->cache_nelem--;
+        ossl_ht_delete(sa->cache, TO_HT_KEY(&key));
         goto end;
     }
     p = OPENSSL_malloc(sizeof(*p));
@@ -1271,8 +1263,6 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
         p->generic_hash = 0;
         if (old != NULL)
             impl_cache_free(old);
-        else
-            sa->cache_nelem++;
         ossl_list_lru_entry_insert_head(&sa->lru_list, p);
         /*
          * We also want to add this method into the cache against a key computed _only_
@@ -1290,7 +1280,6 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
         if (!ossl_method_up_ref(&p->method))
             goto err;
         if (ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), p, NULL)) {
-            sa->cache_nelem++;
             p->specific_hash = 0;
             p->generic_hash = old->generic_hash = HT_KEY_GET_HASH(&key);
             ossl_list_lru_entry_insert_tail(&sa->lru_list, p);
