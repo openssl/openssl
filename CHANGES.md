@@ -116,7 +116,7 @@ OpenSSL Releases
 
    *Viktor Dukhovni*
 
- * Added support for [RFC8998], signature algorithm `sm2sig_sm3`, key exchange
+ * Added support for [RFC 8998], signature algorithm `sm2sig_sm3`, key exchange
    group `curveSM2`, and [tls-hybrid-sm2-mlkem] post-quantum group
    `curveSM2MLKEM768`.
 
@@ -144,7 +144,7 @@ OpenSSL Releases
    * Dr Paul Dale *
 
  * Added support for TLS 1.3 SM cipher suites `TLS_SM4_GCM_SM3` and `TLS_SM4_CCM_SM3`
-   from [RFC8998].
+   from [RFC 8998].
 
    *Milan Broz*
 
@@ -22254,8 +22254,8 @@ ndif
 [CVE-2025-9231]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-9231
 [CVE-2025-9232]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-9232
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
-[RFC8998]: https://datatracker.ietf.org/doc/html/rfc8998#name-iana-considerations
 [RFC 2578 (STD 58), section 3.5]: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
+[RFC 8998]: https://datatracker.ietf.org/doc/html/rfc8998#name-iana-considerations
 [SP 800-132]: https://csrc.nist.gov/pubs/sp/800/132/final
 [SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final
 [SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final
