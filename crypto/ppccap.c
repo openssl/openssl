@@ -47,15 +47,19 @@ void OPENSSL_crypto207_probe(void);
 void OPENSSL_madd300_probe(void);
 void OPENSSL_brd31_probe(void);
 
-#if defined(_AIX)
+/* Compile check_vmx() for AIX 7.0 and later by excluding older versions.
+ * Note: _AIX, _AIX43, _AIX51, _AIX53, _AIX61, _AIX71, _AIX72, etc. are
+ * predefined macros automatically set by the AIX compiler based on the
+ * AIX version. We use negative logic to exclude AIX versions < 7.0.
+ */
+#if !defined(_AIX43) && !defined(_AIX51) && !defined(_AIX53) && !defined(_AIX61)
 static int check_vmx(void)
 {
-    if (_system_configuration.implementation >= 0x10000u &&
-        _system_configuration.vmx_version > 1)
+    if (_system_configuration.implementation >= 0x10000u && _system_configuration.vmx_version > 1)
         return 1;
     return 0;
 }
-#endif
+#endif /* !AIX 4.3, 5.1, 5.3, 6.1 */
 
 long OPENSSL_rdtsc_mftb(void);
 long OPENSSL_rdtsc_mfspr268(void);
@@ -190,12 +194,11 @@ void OPENSSL_cpuid_setup(void)
         if (__power_set(0x1U << 14)) /* POWER6 */
             OPENSSL_ppccap_P |= PPC_FPU64;
     }
-#if defined(_AIX)
-    if (check_vmx())
-    {
+#if defined(_AIX) && !defined(_AIX43) && !defined(_AIX51) && !defined(_AIX53) && !defined(_AIX61)
+    if (check_vmx()) {
 #endif
         if (__power_set(0xffffffffU << 14)) /* POWER6 and later */
-                OPENSSL_ppccap_P |= PPC_ALTIVEC;
+            OPENSSL_ppccap_P |= PPC_ALTIVEC;
 
         if (__power_set(0xffffffffU << 16)) /* POWER8 and later */
             OPENSSL_ppccap_P |= PPC_CRYPTO207;
@@ -205,7 +208,7 @@ void OPENSSL_cpuid_setup(void)
 
         if (__power_set(0xffffffffU << 18)) /* POWER10 and later */
             OPENSSL_ppccap_P |= PPC_BRD31;
-#if defined(_AIX)
+#if defined(_AIX) && !defined(_AIX43) && !defined(_AIX51) && !defined(_AIX53) && !defined(_AIX61)
     }
 #endif
     return;
