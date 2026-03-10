@@ -29,6 +29,16 @@ OpenSSL Releases
 
 -----------
 
+### Changes between 4.0 and 4.1 [xx XXX xxxx]
+
+ * `EVP_CIPHER_CTX_get_num()` and `EVP_CIPHER_CTX_set_num()' have been deprecated.
+
+   Refer to ossl-migration-guide(7) for more info.
+
+   *Shane Lontis*
+
+-----------
+
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
  * The `openssl-x509(1)`, `openssl-req(1)` and `openssl-ca(1)` command-line
