@@ -27,25 +27,26 @@ OpenSSL 4.0
 
 ### Major changes between OpenSSL 3.6 and OpenSSL 4.0 [under development]
 
-  * Support for Encrypted Client Hello (ECH) was added. See `doc/designs/ech-api.md`
-    for details.
+  * Added support for Encrypted Client Hello (ECH).
+    See `doc/designs/ech-api.md` for details.
 
-  * Windows supports the use of staic or dynamic vcruntime linkage
+  * Added support for using either static or dynamic VC runtime linkage
+    on Windows.
 
-  * The `OPENSSL_sk_set_cmp_thunks()` call was added to the `STACK_OF` api
+  * Added `OPENSSL_sk_set_cmp_thunks()` call to the `STACK_OF` API
 
-  * The script tool `c_rehash` was removed. Use `openssl rehash` instead.
+  * Removed `c_rehash` script tool.  Use `openssl rehash` instead.
 
-  * libcrypto no longer cleans up globally allocated data via atexit()
+  * `libcrypto` no longer cleans up globally allocated data via `atexit()`.
 
-  * ENGINE support was removed. The `no-engine` build option and the
-   `OPENSSL_NO_ENGINE` macro is always present.
+  * Removed support for engines.  The `no-engine` build option
+    and the `OPENSSL_NO_ENGINE` macro are always present.
 
-  * The crypto-mdebug-backtrace configuration option has been entirely removed.
+  * Removed `crypto-mdebug-backtrace` configuration option.
 
-  * Support for the SSLv2 Client Hello was removed
+  * Removed support for the SSLv2 Client Hello.
 
-  * When using the FIPS provider via the PKCS5_PBKDF2_HMAC API,
+  * When using the FIPS provider via the `PKCS5_PBKDF2_HMAC` API,
     password protected encrypted files will now have lower bounds
     checks (minimum iteration count, minimum password length, salt
     size and derived key lengths) enforced by default.  Prior to
