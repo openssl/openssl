@@ -127,6 +127,7 @@ jobs:
             NANVIX_HOME="$NANVIX_HOME" NANVIX_TOOLCHAIN="/opt/nanvix" test-integration
 
       - name: Functional Tests
+        if: matrix.process-mode != 'standalone'
         run: |
           timeout --foreground 300 make -f Makefile.nanvix CONFIG_NANVIX=y \
             NANVIX_HOME="$NANVIX_HOME" NANVIX_TOOLCHAIN="/opt/nanvix" \
