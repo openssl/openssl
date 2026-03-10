@@ -977,6 +977,7 @@ static void QUERY_cache_select_cull(ALGORITHM *alg, STORED_ALGORITHMS *sa,
     uint32_t used = 0;
     QUERY *q, *qn;
     QUERY_KEY key;
+    OSSL_TIME ts;
 
 cull_again:
     OSSL_LIST_FOREACH_DELSAFE(q, qn, lru_entry, &sa->lru_list)
@@ -1007,13 +1008,17 @@ cull_again:
             }
         }
         seed = seed >> 1;
+        if (seed == 0) {
+            ts = ossl_time_now();
+            seed = ossl_fnv1a_hash((uint8_t *)&ts, sizeof(OSSL_TIME));
+        }
     }
     /*
      * If we didn't cull our requested number of entries
      * try again.  Note that the used flag is cleared on
      * all entries now, so every entry is fair game
      */
-    if (cullcount != cullcount)
+    if (culled < cullcount)
         goto cull_again;
 }
 
