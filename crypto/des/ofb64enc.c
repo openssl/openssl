@@ -25,7 +25,7 @@ void DES_ofb64_encrypt(register const unsigned char *in,
     DES_key_schedule *schedule, DES_cblock *ivec, int *num)
 {
     register DES_LONG v0, v1, t;
-    register int n = *num;
+    register int n = *num & 0x07;
     register long l = length;
     DES_cblock d;
     register unsigned char *dp;
