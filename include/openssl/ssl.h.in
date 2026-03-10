@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -81,7 +81,6 @@ extern "C" {
 #define SSL_TXT_LOW "LOW"
 #define SSL_TXT_MEDIUM "MEDIUM"
 #define SSL_TXT_HIGH "HIGH"
-#define SSL_TXT_FIPS "FIPS"
 
 #define SSL_TXT_aNULL "aNULL"
 #define SSL_TXT_eNULL "eNULL"

@@ -624,3 +624,5 @@ SSL_ech_set1_grease_suite               ?	4_0_0	EXIST::FUNCTION:ECH
 SSL_ech_get1_retry_config               ?	4_0_0	EXIST::FUNCTION:ECH
 SSL_CTX_ech_set1_outer_alpn_protos      ?	4_0_0	EXIST::FUNCTION:ECH
 SSL_set1_ech_config_list                ?	4_0_0	EXIST::FUNCTION:ECH
+SSL_get0_sigalg                         ?	4_0_0	EXIST::FUNCTION:
+SSL_get0_shared_sigalg                  ?	4_0_0	EXIST::FUNCTION:

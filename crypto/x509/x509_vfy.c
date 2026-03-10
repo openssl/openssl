@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -52,7 +52,7 @@ static int verify_rpk(X509_STORE_CTX *ctx);
 static int dane_verify(X509_STORE_CTX *ctx);
 static int dane_verify_rpk(X509_STORE_CTX *ctx);
 static int null_callback(int ok, X509_STORE_CTX *e);
-static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
+static int check_issued(X509_STORE_CTX *ctx, const X509 *x, const X509 *issuer);
 static int check_extensions(X509_STORE_CTX *ctx);
 static int check_name_constraints(X509_STORE_CTX *ctx);
 static int check_id(X509_STORE_CTX *ctx);
@@ -412,7 +412,7 @@ static int sk_X509_contains(STACK_OF(X509) *sk, X509 *cert)
  * Maybe not touch X509_STORE_CTX_get1_issuer(), for API backward compatibility.
  */
 static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int check_signing_allowed,
-    int no_dup, STACK_OF(X509) *sk, X509 *x)
+    int no_dup, STACK_OF(X509) *sk, const X509 *x)
 {
     int i;
     X509 *candidate, *issuer = NULL;
@@ -453,7 +453,7 @@ static X509 *get0_best_issuer_sk(X509_STORE_CTX *ctx, int check_signing_allowed,
  *  0 certificate not found.
  * -1 some other error.
  */
-int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
+int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, const X509 *x)
 {
     const X509_NAME *xn = X509_get_issuer_name(x);
     X509_OBJECT *obj = X509_OBJECT_new();
@@ -491,7 +491,7 @@ end:
 }
 
 /* Check that the given certificate |x| is issued by the certificate |issuer| */
-static int check_issued(ossl_unused X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
+static int check_issued(ossl_unused X509_STORE_CTX *ctx, const X509 *x, const X509 *issuer)
 {
     int err = ossl_x509_likely_issued(issuer, x);
 
@@ -508,7 +508,7 @@ static int check_issued(ossl_unused X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
  * Alternative get_issuer method: look up from a STACK_OF(X509) in other_ctx.
  * Returns -1 on internal error.
  */
-static int get1_best_issuer_other_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
+static int get1_best_issuer_other_sk(X509 **issuer, X509_STORE_CTX *ctx, const X509 *x)
 {
     *issuer = get0_best_issuer_sk(ctx, 0, 1 /* no_dup */, ctx->other_ctx, x);
     if (*issuer == NULL)
@@ -673,10 +673,6 @@ static int check_extensions(X509_STORE_CTX *ctx)
                 CB_FAIL_IF((x->ex_kusage & KU_KEY_CERT_SIGN) == 0, ctx,
                     x, i, X509_V_ERR_PATHLEN_WITHOUT_KU_KEY_CERT_SIGN);
             }
-            CB_FAIL_IF((x->ex_flags & EXFLAG_CA) != 0
-                    && (x->ex_flags & EXFLAG_BCONS) != 0
-                    && (x->ex_flags & EXFLAG_BCONS_CRITICAL) == 0,
-                ctx, x, i, X509_V_ERR_CA_BCONS_NOT_CRITICAL);
             /* Check Key Usage according to RFC 5280 section 4.2.1.3 */
             if ((x->ex_flags & EXFLAG_CA) != 0) {
                 CB_FAIL_IF((x->ex_flags & EXFLAG_KUSAGE) == 0,
@@ -694,10 +690,6 @@ static int check_extensions(X509_STORE_CTX *ctx)
                            || x->altname == NULL)
                     && X509_NAME_entry_count(X509_get_subject_name(x)) == 0,
                 ctx, x, i, X509_V_ERR_SUBJECT_NAME_EMPTY);
-            CB_FAIL_IF(X509_NAME_entry_count(X509_get_subject_name(x)) == 0
-                    && x->altname != NULL
-                    && (x->ex_flags & EXFLAG_SAN_CRITICAL) == 0,
-                ctx, x, i, X509_V_ERR_EMPTY_SUBJECT_SAN_NOT_CRITICAL);
             /* Check SAN is non-empty according to RFC 5280 section 4.2.1.6 */
             CB_FAIL_IF(x->altname != NULL
                     && sk_GENERAL_NAME_num(x->altname) <= 0,
@@ -705,12 +697,6 @@ static int check_extensions(X509_STORE_CTX *ctx)
             /* Check sig alg consistency acc. to RFC 5280 section 4.1.1.2 */
             CB_FAIL_IF(X509_ALGOR_cmp(&x->sig_alg, &x->cert_info.signature) != 0,
                 ctx, x, i, X509_V_ERR_SIGNATURE_ALGORITHM_INCONSISTENCY);
-            CB_FAIL_IF(x->akid != NULL
-                    && (x->ex_flags & EXFLAG_AKID_CRITICAL) != 0,
-                ctx, x, i, X509_V_ERR_AUTHORITY_KEY_IDENTIFIER_CRITICAL);
-            CB_FAIL_IF(x->skid != NULL
-                    && (x->ex_flags & EXFLAG_SKID_CRITICAL) != 0,
-                ctx, x, i, X509_V_ERR_SUBJECT_KEY_IDENTIFIER_CRITICAL);
             if (X509_get_version(x) >= X509_VERSION_3) {
                 /* Check AKID presence acc. to RFC 5280 section 4.2.1.1 */
                 /*
@@ -831,8 +817,9 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
          * (RFC 3820: 3.4, 4.1.3 (a)(4))
          */
         if ((x->ex_flags & EXFLAG_PROXY) != 0) {
-            X509_NAME *tmpsubject = X509_get_subject_name(x);
-            X509_NAME *tmpissuer = X509_get_issuer_name(x);
+            const X509_NAME *tmpsubject = X509_get_subject_name(x);
+            const X509_NAME *tmpissuer = X509_get_issuer_name(x);
+            X509_NAME *tmpsubject2;
             X509_NAME_ENTRY *tmpentry = NULL;
             int last_nid = 0;
             int err = X509_V_OK;
@@ -869,23 +856,23 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
              * Check that the last subject RDN is a commonName, and that
              * all the previous RDNs match the issuer exactly
              */
-            tmpsubject = X509_NAME_dup(tmpsubject);
-            if (tmpsubject == NULL) {
+            tmpsubject2 = X509_NAME_dup(tmpsubject);
+            if (tmpsubject2 == NULL) {
                 ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
                 ctx->error = X509_V_ERR_OUT_OF_MEM;
                 return -1;
             }
 
-            tmpentry = X509_NAME_delete_entry(tmpsubject, last_loc);
+            tmpentry = X509_NAME_delete_entry(tmpsubject2, last_loc);
             last_nid = OBJ_obj2nid(X509_NAME_ENTRY_get_object(tmpentry));
 
             if (last_nid != NID_commonName
-                || X509_NAME_cmp(tmpsubject, tmpissuer) != 0) {
+                || X509_NAME_cmp(tmpsubject2, tmpissuer) != 0) {
                 err = X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION;
             }
 
             X509_NAME_ENTRY_free(tmpentry);
-            X509_NAME_free(tmpsubject);
+            X509_NAME_free(tmpsubject2);
 
         proxy_name_done:
             CB_FAIL_IF(err != X509_V_OK, ctx, x, i, err);
@@ -2891,7 +2878,7 @@ int X509_STORE_CTX_init_rpk(X509_STORE_CTX *ctx, X509_STORE *store, EVP_PKEY *rp
     return 1;
 }
 
-int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
+int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, const X509 *x509,
     STACK_OF(X509) *chain)
 {
     if (ctx == NULL) {
@@ -2901,7 +2888,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     X509_STORE_CTX_cleanup(ctx);
 
     ctx->store = store;
-    ctx->cert = x509;
+    ctx->cert = (X509 *)x509; /* XXX casts away const */
     ctx->untrusted = chain;
     ctx->crls = NULL;
     ctx->num_untrusted = 0;
@@ -3405,7 +3392,7 @@ static int dane_match_cert(X509_STORE_CTX *ctx, X509 *cert, int depth)
                     break;
                 }
 
-                OPENSSL_free(dane->mcert);
+                X509_free(dane->mcert);
                 dane->mcert = cert;
                 dane->mdpth = depth;
                 dane->mtlsa = t;
@@ -4009,7 +3996,7 @@ memerr:
     return -1;
 }
 
-STACK_OF(X509) *X509_build_chain(X509 *target, STACK_OF(X509) *certs,
+STACK_OF(X509) *X509_build_chain(const X509 *target, STACK_OF(X509) *certs,
     X509_STORE *store, int with_self_signed,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
@@ -4029,7 +4016,8 @@ STACK_OF(X509) *X509_build_chain(X509 *target, STACK_OF(X509) *certs,
         goto err;
     if (!finish_chain)
         X509_STORE_CTX_set0_trusted_stack(ctx, certs);
-    if (!ossl_x509_add_cert_new(&ctx->chain, target, X509_ADD_FLAG_UP_REF)) {
+    /* XXX casts away const */
+    if (!ossl_x509_add_cert_new(&ctx->chain, (X509 *)target, X509_ADD_FLAG_UP_REF)) {
         ctx->error = X509_V_ERR_OUT_OF_MEM;
         goto err;
     }

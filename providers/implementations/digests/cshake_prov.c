@@ -222,6 +222,7 @@ static void cshake_freectx(void *vctx)
 {
     CSHAKE_CTX *ctx = (CSHAKE_CTX *)vctx;
 
+    OPENSSL_free(ctx->propq);
     EVP_MD_free(ctx->md);
     EVP_MD_CTX_destroy(ctx->mdctx);
     OPENSSL_clear_free(ctx, sizeof(*ctx));

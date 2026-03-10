@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -374,7 +374,7 @@ int X509_aux_print(BIO *out, const X509 *x, int indent)
  * Helper functions for improving certificate verification error diagnostics
  */
 
-int ossl_x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags)
+int ossl_x509_print_ex_brief(BIO *bio, const X509 *cert, unsigned long neg_cflags)
 {
     unsigned long flags = ASN1_STRFLGS_RFC2253 | ASN1_STRFLGS_ESC_QUOTE | XN_FLAG_SEP_CPLUS_SPC | XN_FLAG_FN_SN;
     X509_VERIFY_PARAM *vpm = X509_VERIFY_PARAM_new();
@@ -391,7 +391,7 @@ int ossl_x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags)
     if (BIO_printf(bio, "    certificate\n") <= 0
         || !X509_print_ex(bio, cert, flags, ~X509_FLAG_NO_SUBJECT))
         goto err;
-    if (X509_check_issued((X509 *)cert, cert) == X509_V_OK) {
+    if (X509_check_issued(cert, cert) == X509_V_OK) {
         if (BIO_printf(bio, "        self-issued\n") <= 0)
             goto err;
     } else {

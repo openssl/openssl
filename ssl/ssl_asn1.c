@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -14,6 +14,8 @@
 #include <openssl/asn1t.h>
 #include <openssl/encoder.h>
 #include <openssl/x509.h>
+
+#include <crypto/asn1.h>
 
 typedef struct {
     uint32_t version;

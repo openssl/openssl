@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -36,10 +36,12 @@ static X509_BUFFER *buffer_from_bytes(const uint8_t *bytes, size_t length)
     X509_BUFFER *buf;
 
     if ((buf = OPENSSL_zalloc(sizeof *buf)) != NULL
-        && (buf->data = OPENSSL_memdup(bytes, length)) != NULL)
+        && (buf->data = OPENSSL_memdup(bytes, length)) != NULL) {
         buf->len = length;
-    else
+    } else {
         OPENSSL_free(buf);
+        buf = NULL;
+    }
     return buf;
 }
 

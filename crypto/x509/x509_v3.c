@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,8 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "x509_local.h"
+
+#include <crypto/asn1.h>
 
 int X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *x)
 {
@@ -98,6 +100,22 @@ X509_EXTENSION *X509v3_delete_ext(STACK_OF(X509_EXTENSION) *x, int loc)
     return ret;
 }
 
+X509_EXTENSION *X509v3_delete_extension(STACK_OF(X509_EXTENSION) **x, int loc)
+{
+    X509_EXTENSION *ext;
+
+    if (x == NULL)
+        return NULL;
+
+    /* Set extensions to NULL when last element dropped */
+    if ((ext = X509v3_delete_ext(*x, loc)) != NULL
+        && sk_X509_EXTENSION_num(*x) == 0) {
+        sk_X509_EXTENSION_free(*x);
+        *x = NULL;
+    }
+    return ext;
+}
+
 STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
     const X509_EXTENSION *ex, int loc)
 {
@@ -118,6 +136,9 @@ STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
     } else
         sk = *x;
 
+    if (ossl_ignored_x509_extension(ex, X509V3_ADD_SILENT))
+        goto done;
+
     n = sk_X509_EXTENSION_num(sk);
     if (loc > n)
         loc = n;
@@ -132,6 +153,7 @@ STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
         goto err;
     }
+done:
     if (*x == NULL)
         *x = sk;
     return sk;

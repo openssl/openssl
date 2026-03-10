@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -51,7 +51,7 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bags,
 void print_attribute(BIO *out, const ASN1_TYPE *av);
 int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
     const char *name);
-static void hex_print(BIO *out, unsigned char *buf, int len);
+static void hex_print(BIO *out, const unsigned char *buf, int len);
 static int alg_print(const X509_ALGOR *alg);
 int cert_load(BIO *in, STACK_OF(X509) *sk);
 static int set_pbe(int *ppbe, const char *str);
@@ -1280,26 +1280,26 @@ void print_attribute(BIO *out, const ASN1_TYPE *av)
 
     switch (av->type) {
     case V_ASN1_BMPSTRING:
-        value = OPENSSL_uni2asc(av->value.bmpstring->data,
-            av->value.bmpstring->length);
+        value = OPENSSL_uni2asc(ASN1_STRING_get0_data(av->value.bmpstring),
+            ASN1_STRING_length(av->value.bmpstring));
         BIO_printf(out, "%s\n", value);
         OPENSSL_free(value);
         break;
 
     case V_ASN1_UTF8STRING:
-        BIO_printf(out, "%.*s\n", av->value.utf8string->length,
-            av->value.utf8string->data);
+        BIO_printf(out, "%.*s\n", ASN1_STRING_length(av->value.utf8string),
+            ASN1_STRING_get0_data(av->value.utf8string));
         break;
 
     case V_ASN1_OCTET_STRING:
-        hex_print(out, av->value.octet_string->data,
-            av->value.octet_string->length);
+        hex_print(out, ASN1_STRING_get0_data(av->value.octet_string),
+            ASN1_STRING_length(av->value.octet_string));
         BIO_puts(out, "\n");
         break;
 
     case V_ASN1_BIT_STRING:
-        hex_print(out, av->value.bit_string->data,
-            av->value.bit_string->length);
+        hex_print(out, ASN1_STRING_get0_data(av->value.bit_string),
+            ASN1_STRING_length(av->value.bit_string));
         BIO_puts(out, "\n");
         break;
 
@@ -1359,7 +1359,7 @@ int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
     return 1;
 }
 
-static void hex_print(BIO *out, unsigned char *buf, int len)
+static void hex_print(BIO *out, const unsigned char *buf, int len)
 {
     int i;
     for (i = 0; i < len; i++)

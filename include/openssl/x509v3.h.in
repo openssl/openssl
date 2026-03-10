@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -443,11 +443,17 @@ struct ISSUING_DIST_POINT_st {
 #define EXFLAG_FRESHEST 0x1000
 #define EXFLAG_SS 0x2000 /* cert is apparently self-signed */
 
+#define EXFLAG_NO_FINGERPRINT 0x100000
+
+/*
+ * The following flags are no longer used. On X509_V_FLAG_X509_STRICT they were
+ * previously enforced as checks on critical extensions but this behavior has
+ * been removed.
+ */
 #define EXFLAG_BCONS_CRITICAL 0x10000
 #define EXFLAG_AKID_CRITICAL 0x20000
 #define EXFLAG_SKID_CRITICAL 0x40000
 #define EXFLAG_SAN_CRITICAL 0x80000
-#define EXFLAG_NO_FINGERPRINT 0x100000
 
 /* https://datatracker.ietf.org/doc/html/rfc5280#section-4.2.1.3 */
 #define KU_DIGITAL_SIGNATURE X509v3_KU_DIGITAL_SIGNATURE
@@ -747,7 +753,7 @@ int X509V3_extensions_print(BIO *out, const char *title,
 int X509_check_ca(const X509 *x);
 int X509_check_purpose(const X509 *x, int id, int ca);
 int X509_supported_extension(const X509_EXTENSION *ex);
-int X509_check_issued(X509 *issuer, X509 *subject);
+int X509_check_issued(const X509 *issuer, const X509 *subject);
 int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid);
 void X509_set_proxy_flag(X509 *x);
 void X509_set_proxy_pathlen(X509 *x, long l);

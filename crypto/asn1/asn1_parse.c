@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,8 @@
 #ifndef ASN1_PARSE_MAXDEPTH
 #define ASN1_PARSE_MAXDEPTH 128
 #endif
+
+#include <crypto/asn1.h>
 
 static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
     int offset, int depth, int indent, int dump);

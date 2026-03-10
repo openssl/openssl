@@ -1,4 +1,4 @@
-# Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -369,7 +369,7 @@ sub start
     # Process the output from s_server until we find the ACCEPT line, which
     # tells us what the accepting address and port are.
     while (<>) {
-        print;
+        print STDERR $_;
         s/\R$//;                # Better chomp
         next unless (/^ACCEPT\s.*:(\d+)$/);
         $self->{server_port} = $1;
@@ -390,7 +390,7 @@ sub start
     my $error;
     $pid = undef;
     if (eval { require Win32::Process; 1; }) {
-        if (Win32::Process::Create(my $h, $^X, "perl -ne print", 0, 0, ".")) {
+        if (Win32::Process::Create(my $h, $^X, 'perl -ne "print STDERR $_"', 0, 0, ".")) {
             $pid = $h->GetProcessID();
             $self->{proc_handle} = $h;  # hold handle till next round [or exit]
         } else {
@@ -398,7 +398,7 @@ sub start
         }
     } else {
         if (defined($pid = fork)) {
-            $pid or exec("$^X -ne print") or exit($!);
+            $pid or exec($^X, '-ne', 'print STDERR $_') or exit($!);
         } else {
             $error = $!;
         }

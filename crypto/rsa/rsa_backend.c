@@ -246,6 +246,8 @@ err:
     BN_free(n);
     BN_free(e);
     BN_free(d);
+    BN_clear_free(p);
+    BN_clear_free(q);
     sk_BIGNUM_pop_free(factors, BN_clear_free);
     sk_BIGNUM_pop_free(exps, BN_clear_free);
     sk_BIGNUM_pop_free(coeffs, BN_clear_free);

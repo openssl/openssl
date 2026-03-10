@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,8 @@
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
+
+#include <crypto/asn1.h>
 
 /* Add a local keyid to a safebag */
 

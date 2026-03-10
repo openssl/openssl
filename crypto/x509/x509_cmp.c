@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -97,7 +97,7 @@ int X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
     return rv < 0 ? -1 : rv > 0;
 }
 
-X509_NAME *X509_get_issuer_name(const X509 *a)
+const X509_NAME *X509_get_issuer_name(const X509 *a)
 {
     return a->cert_info.issuer;
 }
@@ -114,7 +114,7 @@ unsigned long X509_issuer_name_hash_old(const X509 *x)
 }
 #endif
 
-X509_NAME *X509_get_subject_name(const X509 *a)
+const X509_NAME *X509_get_subject_name(const X509 *a)
 {
     return a->cert_info.subject;
 }
@@ -178,7 +178,7 @@ int X509_cmp(const X509 *a, const X509 *b)
     return rv < 0 ? -1 : rv > 0;
 }
 
-int ossl_x509_add_cert_new(STACK_OF(X509) **p_sk, X509 *cert, int flags)
+int ossl_x509_add_cert_new(STACK_OF(X509) **p_sk, const X509 *cert, int flags)
 {
     if (*p_sk == NULL && (*p_sk = sk_X509_new_null()) == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
@@ -365,7 +365,7 @@ X509 *X509_find_by_issuer_and_serial(const STACK_OF(X509) *sk, const X509_NAME *
     return NULL;
 }
 
-const X509 *X509_find_by_subject(const STACK_OF(X509) *sk, const X509_NAME *name)
+X509 *X509_find_by_subject(const STACK_OF(X509) *sk, const X509_NAME *name)
 {
     X509 *x509;
     int i;
@@ -373,7 +373,7 @@ const X509 *X509_find_by_subject(const STACK_OF(X509) *sk, const X509_NAME *name
     for (i = 0; i < sk_X509_num(sk); i++) {
         x509 = sk_X509_value(sk, i);
         if (X509_NAME_cmp(X509_get_subject_name(x509), name) == 0)
-            return (const X509 *)x509;
+            return x509;
     }
     return NULL;
 }

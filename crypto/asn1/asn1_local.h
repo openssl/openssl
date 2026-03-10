@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -62,6 +62,8 @@ const ASN1_VALUE **ossl_asn1_get_const_field_ptr(const ASN1_VALUE **pval,
 const ASN1_TEMPLATE *ossl_asn1_do_adb(const ASN1_VALUE *val,
     const ASN1_TEMPLATE *tt,
     int nullerr);
+
+ASN1_OBJECT *ossl_asn1_object_new(void);
 
 int ossl_asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it);
 

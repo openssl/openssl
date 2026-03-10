@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -330,7 +330,7 @@ end:
 static int cb(int ok, X509_STORE_CTX *ctx)
 {
     int cert_error = X509_STORE_CTX_get_error(ctx);
-    X509 *current_cert = X509_STORE_CTX_get_current_cert(ctx);
+    const X509 *current_cert = X509_STORE_CTX_get_current_cert(ctx);
 
     if (!ok) {
         if (current_cert != NULL) {

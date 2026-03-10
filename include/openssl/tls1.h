@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -284,6 +284,11 @@ __owur int SSL_export_keying_material_early(SSL *s, unsigned char *out,
 
 int SSL_get_peer_signature_type_nid(const SSL *s, int *pnid);
 int SSL_get_signature_type_nid(const SSL *s, int *pnid);
+
+int SSL_get0_sigalg(SSL *s, int idx, unsigned int *codepoint,
+    const char **name);
+int SSL_get0_shared_sigalg(SSL *s, int idx, unsigned int *codepoint,
+    const char **name);
 
 int SSL_get_sigalgs(SSL *s, int idx,
     int *psign, int *phash, int *psignandhash,

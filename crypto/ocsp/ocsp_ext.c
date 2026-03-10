@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -48,7 +48,7 @@ const X509_EXTENSION *OCSP_REQUEST_get_ext(OCSP_REQUEST *x, int loc)
 
 X509_EXTENSION *OCSP_REQUEST_delete_ext(OCSP_REQUEST *x, int loc)
 {
-    return X509v3_delete_ext(x->tbsRequest.requestExtensions, loc);
+    return X509v3_delete_extension(&x->tbsRequest.requestExtensions, loc);
 }
 
 void *OCSP_REQUEST_get1_ext_d2i(OCSP_REQUEST *x, int nid, int *crit, int *idx)
@@ -98,7 +98,7 @@ const X509_EXTENSION *OCSP_ONEREQ_get_ext(OCSP_ONEREQ *x, int loc)
 
 X509_EXTENSION *OCSP_ONEREQ_delete_ext(OCSP_ONEREQ *x, int loc)
 {
-    return X509v3_delete_ext(x->singleRequestExtensions, loc);
+    return X509v3_delete_extension(&x->singleRequestExtensions, loc);
 }
 
 void *OCSP_ONEREQ_get1_ext_d2i(OCSP_ONEREQ *x, int nid, int *crit, int *idx)
@@ -149,7 +149,7 @@ const X509_EXTENSION *OCSP_BASICRESP_get_ext(OCSP_BASICRESP *x, int loc)
 
 X509_EXTENSION *OCSP_BASICRESP_delete_ext(OCSP_BASICRESP *x, int loc)
 {
-    return X509v3_delete_ext(x->tbsResponseData.responseExtensions, loc);
+    return X509v3_delete_extension(&x->tbsResponseData.responseExtensions, loc);
 }
 
 void *OCSP_BASICRESP_get1_ext_d2i(OCSP_BASICRESP *x, int nid, int *crit,
@@ -203,7 +203,7 @@ const X509_EXTENSION *OCSP_SINGLERESP_get_ext(OCSP_SINGLERESP *x, int loc)
 
 X509_EXTENSION *OCSP_SINGLERESP_delete_ext(OCSP_SINGLERESP *x, int loc)
 {
-    return X509v3_delete_ext(x->singleExtensions, loc);
+    return X509v3_delete_extension(&x->singleExtensions, loc);
 }
 
 void *OCSP_SINGLERESP_get1_ext_d2i(OCSP_SINGLERESP *x, int nid, int *crit,

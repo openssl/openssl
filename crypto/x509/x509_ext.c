@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -102,12 +102,33 @@ const X509_EXTENSION *X509_get_ext(const X509 *x, int loc)
 
 X509_EXTENSION *X509_delete_ext(X509 *x, int loc)
 {
-    return delete_ext(&x->cert_info.extensions, loc);
+    X509_EXTENSION *ret;
+
+    ret = X509v3_delete_extension(&x->cert_info.extensions, loc);
+    if (ret != NULL)
+        x->cert_info.enc.modified = 1;
+    return ret;
 }
 
 int X509_add_ext(X509 *x, const X509_EXTENSION *ex, int loc)
 {
-    return (X509v3_add_ext(&(x->cert_info.extensions), ex, loc) != NULL);
+    STACK_OF(X509_EXTENSION) **exts = &x->cert_info.extensions;
+
+    /* x->cert_info.extensions might initially be NULL */
+    if (X509v3_add_ext(exts, ex, loc) == NULL)
+        return 0;
+    /*
+     * An ignored "empty" SKID or AKID extension will appear to be successfully
+     * added, even though nothing is pushed onto the resulting stack.  However,
+     * if the stack was initially NULL or empty, it will now be non-NULL, but
+     * empty, deallocate and make it NULL in that case.
+     */
+    if (sk_X509_EXTENSION_num(*exts) == 0) {
+        sk_X509_EXTENSION_free(*exts);
+        *exts = NULL;
+    }
+    x->cert_info.enc.modified = 1;
+    return 1;
 }
 
 void *X509_get_ext_d2i(const X509 *x, int nid, int *crit, int *idx)
@@ -118,6 +139,11 @@ void *X509_get_ext_d2i(const X509 *x, int nid, int *crit, int *idx)
 int X509_add1_ext_i2d(X509 *x, int nid, void *value, int crit,
     unsigned long flags)
 {
+    /*
+     * Assume modified, sadly the underlying function does not tell us whether
+     * changes were made, or not.
+     */
+    x->cert_info.enc.modified = 1;
     return X509V3_add1_i2d(&x->cert_info.extensions, nid, value, crit,
         flags);
 }

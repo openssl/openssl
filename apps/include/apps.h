@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -78,7 +78,7 @@ void wait_for_async(SSL *s);
 int has_stdin_waiting(void);
 #endif
 
-void corrupt_signature(const ASN1_STRING *signature);
+int corrupt_signature(ASN1_STRING *signature);
 
 /* Helpers for setting X509v3 certificate fields notBefore and notAfter */
 int check_cert_time_string(const char *time, const char *desc);
@@ -163,6 +163,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     EVP_SKEY **pskey);
 EVP_SKEY *load_skey(const char *uri, int format, int maybe_stdin,
     const char *pass, int quiet);
+int load_rpk_file(SSL *ssl, const char *file);
 X509_STORE *setup_verify(const char *CAfile, int noCAfile,
     const char *CApath, int noCApath,
     const char *CAstore, int noCAstore);

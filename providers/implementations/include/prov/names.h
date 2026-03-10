@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -416,7 +416,7 @@
 #define PROV_DESCS_SM2 "OpenSSL SM2 implementation"
 #define PROV_NAMES_curveSM2 "curveSM2"
 #define PROV_DESCS_curveSM2 "OpenSSL curveSM2 implementation"
-#define PROV_NAMES_LMS "LMS"
+#define PROV_NAMES_LMS "LMS:id-alg-hss-lms-hashsig:1.2.840.113549.1.9.16.3.17"
 #define PROV_DESCS_LMS "OpenSSL LMS implementation"
 #define PROV_NAMES_ML_DSA_44 "ML-DSA-44:MLDSA44:2.16.840.1.101.3.4.3.17:id-ml-dsa-44"
 #define PROV_DESCS_ML_DSA_44 "OpenSSL ML-DSA-44 implementation"

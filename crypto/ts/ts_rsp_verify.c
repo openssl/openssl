@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,8 @@
 #include "internal/sizes.h"
 #include "crypto/ess.h"
 #include "ts_local.h"
+
+#include <crypto/asn1.h>
 
 static int ts_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted,
     X509 *signer, STACK_OF(X509) **chain);

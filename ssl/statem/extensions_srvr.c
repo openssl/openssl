@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,13 +12,15 @@
 #include "statem_local.h"
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
-
 #ifndef OPENSSL_NO_ECH
 #include <openssl/rand.h>
 #include <openssl/trace.h>
 #endif
 
 #define COOKIE_STATE_FORMAT_VERSION 1
+
+#define MAX_SUPPORTED_GROUPS 128
+#define MAX_KEY_SHARES 16
 
 /*
  * 2 bytes for packet length, 2 bytes for format version, 2 bytes for
@@ -657,28 +659,42 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
     const uint16_t *clntgroups, size_t clnt_num_groups,
     const uint16_t *srvrgroups, size_t srvr_num_groups,
     uint16_t **keyshares_arr, PACKET **encoded_pubkey_arr,
-    size_t *keyshares_cnt, size_t *keyshares_max)
+    size_t *keyshares_cnt)
 {
     PACKET encoded_pubkey;
     size_t key_share_pos = 0;
     size_t previous_key_share_pos = 0;
     unsigned int group_id = 0;
+    unsigned int i;
+
+    /*
+     * Theoretically there is no limit on the number of keyshares as long as
+     * they are less than 2^16 bytes in total. It costs us something for each
+     * keyshare to confirm the groups are valid, so we restrict this to a
+     * sensible number (MAX_KEY_SHARES == 16). Any keyshares over this limit are
+     * simply ignored.
+     */
 
     /* Prepare memory to hold the extracted key share groups and related pubkeys */
-    *keyshares_arr = OPENSSL_malloc_array(*keyshares_max,
+    *keyshares_arr = OPENSSL_malloc_array(MAX_KEY_SHARES,
         sizeof(**keyshares_arr));
     if (*keyshares_arr == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto failure;
     }
-    *encoded_pubkey_arr = OPENSSL_malloc_array(*keyshares_max,
+    *encoded_pubkey_arr = OPENSSL_malloc_array(MAX_KEY_SHARES,
         sizeof(**encoded_pubkey_arr));
     if (*encoded_pubkey_arr == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto failure;
     }
 
-    while (PACKET_remaining(key_share_list) > 0) {
+    /*
+     * We limit the number of key shares we are willing to process to
+     * MAX_KEY_SHARES regardless of whether we include them in keyshares_arr or
+     * not.
+     */
+    for (i = 0; PACKET_remaining(key_share_list) > 0 && i < MAX_KEY_SHARES; i++) {
         /* Get the group_id for the current share and its encoded_pubkey */
         if (!PACKET_get_net_2(key_share_list, &group_id)
             || !PACKET_get_length_prefixed_2(key_share_list, &encoded_pubkey)
@@ -744,35 +760,6 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
         /* Memorize this key share group ID and its encoded point */
         (*keyshares_arr)[*keyshares_cnt] = group_id;
         (*encoded_pubkey_arr)[(*keyshares_cnt)++] = encoded_pubkey;
-
-        /*
-         * Memory management (remark: While limiting the client to only allow
-         * a maximum of OPENSSL_CLIENT_MAX_KEY_SHARES to be sent, the server can
-         * handle any number of key shares)
-         */
-        if (*keyshares_cnt == *keyshares_max) {
-            PACKET *tmp_pkt;
-            uint16_t *tmp = OPENSSL_realloc_array(*keyshares_arr,
-                *keyshares_max + GROUPLIST_INCREMENT,
-                sizeof(**keyshares_arr));
-
-            if (tmp == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto failure;
-            }
-
-            *keyshares_arr = tmp;
-            tmp_pkt = OPENSSL_realloc_array(*encoded_pubkey_arr,
-                *keyshares_max + GROUPLIST_INCREMENT,
-                sizeof(**encoded_pubkey_arr));
-            if (tmp_pkt == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto failure;
-            }
-
-            *encoded_pubkey_arr = tmp_pkt;
-            *keyshares_max += GROUPLIST_INCREMENT;
-        }
     }
 
     return EXTRACTION_SUCCESS;
@@ -842,7 +829,6 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
     PACKET *encoded_pubkey_arr = NULL;
     uint16_t *keyshares_arr = NULL;
     size_t keyshares_cnt = 0;
-    size_t keyshares_max = GROUPLIST_INCREMENT;
     /* We conservatively assume that we did not find a suitable group */
     uint16_t group_id_candidate = 0;
     KS_EXTRACTION_RESULT ks_extraction_result;
@@ -897,7 +883,7 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
         clntgroups, clnt_num_groups,
         srvrgroups, srvr_num_groups,
         &keyshares_arr, &encoded_pubkey_arr,
-        &keyshares_cnt, &keyshares_max);
+        &keyshares_cnt);
 
     if (ks_extraction_result == EXTRACTION_FAILURE) /* Fatal error during tests */
         return 0; /* Memory already freed and SSLfatal already called */
@@ -1240,9 +1226,16 @@ int tls_parse_ctos_supported_groups(SSL_CONNECTION *s, PACKET *pkt,
         OPENSSL_free(s->ext.peer_supportedgroups);
         s->ext.peer_supportedgroups = NULL;
         s->ext.peer_supportedgroups_len = 0;
+        /*
+         * We only pay attention to the first 128 supported groups and ignore
+         * any beyond that limit. Theoretically this could cause problems if
+         * the client also uses one of these groups (say in a key share extension)
+         * - but why would any valid client be sending such a huge supported
+         * groups list?
+         */
         if (!tls1_save_u16(&supported_groups_list,
                 &s->ext.peer_supportedgroups,
-                &s->ext.peer_supportedgroups_len)) {
+                &s->ext.peer_supportedgroups_len, MAX_SUPPORTED_GROUPS)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -2591,6 +2584,7 @@ EXT_RETURN tls_construct_stoc_ech(SSL_CONNECTION *s, WPACKET *pkt,
                                 "I've no configs set to be returned\n");
         }
         OSSL_TRACE_END(TLS);
+        OPENSSL_free(rcfgs);
         return EXT_RETURN_NOT_SENT;
     }
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_ech)

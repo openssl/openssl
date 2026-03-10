@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,9 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 #include <openssl/safestack.h>
+#include <openssl/x509_vfy.h>
 
 #include "internal/refcount.h"
 #include "internal/hashtable.h"
+
+#include <crypto/asn1.h>
 
 #define X509V3_conf_add_error_name_value(val) \
     ERR_add_error_data(4, "name=", (val)->name, ", value=", (val)->value)
@@ -150,9 +153,9 @@ struct x509_store_st {
     /* error callback */
     int (*verify_cb)(int ok, X509_STORE_CTX *ctx);
     /* get issuers cert from ctx */
-    int (*get_issuer)(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
+    X509_STORE_CTX_get_issuer_fn get_issuer;
     /* check issued */
-    int (*check_issued)(X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
+    X509_STORE_CTX_check_issued_fn check_issued;
     /* Check revocation status of chain */
     int (*check_revocation)(X509_STORE_CTX *ctx);
     /* retrieve CRL */
@@ -180,7 +183,8 @@ DEFINE_STACK_OF(BY_DIR_ENTRY)
 typedef STACK_OF(X509_NAME_ENTRY) STACK_OF_X509_NAME_ENTRY;
 DEFINE_STACK_OF(STACK_OF_X509_NAME_ENTRY)
 
-int ossl_x509_likely_issued(X509 *issuer, X509 *subject);
+int ossl_ignored_x509_extension(const X509_EXTENSION *ex, int flags);
+int ossl_x509_likely_issued(const X509 *issuer, const X509 *subject);
 int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject);
 int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TYPE type,
     const X509_NAME *name, X509_OBJECT *ret);

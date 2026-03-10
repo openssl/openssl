@@ -113,11 +113,11 @@ static int test_bio_write_triggers_sigpipe(int test)
 end:
     BIO_free(b);
 
-    if (fds[0] != -1) {
+    if (fds[0] >= 0) {
         closesocket(fds[0]);
         fds[0] = -1;
     }
-    if (fds[1] != -1) {
+    if (fds[1] >= 0) {
         closesocket(fds[1]);
         fds[1] = -1;
     }

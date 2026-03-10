@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -372,10 +372,10 @@ my @smime_cms_tests = (
       [ "{cmd1}", @prov, "-encrypt", "-in", $smcont, "-outform", "PEM", "-aes-128-gcm",
         "-kekcipher", "aes-128-cbc",
         "-stream", "-out", "{output}.cms",
-        "-pwri_password", "test" ],
+        "-pwri_password", "testtest" ],
       [ "{cmd2}", "-decrypt", "-in", "{output}.cms", "-out", "{output}.txt",
         "-inform", "PEM",
-        "-pwri_password", "test" ],
+        "-pwri_password", "testtest" ],
       \&final_compare
     ],
 
@@ -393,10 +393,10 @@ my @smime_cms_tests = (
     [ "enveloped content test streaming PEM format, AES-128-CBC cipher, password",
       [ "{cmd1}", @prov, "-encrypt", "-in", $smcont, "-outform", "PEM", "-aes128",
         "-stream", "-out", "{output}.cms",
-        "-pwri_password", "test" ],
+        "-pwri_password", "testtest" ],
       [ "{cmd2}", @prov, "-decrypt", "-in", "{output}.cms", "-out", "{output}.txt",
         "-inform", "PEM",
-        "-pwri_password", "test" ],
+        "-pwri_password", "testtest" ],
       \&final_compare
     ],
 

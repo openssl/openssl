@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,6 +24,8 @@
 #include <openssl/objects.h>
 #include <openssl/ocsp.h>
 #include <openssl/pem.h>
+
+#include <crypto/asn1.h>
 
 #ifndef W_OK
 #ifdef OPENSSL_SYS_VMS
@@ -1468,10 +1470,10 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     const X509_NAME *name = NULL;
     X509_NAME *CAname = NULL, *subject = NULL;
     const ASN1_TIME *tm;
-    ASN1_STRING *str, *str2;
-    ASN1_OBJECT *obj;
+    const ASN1_STRING *str, *str2;
+    const ASN1_OBJECT *obj;
     X509 *ret = NULL;
-    X509_NAME_ENTRY *ne, *tne;
+    const X509_NAME_ENTRY *ne, *tne;
     EVP_PKEY *pktmp;
     int ok = -1, i, j, last, nid;
     const char *p;
@@ -1487,11 +1489,15 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
     if (subj) {
         X509_NAME *n = parse_name(subj, chtype, multirdn, "subject");
+        int ok_local;
 
         if (!n)
             goto end;
-        X509_REQ_set_subject_name(req, n);
+
+        ok_local = X509_REQ_set_subject_name(req, n);
         X509_NAME_free(n);
+        if (ok_local == 0)
+            goto end;
     }
 
     if (default_op)
@@ -1509,14 +1515,14 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
             continue;
 
         /* check some things */
-        if (nid == NID_pkcs9_emailAddress && str->type != V_ASN1_IA5STRING) {
+        if (nid == NID_pkcs9_emailAddress && ASN1_STRING_type(str) != V_ASN1_IA5STRING) {
             BIO_puts(bio_err,
                 "\nemailAddress type needs to be of type IA5STRING\n");
             goto end;
         }
-        if (str->type != V_ASN1_BMPSTRING && str->type != V_ASN1_UTF8STRING) {
-            j = ASN1_PRINTABLE_type(str->data, str->length);
-            if ((j == V_ASN1_T61STRING && str->type != V_ASN1_T61STRING) || (j == V_ASN1_IA5STRING && str->type == V_ASN1_PRINTABLESTRING)) {
+        if (ASN1_STRING_type(str) != V_ASN1_BMPSTRING && ASN1_STRING_type(str) != V_ASN1_UTF8STRING) {
+            j = ASN1_PRINTABLE_type(ASN1_STRING_get0_data(str), ASN1_STRING_length(str));
+            if ((j == V_ASN1_T61STRING && ASN1_STRING_type(str) != V_ASN1_T61STRING) || (j == V_ASN1_IA5STRING && ASN1_STRING_type(str) == V_ASN1_PRINTABLESTRING)) {
                 BIO_puts(bio_err,
                     "\nThe string contains characters that are illegal for the ASN.1 type\n");
                 goto end;
@@ -1554,7 +1560,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
         last = -1;
         for (;;) {
-            X509_NAME_ENTRY *push = NULL;
+            const X509_NAME_ENTRY *push = NULL;
 
             /* lookup the object in the supplied name list */
             j = X509_NAME_get_index_by_OBJ(name, obj, last);
@@ -1614,8 +1620,8 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                         "The %s field is different between\n"
                         "CA certificate (%s) and the request (%s)\n",
                         cv->name,
-                        ((str2 == NULL) ? "NULL" : (char *)str2->data),
-                        ((str == NULL) ? "NULL" : (char *)str->data));
+                        ((str2 == NULL) ? "NULL" : (char *)ASN1_STRING_get0_data(str2)),
+                        ((str == NULL) ? "NULL" : (char *)ASN1_STRING_get0_data(str)));
                     goto end;
                 }
             } else {
@@ -1890,9 +1896,9 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     /* We now just add it to the database as DB_TYPE_VAL('V') */
     row[DB_type] = OPENSSL_strdup("V");
     tm = X509_get0_notAfter(ret);
-    row[DB_exp_date] = app_malloc(tm->length + 1, "row expdate");
-    memcpy(row[DB_exp_date], tm->data, tm->length);
-    row[DB_exp_date][tm->length] = '\0';
+    row[DB_exp_date] = app_malloc(ASN1_STRING_length(tm) + 1, "row expdate");
+    memcpy(row[DB_exp_date], ASN1_STRING_get0_data(tm), ASN1_STRING_length(tm));
+    row[DB_exp_date][ASN1_STRING_length(tm)] = '\0';
     row[DB_rev_date] = NULL;
     row[DB_file] = OPENSSL_strdup("unknown");
     if ((row[DB_type] == NULL) || (row[DB_file] == NULL)
@@ -1996,7 +2002,9 @@ static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
     /*
      * Build up the subject name set.
      */
-    n = X509_REQ_get_subject_name(req);
+    n = X509_NAME_new();
+    if (n == NULL)
+        goto end;
 
     for (i = 0;; i++) {
         if (sk_CONF_VALUE_num(sk) <= i)
@@ -2038,6 +2046,9 @@ static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
         goto end;
     }
 
+    if (!X509_REQ_set_subject_name(req, n))
+        goto end;
+
     /*
      * Now extract the key from the SPKI structure.
      */
@@ -2066,6 +2077,7 @@ static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
         ext_copy, 0, dateopt);
 end:
     X509_REQ_free(req);
+    X509_NAME_free(n);
     CONF_free(parms);
     NETSCAPE_SPKI_free(spki);
     X509_NAME_ENTRY_free(ne);
@@ -2120,9 +2132,9 @@ static int do_revoke(X509 *x509, CA_DB *db, REVINFO_TYPE rev_type,
         /* We now just add it to the database as DB_TYPE_REV('V') */
         row[DB_type] = OPENSSL_strdup("V");
         tm = X509_get0_notAfter(x509);
-        row[DB_exp_date] = app_malloc(tm->length + 1, "row exp_data");
-        memcpy(row[DB_exp_date], tm->data, tm->length);
-        row[DB_exp_date][tm->length] = '\0';
+        row[DB_exp_date] = app_malloc(ASN1_STRING_length(tm) + 1, "row exp_data");
+        memcpy(row[DB_exp_date], ASN1_STRING_get0_data(tm), ASN1_STRING_length(tm));
+        row[DB_exp_date][ASN1_STRING_length(tm)] = '\0';
         row[DB_rev_date] = NULL;
         row[DB_file] = OPENSSL_strdup("unknown");
 
@@ -2390,7 +2402,7 @@ static char *make_revocation_str(REVINFO_TYPE rev_type, const char *rev_arg)
     if (!revtm)
         return NULL;
 
-    i = revtm->length + 1;
+    i = ASN1_STRING_length(revtm) + 1;
 
     if (reason)
         i += (int)(strlen(reason) + 1);
@@ -2398,7 +2410,7 @@ static char *make_revocation_str(REVINFO_TYPE rev_type, const char *rev_arg)
         i += (int)(strlen(other) + 1);
 
     str = app_malloc(i, "revocation reason");
-    OPENSSL_strlcpy(str, (char *)revtm->data, i);
+    OPENSSL_strlcpy(str, (const char *)ASN1_STRING_get0_data(revtm), i);
     if (reason) {
         OPENSSL_strlcat(str, ",", i);
         OPENSSL_strlcat(str, reason, i);
@@ -2485,19 +2497,19 @@ static int old_entry_print(const ASN1_OBJECT *obj, const ASN1_STRING *str)
     *(pbuf++) = '\0';
     BIO_puts(bio_err, buf);
 
-    if (str->type == V_ASN1_PRINTABLESTRING)
+    if (ASN1_STRING_type(str) == V_ASN1_PRINTABLESTRING)
         BIO_puts(bio_err, "PRINTABLE:'");
-    else if (str->type == V_ASN1_T61STRING)
+    else if (ASN1_STRING_type(str) == V_ASN1_T61STRING)
         BIO_puts(bio_err, "T61STRING:'");
-    else if (str->type == V_ASN1_IA5STRING)
+    else if (ASN1_STRING_type(str) == V_ASN1_IA5STRING)
         BIO_puts(bio_err, "IA5STRING:'");
-    else if (str->type == V_ASN1_UNIVERSALSTRING)
+    else if (ASN1_STRING_type(str) == V_ASN1_UNIVERSALSTRING)
         BIO_puts(bio_err, "UNIVERSALSTRING:'");
     else
-        BIO_printf(bio_err, "ASN.1 %2d:'", str->type);
+        BIO_printf(bio_err, "ASN.1 %2d:'", ASN1_STRING_type(str));
 
-    p = (const char *)str->data;
-    for (j = str->length; j > 0; j--) {
+    p = (const char *)ASN1_STRING_get0_data(str);
+    for (j = ASN1_STRING_length(str); j > 0; j--) {
         if ((*p >= ' ') && (*p <= '~'))
             BIO_printf(bio_err, "%c", *p);
         else if (*p & 0x80)

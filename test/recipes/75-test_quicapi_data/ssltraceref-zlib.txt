@@ -19,7 +19,7 @@ Header:
           000f - 01 02 04 04 80 0c 00 00-05 04 80 08 00 00 06   ...............
           001e - 04 80 08 00 00 07 04 80-08 00 00 08 02 40 64   .............@d
           002d - 09 02 40 64                                    ..@d
-        extension_type=supported_groups(10), length=22
+        extension_type=supported_groups(10), length=24
           X25519MLKEM768 (4588)
           SecP256r1MLKEM768 (4587)
           curveSM2MLKEM768 (4590)
@@ -28,6 +28,7 @@ Header:
           ecdh_x448 (30)
           secp384r1 (P-384) (24)
           secp521r1 (P-521) (25)
+          curveSM2 (41)
           ffdhe2048 (256)
           ffdhe3072 (257)
         extension_type=session_ticket(35), length=0
