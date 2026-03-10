@@ -339,7 +339,7 @@ static int test_drop_empty_cert_keyids(void)
         || !TEST_int_eq(sk_X509_EXTENSION_num(exts), 1))
         goto err;
 
-    /* Request "empty" SKID and AKID in order to drop any previous values */
+    /* Request "empty" SKID in order to drop any previous value */
     NCONF_free(conf);
     if (!TEST_ptr(conf = NCONF_new(NULL))
         || !TEST_int_ge(BIO_printf(bio, "subjectKeyIdentifier = none\n"), 0)
