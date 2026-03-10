@@ -252,7 +252,7 @@ OpenSSL Releases
 
    *Daniel Kubec*
 
- * Support of deprecated elliptic curves in TLS according to RFC 8422 was
+ * Support of deprecated elliptic curves in TLS according to [RFC 8422] was
    disabled at compile-time by default. To enable it, use the
    `enable-tls-deprecated-ec` compilation option.
 
@@ -455,12 +455,12 @@ OpenSSL Releases
 
    *Bob Beck*
 
- * Implemented RFC7919, adding support for negotiated FFDHE key exchange
+ * Implemented [RFC 7919], adding support for negotiated FFDHE key exchange
    in TLS 1.2.
 
    *Joachim Vandersmissen* (with additional support from *Viktor Dukhovni*)
 
- * Implemented RFC 9849, adding support for Encrypted Client Hello (ECH).
+ * Implemented [RFC 9849], adding support for Encrypted Client Hello (ECH).
    See doc/design/ech-api.md for details.
 
    *Stephen Farrell* (with much support from *Matt Caswell* and *Tomáš Mráz*)
@@ -22255,7 +22255,10 @@ ndif
 [CVE-2025-9232]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-9232
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [RFC 2578 (STD 58), section 3.5]: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
+[RFC 7919]: https://datatracker.ietf.org/doc/html/rfc7919
+[RFC 8422]: https://datatracker.ietf.org/doc/html/rfc8422
 [RFC 8998]: https://datatracker.ietf.org/doc/html/rfc8998#name-iana-considerations
+[RFC 9849]: https://datatracker.ietf.org/doc/html/rfc9849
 [SP 800-132]: https://csrc.nist.gov/pubs/sp/800/132/final
 [SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final
 [SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final
