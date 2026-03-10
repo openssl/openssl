@@ -145,13 +145,6 @@ struct ossl_method_store_st {
     CRYPTO_RWLOCK *biglock;
 };
 
-typedef struct {
-    HT *cache;
-    size_t nelem;
-    uint32_t seed;
-    unsigned char using_global_seed;
-} IMPL_CACHE_FLUSH;
-
 DEFINE_SPARSE_ARRAY_OF(ALGORITHM);
 
 DEFINE_STACK_OF(ALGORITHM)
