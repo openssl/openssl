@@ -39,6 +39,13 @@ with clear explanations of what is changing and why.  Long descriptions
 are encouraged if they aid understanding.  Commit message titles (their
 first line) should be kept to 50-70 characters if possible.
 
+Pull Requests go through multiple phases before they are merged. In the first
+phase the label 'approval: review pending' is added. After 2 OpenSSL reviewers
+have reviewed your code you may need to make changes. Once you receive 2 or more
+approvals the label is changed to 'approval:done' and 24 hours after this the
+label changes to 'approval: ready to merge'. At some time after this your PR
+will be merged and the PR is closed.
+
 To make it easier to review and accept your pull request, please follow these
 guidelines:
 
@@ -127,3 +134,34 @@ guidelines:
 
  8. Guidelines on how to integrate error output of new crypto library modules
     can be found in [crypto/err/README.md](crypto/err/README.md).
+
+ 9. Once your Pull Request gets to the stage of being reviewed fixup commits
+    should be used where possible. Fixup commits are squashed when the PR is
+    finally merged. Fixup commits are done in the following way:
+
+    ```
+        # Add one or more updated files that needed changes
+        git add <filename>
+
+       # Do a fixup commit
+       git commit --fixup <commit-id>
+
+       # Do a non forced push
+       git push
+    ```
+
+    Where <commit-id> is the id of a previous commit that you want to fix up.
+    To view commit-id use:
+
+    ```
+    git log
+    ```
+ 10. If a Pull Request addresses an [issue] the commit should include the line
+
+    ```
+        Fixes #XXXXX
+    ```
+
+    where XXXXX is the issue number.
+
+    [issue]: https://github.com/openssl/openssl/issues
