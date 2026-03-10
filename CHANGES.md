@@ -29,7 +29,7 @@ OpenSSL Releases
 
 -----------
 
-### Changes between 3.6 and 4.0 alpha 1 [10 Mar 2026]
+### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
  * Added `-expected-rpks` option to the `openssl s_client`
    and `openssl s_server` commands.  This makes it possible to specify
