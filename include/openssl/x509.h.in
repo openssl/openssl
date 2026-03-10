@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -1023,9 +1023,9 @@ int EVP_PKEY_add1_attr_by_txt(EVP_PKEY *key,
     const unsigned char *bytes, int len);
 
 /* lookup a cert from a X509 STACK */
-const X509 *X509_find_by_issuer_and_serial(const STACK_OF(X509) *sk, const X509_NAME *name,
+X509 *X509_find_by_issuer_and_serial(const STACK_OF(X509) *sk, const X509_NAME *name,
     const ASN1_INTEGER *serial);
-const X509 *X509_find_by_subject(const STACK_OF(X509) *sk, const X509_NAME *name);
+X509 *X509_find_by_subject(const STACK_OF(X509) *sk, const X509_NAME *name);
 
 DECLARE_ASN1_FUNCTIONS(PBEPARAM)
 DECLARE_ASN1_FUNCTIONS(PBE2PARAM)

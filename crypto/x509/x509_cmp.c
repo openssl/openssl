@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -345,7 +345,7 @@ end:
 #endif
 
 /* Search a stack of X509 for a match */
-const X509 *X509_find_by_issuer_and_serial(const STACK_OF(X509) *sk, const X509_NAME *name,
+X509 *X509_find_by_issuer_and_serial(const STACK_OF(X509) *sk, const X509_NAME *name,
     const ASN1_INTEGER *serial)
 {
     int i;
@@ -365,7 +365,7 @@ const X509 *X509_find_by_issuer_and_serial(const STACK_OF(X509) *sk, const X509_
     return NULL;
 }
 
-const X509 *X509_find_by_subject(const STACK_OF(X509) *sk, const X509_NAME *name)
+X509 *X509_find_by_subject(const STACK_OF(X509) *sk, const X509_NAME *name)
 {
     X509 *x509;
     int i;
@@ -373,7 +373,7 @@ const X509 *X509_find_by_subject(const STACK_OF(X509) *sk, const X509_NAME *name
     for (i = 0; i < sk_X509_num(sk); i++) {
         x509 = sk_X509_value(sk, i);
         if (X509_NAME_cmp(X509_get_subject_name(x509), name) == 0)
-            return (const X509 *)x509;
+            return x509;
     }
     return NULL;
 }

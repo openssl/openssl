@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -365,7 +365,7 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, const STACK_OF(X509) *certs, int f
     STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
     PKCS7_SIGNER_INFO *si;
     PKCS7_ISSUER_AND_SERIAL *ias;
-    const X509 *signer;
+    X509 *signer;
     int i;
 
     if (p7 == NULL) {
@@ -409,7 +409,7 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, const STACK_OF(X509) *certs, int f
             return 0;
         }
 
-        if (!sk_X509_push(signers, (X509 *)signer)) {
+        if (!sk_X509_push(signers, signer)) {
             sk_X509_free(signers);
             return NULL;
         }
