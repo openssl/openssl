@@ -23,10 +23,10 @@ SOURCE[$TLS1_PRF_GOAL]=tls1_prf.c
 
 SOURCE[$HKDF_GOAL]=hkdf.c
 
-IF[{- !$disable{ikev2kdf} -}]
+IF[{- !$disabled{ikev2kdf} -}]
   SOURCE[$IKEV2_GOAL]=ikev2kdf.c
 ENDIF
-IF[{- !$disable{kbkdf} -}]
+IF[{- !$disabled{kbkdf} -}]
   SOURCE[$KBKDF_GOAL]=kbkdf.c
 ENDIF
 
