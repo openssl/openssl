@@ -840,6 +840,7 @@ Gets or sets the cipher specific "num" parameter for the cipher context I<ctx>.
 Built-in ciphers typically use this to track how much of the current underlying
 block has been "used" already.
 See also EVP_CIPHER_CTX_get_num() and EVP_CIPHER_CTX_set_num().
+This parameter was deprecated in OpenSSL 4.1.
 
 =item "keylen" (B<OSSL_CIPHER_PARAM_KEYLEN>) <unsigned integer>
 
