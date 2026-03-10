@@ -394,7 +394,7 @@ static int b64_write(BIO *b, const char *in, int inl)
     encoded_length = EVP_ENCODE_LENGTH(inl);
 
     if (encoded_length > SIZE_MAX / 2) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_OVERFLOW);
+        ERR_raise(ERR_LIB_BIO, BIO_R_LENGTH_TOO_LONG);
         return -1;
     }
 
