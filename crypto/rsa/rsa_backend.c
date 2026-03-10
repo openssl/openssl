@@ -64,9 +64,8 @@ static int collect_numbers(STACK_OF(BIGNUM) *numbers,
 int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[], int include_private)
 {
     const OSSL_PARAM *param_n, *param_e, *param_d = NULL;
-    const OSSL_PARAM *param_p, *param_q = NULL;
     const OSSL_PARAM *param_derive = NULL;
-    BIGNUM *p = NULL, *q = NULL, *n = NULL, *e = NULL, *d = NULL;
+    BIGNUM *n = NULL, *e = NULL, *d = NULL;
     STACK_OF(BIGNUM) *factors = NULL, *exps = NULL, *coeffs = NULL;
     int is_private = 0;
     int derive_from_pq = 0;
@@ -104,10 +103,8 @@ int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[], int include_private)
                 goto err;
 
             /* we need at minimum p, q */
-            param_p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_FACTOR1);
-            param_q = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_FACTOR2);
-            if ((param_p == NULL || !OSSL_PARAM_get_BN(param_p, &p))
-                || (param_q == NULL || !OSSL_PARAM_get_BN(param_q, &q))) {
+            if (OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_FACTOR1) == NULL
+                || OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_FACTOR2) == NULL) {
                 ERR_raise(ERR_LIB_RSA, ERR_R_PASSED_NULL_PARAMETER);
                 goto err;
             }
@@ -234,8 +231,6 @@ int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[], int include_private)
         goto err;
     }
 
-    BN_clear_free(p);
-    BN_clear_free(q);
     sk_BIGNUM_free(factors);
     sk_BIGNUM_free(exps);
     sk_BIGNUM_free(coeffs);
@@ -246,8 +241,6 @@ err:
     BN_free(n);
     BN_free(e);
     BN_free(d);
-    BN_clear_free(p);
-    BN_clear_free(q);
     sk_BIGNUM_pop_free(factors, BN_clear_free);
     sk_BIGNUM_pop_free(exps, BN_clear_free);
     sk_BIGNUM_pop_free(coeffs, BN_clear_free);
