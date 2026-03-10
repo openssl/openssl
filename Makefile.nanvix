@@ -252,6 +252,29 @@ test-integration: $(TEST_ELF)
 # --- Functional tests: run test program on nanvixd.elf ---
 test-functional: test-integration
 	@echo "=== openssl functional tests ==="
+ifeq ($(PROCESS_MODE),standalone)
+ifdef CONFIG_NANVIX_DOCKER
+	@echo "  Running $(TEST_ELF) via nanvixd.elf standalone (Docker)..."
+	$(DOCKER_RUN_FUNCTIONAL) sh -c '\
+	  mkdir -p /tmp/nanvix-ramfs && \
+	  cp $(DOCKER_WORKSPACE_PATH)/$(TEST_ELF) /tmp/nanvix-ramfs/ && \
+	  ./bin/mkramfs.elf -o /tmp/rootfs.img /tmp/nanvix-ramfs/ && \
+	  timeout --foreground 120 ./bin/nanvixd.elf \
+	    -bin-dir ./bin -ramfs /tmp/rootfs.img \
+	    -- ./$(TEST_ELF)'
+	@echo "  PASS: openssl library test standalone (exit code 0)"
+else
+	@echo "  Running $(TEST_ELF) via nanvixd.elf standalone..."
+	@rm -rf /tmp/nanvix-ramfs && mkdir -p /tmp/nanvix-ramfs
+	@cp $(abspath $(TEST_ELF)) /tmp/nanvix-ramfs/
+	"$(SYSROOT_PATH)/bin/mkramfs.elf" -o /tmp/rootfs.img /tmp/nanvix-ramfs/
+	cd "$(SYSROOT_PATH)" && timeout --foreground 120 ./bin/nanvixd.elf \
+	  -bin-dir ./bin -ramfs /tmp/rootfs.img \
+	  -- ./$(TEST_ELF)
+	@rm -rf /tmp/nanvix-ramfs /tmp/rootfs.img
+	@echo "  PASS: openssl library test standalone (exit code 0)"
+endif
+else
 ifdef CONFIG_NANVIX_DOCKER
 	@echo "  Running $(TEST_ELF) via nanvixd.elf (Docker)..."
 	$(DOCKER_RUN_FUNCTIONAL) sh -c \
@@ -261,6 +284,7 @@ else
 	@echo "  Running $(TEST_ELF) via nanvixd.elf..."
 	cd "$(SYSROOT_PATH)" && timeout --foreground 120 ./bin/nanvixd.elf -- $(abspath $(TEST_ELF))
 	@echo "  PASS: openssl library test (exit code 0)"
+endif
 endif
 	@echo "  PASS: openssl functional tests"
 

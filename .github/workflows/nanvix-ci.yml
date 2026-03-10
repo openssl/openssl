@@ -72,6 +72,8 @@ jobs:
             process-mode: single-process
           - platform: microvm
             process-mode: multi-process
+          - platform: microvm
+            process-mode: standalone
     name: ${{ matrix.platform }}-${{ matrix.process-mode }}
     container:
       image: nanvix/toolchain:latest-minimal
@@ -127,7 +129,8 @@ jobs:
       - name: Functional Tests
         run: |
           timeout --foreground 300 make -f Makefile.nanvix CONFIG_NANVIX=y \
-            NANVIX_HOME="$NANVIX_HOME" NANVIX_TOOLCHAIN="/opt/nanvix" test-functional
+            NANVIX_HOME="$NANVIX_HOME" NANVIX_TOOLCHAIN="/opt/nanvix" \
+            PROCESS_MODE="${{ matrix.process-mode }}" test-functional
 
       - name: Package
         run: |
