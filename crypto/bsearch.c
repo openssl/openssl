@@ -25,7 +25,7 @@ const void *ossl_bsearch(const void *key, const void *base, int num,
     l = 0;
     h = num;
     while (l < h) {
-        i = (l + h) / 2;
+        i = l + (h - l) / 2;
         p = &(base_[i * size]);
         if (cmp_thunk != NULL)
             c = cmp_thunk((cmpthunk_fn)cmp, key, (const void *)p);
