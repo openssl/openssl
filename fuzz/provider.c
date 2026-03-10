@@ -465,9 +465,9 @@ static int do_evp_cipher(const EVP_CIPHER *evp_cipher, const OSSL_PARAM param[])
     int outlen, tmplen;
     int key_len = EVP_CIPHER_get_key_length(evp_cipher);
     int iv_len = EVP_CIPHER_get_iv_length(evp_cipher);
-    unsigned char *key, *iv;
+    unsigned char *key = NULL, *iv = NULL;
     const char intext[] = "text";
-    EVP_CIPHER_CTX *ctx;
+    EVP_CIPHER_CTX *ctx = NULL;
     int i;
 
     if (key_len <= 0)
@@ -477,62 +477,44 @@ static int do_evp_cipher(const EVP_CIPHER *evp_cipher, const OSSL_PARAM param[])
 
     key = OPENSSL_zalloc(key_len);
     iv = OPENSSL_zalloc(iv_len);
-    if (key == NULL || iv == NULL) {
-        OPENSSL_free(key);
-        OPENSSL_free(iv);
-        return 0;
-    }
+    if (key == NULL || iv == NULL)
+        goto err;
     for (i = 0; i < key_len && i < 16; i++)
         key[i] = (unsigned char)i;
     for (i = 0; i < iv_len && i < 8; i++)
         iv[i] = (unsigned char)(i + 1);
 
     ctx = EVP_CIPHER_CTX_new();
-    if (ctx == NULL) {
-        OPENSSL_free(key);
-        OPENSSL_free(iv);
-        return 0;
-    }
+    if (ctx == NULL)
+        goto err;
 
     /* Initialize cipher before setting params so ctx has an algorithm */
-    if (!EVP_EncryptInit_ex2(ctx, evp_cipher, key, iv, NULL)) {
-        EVP_CIPHER_CTX_free(ctx);
-        OPENSSL_free(key);
-        OPENSSL_free(iv);
-        return 0;
-    }
+    if (!EVP_EncryptInit_ex2(ctx, evp_cipher, key, iv, NULL))
+        goto err;
 
-    if (!EVP_CIPHER_CTX_set_params(ctx, param)) {
-        EVP_CIPHER_CTX_free(ctx);
-        OPENSSL_free(key);
-        OPENSSL_free(iv);
-        return 0;
-    }
+    if (!EVP_CIPHER_CTX_set_params(ctx, param))
+        goto err;
 
     if (!EVP_EncryptUpdate(ctx, outbuf, &outlen, (const unsigned char *)intext,
-            (int)strlen(intext))) {
-        /* Error */
-        EVP_CIPHER_CTX_free(ctx);
-        OPENSSL_free(key);
-        OPENSSL_free(iv);
-        return 0;
-    }
+            (int)strlen(intext)))
+        goto err;
     /*
      * Buffer passed to EVP_EncryptFinal() must be after data just
      * encrypted to avoid overwriting it.
      */
-    if (!EVP_EncryptFinal_ex(ctx, outbuf + outlen, &tmplen)) {
-        /* Error */
-        EVP_CIPHER_CTX_free(ctx);
-        OPENSSL_free(key);
-        OPENSSL_free(iv);
-        return 0;
-    }
+    if (!EVP_EncryptFinal_ex(ctx, outbuf + outlen, &tmplen))
+        goto err;
     outlen += tmplen;
     EVP_CIPHER_CTX_free(ctx);
     OPENSSL_free(key);
     OPENSSL_free(iv);
     return 1;
+
+ err:
+    EVP_CIPHER_CTX_free(ctx);
+    OPENSSL_free(key);
+    OPENSSL_free(iv);
+    return 0;
 }
 
 static int do_evp_kdf(EVP_KDF *evp_kdf, const OSSL_PARAM params[])
