@@ -667,6 +667,10 @@ int ossl_cipher_generic_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
+        if (ctx->blocksize > 0 && num >= (unsigned int)ctx->blocksize) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
         ctx->num = num;
     }
     return 1;
