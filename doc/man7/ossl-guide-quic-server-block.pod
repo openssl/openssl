@@ -167,7 +167,7 @@ UDP socket and bind to it on localhost.
     /* Bind to the new UDP socket on localhost */
     if (bind(fd, (const struct sockaddr *)&sa, sizeof(sa)) < 0) {
         fprintf(stderr, "cannot bind to %u\n", port);
-        BIO_closesocket(fd);
+        BIO_closesocket(&fd);
         goto err;
     }
 
@@ -258,7 +258,7 @@ be ready to exit, it would deallocate the constructed B<SSL>.
 And in the main function, it would deallocate the constructed B<SSL_CTX>.
 
     SSL_CTX_free(ctx);
-    BIO_closesocket(fd);
+    BIO_closesocket(&fd);
     res = EXIT_SUCCESS;
     return res;
 

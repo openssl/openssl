@@ -656,15 +656,9 @@ static void helper_cleanup(struct helper *h)
     qtest_fault_free(h->qtf);
     h->qtf = NULL;
 
-    if (h->s_fd >= 0) {
-        BIO_closesocket(h->s_fd);
-        h->s_fd = -1;
-    }
+    BIO_closesocket(&h->s_fd);
 
-    if (h->c_fd >= 0) {
-        BIO_closesocket(h->c_fd);
-        h->c_fd = -1;
-    }
+    BIO_closesocket(&h->c_fd);
 
     BIO_ADDR_free(h->s_net_bio_addr);
     h->s_net_bio_addr = NULL;
@@ -1861,8 +1855,7 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
         } break;
 
         case OPK_C_CLOSE_SOCKET: {
-            BIO_closesocket(h->c_fd);
-            h->c_fd = -1;
+            BIO_closesocket(&h->c_fd);
         } break;
 
         case OPK_C_EXPECT_SSL_ERR: {

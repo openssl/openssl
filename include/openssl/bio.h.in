@@ -903,7 +903,7 @@ int BIO_connect(int sock, const BIO_ADDR *addr, int options);
 int BIO_bind(int sock, const BIO_ADDR *addr, int options);
 int BIO_listen(int sock, const BIO_ADDR *addr, int options);
 int BIO_accept_ex(int accept_sock, BIO_ADDR *addr, int options);
-int BIO_closesocket(int sock);
+int BIO_closesocket(int *sock);
 
 BIO *BIO_new_socket(int sock, int close_flag);
 BIO *BIO_new_connect(const char *host_port);

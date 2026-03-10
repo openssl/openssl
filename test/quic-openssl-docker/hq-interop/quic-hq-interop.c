@@ -130,8 +130,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
 
         /* Connect the socket to the server's address */
         if (!BIO_connect(sock, BIO_ADDRINFO_address(ai), 0)) {
-            BIO_closesocket(sock);
-            sock = -1;
+            BIO_closesocket(&sock);
             continue;
         }
 
@@ -141,8 +140,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
          * <= 0 if something goes wrong, so catch them all here
          */
         if (BIO_socket_nbio(sock, 1) <= 0) {
-            BIO_closesocket(sock);
-            sock = -1;
+            BIO_closesocket(&sock);
             continue;
         }
 
@@ -152,7 +150,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
     if (sock != -1) {
         *peer_addr = BIO_ADDR_dup(BIO_ADDRINFO_address(ai));
         if (*peer_addr == NULL) {
-            BIO_closesocket(sock);
+            BIO_closesocket(&sock);
             return NULL;
         }
     }
@@ -167,7 +165,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
     /* Create a BIO to wrap the socket */
     bio = BIO_new(BIO_s_datagram());
     if (bio == NULL) {
-        BIO_closesocket(sock);
+        BIO_closesocket(&sock);
         return NULL;
     }
 
@@ -179,7 +177,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
      * needed.
      */
     if (BIO_set_fd(bio, sock, BIO_CLOSE) <= 0) {
-        BIO_closesocket(sock);
+        BIO_closesocket(&sock);
         BIO_free(bio);
         return NULL;
     }

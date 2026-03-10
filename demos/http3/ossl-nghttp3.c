@@ -390,7 +390,7 @@ create_socket_bio(const BIO_ADDRINFO *bai)
 
     return bio;
 err:
-    BIO_closesocket(sock);
+    BIO_closesocket(&sock);
 
     return NULL;
 }

@@ -136,7 +136,7 @@ static int create_socket(int domain, int socktype, int protocol)
     if (setsockopt(fd, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (void *)&on, sizeof(on)) < 0) {
         ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
             "calling setsockopt()");
-        BIO_closesocket(fd);
+        BIO_closesocket(&fd);
         return INVALID_SOCKET;
     }
 
@@ -159,7 +159,7 @@ static int create_socket(int domain, int socktype, int protocol)
     if (!set_cloexec(fd)) {
         ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
             "calling set_cloexec()");
-        BIO_closesocket(fd);
+        BIO_closesocket(&fd);
         return INVALID_SOCKET;
     }
 #endif
@@ -271,7 +271,7 @@ int ossl_rio_notifier_init(RIO_NOTIFIER *nfy)
     }
 
     /* Close the listener, which we don't need anymore. */
-    BIO_closesocket(lfd);
+    BIO_closesocket(&lfd);
     lfd = -1;
 
     /*
@@ -302,12 +302,9 @@ int ossl_rio_notifier_init(RIO_NOTIFIER *nfy)
     return 1;
 
 err:
-    if (lfd != INVALID_SOCKET)
-        BIO_closesocket(lfd);
-    if (wfd != INVALID_SOCKET)
-        BIO_closesocket(wfd);
-    if (rfd != INVALID_SOCKET)
-        BIO_closesocket(rfd);
+    BIO_closesocket(&lfd);
+    BIO_closesocket(&wfd);
+    BIO_closesocket(&rfd);
     return 0;
 }
 
@@ -359,8 +356,8 @@ int ossl_rio_notifier_init(RIO_NOTIFIER *nfy)
     return 1;
 
 err:
-    BIO_closesocket(fds[1]);
-    BIO_closesocket(fds[0]);
+    BIO_closesocket(&fds[1]);
+    BIO_closesocket(&fds[0]);
     return 0;
 }
 
@@ -371,8 +368,8 @@ void ossl_rio_notifier_cleanup(RIO_NOTIFIER *nfy)
     if (nfy->rfd < 0)
         return;
 
-    BIO_closesocket(nfy->wfd);
-    BIO_closesocket(nfy->rfd);
+    BIO_closesocket(&nfy->wfd);
+    BIO_closesocket(&nfy->rfd);
     nfy->rfd = nfy->wfd = -1;
 #if defined(OPENSSL_SYS_WINDOWS)
     wsa_done();

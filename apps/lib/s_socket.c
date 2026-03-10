@@ -137,8 +137,7 @@ int init_client(int *sock, const char *host, const char *port,
         if (bi != NULL) {
             if (!BIO_bind(*sock, BIO_ADDRINFO_address(bi),
                     BIO_SOCK_REUSEADDR)) {
-                BIO_closesocket(*sock);
-                *sock = INVALID_SOCKET;
+                BIO_closesocket(sock);
                 continue;
             }
         }
@@ -154,8 +153,7 @@ int init_client(int *sock, const char *host, const char *port,
             BIO *tmpbio = BIO_new_dgram_sctp(*sock, BIO_NOCLOSE);
 
             if (tmpbio == NULL) {
-                BIO_closesocket(*sock);
-                *sock = INVALID_SOCKET;
+                BIO_closesocket(sock);
                 continue;
             }
             BIO_free(tmpbio);
@@ -168,8 +166,7 @@ int init_client(int *sock, const char *host, const char *port,
         }
 
         if (doconn && !BIO_connect(*sock, BIO_ADDRINFO_address(ai), options)) {
-            BIO_closesocket(*sock);
-            *sock = INVALID_SOCKET;
+            BIO_closesocket(sock);
             continue;
         }
 
@@ -177,8 +174,7 @@ int init_client(int *sock, const char *host, const char *port,
         if (tfo || !doconn) {
             if (ba_ret == NULL) {
                 BIO_puts(bio_err, "Internal error\n");
-                BIO_closesocket(*sock);
-                *sock = INVALID_SOCKET;
+                BIO_closesocket(sock);
                 goto out;
             }
 
@@ -364,8 +360,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
         || !BIO_listen(asock, sock_address, sock_options)) {
         BIO_ADDRINFO_free(res);
         ERR_print_errors(bio_err);
-        if (asock != INVALID_SOCKET)
-            BIO_closesocket(asock);
+        BIO_closesocket(&asock);
         goto end;
     }
 
@@ -381,7 +376,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
 
         if (tmpbio == NULL) {
             BIO_ADDRINFO_free(res);
-            BIO_closesocket(asock);
+            BIO_closesocket(&asock);
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -395,7 +390,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
     res = NULL;
 
     if (!report_server_accept(bio_s_out, asock, sock_port == 0, 0)) {
-        BIO_closesocket(asock);
+        BIO_closesocket(&asock);
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -411,7 +406,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
             BIO_ADDR_free(ourpeer);
             ourpeer = BIO_ADDR_new();
             if (ourpeer == NULL) {
-                BIO_closesocket(asock);
+                BIO_closesocket(&asock);
                 ERR_print_errors(bio_err);
                 goto end;
             }
@@ -420,7 +415,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
             } while (sock < 0 && BIO_sock_should_retry(sock));
             if (sock < 0) {
                 ERR_print_errors(bio_err);
-                BIO_closesocket(asock);
+                BIO_closesocket(&asock);
                 break;
             }
 
@@ -455,7 +450,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
             } while (select(sock + 1, &readfds, NULL, NULL, &timeout) > 0
                 && readsocket(sock, sink, sizeof(sink)) > 0);
 
-            BIO_closesocket(sock);
+            BIO_closesocket(&sock);
         } else {
             if (naccept != -1)
                 naccept--;
@@ -464,8 +459,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
         }
 
         if (i < 0 || naccept == 0) {
-            BIO_closesocket(asock);
-            asock = INVALID_SOCKET;
+            BIO_closesocket(&asock);
             ret = i;
             break;
         }

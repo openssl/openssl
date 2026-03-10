@@ -93,7 +93,7 @@ static int sock_free(BIO *a)
         return 0;
     if (a->shutdown) {
         if (a->init) {
-            BIO_closesocket(a->num);
+            BIO_closesocket(&a->num);
         }
         a->init = 0;
         a->flags = 0;
@@ -175,7 +175,7 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
         /* minimal sock_free() */
         if (b->shutdown) {
             if (b->init)
-                BIO_closesocket(b->num);
+                BIO_closesocket(&b->num);
             b->flags = 0;
         }
         b->num = *((int *)ptr);

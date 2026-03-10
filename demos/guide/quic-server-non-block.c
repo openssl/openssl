@@ -190,14 +190,14 @@ static int create_socket(uint16_t port)
     /* Bind to the new UDP socket on localhost */
     if (bind(fd, (const struct sockaddr *)&sa, sizeof(sa)) < 0) {
         fprintf(stderr, "cannot bind to %u\n", port);
-        BIO_closesocket(fd);
+        BIO_closesocket(&fd);
         return -1;
     }
 
     /* Set port to nonblocking mode */
     if (BIO_socket_nbio(fd, 1) <= 0) {
         fprintf(stderr, "Unable to set port to nonblocking mode");
-        BIO_closesocket(fd);
+        BIO_closesocket(&fd);
         return -1;
     }
 
@@ -501,14 +501,14 @@ int main(int argc, char *argv[])
     /* QUIC server connection acceptance loop. */
     if (run_quic_server(ctx, fd) < 0) {
         SSL_CTX_free(ctx);
-        BIO_closesocket(fd);
+        BIO_closesocket(&fd);
         ERR_print_errors_fp(stderr);
         errx(res, "Error in QUIC server loop");
     }
 
     /* Free resources. */
     SSL_CTX_free(ctx);
-    BIO_closesocket(fd);
+    BIO_closesocket(&fd);
     res = EXIT_SUCCESS;
     return res;
 }

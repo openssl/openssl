@@ -403,10 +403,8 @@ err:
     BIO_free(c_net_bio_own);
     BIO_free(c_pair_own);
     BIO_free(s_pair_own);
-    if (s_fd >= 0)
-        BIO_closesocket(s_fd);
-    if (c_fd >= 0)
-        BIO_closesocket(c_fd);
+    BIO_closesocket(&s_fd);
+    BIO_closesocket(&c_fd);
     return testresult;
 }
 

@@ -404,9 +404,9 @@ err:
     if (ai != NULL)
         freeaddrinfo(ai);
     BIO_ADDR_free(baddr);
-    BIO_closesocket(cfd);
-    BIO_closesocket(sfd);
-    BIO_closesocket(afd);
+    BIO_closesocket(&cfd);
+    BIO_closesocket(&sfd);
+    BIO_closesocket(&afd);
     return ret;
 }
 #endif

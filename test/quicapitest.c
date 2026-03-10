@@ -124,7 +124,7 @@ static int test_quic_write_read(int idx)
 
             if (idx >= 2 && j > 0)
                 /* Introduce permanent socket error */
-                BIO_closesocket(csock);
+                BIO_closesocket(&csock);
 
             ossl_quic_tserver_tick(qtserv);
             if (!TEST_true(ossl_quic_tserver_write(qtserv, sid,
@@ -892,8 +892,7 @@ static int test_quic_set_fd(int idx)
 err:
     SSL_free(ssl);
     SSL_CTX_free(ctx);
-    if (fd >= 0)
-        BIO_closesocket(fd);
+    BIO_closesocket(&fd);
     return testresult;
 }
 

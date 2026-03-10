@@ -206,7 +206,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                     /*
                      * if there are more addresses to try, do that first
                      */
-                    BIO_closesocket(b->num);
+                    BIO_closesocket(&b->num);
                     c->state = BIO_CONN_S_CREATE_SOCKET;
                     ERR_pop_to_mark();
                     break;
@@ -238,7 +238,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                     /*
                      * if there are more addresses to try, do that first
                      */
-                    BIO_closesocket(b->num);
+                    BIO_closesocket(&b->num);
                     c->state = BIO_CONN_S_CREATE_SOCKET;
                     break;
                 }
@@ -329,8 +329,7 @@ static void conn_close_socket(BIO *bio)
         /* Only do a shutdown if things were established */
         if (c->state == BIO_CONN_S_OK)
             shutdown(bio->num, 2);
-        BIO_closesocket(bio->num);
-        bio->num = (int)INVALID_SOCKET;
+        BIO_closesocket(&bio->num);
     }
 }
 

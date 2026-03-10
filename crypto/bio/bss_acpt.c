@@ -246,8 +246,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
             if (!BIO_listen(c->accept_sock,
                     BIO_ADDRINFO_address(c->addr_iter),
                     c->bind_mode)) {
-                BIO_closesocket(c->accept_sock);
-                c->accept_sock = (int)INVALID_SOCKET;
+                BIO_closesocket(&c->accept_sock);
                 b->num = (int)INVALID_SOCKET;
                 goto exit_loop;
             }
@@ -259,8 +258,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                 info.addr = &c->cache_accepting_addr;
                 if (!BIO_sock_info(c->accept_sock, BIO_SOCK_INFO_ADDRESS,
                         &info)) {
-                    BIO_closesocket(c->accept_sock);
-                    c->accept_sock = (int)INVALID_SOCKET;
+                    BIO_closesocket(&c->accept_sock);
                     b->num = (int)INVALID_SOCKET;
                     goto exit_loop;
                 }
@@ -357,7 +355,7 @@ exit_loop:
     if (bio != NULL)
         BIO_free(bio);
     else if (s >= 0)
-        BIO_closesocket(s);
+        BIO_closesocket(&s);
 end:
     return ret;
 }

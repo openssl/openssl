@@ -177,14 +177,14 @@ UDP socket and bind to it on localhost.
     /* Bind to the new UDP socket on localhost */
     if (bind(fd, (const struct sockaddr *)&sa, sizeof(sa)) < 0) {
         fprintf(stderr, "cannot bind to %u\n", port);
-        BIO_closesocket(fd);
+        BIO_closesocket(&fd);
         return -1;
     }
 
     /* Set port to nonblocking mode */
     if (BIO_socket_nbio(fd, 1) <= 0) {
         fprintf(stderr, "Unable to set port to nonblocking mode");
-        BIO_closesocket(fd);
+        BIO_closesocket(&fd);
         return -1;
     }
 
@@ -351,7 +351,7 @@ be ready to exit, it would deallocate the constructed B<SSL>.
 And in the main function, it would deallocate the constructed B<SSL_CTX>.
 
     SSL_CTX_free(ctx);
-    BIO_closesocket(fd);
+    BIO_closesocket(&fd);
 
 =head1 SEE ALSO
 

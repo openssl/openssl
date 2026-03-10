@@ -446,10 +446,12 @@ int BIO_accept_ex(int accept_sock, BIO_ADDR *addr_, int options)
  * BIO_closesocket - Close a socket
  * @sock: the socket to close
  */
-int BIO_closesocket(int sock)
+int BIO_closesocket(int* sock)
 {
-    if (sock < 0 || closesocket(sock) < 0)
+    if (*sock < 0 || closesocket(*sock) < 0)
         return 0;
+
+    sock = INVALID_SOCKET;
     return 1;
 }
 #endif

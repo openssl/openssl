@@ -356,7 +356,7 @@ static BIO *create_socket(uint16_t port)
 err:
     BIO_ADDR_free(addr);
     BIO_free(sock);
-    BIO_closesocket(fd);
+    BIO_closesocket(&fd);
     return NULL;
 }
 

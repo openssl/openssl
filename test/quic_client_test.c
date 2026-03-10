@@ -165,8 +165,8 @@ err:
     SSL_CTX_free(c_ctx);
     BIO_ADDR_free(s_addr_);
     BIO_free(c_net_bio_own);
-    if (fd_arg == INVALID_SOCKET && c_fd != INVALID_SOCKET)
-        BIO_closesocket(c_fd);
+    if (fd_arg == INVALID_SOCKET)
+        BIO_closesocket(&c_fd);
     return testresult;
 }
 

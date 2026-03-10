@@ -2437,7 +2437,7 @@ re_start:
             socket_type, protocol, tfo, !isquic, &peer_addr)
         == 0) {
         BIO_printf(bio_err, "connect:errno=%d\n", get_last_socket_error());
-        BIO_closesocket(sock);
+        BIO_closesocket(&sock);
         goto end;
     }
     BIO_printf(bio_c_out, "CONNECTED(%08X)\n", sock);
@@ -2469,7 +2469,7 @@ re_start:
         if (sbio == NULL || (peer_info.addr = BIO_ADDR_new()) == NULL) {
             BIO_puts(bio_err, "memory allocation failure\n");
             BIO_free(sbio);
-            BIO_closesocket(sock);
+            BIO_closesocket(&sock);
             goto end;
         }
         if (!BIO_sock_info(sock, BIO_SOCK_INFO_ADDRESS, &peer_info)) {
@@ -2477,7 +2477,7 @@ re_start:
                 get_last_socket_error());
             BIO_free(sbio);
             BIO_ADDR_free(peer_info.addr);
-            BIO_closesocket(sock);
+            BIO_closesocket(&sock);
             goto end;
         }
 
@@ -2527,7 +2527,7 @@ re_start:
 
     if (sbio == NULL) {
         BIO_puts(bio_err, "Unable to create BIO\n");
-        BIO_closesocket(sock);
+        BIO_closesocket(&sock);
         goto end;
     }
 
@@ -3174,7 +3174,9 @@ re_start:
                         "drop connection and then reconnect\n");
                     do_ssl_shutdown(con);
                     SSL_set_connect_state(con);
-                    BIO_closesocket(SSL_get_fd(con));
+                    int sock = SSL_get_fd(con);
+                    BIO_closesocket(&sock);
+                    SSL_set_fd(con, sock);
                     goto re_start;
                 }
             }
@@ -3533,7 +3535,9 @@ shut:
     } while (select(sock + 1, &readfds, NULL, NULL, &timeout) > 0
         && BIO_read(sbio, sbuf, BUFSIZZ) > 0);
 
-    BIO_closesocket(SSL_get_fd(con));
+    int sock_tmp = SSL_get_fd(con);
+    BIO_closesocket(&sock_tmp);
+    SSL_set_fd(con, sock_tmp);
 end:
     if (ret > 0)
         ERR_print_errors(bio_err); /* show any new or remaining errors */
@@ -4260,7 +4264,9 @@ static int user_data_execute(struct user_data_st *user_data, int cmd, char *arg)
         BIO_puts(bio_err, "RECONNECTING\n");
         do_ssl_shutdown(user_data->con);
         SSL_set_connect_state(user_data->con);
-        BIO_closesocket(SSL_get_fd(user_data->con));
+        int sock_tmp = SSL_get_fd(user_data->con);
+        BIO_closesocket(&sock_tmp);
+        SSL_set_fd(user_data->con, sock_tmp);
         return USER_DATA_PROCESS_RESTART;
 
     case USER_COMMAND_RENEGOTIATE:

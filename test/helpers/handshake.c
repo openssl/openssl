@@ -1462,8 +1462,7 @@ static int create_sctp_socks(int *ssock, int *csock)
         if (!set_sock_as_sctp(lsock)
             || !BIO_listen(lsock, BIO_ADDRINFO_address(ai),
                 BIO_SOCK_REUSEADDR)) {
-            BIO_closesocket(lsock);
-            lsock = INVALID_SOCKET;
+            BIO_closesocket(&lsock);
             continue;
         }
 
@@ -1501,12 +1500,9 @@ static int create_sctp_socks(int *ssock, int *csock)
 
 err:
     BIO_ADDRINFO_free(res);
-    if (consock != INVALID_SOCKET)
-        BIO_closesocket(consock);
-    if (lsock != INVALID_SOCKET)
-        BIO_closesocket(lsock);
-    if (asock != INVALID_SOCKET)
-        BIO_closesocket(asock);
+    BIO_closesocket(&consock);
+    BIO_closesocket(&lsock);
+    BIO_closesocket(&asock);
     return ret;
 }
 #endif

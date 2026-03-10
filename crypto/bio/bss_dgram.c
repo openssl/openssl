@@ -301,7 +301,7 @@ static int dgram_clear(BIO *a)
         return 0;
     if (a->shutdown) {
         if (a->init) {
-            BIO_closesocket(a->num);
+            BIO_closesocket(&a->num);
         }
         a->init = 0;
         a->flags = 0;

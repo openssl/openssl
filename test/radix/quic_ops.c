@@ -109,7 +109,7 @@ static int ssl_create_bound_socket(uint16_t listen_port,
     ok = 1;
 err:
     if (!ok && fd >= 0)
-        BIO_closesocket(fd);
+        BIO_closesocket(&fd);
     else if (ok) {
         *p_fd = fd;
         if (p_result_port != NULL)
@@ -129,7 +129,7 @@ static int ssl_attach_bio_dgram(SSL *ssl,
         return 0;
 
     if (!TEST_ptr(bio = BIO_new_dgram(s_fd, BIO_CLOSE))) {
-        BIO_closesocket(s_fd);
+        BIO_closesocket(&s_fd);
         return 0;
     }
 

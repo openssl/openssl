@@ -58,8 +58,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port, int family
 
         /* Connect the socket to the server's address */
         if (!BIO_connect(sock, BIO_ADDRINFO_address(ai), BIO_SOCK_NODELAY)) {
-            BIO_closesocket(sock);
-            sock = -1;
+            BIO_closesocket(&sock);
             continue;
         }
 
@@ -77,7 +76,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port, int family
     /* Create a BIO to wrap the socket */
     bio = BIO_new(BIO_s_socket());
     if (bio == NULL) {
-        BIO_closesocket(sock);
+        BIO_closesocket(&sock);
         return NULL;
     }
 

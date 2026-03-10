@@ -416,10 +416,8 @@ static int test_bio_dgram_impl(int af, int use_local)
 err:
     BIO_free(b1);
     BIO_free(b2);
-    if (fd1 >= 0)
-        BIO_closesocket(fd1);
-    if (fd2 >= 0)
-        BIO_closesocket(fd2);
+    BIO_closesocket(&fd1);
+    BIO_closesocket(&fd2);
     BIO_ADDR_free(addr1);
     BIO_ADDR_free(addr2);
     BIO_ADDR_free(addr3);

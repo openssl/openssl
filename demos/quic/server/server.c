@@ -99,7 +99,7 @@ static int create_socket(uint16_t port)
 
 err:
     if (fd >= 0)
-        BIO_closesocket(fd);
+        BIO_closesocket(&fd);
 
     return -1;
 }
@@ -237,7 +237,7 @@ err:
     SSL_CTX_free(ctx);
 
     if (fd != -1)
-        BIO_closesocket(fd);
+        BIO_closesocket(&fd);
 
     return rc;
 }

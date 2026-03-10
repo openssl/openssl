@@ -196,8 +196,7 @@ integrate into the OpenSSL error system to log error data, e.g.
 
         /* Connect the socket to the server's address */
         if (!BIO_connect(sock, BIO_ADDRINFO_address(ai), BIO_SOCK_NODELAY)) {
-            BIO_closesocket(sock);
-            sock = -1;
+            BIO_closesocket(&sock);
             continue;
         }
 
@@ -227,7 +226,7 @@ BIO object:
     /* Create a BIO to wrap the socket */
     bio = BIO_new(BIO_s_socket());
     if (bio == NULL) {
-        BIO_closesocket(sock);
+        BIO_closesocket(&sock);
         return NULL;
     }
 

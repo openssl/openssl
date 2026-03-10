@@ -275,8 +275,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 
     if (!BIO_listen(s, BIO_ADDRINFO_address(res),
             bind_mode ? BIO_SOCK_REUSEADDR : 0)) {
-        BIO_closesocket(s);
-        s = INVALID_SOCKET;
+        BIO_closesocket(&s);
     }
 
 err:
@@ -315,8 +314,7 @@ int BIO_accept(int sock, char **ip_port)
         }
 
         if (*ip_port == NULL) {
-            BIO_closesocket(ret);
-            ret = (int)INVALID_SOCKET;
+            BIO_closesocket(&ret);
         } else {
             strcpy(*ip_port, host);
             strcat(*ip_port, ":");
