@@ -39,12 +39,15 @@ with clear explanations of what is changing and why.  Long descriptions
 are encouraged if they aid understanding.  Commit message titles (their
 first line) should be kept to 50-70 characters if possible.
 
-Pull Requests go through multiple phases before they are merged. In the first
-phase the label 'approval: review pending' is added. After 2 OpenSSL reviewers
-have reviewed your code you may need to make changes. Once you receive 2 or more
-approvals the label is changed to 'approval:done' and 24 hours after this the
-label changes to 'approval: ready to merge'. At some time after this your PR
-will be merged and the PR is closed.
+Pull Requests (PR's) go through multiple phases before they are merged. In the
+first phase the label 'approval: review pending' is added. Once you receive 2 or
+more approvals from [Committers] the label is changed to 'approval:done' and
+24 hours after this the label changes to 'approval: ready to merge'. At some time
+after this your PR will be merged and the PR is closed. Reviewers may ask you to
+make changes at any phase before the Pull Request is merged, and any changes
+(that are not just a rebase) will require re-approval.
+
+[Committers]: https://openssl-library.org/about/committers/index.html
 
 To make it easier to review and accept your pull request, please follow these
 guidelines:
@@ -156,6 +159,7 @@ guidelines:
     ```
     git log
     ```
+
  10. If a Pull Request addresses an [issue] the commit should include the line
 
     ```
