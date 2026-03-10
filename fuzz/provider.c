@@ -488,7 +488,6 @@ static int do_evp_cipher(const EVP_CIPHER *evp_cipher, const OSSL_PARAM param[])
     if (ctx == NULL)
         goto err;
 
-    /* Initialize cipher before setting params so ctx has an algorithm */
     if (!EVP_EncryptInit_ex2(ctx, evp_cipher, key, iv, NULL))
         goto err;
 
@@ -644,7 +643,6 @@ static int do_evp_md(EVP_MD *evp_md, const OSSL_PARAM params[])
         goto end;
     }
 
-    /* Initialize digest before setting params so ctx has an algorithm */
     if (!EVP_DigestInit_ex2(mdctx, evp_md, NULL)) {
         r = 0;
         goto end;
@@ -654,7 +652,6 @@ static int do_evp_md(EVP_MD *evp_md, const OSSL_PARAM params[])
         r = 0;
         goto end;
     }
-
     if (!EVP_DigestUpdate(mdctx, "Test", strlen("Test"))) {
         r = 0;
         goto end;
