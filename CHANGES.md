@@ -31,35 +31,6 @@ OpenSSL Releases
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
- * Added restrictions on the maximum number of TLS `key_share`s (16)
-   that a server will pay attention to, as well as the maximum number
-   of supported `group`s (128) and `sig_alg`s (128).  Any sent beyond
-   these limits are ignored, in order to avoid clients sending excessively
-   long lists in these extensions.
-
-   *Matt Caswell*
-
- * Removed specialised built-in logic for adding the SKID and AKID extensions
-   from `openssl x509`, `openssl req`, and `openssl ca` commands,
-   these extensions are handled through configuration files and command-line
-   options just like any other extension.  See their documentation and also
-   `x509v3_config(5)` for additional details.
-
-   Updated the syntax of the `subjectKeyIdentifier` (SKID) and
-   `authorityKeyIdentifier` (AKID) extensions, introducing the `nonss` qualifier
-   for the `keyid` and `issuer` keywords.
-
-   The x509 "mini-CA" now attempts to find extension settings in the default
-   configuration file even if neither the `-extfile` nor the `-extensions`
-   option is explicitly specified.  Failure to open the default configuration
-   is silently ignored.
-
-   The settings in the stock OpenSSL 4.0 configuration file arrange for
-   addition of the requisite SKID and AKID extensions.  Other configuration
-   files may need to be adjusted if desired.
-
-   *Viktor Dukhovni*
-
  * Added `-expected-rpks` option to the `openssl s_client`
    and `openssl s_server` commands.  This makes it possible to specify
    one or more public keys expected from the remote peer that are then used
@@ -67,12 +38,9 @@ OpenSSL Releases
 
    *Viktor Dukhovni*
 
- * Fixed a bug that allowed TLS 1.2 ciphers to be added to the TLS 1.3
-   `ciphersuites` list, and for that list to contain duplicates.
-   Cipher configuration strings for both TLS 1.2 and 1.3 are now
-   case-insensitive.
+ * Added `-hmac-env` and `-hmac-stdin` options to `openssl dgst` command.
 
-   *Viktor Dukhovni*
+   *Igor Ustinov*
 
  * Added LMS support for signature verification to `openssl pkeyutl` command.
    To enable this, LMS `SubjectPublicKeyInfo` encoder and decoders were
@@ -102,13 +70,6 @@ OpenSSL Releases
 
    *Viktor Dukhovni*
 
- * Updated the default group list to append `SecP256r1MKEM768` and
-   `curveSM2MLKEM768` to the first tuple in that order after `*X25519MLKEM768`.
-   Also inserted a penultimate tuple with `curveSM2` (just before the `FFDHE`
-   groups).
-
-   *Viktor Dukhovni*
-
  * Implemented client-side predicted keyshare floating.  When a tuple loses
    the last element that was tagged for transmission of a predicted client
    keyshare (by default `*X25519MLKEM768` and `*X25519` in their respective
@@ -134,21 +95,44 @@ OpenSSL Releases
 
    *Viktor Dukhovni*
 
- * Consolidated processing of SM2 and EdDSA signatures with essentially
-   identical code for ECDSA in the `openssl speed` command.  The output format
-   has changed slightly to report the EC curve name rather than its bit size.
-
-   *Viktor Dukhovni*
-
- * Removed the `SSL_TXT_FIPS` option.  This was a remnant of the old FIPS
-   canister and wasn't used anymore.
-
-   *Dr Paul Dale*
-
  * Added support for TLS 1.3 SM cipher suites `TLS_SM4_GCM_SM3`
    and `TLS_SM4_CCM_SM3` from [RFC 8998].
 
    *Milan Broz*
+
+ * Added CSHAKE as per [SP 800-185].
+
+   *Shane Lontis*
+
+ * Added "ML-DSA-MU" digest algorithm support.
+
+   *Shane Lontis*
+
+ * Added SNMP KDF (`EVP_KDF_SNMPKDF`) to `EVP_KDF`.
+
+   *Barry Fussell and Helen Zhang*
+
+ * Added SRTP KDF (`EVP_KDF_SRTPKDF`) to `EVP_KDF`
+
+   *Barry Fussell and Helen Zhang*
+
+ * Implemented [RFC 7919], adding support for negotiated FFDHE key exchange
+   in TLS 1.2.
+
+   *Joachim Vandersmissen* (with additional support from *Viktor Dukhovni*)
+
+ * Added AKID verification checks when `X509_V_FLAG_X509_STRICT` is set.
+   Raise `X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER` when AKID is not present.
+   Raise `X509_V_ERR_EMPTY_AUTHORITY_KEY_IDENTIFIER` when AKID has no attributes.
+   Raise `X509_V_ERR_AKID_ISSUER_SERIAL_NOT_PAIRED` when `authorityCertIssuer`
+   and `authorityCertSerialNumber` fields are not paired.
+
+   *Daniel Kubec*
+
+ * Implemented [RFC 9849], adding support for Encrypted Client Hello (ECH).
+   See `doc/design/ech-api.md` for details.
+
+   *Stephen Farrell* (with much support from *Matt Caswell* and *Tomáš Mráz*)
 
  * Added the `OSSL_ESS_check_signing_certs_ex()` call.
    This API call is an extension to `OSSL_ESS_check_signing_certs()` that adds
@@ -157,15 +141,46 @@ OpenSSL Releases
 
    *Neil Horman*
 
- * Deprecated `ASN1_OBJECT_new()` function.
-   Refer to `ossl-migration-guide(7)` for more info.
+ * Added `OPENSSL_sk_set_cmp_thunks()` API to allow for proper typecasting
+   during comparison of elements in a `STACK_OF` structure.
 
-   *Frederik Wedel-Heinen*
+   *Neil Horman*
+
+ * Added `ASN1_BIT_STRING_set1()` function to set a bit string to a value,
+   including the length in bytes and the number of unused bits.  Internally,
+   `ASN1_BIT_STRING_set_bit()` has also been modified to keep the number
+   of unused bits correct when changing an `ASN1_BIT_STRING`.
+
+   *Bob Beck*
+
+ * Added `SSL_CTX_get0_alpn_protos()` and `SSL_get0_alpn_protos()` functions.
+
+   *Daniel Kubec*
+
+ * Added `EVP_MD_CTX_serialize()`/`EVP_MD_CTX_deserialize()` functions.
+   These functions allow to export the internal state of a Digest and re-import
+   it later to continue a computation from a specific checkpoint.  Only SHA-2
+   and the SHA-3 family (Keccak, SHAKE, SHA-3) of functions currently support
+   this functionality.
+
+   *Simo Sorce*
+
+ * Added `BIO_set_send_flags()` function that allows setting flags passed to
+   `send()`, `sendto()`, and `sendmsg()`.  The main intention is to allow
+   setting the `MSG_NOSIGNAL` flag to avoid a crash on receiving the `SIGPIPE`
+   signal.
+
+   *Igor Ustinov*
 
  * FIPS self tests can now be deferred and run as needed when installing
    the FIPS module with the `-defer_tests` option.
 
    *Simo Sorce*
+
+ * Lower bounds checks are now enforced when using `PKCS5_PBKDF2_HMAC` API
+   with FIPS provider.
+
+   *Dimitri John Ledkov*
 
  * Added support for using either static or dynamic VC runtime linkage
    on Windows.  Using the `enable-static-vcruntime` configuration option,
@@ -175,10 +190,113 @@ OpenSSL Releases
 
    *Neil Horman*
 
- * Const-corrected `time_t` arguments for `X509_cmp_time()`, `X509_time_adj()`,
-   and `X509_time_adj_ex()`.
+ * Added configure options to disable KDF algorithms for `hmac-drbg-kdf`,
+   `kbkdf`, `krb5kdf`, `pvkkdf`, `snmpkdf`, `sskdf`, `sshkdf`, `x942kdf`,
+   and `x963kdf`.
 
-   *Frederik Wedel-Heinen*
+   *Shane Lontis*
+
+ * Removed configure options can now only be disabled.  You may continue
+   to use `disable-<feature>` syntax, which will remain supported.  Using
+   `enable-<feature>` for a removed feature is no longer permitted.
+
+   *Andrew Dinh*
+
+ * Added restrictions on the maximum number of TLS `key_share`s (16)
+   that a server will pay attention to, as well as the maximum number
+   of supported `group`s (128) and `sig_alg`s (128).  Any sent beyond
+   these limits are ignored, in order to avoid clients sending excessively
+   long lists in these extensions.
+
+   *Matt Caswell*
+
+ * Removed specialised built-in logic for adding the SKID and AKID extensions
+   from `openssl x509`, `openssl req`, and `openssl ca` commands,
+   these extensions are handled through configuration files and command-line
+   options just like any other extension.  See their documentation and also
+   `x509v3_config(5)` for additional details.
+
+   Updated the syntax of the `subjectKeyIdentifier` (SKID) and
+   `authorityKeyIdentifier` (AKID) extensions, introducing the `nonss` qualifier
+   for the `keyid` and `issuer` keywords.
+
+   The x509 "mini-CA" now attempts to find extension settings in the default
+   configuration file even if neither the `-extfile` nor the `-extensions`
+   option is explicitly specified.  Failure to open the default configuration
+   is silently ignored.
+
+   The settings in the stock OpenSSL 4.0 configuration file arrange for
+   addition of the requisite SKID and AKID extensions.  Other configuration
+   files may need to be adjusted if desired.
+
+   *Viktor Dukhovni*
+
+ * Enabled Server verification by default in `s_server`
+   when the `-verify_return_error` option is enabled.
+
+   *Ryan Hooper*
+
+ * Removed extra leading '00:' when printing key data such as an RSA modulus
+   in hexadecimal format where the first (most significant) byte is >= 0x80.
+   This had been added artificially to resemble ASN.1 DER encoding internals.
+   Fixing this also makes sure that key output always has the expected length.
+
+   *David von Oheimb*
+
+ * Standardized the width of hexadecimal dumps to 24 bytes for signatures
+   (to stay within the 80 characters limit) and 16 bytes for everything else.
+
+   *Beat Bolli*
+
+ * Updated the default group list to append `SecP256r1MKEM768` and
+   `curveSM2MLKEM768` to the first tuple in that order after `*X25519MLKEM768`.
+   Also inserted a penultimate tuple with `curveSM2` (just before the `FFDHE`
+   groups).
+
+   *Viktor Dukhovni*
+
+ * Consolidated processing of SM2 and EdDSA signatures with essentially
+   identical code for ECDSA in the `openssl speed` command.  The output format
+   has changed slightly to report the EC curve name rather than its bit size.
+
+   *Viktor Dukhovni*
+
+ * CRLs with a malformed Issuing Distribution Point extensions are now rejected.
+
+   *Daniel Kubec*
+
+ * CRLs with malformed `CRL Number` or `Delta CRL Indicator` extensions
+   are now rejected.
+
+   *Daniel Kubec*
+
+ * Fixed CRLs with invalid `ASN1_TIME` in `invalidityDate` extensions,
+   where verification incorrectly succeeded.  Enforced proper handling
+   of `ASN1_TIME` validation results so that any CRL containing invalid
+   time fields is rejected immediately, preventing the error from propagating
+   to verification.
+
+   *Daniel Kubec*
+
+ * CRLs with a `Certificate Issuer` extension in a certificate revocation entry
+   are now rejected, unless the `Indirect` flag is set to `TRUE`
+   in the `Issuing Distribution Point` extension of the CRL.
+
+   *Daniel Kubec*
+
+ * `SSL_get_error()` no longer depends on the state of the error stack,
+   so it is no longer necessary to empty the error queue before the
+   TLS/SSL I/O operations.
+
+   *Igor Ustinov*
+
+ * `ASN1_STRING` has been made opaque.
+
+   Access to values from `ASN1_STRING` and related types should be done with the
+   appropriate accessor functions.  The various `ASN1_STRING_FLAG` values have
+   been made private.
+
+   *Bob Beck*
 
  * `OPENSSL_cleanup()` now runs in a global destructor, or not at all by default.
 
@@ -190,14 +308,24 @@ OpenSSL Releases
 
    *Bob Beck*
 
- * Critical extension enforcement for `EXFLAG_BCONS_CRITICAL`,
-   `EXFLAG_AKID_CRITICAL`, `EXFLAG_SKID_CRITICAL`, and `EXFLAG_SAN_CRITICAL` is
-   incorrect. These checks were intended as CA requirements to prevent
-   misinterpretation by verifiers that don't support certain extensions
-   However, since we do support these extensions, there is no requirement for
-   them to be marked as critical. Enforcing that on `X509_V_FLAG_X509_STRICT` was a mistake.
+ * `X509_ALGOR_set_md()` function now returns a value indicating success
+    or failure.
 
-   *Daniel Kubec*
+   *David von Oheimb*
+
+ * Added documentation for `X509_cmp_time()`, `X509_cmp_current_time()`,
+   and `X509_cmp_timeframe()`, and deprecated them.
+   Added a new function, `X509_check_certificate_times()`, as well as
+   the `<openssl/posix_time.h>` interface from BoringSSL/LibreSSL.
+   For details of these functions and non-deprecated replacement
+   strategies, see `X509_check_certificate_times(3)`.
+
+   *Bob Beck*
+
+ * Const-corrected `time_t` arguments for `X509_cmp_time()`, `X509_time_adj()`,
+   and `X509_time_adj_ex()`.
+
+   *Frederik Wedel-Heinen*
 
  * Made `X509_ATTRIBUTE` accessor functions const-correct. The functions
    `X509_ATTRIBUTE_get0_object()`, `X509_ATTRIBUTE_get0_type()`, and
@@ -208,48 +336,75 @@ OpenSSL Releases
 
    *kovan*
 
- * `ASN1_STRING` has been made opaque.
-
-   Access to values from `ASN1_STRING` and related types should be done with the
-   appropriate accessor functions.  The various `ASN1_STRING_FLAG` values have
-   been made private.
+ * Constified various function return values, particularly in X509 and related
+   areas, and when functions were returning non-const objects owned by a const
+   parameter.
 
    *Bob Beck*
 
- * Added CSHAKE as per [SP 800-185].
+ * Many functions accepting `X509 *` arguments, or returning values
+   from a const `X509 *` have been changed to take/return const
+   arguments. The most visible changes are places where pointer values
+   are returned from a const `X509 *` object. In many places where
+   these were non const values being returned from a const object,
+   these pointer values have now been made const. The goal of this
+   change is to enable future improvements in X.509 certificate
+   handling. For full details see the relevant section in
+   ossl-migration-guide(7).
 
-   *Shane Lontis*
+   *Bob Beck*
 
- * Added `OPENSSL_sk_set_cmp_thunks()` API to allow for proper typecasting
-   during comparison of elements in a `STACK_OF` structure.
+ * Constified various function parameters, in particular for X509-related
+   functions.
 
-   *Neil Horman*
+   *David von Oheimb*
 
- * `SSL_get_error()` no longer depends on the state of the error stack,
-   so it is no longer necessary to empty the error queue before the
-   TLS/SSL I/O operations.
+ * Constified various X509-related functions: `X509_get_pathlen()`,
+   `X509_check_ca()`, `X509_check_purpose()`, `X509_get_proxy_pathlen()`,
+   `X509_get_extension_flags()`, `X509_get_key_usage()`,
+   `X509_get_extended_key_usage()`, `X509_get0_subject_key_id()`,
+   `X509_get0_authority_key_id()`, `X509_get0_authority_issuer()`,
+   `X509_get0_authority_serial()`, `X509_get0_distinguishing_id()`.
 
-   *Igor Ustinov*
+   *Bob Beck*
 
- * CRLs with a malformed Issuing Distribution Point extensions are now rejected.
+ * Removed needless `const` qualifiers from scalar type arguments in the public
+   APIs, mostly for AES and Camellia.
 
-   *Daniel Kubec*
+   *David von Oheimb*
 
- * Added configure options to disable KDF algorithms for `hmac-drbg-kdf`,
-   `kbkdf`, `krb5kdf`, `pvkkdf`, `snmpkdf`, `sskdf`, `sshkdf`, `x942kdf`,
-   and `x963kdf`.
+ * Fixed a bug that allowed TLS 1.2 ciphers to be added to the TLS 1.3
+   `ciphersuites` list, and for that list to contain duplicates.
+   Cipher configuration strings for both TLS 1.2 and 1.3 are now
+   case-insensitive.
 
-   *Shane Lontis*
+   *Viktor Dukhovni*
+
+ * Deprecated `ASN1_OBJECT_new()` function.
+   Refer to `ossl-migration-guide(7)` for more info.
+
+   *Frederik Wedel-Heinen*
+
+ * Deprecated `X509_NAME_get_text_by_NID()` and `X509_NAME_get_text_by_OBJ()`
+   functions, and documented them as such.
+
+   *Bob Beck*
+
+ * Removed the `SSL_TXT_FIPS` option.  This was a remnant of the old FIPS
+   canister and wasn't used anymore.
+
+   *Dr Paul Dale*
 
  * Removed `OPENSSL_atexit()` function.
 
    *Bob Beck*
 
- * Added AKID verification checks when `X509_V_FLAG_X509_STRICT` is set.
-   Raise `X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER` when AKID is not present.
-   Raise `X509_V_ERR_EMPTY_AUTHORITY_KEY_IDENTIFIER` when AKID has no attributes.
-   Raise `X509_V_ERR_AKID_ISSUER_SERIAL_NOT_PAIRED` when authorityCertIssuer and
-   authorityCertSerialNumber fields are not paired.
+ * Critical extension enforcement for `EXFLAG_BCONS_CRITICAL`,
+   `EXFLAG_AKID_CRITICAL`, `EXFLAG_SKID_CRITICAL`, and `EXFLAG_SAN_CRITICAL` is
+   incorrect. These checks were intended as CA requirements to prevent
+   misinterpretation by verifiers that don't support certain extensions
+   However, since we do support these extensions, there is no requirement for
+   them to be marked as critical. Enforcing that on `X509_V_FLAG_X509_STRICT` was a mistake.
 
    *Daniel Kubec*
 
@@ -268,32 +423,16 @@ OpenSSL Releases
 
    *Kurt Roeckx*
 
- * Added "ML-DSA-MU" digest algorithm support.
+ * Removed support for SSLv3.  SSLv3 has been deprecated since 2015, and OpenSSL
+   had it disabled by default since version 1.1.0 (2016).
 
-   *Shane Lontis*
+   *Kurt Roeckx*
 
  * Support of explicit EC curves was disabled by default, an error will occur
    if an explicit EC curve doesn't match any known one.  A new configuration
    option, `enable-ec_explicit_curves`, is added.
 
    *Dmitry Belyavskiy*
-
- * Removed configure options can now only be disabled. You may continue to use
-   `disable-<feature>`, which will remain supported. Using `enable-<feature>`
-   for a removed feature is no longer permitted.
-
-   *Andrew Dinh*
-
- * Support for SSLv3 was removed. SSLv3 has been deprecated since
-   2015, and OpenSSL had it disabled by default since 1.1.0 (2016).
-
-   *Kurt Roeckx*
-
- * Constified various function return values, particularly in X509 and related
-   areas, and when functions were returning non-const objects owned by a const
-   parameter.
-
-   *Bob Beck*
 
  * The script tool `c_rehash` was removed. Use `openssl rehash` instead.
 
@@ -307,41 +446,10 @@ OpenSSL Releases
 
    *Alexandr Nedvedicky*
 
- * Many functions accepting `X509 *` arguments, or returning values
-   from a const `X509 *` have been changed to take/return const
-   arguments. The most visible changes are places where pointer values
-   are returned from a const `X509 *` object. In many places where
-   these were non const values being returned from a const object,
-   these pointer values have now been made const. The goal of this
-   change is to enable future improvements in X.509 certificate
-   handling. For full details see the relevant section in
-   ossl-migration-guide(7).
-
-   *Bob Beck*
-
  * Removed the `crypto-mdebug-backtrace` configuration option entirely.
    The option has been a no-op since OpenSSL 1.0.2.
 
    *Neil Horman*
-
- * Removed extra leading '00:' when printing key data such as an RSA modulus
-   in hexadecimal format where the first (most significant) byte is >= 0x80.
-   This had been added artificially to resemble ASN.1 DER encoding internals.
-   Fixing this also makes sure that key output always has the expected length.
-
-   *David von Oheimb*
-
- * Standardized the width of hexadecimal dumps to 24 bytes for signatures
-   (to stay within the 80 characters limit) and 16 bytes for everything else.
-
-   *Beat Bolli*
-
- * Added `ASN1_BIT_STRING_set1()` function to set a bit string to a value,
-   including the length in bytes and the number of unused bits.  Internally,
-   `ASN1_BIT_STRING_set_bit()` has also been modified to keep the number
-   of unused bits correct when changing an `ASN1_BIT_STRING`.
-
-   *Bob Beck*
 
  * Removed the deprecated function `ASN1_STRING_data()`.
 
@@ -351,71 +459,10 @@ OpenSSL Releases
 
    *Bob Beck*
 
- * CRLs with malformed `CRL Number` or `Delta CRL Indicator` extensions
-   are now rejected.
-
-   *Daniel Kubec*
-
- * Removed needless `const` qualifiers from scalar type arguments in the public
-   APIs, mostly for AES and Camellia.
-
-   *David von Oheimb*
-
- * Constified various function parameters, in particular for X509-related
-   functions.
-
-   *David von Oheimb*
-
- * `X509_ALGOR_set_md()` function now returns a value indicating success
-    or failure.
-
-   *David von Oheimb*
-
  * Dropped `darwin-i386{,-cc}` and `darwin-ppc{,64}{,-cc}` targets
    from Configurations.
 
    *Daniel Kubec and Eugene Syromiatnikov*
-
- * Added `-hmac-env` and `-hmac-stdin` options to `openssl dgst` command.
-
-   *Igor Ustinov*
-
- * Added `SSL_CTX_get0_alpn_protos()` and `SSL_get0_alpn_protos()` functions.
-
-   *Daniel Kubec*
-
- * Enabled Server verification by default in `s_server`
-   when the `-verify_return_error` option is enabled.
-
-   *Ryan Hooper*
-
- * Constified various X509-related functions: `X509_get_pathlen()`,
-   `X509_check_ca()`, `X509_check_purpose()`, `X509_get_proxy_pathlen()`,
-   `X509_get_extension_flags()`, `X509_get_key_usage()`,
-   `X509_get_extended_key_usage()`, `X509_get0_subject_key_id()`,
-   `X509_get0_authority_key_id()`, `X509_get0_authority_issuer()`,
-   `X509_get0_authority_serial()`, `X509_get0_distinguishing_id()`.
-
-   *Bob Beck*
-
- * Fixed CRLs with invalid `ASN1_TIME` in `invalidityDate` extensions,
-   where verification incorrectly succeeded.  Enforced proper handling
-   of `ASN1_TIME` validation results so that any CRL containing invalid
-   time fields is rejected immediately, preventing the error from propagating
-   to verification.
-
-   *Daniel Kubec*
-
- * CRLs with a `Certificate Issuer` extension in a certificate revocation entry
-   are now rejected, unless the `Indirect` flag is set to `TRUE`
-   in the `Issuing Distribution Point` extension of the CRL.
-
-   *Daniel Kubec*
-
- * Deprecated `X509_NAME_get_text_by_NID()` and `X509_NAME_get_text_by_OBJ()`
-   functions, and documented them as such.
-
-   *Bob Beck*
 
  * Removed support for engines.  The `no-engine` build option
    and the `OPENSSL_NO_ENGINE` macro are always present.  Applications that use
@@ -436,56 +483,9 @@ OpenSSL Releases
 
    *Tomáš Mráz*
 
- * Added SNMP KDF (`EVP_KDF_SNMPKDF`) to `EVP_KDF`.
-
-   *Barry Fussell and Helen Zhang*
-
- * Added `EVP_MD_CTX_serialize()`/`EVP_MD_CTX_deserialize()` functions.
-   These functions allow to export the internal state of a Digest and re-import
-   it later to continue a computation from a specific checkpoint.  Only SHA-2
-   and the SHA-3 family (Keccak, SHAKE, SHA-3) of functions currently support
-   this functionality.
-
-   *Simo Sorce*
-
- * Added SRTP KDF (`EVP_KDF_SRTPKDF`) to `EVP_KDF`
-
-   *Barry Fussell and Helen Zhang*
-
  * Removed the deprecated `msie-hack` option from the `openssl ca` command.
 
    *Bob Beck*
-
- * Implemented [RFC 7919], adding support for negotiated FFDHE key exchange
-   in TLS 1.2.
-
-   *Joachim Vandersmissen* (with additional support from *Viktor Dukhovni*)
-
- * Implemented [RFC 9849], adding support for Encrypted Client Hello (ECH).
-   See `doc/design/ech-api.md` for details.
-
-   *Stephen Farrell* (with much support from *Matt Caswell* and *Tomáš Mráz*)
-
- * Added documentation for `X509_cmp_time()`, `X509_cmp_current_time()`,
-   and `X509_cmp_timeframe()`, and deprecated them.
-   Added a new function, `X509_check_certificate_times()`, as well as
-   the `<openssl/posix_time.h>` interface from BoringSSL/LibreSSL.
-   For details of these functions and non-deprecated replacement
-   strategies, see `X509_check_certificate_times(3)`.
-
-   *Bob Beck*
-
- * Added `BIO_set_send_flags()` function that allows setting flags passed to
-   `send()`, `sendto()`, and `sendmsg()`.  The main intention is to allow
-   setting the `MSG_NOSIGNAL` flag to avoid a crash on receiving the `SIGPIPE`
-   signal.
-
-   *Igor Ustinov*
-
- * Lower bounds checks are now enforced when using `PKCS5_PBKDF2_HMAC` API
-   with FIPS provider.
-
-   *Dimitri John Ledkov*
 
 OpenSSL 3.6
 -----------
