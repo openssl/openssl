@@ -509,7 +509,7 @@ static int do_evp_cipher(const EVP_CIPHER *evp_cipher, const OSSL_PARAM param[])
     OPENSSL_free(iv);
     return 1;
 
- err:
+err:
     EVP_CIPHER_CTX_free(ctx);
     OPENSSL_free(key);
     OPENSSL_free(iv);
