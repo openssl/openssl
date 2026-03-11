@@ -165,7 +165,7 @@ guidelines:
      the commit should include the line:
 
     ```
-        Fixes #XXXXX
+        Fixes XXXXX
     ```
 
     where XXXXX is the issue number.
