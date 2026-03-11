@@ -29,9 +29,6 @@
  * straightforward to add new test cases or regenerate existing ones if the
  * validation logic or expected behavior changes.
  *
- * Trust Hierarchy
- * ---------------
- *
  *   Root CA  (self-signed, trust anchor)
  *       └── leaf  (signed by Root CA)
  *
@@ -754,10 +751,12 @@ static const char *kCrlIDPWrongTag2[] = {
     NULL
 };
 
+/*
 static X509 *root1 = NULL;
 static X509 *leaf1 = NULL;
 static X509 *root2 = NULL;
 static X509 *leaf2 = NULL;
+*/
 
 /*
  * Verify |leaf| certificate (chained up to |root|).  |crls| if
@@ -848,76 +847,105 @@ err:
 
 static int test_crl_basic(void)
 {
+    X509 *root = X509_from_strings(kCRLTestRoot);
+    X509 *leaf = X509_from_strings(kCRLTestLeaf);
     X509_CRL *basic_crl = CRL_from_strings(kBasicCRL);
     X509_CRL *revoked_crl = CRL_from_strings(kRevokedCRL);
     const X509_ALGOR *alg = NULL, *tbsalg;
-    int r;
+    int test;
 
-    r = TEST_ptr(basic_crl)
+    test = TEST_ptr(root)
+        && TEST_ptr(leaf)
+        && TEST_ptr(basic_crl)
         && TEST_ptr(revoked_crl)
-        && TEST_int_eq(verify(leaf1, root1,
+        && TEST_int_eq(verify(leaf, root,
                            make_CRL_stack(basic_crl, NULL),
                            X509_V_FLAG_CRL_CHECK, PARAM_TIME),
             X509_V_OK)
-        && TEST_int_eq(verify(leaf1, root1,
+        && TEST_int_eq(verify(leaf, root,
                            make_CRL_stack(basic_crl, revoked_crl),
                            X509_V_FLAG_CRL_CHECK, PARAM_TIME),
             X509_V_ERR_CERT_REVOKED)
-        && TEST_int_eq(verify(leaf1, root1,
+        && TEST_int_eq(verify(leaf, root,
                            make_CRL_stack(basic_crl, revoked_crl),
                            X509_V_FLAG_CRL_CHECK, PARAM_TIME2),
             X509_V_ERR_CRL_HAS_EXPIRED)
-        && TEST_int_eq(verify(leaf1, root1,
+        && TEST_int_eq(verify(leaf, root,
                            make_CRL_stack(basic_crl, revoked_crl),
                            X509_V_FLAG_CRL_CHECK, 0),
             X509_V_ERR_CRL_NOT_YET_VALID);
 
-    if (r) {
+    if (test) {
         X509_CRL_get0_signature(basic_crl, NULL, &alg);
         tbsalg = X509_CRL_get0_tbs_sigalg(basic_crl);
-        r = TEST_ptr(alg)
+        test = TEST_ptr(alg)
             && TEST_ptr(tbsalg)
             && TEST_int_eq(X509_ALGOR_cmp(alg, tbsalg), 0);
     }
 
     X509_CRL_free(basic_crl);
     X509_CRL_free(revoked_crl);
-    return r;
+    X509_free(leaf);
+    X509_free(root);
+    return test;
 }
 
 static int test_no_crl(void)
 {
-    return TEST_int_eq(verify(leaf1, root1, NULL,
+    X509 *root = X509_from_strings(kCRLTestRoot);
+    X509 *leaf = X509_from_strings(kCRLTestLeaf);
+    int test;
+
+    test = TEST_ptr(root)
+        && TEST_ptr(leaf)
+        && TEST_int_eq(verify(leaf, root, NULL,
                            X509_V_FLAG_CRL_CHECK, PARAM_TIME),
-        X509_V_ERR_UNABLE_TO_GET_CRL);
+            X509_V_ERR_UNABLE_TO_GET_CRL);
+
+    X509_free(leaf);
+    X509_free(root);
+    return test;
 }
 
 static int test_crl_bad_issuer(void)
 {
-    X509_CRL *bad_issuer_crl = CRL_from_strings(kBadIssuerCRL);
-    int r;
+    X509 *root = X509_from_strings(kCRLTestRoot);
+    X509 *leaf = X509_from_strings(kCRLTestLeaf);
+    X509_CRL *crl = CRL_from_strings(kBadIssuerCRL);
+    int test;
 
-    r = TEST_ptr(bad_issuer_crl)
-        && TEST_int_eq(verify(leaf1, root1,
-                           make_CRL_stack(bad_issuer_crl, NULL),
+    test = TEST_ptr(root)
+        && TEST_ptr(leaf)
+        && TEST_ptr(crl)
+        && TEST_int_eq(verify(leaf, root,
+                           make_CRL_stack(crl, NULL),
                            X509_V_FLAG_CRL_CHECK, PARAM_TIME),
             X509_V_ERR_UNABLE_TO_GET_CRL);
-    X509_CRL_free(bad_issuer_crl);
-    return r;
+    X509_CRL_free(crl);
+    X509_free(leaf);
+    X509_free(root);
+    return test;
 }
 
 static int test_crl_empty_idp(void)
 {
-    X509_CRL *empty_idp_crl = CRL_from_strings(kEmptyIdpCRL);
-    int r;
+    X509 *root = X509_from_strings(kCRLTestRoot2);
+    X509 *leaf = X509_from_strings(kCRLTestLeaf2);
+    X509_CRL *crl = CRL_from_strings(kEmptyIdpCRL);
+    int test;
 
-    r = TEST_ptr(empty_idp_crl)
-        && TEST_int_eq(verify(leaf2, root2,
-                           make_CRL_stack(empty_idp_crl, NULL),
+    test = TEST_ptr(root)
+        && TEST_ptr(leaf)
+        && TEST_ptr(crl)
+        && TEST_int_eq(verify(leaf, root,
+                           make_CRL_stack(crl, NULL),
                            X509_V_FLAG_CRL_CHECK, PARAM_TIME2),
             X509_V_ERR_UNABLE_TO_GET_CRL);
-    X509_CRL_free(empty_idp_crl);
-    return r;
+
+    X509_CRL_free(crl);
+    X509_free(leaf);
+    X509_free(root);
+    return test;
 }
 
 static int test_crl_critical_known(void)
@@ -936,16 +964,23 @@ static int test_crl_critical_known(void)
 
 static int test_crl_critical_unknown1(void)
 {
-    X509_CRL *unknown_critical_crl = CRL_from_strings(kUnknownCriticalCRL);
-    int r;
-    r = TEST_ptr(unknown_critical_crl)
-        && TEST_int_eq(verify(leaf1, root1,
-                           make_CRL_stack(unknown_critical_crl, NULL),
+    X509 *root = X509_from_strings(kCRLTestRoot);
+    X509 *leaf = X509_from_strings(kCRLTestLeaf);
+    X509_CRL *crl = CRL_from_strings(kUnknownCriticalCRL);
+
+    int test;
+    test = TEST_ptr(root)
+        && TEST_ptr(leaf)
+        && TEST_ptr(crl)
+        && TEST_int_eq(verify(leaf, root,
+                           make_CRL_stack(crl, NULL),
                            X509_V_FLAG_CRL_CHECK, PARAM_TIME),
             X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION);
 
-    X509_CRL_free(unknown_critical_crl);
-    return r;
+    X509_CRL_free(crl);
+    X509_free(leaf);
+    X509_free(root);
+    return test;
 }
 
 static int test_crl_critical_unknown2(void)
@@ -1033,7 +1068,7 @@ static int test_crl_cert_issuer_ext(void)
 static int test_crl_date_invalid(void)
 {
     X509_CRL *tmm = NULL, *tss = NULL, *utc = NULL;
-    int test = 0;
+    int test;
 
     test = TEST_ptr_null((tmm = CRL_from_strings(kInvalidDateMM)))
         && TEST_err_r(ERR_LIB_ASN1, ASN1_R_GENERALIZEDTIME_IS_TOO_SHORT)
@@ -1067,6 +1102,8 @@ static int get_crl_fn(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x)
 
 static int test_crl_get_fn_score(void)
 {
+    X509 *root = X509_from_strings(kCRLTestRoot);
+    X509 *leaf = X509_from_strings(kCRLTestLeaf);
     X509_STORE_CTX *ctx = X509_STORE_CTX_new();
     X509_STORE *store = X509_STORE_new();
     X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_new();
@@ -1074,26 +1111,28 @@ static int test_crl_get_fn_score(void)
     int status = X509_V_ERR_UNSPECIFIED;
 
     if (!TEST_ptr(ctx)
+        || !TEST_ptr(root)
+        || !TEST_ptr(leaf)
         || !TEST_ptr(store)
         || !TEST_ptr(param)
         || !TEST_ptr(roots))
         goto err;
 
     /* Create a stack; upref the cert because we free it below. */
-    if (!TEST_true(X509_up_ref(root1)))
+    if (!TEST_true(X509_up_ref(root)))
         goto err;
-    if (!TEST_true(sk_X509_push(roots, root1))) {
-        X509_free(root1);
+    if (!TEST_true(sk_X509_push(roots, root))) {
+        X509_free(root);
+        root = NULL;
         goto err;
     }
-    if (!TEST_true(X509_STORE_CTX_init(ctx, store, leaf1, NULL)))
+    if (!TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL)))
         goto err;
 
     X509_STORE_CTX_set0_trusted_stack(ctx, roots);
     X509_STORE_CTX_set_get_crl(ctx, &get_crl_fn);
     X509_VERIFY_PARAM_set_time(param, PARAM_TIME);
-    if (!TEST_long_eq((long)X509_VERIFY_PARAM_get_time(param),
-            (long)PARAM_TIME))
+    if (!TEST_long_eq((long)X509_VERIFY_PARAM_get_time(param), (long)PARAM_TIME))
         goto err;
     X509_VERIFY_PARAM_set_depth(param, 16);
     X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_CRL_CHECK);
@@ -1111,6 +1150,8 @@ err:
     X509_VERIFY_PARAM_free(param);
     X509_STORE_CTX_free(ctx);
     X509_STORE_free(store);
+    X509_free(root);
+    X509_free(leaf);
     return status == X509_V_OK;
 }
 
@@ -1142,7 +1183,7 @@ static int test_crl_number(void)
     return test;
 }
 
-static int test_crl_idp_malformed(void)
+static int test_crl_idp_asn1_wrong_tag(void)
 {
     X509_CRL *crl;
     int test;
@@ -1156,7 +1197,7 @@ static int test_crl_idp_malformed(void)
     return test;
 }
 
-static int test_crl_idp_malformed2(void)
+static int test_crl_idp_asn1_wrong_tag2(void)
 {
     X509_CRL *crl;
     int test;
@@ -1177,48 +1218,138 @@ static int test_crl_idp_malformed2(void)
  */
 static int test_private_keys(void)
 {
-    X509 *root3 = NULL;
-    X509 *leaf3 = NULL;
+    X509 *root = NULL;
+    X509 *leaf = NULL;
     EVP_PKEY *root_pkey = NULL;
     EVP_PKEY *leaf_pkey = NULL;
     EVP_PKEY *root_pub = NULL;
     EVP_PKEY *leaf_pub = NULL;
     int test;
 
-    test = TEST_ptr(root3 = X509_from_strings(kRoot))
-        && TEST_ptr(leaf3 = X509_from_strings(kLeaf))
+    test = TEST_ptr(root = X509_from_strings(kRoot))
+        && TEST_ptr(leaf = X509_from_strings(kLeaf))
         && TEST_ptr(root_pkey = EVP_PKEY_from_strings(kRootPrivateKey))
         && TEST_ptr(leaf_pkey = EVP_PKEY_from_strings(kLeafPrivateKey))
-        && TEST_ptr(root_pub = X509_get_pubkey(root3))
-        && TEST_ptr(leaf_pub = X509_get_pubkey(leaf3))
+        && TEST_ptr(root_pub = X509_get_pubkey(root))
+        && TEST_ptr(leaf_pub = X509_get_pubkey(leaf))
         && TEST_int_eq(EVP_PKEY_eq(root_pub, root_pkey), 1)
         && TEST_int_eq(EVP_PKEY_eq(leaf_pub, leaf_pkey), 1);
 
     EVP_PKEY_free(root_pkey);
     EVP_PKEY_free(leaf_pkey);
-    X509_free(root3);
-    X509_free(leaf3);
+    EVP_PKEY_free(root_pub);
+    EVP_PKEY_free(leaf_pub);
+    X509_free(root);
+    X509_free(leaf);
+    return test;
+}
+
+static int test_crl_idp_onlyca_onlyattr(void)
+{
+    X509 *root = NULL;
+    X509 *leaf = NULL;
+    X509_CRL *crl = NULL;
+    STACK_OF(X509_CRL) *crls;
+    unsigned int flags = X509_V_FLAG_CRL_CHECK;
+    unsigned int expect = X509_V_ERR_UNABLE_TO_GET_CRL;
+    int test;
+
+    test = TEST_ptr(root = X509_from_strings(kRoot))
+        && TEST_ptr(leaf = X509_from_strings(kLeaf))
+        && TEST_ptr((crl = CRL_from_strings(kCrlIDPOnlyCaOnlyAttr)))
+        && TEST_ptr((crls = make_CRL_stack(crl, NULL)))
+        && TEST_int_eq(verify(leaf, root, crls, flags, kVerify), expect);
+
+    X509_CRL_free(crl);
+    X509_free(root);
+    X509_free(leaf);
+    return test;
+}
+
+static int test_crl_idp_onlyuser_onlyattr(void)
+{
+    X509 *root = NULL;
+    X509 *leaf = NULL;
+    X509_CRL *crl = NULL;
+    STACK_OF(X509_CRL) *crls;
+    unsigned int flags = X509_V_FLAG_CRL_CHECK;
+    unsigned int expect = X509_V_ERR_UNABLE_TO_GET_CRL;
+    int test;
+
+    test = TEST_ptr(root = X509_from_strings(kRoot))
+        && TEST_ptr(leaf = X509_from_strings(kLeaf))
+        && TEST_ptr((crl = CRL_from_strings(kCrlIDPOnlyUserOnlyAttr)))
+        && TEST_ptr((crls = make_CRL_stack(crl, NULL)))
+        && TEST_int_eq(verify(leaf, root, crls, flags, kVerify), expect);
+
+    X509_CRL_free(crl);
+    X509_free(root);
+    X509_free(leaf);
+    return test;
+}
+
+static int test_crl_idp_onlyuser_onlyca(void)
+{
+    X509 *root = NULL;
+    X509 *leaf = NULL;
+    X509_CRL *crl = NULL;
+    STACK_OF(X509_CRL) *crls;
+    unsigned int flags = X509_V_FLAG_CRL_CHECK;
+    unsigned int expect = X509_V_ERR_UNABLE_TO_GET_CRL;
+    int test;
+
+    test = TEST_ptr(root = X509_from_strings(kRoot))
+        && TEST_ptr(leaf = X509_from_strings(kLeaf))
+        && TEST_ptr((crl = CRL_from_strings(kCrlIDPOnlyUserOnlyCA)))
+        && TEST_ptr((crls = make_CRL_stack(crl, NULL)))
+        && TEST_int_eq(verify(leaf, root, crls, flags, kVerify), expect);
+
+    X509_CRL_free(crl);
+    X509_free(root);
+    X509_free(leaf);
+    return test;
+}
+
+static int test_crl_idp_onlyuser_onlyca_onlyattr(void)
+{
+    X509 *root = NULL;
+    X509 *leaf = NULL;
+    X509_CRL *crl = NULL;
+    STACK_OF(X509_CRL) *crls;
+    unsigned int flags = X509_V_FLAG_CRL_CHECK;
+    unsigned int expect = X509_V_ERR_UNABLE_TO_GET_CRL;
+    int test;
+
+    test = TEST_ptr(root = X509_from_strings(kRoot))
+        && TEST_ptr(leaf = X509_from_strings(kLeaf))
+        && TEST_ptr((crl = CRL_from_strings(kCrlIDPOnlyUserOnlyCAOnlyAttr)))
+        && TEST_ptr((crls = make_CRL_stack(crl, NULL)))
+        && TEST_int_eq(verify(leaf, root, crls, flags, kVerify), expect);
+
+    X509_CRL_free(crl);
+    X509_free(root);
+    X509_free(leaf);
     return test;
 }
 
 static int test_crl_revocation(void)
 {
-    X509 *root3 = NULL;
-    X509 *leaf3 = NULL;
+    X509 *root = NULL;
+    X509 *leaf = NULL;
     X509_CRL *crl = NULL;
     STACK_OF(X509_CRL) *crls;
     unsigned int flags = X509_V_FLAG_CRL_CHECK;
     int test;
 
-    test = TEST_ptr(root3 = X509_from_strings(kRoot))
-        && TEST_ptr(leaf3 = X509_from_strings(kLeaf))
+    test = TEST_ptr(root = X509_from_strings(kRoot))
+        && TEST_ptr(leaf = X509_from_strings(kLeaf))
         && TEST_ptr((crl = CRL_from_strings(kCrlRecovated)))
         && TEST_ptr((crls = make_CRL_stack(crl, NULL)))
-        && TEST_int_eq(verify(leaf3, root3, crls, flags, kVerify), X509_V_OK);
+        && TEST_int_eq(verify(leaf, root, crls, flags, kVerify), X509_V_OK);
 
     X509_CRL_free(crl);
-    X509_free(root3);
-    X509_free(leaf3);
+    X509_free(root);
+    X509_free(leaf);
     return test;
 }
 
@@ -1234,131 +1365,50 @@ static int test_crl_extension_duplicate(void)
 
 static int test_crl_extension_duplicate_entry(void)
 {
-    X509 *root3 = NULL;
-    X509 *leaf3 = NULL;
+    X509 *root = NULL;
+    X509 *leaf = NULL;
     X509_CRL *crl = NULL;
     STACK_OF(X509_CRL) *crls;
     unsigned int flags = X509_V_FLAG_CRL_CHECK;
+    unsigned int expect = X509_V_ERR_CERT_REVOKED;
     int test;
 
-    test = TEST_ptr(root3 = X509_from_strings(kRoot))
-        && TEST_ptr(leaf3 = X509_from_strings(kLeaf))
+    test = TEST_ptr(root = X509_from_strings(kRoot))
+        && TEST_ptr(leaf = X509_from_strings(kLeaf))
         && TEST_ptr((crl = CRL_from_strings(kCrlExtensionDuplicateEntry)))
         && TEST_ptr((crls = make_CRL_stack(crl, NULL)))
-        && TEST_int_eq(verify(leaf3, root3, crls, flags, kVerify), X509_V_ERR_CERT_REVOKED);
+        && TEST_int_eq(verify(leaf, root, crls, flags, kVerify), expect);
 
     X509_CRL_free(crl);
-    X509_free(root3);
-    X509_free(leaf3);
+    X509_free(root);
+    X509_free(leaf);
     return test;
 }
 
 static int test_crl_extension_duplicate_serial(void)
 {
-    X509_CRL *crl = NULL;
-    int test;
-
-    test = TEST_ptr_null((crl = CRL_from_strings(kCrlExtensionDuplicateSerial)));
-    X509_CRL_free(crl);
-    return test;
-}
-
-static int test_crl_idp_onlyca_onlyattr(void)
-{
-    X509 *root3 = NULL;
-    X509 *leaf3 = NULL;
+    X509 *root = NULL;
+    X509 *leaf = NULL;
     X509_CRL *crl = NULL;
     STACK_OF(X509_CRL) *crls;
     unsigned int flags = X509_V_FLAG_CRL_CHECK;
-    unsigned int expect = X509_V_ERR_UNABLE_TO_GET_CRL;
+    unsigned int expect = X509_V_ERR_CERT_REVOKED;
     int test;
 
-    test = TEST_ptr(root3 = X509_from_strings(kRoot))
-        && TEST_ptr(leaf3 = X509_from_strings(kLeaf))
-        && TEST_ptr((crl = CRL_from_strings(kCrlIDPOnlyCaOnlyAttr)))
+    test = TEST_ptr(root = X509_from_strings(kRoot))
+        && TEST_ptr(leaf = X509_from_strings(kLeaf))
+        && TEST_ptr((crl = CRL_from_strings(kCrlExtensionDuplicateSerial)))
         && TEST_ptr((crls = make_CRL_stack(crl, NULL)))
-        && TEST_int_eq(verify(leaf3, root3, crls, flags, kVerify), expect);
+        && TEST_int_eq(verify(leaf, root, crls, flags, kVerify), expect);
 
     X509_CRL_free(crl);
-    X509_free(root3);
-    X509_free(leaf3);
-    return test;
-}
-
-static int test_crl_idp_onlyuser_onlyattr(void)
-{
-    X509 *root3 = NULL;
-    X509 *leaf3 = NULL;
-    X509_CRL *crl = NULL;
-    STACK_OF(X509_CRL) *crls;
-    unsigned int flags = X509_V_FLAG_CRL_CHECK;
-    unsigned int expect = X509_V_ERR_UNABLE_TO_GET_CRL;
-    int test;
-
-    test = TEST_ptr(root3 = X509_from_strings(kRoot))
-        && TEST_ptr(leaf3 = X509_from_strings(kLeaf))
-        && TEST_ptr((crl = CRL_from_strings(kCrlIDPOnlyUserOnlyAttr)))
-        && TEST_ptr((crls = make_CRL_stack(crl, NULL)))
-        && TEST_int_eq(verify(leaf3, root3, crls, flags, kVerify), expect);
-
-    X509_CRL_free(crl);
-    X509_free(root3);
-    X509_free(leaf3);
-    return test;
-}
-
-static int test_crl_idp_onlyuser_onlyca(void)
-{
-    X509 *root3 = NULL;
-    X509 *leaf3 = NULL;
-    X509_CRL *crl = NULL;
-    STACK_OF(X509_CRL) *crls;
-    unsigned int flags = X509_V_FLAG_CRL_CHECK;
-    unsigned int expect = X509_V_ERR_UNABLE_TO_GET_CRL;
-    int test;
-
-    test = TEST_ptr(root3 = X509_from_strings(kRoot))
-        && TEST_ptr(leaf3 = X509_from_strings(kLeaf))
-        && TEST_ptr((crl = CRL_from_strings(kCrlIDPOnlyUserOnlyCA)))
-        && TEST_ptr((crls = make_CRL_stack(crl, NULL)))
-        && TEST_int_eq(verify(leaf3, root3, crls, flags, kVerify), expect);
-
-    X509_CRL_free(crl);
-    X509_free(root3);
-    X509_free(leaf3);
-    return test;
-}
-
-static int test_crl_idp_onlyuser_onlyca_onlyattr(void)
-{
-    X509 *root3 = NULL;
-    X509 *leaf3 = NULL;
-    X509_CRL *crl = NULL;
-    STACK_OF(X509_CRL) *crls;
-    unsigned int flags = X509_V_FLAG_CRL_CHECK;
-    unsigned int expect = X509_V_ERR_UNABLE_TO_GET_CRL;
-    int test;
-
-    test = TEST_ptr(root3 = X509_from_strings(kRoot))
-        && TEST_ptr(leaf3 = X509_from_strings(kLeaf))
-        && TEST_ptr((crl = CRL_from_strings(kCrlIDPOnlyUserOnlyCAOnlyAttr)))
-        && TEST_ptr((crls = make_CRL_stack(crl, NULL)))
-        && TEST_int_eq(verify(leaf3, root3, crls, flags, kVerify), expect);
-
-    X509_CRL_free(crl);
-    X509_free(root3);
-    X509_free(leaf3);
+    X509_free(root);
+    X509_free(leaf);
     return test;
 }
 
 int setup_tests(void)
 {
-    if (!TEST_ptr(root1 = X509_from_strings(kCRLTestRoot))
-        || !TEST_ptr(leaf1 = X509_from_strings(kCRLTestLeaf))
-        || !TEST_ptr(root2 = X509_from_strings(kCRLTestRoot2))
-        || !TEST_ptr(leaf2 = X509_from_strings(kCRLTestLeaf2)))
-        return 0;
-
     ADD_TEST(test_private_keys);
     ADD_TEST(test_no_crl);
     ADD_TEST(test_crl_basic);
@@ -1370,8 +1420,8 @@ int setup_tests(void)
     ADD_TEST(test_crl_get_fn_score);
     ADD_TEST(test_crl_delta_indicator);
     ADD_TEST(test_crl_number);
-    ADD_TEST(test_crl_idp_malformed);
-    ADD_TEST(test_crl_idp_malformed2);
+    ADD_TEST(test_crl_idp_asn1_wrong_tag);
+    ADD_TEST(test_crl_idp_asn1_wrong_tag2);
     ADD_TEST(test_crl_idp_onlyca_onlyattr);
     ADD_TEST(test_crl_idp_onlyuser_onlyattr);
     ADD_TEST(test_crl_idp_onlyuser_onlyca);
@@ -1388,8 +1438,4 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
-    X509_free(root1);
-    X509_free(leaf1);
-    X509_free(root2);
-    X509_free(leaf2);
 }
