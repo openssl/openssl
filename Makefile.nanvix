@@ -146,6 +146,7 @@ CONFIGURE_OPTS = \
 
 PLATFORM ?= unknown
 PROCESS_MODE ?= unknown
+MEMORY_SIZE ?= unknown
 
 # Marker file to track if configure has been run
 CONFIGURED_MARKER = .nanvix-configured
@@ -297,7 +298,7 @@ test: test-smoke test-integration test-functional
 
 package: all
 	@echo "=== Packaging openssl release ==="
-	$(eval ARTIFACT_NAME := openssl-$(PLATFORM)-$(PROCESS_MODE))
+	$(eval ARTIFACT_NAME := openssl-$(PLATFORM)-$(PROCESS_MODE)-$(MEMORY_SIZE))
 	rm -rf dist/$(ARTIFACT_NAME)
 	mkdir -p dist/$(ARTIFACT_NAME)/sysroot/lib \
 	         dist/$(ARTIFACT_NAME)/sysroot/include/openssl
@@ -316,7 +317,7 @@ package: all
 
 verify-package:
 	@echo "=== Verifying openssl package ==="
-	$(eval ARTIFACT_NAME := openssl-$(PLATFORM)-$(PROCESS_MODE))
+	$(eval ARTIFACT_NAME := openssl-$(PLATFORM)-$(PROCESS_MODE)-$(MEMORY_SIZE))
 	@TARBALL="dist/$(ARTIFACT_NAME).tar.bz2"; \
 	if [ ! -f "$$TARBALL" ]; then \
 	  echo "FAIL: Package tarball not found: $$TARBALL"; exit 1; \
