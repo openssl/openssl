@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,6 +21,15 @@
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+
+#if defined __has_include
+/* Any compiler you're going to run valgrind on has this */
+#if __has_include(<valgrind/valgrind.h>)
+#include <valgrind/valgrind.h>
+#define OPENSSL_VALGRIND_H_INCLUDED
+#endif
+#endif /* defined(__has_include) */
+
 /* Needed to get the other O_xxx flags. */
 #ifdef OPENSSL_SYS_VMS
 #include <unixio.h>
@@ -51,7 +60,7 @@ static void warn_deprecated(const FUNCTION *fp)
         BIO_printf(bio_err, "The command %s is deprecated.", fp->name);
     if (strcmp(fp->deprecated_alternative, DEPRECATED_NO_ALTERNATIVE) != 0)
         BIO_printf(bio_err, " Use '%s' instead.", fp->deprecated_alternative);
-    BIO_printf(bio_err, "\n");
+    BIO_puts(bio_err, "\n");
 }
 
 static int apps_startup(void)
@@ -107,7 +116,7 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
     switch (cmd) {
     case OSSL_TRACE_CTRL_BEGIN:
         if (trace_data->ingroup) {
-            BIO_printf(bio_err, "ERROR: tracing already started\n");
+            BIO_puts(bio_err, "ERROR: tracing already started\n");
             return 0;
         }
         trace_data->ingroup = 1;
@@ -122,7 +131,7 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
         break;
     case OSSL_TRACE_CTRL_WRITE:
         if (!trace_data->ingroup) {
-            BIO_printf(bio_err, "ERROR: writing when tracing not started\n");
+            BIO_puts(bio_err, "ERROR: writing when tracing not started\n");
             return 0;
         }
         if (cnt > INT_MAX)
@@ -132,7 +141,7 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
         break;
     case OSSL_TRACE_CTRL_END:
         if (!trace_data->ingroup) {
-            BIO_printf(bio_err, "ERROR: finishing when tracing not started\n");
+            BIO_puts(bio_err, "ERROR: finishing when tracing not started\n");
             return 0;
         }
         trace_data->ingroup = 0;
@@ -372,6 +381,32 @@ end:
 #ifndef OPENSSL_NO_SECURE_MEMORY
     CRYPTO_secure_malloc_done();
 #endif
+
+#if defined(OPENSSL_VALGRIND_TEST)
+#if defined(OPENSSL_VALGRIND_H_INCLUDED)
+#if defined(RUNNING_ON_VALGRIND)
+    /*
+     * Enable special behaviour if we are compiled with
+     * OPENSSL_VALGRIND_TEST defined.
+     *
+     * Somewhat paradoxically, we do *NOT* want to clean up normally
+     * when running our tests using valgrind in order to test the
+     * suppression file which we will ship with the distribution. We
+     * set the OSSL_USE_VALGRIND environment variable for this
+     * purpose, but we only want to dodge cleanup when running under
+     * valgrind, *and* that environment variable is set. If you run
+     * this under valgrind without that environment variable set, it
+     * will still call OPENSSL_cleanup normally.
+     *
+     */
+    if (RUNNING_ON_VALGRIND && getenv("OSSL_USE_VALGRIND") != NULL)
+        EXIT(ret);
+#endif /* defined(RUNNING_ON_VALGRIND) */
+#else
+#error "OPENSSL_VALGRIND_TEST is defined, but <valgrind/valgrind.h> could not be included!"
+#endif /* defined(OPENSSL_VALGRIND_H_INCLUDED) */
+#endif /* defined(OPENSSL_VALGRIND_TEST) */
+    OPENSSL_cleanup();
     EXIT(ret);
 }
 
@@ -434,26 +469,26 @@ int help_main(int argc, char **argv)
     for (fp = functions; fp->name != NULL; fp++) {
         nl = 0;
         if (i++ % dc.columns == 0) {
-            BIO_printf(bio_err, "\n");
+            BIO_puts(bio_err, "\n");
             nl = 1;
         }
         if (fp->type != tp) {
             tp = fp->type;
             if (!nl)
-                BIO_printf(bio_err, "\n");
+                BIO_puts(bio_err, "\n");
             if (tp == FT_md) {
                 i = 1;
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "\nMessage Digest commands (see the `dgst' command for more details)\n");
             } else if (tp == FT_cipher) {
                 i = 1;
-                BIO_printf(bio_err,
+                BIO_puts(bio_err,
                     "\nCipher commands (see the `enc' command for more details)\n");
             }
         }
         BIO_printf(bio_err, "%-*s", dc.width, fp->name);
     }
-    BIO_printf(bio_err, "\n\n");
+    BIO_puts(bio_err, "\n\n");
     return 0;
 }
 
@@ -467,11 +502,18 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
     f.name = argv[0];
     fp = lh_FUNCTION_retrieve(prog, &f);
     if (fp == NULL) {
-        if (EVP_get_digestbyname(argv[0])) {
+        EVP_MD *md = NULL;
+        EVP_CIPHER *cipher = NULL;
+
+        if ((md = EVP_MD_fetch(app_get0_libctx(), argv[0], app_get0_propq())) != NULL) {
+            EVP_MD_free(md);
+            md = NULL;
             f.type = FT_md;
             f.func = dgst_main;
             fp = &f;
-        } else if (EVP_get_cipherbyname(argv[0])) {
+        } else if ((cipher = EVP_CIPHER_fetch(app_get0_libctx(), argv[0], app_get0_propq())) != NULL) {
+            EVP_CIPHER_free(cipher);
+            cipher = NULL;
             f.type = FT_cipher;
             f.func = enc_main;
             fp = &f;

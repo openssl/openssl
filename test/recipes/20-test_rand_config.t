@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -10,7 +10,7 @@
 use strict;
 use warnings;
 
-use OpenSSL::Test;
+use OpenSSL::Test qw/:DEFAULT result_dir/;
 use OpenSSL::Test::Utils;
 
 setup("test_rand_config");
@@ -57,7 +57,7 @@ my @aria_tests = (
 
 push @rand_tests, @aria_tests unless disabled("aria");
 
-plan tests => scalar @rand_tests;
+plan tests => scalar @rand_tests * 2;
 
 my $contents =<<'CONFIGEND';
 openssl_conf = openssl_init
@@ -86,6 +86,9 @@ foreach (@rand_tests) {
     $ENV{OPENSSL_CONF} = $tmpfile;
 
     ok(comparelines($_->{expected}), $_->{desc});
+    # Also check that instantiating the drbg works
+    my $result_dir = result_dir();
+    ok(run(app(["openssl", "rand", "-writerand", "$result_dir/$tmpfile.bin"])));
 }
 
 # Check that the stdout output contains the expected values.

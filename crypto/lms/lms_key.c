@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -105,4 +105,26 @@ int ossl_lms_key_has(const LMS_KEY *key, int selection)
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         return 0;
     return 1;
+}
+
+/* Returns the public key data or NULL if there is no public key */
+const uint8_t *ossl_lms_key_get_pub(const LMS_KEY *key)
+{
+    return key->pub.encoded;
+}
+
+/* The encoded public key size */
+size_t ossl_lms_key_get_pub_len(const LMS_KEY *key)
+{
+    return 24 + key->lms_params->n;
+}
+
+size_t ossl_lms_key_get_collision_strength_bits(const LMS_KEY *key)
+{
+    return key->lms_params->n * 8;
+}
+
+size_t ossl_lms_key_get_sig_len(const LMS_KEY *key)
+{
+    return 12 + key->lms_params->n * (1 + key->ots_params->p + key->lms_params->h);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -124,19 +124,6 @@ static OSSL_DEMO_H3_STREAM *h3_conn_create_stream(OSSL_DEMO_H3_CONN *conn, int t
 err:
     OPENSSL_free(s);
     return NULL;
-}
-
-static OSSL_DEMO_H3_STREAM *h3_conn_accept_stream(OSSL_DEMO_H3_CONN *conn, SSL *qstream)
-{
-    OSSL_DEMO_H3_STREAM *s;
-
-    if ((s = OPENSSL_zalloc(sizeof(OSSL_DEMO_H3_STREAM))) == NULL)
-        return NULL;
-
-    s->id = SSL_get_stream_id(qstream);
-    s->s = qstream;
-    lh_OSSL_DEMO_H3_STREAM_insert(conn->streams, s);
-    return s;
 }
 
 static void h3_conn_remove_stream(OSSL_DEMO_H3_CONN *conn, OSSL_DEMO_H3_STREAM *s)
@@ -429,7 +416,7 @@ OSSL_DEMO_H3_CONN *OSSL_DEMO_H3_CONN_new_for_addr(SSL_CTX *ctx, const BIO_ADDRIN
     qconn_bio = NULL;
 
     /* Set the hostname we will validate the X.509 certificate against. */
-    if (SSL_set1_host(qconn, bare_hostname) <= 0)
+    if (SSL_set1_dnsname(qconn, bare_hostname) <= 0)
         goto err;
 
     /* Configure SNI */
@@ -457,6 +444,25 @@ void *OSSL_DEMO_H3_CONN_get_user_data(const OSSL_DEMO_H3_CONN *conn)
 SSL *OSSL_DEMO_H3_CONN_get0_connection(const OSSL_DEMO_H3_CONN *conn)
 {
     return conn->qconn;
+}
+
+typedef struct ossl_demo_h3_poll_list {
+    SSL_POLL_ITEM *poll_list;
+    OSSL_DEMO_H3_STREAM **h3_streams;
+    OSSL_DEMO_H3_CONN *conn;
+    size_t poll_count;
+    size_t idx;
+} OSSL_DEMO_H3_POLL_LIST;
+
+static void h3_conn_collect_streams(OSSL_DEMO_H3_STREAM *s, void *list)
+{
+    OSSL_DEMO_H3_POLL_LIST *pollist = list;
+
+    pollist->poll_list[pollist->idx].desc = SSL_as_poll_descriptor(s->s);
+    pollist->poll_list[pollist->idx].revents = 0;
+    pollist->poll_list[pollist->idx].events = SSL_POLL_EVENT_R;
+    pollist->h3_streams[pollist->idx] = s;
+    pollist->idx++;
 }
 
 /* Pumps received data to the HTTP/3 stack for a single stream. */
@@ -578,6 +584,10 @@ int OSSL_DEMO_H3_CONN_handle_events(OSSL_DEMO_H3_CONN *conn)
     nghttp3_vec vecs[8] = { 0 };
     OSSL_DEMO_H3_STREAM key, *s;
     SSL *snew;
+    OSSL_DEMO_H3_POLL_LIST *pollist = NULL;
+    size_t poll_num;
+    struct timeval poll_timeout;
+    size_t result_count;
 
     if (conn == NULL)
         return 0;
@@ -594,15 +604,6 @@ int OSSL_DEMO_H3_CONN_handle_events(OSSL_DEMO_H3_CONN *conn)
     for (;;) {
         if ((snew = SSL_accept_stream(conn->qconn, SSL_ACCEPT_STREAM_NO_BLOCK)) == NULL)
             break;
-
-        /*
-         * Each new incoming stream gets wrapped into an OSSL_DEMO_H3_STREAM object and
-         * added into our stream ID map.
-         */
-        if (h3_conn_accept_stream(conn, snew) == NULL) {
-            SSL_free(snew);
-            return 0;
-        }
     }
 
     /* 2. Pump outgoing data from HTTP/3 engine to QUIC. */
@@ -704,9 +705,36 @@ int OSSL_DEMO_H3_CONN_handle_events(OSSL_DEMO_H3_CONN *conn)
         }
     }
 
-    /* 3. Pump incoming data from QUIC to HTTP/3 engine. */
+    /* 3. Build a list of streams to poll on */
     conn->pump_res = 1; /* cleared in below call if an error occurs */
-    lh_OSSL_DEMO_H3_STREAM_doall_arg(conn->streams, h3_conn_pump_stream, conn);
+    poll_num = lh_OSSL_DEMO_H3_STREAM_num_items(conn->streams);
+    pollist = OPENSSL_malloc(sizeof(OSSL_DEMO_H3_POLL_LIST) + (sizeof(SSL_POLL_ITEM) * poll_num) + (sizeof(OSSL_DEMO_H3_STREAM *) * poll_num));
+    pollist->poll_count = poll_num;
+    pollist->poll_list = (SSL_POLL_ITEM *)(pollist + 1);
+    pollist->h3_streams = (OSSL_DEMO_H3_STREAM **)(pollist->poll_list + poll_num);
+    pollist->conn = conn;
+    pollist->idx = 0;
+    lh_OSSL_DEMO_H3_STREAM_doall_arg(conn->streams, h3_conn_collect_streams, pollist);
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+    result_count = 0;
+
+    /* 4. poll the list built above, looking for streams that are ready to read */
+    if (!SSL_poll(pollist->poll_list, pollist->idx, sizeof(SSL_POLL_ITEM),
+            &poll_timeout, 0, &result_count)) {
+        fprintf(stderr, "Failed to poll\n");
+        goto end;
+    }
+
+    /* 5. Pump incoming data from QUIC to HTTP/3 engine. */
+    for (i = 0; result_count != 0; i++) {
+        if (pollist->poll_list[i].revents == SSL_POLL_EVENT_R) {
+            result_count--;
+            h3_conn_pump_stream(pollist->h3_streams[i], pollist->conn);
+        }
+    }
+end:
+    OPENSSL_free(pollist);
     if (!conn->pump_res)
         return 0;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -26,6 +26,8 @@
 #include "internal/e_os.h"
 #include "internal/nelem.h"
 #include "internal/param_build_set.h"
+
+#include <crypto/asn1.h>
 
 /* Mapping between a flag and a name */
 static const OSSL_ITEM encoding_nameid_map[] = {
@@ -351,9 +353,9 @@ err:
 }
 
 /*
- * The intention with the "backend" source file is to offer backend support
- * for legacy backends (EVP_PKEY_ASN1_METHOD and EVP_PKEY_METHOD) and provider
- * implementations alike.
+ * The intention with the "backend" source file is to offer backend functions
+ * for legacy backends (EVP_PKEY_ASN1_METHOD) and provider implementations
+ * alike.
  */
 int ossl_ec_set_ecdh_cofactor_mode(EC_KEY *ec, int mode)
 {

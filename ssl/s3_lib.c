@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -166,6 +166,42 @@ static SSL_CIPHER tls13_ciphers[] = {
         384,
     },
 #endif
+    {
+        1,
+        TLS1_3_RFC_SM4_GCM_SM3,
+        TLS1_3_RFC_SM4_GCM_SM3,
+        TLS1_3_CK_SM4_GCM_SM3,
+        SSL_kANY,
+        SSL_aANY,
+        SSL_SM4GCM,
+        SSL_AEAD,
+        TLS1_3_VERSION,
+        TLS1_3_VERSION,
+        0,
+        0,
+        SSL_NOT_DEFAULT | SSL_HIGH,
+        SSL_HANDSHAKE_MAC_SM3,
+        128,
+        128,
+    },
+    {
+        1,
+        TLS1_3_RFC_SM4_CCM_SM3,
+        TLS1_3_RFC_SM4_CCM_SM3,
+        TLS1_3_CK_SM4_CCM_SM3,
+        SSL_kANY,
+        SSL_aANY,
+        SSL_SM4CCM,
+        SSL_AEAD,
+        TLS1_3_VERSION,
+        TLS1_3_VERSION,
+        0,
+        0,
+        SSL_NOT_DEFAULT | SSL_HIGH,
+        SSL_HANDSHAKE_MAC_SM3,
+        128,
+        128,
+    },
 };
 
 /*
@@ -211,7 +247,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_STRONG_NONE | SSL_FIPS,
+        SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         0,
         0,
@@ -304,7 +340,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -322,7 +358,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
+        SSL_NOT_DEFAULT | SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -340,7 +376,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -358,7 +394,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
+        SSL_NOT_DEFAULT | SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -376,7 +412,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         256,
         256,
@@ -394,7 +430,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
+        SSL_NOT_DEFAULT | SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         256,
         256,
@@ -412,7 +448,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         256,
         256,
@@ -430,7 +466,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
+        SSL_NOT_DEFAULT | SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         256,
         256,
@@ -449,7 +485,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_STRONG_NONE | SSL_FIPS,
+        SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         0,
         0,
@@ -468,7 +504,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -486,7 +522,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         256,
         256,
@@ -504,7 +540,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
+        SSL_NOT_DEFAULT | SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -522,7 +558,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -540,7 +576,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
+        SSL_NOT_DEFAULT | SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         256,
         256,
@@ -558,7 +594,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         256,
         256,
@@ -576,7 +612,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
+        SSL_NOT_DEFAULT | SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -594,7 +630,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
+        SSL_NOT_DEFAULT | SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         256,
         256,
@@ -612,7 +648,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
         128,
         128,
@@ -630,7 +666,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         256,
         256,
@@ -648,7 +684,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
         128,
         128,
@@ -666,7 +702,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         256,
         256,
@@ -684,7 +720,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
+        SSL_NOT_DEFAULT | SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
         128,
         128,
@@ -702,7 +738,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
+        SSL_NOT_DEFAULT | SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         256,
         256,
@@ -720,7 +756,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
+        SSL_NOT_DEFAULT | SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
         128,
         128,
@@ -738,7 +774,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
+        SSL_NOT_DEFAULT | SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         256,
         256,
@@ -1117,7 +1153,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_STRONG_NONE | SSL_FIPS,
+        SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         0,
         0,
@@ -1156,7 +1192,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -1174,7 +1210,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         256,
         256,
@@ -1193,7 +1229,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_STRONG_NONE | SSL_FIPS,
+        SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         0,
         0,
@@ -1232,7 +1268,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -1250,7 +1286,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         256,
         256,
@@ -1269,7 +1305,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_STRONG_NONE | SSL_FIPS,
+        SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         0,
         0,
@@ -1308,7 +1344,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
+        SSL_NOT_DEFAULT | SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -1326,7 +1362,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_NOT_DEFAULT | SSL_HIGH | SSL_FIPS,
+        SSL_NOT_DEFAULT | SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         256,
         256,
@@ -1344,7 +1380,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
         128,
         128,
@@ -1362,7 +1398,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         256,
         256,
@@ -1380,7 +1416,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
         128,
         128,
@@ -1398,7 +1434,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         256,
         256,
@@ -1416,7 +1452,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
         128,
         128,
@@ -1434,7 +1470,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         256,
         256,
@@ -1452,7 +1488,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
         128,
         128,
@@ -1470,7 +1506,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         256,
         256,
@@ -1489,7 +1525,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_STRONG_NONE | SSL_FIPS,
+        SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         0,
         0,
@@ -1507,7 +1543,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_STRONG_NONE | SSL_FIPS,
+        SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         0,
         0,
@@ -1525,7 +1561,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_STRONG_NONE | SSL_FIPS,
+        SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         0,
         0,
@@ -1564,7 +1600,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -1582,7 +1618,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         256,
         256,
@@ -1620,7 +1656,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -1638,7 +1674,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         256,
         256,
@@ -1676,7 +1712,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -1694,7 +1730,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         256,
         256,
@@ -1712,7 +1748,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
         128,
         128,
@@ -1730,7 +1766,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         256,
         256,
@@ -1748,7 +1784,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
         128,
         128,
@@ -1766,7 +1802,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         256,
         256,
@@ -1784,7 +1820,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
         128,
         128,
@@ -1802,7 +1838,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_2_VERSION,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         256,
         256,
@@ -1820,7 +1856,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -1838,7 +1874,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         256,
         256,
@@ -1857,7 +1893,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_STRONG_NONE | SSL_FIPS,
+        SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         0,
         0,
@@ -1875,7 +1911,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_STRONG_NONE | SSL_FIPS,
+        SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         0,
         0,
@@ -1894,7 +1930,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -1912,7 +1948,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         256,
         256,
@@ -1931,7 +1967,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_STRONG_NONE | SSL_FIPS,
+        SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         0,
         0,
@@ -1949,7 +1985,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_STRONG_NONE | SSL_FIPS,
+        SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         0,
         0,
@@ -1968,7 +2004,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -1986,7 +2022,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         256,
         256,
@@ -2005,7 +2041,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_STRONG_NONE | SSL_FIPS,
+        SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         0,
         0,
@@ -2023,7 +2059,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_STRONG_NONE | SSL_FIPS,
+        SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         0,
         0,
@@ -2062,7 +2098,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -2080,7 +2116,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         256,
         256,
@@ -2098,7 +2134,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         128,
         128,
@@ -2116,7 +2152,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_HIGH | SSL_FIPS,
+        SSL_HIGH,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         256,
         256,
@@ -2135,7 +2171,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_STRONG_NONE | SSL_FIPS,
+        SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         0,
         0,
@@ -2153,7 +2189,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_STRONG_NONE | SSL_FIPS,
+        SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF,
         0,
         0,
@@ -2171,7 +2207,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
         TLS1_2_VERSION,
         DTLS1_BAD_VER,
         DTLS1_2_VERSION,
-        SSL_STRONG_NONE | SSL_FIPS,
+        SSL_STRONG_NONE,
         SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384,
         0,
         0,
@@ -3735,44 +3771,6 @@ void ssl_sort_cipher_list(void)
     qsort(ssl3_scsvs, SSL3_NUM_SCSVS, sizeof(ssl3_scsvs[0]), cipher_compare);
 }
 
-static int sslcon_undefined_function_1(SSL_CONNECTION *sc, unsigned char *r,
-    size_t s, const char *t, size_t u,
-    const unsigned char *v, size_t w, int x)
-{
-    (void)r;
-    (void)s;
-    (void)t;
-    (void)u;
-    (void)v;
-    (void)w;
-    (void)x;
-    return ssl_undefined_function(SSL_CONNECTION_GET_SSL(sc));
-}
-
-const SSL3_ENC_METHOD SSLv3_enc_data = {
-    ssl3_setup_key_block,
-    ssl3_generate_master_secret,
-    ssl3_change_cipher_state,
-    ssl3_final_finish_mac,
-    SSL3_MD_CLIENT_FINISHED_CONST, 4,
-    SSL3_MD_SERVER_FINISHED_CONST, 4,
-    ssl3_alert_code,
-    sslcon_undefined_function_1,
-    0,
-    ssl3_set_handshake_header,
-    tls_close_construct_packet,
-    ssl3_handshake_write
-};
-
-OSSL_TIME ssl3_default_timeout(void)
-{
-    /*
-     * 2 hours, the 24 hours mentioned in the SSLv3 spec is way too long for
-     * http, the cache would over fill
-     */
-    return ossl_seconds2time(60 * 60 * 2);
-}
-
 int ssl3_num_ciphers(void)
 {
     return SSL3_NUM_CIPHERS;
@@ -3927,7 +3925,7 @@ int ssl3_clear(SSL *s)
     if (!ssl_free_wbio_buffer(sc))
         return 0;
 
-    sc->version = SSL3_VERSION;
+    sc->version = TLS1_VERSION;
 
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     OPENSSL_free(sc->ext.npn);
@@ -4041,7 +4039,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                 break;
             len = strlen((char *)parg);
             if (len == 0 || len > TLSEXT_MAXLEN_host_name) {
-                ERR_raise(ERR_LIB_SSL, SSL_R_SSL3_EXT_INVALID_SERVERNAME);
+                ERR_raise(ERR_LIB_SSL, SSL_R_TLS_EXT_INVALID_SERVERNAME);
                 return 0;
             }
             if ((sc->ext.hostname = OPENSSL_strdup((char *)parg)) == NULL) {
@@ -4049,7 +4047,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                 return 0;
             }
         } else {
-            ERR_raise(ERR_LIB_SSL, SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE);
+            ERR_raise(ERR_LIB_SSL, SSL_R_TLS_EXT_INVALID_SERVERNAME_TYPE);
             return 0;
         }
         break;
@@ -4252,7 +4250,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             parg);
 
     case SSL_CTRL_GET_SHARED_GROUP: {
-        uint16_t id = tls1_shared_group(sc, larg);
+        uint16_t id = tls1_shared_group(sc, larg, TLS1_GROUPS_ALL_GROUPS);
 
         if (larg != -1)
             return tls1_group_id2nid(id, 1);
@@ -4392,7 +4390,7 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
     switch (cmd) {
 #if !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_DH_CB:
-        sc->cert->dh_tmp_cb = (DH * (*)(SSL *, int, int)) fp;
+        sc->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
         ret = 1;
         break;
 #endif
@@ -4663,7 +4661,7 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
     switch (cmd) {
 #if !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_DH_CB: {
-        ctx->cert->dh_tmp_cb = (DH * (*)(SSL *, int, int)) fp;
+        ctx->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
     } break;
 #endif
     case SSL_CTRL_SET_TLSEXT_SERVERNAME_CB:
@@ -4727,18 +4725,32 @@ const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id)
     return OBJ_bsearch_ssl_cipher_id(&c, ssl3_scsvs, SSL3_NUM_SCSVS);
 }
 
+const SSL_CIPHER *ssl3_get_tls13_cipher_by_std_name(const char *stdname)
+{
+    SSL_CIPHER *end = &tls13_ciphers[TLS13_NUM_CIPHERS];
+
+    /* this is not efficient, necessary to optimize this? */
+    for (SSL_CIPHER *c = tls13_ciphers; c < end; ++c) {
+        if (c->stdname == NULL)
+            continue;
+        if (OPENSSL_strcasecmp(stdname, c->stdname) == 0)
+            return c;
+    }
+    return NULL;
+}
+
 const SSL_CIPHER *ssl3_get_cipher_by_std_name(const char *stdname)
 {
     SSL_CIPHER *tbl;
-    SSL_CIPHER *alltabs[] = { tls13_ciphers, ssl3_ciphers, ssl3_scsvs };
-    size_t i, j, tblsize[] = { TLS13_NUM_CIPHERS, SSL3_NUM_CIPHERS, SSL3_NUM_SCSVS };
+    SSL_CIPHER *alltabs[] = { ssl3_ciphers, ssl3_scsvs };
+    size_t i, j, tblsize[] = { SSL3_NUM_CIPHERS, SSL3_NUM_SCSVS };
 
     /* this is not efficient, necessary to optimize this? */
     for (j = 0; j < OSSL_NELEM(alltabs); j++) {
         for (i = 0, tbl = alltabs[j]; i < tblsize[j]; i++, tbl++) {
             if (tbl->stdname == NULL)
                 continue;
-            if (strcmp(stdname, tbl->stdname) == 0) {
+            if (OPENSSL_strcasecmp(stdname, tbl->stdname) == 0) {
                 return tbl;
             }
         }
@@ -4931,10 +4943,17 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
                 ok, alg_k, alg_a, mask_k, mask_a, (void *)c, c->name);
 
             /*
+             * if we are considering a DHE cipher suite that uses an ephemeral
+             * FFDHE key check it
+             */
+            if (alg_k & (SSL_kDHE | SSL_kDHEPSK))
+                ok = ok && tls1_check_ffdhe_tmp_key(s, c->id);
+
+            /*
              * if we are considering an ECC cipher suite that uses an ephemeral
              * EC key check it
              */
-            if (alg_k & SSL_kECDHE)
+            if (alg_k & (SSL_kECDHE | SSL_kECDHEPSK))
                 ok = ok && tls1_check_ec_tmp_key(s, c->id);
 
             if (!ok)
@@ -4980,7 +4999,10 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *cl
 
 int ssl3_get_req_cert_type(SSL_CONNECTION *s, WPACKET *pkt)
 {
-    uint32_t alg_k, alg_a = 0;
+#ifndef OPENSSL_NO_GOST
+    uint32_t alg_k;
+#endif
+    uint32_t alg_a = 0;
 
     /* If we have custom certificate types set, use them */
     if (s->cert->ctype)
@@ -4988,9 +5010,9 @@ int ssl3_get_req_cert_type(SSL_CONNECTION *s, WPACKET *pkt)
     /* Get mask of algorithms disabled by signature list */
     ssl_set_sig_mask(&alg_a, s, SSL_SECOP_SIGALG_MASK);
 
+#ifndef OPENSSL_NO_GOST
     alg_k = s->s3.tmp.new_cipher->algorithm_mkey;
 
-#ifndef OPENSSL_NO_GOST
     if (s->version >= TLS1_VERSION && (alg_k & SSL_kGOST))
         if (!WPACKET_put_bytes_u8(pkt, TLS_CT_GOST01_SIGN)
             || !WPACKET_put_bytes_u8(pkt, TLS_CT_GOST12_IANA_SIGN)
@@ -5005,13 +5027,6 @@ int ssl3_get_req_cert_type(SSL_CONNECTION *s, WPACKET *pkt)
             return 0;
 #endif
 
-    if ((s->version == SSL3_VERSION) && (alg_k & SSL_kDHE)) {
-        if (!WPACKET_put_bytes_u8(pkt, SSL3_CT_RSA_EPHEMERAL_DH))
-            return 0;
-        if (!(alg_a & SSL_aDSS)
-            && !WPACKET_put_bytes_u8(pkt, SSL3_CT_DSS_EPHEMERAL_DH))
-            return 0;
-    }
     if (!(alg_a & SSL_aRSA) && !WPACKET_put_bytes_u8(pkt, SSL3_CT_RSA_SIGN))
         return 0;
     if (!(alg_a & SSL_aDSS) && !WPACKET_put_bytes_u8(pkt, SSL3_CT_DSS_SIGN))

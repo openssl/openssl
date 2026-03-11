@@ -1,4 +1,4 @@
-# Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -820,6 +820,7 @@ EVP_R_XTS_DATA_UNIT_IS_TOO_LARGE:191:xts data unit is too large
 EVP_R_XTS_DUPLICATED_KEYS:192:xts duplicated keys
 HTTP_R_ASN1_LEN_EXCEEDS_MAX_RESP_LEN:108:asn1 len exceeds max resp len
 HTTP_R_CONNECT_FAILURE:100:connect failure
+HTTP_R_CONTENT_TYPE_MISMATCH:131:content type mismatch
 HTTP_R_ERROR_PARSING_ASN1_LENGTH:109:error parsing asn1 length
 HTTP_R_ERROR_PARSING_CONTENT_LENGTH:119:error parsing content length
 HTTP_R_ERROR_PARSING_URL:101:error parsing url
@@ -882,9 +883,11 @@ OCSP_R_UNSUPPORTED_REQUESTORNAME_TYPE:129:unsupported requestorname type
 OSSL_DECODER_R_COULD_NOT_DECODE_OBJECT:101:could not decode object
 OSSL_DECODER_R_DECODER_NOT_FOUND:102:decoder not found
 OSSL_DECODER_R_MISSING_GET_PARAMS:100:missing get params
+OSSL_ENCODER_R_BAD_PARAMETER_VALUE:103:bad parameter value
 OSSL_ENCODER_R_ENCODER_NOT_FOUND:101:encoder not found
 OSSL_ENCODER_R_INCORRECT_PROPERTY_QUERY:100:incorrect property query
 OSSL_ENCODER_R_MISSING_GET_PARAMS:102:missing get params
+OSSL_ENCODER_R_UNKNOWN_PARAMETER_NAME:104:unknown parameter name
 OSSL_STORE_R_AMBIGUOUS_CONTENT_TYPE:107:ambiguous content type
 OSSL_STORE_R_BAD_PASSWORD_READ:115:bad password read
 OSSL_STORE_R_ERROR_VERIFYING_PKCS12_MAC:113:error verifying pkcs12 mac
@@ -1061,6 +1064,7 @@ PROV_R_INIT_CALL_OUT_OF_ORDER:238:init call out of order
 PROV_R_INSUFFICIENT_DRBG_STRENGTH:181:insufficient drbg strength
 PROV_R_INVALID_AAD:108:invalid aad
 PROV_R_INVALID_AEAD:231:invalid aead
+PROV_R_INVALID_CIPHER:260:invalid cipher
 PROV_R_INVALID_CONFIG_DATA:211:invalid config data
 PROV_R_INVALID_CONSTANT_LENGTH:157:invalid constant length
 PROV_R_INVALID_CURVE:176:invalid curve
@@ -1071,12 +1075,16 @@ PROV_R_INVALID_DIGEST_LENGTH:166:invalid digest length
 PROV_R_INVALID_DIGEST_SIZE:218:invalid digest size
 PROV_R_INVALID_EDDSA_INSTANCE_FOR_ATTEMPTED_OPERATION:243:\
 	invalid eddsa instance for attempted operation
+PROV_R_INVALID_FUNCTION_NAME:258:invalid function name
+PROV_R_INVALID_INDEX_LENGTH:259:invalid index length
 PROV_R_INVALID_INPUT_LENGTH:230:invalid input length
 PROV_R_INVALID_ITERATION_COUNT:123:invalid iteration count
 PROV_R_INVALID_IV_LENGTH:109:invalid iv length
 PROV_R_INVALID_KDF:232:invalid kdf
+PROV_R_INVALID_KDR:256:invalid kdr
 PROV_R_INVALID_KEY:158:invalid key
 PROV_R_INVALID_KEY_LENGTH:105:invalid key length
+PROV_R_INVALID_LABEL:257:invalid label
 PROV_R_INVALID_MAC:151:invalid mac
 PROV_R_INVALID_MEMORY_SIZE:235:invalid memory size
 PROV_R_INVALID_MGF1_MD:167:invalid mgf1 md
@@ -1296,7 +1304,6 @@ RSA_R_RANDOMNESS_SOURCE_STRENGTH_INSUFFICIENT:180:\
 RSA_R_RSA_OPERATIONS_NOT_SUPPORTED:130:rsa operations not supported
 RSA_R_SLEN_CHECK_FAILED:136:salt length check failed
 RSA_R_SLEN_RECOVERY_FAILED:135:salt length recovery failed
-RSA_R_SSLV3_ROLLBACK_ATTACK:115:sslv3 rollback attack
 RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD:116:\
 	the asn1 object identifier is not known for this md
 RSA_R_UNKNOWN_ALGORITHM_TYPE:117:unknown algorithm type
@@ -1342,6 +1349,7 @@ SSL_R_BAD_DH_VALUE:102:bad dh value
 SSL_R_BAD_DIGEST_LENGTH:111:bad digest length
 SSL_R_BAD_EARLY_DATA:233:bad early data
 SSL_R_BAD_ECC_CERT:304:bad ecc cert
+SSL_R_BAD_ECHCONFIG_EXTENSION:425:bad echconfig extension
 SSL_R_BAD_ECPOINT:306:bad ecpoint
 SSL_R_BAD_EXTENSION:110:bad extension
 SSL_R_BAD_HANDSHAKE_LENGTH:332:bad handshake length
@@ -1422,6 +1430,8 @@ SSL_R_DTLS_MESSAGE_TOO_BIG:334:dtls message too big
 SSL_R_DUPLICATE_COMPRESSION_ID:309:duplicate compression id
 SSL_R_ECC_CERT_NOT_FOR_SIGNING:318:ecc cert not for signing
 SSL_R_ECDH_REQUIRED_FOR_SUITEB_MODE:374:ecdh required for suiteb mode
+SSL_R_ECH_DECODE_ERROR:426:ech decode error
+SSL_R_ECH_REQUIRED:424:ech required
 SSL_R_EE_KEY_TOO_SMALL:399:ee key too small
 SSL_R_EMPTY_RAW_PUBLIC_KEY:349:empty raw public key
 SSL_R_EMPTY_SRTP_PROTECTION_PROFILE_LIST:354:empty srtp protection profile list
@@ -1585,23 +1595,6 @@ SSL_R_SRTP_COULD_NOT_ALLOCATE_PROFILES:362:srtp could not allocate profiles
 SSL_R_SRTP_PROTECTION_PROFILE_LIST_TOO_LONG:363:\
 	srtp protection profile list too long
 SSL_R_SRTP_UNKNOWN_PROTECTION_PROFILE:364:srtp unknown protection profile
-SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH:232:\
-	ssl3 ext invalid max fragment length
-SSL_R_SSL3_EXT_INVALID_SERVERNAME:319:ssl3 ext invalid servername
-SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE:320:ssl3 ext invalid servername type
-SSL_R_SSL3_SESSION_ID_TOO_LONG:300:ssl3 session id too long
-SSL_R_SSLV3_ALERT_BAD_CERTIFICATE:1042:ssl/tls alert bad certificate
-SSL_R_SSLV3_ALERT_BAD_RECORD_MAC:1020:ssl/tls alert bad record mac
-SSL_R_SSLV3_ALERT_CERTIFICATE_EXPIRED:1045:ssl/tls alert certificate expired
-SSL_R_SSLV3_ALERT_CERTIFICATE_REVOKED:1044:ssl/tls alert certificate revoked
-SSL_R_SSLV3_ALERT_CERTIFICATE_UNKNOWN:1046:ssl/tls alert certificate unknown
-SSL_R_SSLV3_ALERT_DECOMPRESSION_FAILURE:1030:ssl/tls alert decompression failure
-SSL_R_SSLV3_ALERT_HANDSHAKE_FAILURE:1040:ssl/tls alert handshake failure
-SSL_R_SSLV3_ALERT_ILLEGAL_PARAMETER:1047:ssl/tls alert illegal parameter
-SSL_R_SSLV3_ALERT_NO_CERTIFICATE:1041:ssl/tls alert no certificate
-SSL_R_SSLV3_ALERT_UNEXPECTED_MESSAGE:1010:ssl/tls alert unexpected message
-SSL_R_SSLV3_ALERT_UNSUPPORTED_CERTIFICATE:1043:\
-	ssl/tls alert unsupported certificate
 SSL_R_SSL_COMMAND_SECTION_EMPTY:117:ssl command section empty
 SSL_R_SSL_COMMAND_SECTION_NOT_FOUND:125:ssl command section not found
 SSL_R_SSL_CTX_HAS_NO_DEFAULT_SSL_VERSION:228:ssl ctx has no default ssl version
@@ -1646,16 +1639,31 @@ SSL_R_TLSV1_BAD_CERTIFICATE_STATUS_RESPONSE:1113:\
 SSL_R_TLSV1_CERTIFICATE_UNOBTAINABLE:1111:tlsv1 certificate unobtainable
 SSL_R_TLSV1_UNRECOGNIZED_NAME:1112:tlsv1 unrecognized name
 SSL_R_TLSV1_UNSUPPORTED_EXTENSION:1110:tlsv1 unsupported extension
+SSL_R_TLS_ALERT_BAD_CERTIFICATE:1042:ssl/tls alert bad certificate
+SSL_R_TLS_ALERT_BAD_RECORD_MAC:1020:ssl/tls alert bad record mac
+SSL_R_TLS_ALERT_CERTIFICATE_EXPIRED:1045:ssl/tls alert certificate expired
+SSL_R_TLS_ALERT_CERTIFICATE_REVOKED:1044:ssl/tls alert certificate revoked
+SSL_R_TLS_ALERT_CERTIFICATE_UNKNOWN:1046:ssl/tls alert certificate unknown
+SSL_R_TLS_ALERT_DECOMPRESSION_FAILURE:1030:ssl/tls alert decompression failure
+SSL_R_TLS_ALERT_HANDSHAKE_FAILURE:1040:ssl/tls alert handshake failure
+SSL_R_TLS_ALERT_ILLEGAL_PARAMETER:1047:ssl/tls alert illegal parameter
+SSL_R_TLS_ALERT_NO_CERTIFICATE:1041:ssl/tls alert no certificate
+SSL_R_TLS_ALERT_UNEXPECTED_MESSAGE:1010:ssl/tls alert unexpected message
+SSL_R_TLS_ALERT_UNSUPPORTED_CERTIFICATE:1043:\
+	ssl/tls alert unsupported certificate
+SSL_R_TLS_EXT_INVALID_MAX_FRAGMENT_LENGTH:232:\
+	ssl3 ext invalid max fragment length
+SSL_R_TLS_EXT_INVALID_SERVERNAME:319:ssl3 ext invalid servername
+SSL_R_TLS_EXT_INVALID_SERVERNAME_TYPE:320:ssl3 ext invalid servername type
 SSL_R_TLS_ILLEGAL_EXPORTER_LABEL:367:tls illegal exporter label
 SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST:157:tls invalid ecpointformat list
+SSL_R_TLS_SESSION_ID_TOO_LONG:300:ssl3 session id too long
 SSL_R_TOO_MANY_KEY_UPDATES:132:too many key updates
 SSL_R_TOO_MANY_WARN_ALERTS:409:too many warn alerts
 SSL_R_TOO_MUCH_EARLY_DATA:164:too much early data
 SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS:314:unable to find ecdh parameters
 SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS:239:\
 	unable to find public key parameters
-SSL_R_UNABLE_TO_LOAD_SSL3_MD5_ROUTINES:242:unable to load ssl3 md5 routines
-SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES:243:unable to load ssl3 sha1 routines
 SSL_R_UNEXPECTED_CCS_MESSAGE:262:unexpected ccs message
 SSL_R_UNEXPECTED_END_OF_EARLY_DATA:178:unexpected end of early data
 SSL_R_UNEXPECTED_EOF_WHILE_READING:294:unexpected eof while reading
@@ -1845,6 +1853,7 @@ X509_R_IDP_MISMATCH:128:idp mismatch
 X509_R_INVALID_ATTRIBUTES:138:invalid attributes
 X509_R_INVALID_DIRECTORY:113:invalid directory
 X509_R_INVALID_DISTPOINT:143:invalid distpoint
+X509_R_INVALID_EXTENSION:146:invalid extension
 X509_R_INVALID_FIELD_NAME:119:invalid field name
 X509_R_INVALID_TRUST:123:invalid trust
 X509_R_ISSUER_MISMATCH:129:issuer mismatch

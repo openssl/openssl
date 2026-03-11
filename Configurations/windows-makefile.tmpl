@@ -38,6 +38,7 @@
 PLATFORM={- $config{target} -}
 SRCDIR={- $config{sourcedir} -}
 BLDDIR={- $config{builddir} -}
+RESULT_D=$(BLDDIR)\test-runs
 FIPSKEY={- $config{FIPSKEY} -}
 
 VERSION={- "$config{full_version}" -}
@@ -208,7 +209,7 @@ OPENSSLDIR_dir={- canonpath($openssldir_dir) -}
 LIBDIR={- our $libdir = $config{libdir} || "lib";
           file_name_is_absolute($libdir) ? "" : $libdir -}
 MODULESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath catpath);
-                  our $modulesprefix = catdir($prefix,$libdir);
+                  our $modulesprefix = file_name_is_absolute($libdir) ? $libdir : catdir($prefix,$libdir);
                   our ($modulesprefix_dev, $modulesprefix_dir,
                        $modulesprefix_file) =
                       splitpath($modulesprefix, 1);
@@ -452,19 +453,19 @@ libclean:
 	-del /Q /F $(LIBS) libcrypto.* libssl.* ossl_static.pdb
 
 clean: libclean
-	{- join("\n\t", map { "-del /Q /F $_" } @HTMLDOCS1) || "\@rem" -}
-	{- join("\n\t", map { "-del /Q /F $_" } @HTMLDOCS3) || "\@rem" -}
-	{- join("\n\t", map { "-del /Q /F $_" } @HTMLDOCS5) || "\@rem" -}
-	{- join("\n\t", map { "-del /Q /F $_" } @HTMLDOCS7) || "\@rem" -}
-	{- join("\n\t", map { "-del /Q /F $_" } @PROGRAMS) || "\@rem" -}
-	{- join("\n\t", map { "-del /Q /F $_" } @MODULES) || "\@rem" -}
-	{- join("\n\t", map { "-del /Q /F $_" } @SCRIPTS) || "\@rem" -}
-	{- join("\n\t", map { "-del /Q /F $_" } @GENERATED_MANDATORY) || "\@rem" -}
-	{- join("\n\t", map { "-del /Q /F $_" } @GENERATED) || "\@rem" -}
+	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @HTMLDOCS1) || "\@rem" -}
+	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @HTMLDOCS3) || "\@rem" -}
+	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @HTMLDOCS5) || "\@rem" -}
+	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @HTMLDOCS7) || "\@rem" -}
+	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @PROGRAMS) || "\@rem" -}
+	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @MODULES) || "\@rem" -}
+	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @SCRIPTS) || "\@rem" -}
+	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @GENERATED_MANDATORY) || "\@rem" -}
+	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @GENERATED) || "\@rem" -}
 	-del /Q /S /F *.d *.obj *.pdb *.ilk *.manifest
 	-del /Q /S /F apps\*.lib apps\*.rc apps\*.res apps\*.exp
 	-del /Q /S /F test\*.exp
-	-rd /Q /S test\test-runs
+	-@if exist "$(RESULT_D)" rd /Q /S "$(RESULT_D)"
 
 distclean: clean
 	-del /Q /F include\openssl\configuration.h
@@ -584,10 +585,10 @@ install_programs: install_runtime_libs build_inst_programs
 	@if not "$(INSTALL_PROGRAMS)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_PROGRAMS) \
                                         "$(INSTALLTOP)\bin"
-	@if not "$(INSTALL_PROGRAMS)"=="" \
+	@if not "$(INSTALL_PROGRAMPDBS)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_PROGRAMPDBS) \
                                         "$(INSTALLTOP)\bin"
-	@if not "$(INSTALL_PROGRAMS)"=="" \
+	@if not "$(BIN_SCRIPTS)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(BIN_SCRIPTS) \
                                         "$(INSTALLTOP)\bin"
 

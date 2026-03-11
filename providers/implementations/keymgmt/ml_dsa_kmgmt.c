@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -61,7 +61,8 @@ static int ml_dsa_pairwise_test(const ML_DSA_KEY *key)
     int ret = 0;
 
     if (!ml_dsa_has(key, OSSL_KEYMGMT_SELECT_KEYPAIR)
-        || ossl_fips_self_testing())
+        || ossl_fips_self_testing()
+        || ossl_self_test_in_progress(ST_ID_ASYM_KEYGEN_ML_DSA))
         return 1;
 
     /*
@@ -106,6 +107,12 @@ ML_DSA_KEY *ossl_prov_ml_dsa_new(PROV_CTX *ctx, const char *propq, int evp_type)
 
     if (!ossl_prov_is_running())
         return 0;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(ctx),
+            ST_ID_ASYM_KEYGEN_ML_DSA))
+        return NULL;
+#endif
 
     key = ossl_ml_dsa_key_new(PROV_LIBCTX_OF(ctx), propq, evp_type);
     /*
@@ -205,7 +212,7 @@ static int ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM params[],
     if (p.pubkey != NULL) {
         if (!OSSL_PARAM_get_octet_string_ptr(p.pubkey, (const void **)&pk, &pk_len))
             return 0;
-        if (pk != NULL && pk_len != key_params->pk_len) {
+        if (pk_len != 0 && pk_len != key_params->pk_len) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH,
                 "Invalid %s public key length", key_params->alg);
             return 0;
@@ -217,7 +224,7 @@ static int ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM params[],
         if (!OSSL_PARAM_get_octet_string_ptr(p.seed, (const void **)&seed,
                 &seed_len))
             return 0;
-        if (seed != NULL && seed_len != ML_DSA_SEED_BYTES) {
+        if (seed_len != 0 && seed_len != ML_DSA_SEED_BYTES) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SEED_LENGTH);
             return 0;
         }
@@ -228,7 +235,7 @@ static int ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM params[],
         if (!OSSL_PARAM_get_octet_string_ptr(p.privkey, (const void **)&sk,
                 &sk_len))
             return 0;
-        if (sk != NULL && sk_len != key_params->sk_len) {
+        if (sk_len != 0 && sk_len != key_params->sk_len) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH,
                 "Invalid %s private key length",
                 key_params->alg);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -590,7 +590,7 @@ static int asn1_ex_i2c(const ASN1_VALUE **pval, unsigned char *cout, int *putype
         break;
 
     case V_ASN1_BIT_STRING:
-        return ossl_i2c_ASN1_BIT_STRING((ASN1_BIT_STRING *)*pval,
+        return ossl_i2c_ASN1_BIT_STRING((const ASN1_BIT_STRING *)*pval,
             cout ? &cout : NULL);
 
     case V_ASN1_INTEGER:

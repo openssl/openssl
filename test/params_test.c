@@ -82,7 +82,7 @@ struct object_st {
     "6768696a6b6c6d6e6f70717273747576" \
     "7778797a30313233343536373839"
 #define p4_init "BLAKE2s256" /* Random string */
-#define p5_init "Hellow World" /* Random string */
+#define p5_init "Hellow World" /* Random string */ /* codespell:ignore */
 #define p6_init OPENSSL_FULL_VERSION_STR /* Static string */
 
 static void cleanup_object(void *vobj)

@@ -1,4 +1,4 @@
-# Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -36,7 +36,7 @@ jobs:
     steps:
     - name: install packages
       run: apk --no-cache add build-base perl linux-headers ${{ matrix.cc }}
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: config
@@ -52,7 +52,7 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   linux:
     if: github.repository == 'openssl/openssl'
@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     container: ${{ matrix.zoo.image }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: install packages
@@ -104,7 +104,7 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   macos:
     if: github.repository == 'openssl/openssl'
@@ -114,7 +114,7 @@ jobs:
         os: [macos-14, macos-15, macos-15-intel]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -130,7 +130,7 @@ jobs:
         sysctl machdep.cpu
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   windows:
     if: github.repository == 'openssl/openssl'
@@ -144,7 +144,7 @@ jobs:
             vcvars: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat
     runs-on: ${{ matrix.platform.os }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -183,16 +183,16 @@ jobs:
       shell: cmd
       run: |
         call "${{ matrix.platform.vcvars }}"
-        nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4
+        nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4 LHASH_WORKERS=16
 
   linux-arm64:
     runs-on: ubuntu-24.04-arm
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: config
-      run: ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+      run: ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -200,12 +200,12 @@ jobs:
     - name: get cpu info
       run: ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   linux-x86:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: run container
@@ -218,7 +218,7 @@ jobs:
     - name: config
       run: |
         podman exec -t $CONTAINER_ID sh -c \
-          "./config --strict-warnings linux-x86 enable-demos enable-fips enable-lms enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace"
+          "./config --strict-warnings linux-x86 enable-demos enable-fips enable-lms enable-md2 enable-rc5 enable-trace"
     - name: config dump
       run: |
         podman exec -t $CONTAINER_ID sh -c \
@@ -247,11 +247,11 @@ jobs:
     runs-on: linux-ppc64le
     if: github.repository == 'openssl/openssl'
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: config
-      run: ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+      run: ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -261,17 +261,17 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   linux-s390x:
     runs-on: linux-s390x
     if: github.repository == 'openssl/openssl'
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: config
-      run: ./config --strict-warnings enable-fips enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+      run: ./config --strict-warnings enable-fips enable-md2 enable-rc5 enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -281,17 +281,17 @@ jobs:
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
     - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   linux-riscv64:
     runs-on: linux-riscv64
     if: github.repository == 'openssl/openssl'
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: config
-      run: ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+      run: ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
@@ -301,13 +301,13 @@ jobs:
     - name: make test
       env:
         OPENSSL_riscvcap: RV64GC_ZBA_ZBB_ZBC_ZBS_ZKT_V
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   freebsd-x86_64:
     runs-on: ubuntu-latest
     if: github.repository == 'openssl/openssl'
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: config
@@ -318,7 +318,7 @@ jobs:
         shutdown_vm: false
         run: |
           sudo pkg install -y gcc perl5
-          ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
+          ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
     - name: config dump
       uses: cross-platform-actions/action@46e8d7fb25520a8d6c64fd2b7a1192611da98eda #v0.30.0
       with:

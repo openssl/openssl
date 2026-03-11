@@ -1,16 +1,11 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-
-/*
- * because of EVP_PKEY_asn1_find deprecation
- */
-#include "internal/deprecated.h"
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
@@ -22,6 +17,7 @@
 #include <openssl/x509v3.h>
 #include "crypto/asn1.h"
 #include "crypto/x509.h"
+#include "crypto/evp.h"
 #include "x509_local.h"
 
 int X509_set_version(X509 *x, long version)
@@ -144,12 +140,12 @@ const ASN1_TIME *X509_get0_notAfter(const X509 *x)
     return x->cert_info.validity.notAfter;
 }
 
-ASN1_TIME *X509_getm_notBefore(const X509 *x)
+ASN1_TIME *X509_getm_notBefore(X509 *x)
 {
     return x->cert_info.validity.notBefore;
 }
 
-ASN1_TIME *X509_getm_notAfter(const X509 *x)
+ASN1_TIME *X509_getm_notAfter(X509 *x)
 {
     return x->cert_info.validity.notAfter;
 }
@@ -159,7 +155,7 @@ int X509_get_signature_type(const X509 *x)
     return EVP_PKEY_type(OBJ_obj2nid(x->sig_alg.algorithm));
 }
 
-X509_PUBKEY *X509_get_X509_PUBKEY(const X509 *x)
+const X509_PUBKEY *X509_get_X509_PUBKEY(const X509 *x)
 {
     return x->cert_info.key;
 }
@@ -206,7 +202,7 @@ void X509_SIG_INFO_set(X509_SIG_INFO *siginf, int mdnid, int pknid,
     siginf->flags = flags;
 }
 
-int X509_get_signature_info(X509 *x, int *mdnid, int *pknid, int *secbits,
+int X509_get_signature_info(const X509 *x, int *mdnid, int *pknid, int *secbits,
     uint32_t *flags)
 {
     X509_check_purpose(x, -1, -1);
@@ -236,7 +232,7 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     switch (mdnid) {
     case NID_undef:
         /* If we have one, use a custom handler for this algorithm */
-        ameth = EVP_PKEY_asn1_find(NULL, pknid);
+        ameth = evp_pkey_asn1_find(pknid);
         if (ameth != NULL && ameth->siginf_set != NULL
             && ameth->siginf_set(siginf, alg, sig))
             break;
@@ -302,8 +298,8 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
 }
 
 /* Returns 1 on success, 0 on failure */
-int ossl_x509_init_sig_info(X509 *x)
+int ossl_x509_init_sig_info(const X509 *x, X509_SIG_INFO *info)
 {
-    return x509_sig_info_init(&x->siginf, &x->sig_alg, &x->signature,
+    return x509_sig_info_init(info, &x->sig_alg, &x->signature,
         X509_PUBKEY_get0(x->cert_info.key));
 }

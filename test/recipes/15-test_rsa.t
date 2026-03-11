@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -65,7 +65,7 @@ sub run_rsa_tests {
     SKIP: {
          skip "Skipping PVK conversion test", 1
              if disabled($cmd) || $cmd eq 'pkey' || disabled("rc4")
-                || disabled ("legacy");
+                || disabled ("legacy") || disabled("pvkkdf");
 
          subtest "$cmd conversions -- private key" => sub {
              tconversion( -type => 'pvk', -prefix => "$cmd-pvk",

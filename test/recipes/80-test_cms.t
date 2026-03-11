@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -44,6 +44,8 @@ my $provname = 'default';
 my $dsaallow = '1';
 my $no_pqc = 0;
 my $no_hkdf_fixed = 0;
+my $no_x963kdf = disabled("x963kdf");
+my $no_x942kdf = disabled("x942kdf");
 
 my $datadir = srctop_dir("test", "recipes", "80-test_cms_data");
 my $smdir    = srctop_dir("test", "smime-certs");
@@ -370,10 +372,10 @@ my @smime_cms_tests = (
       [ "{cmd1}", @prov, "-encrypt", "-in", $smcont, "-outform", "PEM", "-aes-128-gcm",
         "-kekcipher", "aes-128-cbc",
         "-stream", "-out", "{output}.cms",
-        "-pwri_password", "test" ],
+        "-pwri_password", "testtest" ],
       [ "{cmd2}", "-decrypt", "-in", "{output}.cms", "-out", "{output}.txt",
         "-inform", "PEM",
-        "-pwri_password", "test" ],
+        "-pwri_password", "testtest" ],
       \&final_compare
     ],
 
@@ -391,10 +393,10 @@ my @smime_cms_tests = (
     [ "enveloped content test streaming PEM format, AES-128-CBC cipher, password",
       [ "{cmd1}", @prov, "-encrypt", "-in", $smcont, "-outform", "PEM", "-aes128",
         "-stream", "-out", "{output}.cms",
-        "-pwri_password", "test" ],
+        "-pwri_password", "testtest" ],
       [ "{cmd2}", @prov, "-decrypt", "-in", "{output}.cms", "-out", "{output}.txt",
         "-inform", "PEM",
-        "-pwri_password", "test" ],
+        "-pwri_password", "testtest" ],
       \&final_compare
     ],
 
@@ -694,7 +696,7 @@ my @smime_cms_param_tests = (
     ]
 );
 
-if ($no_fips || $old_fips) {
+if (!$no_x942kdf && ($no_fips || $old_fips)) {
     # Only SHA1 supported in dh_cms_encrypt()
     push(@smime_cms_param_tests,
 
@@ -1005,7 +1007,7 @@ subtest "CMS Decrypt message encrypted with OpenSSL 1.1.1\n" => sub {
 
     SKIP: {
         skip "EC or DES isn't supported in this build", 1
-            if disabled("ec") || disabled("des");
+            if disabled("ec") || disabled("des") || disabled("x963kdf");
 
         my $out = "smtst.txt";
 
@@ -1283,8 +1285,8 @@ with({ exit_checker => sub { return shift == 4; } },
 sub check_availability {
     my $tnam = shift;
 
-    return "$tnam: skipped, EC disabled\n"
-        if ($no_ec && $tnam =~ /ECDH/);
+    return "$tnam: skipped, X963KDF disabled\n"
+        if ($no_x963kdf && $tnam =~ /ECDH/);
     return "$tnam: skipped, ECDH disabled\n"
         if ($no_ec && $tnam =~ /ECDH/);
     return "$tnam: skipped, EC2M disabled\n"

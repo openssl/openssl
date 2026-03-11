@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,8 @@
 #include "cms_local.h"
 #include "crypto/evp.h"
 #include "internal/sizes.h"
+
+#include <crypto/asn1.h>
 
 /* KEM Recipient Info (KEMRI) routines */
 
@@ -83,7 +85,7 @@ int ossl_cms_RecipientInfo_kemri_init(CMS_RecipientInfo *ri, X509 *recip,
     CMS_OtherRecipientInfo *ori;
     CMS_KEMRecipientInfo *kemri;
     int idtype;
-    X509_PUBKEY *x_pubkey;
+    const X509_PUBKEY *x_pubkey;
     X509_ALGOR *x_alg;
 
     ri->d.ori = M_ASN1_new_of(CMS_OtherRecipientInfo);

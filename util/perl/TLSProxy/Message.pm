@@ -1,4 +1,4 @@
-# Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -45,6 +45,7 @@ use constant {
     AL_DESC_CLOSE_NOTIFY => 0,
     AL_DESC_UNEXPECTED_MESSAGE => 10,
     AL_DESC_BAD_RECORD_MAC => 20,
+	AL_DESC_BAD_CERTIFICATE => 42,
     AL_DESC_ILLEGAL_PARAMETER => 47,
     AL_DESC_DECODE_ERROR => 50,
     AL_DESC_PROTOCOL_VERSION => 70,
@@ -99,6 +100,8 @@ use constant {
     EXT_RENEGOTIATE => 65281,
     EXT_NPN => 13172,
     EXT_CRYPTOPRO_BUG_EXTENSION => 0xfde8,
+    EXT_ECH => 0xfe0d,
+    EXT_ECH_OUTER => 0xfd00,
     EXT_UNKNOWN => 0xfffe,
     #Unknown extension that should appear last
     EXT_FORCE_LAST => 0xffff

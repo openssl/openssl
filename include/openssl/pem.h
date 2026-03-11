@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -60,6 +60,7 @@ extern "C" {
 #define PEM_STRING_SM2PRIVATEKEY "SM2 PRIVATE KEY"
 #define PEM_STRING_SM2PARAMETERS "SM2 PARAMETERS"
 #define PEM_STRING_ACERT "ATTRIBUTE CERTIFICATE"
+#define PEM_STRING_ECHCONFIG "ECHCONFIG"
 
 #define PEM_TYPE_ENCRYPTED 10
 #define PEM_TYPE_MIC_ONLY 20

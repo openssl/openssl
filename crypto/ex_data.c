@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -499,9 +499,4 @@ void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx)
     if (ad->sk == NULL || idx >= sk_void_num(ad->sk))
         return NULL;
     return sk_void_value(ad->sk, idx);
-}
-
-OSSL_LIB_CTX *ossl_crypto_ex_data_get_ossl_lib_ctx(const CRYPTO_EX_DATA *ad)
-{
-    return ad->ctx;
 }

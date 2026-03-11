@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -96,10 +96,8 @@ static int x9_62_tests(int n)
 
     TEST_info("ECDSA KATs for curve %s", OBJ_nid2sn(nid));
 
-#ifdef FIPS_MODULE
-    if (EC_curve_nid2nist(nid) == NULL)
-        return TEST_skip("skip non approved curves");
-#endif /* FIPS_MODULE */
+    if (OSSL_PROVIDER_available(NULL, "fips") && EC_curve_nid2nist(nid) == NULL)
+        return TEST_skip("skip non approved curves in FIPS mode");
 
     if (!TEST_ptr(mctx = EVP_MD_CTX_new())
         /* get the message digest */

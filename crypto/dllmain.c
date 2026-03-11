@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -37,6 +37,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         OPENSSL_thread_stop();
         break;
     case DLL_PROCESS_DETACH:
+#if defined(OSSL_DLLMAIN_DESTRUCTOR)
+        ossl_cleanup_destructor();
+#endif /* defined(OSSL_DLLMAIN_DESTRUCTOR) */
         break;
     }
     return TRUE;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -32,6 +32,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/der_rsa.h"
 #include "prov/securitycheck.h"
+#include "internal/fips.h"
 
 #define rsa_set_ctx_params_no_digest_st rsa_set_ctx_params_st
 
@@ -235,6 +236,12 @@ static void *rsa_newctx(void *provctx, const char *propq)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_SIG_RSA_SHA256))
+        return NULL;
+#endif
 
     if ((prsactx = OPENSSL_zalloc(sizeof(PROV_RSA_CTX))) == NULL
         || (propq != NULL
@@ -1347,6 +1354,7 @@ static void *rsa_dupctx(void *vprsactx)
     dstctx->mdctx = NULL;
     dstctx->tbuf = NULL;
     dstctx->propq = NULL;
+    dstctx->sig = NULL;
 
     if (srcctx->rsa != NULL && !RSA_up_ref(srcctx->rsa))
         goto err;
@@ -1370,6 +1378,12 @@ static void *rsa_dupctx(void *vprsactx)
     if (srcctx->propq != NULL) {
         dstctx->propq = OPENSSL_strdup(srcctx->propq);
         if (dstctx->propq == NULL)
+            goto err;
+    }
+
+    if (srcctx->sig != NULL) {
+        dstctx->sig = OPENSSL_memdup(srcctx->sig, srcctx->siglen);
+        if (dstctx->sig == NULL)
             goto err;
     }
 
@@ -1506,6 +1520,7 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
     struct rsa_set_ctx_params_st p;
     int pad_mode;
     int saltlen;
+    int count = 0;
     char mdname[OSSL_MAX_NAME_SIZE] = "", *pmdname = NULL;
     char mdprops[OSSL_MAX_PROPQUERY_SIZE] = "", *pmdprops = NULL;
     char mgf1mdname[OSSL_MAX_NAME_SIZE] = "", *pmgf1mdname = NULL;
@@ -1518,12 +1533,14 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
         return 1;
 
     if (prsactx->flag_allow_md) {
-        if (!rsa_set_ctx_params_decoder(params, &p))
+        if (!rsa_set_ctx_params_decoder(params, &p, &count))
             return 0;
     } else {
-        if (!rsa_set_ctx_params_no_digest_decoder(params, &p))
+        if (!rsa_set_ctx_params_no_digest_decoder(params, &p, &count))
             return 0;
     }
+    if (count == 0)
+        return 1;
 
     if (!OSSL_FIPS_IND_SET_CTX_FROM_PARAM(prsactx, OSSL_FIPS_IND_SETTABLE0,
             p.ind_k))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -238,8 +238,8 @@ DEFINE_COMPARISONS(uint64_t, uint64_t, "%llu", unsigned long long)
 DEFINE_COMPARISONS(size_t, size_t, "%zu", size_t)
 DEFINE_COMPARISONS(double, double, "%g", double)
 
-DEFINE_COMPARISON(void *, ptr, eq, ==, "%p", void *)
-DEFINE_COMPARISON(void *, ptr, ne, !=, "%p", void *)
+DEFINE_COMPARISON(void *, ptr, eq, ==, "%p", const void *)
+DEFINE_COMPARISON(void *, ptr, ne, !=, "%p", const void *)
 
 int test_ptr_null(const char *file, int line, const char *s, const void *p)
 {
@@ -302,28 +302,28 @@ int test_str_ne(const char *file, int line, const char *st1, const char *st2,
 }
 
 int test_strn_eq(const char *file, int line, const char *st1, const char *st2,
-    const char *s1, size_t n1, const char *s2, size_t n2)
+    const char *s1, const char *s2, size_t n)
 {
     if (s1 == NULL && s2 == NULL)
         return 1;
-    if (n1 != n2 || s1 == NULL || s2 == NULL || strncmp(s1, s2, n1) != 0) {
+    if (s1 == NULL || s2 == NULL || strncmp(s1, s2, n) != 0) {
         test_fail_string_message(NULL, file, line, "string", st1, st2, "==",
-            s1, s1 == NULL ? 0 : OPENSSL_strnlen(s1, n1),
-            s2, s2 == NULL ? 0 : OPENSSL_strnlen(s2, n2));
+            s1, s1 == NULL ? 0 : OPENSSL_strnlen(s1, n),
+            s2, s2 == NULL ? 0 : OPENSSL_strnlen(s2, n));
         return 0;
     }
     return 1;
 }
 
 int test_strn_ne(const char *file, int line, const char *st1, const char *st2,
-    const char *s1, size_t n1, const char *s2, size_t n2)
+    const char *s1, const char *s2, size_t n)
 {
     if ((s1 == NULL) ^ (s2 == NULL))
         return 1;
-    if (n1 != n2 || s1 == NULL || strncmp(s1, s2, n1) == 0) {
+    if (s1 == NULL || strncmp(s1, s2, n) == 0) {
         test_fail_string_message(NULL, file, line, "string", st1, st2, "!=",
-            s1, s1 == NULL ? 0 : OPENSSL_strnlen(s1, n1),
-            s2, s2 == NULL ? 0 : OPENSSL_strnlen(s2, n2));
+            s1, s1 == NULL ? 0 : OPENSSL_strnlen(s1, n),
+            s2, s2 == NULL ? 0 : OPENSSL_strnlen(s2, n));
         return 0;
     }
     return 1;
@@ -356,6 +356,97 @@ int test_mem_ne(const char *file, int line, const char *st1, const char *st2,
     }
     return 1;
 }
+
+#if defined(OPENSSL_NO_ERR) || defined(OPENSSL_NO_DEPRECATED_3_0) || defined(OPENSSL_SMALL_FOOTPRINT)
+
+int test_err_r(const char *file, int line, int lib, int reason)
+{
+    return 1;
+}
+
+int test_err_s(const char *file, int line, const char *data)
+{
+    return 1;
+}
+
+#else
+
+struct test_err_expect_ctx {
+    struct test_err_expect {
+        char *file, *fn, *data;
+        unsigned long code;
+        int line;
+    } errs[ERR_NUM_ERRORS];
+    int err_count;
+};
+
+static int err_r_cb(int lib, int reason, struct test_err_expect *e)
+{
+    if (ERR_GET_LIB(e->code) == lib && ERR_GET_REASON(e->code) == reason)
+        return 1;
+    return 0;
+}
+
+static int err_s_cb(const char *data, struct test_err_expect *e)
+{
+    if (e->data != NULL && strcmp(e->data, data) == 0)
+        return 1;
+    return 0;
+}
+
+static int test_err_helper(int lib, int reason, const char *str)
+{
+    struct test_err_expect_ctx ctx;
+    int result = 0;
+
+    for (ctx.err_count = 0;; ctx.err_count++) {
+        struct test_err_expect *e = &ctx.errs[ctx.err_count];
+        const char *file = NULL, *fn = NULL, *data = NULL;
+
+        if ((e->code = ERR_get_error_all(&file, &e->line, &fn, &data, NULL)) == 0)
+            break;
+
+        /*
+         * Usage after free won't actually happen in tests, but for greater
+         * robustness, paying for 3 allocations per record in the test is not a
+         * problem and we also gain robustness against future changes in the
+         * error stack.
+         */
+
+        e->file = file != NULL ? OPENSSL_strdup(file) : NULL;
+        e->fn = fn != NULL ? OPENSSL_strdup(fn) : NULL;
+        e->data = data != NULL ? OPENSSL_strdup(data) : NULL;
+    }
+
+    for (int i = 0; i < ctx.err_count; i++) {
+        struct test_err_expect *e = &ctx.errs[i];
+
+        if ((str != NULL ? err_s_cb(str, e) : err_r_cb(lib, reason, e)) == 1)
+            result = 1;
+
+        ERR_new();
+        ERR_set_debug(e->file, e->line, e->fn);
+        ERR_set_error(ERR_GET_LIB(e->code), ERR_GET_REASON(e->code), e->data);
+
+        OPENSSL_free(e->file);
+        OPENSSL_free(e->fn);
+        OPENSSL_free(e->data);
+    }
+
+    return result;
+}
+
+int test_err_r(const char *file, int line, int lib, int reason)
+{
+    return test_err_helper(lib, reason, NULL);
+}
+
+int test_err_s(const char *file, int line, const char *data)
+{
+    return test_err_helper(0, 0, data);
+}
+
+#endif
 
 #define DEFINE_BN_COMPARISONS(opname, op, zero_cond)                 \
     int test_BN_##opname(const char *file, int line,                 \

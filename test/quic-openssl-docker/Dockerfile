@@ -11,7 +11,8 @@ ARG OPENSSL_BRANCH=master
 # Install needed tools
 RUN apt-get update && apt-get install -y \
     git make gcc perl cmake build-essential \
-    autoconf libtool pkg-config libpsl-dev
+    autoconf libtool pkg-config libpsl-dev && \
+    apt-get clean
 
 WORKDIR /
 
@@ -32,19 +33,11 @@ RUN git clone --depth 1 -b $OPENSSL_BRANCH $OPENSSL_URL && \
     make -j 4 && make install && cp test/quic-openssl-docker/hq-interop/quic-hq-interop /usr/local/bin && \
     cp test/quic-openssl-docker/hq-interop/quic-hq-interop-server /usr/local/bin && \
     cp demos/http3/ossl-nghttp3-demo-server /usr/local/bin && \
+    cp demos/http3/ossl-nghttp3-demo /usr/local/bin && \
     rm -rf /openssl
-
-# Build curl
-RUN git clone --depth 1 https://github.com/curl/curl.git && \
-    cd curl && \
-    autoreconf -fi && ./configure --with-openssl-quic --with-openssl --with-nghttp3 --prefix=/usr && \
-    make -j 4 && \
-    make install && \
-    rm -rf /curl
 
 # copy run script and run it
 COPY run_endpoint.sh .
 RUN chmod +x run_endpoint.sh
-RUN apt-get clean
 ENTRYPOINT [ "./run_endpoint.sh" ]
 

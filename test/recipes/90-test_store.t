@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -36,7 +36,7 @@ my @data_files =
     ( "testrsa.msb" );
 push(@data_files,
      ( "testrsa.pvk" ))
-    unless disabled("legacy") || disabled("rc4");
+    unless disabled("legacy") || disabled("rc4") || disabled("pvkkdf");
 my @src_rsa_files =
     ( "test/testrsa.pem",
       "test/testrsapub.pem" );

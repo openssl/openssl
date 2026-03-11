@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1123,6 +1123,14 @@ void SSL_CONF_CTX_free(SSL_CONF_CTX *cctx)
 
 unsigned int SSL_CONF_CTX_set_flags(SSL_CONF_CTX *cctx, unsigned int flags)
 {
+    if ((cctx->flags & SSL_CONF_FLAG_CMDLINE)
+        && (flags & SSL_CONF_FLAG_FILE))
+        flags &= ~SSL_CONF_FLAG_FILE;
+
+    if ((cctx->flags & SSL_CONF_FLAG_FILE)
+        && (flags & SSL_CONF_FLAG_CMDLINE))
+        flags &= ~SSL_CONF_FLAG_CMDLINE;
+
     cctx->flags |= flags;
     return cctx->flags;
 }

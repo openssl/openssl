@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -39,10 +39,12 @@
 #include <openssl/bn.h>
 #include <openssl/ssl.h>
 #include <openssl/core_names.h>
+#include <openssl/encoder.h>
 #include "s_apps.h"
 #include "apps.h"
 
 #include "internal/sockets.h" /* for openssl_fdset() */
+#include "internal/numbers.h" /* for LONG_MAX */
 #include "internal/e_os.h"
 
 #ifdef _WIN32
@@ -161,7 +163,7 @@ char *get_passwd(const char *pass, const char *desc)
     if (!app_passwd(pass, NULL, &result, NULL))
         BIO_printf(bio_err, "Error getting password for %s\n", desc);
     if (pass != NULL && result == NULL) {
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "Trying plain input string (better precede with 'pass:')\n");
         result = OPENSSL_strdup(pass);
         if (result == NULL)
@@ -184,8 +186,11 @@ int app_passwd(const char *arg1, const char *arg2, char **pass1, char **pass2)
     }
     if (arg2 != NULL) {
         *pass2 = app_get_pass(arg2, same ? 2 : 0);
-        if (*pass2 == NULL)
+        if (*pass2 == NULL) {
+            clear_free(*pass1);
+            *pass1 = NULL;
             return 0;
+        }
     } else if (pass2 != NULL) {
         *pass2 = NULL;
     }
@@ -242,7 +247,7 @@ static char *app_get_pass(const char *arg, int keepbio)
             if (btmp == NULL) {
                 BIO_free_all(pwdbio);
                 pwdbio = NULL;
-                BIO_printf(bio_err, "Out of memory\n");
+                BIO_puts(bio_err, "Out of memory\n");
                 return NULL;
             }
             pwdbio = BIO_push(btmp, pwdbio);
@@ -251,20 +256,20 @@ static char *app_get_pass(const char *arg, int keepbio)
             unbuffer(stdin);
             pwdbio = dup_bio_in(FORMAT_TEXT);
             if (pwdbio == NULL) {
-                BIO_printf(bio_err, "Can't open BIO for stdin\n");
+                BIO_puts(bio_err, "Can't open BIO for stdin\n");
                 return NULL;
             }
         } else {
             /* argument syntax error; do not reveal too much about arg */
-            tmp = strchr(arg, ':');
-            if (tmp == NULL || tmp - arg > PASS_SOURCE_SIZE_MAX)
+            const char *arg_ptr = strchr(arg, ':');
+            if (arg_ptr == NULL || arg_ptr - arg > PASS_SOURCE_SIZE_MAX)
                 BIO_printf(bio_err,
                     "Invalid password argument, missing ':' within the first %d chars\n",
                     PASS_SOURCE_SIZE_MAX + 1);
             else
                 BIO_printf(bio_err,
                     "Invalid password argument, starting with \"%.*s\"\n",
-                    (int)(tmp - arg + 1), arg);
+                    (int)(arg_ptr - arg + 1), arg);
             return NULL;
         }
     }
@@ -274,7 +279,7 @@ static char *app_get_pass(const char *arg, int keepbio)
         pwdbio = NULL;
     }
     if (i <= 0) {
-        BIO_printf(bio_err, "Error reading password from BIO\n");
+        BIO_puts(bio_err, "Error reading password from BIO\n");
         return NULL;
     }
     tmp = strchr(tpass, '\n');
@@ -330,7 +335,7 @@ CONF *app_load_config_bio(BIO *in, const char *filename)
     if (filename != NULL)
         BIO_printf(bio_err, "config file \"%s\"\n", filename);
     else
-        BIO_printf(bio_err, "config input");
+        BIO_puts(bio_err, "config input");
 
     NCONF_free(conf);
     return NULL;
@@ -340,7 +345,7 @@ CONF *app_load_config_verbose(const char *filename, int verbose)
 {
     if (verbose) {
         if (*filename == '\0')
-            BIO_printf(bio_err, "No configuration used\n");
+            BIO_puts(bio_err, "No configuration used\n");
         else
             BIO_printf(bio_err, "Using configuration from %s\n", filename);
     }
@@ -374,7 +379,7 @@ int app_load_modules(const CONF *config)
         return 1;
 
     if (CONF_modules_load(config, NULL, 0) <= 0) {
-        BIO_printf(bio_err, "Error configuring OpenSSL modules\n");
+        BIO_puts(bio_err, "Error configuring OpenSSL modules\n");
         ERR_print_errors(bio_err);
         NCONF_free(to_free);
         return 0;
@@ -606,12 +611,12 @@ EVP_PKEY *load_keyparams(const char *uri, int format, int maybe_stdin,
 }
 
 EVP_SKEY *load_skey(const char *uri, int format, int may_stdin,
-                    const char *pass, int quiet)
+    const char *pass, int quiet)
 {
     EVP_SKEY *skey = NULL;
 
     (void)load_key_certs_crls(uri, format, may_stdin, pass, NULL, 0,
-                              NULL, NULL, NULL, NULL, NULL, NULL, NULL, &skey);
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL, &skey);
 
     return skey;
 }
@@ -647,16 +652,19 @@ void *app_malloc_array(size_t n, size_t sz, const char *what)
     return vp;
 }
 
-char *next_item(char *opt) /* in list separated by comma and/or space */
+char *next_item(char *opt) /* in list separated by comma and/or spaces */
 {
     /* advance to separator (comma or whitespace), if any */
-    while (*opt != ',' && !isspace(_UC(*opt)) && *opt != '\0')
+    while (*opt != '\0' && *opt != ',' && !isspace(_UC(*opt)))
         opt++;
     if (*opt != '\0') {
+        int found_comma = *opt == ',';
+
         /* terminate current item */
         *opt++ = '\0';
-        /* skip over any whitespace after separator */
-        while (isspace(_UC(*opt)))
+        /* skip over any further separators, but only one comma */
+        while ((!found_comma && (found_comma = (*opt == ',')))
+            || isspace(_UC(*opt)))
             opt++;
     }
     return *opt == '\0' ? NULL : opt; /* NULL indicates end of input */
@@ -674,18 +682,12 @@ static void warn_cert_msg(const char *uri, X509 *cert, const char *msg)
 static void warn_cert(const char *uri, X509 *cert, int warn_EE,
     X509_VERIFY_PARAM *vpm)
 {
+    int error;
     uint32_t ex_flags = X509_get_extension_flags(cert);
-    /*
-     * This should not be used as as example for how to verify
-     * certificates. This treats an invalid not before or an invalid
-     * not after time in the certificate as infinitely valid, which
-     * you don't want outside of a toy testing function like this.
-     */
-    int res = X509_cmp_timeframe(vpm, X509_get0_notBefore(cert),
-        X509_get0_notAfter(cert));
 
-    if (res != 0)
-        warn_cert_msg(uri, cert, res > 0 ? "has expired" : "not yet valid");
+    if (!X509_check_certificate_times(vpm, cert, &error))
+        warn_cert_msg(uri, cert, X509_verify_cert_error_string(error));
+
     if (warn_EE && (ex_flags & EXFLAG_V1) == 0 && (ex_flags & EXFLAG_CA) == 0)
         warn_cert_msg(uri, cert, "is not a CA cert");
 }
@@ -727,9 +729,10 @@ int load_cert_certs(const char *uri,
     return ret;
 }
 
-STACK_OF(X509) *load_certs_multifile(char *files, const char *pass,
+STACK_OF(X509) *load_certs_multifile(char *files, const char *source,
     const char *desc, X509_VERIFY_PARAM *vpm)
 {
+    char *pass = get_passwd(source, desc);
     STACK_OF(X509) *certs = NULL;
     STACK_OF(X509) *result = sk_X509_new_null();
 
@@ -750,11 +753,13 @@ STACK_OF(X509) *load_certs_multifile(char *files, const char *pass,
         certs = NULL;
         files = next;
     }
+    clear_free(pass);
     return result;
 
 oom:
-    BIO_printf(bio_err, "out of memory\n");
+    BIO_puts(bio_err, "out of memory\n");
 err:
+    clear_free(pass);
     OSSL_STACK_OF_X509_free(certs);
     OSSL_STACK_OF_X509_free(result);
     return NULL;
@@ -782,9 +787,10 @@ static X509_STORE *sk_X509_to_store(X509_STORE *store /* may be NULL */,
  * Create cert store structure with certificates read from given file(s).
  * Returns pointer to created X509_STORE on success, NULL on error.
  */
-X509_STORE *load_certstore(char *input, const char *pass, const char *desc,
+X509_STORE *load_certstore(char *input, const char *source, const char *desc,
     X509_VERIFY_PARAM *vpm)
 {
+    char *pass = get_passwd(source, desc);
     X509_STORE *store = NULL;
     STACK_OF(X509) *certs = NULL;
 
@@ -794,15 +800,19 @@ X509_STORE *load_certstore(char *input, const char *pass, const char *desc,
 
         if (!load_cert_certs(input, NULL, &certs, 1, pass, desc, vpm)) {
             X509_STORE_free(store);
-            return NULL;
+            store = NULL;
+            goto end;
         }
         ok = (store = sk_X509_to_store(store, certs)) != NULL;
         OSSL_STACK_OF_X509_free(certs);
         certs = NULL;
         if (!ok)
-            return NULL;
+            goto end;
         input = next;
     }
+
+end:
+    clear_free(pass);
     return store;
 }
 
@@ -888,7 +898,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls,
     EVP_SKEY **pskey)
 {
-    PW_CB_DATA uidata;
+    PW_CB_DATA uidata = { pass, uri };
     OSSL_STORE_CTX *ctx = NULL;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
     const char *propq = app_get0_propq();
@@ -923,7 +933,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     if (pcerts != NULL) {
         if (*pcerts == NULL && (*pcerts = sk_X509_new_null()) == NULL) {
             if (!quiet)
-                BIO_printf(bio_err, "Out of memory loading");
+                BIO_puts(bio_err, "Out of memory loading");
             goto end;
         }
         /*
@@ -937,7 +947,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     if (pcrls != NULL) {
         if (*pcrls == NULL && (*pcrls = sk_X509_CRL_new_null()) == NULL) {
             if (!quiet)
-                BIO_printf(bio_err, "Out of memory loading");
+                BIO_puts(bio_err, "Out of memory loading");
             goto end;
         }
         /*
@@ -947,9 +957,6 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
          */
         SET_EXPECT(OSSL_STORE_INFO_CRL);
     }
-
-    uidata.password = pass;
-    uidata.prompt_info = uri;
 
     if ((input_type = format2string(format)) != NULL) {
         itp[0] = OSSL_PARAM_construct_utf8_string(OSSL_STORE_PARAM_INPUT_TYPE,
@@ -963,7 +970,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
 
         if (!maybe_stdin) {
             if (!quiet)
-                BIO_printf(bio_err, "No filename or uri specified for loading\n");
+                BIO_puts(bio_err, "No filename or uri specified for loading\n");
             goto end;
         }
         uri = "<stdin>";
@@ -981,14 +988,14 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     }
     if (ctx == NULL) {
         if (!quiet)
-            BIO_printf(bio_err, "Could not open file or uri for loading");
+            BIO_puts(bio_err, "Could not open file or uri for loading");
         goto end;
     }
 
     /* expect == 0 means here multiple types of credentials are to be loaded */
     if (expect > 0 && !OSSL_STORE_expect(ctx, expect)) {
         if (!quiet)
-            BIO_printf(bio_err, "Internal error trying to load");
+            BIO_puts(bio_err, "Internal error trying to load");
         goto end;
     }
 
@@ -1080,7 +1087,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
         if (!ok) {
             failed = OSSL_STORE_INFO_type_string(type);
             if (!quiet)
-                BIO_printf(bio_err, "Error reading");
+                BIO_puts(bio_err, "Error reading");
             break;
         }
     }
@@ -1098,7 +1105,7 @@ end:
             pskey = NULL;
         failed = FAIL_NAME;
         if (failed != NULL && !quiet)
-            BIO_printf(bio_err, "Could not find");
+            BIO_puts(bio_err, "Could not find or decode");
     }
 
     if (failed != NULL && !quiet) {
@@ -1120,7 +1127,7 @@ end:
             ERR_pop_to_mark();
             ERR_set_mark();
         }
-        BIO_printf(bio_err, "\n");
+        BIO_puts(bio_err, "\n");
         ERR_print_errors(bio_err);
         ERR_clear_last_mark();
     } else {
@@ -1159,6 +1166,112 @@ end:
         return 0;
     }
     return 1;
+}
+
+int load_rpk_file(SSL *ssl, const char *file)
+{
+    BIO *in = BIO_new_file(file, "r");
+    char *name = NULL;
+    char *header = NULL;
+    unsigned char *buf = NULL;
+    long buflen;
+    int ret = 1;
+    int found = 0;
+
+    if (in == NULL)
+        return ret;
+
+    ERR_set_mark();
+    while (ret != 0) {
+        PKCS8_PRIV_KEY_INFO *p8;
+        EVP_PKEY *pkey = NULL;
+        X509 *cert = NULL;
+        const unsigned char *p;
+        int pkey_type = NID_undef;
+        X509 *(*d2i)(X509 **, const unsigned char **, long);
+
+        OPENSSL_free(name);
+        OPENSSL_free(header);
+        OPENSSL_free(buf);
+        name = header = NULL;
+        buf = NULL;
+
+        if (!PEM_read_bio(in, &name, &header, &buf, &buflen)) {
+            if (ERR_GET_REASON(ERR_peek_last_error()) != PEM_R_NO_START_LINE)
+                ret = 0;
+            break;
+        }
+        p = buf;
+
+#define WHEN_PEM_X509(name, f)                \
+    ((d2i = f),                               \
+        (strcmp((name), PEM_STRING_X509) == 0 \
+            || strcmp((name), PEM_STRING_X509_OLD) == 0))
+
+#define WHEN_PEM_X509_AUX(name, f) \
+    ((d2i = f),                    \
+        (strcmp((name), PEM_STRING_X509_TRUSTED) == 0))
+
+#define WHEN_PKEY_TYPE(name, str, type) \
+    ((pkey_type = type), (strcmp((name), str) == 0))
+
+        if (strcmp(name, PEM_STRING_PUBLIC) == 0) {
+            pkey = d2i_PUBKEY(NULL, &p, buflen);
+            if (p - buf != buflen || pkey == NULL) {
+                BIO_printf(bio_err, "Error reading %s in %s\n", name, file);
+                ret = 0;
+            } else if (!SSL_add_expected_rpk(ssl, pkey)) {
+                BIO_printf(bio_err, "Error adding RPK from %s in %s\n", name, file);
+                ret = 0;
+            } else {
+                found = 1;
+            }
+            EVP_PKEY_free(pkey);
+        } else if (WHEN_PEM_X509(name, d2i_X509)
+            || WHEN_PEM_X509_AUX(name, d2i_X509_AUX)) {
+            cert = d2i(NULL, &p, buflen);
+            if (p - buf != buflen || cert == NULL) {
+                BIO_printf(bio_err, "Error reading %s in %s\n", name, file);
+                ret = 0;
+            } else if ((pkey = X509_get0_pubkey(cert)) == NULL
+                || !SSL_add_expected_rpk(ssl, pkey)) {
+                BIO_printf(bio_err, "Error adding RPK from %s in %s\n", name, file);
+                ret = 0;
+            } else {
+                found = 1;
+            }
+            X509_free(cert);
+        } else if (WHEN_PKEY_TYPE(name, PEM_STRING_PKCS8INF, NID_undef) == 0
+            || WHEN_PKEY_TYPE(name, PEM_STRING_RSA, EVP_PKEY_RSA)
+            || WHEN_PKEY_TYPE(name, PEM_STRING_ECPRIVATEKEY, EVP_PKEY_EC)
+            || WHEN_PKEY_TYPE(name, PEM_STRING_DSA, EVP_PKEY_DSA)) {
+            if (pkey_type != NID_undef) {
+                pkey = d2i_PrivateKey(pkey_type, 0, &p, buflen);
+            } else {
+                if ((p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, buflen)) != NULL) {
+                    pkey = EVP_PKCS82PKEY(p8);
+                    PKCS8_PRIV_KEY_INFO_free(p8);
+                }
+            }
+            if (p - buf != buflen || pkey == NULL) {
+                BIO_printf(bio_err, "Error reading %s in %s\n", name, file);
+                ret = 0;
+            } else if (!SSL_add_expected_rpk(ssl, pkey)) {
+                BIO_printf(bio_err, "Error adding RPK from %s in %s\n", name, file);
+                ret = 0;
+            } else {
+                found = 1;
+            }
+            EVP_PKEY_free(pkey);
+        }
+    }
+
+    OPENSSL_free(name);
+    OPENSSL_free(header);
+    OPENSSL_free(buf);
+    ERR_pop_to_mark();
+    BIO_free(in);
+    return found && ret;
 }
 
 #define X509V3_EXT_UNKNOWN_MASK (0xfL << 16)
@@ -1272,8 +1385,8 @@ int copy_extensions(X509 *x, X509_REQ *req, int copy_type)
     exts = X509_REQ_get_extensions(req);
 
     for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
-        X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
-        ASN1_OBJECT *obj = X509_EXTENSION_get_object(ext);
+        const X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
+        const ASN1_OBJECT *obj = X509_EXTENSION_get_object(ext);
         int idx = X509_get_ext_by_OBJ(x, obj, -1);
 
         /* Does extension exist in target? */
@@ -1363,8 +1476,7 @@ void print_name(BIO *out, const char *title, const X509_NAME *nm)
     }
     if (lflags == XN_FLAG_COMPAT) {
         buf = X509_NAME_oneline(nm, 0, 0);
-        BIO_puts(out, buf);
-        BIO_puts(out, "\n");
+        BIO_printf(out, "%s\n", buf);
         OPENSSL_free(buf);
     } else {
         if (mline)
@@ -1379,7 +1491,7 @@ void print_bignum_var(BIO *out, const BIGNUM *in, const char *var,
 {
     BIO_printf(out, "    static unsigned char %s_%d[] = {", var, len);
     if (BN_is_zero(in)) {
-        BIO_printf(out, "\n        0x00");
+        BIO_puts(out, "\n        0x00");
     } else {
         int i, l;
 
@@ -1392,7 +1504,7 @@ void print_bignum_var(BIO *out, const BIGNUM *in, const char *var,
                 BIO_printf(out, "0x%02X", buffer[i]);
         }
     }
-    BIO_printf(out, "\n    };\n");
+    BIO_puts(out, "\n    };\n");
 }
 
 void print_array(BIO *out, const char *title, int len, const unsigned char *d)
@@ -1402,13 +1514,13 @@ void print_array(BIO *out, const char *title, int len, const unsigned char *d)
     BIO_printf(out, "unsigned char %s[%d] = {", title, len);
     for (i = 0; i < len; i++) {
         if ((i % 10) == 0)
-            BIO_printf(out, "\n    ");
+            BIO_puts(out, "\n    ");
         if (i < len - 1)
             BIO_printf(out, "0x%02X, ", d[i]);
         else
             BIO_printf(out, "0x%02X", d[i]);
     }
-    BIO_printf(out, "\n};\n");
+    BIO_puts(out, "\n};\n");
 }
 
 X509_STORE *setup_verify(const char *CAfile, int noCAfile,
@@ -1544,7 +1656,7 @@ BIGNUM *load_serial(const char *serialfile, int *exists, int create,
         ERR_clear_error();
         ret = BN_new();
         if (ret == NULL) {
-            BIO_printf(bio_err, "Out of memory\n");
+            BIO_puts(bio_err, "Out of memory\n");
         } else if (!rand_serial(ret, ai)) {
             BIO_printf(bio_err, "Error creating random number to store in %s\n",
                 serialfile);
@@ -1559,7 +1671,7 @@ BIGNUM *load_serial(const char *serialfile, int *exists, int create,
         }
         ret = ASN1_INTEGER_to_BN(ai, NULL);
         if (ret == NULL) {
-            BIO_printf(bio_err, "Error converting number from bin to BIGNUM\n");
+            BIO_puts(bio_err, "Error converting number from bin to BIGNUM\n");
             goto err;
         }
     }
@@ -1590,7 +1702,7 @@ int save_serial(const char *serialfile, const char *suffix,
     else
         j = strlen(serialfile) + strlen(suffix) + 1;
     if (j >= BSIZE) {
-        BIO_printf(bio_err, "File name too long\n");
+        BIO_puts(bio_err, "File name too long\n");
         goto err;
     }
 
@@ -1609,7 +1721,7 @@ int save_serial(const char *serialfile, const char *suffix,
     }
 
     if ((ai = BN_to_ASN1_INTEGER(serial, NULL)) == NULL) {
-        BIO_printf(bio_err, "error converting serial to ASN.1 format\n");
+        BIO_puts(bio_err, "error converting serial to ASN.1 format\n");
         goto err;
     }
     i2a_ASN1_INTEGER(out, ai);
@@ -1638,7 +1750,7 @@ int rotate_serial(const char *serialfile, const char *new_suffix,
     if (i > j)
         j = i;
     if (j + 1 >= BSIZE) {
-        BIO_printf(bio_err, "File name too long\n");
+        BIO_puts(bio_err, "File name too long\n");
         goto err;
     }
 #ifndef OPENSSL_SYS_VMS
@@ -1797,7 +1909,7 @@ int save_index(const char *dbfile, const char *suffix, CA_DB *db)
 
     j = (int)(strlen(dbfile) + strlen(suffix));
     if (j + 6 >= BSIZE) {
-        BIO_printf(bio_err, "File name too long\n");
+        BIO_puts(bio_err, "File name too long\n");
         goto err;
     }
 #ifndef OPENSSL_SYS_VMS
@@ -1847,7 +1959,7 @@ int rotate_index(const char *dbfile, const char *new_suffix,
     if (i > j)
         j = i;
     if (j + 6 >= BSIZE) {
-        BIO_printf(bio_err, "File name too long\n");
+        BIO_puts(bio_err, "File name too long\n");
         goto err;
     }
 #ifndef OPENSSL_SYS_VMS
@@ -2047,45 +2159,45 @@ err:
 }
 
 /*
- * Read whole contents of a BIO into an allocated memory buffer and return
- * it.
+ * Read whole contents of a BIO into an allocated memory buffer.
+ * The return value is one on success, zero on error.
+ * If `maxlen` is non-zero, at most `maxlen` bytes are returned, or else, if
+ * the input is longer than `maxlen`, an error is returned.
+ * If `maxlen` is zero, the limit is effectively `SIZE_MAX`.
  */
-
-int bio_to_mem(unsigned char **out, int maxlen, BIO *in)
+int bio_to_mem(unsigned char **out, size_t *outlen, size_t maxlen, BIO *in)
 {
+    unsigned char tbuf[4096];
     BIO *mem;
-    int len, ret;
-    unsigned char tbuf[1024];
+    BUF_MEM *bufm;
+    size_t sz = 0;
+    int len;
 
     mem = BIO_new(BIO_s_mem());
     if (mem == NULL)
-        return -1;
+        return 0;
     for (;;) {
-        if ((maxlen != -1) && maxlen < 1024)
-            len = maxlen;
-        else
-            len = 1024;
-        len = BIO_read(in, tbuf, len);
-        if (len < 0) {
-            BIO_free(mem);
-            return -1;
-        }
-        if (len == 0)
+        if ((len = BIO_read(in, tbuf, 4096)) == 0)
             break;
-        if (BIO_write(mem, tbuf, len) != len) {
+        if (len < 0
+            || BIO_write(mem, tbuf, len) != len
+            || sz > SIZE_MAX - len
+            || ((sz += len) > maxlen && maxlen != 0)) {
             BIO_free(mem);
-            return -1;
+            return 0;
         }
-        if (maxlen != -1)
-            maxlen -= len;
-
-        if (maxlen == 0)
-            break;
     }
-    ret = BIO_get_mem_data(mem, (char **)out);
-    BIO_set_flags(mem, BIO_FLAGS_MEM_RDONLY);
+
+    /* So BIO_free orphans BUF_MEM */
+    (void)BIO_set_close(mem, BIO_NOCLOSE);
+    BIO_get_mem_ptr(mem, &bufm);
     BIO_free(mem);
-    return ret;
+    *out = (unsigned char *)bufm->data;
+    *outlen = bufm->length;
+    /* Tell BUF_MEM to orphan data */
+    bufm->data = NULL;
+    BUF_MEM_free(bufm);
+    return 1;
 }
 
 int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value)
@@ -2107,6 +2219,65 @@ int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value)
 err:
     OPENSSL_free(stmp);
     return rv;
+}
+
+static int
+encoder_ctrl_string(OSSL_ENCODER_CTX *ctx, const char *value)
+{
+    int rv = 0;
+    char *stmp, *vtmp = NULL;
+
+    stmp = OPENSSL_strdup(value);
+    if (stmp == NULL)
+        return -1;
+    vtmp = strchr(stmp, ':');
+    if (vtmp == NULL) {
+        BIO_printf(bio_err,
+            "Missing encoder option value: %s\n", value);
+        goto end;
+    }
+
+    *vtmp = 0;
+    vtmp++;
+    rv = OSSL_ENCODER_CTX_ctrl_string(ctx, stmp, vtmp);
+
+end:
+    OPENSSL_free(stmp);
+    return rv;
+}
+
+int encode_private_key(BIO *out, const char *output_type, const EVP_PKEY *pkey,
+    const STACK_OF(OPENSSL_STRING) *encopt,
+    const EVP_CIPHER *cipher, const char *pass)
+{
+    int ret = 0;
+    OSSL_ENCODER_CTX *ectx = OSSL_ENCODER_CTX_new_for_pkey(pkey, EVP_PKEY_PRIVATE_KEY,
+        output_type, "PrivateKeyInfo", NULL);
+
+    if (ectx == NULL)
+        return 0;
+
+    if (cipher != NULL)
+        if (!OSSL_ENCODER_CTX_set_cipher(ectx, EVP_CIPHER_get0_name(cipher), NULL)
+            || !OSSL_ENCODER_CTX_set_passphrase(ectx, (const unsigned char *)pass,
+                strlen(pass)))
+            goto end;
+
+    if (encopt != NULL) {
+        int i, n = sk_OPENSSL_STRING_num(encopt);
+
+        for (i = 0; i < n; ++i) {
+            const char *opt = sk_OPENSSL_STRING_value(encopt, i);
+
+            if (encoder_ctrl_string(ectx, opt) <= 0)
+                goto end;
+        }
+    }
+
+    ret = OSSL_ENCODER_to_bio(ectx, out);
+end:
+    OSSL_ENCODER_CTX_free(ectx);
+    return ret;
 }
 
 static void nodes_print(const char *name, STACK_OF(X509_POLICY_NODE) *nodes)
@@ -2320,32 +2491,24 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
         && do_pkey_ctx_init(pkctx, sigopts);
 }
 
-static int adapt_keyid_ext(X509 *cert, X509V3_CTX *ext_ctx,
-    const char *name, const char *value, int add_default)
+int do_EXT_add_nconf(CONF *conf1, CONF *conf2, X509V3_CTX *ctx,
+    X509 *cert, const char *msg, const char *sect)
 {
-    const STACK_OF(X509_EXTENSION) *exts = X509_get0_extensions(cert);
-    X509_EXTENSION *new_ext = X509V3_EXT_nconf(NULL, ext_ctx, name, value);
-    int idx, rv = 0;
+    X509V3_set_nconf(ctx, conf1);
+    if (X509V3_EXT_add_nconf(conf2, ctx, sect != NULL ? sect : "default", cert))
+        return 1;
+    BIO_printf(bio_err, msg, sect);
+    return 0;
+}
 
-    if (new_ext == NULL)
-        return rv;
-
-    idx = X509v3_get_ext_by_OBJ(exts, X509_EXTENSION_get_object(new_ext), -1);
-    if (idx >= 0) {
-        X509_EXTENSION *found_ext = X509v3_get_ext(exts, idx);
-        ASN1_OCTET_STRING *encoded = X509_EXTENSION_get_data(found_ext);
-        int disabled = ASN1_STRING_length(encoded) <= 2; /* indicating "none" */
-
-        if (disabled) {
-            X509_delete_ext(cert, idx);
-            X509_EXTENSION_free(found_ext);
-        } /* else keep existing key identifier, which might be outdated */
-        rv = 1;
-    } else {
-        rv = !add_default || X509_add_ext(cert, new_ext, -1);
-    }
-    X509_EXTENSION_free(new_ext);
-    return rv;
+int do_EXT_REQ_add_nconf(CONF *conf1, CONF *conf2, X509V3_CTX *ctx,
+    X509_REQ *req, const char *msg, const char *sect)
+{
+    X509V3_set_nconf(ctx, conf1);
+    if (X509V3_EXT_REQ_add_nconf(conf2, ctx, sect, req))
+        return 1;
+    BIO_printf(bio_err, msg, sect);
+    return 0;
 }
 
 int cert_matches_key(const X509 *cert, const EVP_PKEY *pkey)
@@ -2362,32 +2525,14 @@ int cert_matches_key(const X509 *cert, const EVP_PKEY *pkey)
 int do_X509_sign(X509 *cert, int force_v1, EVP_PKEY *pkey, const char *md,
     STACK_OF(OPENSSL_STRING) *sigopts, X509V3_CTX *ext_ctx)
 {
-    EVP_MD_CTX *mctx = EVP_MD_CTX_new();
-    int self_sign;
+    EVP_MD_CTX *mctx;
     int rv = 0;
 
-    if (!force_v1) {
-        if (!X509_set_version(cert, X509_VERSION_3))
-            goto end;
-
-        /*
-         * Add default SKID before AKID such that AKID can make use of it
-         * in case the certificate is self-signed
-         */
-        /* Prevent X509_V_ERR_MISSING_SUBJECT_KEY_IDENTIFIER */
-        if (!adapt_keyid_ext(cert, ext_ctx, "subjectKeyIdentifier", "hash", 1))
-            goto end;
-        /* Prevent X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER */
-        self_sign = cert_matches_key(cert, pkey);
-        if (!adapt_keyid_ext(cert, ext_ctx, "authorityKeyIdentifier",
-                "keyid, issuer", !self_sign))
-            goto end;
-    }
-    /* May add further measures for ensuring RFC 5280 compliance, see #19805 */
-
-    if (mctx != NULL && do_sign_init(mctx, pkey, md, sigopts) > 0)
+    if (!force_v1 && !X509_set_version(cert, X509_VERSION_3))
+        return 0;
+    if ((mctx = EVP_MD_CTX_new()) != NULL
+        && do_sign_init(mctx, pkey, md, sigopts) > 0)
         rv = (X509_sign_ctx(cert, mctx) > 0);
-end:
     EVP_MD_CTX_free(mctx);
     return rv;
 }
@@ -2502,7 +2647,7 @@ static X509_CRL *load_crl_crldp(STACK_OF(DIST_POINT) *crldp)
 static STACK_OF(X509_CRL) *crls_http_cb(const X509_STORE_CTX *ctx,
     const X509_NAME *nm)
 {
-    X509 *x;
+    const X509 *x;
     STACK_OF(X509_CRL) *crls = NULL;
     X509_CRL *crl;
     STACK_OF(DIST_POINT) *crldp;
@@ -2596,7 +2741,7 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
         BIO *sbio = NULL;
         X509_STORE *ts = SSL_CTX_get_cert_store(ssl_ctx);
         X509_VERIFY_PARAM *vpm = X509_STORE_get0_param(ts);
-        const char *host = vpm == NULL ? NULL : X509_VERIFY_PARAM_get0_host(vpm, 0 /* first hostname */);
+        char *host = vpm == NULL ? NULL : X509_VERIFY_PARAM_get0_host(vpm, 0 /* first hostname */);
 
         /* adapt after fixing callback design flaw, see #17088 */
         if ((info->use_proxy
@@ -2815,8 +2960,8 @@ double app_tminterval(int stop, int usertime)
         SYSTEMTIME systime;
 
         if (usertime && warning) {
-            BIO_printf(bio_err, "To get meaningful results, run "
-                                "this program on idle system.\n");
+            BIO_puts(bio_err, "To get meaningful results, run "
+                              "this program on idle system.\n");
             warning = 0;
         }
         GetSystemTime(&systime);
@@ -2853,8 +2998,8 @@ double app_tminterval(int stop, int usertime)
     static int warning = 1;
 
     if (usertime && warning) {
-        BIO_printf(bio_err, "To get meaningful results, run "
-                            "this program on idle system.\n");
+        BIO_puts(bio_err, "To get meaningful results, run "
+                          "this program on idle system.\n");
         warning = 0;
     }
 #ifdef CLOCK_REALTIME
@@ -3317,12 +3462,23 @@ int has_stdin_waiting(void)
 }
 #endif
 
-/* Corrupt a signature by modifying final byte */
-void corrupt_signature(const ASN1_STRING *signature)
+/*
+ * Corrupt a signature by modifying final byte
+ * (mutates signature)
+ */
+int corrupt_signature(ASN1_STRING *signature)
 {
-    unsigned char *s = signature->data;
+    const unsigned char *valid = ASN1_STRING_get0_data(signature);
+    int length = ASN1_STRING_length(signature);
+    unsigned char *s = OPENSSL_memdup(valid, length);
 
-    s[signature->length - 1] ^= 0x1;
+    if (s == NULL)
+        return 0;
+
+    s[length - 1] ^= 0x1;
+
+    ASN1_STRING_set0(signature, s, length);
+    return 1;
 }
 
 int check_cert_time_string(const char *time, const char *desc)
@@ -3345,12 +3501,12 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         return 0;
     if (startdate == NULL || strcmp(startdate, "today") == 0) {
         if (X509_gmtime_adj(X509_getm_notBefore(x), 0) == NULL) {
-            BIO_printf(bio_err, "Error setting notBefore certificate field\n");
+            BIO_puts(bio_err, "Error setting notBefore certificate field\n");
             return 0;
         }
     } else {
         if (!ASN1_TIME_set_string_X509(X509_getm_notBefore(x), startdate)) {
-            BIO_printf(bio_err, "Error setting notBefore certificate field\n");
+            BIO_puts(bio_err, "Error setting notBefore certificate field\n");
             return 0;
         }
     }
@@ -3360,11 +3516,11 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
     }
     if (enddate == NULL) {
         if (X509_time_adj_ex(X509_getm_notAfter(x), days, 0, NULL) == NULL) {
-            BIO_printf(bio_err, "Error setting notAfter certificate field\n");
+            BIO_puts(bio_err, "Error setting notAfter certificate field\n");
             return 0;
         }
     } else if (!ASN1_TIME_set_string_X509(X509_getm_notAfter(x), enddate)) {
-        BIO_printf(bio_err, "Error setting notAfter certificate field\n");
+        BIO_puts(bio_err, "Error setting notAfter certificate field\n");
         return 0;
     }
     if (ASN1_TIME_compare(X509_get0_notAfter(x), X509_get0_notBefore(x)) < 0) {
@@ -3496,11 +3652,11 @@ EVP_PKEY *app_keygen(EVP_PKEY_CTX *ctx, const char *alg, int bits, int verbose)
         if (bits > 0)
             BIO_printf(bio_err, " with %d bits\n", bits);
         else
-            BIO_printf(bio_err, "\n");
+            BIO_puts(bio_err, "\n");
     }
     if (!RAND_status())
-        BIO_printf(bio_err, "Warning: generating random key material may take a long time\n"
-                            "if the system has a poor entropy source\n");
+        BIO_puts(bio_err, "Warning: generating random key material may take a long time\n"
+                          "if the system has a poor entropy source\n");
     if (EVP_PKEY_keygen(ctx, &res) <= 0)
         BIO_printf(bio_err, "%s: Error generating %s key\n", opt_getprog(),
             alg != NULL ? alg : "asymmetric");
@@ -3512,8 +3668,8 @@ EVP_PKEY *app_paramgen(EVP_PKEY_CTX *ctx, const char *alg)
     EVP_PKEY *res = NULL;
 
     if (!RAND_status())
-        BIO_printf(bio_err, "Warning: generating random key parameters may take a long time\n"
-                            "if the system has a poor entropy source\n");
+        BIO_puts(bio_err, "Warning: generating random key parameters may take a long time\n"
+                          "if the system has a poor entropy source\n");
     if (EVP_PKEY_paramgen(ctx, &res) <= 0)
         BIO_printf(bio_err, "%s: Generating %s key parameters failed\n",
             opt_getprog(), alg != NULL ? alg : "asymmetric");

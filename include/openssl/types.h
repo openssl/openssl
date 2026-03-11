@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -36,23 +36,23 @@ extern "C" {
 typedef struct ossl_provider_st OSSL_PROVIDER; /* Provider Object */
 
 #ifdef NO_ASN1_TYPEDEFS
-#define ASN1_INTEGER ASN1_STRING
-#define ASN1_ENUMERATED ASN1_STRING
-#define ASN1_BIT_STRING ASN1_STRING
-#define ASN1_OCTET_STRING ASN1_STRING
-#define ASN1_PRINTABLESTRING ASN1_STRING
-#define ASN1_T61STRING ASN1_STRING
-#define ASN1_IA5STRING ASN1_STRING
-#define ASN1_UTCTIME ASN1_STRING
-#define ASN1_GENERALIZEDTIME ASN1_STRING
-#define ASN1_TIME ASN1_STRING
-#define ASN1_GENERALSTRING ASN1_STRING
-#define ASN1_UNIVERSALSTRING ASN1_STRING
-#define ASN1_BMPSTRING ASN1_STRING
-#define ASN1_VISIBLESTRING ASN1_STRING
-#define ASN1_UTF8STRING ASN1_STRING
-#define ASN1_BOOLEAN int
-#define ASN1_NULL int
+typedef ASN1_STRING ASN1_INTEGER;
+typedef ASN1_STRING ASN1_ENUMERATED;
+typedef ASN1_STRING ASN1_BIT_STRING;
+typedef ASN1_STRING ASN1_OCTET_STRING;
+typedef ASN1_STRING ASN1_PRINTABLESTRING;
+typedef ASN1_STRING ASN1_T61STRING;
+typedef ASN1_STRING ASN1_IA5STRING;
+typedef ASN1_STRING ASN1_UTCTIME;
+typedef ASN1_STRING ASN1_GENERALIZEDTIME;
+typedef ASN1_STRING ASN1_TIME;
+typedef ASN1_STRING ASN1_GENERALSTRING;
+typedef ASN1_STRING ASN1_UNIVERSALSTRING;
+typedef ASN1_STRING ASN1_BMPSTRING;
+typedef ASN1_STRING ASN1_VISIBLESTRING;
+typedef ASN1_STRING ASN1_UTF8STRING;
+typedef int ASN1_BOOLEAN;
+typedef int ASN1_NULL;
 #else
 typedef struct asn1_string_st ASN1_INTEGER;
 typedef struct asn1_string_st ASN1_ENUMERATED;
@@ -149,7 +149,9 @@ typedef struct dsa_method DSA_METHOD;
 typedef struct rsa_st RSA;
 typedef struct rsa_meth_st RSA_METHOD;
 #endif
+
 typedef struct rsa_pss_params_st RSA_PSS_PARAMS;
+typedef struct rsa_oaep_params_st RSA_OAEP_PARAMS;
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 typedef struct ec_key_st EC_KEY;
@@ -157,7 +159,6 @@ typedef struct ec_key_method_st EC_KEY_METHOD;
 #endif
 
 typedef struct rand_meth_st RAND_METHOD;
-typedef struct rand_drbg_st RAND_DRBG;
 
 typedef struct ssl_dane_st SSL_DANE;
 typedef struct x509_st X509;
@@ -235,6 +236,11 @@ typedef struct ossl_decoder_st OSSL_DECODER;
 typedef struct ossl_decoder_ctx_st OSSL_DECODER_CTX;
 
 typedef struct ossl_self_test_st OSSL_SELF_TEST;
+
+#ifndef OPENSSL_NO_ECH
+/* opaque type for ECH related information */
+typedef struct ossl_echstore_st OSSL_ECHSTORE;
+#endif
 
 #ifdef __cplusplus
 }

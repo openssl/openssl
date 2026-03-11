@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,11 +18,14 @@
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
 #include "crypto/lms_sig.h"
+#include "internal/fips.h"
 
 static OSSL_FUNC_signature_newctx_fn lms_newctx;
 static OSSL_FUNC_signature_freectx_fn lms_freectx;
 static OSSL_FUNC_signature_verify_message_init_fn lms_verify_msg_init;
 static OSSL_FUNC_signature_verify_fn lms_verify;
+static OSSL_FUNC_signature_digest_verify_init_fn lms_digest_verify_init;
+static OSSL_FUNC_signature_digest_verify_fn lms_digest_verify;
 
 typedef struct {
     OSSL_LIB_CTX *libctx;
@@ -37,6 +40,12 @@ static void *lms_newctx(void *provctx, const char *propq)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_SIG_LMS))
+        return NULL;
+#endif
 
     ctx = OPENSSL_zalloc(sizeof(PROV_LMS_CTX));
     if (ctx == NULL)
@@ -123,11 +132,37 @@ static int lms_verify(void *vctx, const unsigned char *sigbuf, size_t sigbuf_len
     return ret;
 }
 
+static int lms_digest_verify_init(void *vctx, const char *mdname, void *vkey,
+    const OSSL_PARAM params[])
+{
+    PROV_LMS_CTX *ctx = (PROV_LMS_CTX *)vctx;
+
+    if (mdname != NULL && mdname[0] != '\0') {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+            "Explicit digest not supported for LMS operations");
+        return 0;
+    }
+    if (vkey == NULL && ctx->key != NULL)
+        return 1; /* lms_set_ctx_params(ctx, params); */
+
+    return lms_verify_msg_init(vctx, vkey, params);
+}
+
+static int lms_digest_verify(void *vctx, const uint8_t *sig, size_t siglen,
+    const uint8_t *tbs, size_t tbslen)
+{
+    return lms_verify(vctx, sig, siglen, tbs, tbslen);
+}
+
 const OSSL_DISPATCH ossl_lms_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))lms_newctx },
     { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))lms_freectx },
     { OSSL_FUNC_SIGNATURE_VERIFY_MESSAGE_INIT,
         (void (*)(void))lms_verify_msg_init },
     { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))lms_verify },
+    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,
+        (void (*)(void))lms_digest_verify_init },
+    { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY,
+        (void (*)(void))lms_digest_verify },
     OSSL_DISPATCH_END
 };

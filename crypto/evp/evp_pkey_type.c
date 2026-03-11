@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -65,7 +65,7 @@ int EVP_PKEY_type(int type)
     int ret;
     const EVP_PKEY_ASN1_METHOD *ameth;
 
-    ameth = EVP_PKEY_asn1_find(NULL, type);
+    ameth = evp_pkey_asn1_find(type);
     if (ameth)
         ret = ameth->pkey_id;
     else

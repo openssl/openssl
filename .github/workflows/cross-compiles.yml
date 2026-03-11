@@ -1,4 +1,4 @@
-# Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -168,7 +168,7 @@ jobs:
         sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install \
             gcc-${{ matrix.platform.arch }} \
             ${{ matrix.platform.libs }}
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule

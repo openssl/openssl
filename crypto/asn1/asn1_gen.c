@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -149,6 +149,8 @@ static ASN1_TYPE *generate_v3(const char *str, X509V3_CTX *cnf, int depth,
     cpy_len = i2d_ASN1_TYPE(ret, &orig_der);
     ASN1_TYPE_free(ret);
     ret = NULL;
+    if (orig_der == NULL)
+        return NULL;
     /* Set point to start copying for modified encoding */
     cpy_start = orig_der;
 

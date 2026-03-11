@@ -1,5 +1,5 @@
 /*-
- * Copyright 2007-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -15,6 +15,8 @@
 #include <openssl/rand.h> /* for RAND_bytes_ex() */
 #include "internal/sizes.h" /* for OSSL_MAX_NAME_SIZE */
 #include <openssl/err.h>
+
+#include <crypto/asn1.h>
 
 /*-
  * creates and initializes OSSL_CRMF_PBMPARAMETER (section 4.4)

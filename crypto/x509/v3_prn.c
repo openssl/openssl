@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -66,12 +66,12 @@ void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
 
 /* Main routine: print out a general extension */
 
-int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag,
+int X509V3_EXT_print(BIO *out, const X509_EXTENSION *ext, unsigned long flag,
     int indent)
 {
     void *ext_str = NULL;
     char *value = NULL;
-    ASN1_OCTET_STRING *extoct;
+    const ASN1_OCTET_STRING *extoct;
     const unsigned char *p;
     int extlen;
     const X509V3_EXT_METHOD *method;
@@ -150,8 +150,8 @@ int X509V3_extensions_print(BIO *bp, const char *title,
     }
 
     for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
-        ASN1_OBJECT *obj;
-        X509_EXTENSION *ex;
+        const ASN1_OBJECT *obj;
+        const X509_EXTENSION *ex;
 
         ex = sk_X509_EXTENSION_value(exts, i);
         obj = X509_EXTENSION_get_object(ex);
@@ -191,9 +191,9 @@ static int unknown_ext_print(BIO *out, const unsigned char *ext, int extlen,
         return 1;
 
     case X509V3_EXT_PARSE_UNKNOWN:
-        return ASN1_parse_dump(out, ext, extlen, indent, -1);
+        return ASN1_parse_dump(out, ext, extlen, indent, -1) > 0;
     case X509V3_EXT_DUMP_UNKNOWN:
-        return BIO_dump_indent(out, (const char *)ext, extlen, indent);
+        return BIO_dump_indent(out, (const char *)ext, extlen, indent) > 0;
 
     default:
         return 1;

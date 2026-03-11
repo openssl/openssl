@@ -1,4 +1,4 @@
-# Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -32,7 +32,7 @@ jobs:
             vcvars: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars32.bat
     runs-on: ${{ matrix.platform.os }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -103,7 +103,7 @@ jobs:
   plain:
     runs-on: windows-2022
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -115,7 +115,7 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-        perl ..\Configure --banner=Configured --strict-warnings enable-demos no-makedepend no-shared no-fips enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-trace enable-crypto-mdebug -DOSSL_WINCTX=openssl VC-WIN64A-masm
+        perl ..\Configure --banner=Configured --strict-warnings enable-demos no-makedepend no-shared no-fips enable-md2 enable-rc5 enable-weak-ssl-ciphers enable-trace enable-crypto-mdebug -DOSSL_WINCTX=openssl VC-WIN64A-masm
         perl configdata.pm --dump
     - name: build
       working-directory: _build
@@ -144,7 +144,7 @@ jobs:
   minimal:
     runs-on: windows-2022
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -202,7 +202,7 @@ jobs:
       MAKE_PARAMS: -j 4
     steps:
 # Checkout before cygwin can mess with PATH...
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - uses: cygwin/cygwin-install-action@f2009323764960f80959895c7bc3bb30210afe4d #v6

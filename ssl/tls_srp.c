@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -193,12 +193,15 @@ int ssl_srp_server_param_with_username_intern(SSL_CONNECTION *s, int *ad)
     OPENSSL_cleanse(b, sizeof(b));
 
     /* Calculate:  B = (kv + g^b) % N  */
+    s->srp_ctx.B = SRP_Calc_B_ex(s->srp_ctx.b, s->srp_ctx.N, s->srp_ctx.g,
+        s->srp_ctx.v, sctx->libctx, sctx->propq);
+    if (s->srp_ctx.B == NULL) {
+        BN_clear_free(s->srp_ctx.b);
+        s->srp_ctx.b = NULL;
+        return SSL3_AL_FATAL;
+    }
 
-    return ((s->srp_ctx.B = SRP_Calc_B_ex(s->srp_ctx.b, s->srp_ctx.N, s->srp_ctx.g,
-                 s->srp_ctx.v, sctx->libctx, sctx->propq))
-               != NULL)
-        ? SSL_ERROR_NONE
-        : SSL3_AL_FATAL;
+    return SSL_ERROR_NONE;
 }
 
 int SSL_srp_server_param_with_username(SSL *s, int *ad)

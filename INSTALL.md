@@ -584,6 +584,15 @@ In the following list, always the non-default variant is documented: if
 feature `xxxx` is disabled by default then `enable-xxxx` is documented and
 if feature `xxxx` is enabled by default then `no-xxxx` is documented.
 
+### enable-static-vcruntime
+
+Build binaries that do not require that VC runtimes are installed
+
+This option will produce binaries that are "self contained", that do not
+depend upon VC runtime libraries being installed, so can be used on any
+computer running MS Windows.  Without this option, the build will produce
+binaries that rely on the VC runtimes being installed and available.
+
 ### enable-ktls
 
 Build with Kernel TLS support.
@@ -757,19 +766,21 @@ Don't build and install documentation, i.e. manual pages in various forms.
 
 Don't build support for loading Dynamic Shared Objects (DSO)
 
-### no-ec
+### enable-tls-deprecated-ec
 
-Don't build support for Elliptic Curves.
-
-### no-ec2m
-
-Don't build support for binary Elliptic Curves
-
-### no-tls-deprecated-ec
-
-Disable legacy TLS EC groups that were deprecated in RFC8422.  These are the
+Enable legacy TLS EC groups that were deprecated in RFC8422.  These are the
 Koblitz curves, B<secp160r1>, B<secp160r2>, B<secp192r1>, B<secp224r1>, and the
 binary Elliptic curves that would also be disabled by C<no-ec2m>.
+
+### enable-ec_expicit_curves
+
+Enable support for explictitly specified elliptic curves not matching the
+well-known ones. Until this option is on, such curves can't be instantiated
+from ASN.1 formats.
+
+### no-ech
+
+Don't build support for Encrypted Client Hello (ECH) extension.
 
 ### enable-ec_nistp_64_gcc_128
 
@@ -867,25 +878,9 @@ Don't build the legacy provider.
 
 Disabling this also disables the legacy algorithms: MD2 (already disabled by default).
 
-### enable-lms
-
-Enable Leighton-Micali Signatures (LMS) support.
-Support is currently limited to verification only as per
-[SP 800-208](https://csrc.nist.gov/pubs/sp/800/208/final).
-
 ### no-makedepend
 
 Don't generate dependencies.
-
-### no-ml-dsa
-
-Disable Module-Lattice-Based Digital Signature Standard (ML-DSA) support.
-ML-DSA is based on CRYSTALS-DILITHIUM. See [FIPS 204].
-
-### no-ml-kem
-
-Disable Module-Lattice-Based Key-Encapsulation Mechanism Standard (ML-KEM)
-support.  ML-KEM is based on CRYSTALS-KYBER. See [FIPS 203].
 
 ### no-module
 
@@ -965,11 +960,6 @@ Build support for Stream Control Transmission Protocol (SCTP).
 Do not create shared libraries, only static ones.
 
 See [Notes on shared libraries](#notes-on-shared-libraries) below.
-
-### no-slh-dsa
-
-Disable Stateless Hash Based Digital Signature Standard support.
-(SLH-DSA is based on SPHINCS+. See [FIPS 205])
 
 ### no-sm2-precomp
 
@@ -1161,8 +1151,8 @@ Don't build support for negotiating the specified SSL/TLS protocol.
 
 If `no-tls` is selected then all of `tls1`, `tls1_1`, `tls1_2` and `tls1_3`
 are disabled.
-Similarly `no-dtls` will disable `dtls1` and `dtls1_2`.  The `no-ssl` option is
-synonymous with `no-ssl3`.  Note this only affects version negotiation.
+Similarly `no-dtls` will disable `dtls1` and `dtls1_2`.
+`no-ssl` and `no-ssl3` are deprecated and do nothing.
 OpenSSL will still provide the methods for applications to explicitly select
 the individual protocol versions.
 
@@ -1178,22 +1168,30 @@ Analogous to `no-{protocol}` but in addition do not build the methods for
 applications to explicitly select individual protocol versions.  Note that there
 is no `no-tls1_3-method` option because there is no application method for
 TLSv1.3.
+`no-ssl3` is deprecated and does nothing.
 
 Using individual protocol methods directly is deprecated.  Applications should
 use `TLS_method()` instead.
 
 ### enable-{algorithm}
 
-    enable-{md2|rc5}
+    enable-{md2|rc5|lms}
 
 Build with support for the specified algorithm.
+
+The `lms` algorithm support is currently limited to verification only as per
+[SP 800-208](https://csrc.nist.gov/pubs/sp/800/208/final).
 
 ### no-{algorithm}
 
     no-{aria|bf|blake2|camellia|cast|chacha|cmac|
-        des|dh|dsa|ecdh|ecdsa|idea|md4|mdc2|ml-dsa|
-        ml-kem|ocb|poly1305|rc2|rc4|rmd160|scrypt|
-        seed|siphash|siv|sm2|sm3|sm4|whirlpool}
+        des|dh|dsa|
+        ec|ec2m|ecdh|ecdsa|hmac-drbg-kdf|idea|kbkdf|krb5kdf|
+        md4|mdc2|
+        ml-dsa|ml-kem|
+        ocb|poly1305|pvkkdf|rc2|rc4|rmd160|scrypt|
+        seed|siphash|siv|slh-dsa|sm2|sm3|sm4|snmpkdf|srtpkdf|sshkdf|sskdf|
+        x942kdf|x963kdf|whirlpool}
 
 Build without support for the specified algorithm.
 

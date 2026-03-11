@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -8,8 +8,13 @@
 
 
 use OpenSSL::Test;
+use OpenSSL::Test::Utils;
+use OpenSSL::Test::Simple;
 
 setup("test_abort");
+
+plan skip_all => "This test should not be run under valgrind"
+    if ( defined $ENV{OSSL_USE_VALGRIND} );
 
 plan tests => 1;
 

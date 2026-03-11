@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,5 +22,10 @@ int ossl_ssl_get_error(const SSL *s, int i, int check_err);
 #define TLS1_FLAGS_QUIC 0x2000
 /* Set if this is our QUIC handshake layer */
 #define TLS1_FLAGS_QUIC_INTERNAL 0x4000
+
+/* We limit the number of key shares sent */
+#ifndef OPENSSL_CLIENT_MAX_KEY_SHARES
+#define OPENSSL_CLIENT_MAX_KEY_SHARES 4
+#endif
 
 #endif

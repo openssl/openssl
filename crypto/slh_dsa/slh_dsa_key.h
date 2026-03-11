@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -44,7 +44,7 @@ struct slh_dsa_key_st {
     const SLH_HASH_FUNC *hash_func;
     /* See FIPS 205 Section 11.1 */
 
-    EVP_MD *md; /* Used for SHAKE and SHA-256 */
-    EVP_MD *md_big; /* Used for SHA-256 or SHA-512 */
+    EVP_MD *md; /* Used for general SHAKE and SHA-256 hashes */
+    EVP_MD *md_sha512; /* Used for SHA-512 hashes */
     EVP_MAC *hmac;
 };

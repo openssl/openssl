@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,6 +25,8 @@
 #include <openssl/ssl.h>
 #include "internal/nelem.h"
 #include "internal/refcount.h"
+
+#include <crypto/asn1.h>
 
 /* error codes */
 
@@ -214,7 +216,7 @@ struct tls_group_st {
 static struct tls_group_st xor_group = {
     0, /* group_id, set by randomize_tls_alg_id() */
     128, /* secbits */
-    TLS1_3_VERSION, /* mintls */
+    TLS1_2_VERSION, /* mintls */
     0, /* maxtls */
     -1, /* mindtls */
     -1, /* maxdtls */
@@ -2162,8 +2164,7 @@ ASN1_SEQUENCE(X509_PUBKEY_INTERNAL) = {
     ASN1_SIMPLE(X509_PUBKEY, public_key, ASN1_BIT_STRING)
 } static_ASN1_SEQUENCE_END_name(X509_PUBKEY, X509_PUBKEY_INTERNAL)
 
-                                          static X509_PUBKEY
-    * xorx_d2i_X509_PUBKEY_INTERNAL(const unsigned char **pp, long len, OSSL_LIB_CTX *libctx)
+static X509_PUBKEY *xorx_d2i_X509_PUBKEY_INTERNAL(const unsigned char **pp, long len, OSSL_LIB_CTX *libctx)
 {
     X509_PUBKEY *xpub = OPENSSL_zalloc(sizeof(*xpub));
 
@@ -3226,6 +3227,11 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
         default:
             break;
         }
+    }
+
+    if (c_obj_create == NULL || c_obj_add_sigid == NULL) {
+        ERR_raise(ERR_LIB_USER, XORPROV_R_OBJ_CREATE_ERR);
+        goto err;
     }
 
     /*

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -78,7 +78,7 @@ void wait_for_async(SSL *s);
 int has_stdin_waiting(void);
 #endif
 
-void corrupt_signature(const ASN1_STRING *signature);
+int corrupt_signature(ASN1_STRING *signature);
 
 /* Helpers for setting X509v3 certificate fields notBefore and notAfter */
 int check_cert_time_string(const char *time, const char *desc);
@@ -102,6 +102,10 @@ int wrap_password_callback(char *buf, int bufsiz, int verify, void *cb_data);
 int progress_cb(EVP_PKEY_CTX *ctx);
 
 void dump_cert_text(BIO *out, X509 *x);
+int encode_private_key(
+    BIO *out, const char *output_type, const EVP_PKEY *pkey,
+    const STACK_OF(OPENSSL_STRING) *encopt, const EVP_CIPHER *cipher,
+    const char *pass);
 void print_name(BIO *out, const char *title, const X509_NAME *nm);
 void print_bignum_var(BIO *, const BIGNUM *, const char *,
     int, unsigned char *);
@@ -141,11 +145,10 @@ char *process_additional_mac_key_arguments(const char *arg);
 char *get_str_from_file(const char *filename);
 int load_cert_certs(const char *uri,
     X509 **pcert, STACK_OF(X509) **pcerts,
-    int exclude_http, const char *pass, const char *desc,
-    X509_VERIFY_PARAM *vpm);
-STACK_OF(X509) *load_certs_multifile(char *files, const char *pass,
+    int exclude_http, const char *pass, const char *desc, X509_VERIFY_PARAM *vpm);
+STACK_OF(X509) *load_certs_multifile(char *files, const char *source,
     const char *desc, X509_VERIFY_PARAM *vpm);
-X509_STORE *load_certstore(char *input, const char *pass, const char *desc,
+X509_STORE *load_certstore(char *input, const char *source, const char *desc,
     X509_VERIFY_PARAM *vpm);
 int load_certs(const char *uri, int maybe_stdin, STACK_OF(X509) **certs,
     const char *pass, const char *desc);
@@ -160,6 +163,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     EVP_SKEY **pskey);
 EVP_SKEY *load_skey(const char *uri, int format, int maybe_stdin,
     const char *pass, int quiet);
+int load_rpk_file(SSL *ssl, const char *file);
 X509_STORE *setup_verify(const char *CAfile, int noCAfile,
     const char *CApath, int noCApath,
     const char *CAstore, int noCAstore);
@@ -216,7 +220,7 @@ typedef struct ca_db_st {
 #endif
 } CA_DB;
 
-extern int do_updatedb(CA_DB *db, time_t *now);
+extern int do_updatedb(CA_DB *db, const time_t *now);
 
 void app_bail_out(char *fmt, ...);
 /**
@@ -264,7 +268,7 @@ int parse_yesno(const char *str, int def);
 X509_NAME *parse_name(const char *str, int chtype, int multirdn,
     const char *desc);
 void policies_print(X509_STORE_CTX *ctx);
-int bio_to_mem(unsigned char **out, int maxlen, BIO *in);
+int bio_to_mem(unsigned char **out, size_t *outlen, size_t maxlen, BIO *in);
 int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value);
 int x509_ctrl_string(X509 *x, const char *value);
 int x509_req_ctrl_string(X509_REQ *x, const char *value);
@@ -272,6 +276,10 @@ int init_gen_str(EVP_PKEY_CTX **pctx,
     const char *algname, int do_param,
     OSSL_LIB_CTX *libctx, const char *propq);
 int cert_matches_key(const X509 *cert, const EVP_PKEY *pkey);
+int do_EXT_add_nconf(CONF *conf1, CONF *conf2, X509V3_CTX *ctx,
+    X509 *cert, const char *msg, const char *sect);
+int do_EXT_REQ_add_nconf(CONF *conf1, CONF *conf2, X509V3_CTX *ctx,
+    X509_REQ *req, const char *msg, const char *sect);
 int do_X509_sign(X509 *x, int force_v1, EVP_PKEY *pkey, const char *md,
     STACK_OF(OPENSSL_STRING) *sigopts, X509V3_CTX *ext_ctx);
 int do_X509_verify(X509 *x, EVP_PKEY *pkey, STACK_OF(OPENSSL_STRING) *vfyopts);

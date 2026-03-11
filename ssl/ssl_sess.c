@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -61,7 +61,7 @@ void ssl_session_calculate_timeout(SSL_SESSION *ss)
 SSL_SESSION *SSL_get_session(const SSL *ssl)
 /* aka SSL_get0_session; gets 0 objects, just returns a copy of the pointer */
 {
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(ssl);
 
     if (sc == NULL)
         return NULL;
@@ -351,7 +351,6 @@ int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss)
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
     switch (s->version) {
-    case SSL3_VERSION:
     case TLS1_VERSION:
     case TLS1_1_VERSION:
     case TLS1_2_VERSION:
@@ -679,7 +678,7 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
     if (ret->flags & SSL_SESS_FLAG_EXTMS) {
         /* If old session includes extms, but new does not: abort handshake */
         if (!(s->s3.flags & TLS1_FLAGS_RECEIVED_EXTMS)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_INCONSISTENT_EXTMS);
+            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_INCONSISTENT_EXTMS);
             fatal = 1;
             goto err;
         }

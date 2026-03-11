@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -182,12 +182,12 @@ static int genb64(char *prefix, char *suffix, unsigned const char *buf,
 
 static int test_bio_base64_run(test_case *t, int llen, int wscnt)
 {
-    unsigned char *raw;
-    unsigned char *out;
+    unsigned char *raw = NULL;
+    unsigned char *out = NULL;
     unsigned out_len;
     char *encoded = NULL;
     int elen;
-    BIO *bio, *b64;
+    BIO *bio = NULL, *b64 = NULL;
     int n, n1, n2;
     int ret;
 
@@ -208,19 +208,17 @@ static int test_bio_base64_run(test_case *t, int llen, int wscnt)
     out_len = t->bytes + 1024;
     out = OPENSSL_malloc(out_len);
     if (out == NULL) {
-        OPENSSL_free(raw);
         TEST_error("out of memory");
-        return -1;
+        ret = -1;
+        goto end;
     }
 
     elen = genb64(t->prefix, t->suffix, raw, t->bytes, t->trunc, t->encoded,
         llen, wscnt, &encoded);
     if (elen < 0 || (bio = BIO_new(BIO_s_mem())) == NULL) {
-        OPENSSL_free(raw);
-        OPENSSL_free(out);
-        OPENSSL_free(encoded);
         TEST_error("out of memory");
-        return -1;
+        ret = -1;
+        goto end;
     }
     if (t->retry)
         BIO_set_mem_eof_return(bio, EOF_RETURN);
@@ -229,7 +227,7 @@ static int test_bio_base64_run(test_case *t, int llen, int wscnt)
 
     /*
      * When the input is long enough, and the source bio is retriable, exercise
-     * retries by writting the input to the underlying BIO in two steps (1024
+     * retries by writing the input to the underlying BIO in two steps (1024
      * bytes, then the rest) and trying to decode some data after each write.
      */
     n1 = elen;
@@ -238,7 +236,10 @@ static int test_bio_base64_run(test_case *t, int llen, int wscnt)
     if (n1 > 0)
         BIO_write(bio, encoded, n1);
 
-    b64 = BIO_new(BIO_f_base64());
+    if (!TEST_ptr(b64 = BIO_new(BIO_f_base64()))) {
+        ret = -1;
+        goto end;
+    }
     if (t->no_nl)
         BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
     BIO_push(b64, bio);
@@ -296,11 +297,12 @@ static int test_bio_base64_run(test_case *t, int llen, int wscnt)
         ret = -1;
     }
 
-    BIO_free_all(b64);
-    OPENSSL_free(out);
+end:
+    BIO_free(bio);
+    BIO_free(b64);
     OPENSSL_free(raw);
+    OPENSSL_free(out);
     OPENSSL_free(encoded);
-
     return ret;
 }
 
@@ -426,6 +428,45 @@ static int test_bio_base64_corner_case_bug(int idx)
     return generic_case(&t, 0);
 }
 
+#define MEM_CHK "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFB" \
+                "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFB" \
+                "QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFB"
+
+static int test_bio_base64_no_nl(void)
+{
+    char msg[120];
+    BIO *b64 = NULL;
+    BIO *mem = NULL;
+    BIO *b64_chk;
+    BUF_MEM *bptr = NULL;
+    int ok = 0;
+
+    memset(msg, 'A', sizeof(msg));
+
+    b64 = BIO_new(BIO_f_base64());
+    if (!TEST_ptr(b64))
+        goto done;
+
+    mem = BIO_new(BIO_s_mem());
+    if (!TEST_ptr(mem))
+        goto done;
+
+    b64_chk = BIO_push(b64, mem);
+    if (!TEST_ptr_eq(b64, b64_chk))
+        goto done;
+
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+    BIO_write(b64, msg, sizeof(msg));
+    if (!TEST_true(BIO_flush(b64)))
+        goto done;
+    BIO_get_mem_ptr(mem, &bptr);
+    ok = TEST_mem_eq(MEM_CHK, sizeof(MEM_CHK) - 1, bptr->data, bptr->length);
+
+done:
+    BIO_free_all(b64);
+    return ok;
+}
+
 int setup_tests(void)
 {
     int numidx;
@@ -481,5 +522,6 @@ int setup_tests(void)
     numidx = 2 * 2;
     ADD_ALL_TESTS(test_bio_base64_corner_case_bug, numidx);
 
+    ADD_TEST(test_bio_base64_no_nl);
     return 1;
 }

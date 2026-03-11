@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,12 @@
 #include "internal/common.h"
 #include "internal/thread_arch.h"
 #include <assert.h>
+
+#if defined(OPENSSL_SYS_WINDOWS)
+#include <winsock2.h>
+#include <mstcpip.h>
+#include <mswsock.h>
+#endif
 
 /*
  * Core I/O Reactor Framework
@@ -69,12 +75,44 @@ void ossl_quic_reactor_cleanup(QUIC_REACTOR *rtor)
     }
 }
 
+#if defined(OPENSSL_SYS_WINDOWS)
+
+/* Work around for MinGW builds. */
+#if defined(__MINGW32__) && !defined(SIO_UDP_NETRESET)
+#define SIO_UDP_NETRESET _WSAIOW(IOC_VENDOR, 15)
+#endif
+
+/*
+ * On Windows recvfrom() may return WSAECONNRESET when destination port
+ * used in preceding call to sendto() is no longer reachable. The reset
+ * error received from UDP socket takes the whole port down. This behavior
+ * must be suppressed for QUIC protocol so QUIC applications may rely on
+ * QUIC protocol itself to detect network failures.
+ */
+static void rtor_configure_winsock(BIO_POLL_DESCRIPTOR *bpd)
+{
+    BOOL bNewBehavior = FALSE;
+    DWORD dwBytesReturned = 0;
+
+    if (bpd->type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD) {
+        WSAIoctl(bpd->value.fd, SIO_UDP_CONNRESET, &bNewBehavior,
+            sizeof(bNewBehavior), NULL, 0, &dwBytesReturned, NULL, NULL);
+        WSAIoctl(bpd->value.fd, SIO_UDP_NETRESET, &bNewBehavior,
+            sizeof(bNewBehavior), NULL, 0, &dwBytesReturned, NULL, NULL);
+    }
+}
+#endif
+
 void ossl_quic_reactor_set_poll_r(QUIC_REACTOR *rtor, const BIO_POLL_DESCRIPTOR *r)
 {
     if (r == NULL)
         rtor->poll_r.type = BIO_POLL_DESCRIPTOR_TYPE_NONE;
     else
         rtor->poll_r = *r;
+
+#if defined(OPENSSL_SYS_WINDOWS)
+    rtor_configure_winsock(&rtor->poll_r);
+#endif
 
     rtor->can_poll_r
         = ossl_quic_reactor_can_support_poll_descriptor(rtor, &rtor->poll_r);
@@ -86,6 +124,10 @@ void ossl_quic_reactor_set_poll_w(QUIC_REACTOR *rtor, const BIO_POLL_DESCRIPTOR 
         rtor->poll_w.type = BIO_POLL_DESCRIPTOR_TYPE_NONE;
     else
         rtor->poll_w = *w;
+
+#if defined(OPENSSL_SYS_WINDOWS)
+    rtor_configure_winsock(&rtor->poll_w);
+#endif
 
     rtor->can_poll_w
         = ossl_quic_reactor_can_support_poll_descriptor(rtor, &rtor->poll_w);

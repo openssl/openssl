@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,6 +22,7 @@
 #include <openssl/proverr.h>
 #include <openssl/params.h>
 #include "internal/cryptlib.h"
+#include "internal/fips.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
@@ -87,6 +88,12 @@ static void *dh_newctx(void *provctx)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_KA_DH))
+        return NULL;
+#endif
 
     pdhctx = OPENSSL_zalloc(sizeof(PROV_DH_CTX));
     if (pdhctx == NULL)

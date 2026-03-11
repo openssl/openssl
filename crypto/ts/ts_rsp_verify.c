@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,8 @@
 #include "internal/sizes.h"
 #include "crypto/ess.h"
 #include "ts_local.h"
+
+#include <crypto/asn1.h>
 
 static int ts_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted,
     X509 *signer, STACK_OF(X509) **chain);
@@ -84,7 +86,7 @@ static const struct {
  *      - Verify the signature value.
  *      - Returns the signer certificate in 'signer', if 'signer' is not NULL.
  */
-int TS_RESP_verify_signature(PKCS7 *token, STACK_OF(X509) *certs,
+int TS_RESP_verify_signature(PKCS7 *token, const STACK_OF(X509) *certs,
     X509_STORE *store, X509 **signer_out)
 {
     STACK_OF(PKCS7_SIGNER_INFO) *sinfos = NULL;
@@ -205,11 +207,11 @@ end:
 
 static ESS_SIGNING_CERT *ossl_ess_get_signing_cert(const PKCS7_SIGNER_INFO *si)
 {
-    ASN1_TYPE *attr;
+    const ASN1_TYPE *attr;
     const unsigned char *p;
 
     attr = PKCS7_get_signed_attribute(si, NID_id_smime_aa_signingCertificate);
-    if (attr == NULL)
+    if (attr == NULL || attr->type != V_ASN1_SEQUENCE)
         return NULL;
     p = attr->value.sequence->data;
     return d2i_ESS_SIGNING_CERT(NULL, &p, attr->value.sequence->length);
@@ -217,11 +219,11 @@ static ESS_SIGNING_CERT *ossl_ess_get_signing_cert(const PKCS7_SIGNER_INFO *si)
 
 static ESS_SIGNING_CERT_V2 *ossl_ess_get_signing_cert_v2(const PKCS7_SIGNER_INFO *si)
 {
-    ASN1_TYPE *attr;
+    const ASN1_TYPE *attr;
     const unsigned char *p;
 
     attr = PKCS7_get_signed_attribute(si, NID_id_smime_aa_signingCertificateV2);
-    if (attr == NULL)
+    if (attr == NULL || attr->type != V_ASN1_SEQUENCE)
         return NULL;
     p = attr->value.sequence->data;
     return d2i_ESS_SIGNING_CERT_V2(NULL, &p, attr->value.sequence->length);
@@ -434,17 +436,10 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
 
     OBJ_obj2txt(name, sizeof(name), md_alg_resp->algorithm, 0);
 
-    (void)ERR_set_mark();
     md = EVP_MD_fetch(NULL, name, NULL);
-
-    if (md == NULL)
-        md = (EVP_MD *)EVP_get_digestbyname(name);
-
     if (md == NULL) {
-        (void)ERR_clear_last_mark();
         goto err;
     }
-    (void)ERR_pop_to_mark();
 
     length = EVP_MD_get_size(md);
     if (length <= 0)

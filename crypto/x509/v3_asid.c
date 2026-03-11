@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -717,7 +717,7 @@ int X509v3_asid_subset(ASIdentifiers *a, ASIdentifiers *b)
  * Core code for RFC 3779 3.3 path validation.
  */
 static int asid_validate_path_internal(X509_STORE_CTX *ctx,
-    STACK_OF(X509) *chain,
+    const STACK_OF(X509) *chain,
     ASIdentifiers *ext)
 {
     ASIdOrRanges *child_as = NULL, *child_rdi = NULL;
@@ -856,7 +856,7 @@ int X509v3_asid_validate_path(X509_STORE_CTX *ctx)
  * RFC 3779 3.3 path validation of an extension.
  * Test whether chain covers extension.
  */
-int X509v3_asid_validate_resource_set(STACK_OF(X509) *chain,
+int X509v3_asid_validate_resource_set(const STACK_OF(X509) *chain,
     ASIdentifiers *ext, int allow_inheritance)
 {
     if (ext == NULL)

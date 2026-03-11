@@ -48,7 +48,7 @@ sub get_count_info {
     }
     #
     #The number of allocations we skip is in argument 2
-    #The number of mallocs we shoudl test is in argument 4
+    #The number of mallocs we should test is in argument 4
     #
     my $skipcount = $vals[2];
     my $malloccount = $vals[4];
@@ -74,7 +74,7 @@ sub run_memfail_test {
         #
         # We need to setup our openssl malloc failures env var to fail the target malloc
         # the format of this string is a series of A@B;C@D tuples where A,C are the number
-        # of mallocs to consider, and B,D are the likelyhood that they should fail.
+        # of mallocs to consider, and B,D are the likelihood that they should fail.
         # We always skip the first "skip" allocations, then iteratively guarantee that
         # next <idx> mallocs pass, followed by the next single malloc failing, with the remainder
         # passing

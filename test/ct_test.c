@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -149,7 +149,7 @@ end:
     return result;
 }
 
-static int compare_extension_printout(X509_EXTENSION *extension,
+static int compare_extension_printout(const X509_EXTENSION *extension,
     const char *expected_output)
 {
     BIO *text_buffer = NULL;
@@ -250,7 +250,7 @@ static int execute_cert_test(CT_TEST_FIXTURE *fixture)
     if (fixture->certificate_file != NULL) {
         int sct_extension_index;
         int i;
-        X509_EXTENSION *sct_extension = NULL;
+        const X509_EXTENSION *sct_extension = NULL;
 
         if (!TEST_ptr(cert = load_pem_cert(fixture->certs_dir,
                           fixture->certificate_file)))
@@ -479,10 +479,14 @@ static int test_default_ct_policy_eval_ctx_time_is_now(void)
     int success = 0;
     CT_POLICY_EVAL_CTX *ct_policy_ctx = CT_POLICY_EVAL_CTX_new();
     const time_t default_time = (time_t)(CT_POLICY_EVAL_CTX_get_time(ct_policy_ctx) / 1000);
-    const time_t time_tolerance = 600; /* 10 minutes */
+    const double time_tolerance = 600; /* 10 minutes */
+    double seconds;
 
-    if (!TEST_time_t_le(abs((int)difftime(time(NULL), default_time)),
-            time_tolerance))
+    seconds = difftime(time(NULL), default_time);
+    if (seconds < 0.0)
+        seconds = -seconds;
+
+    if (!TEST_double_le(seconds, time_tolerance))
         goto end;
 
     success = 1;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -30,6 +30,10 @@
 
 #define SHA2_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
 
+extern int SHA1_Update_thunk(void *ctx, const unsigned char *data, size_t sz);
+extern int SHA256_Update_thunk(void *ctx, const unsigned char *data, size_t sz);
+extern int SHA512_Update_thunk(void *ctx, const unsigned char *data, size_t sz);
+
 /* Special set_params method for SSL3 */
 static int sha1_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
@@ -58,10 +62,10 @@ static const unsigned char sha256magic[] = "SHA256v1";
     (                                                 \
         SHA256MAGIC_LEN /* magic */                   \
         + sizeof(uint32_t) /* c->md_len */            \
+        + sizeof(uint32_t) /* c->num */               \
         + sizeof(uint32_t) * 8 /* c->h */             \
         + sizeof(uint32_t) * 2 /* c->Nl + c->Nh */    \
         + sizeof(uint32_t) * SHA_LBLOCK /* c->data */ \
-        + sizeof(uint32_t) /* c->num */               \
     )
 
 static int SHA256_Serialize(SHA256_CTX *c, unsigned char *out,
@@ -90,6 +94,9 @@ static int SHA256_Serialize(SHA256_CTX *c, unsigned char *out,
     /* md_len */
     p = OPENSSL_store_u32_le(p, c->md_len);
 
+    /* num */
+    p = OPENSSL_store_u32_le(p, c->num);
+
     /* h */
     for (i = 0; i < sizeof(c->h) / sizeof(SHA_LONG); i++)
         p = OPENSSL_store_u32_le(p, c->h[i]);
@@ -102,15 +109,17 @@ static int SHA256_Serialize(SHA256_CTX *c, unsigned char *out,
     for (i = 0; i < SHA_LBLOCK; i++)
         p = OPENSSL_store_u32_le(p, c->data[i]);
 
-    /* num */
-    p = OPENSSL_store_u32_le(p, c->num);
-
     if (outlen != NULL)
         *outlen = SHA256_SERIALIZATION_LEN;
 
     return 1;
 }
 
+/*
+ * This function only performs basic input sanity checks and is not
+ * built to handle malicious input data. Only trusted input should be
+ * fed to this function
+ */
 static int SHA256_Deserialize(SHA256_CTX *c, const unsigned char *in,
     size_t inlen)
 {
@@ -133,6 +142,12 @@ static int SHA256_Deserialize(SHA256_CTX *c, const unsigned char *in,
         return 0;
     }
 
+    /* num check */
+    p = OPENSSL_load_u32_le(&val, p);
+    if (val >= sizeof(c->data))
+        return 0;
+    c->num = (unsigned int)val;
+
     /* h */
     for (i = 0; i < (sizeof(c->h) / sizeof(SHA_LONG)); i++) {
         p = OPENSSL_load_u32_le(&val, p);
@@ -151,10 +166,6 @@ static int SHA256_Deserialize(SHA256_CTX *c, const unsigned char *in,
         c->data[i] = (SHA_LONG)val;
     }
 
-    /* num */
-    p = OPENSSL_load_u32_le(&val, p);
-    c->num = (unsigned int)val;
-
     return 1;
 }
 
@@ -164,10 +175,10 @@ static const unsigned char sha512magic[] = "SHA512v1";
     (                                              \
         SHA512MAGIC_LEN /* magic */                \
         + sizeof(uint32_t) /* c->md_len */         \
+        + sizeof(uint32_t) /* c->num */            \
         + sizeof(uint64_t) * 8 /* c->h */          \
         + sizeof(uint64_t) * 2 /* c->Nl + c->Nh */ \
         + SHA512_CBLOCK /* c->u.d/c->u.p */        \
-        + sizeof(uint32_t) /* c->num */            \
     )
 
 static int SHA512_Serialize(SHA512_CTX *c, unsigned char *out,
@@ -196,6 +207,9 @@ static int SHA512_Serialize(SHA512_CTX *c, unsigned char *out,
     /* md_len */
     p = OPENSSL_store_u32_le(p, c->md_len);
 
+    /* num */
+    p = OPENSSL_store_u32_le(p, c->num);
+
     /* h */
     for (i = 0; i < sizeof(c->h) / sizeof(SHA_LONG64); i++)
         p = OPENSSL_store_u64_le(p, c->h[i]);
@@ -208,15 +222,17 @@ static int SHA512_Serialize(SHA512_CTX *c, unsigned char *out,
     memcpy(p, c->u.p, SHA512_CBLOCK);
     p += SHA512_CBLOCK;
 
-    /* num */
-    p = OPENSSL_store_u32_le(p, c->num);
-
     if (outlen != NULL)
         *outlen = SHA512_SERIALIZATION_LEN;
 
     return 1;
 }
 
+/*
+ * This function only performs basic input sanity checks and is not
+ * built to handle malicious input data. Only trusted input should be
+ * fed to this function
+ */
 static int SHA512_Deserialize(SHA512_CTX *c, const unsigned char *in,
     size_t inlen)
 {
@@ -239,6 +255,12 @@ static int SHA512_Deserialize(SHA512_CTX *c, const unsigned char *in,
     if ((unsigned int)val32 != c->md_len)
         return 0;
 
+    /* num check */
+    p = OPENSSL_load_u32_le(&val32, p);
+    if (val32 >= sizeof(c->u.d))
+        return 0;
+    c->num = (unsigned int)val32;
+
     /* h */
     for (i = 0; i < (sizeof(c->h) / sizeof(SHA_LONG64)); i++) {
         p = OPENSSL_load_u64_le(&val, p);
@@ -255,62 +277,58 @@ static int SHA512_Deserialize(SHA512_CTX *c, const unsigned char *in,
     memcpy(c->u.p, p, SHA512_CBLOCK);
     p += SHA512_CBLOCK;
 
-    /* num */
-    p = OPENSSL_load_u32_le(&val32, p);
-    c->num = (unsigned int)val32;
-
     return 1;
 }
 
 /* ossl_sha1_functions */
 IMPLEMENT_digest_functions_with_settable_ctx(
     sha1, SHA_CTX, SHA_CBLOCK, SHA_DIGEST_LENGTH, SHA2_FLAGS,
-    SHA1_Init, SHA1_Update, SHA1_Final,
+    SHA1_Init, SHA1_Update_thunk, SHA1_Final,
     sha1_settable_ctx_params, sha1_set_ctx_params)
 
 /* ossl_sha224_functions */
 IMPLEMENT_digest_functions_with_serialize(sha224, SHA256_CTX,
     SHA256_CBLOCK, SHA224_DIGEST_LENGTH,
     SHA2_FLAGS, SHA224_Init,
-    SHA224_Update, SHA224_Final,
+    SHA256_Update_thunk, SHA224_Final,
     SHA256_Serialize, SHA256_Deserialize)
 
 /* ossl_sha256_functions */
 IMPLEMENT_digest_functions_with_serialize(sha256, SHA256_CTX,
     SHA256_CBLOCK, SHA256_DIGEST_LENGTH,
     SHA2_FLAGS, SHA256_Init,
-    SHA256_Update, SHA256_Final,
+    SHA256_Update_thunk, SHA256_Final,
     SHA256_Serialize, SHA256_Deserialize)
 /* ossl_sha256_192_internal_functions */
 IMPLEMENT_digest_functions_with_serialize(sha256_192_internal, SHA256_CTX,
     SHA256_CBLOCK, SHA256_192_DIGEST_LENGTH,
     SHA2_FLAGS, ossl_sha256_192_init,
-    SHA256_Update, SHA256_Final,
+    SHA256_Update_thunk, SHA256_Final,
     SHA256_Serialize, SHA256_Deserialize)
 /* ossl_sha384_functions */
 IMPLEMENT_digest_functions_with_serialize(sha384, SHA512_CTX,
     SHA512_CBLOCK, SHA384_DIGEST_LENGTH,
     SHA2_FLAGS, SHA384_Init,
-    SHA384_Update, SHA384_Final,
+    SHA512_Update_thunk, SHA384_Final,
     SHA512_Serialize, SHA512_Deserialize)
 
 /* ossl_sha512_functions */
 IMPLEMENT_digest_functions_with_serialize(sha512, SHA512_CTX,
     SHA512_CBLOCK, SHA512_DIGEST_LENGTH,
     SHA2_FLAGS, SHA512_Init,
-    SHA512_Update, SHA512_Final,
+    SHA512_Update_thunk, SHA512_Final,
     SHA512_Serialize, SHA512_Deserialize)
 
 /* ossl_sha512_224_functions */
 IMPLEMENT_digest_functions_with_serialize(sha512_224, SHA512_CTX,
     SHA512_CBLOCK, SHA224_DIGEST_LENGTH,
     SHA2_FLAGS, sha512_224_init,
-    SHA512_Update, SHA512_Final,
+    SHA512_Update_thunk, SHA512_Final,
     SHA512_Serialize, SHA512_Deserialize)
 
 /* ossl_sha512_256_functions */
 IMPLEMENT_digest_functions_with_serialize(sha512_256, SHA512_CTX,
     SHA512_CBLOCK, SHA256_DIGEST_LENGTH,
     SHA2_FLAGS, sha512_256_init,
-    SHA512_Update, SHA512_Final,
+    SHA512_Update_thunk, SHA512_Final,
     SHA512_Serialize, SHA512_Deserialize)

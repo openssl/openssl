@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,7 @@
 #include <openssl/core_names.h>
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
+#include "internal/fips.h"
 #include "internal/numbers.h"
 #include "crypto/evp.h"
 #include "prov/provider_ctx.h"
@@ -60,6 +61,12 @@ static void *kdf_snmpkdf_new(void *provctx)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_KDF_SNMPKDF))
+        return NULL;
+#endif
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) != NULL)
         ctx->provctx = provctx;
@@ -150,7 +157,7 @@ static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     struct snmp_set_ctx_params_st p;
     KDF_SNMPKDF *ctx = vctx;
-    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
+    OSSL_LIB_CTX *libctx;
 #ifdef FIPS_MODULE
     const EVP_MD *md = NULL;
 #endif
@@ -161,6 +168,7 @@ static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (ctx == NULL || !snmp_set_ctx_params_decoder(params, &p))
         return 0;
 
+    libctx = PROV_LIBCTX_OF(ctx->provctx);
     if (p.digest != NULL) {
         if (!ossl_prov_digest_load(&ctx->digest, p.digest, p.propq, libctx))
             return 0;
@@ -264,18 +272,21 @@ const OSSL_DISPATCH ossl_kdf_snmpkdf_functions[] = {
  *
  * Shared_key = SHA-1(Derived_password || snmpEngineID || Derived_password).
  *
+ * Input:
  *     e_id -         engine ID(eid)
  *     e_len -        engineID length
  *     password -     password
  *     password_len - password length
  *     okey -         pointer to key output, FIPS testing limited to SHA-1.
- *     okeylen -      key output length
- *     return -       1 pass 0 for error
+ *     keylen -       key length
+ * Output:
+ *     okey   - filled with derived key
+ *     return - 1 on pass, 0 fail
  */
 static int SNMPKDF(const EVP_MD *evp_md,
     const unsigned char *e_id, size_t e_len,
     unsigned char *password, size_t password_len,
-    unsigned char *okey, size_t okeylen)
+    unsigned char *okey, size_t keylen)
 {
     EVP_MD_CTX *md = NULL;
     unsigned char digest[EVP_MAX_MD_SIZE];
@@ -284,7 +295,7 @@ static int SNMPKDF(const EVP_MD *evp_md,
     int ret = 0;
 
     /* Limited to SHA-1 and SHA-2 hashes presently */
-    if (okey == NULL || okeylen == 0)
+    if (okey == NULL || keylen == 0)
         return 0;
 
     md = EVP_MD_CTX_new();
@@ -294,7 +305,7 @@ static int SNMPKDF(const EVP_MD *evp_md,
     }
 
     mdsize = EVP_MD_get_size(evp_md);
-    if (mdsize <= 0 || mdsize < okeylen)
+    if (mdsize <= 0 || mdsize > keylen)
         goto err;
 
     if (!EVP_DigestInit_ex(md, evp_md, NULL))
@@ -314,7 +325,7 @@ static int SNMPKDF(const EVP_MD *evp_md,
         || !EVP_DigestFinal_ex(md, digest, &md_len))
         goto err;
 
-    memcpy(okey, digest, okeylen);
+    memcpy(okey, digest, md_len);
 
     ret = 1;
 

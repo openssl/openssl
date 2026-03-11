@@ -1,4 +1,4 @@
-# Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -87,7 +87,7 @@ jobs:
         branches: ${{ fromJSON(needs.define-matrix.outputs.branches) }}
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         submodules: recursive
         ref: ${{ matrix.branches.branch }}
@@ -107,7 +107,7 @@ jobs:
     - name: setup hostname workaround
       run: sudo hostname localhost
     - name: config
-      run: CC=gcc ./config --debug --coverage ${{ matrix.branches.extra_config }} no-asm enable-rc5 enable-md2 enable-ssl3 enable-nextprotoneg enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-buildtest-c++ enable-ssl-trace enable-trace
+      run: CC=gcc ./config --debug --coverage ${{ matrix.branches.extra_config }} no-asm enable-rc5 enable-md2 enable-nextprotoneg enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-buildtest-c++ enable-ssl-trace enable-trace
     - name: config dump
       run: ./configdata.pm --dump
     - name: make

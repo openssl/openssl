@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,6 +20,8 @@
 #include <openssl/objects.h>
 #include <openssl/asn1t.h>
 #include "crypto/dh.h"
+
+#include <crypto/asn1.h>
 
 /* Override the default free and new methods */
 static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
@@ -76,7 +78,7 @@ ASN1_SEQUENCE(DHvparams) = {
     ASN1_SIMPLE(int_dhvparams, counter, BIGNUM)
 } static_ASN1_SEQUENCE_END_name(int_dhvparams, DHvparams)
 
-    ASN1_SEQUENCE(DHxparams)
+ASN1_SEQUENCE(DHxparams)
     = {
           ASN1_SIMPLE(int_dhx942_dh, p, BIGNUM),
           ASN1_SIMPLE(int_dhx942_dh, g, BIGNUM),
@@ -85,8 +87,7 @@ ASN1_SEQUENCE(DHvparams) = {
           ASN1_OPT(int_dhx942_dh, vparams, DHvparams),
       } static_ASN1_SEQUENCE_END_name(int_dhx942_dh, DHxparams)
 
-          int_dhx942_dh
-    * d2i_int_dhx(int_dhx942_dh * *a, const unsigned char **pp, long length);
+int_dhx942_dh *d2i_int_dhx(int_dhx942_dh **a, const unsigned char **pp, long length);
 int i2d_int_dhx(const int_dhx942_dh *a, unsigned char **pp);
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(int_dhx942_dh, DHxparams, int_dhx)

@@ -31,6 +31,7 @@ void s390x_kma(const unsigned char *aad, size_t alen, const unsigned char *in,
 int s390x_pcc(unsigned int fc, void *param);
 int s390x_kdsa(unsigned int fc, void *param, const unsigned char *in,
     size_t len);
+void OPENSSL_s390x_cleanup(void);
 
 void s390x_flip_endian32(unsigned char dst[32], const unsigned char src[32]);
 void s390x_flip_endian64(unsigned char dst[64], const unsigned char src[64]);

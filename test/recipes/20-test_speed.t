@@ -118,7 +118,7 @@ ok(run(app(['openssl', 'speed', '-help'])),
 
 #Now test some invalid options. The speed app should fail
 ok(!run(app(['openssl', 'speed', 'blah'])),
-        "Test an unknwon algorithm");
+        "Test an unknown algorithm");
 
 ok(!run(app(['openssl', 'speed', '-evp', 'blah'])),
         "Test a unknown evp algorithm");
