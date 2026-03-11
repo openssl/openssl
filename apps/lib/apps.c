@@ -2677,7 +2677,7 @@ static STACK_OF(X509_CRL) *crls_http_cb(const X509_STORE_CTX *ctx,
 
 error:
     X509_CRL_free(crl);
-    sk_X509_CRL_free(crls);
+    sk_X509_CRL_pop_free(crls, X509_CRL_free);
     return NULL;
 }
 
