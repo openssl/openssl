@@ -11,6 +11,9 @@
 #include "../../ssl_local.h"
 #include "../record_local.h"
 #include "recmethod_local.h"
+#include "internal/safe_math.h"
+
+OSSL_SAFE_MATH_UNSIGNED(uint64_t, uint64_t)
 
 /* mod 128 saturating subtract of two 64-bit values */
 static int satsub64(uint64_t l1, uint64_t l2)
@@ -469,6 +472,7 @@ again:
         || rl->packet_length < DTLS1_RT_HEADER_LENGTH) {
         PACKET dtlsrecord;
         unsigned int record_type, record_version, epoch, length;
+        uint64_t epoch64;
 
         rret = rl->funcs->read_n(rl, DTLS1_RT_HEADER_LENGTH,
             TLS_BUFFER_get_len(&rl->rbuf), 0, 1, &nread);
@@ -531,7 +535,7 @@ again:
             uint16_t eebits = rr->type & DTLS13_UNI_HDR_EPOCH_BITS_MASK;
 
             record_version = DTLS1_2_VERSION;
-            epoch = rl->epoch;
+            epoch64 = rl->epoch;
             recseqnumlen = sbitisset ? 2 : 1;
             recseqnumoffs = sizeof(recseqnum) - recseqnumlen;
 
@@ -560,8 +564,17 @@ again:
              * choose the current epoch if the bits match or else choose the
              * next epoch with matching bits
              */
-            while (eebits != (epoch & DTLS13_UNI_HDR_EPOCH_BITS_MASK))
-                epoch++;
+            if ((epoch64 & DTLS13_UNI_HDR_EPOCH_BITS_MASK) > eebits) {
+                int err = 0;
+                epoch64 = safe_add_uint64_t(epoch64, DTLS13_UNI_HDR_EPOCH_BITS_MASK + 1, &err);
+                if (err) {
+                    /* Overflow, silently discard record */
+                    rr->length = 0;
+                    rl->packet_length = 0;
+                    goto again;
+                }
+            }
+            epoch64 = (epoch64 & ~DTLS13_UNI_HDR_EPOCH_BITS_MASK) | eebits;
 
         } else {
             if (!PACKET_get_net_2(&dtlsrecord, &record_version)
@@ -572,14 +585,14 @@ again:
                 rl->packet_length = 0;
                 goto again;
             }
-
+            epoch64 = epoch;
             recseqnumoffs = 0;
             recseqnumlen = 6;
         }
 
         rechdrlen = PACKET_data(&dtlsrecord) - rl->packet;
         rr->rec_version = (int)record_version;
-        rr->epoch = epoch;
+        rr->epoch = epoch64;
         rr->length = length;
 
         if (rl->msg_callback != NULL)
@@ -800,7 +813,7 @@ static int dtls_free(OSSL_RECORD_LAYER *rl)
 
 static int
 dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
-    int role, int direction, int level, uint16_t epoch,
+    int role, int direction, int level, uint64_t epoch,
     unsigned char *secret, size_t secretlen,
     unsigned char *snkey, unsigned char *key, size_t keylen,
     unsigned char *iv, size_t ivlen,
@@ -978,7 +991,7 @@ static int dtls_set_sequence_number(OSSL_RECORD_LAYER *rl, uint64_t sequence)
     return 1;
 }
 
-static int dtls_get_epoch(OSSL_RECORD_LAYER *rl, uint16_t *epoch)
+static int dtls_get_epoch(OSSL_RECORD_LAYER *rl, uint64_t *epoch)
 {
     *epoch = rl->epoch;
     return 1;
