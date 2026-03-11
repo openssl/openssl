@@ -5066,9 +5066,11 @@ static void collect_cipher_cb(EVP_CIPHER *ciph, void *arg)
      * These are special-purpose TLS ciphers with a different initialization
      * order that breaks this test's logic.
      */
+{
     size_t nlen = strlen(name0);
     if (nlen >= 4 && OPENSSL_strcasecmp(name0 + nlen - 4, "-ETM") == 0)
         return;
+}
 #endif
 
     tmp = OPENSSL_realloc(cipher_list,
