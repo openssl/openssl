@@ -148,7 +148,7 @@ guidelines:
         git add <filename>
 
         # Do a fixup commit
-        # <commit-id`> is the id of a previous commit that you want to fix up.
+        # <commit-id> is the id of a previous commit that you want to fix up.
         git commit --fixup <commit-id>
 
         # Do a non forced push
