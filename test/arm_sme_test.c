@@ -31,19 +31,21 @@
  *    _armv9_sme_get_svl_bytes() to report the streaming vector length and
  *    sanity-checks that it is a power-of-two multiple of 16 bytes.
  *
- * Tests 2-4 call TEST_skip() and return success when the matching
- * hardware feature is absent, so the test suite remains green on
- * non-SME hardware.
+ * setup_tests() calls TEST_skip() and returns early when FEAT_SME is
+ * absent (e.g. Apple M1/M2/M3), so the whole binary is reported as
+ * skipped rather than running four individually-skipped subtests.
+ * Tests 2-3 still skip individually when FEAT_SSVE_AES is absent but
+ * FEAT_SME is present (SME without SME_AES).
  */
 
 #include "testutil.h"
 
 #if defined(__aarch64__) && defined(OPENSSL_CPUID_OBJ)
 
-# include <string.h>
-# include <openssl/aes.h>
-# include "arm_arch.h"
-# include "crypto/aes_platform.h"
+#include <string.h>
+#include <openssl/aes.h>
+#include "arm_arch.h"
+#include "crypto/aes_platform.h"
 
 /*
  * _armv9_sme_get_svl_bytes() is defined in crypto/arm64cpuid.pl as a
@@ -138,32 +140,30 @@ static const unsigned char cbc_pt[] = {
 /* ------------------------------------------------------------------ */
 static int test_sme_capability(void)
 {
-    int sme     = (OPENSSL_armcap_P & ARMV9_SME)     != 0;
-    int sme_aes = (OPENSSL_armcap_P & ARMV9_SME_AES) != 0;
+    int sme_cap = (OPENSSL_armcap_P & ARMV9_SME) != 0;
+    int sme_aes_cap = (OPENSSL_armcap_P & ARMV9_SME_AES) != 0;
 
     TEST_info("OPENSSL_armcap_P = 0x%08x", OPENSSL_armcap_P);
     TEST_info("ARMV9_SME        : %s (bit %d)",
-              sme     ? "set"   : "not set", 18);
+        sme_cap ? "set" : "not set", 18);
     TEST_info("ARMV9_SME_AES    : %s (bit %d)",
-              sme_aes ? "set"   : "not set", 19);
+        sme_aes_cap ? "set" : "not set", 19);
     TEST_info("AES_SME_CAPABLE  : %s", AES_SME_CAPABLE ? "yes" : "no");
 
     /* SME_AES requires SME – the two bits must be consistent */
-    if (sme_aes && !TEST_true(sme)) {
+    if (sme_aes_cap && !TEST_true(sme_cap)) {
         TEST_error("ARMV9_SME_AES set but ARMV9_SME is not – inconsistent");
         return 0;
     }
 
     /* AES_SME_CAPABLE must equal (SME && SME_AES) */
-    if (!TEST_int_eq(AES_SME_CAPABLE ? 1 : 0, (sme && sme_aes) ? 1 : 0)) {
+    if (!TEST_int_eq(AES_SME_CAPABLE ? 1 : 0, (sme_cap && sme_aes_cap) ? 1 : 0)) {
         TEST_error("AES_SME_CAPABLE disagrees with ARMV9_SME/ARMV9_SME_AES");
         return 0;
     }
 
     return 1;
 }
-
-# if __ARM_MAX_ARCH__ >= 9
 
 /* ------------------------------------------------------------------ */
 /* test_sme_ctr32: NIST SP 800-38A F.5.1 via aes_v8_sme_ctr32_*      */
@@ -175,8 +175,7 @@ static int test_sme_ctr32(void)
     unsigned char icb[16];
 
     if (!AES_SME_CAPABLE) {
-        TEST_skip("FEAT_SME_AES not available – skipping CTR32 SME test");
-        return 1;
+        return TEST_skip("FEAT_SSVE_AES not available – skipping CTR32 SME test");
     }
 
     if (!TEST_int_eq(AES_set_encrypt_key(ctr_key, 128, &enc_key), 0))
@@ -185,14 +184,14 @@ static int test_sme_ctr32(void)
     memcpy(icb, ctr_icb, sizeof(icb));
 
     aes_v8_sme_ctr32_encrypt_blocks(ctr_pt, out,
-                                    sizeof(ctr_pt) / 16,
-                                    &enc_key, icb);
+        sizeof(ctr_pt) / 16,
+        &enc_key, icb);
 
     if (!TEST_mem_eq(out, sizeof(out), ctr_ct, sizeof(ctr_ct)))
         return 0;
 
     TEST_info("aes_v8_sme_ctr32_encrypt_blocks: PASSED (%zu bytes, %zu blocks)",
-              sizeof(ctr_pt), sizeof(ctr_pt) / 16);
+        sizeof(ctr_pt), sizeof(ctr_pt) / 16);
     return 1;
 }
 
@@ -206,8 +205,7 @@ static int test_sme_cbc_decrypt(void)
     unsigned char iv[16];
 
     if (!AES_SME_CAPABLE) {
-        TEST_skip("FEAT_SME_AES not available – skipping CBC decrypt SME test");
-        return 1;
+        return TEST_skip("FEAT_SSVE_AES not available – skipping CBC decrypt SME test");
     }
 
     if (!TEST_int_eq(AES_set_decrypt_key(cbc_key, 128, &dec_key), 0))
@@ -226,7 +224,7 @@ static int test_sme_cbc_decrypt(void)
         return 0;
 
     TEST_info("aes_v8_sme_cbc_decrypt: PASSED (%zu bytes, %zu blocks)",
-              sizeof(cbc_ct), sizeof(cbc_ct) / 16);
+        sizeof(cbc_ct), sizeof(cbc_ct) / 16);
     return 1;
 }
 
@@ -235,19 +233,12 @@ static int test_sme_cbc_decrypt(void)
 /* ------------------------------------------------------------------ */
 static int test_sme_svl(void)
 {
-    uint64_t svl_bytes;
-
-    if (!(OPENSSL_armcap_P & ARMV9_SME)) {
-        TEST_skip("FEAT_SME not available – skipping SVL query");
-        return 1;
-    }
-
-    svl_bytes = _armv9_sme_get_svl_bytes();
+    uint64_t svl_bytes = _armv9_sme_get_svl_bytes();
 
     TEST_info("Streaming Vector Length (SVL) = %u bits (%u bytes, NVEC = %u)",
-              (unsigned)(svl_bytes * 8),
-              (unsigned)svl_bytes,
-              (unsigned)(svl_bytes / 16));
+        (unsigned)(svl_bytes * 8),
+        (unsigned)svl_bytes,
+        (unsigned)(svl_bytes / 16));
 
     /* SVL must be a multiple of 16 bytes (128 bits) */
     if (!TEST_true(svl_bytes >= 16 && (svl_bytes % 16) == 0))
@@ -260,18 +251,18 @@ static int test_sme_svl(void)
     return 1;
 }
 
-# endif /* __ARM_MAX_ARCH__ >= 9 */
-
 int setup_tests(void)
 {
     OPENSSL_cpuid_setup();
 
+    if (!(OPENSSL_armcap_P & ARMV9_SME)) {
+        return TEST_skip("FEAT_SME not available on this CPU – skipping all SME tests");
+    }
+
     ADD_TEST(test_sme_capability);
-# if __ARM_MAX_ARCH__ >= 9
     ADD_TEST(test_sme_ctr32);
     ADD_TEST(test_sme_cbc_decrypt);
     ADD_TEST(test_sme_svl);
-# endif
     return 1;
 }
 
@@ -279,8 +270,7 @@ int setup_tests(void)
 
 int setup_tests(void)
 {
-    TEST_skip("ARM SME test only runs on AArch64 with OPENSSL_CPUID_OBJ");
-    return 1;
+    return TEST_skip("ARM SME test only runs on AArch64 with OPENSSL_CPUID_OBJ");
 }
 
 #endif
