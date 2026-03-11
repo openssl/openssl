@@ -41,7 +41,7 @@ first line) should be kept to 50-70 characters if possible.
 
 Pull Requests (PR's) go through multiple phases before they are merged. In the
 first phase the label 'approval: review pending' is added. Once you receive 2 or
-more approvals from [Committers] the label is changed to 'approval:done' and
+more approvals from [Committers] the label is changed to 'approval: done' and
 24 hours after this the label changes to 'approval: ready to merge'. At some time
 after this your PR will be merged and the PR is closed. Reviewers may ask you to
 make changes at any phase before the Pull Request is merged, and any changes
@@ -146,15 +146,15 @@ guidelines:
         # Add one or more updated files that needed changes
         git add <filename>
 
-       # Do a fixup commit
-       git commit --fixup <commit-id>
+        # Do a fixup commit
+        git commit --fixup <commit-id>
 
-       # Do a non forced push
-       git push
+        # Do a non forced push
+        git push
     ```
 
-    Where <commit-id> is the id of a previous commit that you want to fix up.
-    To view commit-id use:
+    Where `<`commit-id`>` is the id of a previous commit that you want to fix up.
+    To view commit-id's use:
 
     ```
     git log
