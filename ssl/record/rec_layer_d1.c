@@ -204,7 +204,7 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
     void (*cb)(const SSL *ssl, int type2, int val) = NULL;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
     int is_dtls13;
-    uint16_t curr_epoch;
+    uint64_t curr_epoch;
     int in_early_data;
 
     if (sc == NULL)
@@ -786,29 +786,45 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
     return ret;
 }
 
-void dtls1_increment_epoch(SSL_CONNECTION *s, int rw)
+int dtls1_increment_epoch(SSL_CONNECTION *s, int rw)
 {
     if (rw & SSL3_CC_READ) {
-        s->rlayer.d->r_epoch++;
+        if (!SSL_CONNECTION_IS_DTLS13(s) && s->rlayer.d->r_conn_epoch == UINT16_MAX)
+            return 0;
+
+        s->rlayer.d->r_conn_epoch++;
 
         /*
          * We must not use any buffered messages received from the previous
          * epoch
          */
         dtls1_clear_received_buffer(s);
+
+        if (s->rlayer.d->r_conn_epoch == 0)
+            /* We've wrapped around, so clear the buffer just in case */
+            return 0;
     } else {
-        s->rlayer.d->w_epoch++;
+        if (!SSL_CONNECTION_IS_DTLS13(s) && s->rlayer.d->w_conn_epoch == UINT16_MAX)
+            return 0;
+
+        s->rlayer.d->w_conn_epoch++;
+
+        if (s->rlayer.d->w_conn_epoch == 0)
+            /* We've wrapped around, so clear the buffer just in case */
+            return 0;
     }
+
+    return 1;
 }
 
-uint16_t dtls1_get_epoch(SSL_CONNECTION *s, int rw)
+uint64_t dtls1_get_epoch(SSL_CONNECTION *s, int rw)
 {
-    uint16_t epoch;
+    uint64_t epoch;
 
     if (rw & SSL3_CC_READ)
-        epoch = s->rlayer.d->r_epoch;
+        epoch = s->rlayer.d->r_conn_epoch;
     else
-        epoch = s->rlayer.d->w_epoch;
+        epoch = s->rlayer.d->w_conn_epoch;
 
     return epoch;
 }
