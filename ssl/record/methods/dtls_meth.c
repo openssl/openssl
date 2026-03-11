@@ -800,7 +800,7 @@ static int dtls_free(OSSL_RECORD_LAYER *rl)
 
 static int
 dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
-    int role, int direction, int level, uint16_t epoch,
+    int role, int direction, int level, uint64_t epoch,
     unsigned char *secret, size_t secretlen,
     unsigned char *snkey, unsigned char *key, size_t keylen,
     unsigned char *iv, size_t ivlen,
@@ -978,7 +978,7 @@ static int dtls_set_sequence_number(OSSL_RECORD_LAYER *rl, uint64_t sequence)
     return 1;
 }
 
-static int dtls_get_epoch(OSSL_RECORD_LAYER *rl, uint16_t *epoch)
+static int dtls_get_epoch(OSSL_RECORD_LAYER *rl, uint64_t *epoch)
 {
     *epoch = rl->epoch;
     return 1;

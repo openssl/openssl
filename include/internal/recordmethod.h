@@ -116,7 +116,7 @@ struct ossl_record_method_st {
         const char *propq, int vers,
         int role, int direction,
         int level,
-        uint16_t epoch,
+        uint64_t epoch,
         unsigned char *secret,
         size_t secretlen,
         unsigned char *snkey,
@@ -324,7 +324,7 @@ struct ossl_record_method_st {
     /*
      * Get the Epoch value
      */
-    int (*get_epoch)(OSSL_RECORD_LAYER *rl, uint16_t *epoch);
+    int (*get_epoch)(OSSL_RECORD_LAYER *rl, uint64_t *epoch);
 
     /*
      * Set the current MTU length to be used for the record layer.
