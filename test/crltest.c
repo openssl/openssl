@@ -7,8 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/nelem.h"
-#include <string.h>
 #include <time.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
@@ -184,137 +182,154 @@ static const char *kLeafPrivateKey[] = {
 
 static const char *kCrlRecovated[] = {
     "-----BEGIN X509 CRL-----\n",
-    "MIICUjCCAToCAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYDVQQIDApDYWxp\n",
-    "Zm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQKDAxFeGFtcGxlIENvcnAxHjAc\n",
-    "BgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEdMBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3Qg\n",
-    "Q0EXDTI2MDMxMDA4MDAwMFoXDTI2MDYwODA4MDAwMFowRDAgAgEBFw0yNjAyMDgwODAwMDBaMAww\n",
-    "CgYDVR0VBAMKAQEwIAIBAhcNMjYwMjA4MDgwMDAwWjAMMAoGA1UdFQQDCgEEoC8wLTAfBgNVHSME\n",
-    "GDAWgBT+FA4TGwlny0oNS9pP8++QtUPbMzAKBgNVHRQEAwIBAzANBgkqhkiG9w0BAQsFAAOCAQEA\n",
-    "ZAlvLBRuoem3rlI0QbC9SlYe5yKRGRXNYqpe8fQ4vB0IuGp3jqADecxDqjuJClAhwijra2FYr6oP\n",
-    "Z79EXeqiMKXb3AXYJ0x2WhKFyf4AuaiGjXULHUweSDL1F7Rjx/3vX4zRmQMDc/FXm3TK9OUjcNYd\n",
-    "OERu7dzHhjUR+c0/nNG9g9Zjg9iAXCyQdgkiRkFuorvnM1xTs7BVy2A+uM3FXfe5wE4plYBnVHOK\n",
-    "JPWGmSYJu9PbweHSqacicR5kb5IeDXiIjKYPimaeVxnZdoA8MzasOv9GnDWrNmuq55t3v7apic9x\n",
-    "7/L85EDcLPVUUd5Y0tewL68R7vM96wGtZ+GLHg==\n",
+    "MIICUjCCAToCAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEd\n",
+    "MBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EXDTI2MDMxMDA4MDAwMFoXDTI2\n",
+    "MDYwODA4MDAwMFowRDAgAgEBFw0yNjAyMDgwODAwMDBaMAwwCgYDVR0VBAMKAQEw\n",
+    "IAIBAhcNMjYwMjA4MDgwMDAwWjAMMAoGA1UdFQQDCgEEoC8wLTAfBgNVHSMEGDAW\n",
+    "gBT+FA4TGwlny0oNS9pP8++QtUPbMzAKBgNVHRQEAwIBAzANBgkqhkiG9w0BAQsF\n",
+    "AAOCAQEAZAlvLBRuoem3rlI0QbC9SlYe5yKRGRXNYqpe8fQ4vB0IuGp3jqADecxD\n",
+    "qjuJClAhwijra2FYr6oPZ79EXeqiMKXb3AXYJ0x2WhKFyf4AuaiGjXULHUweSDL1\n",
+    "F7Rjx/3vX4zRmQMDc/FXm3TK9OUjcNYdOERu7dzHhjUR+c0/nNG9g9Zjg9iAXCyQ\n",
+    "dgkiRkFuorvnM1xTs7BVy2A+uM3FXfe5wE4plYBnVHOKJPWGmSYJu9PbweHSqaci\n",
+    "cR5kb5IeDXiIjKYPimaeVxnZdoA8MzasOv9GnDWrNmuq55t3v7apic9x7/L85EDc\n",
+    "LPVUUd5Y0tewL68R7vM96wGtZ+GLHg==\n",
     "-----END X509 CRL-----\n",
-    NULL,
+    NULL
 };
 
 static const char *kCrlExtensionDuplicate[] = {
     "-----BEGIN X509 CRL-----\n",
-    "MIICPTCCASUCAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYDVQQIDApDYWxp\n",
-    "Zm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQKDAxFeGFtcGxlIENvcnAxHjAc\n",
-    "BgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEdMBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3Qg\n",
-    "Q0EXDTI2MDMxMDA4MDAwMFoXDTI2MDYwODA4MDAwMFowIzAhAgIQABcNMjYwMzA5MDgwMDAwWjAM\n",
-    "MAoGA1UdFQQDCgEBoDswOTAfBgNVHSMEGDAWgBT+FA4TGwlny0oNS9pP8++QtUPbMzAKBgNVHRQE\n",
-    "AwIBDDAKBgNVHRQEAwIBYzANBgkqhkiG9w0BAQsFAAOCAQEAGfTawbm18r/wEiCoCNoki1dPdoZI\n",
-    "m6ZK+NUL09SYmdQm99D3UqaXDkBMu5j524ozKwr+wkRZcAd2Q+mJKXAtTAO+geiDrhDRdjC+B04K\n",
-    "PhvZnqWQsvLCxhU6kmCM34bHxUHTGltMbQxx96TqEsbn1TLn4iN6WPyYyRolIPPy5bPymTCV7vTP\n",
-    "eyZhZYNPv2xZwDSS50rFIQFr+H1/PyUYOxRqBmdYOwbfNn0L7SOkAzP+OStK+0krtFWSRIp+aBCf\n",
-    "DvsdXQFy3P4C8IVwiGQYld2Dcfnr13EzzD2XaNJ2cqPdiSGso9fXwLGpn+9SvqzFwdS2QyV5eolb\n",
-    "he5ZiNjO0Q==\n",
+    "MIICPTCCASUCAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEd\n",
+    "MBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EXDTI2MDMxMDA4MDAwMFoXDTI2\n",
+    "MDYwODA4MDAwMFowIzAhAgIQABcNMjYwMzA5MDgwMDAwWjAMMAoGA1UdFQQDCgEB\n",
+    "oDswOTAfBgNVHSMEGDAWgBT+FA4TGwlny0oNS9pP8++QtUPbMzAKBgNVHRQEAwIB\n",
+    "DDAKBgNVHRQEAwIBYzANBgkqhkiG9w0BAQsFAAOCAQEAGfTawbm18r/wEiCoCNok\n",
+    "i1dPdoZIm6ZK+NUL09SYmdQm99D3UqaXDkBMu5j524ozKwr+wkRZcAd2Q+mJKXAt\n",
+    "TAO+geiDrhDRdjC+B04KPhvZnqWQsvLCxhU6kmCM34bHxUHTGltMbQxx96TqEsbn\n",
+    "1TLn4iN6WPyYyRolIPPy5bPymTCV7vTPeyZhZYNPv2xZwDSS50rFIQFr+H1/PyUY\n",
+    "OxRqBmdYOwbfNn0L7SOkAzP+OStK+0krtFWSRIp+aBCfDvsdXQFy3P4C8IVwiGQY\n",
+    "ld2Dcfnr13EzzD2XaNJ2cqPdiSGso9fXwLGpn+9SvqzFwdS2QyV5eolbhe5ZiNjO\n",
+    "0Q==\n",
     "-----END X509 CRL-----\n",
     NULL
 };
 
 static const char *kCrlExtensionDuplicateEntry[] = {
     "-----BEGIN X509 CRL-----\n",
-    "MIICYDCCAUgCAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYDVQQIDApDYWxp\n",
-    "Zm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQKDAxFeGFtcGxlIENvcnAxHjAc\n",
-    "BgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEdMBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3Qg\n",
-    "Q0EXDTI2MDMxMDA4MDAwMFoXDTI2MDYwODA4MDAwMFowUjAtAgIQABcNMjYwMzA5MDgwMDAwWjAY\n",
-    "MAoGA1UdFQQDCgEBMAoGA1UdFQQDCgEBMCECAhABFw0yNjAzMDkwODAwMDBaMAwwCgYDVR0VBAMK\n",
-    "AQSgLzAtMB8GA1UdIwQYMBaAFP4UDhMbCWfLSg1L2k/z75C1Q9szMAoGA1UdFAQDAgELMA0GCSqG\n",
-    "SIb3DQEBCwUAA4IBAQCRInhKVl+Hz4Ukacr7lSCHyir2cFoOqC5H5pyef9CP3M8fa4oIwv0FFAVw\n",
-    "HT/E+6ko2id7qqVdADFql+koVY7DBXIqrQ1qcAoGyclmn/UEEbs2UdbqJiVzlurh5jupExYSj2uJ\n",
-    "o8ZYONhnqKnDzPfpyvBmfE7/X/wPla6PnSGDg4kYC3mtjrIUBwCqxn3WOG7Ai2WtpRvtCtNzhlEd\n",
-    "droOonIS36Bh3c0T+dNTlsvIKfqkfZazv26F1vDFEYS+L7yrzRnhD2eHvX+9xYtotnzwUhPCMuXL\n",
-    "bp9sttDu9SD2VaXnw/5olvv15CSvlw661kh0CQrHydCgRXVxgJX5mfAv\n",
+    "MIICYDCCAUgCAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEd\n",
+    "MBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EXDTI2MDMxMDA4MDAwMFoXDTI2\n",
+    "MDYwODA4MDAwMFowUjAtAgIQABcNMjYwMzA5MDgwMDAwWjAYMAoGA1UdFQQDCgEB\n",
+    "MAoGA1UdFQQDCgEBMCECAhABFw0yNjAzMDkwODAwMDBaMAwwCgYDVR0VBAMKAQSg\n",
+    "LzAtMB8GA1UdIwQYMBaAFP4UDhMbCWfLSg1L2k/z75C1Q9szMAoGA1UdFAQDAgEL\n",
+    "MA0GCSqGSIb3DQEBCwUAA4IBAQCRInhKVl+Hz4Ukacr7lSCHyir2cFoOqC5H5pye\n",
+    "f9CP3M8fa4oIwv0FFAVwHT/E+6ko2id7qqVdADFql+koVY7DBXIqrQ1qcAoGyclm\n",
+    "n/UEEbs2UdbqJiVzlurh5jupExYSj2uJo8ZYONhnqKnDzPfpyvBmfE7/X/wPla6P\n",
+    "nSGDg4kYC3mtjrIUBwCqxn3WOG7Ai2WtpRvtCtNzhlEddroOonIS36Bh3c0T+dNT\n",
+    "lsvIKfqkfZazv26F1vDFEYS+L7yrzRnhD2eHvX+9xYtotnzwUhPCMuXLbp9sttDu\n",
+    "9SD2VaXnw/5olvv15CSvlw661kh0CQrHydCgRXVxgJX5mfAv\n",
     "-----END X509 CRL-----\n",
     NULL
 };
 
 static const char *kCrlExtensionDuplicateSerial[] = {
-    " -----BEGIN X509 CRL-----\n",
-    "MIICdzCCAV8CAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYDVQQIDApDYWxp\n",
-    "Zm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQKDAxFeGFtcGxlIENvcnAxHjAc\n",
-    "BgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEdMBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3Qg\n",
-    "Q0EXDTI2MDMxMDA4MDAwMFoXDTI2MDYwODA4MDAwMFowaTAhAgIQABcNMjYwMzA5MDgwMDAwWjAM\n",
-    "MAoGA1UdFQQDCgEBMCECAhAAFw0yNjAzMDkwODAwMDBaMAwwCgYDVR0VBAMKAQMwIQICEAEXDTI2\n",
-    "MDMwOTA4MDAwMFowDDAKBgNVHRUEAwoBBKAvMC0wHwYDVR0jBBgwFoAU/hQOExsJZ8tKDUvaT/Pv\n",
-    "kLVD2zMwCgYDVR0UBAMCAQowDQYJKoZIhvcNAQELBQADggEBAAtpEQmDQEYmCCPl1948oulVBj4Z\n",
-    "eAB3+AK3o96pd/oUY9VKNmP7uMezD/s9ilC7Ip56u2enEgrjbSEyrFF7XqXY72Z18EU54xG85dzZ\n",
-    "v3Ri7SpUoXTL0vNRIvl4/GHZjHzQZTB1FGvm10FcFUpgX2EHJVuIWuldqxp4OeJrBIN0wSFciH8P\n",
-    "Qqs6o5Dw+sYdj2Culnskgi30uB9qfacgppqB3zFf0ayuauO8rupnpSLk+IfapHLWiS5JY6ZX9R/W\n",
-    "IKdAc0eR6FDo5g9+QvOfhtANWTYJFh8f1Gcnt2BsWGMl8134V3YQ2q+Wb1I9tdli6/4o+dNZROh6\n",
-    "Cs4QAn5WVyc=\n",
+    "-----BEGIN X509 CRL-----\n",
+    "MIICdzCCAV8CAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEd\n",
+    "MBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EXDTI2MDMxMDA4MDAwMFoXDTI2\n",
+    "MDYwODA4MDAwMFowaTAhAgIQABcNMjYwMzA5MDgwMDAwWjAMMAoGA1UdFQQDCgEB\n",
+    "MCECAhAAFw0yNjAzMDkwODAwMDBaMAwwCgYDVR0VBAMKAQMwIQICEAEXDTI2MDMw\n",
+    "OTA4MDAwMFowDDAKBgNVHRUEAwoBBKAvMC0wHwYDVR0jBBgwFoAU/hQOExsJZ8tK\n",
+    "DUvaT/PvkLVD2zMwCgYDVR0UBAMCAQowDQYJKoZIhvcNAQELBQADggEBAAtpEQmD\n",
+    "QEYmCCPl1948oulVBj4ZeAB3+AK3o96pd/oUY9VKNmP7uMezD/s9ilC7Ip56u2en\n",
+    "EgrjbSEyrFF7XqXY72Z18EU54xG85dzZv3Ri7SpUoXTL0vNRIvl4/GHZjHzQZTB1\n",
+    "FGvm10FcFUpgX2EHJVuIWuldqxp4OeJrBIN0wSFciH8PQqs6o5Dw+sYdj2Culnsk\n",
+    "gi30uB9qfacgppqB3zFf0ayuauO8rupnpSLk+IfapHLWiS5JY6ZX9R/WIKdAc0eR\n",
+    "6FDo5g9+QvOfhtANWTYJFh8f1Gcnt2BsWGMl8134V3YQ2q+Wb1I9tdli6/4o+dNZ\n",
+    "ROh6Cs4QAn5WVyc=\n",
     "-----END X509 CRL-----\n",
     NULL
 };
 
 static const char *kCrlIDPOnlyCaOnlyAttr[] = {
     "-----BEGIN X509 CRL-----\n",
-    "MIICajCCAVICAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYDVQQIDApDYWxp\n",
-    "Zm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQKDAxFeGFtcGxlIENvcnAxHjAc\n",
-    "BgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEdMBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3Qg\n",
-    "Q0EXDTI2MDMxMDA4MDAwMFoXDTI2MDYwODA4MDAwMFowIzAhAgIQABcNMjYwMzA5MDgwMDAwWjAM\n",
-    "MAoGA1UdFQQDCgEBoGgwZjAfBgNVHSMEGDAWgBT+FA4TGwlny0oNS9pP8++QtUPbMzAKBgNVHRQE\n",
-    "AwIBFjA3BgNVHRwBAf8ELTAroCOgIYYfaHR0cDovL2NybC5leGFtcGxlLmNvbS9yb290LmNybIIB\n",
-    "/4UB/zANBgkqhkiG9w0BAQsFAAOCAQEAHC06Da0jYHaO6pqNpXmZ7WVXa/LZgrqJkdr1CPM9OBMY\n",
-    "ChOOYBy0Gkb6JJaRzMgKpNmXtx+mYhr/WoQ2B03R/FOWAL8BuTTgy9XRGGZyyUXzXL9VLRtE23eb\n",
-    "k3jkxtB4msqenlY/CfkjGwqrikJcCBwpsS/FAO5Z8Sg1V3cg2cvJmnuwqMK6+PDx55hasC0GyWKH\n",
-    "620JeK472HbWPgJT0HVRGjQo7Z3+iuSOLW+ZXJyZ8bsHKtWI/mpQS1SfP1NXUlOdtjr6ISNBmUrI\n",
-    "q7tL6SBR5NdHaH/jzW3yMQE8LMFtONafDofXXTRjCOdZjh/5Bx3lVlxgAp8PKlzCYkTERQ==\n",
+    "MIICajCCAVICAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEd\n",
+    "MBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EXDTI2MDMxMDA4MDAwMFoXDTI2\n",
+    "MDYwODA4MDAwMFowIzAhAgIQABcNMjYwMzA5MDgwMDAwWjAMMAoGA1UdFQQDCgEB\n",
+    "oGgwZjAfBgNVHSMEGDAWgBT+FA4TGwlny0oNS9pP8++QtUPbMzAKBgNVHRQEAwIB\n",
+    "FjA3BgNVHRwBAf8ELTAroCOgIYYfaHR0cDovL2NybC5leGFtcGxlLmNvbS9yb290\n",
+    "LmNybIIB/4UB/zANBgkqhkiG9w0BAQsFAAOCAQEAHC06Da0jYHaO6pqNpXmZ7WVX\n",
+    "a/LZgrqJkdr1CPM9OBMYChOOYBy0Gkb6JJaRzMgKpNmXtx+mYhr/WoQ2B03R/FOW\n",
+    "AL8BuTTgy9XRGGZyyUXzXL9VLRtE23ebk3jkxtB4msqenlY/CfkjGwqrikJcCBwp\n",
+    "sS/FAO5Z8Sg1V3cg2cvJmnuwqMK6+PDx55hasC0GyWKH620JeK472HbWPgJT0HVR\n",
+    "GjQo7Z3+iuSOLW+ZXJyZ8bsHKtWI/mpQS1SfP1NXUlOdtjr6ISNBmUrIq7tL6SBR\n",
+    "5NdHaH/jzW3yMQE8LMFtONafDofXXTRjCOdZjh/5Bx3lVlxgAp8PKlzCYkTERQ==\n",
     "-----END X509 CRL-----\n",
     NULL
 };
 
 static const char *kCrlIDPOnlyUserOnlyAttr[] = {
     "-----BEGIN X509 CRL-----\n",
-    "MIICajCCAVICAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYDVQQIDApDYWxp\n",
-    "Zm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQKDAxFeGFtcGxlIENvcnAxHjAc\n",
-    "BgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEdMBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3Qg\n",
-    "Q0EXDTI2MDMxMDA4MDAwMFoXDTI2MDYwODA4MDAwMFowIzAhAgIQABcNMjYwMzA5MDgwMDAwWjAM\n",
-    "MAoGA1UdFQQDCgEBoGgwZjAfBgNVHSMEGDAWgBT+FA4TGwlny0oNS9pP8++QtUPbMzAKBgNVHRQE\n",
-    "AwIBFTA3BgNVHRwBAf8ELTAroCOgIYYfaHR0cDovL2NybC5leGFtcGxlLmNvbS9yb290LmNybIEB\n",
-    "/4UB/zANBgkqhkiG9w0BAQsFAAOCAQEAhx9Zg1b1Y5ITgN9BX15SDjuEviYCk+oQpGAcLnTYq8cF\n",
-    "KoGUug3mn3vEYh4dg64hxsWX64X8jcD/fQRM3Ot1SHDZhYOG1QBJyMN/bU5kc4zqXoH/bRrEERiE\n",
-    "5maF84wqKHr+DvJukpAX6i1uehyLEG7smjSKin54s44lVQsX8I93aTks8LPCjxfhusCKvrWmNWDH\n",
-    "gfh4gwKsIj3U5ToYjISrnrFBEAAKzCAaxTgxLrg6+uagA3bFGhRwrqBMFLAysKTJnJpp1Gn8PQdE\n",
-    "QlLeYYmopDhvJcCx5qWn+SV1jfOar5JhR12G+ulc73aJR8c6zaJzoOp7OYtrMtai1gKvgQ==\n",
+    "MIICajCCAVICAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEd\n",
+    "MBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EXDTI2MDMxMDA4MDAwMFoXDTI2\n",
+    "MDYwODA4MDAwMFowIzAhAgIQABcNMjYwMzA5MDgwMDAwWjAMMAoGA1UdFQQDCgEB\n",
+    "oGgwZjAfBgNVHSMEGDAWgBT+FA4TGwlny0oNS9pP8++QtUPbMzAKBgNVHRQEAwIB\n",
+    "FTA3BgNVHRwBAf8ELTAroCOgIYYfaHR0cDovL2NybC5leGFtcGxlLmNvbS9yb290\n",
+    "LmNybIEB/4UB/zANBgkqhkiG9w0BAQsFAAOCAQEAhx9Zg1b1Y5ITgN9BX15SDjuE\n",
+    "viYCk+oQpGAcLnTYq8cFKoGUug3mn3vEYh4dg64hxsWX64X8jcD/fQRM3Ot1SHDZ\n",
+    "hYOG1QBJyMN/bU5kc4zqXoH/bRrEERiE5maF84wqKHr+DvJukpAX6i1uehyLEG7s\n",
+    "mjSKin54s44lVQsX8I93aTks8LPCjxfhusCKvrWmNWDHgfh4gwKsIj3U5ToYjISr\n",
+    "nrFBEAAKzCAaxTgxLrg6+uagA3bFGhRwrqBMFLAysKTJnJpp1Gn8PQdEQlLeYYmo\n",
+    "pDhvJcCx5qWn+SV1jfOar5JhR12G+ulc73aJR8c6zaJzoOp7OYtrMtai1gKvgQ==\n",
     "-----END X509 CRL-----\n",
     NULL
 };
 
 static const char *kCrlIDPOnlyUserOnlyCA[] = {
     "-----BEGIN X509 CRL-----\n",
-    "MIICajCCAVICAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYDVQQIDApDYWxp\n",
-    "Zm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQKDAxFeGFtcGxlIENvcnAxHjAc\n",
-    "BgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEdMBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3Qg\n",
-    "Q0EXDTI2MDMxMDA4MDAwMFoXDTI2MDYwODA4MDAwMFowIzAhAgIQABcNMjYwMzA5MDgwMDAwWjAM\n",
-    "MAoGA1UdFQQDCgEBoGgwZjAfBgNVHSMEGDAWgBT+FA4TGwlny0oNS9pP8++QtUPbMzAKBgNVHRQE\n",
-    "AwIBFDA3BgNVHRwBAf8ELTAroCOgIYYfaHR0cDovL2NybC5leGFtcGxlLmNvbS9yb290LmNybIEB\n",
-    "/4IB/zANBgkqhkiG9w0BAQsFAAOCAQEAScvTwUwgBhEANXRN5bL9S3nEvuxU/kZR8xtaGqUHTsrv\n",
-    "cBxylR5VinF53RJlz0NaMxQRRpE+NLDZaW2tUbt+k/22QPWoGFTfZN2GolzuFqu7v/ZPtAM02NNf\n",
-    "SoxVu+Xb9ycJWJFP1hOreioOknn7FqjR212EypnY5a2D6TVgK11g1brPxVaN1rVt08zhrCj1mq7F\n",
-    "WP4M6W2DkTZ6r1ExgIquKl//1G15cP+k7+SJe91c3cJ/GWzDHOrruLkzsaLAajKr6i5CWBEGEYHL\n",
-    "vRf0RZq1eucBJgsWxYlHvIHgSA4/EbCq6mK4+m2MUAkOOPfaec8MzGJCm73VWgTnRwIWlg==\n",
+    "MIICajCCAVICAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEd\n",
+    "MBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EXDTI2MDMxMDA4MDAwMFoXDTI2\n",
+    "MDYwODA4MDAwMFowIzAhAgIQABcNMjYwMzA5MDgwMDAwWjAMMAoGA1UdFQQDCgEB\n",
+    "oGgwZjAfBgNVHSMEGDAWgBT+FA4TGwlny0oNS9pP8++QtUPbMzAKBgNVHRQEAwIB\n",
+    "FDA3BgNVHRwBAf8ELTAroCOgIYYfaHR0cDovL2NybC5leGFtcGxlLmNvbS9yb290\n",
+    "LmNybIEB/4IB/zANBgkqhkiG9w0BAQsFAAOCAQEAScvTwUwgBhEANXRN5bL9S3nE\n",
+    "vuxU/kZR8xtaGqUHTsrvcBxylR5VinF53RJlz0NaMxQRRpE+NLDZaW2tUbt+k/22\n",
+    "QPWoGFTfZN2GolzuFqu7v/ZPtAM02NNfSoxVu+Xb9ycJWJFP1hOreioOknn7FqjR\n",
+    "212EypnY5a2D6TVgK11g1brPxVaN1rVt08zhrCj1mq7FWP4M6W2DkTZ6r1ExgIqu\n",
+    "Kl//1G15cP+k7+SJe91c3cJ/GWzDHOrruLkzsaLAajKr6i5CWBEGEYHLvRf0RZq1\n",
+    "eucBJgsWxYlHvIHgSA4/EbCq6mK4+m2MUAkOOPfaec8MzGJCm73VWgTnRwIWlg==\n",
     "-----END X509 CRL-----\n",
     NULL
 };
 
 static const char *kCrlIDPOnlyUserOnlyCAOnlyAttr[] = {
     "-----BEGIN X509 CRL-----\n",
-    "MIICbTCCAVUCAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYDVQQIDApDYWxp\n",
-    "Zm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQKDAxFeGFtcGxlIENvcnAxHjAc\n",
-    "BgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEdMBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3Qg\n",
-    "Q0EXDTI2MDMxMDA4MDAwMFoXDTI2MDYwODA4MDAwMFowIzAhAgIQABcNMjYwMzA5MDgwMDAwWjAM\n",
-    "MAoGA1UdFQQDCgEBoGswaTAfBgNVHSMEGDAWgBT+FA4TGwlny0oNS9pP8++QtUPbMzAKBgNVHRQE\n",
-    "AwIBFzA6BgNVHRwBAf8EMDAuoCOgIYYfaHR0cDovL2NybC5leGFtcGxlLmNvbS9yb290LmNybIEB\n",
-    "/4IB/4UB/zANBgkqhkiG9w0BAQsFAAOCAQEAQ7OlOy+pMrRHeM1W3d+s3Ev/fIEO852mBxy32OV4\n",
-    "t3zjHnS+XK0u3U8fWUR6i31FrDQUJDLqNFhWPGHD/MqIbqn6zzLy35S5+AK2pChAKOdUxSzy8bjO\n",
-    "x0tahpqSKXnijxCzFkEqs65J5yVwJJTNjK8ieuqTmsHKwbfPe6x93+7ceygknpeu3rsR2gMGwybN\n",
-    "W8Yq7CUQ87sVcI4H3RAU6qbenT+eec6Xn6VpFQ1qnUvKxnw2CF6q11V/T9Rxqb0TKLia3NXG2IT6\n",
-    "EHf6APJ6wN+DQSZq2qLdt3i3pbJQDcpT90a/PfaSlXcjtM6FcpN4bpex3CgLYIoCivDP9UXR2Q==\n",
+    "MIICbTCCAVUCAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEd\n",
+    "MBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EXDTI2MDMxMDA4MDAwMFoXDTI2\n",
+    "MDYwODA4MDAwMFowIzAhAgIQABcNMjYwMzA5MDgwMDAwWjAMMAoGA1UdFQQDCgEB\n",
+    "oGswaTAfBgNVHSMEGDAWgBT+FA4TGwlny0oNS9pP8++QtUPbMzAKBgNVHRQEAwIB\n",
+    "FzA6BgNVHRwBAf8EMDAuoCOgIYYfaHR0cDovL2NybC5leGFtcGxlLmNvbS9yb290\n",
+    "LmNybIEB/4IB/4UB/zANBgkqhkiG9w0BAQsFAAOCAQEAQ7OlOy+pMrRHeM1W3d+s\n",
+    "3Ev/fIEO852mBxy32OV4t3zjHnS+XK0u3U8fWUR6i31FrDQUJDLqNFhWPGHD/MqI\n",
+    "bqn6zzLy35S5+AK2pChAKOdUxSzy8bjOx0tahpqSKXnijxCzFkEqs65J5yVwJJTN\n",
+    "jK8ieuqTmsHKwbfPe6x93+7ceygknpeu3rsR2gMGwybNW8Yq7CUQ87sVcI4H3RAU\n",
+    "6qbenT+eec6Xn6VpFQ1qnUvKxnw2CF6q11V/T9Rxqb0TKLia3NXG2IT6EHf6APJ6\n",
+    "wN+DQSZq2qLdt3i3pbJQDcpT90a/PfaSlXcjtM6FcpN4bpex3CgLYIoCivDP9UXR\n",
+    "2Q==\n",
     "-----END X509 CRL-----\n",
     NULL
 };
@@ -743,8 +758,6 @@ static X509 *root1 = NULL;
 static X509 *leaf1 = NULL;
 static X509 *root2 = NULL;
 static X509 *leaf2 = NULL;
-static X509 *root3 = NULL;
-static X509 *leaf3 = NULL;
 
 /*
  * Verify |leaf| certificate (chained up to |root|).  |crls| if
@@ -1058,7 +1071,6 @@ static int test_crl_get_fn_score(void)
     X509_STORE *store = X509_STORE_new();
     X509_VERIFY_PARAM *param = X509_VERIFY_PARAM_new();
     STACK_OF(X509) *roots = sk_X509_new_null();
-
     int status = X509_V_ERR_UNSPECIFIED;
 
     if (!TEST_ptr(ctx)
@@ -1165,13 +1177,17 @@ static int test_crl_idp_malformed2(void)
  */
 static int test_private_keys(void)
 {
+    X509 *root3 = NULL;
+    X509 *leaf3 = NULL;
     EVP_PKEY *root_pkey = NULL;
     EVP_PKEY *leaf_pkey = NULL;
     EVP_PKEY *root_pub = NULL;
     EVP_PKEY *leaf_pub = NULL;
     int test;
 
-    test = TEST_ptr(root_pkey = EVP_PKEY_from_strings(kRootPrivateKey))
+    test = TEST_ptr(root3 = X509_from_strings(kRoot))
+        && TEST_ptr(leaf3 = X509_from_strings(kLeaf))
+        && TEST_ptr(root_pkey = EVP_PKEY_from_strings(kRootPrivateKey))
         && TEST_ptr(leaf_pkey = EVP_PKEY_from_strings(kLeafPrivateKey))
         && TEST_ptr(root_pub = X509_get_pubkey(root3))
         && TEST_ptr(leaf_pub = X509_get_pubkey(leaf3))
@@ -1180,20 +1196,29 @@ static int test_private_keys(void)
 
     EVP_PKEY_free(root_pkey);
     EVP_PKEY_free(leaf_pkey);
+    X509_free(root3);
+    X509_free(leaf3);
     return test;
 }
 
 static int test_crl_revocation(void)
 {
+    X509 *root3 = NULL;
+    X509 *leaf3 = NULL;
     X509_CRL *crl = NULL;
     STACK_OF(X509_CRL) *crls;
     unsigned int flags = X509_V_FLAG_CRL_CHECK;
     int test;
 
-    test = TEST_ptr((crl = CRL_from_strings(kCrlRecovated)))
+    test = TEST_ptr(root3 = X509_from_strings(kRoot))
+        && TEST_ptr(leaf3 = X509_from_strings(kLeaf))
+        && TEST_ptr((crl = CRL_from_strings(kCrlRecovated)))
         && TEST_ptr((crls = make_CRL_stack(crl, NULL)))
         && TEST_int_eq(verify(leaf3, root3, crls, flags, kVerify), X509_V_OK);
+
     X509_CRL_free(crl);
+    X509_free(root3);
+    X509_free(leaf3);
     return test;
 }
 
@@ -1209,15 +1234,22 @@ static int test_crl_extension_duplicate(void)
 
 static int test_crl_extension_duplicate_entry(void)
 {
+    X509 *root3 = NULL;
+    X509 *leaf3 = NULL;
     X509_CRL *crl = NULL;
     STACK_OF(X509_CRL) *crls;
     unsigned int flags = X509_V_FLAG_CRL_CHECK;
     int test;
 
-    test = TEST_ptr((crl = CRL_from_strings(kCrlExtensionDuplicateEntry)))
+    test = TEST_ptr(root3 = X509_from_strings(kRoot))
+        && TEST_ptr(leaf3 = X509_from_strings(kLeaf))
+        && TEST_ptr((crl = CRL_from_strings(kCrlExtensionDuplicateEntry)))
         && TEST_ptr((crls = make_CRL_stack(crl, NULL)))
         && TEST_int_eq(verify(leaf3, root3, crls, flags, kVerify), X509_V_ERR_CERT_REVOKED);
+
     X509_CRL_free(crl);
+    X509_free(root3);
+    X509_free(leaf3);
     return test;
 }
 
@@ -1233,61 +1265,89 @@ static int test_crl_extension_duplicate_serial(void)
 
 static int test_crl_idp_onlyca_onlyattr(void)
 {
+    X509 *root3 = NULL;
+    X509 *leaf3 = NULL;
     X509_CRL *crl = NULL;
     STACK_OF(X509_CRL) *crls;
     unsigned int flags = X509_V_FLAG_CRL_CHECK;
     unsigned int expect = X509_V_ERR_UNABLE_TO_GET_CRL;
     int test;
 
-    test = TEST_ptr((crl = CRL_from_strings(kCrlIDPOnlyCaOnlyAttr)))
+    test = TEST_ptr(root3 = X509_from_strings(kRoot))
+        && TEST_ptr(leaf3 = X509_from_strings(kLeaf))
+        && TEST_ptr((crl = CRL_from_strings(kCrlIDPOnlyCaOnlyAttr)))
         && TEST_ptr((crls = make_CRL_stack(crl, NULL)))
         && TEST_int_eq(verify(leaf3, root3, crls, flags, kVerify), expect);
+
     X509_CRL_free(crl);
+    X509_free(root3);
+    X509_free(leaf3);
     return test;
 }
 
 static int test_crl_idp_onlyuser_onlyattr(void)
 {
+    X509 *root3 = NULL;
+    X509 *leaf3 = NULL;
     X509_CRL *crl = NULL;
     STACK_OF(X509_CRL) *crls;
     unsigned int flags = X509_V_FLAG_CRL_CHECK;
     unsigned int expect = X509_V_ERR_UNABLE_TO_GET_CRL;
     int test;
 
-    test = TEST_ptr((crl = CRL_from_strings(kCrlIDPOnlyUserOnlyAttr)))
+    test = TEST_ptr(root3 = X509_from_strings(kRoot))
+        && TEST_ptr(leaf3 = X509_from_strings(kLeaf))
+        && TEST_ptr((crl = CRL_from_strings(kCrlIDPOnlyUserOnlyAttr)))
         && TEST_ptr((crls = make_CRL_stack(crl, NULL)))
         && TEST_int_eq(verify(leaf3, root3, crls, flags, kVerify), expect);
+
     X509_CRL_free(crl);
+    X509_free(root3);
+    X509_free(leaf3);
     return test;
 }
 
 static int test_crl_idp_onlyuser_onlyca(void)
 {
+    X509 *root3 = NULL;
+    X509 *leaf3 = NULL;
     X509_CRL *crl = NULL;
     STACK_OF(X509_CRL) *crls;
     unsigned int flags = X509_V_FLAG_CRL_CHECK;
     unsigned int expect = X509_V_ERR_UNABLE_TO_GET_CRL;
     int test;
 
-    test = TEST_ptr((crl = CRL_from_strings(kCrlIDPOnlyUserOnlyCA)))
+    test = TEST_ptr(root3 = X509_from_strings(kRoot))
+        && TEST_ptr(leaf3 = X509_from_strings(kLeaf))
+        && TEST_ptr((crl = CRL_from_strings(kCrlIDPOnlyUserOnlyCA)))
         && TEST_ptr((crls = make_CRL_stack(crl, NULL)))
         && TEST_int_eq(verify(leaf3, root3, crls, flags, kVerify), expect);
+
     X509_CRL_free(crl);
+    X509_free(root3);
+    X509_free(leaf3);
     return test;
 }
 
 static int test_crl_idp_onlyuser_onlyca_onlyattr(void)
 {
+    X509 *root3 = NULL;
+    X509 *leaf3 = NULL;
     X509_CRL *crl = NULL;
     STACK_OF(X509_CRL) *crls;
     unsigned int flags = X509_V_FLAG_CRL_CHECK;
     unsigned int expect = X509_V_ERR_UNABLE_TO_GET_CRL;
     int test;
 
-    test = TEST_ptr((crl = CRL_from_strings(kCrlIDPOnlyUserOnlyCAOnlyAttr)))
+    test = TEST_ptr(root3 = X509_from_strings(kRoot))
+        && TEST_ptr(leaf3 = X509_from_strings(kLeaf))
+        && TEST_ptr((crl = CRL_from_strings(kCrlIDPOnlyUserOnlyCAOnlyAttr)))
         && TEST_ptr((crls = make_CRL_stack(crl, NULL)))
         && TEST_int_eq(verify(leaf3, root3, crls, flags, kVerify), expect);
+
     X509_CRL_free(crl);
+    X509_free(root3);
+    X509_free(leaf3);
     return test;
 }
 
@@ -1296,9 +1356,7 @@ int setup_tests(void)
     if (!TEST_ptr(root1 = X509_from_strings(kCRLTestRoot))
         || !TEST_ptr(leaf1 = X509_from_strings(kCRLTestLeaf))
         || !TEST_ptr(root2 = X509_from_strings(kCRLTestRoot2))
-        || !TEST_ptr(leaf2 = X509_from_strings(kCRLTestLeaf2))
-        || !TEST_ptr(root3 = X509_from_strings(kRoot))
-        || !TEST_ptr(leaf3 = X509_from_strings(kLeaf)))
+        || !TEST_ptr(leaf2 = X509_from_strings(kCRLTestLeaf2)))
         return 0;
 
     ADD_TEST(test_private_keys);
@@ -1325,7 +1383,6 @@ int setup_tests(void)
     ADD_TEST(test_crl_extension_duplicate_entry);
     ADD_TEST(test_crl_extension_duplicate_serial);
     ADD_ALL_TESTS(test_reuse_crl, 6);
-
     return 1;
 }
 
@@ -1335,6 +1392,4 @@ void cleanup_tests(void)
     X509_free(leaf1);
     X509_free(root2);
     X509_free(leaf2);
-    X509_free(root3);
-    X509_free(leaf3);
 }
