@@ -14192,7 +14192,7 @@ static int check_grease_in_client_hello(void)
 {
     PACKET pkt, ciphers, session, compression, exts, ext_data;
     PACKET inner;
-    unsigned int ext_type, val;
+    unsigned int ext_type = 0, val = 0;
     int found_grease_cipher = 0;
     int found_grease_ext = 0;
     int found_grease_group = 0;
@@ -14200,14 +14200,22 @@ static int check_grease_in_client_hello(void)
     int found_grease_sigalg = 0;
     int found_grease_version = 0;
 
+    memset(&pkt, 0, sizeof(pkt));
+    memset(&ciphers, 0, sizeof(ciphers));
+    memset(&session, 0, sizeof(session));
+    memset(&compression, 0, sizeof(compression));
+    memset(&exts, 0, sizeof(exts));
+    memset(&ext_data, 0, sizeof(ext_data));
+    memset(&inner, 0, sizeof(inner));
+
     if (!TEST_ptr(grease_ch_buf)
         || !TEST_true(PACKET_buf_init(&pkt, grease_ch_buf,
-                grease_ch_len))
+            grease_ch_len))
         /* Skip handshake message header */
         || !TEST_true(PACKET_forward(&pkt, SSL3_HM_HEADER_LENGTH))
         /* Skip client_version + random */
         || !TEST_true(PACKET_forward(&pkt,
-                CLIENT_VERSION_LEN + SSL3_RANDOM_SIZE))
+            CLIENT_VERSION_LEN + SSL3_RANDOM_SIZE))
         /* Skip session_id */
         || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &session))
         /* Get cipher suites */
@@ -14230,7 +14238,7 @@ static int check_grease_in_client_hello(void)
     while (PACKET_remaining(&exts) > 0) {
         if (!TEST_true(PACKET_get_net_2(&exts, &ext_type))
             || !TEST_true(PACKET_get_length_prefixed_2(&exts,
-                    &ext_data)))
+                &ext_data)))
             return 0;
 
         if (is_grease(ext_type))
@@ -14266,13 +14274,14 @@ static int check_grease_in_client_hello(void)
         if (ext_type == TLSEXT_TYPE_key_share) {
             PACKET ks_entry;
 
+            memset(&ks_entry, 0, sizeof(ks_entry));
             if (!TEST_true(PACKET_get_length_prefixed_2(&ext_data,
                     &inner)))
                 return 0;
             while (PACKET_remaining(&inner) > 0) {
                 if (!TEST_true(PACKET_get_net_2(&inner, &val))
                     || !TEST_true(PACKET_get_length_prefixed_2(
-                            &inner, &ks_entry)))
+                        &inner, &ks_entry)))
                     return 0;
                 if (is_grease(val))
                     found_grease_kshare = 1;
@@ -14295,7 +14304,7 @@ static int check_grease_in_client_hello(void)
 
     if (!TEST_true(found_grease_cipher))
         return 0;
-    if (!TEST_int_ge(found_grease_ext, 1))
+    if (!TEST_int_eq(found_grease_ext, 2))
         return 0;
     if (!TEST_true(found_grease_version))
         return 0;
