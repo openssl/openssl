@@ -161,9 +161,8 @@ guidelines:
        git log
     ```
 
- 10. If a Pull Request addresses an [issue] the commit should include the line:
-
-    [issue]: https://github.com/openssl/openssl/issues/
+ 10. If a Pull Request addresses an [issue](https://github.com/openssl/openssl/issues/)
+     the commit should include the line:
 
     ```
         Fixes #XXXXX
