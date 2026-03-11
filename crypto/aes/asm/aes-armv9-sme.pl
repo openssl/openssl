@@ -22,8 +22,8 @@
 #   SVL=512  bits (NVEC=4): ~4x throughput
 #   SVL=1024 bits (NVEC=8): ~8x throughput
 #
-# Requires: FEAT_SME (streaming SVE mode) AND FEAT_SME_AES or
-#           FEAT_SVE_AES available in streaming mode.
+# Requires: FEAT_SME (streaming SVE mode) AND FEAT_SSVE_AES
+#           (SVE AES z-register instructions available in Streaming SVE mode).
 # Detection: ARMV9_SME and ARMV9_SME_AES both set in OPENSSL_armcap_P.
 #
 # Exported functions:
