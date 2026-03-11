@@ -17,6 +17,14 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+static void evp_asym_cipher_free_int(EVP_ASYM_CIPHER *cipher)
+{
+    OPENSSL_free(cipher->type_name);
+    ossl_provider_free(cipher->prov);
+    CRYPTO_FREE_REF(&cipher->refcnt);
+    OPENSSL_free(cipher);
+}
+
 static void evp_asym_cipher_free(void *data)
 {
     EVP_ASYM_CIPHER_free(data);
@@ -363,6 +371,47 @@ static EVP_ASYM_CIPHER *evp_asym_cipher_new(OSSL_PROVIDER *prov)
     return cipher;
 }
 
+static void *evp_asym_cipher_dup_frozen(void *vin)
+{
+    EVP_ASYM_CIPHER *in = vin;
+    EVP_ASYM_CIPHER *out;
+
+    out = OPENSSL_malloc(sizeof(*out));
+    if (out == NULL)
+        return NULL;
+    memcpy(out, in, sizeof(*out));
+    if (!CRYPTO_NEW_REF(&out->refcnt, 1))
+        goto err;
+    out->type_name = OPENSSL_strdup(in->type_name);
+    if (out->type_name == NULL)
+        goto err;
+    out->origin = EVP_ORIG_FROZEN;
+    if (out->prov == NULL || !ossl_provider_up_ref(out->prov)) {
+        OPENSSL_free(out->type_name);
+        goto err;
+    }
+    return out;
+
+err:
+    CRYPTO_FREE_REF(&out->refcnt);
+    OPENSSL_free(out);
+    return NULL;
+}
+
+static void evp_asym_cipher_frozen_free(void *vin)
+{
+    EVP_ASYM_CIPHER *rand = vin;
+    int ref = 0;
+
+    if (rand == NULL || rand->origin != EVP_ORIG_FROZEN)
+        return;
+
+    CRYPTO_DOWN_REF(&rand->refcnt, &ref);
+    if (ref > 0)
+        return;
+    evp_asym_cipher_free_int(rand);
+}
+
 static void *evp_asym_cipher_from_algorithm(int name_id,
     const OSSL_ALGORITHM *algodef,
     OSSL_PROVIDER *prov)
@@ -484,22 +533,20 @@ void EVP_ASYM_CIPHER_free(EVP_ASYM_CIPHER *cipher)
 {
     int i;
 
-    if (cipher == NULL)
+    if (cipher == NULL || cipher->origin != EVP_ORIG_DYNAMIC)
         return;
     CRYPTO_DOWN_REF(&cipher->refcnt, &i);
     if (i > 0)
         return;
-    OPENSSL_free(cipher->type_name);
-    ossl_provider_free(cipher->prov);
-    CRYPTO_FREE_REF(&cipher->refcnt);
-    OPENSSL_free(cipher);
+    evp_asym_cipher_free_int(cipher);
 }
 
 int EVP_ASYM_CIPHER_up_ref(EVP_ASYM_CIPHER *cipher)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&cipher->refcnt, &ref);
+    if (cipher->origin == EVP_ORIG_DYNAMIC)
+        CRYPTO_UP_REF(&cipher->refcnt, &ref);
     return 1;
 }
 
@@ -511,10 +558,26 @@ OSSL_PROVIDER *EVP_ASYM_CIPHER_get0_provider(const EVP_ASYM_CIPHER *cipher)
 EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
     const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_ASYM_CIPHER, algorithm, properties,
+    return evp_generic_fetch(ctx,
+        OSSL_OP_ASYM_CIPHER,
+        algorithm,
+        properties,
         evp_asym_cipher_from_algorithm,
         evp_asym_cipher_up_ref,
-        evp_asym_cipher_free, NULL, NULL);
+        evp_asym_cipher_free,
+        evp_asym_cipher_dup_frozen,
+        evp_asym_cipher_frozen_free);
+}
+
+int evp_asym_cipher_fetch_all(OSSL_LIB_CTX *ctx)
+{
+    return evp_generic_fetch_all(ctx,
+        OSSL_OP_ASYM_CIPHER,
+        evp_asym_cipher_from_algorithm,
+        evp_asym_cipher_up_ref,
+        evp_asym_cipher_free,
+        evp_asym_cipher_dup_frozen,
+        evp_asym_cipher_frozen_free);
 }
 
 EVP_ASYM_CIPHER *evp_asym_cipher_fetch_from_prov(OSSL_PROVIDER *prov,
@@ -526,8 +589,8 @@ EVP_ASYM_CIPHER *evp_asym_cipher_fetch_from_prov(OSSL_PROVIDER *prov,
         evp_asym_cipher_from_algorithm,
         evp_asym_cipher_up_ref,
         evp_asym_cipher_free,
-        NULL,
-        NULL);
+        evp_asym_cipher_dup_frozen,
+        evp_asym_cipher_frozen_free);
 }
 
 int EVP_ASYM_CIPHER_is_a(const EVP_ASYM_CIPHER *cipher, const char *name)
