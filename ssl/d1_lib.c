@@ -153,7 +153,7 @@ DTLS1_RECORD_NUMBER *dtls1_record_number_new(uint64_t epoch, uint64_t seqnum)
     return recnum;
 }
 
-void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint16_t before_epoch)
+void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint64_t before_epoch)
 {
     pitem *item = NULL;
     piterator iter = pqueue_iterator(&s->d1->sent_messages);
