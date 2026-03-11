@@ -948,6 +948,7 @@ int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
 static ossl_inline void generate_random_seed(uint32_t *seed)
 {
     OSSL_TIME ts;
+
     if (*seed == 0) {
         *seed = OPENSSL_rdtsc();
         if (*seed == 0) {
@@ -987,7 +988,6 @@ static void QUERY_cache_select_cull(ALGORITHM *alg, STORED_ALGORITHMS *sa,
     uint32_t used = 0;
     QUERY *q, *qn;
     QUERY_KEY key;
-    OSSL_TIME ts;
 
 cull_again:
     OSSL_LIST_FOREACH_DELSAFE(q, qn, lru_entry, &sa->lru_list)
@@ -1233,7 +1233,7 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
          * Just wait until we try to add to a larger cache
          */
         if (cullcount >= 4) {
-            cullcount = seed % (cullcount / 4);
+            cullcount = seed % (cullcount >> 2);
             cullcount = (cullcount < 1) ? 1 : cullcount;
             QUERY_cache_select_cull(alg, sa, cullcount, seed);
         }
