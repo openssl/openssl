@@ -52,7 +52,7 @@ void OPENSSL_brd31_probe(void);
  * predefined macros automatically set by the AIX compiler based on the
  * AIX version. We use negative logic to exclude AIX versions < 7.0.
  */
-#if !defined(_AIX43) && !defined(_AIX51) && !defined(_AIX53) && !defined(_AIX61)
+#if defined(_AIX) && !defined(_AIX43) && !defined(_AIX51) && !defined(_AIX53) && !defined(_AIX61)
 static int check_vmx(void)
 {
     if (_system_configuration.implementation >= 0x10000u && _system_configuration.vmx_version > 1)
