@@ -3824,6 +3824,7 @@ char *get_str_from_file(const char *filename)
     bio = NULL;
     if (n <= 0) {
         BIO_printf(bio_err, "Error reading from %s\n", filename);
+        OPENSSL_clear_free(buf, MAX_KEY_SIZE);
         return NULL;
     }
     tmp = strchr(buf, '\n');
