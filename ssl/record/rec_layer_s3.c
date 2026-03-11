@@ -1253,7 +1253,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     int use_early_data = 0;
     uint32_t max_early_data;
     COMP_METHOD *compm = (comp == NULL) ? NULL : comp->method;
-    uint16_t epoch_zero;
+    uint64_t epoch_zero;
     uint64_t seq;
 
     if (direction == OSSL_RECORD_DIRECTION_READ) {
@@ -1405,7 +1405,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         int rlret;
         BIO *prev = NULL;
         BIO *next = NULL;
-        unsigned int epoch = 0;
+        uint64_t epoch = 0;
         OSSL_DISPATCH rlayer_dispatch_tmp[OSSL_NELEM(rlayer_dispatch)];
         size_t i, j;
 
