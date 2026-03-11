@@ -123,6 +123,7 @@ static void release_each(QUIC_STREAM *stream, void *arg)
 
 void ossl_quic_stream_map_cleanup(QUIC_STREAM_MAP *qsm)
 {
+    lh_QUIC_STREAM_set_down_load(qsm->map, 0);
     ossl_quic_stream_map_visit(qsm, release_each, qsm);
 
     lh_QUIC_STREAM_free(qsm->map);
