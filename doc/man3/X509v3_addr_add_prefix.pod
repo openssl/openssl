@@ -1,0 +1,179 @@
+=pod
+
+=head1 NAME
+
+X509v3_addr_add_prefix, X509v3_addr_add_range, X509v3_addr_add_inherit,
+X509v3_addr_get_afi, X509v3_addr_get_range,
+X509v3_addr_canonize, X509v3_addr_is_canonical,
+X509v3_addr_inherits, X509v3_addr_subset,
+X509v3_addr_validate_path, X509v3_addr_validate_resource_set
+- RFC 3779 IP address delegation extension
+
+=head1 SYNOPSIS
+
+ #include <openssl/x509v3.h>
+
+ int X509v3_addr_add_prefix(IPAddrBlocks *addr,
+                            const unsigned afi, const unsigned *safi,
+                            unsigned char *a, const int prefixlen);
+ int X509v3_addr_add_range(IPAddrBlocks *addr,
+                           const unsigned afi, const unsigned *safi,
+                           unsigned char *min, unsigned char *max);
+ int X509v3_addr_add_inherit(IPAddrBlocks *addr,
+                             const unsigned afi, const unsigned *safi);
+
+ unsigned X509v3_addr_get_afi(const IPAddressFamily *f);
+ int X509v3_addr_get_range(IPAddressOrRange *aor, const unsigned afi,
+                           unsigned char *min, unsigned char *max,
+                           const int length);
+
+ int X509v3_addr_canonize(IPAddrBlocks *addr);
+ int X509v3_addr_is_canonical(IPAddrBlocks *addr);
+
+ int X509v3_addr_inherits(IPAddrBlocks *addr);
+ int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b);
+
+ int X509v3_addr_validate_path(X509_STORE_CTX *ctx);
+ int X509v3_addr_validate_resource_set(STACK_OF(X509) *chain,
+                                       IPAddrBlocks *ext,
+                                       int allow_inheritance);
+
+=head1 DESCRIPTION
+
+These functions implement support for the IP Address Delegation extension
+defined in RFC 3779 section 2. This extension is used in Resource Public
+Key Infrastructure (RPKI) certificates to bind IP address blocks to the
+holder of the certificate, enabling validation of BGP routing announcements.
+
+All of these functions require OpenSSL to be built with RFC 3779 support
+(enabled by default; disabled with B<OPENSSL_NO_RFC3779>).
+
+The IP address data is represented using the B<IPAddrBlocks> type, which
+is a stack of B<IPAddressFamily> structures. Each B<IPAddressFamily>
+identifies an address family (IPv4 or IPv6) and optional sub-address
+family (SAFI), and contains either an inheritance marker or a list of
+IP address prefixes and ranges.
+
+=head2 Construction Functions
+
+X509v3_addr_add_prefix() adds an IP address prefix to I<addr> for the
+address family identified by I<afi> and optional sub-address family I<safi>.
+The prefix is specified as a raw address I<a> in network byte order with
+I<prefixlen> significant bits. If I<safi> is NULL, no SAFI is used.
+
+X509v3_addr_add_range() adds an IP address range to I<addr> for the
+address family identified by I<afi> and optional sub-address family I<safi>.
+The range is specified as raw minimum and maximum addresses I<min> and I<max>
+in network byte order. If the range can be expressed as a prefix, it is
+stored as a prefix automatically.
+
+X509v3_addr_add_inherit() adds an inheritance marker to I<addr> for the
+address family identified by I<afi> and optional sub-address family I<safi>.
+When an address family is marked as inherited, the certificate inherits its
+IP address resources from its issuer during path validation.
+
+For all three functions, the I<afi> parameter should be B<IANA_AFI_IPV4>
+(1) for IPv4 or B<IANA_AFI_IPV6> (2) for IPv6. The I<safi> parameter
+is a pointer to a SAFI value, or NULL if no SAFI is needed. An address
+family cannot have both an inheritance marker and explicit address entries.
+
+=head2 Extraction Functions
+
+X509v3_addr_get_afi() extracts the Address Family Identifier (AFI) from
+the B<IPAddressFamily> structure I<f>. Returns the AFI value (B<IANA_AFI_IPV4>
+or B<IANA_AFI_IPV6>) or 0 on error.
+
+X509v3_addr_get_range() extracts the minimum and maximum addresses from
+an B<IPAddressOrRange> structure I<aor> and writes them as raw addresses
+into the buffers I<min> and I<max>. The I<afi> parameter specifies the
+address family, and I<length> specifies the buffer size (must be at
+least 4 for IPv4 or 16 for IPv6). For a prefix entry, the minimum is
+the prefix with all remaining bits set to zero, and the maximum has all
+remaining bits set to one.
+
+=head2 Canonical Form
+
+X509v3_addr_is_canonical() checks whether I<addr> is in canonical form
+as defined by RFC 3779. In canonical form, the address families are sorted,
+the address entries within each family are sorted and non-overlapping,
+adjacent entries are merged, and ranges that can be expressed as prefixes
+are stored as prefixes.
+
+X509v3_addr_canonize() converts I<addr> into canonical form. This involves
+sorting address families and entries, merging adjacent entries, and
+converting ranges to prefixes where possible. Overlapping entries cause
+an error.
+
+=head2 Inheritance and Subset Tests
+
+X509v3_addr_inherits() returns 1 if any address family in I<addr> uses
+inheritance, and 0 otherwise.
+
+X509v3_addr_subset() tests whether the IP address set I<a> is a subset
+of the IP address set I<b>. Both I<a> and I<b> must be in canonical form
+and must not use inheritance. Returns 1 if I<a> is a subset of I<b>,
+and 0 otherwise.
+
+=head2 Path Validation
+
+X509v3_addr_validate_path() performs RFC 3779 section 2.3 path validation
+on the certificate chain in I<ctx>. This verifies that every certificate
+in the chain only claims IP address resources that are contained in its
+issuer's IP address resources, and that the trust anchor does not use
+inheritance. This function is called automatically during certificate
+verification when the appropriate verification flags are set.
+
+X509v3_addr_validate_resource_set() tests whether the certificate chain
+I<chain> covers the IP address resources in I<ext>. If I<allow_inheritance>
+is 0, the function rejects extensions that use inheritance. This function
+can be used to verify that a specific set of IP addresses is covered by
+a certificate chain without requiring a full B<X509_STORE_CTX>.
+
+=head1 RETURN VALUES
+
+X509v3_addr_add_prefix(), X509v3_addr_add_range(), and
+X509v3_addr_add_inherit() return 1 on success and 0 on error.
+
+X509v3_addr_get_afi() returns the AFI value (B<IANA_AFI_IPV4> or
+B<IANA_AFI_IPV6>) or 0 if I<f> is NULL or has invalid data.
+
+X509v3_addr_get_range() returns the address length in bytes (4 for IPv4,
+16 for IPv6) on success or 0 on error.
+
+X509v3_addr_is_canonical() returns 1 if I<addr> is in canonical form
+and 0 otherwise. A NULL I<addr> is considered canonical.
+
+X509v3_addr_canonize() returns 1 on success and 0 on error (for example,
+if the input contains overlapping ranges).
+
+X509v3_addr_inherits() returns 1 if any address family uses inheritance,
+and 0 otherwise. Returns 0 if I<addr> is NULL.
+
+X509v3_addr_subset() returns 1 if I<a> is a subset of I<b>, and 0
+otherwise. Returns 1 if I<a> is NULL, and 0 if I<b> is NULL or
+either set uses inheritance.
+
+X509v3_addr_validate_path() and X509v3_addr_validate_resource_set()
+return 1 if validation succeeds and 0 if it fails. On failure,
+X509v3_addr_validate_path() sets the error code in I<ctx>.
+
+=head1 SEE ALSO
+
+L<X509v3_asid_add_id_or_range(3)>,
+L<X509_get_extension_flags(3)>,
+L<X509_STORE_CTX_new(3)>
+
+=head1 HISTORY
+
+These functions have been available since OpenSSL 0.9.8e.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
