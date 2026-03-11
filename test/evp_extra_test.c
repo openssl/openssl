@@ -5067,7 +5067,7 @@ static void collect_cipher_cb(EVP_CIPHER *ciph, void *arg)
      * order that breaks this test's logic.
      */
     size_t nlen = strlen(name0);
-    if (n >= 4 && OPENSSL_strcasecmp(name0 + n - 4, "-ETM") == 0)
+    if (nlen >= 4 && OPENSSL_strcasecmp(name0 + nlen - 4, "-ETM") == 0)
         return;
 #endif
 
