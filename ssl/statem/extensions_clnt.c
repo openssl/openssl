@@ -905,8 +905,9 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         uint16_t grease_group = ossl_grease_value(s, OSSL_GREASE_GROUP);
 
         if (!WPACKET_put_bytes_u16(pkt, grease_group)
-            || !WPACKET_put_bytes_u16(pkt, 1)
-            || !WPACKET_put_bytes_u8(pkt, 0)) {
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_put_bytes_u8(pkt, 0)
+            || !WPACKET_close(pkt)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return EXT_RETURN_FAIL;
         }
@@ -2906,8 +2907,9 @@ EXT_RETURN tls_construct_ctos_grease2(SSL_CONNECTION *s, WPACKET *pkt,
      * extensions.  This mirrors the BoringSSL behaviour.
      */
     if (!WPACKET_put_bytes_u16(pkt, grease_type)
-        || !WPACKET_put_bytes_u16(pkt, 1)
-        || !WPACKET_put_bytes_u8(pkt, 0)) {
+        || !WPACKET_start_sub_packet_u16(pkt)
+        || !WPACKET_put_bytes_u8(pkt, 0)
+        || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }

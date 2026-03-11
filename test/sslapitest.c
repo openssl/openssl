@@ -14147,14 +14147,14 @@ err:
 #if !defined(OSSL_NO_USABLE_TLS1_3)
 /*
  * RFC 8701 GREASE test helpers.
- * We capture the raw ClientHello via msg_callback and then scan the wire
- * bytes to confirm that GREASE values (matching 0x?A?A) are present in the
- * expected fields.
+ * We capture the raw ClientHello via msg_callback and then parse it with
+ * PACKET functions to confirm that GREASE values (matching 0x?A?A) are
+ * present in the expected fields.
  */
 static unsigned char *grease_ch_buf;
 static size_t grease_ch_len;
 
-static int is_grease(uint16_t v)
+static int is_grease(unsigned int v)
 {
     return (v & 0x0f0f) == 0x0a0a && (v >> 8) == (v & 0xff);
 }
@@ -14170,7 +14170,8 @@ static void grease_msg_cb(int write_p, int version, int content_type,
      *   byte 0: msg_type, bytes 1-3: length
      */
     if (write_p != 1 || content_type != SSL3_RT_HANDSHAKE
-        || len < 4 || p[0] != SSL3_MT_CLIENT_HELLO)
+        || len < SSL3_HM_HEADER_LENGTH
+        || p[0] != SSL3_MT_CLIENT_HELLO)
         return;
 
     /* Only capture the first ClientHello (not HRR retry) */
@@ -14183,92 +14184,126 @@ static void grease_msg_cb(int write_p, int version, int content_type,
 
 /*
  * Parse a captured ClientHello (starting from handshake header) and check
- * that it contains GREASE values in the cipher suites and extensions.
+ * that it contains GREASE values in cipher suites, extensions, supported
+ * groups, key shares, and signature algorithms.
  * Returns 1 on success, 0 on failure.
  */
 static int check_grease_in_client_hello(void)
 {
-    const unsigned char *p = grease_ch_buf;
-    const unsigned char *end = p + grease_ch_len;
-    size_t off, cs_len, sess_len, comp_len, ext_len;
+    PACKET pkt, ciphers, session, compression, exts, ext_data;
+    PACKET inner;
+    unsigned int ext_type, val;
     int found_grease_cipher = 0;
     int found_grease_ext = 0;
-    uint16_t val;
+    int found_grease_group = 0;
+    int found_grease_kshare = 0;
+    int found_grease_sigalg = 0;
+    int found_grease_version = 0;
 
-    if (!TEST_ptr(p) || !TEST_size_t_gt(grease_ch_len, 43))
+    if (!TEST_ptr(grease_ch_buf)
+        || !TEST_true(PACKET_buf_init(&pkt, grease_ch_buf,
+                grease_ch_len))
+        /* Skip handshake message header */
+        || !TEST_true(PACKET_forward(&pkt, SSL3_HM_HEADER_LENGTH))
+        /* Skip client_version + random */
+        || !TEST_true(PACKET_forward(&pkt,
+                CLIENT_VERSION_LEN + SSL3_RANDOM_SIZE))
+        /* Skip session_id */
+        || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &session))
+        /* Get cipher suites */
+        || !TEST_true(PACKET_get_length_prefixed_2(&pkt, &ciphers))
+        /* Skip compression */
+        || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &compression))
+        /* Get extensions */
+        || !TEST_true(PACKET_as_length_prefixed_2(&pkt, &exts)))
         return 0;
 
-    /* Skip handshake header: 1 byte type + 3 bytes length */
-    p += 4;
-
-    /* Skip client_version (2) + random (32) */
-    p += 2 + 32;
-    if (p >= end)
-        return 0;
-
-    /* Skip session_id: 1 byte length + data */
-    sess_len = *p++;
-    p += sess_len;
-    if (p + 2 > end)
-        return 0;
-
-    /* Cipher suites: 2 byte length */
-    cs_len = (p[0] << 8) | p[1];
-    p += 2;
-    if (p + cs_len > end)
-        return 0;
-
-    for (off = 0; off + 1 < cs_len; off += 2) {
-        val = (p[off] << 8) | p[off + 1];
+    /* Scan cipher suites for GREASE */
+    while (PACKET_remaining(&ciphers) > 0) {
+        if (!TEST_true(PACKET_get_net_2(&ciphers, &val)))
+            return 0;
         if (is_grease(val))
             found_grease_cipher = 1;
     }
-    p += cs_len;
-    if (p >= end)
-        return 0;
 
-    /* Skip compression methods: 1 byte length + data */
-    comp_len = *p++;
-    p += comp_len;
-    if (p + 2 > end)
-        return 0;
-
-    /* Extensions: 2 byte length */
-    ext_len = (p[0] << 8) | p[1];
-    p += 2;
-    if (p + ext_len > end)
-        return 0;
-
-    end = p + ext_len;
-    while (p + 4 <= end) {
-        uint16_t ext_type = (p[0] << 8) | p[1];
-        uint16_t ext_data_len = (p[2] << 8) | p[3];
+    /* Scan extensions */
+    while (PACKET_remaining(&exts) > 0) {
+        if (!TEST_true(PACKET_get_net_2(&exts, &ext_type))
+            || !TEST_true(PACKET_get_length_prefixed_2(&exts,
+                    &ext_data)))
+            return 0;
 
         if (is_grease(ext_type))
             found_grease_ext++;
 
-        /* For supported_versions extension (type 0x002b), scan its list */
-        if (ext_type == TLSEXT_TYPE_supported_versions && ext_data_len >= 1) {
-            const unsigned char *sv = p + 4;
-            size_t sv_list_len = sv[0];
-            size_t svoff;
-
-            sv++;
-            for (svoff = 0; svoff + 1 < sv_list_len; svoff += 2) {
-                val = (sv[svoff] << 8) | sv[svoff + 1];
-                if (is_grease(val)) {
-                    /* GREASE found in supported_versions */
-                }
+        /* Check for GREASE inside supported_versions */
+        if (ext_type == TLSEXT_TYPE_supported_versions) {
+            if (!TEST_true(PACKET_get_length_prefixed_1(&ext_data,
+                    &inner)))
+                return 0;
+            while (PACKET_remaining(&inner) > 0) {
+                if (!TEST_true(PACKET_get_net_2(&inner, &val)))
+                    return 0;
+                if (is_grease(val))
+                    found_grease_version = 1;
             }
         }
 
-        p += 4 + ext_data_len;
+        /* Check for GREASE inside supported_groups */
+        if (ext_type == TLSEXT_TYPE_supported_groups) {
+            if (!TEST_true(PACKET_get_length_prefixed_2(&ext_data,
+                    &inner)))
+                return 0;
+            while (PACKET_remaining(&inner) > 0) {
+                if (!TEST_true(PACKET_get_net_2(&inner, &val)))
+                    return 0;
+                if (is_grease(val))
+                    found_grease_group = 1;
+            }
+        }
+
+        /* Check for GREASE inside key_share */
+        if (ext_type == TLSEXT_TYPE_key_share) {
+            PACKET ks_entry;
+
+            if (!TEST_true(PACKET_get_length_prefixed_2(&ext_data,
+                    &inner)))
+                return 0;
+            while (PACKET_remaining(&inner) > 0) {
+                if (!TEST_true(PACKET_get_net_2(&inner, &val))
+                    || !TEST_true(PACKET_get_length_prefixed_2(
+                            &inner, &ks_entry)))
+                    return 0;
+                if (is_grease(val))
+                    found_grease_kshare = 1;
+            }
+        }
+
+        /* Check for GREASE inside signature_algorithms */
+        if (ext_type == TLSEXT_TYPE_signature_algorithms) {
+            if (!TEST_true(PACKET_get_length_prefixed_2(&ext_data,
+                    &inner)))
+                return 0;
+            while (PACKET_remaining(&inner) > 0) {
+                if (!TEST_true(PACKET_get_net_2(&inner, &val)))
+                    return 0;
+                if (is_grease(val))
+                    found_grease_sigalg = 1;
+            }
+        }
     }
 
     if (!TEST_true(found_grease_cipher))
         return 0;
-    /* We expect at least one GREASE extension (we inject two) */
     if (!TEST_int_ge(found_grease_ext, 1))
+        return 0;
+    if (!TEST_true(found_grease_version))
+        return 0;
+    if (!TEST_true(found_grease_group))
+        return 0;
+    if (!TEST_true(found_grease_kshare))
+        return 0;
+    if (!TEST_true(found_grease_sigalg))
         return 0;
 
     return 1;
@@ -14297,7 +14332,7 @@ static int test_grease(void)
 
     SSL_set_msg_callback(clientssl, grease_msg_cb);
 
-    /* A full handshake should succeed — server must tolerate GREASE */
+    /* A full handshake should succeed - server must tolerate GREASE */
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
             SSL_ERROR_NONE)))
         goto end;
