@@ -158,15 +158,15 @@ guidelines:
     To view commit-id's use:
 
     ```
-    git log
+       git log
     ```
 
  10. If a Pull Request addresses an [issue] the commit should include the line:
+
+    [issue]: https://github.com/openssl/openssl/issues/
 
     ```
         Fixes #XXXXX
     ```
 
     where XXXXX is the issue number.
-
-    [issue]: https://github.com/openssl/openssl/issues
