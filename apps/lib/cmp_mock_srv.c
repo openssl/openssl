@@ -557,6 +557,7 @@ static int process_genm(OSSL_CMP_SRV_CTX *srv_ctx,
         if (rsp != NULL && sk_OSSL_CMP_ITAV_push(*out, rsp))
             return 1;
         sk_OSSL_CMP_ITAV_free(*out);
+        OSSL_CMP_ITAV_free(rsp);
         return 0;
     }
 
