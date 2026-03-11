@@ -143,24 +143,25 @@ guidelines:
     finally merged. Fixup commits are done in the following way:
 
     ```
+
         # Add one or more updated files that needed changes
         git add <filename>
 
         # Do a fixup commit
+        # <commit-id`> is the id of a previous commit that you want to fix up.
         git commit --fixup <commit-id>
 
         # Do a non forced push
         git push
     ```
 
-    Where `<`commit-id`>` is the id of a previous commit that you want to fix up.
     To view commit-id's use:
 
     ```
     git log
     ```
 
- 10. If a Pull Request addresses an [issue] the commit should include the line
+ 10. If a Pull Request addresses an [issue] the commit should include the line:
 
     ```
         Fixes #XXXXX
