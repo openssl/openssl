@@ -3,7 +3,8 @@
 =head1 NAME
 
 EVP_set_default_properties, EVP_default_properties_enable_fips,
-EVP_default_properties_is_fips_enabled, EVP_get1_default_properties
+EVP_default_properties_is_fips_enabled, EVP_get1_default_properties,
+FIPS_mode
 - manage default properties for future algorithm fetches
 
 =head1 SYNOPSIS
@@ -14,6 +15,7 @@ EVP_default_properties_is_fips_enabled, EVP_get1_default_properties
  char *EVP_get1_default_properties(OSSL_LIB_CTX *libctx);
  int EVP_default_properties_enable_fips(OSSL_LIB_CTX *libctx, int enable);
  int EVP_default_properties_is_fips_enabled(OSSL_LIB_CTX *libctx);
+ #define FIPS_mode() EVP_default_properties_is_fips_enabled(NULL)
 
 =head1 DESCRIPTION
 
@@ -74,6 +76,8 @@ EVP_default_properties_is_fips_enabled() were added in OpenSSL 3.0.
 
 The function EVP_get1_default_properties() was added in OpenSSL 3.5.
 
+FIPS_mode() is restored as a define to
+EVP_default_properties_is_fips_enabled(NULL) in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

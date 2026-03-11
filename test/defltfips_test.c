@@ -17,7 +17,7 @@ static int bad_fips;
 
 static int test_is_fips_enabled(void)
 {
-    int is_fips_enabled, is_fips_loaded;
+    int is_fips_enabled, is_fips_loaded, is_fips_legacy;
     EVP_MD *sha256 = NULL;
 
     /*
@@ -26,16 +26,18 @@ static int test_is_fips_enabled(void)
      * other function calls have auto-loaded the config file.
      */
     is_fips_enabled = EVP_default_properties_is_fips_enabled(NULL);
+    is_fips_legacy = FIPS_mode();
     is_fips_loaded = OSSL_PROVIDER_available(NULL, "fips");
 
     /*
      * Check we're in an expected state. EVP_default_properties_is_fips_enabled
      * can return true even if the FIPS provider isn't loaded - it is only based
      * on the default properties. However we only set those properties if also
-     * loading the FIPS provider.
+     * loading the FIPS provider. Also check that legacy API, matches provider API.
      */
     if (!TEST_int_eq(is_fips || bad_fips, is_fips_enabled)
-        || !TEST_int_eq(is_fips && !bad_fips, is_fips_loaded))
+        || !TEST_int_eq(is_fips && !bad_fips, is_fips_loaded)
+        || !TEST_int_eq(is_fips_legacy, is_fips_enabled))
         return 0;
 
     /*

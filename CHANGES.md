@@ -31,7 +31,10 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
- * none yet
+  * Bring back `FIPS_mode()` as a convenience define to
+    `EVP_default_properties_is_fips_enabled(NULL)`.
+
+    *Dimitri John Ledkov*
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 

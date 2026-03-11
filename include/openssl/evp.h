@@ -121,6 +121,7 @@ int EVP_set_default_properties(OSSL_LIB_CTX *libctx, const char *propq);
 char *EVP_get1_default_properties(OSSL_LIB_CTX *libctx);
 int EVP_default_properties_is_fips_enabled(OSSL_LIB_CTX *libctx);
 int EVP_default_properties_enable_fips(OSSL_LIB_CTX *libctx, int enable);
+#define FIPS_mode() EVP_default_properties_is_fips_enabled(NULL)
 
 #define EVP_PKEY_MO_SIGN 0x0001
 #define EVP_PKEY_MO_VERIFY 0x0002

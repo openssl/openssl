@@ -589,7 +589,9 @@ implemented by EVP_RAND and EVP_RAND_CTX.
 These functions are legacy APIs that are not applicable to the new provider
 model. Applications should instead use
 L<EVP_default_properties_is_fips_enabled(3)> and
-L<EVP_default_properties_enable_fips(3)>.
+L<EVP_default_properties_enable_fips(3)>. A convenience define from FIPS_mode()
+to L<EVP_default_properties_is_fips_enabled(3)> is provided in the
+<openssl/evp.h> header.
 
 =head4 Key generation is slower
 

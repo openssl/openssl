@@ -18,7 +18,9 @@ For information related to installing the FIPS module see
 L<https://github.com/openssl/openssl/blob/master/README-FIPS.md>.
 
 Note that the old functions FIPS_mode() and FIPS_mode_set() are no longer
-present so you must remove them from your application if you use them.
+present so you should remove them from your application if you use them. A
+convenience define FIPS_mode() to EVP_default_properties_is_fips_enabled(NULL)
+is provided in the openssl/evp.h header.
 
 Applications written to use the OpenSSL 3.0 FIPS module should not use any
 legacy APIs or features that avoid the FIPS module. Specifically this includes:
