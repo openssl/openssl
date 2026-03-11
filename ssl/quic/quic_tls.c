@@ -97,7 +97,7 @@ static int quic_free(OSSL_RECORD_LAYER *r);
 
 static int
 quic_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
-    int role, int direction, int level, uint16_t epoch,
+    int role, int direction, int level, uint64_t epoch,
     unsigned char *secret, size_t secretlen,
     unsigned char *snkey, unsigned char *key, size_t keylen,
     unsigned char *iv, size_t ivlen,
@@ -365,7 +365,7 @@ static int quic_retry_write_records(OSSL_RECORD_LAYER *rl)
 
 static int quic_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,
     int *rversion, uint8_t *type, const unsigned char **data,
-    size_t *datalen, uint16_t *epoch,
+    size_t *datalen, uint64_t *epoch,
     uint64_t *seq_num)
 {
     if (rl->recread != 0 || rl->recunreleased != 0)

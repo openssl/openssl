@@ -116,7 +116,7 @@ struct ossl_record_method_st {
         const char *propq, int vers,
         int role, int direction,
         int level,
-        uint16_t epoch,
+        uint64_t epoch,
         unsigned char *secret,
         size_t secretlen,
         unsigned char *snkey,
@@ -229,7 +229,7 @@ struct ossl_record_method_st {
      */
     int (*read_record)(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
         uint8_t *type, const unsigned char **data, size_t *datalen,
-        uint16_t *epoch, uint64_t *seq_num);
+        uint64_t *epoch, uint64_t *seq_num);
     /*
      * Release length bytes from a buffer associated with a record previously
      * read with read_record. Once all the bytes from a record are released, the
@@ -324,7 +324,7 @@ struct ossl_record_method_st {
     /*
      * Get the Epoch value
      */
-    int (*get_epoch)(OSSL_RECORD_LAYER *rl, uint16_t *epoch);
+    int (*get_epoch)(OSSL_RECORD_LAYER *rl, uint64_t *epoch);
 
     /*
      * Set the current MTU length to be used for the record layer.

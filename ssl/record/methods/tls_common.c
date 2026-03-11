@@ -1106,7 +1106,7 @@ int tls13_common_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
 
 int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
     uint8_t *type, const unsigned char **data, size_t *datalen,
-    uint16_t *epoch, uint64_t *seq_num)
+    uint64_t *epoch, uint64_t *seq_num)
 {
     TLS_RL_RECORD *rec;
 
@@ -1383,7 +1383,7 @@ err:
 
 static int
 tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
-    int role, int direction, int level, uint16_t epoch,
+    int role, int direction, int level, uint64_t epoch,
     unsigned char *secret, size_t secretlen,
     unsigned char *snkey, unsigned char *key, size_t keylen,
     unsigned char *iv, size_t ivlen,

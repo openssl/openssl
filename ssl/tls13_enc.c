@@ -816,16 +816,22 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
          * For DTLS1.3 The Compressed Certificate should still be sent in Epoch 2
          * not Epoch 3.
          */
-        if (s->version != DTLS1_3_VERSION || (which & SSL3_CC_COMP_CERT) == 0)
-            dtls1_increment_epoch(s, which);
+        if (s->version != DTLS1_3_VERSION || (which & SSL3_CC_COMP_CERT) == 0) {
+            if (!dtls1_increment_epoch(s, which)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+        }
 
-        if (level == OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE
-            && dtls1_get_epoch(s, which) == 1) {
+        if (level == OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE && dtls1_get_epoch(s, which) == 1) {
             /*
              * We must manually increment epoch because
              * client early traffic was not sent/recv
              */
-            dtls1_increment_epoch(s, which);
+            if (!dtls1_increment_epoch(s, which)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
         }
 
         /* We have moved to the next flight lets clear out old messages */
@@ -906,7 +912,10 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     memcpy(insecret, secret, hashlen);
 
     if (SSL_CONNECTION_IS_DTLS(s)) {
-        dtls1_increment_epoch(s, which);
+        if (!dtls1_increment_epoch(s, which)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
         snenc = s->s3.tmp.new_sym_enc_sn;
         snoffs = s->s3.tmp.new_sym_enc_sn_offs;
     }

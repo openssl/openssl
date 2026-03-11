@@ -72,7 +72,7 @@ typedef struct tls_rl_record_st {
     unsigned char *comp;
     /* epoch number, needed by DTLS1 */
     /* r */
-    uint16_t epoch;
+    uint64_t epoch;
     /* sequence number, needed by DTLS1 */
     /* r */
     uint64_t seq_num;
@@ -219,7 +219,7 @@ struct ossl_record_layer_st {
     int level;
     const EVP_MD *md;
     /* DTLS only */
-    uint16_t epoch;
+    uint64_t epoch;
 
     /*
      * A BIO containing any data read in the previous epoch that was destined
@@ -483,7 +483,7 @@ int tls_get_alert_code(OSSL_RECORD_LAYER *rl);
 int tls_set1_bio(OSSL_RECORD_LAYER *rl, BIO *bio);
 int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
     uint8_t *type, const unsigned char **data, size_t *datalen,
-    uint16_t *epoch, uint64_t *seq_num);
+    uint64_t *epoch, uint64_t *seq_num);
 int tls_release_record(OSSL_RECORD_LAYER *rl, void *rechandle, size_t length);
 int tls_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 void tls_set_plain_alerts(OSSL_RECORD_LAYER *rl, int allow);
