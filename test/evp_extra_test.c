@@ -5044,7 +5044,6 @@ static void collect_cipher_cb(EVP_CIPHER *ciph, void *arg)
     const char *name0 = NULL;
     EVP_CIPHER_TEST_INFO *tmp = NULL;
     EVP_CIPHER_TEST_INFO *info = NULL;
-    size_t n = 0;
 
     (void)arg;
 
@@ -5060,9 +5059,17 @@ static void collect_cipher_cb(EVP_CIPHER *ciph, void *arg)
     if (EVP_CIPHER_get_mode(ciph) == EVP_CIPH_SIV_MODE)
         return;
 
-    n = strlen(name0);
+#ifdef AES_CBC_HMAC_SHA_ETM_CAPABLE
+    /*
+     * Exclude ETM ciphers that only exist on ARM.
+     *
+     * These are special-purpose TLS ciphers with a different initialization
+     * order that breaks this test's logic.
+     */
+    size_t nlen = strlen(name0);
     if (n >= 4 && OPENSSL_strcasecmp(name0 + n - 4, "-ETM") == 0)
         return;
+#endif
 
     tmp = OPENSSL_realloc(cipher_list,
         (cipher_list_n + 1) * sizeof(*tmp));
