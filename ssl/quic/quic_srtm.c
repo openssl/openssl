@@ -168,6 +168,7 @@ void ossl_quic_srtm_free(QUIC_SRTM *srtm)
 
     lh_SRTM_ITEM_free(srtm->items_rev);
     if (srtm->items_fwd != NULL) {
+        lh_SRTM_ITEM_set_down_load(srtm->items_fwd, 0);
         lh_SRTM_ITEM_doall(srtm->items_fwd, srtm_free_each);
         lh_SRTM_ITEM_free(srtm->items_fwd);
     }
