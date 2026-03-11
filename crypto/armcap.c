@@ -145,9 +145,9 @@ static unsigned long getauxval(unsigned long key)
 /* AT_HWCAP2 */
 #define OSSL_HWCAP2 26
 #define OSSL_HWCAP2_SVE2 (1 << 1)
-#define OSSL_HWCAP2_SVEAES (1 << 2)    /* FEAT_SVE_AES - AES in SVE/SSVE mode */
+#define OSSL_HWCAP2_SVEAES (1 << 2) /* FEAT_SVE_AES - AES in SVE/SSVE mode */
 #define OSSL_HWCAP2_RNG (1 << 16)
-#define OSSL_HWCAP2_SME (1 << 23)     /* FEAT_SME - Scalable Matrix Extension */
+#define OSSL_HWCAP2_SME (1 << 23) /* FEAT_SME - Scalable Matrix Extension */
 #endif
 
 uint32_t _armv7_tick(void);
@@ -307,6 +307,22 @@ void OPENSSL_cpuid_setup(void)
                 OPENSSL_armcap_P |= ARMV8_HAVE_SHA3_AND_WORTH_USING;
             }
         }
+
+        /*
+         * FEAT_SME (Scalable Matrix Extension): available on M4 and later.
+         * The sysctl hw.optional.arm.FEAT_SME is 1 when the hardware and
+         * the OS both support SME context management.
+         */
+        OPENSSL_armcap_P |= sysctl_query("hw.optional.arm.FEAT_SME", ARMV9_SME);
+
+        /*
+         * FEAT_SSVE_AES: SVE AES z-register instructions in Streaming SVE mode.
+         * macOS does not expose a dedicated sysctl for FEAT_SSVE_AES; on Apple
+         * Silicon, FEAT_SSVE_AES is present whenever FEAT_SME is present, so
+         * use the conservative "SME + ARMV8_AES" heuristic.
+         */
+        if ((OPENSSL_armcap_P & ARMV9_SME) && (OPENSSL_armcap_P & ARMV8_AES))
+            OPENSSL_armcap_P |= ARMV9_SME_AES;
     }
 #endif /* __aarch64__ */
 
@@ -362,9 +378,9 @@ void OPENSSL_cpuid_setup(void)
             OPENSSL_armcap_P |= ARMV9_SME;
 
         /*
-         * FEAT_SME_AES: AES instructions (AESE/AESD) available in streaming
-         * SVE mode.  Requires both SME (for streaming mode itself) and
-         * FEAT_SVE_AES (for the z-register AES instructions).
+         * FEAT_SSVE_AES: SVE AES z-register instructions in Streaming SVE mode.
+         * Linux reports FEAT_SVE_AES via HWCAP2_SVEAES; combined with
+         * HWCAP2_SME (streaming mode support) this implies FEAT_SSVE_AES.
          */
         if ((hwcap2 & OSSL_HWCAP2_SME) && (hwcap2 & OSSL_HWCAP2_SVEAES))
             OPENSSL_armcap_P |= ARMV9_SME_AES;
@@ -414,8 +430,8 @@ void OPENSSL_cpuid_setup(void)
     OPENSSL_armcap_P |= arm_probe_for(_armv8_rng_probe, ARMV8_RNG);
     OPENSSL_armcap_P |= arm_probe_for(_armv9_sme_probe, ARMV9_SME);
     /*
-     * For FEAT_SME_AES in the SIGILL path, conservatively require both
-     * FEAT_SME and FEAT_AES (hardware AES crypto extension) to be present.
+     * For FEAT_SSVE_AES in the SIGILL path, conservatively require both
+     * FEAT_SME and the ARMV8 AES crypto extension (ARMV8_AES) to be present.
      * We cannot safely probe AESE in streaming SVE mode via SIGILL since
      * SMSTART/SMSTOP would be needed around it.
      */

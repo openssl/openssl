@@ -84,7 +84,7 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 #define ARMV8_UNROLL12_EOR3 (1 << 16)
 #define ARMV9_SVE2_POLY1305 (1 << 17)
 #define ARMV9_SME (1 << 18)
-#define ARMV9_SME_AES (1 << 19)
+#define ARMV9_SME_AES (1 << 19) /* FEAT_SSVE_AES: SVE AES z-reg instrs in Streaming SVE mode */
 
 /*
  * MIDR_EL1 system register
