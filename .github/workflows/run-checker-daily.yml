@@ -1,4 +1,4 @@
-# Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -68,10 +68,12 @@ jobs:
 #          enable-fuzz-libfuzzer,  # Requires extra setup
           no-gost,
           enable-h3demo,
-          enable-heartbeats,
           enable-hqinterop,
+          no-hmac-drbg-kdf,
           no-hw,
           no-idea,
+          no-kbkdf,
+          no-krb5kdf,
           enable-lms,
           no-makedepend,
           enable-md2,
@@ -85,6 +87,7 @@ jobs:
           no-poly1305,
           no-posix-io,
           no-psk,
+          no-pvkkdf,
           no-rc2,
           enable-rc5,
           no-rdrand,
@@ -100,12 +103,14 @@ jobs:
           no-sm2-precomp,
           no-sm3,
           no-sm4,
+          no-snmpkdf,
           no-sock,
+          no-srtpkdf,
           no-sse2,
+          no-sshkdf,
+          no-sskdf,
           no-ssl,
           no-ssl-trace,
-          enable-ssl3,
-          enable-ssl3-method,
           enable-sslkeylog,
           no-shared,
           no-tests,
@@ -122,6 +127,8 @@ jobs:
           no-uplink,
           no-weak-ssl-ciphers,
           no-whirlpool,
+          no-x942kdf,
+          no-x963kdf,
           enable-zlib-dynamic,
           -DOPENSSL_PEDANTIC_ZEROIZATION,
           -DOPENSSL_PEDANTIC_ZEROIZATION enable-fips,
@@ -131,7 +138,7 @@ jobs:
         ]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -153,7 +160,7 @@ jobs:
     if: github.repository == 'openssl/openssl'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -200,7 +207,7 @@ jobs:
         sudo apt-get update
         sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install brotli libbrotli1 libbrotli-dev
     - name: checkout openssl
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -225,7 +232,7 @@ jobs:
         sudo apt-get update
         sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install zstd libzstd1 libzstd-dev
     - name: checkout openssl
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -251,7 +258,7 @@ jobs:
         sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install brotli libbrotli1 libbrotli-dev
         sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install zstd libzstd1 libzstd-dev
     - name: checkout openssl
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -272,7 +279,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: checkout openssl
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: Adjust ASLR for sanitizer
@@ -301,7 +308,7 @@ jobs:
         sudo apt-get update
         sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install brotli libbrotli1 libbrotli-dev
     - name: checkout openssl
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -330,7 +337,7 @@ jobs:
         sudo apt-get update
         sudo apt-get -yq --no-install-suggests --no-install-recommends --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install zstd libzstd1 libzstd-dev
     - name: checkout openssl
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -357,7 +364,7 @@ jobs:
         os: [ubuntu-latest, macos-15, macos-15-intel]
     runs-on: ${{matrix.os}}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -375,7 +382,7 @@ jobs:
     if: github.repository == 'openssl/openssl'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -395,7 +402,7 @@ jobs:
     if: github.repository == 'openssl/openssl'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -419,7 +426,7 @@ jobs:
   bn_debug:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: config

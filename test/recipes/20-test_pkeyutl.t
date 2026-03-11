@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2018-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -23,7 +23,7 @@ plan tests => 27;
 
 SKIP: {
     skip "Skipping tests that require EC, SM2 or SM3", 4
-        if disabled("ec") || disabled("sm2") || disabled("sm3");
+        if disabled("ec") || disabled("sm2") || disabled("sm3") || disabled("x963kdf");
 
     # SM2
     ok_nofips(run(app(([ 'openssl', 'pkeyutl', '-sign',

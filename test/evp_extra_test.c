@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -40,6 +40,13 @@
 #include "crypto/evp.h"
 #include "fake_rsaprov.h"
 #include "fake_pipelineprov.h"
+
+#ifndef OPENSSL_NO_DSA
+#include "helpers/predefined_dsaparams.h"
+#endif
+#ifndef OPENSSL_NO_DH
+#include "helpers/predefined_dhparams.h"
+#endif
 
 #ifdef STATIC_LEGACY
 OSSL_provider_init_fn ossl_legacy_provider_init;
@@ -695,48 +702,6 @@ static const unsigned char kExampleED25519PubKeyDER[] = {
     0xef, 0x5b, 0x7c, 0x20, 0xe8, 0x66, 0x28, 0x30, 0x3c, 0x8a, 0x82, 0x40,
     0x97, 0xa3, 0x08, 0xdc, 0x65, 0x80, 0x39, 0x29
 };
-
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-static const unsigned char kExampleX25519KeyDER[] = {
-    0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x6e,
-    0x04, 0x22, 0x04, 0x20, 0xa0, 0x24, 0x3a, 0x31, 0x24, 0xc3, 0x3f, 0xf6,
-    0x7b, 0x96, 0x0b, 0xd4, 0x8f, 0xd1, 0xee, 0x67, 0xf2, 0x9b, 0x88, 0xac,
-    0x50, 0xce, 0x97, 0x36, 0xdd, 0xaf, 0x25, 0xf6, 0x10, 0x34, 0x96, 0x6e
-};
-#endif
-#endif
-#endif
-
-/* kExampleDHKeyDER is a DH private key in ASN.1, DER format. */
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-#ifndef OPENSSL_NO_DH
-static const unsigned char kExampleDHKeyDER[] = {
-    0x30, 0x82, 0x01, 0x21, 0x02, 0x01, 0x00, 0x30, 0x81, 0x95, 0x06, 0x09,
-    0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x03, 0x01, 0x30, 0x81, 0x87,
-    0x02, 0x81, 0x81, 0x00, 0xf7, 0x52, 0xc2, 0x68, 0xcc, 0x66, 0xc4, 0x8d,
-    0x03, 0x3f, 0xfa, 0x9c, 0x52, 0xd0, 0xd8, 0x33, 0xf2, 0xe1, 0xc9, 0x9e,
-    0xb7, 0xe7, 0x6e, 0x90, 0x97, 0xeb, 0x92, 0x91, 0x6a, 0x9a, 0x85, 0x63,
-    0x92, 0x79, 0xab, 0xb6, 0x3d, 0x23, 0x58, 0x5a, 0xe8, 0x45, 0x06, 0x81,
-    0x97, 0x77, 0xe1, 0xcc, 0x34, 0x4e, 0xae, 0x36, 0x80, 0xf2, 0xc4, 0x7f,
-    0x8a, 0x52, 0xb8, 0xdb, 0x58, 0xc8, 0x4b, 0x12, 0x4c, 0xf1, 0x4c, 0x53,
-    0xc1, 0x89, 0x39, 0x8d, 0xb6, 0x06, 0xd8, 0xea, 0x7f, 0x2d, 0x36, 0x53,
-    0x96, 0x29, 0xbe, 0xb6, 0x75, 0xfc, 0xe7, 0xf3, 0x36, 0xd6, 0xf4, 0x8f,
-    0x16, 0xa6, 0xc7, 0xec, 0x7b, 0xce, 0x42, 0x8d, 0x48, 0x2e, 0xb7, 0x74,
-    0x00, 0x11, 0x52, 0x61, 0xb4, 0x19, 0x35, 0xec, 0x5c, 0xe4, 0xbe, 0x34,
-    0xc6, 0x59, 0x64, 0x5e, 0x42, 0x61, 0x70, 0x54, 0xf4, 0xe9, 0x6b, 0x53,
-    0x02, 0x01, 0x02, 0x04, 0x81, 0x83, 0x02, 0x81, 0x80, 0x64, 0xc2, 0xe3,
-    0x09, 0x69, 0x37, 0x3c, 0xd2, 0x4a, 0xba, 0xc3, 0x78, 0x6a, 0x9b, 0x8a,
-    0x2a, 0xdb, 0xe7, 0xe6, 0xc0, 0xfa, 0x3a, 0xbe, 0x39, 0x67, 0xc0, 0xa9,
-    0x2a, 0xf0, 0x0a, 0xc1, 0x53, 0x1c, 0xdb, 0xfa, 0x1a, 0x26, 0x98, 0xb0,
-    0x8c, 0xc6, 0x06, 0x4a, 0xa2, 0x48, 0xd3, 0xa4, 0x3b, 0xbd, 0x05, 0x48,
-    0xea, 0x59, 0xdb, 0x18, 0xa4, 0xca, 0x66, 0xd9, 0x5d, 0xb8, 0x95, 0xd1,
-    0xeb, 0x97, 0x3d, 0x66, 0x97, 0x5c, 0x86, 0x8f, 0x7e, 0x90, 0xd3, 0x43,
-    0xd1, 0xa2, 0x0d, 0xcb, 0xe7, 0xeb, 0x90, 0xea, 0x09, 0x40, 0xb1, 0x6f,
-    0xf7, 0x4c, 0xf2, 0x41, 0x83, 0x1d, 0xd0, 0x76, 0xef, 0xaf, 0x55, 0x6f,
-    0x5d, 0xa9, 0xa3, 0x55, 0x81, 0x2a, 0xd1, 0x5d, 0x9d, 0x22, 0x77, 0x97,
-    0x83, 0xde, 0xad, 0xb6, 0x5d, 0x19, 0xc1, 0x53, 0xec, 0xfb, 0xaf, 0x06,
-    0x2e, 0x87, 0x2a, 0x0b, 0x7a
-};
 #endif
 #endif
 
@@ -1106,30 +1071,6 @@ static int test_ml_dsa_seed_only(int idx)
 }
 #endif
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-#ifndef OPENSSL_NO_DH
-static EVP_PKEY *load_example_dh_key(void)
-{
-    return load_example_key("DH", kExampleDHKeyDER,
-        sizeof(kExampleDHKeyDER));
-}
-#endif
-
-#ifndef OPENSSL_NO_ECX
-static EVP_PKEY *load_example_ed25519_key(void)
-{
-    return load_example_key("ED25519", kExampleED25519KeyDER,
-        sizeof(kExampleED25519KeyDER));
-}
-
-static EVP_PKEY *load_example_x25519_key(void)
-{
-    return load_example_key("X25519", kExampleX25519KeyDER,
-        sizeof(kExampleX25519KeyDER));
-}
-#endif
-#endif /* OPENSSL_NO_DEPRECATED_3_0 */
-
 static EVP_PKEY *load_example_hmac_key(void)
 {
     EVP_PKEY *pkey = NULL;
@@ -1250,6 +1191,9 @@ static int test_selection(EVP_PKEY *pkey, int selection)
     int testresult = 0;
     int ret;
     BIO *bio = BIO_new(BIO_s_mem());
+
+    if (!TEST_ptr(bio))
+        goto err;
 
     ret = PEM_write_bio_PUBKEY(bio, pkey);
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
@@ -2739,19 +2683,19 @@ static int test_EVP_SM2(void)
     EVP_MD_CTX *md_ctx_verify = NULL;
     EVP_PKEY_CTX *cctx = NULL;
     EVP_MD *check_md = NULL;
-
+    uint8_t sm2_id[] = {
+        0x01, 0x02, 0x03, 0x04, 0x6c, 0x65, 0x74, 0x74, 0x65, 0x72
+    };
+#ifndef OPENSSL_NO_X963KDF
     uint8_t ciphertext[128];
     size_t ctext_len = sizeof(ciphertext);
-
     uint8_t plaintext[8];
     size_t ptext_len = sizeof(plaintext);
-
-    uint8_t sm2_id[] = { 1, 2, 3, 4, 'l', 'e', 't', 't', 'e', 'r' };
-
     OSSL_PARAM sparams[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     OSSL_PARAM gparams[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     int i;
     char mdname[OSSL_MAX_NAME_SIZE];
+#endif
 
     if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx,
                       "SM2", testpropq)))
@@ -2844,7 +2788,7 @@ static int test_EVP_SM2(void)
         goto done;
 
     /* now check encryption/decryption */
-
+#ifndef OPENSSL_NO_X963KDF
     gparams[0] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_DIGEST,
         mdname, sizeof(mdname));
     for (i = 0; i < 2; i++) {
@@ -2911,7 +2855,7 @@ static int test_EVP_SM2(void)
         if (!TEST_true(memcmp(plaintext, kMsg, sizeof(kMsg)) == 0))
             goto done;
     }
-
+#endif /* OPENSSL_NO_X963KDF */
     ret = 1;
 done:
     EVP_PKEY_CTX_free(pctx);
@@ -3443,33 +3387,11 @@ static int test_set_get_raw_keys(int tst)
         && test_set_get_raw_keys_int(tst, 1, 1);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-static int pkey_custom_check(EVP_PKEY *pkey)
-{
-    return 0xbeef;
-}
-
-static int pkey_custom_pub_check(EVP_PKEY *pkey)
-{
-    return 0xbeef;
-}
-
-static int pkey_custom_param_check(EVP_PKEY *pkey)
-{
-    return 0xbeef;
-}
-
-static EVP_PKEY_METHOD *custom_pmeth;
-#endif
-
 static int test_EVP_PKEY_check(int i)
 {
     int ret = 0;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    EVP_PKEY_CTX *ctx2 = NULL;
-#endif
     const APK_DATA *ak = &keycheckdata[i];
     const unsigned char *input = ak->kder;
     size_t input_len = ak->size;
@@ -3497,31 +3419,10 @@ static int test_EVP_PKEY_check(int i)
     if (!TEST_int_eq(EVP_PKEY_param_check(ctx), expected_param_check))
         goto done;
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    ctx2 = EVP_PKEY_CTX_new_id(0xdefaced, NULL);
-    /* assign the pkey directly, as an internal test */
-    if (!EVP_PKEY_up_ref(pkey))
-        goto done;
-
-    ctx2->pkey = pkey;
-
-    if (!TEST_int_eq(EVP_PKEY_check(ctx2), 0xbeef))
-        goto done;
-
-    if (!TEST_int_eq(EVP_PKEY_public_check(ctx2), 0xbeef))
-        goto done;
-
-    if (!TEST_int_eq(EVP_PKEY_param_check(ctx2), 0xbeef))
-        goto done;
-#endif
-
     ret = 1;
 
 done:
     EVP_PKEY_CTX_free(ctx);
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    EVP_PKEY_CTX_free(ctx2);
-#endif
     EVP_PKEY_free(pkey);
     return ret;
 }
@@ -5736,261 +5637,6 @@ err:
     return res;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-static EVP_PKEY_METHOD *custom_pmeth = NULL;
-static const EVP_PKEY_METHOD *orig_pmeth = NULL;
-
-#define EVP_PKEY_CTRL_MY_COMMAND 9999
-
-static int custom_pmeth_init(EVP_PKEY_CTX *ctx)
-{
-    int (*pinit)(EVP_PKEY_CTX *ctx);
-
-    EVP_PKEY_meth_get_init(orig_pmeth, &pinit);
-    return pinit(ctx);
-}
-
-static void custom_pmeth_cleanup(EVP_PKEY_CTX *ctx)
-{
-    void (*pcleanup)(EVP_PKEY_CTX *ctx);
-
-    EVP_PKEY_meth_get_cleanup(orig_pmeth, &pcleanup);
-    pcleanup(ctx);
-}
-
-static int custom_pmeth_sign(EVP_PKEY_CTX *ctx, unsigned char *out,
-    size_t *outlen, const unsigned char *in,
-    size_t inlen)
-{
-    int (*psign)(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
-        const unsigned char *tbs, size_t tbslen);
-
-    EVP_PKEY_meth_get_sign(orig_pmeth, NULL, &psign);
-    return psign(ctx, out, outlen, in, inlen);
-}
-
-static int custom_pmeth_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
-    size_t *siglen, const unsigned char *tbs,
-    size_t tbslen)
-{
-    int (*pdigestsign)(EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen,
-        const unsigned char *tbs, size_t tbslen);
-
-    EVP_PKEY_meth_get_digestsign(orig_pmeth, &pdigestsign);
-    return pdigestsign(ctx, sig, siglen, tbs, tbslen);
-}
-
-static int custom_pmeth_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
-    size_t *keylen)
-{
-    int (*pderive)(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen);
-
-    EVP_PKEY_meth_get_derive(orig_pmeth, NULL, &pderive);
-    return pderive(ctx, key, keylen);
-}
-
-static int custom_pmeth_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
-{
-    int (*pcopy)(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src);
-
-    EVP_PKEY_meth_get_copy(orig_pmeth, &pcopy);
-    return pcopy(dst, src);
-}
-
-static int ctrl_called;
-
-static int custom_pmeth_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
-{
-    int (*pctrl)(EVP_PKEY_CTX *ctx, int type, int p1, void *p2);
-
-    EVP_PKEY_meth_get_ctrl(orig_pmeth, &pctrl, NULL);
-
-    if (type == EVP_PKEY_CTRL_MY_COMMAND) {
-        ctrl_called = 1;
-        return 1;
-    }
-
-    return pctrl(ctx, type, p1, p2);
-}
-
-static int test_custom_pmeth(int idx)
-{
-    EVP_PKEY_CTX *pctx = NULL;
-    EVP_MD_CTX *ctx = NULL;
-    EVP_PKEY *pkey = NULL;
-    int id, orig_id, orig_flags;
-    int testresult = 0;
-    size_t reslen;
-    unsigned char *res = NULL;
-    unsigned char msg[] = { 'H', 'e', 'l', 'l', 'o' };
-    const EVP_MD *md = EVP_sha256();
-    int doderive = 0;
-
-    ctrl_called = 0;
-
-    /* We call deprecated APIs so this test doesn't support a custom libctx */
-    if (testctx != NULL)
-        return 1;
-
-    switch (idx) {
-    case 0:
-    case 6:
-        id = EVP_PKEY_RSA;
-        pkey = load_example_rsa_key();
-        break;
-    case 1:
-    case 7:
-#ifndef OPENSSL_NO_DSA
-        id = EVP_PKEY_DSA;
-        pkey = load_example_dsa_key();
-        break;
-#else
-        return 1;
-#endif
-    case 2:
-    case 8:
-#ifndef OPENSSL_NO_EC
-        id = EVP_PKEY_EC;
-        pkey = load_example_ec_key();
-        break;
-#else
-        return 1;
-#endif
-    case 3:
-    case 9:
-#ifndef OPENSSL_NO_ECX
-        id = EVP_PKEY_ED25519;
-        md = NULL;
-        pkey = load_example_ed25519_key();
-        break;
-#else
-        return 1;
-#endif
-    case 4:
-    case 10:
-#ifndef OPENSSL_NO_DH
-        id = EVP_PKEY_DH;
-        doderive = 1;
-        pkey = load_example_dh_key();
-        break;
-#else
-        return 1;
-#endif
-    case 5:
-    case 11:
-#ifndef OPENSSL_NO_ECX
-        id = EVP_PKEY_X25519;
-        doderive = 1;
-        pkey = load_example_x25519_key();
-        break;
-#else
-        return 1;
-#endif
-    default:
-        TEST_error("Should not happen");
-        goto err;
-    }
-
-    if (!TEST_ptr(pkey))
-        goto err;
-
-    if (idx < 6) {
-        if (!TEST_true(evp_pkey_is_provided(pkey)))
-            goto err;
-    } else {
-        EVP_PKEY *tmp = pkey;
-
-        /* Convert to a legacy key */
-        pkey = EVP_PKEY_new();
-        if (!TEST_ptr(pkey)) {
-            pkey = tmp;
-            goto err;
-        }
-        if (!TEST_true(evp_pkey_copy_downgraded(&pkey, tmp))) {
-            EVP_PKEY_free(tmp);
-            goto err;
-        }
-        EVP_PKEY_free(tmp);
-        if (!TEST_true(evp_pkey_is_legacy(pkey)))
-            goto err;
-    }
-
-    if (!TEST_ptr(orig_pmeth = EVP_PKEY_meth_find(id))
-        || !TEST_ptr(pkey))
-        goto err;
-
-    EVP_PKEY_meth_get0_info(&orig_id, &orig_flags, orig_pmeth);
-    if (!TEST_int_eq(orig_id, id)
-        || !TEST_ptr(custom_pmeth = EVP_PKEY_meth_new(id, orig_flags)))
-        goto err;
-
-    if (id == EVP_PKEY_ED25519) {
-        EVP_PKEY_meth_set_digestsign(custom_pmeth, custom_pmeth_digestsign);
-    }
-    if (id == EVP_PKEY_DH || id == EVP_PKEY_X25519) {
-        EVP_PKEY_meth_set_derive(custom_pmeth, NULL, custom_pmeth_derive);
-    } else {
-        EVP_PKEY_meth_set_sign(custom_pmeth, NULL, custom_pmeth_sign);
-    }
-    if (id != EVP_PKEY_ED25519 && id != EVP_PKEY_X25519) {
-        EVP_PKEY_meth_set_init(custom_pmeth, custom_pmeth_init);
-        EVP_PKEY_meth_set_cleanup(custom_pmeth, custom_pmeth_cleanup);
-        EVP_PKEY_meth_set_copy(custom_pmeth, custom_pmeth_copy);
-    }
-    EVP_PKEY_meth_set_ctrl(custom_pmeth, custom_pmeth_ctrl, NULL);
-    if (!TEST_true(EVP_PKEY_meth_add0(custom_pmeth)))
-        goto err;
-
-    if (doderive) {
-        pctx = EVP_PKEY_CTX_new(pkey, NULL);
-        if (!TEST_ptr(pctx)
-            || !TEST_int_eq(EVP_PKEY_derive_init(pctx), 1)
-            || !TEST_int_ge(EVP_PKEY_CTX_ctrl(pctx, -1, -1,
-                                EVP_PKEY_CTRL_MY_COMMAND, 0, NULL),
-                1)
-            || !TEST_int_eq(ctrl_called, 1)
-            || !TEST_int_ge(EVP_PKEY_derive_set_peer(pctx, pkey), 1)
-            || !TEST_int_ge(EVP_PKEY_derive(pctx, NULL, &reslen), 1)
-            || !TEST_ptr(res = OPENSSL_malloc(reslen))
-            || !TEST_int_ge(EVP_PKEY_derive(pctx, res, &reslen), 1))
-            goto err;
-    } else {
-        ctx = EVP_MD_CTX_new();
-        reslen = EVP_PKEY_size(pkey);
-        res = OPENSSL_malloc(reslen);
-        if (!TEST_ptr(ctx)
-            || !TEST_ptr(res)
-            || !TEST_true(EVP_DigestSignInit(ctx, &pctx, md, NULL, pkey))
-            || !TEST_int_ge(EVP_PKEY_CTX_ctrl(pctx, -1, -1,
-                                EVP_PKEY_CTRL_MY_COMMAND, 0, NULL),
-                1)
-            || !TEST_int_eq(ctrl_called, 1))
-            goto err;
-
-        if (id == EVP_PKEY_ED25519) {
-            if (!TEST_true(EVP_DigestSign(ctx, res, &reslen, msg, sizeof(msg))))
-                goto err;
-        } else {
-            if (!TEST_true(EVP_DigestUpdate(ctx, msg, sizeof(msg)))
-                || !TEST_true(EVP_DigestSignFinal(ctx, res, &reslen)))
-                goto err;
-        }
-    }
-
-    testresult = 1;
-err:
-    OPENSSL_free(res);
-    EVP_MD_CTX_free(ctx);
-    if (doderive)
-        EVP_PKEY_CTX_free(pctx);
-    EVP_PKEY_free(pkey);
-    EVP_PKEY_meth_remove(custom_pmeth);
-    EVP_PKEY_meth_free(custom_pmeth);
-    custom_pmeth = NULL;
-    return testresult;
-}
-#endif /* OPENSSL_NO_DEPRECATED_3_0 */
-
 #ifndef OPENSSL_NO_ECX
 static int ecxnids[] = {
     NID_X25519,
@@ -6162,6 +5808,52 @@ end:
     fake_rsa_finish(fake_rsa);
     return testresult;
 }
+
+#ifndef OPENSSL_NO_EC
+/*
+ * Test that EVP_PKEY_sign_init_ex2() with a mismatched key/signature algorithm
+ * (e.g. RSA key with ECDSA signature) correctly fails.
+ */
+static int test_EVP_PKEY_sign_init_mismatched_key_alg(void)
+{
+    EVP_PKEY *rsa_key = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY_CTX *pkey_ctx = NULL;
+    EVP_SIGNATURE *ecdsa_sig = NULL;
+    int testresult = 0;
+
+    /* Generate an RSA key */
+    if (!TEST_ptr(pkey_ctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA", NULL))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(pkey_ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_keygen_bits(pkey_ctx, 2048), 0)
+        || !TEST_int_gt(EVP_PKEY_keygen(pkey_ctx, &rsa_key), 0))
+        goto end;
+
+    EVP_PKEY_CTX_free(pkey_ctx);
+    pkey_ctx = NULL;
+
+    /* Fetch ECDSA signature algorithm - incompatible with RSA key */
+    if (!TEST_ptr(ecdsa_sig = EVP_SIGNATURE_fetch(testctx, "ECDSA", NULL)))
+        goto end;
+
+    /* Try to init sign with mismatched key/algorithm - this should fail */
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(testctx, rsa_key, NULL)))
+        goto end;
+
+    /* This should fail with -2 (operation not supported for key type) */
+    if (!TEST_int_eq(EVP_PKEY_sign_init_ex2(ctx, ecdsa_sig, NULL), -2))
+        goto end;
+
+    testresult = 1;
+
+end:
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_CTX_free(pkey_ctx);
+    EVP_SIGNATURE_free(ecdsa_sig);
+    EVP_PKEY_free(rsa_key);
+    return testresult;
+}
+#endif
 
 static int aes_gcm_encrypt(const unsigned char *gcm_key, size_t gcm_key_s,
     const unsigned char *gcm_iv, size_t gcm_ivlen,
@@ -6651,6 +6343,366 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+
+static int sign_hits = 0;
+
+static int do_sign_with_method(EVP_PKEY *pkey)
+{
+    const unsigned char msg[] = "Hello, World!";
+    unsigned char sig[128];
+    unsigned int siglen;
+    EVP_MD_CTX *ctx = NULL;
+    int ret = 0;
+
+    sign_hits = 0;
+    ctx = EVP_MD_CTX_new();
+    if (!TEST_ptr(ctx))
+        return 0;
+    if (!TEST_true(EVP_SignInit(ctx, EVP_sha256())))
+        goto err;
+    if (!TEST_true(EVP_SignUpdate(ctx, msg, sizeof(msg) - 1)))
+        goto err;
+    if (!TEST_true(EVP_SignFinal(ctx, sig, &siglen, pkey)))
+        goto err;
+    /* We expect to see our custom sign function called once */
+    if (!TEST_int_eq(sign_hits, 1))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_MD_CTX_free(ctx);
+    return ret;
+}
+
+static int rsa_ex_idx = -1;
+
+static int (*orig_rsa_priv_enc)(int, const unsigned char *, unsigned char *, RSA *, int);
+
+static int tst_rsa_priv_enc(int flen, const unsigned char *from, unsigned char *to,
+    RSA *rsa, int padding)
+{
+    if (strcmp(RSA_get_ex_data(rsa, rsa_ex_idx), "test") != 0)
+        return 0;
+    sign_hits++;
+    return orig_rsa_priv_enc(flen, from, to, rsa, padding);
+}
+
+/* Test that a low level RSA method still gets used even with a provider */
+static int test_low_level_rsa_method(void)
+{
+    BIGNUM *e = BN_new();
+    RSA *rsa = NULL;
+    const RSA_METHOD *def = RSA_get_default_method();
+    RSA_METHOD *method = RSA_meth_dup(def);
+    EVP_PKEY *pkey = NULL;
+    int testresult = 0;
+
+    if (nullprov != NULL) {
+        testresult = TEST_skip("Test does not support a non-default library context");
+        goto err;
+    }
+
+    if (!TEST_ptr(e) || !TEST_ptr(method))
+        goto err;
+
+    rsa_ex_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+
+    if (!TEST_true(BN_set_word(e, RSA_F4)))
+        goto err;
+
+    rsa = RSA_new();
+    if (!TEST_ptr(rsa))
+        goto err;
+    if (!TEST_true(RSA_set_ex_data(rsa, rsa_ex_idx, (void *)"test")))
+        goto err;
+    if (!TEST_true(RSA_generate_key_ex(rsa, 1024, e, NULL)))
+        goto err;
+
+    orig_rsa_priv_enc = RSA_meth_get_priv_enc(def);
+    if (!TEST_true(RSA_meth_set_priv_enc(method, tst_rsa_priv_enc)))
+        goto err;
+    if (!TEST_true(RSA_set_method(rsa, method)))
+        goto err;
+
+    pkey = EVP_PKEY_new();
+    if (!TEST_ptr(pkey))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_assign_RSA(pkey, rsa), 0))
+        goto err;
+    rsa = NULL;
+
+    if (!do_sign_with_method(pkey))
+        goto err;
+
+    testresult = 1;
+err:
+    BN_free(e);
+    RSA_free(rsa);
+    EVP_PKEY_free(pkey);
+    RSA_meth_free(method);
+    return testresult;
+}
+
+#ifndef OPENSSL_NO_DSA
+static int dsa_ex_idx = -1;
+
+static DSA_SIG *(*orig_dsa_sign)(const unsigned char *, int, DSA *);
+
+static DSA_SIG *tst_dsa_sign(const unsigned char *buf, int len, DSA *dsa)
+{
+    if (strcmp(DSA_get_ex_data(dsa, dsa_ex_idx), "test") != 0)
+        return 0;
+    sign_hits++;
+    return orig_dsa_sign(buf, len, dsa);
+}
+
+/* Test that a low level DSA method still gets used even with a provider */
+static int test_low_level_dsa_method(void)
+{
+    DSA *dsa = NULL;
+    const DSA_METHOD *def = DSA_get_default_method();
+    DSA_METHOD *method = DSA_meth_dup(def);
+    EVP_PKEY *pkey = NULL;
+    int testresult = 0;
+
+    if (nullprov != NULL) {
+        testresult = TEST_skip("Test does not support a non-default library context");
+        goto err;
+    }
+
+    if (!TEST_ptr(method))
+        goto err;
+
+    dsa_ex_idx = DSA_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+
+    dsa = load_dsa_params();
+    if (!TEST_ptr(dsa))
+        goto err;
+    if (!TEST_true(DSA_set_ex_data(dsa, dsa_ex_idx, (void *)"test")))
+        goto err;
+    if (!TEST_true(DSA_generate_key(dsa)))
+        goto err;
+
+    orig_dsa_sign = DSA_meth_get_sign(def);
+    if (!TEST_true(DSA_meth_set_sign(method, tst_dsa_sign)))
+        goto err;
+    if (!TEST_true(DSA_set_method(dsa, method)))
+        goto err;
+
+    pkey = EVP_PKEY_new();
+    if (!TEST_ptr(pkey))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_assign_DSA(pkey, dsa), 0))
+        goto err;
+    dsa = NULL;
+
+    if (!do_sign_with_method(pkey))
+        goto err;
+
+    testresult = 1;
+err:
+    DSA_free(dsa);
+    EVP_PKEY_free(pkey);
+    DSA_meth_free(method);
+    return testresult;
+}
+#endif /* OPENSSL_NO_DSA */
+
+#ifndef OPENSSL_NO_EC
+static int ec_ex_idx = -1;
+
+static int (*orig_ec_sign)(int type, const unsigned char *dgst,
+    int dlen, unsigned char *sig,
+    unsigned int *siglen,
+    const BIGNUM *kinv, const BIGNUM *r,
+    EC_KEY *eckey);
+static int (*orig_ec_sign_setup)(EC_KEY *eckey, BN_CTX *ctx_in,
+    BIGNUM **kinvp, BIGNUM **rp);
+static ECDSA_SIG *(*orig_ec_sign_sig)(const unsigned char *dgst,
+    int dgst_len, const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey);
+static int tst_ec_sign(int type, const unsigned char *dgst,
+    int dlen, unsigned char *sig,
+    unsigned int *siglen,
+    const BIGNUM *kinv, const BIGNUM *r,
+    EC_KEY *eckey)
+{
+    if (strcmp(EC_KEY_get_ex_data(eckey, ec_ex_idx), "test") != 0)
+        return 0;
+    sign_hits++;
+    return orig_ec_sign(type, dgst, dlen, sig, siglen, kinv, r, eckey);
+}
+
+/* Test that a low level EC_KEY method still gets used even with a provider */
+static int test_low_level_ec_method(void)
+{
+    EC_KEY *ec = NULL;
+    const EC_KEY_METHOD *def = EC_KEY_get_default_method();
+    EC_KEY_METHOD *method = EC_KEY_METHOD_new(def);
+    EVP_PKEY *pkey = NULL;
+    int testresult = 0;
+
+    if (nullprov != NULL) {
+        testresult = TEST_skip("Test does not support a non-default library context");
+        goto err;
+    }
+
+    if (!TEST_ptr(method))
+        goto err;
+
+    ec_ex_idx = EC_KEY_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+
+    if (!TEST_ptr(ec = EC_KEY_new_by_curve_name_ex(NULL, NULL, NID_X9_62_prime256v1)))
+        goto err;
+    if (!TEST_true(EC_KEY_set_ex_data(ec, ec_ex_idx, (void *)"test")))
+        goto err;
+    if (!TEST_true(EC_KEY_generate_key(ec)))
+        goto err;
+
+    EC_KEY_METHOD_get_sign(def, &orig_ec_sign, &orig_ec_sign_setup, &orig_ec_sign_sig);
+    EC_KEY_METHOD_set_sign(method, tst_ec_sign, orig_ec_sign_setup, orig_ec_sign_sig);
+    if (!TEST_true(EC_KEY_set_method(ec, method)))
+        goto err;
+
+    pkey = EVP_PKEY_new();
+    if (!TEST_ptr(pkey))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_assign_EC_KEY(pkey, ec), 0))
+        goto err;
+    ec = NULL;
+
+    if (!do_sign_with_method(pkey))
+        goto err;
+
+    testresult = 1;
+err:
+    EC_KEY_free(ec);
+    EVP_PKEY_free(pkey);
+    EC_KEY_METHOD_free(method);
+    return testresult;
+}
+#endif /* OPENSSL_NO_EC */
+
+#ifndef OPENSSL_NO_DH
+static int dh_ex_idx = -1;
+
+static int compute_key_hits = 0;
+
+static int (*orig_dh_compute_key)(unsigned char *key, const BIGNUM *pub_key,
+    DH *dh);
+static int tst_dh_compute_key(unsigned char *key, const BIGNUM *pub_key,
+    DH *dh)
+{
+    if (strcmp(DH_get_ex_data(dh, dh_ex_idx), "test") != 0)
+        return 0;
+    compute_key_hits++;
+    return orig_dh_compute_key(key, pub_key, dh);
+}
+
+/* Test that a low level DH method still gets used even with a provider */
+static int test_low_level_dh_method(void)
+{
+    DH *dh = NULL;
+    const DH *cdh = NULL;
+    const DH_METHOD *def = DH_get_default_method();
+    DH_METHOD *method = DH_meth_dup(def);
+    EVP_PKEY *pkey = NULL, *pkeyb = NULL;
+    int testresult = 0;
+    EVP_PKEY_CTX *ctx = NULL;
+    BIGNUM *p = NULL, *g = NULL;
+    unsigned char *buf = NULL;
+    size_t len;
+
+    if (nullprov != NULL) {
+        testresult = TEST_skip("Test does not support a non-default library context");
+        goto err;
+    }
+
+    if (!TEST_ptr(method))
+        goto err;
+
+    dh_ex_idx = DH_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+
+    pkey = get_dh512(NULL);
+    if (!TEST_ptr(pkey))
+        goto err;
+    cdh = EVP_PKEY_get0_DH(pkey);
+    if (!TEST_ptr(cdh))
+        goto err;
+    dh = DH_new();
+    if (!TEST_ptr(dh))
+        goto err;
+    if (!TEST_true(DH_set_ex_data(dh, dh_ex_idx, (void *)"test")))
+        goto err;
+
+    orig_dh_compute_key = DH_meth_get_compute_key(def);
+    if (!TEST_true(DH_meth_set_compute_key(method, tst_dh_compute_key)))
+        goto err;
+    if (!TEST_true(DH_set_method(dh, method)))
+        goto err;
+
+    p = BN_dup(DH_get0_p(cdh));
+    g = BN_dup(DH_get0_g(cdh));
+    if (!TEST_ptr(p) || !TEST_ptr(g))
+        goto err;
+    if (!TEST_true(DH_set0_pqg(dh, p, NULL, g)))
+        goto err;
+    p = g = NULL;
+
+    if (!TEST_true(DH_generate_key(dh)))
+        goto err;
+
+    ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
+    if (!TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_keygen(ctx, &pkeyb), 0))
+        goto err;
+    EVP_PKEY_free(pkey);
+    pkey = NULL;
+
+    pkey = EVP_PKEY_new();
+    if (!TEST_ptr(pkey))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_assign_DH(pkey, dh), 0))
+        goto err;
+    dh = NULL;
+
+    compute_key_hits = 0;
+    EVP_PKEY_CTX_free(ctx);
+    ctx = EVP_PKEY_CTX_new(pkey, NULL);
+    if (!TEST_ptr(ctx))
+        return 0;
+    if (!TEST_int_gt(EVP_PKEY_derive_init(ctx), 0))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_derive_set_peer(ctx, pkeyb), 0))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_derive(ctx, NULL, &len), 0))
+        goto err;
+    buf = OPENSSL_malloc(len);
+    if (!TEST_ptr(buf))
+        goto err;
+    if (!TEST_int_gt(EVP_PKEY_derive(ctx, buf, &len), 0))
+        goto err;
+
+    /* We expect to see our custom compute key function called once */
+    if (!TEST_int_eq(compute_key_hits, 1))
+        goto err;
+
+    testresult = 1;
+err:
+    BN_free(p);
+    BN_free(g);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_free(pkeyb);
+    DH_meth_free(method);
+    DH_free(dh);
+    OPENSSL_free(buf);
+    return testresult;
+}
+#endif /* OPENSSL_NO_DH */
+#endif /* OPENSSL_NO_DEPRECATED_3_0 */
+
 int setup_tests(void)
 {
     char *config_file = NULL;
@@ -6711,6 +6763,9 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_ALL_TESTS(test_EVP_PKEY_sign_with_app_method, 2);
 #endif
+#ifndef OPENSSL_NO_EC
+    ADD_TEST(test_EVP_PKEY_sign_init_mismatched_key_alg);
+#endif
     ADD_ALL_TESTS(test_EVP_Enveloped, 2);
     ADD_ALL_TESTS(test_d2i_AutoPrivateKey, OSSL_NELEM(keydata));
     ADD_TEST(test_privatekey_to_pkcs8);
@@ -6727,16 +6782,6 @@ int setup_tests(void)
     ADD_TEST(test_EVP_SM2_verify);
 #endif
     ADD_ALL_TESTS(test_set_get_raw_keys, OSSL_NELEM(keys));
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    custom_pmeth = EVP_PKEY_meth_new(0xdefaced, 0);
-    if (!TEST_ptr(custom_pmeth))
-        return 0;
-    EVP_PKEY_meth_set_check(custom_pmeth, pkey_custom_check);
-    EVP_PKEY_meth_set_public_check(custom_pmeth, pkey_custom_pub_check);
-    EVP_PKEY_meth_set_param_check(custom_pmeth, pkey_custom_param_check);
-    if (!TEST_int_eq(EVP_PKEY_meth_add0(custom_pmeth), 1))
-        return 0;
-#endif
     ADD_ALL_TESTS(test_EVP_PKEY_check, OSSL_NELEM(keycheckdata));
 #ifndef OPENSSL_NO_CMAC
     ADD_TEST(test_CMAC_keygen);
@@ -6809,10 +6854,6 @@ int setup_tests(void)
     if (OSSL_NELEM(keylen_change_ciphers) - 1 > 0)
         ADD_ALL_TESTS(test_keylen_change, OSSL_NELEM(keylen_change_ciphers) - 1);
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    ADD_ALL_TESTS(test_custom_pmeth, 12);
-#endif
-
 #ifndef OPENSSL_NO_ECX
     ADD_ALL_TESTS(test_ecx_short_keys, OSSL_NELEM(ecxnids));
     ADD_ALL_TESTS(test_ecx_not_private_key, OSSL_NELEM(keys));
@@ -6836,6 +6877,19 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_ML_DSA
     ADD_ALL_TESTS(test_ml_dsa_seed_only, 2);
 #endif
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    ADD_TEST(test_low_level_rsa_method);
+#ifndef OPENSSL_NO_DSA
+    ADD_TEST(test_low_level_dsa_method);
+#endif
+#ifndef OPENSSL_NO_EC
+    ADD_TEST(test_low_level_ec_method);
+#endif
+#ifndef OPENSSL_NO_DH
+    ADD_TEST(test_low_level_dh_method);
+#endif
+#endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
     return 1;
 }

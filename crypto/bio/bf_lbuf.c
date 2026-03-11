@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -187,14 +187,34 @@ static int linebuffer_write(BIO *b, const char *in, int inl)
     } while (foundnl && inl > 0);
     /*
      * We've written as much as we can.  The rest of the input buffer, if
-     * any, is text that doesn't and with a NL and therefore needs to be
-     * saved for the next trip.
+     * any, is text that doesn't end with a NL and therefore we need to try
+     * free up some space in our obuf so we can make forward progress.
      */
-    if (inl > 0) {
-        memcpy(&(ctx->obuf[ctx->obuf_len]), in, inl);
-        ctx->obuf_len += inl;
-        num += inl;
+    while (inl > 0) {
+        size_t avail = (size_t)ctx->obuf_size - (size_t)ctx->obuf_len;
+        size_t to_copy;
+
+        if (avail == 0) {
+            /* Flush buffered data to make room */
+            i = BIO_write(b->next_bio, ctx->obuf, ctx->obuf_len);
+            if (i <= 0) {
+                BIO_copy_next_retry(b);
+                return num > 0 ? num : i;
+            }
+            if (i < ctx->obuf_len)
+                memmove(ctx->obuf, ctx->obuf + i, ctx->obuf_len - i);
+            ctx->obuf_len -= i;
+            continue;
+        }
+
+        to_copy = inl > (int)avail ? avail : (size_t)inl;
+        memcpy(&(ctx->obuf[ctx->obuf_len]), in, to_copy);
+        ctx->obuf_len += (int)to_copy;
+        in += to_copy;
+        inl -= (int)to_copy;
+        num += (int)to_copy;
     }
+
     return num;
 }
 
@@ -287,6 +307,15 @@ static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         if (BIO_set_write_buffer_size(dbio, ctx->obuf_size) <= 0)
             ret = 0;
         break;
+    case BIO_CTRL_EOF:
+        /*
+         * If there is no next BIO, BIO_read() returns 0, which means EOF.
+         * BIO_eof() should return 1 in this case.
+         */
+        if (b->next_bio == NULL)
+            return 1;
+        ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
+        break;
     default:
         if (b->next_bio == NULL)
             return 0;
@@ -305,9 +334,14 @@ static long linebuffer_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 
 static int linebuffer_gets(BIO *b, char *buf, int size)
 {
+    int ret = 0;
+
     if (b->next_bio == NULL)
         return 0;
-    return BIO_gets(b->next_bio, buf, size);
+    ret = BIO_gets(b->next_bio, buf, size);
+    BIO_clear_retry_flags(b);
+    BIO_copy_next_retry(b);
+    return ret;
 }
 
 static int linebuffer_puts(BIO *b, const char *str)

@@ -8,13 +8,13 @@ X509_check_host, X509_check_email, X509_check_ip, X509_check_ip_asc - X.509 cert
 
  #include <openssl/x509v3.h>
 
- int X509_check_host(X509 *, const char *name, size_t namelen,
+ int X509_check_host(const X509 *, const char *name, size_t namelen,
                      unsigned int flags, char **peername);
- int X509_check_email(X509 *, const char *address, size_t addresslen,
+ int X509_check_email(const X509 *, const char *address, size_t addresslen,
                       unsigned int flags);
- int X509_check_ip(X509 *, const unsigned char *address, size_t addresslen,
+ int X509_check_ip(const X509 *, const unsigned char *address, size_t addresslen,
                    unsigned int flags);
- int X509_check_ip_asc(X509 *, const char *address, unsigned int flags);
+ int X509_check_ip_asc(const X509 *, const char *address, unsigned int flags);
 
 =head1 DESCRIPTION
 
@@ -154,7 +154,7 @@ These functions were added in OpenSSL 1.0.2.
 
 =head1 COPYRIGHT
 
-Copyright 2012-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2012-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

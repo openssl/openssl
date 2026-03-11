@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -529,13 +529,18 @@ int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int writing, int ret,
                 ERR_new();
                 ERR_set_debug(file, line, 0);
                 ossl_statem_fatal(s, al, SSL_R_RECORD_LAYER_FAILURE, NULL);
+            } else {
+                /*
+                 * Some failure but there is no alert code. We don't log an
+                 * error for this. The record layer should have logged an error
+                 * already or, if not, its due to some sys call error which will be
+                 * reported via SSL_ERROR_SYSCALL and errno. We do still set the
+                 * state machine into an error state via ossl_statem_send_fatal().
+                 * This doesn't actually send an alert because we are using
+                 * SSL_AD_NO_ALERT.
+                 */
+                ossl_statem_send_fatal(s, SSL_AD_NO_ALERT);
             }
-            /*
-             * else some failure but there is no alert code. We don't log an
-             * error for this. The record layer should have logged an error
-             * already or, if not, its due to some sys call error which will be
-             * reported via SSL_ERROR_SYSCALL and errno.
-             */
         }
         /*
          * The record layer distinguishes the cases of EOF, non-fatal
@@ -1120,17 +1125,6 @@ start:
             return -1;
         }
     }
-}
-
-/*
- * Returns true if the current rrec was sent in SSLv2 backwards compatible
- * format and false otherwise.
- */
-int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl)
-{
-    if (SSL_CONNECTION_IS_DTLS(rl->s))
-        return 0;
-    return rl->tlsrecs[0].version == SSL2_VERSION;
 }
 
 static OSSL_FUNC_rlayer_msg_callback_fn rlayer_msg_callback_wrapper;

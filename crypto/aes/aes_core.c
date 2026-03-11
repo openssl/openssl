@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -190,7 +190,7 @@ static void SubWord(u32 *w)
     a2 = a3;
     a2 ^= (a3 & 0x0C0C0C0Cu) >> 2;
     a4 = a3 & a2;
-    a4 ^= (a4 & 0x0A0A0A0A0Au) >> 1;
+    a4 ^= (a4 & 0x0A0A0A0Au) >> 1;
     a4 ^= (((a3 << 1) & a2) ^ ((a2 << 1) & a3)) & 0x0A0A0A0Au;
     a5 = a4 & 0x08080808u;
     a5 |= a5 >> 1;
@@ -628,7 +628,7 @@ static void KeyExpansion(const unsigned char *key, u64 *w,
 /**
  * Expand the cipher key into the encryption key schedule.
  */
-int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
+int AES_set_encrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
     u64 *rk;
@@ -654,7 +654,7 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 /**
  * Expand the cipher key into the decryption key schedule.
  */
-int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
+int AES_set_decrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
     return AES_set_encrypt_key(userKey, bits, key);
@@ -3042,7 +3042,7 @@ static const u32 rcon[] = {
 /**
  * Expand the cipher key into the encryption key schedule.
  */
-int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
+int AES_set_encrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
 
@@ -3125,7 +3125,7 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 /**
  * Expand the cipher key into the decryption key schedule.
  */
-int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
+int AES_set_decrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
 
@@ -3482,7 +3482,7 @@ static const u32 rcon[] = {
 /**
  * Expand the cipher key into the encryption key schedule.
  */
-int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
+int AES_set_encrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
     u32 *rk;
@@ -3564,7 +3564,7 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 /**
  * Expand the cipher key into the decryption key schedule.
  */
-int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
+int AES_set_decrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -248,12 +248,14 @@
 #define PROV_NAMES_SHAKE_128 "SHAKE-128:SHAKE128:2.16.840.1.101.3.4.2.11"
 #define PROV_NAMES_SHAKE_256 "SHAKE-256:SHAKE256:2.16.840.1.101.3.4.2.12"
 
-/*
- * KECCAK-KMAC-128 and KECCAK-KMAC-256 as hashes are mostly useful for
- * KMAC128 and KMAC256.
- */
-#define PROV_NAMES_KECCAK_KMAC_128 "KECCAK-KMAC-128:KECCAK-KMAC128"
-#define PROV_NAMES_KECCAK_KMAC_256 "KECCAK-KMAC-256:KECCAK-KMAC256"
+#define PROV_NAMES_CSHAKE_128 "CSHAKE-128:CSHAKE128"
+#define PROV_NAMES_CSHAKE_256 "CSHAKE-256:CSHAKE256"
+
+/* Internal algorithms used by CSHAKE variants */
+#define PROV_NAMES_CSHAKE_KECCAK_128 "CSHAKE-KECCAK-128:KECCAK-KMAC-128:KECCAK-KMAC128"
+#define PROV_NAMES_CSHAKE_KECCAK_256 "CSHAKE-KECCAK-256:KECCAK-KMAC-256:KECCAK-KMAC256"
+#define PROV_NAMES_KECCAK_KMAC_128 PROV_NAMES_CSHAKE_KECCAK_128
+#define PROV_NAMES_KECCAK_KMAC_256 PROV_NAMES_CSHAKE_KECCAK_256
 /*
  * https://blake2.net/ doesn't specify size variants, but mentions that
  * Bouncy Castle uses the names BLAKE2b-160, BLAKE2b-256, BLAKE2b-384, and
@@ -271,6 +273,12 @@
 #define PROV_NAMES_MDC2 "MDC2:2.5.8.3.101"
 #define PROV_NAMES_WHIRLPOOL "WHIRLPOOL:1.0.10118.3.0.55"
 #define PROV_NAMES_RIPEMD_160 "RIPEMD-160:RIPEMD160:RIPEMD:RMD160:1.3.36.3.2.1"
+/*
+ * Name taken from
+ * https://csrc.nist.gov/csrc/media/Projects/post-quantum-cryptography/documents/faq/fips204-sec6-03192025.pdf
+ * See ExternalMu-ML-DSA.Prehash
+ */
+#define PROV_NAMES_ML_DSA_MU "ML-DSA-MU"
 
 /*-
  * KDFs / PRFs
@@ -290,6 +298,7 @@
 #define PROV_NAMES_PBKDF2 "PBKDF2:1.2.840.113549.1.5.12"
 #define PROV_NAMES_PVKKDF "PVKKDF"
 #define PROV_NAMES_SNMPKDF "SNMPKDF"
+#define PROV_NAMES_SRTPKDF "SRTPKDF"
 #define PROV_NAMES_SSHKDF "SSHKDF"
 #define PROV_NAMES_X963KDF "X963KDF:X942KDF-CONCAT"
 #define PROV_NAMES_X942KDF_ASN1 "X942KDF-ASN1:X942KDF"
@@ -405,7 +414,9 @@
 #define PROV_DESCS_RSA_PSS "OpenSSL RSA-PSS implementation"
 #define PROV_NAMES_SM2 "SM2:1.2.156.10197.1.301"
 #define PROV_DESCS_SM2 "OpenSSL SM2 implementation"
-#define PROV_NAMES_LMS "LMS"
+#define PROV_NAMES_curveSM2 "curveSM2"
+#define PROV_DESCS_curveSM2 "OpenSSL curveSM2 implementation"
+#define PROV_NAMES_LMS "LMS:id-alg-hss-lms-hashsig:1.2.840.113549.1.9.16.3.17"
 #define PROV_DESCS_LMS "OpenSSL LMS implementation"
 #define PROV_NAMES_ML_DSA_44 "ML-DSA-44:MLDSA44:2.16.840.1.101.3.4.3.17:id-ml-dsa-44"
 #define PROV_DESCS_ML_DSA_44 "OpenSSL ML-DSA-44 implementation"
@@ -427,6 +438,8 @@
 #define PROV_DESCS_SecP256r1MLKEM768 "P-256+ML-KEM-768 TLS hybrid implementation"
 #define PROV_NAMES_SecP384r1MLKEM1024 "SecP384r1MLKEM1024"
 #define PROV_DESCS_SecP384r1MLKEM1024 "P-384+ML-KEM-1024 TLS hybrid implementation"
+#define PROV_NAMES_curveSM2MLKEM768 "curveSM2MLKEM768"
+#define PROV_DESCS_curveSM2MLKEM768 "curveSM2+ML-KEM-768 TLS hybrid implementation"
 #define PROV_NAMES_SLH_DSA_SHA2_128S "SLH-DSA-SHA2-128s:id-slh-dsa-sha2-128s:2.16.840.1.101.3.4.3.20"
 #define PROV_NAMES_SLH_DSA_SHA2_128F "SLH-DSA-SHA2-128f:id-slh-dsa-sha2-128f:2.16.840.1.101.3.4.3.21"
 #define PROV_NAMES_SLH_DSA_SHA2_192S "SLH-DSA-SHA2-192s:id-slh-dsa-sha2-192s:2.16.840.1.101.3.4.3.22"

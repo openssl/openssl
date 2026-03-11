@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -184,12 +184,12 @@ int rsautl_main(int argc, char **argv)
         goto end;
 
     if (need_priv && (key_type != KEY_PRIVKEY)) {
-        BIO_printf(bio_err, "A private key is needed for this operation\n");
+        BIO_puts(bio_err, "A private key is needed for this operation\n");
         goto end;
     }
 
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
-        BIO_printf(bio_err, "Error getting password\n");
+        BIO_puts(bio_err, "Error getting password\n");
         goto end;
     }
 
@@ -230,7 +230,7 @@ int rsautl_main(int argc, char **argv)
     /* Read the input data */
     rv = BIO_read(in, rsa_in, keysize * 2);
     if (rv < 0) {
-        BIO_printf(bio_err, "Error reading input Data\n");
+        BIO_puts(bio_err, "Error reading input Data\n");
         goto end;
     }
     rsa_inlen = rv;
@@ -274,7 +274,7 @@ int rsautl_main(int argc, char **argv)
     }
 
     if (!rv) {
-        BIO_printf(bio_err, "RSA operation error\n");
+        BIO_puts(bio_err, "RSA operation error\n");
         ERR_print_errors(bio_err);
         goto end;
     }

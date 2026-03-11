@@ -69,9 +69,13 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item SHAKE, see L<EVP_MD-SHAKE(7)>
 
-=item KECCAK-KMAC, see L<EVP_MD-KECCAK-KMAC(7)>
+=item CSHAKE, see L<EVP_MD-CSHAKE(7)>
 
-KECCAK-KMAC is only used internally as a sub algorithm of KMAC.
+=item CSHAKE-KECCAK, see L<EVP_MD-CSHAKE-KECCAK(7)>
+
+It is used internally as a sub algorithm of CSHAKE.
+
+=item ML-DSA-MU, see L<EVP_MD-ML-DSA-MU(7)>
 
 =back
 
@@ -118,6 +122,8 @@ KECCAK-KMAC is only used internally as a sub algorithm of KMAC.
 =item PBKDF2, see L<EVP_KDF-PBKDF2(7)>
 
 =item SNMPKDF, see L<EVP_KDF-SNMPKDF(7)>
+
+=item SRTPKDF, see L<EVP_KDF-SRTPKDF(7)>
 
 =item SSHKDF, see L<EVP_KDF-SSHKDF(7)>
 
@@ -321,10 +327,11 @@ Uses HMAC SHA256 on the module file to validate that the module has not been
 modified. The integrity value is compared to a value written to a configuration
 file during installation.
 
-=item "KAT_Integrity" (B<OSSL_SELF_TEST_TYPE_KAT_INTEGRITY>)
+=item "KAT_Mac" (B<OSSL_SELF_TEST_TYPE_KAT_MAC>)
 
 Used during the Module Integrity test to perform a known answer test on
-HMAC SHA256 prior to using it.
+HMAC SHA256 prior to using it. In pre-4.0 versions
+B<OSSL_SELF_TEST_TYPE_KAT_INTEGRITY> ("KAT_Integrity") was used for this.
 
 =item "KAT_Cipher" (B<OSSL_SELF_TEST_TYPE_KAT_CIPHER>)
 
@@ -487,6 +494,8 @@ Key agreement tests used with the "KAT_KA" type.
 
 =item "SNMPKDF" (B<OSSL_SELF_TEST_DESC_KDF_SNMPKDF>)
 
+=item "SRTPKDF" (B<OSSL_SELF_TEST_DESC_KDF_SRTPKDF>)
+
 =item "SSHKDF" (B<OSSL_SELF_TEST_DESC_KDF_SSHKDF>)
 
 =item "TLS12_PRF" (B<OSSL_SELF_TEST_DESC_KDF_TLS12_PRF>)
@@ -606,11 +615,13 @@ L<https://www.openssl.org/source/>
 
 The HKDF-SHA256, HKDF-SHA384 and HKDF-SHA512 algorithms were added in OpenSSL 3.6.
 
+The CSHAKE-128 and CSHAKE-256 algorithms were added in OpenSSL 4.0.
+
 All other functionality was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -41,9 +41,6 @@ IMPLEMENT_tls_meth_func(TLS1_VERSION, SSL_METHOD_NO_SUITEB, SSL_OP_NO_TLSv1,
     tlsv1_method,
     ossl_statem_accept, ossl_statem_connect, TLSv1_enc_data)
 #endif
-#ifndef OPENSSL_NO_SSL3_METHOD
-IMPLEMENT_ssl3_meth_func(sslv3_method, ossl_statem_accept, ossl_statem_connect)
-#endif
 /*-
  * TLS/SSLv3 server methods
  */
@@ -73,10 +70,6 @@ IMPLEMENT_tls_meth_func(TLS1_VERSION, SSL_METHOD_NO_SUITEB, SSL_OP_NO_TLSv1,
     ossl_statem_accept,
     ssl_undefined_function, TLSv1_enc_data)
 #endif
-#ifndef OPENSSL_NO_SSL3_METHOD
-IMPLEMENT_ssl3_meth_func(sslv3_server_method,
-    ossl_statem_accept, ssl_undefined_function)
-#endif
 /*-
  * TLS/SSLv3 client methods
  */
@@ -105,10 +98,6 @@ IMPLEMENT_tls_meth_func(TLS1_VERSION, SSL_METHOD_NO_SUITEB, SSL_OP_NO_TLSv1,
     tlsv1_client_method,
     ssl_undefined_function,
     ossl_statem_connect, TLSv1_enc_data)
-#endif
-#ifndef OPENSSL_NO_SSL3_METHOD
-IMPLEMENT_ssl3_meth_func(sslv3_client_method,
-    ssl_undefined_function, ossl_statem_connect)
 #endif
 /*-
  * DTLS methods
@@ -173,107 +162,3 @@ IMPLEMENT_dtls1_meth_func(DTLS_ANY_VERSION, 0, 0,
     DTLS_client_method,
     ssl_undefined_function,
     ossl_statem_connect, DTLSv1_2_enc_data)
-#ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#ifndef OPENSSL_NO_TLS1_2_METHOD
-const SSL_METHOD *TLSv1_2_method(void)
-{
-    return tlsv1_2_method();
-}
-
-const SSL_METHOD *TLSv1_2_server_method(void)
-{
-    return tlsv1_2_server_method();
-}
-
-const SSL_METHOD *TLSv1_2_client_method(void)
-{
-    return tlsv1_2_client_method();
-}
-#endif
-
-#ifndef OPENSSL_NO_TLS1_1_METHOD
-const SSL_METHOD *TLSv1_1_method(void)
-{
-    return tlsv1_1_method();
-}
-
-const SSL_METHOD *TLSv1_1_server_method(void)
-{
-    return tlsv1_1_server_method();
-}
-
-const SSL_METHOD *TLSv1_1_client_method(void)
-{
-    return tlsv1_1_client_method();
-}
-#endif
-
-#ifndef OPENSSL_NO_TLS1_METHOD
-const SSL_METHOD *TLSv1_method(void)
-{
-    return tlsv1_method();
-}
-
-const SSL_METHOD *TLSv1_server_method(void)
-{
-    return tlsv1_server_method();
-}
-
-const SSL_METHOD *TLSv1_client_method(void)
-{
-    return tlsv1_client_method();
-}
-#endif
-
-#ifndef OPENSSL_NO_SSL3_METHOD
-const SSL_METHOD *SSLv3_method(void)
-{
-    return sslv3_method();
-}
-
-const SSL_METHOD *SSLv3_server_method(void)
-{
-    return sslv3_server_method();
-}
-
-const SSL_METHOD *SSLv3_client_method(void)
-{
-    return sslv3_client_method();
-}
-#endif
-
-#ifndef OPENSSL_NO_DTLS1_2_METHOD
-const SSL_METHOD *DTLSv1_2_method(void)
-{
-    return dtlsv1_2_method();
-}
-
-const SSL_METHOD *DTLSv1_2_server_method(void)
-{
-    return dtlsv1_2_server_method();
-}
-
-const SSL_METHOD *DTLSv1_2_client_method(void)
-{
-    return dtlsv1_2_client_method();
-}
-#endif
-
-#ifndef OPENSSL_NO_DTLS1_METHOD
-const SSL_METHOD *DTLSv1_method(void)
-{
-    return dtlsv1_method();
-}
-
-const SSL_METHOD *DTLSv1_server_method(void)
-{
-    return dtlsv1_server_method();
-}
-
-const SSL_METHOD *DTLSv1_client_method(void)
-{
-    return dtlsv1_client_method();
-}
-#endif
-
-#endif

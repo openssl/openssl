@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -4736,9 +4736,10 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
     int ret;
     QCTX ctx;
     SSL *conn_ssl = NULL;
+    SSL *conn_ssl_tmp = NULL;
     SSL_CONNECTION *conn = NULL;
     QUIC_CHANNEL *new_ch = NULL;
-    QUIC_CONNECTION *qc;
+    QUIC_CONNECTION *qc = NULL;
     int no_block = ((flags & SSL_ACCEPT_CONNECTION_NO_BLOCK) != 0);
 
     if (!expect_quic_listener(ssl, &ctx))
@@ -4785,22 +4786,46 @@ SSL *ossl_quic_accept_connection(SSL *ssl, uint64_t flags)
      * created channel, so once we pop the new channel from the port above
      * we just need to extract it
      */
-    if (new_ch == NULL
-        || (conn_ssl = ossl_quic_channel_get0_tls(new_ch)) == NULL
-        || (conn = SSL_CONNECTION_FROM_SSL(conn_ssl)) == NULL
-        || (conn_ssl = SSL_CONNECTION_GET_USER_SSL(conn)) == NULL)
+    if (new_ch == NULL)
         goto out;
-    qc = (QUIC_CONNECTION *)conn_ssl;
-    qc->listener = ctx.ql;
-    qc->pending = 0;
-    if (!SSL_up_ref(&ctx.ql->obj.ssl)) {
-        SSL_free(conn_ssl);
-        SSL_free(ossl_quic_channel_get0_tls(new_ch));
-        conn_ssl = NULL;
+
+    /*
+     * All objects below must exist, because new_ch != NULL. The objects are
+     * bound to new_ch. If channel constructor fails to create any item here
+     * it just fails to create channel.
+     */
+    if (!ossl_assert((conn_ssl_tmp = ossl_quic_channel_get0_tls(new_ch)) != NULL)
+        || !ossl_assert((conn = SSL_CONNECTION_FROM_SSL(conn_ssl_tmp)) != NULL)
+        || !ossl_assert((conn_ssl_tmp = SSL_CONNECTION_GET_USER_SSL(conn)) != NULL))
+        goto out;
+
+    qc = (QUIC_CONNECTION *)conn_ssl_tmp;
+    if (SSL_up_ref(&ctx.ql->obj.ssl)) {
+        qc->listener = ctx.ql;
+        conn_ssl = conn_ssl_tmp;
+        conn_ssl_tmp = NULL;
+        qc->pending = 0;
     }
 
 out:
+
     qctx_unlock(&ctx);
+    /*
+     * You might expect ossl_quic_channel_free() to be called here. Be
+     * assured it happens, The process goes as follows:
+     *    - The SSL_free() here is being handled by ossl_quic_free().
+     *    - The very last step of ossl_quic_free() is call to qc_cleanup()
+     *      where channel gets freed.
+     * NOTE: We defer this SSL_free until after the call to qctx_unlock above
+     * to avoid the deadlock that would occur when ossl_quic_free attempts to
+     * re-acquire this mutex.  We also do the gymnastics with conn_ssl and
+     * conn_ssl_tmp above so that we only actually do the free on the SSL
+     * object if the up-ref above fails, in such a way that we don't unbalance
+     * the listener refcount (i.e. if the up-ref fails above, we don't set the
+     * listener pointer so that we don't then drop the ref-count erroneously
+     * during the free operation.
+     */
+    SSL_free(conn_ssl_tmp);
     return conn_ssl;
 }
 
@@ -5222,6 +5247,8 @@ const SSL_CIPHER *ossl_quic_get_cipher_by_char(const unsigned char *p)
 {
     const SSL_CIPHER *ciph = ssl3_get_cipher_by_char(p);
 
+    if (ciph == NULL)
+        return NULL;
     if ((ciph->algorithm2 & SSL_QUIC) == 0)
         return NULL;
 

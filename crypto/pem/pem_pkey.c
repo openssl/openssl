@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -174,7 +174,7 @@ static EVP_PKEY *pem_read_bio_key_legacy(BIO *bp, EVP_PKEY **x,
         PKCS8_PRIV_KEY_INFO_free(p8inf);
     } else if ((slen = ossl_pem_check_suffix(nm, "PRIVATE KEY")) > 0) {
         const EVP_PKEY_ASN1_METHOD *ameth;
-        ameth = EVP_PKEY_asn1_find_str(NULL, nm, slen);
+        ameth = evp_pkey_asn1_find_str(nm, slen);
         if (ameth == NULL || ameth->old_priv_decode == NULL)
             goto p8err;
         ret = ossl_d2i_PrivateKey_legacy(ameth->pkey_id, x, &p, len, libctx,

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -46,7 +46,6 @@ int openssl_get_fork_id(void);
 
 char *ossl_safe_getenv(const char *name);
 
-extern CRYPTO_RWLOCK *memdbg_lock;
 int openssl_strerror_r(int errnum, char *buf, size_t buflen);
 #if !defined(OPENSSL_NO_STDIO)
 FILE *openssl_fopen(const char *filename, const char *mode);
@@ -118,11 +117,12 @@ typedef struct ossl_ex_data_global_st {
 #define OSSL_LIB_CTX_DECODER_CACHE_INDEX 20
 #define OSSL_LIB_CTX_COMP_METHODS 21
 #define OSSL_LIB_CTX_INDICATOR_CB_INDEX 22
-#define OSSL_LIB_CTX_MAX_INDEXES 22
 #define OSSL_LIB_CTX_SSL_CONF_IMODULE 23
+#define OSSL_LIB_CTX_MAX_INDEXES 23
 
 OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx);
+int ossl_lib_ctx_is_default_nocreate(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_is_global_default(OSSL_LIB_CTX *ctx);
 
 /* Functions to retrieve pointers to data by index */
@@ -133,7 +133,6 @@ OSSL_EX_DATA_GLOBAL *ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX *ctx);
 
 const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx);
 
-OSSL_LIB_CTX *ossl_crypto_ex_data_get_ossl_lib_ctx(const CRYPTO_EX_DATA *ad);
 int ossl_crypto_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,
     CRYPTO_EX_DATA *ad);
 int ossl_crypto_get_ex_new_index_ex(OSSL_LIB_CTX *ctx, int class_index,
@@ -152,6 +151,7 @@ int ossl_crypto_free_ex_index_ex(OSSL_LIB_CTX *ctx, int class_index, int idx);
 
 const void *ossl_bsearch(const void *key, const void *base, int num,
     int size, int (*cmp)(const void *, const void *),
+    int (*cmp_thunk)(int (*real_cmp_fn)(const void *, const void *), const void *, const void *),
     int flags);
 
 char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,

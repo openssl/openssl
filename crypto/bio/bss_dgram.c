@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -427,7 +427,7 @@ static int dgram_read(BIO *b, char *out, int outl)
     BIO_ADDR peer;
     socklen_t len = sizeof(peer);
 
-    if (out != NULL) {
+    if (out != NULL && outl > 0) {
         clear_socket_error();
         BIO_ADDR_clear(&peer);
         dgram_adjust_rcv_timeout(b);
@@ -961,7 +961,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                     "calling setsockopt()");
 
-#elif defined(OPENSSL_SYS_LINUX) && defined(IPV6_MTU_DISCOVER)
+#elif defined(OPENSSL_SYS_LINUX) && defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_PROBE)
             sockopt_val = num ? IPV6_PMTUDISC_PROBE : IPV6_PMTUDISC_DONT;
             if ((ret = setsockopt(b->num, IPPROTO_IPV6, IPV6_MTU_DISCOVER,
                      &sockopt_val, sizeof(sockopt_val)))
@@ -1347,7 +1347,7 @@ static int dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     size_t i;
     struct mmsghdr mh[BIO_MAX_MSGS_PER_CALL];
     struct iovec iov[BIO_MAX_MSGS_PER_CALL];
-    unsigned char control[BIO_MAX_MSGS_PER_CALL][BIO_CMSG_ALLOC_LEN];
+    unsigned char control[BIO_MAX_MSGS_PER_CALL][BIO_CMSG_ALLOC_LEN] = { { 0 } };
     int have_local_enabled = data->local_addr_enabled;
 #elif M_METHOD == M_METHOD_RECVMSG
     int sysflags;
@@ -1355,7 +1355,7 @@ static int dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     ossl_ssize_t l;
     struct msghdr mh;
     struct iovec iov;
-    unsigned char control[BIO_CMSG_ALLOC_LEN];
+    unsigned char control[BIO_CMSG_ALLOC_LEN] = { 0 };
     int have_local_enabled = data->local_addr_enabled;
 #elif M_METHOD == M_METHOD_WSARECVMSG
     bio_dgram_data *data = (bio_dgram_data *)b->ptr;
@@ -1363,7 +1363,7 @@ static int dgram_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     WSAMSG wmsg;
     WSABUF wbuf;
     DWORD num_bytes_sent = 0;
-    unsigned char control[BIO_CMSG_ALLOC_LEN];
+    unsigned char control[BIO_CMSG_ALLOC_LEN] = { 0 };
 #endif
 #if M_METHOD == M_METHOD_RECVFROM || M_METHOD == M_METHOD_WSARECVMSG
     int sysflags;

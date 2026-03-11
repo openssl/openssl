@@ -289,7 +289,7 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
     }
 
     /* If we haven't received a name id yet, try to get one for the name */
-    name_id = name != NULL ? ossl_namemap_name2num(namemap, name) : 0;
+    name_id = ossl_namemap_name2num(namemap, name);
 
     /*
      * If we have a name id, calculate a method id with evp_method_id().
@@ -350,7 +350,7 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                 name_id = ossl_namemap_name2num(namemap, name);
             if (name_id == 0) {
                 ERR_raise_data(ERR_LIB_EVP, ERR_R_FETCH_FAILED,
-                    "Algorithm %s cannot be found", name);
+                    "Algorithm %s cannot be found", name != NULL ? name : "<null>");
                 free_method(method);
                 method = NULL;
             } else {

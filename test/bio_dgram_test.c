@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -471,7 +471,7 @@ static int random_data(const uint32_t *key, uint8_t *data, size_t data_len, size
     if (cipher == NULL)
         goto err;
 
-    if (EVP_EncryptInit_ex2(ctx, cipher, (uint8_t *)key, (uint8_t *)counter, NULL) == 0)
+    if (EVP_EncryptInit_ex2(ctx, cipher, (const uint8_t *)key, (uint8_t *)counter, NULL) == 0)
         goto err;
 
     while (data_len > 0) {

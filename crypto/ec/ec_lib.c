@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -174,6 +174,8 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 
     dest->libctx = src->libctx;
     dest->curve_name = src->curve_name;
+
+    EC_pre_comp_free(dest);
 
     /* Copy precomputed */
     dest->pre_comp_type = src->pre_comp_type;
@@ -465,10 +467,36 @@ int EC_GROUP_order_bits(const EC_GROUP *group)
     return group->meth->group_order_bits(group);
 }
 
+int EC_GROUP_security_bits(const EC_GROUP *group)
+{
+    int ecbits = group->meth->group_order_bits(group);
+
+    /*
+     * The following estimates are based on the values published in Table 2 of
+     * "NIST Special Publication 800-57 Part 1 Revision 4" at
+     * http://dx.doi.org/10.6028/NIST.SP.800-57pt1r4 .
+     *
+     * Note that the above reference explicitly categorizes algorithms in a
+     * discrete set of values {80, 112, 128, 192, 256}, and that it is relevant
+     * only for NIST approved Elliptic Curves, while OpenSSL applies the same
+     * logic also to other curves.
+     */
+    if (ecbits >= 512)
+        return 256;
+    if (ecbits >= 384)
+        return 192;
+    if (ecbits >= 256)
+        return 128;
+    if (ecbits >= 224)
+        return 112;
+    if (ecbits >= 160)
+        return 80;
+    return ecbits / 2;
+}
+
 int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor,
     BN_CTX *ctx)
 {
-
     if (group->cofactor == NULL)
         return 0;
     if (!BN_copy(cofactor, group->cofactor))
@@ -1551,7 +1579,9 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
     int is_prime_field = 1;
     BN_CTX *bnctx = NULL;
     const unsigned char *buf = NULL;
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
     int encoding_flag = -1;
+#endif
 #endif
 
     /* This is the simple named group case */
@@ -1726,6 +1756,12 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
         goto err;
     }
     if (named_group == group) {
+#ifdef OPENSSL_NO_EC_EXPLICIT_CURVES
+        if (EC_GROUP_check_named_curve(group, 0, NULL) == NID_undef) {
+            ERR_raise(ERR_LIB_EC, EC_R_UNKNOWN_GROUP);
+            goto err;
+        }
+#else
         /*
          * If we did not find a named group then the encoding should be explicit
          * if it was specified
@@ -1741,6 +1777,7 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
             goto err;
         }
         EC_GROUP_set_asn1_flag(group, OPENSSL_EC_EXPLICIT_CURVE);
+#endif
     } else {
         EC_GROUP_free(group);
         group = named_group;

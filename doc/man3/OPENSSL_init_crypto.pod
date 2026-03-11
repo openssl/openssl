@@ -4,7 +4,7 @@
 
 OPENSSL_INIT_new, OPENSSL_INIT_set_config_filename,
 OPENSSL_INIT_set_config_appname, OPENSSL_INIT_set_config_file_flags,
-OPENSSL_INIT_free, OPENSSL_init_crypto, OPENSSL_cleanup, OPENSSL_atexit,
+OPENSSL_INIT_free, OPENSSL_init_crypto, OPENSSL_cleanup,
 OPENSSL_thread_stop_ex, OPENSSL_thread_stop - OpenSSL initialisation
 and deinitialisation functions
 
@@ -14,7 +14,6 @@ and deinitialisation functions
 
  void OPENSSL_cleanup(void);
  int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
- int OPENSSL_atexit(void (*handler)(void));
  void OPENSSL_thread_stop_ex(OSSL_LIB_CTX *ctx);
  void OPENSSL_thread_stop(void);
 
@@ -36,8 +35,7 @@ application is multi-threaded), and these resources must be freed prior to the
 thread closing.
 
 As of version 1.1.0 OpenSSL will automatically allocate all resources that it
-needs so no explicit initialisation is required. Similarly it will also
-automatically deinitialise as required.
+needs so no explicit initialisation is required.
 
 However, there may be situations when explicit initialisation is desirable or
 needed, for example when some nondefault initialisation is required. The
@@ -126,10 +124,7 @@ See OPENSSL_fork_prepare(3) for details.
 
 =item OPENSSL_INIT_NO_ATEXIT
 
-By default OpenSSL will attempt to clean itself up when the process exits via an
-"atexit" handler. Using this option suppresses that behaviour. This means that
-the application will have to clean up OpenSSL explicitly using
-OPENSSL_cleanup().
+The option has no effect in 4.0 and later.
 
 =back
 
@@ -139,17 +134,28 @@ OPENSSL_init_crypto(). For example:
  OPENSSL_init_crypto(OPENSSL_INIT_NO_ADD_ALL_CIPHERS
                      | OPENSSL_INIT_NO_ADD_ALL_DIGESTS, NULL);
 
-The OPENSSL_cleanup() function deinitialises OpenSSL (both libcrypto
-and libssl). All resources allocated by OpenSSL are freed. Typically there
-should be no need to call this function directly as it is initiated
-automatically on application exit. This is done via the standard C library
-atexit() function. In the event that the application will close in a manner
-that will not call the registered atexit() handlers then the application should
-call OPENSSL_cleanup() directly. Developers of libraries using OpenSSL
-are discouraged from calling this function and should instead, typically, rely
-on auto-deinitialisation. This is to avoid error conditions where both an
-application and a library it depends on both use OpenSSL, and the library
-deinitialises it before the application has finished using it.
+The OPENSSL_cleanup() function requests deinitialization of OpenSSL
+(both libcrypto and libssl). OpenSSL installs a global destructor
+function at initialization time if the toolchain supports this. This
+destructor is run after exit and after subordinate library destructors
+have run. By default the destructor does nothing. If deinitialization
+has been requested by a call to OPENSSL_cleanup(), then the destructor
+frees all global resources allocated by OpenSSL.
+
+If the toolchain building OpenSSL does not support a global
+destructor, by default OPENSSL_cleanup will do nothing, as this is the
+safest option, allowing the operating system to then reap all library
+resources on process exit. Note, this may, on some leak detection
+tools (like valgrind) result in reports that indicate reachable memory
+remains on exit in certain configurations.  As these are not formally
+leaks, it is recommended that reachable memory reports be suppressed
+when running such tools.
+
+If OpenSSL is compiled with the compile time option of DO_NOT_SKIP_OPENSSL_CLEANUP
+OPENSSL_cleanup() will deinitialize the library immediately when called. This
+is not normally recommended unless you are certain that the global resources
+will not be used by something after the point at which OPENSSL_cleanup() is
+called.
 
 Once OPENSSL_cleanup() has been called the library cannot be reinitialised.
 Attempts to call OPENSSL_init_crypto() will fail and an ERR_R_INIT_FAIL error
@@ -157,12 +163,6 @@ will be added to the error stack. Note that because initialisation has failed
 OpenSSL error strings will not be available, only an error code. This code can
 be put through the openssl errstr command line application to produce a human
 readable error (see L<openssl-errstr(1)>).
-
-The OPENSSL_atexit() function enables the registration of a
-function to be called during OPENSSL_cleanup(). Stop handlers are
-called after deinitialisation of resources local to a thread, but before other
-process wide resources are freed. In the event that multiple stop handlers are
-registered, no guarantees are made about the order of execution.
 
 The OPENSSL_thread_stop_ex() function deallocates resources associated
 with the current thread for the given OSSL_LIB_CTX B<ctx>. The B<ctx> parameter
@@ -226,7 +226,7 @@ call should use the RTLD_NODELETE flag (where available on the platform).
 
 =head1 RETURN VALUES
 
-The functions OPENSSL_init_crypto, OPENSSL_atexit() and
+The functions OPENSSL_init_crypto, and
 OPENSSL_INIT_set_config_appname() return 1 on success or 0 on error.
 
 =head1 SEE ALSO
@@ -235,7 +235,7 @@ L<OPENSSL_init_ssl(3)>
 
 =head1 HISTORY
 
-The OPENSSL_init_crypto(), OPENSSL_cleanup(), OPENSSL_atexit(),
+The OPENSSL_init_crypto(), OPENSSL_cleanup()
 OPENSSL_thread_stop(), OPENSSL_INIT_new(), OPENSSL_INIT_set_config_appname()
 and OPENSSL_INIT_free() functions were added in OpenSSL 1.1.0.
 
@@ -249,7 +249,7 @@ B<OPENSSL_INIT_ENGINE_ALL_BUILTIN> is defined to 0 since OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

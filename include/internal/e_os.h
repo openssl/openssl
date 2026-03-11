@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -85,16 +85,29 @@
 #ifdef WINDOWS
 #if !defined(_WIN32_WCE) && !defined(_WIN32_WINNT)
 /*
- * Defining _WIN32_WINNT here in e_os.h implies certain "discipline."
- * Most notably we ought to check for availability of each specific
- * routine that was introduced after denoted _WIN32_WINNT with
- * GetProcAddress(). Normally newer functions are masked with higher
- * _WIN32_WINNT in SDK headers. So that if you wish to use them in
- * some module, you'd need to override _WIN32_WINNT definition in
- * the target module in order to "reach for" prototypes, but replace
- * calls to new functions with indirect calls. Alternatively it
- * might be possible to achieve the goal by /DELAYLOAD-ing .DLLs
- * and check for current OS version instead.
+ * The _WIN32_WINNT is described here:
+ * https://learn.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt?view=msvc-170
+ * In a nutshell the macro defines minimal required Windows version where
+ * the resulting application is guaranteed to run on. If left undefined here,
+ * then the definition is provided by the Windows SDK found on host where
+ * application is being built.
+ *
+ * OpenSSL defaults to version 0x501, which matches Windows XP, meaning the
+ * compiled library will use APIs available on Windows XP and later.  User may
+ * override the version specified here at build time using command as
+ * follows:
+ *     perl ./Configure "-D_WIN32_WINNT=0x...." ...
+ *
+ * The list of recognized constants (as found in the link above) is as follows:
+ * 	0x0400 // Windows NT 4.0
+ *	0x0500 // Windows 2000
+ *	0x0501 // Windows XP
+ *	0x0502 // Windows Server 2003
+ *	0x0600 // Windows Vista, Windows Server 2008, Windows Vista
+ *	0x0601 // Windows 7
+ *	0x0602 // Windows 8
+ *	0x0603 // Windows 8.1
+ *	0x0A00 // Windows 10
  */
 #define _WIN32_WINNT 0x0501
 #endif
@@ -243,7 +256,7 @@ FILE *__iob_func(void);
 #include <sockLib.h>
 #include <taskLib.h>
 
-#define TTY_STRUCT int
+typedef int TTY_STRUCT;
 #define sleep(a) taskDelay((a) * sysClkRateGet())
 
 /*
@@ -339,7 +352,7 @@ inline int nssgetpid(void)
  * There is no locale_t on NONSTOP.
  */
 #if defined(OPENSSL_SYS_WINDOWS)
-#define locale_t _locale_t
+typedef _locale_t locale_t;
 #define freelocale _free_locale
 #define strcasecmp_l _stricmp_l
 #define strncasecmp_l _strnicmp_l
@@ -353,3 +366,48 @@ inline int nssgetpid(void)
 #endif
 
 #endif
+
+/*
+ * Can we use a global destructor?  We can use a global destructor via
+ * __attribute__ on anything like a modern gcc/clang.  We can also use
+ * it via dllmain on anything win32/win64.
+ *
+ * Older things may not do this.
+ * The assumption here is then if you don't have destructor support,
+ * it is safe to call OPENSSL_cleanup before an application exits
+ * because no library it is linked with will run code in a destructor
+ * that will call into OpenSSL after exit() happens.
+ *
+ */
+#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN64)
+#define OSSL_CLEANUP_USING_DESTRUCTOR
+#define OSSL_DLLMAIN_DESTRUCTOR
+/*
+ * destructor will be installed in libcrypto's dllmain.c
+ * This means effectively anything not win16 or dos will handle
+ * this.
+ */
+void ossl_cleanup_destructor(void);
+#else
+#if defined(__has_attribute)
+#if __has_attribute(destructor)
+/*
+ * This seems to have been a thing with any gcc or clang since the
+ * early 2000's. So this could pretty much instead be just unconditional
+ * on __GNUC__ or __clang__.
+ */
+#define OSSL_CLEANUP_USING_DESTRUCTOR
+/* destructor is installed by compiler */
+void ossl_cleanup_destructor(void) __attribute__((destructor));
+#else
+/* We are not using a destructor */
+/*
+ * So we are on something that is not close to Windows or being
+ * compiled with a modern GCC/Clang derivative. either way
+ * this probably means something like a toolchain that is
+ * more than 20 years old.
+ */
+void ossl_cleanup_destructor(void);
+#endif /* defined (__has_attribute(destructor) */
+#endif /* defined (__has_attribute) */
+#endif /* defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN64) */

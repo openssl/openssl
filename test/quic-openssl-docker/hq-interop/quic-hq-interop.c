@@ -1,5 +1,5 @@
 /*
- *  Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+ *  Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  *  Licensed under the Apache License 2.0 (the "License").  You may not use
  *  this file except in compliance with the License.  You can obtain a copy
@@ -403,7 +403,7 @@ static int setup_session_cache(SSL *ssl, SSL_CTX *ctx, const char *filename)
 
     /*
      * Because we cache sessions to a file in this client, we don't
-     * actualy need to internally store sessions, because we restore them
+     * actually need to internally store sessions, because we restore them
      * from the file with SSL_set_session below, but we want to ensure
      * that caching is enabled so that the session cache callbacks get called
      * properly.  The documentation is a bit unclear under what conditions
@@ -467,7 +467,7 @@ static BIO **outbiolist = NULL;
  * This static variable holds the reference to a dynamically allocated array
  * of strings, representing output names. It is initialized to NULL and
  * populated as required during operation.  This array holds the names of the
- * output files from http GET requests.  Indicies are correlated with the
+ * output files from http GET requests.  Indices are correlated with the
  * corresponding outbiolist and poll_list arrays
  */
 static char **outnames = NULL;
@@ -606,7 +606,7 @@ static size_t build_request_set(SSL *ssl)
         new_stream = NULL;
 
         /*
-         * NOTE: We are doing groups of 25 because thats 1/4 of the initial max
+         * NOTE: We are doing groups of 25 because that's 1/4 of the initial max
          * stream count that most servers advertise.  This gives the server an
          * opportunity to send us updated MAX_STREAM frames to extend our stream
          * allotment before we run out, which many servers defer doing.
@@ -783,7 +783,7 @@ static int setup_connection(char *hostname, char *port,
      * Virtually all clients should do this unless you really know what you
      * are doing.
      */
-    if (!SSL_set1_host(*ssl, hostname)) {
+    if (!SSL_set1_dnsname(*ssl, hostname)) {
         fprintf(stderr, "Failed to set the certificate verification hostname");
         goto end;
     }

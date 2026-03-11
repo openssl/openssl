@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -87,6 +87,10 @@ static void *keymgmt_from_algorithm(int name_id,
         case OSSL_FUNC_KEYMGMT_NEW:
             if (keymgmt->new == NULL)
                 keymgmt->new = OSSL_FUNC_keymgmt_new(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_NEW_EX:
+            if (keymgmt->new_ex == NULL)
+                keymgmt->new_ex = OSSL_FUNC_keymgmt_new_ex(fns);
             break;
         case OSSL_FUNC_KEYMGMT_GEN_INIT:
             if (keymgmt->gen_init == NULL)
@@ -236,6 +240,7 @@ static void *keymgmt_from_algorithm(int name_id,
      */
     if (keymgmt->free == NULL
         || (keymgmt->new == NULL
+            && keymgmt->new_ex == NULL
             && keymgmt->gen == NULL
             && keymgmt->load == NULL)
         || keymgmt->has == NULL
@@ -365,18 +370,20 @@ int EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
 /*
  * Internal API that interfaces with the method function pointers
  */
-void *evp_keymgmt_newdata(const EVP_KEYMGMT *keymgmt)
+void *evp_keymgmt_newdata(const EVP_KEYMGMT *keymgmt, const OSSL_PARAM params[])
 {
     void *provctx = ossl_provider_ctx(EVP_KEYMGMT_get0_provider(keymgmt));
 
     /*
-     * 'new' is currently mandatory on its own, but when new
-     * constructors appear, it won't be quite as mandatory,
-     * so we have a check for future cases.
+     * Some providers may have a new_ex which accepts parameters. Otherwise we
+     * fall back to the old "new" which doesn't accept params.
      */
-    if (keymgmt->new == NULL)
-        return NULL;
-    return keymgmt->new(provctx);
+    if (keymgmt->new_ex == NULL) {
+        if (keymgmt->new == NULL)
+            return NULL;
+        return keymgmt->new(provctx);
+    }
+    return keymgmt->new_ex(provctx, params);
 }
 
 void evp_keymgmt_freedata(const EVP_KEYMGMT *keymgmt, void *keydata)
@@ -401,8 +408,8 @@ int evp_keymgmt_gen_set_template(const EVP_KEYMGMT *keymgmt, void *genctx,
     /*
      * It's arguable if we actually should return success in this case, as
      * it allows the caller to set a template key, which is then ignored.
-     * However, this is how the legacy methods (EVP_PKEY_METHOD) operate,
-     * so we do this in the interest of backward compatibility.
+     * However, this is how the legacy methods used to operate, so we do this in
+     * the interest of backward compatibility.
      */
     if (keymgmt->gen_set_template == NULL)
         return 1;

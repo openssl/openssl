@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -40,10 +40,11 @@ static SSL_CTX *create_server_ctx(void);
 static int qc_init(SSL *qconn, BIO_ADDR *dst_addr);
 
 /* The ssltrace test assumes some options are switched on/off */
-#if !defined(OPENSSL_NO_SSL_TRACE)                            \
-    && defined(OPENSSL_NO_BROTLI) && defined(OPENSSL_NO_ZSTD) \
-    && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_DH)    \
-    && !defined(OPENSSL_NO_ML_DSA) && !defined(OPENSSL_NO_ML_KEM)
+#if !defined(OPENSSL_NO_SSL_TRACE)                                \
+    && defined(OPENSSL_NO_BROTLI) && defined(OPENSSL_NO_ZSTD)     \
+    && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_DH)        \
+    && !defined(OPENSSL_NO_ML_DSA) && !defined(OPENSSL_NO_ML_KEM) \
+    && !defined(OPENSSL_NO_SM2)
 #define DO_SSL_TRACE_TEST
 #endif
 
@@ -2893,8 +2894,7 @@ static int test_ssl_listen_ex(void)
         goto err;
 
     /* Call SSL_accept() and SSL_connect() until we are connected */
-    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_NONE, 0, 0)))
+    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE, 0, 0)))
 
         /*
          * Ensure that, now that we have used SSL_listen_ex, SSL_accept_connection
@@ -3011,8 +3011,8 @@ static int test_ssl_set_verify(void)
     serverssl = SSL_accept_connection(qlistener, 0);
 
     /* Call SSL_accept() and SSL_connect() until we are connected */
-    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_NONE, 0, 0)))
+    if (!TEST_ptr(serverssl)
+        || !TEST_true(create_bare_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE, 0, 0)))
         goto err;
 
     testresult = 1;
@@ -3224,8 +3224,8 @@ static int test_client_hello_retry(void)
     serverssl = SSL_accept_connection(qlistener, 0);
 
     /* Call SSL_accept() and SSL_connect() until we are connected */
-    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_NONE, 0, 0)))
+    if (!TEST_ptr(serverssl)
+        || !TEST_true(create_bare_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE, 0, 0)))
         goto err;
 
     testresult = 1;
@@ -3489,7 +3489,7 @@ int setup_tests(void)
         goto err;
 
     cprivkey = test_mk_file_path(certsdir, "ee-key.pem");
-    if (privkey == NULL)
+    if (cprivkey == NULL)
         goto err;
 
     ADD_ALL_TESTS(test_quic_write_read, 3);

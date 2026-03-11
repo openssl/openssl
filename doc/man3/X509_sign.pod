@@ -52,6 +52,10 @@ is not always updated meaning a stale version is sometimes used. This is not
 normally a problem because modifying the signed portion will invalidate the
 signature and signing will always update the encoding.
 
+When signing X509 certificates and certificate requests, any B<empty>
+subjectKeyIdentifier (empty string) or authorityKeyIdentifier (empty sequence)
+extensions are flagged as an error and the signature operation fails.
+
 =head1 RETURN VALUES
 
 All functions return the size of the signature
@@ -80,7 +84,7 @@ in OpenSSL 3.4.
 
 =head1 COPYRIGHT
 
-Copyright 2015-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

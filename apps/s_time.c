@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -61,7 +61,6 @@ typedef enum OPTION_choice {
     OPT_BUGS,
     OPT_VERIFY,
     OPT_TIME,
-    OPT_SSL3,
     OPT_WWW,
     OPT_TLS1,
     OPT_TLS1_1,
@@ -83,9 +82,6 @@ const OPTIONS s_time_options[] = {
     { "cipher", OPT_CIPHER, 's', "TLSv1.2 and below cipher list to be used" },
     { "ciphersuites", OPT_CIPHERSUITES, 's',
         "Specify TLSv1.3 ciphersuites to be used" },
-#ifndef OPENSSL_NO_SSL3
-    { "ssl3", OPT_SSL3, '-', "Just use SSLv3" },
-#endif
 #ifndef OPENSSL_NO_TLS1
     { "tls1", OPT_TLS1, '-', "Just use TLSv1.0" },
 #endif
@@ -226,10 +222,6 @@ int s_time_main(int argc, char **argv)
                 goto end;
             }
             break;
-        case OPT_SSL3:
-            min_version = SSL3_VERSION;
-            max_version = SSL3_VERSION;
-            break;
         case OPT_TLS1:
             min_version = TLS1_VERSION;
             max_version = TLS1_VERSION;
@@ -326,8 +318,6 @@ int s_time_main(int argc, char **argv)
             ver = SSL_version(scon);
             if (ver == TLS1_VERSION)
                 ver = 't';
-            else if (ver == SSL3_VERSION)
-                ver = '3';
             else
                 ver = '*';
         }
@@ -358,7 +348,7 @@ next:
 
     /* Get an SSL object so we can reuse the session id */
     if ((scon = doConnection(NULL, host, ctx)) == NULL) {
-        BIO_printf(bio_err, "Unable to get connection\n");
+        BIO_puts(bio_err, "Unable to get connection\n");
         goto end;
     }
 
@@ -408,8 +398,6 @@ next:
             ver = SSL_version(scon);
             if (ver == TLS1_VERSION)
                 ver = 't';
-            else if (ver == SSL3_VERSION)
-                ver = '3';
             else
                 ver = '*';
         }
@@ -478,7 +466,7 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
     /* ok, lets connect */
     i = SSL_connect(serverCon);
     if (i <= 0) {
-        BIO_printf(bio_err, "ERROR\n");
+        BIO_puts(bio_err, "ERROR\n");
         if (verify_args.error != X509_V_OK)
             BIO_printf(bio_err, "verify error:%s\n",
                 X509_verify_cert_error_string(verify_args.error));

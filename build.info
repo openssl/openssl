@@ -1,7 +1,7 @@
 # Note that some of these directories are filtered in Configure.  Look for
 # %skipdir there for further explanations.
 
-SUBDIRS=crypto ssl apps util tools fuzz providers doc
+SUBDIRS=crypto ssl apps util fuzz providers doc
 IF[{- !$disabled{tests} -}]
   SUBDIRS=test
 ENDIF
@@ -68,10 +68,12 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/kdfs/pvkkdf.inc \
          providers/implementations/kdfs/scrypt.inc \
          providers/implementations/kdfs/snmpkdf.inc \
+         providers/implementations/kdfs/srtpkdf.inc \
          providers/implementations/kdfs/sshkdf.inc \
          providers/implementations/kdfs/sskdf.inc \
          providers/implementations/kdfs/tls1_prf.inc \
          providers/implementations/kdfs/x942kdf.inc \
+         providers/implementations/kdfs/x963kdf.inc \
          providers/implementations/kem/ec_kem.inc \
          providers/implementations/kem/ecx_kem.inc \
          providers/implementations/kem/ml_kem_kem.inc \
@@ -117,6 +119,8 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/digests/mdc2_prov.inc \
          providers/implementations/digests/sha2_prov.inc \
          providers/implementations/digests/sha3_prov.inc \
+         providers/implementations/digests/ml_dsa_mu_prov.inc \
+         providers/implementations/digests/cshake_prov.inc \
          providers/implementations/include/prov/blake2_params.inc \
          providers/implementations/macs/cmac_prov.inc \
          providers/implementations/macs/gmac_prov.inc \
@@ -187,10 +191,12 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/kdfs/pvkkdf.inc \
        providers/implementations/kdfs/scrypt.inc \
        providers/implementations/kdfs/snmpkdf.inc \
+       providers/implementations/kdfs/srtpkdf.inc \
        providers/implementations/kdfs/sshkdf.inc \
        providers/implementations/kdfs/sskdf.inc \
        providers/implementations/kdfs/tls1_prf.inc \
        providers/implementations/kdfs/x942kdf.inc \
+       providers/implementations/kdfs/x963kdf.inc \
        providers/implementations/kem/ec_kem.inc \
        providers/implementations/kem/ecx_kem.inc \
        providers/implementations/kem/ml_kem_kem.inc \
@@ -232,10 +238,12 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/ciphers/cipher_rc4_hmac_md5.inc \
        providers/implementations/ciphers/cipher_sm4_xts.inc \
        providers/implementations/digests/blake2_prov.inc \
+       providers/implementations/digests/ml_dsa_mu_prov.inc \
        providers/implementations/digests/digestcommon.inc \
        providers/implementations/digests/mdc2_prov.inc \
        providers/implementations/digests/sha2_prov.inc \
        providers/implementations/digests/sha3_prov.inc \
+       providers/implementations/digests/cshake_prov.inc \
        providers/implementations/include/prov/blake2_params.inc \
        providers/implementations/macs/cmac_prov.inc \
        providers/implementations/macs/gmac_prov.inc \
@@ -251,6 +259,7 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/rands/seed_src_jitter.inc \
        providers/implementations/rands/test_rng.inc \
        include/openssl/core_names.h]=util/perl|OpenSSL/paramnames.pm
+
 GENERATE[providers/implementations/asymciphers/rsa_enc.inc]=\
     providers/implementations/asymciphers/rsa_enc.inc.in
 GENERATE[providers/implementations/asymciphers/sm2_enc.inc]=\
@@ -297,6 +306,8 @@ GENERATE[providers/implementations/kdfs/scrypt.inc]=\
     providers/implementations/kdfs/scrypt.inc.in
 GENERATE[providers/implementations/kdfs/snmpkdf.inc]=\
     providers/implementations/kdfs/snmpkdf.inc.in
+GENERATE[providers/implementations/kdfs/srtpkdf.inc]=\
+    providers/implementations/kdfs/srtpkdf.inc.in
 GENERATE[providers/implementations/kdfs/sshkdf.inc]=\
     providers/implementations/kdfs/sshkdf.inc.in
 GENERATE[providers/implementations/kdfs/sskdf.inc]=\
@@ -305,6 +316,8 @@ GENERATE[providers/implementations/kdfs/tls1_prf.inc]=\
     providers/implementations/kdfs/tls1_prf.inc.in
 GENERATE[providers/implementations/kdfs/x942kdf.inc]=\
     providers/implementations/kdfs/x942kdf.inc.in
+GENERATE[providers/implementations/kdfs/x963kdf.inc]=\
+    providers/implementations/kdfs/x963kdf.inc.in
 GENERATE[providers/implementations/kem/ec_kem.inc]=\
     providers/implementations/kem/ec_kem.inc.in
 GENERATE[providers/implementations/kem/ecx_kem.inc]=\
@@ -395,8 +408,12 @@ GENERATE[providers/implementations/digests/sha2_prov.inc]=\
     providers/implementations/digests/sha2_prov.inc.in
 GENERATE[providers/implementations/digests/sha3_prov.inc]=\
     providers/implementations/digests/sha3_prov.inc.in
+GENERATE[providers/implementations/digests/cshake_prov.inc]=\
+    providers/implementations/digests/cshake_prov.inc.in
 GENERATE[providers/implementations/include/prov/blake2_params.inc]=\
     providers/implementations/include/prov/blake2_params.inc.in
+GENERATE[providers/implementations/digests/ml_dsa_mu_prov.inc]=\
+    providers/implementations/digests/ml_dsa_mu_prov.inc.in
 GENERATE[providers/implementations/macs/cmac_prov.inc]=\
     providers/implementations/macs/cmac_prov.inc.in
 GENERATE[providers/implementations/macs/gmac_prov.inc]=\

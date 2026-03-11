@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -266,6 +266,9 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                 }
             }
 
+            /* Free old values before assigning new ones to prevent memory leak */
+            OPENSSL_free(c->cache_accepting_name);
+            OPENSSL_free(c->cache_accepting_serv);
             c->cache_accepting_name = BIO_ADDR_hostname_string(&c->cache_accepting_addr, 1);
             c->cache_accepting_serv = BIO_ADDR_service_string(&c->cache_accepting_addr, 1);
             c->state = ACPT_S_ACCEPT;
@@ -413,6 +416,7 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
         acpt_close_socket(b);
         BIO_ADDRINFO_free(data->addr_first);
         data->addr_first = NULL;
+        data->addr_iter = NULL;
         b->flags = 0;
         break;
     case BIO_C_DO_STATE_MACHINE:

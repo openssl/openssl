@@ -130,6 +130,13 @@ This output usually makes sense only if you know OpenSSL internals well.
 The value of this environment variable is a comma-separated list of names,
 with the following available:
 
+=item B<OPENSSL_RUNNING_UNIT_TESTS>
+
+This environment variable is used to flag the fact that unit tests are being run
+(i.e. `make test`).  It is used to detect when the OpenSSL should behave in a special
+manner during unit tests (i.e. when unit tests are being run on fuzzing builds).  It should
+generally not be set by users.
+
 =over 4
 
 =item B<ALL>
@@ -323,7 +330,7 @@ directory from which dynamic engines were loaded.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

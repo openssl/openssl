@@ -61,7 +61,9 @@ either by itself or in addition to the encryption or decryption.
 
 =item B<-I<cipher>>
 
-The cipher to use.
+The cipher to use. This option is specified by prepending a hyphen to the
+cipher name (e.g., B<-aes-256-cbc>), not as an argument to a C<-cipher> flag.
+Use C<openssl list -cipher-algorithms> to see the available ciphers.
 
 =item B<-help>
 
@@ -519,7 +521,7 @@ The B<-skeyuri> and B<-storepass> options were added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

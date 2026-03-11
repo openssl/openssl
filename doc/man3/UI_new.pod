@@ -159,17 +159,20 @@ With the description "pass phrase" and the filename "foo.key", that becomes
 string and may include encodings that will be processed by the other
 method functions.
 
-UI_add_user_data() adds a user data pointer for the method to use at any
+UI_add_user_data() sets the user data pointer for the method to use at any
 time.  The built-in UI method doesn't care about this info.  Note that several
-calls to this function doesn't add data, it replaces the previous blob
+calls to this function doesn't add data, it replaces the previous pointer
 with the one given as argument.
+The return value is the previously set user data pointer if it was set
+using UI_add_user_data() and thus the caller owns it, otherwise NULL.
 
 UI_dup_user_data() duplicates the user data and works as an alternative
 to UI_add_user_data() when the user data needs to be preserved for a longer
 duration, perhaps even the lifetime of the application.  The UI object takes
 ownership of this duplicate and will free it whenever it gets replaced or
 the UI is destroyed.  UI_dup_user_data() returns 0 on success, or -1 on memory
-allocation failure or if the method doesn't have a duplicator function.
+allocation failure or if the method doesn't have a duplicator and a destructor
+function.
 
 UI_get0_user_data() retrieves the data that has last been given to the
 UI with UI_add_user_data() or UI_dup_user_data.
@@ -224,6 +227,9 @@ is less than or equal to 0 otherwise.
 
 UI_construct_prompt() returns a string or NULL if an error occurred.
 
+UI_add_user_data() returns
+the user data pointer previously set using this function, otherwise NULL.
+
 UI_dup_user_data() returns 0 on success or -1 on error.
 
 UI_get0_result() returns a string or NULL on error.
@@ -245,7 +251,7 @@ The UI_dup_user_data() function was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

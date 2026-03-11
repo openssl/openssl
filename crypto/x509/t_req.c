@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,8 @@
 #include <openssl/x509v3.h>
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
+
+#include <crypto/asn1.h>
 
 #ifndef OPENSSL_NO_STDIO
 int X509_REQ_print_fp(FILE *fp, const X509_REQ *x)
@@ -112,10 +114,10 @@ int X509_REQ_print_ex(BIO *bp, const X509_REQ *x, unsigned long nmflags, unsigne
                 goto err;
         } else {
             for (i = 0; i < X509_REQ_get_attr_count(x); i++) {
-                ASN1_TYPE *at;
+                const ASN1_TYPE *at;
                 X509_ATTRIBUTE *a;
                 ASN1_BIT_STRING *bs = NULL;
-                ASN1_OBJECT *aobj;
+                const ASN1_OBJECT *aobj;
                 int j, type = 0, count = 1, ii = 0;
 
                 a = X509_REQ_get_attr(x, i);
@@ -169,8 +171,8 @@ int X509_REQ_print_ex(BIO *bp, const X509_REQ *x, unsigned long nmflags, unsigne
             if (BIO_printf(bp, "%12sRequested Extensions:\n", "") <= 0)
                 goto err;
             for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
-                ASN1_OBJECT *obj;
-                X509_EXTENSION *ex;
+                const ASN1_OBJECT *obj;
+                const X509_EXTENSION *ex;
                 int critical;
                 ex = sk_X509_EXTENSION_value(exts, i);
                 if (BIO_printf(bp, "%16s", "") <= 0)

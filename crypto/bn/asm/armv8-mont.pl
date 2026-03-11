@@ -780,7 +780,7 @@ __bn_sqr8x_mont:
 	umulh	$t2,$a4,$a0
 	stp	$acc0,$acc1,[$tp],#8*2	// t[0..1]
 	adc	$acc0,xzr,xzr		// t[8]
-	adds	$acc2,$acc2,$t3		// t[2]+lo(a[1]*a[0])
+	adds	$acc2,$acc2,$t3		// t[2]+hi(a[1]*a[0])
 	umulh	$t3,$a5,$a0
 	adcs	$acc3,$acc3,$t0
 	umulh	$t0,$a6,$a0

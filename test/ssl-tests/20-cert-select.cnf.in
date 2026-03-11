@@ -949,6 +949,25 @@ my @tests_tls_1_3_non_fips = (
         },
     },
 );
+my @tests_tls_1_3_sm2 = (
+    {
+        name => "TLS 1.3 SM2",
+        server =>  {
+            "Certificate" => test_pem("sm2.pem"),
+            "PrivateKey" => test_pem("sm2.key"),
+        },
+        client => {
+            "VerifyCAFile" => test_pem("sm2-root.crt"),
+            "MinProtocol" => "TLSv1.3",
+            "MaxProtocol" => "TLSv1.3"
+        },
+        test   => {
+            "ExpectedResult" => "Success"
+        },
+    },
+);
+push @tests_tls_1_3_non_fips, @tests_tls_1_3_sm2
+    unless disabled("sm2");
 
 push @tests, @tests_tls_1_3 unless disabled("tls1_3");
 push @tests, @tests_tls_1_3_non_fips unless disabled("tls1_3") || $fips_mode;

@@ -20,15 +20,15 @@ use OpenSSL::Test;
 use OpenSSL::Test::Utils qw/anydisabled alldisabled disabled/;
 setup("no_test_here");
 
-my @tls_protocols = ("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
+my @tls_protocols = ("TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
 my @tls_protocols_fips = ("TLSv1.2", "TLSv1.3");
 # undef stands for "no limit".
-my @min_tls_protocols = (undef, "SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
+my @min_tls_protocols = (undef, "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
 my @min_tls_protocols_fips = (undef, "TLSv1.2", "TLSv1.3");
-my @max_tls_protocols = ("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3", undef);
+my @max_tls_protocols = ("TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3", undef);
 my @max_tls_protocols_fips = ("TLSv1.2", "TLSv1.3", undef);
 
-my @is_tls_disabled = anydisabled("ssl3", "tls1", "tls1_1", "tls1_2", "tls1_3");
+my @is_tls_disabled = anydisabled("tls1", "tls1_1", "tls1_2", "tls1_3");
 my @is_tls_disabled_fips = anydisabled("tls1_2", "tls1_3");
 
 my $min_tls_enabled; my $max_tls_enabled;
@@ -107,7 +107,7 @@ sub no_tests {
         return disabled("dtls1_2");
     }
     return $dtls ? alldisabled("dtls1", "dtls1_2") :
-      alldisabled("ssl3", "tls1", "tls1_1", "tls1_2", "tls1_3");
+      alldisabled("tls1", "tls1_1", "tls1_2", "tls1_3");
 }
 
 sub generate_version_tests {

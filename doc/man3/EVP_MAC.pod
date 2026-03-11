@@ -259,7 +259,7 @@ The standard parameter names are:
 Its value is the MAC key as an array of bytes.
 
 For MACs that use an underlying computation algorithm, the algorithm
-must be set first, see parameter names "algorithm" below.
+must be set first, see "cipher" and "digest" parameters below.
 
 =item "iv" (B<OSSL_MAC_PARAM_IV>) <octet string>
 
@@ -499,7 +499,7 @@ The EVP_MAC_init_SKEY() function was added in OpenSSL 3.5.
 
 =head1 COPYRIGHT
 
-Copyright 2018-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

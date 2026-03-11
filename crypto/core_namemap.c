@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,22 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * For EVP_PKEY_asn1_get0_info(), EVP_PKEY_asn1_get_count() and
- * EVP_PKEY_asn1_get0()
- */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include "internal/namemap.h"
 #include "internal/tsan_assist.h"
 #include "internal/hashtable.h"
 #include "internal/sizes.h"
 #include "crypto/context.h"
+#include "crypto/evp.h"
 
 #define NAMEMAP_HT_BUCKETS 512
 
+#define NAMEMAP_NAME_LEN 64
 HT_START_KEY_DEFN(namenum_key)
-HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, NAMEMAP_NAME_LEN)
 HT_END_KEY_DEFN(NAMENUM_KEY)
 
 /*-
@@ -154,11 +150,11 @@ int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name)
         namemap = ossl_namemap_stored(NULL);
 #endif
 
-    if (namemap == NULL)
+    if (namemap == NULL || name == NULL)
         return 0;
 
-    HT_INIT_KEY(&key);
-    HT_SET_KEY_STRING_CASE(&key, name, name);
+    HT_INIT_RAW_KEY(&key);
+    HT_COPY_RAW_KEY_CASE(TO_HT_KEY(&key), name, strlen(name));
 
     val = ossl_ht_get(namemap->namenum_ht, TO_HT_KEY(&key));
 
@@ -184,8 +180,11 @@ int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
     if (namemap == NULL)
         return 0;
 
-    HT_INIT_KEY(&key);
-    HT_SET_KEY_STRING_CASE_N(&key, name, name, (int)name_len);
+    if (name_len > NAMEMAP_NAME_LEN)
+        name_len = NAMEMAP_NAME_LEN;
+
+    HT_INIT_RAW_KEY(&key);
+    HT_COPY_RAW_KEY_CASE(TO_HT_KEY(&key), name, name_len);
 
     val = ossl_ht_get(namemap->namenum_ht, TO_HT_KEY(&key));
 
@@ -276,8 +275,9 @@ static int namemap_add_name(OSSL_NAMEMAP *namemap, int number,
     /* Using tsan_store alone here is safe since we're under lock */
     tsan_store(&namemap->max_number, number);
 
-    HT_INIT_KEY(&key);
-    HT_SET_KEY_STRING_CASE(&key, name, name);
+    HT_INIT_RAW_KEY(&key);
+    HT_COPY_RAW_KEY_CASE(TO_HT_KEY(&key), name, strlen(name));
+
     val.value = (void *)(intptr_t)number;
     ret = ossl_ht_insert(namemap->namenum_ht, TO_HT_KEY(&key), &val, NULL);
     if (ret <= 0) {
@@ -446,7 +446,7 @@ static void get_legacy_pkey_meth_names(const EVP_PKEY_ASN1_METHOD *ameth,
     int nid = 0, base_nid = 0, flags = 0;
     const char *pem_name = NULL;
 
-    EVP_PKEY_asn1_get0_info(&nid, &base_nid, &flags, NULL, &pem_name, ameth);
+    evp_pkey_asn1_get0_info(&nid, &base_nid, &flags, NULL, &pem_name, ameth);
     if (nid != NID_undef) {
         if ((flags & ASN1_PKEY_ALIAS) == 0) {
             switch (nid) {
@@ -534,8 +534,8 @@ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
             int i, end;
 
             /* We also pilfer data from the legacy EVP_PKEY_ASN1_METHODs */
-            for (i = 0, end = EVP_PKEY_asn1_get_count(); i < end; i++)
-                get_legacy_pkey_meth_names(EVP_PKEY_asn1_get0(i), namemap);
+            for (i = 0, end = evp_pkey_asn1_get_count(); i < end; i++)
+                get_legacy_pkey_meth_names(evp_pkey_asn1_get0(i), namemap);
         }
 #endif
     }

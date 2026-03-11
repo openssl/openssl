@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,15 +12,19 @@
 
 #define EVP_CTRL_RET_UNSUPPORTED -1
 
+/*
+ * Length of the BASE64-encoded lines when encoding.
+ * This needs to be divisible by 3 to keep the AVX2 optimized code path.
+ */
+#define EVP_ENCODE_B64_LENGTH 48
+
 struct evp_md_ctx_st {
     const EVP_MD *reqdigest; /* The original requested digest */
     const EVP_MD *digest;
     unsigned long flags;
-    void *md_data;
+
     /* Public key context for sign/verify */
     EVP_PKEY_CTX *pctx;
-    /* Update function: usually copied from EVP_MD */
-    int (*update)(EVP_MD_CTX *ctx, const void *data, size_t count);
 
     /*
      * Opaque ctx returned from a providers digest algorithm implementation
@@ -100,6 +104,7 @@ struct evp_keymgmt_st {
 
     /* Constructor(s), destructor, information */
     OSSL_FUNC_keymgmt_new_fn *new;
+    OSSL_FUNC_keymgmt_new_ex_fn *new_ex;
     OSSL_FUNC_keymgmt_free_fn *free;
     OSSL_FUNC_keymgmt_get_params_fn *get_params;
     OSSL_FUNC_keymgmt_gettable_params_fn *gettable_params;
@@ -274,12 +279,6 @@ int PKCS5_v2_PBKDF2_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
 struct evp_Encode_Ctx_st {
     /* number saved in a partial encode/decode */
     int num;
-    /*
-     * The length is either the output line length (in input bytes) or the
-     * shortest input line length that is ok.  Once decoding begins, the
-     * length is adjusted up each time a longer line is decoded
-     */
-    int length;
     /* data to encode */
     unsigned char enc_data[80];
     /* number read on current line */
@@ -380,24 +379,6 @@ int evp_do_md_ctx_setparams(const EVP_MD *md, void *provctx,
     OSSL_PARAM params[]);
 
 OSSL_PARAM *evp_pkey_to_param(EVP_PKEY *pkey, size_t *sz);
-
-#define M_check_autoarg(ctx, arg, arglen, err)                               \
-    if (ctx->pmeth->flags & EVP_PKEY_FLAG_AUTOARGLEN) {                      \
-        size_t pksize = (size_t)EVP_PKEY_get_size(ctx->pkey);                \
-                                                                             \
-        if (pksize == 0) {                                                   \
-            ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY); /*ckerr_ignore*/      \
-            return 0;                                                        \
-        }                                                                    \
-        if (arg == NULL) {                                                   \
-            *arglen = pksize;                                                \
-            return 1;                                                        \
-        }                                                                    \
-        if (*arglen < pksize) {                                              \
-            ERR_raise(ERR_LIB_EVP, EVP_R_BUFFER_TOO_SMALL); /*ckerr_ignore*/ \
-            return 0;                                                        \
-        }                                                                    \
-    }
 
 void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx);
 void evp_cipher_free_int(EVP_CIPHER *md);

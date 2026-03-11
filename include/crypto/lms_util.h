@@ -27,9 +27,7 @@
  * See RFC 8554 Section 3.1.3: Strings of w-bit Elements
  * w: Is one of {1,2,4,8}
  */
-static ossl_unused ossl_inline
-    uint8_t
-    lms_ots_coef(const unsigned char *S, uint16_t i, uint8_t w)
+static ossl_unused ossl_inline uint8_t lms_ots_coef(const unsigned char *S, uint16_t i, uint8_t w)
 {
     uint8_t bitmask = (1 << w) - 1;
     uint8_t shift = 8 - (w * (i % (8 / w)) + w);

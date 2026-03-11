@@ -1,4 +1,4 @@
-Private-Key: (256 bit)
+Private-Key: (256 bit field, 128 bit security level)
 priv:
     33:d0:43:83:a9:89:56:03:d2:d7:fe:6b:01:6f:e4:59:
     cc:0d:9a:24:6c:86:1b:2e:dc:4b:4d:35:43:e1:1b:ad

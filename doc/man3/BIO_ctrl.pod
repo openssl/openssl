@@ -65,8 +65,11 @@ BIO_tell() returns the current file position of a file related BIO.
 BIO_flush() normally writes out any internally buffered data, in some
 cases it is used to signal EOF and that no more data will be written.
 
-BIO_eof() returns 1 if the BIO has read EOF, the precise meaning of
-"EOF" varies according to the BIO type.
+BIO_eof() returns 1 if the BIO has reached end-of-file as a result of
+the most recent read operation. The precise meaning of "EOF" varies
+according to the BIO type. The function reports the result of the
+previous read attempt and does not update this state based on subsequent
+operations.
 
 BIO_set_close() sets the BIO B<b> close flag to B<flag>. B<flag> can
 take the value BIO_CLOSE or BIO_NOCLOSE. Typically BIO_CLOSE is used
@@ -179,7 +182,7 @@ were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

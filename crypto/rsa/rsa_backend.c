@@ -28,9 +28,9 @@
 #include "rsa_local.h"
 
 /*
- * The intention with the "backend" source file is to offer backend support
- * for legacy backends (EVP_PKEY_ASN1_METHOD and EVP_PKEY_METHOD) and provider
- * implementations alike.
+ * The intention with the "backend" source file is to offer backend functions
+ * for legacy backends (EVP_PKEY_ASN1_METHOD) and provider implementations
+ * alike.
  */
 
 DEFINE_STACK_OF(BIGNUM)
@@ -246,6 +246,8 @@ err:
     BN_free(n);
     BN_free(e);
     BN_free(d);
+    BN_clear_free(p);
+    BN_clear_free(q);
     sk_BIGNUM_pop_free(factors, BN_clear_free);
     sk_BIGNUM_pop_free(exps, BN_clear_free);
     sk_BIGNUM_pop_free(coeffs, BN_clear_free);

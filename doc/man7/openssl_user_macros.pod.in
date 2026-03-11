@@ -88,6 +88,17 @@ versions up to and including the version given by B<OPENSSL_API_COMPAT>
 (or the default value given above, when B<OPENSSL_API_COMPAT> isn't defined)
 will be hidden.
 
+=item B<OPENSSL_ENGINE_STUBS>
+
+ENGINE API, as defined in openssl/engine.h, was permanently removed in OpenSSL 4.0.
+
+The user application can use the define B<OPENSSL_ENGINE_STUBS> to enable stub macros
+for API ENGINE functions. It should temporarily help the easy transition of applications
+without source code modifications.
+
+Note that all stub macros emulate API function failures; they will not restore
+the removed API even if the B<OPENSSL_API_COMPAT> define is used.
+
 =back
 
 =head1 COPYRIGHT

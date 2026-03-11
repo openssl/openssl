@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -16,6 +16,7 @@
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
 #include <openssl/buffer.h>
+#include <openssl/core_names.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
@@ -322,6 +323,7 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
     unsigned char tls13tbs[TLS13_TBS_PREAMBLE_SIZE + EVP_MAX_MD_SIZE];
     const SIGALG_LOOKUP *lu = s->s3.tmp.sigalg;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    OSSL_PARAM params[3], *p = params;
 
     if (lu == NULL || s->s3.tmp.cert == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -351,10 +353,19 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
         goto err;
     }
 
+    /*
+     * To avoid problems with older RSA providers we must also pass the digest
+     * name when passing any other parameters.
+     */
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_TLS_VERSION, &s->version);
+    if (md != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
+            (char *)EVP_MD_get0_name(md), 0);
+    *p = OSSL_PARAM_construct_end();
+
     if (EVP_DigestSignInit_ex(mctx, &pctx,
             md == NULL ? NULL : EVP_MD_get0_name(md),
-            sctx->libctx, sctx->propq, pkey,
-            NULL)
+            sctx->libctx, sctx->propq, pkey, params)
         <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
@@ -369,42 +380,20 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
             goto err;
         }
     }
-    if (s->version == SSL3_VERSION) {
-        /*
-         * Here we use EVP_DigestSignUpdate followed by EVP_DigestSignFinal
-         * in order to add the EVP_CTRL_SSL3_MASTER_SECRET call between them.
-         */
-        if (EVP_DigestSignUpdate(mctx, hdata, hdatalen) <= 0
-            || EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                   (int)s->session->master_key_length,
-                   s->session->master_key)
-                <= 0
-            || EVP_DigestSignFinal(mctx, NULL, &siglen) <= 0) {
 
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-            goto err;
-        }
-        sig = OPENSSL_malloc(siglen);
-        if (sig == NULL
-            || EVP_DigestSignFinal(mctx, sig, &siglen) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-            goto err;
-        }
-    } else {
-        /*
-         * Here we *must* use EVP_DigestSign() because Ed25519/Ed448 does not
-         * support streaming via EVP_DigestSignUpdate/EVP_DigestSignFinal
-         */
-        if (EVP_DigestSign(mctx, NULL, &siglen, hdata, hdatalen) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-            goto err;
-        }
-        sig = OPENSSL_malloc(siglen);
-        if (sig == NULL
-            || EVP_DigestSign(mctx, sig, &siglen, hdata, hdatalen) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-            goto err;
-        }
+    /*
+     * Here we *must* use EVP_DigestSign() because Ed25519/Ed448 does not
+     * support streaming via EVP_DigestSignUpdate/EVP_DigestSignFinal
+     */
+    if (EVP_DigestSign(mctx, NULL, &siglen, hdata, hdatalen) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+        goto err;
+    }
+    sig = OPENSSL_malloc(siglen);
+    if (sig == NULL
+        || EVP_DigestSign(mctx, sig, &siglen, hdata, hdatalen) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+        goto err;
     }
 
 #ifndef OPENSSL_NO_GOST
@@ -455,6 +444,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
     EVP_PKEY_CTX *pctx = NULL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    OSSL_PARAM params[3], *p = params;
 
     if (mctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
@@ -536,10 +526,19 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
     OSSL_TRACE1(TLS, "Using client verify alg %s\n",
         md == NULL ? "n/a" : EVP_MD_get0_name(md));
 
+    /*
+     * To avoid problems with older RSA providers we must also pass the digest
+     * name when passing any other parameters.
+     */
+    *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_TLS_VERSION, &s->version);
+    if (md != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
+            (char *)EVP_MD_get0_name(md), 0);
+    *p = OSSL_PARAM_construct_end();
+
     if (EVP_DigestVerifyInit_ex(mctx, &pctx,
             md == NULL ? NULL : EVP_MD_get0_name(md),
-            sctx->libctx, sctx->propq, pkey,
-            NULL)
+            sctx->libctx, sctx->propq, pkey, params)
         <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
@@ -567,30 +566,16 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
             goto err;
         }
     }
-    if (s->version == SSL3_VERSION) {
-        if (EVP_DigestVerifyUpdate(mctx, hdata, hdatalen) <= 0
-            || EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
-                   (int)s->session->master_key_length,
-                   s->session->master_key)
-                <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
-            goto err;
-        }
-        if (EVP_DigestVerifyFinal(mctx, data, len) <= 0) {
-            SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_SIGNATURE);
-            goto err;
-        }
-    } else {
-        j = EVP_DigestVerify(mctx, data, len, hdata, hdatalen);
+
+    j = EVP_DigestVerify(mctx, data, len, hdata, hdatalen);
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-        /* Ignore bad signatures when fuzzing */
-        if (SSL_IS_QUIC_HANDSHAKE(s))
-            j = 1;
+    /* Ignore bad signatures when fuzzing */
+    if (SSL_IS_QUIC_HANDSHAKE(s))
+        j = 1;
 #endif
-        if (j <= 0) {
-            SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_SIGNATURE);
-            goto err;
-        }
+    if (j <= 0) {
+        SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_SIGNATURE);
+        goto err;
     }
 
     /*
@@ -1328,7 +1313,7 @@ unsigned long tls_output_rpk(SSL_CONNECTION *sc, WPACKET *pkt, CERT_PKEY *cpk)
 {
     int pdata_len = 0;
     unsigned char *pdata = NULL;
-    X509_PUBKEY *xpk = NULL;
+    const X509_PUBKEY *xpk = NULL;
     unsigned long ret = 0;
     X509 *x509 = NULL;
 
@@ -1631,32 +1616,16 @@ int tls_get_message_header(SSL_CONNECTION *s, int *mt)
     *mt = *p;
     s->s3.tmp.message_type = *(p++);
 
-    if (RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
-        /*
-         * Only happens with SSLv3+ in an SSLv2 backward compatible
-         * ClientHello
-         *
-         * Total message size is the remaining record bytes to read
-         * plus the SSL3_HM_HEADER_LENGTH bytes that we already read
-         */
-        l = s->rlayer.tlsrecs[0].length + SSL3_HM_HEADER_LENGTH;
-        s->s3.tmp.message_size = l;
-
-        s->init_msg = s->init_buf->data;
-        s->init_num = SSL3_HM_HEADER_LENGTH;
-    } else {
-        n2l3(p, l);
-        /* BUF_MEM_grow takes an 'int' parameter */
-        if (l > (INT_MAX - SSL3_HM_HEADER_LENGTH)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-                SSL_R_EXCESSIVE_MESSAGE_SIZE);
-            return 0;
-        }
-        s->s3.tmp.message_size = l;
-
-        s->init_msg = s->init_buf->data + SSL3_HM_HEADER_LENGTH;
-        s->init_num = 0;
+    n2l3(p, l);
+    /* BUF_MEM_grow takes an 'int' parameter */
+    if (l > (INT_MAX - SSL3_HM_HEADER_LENGTH)) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_EXCESSIVE_MESSAGE_SIZE);
+        return 0;
     }
+    s->s3.tmp.message_size = l;
+
+    s->init_msg = s->init_buf->data + SSL3_HM_HEADER_LENGTH;
+    s->init_num = 0;
 
     return 1;
 }
@@ -1699,48 +1668,35 @@ int tls_get_message_body(SSL_CONNECTION *s, size_t *len)
         return 0;
     }
 
-    /* Feed this message into MAC computation. */
-    if (RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
-        if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                s->init_num)) {
-            /* SSLfatal() already called */
-            *len = 0;
-            return 0;
-        }
-        if (s->msg_callback)
-            s->msg_callback(0, SSL2_VERSION, 0, s->init_buf->data,
-                (size_t)s->init_num, ussl, s->msg_callback_arg);
-    } else {
-        /*
-         * We defer feeding in the HRR until later. We'll do it as part of
-         * processing the message
-         * The TLsv1.3 handshake transcript stops at the ClientFinished
-         * message.
-         */
+    /*
+     * We defer feeding in the HRR until later. We'll do it as part of
+     * processing the message
+     * The TLsv1.3 handshake transcript stops at the ClientFinished
+     * message.
+     */
 #define SERVER_HELLO_RANDOM_OFFSET (SSL3_HM_HEADER_LENGTH + 2)
-        /* KeyUpdate and NewSessionTicket do not need to be added */
-        if (!SSL_CONNECTION_IS_TLS13(s)
-            || (s->s3.tmp.message_type != SSL3_MT_NEWSESSION_TICKET
-                && s->s3.tmp.message_type != SSL3_MT_KEY_UPDATE)) {
-            if (s->s3.tmp.message_type != SSL3_MT_SERVER_HELLO
-                || s->init_num < SERVER_HELLO_RANDOM_OFFSET + SSL3_RANDOM_SIZE
-                || memcmp(hrrrandom,
-                       s->init_buf->data + SERVER_HELLO_RANDOM_OFFSET,
-                       SSL3_RANDOM_SIZE)
-                    != 0) {
-                if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                        s->init_num + SSL3_HM_HEADER_LENGTH)) {
-                    /* SSLfatal() already called */
-                    *len = 0;
-                    return 0;
-                }
+    /* KeyUpdate and NewSessionTicket do not need to be added */
+    if (!SSL_CONNECTION_IS_TLS13(s)
+        || (s->s3.tmp.message_type != SSL3_MT_NEWSESSION_TICKET
+            && s->s3.tmp.message_type != SSL3_MT_KEY_UPDATE)) {
+        if (s->s3.tmp.message_type != SSL3_MT_SERVER_HELLO
+            || s->init_num < SERVER_HELLO_RANDOM_OFFSET + SSL3_RANDOM_SIZE
+            || memcmp(hrrrandom,
+                   s->init_buf->data + SERVER_HELLO_RANDOM_OFFSET,
+                   SSL3_RANDOM_SIZE)
+                != 0) {
+            if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
+                    s->init_num + SSL3_HM_HEADER_LENGTH)) {
+                /* SSLfatal() already called */
+                *len = 0;
+                return 0;
             }
         }
-        if (s->msg_callback)
-            s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, s->init_buf->data,
-                (size_t)s->init_num + SSL3_HM_HEADER_LENGTH, ussl,
-                s->msg_callback_arg);
     }
+    if (s->msg_callback)
+        s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, s->init_buf->data,
+            (size_t)s->init_num + SSL3_HM_HEADER_LENGTH, ussl,
+            s->msg_callback_arg);
 
     *len = s->init_num;
     return 1;
@@ -1859,11 +1815,6 @@ static const version_info tls_version_table[] = {
     { TLS1_VERSION, tlsv1_client_method, tlsv1_server_method },
 #else
     { TLS1_VERSION, NULL, NULL },
-#endif
-#ifndef OPENSSL_NO_SSL3
-    { SSL3_VERSION, sslv3_client_method, sslv3_server_method },
-#else
-    { SSL3_VERSION, NULL, NULL },
 #endif
     { 0, NULL, NULL },
 };
@@ -2086,7 +2037,7 @@ int ssl_set_version_bound(int method_version, int version, int *bound)
         return 1;
     }
 
-    valid_tls = version >= SSL3_VERSION && version <= TLS_MAX_VERSION_INTERNAL;
+    valid_tls = version > SSL3_VERSION && version <= TLS_MAX_VERSION_INTERNAL;
     valid_dtls =
         /* We support client side pre-standardisation version of DTLS */
         (version == DTLS1_BAD_VER)
@@ -2209,6 +2160,18 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
 
     suppversions = &hello->pre_proc_exts[TLSEXT_IDX_supported_versions];
 
+#ifndef OPENSSL_NO_ECH
+    /*
+     * Check we're dealing with a TLSv1.3 connection when ECH has
+     * succeeded, and not with a smuggled earlier version ClientHello
+     * (which could be a form of attack).
+     * This bit checks there is a supported version present, a little
+     * bit further below, we check that that version is TLSv1.3
+     */
+    if (!suppversions->present && s->ext.ech.success == 1)
+        return SSL_R_UNSUPPORTED_PROTOCOL;
+#endif
+
     /* If we did an HRR then supported versions is mandatory */
     if (!suppversions->present && s->hello_retry_request != SSL_HRR_NONE)
         return SSL_R_UNSUPPORTED_PROTOCOL;
@@ -2250,6 +2213,11 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
         }
 
         if (best_vers > 0) {
+#ifndef OPENSSL_NO_ECH
+            /* ECH needs TLSV1.3 also */
+            if (s->ext.ech.success == 1 && best_vers != TLS1_3_VERSION)
+                return SSL_R_UNSUPPORTED_PROTOCOL;
+#endif
             if (s->hello_retry_request != SSL_HRR_NONE) {
                 /*
                  * This is after a HelloRetryRequest so we better check that we
@@ -2915,6 +2883,12 @@ MSG_PROCESS_RETURN tls13_process_compressed_certificate(SSL_CONNECTION *sc,
         || !PACKET_get_net_3_len(pkt, &expected_length)
         || !PACKET_get_net_3_len(pkt, &comp_length)) {
         SSLfatal(sc, SSL_AD_BAD_CERTIFICATE, SSL_R_BAD_DECOMPRESSION);
+        goto err;
+    }
+
+    /* Prevent excessive pre-decompression allocation */
+    if (expected_length > sc->max_cert_list) {
+        SSLfatal(sc, SSL_AD_BAD_CERTIFICATE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
         goto err;
     }
 

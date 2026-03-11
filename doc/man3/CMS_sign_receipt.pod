@@ -9,7 +9,7 @@ CMS_sign_receipt - create a CMS signed receipt
  #include <openssl/cms.h>
 
  CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si, X509 *signcert,
-                                   EVP_PKEY *pkey, STACK_OF(X509) *certs,
+                                   EVP_PKEY *pkey, const STACK_OF(X509) *certs,
                                    unsigned int flags);
 
 =head1 DESCRIPTION
@@ -42,7 +42,7 @@ L<CMS_sign(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2008-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,16 +1,11 @@
 /*
- * Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-
-/*
- * Needed for EVP_PKEY_asn1_find
- */
-#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
 #include <openssl/x509_acert.h>
@@ -23,6 +18,9 @@
 #include "ext_dat.h"
 #include "x509_local.h"
 #include "crypto/asn1.h"
+#include "crypto/evp.h"
+
+#include <crypto/asn1.h>
 
 static int i2r_ISSUER_SERIAL(X509V3_EXT_METHOD *method,
     OSSL_ISSUER_SERIAL *iss,
@@ -46,7 +44,7 @@ ASN1_SEQUENCE(OSSL_ISSUER_SERIAL) = {
     ASN1_OPT(OSSL_ISSUER_SERIAL, issuerUID, ASN1_BIT_STRING),
 } static_ASN1_SEQUENCE_END(OSSL_ISSUER_SERIAL)
 
-    ASN1_SEQUENCE(OSSL_OBJECT_DIGEST_INFO)
+ASN1_SEQUENCE(OSSL_OBJECT_DIGEST_INFO)
     = {
           ASN1_EMBED(OSSL_OBJECT_DIGEST_INFO, digestedObjectType, ASN1_ENUMERATED),
           ASN1_OPT(OSSL_OBJECT_DIGEST_INFO, otherObjectTypeID, ASN1_OBJECT),
@@ -54,14 +52,14 @@ ASN1_SEQUENCE(OSSL_ISSUER_SERIAL) = {
           ASN1_EMBED(OSSL_OBJECT_DIGEST_INFO, objectDigest, ASN1_BIT_STRING),
       } static_ASN1_SEQUENCE_END(OSSL_OBJECT_DIGEST_INFO)
 
-        ASN1_SEQUENCE(OSSL_TARGET_CERT)
+ASN1_SEQUENCE(OSSL_TARGET_CERT)
     = {
           ASN1_SIMPLE(OSSL_TARGET_CERT, targetCertificate, OSSL_ISSUER_SERIAL),
           ASN1_OPT(OSSL_TARGET_CERT, targetName, GENERAL_NAME),
           ASN1_OPT(OSSL_TARGET_CERT, certDigestInfo, OSSL_OBJECT_DIGEST_INFO),
       } static_ASN1_SEQUENCE_END(OSSL_TARGET_CERT)
 
-        ASN1_CHOICE(OSSL_TARGET)
+ASN1_CHOICE(OSSL_TARGET)
     = {
           ASN1_EXP(OSSL_TARGET, choice.targetName, GENERAL_NAME, 0),
           ASN1_EXP(OSSL_TARGET, choice.targetGroup, GENERAL_NAME, 1),
@@ -153,7 +151,7 @@ static int i2r_OBJECT_DIGEST_INFO(X509V3_EXT_METHOD *method,
         int pkey_nid, dig_nid;
         const EVP_PKEY_ASN1_METHOD *ameth;
         if (OBJ_find_sigid_algs(sig_nid, &dig_nid, &pkey_nid)) {
-            ameth = EVP_PKEY_asn1_find(NULL, pkey_nid);
+            ameth = evp_pkey_asn1_find(pkey_nid);
             if (ameth && ameth->sig_print)
                 return ameth->sig_print(out, digalg, sig, indent + 4, 0);
         }

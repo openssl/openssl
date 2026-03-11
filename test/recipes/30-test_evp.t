@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -29,12 +29,21 @@ my $no_dsa = disabled("dsa");
 my $no_ec = disabled("ec");
 my $no_ecx = disabled("ecx");
 my $no_ec2m = disabled("ec2m");
-my $no_sm2 = disabled("sm2");
+my $no_sm2 = disabled("sm2") || disabled("x963kdf");
 my $no_siv = disabled("siv");
 my $no_argon2 = disabled("argon2");
 my $no_ml_dsa = disabled("ml-dsa");
 my $no_ml_kem = disabled("ml-kem");
 my $no_lms = disabled("lms");
+my $no_sskdf = disabled("sskdf");
+my $no_x942kdf = disabled("x942kdf");
+my $no_x963kdf = disabled("x963kdf");
+my $no_determinstic_nonce = disabled("hmac-drbg-kdf");
+my $no_kbkdf = disabled("kbkdf");
+my $no_krb5kdf = disabled("krb5kdf");
+my $no_snmpkdf = disabled("snmpkdf");
+my $no_srtpkdf = disabled("srtpkdf");
+my $no_sshkdf = disabled("sshkdf");
 
 # Default config depends on if the legacy module is built or not
 my $defaultcnf = $no_legacy ? 'default.cnf' : 'default-and-legacy.cnf';
@@ -52,17 +61,10 @@ my @files = qw(
                 evpciph_aes_stitched.txt
                 evpciph_des3_common.txt
                 evpkdf_hkdf.txt
-                evpkdf_kbkdf_counter.txt
-                evpkdf_kbkdf_kmac.txt
                 evpkdf_pbkdf1.txt
                 evpkdf_pbkdf2.txt
-                evpkdf_snmp.txt
-                evpkdf_ss.txt
-                evpkdf_ssh.txt
                 evpkdf_tls12_prf.txt
                 evpkdf_tls13_kdf.txt
-                evpkdf_x942.txt
-                evpkdf_x963.txt
                 evpmac_common.txt
                 evpmd_sha.txt
                 evppbe_pbkdf2.txt
@@ -73,14 +75,23 @@ my @files = qw(
                 evppkey_rsa_sigalg.txt
                 evprand.txt
               );
+push @files, qw(evpkdf_ssh.txt) unless $no_sshkdf;
+push @files, qw(evpkdf_snmp.txt) unless $no_snmpkdf;
+push @files, qw(evpkdf_srtp.txt) unless $no_srtpkdf;
+push @files, qw(
+                evpkdf_kbkdf_counter.txt
+                evpkdf_kbkdf_kmac.txt
+               ) unless $no_kbkdf;
+push @files, qw(evpkdf_ss.txt) unless $no_sskdf;
+push @files, qw(evpkdf_x942.txt) unless $no_x942kdf;
+push @files, qw(evpkdf_x963.txt) unless $no_x963kdf;
 push @files, qw(
                 evppkey_ffdhe.txt
                 evppkey_dh.txt
                ) unless $no_dh;
-push @files, qw(
-                evpkdf_x942_des.txt
-                evpmac_cmac_des.txt
-               ) unless $no_des;
+push @files, qw(evppkey_ffdhe_x942kdf.txt) unless ($no_x942kdf || $no_dh);
+push @files, qw(evpmac_cmac_des.txt) unless $no_des;
+push @files, qw(evpkdf_x942_des.txt) unless ($no_des || $no_x942kdf);
 push @files, qw(
                 evppkey_slh_dsa_siggen.txt
                 evppkey_slh_dsa_sigver.txt
@@ -131,7 +142,7 @@ push @files, qw(
                ) unless $no_lms;
 push @files, qw(
                 evppkey_ecdsa_rfc6979.txt
-               ) unless $no_ec;
+               ) unless ($no_ec || $no_determinstic_nonce);
 
 # A list of tests that only run with the default provider
 # (i.e. The algorithms are not present in the fips provider)
@@ -152,10 +163,8 @@ my @defltfiles = qw(
                      evpciph_seed.txt
                      evpciph_sm4.txt
                      evpencod.txt
-                     evpkdf_krb5.txt
                      evpkdf_scrypt.txt
                      evpkdf_tls11_prf.txt
-                     evpkdf_hmac_drbg.txt
                      evpmac_blake.txt
                      evpmac_poly1305.txt
                      evpmac_siphash.txt
@@ -171,13 +180,15 @@ my @defltfiles = qw(
                      evppkey_kdf_scrypt.txt
                      evppkey_kdf_tls1_prf.txt
                     );
+push @defltfiles, qw(evpkdf_krb5.txt) unless $no_krb5kdf;
 push @defltfiles, qw(evppkey_brainpool.txt) unless $no_ec;
 push @defltfiles, qw(evppkey_ecx_kem.txt) unless $no_ecx;
-push @defltfiles, qw(evppkey_dsa_rfc6979.txt) unless $no_dsa;
+push @defltfiles, qw(evppkey_dsa_rfc6979.txt) unless ($no_dsa || $no_determinstic_nonce);
 push @defltfiles, qw(evppkey_sm2.txt) unless $no_sm2;
 push @defltfiles, qw(evpciph_aes_gcm_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpciph_aes_siv.txt) unless $no_siv;
 push @defltfiles, qw(evpkdf_argon2.txt) unless $no_argon2;
+push @defltfiles, qw(evpkdf_hmac_drbg.txt) unless $no_determinstic_nonce;
 
 plan tests =>
     + (scalar(@configs) * scalar(@files))

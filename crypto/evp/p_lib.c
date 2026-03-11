@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -31,6 +31,7 @@
 #include <openssl/param_build.h>
 #include <openssl/encoder.h>
 #include <openssl/core_names.h>
+#include <openssl/provider.h>
 
 #include "internal/numbers.h" /* includes SIZE_MAX */
 #include "internal/ffc.h"
@@ -1517,9 +1518,9 @@ static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str,
     }
 #ifndef FIPS_MODULE
     if (str != NULL)
-        ameth = EVP_PKEY_asn1_find_str(NULL, str, len);
+        ameth = evp_pkey_asn1_find_str(str, len);
     else if (type != EVP_PKEY_NONE)
-        ameth = EVP_PKEY_asn1_find(NULL, type);
+        ameth = evp_pkey_asn1_find(type);
 #endif
 
     {
@@ -1704,7 +1705,7 @@ void evp_pkey_free_legacy(EVP_PKEY *x)
     const EVP_PKEY_ASN1_METHOD *ameth = x->ameth;
 
     if (ameth == NULL && x->legacy_cache_pkey.ptr != NULL)
-        ameth = EVP_PKEY_asn1_find(NULL, x->type);
+        ameth = evp_pkey_asn1_find(x->type);
 
     if (ameth != NULL) {
         if (x->legacy_cache_pkey.ptr != NULL) {
@@ -1859,6 +1860,8 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
 #ifndef FIPS_MODULE
     if (pk->pkey.ptr != NULL) {
         OP_CACHE_ELEM *op;
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+        OSSL_PARAM *p = NULL;
 
         /*
          * If the legacy "origin" hasn't changed since last time, we try
@@ -1897,11 +1900,29 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
         if (!EVP_KEYMGMT_is_a(tmp_keymgmt, OBJ_nid2sn(pk->type)))
             goto end;
 
-        if ((keydata = evp_keymgmt_newdata(tmp_keymgmt)) == NULL)
+        if (strcmp(OSSL_PROVIDER_get0_name(EVP_KEYMGMT_get0_provider(tmp_keymgmt)), "default") == 0) {
+            /*
+             * We attempt to pass the low-level object to the keymgmt. We only
+             * support this via an internal use only parameter. We break the
+             * normal rules that prevent passing complex objects via OSSL_PARAM,
+             * but this is only for the default provider where we can get away
+             * with this. This is necessary here for backwards compatibility
+             * reasons.
+             */
+            params[0] = OSSL_PARAM_construct_octet_ptr("legacy-object",
+                &pk->pkey.ptr, sizeof(pk->pkey.ptr));
+            p = params;
+        }
+        keydata = evp_keymgmt_newdata(tmp_keymgmt, p);
+        if (keydata == NULL)
             goto end;
 
-        if (!pk->ameth->export_to(pk, keydata, tmp_keymgmt->import,
-                libctx, propquery)) {
+        /*
+         * We skip the export if the key data we got back is actually the same
+         * as the low level object we passed in
+         */
+        if (keydata != pk->pkey.ptr
+            && !pk->ameth->export_to(pk, keydata, tmp_keymgmt->import, libctx, propquery)) {
             evp_keymgmt_freedata(tmp_keymgmt, keydata);
             keydata = NULL;
             goto end;
@@ -1921,14 +1942,10 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
 
         if (!CRYPTO_THREAD_write_lock(pk->lock))
             goto end;
-        if (pk->ameth->dirty_cnt(pk) != pk->dirty_cnt_copy
-            && !evp_keymgmt_util_clear_operation_cache(pk)) {
-            CRYPTO_THREAD_unlock(pk->lock);
-            evp_keymgmt_freedata(tmp_keymgmt, keydata);
-            keydata = NULL;
-            EVP_KEYMGMT_free(tmp_keymgmt);
-            goto end;
-        }
+
+        if (pk->ameth->dirty_cnt(pk) != pk->dirty_cnt_copy)
+            evp_keymgmt_util_clear_operation_cache(pk);
+
         EVP_KEYMGMT_free(tmp_keymgmt); /* refcnt-- */
 
         /* Check to make sure some other thread didn't get there first */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,7 @@
 #include <openssl/crypto.h>
 
 #include "internal/nelem.h"
+#include "internal/tlsgroups.h"
 #include "ssl_test_ctx.h"
 #include "../testutil.h"
 
@@ -155,7 +156,6 @@ static const test_enum ssl_protocols[] = {
     { "TLSv1.2", TLS1_2_VERSION },
     { "TLSv1.1", TLS1_1_VERSION },
     { "TLSv1", TLS1_VERSION },
-    { "SSLv3", SSL3_VERSION },
     { "DTLSv1", DTLS1_VERSION },
     { "DTLSv1.2", DTLS1_2_VERSION },
 };
@@ -521,19 +521,10 @@ const char *ssl_max_fragment_len_name(int MFL_mode)
 __owur static int parse_expected_key_type(int *ptype, const char *value)
 {
     int nid;
-#ifndef OPENSSL_NO_DEPRECATED_3_6
-    const EVP_PKEY_ASN1_METHOD *ameth;
-#endif
 
     if (value == NULL)
         return 0;
-#ifndef OPENSSL_NO_DEPRECATED_3_6
-    ameth = EVP_PKEY_asn1_find_str(NULL, value, -1);
-    if (ameth != NULL)
-        EVP_PKEY_asn1_get0_info(&nid, NULL, NULL, NULL, NULL, ameth);
-    else
-        nid = OBJ_sn2nid(value);
-#else
+
     /*
      * These functions map the values differently than
      * EVP_PKEY_asn1_find_str (which was used before) so use this hack
@@ -549,10 +540,20 @@ __owur static int parse_expected_key_type(int *ptype, const char *value)
         nid = OBJ_sn2nid("ED25519");
     } else if (strcmp("EC", value) == 0) {
         nid = OBJ_sn2nid("id-ecPublicKey");
+    } else if (strcmp("curveSM2", value) == 0) {
+        nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_curveSM2;
+    } else if (strcmp("X25519MLKEM768", value) == 0) {
+        nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_X25519MLKEM768;
+    } else if (strcmp("SecP256r1MLKEM768", value) == 0) {
+        nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_SecP256r1MLKEM768;
+    } else if (strcmp("SecP384r1MLKEM1024", value) == 0) {
+        nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_SecP384r1MLKEM1024;
+    } else if (strcmp("curveSM2MLKEM768", value) == 0) {
+        nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_curveSM2MLKEM768;
     } else {
         nid = OBJ_ln2nid(value);
     }
-#endif
+
     if (nid == NID_undef)
         nid = OBJ_sn2nid(value);
 #ifndef OPENSSL_NO_EC

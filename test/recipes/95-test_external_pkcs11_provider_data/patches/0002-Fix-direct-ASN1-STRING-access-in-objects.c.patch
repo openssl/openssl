@@ -1,0 +1,215 @@
+From f49db84521f99d1bdfba3449dfde341950477e1b Mon Sep 17 00:00:00 2001
+From: Bob Beck <beck@openssl.org>
+Date: Sun, 22 Feb 2026 13:08:11 -0700
+Subject: [PATCH 2/2] Fix direct ASN1 STRING access in objects.c
+
+---
+ src/objects.c | 105 ++++++++++++++++++++++++++++++++------------------
+ 1 file changed, 67 insertions(+), 38 deletions(-)
+
+diff --git a/src/objects.c b/src/objects.c
+index b853181..4745f0f 100644
+--- a/src/objects.c
++++ b/src/objects.c
+@@ -911,12 +911,14 @@ static CK_RV decode_ec_point(CK_KEY_TYPE key_type, CK_ATTRIBUTE *attr,
+         }
+     }
+ 
+-    ec_point->data = octet->data;
+-    ec_point->length = octet->length;
+-
+-    /* moved octet data, do not free it */
+-    octet->data = NULL;
+-    octet->length = 0;
++    ec_point->data =
++        OPENSSL_memdup(ASN1_STRING_get0_data(octet), ASN1_STRING_length(octet));
++    if (!ec_point->data) {
++        ret = CKR_HOST_MEMORY;
++        ec_point->length = 0;
++        goto done;
++    }
++    ec_point->length = ASN1_STRING_length(octet);
+ 
+     ret = CKR_OK;
+ done:
+@@ -1791,7 +1793,6 @@ CK_RV p11prov_derive_key(P11PROV_OBJ *key, CK_MECHANISM *mechanism,
+     P11PROV_CTX *ctx = p11prov_obj_get_prov_ctx(key);
+     CK_OBJECT_HANDLE handle = CK_INVALID_HANDLE;
+     P11PROV_SESSION *session = *_session;
+-    bool first_pass = true;
+     CK_RV ret;
+ 
+     /* do this first as it may cause a refresh of the object that will
+@@ -3884,42 +3885,53 @@ static CK_RV return_dup_key(P11PROV_OBJ *dst, P11PROV_OBJ *src)
+ 
+ static CK_RV fix_ec_key_import(P11PROV_OBJ *key, int allocattrs)
+ {
++    CK_RV ret = CKR_GENERAL_ERROR;
+     CK_ATTRIBUTE *pub;
+-    ASN1_OCTET_STRING oct;
++    ASN1_OCTET_STRING *oct = NULL;
+     unsigned char *der = NULL;
+     int len;
+ 
+     if (key->numattrs >= allocattrs) {
+-        P11PROV_raise(key->ctx, CKR_GENERAL_ERROR,
+-                      "Too many attributes?? %d >= %d", key->numattrs,
+-                      allocattrs);
+-        return CKR_GENERAL_ERROR;
++        P11PROV_raise(key->ctx, ret, "Too many attributes?? %d >= %d",
++                      key->numattrs, allocattrs);
++        goto done;
+     }
+ 
+     pub = p11prov_obj_get_attr(key, CKA_P11PROV_PUB_KEY);
+     if (!pub) {
+-        P11PROV_raise(key->ctx, CKR_KEY_INDIGESTIBLE, "No public key found");
+-        return CKR_KEY_INDIGESTIBLE;
++       P11PROV_raise(key->ctx, CKR_KEY_INDIGESTIBLE, "No public key found");
++       ret = CKR_KEY_INDIGESTIBLE;
++       goto done;
+     }
+ 
+-    oct.data = pub->pValue;
+-    oct.length = pub->ulValueLen;
+-    oct.flags = 0;
+-
+-    len = i2d_ASN1_OCTET_STRING(&oct, &der);
++    oct = ASN1_OCTET_STRING_new();
++    if (!oct) {
++       goto done;
++    }
++    if (!ASN1_STRING_set(oct, pub->pValue, pub->ulValueLen)) {
++       goto done;
++    }
++    len = i2d_ASN1_OCTET_STRING(oct, &der);
+     if (len < 0) {
+-        P11PROV_raise(key->ctx, CKR_KEY_INDIGESTIBLE,
+-                      "Failure to encode EC point to DER");
+-        return CKR_KEY_INDIGESTIBLE;
++       ret = CKR_KEY_INDIGESTIBLE;
++       P11PROV_raise(key->ctx, ret, "Failure to encode EC point to DER");
++       goto done;
+     }
+     key->attrs[key->numattrs].type = CKA_EC_POINT;
+     key->attrs[key->numattrs].pValue = der;
++    der = NULL;
+     key->attrs[key->numattrs].ulValueLen = len;
+     key->numattrs++;
+ 
+     P11PROV_debug("fixing EC key %p import", key);
+ 
+-    return CKR_OK;
++    ret = CKR_OK;
++
++done:
++   OPENSSL_free(der);
++   ASN1_OCTET_STRING_free(oct);
++   return ret;
++
+ }
+ 
+ static CK_RV p11prov_obj_import_public_key(P11PROV_OBJ *key, CK_KEY_TYPE type,
+@@ -5221,11 +5233,11 @@ CK_RV p11prov_obj_set_ec_encoded_public_key(P11PROV_OBJ *key,
+                                             const void *pubkey,
+                                             size_t pubkey_len)
+ {
+-    CK_RV rv;
++    CK_RV rv = CKR_GENERAL_ERROR;
+     CK_ATTRIBUTE *pub;
+     CK_ATTRIBUTE *ecpoint;
+     CK_ATTRIBUTE new_pub;
+-    ASN1_OCTET_STRING oct;
++    ASN1_OCTET_STRING *oct = NULL;
+     unsigned char *der = NULL;
+     int add_attrs = 0;
+     int len;
+@@ -5238,8 +5250,9 @@ CK_RV p11prov_obj_set_ec_encoded_public_key(P11PROV_OBJ *key,
+         /* not matching, error out */
+         P11PROV_raise(key->ctx, CKR_KEY_INDIGESTIBLE,
+                       "Cannot change public key of a token object");
+-        return CKR_KEY_INDIGESTIBLE;
+-    }
++        rv = CKR_KEY_INDIGESTIBLE;
++        goto done;
++   }
+ 
+     switch (key->data.key.type) {
+     case CKK_EC:
+@@ -5252,13 +5265,15 @@ CK_RV p11prov_obj_set_ec_encoded_public_key(P11PROV_OBJ *key,
+             /* check that this is a public key */
+             P11PROV_raise(key->ctx, CKR_KEY_INDIGESTIBLE,
+                           "Invalid Key type, not a public key");
+-            return CKR_KEY_INDIGESTIBLE;
++            rv = CKR_KEY_INDIGESTIBLE;
++            goto done;
+         }
+         break;
+     default:
+         P11PROV_raise(key->ctx, CKR_KEY_INDIGESTIBLE,
+                       "Invalid Key type, not an EC/ED key");
+-        return CKR_KEY_INDIGESTIBLE;
++        rv = CKR_KEY_INDIGESTIBLE;
++        goto done;
+     }
+ 
+     pub = p11prov_obj_get_attr(key, CKA_P11PROV_PUB_KEY);
+@@ -5277,7 +5292,8 @@ CK_RV p11prov_obj_set_ec_encoded_public_key(P11PROV_OBJ *key,
+         if (!ptr) {
+             P11PROV_raise(key->ctx, CKR_HOST_MEMORY,
+                           "Failed to store key public key");
+-            return CKR_HOST_MEMORY;
++            rv = CKR_HOST_MEMORY;
++            goto done;
+         }
+         key->attrs = ptr;
+     }
+@@ -5305,24 +5321,37 @@ CK_RV p11prov_obj_set_ec_encoded_public_key(P11PROV_OBJ *key,
+     new_pub.ulValueLen = (CK_ULONG)pubkey_len;
+     rv = p11prov_copy_attr(pub, &new_pub);
+     if (rv != CKR_OK) {
+-        return rv;
++        goto done;
+     }
+ 
+-    oct.data = (unsigned char *)pubkey;
+-    oct.length = (int)pubkey_len;
+-    oct.flags = 0;
+-
+-    len = i2d_ASN1_OCTET_STRING(&oct, &der);
++    oct = ASN1_STRING_new();
++    if (!oct) {
++        rv = CKR_HOST_MEMORY;
++        goto done;
++    }
++    if (!ASN1_STRING_set(oct, pubkey, pubkey_len)) {
++        rv = CKR_HOST_MEMORY;
++        goto done;
++    }
++    len = i2d_ASN1_OCTET_STRING(oct, &der);
+     if (len < 0) {
+         P11PROV_raise(key->ctx, CKR_KEY_INDIGESTIBLE,
+                       "Failure to encode EC point to DER");
+-        return CKR_KEY_INDIGESTIBLE;
++        rv = CKR_KEY_INDIGESTIBLE;
++        goto done;
+     }
+     ecpoint->type = CKA_EC_POINT;
+     ecpoint->pValue = der;
++    der = NULL;
+     ecpoint->ulValueLen = len;
+ 
+-    return CKR_OK;
++    rv = CKR_OK;
++
++done:
++    ASN1_OCTET_STRING_free(oct);
++    OPENSSL_free(der);
++
++    return rv;
+ }
+ 
+ CK_RV p11prov_obj_copy_specific_attr(P11PROV_OBJ *pub_key,
+-- 
+2.52.0
+

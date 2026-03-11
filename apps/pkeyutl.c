@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -38,7 +38,7 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
 
 static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
     EVP_PKEY *pkey, BIO *in,
-    int filesize, unsigned char *sig, int siglen,
+    int filesize, unsigned char *sig, size_t siglen,
     unsigned char **out, size_t *poutlen);
 
 static int only_nomd(EVP_PKEY *pkey)
@@ -148,7 +148,7 @@ int pkeyutl_main(int argc, char **argv)
     char hexdump = 0, asn1parse = 0, rev = 0, *prog;
     unsigned char *buf_in = NULL, *buf_out = NULL, *sig = NULL, *secret = NULL;
     OPTION_CHOICE o;
-    int buf_inlen = 0, siglen = -1;
+    size_t buf_inlen = 0, siglen = 0;
     int keyform = FORMAT_UNDEF, peerform = FORMAT_UNDEF;
     int keysize = -1, pkey_op = EVP_PKEY_OP_SIGN, key_type = KEY_PRIVKEY;
     int ret = 1, rv = -1;
@@ -357,7 +357,7 @@ int pkeyutl_main(int argc, char **argv)
 
     if (rawin) {
         if ((mctx = EVP_MD_CTX_new()) == NULL) {
-            BIO_printf(bio_err, "Error: out of memory\n");
+            BIO_puts(bio_err, "Error: out of memory\n");
             goto end;
         }
     }
@@ -479,8 +479,8 @@ int pkeyutl_main(int argc, char **argv)
     if (pkey_op == EVP_PKEY_OP_ENCAPSULATE
         || pkey_op == EVP_PKEY_OP_DECAPSULATE) {
         if (secoutfile == NULL && pkey_op == EVP_PKEY_OP_ENCAPSULATE) {
-            BIO_printf(bio_err, "KEM-based shared-secret derivation requires "
-                                "the '-secret <file>' option\n");
+            BIO_puts(bio_err, "KEM-based shared-secret derivation requires "
+                              "the '-secret <file>' option\n");
             goto end;
         }
         /* For backwards compatibility, default decap secrets to the output */
@@ -491,31 +491,31 @@ int pkeyutl_main(int argc, char **argv)
 
     if (sigfile != NULL) {
         BIO *sigbio = BIO_new_file(sigfile, "rb");
+        size_t maxsiglen = 16 * 1024 * 1024;
 
         if (sigbio == NULL) {
             BIO_printf(bio_err, "Can't open signature file %s\n", sigfile);
             goto end;
         }
-        siglen = bio_to_mem(&sig, keysize * 10, sigbio);
-        BIO_free(sigbio);
-        if (siglen < 0) {
-            BIO_printf(bio_err, "Error reading signature data\n");
+        if (!bio_to_mem(&sig, &siglen, maxsiglen, sigbio)) {
+            BIO_free(sigbio);
+            BIO_puts(bio_err, "Error reading signature data\n");
             goto end;
         }
+        BIO_free(sigbio);
     }
 
     /* Raw input data is handled elsewhere */
     if (in != NULL && !rawin) {
         /* Read the input data */
-        buf_inlen = bio_to_mem(&buf_in, -1, in);
-        if (buf_inlen < 0) {
-            BIO_printf(bio_err, "Error reading input Data\n");
+        if (!bio_to_mem(&buf_in, &buf_inlen, 0, in)) {
+            BIO_puts(bio_err, "Error reading input Data\n");
             goto end;
         }
         if (rev) {
             size_t i;
             unsigned char ctmp;
-            size_t l = (size_t)buf_inlen;
+            size_t l = buf_inlen;
 
             for (i = 0; i < l / 2; i++) {
                 ctmp = buf_in[i];
@@ -530,7 +530,8 @@ int pkeyutl_main(int argc, char **argv)
         && (pkey_op == EVP_PKEY_OP_SIGN || pkey_op == EVP_PKEY_OP_VERIFY)) {
         if (buf_inlen > EVP_MAX_MD_SIZE) {
             BIO_printf(bio_err,
-                "Error: The non-raw input data length %d is too long - max supported hashed size is %d\n",
+                "Error: The non-raw input data length %zd is too long - "
+                "max supported hashed size is %d\n",
                 buf_inlen, EVP_MAX_MD_SIZE);
             goto end;
         }
@@ -541,8 +542,7 @@ int pkeyutl_main(int argc, char **argv)
             rv = do_raw_keyop(pkey_op, mctx, pkey, in, filesize, sig, siglen,
                 NULL, 0);
         } else {
-            rv = EVP_PKEY_verify(ctx, sig, (size_t)siglen,
-                buf_in, (size_t)buf_inlen);
+            rv = EVP_PKEY_verify(ctx, sig, siglen, buf_in, buf_inlen);
         }
         if (rv == 1) {
             BIO_puts(out, "Signature Verified Successfully\n");
@@ -562,7 +562,7 @@ int pkeyutl_main(int argc, char **argv)
             rv = 1;
         } else {
             rv = do_keyop(ctx, pkey_op, NULL, &buf_outlen,
-                buf_in, (size_t)buf_inlen, NULL, &secretlen);
+                buf_in, buf_inlen, NULL, &secretlen);
         }
         if (rv > 0
             && (secretlen > 0 || (pkey_op != EVP_PKEY_OP_ENCAPSULATE && pkey_op != EVP_PKEY_OP_DECAPSULATE))
@@ -573,7 +573,7 @@ int pkeyutl_main(int argc, char **argv)
                 secret = app_malloc(secretlen, "secret output");
             rv = do_keyop(ctx, pkey_op,
                 buf_out, &buf_outlen,
-                buf_in, (size_t)buf_inlen, secret, &secretlen);
+                buf_in, buf_inlen, secret, &secretlen);
         }
     }
     if (rv <= 0) {
@@ -629,11 +629,11 @@ static EVP_PKEY *get_pkey(const char *kdfalg,
     if (((pkey_op == EVP_PKEY_OP_SIGN) || (pkey_op == EVP_PKEY_OP_DECRYPT)
             || (pkey_op == EVP_PKEY_OP_DERIVE))
         && (key_type != KEY_PRIVKEY && kdfalg == NULL)) {
-        BIO_printf(bio_err, "A private key is needed for this operation\n");
+        BIO_puts(bio_err, "A private key is needed for this operation\n");
         return NULL;
     }
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
-        BIO_printf(bio_err, "Error getting password\n");
+        BIO_puts(bio_err, "Error getting password\n");
         return NULL;
     }
     switch (key_type) {
@@ -822,7 +822,7 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
 
 static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
     EVP_PKEY *pkey, BIO *in,
-    int filesize, unsigned char *sig, int siglen,
+    int filesize, unsigned char *sig, size_t siglen,
     unsigned char **out, size_t *poutlen)
 {
     int rv = 0;
@@ -833,24 +833,25 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
     /* Some algorithms only support oneshot digests */
     if (only_nomd(pkey)) {
         if (filesize < 0) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "Error: unable to determine file size for oneshot operation\n");
             goto end;
         }
-        mbuf = app_malloc(filesize, "oneshot sign/verify buffer");
+        if (filesize > 0)
+            mbuf = app_malloc(filesize, "oneshot sign/verify buffer");
         switch (pkey_op) {
         case EVP_PKEY_OP_VERIFY:
             buf_len = BIO_read(in, mbuf, filesize);
             if (buf_len != filesize) {
-                BIO_printf(bio_err, "Error reading raw input data\n");
+                BIO_puts(bio_err, "Error reading raw input data\n");
                 goto end;
             }
-            rv = EVP_DigestVerify(mctx, sig, (size_t)siglen, mbuf, buf_len);
+            rv = EVP_DigestVerify(mctx, sig, siglen, mbuf, buf_len);
             break;
         case EVP_PKEY_OP_SIGN:
             buf_len = BIO_read(in, mbuf, filesize);
             if (buf_len != filesize) {
-                BIO_printf(bio_err, "Error reading raw input data\n");
+                BIO_puts(bio_err, "Error reading raw input data\n");
                 goto end;
             }
             rv = EVP_DigestSign(mctx, NULL, poutlen, mbuf, buf_len);
@@ -870,16 +871,16 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
             if (buf_len == 0)
                 break;
             if (buf_len < 0) {
-                BIO_printf(bio_err, "Error reading raw input data\n");
+                BIO_puts(bio_err, "Error reading raw input data\n");
                 goto end;
             }
             rv = EVP_DigestVerifyUpdate(mctx, tbuf, (size_t)buf_len);
             if (rv != 1) {
-                BIO_printf(bio_err, "Error verifying raw input data\n");
+                BIO_puts(bio_err, "Error verifying raw input data\n");
                 goto end;
             }
         }
-        rv = EVP_DigestVerifyFinal(mctx, sig, (size_t)siglen);
+        rv = EVP_DigestVerifyFinal(mctx, sig, siglen);
         break;
     case EVP_PKEY_OP_SIGN:
         for (;;) {
@@ -887,12 +888,12 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
             if (buf_len == 0)
                 break;
             if (buf_len < 0) {
-                BIO_printf(bio_err, "Error reading raw input data\n");
+                BIO_puts(bio_err, "Error reading raw input data\n");
                 goto end;
             }
             rv = EVP_DigestSignUpdate(mctx, tbuf, (size_t)buf_len);
             if (rv != 1) {
-                BIO_printf(bio_err, "Error signing raw input data\n");
+                BIO_puts(bio_err, "Error signing raw input data\n");
                 goto end;
             }
         }

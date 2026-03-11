@@ -1,16 +1,11 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-
-/*
- * because of EVP_PKEY_asn1_find deprecation
- */
-#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
@@ -21,6 +16,7 @@
 #include <openssl/x509v3.h>
 #include "crypto/asn1.h"
 #include "crypto/x509.h"
+#include "crypto/evp.h"
 
 void OSSL_STACK_OF_X509_free(STACK_OF(X509) *certs)
 {
@@ -28,12 +24,12 @@ void OSSL_STACK_OF_X509_free(STACK_OF(X509) *certs)
 }
 
 #ifndef OPENSSL_NO_STDIO
-int X509_print_fp(FILE *fp, X509 *x)
+int X509_print_fp(FILE *fp, const X509 *x)
 {
     return X509_print_ex_fp(fp, x, XN_FLAG_COMPAT, X509_FLAG_COMPAT);
 }
 
-int X509_print_ex_fp(FILE *fp, X509 *x, unsigned long nmflag, unsigned long cflag)
+int X509_print_ex_fp(FILE *fp, const X509 *x, unsigned long nmflag, unsigned long cflag)
 {
     BIO *b;
     int ret;
@@ -138,7 +134,7 @@ int X509_print_ex(BIO *bp, const X509 *x, unsigned long nmflags, unsigned long c
             goto err;
     }
     if (!(cflag & X509_FLAG_NO_PUBKEY)) {
-        X509_PUBKEY *xpkey = X509_get_X509_PUBKEY(x);
+        const X509_PUBKEY *xpkey = X509_get_X509_PUBKEY(x);
         ASN1_OBJECT *xpoid;
         X509_PUBKEY_get0_param(&xpoid, NULL, NULL, NULL, xpkey);
         if (BIO_write(bp, "        Subject Public Key Info:\n", 33) <= 0)
@@ -204,7 +200,7 @@ int X509_ocspid_print(BIO *bp, const X509 *x)
     int derlen;
     int i;
     unsigned char SHA1md[SHA_DIGEST_LENGTH];
-    ASN1_BIT_STRING *keybstr;
+    const ASN1_BIT_STRING *keybstr;
     const X509_NAME *subj;
     EVP_MD *md = NULL;
 
@@ -307,7 +303,7 @@ int X509_signature_print(BIO *bp, const X509_ALGOR *sigalg,
         int pkey_nid, dig_nid;
         const EVP_PKEY_ASN1_METHOD *ameth;
         if (OBJ_find_sigid_algs(sig_nid, &dig_nid, &pkey_nid)) {
-            ameth = EVP_PKEY_asn1_find(NULL, pkey_nid);
+            ameth = evp_pkey_asn1_find(pkey_nid);
             if (ameth && ameth->sig_print)
                 return ameth->sig_print(bp, sigalg, sig, indent + 4, 0);
         }
@@ -323,7 +319,7 @@ int X509_signature_print(BIO *bp, const X509_ALGOR *sigalg,
 int X509_aux_print(BIO *out, const X509 *x, int indent)
 {
     char oidstr[80], first;
-    STACK_OF(ASN1_OBJECT) *trust, *reject;
+    const STACK_OF(ASN1_OBJECT) *trust, *reject;
     const unsigned char *alias, *keyid;
     int keyidlen;
     int i;
@@ -378,34 +374,45 @@ int X509_aux_print(BIO *out, const X509 *x, int indent)
  * Helper functions for improving certificate verification error diagnostics
  */
 
-int ossl_x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags)
+int ossl_x509_print_ex_brief(BIO *bio, const X509 *cert, unsigned long neg_cflags)
 {
     unsigned long flags = ASN1_STRFLGS_RFC2253 | ASN1_STRFLGS_ESC_QUOTE | XN_FLAG_SEP_CPLUS_SPC | XN_FLAG_FN_SN;
+    X509_VERIFY_PARAM *vpm = X509_VERIFY_PARAM_new();
+    int error, ret = 0;
 
-    if (cert == NULL)
-        return BIO_printf(bio, "    (no certificate)\n") > 0;
+    if (vpm == NULL) {
+        ret = BIO_printf(bio, "    (malloc failed)\n") > 0;
+        goto err;
+    }
+    if (cert == NULL) {
+        ret = BIO_printf(bio, "    (no certificate)\n") > 0;
+        goto err;
+    }
     if (BIO_printf(bio, "    certificate\n") <= 0
         || !X509_print_ex(bio, cert, flags, ~X509_FLAG_NO_SUBJECT))
-        return 0;
-    if (X509_check_issued((X509 *)cert, cert) == X509_V_OK) {
+        goto err;
+    if (X509_check_issued(cert, cert) == X509_V_OK) {
         if (BIO_printf(bio, "        self-issued\n") <= 0)
-            return 0;
+            goto err;
     } else {
         if (BIO_printf(bio, " ") <= 0
             || !X509_print_ex(bio, cert, flags, ~X509_FLAG_NO_ISSUER))
-            return 0;
+            goto err;
     }
     if (!X509_print_ex(bio, cert, flags,
             ~(X509_FLAG_NO_SERIAL | X509_FLAG_NO_VALIDITY)))
-        return 0;
-    if (X509_cmp_current_time(X509_get0_notBefore(cert)) > 0)
-        if (BIO_printf(bio, "        not yet valid\n") <= 0)
-            return 0;
-    if (X509_cmp_current_time(X509_get0_notAfter(cert)) < 0)
-        if (BIO_printf(bio, "        no more valid\n") <= 0)
-            return 0;
-    return X509_print_ex(bio, cert, flags,
+        goto err;
+
+    if (!X509_check_certificate_times(vpm, cert, &error)) {
+        if (BIO_printf(bio, "        %s\n", X509_verify_cert_error_string(error)) <= 0)
+            goto err;
+    }
+    ret = X509_print_ex(bio, cert, flags,
         ~neg_cflags & ~X509_FLAG_EXTENSIONS_ONLY_KID);
+
+err:
+    X509_VERIFY_PARAM_free(vpm);
+    return ret;
 }
 
 static int print_certs(BIO *bio, const STACK_OF(X509) *certs)

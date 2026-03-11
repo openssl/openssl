@@ -108,10 +108,13 @@ providers/implementations/kdfs/pbkdf2.inc
 providers/implementations/kdfs/pkcs12kdf.inc
 providers/implementations/kdfs/pvkkdf.inc
 providers/implementations/kdfs/scrypt.inc
+providers/implementations/kdfs/snmpkdf.inc
+providers/implementations/kdfs/srtpkdf.inc
 providers/implementations/kdfs/sshkdf.inc
 providers/implementations/kdfs/sskdf.inc
 providers/implementations/kdfs/tls1_prf.inc
 providers/implementations/kdfs/x942kdf.inc
+providers/implementations/kdfs/x963kdf.inc
 providers/implementations/kem/ec_kem.inc
 providers/implementations/kem/ecx_kem.inc
 providers/implementations/kem/ml_kem_kem.inc
@@ -161,8 +164,9 @@ providers/implementations/digests/digestcommon.inc
 providers/implementations/digests/mdc2_prov.inc
 providers/implementations/digests/sha2_prov.inc
 providers/implementations/digests/sha3_prov.inc
+providers/implementations/digests/ml_dsa_mu_prov.inc
+providers/implementations/digests/cshake_prov.inc
 providers/implementations/include/prov/blake2_params.inc
-providers/implementations/kdfs/snmpkdf.inc
 providers/implementations/macs/cmac_prov.inc
 providers/implementations/macs/gmac_prov.inc
 providers/implementations/macs/hmac_prov.inc
@@ -301,8 +305,6 @@ providers/implementations/rands/test_rng.inc
 
 # Misc auto generated files
 /doc/man7/openssl_user_macros.pod
-/tools/c_rehash
-/tools/c_rehash.pl
 /util/shlib_wrap.sh
 /util/wrap.pl
 /tags
@@ -423,3 +425,11 @@ doc-nits
 # LSP (Language Server Protocol) support
 .cache/
 compile_commands.json
+
+# coverage files
+*.gcda
+*.gcno
+lcov.info
+run_tests
+depend
+

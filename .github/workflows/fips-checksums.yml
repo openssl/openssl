@@ -1,4 +1,4 @@
-# Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -26,7 +26,7 @@ jobs:
           mkdir ./build
           mkdir ./source
           mkdir ./artifact
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.base.repo.full_name }}
           ref: ${{ github.event.pull_request.base.ref }}
@@ -44,7 +44,7 @@ jobs:
       - name: make fips-checksums pristine
         run: make fips-checksums
         working-directory: ./build-pristine
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           path: source
           persist-credentials: false
@@ -79,7 +79,7 @@ jobs:
   compute-abidiff:
     runs-on: ubuntu-latest
     env:
-      BUILD_OPTS: -g --strict-warnings enable-ktls enable-fips enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-ssl3 enable-ssl3-method enable-trace enable-zlib enable-zstd
+      BUILD_OPTS: -g --strict-warnings enable-ktls enable-fips enable-egd enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-sctp enable-trace enable-zlib enable-zstd
     steps:
       - name: create build dirs
         run: |
@@ -90,7 +90,7 @@ jobs:
           mkdir ./artifact
       - name: install extra config support
         run: sudo apt-get -y install libsctp-dev abigail-tools libzstd-dev zstd
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           repository: ${{ github.event.pull_request.base.repo.full_name }}
           ref: ${{ github.event.pull_request.base.ref }}
@@ -102,7 +102,7 @@ jobs:
       - name: make pristine
         run: make -s -j4
         working-directory: ./build-pristine
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           path: source
           persist-credentials: false

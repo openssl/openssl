@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -476,7 +476,7 @@ static const u32 rcon[] = {
 /**
  * Expand the cipher key into the encryption key schedule.
  */
-int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
+int AES_set_encrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
 
@@ -559,7 +559,7 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 /**
  * Expand the cipher key into the decryption key schedule.
  */
-int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
+int AES_set_decrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
 

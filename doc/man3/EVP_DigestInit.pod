@@ -19,7 +19,7 @@ EVP_MD_names_do_all, EVP_MD_get0_provider, EVP_MD_get_type,
 EVP_MD_get_pkey_type, EVP_MD_get_size, EVP_MD_get_block_size, EVP_MD_get_flags,
 EVP_MD_CTX_get0_name, EVP_MD_CTX_md, EVP_MD_CTX_get0_md, EVP_MD_CTX_get1_md,
 EVP_MD_CTX_get_type, EVP_MD_CTX_get_size_ex, EVP_MD_CTX_get_block_size,
-EVP_MD_CTX_get0_md_data, EVP_MD_CTX_update_fn, EVP_MD_CTX_set_update_fn,
+EVP_MD_CTX_get0_md_data,
 EVP_md_null,
 EVP_get_digestbyname, EVP_get_digestbynid, EVP_get_digestbyobj,
 EVP_MD_CTX_get_pkey_ctx, EVP_MD_CTX_set_pkey_ctx,
@@ -97,7 +97,6 @@ EVP_MD_CTX_type, EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_md_data
  int EVP_MD_CTX_get_size_ex(const EVP_MD_CTX *ctx);
  int EVP_MD_CTX_get_block_size(const EVP_MD_CTX *ctx);
  int EVP_MD_CTX_get_type(const EVP_MD_CTX *ctx);
- void *EVP_MD_CTX_get0_md_data(const EVP_MD_CTX *ctx);
 
  const EVP_MD *EVP_md_null(void);
 
@@ -124,7 +123,7 @@ EVP_MD_CTX_type, EVP_MD_CTX_pkey_ctx, EVP_MD_CTX_md_data
  #define EVP_MD_CTX_block_size EVP_MD_CTX_get_block_size
  #define EVP_MD_CTX_type EVP_MD_CTX_get_type
  #define EVP_MD_CTX_pkey_ctx EVP_MD_CTX_get_pkey_ctx
- #define EVP_MD_CTX_md_data EVP_MD_CTX_get0_md_data
+
 
 The following functions have been deprecated since OpenSSL 3.0, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
@@ -132,12 +131,13 @@ see L<openssl_user_macros(7)>:
 
  const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
 
- int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
-                                              const void *data, size_t count);
+The following functions have been deprecated since OpenSSL 4.0, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
 
- void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
-                               int (*update)(EVP_MD_CTX *ctx,
-                                             const void *data, size_t count));
+ void *EVP_MD_CTX_get0_md_data(const EVP_MD_CTX *ctx);
+
+ #define EVP_MD_CTX_md_data EVP_MD_CTX_get0_md_data
 
 =head1 DESCRIPTION
 
@@ -150,8 +150,9 @@ Each Message digest algorithm (such as SHA256) produces a fixed size output
 length which is returned when EVP_DigestFinal_ex() is called.
 Extendable Output Functions (XOF) such as SHAKE256 have a variable sized output
 length I<outlen> which can be used with either EVP_DigestFinalXOF() or
-EVP_DigestSqueeze(). EVP_DigestFinal_ex() may also be used for an XOF, but the
-"xoflen" must be set beforehand (See L</PARAMETERS>).
+EVP_DigestSqueeze(). EVP_DigestFinal_ex() may also be used for XOF algorithms, but
+for XOF algorithms that do not have a default size the "xoflen" must be set
+beforehand (See L</PARAMETERS>).
 Note that EVP_MD_get_size() and EVP_MD_CTX_get_size_ex() behave differently for
 an XOF.
 
@@ -340,6 +341,11 @@ different OpenSSL version and does not guarantee interoperability between
 different providers. Some providers may not allow export/import across
 process boundaries.
 
+NOTE: Applications must guarantee that only trusted data is used during
+deserialization. The deserialization operation is not built to address
+adversarial data compromise, and only basic checks to protect from simple
+mistakes are implemented.
+
 =item EVP_MD_CTX_dup()
 
 Can be used to duplicate the message digest state from I<in>.  This is useful
@@ -381,7 +387,7 @@ L<OSSL_LIB_CTX(3)>) will be considered.
 =item EVP_MD_xof()
 
 Returns 1 if I<md> is an Extendable-output Function (XOF) otherwise it returns
-0. SHAKE128 and SHAKE256 are XOF functions.
+0. SHAKE128, SHAKE256, CSHAKE128 and CSHAKE256 are XOF functions.
 It returns 0 for BLAKE2B algorithms.
 
 =item EVP_MD_get0_name(),
@@ -432,9 +438,8 @@ returns B<NID_sha1>. This function is normally used when setting ASN1 OIDs.
 
 =item EVP_MD_CTX_get0_md_data()
 
-Return the digest method private data for the passed B<EVP_MD_CTX>. This
-function exists for legacy backward compatibility reasons and always returns
-NULL.
+This function is deprecated and exists for legacy backward compatibility reasons
+and always returns NULL.
 
 =item EVP_MD_CTX_get0_md(), EVP_MD_CTX_get1_md()
 
@@ -447,16 +452,6 @@ this function will not have its reference count incremented and therefore it
 should not be used after the EVP_MD_CTX is freed.
 EVP_MD_CTX_get1_md() is the same except the ownership is passed to the
 caller and is from the passed B<EVP_MD_CTX>.
-
-=item EVP_MD_CTX_set_update_fn()
-
-Sets the update function for I<ctx> to I<update>.
-This is the function that is called by EVP_DigestUpdate(). If not set, the
-update function from the B<EVP_MD> type specified at initialization is used.
-
-=item EVP_MD_CTX_update_fn()
-
-Returns the update function for I<ctx>.
 
 =item EVP_MD_get_flags()
 
@@ -537,7 +532,7 @@ following OSSL_PARAM keys:
 
 Sets or gets the digest length for extendable output functions.
 The value should not exceed what can be given using a B<size_t>.
-It may be used by SHAKE-128 and SHAKE-256 to set the
+It may be used by SHAKE-128, CSHAKE-128, SHAKE-256 and CSHAKE-256, to set the
 output length used by EVP_DigestFinal_ex() and EVP_DigestFinal().
 
 =item "size" (B<OSSL_DIGEST_PARAM_SIZE>) <unsigned integer>
@@ -557,6 +552,20 @@ EVP_MD_CTX_set_params() can be used with the following OSSL_PARAM keys:
 
 Sets the padding type.
 It is used by the MDC2 algorithm.
+
+=item "function-name" (B<OSSL_DIGEST_PARAM_FUNCTION_NAME>)<UTF8 string>
+
+Sets the function name string.
+It is used by L<EVP_MD-CSHAKE(7)>.
+
+=item "customization" (B<OSSL_DIGEST_PARAM_CUSTOMIZATION>)<UTF8 string>
+
+Sets a customisation string.
+It is used by L<EVP_MD-CSHAKE(7)>.
+
+=item "properties" (B<OSSL_DIGEST_PARAM_PROPERTIES>)<UTF8 string>
+
+Sets properties to be used when fetching algorithm implementations.
 
 =back
 
@@ -891,7 +900,7 @@ OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -148,6 +148,11 @@ int DH_up_ref(DH *r)
     REF_PRINT_COUNT("DH", i, r);
     REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
+}
+
+OSSL_LIB_CTX *ossl_dh_get0_libctx(const DH *dh)
+{
+    return dh->libctx;
 }
 
 void ossl_dh_set0_libctx(DH *d, OSSL_LIB_CTX *libctx)

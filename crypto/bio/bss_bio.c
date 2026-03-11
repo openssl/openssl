@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -112,6 +112,9 @@ static int bio_read(BIO *bio, char *buf, int size_)
     size_t rest;
     struct bio_bio_st *b, *peer_b;
 
+    if (buf == NULL || size_ <= 0)
+        return 0;
+
     BIO_clear_retry_flags(bio);
 
     if (!bio->init)
@@ -125,9 +128,6 @@ static int bio_read(BIO *bio, char *buf, int size_)
     assert(peer_b->buf != NULL);
 
     peer_b->request = 0; /* will be set in "retry_read" situation */
-
-    if (buf == NULL || size == 0)
-        return 0;
 
     if (peer_b->len == 0) {
         if (peer_b->closed)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -29,19 +29,17 @@
 #include <openssl/cmp_util.h> /* for OSSL_CMP_log_close() */
 #include <openssl/trace.h>
 #include <openssl/ssl.h> /* for OPENSSL_INIT_(NO_)?LOAD_SSL_STRINGS */
+#include "crypto/bn.h"
 #include "crypto/ctype.h"
 #include "sslerr.h"
+
+#ifdef S390X_MOD_EXP
+#include "s390x_arch.h"
+#endif
 
 static int stopped = 0;
 static uint64_t optsdone = 0;
 
-typedef struct ossl_init_stop_st OPENSSL_INIT_STOP;
-struct ossl_init_stop_st {
-    void (*handler)(void);
-    OPENSSL_INIT_STOP *next;
-};
-
-static OPENSSL_INIT_STOP *stop_handlers = NULL;
 /* Guards access to the optsdone variable on platforms without atomics */
 static CRYPTO_RWLOCK *optsdone_lock = NULL;
 /* Guards simultaneous INIT_LOAD_CONFIG calls with non-NULL settings */
@@ -50,6 +48,7 @@ static CRYPTO_THREAD_LOCAL in_init_config_local;
 
 static CRYPTO_ONCE base = CRYPTO_ONCE_STATIC_INIT;
 static int base_inited = 0;
+static int do_global_cleanup = 0;
 DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 {
     /* no need to init trace */
@@ -82,98 +81,6 @@ err:
     init_lock = NULL;
 
     return 0;
-}
-
-static CRYPTO_ONCE register_atexit = CRYPTO_ONCE_STATIC_INIT;
-#if !defined(OPENSSL_SYS_UEFI) && defined(_WIN32)
-static int win32atexit(void)
-{
-    OPENSSL_cleanup();
-    return 0;
-}
-#endif
-
-DEFINE_RUN_ONCE_STATIC(ossl_init_register_atexit)
-{
-#ifndef OPENSSL_NO_ATEXIT
-#ifdef OPENSSL_INIT_DEBUG
-    fprintf(stderr, "OPENSSL_INIT: ossl_init_register_atexit()\n");
-#endif
-#ifndef OPENSSL_SYS_UEFI
-#if defined(_WIN32) && !defined(__BORLANDC__)
-    /* We use _onexit() in preference because it gets called on DLL unload */
-    if (_onexit(win32atexit) == NULL)
-        return 0;
-#else
-    if (atexit(OPENSSL_cleanup) != 0)
-        return 0;
-#endif
-#endif
-#endif
-
-    return 1;
-}
-
-DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_register_atexit,
-    ossl_init_register_atexit)
-{
-#ifdef OPENSSL_INIT_DEBUG
-    fprintf(stderr, "OPENSSL_INIT: ossl_init_no_register_atexit ok!\n");
-#endif
-    /* Do nothing in this case */
-    return 1;
-}
-
-static CRYPTO_ONCE load_crypto_nodelete = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_nodelete)
-{
-    OSSL_TRACE(INIT, "ossl_init_load_crypto_nodelete()\n");
-
-#if !defined(OPENSSL_USE_NODELETE) \
-    && !defined(OPENSSL_NO_PINSHARED)
-#if defined(DSO_WIN32) && !defined(_WIN32_WCE)
-    {
-        HMODULE handle = NULL;
-        BOOL ret;
-
-        /* We don't use the DSO route for WIN32 because there is a better way */
-        ret = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
-                | GET_MODULE_HANDLE_EX_FLAG_PIN,
-            (void *)&base_inited, &handle);
-
-        OSSL_TRACE1(INIT,
-            "ossl_init_load_crypto_nodelete: "
-            "obtained DSO reference? %s\n",
-            (ret == TRUE ? "No!" : "Yes."));
-        return (ret == TRUE) ? 1 : 0;
-    }
-#elif !defined(DSO_NONE)
-    /*
-     * Deliberately leak a reference to ourselves. This will force the library
-     * to remain loaded until the atexit() handler is run at process exit.
-     */
-    {
-        DSO *dso;
-        void *err;
-
-        if (!err_shelve_state(&err))
-            return 0;
-
-        dso = DSO_dsobyaddr(&base_inited, DSO_FLAG_NO_UNLOAD_ON_FREE);
-        /*
-         * In case of No!, it is uncertain our exit()-handlers can still be
-         * called. After dlclose() the whole library might have been unloaded
-         * already.
-         */
-        OSSL_TRACE1(INIT, "obtained DSO reference? %s\n",
-            (dso == NULL ? "No!" : "Yes."));
-        DSO_free(dso);
-        err_unshelve_state(err);
-    }
-#endif
-#endif
-
-    return 1;
 }
 
 static CRYPTO_ONCE load_crypto_strings = CRYPTO_ONCE_STATIC_INIT;
@@ -306,10 +213,29 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_async)
     return 1;
 }
 
-void OPENSSL_cleanup(void)
+/*
+ * Global cleanup function. This is optional, and not strictly
+ * necessary to run. Operating systems have successfully been
+ * recovering memory from exiting tasks since the days when I amused
+ * myself by drawing dinosaurs in crayon on used punch cards.
+ *
+ * If we have destructor support, this function is installed and
+ * always run as a global destructor. It only does anything if
+ * someone has called OPENSSL_cleanup() before it is run.
+ *
+ * This ensures that we do the actual cleanup requested by an
+ * OPENSSL_cleanup() only after subordinate library destructors which
+ * may call into OpenSSL have run.
+ *
+ * If we do not have destructor support, then this function is not
+ * normally run, and OPENSSL_cleanup() will do nothing. If we are
+ * compiled with the compile time define of
+ * DO_NOT_SKIP_OPENSSL_CLEANUP, this function will be called
+ * directly from OPENSSL_cleanup() so that cleanup will happen
+ * when OPENSSL_cleanup() is called.
+ */
+void ossl_cleanup_destructor(void)
 {
-    OPENSSL_INIT_STOP *currhandler, *lasthandler;
-
     /*
      * At some point we should consider looking at this function with a view to
      * moving most/all of this into onfree handlers in OSSL_LIB_CTX.
@@ -319,7 +245,11 @@ void OPENSSL_cleanup(void)
     if (!base_inited)
         return;
 
-    /* Might be explicitly called and also by atexit */
+    /* If we have not been told to clean up, and we are invoked, return */
+    if (!do_global_cleanup)
+        return;
+
+    /* Might be explicitly called */
     if (stopped)
         return;
     stopped = 1;
@@ -329,15 +259,6 @@ void OPENSSL_cleanup(void)
      * the very last thread in some situations, so call it directly.
      */
     OPENSSL_thread_stop();
-
-    currhandler = stop_handlers;
-    while (currhandler != NULL) {
-        currhandler->handler();
-        lasthandler = currhandler;
-        currhandler = currhandler->next;
-        OPENSSL_free(lasthandler);
-    }
-    stop_handlers = NULL;
 
     CRYPTO_THREAD_lock_free(optsdone_lock);
     optsdone_lock = NULL;
@@ -415,6 +336,10 @@ void OPENSSL_cleanup(void)
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_trace_cleanup()\n");
     ossl_trace_cleanup();
 
+#ifdef S390X_MOD_EXP
+    OPENSSL_s390x_cleanup();
+#endif
+
     base_inited = 0;
 }
 
@@ -460,10 +385,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
      *
      * When the caller specifies OPENSSL_INIT_BASE_ONLY, that should be the
      * *only* option specified.  With that option we return immediately after
-     * doing the requested limited initialization.  Note that
-     * err_shelve_state() called by us via ossl_init_load_crypto_nodelete()
-     * re-enters OPENSSL_init_crypto() with OPENSSL_INIT_BASE_ONLY, but with
-     * base already initialized this is a harmless NOOP.
+     * doing the requested limited initialization.
      *
      * If we remain the only caller of err_shelve_state() the recursion should
      * perhaps be removed, but if in doubt, it can be left in place.
@@ -485,23 +407,6 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         if ((tmp & opts) == opts)
             return 1;
     }
-
-    /*
-     * Now we don't always set up exit handlers, the INIT_BASE_ONLY calls
-     * should not have the side-effect of setting up exit handlers, and
-     * therefore, this code block is below the INIT_BASE_ONLY-conditioned early
-     * return above.
-     */
-    if ((opts & OPENSSL_INIT_NO_ATEXIT) != 0) {
-        if (!RUN_ONCE_ALT(&register_atexit, ossl_init_no_register_atexit,
-                ossl_init_register_atexit))
-            return 0;
-    } else if (!RUN_ONCE(&register_atexit, ossl_init_register_atexit)) {
-        return 0;
-    }
-
-    if (!RUN_ONCE(&load_crypto_nodelete, ossl_init_load_crypto_nodelete))
-        return 0;
 
     if ((opts & OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS)
         && !RUN_ONCE_ALT(&load_crypto_strings,
@@ -584,66 +489,14 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     return 1;
 }
 
-int OPENSSL_atexit(void (*handler)(void))
+void OPENSSL_cleanup(void)
 {
-    OPENSSL_INIT_STOP *newhand;
+    do_global_cleanup = 1;
+#if defined(OSSL_CLEANUP_USING_DESTRUCTOR)
+    return;
+#endif /* defined(OSSL_CLEANUP_USING_DESTRUCTOR) */
 
-#if !defined(OPENSSL_USE_NODELETE) \
-    && !defined(OPENSSL_NO_PINSHARED)
-    {
-#if defined(DSO_WIN32) && !defined(_WIN32_WCE)
-        HMODULE handle = NULL;
-        BOOL ret;
-        union {
-            void *sym;
-            void (*func)(void);
-        } handlersym;
-
-        handlersym.func = handler;
-
-        /*
-         * We don't use the DSO route for WIN32 because there is a better
-         * way
-         */
-        ret = GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
-                | GET_MODULE_HANDLE_EX_FLAG_PIN,
-            handlersym.sym, &handle);
-
-        if (!ret)
-            return 0;
-#elif !defined(DSO_NONE)
-        /*
-         * Deliberately leak a reference to the handler. This will force the
-         * library/code containing the handler to remain loaded until we run the
-         * atexit handler. If -znodelete has been used then this is
-         * unnecessary.
-         */
-        DSO *dso = NULL;
-        union {
-            void *sym;
-            void (*func)(void);
-        } handlersym;
-
-        handlersym.func = handler;
-
-        ERR_set_mark();
-        dso = DSO_dsobyaddr(handlersym.sym, DSO_FLAG_NO_UNLOAD_ON_FREE);
-        /* See same code above in ossl_init_base() for an explanation. */
-        OSSL_TRACE1(INIT,
-            "atexit: obtained DSO reference? %s\n",
-            (dso == NULL ? "No!" : "Yes."));
-        DSO_free(dso);
-        ERR_pop_to_mark();
-#endif
-    }
-#endif
-
-    if ((newhand = OPENSSL_malloc(sizeof(*newhand))) == NULL)
-        return 0;
-
-    newhand->handler = handler;
-    newhand->next = stop_handlers;
-    stop_handlers = newhand;
-
-    return 1;
+#if defined(DO_NOT_SKIP_OPENSSL_CLEANUP)
+    ossl_cleanup_destructor();
+#endif /* defined(DO_NOT_SKIP_OPENSSL_CLEANUP) */
 }

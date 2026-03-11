@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -371,6 +371,9 @@ SKIP: {
                      srctop_file('test', 'data.bin')])),
                      "Generating signature with xoflen should fail");
     };
+
+    skip "HMAC-DRBG-KDF is not supported by this OpenSSL build", 1
+        if disabled("hmac-drbg-kdf");
 
     subtest "signing using the nonce-type sigopt" => sub {
         plan tests => 1;

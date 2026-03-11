@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -252,6 +252,14 @@ const BIGNUM *EC_GROUP_get0_order(const EC_GROUP *group);
  *  \return number of bits of group order.
  */
 int EC_GROUP_order_bits(const EC_GROUP *group);
+
+/** Gets the symmetric-equivalent security bit size an EC_GROUP.
+ * This is rounded down to one of the standard sizes, (80, 112,
+ * 128, 192, 256) or reported as-is when smaller than 80.
+ *  \param  group  EC_GROUP object
+ *  \return symmetric-equivalent security bits.
+ */
+int EC_GROUP_security_bits(const EC_GROUP *group);
 
 /** Gets the cofactor of a EC_GROUP
  *  \param  group     EC_GROUP object

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,6 +21,8 @@
 #include <openssl/rand.h>
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
+
+#include <crypto/asn1.h>
 
 static int pkcs12_pbmac1_pbkdf2_key_gen(const char *pass, int passlen,
     unsigned char *salt, int saltlen,
@@ -123,8 +125,6 @@ static int PBMAC1_PBKDF2_HMAC(OSSL_LIB_CTX *ctx, const char *propq,
         ERR_raise(ERR_LIB_PKCS12, ERR_R_UNSUPPORTED);
         goto err;
     }
-    keylen = ASN1_INTEGER_get(pbkdf2_param->keylength);
-    pbkdf2_salt = pbkdf2_param->salt->value.octet_string;
 
     if (pbkdf2_param->prf == NULL) {
         kdf_hmac_nid = NID_hmacWithSHA1;
@@ -136,6 +136,22 @@ static int PBMAC1_PBKDF2_HMAC(OSSL_LIB_CTX *ctx, const char *propq,
     kdf_md = EVP_MD_fetch(ctx, OBJ_nid2sn(ossl_hmac2mdnid(kdf_hmac_nid)), propq);
     if (kdf_md == NULL) {
         ERR_raise(ERR_LIB_PKCS12, ERR_R_FETCH_FAILED);
+        goto err;
+    }
+
+    /* Validate salt is an OCTET STRING choice */
+    if (pbkdf2_param->salt == NULL
+        || pbkdf2_param->salt->type != V_ASN1_OCTET_STRING) {
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_PARSE_ERROR);
+        goto err;
+    }
+    pbkdf2_salt = pbkdf2_param->salt->value.octet_string;
+
+    /* RFC 9579 specifies missing key length as invalid */
+    if (pbkdf2_param->keylength != NULL)
+        keylen = ASN1_INTEGER_get(pbkdf2_param->keylength);
+    if (keylen <= 0 || keylen > EVP_MAX_MD_SIZE) {
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_PARSE_ERROR);
         goto err;
     }
 
@@ -167,8 +183,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
         const char *propq))
 {
     int ret = 0;
-    const EVP_MD *md;
-    EVP_MD *md_fetch;
+    EVP_MD *md;
     HMAC_CTX *hmac = NULL;
     unsigned char key[EVP_MAX_MD_SIZE], *salt;
     int saltlen, iter;
@@ -207,17 +222,12 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
         if (OBJ_obj2txt(md_name, sizeof(md_name), macoid, 0) < 0)
             return 0;
     }
-    (void)ERR_set_mark();
-    md = md_fetch = EVP_MD_fetch(libctx, md_name, propq);
-    if (md == NULL)
-        md = EVP_get_digestbynid(OBJ_obj2nid(macoid));
+    md = EVP_MD_fetch(libctx, md_name, propq);
 
     if (md == NULL) {
-        (void)ERR_clear_last_mark();
         ERR_raise(ERR_LIB_PKCS12, PKCS12_R_UNKNOWN_DIGEST_ALGORITHM);
         return 0;
     }
-    (void)ERR_pop_to_mark();
 
     keylen = EVP_MD_get_size(md);
     md_nid = EVP_MD_get_type(md);
@@ -240,7 +250,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
             goto err;
         }
     } else {
-        EVP_MD *hmac_md = (EVP_MD *)md;
+        EVP_MD *hmac_md = md;
         int fetched = 0;
 
         if (pbmac1_kdf_nid != NID_undef) {
@@ -286,7 +296,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
 err:
     OPENSSL_cleanse(key, sizeof(key));
     HMAC_CTX_free(hmac);
-    EVP_MD_free(md_fetch);
+    EVP_MD_free(md);
     return ret;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -373,8 +373,9 @@ static int conn_read(BIO *b, char *out, int outl)
         return ret;
     }
 
-    if (out != NULL) {
+    if (out != NULL && outl > 0) {
         clear_socket_error();
+        b->flags &= ~BIO_FLAGS_IN_EOF;
 #ifndef OPENSSL_NO_KTLS
         if (BIO_get_ktls_recv(b))
             ret = ktls_read_record(b->num, out, outl);
@@ -414,7 +415,7 @@ static int conn_write(BIO *b, const char *in, int inl)
     clear_socket_error();
 #ifndef OPENSSL_NO_KTLS
     if (BIO_should_ktls_ctrl_msg_flag(b)) {
-        ret = ktls_send_ctrl_message(b->num, data->record_type, in, inl);
+        ret = ktls_send_ctrl_message(b->num, data->record_type, in, inl, 0);
         if (ret >= 0) {
             ret = inl;
             BIO_clear_ktls_ctrl_msg_flag(b);
@@ -460,6 +461,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
         conn_close_socket(b);
         BIO_ADDRINFO_free(data->addr_first);
         data->addr_first = NULL;
+        data->addr_iter = NULL;
         b->flags = 0;
         break;
     case BIO_C_DO_STATE_MACHINE:
@@ -776,6 +778,7 @@ int conn_gets(BIO *bio, char *buf, int size)
     }
 
     clear_socket_error();
+    bio->flags &= ~BIO_FLAGS_IN_EOF;
     while (size-- > 1) {
 #ifndef OPENSSL_NO_KTLS
         if (BIO_get_ktls_recv(bio))

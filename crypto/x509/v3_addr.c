@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -544,7 +544,7 @@ err:
  * Add an inheritance element.
  */
 int X509v3_addr_add_inherit(IPAddrBlocks *addr,
-    const unsigned afi, const unsigned *safi)
+    unsigned afi, const unsigned *safi)
 {
     IPAddressFamily *f = make_IPAddressFamily(addr, afi, safi);
 
@@ -595,7 +595,7 @@ static IPAddressOrRanges *make_prefix_or_range(IPAddrBlocks *addr,
 int X509v3_addr_add_prefix(IPAddrBlocks *addr,
     const unsigned afi,
     const unsigned *safi,
-    unsigned char *a, const int prefixlen)
+    unsigned char *a, int prefixlen)
 {
     IPAddressOrRanges *aors = make_prefix_or_range(addr, afi, safi);
     IPAddressOrRange *aor;
@@ -613,7 +613,7 @@ int X509v3_addr_add_prefix(IPAddrBlocks *addr,
  * Add a range.
  */
 int X509v3_addr_add_range(IPAddrBlocks *addr,
-    const unsigned afi,
+    unsigned afi,
     const unsigned *safi,
     unsigned char *min, unsigned char *max)
 {
@@ -652,9 +652,9 @@ static int extract_min_max(IPAddressOrRange *aor,
  * Public wrapper for extract_min_max().
  */
 int X509v3_addr_get_range(IPAddressOrRange *aor,
-    const unsigned afi,
+    unsigned afi,
     unsigned char *min,
-    unsigned char *max, const int length)
+    unsigned char *max, int length)
 {
     int afi_length = length_from_afi(afi);
 
@@ -1210,7 +1210,7 @@ int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b)
  * X509_V_OK.
  */
 static int addr_validate_path_internal(X509_STORE_CTX *ctx,
-    STACK_OF(X509) *chain,
+    const STACK_OF(X509) *chain,
     IPAddrBlocks *ext)
 {
     IPAddrBlocks *child = NULL;
@@ -1344,7 +1344,7 @@ int X509v3_addr_validate_path(X509_STORE_CTX *ctx)
  * RFC 3779 2.3 path validation of an extension.
  * Test whether chain covers extension.
  */
-int X509v3_addr_validate_resource_set(STACK_OF(X509) *chain,
+int X509v3_addr_validate_resource_set(const STACK_OF(X509) *chain,
     IPAddrBlocks *ext, int allow_inheritance)
 {
     if (ext == NULL)

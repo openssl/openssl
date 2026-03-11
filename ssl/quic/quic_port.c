@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -865,7 +865,7 @@ static int port_try_handle_stateless_reset(QUIC_PORT *port, const QUIC_URXE *e)
 
     for (i = 0;; ++i) {
         if (!ossl_quic_srtm_lookup(port->srtm,
-                (QUIC_STATELESS_RESET_TOKEN *)(data + e->data_len
+                (const QUIC_STATELESS_RESET_TOKEN *)(data + e->data_len
                     - sizeof(QUIC_STATELESS_RESET_TOKEN)),
                 i, &opaque, NULL))
             break;

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -175,7 +175,7 @@ static int bmp_to_utf8(char *str, const unsigned char *utf16, int len)
         utf32chr += 0x10000;
     }
 
-    return UTF8_putc((unsigned char *)str, len > 4 ? 4 : len, utf32chr);
+    return UTF8_putc((unsigned char *)str, 4, utf32chr);
 }
 
 char *OPENSSL_uni2utf8(const unsigned char *uni, int unilen)
@@ -213,6 +213,11 @@ char *OPENSSL_uni2utf8(const unsigned char *uni, int unilen)
     /* re-run the loop emitting UTF-8 string */
     for (asclen = 0, i = 0; i < unilen;) {
         j = bmp_to_utf8(asctmp + asclen, uni + i, unilen - i);
+        /* when UTF8_putc fails */
+        if (j < 0) {
+            OPENSSL_free(asctmp);
+            return NULL;
+        }
         if (j == 4)
             i += 4;
         else

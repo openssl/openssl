@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -648,15 +648,15 @@ static void sv_usage(void)
     fprintf(stderr,
         " -dhe4096      - use 4096 bit key (safe prime) for DHE\n");
 #endif
+    fprintf(
+        stderr,
+        " -groups <list> - override the default client supported groups list\n");
     fprintf(stderr, " -no_dhe       - disable DHE\n");
 #ifndef OPENSSL_NO_EC
     fprintf(stderr, " -no_ecdhe     - disable ECDHE\n");
 #endif
 #ifndef OPENSSL_NO_PSK
     fprintf(stderr, " -psk arg      - PSK in hex (without 0x)\n");
-#endif
-#ifndef OPENSSL_NO_SSL3
-    fprintf(stderr, " -ssl3         - use SSLv3\n");
 #endif
 #ifndef OPENSSL_NO_TLS1
     fprintf(stderr, " -tls1         - use TLSv1\n");
@@ -814,7 +814,6 @@ static int protocol_from_string(const char *value)
         int version;
     };
     static const struct protocol_versions versions[] = {
-        { "ssl3", SSL3_VERSION },
         { "tls1", TLS1_VERSION },
         { "tls1.1", TLS1_1_VERSION },
         { "tls1.2", TLS1_2_VERSION },
@@ -898,7 +897,7 @@ int main(int argc, char *argv[])
         BIO_IPV6 } bio_type
         = BIO_MEM;
     int force = 0;
-    int dtls1 = 0, dtls12 = 0, dtls = 0, tls1 = 0, tls1_1 = 0, tls1_2 = 0, ssl3 = 0;
+    int dtls1 = 0, dtls12 = 0, dtls = 0, tls1 = 0, tls1_1 = 0, tls1_2 = 0;
     int ret = EXIT_FAILURE;
     int client_auth = 0;
     int server_auth = 0, i;
@@ -914,9 +913,10 @@ int main(int argc, char *argv[])
     long bytes = 256L;
 #ifndef OPENSSL_NO_DH
     EVP_PKEY *dhpkey;
-    int dhe512 = 0, dhe1024dsa = 0, dhe4096 = 0;
+    int dhe512 = 0, dhe1024dsa = 0, dhe2048 = 0, dhe4096 = 0;
     int no_dhe = 0;
 #endif
+    const char *groups = NULL;
     int no_psk = 0;
     int print_time = 0;
     clock_t s_time = 0, c_time = 0;
@@ -1005,6 +1005,8 @@ int main(int argc, char *argv[])
             dhe512 = 1;
         else if (strcmp(*argv, "-dhe1024dsa") == 0)
             dhe1024dsa = 1;
+        else if (strcmp(*argv, "-dhe2048") == 0)
+            dhe2048 = 1;
         else if (strcmp(*argv, "-dhe4096") == 0)
             dhe4096 = 1;
 #endif
@@ -1022,14 +1024,16 @@ int main(int argc, char *argv[])
 #else
             no_psk = 1;
 #endif
+        } else if (strcmp(*argv, "-groups") == 0) {
+            if (--argc < 1)
+                goto bad;
+            groups = *(++argv);
         } else if (strcmp(*argv, "-tls1_2") == 0) {
             tls1_2 = 1;
         } else if (strcmp(*argv, "-tls1_1") == 0) {
             tls1_1 = 1;
         } else if (strcmp(*argv, "-tls1") == 0) {
             tls1 = 1;
-        } else if (strcmp(*argv, "-ssl3") == 0) {
-            ssl3 = 1;
         } else if (strcmp(*argv, "-dtls1") == 0) {
             dtls1 = 1;
         } else if (strcmp(*argv, "-dtls12") == 0) {
@@ -1246,19 +1250,14 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    if (ssl3 + tls1 + tls1_1 + tls1_2 + dtls + dtls1 + dtls12 > 1) {
-        fprintf(stderr, "At most one of -ssl3, -tls1, -tls1_1, -tls1_2, -dtls, -dtls1 or -dtls12 should "
+    if (tls1 + tls1_1 + tls1_2 + dtls + dtls1 + dtls12 > 1) {
+        fprintf(stderr, "At most one of -tls1, -tls1_1, -tls1_2, -dtls, -dtls1 or -dtls12 should "
                         "be requested.\n");
         goto end;
     }
 
-#ifdef OPENSSL_NO_SSL3
-    if (ssl3)
-        no_protocol = 1;
-    else
-#endif
 #ifdef OPENSSL_NO_TLS1
-        if (tls1)
+    if (tls1)
         no_protocol = 1;
     else
 #endif
@@ -1296,11 +1295,11 @@ int main(int argc, char *argv[])
         goto end;
     }
 
-    if (!ssl3 && !tls1 && !tls1_1 && !tls1_2 && !dtls && !dtls1 && !dtls12 && number > 1
+    if (!tls1 && !tls1_1 && !tls1_2 && !dtls && !dtls1 && !dtls12 && number > 1
         && !reuse && !force) {
         fprintf(stderr, "This case cannot work.  Use -f to perform "
                         "the test anyway (and\n-d to see what happens), "
-                        "or add one of -ssl3, -tls1, -tls1_1, -tls1_2, -dtls, -dtls1, -dtls12, -reuse\n"
+                        "or add one of -tls1, -tls1_1, -tls1_2, -dtls, -dtls1, -dtls12, -reuse\n"
                         "to avoid protocol mismatch.\n");
         goto end;
     }
@@ -1344,10 +1343,7 @@ int main(int argc, char *argv[])
 
 #ifndef OPENSSL_NO_TLS
     meth = TLS_method();
-    if (ssl3) {
-        min_version = SSL3_VERSION;
-        max_version = SSL3_VERSION;
-    } else if (tls1) {
+    if (tls1) {
         min_version = TLS1_VERSION;
         max_version = TLS1_VERSION;
     } else if (tls1_1) {
@@ -1516,6 +1512,8 @@ int main(int argc, char *argv[])
             dhpkey = get_dh1024dsa(libctx);
         else if (dhe512)
             dhpkey = get_dh512(libctx);
+        else if (dhe2048)
+            dhpkey = get_dh2048(libctx);
         else if (dhe4096)
             dhpkey = get_dh4096(libctx);
         else
@@ -1533,6 +1531,12 @@ int main(int argc, char *argv[])
             EVP_PKEY_free(dhpkey);
     }
 #endif
+    if (groups != NULL && !SSL_CTX_set1_groups_list(c_ctx, groups)) {
+        BIO_printf(bio_err, "error setting client supported groups to: %s\n",
+            groups);
+        ERR_print_errors(bio_err);
+        goto end;
+    }
 
     if (!(SSL_CTX_load_verify_file(s_ctx, CAfile)
             || SSL_CTX_load_verify_dir(s_ctx, CApath))
@@ -2907,7 +2911,7 @@ static int app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 
     if (cb_arg->app_verify) {
         char *s = NULL, buf[256];
-        X509 *c = X509_STORE_CTX_get0_cert(ctx);
+        const X509 *c = X509_STORE_CTX_get0_cert(ctx);
 
         printf("In app_verify_callback, allowing cert. ");
         printf("Arg is: %s\n", cb_arg->string);

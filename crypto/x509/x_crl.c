@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,7 +8,6 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include "crypto/x509.h"
@@ -80,7 +79,6 @@ ASN1_SEQUENCE_enc(X509_CRL_INFO, enc, crl_inf_cb) = {
 
 static int crl_set_issuers(X509_CRL *crl)
 {
-
     int i, j;
     GENERAL_NAMES *most_recent_issuer, *gtmp;
     STACK_OF(X509_REVOKED) *revoked;
@@ -91,6 +89,8 @@ static int crl_set_issuers(X509_CRL *crl)
      */
     if (crl->crl.lastUpdate == NULL) {
         crl->flags |= EXFLAG_INVALID;
+        ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_TIME_VALUE,
+            "lastUpdate in CRL is not well-formed");
         return 0;
     }
 
@@ -121,6 +121,8 @@ static int crl_set_issuers(X509_CRL *crl)
          */
         if ((rev_date = X509_REVOKED_get0_revocationDate(rev)) == NULL) {
             crl->flags |= EXFLAG_INVALID;
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_TIME_VALUE,
+                "revocationDate in CRL is not well-formed");
             return 0;
         }
 
@@ -139,6 +141,8 @@ static int crl_set_issuers(X509_CRL *crl)
              */
             if (crl->idp == NULL || !crl->idp->indirectCRL) {
                 crl->flags |= EXFLAG_INVALID;
+                ERR_raise_data(ERR_LIB_ASN1, ASN1_R_INVALID_VALUE,
+                    "CRL Certificate Issuer extension requires Indirect CRL flag to be set");
                 GENERAL_NAMES_free(gtmp);
                 return 0;
             }
@@ -171,7 +175,6 @@ static int crl_set_issuers(X509_CRL *crl)
             rev->reason = CRL_REASON_NONE;
 
         /* Check for critical CRL entry extensions and validate time. */
-
         exts = rev->extensions;
 
         for (j = 0; j < sk_X509_EXTENSION_num(exts); j++) {
@@ -186,6 +189,8 @@ static int crl_set_issuers(X509_CRL *crl)
             if (nid == NID_invalidity_date) {
                 if ((inv_date = X509V3_EXT_d2i(ext)) == NULL) {
                     crl->flags |= EXFLAG_INVALID;
+                    ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_TIME_VALUE,
+                        "invalidityDate in CRL is not well-formed");
                     return 0;
                 }
                 ASN1_GENERALIZEDTIME_free(inv_date);
@@ -242,9 +247,12 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     case ASN1_OP_D2I_POST:
         if (!X509_CRL_digest(crl, EVP_sha1(), crl->sha1_hash, NULL))
             crl->flags |= EXFLAG_NO_FINGERPRINT;
-        crl->idp = X509_CRL_get_ext_d2i(crl,
-            NID_issuing_distribution_point, &i,
-            NULL);
+        crl->idp = X509_CRL_get_ext_d2i(crl, NID_issuing_distribution_point, &i, NULL);
+        if (crl->idp == NULL && i != -1) {
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
+                "CRL: malformed CRL issuing distribution point");
+            return 0;
+        }
         if (crl->idp != NULL) {
             if (!setup_idp(crl, crl->idp))
                 crl->flags |= EXFLAG_INVALID;
@@ -258,20 +266,21 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (crl->akid == NULL && i != -1)
             crl->flags |= EXFLAG_INVALID;
 
-        crl->crl_number = X509_CRL_get_ext_d2i(crl,
-            NID_crl_number, &i, NULL);
-        if (crl->crl_number == NULL && i != -1)
-            crl->flags |= EXFLAG_INVALID;
-
-        crl->base_crl_number = X509_CRL_get_ext_d2i(crl,
-            NID_delta_crl, &i,
-            NULL);
-        if (crl->base_crl_number == NULL && i != -1)
-            crl->flags |= EXFLAG_INVALID;
+        crl->crl_number = X509_CRL_get_ext_d2i(crl, NID_crl_number, &i, NULL);
+        if (crl->crl_number == NULL && i != -1) {
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
+                "CRL: malformed CRL number extension");
+            return 0;
+        }
+        crl->base_crl_number = X509_CRL_get_ext_d2i(crl, NID_delta_crl, &i, NULL);
+        if (crl->base_crl_number == NULL && i != -1) {
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
+                "CRL: malformed Delta CRL Indicator");
+            return 0;
+        }
         /* Delta CRLs must have CRL number */
         if (crl->base_crl_number && !crl->crl_number)
             crl->flags |= EXFLAG_INVALID;
-
         /*
          * See if we have any unhandled critical CRL extensions and indicate
          * this in a flag. We only currently handle IDP so anything else
@@ -446,7 +455,7 @@ int X509_CRL_get0_by_serial(X509_CRL *crl,
     return 0;
 }
 
-int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x)
+int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, const X509 *x)
 {
     if (crl->meth->crl_lookup)
         return crl->meth->crl_lookup(crl, ret,

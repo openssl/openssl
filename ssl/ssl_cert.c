@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -741,8 +741,8 @@ static int xname_cmp(const X509_NAME *a, const X509_NAME *b)
     /* X509_NAME_cmp() itself casts away constness in this way, so
      * assume it's safe:
      */
-    alen = i2d_X509_NAME((X509_NAME *)a, &abuf);
-    blen = i2d_X509_NAME((X509_NAME *)b, &bbuf);
+    alen = i2d_X509_NAME(a, &abuf);
+    blen = i2d_X509_NAME(b, &bbuf);
 
     if (alen < 0 || blen < 0)
         ret = -2;
@@ -765,7 +765,7 @@ static int xname_sk_cmp(const X509_NAME *const *a, const X509_NAME *const *b)
 static unsigned long xname_hash(const X509_NAME *a)
 {
     /* This returns 0 also if SHA1 is not available */
-    return X509_NAME_hash_ex((X509_NAME *)a, NULL, NULL, NULL);
+    return X509_NAME_hash_ex(a, NULL, NULL, NULL);
 }
 
 STACK_OF(X509_NAME) *SSL_load_client_CA_file_ex(const char *file,
@@ -774,6 +774,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file_ex(const char *file,
 {
     BIO *in = BIO_new(BIO_s_file());
     X509 *x = NULL;
+    const X509_NAME *cxn = NULL;
     X509_NAME *xn = NULL;
     STACK_OF(X509_NAME) *ret = NULL;
     LHASH_OF(X509_NAME) *name_hash = lh_X509_NAME_new(xname_hash, xname_cmp);
@@ -812,10 +813,10 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file_ex(const char *file,
                 goto err;
             }
         }
-        if ((xn = X509_get_subject_name(x)) == NULL)
+        if ((cxn = X509_get_subject_name(x)) == NULL)
             goto err;
         /* check for duplicates */
-        xn = X509_NAME_dup(xn);
+        xn = X509_NAME_dup(cxn);
         if (xn == NULL)
             goto err;
         if (lh_X509_NAME_retrieve(name_hash, xn) != NULL) {
@@ -856,6 +857,7 @@ static int add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 {
     BIO *in;
     X509 *x = NULL;
+    const X509_NAME *cxn = NULL;
     X509_NAME *xn = NULL;
     int ret = 1;
 
@@ -872,9 +874,9 @@ static int add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     for (;;) {
         if (PEM_read_bio_X509(in, &x, NULL, NULL) == NULL)
             break;
-        if ((xn = X509_get_subject_name(x)) == NULL)
+        if ((cxn = X509_get_subject_name(x)) == NULL)
             goto err;
-        xn = X509_NAME_dup(xn);
+        xn = X509_NAME_dup(cxn);
         if (xn == NULL)
             goto err;
         if (lh_X509_NAME_retrieve(name_hash, xn) != NULL) {
@@ -1023,6 +1025,7 @@ static int add_uris_recursive(STACK_OF(X509_NAME) *stack,
     int ok = 1;
     OSSL_STORE_CTX *ctx = NULL;
     X509 *x = NULL;
+    const X509_NAME *cxn = NULL;
     X509_NAME *xn = NULL;
     OSSL_STORE_INFO *info = NULL;
 
@@ -1046,8 +1049,8 @@ static int add_uris_recursive(STACK_OF(X509_NAME) *stack,
                     depth - 1);
         } else if (infotype == OSSL_STORE_INFO_CERT) {
             if ((x = OSSL_STORE_INFO_get0_CERT(info)) == NULL
-                || (xn = X509_get_subject_name(x)) == NULL
-                || (xn = X509_NAME_dup(xn)) == NULL)
+                || (cxn = X509_get_subject_name(x)) == NULL
+                || (xn = X509_NAME_dup(cxn)) == NULL)
                 goto err;
             if (sk_X509_NAME_find(stack, xn) >= 0) {
                 /* Duplicate. */

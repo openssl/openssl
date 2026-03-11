@@ -9,10 +9,11 @@ PKCS7_sign_ex, PKCS7_sign
 
  #include <openssl/pkcs7.h>
 
- PKCS7 *PKCS7_sign_ex(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
+ PKCS7 *PKCS7_sign_ex(X509 *signcert, EVP_PKEY *pkey,
+                      const STACK_OF(X509) *certs,
                       BIO *data, int flags, OSSL_LIB_CTX *libctx,
                       const char *propq);
- PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
+ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, const STACK_OF(X509) *certs,
                    BIO *data, int flags);
 
 =head1 DESCRIPTION
@@ -122,7 +123,7 @@ The B<PKCS7_STREAM> flag was added in OpenSSL 1.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2002-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -33,8 +33,8 @@ OSSL_provider_init_fn ossl_legacy_provider_init;
 /* Extended test macros to allow passing file & line number */
 #define TEST_FL_ptr(a) test_ptr(file, line, #a, a)
 #define TEST_FL_mem_eq(a, m, b, n) test_mem_eq(file, line, #a, #b, a, m, b, n)
-#define TEST_FL_strn_eq(a, b, n) test_strn_eq(file, line, #a, #b, a, n, b, n)
-#define TEST_FL_strn2_eq(a, m, b, n) test_strn_eq(file, line, #a, #b, a, m, b, n)
+#define TEST_FL_strn_eq(a, b, n) test_strn_eq(file, line, #a, #b, a, b, n)
+#define TEST_FL_size_t_eq(a, b) test_size_t_eq(file, line, #a, #b, a, b)
 #define TEST_FL_int_eq(a, b) test_int_eq(file, line, #a, #b, a, b)
 #define TEST_FL_int_ge(a, b) test_int_ge(file, line, #a, #b, a, b)
 #define TEST_FL_int_gt(a, b) test_int_gt(file, line, #a, #b, a, b)
@@ -507,7 +507,8 @@ static int test_text(const char *file, const int line,
     const void *data1, size_t data1_len,
     const void *data2, size_t data2_len)
 {
-    return TEST_FL_strn2_eq(data1, data1_len, data2, data2_len);
+    return TEST_FL_size_t_eq(data1_len, data2_len)
+        && TEST_FL_strn_eq(data1, data2, data1_len);
 }
 
 static int test_mem(const char *file, const int line,
@@ -829,7 +830,7 @@ static int test_protected_via_legacy_PEM(const char *type, EVP_PKEY *key)
         dump_pem, 0);
 }
 
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_PVKKDF)
 static int test_protected_via_PVK(const char *type, EVP_PKEY *key)
 {
     int ret = 0;
@@ -1018,7 +1019,7 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
     }
 #define ADD_TEST_SUITE_UNPROTECTED_PVK(KEYTYPE) \
     ADD_TEST(test_unprotected_##KEYTYPE##_via_PVK)
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_PVKKDF)
 #define IMPLEMENT_TEST_SUITE_PROTECTED_PVK(KEYTYPE, KEYTYPEstr)   \
     static int test_protected_##KEYTYPE##_via_PVK(void)           \
     {                                                             \
@@ -1047,7 +1048,7 @@ IMPLEMENT_TEST_SUITE_PARAMS(DSA, "DSA")
 IMPLEMENT_TEST_SUITE_LEGACY(DSA, "DSA")
 IMPLEMENT_TEST_SUITE_MSBLOB(DSA, "DSA")
 IMPLEMENT_TEST_SUITE_UNPROTECTED_PVK(DSA, "DSA")
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_PVKKDF)
 IMPLEMENT_TEST_SUITE_PROTECTED_PVK(DSA, "DSA")
 #endif
 #endif
@@ -1138,7 +1139,7 @@ IMPLEMENT_TEST_SUITE(RSA_PSS, "RSA-PSS", 1)
  */
 IMPLEMENT_TEST_SUITE_MSBLOB(RSA, "RSA")
 IMPLEMENT_TEST_SUITE_UNPROTECTED_PVK(RSA, "RSA")
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_PVKKDF)
 IMPLEMENT_TEST_SUITE_PROTECTED_PVK(RSA, "RSA")
 #endif
 
@@ -1601,7 +1602,7 @@ int setup_tests(void)
         ADD_TEST_SUITE_LEGACY(DSA);
         ADD_TEST_SUITE_MSBLOB(DSA);
         ADD_TEST_SUITE_UNPROTECTED_PVK(DSA);
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_PVKKDF)
         ADD_TEST_SUITE_PROTECTED_PVK(DSA);
 #endif
 #endif
@@ -1653,7 +1654,7 @@ int setup_tests(void)
          */
         ADD_TEST_SUITE_MSBLOB(RSA);
         ADD_TEST_SUITE_UNPROTECTED_PVK(RSA);
-#ifndef OPENSSL_NO_RC4
+#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_PVKKDF)
         ADD_TEST_SUITE_PROTECTED_PVK(RSA);
 #endif
 

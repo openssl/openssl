@@ -69,8 +69,6 @@ EVP_CIPHER_CTX_get_block_size,
 EVP_CIPHER_CTX_get_key_length,
 EVP_CIPHER_CTX_get_iv_length,
 EVP_CIPHER_CTX_get_tag_length,
-EVP_CIPHER_CTX_get_app_data,
-EVP_CIPHER_CTX_set_app_data,
 EVP_CIPHER_CTX_flags,
 EVP_CIPHER_CTX_set_flags,
 EVP_CIPHER_CTX_clear_flags,
@@ -228,8 +226,6 @@ EVP_CIPHER_CTX_mode
  int EVP_CIPHER_CTX_get_key_length(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_get_iv_length(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_get_tag_length(const EVP_CIPHER_CTX *ctx);
- void *EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx);
- void EVP_CIPHER_CTX_set_app_data(const EVP_CIPHER_CTX *ctx, void *data);
  int EVP_CIPHER_CTX_get_type(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_get_mode(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_get_num(const EVP_CIPHER_CTX *ctx);
@@ -1472,6 +1468,9 @@ for failure.
 EVP_CIPHER_names_do_all() returns 1 if the callback was called for all names.
 A return value of 0 means that the callback was not called for any names.
 
+EVP_CIPHER_get_params(), EVP_CIPHER_CTX_get_params() and
+EVP_CIPHER_CTX_set_params() return 1 for success and 0 for failure.
+
 =head1 CIPHER LISTING
 
 All algorithms have a fixed key length unless otherwise stated.
@@ -1975,7 +1974,7 @@ rather than a 0 return value indicating an error.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

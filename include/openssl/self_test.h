@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -38,6 +38,7 @@ extern "C" {
 #define OSSL_SELF_TEST_TYPE_KAT_ASYM_KEYGEN "KAT_AsymmetricKeyGeneration"
 #define OSSL_SELF_TEST_TYPE_KAT_KEM "KAT_KEM"
 #define OSSL_SELF_TEST_TYPE_KAT_DIGEST "KAT_Digest"
+#define OSSL_SELF_TEST_TYPE_KAT_MAC "KAT_Mac"
 #define OSSL_SELF_TEST_TYPE_KAT_SIGNATURE "KAT_Signature"
 #define OSSL_SELF_TEST_TYPE_PCT_SIGNATURE "PCT_Signature"
 #define OSSL_SELF_TEST_TYPE_KAT_KDF "KAT_KDF"
@@ -84,6 +85,7 @@ extern "C" {
 #define OSSL_SELF_TEST_DESC_KDF_X942KDF "X942KDF"
 #define OSSL_SELF_TEST_DESC_KDF_PBKDF2 "PBKDF2"
 #define OSSL_SELF_TEST_DESC_KDF_SNMPKDF "SNMPKDF"
+#define OSSL_SELF_TEST_DESC_KDF_SRTPKDF "SRTPKDF"
 #define OSSL_SELF_TEST_DESC_KDF_SSHKDF "SSHKDF"
 #define OSSL_SELF_TEST_DESC_KDF_TLS12_PRF "TLS12_PRF"
 #define OSSL_SELF_TEST_DESC_KDF_KBKDF "KBKDF"

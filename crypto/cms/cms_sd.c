@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -141,7 +141,7 @@ static int cms_copy_messageDigest(CMS_ContentInfo *cms, CMS_SignerInfo *si)
 
     sinfos = CMS_get0_SignerInfos(cms);
     for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
-        ASN1_OCTET_STRING *messageDigest;
+        const ASN1_OCTET_STRING *messageDigest;
 
         sitmp = sk_CMS_SignerInfo_value(sinfos, i);
         if (sitmp == si)
@@ -480,10 +480,15 @@ static const struct {
 static const char *cms_mdless_signing(EVP_PKEY *pkey)
 {
     unsigned int i;
+    int def_nid = NID_undef;
 
     for (i = 0; key2data[i].name != NULL; i++) {
         if (EVP_PKEY_is_a(pkey, key2data[i].name))
             return key2data[i].name;
+    }
+    if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) <= 0) {
+        /* Key doesn't have default digest, it's mdless */
+        return EVP_PKEY_get0_type_name(pkey);
     }
     return NULL;
 }
@@ -553,7 +558,11 @@ static int ossl_cms_adjust_md(EVP_PKEY *pk, const EVP_MD **md, unsigned int flag
         return 1;
     }
 
+    if (*md != NULL)
+        (void)ERR_set_mark(); /* No error if no default md and user-supplied md is set */
     tmp_md = ossl_cms_get_default_md(pk, &md_a_must);
+    if (*md != NULL)
+        (void)ERR_pop_to_mark();
     if (md_a_must)
         *md = tmp_md;
     else if (*md == NULL)
@@ -625,7 +634,8 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     if (ossl_cms_adjust_md(pk, &md, flags) != 1)
         goto err;
 
-    X509_ALGOR_set_md(si->digestAlgorithm, md);
+    if (!X509_ALGOR_set_md(si->digestAlgorithm, md))
+        goto err;
 
     /* See if digest is present in digestAlgorithms */
     for (i = 0; i < sk_X509_ALGOR_num(sd->digestAlgorithms); i++) {
@@ -639,12 +649,9 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
             break;
     }
     if (i == sk_X509_ALGOR_num(sd->digestAlgorithms)) {
-        if ((alg = X509_ALGOR_new()) == NULL) {
-            ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
-            goto err;
-        }
-        X509_ALGOR_set_md(alg, md);
-        if (!sk_X509_ALGOR_push(sd->digestAlgorithms, alg)) {
+        if ((alg = X509_ALGOR_new()) == NULL
+            || !X509_ALGOR_set_md(alg, md)
+            || !sk_X509_ALGOR_push(sd->digestAlgorithms, alg)) {
             X509_ALGOR_free(alg);
             ERR_raise(ERR_LIB_CMS, ERR_R_CRYPTO_LIB);
             goto err;
@@ -873,7 +880,7 @@ int CMS_SignerInfo_cert_cmp(CMS_SignerInfo *si, X509 *cert)
     return ossl_cms_SignerIdentifier_cert_cmp(si->sid, cert);
 }
 
-int CMS_set1_signers_certs(CMS_ContentInfo *cms, STACK_OF(X509) *scerts,
+int CMS_set1_signers_certs(CMS_ContentInfo *cms, const STACK_OF(X509) *scerts,
     unsigned int flags)
 {
     CMS_SignedData *sd;
@@ -1389,7 +1396,7 @@ int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
 
 int CMS_SignerInfo_verify_ex(CMS_SignerInfo *si, BIO *chain, BIO *data)
 {
-    ASN1_OCTET_STRING *os = NULL;
+    const ASN1_OCTET_STRING *os = NULL;
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
     EVP_PKEY_CTX *pkctx = NULL;
     int r = -1;
@@ -1491,8 +1498,9 @@ err:
 }
 
 BIO *CMS_SignedData_verify(CMS_SignedData *sd, BIO *detached_data,
-    STACK_OF(X509) *scerts, X509_STORE *store,
-    STACK_OF(X509) *extra, STACK_OF(X509_CRL) *crls,
+    const STACK_OF(X509) *scerts, X509_STORE *store,
+    const STACK_OF(X509) *extra,
+    const STACK_OF(X509_CRL) *crls,
     unsigned int flags,
     OSSL_LIB_CTX *libctx, const char *propq)
 {

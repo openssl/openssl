@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -29,7 +29,7 @@
 #define RC4_HMAC_MD5_IV_BITS 0
 #define RC4_HMAC_MD5_MODE 0
 
-#define GET_HW(ctx) ((PROV_CIPHER_HW_RC4_HMAC_MD5 *)ctx->base.hw)
+#define GET_HW(ctx) ((const PROV_CIPHER_HW_RC4_HMAC_MD5 *)ctx->base.hw)
 
 static OSSL_FUNC_cipher_encrypt_init_fn rc4_hmac_md5_einit;
 static OSSL_FUNC_cipher_decrypt_init_fn rc4_hmac_md5_dinit;

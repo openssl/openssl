@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -165,7 +165,7 @@ int rand_main(int argc, char **argv)
             }
             scaled_num = num << shift;
             if (scaled_num > (UINT64_MAX >> 3)) {
-                BIO_printf(bio_err, "Request exceeds max allowed output\n");
+                BIO_puts(bio_err, "Request exceeds max allowed output\n");
                 goto opthelp;
             }
         } else {

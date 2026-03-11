@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,6 +20,7 @@
 
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
+#include <openssl/pkcs12.h>
 #include <openssl/objects.h>
 #include <openssl/posix_time.h>
 #include "testutil.h"
@@ -554,6 +555,38 @@ err:
     return ret;
 }
 
+static int test_mbstring_ncopy(void)
+{
+    ASN1_STRING *str = NULL;
+    const unsigned char in[] = { 0xFF, 0xFE, 0xFF, 0xFE };
+    int inlen = 4;
+    int inform = MBSTRING_UNIV;
+
+    if (!TEST_int_eq(ASN1_mbstring_ncopy(&str, in, inlen, inform, B_ASN1_GENERALSTRING, 0, 0), -1)
+        || !TEST_int_eq(ASN1_mbstring_ncopy(&str, in, inlen, inform, B_ASN1_VISIBLESTRING, 0, 0), -1)
+        || !TEST_int_eq(ASN1_mbstring_ncopy(&str, in, inlen, inform, B_ASN1_VIDEOTEXSTRING, 0, 0), -1)
+        || !TEST_int_eq(ASN1_mbstring_ncopy(&str, in, inlen, inform, B_ASN1_GENERALIZEDTIME, 0, 0), -1))
+        return 0;
+
+    return 1;
+}
+
+static int test_ossl_uni2utf8(void)
+{
+    const unsigned char in[] = { 0x21, 0x92 }; /* unicode right arrow */
+    int inlen = 2;
+    char *out = NULL;
+    int ok = 0;
+
+    /* reproducer for CVE-2025-69419 */
+    out = OPENSSL_uni2utf8(in, inlen);
+    if (TEST_str_eq(out, "\xe2\x86\x92"))
+        ok = 1;
+
+    OPENSSL_free(out);
+    return ok;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_tbl_standard);
@@ -565,5 +598,7 @@ int setup_tests(void)
     ADD_TEST(test_obj_nid_undef);
     ADD_TEST(posix_time_test);
     ADD_TEST(test_asn1_time_tm_conversions);
+    ADD_TEST(test_mbstring_ncopy);
+    ADD_TEST(test_ossl_uni2utf8);
     return 1;
 }

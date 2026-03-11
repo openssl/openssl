@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -25,10 +25,10 @@ use lib bldtop_dir('.');
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_psk,
-    $no_ssl3, $no_tls1, $no_tls1_1, $no_tls1_2, $no_tls1_3,
+    $no_tls1, $no_tls1_1, $no_tls1_2, $no_tls1_3,
     $no_dtls, $no_dtls1, $no_dtls1_2, $no_ct) =
     anydisabled qw/rsa dsa dh ec psk
-                   ssl3 tls1 tls1_1 tls1_2 tls1_3
+                   tls1 tls1_1 tls1_2 tls1_3
                    dtls dtls1 dtls1_2 ct/;
 #If ec and dh are disabled then don't use TLSv1.3
 $no_tls1_3 = 1 if (!$no_tls1_3 && $no_ec && $no_dh);
@@ -416,42 +416,25 @@ sub testssl {
 
     subtest 'standard SSL tests' => sub {
         ######################################################################
-        plan tests => 19;
+        plan tests => 15;
 
       SKIP: {
-          skip "SSLv3 is not supported by this OpenSSL build", 4
-              if disabled("ssl3");
-
-          skip "SSLv3 is not supported by the FIPS provider", 4
-              if $provider eq "fips";
-
-          ok(run(test([@ssltest, "-bio_pair", "-ssl3"])),
-             'test sslv3 via BIO pair');
-          ok(run(test([@ssltest, "-bio_pair", "-ssl3", "-server_auth", @CA])),
-             'test sslv3 with server authentication via BIO pair');
-          ok(run(test([@ssltest, "-bio_pair", "-ssl3", "-client_auth", @CA])),
-             'test sslv3 with client authentication via BIO pair');
-          ok(run(test([@ssltest, "-bio_pair", "-ssl3", "-server_auth", "-client_auth", @CA])),
-             'test sslv3 with both server and client authentication via BIO pair');
-        }
-
-      SKIP: {
-          skip "Neither SSLv3 nor any TLS version are supported by this OpenSSL build", 1
+          skip "No TLS versions are supported by this OpenSSL build", 1
               if $no_anytls;
 
           ok(run(test([@ssltest, "-bio_pair"])),
-             'test sslv2/sslv3 via BIO pair');
+             'test via BIO pair');
         }
 
       SKIP: {
-          skip "Neither SSLv3 nor any TLS version are supported by this OpenSSL build", 14
+          skip "No TLS versions are supported by this OpenSSL build", 14
               if $no_anytls;
 
         SKIP: {
-            skip "skipping test of sslv2/sslv3 w/o (EC)DHE test", 1 if $dsa_cert;
+            skip "skipping test w/o (EC)DHE test", 1 if $dsa_cert;
 
             ok(run(test([@ssltest, "-bio_pair", "-no_dhe", "-no_ecdhe"])),
-               'test sslv2/sslv3 w/o (EC)DHE via BIO pair');
+               'test w/o (EC)DHE via BIO pair');
           }
 
         SKIP: {
@@ -459,17 +442,17 @@ sub testssl {
                 if ($no_dh);
 
             ok(run(test([@ssltest, "-bio_pair", "-dhe1024dsa", "-v"])),
-               'test sslv2/sslv3 with 1024bit DHE via BIO pair');
+               'test with 1024bit DHE via BIO pair');
           }
 
           ok(run(test([@ssltest, "-bio_pair", "-server_auth", @CA])),
-             'test sslv2/sslv3 with server authentication');
+             'test with server authentication');
           ok(run(test([@ssltest, "-bio_pair", "-client_auth", @CA])),
-             'test sslv2/sslv3 with client authentication via BIO pair');
+             'test with client authentication via BIO pair');
           ok(run(test([@ssltest, "-bio_pair", "-server_auth", "-client_auth", @CA])),
-             'test sslv2/sslv3 with both client and server authentication via BIO pair');
+             'test with both client and server authentication via BIO pair');
           ok(run(test([@ssltest, "-bio_pair", "-server_auth", "-client_auth", "-app_verify", @CA])),
-             'test sslv2/sslv3 with both client and server authentication via BIO pair and app verify');
+             'test with both client and server authentication via BIO pair and app verify');
 
         SKIP: {
             skip "No IPv4 available on this machine", 4
@@ -517,7 +500,6 @@ sub testssl {
         push @protocols, "-tls1_3" unless $no_tls1_3;
         push @protocols, "-tls1_2" unless $no_tls1_2;
         push @protocols, "-tls1" unless $no_tls1 || $provider eq "fips";
-        push @protocols, "-ssl3" unless $no_ssl3 || $provider eq "fips";
         my $protocolciphersuitecount = 0;
         my %ciphersuites = ();
         my %ciphersstatus = ();
@@ -566,9 +548,6 @@ sub testssl {
                     # DSA is not allowed in FIPS 140-3
                     note "*****SKIPPING $protocol $cipher";
                     ok(1);
-                } elsif ($protocol eq "-ssl3" && $cipher =~ /ECDH/ ) {
-                    note "*****SKIPPING $protocol $cipher";
-                    ok(1);
                 } else {
                     if ($protocol eq "-tls1_3") {
                         $ciphersuites = $cipher;
@@ -587,11 +566,16 @@ sub testssl {
 
           SKIP: {
               skip "skipping dhe512 test", 1
-                  if ($no_dh);
+                  if ($no_dh || $no_ec);
 
+              # Need some explicit EC groups to suppress default support of
+              # ffdhe2048 and ffdhe3072 in the client hello, which then
+              # overrides the server's DH temp parameters from "-dh512".
+              #
               is(run(test([@ssltest,
                            "-s_cipher", "EDH",
                            "-c_cipher", 'EDH:@SECLEVEL=1',
+                           "-groups", "?P-256:?X25519:?MLKEM512",
                            "-dhe512",
                            $protocol])), 0,
                  "testing connection with weak DH, expecting failure");
@@ -601,18 +585,7 @@ sub testssl {
 
     subtest 'SSL security level failure tests' => sub {
         ######################################################################
-        plan tests => 3;
-
-      SKIP: {
-          skip "SSLv3 is not supported by this OpenSSL build", 1
-              if disabled("ssl3");
-
-          skip "SSLv3 is not supported by the FIPS provider", 1
-              if $provider eq "fips";
-
-          is(run(test([@ssltest, "-bio_pair", "-ssl3", "-cipher", '@SECLEVEL=1'])),
-             0, "test sslv3 fails at security level 1, expecting failure");
-        }
+        plan tests => 2;
 
       SKIP: {
           skip "TLSv1.0 is not supported by this OpenSSL build", 1

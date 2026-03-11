@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
+ *  Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  *  Licensed under the Apache License 2.0 (the "License").  You may not use
  *  this file except in compliance with the License.  You can obtain a copy
@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
      * Virtually all clients should do this unless you really know what you
      * are doing.
      */
-    if (!SSL_set1_host(ssl, hostname)) {
+    if (!SSL_set1_dnsname(ssl, hostname)) {
         printf("Failed to set the certificate verification hostname");
         goto end;
     }

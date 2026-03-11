@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -23,6 +23,7 @@
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
+#include "internal/fips.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
@@ -89,6 +90,12 @@ static void *ecdh_newctx(void *provctx)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_KA_ECDH))
+        return NULL;
+#endif
 
     pectx = OPENSSL_zalloc(sizeof(*pectx));
     if (pectx == NULL)

@@ -1,4 +1,4 @@
-# Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -24,7 +24,7 @@ permissions:
   contents: read
 
 env:
-  opts: enable-rc5 enable-md2 enable-ssl3 enable-weak-ssl-ciphers enable-zlib
+  opts: enable-rc5 enable-md2 enable-weak-ssl-ciphers enable-zlib
 
 jobs:
   fips-releases:
@@ -143,13 +143,13 @@ jobs:
             name: master,
             dir: branch-master,
             tgz: branch-master.tar.gz,
-            extra_config: "enable-lms",
+            extra_config: "enable-lms enable-tls-deprecated-ec",
           },
         ]
 
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           path: ${{ matrix.branch.dir }}
           repository: openssl/openssl

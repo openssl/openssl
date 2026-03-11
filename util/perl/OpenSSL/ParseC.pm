@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2018-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -463,6 +463,15 @@ int d2i_$2(void);
 int i2d_$2(void);
 int $2_free(void);
 int $2_new(void);
+DECLARE_ASN1_ITEM($2)
+EOF
+      },
+    },
+    { regexp   => qr/DECLARE_ASN1_ENCODE_FUNCTIONS_name_attr<<<\((.*),\s*(.*)\)>>>/,
+      massager => sub {
+          return (<<"EOF");
+int d2i_$2(void);
+int i2d_$2(void);
 DECLARE_ASN1_ITEM($2)
 EOF
       },
