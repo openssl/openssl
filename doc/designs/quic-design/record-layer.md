@@ -401,7 +401,7 @@ struct ossl_record_method_st {
                             const char *propq, int vers,
                             int role, int direction,
                             int level,
-                            uint16_t epoch,
+                            uint64_t epoch,
                             unsigned char *key,
                             size_t keylen,
                             unsigned char *iv,
