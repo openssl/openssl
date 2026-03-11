@@ -939,6 +939,29 @@ int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
 }
 
 /*
+ * Generate some randomness in our hash table when we need it, since
+ * The use of this particular code occurs before our algorithms are
+ * registered, preventing the use of the RAND_bytes apis.
+ * Based off of:
+ * https://doi.org/10.18637/jss.v008.i14
+ */
+static ossl_inline void generate_random_seed(uint32_t *seed)
+{
+    OSSL_TIME ts;
+    if (*seed == 0) {
+        *seed = OPENSSL_rdtsc();
+        if (*seed == 0) {
+            ts = ossl_time_now();
+            *seed = (uint32_t)ts.t;
+        }
+    }
+
+    *seed ^= *seed << 13;
+    *seed ^= *seed >> 17;
+    *seed ^= *seed << 5;
+}
+
+/*
  * Cull items from the QUERY cache.
  *
  * We don't want to let our QUERY cache grow too large, so if we grow beyond
@@ -957,7 +980,7 @@ int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
  * 6) Update our sa->seed by xoring the current sa->seed with the last hash that was eliminated.
  */
 static void QUERY_cache_select_cull(ALGORITHM *alg, STORED_ALGORITHMS *sa,
-    size_t cullcount, uint64_t seed)
+    size_t cullcount, uint32_t seed)
 {
     size_t culled = 0;
     uint64_t hash = 0;
@@ -993,11 +1016,9 @@ cull_again:
                 if (culled == cullcount)
                     break;
             }
-        }
-        seed = seed >> 1;
-        if (seed == 0) {
-            ts = ossl_time_now();
-            seed = ossl_fnv1a_hash((uint8_t *)&ts, sizeof(OSSL_TIME));
+            generate_random_seed(&seed);
+        } else {
+            seed = seed >> 1;
         }
     }
     /*
@@ -1199,8 +1220,9 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
     if (alg == NULL)
         goto err;
     if (ossl_ht_count(sa->cache) > IMPL_CACHE_FLUSH_THRESHOLD) {
-        OSSL_TIME ts = ossl_time_now();
-        uint64_t seed = ossl_fnv1a_hash((uint8_t *)&ts, sizeof(OSSL_TIME));
+        uint32_t seed = 0;
+
+        generate_random_seed(&seed);
         /*
          * Cull between 1 and 25% of this cache
          */
