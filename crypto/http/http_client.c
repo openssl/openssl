@@ -1466,7 +1466,10 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
     }
     BIO_push(fbio, bio);
 
-    BIO_printf(fbio, "CONNECT %s:%s " HTTP_1_0 "\r\n", server, port);
+    if (strchr(server, ':') != NULL)
+        BIO_printf(fbio, "CONNECT [%s]:%s " HTTP_1_0 "\r\n", server, port);
+    else
+        BIO_printf(fbio, "CONNECT %s:%s " HTTP_1_0 "\r\n", server, port);
 
     /*
      * Workaround for broken proxies which would otherwise close
