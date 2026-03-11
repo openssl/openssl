@@ -165,35 +165,7 @@ guidelines:
     the commit should include the line:
 
     ```
-
-        # Add one or more updated files that needed changes
-        git add <filename>
-
-        # Do a fixup commit
-        # <commit-id> is the id of a previous commit that you want to fix up.
-        git commit --fixup <commit-id>
-
-        # Do a non forced push
-        git push
-    ```
-
-    ```
         Fixes #XXXXX
     ```
 
     where XXXXX is the issue number.
-
-11. Temp for testing
-
-    ```
-
-        # Add one or more updated files that needed changes
-        git add <filename>
-
-        # Do a fixup commit
-        # <commit-id> is the id of a previous commit that you want to fix up.
-        git commit --fixup <commit-id>
-
-        # Do a non forced push
-        git push
-    ```
