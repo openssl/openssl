@@ -55,7 +55,7 @@
  * cryptographic.
  */
 
-/* Verification time to the verify function as a parameter. */
+/* Verification time. */
 static time_t kVerify = 1775779200; /* 2026-04-10 00:00:00 UTC */
 
 static const char *kRoot[] = {
@@ -833,7 +833,7 @@ err:
     return NULL;
 }
 
-static int test_basic_crl(void)
+static int test_crl_basic(void)
 {
     X509_CRL *basic_crl = CRL_from_strings(kBasicCRL);
     X509_CRL *revoked_crl = CRL_from_strings(kRevokedCRL);
@@ -879,7 +879,7 @@ static int test_no_crl(void)
         X509_V_ERR_UNABLE_TO_GET_CRL);
 }
 
-static int test_bad_issuer_crl(void)
+static int test_crl_bad_issuer(void)
 {
     X509_CRL *bad_issuer_crl = CRL_from_strings(kBadIssuerCRL);
     int r;
@@ -907,7 +907,7 @@ static int test_crl_empty_idp(void)
     return r;
 }
 
-static int test_known_critical_crl(void)
+static int test_crl_critical_known(void)
 {
     X509_CRL *crl = CRL_from_strings(kKnownCriticalCRL);
     int test;
@@ -921,7 +921,7 @@ static int test_known_critical_crl(void)
     return test;
 }
 
-static int test_unknown_critical_crl1(void)
+static int test_crl_critical_unknown1(void)
 {
     X509_CRL *unknown_critical_crl = CRL_from_strings(kUnknownCriticalCRL);
     int r;
@@ -935,7 +935,7 @@ static int test_unknown_critical_crl1(void)
     return r;
 }
 
-static int test_unknown_critical_crl2(void)
+static int test_crl_critical_unknown2(void)
 {
     X509_CRL *crl;
     int test;
@@ -1052,7 +1052,7 @@ static int get_crl_fn(X509_STORE_CTX *ctx, X509_CRL **crl, X509 *x)
     return 1;
 }
 
-static int test_get_crl_fn_score(void)
+static int test_crl_get_fn_score(void)
 {
     X509_STORE_CTX *ctx = X509_STORE_CTX_new();
     X509_STORE *store = X509_STORE_new();
@@ -1237,7 +1237,6 @@ static int test_crl_idp_onlyca_onlyattr(void)
     STACK_OF(X509_CRL) *crls;
     unsigned int flags = X509_V_FLAG_CRL_CHECK;
     unsigned int expect = X509_V_ERR_UNABLE_TO_GET_CRL;
-
     int test;
 
     test = TEST_ptr((crl = CRL_from_strings(kCrlIDPOnlyCaOnlyAttr)))
@@ -1283,7 +1282,6 @@ static int test_crl_idp_onlyuser_onlyca_onlyattr(void)
     STACK_OF(X509_CRL) *crls;
     unsigned int flags = X509_V_FLAG_CRL_CHECK;
     unsigned int expect = X509_V_ERR_UNABLE_TO_GET_CRL;
-
     int test;
 
     test = TEST_ptr((crl = CRL_from_strings(kCrlIDPOnlyUserOnlyCAOnlyAttr)))
@@ -1305,27 +1303,27 @@ int setup_tests(void)
 
     ADD_TEST(test_private_keys);
     ADD_TEST(test_no_crl);
-    ADD_TEST(test_basic_crl);
-    ADD_TEST(test_bad_issuer_crl);
+    ADD_TEST(test_crl_basic);
+    ADD_TEST(test_crl_bad_issuer);
     ADD_TEST(test_crl_empty_idp);
-    ADD_TEST(test_known_critical_crl);
+    ADD_TEST(test_crl_critical_known);
     ADD_TEST(test_crl_cert_issuer_ext);
     ADD_TEST(test_crl_date_invalid);
-    ADD_TEST(test_get_crl_fn_score);
+    ADD_TEST(test_crl_get_fn_score);
     ADD_TEST(test_crl_delta_indicator);
     ADD_TEST(test_crl_number);
     ADD_TEST(test_crl_idp_malformed);
     ADD_TEST(test_crl_idp_malformed2);
-    ADD_TEST(test_unknown_critical_crl1);
-    ADD_TEST(test_unknown_critical_crl2);
-    ADD_TEST(test_crl_revocation);
-    ADD_TEST(test_crl_extension_duplicate);
-    ADD_TEST(test_crl_extension_duplicate_entry);
-    ADD_TEST(test_crl_extension_duplicate_serial);
     ADD_TEST(test_crl_idp_onlyca_onlyattr);
     ADD_TEST(test_crl_idp_onlyuser_onlyattr);
     ADD_TEST(test_crl_idp_onlyuser_onlyca);
     ADD_TEST(test_crl_idp_onlyuser_onlyca_onlyattr);
+    ADD_TEST(test_crl_critical_unknown1);
+    ADD_TEST(test_crl_critical_unknown2);
+    ADD_TEST(test_crl_revocation);
+    ADD_TEST(test_crl_extension_duplicate);
+    ADD_TEST(test_crl_extension_duplicate_entry);
+    ADD_TEST(test_crl_extension_duplicate_serial);
     ADD_ALL_TESTS(test_reuse_crl, 6);
 
     return 1;
