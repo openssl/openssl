@@ -66,15 +66,20 @@ jobs:
         include:
           - platform: hyperlight
             process-mode: multi-process
+            memory: 128mb
           - platform: hyperlight
             process-mode: single-process
+            memory: 128mb
           - platform: microvm
             process-mode: single-process
+            memory: 128mb
           - platform: microvm
             process-mode: multi-process
+            memory: 128mb
           - platform: microvm
             process-mode: standalone
-    name: ${{ matrix.platform }}-${{ matrix.process-mode }}
+            memory: 128mb
+    name: ${{ matrix.platform }}-${{ matrix.process-mode }}-${{ matrix.memory }}
     container:
       image: nanvix/toolchain:latest-minimal
       options: --device /dev/kvm
@@ -98,7 +103,7 @@ jobs:
         run: |
           set -euo pipefail
           # Find and extract the artifact matching platform and process-mode
-          ARTIFACT_PATTERN="${{ matrix.platform }}.*${{ matrix.process-mode }}.*\.tar\.bz2"
+          ARTIFACT_PATTERN="${{ matrix.platform }}.*${{ matrix.process-mode }}.*${{ matrix.memory }}.*\.tar\.bz2"
           ARTIFACT_FILE=$(find nanvix-artifacts -maxdepth 1 -type f -name "*.tar.bz2" | grep -E "$ARTIFACT_PATTERN" | head -1)
           if [[ -z "$ARTIFACT_FILE" ]]; then
             echo "::error::No ${{ matrix.platform }} ${{ matrix.process-mode }} artifact found"
@@ -139,8 +144,9 @@ jobs:
             NANVIX_HOME="$NANVIX_HOME" NANVIX_TOOLCHAIN="/opt/nanvix" \
             INSTALL_PREFIX="/sysroot" \
             PLATFORM="${{ matrix.platform }}" PROCESS_MODE="${{ matrix.process-mode }}" \
+            MEMORY_SIZE="${{ matrix.memory }}" \
             package
-          ARTIFACT_NAME="openssl-${{ matrix.platform }}-${{ matrix.process-mode }}"
+          ARTIFACT_NAME="openssl-${{ matrix.platform }}-${{ matrix.process-mode }}-${{ matrix.memory }}"
           echo "ARTIFACT_TARBALL=dist/${ARTIFACT_NAME}.tar.bz2" >> "$GITHUB_ENV"
 
       - name: Verify Package
@@ -148,12 +154,13 @@ jobs:
           make -f Makefile.nanvix CONFIG_NANVIX=y \
             NANVIX_HOME="$NANVIX_HOME" NANVIX_TOOLCHAIN="/opt/nanvix" \
             PLATFORM="${{ matrix.platform }}" PROCESS_MODE="${{ matrix.process-mode }}" \
+            MEMORY_SIZE="${{ matrix.memory }}" \
             verify-package
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: openssl-${{ matrix.platform }}-${{ matrix.process-mode }}
+          name: openssl-${{ matrix.platform }}-${{ matrix.process-mode }}-${{ matrix.memory }}
           path: ${{ env.ARTIFACT_TARBALL }}
           retention-days: 7
 
