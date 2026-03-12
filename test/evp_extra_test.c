@@ -5041,9 +5041,10 @@ static int seen_name(const char *name)
 
 static void collect_cipher_cb(EVP_CIPHER *ciph, void *arg)
 {
-    const char *name0 = NULL;
     EVP_CIPHER_TEST_INFO *tmp = NULL;
     EVP_CIPHER_TEST_INFO *info = NULL;
+    const char *name0 = NULL;
+    int taglen = 0;
 
     (void)arg;
 
@@ -5051,6 +5052,9 @@ static void collect_cipher_cb(EVP_CIPHER *ciph, void *arg)
         return;
 
     name0 = EVP_CIPHER_get0_name(ciph);
+    taglen = (EVP_CIPHER_get_flags(ciph) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0
+        ? EVPTEST_TAG_LEN_DEFAULT
+        : 0;
 
     if (name0 == NULL || seen_name(name0))
         return;
@@ -5059,19 +5063,24 @@ static void collect_cipher_cb(EVP_CIPHER *ciph, void *arg)
     if (EVP_CIPHER_get_mode(ciph) == EVP_CIPH_SIV_MODE)
         return;
 
-#ifdef AES_CBC_HMAC_SHA_ETM_CAPABLE
     /*
      * Exclude ETM ciphers that only exist on ARM.
      *
      * These are special-purpose TLS ciphers with a different initialization
      * order that breaks this test's logic.
      */
-{
-    size_t nlen = strlen(name0);
-    if (nlen >= 4 && OPENSSL_strcasecmp(name0 + nlen - 4, "-ETM") == 0)
-        return;
-}
-#endif
+    if (taglen > 0) {
+        if (EVP_CIPHER_is_a(ciph, "AES-128-CBC-HMAC-SHA1-ETM")
+            || EVP_CIPHER_is_a(ciph, "AES-128-CBC-HMAC-SHA256-ETM")
+            || EVP_CIPHER_is_a(ciph, "AES-128-CBC-HMAC-SHA512-ETM")
+            || EVP_CIPHER_is_a(ciph, "AES-192-CBC-HMAC-SHA1-ETM")
+            || EVP_CIPHER_is_a(ciph, "AES-192-CBC-HMAC-SHA256-ETM")
+            || EVP_CIPHER_is_a(ciph, "AES-192-CBC-HMAC-SHA512-ETM")
+            || EVP_CIPHER_is_a(ciph, "AES-256-CBC-HMAC-SHA1-ETM")
+            || EVP_CIPHER_is_a(ciph, "AES-256-CBC-HMAC-SHA256-ETM")
+            || EVP_CIPHER_is_a(ciph, "AES-256-CBC-HMAC-SHA512-ETM"))
+            return;
+    }
 
     tmp = OPENSSL_realloc(cipher_list,
         (cipher_list_n + 1) * sizeof(*tmp));
@@ -5087,13 +5096,11 @@ static void collect_cipher_cb(EVP_CIPHER *ciph, void *arg)
         return;
 
     info->ciph = ciph;
-    info->name = EVP_CIPHER_get0_name(ciph);
+    info->name = name0;
     info->keylen = EVP_CIPHER_get_key_length(ciph);
     info->ivlen = EVP_CIPHER_get_iv_length(ciph);
     info->mode = EVP_CIPHER_get_mode(ciph);
-    info->taglen = (EVP_CIPHER_get_flags(ciph) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0
-        ? EVPTEST_TAG_LEN_DEFAULT
-        : 0;
+    info->taglen = taglen;
 
     cipher_list_n++;
 }
