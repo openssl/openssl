@@ -203,9 +203,9 @@ static int ch_init(QUIC_CHANNEL *ch)
      * Note: The TP we transmit governs what the peer can transmit and thus
      * applies to the RXFC.
      */
-    ch->tx_init_max_stream_data_bidi_local  = QUIC_DEFAULT_MAX_STREAM_DATA;
-    ch->tx_init_max_stream_data_bidi_remote = QUIC_DEFAULT_MAX_STREAM_DATA;
-    ch->tx_init_max_stream_data_uni         = QUIC_DEFAULT_MAX_STREAM_DATA;
+    ch->tx_init_max_stream_data_bidi_local = QUIC_DEFAULT_INIT_STREAM_RXFC_WND;
+    ch->tx_init_max_stream_data_bidi_remote = QUIC_DEFAULT_INIT_STREAM_RXFC_WND;
+    ch->tx_init_max_stream_data_uni = QUIC_DEFAULT_INIT_STREAM_RXFC_WND;
 
     if (!ossl_quic_rxfc_init(&ch->conn_rxfc, NULL,
             DEFAULT_INIT_CONN_RXFC_WND,
@@ -1829,16 +1829,14 @@ static int ch_on_transport_params(const unsigned char *params,
              * This is correct; the BIDI_LOCAL TP governs streams created by
              * the endpoint which sends the TP, i.e., our peer.
              */
-            sc->session->quic_params.init_max_stream_data_bidi_local =
-                ch->rx_init_max_stream_data_bidi_remote;
+            sc->session->quic_params.init_max_stream_data_bidi_local = ch->rx_init_max_stream_data_bidi_remote;
 
         if (got_initial_max_stream_data_bidi_remote)
             /*
              * This is correct; the BIDI_REMOTE TP governs streams created
              * by the endpoint which receives the TP, i.e., us.
              */
-            sc->session->quic_params.init_max_stream_data_bidi_remote =
-                ch->rx_init_max_stream_data_bidi_local;
+            sc->session->quic_params.init_max_stream_data_bidi_remote = ch->rx_init_max_stream_data_bidi_local;
 
         if (got_initial_max_stream_data_uni)
             sc->session->quic_params.init_max_stream_data_uni = ch->rx_init_max_stream_data_uni;
@@ -3885,7 +3883,7 @@ static int ch_init_new_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs,
 
     if (!ossl_quic_rxfc_init(&qs->rxfc, &ch->conn_rxfc,
             rxfc_wnd,
-            DEFAULT_STREAM_RXFC_MAX_WND_MUL * rxfc_wnd,
+            QUIC_DEFAULT_STREAM_RXFC_MAX_WND_MUL * rxfc_wnd,
             get_time, ch))
         goto err;
 
