@@ -464,7 +464,6 @@ sub clientstart
         if ($self->debug) {
             print STDERR "Client command: $execcmd\n";
         }
-
         open(my $savedout, ">&STDOUT");
         # If we open pipe with new descriptor, attempt to close it,
         # explicitly or implicitly, would incur waitpid and effectively
@@ -583,7 +582,9 @@ sub clientstart
         }
 
         #Closing this also kills the child process
-        $client_sock->close();
+        if (!$self->{isdtls}) {
+            $client_sock->close();
+        }
     }
 
     my $pid;
