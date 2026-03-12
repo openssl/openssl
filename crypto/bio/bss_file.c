@@ -200,14 +200,14 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
              * https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/feof?view=msvc-170
              * So if ret is zero here we need to check errno for EINVAL
              */
-            ret = (long)UP_feof(fp);
+            ret = !!(long)UP_feof(fp);
             if (ret == 0 && errno == EINVAL)
                 ret = -EINVAL;
         } else {
             /*
              * POSIX only returns 0 or nonzero,
              * the latter representing end of file
-             * We need to map this to 1 or 0 specifically
+             * We need to map this to 0 or 1 respectively
              * as per the BIO_eof docs
              */
             ret = !!(long)feof(fp);
