@@ -20,7 +20,7 @@
 #include "ssl_local.h"
 #include "statem/statem_local.h"
 #ifndef OPENSSL_NO_QUIC
-# include "internal/quic_types.h"
+#include "internal/quic_types.h"
 #endif
 
 static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
@@ -126,9 +126,9 @@ SSL_SESSION *SSL_SESSION_new(void)
 #ifndef OPENSSL_NO_QUIC
     /* Set QUIC params to default values */
     ss->quic_params.init_max_data = 0;
-    ss->quic_params.init_max_stream_data_bidi_local = QUIC_DEFAULT_MAX_STREAM_DATA;
-    ss->quic_params.init_max_stream_data_bidi_remote = QUIC_DEFAULT_MAX_STREAM_DATA;
-    ss->quic_params.init_max_stream_data_uni = QUIC_DEFAULT_MAX_STREAM_DATA;
+    ss->quic_params.init_max_stream_data_bidi_local = QUIC_DEFAULT_INIT_STREAM_RXFC_WND;
+    ss->quic_params.init_max_stream_data_bidi_remote = QUIC_DEFAULT_INIT_STREAM_RXFC_WND;
+    ss->quic_params.init_max_stream_data_uni = QUIC_DEFAULT_INIT_STREAM_RXFC_WND;
     ss->quic_params.max_local_streams_bidi = 0;
     ss->quic_params.max_local_streams_uni = 0;
     ss->quic_params.max_idle_timeout = QUIC_DEFAULT_IDLE_TIMEOUT;
@@ -276,10 +276,8 @@ static SSL_SESSION *ssl_session_dup_intern(const SSL_SESSION *src, int ticket)
 
 #ifndef OPENSSL_NO_QUIC
     dest->quic_params.init_max_data = src->quic_params.init_max_data;
-    dest->quic_params.init_max_stream_data_bidi_local =
-        src->quic_params.init_max_stream_data_bidi_local;
-    dest->quic_params.init_max_stream_data_bidi_remote =
-        src->quic_params.init_max_stream_data_bidi_remote;
+    dest->quic_params.init_max_stream_data_bidi_local = src->quic_params.init_max_stream_data_bidi_local;
+    dest->quic_params.init_max_stream_data_bidi_remote = src->quic_params.init_max_stream_data_bidi_remote;
     dest->quic_params.init_max_stream_data_uni = src->quic_params.init_max_stream_data_uni;
     dest->quic_params.max_local_streams_bidi = src->quic_params.max_local_streams_bidi;
     dest->quic_params.max_local_streams_uni = src->quic_params.max_local_streams_uni;

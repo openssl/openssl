@@ -106,6 +106,9 @@ int ossl_quic_gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len,
 /* Arbitrary choice of default idle timeout (not an RFC value). */
 #define QUIC_DEFAULT_IDLE_TIMEOUT 30000
 
+#define QUIC_DEFAULT_INIT_STREAM_RXFC_WND (512 * 1024)
+#define QUIC_DEFAULT_STREAM_RXFC_MAX_WND_MUL 12
+
 #define QUIC_STATELESS_RESET_TOKEN_LEN 16
 
 #  define QUIC_DEFAULT_MAX_STREAM_DATA (512 * 1024)
