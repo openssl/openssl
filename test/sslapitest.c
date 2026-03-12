@@ -14113,10 +14113,14 @@ static int test_ssl_trace(void)
     } else {
 
 #ifdef OPENSSL_NO_ZLIB
+#ifdef OPENSSL_NO_QUIC
         reffile = test_mk_file_path(datadir, "ssltraceref.txt");
 #else
+        reffile = test_mk_file_path(datadir, "ssltraceref-quic.txt");
+#endif /* OPENSSL_NO_QUIC */
+#else
         reffile = test_mk_file_path(datadir, "ssltraceref-zlib.txt");
-#endif
+#endif /* OPENSSL_NO_ZLIB */
         if (!TEST_true(compare_with_reference_file(bio, reffile)))
             goto err;
     }
