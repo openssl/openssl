@@ -1388,7 +1388,10 @@ static int setup_verification_ctx(OSSL_CMP_CTX *ctx)
         out_vpm = X509_STORE_get0_param(out_trusted);
         X509_VERIFY_PARAM_clear_flags(out_vpm, X509_V_FLAG_USE_CHECK_TIME);
 
-        (void)OSSL_CMP_CTX_set_certConf_cb_arg(ctx, out_trusted);
+        if (!OSSL_CMP_CTX_set_certConf_cb_arg(ctx, out_trusted)) {
+            X509_STORE_free(out_trusted);
+            return 0;
+        }
     }
 
     if (opt_disable_confirm)
