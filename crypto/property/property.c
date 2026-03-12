@@ -42,6 +42,17 @@
 #endif
 
 /*
+ * To keep random cull distributions from being unbiased, we should keep both
+ * CACHE_SIZE and NUM_SHARDS as powers of 2
+ */
+#if (CACHE_SIZE != 0 && (CACHE_SIZE & (CACHE_SIZE - 1)))
+#error "CACHE_SIZE must be a power of 2"
+#endif
+
+#if (NUM_SHARDS != 0 && (NUM_SHARDS & (NUM_SHARDS - 1)))
+#error "NUM_SHARDS must be a power of 2"
+#endif
+/*
  * The number of elements in the query cache before we initiate a flush.
  * If reducing this, also ensure the stochastic test in test/property_test.c
  * isn't likely to fail.
