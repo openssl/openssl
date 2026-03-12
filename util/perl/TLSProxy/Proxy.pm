@@ -201,38 +201,6 @@ sub DESTROY
     $self->{proxy_sock}->close() if $self->{proxy_sock};
 }
 
-sub reopenUDPSocket()
-{
-    my $self = shift;
-
-    if ($self->{proxy_sock})
-    {
-        if (!$self->{proxy_sock}->opened) {
-            my $clientaddr = $self->{client_addr};
-            $clientaddr =~ s/[\[\]]//g; # Remove [ and ]
-            my $proxaddr = $self->{proxy_addr};
-            $proxaddr =~ s/[\[\]]//g; # Remove [ and ]
-
-            my @proxyargs = (
-                LocalHost   => $proxaddr,
-                LocalPort   => $self->{proxy_port},
-                PeerHost    => $clientaddr,
-                PeerPort    => $self->{client_port},
-                Proto       => "udp",
-            );
-
-            if (my $sock = $IP_factory->(@proxyargs)) {
-                $self->{proxy_sock} = $sock;
-            } else {
-                warn "Failed creating proxy socket (".$self->{proxy_addr}.",0): $!\n";
-                return 0;
-            }
-        }
-    }
-
-    return 1;
-}
-
 sub clearClient
 {
     my $self = shift;
@@ -614,7 +582,9 @@ sub clientstart
         }
 
         #Closing this also kills the child process
-        $client_sock->close();
+        if (!$self->{isdtls}) {
+            $client_sock->close();
+        }
     }
 
     my $pid;

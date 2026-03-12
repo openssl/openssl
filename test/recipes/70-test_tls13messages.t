@@ -256,9 +256,6 @@ sub run_tests
     $proxy->clearClient();
     $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
     $proxy->clientflags("-no_rx_cert_comp -sess_in " . $session);
-    if ($run_test_as_dtls == 1) {
-        $proxy->reopenUDPSocket();
-    }
     $proxy->clientstart();
     checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
         (checkhandshake::DEFAULT_EXTENSIONS
