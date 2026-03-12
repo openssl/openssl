@@ -193,10 +193,25 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = (long)fseek(fp, num, 0);
         break;
     case BIO_CTRL_EOF:
-        if (b->flags & BIO_FLAGS_UPLINK_INTERNAL)
+        if (b->flags & BIO_FLAGS_UPLINK_INTERNAL) {
+            /*
+             * The uplink code (which is only used by windows)
+             * can have feof return an error, according to
+             * https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/feof?view=msvc-170
+             * So if ret is zero here we need to check errno for EINVAL
+             */
             ret = (long)UP_feof(fp);
-        else
-            ret = (long)feof(fp);
+            if (ret == 0 && errno == EINVAL)
+                ret = -EINVAL;
+        } else {
+            /*
+             * POSIX only returns 0 or nonzero,
+             * the latter representing end of file
+             * We need to map this to 1 or 0 specifically
+             * as per the BIO_eof docs
+             */
+            ret = !!(long)feof(fp);
+        }
         break;
     case BIO_C_FILE_TELL:
     case BIO_CTRL_INFO:
