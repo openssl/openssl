@@ -331,6 +331,27 @@ static const char *kCrlIDPOnlyUserOnlyCAOnlyAttr[] = {
     NULL
 };
 
+static const char *kCrlCINoIndirectFlag[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICrzCCAZcCAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEd\n",
+    "MBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EXDTI2MDMxMDA4MDAwMFoXDTI2\n",
+    "MDYwODA4MDAwMFowbjBsAgIQABcNMjYwMzA5MDgwMDAwWjBXMFUGA1UdHQROMEyk\n",
+    "SjBIMQswCQYDVQQGEwJVUzEVMBMGA1UECgwMRXhhbXBsZSBDb3JwMSIwIAYDVQQD\n",
+    "DBlFeGFtcGxlIENvcnAgSXNzdWluZyBDQSAyoGIwYDAfBgNVHSMEGDAWgBT+FA4T\n",
+    "Gwlny0oNS9pP8++QtUPbMzAKBgNVHRQEAwIBKDAxBgNVHRwBAf8EJzAloCOgIYYf\n",
+    "aHR0cDovL2NybC5leGFtcGxlLmNvbS9yb290LmNybDANBgkqhkiG9w0BAQsFAAOC\n",
+    "AQEAc2tRh8V2jStk9g78UUUp/v+zI8rGaeU2mS7EIqxyqzH916tj1+aKcH+wY5ed\n",
+    "YGrsG5ERsdZWVWREpZmoIpqagF1nvU9Ya5unNDVGQZqRXtANX2bI1sdqu0tLZ+ul\n",
+    "t3Um6jbga/0Ej1rGDjF3Y2/tvQ8q7v42Hk859TQp2xmX7er48ERj9RbL8I7O0AIS\n",
+    "15dIAIhsFQJruelovjzJ6Y0tKZgJ+ExAItezAVhEPl6dqEYO5zXXXzwKRBG1A2Jh\n",
+    "dKdLqbcqkFbd8jIr7b1JNrJU1jcIMAm3/X0l+XwH+ychKy4+6wjPiDVFgyDfn1qf\n",
+    "ZjPymdOBXXH7OvqdCw43/RadaQ==\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
 /*
  * We cannot use old certificates for new tests because the private key
  * associated with them is no longer available. Therefore, we add kCRLTestLeaf,
@@ -1332,6 +1353,19 @@ static int test_crl_idp_onlyuser_onlyca_onlyattr(void)
     return test;
 }
 
+static int test_crl_idp_cert_issuer_no_indirect_flag(void)
+{
+    X509_CRL *crl = NULL;
+    int test;
+
+    test = TEST_ptr_null((crl = CRL_from_strings(kCrlCINoIndirectFlag)))
+        && TEST_err_r(ERR_LIB_ASN1, ASN1_R_INVALID_VALUE)
+        && TEST_err_s("CRL Certificate Issuer extension requires Indirect CRL flag to be set");
+
+    X509_CRL_free(crl);
+    return test;
+}
+
 static int test_crl_revocation(void)
 {
     X509 *root = NULL;
@@ -1358,7 +1392,9 @@ static int test_crl_extension_duplicate(void)
     X509_CRL *crl = NULL;
     int test;
 
-    test = TEST_ptr_null((crl = CRL_from_strings(kCrlExtensionDuplicate)));
+    test = TEST_ptr_null((crl = CRL_from_strings(kCrlExtensionDuplicate)))
+        && TEST_err_s("CRL: malformed CRL number extension");
+
     X509_CRL_free(crl);
     return test;
 }
@@ -1426,6 +1462,7 @@ int setup_tests(void)
     ADD_TEST(test_crl_idp_onlyuser_onlyattr);
     ADD_TEST(test_crl_idp_onlyuser_onlyca);
     ADD_TEST(test_crl_idp_onlyuser_onlyca_onlyattr);
+    ADD_TEST(test_crl_idp_cert_issuer_no_indirect_flag);
     ADD_TEST(test_crl_critical_unknown1);
     ADD_TEST(test_crl_critical_unknown2);
     ADD_TEST(test_crl_revocation);
