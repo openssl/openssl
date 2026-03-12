@@ -798,6 +798,62 @@ static int test_kem(OSSL_LIB_CTX *libctx, const char *propq,
         && test_ml_kem_keyexch(libctx, propq);
 }
 
+static int test_rsa_enc_dec(OSSL_LIB_CTX *libctx, const char *propq)
+{
+    EVP_PKEY_CTX *keyctx = NULL, *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    unsigned char plaintext[] = "Hello world";
+    unsigned char *ciphertext = NULL, *decrypted = NULL;
+    size_t ciphertext_len, decrypted_len;
+    int ret = 0;
+
+    /* Generate key */
+    if (!TEST_ptr(keyctx = EVP_PKEY_CTX_new_from_name(libctx, "RSA", propq))
+        || !TEST_int_eq(EVP_PKEY_keygen_init(keyctx), 1)
+        || !TEST_int_eq(EVP_PKEY_keygen(keyctx, &pkey), 1))
+        goto err;
+
+    /* Encrypt */
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq))
+        || !TEST_int_eq(EVP_PKEY_encrypt_init(ctx), 1)
+        || !TEST_int_eq(EVP_PKEY_encrypt(ctx, NULL, &ciphertext_len,
+                        plaintext, sizeof(plaintext)), 1)
+        || !TEST_ptr(ciphertext = OPENSSL_malloc(ciphertext_len))
+        || !TEST_int_eq(EVP_PKEY_encrypt(ctx, ciphertext, &ciphertext_len,
+                        plaintext, sizeof(plaintext)), 1)
+        )
+        goto err;
+
+    /* Decrypt */
+    if (!TEST_int_eq(EVP_PKEY_decrypt_init(ctx), 1)
+        || !TEST_int_eq(EVP_PKEY_decrypt(ctx, NULL, &decrypted_len, ciphertext,
+                        ciphertext_len), 1)
+        || !TEST_ptr(decrypted = OPENSSL_malloc(decrypted_len))
+        || !TEST_int_eq(EVP_PKEY_decrypt(ctx, decrypted, &decrypted_len,
+                        ciphertext, ciphertext_len), 1)
+        || !TEST_int_eq(strcasecmp((const char *)plaintext, (const char *)decrypted), 0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_CTX_free(keyctx);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    OPENSSL_free(ciphertext);
+    OPENSSL_free(decrypted);
+
+    return ret;
+}
+
+static int test_asym_cipher(EVP_ASYM_CIPHER *cipher, const char *name,
+                            OSSL_LIB_CTX *ctx, const char *propq)
+{
+    return TEST_ptr(cipher)
+        && TEST_ptr(EVP_ASYM_CIPHER_get0_provider(cipher))
+        && TEST_true(EVP_ASYM_CIPHER_is_a(cipher, name))
+        && TEST_true(test_rsa_enc_dec(ctx, propq));
+}
+
 static int test_EVP_KEYMGMT_fetch_freeze(void)
 {
 #if defined(OPENSSL_NO_CACHED_FETCH) || defined(OPENSSL_NO_EC)
@@ -1355,6 +1411,7 @@ static int test_EVP_ASYM_CIPHER_fetch_freeze(void)
         goto err;
 
     if (!TEST_ptr(cipher = EVP_ASYM_CIPHER_fetch(ctx, "RSA", NULL))
+        || !TEST_true(test_asym_cipher(cipher, "RSA", ctx, NULL))
         || !TEST_int_ne(cipher->origin, EVP_ORIG_FROZEN))
         goto err;
     EVP_ASYM_CIPHER_free(cipher);
@@ -1362,23 +1419,24 @@ static int test_EVP_ASYM_CIPHER_fetch_freeze(void)
 
     if (!TEST_int_eq(OSSL_LIB_CTX_freeze(ctx, "?fips=true"), 1)
         || !TEST_ptr(cipher = EVP_ASYM_CIPHER_fetch(ctx, "RSA", NULL))
+        || !TEST_true(test_asym_cipher(cipher, "RSA", ctx, NULL))
         || !TEST_int_eq(cipher->origin, EVP_ORIG_FROZEN))
         goto err;
     /* Technically, frozen version doesn't need to be freed */
     EVP_ASYM_CIPHER_free(cipher);
-    cipher = NULL;
 
     if (!TEST_ptr(cipher = EVP_ASYM_CIPHER_fetch(ctx, "RSA", "?fips=true"))
+        || !TEST_true(test_asym_cipher(cipher, "RSA", ctx, "?fips=true"))
         || !TEST_int_eq(cipher->origin, EVP_ORIG_FROZEN))
         goto err;
     EVP_ASYM_CIPHER_free(cipher);
-    cipher = NULL;
 
     /*
      * A mismatched propq should use the regular fetch path rather than the
      * frozen fast path.
      */
     if (!TEST_ptr(cipher = EVP_ASYM_CIPHER_fetch(ctx, "RSA", "?provider=default"))
+        || !TEST_true(test_asym_cipher(cipher, "RSA", ctx, "?provider=default"))
         || !TEST_int_ne(cipher->origin, EVP_ORIG_FROZEN))
         goto err;
 
