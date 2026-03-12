@@ -141,9 +141,9 @@ Otherwise, listing an unknown group name will cause a failure to parse the
 I<list>.
 Note that whether a group is known or not may depend on the OpenSSL version,
 how OpenSSL was compiled and/or which providers are loaded.
-Best practice is to make sure you have the correct spelling of the group name
-and also prefix it with a C<?> to handle configurations in which it might
-nevertheless be unknown.
+Make sure you have the correct spelling of the group name and when in doubt
+prefix it with a C<?> to handle configurations in which it might nevertheless
+be unknown.
 
 If a group name is prefixed with the C<-> character, it will be removed from
 the list of groups specified up to that point.
