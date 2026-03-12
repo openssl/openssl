@@ -602,13 +602,7 @@ sub clientstart
         # it's done already, just collect the exit code [and reap]...
         waitpid($pid, 0);
 
-        # TODO(DTLSv1.3): The server is not able to shut down correctly
-        #                 when the client sends an alert in epoch 0 and the
-        #                 server has sent its Finished message.
-        #                 As a workaround we accept a bad exit code for a failing
-        #                 DTLS test run.
-        die "exit code $? from s_server process\n"
-            if $? != 0 && (!$self->{isdtls} || $success == 1);
+        die "exit code $? from s_server process\n" if $? != 0;
     } else {
         # It's a bit counter-intuitive spot to make next connection to
         # the s_server. Rationale is that established connection works
