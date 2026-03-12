@@ -168,8 +168,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
         if ((*(q++) & V_ASN1_PRIMITIVE_TAG) == V_ASN1_PRIMITIVE_TAG) {
             do {
                 diff--;
-            }
-            while (diff > 0 && *(q++) & 0x80);
+            } while (diff > 0 && *(q++) & 0x80);
         }
 
         if (diff == 0) {
@@ -183,7 +182,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
         diff--;
         /* Check the length.  This should also work for indefinite length */
         if (*q & 0x80) {
-            int i = *q & 0x7f;
+            unsigned int i = *q & 0x7f;
             if (i > diff) {
                 want = q - p + i + 1;
                 continue;
