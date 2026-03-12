@@ -298,7 +298,7 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
      * If method->bread() returned 0 when dlen>0, it can be either EOF or
      * an error, and we should distinguish them
      */
-    if (ret == 0 && dlen > 0 && BIO_eof(b) != 1)
+    if (ret == 0 && dlen > 0 && BIO_eof(b) == 0)
         ret = -1;
 
     if (HAS_CALLBACK(b))
