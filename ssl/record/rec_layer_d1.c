@@ -229,8 +229,6 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
 start:
     sc->rwstate = SSL_NOTHING;
     in_early_data = (sc->early_data_state == SSL_EARLY_DATA_READING);
-    if (in_early_data)
-        sc->rlayer.rrlmethod->set_in_early_data(sc->rlayer.rrl, 1);
 
     /*
      * We are not handshaking and have no data yet, so process data buffered
@@ -271,7 +269,6 @@ start:
             if (ret <= 0 && is_dtls13
                 && sc->rlayer.rrlmethod->unprocessed_records(sc->rlayer.rrl) > 0
                 && ((SSL_in_init(s) && sc->dtls13_process_hello) || in_early_data)) {
-
                 int which = SSL3_CC_HANDSHAKE;
 
                 if (sc->server)
@@ -607,16 +604,9 @@ start:
 
         i = sc->handshake_func(s);
         /* SSLfatal() called if appropriate */
-        if (i < 0) {
-            /*
-             * Since DTLS 1.3 introduce a new header with a new seq number we can
-             * end up receiving a retransmit of a Handshake message that has
-             * already been processed.
-             */
-            if (sc->version == DTLS1_3_VERSION)
-                ossl_statem_set_in_init(sc, 0);
+        if (i < 0)
             return i;
-        }
+
         if (i == 0)
             return -1;
 

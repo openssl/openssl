@@ -108,11 +108,6 @@ static void dtls_set_in_init(OSSL_RECORD_LAYER *rl, int in_init)
     rl->in_init = in_init;
 }
 
-static void dtls_set_in_early_data(OSSL_RECORD_LAYER *rl, int in_early_data)
-{
-    rl->in_early_data = in_early_data;
-}
-
 size_t dtls_get_rec_header_size(uint8_t hdr_first_byte)
 {
     size_t size = 0;
@@ -499,7 +494,8 @@ again:
          * If we have buffered records and the original BIO READ has all been processed
          * let's leave and allow the Record Layer to update.
          */
-        if (rl->version == DTLS1_3_VERSION && buffered_record == 1 && rl->rbuf.left == 0) {
+        if (rl->version == DTLS1_3_VERSION
+            && buffered_record == 1 && rl->rbuf.left == 0) {
             return OSSL_RECORD_RETURN_RETRY;
         }
 
@@ -887,7 +883,6 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     (*retrl)->isdtls = 1;
     (*retrl)->epoch = epoch;
     (*retrl)->in_init = 1;
-    (*retrl)->in_early_data = 0;
     (*retrl)->dtls13_epoch_1_seq = 0;
     (*retrl)->dtls13_epoch_2_seq = 100;
 
@@ -1086,7 +1081,6 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     dtls_get_epoch,
     dtls_set_curr_mtu,
     dtls_unprocessed_records,
-    dtls_set_in_early_data,
     tls_alloc_buffers,
     tls_free_buffers
 };
