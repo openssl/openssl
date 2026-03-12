@@ -253,6 +253,18 @@ int i2d_SSL_SESSION(const SSL_SESSION *in, unsigned char **pp)
     as.active_conn_id_limit = in->quic_params.active_conn_id_limit;
 #endif
 
+#ifndef OPENSSL_NO_QUIC
+    as.init_max_data = in->quic_params.init_max_data;
+    as.init_max_stream_data_bidi_local = in->quic_params.init_max_stream_data_bidi_local;
+    as.init_max_stream_data_bidi_remote = in->quic_params.init_max_stream_data_bidi_remote;
+    as.init_max_stream_data_uni = in->quic_params.init_max_stream_data_uni;
+    as.max_local_streams_bidi = in->quic_params.max_local_streams_bidi;
+    as.max_local_streams_uni = in->quic_params.max_local_streams_uni;
+    as.max_idle_timeout = in->quic_params.max_idle_timeout;
+    as.max_udp_payload_size = in->quic_params.max_udp_payload_size;
+    as.active_conn_id_limit = in->quic_params.active_conn_id_limit;
+#endif
+
     ret = i2d_SSL_SESSION_ASN1(&as, pp);
     OPENSSL_free(peer_rpk.data);
     return ret;
