@@ -341,8 +341,12 @@ Download CRLs from distribution points given in CDP extensions of certificates
 
 =item B<-verifyCAfile> I<filename>
 
-A file in PEM format CA containing trusted certificates to use
-for verifying client certificates.
+A file in PEM format containing trusted CA certificates (root and/or
+intermediate) used to verify the client certificate chain. When this
+option is specified, it is used for client certificate verification
+instead of B<-CAfile>. Note that B<-CAfile> will still be used to
+build the list of acceptable CA names sent to the client during the
+handshake, even when B<-verifyCAfile> is specified.
 
 =item B<-verifyCApath> I<dir>
 
