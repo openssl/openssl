@@ -365,11 +365,6 @@ struct ossl_record_layer_st {
     int in_init;
 
     /*
-     * Whether we are currently in early data or not. Only maintained for DTLS
-     */
-    int in_early_data;
-
-    /*
      * DTLSv1.3 uses encrypted sequence numbers in epoch 1 and beyond.
      * For records that are buffered we need to put a priority on the
      * buffered records.
