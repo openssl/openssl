@@ -27,7 +27,7 @@ use OpenSSL::config;
 my $orig_death_handler = $SIG{__DIE__};
 $SIG{__DIE__} = \&death_handler;
 
-my $usage="Usage: Configure [no-<feature> ...] [enable-<feature> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]thread-pool] [[no-]default-thread-pool] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] [--help] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<feature> ...] [enable-<feature> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]thread-pool] [[no-]default-thread-pool] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] [--manpage-format={roff,mdoc}] [--help] os/compiler[:flags]\n";
 
 my $banner = <<"EOF";
 
@@ -289,6 +289,7 @@ my $dofile = abs2rel(catfile($srcdir, "util/dofile.pl"));
 
 my $local_config_envname = 'OPENSSL_LOCAL_CONFIG_DIR';
 
+$config{manpage_format} = "roff";
 $config{sourcedir} = abs2rel($srcdir, $blddir);
 $config{builddir} = abs2rel($blddir, $blddir);
 # echo -n 'holy hand grenade of antioch' | openssl sha256
@@ -1018,6 +1019,10 @@ while (@argvcopy)
                 {
                 $config{build_type} = "release";
                 }
+        elsif (/^--manpage-format=(mdoc|roff)$/)
+		{
+		$config{manpage_format}="$1";
+		}
         elsif (/^--pgo$/)
                 {
                 $config{build_type} = "pgo";
