@@ -106,7 +106,7 @@ If there is an additional argument on the command line it will be used as the
 list box), otherwise the name "My Certificate" is used.
 Delegates work to L<openssl-pkcs12(1)>.
 
-=item B<-sign>, B<-signcert>, B<-xsign>
+=item B<-sign>, B<-xsign>
 
 Calls the L<openssl-ca(1)> command to sign a certificate request. It expects the
 request to be in the file F<newreq.pem>. The new certificate is written to the
