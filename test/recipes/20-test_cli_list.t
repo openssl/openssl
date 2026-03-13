@@ -31,53 +31,42 @@ sub check_skey_manager_list {
        "Several skey managers are listed - $provider provider");
 }
 
+# Checks a list of algorithms for any disabled algoritms
+sub check_list_against_disabled {
+    my ($algorithms_ref, $validator, $list_name) = @_;
+    my @algorithms = @$algorithms_ref;
+    my @disabled = run(app(["openssl", "list", "-disabled"]), capture => 1);
+
+    chomp @algorithms;
+    chomp @disabled;
+    my $unmatched = 1;
+    foreach my $manager (@algorithms){
+      foreach my $algorithm (@disabled) {
+        $unmatched = $unmatched && $validator->($manager, $algorithm);    
+      }
+    }
+    ok($unmatched, "No disabled algorithms appear in ".$list_name." list");
+}
 
 # Checks the key manager list for any disabled algorithms
 sub check_key_manager_list {
     my @keymanagers = run(app(["openssl", "list", "-key-managers"]), capture => 1);
-    my @disabled = run(app(["openssl", "list", "-disabled"]), capture => 1);
-
-    chomp @keymanagers;
-    chomp @disabled;
-    my $unmatched = 1;
-    foreach my $manager (@keymanagers){
-      foreach my $algorithm (@disabled) {
-        $unmatched = $unmatched && !($manager =~ /IDs:.*\Q$algorithm\E/);    
-      }
-    }
-    ok($unmatched, "No disabled algorithms appear in key manager list");
+    my $validator = sub {return !($_[0] =~ /IDs:.*\Q$_[1]\E/)};
+    check_list_against_disabled(\@keymanagers, $validator, "key manager");
 }
 
 # Checks the public key algorithms list for any disabled algorithms
 sub check_public_key_algorithms_list {
     my @pkalgorithms = run(app(["openssl", "list", "-public-key-algorithms"]), capture => 1);
-    my @disabled = run(app(["openssl", "list", "-disabled"]), capture => 1);
-
-    chomp @pkalgorithms;
-    chomp @disabled;
-    my $unmatched = 1;
-    foreach my $pkalgorithm (@pkalgorithms){
-      foreach my $algorithm (@disabled) {
-        $unmatched = $unmatched && !($pkalgorithm =~ /IDs:.*\Q$algorithm\E/);    
-      }
-    }
-    ok($unmatched, "No disabled algorithms appear in public key algorithms list");
+    my $validator = sub {return !($_[0] =~ /IDs:.*\Q$_[1]\E/)};
+    check_list_against_disabled(\@pkalgorithms, $validator, "public key algorithms");
 }
 
 # Checks the key exchange algorithms list for any disabled algorithms
 sub check_key_exchange_algorithms_list {
     my @pkalgorithms = run(app(["openssl", "list", "-key-exchange-algorithms"]), capture => 1);
-    my @disabled = run(app(["openssl", "list", "-disabled"]), capture => 1);
-
-    chomp @pkalgorithms;
-    chomp @disabled;
-    my $unmatched = 1;
-    foreach my $pkalgorithm (@pkalgorithms){
-      foreach my $algorithm (@disabled) {
-        $unmatched = $unmatched && !($pkalgorithm =~ /{.*[0-9],.*\Q$algorithm\E/);    
-      }
-    }
-    ok($unmatched, "No disabled algorithms appear in key exchange algorithms list");
+    my $validator = sub {return !($_[0] =~ /{.*[0-9],.*\Q$_[1]\E/)};
+    check_list_against_disabled(\@pkalgorithms, $validator, "key exchange algorithms");
 }
 
 check_skey_manager_list("default");
