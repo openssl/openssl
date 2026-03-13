@@ -800,43 +800,40 @@ static int test_kem(OSSL_LIB_CTX *libctx, const char *propq,
 
 static int test_rsa_enc_dec(OSSL_LIB_CTX *libctx, const char *propq)
 {
-    EVP_PKEY_CTX *keyctx = NULL, *ctx = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey = NULL;
     unsigned char plaintext[] = "Hello world";
     unsigned char *ciphertext = NULL, *decrypted = NULL;
     size_t ciphertext_len, decrypted_len;
     int ret = 0;
 
-    /* Generate key */
-    if (!TEST_ptr(keyctx = EVP_PKEY_CTX_new_from_name(libctx, "RSA", propq))
-        || !TEST_int_eq(EVP_PKEY_keygen_init(keyctx), 1)
-        || !TEST_int_eq(EVP_PKEY_keygen(keyctx, &pkey), 1))
-        goto err;
-
     /* Encrypt */
-    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq))
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(libctx, propq, "RSA", 4096))
+        || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq))
         || !TEST_int_eq(EVP_PKEY_encrypt_init(ctx), 1)
         || !TEST_int_eq(EVP_PKEY_encrypt(ctx, NULL, &ciphertext_len,
-                        plaintext, sizeof(plaintext)), 1)
+                            plaintext, sizeof(plaintext)),
+            1)
         || !TEST_ptr(ciphertext = OPENSSL_malloc(ciphertext_len))
         || !TEST_int_eq(EVP_PKEY_encrypt(ctx, ciphertext, &ciphertext_len,
-                        plaintext, sizeof(plaintext)), 1)
-        )
+                            plaintext, sizeof(plaintext)),
+            1))
         goto err;
 
     /* Decrypt */
     if (!TEST_int_eq(EVP_PKEY_decrypt_init(ctx), 1)
         || !TEST_int_eq(EVP_PKEY_decrypt(ctx, NULL, &decrypted_len, ciphertext,
-                        ciphertext_len), 1)
+                            ciphertext_len),
+            1)
         || !TEST_ptr(decrypted = OPENSSL_malloc(decrypted_len))
         || !TEST_int_eq(EVP_PKEY_decrypt(ctx, decrypted, &decrypted_len,
-                        ciphertext, ciphertext_len), 1)
+                            ciphertext, ciphertext_len),
+            1)
         || !TEST_int_eq(strcasecmp((const char *)plaintext, (const char *)decrypted), 0))
         goto err;
 
     ret = 1;
 err:
-    EVP_PKEY_CTX_free(keyctx);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
     OPENSSL_free(ciphertext);
@@ -846,7 +843,7 @@ err:
 }
 
 static int test_asym_cipher(EVP_ASYM_CIPHER *cipher, const char *name,
-                            OSSL_LIB_CTX *ctx, const char *propq)
+    OSSL_LIB_CTX *ctx, const char *propq)
 {
     return TEST_ptr(cipher)
         && TEST_ptr(EVP_ASYM_CIPHER_get0_provider(cipher))
