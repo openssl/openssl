@@ -688,6 +688,257 @@ err:
     return test;
 }
 
+/* https://github.com/openssl/openssl/issues/26325 */
+static const char *kRootExtensionDuplicity[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIDhDCCAmygAwIBAgIDCxQYMA0GCSqGSIb3DQEBCwUAMHoxCzAJBgNVBAYTAlVO\n",
+    "MQ8wDQYDVQQIDAZNeSBTVDExFTATBgNVBAcMDE1ZIExvY2FsaXR5MTEUMBIGA1UE\n",
+    "CgwLTVkgQ29tcGFueTExETAPBgNVBAsMCE15IFVuaXQxMRowGAYDVQQDDBF3d3cu\n",
+    "bXljb21wYW55LmNvbTAeFw0xOTA2MTkwODU1NTlaFw0yOTA2MTkwODU1NTlaMHox\n",
+    "CzAJBgNVBAYTAlVOMQ8wDQYDVQQIDAZNeSBTVDExFTATBgNVBAcMDE1ZIExvY2Fs\n",
+    "aXR5MTEUMBIGA1UECgwLTXkgQ29tcGFueTExETAPBgNVBAsMCE15IFVuaXQxMRow\n",
+    "GAYDVQQDDBF3d3cubXljb21wYW55LmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEP\n",
+    "ADCCAQoCggEBALVNKQrEfNWp3s0FOW+9RAjXOMvhAprV/FsWo6M72Mq/EwaV4Ny+\n",
+    "Q2CZ2Bs09KmRw43RG4dHHkB5/ewE7HhohQcHVH+tcWrM0IdgQIzKva2vICFZkp6O\n",
+    "am71qSe8+qtLSkzlTYJv4oeTLmMA2SSwTTP74hB29MS6O8scaLcM+OqfaGzr6k/Z\n",
+    "GnMMjI/zf4rbrLGPJcGGZ4jIMkrYm1PnwAwg6ijXrU0kb8DBgVvpmrluYfQdBvy6\n",
+    "bSib3P9ckyCGqqszn50qQZqqa2n6Ol/CBwRsCuYuhazRsBcXiULQ1lv2JQG86ILb\n",
+    "h/SXXfB4A6p0ti3tmcTMIPN5AI3y/EvUUwkCAwEAAaMTMBEwDwYDVR0TAQH/BAUw\n",
+    "AwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAS6joG5vUo2kMLX0bcpjKzE3h40ZypVgJ\n",
+    "bSCLu/alVcIDzdLTK/SOp2NMvtGmn+BMRvfzW+Lk58sMZ2QC3x+RZKHV+pDsT+Lj\n",
+    "Zi1bhpvtzrN62PmYZXGTu0xPME3SlBLilUFIRgH5lrxzlBdRURMCbHJOblAfzVdw\n",
+    "EBCtDVdGcox/mzu1Jo/sJQb59a49ZQpvwp7m7kZE0q6dBgElYX4JaRYhbwsv/tP2\n",
+    "jEA+jQYNORgFvCOkITbaO4Avc7BXSCGkDHoH6GsANf0bdtaMQCbUMeaC2CYUzRoC\n",
+    "fTEJ9LvFu7syeEDpUbgPXgRqpUQLyxoVYxWjXZ3CG5jeRmJzAEAoyg==\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+static const char *kCertExtensionDuplicity[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIENDCCAxygAwIBAgIVASygDp5oUEVMj9bx6z7bj3ce5ypQMA0GCSqGSIb3DQEB\n",
+    "CwUAMHoxCzAJBgNVBAYTAlVOMQ8wDQYDVQQIDAZNeSBTVDExFTATBgNVBAcMDE1Z\n",
+    "IExvY2FsaXR5MTEUMBIGA1UECgwLTXkgQ29tcGFueTExETAPBgNVBAsMCE15IFVu\n",
+    "aXQxMRowGAYDVQQDDBF3d3cubXljb21wYW55LmNvbTAiGA8yMDE5MDYxOTA4NTU1\n",
+    "OVoYDzIwMjkwNjE5MDg1NTU5WjB7MQswCQYDVQQGEwJVTjEPMA0GA1UECAwGTXkg\n",
+    "U1QxMRUwEwYDVQQHDAxNWSBMb2NhbGl0eTExFDASBgNVBAoMC015IENvbXBhbnkx\n",
+    "MREwDwYDVQQLDAhNeSBVbml0MTEbMBkGA1UEAwwSd3d3Lm15Y29tcGFueTEuY29t\n",
+    "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtU0pCsR81anezQU5b71E\n",
+    "CNc4y+ECmtX8WxajozvYyr8TBpXg3L5DYJnYGzT0qZHDjdEbh0ceQHn97ATseGiF\n",
+    "BwdUf61xaszQh2BAjMq9ra8gIVmSno5qbvWpJ7z6q0tKTOVNgm/ih5MuYwDZJLBN\n",
+    "M/viEHb0xLo7yxxotwz46p9obOvqT9kacwyMj/N/itussY8lwYZniMgyStibU+fA\n",
+    "DCDqKNetTSRvwMGBW+mauW5h9B0G/LptKJvc/1yTIIaqqzOfnSpBmqprafo6X8IH\n",
+    "BGwK5i6FrNGwFxeJQtDWW/YlAbzogtuH9Jdd8HgDqnS2Le2ZxMwg83kAjfL8S9RT\n",
+    "CQIDAQABo4GrMIGoMFIGCCsGAQUFBwELBEYwRDBCBggrBgEFBQcwBYY2ZnRwOi8v\n",
+    "NjYuMjMzLjIuMjM1L2Z8M2YvTUI5JT94dV89WEdlYXxIMFgmcTRpRm1YIXs9dS89\n",
+    "MFIGCCsGAQUFBwELBEYwRDBCBggrBgEFBQcwBYY2ZnRwOi8vNjouMjMzLjIuMjM1\n",
+    "L2Z8M2YvTUI5JT94dV89WEdlYXxIMFgmcTRpRm1YIXs9dS89MA0GCSqGSIb3DQEB\n",
+    "CwUAA4IBAQCoLSlKFFlg2xSGf9PFrXayO9ODk4pUkzb/+u0fsf6Vekwo/0dFNxSM\n",
+    "1sPtfoyprGMd7DK8R0rELq7k4+TaypV1JFBj9G9///dCTdX8Fg1SMRamIY0cs8Cu\n",
+    "VJCPWpLD6RQzZm9WkUqcc1yhjW8eO7OABazKwFQBLRS97ocztbyNvPbsZ0xInSMV\n",
+    "7E3xOj4XeibJ2y+EHUbMRDPtwZuy+E1m/kYScLAqIweVaxrWQnCC1HcARxL6eHx9\n",
+    "8kzGS23XAT9jLvdxwNs23GXiAjzxifJmR7oujP+uALF+FfHdJb7vr6l8lVNzRnDH\n",
+    "utv/6BamvgrYfDmA6GO3UItEgYozDtaN\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+/*
+ * The following test checks for a duplicate extension with a known build-time
+ * NID, which is detected in constant time.
+ * */
+static int tests_x509_check_ext_duplicity(void)
+{
+    X509 *root = NULL, *leaf = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_STORE *store = NULL;
+    X509_VERIFY_PARAM *param = NULL;
+    STACK_OF(X509) *x509s = NULL;
+    const time_t verify_time = 1753284700; /* July 23th, 2025 */
+    int test;
+
+    test = TEST_ptr(ctx = X509_STORE_CTX_new())
+        && TEST_ptr(store = X509_STORE_new())
+        && TEST_ptr(param = X509_VERIFY_PARAM_new())
+        && TEST_ptr(x509s = sk_X509_new_null())
+        && TEST_ptr((root = X509_from_strings(kRootExtensionDuplicity)))
+        && TEST_ptr((leaf = X509_from_strings(kCertExtensionDuplicity)))
+        && TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL));
+
+    if (test != 1)
+        goto err;
+    if (!TEST_true(sk_X509_push(x509s, root)))
+        goto err;
+    root = NULL;
+
+    X509_STORE_CTX_set0_trusted_stack(ctx, x509s);
+    X509_VERIFY_PARAM_set_depth(param, 16);
+    X509_VERIFY_PARAM_set_time(param, verify_time);
+    X509_STORE_CTX_set0_param(ctx, param);
+    param = NULL;
+    ERR_clear_error();
+
+    test = TEST_int_eq(X509_verify_cert(ctx), 0)
+        && TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+            X509_V_ERR_DUPLICATE_EXTENSION);
+
+err:
+    OSSL_STACK_OF_X509_free(x509s);
+    X509_VERIFY_PARAM_free(param);
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    X509_free(leaf);
+    X509_free(root);
+
+    return test;
+}
+
+/*
+ * This test checks for a duplicate extension with an undefined NID, where the
+ * duplicate is detected via OID.
+ */
+static int tests_x509_check_ext_duplicity_nid_undef(void)
+{
+    X509 *root = NULL, *leaf = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_STORE *store = NULL;
+    X509_VERIFY_PARAM *param = NULL;
+    STACK_OF(X509) *x509s = NULL;
+    ASN1_OBJECT *obj1 = NULL, *obj2 = NULL;
+    ASN1_OCTET_STRING *oct1 = NULL, *oct2 = NULL;
+    X509_EXTENSION *ext1 = NULL, *ext2 = NULL;
+    const unsigned char data[] = { 0x04, 0x03, 0x41, 0x42, 0x43 };
+    const time_t verify_time = 1753284700; /* July 23th, 2025 */
+    const char *unknown_oid = "1.2.3.4.5.6.7.8.9";
+    int test;
+
+    test = TEST_ptr(ctx = X509_STORE_CTX_new())
+        && TEST_ptr(store = X509_STORE_new())
+        && TEST_ptr(param = X509_VERIFY_PARAM_new())
+        && TEST_ptr(x509s = sk_X509_new_null())
+        && TEST_ptr((root = X509_from_strings(kRootMendelsonAKIDKeyNULL)))
+        && TEST_ptr((leaf = X509_from_strings(kLeafMendelsonAKIDKeyNULL)))
+        && TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL))
+        && TEST_ptr(obj1 = OBJ_txt2obj(unknown_oid, 1))
+        && TEST_ptr(oct1 = ASN1_OCTET_STRING_new())
+        && TEST_int_eq(ASN1_OCTET_STRING_set(oct1, data, sizeof(data)), 1)
+        && TEST_ptr(ext1 = X509_EXTENSION_create_by_OBJ(NULL, obj1, 0, oct1))
+        && TEST_int_eq(X509_add_ext(leaf, ext1, -1), 1)
+        && TEST_ptr(obj2 = OBJ_txt2obj(unknown_oid, 1))
+        && TEST_ptr(oct2 = ASN1_OCTET_STRING_new())
+        && TEST_int_eq(ASN1_OCTET_STRING_set(oct2, data, sizeof(data)), 1)
+        && TEST_ptr(ext2 = X509_EXTENSION_create_by_OBJ(NULL, obj2, 0, oct2))
+        && TEST_int_eq(X509_add_ext(leaf, ext2, -1), 1);
+
+    if (test != 1)
+        goto err;
+    if (!TEST_true(sk_X509_push(x509s, root)))
+        goto err;
+    root = NULL;
+
+    X509_STORE_CTX_set0_trusted_stack(ctx, x509s);
+    X509_VERIFY_PARAM_set_depth(param, 16);
+    X509_VERIFY_PARAM_set_time(param, verify_time);
+    X509_STORE_CTX_set0_param(ctx, param);
+    param = NULL;
+    ERR_clear_error();
+
+    test = TEST_int_eq(X509_verify_cert(ctx), 0)
+        && TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+            X509_V_ERR_DUPLICATE_EXTENSION);
+
+err:
+    ASN1_OBJECT_free(obj1);
+    ASN1_OCTET_STRING_free(oct1);
+    X509_EXTENSION_free(ext1);
+    ASN1_OBJECT_free(obj2);
+    ASN1_OCTET_STRING_free(oct2);
+    X509_EXTENSION_free(ext2);
+    OSSL_STACK_OF_X509_free(x509s);
+    X509_VERIFY_PARAM_free(param);
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    X509_free(leaf);
+    X509_free(root);
+
+    return test;
+}
+
+/*
+ * This test checks for a duplicate extension with a dynamically registered NID,
+ * where the duplicate is detected via OID.
+ */
+static int tests_x509_check_ext_duplicity_nid_dynamic(void)
+{
+    X509 *root = NULL, *leaf = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_STORE *store = NULL;
+    X509_VERIFY_PARAM *param = NULL;
+    STACK_OF(X509) *x509s = NULL;
+    ASN1_OBJECT *obj1 = NULL, *obj2 = NULL;
+    ASN1_OCTET_STRING *oct1 = NULL, *oct2 = NULL;
+    X509_EXTENSION *ext1 = NULL, *ext2 = NULL;
+    const unsigned char data[] = { 0x04, 0x03, 0x41, 0x42, 0x43 };
+    const time_t verify_time = 1753284700; /* July 23th, 2025 */
+    const char *oid = "1.2.3.4.5.6.7.8.9";
+    const char *sn = "testOID";
+    const char *ln = "testOID Long Name";
+    int nid;
+    int test;
+
+    test = TEST_ptr(ctx = X509_STORE_CTX_new())
+        && TEST_ptr(store = X509_STORE_new())
+        && TEST_ptr(param = X509_VERIFY_PARAM_new())
+        && TEST_ptr(x509s = sk_X509_new_null())
+        && TEST_ptr((root = X509_from_strings(kRootMendelsonAKIDKeyNULL)))
+        && TEST_ptr((leaf = X509_from_strings(kLeafMendelsonAKIDKeyNULL)))
+        && TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL))
+        && TEST_true((nid = OBJ_create(oid, sn, ln)) != NID_undef)
+        && TEST_ptr(obj1 = OBJ_nid2obj(nid))
+        && TEST_ptr(oct1 = ASN1_OCTET_STRING_new())
+        && TEST_int_eq(ASN1_OCTET_STRING_set(oct1, data, sizeof(data)), 1)
+        && TEST_ptr(ext1 = X509_EXTENSION_create_by_OBJ(NULL, obj1, 0, oct1))
+        && TEST_int_eq(X509_add_ext(leaf, ext1, -1), 1)
+        && TEST_ptr(obj2 = OBJ_nid2obj(nid))
+        && TEST_ptr(oct2 = ASN1_OCTET_STRING_new())
+        && TEST_int_eq(ASN1_OCTET_STRING_set(oct2, data, sizeof(data)), 1)
+        && TEST_ptr(ext2 = X509_EXTENSION_create_by_OBJ(NULL, obj2, 0, oct2))
+        && TEST_int_eq(X509_add_ext(leaf, ext2, -1), 1);
+
+    if (test != 1)
+        goto err;
+    if (!TEST_true(sk_X509_push(x509s, root)))
+        goto err;
+    root = NULL;
+
+    X509_STORE_CTX_set0_trusted_stack(ctx, x509s);
+    X509_VERIFY_PARAM_set_depth(param, 16);
+    X509_VERIFY_PARAM_set_time(param, verify_time);
+    X509_STORE_CTX_set0_param(ctx, param);
+    param = NULL;
+    ERR_clear_error();
+
+    test = TEST_int_eq(X509_verify_cert(ctx), 0)
+        && TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+            X509_V_ERR_DUPLICATE_EXTENSION);
+
+err:
+    ASN1_OBJECT_free(obj1);
+    ASN1_OCTET_STRING_free(oct1);
+    X509_EXTENSION_free(ext1);
+    ASN1_OBJECT_free(obj2);
+    ASN1_OCTET_STRING_free(oct2);
+    X509_EXTENSION_free(ext2);
+    OSSL_STACK_OF_X509_free(x509s);
+    X509_VERIFY_PARAM_free(param);
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    X509_free(leaf);
+    X509_free(root);
+
+    return test;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_standard_exts);
@@ -697,5 +948,9 @@ int setup_tests(void)
     ADD_TEST(tests_X509_check_crypto);
     ADD_TEST(tests_x509_check_dpn);
     ADD_TEST(tests_x509_check_akid);
+    ADD_TEST(tests_x509_check_ext_duplicity);
+    ADD_TEST(tests_x509_check_ext_duplicity_nid_undef);
+    ADD_TEST(tests_x509_check_ext_duplicity_nid_dynamic);
+
     return 1;
 }
