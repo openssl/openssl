@@ -798,6 +798,61 @@ static int test_kem(OSSL_LIB_CTX *libctx, const char *propq,
         && test_ml_kem_keyexch(libctx, propq);
 }
 
+static int test_rsa_enc_dec(OSSL_LIB_CTX *libctx, const char *propq)
+{
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    unsigned char plaintext[] = "Hello world";
+    unsigned char *ciphertext = NULL, *decrypted = NULL;
+    size_t ciphertext_len, decrypted_len;
+    int ret = 0;
+
+    /* Encrypt */
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(libctx, propq, "RSA", 4096))
+        || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq))
+        || !TEST_int_eq(EVP_PKEY_encrypt_init(ctx), 1)
+        || !TEST_int_eq(EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING), 1)
+        || !TEST_int_eq(EVP_PKEY_encrypt(ctx, NULL, &ciphertext_len,
+                            plaintext, sizeof(plaintext)),
+            1)
+        || !TEST_ptr(ciphertext = OPENSSL_malloc(ciphertext_len))
+        || !TEST_int_eq(EVP_PKEY_encrypt(ctx, ciphertext, &ciphertext_len,
+                            plaintext, sizeof(plaintext)),
+            1))
+        goto err;
+
+    /* Decrypt */
+    if (!TEST_int_eq(EVP_PKEY_decrypt_init(ctx), 1)
+        || !TEST_int_eq(EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING), 1)
+        || !TEST_int_eq(EVP_PKEY_decrypt(ctx, NULL, &decrypted_len, ciphertext,
+                            ciphertext_len),
+            1)
+        || !TEST_ptr(decrypted = OPENSSL_malloc(decrypted_len))
+        || !TEST_int_eq(EVP_PKEY_decrypt(ctx, decrypted, &decrypted_len,
+                            ciphertext, ciphertext_len),
+            1)
+        || !TEST_int_eq(strcasecmp((const char *)plaintext, (const char *)decrypted), 0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    OPENSSL_free(ciphertext);
+    OPENSSL_free(decrypted);
+
+    return ret;
+}
+
+static int test_asym_cipher(EVP_ASYM_CIPHER *cipher, const char *name,
+    OSSL_LIB_CTX *ctx, const char *propq)
+{
+    return TEST_ptr(cipher)
+        && TEST_ptr(EVP_ASYM_CIPHER_get0_provider(cipher))
+        && TEST_true(EVP_ASYM_CIPHER_is_a(cipher, name))
+        && TEST_true(test_rsa_enc_dec(ctx, propq));
+}
+
 static int test_EVP_KEYMGMT_fetch_freeze(void)
 {
 #if defined(OPENSSL_NO_CACHED_FETCH) || defined(OPENSSL_NO_EC)
@@ -1336,6 +1391,112 @@ static int test_explicit_EVP_RAND_fetch_by_name(void)
     return test_explicit_EVP_RAND_fetch("HASH-DRBG");
 }
 
+static int test_EVP_ASYM_CIPHER_fetch_freeze(void)
+{
+#if defined(OPENSSL_NO_CACHED_FETCH) || defined(OPENSSL_NO_ML_KEM)
+    /*
+     * Test does not make sense if cached fetch is disabled.
+     * There's nothing to freeze, and test will fail.
+     */
+    return 1;
+#endif
+
+    EVP_ASYM_CIPHER *cipher = NULL;
+    int ret = 0;
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    if (!TEST_ptr(cipher = EVP_ASYM_CIPHER_fetch(ctx, "RSA", NULL))
+        || !TEST_true(test_asym_cipher(cipher, "RSA", ctx, NULL))
+        || !TEST_int_ne(cipher->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_ASYM_CIPHER_free(cipher);
+    cipher = NULL;
+
+    if (!TEST_int_eq(OSSL_LIB_CTX_freeze(ctx, "?fips=true"), 1)
+        || !TEST_ptr(cipher = EVP_ASYM_CIPHER_fetch(ctx, "RSA", NULL))
+        || !TEST_true(test_asym_cipher(cipher, "RSA", ctx, NULL))
+        || !TEST_int_eq(cipher->origin, EVP_ORIG_FROZEN))
+        goto err;
+    /* Technically, frozen version doesn't need to be freed */
+    EVP_ASYM_CIPHER_free(cipher);
+
+    if (!TEST_ptr(cipher = EVP_ASYM_CIPHER_fetch(ctx, "RSA", "?fips=true"))
+        || !TEST_true(test_asym_cipher(cipher, "RSA", ctx, "?fips=true"))
+        || !TEST_int_eq(cipher->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_ASYM_CIPHER_free(cipher);
+
+    /*
+     * A mismatched propq should use the regular fetch path rather than the
+     * frozen fast path.
+     */
+    if (!TEST_ptr(cipher = EVP_ASYM_CIPHER_fetch(ctx, "RSA", "?provider=default"))
+        || !TEST_true(test_asym_cipher(cipher, "RSA", ctx, "?provider=default"))
+        || !TEST_int_ne(cipher->origin, EVP_ORIG_FROZEN))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_ASYM_CIPHER_free(cipher);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_implicit_EVP_ASYM_CIPHER_fetch(void)
+{
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+    EVP_ASYM_CIPHER *cipher = NULL;
+    int ret = 0;
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    if (!TEST_ptr(cipher = EVP_ASYM_CIPHER_fetch(ctx, "RSA", NULL)))
+        goto err;
+    ret = 1;
+err:
+    EVP_ASYM_CIPHER_free(cipher);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_explicit_EVP_ASYM_CIPHER_fetch(const char *id)
+{
+    OSSL_LIB_CTX *ctx = NULL;
+    EVP_ASYM_CIPHER *cipher = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+    int ret = 0;
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    cipher = EVP_ASYM_CIPHER_fetch(ctx, id, fetch_property);
+    if (expected_fetch_result != 0) {
+        if (!TEST_true(EVP_ASYM_CIPHER_up_ref(cipher)))
+            goto err;
+        /* Ref count should now be 2. Release first one here */
+        EVP_ASYM_CIPHER_free(cipher);
+    } else {
+        if (!TEST_ptr_null(cipher))
+            goto err;
+    }
+    ret = 1;
+err:
+    EVP_ASYM_CIPHER_free(cipher);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_explicit_EVP_ASYM_CIPHER_fetch_by_name(void)
+{
+    return test_explicit_EVP_ASYM_CIPHER_fetch("RSA");
+}
+
 int setup_tests(void)
 {
     OPTION_CHOICE o;
@@ -1396,6 +1557,10 @@ int setup_tests(void)
         ADD_TEST(test_EVP_KEM_fetch_freeze);
         ADD_TEST(test_explicit_EVP_KEM_fetch_by_name);
         ADD_ALL_TESTS_NOSUBTEST(test_explicit_EVP_KEM_fetch_by_X509_ALGOR, 2);
+    } else if (strcmp(alg, "asymcipher") == 0) {
+        ADD_TEST(test_EVP_ASYM_CIPHER_fetch_freeze);
+        ADD_TEST(test_implicit_EVP_ASYM_CIPHER_fetch);
+        ADD_TEST(test_explicit_EVP_ASYM_CIPHER_fetch_by_name);
     } else {
         TEST_error("Unknown fetch type: %s", alg);
         return 0;
