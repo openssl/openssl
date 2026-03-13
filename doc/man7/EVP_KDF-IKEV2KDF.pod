@@ -1,0 +1,271 @@
+=pod
+
+=head1 NAME
+
+EVP_KDF-IKEV2KDF - The IKEV2KDF EVP_KDF implementation
+
+=head1 DESCRIPTION
+
+Support for computing the B<IKEV2KDF> KDF through the B<EVP_KDF> API.
+
+The EVP_KDF-IKEV2KDF algorithm implements the IKEv2 key derivation function.
+It is defined in RFC 7296, section 2.13, 2.14, 2.17, 2.18 and is used by the
+Internet Key Exchange version 2 (IKEv2) protocol to derive various keys from
+the shared secretestablished during the Diffie-Hellman exchange.
+The key derivation requires several inputs including the hashing function,
+the shared secret (g^ir), nonces from both parties, the Security
+Parameter Index (SPI) values from both parties, and new shared secret (new g^ir).
+
+=head2 Identity
+
+"IKEV2KDF" is the name for this implementation; it
+can be used with the EVP_KDF_fetch() function.
+
+=head2 Supported parameters
+
+The supported parameters are:
+
+=over 4
+
+=item "properties" (B<OSSL_KDF_PARAM_PROPERTIES>) <UTF8 string>
+
+=item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
+
+These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
+It must be set to one of "SHA1", "SHA224", SHA256", "SHA384", or
+"SHA512" for the IKEV2KDF implementation.
+If a value is already set, the contents are replaced.
+
+=item "secret" (B<OSSL_KDF_PARAM_SECRET>) <octet string>
+
+This parameter sets the shared secret (g^ir) used as generating SEEDKEY.
+This parameter sets the shared secret (new g^ir) used as deriving DKM(Child_SA)
+or deriving REKEY.
+If a value is already set, the contents are replaced.
+
+=item "ni" (B<OSSL_KDF_PARAM_IKEV2_NI>) <octet string>
+
+This parameter sets the initiator's nonce (Ni) value for the KDF.
+If a value is already set, the contents are replaced.
+
+=item "nr" (B<OSSL_KDF_PARAM_IKEV2_NR>) <octet string>
+
+This parameter sets the responder's nonce (Nr) value for the KDF.
+If a value is already set, the contents are replaced.
+
+=item "spii" (B<OSSL_KDF_PARAM_IKEV2_SPII>) <octet string>
+
+This parameter sets the initiator's Security Parameter Index (SPIi) value
+for the KDF. If a value is already set, the contents are replaced.
+
+=item "spir" (B<OSSL_KDF_PARAM_IKEV2_SPIR>) <octet string>
+
+This parameter sets the responder's Security Parameter Index (SPIr) value
+for the KDF. If a value is already set, the contents are replaced.
+
+=item "mode" (B<OSSL_KDF_PARAM_MODE>) <int>
+
+This parameter sets the IKEv2 KDF mode. The IKEV2KDF implementation supports
+three different modes of operation:
+
+=over 8
+
+=item * Mode 0: generating SKEYSEED used in deriving key material
+
+=item * Mode 1: deriving key materials. It has 3 stages.
+
+Initial key derivation - derives the initial set of keys
+(SK_d, SK_ai, SK_ar, SK_ei, SK_er, SK_pi, SK_pr) from SKEYSEED using the
+nonces (from both sides), and security parameter index (SPI) values (from both
+sides).
+
+2nd stage key derivation - derives keying material for the Child_SA
+
+3rd stage key derivation - derives keying material for the Child_DH
+
+=item * Mode 2: Rekey derivation - derives a new SKEYSEED when rekeying the
+IKE SA, using the existing SK_d as input along with new nonces and SPIs.
+
+=back
+
+If a value is already set, the contents are replaced.
+
+=item "type" (B<OSSL_KDF_PARAM_IKEV2KDF_TYPE>) <int>
+
+This parameter specifies the type of key being derived within the selected mode.
+When type=1, a new secret is used for the key derivation process DKM(Child_DH).
+If a value is already set, the contents are replaced.
+
+=back
+
+=head1 NOTES
+
+A context for IKEV2KDF can be obtained by calling:
+
+ EVP_KDF *kdf = EVP_KDF_fetch(NULL, "IKEV2KDF", NULL);
+ EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
+
+The output length for IKEV2KDF can be specified by the caller based on the
+specific key being derived (e.g., SK_d, SK_ai, SK_ar, SK_ei, SK_er, SK_pi, SK_pr).
+Different keys may require different lengths depending on the cryptographic
+algorithms being used.
+
+=head1 EXAMPLES
+
+=head2 Example of generating SEEDKEY
+
+This example derives a 32-byte SEEDKEY using SHA-256 with the appropriate
+shared secret, and nonces:
+
+ EVP_KDF *kdf;
+ EVP_KDF_CTX *kctx;
+ unsigned char secret[32] = "0123456789abcdef...";
+ unsigned char ni[16] = "initiator_nonce...";
+ unsigned char nr[16] = "responder_nonce...";
+ int mode = 0; /* generating SEEDKEY */
+ unsigned char out[32];
+ size_t outlen = sizeof(out);
+ OSSL_PARAM params[6], *p = params;
+
+ kdf = EVP_KDF_fetch(NULL, "IKEV2KDF", NULL);
+ kctx = EVP_KDF_CTX_new(kdf);
+ EVP_KDF_free(kdf);
+
+ *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                         SN_sha256, strlen(SN_sha256));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+                                          secret, sizeof(secret));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NI,
+                                          ni, sizeof(ni));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NR,
+                                          nr, sizeof(nr));
+ *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+ *p = OSSL_PARAM_construct_end();
+ if (EVP_KDF_derive(kctx, out, outlen, params) <= 0)
+     /* Error */
+
+=head2 Example of the parameters deriving DKM(Initial SA)
+
+ unsigned char ni[16] = "initiator_nonce...";
+ unsigned char nr[16] = "responder_nonce...";
+ unsigned char spii[8] = "init_spi";
+ unsigned char spir[8] = "resp_spi";
+ unsigned char skeyseed[32] = "derived_sekey_from_previous_step...";
+ int mode = 1; /* deriving DKM */
+ unsigned char out["user can specify the size"];
+ size_t outlen = sizeof(out);
+ OSSL_PARAM params[8], *p = params;
+
+ *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                         SN_sha256, strlen(SN_sha256));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEEDKEY,
+                                          skeyseed, sizeof(skeyseed));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NI,
+                                          ni, sizeof(ni));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NR,
+                                          nr, sizeof(nr));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_SPII,
+                                          spii, sizeof(spii));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_SPIR,
+                                          spir, sizeof(spir));
+ *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+ *p = OSSL_PARAM_construct_end();
+
+=head2 Example of the parameters used for deriving DKM(Child_SA)
+
+ unsigned char ni[16] = "initiator_nonce...";
+ unsigned char nr[16] = "responder_nonce...";
+ unsigned char sk_d[32] = "the sk_d from DKM";
+ int mode = 1; /* deriving DKM */
+ unsigned char out["user can specify the size"];
+ size_t outlen = sizeof(out);
+ OSSL_PARAM params[6], *p = params;
+
+ *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                         SN_sha256, strlen(SN_sha256));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+                                          sk_d, sizeof(sk_d));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NI,
+                                          ni, sizeof(ni));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NR,
+                                          nr, sizeof(nr));
+ *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+ *p = OSSL_PARAM_construct_end();
+
+=head2 Example of the parameters used for deriving DKM(Child_DH)
+
+ uint8_t ni[16] = "initiator_nonce...";
+ uint8_t nr[16] = "responder_nonce...";
+ unsigned char sk_d[32] = "the sk_d from DKM";
+ int mode = 1; /* deriving DKM */
+ unsigned char out["user can specify the size"];
+ size_t outlen = sizeof(out);
+ OSSL_PARAM params[7], *p = params;
+ unsigned char new_secret[32] = "0123456789abcdef...";
+
+ *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                         SN_sha256, strlen(SN_sha256));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+                                          sk_d, sizeof(sk_d));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NI,
+                                          ni, sizeof(ni));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NR,
+                                          nr, sizeof(nr));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_SECRET,
+                                          new_secret, sizeof(new_secret));
+ *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+ *p = OSSL_PARAM_construct_end();
+
+=head2 Example of the parameters used for rekeying the IKE SA
+
+ unsigned char ni[16] = "initiator_nonce...";
+ unsigned char nr[16] = "responder_nonce...";
+ unsigned char sk_d[32] = "the sk_d from DKM";
+ int mode = 2; /* REKEY */
+ unsigned char out[32];
+ size_t outlen = sizeof(out);
+ OSSL_PARAM params[7], *p = params;
+ unsigned char new_secret[32] = "0123456789abcdef...";
+
+ *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                         SN_sha256, strlen(SN_sha256));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
+                                          sk_d, sizeof(sk_d));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NI,
+                                          ni, sizeof(ni));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_NR,
+                                          nr, sizeof(nr));
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_IKEV2_SECRET,
+                                          new_secret, sizeof(new_secret));
+ *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_MODE, &mode);
+ *p = OSSL_PARAM_construct_end();
+
+=head1 CONFORMING TO
+
+RFC 7296 and SP800-135
+
+=head1 SEE ALSO
+
+L<EVP_KDF(3)>,
+L<EVP_KDF_CTX_new(3)>,
+L<EVP_KDF_CTX_dup(3)>,
+L<EVP_KDF_CTX_free(3)>,
+L<EVP_KDF_CTX_set_params(3)>,
+L<EVP_KDF_CTX_get_kdf_size(3)>,
+L<EVP_KDF_derive(3)>,
+L<EVP_KDF(3)/PARAMETERS>
+
+=head1 HISTORY
+
+This functionality was added in OpenSSL 4.0.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

@@ -140,7 +140,7 @@ This option is identical to the B<-mac> option.
 =item I<kdf_name>
 
 Specifies the name of a supported KDF algorithm which will be used.
-The supported algorithms names include TLS1-PRF, HKDF, SSKDF, PBKDF2,
+The supported algorithms names include TLS1-PRF, HKDF, IKEV2KDF, SSKDF, PBKDF2,
 SNMPKDF, SRTPKDF, SSHKDF, X942KDF-ASN1, X942KDF-CONCAT, X963KDF and SCRYPT.
 
 =back
@@ -156,6 +156,55 @@ Use HKDF to create a hex-encoded derived key from a secret key, salt and info:
 
     openssl kdf -keylen 10 -kdfopt digest:SHA2-256 -kdfopt key:secret \
                 -kdfopt salt:salt -kdfopt info:label HKDF
+
+Use IKEV2KDF to create a hex-encded SEEDKEY from initiator_nonce,
+    responder_nonce, and shared secret:
+
+    openssl kdf -keylen 20 -kdfopt digest:SHA1 \
+                -kdfopt hexni:3651fef5c9c35e93c09a8b90 \
+                -kdfopt hexnr:a3f04d59 \
+                -kdfopt hexsecret:d084a30166a50fb7325c3960874a839449ef9741c2f4f947d0201dd8c1269273d79509f37e3ca3eb4fa2fe2a28254e289cd3f34dad4eb4df1a07685a4b8a94fa61e2491f7598b3ce65547ff133b3f63d1ac4175eaa695033f3cedb026a6873a36455172a8540b8a5d23a0143bed0390ee49b168269d75fffee9fb62be965993c \
+                -kdfopt mode:0 IKEV2KDF
+
+Use IKEV2KDF to create a hex-encded Derived Key Material (DKM) from initiator_nonce,
+    responder_nonce, SPI_initiator, SPI_responder and SEEDKEY(seed):
+
+    openssl kdf -keylen 132 -kdfopt digest:SHA1 \
+                -kdfopt hexni:3651fef5c9c35e93c09a8b90 \
+                -kdfopt hexnr:a3f04d59 \
+                -kdfopt hexspii:8e5c3ae507221684 \
+                -kdfopt hexspir:b1f201bb155c3acd \
+                -kdfopt hexseed:cd2e8050137832245f1dbacc6e4f0a92f94d45d6 \
+                -kdfopt mode:1 IKEV2KDF
+
+Use IKEV2KDF to create a hex-encded DKM(Child_SA) from initiator_nonce,
+    responder_nonce and sk_d(key):
+
+    openssl kdf -keylen 132 -kdfopt digest:SHA1 \
+                -kdfopt hexni:3651fef5c9c35e93c09a8b90 \
+                -kdfopt hexnr:a3f04d59 \
+                -kdfopt hexkey:6f1b12cad3cbe097b35430356d869d54cddb0198 \
+                -kdfopt mode:1 IKEV2KDF
+
+Use IKEV2KDF to create a hex-encded DKM(Child_DH) from initiator_nonce,
+    responder_nonce, sk_d(key) and new shared secret:
+
+    openssl kdf -keylen 132 -kdfopt digest:SHA1 \
+                -kdfopt hexni:3651fef5c9c35e93c09a8b90 \
+                -kdfopt hexnr:a3f04d59 \
+                -kdfopt hexkey:6f1b12cad3cbe097b35430356d869d54cddb0198 \
+                -kdfopt hexsecret:52f00ab174c25d5b7139ae5ff4e8e9eddee5992d2e36adf8a559ffd90dab1442e4fbe429d320c0f33552a17d1557fa41ea70e8fb916c4fa27ed52b5f8ebd8461afa78f1159159a64055ac5f6319e29c28eae58cbc6847770f32c3fed1d04750484f854790f95e9ec01bc5bc461f24966462e359511329305038e94deb6dd42c2 \
+                -kdfopt mode:1 IKEV2KDF
+
+Use IKEV2KDF to create a hex-encded REKEY from initiator_nonce,
+    responder_nonce, sk_d(key) and new shared secret:
+
+    openssl kdf -keylen 20 -kdfopt digest:SHA1 \
+                -kdfopt hexni:3651fef5c9c35e93c09a8b90 \
+                -kdfopt hexnr:a3f04d59 \
+                -kdfopt hexkey:6f1b12cad3cbe097b35430356d869d54cddb0198 \
+                -kdfopt hexsecret:52f00ab174c25d5b7139ae5ff4e8e9eddee5992d2e36adf8a559ffd90dab1442e4fbe429d320c0f33552a17d1557fa41ea70e8fb916c4fa27ed52b5f8ebd8461afa78f1159159a64055ac5f6319e29c28eae58cbc6847770f32c3fed1d04750484f854790f95e9ec01bc5bc461f24966462e359511329305038e94deb6dd42c2 \
+                -kdfopt mode:2 IKEV2KDF
 
 Use SSKDF with KMAC to create a hex-encoded derived key from a secret key, salt and info:
 

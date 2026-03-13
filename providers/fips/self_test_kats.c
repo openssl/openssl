@@ -260,7 +260,7 @@ static int self_test_kdf(const ST_DEFINITION *t, OSSL_SELF_TEST *st,
     OSSL_LIB_CTX *libctx)
 {
     int ret = 0;
-    unsigned char out[128];
+    unsigned char out[256];
     EVP_KDF *kdf = NULL;
     EVP_KDF_CTX *ctx = NULL;
     OSSL_PARAM *params = NULL;
@@ -294,6 +294,7 @@ err:
     EVP_KDF_free(kdf);
     EVP_KDF_CTX_free(ctx);
     OSSL_PARAM_free(params);
+    OPENSSL_cleanse(out, 256);
     OSSL_SELF_TEST_onend(st, ret);
     return ret;
 }

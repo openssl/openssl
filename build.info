@@ -60,6 +60,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/kdfs/argon2.inc \
          providers/implementations/kdfs/hkdf.inc \
          providers/implementations/kdfs/hmacdrbg_kdf.inc \
+         providers/implementations/kdfs/ikev2kdf.inc \
          providers/implementations/kdfs/kbkdf.inc \
          providers/implementations/kdfs/krb5kdf.inc \
          providers/implementations/kdfs/pbkdf1.inc \
@@ -183,6 +184,7 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/kdfs/argon2.inc \
        providers/implementations/kdfs/hkdf.inc \
        providers/implementations/kdfs/hmacdrbg_kdf.inc \
+       providers/implementations/kdfs/ikev2kdf.inc \
        providers/implementations/kdfs/kbkdf.inc \
        providers/implementations/kdfs/krb5kdf.inc \
        providers/implementations/kdfs/pbkdf1.inc \
@@ -290,6 +292,8 @@ GENERATE[providers/implementations/kdfs/hkdf.inc]=\
     providers/implementations/kdfs/hkdf.inc.in
 GENERATE[providers/implementations/kdfs/hmacdrbg_kdf.inc]=\
     providers/implementations/kdfs/hmacdrbg_kdf.inc.in
+GENERATE[providers/implementations/kdfs/ikev2kdf.inc]=\
+    providers/implementations/kdfs/ikev2kdf.inc.in
 GENERATE[providers/implementations/kdfs/kbkdf.inc]=\
     providers/implementations/kdfs/kbkdf.inc.in
 GENERATE[providers/implementations/kdfs/krb5kdf.inc]=\
