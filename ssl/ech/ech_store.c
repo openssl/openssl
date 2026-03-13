@@ -431,7 +431,7 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
      * We don't really handle ECHConfig extensions as of now,
      * (none are well-defined), so we're only skipping over
      * whatever we find here. If/when adding real extensions
-     * then it may be neccesary to also check that the set of
+     * then it may be necessary to also check that the set of
      * extensions loaded contain no duplicate types.
      */
     if (!PACKET_get_length_prefixed_2(&ver_pkt, &exts)) {
