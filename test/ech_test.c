@@ -1247,7 +1247,7 @@ static int ech_bad_public_names(void)
         if (verbose)
             TEST_info("checking bad name |%s|", bad_names[i]);
         if (!TEST_false(OSSL_ECHSTORE_new_config(es, 0xfe0d, 0, bad_names[i],
-            hpke_suite))) {
+                hpke_suite))) {
             if (verbose)
                 TEST_info("bad name |%s| erroneously accepted", bad_names[i]);
             goto end;
@@ -1257,7 +1257,7 @@ static int ech_bad_public_names(void)
         if (verbose)
             TEST_info("checking good name |%s|", good_names[i]);
         if (!TEST_true(OSSL_ECHSTORE_new_config(es, 0xfe0d, 0, good_names[i],
-            hpke_suite))) {
+                hpke_suite))) {
             if (verbose)
                 TEST_info("good name |%s| erroneously rejected", good_names[i]);
             goto end;

@@ -1222,7 +1222,7 @@ static int init_ech(SSL_CONNECTION *s, unsigned int context)
 static int final_ech(SSL_CONNECTION *s, unsigned int context, int sent)
 {
     if (s->server && s->ext.ech.success == 1
-            && s->ext.ech.inner_ech_seen_ok != 1) {
+        && s->ext.ech.inner_ech_seen_ok != 1) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_ECH_REQUIRED);
         return 0;
     }

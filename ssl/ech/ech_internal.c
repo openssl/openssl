@@ -1497,7 +1497,7 @@ err:
  * return 1 for good 0 for error
  */
 static int ech_copy_ext(SSL_CONNECTION *s, WPACKET *di, uint16_t type2copy,
-    PACKET *exts, int index)
+    PACKET *exts, size_t index)
 {
     unsigned int etype, elen;
     const unsigned char *eval;
@@ -2069,12 +2069,12 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
         }
         OSSL_TRACE_END(TLS);
         if (extval->config_id == ee->config_id) {
-            int suite_id;
+            unsigned int suite_id;
 
             /* check aead and kdf match a loaded suite for the config_id */
             for (suite_id = 0; suite_id != ee->nsuites && foundcfg == 0; suite_id++) {
                 if (ee->suites[suite_id].kdf_id == extval->kdf_id
-                        && ee->suites[suite_id].aead_id == extval->aead_id) {
+                    && ee->suites[suite_id].aead_id == extval->aead_id) {
                     foundcfg = 1;
                 }
             }

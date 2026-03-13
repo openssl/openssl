@@ -1900,9 +1900,8 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_ECH_REQUIRED);
             goto err;
         } else {
-            OSSL_TRACE1(TLS, "ECH HRR falling back to public_name: %s\n",
-                s->ext.ech.outer_hostname != NULL ?
-                    s->ext.ech.outer_hostname : "NONE");
+            OSSL_TRACE1(TLS, "ECH falling back to public_name: %s\n",
+                s->ext.ech.outer_hostname != NULL ? s->ext.ech.outer_hostname : "NONE");
             s->ext.ech.former_inner = s->ext.hostname;
             s->ext.hostname = NULL;
             if (s->ext.ech.outer_hostname != NULL) {
