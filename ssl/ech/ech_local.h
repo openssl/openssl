@@ -242,6 +242,7 @@ typedef struct ossl_ech_conn_st {
      * not.
      */
     int retry_configs_ok;
+    int inner_ech_seen_ok; /* set if we see inner ECH as expected */
     int grease; /* 1 if we're GREASEing, 0 otherwise */
     char *grease_suite; /* HPKE suite string for GREASEing */
     unsigned char *sent; /* GREASEy ECH value sent, in case needed for re-tx */
