@@ -5439,10 +5439,10 @@ X509_get1_email                         ?	4_0_0	EXIST::FUNCTION:
 X509_REQ_get1_email                     ?	4_0_0	EXIST::FUNCTION:
 X509_email_free                         ?	4_0_0	EXIST::FUNCTION:
 X509_get1_ocsp                          ?	4_0_0	EXIST::FUNCTION:
-X509_check_host                         ?	4_0_0	EXIST::FUNCTION:
-X509_check_email                        ?	4_0_0	EXIST::FUNCTION:
-X509_check_ip                           ?	4_0_0	EXIST::FUNCTION:
-X509_check_ip_asc                       ?	4_0_0	EXIST::FUNCTION:
+X509_check_host                         ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
+X509_check_email                        ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
+X509_check_ip                           ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
+X509_check_ip_asc                       ?	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
 a2i_IPADDRESS                           ?	4_0_0	EXIST::FUNCTION:
 a2i_IPADDRESS_NC                        ?	4_0_0	EXIST::FUNCTION:
 X509V3_NAME_from_section                ?	4_0_0	EXIST::FUNCTION:
@@ -5715,3 +5715,6 @@ OPENSSL_sk_set_cmp_thunks               ?	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_set1                    ?	4_0_0	EXIST::FUNCTION:
 OSSL_ESS_check_signing_certs_ex         ?	4_0_0	EXIST::FUNCTION:
 X509v3_delete_extension                 ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_cn               ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_add1_cn               ?	4_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_cn_input_validation ?	4_0_0	EXIST::FUNCTION:
