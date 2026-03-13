@@ -789,6 +789,9 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
 int dtls1_increment_epoch(SSL_CONNECTION *s, int rw)
 {
     if (rw & SSL3_CC_READ) {
+        if (!SSL_CONNECTION_IS_DTLS13(s) && s->rlayer.d->r_conn_epoch == UINT16_MAX)
+            return 0;
+
         s->rlayer.d->r_conn_epoch++;
 
         /*
@@ -801,6 +804,9 @@ int dtls1_increment_epoch(SSL_CONNECTION *s, int rw)
             /* We've wrapped around, so clear the buffer just in case */
             return 0;
     } else {
+        if (!SSL_CONNECTION_IS_DTLS13(s) && s->rlayer.d->w_conn_epoch == UINT16_MAX)
+            return 0;
+
         s->rlayer.d->w_conn_epoch++;
 
         if (s->rlayer.d->w_conn_epoch == 0)
