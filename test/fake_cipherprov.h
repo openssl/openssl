@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,4 +16,5 @@ void fake_cipher_finish(OSSL_PROVIDER *p);
 #define FAKE_PROV_NAME "fake-cipher"
 #define FAKE_CIPHER_FETCH_PROPS "provider=fake-cipher"
 
+#define FAKE_CIPHER_NO_GETPARAMS "fake_cipher_no_getparams"
 #define FAKE_CIPHER_PARAM_KEY_NAME "key_name"
