@@ -42,6 +42,9 @@ sub check_list_against_disabled {
     my $unmatched = 1;
     foreach my $manager (@algorithms){
       foreach my $algorithm (@disabled) {
+        if (!$validator->($manager, $algorithm)) {
+          print "Disabled algorithm found in $list_name list: $algorithm\n";
+        }
         $unmatched = $unmatched && $validator->($manager, $algorithm);    
       }
     }
