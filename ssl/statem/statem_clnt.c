@@ -1891,7 +1891,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
              * connection accordingly.
              */
         } else if (!hrr && s->ext.ech.success == 0
-                && s->ext.ech.hrrsignal_p != NULL) {
+            && s->ext.ech.hrrsignal_p != NULL) {
             /*
              * we previously saw a good HRR ECH acceptance but now
              * the SH.random ECH acceptance signal is bad so that's an

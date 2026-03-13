@@ -312,7 +312,7 @@ static int ech_final_config_checks(OSSL_ECHSTORE_ENTRY *ee)
     }
     if (strspn(lastlabel, "0123456789") == lllen)
         goto err;
-    if (lastlabel[0]== '0' && lllen > 2
+    if (lastlabel[0] == '0' && lllen > 2
         && (lastlabel[1] == 'x' || lastlabel[1] == 'X')
         && strspn(lastlabel + 2, "0123456789abcdefABCDEF") == (lllen - 2))
         goto err;
