@@ -33,7 +33,7 @@ plan skip_all => "$test_name requires TLSv1.3 enabled"
 plan skip_all => "$test_name is not available Windows or VMS"
     if $^O =~ /^(VMS|MSWin32|msys)$/;
 
-plan tests => 22;
+plan tests => 26;
 
 my $shlib_wrap   = bldtop_file("util", "shlib_wrap.sh");
 my $apps_openssl = bldtop_file("apps", "openssl");
@@ -94,6 +94,26 @@ sub start_ech_client_server
                              "-ech_noretry_dir", $ech_dir,
                              "-servername", "example.com",
                              "-tls1_3");
+        } elsif ($test_type eq "servername_fatal" ) {
+            # load keys from key dir (some will fail)
+            @s_server_cmd = ("s_server", "-accept", "0", "-naccept", "1",
+                            "-cert", $server_pem, "-key", $server_key,
+                            "-cert2", $server_pem, "-key2", $server_key,
+                            "-ech_dir", $ech_dir,
+                            "-ech_noretry_dir", $ech_dir,
+                            "-servername", "example.com",
+                            "-servername_fatal",
+                            "-tls1_3");
+        } elsif ($test_type eq "servername_fatal2" ) {
+            # load keys from key dir (some will fail)
+            @s_server_cmd = ("s_server", "-accept", "0", "-naccept", "1",
+                            "-cert", $server_pem, "-key", $server_key,
+                            "-cert2", $server_pem, "-key2", $server_key,
+                            "-ech_dir", $ech_dir,
+                            "-ech_noretry_dir", $ech_dir,
+                            "-servername", "example.com",
+                            "-servername_fatal",
+                            "-tls1_3");
         } else {
             # default for all other tests (for now)
             @s_server_cmd = ("s_server", "-accept", "0", "-naccept", "1",
@@ -222,6 +242,15 @@ sub start_ech_client_server
                              "-ech_config_list", $good_b64,
                              "-ech_ignore_cid",
                              "-prexit");
+
+        } elsif ($test_type eq "servername_fatal2" ) {
+            # Real ECH, but mismatching servername
+            @s_client_cmd = ("s_client",
+                            "-connect", "localhost:$s_server_port",
+                            "-servername", "server.not-the-example",
+                            "-CAfile", $root_pem,
+                            "-ech_config_list", $good_b64,
+                            "-prexit");
         } else {
             # Real ECH, and default
             @s_client_cmd = ("s_client",
@@ -380,6 +409,26 @@ sub keydir_test {
     ok($s_client_match == 1, "s_server using ech keydir on command line");
 }
 
+sub servernamefatal_test {
+    print("\n\nServer using servername_fatal test.\n");
+    my $tt = "servername_fatal";
+    my $win = "^ECH: success";
+    start_ech_client_server($tt, $win);
+    ok($s_server_port ne "0", "s_server port check");
+    print("s_server ready, on port $s_server_port pid: $s_server_pid\n");
+    ok($s_client_match == 1, "s_server using ech servername_fatal on command line");
+}
+
+sub servernamefatal_test2 {
+    print("\n\nServer using servername_fatal test.\n");
+    my $tt = "servername_fatal2";
+    my $win = "^ECH: tried but failed";
+    start_ech_client_server($tt, $win);
+    ok($s_server_port ne "0", "s_server port check");
+    print("s_server ready, on port $s_server_port pid: $s_server_pid\n");
+    ok($s_client_match == 1, "s_server using ech servername_fatal and bad name on command line");
+}
+
 basic_test();
 wrong_test();
 grease_test();
@@ -391,4 +440,6 @@ no_outer_test();
 cid_free_test();
 cid_wrong_test();
 keydir_test();
+servernamefatal_test();
+servernamefatal_test2();
 
