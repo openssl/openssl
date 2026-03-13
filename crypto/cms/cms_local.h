@@ -73,6 +73,7 @@ struct CMS_SignedData_st {
     int32_t version;
     STACK_OF(X509_ALGOR) *digestAlgorithms;
     CMS_EncapsulatedContentInfo *encapContentInfo;
+    /* untrusted certificates for chain building, may include signer certs: */
     STACK_OF(CMS_CertificateChoices) *certificates;
     STACK_OF(CMS_RevocationInfoChoice) *crls;
     STACK_OF(CMS_SignerInfo) *signerInfos;

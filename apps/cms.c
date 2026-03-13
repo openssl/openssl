@@ -985,9 +985,10 @@ int cms_main(int argc, char **argv)
         }
     }
 
-    if (certfile != NULL
-        && !load_certs(certfile, 0, &other, NULL, "certificate file"))
+    if (certfile != NULL && !load_certs(certfile, 0, &other, NULL, "extra certificates")) {
+        ERR_print_errors(bio_err);
         goto end;
+    }
 
     if (recipfile != NULL && (operation == SMIME_DECRYPT)
         && (recip = load_cert(recipfile, FORMAT_UNDEF,
