@@ -1,0 +1,200 @@
+=pod
+
+=head1 NAME
+
+EVP_PKEY-MLX-KEM, EVP_KEYMGMT-MLX-KEM - Hybrid ML-KEM key support for TLS 1.3
+
+=head1 DESCRIPTION
+
+These hybrid ML_KEM algorithms derive the session secret from both a
+traditional/classical algorithm (such as X25519/ECDH) and the post-quantum
+algorithm (ML_KEM), ensuring the connection remains secure unless both
+schemes are broken.
+
+The algorithms supported here are specifically for use in TLS 1.3 and are not
+suitable for other purposes. There is no encoder/decoder support, and
+EVP_PKEY_CTX_new_id() is also not supported as there are no associated EVP_PKEY
+type identifiers.
+
+The following names can be used by EVP_PKEY_CTX_new_from_name() using OpenSSL's
+default and FIPS providers.
+
+=over 4
+
+=item B<X25519MLKEM768>
+
+The shared secret is the concatenation of a 32 byte L<EVP_PKEY-ML-KEM(7)> shared
+secret followed by a 32 byte L<EVP_PKEY-X25519(7)> shared secret. X25519 is not an
+approved FIPS algorithm, but this combination is still allowed by FIPS 140-3
+since ML-KEM is FIPS approved.
+
+=item B<X448MLKEM1024>
+
+Similar to B<X25519MLKEM768> with a higher security strength, the shared secret
+is the concatenation of a 32 byte L<EVP_PKEY-ML-KEM(7)> shared secret followed
+by a 56 byte L<EVP_PKEY-X448(7)> shared secret.
+
+=item B<SecP256r1MLKEM768>
+
+The shared secret is the concatenation of a 32 byte L<EVP_PKEY-EC(7)> shared
+secret followed by a 32 byte L<EVP_PKEY-ML-KEM(7)> shared secret.
+Both algorithms used are FIPS approved.
+
+=item B<SecP384r1MLKEM1024>
+
+Similar to B<SecP256r1MLKEM768> with a higher security strength, the shared
+secret is the concatenation of a 48 byte L<EVP_PKEY-EC(7)> shared
+secret followed by a 32 byte L<EVP_PKEY-ML-KEM(7)> shared secret.
+
+=back
+
+=head2 Keygen Parameters
+
+No mandatory parameters are required for generating a key pair.
+To set the optional parameter, use L<EVP_PKEY_CTX_set_params(3)> after calling
+L<EVP_PKEY_keygen_init(3)>.
+Calling EVP_PKEY_keygen() internally generates a classic and ML-KEM key.
+
+=over 4
+
+=item "properties" (B<OSSL_PKEY_PARAM_PROPERTIES>) <UTF8 string>
+
+Sets properties to be used when fetching algorithm implementations used for
+the ML-KEM and X25519 or ECDH algorithms.
+
+=back
+
+=head2 Common parameters
+
+See L<provider-keymgmt(7)/Common Information Parameters>)
+for common information related to parameters.
+
+The following common gettables can be retrieved using
+L<EVP_PKEY_get_int_param(3)>, they retrieve information related to the ML-KEM
+algorithm.
+
+=over 4
+
+=item 'bits' (B<OSSL_PKEY_PARAM_BITS>) <integer>
+
+=item "security-bits" (B<OSSL_PKEY_PARAM_SECURITY_BITS>) <integer>
+
+=item "security-category" (B<OSSL_PKEY_PARAM_SECURITY_CATEGORY>) <integer>
+
+=item "max-size" (B<OSSL_PKEY_PARAM_MAX_SIZE>) <integer>
+
+This value is the combined size of the 2 shared secrets as described above.
+
+=back
+
+The following parameters are also handled.
+
+=over 4
+
+=item "encoded-pub-key" (B<OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY>) <octet string>
+
+Used for getting and setting the encoding of concatenated public keys.
+The public keys can not be modified once they are set.
+
+The format of the public keys for the different algorithms is:
+
+=over 4
+
+=item B<SecP256r1MLKEM768>
+
+A 65 byte EC public key followed by a 1184 byte MLKEM public key.
+
+=item B<SecP384r1MLKEM1024>
+
+A 97 byte EC public key followed by a 1568 byte MLKEM public key.
+
+=item B<X25519MLKEM768>
+
+A 1184 byte MLKEM public key followed by a 32 byte X25519 public key.
+
+=item B<X448MLKEM1024>
+
+A 1568 byte MLKEM public key followed by a 56 byte X448 public key.
+
+=back
+
+=item "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>) <octet string>
+
+The public key value.
+
+This parameter is only used when importing or exporting the public key value with
+the EVP_PKEY_fromdata() and EVP_PKEY_todata() functions.
+The public key format format is the same as "encoded-pub-key".
+
+=item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <octet string>
+
+The private key value which is the concatenation of 2 internal private keys.
+
+This parameter can be used when importing or exporting the private key value
+using the EVP_PKEY_fromdata() and EVP_PKEY_todata() functions.
+Initial import aside, this parameter is otherwise only gettable.
+
+The format of the private keys for the different algorithms is:
+
+=over 4
+
+=item B<SecP256r1MLKEM768>
+
+32 byte EC private key followed by a 2400 byte MLKEM private key.
+
+=item B<SecP384r1MLKEM1024>
+
+48 byte EC private key followed by a 3168 byte MLKEM private key.
+
+=item B<X25519MLKEM768>
+
+2400 byte MLKEM private key followed by a 32 byte X25519 private key.
+
+=item B<X448MLKEM1024>
+
+3168 byte MLKEM private key followed by a 56 byte X448 private key.
+
+=back
+
+=back
+
+=head1 CONFORMING TO
+
+=over 4
+
+=item https://datatracker.ietf.org/doc/draft-ietf-tls-ecdhe-mlkem/
+
+Note that B<X448MLKEM1024> is not defined by this document.
+
+=item SP800-227
+
+The general notation used in this document says that outputs are
+combined/processed in order of the names.
+B<X25519MLKEM768> and B<X448MLKEM768> however use the reverse order since
+X25519 and X448 are not FIPS approved algorithms.
+Even though they are not FIPS approved the hybrid combination is still allowed
+since MLKEM is FIPS approved.
+
+=back
+
+=head1 SEE ALSO
+
+L<EVP_KEM-ML-KEM(7)>,
+L<EVP_PKEY-X25519(7)>,
+L<EVP_PKEY-EC(7)>,
+L<provider-keymgmt(7)>
+
+=head1 HISTORY
+
+This functionality was added in OpenSSL 3.5.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
