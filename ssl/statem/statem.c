@@ -482,6 +482,8 @@ static int state_machine(SSL_CONNECTION *s, int server)
             if (ssret == SUB_STATE_FINISHED) {
                 st->state = MSG_FLOW_WRITING;
                 init_write_state_machine(s);
+            } else if (ssret == SUB_STATE_END_HANDSHAKE) {
+                st->state = MSG_FLOW_FINISHED;
             } else {
                 /* NBIO or error */
                 goto end;
@@ -628,6 +630,20 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
             }
 
             if (ret == 0) {
+                /*
+                 * If we're in DTLSv1.3 and in state TLS_ST_OK, then we must
+                 * have received a post-handshake message. If we subsequently
+                 * try to receive that message and get nothing back (and did not
+                 * encounter a fatal error), then that message must have been
+                 * dropped, so we need to end the handshake now, and return to
+                 * reading app data.
+                 */
+                if (SSL_CONNECTION_IS_DTLS13(s)
+                    && st->hand_state == TLS_ST_OK
+                    && s->statem.state != MSG_FLOW_ERROR) {
+                    ossl_statem_set_in_init(s, 0);
+                    return SUB_STATE_END_HANDSHAKE;
+                }
                 /* Could be non-blocking IO */
                 return SUB_STATE_ERROR;
             }
