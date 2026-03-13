@@ -1466,9 +1466,9 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
     }
     BIO_push(fbio, bio);
 
-    if (server[0] == '[')
-        BIO_printf(fbio, "CONNECT %s:%s " HTTP_1_0 "\r\n", server, port);
-    else if (strchr(server, ':') != NULL)
+
+    /* Add square brackets around a naked IPv6 address */
+    if (server[0] != '[' && strchr(server, ':') != NULL)
         BIO_printf(fbio, "CONNECT [%s]:%s " HTTP_1_0 "\r\n", server, port);
     else
         BIO_printf(fbio, "CONNECT %s:%s " HTTP_1_0 "\r\n", server, port);
