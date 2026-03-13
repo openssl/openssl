@@ -811,6 +811,7 @@ static int test_rsa_enc_dec(OSSL_LIB_CTX *libctx, const char *propq)
     if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(libctx, propq, "RSA", 4096))
         || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq))
         || !TEST_int_eq(EVP_PKEY_encrypt_init(ctx), 1)
+        || !TEST_int_eq(EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING), 1)
         || !TEST_int_eq(EVP_PKEY_encrypt(ctx, NULL, &ciphertext_len,
                             plaintext, sizeof(plaintext)),
             1)
@@ -822,6 +823,7 @@ static int test_rsa_enc_dec(OSSL_LIB_CTX *libctx, const char *propq)
 
     /* Decrypt */
     if (!TEST_int_eq(EVP_PKEY_decrypt_init(ctx), 1)
+        || !TEST_int_eq(EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING), 1)
         || !TEST_int_eq(EVP_PKEY_decrypt(ctx, NULL, &decrypted_len, ciphertext,
                             ciphertext_len),
             1)
