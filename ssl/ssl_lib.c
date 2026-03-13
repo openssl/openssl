@@ -8511,7 +8511,9 @@ uint16_t ossl_grease_value(SSL_CONNECTION *s, int index)
         return 0x0A0A;
 
     if (!s->ext.grease_seeded) {
-        if (RAND_bytes(s->ext.grease_seed, sizeof(s->ext.grease_seed)) <= 0)
+        if (RAND_bytes_ex(SSL_CONNECTION_GET_CTX(s)->libctx,
+                          s->ext.grease_seed,
+                          sizeof(s->ext.grease_seed), 0) <= 0)
             memset(s->ext.grease_seed, 0x42, sizeof(s->ext.grease_seed));
         s->ext.grease_seeded = 1;
     }
