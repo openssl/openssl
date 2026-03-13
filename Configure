@@ -606,7 +606,6 @@ our %disabled = ( # "what"         => "comment"
                   "fips"                => "default",
                   "fips-jitter"         => "default",
                   "asan"                => "default",
-                  "hqc"                 => "default",
                   "brotli"              => "default",
                   "brotli-dynamic"      => "default",
                   "buildtest-c++"       => "default",
