@@ -13,8 +13,9 @@ This software seed source produces randomness based on tiny CPU
 "jitter" fluctuations.
 
 It is available when OpenSSL is compiled with B<enable-jitter>
-option. When available it is listed in B<openssl list
--random-generators> and B<openssl info -seeds>.
+option or B<enable-jitter-dynamic>. The first statically links the
+library while the second dynamically links it. When available it is
+listed in B<openssl list -random-generators> and B<openssl info -seeds>.
 
 =head2 Identity
 
@@ -45,6 +46,8 @@ A context for the seed source can be obtained by calling:
  EVP_RAND_CTX *rctx = EVP_RAND_CTX_new(rand, NULL);
 
 The B<enable-jitter> option was added in OpenSSL 3.4.
+
+The B<enable-jitter-dynamic> option was added in OpenSSL 4.0.
 
 By specifying the B<enable-fips-jitter> configuration option, the FIPS
 provider will use an internal jitter source for its entropy.  Enabling
