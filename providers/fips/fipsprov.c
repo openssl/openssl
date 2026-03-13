@@ -642,6 +642,14 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
     { PROV_NAMES_LMS, FIPS_DEFAULT_PROPERTIES, ossl_lms_keymgmt_functions,
         PROV_DESCS_LMS },
 #endif
+#ifndef OPENSSL_NO_HQC
+    { PROV_NAMES_HQC_KEM_128, FIPS_DEFAULT_PROPERTIES, ossl_hqc_128_keymgmt_functions,
+        PROV_DESCS_HQC_KEM_128 },
+    { PROV_NAMES_HQC_KEM_192, FIPS_DEFAULT_PROPERTIES, ossl_hqc_192_keymgmt_functions,
+        PROV_DESCS_HQC_KEM_192 },
+    { PROV_NAMES_HQC_KEM_256, FIPS_DEFAULT_PROPERTIES, ossl_hqc_256_keymgmt_functions,
+        PROV_DESCS_HQC_KEM_256 },
+#endif
 #ifndef OPENSSL_NO_ML_KEM
     { PROV_NAMES_ML_KEM_512, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_512_keymgmt_functions,
         PROV_DESCS_ML_KEM_512 },
@@ -654,14 +662,6 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
         PROV_DESCS_X25519MLKEM768 },
     { PROV_NAMES_X448MLKEM1024, FIPS_DEFAULT_PROPERTIES, ossl_mlx_x448_kem_kmgmt_functions,
         PROV_DESCS_X448MLKEM1024 },
-#endif
-#ifndef OPENSSL_NO_HQC
-    { PROV_NAMES_HQC_KEM_128, FIPS_DEFAULT_PROPERTIES, ossl_hqc_128_keymgmt_functions,
-        PROV_DESCS_HQC_KEM_128 },
-    { PROV_NAMES_HQC_KEM_192, FIPS_DEFAULT_PROPERTIES, ossl_hqc_192_keymgmt_functions,
-        PROV_DESCS_HQC_KEM_192 },
-    { PROV_NAMES_HQC_KEM_256, FIPS_DEFAULT_PROPERTIES, ossl_hqc_256_keymgmt_functions,
-        PROV_DESCS_HQC_KEM_256 },
 #endif
 #if !defined(OPENSSL_NO_EC)
     { PROV_NAMES_SecP256r1MLKEM768, FIPS_DEFAULT_PROPERTIES, ossl_mlx_p256_kem_kmgmt_functions,
