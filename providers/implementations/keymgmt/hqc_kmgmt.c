@@ -1684,7 +1684,7 @@ static void *hqc_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     }
 
     /*
-     * Initalize our shake digest as a prng to generate our key seed from
+     * Initialize our shake digest as a prng to generate our key seed from
      * the provided seed
      */
     md_ctx = EVP_MD_CTX_new();
