@@ -49,8 +49,8 @@ typedef struct dtls_record_layer_st {
      * undefined, and starts at zero once the initial handshake is
      * completed
      */
-    uint16_t r_conn_epoch;
-    uint16_t w_conn_epoch;
+    uint64_t r_conn_epoch;
+    uint64_t w_conn_epoch;
 
     /*
      * Buffered application records. Only for records between CCS and
