@@ -28,7 +28,7 @@ EVP_PKEY_keygen_init().
 =item "seed" (B<OSSL_PKEY_PARAM_HQC_SEED>) <octet string>
 
 Internally, HQC generates keys using a random buffer to seed an XOF digest algorithm.
-By default, key generation obtains the random buffer via L<RAND_bytes_ex()>.  However,
+By default, key generation obtains the random buffer via L<RAND_bytes_ex(3)>.  However,
 a user may choose to supply a specific random seed buffer using this parameter.
 
 If specified, the random buffer must be sized to 48 bytes for all key types.
