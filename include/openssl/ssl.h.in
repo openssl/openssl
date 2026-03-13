@@ -453,6 +453,9 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 #define SSL_OP_ECH_GREASE_RETRY_CONFIG SSL_OP_BIT(40)
 #endif
 
+/* RFC 8701: Send GREASE values in ClientHello */
+#define SSL_OP_GREASE SSL_OP_BIT(41)
+
 /*
  * Option "collections."
  */
