@@ -14,7 +14,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_cli_list");
 
-plan tests => 9;
+plan tests => 12;
 
 my $fipsconf = srctop_file("test", "fips-and-base.cnf");
 my $defaultconf = srctop_file("test", "default.cnf");
@@ -72,18 +72,39 @@ sub check_key_exchange_algorithms_list {
     check_list_against_disabled(\@pkalgorithms, $validator, "key exchange algorithms");
 }
 
-# Checks the key exchange algorithms list for any disabled algorithms
+# Checks the mac algorithms list for any disabled algorithms
 sub check_mac_algorithms_list {
     my @pkalgorithms = run(app(["openssl", "list", "-mac-algorithms"]), capture => 1);
     my $validator = sub {return !($_[0] =~ /{.*[0-9],.*\b\Q$_[1]\E\b/)};
     check_list_against_disabled(\@pkalgorithms, $validator, "mac algorithms");
 }
 
-# Checks the key exchange algorithms list for any disabled algorithms
+# Checks the cipher algorithms list for any disabled algorithms
 sub check_cipher_algorithms_list {
     my @pkalgorithms = run(app(["openssl", "list", "-cipher-algorithms"]), capture => 1);
     my $validator = sub { return !($_[0] =~ /{.*[0-9],.*\b\Q$_[1]\E\b/) };
     check_list_against_disabled(\@pkalgorithms, $validator, "cipher algorithms");
+}
+
+# Checks the kem algorithms list for any disabled algorithms
+sub check_kem_algorithms_list {
+    my @pkalgorithms = run(app(["openssl", "list", "-kem-algorithms"]), capture => 1);
+    my $validator = sub { return !($_[0] =~ /{.*[0-9],.*\b\Q$_[1]\E\b/) };
+    check_list_against_disabled(\@pkalgorithms, $validator, "kem algorithms");
+}
+
+# Checks the signature algorithms list for any disabled algorithms
+sub check_signature_algorithms_list {
+    my @pkalgorithms = run(app(["openssl", "list", "-signature-algorithms"]), capture => 1);
+    my $validator = sub { return !($_[0] =~ /{.*[0-9],.*\b\Q$_[1]\E\b/) };
+    check_list_against_disabled(\@pkalgorithms, $validator, "signature algorithms");
+}
+
+# Checks the asymcipher algorithms list for any disabled algorithms
+sub check_asymcipher_algorithms_list {
+    my @pkalgorithms = run(app(["openssl", "list", "-asymcipher-algorithms"]), capture => 1);
+    my $validator = sub { return !($_[0] =~ /{.*[0-9],.*\b\Q$_[1]\E\b/) };
+    check_list_against_disabled(\@pkalgorithms, $validator, "asymcipher algorithms");
 }
 
 check_skey_manager_list("default");
@@ -92,6 +113,9 @@ check_public_key_algorithms_list();
 check_key_exchange_algorithms_list();
 check_mac_algorithms_list();
 check_cipher_algorithms_list();
+check_kem_algorithms_list();
+check_signature_algorithms_list();
+check_asymcipher_algorithms_list();
 
 SKIP: {
     my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
