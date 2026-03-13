@@ -676,7 +676,6 @@ again:
         goto again;
     }
 
-    /* TODO(DTLSv1.3): make recseqnum a uint64_t */
     rl->sequence = ((uint64_t)recseqnum[0]) << 40;
     rl->sequence |= ((uint64_t)recseqnum[1]) << 32;
     rl->sequence |= ((uint64_t)recseqnum[2]) << 24;
