@@ -104,7 +104,7 @@ void *ASN1_item_d2i_fp(const ASN1_ITEM *it, FILE *in, void *x)
 }
 #endif
 
-#define HEADER_SIZE 8
+#define HEADER_SIZE 2
 #define ASN1_CHUNK_INITIAL_SIZE (16 * 1024)
 int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 {
@@ -157,11 +157,41 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
         }
         /* else data already loaded */
 
+        /* make sure there is enough data for a complete header */
         p = (unsigned char *)&(b->data[off]);
         q = p;
         diff = len - off;
         if (diff == 0)
             goto err;
+
+        diff--;
+        if ((*(q++) & V_ASN1_PRIMITIVE_TAG) == V_ASN1_PRIMITIVE_TAG) {
+            do {
+                diff--;
+            } while (diff > 0 && *(q++) & 0x80);
+        }
+
+        if (diff == 0) {
+            want = HEADER_SIZE + q - p;
+            if (*q & 0x80) {
+                want++;
+            }
+            continue;
+        }
+
+        diff--;
+        /* Check the length.  This should also work for indefinite length */
+        if (*q & 0x80) {
+            unsigned int i = *q & 0x7f;
+            if (i > diff) {
+                want = q - p + i + 1;
+                continue;
+            }
+        }
+
+        /* We have a complete header now.  Parse the tag and length */
+        q = p;
+        diff = len - off;
         inf = ASN1_get_object(&q, &slen, &tag, &xclass, (int)diff);
         if (inf & 0x80) {
             unsigned long e;
