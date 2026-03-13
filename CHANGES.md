@@ -41,6 +41,10 @@ OpenSSL Releases
 
    *Paul Louvel*
 
+ * Add IKEV2 KDF (EVP_KDF-IKEV2KDF) to EVP_KDF
+
+   *Helen Zhang*
+
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
  * Added `-expected-rpks` option to the `openssl s_client`
