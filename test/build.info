@@ -248,7 +248,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[evp_libctx_test]=../include ../apps/include
   DEPEND[evp_libctx_test]=../libcrypto.a libtestutil.a
 
-  SOURCE[evp_fetch_prov_test]=evp_fetch_prov_test.c
+  SOURCE[evp_fetch_prov_test]=evp_fetch_prov_test.c fake_cipherprov.c
   INCLUDE[evp_fetch_prov_test]=../include ../apps/include
   DEPEND[evp_fetch_prov_test]=../libcrypto libtestutil.a
 
