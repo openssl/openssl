@@ -20,6 +20,7 @@
 #include <openssl/provider.h>
 #include "internal/sizes.h"
 #include "testutil.h"
+#include "fake_cipherprov.h"
 
 static char *config_file = NULL;
 static char *alg = "digest";
@@ -341,6 +342,36 @@ static int test_explicit_EVP_CIPHER_fetch_by_name(void)
 }
 
 /*
+ * Test that a provider cipher without get_params fails to fetch.
+ */
+static int test_cipher_no_getparams(void)
+{
+    int ret = 0;
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *fake_prov = NULL;
+    EVP_CIPHER *cipher = NULL;
+
+    ctx = OSSL_LIB_CTX_new();
+    if (!TEST_ptr(ctx))
+        return 0;
+
+    if (!TEST_ptr(fake_prov = fake_cipher_start(ctx)))
+        goto end;
+
+    /* Fetch must fail for a cipher that has no get_params */
+    cipher = EVP_CIPHER_fetch(ctx, FAKE_CIPHER_NO_GETPARAMS, FAKE_CIPHER_FETCH_PROPS);
+    if (!TEST_ptr_null(cipher))
+        goto end;
+
+    ret = 1;
+end:
+    EVP_CIPHER_free(cipher);
+    fake_cipher_finish(fake_prov);
+    OSSL_LIB_CTX_free(ctx);
+    return ret;
+}
+
+/*
  * idx 0: Allow names from OBJ_obj2txt()
  * idx 1: Force an OID in text form from OBJ_obj2txt()
  */
@@ -408,6 +439,7 @@ int setup_tests(void)
     } else {
         ADD_TEST(test_implicit_EVP_CIPHER_fetch);
         ADD_TEST(test_explicit_EVP_CIPHER_fetch_by_name);
+        ADD_TEST(test_cipher_no_getparams);
         ADD_ALL_TESTS_NOSUBTEST(test_explicit_EVP_CIPHER_fetch_by_X509_ALGOR, 2);
     }
     return 1;

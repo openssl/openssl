@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -267,8 +267,18 @@ static const OSSL_DISPATCH ossl_fake_functions[] = {
     OSSL_DISPATCH_END
 };
 
+static const OSSL_DISPATCH ossl_fake_no_getparams_functions[] = {
+    { OSSL_FUNC_CIPHER_NEWCTX,
+        (void (*)(void))fake_newctx },
+    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))fake_freectx },
+    { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))fake_cipher },
+    OSSL_DISPATCH_END
+};
+
 static const OSSL_ALGORITHM fake_cipher_algs[] = {
     { "fake_cipher", FAKE_CIPHER_FETCH_PROPS, ossl_fake_functions },
+    { FAKE_CIPHER_NO_GETPARAMS, FAKE_CIPHER_FETCH_PROPS,
+        ossl_fake_no_getparams_functions },
     { NULL, NULL, NULL }
 };
 
