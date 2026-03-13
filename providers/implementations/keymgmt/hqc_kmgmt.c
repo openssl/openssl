@@ -420,7 +420,7 @@ static size_t hqc_compute_hamming_weight(const uint64_t *keybuf, size_t size)
         total_population += __builtin_popcountll(keybuf[i]);
 #else
         for (j = 0; j < sizeof(uint64_t); j++)
-            total_population += (keybuf[i] & (1 << j)) ? 1 : 0;
+            total_population += (keybuf[i] & (uint64_t)(1ULL << j)) ? 1 : 0;
 #endif
     }
     return total_population;
@@ -434,7 +434,7 @@ static int hqc_kem_validate(const void *vkey, int selection, int check_type)
     int ret = 0;
     uint8_t *dk_seed;
     uint8_t xof_separator = HQC_XOF_SEP;
-    uint64_t *xptr = NULL, *yptr = NULL;
+    uint64_t *x = NULL, *y = NULL;
 
     if (key == NULL)
         return 0;
@@ -448,12 +448,12 @@ static int hqc_kem_validate(const void *vkey, int selection, int check_type)
         return 0;
 
     if (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) {
-        uint64_t x[VEC_SIZE(key->info->n, 64)];
-        uint64_t y[VEC_SIZE(key->info->n, 64)];
         size_t hamming_weight;
+        x = OPENSSL_zalloc(VEC_SIZE(key->info->n, 64) * sizeof(uint64_t));
+        y = OPENSSL_zalloc(VEC_SIZE(key->info->n, 64) * sizeof(uint64_t));
 
-        memset(x, 0, VEC_SIZE(key->info->n, 64) * sizeof(uint64_t));
-        memset(y, 0, VEC_SIZE(key->info->n, 64) * sizeof(uint64_t));
+        if (x == NULL || y == NULL)
+            goto err;
 
         dk_seed = key->dk + key->info->ek_size; /* original seed offset to here */
         /*
@@ -477,8 +477,6 @@ static int hqc_kem_validate(const void *vkey, int selection, int check_type)
         /*
          * Recompute our x and y vectors
          */
-        xptr = x;
-        yptr = y;
         if (!hqc_sample_xof(md_ctx, y, key->info)
             || !hqc_sample_xof(md_ctx, x, key->info))
             goto err;
@@ -499,10 +497,8 @@ err:
     /*
      * If we computed x and y above, make sure we clear it from the stack
      */
-    if (xptr != NULL)
-        memset(xptr, 0, VEC_SIZE(key->info->n, 64));
-    if (yptr != NULL)
-        memset(yptr, 0, VEC_SIZE(key->info->n, 64));
+    OPENSSL_clear_free(x, VEC_SIZE(key->info->n, 64) * sizeof(uint64_t));
+    OPENSSL_clear_free(y, VEC_SIZE(key->info->n, 64) * sizeof(uint64_t));
     EVP_MD_CTX_free(md_ctx);
     EVP_MD_free(shake);
     return ret;
@@ -1071,7 +1067,11 @@ static uint32_t barrett_reduce(uint32_t x, const HQC_VARIANT_INFO *info)
     uint64_t q = ((uint64_t)x * info->n_mu) >> 32;
     uint32_t r = x - (uint32_t)(q * info->n);
     uint32_t reduce_flag = (((r - info->n) >> 31) ^ 1);
-    uint32_t mask = -reduce_flag;
+    /*
+     * Windows get all cranky about trying to negate a uint32_t
+     * Tell it to chill out with some casting
+     */
+    uint32_t mask = (uint32_t)(-((int32_t)reduce_flag));
     r -= mask & info->n;
     return r;
 }
