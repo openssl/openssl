@@ -74,6 +74,10 @@ OpenSSL Releases
 
    *William McCormack*
 
+ * Added IKEV2 KDF (EVP_KDF-IKEV2KDF) implementation.
+
+   *Helen Zhang*
+
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
  * Added `-expected-rpks` option to the `openssl s_client`
