@@ -30,7 +30,31 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 205;
+sub verify_capture {
+    my ($cert, $purpose, $trusted, $untrusted, @opts) = @_;
+    my @args = qw(openssl verify -auth_level 1);
+    my $errfile = "verify-capture.err";
+    push(@args, "-purpose", $purpose) if $purpose ne "";
+    push(@args, @opts);
+    for (@$trusted) { push(@args, "-trusted", srctop_file(@certspath, "$_.pem")) }
+    for (@$untrusted) { push(@args, "-untrusted", srctop_file(@certspath, "$_.pem")) }
+    push(@args, srctop_file(@certspath, "$cert.pem"));
+    unlink $errfile;
+    my @out = run(app([@args], stderr => $errfile),
+                  capture => 1, statusvar => \my $exit);
+    my $err = '';
+
+    if (open(my $fh, '<', $errfile)) {
+        local $/;
+        $err = <$fh>;
+        close($fh);
+        unlink $errfile;
+    }
+
+    return ($exit, join('', @out) . $err);
+}
+
+plan tests => 207;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -467,6 +491,16 @@ ok(!verify("badalt10-cert", "", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
 
 ok(!verify("bad-othername-cert", "", ["root-cert"], ["nccaothername-cert"], ),
    "CVE-2022-4203 type confusion test");
+
+{
+    my ($exit, $out) =
+        verify_capture("eai-nc-othername-leaf", "", ["eai-nc-othername-root"],
+                       ["eai-nc-othername-int"], "-no_check_time");
+
+    ok(!$exit, "reject unsupported SmtpUTF8Mailbox otherName email constraint");
+    like($out, qr/unsupported name constraint type/i,
+         "report unsupported SmtpUTF8Mailbox otherName email constraint");
+}
 
 ok(verify("nc-uri-cert", "", ["root-cert"], ["ncca4-cert"], ),
    "Name constraints URI with userinfo");

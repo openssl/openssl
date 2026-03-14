@@ -498,6 +498,26 @@ static int nc_minmax_valid(GENERAL_SUBTREE *sub)
     return ok;
 }
 
+static int nc_check_invalid_email_subtree(int effective_type,
+    const GENERAL_NAME *base)
+{
+    if (effective_type != GEN_EMAIL)
+        return X509_V_OK;
+
+    if (base->type != GEN_OTHERNAME)
+        return X509_V_OK;
+
+    /*
+     * RFC 9598 requires email name constraints to use rfc822Name subtrees.
+     * Treat otherName:SmtpUTF8Mailbox subtrees as malformed for the email
+     * matching path, but leave unrelated otherName constraints untouched.
+     */
+    if (OBJ_obj2nid(base->d.otherName->type_id) == NID_id_on_SmtpUTF8Mailbox)
+        return X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE;
+
+    return X509_V_OK;
+}
+
 static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 {
     GENERAL_SUBTREE *sub;
@@ -509,9 +529,10 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
      * the otherName field may contain EAI email address treated specially
      * according to RFC 8398, section 6
      */
-    if (effective_type == GEN_OTHERNAME && (OBJ_obj2nid(gen->d.otherName->type_id) == NID_id_on_SmtpUTF8Mailbox)) {
+    if (effective_type == GEN_OTHERNAME
+        && OBJ_obj2nid(gen->d.otherName->type_id)
+            == NID_id_on_SmtpUTF8Mailbox)
         effective_type = GEN_EMAIL;
-    }
 
     /*
      * Permitted subtrees: if any subtrees exist of matching the type at
@@ -520,6 +541,9 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 
     for (i = 0; i < sk_GENERAL_SUBTREE_num(nc->permittedSubtrees); i++) {
         sub = sk_GENERAL_SUBTREE_value(nc->permittedSubtrees, i);
+        r = nc_check_invalid_email_subtree(effective_type, sub->base);
+        if (r != X509_V_OK)
+            return r;
         if (effective_type != sub->base->type
             || (effective_type == GEN_OTHERNAME && OBJ_cmp(gen->d.otherName->type_id, sub->base->d.otherName->type_id) != 0))
             continue;
@@ -544,6 +568,9 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 
     for (i = 0; i < sk_GENERAL_SUBTREE_num(nc->excludedSubtrees); i++) {
         sub = sk_GENERAL_SUBTREE_value(nc->excludedSubtrees, i);
+        r = nc_check_invalid_email_subtree(effective_type, sub->base);
+        if (r != X509_V_OK)
+            return r;
         if (effective_type != sub->base->type
             || (effective_type == GEN_OTHERNAME && OBJ_cmp(gen->d.otherName->type_id, sub->base->d.otherName->type_id) != 0))
             continue;
