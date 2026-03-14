@@ -1493,42 +1493,16 @@ err:
  * di is the reconstituted inner CH
  * type2copy is the outer type to copy
  * exts is the outer extensions packet (changing as we go)
- * index is the index of the outer
  * return 1 for good 0 for error
  */
 static int ech_copy_ext(SSL_CONNECTION *s, WPACKET *di, uint16_t type2copy,
-    PACKET *exts, size_t index)
+    PACKET *exts)
 {
     unsigned int etype, elen;
     const unsigned char *eval;
 
-    /*
-     * First time in index is 0 and we're willing
-     * to skip until we find the first thing to
-     * copy, thereafter, the things we're looking
-     * for should be contiguous, so the next one
-     * should be what we're after
-     */
-    if (index == 0) {
-        while (PACKET_remaining(exts) > 0) {
-            if (!PACKET_get_net_2(exts, &etype)
-                || !PACKET_get_net_2(exts, &elen)
-                || !PACKET_get_bytes(exts, &eval, elen)) {
-                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-                goto err;
-            }
-            if (etype == type2copy) {
-                if (!WPACKET_put_bytes_u16(di, etype)
-                    || !WPACKET_put_bytes_u16(di, elen)
-                    || !WPACKET_memcpy(di, eval, elen)) {
-                    SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-                    goto err;
-                }
-                return 1;
-            }
-        }
-    } else {
-        /* not first time, we'll only check the next value */
+    /* Skip until we find the thing to copy */
+    while (PACKET_remaining(exts) > 0) {
         if (!PACKET_get_net_2(exts, &etype)
             || !PACKET_get_net_2(exts, &elen)
             || !PACKET_get_bytes(exts, &eval, elen)) {
@@ -1654,7 +1628,7 @@ static int ech_reconstitute_inner(SSL_CONNECTION *s, WPACKET *di, PACKET *ei,
                 goto err;
             }
             for (i = 0; i != n_outers; i++) {
-                if (ech_copy_ext(s, di, outers[i], &exts, i) != 1)
+                if (ech_copy_ext(s, di, outers[i], &exts) != 1)
                     /* SSLfatal called already */
                     goto err;
             }
