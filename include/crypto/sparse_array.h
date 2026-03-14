@@ -62,7 +62,7 @@ extern "C" {
     }                                                                                                              \
     static ossl_unused ossl_inline int                                                                             \
     ossl_sa_##type##_set(SPARSE_ARRAY_OF(type) * sa,                                                               \
-        ossl_uintmax_t n, ctype * val)                                                                             \
+        ossl_uintmax_t n, ctype *val)                                                                              \
     {                                                                                                              \
         return ossl_sa_set((OPENSSL_SA *)sa, n, (void *)val);                                                      \
     }                                                                                                              \
