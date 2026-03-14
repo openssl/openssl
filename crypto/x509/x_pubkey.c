@@ -229,7 +229,8 @@ static int x509_pubkey_ex_d2i_ex(ASN1_VALUE **pval,
     }
 
     ERR_pop_to_mark();
-    ret = 1;
+    if (pubkey != NULL && pubkey->pkey != NULL)
+        ret = 1;
 end:
     OSSL_DECODER_CTX_free(dctx);
     OPENSSL_free(tmpbuf);
