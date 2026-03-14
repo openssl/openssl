@@ -172,7 +172,7 @@ static int put_loader_in_store(void *store, void *method,
         return 0;
 
     return ossl_method_store_add(store, prov, id, propdef, method,
-        up_ref_loader, free_loader);
+        up_ref_loader, free_loader, NULL, NULL);
 }
 
 static void *loader_from_algorithm(int scheme_id, const OSSL_ALGORITHM *algodef,
@@ -339,7 +339,7 @@ inner_loader_fetch(struct loader_data_st *methdata,
             if (id == 0)
                 id = ossl_namemap_name2num(namemap, scheme);
             ossl_method_store_cache_set(store, prov, id, propq, method,
-                up_ref_loader, free_loader);
+                up_ref_loader, free_loader, NULL, NULL);
         }
 
         /*

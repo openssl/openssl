@@ -101,6 +101,7 @@ struct evp_keymgmt_st {
     const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
+    int origin;
 
     /* Constructor(s), destructor, information */
     OSSL_FUNC_keymgmt_new_fn *new;
@@ -202,6 +203,36 @@ struct evp_signature_st {
     OSSL_FUNC_signature_query_key_types_fn *query_key_types;
 } /* EVP_SIGNATURE */;
 
+struct evp_rand_st {
+    OSSL_PROVIDER *prov;
+    int name_id;
+    int origin;
+    char *type_name;
+    const char *description;
+    CRYPTO_REF_COUNT refcnt;
+
+    const OSSL_DISPATCH *dispatch;
+    OSSL_FUNC_rand_newctx_fn *newctx;
+    OSSL_FUNC_rand_freectx_fn *freectx;
+    OSSL_FUNC_rand_instantiate_fn *instantiate;
+    OSSL_FUNC_rand_uninstantiate_fn *uninstantiate;
+    OSSL_FUNC_rand_generate_fn *generate;
+    OSSL_FUNC_rand_reseed_fn *reseed;
+    OSSL_FUNC_rand_nonce_fn *nonce;
+    OSSL_FUNC_rand_enable_locking_fn *enable_locking;
+    OSSL_FUNC_rand_lock_fn *lock;
+    OSSL_FUNC_rand_unlock_fn *unlock;
+    OSSL_FUNC_rand_gettable_params_fn *gettable_params;
+    OSSL_FUNC_rand_gettable_ctx_params_fn *gettable_ctx_params;
+    OSSL_FUNC_rand_settable_ctx_params_fn *settable_ctx_params;
+    OSSL_FUNC_rand_get_params_fn *get_params;
+    OSSL_FUNC_rand_get_ctx_params_fn *get_ctx_params;
+    OSSL_FUNC_rand_set_ctx_params_fn *set_ctx_params;
+    OSSL_FUNC_rand_verify_zeroization_fn *verify_zeroization;
+    OSSL_FUNC_rand_get_seed_fn *get_seed;
+    OSSL_FUNC_rand_clear_seed_fn *clear_seed;
+} /* EVP_RAND */;
+
 struct evp_skeymgmt_st {
     int name_id;
     char *type_name;
@@ -247,6 +278,7 @@ struct evp_asym_cipher_st {
 
 struct evp_kem_st {
     int name_id;
+    int origin;
     char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
@@ -300,14 +332,26 @@ void *evp_generic_fetch(OSSL_LIB_CTX *ctx, int operation_id,
         const OSSL_ALGORITHM *algodef,
         OSSL_PROVIDER *prov),
     int (*up_ref_method)(void *),
-    void (*free_method)(void *));
+    void (*free_method)(void *),
+    void *(*dup_method)(void *),
+    void (*dup_free_method)(void *));
+int evp_generic_fetch_all(OSSL_LIB_CTX *ctx, int operation_id,
+    void *(*new_method)(int name_id,
+        const OSSL_ALGORITHM *algodef,
+        OSSL_PROVIDER *prov),
+    int (*up_ref_method)(void *),
+    void (*free_method)(void *),
+    void *(*dup_method)(void *),
+    void (*dup_free_method)(void *));
 void *evp_generic_fetch_from_prov(OSSL_PROVIDER *prov, int operation_id,
     const char *name, const char *properties,
     void *(*new_method)(int name_id,
         const OSSL_ALGORITHM *algodef,
         OSSL_PROVIDER *prov),
     int (*up_ref_method)(void *),
-    void (*free_method)(void *));
+    void (*free_method)(void *),
+    void *(*dup_method)(void *),
+    void (*dup_free_method)(void *));
 void evp_generic_do_all_prefetched(OSSL_LIB_CTX *libctx, int operation_id,
     void (*user_fn)(void *method, void *arg),
     void *user_arg);
@@ -390,3 +434,11 @@ int evp_names_do_all(OSSL_PROVIDER *prov, int number,
     void (*fn)(const char *name, void *data),
     void *data);
 int evp_cipher_cache_constants(EVP_CIPHER *cipher);
+int evp_method_id2name_id_op_id(uint32_t meth_id, int *name_id,
+    unsigned int *operation_id);
+int evp_md_fetch_all(OSSL_LIB_CTX *ctx);
+int evp_cipher_fetch_all(OSSL_LIB_CTX *ctx);
+int evp_rand_fetch_all(OSSL_LIB_CTX *ctx);
+int evp_mac_fetch_all(OSSL_LIB_CTX *ctx);
+int evp_keymgmt_fetch_all(OSSL_LIB_CTX *ctx);
+int evp_kem_fetch_all(OSSL_LIB_CTX *ctx);

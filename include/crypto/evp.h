@@ -141,6 +141,7 @@ void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx);
 struct evp_mac_st {
     OSSL_PROVIDER *prov;
     int name_id;
+    int origin;
     char *type_name;
     const char *description;
 
@@ -185,6 +186,7 @@ struct evp_kdf_st {
 
 #define EVP_ORIG_DYNAMIC 0
 #define EVP_ORIG_GLOBAL 1
+#define EVP_ORIG_FROZEN 2
 
 struct evp_md_st {
     /* nid */
