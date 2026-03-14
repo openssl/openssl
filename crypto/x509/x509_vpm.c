@@ -935,7 +935,14 @@ static const X509_VERIFY_PARAM default_table[] = {
         .auth_level = -1,
     },
     {
-        .name = "smime_sign", /* S/MIME sign parameters */
+        .name = "smime_encrypt", /* S/MIME encryption parameters */
+        .purpose = X509_PURPOSE_SMIME_ENCRYPT,
+        .trust = X509_TRUST_EMAIL,
+        .depth = -1,
+        .auth_level = -1,
+    },
+    {
+        .name = "smime_sign", /* S/MIME signature parameters */
         .purpose = X509_PURPOSE_SMIME_SIGN,
         .trust = X509_TRUST_EMAIL,
         .depth = -1,
