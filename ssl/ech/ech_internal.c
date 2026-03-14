@@ -1054,22 +1054,17 @@ int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
     if (for_hrr == 0) { /* zap magic octets at fixed place for SH */
         conf_loc = tbuf + chend + shoffset;
     } else {
-        if (s->server == 1) { /* we get to say where we put ECH:-) */
-            conf_loc = tbuf + tlen - OSSL_ECH_SIGNAL_LEN;
-        } else {
-            if (s->ext.ech.hrrsignal_p == NULL) {
-                /* No ECH found so we'll exit, but set random output */
-                if (RAND_bytes_ex(sctx->libctx, acbuf,
-                        OSSL_ECH_SIGNAL_LEN, 0)
-                    <= 0) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_ECH_REQUIRED);
-                    goto end;
-                }
-                rv = 1;
+        if (s->server == 0 && s->ext.ech.hrrsignal_p == NULL) {
+            /* No ECH found so we'll exit, but set random output */
+            if (RAND_bytes_ex(sctx->libctx, acbuf, OSSL_ECH_SIGNAL_LEN, 0)
+                <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_ECH_REQUIRED);
                 goto end;
             }
-            conf_loc = s->ext.ech.hrrsignal_p;
+            rv = 1;
+            goto end;
         }
+        conf_loc = tbuf + tlen - OSSL_ECH_SIGNAL_LEN;
     }
     memset(conf_loc, 0, OSSL_ECH_SIGNAL_LEN);
 #ifdef OSSL_ECH_SUPERVERBOSE
@@ -1096,7 +1091,11 @@ int ossl_ech_calc_confirm(SSL_CONNECTION *s, int for_hrr,
     ossl_ech_pbuf("cx: result", acbuf, OSSL_ECH_SIGNAL_LEN);
 #endif
     /* put confirm value back into transcript */
-    memcpy(conf_loc, acbuf, OSSL_ECH_SIGNAL_LEN);
+    if (s->server == 0 && for_hrr == 1) { /* put back the one we got */
+        memcpy(conf_loc, s->ext.ech.hrrsignal, OSSL_ECH_SIGNAL_LEN);
+    } else {
+        memcpy(conf_loc, acbuf, OSSL_ECH_SIGNAL_LEN);
+    }
     /* on a server, we need to reset the hs buffer now */
     if (s->server && s->hello_retry_request == SSL_HRR_NONE)
         ossl_ech_reset_hs_buffer(s, s->ext.ech.innerch, s->ext.ech.innerch_len);
@@ -1475,9 +1474,11 @@ static int ech_find_outers(SSL_CONNECTION *s, PACKET *pkt,
     }
     *n_outers = olen / 2;
     for (i = 0; i != *n_outers; i++) {
+        /* check for ones that are not allowed */
         if (!PACKET_get_net_2(&op, &pi_tmp)
-            || pi_tmp == TLSEXT_TYPE_outer_extensions) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            || pi_tmp == TLSEXT_TYPE_outer_extensions
+            || pi_tmp == TLSEXT_TYPE_ech) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
             goto err;
         }
         outers[i] = (uint16_t)pi_tmp;
@@ -1491,25 +1492,20 @@ err:
  * copy one extension from outer to inner
  * di is the reconstituted inner CH
  * type2copy is the outer type to copy
- * extsbuf is the outer extensions buffer
- * extslen is the outer extensions buffer length
+ * exts is the outer extensions packet (changing as we go)
  * return 1 for good 0 for error
  */
 static int ech_copy_ext(SSL_CONNECTION *s, WPACKET *di, uint16_t type2copy,
-    const unsigned char *extsbuf, size_t extslen)
+    PACKET *exts)
 {
-    PACKET exts;
     unsigned int etype, elen;
     const unsigned char *eval;
 
-    if (PACKET_buf_init(&exts, extsbuf, extslen) != 1) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-    while (PACKET_remaining(&exts) > 0) {
-        if (!PACKET_get_net_2(&exts, &etype)
-            || !PACKET_get_net_2(&exts, &elen)
-            || !PACKET_get_bytes(&exts, &eval, elen)) {
+    /* Skip until we find the thing to copy */
+    while (PACKET_remaining(exts) > 0) {
+        if (!PACKET_get_net_2(exts, &etype)
+            || !PACKET_get_net_2(exts, &elen)
+            || !PACKET_get_bytes(exts, &eval, elen)) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             goto err;
         }
@@ -1547,6 +1543,7 @@ static int ech_reconstitute_inner(SSL_CONNECTION *s, WPACKET *di, PACKET *ei,
     unsigned int pi_tmp, etype, elen, outer_extslen;
     PACKET outer, session_id;
     size_t i;
+    int outers_done = 0;
 
     if (PACKET_buf_init(&outer, ob, ob_len) != 1) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -1620,10 +1617,18 @@ static int ech_reconstitute_inner(SSL_CONNECTION *s, WPACKET *di, PACKET *ei,
             goto err;
         }
         if (etype == TLSEXT_TYPE_outer_extensions) {
+            PACKET exts;
+
+            if (outers_done++) { /* just do this once */
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            if (PACKET_buf_init(&exts, outer_exts, outer_extslen) != 1) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
             for (i = 0; i != n_outers; i++) {
-                if (ech_copy_ext(s, di, outers[i],
-                        outer_exts, outer_extslen)
-                    != 1)
+                if (ech_copy_ext(s, di, outers[i], &exts) != 1)
                     /* SSLfatal called already */
                     goto err;
             }
@@ -1739,7 +1744,7 @@ static unsigned char *hpke_decrypt_encch(SSL_CONNECTION *s,
     size_t aad_len, unsigned char *aad,
     int forhrr, size_t *innerlen)
 {
-    size_t cipherlen = 0;
+    size_t cipherlen = 0, zind = 0;
     unsigned char *cipher = NULL;
     size_t senderpublen = 0;
     unsigned char *senderpub = NULL;
@@ -1876,24 +1881,18 @@ end:
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             goto paderr;
         }
-        /*
-         * The RFC calls for that padding to be all zeros. I'm not so
-         * keen on that being a good idea to enforce, so we'll make it
-         * easy to not do so (but check by default)
-         */
-#define CHECKZEROS
-#ifdef CHECKZEROS
-        {
-            size_t zind = 0;
+        /* The RFC calls for that padding to be all zeros */
 
-            if (*innerlen < ch_len)
+        if (*innerlen < ch_len) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            goto paderr;
+        }
+        for (zind = ch_len; zind != *innerlen; zind++) {
+            if (clear[zind] != 0x00) {
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
                 goto paderr;
-            for (zind = ch_len; zind != *innerlen; zind++) {
-                if (clear[zind] != 0x00)
-                    goto paderr;
             }
         }
-#endif
         *innerlen = ch_len;
 #ifdef OSSL_ECH_SUPERVERBOSE
         ossl_ech_pbuf("unpadded clear", clear, *innerlen);
@@ -2034,7 +2033,7 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
     es = s->ext.ech.es;
     num = (es == NULL || es->entries == NULL ? 0
                                              : sk_OSSL_ECHSTORE_ENTRY_num(es->entries));
-    for (cfgind = 0; cfgind != num; cfgind++) {
+    for (cfgind = 0; cfgind != num && foundcfg == 0; cfgind++) {
         ee = sk_OSSL_ECHSTORE_ENTRY_value(es->entries, cfgind);
         OSSL_TRACE_BEGIN(TLS)
         {
@@ -2044,8 +2043,15 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
         }
         OSSL_TRACE_END(TLS);
         if (extval->config_id == ee->config_id) {
-            foundcfg = 1;
-            break;
+            unsigned int suite_id;
+
+            /* check aead and kdf match a loaded suite for the config_id */
+            for (suite_id = 0; suite_id != ee->nsuites && foundcfg == 0; suite_id++) {
+                if (ee->suites[suite_id].kdf_id == extval->kdf_id
+                    && ee->suites[suite_id].aead_id == extval->aead_id) {
+                    foundcfg = 1;
+                }
+            }
         }
     }
     if (foundcfg == 1) {
