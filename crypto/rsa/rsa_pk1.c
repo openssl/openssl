@@ -23,7 +23,7 @@
 #include <openssl/prov_ssl.h>
 #include <openssl/evp.h>
 #include <openssl/sha.h>
-#include <openssl/hmac.h>
+#include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 #include "crypto/rsa.h"
 #include "rsa_local.h"
@@ -285,10 +285,11 @@ static int ossl_rsa_prf(OSSL_LIB_CTX *ctx,
     uint16_t iter = 0;
     unsigned char be_iter[sizeof(iter)];
     unsigned char be_bitlen[sizeof(bitlen)];
-    HMAC_CTX *hmac = NULL;
-    EVP_MD *md = NULL;
+    EVP_MAC *mac = NULL;
+    EVP_MAC_CTX *mctx = NULL;
     unsigned char hmac_out[SHA256_DIGEST_LENGTH];
-    unsigned int md_len;
+    size_t md_len;
+    OSSL_PARAM params[2];
 
     if (tlen * 8 != bitlen) {
         ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
@@ -298,12 +299,6 @@ static int ossl_rsa_prf(OSSL_LIB_CTX *ctx,
     be_bitlen[0] = (bitlen >> 8) & 0xff;
     be_bitlen[1] = bitlen & 0xff;
 
-    hmac = HMAC_CTX_new();
-    if (hmac == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-
     /*
      * we use hardcoded hash so that migrating between versions that use
      * different hash doesn't provide a Bleichenbacher oracle:
@@ -311,19 +306,28 @@ static int ossl_rsa_prf(OSSL_LIB_CTX *ctx,
      * messages for the same ciphertext, they'll know that the message is
      * synthetically generated, which means that the padding check failed
      */
-    md = EVP_MD_fetch(ctx, "sha256", NULL);
-    if (md == NULL) {
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+        "SHA256", 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    mac = EVP_MAC_fetch(ctx, "HMAC", NULL);
+    if (mac == NULL) {
+        ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    mctx = EVP_MAC_CTX_new(mac);
+    if (mctx == NULL) {
         ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
-    if (HMAC_Init_ex(hmac, kdk, SHA256_DIGEST_LENGTH, md, NULL) <= 0) {
+    if (!EVP_MAC_init(mctx, kdk, SHA256_DIGEST_LENGTH, params)) {
         ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
     for (pos = 0; pos < tlen; pos += SHA256_DIGEST_LENGTH, iter++) {
-        if (HMAC_Init_ex(hmac, NULL, 0, NULL, NULL) <= 0) {
+        if (!EVP_MAC_init(mctx, NULL, 0, NULL)) {
             ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
             goto err;
         }
@@ -331,33 +335,35 @@ static int ossl_rsa_prf(OSSL_LIB_CTX *ctx,
         be_iter[0] = (iter >> 8) & 0xff;
         be_iter[1] = iter & 0xff;
 
-        if (HMAC_Update(hmac, be_iter, sizeof(be_iter)) <= 0) {
+        if (!EVP_MAC_update(mctx, be_iter, sizeof(be_iter))) {
             ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        if (HMAC_Update(hmac, (unsigned char *)label, llen) <= 0) {
+        if (!EVP_MAC_update(mctx, (unsigned char *)label, llen)) {
             ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        if (HMAC_Update(hmac, be_bitlen, sizeof(be_bitlen)) <= 0) {
+        if (!EVP_MAC_update(mctx, be_bitlen, sizeof(be_bitlen))) {
             ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
         /*
-         * HMAC_Final requires the output buffer to fit the whole MAC
+         * EVP_MAC_final requires the output buffer to fit the whole MAC
          * value, so we need to use the intermediate buffer for the last
          * unaligned block
          */
         md_len = SHA256_DIGEST_LENGTH;
         if (pos + SHA256_DIGEST_LENGTH > tlen) {
-            if (HMAC_Final(hmac, hmac_out, &md_len) <= 0) {
+            if (!EVP_MAC_final(mctx, hmac_out, &md_len,
+                    SHA256_DIGEST_LENGTH)) {
                 ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
             memcpy(to + pos, hmac_out, tlen - pos);
         } else {
-            if (HMAC_Final(hmac, to + pos, &md_len) <= 0) {
+            if (!EVP_MAC_final(mctx, to + pos, &md_len,
+                    SHA256_DIGEST_LENGTH)) {
                 ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
@@ -367,8 +373,8 @@ static int ossl_rsa_prf(OSSL_LIB_CTX *ctx,
     ret = 0;
 
 err:
-    HMAC_CTX_free(hmac);
-    EVP_MD_free(md);
+    EVP_MAC_CTX_free(mctx);
+    EVP_MAC_free(mac);
     return ret;
 }
 
