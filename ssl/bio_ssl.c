@@ -112,26 +112,28 @@ static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes)
 
     switch (SSL_get_error(ssl, ret)) {
     case SSL_ERROR_NONE:
-        if (sb->renegotiate_count > 0) {
-            sb->byte_count += *readbytes;
-            if (sb->byte_count > sb->renegotiate_count) {
-                sb->byte_count = 0;
-                sb->num_renegotiates++;
-                SSL_renegotiate(ssl);
-                r = 1;
+        /* Renegotiation is only supported for TLSv1.2 and below */
+        if (!SSL_CONNECTION_IS_TLS13(SSL_CONNECTION_FROM_SSL(ssl))) {
+            if (sb->renegotiate_count > 0) {
+                sb->byte_count += *readbytes;
+                if (sb->byte_count > sb->renegotiate_count) {
+                    sb->byte_count = 0;
+                    if (SSL_renegotiate(ssl))
+                        sb->num_renegotiates++;
+                    r = 1;
+                }
+            }
+            if ((sb->renegotiate_timeout > 0) && (!r)) {
+                unsigned long tm;
+
+                tm = (unsigned long)time(NULL);
+                if (tm > sb->last_time + sb->renegotiate_timeout) {
+                    sb->last_time = tm;
+                    if (SSL_renegotiate(ssl))
+                        sb->num_renegotiates++;
+                }
             }
         }
-        if ((sb->renegotiate_timeout > 0) && (!r)) {
-            unsigned long tm;
-
-            tm = (unsigned long)time(NULL);
-            if (tm > sb->last_time + sb->renegotiate_timeout) {
-                sb->last_time = tm;
-                sb->num_renegotiates++;
-                SSL_renegotiate(ssl);
-            }
-        }
-
         break;
     case SSL_ERROR_WANT_READ:
         BIO_set_retry_read(b);
@@ -183,23 +185,26 @@ static int ssl_write(BIO *b, const char *buf, size_t size, size_t *written)
 
     switch (SSL_get_error(ssl, ret)) {
     case SSL_ERROR_NONE:
-        if (bs->renegotiate_count > 0) {
-            bs->byte_count += *written;
-            if (bs->byte_count > bs->renegotiate_count) {
-                bs->byte_count = 0;
-                bs->num_renegotiates++;
-                SSL_renegotiate(ssl);
-                r = 1;
+        /* Renegotiation is only supported for TLSv1.2 and below */
+        if (!SSL_CONNECTION_IS_TLS13(SSL_CONNECTION_FROM_SSL(ssl))) {
+            if (bs->renegotiate_count > 0) {
+                bs->byte_count += *written;
+                if (bs->byte_count > bs->renegotiate_count) {
+                    bs->byte_count = 0;
+                    if (SSL_renegotiate(ssl))
+                        bs->num_renegotiates++;
+                    r = 1;
+                }
             }
-        }
-        if ((bs->renegotiate_timeout > 0) && (!r)) {
-            unsigned long tm;
+            if ((bs->renegotiate_timeout > 0) && (!r)) {
+                unsigned long tm;
 
-            tm = (unsigned long)time(NULL);
-            if (tm > bs->last_time + bs->renegotiate_timeout) {
-                bs->last_time = tm;
-                bs->num_renegotiates++;
-                SSL_renegotiate(ssl);
+                tm = (unsigned long)time(NULL);
+                if (tm > bs->last_time + bs->renegotiate_timeout) {
+                    bs->last_time = tm;
+                    if (SSL_renegotiate(ssl))
+                        bs->num_renegotiates++;
+                }
             }
         }
         break;
