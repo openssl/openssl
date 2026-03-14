@@ -333,8 +333,10 @@ For KUR, a further fallback is the subject DN
 of the reference certificate (see B<-oldcert>) if provided.
 This fallback is used for IR and CR only if no SANs are set.
 
-If provided and neither of B<-cert>, B<-oldcert>, or B<-csr> is given,
+If provided and none of B<-cert>, B<-oldcert>, B<-csr>, and B<-ref> is given,
 the subject DN is used as fallback sender of outgoing CMP messages.
+With MAC-based message protection,
+the subject commonName, if any, is taken as the default senderKID.
 
 The argument must be formatted as I</type0=value0/type1=value1/type2=...>.
 Special characters may be escaped by C<\> (backslash); whitespace is retained.
@@ -416,8 +418,10 @@ and the respective public key is placed in the certification request
 PKCS#10 CSR input may also be used with B<-cmd> I<rr>
 to specify the certificate to be revoked
 via the included subject name and public key.
-Its subject is used as fallback sender in CMP message headers
+Its subject is used as the fallback sender field in CMP message headers
 if B<-cert> and B<-oldcert> are not given.
+With password-based message protection,
+its subject commonName, if any, is taken as the default senderKID.
 
 =item B<-out_trusted> I<filenames>|I<uris>
 
@@ -476,7 +480,9 @@ The reference certificate, if any, is also used for
 deriving default subject DN and Subject Alternative Names and the
 default issuer entry in the requested certificate template of an IR/CR/KUR.
 Its public key is used as a fallback in the template of certification requests.
-Its subject is used as sender of outgoing messages if B<-cert> is not given.
+Its subject is used as the sender field in CMP message headers.
+With password-based message protection,
+its subject commonName, if any, is taken as the default senderKID.
 Its issuer is used as default recipient in CMP message headers
 if neither B<-recipient>, B<-srvcert>, nor B<-issuer> is given.
 
@@ -821,13 +827,20 @@ If on success no such CRL was received, this is indicated by deleting the file.
 
 =item B<-ref> I<value>
 
-Reference number/string/value to use as fallback senderKID; this is required
-if no sender name can be determined from the B<-cert> or <-subject> options and
-is typically used when authenticating with pre-shared key (password-based MAC).
+A reference string (which may encode a name, number, or other value) to use
+as the senderKID in CMP message headers except with signature-based protection.
+When using MAC-based message protection, this senderKID field must be filled in,
+where the commonName (if any) of the sender field is taken as the fallback value.
+
+When the option is provided, in case of MAC-based protection
+the value is used as the sender Distinguished Name (DN)
+having only a commonName component with the given value.
+For signature-based protection
+this DN is used only as the ultimate fallback sender value.
 
 =item B<-secret> I<arg>
 
-Provides the source of a secret value to use with MAC-based message protection.
+Provides a secret value required use with password-based message protection.
 This takes precedence over the B<-cert> and B<-key> options.
 The secret is used for creating MAC-based protection of outgoing messages
 and for validating incoming messages that have MAC-based protection.
@@ -846,7 +859,7 @@ The subject and the public key contained in this certificate
 serve as fallback values in the certificate template of IR/CR/KUR messages.
 
 The subject of this certificate will be used as sender of outgoing CMP messages,
-while the subject of B<-oldcert> or B<-subjectName> may provide fallback values.
+while the subject of B<-oldcert> or B<-subject> may provide fallback values.
 
 The issuer of this certificate is used as one of the recipient fallback values
 and as fallback issuer entry in the certificate template of IR/CR/KUR messages.
@@ -884,7 +897,7 @@ have no effect on the certificate verification enabled via this option.
 The corresponding private key file for the client's current certificate given in
 the B<-cert> option.
 This will be used for signature-based message protection unless the B<-secret>
-option indicating MAC-based protection or B<-unprotected_requests> is given.
+option indicating password-based protection or B<-unprotected_requests> is given.
 
 It is also used as a fallback for the B<-newkey> option with IR/CR/KUR messages.
 
@@ -908,10 +921,12 @@ Defaults to C<sha256>.
 
 =item B<-mac> I<name>
 
-Specifies the name of the MAC algorithm in C<MSG_MAC_ALG>.
+Specifies the keyed MAC algorithm to use with MAC-based message protection.
 To get the names of supported MAC algorithms use C<openssl list -mac-algorithms>
 and possibly combine such a name with the name of a supported digest algorithm,
-e.g., hmacWithSHA256.
+e.g., C<hmacWithSHA256>.
+L<https://raw.githubusercontent.com/openssl/openssl/master/include/openssl/obj_mac.h>
+contains the complete set of supported combinations of MAC and digest algorithm names.
 Defaults to C<hmac-sha1>, for backward compatibility with RFC 4210.
 
 =item B<-extracerts> I<filenames>|I<uris>
@@ -1324,7 +1339,7 @@ or using general messages with infoType C<caCerts> or C<rootCaCert>,
 authentication of the CMP server is particularly critical.
 So special care must be taken setting up server authentication
 using B<-trusted> and related options for certificate-based authentication
-or B<-secret> for MAC-based protection.
+or B<-secret> for password-based protection.
 If authentication is certificate-based, the B<-srvcertout> option
 should be used to obtain the validated server certificate
 and perform an authorization check based on it.

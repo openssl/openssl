@@ -35,7 +35,7 @@ static EVP_PKEY *server_key = NULL;
 static X509 *server_cert = NULL;
 static EVP_PKEY *client_key = NULL;
 static X509 *client_cert = NULL;
-static unsigned char ref[CMP_TEST_REFVALUE_LENGTH];
+static unsigned char ref[] = CMP_TEST_REFVALUE;
 
 /*
  * For these unit tests, the client abandons message protection, and for
@@ -560,8 +560,7 @@ int setup_tests(void)
     if (!TEST_ptr(server_key = load_pkey_pem(server_key_f, libctx))
         || !TEST_ptr(server_cert = load_cert_pem(server_cert_f, libctx))
         || !TEST_ptr(client_key = load_pkey_pem(client_key_f, libctx))
-        || !TEST_ptr(client_cert = load_cert_pem(client_cert_f, libctx))
-        || !TEST_int_eq(1, RAND_bytes_ex(libctx, ref, sizeof(ref), 0))) {
+        || !TEST_ptr(client_cert = load_cert_pem(client_cert_f, libctx))) {
         cleanup_tests();
         return 0;
     }
