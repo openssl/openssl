@@ -56,6 +56,11 @@ key() {
         dsa)  args=(-paramfile "$bits");;
         ed25519)  ;;
         ed448)  ;;
+        ML-KEM*)  ;;
+        MLKEM*)  ;;
+        ML-DSA*)  ;;
+        MLDSA*)  ;;
+        SLH-DSA*)  ;;
         *) printf "Unsupported key algorithm: %s\n" "$alg" >&2; return 1;;
         esac
         stderr_onerror \

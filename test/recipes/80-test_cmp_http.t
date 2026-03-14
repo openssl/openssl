@@ -251,6 +251,7 @@ if (-s $faillog_file) {
 }
 
 sub load_tests {
+    my $openssl_app = cmdstr(app([qw(openssl)]));
     my $server_name = shift;
     my $aspect = shift;
     my $test_config = $ENV{OPENSSL_CMP_CONFIG} // "$server_name/test.cnf";
@@ -263,6 +264,7 @@ sub load_tests {
     while (my $line = <$data>) {
         chomp $line;
         $line =~ s{\r\n}{\n}g; # adjust line endings
+        $line =~ s{_OPENSSL_APP}{$openssl_app}g;
         $line =~ s{_CA_DN}{$ca_dn}g;
         $line =~ s{_SERVER_DN}{$server_dn}g;
         $line =~ s{_SERVER_HOST}{$server_host}g;
