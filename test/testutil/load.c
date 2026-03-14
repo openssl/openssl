@@ -159,3 +159,24 @@ X509 *X509_from_strings(const char **pem)
     BIO_free(b);
     return x;
 }
+
+/*
+ * Create a PKEY from an array of strings.
+ */
+EVP_PKEY *EVP_PKEY_from_strings(const char **pem)
+{
+    EVP_PKEY *key;
+    char *p;
+    BIO *b = glue2bio(pem, &p);
+
+    if (b == NULL) {
+        OPENSSL_free(p);
+        return NULL;
+    }
+
+    ERR_clear_error();
+    key = PEM_read_bio_PrivateKey_ex(b, NULL, NULL, NULL, NULL, NULL);
+    OPENSSL_free(p);
+    BIO_free(b);
+    return key;
+}
