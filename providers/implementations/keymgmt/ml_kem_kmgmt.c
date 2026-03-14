@@ -401,9 +401,7 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key, const OSSL_PARAM params[],
     struct ml_kem_import_params_st p;
 
     /* Invalid attempt to mutate a key, what is the right error to report? */
-    if (key == NULL
-        || ossl_ml_kem_have_pubkey(key)
-        || !ml_kem_import_params_decoder(params, &p))
+    if (!ml_kem_import_params_decoder(params, &p))
         return 0;
     v = ossl_ml_kem_key_vinfo(key);
 
@@ -488,10 +486,10 @@ static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
     int include_private;
     int res;
 
-    if (!ossl_prov_is_running() || key == NULL)
-        return 0;
-
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
+    if (!ossl_prov_is_running()
+        || (selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0
+        || key == NULL
+        || ossl_ml_kem_have_pubkey(key))
         return 0;
 
     include_private = selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;

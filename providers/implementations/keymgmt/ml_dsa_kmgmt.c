@@ -293,7 +293,13 @@ static int ml_dsa_import(void *keydata, int selection, const OSSL_PARAM params[]
     int include_priv;
     int res;
 
-    if (!ossl_prov_is_running() || key == NULL)
+    /*
+     * Once a key is fully initialised (has at least a public component),
+     * further mutation is no longer safe and disallowed.
+     */
+    if (!ossl_prov_is_running()
+        || key == NULL
+        || ossl_ml_dsa_key_has(key, OSSL_KEYMGMT_SELECT_PUBLIC_KEY))
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
