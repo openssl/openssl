@@ -123,9 +123,7 @@ static int execute_exec_GENM_ses_test_single(CMP_SES_TEST_FIXTURE *fixture)
 
     sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
     return TEST_int_eq(OSSL_CMP_CTX_get_status(ctx), fixture->expected)
-            && fixture->expected == OSSL_CMP_PKISTATUS_accepted
-        ? TEST_ptr(itavs)
-        : TEST_ptr_null(itavs);
+        && (fixture->expected == OSSL_CMP_PKISTATUS_accepted ? TEST_ptr(itavs) : TEST_ptr_null(itavs));
 }
 
 static int execute_exec_GENM_ses_test(CMP_SES_TEST_FIXTURE *fixture)
