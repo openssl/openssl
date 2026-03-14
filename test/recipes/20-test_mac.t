@@ -10,7 +10,7 @@
 use strict;
 use warnings;
 
-use OpenSSL::Test qw(:DEFAULT data_file);
+use OpenSSL::Test qw(:DEFAULT data_file srctop_file);
 use OpenSSL::Test::Utils;
 use Storable qw(dclone);
 
@@ -138,8 +138,9 @@ my @siphash_fail_tests = (
 
 push @mac_fail_tests, @siphash_fail_tests unless disabled("siphash");
 
-plan tests => (scalar @mac_tests * 2) + scalar @mac_fail_tests;
+plan tests => (scalar @mac_tests * 2) + (scalar @mac_fail_tests) + 2;
 
+my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my $test_count = 0;
 
 foreach (@mac_tests) {
@@ -172,6 +173,28 @@ foreach (@mac_tests) {
 foreach (@mac_fail_tests) {
     $test_count++;
     ok(compareline($_->{cmd}, $_->{type}, $_->{input}, $_->{expected}, $_->{err}), $_->{desc});
+}
+
+SKIP: {
+    skip "Skipping FIPS tests", 2
+        if $no_fips;
+
+    my $fipsconf = srctop_file("test", "fips-and-base.cnf");
+
+    # This is only valid after OpenSSL 4.0
+    run(test(["fips_version_test", "-config", $fipsconf, ">=4.0.0"]),
+             capture => 1, statusvar => \my $exit);
+    skip "FIPS provider version is too old for this test", 2
+        if !$exit;
+
+    $ENV{OPENSSL_CONF} = $fipsconf;
+    ok(!run(app(['openssl', 'dgst', '-provider', 'fips', '-sha256', '-hmac',
+                 '1234', srctop_file("test", "testec-p112r1.pem")])),
+        "Checking bad key size fails in FIPS provider");
+    ok(run(app(['openssl', 'dgst', '-provider', 'fips', '-sha256', '-hmac',
+                 '123456789ABCDE', srctop_file("test", "testec-p112r1.pem")])),
+        "Checking good key size passes in FIPS provider");
+    delete $ENV{OPENSSL_CONF};
 }
 
 # Create a temp input file and save the input data into it, and
