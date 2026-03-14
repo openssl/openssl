@@ -8,10 +8,13 @@
  */
 
 #include <openssl/core_names.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/proverr.h>
 #include "internal/nelem.h"
 #include "testutil.h"
 #include "ml_dsa.inc"
+#include "crypto/evp.h"
 #include "crypto/ml_dsa.h"
 
 typedef enum OPTION_choice {
@@ -644,6 +647,108 @@ err:
     return ret;
 }
 
+/*
+ * Test that the keymgmt import dispatch refuses to import into a key whose
+ * public component is already set, i.e. the key is immutable once initialised.
+ *
+ * Four sub-cases are exercised:
+ *   1. public-key-only → re-import public key  → must fail
+ *   2. public-key-only → import keypair        → must fail
+ *   3. full keypair    → re-import keypair      → must fail
+ *   4. full keypair    → import public key only → must fail
+ *
+ * All failures must raise PROV_R_KEY_IMMUTABLE_ONCE_SET.
+ */
+static int ml_dsa_key_immutable_test(void)
+{
+    int ret = 0;
+    EVP_KEYMGMT *keymgmt = NULL;
+    void *keydata = NULL;
+    const ML_DSA_KEYGEN_TEST_DATA *tst = &ml_dsa_keygen_testdata[0];
+    OSSL_PARAM pub_params[2], keypair_params[3];
+
+    pub_params[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_PKEY_PARAM_PUB_KEY, (void *)tst->pub, tst->pub_len);
+    pub_params[1] = OSSL_PARAM_construct_end();
+
+    keypair_params[0] = OSSL_PARAM_construct_octet_string(
+        OSSL_PKEY_PARAM_PRIV_KEY, (void *)tst->priv, tst->priv_len);
+    keypair_params[1] = OSSL_PARAM_construct_octet_string(
+        OSSL_PKEY_PARAM_PUB_KEY, (void *)tst->pub, tst->pub_len);
+    keypair_params[2] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(keymgmt = EVP_KEYMGMT_fetch(lib_ctx, tst->name, NULL)))
+        goto end;
+
+    /* Sub-case 1 & 2: start from a public-key-only import */
+    if (!TEST_ptr(keydata = evp_keymgmt_newdata(keymgmt, NULL)))
+        goto end;
+
+    if (!TEST_true(evp_keymgmt_import(keymgmt, keydata,
+            OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
+            pub_params)))
+        goto end;
+
+    /* Re-import of the same public key must fail */
+    if (!TEST_false(evp_keymgmt_import(keymgmt, keydata,
+            OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
+            pub_params)))
+        goto end;
+    if (!TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            PROV_R_KEY_IMMUTABLE_ONCE_SET))
+        goto end;
+    ERR_clear_error();
+
+    /* Import of a full keypair into a public-key-only key must also fail */
+    if (!TEST_false(evp_keymgmt_import(keymgmt, keydata,
+            OSSL_KEYMGMT_SELECT_KEYPAIR,
+            keypair_params)))
+        goto end;
+    if (!TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            PROV_R_KEY_IMMUTABLE_ONCE_SET))
+        goto end;
+    ERR_clear_error();
+
+    evp_keymgmt_freedata(keymgmt, keydata);
+    keydata = NULL;
+
+    /* Sub-case 3 & 4: start from a full keypair import */
+    if (!TEST_ptr(keydata = evp_keymgmt_newdata(keymgmt, NULL)))
+        goto end;
+
+    if (!TEST_true(evp_keymgmt_import(keymgmt, keydata,
+            OSSL_KEYMGMT_SELECT_KEYPAIR,
+            keypair_params)))
+        goto end;
+
+    /* Re-import of the same keypair must fail */
+    if (!TEST_false(evp_keymgmt_import(keymgmt, keydata,
+            OSSL_KEYMGMT_SELECT_KEYPAIR,
+            keypair_params)))
+        goto end;
+    if (!TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            PROV_R_KEY_IMMUTABLE_ONCE_SET))
+        goto end;
+    ERR_clear_error();
+
+    /* Import of a public-key-only into a full keypair must also fail */
+    if (!TEST_false(evp_keymgmt_import(keymgmt, keydata,
+            OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
+            pub_params)))
+        goto end;
+    if (!TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            PROV_R_KEY_IMMUTABLE_ONCE_SET))
+        goto end;
+    ERR_clear_error();
+
+    ret = 1;
+end:
+    if (keymgmt != NULL)
+        evp_keymgmt_freedata(keymgmt, keydata);
+    EVP_KEYMGMT_free(keymgmt);
+    return ret;
+}
+
 const OPTIONS *test_get_options(void)
 {
     static const OPTIONS options[] = {
@@ -692,6 +797,13 @@ int setup_tests(void)
     ADD_TEST(from_data_bad_input_test);
     ADD_TEST(ml_dsa_digest_sign_verify_test);
     ADD_TEST(ml_dsa_priv_pub_bad_t0_test);
+
+    /*
+     * Tested only in the default configuration, with a non-default provider
+     * configuration this test is expected to fail for some older providers.
+     */
+    if (config_file == NULL)
+        ADD_TEST(ml_dsa_key_immutable_test);
     return 1;
 }
 
