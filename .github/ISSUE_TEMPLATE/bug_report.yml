@@ -1,0 +1,118 @@
+name: OpenSSL Bug Report
+description: Report a defect in OpenSSL
+title: "[BUG] "
+labels: ["issue: bug report"]
+
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug in OpenSSL.
+
+        If you are asking how to *use* OpenSSL, please open a Q&A discussion
+        topic or see:
+        https://github.com/openssl/openssl/blob/master/SUPPORT.md
+        If you think your issue is potentially a security vulnerability, please do not open
+        an issue here but send an e-mail with your report to: openssl-security@openssl.org
+
+        Please include as much detail as possible so the issue can be reproduced.
+
+  - type: input
+    id: openssl_version
+    attributes:
+      label: OpenSSL Version
+      description: Run `openssl version`
+      placeholder: OpenSSL 3.2.1
+    validations:
+      required: true
+
+  - type: dropdown
+    id: distributor
+    attributes:
+      label: OpenSSL Distributor
+      description: Where did your OpenSSL build come from?
+      options:
+        - uv python build
+        - Fedora
+        - RHEL
+        - Amazon Linux 2023 (AL2023)
+        - pyca/cryptography wheel
+        - Debian / Ubuntu
+        - macOS system OpenSSL
+        - Homebrew
+        - Custom build from source
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      placeholder: Ubuntu 22.04 / Fedora 40 / macOS 14
+
+  - type: input
+    id: architecture
+    attributes:
+      label: CPU Architecture
+      placeholder: x86_64 / ARM64 / etc
+
+  - type: textarea
+    id: openssl_version_a
+    attributes:
+      label: Full OpenSSL Version Output
+      description: Please run `openssl version -a`
+      render: shell
+
+  - type: textarea
+    id: build_config
+    attributes:
+      label: Build Configuration
+      description: |
+        If this is a build issue include:
+
+        `perl configdata.pm --dump`
+      render: shell
+
+  - type: dropdown
+    id: issue_type
+    attributes:
+      label: Issue Type
+      options:
+        - Build failure
+        - Other
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Provide commands or code that reproduces the issue.
+      placeholder: |
+        1. Run command ...
+        2. Execute program ...
+        3. Observe error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Output
+      description: Paste command output or stack traces.
+      render: shell
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
