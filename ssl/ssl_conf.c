@@ -77,10 +77,10 @@ typedef struct {
     { str, (int)(sizeof(str) - 1), SSL_TFLAG_VFY | SSL_TFLAG_SERVER, flag }
 
 #define SSL_FLAG_CERTVAL(str, flag) \
-    {str, (int)(sizeof(str) - 1), SSL_TFLAG_CERTVAL | SSL_TFLAG_BOTH, flag}
+    { str, (int)(sizeof(str) - 1), SSL_TFLAG_CERTVAL | SSL_TFLAG_BOTH, flag }
 
 #define SSL_FLAG_HOSTVER(str, flag) \
-    {str, (int)(sizeof(str) - 1), SSL_TFLAG_HOSTVER | SSL_TFLAG_BOTH, flag}
+    { str, (int)(sizeof(str) - 1), SSL_TFLAG_HOSTVER | SSL_TFLAG_BOTH, flag }
 
 /*
  * Opaque structure containing SSL configuration context.
@@ -574,7 +574,7 @@ static int cmd_SetHostFlags(SSL_CONF_CTX *cctx, const char *value)
 }
 
 static int do_add(SSL_CONF_CTX *cctx,
-                  const char *CAfile, const char *CApath)
+    const char *CAfile, const char *CApath)
 {
     X509_STORE **st;
     SSL_CTX *ctx;
@@ -984,9 +984,9 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_STRING(AddExpectedDNSName, NULL, SSL_CONF_FLAG_CERTIFICATE),
     SSL_CONF_CMD_STRING(SetExpectedIPAddress, NULL, SSL_CONF_FLAG_CERTIFICATE),
     SSL_CONF_CMD(AddCAPath, "addCApath", SSL_CONF_FLAG_CERTIFICATE,
-                 SSL_CONF_TYPE_DIR),
+        SSL_CONF_TYPE_DIR),
     SSL_CONF_CMD(AddCAFile, "addCAfile", SSL_CONF_FLAG_CERTIFICATE,
-                 SSL_CONF_TYPE_FILE),
+        SSL_CONF_TYPE_FILE),
     SSL_CONF_CMD(Certificate, "cert", SSL_CONF_FLAG_CERTIFICATE,
         SSL_CONF_TYPE_FILE),
     SSL_CONF_CMD(PrivateKey, "key", SSL_CONF_FLAG_CERTIFICATE,

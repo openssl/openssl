@@ -14534,8 +14534,8 @@ end:
 }
 
 static int test_ssl_conf_SetCertificateFlags(SSL_CONF_CTX *confctx,
-                                             SSL_CTX *ssl_ctx,
-                                             SSL *ssl)
+    SSL_CTX *ssl_ctx,
+    SSL *ssl)
 {
     int ret = 0;
     X509_VERIFY_PARAM *param;
@@ -14570,8 +14570,8 @@ end:
 }
 
 static int test_ssl_conf_SetHostFlags(SSL_CONF_CTX *confctx,
-                                      SSL_CTX *ssl_ctx,
-                                      SSL *ssl)
+    SSL_CTX *ssl_ctx,
+    SSL *ssl)
 {
     int ret = 0;
     X509_VERIFY_PARAM *param;
@@ -14606,8 +14606,8 @@ end:
 }
 
 static int test_ssl_conf_SetExpectedDNSName(SSL_CONF_CTX *confctx,
-                                            SSL_CTX *ssl_ctx,
-                                            SSL *ssl)
+    SSL_CTX *ssl_ctx,
+    SSL *ssl)
 {
     static const char *first_hostname = "host1.openssl.org";
     static const char *second_hostname = "host2.openssl.org";
@@ -14663,8 +14663,8 @@ end:
 }
 
 static int test_ssl_conf_SetExpectedIPAddress(SSL_CONF_CTX *confctx,
-                                              SSL_CTX *ssl_ctx,
-                                              SSL *ssl)
+    SSL_CTX *ssl_ctx,
+    SSL *ssl)
 {
     static const char *first_ip = "192.168.29.65";
     static const char *second_ip = "10.10.10.19";
@@ -14715,9 +14715,7 @@ static int test_ssl_conf(void)
         goto end;
     if (!TEST_ptr(confctx = SSL_CONF_CTX_new()))
         goto end;
-    SSL_CONF_CTX_set_flags(confctx, SSL_CONF_FLAG_FILE
-                           | SSL_CONF_FLAG_CERTIFICATE
-                           | SSL_CONF_FLAG_SERVER);
+    SSL_CONF_CTX_set_flags(confctx, SSL_CONF_FLAG_FILE | SSL_CONF_FLAG_CERTIFICATE | SSL_CONF_FLAG_SERVER);
     SSL_CONF_CTX_set_ssl_ctx(confctx, ssl_ctx);
 
     if (!test_ssl_conf_SetCertificateFlags(confctx, ssl_ctx, NULL))
@@ -14744,9 +14742,7 @@ static int test_ssl_conf(void)
         goto end;
     if (!TEST_ptr(confctx = SSL_CONF_CTX_new()))
         goto end;
-    SSL_CONF_CTX_set_flags(confctx, SSL_CONF_FLAG_FILE
-                           | SSL_CONF_FLAG_CERTIFICATE
-                           | SSL_CONF_FLAG_SERVER);
+    SSL_CONF_CTX_set_flags(confctx, SSL_CONF_FLAG_FILE | SSL_CONF_FLAG_CERTIFICATE | SSL_CONF_FLAG_SERVER);
     SSL_CONF_CTX_set_ssl(confctx, ssl);
 
     if (!test_ssl_conf_SetCertificateFlags(confctx, NULL, ssl))
