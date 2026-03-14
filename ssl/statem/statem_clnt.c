@@ -403,20 +403,6 @@ int ossl_statem_client_read_transition(SSL_CONNECTION *s, int mt)
 
 err:
     /* No valid transition found */
-    if (SSL_CONNECTION_IS_DTLS(s) && mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
-        BIO *rbio;
-
-        /*
-         * CCS messages don't have a message sequence number so this is probably
-         * because of an out-of-order CCS. We'll just drop it.
-         */
-        s->init_num = 0;
-        s->rwstate = SSL_READING;
-        rbio = SSL_get_rbio(SSL_CONNECTION_GET_SSL(s));
-        BIO_clear_retry_flags(rbio);
-        BIO_set_retry_read(rbio);
-        return 0;
-    }
     SSLfatal(s, SSL3_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
     return 0;
 }

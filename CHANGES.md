@@ -365,6 +365,11 @@ OpenSSL Releases
 
    *Bob Beck*
 
+ * Improved DTLS handshake robustness under UDP reordering by buffering and
+   replaying early ChangeCipherSpec (CCS) records at the expected state.
+
+   *Tong Li*
+
  * Many functions accepting `X509 *` arguments, or returning values
    from a const `X509 *` have been changed to take/return const
    arguments. The most visible changes are places where pointer values

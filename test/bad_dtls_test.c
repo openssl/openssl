@@ -46,6 +46,15 @@
 /* For DTLS1_BAD_VER packets the MAC doesn't include the handshake header */
 #define MAC_OFFSET (DTLS1_RT_HEADER_LENGTH + DTLS1_HM_HEADER_LENGTH)
 
+static unsigned int infinite_timer_cb(SSL *s, unsigned int timer_us)
+{
+    (void)s;
+
+    if (timer_us == 0)
+        return 999999999;
+    return timer_us;
+}
+
 static unsigned char client_random[SSL3_RANDOM_SIZE];
 static unsigned char server_random[SSL3_RANDOM_SIZE];
 
@@ -332,7 +341,7 @@ static int send_hello_verify(BIO *rbio)
     return 1;
 }
 
-static int send_server_hello(BIO *rbio)
+static int send_server_hello(BIO *rbio, int reorder_ccs)
 {
     static unsigned char server_hello[] = {
         0x16, /* Handshake */
@@ -459,8 +468,13 @@ static int send_server_hello(BIO *rbio)
             sizeof(server_hello) - MAC_OFFSET))
         return 0;
 
-    BIO_write(rbio, server_hello, sizeof(server_hello));
-    BIO_write(rbio, change_cipher_spec, sizeof(change_cipher_spec));
+    if (reorder_ccs) {
+        BIO_write(rbio, change_cipher_spec, sizeof(change_cipher_spec));
+        BIO_write(rbio, server_hello, sizeof(server_hello));
+    } else {
+        BIO_write(rbio, server_hello, sizeof(server_hello));
+        BIO_write(rbio, change_cipher_spec, sizeof(change_cipher_spec));
+    }
 
     return 1;
 }
@@ -665,8 +679,9 @@ static struct {
     /* The last test should be NODROP, because a DROP wouldn't get tested. */
 };
 
-static int test_bad_dtls(void)
+static int test_bad_dtls(int idx)
 {
+    int reorder_ccs = idx;
     SSL_SESSION *sess = NULL;
     SSL_CTX *ctx = NULL;
     SSL *con = NULL;
@@ -734,6 +749,8 @@ static int test_bad_dtls(void)
     }
 
     SSL_set_connect_state(con);
+    if (reorder_ccs)
+        DTLS_set_timer_cb(con, infinite_timer_cb);
 
     /* Send initial ClientHello */
     ret = SSL_do_handshake(con);
@@ -747,7 +764,7 @@ static int test_bad_dtls(void)
     if (!TEST_int_le(ret, 0)
         || !TEST_int_eq(SSL_get_error(con, ret), SSL_ERROR_WANT_READ)
         || !TEST_int_eq(validate_client_hello(wbio), 2)
-        || !TEST_true(send_server_hello(rbio)))
+        || !TEST_true(send_server_hello(rbio, reorder_ccs)))
         goto end;
 
     ret = SSL_do_handshake(con);
@@ -808,6 +825,6 @@ end:
 
 int setup_tests(void)
 {
-    ADD_TEST(test_bad_dtls);
+    ADD_ALL_TESTS(test_bad_dtls, 2);
     return 1;
 }
