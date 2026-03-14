@@ -83,6 +83,7 @@ static int end_of_early_data = 0;
 
 #ifndef OPENSSL_NO_OCSP
 static int test_tlsext_status_type(void);
+static int test_tlsext_status_type_unauthorized_signer(void);
 #ifndef OSSL_NO_USABLE_TLS1_3
 static int test_tlsext_status_type_multi(void);
 #endif
@@ -119,6 +120,7 @@ static int error_writing_log = 0;
 #ifndef OPENSSL_NO_OCSP
 static int ocsp_server_called = 0;
 static int ocsp_client_called = 0;
+static int ocsp_verify_error = X509_V_OK;
 #ifndef OSSL_NO_USABLE_TLS1_3
 static int ocsp_verify_cb_called = 0;
 #endif
@@ -1965,6 +1967,108 @@ static int ocsp_client_cb_single(SSL *s, void *arg)
 
     ocsp_client_called = 1;
     return 1;
+}
+
+static int ocsp_server_cb_leaf_signer(SSL *s, void *arg)
+{
+    STACK_OF(X509) *server_certs = NULL;
+    X509 *ssl_cert = NULL;
+    X509 *issuer = NULL;
+    OCSP_RESPONSE *ocsp_resp;
+    unsigned char *ocsp_resp_der = NULL;
+    int resplen = 0;
+
+    (void)arg;
+
+    ssl_cert = SSL_get_certificate(s);
+    SSL_get0_chain_certs(s, &server_certs);
+    issuer = sk_X509_value(server_certs, 0);
+
+    ocsp_resp = create_ocsp_resp(ssl_cert, issuer, V_OCSP_CERTSTATUS_GOOD,
+        "leaf.key", "leaf.pem");
+    if (!TEST_ptr(ocsp_resp))
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+
+    resplen = i2d_OCSP_RESPONSE(ocsp_resp, &ocsp_resp_der);
+    OCSP_RESPONSE_free(ocsp_resp);
+
+    if (!TEST_true(SSL_set_tlsext_status_ocsp_resp(s, ocsp_resp_der, resplen))) {
+        OPENSSL_free(ocsp_resp_der);
+        return SSL_TLSEXT_ERR_ALERT_FATAL;
+    }
+
+    ocsp_server_called = 1;
+    return SSL_TLSEXT_ERR_OK;
+}
+
+static int verify_cb_ocsp_failure(int preverify_ok, X509_STORE_CTX *x509_ctx)
+{
+    if (!preverify_ok && ocsp_verify_error == X509_V_OK)
+        ocsp_verify_error = X509_STORE_CTX_get_error(x509_ctx);
+#ifndef OSSL_NO_USABLE_TLS1_3
+    ocsp_verify_cb_called += 1;
+#endif
+    return preverify_ok;
+}
+
+static int test_tlsext_status_type_unauthorized_signer(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char *leaf_chain = test_mk_file_path(certsdir, "leaf-chain.pem");
+    char *skey = test_mk_file_path(certsdir, "leaf.key");
+    char *leaf = test_mk_file_path(certsdir, "leaf.pem");
+    char *root = test_mk_file_path(certsdir, "rootCA.pem");
+    OSSL_LIB_CTX *tmpctx = OSSL_LIB_CTX_set0_default(libctx);
+    X509_VERIFY_PARAM *vpm = X509_VERIFY_PARAM_new();
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_VERSION, 0, &sctx, &cctx, leaf, skey)))
+        goto end;
+    if (SSL_CTX_use_certificate_chain_file(sctx, leaf_chain) <= 0)
+        goto end;
+    if (!TEST_true(SSL_CTX_load_verify_locations(cctx, root, NULL)))
+        goto end;
+    if (!TEST_true(SSL_CTX_set_tlsext_status_type(cctx, TLSEXT_STATUSTYPE_ocsp)))
+        goto end;
+
+    SSL_CTX_set_verify(cctx, SSL_VERIFY_PEER, verify_cb_ocsp_failure);
+    SSL_CTX_set_tlsext_status_cb(sctx, ocsp_server_cb_leaf_signer);
+    X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_OCSP_RESP_CHECK);
+    if (!TEST_true(SSL_CTX_set1_param(cctx, vpm)))
+        goto end;
+
+    ocsp_client_called = 0;
+    ocsp_server_called = 0;
+    ocsp_verify_error = X509_V_OK;
+#ifndef OSSL_NO_USABLE_TLS1_3
+    ocsp_verify_cb_called = 0;
+#endif
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL))
+        || !TEST_int_eq(ocsp_server_called, 1)
+        || !TEST_true(ocsp_verify_error == X509_V_ERR_OCSP_VERIFY_FAILED
+            || ocsp_verify_error == X509_V_ERR_OCSP_SIGNATURE_FAILURE))
+        goto end;
+
+    testresult = 1;
+
+end:
+    OPENSSL_free(leaf_chain);
+    OPENSSL_free(skey);
+    OPENSSL_free(leaf);
+    OPENSSL_free(root);
+    X509_VERIFY_PARAM_free(vpm);
+    OSSL_LIB_CTX_set0_default(tmpctx);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
 }
 
 static int test_tlsext_status_type(void)
@@ -14469,6 +14573,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_large_app_data, 28);
     ADD_TEST(test_cleanse_plaintext);
 #ifndef OPENSSL_NO_OCSP
+    ADD_TEST(test_tlsext_status_type_unauthorized_signer);
     ADD_TEST(test_tlsext_status_type);
 #ifndef OSSL_NO_USABLE_TLS1_3
     ADD_TEST(test_tlsext_status_type_multi);
