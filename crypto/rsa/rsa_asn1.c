@@ -47,7 +47,7 @@ static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                 return 1;
         } else if (rsa->version == RSA_ASN1_VERSION_MULTI) {
             if (is_multi_prime) 
-                return ossl_rsa_multip_calc_product(rsa) == 1 ? 2 : 0;
+                return (ossl_rsa_multip_calc_product(rsa) == 1) ? 2 : 0;
         }
         ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_RSA_KEY_VERSION);
         return 0;
