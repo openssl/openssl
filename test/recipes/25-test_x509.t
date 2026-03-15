@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 138;
+plan tests => 139;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -412,6 +412,12 @@ cert_contains($time_spec_per_cert,
 cert_contains($time_spec_per_cert,
               "Years: 2023, 2024",
               1, 'X.509 Time Specification (Periodic)');
+
+my $time_spec_per_no_second_cert =
+    srctop_file(@certs, "ext-timeSpecification-periodic-no-second.pem");
+cert_contains($time_spec_per_no_second_cert,
+              "05:43:00 - 12:34:56",
+              1, 'X.509 Time Specification (Periodic, no second)');
 
 my $attr_map_cert = srctop_file(@certs, "ext-attributeMappings.pem");
 cert_contains($attr_map_cert,
