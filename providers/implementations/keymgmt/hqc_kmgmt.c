@@ -1151,30 +1151,34 @@ static uint32_t barrett_reduce(uint32_t x, const HQC_VARIANT_INFO *info)
  */
 static int hqc_sample_xof(EVP_MD_CTX *md_ctx, uint64_t *vec, const HQC_VARIANT_INFO *info)
 {
-    uint32_t support[info->omega_r];
+    uint32_t *support;
     size_t random_bytes_size = 3 * info->omega;
-    uint8_t rand_bytes[3 * info->omega_r];
+    uint8_t *rand_bytes;
     uint8_t inc;
     size_t i, j, k;
-    uint32_t index_tab[info->omega_r];
-    uint64_t bit_tab[info->omega_r];
+    uint32_t *index_tab;
+    uint64_t *bit_tab;
     int32_t pos;
     uint64_t val;
     uint32_t tmp;
     int val1;
     uint64_t mask;
+    int ret = 0;
 
-    memset(support, 0, info->omega_r * sizeof(uint32_t));
-    memset(rand_bytes, 0, 3 * info->omega_r);
-    memset(index_tab, 0, info->omega_r * sizeof(uint32_t));
-    memset(bit_tab, 0, info->omega_r * sizeof(uint64_t));
+    support = OPENSSL_zalloc(info->omega_r * sizeof(uint32_t));
+    rand_bytes = OPENSSL_zalloc(info->omega * 3);
+    index_tab = OPENSSL_zalloc(info->omega_r * sizeof(uint32_t));
+    bit_tab = OPENSSL_zalloc(info->omega_r * sizeof(uint64_t));
+
+    if (support == NULL || rand_bytes == NULL || index_tab == NULL || bit_tab == NULL)
+        goto err;
 
     i = 0;
     j = random_bytes_size;
     while (i < info->omega) {
         do {
             if (j == random_bytes_size) {
-                if (!xof_get_bytes(md_ctx, rand_bytes, random_bytes_size))
+                if (!xof_get_bytes(md_ctx, rand_bytes, (uint32_t)random_bytes_size))
                     return 0;
                 j = 0;
             }
@@ -1203,15 +1207,20 @@ static int hqc_sample_xof(EVP_MD_CTX *md_ctx, uint64_t *vec, const HQC_VARIANT_I
     for (i = 0; i < VEC_SIZE(info->n, 64); i++) {
         val = 0;
         for (j = 0; j < info->omega; j++) {
-            tmp = i - index_tab[j];
-            val1 = 1 ^ ((tmp | -tmp) >> 31);
+            tmp = (uint32_t)i - index_tab[j];
+            val1 = 1 ^ ((tmp | (uint32_t)(-(int32_t)tmp)) >> 31);
             mask = -val1;
             val |= (bit_tab[j] & mask);
         }
         vec[i] |= val;
     }
-
-    return 1;
+    ret = 1;
+err:
+    OPENSSL_free(support);
+    OPENSSL_free(rand_bytes);
+    OPENSSL_free(index_tab);
+    OPENSSL_free(bit_tab);
+    return ret;
 }
 
 /**
@@ -1268,7 +1277,7 @@ static void schoolbook_mul(uint64_t *r, const uint64_t *a, const uint64_t *b, si
     for (i = 0; i < n; i++) {
         ai = a[i];
         for (bit = 0; bit < 64; bit++) {
-            mask = -((ai >> bit) & 1ULL);
+            mask = (uint64_t)(-((int64_t)((ai >> bit) & 1ULL)));
             base = i;
             sh = bit;
             inv = 64 - sh;
@@ -1499,12 +1508,21 @@ static void reduce(uint64_t *out, const uint64_t *a, const HQC_VARIANT_INFO *inf
  */
 static void vec_mul(uint64_t *out, const uint64_t *a, const uint64_t *b, const HQC_VARIANT_INFO *info)
 {
-    uint64_t unreduced[2 * VEC_SIZE(info->n, 64)];
-    uint64_t tmp_buffer[16 * VEC_SIZE(info->n, 64)];
+    uint64_t *unreduced;
+    uint64_t *tmp_buffer;
+
+    unreduced = OPENSSL_malloc(2 * VEC_SIZE(info->n, 64) * sizeof(uint64_t));
+    tmp_buffer = OPENSSL_malloc(16 * VEC_SIZE(info->n, 64) * sizeof(uint64_t));
+
+    if (unreduced == NULL || tmp_buffer == NULL)
+        goto err;
 
     karatsuba_mul(unreduced, a, b, VEC_SIZE(info->n, 64), tmp_buffer);
 
     reduce(out, unreduced, info);
+err:
+    OPENSSL_free(unreduced);
+    OPENSSL_free(tmp_buffer);
 }
 
 /**
@@ -1722,7 +1740,7 @@ static void *hqc_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
         goto err;
     if (!xof_get_bytes(md_ctx, seed_pke, SEED_BYTES))
         goto err;
-    if (!xof_get_bytes(md_ctx, gctx->sigma, key->info->security_bytes))
+    if (!xof_get_bytes(md_ctx, gctx->sigma, (uint32_t)key->info->security_bytes))
         goto err;
 
     /*
