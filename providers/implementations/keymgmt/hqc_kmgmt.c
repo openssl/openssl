@@ -259,6 +259,11 @@ typedef struct hqc_kem_gen_ctx_st {
     uint8_t *seed;
     EVP_MD *shake;
     EVP_MD *sha3;
+    uint8_t *sigma;
+    uint64_t *x;
+    uint64_t *y;
+    uint64_t *h;
+    uint64_t *s;
 } PROV_HQC_GEN_CTX;
 
 /**
@@ -783,7 +788,7 @@ static int hqc_kem_get_params(void *vkey, OSSL_PARAM params[])
             return 0;
     }
     if (p.maxsize != NULL) {
-        if (!OSSL_PARAM_set_int(p.bits, key->info->ek_size))
+        if (!OSSL_PARAM_set_size_t(p.bits, key->info->ek_size))
             return 0;
     }
 
@@ -904,6 +909,12 @@ static void hqc_kem_cleanup_gen_ctx(PROV_HQC_GEN_CTX *gctx)
     OPENSSL_free(gctx->seed);
     EVP_MD_free(gctx->shake);
     EVP_MD_free(gctx->sha3);
+    OPENSSL_free(gctx->sigma);
+    OPENSSL_free(gctx->x);
+    OPENSSL_free(gctx->y);
+    OPENSSL_free(gctx->h);
+    OPENSSL_free(gctx->s);
+
     OPENSSL_free(gctx);
 }
 
@@ -979,6 +990,16 @@ static void *hqc_kem_gen_init(void *provctx, int selection,
 
     gctx->sha3 = EVP_MD_fetch(PROV_LIBCTX_OF(provctx), "SHA3-512", gctx->propq);
     if (gctx->sha3 == NULL)
+        goto err;
+
+    gctx->sigma = OPENSSL_zalloc(variant_info[evp_type].security_bytes);
+    gctx->x = OPENSSL_zalloc(VEC_SIZE(variant_info[evp_type].n, 64) * sizeof(uint64_t));
+    gctx->y = OPENSSL_zalloc(VEC_SIZE(variant_info[evp_type].n, 64) * sizeof(uint64_t));
+    gctx->h = OPENSSL_zalloc(VEC_SIZE(variant_info[evp_type].n, 64) * sizeof(uint64_t));
+    gctx->s = OPENSSL_zalloc(VEC_SIZE(variant_info[evp_type].n, 64) * sizeof(uint64_t));
+
+    if (gctx->sigma == NULL || gctx->x == NULL || gctx->y == NULL
+        || gctx->h == NULL || gctx->s == NULL)
         goto err;
 
     return gctx;
@@ -1649,7 +1670,6 @@ static void *hqc_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     HQC_KEY *key;
     uint8_t keypair_seed[2 * SEED_BYTES];
     uint8_t seed_kem[SEED_BYTES];
-    uint8_t sigma[variant_info[gctx->evp_type].security_bytes];
     uint8_t seed_pke[SEED_BYTES];
     uint8_t *dk_seed = keypair_seed;
     uint8_t *ek_seed = &keypair_seed[SEED_BYTES];
@@ -1659,19 +1679,10 @@ static void *hqc_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     EVP_MD_CTX *md_ctx = NULL;
     unsigned int len;
     int ret = 0;
-    uint64_t x[VEC_SIZE(variant_info[gctx->evp_type].n, 64)];
-    uint64_t y[VEC_SIZE(variant_info[gctx->evp_type].n, 64)];
-    uint64_t h[VEC_SIZE(variant_info[gctx->evp_type].n, 64)];
-    uint64_t s[VEC_SIZE(variant_info[gctx->evp_type].n, 64)];
 
     key = ossl_prov_hqc_kem_new(gctx->provctx, gctx->propq, gctx->evp_type);
     if (key == NULL)
         goto err;
-
-    memset(x, 0, VEC_SIZE(variant_info[gctx->evp_type].n, 64) * sizeof(uint64_t));
-    memset(y, 0, VEC_SIZE(variant_info[gctx->evp_type].n, 64) * sizeof(uint64_t));
-    memset(h, 0, VEC_SIZE(variant_info[gctx->evp_type].n, 64) * sizeof(uint64_t));
-    memset(s, 0, VEC_SIZE(variant_info[gctx->evp_type].n, 64) * sizeof(uint64_t));
 
     /* we may need to generate a seed */
     if (gctx->seed == NULL) {
@@ -1711,7 +1722,7 @@ static void *hqc_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
         goto err;
     if (!xof_get_bytes(md_ctx, seed_pke, SEED_BYTES))
         goto err;
-    if (!xof_get_bytes(md_ctx, sigma, key->info->security_bytes))
+    if (!xof_get_bytes(md_ctx, gctx->sigma, key->info->security_bytes))
         goto err;
 
     /*
@@ -1747,9 +1758,9 @@ static void *hqc_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     /*
      * Sample the digest to get our x and y vectors
      */
-    if (!hqc_sample_xof(md_ctx, y, key->info))
+    if (!hqc_sample_xof(md_ctx, gctx->y, key->info))
         goto err;
-    if (!hqc_sample_xof(md_ctx, x, key->info))
+    if (!hqc_sample_xof(md_ctx, gctx->x, key->info))
         goto err;
 
     /*
@@ -1764,22 +1775,22 @@ static void *hqc_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (!EVP_DigestUpdate(md_ctx, &xof_separator, 1))
         goto err;
 
-    if (!EVP_DigestSqueeze(md_ctx, (unsigned char *)h, VEC_SIZE(key->info->n, 8)))
+    if (!EVP_DigestSqueeze(md_ctx, (unsigned char *)gctx->h, VEC_SIZE(key->info->n, 8)))
         goto err;
 
-    h[VEC_SIZE(key->info->n, 64) - 1] &= VEC_BITMASK(key->info->n, 64);
+    gctx->h[VEC_SIZE(key->info->n, 64) - 1] &= VEC_BITMASK(key->info->n, 64);
 
-    vec_mul(s, y, h, key->info);
-    vec_add(s, x, s, VEC_SIZE(key->info->n, 64));
+    vec_mul(gctx->s, gctx->y, gctx->h, key->info);
+    vec_add(gctx->s, gctx->x, gctx->s, VEC_SIZE(key->info->n, 64));
 
     /*
      * Place the encryption and decryption values into the key
      */
     memcpy(key->ek, ek_seed, SEED_BYTES);
-    memcpy(key->ek + SEED_BYTES, s, VEC_SIZE(key->info->n, 8));
+    memcpy(key->ek + SEED_BYTES, gctx->s, VEC_SIZE(key->info->n, 8));
     memcpy(key->dk, key->ek, key->info->ek_size);
     memcpy(key->dk + key->info->ek_size, dk_seed, SEED_BYTES);
-    memcpy(key->dk + key->info->ek_size + SEED_BYTES, sigma, key->info->security_bytes);
+    memcpy(key->dk + key->info->ek_size + SEED_BYTES, gctx->sigma, key->info->security_bytes);
     memcpy(key->dk + key->info->ek_size + SEED_BYTES + key->info->security_bytes,
         seed_kem, SEED_BYTES);
 
@@ -1788,7 +1799,6 @@ static void *hqc_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
 err:
     memset(keypair_seed, 0, 2 * SEED_BYTES);
     memset(seed_kem, 0, sizeof(seed_kem));
-    memset(sigma, 0, sizeof(sigma));
     EVP_MD_CTX_free(md_ctx);
     if (ret == 0)
         hqc_kem_key_free(key);
