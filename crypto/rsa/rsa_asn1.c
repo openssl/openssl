@@ -38,12 +38,20 @@ static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         *pval = NULL;
         return 2;
     } else if (operation == ASN1_OP_D2I_POST) {
-        if (((RSA *)*pval)->version != RSA_ASN1_VERSION_MULTI) {
-            /* not a multi-prime key, skip */
-            return 1;
+        /* Validate version field according to RFC 8017 */
+        RSA *rsa = (RSA *)*pval;
+        int is_multi_prime = sk_RSA_PRIME_INFO_num(rsa->prime_infos) > 0;
+
+        if (rsa->version == RSA_ASN1_VERSION_DEFAULT) {
+            if (!is_multi_prime)
+                return 1;
+        } else if (rsa->version == RSA_ASN1_VERSION_MULTI) {
+            if (is_multi_prime) 
+                return (ossl_rsa_multip_calc_product(rsa) == 1) ? 2 : 0;
         }
-        return (ossl_rsa_multip_calc_product((RSA *)*pval) == 1) ? 2 : 0;
-    }
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_RSA_KEY_VERSION);
+        return 0;
+    }   
     return 1;
 }
 
