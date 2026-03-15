@@ -41,6 +41,10 @@ OpenSSL Releases
 
    *Paul Louvel*
 
+ * Added CTLOG_STORE_add0_log() to add individual CT logs to a CTLOG_STORE.
+
+   *Tim Perry*
+
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
  * Added `-expected-rpks` option to the `openssl s_client`
