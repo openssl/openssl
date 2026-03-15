@@ -134,7 +134,7 @@ static int hqc_sample_xof(EVP_MD_CTX *md_ctx, uint64_t *vec, const HQC_VARIANT_I
  * @param s Word or vector size in bits.
  * @return A bitmask with (a % s) least significant bits set.
  */
-#define VEC_BITMASK(a, s) ((1UL << (a % s)) - 1)
+#define VEC_BITMASK(a, s) ((1ULL << (a % s)) - 1)
 
 /**
  * @var variant_info
