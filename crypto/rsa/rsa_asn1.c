@@ -39,26 +39,19 @@ static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         return 2;
     } else if (operation == ASN1_OP_D2I_POST) {
         /* Validate version field according to RFC 8017 */
-        if (((RSA *)*pval)->version != RSA_ASN1_VERSION_DEFAULT &&
-            ((RSA *)*pval)->version != RSA_ASN1_VERSION_MULTI) {
-            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_RSA_KEY_VERSION);
-            return 0;
+        RSA *rsa = (RSA *)*pval;
+        int is_multi_prime = sk_RSA_PRIME_INFO_num(rsa->prime_infos) > 0;
+
+        if (rsa->version == RSA_ASN1_VERSION_DEFAULT) {
+            if (!is_multi_prime)
+                return 1;
+        } else if (rsa->version == RSA_ASN1_VERSION_MULTI) {
+            if (is_multi_prime) 
+                return ossl_rsa_multip_calc_product(rsa) == 1 ? 2 : 0;
         }
-        if (((RSA *)*pval)->version == RSA_ASN1_VERSION_DEFAULT) {
-            /* Must have exactly 2 primes (otherPrimeInfos must be empty/absent) */
-            if (sk_RSA_PRIME_INFO_num(((RSA *)*pval)->prime_infos) > 0) {
-                ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_RSA_KEY_VERSION);
-                return 0;
-            }
-        } else if (((RSA *)*pval)->version == RSA_ASN1_VERSION_MULTI) {
-            /* Must have 3+ primes (otherPrimeInfos must be present) */
-            if (sk_RSA_PRIME_INFO_num(((RSA *)*pval)->prime_infos) <= 0) {
-                ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_RSA_KEY_VERSION);
-                return 0;
-            }
-        }
-        return (((RSA *)*pval)->version != RSA_ASN1_VERSION_MULTI || ossl_rsa_multip_calc_product((RSA *)*pval) == 1) ? 2 : 0;       
-    }
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_RSA_KEY_VERSION);
+        return 0;
+    }   
     return 1;
 }
 
