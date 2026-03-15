@@ -688,7 +688,7 @@ int opt_ulong(const char *value, unsigned long *result)
     l = strtoul(value, &endptr, 0);
     if (*endptr
         || endptr == value
-        || ((l == ULONG_MAX) && errno == ERANGE)
+        || (l == ULONG_MAX && errno == ERANGE)
         || (l == 0 && errno != 0)) {
         opt_number_error(value);
         errno = oerrno;
@@ -765,12 +765,12 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
         X509_VERIFY_PARAM_set1(vpm, vtmp);
         break;
     case OPT_V_VERIFY_DEPTH:
-        i = atoi(opt_arg());
+        i = opt_int_arg();
         if (i >= 0)
             X509_VERIFY_PARAM_set_depth(vpm, i);
         break;
     case OPT_V_VERIFY_AUTH_LEVEL:
-        i = atoi(opt_arg());
+        i = opt_int_arg();
         if (i >= 0)
             X509_VERIFY_PARAM_set_auth_level(vpm, i);
         break;

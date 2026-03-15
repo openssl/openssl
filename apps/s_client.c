@@ -1218,7 +1218,7 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_VERIFY:
             verify = SSL_VERIFY_PEER;
-            verify_args.depth = atoi(opt_arg());
+            verify_args.depth = opt_int_arg();
             if (!c_quiet)
                 BIO_printf(bio_err, "verify depth is %d\n", verify_args.depth);
             break;
@@ -1399,7 +1399,7 @@ int s_client_main(int argc, char **argv)
                 min_version = TLS1_VERSION;
             break;
         case OPT_SRP_STRENGTH:
-            srp_arg.strength = atoi(opt_arg());
+            srp_arg.strength = opt_int_arg();
             BIO_printf(bio_err, "SRP minimal length for N is %d\n",
                 srp_arg.strength);
             if (min_version < TLS1_VERSION)
@@ -1642,7 +1642,7 @@ int s_client_main(int argc, char **argv)
             sni_outer_name = opt_arg();
             break;
         case OPT_ECH_SELECT:
-            ech_select = atoi(opt_arg());
+            ech_select = opt_int_arg();
             break;
         case OPT_ECH_GREASE:
             ech_grease = 1;
@@ -1651,7 +1651,7 @@ int s_client_main(int argc, char **argv)
             ech_grease_suite = opt_arg();
             break;
         case OPT_ECH_GREASE_TYPE:
-            ech_grease_type = atoi(opt_arg());
+            ech_grease_type = opt_int_arg();
             break;
         case OPT_ECH_IGNORE_CONFIG_ID:
             ech_ignore_cid = 1;
@@ -1672,13 +1672,13 @@ int s_client_main(int argc, char **argv)
             keymatexportlabel = opt_arg();
             break;
         case OPT_KEYMATEXPORTLEN:
-            keymatexportlen = atoi(opt_arg());
+            keymatexportlen = opt_int_arg();
             break;
         case OPT_ASYNC:
             async = 1;
             break;
         case OPT_MAXFRAGLEN:
-            len = atoi(opt_arg());
+            len = opt_int_arg();
             switch (len) {
             case 512:
                 maxfraglen = TLSEXT_max_fragment_length_512;
@@ -1700,16 +1700,16 @@ int s_client_main(int argc, char **argv)
             }
             break;
         case OPT_MAX_SEND_FRAG:
-            max_send_fragment = atoi(opt_arg());
+            max_send_fragment = opt_int_arg();
             break;
         case OPT_SPLIT_SEND_FRAG:
-            split_send_fragment = atoi(opt_arg());
+            split_send_fragment = opt_int_arg();
             break;
         case OPT_MAX_PIPELINES:
-            max_pipelines = atoi(opt_arg());
+            max_pipelines = opt_int_arg();
             break;
         case OPT_READ_BUF:
-            read_buf_len = atoi(opt_arg());
+            read_buf_len = opt_int_arg();
             break;
         case OPT_KEYLOG_FILE:
             keylog_file = opt_arg();

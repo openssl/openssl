@@ -101,7 +101,7 @@ int kdf_main(int argc, char **argv)
             out_bin = 1;
             break;
         case OPT_KEYLEN:
-            dkm_len = atoi(opt_arg());
+            dkm_len = opt_int_arg();
             break;
         case OPT_OUT:
             outfile = opt_arg();

@@ -1874,13 +1874,13 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_VERIFY:
             s_server_verify = SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE;
-            verify_args.depth = atoi(opt_arg());
+            verify_args.depth = opt_int_arg();
             if (!s_quiet)
                 BIO_printf(bio_err, "verify depth is %d\n", verify_args.depth);
             break;
         case OPT_UPPER_V_VERIFY:
             s_server_verify = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT | SSL_VERIFY_CLIENT_ONCE;
-            verify_args.depth = atoi(opt_arg());
+            verify_args.depth = opt_int_arg();
             if (!s_quiet)
                 BIO_printf(bio_err,
                     "verify depth is %d, must return a certificate\n",
@@ -2064,7 +2064,7 @@ int s_server_main(int argc, char *argv[])
         case OPT_STATUS_TIMEOUT:
 #ifndef OPENSSL_NO_OCSP
             s_tlsextstatus = 1;
-            tlscstatp.timeout = atoi(opt_arg());
+            tlscstatp.timeout = opt_int_arg();
 #endif
             break;
         case OPT_PROXY:
@@ -2290,35 +2290,35 @@ int s_server_main(int argc, char *argv[])
             keymatexportlabel = opt_arg();
             break;
         case OPT_KEYMATEXPORTLEN:
-            keymatexportlen = atoi(opt_arg());
+            keymatexportlen = opt_int_arg();
             break;
         case OPT_ASYNC:
             async = 1;
             break;
         case OPT_MAX_SEND_FRAG:
-            max_send_fragment = atoi(opt_arg());
+            max_send_fragment = opt_int_arg();
             break;
         case OPT_SPLIT_SEND_FRAG:
-            split_send_fragment = atoi(opt_arg());
+            split_send_fragment = opt_int_arg();
             break;
         case OPT_MAX_PIPELINES:
-            max_pipelines = atoi(opt_arg());
+            max_pipelines = opt_int_arg();
             break;
         case OPT_READ_BUF:
-            read_buf_len = atoi(opt_arg());
+            read_buf_len = opt_int_arg();
             break;
         case OPT_KEYLOG_FILE:
             keylog_file = opt_arg();
             break;
         case OPT_MAX_EARLY:
-            max_early_data = atoi(opt_arg());
+            max_early_data = opt_int_arg();
             if (max_early_data < 0) {
                 BIO_puts(bio_err, "Invalid value for max_early_data\n");
                 goto end;
             }
             break;
         case OPT_RECV_MAX_EARLY:
-            recv_max_early_data = atoi(opt_arg());
+            recv_max_early_data = opt_int_arg();
             if (recv_max_early_data < 0) {
                 BIO_puts(bio_err, "Invalid value for recv_max_early_data\n");
                 goto end;
