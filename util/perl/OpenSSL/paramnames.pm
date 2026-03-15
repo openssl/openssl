@@ -473,6 +473,9 @@ my %params = (
 # SLH_DSA Key generation parameters
     'OSSL_PKEY_PARAM_SLH_DSA_SEED' =>              "seed",
 
+# HQC Key generation parameters
+    'OSSL_PKEY_PARAM_HQC_SEED' =>                  "seed",
+
 # Key Exchange parameters
     'OSSL_EXCHANGE_PARAM_PAD' =>                   "pad",# uint
     'OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE' => "ecdh-cofactor-mode",# int

@@ -1,0 +1,104 @@
+=pod
+
+=head1 NAME
+
+EVP_PKEY-HQC,
+EVP_KEYMGMT-HQC,
+EVP_PKEY-HQC-128,
+EVP_PKEY-HQC-192,
+EVP_PKEY-HQC-256,
+EVP_KEYMGMT-HQC-128,
+EVP_KEYMGMT-HQC-192,
+EVP_KEYMGMT-HQC-256
+- HQC keytype and algorithm support
+
+=head1 DESCRIPTION
+
+The B<HQC-128>, B<HQC-192>, and B<HQC-256> keytypes are implemented
+in OpenSSL's default and FIPS providers.
+
+=head2 Keygen Parameters
+
+No mandatory parameters are required for generating a key pair.
+To set explicit parameters, use EVP_PKEY_CTX_set_params() after calling
+EVP_PKEY_keygen_init().
+
+=over 4
+
+=item "seed" (B<OSSL_PKEY_PARAM_HQC_SEED>) <octet string>
+
+Internally, HQC generates keys using a random buffer to seed an XOF digest algorithm.
+By default, key generation obtains the random buffer via L<RAND_bytes_ex(3)>.  However,
+a user may choose to supply a specific random seed buffer using this parameter.
+
+If specified, the random buffer must be sized to 48 bytes for all key types.
+
+=item "properties" (B<OSSL_PKEY_PARAM_PROPERTIES>) <UTF8 string>
+
+Sets properties to be used when fetching algorithm implementations used for
+HQC hashing operations.
+
+Use L<EVP_PKEY_CTX_set_params(3)> after calling L<EVP_PKEY_keygen_init(3)>.
+
+=back
+
+=head2 Common parameters
+
+In addition to the common parameters that all keytypes should support (see
+L<provider-keymgmt(7)/Common Information Parameters>), B<HQC> keys
+support the parameters listed below.
+These are gettable using
+L<EVP_PKEY_get_octet_string_param(3)> or L<EVP_PKEY_get_params(3)>.
+They can be initialised via L<EVP_PKEY_fromdata(3)>, and are returned by
+L<EVP_PKEY_todata(3)> given a suitable I<selection>.
+Once a public or private key is configured, it can no longer be modified,
+nor can another key component be added.
+
+=over 4
+
+=item "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>) <octet string>
+
+The public key value.
+
+This parameter is used when importing or exporting the public key value with
+the EVP_PKEY_fromdata() and EVP_PKEY_todata() functions.
+
+=item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <octet string>
+
+The private key value.
+
+This parameter is used when importing or exporting the private key value with
+the EVP_PKEY_fromdata() and EVP_PKEY_todata() functions.
+
+=item "seccat" (B<OSSL_PKEY_PARAM_SECURITY_CATEGORY>) (integer)
+
+The NIST security category of the key.
+
+=item "maxsize" (B<OSSL_PKEY_PARAM_MAX_SIZE>) (integer)
+
+The maximum size of the public portion of this key type.
+
+=item "secbits" (B<OSSL_PKEY_PARAM_SECURITY_BITS>) (integer)
+
+The number of security bits in the key.
+
+=item "bits" (B<OSSL_PKEY_PARAM_BITS>) (integer)
+
+The effective security strength of the key.
+
+=back
+
+=head1 HISTORY
+
+This functionality was added in OpenSSL 4.X.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
