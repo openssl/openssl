@@ -469,6 +469,7 @@ again:
         || rl->packet_length < DTLS1_RT_HEADER_LENGTH) {
         PACKET dtlsrecord;
         unsigned int record_type, record_version, epoch, length;
+        uint64_t epoch64;
 
         rret = rl->funcs->read_n(rl, DTLS1_RT_HEADER_LENGTH,
             TLS_BUFFER_get_len(&rl->rbuf), 0, 1, &nread);
@@ -531,7 +532,7 @@ again:
             uint16_t eebits = rr->type & DTLS13_UNI_HDR_EPOCH_BITS_MASK;
 
             record_version = DTLS1_2_VERSION;
-            epoch = rl->epoch;
+            epoch64 = rl->epoch;
             recseqnumlen = sbitisset ? 2 : 1;
             recseqnumoffs = sizeof(recseqnum) - recseqnumlen;
 
@@ -560,8 +561,8 @@ again:
              * choose the current epoch if the bits match or else choose the
              * next epoch with matching bits
              */
-            while (eebits != (epoch & DTLS13_UNI_HDR_EPOCH_BITS_MASK))
-                epoch++;
+            while (eebits != (epoch64 & DTLS13_UNI_HDR_EPOCH_BITS_MASK))
+                epoch64++;
 
         } else {
             if (!PACKET_get_net_2(&dtlsrecord, &record_version)
@@ -572,14 +573,14 @@ again:
                 rl->packet_length = 0;
                 goto again;
             }
-
+            epoch64 = epoch;
             recseqnumoffs = 0;
             recseqnumlen = 6;
         }
 
         rechdrlen = PACKET_data(&dtlsrecord) - rl->packet;
         rr->rec_version = (int)record_version;
-        rr->epoch = epoch;
+        rr->epoch = epoch64;
         rr->length = length;
 
         if (rl->msg_callback != NULL)
