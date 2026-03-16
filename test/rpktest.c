@@ -152,7 +152,7 @@ static int test_rpk(int idx)
         privkey_file = privkey;
         other_cert_file = cert2;
         break;
-#ifndef OPENSSL_NO_ECDSA
+#ifndef OPENSSL_NO_EC
     case 1:
         /* use ECDSA */
         cert_file = cert2;
@@ -188,7 +188,7 @@ static int test_rpk(int idx)
     if (!TEST_ptr(other_x509))
         goto end;
     other_pkey = X509_get0_pubkey(other_x509);
-#ifdef OPENSSL_NO_ECDSA
+#ifdef OPENSSL_NO_EC
     /* Can't get other_key if it's ECDSA */
     if (other_pkey == NULL && idx_cert == 0
         && (idx == 4 || idx == 6 || idx == 7 || idx == 16)) {
