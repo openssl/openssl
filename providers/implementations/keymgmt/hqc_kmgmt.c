@@ -425,7 +425,7 @@ static size_t hqc_compute_hamming_weight(const uint64_t *keybuf, size_t size)
 #if defined(__GNUC__) || defined(__CLANG__)
         total_population += __builtin_popcountll(keybuf[i]);
 #else
-        for (j = 0; j < sizeof(uint64_t); j++)
+        for (j = 0; j < sizeof(uint64_t) * 8; j++)
             total_population += (keybuf[i] & (uint64_t)(1ULL << j)) ? 1 : 0;
 #endif
     }
