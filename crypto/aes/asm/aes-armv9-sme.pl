@@ -181,7 +181,7 @@ ___
 # ====================================================================
 
 my $code = "#include \"arm_arch.h\"\n";
-$code .= ".arch\tarmv9-a+sme+sve2-aes\n";
+$code .= ".arch\tarmv9-a\n";
 $code .= ".text\n";
 $code .= ".arch_extension\tsve2-aes\n";
 $code .= "\n";

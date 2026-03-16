@@ -133,12 +133,13 @@ void gcm_ghash_p8(u64 Xi[2], const u128 Htable[16], const u8 *inp, size_t len);
  * itself, but the assembly routines are still linked in on aarch64 and
  * the runtime check will always be false on such a build.
  */
-#if __ARM_MAX_ARCH__ >= 9
+/*
+ * On aarch64, __ARM_ARCH__ is hard-coded to 8 by GCC/Clang, so
+ * __ARM_MAX_ARCH__ is not a reliable indicator for SME availability.
+ * Rely on runtime capability bits instead.
+ */
 #define AES_SME_CAPABLE \
     ((OPENSSL_armcap_P & ARMV9_SME) && (OPENSSL_armcap_P & ARMV9_SME_AES))
-#else
-#define AES_SME_CAPABLE 0
-#endif
 /*
  * aes_v8_sme_ctr32_encrypt_blocks:
  *   AES-CTR encrypt/decrypt using Streaming SVE (SME).
