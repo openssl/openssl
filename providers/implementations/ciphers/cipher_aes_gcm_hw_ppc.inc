@@ -44,8 +44,8 @@ static inline u32 add32TOU(unsigned char buf[4], u32 n)
 static size_t ppc_aes_gcm_crypt(const unsigned char *in, unsigned char *out, size_t len,
                                 const void *key, unsigned char ivec[16], u64 *Xi, int encrypt)
 {
-    int s = 0;
-    int ndone = 0;
+    size_t s = 0;
+    size_t ndone = 0;
     int ctr_reset = 0;
     u64 blocks_unused;
     u64 nb = len / 16;
