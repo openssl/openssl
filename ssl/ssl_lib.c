@@ -7335,14 +7335,34 @@ __owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc)
 int SSL_stateless(SSL *s)
 {
     int ret;
+    int dtls_hrr_pending;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
     if (sc == NULL)
         return 0;
 
+    /*
+     * For DTLS, track whether we have already sent a HelloRetryRequest so
+     * that we can restore handshake_read_seq after SSL_clear() resets it.
+     * After an HRR the client's second ClientHello carries message seq=1;
+     * if handshake_read_seq is left at 0 the message would be treated as
+     * out-of-order and buffered rather than accepted.
+     */
+    dtls_hrr_pending = SSL_CONNECTION_IS_DTLS(sc)
+        && sc->hello_retry_request == SSL_HRR_PENDING;
+
     /* Ensure there is no state left over from a previous invocation */
     if (!SSL_clear(s))
         return 0;
+
+    /*
+     * If we previously sent a DTLS HelloRetryRequest, SSL_clear() has just
+     * reset handshake_read_seq to 0.  Restore it to 1 so that the incoming
+     * ClientHello2 is recognised as the expected next message rather than
+     * buffered as out-of-order.
+     */
+    if (dtls_hrr_pending)
+        sc->d1->handshake_read_seq = 1;
 
     ERR_clear_error();
 
