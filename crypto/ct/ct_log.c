@@ -317,8 +317,10 @@ EVP_PKEY *CTLOG_get0_public_key(const CTLOG *log)
 
 int CTLOG_STORE_add0_log(CTLOG_STORE *store, CTLOG *log)
 {
-    if (store == NULL || log == NULL)
+    if (store == NULL || log == NULL) {
+        ERR_raise(ERR_LIB_CT, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
 
     if (!sk_CTLOG_push(store->logs, log)) {
         ERR_raise(ERR_LIB_CT, ERR_R_CRYPTO_LIB);
