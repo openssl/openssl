@@ -203,6 +203,8 @@ int set_up_srp_verifier_file(SSL_CTX *ctx, srpsrvparm *srp_callback_parm,
         BIO_printf(bio_err,
             "Cannot initialize SRP verifier file \"%s\":ret=%d\n",
             srp_verifier_file, ret);
+        SRP_VBASE_free(srp_callback_parm->vb);
+        srp_callback_parm->vb = NULL;
         return 0;
     }
     SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, verify_callback);
