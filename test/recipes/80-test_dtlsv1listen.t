@@ -6,7 +6,15 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
+use OpenSSL::Test::Utils;
+use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
-use OpenSSL::Test::Simple;
+setup("test_dtlsv1listen");
 
-simple_test("test_dtlsv1listen", "dtlsv1listentest", "dh");
+plan skip_all => "No DTLS protocols are supported by this OpenSSL build"
+    if alldisabled(available_protocols("dtls"));
+
+plan tests => 1;
+
+ok(run(test(["dtlsv1listentest", srctop_file("apps", "server.pem"),
+             srctop_file("apps", "server.pem")])), "running dtlsv1listentest");
