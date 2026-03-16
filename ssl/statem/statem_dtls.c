@@ -1262,7 +1262,11 @@ int dtls1_buffer_message(SSL_CONNECTION *s, int is_ccs)
         return 0;
     }
 
-    pqueue_insert(s->d1->sent_messages, item);
+    if (pqueue_insert(s->d1->sent_messages, item) == NULL) {
+        dtls1_hm_fragment_free(frag);
+        pitem_free(item);
+        return 0;
+    }
     return 1;
 }
 
