@@ -1188,7 +1188,7 @@ The `lms` algorithm support is currently limited to verification only as per
         des|dh|dsa|
         ec|ec2m|ecdh|ecdsa|hmac-drbg-kdf|idea|kbkdf|krb5kdf|
         md4|mdc2|
-        ml-dsa|ml-kem|
+        ml-dsa|ml-kem|hqc|
         ocb|poly1305|pvkkdf|rc2|rc4|rmd160|scrypt|
         seed|siphash|siv|slh-dsa|sm2|sm3|sm4|snmpkdf|srtpkdf|sshkdf|sskdf|
         x942kdf|x963kdf|whirlpool}
