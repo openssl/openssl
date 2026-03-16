@@ -23,53 +23,38 @@ The X509_STORE_new() function returns a new X509_STORE.
 X509_STORE_up_ref() increments the reference count associated with the
 X509_STORE object.
 
-X509_STORE_lock() acquires an write lock on the store, blocking other threads
-from reading or modifying the object cache (certificates and CRLs) until 
-X509_STORE_unlock() is called. Individual operations such as 
-L<X509_STORE_add_cert(3)> and certificate lookup functions manage this lock
-internally, so applications do not normally need to call X509_STORE_lock()
-directly. It can be used for compound operations that must be atomic with
-respect to other threads, such as inspecting the store's state before
-conditionally modifying it, or calling configuration functions on an
-already-shared store.
+X509_STORE_lock() locks the store from reads and writes by other threads, 
+and X509_STORE_unlock() unlocks it. Not all operations require locking 
+the store, see the notes on thread safety below.
 
-X509_STORE_free() frees up a single X509_STORE object.
+X509_STORE_free() decrements the reference count of the X509_STORE object.
+The store's memory is only freed when its reference count drops to 
+zero.
 If the argument is NULL, nothing is done.
 
 =head1 NOTES
 
 =head2 Thread safety
 
-B<X509_STORE> uses an internal read-write lock to protect its object cache
-(certs and CRLs held in memory). Adding certificates or CRLs, for example 
-L<X509_STORE_add_cert(3)> or L<X509_STORE_add_crl(3)>, as well as
-looking up objects from the cache with L<X509_STORE_CTX_get_by_subject(3)>, 
-will acquire this lock internally and are safe to call concurrently from 
-multiple threads on the same store without external synchronization.
+When an B<X509_STORE> is shared across multiple threads, each thread or
+component that holds a pointer to it should call X509_STORE_up_ref() to
+acquire a reference, and release the reference with X509_STORE_free() when 
+done.
+
+Adding certificates or CRLs, for example L<X509_STORE_add_cert(3)> or 
+L<X509_STORE_add_crl(3)>, as well as looking up objects from the cache 
+with L<X509_STORE_CTX_get_by_subject(3)> are safe to call concurrently 
+from multiple threads on the same store without external synchronization, 
+but still require acquiring a reference.
 
 Store I<configuration> functions (X509_STORE_set_flags(),
 X509_STORE_set_depth(), X509_STORE_set_purpose(), X509_STORE_set_trust(),
-and similar) do B<not> acquire the internal lock. They must not be called
-concurrently with any other operation on the same store. Typically, the
-store is fully configured before being shared with other threads.
+and similar) are B<not> safe to call concurrently with any other operation 
+on the same store; the store must be fully configured before being shared 
+with other threads.
 
-=head2 Lifetime management
-
-When an B<X509_STORE> is shared across multiple threads, each thread or
-component that holds a pointer to it should call X509_STORE_up_ref() to
-acquire a reference, and release it with X509_STORE_free() when done.
-
-The store's memory is freed when its reference count drops to zero, but
-using reference counts alone is not sufficient to prevent concurrent
-destruction. Although it prevents the store from being freed while
-references are outstanding, it does not prevent a thread from calling
-X509_STORE_free() and driving the count to zero while another thread is
-mid-way through a lookup. 
-
-Therefore, applications must ensure that all threads have finished operating 
-on the store before the last X509_STORE_free() call is made; this can be done
-by having a single owner thread that calls X509_STORE_free() only after 
-joining with all threads that use the store.
+One useful pattern is having a single owner thread that calls 
+X509_STORE_free() only after joining with all threads that use the store.
 
 =head1 RETURN VALUES
 

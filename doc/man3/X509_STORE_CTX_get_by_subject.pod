@@ -30,18 +30,8 @@ but returns the found object on success, else NULL.
 
 =head1 NOTES
 
-These functions internally acquire a read lock on the underlying
-B<X509_STORE>'s object cache for the initial lookup. One can therefore
-call them concurrently with L<X509_STORE_add_cert(3)>,
-L<X509_STORE_add_crl(3)>, or with other lookup functions on the same store.
-
-However, these functions release the store's internal lock before
-incrementing the found object's reference count and copying its data
-into I<ret>. The caller must therefore ensure that the underlying
-B<X509_STORE> is not freed by another thread while these functions are
-executing. A concurrent L<X509_STORE_free(3)> that destroys the store and
-its cached objects can cause a use-after-free even if the store's reference
-count had not yet reached zero at the time the lookup began.
+These functions are safe to use in a multithreaded environment and with 
+lookup functions on the same store.
 
 Applications sharing a store across threads should manage its lifetime with
 L<X509_STORE_up_ref(3)> and L<X509_STORE_free(3)>, and must ensure that
