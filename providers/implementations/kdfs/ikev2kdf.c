@@ -94,9 +94,8 @@ static void *kdf_ikev2kdf_new(void *provctx)
         return NULL;
 #endif
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) != NULL) {
+    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) != NULL)
         ctx->libctx = PROV_LIBCTX_OF(provctx);
-    }
     return ctx;
 }
 
@@ -291,12 +290,8 @@ static int kdf_ikev2kdf_derive(void *vctx, unsigned char *key, size_t keylen,
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
-
-    if (EVP_MD_is_a(md, SN_sha1) || EVP_MD_is_a(md, SN_sha224)
-        || EVP_MD_is_a(md, SN_sha256) || EVP_MD_is_a(md, SN_sha384)
-        || EVP_MD_is_a(md, SN_sha512))
-        md_size = EVP_MD_size(md);
-    else
+    md_size = EVP_MD_size(md);
+    if (md_size <= 0)
         return 0;
 
     if (!ikev2_common_check_ctx_params(ctx))
@@ -504,9 +499,8 @@ static int kdf_ikev2kdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
         sz = EVP_MD_size(md);
-        if (sz <= 0) {
+        if (sz <= 0)
             return 0;
-        }
         if (!OSSL_PARAM_set_size_t(p.size, sz))
             return 0;
     }
@@ -719,17 +713,19 @@ static int IKEV2_DKM(OSSL_LIB_CTX *libctx, unsigned char *dkm, const size_t len_
         || ((ctx = EVP_MAC_CTX_new(mac)) == NULL))
         goto err;
 
+    /*
+     * len_out <= IKEV2_MAX_DKM_LEN
+     * loop count will fit in 1 byte value
+     */
     for (ii = 0; ii < len_out; ii += md_size) {
         if (!EVP_MAC_init(ctx, seedkey, seedkey_len, params))
             goto err;
-        if (ii != 0) {
+        if (ii != 0)
             if (!EVP_MAC_update(ctx, &hmac[ii - md_size], md_size))
                 goto err;
-        }
-        if (shared_secret != NULL) {
+        if (shared_secret != NULL)
             if (!EVP_MAC_update(ctx, shared_secret, shared_secret_len))
                 goto err;
-        }
         if (!EVP_MAC_update(ctx, ni, ni_len)
             || !EVP_MAC_update(ctx, nr, nr_len))
             goto err;
@@ -739,9 +735,8 @@ static int IKEV2_DKM(OSSL_LIB_CTX *libctx, unsigned char *dkm, const size_t len_
                 goto err;
         if (!EVP_MAC_update(ctx, &counter, 1))
             goto err;
-        if (!EVP_MAC_final(ctx, &hmac[ii], &outl, len_out)) {
+        if (!EVP_MAC_final(ctx, &hmac[ii], &outl, len_out))
             goto err;
-        }
         counter++;
     }
 

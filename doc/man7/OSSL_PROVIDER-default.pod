@@ -135,6 +135,8 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item HKDF-SHA512, see L<EVP_KDF-HKDF(7)>
 
+=item IKEV2KDF, see L<EVP_KDF-IKEV2KDF(7)>
+
 =item TLS13-KDF, see L<EVP_KDF-TLS13_KDF(7)>
 
 =item SSKDF, see L<EVP_KDF-SS(7)>
