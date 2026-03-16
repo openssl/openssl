@@ -204,4 +204,9 @@ extern int OPENSSL_s390xcex_nodev;
 #define S390X_KMAC_IIMP 0x4000
 #define S390X_KMAC_CCUP 0x2000
 
+/* Are the s390x vector instructions (VX and VXE) supported? */
+/* This is the case for >= z13 (VX) and >= z14 (VXE).        */
+#define S390X_VX_CAPABLE ( \
+    (OPENSSL_s390xcap_P.stfle[2] & S390X_CAPBIT(S390X_VX)) && (OPENSSL_s390xcap_P.stfle[2] & S390X_CAPBIT(S390X_VXE)))
+
 #endif

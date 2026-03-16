@@ -178,6 +178,11 @@ OpenSSL Releases
 
    *Norbert Pócs*
 
+ * Added optimized ML-DSA NTT operations on `s390x`
+   (or other architectures with 128 bit vector registers).
+
+   *Timo Keller*
+
 ### Changes between 3.6 and 4.0.0 [14 Apr 2026]
 
  * Added `-expected-rpks` option to the `openssl s_client`
