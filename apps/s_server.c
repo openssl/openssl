@@ -639,12 +639,13 @@ static int ssl_ech_servername_cb(SSL *s, int *ad, void *arg)
             BIO_printf(p->biodebug,
                 "ssl_ech_servername_cb: Not switching context "
                 "- no ECH SUCCESS\n");
-        if (servername != NULL
-            && OPENSSL_strcasecmp(servername, p->servername) != 0)
-            return p->extension_error;
-        if (ctx2 != NULL) {
-            BIO_puts(p->biodebug, "Switching server context.\n");
-            SSL_set_SSL_CTX(s, ctx2);
+        if (servername != NULL) {
+            if (OPENSSL_strcasecmp(servername, p->servername))
+                return p->extension_error;
+            if (ctx2 != NULL) {
+                BIO_puts(p->biodebug, "Switching server context.\n");
+                SSL_set_SSL_CTX(s, ctx2);
+            }
         }
     }
     return SSL_TLSEXT_ERR_OK;
