@@ -15,7 +15,7 @@ DTLSv1_listen
 
 =head1 DESCRIPTION
 
-SSL_stateless() statelessly listens for new incoming TLSv1.3 connections.
+SSL_stateless() statelessly listens for new incoming (D)TLSv1.3 connections.
 DTLSv1_listen() statelessly listens for new incoming DTLS connections. If a
 ClientHello is received that does not contain a cookie, then they respond with a
 request for a new ClientHello that does contain a cookie. If a ClientHello is
@@ -42,7 +42,7 @@ address. In this case a TLSv1.3 application would be susceptible to this attack.
 As a countermeasure to this issue TLSv1.3 and DTLS include a stateless cookie
 mechanism. The idea is that when a client attempts to connect to a server it
 sends a ClientHello message. The server responds with a HelloRetryRequest (in
-TLSv1.3) or a HelloVerifyRequest (in DTLS) which contains a unique cookie. The
+(D)TLSv1.3) or a HelloVerifyRequest (in DTLS) which contains a unique cookie. The
 client then resends the ClientHello, but this time includes the cookie in the
 message thus proving that the client is capable of receiving messages sent to
 that address. All of this can be done by the server without allocating any
@@ -97,14 +97,17 @@ For SSL_stateless() if an entire ClientHello message cannot be read without the
 application's responsibility to ensure that data read from the "read" BIO during
 a single SSL_stateless() call is all from the same peer.
 
-SSL_stateless() will fail (with a 0 return value) if some TLS version less than
-TLSv1.3 is used.
+SSL_stateless() will fail (with a 0 return value) if some (D)TLS version less than
+(D)TLSv1.3 is used.
 
 Both SSL_stateless() and DTLSv1_listen() will clear the error queue when they
 start.
 
 SSL_stateless() cannot be used with QUIC SSL objects and returns an error if
 called on such an object.
+
+For DTLS1.3 to utilize Hello Retry Requests instead of Hello Verify Request,
+please use SSL_stateless() instead of DTLSv1_listen().
 
 =head1 RETURN VALUES
 
@@ -146,7 +149,7 @@ The type of "peer" also changed in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2015-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
