@@ -26,6 +26,7 @@ $CHACHA_GOAL=../../libdefault.a
 $CHACHAPOLY_GOAL=../../libdefault.a
 $SIV_GOAL=../../libdefault.a
 $SIV_GCM_GOAL=../../libdefault.a
+$CAPRISE_GOAL=../../libdefault.a
 
 IF[{- !$disabled{asm} -}]
   $GHASHDEF_x86=GHASH_ASM
@@ -218,3 +219,6 @@ IF[{- !$disabled{chacha} -}]
       cipher_chacha20_poly1305.c cipher_chacha20_poly1305_hw.c
  ENDIF
 ENDIF
+
+SOURCE[$CAPRISE_GOAL]=\
+      cipher_caprise.c
