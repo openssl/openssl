@@ -17,7 +17,7 @@
 
 #if defined(ARMv8_HWAES_CAPABLE)
 
-/* MODES: ctr */
+/* MODES: cbc, ctr */
 
 static int cipher_hw_aes_arm_initkey(PROV_CIPHER_CTX *ctx,
     const unsigned char *key, size_t keylen)
@@ -25,7 +25,14 @@ static int cipher_hw_aes_arm_initkey(PROV_CIPHER_CTX *ctx,
     if (!ossl_cipher_hw_aes_initkey(ctx, key, keylen))
         return 0;
 
-    if (AES_UNROLL12_EOR3_CAPABLE && ctx->mode == EVP_CIPH_CTR_MODE)
+    if (AES_SME_CAPABLE) {
+        if (ctx->mode == EVP_CIPH_CTR_MODE)
+            ctx->stream.ctr = (ctr128_f)aes_v8_sme_ctr32_encrypt_blocks;
+        if (ctx->mode == EVP_CIPH_CBC_MODE && !ctx->enc)
+            ctx->stream.cbc = (cbc128_f)aes_v8_sme_cbc_decrypt;
+    }
+    if (AES_UNROLL12_EOR3_CAPABLE && ctx->mode == EVP_CIPH_CTR_MODE
+        && ctx->stream.ctr != (ctr128_f)aes_v8_sme_ctr32_encrypt_blocks)
         ctx->stream.ctr = (ctr128_f)HWAES_ctr32_encrypt_blocks_unroll12_eor3;
 
     return 1;
@@ -37,10 +44,20 @@ static const PROV_CIPHER_HW arm_ctr = {
     ossl_cipher_aes_copyctx
 };
 
+static const PROV_CIPHER_HW arm_cbc = {
+    cipher_hw_aes_arm_initkey,
+    ossl_cipher_hw_generic_cbc,
+    ossl_cipher_aes_copyctx
+};
+
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_arm(enum aes_modes mode)
 {
-    if (ARMv8_HWAES_CAPABLE && mode == AES_MODE_CTR)
-        return &arm_ctr;
+    if (ARMv8_HWAES_CAPABLE) {
+        if (mode == AES_MODE_CTR)
+            return &arm_ctr;
+        if (mode == AES_MODE_CBC)
+            return &arm_cbc;
+    }
     return NULL;
 }
 
