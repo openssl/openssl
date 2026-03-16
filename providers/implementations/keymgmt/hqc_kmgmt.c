@@ -171,43 +171,43 @@ static int hqc_sample_xof(EVP_MD_CTX *md_ctx, uint64_t *vec, const HQC_VARIANT_I
  */
 static const HQC_VARIANT_INFO variant_info[EVP_PKEY_HQC_KEM_MAX] = {
     {
-        EVP_PKEY_HQC_KEM_128, /* type */
-        2241, /* ek/priv key len */
-        2321, /* dk/pub key len */
-        48, /* seed length */
-        16, /* security bytes */
-        1, /* security category */
-        128, /* secbits */
-        17669, /* N value */
-        243079ULL, /* N Mu value */
-        66, /* Omega value */
-        75, /* Omega-R value */
-        16767881 /* Rejection threshold */
+        .type = EVP_PKEY_HQC_KEM_128, /* type */
+        .ek_size = 2241, /* ek/priv key len */
+        .dk_size = 2321, /* dk/pub key len */
+        .seed_len = 48, /* seed length */
+        .security_bytes = 16, /* security bytes */
+        .security_category = 1, /* security category */
+        .secbits = 128, /* secbits */
+        .n = 17669, /* N value */
+        .n_mu = 243079ULL, /* N Mu value */
+        .omega = 66, /* Omega value */
+        .omega_r = 75, /* Omega-R value */
+        .rej_threshold = 16767881 /* Rejection threshold */
     },
-    { EVP_PKEY_HQC_KEM_192,
-        4514,
-        4602,
-        48,
-        24,
-        3,
-        192,
-        35851,
-        119800ULL,
-        100,
-        114,
-        16742417 },
-    { EVP_PKEY_HQC_KEM_256,
-        7237,
-        7333,
-        48,
-        32,
-        5,
-        256,
-        57637,
-        74517ULL,
-        131,
-        149,
-        16772367 }
+    { .type = EVP_PKEY_HQC_KEM_192,
+        .ek_size = 4514,
+        .dk_size = 4602,
+        .seed_len = 48,
+        .security_bytes = 24,
+        .security_category = 3,
+        .secbits = 192,
+        .n = 35851,
+        .n_mu = 119800ULL,
+        .omega = 100,
+        .omega_r = 114,
+        .rej_threshold = 16742417 },
+    { .type = EVP_PKEY_HQC_KEM_256,
+        .ek_size = 7237,
+        .dk_size = 7333,
+        .seed_len = 48,
+        .security_bytes = 32,
+        .security_category = 5,
+        .secbits = 256,
+        .n = 57637,
+        .n_mu = 74517ULL,
+        .omega = 131,
+        .omega_r = 149,
+        .rej_threshold = 16772367 }
 };
 
 /**
