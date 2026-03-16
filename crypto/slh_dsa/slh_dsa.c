@@ -119,11 +119,11 @@ static int slh_sign_internal(SLH_DSA_HASH_CTX *hctx,
         /* Generate ht signature and append to the SLH-DSA signature */
         && ossl_slh_ht_sign(hctx, pk_fors, sk_seed, pk_seed, tree_id, leaf_id,
             wpkt);
-    *sig_len = sig_len_expected;
-    ret = 1;
 err:
     if (!WPACKET_finish(wpkt))
         ret = 0;
+    if (ret)
+        *sig_len = sig_len_expected;
     return ret;
 }
 
