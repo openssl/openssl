@@ -1466,10 +1466,11 @@ void ossl_ssl_connection_free(SSL *ssl)
      * entries pointing to the current s->rlayer.wrl. RECORD_LAYER_clear
      * is about to free and NULL out that pointer. If we let
      * dtls1_clear_sent_buffer (called later via ssl_deinit) compare
-     * saved.wrl against a now-NULL s->rlayer.wrl, it will incorrectly
-     * attempt to free already-freed memory (double-free). Preemptively
-     * null out any saved_retransmit_state entry that references the
-     * current wrl so that RECORD_LAYER_clear owns that free exclusively.
+     * saved.wrl against current s->rlayer.wrl to set the
+     * saved_retransmit_state.wrl to NULL so it doesn't get freed
+     * a second time.
+     * Preemptively null out any saved_retransmit_state entry that references
+     * the current wrl so that RECORD_LAYER_clear owns that free exclusively.
      * Entries with a different (older) saved wrl pointer are unaffected
      * and will be freed correctly by dtls1_clear_sent_buffer.
      */

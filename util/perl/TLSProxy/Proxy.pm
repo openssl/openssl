@@ -285,6 +285,27 @@ sub start
     #
     $ENV{OPENSSL_s390xcap} = "kmac:~0:~f000";
 
+    # For DTLS, s_client must bind to a fixed client port so the proxy knows
+    # where to send packets back.  The port was chosen once at new() time, but
+    # a prior s_client from a previous start() call may not have fully released
+    # it yet.  Re-select a free port on every start() to avoid EADDRINUSE.
+    if ($self->{isdtls}) {
+        my $found_port = 0;
+        my $test_client_addr = $self->{client_addr};
+        for (my $i = 0; $i <= 10; $i++) {
+            my $candidate = 49152 + int(rand(65535 - 49152));
+            my $test_sock = $IP_factory->(LocalPort => $candidate,
+                                          LocalAddr => $test_client_addr);
+            if ($test_sock) {
+                $test_sock->close();
+                $self->{client_port} = $candidate;
+                $found_port = 1;
+                last;
+            }
+        }
+        die "Unable to find usable port for TLSProxy" if $found_port == 0;
+    }
+
     # Create the Proxy socket
     my $proxaddr = $self->{proxy_addr};
     $proxaddr =~ s/[\[\]]//g; # Remove [ and ]
