@@ -15,9 +15,10 @@
 #include "internal/nelem.h"
 #include "testutil.h"
 
+static const char *alg_name[] = { "HQC-128", "HQC-192", "HQC-256" };
+
 static int hqc_generate_and_validate_key(int idx)
 {
-    const char *alg_name[] = { "HQC-128", "HQC-192", "HQC-256" };
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     int ret = 0;
@@ -42,6 +43,6 @@ err:
 
 int setup_tests(void)
 {
-    ADD_ALL_TESTS(hqc_generate_and_validate_key, 3);
+    ADD_ALL_TESTS(hqc_generate_and_validate_key, OSSL_NELEM(alg_name));
     return 1;
 }
