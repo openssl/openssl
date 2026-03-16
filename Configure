@@ -488,6 +488,7 @@ my @disablables_algorithms = (
     "sm2",
     "sm3",
     "sm4",
+    "srtpkdf",
     "sshkdf",
     "sskdf",
     "x942kdf",
