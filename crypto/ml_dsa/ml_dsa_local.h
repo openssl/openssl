@@ -76,6 +76,15 @@ void ossl_ml_dsa_poly_ntt(POLY *s);
 void ossl_ml_dsa_poly_ntt_inverse(POLY *s);
 void ossl_ml_dsa_poly_ntt_mult(const POLY *lhs, const POLY *rhs, POLY *out);
 
+/* Optimization for s390x */
+/* z13 supports VX, z14 supports VXE; z14 means __ARCH__ == 12 */
+#if defined(OPENSSL_ML_DSA_S390X) && defined(__s390x__) && (__ARCH__ >= 12) && defined(__VX__)
+#include "arch/s390x_arch.h"
+#define VX_COMPILER_SUPPORT_VEC128
+void ossl_ml_dsa_poly_ntt_vec128(POLY *p);
+void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p);
+#endif
+
 void ossl_ml_dsa_key_compress_power2_round(uint32_t r, uint32_t *r1, uint32_t *r0);
 uint32_t ossl_ml_dsa_key_compress_high_bits(uint32_t r, uint32_t gamma2);
 void ossl_ml_dsa_key_compress_decompose(uint32_t r, uint32_t gamma2,

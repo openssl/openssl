@@ -240,6 +240,12 @@ static void ml_dsa_ntt_init(void)
         poly_ntt_mult_impl = poly_ntt_mult_avx2_wrapper;
     }
 #endif
+#ifdef VX_COMPILER_SUPPORT_VEC128
+    if (S390X_VX_CAPABLE) {
+        poly_ntt_impl = ossl_ml_dsa_poly_ntt_vec128;
+        poly_ntt_inverse_impl = ossl_ml_dsa_poly_ntt_inverse_vec128;
+    }
+#endif
 }
 
 /*
