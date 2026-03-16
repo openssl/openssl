@@ -302,7 +302,7 @@ const unsigned char *SSL_SESSION_get0_id_context(const SSL_SESSION *s,
     return s->sid_ctx;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_5_0
+#ifndef OPENSSL_NO_DEPRECATED_4_1
 unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s)
 {
     return s->compress_meth;

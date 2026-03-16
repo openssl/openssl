@@ -1767,7 +1767,7 @@ err:
         ret->session_ticket = SSL_TEST_SESSION_TICKET_NO;
     else
         ret->session_ticket = SSL_TEST_SESSION_TICKET_YES;
-#ifndef OPENSSL_NO_DEPRECATED_5_0
+#ifndef OPENSSL_NO_DEPRECATED_4_1
     ret->compression = (SSL_get_current_compression(client.ssl) == NULL)
         ? SSL_TEST_COMPRESSION_NO
         : SSL_TEST_COMPRESSION_YES;

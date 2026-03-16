@@ -31,7 +31,7 @@ static OSSL_TIME fake_now_cb(void *arg)
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
-#ifndef OPENSSL_NO_DEPRECATED_5_0
+#ifndef OPENSSL_NO_DEPRECATED_4_1
     STACK_OF(SSL_COMP) *comp_methods;
 #endif
 
@@ -41,7 +41,7 @@ int FuzzerInitialize(int *argc, char ***argv)
     ERR_clear_error();
     CRYPTO_free_ex_index(0, -1);
     idx = SSL_get_ex_data_X509_STORE_CTX_idx();
-#ifndef OPENSSL_NO_DEPRECATED_5_0
+#ifndef OPENSSL_NO_DEPRECATED_4_1
     comp_methods = SSL_COMP_get_compression_methods();
     if (comp_methods != NULL)
         sk_SSL_COMP_sort(comp_methods);

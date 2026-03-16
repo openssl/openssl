@@ -462,7 +462,6 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
     int *mac_pkey_type, size_t *mac_secret_size,
     SSL_COMP **comp, int use_etm)
 {
-    int i;
     const SSL_CIPHER *c;
 
     c = s->cipher;
@@ -470,8 +469,9 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
         return 0;
     if (comp != NULL) {
         *comp = NULL;
-#ifndef OPENSSL_NO_DEPRECATED_5_0
+#ifndef OPENSSL_NO_DEPRECATED_4_1
         {
+            int i;
             SSL_COMP ctmp;
             STACK_OF(SSL_COMP) *comp_methods;
 
@@ -1929,7 +1929,7 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
     return ctmp;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_5_0
+#ifndef OPENSSL_NO_DEPRECATED_4_1
 #ifdef OPENSSL_NO_COMP
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
 {

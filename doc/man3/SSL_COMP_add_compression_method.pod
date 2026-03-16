@@ -12,7 +12,7 @@ SSL_COMP_free_compression_methods
 
  #include <openssl/ssl.h>
 
-The following functions have been deprecated since OpenSSL 5.0, and can be
+The following functions have been deprecated since OpenSSL 4.1, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
 see L<openssl_user_macros(7)>:
 
@@ -131,7 +131,7 @@ The SSL_COMP_get0_name() and SSL_COMP_get_id() functions were added in OpenSSL 1
 SSL_COMP_add_compression_method(), SSL_COMP_get_compression_methods(),
 SSL_COMP_set0_compression_methods(), SSL_COMP_get_name(), SSL_COMP_get0_name(),
 SSL_COMP_get_id(), SSL_get_current_compression(), and SSL_get_current_expansion()
-were deprecated in OpenSSL 5.0.
+were deprecated in OpenSSL 4.1.
 TLS record-level compression is obsolete and a security liability
 (see the CRIME attack). Use B<SSL_OP_NO_COMPRESSION> to disable compression
 instead. These functions will be removed in a future version.

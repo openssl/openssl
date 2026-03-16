@@ -3725,7 +3725,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     const SSL_CIPHER *c;
     int i, istls13 = (SSL_version(s) == TLS1_3_VERSION);
     long verify_result;
-#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_5_0)
+#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_4_1)
     const COMP_METHOD *comp, *expansion;
 #endif
     unsigned char *exportedkeymat;
@@ -3853,7 +3853,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 
     ssl_print_secure_renegotiation_notes(bio, s);
 
-#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_5_0)
+#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_4_1)
     comp = SSL_get_current_compression(s);
     expansion = SSL_get_current_expansion(s);
     BIO_printf(bio, "Compression: %s\n"

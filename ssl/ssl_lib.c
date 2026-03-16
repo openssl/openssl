@@ -1182,7 +1182,7 @@ int SSL_add1_ipaddr(SSL *s, const char *ipaddr)
     return X509_VERIFY_PARAM_add1_ip_asc(sc->param, ipaddr);
 }
 
-#if !defined(OPENSSL_NO_DEPRECATED_5_0)
+#if !defined(OPENSSL_NO_DEPRECATED_4_1)
 int SSL_set1_host(SSL *s, const char *host)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
@@ -1233,7 +1233,7 @@ int SSL_add1_host(SSL *s, const char *host)
 
     return X509_VERIFY_PARAM_add1_host(sc->param, host, 0);
 }
-#endif /* !defined(OPENSSL_NO_DEPRECATED_5_0) */
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
 
 void SSL_set_hostflags(SSL *s, unsigned int flags)
 {
@@ -4369,7 +4369,7 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     if ((ret->ext.secure = OPENSSL_secure_zalloc(sizeof(*ret->ext.secure))) == NULL)
         goto err;
 
-#ifndef OPENSSL_NO_DEPRECATED_5_0
+#ifndef OPENSSL_NO_DEPRECATED_4_1
     /* No compression for DTLS */
     if (!(meth->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS))
         ret->comp_methods = SSL_COMP_get_compression_methods();
@@ -5525,7 +5525,7 @@ const SSL_CIPHER *SSL_get_pending_cipher(const SSL *s)
     return sc->s3.tmp.new_cipher;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_5_0
+#ifndef OPENSSL_NO_DEPRECATED_4_1
 const COMP_METHOD *SSL_get_current_compression(const SSL *s)
 {
 #ifndef OPENSSL_NO_COMP
@@ -6972,7 +6972,7 @@ void SSL_CTX_set_new_pending_conn_cb(SSL_CTX *c, SSL_new_pending_conn_cb_fn cb,
     c->new_pending_conn_arg = arg;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_5_0
+#ifndef OPENSSL_NO_DEPRECATED_4_1
 int SSL_client_hello_isv2(SSL *s)
 {
     return 0;

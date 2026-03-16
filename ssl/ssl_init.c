@@ -25,7 +25,7 @@ static CRYPTO_ONCE ssl_base = CRYPTO_ONCE_STATIC_INIT;
 static int ssl_base_inited = 0;
 DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
 {
-#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_5_0)
+#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_4_1)
     OSSL_TRACE(INIT, "ossl_init_ssl_base: "
                      "SSL_COMP_get_compression_methods()\n");
     /*
