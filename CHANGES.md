@@ -41,6 +41,12 @@ OpenSSL Releases
 
    *Paul Louvel*
 
+ * Dropped `no-ecdsa` and `no-ecdh` options from `Configure` as these options
+   did not really disable the implementations. Use `no-ec` to disable the
+   elliptic curve support.
+
+   *Tomáš Mráz*
+
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
  * Added `-expected-rpks` option to the `openssl s_client`
