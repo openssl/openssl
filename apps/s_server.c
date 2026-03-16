@@ -630,7 +630,7 @@ static int ssl_ech_servername_cb(SSL *s, int *ad, void *arg)
                         "ssl_ech_servername_cb: Not switching context "
                         "- no name match (%d).\n",
                         check_host);
-                if (OPENSSL_strcasecmp(servername, p->servername))
+                if (OPENSSL_strcasecmp(servername, p->servername) != 0)
                     return p->extension_error;
             }
         }
