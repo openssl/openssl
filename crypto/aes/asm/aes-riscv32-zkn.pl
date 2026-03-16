@@ -36,6 +36,11 @@
 
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
+use FindBin qw($Bin);
+use lib "$Bin";
+use lib "$Bin/../../perlasm";
+use riscv;
+
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
 $flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
@@ -244,6 +249,7 @@ my $code .= <<___;
 .globl rv32i_zkne_encrypt
 .type   rv32i_zkne_encrypt,\@function
 rv32i_zkne_encrypt:
+    @{[lpad 0]}
 ___
 
 $code .= save_regs();
@@ -355,6 +361,7 @@ $code .= <<___;
 .globl rv32i_zknd_decrypt
 .type   rv32i_zknd_decrypt,\@function
 rv32i_zknd_decrypt:
+    @{[lpad 0]}
 ___
 
 $code .= save_regs();
@@ -739,6 +746,7 @@ $code .= <<___;
 .globl rv32i_zkne_set_encrypt_key
 .type rv32i_zkne_set_encrypt_key,\@function
 rv32i_zkne_set_encrypt_key:
+    @{[lpad 0]}
 ___
 
 $code .= save_regs();
@@ -758,6 +766,7 @@ $code .= <<___;
 .globl rv32i_zbkb_zkne_set_encrypt_key
 .type rv32i_zbkb_zkne_set_encrypt_key,\@function
 rv32i_zbkb_zkne_set_encrypt_key:
+    @{[lpad 0]}
 ___
 
 $code .= save_regs();
@@ -1051,6 +1060,7 @@ $code .= <<___;
 .globl rv32i_zknd_zkne_set_decrypt_key
 .type   rv32i_zknd_zkne_set_decrypt_key,\@function
 rv32i_zknd_zkne_set_decrypt_key:
+    @{[lpad 0]}
 ___
 $code .= save_regs();
 $code .= AES_set_common(ke128dec(0), ke192dec(0),ke256dec(0));
@@ -1069,6 +1079,7 @@ $code .= <<___;
 .globl rv32i_zbkb_zknd_zkne_set_decrypt_key
 .type rv32i_zbkb_zknd_zkne_set_decrypt_key,\@function
 rv32i_zbkb_zknd_zkne_set_decrypt_key:
+    @{[lpad 0]}
 ___
 
 $code .= save_regs();

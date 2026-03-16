@@ -393,6 +393,7 @@ $code .= <<___;
 .globl rv64i_zvkned_cbc_encrypt
 .type rv64i_zvkned_cbc_encrypt,\@function
 rv64i_zvkned_cbc_encrypt:
+    @{[lpad 0]}
     # check whether the length is a multiple of 16 and >= 16
     li $T1, 16
     blt $LEN, $T1, L_end
@@ -419,6 +420,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_cbc_enc_128:
+    @{[lpad 0]}
     # Load all 11 round keys to v1-v11 registers.
     @{[aes_128_load_key $KEYP]}
 
@@ -454,6 +456,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_cbc_enc_192:
+    @{[lpad 0]}
     # Load all 13 round keys to v1-v13 registers.
     @{[aes_192_load_key $KEYP]}
 
@@ -489,6 +492,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_cbc_enc_256:
+    @{[lpad 0]}
     # Load all 15 round keys to v1-v15 registers.
     @{[aes_256_load_key $KEYP]}
 
@@ -531,6 +535,7 @@ $code .= <<___;
 .globl rv64i_zvkned_cbc_decrypt
 .type rv64i_zvkned_cbc_decrypt,\@function
 rv64i_zvkned_cbc_decrypt:
+    @{[lpad 0]}
     # check whether the length is a multiple of 16 and >= 16
     li $T1, 16
     blt $LEN, $T1, L_end
@@ -557,6 +562,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_cbc_dec_128:
+    @{[lpad 0]}
     # Load all 11 round keys to v1-v11 registers.
     @{[aes_128_load_key $KEYP]}
 
@@ -649,6 +655,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_cbc_dec_192:
+    @{[lpad 0]}
     # Load all 13 round keys to v1-v13 registers.
     @{[aes_192_load_key $KEYP]}
 
@@ -686,6 +693,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_cbc_dec_256:
+    @{[lpad 0]}
     # Load all 15 round keys to v1-v15 registers.
     @{[aes_256_load_key $KEYP]}
 
@@ -737,6 +745,7 @@ $code .= <<___;
 .globl rv64i_zvkned_ecb_encrypt
 .type rv64i_zvkned_ecb_encrypt,\@function
 rv64i_zvkned_ecb_encrypt:
+    @{[lpad 0]}
     # Make the LEN become e32 length.
     srli $LEN32, $LEN, 2
 
@@ -760,6 +769,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_ecb_enc_128:
+    @{[lpad 0]}
     # Load all 11 round keys to v1-v11 registers.
     @{[aes_128_load_key $KEYP]}
 
@@ -787,6 +797,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_ecb_enc_192:
+    @{[lpad 0]}
     # Load all 13 round keys to v1-v13 registers.
     @{[aes_192_load_key $KEYP]}
 
@@ -814,6 +825,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_ecb_enc_256:
+    @{[lpad 0]}
     # Load all 15 round keys to v1-v15 registers.
     @{[aes_256_load_key $KEYP]}
 
@@ -848,6 +860,7 @@ $code .= <<___;
 .globl rv64i_zvkned_ecb_decrypt
 .type rv64i_zvkned_ecb_decrypt,\@function
 rv64i_zvkned_ecb_decrypt:
+    @{[lpad 0]}
     # Make the LEN become e32 length.
     srli $LEN32, $LEN, 2
 
@@ -871,6 +884,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_ecb_dec_128:
+    @{[lpad 0]}
     # Load all 11 round keys to v1-v11 registers.
     @{[aes_128_load_key $KEYP]}
 
@@ -898,6 +912,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_ecb_dec_192:
+    @{[lpad 0]}
     # Load all 13 round keys to v1-v13 registers.
     @{[aes_192_load_key $KEYP]}
 
@@ -925,6 +940,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_ecb_dec_256:
+    @{[lpad 0]}
     # Load all 15 round keys to v1-v15 registers.
     @{[aes_256_load_key $KEYP]}
 
@@ -965,6 +981,8 @@ $code .= <<___;
 .globl rv64i_zvkned_set_encrypt_key
 .type rv64i_zvkned_set_encrypt_key,\@function
 rv64i_zvkned_set_encrypt_key:
+    @{[lpad 0]}
+
     # Get proper routine for key size
     li $T0, 256
     beq $BITS, $T0, L_set_key_256
@@ -981,6 +999,8 @@ $code .= <<___;
 .globl rv64i_zvkned_set_decrypt_key
 .type rv64i_zvkned_set_decrypt_key,\@function
 rv64i_zvkned_set_decrypt_key:
+    @{[lpad 0]}
+
     # Get proper routine for key size
     li $T0, 256
     beq $BITS, $T0, L_set_key_256
@@ -995,6 +1015,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_set_key_128:
+    @{[lpad 0]}
     # Store the number of rounds
     li $T1, 10
     sw $T1, 240($KEYP)
@@ -1047,6 +1068,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_set_key_256:
+    @{[lpad 0]}
     # Store the number of rounds
     li $T1, 14
     sw $T1, 240($KEYP)
@@ -1133,6 +1155,7 @@ $code .= <<___;
 .globl rv64i_zvkned_encrypt
 .type rv64i_zvkned_encrypt,\@function
 rv64i_zvkned_encrypt:
+    @{[lpad 0]}
     # Load number of rounds
     lwu $ROUNDS, 240($KEYP)
 
@@ -1151,6 +1174,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_enc_128:
+    @{[lpad 0]}
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
 
     @{[vle32_v $V1, $INP]}
@@ -1197,6 +1221,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_enc_192:
+    @{[lpad 0]}
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
 
     @{[vle32_v $V1, $INP]}
@@ -1248,6 +1273,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_enc_256:
+    @{[lpad 0]}
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
 
     @{[vle32_v $V1, $INP]}
@@ -1311,6 +1337,7 @@ $code .= <<___;
 .globl rv64i_zvkned_decrypt
 .type rv64i_zvkned_decrypt,\@function
 rv64i_zvkned_decrypt:
+    @{[lpad 0]}
     # Load number of rounds
     lwu $ROUNDS, 240($KEYP)
 
@@ -1329,6 +1356,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_dec_128:
+    @{[lpad 0]}
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
 
     @{[vle32_v $V1, $INP]}
@@ -1376,6 +1404,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_dec_192:
+    @{[lpad 0]}
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
 
     @{[vle32_v $V1, $INP]}
@@ -1429,6 +1458,7 @@ ___
 $code .= <<___;
 .p2align 3
 L_dec_256:
+    @{[lpad 0]}
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
 
     @{[vle32_v $V1, $INP]}

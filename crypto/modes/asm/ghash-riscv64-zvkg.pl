@@ -77,6 +77,7 @@ $code .= <<___;
 .globl gcm_init_rv64i_zvkg
 .type gcm_init_rv64i_zvkg,\@function
 gcm_init_rv64i_zvkg:
+    @{[lpad 0]}
     ld      $VAL0, 0($H)
     ld      $VAL1, 8($H)
     @{[sd_rev8_rv64i $VAL0, $Htable, 0, $TMP0]}
@@ -94,6 +95,7 @@ $code .= <<___;
 .globl gcm_init_rv64i_zvkg_zvkb
 .type gcm_init_rv64i_zvkg_zvkb,\@function
 gcm_init_rv64i_zvkg_zvkb:
+    @{[lpad 0]}
     @{[vsetivli__x0_2_e64_m1_tu_mu]} # vsetivli x0, 2, e64, m1, tu, mu
     @{[vle64_v $V0, $H]}             # vle64.v v0, (a1)
     @{[vrev8_v $V0, $V0]}            # vrev8.v v0, v0
@@ -118,6 +120,7 @@ $code .= <<___;
 .globl gcm_gmult_rv64i_zvkg
 .type gcm_gmult_rv64i_zvkg,\@function
 gcm_gmult_rv64i_zvkg:
+    @{[lpad 0]}
     @{[vsetivli__x0_4_e32_m1_tu_mu]}
     @{[vle32_v $VS2, $Htable]}
     @{[vle32_v $VD, $Xi]}
@@ -146,6 +149,7 @@ $code .= <<___;
 .globl gcm_ghash_rv64i_zvkg
 .type gcm_ghash_rv64i_zvkg,\@function
 gcm_ghash_rv64i_zvkg:
+    @{[lpad 0]}
     @{[vsetivli__x0_4_e32_m1_tu_mu]}
     @{[vle32_v $vH, $Htable]}
     @{[vle32_v $vXi, $Xi]}

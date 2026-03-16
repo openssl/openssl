@@ -1129,4 +1129,16 @@ sub vrgather_vv{
     return ".word ".($template | ($vs2 << 20) | ($vs1 << 15 ) | ($vd << 7));
 }
 
+## Zicfilp (Control Flow Integrity - Landing Pad) support
+
+sub lpad {
+    # lpad instruction - landing pad for forward-edge CFI
+    # Encoding: AUIPC x0, <lpl>
+    # On hardware without Zicfilp: executes as AUIPC x0 (writes to zero register, harmless NOP)
+    # On hardware with Zicfilp: performs landing pad check for CFI
+    my $lpl = shift // 0;  # Landing pad label, default to 0
+    my $encoding = 0x00000017 | ($lpl << 12);
+    return "    .word $encoding";
+}
+
 1;
