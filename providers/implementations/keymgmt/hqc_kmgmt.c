@@ -21,6 +21,7 @@
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
 #include "internal/sizes.h"
+#include "internal/endian.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
@@ -1697,6 +1698,9 @@ static void *hqc_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     EVP_MD_CTX *md_ctx = NULL;
     unsigned int len;
     int ret = 0;
+#ifdef B_ENDIAN
+    size_t idx;
+#endif
 
     key = ossl_prov_hqc_kem_new(gctx->provctx, gctx->propq, gctx->evp_type);
     if (key == NULL)
@@ -1796,10 +1800,29 @@ static void *hqc_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (!EVP_DigestSqueeze(md_ctx, (unsigned char *)gctx->h, VEC_SIZE(key->info->n, 8)))
         goto err;
 
+/*
+ * The DigestSqueeze above treats h as a byte array, but the
+ * vector operations below treat it as uint64_t which the
+ * karatsuba algorithm expects to be in little endian
+ * so do that swap on big endian systems here
+ */
+#ifdef B_ENDIAN
+    for (idx = 0; idx < VEC_SIZE(key->info->n, 64); idx++)
+        gctx->h[idx] = htole64(gctx->h[idx]);
+#endif
+
     gctx->h[VEC_SIZE(key->info->n, 64) - 1] &= VEC_BITMASK(key->info->n, 64);
 
     vec_mul(gctx->s, gctx->y, gctx->h, key->info);
     vec_add(gctx->s, gctx->x, gctx->s, VEC_SIZE(key->info->n, 64));
+
+    /*
+     * Swap the results back prior to serializing to the key below
+     */
+#ifdef B_ENDIAN
+    for (idx = 0; idx < VEC_SIZE(key->info->n, 64); idx++)
+        gctx->s[idx] = htole64(gctx->s[idx]);
+#endif
 
     /*
      * Place the encryption and decryption values into the key
