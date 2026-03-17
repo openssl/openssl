@@ -467,16 +467,16 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
 
     ret = 1;
 err:
-    if (!(flags & SMIME_BINARY) && dcont) {
+    if (!(flags & SMIME_BINARY) && dcont != NULL) {
         do_free_upto(cmsbio, tmpout);
-        if (tmpin != dcont)
-            BIO_free(tmpin);
     } else {
-        if (dcont && (tmpin == dcont))
+        if (dcont != NULL && tmpin == dcont)
             do_free_upto(cmsbio, dcont);
         else
             BIO_free_all(cmsbio);
     }
+    if (tmpin != dcont)
+        BIO_free(tmpin);
 
     if (out != tmpout)
         BIO_free_all(tmpout);
