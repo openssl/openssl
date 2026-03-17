@@ -327,7 +327,7 @@ Return codes from SSL_ech_get_status
 
 =item B<SSL_ECH_STATUS_NOT_TRIED>  -101, ECH wasn't attempted
 
-=item B<SSL_ECH_STATUS_BAD_NAME>   -102, ECH ok but server cert bad
+=item B<SSL_ECH_STATUS_BAD_NAME>   -102, ECH ok but server or client cert bad
 
 =item B<SSL_ECH_STATUS_NOT_CONFIGURED> -103, ECH wasn't configured
 
