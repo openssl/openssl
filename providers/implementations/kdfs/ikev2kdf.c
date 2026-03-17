@@ -24,6 +24,7 @@
 #define IKEV2KDF_MAX_GROUP19_MODLEN 32 /* ECDH p256 */
 #define IKEV2KDF_MAX_GROUP20_MODLEN 48 /* ECDH p384 */
 #define IKEV2KDF_MAX_GROUP21_MODLEN 66 /* ECDH p521 */
+#define IKEV2KDF_MAX_GROUP2_MODLEN 128 /* DH group 2, no longer secure */
 #define IKEV2KDF_MAX_GROUP14_MODLEN 256
 #define IKEV2KDF_MAX_GROUP15_MODLEN 384
 #define IKEV2KDF_MAX_GROUP16_MODLEN 512
@@ -105,8 +106,8 @@ static void *kdf_ikev2kdf_dup(void *vctx)
     KDF_IKEV2KDF *dest = NULL;
 
     dest = OPENSSL_zalloc(sizeof(*src));
-    dest->libctx = src->libctx;
     if (dest != NULL) {
+        dest->libctx = src->libctx;
         if ((src->secret != NULL)
             && (!ossl_prov_memdup(src->secret, src->secret_len,
                 &dest->secret, &dest->secret_len)))
@@ -162,13 +163,13 @@ static void kdf_ikev2kdf_reset(void *vctx)
     OSSL_LIB_CTX *libctx = ctx->libctx;
 
     ossl_prov_digest_reset(&ctx->digest);
+    OPENSSL_clear_free(ctx->secret, ctx->secret_len);
+    OPENSSL_clear_free(ctx->seedkey, ctx->seedkey_len);
+    OPENSSL_clear_free(ctx->sk_d, ctx->sk_d_len);
     OPENSSL_clear_free(ctx->ni, ctx->ni_len);
     OPENSSL_clear_free(ctx->nr, ctx->nr_len);
     OPENSSL_clear_free(ctx->spii, ctx->spii_len);
     OPENSSL_clear_free(ctx->spir, ctx->spir_len);
-    OPENSSL_clear_free(ctx->secret, ctx->secret_len);
-    OPENSSL_clear_free(ctx->seedkey, ctx->seedkey_len);
-    OPENSSL_clear_free(ctx->sk_d, ctx->sk_d_len);
     memset(ctx, 0, sizeof(*ctx));
     ctx->libctx = libctx;
 }
@@ -188,19 +189,9 @@ static int ikev2_common_check_ctx_params(KDF_IKEV2KDF *ctx)
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_NONCE);
         return 0;
     }
-    if ((ctx->ni_len < IKEV2KDF_MIN_NONCE_LENGTH)
-        || (ctx->ni_len > IKEV2KDF_MAX_NONCE_LENGTH)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_NONCE_LENGTH);
-        return 0;
-    }
 
     if (ctx->nr == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_NONCE);
-        return 0;
-    }
-    if ((ctx->nr_len < IKEV2KDF_MIN_NONCE_LENGTH)
-        || (ctx->nr_len > IKEV2KDF_MAX_NONCE_LENGTH)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_NONCE_LENGTH);
         return 0;
     }
     return 1;
@@ -215,6 +206,7 @@ static int ikev2_common_check_ctx_params(KDF_IKEV2KDF *ctx)
  * ecdh group 19 32 bytes
  * ecdh group 20 48 bytes
  * ecdh group 21 66 bytes
+ * dh group 2 128 bytes (no longer secure, but still supported for interoperability)
  * dh group 14 256 bytes
  * dh group 15 384 bytes
  * dh group 16 512 bytes
@@ -225,6 +217,7 @@ static int ikev2_common_check_ctx_params(KDF_IKEV2KDF *ctx)
 static int ikev2_check_secret_and_pad(KDF_IKEV2KDF *ctx)
 {
     size_t pad_len = 0;
+    uint8_t *new_secret = NULL;
 
     if (ctx->secret_len == 0)
         return 1;
@@ -232,32 +225,54 @@ static int ikev2_check_secret_and_pad(KDF_IKEV2KDF *ctx)
         || (ctx->secret_len > IKEV2KDF_MAX_GROUP18_MODLEN)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SECRET_LENGTH);
         return 0;
-    } else if (ctx->secret_len > IKEV2KDF_MAX_GROUP17_MODLEN) {
-        pad_len = IKEV2KDF_MAX_GROUP18_MODLEN - ctx->secret_len;
-    } else if (ctx->secret_len > IKEV2KDF_MAX_GROUP16_MODLEN) {
-        pad_len = IKEV2KDF_MAX_GROUP17_MODLEN - ctx->secret_len;
-    } else if (ctx->secret_len > IKEV2KDF_MAX_GROUP15_MODLEN) {
-        pad_len = IKEV2KDF_MAX_GROUP16_MODLEN - ctx->secret_len;
-    } else if (ctx->secret_len > IKEV2KDF_MAX_GROUP14_MODLEN) {
-        pad_len = IKEV2KDF_MAX_GROUP15_MODLEN - ctx->secret_len;
-    } else if (ctx->secret_len > IKEV2KDF_MAX_GROUP21_MODLEN) {
-        pad_len = IKEV2KDF_MAX_GROUP21_MODLEN - ctx->secret_len;
-    } else if (ctx->secret_len > IKEV2KDF_MAX_GROUP20_MODLEN) {
-        pad_len = IKEV2KDF_MAX_GROUP20_MODLEN - ctx->secret_len;
-    } else if (ctx->secret_len > IKEV2KDF_MAX_GROUP19_MODLEN) {
+    }
+    if ((ctx->secret_len == IKEV2KDF_MAX_GROUP19_MODLEN)
+        || (ctx->secret_len == IKEV2KDF_MAX_GROUP20_MODLEN)
+        || (ctx->secret_len == IKEV2KDF_MAX_GROUP21_MODLEN)
+        || (ctx->secret_len == IKEV2KDF_MAX_GROUP2_MODLEN)
+        || (ctx->secret_len == IKEV2KDF_MAX_GROUP14_MODLEN)
+        || (ctx->secret_len == IKEV2KDF_MAX_GROUP15_MODLEN)
+        || (ctx->secret_len == IKEV2KDF_MAX_GROUP16_MODLEN)
+        || (ctx->secret_len == IKEV2KDF_MAX_GROUP17_MODLEN)
+        || (ctx->secret_len == IKEV2KDF_MAX_GROUP18_MODLEN))
+        /* no padding needed if secret_len is already valid */
+        return 1;
+
+    if (ctx->secret_len < IKEV2KDF_MAX_GROUP19_MODLEN)
         pad_len = IKEV2KDF_MAX_GROUP19_MODLEN - ctx->secret_len;
+    if ((ctx->secret_len > IKEV2KDF_MAX_GROUP19_MODLEN)
+        && (ctx->secret_len < IKEV2KDF_MAX_GROUP20_MODLEN))
+        pad_len = IKEV2KDF_MAX_GROUP20_MODLEN - ctx->secret_len;
+    if ((ctx->secret_len > IKEV2KDF_MAX_GROUP20_MODLEN)
+        && (ctx->secret_len < IKEV2KDF_MAX_GROUP21_MODLEN))
+        pad_len = IKEV2KDF_MAX_GROUP21_MODLEN - ctx->secret_len;
+    if ((ctx->secret_len > IKEV2KDF_MAX_GROUP21_MODLEN)
+        && (ctx->secret_len < IKEV2KDF_MAX_GROUP2_MODLEN))
+        pad_len = IKEV2KDF_MAX_GROUP2_MODLEN - ctx->secret_len;
+    if ((ctx->secret_len > IKEV2KDF_MAX_GROUP2_MODLEN)
+        && (ctx->secret_len < IKEV2KDF_MAX_GROUP14_MODLEN))
+        pad_len = IKEV2KDF_MAX_GROUP14_MODLEN - ctx->secret_len;
+    if ((ctx->secret_len > IKEV2KDF_MAX_GROUP14_MODLEN)
+        && (ctx->secret_len < IKEV2KDF_MAX_GROUP15_MODLEN))
+        pad_len = IKEV2KDF_MAX_GROUP15_MODLEN - ctx->secret_len;
+    if ((ctx->secret_len > IKEV2KDF_MAX_GROUP15_MODLEN)
+        && (ctx->secret_len < IKEV2KDF_MAX_GROUP16_MODLEN))
+        pad_len = IKEV2KDF_MAX_GROUP16_MODLEN - ctx->secret_len;
+    if ((ctx->secret_len >= IKEV2KDF_MAX_GROUP16_MODLEN)
+        && (ctx->secret_len < IKEV2KDF_MAX_GROUP17_MODLEN))
+        pad_len = IKEV2KDF_MAX_GROUP17_MODLEN - ctx->secret_len;
+    if (ctx->secret_len > IKEV2KDF_MAX_GROUP17_MODLEN)
+        pad_len = IKEV2KDF_MAX_GROUP18_MODLEN - ctx->secret_len;
+
+    new_secret = OPENSSL_zalloc(ctx->secret_len + pad_len);
+    if (new_secret == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        return 0;
     }
-    if (pad_len > 0) {
-        uint8_t *new_secret = OPENSSL_zalloc(ctx->secret_len + pad_len);
-        if (new_secret == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
-            return 0;
-        }
-        memcpy(new_secret + pad_len, ctx->secret, ctx->secret_len);
-        OPENSSL_clear_free(ctx->secret, ctx->secret_len);
-        ctx->secret = new_secret;
-        ctx->secret_len += pad_len;
-    }
+    memcpy(new_secret + pad_len, ctx->secret, ctx->secret_len);
+    OPENSSL_clear_free(ctx->secret, ctx->secret_len);
+    ctx->secret = new_secret;
+    ctx->secret_len += pad_len;
     return 1;
 }
 
@@ -419,12 +434,24 @@ static int kdf_ikev2kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             && !EVP_MD_is_a(md, SN_sha512))
             return 0;
     }
-    if (p.ni != NULL)
+    if (p.ni != NULL) {
         if (!ikev2kdf_set_membuf(&ctx->ni, &ctx->ni_len, p.ni))
             return 0;
-    if (p.nr != NULL)
+        if ((ctx->ni_len < IKEV2KDF_MIN_NONCE_LENGTH)
+            || (ctx->ni_len > IKEV2KDF_MAX_NONCE_LENGTH)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_NONCE_LENGTH);
+            return 0;
+        }
+    }
+    if (p.nr != NULL) {
         if (!ikev2kdf_set_membuf(&ctx->nr, &ctx->nr_len, p.nr))
             return 0;
+        if ((ctx->nr_len < IKEV2KDF_MIN_NONCE_LENGTH)
+            || (ctx->nr_len > IKEV2KDF_MAX_NONCE_LENGTH)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_NONCE_LENGTH);
+            return 0;
+        }
+    }
     if (p.spii != NULL)
         if (!ikev2kdf_set_membuf(&ctx->spii, &ctx->spii_len, p.spii))
             return 0;
@@ -679,11 +706,13 @@ static int IKEV2_DKM(OSSL_LIB_CTX *libctx, unsigned char *dkm, const size_t len_
     };
 
     md_size = EVP_MD_size(evp_md);
+    if (md_size <= 0)
+        return 0;
     /* len_out may not fit the last hmac, round up */
     hmac_len = ((len_out + md_size - 1) / md_size) * md_size;
     hmac = OPENSSL_malloc(hmac_len);
     if (hmac == NULL)
-        goto err;
+        return 0;
 
     mac = EVP_MAC_fetch(libctx, "HMAC", NULL);
     if ((mac == NULL)

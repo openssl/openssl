@@ -70,16 +70,9 @@ OpenSSL Releases
 
    *William McCormack*
 
-### Changes between 3.6 and 4.0 [xx XXX xxxx]
+ * Add IKEV2 KDF (EVP_KDF-IKEV2KDF) to EVP_KDF
 
- * Added support for RFC 8701 GREASE (Generate Random Extensions And Sustain
-   Extensibility). When `SSL_OP_GREASE` is set, the TLS client injects
-   reserved GREASE values into cipher suites, supported versions, supported
-   groups, signature algorithms, key share, and extensions in the ClientHello
-   to prevent ecosystem ossification. The `openssl s_client` command gains a
-   `-grease` option to enable this.
-
-   *William McCormack*
+   *Helen Zhang*
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
@@ -554,10 +547,6 @@ OpenSSL Releases
  * Removed the deprecated `msie-hack` option from the `openssl ca` command.
 
    *Bob Beck*
-
- * Add IKEV2 KDF (EVP_KDF-IKEV2KDF) to EVP_KDF
-
-   *Helen Zhang*
 
 OpenSSL 3.6
 -----------

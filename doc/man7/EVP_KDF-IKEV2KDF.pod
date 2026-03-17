@@ -335,7 +335,7 @@ L<EVP_KDF(3)/PARAMETERS>
 
 =head1 HISTORY
 
-This functionality was added in OpenSSL 4.0.
+This functionality was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

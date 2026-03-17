@@ -294,7 +294,9 @@ err:
     EVP_KDF_free(kdf);
     EVP_KDF_CTX_free(ctx);
     OSSL_PARAM_free(params);
+#ifdef OPENSSL_PEDANTIC_ZEROIZATION
     OPENSSL_cleanse(out, 256);
+#endif
     OSSL_SELF_TEST_onend(st, ret);
     return ret;
 }
