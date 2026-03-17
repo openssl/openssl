@@ -1497,7 +1497,7 @@ static int test_explicit_EVP_ASYM_CIPHER_fetch_by_name(void)
     return test_explicit_EVP_ASYM_CIPHER_fetch("RSA");
 }
 
-EVP_PKEY *generate_key()
+static EVP_PKEY *generate_key(void)
 {
     EVP_PKEY_CTX *ctx;
     EVP_PKEY *pkey = NULL;
