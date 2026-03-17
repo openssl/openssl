@@ -37,22 +37,24 @@ sub test_ocsp {
     }
     my $expected_exit = shift;
     my $nochecks = shift;
+    my $opt_untrusted = shift // "-verify_other";
     my $outputfile = basename($inputfile, '.ors') . '.dat';
 
     run(app(["openssl", "base64", "-d",
              "-in", catfile($ocspdir,$inputfile),
              "-out", $outputfile]));
+    my @certopt = ($opt_untrusted, catfile($ocspdir, $untrusted));
     with({ exit_checker => sub { return shift == $expected_exit; } },
          sub { ok(run(app(["openssl", "ocsp", "-respin", $outputfile,
                            "-partial_chain", @check_time,
                            "-CAfile", catfile($ocspdir, $CAfile),
-                           "-verify_other", catfile($ocspdir, $untrusted),
+                           @certopt,
                            "-no-CApath", "-no-CAstore",
                            $nochecks ? "-no_cert_checks" : ()])),
                   $title); });
 }
 
-plan tests => 12;
+plan tests => 13;
 
 subtest "=== VALID OCSP RESPONSES ===" => sub {
     plan tests => 7;
@@ -228,6 +230,14 @@ subtest "=== OCSP API TESTS===" => sub {
 
     ok(run(test(["ocspapitest", $cert, $key])),
                  "running ocspapitest");
+};
+
+subtest "=== UNTRUSTED ISSUER HINTS ===" => sub {
+    plan tests => 1;
+
+    test_ocsp("NON-DELEGATED; invalid issuer via -issuer",
+              "ND1.ors", "ND1_Cross_Root.pem",
+              "ISIC_ND1_Issuer_ICA.pem", 1, 0, "-issuer");
 };
 
 subtest "=== OCSP handling of identical input and output files ===" => sub {
