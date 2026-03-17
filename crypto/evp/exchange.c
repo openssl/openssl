@@ -19,6 +19,14 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+static void evp_keyexch_free_int(EVP_KEYEXCH *exchange)
+{
+    OPENSSL_free(exchange->type_name);
+    ossl_provider_free(exchange->prov);
+    CRYPTO_FREE_REF(&exchange->refcnt);
+    OPENSSL_free(exchange);
+}
+
 static void evp_keyexch_free(void *data)
 {
     EVP_KEYEXCH_free(data);
@@ -45,6 +53,47 @@ static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
     exchange->prov = prov;
 
     return exchange;
+}
+
+static void *evp_keyexch_dup_frozen(void *vin)
+{
+    EVP_KEYEXCH *in = vin;
+    EVP_KEYEXCH *out;
+
+    out = OPENSSL_malloc(sizeof(*out));
+    if (out == NULL)
+        return NULL;
+    memcpy(out, in, sizeof(*out));
+    if (!CRYPTO_NEW_REF(&out->refcnt, 1))
+        goto err;
+    out->type_name = OPENSSL_strdup(in->type_name);
+    if (out->type_name == NULL)
+        goto err;
+    out->origin = EVP_ORIG_FROZEN;
+    if (out->prov == NULL || !ossl_provider_up_ref(out->prov)) {
+        OPENSSL_free(out->type_name);
+        goto err;
+    }
+    return out;
+
+err:
+    CRYPTO_FREE_REF(&out->refcnt);
+    OPENSSL_free(out);
+    return NULL;
+}
+
+static void evp_keyexch_frozen_free(void *vin)
+{
+    EVP_KEYEXCH *rand = vin;
+    int ref = 0;
+
+    if (rand == NULL || rand->origin != EVP_ORIG_FROZEN)
+        return;
+
+    CRYPTO_DOWN_REF(&rand->refcnt, &ref);
+    if (ref > 0)
+        return;
+    evp_keyexch_free_int(rand);
 }
 
 static void *evp_keyexch_from_algorithm(int name_id,
@@ -162,22 +211,20 @@ void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange)
 {
     int i;
 
-    if (exchange == NULL)
+    if (exchange == NULL || exchange->origin != EVP_ORIG_DYNAMIC)
         return;
     CRYPTO_DOWN_REF(&exchange->refcnt, &i);
     if (i > 0)
         return;
-    OPENSSL_free(exchange->type_name);
-    ossl_provider_free(exchange->prov);
-    CRYPTO_FREE_REF(&exchange->refcnt);
-    OPENSSL_free(exchange);
+    evp_keyexch_free_int(exchange);
 }
 
 int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&exchange->refcnt, &ref);
+    if (exchange->origin == EVP_ORIG_DYNAMIC)
+        CRYPTO_UP_REF(&exchange->refcnt, &ref);
     return 1;
 }
 
@@ -189,10 +236,26 @@ OSSL_PROVIDER *EVP_KEYEXCH_get0_provider(const EVP_KEYEXCH *exchange)
 EVP_KEYEXCH *EVP_KEYEXCH_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
     const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
+    return evp_generic_fetch(ctx,
+        OSSL_OP_KEYEXCH,
+        algorithm,
+        properties,
         evp_keyexch_from_algorithm,
         evp_keyexch_up_ref,
-        evp_keyexch_free, NULL, NULL);
+        evp_keyexch_free,
+        evp_keyexch_dup_frozen,
+        evp_keyexch_frozen_free);
+}
+
+int evp_keyexch_fetch_all(OSSL_LIB_CTX *ctx)
+{
+    return evp_generic_fetch_all(ctx,
+        OSSL_OP_KEYEXCH,
+        evp_keyexch_from_algorithm,
+        evp_keyexch_up_ref,
+        evp_keyexch_free,
+        evp_keyexch_dup_frozen,
+        evp_keyexch_frozen_free);
 }
 
 EVP_KEYEXCH *evp_keyexch_fetch_from_prov(OSSL_PROVIDER *prov,
@@ -204,8 +267,8 @@ EVP_KEYEXCH *evp_keyexch_fetch_from_prov(OSSL_PROVIDER *prov,
         evp_keyexch_from_algorithm,
         evp_keyexch_up_ref,
         evp_keyexch_free,
-        NULL,
-        NULL);
+        evp_keyexch_dup_frozen,
+        evp_keyexch_frozen_free);
 }
 
 int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)

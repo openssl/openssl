@@ -137,6 +137,7 @@ struct evp_keymgmt_st {
 
 struct evp_keyexch_st {
     int name_id;
+    int origin;
     char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
@@ -465,3 +466,4 @@ int evp_mac_fetch_all(OSSL_LIB_CTX *ctx);
 int evp_keymgmt_fetch_all(OSSL_LIB_CTX *ctx);
 int evp_kem_fetch_all(OSSL_LIB_CTX *ctx);
 int evp_asym_cipher_fetch_all(OSSL_LIB_CTX *ctx);
+int evp_keyexch_fetch_all(OSSL_LIB_CTX *ctx);

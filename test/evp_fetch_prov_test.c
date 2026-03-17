@@ -1497,6 +1497,202 @@ static int test_explicit_EVP_ASYM_CIPHER_fetch_by_name(void)
     return test_explicit_EVP_ASYM_CIPHER_fetch("RSA");
 }
 
+static EVP_PKEY *generate_dh_key(void)
+{
+    EVP_PKEY_CTX *ctx;
+    EVP_PKEY *pkey = NULL;
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_construct_utf8_string("group", "ffdhe4096", 0),
+        OSSL_PARAM_construct_end()
+    };
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(NULL, "DH", NULL))
+        || !TEST_int_eq(EVP_PKEY_keygen_init(ctx), 1)
+        || !TEST_int_eq(EVP_PKEY_CTX_set_params(ctx, params), 1)
+        || !TEST_int_eq(EVP_PKEY_keygen(ctx, &pkey), 1)) {
+        EVP_PKEY_CTX_free(ctx);
+        return NULL;
+    }
+
+    EVP_PKEY_CTX_free(ctx);
+    return pkey;
+}
+
+static int derive_secret(EVP_PKEY *priv, EVP_PKEY *peer,
+    unsigned char **secret, size_t *secret_len)
+{
+    EVP_PKEY_CTX *ctx;
+    int ret = 0;
+
+    *secret = NULL;
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(NULL, priv, NULL))
+        || !TEST_int_eq(EVP_PKEY_derive_init(ctx), 1)
+        || !TEST_int_eq(EVP_PKEY_derive_set_peer(ctx, peer), 1)
+        || !TEST_int_eq(EVP_PKEY_derive(ctx, NULL, secret_len), 1)
+        || !TEST_ptr(*secret = OPENSSL_malloc(*secret_len))
+        || !TEST_int_eq(EVP_PKEY_derive(ctx, *secret, secret_len), 1)) {
+        OPENSSL_free(*secret);
+        *secret = NULL;
+        *secret_len = 0;
+        goto err;
+    }
+
+    ret = 1;
+err:
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+
+static int test_dh_derive(OSSL_LIB_CTX *libctx, const char *propq)
+{
+    EVP_PKEY *alice = NULL, *bob = NULL;
+    unsigned char *secret1 = NULL, *secret2 = NULL;
+    size_t secret1_len = 0, secret2_len = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(alice = generate_dh_key())
+        || !TEST_ptr(bob = generate_dh_key())
+        || !TEST_int_eq(derive_secret(alice, bob, &secret1, &secret1_len), 1)
+        || !TEST_size_t_gt(secret1_len, 0)
+        || !TEST_int_eq(derive_secret(bob, alice, &secret2, &secret2_len), 1)
+        || !TEST_size_t_gt(secret2_len, 0)
+        || !TEST_size_t_eq(secret1_len, secret2_len)
+        || !TEST_int_eq(memcmp(secret1, secret2, secret1_len), 0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_free(alice);
+    EVP_PKEY_free(bob);
+    OPENSSL_free(secret1);
+    OPENSSL_free(secret2);
+
+    return ret;
+}
+
+static int test_keyexch(OSSL_LIB_CTX *ctx, const char *propq, EVP_KEYEXCH *exchange, const char *name)
+{
+    return TEST_ptr(exchange)
+        && TEST_ptr(EVP_KEYEXCH_get0_provider(exchange))
+        && TEST_true(EVP_KEYEXCH_is_a(exchange, name))
+        && TEST_true(test_dh_derive(ctx, propq));
+}
+
+static int test_EVP_KEYEXCH_fetch_freeze(void)
+{
+#if defined(OPENSSL_NO_CACHED_FETCH) || defined(OPENSSL_NO_DH)
+    /*
+     * Test does not make sense if cached fetch is disabled.
+     * There's nothing to freeze, and test will fail.
+     */
+    return 1;
+#endif
+
+    EVP_KEYEXCH *exchange = NULL;
+    int ret = 0;
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    if (!TEST_ptr(exchange = EVP_KEYEXCH_fetch(ctx, "DH", NULL))
+        || !TEST_true(test_keyexch(ctx, NULL, exchange, "DH"))
+        || !TEST_int_ne(exchange->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_KEYEXCH_free(exchange);
+    exchange = NULL;
+
+    if (!TEST_int_eq(OSSL_LIB_CTX_freeze(ctx, "?fips=true"), 1)
+        || !TEST_ptr(exchange = EVP_KEYEXCH_fetch(ctx, "DH", NULL))
+        || !TEST_true(test_keyexch(ctx, NULL, exchange, "DH"))
+        || !TEST_int_eq(exchange->origin, EVP_ORIG_FROZEN))
+        goto err;
+    /* Technically, frozen version doesn't need to be freed */
+    EVP_KEYEXCH_free(exchange);
+
+    if (!TEST_ptr(exchange = EVP_KEYEXCH_fetch(ctx, "DH", "?fips=true"))
+        || !TEST_true(test_keyexch(ctx, "?fips=true", exchange, "DH"))
+        || !TEST_int_eq(exchange->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_KEYEXCH_free(exchange);
+
+    /*
+     * A mismatched propq should use the regular fetch path rather than the
+     * frozen fast path.
+     */
+    if (!TEST_ptr(exchange = EVP_KEYEXCH_fetch(ctx, "DH", "?provider=default"))
+        || !TEST_true(test_keyexch(ctx, "?provider=default", exchange, "DH"))
+        || !TEST_int_ne(exchange->origin, EVP_ORIG_FROZEN))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_KEYEXCH_free(exchange);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_implicit_EVP_KEYEXCH_fetch(void)
+{
+#if defined(OPENSSL_NO_DH)
+    return 1;
+#endif
+
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+    EVP_KEYEXCH *exchange = NULL;
+    int ret = 0;
+
+    if (use_default_ctx == 0 && !TEST_true(load_providers(&ctx, prov)))
+        goto err;
+
+    if (!TEST_ptr(exchange = EVP_KEYEXCH_fetch(ctx, "DH", NULL)))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_KEYEXCH_free(exchange);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_explicit_EVP_KEYEXCH_fetch(const char *id)
+{
+    OSSL_LIB_CTX *ctx = NULL;
+    EVP_KEYEXCH *exchange = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+    int ret = 0;
+
+    if (use_default_ctx == 0 && !TEST_true(load_providers(&ctx, prov)))
+        goto err;
+
+    exchange = EVP_KEYEXCH_fetch(ctx, id, fetch_property);
+    if (expected_fetch_result != 0) {
+        if (!TEST_true(EVP_KEYEXCH_up_ref(exchange)))
+            goto err;
+        /* Ref count should now be 2. Release first one here */
+        EVP_KEYEXCH_free(exchange);
+    } else {
+        if (!TEST_ptr_null(exchange))
+            goto err;
+    }
+    ret = 1;
+err:
+    EVP_KEYEXCH_free(exchange);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_explicit_EVP_KEYEXCH_fetch_by_name(void)
+{
+#if defined(OPENSSL_NO_DH)
+    return 1;
+#endif
+
+    return test_explicit_EVP_KEYEXCH_fetch("DH");
+}
+
 int setup_tests(void)
 {
     OPTION_CHOICE o;
@@ -1561,6 +1757,10 @@ int setup_tests(void)
         ADD_TEST(test_EVP_ASYM_CIPHER_fetch_freeze);
         ADD_TEST(test_implicit_EVP_ASYM_CIPHER_fetch);
         ADD_TEST(test_explicit_EVP_ASYM_CIPHER_fetch_by_name);
+    } else if (strcmp(alg, "evp_keyexch") == 0) {
+        ADD_TEST(test_EVP_KEYEXCH_fetch_freeze);
+        ADD_TEST(test_implicit_EVP_KEYEXCH_fetch);
+        ADD_TEST(test_explicit_EVP_KEYEXCH_fetch_by_name);
     } else {
         TEST_error("Unknown fetch type: %s", alg);
         return 0;
