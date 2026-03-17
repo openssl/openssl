@@ -183,6 +183,10 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
         /* Check the length.  This should also work for indefinite length */
         if (*q & 0x80) {
             unsigned int i = *q & 0x7f;
+            if (i > sizeof(long)) {
+                ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LONG);
+                goto err;
+            }
             if (i > diff) {
                 want = q - p + i + 1;
                 continue;
