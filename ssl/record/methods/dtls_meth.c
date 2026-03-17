@@ -11,6 +11,9 @@
 #include "../../ssl_local.h"
 #include "../record_local.h"
 #include "recmethod_local.h"
+#include "internal/safe_math.h"
+
+OSSL_SAFE_MATH_UNSIGNED(uint64_t, uint64_t)
 
 /* mod 128 saturating subtract of two 64-bit values */
 static int satsub64(uint64_t l1, uint64_t l2)
@@ -561,8 +564,17 @@ again:
              * choose the current epoch if the bits match or else choose the
              * next epoch with matching bits
              */
-            while (eebits != (epoch64 & DTLS13_UNI_HDR_EPOCH_BITS_MASK))
-                epoch64++;
+            if ((epoch64 & DTLS13_UNI_HDR_EPOCH_BITS_MASK) > eebits) {
+                int err = 0;
+                epoch64 = safe_add_uint64_t(epoch64, DTLS13_UNI_HDR_EPOCH_BITS_MASK + 1, &err);
+                if (err) {
+                    /* Overflow, silently discard record */
+                    rr->length = 0;
+                    rl->packet_length = 0;
+                    goto again;
+                }
+            }
+            epoch64 = (epoch64 & ~DTLS13_UNI_HDR_EPOCH_BITS_MASK) | eebits;
 
         } else {
             if (!PACKET_get_net_2(&dtlsrecord, &record_version)
