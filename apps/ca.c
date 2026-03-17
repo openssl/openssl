@@ -1525,7 +1525,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         j = ASN1_PRINTABLE_type(ASN1_STRING_get0_data(str),
             ASN1_STRING_length(str));
         if ((type == V_ASN1_T61STRING && j != V_ASN1_T61STRING)
-            || (type == V_ASN1_IA5STRING && type == V_ASN1_PRINTABLESTRING)) {
+            || (type == V_ASN1_IA5STRING && j != V_ASN1_IA5STRING)) {
             BIO_puts(bio_err,
                 "\nThe string contains characters that are illegal for the"
                 " ASN.1 type\n");
