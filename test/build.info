@@ -302,7 +302,14 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[slh_dsa_test]=../include ../apps/include
     DEPEND[slh_dsa_test]=../libcrypto libtestutil.a
   ENDIF
-  
+ 
+  IF[{- !$disabled{'hqc'} -}]
+    PROGRAMS{noinst}=hqc_test
+    SOURCE[hqc_test]=hqc_test.c
+    INCLUDE[hqc_test]=../include ../apps/include
+    DEPEND[hqc_test]=../libcrypto libtestutil.a
+  ENDIF
+
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=igetest bftest casttest
 

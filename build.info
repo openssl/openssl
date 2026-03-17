@@ -88,6 +88,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/keymgmt/mlx_kmgmt.inc \
          providers/implementations/keymgmt/slh_dsa_kmgmt.inc \
          providers/implementations/keymgmt/template_kmgmt.inc \
+         providers/implementations/keymgmt/hqc_kmgmt.inc \
          providers/implementations/signature/dsa_sig.inc \
          providers/implementations/signature/ecdsa_sig.inc \
          providers/implementations/signature/eddsa_sig.inc \
@@ -209,6 +210,7 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/keymgmt/ml_dsa_kmgmt.inc \
        providers/implementations/keymgmt/ml_kem_kmgmt.inc \
        providers/implementations/keymgmt/mlx_kmgmt.inc \
+       providers/implementations/keymgmt/hqc_kmgmt.inc \
        providers/implementations/keymgmt/slh_dsa_kmgmt.inc \
        providers/implementations/keymgmt/template_kmgmt.inc \
        providers/implementations/signature/dsa_sig.inc \
@@ -346,6 +348,8 @@ GENERATE[providers/implementations/keymgmt/slh_dsa_kmgmt.inc]=\
     providers/implementations/keymgmt/slh_dsa_kmgmt.inc.in
 GENERATE[providers/implementations/keymgmt/template_kmgmt.inc]=\
     providers/implementations/keymgmt/template_kmgmt.inc.in
+GENERATE[providers/implementations/keymgmt/hqc_kmgmt.inc]=\
+    providers/implementations/keymgmt/hqc_kmgmt.inc.in
 GENERATE[providers/implementations/signature/dsa_sig.inc]=\
     providers/implementations/signature/dsa_sig.inc.in
 GENERATE[providers/implementations/signature/ecdsa_sig.inc]=\

@@ -4803,6 +4803,10 @@ DEPEND[html/man7/EVP_PKEY-HMAC.html]=man7/EVP_PKEY-HMAC.pod
 GENERATE[html/man7/EVP_PKEY-HMAC.html]=man7/EVP_PKEY-HMAC.pod
 DEPEND[man/man7/EVP_PKEY-HMAC.7]=man7/EVP_PKEY-HMAC.pod
 GENERATE[man/man7/EVP_PKEY-HMAC.7]=man7/EVP_PKEY-HMAC.pod
+DEPEND[html/man7/EVP_PKEY-HQC.html]=man7/EVP_PKEY-HQC.pod
+GENERATE[html/man7/EVP_PKEY-HQC.html]=man7/EVP_PKEY-HQC.pod
+DEPEND[man/man7/EVP_PKEY-HQC.7]=man7/EVP_PKEY-HQC.pod
+GENERATE[man/man7/EVP_PKEY-HQC.7]=man7/EVP_PKEY-HQC.pod
 DEPEND[html/man7/EVP_PKEY-LMS.html]=man7/EVP_PKEY-LMS.pod
 GENERATE[html/man7/EVP_PKEY-LMS.html]=man7/EVP_PKEY-LMS.pod
 DEPEND[man/man7/EVP_PKEY-LMS.7]=man7/EVP_PKEY-LMS.pod
@@ -5254,6 +5258,7 @@ html/man7/EVP_PKEY-DSA.html \
 html/man7/EVP_PKEY-EC.html \
 html/man7/EVP_PKEY-FFC.html \
 html/man7/EVP_PKEY-HMAC.html \
+html/man7/EVP_PKEY-HQC.html \
 html/man7/EVP_PKEY-LMS.html \
 html/man7/EVP_PKEY-ML-DSA.html \
 html/man7/EVP_PKEY-ML-KEM.html \
@@ -5418,6 +5423,7 @@ man/man7/EVP_PKEY-DSA.7 \
 man/man7/EVP_PKEY-EC.7 \
 man/man7/EVP_PKEY-FFC.7 \
 man/man7/EVP_PKEY-HMAC.7 \
+man/man7/EVP_PKEY-HQC.7 \
 man/man7/EVP_PKEY-LMS.7 \
 man/man7/EVP_PKEY-ML-DSA.7 \
 man/man7/EVP_PKEY-ML-KEM.7 \
