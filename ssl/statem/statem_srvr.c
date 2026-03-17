@@ -494,8 +494,8 @@ OCSP_RESPONSE *ossl_get_ocsp_response(SSL_CONNECTION *s, int chainidx)
              * happening because of test cases.
              */
             ERR_set_mark();
-            if (((bs = OCSP_response_get1_basic(resp)) != NULL)
-                && ((sr = OCSP_resp_get0(bs, 0)) != NULL)) {
+            bs = OCSP_response_get1_basic(resp);
+            if (bs != NULL && (sr = OCSP_resp_get0(bs, 0)) != NULL) {
                 /* use the first single response to get the algorithm used */
                 cid = (OCSP_CERTID *)OCSP_SINGLERESP_get0_id(sr);
 
@@ -551,6 +551,8 @@ OCSP_RESPONSE *ossl_get_ocsp_response(SSL_CONNECTION *s, int chainidx)
                  */
                 if (i == num)
                     resp = NULL;
+            } else {
+                OCSP_BASICRESP_free(bs);
             }
 
             /*
