@@ -823,7 +823,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
             }
         }
 
-        if (level == OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE && dtls1_get_connection_epoch(s, which) == 1) {
+        if (level == OSSL_RECORD_PROTECTION_LEVEL_HANDSHAKE && dtls1_get_epoch(s, which) == 1) {
             /*
              * We must manually increment epoch because
              * client early traffic was not sent/recv

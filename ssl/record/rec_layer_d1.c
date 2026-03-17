@@ -543,7 +543,7 @@ start:
          * This may just be a stale retransmit. Also sanity check that we have
          * at least enough record bytes for a message header
          */
-        if (rr->epoch != dtls1_get_serialized_epoch(sc, SSL3_CC_READ)
+        if (rr->epoch != dtls1_get_epoch(sc, SSL3_CC_READ)
             || rr->length < DTLS1_HM_HEADER_LENGTH) {
             if (!ssl_release_record(sc, rr, 0))
                 return -1;
@@ -817,7 +817,7 @@ int dtls1_increment_epoch(SSL_CONNECTION *s, int rw)
     return 1;
 }
 
-uint64_t dtls1_get_connection_epoch(SSL_CONNECTION *s, int rw)
+uint64_t dtls1_get_epoch(SSL_CONNECTION *s, int rw)
 {
     uint64_t epoch;
 
@@ -827,16 +827,4 @@ uint64_t dtls1_get_connection_epoch(SSL_CONNECTION *s, int rw)
         epoch = s->rlayer.d->w_conn_epoch;
 
     return epoch;
-}
-
-uint16_t dtls1_get_serialized_epoch(SSL_CONNECTION *s, int rw)
-{
-    uint64_t epoch;
-
-    if (rw & SSL3_CC_READ)
-        epoch = s->rlayer.d->r_conn_epoch;
-    else
-        epoch = s->rlayer.d->w_conn_epoch;
-
-    return epoch & 0xffff;
 }

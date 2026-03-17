@@ -259,7 +259,7 @@ void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint64_t before_epoch)
 {
 }
 
-uint64_t dtls1_get_connection_epoch(SSL_CONNECTION *s, int rw)
+uint64_t dtls1_get_epoch(SSL_CONNECTION *s, int rw)
 {
     return 0;
 }

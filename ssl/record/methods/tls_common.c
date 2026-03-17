@@ -1106,7 +1106,7 @@ int tls13_common_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
 
 int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
     uint8_t *type, const unsigned char **data, size_t *datalen,
-    uint16_t *epoch, uint64_t *seq_num)
+    uint64_t *epoch, uint64_t *seq_num)
 {
     TLS_RL_RECORD *rec;
 

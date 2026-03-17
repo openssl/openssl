@@ -1133,7 +1133,7 @@ CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt)
 
         recnumnext = ossl_list_record_number_next(recnum);
 
-        if (recnum->epoch <= dtls1_get_connection_epoch(s, SSL3_CC_WRITE)) {
+        if (recnum->epoch <= dtls1_get_epoch(s, SSL3_CC_WRITE)) {
             /*
              * rfc9147:
              * During the handshake, ACK records MUST be sent with an epoch which

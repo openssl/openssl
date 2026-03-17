@@ -35,7 +35,7 @@ typedef struct tls_record_st {
     /* Offset into the data buffer where to start reading */
     size_t off;
     /* Serialized DTLS epoch */
-    uint16_t epoch;
+    uint64_t epoch;
     /* sequence number. DTLS only */
     uint64_t seq_num;
 #ifndef OPENSSL_NO_SCTP
@@ -161,8 +161,7 @@ __owur int dtls1_write_bytes(SSL_CONNECTION *s, uint8_t type, const void *buf,
 int do_dtls1_write(SSL_CONNECTION *s, uint8_t type, const unsigned char *buf,
     size_t len, size_t *written);
 int dtls1_increment_epoch(SSL_CONNECTION *s, int rw);
-uint64_t dtls1_get_connection_epoch(SSL_CONNECTION *s, int rw);
-uint16_t dtls1_get_serialized_epoch(SSL_CONNECTION *s, int rw);
+uint64_t dtls1_get_epoch(SSL_CONNECTION *s, int rw);
 uint64_t dtls1_get_record_sequence_number(SSL_CONNECTION *s);
 int ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr, size_t length);
 

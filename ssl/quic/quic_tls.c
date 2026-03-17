@@ -365,7 +365,7 @@ static int quic_retry_write_records(OSSL_RECORD_LAYER *rl)
 
 static int quic_read_record(OSSL_RECORD_LAYER *rl, void **rechandle,
     int *rversion, uint8_t *type, const unsigned char **data,
-    size_t *datalen, uint16_t *epoch,
+    size_t *datalen, uint64_t *epoch,
     uint64_t *seq_num)
 {
     if (rl->recread != 0 || rl->recunreleased != 0)
