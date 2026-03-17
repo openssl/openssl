@@ -1497,7 +1497,7 @@ static int test_explicit_EVP_ASYM_CIPHER_fetch_by_name(void)
     return test_explicit_EVP_ASYM_CIPHER_fetch("RSA");
 }
 
-static EVP_PKEY *generate_key()
+EVP_PKEY *generate_key()
 {
     EVP_PKEY_CTX *ctx;
     EVP_PKEY *pkey = NULL;
@@ -1515,7 +1515,7 @@ static EVP_PKEY *generate_key()
 }
 
 static int derive_secret(EVP_PKEY *priv, EVP_PKEY *peer,
-                         unsigned char **secret, size_t *secret_len)
+    unsigned char **secret, size_t *secret_len)
 {
     EVP_PKEY_CTX *ctx;
     int ret = 0;
@@ -1597,7 +1597,7 @@ static int test_EVP_KEYEXCH_fetch_freeze(void)
     exchange = NULL;
 
     if (!TEST_int_eq(OSSL_LIB_CTX_freeze(ctx, "?fips=true"), 1)
-        || !TEST_ptr(exchange = EVP_KEYEXCH_fetch(ctx, "ECDH", NULL)) 
+        || !TEST_ptr(exchange = EVP_KEYEXCH_fetch(ctx, "ECDH", NULL))
         || !TEST_true(test_keyexch(exchange, "ECDH", ctx, NULL))
         || !TEST_int_eq(exchange->origin, EVP_ORIG_FROZEN))
         goto err;
