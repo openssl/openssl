@@ -548,7 +548,7 @@ static TEST_ECHINNER test_inners[] = {
         encoded_inner_outers, sizeof(encoded_inner_outers),
         encoded_inner_post, sizeof(bad_pad_encoded_inner_post),
         0, /* expected result */
-        SSL_R_TLSV1_ALERT_DECODE_ERROR },
+        SSL_R_TLS_ALERT_ILLEGAL_PARAMETER },
     /* 8. so many padding bytes recovered clear is short */
     { NULL, 0,
         short_encoded_inner, sizeof(short_encoded_inner),

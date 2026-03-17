@@ -1689,9 +1689,19 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
             }
         } else if (s->ext.ech.es != NULL) {
             PACKET newpkt;
+            int secondtime = s->ext.ech.success;
 
+            /*
+             * if ECH decrypt worked first time (success == 1) then fail
+             * if there's no ECH extension at all 2nd time
+             */
+            if (secondtime == 1 && echoffset == 0) {
+                SSLfatal(s, SSL_AD_MISSING_EXTENSION,
+                    SSL_R_TLSV13_ALERT_MISSING_EXTENSION);
+                goto err;
+            }
             if (ossl_ech_early_decrypt(s, pkt, &newpkt) != 1) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                /* SSLfatal() already called */
                 goto err;
             }
             if (s->ext.ech.success == 1) {
@@ -1705,6 +1715,10 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
                     goto err;
                 }
                 *pkt = newpkt;
+            } else if (secondtime == 1 && s->ext.ech.success == 0) {
+                /* 2nd time decrypt failed */
+                SSLfatal(s, SSL_AD_DECRYPT_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
             }
         }
     }
@@ -1872,6 +1886,11 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     /* Choose the server SSL/TLS/DTLS version. */
     protverr = ssl_choose_server_version(s, clienthello, &dgrd);
 
+#ifndef OPENSSL_NO_ECH
+    if (protverr && s->ext.ech.success == 1) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, protverr);
+    }
+#endif
     if (protverr) {
         if (SSL_IS_FIRST_HANDSHAKE(s)) {
             /* like ssl3_get_record, send alert using remote version number */
