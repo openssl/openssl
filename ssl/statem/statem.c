@@ -500,22 +500,6 @@ static void init_read_state_machine(SSL *s)
     st->read_state = READ_STATE_HEADER;
 }
 
-static int grow_init_buf(SSL *s, size_t size)
-{
-
-    size_t msg_offset = (char *)s->init_msg - s->init_buf->data;
-
-    if (!BUF_MEM_grow_clean(s->init_buf, (int)size))
-        return 0;
-
-    if (size < msg_offset)
-        return 0;
-
-    s->init_msg = s->init_buf->data + msg_offset;
-
-    return 1;
-}
-
 /*
  * This function implements the sub-state machine when the message flow is in
  * MSG_FLOW_READING. The valid sub-states and transitions are:
@@ -608,14 +592,6 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
             if (s->s3.tmp.message_size > max_message_size(s)) {
                 SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                     SSL_R_EXCESSIVE_MESSAGE_SIZE);
-                return SUB_STATE_ERROR;
-            }
-
-            /* dtls_get_message already did this */
-            if (!SSL_IS_DTLS(s)
-                && s->s3.tmp.message_size > 0
-                && !grow_init_buf(s, s->s3.tmp.message_size + SSL3_HM_HEADER_LENGTH)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_BUF_LIB);
                 return SUB_STATE_ERROR;
             }
 
