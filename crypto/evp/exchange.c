@@ -242,7 +242,7 @@ EVP_KEYEXCH *EVP_KEYEXCH_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
         properties,
         evp_keyexch_from_algorithm,
         evp_keyexch_up_ref,
-        evp_keyexch_free, 
+        evp_keyexch_free,
         evp_keyexch_dup_frozen,
         evp_keyexch_frozen_free);
 }
