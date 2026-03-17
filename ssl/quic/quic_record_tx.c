@@ -282,7 +282,8 @@ static TXE *qtx_resize_txe(OSSL_QTX *qtx, TXE_LIST *txl, TXE *txe, size_t n)
 
     /* Remove the item from the list to avoid accessing freed memory */
     p = ossl_list_txe_prev(txe);
-    ossl_list_txe_remove(txl, txe);
+    if (txl != NULL)
+        ossl_list_txe_remove(txl, txe);
 
     /*
      * NOTE: We do not clear old memory, although it does contain decrypted
@@ -290,17 +291,21 @@ static TXE *qtx_resize_txe(OSSL_QTX *qtx, TXE_LIST *txl, TXE *txe, size_t n)
      */
     txe2 = OPENSSL_realloc(txe, sizeof(TXE) + n);
     if (txe2 == NULL) {
-        if (p == NULL)
-            ossl_list_txe_insert_head(txl, txe);
-        else
-            ossl_list_txe_insert_after(txl, p, txe);
+        if (txl != NULL) {
+            if (p == NULL)
+                ossl_list_txe_insert_head(txl, txe);
+            else
+                ossl_list_txe_insert_after(txl, p, txe);
+        }
         return NULL;
     }
 
-    if (p == NULL)
-        ossl_list_txe_insert_head(txl, txe2);
-    else
-        ossl_list_txe_insert_after(txl, p, txe2);
+    if (txl != NULL) {
+        if (p == NULL)
+            ossl_list_txe_insert_head(txl, txe2);
+        else
+            ossl_list_txe_insert_after(txl, p, txe2);
+    }
 
     if (qtx->cons == txe)
         qtx->cons = txe2;
