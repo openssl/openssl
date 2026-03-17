@@ -1497,14 +1497,18 @@ static int test_explicit_EVP_ASYM_CIPHER_fetch_by_name(void)
     return test_explicit_EVP_ASYM_CIPHER_fetch("RSA");
 }
 
-static EVP_PKEY *generate_key(void)
+static EVP_PKEY *generate_dh_key(void)
 {
     EVP_PKEY_CTX *ctx;
     EVP_PKEY *pkey = NULL;
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_construct_utf8_string("group", "ffdhe4096", 0),
+        OSSL_PARAM_construct_end()
+    };
 
-    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL))
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(NULL, "DH", NULL))
         || !TEST_int_eq(EVP_PKEY_keygen_init(ctx), 1)
-        || !TEST_int_eq(EVP_PKEY_CTX_set_group_name(ctx, "prime256v1"), 1)
+        || !TEST_int_eq(EVP_PKEY_CTX_set_params(ctx, params), 1)
         || !TEST_int_eq(EVP_PKEY_keygen(ctx, &pkey), 1)) {
         EVP_PKEY_CTX_free(ctx);
         return NULL;
@@ -1537,15 +1541,15 @@ err:
     return ret;
 }
 
-static int test_ec_derive(OSSL_LIB_CTX *libctx, const char *propq)
+static int test_dh_derive(OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_PKEY *alice = NULL, *bob = NULL;
     unsigned char *secret1 = NULL, *secret2 = NULL;
     size_t secret1_len = 0, secret2_len = 0;
     int ret = 0;
 
-    if (!TEST_ptr(alice = generate_key())
-        || !TEST_ptr(bob = generate_key())
+    if (!TEST_ptr(alice = generate_dh_key())
+        || !TEST_ptr(bob = generate_dh_key())
         || !TEST_int_eq(derive_secret(alice, bob, &secret1, &secret1_len), 1)
         || !TEST_int_eq(derive_secret(bob, alice, &secret2, &secret2_len), 1)
         || !TEST_size_t_eq(secret1_len, secret2_len)
@@ -1562,13 +1566,12 @@ err:
     return ret;
 }
 
-static int test_keyexch(EVP_KEYEXCH *exchange, const char *name,
-    OSSL_LIB_CTX *ctx, const char *propq)
+static int test_keyexch(OSSL_LIB_CTX *ctx, const char *propq, EVP_KEYEXCH *exchange, const char *name)
 {
     return TEST_ptr(exchange)
         && TEST_ptr(EVP_KEYEXCH_get0_provider(exchange))
         && TEST_true(EVP_KEYEXCH_is_a(exchange, name))
-        && TEST_true(test_ec_derive(ctx, propq));
+        && TEST_true(test_dh_derive(ctx, propq));
 }
 
 static int test_EVP_KEYEXCH_fetch_freeze(void)
@@ -1589,23 +1592,23 @@ static int test_EVP_KEYEXCH_fetch_freeze(void)
     if (use_default_ctx == 0 && !load_providers(&ctx, prov))
         goto err;
 
-    if (!TEST_ptr(exchange = EVP_KEYEXCH_fetch(ctx, "ECDH", NULL))
-        || !TEST_true(test_keyexch(exchange, "ECDH", ctx, NULL))
+    if (!TEST_ptr(exchange = EVP_KEYEXCH_fetch(ctx, "DH", NULL))
+        || !TEST_true(test_keyexch(ctx, NULL, exchange, "DH"))
         || !TEST_int_ne(exchange->origin, EVP_ORIG_FROZEN))
         goto err;
     EVP_KEYEXCH_free(exchange);
     exchange = NULL;
 
     if (!TEST_int_eq(OSSL_LIB_CTX_freeze(ctx, "?fips=true"), 1)
-        || !TEST_ptr(exchange = EVP_KEYEXCH_fetch(ctx, "ECDH", NULL))
-        || !TEST_true(test_keyexch(exchange, "ECDH", ctx, NULL))
+        || !TEST_ptr(exchange = EVP_KEYEXCH_fetch(ctx, "DH", NULL))
+        || !TEST_true(test_keyexch(ctx, NULL, exchange, "DH"))
         || !TEST_int_eq(exchange->origin, EVP_ORIG_FROZEN))
         goto err;
     /* Technically, frozen version doesn't need to be freed */
     EVP_KEYEXCH_free(exchange);
 
-    if (!TEST_ptr(exchange = EVP_KEYEXCH_fetch(ctx, "ECDH", "?fips=true"))
-        || !TEST_true(test_keyexch(exchange, "ECDH", ctx, "?fips=true"))
+    if (!TEST_ptr(exchange = EVP_KEYEXCH_fetch(ctx, "DH", "?fips=true"))
+        || !TEST_true(test_keyexch(ctx, "?fips=true", exchange, "DH"))
         || !TEST_int_eq(exchange->origin, EVP_ORIG_FROZEN))
         goto err;
     EVP_KEYEXCH_free(exchange);
@@ -1614,8 +1617,8 @@ static int test_EVP_KEYEXCH_fetch_freeze(void)
      * A mismatched propq should use the regular fetch path rather than the
      * frozen fast path.
      */
-    if (!TEST_ptr(exchange = EVP_KEYEXCH_fetch(ctx, "ECDH", "?provider=default"))
-        || !TEST_true(test_keyexch(exchange, "ECDH", ctx, "?provider=default"))
+    if (!TEST_ptr(exchange = EVP_KEYEXCH_fetch(ctx, "DH", "?provider=default"))
+        || !TEST_true(test_keyexch(ctx, "?provider=default", exchange, "DH"))
         || !TEST_int_ne(exchange->origin, EVP_ORIG_FROZEN))
         goto err;
 
@@ -1636,7 +1639,7 @@ static int test_implicit_EVP_KEYEXCH_fetch(void)
     if (use_default_ctx == 0 && !TEST_true(load_providers(&ctx, prov)))
         goto err;
 
-    if (!TEST_ptr(exchange = EVP_KEYEXCH_fetch(ctx, "ECDH", NULL)))
+    if (!TEST_ptr(exchange = EVP_KEYEXCH_fetch(ctx, "DH", NULL)))
         goto err;
 
     ret = 1;
@@ -1675,7 +1678,7 @@ err:
 
 static int test_explicit_EVP_KEYEXCH_fetch_by_name(void)
 {
-    return test_explicit_EVP_KEYEXCH_fetch("ECDH");
+    return test_explicit_EVP_KEYEXCH_fetch("DH");
 }
 
 int setup_tests(void)
