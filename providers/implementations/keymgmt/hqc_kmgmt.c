@@ -49,8 +49,6 @@ static OSSL_FUNC_keymgmt_import_types_fn hqc_kem_imexport_types;
 static OSSL_FUNC_keymgmt_export_types_fn hqc_kem_imexport_types;
 static OSSL_FUNC_keymgmt_dup_fn hqc_kem_dup;
 
-static int xof_get_bytes(EVP_MD_CTX *xof_ctx, uint8_t *output, uint32_t output_size);
-static int hqc_sample_xof(EVP_MD_CTX *md_ctx, uint64_t *vec, const HQC_VARIANT_INFO *info);
 /**
  * @def HQC_PRNG_DOMAIN_SEP
  * @brief Domain separation constant for the HQC PRNG (Pseudo-Random
@@ -105,37 +103,6 @@ static int hqc_sample_xof(EVP_MD_CTX *md_ctx, uint64_t *vec, const HQC_VARIANT_I
  * Define that value here
  */
 #define SEED_BYTES 32
-
-/**
- * @def VEC_SIZE(a, b)
- * @brief Computes the number of elements of size @p b required to store
- *        @p a units.
- *
- * This macro performs ceiling division of @p a by @p b, effectively
- * returning the smallest integer greater than or equal to (a / b).
- * Commonly used to determine the number of words or vector blocks
- * needed to hold a certain number of bits or bytes.
- *
- * @param a Total size (e.g., number of bits or bytes).
- * @param b Unit size (e.g., bits or bytes per word).
- * @return The number of full units of size @p b needed to store @p a.
- */
-#define VEC_SIZE(a, b) (((a) / (b)) + ((a) % (b) == 0 ? 0 : 1))
-
-/**
- * @def VEC_BITMASK(a, s)
- * @brief Generates a bitmask for the remainder bits of @p a relative to
- *        size @p s.
- *
- * This macro produces a mask with the lowest (a % s) bits set to 1 and
- * the remaining bits cleared. It is typically used to isolate or
- * operate on the trailing bits of a partially filled vector or word.
- *
- * @param a Bit index or size value.
- * @param s Word or vector size in bits.
- * @return A bitmask with (a % s) least significant bits set.
- */
-#define VEC_BITMASK(a, s) ((1ULL << (a % s)) - 1)
 
 /**
  * @var variant_info
@@ -483,8 +450,8 @@ static int hqc_kem_validate(const void *vkey, int selection, int check_type)
         /*
          * Recompute our x and y vectors
          */
-        if (!hqc_sample_xof(md_ctx, y, key->info)
-            || !hqc_sample_xof(md_ctx, x, key->info))
+        if (!ossl_hqc_sample_xof(md_ctx, y, key->info)
+            || !ossl_hqc_sample_xof(md_ctx, x, key->info))
             goto err;
         /*
          * Now confirm that the hamming weights for x and y are what
@@ -1046,185 +1013,6 @@ static const OSSL_PARAM *hqc_kem_gen_settable_params(ossl_unused void *vgctx,
 }
 
 /**
- * @brief Performs modular reduction using Barrett reduction for HQC
- *        arithmetic operations.
- *
- * This function computes the value of @p x modulo @c info->n using
- * Barrett reduction, a fast method for modular reduction that avoids
- * expensive division operations. It is used internally within the HQC
- * (Hamming Quasi-Cyclic) cryptographic routines for efficient modular
- * arithmetic.
- *
- * @param x
- *   The input value to be reduced.
- *
- * @param info
- *   Pointer to an @c HQC_VARIANT_INFO structure containing variant-
- *   specific parameters:
- *   - @c n     : The modulus.
- *   - @c n_mu  : The precomputed Barrett constant
- *                (⌊2³² / n⌋ or a scaled equivalent).
- *
- * @return
- *   The reduced value @c r such that @c 0 ≤ r < info->n.
- *
- * @details
- *   - Computes an approximate quotient @c q = ⌊(x * n_mu) / 2³²⌋.
- *   - Calculates the provisional remainder @c r = x − q × n.
- *   - Conditionally subtracts @c n if @c r ≥ n to ensure the result is
- *     within the correct range.
- *   - Uses bitwise operations instead of branching for constant-time
- *     behavior.
- *
- * @note
- *   - The computation is designed to be constant-time, avoiding
- *     conditional branches that could leak timing information.
- *   - The correctness of the reduction depends on the accuracy of the
- *     precomputed @c n_mu parameter for the given HQC variant.
- *   - This function is typically used in finite-field or polynomial
- *     arithmetic within HQC encryption and key encapsulation routines.
- */
-static uint32_t barrett_reduce(uint32_t x, const HQC_VARIANT_INFO *info)
-{
-    uint64_t q = ((uint64_t)x * info->n_mu) >> 32;
-    uint32_t r = x - (uint32_t)(q * info->n);
-    uint32_t reduce_flag = (((r - info->n) >> 31) ^ 1);
-    /*
-     * Windows get all cranky about trying to negate a uint32_t
-     * Tell it to chill out with some casting
-     */
-    uint32_t mask = (uint32_t)(-((int32_t)reduce_flag));
-    r -= mask & info->n;
-    return r;
-}
-
-/**
- * @brief Samples a sparse binary vector deterministically using an
- *        extendable-output function (XOF).
- *
- * This function generates a binary vector with exactly
- * @c info->omega bits set, according to the HQC (Hamming Quasi-Cyclic)
- * cryptographic specification. The sampling is performed using a
- * pseudorandom byte stream derived from the provided XOF context.
- * Duplicate positions are rejected to ensure unique bit indices.
- *
- * @param md_ctx
- *   Pointer to the initialized @c EVP_MD_CTX representing the XOF
- *   context (e.g., SHAKE256). Used to generate pseudorandom bytes.
- *
- * @param vec
- *   Pointer to the output vector buffer where sampled bits will be set.
- *   Must be large enough to store @c VEC_SIZE(info->n, 64) 64-bit
- *   blocks.
- *
- * @param info
- *   Pointer to an @c HQC_VARIANT_INFO structure providing variant-
- *   specific parameters:
- *   - @c omega        : Number of bits to set in the vector.
- *   - @c omega_r      : Support vector size.
- *   - @c n            : Modulus size in bits.
- *   - @c rej_threshold: Rejection threshold for candidate values.
- *
- * @return
- *   Returns 1 on success, or 0 on failure (e.g., when random byte
- *   generation via @c xof_get_bytes() fails).
- *
- * @details
- *   - Random 24-bit integers are extracted from the XOF stream and
- *     reduced modulo @c n using @c barrett_reduce().
- *   - Duplicate indices are discarded to ensure uniqueness among
- *     selected bit positions.
- *   - For each valid index, the bit position and corresponding 64-bit
- *     word offset are recorded in lookup tables.
- *   - The final binary vector is assembled using bitwise OR operations
- *     across all selected indices.
- *   - The procedure avoids branching where possible to maintain
- *     constant-time behavior.
- *
- * @note
- *   - The caller must ensure that @c md_ctx has been properly seeded
- *     before calling this function.
- *   - The @c vec buffer is modified in place and should be zeroed
- *     before use if accumulation of bits is not intended.
- *   - This function is critical for HQC's error vector and random
- *     support generation steps, where cryptographic uniformity and
- *     reproducibility are required.
- */
-static int hqc_sample_xof(EVP_MD_CTX *md_ctx, uint64_t *vec, const HQC_VARIANT_INFO *info)
-{
-    uint32_t *support;
-    size_t random_bytes_size = 3 * info->omega;
-    uint8_t *rand_bytes;
-    uint8_t inc;
-    size_t i, j, k;
-    uint32_t *index_tab;
-    uint64_t *bit_tab;
-    int32_t pos;
-    uint64_t val;
-    uint32_t tmp;
-    int val1;
-    uint64_t mask;
-    int ret = 0;
-
-    support = OPENSSL_zalloc(info->omega_r * sizeof(uint32_t));
-    rand_bytes = OPENSSL_zalloc(info->omega * 3);
-    index_tab = OPENSSL_zalloc(info->omega_r * sizeof(uint32_t));
-    bit_tab = OPENSSL_zalloc(info->omega_r * sizeof(uint64_t));
-
-    if (support == NULL || rand_bytes == NULL || index_tab == NULL || bit_tab == NULL)
-        goto err;
-
-    i = 0;
-    j = random_bytes_size;
-    while (i < info->omega) {
-        do {
-            if (j == random_bytes_size) {
-                if (!xof_get_bytes(md_ctx, rand_bytes, (uint32_t)random_bytes_size))
-                    return 0;
-                j = 0;
-            }
-            support[i] = ((uint32_t)rand_bytes[j++]) << 16;
-            support[i] |= ((uint32_t)rand_bytes[j++]) << 8;
-            support[i] |= rand_bytes[j++];
-        } while (support[i] >= info->rej_threshold);
-
-        support[i] = barrett_reduce(support[i], info);
-
-        inc = 1;
-        for (k = 0; k < i; k++) {
-            if (support[k] == support[i])
-                inc = 0;
-        }
-        i += inc;
-    }
-
-    for (i = 0; i < info->omega; i++) {
-        index_tab[i] = support[i] >> 6;
-        pos = support[i] & 0x3f;
-        bit_tab[i] = ((uint64_t)1) << pos;
-    }
-
-    val = 0;
-    for (i = 0; i < VEC_SIZE(info->n, 64); i++) {
-        val = 0;
-        for (j = 0; j < info->omega; j++) {
-            tmp = (uint32_t)i - index_tab[j];
-            val1 = 1 ^ ((tmp | (uint32_t)(-(int32_t)tmp)) >> 31);
-            mask = -val1;
-            val |= (bit_tab[j] & mask);
-        }
-        vec[i] |= val;
-    }
-    ret = 1;
-err:
-    OPENSSL_free(support);
-    OPENSSL_free(rand_bytes);
-    OPENSSL_free(index_tab);
-    OPENSSL_free(bit_tab);
-    return ret;
-}
-
-/**
  * @brief Performs polynomial multiplication using the schoolbook method
  *        over GF(2).
  *
@@ -1438,7 +1226,7 @@ static void karatsuba_mul(uint64_t *r, const uint64_t *a, const uint64_t *b,
  *     shifting and XORing the upper words of @p a.
  *   - The shifting amount depends on @c info->n mod 64 to handle
  *     partial-word alignment.
- *   - The final word is masked using @c VEC_BITMASK() to ensure
+ *   - The final word is masked using @c VEC64_BITMASK() to ensure
  *     that bits above degree n−1 are cleared.
  *
  * @note
@@ -1456,7 +1244,7 @@ static void reduce(uint64_t *out, const uint64_t *a, const HQC_VARIANT_INFO *inf
         uint64_t carry = a[i + VEC_SIZE(info->n, 64)] << (64 - (info->n & 0x3F));
         out[i] = a[i] ^ r ^ carry;
     }
-    out[VEC_SIZE(info->n, 64) - 1] &= VEC_BITMASK(info->n, 64);
+    out[VEC_SIZE(info->n, 64) - 1] &= VEC64_BITMASK(info->n);
 }
 
 /**
@@ -1570,67 +1358,6 @@ static void vec_add(uint64_t *o, const uint64_t *v1, const uint64_t *v2, uint32_
 }
 
 /**
- * @brief Extracts a specified number of bytes from an extendable-output
- *        function (XOF) context.
- *
- * This function retrieves pseudorandom bytes from an initialized XOF
- * digest context (e.g., SHAKE256) using the OpenSSL provider API. It
- * ensures that the requested number of bytes is produced even if the
- * total output size is not aligned to 64-bit boundaries.
- *
- * @param xof_ctx
- *   Pointer to the @c EVP_MD_CTX XOF context from which bytes are
- *   squeezed. Must be properly initialized with a SHAKE-based digest.
- *
- * @param output
- *   Pointer to the destination buffer that will receive the generated
- *   pseudorandom bytes.
- *
- * @param output_size
- *   Number of bytes to extract from the XOF stream.
- *
- * @return
- *   Returns 1 on success, or 0 if any call to
- *   @c EVP_DigestSqueeze() fails.
- *
- * @details
- *   - The function first extracts all full 64-bit blocks directly into
- *     the output buffer.
- *   - If @p output_size is not a multiple of 8, an additional 64-bit
- *     block is squeezed into a temporary buffer, and the remaining
- *     bytes are copied to complete the output.
- *   - This design ensures full coverage of the requested output size
- *     without alignment or padding issues.
- *
- * @note
- *   - The @p xof_ctx must be configured for a XOF-capable digest
- *     (e.g., SHAKE128 or SHAKE256).
- *   - This function maintains XOF state continuity — subsequent calls
- *     continue generating the next bytes in the pseudorandom sequence.
- *   - Commonly used in HQC for deterministic sampling and key material
- *     generation.
- */
-static int xof_get_bytes(EVP_MD_CTX *xof_ctx, uint8_t *output, uint32_t output_size)
-{
-    const uint8_t bsize = sizeof(uint64_t);
-    const uint8_t remainder = output_size % bsize;
-    uint8_t tmp[sizeof(uint64_t)];
-
-    if (!EVP_DigestSqueeze(xof_ctx, output, output_size - remainder))
-        return 0;
-    if (remainder != 0) {
-        if (!EVP_DigestSqueeze(xof_ctx, tmp, bsize))
-            return 0;
-        output += output_size - remainder;
-        for (uint8_t i = 0; i < remainder; i++) {
-            output[i] = tmp[i];
-        }
-    }
-
-    return 1;
-}
-
-/**
  * @brief Generates a new HQC KEM public/private keypair.
  *
  * This function implements the full deterministic key generation
@@ -1667,7 +1394,7 @@ static int xof_get_bytes(EVP_MD_CTX *xof_ctx, uint8_t *output, uint32_t output_s
  *       3. @c sigma     — random secret component.
  *       4. @c keypair_seed — concatenated decryption/encryption seeds.
  *   - Samples sparse vectors @c x and @c y using
- *     @c hqc_sample_xof(), computes the public polynomial @c h and
+ *     @c ossl_hqc_sample_xof(), computes the public polynomial @c h and
  *     derives the support vector @c s = x + y * h mod (xⁿ + 1).
  *   - Assembles the final keys:
  *       - Public key = (ek_seed || s)
@@ -1742,9 +1469,9 @@ static void *hqc_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
         goto err;
     if (!EVP_DigestUpdate(md_ctx, &xof_separator, 1))
         goto err;
-    if (!xof_get_bytes(md_ctx, seed_pke, SEED_BYTES))
+    if (!ossl_hqc_xof_get_bytes(md_ctx, seed_pke, SEED_BYTES))
         goto err;
-    if (!xof_get_bytes(md_ctx, gctx->sigma, (uint32_t)key->info->security_bytes))
+    if (!ossl_hqc_xof_get_bytes(md_ctx, gctx->sigma, (uint32_t)key->info->security_bytes))
         goto err;
 
     /*
@@ -1780,9 +1507,9 @@ static void *hqc_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     /*
      * Sample the digest to get our x and y vectors
      */
-    if (!hqc_sample_xof(md_ctx, gctx->y, key->info))
+    if (!ossl_hqc_sample_xof(md_ctx, gctx->y, key->info))
         goto err;
-    if (!hqc_sample_xof(md_ctx, gctx->x, key->info))
+    if (!ossl_hqc_sample_xof(md_ctx, gctx->x, key->info))
         goto err;
 
     /*
@@ -1811,7 +1538,7 @@ static void *hqc_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
         gctx->h[idx] = htole64(gctx->h[idx]);
 #endif
 
-    gctx->h[VEC_SIZE(key->info->n, 64) - 1] &= VEC_BITMASK(key->info->n, 64);
+    gctx->h[VEC_SIZE(key->info->n, 64) - 1] &= VEC64_BITMASK(key->info->n);
 
     vec_mul(gctx->s, gctx->y, gctx->h, key->info);
     vec_add(gctx->s, gctx->x, gctx->s, VEC_SIZE(key->info->n, 64));
@@ -1904,20 +1631,11 @@ static void hqc_kem_gen_cleanup(void *vgctx)
 static void *hqc_kem_dup(const void *vkey, int selection)
 {
     const HQC_KEY *key = vkey;
-    HQC_KEY *dup;
 
     if (!hqc_key_has(key, selection))
         return NULL;
 
-    dup = ossl_prov_hqc_kem_new(NULL, NULL, key->info->type);
-    if (dup == NULL)
-        return NULL;
-
-    memcpy(dup->ek, key->ek, key->info->ek_size);
-    memcpy(dup->dk, key->dk, key->info->dk_size);
-    dup->selection = selection;
-
-    return dup;
+    return ossl_hqc_kem_key_dup(key, selection);
 }
 
 #define DECLARE_VARIANT(bits)                                                              \
