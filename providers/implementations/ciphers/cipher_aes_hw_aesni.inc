@@ -49,6 +49,8 @@ static int cipher_hw_aesni_initkey(PROV_CIPHER_CTX *dat,
     return 1;
 }
 
+#if !(defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
+
 static int cipher_hw_aesni_cbc(PROV_CIPHER_CTX *ctx, unsigned char *out,
                                const unsigned char *in, size_t len)
 {
@@ -58,6 +60,48 @@ static int cipher_hw_aesni_cbc(PROV_CIPHER_CTX *ctx, unsigned char *out,
 
     return 1;
 }
+
+#else
+/* Cache the CPUID check so we don't read OPENSSL_ia32cap_P[] on every call */
+static int aes_cbc_vaes_capable(void)
+{
+    static int cached = -1;
+
+    if (cached == -1)
+        cached = ossl_aes_cbc_vaes_eligible();
+    return cached;
+}
+
+/* active in 64-bit builds when AES-NI, AVX512F, and VAES are detected */
+static int aes_cbc_vaes_wrapper(
+    PROV_CIPHER_CTX *ctx,
+    unsigned char *out,
+    const unsigned char *in,
+    size_t len)
+{
+    const AES_KEY *ks = ctx->ks;
+
+    ossl_aes_cbc_vaes_decrypt(in, out, len, ks, ctx->iv, ctx->enc);
+
+    return 1;
+}
+
+/* CBC mode with VAES support */
+static int cipher_hw_aesni_cbc(PROV_CIPHER_CTX *ctx, unsigned char *out,
+                               const unsigned char *in, size_t len)
+{
+    /* Use VAES only when the payload is large enough to amortize the
+     * per-call setup cost (key broadcast).  For small sizes the
+     * hand-tuned aesni_cbc_encrypt assembly is faster. */
+    if (!ctx->enc && aes_cbc_vaes_capable() && len >= 256) {
+        return aes_cbc_vaes_wrapper(ctx, out, in, len);
+    }
+
+    aesni_cbc_encrypt(in, out, len, ctx->ks, ctx->iv, ctx->enc);
+    return 1;
+}
+
+#endif
 
 static int cipher_hw_aesni_ecb(PROV_CIPHER_CTX *ctx, unsigned char *out,
                                const unsigned char *in, size_t len)
