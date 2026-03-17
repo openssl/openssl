@@ -210,6 +210,12 @@ void ossl_aes_cfb128_vaes_enc(const unsigned char *in, unsigned char *out,
 void ossl_aes_cfb128_vaes_dec(const unsigned char *in, unsigned char *out,
     size_t len, const AES_KEY *ks,
     const unsigned char ivec[16], ossl_ssize_t *num);
+
+/* VAES AVX-512 CBC decryption (single entry point for all key sizes) */
+void ossl_aes_cbc_vaes_decrypt(const unsigned char *in, unsigned char *out,
+    size_t len, const void *key, unsigned char ivec[16], int enc);
+int ossl_aes_cbc_vaes_eligible(void);
+
 int ossl_aes_cfb128_vaes_eligible(void);
 
 void aesni_encrypt(const unsigned char *in, unsigned char *out,
