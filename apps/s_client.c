@@ -8,7 +8,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/deprecated.h"
+/*
+ * Use OPENSSL_SUPPRESS_DEPRECATED (not internal/deprecated.h) so that
+ * OPENSSL_NO_DEPRECATED_4_1 remains in effect when building with no-deprecated.
+ * Otherwise the compression block below would be compiled but the symbols
+ * would be missing from libssl, causing link errors.
+ */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include "internal/e_os.h"
 #include <ctype.h>
 #include <stdio.h>
