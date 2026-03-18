@@ -12,7 +12,7 @@
 
 #include <openssl/evp.h>
 
-#if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
+#if (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)) && !defined(_M_ARM64EC)
 int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
     const unsigned char *src, int srclen,
     int *consumed_out);

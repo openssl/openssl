@@ -18,7 +18,7 @@
 #if defined(__AVX2__)
 #define HAVE_AVX2() 1
 #elif defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) \
-    && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
+    && ((defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)) && !defined(_M_ARM64EC))
 #define HAVE_AVX2() ((OPENSSL_ia32cap_P[2] & (1u << 5)) != 0)
 #endif
 
