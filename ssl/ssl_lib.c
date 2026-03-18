@@ -1461,32 +1461,8 @@ void ossl_ssl_connection_free(SSL *ssl)
     if (s == NULL)
         return;
 
-    /*
-     * For DTLS, the sent_messages queue may hold saved_retransmit_state
-     * entries pointing to the current s->rlayer.wrl. RECORD_LAYER_clear
-     * is about to free and NULL out that pointer. If we let
-     * dtls1_clear_sent_buffer (called later via ssl_deinit) compare
-     * saved.wrl against current s->rlayer.wrl to set the
-     * saved_retransmit_state.wrl to NULL so it doesn't get freed
-     * a second time.
-     * Preemptively null out any saved_retransmit_state entry that references
-     * the current wrl so that RECORD_LAYER_clear owns that free exclusively.
-     * Entries with a different (older) saved wrl pointer are unaffected
-     * and will be freed correctly by dtls1_clear_sent_buffer.
-     */
-    if (SSL_CONNECTION_IS_DTLS(s) && s->d1 != NULL && s->rlayer.wrl != NULL) {
-        pitem *item;
-        piterator iter = pqueue_iterator(&s->d1->sent_messages);
-
-        while ((item = pqueue_next(&iter)) != NULL) {
-            dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
-
-            if (sent_msg->saved_retransmit_state.wrl == s->rlayer.wrl) {
-                sent_msg->saved_retransmit_state.wrl = NULL;
-                sent_msg->saved_retransmit_state.wrlmethod = NULL;
-            }
-        }
-    }
+    if (s->d1 != NULL && s->rlayer.wrl != NULL)
+        dtls1_clear_current_wrl_from_sent_buffer(s);
 
     /*
      * Ignore return values. This could result in user callbacks being called
