@@ -2598,8 +2598,6 @@ __owur int dtls1_set_handshake_header(SSL_CONNECTION *s, WPACKET *pkt, int htype
 __owur int dtls1_close_construct_packet(SSL_CONNECTION *s, WPACKET *pkt, int htype);
 __owur int ssl3_handshake_write(SSL_CONNECTION *s);
 
-__owur int ssl_allow_compression(SSL_CONNECTION *s);
-
 __owur int ssl_version_cmp(const SSL_CONNECTION *s, int versiona, int versionb);
 __owur int ssl_version_supported(const SSL_CONNECTION *s, int version,
     const SSL_METHOD **meth);

@@ -1765,9 +1765,8 @@ err:
         ret->session_ticket = SSL_TEST_SESSION_TICKET_NO;
     else
         ret->session_ticket = SSL_TEST_SESSION_TICKET_YES;
-    ret->compression = (SSL_get_current_compression(client.ssl) == NULL)
-        ? SSL_TEST_COMPRESSION_NO
-        : SSL_TEST_COMPRESSION_YES;
+    /* TLS record compression removed in OpenSSL 5.0 - always no compression */
+    ret->compression = SSL_TEST_COMPRESSION_NO;
     if (sess_id == NULL || sess_id_len == 0)
         ret->session_id = SSL_TEST_SESSION_ID_NO;
     else

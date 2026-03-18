@@ -1835,9 +1835,6 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     int i, al = SSL_AD_INTERNAL_ERROR;
     int protverr;
     unsigned long id;
-#ifndef OPENSSL_NO_COMP
-    SSL_COMP *comp = NULL;
-#endif
     const SSL_CIPHER *c;
     STACK_OF(SSL_CIPHER) *ciphers = NULL;
     STACK_OF(SSL_CIPHER) *scsvs = NULL;
@@ -2155,93 +2152,20 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     }
 
     /*
-     * Worst case, we will use the NULL compression, but if we have other
-     * options, we will now look for them.  We have complen-1 compression
-     * algorithms from the client, starting at q.
+     * TLS record compression removed (CRIME): always use null compression.
+     * Reject session resume if the session had compression enabled.
      */
     s->s3.tmp.new_compression = NULL;
     if (SSL_CONNECTION_IS_TLS13(s)) {
-        /*
-         * We already checked above that the NULL compression method appears in
-         * the list. Now we check there aren't any others (which is illegal in
-         * a TLSv1.3 ClientHello.
-         */
         if (clienthello->compressions_len != 1) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                 SSL_R_INVALID_COMPRESSION_ALGORITHM);
             goto err;
         }
-    }
-#ifndef OPENSSL_NO_COMP
-    /* This only happens if we have a cache hit */
-    else if (s->session->compress_meth != 0) {
-        int m, comp_id = s->session->compress_meth;
-        unsigned int k;
-        /* Perform sanity checks on resumed compression algorithm */
-        /* Can't disable compression */
-        if (!ssl_allow_compression(s)) {
-            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
-                SSL_R_INCONSISTENT_COMPRESSION);
-            goto err;
-        }
-        /* Look for resumed compression method */
-        for (m = 0; m < sk_SSL_COMP_num(sctx->comp_methods); m++) {
-            comp = sk_SSL_COMP_value(sctx->comp_methods, m);
-            if (comp_id == comp->id) {
-                s->s3.tmp.new_compression = comp;
-                break;
-            }
-        }
-        if (s->s3.tmp.new_compression == NULL) {
-            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
-                SSL_R_INVALID_COMPRESSION_ALGORITHM);
-            goto err;
-        }
-        /* Look for resumed method in compression list */
-        for (k = 0; k < clienthello->compressions_len; k++) {
-            if (clienthello->compressions[k] == comp_id)
-                break;
-        }
-        if (k >= clienthello->compressions_len) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-                SSL_R_REQUIRED_COMPRESSION_ALGORITHM_MISSING);
-            goto err;
-        }
-    } else if (s->hit) {
-        comp = NULL;
-    } else if (ssl_allow_compression(s) && sctx->comp_methods) {
-        /* See if we have a match */
-        int m, nn, v, done = 0;
-        unsigned int o;
-
-        nn = sk_SSL_COMP_num(sctx->comp_methods);
-        for (m = 0; m < nn; m++) {
-            comp = sk_SSL_COMP_value(sctx->comp_methods, m);
-            v = comp->id;
-            for (o = 0; o < clienthello->compressions_len; o++) {
-                if (v == clienthello->compressions[o]) {
-                    done = 1;
-                    break;
-                }
-            }
-            if (done)
-                break;
-        }
-        if (done)
-            s->s3.tmp.new_compression = comp;
-        else
-            comp = NULL;
-    }
-#else
-    /*
-     * If compression is disabled we'd better not try to resume a session
-     * using compression.
-     */
-    if (s->session->compress_meth != 0) {
+    } else if (s->session->compress_meth != 0) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_INCONSISTENT_COMPRESSION);
         goto err;
     }
-#endif
 
     /*
      * Given s->peer_ciphers and SSL_get_ciphers, we must pick a cipher
@@ -2258,11 +2182,8 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     }
 
     if (!s->hit) {
-#ifdef OPENSSL_NO_COMP
+        /* TLS record compression removed: always use null */
         s->session->compress_meth = 0;
-#else
-        s->session->compress_meth = (comp == NULL) ? 0 : comp->id;
-#endif
     }
 
     sk_SSL_CIPHER_free(ciphers);
@@ -2599,15 +2520,8 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
         return CON_FUNC_ERROR;
     }
 
-    /* set up the compression method */
-#ifdef OPENSSL_NO_COMP
+    /* TLS record compression removed (CRIME): always send null compression */
     compm = 0;
-#else
-    if (usetls13 || s->s3.tmp.new_compression == NULL)
-        compm = 0;
-    else
-        compm = s->s3.tmp.new_compression->id;
-#endif
 
     if (!WPACKET_sub_memcpy_u8(pkt, session_id, sl)
         || !SSL_CONNECTION_GET_SSL(s)->method->put_cipher_by_char(s->s3.tmp.new_cipher,

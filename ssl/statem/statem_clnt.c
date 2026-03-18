@@ -836,14 +836,8 @@ WORK_STATE ossl_statem_client_post_work(SSL_CONNECTION *s, WORK_STATE wst)
             break;
         }
         s->session->cipher = s->s3.tmp.new_cipher;
-#ifdef OPENSSL_NO_COMP
+        /* TLS record compression removed: always null */
         s->session->compress_meth = 0;
-#else
-        if (s->s3.tmp.new_compression == NULL)
-            s->session->compress_meth = 0;
-        else
-            s->session->compress_meth = s->s3.tmp.new_compression->id;
-#endif
         if (!ssl->method->ssl3_enc->setup_key_block(s)) {
             /* SSLfatal() already called */
             return WORK_ERROR;
@@ -1386,9 +1380,6 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pk
     unsigned char *p;
     size_t sess_id_len;
     int i, protverr;
-#ifndef OPENSSL_NO_COMP
-    SSL_COMP *comp;
-#endif
     SSL_SESSION *sess = s->session;
     unsigned char *session_id;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
@@ -1553,28 +1544,9 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pk
         return CON_FUNC_ERROR;
     }
 
-    /* COMPRESSION */
-    if (!WPACKET_start_sub_packet_u8(pkt)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return CON_FUNC_ERROR;
-    }
-#ifndef OPENSSL_NO_COMP
-    if (ssl_allow_compression(s)
-        && sctx->comp_methods
-        && (SSL_CONNECTION_IS_DTLS(s)
-            || s->s3.tmp.max_ver < TLS1_3_VERSION)) {
-        int compnum = sk_SSL_COMP_num(sctx->comp_methods);
-        for (i = 0; i < compnum; i++) {
-            comp = sk_SSL_COMP_value(sctx->comp_methods, i);
-            if (!WPACKET_put_bytes_u8(pkt, comp->id)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return CON_FUNC_ERROR;
-            }
-        }
-    }
-#endif
-    /* Add the NULL method */
-    if (!WPACKET_put_bytes_u8(pkt, 0) || !WPACKET_close(pkt)) {
+    /* COMPRESSION: TLS record compression removed (CRIME), send only null */
+    if (!WPACKET_start_sub_packet_u8(pkt)
+        || !WPACKET_put_bytes_u8(pkt, 0) || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return CON_FUNC_ERROR;
     }
@@ -1704,9 +1676,6 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
     RAW_EXTENSION *extensions = NULL;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
-#ifndef OPENSSL_NO_COMP
-    SSL_COMP *comp;
-#endif
 #ifndef OPENSSL_NO_ECH
     const unsigned char *shbuf = NULL;
     size_t shlen, alen;
@@ -2064,44 +2033,17 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
     }
 
-#ifdef OPENSSL_NO_COMP
+    /* TLS record compression removed (CRIME): only accept null compression */
     if (compression != 0) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
             SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
         goto err;
     }
-    /*
-     * If compression is disabled we'd better not try to resume a session
-     * using compression.
-     */
     if (s->session->compress_meth != 0) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_INCONSISTENT_COMPRESSION);
         goto err;
     }
-#else
-    if (s->hit && compression != s->session->compress_meth) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-            SSL_R_OLD_SESSION_COMPRESSION_ALGORITHM_NOT_RETURNED);
-        goto err;
-    }
-    if (compression == 0)
-        comp = NULL;
-    else if (!ssl_allow_compression(s)) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_COMPRESSION_DISABLED);
-        goto err;
-    } else {
-        comp = ssl3_comp_find(SSL_CONNECTION_GET_CTX(s)->comp_methods,
-            compression);
-    }
-
-    if (compression != 0 && comp == NULL) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-            SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
-        goto err;
-    } else {
-        s->s3.tmp.new_compression = comp;
-    }
-#endif
+    s->s3.tmp.new_compression = NULL;
 
     if (!tls_parse_all_extensions(s, context, extensions, NULL, 0, 1)) {
         /* SSLfatal() already called */

@@ -368,7 +368,10 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 #endif
 /* As server, disallow session resumption on renegotiation */
 #define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION SSL_OP_BIT(16)
-/* Don't use compression even if supported */
+/*
+ * As of OpenSSL 5.0, TLS record compression has been removed (CRIME).
+ * This option is retained for API compatibility but has no effect.
+ */
 #define SSL_OP_NO_COMPRESSION SSL_OP_BIT(17)
 /* Permit unsafe legacy renegotiation */
 #define SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION SSL_OP_BIT(18)
@@ -1782,7 +1785,9 @@ const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s,
     unsigned int *len);
 const unsigned char *SSL_SESSION_get0_id_context(const SSL_SESSION *s,
     unsigned int *len);
-__owur unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s);
+#ifndef OPENSSL_NO_DEPRECATED_5_0
+OSSL_DEPRECATEDIN_5_0 __owur unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s);
+#endif /* OPENSSL_NO_DEPRECATED_5_0 */
 #ifndef OPENSSL_NO_STDIO
 int SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *ses);
 #endif
@@ -2233,20 +2238,22 @@ void SSL_set_tmp_dh_callback(SSL *ssl,
 #endif
 #endif
 
-__owur const COMP_METHOD *SSL_get_current_compression(const SSL *s);
-__owur const COMP_METHOD *SSL_get_current_expansion(const SSL *s);
-__owur const char *SSL_COMP_get_name(const COMP_METHOD *comp);
-__owur const char *SSL_COMP_get0_name(const SSL_COMP *comp);
-__owur int SSL_COMP_get_id(const SSL_COMP *comp);
-STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
-__owur STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
+#ifndef OPENSSL_NO_DEPRECATED_5_0
+OSSL_DEPRECATEDIN_5_0 __owur const COMP_METHOD *SSL_get_current_compression(const SSL *s);
+OSSL_DEPRECATEDIN_5_0 __owur const COMP_METHOD *SSL_get_current_expansion(const SSL *s);
+OSSL_DEPRECATEDIN_5_0 __owur const char *SSL_COMP_get_name(const COMP_METHOD *comp);
+OSSL_DEPRECATEDIN_5_0 __owur const char *SSL_COMP_get0_name(const SSL_COMP *comp);
+OSSL_DEPRECATEDIN_5_0 __owur int SSL_COMP_get_id(const SSL_COMP *comp);
+OSSL_DEPRECATEDIN_5_0 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
+OSSL_DEPRECATEDIN_5_0 __owur STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
         *meths);
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #define SSL_COMP_free_compression_methods() \
     while (0)                               \
     continue
 #endif
-__owur int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
+OSSL_DEPRECATEDIN_5_0 __owur int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
+#endif /* OPENSSL_NO_DEPRECATED_5_0 */
 
 const SSL_CIPHER *SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr);
 int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c);

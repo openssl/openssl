@@ -860,6 +860,40 @@ end:
 }
 
 /*
+ * Regression test: as of OpenSSL 5.0 TLS record compression is never
+ * negotiated. After a successful handshake, SSL_get_current_compression
+ * must be NULL on both client and server (when the deprecated API is present).
+ */
+static int test_no_record_compression(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_VERSION, 0,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+#ifndef OPENSSL_NO_DEPRECATED_5_0
+    if (!TEST_ptr_null(SSL_get_current_compression(serverssl))
+        || !TEST_ptr_null(SSL_get_current_compression(clientssl)))
+        goto end;
+#endif
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
  * Very focused test to exercise a single case in the server-side state
  * machine, when the ChangeCipherState message needs to actually change
  * from one cipher to a different cipher (i.e., not changing from null
@@ -14723,6 +14757,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_client_hello_cb);
     ADD_TEST(test_no_ems);
+    ADD_TEST(test_no_record_compression);
     ADD_TEST(test_ccs_change_cipher);
 #endif
 #ifndef OSSL_NO_USABLE_TLS1_3

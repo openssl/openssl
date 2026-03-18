@@ -4367,9 +4367,8 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     if ((ret->ext.secure = OPENSSL_secure_zalloc(sizeof(*ret->ext.secure))) == NULL)
         goto err;
 
-    /* No compression for DTLS */
-    if (!(meth->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS))
-        ret->comp_methods = SSL_COMP_get_compression_methods();
+    /* TLS record compression removed (CRIME): do not register compression */
+    ret->comp_methods = NULL;
 
     ret->max_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
     ret->split_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
@@ -4415,12 +4414,9 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         ret->cert_comp_prefs[i++] = TLSEXT_comp_cert_zstd;
 #endif
     /*
-     * Disable compression by default to prevent CRIME. Applications can
-     * re-enable compression by configuring
-     * SSL_CTX_clear_options(ctx, SSL_OP_NO_COMPRESSION);
-     * or by using the SSL_CONF library. Similarly we also enable TLSv1.3
-     * middlebox compatibility by default. This may be disabled by default in
-     * a later OpenSSL version.
+     * TLS record compression has been removed (CRIME). SSL_OP_NO_COMPRESSION
+     * is kept for API compatibility but has no effect. Similarly we enable
+     * TLSv1.3 middlebox compatibility by default.
      */
     ret->options |= SSL_OP_NO_COMPRESSION | SSL_OP_ENABLE_MIDDLEBOX_COMPAT;
 
@@ -5521,6 +5517,7 @@ const SSL_CIPHER *SSL_get_pending_cipher(const SSL *s)
     return sc->s3.tmp.new_cipher;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_5_0
 const COMP_METHOD *SSL_get_current_compression(const SSL *s)
 {
 #ifndef OPENSSL_NO_COMP
@@ -5548,6 +5545,18 @@ const COMP_METHOD *SSL_get_current_expansion(const SSL *s)
     return NULL;
 #endif
 }
+#else
+/* TLS record compression removed in 5.0 - stubs for ABI compatibility */
+const COMP_METHOD *SSL_get_current_compression(const SSL *s)
+{
+    return NULL;
+}
+
+const COMP_METHOD *SSL_get_current_expansion(const SSL *s)
+{
+    return NULL;
+}
+#endif /* OPENSSL_NO_DEPRECATED_5_0 */
 
 int ssl_init_wbio_buffer(SSL_CONNECTION *s)
 {

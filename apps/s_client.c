@@ -3731,9 +3731,6 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     const SSL_CIPHER *c;
     int i, istls13 = (SSL_version(s) == TLS1_3_VERSION);
     long verify_result;
-#ifndef OPENSSL_NO_COMP
-    const COMP_METHOD *comp, *expansion;
-#endif
     unsigned char *exportedkeymat;
 #ifndef OPENSSL_NO_CT
     const SSL_CTX *ctx = SSL_get_SSL_CTX(s);
@@ -3859,14 +3856,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 
     ssl_print_secure_renegotiation_notes(bio, s);
 
-#ifndef OPENSSL_NO_COMP
-    comp = SSL_get_current_compression(s);
-    expansion = SSL_get_current_expansion(s);
-    BIO_printf(bio, "Compression: %s\n"
-                    "Expansion: %s\n",
-        comp ? SSL_COMP_get_name(comp) : "NONE",
-        expansion ? SSL_COMP_get_name(expansion) : "NONE");
-#endif
+    /* TLS record compression removed in OpenSSL 5.0; always NONE */
+    BIO_printf(bio, "Compression: NONE\nExpansion: NONE\n");
 #ifndef OPENSSL_NO_KTLS
     if (BIO_get_ktls_send(SSL_get_wbio(s)))
         BIO_puts(bio_err, "Using Kernel TLS for sending\n");

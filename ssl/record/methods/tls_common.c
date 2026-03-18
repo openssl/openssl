@@ -110,13 +110,11 @@ char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
 }
 
 #ifndef OPENSSL_NO_COMP
+/* TLS record compression removed in 5.0 - always disallow for buffer sizing */
 static int tls_allow_compression(OSSL_RECORD_LAYER *rl)
 {
-    if (rl->options & SSL_OP_NO_COMPRESSION)
-        return 0;
-
-    return rl->security == NULL
-        || rl->security(rl->cbarg, SSL_SECOP_COMPRESSION, 0, 0, NULL);
+    (void)rl;
+    return 0;
 }
 #endif
 
