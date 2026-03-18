@@ -1576,7 +1576,7 @@ static int test_keyexch(OSSL_LIB_CTX *ctx, const char *propq, EVP_KEYEXCH *excha
 
 static int test_EVP_KEYEXCH_fetch_freeze(void)
 {
-#if defined(OPENSSL_NO_CACHED_FETCH) || defined(OPENSSL_NO_ML_KEM) || defined(OPENSSL_NO_DH)
+#if defined(OPENSSL_NO_CACHED_FETCH) || defined(OPENSSL_NO_DH)
     /*
      * Test does not make sense if cached fetch is disabled.
      * There's nothing to freeze, and test will fail.
