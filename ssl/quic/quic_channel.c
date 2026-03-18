@@ -4145,6 +4145,9 @@ int ossl_quic_channel_set_max_data_request(QUIC_CHANNEL *ch, uint64_t max_data)
     if (ossl_quic_channel_have_generated_transport_params(ch))
         return 0;
 
+    if (max_data > UINT64_MAX / DEFAULT_CONN_RXFC_MAX_WND_MUL)
+        return 0;
+
     if (!ossl_quic_rxfc_init(&ch->conn_rxfc, NULL,
             max_data, DEFAULT_CONN_RXFC_MAX_WND_MUL * max_data,
             get_time, ch))
