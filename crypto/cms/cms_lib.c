@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -409,28 +409,20 @@ BIO *ossl_cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
 {
     BIO *mdbio = NULL;
     const ASN1_OBJECT *digestoid;
-    const EVP_MD *digest = NULL;
-    EVP_MD *fetched_digest = NULL;
+    EVP_MD *digest = NULL;
     char alg[OSSL_MAX_NAME_SIZE];
     size_t xof_len = 0;
 
     X509_ALGOR_get0(&digestoid, NULL, NULL, digestAlgorithm);
     OBJ_obj2txt(alg, sizeof(alg), digestoid, 0);
 
-    (void)ERR_set_mark();
-    fetched_digest = EVP_MD_fetch(ossl_cms_ctx_get0_libctx(ctx), alg,
+    digest = EVP_MD_fetch(ossl_cms_ctx_get0_libctx(ctx), alg,
         ossl_cms_ctx_get0_propq(ctx));
 
-    if (fetched_digest != NULL)
-        digest = fetched_digest;
-    else
-        digest = EVP_get_digestbyobj(digestoid);
     if (digest == NULL) {
-        (void)ERR_clear_last_mark();
         ERR_raise(ERR_LIB_CMS, CMS_R_UNKNOWN_DIGEST_ALGORITHM);
         goto err;
     }
-    (void)ERR_pop_to_mark();
 
     mdbio = BIO_new(BIO_f_md());
     if (mdbio == NULL || BIO_set_md(mdbio, digest) <= 0) {
@@ -455,10 +447,10 @@ BIO *ossl_cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
                 goto err;
         }
     }
-    EVP_MD_free(fetched_digest);
+    EVP_MD_free(digest);
     return mdbio;
 err:
-    EVP_MD_free(fetched_digest);
+    EVP_MD_free(digest);
     BIO_free(mdbio);
     return NULL;
 }
@@ -481,7 +473,7 @@ int ossl_cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
             return 0;
         }
         BIO_get_md_ctx(chain, &mtmp);
-        if (EVP_MD_CTX_get_type(mtmp) == nid
+        if (EVP_MD_CTX_get_type(mtmp) == nid || OBJ_sn2nid(EVP_MD_CTX_get0_name(mtmp)) == nid
             /*
              * Workaround for broken implementations that use signature
              * algorithm OID instead of digest.

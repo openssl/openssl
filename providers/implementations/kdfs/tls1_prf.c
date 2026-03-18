@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -207,7 +207,7 @@ static int fips_ems_check_passed(TLS1_PRF *ctx)
     if (!ems_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
                 libctx, "TLS_PRF", "EMS",
-                ossl_fips_config_tls1_prf_ems_check)) {
+                FIPS_CONFIG_TLS1_PRF_EMS_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_EMS_NOT_ENABLED);
             return 0;
         }
@@ -232,7 +232,7 @@ static int fips_digest_check_passed(TLS1_PRF *ctx, const EVP_MD *md)
     if (digest_unapproved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE1,
                 libctx, "TLS_PRF", "Digest",
-                ossl_fips_config_tls1_prf_digest_check)) {
+                FIPS_CONFIG_TLS1_PRF_DIGEST_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
             return 0;
         }
@@ -248,7 +248,7 @@ static int fips_key_check_passed(TLS1_PRF *ctx)
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE2,
                 libctx, "TLS_PRF", "Key size",
-                ossl_fips_config_tls1_prf_key_check)) {
+                FIPS_CONFIG_TLS1_PRF_KEY_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }

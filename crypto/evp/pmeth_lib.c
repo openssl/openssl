@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1216,7 +1216,7 @@ static int evp_pkey_ctx_store_cached_data(EVP_PKEY_CTX *ctx,
             if (ctx->cached_parameters.dist_id_name == NULL)
                 return 0;
         }
-        if (data_len > 0) {
+        if (data != NULL) {
             ctx->cached_parameters.dist_id = OPENSSL_memdup(data, data_len);
             if (ctx->cached_parameters.dist_id == NULL)
                 return 0;

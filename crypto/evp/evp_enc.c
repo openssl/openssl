@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1478,12 +1478,12 @@ static void *evp_cipher_from_algorithm(const int name_id,
     if ((fnciphcnt != 0 && fnciphcnt != 3 && fnciphcnt != 4)
         || (fnciphcnt == 0 && cipher->ccipher == NULL && fnpipecnt == 0)
         || (fnpipecnt != 0 && (fnpipecnt < 3 || cipher->p_cupdate == NULL || cipher->p_cfinal == NULL))
-        || fnctxcnt != 2) {
+        || fnctxcnt != 2
+        || cipher->get_params == NULL) {
         /*
          * In order to be a consistent set of functions we must have at least
          * a complete set of "encrypt" functions, or a complete set of "decrypt"
-         * functions, or a single "cipher" function. In all cases we need both
-         * the "newctx" and "freectx" functions.
+         * functions, or a single "cipher" function.
          */
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         goto err;

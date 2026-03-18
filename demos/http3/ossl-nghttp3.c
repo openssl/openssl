@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -416,7 +416,7 @@ OSSL_DEMO_H3_CONN *OSSL_DEMO_H3_CONN_new_for_addr(SSL_CTX *ctx, const BIO_ADDRIN
     qconn_bio = NULL;
 
     /* Set the hostname we will validate the X.509 certificate against. */
-    if (SSL_set1_host(qconn, bare_hostname) <= 0)
+    if (SSL_set1_dnsname(qconn, bare_hostname) <= 0)
         goto err;
 
     /* Configure SNI */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -347,9 +347,9 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id)
     InterlockedExchange((LONG volatile *)&lock->reader_idx, tmp);
 #endif
 
-    /* wake up any waiters */
-    ossl_crypto_condvar_broadcast(lock->alloc_signal);
     ossl_crypto_mutex_unlock(lock->alloc_lock);
+    /* wake up any waiters */
+    ossl_crypto_condvar_signal(lock->alloc_signal);
     return &lock->qp_group[current_idx];
 }
 
@@ -358,8 +358,8 @@ static void retire_qp(CRYPTO_RCU_LOCK *lock,
 {
     ossl_crypto_mutex_lock(lock->alloc_lock);
     lock->writers_alloced--;
-    ossl_crypto_condvar_broadcast(lock->alloc_signal);
     ossl_crypto_mutex_unlock(lock->alloc_lock);
+    ossl_crypto_condvar_signal(lock->alloc_signal);
 }
 
 void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
@@ -388,8 +388,8 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
     } while (count != (uint64_t)0);
 
     lock->next_to_retire++;
-    ossl_crypto_condvar_broadcast(lock->prior_signal);
     ossl_crypto_mutex_unlock(lock->prior_lock);
+    ossl_crypto_condvar_broadcast(lock->prior_signal);
 
     retire_qp(lock, qp);
 

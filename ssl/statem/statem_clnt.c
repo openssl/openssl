@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -403,20 +403,6 @@ int ossl_statem_client_read_transition(SSL_CONNECTION *s, int mt)
 
 err:
     /* No valid transition found */
-    if (SSL_CONNECTION_IS_DTLS(s) && mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
-        BIO *rbio;
-
-        /*
-         * CCS messages don't have a message sequence number so this is probably
-         * because of an out-of-order CCS. We'll just drop it.
-         */
-        s->init_num = 0;
-        s->rwstate = SSL_READING;
-        rbio = SSL_get_rbio(SSL_CONNECTION_GET_SSL(s));
-        BIO_clear_retry_flags(rbio);
-        BIO_set_retry_read(rbio);
-        return 0;
-    }
     SSLfatal(s, SSL3_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
     return 0;
 }
@@ -1899,7 +1885,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     goto err;
                 }
-                if (SSL_set1_host(ssl, s->ext.ech.outer_hostname) != 1) {
+                if (SSL_set1_dnsname(ssl, s->ext.ech.outer_hostname) != 1) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     goto err;
                 }
@@ -3395,6 +3381,7 @@ int tls_process_initial_server_flight(SSL_CONNECTION *s)
         && s->ext.ech.attempted == 1
         && s->ext.ech.success != 1
         && s->ext.ech.grease != OSSL_ECH_IS_GREASE) {
+        s->ext.ech.retry_configs_ok = 1; /* note those are good */
         SSLfatal(s, SSL_AD_ECH_REQUIRED, SSL_R_ECH_REQUIRED);
         return 0;
     }

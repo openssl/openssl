@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,18 @@
 #include "crypto/rand.h"
 #include "internal/cryptlib.h"
 #include "self_test.h"
+
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
+#define SELF_TEST_KA_ENABLED 1
+#endif
+
+#if !defined(OPENSSL_NO_ML_DSA) || !defined(OPENSSL_NO_SLH_DSA)
+#define SELF_TEST_ASYM_KEYGEN_ENABLED 1
+#endif
+
+#if !defined(OPENSSL_NO_ML_KEM)
+#define SELF_TEST_KEM_ENABLED 1
+#endif
 
 static int set_kat_drbg(OSSL_LIB_CTX *ctx,
     const unsigned char *entropy, size_t entropy_len,
@@ -393,7 +405,7 @@ err:
     return ret;
 }
 
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
+#if defined(SELF_TEST_KA_ENABLED)
 static int self_test_ka(const ST_DEFINITION *t,
     OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 {
@@ -454,7 +466,7 @@ err:
     OSSL_SELF_TEST_onend(st, ret);
     return ret;
 }
-#endif /* !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC) */
+#endif /* defined(SELF_TEST_KA_ENABLED) */
 
 static int digest_signature(const uint8_t *sig, size_t sig_len,
     uint8_t *out, size_t *out_len,
@@ -601,7 +613,7 @@ err:
     return ret;
 }
 
-#if !defined(OPENSSL_NO_ML_DSA) || !defined(OPENSSL_NO_SLH_DSA)
+#if defined(SELF_TEST_ASYM_KEYGEN_ENABLED)
 /*
  * Test that a deterministic key generation produces the correct key
  */
@@ -651,9 +663,9 @@ err:
     OSSL_SELF_TEST_onend(st, ret);
     return ret;
 }
-#endif /* OPENSSL_NO_ML_DSA */
+#endif /* defined(SELF_TEST_ASYM_KEYGEN_ENABLED) */
 
-#ifndef OPENSSL_NO_ML_KEM
+#if defined(SELF_TEST_KEM_ENABLED)
 /*
  * FIPS 140-3 IG 10.3.A resolution 14 mandates a CAST for ML-KEM
  * encapsulation.
@@ -809,7 +821,7 @@ err:
     OSSL_PARAM_free(params);
     return ret;
 }
-#endif
+#endif /* defined(SELF_TEST_KEM_ENABLED) */
 
 /*
  * Test an encrypt or decrypt KAT..
@@ -975,6 +987,8 @@ static int set_kat_drbg(OSSL_LIB_CTX *ctx,
     EVP_RAND *rand;
     unsigned int strength = 256;
     EVP_RAND_CTX *parent_rand = NULL;
+    int reseed_time_interval = 0;
+    unsigned int reseed_requests = 0;
     OSSL_PARAM drbg_params[3] = {
         OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END
     };
@@ -1021,7 +1035,12 @@ static int set_kat_drbg(OSSL_LIB_CTX *ctx,
     EVP_RAND_CTX_free(parent_rand);
     parent_rand = NULL;
 
-    if (!EVP_RAND_instantiate(kat_rand, strength, 0, persstr, persstr_len, NULL))
+    /* Disable time/request based reseeding to make selftests deterministic */
+    drbg_params[0] = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL,
+        &reseed_time_interval);
+    drbg_params[1] = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_REQUESTS,
+        &reseed_requests);
+    if (!EVP_RAND_instantiate(kat_rand, strength, 0, persstr, persstr_len, drbg_params))
         goto err;
 
     /* When we set the new private generator this one is freed, so upref it */
@@ -1112,15 +1131,21 @@ static int SELF_TEST_kats_single(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
     case SELF_TEST_DRBG:
         ret = self_test_drbg(&st_all_tests[id], st, libctx);
         break;
+#if defined(SELF_TEST_KA_ENABLED)
     case SELF_TEST_KAT_KAS:
         ret = self_test_ka(&st_all_tests[id], st, libctx);
         break;
+#endif
+#if defined(SELF_TEST_ASYM_KEYGEN_ENABLED)
     case SELF_TEST_KAT_ASYM_KEYGEN:
         ret = self_test_asym_keygen(&st_all_tests[id], st, libctx);
         break;
+#endif
+#if defined(SELF_TEST_KEM_ENABLED)
     case SELF_TEST_KAT_KEM:
         ret = self_test_kem(&st_all_tests[id], st, libctx);
         break;
+#endif
     case SELF_TEST_KAT_ASYM_CIPHER:
         ret = self_test_asym_cipher(&st_all_tests[id], st, libctx);
         break;

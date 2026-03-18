@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Siemens AG 2018-2020
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -591,6 +591,7 @@ static int process_genm(OSSL_CMP_SRV_CTX *srv_ctx,
         if (rsp != NULL && sk_OSSL_CMP_ITAV_push(*out, rsp))
             return 1;
         sk_OSSL_CMP_ITAV_free(*out);
+        OSSL_CMP_ITAV_free(rsp);
         return 0;
     }
 

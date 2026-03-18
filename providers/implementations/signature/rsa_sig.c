@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -424,7 +424,7 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
                     OSSL_FIPS_IND_SETTABLE1,
                     ctx->libctx,
                     md_nid, sha1_allowed, 1, desc,
-                    ossl_fips_config_signature_digest_check))
+                    FIPS_CONFIG_SIGNATURE_DIGEST_CHECK))
                 goto err;
         }
 #endif
@@ -656,7 +656,7 @@ static int rsa_pss_saltlen_check_passed(PROV_RSA_CTX *ctx, const char *algoname,
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE3,
                 ctx->libctx,
                 algoname, "PSS Salt Length",
-                ossl_fips_config_rsa_pss_saltlen_check)) {
+                FIPS_CONFIG_RSA_PSS_SALTLEN_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SALT_LENGTH);
             return 0;
         }
@@ -1504,7 +1504,7 @@ static int rsa_x931_padding_allowed(PROV_RSA_CTX *ctx)
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE2,
                 ctx->libctx,
                 "RSA Sign set ctx", "X931 Padding",
-                ossl_fips_config_rsa_sign_x931_disallowed)) {
+                FIPS_CONFIG_RSA_SIGN_X931_PAD_DISABLED)) {
             ERR_raise(ERR_LIB_PROV,
                 PROV_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
             return 0;
@@ -1520,6 +1520,7 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
     struct rsa_set_ctx_params_st p;
     int pad_mode;
     int saltlen;
+    int count = 0;
     char mdname[OSSL_MAX_NAME_SIZE] = "", *pmdname = NULL;
     char mdprops[OSSL_MAX_PROPQUERY_SIZE] = "", *pmdprops = NULL;
     char mgf1mdname[OSSL_MAX_NAME_SIZE] = "", *pmgf1mdname = NULL;
@@ -1532,12 +1533,14 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
         return 1;
 
     if (prsactx->flag_allow_md) {
-        if (!rsa_set_ctx_params_decoder(params, &p))
+        if (!rsa_set_ctx_params_decoder(params, &p, &count))
             return 0;
     } else {
-        if (!rsa_set_ctx_params_no_digest_decoder(params, &p))
+        if (!rsa_set_ctx_params_no_digest_decoder(params, &p, &count))
             return 0;
     }
+    if (count == 0)
+        return 1;
 
     if (!OSSL_FIPS_IND_SET_CTX_FROM_PARAM(prsactx, OSSL_FIPS_IND_SETTABLE0,
             p.ind_k))

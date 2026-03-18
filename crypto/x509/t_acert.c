@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,8 @@
 #include <openssl/bn.h>
 #include <openssl/objects.h>
 #include <openssl/x509_acert.h>
+
+#include <crypto/asn1.h>
 
 static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
 {
@@ -242,8 +244,8 @@ int X509_ACERT_print_ex(BIO *bp, X509_ACERT *x, unsigned long nmflags,
             if (BIO_printf(bp, "%8sExtensions:\n", "") <= 0)
                 goto err;
             for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
-                ASN1_OBJECT *obj;
-                X509_EXTENSION *ex;
+                const ASN1_OBJECT *obj;
+                const X509_EXTENSION *ex;
                 int critical;
 
                 ex = sk_X509_EXTENSION_value(exts, i);

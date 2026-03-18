@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -415,7 +415,7 @@ static int conn_write(BIO *b, const char *in, int inl)
     clear_socket_error();
 #ifndef OPENSSL_NO_KTLS
     if (BIO_should_ktls_ctrl_msg_flag(b)) {
-        ret = ktls_send_ctrl_message(b->num, data->record_type, in, inl);
+        ret = ktls_send_ctrl_message(b->num, data->record_type, in, inl, 0);
         if (ret >= 0) {
             ret = inl;
             BIO_clear_ktls_ctrl_msg_flag(b);

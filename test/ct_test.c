@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -149,7 +149,7 @@ end:
     return result;
 }
 
-static int compare_extension_printout(X509_EXTENSION *extension,
+static int compare_extension_printout(const X509_EXTENSION *extension,
     const char *expected_output)
 {
     BIO *text_buffer = NULL;
@@ -250,7 +250,7 @@ static int execute_cert_test(CT_TEST_FIXTURE *fixture)
     if (fixture->certificate_file != NULL) {
         int sct_extension_index;
         int i;
-        X509_EXTENSION *sct_extension = NULL;
+        const X509_EXTENSION *sct_extension = NULL;
 
         if (!TEST_ptr(cert = load_pem_cert(fixture->certs_dir,
                           fixture->certificate_file)))

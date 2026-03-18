@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -79,6 +79,8 @@ static EXT_LIST ext_list[] = {
     EXT_EXCEPTION(ech),
     EXT_EXCEPTION(outer_extensions),
 #endif
+    EXT_ENTRY(grease1),
+    EXT_ENTRY(grease2),
     EXT_ENTRY(padding),
     EXT_ENTRY(psk),
     EXT_END(num_builtins)

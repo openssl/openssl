@@ -364,7 +364,7 @@ inner_ossl_encoder_fetch(struct encoder_data_st *methdata,
         return NULL;
     }
 
-    id = name != NULL ? ossl_namemap_name2num(namemap, name) : 0;
+    id = ossl_namemap_name2num(namemap, name);
 
     /*
      * If we haven't found the name yet, chances are that the algorithm to

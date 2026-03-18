@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -598,6 +598,7 @@ typedef enum OPTION_choice {
     OPT_S_ENUM,
     OPT_IGNORE_UNEXPECTED_EOF,
     OPT_FALLBACKSCSV,
+    OPT_GREASE,
     OPT_NOCMDS,
     OPT_ADV,
     OPT_PROXY,
@@ -614,6 +615,7 @@ typedef enum OPTION_choice {
     OPT_ENABLE_PHA,
     OPT_ENABLE_SERVER_RPK,
     OPT_ENABLE_CLIENT_RPK,
+    OPT_EXPECTED_RPK,
     OPT_SCTP_LABEL_BUG,
     OPT_KTLS,
 #ifndef OPENSSL_NO_ECH
@@ -670,6 +672,7 @@ const OPTIONS s_client_options[] = {
     { "read_buf", OPT_READ_BUF, 'p',
         "Default read buffer size to be used for connections" },
     { "fallback_scsv", OPT_FALLBACKSCSV, '-', "Send the fallback SCSV" },
+    { "grease", OPT_GREASE, '-', "Send GREASE values in ClientHello (RFC 8701)" },
 
     OPT_SECTION("Identity"),
     { "cert", OPT_CERT, '<', "Client certificate file to use" },
@@ -694,6 +697,8 @@ const OPTIONS s_client_options[] = {
         "Do not load certificates from the default certificates store" },
     { "requestCAfile", OPT_REQCAFILE, '<',
         "PEM format file of CA names to send to the server" },
+    { "expected-rpks", OPT_EXPECTED_RPK, '<',
+        "PEM file with expected server public key(s)" },
 #if defined(TCP_FASTOPEN) && !defined(OPENSSL_NO_TFO)
     { "tfo", OPT_TFO, '-', "Connect using TCP Fast Open" },
 #endif
@@ -986,6 +991,7 @@ int s_client_main(int argc, char **argv)
     SSL_EXCERT *exc = NULL;
     SSL_CONF_CTX *cctx = NULL;
     STACK_OF(OPENSSL_STRING) *ssl_args = NULL;
+    STACK_OF(OPENSSL_STRING) *rpk_files = NULL;
     char *dane_tlsa_domain = NULL;
     STACK_OF(OPENSSL_STRING) *dane_tlsa_rrset = NULL;
     int dane_ee_no_name = 0;
@@ -1027,6 +1033,7 @@ int s_client_main(int argc, char **argv)
 #endif
     int read_buf_len = 0;
     int fallback_scsv = 0;
+    int grease = 0;
     OPTION_CHOICE o;
 #ifndef OPENSSL_NO_DTLS
     int enable_timeouts = 0;
@@ -1514,6 +1521,9 @@ int s_client_main(int argc, char **argv)
         case OPT_FALLBACKSCSV:
             fallback_scsv = 1;
             break;
+        case OPT_GREASE:
+            grease = 1;
+            break;
         case OPT_KEYFORM:
             if (!opt_format(opt_arg(), OPT_FMT_ANY, &key_format))
                 goto opthelp;
@@ -1726,6 +1736,13 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_ENABLE_CLIENT_RPK:
             enable_client_rpk = 1;
+            break;
+        case OPT_EXPECTED_RPK:
+            if ((rpk_files == NULL
+                    && (rpk_files = sk_OPENSSL_STRING_new_null()) == NULL)
+                || !sk_OPENSSL_STRING_push(rpk_files, opt_arg()))
+                goto end;
+            enable_server_rpk = 1;
             break;
         }
     }
@@ -2190,9 +2207,12 @@ int s_client_main(int argc, char **argv)
 
     if (dane_tlsa_domain != NULL) {
         if (SSL_CTX_dane_enable(ctx) <= 0) {
-            BIO_printf(bio_err,
-                "%s: Error enabling DANE TLSA authentication.\n",
-                prog);
+            BIO_printf(bio_err, "%s: Error enabling DANE TLSA authentication.\n", prog);
+            goto end;
+        }
+    } else if (rpk_files != NULL) {
+        if (SSL_CTX_dane_enable(ctx) <= 0) {
+            BIO_printf(bio_err, "%s: Error enabling RPK verification\n", prog);
             goto end;
         }
     }
@@ -2236,16 +2256,15 @@ int s_client_main(int argc, char **argv)
     if (enable_pha)
         SSL_set_post_handshake_auth(con, 1);
 
-    if (enable_client_rpk)
-        if (!SSL_set1_client_cert_type(con, cert_type_rpk, sizeof(cert_type_rpk))) {
-            BIO_puts(bio_err, "Error setting client certificate types\n");
-            goto end;
-        }
-    if (enable_server_rpk) {
-        if (!SSL_set1_server_cert_type(con, cert_type_rpk, sizeof(cert_type_rpk))) {
-            BIO_puts(bio_err, "Error setting server certificate types\n");
-            goto end;
-        }
+    if (enable_client_rpk
+        && !SSL_set1_client_cert_type(con, cert_type_rpk, sizeof(cert_type_rpk))) {
+        BIO_puts(bio_err, "Error setting client certificate types\n");
+        goto end;
+    }
+    if (enable_server_rpk
+        && !SSL_set1_server_cert_type(con, cert_type_rpk, sizeof(cert_type_rpk))) {
+        BIO_puts(bio_err, "Error setting server certificate types\n");
+        goto end;
     }
 
 #ifndef OPENSSL_NO_ECH
@@ -2291,6 +2310,8 @@ int s_client_main(int argc, char **argv)
 
     if (fallback_scsv)
         SSL_set_mode(con, SSL_MODE_SEND_FALLBACK_SCSV);
+    if (grease)
+        SSL_set_options(con, SSL_OP_GREASE);
 
     if (!noservername && (servername != NULL || dane_tlsa_domain == NULL)) {
         if (servername == NULL) {
@@ -2356,25 +2377,38 @@ int s_client_main(int argc, char **argv)
                 prog);
             goto end;
         }
-        if (dane_tlsa_rrset == NULL) {
+        if (dane_tlsa_rrset != NULL) {
+            if (tlsa_import_rrset(con, dane_tlsa_rrset) <= 0) {
+                BIO_printf(bio_err, "%s: Failed to import any TLSA "
+                                    "records.\n",
+                    prog);
+                goto end;
+            }
+        } else if (rpk_files == NULL) {
             BIO_printf(bio_err, "%s: DANE TLSA authentication requires at "
-                                "least one -dane_tlsa_rrdata option.\n",
-                prog);
-            goto end;
-        }
-        if (tlsa_import_rrset(con, dane_tlsa_rrset) <= 0) {
-            BIO_printf(bio_err, "%s: Failed to import any TLSA "
-                                "records.\n",
+                                "least one -dane_tlsa_rrdata option, or else "
+                                "at least one -expected_rpks option.\n",
                 prog);
             goto end;
         }
         if (dane_ee_no_name)
             SSL_dane_set_flags(con, DANE_FLAG_NO_DANE_EE_NAMECHECKS);
-    } else if (dane_tlsa_rrset != NULL) {
+    } else if (rpk_files == NULL && dane_tlsa_rrset != NULL) {
         BIO_printf(bio_err, "%s: DANE TLSA authentication requires the "
                             "-dane_tlsa_domain option.\n",
             prog);
         goto end;
+    }
+
+    if (rpk_files != NULL) {
+        if (dane_tlsa_domain == NULL
+            && !SSL_dane_enable(con, noservername ? NULL : servername)) {
+            BIO_puts(bio_err, "Error enabling server RPK verification\n");
+            goto end;
+        }
+        for (i = 0; i < sk_OPENSSL_STRING_num(rpk_files); ++i)
+            if (!load_rpk_file(con, sk_OPENSSL_STRING_value(rpk_files, i)))
+                goto end;
     }
 #ifndef OPENSSL_NO_DTLS
     if (isdtls && tfo) {
@@ -3039,8 +3073,8 @@ re_start:
         NCONF_free(cnf);
 
         /* Send SSLRequest packet */
-        BIO_write(sbio, atyp->value.sequence->data,
-            atyp->value.sequence->length);
+        BIO_write(sbio, ASN1_STRING_get0_data(atyp->value.sequence),
+            ASN1_STRING_length(atyp->value.sequence));
         (void)BIO_flush(sbio);
         ASN1_TYPE_free(atyp);
 
@@ -3535,6 +3569,7 @@ end:
     X509_VERIFY_PARAM_free(vpm);
     ssl_excert_free(exc);
     sk_OPENSSL_STRING_free(ssl_args);
+    sk_OPENSSL_STRING_free(rpk_files);
     sk_OPENSSL_STRING_free(dane_tlsa_rrset);
     SSL_CONF_CTX_free(cctx);
     OPENSSL_clear_free(cbuf, BUFSIZZ);
@@ -4172,7 +4207,11 @@ static void user_data_init(struct user_data_st *user_data, SSL *con, char *buf,
 
 static int user_data_add(struct user_data_st *user_data, size_t i)
 {
-    if (user_data->buflen != 0 || i > user_data->bufmax)
+    /*
+     * We must allow one byte for a NUL terminator so i must be less than
+     * bufmax
+     */
+    if (user_data->buflen != 0 || i >= user_data->bufmax)
         return 0;
 
     user_data->buflen = i;

@@ -20,7 +20,7 @@ ENDIF
 DEPEND[encode_key2any.o]=../../common/include/prov/der_rsa.h
 
 IF[{- !$disabled{lms} -}]
-  SOURCE[$DECODER_GOAL]=decode_lmsxdr2key.c
+  SOURCE[$DECODER_GOAL]=decode_lmsxdr2key.c lms_codecs.c
 ENDIF
 
 IF[{- !$disabled{'ml-dsa'} -}]

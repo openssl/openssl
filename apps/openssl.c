@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -502,11 +502,18 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
     f.name = argv[0];
     fp = lh_FUNCTION_retrieve(prog, &f);
     if (fp == NULL) {
-        if (EVP_get_digestbyname(argv[0])) {
+        EVP_MD *md = NULL;
+        EVP_CIPHER *cipher = NULL;
+
+        if ((md = EVP_MD_fetch(app_get0_libctx(), argv[0], app_get0_propq())) != NULL) {
+            EVP_MD_free(md);
+            md = NULL;
             f.type = FT_md;
             f.func = dgst_main;
             fp = &f;
-        } else if (EVP_get_cipherbyname(argv[0])) {
+        } else if ((cipher = EVP_CIPHER_fetch(app_get0_libctx(), argv[0], app_get0_propq())) != NULL) {
+            EVP_CIPHER_free(cipher);
+            cipher = NULL;
             f.type = FT_cipher;
             f.func = enc_main;
             fp = &f;

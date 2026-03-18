@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -202,7 +202,7 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
                     OSSL_FIPS_IND_SETTABLE1,
                     ctx->libctx,
                     md_nid, sha1_allowed, 0, desc,
-                    ossl_fips_config_signature_digest_check))
+                    FIPS_CONFIG_SIGNATURE_DIGEST_CHECK))
                 goto err;
         }
 #endif
@@ -260,7 +260,7 @@ static int dsa_sign_check_approved(PROV_DSA_CTX *ctx, int signing,
     if (signing
         && !OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE2,
             ctx->libctx, desc, "DSA",
-            ossl_fips_config_dsa_sign_disallowed))
+            FIPS_CONFIG_DSA_SIGN_DISABLED))
         return 0;
     return 1;
 }
@@ -272,7 +272,7 @@ static int dsa_check_key(PROV_DSA_CTX *ctx, int sign, const char *desc)
     if (!approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
                 ctx->libctx, desc, "DSA Key",
-                ossl_fips_config_signature_digest_check)) {
+                FIPS_CONFIG_SIGNATURE_DIGEST_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }

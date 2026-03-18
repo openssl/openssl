@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,8 @@
 #include "internal/sizes.h"
 #include "crypto/evp.h"
 #include "pk7_local.h"
+
+#include <crypto/asn1.h>
 
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
     void *value);
@@ -800,6 +802,10 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
         break;
     case NID_pkcs7_signed:
         si_sk = p7->d.sign->signer_info;
+        if (p7->d.sign->contents == NULL) {
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_CONTENT);
+            goto err;
+        }
         os = PKCS7_get_octet_string(p7->d.sign->contents);
         /* If detached data then the content is excluded */
         if (PKCS7_type_is_data(p7->d.sign->contents) && p7->detached) {
@@ -810,6 +816,10 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
         break;
 
     case NID_pkcs7_digest:
+        if (p7->d.digest->contents == NULL) {
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_CONTENT);
+            goto err;
+        }
         os = PKCS7_get_octet_string(p7->d.digest->contents);
         /* If detached data then the content is excluded */
         if (PKCS7_type_is_data(p7->d.digest->contents) && p7->detached) {
@@ -1024,13 +1034,15 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
         goto err;
     }
 
-    return PKCS7_signatureVerify(bio, p7, si, signer);
+    if (PKCS7_signatureVerify(bio, p7, si, signer) <= 0)
+        goto err;
+    ret = 1;
 err:
     return ret;
 }
 
 int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
-    X509 *signer)
+    const X509 *signer)
 {
     ASN1_OCTET_STRING *os;
     EVP_MD_CTX *mdc_tmp, *mdc;

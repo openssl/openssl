@@ -67,8 +67,7 @@ void ossl_FIPS_IND_set_approved(OSSL_FIPS_IND *ind);
 void ossl_FIPS_IND_set_settable(OSSL_FIPS_IND *ind, int id, int enable);
 int ossl_FIPS_IND_get_settable(const OSSL_FIPS_IND *ind, int id);
 int ossl_FIPS_IND_on_unapproved(OSSL_FIPS_IND *ind, int id, OSSL_LIB_CTX *libctx,
-    const char *algname, const char *opname,
-    OSSL_FIPS_IND_CHECK_CB *config_check_fn);
+    const char *algname, const char *opname, enum fips_config_id config_id);
 int ossl_FIPS_IND_set_ctx_param(OSSL_FIPS_IND *ind, int id, const OSSL_PARAM *p);
 int ossl_FIPS_IND_set_ctx_param_locate(OSSL_FIPS_IND *ind, int id,
     const OSSL_PARAM params[],
@@ -100,8 +99,8 @@ void ossl_FIPS_IND_copy(OSSL_FIPS_IND *dst, const OSSL_FIPS_IND *src);
  * If there is more than 1 strict check flag per algorithm ctx, the id represents
  * the index.
  */
-#define OSSL_FIPS_IND_ON_UNAPPROVED(ctx, id, libctx, algname, opname, config_check_fn) \
-    ossl_FIPS_IND_on_unapproved(&ctx->indicator, id, libctx, algname, opname, config_check_fn)
+#define OSSL_FIPS_IND_ON_UNAPPROVED(ctx, id, libctx, algname, opname, config_id) \
+    ossl_FIPS_IND_on_unapproved(&ctx->indicator, id, libctx, algname, opname, config_id)
 
 #define OSSL_FIPS_IND_SETTABLE_CTX_PARAM(name) \
     OSSL_PARAM_int(name, NULL),
@@ -146,7 +145,7 @@ int ossl_fips_ind_digest_sign_check(OSSL_FIPS_IND *ind, int id,
     int nid, int sha1_allowed,
     int sha512_trunc_allowed,
     const char *desc,
-    OSSL_FIPS_IND_CHECK_CB *config_check_f);
+    enum fips_config_id config_id);
 
 #else
 #define OSSL_FIPS_IND_DECLARE

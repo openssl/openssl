@@ -56,7 +56,7 @@ static int ml_dsa_create_keypair(EVP_PKEY **pkey, const char *name,
 {
     int ret = 0, selection = 0;
     EVP_PKEY_CTX *ctx = NULL;
-    OSSL_PARAM params[3], *p = params;
+    OSSL_PARAM params[4], *p = params;
 
     if (priv != NULL) {
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PRIV_KEY,
@@ -68,6 +68,7 @@ static int ml_dsa_create_keypair(EVP_PKEY **pkey, const char *name,
             (uint8_t *)pub, pub_len);
         selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
     }
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_PROPERTIES, "?fips=yes", 0);
     *p = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(lib_ctx, name, NULL))

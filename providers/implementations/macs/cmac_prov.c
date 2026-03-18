@@ -139,7 +139,7 @@ static int tdes_check_param(struct cmac_data_st *macctx, OSSL_PARAM *p,
     if (EVP_CIPHER_is_a(cipher, "DES-EDE3-CBC")) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(macctx, OSSL_FIPS_IND_SETTABLE0,
                 libctx, "CMAC", "Triple-DES",
-                ossl_fips_config_tdes_encrypt_disallowed))
+                FIPS_CONFIG_TDES_ENCRYPT_DISABLED))
             return 0;
         OSSL_FIPS_IND_GET_PARAM(macctx, p, state, OSSL_FIPS_IND_SETTABLE0,
             OSSL_CIPHER_PARAM_FIPS_ENCRYPT_CHECK)

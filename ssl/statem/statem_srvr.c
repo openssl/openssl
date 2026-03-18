@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -309,20 +309,6 @@ int ossl_statem_server_read_transition(SSL_CONNECTION *s, int mt)
 
 err:
     /* No valid transition found */
-    if (SSL_CONNECTION_IS_DTLS(s) && mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
-        BIO *rbio;
-
-        /*
-         * CCS messages don't have a message sequence number so this is probably
-         * because of an out-of-order CCS. We'll just drop it.
-         */
-        s->init_num = 0;
-        s->rwstate = SSL_READING;
-        rbio = SSL_get_rbio(SSL_CONNECTION_GET_SSL(s));
-        BIO_clear_retry_flags(rbio);
-        BIO_set_retry_read(rbio);
-        return 0;
-    }
     SSLfatal(s, SSL3_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
     return 0;
 }
@@ -1203,17 +1189,7 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
 
     case TLS_ST_SW_SESSION_TICKET:
         clear_sys_error();
-        ERR_set_mark();
-        st->error_state = ERROR_STATE_NOERROR;
         if (SSL_CONNECTION_IS_TLS13(s) && statem_flush(s) != 1) {
-            if (ERR_count_to_mark() > 0) {
-                unsigned long l = ERR_peek_error();
-                if (ERR_GET_LIB(l) == ERR_LIB_SYS)
-                    st->error_state = ERROR_STATE_SYSCALL;
-                else
-                    st->error_state = ERROR_STATE_SSL;
-            }
-            ERR_clear_last_mark();
             if (SSL_get_error(ssl, 0) == SSL_ERROR_SYSCALL
                 && conn_is_closed()) {
                 /*
@@ -1691,11 +1667,21 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
                 goto err;
             }
             if (!WPACKET_init_static_len(&inner, s->ext.ech.innerch,
-                    s->ext.ech.innerch_len, 0)
-                || !WPACKET_put_bytes_u8(&inner, SSL3_MT_CLIENT_HELLO)
+                    s->ext.ech.innerch_len, 0)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            if (!WPACKET_put_bytes_u8(&inner, SSL3_MT_CLIENT_HELLO)
                 || !WPACKET_put_bytes_u24(&inner, s->ext.ech.innerch_len - SSL3_HM_HEADER_LENGTH)
                 || !WPACKET_memcpy(&inner, pbuf, s->ext.ech.innerch_len - SSL3_HM_HEADER_LENGTH)
                 || !WPACKET_finish(&inner)) {
+                WPACKET_cleanup(&inner);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            if (ossl_ech_intbuf_add(s, s->ext.ech.innerch,
+                    s->ext.ech.innerch_len, 0)
+                != 1) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
@@ -3589,8 +3575,8 @@ static int tls_process_cke_gost(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
     }
 
-    inlen = pKX->kxBlob->value.sequence->length;
-    start = pKX->kxBlob->value.sequence->data;
+    inlen = ASN1_STRING_length(pKX->kxBlob->value.sequence);
+    start = ASN1_STRING_get0_data(pKX->kxBlob->value.sequence);
 
     if (EVP_PKEY_decrypt(pkey_ctx, premaster_secret, &outlen, start,
             inlen)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,11 +17,8 @@ typedef struct self_test_post_params_st {
     const char *module_filename; /* Module file to perform MAC on */
     const char *module_checksum_data; /* Expected module MAC integrity */
 
-    /* Used for continuous tests */
-    const char *conditional_error_check;
-
     /* Used to decide whether to defer tests or not */
-    const char *defer_tests;
+    unsigned char defer_tests;
 
     /* BIO callbacks supplied to the FIPS provider */
     OSSL_FUNC_BIO_new_file_fn *bio_new_file_cb;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -626,7 +626,7 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
      */
     if (!OSSL_FIPS_IND_ON_UNAPPROVED(gctx, OSSL_FIPS_IND_SETTABLE0,
             gctx->libctx, "DSA", "Keygen",
-            ossl_fips_config_dsa_sign_disallowed))
+            FIPS_CONFIG_DSA_SIGN_DISABLED))
         return 0;
 #endif
 

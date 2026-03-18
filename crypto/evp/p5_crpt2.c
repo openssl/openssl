@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,17 +19,19 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+#include <crypto/asn1.h>
+
 int ossl_pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
     const unsigned char *salt, int saltlen, int iter,
     const EVP_MD *digest, int keylen, unsigned char *out,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
     const char *empty = "";
-    int rv = 1, mode = 1;
+    int rv = 1;
     EVP_KDF *kdf;
     EVP_KDF_CTX *kctx;
     const char *mdname = EVP_MD_get0_name(digest);
-    OSSL_PARAM params[6], *p = params;
+    OSSL_PARAM params[5], *p = params;
 
     /* Keep documented behaviour. */
     if (pass == NULL) {
@@ -50,7 +52,6 @@ int ossl_pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
         return 0;
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
         (char *)pass, (size_t)passlen);
-    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_PKCS5, &mode);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
         (unsigned char *)salt, saltlen);
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_ITER, &iter);

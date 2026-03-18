@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1819,6 +1819,10 @@ err:
     if (SSL_get_peer_tmp_key(client.ssl, &tmp_key)) {
         ret->tmp_key_type = pkey_type(tmp_key);
         EVP_PKEY_free(tmp_key);
+        if (ret->tmp_key_type == EVP_PKEY_KEYMGMT)
+            ret->tmp_key_type = SSL_get_negotiated_group(client.ssl);
+    } else {
+        ret->tmp_key_type = SSL_get_negotiated_group(client.ssl);
     }
 
     SSL_get_peer_signature_nid(client.ssl, &ret->server_sign_hash);

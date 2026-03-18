@@ -474,6 +474,12 @@ B<OSSL_KDF_PARAM_INFO> parameter of the B<KEMRecipientInfo> type's KDF.
 Digest algorithm to use when signing or resigning. If not present then the
 default digest algorithm for the signing key will be used (usually SHA-256).
 
+Note that, in the case signed attributes are not used (B<-noattr>), for
+some hash-less signing schemes the given digest algorithm will be ignored
+and a digest algorithm required by the signing scheme will be used. This is
+the case for EdDSA (RFC 8419). For SLH-DSA (RFC 9814) and ML-DSA (RFC 9882),
+the scheme-suggested digest algorithm will only be used if none is given.
+
 =item B<-signer> I<file>
 
 A signing certificate.  When signing or resigning a message, this option can be
@@ -902,7 +908,7 @@ Use SHA256 KDF with an ECDH certificate:
 
 Print CMS signed binary data in human-readable form:
 
-openssl cms -in signed.cms -binary -inform DER -cmsout -print
+ openssl cms -in signed.cms -binary -inform DER -cmsout -print
 
 =head1 BUGS
 
@@ -923,6 +929,10 @@ user has to manually include the correct encryption algorithm. It should store
 the list of permitted ciphers in a database and only use those.
 
 No revocation checking is done on the signer's certificate.
+
+Ed448 signing is not supported when using signed-data with signed attributes
+since OpenSSL does not currently support the digestAlgorithm id-shake256-len
+as required per RFC 8419.
 
 =head1 SEE ALSO
 
@@ -954,7 +964,7 @@ The B<-engine> option was removed in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
-Copyright 2008-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2008-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

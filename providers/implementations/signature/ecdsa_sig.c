@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -248,7 +248,7 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx,
                 OSSL_FIPS_IND_SETTABLE1,
                 ctx->libctx,
                 md_nid, sha1_allowed, 0, desc,
-                ossl_fips_config_signature_digest_check))
+                FIPS_CONFIG_SIGNATURE_DIGEST_CHECK))
             goto err;
     }
 #endif

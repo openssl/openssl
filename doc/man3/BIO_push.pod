@@ -20,7 +20,7 @@ Otherwise it prepends I<b>, which may be a single BIO or a chain of BIOs,
 to I<next> (unless I<next> is NULL).
 It then makes a control call on I<b> and returns I<b>.
 
-BIO_pop() removes the BIO I<b> from any chain is is part of.
+BIO_pop() removes the BIO I<b> from any chain it is part of.
 If I<b> is NULL the function does nothing and returns NULL.
 Otherwise it makes a control call on I<b> and
 returns the next BIO in the chain, or NULL if there is no next BIO.

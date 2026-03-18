@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -52,6 +52,11 @@ static const char pem_kp1[] = "-----BEGIN PRIVATE KEY-----\n"
 static const char echconfig[] = "AD7+DQA6bAAgACCY7B0f/3KvHIFdoqFaObdU8YYU+MdBf4vzbLhAAL2QCwAEAAEA"
                                 "AQALZXhhbXBsZS5jb20AAA==";
 static size_t echconfiglen = sizeof(echconfig) - 1;
+
+/* a second ECHConfig for when we want to use the wrong one */
+static const char ec_kp2[] = "AEf+DQBDvQAgACCr9pErR7E/gNeoni+0YpDZaMd7XN+hFnCN+H0Xnm1EHQAEAAEAAQAUZnJvbnQuc2VydmVyLmV4YW1wbGUAAA==";
+static size_t ec_kp2len = sizeof(ec_kp2) - 1;
+
 static unsigned char bin_echconfig[] = {
     0x00, 0x3e, 0xfe, 0x0d, 0x00, 0x3a, 0x6c, 0x00,
     0x20, 0x00, 0x20, 0x98, 0xec, 0x1d, 0x1f, 0xff,
@@ -133,7 +138,7 @@ static const unsigned char entire_encoded_inner[] = {
     0x04, 0xd2, 0xdb, 0xe2, 0x89, 0x33, 0x36, 0x15,
     0x96, 0xc9, 0x00, 0x00, 0x08, 0x13, 0x02, 0x13,
     0x03, 0x13, 0x01, 0x00, 0xff, 0x01, 0x00, 0x00,
-    0x34, 0xfd, 0x00, 0x00, 0x13, 0x12, 0x00, 0x0b,
+    0x32, 0xfd, 0x00, 0x00, 0x11, 0x10,
     0x00, 0x0a, 0x00, 0x23, 0x00, 0x16, 0x00, 0x17,
     0x00, 0x0d, 0x00, 0x2b, 0x00, 0x2d, 0x00, 0x33,
     0x00, 0x00, 0x00, 0x14, 0x00, 0x12, 0x00, 0x00,
@@ -142,7 +147,8 @@ static const unsigned char entire_encoded_inner[] = {
     0xfe, 0x0d, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00
 };
 
 /* a full padded, encoded inner client hello with no extensions */
@@ -173,13 +179,13 @@ static const unsigned char outer_short_encoded_inner[] = {
     0x04, 0xd2, 0xdb, 0xe2, 0x89, 0x33, 0x36, 0x15,
     0x96, 0xc9, 0x00, 0x00, 0x08, 0x13, 0x02, 0x13,
     0x03, 0x13, 0x01, 0x00, 0xff, 0x01, 0x00, 0x00,
-    0x34, 0xfd, 0x00, 0x00, 0x13, 0x12, 0x00, 0x0b,
+    0x32, 0xfd, 0x00, 0x00, 0x11, 0x10,
     0x00, 0x0a, 0x00, 0x23, 0x00, 0x16, 0x00, 0x17,
     0x00, 0x0d, 0x00, 0x2b, 0x00, 0x2d, 0x00, 0x33,
     0x00, 0x00, 0x00, 0x14, 0x00, 0x12, 0x00, 0x00,
     0x0f, 0x66, 0x6f, 0x6f, 0x2e, 0x65, 0x78, 0x61,
     0x6d, 0x70, 0x6c, 0x65, 0x2e, 0x63, 0x6f, 0x6d,
-    0xfe, 0x0d, 0x00, 0x01, 0x01
+    0xfe, 0x0d, 0x00, 0x01, 0x01, 0x00, 0x00
 };
 
 /* inner prefix up as far as outer_exts */
@@ -190,7 +196,7 @@ static const unsigned char encoded_inner_pre[] = {
     0x04, 0xd2, 0xdb, 0xe2, 0x89, 0x33, 0x36, 0x15,
     0x96, 0xc9, 0x00, 0x00, 0x08, 0x13, 0x02, 0x13,
     0x03, 0x13, 0x01, 0x00, 0xff, 0x01, 0x00, 0x00,
-    0x34
+    0x32
 };
 
 /* inner prefix with mad length of suites (0xDDDD) */
@@ -201,54 +207,54 @@ static const unsigned char badsuites_inner_pre[] = {
     0x04, 0xd2, 0xdb, 0xe2, 0x89, 0x33, 0x36, 0x15,
     0x96, 0xc9, 0x00, 0xDD, 0xDD, 0x13, 0x02, 0x13,
     0x03, 0x13, 0x01, 0x00, 0xff, 0x01, 0x00, 0x00,
-    0x34
+    0x32
 };
 
 /* outer extensions - we play with variations of this */
 static const unsigned char encoded_inner_outers[] = {
-    0xfd, 0x00, 0x00, 0x13, 0x12, 0x00, 0x0b,
+    0xfd, 0x00, 0x00, 0x11, 0x10,
     0x00, 0x0a, 0x00, 0x23, 0x00, 0x16, 0x00, 0x17,
     0x00, 0x0d, 0x00, 0x2b, 0x00, 0x2d, 0x00, 0x33
 };
 
-/* outers with repetition of one extension (0x0B) */
+/* outers with repetition of one extension (0x23) */
 static const unsigned char borked_outer1[] = {
-    0xfd, 0x00, 0x00, 0x13, 0x12, 0x00, 0x0b,
-    0x00, 0x0B, 0x00, 0x23, 0x00, 0x16, 0x00, 0x17,
+    0xfd, 0x00, 0x00, 0x11, 0x10,
+    0x00, 0x23, 0x00, 0x23, 0x00, 0x16, 0x00, 0x17,
     0x00, 0x0d, 0x00, 0x2b, 0x00, 0x2d, 0x00, 0x33
 };
 
 /* outers including a non-used extension (0xFFAB) */
 static const unsigned char borked_outer2[] = {
-    0xfd, 0x00, 0x00, 0x13, 0x12, 0x00, 0x0b,
+    0xfd, 0x00, 0x00, 0x11, 0x10,
     0x00, 0x0a, 0x00, 0x23, 0x00, 0x16, 0x00, 0x17,
     0xFF, 0xAB, 0x00, 0x2b, 0x00, 0x2d, 0x00, 0x33
 };
 
 /* refer to SNI in outers! 2nd-last is 0x0000 */
 static const unsigned char borked_outer3[] = {
-    0xfd, 0x00, 0x00, 0x13, 0x12, 0x00, 0x0b,
+    0xfd, 0x00, 0x00, 0x11, 0x10,
     0x00, 0x0a, 0x00, 0x23, 0x00, 0x16, 0x00, 0x17,
     0x00, 0x0d, 0x00, 0x2b, 0x00, 0x00, 0x00, 0x33
 };
 
 /* refer to ECH (0xfe0d) within outers */
 static const unsigned char borked_outer4[] = {
-    0xfd, 0x00, 0x00, 0x13, 0x12, 0x00, 0x0b,
+    0xfd, 0x00, 0x00, 0x11, 0x10,
     0x00, 0x0a, 0x00, 0x23, 0x00, 0x16, 0x00, 0x17,
     0xFE, 0x0D, 0x00, 0x2b, 0x00, 0x2d, 0x00, 0x33
 };
 
 /* refer to outers (0xfd00) within outers */
 static const unsigned char borked_outer5[] = {
-    0xfd, 0x00, 0x00, 0x13, 0x12, 0x00, 0x0b,
+    0xfd, 0x00, 0x00, 0x11, 0x10,
     0x00, 0x0a, 0x00, 0x23, 0x00, 0x16, 0x00, 0x17,
     0xFD, 0x00, 0x00, 0x2b, 0x00, 0x2d, 0x00, 0x33
 };
 
 /* no outers at all! include unknown ext 0xFF99 instead */
 static const unsigned char borked_outer6[] = {
-    0xFF, 0x99, 0x00, 0x13, 0x12, 0x00, 0x0b,
+    0xFF, 0x99, 0x00, 0x11, 0x10,
     0x00, 0x0a, 0x00, 0x23, 0x00, 0x16, 0x00, 0x17,
     0x00, 0x0d, 0x00, 0x2b, 0x00, 0x2d, 0x00, 0x33
 };
@@ -259,42 +265,42 @@ static const unsigned char borked_outer6[] = {
  * to ensure overall decode succeeds
  */
 static const unsigned char borked_outer7[] = {
-    0xfd, 0x00, 0x00, 0x0E, 0x12, 0x00, 0x0b,
+    0xfd, 0x00, 0x00, 0x0E, 0x10,
     0x00, 0x0a, 0x00, 0x23, 0x00, 0x16, 0x00, 0x17,
     0x00, 0x0d, 0x00, 0xFF, 0xFF, 0x00, 0x01, 0x00
 };
 
 /* outer with bad inner length (odd number of octets)  */
 static const unsigned char borked_outer8[] = {
-    0xfd, 0x00, 0x00, 0x13, 0x11, 0x00, 0x0b,
+    0xfd, 0x00, 0x00, 0x11, 0x11,
     0x00, 0x0a, 0x00, 0x23, 0x00, 0x16, 0x00, 0x17,
     0x00, 0x0d, 0x00, 0x2b, 0x00, 0x2d, 0x00, 0x33
 };
 
-/* outer with HUGE length (0xFF13) */
+/* outer with HUGE length (0xFF11) */
 static const unsigned char borked_outer9[] = {
-    0xfd, 0x00, 0xFF, 0x13, 0x12, 0x00, 0x0b,
+    0xfd, 0x00, 0xFF, 0x11, 0x10,
     0x00, 0x0a, 0x00, 0x23, 0x00, 0x16, 0x00, 0x17,
     0x00, 0x0d, 0x00, 0x2b, 0x00, 0x2d, 0x00, 0x33
 };
 
 /* outer with zero length, followed by bogus ext */
 static const unsigned char borked_outer10[] = {
-    0xfd, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00,
-    0x0F, 0x0a, 0x00, 0x23, 0x00, 0x16, 0x00, 0x17,
+    0xfd, 0x00, 0x00, 0x00, 0xFF,
+    0x0F, 0x00, 0x0D, 0x23, 0x00, 0x16, 0x00, 0x17,
     0x00, 0x0d, 0x00, 0x2b, 0x00, 0x2d, 0x00, 0x33
 };
 
 /* refer to key-share 0x00 0x33 (51) twice within outers */
 static const unsigned char borked_outer11[] = {
-    0xfd, 0x00, 0x00, 0x13, 0x12, 0x00, 0x0b,
+    0xfd, 0x00, 0x00, 0x11, 0x10,
     0x00, 0x0a, 0x00, 0x23, 0x00, 0x16, 0x00, 0x17,
     0x00, 0x33, 0x00, 0x2b, 0x00, 0x2d, 0x00, 0x33
 };
 
 /* refer to psk kex mode (0x00 0x2D/45) within outers */
 static const unsigned char borked_outer12[] = {
-    0xfd, 0x00, 0x00, 0x13, 0x12, 0x00, 0x0b,
+    0xfd, 0x00, 0x00, 0x11, 0x10,
     0x00, 0x0a, 0x00, 0x23, 0x00, 0x16, 0x00, 0x17,
     0x00, 0x2D, 0x00, 0x2b, 0x00, 0x2d, 0x00, 0x33
 };
@@ -306,7 +312,8 @@ static const unsigned char encoded_inner_post[] = {
     0xfe, 0x0d, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00
 };
 
 /* muck up the padding by including non-zero stuff */
@@ -317,7 +324,8 @@ static const unsigned char bad_pad_encoded_inner_post[] = {
     0xfe, 0x0d, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00
 };
 
 /* an encoded inner that's just too short */
@@ -355,8 +363,7 @@ static const unsigned char too_many_outers[] = {
     0xfd, 0x00, /* outers */
     0x00, 0x2b, /* len of outers */
     0x2a, /* above minus one (42) 21 outers */
-    0x00, 0x0b, /* the 9 'normal' outers */
-    0x00, 0x0a,
+    0x00, 0x0a, /* the 8 'normal' outers */
     0x00, 0x23,
     0x00, 0x16,
     0x00, 0x17,
@@ -364,6 +371,7 @@ static const unsigned char too_many_outers[] = {
     0x00, 0x2b,
     0x00, 0x2d,
     0x00, 0x33,
+    0x00, 0x0b, /* point encoding, not actually in outer */
     /* 12 more outers, set 'em all to ALPN (16, 0x10) */
     0x00, 0x10, 0x00, 0x10, 0x00, 0x10, 0x00, 0x10,
     0x00, 0x10, 0x00, 0x10, 0x00, 0x10, 0x00, 0x10,
@@ -389,7 +397,7 @@ static const unsigned char no_supported_exts[] = {
     0x04, 0xd2, 0xdb, 0xe2, 0x89, 0x33, 0x36, 0x15,
     0x96, 0xc9, 0x00, 0x00, 0x08, 0x13, 0x02, 0x13,
     0x03, 0x13, 0x01, 0x00, 0xff, 0x01, 0x00, 0x00,
-    0x32, 0xfd, 0x00, 0x00, 0x11, 0x10, 0x00, 0x0b,
+    0x30, 0xfd, 0x00, 0x00, 0x0f, 0x0e,
     0x00, 0x0a, 0x00, 0x23, 0x00, 0x16, 0x00, 0x17,
     0x00, 0x0d, 0x00, 0x2d, 0x00, 0x33,
     0x00, 0x00, 0x00, 0x14, 0x00, 0x12, 0x00, 0x00,
@@ -399,7 +407,7 @@ static const unsigned char no_supported_exts[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00
+    0x00, 0x00, 0x00, 0x00
 };
 
 static const unsigned char tlsv12_inner[] = {
@@ -414,10 +422,9 @@ static const unsigned char tlsv12_inner[] = {
     0x01, 0x00, /* no compression */
     0x00, 0x32, /* extslen */
     0xfd, 0x00, /* outers */
-    0x00, 0x11, /* len of outers */
-    0x10, /* above minus one (16) 8 outers */
-    0x00, 0x0b, /* the 'normal' outers, minus supported_versions */
-    0x00, 0x0a,
+    0x00, 0x10, /* len of outers */
+    0x0e, /* above minus one (16) 8 outers */
+    0x00, 0x0a, /* the 'normal' outers, minus supported_versions */
     0x00, 0x23,
     0x00, 0x16,
     0x00, 0x17,
@@ -429,7 +436,7 @@ static const unsigned char tlsv12_inner[] = {
     0x0f, 0x66, 0x6f, 0x6f, 0x2e, 0x65, 0x78, 0x61,
     0x6d, 0x70, 0x6c, 0x65, 0x2e, 0x63, 0x6f, 0x6d,
     0xfe, 0x0d, 0x00, 0x01, 0x01,
-    0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -445,17 +452,20 @@ static TEST_ECHINNER test_inners[] = {
     { NULL, 0,
         outer_short_encoded_inner, sizeof(outer_short_encoded_inner),
         NULL, 0,
-        0, /* expected result */ SSL_R_BAD_EXTENSION },
+        0, /* expected result */
+        SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC },
     /* 3. otherwise-correct case that fails only due to client random */
     { NULL, 0,
         entire_encoded_inner, sizeof(entire_encoded_inner),
         NULL, 0,
-        0, /* expected result */ SSL_R_BAD_EXTENSION },
+        0, /* expected result */
+        SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC },
     /* 4. otherwise-correct case that fails only due to client random */
     { encoded_inner_pre, sizeof(encoded_inner_pre),
         encoded_inner_outers, sizeof(encoded_inner_outers),
         encoded_inner_post, sizeof(encoded_inner_post),
-        0, /* expected result */ SSL_R_BAD_EXTENSION },
+        0, /* expected result */
+        SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC },
     /* 5. fails HPKE decryption due to bad padding so treated as GREASE */
     { encoded_inner_pre, sizeof(encoded_inner_pre),
         encoded_inner_outers, sizeof(encoded_inner_outers),
@@ -589,7 +599,7 @@ static TEST_ECHINNER test_inners[] = {
     { NULL, 0,
         no_supported_exts, sizeof(no_supported_exts),
         NULL, 0,
-        0, /* expected result */ SSL_R_BAD_EXTENSION },
+        0, /* expected result */ SSL_R_UNSUPPORTED_PROTOCOL },
     /*
      * 23. no supported_versions hence TLSv1.2, with server set to
      * allow max tlsv1.2
@@ -606,13 +616,12 @@ static TEST_ECHINNER test_inners[] = {
     { NULL, 0,
         no_supported_exts, sizeof(no_supported_exts),
         NULL, 0,
-        0, /* expected result */ SSL_R_BAD_EXTENSION },
+        0, /* expected result */ SSL_R_UNSUPPORTED_PROTOCOL },
     /* 25. smuggled TLSv1.2 CH */
     { NULL, 0,
         tlsv12_inner, sizeof(tlsv12_inner),
         NULL, 0,
         0, /* expected result */ SSL_R_BAD_EXTENSION },
-
 };
 
 /*
@@ -1208,7 +1217,7 @@ static int corrupt_or_copy(const char *msg, const int msglen,
         return 1;
     }
 
-    if (is_sh == 1) {
+    if (testcase == TESTCASE_SH && is_sh == 1) {
         if (testiter >= (int)OSSL_NELEM(test_shs))
             return 0;
         ts = &test_shs[testiter];
@@ -1252,6 +1261,7 @@ static int corrupt_or_copy(const char *msg, const int msglen,
             return 1;
         }
     }
+
     /* if doing nothing, do that... */
     if (!TEST_ptr(*msgout = OPENSSL_memdup(msg, msglen)))
         return 0;
@@ -1282,10 +1292,11 @@ static int tls_corrupt_write(BIO *bio, const char *in, int inl)
 
     ret = corrupt_or_copy(in, inl, &copy, &copylen);
     if (ret == 0)
-        return 0;
+        goto out;
     ret = BIO_write(next, copy, inl);
-    OPENSSL_free(copy);
     copy_flags(bio);
+out:
+    OPENSSL_free(copy);
     return ret;
 }
 
@@ -1615,6 +1626,130 @@ end:
     return testresult;
 }
 
+/*
+ * Callback that corrupts a server Finished message.
+ * This doesn't seem to be documented, but the buffer here is the actual
+ * message and not a copy just for the callback, so we can corrupt it by
+ * flipping bits in the last octet of the server Finished.  Presumably changing
+ * lengths would cause other breakage, but the below currently causes the
+ * `memcmp()` to fail in the client's call of `tls_process_finished()` which
+ * produces the desired effect of causing the TLS session to fail both because
+ * of ECH-required and subsequently because of a later handshake failure
+ * resulting in us not making the retry-configs available to the client.
+ */
+static void corrupt_server_finished(int write_p, int version, int content_type,
+    const void *buf, size_t msglen, SSL *ssl, void *arg)
+{
+    unsigned char *msg = (unsigned char *)buf;
+
+    if (write_p == 0 && content_type == SSL3_RT_HANDSHAKE
+        && msg[0] == SSL3_MT_FINISHED)
+        msg[msglen - 1] ^= 0xAA;
+}
+
+/*
+ * Test roundtrip with wrong ECHConfig, with and without corrupting
+ * the server Finished to check that retry-configs are not made
+ * available to the client in the latter case.
+ */
+static int ech_retry_config_test(int idx)
+{
+    int res = 0, clientstatus, serverstatus;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    char *cinner = NULL, *couter = NULL, *sinner = NULL, *souter = NULL;
+    unsigned char *retryconfig = NULL;
+    size_t retryconfiglen = 0;
+    int err = 0, err_reason = 0, exp_err = ERR_R_OSSL_STORE_LIB;
+    const char *err_str = NULL;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(),
+            TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+    if (!TEST_true(SSL_CTX_set1_echstore(sctx, es)))
+        goto end;
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+            &clientssl, NULL, NULL)))
+        goto end;
+    if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "foo.example.com")))
+        goto end;
+    /* set a real but wrong ECHConfig */
+    if (!TEST_true(SSL_set1_ech_config_list(clientssl, (unsigned char *)ec_kp2,
+            ec_kp2len)))
+        goto end;
+    if (idx == 1) /* corrupt as desired */
+        SSL_set_msg_callback(clientssl, corrupt_server_finished);
+    /* real but wrong => failure, due to ECH */
+    if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_R_ECH_REQUIRED)))
+        goto end;
+    serverstatus = SSL_ech_get1_status(serverssl, &sinner, &souter);
+    if (verbose)
+        TEST_info("ech_retry_config_test: server status %d, %s, %s",
+            serverstatus, sinner, souter);
+    if (!TEST_int_eq(serverstatus, SSL_ECH_STATUS_GREASE))
+        goto end;
+    /* override cert verification */
+    SSL_set_verify_result(clientssl, X509_V_OK);
+    clientstatus = SSL_ech_get1_status(clientssl, &cinner, &couter);
+    if (verbose)
+        TEST_info("ech_retry_config_test: client status %d, %s, %s",
+            clientstatus, cinner, couter);
+    if (!TEST_int_eq(clientstatus, SSL_ECH_STATUS_FAILED_ECH))
+        goto end;
+    if (idx == 0) { /* no corruption, retry-configs made available */
+        if (!TEST_true(SSL_ech_get1_retry_config(clientssl, &retryconfig,
+                &retryconfiglen)))
+            goto end;
+        if (!TEST_ptr(retryconfig))
+            goto end;
+        if (!TEST_int_ne((int)retryconfiglen, 0))
+            goto end;
+        if (verbose)
+            TEST_info("ech_retry_config_test: retryconfglen: %d\n", (int)retryconfiglen);
+        /* we kow the size to expect as the configs are hard-coded above */
+        if (!TEST_size_t_eq(retryconfiglen, 64))
+            goto end;
+    } else { /* corruption, retry-configs NOT made available */
+        if (!TEST_false(SSL_ech_get1_retry_config(clientssl, &retryconfig,
+                &retryconfiglen)))
+            goto end;
+        /* check we got the specific error expected */
+        err_str = ERR_reason_error_string(exp_err);
+        err_reason = ERR_GET_REASON(exp_err);
+        TEST_info("ech_retry_config_test Expected error: %d/%s",
+            err_reason, err_str);
+        do {
+            err = ERR_get_error();
+            if (err == 0) {
+                TEST_error("ech_retry_config_test: Unexpected error");
+                goto end;
+            }
+            err_reason = ERR_GET_REASON(err);
+            err_str = ERR_reason_error_string(err);
+            if (verbose)
+                TEST_info("ech_retry_config_test Actual error: %d/%s",
+                    err_reason, err_str);
+        } while (err_reason != exp_err);
+        if (verbose)
+            TEST_info("ech_retry_config_test: retry configs withheld\n");
+    }
+    res = 1;
+end:
+    OPENSSL_free(sinner);
+    OPENSSL_free(souter);
+    OPENSSL_free(cinner);
+    OPENSSL_free(couter);
+    OPENSSL_free(retryconfig);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return res;
+}
+
 const OPTIONS *test_get_options(void)
 {
     static const OPTIONS test_options[] = {
@@ -1675,6 +1810,18 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ch_corrupt, OSSL_NELEM(test_inners));
     ADD_ALL_TESTS(test_sh_corrupt, OSSL_NELEM(test_shs));
     ADD_ALL_TESTS(test_ech_corrupt, OSSL_NELEM(test_echs));
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    ADD_ALL_TESTS(ech_retry_config_test, 2);
+#else
+    /*
+     * It seems fuzz tests cause our corruption to not work so we'll skip doing
+     * that. There's an ifdef'd code fragment in `tls_process_finished()` for
+     * when fuzzing that I guess causes that, but it's ok that we only do the
+     * corruption test when not fuzzing. We still do the (first) non-corrupt
+     * test to avoid a warning that `ech_retry_config_test()` isn't called.
+     */
+    ADD_ALL_TESTS(ech_retry_config_test, 1);
+#endif
     return 1;
 err:
     BIO_free_all(in);

@@ -100,18 +100,20 @@ SSL_CTX_use_PrivateKey() or SSL_use_PrivateKey().
 On success the reference counter of the B<pkey>/B<rsa> is incremented.
 
 SSL_CTX_use_cert_and_key() and SSL_use_cert_and_key() assign the X.509
-certificate B<x>, private key B<key>, and certificate B<chain> onto the
-corresponding B<ssl> or B<ctx>. The B<pkey> argument must be the private
-key of the X.509 certificate B<x>. If the B<override> argument is 0, then
-B<x>, B<pkey> and B<chain> are set only if all were not previously set.
-If B<override> is non-0, then the certificate, private key and chain certs
-are always set. If B<pkey> is NULL, then the public key of B<x> is used as
-the private key. This is intended to be used with hardware
-that stores the private key securely, such that it cannot be
-accessed by OpenSSL. The reference count of the public key is incremented
-(twice if there is no private key); it is not copied nor duplicated. This
-allows all private key validations checks to succeed without an actual
-private key being assigned via SSL_CTX_use_PrivateKey(), etc.
+certificate B<x>, private key B<pkey>, and certificate chain B<chain> onto
+the corresponding B<ctx> or B<ssl>.
+If B<pkey> is not NULL, a check is performed to verify that B<pkey> matches
+the public key of B<x>.
+If the B<override> argument is 0, the function fails if a certificate of the
+same public key type has already been set.
+If B<override> is non-0, any previously set certificate, private key, and
+chain of the same type are replaced.
+If B<pkey> is NULL, then the public key of B<x> is used as the private key.
+This is intended to be used with hardware that stores the private key
+securely, such that it cannot be accessed by OpenSSL.
+The reference counts of B<x>, B<pkey>, and the certificates in B<chain> are
+incremented; the caller should free its own references when they are no
+longer needed.
 
 SSL_CTX_use_PrivateKey_ASN1() adds the private key of type B<pk>
 stored at memory location B<d> (length B<len>) to B<ctx>.
@@ -138,9 +140,23 @@ this B<ssl>, the last item added into B<ctx> will be checked.
 
 =head1 NOTES
 
-The internal certificate store of OpenSSL can hold several private
-key/certificate pairs at a time. The certificate used depends on the
-cipher selected, see also L<SSL_CTX_set_cipher_list(3)>.
+Each B<SSL_CTX> or B<SSL> object has an internal certificate store that can
+hold multiple private keys and associated certificate chains at a time.
+By default B<SSL> objects use the settings of the parent B<SSL_CTX>.
+This allows a TLS server to support multiple certificate types (e.g., RSA,
+ECDSA, or post-quantum algorithms) on a single listening socket, at most
+one of each type.
+During the TLS handshake, OpenSSL automatically selects the most preferred
+mutually supported certificate type, based on the signature algorithms and
+cipher suites (TLS 1.2 and prior) advertised by the client.
+To load multiple keys and associated certificate chains, simply call the
+certificate and private key loading functions multiple times with different key
+types.
+For example, the SSL_CTX_use_cert_and_key() and SSL_use_cert_and_key()
+functions can be called multiple times on the same B<SSL_CTX> or B<SSL> object,
+respectively, with a different certificate type (and matching private key type)
+in each call.
+For TLS 1.2, see also L<SSL_CTX_set_cipher_list(3)>.
 
 When reading certificates and private keys from file, files of type
 SSL_FILETYPE_ASN1 (also known as B<DER>, binary encoding) can only contain

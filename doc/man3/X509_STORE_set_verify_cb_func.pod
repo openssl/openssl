@@ -41,9 +41,9 @@ X509_STORE_CTX_lookup_certs_fn, X509_STORE_CTX_lookup_crls_fn
  #include <openssl/x509_vfy.h>
 
  typedef int (*X509_STORE_CTX_get_issuer_fn)(X509 **issuer,
-                                             X509_STORE_CTX *ctx, X509 *x);
+                                             X509_STORE_CTX *ctx, const X509 *x);
  typedef int (*X509_STORE_CTX_check_issued_fn)(X509_STORE_CTX *ctx,
-                                               X509 *x, X509 *issuer);
+                                               const X509 *x, const X509 *issuer);
  typedef int (*X509_STORE_CTX_check_revocation_fn)(X509_STORE_CTX *ctx);
  typedef int (*X509_STORE_CTX_get_crl_fn)(X509_STORE_CTX *ctx,
                                           X509_CRL **crl, X509 *x);
@@ -65,7 +65,7 @@ X509_STORE_CTX_lookup_certs_fn, X509_STORE_CTX_lookup_crls_fn
  void X509_STORE_set_verify(X509_STORE *xs, X509_STORE_CTX_verify_fn verify);
  X509_STORE_CTX_verify_fn X509_STORE_CTX_get_verify(const X509_STORE_CTX *ctx);
 
- int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
+ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, const X509 *x);
  X509_STORE_CTX_get_issuer_fn X509_STORE_get_get_issuer(const X509_STORE_CTX *ctx);
  void X509_STORE_set_get_issuer(X509_STORE *xs,
                                 X509_STORE_CTX_get_issuer_fn get_issuer);
@@ -277,7 +277,7 @@ were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2009-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2009-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
