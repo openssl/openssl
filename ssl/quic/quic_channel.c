@@ -4239,6 +4239,14 @@ int ossl_quic_channel_set_ack_delay_exponent_request(QUIC_CHANNEL *ch, uint64_t 
     if (ossl_quic_channel_have_generated_transport_params(ch))
         return 0;
 
+    /*
+     * ossl_quic_tx_packetiser_args_st::ack_delay_exponent is uint32_t,
+     * but quic_channel_st::tx_ack_delay_exp is unsigned char, checking
+     * against the smaller type.
+     */
+    if (exp > UCHAR_MAX)
+        return 0;
+
     if (!ossl_quic_tx_packetiser_set_ack_delay_exponent(ch->txp, (uint32_t)exp))
         return 0;
 
@@ -4280,6 +4288,9 @@ uint64_t ossl_quic_channel_get_max_ack_delay_peer_request(const QUIC_CHANNEL *ch
 int ossl_quic_channel_set_disable_active_migration_request(QUIC_CHANNEL *ch, uint64_t disable)
 {
     if (ossl_quic_channel_have_generated_transport_params(ch))
+        return 0;
+
+    if (disable > UCHAR_MAX)
         return 0;
 
     ch->tx_disable_active_migration = (unsigned char)disable;
