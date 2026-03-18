@@ -314,7 +314,7 @@ char *NCONF_get_string(const CONF *conf, const char *group, const char *name)
         return NULL;
     }
     ERR_raise_data(ERR_LIB_CONF, CONF_R_NO_VALUE,
-        "group=%s name=%s", group, name);
+        "group=%s name=%s", group != NULL ? group : "", name);
     return NULL;
 }
 
