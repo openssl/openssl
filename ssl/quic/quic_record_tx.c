@@ -271,7 +271,7 @@ static TXE *qtx_ensure_free_txe(OSSL_QTX *qtx, size_t alloc_len)
  */
 static TXE *qtx_resize_txe(OSSL_QTX *qtx, TXE *txe, size_t n)
 {
-    TXE *txe2, *p;
+    TXE *txe2;
 
     /* Should never happen. */
     if (txe == NULL)
