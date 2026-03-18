@@ -392,14 +392,13 @@ static void *ecdsa_dupctx(void *vctx)
     PROV_ECDSA_CTX *srcctx = (PROV_ECDSA_CTX *)vctx;
     PROV_ECDSA_CTX *dstctx;
 
-    if (!ossl_prov_is_running())
+    /* Test KATS should not need to be supported */
+    if (!ossl_prov_is_running()
+        || srcctx->kinv != NULL
+        || srcctx->r != NULL
+        || (dstctx = OPENSSL_memdup(srcctx, sizeof(*srcctx))) == NULL)
         return NULL;
 
-    dstctx = OPENSSL_zalloc(sizeof(*srcctx));
-    if (dstctx == NULL)
-        return NULL;
-
-    *dstctx = *srcctx;
     dstctx->ec = NULL;
     dstctx->md = NULL;
     dstctx->mdctx = NULL;
@@ -407,27 +406,19 @@ static void *ecdsa_dupctx(void *vctx)
 
     if (srcctx->ec != NULL && !EC_KEY_up_ref(srcctx->ec))
         goto err;
-    /* Test KATS should not need to be supported */
-    if (srcctx->kinv != NULL || srcctx->r != NULL)
-        goto err;
     dstctx->ec = srcctx->ec;
 
     if (srcctx->md != NULL && !EVP_MD_up_ref(srcctx->md))
         goto err;
     dstctx->md = srcctx->md;
 
-    if (srcctx->mdctx != NULL) {
-        dstctx->mdctx = EVP_MD_CTX_new();
-        if (dstctx->mdctx == NULL
-            || !EVP_MD_CTX_copy_ex(dstctx->mdctx, srcctx->mdctx))
-            goto err;
-    }
-
-    if (srcctx->propq != NULL) {
-        dstctx->propq = OPENSSL_strdup(srcctx->propq);
-        if (dstctx->propq == NULL)
-            goto err;
-    }
+    if (srcctx->mdctx != NULL
+        && ((dstctx->mdctx = EVP_MD_CTX_new()) == NULL
+            || !EVP_MD_CTX_copy_ex(dstctx->mdctx, srcctx->mdctx)))
+        goto err;
+    if (srcctx->propq != NULL
+        && (dstctx->propq = OPENSSL_strdup(srcctx->propq)) == NULL)
+        goto err;
 
     return dstctx;
 err:
