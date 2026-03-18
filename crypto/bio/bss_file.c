@@ -331,7 +331,12 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
             ? UP_fflush(b->ptr)
             : fflush((FILE *)b->ptr);
         if (st == EOF) {
-            ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
+            int syserr = get_last_sys_error();
+            if (syserr == EAGAIN || syserr == EWOULDBLOCK) {
+                /* Non-blocking stream not ready; not a real error */
+                break;
+            }
+            ERR_raise_data(ERR_LIB_SYS, syserr,
                 "calling fflush()");
             ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
             ret = 0;
