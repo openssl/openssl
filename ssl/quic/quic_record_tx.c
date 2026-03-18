@@ -284,7 +284,7 @@ static TXE *qtx_resize_txe(OSSL_QTX *qtx, TXE *txe, size_t n)
      * to resize txe, the caller must detach it from the list first,
      * fail if txe is still attached.
      */
-    if (ossl_assert(ossl_list_txe_prev(txe) == NULL
+    if (!ossl_assert(ossl_list_txe_prev(txe) == NULL
             && ossl_list_txe_next(txe) == NULL))
         return NULL;
 
