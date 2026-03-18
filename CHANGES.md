@@ -41,6 +41,46 @@ OpenSSL Releases
 
    *Paul Louvel*
 
+ * Dropped `no-ecdsa` and `no-ecdh` options from `Configure` as these options
+   did not really disable the implementations. Use `no-ec` to disable the
+   elliptic curve support.
+
+   *Tomáš Mráz*
+
+ * Made more QUIC transport parameters configurable via the
+   `SSL_get_value_uint`/`SSL_set_value_uint` functions. Now also configurable:
+   `max_udp_payload_size`, `initial_max_data`,
+   `initial_max_stream_data_bidi_local`, `initial_max_stream_data_uni`,
+   `ack_delay_exponent`, `max_ack_delay`.
+
+   *Nikolas Gauder*
+
+ * Add new verification error `X509_V_ERR_DUPLICATE_EXTENSION` with descriptive
+   message for certificates containing duplicate X.509 extensions, which are
+   explicitly prohibited by [RFC 5280].
+
+   *Daniel Kubec*
+
+ * Added support for RFC 8701 GREASE (Generate Random Extensions And Sustain
+   Extensibility). When `SSL_OP_GREASE` is set, the TLS client injects
+   reserved GREASE values into cipher suites, supported versions, supported
+   groups, signature algorithms, key share, and extensions in the ClientHello
+   to prevent ecosystem ossification. The `openssl s_client` command gains a
+   `-grease` option to enable this.
+
+   *William McCormack*
+
+### Changes between 3.6 and 4.0 [xx XXX xxxx]
+
+ * Added support for RFC 8701 GREASE (Generate Random Extensions And Sustain
+   Extensibility). When `SSL_OP_GREASE` is set, the TLS client injects
+   reserved GREASE values into cipher suites, supported versions, supported
+   groups, signature algorithms, key share, and extensions in the ClientHello
+   to prevent ecosystem ossification. The `openssl s_client` command gains a
+   `-grease` option to enable this.
+
+   *William McCormack*
+
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
  * Added `-expected-rpks` option to the `openssl s_client`
@@ -364,6 +404,11 @@ OpenSSL Releases
    parameter.
 
    *Bob Beck*
+
+ * Improved DTLS handshake robustness under UDP reordering by buffering and
+   replaying early ChangeCipherSpec (CCS) records at the expected state.
+
+   *Tong Li*
 
  * Many functions accepting `X509 *` arguments, or returning values
    from a const `X509 *` have been changed to take/return const

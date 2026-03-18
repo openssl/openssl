@@ -670,6 +670,13 @@ it checks that any present EKU extension (that does not contain
 B<anyExtendedKeyUsage>) contains the respective EKU as detailed below.
 Moreover, it does these checks even for trust anchor certificates.
 
+=head3 Duplicate Extensions
+
+According to RFC 5280 section 4.2, a certificate MUST NOT include more
+than one instance of a particular extension. If a duplicate extension is
+detected, the certificate is rejected.
+This check applies to all certificates: end-entity certificates, intermediate CA certificates, and root CA (trust anchor) certificates.
+
 =head3 Checks Implied by Specific Predefined Policies
 
 A specific description of each check is given below. The comments about

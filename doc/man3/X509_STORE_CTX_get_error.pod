@@ -518,6 +518,10 @@ Authority Key Identifier has no attributes.
 
 Authority Key Identifier issuer and serial number must be paired.
 
+=item B<X509_V_ERR_DUPLICATE_EXTENSION: extension MUST NOT appear more than once>
+
+Certificate includes more than one instance of a particular extension.
+
 =back
 
 =head1 NOTES
