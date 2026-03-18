@@ -234,7 +234,7 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/download-artifact@v6.0.0
+      - uses: actions/download-artifact@v8.0.1
         if: steps.early_exit.outputs.skip != 'true'
         with:
           name: ${{ matrix.tree_a }}.tar.gz
@@ -242,7 +242,7 @@ jobs:
         if: steps.early_exit.outputs.skip != 'true'
         run: tar xzf "${{ matrix.tree_a }}.tar.gz"
 
-      - uses: actions/download-artifact@v6.0.0
+      - uses: actions/download-artifact@v8.0.1
         if: steps.early_exit.outputs.skip != 'true'
         with:
           name: ${{ matrix.tree_b }}.tar.gz
