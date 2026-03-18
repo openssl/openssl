@@ -1576,7 +1576,7 @@ static int test_keyexch(OSSL_LIB_CTX *ctx, const char *propq, EVP_KEYEXCH *excha
 
 static int test_EVP_KEYEXCH_fetch_freeze(void)
 {
-#if defined(OPENSSL_NO_CACHED_FETCH) || defined(OPENSSL_NO_ML_KEM)
+#if defined(OPENSSL_NO_CACHED_FETCH) || defined(OPENSSL_NO_ML_KEM) || defined(OPENSSL_NO_DH)
     /*
      * Test does not make sense if cached fetch is disabled.
      * There's nothing to freeze, and test will fail.
@@ -1631,6 +1631,10 @@ err:
 
 static int test_implicit_EVP_KEYEXCH_fetch(void)
 {
+#if defined(OPENSSL_NO_DH)
+    return 1;
+#endif
+
     OSSL_LIB_CTX *ctx = NULL;
     OSSL_PROVIDER *prov[2] = { NULL, NULL };
     EVP_KEYEXCH *exchange = NULL;
@@ -1678,6 +1682,10 @@ err:
 
 static int test_explicit_EVP_KEYEXCH_fetch_by_name(void)
 {
+#if defined(OPENSSL_NO_DH)
+    return 1;
+#endif
+
     return test_explicit_EVP_KEYEXCH_fetch("DH");
 }
 
