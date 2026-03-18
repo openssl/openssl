@@ -4145,9 +4145,13 @@ int ossl_quic_channel_set_max_data_request(QUIC_CHANNEL *ch, uint64_t max_data)
     if (ossl_quic_channel_have_generated_transport_params(ch))
         return 0;
 
+    if (!ossl_quic_rxfc_init(&ch->conn_rxfc, NULL,
+            max_data, DEFAULT_CONN_RXFC_MAX_WND_MUL * max_data,
+            get_time, ch))
+        return 0;
+
     ch->tx_init_max_data = max_data;
-    ossl_quic_rxfc_init(&ch->conn_rxfc, NULL,
-        max_data, DEFAULT_CONN_RXFC_MAX_WND_MUL * max_data, get_time, ch);
+
     return 1;
 }
 
@@ -4201,11 +4205,17 @@ int ossl_quic_channel_set_max_streams_request(QUIC_CHANNEL *ch, uint64_t max_str
         return 0;
 
     if (is_uni) {
+        if (!ossl_quic_rxfc_init_standalone(&ch->max_streams_uni_rxfc,
+                max_streams, get_time, ch))
+            return 0;
+
         ch->tx_init_max_streams_uni = max_streams;
-        ossl_quic_rxfc_init_standalone(&ch->max_streams_uni_rxfc, max_streams, get_time, ch);
     } else {
+        if (!ossl_quic_rxfc_init_standalone(&ch->max_streams_bidi_rxfc,
+                max_streams, get_time, ch))
+            return 0;
+
         ch->tx_init_max_streams_bidi = max_streams;
-        ossl_quic_rxfc_init_standalone(&ch->max_streams_bidi_rxfc, max_streams, get_time, ch);
     }
 
     return 1;
@@ -4226,8 +4236,11 @@ int ossl_quic_channel_set_ack_delay_exponent_request(QUIC_CHANNEL *ch, uint64_t 
     if (ossl_quic_channel_have_generated_transport_params(ch))
         return 0;
 
+    if (!ossl_quic_tx_packetiser_set_ack_delay_exponent(ch->txp, (uint32_t)exp))
+        return 0;
+
     ch->tx_ack_delay_exp = (unsigned char)exp;
-    ossl_quic_tx_packetiser_set_ack_delay_exponent(ch->txp, (uint32_t)exp);
+
     return 1;
 }
 
