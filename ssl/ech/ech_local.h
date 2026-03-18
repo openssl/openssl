@@ -43,6 +43,7 @@
 
 #define OSSL_ECH_OUTER_CH_TYPE 0 /* outer ECHClientHello enum */
 #define OSSL_ECH_INNER_CH_TYPE 1 /* inner ECHClientHello enum */
+#define OSSL_ECH_UNKNOWN_CH_TYPE -1 /* we don't know yet */
 
 #define OSSL_ECH_CIPHER_LEN 4 /* ECHCipher length (2 for kdf, 2 for aead) */
 

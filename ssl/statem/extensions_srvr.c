@@ -2473,8 +2473,11 @@ int tls_parse_ctos_ech(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
      * and only if we decrypted ok or are a backend
      */
     if (PACKET_get_1(pkt, &echtype) != 1
-        || echtype != OSSL_ECH_INNER_CH_TYPE
         || PACKET_remaining(pkt) != 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    if (echtype != OSSL_ECH_INNER_CH_TYPE) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
         return 0;
     }

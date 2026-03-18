@@ -1157,7 +1157,7 @@ int ossl_ech_get_ch_offsets(SSL_CONNECTION *s, PACKET *pkt, size_t *sessid_off,
     /* do the work */
     ch_len = PACKET_remaining(pkt);
     if (PACKET_peek_bytes(pkt, &ch, ch_len) != 1) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
     if (ossl_ech_helper_get_ch_offsets(ch, ch_len, sessid_off, exts_off,
@@ -1218,8 +1218,12 @@ static int ech_get_outer_sni(SSL_CONNECTION *s, char **osni_str,
         || !PACKET_get_net_2(&wrap, &type)
         || type != 0
         || !PACKET_get_net_2(&wrap, &osnilen)
-        || !PACKET_get_sub_packet(&wrap, &osni, osnilen)
-        || tls_parse_ctos_server_name(s, &osni, 0, NULL, 0) != 1)
+        || !PACKET_get_sub_packet(&wrap, &osni, osnilen)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    if (tls_parse_ctos_server_name(s, &osni, 0, NULL, 0) != 1)
+        /* SSLfatal called already */
         return 0;
     OPENSSL_free(s->ext.ech.outer_hostname);
     *osni_str = s->ext.ech.outer_hostname = s->ext.hostname;
@@ -1268,7 +1272,7 @@ static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
     if (extval == NULL)
         goto err;
     if (!PACKET_get_1(pkt, &innerorouter)) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
     if (innerorouter != OSSL_ECH_OUTER_CH_TYPE) {
@@ -1276,18 +1280,18 @@ static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
         goto err;
     }
     if (!PACKET_get_net_2(pkt, &pval_tmp)) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
     extval->kdf_id = pval_tmp & 0xffff;
     if (!PACKET_get_net_2(pkt, &pval_tmp)) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
     extval->aead_id = pval_tmp & 0xffff;
     /* config id */
     if (!PACKET_copy_bytes(pkt, &extval->config_id, 1)) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
 #ifdef OSSL_ECH_SUPERVERBOSE
@@ -1296,7 +1300,7 @@ static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
     s->ext.ech.attempted_cid = extval->config_id;
     /* enc - the client's public share */
     if (!PACKET_get_net_2(pkt, &pval_tmp)) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
     if (pval_tmp > OSSL_ECH_MAX_GREASE_PUB) {
@@ -1304,7 +1308,7 @@ static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
         goto err;
     }
     if (pval_tmp > PACKET_remaining(pkt)) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
     if (pval_tmp == 0 && s->hello_retry_request != SSL_HRR_PENDING) {
@@ -1336,7 +1340,7 @@ static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
             goto err;
         if (!PACKET_copy_bytes(pkt, tmpenc, pval_tmp)) {
             OPENSSL_free(tmpenc);
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             goto err;
         }
         if (memcmp(tmpenc, s->ext.ech.pub, pval_tmp) != 0) {
@@ -1361,7 +1365,7 @@ static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
         if (extval->enc == NULL)
             goto err;
         if (!PACKET_copy_bytes(pkt, extval->enc, pval_tmp)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             goto err;
         }
         /* squirrel away that value in case of future HRR */
@@ -1375,7 +1379,7 @@ static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
     /* payload - the encrypted CH */
     *payload_offset = PACKET_data(pkt) - startofech;
     if (!PACKET_get_net_2(pkt, &pval_tmp)) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
     if (pval_tmp > OSSL_ECH_MAX_PAYLOAD_LEN) {
@@ -1391,7 +1395,7 @@ static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
     if (extval->payload == NULL)
         goto err;
     if (!PACKET_copy_bytes(pkt, extval->payload, pval_tmp)) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
     *retext = extval;
@@ -1439,24 +1443,24 @@ static int ech_find_outers(SSL_CONNECTION *s, PACKET *pkt,
         || pi_tmp != 0x00 /* 1 octet of no comressions */
         || !PACKET_get_net_2(pkt, &extlens) /* len(extensions) */
         || extlens == 0) { /* no extensions! */
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
     while (PACKET_remaining(pkt) > 0 && outers_found == 0) {
         if (!PACKET_get_net_2(pkt, &etype)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             goto err;
         }
         if (etype == TLSEXT_TYPE_outer_extensions) {
             outers_found = 1;
             if (!PACKET_get_length_prefixed_2(pkt, &op)) {
-                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
                 goto err;
             }
         } else { /* skip over */
             if (!PACKET_get_net_2(pkt, &elen)
                 || !PACKET_get_bytes(pkt, &pp_tmp, elen)) {
-                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
                 goto err;
             }
         }
@@ -1511,14 +1515,14 @@ static int ech_copy_ext(SSL_CONNECTION *s, WPACKET *di, uint16_t type2copy,
         if (!PACKET_get_net_2(exts, &etype)
             || !PACKET_get_net_2(exts, &elen)
             || !PACKET_get_bytes(exts, &eval, elen)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             goto err;
         }
         if (etype == type2copy) {
             if (!WPACKET_put_bytes_u16(di, etype)
                 || !WPACKET_put_bytes_u16(di, elen)
                 || !WPACKET_memcpy(di, eval, elen)) {
-                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
                 goto err;
             }
             return 1;
@@ -1587,7 +1591,7 @@ static int ech_reconstitute_inner(SSL_CONNECTION *s, WPACKET *di, PACKET *ei,
         || !PACKET_get_net_2(ei, &pi_tmp)
         || !PACKET_get_net_2(&outer, &pi_tmp)
         || !WPACKET_put_bytes_u16(di, pi_tmp)) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
     /* handle simple, but unlikely, case first */
@@ -1598,7 +1602,7 @@ static int ech_reconstitute_inner(SSL_CONNECTION *s, WPACKET *di, PACKET *ei,
             || !PACKET_get_bytes(ei, &pp_tmp, pi_tmp)
             || !WPACKET_put_bytes_u16(di, pi_tmp)
             || !WPACKET_memcpy(di, pp_tmp, pi_tmp)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             goto err;
         }
         WPACKET_close(di);
@@ -1612,14 +1616,14 @@ static int ech_reconstitute_inner(SSL_CONNECTION *s, WPACKET *di, PACKET *ei,
         || !PACKET_get_net_2(&outer, &outer_extslen)
         || !PACKET_get_bytes(&outer, &outer_exts, outer_extslen)
         || !WPACKET_start_sub_packet_u16(di)) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
     while (PACKET_remaining(ei) > 0) {
         if (!PACKET_get_net_2(ei, &etype)
             || !PACKET_get_net_2(ei, &elen)
             || !PACKET_get_bytes(ei, &eval, elen)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             goto err;
         }
         if (etype == TLSEXT_TYPE_outer_extensions) {
@@ -1642,7 +1646,7 @@ static int ech_reconstitute_inner(SSL_CONNECTION *s, WPACKET *di, PACKET *ei,
             if (!WPACKET_put_bytes_u16(di, etype)
                 || !WPACKET_put_bytes_u16(di, elen)
                 || !WPACKET_memcpy(di, eval, elen)) {
-                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
                 goto err;
             }
         }
@@ -1858,11 +1862,11 @@ end:
         size_t echoffset = 0; /* offset of start of ECH within CH */
         uint16_t echtype = OSSL_ECH_type_unknown; /* type of ECH seen */
         size_t outersnioffset = 0; /* offset to SNI in outer */
-        int innerflag = -1;
+        int innerflag = OSSL_ECH_UNKNOWN_CH_TYPE;
         PACKET innerchpkt;
 
         if (PACKET_buf_init(&innerchpkt, clear, clearlen) != 1) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
             goto paderr;
         }
         /* reset the offsets, as we move from outer to inner CH */
@@ -1871,7 +1875,7 @@ end:
             &extsoffset, &echoffset, &echtype,
             &innerflag, &outersnioffset);
         if (rv != 1) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+            /* SSLfatal called already */
             goto paderr;
         }
         /* odd form of check below just for emphasis */
@@ -1884,7 +1888,7 @@ end:
         ch_len = extsoffset + 2 + extslen;
         /* the check below protects us from bogus data */
         if (ch_len > clearlen) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             goto paderr;
         }
         /* The RFC calls for that padding to be all zeros */
@@ -1955,7 +1959,7 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
     if (s == NULL)
         return 0;
     if (outerpkt == NULL || newpkt == NULL) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
     /* find offsets - on success, outputs are safe to use */
@@ -1963,7 +1967,7 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
             &echoffset, &echtype, &innerflag,
             &outersnioffset)
         != 1) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        /* SSLfatal called already */
         return 0;
     }
     if (echoffset == 0 || echtype != TLSEXT_TYPE_ech)
@@ -1986,8 +1990,10 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
     }
     memcpy(s->tmp_session_id, &opd[startofsessid + 1], s->tmp_session_id_len);
     if (outersnioffset > 0) { /* Grab the outer SNI for tracing */
-        if (ech_get_outer_sni(s, &osni_str, opd, opl, outersnioffset) != 1
-            || osni_str == NULL) {
+        if (ech_get_outer_sni(s, &osni_str, opd, opl, outersnioffset) != 1)
+            /* SSLfatal called already */
+            goto err;
+        if (osni_str == NULL) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
             goto err;
         }
@@ -1996,17 +2002,17 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
         OSSL_TRACE(TLS, "EARLY: no sign of an outer SNI\n");
     }
     if (echoffset > opl - 4) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
     startofech = &opd[echoffset + 4];
     echlen = opd[echoffset + 2] * 256 + opd[echoffset + 3];
     if (echlen > opl - echoffset - 4) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
     if (PACKET_buf_init(&echpkt, startofech, echlen) != 1) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
     if (ech_decode_inbound_ech(s, &echpkt, &extval, &startofciphertext) != 1)
@@ -2021,7 +2027,7 @@ int ossl_ech_early_decrypt(SSL_CONNECTION *s, PACKET *outerpkt, PACKET *newpkt)
     lenofciphertext = extval->payload_len;
     aad_len = opl;
     if (aad_len < startofciphertext + lenofciphertext) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
     aad = OPENSSL_memdup(opd, aad_len);

@@ -1634,7 +1634,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
      * that ECH "worked."
      */
     if (s->server && PACKET_remaining(pkt) != 0) {
-        int rv = 0, innerflag = -1;
+        int rv = 0, innerflag = OSSL_ECH_UNKNOWN_CH_TYPE;
         size_t startofsessid = 0, startofexts = 0, echoffset = 0;
         size_t outersnioffset = 0; /* offset to SNI in outer */
         uint16_t echtype = OSSL_ECH_type_unknown; /* type of ECH seen */
@@ -1646,7 +1646,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
             &echoffset, &echtype, &innerflag,
             &outersnioffset);
         if (rv != 1) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            /* SSLfatal already called */
             goto err;
         }
         if (innerflag == OSSL_ECH_INNER_CH_TYPE) {
