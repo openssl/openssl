@@ -487,10 +487,14 @@ static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
 
     if (!ossl_prov_is_running()
         || (selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0
-        || key == NULL
-        /* Invalid attempt to mutate a key, what is the right error to report? */
-        || ossl_ml_kem_have_pubkey(key))
+        || key == NULL)
         return 0;
+    if (ossl_ml_kem_have_pubkey(key)) {
+        /* Invalid attempt to mutate a key. */
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_KEY_FROZEN,
+            "Keys are frozen once key material has been loaded or generated");
+        return 0;
+    }
 
     include_private = selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
     res = ml_kem_key_fromdata(key, params, include_private);
