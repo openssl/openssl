@@ -1259,6 +1259,31 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     uint32_t max_early_data;
     COMP_METHOD *compm = (comp == NULL) ? NULL : comp->method;
 
+    if (direction == OSSL_RECORD_DIRECTION_READ) {
+        if (SSL_CONNECTION_IS_DTLS(s)) {
+            if (s->rlayer.curr_rec < s->rlayer.num_recs) {
+                /*
+                 * We are trying to move to the next epoch, but we've still got
+                 * trailing record data to process. This should not happen in
+                 * normal circumstances. The CCS must have arrived early, but
+                 * this remaining record data is unexpected.
+                 */
+                SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
+                return 0;
+            }
+        } else {
+            if (!ossl_assert(s->rlayer.curr_rec == s->rlayer.num_recs)) {
+                /*
+                 * How can this happen? We're trying to change to the next
+                 * record layer - but that should only happen on a record
+                 * boundary. We should never be able to get here.
+                 */
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+        }
+    }
+
     meth = ssl_select_next_record_layer(s, direction, level);
 
     if (direction == OSSL_RECORD_DIRECTION_READ) {
