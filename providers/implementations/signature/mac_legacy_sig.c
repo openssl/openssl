@@ -247,6 +247,8 @@ static int mac_set_ctx_params(void *vpmacctx, const OSSL_PARAM params[])
 
         if (!mac_legacy_set_ctx_params_decoder(params, &p))
             return 0;
+        if (!OSSL_FIPS_IND_SET_CTX_FROM_PARAM(ctx, OSSL_FIPS_IND_SETTABLE0, p.ind_k))
+            return 0;
         if (p.key != NULL) {
             if (p.key->data_type != OSSL_PARAM_OCTET_STRING)
                 return 0;
