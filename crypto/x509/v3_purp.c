@@ -81,16 +81,17 @@ static int xp_cmp(const X509_PURPOSE *const *a, const X509_PURPOSE *const *b)
     return (*a)->purpose - (*b)->purpose;
 }
 
+/*
+ * If id == -1 it just calls x509v3_cache_extensions() for its side-effect.
+ * Returns > 0 on success, -1 on (internal) error,
+ * 0 if x does not allow purpose or is not a CA cert while non_leaf is nonzero
+ */
 int X509_check_purpose(const X509 *x, int id, int non_leaf)
 {
     int idx;
     const X509_PURPOSE *pt;
 
-    /*
-     * TODO: This cast can be dropped when https://github.com/openssl/openssl/pull/30067
-     * gets merged
-     */
-    if (!ossl_x509v3_cache_extensions((X509 *)x))
+    if (!ossl_x509v3_cache_extensions(x))
         return -1;
     if (id == -1)
         return 1;
@@ -139,6 +140,7 @@ X509_PURPOSE *X509_PURPOSE_get0(int idx)
     return sk_X509_PURPOSE_value(xptable, idx - X509_PURPOSE_COUNT);
 }
 
+/* Returns -1 if not found, else an index => 0 in the standard/extended table */
 int X509_PURPOSE_get_by_sname(const char *sname)
 {
     int i;
@@ -152,7 +154,7 @@ int X509_PURPOSE_get_by_sname(const char *sname)
     return -1;
 }
 
-/* Returns -1 on error, else an index => 0 in standard/extended purpose table */
+/* Returns -1 if not found, else an index => 0 in the standard/extended table */
 int X509_PURPOSE_get_by_id(int purpose)
 {
     X509_PURPOSE tmp;
@@ -172,6 +174,7 @@ int X509_PURPOSE_get_by_id(int purpose)
 /*
  * Add purpose entry identified by |sname|. |id| must be >= X509_PURPOSE_MIN.
  * May also be used to modify existing entry, including changing its id.
+ * This overrides a standard purpose if id <= X509_PURPOSE_MAX.
  */
 int X509_PURPOSE_add(int id, int trust, int flags,
     int (*ck)(const X509_PURPOSE *, const X509 *, int),
@@ -519,7 +522,8 @@ static void scan_ext_flags(const X509 *x509, uint32_t *flags)
  * e.g., if cert 'x' is self-issued, in x->ex_flags and other internal fields.
  * x->sha1_hash is filled in, or else EXFLAG_NO_FINGERPRINT is set in x->flags.
  * X509_SIG_INFO_VALID is set in x->flags if x->siginf was filled successfully.
- * Set EXFLAG_INVALID and return 0 in case the certificate is invalid.
+ * Set EXFLAG_INVALID and return 0 if the X509 structure is incomplete
+ * or malformed according to superficial checks on some RFC 5280 requirements.
  *
  * This is usually called by side-effect on objects, and forces us to keep
  * mutable X509 objects around. We should really make this go away.
@@ -580,13 +584,13 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     /* Handle basic constraints */
     tmp_ex_pathlen = -1;
     if ((bs = X509_get_ext_d2i(const_x, NID_basic_constraints, &i, NULL)) != NULL) {
+        /*
+         * The error case !bs->ca is checked by check_extensions()
+         * in case ctx->param->flags & X509_V_FLAG_X509_STRICT
+         */
         if (bs->ca)
             tmp_ex_flags |= EXFLAG_CA;
         if (bs->pathlen != NULL) {
-            /*
-             * The error case !bs->ca is checked by check_chain()
-             * in case ctx->param->flags & X509_V_FLAG_X509_STRICT
-             */
             if (bs->pathlen->type == V_ASN1_NEG_INTEGER) {
                 ERR_raise(ERR_LIB_X509V3, X509V3_R_NEGATIVE_PATHLEN);
                 tmp_ex_flags |= EXFLAG_INVALID;
