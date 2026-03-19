@@ -58,7 +58,8 @@ If the argument is NULL, nothing is done.
 OSSL_PARAM_BLD_to_param() converts a built up OSSL_PARAM_BLD structure
 I<bld> into an allocated OSSL_PARAM array.
 The OSSL_PARAM array and all associated storage must be freed by calling
-OSSL_PARAM_free() with the functions return value.
+OSSL_PARAM_free(); if the contents of OSSL_PARAM array are confidential call
+OSSL_PARAM_clear_free().
 OSSL_PARAM_BLD_free() can safely be called any time after this function is.
 
 =begin comment
@@ -177,7 +178,7 @@ private key.
     OSSL_PARAM_BLD_free(bld);
     /* Use params */
     ...
-    OSSL_PARAM_free(params);
+    OSSL_PARAM_clear_free(params);
 
 =head2 Example 2
 
@@ -199,7 +200,7 @@ public key.
 
 =head1 SEE ALSO
 
-L<OSSL_PARAM_int(3)>, L<OSSL_PARAM(3)>, L<OSSL_PARAM_free(3)>
+L<OSSL_PARAM_int(3)>, L<OSSL_PARAM(3)>, L<OSSL_PARAM_free(3)>, L<OSSL_PARAM_clear_free(3)>
 
 =head1 HISTORY
 
