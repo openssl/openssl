@@ -70,16 +70,12 @@ OpenSSL Releases
 
    *William McCormack*
 
-### Changes between 3.6 and 4.0 [xx XXX xxxx]
+ * Fixed a use-after-free in DTLS when the read record layer was replaced (e.g.
+   at ChangeCipherSpec). Unprocessed records are now released through the old
+   record layer before it is freed, so the next read does not use descriptors
+   pointing into freed memory.
 
- * Added support for RFC 8701 GREASE (Generate Random Extensions And Sustain
-   Extensibility). When `SSL_OP_GREASE` is set, the TLS client injects
-   reserved GREASE values into cipher suites, supported versions, supported
-   groups, signature algorithms, key share, and extensions in the ClientHello
-   to prevent ecosystem ossification. The `openssl s_client` command gains a
-   `-grease` option to enable this.
-
-   *William McCormack*
+   *John Claus*
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 

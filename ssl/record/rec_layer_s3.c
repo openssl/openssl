@@ -24,6 +24,12 @@
 #include "internal/comp.h"
 #include "internal/ssl_unwrap.h"
 
+#define RECORD_LAYER_reset_read_state(rl) \
+    do {                                  \
+        (rl)->curr_rec = 0;               \
+        (rl)->num_recs = 0;               \
+    } while (0)
+
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL_CONNECTION *s)
 {
     rl->s = s;
@@ -1459,6 +1465,21 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     if (!SSL_CONNECTION_IS_DTLS(s)
         || direction == OSSL_RECORD_DIRECTION_READ
         || pqueue_peek(s->d1->sent_messages) == NULL) {
+        if (SSL_CONNECTION_IS_DTLS(s) && direction == OSSL_RECORD_DIRECTION_READ) {
+            /*
+             * Release any unprocessed records through the old layer before we
+             * free it. Otherwise the next read would use descriptors pointing
+             * into the old layer's freed buffer (use-after-free).
+             */
+            while (s->rlayer.curr_rec < s->rlayer.num_recs) {
+                TLS_RECORD *rr = &s->rlayer.tlsrecs[s->rlayer.curr_rec];
+
+                if (!ssl_release_record(s, rr, 0)) {
+                    /* SSLfatal already called */
+                    return 0;
+                }
+            }
+        }
         if (*thismethod != NULL && !(*thismethod)->free(*thisrl)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
@@ -1467,6 +1488,13 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
 
     *thisrl = newrl;
     *thismethod = meth;
+
+    /*
+     * When replacing the read record layer, reset read state so the next
+     * read fetches from the new layer.
+     */
+    if (direction == OSSL_RECORD_DIRECTION_READ)
+        RECORD_LAYER_reset_read_state(&s->rlayer);
 
     return ssl_post_record_layer_select(s, direction);
 }

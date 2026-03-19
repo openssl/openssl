@@ -18,6 +18,8 @@ setup("test_fuzz_${fuzzer}");
 plan skip_all => "This test requires dtls support"
     if disabled("dtls");
 
+# Running the dtlsserver corpus with ASan also guards against use-after-free
+# when the read record layer is replaced at ChangeCipherSpec (issue #30487).
 plan tests => 2; # one more due to below require_ok(...)
 
 require_ok(srctop_file('test','recipes','fuzz.pl'));
