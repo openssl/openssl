@@ -17,4 +17,5 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 
 {- produce_param_decoder('mac_legacy_set_ctx_params',
                          (['OSSL_MAC_PARAM_KEY', 'key', 'octet_string'],
+                          ['OSSL_MAC_PARAM_FIPS_KEY_CHECK', 'ind_k',   'int', 'fips'],
                          )); -}
