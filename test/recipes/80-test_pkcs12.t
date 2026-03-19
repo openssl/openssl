@@ -56,7 +56,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => $no_fips ? 58 : 63;
+plan tests => $no_fips ? 66 : 71;
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -137,6 +137,56 @@ ok(run(app(["openssl", "pkcs12",
             "-passin", "pass:v3-certs",
             "-nomacver", "-nodes"])),
   "test_import_pkcs12_cert_key_cert");
+
+# Regression: single -in file with cert(s) before key (no -inkey)
+# Previously failed with "No private key found"; now key/cert order is arbitrary
+{
+    my $out_cert_key_order = "out_cert_key_order.p12";
+    ok(run(app(["openssl", "pkcs12", "-export",
+                "-in", srctop_file(@path, "cert-key-cert.pem"),
+                "-passout", "pass:v3-certs",
+                "-nomac", "-out", $out_cert_key_order])),
+       "test_export_pkcs12_single_in_cert_then_key");
+    ok(run(app(["openssl", "pkcs12", "-in", $out_cert_key_order,
+                "-passin", "pass:v3-certs", "-nomacver", "-nodes"])),
+       "test_import_pkcs12_cert_then_key");
+}
+
+# Regression: single -in file with key before cert(s) (no -inkey)
+{
+    ok(run(app(["openssl", "pkey", "-in", srctop_file(@path, "cert-key-cert.pem"),
+                "-out", "keyonly.pem"])), "extract key for keyfirst test");
+    ok(run(app(["openssl", "x509", "-in", srctop_file(@path, "cert-key-cert.pem"),
+                "-out", "certonly.pem"])), "extract cert for keyfirst test");
+    open my $out, '>', 'keyfirst.pem' or die $!;
+    open my $k, '<', 'keyonly.pem' or die $!;
+    open my $c, '<', 'certonly.pem' or die $!;
+    print $out $_ while <$k>;
+    print $out $_ while <$c>;
+    close $out;
+    close $k;
+    close $c;
+    ok(run(app(["openssl", "pkcs12", "-export", "-in", "keyfirst.pem",
+                "-passout", "pass:test", "-nomac", "-out", "out_keyfirst.p12"])),
+       "test_export_pkcs12_single_in_key_then_cert");
+    ok(run(app(["openssl", "pkcs12", "-in", "out_keyfirst.p12",
+                "-passin", "pass:test", "-nomacver", "-nodes"])),
+       "test_import_pkcs12_key_then_cert");
+}
+
+# Regression: single -in with -nocerts when key is not first (key-only export)
+# Exercises load_key_certs_crls with only ppkey requested; key appears after cert(s)
+{
+    my $out_nocerts_order = "out_nocerts_cert_then_key.p12";
+    ok(run(app(["openssl", "pkcs12", "-export", "-nocerts",
+                "-in", srctop_file(@path, "cert-key-cert.pem"),
+                "-passout", "pass:v3-certs",
+                "-nomac", "-out", $out_nocerts_order])),
+       "test_export_pkcs12_single_in_nocerts_cert_then_key");
+    ok(run(app(["openssl", "pkcs12", "-in", $out_nocerts_order,
+                "-passin", "pass:v3-certs", "-nomacver", "-nodes", "-nocerts"])),
+       "test_import_pkcs12_nocerts_key_only");
+}
 
 ok(run(app(["openssl", "pkcs12", "-export", "-out", $outfile5,
             "-in", srctop_file(@path, "ee-cert.pem"), "-caname", "testname",
