@@ -175,6 +175,12 @@ can be utilized to check for this. A completely new documentation file
 should also contain a HISTORY section with wording along this line, e.g.
 "These functions have been added in OpenSSL version xxx.".
 
+The option -a checks for undocumented environment variables by scanning
+C (.c, .in) and Perl (.t, .pl) source files; variables intended for end users
+must be documented in the appropriate manual (e.g. `openssl-env(7)`).
+Names used only for tests, build scripts, or other internal tooling are listed
+in `util/find-doc-nits` and omitted from that requirement.
+
 Summary
 -------
 
