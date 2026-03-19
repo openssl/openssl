@@ -109,7 +109,10 @@ int ossl_quic_gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len,
 
 #define QUIC_STATELESS_RESET_TOKEN_LEN 16
 
-#  define QUIC_DEFAULT_MAX_STREAM_DATA (512 * 1024)
+/* Arbitrary choice of default idle timeout (not an RFC value). */
+#define QUIC_DEFAULT_IDLE_TIMEOUT 30000
+
+#define QUIC_DEFAULT_MAX_STREAM_DATA (512 * 1024)
 
 typedef struct {
     unsigned char token[QUIC_STATELESS_RESET_TOKEN_LEN];

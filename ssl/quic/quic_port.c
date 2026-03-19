@@ -93,9 +93,6 @@ typedef struct validation_token {
  */
 #define ENCRYPTED_TOKEN_MAX_LEN (MARSHALLED_TOKEN_MAX_LEN + 16 + 12)
 
-/* Arbitrary choice of default idle timeout (not an RFC value). */
-#define DEFAULT_IDLE_TIMEOUT 30000
-
 #define DEFAULT_INIT_CONN_RXFC_WND (768 * 1024)
 #define DEFAULT_INIT_STREAM_RXFC_WND (512 * 1024)
 
@@ -173,7 +170,7 @@ static int port_init(QUIC_PORT *port)
     port->rx_short_dcid_len = (unsigned char)rx_short_dcid_len;
     port->tx_init_dcid_len = INIT_DCID_LEN;
 
-    port->max_idle_timeout = DEFAULT_IDLE_TIMEOUT;
+    port->max_idle_timeout = QUIC_DEFAULT_IDLE_TIMEOUT;
 
     /*
      * We tell the peer we can handle at most this many bytes in a datagram payload.
