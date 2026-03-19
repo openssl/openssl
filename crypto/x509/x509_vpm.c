@@ -373,7 +373,7 @@ void X509_VERIFY_PARAM_free(X509_VERIFY_PARAM *param)
     clear_buffer_stack(&param->rfc822s);
     clear_buffer_stack(&param->smtputf8s);
     OPENSSL_free(param->peername);
-    sk_X509_pop_free(param->ocsp_verify_other, X509_free);
+    sk_X509_pop_free(param->ocsp_extra_untrusted, X509_free);
     OPENSSL_free(param);
 }
 
@@ -488,8 +488,8 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
     }
     x509_verify_param_copy(validate_smtputf8, NULL);
 
-    if (test_x509_verify_param_copy(ocsp_verify_other, NULL)) {
-        if (!X509_VERIFY_PARAM_set1_ocsp_verify_other(dest, src->ocsp_verify_other))
+    if (test_x509_verify_param_copy(ocsp_extra_untrusted, NULL)) {
+        if (!X509_VERIFY_PARAM_set1_ocsp_extra_untrusted(dest, src->ocsp_extra_untrusted))
             return 0;
     }
 
@@ -913,8 +913,8 @@ const char *X509_VERIFY_PARAM_get0_name(const X509_VERIFY_PARAM *param)
     return param->name;
 }
 
-int X509_VERIFY_PARAM_set1_ocsp_verify_other(X509_VERIFY_PARAM *param,
-    STACK_OF(X509) *ocsp_verify_other)
+int X509_VERIFY_PARAM_set1_ocsp_extra_untrusted(X509_VERIFY_PARAM *param,
+    STACK_OF(X509) *ocsp_extra_untrusted)
 {
     int i;
     X509 *x509, *dx509;
@@ -923,23 +923,23 @@ int X509_VERIFY_PARAM_set1_ocsp_verify_other(X509_VERIFY_PARAM *param,
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    sk_X509_pop_free(param->ocsp_verify_other, X509_free);
+    sk_X509_pop_free(param->ocsp_extra_untrusted, X509_free);
 
-    if (ocsp_verify_other == NULL) {
-        param->ocsp_verify_other = NULL;
+    if (ocsp_extra_untrusted == NULL) {
+        param->ocsp_extra_untrusted = NULL;
         return 1;
     }
 
-    param->ocsp_verify_other = sk_X509_new_null();
-    if (param->ocsp_verify_other == NULL)
+    param->ocsp_extra_untrusted = sk_X509_new_null();
+    if (param->ocsp_extra_untrusted == NULL)
         return 0;
 
-    for (i = 0; i < sk_X509_num(ocsp_verify_other); i++) {
-        x509 = sk_X509_value(ocsp_verify_other, i);
+    for (i = 0; i < sk_X509_num(ocsp_extra_untrusted); i++) {
+        x509 = sk_X509_value(ocsp_extra_untrusted, i);
         dx509 = X509_dup(x509);
         if (dx509 == NULL)
             return 0;
-        if (!sk_X509_push(param->ocsp_verify_other, dx509)) {
+        if (!sk_X509_push(param->ocsp_extra_untrusted, dx509)) {
             X509_free(dx509);
             return 0;
         }
@@ -947,9 +947,9 @@ int X509_VERIFY_PARAM_set1_ocsp_verify_other(X509_VERIFY_PARAM *param,
     return 1;
 }
 
-STACK_OF(X509) *X509_VERIFY_PARAM_get0_ocsp_verify_other(const X509_VERIFY_PARAM *param)
+STACK_OF(X509) *X509_VERIFY_PARAM_get0_ocsp_extra_untrusted(const X509_VERIFY_PARAM *param)
 {
-    return param->ocsp_verify_other;
+    return param->ocsp_extra_untrusted;
 }
 
 /*

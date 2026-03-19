@@ -97,7 +97,7 @@ B<openssl> B<s_client>
 [B<-status>]
 [B<-ocsp_check_leaf>]
 [B<-ocsp_check_all>]
-[B<-ocsp_verify_other>]
+[B<-ocsp_extra_untrusted>]
 [B<-alpn> I<protocols>]
 [B<-nextprotoneg> I<protocols>]
 [B<-ct>]
@@ -712,11 +712,12 @@ excluding the trust anchor).
 
 This implies the B<-status> and B<-ocsp_check_leaf>.
 
-=item B<-ocsp_verify_other>
+=item B<-ocsp_extra_untrusted>
 
-File or URI containing additional certificates to search when attempting to
-locate the OCSP response signing certificate. Some responders omit the actual
-signer's certificate from the response: this option can be used to supply the
+File or URI containing additional untrusted certificates to search when attempting
+to locate the OCSP response signing certificate or to complete its chain.
+Some responders omit the actual signer's certificate or other intermediate
+certificates from the response: this option can be used to supply the
 necessary certificate in such cases.
 The input can be in PEM, DER, or PKCS#12 format.
 
@@ -1151,6 +1152,8 @@ options were added in OpenSSL 3.6.
 The B<ech> options were added in OpenSSL 4.0.
 
 The B<-expected-rpks> option was added in OpenSSL 4.0.
+
+The B<-ocsp_extra_untrusted> optionas was added in OpenSSL 4.1
 
 =head1 COPYRIGHT
 
