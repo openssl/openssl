@@ -144,6 +144,7 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     { ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_X931_DIGEST),
         "invalid x931 digest" },
     { ERR_PACK(ERR_LIB_PROV, 0, PROV_R_IN_ERROR_STATE), "in error state" },
+    { ERR_PACK(ERR_LIB_PROV, 0, PROV_R_KEY_FROZEN), "key frozen" },
     { ERR_PACK(ERR_LIB_PROV, 0, PROV_R_KEY_SETUP_FAILED), "key setup failed" },
     { ERR_PACK(ERR_LIB_PROV, 0, PROV_R_KEY_SIZE_TOO_SMALL),
         "key size too small" },
