@@ -1532,6 +1532,8 @@ static int derive_secret(EVP_PKEY *priv, EVP_PKEY *peer,
         || !TEST_ptr(*secret = OPENSSL_malloc(*secret_len))
         || !TEST_int_eq(EVP_PKEY_derive(ctx, *secret, secret_len), 1)) {
         OPENSSL_free(*secret);
+        *secret = NULL;
+        *secret_len = 0;
         goto err;
     }
 
@@ -1551,7 +1553,9 @@ static int test_dh_derive(OSSL_LIB_CTX *libctx, const char *propq)
     if (!TEST_ptr(alice = generate_dh_key())
         || !TEST_ptr(bob = generate_dh_key())
         || !TEST_int_eq(derive_secret(alice, bob, &secret1, &secret1_len), 1)
+        || !TEST_size_t_ge(secret1_len, 0)
         || !TEST_int_eq(derive_secret(bob, alice, &secret2, &secret2_len), 1)
+        || !TEST_size_t_ge(secret2_len, 0)
         || !TEST_size_t_eq(secret1_len, secret2_len)
         || !TEST_int_eq(memcmp(secret1, secret2, secret1_len), 0))
         goto err;
