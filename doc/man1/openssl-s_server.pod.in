@@ -611,9 +611,9 @@ Disables support for receiving TLSv1.3 compressed certificates.
 
 =item B<-no_comp>
 
-Disable negotiation of TLS compression.
-TLS compression is not recommended and is off by default as of
-OpenSSL 1.1.0.
+Disable negotiation of TLS record compression.
+TLS record compression is off by default (since OpenSSL 1.1.0) and was
+removed in OpenSSL 5.0; this option has no effect in 5.0 and later.
 
 =item B<-num_tickets>
 

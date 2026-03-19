@@ -462,25 +462,14 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
     int *mac_pkey_type, size_t *mac_secret_size,
     SSL_COMP **comp, int use_etm)
 {
-    int i;
     const SSL_CIPHER *c;
 
     c = s->cipher;
     if (c == NULL)
         return 0;
+    /* TLS record compression removed (CRIME): never use compression */
     if (comp != NULL) {
-        SSL_COMP ctmp;
-        STACK_OF(SSL_COMP) *comp_methods;
-
         *comp = NULL;
-        ctmp.id = s->compress_meth;
-        comp_methods = SSL_COMP_get_compression_methods();
-        if (comp_methods != NULL) {
-            i = sk_SSL_COMP_find(comp_methods, &ctmp);
-            if (i >= 0)
-                *comp = sk_SSL_COMP_value(comp_methods, i);
-        }
-        /* If were only interested in comp then return success */
         if ((enc == NULL) && (md == NULL))
             return 1;
     }
@@ -1925,6 +1914,7 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
     return ctmp;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_5_0
 #ifdef OPENSSL_NO_COMP
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
 {
@@ -2018,30 +2008,65 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
     return 0;
 }
 #endif
+#else
+/* TLS record compression removed in 5.0 - stubs for ABI compatibility */
+STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
+{
+    return NULL;
+}
+
+STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
+        *meths)
+{
+    return meths;
+}
+
+int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
+{
+    (void)id;
+    (void)cm;
+    return 1;
+}
+#endif /* OPENSSL_NO_DEPRECATED_5_0 */
 
 const char *SSL_COMP_get_name(const COMP_METHOD *comp)
 {
+#ifndef OPENSSL_NO_DEPRECATED_5_0
 #ifndef OPENSSL_NO_COMP
     return comp ? COMP_get_name(comp) : NULL;
 #else
+    return NULL;
+#endif
+#else
+    (void)comp;
     return NULL;
 #endif
 }
 
 const char *SSL_COMP_get0_name(const SSL_COMP *comp)
 {
+#ifndef OPENSSL_NO_DEPRECATED_5_0
 #ifndef OPENSSL_NO_COMP
     return comp->name;
 #else
+    return NULL;
+#endif
+#else
+    (void)comp;
     return NULL;
 #endif
 }
 
 int SSL_COMP_get_id(const SSL_COMP *comp)
 {
+#ifndef OPENSSL_NO_DEPRECATED_5_0
 #ifndef OPENSSL_NO_COMP
     return comp->id;
 #else
+    return -1;
+#endif
+#else
+    (void)comp;
     return -1;
 #endif
 }

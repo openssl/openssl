@@ -76,6 +76,7 @@ our @tests_tls1_3 = (
     },
 );
 our @tests_tls1_2 = (
+    # As of OpenSSL 5.0 TLS record compression is never negotiated (CRIME).
     {
         name => "tlsv1_2-both-compress",
         server => {
@@ -88,7 +89,7 @@ our @tests_tls1_2 = (
             "MaxProtocol" => "TLSv1.2"
         },
         test => {
-            "CompressionExpected" => "Yes",
+            "CompressionExpected" => "No",
             "ExpectedResult" => "Success"
         }
     },

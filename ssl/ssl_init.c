@@ -23,12 +23,13 @@ static CRYPTO_ONCE ssl_base = CRYPTO_ONCE_STATIC_INIT;
 static int ssl_base_inited = 0;
 DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
 {
-#ifndef OPENSSL_NO_COMP
+#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_5_0)
     OSSL_TRACE(INIT, "ossl_init_ssl_base: "
                      "SSL_COMP_get_compression_methods()\n");
     /*
      * This will initialise the built-in compression algorithms. The value
-     * returned is a STACK_OF(SSL_COMP), but that can be discarded safely
+     * returned is a STACK_OF(SSL_COMP), but that can be discarded safely.
+     * TLS record compression removed in 5.0 - skipped when OPENSSL_NO_DEPRECATED_5_0.
      */
     SSL_COMP_get_compression_methods();
 #endif
