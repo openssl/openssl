@@ -54,6 +54,7 @@ struct X509_VERIFY_PARAM_st {
     int (*validate_smtputf8)(const char *name, size_t len);
     unsigned int hostflags; /* Flags to control matching features */
     char *peername; /* Matching hostname in peer certificate */
+    STACK_OF(X509) *ocsp_extra_untrusted; /* Additional certificates to search for OCSP signer */
 };
 
 /* No error callback if depth < 0 */

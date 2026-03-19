@@ -26,7 +26,9 @@ X509_VERIFY_PARAM_get1_ip_asc,
 X509_VERIFY_PARAM_set1_host_input_validation,
 X509_VERIFY_PARAM_set1_rfc822_input_validation,
 X509_VERIFY_PARAM_set1_smtputf8_input_validation,
-X509_VERIFY_PARAM_set1_ip_input_validation
+X509_VERIFY_PARAM_set1_ip_input_validation,
+X509_VERIFY_PARAM_set1_ocsp_extra_untrusted,
+X509_VERIFY_PARAM_get0_ocsp_extra_untrusted
 - X509 verification parameters
 
 =head1 SYNOPSIS
@@ -97,6 +99,9 @@ X509_VERIFY_PARAM_set1_ip_input_validation
     int (*validate_rfc822)(const char *name, size_t len));
  void X509_VERIFY_PARAM_set1_smtputf8_input_validation(X509_VERIFY_PARAM *param,
     int (*validate_smtputf8)(const char *name, size_t len));
+ int X509_VERIFY_PARAM_set1_ocsp_extra_untrusted(X509_VERIFY_PARAM *param,
+                                              STACK_OF(X509) *ocsp_extra_untrusted);
+ STACK_OF(X509) *X509_VERIFY_PARAM_get0_ocsp_extra_untrusted(const X509_VERIFY_PARAM *param);
 
 =head1 DESCRIPTION
 
@@ -324,6 +329,13 @@ the corresponding verification parameters.
 If the provided function succeeds, the corresponding
 input will be accepted for use in certificate verification.
 
+509_VERIFY_PARAM_set1_ocsp_extra_untrusted() sets further certificates used to
+check OCSP responses that does not include the needed signer certificate
+or intermediate CA certificates.
+
+X509_VERIFY_PARAM_get0_ocsp_extra_untrusted() gets the certificates
+that were set using X509_VERIFY_PARAM_set1_ocsp_extra_untrusted().
+
 =head1 RETURN VALUES
 
 X509_VERIFY_PARAM_set_flags(), X509_VERIFY_PARAM_clear_flags(),
@@ -333,8 +345,8 @@ X509_VERIFY_PARAM_add0_policy() X509_VERIFY_PARAM_set1_policies(),
 X509_VERIFY_PARAM_set1_host(), X509_VERIFY_PARAM_add1_host(),
 X509_VERIFY_PARAM_set1_email(),
 X509_VERIFY_PARAM_set1_ip(), X509_VERIFY_PARAM_add1_ip(),
-X509_VERIFY_PARAM_set1_ip_asc(),
-X509_VERIFY_PARAM_add1_ip_asc() return 1 for success and 0 for
+X509_VERIFY_PARAM_set1_ip_asc(), X509_VERIFY_PARAM_add1_ip_asc() and
+X509_VERIFY_PARAM_set1_ocsp_extra_untrusted()return 1 for success and 0 for
 failure.
 
 X509_VERIFY_PARAM_get0_host(), X509_VERIFY_PARAM_get0_email(), and
@@ -357,6 +369,9 @@ level.
 
 X509_VERIFY_PARAM_get_purpose() returns the current purpose,
 which may be B<X509_PURPOSE_DEFAULT_ANY> if unset.
+
+X509_VERIFY_PARAM_get0_ocsp_extra_untrusted() returns the additional signer
+certificates for checking OCSP responses.
 
 =head1 VERIFICATION FLAGS
 
@@ -539,6 +554,9 @@ enabling policy checking however the implementation has never done this.
 The documentation was changed to align with the implementation.
 
 The X509_VERIFY_PARAM_get_purpose() function was added in OpenSSL 3.5.
+
+The functions X509_VERIFY_PARAM_set1_ocsp_extra_untrusted() and
+X509_VERIFY_PARAM_get0_ocsp_extra_untrusted() were added in OpenSSL 4.1
 
 =head1 COPYRIGHT
 

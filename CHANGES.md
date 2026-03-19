@@ -823,6 +823,20 @@ OpenSSL 3.6
    <!-- https://github.com/openssl/openssl/pull/29251 -->
 
    *Remi Gacogne and Tomáš Mráz*
+ * Added `BIO_set_send_flags()` function that allows setting flags passed to
+   send(), sendto(), and sendmsg(). The main intention is to allow setting
+   the `MSG_NOSIGNAL` flag to avoid a crash on receiving the SIGPIPE signal.
+
+   *Igor Ustinov*
+
+ * Add parameter `-ocsp_extra_untrusted` to `s_client` application and new
+   field in `X509_VERIFY_PARAM` to provide additional certificates for
+   checking OCSP responses e.g., during TLS handshake.
+
+   *Martin Rauch*
+
+OpenSSL 3.6
+-----------
 
 ### Changes between 3.5 and 3.6.0 [1 Oct 2025]
 
