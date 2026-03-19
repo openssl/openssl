@@ -636,6 +636,58 @@ int mempacket_split_packet_at(BIO *bio, int pktidx, int recidx)
     return 1;
 }
 
+/*
+ * Append arbitrary data to a given record. The record must be the last record
+ * in the packet
+ */
+int mempacket_append_to_record(BIO *bio, int pktidx, int recidx,
+    unsigned char *data, size_t datalen)
+{
+    MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
+    MEMPACKET *srcpkt;
+    size_t rem, len;
+    int i;
+    unsigned char *rec, *tmp;
+
+    if (ctx == NULL)
+        return 0;
+    srcpkt = sk_MEMPACKET_value(ctx->pkts, pktidx);
+    if (srcpkt == NULL)
+        return 0;
+
+    tmp = OPENSSL_realloc(srcpkt->data, srcpkt->len + datalen);
+    if (tmp == NULL)
+        return 0;
+    srcpkt->data = tmp;
+
+    for (i = 0, rem = srcpkt->len, rec = srcpkt->data;
+        rem >= DTLS1_RT_HEADER_LENGTH && i < recidx;
+        i++, rem -= len, rec += len) {
+        len = ((rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO])
+            + DTLS1_RT_HEADER_LENGTH;
+        if (rem < len)
+            return 0;
+    }
+
+    if (i != recidx || rem < DTLS1_RT_HEADER_LENGTH)
+        return 0;
+
+    len = ((rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO]);
+    /* We can only append to the last record */
+    if (rem != len + DTLS1_RT_HEADER_LENGTH)
+        return 0;
+
+    /* Check we can fit the extra data in the record */
+    if (0xffff - len < datalen)
+        return 0;
+    len += datalen;
+    rec[RECORD_LEN_HI] = (len >> 8) & 0xff;
+    rec[RECORD_LEN_LO] = len & 0xff;
+    memcpy(srcpkt->data + srcpkt->len, data, datalen);
+    srcpkt->len += (int)datalen;
+    return 1;
+}
+
 int mempacket_dup_last_packet(BIO *bio)
 {
     MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
