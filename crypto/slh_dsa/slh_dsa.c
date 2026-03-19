@@ -247,6 +247,8 @@ static uint8_t *msg_encode(const uint8_t *msg, size_t msg_len,
 
     /* Pure encoding */
     encoded_len = 1 + 1 + ctx_len + msg_len;
+    if (encoded_len < msg_len) /* Check for overflow */
+        return NULL;
     *out_len = encoded_len;
     if (encoded_len <= tmp_len) {
         encoded = tmp;
@@ -264,8 +266,8 @@ static uint8_t *msg_encode(const uint8_t *msg, size_t msg_len,
         if (encoded != tmp)
             OPENSSL_free(encoded);
         encoded = NULL;
+        WPACKET_cleanup(&pkt);
     }
-    WPACKET_cleanup(&pkt);
     return encoded;
 }
 
