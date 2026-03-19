@@ -54,7 +54,7 @@ IF[{- !$disabled{tests} -}]
           dtlsv1listentest ct_test threadstest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bio_callback_test bio_memleak_test bio_core_test bio_dgram_test param_build_test \
-          sslapitest ssl_handshake_rtt_test dtlstest dtls_ccs_reorder_test sslcorrupttest \
+          sslapitest ssl_handshake_rtt_test dtlstest sslcorrupttest \
           bio_base64_test bio_enc_test pkey_meth_kdf_test evp_kdf_test uitest \
           cipherbytes_test threadstest_fips threadpool_test \
           asn1_encode_test asn1_decode_test asn1_string_table_test asn1_stable_parse_test \
@@ -96,6 +96,10 @@ IF[{- !$disabled{tests} -}]
 
   IF[{- !$disabled{comp} && (!$disabled{brotli} || !$disabled{zstd} || !$disabled{zlib}) -}]
     PROGRAMS{noinst}=cert_comp_test
+  ENDIF
+
+  IF[{- !$disabled{dtls} -}]
+    PROGRAMS{noinst}=dtls_ccs_reorder_test
   ENDIF
 
   SOURCE[confdump]=confdump.c
@@ -657,9 +661,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[dtlstest]=../include ../apps/include
   DEPEND[dtlstest]=../libcrypto ../libssl libtestutil.a
 
-  SOURCE[dtls_ccs_reorder_test]=dtls_ccs_reorder_test.c helpers/ssltestlib.c
-  INCLUDE[dtls_ccs_reorder_test]=../include ../apps/include
-  DEPEND[dtls_ccs_reorder_test]=../libcrypto ../libssl libtestutil.a
+  IF[{- !$disabled{dtls} -}]
+    SOURCE[dtls_ccs_reorder_test]=dtls_ccs_reorder_test.c helpers/ssltestlib.c
+    INCLUDE[dtls_ccs_reorder_test]=../include ../apps/include
+    DEPEND[dtls_ccs_reorder_test]=../libcrypto ../libssl libtestutil.a
+  ENDIF
 
   SOURCE[sslcorrupttest]=sslcorrupttest.c helpers/ssltestlib.c
   INCLUDE[sslcorrupttest]=../include ../apps/include
