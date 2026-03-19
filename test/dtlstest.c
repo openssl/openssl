@@ -807,7 +807,7 @@ static int test_swap_records_dtls13(int idx)
     }
 
     if (idx == 3) {
-        if (!TEST_int_le(SSL_connect(cssl), 0))
+        if (!TEST_int_le(SSL_read(cssl, buf, sizeof(buf)), (int)sizeof(msg)))
             goto end;
     }
     /*
