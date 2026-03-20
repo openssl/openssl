@@ -206,7 +206,7 @@ derived shared-secret value generated in the encapsulation process.
 Encapsulation is supported with a number of public key algorithms, currently:
 L<ML-KEM|EVP_PKEY-ML-KEM(7)>,
 L<X25519|EVP_KEM-X25519(7)>,
-L<X449|EVP_KEM-X448(7)>,
+L<X448|EVP_KEM-X448(7)>,
 and
 L<EC|EVP_KEM-EC(7)>.
 The ECX and EC algorithms use the
