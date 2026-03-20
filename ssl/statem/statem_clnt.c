@@ -533,6 +533,13 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL_CONNECTION *s)
     case TLS_ST_CW_FINISHED:
         if (SSL_CONNECTION_IS_DTLS13(s))
             /* We wait for ACK */
+            /* TODO (DTLS1.3) We should come out of init here
+             * so if the server sends APP data and we receive
+             * it before the ACK, we can process it correctly.
+             * Need to verify that the timers still
+             * fire if we do not receive the server's ACK to
+             * the client's finish message.
+             */
             return WRITE_TRAN_FINISHED;
         else
             st->hand_state = TLS_ST_OK;

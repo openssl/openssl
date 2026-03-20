@@ -216,7 +216,7 @@ int dtls1_read_bytes(SSL *s, uint8_t type, uint8_t *recvd_type,
         return -1;
     }
 
-    if (!ossl_statem_get_in_handshake(sc) && SSL_in_init(s) && !(is_dtls13 && type == SSL3_RT_APPLICATION_DATA) && dtls1_get_epoch(sc, SSL3_CC_READ) < 3) {
+    if (!ossl_statem_get_in_handshake(sc) && SSL_in_init(s)) {
         /* type == SSL3_RT_APPLICATION_DATA */
         i = sc->handshake_func(s);
         /* SSLfatal() already called if appropriate */
