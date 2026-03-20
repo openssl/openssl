@@ -1461,6 +1461,9 @@ void ossl_ssl_connection_free(SSL *ssl)
     if (s == NULL)
         return;
 
+    if (s->d1 != NULL && s->rlayer.wrl != NULL)
+        dtls1_clear_current_wrl_from_sent_buffer(s);
+
     /*
      * Ignore return values. This could result in user callbacks being called
      * e.g. for the QUIC TLS record layer. So we do this early before we have

@@ -217,6 +217,29 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs)
     pqueue_free(remaining_sent_messages);
 }
 
+/*
+ * Before RECORD_LAYER_clear() frees s->rlayer.wrl, null out any
+ * saved_retransmit_state.wrl pointers in the sent_messages queue that
+ * reference it.  This transfers ownership of that free exclusively to
+ * RECORD_LAYER_clear and prevents dtls1_clear_sent_buffer from freeing
+ * the same pointer a second time.  Entries with a different (older) wrl
+ * pointer are left untouched and will be freed correctly later.
+ */
+void dtls1_clear_current_wrl_from_sent_buffer(SSL_CONNECTION *s)
+{
+    pitem *item;
+    piterator iter = pqueue_iterator(&s->d1->sent_messages);
+
+    while ((item = pqueue_next(&iter)) != NULL) {
+        dtls_sent_msg *sent_msg = (dtls_sent_msg *)item->data;
+
+        if (sent_msg->saved_retransmit_state.wrl == s->rlayer.wrl) {
+            sent_msg->saved_retransmit_state.wrl = NULL;
+            sent_msg->saved_retransmit_state.wrlmethod = NULL;
+        }
+    }
+}
+
 int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s)
 {
     pitem *item;
