@@ -79,7 +79,7 @@ const BIO_METHOD *BIO_s_secmem(void)
     return &secmem_method;
 }
 
-BIO *BIO_new_mem_buf(const void *buf, int len)
+static BIO *bio_new_mem_buf_intern(const void *buf, int len, int exdata)
 {
     BIO *ret;
     BUF_MEM *b;
@@ -91,8 +91,13 @@ BIO *BIO_new_mem_buf(const void *buf, int len)
         return NULL;
     }
     sz = (len < 0) ? strlen(buf) : (size_t)len;
-    if ((ret = BIO_new(BIO_s_mem())) == NULL)
-        return NULL;
+    if (exdata) {
+        if ((ret = BIO_new_ex2(NULL, BIO_s_mem())) == NULL)
+            return NULL;
+    } else {
+        if ((ret = BIO_new(BIO_s_mem())) == NULL)
+            return NULL;
+    }
     bb = (BIO_BUF_MEM *)ret->ptr;
     b = bb->buf;
     /* Cast away const and trust in the MEM_RDONLY flag. */
@@ -104,6 +109,16 @@ BIO *BIO_new_mem_buf(const void *buf, int len)
     /* Since this is static data retrying won't help */
     ret->num = 0;
     return ret;
+}
+
+BIO *BIO_new_mem_buf(const void *buf, int len)
+{
+    return bio_new_mem_buf_intern(buf, len, 1);
+}
+
+BIO *BIO_new_mem_buf_ex(const void *buf, int len)
+{
+    return bio_new_mem_buf_intern(buf, len, 0);
 }
 
 static int mem_init(BIO *bi, unsigned long flags)

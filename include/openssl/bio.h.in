@@ -769,6 +769,7 @@ const BIO_METHOD *BIO_s_dgram_mem(void);
 #endif
 const BIO_METHOD *BIO_s_secmem(void);
 BIO *BIO_new_mem_buf(const void *buf, int len);
+BIO *BIO_new_mem_buf_ex(const void *buf, int len);
 #ifndef OPENSSL_NO_SOCK
 const BIO_METHOD *BIO_s_socket(void);
 const BIO_METHOD *BIO_s_connect(void);
