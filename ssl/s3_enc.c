@@ -24,7 +24,7 @@ void ssl3_cleanup_key_block(SSL_CONNECTION *s)
 
 int ssl3_init_finished_mac(SSL_CONNECTION *s)
 {
-    BIO *buf = BIO_new(BIO_s_mem());
+    BIO *buf = BIO_new_ex2(NULL, BIO_s_mem());
 
     if (buf == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_BIO_LIB);

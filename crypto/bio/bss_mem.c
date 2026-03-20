@@ -92,10 +92,10 @@ static BIO *bio_new_mem_buf_intern(const void *buf, int len, int exdata)
     }
     sz = (len < 0) ? strlen(buf) : (size_t)len;
     if (exdata) {
-        if ((ret = BIO_new_ex2(NULL, BIO_s_mem())) == NULL)
+        if ((ret = BIO_new(BIO_s_mem())) == NULL)
             return NULL;
     } else {
-        if ((ret = BIO_new(BIO_s_mem())) == NULL)
+        if ((ret = BIO_new_ex2(NULL, BIO_s_mem())) == NULL)
             return NULL;
     }
     bb = (BIO_BUF_MEM *)ret->ptr;
