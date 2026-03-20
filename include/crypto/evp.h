@@ -425,6 +425,7 @@ struct evp_pkey_st {
     STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
     int save_parameters;
     unsigned int foreign : 1; /* the low-level key is using an engine or an app-method */
+    unsigned int has_exdata : 1;
     CRYPTO_EX_DATA ex_data;
 #endif
 

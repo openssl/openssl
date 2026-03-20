@@ -1333,6 +1333,7 @@ struct ec_key_st *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey);
 #endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
 EVP_PKEY *EVP_PKEY_new(void);
+EVP_PKEY *EVP_PKEY_new_ex(void);
 int EVP_PKEY_up_ref(EVP_PKEY *pkey);
 EVP_PKEY *EVP_PKEY_dup(EVP_PKEY *pkey);
 void EVP_PKEY_free(EVP_PKEY *pkey);

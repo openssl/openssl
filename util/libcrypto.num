@@ -5718,3 +5718,4 @@ X509v3_delete_extension                 5715	4_0_0	EXIST::FUNCTION:
 CTLOG_STORE_add0_log                    ?	4_1_0	EXIST::FUNCTION:CT
 BIO_new_ex2                             ?	4_1_0	EXIST::FUNCTION:
 BIO_new_mem_buf_ex                      ?	4_1_0	EXIST::FUNCTION:
+EVP_PKEY_new_ex                         ?	4_1_0	EXIST::FUNCTION:
