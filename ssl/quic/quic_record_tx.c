@@ -896,7 +896,7 @@ int ossl_qtx_write_pkt(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt)
                  * the ossl_qtx_finish_dgram() also puts the txe (-.cons) to
                  * tx list, so ->cons becomes attached again. The function also
                  * sets ->cons to NULL so the next loop iteration starts with
-                 * fresh txe (which is also save to resize).
+                 * fresh txe (which is also safe to resize).
                  */
                 ossl_qtx_finish_dgram(qtx);
                 was_coalescing = 0;
