@@ -565,7 +565,7 @@ struct ssl_session_st {
     uint32_t flags;
     SSL_CTX *owner;
 
-# ifndef OPENSSL_NO_QUIC
+#ifndef OPENSSL_NO_QUIC
     /* Remote QUIC transport parameters for 0-RTT, for client only */
     struct {
         uint64_t init_max_data;
@@ -578,7 +578,7 @@ struct ssl_session_st {
         uint64_t max_udp_payload_size;
         uint64_t active_conn_id_limit;
     } quic_params;
-# endif
+#endif
 
     /*
      * These are used to make removal of session-ids more efficient and to

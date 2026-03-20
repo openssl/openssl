@@ -1825,16 +1825,14 @@ static int ch_on_transport_params(const unsigned char *params,
              * This is correct; the BIDI_LOCAL TP governs streams created by
              * the endpoint which sends the TP, i.e., our peer.
              */
-            sc->session->quic_params.init_max_stream_data_bidi_local =
-                ch->rx_init_max_stream_data_bidi_remote;
+            sc->session->quic_params.init_max_stream_data_bidi_local = ch->rx_init_max_stream_data_bidi_remote;
 
         if (got_initial_max_stream_data_bidi_remote)
             /*
              * This is correct; the BIDI_REMOTE TP governs streams created
              * by the endpoint which receives the TP, i.e., us.
              */
-            sc->session->quic_params.init_max_stream_data_bidi_remote =
-                ch->rx_init_max_stream_data_bidi_local;
+            sc->session->quic_params.init_max_stream_data_bidi_remote = ch->rx_init_max_stream_data_bidi_local;
 
         if (got_initial_max_stream_data_uni)
             sc->session->quic_params.init_max_stream_data_uni = ch->rx_init_max_stream_data_uni;
