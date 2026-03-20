@@ -749,6 +749,7 @@ static void *mlx_kem_dup(const void *vkey, int selection)
     default:
         ERR_raise_data(ERR_LIB_PROV, PROV_R_UNSUPPORTED_SELECTION,
             "duplication of partial key material not supported");
+        ret->mkey = ret->xkey = NULL;
         break;
     }
 
