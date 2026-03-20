@@ -67,6 +67,7 @@ my @rhotates = ([  0,  1, 62, 28, 27 ],
 
 $code.=<<___;
 .text
+.machine	"z10"
 
 .type	__KeccakF1600,\@function
 .align	32
