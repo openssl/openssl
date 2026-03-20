@@ -498,6 +498,10 @@ int OSSL_STORE_delete(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
     int res = 0;
     struct ossl_passphrase_data_st pwdata = { 0 };
 
+    if (uri == NULL) {
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
     OPENSSL_strlcpy(scheme, uri, sizeof(scheme));
     if ((p = strchr(scheme, ':')) != NULL)
         *p++ = '\0';
