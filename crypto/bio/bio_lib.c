@@ -78,7 +78,7 @@ static long bio_call_callback(BIO *b, int oper, const char *argp, size_t len,
     return ret;
 }
 
-BIO *BIO_new_ex(OSSL_LIB_CTX *libctx, const BIO_METHOD *method)
+static BIO *bio_new_intern(OSSL_LIB_CTX *libctx, const BIO_METHOD *method, int exdata)
 {
     BIO *bio = OPENSSL_zalloc(sizeof(*bio));
 
@@ -88,16 +88,18 @@ BIO *BIO_new_ex(OSSL_LIB_CTX *libctx, const BIO_METHOD *method)
     bio->libctx = libctx;
     bio->method = method;
     bio->shutdown = 1;
+    bio->has_exdata = exdata;
 
     if (!CRYPTO_NEW_REF(&bio->references, 1))
         goto err;
 
-    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data))
+    if (exdata && !CRYPTO_new_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data))
         goto err;
 
     if (method->create != NULL && !method->create(bio)) {
         ERR_raise(ERR_LIB_BIO, ERR_R_INIT_FAIL);
-        CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
+        if (exdata)
+            CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
         goto err;
     }
     if (method->create == NULL)
@@ -111,9 +113,19 @@ err:
     return NULL;
 }
 
+BIO *BIO_new_ex2(OSSL_LIB_CTX *libctx, const BIO_METHOD *method)
+{
+    return bio_new_intern(libctx, method, 0);
+}
+
+BIO *BIO_new_ex(OSSL_LIB_CTX *libctx, const BIO_METHOD *method)
+{
+    return bio_new_intern(libctx, method, 1);
+}
+
 BIO *BIO_new(const BIO_METHOD *method)
 {
-    return BIO_new_ex(NULL, method);
+    return bio_new_intern(NULL, method, 1);
 }
 
 int BIO_free(BIO *a)
@@ -140,7 +152,8 @@ int BIO_free(BIO *a)
     if ((a->method != NULL) && (a->method->destroy != NULL))
         a->method->destroy(a);
 
-    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, a, &a->ex_data);
+    if (a->has_exdata)
+        CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, a, &a->ex_data);
 
     CRYPTO_FREE_REF(&a->references);
 
@@ -898,6 +911,7 @@ BIO *BIO_dup_chain(BIO *in)
         new_bio->init = bio->init;
         new_bio->shutdown = bio->shutdown;
         new_bio->flags = bio->flags;
+        new_bio->has_exdata = bio->has_exdata;
 
         /* This will let SSL_s_sock() work with stdin/stdout */
         new_bio->num = bio->num;
@@ -908,7 +922,8 @@ BIO *BIO_dup_chain(BIO *in)
         }
 
         /* copy app data */
-        if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_BIO, &new_bio->ex_data,
+        if (bio->has_exdata
+            && !CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_BIO, &new_bio->ex_data,
                 &bio->ex_data)) {
             BIO_free(new_bio);
             goto err;
@@ -937,11 +952,17 @@ void BIO_copy_next_retry(BIO *b)
 
 int BIO_set_ex_data(BIO *bio, int idx, void *data)
 {
+    if (!bio->has_exdata)
+        return 0;
+
     return CRYPTO_set_ex_data(&(bio->ex_data), idx, data);
 }
 
 void *BIO_get_ex_data(const BIO *bio, int idx)
 {
+    if (!bio->has_exdata)
+        return NULL;
+
     return CRYPTO_get_ex_data(&(bio->ex_data), idx);
 }
 
@@ -957,11 +978,6 @@ uint64_t BIO_number_written(BIO *bio)
     if (bio)
         return bio->num_write;
     return 0;
-}
-
-void bio_free_ex_data(BIO *bio)
-{
-    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
 }
 
 void bio_cleanup(void)

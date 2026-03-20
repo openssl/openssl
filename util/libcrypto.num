@@ -5716,3 +5716,4 @@ ASN1_BIT_STRING_set1                    5713	4_0_0	EXIST::FUNCTION:
 OSSL_ESS_check_signing_certs_ex         5714	4_0_0	EXIST::FUNCTION:
 X509v3_delete_extension                 5715	4_0_0	EXIST::FUNCTION:
 CTLOG_STORE_add0_log                    ?	4_1_0	EXIST::FUNCTION:CT
+BIO_new_ex2                             ?	4_1_0	EXIST::FUNCTION:
