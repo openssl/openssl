@@ -117,7 +117,8 @@ static int hmac_check_key(PROV_MAC_CTX *macctx, const unsigned char *key, size_t
 
     if (!approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(macctx, OSSL_FIPS_IND_SETTABLE0,
-                macctx->libctx, "HMAC", "keysize", ossl_fips_config_hmac_key_check)) {
+                macctx->libctx, "HMAC", "keysize",
+                FIPS_CONFIG_HMAC_KEY_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
