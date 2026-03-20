@@ -222,25 +222,25 @@ Received TLS Record
 Header:
   Version = TLS 1.2 (0x303)
   Content Type = ApplicationData (23)
-  Length = 234
+  Length = ?
   Inner Content Type = Handshake (22)
-    NewSessionTicket, Length=213
+    NewSessionTicket, Length=?
         ticket_lifetime_hint=7200
         ticket_age_add=?
         ticket_nonce (len=8): ?
-        ticket (len=192): ?
+        ticket (len=???): ?
         No extensions
 
 Received TLS Record
 Header:
   Version = TLS 1.2 (0x303)
   Content Type = ApplicationData (23)
-  Length = 234
+  Length = ?
   Inner Content Type = Handshake (22)
-    NewSessionTicket, Length=213
+    NewSessionTicket, Length=?
         ticket_lifetime_hint=7200
         ticket_age_add=?
         ticket_nonce (len=8): ?
-        ticket (len=192): ?
+        ticket (len=???): ?
         No extensions
 
