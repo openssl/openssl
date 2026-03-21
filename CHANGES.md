@@ -31,6 +31,12 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added new verification error `X509_V_ERR_SERIAL_NUMBER_ZERO` when
+   `X509_V_FLAG_X509_STRICT` is set, rejecting certificates with a zero serial
+   number as required by [RFC 5280] section 4.1.2.2.
+
+   *Chris Baudouin, Jr.*
+
  * Added AVX2 optimized ML-DSA NTT operations on `x86_64`.
 
    *Marcel Cornu and Tomasz Kantecki*
