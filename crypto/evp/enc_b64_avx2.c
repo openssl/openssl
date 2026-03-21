@@ -2,7 +2,7 @@
 #include "enc_b64_scalar.h"
 #include "enc_b64_avx2.h"
 
-#if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
+#if (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)) && !defined(_M_ARM64EC)
 #include "b64_avx2_common.h"
 
 /*
