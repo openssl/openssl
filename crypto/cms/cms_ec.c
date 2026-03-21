@@ -26,8 +26,8 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
 
     if (ptype == V_ASN1_SEQUENCE) {
         const ASN1_STRING *pstr = pval;
-        const unsigned char *pm = pstr->data;
-        size_t pmlen = (size_t)pstr->length;
+        const unsigned char *pm = ASN1_STRING_get0_data(pstr);
+        size_t pmlen = (size_t)ASN1_STRING_length(pstr);
         int selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
 
         ctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "DER", NULL, "EC",
@@ -179,8 +179,8 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     if (alg->parameter->type != V_ASN1_SEQUENCE)
         return 0;
 
-    p = alg->parameter->value.sequence->data;
-    plen = alg->parameter->value.sequence->length;
+    p = ASN1_STRING_get0_data(alg->parameter->value.sequence);
+    plen = ASN1_STRING_length(alg->parameter->value.sequence);
     kekalg = d2i_X509_ALGOR(NULL, &p, plen);
     if (kekalg == NULL)
         goto err;

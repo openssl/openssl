@@ -16,7 +16,6 @@
 #include <openssl/rand.h>
 #include <openssl/aes.h>
 #include "internal/sizes.h"
-#include "crypto/asn1.h"
 #include "cms_local.h"
 
 int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri,
@@ -390,15 +389,14 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
 
         if (!kek_wrap_key(key, &keylen, ec->key, ec->keylen, kekctx, cms_ctx))
             goto err;
-        pwri->encryptedKey->data = key;
-        pwri->encryptedKey->length = (int)keylen;
+        ASN1_STRING_set0(pwri->encryptedKey, key, (int)keylen);
     } else {
-        key = OPENSSL_malloc(pwri->encryptedKey->length);
+        key = OPENSSL_malloc(ASN1_STRING_length(pwri->encryptedKey));
         if (key == NULL)
             goto err;
         if (!kek_unwrap_key(key, &keylen,
-                pwri->encryptedKey->data,
-                pwri->encryptedKey->length, kekctx)) {
+                ASN1_STRING_get0_data(pwri->encryptedKey),
+                ASN1_STRING_length(pwri->encryptedKey), kekctx)) {
             ERR_raise(ERR_LIB_CMS, CMS_R_UNWRAP_FAILURE);
             goto err;
         }

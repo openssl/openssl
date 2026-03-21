@@ -142,7 +142,9 @@ static int i2r_OSSL_TIME_SPEC_ABSOLUTE(X509V3_EXT_METHOD *method,
             return 0;
         if (!ossl_asn1_time_print_ex(out, time->startTime, 0))
             return 0;
-        if (BIO_printf(out, "%.*s", time->startTime->length, time->startTime->data) <= 0)
+        if (BIO_printf(out, "%.*s", ASN1_STRING_length(time->startTime),
+                ASN1_STRING_get0_data(time->startTime))
+            <= 0)
             return 0;
     } else if (time->endTime != NULL) {
         if (!BIO_puts(out, "Any time until "))

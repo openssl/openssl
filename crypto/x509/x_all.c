@@ -25,7 +25,6 @@
 #include <openssl/dsa.h>
 #include <openssl/x509v3.h>
 #include "internal/asn1.h"
-#include "crypto/asn1.h"
 #include "crypto/pkcs7.h"
 #include "crypto/x509.h"
 #include "crypto/x509_acert.h"
@@ -532,7 +531,8 @@ int X509_pubkey_digest(const X509 *data, const EVP_MD *type,
 
     if (key == NULL)
         return 0;
-    return EVP_Digest(key->data, key->length, md, len, type, NULL);
+    return EVP_Digest(ASN1_STRING_get0_data(key),
+        (size_t)ASN1_STRING_length(key), md, len, type, NULL);
 }
 
 int X509_digest(const X509 *cert, const EVP_MD *md, unsigned char *data,

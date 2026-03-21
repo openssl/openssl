@@ -84,10 +84,11 @@ static int i2r_pci(X509V3_EXT_METHOD *method, PROXY_CERT_INFO_EXTENSION *pci,
     BIO_puts(out, "\n");
     BIO_printf(out, "%*sPolicy Language: ", indent, "");
     i2a_ASN1_OBJECT(out, pci->proxyPolicy->policyLanguage);
-    if (pci->proxyPolicy->policy && pci->proxyPolicy->policy->data)
+    if (pci->proxyPolicy->policy != NULL
+        && ASN1_STRING_get0_data(pci->proxyPolicy->policy) != NULL)
         BIO_printf(out, "\n%*sPolicy Text: %.*s", indent, "",
-            pci->proxyPolicy->policy->length,
-            pci->proxyPolicy->policy->data);
+            ASN1_STRING_length(pci->proxyPolicy->policy),
+            (const char *)ASN1_STRING_get0_data(pci->proxyPolicy->policy));
     return 1;
 }
 

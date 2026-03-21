@@ -15,8 +15,6 @@
 #include "x509_local.h"
 #include <crypto/x509.h>
 
-#include <crypto/asn1.h>
-
 /*-
  * X509_ATTRIBUTE: this has the following form:
  *
@@ -81,7 +79,7 @@ int ossl_print_attribute_value(BIO *out,
     int indent)
 {
     ASN1_STRING *str;
-    unsigned char *value;
+    const unsigned char *value;
     X509_NAME *xn = NULL;
     int64_t int_val;
     int ret = 1;
@@ -102,20 +100,21 @@ int ossl_print_attribute_value(BIO *out,
             return BIO_printf(out, "%lld", (long long int)int_val) > 0;
         }
         str = av->value.integer;
-        return ossl_bio_print_hex(out, str->data, str->length);
+        return ossl_bio_print_hex(out, (unsigned char *)ASN1_STRING_get0_data(str),
+            ASN1_STRING_length(str));
 
     case V_ASN1_BIT_STRING:
         if (BIO_printf(out, "%*s", indent, "") < 0)
             return 0;
-        return ossl_bio_print_hex(out, av->value.bit_string->data,
-            av->value.bit_string->length);
+        return ossl_bio_print_hex(out, (unsigned char *)ASN1_STRING_get0_data(av->value.bit_string),
+            ASN1_STRING_length(av->value.bit_string));
 
     case V_ASN1_OCTET_STRING:
     case V_ASN1_VIDEOTEXSTRING:
         if (BIO_printf(out, "%*s", indent, "") < 0)
             return 0;
-        return ossl_bio_print_hex(out, av->value.octet_string->data,
-            av->value.octet_string->length);
+        return ossl_bio_print_hex(out, (unsigned char *)ASN1_STRING_get0_data(av->value.octet_string),
+            ASN1_STRING_length(av->value.octet_string));
 
     case V_ASN1_NULL:
         return BIO_printf(out, "%*sNULL", indent, "") >= 4;
@@ -134,8 +133,8 @@ int ossl_print_attribute_value(BIO *out,
     case V_ASN1_GRAPHICSTRING:
     case V_ASN1_OBJECT_DESCRIPTOR:
         return BIO_printf(out, "%*s%.*s", indent, "",
-                   av->value.generalstring->length,
-                   av->value.generalstring->data)
+                   ASN1_STRING_length(av->value.generalstring),
+                   ASN1_STRING_get0_data(av->value.generalstring))
             >= 0;
 
         /* EXTERNAL would go here. */
@@ -143,8 +142,8 @@ int ossl_print_attribute_value(BIO *out,
 
     case V_ASN1_UTF8STRING:
         return BIO_printf(out, "%*s%.*s", indent, "",
-                   av->value.utf8string->length,
-                   av->value.utf8string->data)
+                   ASN1_STRING_length(av->value.utf8string),
+                   ASN1_STRING_get0_data(av->value.utf8string))
             >= 0;
 
     case V_ASN1_REAL:
@@ -172,10 +171,9 @@ int ossl_print_attribute_value(BIO *out,
              * This preserves the original  pointer. We don't want to corrupt this
              * value.
              */
-            value = av->value.sequence->data;
-            xn = d2i_X509_NAME(NULL,
-                (const unsigned char **)&value,
-                av->value.sequence->length);
+            value = ASN1_STRING_get0_data(av->value.sequence);
+            xn = d2i_X509_NAME(NULL, &value,
+                ASN1_STRING_length(av->value.sequence));
             if (xn == NULL) {
                 BIO_puts(out, "(COULD NOT DECODE DISTINGUISHED NAME)\n");
                 return 0;
@@ -188,13 +186,13 @@ int ossl_print_attribute_value(BIO *out,
         default:
             break;
         }
-        return ASN1_parse_dump(out, av->value.sequence->data,
-                   av->value.sequence->length, indent, 1)
+        return ASN1_parse_dump(out, ASN1_STRING_get0_data(av->value.sequence),
+                   ASN1_STRING_length(av->value.sequence), indent, 1)
             > 0;
 
     case V_ASN1_SET:
-        return ASN1_parse_dump(out, av->value.set->data,
-                   av->value.set->length, indent, 1)
+        return ASN1_parse_dump(out, ASN1_STRING_get0_data(av->value.set),
+                   ASN1_STRING_length(av->value.set), indent, 1)
             > 0;
 
     /*
@@ -207,26 +205,26 @@ int ossl_print_attribute_value(BIO *out,
     case V_ASN1_GENERALIZEDTIME:
     case V_ASN1_NUMERICSTRING:
         return BIO_printf(out, "%*s%.*s", indent, "",
-                   av->value.visiblestring->length,
-                   av->value.visiblestring->data)
+                   ASN1_STRING_length(av->value.visiblestring),
+                   ASN1_STRING_get0_data(av->value.visiblestring))
             >= 0;
 
     case V_ASN1_PRINTABLESTRING:
         return BIO_printf(out, "%*s%.*s", indent, "",
-                   av->value.printablestring->length,
-                   av->value.printablestring->data)
+                   ASN1_STRING_length(av->value.printablestring),
+                   ASN1_STRING_get0_data(av->value.printablestring))
             >= 0;
 
     case V_ASN1_T61STRING:
         return BIO_printf(out, "%*s%.*s", indent, "",
-                   av->value.t61string->length,
-                   av->value.t61string->data)
+                   ASN1_STRING_length(av->value.t61string),
+                   ASN1_STRING_get0_data(av->value.t61string))
             >= 0;
 
     case V_ASN1_IA5STRING:
         return BIO_printf(out, "%*s%.*s", indent, "",
-                   av->value.ia5string->length,
-                   av->value.ia5string->data)
+                   ASN1_STRING_length(av->value.ia5string),
+                   ASN1_STRING_get0_data(av->value.ia5string))
             >= 0;
 
     /* UniversalString would go here. */

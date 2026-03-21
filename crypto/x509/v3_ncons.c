@@ -91,7 +91,7 @@ IMPLEMENT_ASN1_ALLOC_FUNCTIONS(GENERAL_SUBTREE)
 IMPLEMENT_ASN1_ALLOC_FUNCTIONS(NAME_CONSTRAINTS)
 
 #define IA5_OFFSET_LEN(ia5base, offset) \
-    ((ia5base)->length - ((unsigned char *)(offset) - (ia5base)->data))
+    (ASN1_STRING_length(ia5base) - ((const unsigned char *)(offset) - ASN1_STRING_get0_data(ia5base)))
 
 /* Like memchr but for ASN1_IA5STRING. Additionally you can specify the
  * starting point to search from
@@ -102,8 +102,9 @@ IMPLEMENT_ASN1_ALLOC_FUNCTIONS(NAME_CONSTRAINTS)
 static char *ia5memrchr(ASN1_IA5STRING *str, int c)
 {
     int i;
+    const unsigned char *str_data = ASN1_STRING_get0_data(str);
 
-    for (i = str->length; i > 0 && str->data[i - 1] != c; i--)
+    for (i = ASN1_STRING_length(str); i > 0 && str_data[i - 1] != c; i--)
         ;
 
     if (i == 0)
@@ -235,12 +236,18 @@ static int do_i2r_name_constraints(const X509V3_EXT_METHOD *method,
 
 static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip)
 {
-    /* ip->length should be 8 or 32 and len1 == len2 == 4 or len1 == len2 == 16 */
-    int len1 = ip->length >= 16 ? 16 : ip->length >= 4 ? 4
-                                                       : ip->length;
-    int len2 = ip->length - len1;
-    char *ip1 = ossl_ipaddr_to_asc(ip->data, len1);
-    char *ip2 = ossl_ipaddr_to_asc(ip->data + len1, len2);
+    /*
+     * ip->length should be 8 or 32 and len1 == len2 == 4 or len1 == len2 == 16
+     * XXX Todo: Investigate why we need to print random length strings as
+     * ip's, and not exact length.
+     */
+    int ip_length = ASN1_STRING_length(ip);
+    const unsigned char *ip_data = ASN1_STRING_get0_data(ip);
+    int len1 = ip_length >= 16 ? 16 : ip_length >= 4 ? 4
+                                                     : ip_length;
+    int len2 = ip_length - len1;
+    char *ip1 = ossl_ipaddr_to_asc((unsigned char *)ip_data, len1);
+    char *ip2 = ossl_ipaddr_to_asc((unsigned char *)ip_data + len1, len2);
     int ret = ip1 != NULL && ip2 != NULL
         && BIO_printf(bp, "IP:%s/%s", ip1, ip2) > 0;
 
@@ -320,7 +327,7 @@ int NAME_CONSTRAINTS_check(const X509 *x, NAME_CONSTRAINTS *nc)
             ne = X509_NAME_get_entry(nm, i);
             /* XXX casts away const (but does not mutate) */
             gntmp.d.rfc822Name = (ASN1_STRING *)X509_NAME_ENTRY_get_data(ne);
-            if (gntmp.d.rfc822Name->type != V_ASN1_IA5STRING)
+            if (ASN1_STRING_type(gntmp.d.rfc822Name) != V_ASN1_IA5STRING)
                 return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 
             r = nc_match(&gntmp, nc);
@@ -622,27 +629,29 @@ static int nc_dn(const X509_NAME *nm, const X509_NAME *base)
 
 static int nc_dns(ASN1_IA5STRING *dns, ASN1_IA5STRING *base)
 {
-    char *baseptr = (char *)base->data;
-    char *dnsptr = (char *)dns->data;
+    const char *baseptr = (const char *)ASN1_STRING_get0_data(base);
+    const char *dnsptr = (const char *)ASN1_STRING_get0_data(dns);
+    int base_length = ASN1_STRING_length(base);
+    int dns_length = ASN1_STRING_length(dns);
 
     /* Empty matches everything */
-    if (base->length == 0)
+    if (base_length == 0)
         return X509_V_OK;
 
-    if (dns->length < base->length)
+    if (dns_length < base_length)
         return X509_V_ERR_PERMITTED_VIOLATION;
 
     /*
      * Otherwise can add zero or more components on the left so compare RHS
      * and if dns is longer and expect '.' as preceding character.
      */
-    if (dns->length > base->length) {
-        dnsptr += dns->length - base->length;
+    if (dns_length > base_length) {
+        dnsptr += dns_length - base_length;
         if (*baseptr != '.' && dnsptr[-1] != '.')
             return X509_V_ERR_PERMITTED_VIOLATION;
     }
 
-    if (ia5ncasecmp(baseptr, dnsptr, base->length))
+    if (ia5ncasecmp(baseptr, dnsptr, base_length))
         return X509_V_ERR_PERMITTED_VIOLATION;
 
     return X509_V_OK;
@@ -665,13 +674,15 @@ static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base)
     size_t size = sizeof(ulabel);
     int ret = X509_V_OK;
     size_t emlhostlen;
+    int base_length = ASN1_STRING_length(base);
+    const unsigned char *base_data = ASN1_STRING_get0_data(base);
 
     /* We do not accept embedded NUL characters */
-    if (base->length > 0 && memchr(base->data, 0, base->length) != NULL)
+    if (base_length > 0 && memchr(base_data, 0, base_length) != NULL)
         return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 
     /* 'base' may not be NUL terminated. Create a copy that is */
-    baseptr = OPENSSL_strndup((char *)base->data, base->length);
+    baseptr = OPENSSL_strndup((const char *)base_data, base_length);
     if (baseptr == NULL)
         return X509_V_ERR_OUT_OF_MEM;
 
@@ -681,7 +692,7 @@ static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base)
     }
 
     eml = emltype->value.utf8string;
-    emlptr = (char *)eml->data;
+    emlptr = (const char *)ASN1_STRING_get0_data(eml);
     emlat = ia5memrchr(eml, '@');
 
     if (emlat == NULL) {
@@ -697,8 +708,8 @@ static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base)
             goto end;
         }
 
-        if ((size_t)eml->length > strlen(ulabel)) {
-            emlptr += eml->length - strlen(ulabel);
+        if ((size_t)ASN1_STRING_length(eml) > strlen(ulabel)) {
+            emlptr += ASN1_STRING_length(eml) - strlen(ulabel);
             /* X509_V_OK */
             if (ia5ncasecmp(ulabel, emlptr, strlen(ulabel)) == 0)
                 goto end;
@@ -727,19 +738,21 @@ end:
 
 static int nc_email(ASN1_IA5STRING *eml, ASN1_IA5STRING *base)
 {
-    const char *baseptr = (char *)base->data;
-    const char *emlptr = (char *)eml->data;
+    const char *baseptr = (const char *)ASN1_STRING_get0_data(base);
+    const char *emlptr = (const char *)ASN1_STRING_get0_data(eml);
     const char *baseat = ia5memrchr(base, '@');
     const char *emlat = ia5memrchr(eml, '@');
+    int base_length = ASN1_STRING_length(base);
+    int eml_length = ASN1_STRING_length(eml);
     size_t basehostlen, emlhostlen;
 
     if (!emlat)
         return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
     /* Special case: initial '.' is RHS match */
-    if (!baseat && base->length > 0 && (*baseptr == '.')) {
-        if (eml->length > base->length) {
-            emlptr += eml->length - base->length;
-            if (ia5ncasecmp(baseptr, emlptr, base->length) == 0)
+    if (!baseat && base_length > 0 && (*baseptr == '.')) {
+        if (eml_length > base_length) {
+            emlptr += eml_length - base_length;
+            if (ia5ncasecmp(baseptr, emlptr, base_length) == 0)
                 return X509_V_OK;
         }
         return X509_V_ERR_PERMITTED_VIOLATION;
@@ -772,14 +785,17 @@ static int nc_email(ASN1_IA5STRING *eml, ASN1_IA5STRING *base)
 
 static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
 {
-    const char *baseptr = (char *)base->data;
+    const char *baseptr = (const char *)ASN1_STRING_get0_data(base);
+    int base_length = ASN1_STRING_length(base);
     char *uri_copy;
     char *scheme;
     char *host;
     int hostlen;
     int ret;
 
-    if ((uri_copy = OPENSSL_strndup((const char *)uri->data, uri->length)) == NULL)
+    if ((uri_copy = OPENSSL_strndup((const char *)ASN1_STRING_get0_data(uri),
+             ASN1_STRING_length(uri)))
+        == NULL)
         return X509_V_ERR_UNSPECIFIED;
 
     if (!OSSL_parse_url(uri_copy, &scheme, NULL, &host, NULL, NULL, NULL, NULL, NULL)) {
@@ -803,9 +819,9 @@ static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
     hostlen = (int)strlen(host);
 
     /* Special case: initial '.' is RHS match */
-    if (base->length > 0 && *baseptr == '.') {
-        if (hostlen > base->length) {
-            if (ia5ncasecmp(host + hostlen - base->length, baseptr, base->length) == 0) {
+    if (base_length > 0 && *baseptr == '.') {
+        if (hostlen > base_length) {
+            if (ia5ncasecmp(host + hostlen - base_length, baseptr, base_length) == 0) {
                 ret = X509_V_OK;
                 goto end;
             }
@@ -814,7 +830,7 @@ static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
         goto end;
     }
 
-    if ((base->length != hostlen)
+    if ((base_length != hostlen)
         || ia5ncasecmp(host, baseptr, hostlen) != 0) {
         ret = X509_V_ERR_PERMITTED_VIOLATION;
         goto end;
@@ -829,11 +845,11 @@ end:
 static int nc_ip(ASN1_OCTET_STRING *ip, ASN1_OCTET_STRING *base)
 {
     int hostlen, baselen, i;
-    unsigned char *hostptr, *baseptr, *maskptr;
-    hostptr = ip->data;
-    hostlen = ip->length;
-    baseptr = base->data;
-    baselen = base->length;
+    const unsigned char *hostptr, *baseptr, *maskptr;
+    hostptr = ASN1_STRING_get0_data(ip);
+    hostlen = ASN1_STRING_length(ip);
+    baseptr = ASN1_STRING_get0_data(base);
+    baselen = ASN1_STRING_length(base);
 
     /* Invalid if not IPv4 or IPv6 */
     if (!((hostlen == 4) || (hostlen == 16)))
@@ -845,7 +861,7 @@ static int nc_ip(ASN1_OCTET_STRING *ip, ASN1_OCTET_STRING *base)
     if (hostlen * 2 != baselen)
         return X509_V_ERR_PERMITTED_VIOLATION;
 
-    maskptr = base->data + hostlen;
+    maskptr = baseptr + hostlen;
 
     /* Considering possible not aligned base ipAddress */
     /* Not checking for wrong mask definition: i.e.: 255.0.255.0 */

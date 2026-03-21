@@ -14,8 +14,6 @@
 #include <openssl/objects.h>
 #include <openssl/x509_acert.h>
 
-#include <crypto/asn1.h>
-
 static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
 {
     const ASN1_OBJECT *aobj;
@@ -44,7 +42,8 @@ static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
     for (i = 0; i < count; i++) {
         const ASN1_TYPE *at;
         int type;
-        ASN1_BIT_STRING *bs;
+        const unsigned char *data;
+        int len;
 
         at = X509_ATTRIBUTE_get0_type(a, i);
         type = at->type;
@@ -55,8 +54,9 @@ static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
         case V_ASN1_NUMERICSTRING:
         case V_ASN1_UTF8STRING:
         case V_ASN1_IA5STRING:
-            bs = at->value.asn1_string;
-            if (BIO_write(bp, (char *)bs->data, bs->length) != bs->length)
+            data = ASN1_STRING_get0_data(at->value.asn1_string);
+            len = ASN1_STRING_length(at->value.asn1_string);
+            if (BIO_write(bp, (char *)data, len) != len)
                 goto err;
             if (BIO_puts(bp, "\n") <= 0)
                 goto err;
@@ -64,8 +64,8 @@ static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
         case V_ASN1_SEQUENCE:
             if (BIO_puts(bp, "\n") <= 0)
                 goto err;
-            if (ASN1_parse_dump(bp, at->value.sequence->data,
-                    at->value.sequence->length, i, 1)
+            if (ASN1_parse_dump(bp, ASN1_STRING_get0_data(at->value.sequence),
+                    ASN1_STRING_length(at->value.sequence), i, 1)
                 <= 0)
                 goto err;
             break;

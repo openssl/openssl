@@ -17,8 +17,6 @@
 #include <openssl/x509v3.h>
 #include "x509_local.h"
 
-#include <crypto/asn1.h>
-
 int X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *x)
 {
     int ret;
@@ -265,7 +263,8 @@ int X509_EXTENSION_set_data(X509_EXTENSION *ex, const ASN1_OCTET_STRING *data)
 
     if (ex == NULL)
         return 0;
-    i = ASN1_OCTET_STRING_set(&ex->value, data->data, data->length);
+    i = ASN1_OCTET_STRING_set(&ex->value, ASN1_STRING_get0_data(data),
+        ASN1_STRING_length(data));
     if (!i)
         return 0;
     return 1;

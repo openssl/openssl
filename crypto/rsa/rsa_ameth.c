@@ -20,7 +20,7 @@
 #include <openssl/bn.h>
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
-#include "crypto/asn1.h"
+#include "crypto/asn1.h" /* for ossl_x509_algor_new_from_md(), ossl_x509_algor_mgf1_decode(), ossl_x509_algor_md_to_mgf1() */
 #include "crypto/evp.h"
 #include "crypto/rsa.h"
 #include "rsa_local.h"

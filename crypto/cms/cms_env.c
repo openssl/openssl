@@ -22,7 +22,6 @@
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include "internal/sizes.h"
-#include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/x509.h"
 #include "cms_local.h"
@@ -652,8 +651,8 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
         EVP_PKEY_CTX_ctrl_str(ktri->pctx, "rsa_pkcs1_implicit_rejection", "0");
 
     if (evp_pkey_decrypt_alloc(ktri->pctx, &ek, &eklen, fixlen,
-            ktri->encryptedKey->data,
-            ktri->encryptedKey->length)
+            ASN1_STRING_get0_data(ktri->encryptedKey),
+            (size_t)ASN1_STRING_length(ktri->encryptedKey))
         <= 0)
         goto err;
 
@@ -986,7 +985,7 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
 
     /* If encrypted key length is invalid don't bother */
 
-    if (kekri->encryptedKey->length < 16) {
+    if (ASN1_STRING_length(kekri->encryptedKey) < 16) {
         ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_ENCRYPTED_KEY_LENGTH);
         goto err;
     }
@@ -997,7 +996,7 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
         goto err;
     }
 
-    ukey = OPENSSL_malloc(kekri->encryptedKey->length - 8);
+    ukey = OPENSSL_malloc(ASN1_STRING_length(kekri->encryptedKey) - 8);
     if (ukey == NULL)
         goto err;
 
@@ -1009,8 +1008,8 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
 
     if (!EVP_DecryptInit_ex(ctx, cipher, NULL, kekri->key, NULL)
         || !EVP_DecryptUpdate(ctx, ukey, &ukeylen,
-            kekri->encryptedKey->data,
-            kekri->encryptedKey->length)
+            ASN1_STRING_get0_data(kekri->encryptedKey),
+            ASN1_STRING_length(kekri->encryptedKey))
         || !EVP_DecryptFinal_ex(ctx, ukey + ukeylen, &outlen)) {
         ERR_raise(ERR_LIB_CMS, CMS_R_UNWRAP_ERROR);
         goto err;
@@ -1255,8 +1254,8 @@ BIO *ossl_cms_AuthEnvelopedData_init_bio(CMS_ContentInfo *cms)
     ec = aenv->authEncryptedContentInfo;
     /* Set tag for decryption */
     if (ec->cipher == NULL) {
-        ec->tag = aenv->mac->data;
-        ec->taglen = aenv->mac->length;
+        ec->tag = (unsigned char *)ASN1_STRING_get0_data(aenv->mac);
+        ec->taglen = (size_t)ASN1_STRING_length(aenv->mac);
     }
     ret = ossl_cms_EncryptedContent_init_bio(ec, ossl_cms_get0_cmsctx(cms), 1);
 

@@ -86,10 +86,11 @@ static int rsa_cms_decrypt(CMS_RecipientInfo *ri)
             goto err;
         }
 
-        label = plab->parameter->value.octet_string->data;
+        labellen = ASN1_STRING_length(plab->parameter->value.octet_string);
+        label = (unsigned char *)ASN1_STRING_get0_data(
+            plab->parameter->value.octet_string);
         /* Stop label being freed when OAEP parameters are freed */
-        plab->parameter->value.octet_string->data = NULL;
-        labellen = plab->parameter->value.octet_string->length;
+        ASN1_STRING_set0(plab->parameter->value.octet_string, NULL, 0);
     }
 
     if (EVP_PKEY_CTX_set_rsa_padding(pkctx, RSA_PKCS1_OAEP_PADDING) <= 0)

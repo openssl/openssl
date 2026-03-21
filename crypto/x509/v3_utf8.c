@@ -32,14 +32,14 @@ char *i2s_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
 {
     char *tmp;
 
-    if (utf8 == NULL || utf8->length == 0) {
+    if (utf8 == NULL || ASN1_STRING_length(utf8) == 0) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
-    if ((tmp = OPENSSL_malloc(utf8->length + 1)) == NULL)
+    if ((tmp = OPENSSL_malloc(ASN1_STRING_length(utf8) + 1)) == NULL)
         return NULL;
-    memcpy(tmp, utf8->data, utf8->length);
-    tmp[utf8->length] = 0;
+    memcpy(tmp, ASN1_STRING_get0_data(utf8), ASN1_STRING_length(utf8));
+    tmp[ASN1_STRING_length(utf8)] = 0;
     return tmp;
 }
 
