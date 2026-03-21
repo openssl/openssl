@@ -163,6 +163,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
     const void *data, EVP_MD_CTX *ctx)
 {
     const EVP_MD *md;
+    EVP_PKEY_CTX *pctx;
     EVP_PKEY *pkey;
     unsigned char *buf_in = NULL, *buf_out = NULL;
     size_t inl = 0, outl = 0, outll = 0;
@@ -170,7 +171,14 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
     int rv, pkey_id;
 
     md = EVP_MD_CTX_get0_md(ctx);
-    pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_get_pkey_ctx(ctx));
+    pctx = EVP_MD_CTX_get_pkey_ctx(ctx);
+
+    if (pctx == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_CONTEXT_NOT_INITIALISED);
+        goto err;
+    }
+
+    pkey = EVP_PKEY_CTX_get0_pkey(pctx);
 
     if (pkey == NULL) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_CONTEXT_NOT_INITIALISED);
@@ -178,13 +186,11 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
     }
 
     if (pkey->ameth == NULL) {
-        EVP_PKEY_CTX *pctx = EVP_MD_CTX_get_pkey_ctx(ctx);
         OSSL_PARAM params[2];
         unsigned char aid[128];
         size_t aid_len = 0;
 
-        if (pctx == NULL
-            || !EVP_PKEY_CTX_IS_SIGNATURE_OP(pctx)) {
+        if (!EVP_PKEY_CTX_IS_SIGNATURE_OP(pctx)) {
             ERR_raise(ERR_LIB_ASN1, ASN1_R_CONTEXT_NOT_INITIALISED);
             goto err;
         }
