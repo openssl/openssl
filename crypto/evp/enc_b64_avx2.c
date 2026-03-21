@@ -630,4 +630,5 @@ int encode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
     return (int)(out - (uint8_t *)dst) + +evp_encodeblock_int(ctx, out, src + i, srclen - i, final_wrap_cnt);
 }
 OPENSSL_UNTARGET_AVX2
+#endif /* !defined(_M_ARM64EC) */
 #endif

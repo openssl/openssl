@@ -41,6 +41,10 @@ OpenSSL Releases
 
    *Paul Louvel*
 
+ * Added `CTLOG_STORE_add0_log()` to add individual CT logs to a `CTLOG_STORE`.
+
+   *Tim Perry*
+
  * Dropped `no-ecdsa` and `no-ecdh` options from `Configure` as these options
    did not really disable the implementations. Use `no-ec` to disable the
    elliptic curve support.

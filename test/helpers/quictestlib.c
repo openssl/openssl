@@ -930,9 +930,10 @@ int qtest_fault_prepend_frame(QTEST_FAULT *fault, const unsigned char *frame,
     old_len = fault->pplainio.buf_len;
 
     /* Extend the size of the packet by the size of the new frame */
-    if (!TEST_true(qtest_fault_resize_plain_packet(fault,
-            old_len + frame_len)))
+    if (!qtest_fault_resize_plain_packet(fault, old_len + frame_len)) {
+        TEST_info("Cannot extend packet (%zu + %zu)", old_len, frame_len);
         return 0;
+    }
 
     memmove(buf + frame_len, buf, old_len);
     memcpy(buf, frame, frame_len);
