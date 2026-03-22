@@ -10,6 +10,9 @@
 #ifndef OSSL_PROV_CIPHER_ASCON_AEAD128_H
 # define OSSL_PROV_CIPHER_ASCON_AEAD128_H
 
+# include <openssl/opensslconf.h>
+# ifndef OPENSSL_NO_ASCON128
+
 # include <stdint.h>
 # include <stdbool.h>
 # include <openssl/core.h>
@@ -62,5 +65,7 @@ struct ascon_aead128_ctx_st
 
 /* Dispatch table for ASCON-AEAD128 */
 extern const OSSL_DISPATCH ossl_ascon_aead128_functions[];
+
+# endif /* OPENSSL_NO_ASCON128 */
 
 #endif /* OSSL_PROV_CIPHER_ASCON_AEAD128_H */

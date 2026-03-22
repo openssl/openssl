@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "ascon.h"
+#include "crypto/ascon.h"
 #include <string.h>
 #include "internal/cryptlib.h"
 #include <openssl/byteorder.h>
@@ -170,21 +170,21 @@ static ASCON_INLINE void ascon_aead128_update(ascon_aead128_ctx *ctx,
     ctx->state[4] = s4;
 }
 
-void ascon_aead128_encrypt_update(ascon_aead128_ctx *ctx, unsigned char *ct,
-                                  const unsigned char *pt, size_t len)
+static void ascon_aead128_encrypt_update(ascon_aead128_ctx *ctx, unsigned char *ct,
+                                         const unsigned char *pt, size_t len)
 {
     ascon_aead128_update(ctx, ct, pt, len);
 }
 
-void ascon_aead128_decrypt_update(ascon_aead128_ctx *ctx, unsigned char *pt,
-                                  const unsigned char *ct, size_t len)
+static void ascon_aead128_decrypt_update(ascon_aead128_ctx *ctx, unsigned char *pt,
+                                       const unsigned char *ct, size_t len)
 {
     ctx->flags |= ASCONFLG_DEC;
     ascon_aead128_update(ctx, pt, ct, len);
 }
 
-void ascon_aead128_init(ascon_aead128_ctx *ctx, const unsigned char *k,
-                        const unsigned char *n)
+static void ascon_aead128_init(ascon_aead128_ctx *ctx, const unsigned char *k,
+                               const unsigned char *n)
 {
     uint64_t s0, s1, s2, s3, s4, k0, k1;
 
@@ -207,8 +207,8 @@ void ascon_aead128_init(ascon_aead128_ctx *ctx, const unsigned char *k,
     ctx->flags = ASCONFLG_DOMAINSEP;
 }
 
-void ascon_aead128_aad_update(ascon_aead128_ctx *ctx, const unsigned char *in,
-                              size_t len)
+static void ascon_aead128_aad_update(ascon_aead128_ctx *ctx, const unsigned char *in,
+                                     size_t len)
 {
     uint64_t flags;
 
@@ -218,7 +218,7 @@ void ascon_aead128_aad_update(ascon_aead128_ctx *ctx, const unsigned char *in,
     ctx->flags = (len > 0) ? flags |= ASCONFLG_AAD : flags;
 }
 
-void ascon_aead128_encrypt_final(ascon_aead128_ctx *ctx, unsigned char *tag)
+static void ascon_aead128_final(ascon_aead128_ctx *ctx, unsigned char *tag)
 {
     uint64_t s0, s1, s2, s3, s4, k0, k1;
     unsigned char pad = 0x01;

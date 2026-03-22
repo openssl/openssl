@@ -9,6 +9,10 @@
 
 # ifndef ASCON_H
 #  define ASCON_H
+#  include <openssl/opensslconf.h>
+
+#  ifndef OPENSSL_NO_ASCON128
+
 #  include <stddef.h>
 #  include <stdint.h>
 #  include <stdbool.h>
@@ -88,4 +92,6 @@ void ossl_ascon_cxof128_final(ascon_cxof128_ctx *ctx, unsigned char *out,
                                size_t len);
 void ossl_ascon_cxof128_cleanup(ascon_cxof128_ctx *ctx);
 
-#endif /* ASCON_H */
+#  endif /* OPENSSL_NO_ASCON128 */
+
+# endif /* ASCON_H */
