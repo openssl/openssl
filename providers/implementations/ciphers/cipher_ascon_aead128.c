@@ -128,83 +128,68 @@ static int ascon_aead128_internal_init(void *vctx, direction_t direction,
                                        const OSSL_PARAM params[])
 {
     struct ascon_aead128_ctx_st *ctx = vctx;
+    uint8_t saved_tag[FIXED_TAG_LENGTH];
+    int tag_was_set;
+    unsigned char ivcopy[ASCON_AEAD_NONCE_LEN];
 
     if (ctx == NULL)
         return OSSL_RV_ERROR;
 
-    /* Validate key length if key is provided */
+    if (key == NULL && iv == NULL) {
+        ctx->direction = direction;
+        return OSSL_RV_SUCCESS;
+    }
+
     if (key != NULL) {
         if (keylen != ASCON_AEAD128_KEY_LEN) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return OSSL_RV_ERROR;
         }
+        memcpy(ctx->key, key, ASCON_AEAD128_KEY_LEN);
+        ctx->key_set = true;
     }
 
-    /* Validate IV length if IV is provided */
     if (iv != NULL) {
         if (ivlen != ASCON_AEAD_NONCE_LEN) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return OSSL_RV_ERROR;
         }
-    }
-
-    /* Handle reinitialization with NULL key but new IV */
-    if (key == NULL && iv != NULL && ctx->key_set) {
-        /* Preserve tag for decryption - it may have been set before reinitialization */
-        uint8_t saved_tag[FIXED_TAG_LENGTH];
-        int tag_was_set = ctx->is_tag_set;
-
-        if (tag_was_set && direction == DECRYPTION)
-            memcpy(saved_tag, ctx->tag, FIXED_TAG_LENGTH);
-
-        ascon_aead128_cleanctx(ctx);
-        ctx->direction = direction;
-        /* Use stored key for reinitialization */
-        ossl_ascon_aead128_init(ctx->internal_ctx, ctx->key, iv);
-        /* Store the IV for get_updated_iv */
         memcpy(ctx->iv, iv, ASCON_AEAD_NONCE_LEN);
         ctx->iv_set = true;
-        ctx->is_ongoing = true;
-
-        /* Restore tag for decryption if it was set before reinitialization */
-        if (tag_was_set && direction == DECRYPTION) {
-            memcpy(ctx->tag, saved_tag, FIXED_TAG_LENGTH);
-            ctx->is_tag_set = true;
-        }
-
-        return OSSL_RV_SUCCESS;
     }
 
-    /* Only clean and initialize if both key and IV are provided */
-    if (key != NULL && iv != NULL) {
-        /* Preserve tag for decryption - it may have been set before reinitialization */
-        uint8_t saved_tag[FIXED_TAG_LENGTH];
-        int tag_was_set = ctx->is_tag_set;
-
-        if (tag_was_set && direction == DECRYPTION)
-            memcpy(saved_tag, ctx->tag, FIXED_TAG_LENGTH);
-
-        ascon_aead128_cleanctx(ctx);
-        ctx->direction = direction;
-        ossl_ascon_aead128_init(ctx->internal_ctx, key, iv);
-        /* Store the key and IV for reinitialization */
-        memcpy(ctx->key, key, ASCON_AEAD128_KEY_LEN);
-        ctx->key_set = true;
-        memcpy(ctx->iv, iv, ASCON_AEAD_NONCE_LEN);
-        ctx->iv_set = true;
-        ctx->is_ongoing = true;
-
-        /* Restore tag for decryption if it was set before reinitialization */
-        if (tag_was_set && direction == DECRYPTION) {
-            memcpy(ctx->tag, saved_tag, FIXED_TAG_LENGTH);
-            ctx->is_tag_set = true;
-        }
-
-        return OSSL_RV_SUCCESS;
-    }
-
-    /* If only direction is being set (key/IV not provided yet), just set direction */
     ctx->direction = direction;
+
+    tag_was_set = ctx->is_tag_set;
+    if (tag_was_set && direction == DECRYPTION)
+        memcpy(saved_tag, ctx->tag, FIXED_TAG_LENGTH);
+
+    if (ctx->key_set && ctx->iv_set) {
+        memcpy(ivcopy, ctx->iv, sizeof(ivcopy));
+        ascon_aead128_cleanctx(ctx);
+        ctx->key_set = true;
+        memcpy(ctx->iv, ivcopy, sizeof(ivcopy));
+        ctx->iv_set = true;
+        if (tag_was_set && direction == DECRYPTION) {
+            memcpy(ctx->tag, saved_tag, FIXED_TAG_LENGTH);
+            ctx->is_tag_set = true;
+        }
+        ossl_ascon_aead128_init(ctx->internal_ctx, ctx->key, ctx->iv);
+        ctx->is_ongoing = true;
+    } else {
+        ctx->is_ongoing = false;
+        ctx->assoc_data_processed = false;
+        ctx->is_tag_set = false;
+        ctx->tag_len = FIXED_TAG_LENGTH;
+        if (ctx->internal_ctx != NULL)
+            ossl_ascon_aead_cleanup(ctx->internal_ctx);
+        OPENSSL_cleanse(ctx->tag, sizeof(ctx->tag));
+        if (!ctx->key_set)
+            OPENSSL_cleanse(ctx->key, sizeof(ctx->key));
+        if (!ctx->iv_set)
+            OPENSSL_cleanse(ctx->iv, sizeof(ctx->iv));
+    }
+
     return OSSL_RV_SUCCESS;
 }
 
@@ -257,6 +242,15 @@ static int ascon_aead128_update(void *vctx, unsigned char *out, size_t *outl,
         if (outl != NULL)
             *outl = 0;
         return OSSL_RV_SUCCESS;
+    }
+
+    if (outsize < inl) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+        return OSSL_RV_ERROR;
+    }
+    if (inl > 0 && in == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_INPUT_LENGTH);
+        return OSSL_RV_ERROR;
     }
 
     if (ctx->direction == ENCRYPTION) {
@@ -352,9 +346,9 @@ static int ascon_aead128_final(void *vctx, unsigned char *out, size_t *outl, siz
             if (is_tag_valid) {
                 *outl = ret;
                 return OSSL_RV_SUCCESS;
-            } else {
-                return OSSL_RV_ERROR;
             }
+            ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
+            return OSSL_RV_ERROR;
         } else {
             ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             return OSSL_RV_ERROR;

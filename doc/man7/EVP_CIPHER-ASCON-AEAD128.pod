@@ -39,6 +39,16 @@ authentication tag. The implementation processes data in 128-bit (16-byte) block
 using the Ascon-p[8] permutation for data processing and Ascon-p[12] for
 initialization and finalization.
 
+The nonce (IV) must be unique for each encryption under a given key. Reusing a
+nonce with the same key can compromise confidentiality and/or integrity.
+Ascon-AEAD128 is not misuse-resistant.
+
+When decrypting, applications must verify that the final step succeeds (for
+example L<EVP_DecryptFinal_ex(3)> returns success). If finalisation fails,
+authentication must be treated as failed and any produced plaintext must not be
+trusted or used. Streaming decryption output is not authenticated until the
+tag is verified.
+
 =head1 CONFORMING TO
 
 =over 4
