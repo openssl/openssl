@@ -930,6 +930,11 @@ int EC_POINT_get_affine_coordinates(const EC_GROUP *group,
     const EC_POINT *point, BIGNUM *x, BIGNUM *y,
     BN_CTX *ctx)
 {
+#ifndef FIPS_MODULE
+    BN_CTX *new_ctx = NULL;
+#endif
+    int ret = 0;
+
     if (group->meth->point_get_affine_coordinates == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
@@ -942,7 +947,30 @@ int EC_POINT_get_affine_coordinates(const EC_GROUP *group,
         ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
         return 0;
     }
-    return group->meth->point_get_affine_coordinates(group, point, x, y, ctx);
+#ifndef FIPS_MODULE
+    if (ctx == NULL)
+        ctx = new_ctx = BN_CTX_secure_new();
+#endif
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (point->Z_is_one) {
+        if (group->meth->field_decode != NULL) {
+            if ((x != NULL && !group->meth->field_decode(group, x, point->X, ctx))
+                || (y != NULL && !group->meth->field_decode(group, y, point->Y, ctx)))
+                goto err;
+        } else if ((x != NULL && !BN_copy(x, point->X))
+            || (y != NULL && !BN_copy(y, point->Y)))
+            goto err;
+        ret = 1;
+    } else
+        ret = group->meth->point_get_affine_coordinates(group, point, x, y, ctx);
+err:
+#ifndef FIPS_MODULE
+    BN_CTX_free(new_ctx);
+#endif
+    return ret;
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
