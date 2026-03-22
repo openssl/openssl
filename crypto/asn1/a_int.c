@@ -464,7 +464,7 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
         p += len;
     }
 
-    ASN1_STRING_set0(ret, s, (int)len);  /* len <= INT_MAX checked above */
+    ASN1_STRING_set0(ret, s, (int)len); /* len <= INT_MAX checked above */
     if (a != NULL)
         (*a) = ret;
     *pp = p;
