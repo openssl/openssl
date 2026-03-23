@@ -72,7 +72,7 @@ static int msvc_bio_vprintf(BIO *bio, const char *format, va_list args)
 }
 #endif
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 /*
  * This function is for unit test on windows only when built with Visual Studio
  */
