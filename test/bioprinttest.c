@@ -315,7 +315,7 @@ static int test_int(int i)
     return 1;
 }
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 static int test_int_win32(int i)
 {
     int ret;
@@ -460,7 +460,7 @@ static int test_width_precision(int i)
     return 1;
 }
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 static int test_width_precision_win32(int i)
 {
     int ret;
@@ -691,7 +691,7 @@ static int test_zu(int i)
     return 1;
 }
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 static int test_zu_win32(int i)
 {
     int ret;
@@ -734,7 +734,7 @@ static int test_t(int i)
     return 1;
 }
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 static int test_t_win32(int i)
 {
     int ret;
@@ -781,7 +781,7 @@ static int test_j(int i)
     return 1;
 }
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 static int test_j_win32(int i)
 {
     int ret;
@@ -877,7 +877,7 @@ static int test_fp(int i)
     return r;
 }
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 static int test_fp_win32(int i)
 {
     int ret;
@@ -931,7 +931,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_t, OSSL_NELEM(t_data));
     ADD_ALL_TESTS(test_j, OSSL_NELEM(jf_data));
 
-#ifdef _WIN32
+#ifdef _MSC_VER
     /*
      * those tests are using _vsnprintf_s()
      */
