@@ -1332,6 +1332,7 @@ static int ssl_print_raw_public_key(BIO *bio, const SSL_CONNECTION *sc,
     int server, int indent, const unsigned char **pmsg, size_t *pmsglen)
 {
     EVP_PKEY *pkey;
+    SSL_CTX *ctx = SSL_CONNECTION_GET_CTX(sc);
     size_t clen;
     const unsigned char *msg = *pmsg;
     size_t msglen = *pmsglen;
@@ -1362,8 +1363,7 @@ static int ssl_print_raw_public_key(BIO *bio, const SSL_CONNECTION *sc,
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "raw_public_key, length=%d\n", (int)clen);
 
-    pkey = d2i_PUBKEY_ex(NULL, &msg, (long)clen,
-        sc->ssl.ctx->libctx, sc->ssl.ctx->propq);
+    pkey = d2i_PUBKEY_ex(NULL, &msg, (long)clen, ctx->libctx, ctx->propq);
     if (pkey == NULL)
         return 0;
     EVP_PKEY_print_public(bio, pkey, indent + 2, NULL);
