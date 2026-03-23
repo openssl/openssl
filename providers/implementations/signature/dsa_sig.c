@@ -659,8 +659,7 @@ static void *dsa_dupctx(void *vpdsactx)
     dstctx->md = srcctx->md;
 
     if (srcctx->mdctx != NULL
-        && ((dstctx->mdctx = EVP_MD_CTX_new()) == NULL
-            || !EVP_MD_CTX_copy_ex(dstctx->mdctx, srcctx->mdctx)))
+        && (dstctx->mdctx = EVP_MD_CTX_dup(srcctx->mdctx)) == NULL)
         goto err;
     if (srcctx->propq != NULL
         && ((dstctx->propq = OPENSSL_strdup(srcctx->propq)) == NULL))
