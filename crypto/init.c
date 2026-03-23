@@ -498,6 +498,7 @@ void OPENSSL_cleanup(void)
 #endif /* defined(DO_NOT_SKIP_OPENSSL_CLEANUP) */
 }
 
+#if defined(OSSL_USE_GLOBAL_CONSTRUCTOR) || defined(OSSL_DLLMAIN_CONSTRUCTOR)
 /*
  * Global library constructor function.
  *
@@ -518,3 +519,4 @@ void ossl_crypto_constructor(void)
      */
     OPENSSL_cpuid_setup();
 }
+#endif /* defined(OSSL_USE_GLOBAL_CONSTRUCTOR) || defined(OSSL_DLLMAIN_CONSTRUTOR) */
