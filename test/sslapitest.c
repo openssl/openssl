@@ -10369,7 +10369,7 @@ static int test_session_cache_overflow(int idx)
      * would free the get_sess_val, causing a use-after-free error.
      */
     if (!TEST_true(CRYPTO_GET_REF(&get_sess_val->references, &references))
-            || !TEST_int_ge(references, 2))
+        || !TEST_int_ge(references, 2))
         goto end;
     sess = SSL_get1_session(clientssl);
     if (!TEST_ptr(sess))
