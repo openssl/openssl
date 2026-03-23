@@ -67,7 +67,6 @@ ENDIF
 # provider module that uses it.  ctype.c is included here because the CPUID
 # uses functions from there to parse magic environment variables.
 $CPUID_COMMON=$CPUIDASM cpuid.c ctype.c
-INCLUDE[cpuid.o]=..
 
 SOURCE[../libcrypto]=$CPUID_COMMON
 DEFINE[../libcrypto]=$CPUIDDEF
