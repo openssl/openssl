@@ -20,6 +20,7 @@
 #include <openssl/param_build.h>
 #include <openssl/rand.h>
 #include <crypto/ml_kem.h>
+#include "crypto/evp.h"
 #include "testutil.h"
 
 static OSSL_LIB_CTX *testctx = NULL;
@@ -420,6 +421,70 @@ static int test_ml_kem_from_data_propq(void)
     return ret;
 }
 
+static const char *mlx_kem_algs[] = {
+    "X25519MLKEM768",
+    "SecP256r1MLKEM768",
+    "SecP384r1MLKEM1024",
+};
+
+/*
+ * Test that mlx_kem_dup() with partial selection (public-only) does not
+ * corrupt the original key. Before the fix, the default branch of the
+ * switch in mlx_kem_dup() would call mlx_kem_key_free() on a shallow copy
+ * without nulling mkey/xkey first, causing a double-free when the original
+ * key was later freed.
+ */
+static int test_mlx_kem_dup_partial_selection(int idx)
+{
+    const char *alg = mlx_kem_algs[idx];
+    EVP_PKEY_CTX *genctx = NULL;
+    EVP_PKEY_CTX *encctx = NULL;
+    EVP_PKEY *keypair = NULL;
+    EVP_PKEY *dest = NULL;
+    size_t wrpkeylen = 0, genkeylen = 0;
+    int ret = 0;
+
+    /* Generate an MLX KEM keypair */
+    if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(testctx, alg, NULL))
+        || !TEST_int_eq(EVP_PKEY_keygen_init(genctx), 1)
+        || !TEST_int_eq(EVP_PKEY_keygen(genctx, &keypair), 1))
+        goto err;
+
+    /*
+     * Attempt a partial copy (public-key only). EVP_PKEY_PUBLIC_KEY includes
+     * OSSL_KEYMGMT_SELECT_PUBLIC_KEY (0x02) but not private, so
+     * selection & OSSL_KEYMGMT_SELECT_KEYPAIR == 0x02 which hits the default
+     * branch in mlx_kem_dup(). This should fail gracefully without corrupting
+     * the source key.
+     */
+    if (!TEST_ptr(dest = EVP_PKEY_new()))
+        goto err;
+    /* Expected to fail — partial duplication is not supported for MLX KEM */
+    evp_keymgmt_util_copy(dest, keypair, EVP_PKEY_PUBLIC_KEY);
+    ERR_clear_error();
+
+    /*
+     * Verify the original keypair is still intact by performing an
+     * encapsulate operation. If the partial copy corrupted the key
+     * (double-freed mkey/xkey), this would crash or trigger ASan.
+     */
+    if (!TEST_ptr(encctx = EVP_PKEY_CTX_new_from_pkey(testctx, keypair, NULL))
+        || !TEST_int_gt(EVP_PKEY_encapsulate_init(encctx, NULL), 0)
+        || !TEST_int_gt(EVP_PKEY_encapsulate(encctx, NULL, &wrpkeylen,
+                                             NULL, &genkeylen), 0)
+        || !TEST_size_t_gt(wrpkeylen, 0)
+        || !TEST_size_t_gt(genkeylen, 0))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_CTX_free(encctx);
+    EVP_PKEY_free(dest);
+    EVP_PKEY_free(keypair);
+    EVP_PKEY_CTX_free(genctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     int test_rand = 0;
@@ -448,5 +513,6 @@ int setup_tests(void)
 
     ADD_TEST(test_ml_kem);
     ADD_TEST(test_ml_kem_from_data_propq);
+    ADD_ALL_TESTS(test_mlx_kem_dup_partial_selection, OSSL_NELEM(mlx_kem_algs));
     return 1;
 }
