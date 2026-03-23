@@ -362,6 +362,7 @@ void ossl_crypto_constructor(void);
 #else
 #if defined(__has_attribute)
 #if __has_attribute(constructor)
+#define OSSL_USE_GLOBAL_CONSTRUCTOR
 /* constructor is installed by compiler */
 void ossl_crypto_constructor(void) __attribute__((constructor));
 #endif /* __has_attribute(constructor) */

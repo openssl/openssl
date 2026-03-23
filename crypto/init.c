@@ -757,6 +757,7 @@ int OPENSSL_atexit(void (*handler)(void))
     return 1;
 }
 
+#if defined(OSSL_USE_GLOBAL_CONSTRUCTOR)
 /*
  * Global library constructor function.
  *
@@ -777,3 +778,4 @@ void ossl_crypto_constructor(void)
      */
     OPENSSL_cpuid_setup();
 }
+#endif /* defined(OSSL_USE_GLOBAL_CONSTRUCTOR) */
