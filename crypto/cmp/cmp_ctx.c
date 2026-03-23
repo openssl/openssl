@@ -82,7 +82,13 @@ err:
 static int cmp_ctx_set_md(OSSL_CMP_CTX *ctx, EVP_MD **pmd, int nid)
 {
     const char *name = OBJ_nid2sn(nid);
-    EVP_MD *md = EVP_MD_fetch(ctx->libctx, name, ctx->propq);
+    EVP_MD *md;
+
+    if (name == NULL) {
+        ERR_raise_data(ERR_LIB_CMP, CMP_R_UNKNOWN_ALGORITHM_ID, "nid=%d", nid);
+        return 0;
+    }
+    md = EVP_MD_fetch(ctx->libctx, name, ctx->propq);
     /* fetching in advance to be able to throw error early if unsupported */
 
     if (md == NULL) {
