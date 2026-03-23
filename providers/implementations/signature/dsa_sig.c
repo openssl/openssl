@@ -412,6 +412,7 @@ static void *dsa_dupctx(void *vpdsactx)
     dstctx->md = NULL;
     dstctx->mdctx = NULL;
     dstctx->propq = NULL;
+    dstctx->aid = NULL;
 
     if (srcctx->dsa != NULL && !DSA_up_ref(srcctx->dsa))
         goto err;
@@ -432,6 +433,18 @@ static void *dsa_dupctx(void *vpdsactx)
         if (dstctx->propq == NULL)
             goto err;
     }
+    /*
+     * The DER-encoding of the algorithm OID is written at the end of aid_buf.
+     * Check that srcctx->aid points into the source aid_buf and then use the
+     * same offset into dstctx->aid_buf.
+     */
+    if (srcctx->aid != NULL
+        && srcctx->aid_len > 0
+        && srcctx->aid >= srcctx->aid_buf
+        && srcctx->aid + srcctx->aid_len <= srcctx->aid_buf + sizeof(srcctx->aid_buf))
+        dstctx->aid = dstctx->aid_buf + (srcctx->aid - srcctx->aid_buf);
+    else
+        dstctx->aid_len = 0;
 
     return dstctx;
 err:
