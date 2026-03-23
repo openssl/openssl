@@ -404,9 +404,11 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
         clear_sys_error();
         if (bio != NULL) {
             ret = BIO_read(bio, pkt + len + left, (int)(max - left));
-            if (ret >= 0) {
+            if (ret > 0) {
                 bioread = ret;
                 ret = OSSL_RECORD_RETURN_SUCCESS;
+	    } else if (ret == 0 && BIO_eof(bio)) {
+                ret = OSSL_RECORD_RETURN_EOF;
             } else if (BIO_should_retry(bio)) {
                 if (rl->prev != NULL) {
                     /*
