@@ -582,15 +582,15 @@ IF[{- !$disabled{tests} -}]
   DEPEND[bio_dgram_test]=../libcrypto libtestutil.a
 
   SOURCE[bio_tfo_test]=bio_tfo_test.c
-  INCLUDE[bio_tfo_test]=../include ../apps/include ..
+  INCLUDE[bio_tfo_test]=../include ../apps/include
   DEPEND[bio_tfo_test]=../libcrypto libtestutil.a
 
   SOURCE[membio_test]=membio_test.c
-  INCLUDE[membio_test]=../include ../apps/include ..
+  INCLUDE[membio_test]=../include ../apps/include
   DEPEND[membio_test]=../libcrypto libtestutil.a
 
   SOURCE[bio_dgram_test]=bio_dgram_test.c
-  INCLUDE[bio_dgram_test]=../include ../apps/include ..
+  INCLUDE[bio_dgram_test]=../include ../apps/include
   DEPEND[bio_dgram_test]=../libcrypto libtestutil.a
 
   SOURCE[params_api_test]=params_api_test.c
@@ -1151,7 +1151,7 @@ IF[{- !$disabled{tests} -}]
   DEPEND[errtest]=../libcrypto libtestutil.a
 
   SOURCE[aesgcmtest]=aesgcmtest.c
-  INCLUDE[aesgcmtest]=../include ../apps/include ..
+  INCLUDE[aesgcmtest]=../include ../apps/include
   DEPEND[aesgcmtest]=../libcrypto libtestutil.a
 
   PROGRAMS{noinst}=context_internal_test
@@ -1169,19 +1169,19 @@ IF[{- !$disabled{tests} -}]
   PROGRAMS{noinst}=provider_internal_test
   DEFINE[provider_internal_test]=PROVIDER_INIT_FUNCTION_NAME=p_test_init
   SOURCE[provider_internal_test]=provider_internal_test.c p_test.c
-  INCLUDE[provider_internal_test]=../include ../apps/include ..
+  INCLUDE[provider_internal_test]=../include ../apps/include
   DEPEND[provider_internal_test]=../libcrypto.a libtestutil.a
   PROGRAMS{noinst}=provider_test
   DEFINE[provider_test]=PROVIDER_INIT_FUNCTION_NAME=p_test_init
   SOURCE[provider_test]=provider_test.c p_test.c
-  INCLUDE[provider_test]=../include ../apps/include ..
+  INCLUDE[provider_test]=../include ../apps/include
   DEPEND[provider_test]=../libcrypto libtestutil.a
   IF[{- !$disabled{module} -}]
     MODULES{noinst}=p_test p_ossltest
     SOURCE[p_test]=p_test.c
     SOURCE[p_ossltest]=p_ossltest.c ../providers/prov_running.c
-    INCLUDE[p_test]=../include ..
-    INCLUDE[p_ossltest]=../include .. ../providers/common/include ../providers/implementations/include ../providers/implementations
+    INCLUDE[p_test]=../include
+    INCLUDE[p_ossltest]=../include ../crypto ../providers/common/include ../providers/implementations/include ../providers/implementations
     DEPEND[p_ossltest]=../providers/libcommon.a ../libcrypto
     IF[{- defined $target{shared_defflag} -}]
       SOURCE[p_test]=p_test.ld
@@ -1190,7 +1190,7 @@ IF[{- !$disabled{tests} -}]
     ENDIF
     MODULES{noinst}=p_minimal
     SOURCE[p_minimal]=p_minimal.c
-    INCLUDE[p_minimal]=../include ..
+    INCLUDE[p_minimal]=../include
     IF[{- defined $target{shared_defflag} -}]
       SOURCE[p_minimal]=p_minimal.ld
       GENERATE[p_minimal.ld]=../util/providers.num
