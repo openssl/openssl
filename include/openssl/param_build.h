@@ -56,6 +56,12 @@ int OSSL_PARAM_BLD_push_octet_string(OSSL_PARAM_BLD *bld, const char *key,
     const void *buf, size_t bsize);
 int OSSL_PARAM_BLD_push_octet_ptr(OSSL_PARAM_BLD *bld, const char *key,
     void *buf, size_t bsize);
+int OSSL_PARAM_BLD_push_EC_affine_point_ex(OSSL_PARAM_BLD *bld,
+    const BIGNUM *X, const BIGNUM *Y, unsigned int field_len);
+#ifndef OPENSSL_NO_EC
+int OSSL_PARAM_BLD_push_EC_affine_point(OSSL_PARAM_BLD *bld,
+    const BIGNUM *X, const BIGNUM *Y);
+#endif
 
 #ifdef __cplusplus
 }

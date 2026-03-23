@@ -1601,7 +1601,14 @@ err:
 }
 #endif /* OPENSSL_NO_ECX */
 
-static int test_fromdata_ec(void)
+/*
+ * tst uses indexes 0..3
+ * 0 = uncompressed format
+ * 1 = compressed format
+ * 2 = affine coordinates format via OSSL_PARAM_BLD_push_EC_affine_point()
+ * 3 = affine coordinates format via OSSL_PARAM_BLD_push_EC_affine_point_ex()
+ */
+static int test_fromdata_ec(int tst)
 {
     int ret = 0;
     EVP_PKEY_CTX *ctx = NULL;
@@ -1637,6 +1644,19 @@ static int test_fromdata_ec(void)
         0x02, 0xa5, 0x77, 0x57, 0xc8, 0xa3, 0x47, 0x73,
         0x3a, 0x6a, 0x08, 0x28, 0x39, 0xbd, 0xc9, 0xd2
     };
+    /* SAME IN AFFINE COORDINATES */
+    static const unsigned char X_buf[] = {
+        0x1b, 0x93, 0x67, 0x55, 0x1c, 0x55, 0x9f, 0x63,
+        0xd1, 0x22, 0xa4, 0xd8, 0xd1, 0x0a, 0x60, 0x6d,
+        0x02, 0xa5, 0x77, 0x57, 0xc8, 0xa3, 0x47, 0x73,
+        0x3a, 0x6a, 0x08, 0x28, 0x39, 0xbd, 0xc9, 0xd2
+    };
+    static const unsigned char Y_buf[] = {
+        0x80, 0xec, 0xe9, 0xa7, 0x08, 0x29, 0x71, 0x2f,
+        0xc9, 0x56, 0x82, 0xee, 0x9a, 0x85, 0x0f, 0x6d,
+        0x7f, 0x59, 0x5f, 0x8c, 0xd1, 0x96, 0x0b, 0xdf,
+        0x29, 0x3e, 0x49, 0x07, 0x88, 0x3f, 0x9a, 0x29
+    };
     static const unsigned char ec_priv_keydata[] = {
         0x33, 0xd0, 0x43, 0x83, 0xa9, 0x89, 0x56, 0x03,
         0xd2, 0xd7, 0xfe, 0x6b, 0x01, 0x6f, 0xe4, 0x59,
@@ -1654,6 +1674,8 @@ static int test_fromdata_ec(void)
     BIGNUM *a = NULL;
     BIGNUM *b = NULL;
     BIGNUM *p = NULL;
+    BIGNUM *X = NULL;
+    BIGNUM *Y = NULL;
 
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new()))
         goto err;
@@ -1673,11 +1695,37 @@ static int test_fromdata_ec(void)
      * `OSSL_PKEY_PARAM_PUB_KEY` and expect to default to uncompressed
      * format.
      */
-    if (OSSL_PARAM_BLD_push_octet_string(bld, OSSL_PKEY_PARAM_PUB_KEY,
-            ec_pub_keydata_compressed,
-            sizeof(ec_pub_keydata_compressed))
-        <= 0)
+    switch (tst) {
+    case 0:
+        if (!TEST_true(OSSL_PARAM_BLD_push_octet_string(bld,
+                OSSL_PKEY_PARAM_PUB_KEY,
+                ec_pub_keydata_compressed,
+                sizeof(ec_pub_keydata_compressed))))
+            goto err;
+        break;
+    case 1:
+        if (!TEST_true(OSSL_PARAM_BLD_push_octet_string(bld,
+                OSSL_PKEY_PARAM_PUB_KEY,
+                ec_pub_keydata, sizeof(ec_pub_keydata))))
+            goto err;
+        break;
+    case 2:
+        if (!TEST_ptr(X = BN_bin2bn(X_buf, sizeof(X_buf), NULL))
+            || !TEST_ptr(Y = BN_bin2bn(Y_buf, sizeof(Y_buf), NULL)))
+            goto err;
+        if (!TEST_true(OSSL_PARAM_BLD_push_EC_affine_point(bld, X, Y)))
+            goto err;
+        break;
+    case 3:
+        if (!TEST_ptr(X = BN_bin2bn(X_buf, sizeof(X_buf), NULL))
+            || !TEST_ptr(Y = BN_bin2bn(Y_buf, sizeof(Y_buf), NULL)))
+            goto err;
+        if (!TEST_true(OSSL_PARAM_BLD_push_EC_affine_point_ex(bld, X, Y, 32)))
+            goto err;
+        break;
+    default:
         goto err;
+    }
     if (OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY, ec_priv_bn) <= 0)
         goto err;
     if (!TEST_ptr(fromdata_params = OSSL_PARAM_BLD_to_param(bld)))
@@ -1801,6 +1849,8 @@ err:
     BN_free(p);
     BN_free(bn_priv);
     BN_free(ec_priv_bn);
+    BN_free(X);
+    BN_free(Y);
     OSSL_PARAM_free(fromdata_params);
     OSSL_PARAM_BLD_free(bld);
     EVP_PKEY_free(pk);
@@ -2290,7 +2340,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_ECX
     ADD_ALL_TESTS(test_fromdata_ecx, 4 * 3);
 #endif
-    ADD_TEST(test_fromdata_ec);
+    ADD_ALL_TESTS(test_fromdata_ec, 4);
     ADD_TEST(test_ec_dup_no_operation);
     ADD_TEST(test_ec_dup_keygen_operation);
 #endif
