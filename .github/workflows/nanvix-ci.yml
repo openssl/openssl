@@ -166,7 +166,7 @@ jobs:
 
   release:
     needs: [get-nanvix-info, build]
-    if: github.event_name != 'pull_request'
+    if: ${{ !cancelled() && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     env:
       NANVIX_SHA: ${{ needs.get-nanvix-info.outputs.sha }}
@@ -175,7 +175,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download All Artifacts
+        id: download-artifacts
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           path: release-artifacts
           pattern: openssl-*
@@ -184,7 +186,16 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release-assets
-          find release-artifacts -name "*.tar.bz2" -exec cp {} release-assets/ \;
+          if [[ "${{ steps.download-artifacts.outcome }}" == "failure" ]]; then
+            echo "::warning::Artifact download step failed — this may indicate an API or network issue"
+          fi
+          find release-artifacts -name "*.tar.bz2" -exec cp {} release-assets/ \; 2>/dev/null || true
+          ASSET_COUNT=$(find release-assets -name "*.tar.bz2" 2>/dev/null | wc -l)
+          echo "Found $ASSET_COUNT release asset(s)"
+          if [[ "$ASSET_COUNT" -eq 0 ]]; then
+            echo "::error::No release assets found — all matrix builds may have failed or artifact retrieval encountered an error"
+            exit 1
+          fi
           ls -la release-assets/
 
       - name: Get Nanvix Release Info
@@ -251,11 +262,12 @@ jobs:
             -f "client_payload[openssl_tag]=${RELEASE_TAG}" || echo "::warning::Failed to trigger cpython workflow"
 
   report-failure:
-    needs: [build]
+    needs: [build, release]
     if: >-
       ${{ always() &&
           (github.event_name == 'repository_dispatch' || github.event_name == 'schedule' || github.event_name == 'push') &&
-          needs.build.result == 'failure' }}
+          needs.build.result == 'failure' &&
+          needs.release.result == 'failure' }}
     runs-on: ubuntu-latest
     steps:
       - name: Create failure issue
