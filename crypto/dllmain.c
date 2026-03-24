@@ -30,6 +30,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
+        OPENSSL_cpuid_setup();
         break;
     case DLL_THREAD_ATTACH:
         break;
