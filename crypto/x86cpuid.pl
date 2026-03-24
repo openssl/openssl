@@ -493,6 +493,8 @@ my $rdop = shift;
 &gen_random("rdrand");
 &gen_random("rdseed");
 
+&initseg("OPENSSL_cpuid_setup");
+
 &hidden("OPENSSL_cpuid_setup");
 &hidden("OPENSSL_ia32cap_P");
 
