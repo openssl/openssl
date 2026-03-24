@@ -25,7 +25,7 @@ OpenSSL Releases
 OpenSSL 4.0
 -----------
 
-### Major changes between OpenSSL 3.6 and OpenSSL 4.0 beta 1 [in pre-release]
+### Major changes between OpenSSL 3.6 and OpenSSL 4.0 [under development]
 
 OpenSSL 4.0.0 is a feature release adding significant new functionality
 to OpenSSL.
