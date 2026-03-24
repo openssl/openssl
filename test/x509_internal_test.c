@@ -803,6 +803,8 @@ static int test_X509_ALGOR_set_md_null_obj(void)
 err:
     X509_ALGOR_free(alg);
     return ret;
+}
+
 /* https://github.com/openssl/openssl/issues/26325 */
 static const char *kRootExtensionDuplicity[] = {
     "-----BEGIN CERTIFICATE-----\n",
