@@ -527,6 +527,11 @@ s390x_flip_endian64:
 ___
 }
 
+$code.=<<___;
+.section	.init
+	brasl	$ra,OPENSSL_cpuid_setup
+___
+
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 print $code;
 close STDOUT or die "error closing STDOUT: $!";	# force flush
