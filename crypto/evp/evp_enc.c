@@ -979,6 +979,11 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     size_t soutl, inl_ = (size_t)inl;
     int blocksize;
 
+    if (inl < 0) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_LENGTH);
+        return 0;
+    }
+
     if (ossl_likely(outl != NULL)) {
         *outl = 0;
     } else {
@@ -1127,6 +1132,11 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     unsigned int b;
     size_t soutl, inl_ = (size_t)inl;
     int blocksize;
+
+    if (inl < 0) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_LENGTH);
+        return 0;
+    }
 
     if (ossl_likely(outl != NULL)) {
         *outl = 0;
