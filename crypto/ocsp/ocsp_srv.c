@@ -170,7 +170,7 @@ int OCSP_basic_sign_ctx(OCSP_BASICRESP *brsp,
     EVP_PKEY_CTX *pkctx;
     EVP_PKEY *pkey;
 
-    if (ctx == NULL || ((pkctx = EVP_MD_CTX_get_pkey_ctx(ctx)) == NULL)) {
+    if (ctx == NULL || (pkctx = EVP_MD_CTX_get_pkey_ctx(ctx)) == NULL) {
         ERR_raise(ERR_LIB_OCSP, OCSP_R_NO_SIGNER_KEY);
         goto err;
     }
