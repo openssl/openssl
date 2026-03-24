@@ -5904,6 +5904,45 @@ static int test_invalid_ctx_for_digest(void)
     return ret;
 }
 
+static int test_evp_cipher_negative_length(void)
+{
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    unsigned char key[16] = { 0 };
+    unsigned char iv[16] = { 0 };
+    unsigned char buffer[32] = { 0 };
+    int outl = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
+        goto end;
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, "AES-128-CBC", testpropq)))
+        goto end;
+
+    /* Initialize encryption context */
+    if (!TEST_int_eq(EVP_EncryptInit_ex2(ctx, cipher, key, iv, NULL), 1))
+        goto end;
+
+    /* Test EVP_EncryptUpdate with negative length - should fail */
+    if (!TEST_int_eq(EVP_EncryptUpdate(ctx, buffer, &outl, (unsigned char *)"test", -1), 0))
+        goto end;
+
+    /* Reinitialize for decryption */
+    if (!TEST_int_eq(EVP_DecryptInit_ex2(ctx, cipher, key, iv, NULL), 1))
+        goto end;
+
+    /* Test EVP_DecryptUpdate with negative length - should fail */
+    if (!TEST_int_eq(EVP_DecryptUpdate(ctx, buffer, &outl, (unsigned char *)"test", -1), 0))
+        goto end;
+
+    ret = 1;
+end:
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     OPTION_CHOICE o;
@@ -6081,6 +6120,8 @@ int setup_tests(void)
 #endif
 
     ADD_TEST(test_invalid_ctx_for_digest);
+
+    ADD_TEST(test_evp_cipher_negative_length);
 
     return 1;
 }
