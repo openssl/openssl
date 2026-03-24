@@ -10,7 +10,7 @@
      our $makedep_scheme = $config{makedep_scheme};
      our $makedepcmd = platform->makedepcmd();
 
-     sub windowsdll { $config{target} =~ /^(?:Cygwin|mingw)/ }
+     sub windowsdll { $config{target} =~ /^(?:Cygwin|mingw|win64)/ }
 
      # Shared AIX support is special. We put libcrypto[64].so.ver into
      # libcrypto.a and use libcrypto_a.a as static one, unless using
@@ -636,6 +636,8 @@ clean: libclean ## Clean the workspace, keep the configuration
 	$(RM) $(GENERATED_MANDATORY) $(GENERATED)
 	-find . -name '*{- platform->depext() -}' \! -name '.*' \! -type d -exec $(RM) {} \;
 	-find . -name '*{- platform->objext() -}' \! -name '.*' \! -type d -exec $(RM) {} \;
+	{- $config{target} =~ /^win64-/ ? "-find . -name '*.pdb' \\! -name '.*' \\! -type d -exec \$(RM) {} \\;" : "\@ :" -}
+	{- $config{target} =~ /^win64-/ ? "\$(RM) \$(MODULES:.dll=" . platform->libext() . ')' : "\@ :" -}
 	$(RM) core
 	$(RM) tags TAGS doc-nits md-nits
 	$(RM) -r $(RESULT_D)
@@ -1747,6 +1749,14 @@ $obj: $deps
 		mv $dep.tmp $dep; \\
 	fi
 EOF
+      } elsif (($target{msvc_syntax} // 0) && grep /\.rc$/, @srcs) {
+          # Use $(CC) to preprocess the resource script before compiling it
+          $recipe .= <<"EOF";
+$obj: $deps
+	\$(CC) $incs $defs \$(CFLAGS) -E $srcs > $srcs.i
+	$cmd $cmdflags $cmdcompile /fo\$\@ $srcs.i
+	\$(RM) $srcs.i
+EOF
       } else {
           $recipe .= <<"EOF";
 $obj: $deps
@@ -1770,10 +1780,16 @@ EOF
           if (platform->isstaticlib($_)) {
               push @linklibs, platform->convertext($_);
           } else {
-              my $d = "-L" . dirname($_);
+              my $d = dirname($_);
               my $l = basename($_);
-              $l =~ s/^lib//;
-              $l = "-l" . $l;
+              if ($target{msvc_syntax} // 0) {
+                  $d = "/LIBPATH:" . $d;
+                  $l = $l . '.lib';
+              } else {
+                  $d = "-L" . $d;
+                  $l =~ s/^lib//;
+                  $l = "-l" . $l;
+              }
               push @linklibs, $l;
               push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
           }
@@ -1869,13 +1885,37 @@ $import: $full
 EOF
           }
       }
-      $recipe .= <<"EOF";
+      if ($target{msvc_syntax} // 0) {
+          # Clang-CL accepts the rest of the command line after /link as linker
+          # options, but does not forward /LIBPATH like GCC/Clang forwards -L
+          # and so on. Therefore, object files must go before linker flags.
+          # To overcome the low command line length limit on Windows, a
+          # response file must also be used for the objects
+          my $max_per_call = $target{max_objects_per_link_call} // 500;
+          my @objs_grouped;
+          push @objs_grouped, join(" ", splice @fullobjs, 0, $max_per_call)
+              while @fullobjs;
+          my $rsp = "$full.rsp";
+          my $gen_rsp =
+              join("\n\t", (map { "\@echo '$_' >> $rsp" } @objs_grouped));
+          $recipe .= <<"EOF";
+$full: $fulldeps
+	\$(RM) $rsp
+	$gen_rsp
+	\$(CC) \$(LIB_CFLAGS) $shared_soname \\
+		-o $full \\
+		$linklibs \$(LIB_EX_LIBS) \$(LIB_LDFLAGS) $linkflags $shared_imp $shared_def \@$rsp
+	\$(RM) $rsp
+EOF
+      } else {
+          $recipe .= <<"EOF";
 $full: $fulldeps
 	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
 		-o $full$shared_def \\
 		$fullobjs \\
 		$linklibs \$(LIB_EX_LIBS)
 EOF
+      }
       if (windowsdll()) {
           $recipe .= <<"EOF";
 	rm -f apps/$full
@@ -1907,10 +1947,16 @@ EOF
           if (platform->isstaticlib($_)) {
               push @linklibs, platform->convertext($_);
           } else {
-              my $d = "-L" . dirname($_);
+              my $d = dirname($_);
               my $l = basename($_);
-              $l =~ s/^lib//;
-              $l = "-l" . $l;
+              if ($target{msvc_syntax} // 0) {
+                  $d = "/LIBPATH:" . $d;
+                  $l = $l . '.lib';
+              } else {
+                  $d = "-L" . $d;
+                  $l =~ s/^lib//;
+                  $l = "-l" . $l;
+              }
               push @linklibs, $l;
               push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
           }
@@ -1932,13 +1978,23 @@ EOF
                       fill_lines(' ', $COLUMNS - length($dso) - 2,
                                  @objs, @defs, @deps));
 
-      return <<"EOF";
+      if ($target{msvc_syntax} // 0) {
+          return <<"EOF";
+$dso: $deps
+	\$(CC) \$(DSO_CFLAGS) \\
+		-o $dso \\
+		$objs \\
+		$linklibs\$(DSO_EX_LIBS) \$(DSO_LDFLAGS) $linkflags $shared_def
+EOF
+      } else {
+          return <<"EOF";
 $dso: $deps
 	\$(CC) \$(DSO_CFLAGS) $linkflags\$(DSO_LDFLAGS) \\
 		-o $dso$shared_def \\
 		$objs \\
 		$linklibs\$(DSO_EX_LIBS)
 EOF
+      }
   }
   sub obj2lib {
       my %args = @_;
@@ -1946,14 +2002,28 @@ EOF
       my @objs = map { platform->obj($_) } @{$args{objs}};
       my $deps = join(" \\\n" . ' ' x (length($lib) + 2),
                       fill_lines(' ', $COLUMNS - length($lib) - 2, @objs));
-      my $max_per_call = 500;
+      my $max_per_call = $target{max_objects_per_link_call} // 500;
       my @objs_grouped;
       push @objs_grouped, join(" ", splice @objs, 0, $max_per_call) while @objs;
-      my $fill_lib =
-          join("\n\t", (map { "\$(AR) \$(ARFLAGS) $lib $_" } @objs_grouped));
+      my $rsp = '';
+      my $fill_lib;
+      if ($target{msvc_syntax} // 0) {
+          # MSVC-like tools overwrite the lib file and do not support appending
+          # objects in multiple calls. Use response file instead
+          $rsp = "$lib.rsp";
+          my $gen_rsp =
+              join("\n\t", (map { "\@echo '$_' >> $rsp" } @objs_grouped));
+          $fill_lib = $gen_rsp . "\n" . <<"EOF";
+	\$(AR) \$(ARFLAGS) /out:$lib \@$rsp
+	\$(RM) $rsp
+EOF
+      } else {
+          $fill_lib =
+              join("\n\t", (map { "\$(AR) \$(ARFLAGS) $lib $_" } @objs_grouped));
+      }
       return <<"EOF";
 $lib: $deps
-	\$(RM) $lib
+	\$(RM) $lib $rsp
 	$fill_lib
 	\$(RANLIB) \$\@ || echo Never mind.
 EOF
@@ -1972,10 +2042,16 @@ EOF
           if (platform->isstaticlib($_)) {
               push @linklibs, platform->convertext($_);
           } else {
-              my $d = "-L" . dirname($_);
+              my $d = dirname($_);
               my $l = basename($_);
-              $l =~ s/^lib//;
-              $l = "-l" . $l;
+              if ($target{msvc_syntax} // 0) {
+                  $d = "/LIBPATH:" . $d;
+                  $l = $l . '.lib';
+              } else {
+                  $d = "-L" . $d;
+                  $l =~ s/^lib//;
+                  $l = "-l" . $l;
+              }
               push @linklibs, $l;
               push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
           }
@@ -1994,7 +2070,17 @@ EOF
                       fill_lines(' ', $COLUMNS - length($bin) - 2,
                                  @objs, @deps));
 
-      return <<"EOF";
+      if ($target{msvc_syntax} // 0) {
+          return <<"EOF";
+$bin: $deps
+	rm -f $bin
+	\$\${LDCMD:-$cmd} $cmdflags \\
+		-o $bin \\
+		$objs \\
+		$linklibs\$(BIN_EX_LIBS) \$(BIN_LDFLAGS) $linkflags
+EOF
+      } else {
+          return <<"EOF";
 $bin: $deps
 	rm -f $bin
 	\$\${LDCMD:-$cmd} $cmdflags $linkflags\$(BIN_LDFLAGS) \\
@@ -2002,6 +2088,7 @@ $bin: $deps
 		$objs \\
 		$linklibs\$(BIN_EX_LIBS)
 EOF
+      }
   }
   sub in2script {
       my %args = @_;
