@@ -101,7 +101,7 @@ static int item_verify(const ASN1_ITEM *it, const X509_ALGOR *alg,
     pctx = EVP_MD_CTX_get_pkey_ctx(ctx);
 
     if (pctx == NULL) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_CONTEXT_NOT_INITIALISED);
         return -1;
     }
 
