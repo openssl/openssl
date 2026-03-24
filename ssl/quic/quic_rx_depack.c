@@ -1300,6 +1300,7 @@ static int depack_process_frames(QUIC_CHANNEL *ch, PACKET *pkt,
                     OSSL_QUIC_ERR_PROTOCOL_VIOLATION,
                     frame_type,
                     "NEW_CONN_ID valid only in 0/1-RTT");
+                return 0;
             }
             if (!depack_do_frame_new_conn_id(pkt, ch, ackm_data))
                 return 0;
