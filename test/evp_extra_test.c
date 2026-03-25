@@ -5069,18 +5069,16 @@ static void collect_cipher_cb(EVP_CIPHER *ciph, void *arg)
      * These are special-purpose TLS ciphers with a different initialization
      * order that breaks this test's logic.
      */
-    if (taglen > 0) {
-        if (EVP_CIPHER_is_a(ciph, "AES-128-CBC-HMAC-SHA1-ETM")
-            || EVP_CIPHER_is_a(ciph, "AES-128-CBC-HMAC-SHA256-ETM")
-            || EVP_CIPHER_is_a(ciph, "AES-128-CBC-HMAC-SHA512-ETM")
-            || EVP_CIPHER_is_a(ciph, "AES-192-CBC-HMAC-SHA1-ETM")
-            || EVP_CIPHER_is_a(ciph, "AES-192-CBC-HMAC-SHA256-ETM")
-            || EVP_CIPHER_is_a(ciph, "AES-192-CBC-HMAC-SHA512-ETM")
-            || EVP_CIPHER_is_a(ciph, "AES-256-CBC-HMAC-SHA1-ETM")
-            || EVP_CIPHER_is_a(ciph, "AES-256-CBC-HMAC-SHA256-ETM")
-            || EVP_CIPHER_is_a(ciph, "AES-256-CBC-HMAC-SHA512-ETM"))
-            return;
-    }
+    if (EVP_CIPHER_is_a(ciph, "AES-128-CBC-HMAC-SHA1-ETM")
+        || EVP_CIPHER_is_a(ciph, "AES-128-CBC-HMAC-SHA256-ETM")
+        || EVP_CIPHER_is_a(ciph, "AES-128-CBC-HMAC-SHA512-ETM")
+        || EVP_CIPHER_is_a(ciph, "AES-192-CBC-HMAC-SHA1-ETM")
+        || EVP_CIPHER_is_a(ciph, "AES-192-CBC-HMAC-SHA256-ETM")
+        || EVP_CIPHER_is_a(ciph, "AES-192-CBC-HMAC-SHA512-ETM")
+        || EVP_CIPHER_is_a(ciph, "AES-256-CBC-HMAC-SHA1-ETM")
+        || EVP_CIPHER_is_a(ciph, "AES-256-CBC-HMAC-SHA256-ETM")
+        || EVP_CIPHER_is_a(ciph, "AES-256-CBC-HMAC-SHA512-ETM"))
+        return;
 
     tmp = OPENSSL_realloc(cipher_list,
         (cipher_list_n + 1) * sizeof(*tmp));
