@@ -7335,7 +7335,7 @@ __owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc)
 int SSL_stateless(SSL *s)
 {
     int ret;
-    int dtls_hrr_pending;
+    int dtls_hrr_pending = 0;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
     if (sc == NULL)
@@ -7348,8 +7348,9 @@ int SSL_stateless(SSL *s)
      * if handshake_read_seq is left at 0 the message would be treated as
      * out-of-order and buffered rather than accepted.
      */
-    dtls_hrr_pending = SSL_CONNECTION_IS_DTLS(sc)
-        && sc->hello_retry_request == SSL_HRR_PENDING;
+    if (SSL_CONNECTION_IS_DTLS(sc) && sc->hello_retry_request == SSL_HRR_PENDING
+        && !ossl_statem_in_error(sc))
+        dtls_hrr_pending = 1;
 
     /* Ensure there is no state left over from a previous invocation */
     if (!SSL_clear(s))
@@ -7357,12 +7358,14 @@ int SSL_stateless(SSL *s)
 
     /*
      * If we previously sent a DTLS HelloRetryRequest, SSL_clear() has just
-     * reset handshake_read_seq to 0.  Restore it to 1 so that the incoming
-     * ClientHello2 is recognised as the expected next message rather than
-     * buffered as out-of-order.
+     * reset handshake_read_seq and next_handshake_write_seq to 0.  Restore
+     * them to 1 so that the incoming ClientHello from HRR is recognised as
+     * the expected next message.
      */
-    if (dtls_hrr_pending)
+    if (dtls_hrr_pending) {
         sc->d1->handshake_read_seq = 1;
+        sc->d1->next_handshake_write_seq = 1;
+    }
 
     ERR_clear_error();
 

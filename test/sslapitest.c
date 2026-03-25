@@ -7071,6 +7071,16 @@ static int test_stateless(int idx)
     clientssl = NULL;
 
     /*
+     * Since we are using the same server object for multiple tests
+     * we need to clear it outside of SSL_stateless in this test
+     * to properly reset the handshake_req_seq
+     */
+    if (testdtls) {
+        if (!TEST_true(SSL_clear(serverssl)))
+            goto end;
+    }
+
+    /*
      * Now create a connection from a new client but with the same server SSL
      * object
      */
