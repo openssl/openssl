@@ -77,6 +77,10 @@ is implied since OpenSSL 3.5, and required in earlier versions.
 
 The B<-digest> option implies B<-rawin> since OpenSSL 3.5.
 
+When the input is read from a file (B<-in> I<filename>), the command may
+use memory-mapped I/O on supported platforms for better performance and
+to handle large files without loading the entire file into memory.
+
 =item B<-digest> I<algorithm>
 
 This option can only be used with B<-sign> and B<-verify>.
@@ -680,6 +684,11 @@ Also since OpenSSL 3.5, the B<-kemop> option is no longer required for any of
 the supported algorithms, the only supported B<mode> is now the default.
 
 The B<-engine> option was removed in OpenSSL 4.0.
+
+Since OpenSSL 4.1, when reading raw input from a file (B<-in> I<filename>) for
+oneshot sign/verify (such as Ed25519, Ed448, and ML-DSA), the command uses
+memory-mapped I/O on supported platforms, allowing large files to be processed
+without loading the entire file into memory.
 
 =head1 COPYRIGHT
 

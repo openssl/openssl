@@ -31,6 +31,17 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * The `openssl pkeyutl` command now uses memory-mapped I/O when reading
+   raw input from a file for oneshot sign/verify operations (such as Ed25519,
+   Ed448, and ML-DSA) on platforms that support it (Unix-like). The
+   `openssl dgst` command uses the same approach for one-shot sign/verify
+   when the input is from a file, removing the previous 16 MB limit for
+   file-based input. This improves performance and supports large files
+   without doubling memory use. Other platforms and stdin input continue to
+   use the existing buffer-based path.
+
+   *John Claus*
+
  * Added AVX2 optimized ML-DSA NTT operations on `x86_64`.
 
    *Marcel Cornu and Tomasz Kantecki*
