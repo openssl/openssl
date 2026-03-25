@@ -9,7 +9,7 @@
 
 /*
  * Internal tests for the camellia module.
- * Currently only tests Armv8 Neon implementation. 
+ * Currently only tests Armv8 Neon implementation.
  */
 
 #include <string.h>
@@ -23,22 +23,21 @@
 #include <stdio.h>
 #include <stdint.h>
 
-
 #ifdef CMLL_AES_CAPABLE
 static void fill_blks(uint8_t *fill, const uint8_t *blk, unsigned int nblks)
 {
-  while (nblks) {
-    memcpy(fill, blk, 16);
-    fill += 16;
-    nblks--;
-  }
+    while (nblks) {
+        memcpy(fill, blk, 16);
+        fill += 16;
+        nblks--;
+    }
 }
 static void camellia_encrypt_armv8_wrapper(const unsigned char *in, unsigned char *out,
-                                   const CAMELLIA_KEY *key)
+    const CAMELLIA_KEY *key)
 {
 
     /*Treating key memory block as an optimized SIMD context, not the standard key struct.*/
-    
+
     camellia_encrypt_1blk_armv8((struct camellia_simd_ctx *)key, out, in);
 }
 #endif
@@ -200,7 +199,7 @@ static int test_camellia_16blk_key128_neon(void)
 
     camellia_keysetup_neon((struct camellia_simd_ctx *)&ctx, k, 128 / 8);
     camellia_encrypt_16blks_neon((struct camellia_simd_ctx *)&ctx, tmp, input_simd);
-    for (int i = 0; i < 16; i++){
+    for (int i = 0; i < 16; i++) {
         if (!TEST_mem_eq(tmp + (i * 16), CAMELLIA_BLOCK_SIZE, expected_1rnd, CAMELLIA_BLOCK_SIZE)) {
             TEST_error("Initial 1-round encryption failed for block %d.", i);
             return 0;
@@ -217,9 +216,9 @@ static int test_camellia_16blk_key128_neon(void)
 static int test_camellia_1blk_key192_aese(void)
 {
     static const uint8_t k[24] = {
-        0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef,
-        0xfe,0xdc,0xba,0x98,0x76,0x54,0x32,0x10,
-        0x00,0x11,0x22,0x33,0x44,0x55,0x66,0x77
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+        0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10,
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77
     };
 
     static const uint8_t input[CAMELLIA_BLOCK_SIZE] = {
@@ -228,8 +227,8 @@ static int test_camellia_1blk_key192_aese(void)
     };
 
     static const uint8_t expected_1rnd[CAMELLIA_BLOCK_SIZE] = {
-        0xb4,0x99,0x34,0x01,0xb3,0xe9,0x96,0xf8,
-        0x4e,0xe5,0xce,0xe7,0xd7,0x9b,0x09,0xb9
+        0xb4, 0x99, 0x34, 0x01, 0xb3, 0xe9, 0x96, 0xf8,
+        0x4e, 0xe5, 0xce, 0xe7, 0xd7, 0x9b, 0x09, 0xb9
     };
 
     CAMELLIA_KEY ctx;
@@ -256,9 +255,9 @@ static int test_camellia_1blk_key192_aese(void)
 static int test_camellia_1blk_key192_armv8(void)
 {
     static const uint8_t k[24] = {
-        0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef,
-        0xfe,0xdc,0xba,0x98,0x76,0x54,0x32,0x10,
-        0x00,0x11,0x22,0x33,0x44,0x55,0x66,0x77
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+        0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10,
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77
     };
 
     static const uint8_t input[CAMELLIA_BLOCK_SIZE] = {
@@ -267,8 +266,8 @@ static int test_camellia_1blk_key192_armv8(void)
     };
 
     static const uint8_t expected_1rnd[CAMELLIA_BLOCK_SIZE] = {
-        0xb4,0x99,0x34,0x01,0xb3,0xe9,0x96,0xf8,
-        0x4e,0xe5,0xce,0xe7,0xd7,0x9b,0x09,0xb9
+        0xb4, 0x99, 0x34, 0x01, 0xb3, 0xe9, 0x96, 0xf8,
+        0x4e, 0xe5, 0xce, 0xe7, 0xd7, 0x9b, 0x09, 0xb9
     };
 
     CAMELLIA_KEY ctx;
@@ -295,9 +294,9 @@ static int test_camellia_1blk_key192_armv8(void)
 static int test_camellia_16blk_key192_neon(void)
 {
     static const uint8_t k[24] = {
-        0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef,
-        0xfe,0xdc,0xba,0x98,0x76,0x54,0x32,0x10,
-        0x00,0x11,0x22,0x33,0x44,0x55,0x66,0x77
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+        0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10,
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77
     };
 
     static const uint8_t input[CAMELLIA_BLOCK_SIZE] = {
@@ -306,8 +305,8 @@ static int test_camellia_16blk_key192_neon(void)
     };
 
     static const uint8_t expected_1rnd[CAMELLIA_BLOCK_SIZE] = {
-        0xb4,0x99,0x34,0x01,0xb3,0xe9,0x96,0xf8,
-        0x4e,0xe5,0xce,0xe7,0xd7,0x9b,0x09,0xb9
+        0xb4, 0x99, 0x34, 0x01, 0xb3, 0xe9, 0x96, 0xf8,
+        0x4e, 0xe5, 0xce, 0xe7, 0xd7, 0x9b, 0x09, 0xb9
     };
 
     CAMELLIA_KEY ctx;
@@ -318,7 +317,7 @@ static int test_camellia_16blk_key192_neon(void)
 
     camellia_keysetup_neon((struct camellia_simd_ctx *)&ctx, k, 192 / 8);
     camellia_encrypt_16blks_neon((struct camellia_simd_ctx *)&ctx, tmp, input_simd);
-    for (int i = 0; i < 16; i++){
+    for (int i = 0; i < 16; i++) {
         if (!TEST_mem_eq(tmp + (i * 16), CAMELLIA_BLOCK_SIZE, expected_1rnd, CAMELLIA_BLOCK_SIZE)) {
             TEST_error("Initial 1-round encryption failed for block %d.", i);
             return 0;
@@ -335,10 +334,10 @@ static int test_camellia_16blk_key192_neon(void)
 static int test_camellia_1blk_key256_armv8(void)
 {
     static const uint8_t k[32] = {
-        0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef,
-        0xfe,0xdc,0xba,0x98,0x76,0x54,0x32,0x10,
-        0x00,0x11,0x22,0x33,0x44,0x55,0x66,0x77,
-        0x88,0x99,0xaa,0xbb,0xcc,0xdd,0xee,0xff
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+        0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10,
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+        0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff
     };
 
     static const uint8_t input[CAMELLIA_BLOCK_SIZE] = {
@@ -347,8 +346,8 @@ static int test_camellia_1blk_key256_armv8(void)
     };
 
     static const uint8_t expected_1rnd[CAMELLIA_BLOCK_SIZE] = {
-        0x9a,0xcc,0x23,0x7d,0xff,0x16,0xd7,0x6c,
-        0x20,0xef,0x7c,0x91,0x9e,0x3a,0x75,0x09
+        0x9a, 0xcc, 0x23, 0x7d, 0xff, 0x16, 0xd7, 0x6c,
+        0x20, 0xef, 0x7c, 0x91, 0x9e, 0x3a, 0x75, 0x09
     };
 
     CAMELLIA_KEY ctx;
@@ -375,10 +374,10 @@ static int test_camellia_1blk_key256_armv8(void)
 static int test_camellia_16blk_key256_neon(void)
 {
     static const uint8_t k[32] = {
-        0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef,
-        0xfe,0xdc,0xba,0x98,0x76,0x54,0x32,0x10,
-        0x00,0x11,0x22,0x33,0x44,0x55,0x66,0x77,
-        0x88,0x99,0xaa,0xbb,0xcc,0xdd,0xee,0xff
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+        0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10,
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+        0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff
     };
 
     static const uint8_t input[CAMELLIA_BLOCK_SIZE] = {
@@ -387,8 +386,8 @@ static int test_camellia_16blk_key256_neon(void)
     };
 
     static const uint8_t expected_1rnd[CAMELLIA_BLOCK_SIZE] = {
-        0x9a,0xcc,0x23,0x7d,0xff,0x16,0xd7,0x6c,
-        0x20,0xef,0x7c,0x91,0x9e,0x3a,0x75,0x09
+        0x9a, 0xcc, 0x23, 0x7d, 0xff, 0x16, 0xd7, 0x6c,
+        0x20, 0xef, 0x7c, 0x91, 0x9e, 0x3a, 0x75, 0x09
     };
 
     CAMELLIA_KEY ctx;
@@ -399,7 +398,7 @@ static int test_camellia_16blk_key256_neon(void)
 
     camellia_keysetup_neon((struct camellia_simd_ctx *)&ctx, k, 256 / 8);
     camellia_encrypt_16blks_neon((struct camellia_simd_ctx *)&ctx, tmp, input_simd);
-    for (int i = 0; i < 16; i++){
+    for (int i = 0; i < 16; i++) {
         if (!TEST_mem_eq(tmp + (i * 16), CAMELLIA_BLOCK_SIZE, expected_1rnd, CAMELLIA_BLOCK_SIZE)) {
             TEST_error("Initial 1-round encryption failed for block %d.", i);
             return 0;
@@ -415,7 +414,7 @@ static int test_camellia_16blk_key256_neon(void)
 
 static int test_camellia_cbc_neon(void)
 {
-    static const uint8_t k[16] = { 
+    static const uint8_t k[16] = {
         0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
         0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
     };
@@ -442,9 +441,9 @@ static int test_camellia_cbc_neon(void)
 
     /* Arbitrary IV */
 
-    static const uint8_t iv_random[16] = { 
-        0xAA, 0xBB, 0xCC, 0xDD, 0x11, 0x22, 0x33, 0x44, 
-        0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22 
+    static const uint8_t iv_random[16] = {
+        0xAA, 0xBB, 0xCC, 0xDD, 0x11, 0x22, 0x33, 0x44,
+        0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22
     };
 
     memcpy(iv_asm, iv_random, 16);
@@ -453,8 +452,8 @@ static int test_camellia_cbc_neon(void)
 
     /* Run reference (OpenSSL Generic Logic using 1-block encryption routine) */
 
-    CRYPTO_cbc128_encrypt(input_full, ref, LEN, &ctx, iv_ref, 
-                          (block128_f)camellia_encrypt_armv8_wrapper);
+    CRYPTO_cbc128_encrypt(input_full, ref, LEN, &ctx, iv_ref,
+        (block128_f)camellia_encrypt_armv8_wrapper);
 
     /* Run candidate (ASM CBC) */
 
@@ -495,10 +494,10 @@ static int test_camellia_ctr_neon(void)
 {
     /* Use enough blocks to trigger several iterations of the bulk loop and tail loop */
 
-    #define CTR_TEST_BLKS 95
-    #define CTR_TEST_LEN  (CTR_TEST_BLKS * 16)
+#define CTR_TEST_BLKS 95
+#define CTR_TEST_LEN (CTR_TEST_BLKS * 16)
 
-    static const uint8_t k[16] = { 
+    static const uint8_t k[16] = {
         0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF,
         0xFE, 0xDC, 0xBA, 0x98, 0x76, 0x54, 0x32, 0x10
     };
@@ -510,23 +509,23 @@ static int test_camellia_ctr_neon(void)
 
     /* Arbitrary IV (Nonce + Counter) */
 
-    static const uint8_t iv_original[16] = { 
+    static const uint8_t iv_original[16] = {
         0xFF, 0xEE, 0xDD, 0xCC, 0xBB, 0xAA, 0x99, 0x88, /* Nonce */
-        0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xF0  /* Counter near overflow */
+        0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xF0 /* Counter near overflow */
     };
 
     uint8_t input_full[CTR_TEST_LEN];
     uint8_t ref_out[CTR_TEST_LEN];
     uint8_t asm_out[CTR_TEST_LEN];
-    
+
     uint8_t iv_ref[16];
     uint8_t iv_asm[16];
-    
+
     /* Stream State Buffers */
 
     unsigned char ecount_buf_ref[16];
     unsigned int num_ref = 0;
-    
+
     unsigned char ecount_buf_asm[16];
     unsigned int num_asm = 0;
 
@@ -539,26 +538,26 @@ static int test_camellia_ctr_neon(void)
     camellia_keysetup_neon((struct camellia_simd_ctx *)&ctx, k, 128 / 8);
 
     /* Run reference (generic C + 1-block ASM) */
-    
+
     memcpy(iv_ref, iv_original, 16);
     memset(ecount_buf_ref, 0, 16);
     num_ref = 0;
 
-    CRYPTO_ctr128_encrypt(input_full, ref_out, CTR_TEST_LEN, 
-                          &ctx, iv_ref, 
-                          ecount_buf_ref, &num_ref, 
-                          (block128_f)camellia_encrypt_armv8_wrapper);
-    
+    CRYPTO_ctr128_encrypt(input_full, ref_out, CTR_TEST_LEN,
+        &ctx, iv_ref,
+        ecount_buf_ref, &num_ref,
+        (block128_f)camellia_encrypt_armv8_wrapper);
+
     memcpy(iv_asm, iv_original, 16);
     memset(ecount_buf_asm, 0, 16);
     num_asm = 0;
 
     /* Run target (parallel ASM)*/
 
-    CRYPTO_ctr128_encrypt_ctr32(input_full, asm_out, CTR_TEST_LEN, 
-                                &ctx, iv_asm, 
-                                ecount_buf_asm, &num_asm, 
-                                (ctr128_f)camellia_ctr32_encrypt_blocks_neon);
+    CRYPTO_ctr128_encrypt_ctr32(input_full, asm_out, CTR_TEST_LEN,
+        &ctx, iv_asm,
+        ecount_buf_asm, &num_asm,
+        (ctr128_f)camellia_ctr32_encrypt_blocks_neon);
 
     if (!TEST_mem_eq(asm_out, CTR_TEST_LEN, ref_out, CTR_TEST_LEN)) {
         TEST_error("CTR Test: ASM output mismatches Reference");
@@ -574,15 +573,15 @@ static int test_camellia_ctr_neon(void)
     /* Run decryption (round trip) */
 
     uint8_t roundtrip_out[CTR_TEST_LEN];
-    
+
     memcpy(iv_asm, iv_original, 16);
     memset(ecount_buf_asm, 0, 16);
     num_asm = 0;
 
-    CRYPTO_ctr128_encrypt_ctr32(asm_out, roundtrip_out, CTR_TEST_LEN, 
-                                &ctx, iv_asm, 
-                                ecount_buf_asm, &num_asm, 
-                                (ctr128_f)camellia_ctr32_encrypt_blocks_neon);
+    CRYPTO_ctr128_encrypt_ctr32(asm_out, roundtrip_out, CTR_TEST_LEN,
+        &ctx, iv_asm,
+        ecount_buf_asm, &num_asm,
+        (ctr128_f)camellia_ctr32_encrypt_blocks_neon);
 
     if (!TEST_mem_eq(roundtrip_out, CTR_TEST_LEN, input_full, CTR_TEST_LEN)) {
         TEST_error("CTR Round Trip: Decryption failed to recover plaintext");

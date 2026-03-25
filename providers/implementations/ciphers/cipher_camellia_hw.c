@@ -12,7 +12,7 @@
  * internal use.
  */
 #ifndef CMLL_ASM
-# define CMLL_ASM
+#define CMLL_ASM
 #endif
 
 #include "internal/deprecated.h"
@@ -22,29 +22,29 @@
 #include "cipher_camellia.h"
 
 #ifdef CMLL_AES_CAPABLE
-static void camellia_encrypt_aese_wrapper(const unsigned char *in, unsigned char *out, 
-                                   const CAMELLIA_KEY *key) 
+static void camellia_encrypt_aese_wrapper(const unsigned char *in, unsigned char *out,
+    const CAMELLIA_KEY *key)
 {
     /*Treating key memory block as an optimized SIMD context, not the standard key struct.*/
     camellia_encrypt_1blk_aese((struct camellia_simd_ctx *)key, out, in);
 }
-static void camellia_decrypt_aese_wrapper(const unsigned char *in, unsigned char *out, 
-                                   const CAMELLIA_KEY *key) 
+static void camellia_decrypt_aese_wrapper(const unsigned char *in, unsigned char *out,
+    const CAMELLIA_KEY *key)
 {
     camellia_decrypt_1blk_aese((struct camellia_simd_ctx *)key, out, in);
 }
 static void camellia_cbc_neon_wrapper(const unsigned char *in, unsigned char *out,
-                                       size_t len, const CAMELLIA_KEY *key,
-                                       unsigned char *ivec, const int enc)
+    size_t len, const CAMELLIA_KEY *key,
+    unsigned char *ivec, const int enc)
 {
     if (enc) {
-        camellia_cbc_encrypt_neon(in, out, len, 
-                                (const struct camellia_simd_ctx *)key, 
-                                ivec);
+        camellia_cbc_encrypt_neon(in, out, len,
+            (const struct camellia_simd_ctx *)key,
+            ivec);
     } else {
-        camellia_cbc_decrypt_neon(in, out, len, 
-                                (const struct camellia_simd_ctx *)key, 
-                                ivec);
+        camellia_cbc_decrypt_neon(in, out, len,
+            (const struct camellia_simd_ctx *)key,
+            ivec);
     }
 }
 #endif
@@ -60,22 +60,18 @@ static int cipher_hw_camellia_initkey(PROV_CIPHER_CTX *dat,
 #ifdef CMLL_AES_CAPABLE
     camellia_keysetup_neon((struct camellia_simd_ctx *)ks, key, keylen);
     if (dat->enc || (mode != EVP_CIPH_ECB_MODE && mode != EVP_CIPH_CBC_MODE)) {
-        dat->block = (block128_f) camellia_encrypt_aese_wrapper;
+        dat->block = (block128_f)camellia_encrypt_aese_wrapper;
         if (mode == EVP_CIPH_CBC_MODE) {
-            dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
-                (cbc128_f) camellia_cbc_neon_wrapper : NULL;
+            dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ? (cbc128_f)camellia_cbc_neon_wrapper : NULL;
         } else if (mode == EVP_CIPH_CTR_MODE) {
-            dat->stream.ctr = mode == EVP_CIPH_CTR_MODE ?
-                (ctr128_f) camellia_ctr32_encrypt_blocks_neon : NULL;
+            dat->stream.ctr = mode == EVP_CIPH_CTR_MODE ? (ctr128_f)camellia_ctr32_encrypt_blocks_neon : NULL;
         }
     } else {
-        dat->block = (block128_f) camellia_decrypt_aese_wrapper;
+        dat->block = (block128_f)camellia_decrypt_aese_wrapper;
         if (mode == EVP_CIPH_CBC_MODE) {
-            dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ?
-                (cbc128_f) camellia_cbc_neon_wrapper : NULL;
+            dat->stream.cbc = mode == EVP_CIPH_CBC_MODE ? (cbc128_f)camellia_cbc_neon_wrapper : NULL;
         } else if (mode == EVP_CIPH_CTR_MODE) {
-            dat->stream.ctr = mode == EVP_CIPH_CTR_MODE ?
-                (ctr128_f) camellia_ctr32_encrypt_blocks_neon : NULL;
+            dat->stream.ctr = mode == EVP_CIPH_CTR_MODE ? (ctr128_f)camellia_ctr32_encrypt_blocks_neon : NULL;
         }
     }
 #else
@@ -120,9 +116,9 @@ IMPLEMENT_CIPHER_HW_COPYCTX(cipher_hw_camellia_copyctx, PROV_CAMELLIA_CTX)
     }
 
 PROV_CIPHER_HW_camellia_mode(cbc)
-    PROV_CIPHER_HW_camellia_mode(ecb)
-        PROV_CIPHER_HW_camellia_mode(ofb128)
-            PROV_CIPHER_HW_camellia_mode(cfb128)
-                PROV_CIPHER_HW_camellia_mode(cfb1)
-                    PROV_CIPHER_HW_camellia_mode(cfb8)
-                        PROV_CIPHER_HW_camellia_mode(ctr)
+PROV_CIPHER_HW_camellia_mode(ecb)
+PROV_CIPHER_HW_camellia_mode(ofb128)
+PROV_CIPHER_HW_camellia_mode(cfb128)
+PROV_CIPHER_HW_camellia_mode(cfb1)
+PROV_CIPHER_HW_camellia_mode(cfb8)
+PROV_CIPHER_HW_camellia_mode(ctr)

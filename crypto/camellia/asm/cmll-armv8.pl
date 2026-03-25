@@ -217,7 +217,7 @@ ___
 # Approximately as fast as the scalar version.
 # In: 
 #   ll_lr, rl_rr (v0, v1) - input states
-#   tmp_lr, tmp_rr (v2, v3) - vectors to hold right halfs of input states temporarily
+#   tmp_lr, tmp_rr (v2, v3) - vectors to hold right halves of input states temporarily
 #   v_t0, v_t1, v_t2, v_t3 (v4-v7) - temporary vector registers
 #   x_CTX (x0) - base round key pointer
 #   kl_idx, kr_idx - round key offset indices
