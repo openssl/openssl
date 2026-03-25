@@ -503,7 +503,7 @@ L<life_cycle-mac(7)>
 These functions were added in OpenSSL 3.0.
 
 The EVP_MAC_init_SKEY() function was added in OpenSSL 3.5.
-The EVP_MAC_squeeze() function was added in OpenSSL 4.0.
+The EVP_MAC_squeeze() function was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

@@ -274,7 +274,7 @@ The parameters "no-short-mac" and "fips-indicator" were added in OpenSSL 3.4.
 
 The function OSSL_FUNC_mac_init_skey() was introduced in OpenSSL 3.5.
 
-The function OSSL_FUNC_mac_squeeze() was introduced in OpenSSL 4.0.
+The function OSSL_FUNC_mac_squeeze() was introduced in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
