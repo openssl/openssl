@@ -199,11 +199,11 @@ static int vms_load(DSO *dso)
     strncpy(p->imagename, filename, sp1 - filename);
     p->imagename[sp1 - filename] = '\0';
     if (ext) {
-        strcat(p->imagename, ext);
+        OPENSSL_strlcat(p->imagename, ext, sizeof(p->imagename));
         if (*sp2 == '.')
             sp2++;
     }
-    strcat(p->imagename, sp2);
+    OPENSSL_strlcat(p->imagename, sp2, sizeof(p->imagename));
 
     p->filename_dsc.dsc$w_length = strlen(p->filename);
     p->filename_dsc.dsc$b_dtype = DSC$K_DTYPE_T;
@@ -409,8 +409,8 @@ static char *vms_merger(DSO *dso, const char *filespec1,
     /* Copy the file names to storage with a 32-bit pointer. */
     filespec1_32p = filespec1_32;
     filespec2_32p = filespec2_32;
-    strcpy(filespec1_32p, filespec1);
-    strcpy(filespec2_32p, filespec2);
+    OPENSSL_strlcpy(filespec1_32p, filespec1, sizeof(filespec1_32));
+    OPENSSL_strlcpy(filespec2_32p, filespec2, sizeof(filespec2_32));
 #endif /* __INITIAL_POINTER_SIZE == 64 [else] */
 
     fab = cc$rms_fab;

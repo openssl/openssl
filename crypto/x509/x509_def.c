@@ -37,9 +37,9 @@ static void get_windows_default_path(char *pathname, const char *suffix)
     if (ossldir == NULL)
         return;
 
-    OPENSSL_strlcpy(pathname, ossldir, MAX_PATH - 1);
+    OPENSSL_strlcpy(pathname, ossldir, MAX_PATH + 1);
     if (MAX_PATH - strlen(pathname) > strlen(suffix))
-        strcat(pathname, suffix);
+        OPENSSL_strlcat(pathname, suffix, MAX_PATH + 1);
 }
 
 static CRYPTO_ONCE openssldir_setup_init = CRYPTO_ONCE_STATIC_INIT;

@@ -376,15 +376,15 @@ static int ts_check_status_info(TS_RESP *response)
             if (ASN1_BIT_STRING_get_bit(info->failure_info,
                     ts_failure_info[i].code)) {
                 if (!first)
-                    strcat(failure_text, ",");
+                    OPENSSL_strlcat(failure_text, ",", sizeof(failure_text));
                 else
                     first = 0;
-                strcat(failure_text, ts_failure_info[i].text);
+                OPENSSL_strlcat(failure_text, ts_failure_info[i].text, sizeof(failure_text));
             }
         }
     }
     if (failure_text[0] == '\0')
-        strcpy(failure_text, "unspecified");
+        OPENSSL_strlcpy(failure_text, "unspecified", sizeof(failure_text));
 
     ERR_raise_data(ERR_LIB_TS, TS_R_NO_TIME_STAMP_TOKEN,
         "status code: %s, status text: %s, failure codes: %s",

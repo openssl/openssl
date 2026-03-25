@@ -320,15 +320,15 @@ const char *RAND_file_name(char *buf, size_t size)
     if (use_randfile) {
         if (len + 1 >= size)
             return NULL;
-        strcpy(buf, s);
+        OPENSSL_strlcpy(buf, s, size);
     } else {
         if (len + 1 + strlen(RFILE) + 1 >= size)
             return NULL;
-        strcpy(buf, s);
+        OPENSSL_strlcpy(buf, s, size);
 #ifndef OPENSSL_SYS_VMS
-        strcat(buf, "/");
+        OPENSSL_strlcat(buf, "/", size);
 #endif
-        strcat(buf, RFILE);
+        OPENSSL_strlcat(buf, RFILE, size);
     }
 
     return buf;

@@ -194,9 +194,9 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
         merged = OPENSSL_malloc(len + 2);
         if (merged == NULL)
             return NULL;
-        strcpy(merged, filespec2);
+        OPENSSL_strlcpy(merged, filespec2, len + 2);
         merged[spec2len] = '/';
-        strcpy(&merged[spec2len + 1], filespec1);
+        OPENSSL_strlcpy(&merged[spec2len + 1], filespec1, len + 2 - (spec2len + 1));
     }
     return merged;
 }
