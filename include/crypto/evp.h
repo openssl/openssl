@@ -181,6 +181,9 @@ struct evp_kdf_st {
     OSSL_FUNC_kdf_set_ctx_params_fn *set_ctx_params;
     OSSL_FUNC_kdf_set_skey_fn *set_skey;
     OSSL_FUNC_kdf_derive_skey_fn *derive_skey;
+    OSSL_FUNC_kdf_derive_multi_fn *derive_multi;
+    OSSL_FUNC_kdf_get_skey_fn *get_skey;
+    OSSL_FUNC_kdf_get_data_fn *get_data;
 };
 
 #define EVP_ORIG_DYNAMIC 0

@@ -47,6 +47,13 @@ int EVP_KDF_CTX_set_SKEY(EVP_KDF_CTX *ctx, EVP_SKEY *key, const char *paramname)
 EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
     const char *key_type, const char *propquery,
     size_t keylen, const OSSL_PARAM params[]);
+int EVP_KDF_derive_SKEYs(EVP_KDF_CTX *ctx, const OSSL_PARAM params[]);
+EVP_SKEY *EVP_KDF_CTX_get0_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
+    const char *key_type, const char *propquery, const char *purpose);
+EVP_SKEY *EVP_KDF_CTX_get1_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
+    const char *key_type, const char *propquery, const char *purpose);
+unsigned char *EVP_KDF_CTX_get0_data(const EVP_KDF_CTX *ctx, const char *purpose,
+    size_t *datalen);
 int EVP_KDF_get_params(EVP_KDF *kdf, OSSL_PARAM params[]);
 int EVP_KDF_CTX_get_params(EVP_KDF_CTX *ctx, OSSL_PARAM params[]);
 int EVP_KDF_CTX_set_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[]);

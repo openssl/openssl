@@ -8,6 +8,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "internal/cryptlib.h"
@@ -280,6 +281,108 @@ EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
     if (mgmt != skeymgmt)
         EVP_SKEYMGMT_free(skeymgmt);
     return ret;
+}
+
+int EVP_KDF_derive_SKEYs(EVP_KDF_CTX *ctx, const OSSL_PARAM params[])
+{
+    if (!ctx) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (!ctx->meth->derive_multi) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_UNSUPPORTED);
+        return 0;
+    }
+
+    return ctx->meth->derive_multi(ctx->algctx, params);
+}
+
+static EVP_SKEY *evp_kdf_ctx_get_skey(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
+    const char *key_type, const char *propquery, const char *purpose, bool incr_refcount)
+{
+    EVP_SKEY *ret = NULL;
+    EVP_SKEYMGMT *skeymgmt;
+
+    if (!ctx || !purpose) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    if (!ctx->meth->get_skey) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_UNSUPPORTED);
+        return NULL;
+    }
+
+    if (mgmt != NULL) {
+        skeymgmt = mgmt;
+    } else {
+        skeymgmt = evp_skeymgmt_fetch_from_prov(ctx->meth->prov,
+            key_type, propquery);
+        if (skeymgmt == NULL) {
+            /*
+             * The provider does not support skeymgmt, let's try to fallback
+             * to a provider that supports it
+             */
+            skeymgmt = EVP_SKEYMGMT_fetch(ossl_provider_libctx(ctx->meth->prov),
+                key_type, propquery);
+        }
+
+        if (skeymgmt == NULL) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_FETCH_FAILED);
+            return NULL;
+        }
+    }
+
+    ret = evp_skey_alloc(skeymgmt);
+    if (ret == NULL) {
+        if (mgmt != skeymgmt)
+            EVP_SKEYMGMT_free(skeymgmt);
+
+        return NULL;
+    }
+
+    ret->keydata = ctx->meth->get_skey(ctx->algctx, purpose, skeymgmt->import, incr_refcount);
+    if (!ret->keydata) {
+        if (mgmt != skeymgmt)
+            EVP_SKEYMGMT_free(skeymgmt);
+
+        EVP_SKEY_free(ret);
+        return NULL;
+    }
+
+    if (mgmt != skeymgmt)
+        EVP_SKEYMGMT_free(skeymgmt);
+
+    return ret;
+}
+
+EVP_SKEY *EVP_KDF_CTX_get0_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
+    const char *key_type, const char *propquery, const char *purpose)
+{
+    return evp_kdf_ctx_get_skey(ctx, mgmt, key_type, propquery, purpose, false);
+}
+
+EVP_SKEY *EVP_KDF_CTX_get1_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
+    const char *key_type, const char *propquery, const char *purpose)
+{
+    return evp_kdf_ctx_get_skey(ctx, mgmt, key_type, propquery, purpose, true);
+}
+
+unsigned char* EVP_KDF_CTX_get0_data(const EVP_KDF_CTX *ctx, const char *purpose,
+                        size_t *datalen)
+{
+    if (!ctx || !purpose) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    if (!ctx->meth->get_data) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_UNSUPPORTED);
+        return NULL;
+    }
+
+    return ctx->meth->get_data(ctx->algctx, purpose, datalen);
 }
 
 /*
