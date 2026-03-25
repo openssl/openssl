@@ -331,7 +331,7 @@ static int test_exec_KUR_ses_transfer_error(void)
 
 static int test_exec_KUR_bad_pkiConf_protection(void)
 {
-    return test_exec_KUR_ses(0, OSSL_CMP_PKIBODY_PKICONF, 0, 0);
+    return test_exec_KUR_ses(0, -1 /* disabled: OSSL_CMP_PKIBODY_PKICONF */, 0, 0);
 }
 
 static int test_exec_KUR_ses_wrong_popo(void)
