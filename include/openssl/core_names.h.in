@@ -88,6 +88,16 @@ extern "C" {
 #define OSSL_KDF_NAME_KRB5KDF "KRB5KDF"
 #define OSSL_KDF_NAME_HMACDRBGKDF "HMAC-DRBG-KDF"
 
+/* Known KDF keys/data purposes */
+#define OSSL_KDF_PURPOSE_MASTER_SECRET "master_secret"
+#define OSSL_KDF_PURPOSE_CLIENT_MAC_KEY "client_write_MAC_key"
+#define OSSL_KDF_PURPOSE_SERVER_MAC_KEY "server_write_MAC_key"
+#define OSSL_KDF_PURPOSE_CLIENT_KEY "client_write_key"
+#define OSSL_KDF_PURPOSE_SERVER_KEY "server_write_key"
+#define OSSL_KDF_PURPOSE_CLIENT_IV "client_write_IV"
+#define OSSL_KDF_PURPOSE_SERVER_IV "server_write_IV"
+#define OSSL_KDF_PURPOSE_FINISHED_MAC "finished_mac"
+
 /* RSA padding modes */
 #define OSSL_PKEY_RSA_PAD_MODE_NONE "none"
 #define OSSL_PKEY_RSA_PAD_MODE_PKCSV15 "pkcs1"
