@@ -357,7 +357,8 @@ static int kdf_ikev2kdf_derive(void *vctx, unsigned char *key, size_t keylen,
                 return 0;
             }
             /* If Child_DH is intended, require secret_len > 0 */
-            if (ctx->secret != NULL && ctx->secret_len == 0) {
+            if ((ctx->secret != NULL && ctx->secret_len == 0)
+                || (ctx->secret == NULL && ctx->secret_len != 0)) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SECRET);
                 return 0;
             }
