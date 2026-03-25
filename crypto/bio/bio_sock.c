@@ -318,9 +318,10 @@ int BIO_accept(int sock, char **ip_port)
             BIO_closesocket(ret);
             ret = (int)INVALID_SOCKET;
         } else {
-            strcpy(*ip_port, host);
-            strcat(*ip_port, ":");
-            strcat(*ip_port, port);
+            size_t len = strlen(host) + strlen(port) + 2;
+            OPENSSL_strlcpy(*ip_port, host, len);
+            OPENSSL_strlcat(*ip_port, ":", len);
+            OPENSSL_strlcat(*ip_port, port, len);
         }
         OPENSSL_free(host);
         OPENSSL_free(port);

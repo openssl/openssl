@@ -490,13 +490,14 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap, int *cex)
     char *tok_begin, *tok_end, *buff, tok[S390X_STFLE_MAX][LEN + 1];
     int rc, off, i, n;
 
-    buff = malloc(strlen(env) + 1);
+    size_t buff_len = strlen(env) + 1;
+    buff = malloc(buff_len);
     if (buff == NULL)
         return 0;
 
     rc = 0;
     memset(cap, ~0, sizeof(*cap));
-    strcpy(buff, env);
+    OPENSSL_strlcpy(buff, env, buff_len);
 
     tok_begin = buff + strspn(buff, ";");
     strtok(tok_begin, ";");

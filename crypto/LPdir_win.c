@@ -153,13 +153,14 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
             (*ctx)->handle = FindFirstFile(wdir, &(*ctx)->ctx);
         } else {
             if (directory[dirlen - 1] != '*') {
-                char *buf = _alloca(dirlen + 3);
+                size_t buflen = dirlen + 3;
+                char *buf = _alloca(buflen);
 
-                strcpy(buf, directory);
+                OPENSSL_strlcpy(buf, directory, buflen);
                 if (buf[dirlen - 1] != '/' && buf[dirlen - 1] != '\\')
-                    strcpy(buf + dirlen, "/*");
+                    OPENSSL_strlcat(buf, "/*", buflen);
                 else
-                    strcpy(buf + dirlen, "*");
+                    OPENSSL_strlcat(buf, "*", buflen);
 
                 directory = buf;
             }

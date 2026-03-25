@@ -307,7 +307,7 @@ void vms_bind_sym(DSO *dso, const char *symname, void **sym)
 #if __INITIAL_POINTER_SIZE == 64
     /* Copy the symbol name to storage with a 32-bit pointer. */
     symname_32p = symname_32;
-    strcpy(symname_32p, symname);
+    OPENSSL_strlcpy(symname_32p, symname, sizeof(symname_32));
 #endif /* __INITIAL_POINTER_SIZE == 64 [else] */
 
     symname_dsc.dsc$w_length = strlen(SYMNAME);
@@ -486,11 +486,10 @@ static char *vms_name_converter(DSO *dso, const char *filename)
             p = strrchr(filename, ';');
             if (p != NULL)
                 len = p - filename;
-            strncpy(translated, filename, len);
-            translated[len] = '\0';
-            strcat(translated, DSO_EXTENSION);
+            OPENSSL_strlcpy(translated, filename, len + 1);
+            OPENSSL_strlcat(translated, DSO_EXTENSION, rsize);
             if (p != NULL)
-                strcat(translated, p);
+                OPENSSL_strlcat(translated, p, rsize);
         }
     } else {
         translated = OPENSSL_strdup(filename);
