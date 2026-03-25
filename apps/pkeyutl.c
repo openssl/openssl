@@ -9,6 +9,7 @@
 
 #include "apps.h"
 #include "progs.h"
+#include <limits.h>
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
@@ -37,8 +38,8 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
     unsigned char *secret, size_t *psecretlen);
 
 static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
-    EVP_PKEY *pkey, BIO *in,
-    int filesize, unsigned char *sig, size_t siglen,
+    EVP_PKEY *pkey, BIO *in, const char *infile,
+    size_t filesize, unsigned char *sig, size_t siglen,
     unsigned char **out, size_t *poutlen);
 
 static int only_nomd(EVP_PKEY *pkey)
@@ -162,7 +163,7 @@ int pkeyutl_main(int argc, char **argv)
     int rawin = 0;
     EVP_MD_CTX *mctx = NULL;
     EVP_MD *md = NULL;
-    int filesize = -1;
+    size_t filesize = (size_t)-1; /* (size_t)-1 means unknown */
     OSSL_LIB_CTX *libctx = app_get0_libctx();
 
     prog = opt_init(argc, argv, pkeyutl_options);
@@ -454,8 +455,11 @@ int pkeyutl_main(int argc, char **argv)
         if (infile != NULL) {
             struct stat st;
 
-            if (stat(infile, &st) == 0 && st.st_size <= INT_MAX)
-                filesize = (int)st.st_size;
+            if (stat(infile, &st) == 0 && st.st_size >= 0) {
+                filesize = (size_t)st.st_size;
+                if ((off_t)filesize != st.st_size)
+                    filesize = (size_t)-1;
+            }
         }
         if (in == NULL)
             goto end;
@@ -539,7 +543,7 @@ int pkeyutl_main(int argc, char **argv)
 
     if (pkey_op == EVP_PKEY_OP_VERIFY) {
         if (rawin) {
-            rv = do_raw_keyop(pkey_op, mctx, pkey, in, filesize, sig, siglen,
+            rv = do_raw_keyop(pkey_op, mctx, pkey, in, infile, filesize, sig, siglen,
                 NULL, 0);
         } else {
             rv = EVP_PKEY_verify(ctx, sig, siglen, buf_in, buf_inlen);
@@ -554,7 +558,7 @@ int pkeyutl_main(int argc, char **argv)
     }
     if (rawin) {
         /* rawin allocates the buffer in do_raw_keyop() */
-        rv = do_raw_keyop(pkey_op, mctx, pkey, in, filesize, NULL, 0,
+        rv = do_raw_keyop(pkey_op, mctx, pkey, in, infile, filesize, NULL, 0,
             &buf_out, &buf_outlen);
     } else {
         if (kdflen != 0) {
@@ -821,8 +825,8 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
 #define TBUF_MAXSIZE 2048
 
 static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
-    EVP_PKEY *pkey, BIO *in,
-    int filesize, unsigned char *sig, size_t siglen,
+    EVP_PKEY *pkey, BIO *in, const char *infile,
+    size_t filesize, unsigned char *sig, size_t siglen,
     unsigned char **out, size_t *poutlen)
 {
     int rv = 0;
@@ -832,32 +836,72 @@ static int do_raw_keyop(int pkey_op, EVP_MD_CTX *mctx,
 
     /* Some algorithms only support oneshot digests */
     if (only_nomd(pkey)) {
-        if (filesize < 0) {
+        if (filesize == (size_t)-1) {
+            BIO_printf(bio_err,
+                "Error: unable to determine size of file '%s' for oneshot operation\n",
+                infile);
+            goto end;
+        }
+#if defined(OPENSSL_SYS_UNIX) && defined(_POSIX_MAPPED_FILES) && _POSIX_MAPPED_FILES > 0
+        if (infile != NULL) {
+            struct stat st;
+
+            if (stat(infile, &st) == 0 && !S_ISREG(st.st_mode)) {
+                BIO_puts(bio_err, "Error: failed to use memory-mapped file\n");
+                goto end;
+            }
+        }
+        if (filesize > 0 && infile != NULL) {
+            const unsigned char *data = NULL;
+            size_t mapped_size = 0;
+
+            if (app_mmap_file(infile, bio_err, filesize, &data, &mapped_size) == 1) {
+                switch (pkey_op) {
+                case EVP_PKEY_OP_VERIFY:
+                    rv = EVP_DigestVerify(mctx, sig, siglen, data, mapped_size);
+                    break;
+                case EVP_PKEY_OP_SIGN:
+                    rv = EVP_DigestSign(mctx, NULL, poutlen, data, mapped_size);
+                    if (rv == 1 && out != NULL) {
+                        *out = app_malloc(*poutlen, "buffer output");
+                        rv = EVP_DigestSign(mctx, *out, poutlen, data, mapped_size);
+                    }
+                    break;
+                default:
+                    break;
+                }
+                munmap((void *)data, mapped_size);
+            }
+            /* Success or mmap failure: do not fall back to buffer path */
+            goto end;
+        }
+#endif
+        if (filesize > INT_MAX) {
             BIO_puts(bio_err,
-                "Error: unable to determine file size for oneshot operation\n");
+                "Error: file too large for oneshot operation without memory mapping\n");
             goto end;
         }
         if (filesize > 0)
             mbuf = app_malloc(filesize, "oneshot sign/verify buffer");
         switch (pkey_op) {
         case EVP_PKEY_OP_VERIFY:
-            buf_len = BIO_read(in, mbuf, filesize);
-            if (buf_len != filesize) {
+            buf_len = BIO_read(in, mbuf, (int)filesize);
+            if (buf_len < 0 || (size_t)buf_len != filesize) {
                 BIO_puts(bio_err, "Error reading raw input data\n");
                 goto end;
             }
-            rv = EVP_DigestVerify(mctx, sig, siglen, mbuf, buf_len);
+            rv = EVP_DigestVerify(mctx, sig, siglen, mbuf, filesize);
             break;
         case EVP_PKEY_OP_SIGN:
-            buf_len = BIO_read(in, mbuf, filesize);
-            if (buf_len != filesize) {
+            buf_len = BIO_read(in, mbuf, (int)filesize);
+            if (buf_len < 0 || (size_t)buf_len != filesize) {
                 BIO_puts(bio_err, "Error reading raw input data\n");
                 goto end;
             }
-            rv = EVP_DigestSign(mctx, NULL, poutlen, mbuf, buf_len);
+            rv = EVP_DigestSign(mctx, NULL, poutlen, mbuf, filesize);
             if (rv == 1 && out != NULL) {
                 *out = app_malloc(*poutlen, "buffer output");
-                rv = EVP_DigestSign(mctx, *out, poutlen, mbuf, buf_len);
+                rv = EVP_DigestSign(mctx, *out, poutlen, mbuf, filesize);
             }
             break;
         }

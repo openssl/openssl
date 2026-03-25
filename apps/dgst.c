@@ -7,10 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "apps.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "apps.h"
 #include "progs.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>
@@ -20,6 +20,7 @@
 #include <openssl/pem.h>
 #include <openssl/hmac.h>
 #include <ctype.h>
+#include <sys/stat.h>
 
 #undef BUFSIZE
 #define BUFSIZE 1024 * 8
@@ -482,7 +483,7 @@ int dgst_main(int argc, char **argv)
         BIO_set_fp(in, stdin, BIO_NOCLOSE);
         if (oneshot_sign)
             ret = do_fp_oneshot_sign(out, signctx, in, separator, out_bin,
-                sigkey, sigbuf, siglen, NULL, "stdin");
+                sigkey, sigbuf, siglen, NULL, NULL);
         else
             ret = do_fp(out, buf, inp, separator, out_bin, xoflen,
                 sigkey, sigbuf, siglen, NULL, md_name, "stdin");
@@ -723,6 +724,43 @@ end:
 }
 
 /*
+ * Perform one-shot verify or sign on a contiguous data buffer.
+ * Returns 0 on failure, 1 on success.
+ */
+static int do_oneshot_verify_sign(EVP_MD_CTX *ctx, BIO *out,
+    unsigned char *sigin, int siglen, EVP_PKEY *key,
+    const unsigned char *data, size_t len,
+    int sep, int binout, const char *sig_name, const char *file)
+{
+    int res;
+    size_t siglen_out = 0;
+    unsigned char *sig = NULL;
+
+    if (sigin != NULL) {
+        res = EVP_DigestVerify(ctx, sigin, siglen, data, len);
+        print_verify_result(out, res);
+        return res > 0;
+    }
+    if (key != NULL) {
+        if (EVP_DigestSign(ctx, NULL, &siglen_out, data, len) != 1) {
+            BIO_puts(bio_err, "Error getting maximum length of signed data\n");
+            return 0;
+        }
+        sig = app_malloc(siglen_out, "Signature buffer");
+        if (EVP_DigestSign(ctx, sig, &siglen_out, data, len) != 1) {
+            BIO_puts(bio_err, "Error signing data\n");
+            OPENSSL_free(sig);
+            return 0;
+        }
+        print_out(out, sig, siglen_out, sep, binout, sig_name, NULL, file);
+        OPENSSL_free(sig);
+        return 1;
+    }
+    BIO_puts(bio_err, "key must be set for one-shot algorithms\n");
+    return 0;
+}
+
+/*
  * Some new algorithms only support one shot operations.
  * For these we need to buffer all input and then do the sign on the
  * total buffered input. These algorithms set a NULL digest name which is
@@ -732,43 +770,42 @@ static int do_fp_oneshot_sign(BIO *out, EVP_MD_CTX *ctx, BIO *in, int sep, int b
     EVP_PKEY *key, unsigned char *sigin, int siglen,
     const char *sig_name, const char *file)
 {
-    int res, ret = EXIT_FAILURE;
-    size_t len = 0;
+    int ret = EXIT_FAILURE;
     size_t buflen = 0;
     size_t maxlen = 16 * 1024 * 1024;
-    uint8_t *buf = NULL, *sig = NULL;
+    uint8_t *buf = NULL;
 
-    if (!bio_to_mem(&buf, &buflen, maxlen, in)) {
-        BIO_printf(bio_err, "Read error in %s\n", file);
-        return ret;
-    }
-    if (sigin != NULL) {
-        res = EVP_DigestVerify(ctx, sigin, siglen, buf, buflen);
-        print_verify_result(out, res);
-        if (res > 0)
-            ret = EXIT_SUCCESS;
-        goto end;
-    }
-    if (key != NULL) {
-        if (EVP_DigestSign(ctx, NULL, &len, buf, buflen) != 1) {
-            BIO_puts(bio_err, "Error getting maximum length of signed data\n");
-            goto end;
-        }
-        sig = app_malloc(len, "Signature buffer");
-        if (EVP_DigestSign(ctx, sig, &len, buf, buflen) != 1) {
-            BIO_puts(bio_err, "Error signing data\n");
-            goto end;
-        }
-        print_out(out, sig, len, sep, binout, sig_name, NULL, file);
-        ret = EXIT_SUCCESS;
-    } else {
-        BIO_puts(bio_err, "key must be set for one-shot algorithms\n");
-        goto end;
-    }
+#if defined(OPENSSL_SYS_UNIX) && defined(_POSIX_MAPPED_FILES) && _POSIX_MAPPED_FILES > 0
+    if (file != NULL) {
+        const unsigned char *data = NULL;
+        size_t filesize = 0;
+        int r = app_mmap_file(file, bio_err, (size_t)-1, &data, &filesize);
 
-end:
-    OPENSSL_free(sig);
-    OPENSSL_clear_free(buf, buflen);
+        if (r == 1) {
+            ret = do_oneshot_verify_sign(ctx, out, sigin, siglen, key, data,
+                      filesize, sep, binout, sig_name, file)
+                ? EXIT_SUCCESS
+                : EXIT_FAILURE;
+            munmap((void *)data, filesize);
+            return ret;
+        }
+        if (r == -1)
+            return EXIT_FAILURE; /* error already printed */
+        /* r == 0: empty file, fall through to buffer path */
+    }
+#endif
+
+    {
+        const char *display_file = file != NULL ? file : "stdin";
+
+        if (!bio_to_mem(&buf, &buflen, maxlen, in))
+            return EXIT_FAILURE;
+        ret = do_oneshot_verify_sign(ctx, out, sigin, siglen, key, buf, buflen,
+                  sep, binout, sig_name, display_file)
+            ? EXIT_SUCCESS
+            : EXIT_FAILURE;
+        OPENSSL_clear_free(buf, buflen);
+    }
 
     return ret;
 }
