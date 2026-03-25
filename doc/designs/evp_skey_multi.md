@@ -30,8 +30,7 @@ API for access to a particular object.
 To derive the opaque keys and and bytes buffers, we use the function
 
 ```C
-int EVP_KDF_derive_SKEYs(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
-                         const char *propquery, const OSSL_PARAM params[]);
+int EVP_KDF_derive_SKEYs(EVP_KDF_CTX *ctx, const OSSL_PARAM params[]);
 ```
 
 This function doesn't directly return objects when this functions succeeds,
@@ -47,24 +46,28 @@ The params can also be set by a preceding call to `EVP_KDF_CTX_set_params`.
 To access the individual EVP_SKEY values, we introduce the functions
 
 ```C
-EVP_SKEY *EVP_KDF_CTX_get0_SKEY(EVP_KDF_CTX *ctx, const char *purpose);
-EVP_SKEY *EVP_KDF_CTX_get1_SKEY(EVP_KDF_CTX *ctx, const char *purpose);
+EVP_SKEY *EVP_KDF_CTX_get0_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
+                                const char *key_type, const char *propquery, const char *purpose);
+EVP_SKEY *EVP_KDF_CTX_get1_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
+                                const char *key_type, const char *propquery, const char *purpose);
 ```
 
 where the `purpose` argument is a name of the particular EVP_SKEY purpose (e.g.
 "client_MAC_key", "server_CIPHER_key") as specified by the documentation of the
-specific KDF operation that was executed.
+specific KDF operation that was executed. The caller may specify an explicit
+EVP_SKEYMGMT associated with the resulting EVP_SKEY, or it may specify a key type
+and propquery and the KDF context will search for an appropriate EVP_SKEYMGMT.
 
-To access an IV, the proposed API is
+To access generic output bytes (e.g. an IV for TLS 1.2), the proposed API is
 
 ```C
-int EVP_KDF_CTX_get0_IV(EVP_KDF_CTX *ctx, const char *purpose,
-                        unsigned char **pIV, size_t *pIVlen);
+unsigned char* EVP_KDF_CTX_get0_data(EVP_KDF_CTX *ctx, const char *purpose,
+                                     size_t *datalen);
 ```
 
-where the `purpose` argument is a documented name of the particular IV purpose
-(e.g. "client_IV") and `pIVlen` argument is a way to get the length of
-generated IV.
+where the `purpose` argument is a documented name of the particular purpose
+(e.g. "client_IV") and `datalen` argument is a way to get the length of
+output data.
 
 Provider API
 ------------
@@ -75,11 +78,12 @@ We extend the EVP_KDF structure with the following member functions:
 OSSL_CORE_MAKE_FUNC(int, kdf_derive_multi, (void *kctx,
                     const OSSL_PARAM params[]))
 
-OSSL_CORE_MAKE_FUNC(int, kdf_get_skey,
-                    (void *kctx, void *skeydata, const char *purpose, bool incr_refcount))
+OSSL_CORE_MAKE_FUNC(void*, kdf_get_skey,
+                    (void *kctx, const char *purpose, OSSL_FUNC_skeymgmt_import_fn *import,
+                     bool incr_refcount))
 
-OSSL_CORE_MAKE_FUNC(unsigned char *, kdf_get_iv,
-                    (void *kctx, const char *purpose))
+OSSL_CORE_MAKE_FUNC(unsigned char *, kdf_get_data,
+                    (void *kctx, const char *purpose, size_t *datalen))
 
 ```
 
