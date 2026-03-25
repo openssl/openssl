@@ -2402,7 +2402,7 @@ int check_cert_might_be_valid(BIO *bio, X509 *x, const char *checkhost,
     }
 
     if ((store = X509_STORE_new()) == NULL) {
-        maybe_printf(bio, "Malloc failed or internal error\n");
+        ERR_print_errors(bio);
         goto err;
     }
 
