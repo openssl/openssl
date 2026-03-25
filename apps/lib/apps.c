@@ -2438,7 +2438,7 @@ int check_cert_might_be_valid(BIO *bio, X509 *x, const char *checkhost,
     X509_VERIFY_PARAM_set_trust(vpm, X509_TRUST_OK_ANY_EKU);
 
     if (!X509_VERIFY_PARAM_set1_ip_asc(vpm, checkip)) {
-        maybe_printf(bio, "Invalid ip address %s\n", checkip);
+        maybe_printf(bio, "Invalid IP address: %s\n", checkip);
         goto err;
     }
 
