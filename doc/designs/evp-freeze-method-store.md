@@ -223,3 +223,65 @@ Implementation Details
    they will have a special flag set on them (`EVP_ORIG_FROZEN`
    instead of `EVP_ORIG_METH`) so that we know later we don't need to
    free it (i.e., it comes from the long-lived cache).
+
+Implementation V2
+=================
+
+This version of freezing will address all outstanding issues.
+
+Note: Maybe the freezing name itself was not chosen right. In a
+nutshell, the API call will create immutable store with pre-fetched
+algorithms for any `propq` that is bound to a lifetime of
+`OSSL_LIB_CTX`.
+
+API change
+----------
+```c
+  int OSSL_LIB_CTX_freeze(OSSL_LIB_CTX *ctx, const char *const *propq, size_t count)
+```
+or 
+```
+  int OSSL_LIB_CTX_create_imm_mstore(OSSL_LIB_CTX *ctx, const char *const *propq, size_t count)
+```
+
+Any propq can be pre-fetched and stored into frozen/immutable store, not
+just one with extra addition to ""/NULL.
+
+```c
+const char *propq[] = { "fips=true", "fips=false" };
+OSSL_LIB_CTX_freeze(ctx, propq, sizeof(propq), OSSL_NELEM(propq));
+```
+
+Retrieval from frozen/immutable method store
+--------------------------------------------
+```
+   EVP_xxx_fetch(...)
+     ossl_method_store_get_frozen(store, propq, &method))
+        /* nothing has been frozen, fallback  */
+        if (store->propq_trie == NULL)
+            return;
+        HT *frozen_mstore = ossl_trie_get(store->propq_trie, propq);
+        /* propq is not frozen, fallback */
+        if (frozen_mstore == NULL)
+            return;
+
+        /* return method from frozen/imm_mstore if any */
+```
+
+How the freeze/immutable store is created
+-----------------------------------------
+
+Originally, the freeze method store calls a bunch of `evp_*_fetch_all` to force
+load algorithm to the sparse array (SA), and then iterate over the SA to find the
+best match for `<nid, propq>`. If method is found, method was duplicated with updated
+`->origin` to `EVP_ORIG_FROZEN`, and provider was `up_ref()`-ed.
+
+The requirement for force algo load to method store can be lifted by implementing
+`evp_method_data_st` and `ossl_method_construct` that will use
+directly `HT<operation_id, algo_name>`.
+
+With that:
+
+* callbacks `dup_method`, and `dup_free_method` could removed from fetch and store_cache
+  code path entirely
+* remove all restrictions on `OSSL_METHOD_STORE`
