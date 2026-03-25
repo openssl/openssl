@@ -22,12 +22,12 @@
 #define VPSM4_ASM
 
 #if defined(OPENSSL_CPUID_OBJ) && (defined(__aarch64__) || defined(_M_ARM64))
-# include "crypto/arm_arch.h"
+#include "crypto/arm_arch.h"
 #endif
 
-# include "crypto/sm4.h"
-# include "crypto/modes.h"
-# include "crypto/sm4_platform.h"
+#include "crypto/sm4.h"
+#include "crypto/modes.h"
+#include "crypto/sm4_platform.h"
 
 static int test_sm4_ecb(void)
 {
@@ -73,7 +73,7 @@ static int test_sm4_ecb(void)
     } else
 #endif
 #if defined(VPSM4_CAPABLE)
-    if (vpsm4_capable()) {
+        if (vpsm4_capable()) {
         vpsm4_ecb_encrypt(block, block, sizeof(block), &key, SM4_ENCRYPT);
     } else
 #endif
@@ -90,7 +90,7 @@ static int test_sm4_ecb(void)
         } else
 #endif
 #if defined(VPSM4_CAPABLE)
-        if (vpsm4_capable()) {
+            if (vpsm4_capable()) {
             vpsm4_ecb_encrypt(block, block, sizeof(block), &key, SM4_ENCRYPT);
         } else
 #endif
@@ -107,7 +107,7 @@ static int test_sm4_ecb(void)
     } else
 #endif
 #if defined(VPSM4_CAPABLE)
-    if (vpsm4_capable()) {
+        if (vpsm4_capable()) {
         vpsm4_set_decrypt_key(k, &key);
     }
 #endif
@@ -119,12 +119,12 @@ static int test_sm4_ecb(void)
         } else
 #endif
 #if defined(VPSM4_CAPABLE)
-        if (vpsm4_capable()) {
+            if (vpsm4_capable()) {
             vpsm4_ecb_encrypt(block, block, sizeof(block), &key, SM4_DECRYPT);
         } else
 #endif
         {
-        ossl_sm4_decrypt(block, block, &key);
+            ossl_sm4_decrypt(block, block, &key);
         }
     }
     if (!TEST_mem_eq(block, SM4_BLOCK_SIZE, input, SM4_BLOCK_SIZE))
@@ -172,43 +172,43 @@ static int test_vpsm4_cbc(void)
 #if defined(VPSM4_EX_CAPABLE)
     if (vpsm4_ex_capable()) {
         vpsm4_ex_cbc_encrypt(plaintext, ciphertext, sizeof(plaintext), &key, iv,
-                             SM4_ENCRYPT);
+            SM4_ENCRYPT);
     } else
 #endif
 #if defined(VPSM4_CAPABLE)
-    if (vpsm4_capable()) {
+        if (vpsm4_capable()) {
         vpsm4_cbc_encrypt(plaintext, ciphertext, sizeof(plaintext), &key, iv,
-                          SM4_ENCRYPT);
+            SM4_ENCRYPT);
     } else
 #endif
     {
         CRYPTO_cbc128_encrypt(plaintext, ciphertext, sizeof(plaintext), &key, iv,
-                              (block128_f)ossl_sm4_encrypt);
+            (block128_f)ossl_sm4_encrypt);
     }
 
     if (!TEST_mem_eq(ciphertext, sizeof(ciphertext),
-                     expected_ciphertext, sizeof(expected_ciphertext)))
+            expected_ciphertext, sizeof(expected_ciphertext)))
         return 0;
 
     /* --- Test Decryption --- */
     memcpy(iv, iv_bytes, SM4_BLOCK_SIZE); /* Reset IV for decryption */
 #if defined(VPSM4_EX_CAPABLE)
     if (vpsm4_ex_capable()) {
-	    vpsm4_ex_set_decrypt_key(key_bytes, &key);
+        vpsm4_ex_set_decrypt_key(key_bytes, &key);
         vpsm4_ex_cbc_encrypt(ciphertext, decrypted, sizeof(ciphertext), &key, iv,
-                             SM4_DECRYPT);
+            SM4_DECRYPT);
     } else
 #endif
 #if defined(VPSM4_CAPABLE)
-    if (vpsm4_capable()) {
-	    vpsm4_set_decrypt_key(key_bytes, &key);
+        if (vpsm4_capable()) {
+        vpsm4_set_decrypt_key(key_bytes, &key);
         vpsm4_cbc_encrypt(ciphertext, decrypted, sizeof(ciphertext), &key, iv,
-                          SM4_DECRYPT);
+            SM4_DECRYPT);
     } else
 #endif
     {
         CRYPTO_cbc128_decrypt(ciphertext, decrypted, sizeof(ciphertext), &key, iv,
-                              (block128_f)ossl_sm4_decrypt);
+            (block128_f)ossl_sm4_decrypt);
     }
 
     if (!TEST_mem_eq(decrypted, sizeof(decrypted), plaintext, sizeof(plaintext)))
@@ -218,7 +218,7 @@ static int test_vpsm4_cbc(void)
 }
 
 /*
- * Internal SM4 CBC test - compiled C implementation. 
+ * Internal SM4 CBC test - compiled C implementation.
  */
 static int test_sm4_cbc(void)
 {
@@ -253,16 +253,16 @@ static int test_sm4_cbc(void)
     ossl_sm4_set_key(key_bytes, &key);
     memcpy(iv, iv_bytes, SM4_BLOCK_SIZE); /* Use a working copy of the IV */
     CRYPTO_cbc128_encrypt(plaintext, ciphertext, sizeof(plaintext), &key, iv,
-                          (block128_f)ossl_sm4_encrypt);
+        (block128_f)ossl_sm4_encrypt);
 
     if (!TEST_mem_eq(ciphertext, sizeof(ciphertext),
-                     expected_ciphertext, sizeof(expected_ciphertext)))
+            expected_ciphertext, sizeof(expected_ciphertext)))
         return 0;
 
     /* --- Test Decryption --- */
     memcpy(iv, iv_bytes, SM4_BLOCK_SIZE); /* Reset IV for decryption */
     CRYPTO_cbc128_decrypt(ciphertext, decrypted, sizeof(ciphertext), &key, iv,
-                          (block128_f)ossl_sm4_decrypt);
+        (block128_f)ossl_sm4_decrypt);
 
     if (!TEST_mem_eq(decrypted, sizeof(decrypted), plaintext, sizeof(plaintext)))
         return 0;

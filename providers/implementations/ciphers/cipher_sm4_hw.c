@@ -43,7 +43,7 @@ static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
         } else
 #endif
 #ifdef VPSM4_EX_CAPABLE
-        if (VPSM4_EX_CAPABLE && (ctx->mode != EVP_CIPH_CBC_MODE)) {
+            if (VPSM4_EX_CAPABLE && (ctx->mode != EVP_CIPH_CBC_MODE)) {
             vpsm4_ex_set_encrypt_key(key, ks);
             ctx->block = (block128_f)vpsm4_ex_encrypt;
             ctx->stream.cbc = NULL;
@@ -54,7 +54,7 @@ static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
         } else
 #endif
 #ifdef VPSM4_CAPABLE
-        if (VPSM4_CAPABLE && (ctx->mode != EVP_CIPH_CBC_MODE)) {
+            if (VPSM4_CAPABLE && (ctx->mode != EVP_CIPH_CBC_MODE)) {
             vpsm4_set_encrypt_key(key, ks);
             ctx->block = (block128_f)vpsm4_encrypt;
             ctx->stream.cbc = NULL;
@@ -85,7 +85,7 @@ static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
         } else
 #endif
 #ifdef VPSM4_EX_CAPABLE
-        if (VPSM4_EX_CAPABLE) {
+            if (VPSM4_EX_CAPABLE) {
             vpsm4_ex_set_decrypt_key(key, ks);
             ctx->block = (block128_f)vpsm4_ex_decrypt;
             ctx->stream.cbc = NULL;
@@ -96,7 +96,7 @@ static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
         } else
 #endif
 #ifdef VPSM4_CAPABLE
-        if (VPSM4_CAPABLE) {
+            if (VPSM4_CAPABLE) {
             vpsm4_set_decrypt_key(key, ks);
             ctx->block = (block128_f)vpsm4_decrypt;
             ctx->stream.cbc = NULL;
@@ -117,17 +117,17 @@ static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
 
 IMPLEMENT_CIPHER_HW_COPYCTX(cipher_hw_sm4_copyctx, PROV_SM4_CTX)
 
-#define PROV_CIPHER_HW_sm4_mode(mode)                   \
-    static const PROV_CIPHER_HW sm4_##mode = {          \
-        cipher_hw_sm4_initkey,                          \
-        ossl_cipher_hw_generic_##mode,                  \
-        cipher_hw_sm4_copyctx                           \
-    };                                                  \
-    PROV_CIPHER_HW_declare(mode)                        \
-        const PROV_CIPHER_HW *                          \
-        ossl_prov_cipher_hw_sm4_##mode(size_t keybits)  \
-    {                                                   \
-        PROV_CIPHER_HW_select(mode) return &sm4_##mode; \
+#define PROV_CIPHER_HW_sm4_mode(mode)                      \
+    static const PROV_CIPHER_HW sm4_##mode = {             \
+        cipher_hw_sm4_initkey,                             \
+        ossl_cipher_hw_generic_##mode,                     \
+        cipher_hw_sm4_copyctx                              \
+    };                                                     \
+    PROV_CIPHER_HW_declare(mode)                           \
+        const PROV_CIPHER_HW *                             \
+            ossl_prov_cipher_hw_sm4_##mode(size_t keybits) \
+    {                                                      \
+        PROV_CIPHER_HW_select(mode) return &sm4_##mode;    \
     }
 
 #if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
