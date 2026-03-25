@@ -5,7 +5,8 @@
 EVP_KDF, EVP_KDF_fetch, EVP_KDF_free, EVP_KDF_up_ref,
 EVP_KDF_CTX, EVP_KDF_CTX_new, EVP_KDF_CTX_free, EVP_KDF_CTX_dup,
 EVP_KDF_CTX_reset, EVP_KDF_derive,
-EVP_KDF_CTX_set_SKEY, EVP_KDF_derive_SKEY,
+EVP_KDF_CTX_set_SKEY, EVP_KDF_derive_SKEY, EVP_KDF_derive_SKEYs,
+EVP_KDF_CTX_get0_SKEY, EVP_KDF_CTX_get1_SKEY, EVP_KDF_CTX_get0_data,
 EVP_KDF_CTX_get_kdf_size,
 EVP_KDF_get0_provider, EVP_KDF_CTX_kdf, EVP_KDF_is_a,
 EVP_KDF_get0_name, EVP_KDF_names_do_all, EVP_KDF_get0_description,
@@ -33,11 +34,20 @@ EVP_KDF_CTX_gettable_params, EVP_KDF_CTX_settable_params - EVP KDF routines
  EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
                                const char *key_type, const char *propquery,
                                size_t keylen, const OSSL_PARAM params[]);
+ int EVP_KDF_derive_SKEYs(EVP_KDF_CTX *ctx, const OSSL_PARAM params[]);
  int EVP_KDF_up_ref(EVP_KDF *kdf);
  void EVP_KDF_free(EVP_KDF *kdf);
  EVP_KDF *EVP_KDF_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
                         const char *properties);
  int EVP_KDF_is_a(const EVP_KDF *kdf, const char *name);
+ EVP_SKEY *EVP_KDF_CTX_get0_SKEY(EVP_KDF_CTX *ctx, EVP_KDF_CTX *ctx,
+                                 EVP_SKEYMGMT *skeymgmt, const char *key_type,
+                                 const char *propquery, const char *purpose);
+ EVP_SKEY *EVP_KDF_CTX_get1_SKEY(EVP_KDF_CTX *ctx, EVP_KDF_CTX *ctx,
+                                 EVP_SKEYMGMT *skeymgmt, const char *key_type,
+                                 const char *propquery, const char *purpose);
+ unsigned char* EVP_KDF_CTX_get0_data(EVP_KDF_CTX *ctx, const char *purpose,
+                                      size_t *datalen);
  const char *EVP_KDF_get0_name(const EVP_KDF *kdf);
  const char *EVP_KDF_get0_description(const EVP_KDF *kdf);
  const OSSL_PROVIDER *EVP_KDF_get0_provider(const EVP_KDF *kdf);
@@ -126,6 +136,33 @@ the derivation functions. As different KDFs may accept several parameters as
 key names, we can specify the particular parameter name we set.  If null is
 passed, the parameter B<OSSL_KDF_PARAM_KEY> is implied.  It is used when the
 input key is represented by B<EVP_SKEY> rather than raw bytes.
+
+EVP_KDF_derive_SKEYs() is used to derive multiple B<EVP_SKEY> objects in
+a single step. It can be used with KDFs that allow derivation of multiple
+outputs while avoiding multiple calls to providers for each output (for
+example L<EVP_KDF-TLS1_PRF(7)> may derive 2/4 keys and 2 IVs). This function
+does not return any objects when it succeeds - they are stored in I<ctx>.
+The parameters in I<params> are specific for each KDF and may contain
+information about the requested key lengths, number of keys, etc. If no
+parameters are specified, the KDF may use internal defaults. The
+parameters may also be set with a call to EVP_KDF_CTX_set_params().
+
+EVP_KDF_CTX_get0_SKEY() retrieves B<EVP_SKEY> objects that were derived
+by a preceding call to EVP_KDF_derive_SKEYs(). It can be called multiple
+times, for each desired output. If the I<skeymgmt> argument is explicitly
+passed, it will be used for the generated key. If the I<skeymgmt> argument
+is NULL, the I<key_type> and I<propquery> will be used for fetching the
+B<EVP_SKEYMGMT> object linked to the key. I<purpose> is a name that
+identifies which of the multiple derived keys is requested (e.g.
+"client_write_MAC_key" or "server_write_key"), as specified by the
+documentation of the specific KDF. EVP_KDF_CTX_get1_SKEY() does the same
+and also increases the reference count of the returned B<EVP_SKEY>.
+
+EVP_KDF_CTX_get0_data() can be used to retrieve data that may also have
+been derived by the KDF. I<purpose> is a name that identifies which piece
+of data is requested (e.g. "client_write_IV"), as specified by the
+documentation of the specific KDF. I<datalen> can be used to get the
+length of the output data.
 
 EVP_KDF_get_params() retrieves details about the implementation
 I<kdf>.
