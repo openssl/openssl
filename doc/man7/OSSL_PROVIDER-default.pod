@@ -197,6 +197,8 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item SecP384r1MLKEM1024, see L<EVP_PKEY-MLX-KEM(7)>
 
+=item curveSM2MLKEM768, see L<EVP_PKEY-MLX-KEM(7)>
+
 =item TLS1-PRF
 
 =item HKDF
@@ -338,6 +340,8 @@ The OpenSSL default provider supports these operations and algorithms:
 =item SecP256r1MLKEM768, see L<EVP_KEYMGMT-MLX-KEM(7)>
 
 =item SecP384r1MLKEM1024, see L<EVP_KEYMGMT-MLX-KEM(7)>
+
+=item curveSM2MLKEM768, see L<EVP_PKEY-MLX-KEM(7)>
 
 =item SLH-DSA-SHA2-128s, see L<EVP_KEYMGMT-SLH-DSA(7)>
 
@@ -567,11 +571,16 @@ L<OSSL_PROVIDER-base(7)>
 Support for B<LMS> Public Key (SubjectPublicKeyInfo) encoders and decoders
 was added in OpenSSL 4.0.
 
-The RIPEMD160 digest was added to the default provider in OpenSSL 3.0.7.
+Support for B<curveSM2MLKEM768> was added in OpenSSL 4.0.
+
+The CSHAKE-128 and CSHAKE-256 algorithms were added in OpenSSL 4.0.
 
 The HKDF-SHA256, HKDF-SHA384 and HKDF-SHA512 algorithms were added in OpenSSL 3.6.
 
-The CSHAKE-128 and CSHAKE-256 algorithms were added in OpenSSL 4.0.
+Support for B<X25519MLKEM768>, B<X448MLKEM1024>, B<SecP256r1MLKEM768> and
+B<SecP384r1MLKEM1024> was added in OpenSSL 3.5.
+
+The RIPEMD160 digest was added to the default provider in OpenSSL 3.0.7.
 
 All other functionality was added in OpenSSL 3.0.
 

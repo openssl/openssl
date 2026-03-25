@@ -7,8 +7,8 @@ EVP_PKEY-MLX-KEM, EVP_KEYMGMT-MLX-KEM - Hybrid ML-KEM key support for TLS 1.3
 =head1 DESCRIPTION
 
 These hybrid ML_KEM algorithms derive the session secret from both a
-traditional/classical algorithm (such as X25519/ECDH) and the post-quantum
-algorithm (ML_KEM), ensuring the connection remains secure unless both
+ECDH (classical) algorithm (such as X25519, or P-256) and a post-quantum
+algorithm (ML_KEM), ensuring that key agreement remains secure unless both
 schemes are broken.
 
 The algorithms supported here are specifically for use in TLS 1.3 and are not
@@ -48,19 +48,30 @@ secret followed by a 32 byte L<EVP_PKEY-ML-KEM(7)> shared secret.
 
 =back
 
+The following name is supported only in OpenSSL's default provider.
+
+=over 4
+
+=item B<curveSM2MLKEM768>
+
+The shared secret is the concatenation of a 32 byte L<EVP_PKEY-SM2(7)> shared
+secret followed by a 32 byte L<EVP_PKEY-ML-KEM(7)> shared secret.
+Both algorithms used are FIPS approved.
+
+=back
+
 =head2 Keygen Parameters
 
 No mandatory parameters are required for generating a key pair.
 To set the optional parameter, use L<EVP_PKEY_CTX_set_params(3)> after calling
 L<EVP_PKEY_keygen_init(3)>.
-Calling EVP_PKEY_keygen() internally generates a classic and ML-KEM key.
 
 =over 4
 
 =item "properties" (B<OSSL_PKEY_PARAM_PROPERTIES>) <UTF8 string>
 
 Sets properties to be used when fetching algorithm implementations used for
-the ML-KEM and X25519 or ECDH algorithms.
+the B<ML-KEM>, B<ECDH> or B<SM2> algorithms.
 
 =back
 
@@ -100,21 +111,25 @@ The format of the public keys for the different algorithms is:
 
 =over 4
 
-=item B<SecP256r1MLKEM768>
+=item B<SecP256r1MLKEM768> and B<curveSM2MLKEM768>
 
-A 65 byte EC public key followed by a 1184 byte MLKEM public key.
+A 65 byte EC public key followed by a 1184 byte ML-KEM-768 public key.
 
 =item B<SecP384r1MLKEM1024>
 
-A 97 byte EC public key followed by a 1568 byte MLKEM public key.
+A 97 byte EC public key followed by a 1568 byte ML-KEM-1024 public key.
 
 =item B<X25519MLKEM768>
 
-A 1184 byte MLKEM public key followed by a 32 byte X25519 public key.
+A 1184 byte ML-KEM-768 public key followed by a 32 byte X25519 public key.
 
 =item B<X448MLKEM1024>
 
-A 1568 byte MLKEM public key followed by a 56 byte X448 public key.
+A 1568 byte ML-KEM-1024 public key followed by a 56 byte X448 public key.
+
+=item B<curveSM2MLKEM768>
+
+A 65 byte SM2 public key followed by a 1184 byte ML-KEM-768 public key.
 
 =back
 
@@ -140,19 +155,23 @@ The format of the private keys for the different algorithms is:
 
 =item B<SecP256r1MLKEM768>
 
-32 byte EC private key followed by a 2400 byte MLKEM private key.
+32 byte EC private key followed by a 2400 byte ML-KEM-768 private key.
 
 =item B<SecP384r1MLKEM1024>
 
-48 byte EC private key followed by a 3168 byte MLKEM private key.
+48 byte EC private key followed by a 3168 byte ML-KEM-1024 private key.
 
 =item B<X25519MLKEM768>
 
-2400 byte MLKEM private key followed by a 32 byte X25519 private key.
+2400 byte ML-KEM-768 private key followed by a 32 byte X25519 private key.
 
 =item B<X448MLKEM1024>
 
-3168 byte MLKEM private key followed by a 56 byte X448 private key.
+3168 byte ML-KEM-1024 private key followed by a 56 byte X448 private key.
+
+=item B<curveSM2MLKEM768>
+
+32 byte SM2 private key followed by a 2400 byte ML-KEM-768 private key.
 
 =back
 
@@ -182,11 +201,14 @@ since MLKEM is FIPS approved.
 L<EVP_KEM-ML-KEM(7)>,
 L<EVP_PKEY-X25519(7)>,
 L<EVP_PKEY-EC(7)>,
+L<EVP_PKEY-SM2(7)>,
 L<provider-keymgmt(7)>
 
 =head1 HISTORY
 
 This functionality was added in OpenSSL 3.5.
+
+Support for B<curveSM2MLKEM768> was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
