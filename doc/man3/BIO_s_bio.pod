@@ -120,7 +120,7 @@ BIO_nread() is similar to BIO_nread0() but also advances the read position
 by up to B<num> bytes. The actual number of bytes consumed is returned.
 The B<*buf> pointer is set to the start of the data that was consumed.
 Since the data is considered consumed after this call, the pointer returned
-by a prior BIO_nread0() should not be used afterwards unless the caller also
+by BIO_nread() should not be used afterwards unless the caller also
 controls the writing side. The typical pattern is to call BIO_nread0() first,
 use the data, and then call BIO_nread() to consume it.
 
@@ -231,7 +231,7 @@ and must be transferred to the network. Use BIO_ctrl_get_read_request() to
 find out, how many bytes must be written into the buffer before the
 SSL_operation() can successfully be continued.
 
-The typical usage pattern for the non-copying write interface is:
+A typical usage pattern for the non-copying write interface is:
 
  int ret;
  char *buf;
@@ -243,7 +243,7 @@ The typical usage pattern for the non-copying write interface is:
      BIO_nwrite(bio, &buf, len);  /* commit the write */
  }
 
-The typical usage pattern for the non-copying read interface is:
+A typical usage pattern for the non-copying read interface is:
 
  int ret;
  char *buf;
