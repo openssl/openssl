@@ -7335,14 +7335,56 @@ __owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc)
 int SSL_stateless(SSL *s)
 {
     int ret;
+    int dtls_hrr_pending = 0;
+    uint16_t dtls_handshake_read_seq = 0;
+    uint16_t dtls_next_handshake_write_seq = 0;
+    uint64_t dtls_rl_read_seq = 0;
+    uint64_t dtls_rl_write_seq = 0;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
     if (sc == NULL)
         return 0;
 
+    /*
+     * For DTLS, track whether we have already sent a HelloRetryRequest so
+     * that we can restore handshake_read_seq after SSL_clear() resets it.
+     * After an HRR the client's second ClientHello carries message seq=1;
+     * if handshake_read_seq is left at 0 the message would be treated as
+     * out-of-order and buffered rather than accepted.
+     */
+    if (SSL_CONNECTION_IS_DTLS(sc) && sc->hello_retry_request == SSL_HRR_PENDING
+        && !ossl_statem_in_error(sc)) {
+        dtls_hrr_pending = 1;
+        dtls_handshake_read_seq = sc->d1->handshake_read_seq;
+        dtls_next_handshake_write_seq = sc->d1->next_handshake_write_seq;
+
+        if (sc->rlayer.wrlmethod->get_sequence && sc->rlayer.rrlmethod->get_sequence) {
+            if (!sc->rlayer.rrlmethod->get_sequence(sc->rlayer.rrl, &dtls_rl_read_seq)
+                || !sc->rlayer.wrlmethod->get_sequence(sc->rlayer.wrl, &dtls_rl_write_seq))
+                return 0;
+        }
+    }
+
     /* Ensure there is no state left over from a previous invocation */
     if (!SSL_clear(s))
         return 0;
+
+    /*
+     * If we previously sent a DTLS HelloRetryRequest, SSL_clear() has just
+     * reset handshake_read_seq and next_handshake_write_seq to 0.  Restore
+     * them to 1 so that the incoming ClientHello from HRR is recognised as
+     * the expected next message.
+     */
+    if (dtls_hrr_pending) {
+        sc->d1->handshake_read_seq = dtls_handshake_read_seq;
+        sc->d1->next_handshake_write_seq = dtls_next_handshake_write_seq;
+
+        if (sc->rlayer.wrlmethod->set_sequence && sc->rlayer.rrlmethod->set_sequence) {
+            if (!sc->rlayer.rrlmethod->set_sequence(sc->rlayer.rrl, dtls_rl_read_seq)
+                || !sc->rlayer.wrlmethod->set_sequence(sc->rlayer.wrl, dtls_rl_write_seq))
+                return 0;
+        }
+    }
 
     ERR_clear_error();
 
