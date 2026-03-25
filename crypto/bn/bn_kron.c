@@ -38,10 +38,10 @@ int BN_kronecker(const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
     if (B == NULL)
         goto end;
 
-    err = !BN_copy(A, a);
+    err = BN_copy(A, a) == NULL;
     if (err)
         goto end;
-    err = !BN_copy(B, b);
+    err = BN_copy(B, b) == NULL;
     if (err)
         goto end;
 
