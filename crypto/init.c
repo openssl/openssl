@@ -178,27 +178,24 @@ DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_add_all_digests,
 }
 
 static CRYPTO_ONCE config = CRYPTO_ONCE_STATIC_INIT;
-static int config_inited = 0;
 static const OPENSSL_INIT_SETTINGS *conf_settings = NULL;
 DEFINE_RUN_ONCE_STATIC(ossl_init_config)
 {
     int ret = ossl_config_int(NULL);
 
-    config_inited = 1;
     return ret;
 }
 DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_config_settings, ossl_init_config)
 {
     int ret = ossl_config_int(conf_settings);
 
-    config_inited = 1;
     return ret;
 }
 DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_config, ossl_init_config)
 {
     OSSL_TRACE(INIT, "ossl_no_config_int()\n");
     ossl_no_config_int();
-    config_inited = 1;
+
     return 1;
 }
 

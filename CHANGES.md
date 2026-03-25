@@ -41,6 +41,10 @@ OpenSSL Releases
 
    *Paul Louvel*
 
+ * Added `CTLOG_STORE_add0_log()` to add individual CT logs to a `CTLOG_STORE`.
+
+   *Tim Perry*
+
  * Dropped `no-ecdsa` and `no-ecdh` options from `Configure` as these options
    did not really disable the implementations. Use `no-ec` to disable the
    elliptic curve support.
@@ -70,16 +74,9 @@ OpenSSL Releases
 
    *William McCormack*
 
-### Changes between 3.6 and 4.0 [xx XXX xxxx]
+ * Added IKEV2 KDF (EVP_KDF-IKEV2KDF) implementation.
 
- * Added support for RFC 8701 GREASE (Generate Random Extensions And Sustain
-   Extensibility). When `SSL_OP_GREASE` is set, the TLS client injects
-   reserved GREASE values into cipher suites, supported versions, supported
-   groups, signature algorithms, key share, and extensions in the ClientHello
-   to prevent ecosystem ossification. The `openssl s_client` command gains a
-   `-grease` option to enable this.
-
-   *William McCormack*
+   *Helen Zhang*
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 

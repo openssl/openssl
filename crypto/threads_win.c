@@ -710,7 +710,7 @@ int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
 
     return 1;
 #else
-    InterlockedExchange64(dst, val);
+    InterlockedExchange64((LONG64 volatile *)dst, val);
     return 1;
 #endif
 }
@@ -743,7 +743,7 @@ int CRYPTO_atomic_store_int(int *dst, int val, CRYPTO_RWLOCK *lock)
 
     return 1;
 #else
-    InterlockedExchange(dst, val);
+    InterlockedExchange((LONG volatile *)dst, val);
     return 1;
 #endif
 }

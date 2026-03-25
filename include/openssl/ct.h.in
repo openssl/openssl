@@ -500,6 +500,14 @@ CTLOG_STORE *CTLOG_STORE_new(void);
 void CTLOG_STORE_free(CTLOG_STORE *store);
 
 /*
+ * Adds a CT log to a CTLOG_STORE.
+ * Takes ownership of the CTLOG on success - the caller must not free it after
+ * a successful call. On failure, the caller retains ownership.
+ * Returns 1 on success, 0 on failure.
+ */
+__owur int CTLOG_STORE_add0_log(CTLOG_STORE *store, CTLOG *log);
+
+/*
  * Finds a CT log in the store based on its log ID.
  * Returns the CT log, or NULL if no match is found.
  */

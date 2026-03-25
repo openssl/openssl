@@ -120,7 +120,7 @@ static int ech_bio2buf(BIO *in, unsigned char **buf, size_t *len)
         brv = BIO_read_ex(in, lptr, OSSL_ECH_BUFCHUNK, &readbytes);
         if (brv != 1)
             goto err;
-        if (readbytes < OSSL_ECH_BUFCHUNK) {
+        if (BIO_eof(in) || readbytes < OSSL_ECH_BUFCHUNK) {
             done = 1;
             break;
         }

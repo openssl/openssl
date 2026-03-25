@@ -1305,7 +1305,7 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
         goto end;
     }
 
-    if (OCSP_basic_verify(bs, ctx->chain, ctx->store, OCSP_TRUSTOTHER) <= 0) {
+    if (OCSP_basic_verify(bs, ctx->chain, ctx->store, 0) <= 0) {
         ret = X509_V_ERR_OCSP_SIGNATURE_FAILURE;
         goto end;
     }
