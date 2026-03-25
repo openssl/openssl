@@ -560,22 +560,24 @@ again:
             }
 
             /*
-             * We should not be getting records from a previous epoch so
-             * choose the current epoch if the bits match or else choose the
-             * next epoch with matching bits
+             * RFC 9147 Section 4.2.2 Says that after the handshake phase (epoch 3+)
+             * if the epoch bits do not match the current epoch we should use the
+             * last epoch value. That would result in dropping the packet.
              */
-            if ((epoch64 & DTLS13_UNI_HDR_EPOCH_BITS_MASK) > eebits) {
-                int err = 0;
-                epoch64 = safe_add_uint64_t(epoch64, DTLS13_UNI_HDR_EPOCH_BITS_MASK + 1, &err);
-                if (err) {
-                    /* Overflow, silently discard record */
+            if ((epoch64 & DTLS13_UNI_HDR_EPOCH_BITS_MASK) != eebits) {
+                /*
+                 * Since we do not transition out of early data until after we receive the next
+                 * record if we are in Early Data (epoch 1) and get an
+                 * epoch 2 record we must increment the epoch
+                 */
+                if (epoch64 == 1 && ((epoch64 & DTLS13_UNI_HDR_EPOCH_BITS_MASK) + 1) == eebits) {
+                    epoch64++;
+                } else {
                     rr->length = 0;
                     rl->packet_length = 0;
                     goto again;
                 }
             }
-            epoch64 = (epoch64 & ~DTLS13_UNI_HDR_EPOCH_BITS_MASK) | eebits;
-
         } else {
             if (!PACKET_get_net_2(&dtlsrecord, &record_version)
                 || !PACKET_get_net_2(&dtlsrecord, &epoch)
