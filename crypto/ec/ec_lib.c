@@ -945,17 +945,17 @@ int EC_POINT_get_affine_coordinates(const EC_GROUP *group,
         ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
         return 0;
     }
-    if (ctx == NULL && (ctx = new_ctx = BN_CTX_new_ex(group->libctx)) == NULL) {
-        ERR_raise(ERR_LIB_EC, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
     if (point->Z_is_one) {
         if (group->meth->field_decode != NULL) {
+            if (ctx == NULL && (ctx = new_ctx = BN_CTX_new_ex(group->libctx)) == NULL) {
+                ERR_raise(ERR_LIB_EC, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
             if ((x != NULL && !group->meth->field_decode(group, x, point->X, ctx))
                 || (y != NULL && !group->meth->field_decode(group, y, point->Y, ctx)))
                 goto err;
-        } else if ((x != NULL && !BN_copy(x, point->X))
-            || (y != NULL && !BN_copy(y, point->Y)))
+        } else if ((x != NULL && BN_copy(x, point->X) == NULL)
+            || (y != NULL && BN_copy(y, point->Y) == NULL))
             goto err;
         ret = 1;
     } else
