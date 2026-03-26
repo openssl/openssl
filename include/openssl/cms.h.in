@@ -76,6 +76,11 @@ CMS_ContentInfo *CMS_ContentInfo_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 #define CMS_RECIPINFO_OTHER 4
 #define CMS_RECIPINFO_KEM 5
 
+#define CMS_VERIFY_RESULT 0
+#define CMS_VERIFY_CERT 1
+#define CMS_VERIFY_ATTR 2
+#define CMS_VERIFY_CONTENT 3
+
 /* S/MIME related flags */
 
 #define CMS_TEXT 0x1
@@ -104,6 +109,7 @@ CMS_ContentInfo *CMS_ContentInfo_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 #define CMS_CADES 0x100000
 #define CMS_USE_ORIGINATOR_KEYID 0x200000
 #define CMS_NO_SIGNING_TIME 0x400000
+#define CMS_VERIFY_PARTIAL 0x800000
 
 const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms);
 
@@ -289,6 +295,7 @@ EVP_MD_CTX *CMS_SignerInfo_get0_md_ctx(CMS_SignerInfo *si);
 STACK_OF(CMS_SignerInfo) *CMS_get0_SignerInfos(CMS_ContentInfo *cms);
 
 void CMS_SignerInfo_set1_signer_cert(CMS_SignerInfo *si, X509 *signer);
+X509 *CMS_SignerInfo_get0_signer_cert(const CMS_SignerInfo *si);
 int CMS_SignerInfo_get0_signer_id(CMS_SignerInfo *si,
     ASN1_OCTET_STRING **keyid,
     X509_NAME **issuer, ASN1_INTEGER **sno);
@@ -299,6 +306,7 @@ void CMS_SignerInfo_get0_algs(CMS_SignerInfo *si, EVP_PKEY **pk,
     X509 **signer, X509_ALGOR **pdig,
     X509_ALGOR **psig);
 ASN1_OCTET_STRING *CMS_SignerInfo_get0_signature(CMS_SignerInfo *si);
+int CMS_SignerInfo_get_verification_result(const CMS_SignerInfo *si, int type);
 int CMS_SignerInfo_sign(CMS_SignerInfo *si);
 int CMS_SignerInfo_verify(CMS_SignerInfo *si);
 int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain);
