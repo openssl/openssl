@@ -1,3 +1,12 @@
+/*
+ * Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
 #include <openssl/evp.h>
 #include "enc_b64_scalar.h"
 #include "enc_b64_avx2.h"
@@ -42,6 +51,7 @@
  * Clang/MSVC will just ignore these pragmas.
  */
 
+#include <assert.h>
 #include <string.h>
 #include <immintrin.h>
 #include <stddef.h>
@@ -665,7 +675,376 @@ int encode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
         *out++ = '\n';
     }
 
-    return (int)(out - (uint8_t *)dst) + +evp_encodeblock_int(ctx, out, src + i, srclen - i, final_wrap_cnt);
+    return (int)(out - (uint8_t *)dst) + evp_encodeblock_int(ctx, out, src + i, srclen - i, final_wrap_cnt);
+}
+OPENSSL_UNTARGET_AVX2
+
+/*
+ * Base64 decode: map ASCII to 6-bit values (0-63). Invalid/whitespace etc.
+ * map to 0x80+. We use four 32-byte PSHUFB tables per alphabet (index by
+ * high 2 bits of byte, low 5 bits index within table). Tables match
+ * data_ascii2bin and srpdata_ascii2bin from encode.c.
+ */
+#define B64D_FF 0xFF
+/* Shared by both alphabets (indices 0-31 are identical). */
+static const uint8_t decode_0[32] = {
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    0xE0,
+    0xF0,
+    B64D_FF,
+    B64D_FF,
+    0xF1,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+};
+static const uint8_t decode_std_1[32] = {
+    B64D_FF,
+    0xE0,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    0x3E,
+    B64D_FF,
+    0xF2,
+    B64D_FF,
+    0x3F,
+    0x34,
+    0x35,
+    0x36,
+    0x37,
+    0x38,
+    0x39,
+    0x3A,
+    0x3B,
+    0x3C,
+    0x3D,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    0x00,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+};
+static const uint8_t decode_std_2[32] = {
+    0x00,
+    0x01,
+    0x02,
+    0x03,
+    0x04,
+    0x05,
+    0x06,
+    0x07,
+    0x08,
+    0x09,
+    0x0A,
+    0x0B,
+    0x0C,
+    0x0D,
+    0x0E,
+    0x0F,
+    0x10,
+    0x11,
+    0x12,
+    0x13,
+    0x14,
+    0x15,
+    0x16,
+    0x17,
+    0x18,
+    0x19,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+};
+static const uint8_t decode_std_3[32] = {
+    0x1A,
+    0x1B,
+    0x1C,
+    0x1D,
+    0x1E,
+    0x1F,
+    0x20,
+    0x21,
+    0x22,
+    0x23,
+    0x24,
+    0x25,
+    0x26,
+    0x27,
+    0x28,
+    0x29,
+    0x2A,
+    0x2B,
+    0x2C,
+    0x2D,
+    0x2E,
+    0x2F,
+    0x30,
+    0x31,
+    0x32,
+    0x33,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+};
+
+static const uint8_t decode_srp_1[32] = {
+    B64D_FF,
+    0xE0,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    0xF2,
+    0x3E,
+    0x3F,
+    0x00,
+    0x01,
+    0x02,
+    0x03,
+    0x04,
+    0x05,
+    0x06,
+    0x07,
+    0x08,
+    0x09,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    0x00,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+};
+static const uint8_t decode_srp_2[32] = {
+    0x0A,
+    0x0B,
+    0x0C,
+    0x0D,
+    0x0E,
+    0x0F,
+    0x10,
+    0x11,
+    0x12,
+    0x13,
+    0x14,
+    0x15,
+    0x16,
+    0x17,
+    0x18,
+    0x19,
+    0x1A,
+    0x1B,
+    0x1C,
+    0x1D,
+    0x1E,
+    0x1F,
+    0x20,
+    0x21,
+    0x22,
+    0x23,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+};
+static const uint8_t decode_srp_3[32] = {
+    0x24,
+    0x25,
+    0x26,
+    0x27,
+    0x28,
+    0x29,
+    0x2A,
+    0x2B,
+    0x2C,
+    0x2D,
+    0x2E,
+    0x2F,
+    0x30,
+    0x31,
+    0x32,
+    0x33,
+    0x34,
+    0x35,
+    0x36,
+    0x37,
+    0x38,
+    0x39,
+    0x3A,
+    0x3B,
+    0x3C,
+    0x3D,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+    B64D_FF,
+};
+
+/* Alphabet selection: [0] = standard, [1] = SRP; each row is 3 LUTs (decode_0 shared). */
+static const uint8_t *const decode_alphabets[2][3] = {
+    { decode_std_1, decode_std_2, decode_std_3 },
+    { decode_srp_1, decode_srp_2, decode_srp_3 },
+};
+
+/* De-interleave control for packus_epi16 output: [0,2,...,30, 1,3,...,31] -> [0..31]. */
+static const uint8_t b64d_shuf_sel[32] = {
+    0, 8, 1, 9, 2, 10, 3, 11, 4, 12, 5, 13, 6, 14, 7, 15,
+    16, 24, 17, 25, 18, 26, 19, 27, 20, 28, 21, 29, 22, 30, 23, 31
+};
+
+/* Pack 32 decoded 6-bit bytes -> 24 output bytes: shuffle and permute controls. */
+static const uint8_t b64d_dec_shuf[32] = {
+    2, 1, 0, 6, 5, 4, 10, 9, 8, 14, 13, 12, 0xFF, 0xFF, 0xFF, 0xFF,
+    2, 1, 0, 6, 5, 4, 10, 9, 8, 14, 13, 12, 0xFF, 0xFF, 0xFF, 0xFF
+};
+static const int32_t b64d_dec_perm[8] = { 0, 1, 2, 4, 5, 6, -1, -1 };
+
+typedef char ossl_b64_avx2_chk_decode_0[(sizeof(decode_0) == 32) ? 1 : -1];
+typedef char ossl_b64_avx2_chk_shuf_sel[(sizeof(b64d_shuf_sel) == 32) ? 1 : -1];
+typedef char ossl_b64_avx2_chk_dec_shuf[(sizeof(b64d_dec_shuf) == 32) ? 1 : -1];
+
+OPENSSL_TARGET_AVX2
+static inline __m256i ascii2bin_avx2(__m256i input, int use_srp)
+{
+    const __m256i indices = _mm256_and_si256(input, _mm256_set1_epi8(31));
+    const __m256i zero = _mm256_setzero_si256();
+    __m256i lo = _mm256_unpacklo_epi8(input, zero);
+    __m256i hi = _mm256_unpackhi_epi8(input, zero);
+    __m256i lo5 = _mm256_and_si256(_mm256_srli_epi16(lo, 5), _mm256_set1_epi16(0x0003));
+    __m256i hi5 = _mm256_and_si256(_mm256_srli_epi16(hi, 5), _mm256_set1_epi16(0x0003));
+    __m256i sel = _mm256_packus_epi16(lo5, hi5);
+    sel = _mm256_shuffle_epi8(sel, _mm256_loadu_si256((const __m256i *)b64d_shuf_sel));
+
+    const __m256i t0 = _mm256_loadu_si256((const __m256i *)decode_0);
+    const __m256i t1 = _mm256_loadu_si256((const __m256i *)decode_alphabets[use_srp][0]);
+    const __m256i t2 = _mm256_loadu_si256((const __m256i *)decode_alphabets[use_srp][1]);
+    const __m256i t3 = _mm256_loadu_si256((const __m256i *)decode_alphabets[use_srp][2]);
+
+    __m256i r0 = _mm256_shuffle_epi8(t0, indices);
+    __m256i r1 = _mm256_shuffle_epi8(t1, indices);
+    __m256i r2 = _mm256_shuffle_epi8(t2, indices);
+    __m256i r3 = _mm256_shuffle_epi8(t3, indices);
+
+    __m256i mask1 = _mm256_cmpeq_epi8(sel, _mm256_set1_epi8(1));
+    __m256i mask2 = _mm256_cmpeq_epi8(sel, _mm256_set1_epi8(2));
+    __m256i mask3 = _mm256_cmpeq_epi8(sel, _mm256_set1_epi8(3));
+    __m256i out = _mm256_blendv_epi8(r0, r1, mask1);
+    out = _mm256_blendv_epi8(out, r2, mask2);
+    out = _mm256_blendv_epi8(out, r3, mask3);
+    return out;
+}
+
+/* Pack 32 decoded 6-bit bytes into 24 output bytes (8 groups of 4 -> 3). */
+static inline void dec_reshuffle(__m256i in, uint8_t *out)
+{
+    const __m256i merge = _mm256_maddubs_epi16(in, _mm256_set1_epi32(0x01400140));
+    __m256i packed = _mm256_madd_epi16(merge, _mm256_set1_epi32(0x00011000));
+    packed = _mm256_shuffle_epi8(packed, _mm256_loadu_si256((const __m256i *)b64d_dec_shuf));
+    packed = _mm256_permutevar8x32_epi32(packed, _mm256_loadu_si256((const __m256i *)b64d_dec_perm));
+    /*
+     * Only 24 output bytes are defined; the permuted register may leave
+     * undefined bytes in the upper 8 lanes. A 32-byte store can overrun
+     * EVP_DecodeBlock output buffers sized exactly for 24-byte chunks.
+     */
+    uint8_t tmp[32];
+    _mm256_storeu_si256((__m256i *)tmp, packed);
+    memcpy(out, tmp, 24);
+}
+
+/*
+ * Process one 32-byte vector: decode, validate, write 24 bytes to dst.
+ * Returns 0 on success, -1 if any lane is invalid for base64 (scalar rules).
+ */
+static inline int decode_one_vector(const uint8_t *src, uint8_t *dst, int use_srp)
+{
+    __m256i str = _mm256_loadu_si256((const __m256i *)src);
+    __m256i decoded = ascii2bin_avx2(str, use_srp);
+    /*
+     * Match scalar evp_decodeblock_int: reject if any lane has bit 7 set
+     * (invalid / whitespace / control from data_ascii2bin), or any value
+     * outside 0..63. Signed cmpgt_epi8(decoded, 63) misses 0x80..0xff
+     * because those are negative as int8.
+     */
+    __m256i bad_hi = _mm256_and_si256(decoded, _mm256_set1_epi8((char)0x80));
+    __m256i bad_gt = _mm256_cmpgt_epi8(decoded, _mm256_set1_epi8(63));
+    if (_mm256_movemask_epi8(_mm256_or_si256(bad_hi, bad_gt)) != 0)
+        return -1;
+    dec_reshuffle(decoded, dst);
+    return 0;
+}
+
+__owur int decode_base64_avx2(int use_srp, unsigned char *restrict out,
+    const unsigned char *restrict src, int srclen)
+{
+    uint8_t *dst = (uint8_t *)out;
+    const uint8_t *input = (const uint8_t *)src;
+    int total = 0;
+
+    while (srclen >= 64) {
+        _mm_prefetch((const char *)(input + 64), _MM_HINT_T0);
+        if (decode_one_vector(input, dst, use_srp) != 0
+            || decode_one_vector(input + 32, dst + 24, use_srp) != 0)
+            return -1;
+        input += 64;
+        dst += 48;
+        total += 48;
+        srclen -= 64;
+    }
+
+    if (srclen >= 32) {
+        _mm_prefetch((const char *)(input + 32), _MM_HINT_T0);
+        if (decode_one_vector(input, dst, use_srp) != 0)
+            return -1;
+        total += 24;
+    }
+    return total;
 }
 OPENSSL_UNTARGET_AVX2
 #endif /* !defined(_M_ARM64EC) */

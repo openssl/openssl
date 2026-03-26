@@ -31,6 +31,11 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added AVX2 optimized base64 decoding on `x86_64` when AVX2 is available.
+   Both standard and SRP alphabets are supported.
+
+   *John Claus*
+
  * Added AVX2 optimized ML-DSA NTT operations on `x86_64`.
 
    *Marcel Cornu and Tomasz Kantecki*
