@@ -278,13 +278,15 @@ the default trust id for I<purpose>. If the default trust id for the
 purpose is I<X509_TRUST_DEFAULT> and I<trust> is 0 then the default trust id
 associated with the I<def_purpose> value is used for the trust setting instead.
 
-X509_STORE_CTX_set_time() sets the verification time in I<ctx> to I<t>.
+X509_STORE_CTX_set_time() sets the verification time in I<ctx> to I<t>,
+which is a POSIX time value representing seconds since 1970-01-01T00:00:00Z
+(see L<OPENSSL_tm_to_posix(3)>).
 This is a convenience function that calls L<X509_VERIFY_PARAM_set_time(3)>
 on the verification parameters associated with I<ctx>.
 By default, the current system time is used for certificate verification.
 Setting a specific time is useful for testing or when verifying historical
 certificates.
-The I<flags> parameter is currently ignored and should be set to 0.
+The I<flags> parameter is ignored.
 
 =head1 NOTES
 
@@ -314,7 +316,7 @@ present, or NULL if absent.
 X509_STORE_CTX_cleanup(), X509_STORE_CTX_free(),
 X509_STORE_CTX_set0_trusted_stack(),
 X509_STORE_CTX_set_cert(),
-X509_STORE_CTX_set0_crls(), X509_STORE_CTX_set0_param() and
+X509_STORE_CTX_set0_crls(), X509_STORE_CTX_set0_param(), and
 X509_STORE_CTX_set_time() do not return values.
 
 X509_STORE_CTX_set_default() returns 1 for success or 0 if an error occurred.
