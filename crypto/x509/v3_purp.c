@@ -729,10 +729,8 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     tmp_nc = X509_get_ext_d2i(const_x, NID_name_constraints, &i, NULL);
     if (tmp_nc == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
-    if (!check_name_constraints(tmp_nc)) {
-        fprintf(stderr, "nc check failed\n");
+    if (!check_name_constraints(tmp_nc))
         tmp_ex_flags |= EXFLAG_INVALID;
-    }
 
     /* Handle CRL distribution point entries */
     res = setup_crldp(const_x, &tmp_crldp);
