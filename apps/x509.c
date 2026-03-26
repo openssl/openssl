@@ -197,7 +197,7 @@ const OPTIONS x509_options[] = {
         "[CC]YYMMDDHHMMSSZ value for notBefore certificate field" },
     { "not_after", OPT_NOT_AFTER, 's',
         "[CC]YYMMDDHHMMSSZ value for notAfter certificate field, overrides -days" },
-    { "days", OPT_DAYS, 'n',
+    { "days", OPT_DAYS, 'p',
         "Number of days until newly generated certificate expires - default 30" },
     { "preserve_dates", OPT_PRESERVE_DATES, '-',
         "Preserve existing validity dates" },

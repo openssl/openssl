@@ -682,7 +682,7 @@ const OPTIONS s_client_options[] = {
     { "key", OPT_KEY, 's', "Private key file to use; default: -cert file" },
     { "keyform", OPT_KEYFORM, 'f', "Key format (DER/PEM)" },
     { "pass", OPT_PASS, 's', "Private key and cert file pass phrase source" },
-    { "verify", OPT_VERIFY, 'p', "Turn on peer certificate verification" },
+    { "verify", OPT_VERIFY, 'p', "Turn on peer certificate verification, set depth" },
     { "nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options" },
     { "CApath", OPT_CAPATH, '/', "PEM format directory of CA's" },
     { "CAfile", OPT_CAFILE, '<', "PEM format file of CA's" },
@@ -1652,6 +1652,12 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_ECH_GREASE_TYPE:
             ech_grease_type = opt_int_arg();
+            if (ech_grease_type != (ech_grease_type & 0xFFFF)) {
+                BIO_printf(bio_err,
+                    "%s: invalid GREASE ECH type 0x%8x\n permitted values are 0-FFFF",
+                    prog, ech_grease_type);
+                goto opthelp;
+            }
             break;
         case OPT_ECH_IGNORE_CONFIG_ID:
             ech_ignore_cid = 1;

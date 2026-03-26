@@ -1339,7 +1339,7 @@ const OPTIONS s_server_options[] = {
     { "no-CAstore", OPT_NOCASTORE, '-',
         "Do not load certificates from the default certificates store URI" },
     { "nocert", OPT_NOCERT, '-', "Don't use any certificates (Anon-DH)" },
-    { "verify", OPT_VERIFY, 'n', "Turn on peer certificate verification" },
+    { "verify", OPT_VERIFY, 'p', "Turn on peer certificate verification, set depth" },
     { "Verify", OPT_UPPER_V_VERIFY, 'n',
         "Turn on peer certificate verification, must have a cert" },
     { "nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options" },
@@ -1432,7 +1432,7 @@ const OPTIONS s_server_options[] = {
         "Provide certificate status response(s) if requested, for the whole chain" },
     { "status_verbose", OPT_STATUS_VERBOSE, '-',
         "Print more output in certificate status callback" },
-    { "status_timeout", OPT_STATUS_TIMEOUT, 'n',
+    { "status_timeout", OPT_STATUS_TIMEOUT, 'N',
         "Status request responder timeout" },
     { "status_url", OPT_STATUS_URL, 's', "Status request fallback URL" },
     { "proxy", OPT_PROXY, 's',
@@ -1489,7 +1489,7 @@ const OPTIONS s_server_options[] = {
 #endif
 
     OPT_SECTION("Protocol and version"),
-    { "max_early_data", OPT_MAX_EARLY, 'n',
+    { "max_early_data", OPT_MAX_EARLY, 'N',
         "The maximum number of bytes of early data as advertised in tickets" },
     { "recv_max_early_data", OPT_RECV_MAX_EARLY, 'n',
         "The maximum number of bytes of early data (hard limit)" },

@@ -39,9 +39,9 @@
         { "purpose", OPT_V_PURPOSE, 's',                                                   \
             "certificate chain purpose" },                                                 \
         { "verify_name", OPT_V_VERIFY_NAME, 's', "verification policy name" },             \
-        { "verify_depth", OPT_V_VERIFY_DEPTH, 'n',                                         \
+        { "verify_depth", OPT_V_VERIFY_DEPTH, 'N',                                         \
             "chain depth limit" },                                                         \
-        { "auth_level", OPT_V_VERIFY_AUTH_LEVEL, 'n',                                      \
+        { "auth_level", OPT_V_VERIFY_AUTH_LEVEL, 'N',                                      \
             "chain authentication security level" },                                       \
         { "attime", OPT_V_ATTIME, 'M', "verification epoch time" },                        \
         { "verify_hostname", OPT_V_VERIFY_HOSTNAME, 's',                                   \

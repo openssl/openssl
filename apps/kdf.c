@@ -39,7 +39,7 @@ const OPTIONS kdf_options[] = {
     { "digest", OPT_DIGEST, 's', "Digest" },
     { "mac", OPT_MAC, 's', "MAC" },
     { OPT_MORE_STR, 1, '-', "See 'Supported Controls' in the EVP_KDF_ docs\n" },
-    { "keylen", OPT_KEYLEN, 's', "The size of the output derived key" },
+    { "keylen", OPT_KEYLEN, 'p', "The size of the output derived key" },
 
     OPT_SECTION("Output"),
     { "out", OPT_OUT, '>', "Output to filename rather than stdout" },
@@ -175,10 +175,7 @@ int kdf_main(int argc, char **argv)
     if (out == NULL)
         goto err;
 
-    if (dkm_len <= 0) {
-        BIO_puts(bio_err, "Invalid derived key length.\n");
-        goto err;
-    }
+    OPENSSL_assert(dkm_len > 0);
     dkm_bytes = app_malloc(dkm_len, "out buffer");
     if (dkm_bytes == NULL)
         goto err;
