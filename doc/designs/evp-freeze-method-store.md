@@ -1,6 +1,15 @@
 OpenSSL Method Store Freezing
 =============================
 
+The hypothesis was that the high cost of isolated EVP fetches came
+from repeatedly executing generic method-store bookkeeping on the hot
+path. If the resolved methods could be materialized once, before
+other threads start, and then treated as immutable for the lifetime
+of the `OSSL_LIB_CTX`, later lookups should be able to avoid most of
+the read-lock, reference-count, and object-lifetime overhead while
+still returning the same methods for the same `<operation, algorithm,
+property query>` inputs.
+
 This engineering design document explains our investigation into the
 performance of the method store. The investigation results confirmed
 our initial hypothesis: to resolve significant performance
@@ -27,9 +36,8 @@ The proposed solution involves:
 - The **freeze function** must be called once in a non-threaded environment.
 - The cache eliminates the need for read locks, object copying, and
   freeing during subsequent lookups.
-- The system supports optional query strings (e.g., `"?fips=true"`),
+- The system supports optional query strings (e.g., `{ "?fips=true", "fips=no" }`),
   creating a separate frozen cache if needed.
-- After freezing, providers cannot be added, modified, or removed.
 - Functionality remains otherwise identical.
 
 The next steps include implementing the cache, adding unit tests for
@@ -41,9 +49,9 @@ Investigating Hashing Performance Using EVP API
 
 We investigated the performance of hashing using the modern EVP
 interface versus the deprecated/legacy interfaces
-(https://github.com/openssl/project/issues/1681). A new perftool,
+[1681](https://github.com/openssl/project/issues/1681). A new perftool,
 evp_hash, was created to compute hashes using a specified algorithm
-(https://github.com/openssl/perftools/pull/58).
+[58](https://github.com/openssl/perftools/pull/58).
 
 Three environments were tested:
 
@@ -91,9 +99,9 @@ Deep Dive with Linux perf & Flamegraph
 
 Given the significant performance gap in the `evp_isolated` case, we
 aimed to analyze the runtime breakdown
-(https://github.com/openssl/project/issues/1698). We decided to use
+[1698](https://github.com/openssl/project/issues/1698). We decided to use
 the Linux perf tool with a flamegraph visualization
-(https://github.com/brendangregg/FlameGraph).
+[FlameGraph](https://github.com/brendangregg/FlameGraph).
 
 The perf analysis immediately identified a new primary issue: read
 locks and reference-counted copying were taking up to 80% of the total
@@ -103,13 +111,13 @@ releasing read locks, as well as copying & managing reference counts
 during the method fetching process, was the dominant bottleneck, not
 lock contention itself.
 
-
 Proof of Concept
 ----------------
+
 Based on the finding that lock/reference-counting overhead was the
 main bottleneck, we investigated methods to remove the need for read
 locks and reference counting in the evp_isolated case
-(https://github.com/openssl/project/issues/1705).
+[1705](https://github.com/openssl/project/issues/1705).
 
 We created a proof of concept implementation for `EVP_DigestInit_ex`
 when called with the SHA1 algorithm. The PoC was designed to skip the
@@ -149,10 +157,6 @@ Solution Goals / Non-Goals
 * Consistency Constraint: No solution may alter the specific method
   returned for any given query. Correctness and consistency of method
   resolution must be preserved.
-* Freezing Mechanism (Permitted Trade-off): The solution may include
-  mechanisms that prevent further modifications or changes to the
-  method store once a certain state (e.g., "frozen" or "finalized") is
-  reached, as a potential trade-off for performance gains.
 
 Method Store Freezing
 ---------------------
@@ -170,15 +174,14 @@ can't/don't want to restructure their code to pass data to threads.
 
 Functionality from an application standpoint should be identical both
 before and after freezing. The only difference should be in
-performance, plus providers can't be added/modified/removed after the
-freeze.
+performance.
 
 Implementation Details
 ----------------------
-* Cache Structure:
-  Essentially, it's just a dictionary of strings to function pointers.
+
 * Implementation:
-  The frozen cache will be implemented using lockless HT cache.
+  The frozen cache will be implemented using combination of lockless HT,
+  and TRIE. Depending on what will be faster.
 * Caches for Each Type:
   Most likely need different caches for different types of objects in
   the method store (e.g., digests, algorithms). There should only be
@@ -198,19 +201,25 @@ Implementation Details
   * We can spend as much time as needed to create the cache from
     within the main thread.
 * Handling Query Strings:
- * The freeze function can receive an optional query string to account
-   for the method store's optional query string capability.
- * By default, if the query string is NULL, we will only have 1 frozen
+ * The freeze function can receive an optional query array of strings.
+
+   ```c
+   int OSSL_LIB_CTX_freeze(OSSL_LIB_CTX *ctx, const char *const *propq, size_t count)
+    ```
+
+ * By default, if the query string is `NULL`, we will only have 1 frozen
    cache (for the default case).
- * However, if a non-NULL query string is passed, we'll have 2 frozen
-   caches (first for the NULL query string, second for the passed query
-   string).
+ * However, if a non-NULL query string is passed, we'll have `n` frozen
+   caches, one for each query string.
  * Other query strings will go through the old internal methods and
    require the current read locks (i.e., be slow).
  * This is primarily to maximize performance for common use cases like
    for applications that want only FIPS algorithms
-   (i.e.,"?fips=true"). All other query strings will fall back to the
-   standard lookup path.
+   (i.e.,"?fips=true").
+ * Query strings, such as `{"fips=yes", "fips='yes'", "fips=\"yes\""}` must be converted
+   to internal form in order to eliminate duplicates.
+ * To determine if query string is frozen, query strings will be store in TRIE/HT,
+   depending on what will be faster.
  * Cache Creation:
    When freezing, we look up all algorithms with the given query
    string (or `NULL` if none) and save everything that's returned into
@@ -223,25 +232,20 @@ Implementation Details
    they will have a special flag set on them (`EVP_ORIG_FROZEN`
    instead of `EVP_ORIG_METH`) so that we know later we don't need to
    free it (i.e., it comes from the long-lived cache).
+ * the remaining fallback path would continue to use the existing mutable method store
+   semantics for unfrozen `propq` values
 
-Implementation V2
-=================
-
-This version of freezing will address all outstanding issues.
-
-Note: Maybe the freezing name itself was not chosen right. In a
-nutshell, the API call will create immutable store with pre-fetched
-algorithms for any `propq` that is bound to a lifetime of
-`OSSL_LIB_CTX`.
-
-API change
+API design
 ----------
+
 ```c
   int OSSL_LIB_CTX_freeze(OSSL_LIB_CTX *ctx, const char *const *propq, size_t count)
 ```
-or 
-```
-  int OSSL_LIB_CTX_create_imm_mstore(OSSL_LIB_CTX *ctx, const char *const *propq, size_t count)
+
+or
+
+```c
+   int OSSL_LIB_CTX_freeze(OSSL_LIB_CTX *ctx, ...) __attribute__ ((sentinel));
 ```
 
 Any propq can be pre-fetched and stored into frozen/immutable store, not
@@ -249,17 +253,19 @@ just one with extra addition to ""/NULL.
 
 ```c
 const char *propq[] = { "fips=true", "fips=false" };
-OSSL_LIB_CTX_freeze(ctx, propq, sizeof(propq), OSSL_NELEM(propq));
+OSSL_LIB_CTX_freeze(ctx, propq, OSSL_NELEM(propq));
 ```
 
 Retrieval from frozen/immutable method store
 --------------------------------------------
-```
+
+```c
    EVP_xxx_fetch(...)
      ossl_method_store_get_frozen(store, propq, &method))
         /* nothing has been frozen, fallback  */
         if (store->propq_trie == NULL)
             return;
+        /* normalize propq */
         HT *frozen_mstore = ossl_trie_get(store->propq_trie, propq);
         /* propq is not frozen, fallback */
         if (frozen_mstore == NULL)
@@ -267,21 +273,3 @@ Retrieval from frozen/immutable method store
 
         /* return method from frozen/imm_mstore if any */
 ```
-
-How the freeze/immutable store is created
------------------------------------------
-
-Originally, the freeze method store calls a bunch of `evp_*_fetch_all` to force
-load algorithm to the sparse array (SA), and then iterate over the SA to find the
-best match for `<nid, propq>`. If method is found, method was duplicated with updated
-`->origin` to `EVP_ORIG_FROZEN`, and provider was `up_ref()`-ed.
-
-The requirement for force algo load to method store can be lifted by implementing
-`evp_method_data_st` and `ossl_method_construct` that will use
-directly `HT<operation_id, algo_name>`.
-
-With that:
-
-* callbacks `dup_method`, and `dup_free_method` could removed from fetch and store_cache
-  code path entirely
-* remove all restrictions on `OSSL_METHOD_STORE`
