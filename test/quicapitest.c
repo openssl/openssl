@@ -3417,12 +3417,14 @@ static int test_quic_peer_addr_v4(void)
         "127.0.0.2", 4434);
 }
 
+#if OPENSSL_USE_IPV6
 static int test_quic_peer_addr_v6(void)
 {
     return test_quic_peer_addr_common(AF_INET6,
         "::1", 4433,
         "::2", 4434);
 }
+#endif
 
 /***********************************************************************************/
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
@@ -3529,7 +3531,9 @@ int setup_tests(void)
     ADD_TEST(test_ssl_set_verify);
     ADD_TEST(test_accept_stream);
     ADD_TEST(test_client_hello_retry);
+#if OPENSSL_USE_IPV6
     ADD_TEST(test_quic_peer_addr_v6);
+#endif
     ADD_TEST(test_quic_peer_addr_v4);
 
     return 1;
