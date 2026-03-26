@@ -140,7 +140,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
             }
             i = BIO_read(in, &(b->data[len]), (int)want);
 
-            if (i <= 0 && diff == 0) {
+            if (i <= 0) {
                 ERR_raise(ERR_LIB_ASN1, ASN1_R_NOT_ENOUGH_DATA);
                 goto err;
             }
@@ -162,25 +162,29 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
         q = p;
         diff = len - off;
         if (diff == 0)
-            goto err;
+           goto err;
 
         diff--;
         if ((*(q++) & V_ASN1_PRIMITIVE_TAG) == V_ASN1_PRIMITIVE_TAG) {
+            /* Multi-byte tag.  See if we have the whole thing yet */
             do {
                 diff--;
             } while (diff > 0 && *(q++) & 0x80);
-        }
 
-        if (diff == 0) {
-            want = HEADER_SIZE + q - p;
-            if (*q & 0x80) {
-                want++;
+            if (diff == 0) {
+                /* End of current data, will need at least 1 more byte for
+                 * length.  2 if the tag is still incomplete */
+                want = q - p + 2;
+                if (*q & 0x80) {
+                    want++;
+                }
+                continue;
             }
-            continue;
         }
 
         diff--;
-        /* Check the length.  This should also work for indefinite length */
+        /* Check the length.  This should also work for indefinite length
+         */
         if (*q & 0x80) {
             unsigned int i = *q & 0x7f;
             if (i > sizeof(long)) {
@@ -193,7 +197,8 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
             }
         }
 
-        /* We have a complete header now.  Parse the tag and length */
+        /* We have a complete header now, assuming we didn't hit EOF. Parse the
+         * tag and length */
         q = p;
         diff = len - off;
         inf = ASN1_get_object(&q, &slen, &tag, &xclass, (int)diff);
