@@ -83,6 +83,7 @@ int ossl_quic_fifd_pkt_commit(QUIC_FIFD *fifd, QUIC_TXPIM_PKT *pkt);
 void ossl_quic_fifd_set_qlog_cb(QUIC_FIFD *fifd, QLOG *(*get_qlog_cb)(void *arg),
     void *arg);
 
+void ossl_quic_fifd_pkt_discard_unreliable(QUIC_FIFD *fifd, QUIC_TXPIM_PKT *tpkt);
 #endif
 
 #endif
