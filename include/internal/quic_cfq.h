@@ -149,6 +149,7 @@ QUIC_CFQ_ITEM *ossl_quic_cfq_get_priority_head(const QUIC_CFQ *cfq,
 QUIC_CFQ_ITEM *ossl_quic_cfq_item_get_priority_next(const QUIC_CFQ_ITEM *item,
     uint32_t pn_space);
 
+int ossl_quic_cfq_discard_unreliable(QUIC_CFQ *cfq, QUIC_CFQ_ITEM *item);
 #endif
 
 #endif

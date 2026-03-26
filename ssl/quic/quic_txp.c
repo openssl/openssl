@@ -3133,6 +3133,8 @@ static int txp_pkt_commit(OSSL_QUIC_TX_PACKETISER *txp,
             --probe_info->pto[pn_space];
     }
 
+    ossl_quic_fifd_pkt_discard_unreliable(&txp->fifd, tpkt);
+
     return rc;
 }
 
