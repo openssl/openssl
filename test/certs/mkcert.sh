@@ -255,7 +255,7 @@ genee() {
     local cakey=$1; shift
     local ca=$1; shift
 
-    exts=$(printf "%s\n%s\n%s\n%s\n%s\n[alts]\n%s\n" \
+    exts=$(printf "%s\n%s\n%s\n%s\n%s\n%s\n[alts]\n%s\n" \
 	    "subjectKeyIdentifier = hash" \
 	    "authorityKeyIdentifier = keyid, issuer" \
 	    "basicConstraints = CA:false" \
