@@ -8,6 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #if defined(__TANDEM) && defined(_SPT_MODEL_)
 #include <spthread.h>
 #include <spt_extensions.h> /* timeval */
@@ -300,10 +302,12 @@ const unsigned char *SSL_SESSION_get0_id_context(const SSL_SESSION *s,
     return s->sid_ctx;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_4_1
 unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s)
 {
     return s->compress_meth;
 }
+#endif
 
 /*
  * SSLv3/TLSv1 has 32 bytes (256 bits) of session ID space. As such, filling

@@ -29,7 +29,20 @@ OpenSSL Releases
 
 -----------
 
+### Changes between 4.0 and 5.0 [xx XXX xxxx]
+
+ * (No changes yet)
+
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
+
+ * Deprecated `SSL_COMP_add_compression_method()`,
+   `SSL_COMP_get_compression_methods()`, `SSL_COMP_set0_compression_methods()`,
+   `SSL_COMP_get_name()`, `SSL_COMP_get0_name()`, `SSL_COMP_get_id()`,
+   `SSL_get_current_compression()`, `SSL_get_current_expansion()`, and
+   `SSL_SESSION_get_compress_id()`.
+   TLS record-level compression is obsolete and a known security liability
+   (CRIME attack).  Use `SSL_OP_NO_COMPRESSION` to disable compression.
+   These functions will be removed in a future release.
 
  * Added AVX2 optimized ML-DSA NTT operations on `x86_64`.
 

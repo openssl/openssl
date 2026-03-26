@@ -8,6 +8,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * Use OPENSSL_SUPPRESS_DEPRECATED (not internal/deprecated.h) so that
+ * OPENSSL_NO_DEPRECATED_4_1 remains in effect when building with no-deprecated.
+ * Otherwise the compression block below would be compiled but the symbols
+ * would be missing from libssl, causing link errors.
+ */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include "internal/e_os.h"
 #include <ctype.h>
 #include <stdio.h>
@@ -3731,7 +3739,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     const SSL_CIPHER *c;
     int i, istls13 = (SSL_version(s) == TLS1_3_VERSION);
     long verify_result;
-#ifndef OPENSSL_NO_COMP
+#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_4_1)
     const COMP_METHOD *comp, *expansion;
 #endif
     unsigned char *exportedkeymat;
@@ -3859,7 +3867,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 
     ssl_print_secure_renegotiation_notes(bio, s);
 
-#ifndef OPENSSL_NO_COMP
+#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_4_1)
     comp = SSL_get_current_compression(s);
     expansion = SSL_get_current_expansion(s);
     BIO_printf(bio, "Compression: %s\n"

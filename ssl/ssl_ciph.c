@@ -462,24 +462,28 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
     int *mac_pkey_type, size_t *mac_secret_size,
     SSL_COMP **comp, int use_etm)
 {
-    int i;
     const SSL_CIPHER *c;
 
     c = s->cipher;
     if (c == NULL)
         return 0;
     if (comp != NULL) {
-        SSL_COMP ctmp;
-        STACK_OF(SSL_COMP) *comp_methods;
-
         *comp = NULL;
-        ctmp.id = s->compress_meth;
-        comp_methods = SSL_COMP_get_compression_methods();
-        if (comp_methods != NULL) {
-            i = sk_SSL_COMP_find(comp_methods, &ctmp);
-            if (i >= 0)
-                *comp = sk_SSL_COMP_value(comp_methods, i);
+#ifndef OPENSSL_NO_DEPRECATED_4_1
+        {
+            int i;
+            SSL_COMP ctmp;
+            STACK_OF(SSL_COMP) *comp_methods;
+
+            ctmp.id = s->compress_meth;
+            comp_methods = SSL_COMP_get_compression_methods();
+            if (comp_methods != NULL) {
+                i = sk_SSL_COMP_find(comp_methods, &ctmp);
+                if (i >= 0)
+                    *comp = sk_SSL_COMP_value(comp_methods, i);
+            }
         }
+#endif
         /* If were only interested in comp then return success */
         if ((enc == NULL) && (md == NULL))
             return 1;
@@ -1925,6 +1929,7 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
     return ctmp;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_4_1
 #ifdef OPENSSL_NO_COMP
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void)
 {
@@ -2045,6 +2050,7 @@ int SSL_COMP_get_id(const SSL_COMP *comp)
     return -1;
 #endif
 }
+#endif
 
 const SSL_CIPHER *ssl_get_cipher_by_char(SSL_CONNECTION *s,
     const unsigned char *ptr,

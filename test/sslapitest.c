@@ -9,9 +9,10 @@
 
 /*
  * We need access to the deprecated low level HMAC APIs for legacy purposes
- * when the deprecated calls are not hidden
+ * when the deprecated calls are not hidden. Also suppress 4.1 deprecation
+ * when testing deprecated SSL_COMP APIs.
  */
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#if !defined(OPENSSL_NO_DEPRECATED_3_0) || !defined(OPENSSL_NO_DEPRECATED_4_1)
 #define OPENSSL_SUPPRESS_DEPRECATED
 #endif
 
@@ -810,6 +811,28 @@ end:
 
     return testresult;
 }
+
+#ifndef OPENSSL_NO_DEPRECATED_4_1
+static int test_deprecated_ssl_comp(void)
+{
+    STACK_OF(SSL_COMP) *meths;
+    int n;
+
+    meths = SSL_COMP_get_compression_methods();
+    if (meths == NULL)
+        return 1; /* no compression in build, APIs still callable */
+    n = sk_SSL_COMP_num(meths);
+    if (n > 0) {
+        const SSL_COMP *comp = sk_SSL_COMP_value(meths, 0);
+
+        if (!TEST_ptr(comp)
+            || !TEST_ptr(SSL_COMP_get0_name(comp))
+            || !TEST_int_ne(SSL_COMP_get_id(comp), -1))
+            return 0;
+    }
+    return 1;
+}
+#endif
 
 static int test_no_ems(void)
 {
@@ -14783,6 +14806,9 @@ int setup_tests(void)
     ADD_TEST(test_ssl_ctx_build_cert_chain);
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_client_hello_cb);
+#ifndef OPENSSL_NO_DEPRECATED_4_1
+    ADD_TEST(test_deprecated_ssl_comp);
+#endif
     ADD_TEST(test_no_ems);
     ADD_TEST(test_ccs_change_cipher);
 #endif
