@@ -700,6 +700,12 @@ static int check_extensions(X509_STORE_CTX *ctx)
             /* Check sig alg consistency acc. to RFC 5280 section 4.1.1.2 */
             CB_FAIL_IF(X509_ALGOR_cmp(&x->sig_alg, &x->cert_info.signature) != 0,
                 ctx, x, i, X509_V_ERR_SIGNATURE_ALGORITHM_INCONSISTENCY);
+            /* Check serial number is non-zero acc. to RFC 5280 section 4.1.2.2 */
+            const ASN1_INTEGER *serial = X509_get0_serialNumber(x);
+            CB_FAIL_IF(serial == NULL
+                    || serial->length == 0
+                    || (serial->length == 1 && serial->data[0] == 0),
+                ctx, x, i, X509_V_ERR_SERIAL_NUMBER_ZERO);
             if (X509_get_version(x) >= X509_VERSION_3) {
                 /* Check AKID presence acc. to RFC 5280 section 4.2.1.1 */
                 /*

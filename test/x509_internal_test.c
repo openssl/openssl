@@ -939,6 +939,99 @@ err:
     return test;
 }
 
+/* https://github.com/openssl/openssl/issues/27229 */
+static const char *kRootSerialZero[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIC/DCCAeSgAwIBAgIBADANBgkqhkiG9w0BAQsFADAXMRUwEwYDVQQDDAxUZXN0\n",
+    "IFJvb3QgQ0EwHhcNMjYwMzIxMTk0MDI1WhcNMzYwMzE4MTk0MDI1WjAXMRUwEwYD\n",
+    "VQQDDAxUZXN0IFJvb3QgQ0EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIB\n",
+    "AQCmz4O3jwwEnxCmKSKZ2BgO4U9kBPXyStDRSf+OWUxPSDVgShCC7sTNR4Y1LoY/\n",
+    "G/kqelRVw1QeH2AOGqOun4UQ2ywqqAjOsGQ2h1auuNj6c/8eFBHoOmbnmmgPFVvL\n",
+    "wXTF3/y0o7pG76ugRdx4X4Awac8JaLghCkn1b+m461lE2tBiD0JWbBTkeq/NVYx/\n",
+    "5OhGQQ5fF9qEz9t+dp5SLMrXDTBKEd4W3Jq5s+Md5GpvnI3PQ8IHl5tIQCQVh4Uh\n",
+    "MyaRbZKU+BkRDodijj4g9+ArCrw5O5iWb7dMzi4cvBdNuKcGcAC0q1v3lGjohi96\n",
+    "lyv/K1IhLqsweUxakHegMa4/AgMBAAGjUzBRMB0GA1UdDgQWBBSb52c8h5/J5SDd\n",
+    "qHzZVSlEoKgYfDAfBgNVHSMEGDAWgBSb52c8h5/J5SDdqHzZVSlEoKgYfDAPBgNV\n",
+    "HRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQCkInJ8Lr8HpoXOb67YxqCQ\n",
+    "HdqfpQvK/arxu7PjBeJQZxpOor4PGJ0VGoHI3u1L0HT49qusdK1wzJhMzrYmL1Ng\n",
+    "zqChXRruT3cDtcqdkWNJ3zGSw1al2MdJwSKkgloXk32yrxF+zU8csOOIZgg7+f7s\n",
+    "wgvi4jvvXUIzPD9ezeYIqSbBqFgti4bHhpAIDmATf6P7pEfDdENhHpOS17fA0S7d\n",
+    "2ikPX9Xr0OfAYUQRQZPO6N+NlFsectEdaJey5wLRonDVDDGZyvUwseQVs4qHv9Cn\n",
+    "AldoxUrhxBZ3C0FJCJmUN0kNoZsznN5dB3xFZVFDINxxtGbWvy+ZQcWb8IJbFvr2\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+static const char *kLeafSerialZero[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIICnzCCAYcCAQAwDQYJKoZIhvcNAQELBQAwFzEVMBMGA1UEAwwMVGVzdCBSb290\n",
+    "IENBMB4XDTI2MDMyMTE5NDAyNloXDTM2MDMxODE5NDAyNlowFDESMBAGA1UEAwwJ\n",
+    "VGVzdCBMZWFmMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtCQCJg1k\n",
+    "eSofHGN7Yf6WZhEg1uiYARbTleRLKgrEwlFt+DJp10++ptQlils1mqbmCZ7mCfaM\n",
+    "QYJGStdoOVmppCb+jgSk5ZXdtoE5zi3Z7n5ZN7yCtiViOKCHbAFVsk/xIhXjjX/D\n",
+    "/XHg6rZ/2crwlyKpeaGSkRr99Tgp1V2xcDqgX+Z670t0KyBmpdqnMP8yLI71JHzI\n",
+    "yny8oc9Ivpi6rwexb2SWOLwfH23R5mWph1BiYo6RALMJEwP0ud0moK3eTKlbRBqb\n",
+    "u+pPOAqGnjHaDOFKlkE+JMgx0XXS9ojQ0dofOqsYEwsawgyBScawT4fcrK8kfHUG\n",
+    "HCd4tkLxcvFT3wIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQBb8JlADsHgX/HfMmJG\n",
+    "DCdAxSsyiSAy1Ah0vkFa6XESdh80MeDpXNSitGfZJcV/0CD6K5KlwKjQdERxbF5+\n",
+    "DwhoeUf9pKSyaDUAJl79WhgRTi+XFqsnIyDmYbZqHwdnPOUUM0mHGqwOmlQnRJEz\n",
+    "YEShDyxYTvnX1cKb3x1RdhykAEwm0xT5cTriKyx51nc5UutEC8B6e9Nju3boYzch\n",
+    "zw2BC2CZK2wKHQ8BS2+9TRGAJvhoXrcVYStLcP4BFdUevCGDQFy02mDAre3ISM9+\n",
+    "DEis7gh1V3/L/9PNfn2lRc9U+/qS6JgH6jTDY6TuAFv3wDg5ru+XVAdZ/cxZ9C1o\n",
+    "2suc\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+/* Verify time within the validity period of the zero-serial certs */
+static const time_t zero_serial_verify_time = 1798761600; /* 2027-01-01 */
+
+static int tests_x509_check_serial_zero(void)
+{
+    X509 *root = NULL, *leaf = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_STORE *store = NULL;
+    X509_VERIFY_PARAM *param = NULL;
+    STACK_OF(X509) *x509s = NULL;
+    int test;
+
+    test = TEST_ptr(ctx = X509_STORE_CTX_new())
+        && TEST_ptr(store = X509_STORE_new())
+        && TEST_ptr(param = X509_VERIFY_PARAM_new())
+        && TEST_ptr(x509s = sk_X509_new_null())
+        && TEST_ptr((root = X509_from_strings(kRootSerialZero)))
+        && TEST_ptr((leaf = X509_from_strings(kLeafSerialZero)))
+        && TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL));
+
+    if (test != 1)
+        goto err;
+    if (!TEST_true(sk_X509_push(x509s, root)))
+        goto err;
+    root = NULL;
+
+    X509_STORE_CTX_set0_trusted_stack(ctx, x509s);
+    X509_VERIFY_PARAM_set_depth(param, 16);
+    X509_VERIFY_PARAM_set_time(param, zero_serial_verify_time);
+    X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_X509_STRICT);
+    X509_STORE_CTX_set0_param(ctx, param);
+    param = NULL;
+    ERR_clear_error();
+
+    test = TEST_int_eq(X509_verify_cert(ctx), 0)
+        && TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+            X509_V_ERR_SERIAL_NUMBER_ZERO);
+
+err:
+    OSSL_STACK_OF_X509_free(x509s);
+    X509_VERIFY_PARAM_free(param);
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    X509_free(leaf);
+    X509_free(root);
+
+    return test;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_standard_exts);
@@ -951,6 +1044,7 @@ int setup_tests(void)
     ADD_TEST(tests_x509_check_ext_duplicity);
     ADD_TEST(tests_x509_check_ext_duplicity_nid_undef);
     ADD_TEST(tests_x509_check_ext_duplicity_nid_dynamic);
+    ADD_TEST(tests_x509_check_serial_zero);
 
     return 1;
 }
