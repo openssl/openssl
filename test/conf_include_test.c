@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/conf.h>
+#include <openssl/conferr.h>
 #include <openssl/err.h>
 #include "testutil.h"
 
@@ -202,6 +203,44 @@ static int test_check_overflow(void)
     return 1;
 }
 
+/*
+ * Regression test for issue #30402: NCONF_get_string(conf, NULL, name) uses
+ * the default section; if the name is missing, the error path must not pass
+ * a NULL group pointer to ERR_raise_data(..., "group=%s ..."), which is
+ * undefined for %s and crashes some libc vsnprintf implementations.
+ */
+static int test_nconf_null_group_missing_key(void)
+{
+    static const char minimal_cnf[] = "[section]\nkey = value\n";
+    CONF *local_conf = NULL;
+    BIO *mem = NULL;
+    long errline = 0;
+    unsigned long err;
+    int ok = 0;
+
+    if (!TEST_ptr(local_conf = NCONF_new(NULL)))
+        return 0;
+    if (!TEST_ptr(mem = BIO_new_mem_buf(minimal_cnf, sizeof(minimal_cnf) - 1)))
+        goto end;
+    if (!TEST_int_gt(NCONF_load_bio(local_conf, mem, &errline), 0))
+        goto end;
+
+    ERR_clear_error();
+    if (!TEST_ptr_null(NCONF_get_string(local_conf, NULL,
+            "openssl_regtest_no_such_key")))
+        goto end;
+    err = ERR_peek_last_error();
+    if (!TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_CONF)
+        || !TEST_int_eq(ERR_GET_REASON(err), CONF_R_NO_VALUE))
+        goto end;
+    (void)ERR_get_error();
+    ok = 1;
+end:
+    BIO_free(mem);
+    NCONF_free(local_conf);
+    return ok;
+}
+
 static int test_available_providers(void)
 {
     libctx = OSSL_LIB_CTX_new();
@@ -286,6 +325,7 @@ int setup_tests(void)
     ADD_TEST(test_load_config);
     ADD_TEST(test_check_null_numbers);
     ADD_TEST(test_check_overflow);
+    ADD_TEST(test_nconf_null_group_missing_key);
     if (test_providers != 0)
         ADD_TEST(test_available_providers);
 
