@@ -1616,7 +1616,7 @@ EVP_KDF_get0_description                ?	4_0_0	EXIST::FUNCTION:
 EVP_KDF_is_a                            ?	4_0_0	EXIST::FUNCTION:
 EVP_KDF_get0_name                       ?	4_0_0	EXIST::FUNCTION:
 EVP_KDF_get0_provider                   ?	4_0_0	EXIST::FUNCTION:
-EVP_KDF_CTX_kdf                         ?	4_0_0	EXIST::FUNCTION:
+EVP_KDF_CTX_kdf                         ?	4_0_0	NOEXIST::FUNCTION:
 EVP_KDF_CTX_reset                       ?	4_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_get_kdf_size                ?	4_0_0	EXIST::FUNCTION:
 EVP_KDF_derive                          ?	4_0_0	EXIST::FUNCTION:
@@ -5716,3 +5716,5 @@ ASN1_BIT_STRING_set1                    ?	4_0_0	EXIST::FUNCTION:
 OSSL_ESS_check_signing_certs_ex         ?	4_0_0	EXIST::FUNCTION:
 X509v3_delete_extension                 ?	4_0_0	EXIST::FUNCTION:
 CTLOG_STORE_add0_log                    ?	4_0_0	EXIST::FUNCTION:CT
+EVP_KDF_CTX_get0_kdf                    ?	4_0_0	EXIST::FUNCTION:
+EVP_KDF_CTX_get1_kdf                    ?	4_0_0	EXIST::FUNCTION:
