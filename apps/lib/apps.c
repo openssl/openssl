@@ -235,7 +235,7 @@ static char *app_get_pass(const char *arg, int keepbio)
         } else if (CHECK_AND_SKIP_PREFIX(arg, "fd:")) {
             BIO *btmp;
 
-            i = opt_int_arg();
+            i = atoi(arg);
             if (i >= 0)
                 pwdbio = BIO_new_fd(i, BIO_NOCLOSE);
             if ((i < 0) || pwdbio == NULL) {
