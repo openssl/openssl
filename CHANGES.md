@@ -31,6 +31,12 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Add partial update support for AES-CBC-HMAC-SHA-ETM cipher, enabling
+   processing of fragmented inputs. Also, add optimizations to the partial update
+   paths to efficiently handle larger buffers.
+
+   *Gowtham Suresh Kumar*
+
  * Added AVX2 optimized ML-DSA NTT operations on `x86_64`.
 
    *Marcel Cornu and Tomasz Kantecki*
