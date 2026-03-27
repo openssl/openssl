@@ -850,8 +850,10 @@ static void port_bind_channel(QUIC_PORT *port, const BIO_ADDR *peer,
         if (!ossl_quic_provide_initial_secret(ch->port->engine->libctx,
                 ch->port->engine->propq,
                 dcid, /* is_server */ 1,
-                ch->qrx, NULL))
+                ch->qrx, NULL)) {
+            ossl_quic_channel_free(ch);
             return;
+        }
 
     if (odcid->id_len != 0) {
         /*
