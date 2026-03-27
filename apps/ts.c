@@ -344,7 +344,7 @@ int ts_main(int argc, char **argv)
         if ((in != NULL) && (queryfile != NULL))
             goto opthelp;
         if (in == NULL) {
-            if ((conf == NULL) || (token_in != 0))
+            if (conf == NULL || token_in != 0 || queryfile == NULL)
                 goto opthelp;
         }
         ret = !reply_command(conf, section, engine, queryfile,
