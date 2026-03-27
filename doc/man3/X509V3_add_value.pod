@@ -1,0 +1,80 @@
+=pod
+
+=head1 NAME
+
+X509V3_add_value, X509V3_add_value_uchar,
+X509V3_add_value_bool, X509V3_add_value_bool_nf,
+X509V3_add_value_int, X509V3_conf_free
+- CONF_VALUE stack utility functions for X509 extension handling
+
+=head1 SYNOPSIS
+
+ #include <openssl/x509v3.h>
+
+ int X509V3_add_value(const char *name, const char *value,
+                      STACK_OF(CONF_VALUE) **extlist);
+ int X509V3_add_value_uchar(const char *name,
+                            const unsigned char *value,
+                            STACK_OF(CONF_VALUE) **extlist);
+ int X509V3_add_value_bool(const char *name, int asn1_bool,
+                           STACK_OF(CONF_VALUE) **extlist);
+ int X509V3_add_value_bool_nf(const char *name, int asn1_bool,
+                              STACK_OF(CONF_VALUE) **extlist);
+ int X509V3_add_value_int(const char *name, const ASN1_INTEGER *aint,
+                          STACK_OF(CONF_VALUE) **extlist);
+ void X509V3_conf_free(CONF_VALUE *val);
+
+=head1 DESCRIPTION
+
+These functions manipulate B<STACK_OF(CONF_VALUE)> structures used by
+X509 v3 extension implementations. They are primarily used when writing
+custom extension B<i2v> and B<v2i> methods (see L<X509V3_EXT_add(3)>).
+
+X509V3_add_value() adds a name-value pair to the stack I<*extlist>.
+If I<*extlist> is NULL, a new stack is allocated. Both I<name> and I<value>
+are copied. Either may be NULL.
+
+X509V3_add_value_uchar() is identical to X509V3_add_value() except I<value>
+is an B<unsigned char> pointer.
+
+X509V3_add_value_bool() adds a name-value pair where the value is either
+"TRUE" or "FALSE" depending on whether I<asn1_bool> is nonzero or zero.
+
+X509V3_add_value_bool_nf() is similar to X509V3_add_value_bool() but adds
+nothing and returns success if I<asn1_bool> is zero. When I<asn1_bool> is
+nonzero, it adds the value "TRUE".
+
+X509V3_add_value_int() converts I<aint> to a decimal string representation
+and adds it as a name-value pair. If I<aint> is NULL, nothing is added
+and the function returns success.
+
+X509V3_conf_free() frees a B<CONF_VALUE> structure and its I<name>, I<value>
+and I<section> members. This function is typically used as a callback with
+sk_CONF_VALUE_pop_free() to free an entire stack.
+
+=head1 RETURN VALUES
+
+X509V3_add_value(), X509V3_add_value_uchar(), X509V3_add_value_bool(),
+X509V3_add_value_bool_nf() and X509V3_add_value_int() return 1 on success
+and 0 on error.
+
+=head1 SEE ALSO
+
+L<X509V3_EXT_add(3)>,
+L<X509V3_get_value_bool(3)>,
+L<X509V3_parse_list(3)>
+
+=head1 HISTORY
+
+These functions have been available since OpenSSL 0.9.5.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

@@ -2,42 +2,94 @@
 
 =head1 NAME
 
-X509V3_EXT_print, X509V3_EXT_print_fp - pretty print X509 certificate extensions
+X509V3_EXT_print, X509V3_EXT_print_fp, X509V3_extensions_print,
+X509V3_EXT_val_prn - X509 extension printing functions
 
 =head1 SYNOPSIS
 
  #include <openssl/x509v3.h>
 
- int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext, unsigned long flag, int indent);
- int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext, int flag, int indent);
+ int X509V3_EXT_print(BIO *out, X509_EXTENSION *ext,
+                      unsigned long flag, int indent);
+ int X509V3_EXT_print_fp(FILE *out, X509_EXTENSION *ext,
+                         int flag, int indent);
+ int X509V3_extensions_print(BIO *out, const char *title,
+                             const STACK_OF(X509_EXTENSION) *exts,
+                             unsigned long flag, int indent);
+ void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val,
+                         int indent, int ml);
 
 =head1 DESCRIPTION
 
-X509V3_EXT_print() and X509V3_EXT_print_fp() parse and print the extension
-info from I<ext> to I<bio> or I<out> with indentation set via I<indent>.
-I<flag> determines the behaviour if an extension could not be parsed and can be
-one of:
-B<X509V3_EXT_DEFAULT> (equivalent to 0): an unknown or unparsable extension
-stops the parsing and the function returns a failure.
-B<X509V3_EXT_PARSE_UNKNOWN>: an unknown or unparsable extension is handled by
-printing it through the B<ASN1_parse_dump()> function, and the function returns
-success.
-B<X509V3_EXT_DUMP_UNKNOWN>: an unknown or unparsable extension is handled by
-printing it through the B<BIO_dump_indent()> function, and the function returns
-success,
-B<X509V3_EXT_ERROR_UNKNOWN>: an unknown or unparsable extension is handled by
-printing either "<Not Supported>" or  "<Parse Error>", and the function returns
-success.
+X509V3_EXT_print() prints the extension I<ext> to the BIO I<out>.
+The I<flag> argument controls the display of unknown or unparsable extensions.
+The I<indent> argument specifies the number of spaces to indent the output.
+If the extension is supported and can be parsed, its contents are printed
+in a human-readable form. If parsing fails or the extension is unknown,
+the behaviour depends on I<flag>:
+
+=over 4
+
+=item B<X509V3_EXT_DEFAULT>
+
+Return 0 (failure) for unknown or unparsable extensions.
+
+=item B<X509V3_EXT_ERROR_UNKNOWN>
+
+Print "<Parse Error>" for known but unparsable extensions and
+"<Not Supported>" for unknown extensions, and return 1.
+
+=item B<X509V3_EXT_PARSE_UNKNOWN>
+
+Attempt to parse and dump the raw ASN.1 data of the extension.
+
+=item B<X509V3_EXT_DUMP_UNKNOWN>
+
+Print a hex dump of the extension data.
+
+=back
+
+These flags are defined in the B<X509V3_EXT_UNKNOWN_MASK> (C<0xfL << 16>)
+bits of I<flag>.
+
+X509V3_EXT_print_fp() is identical to X509V3_EXT_print() except it prints
+to a B<FILE> pointer instead of a B<BIO>.
+This function is not available if B<OPENSSL_NO_STDIO> is defined.
+
+X509V3_extensions_print() prints all extensions in the stack I<exts>
+to the BIO I<out>. If I<title> is not NULL, it is printed as a heading.
+Each extension is printed with its OID name and critical flag, followed
+by its contents as formatted by X509V3_EXT_print(). If an extension cannot
+be printed, its raw data is output instead. The I<flag> and I<indent>
+arguments are passed through to X509V3_EXT_print().
+
+X509V3_EXT_val_prn() prints a stack of B<CONF_VALUE> structures to the
+BIO I<out>. This is a helper function used internally by X509V3_EXT_print()
+for extensions that use the I<i2v> method. If I<ml> is nonzero, each
+name-value pair is printed on a separate line with I<indent> spaces of
+indentation. Otherwise, the values are printed on a single line separated
+by commas.
 
 =head1 RETURN VALUES
 
-X509V3_EXT_print() and X509V3_EXT_print_fp() return 1 for success and 0 for
-failure.
+X509V3_EXT_print() returns 1 on success and 0 if the extension could not
+be printed.
+
+X509V3_EXT_print_fp() returns 1 on success and 0 on error.
+
+X509V3_extensions_print() returns 1 on success and 0 on error.
+
+X509V3_EXT_val_prn() does not return a value.
 
 =head1 SEE ALSO
 
-L<BIO_dump_indent(3)>,
-L<ASN1_parse_dump(3)>,
+L<X509V3_get_d2i(3)>,
+L<X509V3_EXT_nconf(3)>,
+L<X509_get_extension_flags(3)>
+
+=head1 HISTORY
+
+These functions have been available since OpenSSL 0.9.7.
 
 =head1 COPYRIGHT
 

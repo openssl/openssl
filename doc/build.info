@@ -2879,18 +2879,50 @@ DEPEND[html/man3/UI_new.html]=man3/UI_new.pod
 GENERATE[html/man3/UI_new.html]=man3/UI_new.pod
 DEPEND[man/man3/UI_new.3]=man3/UI_new.pod
 GENERATE[man/man3/UI_new.3]=man3/UI_new.pod
+DEPEND[html/man3/X509V3_EXT_add.html]=man3/X509V3_EXT_add.pod
+GENERATE[html/man3/X509V3_EXT_add.html]=man3/X509V3_EXT_add.pod
+DEPEND[man/man3/X509V3_EXT_add.3]=man3/X509V3_EXT_add.pod
+GENERATE[man/man3/X509V3_EXT_add.3]=man3/X509V3_EXT_add.pod
+DEPEND[html/man3/X509V3_EXT_nconf.html]=man3/X509V3_EXT_nconf.pod
+GENERATE[html/man3/X509V3_EXT_nconf.html]=man3/X509V3_EXT_nconf.pod
+DEPEND[man/man3/X509V3_EXT_nconf.3]=man3/X509V3_EXT_nconf.pod
+GENERATE[man/man3/X509V3_EXT_nconf.3]=man3/X509V3_EXT_nconf.pod
 DEPEND[html/man3/X509V3_EXT_print.html]=man3/X509V3_EXT_print.pod
 GENERATE[html/man3/X509V3_EXT_print.html]=man3/X509V3_EXT_print.pod
 DEPEND[man/man3/X509V3_EXT_print.3]=man3/X509V3_EXT_print.pod
 GENERATE[man/man3/X509V3_EXT_print.3]=man3/X509V3_EXT_print.pod
+DEPEND[html/man3/X509V3_NAME_from_section.html]=man3/X509V3_NAME_from_section.pod
+GENERATE[html/man3/X509V3_NAME_from_section.html]=man3/X509V3_NAME_from_section.pod
+DEPEND[man/man3/X509V3_NAME_from_section.3]=man3/X509V3_NAME_from_section.pod
+GENERATE[man/man3/X509V3_NAME_from_section.3]=man3/X509V3_NAME_from_section.pod
+DEPEND[html/man3/X509V3_add_value.html]=man3/X509V3_add_value.pod
+GENERATE[html/man3/X509V3_add_value.html]=man3/X509V3_add_value.pod
+DEPEND[man/man3/X509V3_add_value.3]=man3/X509V3_add_value.pod
+GENERATE[man/man3/X509V3_add_value.3]=man3/X509V3_add_value.pod
 DEPEND[html/man3/X509V3_get_d2i.html]=man3/X509V3_get_d2i.pod
 GENERATE[html/man3/X509V3_get_d2i.html]=man3/X509V3_get_d2i.pod
 DEPEND[man/man3/X509V3_get_d2i.3]=man3/X509V3_get_d2i.pod
 GENERATE[man/man3/X509V3_get_d2i.3]=man3/X509V3_get_d2i.pod
+DEPEND[html/man3/X509V3_get_string.html]=man3/X509V3_get_string.pod
+GENERATE[html/man3/X509V3_get_string.html]=man3/X509V3_get_string.pod
+DEPEND[man/man3/X509V3_get_string.3]=man3/X509V3_get_string.pod
+GENERATE[man/man3/X509V3_get_string.3]=man3/X509V3_get_string.pod
+DEPEND[html/man3/X509V3_get_value_bool.html]=man3/X509V3_get_value_bool.pod
+GENERATE[html/man3/X509V3_get_value_bool.html]=man3/X509V3_get_value_bool.pod
+DEPEND[man/man3/X509V3_get_value_bool.3]=man3/X509V3_get_value_bool.pod
+GENERATE[man/man3/X509V3_get_value_bool.3]=man3/X509V3_get_value_bool.pod
+DEPEND[html/man3/X509V3_parse_list.html]=man3/X509V3_parse_list.pod
+GENERATE[html/man3/X509V3_parse_list.html]=man3/X509V3_parse_list.pod
+DEPEND[man/man3/X509V3_parse_list.3]=man3/X509V3_parse_list.pod
+GENERATE[man/man3/X509V3_parse_list.3]=man3/X509V3_parse_list.pod
 DEPEND[html/man3/X509V3_set_ctx.html]=man3/X509V3_set_ctx.pod
 GENERATE[html/man3/X509V3_set_ctx.html]=man3/X509V3_set_ctx.pod
 DEPEND[man/man3/X509V3_set_ctx.3]=man3/X509V3_set_ctx.pod
 GENERATE[man/man3/X509V3_set_ctx.3]=man3/X509V3_set_ctx.pod
+DEPEND[html/man3/X509V3_set_nconf.html]=man3/X509V3_set_nconf.pod
+GENERATE[html/man3/X509V3_set_nconf.html]=man3/X509V3_set_nconf.pod
+DEPEND[man/man3/X509V3_set_nconf.3]=man3/X509V3_set_nconf.pod
+GENERATE[man/man3/X509V3_set_nconf.3]=man3/X509V3_set_nconf.pod
 DEPEND[html/man3/X509_ACERT_add1_attr.html]=man3/X509_ACERT_add1_attr.pod
 GENERATE[html/man3/X509_ACERT_add1_attr.html]=man3/X509_ACERT_add1_attr.pod
 DEPEND[man/man3/X509_ACERT_add1_attr.3]=man3/X509_ACERT_add1_attr.pod
@@ -3763,9 +3795,17 @@ html/man3/UI_STRING.html \
 html/man3/UI_UTIL_read_pw.html \
 html/man3/UI_create_method.html \
 html/man3/UI_new.html \
+html/man3/X509V3_EXT_add.html \
+html/man3/X509V3_EXT_nconf.html \
 html/man3/X509V3_EXT_print.html \
+html/man3/X509V3_NAME_from_section.html \
+html/man3/X509V3_add_value.html \
 html/man3/X509V3_get_d2i.html \
+html/man3/X509V3_get_string.html \
+html/man3/X509V3_get_value_bool.html \
+html/man3/X509V3_parse_list.html \
 html/man3/X509V3_set_ctx.html \
+html/man3/X509V3_set_nconf.html \
 html/man3/X509_ACERT_add1_attr.html \
 html/man3/X509_ACERT_add_attr_nconf.html \
 html/man3/X509_ACERT_get0_holder_baseCertId.html \
@@ -4436,9 +4476,17 @@ man/man3/UI_STRING.3 \
 man/man3/UI_UTIL_read_pw.3 \
 man/man3/UI_create_method.3 \
 man/man3/UI_new.3 \
+man/man3/X509V3_EXT_add.3 \
+man/man3/X509V3_EXT_nconf.3 \
 man/man3/X509V3_EXT_print.3 \
+man/man3/X509V3_NAME_from_section.3 \
+man/man3/X509V3_add_value.3 \
 man/man3/X509V3_get_d2i.3 \
+man/man3/X509V3_get_string.3 \
+man/man3/X509V3_get_value_bool.3 \
+man/man3/X509V3_parse_list.3 \
 man/man3/X509V3_set_ctx.3 \
+man/man3/X509V3_set_nconf.3 \
 man/man3/X509_ACERT_add1_attr.3 \
 man/man3/X509_ACERT_add_attr_nconf.3 \
 man/man3/X509_ACERT_get0_holder_baseCertId.3 \
