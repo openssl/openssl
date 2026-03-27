@@ -46,6 +46,15 @@ This parameter sets the context seed.
 The length of the context seed cannot exceed 1024 bytes;
 this should be more than enough for any normal use of the TLS PRF.
 
+=item "maclen" (B<OSSL_KDF_PARAM_MAC_SIZE>) <unsigned integer>
+
+=item "keylen" (B<OSSL_KDF_PARAM_KEY_LENGTH>) <unsigned integer>
+
+=item "ivlen" (B<OSSL_KDF_PARAM_IV_LENGTH>) <unsigned integer>
+
+When using the B<EVP_KDF_derive_SKEYs> API, these set the keys, IVs
+or finished MAC lengths.
+
 =back
 
 The OpenSSL FIPS provider also supports the following parameters:
@@ -87,6 +96,44 @@ Setting this to zero will ignore the error and set the approved
 "fips-indicator" to 0.
 This option breaks FIPS compliance if it causes the approved "fips-indicator"
 to return 0.
+
+=back
+
+=head2 SKEYs derivation
+
+When using this KDF with the B<EVP_KDF_derive_SKEYs> API, use these purposes to
+obtain the desired output:
+
+=over 4
+
+=item "master_secret" (B<OSSL_KDF_PURPOSE_MASTER_SECRET>)
+
+Derive the master secret. I<keylen> must be set to 48.
+
+=item "client_write_MAC_key" (B<OSSL_KDF_PURPOSE_CLIENT_MAC_KEY>)
+
+=item "server_write_MAC_key" (B<OSSL_KDF_PURPOSE_SERVER_MAC_KEY>)
+
+Derive MAC keys. I<maclen> is optional, and if it is not set these
+keys are not derived.
+
+=item "client_write_key" (B<OSSL_KDF_PURPOSE_CLIENT_KEY>)
+
+=item "server_write_key" (B<OSSL_KDF_PURPOSE_SERVER_KEY>)
+
+Derive cipher keys. I<keylen> must be set.
+
+=item "client_write_IV" (B<OSSL_KDF_PURPOSE_CLIENT_IV>)
+
+=item "server_write_IV" (B<OSSL_KDF_PURPOSE_SERVER_IV>)
+
+Derive client and server IVs. I<keylen> and I<ivlen> must be specified.
+I<maclen> is optional.
+
+=item "finished_mac" (B<OSSL_KDF_PURPOSE_FINISHED_MAC>)
+
+Derive the finished data. I<maclen> must be specified and it is the
+length of the output MAC.
 
 =back
 

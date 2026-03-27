@@ -78,6 +78,10 @@ OpenSSL Releases
 
    *Helen Zhang*
 
+ * Added support for derivation of multiple SKEYs in a single step.
+
+   *Ilie Halip, based on Dmitry Belyavskiy's design*
+
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
  * Added `-expected-rpks` option to the `openssl s_client`

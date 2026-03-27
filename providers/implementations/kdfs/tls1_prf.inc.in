@@ -19,9 +19,15 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                           ['OSSL_KDF_PARAM_FIPS_EMS_CHECK',    'ind_e',  'int', 'fips'],
                           ['OSSL_KDF_PARAM_FIPS_DIGEST_CHECK', 'ind_d',  'int', 'fips'],
                           ['OSSL_KDF_PARAM_FIPS_KEY_CHECK',    'ind_k',  'int', 'fips'],
+                          ['OSSL_KDF_PARAM_MAC_SIZE',          'maclen', 'size_t'],
+                          ['OSSL_KDF_PARAM_KEY_LENGTH',        'keylen', 'size_t'],
+                          ['OSSL_KDF_PARAM_IV_LENGTH',         'ivlen',  'size_t'],
                          )); -}
 
 {- produce_param_decoder('tls1prf_get_ctx_params',
                          (['OSSL_KDF_PARAM_SIZE',                    'size', 'size_t'],
                           ['OSSL_KDF_PARAM_FIPS_APPROVED_INDICATOR', 'ind',  'int', 'fips'],
+                          ['OSSL_KDF_PARAM_MAC_SIZE',                'maclen', 'size_t'],
+                          ['OSSL_KDF_PARAM_KEY_LENGTH',              'keylen', 'size_t'],
+                          ['OSSL_KDF_PARAM_IV_LENGTH',               'ivlen',  'size_t'],
                          )); -}

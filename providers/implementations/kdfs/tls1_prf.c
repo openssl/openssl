@@ -84,6 +84,9 @@ static OSSL_FUNC_kdf_settable_ctx_params_fn kdf_tls1_prf_settable_ctx_params;
 static OSSL_FUNC_kdf_set_ctx_params_fn kdf_tls1_prf_set_ctx_params;
 static OSSL_FUNC_kdf_gettable_ctx_params_fn kdf_tls1_prf_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn kdf_tls1_prf_get_ctx_params;
+static OSSL_FUNC_kdf_derive_multi_fn kdf_tls1_prf_derive_multi;
+static OSSL_FUNC_kdf_get_skey_fn kdf_tls1_prf_get_skey;
+static OSSL_FUNC_kdf_get_data_fn kdf_tls1_prf_get_data;
 
 static int tls1_prf_alg(EVP_MAC_CTX *mdctx, EVP_MAC_CTX *sha1ctx,
     const unsigned char *sec, size_t slen,
@@ -94,6 +97,7 @@ static int tls1_prf_alg(EVP_MAC_CTX *mdctx, EVP_MAC_CTX *sha1ctx,
 #define TLS_MD_MASTER_SECRET_CONST_SIZE 13
 
 #define TLSPRF_MAX_SEEDS 6
+#define TLSPRF_MASTER_SECRET_SIZE 48
 
 #include "providers/implementations/kdfs/tls1_prf.inc"
 
@@ -112,6 +116,13 @@ typedef struct {
     /* Concatenated seed data */
     unsigned char *seed;
     size_t seedlen;
+
+    size_t maclen;
+    size_t keylen;
+    size_t ivlen;
+
+    unsigned char *out;
+    size_t outlen;
 
     OSSL_FIPS_IND_DECLARE
 } TLS1_PRF;
@@ -151,6 +162,7 @@ static void kdf_tls1_prf_reset(void *vctx)
     TLS1_PRF *ctx = (TLS1_PRF *)vctx;
     void *provctx = ctx->provctx;
 
+    OPENSSL_clear_free(ctx->out, ctx->outlen);
     EVP_MAC_CTX_free(ctx->P_hash);
     EVP_MAC_CTX_free(ctx->P_sha1);
     OPENSSL_clear_free(ctx->sec, ctx->seclen);
@@ -176,6 +188,9 @@ static void *kdf_tls1_prf_dup(void *vctx)
             goto err;
         if (!ossl_prov_memdup(src->seed, src->seedlen, &dest->seed,
                 &dest->seedlen))
+            goto err;
+        if (!ossl_prov_memdup(src->out, src->outlen, &dest->out,
+                &dest->outlen))
             goto err;
         OSSL_FIPS_IND_COPY(dest, src)
     }
@@ -291,6 +306,169 @@ static int kdf_tls1_prf_derive(void *vctx, unsigned char *key, size_t keylen,
         ctx->sec, ctx->seclen,
         ctx->seed, ctx->seedlen,
         key, keylen);
+}
+
+static int kdf_tls1_prf_derive_multi(void *vctx, const OSSL_PARAM params[])
+{
+    TLS1_PRF *ctx = (TLS1_PRF *)vctx;
+
+    if (!ossl_prov_is_running() || !kdf_tls1_prf_set_ctx_params(ctx, params))
+        return 0;
+
+    if (ctx->P_hash == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
+        return 0;
+    }
+    if (ctx->sec == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SECRET);
+        return 0;
+    }
+    if (ctx->seedlen == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SEED);
+        return 0;
+    }
+#ifdef FIPS_MODULE
+    if (!fips_ems_check_passed(ctx))
+        return 0;
+#endif
+
+    ctx->outlen = ctx->maclen * 2 + ctx->keylen * 2 + ctx->ivlen * 2;
+    if (ctx->outlen == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_PARAMETERS_SET);
+        return 0;
+    }
+
+    ctx->out = OPENSSL_zalloc(ctx->outlen);
+    if (!ctx->out) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NULL_OUTPUT_BUFFER);
+        return 0;
+    }
+
+    return tls1_prf_alg(ctx->P_hash, ctx->P_sha1,
+        ctx->sec, ctx->seclen,
+        ctx->seed, ctx->seedlen,
+        ctx->out, ctx->outlen);
+}
+
+static void* kdf_tls1_prf_get_skey(void *vctx, const char *purpose, OSSL_FUNC_skeymgmt_import_fn *import, bool incr_refcount)
+{
+    TLS1_PRF *ctx = vctx;
+    OSSL_PARAM import_params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    size_t offset = 0;
+    size_t length = 0;
+
+    if (!purpose) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DATA);
+        return NULL;
+    }
+
+    if (!OPENSSL_strcasecmp(purpose, OSSL_KDF_PURPOSE_MASTER_SECRET)) {
+        if (ctx->keylen != TLSPRF_MASTER_SECRET_SIZE) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return NULL;
+        }
+
+        offset = 0;
+        length = ctx->keylen;
+    }
+    else if (!OPENSSL_strcasecmp(purpose, OSSL_KDF_PURPOSE_CLIENT_MAC_KEY)) {
+        if (ctx->maclen == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MAC);
+            return NULL;
+        }
+
+        offset = 0;
+        length = ctx->maclen;
+    }
+    else if (!OPENSSL_strcasecmp(purpose, OSSL_KDF_PURPOSE_SERVER_MAC_KEY)) {
+        if (ctx->maclen == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MAC);
+            return NULL;
+        }
+
+        offset = ctx->maclen;
+        length = ctx->maclen;
+    }
+    else if (!OPENSSL_strcasecmp(purpose, OSSL_KDF_PURPOSE_CLIENT_KEY)) {
+        if (ctx->keylen == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return NULL;
+        }
+
+        offset = 2 * ctx->maclen;
+        length = ctx->keylen;
+    }
+    else if (!OPENSSL_strcasecmp(purpose, OSSL_KDF_PURPOSE_SERVER_KEY)) {
+        if (ctx->keylen == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return NULL;
+        }
+
+        offset = 2 * ctx->maclen + ctx->keylen;
+        length = ctx->keylen;
+    }
+    else {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DATA);
+        return NULL;
+    }
+
+    if (ctx->outlen < offset || ctx->outlen < offset + length) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+        return NULL;
+    }
+
+    import_params[0] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_RAW_BYTES,
+        (void *)(ctx->out + offset), length);
+    return import(ctx->provctx, OSSL_SKEYMGMT_SELECT_SECRET_KEY, import_params);
+}
+
+static unsigned char* kdf_tls1_prf_get_data(void *vctx, const char *purpose, size_t *datalen)
+{
+    TLS1_PRF *ctx = vctx;
+    size_t offset = 0;
+    size_t length = 0;
+
+    if (!OPENSSL_strcasecmp(purpose, OSSL_KDF_PURPOSE_CLIENT_IV)) {
+        if (ctx->keylen == 0 || ctx->ivlen == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return NULL;
+        }
+
+        offset = 2 * ctx->maclen + 2 * ctx->keylen;
+        length = ctx->ivlen;
+    }
+    else if (!OPENSSL_strcasecmp(purpose, OSSL_KDF_PURPOSE_SERVER_IV)) {
+        if (ctx->keylen == 0 || ctx->ivlen == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return NULL;
+        }
+
+        offset = 2 * ctx->maclen + 2 * ctx->keylen + ctx->ivlen;
+        length = ctx->ivlen;
+    }
+    else if (!OPENSSL_strcasecmp(purpose, OSSL_KDF_PURPOSE_FINISHED_MAC)) {
+        if (ctx->maclen == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MAC);
+            return NULL;
+        }
+
+        offset = 0;
+        length = ctx->maclen;
+    }
+    else {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DATA);
+        return NULL;
+    }
+
+    if (ctx->outlen < offset || ctx->outlen < offset + length) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+        return NULL;
+    }
+
+    if (datalen != NULL)
+        *datalen = length;
+    
+    return (ctx->out + offset);
 }
 
 static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
@@ -416,6 +594,34 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         }
     }
 
+    if (p.maclen != NULL) {
+        if (!OSSL_PARAM_get_size_t(p.maclen, &ctx->maclen))
+            return 0;
+
+        if (ctx->maclen > EVP_MAX_KEY_LENGTH) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MAC);
+            return 0;
+        }
+    }
+    if (p.keylen != NULL) {
+        if (!OSSL_PARAM_get_size_t(p.keylen, &ctx->keylen))
+            return 0;
+
+        if (ctx->keylen > EVP_MAX_KEY_LENGTH) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+            return 0;
+        }
+    }
+    if (p.ivlen != NULL) {
+        if (!OSSL_PARAM_get_size_t(p.ivlen, &ctx->ivlen))
+            return 0;
+
+        if (ctx->ivlen > EVP_MAX_IV_LENGTH) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
+            return 0;
+        }
+    }
+
     return 1;
 }
 
@@ -461,6 +667,12 @@ const OSSL_DISPATCH ossl_kdf_tls1_prf_functions[] = {
         (void (*)(void))kdf_tls1_prf_gettable_ctx_params },
     { OSSL_FUNC_KDF_GET_CTX_PARAMS,
         (void (*)(void))kdf_tls1_prf_get_ctx_params },
+    { OSSL_FUNC_KDF_DERIVE_MULTI,
+        (void (*)(void))kdf_tls1_prf_derive_multi },
+    { OSSL_FUNC_KDF_GET_SKEY,
+        (void (*)(void))kdf_tls1_prf_get_skey },
+    { OSSL_FUNC_KDF_GET_DATA,
+        (void (*)(void))kdf_tls1_prf_get_data },
     OSSL_DISPATCH_END
 };
 
