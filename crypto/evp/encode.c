@@ -656,6 +656,31 @@ static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     if (n == 0)
         return 0;
 
+#if defined(HAS_IA32CAP_IS_64) || defined(__AVX2__)
+    {
+        const int use_srp = (ctx != NULL
+            && (ctx->flags & EVP_ENCODE_CTX_USE_SRP_ALPHABET) != 0);
+        const int avx2_len = (n - 4) & ~31;
+
+        if (avx2_len > 0
+#if defined(__AVX2__)
+            && 1
+#else
+            && (OPENSSL_ia32cap_P[2] & (1u << 5)) != 0
+#endif
+        ) {
+            int decoded = decode_base64_avx2(use_srp, t, f, avx2_len);
+
+            if (decoded < 0)
+                return -1;
+            ret += decoded;
+            t += decoded;
+            f += avx2_len;
+            n -= avx2_len;
+        }
+    }
+#endif
+
     /* all 4-byte blocks except the last one do not have padding. */
     for (i = 0; i < n - 4; i += 4) {
         a = conv_ascii2bin(*(f++), table);

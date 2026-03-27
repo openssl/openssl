@@ -437,3 +437,6 @@ lcov.info
 run_tests
 depend
 
+# Local-only helper (not for upstream)
+/util/pre-pr-check.sh
+
