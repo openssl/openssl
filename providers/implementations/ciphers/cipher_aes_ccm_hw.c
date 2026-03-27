@@ -60,8 +60,6 @@ static const PROV_CCM_HW aes_ccm = {
 #include "cipher_aes_ccm_hw_s390x.inc"
 #elif defined(AESNI_CAPABLE)
 #include "cipher_aes_ccm_hw_aesni.inc"
-#elif defined(SPARC_AES_CAPABLE)
-#include "cipher_aes_ccm_hw_t4.inc"
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 #include "cipher_aes_ccm_hw_rv64i.inc"
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32

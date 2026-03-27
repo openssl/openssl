@@ -17,7 +17,7 @@ IF[{- !$disabled{asm} -}]
   $AESDEF_ia64=AES_ASM
 
   $AESASM_sparcv9=\
-        aes_core.c aes_cbc.c aes-sparcv9.S aest4-sparcv9.S aesfx-sparcv9.S
+        aes_core.c aes_cbc.c aes-sparcv9.S
   $AESDEF_sparcv9=AES_ASM
 
   $AESASM_mips32=aes_cbc.c aes-mips.S
@@ -114,11 +114,6 @@ GENERATE[aesni-mb-x86_64.s]=asm/aesni-mb-x86_64.pl
 
 GENERATE[aes-sparcv9.S]=asm/aes-sparcv9.pl
 INCLUDE[aes-sparcv9.o]=..
-GENERATE[aest4-sparcv9.S]=asm/aest4-sparcv9.pl
-INCLUDE[aest4-sparcv9.o]=..
-DEPEND[aest4-sparcv9.S]=../perlasm/sparcv9_modes.pl
-GENERATE[aesfx-sparcv9.S]=asm/aesfx-sparcv9.pl
-INCLUDE[aesfx-sparcv9.o]=..
 
 GENERATE[aes-ppc.s]=asm/aes-ppc.pl
 GENERATE[vpaes-ppc.s]=asm/vpaes-ppc.pl

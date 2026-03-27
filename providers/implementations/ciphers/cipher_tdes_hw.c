@@ -27,17 +27,6 @@ int ossl_cipher_hw_tdes_ede3_initkey(PROV_CIPHER_CTX *ctx,
     DES_cblock *deskey = (DES_cblock *)key;
 
     tctx->tstream.cbc = NULL;
-#if defined(SPARC_DES_CAPABLE)
-    if (SPARC_DES_CAPABLE) {
-        if (ctx->mode == EVP_CIPH_CBC_MODE) {
-            des_t4_key_expand(&deskey[0], &tctx->ks1);
-            des_t4_key_expand(&deskey[1], &tctx->ks2);
-            des_t4_key_expand(&deskey[2], &tctx->ks3);
-            tctx->tstream.cbc = ctx->enc ? des_t4_ede3_cbc_encrypt : des_t4_ede3_cbc_decrypt;
-            return 1;
-        }
-    }
-#endif
     DES_set_key_unchecked(&deskey[0], &tctx->ks1);
     DES_set_key_unchecked(&deskey[1], &tctx->ks2);
     DES_set_key_unchecked(&deskey[2], &tctx->ks3);

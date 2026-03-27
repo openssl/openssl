@@ -42,13 +42,8 @@ static int cipher_hw_camellia_initkey(PROV_CIPHER_CTX *dat,
 
 IMPLEMENT_CIPHER_HW_COPYCTX(cipher_hw_camellia_copyctx, PROV_CAMELLIA_CTX)
 
-#if defined(SPARC_CMLL_CAPABLE)
-#include "cipher_camellia_hw_t4.inc"
-#else
-/* The generic case */
 #define PROV_CIPHER_HW_declare(mode)
 #define PROV_CIPHER_HW_select(mode)
-#endif /* SPARC_CMLL_CAPABLE */
 
 #define PROV_CIPHER_HW_camellia_mode(mode)                   \
     static const PROV_CIPHER_HW camellia_##mode = {          \
