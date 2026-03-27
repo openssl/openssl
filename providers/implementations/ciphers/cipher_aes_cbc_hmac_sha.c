@@ -307,6 +307,7 @@ static void *aes_cbc_hmac_sha1_newctx(void *provctx, size_t kbits,
 static void *aes_cbc_hmac_sha1_dupctx(void *provctx)
 {
     PROV_AES_HMAC_SHA1_CTX *ctx = provctx;
+    PROV_AES_HMAC_SHA1_CTX *dctx;
 
     if (!ossl_prov_is_running())
         return NULL;
@@ -314,7 +315,14 @@ static void *aes_cbc_hmac_sha1_dupctx(void *provctx)
     if (ctx == NULL)
         return NULL;
 
-    return OPENSSL_memdup(ctx, sizeof(*ctx));
+    dctx = OPENSSL_memdup(ctx, sizeof(*ctx));
+    if (dctx != NULL
+        && !ossl_cipher_generic_dupctx_tlsmac(&dctx->base_ctx.base,
+            &ctx->base_ctx.base)) {
+        OPENSSL_clear_free(dctx, sizeof(*dctx));
+        return NULL;
+    }
+    return dctx;
 }
 
 static void aes_cbc_hmac_sha1_freectx(void *vctx)
@@ -356,11 +364,22 @@ static void *aes_cbc_hmac_sha256_newctx(void *provctx, size_t kbits,
 static void *aes_cbc_hmac_sha256_dupctx(void *provctx)
 {
     PROV_AES_HMAC_SHA256_CTX *ctx = provctx;
+    PROV_AES_HMAC_SHA256_CTX *dctx;
 
     if (!ossl_prov_is_running())
         return NULL;
 
-    return OPENSSL_memdup(ctx, sizeof(*ctx));
+    if (ctx == NULL)
+        return NULL;
+
+    dctx = OPENSSL_memdup(ctx, sizeof(*ctx));
+    if (dctx != NULL
+        && !ossl_cipher_generic_dupctx_tlsmac(&dctx->base_ctx.base,
+            &ctx->base_ctx.base)) {
+        OPENSSL_clear_free(dctx, sizeof(*dctx));
+        return NULL;
+    }
+    return dctx;
 }
 
 static void aes_cbc_hmac_sha256_freectx(void *vctx)
