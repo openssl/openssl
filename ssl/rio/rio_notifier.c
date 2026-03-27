@@ -13,6 +13,7 @@
 #include "internal/thread_once.h"
 #include "internal/rio_notifier.h"
 
+#if !defined(OPENSSL_SYS_WINDOWS) || RIO_NOTIFIER_METHOD == RIO_NOTIFIER_METHOD_SOCKETPAIR
 /*
  * Sets a socket as close-on-exec, except that this is a no-op if we are certain
  * we do not need to do this or the OS does not support the concept.
@@ -25,6 +26,7 @@ static int set_cloexec(int fd)
     return 1;
 #endif
 }
+#endif
 
 #if defined(OPENSSL_SYS_WINDOWS)
 
