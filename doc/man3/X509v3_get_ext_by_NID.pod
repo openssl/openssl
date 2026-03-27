@@ -30,7 +30,7 @@ X509_REVOKED_get_ext_by_critical, X509_REVOKED_delete_ext, X509_REVOKED_add_ext
  X509_EXTENSION *X509v3_delete_ext(STACK_OF(X509_EXTENSION) *x, int loc);
  X509_EXTENSION *X509v3_delete_extension(STACK_OF(X509_EXTENSION) **x, int loc);
  STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
-                                          X509_EXTENSION *ex, int loc);
+                                          const X509_EXTENSION *ex, int loc);
  STACK_OF(X509_EXTENSION)
       *X509v3_add_extensions(STACK_OF(X509_EXTENSION) **target,
                              const STACK_OF(X509_EXTENSION) *exts);
