@@ -5001,10 +5001,11 @@ err:
 }
 
 /*
- * Dynamically discover all applicable ciphers and verifies multi-step
- * init correctly. This test should require zero maintenance when new
- * ciphers are added as the discovery loop handles it.
- * This test focuses stale key-regression.
+ * Dynamically discover all applicable ciphers and verify multi-step
+ * init works correctly. This test should require zero maintenance when new
+ * ciphers are added, as the discovery loop handles them.
+ * This test focuses on verifying that ciphers do not reuse a key when it is
+ * changed under the same context in different steps.
  */
 
 /* maximum AEAD tag buffer size, exceeds AES-CBC-HMAC-SHA512 */
@@ -5139,6 +5140,11 @@ static int test_evp_diff_order_init(int idx)
     EVP_CIPHER_CTX *ctx_ivkey = NULL; /* used to test multi step init IV->KEY */
     EVP_CIPHER_CTX *ctx_onestep = NULL; /* base test with single step init */
 
+    OSSL_PARAM ivparams[2];
+    OSSL_PARAM tagparams[2];
+    OSSL_PARAM get_tagparams[2];
+
+    int ivlen = info->ivlen;
     unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
     unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
 
@@ -5165,6 +5171,11 @@ static int test_evp_diff_order_init(int idx)
     int blocksz = 0, tmplen = 0, testresult = 1, i = 0;
     char *errmsg = NULL;
 
+    ivparams[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_AEAD_IVLEN, &ivlen);
+    ivparams[1] = OSSL_PARAM_construct_end();
+    tagparams[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_AEAD_TAGLEN, &taglen);
+    tagparams[1] = OSSL_PARAM_construct_end();
+
     blocksz = EVP_CIPHER_get_block_size(info->ciph);
     pt_size = (blocksz > 1) ? (size_t)blocksz * 2 : 31;
 
@@ -5180,13 +5191,11 @@ static int test_evp_diff_order_init(int idx)
     }
 
     if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE) {
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_keyiv,
-                EVP_CTRL_AEAD_SET_IVLEN, info->ivlen, NULL))) {
+        if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_keyiv, ivparams))) {
             errmsg = "CCM_SET_IVLEN";
             goto err;
         }
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_keyiv,
-                EVP_CTRL_AEAD_SET_TAG, taglen, NULL))) {
+        if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_keyiv, tagparams))) {
             errmsg = "CCM_SET_TAGLEN";
             goto err;
         }
@@ -5242,8 +5251,11 @@ static int test_evp_diff_order_init(int idx)
         if (tl > 0)
             taglen = tl;
 
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_keyiv,
-                EVP_CTRL_AEAD_GET_TAG, taglen, tag_keyiv))) {
+        // change here
+        get_tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+            tag_keyiv, taglen);
+        get_tagparams[1] = OSSL_PARAM_construct_end();
+        if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx_keyiv, get_tagparams))) {
             errmsg = "AEAD_GET_TAG";
             goto err;
         }
@@ -5262,13 +5274,11 @@ static int test_evp_diff_order_init(int idx)
     }
 
     if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE) {
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_ivkey,
-                EVP_CTRL_AEAD_SET_IVLEN, info->ivlen, NULL))) {
+        if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_ivkey, ivparams))) {
             errmsg = "CCM_SET_IVLEN";
             goto err;
         }
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_ivkey,
-                EVP_CTRL_AEAD_SET_TAG, taglen, NULL))) {
+        if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_ivkey, tagparams))) {
             errmsg = "CCM_SET_TAGLEN";
             goto err;
         }
@@ -5307,9 +5317,11 @@ static int test_evp_diff_order_init(int idx)
     }
 
     ct_ivkey_len += ct_ivkey_fin_len;
+    get_tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag_ivkey, taglen);
+
     if (info->taglen > 0
-        && !TEST_true(EVP_CIPHER_CTX_ctrl(ctx_ivkey,
-            EVP_CTRL_AEAD_GET_TAG, taglen, tag_ivkey))) {
+        && !TEST_true(EVP_CIPHER_CTX_get_params(ctx_ivkey, get_tagparams))) {
         errmsg = "AEAD_GET_TAG";
         goto err;
     }
@@ -5325,13 +5337,11 @@ static int test_evp_diff_order_init(int idx)
         goto err;
     }
     if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE) {
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep,
-                EVP_CTRL_AEAD_SET_IVLEN, info->ivlen, NULL))) {
+        if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_onestep, ivparams))) {
             errmsg = "CCM_SET_IVLEN";
             goto err;
         }
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep,
-                EVP_CTRL_AEAD_SET_TAG, taglen, NULL))) {
+        if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_onestep, tagparams))) {
             errmsg = "CCM_SET_TAGLEN";
             goto err;
         }
@@ -5366,9 +5376,11 @@ static int test_evp_diff_order_init(int idx)
     }
 
     ct_onestep_len += ct_onestep_fin_len;
+    get_tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag_onestep, taglen);
+
     if (info->taglen > 0
-        && !TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep, EVP_CTRL_AEAD_GET_TAG,
-            taglen, tag_onestep))) {
+        && !TEST_true(EVP_CIPHER_CTX_get_params(ctx_onestep, get_tagparams))) {
         errmsg = "AEAD_GET_TAG";
         goto err;
     }
@@ -5411,7 +5423,7 @@ err:
     return testresult;
 }
 /*
- * Verify no stale key is not being used after providing a new key.
+ * Verify stale key is not being used after providing a new key in multiple steps.
  * This test performs a full round of encryption and then changes the
  * key and then the IV in a multi-step init.
  * This is compared to another context without reinitialization to check
@@ -5423,6 +5435,11 @@ static int test_evp_stale_key_reinit(int idx)
     EVP_CIPHER_CTX *ctx_reinit = NULL; /* used to test multi step init KEY->IV */
     EVP_CIPHER_CTX *ctx_onestep = NULL; /* base test with single step init */
 
+    OSSL_PARAM ivparams[2];
+    OSSL_PARAM tagparams[2];
+    OSSL_PARAM get_tagparams[2];
+
+    int ivlen = info->ivlen;
     unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
     unsigned char key2[EVP_MAX_KEY_LENGTH] = { 0 };
     unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
@@ -5450,6 +5467,11 @@ static int test_evp_stale_key_reinit(int idx)
 
     int blocksz = 0, tmplen = 0, testresult = 1, i = 0;
     char *errmsg = NULL;
+
+    ivparams[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_AEAD_IVLEN, &ivlen);
+    ivparams[1] = OSSL_PARAM_construct_end();
+    tagparams[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_AEAD_TAGLEN, &taglen);
+    tagparams[1] = OSSL_PARAM_construct_end();
 
     blocksz = EVP_CIPHER_get_block_size(info->ciph);
     pt_size = (blocksz > 1) ? (size_t)blocksz * 2 : 31;
@@ -5479,13 +5501,11 @@ static int test_evp_stale_key_reinit(int idx)
     }
 
     if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE) {
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_reinit,
-                EVP_CTRL_AEAD_SET_IVLEN, info->ivlen, NULL))) {
+        if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_reinit, ivparams))) {
             errmsg = "CCM_SET_IVLEN";
             goto err;
         }
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_reinit,
-                EVP_CTRL_AEAD_SET_TAG, taglen, NULL))) {
+        if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_reinit, tagparams))) {
             errmsg = "CCM_SET_TAGLEN";
             goto err;
         }
@@ -5528,8 +5548,10 @@ static int test_evp_stale_key_reinit(int idx)
         if (tl > 0)
             taglen = tl;
 
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_reinit,
-                EVP_CTRL_AEAD_GET_TAG, taglen, tag))) {
+        get_tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+            tag, taglen);
+        get_tagparams[1] = OSSL_PARAM_construct_end();
+        if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx_reinit, get_tagparams))) {
             errmsg = "AEAD_GET_TAG";
             goto err;
         }
@@ -5565,9 +5587,11 @@ static int test_evp_stale_key_reinit(int idx)
     }
 
     ct_reinit_len += ct_reinit_fin_len;
+    get_tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag_reinit, taglen);
+
     if (info->taglen > 0
-        && !TEST_true(EVP_CIPHER_CTX_ctrl(ctx_reinit,
-            EVP_CTRL_AEAD_GET_TAG, taglen, tag_reinit))) {
+        && !TEST_true(EVP_CIPHER_CTX_get_params(ctx_reinit, get_tagparams))) {
         errmsg = "AEAD_GET_TAG";
         goto err;
     }
@@ -5585,13 +5609,11 @@ static int test_evp_stale_key_reinit(int idx)
     }
 
     if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE) {
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep,
-                EVP_CTRL_AEAD_SET_IVLEN, info->ivlen, NULL))) {
+        if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_onestep, ivparams))) {
             errmsg = "CCM_SET_IVLEN";
             goto err;
         }
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep,
-                EVP_CTRL_AEAD_SET_TAG, taglen, NULL))) {
+        if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_onestep, tagparams))) {
             errmsg = "CCM_SET_TAGLEN";
             goto err;
         }
@@ -5625,9 +5647,11 @@ static int test_evp_stale_key_reinit(int idx)
     }
 
     ct_onestep_len += ct_onestep_fin_len;
+    get_tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag_onestep, taglen);
+
     if (info->taglen > 0
-        && !TEST_true(EVP_CIPHER_CTX_ctrl(ctx_onestep, EVP_CTRL_AEAD_GET_TAG,
-            taglen, tag_onestep))) {
+        && !TEST_true(EVP_CIPHER_CTX_get_params(ctx_onestep, get_tagparams))) {
         errmsg = "AEAD_GET_TAG";
         goto err;
     }
@@ -5659,7 +5683,9 @@ err:
 /*
  * Decrypt roundtrip:
  * Encrypt single-call, decrypt via multi-step init, verify plaintext recovery.
- * For AEAD ciphers this also exercises tag verification through the multi-step path.
+ * For AEAD ciphers this also exercises tag verification.
+ * The goal is to test that EVP behaves the same when initializing the key
+ * in different steps or in a single one in decryption.
  */
 static int test_evp_decrypt_roundtrip_multistep(int idx)
 {
@@ -5667,6 +5693,11 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
     EVP_CIPHER_CTX *ctx_enc = NULL; /* single-call encrypt */
     EVP_CIPHER_CTX *ctx_dec = NULL; /* multi-step decrypt (KEY -> IV) */
 
+    OSSL_PARAM ivparams[2];
+    OSSL_PARAM tagparams[2];
+    OSSL_PARAM get_tagparams[2];
+
+    int ivlen = info->ivlen;
     unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
     unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
 
@@ -5690,6 +5721,11 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
     blocksz = EVP_CIPHER_get_block_size(info->ciph);
     pt_size = (blocksz > 1) ? (size_t)blocksz * 2 : 31;
 
+    ivparams[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_AEAD_IVLEN, &ivlen);
+    ivparams[1] = OSSL_PARAM_construct_end();
+    tagparams[0] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_AEAD_TAGLEN, &taglen);
+    tagparams[1] = OSSL_PARAM_construct_end();
+
     for (i = 0; i < info->keylen && i < (int)sizeof(key); i++)
         key[i] = (unsigned char)(0xA0 + i);
 
@@ -5711,13 +5747,11 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
     }
 
     if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE) {
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_enc, EVP_CTRL_AEAD_SET_IVLEN,
-                info->ivlen, NULL))) {
+        if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_enc, ivparams))) {
             errmsg = "ENC_CCM_SET_IVLEN";
             goto err;
         }
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_enc, EVP_CTRL_AEAD_SET_TAG,
-                taglen, NULL))) {
+        if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_enc, tagparams))) {
             errmsg = "ENC_CCM_SET_TAGLEN";
             goto err;
         }
@@ -5757,9 +5791,10 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
 
         if (tl > 0)
             taglen = tl;
-
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_enc,
-                EVP_CTRL_AEAD_GET_TAG, taglen, tag))) {
+        get_tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+            tag, taglen);
+        get_tagparams[1] = OSSL_PARAM_construct_end();
+        if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx_enc, get_tagparams))) {
             errmsg = "ENC_AEAD_GET_TAG";
             goto err;
         }
@@ -5776,15 +5811,14 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
         goto err;
     }
 
+    tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, tag, (size_t)taglen);
     /* CCM requires tag before init */
     if (info->taglen > 0 && info->mode == EVP_CIPH_CCM_MODE) {
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_dec, EVP_CTRL_AEAD_SET_IVLEN,
-                info->ivlen, NULL))) {
+        if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_dec, ivparams))) {
             errmsg = "DEC_CCM_SET_IVLEN";
             goto err;
         }
-        if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx_dec, EVP_CTRL_AEAD_SET_TAG,
-                taglen, tag))) {
+        if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_dec, tagparams))) {
             errmsg = "DEC_CCM_SET_TAG";
             goto err;
         }
@@ -5805,8 +5839,7 @@ static int test_evp_decrypt_roundtrip_multistep(int idx)
      * provider tag state (e.g. ETM ciphers).
      */
     if (info->taglen > 0 && info->mode != EVP_CIPH_CCM_MODE
-        && !TEST_true(EVP_CIPHER_CTX_ctrl(ctx_dec, EVP_CTRL_AEAD_SET_TAG,
-            taglen, tag))) {
+        && !TEST_true(EVP_CIPHER_CTX_set_params(ctx_dec, tagparams))) {
         errmsg = "DEC_AEAD_SET_TAG";
         goto err;
     }
