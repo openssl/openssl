@@ -388,7 +388,7 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
             BIO_puts(out, ":");
         nid = SSL_get_shared_group(s, i);
         const char *name = SSL_group_to_name(s, nid);
-        BIO_puts(out, ((name == NULL) ? "<NULL>" : name ));
+        BIO_puts(out, ((name == NULL) ? "<NULL>" : name));
     }
     if (ngroups == 0)
         BIO_puts(out, "NONE");
