@@ -89,6 +89,14 @@ OpenSSL Releases
 
    *Helen Zhang*
 
+ * Added stricter validation for RSA private key parsing. Implements a check 
+   for `prime_infos` within function `rsa_cb`. The check ensures that keys 
+   with version 0 that include multi-prime parameters (prime_infos) are no 
+   longer accepted. Such keys are not compliant with PKCS#1 but were previously 
+   tolerated. These malformed keys may now be rejected during parsing.
+
+   *Oscar Capraro* (with much support from *Lily Wong* and *Emmalee Carpenter*)
+
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
  * Added `-expected-rpks` option to the `openssl s_client`
