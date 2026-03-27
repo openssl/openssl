@@ -50,7 +50,7 @@ typedef struct {
  * atomically updated
  */
 struct rcu_qp {
-    volatile uint64_t users;
+    uint64_t users;
 };
 
 struct thread_qp {
