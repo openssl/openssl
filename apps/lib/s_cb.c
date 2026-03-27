@@ -403,9 +403,13 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
     EVP_PKEY *key;
 
     if (!SSL_get_peer_tmp_key(s, &key)) {
-        if (SSL_version(s) == TLS1_3_VERSION)
+        if (SSL_version(s) == TLS1_3_VERSION) {
+            const char *name;
+
+            name = SSL_group_to_name(s, SSL_get_negotiated_group(s));
             BIO_printf(out, "Negotiated TLS1.3 group: %s\n",
-                SSL_group_to_name(s, SSL_get_negotiated_group(s)));
+                name == NULL ? "(null)" : name);
+        }
         return 1;
     }
 

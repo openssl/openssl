@@ -66,7 +66,7 @@ BIO *BIO_new_file(const char *filename, const char *mode)
     if (file == NULL) {
         ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
             "calling fopen(%s, %s)",
-            filename, mode);
+            filename == NULL ? "(null)" : filename, mode);
         if (errno == ENOENT
 #ifdef ENXIO
             || errno == ENXIO
