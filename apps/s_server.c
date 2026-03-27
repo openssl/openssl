@@ -617,7 +617,8 @@ static int ssl_ech_servername_cb(SSL *s, int *ad, void *arg)
         return SSL_TLSEXT_ERR_NOACK;
     if (echrv == SSL_ECH_STATUS_SUCCESS && servername != NULL) {
         if (ctx2 != NULL) {
-            int check_host = X509_check_host(p->scert, servername, 0, 0, NULL);
+            int check_host = check_cert_might_be_valid(p->biodebug,
+                p->scert, servername, NULL, NULL);
 
             if (check_host == 1) {
                 if (p->biodebug != NULL)

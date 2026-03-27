@@ -1001,7 +1001,7 @@ static int do_x509_check(const X509 *x, const char *chk, size_t chklen,
     return 0;
 }
 
-int X509_check_host(const X509 *x, const char *chk, size_t chklen,
+int ossl_x509_check_host(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags, char **peername)
 {
     if (chk == NULL)
@@ -1020,6 +1020,14 @@ int X509_check_host(const X509 *x, const char *chk, size_t chklen,
     return do_x509_check(x, chk, chklen, flags, GEN_DNS, 0, peername);
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_1)
+int X509_check_host(const X509 *x, const char *chk, size_t chklen,
+    unsigned int flags, char **peername)
+{
+    return ossl_x509_check_host(x, chk, chklen, flags, peername);
+}
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
+
 int ossl_x509_check_rfc822(X509 *x, const char *chk, size_t chklen,
     unsigned int flags)
 {
@@ -1034,6 +1042,15 @@ int ossl_x509_check_smtputf8(X509 *x, const char *chk, size_t chklen,
         == 1;
 }
 
+int ossl_x509_check_ip(const X509 *x, const unsigned char *chk, size_t chklen,
+    unsigned int flags)
+{
+    if (chk == NULL)
+        return -2;
+    return do_x509_check(x, (char *)chk, chklen, flags, GEN_IPADD, 0, NULL);
+}
+
+#if !defined(OPENSSL_NO_DEPRECATED_4_1)
 int X509_check_email(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags)
 {
@@ -1063,9 +1080,7 @@ int X509_check_email(const X509 *x, const char *chk, size_t chklen,
 int X509_check_ip(const X509 *x, const unsigned char *chk, size_t chklen,
     unsigned int flags)
 {
-    if (chk == NULL)
-        return -2;
-    return do_x509_check(x, (char *)chk, chklen, flags, GEN_IPADD, 0, NULL);
+    return ossl_x509_check_ip(x, chk, chklen, flags);
 }
 
 int X509_check_ip_asc(const X509 *x, const char *ipasc, unsigned int flags)
@@ -1080,6 +1095,7 @@ int X509_check_ip_asc(const X509 *x, const char *ipasc, unsigned int flags)
         return -2;
     return do_x509_check(x, (char *)ipout, iplen, flags, GEN_IPADD, 0, NULL);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
 
 char *ossl_ipaddr_to_asc(unsigned char *p, int len)
 {
