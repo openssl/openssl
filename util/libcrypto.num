@@ -1766,6 +1766,8 @@ OSSL_PARAM_BLD_push_utf8_string         ?	4_0_0	EXIST::FUNCTION:
 OSSL_PARAM_BLD_push_utf8_ptr            ?	4_0_0	EXIST::FUNCTION:
 OSSL_PARAM_BLD_push_octet_string        ?	4_0_0	EXIST::FUNCTION:
 OSSL_PARAM_BLD_push_octet_ptr           ?	4_0_0	EXIST::FUNCTION:
+OSSL_PARAM_BLD_push_EC_affine_point     ?	4_0_0	EXIST::FUNCTION:EC
+OSSL_PARAM_BLD_push_EC_affine_point_ex  ?	4_0_0	EXIST::FUNCTION:
 OSSL_PARAM_locate                       ?	4_0_0	EXIST::FUNCTION:
 OSSL_PARAM_locate_const                 ?	4_0_0	EXIST::FUNCTION:
 OSSL_PARAM_construct_int                ?	4_0_0	EXIST::FUNCTION:

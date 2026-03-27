@@ -45,6 +45,13 @@ OpenSSL Releases
 
    *Tim Perry*
 
+ * Added the `OSSL_PARAM_BLD_push_EC_affine_point()` and
+   `OSSL_PARAM_BLD_push_EC_affine_point_ex()` functions, which create an
+   `OSSL_PARAM` object referencing the EC public key with given affine
+   coordinates.
+
+   *Igor Ustinov*
+
  * Dropped `no-ecdsa` and `no-ecdh` options from `Configure` as these options
    did not really disable the implementations. Use `no-ec` to disable the
    elliptic curve support.

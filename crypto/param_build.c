@@ -9,11 +9,17 @@
  */
 
 #include <string.h>
-#include <openssl/err.h>
-#include <openssl/cryptoerr.h>
-#include <openssl/params.h>
-#include <openssl/types.h>
-#include <openssl/safestack.h>
+#include "openssl/err.h"
+#include "openssl/cryptoerr.h"
+#include "openssl/params.h"
+#include "openssl/types.h"
+#include "openssl/safestack.h"
+#include "openssl/ec.h"
+#include "openssl/core_names.h"
+#ifndef OPENSSL_NO_EC
+#include "openssl/obj_mac.h"
+#include "crypto/ec.h"
+#endif
 #include "internal/param_build_set.h"
 
 /*
@@ -28,6 +34,7 @@ typedef struct {
     size_t size;
     size_t alloc_blocks;
     const BIGNUM *bn;
+    void *owned_data;
     const void *string;
     union {
         /*
@@ -105,9 +112,14 @@ OSSL_PARAM_BLD *OSSL_PARAM_BLD_new(void)
 static void free_all_params(OSSL_PARAM_BLD *bld)
 {
     int i, n = sk_OSSL_PARAM_BLD_DEF_num(bld->params);
+    OSSL_PARAM_BLD_DEF *pd;
 
-    for (i = 0; i < n; i++)
-        OPENSSL_free(sk_OSSL_PARAM_BLD_DEF_pop(bld->params));
+    for (i = 0; i < n; i++) {
+        pd = sk_OSSL_PARAM_BLD_DEF_pop(bld->params);
+        if (pd->owned_data != NULL)
+            OPENSSL_free(pd->owned_data);
+        OPENSSL_free(pd);
+    }
 }
 
 void OSSL_PARAM_BLD_free(OSSL_PARAM_BLD *bld)
@@ -304,6 +316,112 @@ int OSSL_PARAM_BLD_push_octet_ptr(OSSL_PARAM_BLD *bld, const char *key,
     pd->string = buf;
     return 1;
 }
+
+int OSSL_PARAM_BLD_push_EC_affine_point_ex(OSSL_PARAM_BLD *bld,
+    const BIGNUM *X, const BIGNUM *Y, unsigned int field_len)
+{
+    unsigned char *buf = NULL;
+    int buflen;
+    OSSL_PARAM_BLD_DEF *pd = NULL;
+
+    if (bld == NULL || X == NULL || Y == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    /* Checking if affine coordinates are not too long */
+    if (BN_num_bytes(X) > field_len || BN_num_bytes(Y) > field_len) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
+            "EC affine coordinate exceeds field length");
+        return 0;
+    }
+
+    /* Converting (X,Y) to the SEC1 uncompressed point encoding blob */
+    buflen = 1 + 2 * field_len;
+    buf = OPENSSL_malloc(buflen);
+    if (buf == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    buf[0] = POINT_CONVERSION_UNCOMPRESSED;
+    if (BN_bn2binpad(X, buf + 1, field_len) < 0) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
+            "failed to encode X coordinate");
+        goto err;
+    }
+    if (BN_bn2binpad(Y, buf + 1 + field_len, field_len) < 0) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
+            "failed to encode Y coordinate");
+        goto err;
+    }
+
+    /* Pushing blob to bld */
+    pd = param_push(bld, OSSL_PKEY_PARAM_PUB_KEY, buflen, buflen, OSSL_PARAM_OCTET_STRING, 0);
+    if (pd == NULL)
+        goto err;
+    pd->owned_data = buf;
+    pd->string = pd->owned_data;
+    return 1;
+
+err:
+    OPENSSL_free(buf);
+    return 0;
+}
+
+#ifndef OPENSSL_NO_EC
+int OSSL_PARAM_BLD_push_EC_affine_point(OSSL_PARAM_BLD *bld,
+    const BIGNUM *X, const BIGNUM *Y)
+{
+    const char *group_name = NULL;
+    int nid;
+    EC_GROUP *group = NULL;
+    int field_len;
+    int i, n;
+    OSSL_PARAM_BLD_DEF *pd = NULL;
+
+    if (bld == NULL || X == NULL || Y == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    /* Looking for the set group name */
+    if (bld->params == NULL) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
+            "EC group name must be set in builder before pushing an affine point");
+        return 0;
+    }
+    n = sk_OSSL_PARAM_BLD_DEF_num(bld->params);
+    for (i = n - 1; i >= 0; i--) {
+        pd = sk_OSSL_PARAM_BLD_DEF_value(bld->params, i);
+        if (pd == NULL || pd->key == NULL)
+            continue;
+        if (strcmp(pd->key, OSSL_PKEY_PARAM_GROUP_NAME) == 0)
+            break;
+    }
+    if (i < 0) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
+            "EC group name must be set in builder before pushing an affine point");
+        return 0;
+    }
+    group_name = pd->string;
+
+    /* Determining the group field length */
+    nid = ossl_ec_curve_name2nid(group_name);
+    if (nid == NID_undef) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
+            "group is not an EC named curve: %s", group_name);
+        return 0;
+    }
+
+    group = EC_GROUP_new_by_curve_name_ex(NULL, NULL, nid);
+    if (group == NULL)
+        return 0;
+    field_len = (EC_GROUP_get_degree(group) + 7) / 8;
+    EC_GROUP_free(group);
+
+    return OSSL_PARAM_BLD_push_EC_affine_point_ex(bld, X, Y, field_len);
+}
+#endif
 
 static OSSL_PARAM *param_bld_convert(OSSL_PARAM_BLD *bld, OSSL_PARAM *param,
     OSSL_PARAM_ALIGNED_BLOCK *blk,

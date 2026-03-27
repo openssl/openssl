@@ -312,7 +312,8 @@ int ossl_ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
     enc_len = (form == POINT_CONVERSION_COMPRESSED) ? 1 + field_len : 1 + 2 * field_len;
 
     if (len != (size_t)enc_len) {
-        ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
+        ERR_raise_data(ERR_LIB_EC, EC_R_INVALID_ENCODING,
+            "EC affine coordinate length doesn't match the field degree");
         return 0;
     }
 
