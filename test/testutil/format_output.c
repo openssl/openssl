@@ -386,7 +386,7 @@ void test_output_bignum(const char *name, const BIGNUM *bn)
 {
     if (bn == NULL || BN_is_zero(bn)) {
         test_printf_stderr("bignum: '%s' = %s\n",
-            name == NULL ? "(null)" : name,
+            name == NULL ? "<NULL>" : name,
             test_bignum_zero_null(bn));
     } else if (BN_num_bytes(bn) <= BN_OUTPUT_SIZE) {
         unsigned char buf[BN_OUTPUT_SIZE];
@@ -398,7 +398,7 @@ void test_output_bignum(const char *name, const BIGNUM *bn)
         while (*p == '0' && *++p != '\0')
             ;
         test_printf_stderr("bignum: '%s' = %s0x%s\n",
-            name == NULL ? "(null)" : name,
+            name == NULL ? "<NULL>" : name,
             BN_is_negative(bn) ? "-" : "", p);
     } else {
         test_fail_bignum_common("bignum", NULL, 0, NULL, NULL, NULL, name,
