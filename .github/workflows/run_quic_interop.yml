@@ -23,7 +23,9 @@ jobs:
           persist-credentials: false
       - name: "log in to quay.io"
         run: |
-          docker login -u openssl-ci+machine -p ${{ secrets.QUAY_IO_PASSWORD }} quay.io
+          docker login -u openssl-ci+machine -p ${QUAY_IO_PASSWORD} quay.io
+        env:
+          QUAY_IO_PASSWORD: ${{ secrets.QUAY_IO_PASSWORD }}
       - name: "Build container"
         run: |
           cd test/quic-openssl-docker/
@@ -44,7 +46,9 @@ jobs:
           persist-credentials: false
       - name: "log in to quay.io"
         run: |
-          docker login -u openssl-ci+machine -p ${{ secrets.QUAY_IO_PASSWORD }} quay.io
+          docker login -u openssl-ci+machine -p ${QUAY_IO_PASSWORD} quay.io
+        env:
+          QUAY_IO_PASSWORD: ${{ secrets.QUAY_IO_PASSWORD }}
       - name: Patch qns.Dockerfile
         run: |
           sed -i 's/RUN     cmake -DQUIC_BUILD_TOOLS=on -DQUIC_ENABLE_LOGGING=on ../RUN     cmake -DQUIC_BUILD_TOOLS=on -DQUIC_ENABLE_LOGGING=on -DQUIC_TLS_LIB=openssl ../' ./scripts/qns.Dockerfile
