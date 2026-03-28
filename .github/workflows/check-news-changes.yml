@@ -74,7 +74,7 @@ jobs:
         if: ${{ env.FOUND_NEWS_CHANGES_ADDITION == 'no' && env.SKIP_NEWS_CHECK == 'no' }}
         run: |
           set +e
-          echo ${HEAD_REF} | grep -q "feature"
+          echo "${HEAD_REF}" | grep -q "feature"
           if [ $? -eq 0 ]; then
             echo "Feature branch found"
             echo "NEED_NEWS_CHANGES=yes" >> $GITHUB_ENV
