@@ -304,7 +304,7 @@ static int validate_local_part(const char *name, size_t len,
 static int validate_email_name(const char *name, size_t len, int rfc822)
 {
     size_t dns_len, local_len;
-    char *at, *next, *dnsname;
+    const char *at, *next, *dnsname;
     ossl_charset_t local_charset;
 
     /*
