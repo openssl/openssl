@@ -16,6 +16,9 @@
 #include <openssl/opensslconf.h>
 #include "testutil.h"
 #include "crypto/chacha.h"
+#if defined(__powerpc64__) && !defined(OPENSSL_SYS_AIX) && !defined(OPENSSL_SYS_MACOSX)
+# include "crypto/ppc_arch.h"
+#endif
 
 static const unsigned int key[] = {
     0x03020100, 0x07060504, 0x0b0a0908, 0x0f0e0d0c,
@@ -179,6 +182,70 @@ static int test_cha_cha_internal(int n)
     return 1;
 }
 
+#if defined(__powerpc64__) && !defined(OPENSSL_SYS_AIX) && !defined(OPENSSL_SYS_MACOSX)
+/*
+ * Test that ChaCha20_ctr32_vsx_8x (the POWER10 8-block path, triggered for
+ * buffers > 255 bytes) preserves callee-saved FPRs f14-f25 as required by
+ * the ELFv2 ABI. The function uses vxxlor to spill VMX values into
+ * VSR0-VSR25, which aliases FPR0-FPR25; without explicit saves/restores
+ * the caller's floating-point state is silently corrupted.
+ */
+__attribute__((noinline))
+static int test_chacha20_p10_fpr_abi(void)
+{
+    /*
+     * Use a buffer larger than 255 bytes to ensure the 8x path is taken.
+     * The input content doesn't matter for this ABI test.
+     */
+    static unsigned char in[512], out[512];
+    int ok = 1;
+
+    register double r14 asm("fr14");
+    register double r15 asm("fr15");
+    register double r16 asm("fr16");
+    register double r17 asm("fr17");
+    register double r18 asm("fr18");
+    register double r19 asm("fr19");
+    register double r20 asm("fr20");
+    register double r21 asm("fr21");
+    register double r22 asm("fr22");
+    register double r23 asm("fr23");
+    register double r24 asm("fr24");
+    register double r25 asm("fr25");
+
+    r14 = 14.0; r15 = 15.0; r16 = 16.0; r17 = 17.0;
+    r18 = 18.0; r19 = 19.0; r20 = 20.0; r21 = 21.0;
+    r22 = 22.0; r23 = 23.0; r24 = 24.0; r25 = 25.0;
+
+    /* Force the values into the actual FPR registers before the call */
+    asm volatile("" : "+d"(r14), "+d"(r15), "+d"(r16), "+d"(r17));
+    asm volatile("" : "+d"(r18), "+d"(r19), "+d"(r20), "+d"(r21));
+    asm volatile("" : "+d"(r22), "+d"(r23), "+d"(r24), "+d"(r25));
+
+    ChaCha20_ctr32(out, in, sizeof(in), key, ivp);
+
+    /* Read back from the FPR registers after the call */
+    asm volatile("" : "+d"(r14), "+d"(r15), "+d"(r16), "+d"(r17));
+    asm volatile("" : "+d"(r18), "+d"(r19), "+d"(r20), "+d"(r21));
+    asm volatile("" : "+d"(r22), "+d"(r23), "+d"(r24), "+d"(r25));
+
+    ok &= TEST_double_eq(r14, 14.0);
+    ok &= TEST_double_eq(r15, 15.0);
+    ok &= TEST_double_eq(r16, 16.0);
+    ok &= TEST_double_eq(r17, 17.0);
+    ok &= TEST_double_eq(r18, 18.0);
+    ok &= TEST_double_eq(r19, 19.0);
+    ok &= TEST_double_eq(r20, 20.0);
+    ok &= TEST_double_eq(r21, 21.0);
+    ok &= TEST_double_eq(r22, 22.0);
+    ok &= TEST_double_eq(r23, 23.0);
+    ok &= TEST_double_eq(r24, 24.0);
+    ok &= TEST_double_eq(r25, 25.0);
+
+    return ok;
+}
+#endif
+
 int setup_tests(void)
 {
 #ifdef OPENSSL_CPUID_OBJ
@@ -186,5 +253,10 @@ int setup_tests(void)
 #endif
 
     ADD_ALL_TESTS(test_cha_cha_internal, sizeof(ref));
+#if defined(__powerpc64__) && !defined(OPENSSL_SYS_AIX) && !defined(OPENSSL_SYS_MACOSX)
+    /* Only run the ABI test when the POWER10 8x path is available */
+    if (OPENSSL_ppccap_P & PPC_BRD31)
+        ADD_TEST(test_chacha20_p10_fpr_abi);
+#endif
     return 1;
 }
