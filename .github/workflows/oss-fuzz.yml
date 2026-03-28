@@ -24,12 +24,12 @@ jobs:
         sudo rm -rf /usr/share/dotnet /usr/share/swift /usr/local/.ghcup /usr/local/share/powershell /usr/local/share/chromium /usr/local/lib/android /usr/local/lib/node_modules
         df
     - name: Build Fuzzers
-      uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@51fea8a581a325b79f2af174b9f7c04333c283c0 # master
+      uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@master
       with:
         oss-fuzz-project-name: 'openssl'
         dry-run: false
     - name: Run Fuzzers
-      uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@51fea8a581a325b79f2af174b9f7c04333c283c0 # master
+      uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@master
       with:
         oss-fuzz-project-name: 'openssl'
         fuzz-seconds: 600
