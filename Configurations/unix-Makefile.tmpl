@@ -1553,6 +1553,16 @@ EOF
           my $section = $1;
           my $name = uc basename($args{src}, ".$section");
           my $pod = $gen0;
+
+          if ($config{manpage_format} eq "mdoc") {
+              return <<"EOF";
+$args{src}: $pod
+	pod2mdoc -n $name -s $section\$(MANSUFFIX) \\
+		 -d \$(RELEASE_DATE) \\
+		 $pod >\$\@
+EOF
+          }
+          die "Unhandled manpage format: $config{manpage_format}" unless ($config{manpage_format} eq "roff");
           return <<"EOF";
 $args{src}: $pod
 	pod2man --name=$name --section=$section\$(MANSUFFIX) --center=OpenSSL \\
