@@ -1,0 +1,4 @@
+[package]
+name = "openssl"
+version = "3.5.0"
+nanvix-version = "latest"

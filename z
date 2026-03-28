@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Copyright(c) The Maintainers of Nanvix.
+# Licensed under the MIT License.
+
+# Unified entry point: delegates to z.sh (Linux/macOS) or z.ps1 (Windows).
+# Requires nanvix-zutil to be installed (pip install nanvix-zutil).
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+case "$(uname -s)" in
+    CYGWIN*|MINGW*|MSYS*)
+        exec powershell.exe -NoProfile -ExecutionPolicy Bypass \
+            -File "$SCRIPT_DIR/z.ps1" "$@"
+        ;;
+    *)
+        exec "$SCRIPT_DIR/z.sh" "$@"
+        ;;
+esac
