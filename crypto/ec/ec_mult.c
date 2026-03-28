@@ -213,7 +213,7 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
         goto err;
     }
 
-    if (!BN_copy(k, scalar)) {
+    if ((BN_copy(k, scalar) == NULL)) {
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }

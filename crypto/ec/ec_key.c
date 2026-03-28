@@ -136,7 +136,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
                 if (dest->priv_key == NULL)
                     return NULL;
             }
-            if (!BN_copy(dest->priv_key, src->priv_key))
+            if ((BN_copy(dest->priv_key, src->priv_key) == NULL))
                 return NULL;
             if (src->group->meth->keycopy
                 && src->group->meth->keycopy(dest, src) == 0)
