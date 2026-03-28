@@ -1533,7 +1533,7 @@ static int ecp_nistz256group_full_init(EC_GROUP *group,
     }
     if (!EC_POINT_copy(group->generator, P))
         goto err;
-    if (!BN_copy(group->order, order))
+    if ((BN_copy(group->order, order) == NULL))
         goto err;
     if (!BN_set_word(group->cofactor, 1))
         goto err;

@@ -167,7 +167,7 @@ static ossl_inline BIGNUM *bn_mod_inverse_no_branch(BIGNUM *in,
     if (BN_is_one(A)) {
         /* Y*a == 1  (mod |n|) */
         if (!Y->neg && BN_ucmp(Y, n) < 0) {
-            if (!BN_copy(R, Y))
+            if ((BN_copy(R, Y) == NULL))
                 goto err;
         } else {
             if (!BN_nnmod(R, Y, n, ctx))
@@ -456,7 +456,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
                     if (!BN_lshift(tmp, X, 2))
                         goto err;
                 } else if (D->top == 1) {
-                    if (!BN_copy(tmp, X))
+                    if ((BN_copy(tmp, X) == NULL))
                         goto err;
                     if (!BN_mul_word(tmp, D->d[0]))
                         goto err;
@@ -492,7 +492,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
     if (BN_is_one(A)) {
         /* Y*a == 1  (mod |n|) */
         if (!Y->neg && BN_ucmp(Y, n) < 0) {
-            if (!BN_copy(R, Y))
+            if ((BN_copy(R, Y) == NULL))
                 goto err;
         } else {
             if (!BN_nnmod(R, Y, n, ctx))

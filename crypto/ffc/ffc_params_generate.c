@@ -267,7 +267,7 @@ static int generate_p(BN_CTX *ctx, const EVP_MD *evpmd, int max_counter, int n,
          * X = W + 2^(L-1) where W < 2^(L-1)
          */
         if (!BN_mask_bits(W, L - 1)
-            || !BN_copy(X, W)
+            || (BN_copy(X, W) == NULL)
             || !BN_add(X, X, test)
             /*
              * A.1.1.2 Step (11.4) AND

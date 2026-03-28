@@ -288,7 +288,7 @@ int bn_div_fixed_top(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num,
         goto err;
 
     /* First we normalise the numbers */
-    if (!BN_copy(sdiv, divisor))
+    if ((BN_copy(sdiv, divisor) == NULL))
         goto err;
     norm_shift = bn_left_align(sdiv);
     sdiv->neg = 0;

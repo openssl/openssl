@@ -645,7 +645,7 @@ EC_KEY *ossl_ec_key_dup(const EC_KEY *src, int selection)
             /* no parameter-less keys allowed */
             goto err;
         ret->priv_key = BN_new();
-        if (ret->priv_key == NULL || !BN_copy(ret->priv_key, src->priv_key))
+        if (ret->priv_key == NULL || (BN_copy(ret->priv_key, src->priv_key) == NULL))
             goto err;
         if (ret->group->meth->keycopy
             && ret->group->meth->keycopy(ret, src) == 0)

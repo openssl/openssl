@@ -322,7 +322,7 @@ BIGNUM *BN_dup(const BIGNUM *a)
     t = BN_get_flags(a, BN_FLG_SECURE) ? BN_secure_new() : BN_new();
     if (t == NULL)
         return NULL;
-    if (!BN_copy(t, a)) {
+    if ((BN_copy(t, a) == NULL)) {
         BN_free(t);
         return NULL;
     }
