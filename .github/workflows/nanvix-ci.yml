@@ -11,8 +11,6 @@ on:
   pull_request:
     branches: ["nanvix/**"]
   workflow_dispatch:
-  repository_dispatch:
-    types: [nanvix-minor-release, nanvix-major-release]
 
 permissions:
   contents: write
@@ -21,7 +19,7 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name || github.ref || 'default' }}
-  cancel-in-progress: ${{ github.event_name == 'repository_dispatch' }}
+  cancel-in-progress: true
 
 jobs:
   ci:
@@ -31,5 +29,3 @@ jobs:
       caller-event-name: ${{ github.event_name }}
     secrets:
       GH_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
-
-
