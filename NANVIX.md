@@ -295,7 +295,6 @@ shared CI configuration and are not defined directly in this repository's workfl
 | PR to `nanvix/**` | Pull requests targeting Nanvix branches |
 | Daily schedule | Runs at midnight UTC |
 | Manual dispatch | Can be triggered manually |
-| Repository dispatch | Triggered by `nanvix-release` events |
 
 ### Build Matrix
 
