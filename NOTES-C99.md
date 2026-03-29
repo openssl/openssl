@@ -32,4 +32,18 @@ The list of C-99 features we don't support in OpenSSL project follows:
      {
          char s[n]; /* variable size array */
          ...
+     }
      ```
+
+Exit status macros (`EXIT_SUCCESS`, `EXIT_FAILURE`)
+---------------------------------------------------
+
+These macros from `<stdlib.h>` represent *process* exit status.  Do not use
+them as return values from internal APIs (any function that is not `main()`).
+Use them only as the return value from `main()` or as the argument to
+`exit(3)` (or equivalent, such as `_exit()`).
+
+Elsewhere, be consistent with the rest of the codebase: return a positive
+value for success (often `1`), and `0` or a non-positive value for failure,
+or `bool` when that improves clarity.  See
+<https://github.com/openssl/openssl/issues/30562>.
