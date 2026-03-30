@@ -2209,6 +2209,7 @@ int app_mmap_file(const char *path, BIO *err_bio, size_t known_size,
     struct stat st;
     size_t filesize;
     int fd;
+    int ret = -1;
     void *p;
 
     *out_data = NULL;
@@ -2217,10 +2218,16 @@ int app_mmap_file(const char *path, BIO *err_bio, size_t known_size,
     if (known_size == 0)
         return 0;
 
+    fd = open(path, O_RDONLY);
+    if (fd < 0) {
+        BIO_puts(err_bio, "Error opening file for memory mapping\n");
+        return -1;
+    }
+
     if (known_size == (size_t)-1) {
-        if (stat(path, &st) != 0 || st.st_size < 0) {
+        if (fstat(fd, &st) != 0 || st.st_size < 0) {
             BIO_printf(err_bio, "Error: failed to get size of file '%s'\n", path);
-            return -1;
+            goto err;
         }
         if (!S_ISREG(st.st_mode)) {
             /*
@@ -2229,24 +2236,21 @@ int app_mmap_file(const char *path, BIO *err_bio, size_t known_size,
              * and fall back to the buffer path in callers.
              */
             BIO_puts(err_bio, "Error: failed to use memory-mapped file\n");
-            return -1;
+            goto err;
         }
         filesize = (size_t)st.st_size;
         if ((off_t)filesize != st.st_size) {
             BIO_puts(err_bio, "Error: failed to convert file size, likely too big\n");
-            return -1;
+            goto err;
         }
-        if (filesize == 0)
-            return 0;
+        if (filesize == 0) {
+            ret = 0;
+            goto err;
+        }
     } else {
         filesize = known_size;
     }
 
-    fd = open(path, O_RDONLY);
-    if (fd < 0) {
-        BIO_puts(err_bio, "Error opening file for memory mapping\n");
-        return -1;
-    }
     p = mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, fd, 0);
     (void)close(fd);
     if (p == MAP_FAILED) {
@@ -2256,6 +2260,10 @@ int app_mmap_file(const char *path, BIO *err_bio, size_t known_size,
     *out_data = (const unsigned char *)p;
     *out_size = filesize;
     return 1;
+
+err:
+    close(fd);
+    return ret;
 }
 #endif
 
