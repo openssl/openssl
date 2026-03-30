@@ -7,6 +7,13 @@
 
 set -euo pipefail
 
+# In CI containers the checkout directory may be owned by a different uid than
+# the process running this script, triggering git's "dubious ownership" check.
+# Mark the current directory safe before calling git rev-parse.
+if [ -n "${CI:-}" ]; then
+	git config --global --add safe.directory "$(pwd)"
+fi
+
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 VENV="$REPO_ROOT/.nanvix/venv"
 
