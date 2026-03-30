@@ -8,15 +8,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)"
-
-# In CI containers the checkout directory may be owned by a different uid than
-# the process running this script, triggering git's "dubious ownership" check.
-# Scope the safe.directory override to this single git invocation.
-if [ -n "${CI:-}" ]; then
-	REPO_ROOT="$(git -c safe.directory="$SCRIPT_DIR" -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
-else
-	REPO_ROOT="$(git rev-parse --show-toplevel)"
-fi
+REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 
 VENV="$REPO_ROOT/.nanvix/venv"
 
