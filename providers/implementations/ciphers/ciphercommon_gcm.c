@@ -137,6 +137,9 @@ static int setivinv(PROV_GCM_CTX *ctx, unsigned char *in, size_t inl)
         || ctx->enc)
         return 0;
 
+    if (inl == 0 || inl > ctx->ivlen)
+        return 0;
+
     memcpy(ctx->iv + ctx->ivlen - inl, in, inl);
     if (!ctx->hw->setiv(ctx, ctx->iv, ctx->ivlen))
         return 0;
