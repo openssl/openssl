@@ -1503,7 +1503,12 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             SSL_SESSION_free(sess);
             sess = NULL;
             s->ext.early_data_ok = 0;
-            s->ext.ticket_expected = 0;
+            /*
+             * We fall back to a full handshake. The new session ticket will be
+             * issued to the client with the newly negotiated ciphersuite,
+             * allowing successful resumption on future connections.
+             */
+            s->ext.ticket_expected = 1;
             continue;
         }
         break;
