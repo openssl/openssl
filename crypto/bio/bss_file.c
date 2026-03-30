@@ -193,10 +193,26 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = (long)fseek(fp, num, 0);
         break;
     case BIO_CTRL_EOF:
+        /*
+         * NOTE feof returns 0 if we're not in an eof condition
+         * and a non-zero value if we are (i.e. any non-zero value
+         * so we map the 0:non-0 return value here to 0:1 with a
+         * double negation
+         */
         if (b->flags & BIO_FLAGS_UPLINK_INTERNAL)
-            ret = (long)UP_feof(fp);
+            ret = !!(long)UP_feof(fp);
         else
-            ret = (long)feof(fp);
+            ret = !!(long)feof(fp);
+#if defined(OPENSSL_SYS_WINDOWS)
+        /*
+         * Windows gives us an extra issue to contend with.
+         * In windows feof may return 0 if it is passed an invalid
+         * stream.  In this event, feof sets errno to EINVAL.
+         * Check for that here, and set ret to -EINVAL if its the case.
+         */
+        if (ret == 0 && errno == EINVAL)
+            ret = -EINVAL;
+#endif
         break;
     case BIO_C_FILE_TELL:
     case BIO_CTRL_INFO:

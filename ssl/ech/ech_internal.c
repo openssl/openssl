@@ -1864,7 +1864,7 @@ end:
             goto paderr;
         }
         /* odd form of check below just for emphasis */
-        if ((extsoffset + 1) > clearlen) {
+        if ((extsoffset + 2) > clearlen) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             goto paderr;
         }

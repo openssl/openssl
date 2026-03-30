@@ -464,6 +464,18 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     INVALID_EXTENSION,
     INVALID_EXTENSION,
 #endif /* END_OPENSSL_NO_ECH */
+    { /* RFC 8701 GREASE extension 1 - type is dynamic */
+        TLSEXT_TYPE_grease1,
+        SSL_EXT_CLIENT_HELLO,
+        0,
+        NULL,
+        NULL, NULL, NULL, tls_construct_ctos_grease1, NULL },
+    { /* RFC 8701 GREASE extension 2 - type is dynamic */
+        TLSEXT_TYPE_grease2,
+        SSL_EXT_CLIENT_HELLO,
+        0,
+        NULL,
+        NULL, NULL, NULL, tls_construct_ctos_grease2, NULL },
     { /* Must be immediately before pre_shared_key */
         TLSEXT_TYPE_padding,
         SSL_EXT_CLIENT_HELLO,

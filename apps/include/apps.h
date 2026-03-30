@@ -10,6 +10,16 @@
 #ifndef OSSL_APPS_H
 #define OSSL_APPS_H
 
+#if defined(__linux__) || defined(__sun__) || defined(__hpux)
+/*
+ * Allow open() and stat() to work with files larger than 2GB on 32-bit
+ * systems.  See crypto/o_fopen.c and crypto/bio/bss_file.c.
+ */
+#ifndef _FILE_OFFSET_BITS
+#define _FILE_OFFSET_BITS 64
+#endif
+#endif
+
 #include "internal/common.h" /* for HAS_PREFIX */
 #include "internal/nelem.h"
 #include <assert.h>
@@ -22,6 +32,19 @@
 #endif
 
 #include <openssl/e_os2.h>
+#if defined(OPENSSL_SYS_UNIX) && defined(_POSIX_MAPPED_FILES) && _POSIX_MAPPED_FILES > 0
+#include <sys/mman.h>
+#include <unistd.h>
+/*
+ * Map a file read-only into memory.  Returns 1 on success (*out_data and
+ * *out_size set; caller must munmap when done), 0 when file size is 0 (no
+ * error, caller may use buffer path), or -1 on error (message printed to
+ * bio_err).  known_size: (size_t)-1 = stat to get size; 0 = do not map
+ * (return 0); > 0 = use this size (caller obtained it from stat of same path).
+ */
+int app_mmap_file(const char *path, BIO *err_bio, size_t known_size,
+    const unsigned char **out_data, size_t *out_size);
+#endif
 #include <openssl/types.h>
 #include <openssl/bio.h>
 #include <openssl/x509.h>

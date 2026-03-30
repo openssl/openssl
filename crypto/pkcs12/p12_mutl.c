@@ -142,7 +142,7 @@ static int PBMAC1_PBKDF2_HMAC(OSSL_LIB_CTX *ctx, const char *propq,
     /* Validate salt is an OCTET STRING choice */
     if (pbkdf2_param->salt == NULL
         || pbkdf2_param->salt->type != V_ASN1_OCTET_STRING) {
-        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_PARSE_ERROR);
+        ERR_raise_data(ERR_LIB_PKCS12, PKCS12_R_PARSE_ERROR, "Invalid Salt");
         goto err;
     }
     pbkdf2_salt = pbkdf2_param->salt->value.octet_string;
@@ -151,7 +151,8 @@ static int PBMAC1_PBKDF2_HMAC(OSSL_LIB_CTX *ctx, const char *propq,
     if (pbkdf2_param->keylength != NULL)
         keylen = ASN1_INTEGER_get(pbkdf2_param->keylength);
     if (keylen <= 0 || keylen > EVP_MAX_MD_SIZE) {
-        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_PARSE_ERROR);
+        ERR_raise_data(ERR_LIB_PKCS12, PKCS12_R_PARSE_ERROR,
+            "Invalid Key length (%d is not in the range 1..64)", keylen);
         goto err;
     }
 
@@ -184,7 +185,6 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
 {
     int ret = 0;
     EVP_MD *md;
-    HMAC_CTX *hmac = NULL;
     unsigned char key[EVP_MAX_MD_SIZE], *salt;
     int saltlen, iter;
     char md_name[80];
@@ -194,6 +194,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     const ASN1_OBJECT *macoid;
     OSSL_LIB_CTX *libctx;
     const char *propq;
+    size_t md_sz, outlen;
 
     if (!PKCS7_type_is_data(p12->authsafes)) {
         ERR_raise(ERR_LIB_PKCS12, PKCS12_R_CONTENT_TYPE_NOT_DATA);
@@ -233,6 +234,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     md_nid = EVP_MD_get_type(md);
     if (keylen <= 0)
         goto err;
+    md_sz = keylen;
 
     /* For PBMAC1 we use a special keygen callback if not provided (e.g. on verification) */
     if (pbmac1_md_nid != NID_undef && pkcs12_key_gen == NULL) {
@@ -284,18 +286,17 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
             }
         }
     }
-    if ((hmac = HMAC_CTX_new()) == NULL
-        || !HMAC_Init_ex(hmac, key, keylen, md, NULL)
-        || !HMAC_Update(hmac, p12->authsafes->d.data->data,
-            p12->authsafes->d.data->length)
-        || !HMAC_Final(hmac, mac, maclen)) {
+    if (EVP_Q_mac(libctx, "HMAC", propq, md_name, NULL, key, keylen,
+            p12->authsafes->d.data->data, p12->authsafes->d.data->length,
+            mac, md_sz, &outlen)
+        == NULL)
         goto err;
-    }
+    if (outlen > UINT_MAX)
+        goto err;
+    *maclen = (unsigned int)outlen;
     ret = 1;
-
 err:
     OPENSSL_cleanse(key, sizeof(key));
-    HMAC_CTX_free(hmac);
     EVP_MD_free(md);
     return ret;
 }
@@ -528,6 +529,8 @@ int PKCS12_set_pbmac1_pbkdf2(PKCS12 *p12, const char *pass, int passlen,
     X509_ALGOR_free(param->messageAuthScheme);
     param->keyDerivationFunc = alg;
     param->messageAuthScheme = hmac_alg;
+    alg = NULL;
+    hmac_alg = NULL;
 
     X509_SIG_getm(p12->mac->dinfo, &macalg, &macoct);
     if (!ASN1_TYPE_pack_sequence(ASN1_ITEM_rptr(PBMAC1PARAM), param, &macalg->parameter))
@@ -549,6 +552,8 @@ int PKCS12_set_pbmac1_pbkdf2(PKCS12 *p12, const char *pass, int passlen,
     ret = 1;
 
 err:
+    X509_ALGOR_free(alg);
+    X509_ALGOR_free(hmac_alg);
     PBMAC1PARAM_free(param);
     OPENSSL_free(known_salt);
     return ret;

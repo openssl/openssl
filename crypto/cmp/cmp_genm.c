@@ -112,7 +112,8 @@ static OSSL_CMP_ITAV *get_genm_itav(OSSL_CMP_CTX *ctx,
     req = NULL;
     itavs = OSSL_CMP_exec_GENM_ses(ctx);
     if (itavs == NULL) {
-        if (OSSL_CMP_CTX_get_status(ctx) != OSSL_CMP_PKISTATUS_request)
+        if (OSSL_CMP_CTX_get_status(ctx) != OSSL_CMP_PKISTATUS_request
+            && OSSL_CMP_CTX_get_status(ctx) != OSSL_CMP_PKISTATUS_rejection)
             ERR_raise_data(ERR_LIB_CMP, CMP_R_GETTING_GENP,
                 "with infoType %s", desc);
         return NULL;
@@ -148,7 +149,7 @@ static OSSL_CMP_ITAV *get_genm_itav(OSSL_CMP_CTX *ctx,
         OSSL_CMP_ITAV_free(itav);
     }
     ERR_raise_data(ERR_LIB_CMP, CMP_R_INVALID_GENP,
-        "could not find any ITAV for %s", desc);
+        "could not find any suitable ITAV for %s", desc);
 
 err:
     sk_OSSL_CMP_ITAV_free(itavs);
@@ -335,11 +336,14 @@ int OSSL_CMP_get1_rootCaKeyUpdate(OSSL_CMP_CTX *ctx,
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ROOTCAKEYUPDATE);
         goto end;
     }
-    if (oldWithOld != NULL && my_oldWithNew != NULL
-        && !verify_ss_cert_trans(ctx, *newWithNew, my_oldWithNew,
-            oldWithOld_copy, "oldWithOld")) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ROOTCAKEYUPDATE);
-        goto end;
+    if (my_oldWithNew != NULL) {
+        if (oldWithOld == NULL) {
+            ossl_cmp_log(WARN, ctx, "oldWithNew certificate received in genp for verifying oldWithOld, but oldWithOld was not provided");
+        } else if (!verify_ss_cert_trans(ctx, *newWithNew, my_oldWithNew,
+                       oldWithOld_copy, "oldWithOld")) {
+            ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ROOTCAKEYUPDATE);
+            goto end;
+        }
     }
 
     if (!X509_up_ref(*newWithNew))

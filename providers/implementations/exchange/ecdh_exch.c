@@ -507,7 +507,7 @@ static ossl_inline int ecdh_plain_derive(void *vpecdhctx, unsigned char *secret,
     if (has_cofactor && !cofactor_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(pecdhctx, OSSL_FIPS_IND_SETTABLE2,
                 pecdhctx->libctx, "ECDH", "Cofactor",
-                ossl_fips_config_ecdh_cofactor_check)) {
+                FIPS_CONFIG_ECDH_COFACTOR_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_COFACTOR_REQUIRED);
             goto end;
         }

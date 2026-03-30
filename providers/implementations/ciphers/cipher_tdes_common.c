@@ -65,7 +65,10 @@ void ossl_tdes_freectx(void *vctx)
 static int tdes_encrypt_check_approved(PROV_TDES_CTX *ctx, int enc)
 {
     /* Triple-DES encryption is not approved in FIPS 140-3 */
-    if (enc && !OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0, ctx->base.libctx, "Triple-DES", "Encryption", ossl_fips_config_tdes_encrypt_disallowed))
+    if (enc
+        && !OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
+            ctx->base.libctx, "Triple-DES", "Encryption",
+            FIPS_CONFIG_TDES_ENCRYPT_DISABLED))
         return 0;
     return 1;
 }

@@ -115,6 +115,8 @@ It is used internally as a sub algorithm of CSHAKE.
 
 =item HKDF-SHA512, see L<EVP_KDF-HKDF(7)>
 
+=item IKEV2KDF, see L<EVP_KDF-IKEV2KDF(7)>
+
 =item TLS13-KDF, see L<EVP_KDF-TLS13_KDF(7)>
 
 =item SSKDF, see L<EVP_KDF-SS(7)>
@@ -479,6 +481,8 @@ Signature tests used with the "KAT_Signature" type.
 Key agreement tests used with the "KAT_KA" type.
 
 =item "HKDF" (B<OSSL_SELF_TEST_DESC_KDF_HKDF>)
+
+=item "IKEV2KDF" (B<OSSL_SELF_TEST_DESC_KDF_IKEV2KDF>)
 
 =item "TLS13_KDF_EXTRACT" (B<OSSL_SELF_TEST_DESC_KDF_TLS13_EXTRACT>)
 

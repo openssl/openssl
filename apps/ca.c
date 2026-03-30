@@ -1505,26 +1505,31 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
     name = X509_REQ_get_subject_name(req);
     for (i = 0; i < X509_NAME_entry_count(name); i++) {
+        int type;
         ne = X509_NAME_get_entry(name, i);
         str = X509_NAME_ENTRY_get_data(ne);
         obj = X509_NAME_ENTRY_get_object(ne);
         nid = OBJ_obj2nid(obj);
+        type = ASN1_STRING_type(str);
 
         /* If no EMAIL is wanted in the subject */
         if (nid == NID_pkcs9_emailAddress && !email_dn)
             continue;
 
         /* check some things */
-        if (nid == NID_pkcs9_emailAddress && ASN1_STRING_type(str) != V_ASN1_IA5STRING) {
+        if (nid == NID_pkcs9_emailAddress && type != V_ASN1_IA5STRING) {
             BIO_puts(bio_err,
                 "\nemailAddress type needs to be of type IA5STRING\n");
             goto end;
         }
-        if (ASN1_STRING_type(str) != V_ASN1_BMPSTRING && ASN1_STRING_type(str) != V_ASN1_UTF8STRING) {
-            j = ASN1_PRINTABLE_type(ASN1_STRING_get0_data(str), ASN1_STRING_length(str));
-            if ((j == V_ASN1_T61STRING && ASN1_STRING_type(str) != V_ASN1_T61STRING) || (j == V_ASN1_IA5STRING && ASN1_STRING_type(str) == V_ASN1_PRINTABLESTRING)) {
+        if (type != V_ASN1_BMPSTRING && type != V_ASN1_UTF8STRING) {
+            j = ASN1_PRINTABLE_type(ASN1_STRING_get0_data(str),
+                ASN1_STRING_length(str));
+            if ((j == V_ASN1_T61STRING && type != V_ASN1_T61STRING)
+                || (j == V_ASN1_IA5STRING && type == V_ASN1_PRINTABLESTRING)) {
                 BIO_puts(bio_err,
-                    "\nThe string contains characters that are illegal for the ASN.1 type\n");
+                    "\nThe string contains characters that are illegal for the"
+                    " ASN.1 type\n");
                 goto end;
             }
         }

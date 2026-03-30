@@ -248,7 +248,7 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx,
                 OSSL_FIPS_IND_SETTABLE1,
                 ctx->libctx,
                 md_nid, sha1_allowed, 0, desc,
-                ossl_fips_config_signature_digest_check))
+                FIPS_CONFIG_SIGNATURE_DIGEST_CHECK))
             goto err;
     }
 #endif
@@ -657,21 +657,20 @@ static void *ecdsa_dupctx(void *vctx)
     PROV_ECDSA_CTX *srcctx = (PROV_ECDSA_CTX *)vctx;
     PROV_ECDSA_CTX *dstctx;
 
-    if (!ossl_prov_is_running())
+    /* Test KATS should not need to be supported */
+    if (!ossl_prov_is_running()
+        || srcctx->kinv != NULL
+        || srcctx->r != NULL
+        || (dstctx = OPENSSL_memdup(srcctx, sizeof(*srcctx))) == NULL)
         return NULL;
 
-    dstctx = OPENSSL_zalloc(sizeof(*srcctx));
-    if (dstctx == NULL)
-        return NULL;
-
-    *dstctx = *srcctx;
     dstctx->ec = NULL;
     dstctx->propq = NULL;
+    dstctx->md = NULL;
+    dstctx->mdctx = NULL;
+    dstctx->sig = NULL;
 
     if (srcctx->ec != NULL && !EC_KEY_up_ref(srcctx->ec))
-        goto err;
-    /* Test KATS should not need to be supported */
-    if (srcctx->kinv != NULL || srcctx->r != NULL)
         goto err;
     dstctx->ec = srcctx->ec;
 
@@ -679,18 +678,16 @@ static void *ecdsa_dupctx(void *vctx)
         goto err;
     dstctx->md = srcctx->md;
 
-    if (srcctx->mdctx != NULL) {
-        dstctx->mdctx = EVP_MD_CTX_new();
-        if (dstctx->mdctx == NULL
-            || !EVP_MD_CTX_copy_ex(dstctx->mdctx, srcctx->mdctx))
-            goto err;
-    }
-
-    if (srcctx->propq != NULL) {
-        dstctx->propq = OPENSSL_strdup(srcctx->propq);
-        if (dstctx->propq == NULL)
-            goto err;
-    }
+    if (srcctx->mdctx != NULL
+        && ((dstctx->mdctx = EVP_MD_CTX_new()) == NULL
+            || !EVP_MD_CTX_copy_ex(dstctx->mdctx, srcctx->mdctx)))
+        goto err;
+    if (srcctx->propq != NULL
+        && (dstctx->propq = OPENSSL_strdup(srcctx->propq)) == NULL)
+        goto err;
+    if (srcctx->sig != NULL
+        && (dstctx->sig = OPENSSL_memdup(srcctx->sig, srcctx->siglen)) == NULL)
+        goto err;
 
     return dstctx;
 err:
@@ -971,6 +968,12 @@ static int ecdsa_sigalg_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             if (!OSSL_PARAM_get_octet_string(p.sig, (void **)&ctx->sig,
                     0, &ctx->siglen))
                 return 0;
+            /* The signature must not be empty */
+            if (ctx->siglen == 0) {
+                OPENSSL_free(ctx->sig);
+                ctx->sig = NULL;
+                return 0;
+            }
         }
     }
     return 1;

@@ -19,6 +19,9 @@ jobs:
       matrix:
         release: [
           {
+            branch: '4.0',
+            cppflags: ''
+          }, {
             branch: '3.6',
             cppflags: ''
           }, {

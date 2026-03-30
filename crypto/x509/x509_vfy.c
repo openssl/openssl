@@ -625,6 +625,9 @@ static int check_extensions(X509_STORE_CTX *ctx)
 
     for (i = 0; i < num; i++) {
         x = sk_X509_value(ctx->chain, i);
+        /* RFC 5280, 4.2: a given extension MUST NOT appear more than once */
+        CB_FAIL_IF((x->ex_flags & EXFLAG_DUPLICATE) != 0,
+            ctx, x, i, X509_V_ERR_DUPLICATE_EXTENSION);
         CB_FAIL_IF((ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) == 0
                 && (x->ex_flags & EXFLAG_CRITICAL) != 0,
             ctx, x, i, X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION);
@@ -926,64 +929,55 @@ static int check_id_error(X509_STORE_CTX *ctx, int errcode)
 
 static int check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
 {
-    int i;
-    int n = sk_X509_BUFFER_num(vpm->hosts);
     const uint8_t *name;
+    int n = sk_X509_BUFFER_num(vpm->hosts);
 
     if (vpm->peername != NULL) {
         OPENSSL_free(vpm->peername);
         vpm->peername = NULL;
     }
-    for (i = 0; i < n; ++i) {
+    for (int i = 0; i < n; ++i) {
         size_t len = sk_X509_BUFFER_value(vpm->hosts, i)->len;
         name = sk_X509_BUFFER_value(vpm->hosts, i)->data;
         if (X509_check_host(x, (const char *)name, len, vpm->hostflags, &vpm->peername) > 0)
             return 1;
     }
-    return n == 0;
+    return n <= 0;
 }
 
 static int check_email(X509 *x, X509_VERIFY_PARAM *vpm)
 {
-    int i, n, j;
     const uint8_t *name;
+    int nasc = sk_X509_BUFFER_num(vpm->rfc822s);
+    int nutf = sk_X509_BUFFER_num(vpm->smtputf8s);
 
-    if (vpm->rfc822s == NULL)
-        return 1;
-
-    n = sk_X509_BUFFER_num(vpm->rfc822s);
-
-    for (i = 0; i < n; ++i) {
+    for (int i = 0; i < nasc; ++i) {
         size_t len = sk_X509_BUFFER_value(vpm->rfc822s, i)->len;
         name = sk_X509_BUFFER_value(vpm->rfc822s, i)->data;
         if (ossl_x509_check_rfc822(x, (const char *)name, len, vpm->hostflags))
             return 1;
     }
-
-    j = sk_X509_BUFFER_num(vpm->smtputf8s);
-    for (i = 0; i < j; ++i) {
+    for (int i = 0; i < nutf; ++i) {
         size_t len = sk_X509_BUFFER_value(vpm->smtputf8s, i)->len;
         name = sk_X509_BUFFER_value(vpm->smtputf8s, i)->data;
         if (ossl_x509_check_smtputf8(x, (const char *)name, len, vpm->hostflags))
             return 1;
     }
-
-    return n == 0 && j == 0;
+    return nasc <= 0 && nutf <= 0;
 }
 
 static int check_ips(X509 *x, X509_VERIFY_PARAM *vpm)
 {
-    int i;
-    int n = sk_X509_BUFFER_num(vpm->ips);
     const uint8_t *name;
+    int n = sk_X509_BUFFER_num(vpm->ips);
 
-    for (i = 0; i < n; ++i) {
+    for (int i = 0; i < n; ++i) {
         size_t len = sk_X509_BUFFER_value(vpm->ips, i)->len;
         name = sk_X509_BUFFER_value(vpm->ips, i)->data;
         if (X509_check_ip(x, name, len, vpm->hostflags) > 0)
             return 1;
     }
-    return n == 0;
+    return n <= 0;
 }
 
 static int check_id(X509_STORE_CTX *ctx)
@@ -1311,7 +1305,7 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
         goto end;
     }
 
-    if (OCSP_basic_verify(bs, ctx->chain, ctx->store, OCSP_TRUSTOTHER) <= 0) {
+    if (OCSP_basic_verify(bs, ctx->chain, ctx->store, 0) <= 0) {
         ret = X509_V_ERR_OCSP_SIGNATURE_FAILURE;
         goto end;
     }

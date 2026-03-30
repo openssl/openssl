@@ -598,6 +598,7 @@ typedef enum OPTION_choice {
     OPT_S_ENUM,
     OPT_IGNORE_UNEXPECTED_EOF,
     OPT_FALLBACKSCSV,
+    OPT_GREASE,
     OPT_NOCMDS,
     OPT_ADV,
     OPT_PROXY,
@@ -671,6 +672,7 @@ const OPTIONS s_client_options[] = {
     { "read_buf", OPT_READ_BUF, 'p',
         "Default read buffer size to be used for connections" },
     { "fallback_scsv", OPT_FALLBACKSCSV, '-', "Send the fallback SCSV" },
+    { "grease", OPT_GREASE, '-', "Send GREASE values in ClientHello (RFC 8701)" },
 
     OPT_SECTION("Identity"),
     { "cert", OPT_CERT, '<', "Client certificate file to use" },
@@ -1031,6 +1033,7 @@ int s_client_main(int argc, char **argv)
 #endif
     int read_buf_len = 0;
     int fallback_scsv = 0;
+    int grease = 0;
     OPTION_CHOICE o;
 #ifndef OPENSSL_NO_DTLS
     int enable_timeouts = 0;
@@ -1517,6 +1520,9 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_FALLBACKSCSV:
             fallback_scsv = 1;
+            break;
+        case OPT_GREASE:
+            grease = 1;
             break;
         case OPT_KEYFORM:
             if (!opt_format(opt_arg(), OPT_FMT_ANY, &key_format))
@@ -2304,6 +2310,8 @@ int s_client_main(int argc, char **argv)
 
     if (fallback_scsv)
         SSL_set_mode(con, SSL_MODE_SEND_FALLBACK_SCSV);
+    if (grease)
+        SSL_set_options(con, SSL_OP_GREASE);
 
     if (!noservername && (servername != NULL || dane_tlsa_domain == NULL)) {
         if (servername == NULL) {
@@ -4199,7 +4207,11 @@ static void user_data_init(struct user_data_st *user_data, SSL *con, char *buf,
 
 static int user_data_add(struct user_data_st *user_data, size_t i)
 {
-    if (user_data->buflen != 0 || i > user_data->bufmax)
+    /*
+     * We must allow one byte for a NUL terminator so i must be less than
+     * bufmax
+     */
+    if (user_data->buflen != 0 || i >= user_data->bufmax)
         return 0;
 
     user_data->buflen = i;

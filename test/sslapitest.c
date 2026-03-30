@@ -119,11 +119,14 @@ static int error_writing_log = 0;
 #ifndef OPENSSL_NO_OCSP
 static int ocsp_server_called = 0;
 static int ocsp_client_called = 0;
+static int ocsp_verify_error = X509_V_OK;
 #ifndef OSSL_NO_USABLE_TLS1_3
 static int ocsp_verify_cb_called = 0;
 #endif
 static int cdummyarg = 1;
 static X509 *ocspcert = NULL;
+static const char *ocsp_signer_key = "subinterCA.key";
+static const char *ocsp_signer_cert = "subinterCA.pem";
 #endif
 
 #define CLIENT_VERSION_LEN 2
@@ -1856,7 +1859,7 @@ static int test_cleanse_plaintext(void)
 
 #ifndef OPENSSL_NO_OCSP
 static OCSP_RESPONSE *create_ocsp_resp(X509 *ssl_cert, X509 *issuer, int status,
-    char *signer_key_files, char *signer_cert_files)
+    const char *signer_key_files, const char *signer_cert_files)
 {
     ASN1_TIME *thisupd = X509_gmtime_adj(NULL, 0);
     ASN1_TIME *nextupd = X509_time_adj_ex(NULL, 1, 0, NULL);
@@ -1929,7 +1932,8 @@ static int ocsp_server_cb_single(SSL *s, void *arg)
     SSL_get0_chain_certs(s, &server_certs);
     issuer = sk_X509_value(server_certs, 0);
 
-    ocsp_resp = create_ocsp_resp(ssl_cert, issuer, V_OCSP_CERTSTATUS_GOOD, "subinterCA.key", "subinterCA.pem");
+    ocsp_resp = create_ocsp_resp(ssl_cert, issuer, V_OCSP_CERTSTATUS_GOOD,
+        ocsp_signer_key, ocsp_signer_cert);
     if (!TEST_ptr(ocsp_resp))
         return SSL_TLSEXT_ERR_ALERT_FATAL;
 
@@ -1965,6 +1969,13 @@ static int ocsp_client_cb_single(SSL *s, void *arg)
 
     ocsp_client_called = 1;
     return 1;
+}
+
+static int verify_cb_capture_error(int preverify_ok, X509_STORE_CTX *x509_ctx)
+{
+    if (!preverify_ok && ocsp_verify_error == X509_V_OK)
+        ocsp_verify_error = X509_STORE_CTX_get_error(x509_ctx);
+    return preverify_ok;
 }
 
 static int test_tlsext_status_type(void)
@@ -2093,9 +2104,59 @@ static int test_tlsext_status_type(void)
         || !TEST_true(ocsp_server_called))
         goto end;
 
+    /*
+     * Test that a stapled OCSP response signed by the leaf certificate
+     * (unauthorized signer) is rejected when X509_V_FLAG_OCSP_RESP_CHECK
+     * is enabled.  Reuse the existing sctx/cctx, adding only the trust
+     * anchor, verify callback, and OCSP response check flag.
+     */
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    ocsp_signer_key = "leaf.key";
+    ocsp_signer_cert = "leaf.pem";
+    ocsp_server_called = 0;
+    ocsp_verify_error = X509_V_OK;
+    cdummyarg = 1;
+
+    {
+        char *root = test_mk_file_path(certsdir, "rootCA.pem");
+
+        if (!TEST_ptr(root)
+            || !TEST_true(SSL_CTX_load_verify_locations(cctx, root, NULL))) {
+            OPENSSL_free(root);
+            goto end;
+        }
+        OPENSSL_free(root);
+    }
+    SSL_CTX_set_verify(cctx, SSL_VERIFY_PEER, verify_cb_capture_error);
+    {
+        X509_VERIFY_PARAM *vpm = X509_VERIFY_PARAM_new();
+
+        if (!TEST_ptr(vpm))
+            goto end;
+        X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_OCSP_RESP_CHECK);
+        if (!TEST_true(SSL_CTX_set1_param(cctx, vpm))) {
+            X509_VERIFY_PARAM_free(vpm);
+            goto end;
+        }
+        X509_VERIFY_PARAM_free(vpm);
+    }
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL))
+        || !TEST_int_eq(ocsp_server_called, 1)
+        || !TEST_int_eq(ocsp_verify_error, X509_V_ERR_OCSP_VERIFY_FAILED))
+        goto end;
+
     testresult = 1;
 
 end:
+    ocsp_signer_key = "subinterCA.key";
+    ocsp_signer_cert = "subinterCA.pem";
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
@@ -10227,6 +10288,7 @@ static int test_session_cache_overflow(int idx)
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
     SSL_SESSION *sess = NULL;
+    int references;
 
 #ifdef OSSL_NO_USABLE_TLS1_3
     /* If no TLSv1.3 available then do nothing in this case */
@@ -10299,6 +10361,15 @@ static int test_session_cache_overflow(int idx)
      */
     get_sess_val = SSL_get_session(serverssl);
     if (!TEST_ptr(get_sess_val))
+        goto end;
+    /*
+     * Normally the session is also stored in the cache, thus we have more than
+     * one reference, but due to an out-of-memory error it can happen that this
+     * is the only reference, and in that case the SSL_free(serverssl) below
+     * would free the get_sess_val, causing a use-after-free error.
+     */
+    if (!TEST_true(CRYPTO_GET_REF(&get_sess_val->references, &references))
+        || !TEST_int_ge(references, 2))
         goto end;
     sess = SSL_get1_session(clientssl);
     if (!TEST_ptr(sess))
@@ -14134,6 +14205,227 @@ err:
 }
 #endif
 
+#if !defined(OSSL_NO_USABLE_TLS1_3)
+/*
+ * RFC 8701 GREASE test helpers.
+ * We capture the raw ClientHello via msg_callback and then parse it with
+ * PACKET functions to confirm that GREASE values (matching 0x?A?A) are
+ * present in the expected fields.
+ */
+static unsigned char *grease_ch_buf;
+static size_t grease_ch_len;
+
+static int is_grease(unsigned int v)
+{
+    return (v & 0x0f0f) == 0x0a0a && (v >> 8) == (v & 0xff);
+}
+
+static void grease_msg_cb(int write_p, int version, int content_type,
+    const void *buf, size_t len, SSL *ssl, void *arg)
+{
+    const unsigned char *p = buf;
+
+    /*
+     * We want the outgoing (write_p == 1) handshake (content_type == 22)
+     * ClientHello (msg_type == 1).  The buf starts at the handshake header:
+     *   byte 0: msg_type, bytes 1-3: length
+     */
+    if (write_p != 1 || content_type != SSL3_RT_HANDSHAKE
+        || len < SSL3_HM_HEADER_LENGTH
+        || p[0] != SSL3_MT_CLIENT_HELLO)
+        return;
+
+    /* Only capture the first ClientHello (not HRR retry) */
+    if (grease_ch_buf != NULL)
+        return;
+
+    grease_ch_buf = OPENSSL_memdup(buf, len);
+    grease_ch_len = len;
+}
+
+/*
+ * Parse a captured ClientHello (starting from handshake header) and check
+ * that it contains GREASE values in cipher suites, extensions, supported
+ * groups, key shares, and signature algorithms.
+ * Returns 1 on success, 0 on failure.
+ */
+static int check_grease_in_client_hello(void)
+{
+    PACKET pkt, ciphers, session, compression, exts, ext_data;
+    PACKET inner;
+    unsigned int ext_type = 0, val = 0;
+    int found_grease_cipher = 0;
+    int found_grease_ext = 0;
+    int found_grease_group = 0;
+    int found_grease_kshare = 0;
+    int found_grease_sigalg = 0;
+    int found_grease_version = 0;
+
+    memset(&pkt, 0, sizeof(pkt));
+    memset(&ciphers, 0, sizeof(ciphers));
+    memset(&session, 0, sizeof(session));
+    memset(&compression, 0, sizeof(compression));
+    memset(&exts, 0, sizeof(exts));
+    memset(&ext_data, 0, sizeof(ext_data));
+    memset(&inner, 0, sizeof(inner));
+
+    if (!TEST_ptr(grease_ch_buf)
+        || !TEST_true(PACKET_buf_init(&pkt, grease_ch_buf,
+            grease_ch_len))
+        /* Skip handshake message header */
+        || !TEST_true(PACKET_forward(&pkt, SSL3_HM_HEADER_LENGTH))
+        /* Skip client_version + random */
+        || !TEST_true(PACKET_forward(&pkt,
+            CLIENT_VERSION_LEN + SSL3_RANDOM_SIZE))
+        /* Skip session_id */
+        || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &session))
+        /* Get cipher suites */
+        || !TEST_true(PACKET_get_length_prefixed_2(&pkt, &ciphers))
+        /* Skip compression */
+        || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &compression))
+        /* Get extensions */
+        || !TEST_true(PACKET_as_length_prefixed_2(&pkt, &exts)))
+        return 0;
+
+    /* Scan cipher suites for GREASE */
+    while (PACKET_remaining(&ciphers) > 0) {
+        if (!TEST_true(PACKET_get_net_2(&ciphers, &val)))
+            return 0;
+        if (is_grease(val))
+            found_grease_cipher = 1;
+    }
+
+    /* Scan extensions */
+    while (PACKET_remaining(&exts) > 0) {
+        if (!TEST_true(PACKET_get_net_2(&exts, &ext_type))
+            || !TEST_true(PACKET_get_length_prefixed_2(&exts,
+                &ext_data)))
+            return 0;
+
+        if (is_grease(ext_type))
+            found_grease_ext++;
+
+        /* Check for GREASE inside supported_versions */
+        if (ext_type == TLSEXT_TYPE_supported_versions) {
+            if (!TEST_true(PACKET_get_length_prefixed_1(&ext_data,
+                    &inner)))
+                return 0;
+            while (PACKET_remaining(&inner) > 0) {
+                if (!TEST_true(PACKET_get_net_2(&inner, &val)))
+                    return 0;
+                if (is_grease(val))
+                    found_grease_version = 1;
+            }
+        }
+
+        /* Check for GREASE inside supported_groups */
+        if (ext_type == TLSEXT_TYPE_supported_groups) {
+            if (!TEST_true(PACKET_get_length_prefixed_2(&ext_data,
+                    &inner)))
+                return 0;
+            while (PACKET_remaining(&inner) > 0) {
+                if (!TEST_true(PACKET_get_net_2(&inner, &val)))
+                    return 0;
+                if (is_grease(val))
+                    found_grease_group = 1;
+            }
+        }
+
+        /* Check for GREASE inside key_share */
+        if (ext_type == TLSEXT_TYPE_key_share) {
+            PACKET ks_entry;
+
+            memset(&ks_entry, 0, sizeof(ks_entry));
+            if (!TEST_true(PACKET_get_length_prefixed_2(&ext_data,
+                    &inner)))
+                return 0;
+            while (PACKET_remaining(&inner) > 0) {
+                if (!TEST_true(PACKET_get_net_2(&inner, &val))
+                    || !TEST_true(PACKET_get_length_prefixed_2(
+                        &inner, &ks_entry)))
+                    return 0;
+                if (is_grease(val))
+                    found_grease_kshare = 1;
+            }
+        }
+
+        /* Check for GREASE inside signature_algorithms */
+        if (ext_type == TLSEXT_TYPE_signature_algorithms) {
+            if (!TEST_true(PACKET_get_length_prefixed_2(&ext_data,
+                    &inner)))
+                return 0;
+            while (PACKET_remaining(&inner) > 0) {
+                if (!TEST_true(PACKET_get_net_2(&inner, &val)))
+                    return 0;
+                if (is_grease(val))
+                    found_grease_sigalg = 1;
+            }
+        }
+    }
+
+    if (!TEST_true(found_grease_cipher))
+        return 0;
+    if (!TEST_int_eq(found_grease_ext, 2))
+        return 0;
+    if (!TEST_true(found_grease_version))
+        return 0;
+    if (!TEST_true(found_grease_group))
+        return 0;
+    if (!TEST_true(found_grease_kshare))
+        return 0;
+    if (!TEST_true(found_grease_sigalg))
+        return 0;
+
+    return 1;
+}
+
+static int test_grease(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+
+    grease_ch_buf = NULL;
+    grease_ch_len = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(),
+            TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    SSL_CTX_set_options(cctx, SSL_OP_GREASE);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+            &clientssl, NULL, NULL)))
+        goto end;
+
+    SSL_set_msg_callback(clientssl, grease_msg_cb);
+
+    /* A full handshake should succeed - server must tolerate GREASE */
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+
+    /* Now verify the captured ClientHello contains GREASE values */
+    if (!TEST_true(check_grease_in_client_hello()))
+        goto end;
+
+    testresult = 1;
+
+end:
+    OPENSSL_free(grease_ch_buf);
+    grease_ch_buf = NULL;
+    grease_ch_len = 0;
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+#endif /* !defined(OSSL_NO_USABLE_TLS1_3) */
+
 static int test_ssl_conf_flags(void)
 {
     SSL_CONF_CTX *cctx = NULL;
@@ -14254,6 +14546,52 @@ end:
 #else /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
     return TEST_skip("No EC and DH support.");
 #endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
+}
+
+/*
+ * Test that if we attempt to send HTTP to a TLS server that we get the expected
+ * failure reason code.
+ */
+static int test_http_verbs(int idx)
+{
+    SSL_CTX *sctx = NULL;
+    SSL *serverssl = NULL;
+    int testresult = 0;
+    const char *verbs[] = { "GET", "POST", "HEAD" };
+    const char *http_trailer = " / HTTP/1.0\r\n\r\n";
+    BIO *b = BIO_new(BIO_s_mem());
+
+    if (!TEST_true((unsigned int)idx < OSSL_NELEM(verbs)))
+        goto end;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            NULL, 0, 0, &sctx, NULL, cert, privkey)))
+        goto end;
+
+    serverssl = SSL_new(sctx);
+    if (!TEST_ptr(serverssl))
+        goto end;
+
+    if (!TEST_int_gt(BIO_write(b, verbs[idx], (int)strlen(verbs[idx])), 0))
+        goto end;
+    if (!TEST_int_gt(BIO_write(b, http_trailer, (int)strlen(http_trailer)), 0))
+        goto end;
+    SSL_set_bio(serverssl, b, b);
+    b = NULL;
+
+    ERR_clear_error();
+    if (!TEST_int_le(SSL_accept(serverssl), 0))
+        goto end;
+    if (!TEST_int_eq(ERR_GET_REASON(ERR_get_error()), SSL_R_HTTP_REQUEST))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_CTX_free(sctx);
+    BIO_free(b);
+
+    return testresult;
 }
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
@@ -14598,6 +14936,10 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_ssl_set_groups_unsupported_keyshare, 2);
     ADD_TEST(test_ssl_conf_flags);
+    ADD_ALL_TESTS(test_http_verbs, 3);
+#if !defined(OSSL_NO_USABLE_TLS1_3)
+    ADD_TEST(test_grease);
+#endif
     return 1;
 
 err:

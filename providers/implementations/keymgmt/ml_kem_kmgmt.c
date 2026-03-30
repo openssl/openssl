@@ -28,6 +28,8 @@
 #include "prov/provider_ctx.h"
 #include "prov/securitycheck.h"
 #include "prov/ml_kem.h"
+#define ml_kem_export_params_st
+#define ml_kem_export_params_decoder
 #include "providers/implementations/keymgmt/ml_kem_kmgmt.inc"
 
 static OSSL_FUNC_keymgmt_new_fn ml_kem_512_new;
@@ -52,8 +54,8 @@ static OSSL_FUNC_keymgmt_match_fn ml_kem_match;
 static OSSL_FUNC_keymgmt_validate_fn ml_kem_validate;
 static OSSL_FUNC_keymgmt_import_fn ml_kem_import;
 static OSSL_FUNC_keymgmt_export_fn ml_kem_export;
-static OSSL_FUNC_keymgmt_import_types_fn ml_kem_imexport_types;
-static OSSL_FUNC_keymgmt_export_types_fn ml_kem_imexport_types;
+static OSSL_FUNC_keymgmt_import_types_fn ml_kem_import_types;
+static OSSL_FUNC_keymgmt_export_types_fn ml_kem_export_types;
 static OSSL_FUNC_keymgmt_dup_fn ml_kem_dup;
 
 static const int minimal_selection = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
@@ -339,10 +341,17 @@ err:
     return ret;
 }
 
-static const OSSL_PARAM *ml_kem_imexport_types(int selection)
+static const OSSL_PARAM *ml_kem_import_types(int selection)
 {
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        return ml_kem_key_type_params_list;
+        return ml_kem_import_params_list;
+    return NULL;
+}
+
+static const OSSL_PARAM *ml_kem_export_types(int selection)
+{
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
+        return ml_kem_export_params_list;
     return NULL;
 }
 
@@ -383,19 +392,18 @@ static int check_prvenc(const uint8_t *prvenc, ML_KEM_KEY *key)
     return 0;
 }
 
-static int ml_kem_key_fromdata(ML_KEM_KEY *key,
-    const OSSL_PARAM params[],
+static int ml_kem_key_fromdata(ML_KEM_KEY *key, const OSSL_PARAM params[],
     int include_private)
 {
     const void *pubenc = NULL, *prvenc = NULL, *seedenc = NULL;
     size_t publen = 0, prvlen = 0, seedlen = 0, puboff;
     const ML_KEM_VINFO *v;
-    struct ml_kem_key_type_params_st p;
+    struct ml_kem_import_params_st p;
 
     /* Invalid attempt to mutate a key, what is the right error to report? */
     if (key == NULL
         || ossl_ml_kem_have_pubkey(key)
-        || !ml_kem_key_type_params_decoder(params, &p))
+        || !ml_kem_import_params_decoder(params, &p))
         return 0;
     v = ossl_ml_kem_key_vinfo(key);
 
@@ -452,6 +460,12 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key,
                 v->algorithm_name);
             return 0;
         }
+    }
+    if (p.propq != NULL) {
+        if (p.propq->data_type != OSSL_PARAM_UTF8_STRING)
+            return 0;
+        if (!ossl_ml_kem_key_fetch_digest(key, p.propq->data))
+            return 0;
     }
 
     if (seedlen != 0
@@ -797,7 +811,7 @@ static void ml_kem_gen_cleanup(void *vgctx)
         return;
 
     if (gctx->seed != NULL)
-        OPENSSL_cleanse(gctx->seed, ML_KEM_RANDOM_BYTES);
+        OPENSSL_cleanse(gctx->seed, ML_KEM_SEED_BYTES);
     OPENSSL_free(gctx->propq);
     OPENSSL_free(gctx);
 }
@@ -849,9 +863,9 @@ static void *ml_kem_dup(const void *vkey, int selection)
         { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (OSSL_FUNC)ml_kem_gen_cleanup },                 \
         DISPATCH_LOAD_FN { OSSL_FUNC_KEYMGMT_DUP, (OSSL_FUNC)ml_kem_dup },                \
         { OSSL_FUNC_KEYMGMT_IMPORT, (OSSL_FUNC)ml_kem_import },                           \
-        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (OSSL_FUNC)ml_kem_imexport_types },             \
+        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (OSSL_FUNC)ml_kem_import_types },               \
         { OSSL_FUNC_KEYMGMT_EXPORT, (OSSL_FUNC)ml_kem_export },                           \
-        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (OSSL_FUNC)ml_kem_imexport_types },             \
+        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (OSSL_FUNC)ml_kem_export_types },               \
         OSSL_DISPATCH_END                                                                 \
     }
 DECLARE_VARIANT(512);

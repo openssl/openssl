@@ -55,8 +55,6 @@ jobs:
           no-dtls1_2,
           no-dtls1_2-method,
           no-dtls1-method,
-          no-ecdh,
-          no-ecdsa,
           enable-ec_nistp_64_gcc_128,
           enable-egd,
 #          enable-external-tests,  # Requires extra setup
@@ -72,6 +70,7 @@ jobs:
           no-hmac-drbg-kdf,
           no-hw,
           no-idea,
+          no-ikev2kdf,
           no-kbkdf,
           no-krb5kdf,
           enable-lms,

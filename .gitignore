@@ -59,6 +59,8 @@
 /include/openssl/x509_vfy.h
 /include/openssl/core_names.h
 
+/apps/include/configuration.h
+
 # Auto generated parameter name files
 /crypto/params_idx.c
 
@@ -86,6 +88,7 @@ providers/common/include/prov/der_wrap.h
 providers/common/include/prov/der_sm2.h
 providers/common/include/prov/der_ml_dsa.h
 providers/common/include/prov/der_hkdf.h
+providers/fips/fipsparams.inc
 providers/implementations/asymciphers/rsa_enc.inc
 providers/implementations/asymciphers/sm2_enc.inc
 providers/implementations/exchange/dh_exch.inc
@@ -101,6 +104,7 @@ providers/implementations/encode_decode/encode_key2ms.inc
 providers/implementations/kdfs/argon2.inc
 providers/implementations/kdfs/hkdf.inc
 providers/implementations/kdfs/hmacdrbg_kdf.inc
+providers/implementations/kdfs/ikev2kdf.inc
 providers/implementations/kdfs/kbkdf.inc
 providers/implementations/kdfs/krb5kdf.inc
 providers/implementations/kdfs/pbkdf1.inc

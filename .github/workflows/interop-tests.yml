@@ -68,11 +68,11 @@ jobs:
       matrix:
         branch: [
           { openssl: 'master', openssh: 'openssl-master', openssl_config: 'no-docs'},
+          { openssl: 'openssl-4.0', openssh: 'openssl-4.0', openssl_config: 'no-docs'},
           { openssl: 'openssl-3.6', openssh: 'openssl-3.6', openssl_config: 'no-docs'},
           { openssl: 'openssl-3.5', openssh: 'openssl-3.5', openssl_config: 'no-docs'},
           { openssl: 'openssl-3.4', openssh: 'openssl-3.4', openssl_config: 'no-docs'},
           { openssl: 'openssl-3.3', openssh: 'openssl-3.3', openssl_config: 'no-docs'},
-          { openssl: 'openssl-3.2', openssh: 'openssl-3.2', openssl_config: 'no-docs'},
           { openssl: 'openssl-3.0', openssh: 'openssl-3.0', openssl_config: ''}
         ]
     runs-on: ubuntu-latest
@@ -81,28 +81,24 @@ jobs:
       TEST_SSH_UNSAFE_PERMISSIONS: 1
       TEST_SSH_HOSTBASED_AUTH: yes
     steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-        ref: ${{ matrix.branch.openssl }}
-        fetch-depth: 1
-    - name: config
-      run: ./config --banner=Configured -fPIC --prefix=/opt/openssl ${{ matrix.openssl_config }} shared -Wl,-rpath,/opt/openssl/lib64 && perl configdata.pm --dump
-    - name: make
-      run: |
-        make -s -j4
-        make -s -j4 install_sw
-    - name: install dependencies of openssh
+    - name: install dependencies
       run: |
         sudo apt-get update
         sudo apt-get -yq install autoconf zlib1g-dev
-    - name: run openssh
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+        repository: openssh/openssh-portable
+        fetch-depth: 1
+    - name: setup ci
+      run: sh ./.github/setup_ci.sh ${{ matrix.branch.openssh }} ubuntu-latest
+    - name: autoreconf
+      run: autoreconf
+    - name: configure
+      run: sh ./.github/configure.sh ${{ matrix.branch.openssh }}
+    - name: make
       run: |
-        git clone --branch master --depth 1 https://github.com/openssh/openssh-portable.git
-        cd openssh-portable
-        sh ./.github/setup_ci.sh ${{ matrix.branch.openssh }} ubuntu-latest
-        autoreconf
-        sh ./.github/configure.sh ${{ matrix.branch.openssh }}
         make clean
         make -s -j4
-        sh ./.github/run_test.sh
+    - name: run tests
+      run: sh ./.github/run_test.sh

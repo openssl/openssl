@@ -112,7 +112,7 @@ static int dh_check_key(PROV_DH_CTX *ctx)
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
                 ctx->libctx, "DH Init", "DH Key",
-                ossl_fips_config_securitycheck_enabled)) {
+                FIPS_CONFIG_SECURITY_CHECKS)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }

@@ -697,11 +697,22 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_certificate_authorities,
     TLSEXT_IDX_ech,
     TLSEXT_IDX_outer_extensions,
+    TLSEXT_IDX_grease1,
+    TLSEXT_IDX_grease2,
     TLSEXT_IDX_padding,
     TLSEXT_IDX_psk,
     /* Dummy index - must always be the last entry */
     TLSEXT_IDX_num_builtins
 } TLSEXT_INDEX;
+
+/* RFC 8701 GREASE seed indices */
+#define OSSL_GREASE_CIPHER 0
+#define OSSL_GREASE_GROUP 1
+#define OSSL_GREASE_EXT1 2
+#define OSSL_GREASE_EXT2 3
+#define OSSL_GREASE_VERSION 4
+#define OSSL_GREASE_SIGALG 5
+#define OSSL_GREASE_LAST_INDEX 5
 
 DEFINE_LHASH_OF_EX(SSL_SESSION);
 /* Needed in ssl_cert.c */
@@ -1741,6 +1752,10 @@ struct ssl_connection_st {
 #ifndef OPENSSL_NO_ECH
         OSSL_ECH_CONN ech;
 #endif
+
+        /* RFC 8701 GREASE */
+        uint8_t grease_seed[OSSL_GREASE_LAST_INDEX + 1];
+        int grease_seeded;
     } ext;
 
     /*
@@ -1982,6 +1997,7 @@ typedef struct dtls1_state_st {
     unsigned int timeout_duration_us;
 
     unsigned int retransmitting;
+    unsigned int has_change_cipher_spec;
 #ifndef OPENSSL_NO_SCTP
     int shutdown_received;
 #endif
@@ -2504,6 +2520,11 @@ void ssl_sort_cipher_list(void);
 int ssl_load_ciphers(SSL_CTX *ctx);
 int ssl_cipher_list_to_bytes(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk,
     WPACKET *pkt);
+uint16_t ossl_grease_value(SSL_CONNECTION *s, int index);
+static ossl_inline int ossl_is_grease_value(uint16_t val)
+{
+    return (val & 0x0f0f) == 0x0a0a && (val >> 8) == (val & 0xff);
+}
 __owur int ssl_setup_sigalgs(SSL_CTX *ctx);
 int ssl_load_groups(SSL_CTX *ctx);
 int ssl_load_sigalgs(SSL_CTX *ctx);

@@ -186,8 +186,13 @@ int app_passwd(const char *arg1, const char *arg2, char **pass1, char **pass2)
     }
     if (arg2 != NULL) {
         *pass2 = app_get_pass(arg2, same ? 2 : 0);
-        if (*pass2 == NULL)
+        if (*pass2 == NULL) {
+            if (pass1 != NULL) {
+                clear_free(*pass1);
+                *pass1 = NULL;
+            }
             return 0;
+        }
     } else if (pass2 != NULL) {
         *pass2 = NULL;
     }
@@ -2197,6 +2202,63 @@ int bio_to_mem(unsigned char **out, size_t *outlen, size_t maxlen, BIO *in)
     return 1;
 }
 
+#if defined(OPENSSL_SYS_UNIX) && defined(_POSIX_MAPPED_FILES) && _POSIX_MAPPED_FILES > 0
+int app_mmap_file(const char *path, BIO *err_bio, size_t known_size,
+    const unsigned char **out_data, size_t *out_size)
+{
+    struct stat st;
+    size_t filesize;
+    int fd;
+    void *p;
+
+    *out_data = NULL;
+    *out_size = 0;
+
+    if (known_size == 0)
+        return 0;
+
+    if (known_size == (size_t)-1) {
+        if (stat(path, &st) != 0 || st.st_size < 0) {
+            BIO_printf(err_bio, "Error: failed to get size of file '%s'\n", path);
+            return -1;
+        }
+        if (!S_ISREG(st.st_mode)) {
+            /*
+             * mmap() is only for regular files. Directories and other non-regular
+             * paths can report st_size == 0; do not treat those like empty files
+             * and fall back to the buffer path in callers.
+             */
+            BIO_puts(err_bio, "Error: failed to use memory-mapped file\n");
+            return -1;
+        }
+        filesize = (size_t)st.st_size;
+        if ((off_t)filesize != st.st_size) {
+            BIO_puts(err_bio, "Error: failed to convert file size, likely too big\n");
+            return -1;
+        }
+        if (filesize == 0)
+            return 0;
+    } else {
+        filesize = known_size;
+    }
+
+    fd = open(path, O_RDONLY);
+    if (fd < 0) {
+        BIO_puts(err_bio, "Error opening file for memory mapping\n");
+        return -1;
+    }
+    p = mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, fd, 0);
+    (void)close(fd);
+    if (p == MAP_FAILED) {
+        BIO_puts(err_bio, "Error: failed to use memory-mapped file\n");
+        return -1;
+    }
+    *out_data = (const unsigned char *)p;
+    *out_size = filesize;
+    return 1;
+}
+#endif
+
 int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value)
 {
     int rv = 0;
@@ -2672,7 +2734,7 @@ static STACK_OF(X509_CRL) *crls_http_cb(const X509_STORE_CTX *ctx,
 
 error:
     X509_CRL_free(crl);
-    sk_X509_CRL_free(crls);
+    sk_X509_CRL_pop_free(crls, X509_CRL_free);
     return NULL;
 }
 
@@ -3819,6 +3881,7 @@ char *get_str_from_file(const char *filename)
     bio = NULL;
     if (n <= 0) {
         BIO_printf(bio_err, "Error reading from %s\n", filename);
+        OPENSSL_clear_free(buf, MAX_KEY_SIZE);
         return NULL;
     }
     tmp = strchr(buf, '\n');

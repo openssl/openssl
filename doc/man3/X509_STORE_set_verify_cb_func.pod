@@ -41,9 +41,9 @@ X509_STORE_CTX_lookup_certs_fn, X509_STORE_CTX_lookup_crls_fn
  #include <openssl/x509_vfy.h>
 
  typedef int (*X509_STORE_CTX_get_issuer_fn)(X509 **issuer,
-                                             X509_STORE_CTX *ctx, X509 *x);
+                                             X509_STORE_CTX *ctx, const X509 *x);
  typedef int (*X509_STORE_CTX_check_issued_fn)(X509_STORE_CTX *ctx,
-                                               X509 *x, X509 *issuer);
+                                               const X509 *x, const X509 *issuer);
  typedef int (*X509_STORE_CTX_check_revocation_fn)(X509_STORE_CTX *ctx);
  typedef int (*X509_STORE_CTX_get_crl_fn)(X509_STORE_CTX *ctx,
                                           X509_CRL **crl, X509 *x);

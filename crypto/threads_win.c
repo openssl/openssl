@@ -347,9 +347,9 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id)
     InterlockedExchange((LONG volatile *)&lock->reader_idx, tmp);
 #endif
 
-    /* wake up any waiters */
-    ossl_crypto_condvar_broadcast(lock->alloc_signal);
     ossl_crypto_mutex_unlock(lock->alloc_lock);
+    /* wake up any waiters */
+    ossl_crypto_condvar_signal(lock->alloc_signal);
     return &lock->qp_group[current_idx];
 }
 
@@ -358,8 +358,8 @@ static void retire_qp(CRYPTO_RCU_LOCK *lock,
 {
     ossl_crypto_mutex_lock(lock->alloc_lock);
     lock->writers_alloced--;
-    ossl_crypto_condvar_broadcast(lock->alloc_signal);
     ossl_crypto_mutex_unlock(lock->alloc_lock);
+    ossl_crypto_condvar_signal(lock->alloc_signal);
 }
 
 void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
@@ -388,8 +388,8 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
     } while (count != (uint64_t)0);
 
     lock->next_to_retire++;
-    ossl_crypto_condvar_broadcast(lock->prior_signal);
     ossl_crypto_mutex_unlock(lock->prior_lock);
+    ossl_crypto_condvar_broadcast(lock->prior_signal);
 
     retire_qp(lock, qp);
 
@@ -710,7 +710,7 @@ int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
 
     return 1;
 #else
-    InterlockedExchange64(dst, val);
+    InterlockedExchange64((LONG64 volatile *)dst, val);
     return 1;
 #endif
 }
@@ -743,7 +743,7 @@ int CRYPTO_atomic_store_int(int *dst, int val, CRYPTO_RWLOCK *lock)
 
     return 1;
 #else
-    InterlockedExchange(dst, val);
+    InterlockedExchange((LONG volatile *)dst, val);
     return 1;
 #endif
 }

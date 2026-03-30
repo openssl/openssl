@@ -219,7 +219,7 @@ static int fips_hkdf_key_check_passed(KDF_HKDF *ctx)
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
                 libctx, "HKDF", "Key size",
-                ossl_fips_config_hkdf_key_check)) {
+                FIPS_CONFIG_HKDF_KEY_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
@@ -884,7 +884,7 @@ static int fips_tls1_3_digest_check_passed(KDF_HKDF *ctx, const EVP_MD *md)
     if (digest_unapproved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
                 libctx, "TLS13 KDF", "Digest",
-                ossl_fips_config_tls13_kdf_digest_check)) {
+                FIPS_CONFIG_TLS13_KDF_DIGEST_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
             return 0;
         }
@@ -920,7 +920,7 @@ static int fips_tls1_3_key_check_passed(KDF_HKDF *ctx)
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE1,
                 libctx, "TLS13 KDF", "Key size",
-                ossl_fips_config_tls13_kdf_key_check)) {
+                FIPS_CONFIG_TLS13_KDF_KEY_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }

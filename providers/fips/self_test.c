@@ -123,7 +123,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         init();
         break;
     case DLL_PROCESS_DETACH:
+# ifndef __CYGWIN__
         cleanup();
+# endif
         break;
     default:
         break;
@@ -358,8 +360,7 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, void *fips_global,
             goto locked_end;
         }
 
-        if ((st->defer_tests != NULL)
-            && strcmp(st->defer_tests, "1") == 0) {
+        if (st->defer_tests == 1) {
             /* Mark all non executed tests as deferred */
             for (int i = 0; i < ST_ID_MAX; i++) {
                 if (st_all_tests[i].state == SELF_TEST_STATE_INIT) {

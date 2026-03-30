@@ -518,25 +518,25 @@ EVP_SKEY *EVP_PKEY_derive_SKEY(EVP_PKEY_CTX *ctx, EVP_SKEYMGMT *mgmt,
 
         if (ctx->op.kex.exchange->derive == NULL) {
             ERR_raise(ERR_R_EVP_LIB, ERR_R_UNSUPPORTED);
-            return NULL;
+            goto cleanup;
         }
 
         key = OPENSSL_zalloc(keylen);
         if (key == NULL) {
             ERR_raise(ERR_R_EVP_LIB, ERR_R_CRYPTO_LIB);
-            return NULL;
+            goto cleanup;
         }
 
         if (!ctx->op.kex.exchange->derive(ctx->op.kex.algctx, key, &tmplen,
                 tmplen)) {
             OPENSSL_free(key);
-            return NULL;
+            goto cleanup;
         }
 
         if (keylen != tmplen) {
             OPENSSL_free(key);
             ERR_raise(ERR_R_EVP_LIB, ERR_R_INTERNAL_ERROR);
-            return NULL;
+            goto cleanup;
         }
         import_params[0] = OSSL_PARAM_construct_octet_string(OSSL_SKEY_PARAM_RAW_BYTES,
             key, keylen);
@@ -544,30 +544,25 @@ EVP_SKEY *EVP_PKEY_derive_SKEY(EVP_PKEY_CTX *ctx, EVP_SKEYMGMT *mgmt,
         ret = EVP_SKEY_import_SKEYMGMT(ctx->libctx, skeymgmt,
             OSSL_SKEYMGMT_SELECT_SECRET_KEY, import_params);
         OPENSSL_clear_free(key, keylen);
-        if (mgmt != skeymgmt)
-            EVP_SKEYMGMT_free(skeymgmt);
-        return ret;
+        goto cleanup;
     }
 
     ret = evp_skey_alloc(skeymgmt);
-    if (ret == NULL) {
-        if (mgmt != skeymgmt)
-            EVP_SKEYMGMT_free(skeymgmt);
-        return NULL;
-    }
+    if (ret == NULL)
+        goto cleanup;
 
     ret->keydata = ctx->op.kex.exchange->derive_skey(ctx->op.kex.algctx, key_type,
         ossl_provider_ctx(skeymgmt->prov),
         skeymgmt->import, keylen, params);
 
-    if (mgmt != skeymgmt)
-        EVP_SKEYMGMT_free(skeymgmt);
-
     if (ret->keydata == NULL) {
         EVP_SKEY_free(ret);
-        return NULL;
+        ret = NULL;
+        goto cleanup;
     }
-
+cleanup:
+    if (mgmt != skeymgmt)
+        EVP_SKEYMGMT_free(skeymgmt);
     return ret;
 }
 

@@ -141,28 +141,9 @@ int ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
 
 int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name)
 {
-    int number = 0;
-    HT_VALUE *val;
-    NAMENUM_KEY key;
-
-#ifndef FIPS_MODULE
-    if (namemap == NULL)
-        namemap = ossl_namemap_stored(NULL);
-#endif
-
-    if (namemap == NULL)
+    if (name == NULL)
         return 0;
-
-    HT_INIT_RAW_KEY(&key);
-    HT_COPY_RAW_KEY_CASE(TO_HT_KEY(&key), name, strlen(name));
-
-    val = ossl_ht_get(namemap->namenum_ht, TO_HT_KEY(&key));
-
-    if (val != NULL)
-        /* We store a (small) int directly instead of a pointer to it. */
-        number = (int)(intptr_t)val->value;
-
-    return number;
+    return ossl_namemap_name2num_n(namemap, name, strlen(name));
 }
 
 int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,

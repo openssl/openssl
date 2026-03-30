@@ -76,6 +76,7 @@ B<openssl> B<s_client>
 [B<-sctp>]
 [B<-sctp_label_bug>]
 [B<-fallback_scsv>]
+[B<-grease>]
 [B<-async>]
 [B<-maxfraglen> I<len>]
 [B<-max_send_frag>]
@@ -572,6 +573,13 @@ available where OpenSSL has support for SCTP enabled.
 =item B<-fallback_scsv>
 
 Send TLS_FALLBACK_SCSV in the ClientHello.
+
+=item B<-grease>
+
+Send GREASE (Generate Random Extensions And Sustain Extensibility) values in
+the ClientHello as defined in RFC 8701. This injects random reserved values
+into cipher suites, supported groups, supported versions, signature algorithms,
+key share, and extensions to prevent ecosystem ossification.
 
 =item B<-async>
 

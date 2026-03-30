@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -66,6 +66,59 @@ static void dtls1_set_message_header_int(SSL_CONNECTION *s, unsigned char mt,
     size_t frag_len);
 static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
     size_t *len);
+
+/*
+ * Check if CCS is expected in current state.
+ *
+ * RFC 6347 Section 4.1 states DTLS must handle message reordering since UDP
+ * does not guarantee in-order delivery. This function determines when a
+ * buffered CCS should be delivered to the state machine.
+ *
+ * Server states where CCS is expected:
+ *   - TLS_ST_SR_KEY_EXCH: After key exchange (anonymous or no_cert_verify)
+ *   - TLS_ST_SR_CERT_VRFY: After certificate verify
+ *   - TLS_ST_SW_FINISHED: Session resumption (abbreviated handshake)
+ *
+ * Client states where CCS is expected:
+ *   - TLS_ST_CR_SRVR_HELLO: Abbreviated handshake without ticket
+ *   - TLS_ST_CW_FINISHED: After sending Finished, before server CCS
+ *   - TLS_ST_CR_SESSION_TICKET: After receiving session ticket
+ */
+static int dtls_ccs_expected(SSL_CONNECTION *s)
+{
+    OSSL_HANDSHAKE_STATE st = s->statem.hand_state;
+
+    if (s->server) {
+        switch (st) {
+        case TLS_ST_SR_KEY_EXCH:
+            /* Anonymous or no client cert: CCS follows KeyExchange */
+            if (s->session->peer == NULL && s->session->peer_rpk == NULL)
+                return 1;
+            /* Client cert but no verify message required */
+            return s->statem.no_cert_verify;
+        case TLS_ST_SR_CERT_VRFY:
+            return 1;
+        case TLS_ST_SW_FINISHED:
+            /* Abbreviated handshake: server sends first, then receives CCS */
+            return s->hit;
+        default:
+            return 0;
+        }
+    } else {
+        switch (st) {
+        case TLS_ST_CR_SRVR_HELLO:
+            /* Abbreviated handshake without session ticket */
+            return (s->hit && !s->ext.ticket_expected);
+        case TLS_ST_CW_FINISHED:
+            /* Full handshake: waiting for server CCS after sending Finished */
+            return !s->ext.ticket_expected;
+        case TLS_ST_CR_SESSION_TICKET:
+            return 1;
+        default:
+            return 0;
+        }
+    }
+}
 
 static hm_fragment *dtls1_hm_fragment_new(size_t frag_len, int reassembly)
 {
@@ -830,6 +883,28 @@ static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
     p = (unsigned char *)s->init_buf->data;
 
 redo:
+    /* Check for buffered CCS */
+    if ((s->version == DTLS1_VERSION || s->version == DTLS1_2_VERSION
+            || s->version == DTLS1_BAD_VER)
+        && s->d1->has_change_cipher_spec && dtls_ccs_expected(s)) {
+        size_t extra = (s->version == DTLS1_BAD_VER) ? 2 : 0;
+
+        s->d1->has_change_cipher_spec = 0;
+        p[0] = SSL3_MT_CCS;
+        /*
+         * The extra 2 bytes are never consumed, only checked for
+         * length -- zero-fill to avoid old init_buf content.
+         */
+        if (extra > 0)
+            memset(p + 1, 0, extra);
+        s->init_num = extra;
+        s->init_msg = p + 1;
+        s->s3.tmp.message_type = SSL3_MT_CHANGE_CIPHER_SPEC;
+        s->s3.tmp.message_size = extra;
+        *len = extra;
+        return 1;
+    }
+
     /* see if we have the required fragment already */
     ret = dtls1_retrieve_buffered_fragment(s, &frag_len);
     if (ret < 0) {
@@ -857,12 +932,22 @@ redo:
             goto f_err;
         }
 
-        s->init_num = readbytes - 1;
-        s->init_msg = s->init_buf->data + 1;
-        s->s3.tmp.message_type = SSL3_MT_CHANGE_CIPHER_SPEC;
-        s->s3.tmp.message_size = readbytes - 1;
-        *len = readbytes - 1;
-        return 1;
+        /* Buffer CCS for reorder tolerance */
+        if (s->version == DTLS1_VERSION || s->version == DTLS1_2_VERSION
+            || s->version == DTLS1_BAD_VER) {
+            size_t expected = (s->version == DTLS1_BAD_VER) ? 3 : 1;
+
+            if (readbytes != expected) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR,
+                    SSL_R_BAD_CHANGE_CIPHER_SPEC);
+                goto f_err;
+            }
+            s->d1->has_change_cipher_spec = 1;
+            goto redo;
+        }
+        SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE,
+            SSL_R_BAD_CHANGE_CIPHER_SPEC);
+        goto f_err;
     }
 
     /* Handshake fails if message header is incomplete */
@@ -1177,7 +1262,11 @@ int dtls1_buffer_message(SSL_CONNECTION *s, int is_ccs)
         return 0;
     }
 
-    pqueue_insert(s->d1->sent_messages, item);
+    if (pqueue_insert(s->d1->sent_messages, item) == NULL) {
+        dtls1_hm_fragment_free(frag);
+        pitem_free(item);
+        return 0;
+    }
     return 1;
 }
 

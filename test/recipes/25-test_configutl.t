@@ -35,13 +35,13 @@ foreach my $file (@tests) {
        "-noheader", "-out", "$file.got"])));
 
     if ($file eq "includes.cnf") {
-        my $cmp1 = cmp_text("$file.got", srctop_file("test", "recipes", "25-test_configutl_data", "$file.expected1"));
-	my $cmp2 = cmp_text("$file.got", srctop_file("test", "recipes", "25-test_configutl_data", "$file.expected2"));
+        my $cmp1 = cmp_text("$file.got", srctop_file("test", "recipes", "25-test_configutl_data", "$file-exp1.out"));
+        my $cmp2 = cmp_text("$file.got", srctop_file("test", "recipes", "25-test_configutl_data", "$file-exp2.out"));
 
-	is((($cmp1 == 0) || ($cmp2 == 0)), 1, "$file got/expected 1/2");
+        is((($cmp1 == 0) || ($cmp2 == 0)), 1, "$file got/expected 1/2");
     } else {
         is(cmp_text("$file.got",
-           srctop_file("test", "recipes", "25-test_configutl_data", "$file.expected")),
+           srctop_file("test", "recipes", "25-test_configutl_data", "$file-exp.out")),
            0, "$file got/expected");
     }
 

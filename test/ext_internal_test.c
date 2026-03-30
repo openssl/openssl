@@ -79,6 +79,8 @@ static EXT_LIST ext_list[] = {
     EXT_EXCEPTION(ech),
     EXT_EXCEPTION(outer_extensions),
 #endif
+    EXT_ENTRY(grease1),
+    EXT_ENTRY(grease2),
     EXT_ENTRY(padding),
     EXT_ENTRY(psk),
     EXT_END(num_builtins)

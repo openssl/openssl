@@ -8496,3 +8496,37 @@ int SSL_CTX_get0_server_cert_type(const SSL_CTX *ctx, unsigned char **t, size_t 
     *len = ctx->server_cert_type_len;
     return 1;
 }
+
+/*
+ * RFC 8701 GREASE - returns a GREASE value (0x?A?A pattern) for the given
+ * index.  Seeds are generated lazily on first use and remain stable for the
+ * lifetime of the connection so that HelloRetryRequest replays get identical
+ * values.
+ */
+uint16_t ossl_grease_value(SSL_CONNECTION *s, int index)
+{
+    uint16_t ret;
+
+    if (index < 0 || index > OSSL_GREASE_LAST_INDEX)
+        return 0x0A0A;
+
+    if (!s->ext.grease_seeded) {
+        if (RAND_bytes_ex(SSL_CONNECTION_GET_CTX(s)->libctx,
+                s->ext.grease_seed,
+                sizeof(s->ext.grease_seed), 0)
+            <= 0)
+            memset(s->ext.grease_seed, 0x42, sizeof(s->ext.grease_seed));
+        s->ext.grease_seeded = 1;
+    }
+
+    /* Map seed byte to 0x?A?A pattern */
+    ret = (s->ext.grease_seed[index] & 0xf0) | 0x0a;
+    ret |= ret << 8;
+
+    /* Ensure EXT2 differs from EXT1 */
+    if (index == OSSL_GREASE_EXT2
+        && ret == ossl_grease_value(s, OSSL_GREASE_EXT1))
+        ret ^= 0x1010;
+
+    return ret;
+}

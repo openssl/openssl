@@ -910,8 +910,9 @@ int pkcs12_main(int argc, char **argv)
                 goto end;
             }
             OPENSSL_free(utmp);
-            if (!PKCS12_verify_mac(p12, badpass, -1)) {
-                BIO_puts(bio_err, "Mac verify error: invalid password?\n");
+            if (strcmp(mpass, badpass) == 0 || !PKCS12_verify_mac(p12, badpass, -1)) {
+                if (ERR_peek_error() == 0)
+                    BIO_puts(bio_err, "Mac verify error: invalid password?\n");
                 ERR_print_errors(bio_err);
                 goto end;
             } else {

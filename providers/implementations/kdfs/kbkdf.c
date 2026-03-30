@@ -205,7 +205,7 @@ static int fips_kbkdf_key_check_passed(KBKDF *ctx)
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
                 libctx, "KBKDF", "Key size",
-                ossl_fips_config_kbkdf_key_check)) {
+                FIPS_CONFIG_KBKDF_KEY_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }

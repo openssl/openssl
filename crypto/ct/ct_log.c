@@ -315,6 +315,20 @@ EVP_PKEY *CTLOG_get0_public_key(const CTLOG *log)
     return log->public_key;
 }
 
+int CTLOG_STORE_add0_log(CTLOG_STORE *store, CTLOG *log)
+{
+    if (store == NULL || log == NULL) {
+        ERR_raise(ERR_LIB_CT, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (!sk_CTLOG_push(store->logs, log)) {
+        ERR_raise(ERR_LIB_CT, ERR_R_CRYPTO_LIB);
+        return 0;
+    }
+    return 1;
+}
+
 /*
  * Given a log ID, finds the matching log.
  * Returns NULL if no match found.

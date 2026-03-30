@@ -116,6 +116,11 @@ are empty.
 Once a public or private key component is set, no further changes are allowed.
 This parameter is gettable and settable (once only).
 
+=item "properties" (B<OSSL_PKEY_PARAM_PROPERTIES>) <UTF8 string>
+
+Can be used when importing raw keys using L<EVP_PKEY_fromdata(3)>,
+to fetch internal digest algorithms.
+
 =back
 
 =head2 Provider configuration parameters
