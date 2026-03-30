@@ -6,10 +6,16 @@
 
 param(
     [Parameter(ValueFromRemainingArguments = $true)]
-    [string[]]$RemainingArgs
+    [string[]]$Args
 )
 
 $ErrorActionPreference = 'Stop'
+
+# If nanvix-zutil is already on PATH (e.g. CI), use it directly.
+if (Get-Command nanvix-zutil -ErrorAction SilentlyContinue) {
+    & nanvix-zutil @Args
+    exit $LASTEXITCODE
+}
 
 $repoRoot = git rev-parse --show-toplevel
 $venvDir = Join-Path $repoRoot ".nanvix\venv"
@@ -38,9 +44,9 @@ if (-not (Test-Path $venvZutil) -and -not (Get-Command nanvix-zutil -ErrorAction
 
 # Prefer the venv copy; fall back to global.
 if (Test-Path $venvZutil) {
-    & $venvZutil @RemainingArgs
+    & $venvZutil @Args
 } elseif (Get-Command nanvix-zutil -ErrorAction SilentlyContinue) {
-    & nanvix-zutil @RemainingArgs
+    & nanvix-zutil @Args
 } else {
     throw "nanvix-zutil not found in venv ($venvDir) or on PATH."
 }
