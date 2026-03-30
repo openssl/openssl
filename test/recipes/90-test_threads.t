@@ -28,6 +28,8 @@ plan skip_all => "This test should not be run under valgrind"
 
 plan tests => 3;
 
+$ENV{TSAN_OPTIONS} = "suppressions=".srctop_file('/util/suppressions.txt');
+
 if ($no_fips) {
     ok(run(test(["threadstest", "-config", $config_path, data_dir()])),
        "running test_threads");
