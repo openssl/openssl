@@ -968,13 +968,33 @@ int ossl_drbg_get_ctx_params_no_lock(PROV_DRBG *drbg,
 int ossl_drbg_set_ctx_params(PROV_DRBG *drbg,
     const struct drbg_set_ctx_params_st *p)
 {
-    if (p->reseed_req != NULL
-        && !OSSL_PARAM_get_uint(p->reseed_req, &drbg->reseed_interval))
-        return 0;
+    if (p->reseed_req != NULL) {
+        unsigned int val;
 
-    if (p->reseed_time != NULL
-        && !OSSL_PARAM_get_time_t(p->reseed_time, &drbg->reseed_time_interval))
-        return 0;
+        if (!OSSL_PARAM_get_uint(p->reseed_req, &val))
+            return 0;
+#ifdef FIPS_MODULE
+        if (val == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CONFIG_DATA);
+            return 0;
+        }
+#endif
+        drbg->reseed_interval = val;
+    }
+
+    if (p->reseed_time != NULL) {
+        time_t val;
+
+        if (!OSSL_PARAM_get_time_t(p->reseed_time, &val))
+            return 0;
+#ifdef FIPS_MODULE
+        if (val == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CONFIG_DATA);
+            return 0;
+        }
+#endif
+        drbg->reseed_time_interval = val;
+    }
 
     return 1;
 }
