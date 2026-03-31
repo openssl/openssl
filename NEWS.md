@@ -92,7 +92,7 @@ changes:
   * Dropped `darwin-i386{,-cc}` and `darwin-ppc{,64}{,-cc}` targets
     from Configurations.
 
-  * Removed support for malformed keys that were previously accepted during 
+  * Removed support for malformed keys that were previously accepted during
     RSA private key parsing.
 
 This release adds the following new features:
