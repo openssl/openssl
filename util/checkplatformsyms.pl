@@ -58,6 +58,10 @@ if ($Config{osname} eq "MSWin32") {
                 }
             }
         }
+
+        close($OBJFH);
+        ($? >> 8 == 0) or die "Command '$cmd' has failed.";
+
         foreach (@symlist) {
             if (index($exps, $_) < 0) {
                 print "Symbol $_ not in the allowed platform symbols list\n";
@@ -87,5 +91,6 @@ else {
                 }
         }
         close($OBJFH);
-        exit 0;
+
+        exit $? >> 8;
     }
