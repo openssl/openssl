@@ -61,6 +61,16 @@ The following algorithms are available in the legacy provider:
 This implementation supports the parameters described in
 L<EVP_EncryptInit(3)/PARAMETERS> including "encrypt-check" and "fips-indicator".
 
+=head1 NOTES
+ 
+The DES3-WRAP implementation does not support streaming. That means to obtain
+correct results there can be only one L<EVP_EncryptUpdate(3)> or
+L<EVP_DecryptUpdate(3)> call after the initialization of the context.
+ 
+When wrapping (encrypting) with DES3-WRAP, the output buffer must be at least
+I<input_length> + 16 bytes. The extra 16 bytes accommodate an 8-byte IV and an
+8-byte integrity check value (ICV) prepended and appended by the algorithm.
+
 =head1 SEE ALSO
 
 L<provider-cipher(7)>, L<OSSL_PROVIDER-FIPS(7)>, L<OSSL_PROVIDER-default(7)>,
@@ -68,7 +78,7 @@ L<OSSL_PROVIDER-legacy(7)>,
 
 =head1 COPYRIGHT
 
-Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
