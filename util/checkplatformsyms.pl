@@ -73,9 +73,13 @@ if ($Config{osname} eq "MSWin32") {
         exit !$ok;
     }
 else {
-        $cmd = "objdump -t " . $objfilelist . " | grep UND | grep -v \@OPENSSL";
-        $cmd = $cmd . " | awk '{print \$NF}' |";
-        $cmd = $cmd . " sed -e\"s/@.*\$//\" | sort | uniq";
+        $cmd = "objdump -t " . $objfilelist . " | awk " .
+            "'/\\\\*UND\\\\*/ {" .
+                "split(\$NF, sym_lib, \"@\");" .
+                "if (sym_lib[2] !~ \"OPENSSL_[1-9][0-9]*\\\\.[0-9]+\\\\.[0-9]+\$\")" .
+                    "syms[sym_lib[1]] = 1;" .
+            "}" .
+            "END { for (s in syms) print s; };'";
 
         open $expsyms, '<', $expectedsyms or die;
         {
