@@ -1,0 +1,7 @@
+# Config for regression test: issuerSignTool extension (GH openssl/openssl#30564).
+[ext]
+issuerSignTool = @issuer_sign_tool_sect
+
+[issuer_sign_tool_sect]
+signTool = OpenSSL regression test
+cATool = OpenSSL regression CA tool

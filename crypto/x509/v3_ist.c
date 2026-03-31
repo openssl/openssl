@@ -33,6 +33,11 @@ ASN1_SEQUENCE(ISSUER_SIGN_TOOL) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(ISSUER_SIGN_TOOL)
 
+/*
+ * ISSUER_SIGN_TOOL_new() allocates empty ASN.1 UTF8String objects for each field.
+ * Populate them with ASN1_STRING_set() only; do not replace the pointers with
+ * ASN1_UTF8STRING_new(), or the original allocations are leaked.
+ */
 static ISSUER_SIGN_TOOL *v2i_issuer_sign_tool(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
     STACK_OF(CONF_VALUE) *nval)
 {

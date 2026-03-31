@@ -42,6 +42,15 @@ OpenSSL Releases
 
    *John Claus*
 
+ * Documented the Issuer Sign Tool (`issuerSignTool`) X.509v3 extension
+   configuration: `ISSUER_SIGN_TOOL_new()` allocates UTF-8 string members that
+   must be updated with `ASN1_STRING_set()` only, not replaced (replacing them
+   leaked memory in earlier versions).  Added `x509v3_config(5)` documentation
+   and regression tests so the successful config path stays covered under
+   CI and sanitizers.
+
+   *John Claus*
+
  * Added AVX2 optimized ML-DSA NTT operations on `x86_64`.
 
    *Marcel Cornu and Tomasz Kantecki*
