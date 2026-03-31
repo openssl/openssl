@@ -374,7 +374,10 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
             BIO_puts(out, ":");
         nid = groups[i];
         const char *name = SSL_group_to_name(s, nid);
-        BIO_puts(out, ((name == NULL) ? "<NULL>" : name));
+        if (name == NULL)
+            BIO_printf(out, "%d", nid);
+        else
+            BIO_puts(out, name);
     }
     OPENSSL_free(groups);
     if (noshared) {
@@ -388,7 +391,10 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
             BIO_puts(out, ":");
         nid = SSL_get_shared_group(s, i);
         const char *name = SSL_group_to_name(s, nid);
-        BIO_puts(out, ((name == NULL) ? "<NULL>" : name));
+        if (name == NULL)
+            BIO_printf(out, "%d", nid);
+        else
+            BIO_puts(out, name);
     }
     if (ngroups == 0)
         BIO_puts(out, "NONE");
@@ -404,11 +410,13 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
 
     if (!SSL_get_peer_tmp_key(s, &key)) {
         if (SSL_version(s) == TLS1_3_VERSION) {
-            const char *name;
+            int nid = SSL_get_negotiated_group(s);
+            const char *name = SSL_group_to_name(s, nid);
 
-            name = SSL_group_to_name(s, SSL_get_negotiated_group(s));
-            BIO_printf(out, "Negotiated TLS1.3 group: %s\n",
-                name == NULL ? "<NULL>" : name);
+            if (name == NULL)
+                BIO_printf(out, "Negotiated TLS1.3 group: %d\n", nid);
+            else
+                BIO_printf(out, "Negotiated TLS1.3 group: %s\n", name);
         }
         return 1;
     }
