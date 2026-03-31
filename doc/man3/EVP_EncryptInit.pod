@@ -412,7 +412,8 @@ encrypted data.
 For most ciphers and modes, the amount of data written can be anything
 from zero bytes to (inl + cipher_block_size - 1) bytes.
 For wrap cipher modes, the amount of data written can be anything
-from zero bytes to (inl + cipher_block_size) bytes.
+from zero bytes to (inl rounded up to cipher_block_size + cipher_block_size)
+bytes.
 For stream ciphers, the amount of data written can be anything from zero
 bytes to inl bytes.
 Thus, the buffer pointed to by I<out> must contain sufficient room for the
