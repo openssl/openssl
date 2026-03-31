@@ -62,13 +62,15 @@ if ($Config{osname} eq "MSWin32") {
         close($OBJFH);
         ($? >> 8 == 0) or die "Command '$cmd' has failed.";
 
+        my $ok = 1;
         foreach (@symlist) {
+            chomp;
             if (index($exps, $_) < 0) {
                 print "Symbol $_ not in the allowed platform symbols list\n";
-                exit 1;
+                $ok = 0;
             }
         }
-        exit 0;
+        exit !$ok;
     }
 else {
         $cmd = "objdump -t " . $objfilelist . " | grep UND | grep -v \@OPENSSL";
@@ -83,14 +85,16 @@ else {
         close($expsyms);
 
         open($OBJFH, "$cmd|") or die "Cannot open process: $!";
+        my $ok = 1;
         while (<$OBJFH>)
         {
+                chomp;
                 if (index($exps, $_) < 0) {
                     print "Symbol $_ not in the allowed platform symbols list\n";
-                    exit 1;
+                    $ok = 0;
                 }
         }
         close($OBJFH);
 
-        exit $? >> 8;
+        exit !(!($? >> 8) || !$ok);
     }
