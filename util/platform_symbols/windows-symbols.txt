@@ -109,6 +109,7 @@ _execute_onexit_table
 _exit
 _fileno
 _fstat64i32
+_get_osfhandle
 _gmtime64_s
 _initialize_narrow_environment
 _initialize_onexit_table
