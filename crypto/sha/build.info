@@ -65,7 +65,7 @@ ENDIF
 $KECCAK1600ASM=keccak1600.c
 IF[{- !$disabled{asm} -}]
   $KECCAK1600ASM_x86=
-  $KECCAK1600ASM_x86_64=keccak1600-x86_64.s
+  $KECCAK1600ASM_x86_64=keccak1600-x86_64.s keccak1600x4-avx512vl.s
 
   $KECCAK1600ASM_s390x=keccak1600-s390x.S
 
@@ -83,8 +83,8 @@ IF[{- !$disabled{asm} -}]
 ENDIF
 
 $COMMON=sha1dgst.c sha256.c sha512.c sha3.c sha3_encode.c $SHA1ASM $KECCAK1600ASM
-SOURCE[../../libcrypto]=$COMMON sha1_one.c
-SOURCE[../../providers/libfips.a]= $COMMON
+SOURCE[../../libcrypto]=$COMMON sha1_one.c sha3_x4.c
+SOURCE[../../providers/libfips.a]= $COMMON sha3_x4.c
 
 # Implementations are now spread across several libraries, so the defines
 # need to be applied to all affected libraries and modules.
@@ -197,5 +197,9 @@ GENERATE[keccak1600-avx512.S]=asm/keccak1600-avx512.pl
 GENERATE[keccak1600-avx512vl.S]=asm/keccak1600-avx512vl.pl
 GENERATE[keccak1600-mmx.S]=asm/keccak1600-mmx.pl
 GENERATE[keccak1600p8-ppc.S]=asm/keccak1600p8-ppc.pl
+
+# Keccak1600_x4_avx512vl.S supports multi-squeeze
+# Currently only used in ML-DSA on x86_64 with AVX-512VL support
+GENERATE[keccak1600x4-avx512vl.s]=asm/keccak1600x4-avx512vl.pl
 
 GENERATE[sha1-thumb.S]=asm/sha1-thumb.pl

@@ -63,6 +63,9 @@ int ossl_ml_dsa_matrix_expand_A(EVP_MD_CTX *g_ctx, const EVP_MD *md,
     const uint8_t *rho, MATRIX *out);
 int ossl_ml_dsa_vector_expand_S(EVP_MD_CTX *h_ctx, const EVP_MD *md, int eta,
     const uint8_t *seed, VECTOR *s1, VECTOR *s2);
+void ossl_ml_dsa_vector_expand_mask(VECTOR *out, const uint8_t *rho_prime,
+    size_t rho_prime_len, uint32_t kappa, uint32_t gamma1,
+    EVP_MD_CTX *h_ctx, const EVP_MD *md);
 void ossl_ml_dsa_matrix_mult_vector(const MATRIX *matrix_kl, const VECTOR *vl,
     VECTOR *vk);
 int ossl_ml_dsa_poly_expand_mask(POLY *out, const uint8_t *seed, size_t seed_len,

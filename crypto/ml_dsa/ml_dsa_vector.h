@@ -8,7 +8,9 @@
  */
 
 #include <assert.h>
+#include <stddef.h>
 #include "ml_dsa_poly.h"
+#include "ml_dsa_hash.h"
 
 struct vector_st {
     POLY *poly;
@@ -156,19 +158,8 @@ vector_expand_mask(VECTOR *out, const uint8_t *rho_prime, size_t rho_prime_len,
     uint32_t kappa, uint32_t gamma1,
     EVP_MD_CTX *h_ctx, const EVP_MD *md)
 {
-    size_t i;
-    uint8_t derived_seed[ML_DSA_RHO_PRIME_BYTES + 2];
-
-    memcpy(derived_seed, rho_prime, ML_DSA_RHO_PRIME_BYTES);
-
-    for (i = 0; i < out->num_poly; i++) {
-        size_t index = kappa + i;
-
-        derived_seed[ML_DSA_RHO_PRIME_BYTES] = index & 0xFF;
-        derived_seed[ML_DSA_RHO_PRIME_BYTES + 1] = (index >> 8) & 0xFF;
-        poly_expand_mask(out->poly + i, derived_seed, sizeof(derived_seed),
-            gamma1, h_ctx, md);
-    }
+    ossl_ml_dsa_vector_expand_mask(out, rho_prime, rho_prime_len, kappa, gamma1,
+        h_ctx, md);
 }
 
 /* Scale back previously rounded value */

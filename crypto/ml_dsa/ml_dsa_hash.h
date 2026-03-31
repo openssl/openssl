@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#ifndef OSSL_CRYPTO_ML_DSA_HASH_H
+#define OSSL_CRYPTO_ML_DSA_HASH_H
+
 #include <openssl/evp.h>
 
 static ossl_inline ossl_unused int
@@ -39,3 +42,5 @@ shake_xof_3(EVP_MD_CTX *ctx, const EVP_MD *md, const uint8_t *in1, size_t in1_le
         && EVP_DigestUpdate(ctx, in3, in3_len)
         && EVP_DigestSqueeze(ctx, out, out_len);
 }
+
+#endif /* OSSL_CRYPTO_ML_DSA_HASH_H */
