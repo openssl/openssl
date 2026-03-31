@@ -133,6 +133,10 @@ sub run_test {
         if (/^cert_status: ocsp response sent:/) {
             $resp = 1;
             last;
+        } elsif (/^cert_status:/) {
+            ;
+        } else {
+            last;
         }
     }
     ok($resp == 1, "check s_server sent ocsp response");
