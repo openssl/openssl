@@ -1693,6 +1693,138 @@ static int test_explicit_EVP_KEYEXCH_fetch_by_name(void)
     return test_explicit_EVP_KEYEXCH_fetch("DH");
 }
 
+static int test_aes_skey(OSSL_LIB_CTX *libctx, const char *propq)
+{
+    unsigned char raw_key[16] = { 0 };
+    EVP_SKEY *skey = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(skey = EVP_SKEY_import_raw_key(libctx, "AES", raw_key,
+                      sizeof(raw_key), propq)))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SKEY_free(skey);
+    return ret;
+}
+
+static int test_skeymgmt(OSSL_LIB_CTX *libctx, const char *propq,
+    EVP_SKEYMGMT *skeymgmt, const char *name)
+{
+    return TEST_ptr(skeymgmt)
+        && TEST_ptr(EVP_SKEYMGMT_get0_provider(skeymgmt))
+        && TEST_true(EVP_SKEYMGMT_is_a(skeymgmt, name))
+        && TEST_true(test_aes_skey(libctx, propq));
+}
+
+static int test_EVP_SKEYMGMT_fetch_freeze(void)
+{
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    /*
+     * Test does not make sense if cached fetch is disabled.
+     * There's nothing to freeze, and test will fail.
+     */
+    return 1;
+#endif
+
+    EVP_SKEYMGMT *skeymgmt = NULL;
+    int ret = 0;
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *prov[2] = { NULL, NULL };
+
+    if (use_default_ctx == 0 && !load_providers(&ctx, prov))
+        goto err;
+
+    if (!TEST_ptr(skeymgmt = EVP_SKEYMGMT_fetch(ctx, "AES", NULL))
+        || !TEST_true(test_skeymgmt(ctx, NULL, skeymgmt, "AES"))
+        || !TEST_int_ne(skeymgmt->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_SKEYMGMT_free(skeymgmt);
+    skeymgmt = NULL;
+
+    if (!TEST_int_eq(OSSL_LIB_CTX_freeze(ctx, "?fips=true"), 1)
+        || !TEST_ptr(skeymgmt = EVP_SKEYMGMT_fetch(ctx, "AES", NULL))
+        || !TEST_true(test_skeymgmt(ctx, NULL, skeymgmt, "AES"))
+        || !TEST_int_eq(skeymgmt->origin, EVP_ORIG_FROZEN))
+        goto err;
+    /* Technically, frozen version doesn't need to be freed */
+    EVP_SKEYMGMT_free(skeymgmt);
+
+    if (!TEST_ptr(skeymgmt = EVP_SKEYMGMT_fetch(ctx, "AES", "?fips=true"))
+        || !TEST_true(test_skeymgmt(ctx, "?fips=true", skeymgmt, "AES"))
+        || !TEST_int_eq(skeymgmt->origin, EVP_ORIG_FROZEN))
+        goto err;
+    EVP_SKEYMGMT_free(skeymgmt);
+
+    /*
+     * A mismatched propq should use the regular fetch path rather than the
+     * frozen fast path.
+     */
+    if (!TEST_ptr(skeymgmt = EVP_SKEYMGMT_fetch(ctx, "AES", "?provider=default"))
+        || !TEST_true(test_skeymgmt(ctx, "?provider=default", skeymgmt, "AES"))
+        || !TEST_int_ne(skeymgmt->origin, EVP_ORIG_FROZEN))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SKEYMGMT_free(skeymgmt);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_implicit_EVP_SKEYMGMT_fetch(void)
+{
+    OSSL_LIB_CTX *ctx = NULL;
+    OSSL_PROVIDER *prov[] = { NULL, NULL };
+    EVP_SKEYMGMT *skeymgmt = NULL;
+    int ret = 0;
+
+    if (use_default_ctx == 0 && !TEST_true(load_providers(&ctx, prov)))
+        goto err;
+
+    if (!TEST_ptr(skeymgmt = EVP_SKEYMGMT_fetch(ctx, "AES", NULL)))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_SKEYMGMT_free(skeymgmt);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_explicit_EVP_SKEYMGMT_fetch(const char *id)
+{
+    OSSL_LIB_CTX *ctx = NULL;
+    EVP_SKEYMGMT *skeymgmt = NULL;
+    OSSL_PROVIDER *prov[] = { NULL, NULL };
+    int ret = 0;
+
+    if (use_default_ctx == 0 && !TEST_true(load_providers(&ctx, prov)))
+        goto err;
+
+    skeymgmt = EVP_SKEYMGMT_fetch(ctx, id, fetch_property);
+    if (expected_fetch_result != 0) {
+        if (!TEST_true(EVP_SKEYMGMT_up_ref(skeymgmt)))
+            goto err;
+        /* Ref count should now be 2. Release first one here */
+        EVP_SKEYMGMT_free(skeymgmt);
+    } else {
+        if (!TEST_ptr_null(skeymgmt))
+            goto err;
+    }
+    ret = 1;
+err:
+    EVP_SKEYMGMT_free(skeymgmt);
+    unload_providers(&ctx, prov);
+    return ret;
+}
+
+static int test_explicit_EVP_SKEYMGMT_fetch_by_name(void)
+{
+    return test_explicit_EVP_SKEYMGMT_fetch("AES");
+}
+
 int setup_tests(void)
 {
     OPTION_CHOICE o;
@@ -1761,6 +1893,10 @@ int setup_tests(void)
         ADD_TEST(test_EVP_KEYEXCH_fetch_freeze);
         ADD_TEST(test_implicit_EVP_KEYEXCH_fetch);
         ADD_TEST(test_explicit_EVP_KEYEXCH_fetch_by_name);
+    } else if (strcmp(alg, "skeymgmt") == 0) {
+        ADD_TEST(test_EVP_SKEYMGMT_fetch_freeze);
+        ADD_TEST(test_implicit_EVP_SKEYMGMT_fetch);
+        ADD_TEST(test_explicit_EVP_SKEYMGMT_fetch_by_name);
     } else {
         TEST_error("Unknown fetch type: %s", alg);
         return 0;
