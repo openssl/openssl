@@ -688,10 +688,19 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
             st->hand_state = TLS_ST_OK;
             return WRITE_TRAN_CONTINUE;
         }
-        if (s->num_tickets > s->sent_tickets)
-            st->hand_state = TLS_ST_SW_SESSION_TICKET;
-        else
+        /*
+         * Do not issue TLSv1.3 tickets when both SSL_OP_NO_TICKET and
+         * SSL_SESS_CACHE_OFF are set.
+         */
+        if ((s->options & SSL_OP_NO_TICKET) != 0
+            && (SSL_CONNECTION_GET_CTX(s)->session_cache_mode
+                & SSL_SESS_CACHE_SERVER) == 0) {
             st->hand_state = TLS_ST_OK;
+        } else if (s->num_tickets > s->sent_tickets) {
+            st->hand_state = TLS_ST_SW_SESSION_TICKET;
+        } else {
+            st->hand_state = TLS_ST_OK;
+        }
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SR_KEY_UPDATE:
