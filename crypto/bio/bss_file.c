@@ -64,14 +64,15 @@ BIO *BIO_new_file(const char *filename, const char *mode)
         fp_flags |= BIO_FP_TEXT;
 
     if (filename == NULL) {
-        ERR_raise_data(ERR_LIB_SYS, ERR_R_PASSED_NULL_PARAMETER, __func__);
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER, __func__);
         return NULL;
     }
 
     file = openssl_fopen(filename, mode);
     if (file == NULL) {
         ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
-            "calling fopen(%s, %s)", filename, mode);
+            "calling fopen(%s, %s)",
+            filename, mode);
         if (errno == ENOENT
 #ifdef ENXIO
             || errno == ENXIO
@@ -305,14 +306,15 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
             OPENSSL_strlcat(p, "b", sizeof(p));
 #endif
         if (ptr == NULL) {
-            ERR_raise_data(ERR_LIB_SYS, ERR_R_PASSED_NULL_PARAMETER, __func__);
-	    ret = 0;
+            ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER, __func__);
+            ret = 0;
             break;
         }
         fp = openssl_fopen(ptr, p);
         if (fp == NULL) {
             ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
-                "calling fopen(%s, %s)", (const char *)ptr, p);
+                "calling fopen(%s, %s)",
+                (const char *)ptr, p);
             ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
             ret = 0;
             break;
