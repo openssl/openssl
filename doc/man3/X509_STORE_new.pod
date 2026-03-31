@@ -34,7 +34,7 @@ If the argument is NULL, nothing is done.
 
 =head1 NOTES
 
-=head2 Thread safety
+=head2 Thread Safety
 
 When an B<X509_STORE> is shared across multiple threads, each thread or
 component that holds a pointer to it should call X509_STORE_up_ref() to
@@ -45,7 +45,8 @@ Adding certificates or CRLs, for example L<X509_STORE_add_cert(3)> or
 L<X509_STORE_add_crl(3)>, as well as looking up objects from the cache 
 with L<X509_STORE_CTX_get_by_subject(3)> are safe to call concurrently 
 from multiple threads on the same store without external synchronization, 
-but still require acquiring a reference.
+provided the ownership to the X509_STORE is obtained by acquiring a 
+reference in advance.
 
 Store I<configuration> functions (X509_STORE_set_flags(),
 X509_STORE_set_depth(), X509_STORE_set_purpose(), X509_STORE_set_trust(),

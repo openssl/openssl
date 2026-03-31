@@ -36,7 +36,7 @@ lookup functions on the same store.
 Applications sharing a store across threads should manage its lifetime with
 L<X509_STORE_up_ref(3)> and L<X509_STORE_free(3)>, and must ensure that
 all lookup operations have completed before the store is freed. See
-L<X509_STORE_new(3)> for more discussion of the B<X509_STORE> threading
+L<X509_STORE_new(3)/Thread Safety> for more discussion of the B<X509_STORE> threading
 model.
 
 =head1 RETURN VALUES
@@ -48,7 +48,7 @@ X509_STORE_CTX_get_obj_by_subject() returns an object on success, else NULL.
 =head1 SEE ALSO
 
 L<X509_LOOKUP_meth_set_get_by_subject(3)>,
-L<X509_LOOKUP_by_subject(3)>
+L<X509_LOOKUP_by_subject(3)>,
 L<X509_STORE_new(3)> 
 
 =head1 COPYRIGHT
