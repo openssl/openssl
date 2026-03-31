@@ -172,6 +172,11 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
         goto ret;
     }
 
+    if (dgstlen < 0) {
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_LENGTH);
+        goto ret;
+    }
+
     memset(param, 0, sizeof(param));
     off = len - (dgstlen > len ? len : dgstlen);
     memcpy(param + S390X_OFF_H(len) + off, dgst, len - off);
@@ -309,6 +314,11 @@ static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
     y = BN_CTX_get(ctx);
     if (x == NULL || y == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+        goto ret;
+    }
+
+    if (dgstlen < 0) {
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_LENGTH);
         goto ret;
     }
 
