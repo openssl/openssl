@@ -329,11 +329,6 @@ doc-nits
 compile_commands.json
 
 .z.cache
+.nanvix-configured
+openssl_nanvix*
 
-# Nanvix build state (keep .nanvix/z.py tracked)
-.nanvix/venv/
-.nanvix/cache/
-.nanvix/sysroot/
-.nanvix/buildroot/
-.nanvix/env.json
-.nanvix/nanvix.lock

@@ -1,0 +1,7 @@
+venv/
+cache/
+sysroot/
+buildroot/
+env.json
+nanvix.lock
+__pycache__

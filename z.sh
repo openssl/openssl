@@ -3,51 +3,51 @@
 # Licensed under the MIT License.
 
 # Thin wrapper that delegates to the nanvix-zutil CLI.
-# Requires nanvix-zutil to be installed (pip install nanvix-zutil).
+# Self-bootstraps nanvix-zutil into .nanvix/venv/ if it is not already installed.
 
 set -euo pipefail
 
-# If nanvix-zutil is already on PATH (e.g. CI), use it directly.
-if command -v nanvix-zutil &>/dev/null; then
-	exec nanvix-zutil "$@"
-fi
-
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)"
-REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
-
+ZUTIL_VERSION="${NANVIX_ZUTIL_VERSION:-0.5.0}"
+REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)"
 VENV="$REPO_ROOT/.nanvix/venv"
+VENV_BIN="$VENV/bin/nanvix-zutil"
+ZUTIL_GLOBAL_VERSION="$(nanvix-zutil --version 2>/dev/null || true )"
 
-if ! "$VENV/bin/nanvix-zutil" --version &>/dev/null && ! command -v nanvix-zutil &>/dev/null; then
-	echo "nanvix-zutil not found — bootstrapping from nanvix/zutils latest release..." >&2
-	WHEEL_URL=$(curl -fsSL "https://api.github.com/repos/nanvix/zutils/releases/latest" |
-		python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-assets = data.get('assets') or []
-wheel = next(
-    (a['browser_download_url'] for a in assets if a.get('name', '').endswith('.whl')),
-    None,
-)
-if not wheel:
-    print('Error: no .whl asset in latest nanvix/zutils release.', file=sys.stderr)
-    print('Install manually: pip install nanvix-zutil', file=sys.stderr)
-    sys.exit(1)
-print(wheel)
-")
+function bootstrap() {
+	# Pin nanvix-zutil version for reproducible bootstrapping.
+	# Override with NANVIX_ZUTIL_VERSION env var if needed.
+	echo "nanvix-zutil not found — bootstrapping nanvix-zutil==${ZUTIL_VERSION}..." >&2
+
+	if ! command -v python3 &>/dev/null; then
+		echo "Error: python3 not found. Install Python 3 and ensure python3 is on PATH." >&2
+		exit 1
+	fi
+
+	WHEEL_URL="https://github.com/nanvix/zutils/releases/download/v${ZUTIL_VERSION}/nanvix_zutil-${ZUTIL_VERSION}-py3-none-any.whl"
 	if [ -d "$VENV" ]; then
 		python3 -m venv --clear "$VENV"
 	else
 		python3 -m venv "$VENV"
 	fi
 	"$VENV/bin/pip" install --quiet "$WHEEL_URL"
-fi
+}
 
 # Prefer the venv copy if it exists; otherwise use the global install.
-if [ -x "$VENV/bin/nanvix-zutil" ]; then
-	exec "$VENV/bin/nanvix-zutil" "$@"
-elif command -v nanvix-zutil &>/dev/null; then
-	exec nanvix-zutil "$@"
+BIN=""
+if [ ! -d "$VENV" ] && [ -z "$ZUTIL_GLOBAL_VERSION" ]; then
+    bootstrap
+    BIN="$VENV_BIN"
+elif [ -x "$VENV_BIN" ]; then
+    BIN="$VENV_BIN"
+elif [ -d "$VENV" ] && ! command -v nanvix-zutil &>/dev/null; then
+    echo "Warning: incomplete venv detected (binary missing). Re-running bootstrap..." >&2
+    bootstrap
+    BIN="$VENV_BIN"
 else
-	echo "nanvix-zutil not found in venv ($VENV) or on PATH." >&2
-	exit 1
+    BIN="nanvix-zutil"
+    if [ "$ZUTIL_GLOBAL_VERSION" != "nanvix-zutil ${ZUTIL_VERSION}" ]; then
+        echo "Warning: nanvix-zutil global install does not match expected version. Expected ${ZUTIL_VERSION}, found ${ZUTIL_GLOBAL_VERSION}." >&2
+    fi
 fi
+
+exec "$BIN" "$@"
