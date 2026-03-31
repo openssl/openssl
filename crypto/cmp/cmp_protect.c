@@ -88,8 +88,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
         if (sig_len > INT_MAX || (prot = ASN1_BIT_STRING_new()) == NULL)
             goto end;
         /* OpenSSL by default encodes all bit strings as ASN.1 NamedBitList */
-        ossl_asn1_bit_string_set_unused_bits(prot, 0);
-        if (!ASN1_BIT_STRING_set(prot, protection, (int)sig_len)) {
+        if (!ASN1_BIT_STRING_set1(prot, protection, (int)sig_len, 0)) {
             ASN1_BIT_STRING_free(prot);
             prot = NULL;
         }

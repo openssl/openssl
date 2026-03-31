@@ -295,9 +295,8 @@ X509_PUBKEY *X509_PUBKEY_dup(const X509_PUBKEY *a)
     }
     if ((pubkey->algor = X509_ALGOR_dup(a->algor)) == NULL
         || (pubkey->public_key = ASN1_BIT_STRING_new()) == NULL
-        || !ASN1_BIT_STRING_set(pubkey->public_key,
-            a->public_key->data,
-            a->public_key->length)) {
+        || !ASN1_BIT_STRING_set1(pubkey->public_key,
+            a->public_key->data, a->public_key->length, 0)) {
         x509_pubkey_ex_free((ASN1_VALUE **)&pubkey,
             ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL));
         ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);

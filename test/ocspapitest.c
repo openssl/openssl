@@ -84,7 +84,7 @@ static OCSP_BASICRESP *make_dummy_resp(void)
         || !TEST_true(X509_NAME_add_entry_by_NID(name, NID_commonName,
             MBSTRING_ASC,
             namestr, -1, -1, 1))
-        || !TEST_true(ASN1_BIT_STRING_set(key, keybytes, sizeof(keybytes)))
+        || !TEST_true(ASN1_BIT_STRING_set1(key, keybytes, sizeof(keybytes), 0))
         || !TEST_true(ASN1_INTEGER_set_uint64(serial, (uint64_t)1)))
         goto err;
     cid = OCSP_cert_id_new(EVP_sha256(), name, key, serial);

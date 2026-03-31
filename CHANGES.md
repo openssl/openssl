@@ -105,6 +105,10 @@ OpenSSL Releases
 
    *Helen Zhang*
 
+ * Deprecated `ASN1_BIT_STRING_set()` in favour of `ASN1_BIT_STRING_set1()`.
+
+   *Norbert Pócs*
+
 ### Changes between 3.6 and 4.0.0 [14 Apr 2026]
 
  * Added `-expected-rpks` option to the `openssl s_client`

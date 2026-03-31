@@ -348,9 +348,8 @@ static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
                 ERR_raise(ERR_LIB_EC, ERR_R_ASN1_LIB);
                 goto err;
             }
-        ossl_asn1_bit_string_set_unused_bits(curve->seed, 0);
-        if (!ASN1_BIT_STRING_set(curve->seed, group->seed,
-                (int)group->seed_len)) {
+        if (!ASN1_BIT_STRING_set1(curve->seed, group->seed,
+                (int)group->seed_len, 0)) {
             ERR_raise(ERR_LIB_EC, ERR_R_ASN1_LIB);
             goto err;
         }

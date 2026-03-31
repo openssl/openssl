@@ -30,6 +30,13 @@ expose this information. If required the state should be set and get
 via an OSSL_PARAM, bearing in mind that the bounds must be checked if setting
 this value.
 
+=head3 Deprecation of ASN1_BIT_STRING_set()
+
+This function was deprecated in OpenSSL 4.1 in favour of
+ASN1_BIT_STRING_set1(). The new functions in addition to what
+ASN1_BIT_STRING_set() does, validates the function arguments and sets
+unused bits after setting the BIT STRING value.
+
 =head1 OPENSSL 4.0
 
 =head2 Main Changes from OpenSSL 3.6

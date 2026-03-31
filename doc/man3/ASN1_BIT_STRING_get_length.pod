@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+ASN1_BIT_STRING_set,
 ASN1_BIT_STRING_set1,
 ASN1_BIT_STRING_set_bit,
 ASN1_BIT_STRING_get_bit,
@@ -35,6 +36,12 @@ ASN1_BIT_STRING_get_length - ASN1_BIT_STRING accessors
     size_t *length, int *unused_bits);
   int ASN1_BIT_STRING_set1(ASN1_BIT_STRING *bitstr, const uint8_t *data,
     size_t length, int unused_bits);
+
+The following function have been deprecated since OpenSSL 4.1, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
+
+  int ASN1_BIT_STRING_set(ASN1_BIT_STRING *a, unsigned char *d, int length);
 
 =head1 DESCRIPTION
 
@@ -71,6 +78,9 @@ containing bit values in I<length> and the number of unused bits in
 the last octet in I<unused_bits>. The value returned in
 I<unused_bits> is guaranteed to be between 0 and 7, inclusive.
 
+ASN1_BIT_STRING_set() sets the octets of I<a> to the bits in the
+byte string I<d> of I<length> octets.
+
 ASN1_BIT_STRING_set1() sets the type of I<bitstr> to
 I<V_ASN1_BIT_STRING> and its octets to the bits in the byte string
 I<data> of length I<length> octets, making sure that the last
@@ -99,8 +109,12 @@ ASN1_BIT_STRING_get_length() returns 1 on success or 0 if the encoding
 of I<bitstr> is internally inconsistent, or if one of I<bitstr>,
 I<length>, or I<unused_bits> is NULL.
 
+ASN1_BIT_STRING_set() returns 1 on success or 0 if memory allocation fails,
+I<length> is not specified (value less than 0) and I<d> is NULL or
+I<length> is larger than INT_MAX-1.
+
 ASN1_BIT_STRING_set1() returns 1 on success or 0 if memory allocation
-fails or if I<bitstr> is NULL , I<length> is too large, I<length>is
+fails or if I<bitstr> is NULL, I<length> is too large, I<length> is
 zero and I<unused_bits> is nonzero, I<unused_bits> is less than 0 or
 greater than 7, or any unused bit in the last octet of I<data> is
 nonzero.
@@ -109,6 +123,9 @@ nonzero.
 
 Functions ASN1_BIT_STRING_get_length() and ASN1_BIT_STRING_set1() were
 added in OpenSSL version 4.0.
+
+ASN1_BIT_STRING_set() was deprecated in OpenSSL 4.1 in favour of
+ASN1_BIT_STRING_set1().
 
 =head1 COPYRIGHT
 

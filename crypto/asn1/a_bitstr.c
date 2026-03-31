@@ -15,10 +15,12 @@
 
 #include <crypto/asn1.h>
 
+#ifndef OPENSSL_NO_DEPRECATED_4_1
 int ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, int len)
 {
     return ASN1_STRING_set(x, d, len);
 }
+#endif
 
 int ossl_i2c_ASN1_BIT_STRING(const ASN1_BIT_STRING *a, unsigned char **pp)
 {
