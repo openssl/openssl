@@ -91,6 +91,7 @@ __current_exception
 __current_exception_context
 __std_type_info_destroy_list
 __stdio_common_vfprintf
+__stdio_common_vsnprintf_s
 __stdio_common_vsprintf
 __stdio_common_vsprintf_s
 __stdio_common_vsscanf
