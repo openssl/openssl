@@ -2271,14 +2271,13 @@ static void ssl_update_error_state(SSL_CONNECTION *sc)
     if (sc == NULL)
         return;
 
-    if (sc->statem.state == MSG_FLOW_ERROR) {
+    if (sc->statem.state == MSG_FLOW_ERROR
+        && sc->statem.error_state == ERROR_STATE_NOERROR) {
         l = ERR_peek_error();
-        if (l != 0) {
-            if (ERR_GET_LIB(l) == ERR_LIB_SYS)
-                sc->statem.error_state = ERROR_STATE_SYSCALL;
-            else
-                sc->statem.error_state = ERROR_STATE_SSL;
-        }
+        if (l == 0 || ERR_GET_LIB(l) == ERR_LIB_SYS)
+            sc->statem.error_state = ERROR_STATE_SYSCALL;
+        else
+            sc->statem.error_state = ERROR_STATE_SSL;
     }
 }
 
