@@ -1700,7 +1700,7 @@ static int test_aes_skey(OSSL_LIB_CTX *libctx, const char *propq)
     int ret = 0;
 
     if (!TEST_ptr(skey = EVP_SKEY_import_raw_key(libctx, "AES", raw_key,
-                                                  sizeof(raw_key), propq)))
+                      sizeof(raw_key), propq)))
         goto err;
 
     ret = 1;
@@ -1710,7 +1710,7 @@ err:
 }
 
 static int test_skeymgmt(OSSL_LIB_CTX *libctx, const char *propq,
-                         EVP_SKEYMGMT *skeymgmt, const char *name)
+    EVP_SKEYMGMT *skeymgmt, const char *name)
 {
     return TEST_ptr(skeymgmt)
         && TEST_ptr(EVP_SKEYMGMT_get0_provider(skeymgmt))
