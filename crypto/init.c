@@ -756,3 +756,26 @@ int OPENSSL_atexit(void (*handler)(void))
 
     return 1;
 }
+
+#if defined(OSSL_USE_GLOBAL_CONSTRUCTOR)
+/*
+ * Global library constructor function.
+ *
+ * If we have constructor support, this function is installed and
+ * always run as a global constructor.
+ *
+ */
+void ossl_crypto_constructor(void)
+{
+    /*
+     * Ensure we know about CPU features and do not need to directly
+     * call this as a constructor from assembly language files.
+     *
+     * In the incredibly improbable world where for some reason you
+     * both require detection of modern CPU features, but are building
+     * with a toolchain from the days of hammer pants and telephones
+     * with cords, you might not get automatic CPU feature detection.
+     */
+    OPENSSL_cpuid_setup();
+}
+#endif /* defined(OSSL_USE_GLOBAL_CONSTRUCTOR) */
