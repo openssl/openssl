@@ -49,7 +49,7 @@ if ($Config{osname} eq "MSWin32") {
                 $currentdll =~ s/^\s+|s+$//g;
             }
             # filter imports from our own library
-            if ("$currentdll" ne "libcrypto-3-x64") {
+            if ("$currentdll" !~ /^libcrypto-[1-9][0-9]*(-x64)?$/) {
                 my $line = $_;
                 $line =~ s/                          [0-9a-fA-F]{1,2} /SYMBOL /;
                 if (index($line, "SYMBOL") != -1) {
