@@ -43,7 +43,7 @@ if ($Config{osname} eq "MSWin32") {
         {
             chomp;
             my $dllfile = $_;
-            $dllfile =~ s/( +)(.*)(\.dll)(.*)/DLLFILE \2/;
+            $dllfile =~ s/( +)(.*)(\.dll)(.*)/DLLFILE $2/;
             if (index($dllfile, "DLLFILE") >= 0) {
                 $currentdll = substr($dllfile, 8);
                 $currentdll =~ s/^\s+|s+$//g;
