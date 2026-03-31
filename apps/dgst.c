@@ -483,7 +483,7 @@ int dgst_main(int argc, char **argv)
         BIO_set_fp(in, stdin, BIO_NOCLOSE);
         if (oneshot_sign)
             ret = do_fp_oneshot_sign(out, signctx, in, separator, out_bin,
-                sigkey, sigbuf, siglen, NULL, NULL)
+                      sigkey, sigbuf, siglen, NULL, NULL)
                 ? EXIT_SUCCESS
                 : EXIT_FAILURE;
         else
@@ -793,7 +793,7 @@ static int do_fp_oneshot_sign(BIO *out, EVP_MD_CTX *ctx, BIO *in, int sep, int b
 
         if (r == 1) {
             ret = do_oneshot_verify_sign(ctx, out, sigin, siglen, key, data,
-                      filesize, sep, binout, sig_name, file);
+                filesize, sep, binout, sig_name, file);
             munmap((void *)data, filesize);
             return ret;
         }
@@ -809,7 +809,7 @@ static int do_fp_oneshot_sign(BIO *out, EVP_MD_CTX *ctx, BIO *in, int sep, int b
         if (!bio_to_mem(&buf, &buflen, maxlen, in))
             return 0;
         ret = do_oneshot_verify_sign(ctx, out, sigin, siglen, key, buf, buflen,
-                  sep, binout, sig_name, display_file);
+            sep, binout, sig_name, display_file);
         OPENSSL_clear_free(buf, buflen);
     }
 
