@@ -14,6 +14,13 @@ my $expectedsyms=$ARGV[0];
 
 shift(@ARGV);
 
+# Check that object files exist
+foreach (@ARGV) {
+    unless (-f $_ && -r $_) {
+        die "Path is not a regular readable file: '$_'";
+    }
+}
+
 my $objlist;
 my $objfilelist = join(" ", @ARGV);
 my $expsyms;
