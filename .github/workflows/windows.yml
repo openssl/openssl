@@ -67,6 +67,7 @@ jobs:
         apps/openssl.exe version -v | %{($_ -split '\s+')[1]}
         apps/openssl.exe version -v | %{($_ -split '\s+')[1] -replace '([0-9]+\.[0-9]+)(\..*)','$1'}
         echo "OSSL_VERSION=$(apps/openssl.exe version -v | %{($_ -split '\s+')[1] -replace '([0-9]+\.[0-9]+)(\..*)','$1'})" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+        echo "OSSL_MAJOR=$(apps/openssl.exe version -v | %{($_ -split '\s+')[1] -replace '([0-9]+)\.[0-9]+(\..*)','$1'})" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
     - name: Set registry keys
       working-directory: _build
       run: |
@@ -83,7 +84,10 @@ jobs:
         ./apps/openssl.exe version -c
     - name: Check platform symbol usage
       working-directory: _build
-      run: perl ../util/checkplatformsyms.pl ../util/platform_symbols/windows-symbols.txt libcrypto-3-x64.dll ./libssl-3-x64.dll
+      shell: cmd
+      run: |
+        call "${{ matrix.platform.vcvars }}"
+        perl ../util/checkplatformsyms.pl ../util/platform_symbols/windows-symbols.txt libcrypto-%OSSL_MAJOR%${{ matrix.platform.arch == 'amd64' && '-x64' || '' }}.dll ./libssl-%OSSL_MAJOR%${{ matrix.platform.arch == 'amd64' && '-x64' : '' }}.dll
     - name: test
       working-directory: _build
       shell: cmd
