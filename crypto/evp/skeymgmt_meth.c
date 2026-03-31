@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/evp.h>
@@ -16,6 +17,55 @@
 #include "internal/refcount.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+
+static void evp_skeymgmt_free_int(EVP_SKEYMGMT *skeymgmt)
+{
+    OPENSSL_free(skeymgmt->type_name);
+    ossl_provider_free(skeymgmt->prov);
+    CRYPTO_FREE_REF(&skeymgmt->refcnt);
+    OPENSSL_free(skeymgmt);
+}
+
+static void *evp_skeymgmt_dup_frozen(void *vin)
+{
+    EVP_SKEYMGMT *in = vin;
+    EVP_SKEYMGMT *out;
+
+    out = OPENSSL_malloc(sizeof(*out));
+    if (out == NULL)
+        return NULL;
+    memcpy(out, in, sizeof(*out));
+    if (!CRYPTO_NEW_REF(&out->refcnt, 1))
+        goto err;
+    out->type_name = OPENSSL_strdup(in->type_name);
+    if (out->type_name == NULL)
+        goto err;
+    out->origin = EVP_ORIG_FROZEN;
+    if (out->prov == NULL || !ossl_provider_up_ref(out->prov)) {
+        OPENSSL_free(out->type_name);
+        goto err;
+    }
+    return out;
+
+err:
+    CRYPTO_FREE_REF(&out->refcnt);
+    OPENSSL_free(out);
+    return NULL;
+}
+
+static void evp_skeymgmt_frozen_free(void *vin)
+{
+    EVP_SKEYMGMT *skeymgmt = vin;
+    int ref = 0;
+
+    if (skeymgmt == NULL || skeymgmt->origin != EVP_ORIG_FROZEN)
+        return;
+
+    CRYPTO_DOWN_REF(&skeymgmt->refcnt, &ref);
+    if (ref > 0)
+        return;
+    evp_skeymgmt_free_int(skeymgmt);
+}
 
 void *evp_skeymgmt_generate(const EVP_SKEYMGMT *skeymgmt, const OSSL_PARAM params[])
 {
@@ -137,8 +187,8 @@ EVP_SKEYMGMT *evp_skeymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
         skeymgmt_from_algorithm,
         (int (*)(void *))EVP_SKEYMGMT_up_ref,
         (void (*)(void *))EVP_SKEYMGMT_free,
-        NULL,
-        NULL);
+        evp_skeymgmt_dup_frozen,
+        evp_skeymgmt_frozen_free);
 }
 
 EVP_SKEYMGMT *EVP_SKEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
@@ -147,14 +197,28 @@ EVP_SKEYMGMT *EVP_SKEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
     return evp_generic_fetch(ctx, OSSL_OP_SKEYMGMT, algorithm, properties,
         skeymgmt_from_algorithm,
         (int (*)(void *))EVP_SKEYMGMT_up_ref,
-        (void (*)(void *))EVP_SKEYMGMT_free, NULL, NULL);
+        (void (*)(void *))EVP_SKEYMGMT_free,
+        evp_skeymgmt_dup_frozen,
+        evp_skeymgmt_frozen_free);
+}
+
+int evp_skeymgmt_fetch_all(OSSL_LIB_CTX *ctx)
+{
+    return evp_generic_fetch_all(ctx,
+        OSSL_OP_SKEYMGMT,
+        skeymgmt_from_algorithm,
+        (int (*)(void *))EVP_SKEYMGMT_up_ref,
+        (void (*)(void *))EVP_SKEYMGMT_free,
+        evp_skeymgmt_dup_frozen,
+        evp_skeymgmt_frozen_free);
 }
 
 int EVP_SKEYMGMT_up_ref(EVP_SKEYMGMT *skeymgmt)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&skeymgmt->refcnt, &ref);
+    if (skeymgmt->origin == EVP_ORIG_DYNAMIC)
+        CRYPTO_UP_REF(&skeymgmt->refcnt, &ref);
     return 1;
 }
 
@@ -162,16 +226,13 @@ void EVP_SKEYMGMT_free(EVP_SKEYMGMT *skeymgmt)
 {
     int ref = 0;
 
-    if (skeymgmt == NULL)
+    if (skeymgmt == NULL || skeymgmt->origin != EVP_ORIG_DYNAMIC)
         return;
 
     CRYPTO_DOWN_REF(&skeymgmt->refcnt, &ref);
     if (ref > 0)
         return;
-    OPENSSL_free(skeymgmt->type_name);
-    ossl_provider_free(skeymgmt->prov);
-    CRYPTO_FREE_REF(&skeymgmt->refcnt);
-    OPENSSL_free(skeymgmt);
+    evp_skeymgmt_free_int(skeymgmt);
 }
 
 const OSSL_PROVIDER *EVP_SKEYMGMT_get0_provider(const EVP_SKEYMGMT *skeymgmt)
