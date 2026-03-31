@@ -442,12 +442,15 @@ static int make_addressRange(IPAddressOrRange **result,
 {
     IPAddressOrRange *aor;
     int i, prefixlen;
+    unsigned char *p_min = min, *p_max = max;
 
-    if (memcmp(min, max, length) > 0)
-        return 0;
+    if (memcmp(min, max, length) > 0) {
+        p_min = max;
+        p_max = min;
+    }
 
-    if ((prefixlen = range_should_be_prefix(min, max, length)) >= 0)
-        return make_addressPrefix(result, min, prefixlen, length);
+    if ((prefixlen = range_should_be_prefix(p_min, p_max, length)) >= 0)
+        return make_addressPrefix(result, p_min, prefixlen, length);
 
     if ((aor = IPAddressOrRange_new()) == NULL)
         return 0;
@@ -459,13 +462,13 @@ static int make_addressRange(IPAddressOrRange **result,
     if (aor->u.addressRange->max == NULL && (aor->u.addressRange->max = ASN1_BIT_STRING_new()) == NULL)
         goto err;
 
-    for (i = length; i > 0 && min[i - 1] == 0x00; --i)
+    for (i = length; i > 0 && p_min[i - 1] == 0x00; --i)
         ;
-    if (!ASN1_BIT_STRING_set(aor->u.addressRange->min, min, i))
+    if (!ASN1_BIT_STRING_set(aor->u.addressRange->min, p_min, i))
         goto err;
     ossl_asn1_string_set_bits_left(aor->u.addressRange->min, 0);
     if (i > 0) {
-        unsigned char b = min[i - 1];
+        unsigned char b = p_min[i - 1];
         int j = 1;
 
         while ((b & (0xFFU >> j)) != 0)
@@ -473,13 +476,13 @@ static int make_addressRange(IPAddressOrRange **result,
         aor->u.addressRange->min->flags |= 8 - j;
     }
 
-    for (i = length; i > 0 && max[i - 1] == 0xFF; --i)
+    for (i = length; i > 0 && p_max[i - 1] == 0xFF; --i)
         ;
-    if (!ASN1_BIT_STRING_set(aor->u.addressRange->max, max, i))
+    if (!ASN1_BIT_STRING_set(aor->u.addressRange->max, p_max, i))
         goto err;
     ossl_asn1_string_set_bits_left(aor->u.addressRange->max, 0);
     if (i > 0) {
-        unsigned char b = max[i - 1];
+        unsigned char b = p_max[i - 1];
         int j = 1;
 
         while ((b & (0xFFU >> j)) != (0xFFU >> j))
@@ -492,6 +495,23 @@ static int make_addressRange(IPAddressOrRange **result,
 
 err:
     IPAddressOrRange_free(aor);
+    return 0;
+}
+
+/*
+ * Extract min and max values from an IPAddressOrRange.
+ */
+static int extract_min_max(IPAddressOrRange *aor,
+    unsigned char *min, unsigned char *max, int length)
+{
+    if (aor == NULL || min == NULL || max == NULL)
+        return 0;
+    switch (aor->type) {
+    case IPAddressOrRange_addressPrefix:
+        return (addr_expand(min, aor->u.addressPrefix, length, 0x00) && addr_expand(max, aor->u.addressPrefix, length, 0xFF));
+    case IPAddressOrRange_addressRange:
+        return (addr_expand(min, aor->u.addressRange->min, length, 0x00) && addr_expand(max, aor->u.addressRange->max, length, 0xFF));
+    }
     return 0;
 }
 
@@ -599,9 +619,10 @@ int X509v3_addr_add_prefix(IPAddrBlocks *addr,
 {
     IPAddressOrRanges *aors = make_prefix_or_range(addr, afi, safi);
     IPAddressOrRange *aor;
+    int length = length_from_afi(afi);
 
     if (aors == NULL
-        || !make_addressPrefix(&aor, a, prefixlen, length_from_afi(afi)))
+        || !make_addressPrefix(&aor, a, prefixlen, length))
         return 0;
     if (sk_IPAddressOrRange_push(aors, aor))
         return 1;
@@ -628,23 +649,6 @@ int X509v3_addr_add_range(IPAddrBlocks *addr,
     if (sk_IPAddressOrRange_push(aors, aor))
         return 1;
     IPAddressOrRange_free(aor);
-    return 0;
-}
-
-/*
- * Extract min and max values from an IPAddressOrRange.
- */
-static int extract_min_max(IPAddressOrRange *aor,
-    unsigned char *min, unsigned char *max, int length)
-{
-    if (aor == NULL || min == NULL || max == NULL)
-        return 0;
-    switch (aor->type) {
-    case IPAddressOrRange_addressPrefix:
-        return (addr_expand(min, aor->u.addressPrefix, length, 0x00) && addr_expand(max, aor->u.addressPrefix, length, 0xFF));
-    case IPAddressOrRange_addressRange:
-        return (addr_expand(min, aor->u.addressRange->min, length, 0x00) && addr_expand(max, aor->u.addressRange->max, length, 0xFF));
-    }
     return 0;
 }
 

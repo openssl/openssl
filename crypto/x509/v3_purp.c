@@ -1286,18 +1286,28 @@ const ASN1_INTEGER *X509_get0_authority_serial(const X509 *x)
 
 long X509_get_pathlen(const X509 *x)
 {
-    /* Called for side effect of caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1
-        || (x->ex_flags & EXFLAG_BCONS) == 0)
+    /*
+     * Cache extensions (X509_check_purpose with id -1).  If the cert is then
+     * marked invalid, still report pathlen when basic constraints were parsed.
+     */
+    if (X509_check_purpose(x, -1, 0) != 1) {
+        if ((x->ex_flags & EXFLAG_BCONS) != 0)
+            return x->ex_pathlen;
+        return -1;
+    }
+    if ((x->ex_flags & EXFLAG_BCONS) == 0)
         return -1;
     return x->ex_pathlen;
 }
 
 long X509_get_proxy_pathlen(const X509 *x)
 {
-    /* Called for side effect of caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1
-        || (x->ex_flags & EXFLAG_PROXY) == 0)
+    if (X509_check_purpose(x, -1, 0) != 1) {
+        if ((x->ex_flags & EXFLAG_PROXY) != 0)
+            return x->ex_pcpathlen;
+        return -1;
+    }
+    if ((x->ex_flags & EXFLAG_PROXY) == 0)
         return -1;
     return x->ex_pcpathlen;
 }

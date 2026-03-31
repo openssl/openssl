@@ -31,6 +31,24 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * RFC 3779 API usability: `X509v3_addr_add_prefix()`, `X509v3_addr_add_range()`,
+   and `X509v3_asid_add_id_or_range()` now normalize inverted range bounds (min/max
+   swapped) without modifying the caller's buffers.  Overlapping or otherwise
+   non-canonical lists are still the caller's responsibility to avoid;
+   `X509v3_addr_canonize()` and `X509v3_asid_canonize()` continue to detect those
+   issues.  For `X509v3_asid_add_id_or_range()`, on failure the caller retains
+   ownership of the min/max arguments (the function clears pointers before freeing
+   the incomplete `ASIdOrRange` so the caller's integers are not double-freed).
+
+ * `X509_get_pathlen()` and `X509_get_proxy_pathlen()` now return the cached
+   constraint value when the corresponding extension was parsed, even if
+   `ossl_x509v3_cache_extensions()` otherwise treated the certificate as
+   invalid (for example under stricter validation or some build options).
+
+ * Treat `EOPNOTSUPP` from POSIX TTY setup (`tcgetattr` / equivalent) like other
+   benign "not a terminal" errno values so password prompts fall back when
+   there is no real console (notably some CI and macOS environments).
+
  * The `openssl pkeyutl` command now uses memory-mapped I/O when reading
    raw input from a file for oneshot sign/verify operations (such as Ed25519,
    Ed448, and ML-DSA) on platforms that support it (Unix-like). The

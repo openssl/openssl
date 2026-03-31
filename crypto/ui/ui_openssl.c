@@ -453,11 +453,20 @@ static int open_console(UI *ui)
                                 is_a_tty = 0;
                             else
 #endif
-                            {
-                                ERR_raise_data(ERR_LIB_UI, UI_R_UNKNOWN_TTYGET_ERRNO_VALUE,
-                                    "errno=%d", errno);
-                                return 0;
-                            }
+#ifdef EOPNOTSUPP
+                                /*
+                                 * Some platforms return EOPNOTSUPP for TTY ioctls when there is
+                                 * no controlling terminal (e.g. CI, sandboxed runners).
+                                 */
+                                if (errno == EOPNOTSUPP)
+                                    is_a_tty = 0;
+                                else
+#endif
+                                {
+                                    ERR_raise_data(ERR_LIB_UI, UI_R_UNKNOWN_TTYGET_ERRNO_VALUE,
+                                        "errno=%d", errno);
+                                    return 0;
+                                }
     }
 #endif
 #ifdef OPENSSL_SYS_VMS

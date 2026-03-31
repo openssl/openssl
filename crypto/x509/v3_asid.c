@@ -174,6 +174,28 @@ int X509v3_asid_add_inherit(ASIdentifiers *asid, int which)
 }
 
 /*
+ * Extract min and max values from an ASIdOrRange.
+ */
+static int extract_min_max(ASIdOrRange *aor,
+    ASN1_INTEGER **min, ASN1_INTEGER **max)
+{
+    if (!ossl_assert(aor != NULL))
+        return 0;
+    switch (aor->type) {
+    case ASIdOrRange_id:
+        *min = aor->u.id;
+        *max = aor->u.id;
+        return 1;
+    case ASIdOrRange_range:
+        *min = aor->u.range->min;
+        *max = aor->u.range->max;
+        return 1;
+    }
+
+    return 0;
+}
+
+/*
  * Add an ID or range to an ASIdentifierChoice.
  */
 int X509v3_asid_add_id_or_range(ASIdentifiers *asid,
@@ -181,6 +203,7 @@ int X509v3_asid_add_id_or_range(ASIdentifiers *asid,
 {
     ASIdentifierChoice **choice;
     ASIdOrRange *aor;
+
     if (asid == NULL)
         return 0;
     switch (which) {
@@ -214,13 +237,20 @@ int X509v3_asid_add_id_or_range(ASIdentifiers *asid,
         aor->type = ASIdOrRange_id;
         aor->u.id = min;
     } else {
+        ASN1_INTEGER *n_min = min;
+        ASN1_INTEGER *n_max = max;
+
+        if (ASN1_INTEGER_cmp(min, max) > 0) {
+            n_min = max;
+            n_max = min;
+        }
         aor->type = ASIdOrRange_range;
         if ((aor->u.range = ASRange_new()) == NULL)
             goto err;
         ASN1_INTEGER_free(aor->u.range->min);
-        aor->u.range->min = min;
+        aor->u.range->min = n_min;
         ASN1_INTEGER_free(aor->u.range->max);
-        aor->u.range->max = max;
+        aor->u.range->max = n_max;
     }
     /* Cannot fail due to the reservation above */
     if (!ossl_assert(sk_ASIdOrRange_push((*choice)->u.asIdsOrRanges, aor)))
@@ -228,29 +258,14 @@ int X509v3_asid_add_id_or_range(ASIdentifiers *asid,
     return 1;
 
 err:
-    ASIdOrRange_free(aor);
-    return 0;
-}
-
-/*
- * Extract min and max values from an ASIdOrRange.
- */
-static int extract_min_max(ASIdOrRange *aor,
-    ASN1_INTEGER **min, ASN1_INTEGER **max)
-{
-    if (!ossl_assert(aor != NULL))
-        return 0;
-    switch (aor->type) {
-    case ASIdOrRange_id:
-        *min = aor->u.id;
-        *max = aor->u.id;
-        return 1;
-    case ASIdOrRange_range:
-        *min = aor->u.range->min;
-        *max = aor->u.range->max;
-        return 1;
+    /* On failure do not take ownership: clear so free does not free caller's min/max */
+    if (aor->type == ASIdOrRange_id) {
+        aor->u.id = NULL;
+    } else if (aor->type == ASIdOrRange_range && aor->u.range != NULL) {
+        aor->u.range->min = NULL;
+        aor->u.range->max = NULL;
     }
-
+    ASIdOrRange_free(aor);
     return 0;
 }
 

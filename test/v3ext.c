@@ -459,6 +459,310 @@ end:
     return ret;
 }
 
+/*
+ * Test that adding a range with inverted bounds (max, min) is accepted and
+ * normalized, and canonize succeeds.
+ */
+static int test_addr_inverted_range(void)
+{
+    IPAddrBlocks *addr = NULL;
+    ASN1_OCTET_STRING *ip1 = NULL, *ip2 = NULL;
+    int testresult = 0;
+
+    addr = sk_IPAddressFamily_new_null();
+    if (!TEST_ptr(addr))
+        goto end;
+    ip1 = a2i_IPADDRESS("192.168.0.10");
+    if (!TEST_ptr(ip1) || !TEST_int_eq(ip1->length, 4))
+        goto end;
+    ip2 = a2i_IPADDRESS("192.168.0.5");
+    if (!TEST_ptr(ip2) || !TEST_int_eq(ip2->length, 4))
+        goto end;
+    /* Pass (max, min) - should be normalized and succeed */
+    if (!TEST_true(X509v3_addr_add_range(addr, IANA_AFI_IPV4, NULL, ip1->data, ip2->data)))
+        goto end;
+    if (!TEST_true(X509v3_addr_canonize(addr)))
+        goto end;
+    if (!TEST_true(X509v3_addr_is_canonical(addr)))
+        goto end;
+    testresult = 1;
+end:
+    sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
+    ASN1_OCTET_STRING_free(ip1);
+    ASN1_OCTET_STRING_free(ip2);
+    return testresult;
+}
+
+/*
+ * Overlapping adds are accepted; canonize rejects a non-canonical list.
+ */
+static int test_addr_overlap(void)
+{
+    IPAddrBlocks *addr = NULL;
+    ASN1_OCTET_STRING *ip1 = NULL, *ip2 = NULL, *ip3 = NULL, *ip4 = NULL;
+    int testresult = 0;
+
+    addr = sk_IPAddressFamily_new_null();
+    if (!TEST_ptr(addr))
+        goto end;
+    ip1 = a2i_IPADDRESS("192.168.0.0");
+    ip2 = a2i_IPADDRESS("192.168.0.255");
+    if (!TEST_ptr(ip1) || !TEST_ptr(ip2))
+        goto end;
+    if (!TEST_true(X509v3_addr_add_range(addr, IANA_AFI_IPV4, NULL, ip1->data, ip2->data)))
+        goto end;
+    ip3 = a2i_IPADDRESS("192.168.0.100");
+    ip4 = a2i_IPADDRESS("192.168.1.100");
+    if (!TEST_ptr(ip3) || !TEST_ptr(ip4))
+        goto end;
+    if (!TEST_true(X509v3_addr_add_range(addr, IANA_AFI_IPV4, NULL, ip3->data, ip4->data)))
+        goto end;
+    if (!TEST_false(X509v3_addr_canonize(addr)))
+        goto end;
+    /* addr canonize returns 0 on overlap without always pushing an error */
+    sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
+    addr = NULL;
+    ASN1_OCTET_STRING_free(ip1);
+    ASN1_OCTET_STRING_free(ip2);
+    ASN1_OCTET_STRING_free(ip3);
+    ASN1_OCTET_STRING_free(ip4);
+    ip1 = ip2 = ip3 = ip4 = NULL;
+
+    addr = sk_IPAddressFamily_new_null();
+    if (!TEST_ptr(addr))
+        goto end;
+    ip1 = a2i_IPADDRESS("192.168.0.0");
+    ip2 = a2i_IPADDRESS("192.168.0.255");
+    ip3 = a2i_IPADDRESS("192.168.0.0");
+    if (!TEST_ptr(ip1) || !TEST_ptr(ip2) || !TEST_ptr(ip3))
+        goto end;
+    if (!TEST_true(X509v3_addr_add_range(addr, IANA_AFI_IPV4, NULL, ip1->data, ip2->data)))
+        goto end;
+    if (!TEST_true(X509v3_addr_add_prefix(addr, IANA_AFI_IPV4, NULL, ip3->data, 24)))
+        goto end;
+    if (!TEST_false(X509v3_addr_canonize(addr)))
+        goto end;
+    testresult = 1;
+end:
+    sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
+    ASN1_OCTET_STRING_free(ip1);
+    ASN1_OCTET_STRING_free(ip2);
+    ASN1_OCTET_STRING_free(ip3);
+    ASN1_OCTET_STRING_free(ip4);
+    return testresult;
+}
+
+/*
+ * Test that adding an AS range with inverted bounds (max, min) is accepted
+ * and canonize succeeds.
+ */
+static int test_asid_inverted_range(void)
+{
+    ASIdentifiers *asid = NULL;
+    ASN1_INTEGER *min = NULL, *max = NULL;
+    int testresult = 0;
+
+    asid = ASIdentifiers_new();
+    if (!TEST_ptr(asid))
+        goto end;
+    min = ASN1_INTEGER_new();
+    max = ASN1_INTEGER_new();
+    if (!TEST_ptr(min) || !TEST_ptr(max))
+        goto end;
+    if (!TEST_true(ASN1_INTEGER_set_int64(min, 100))
+        || !TEST_true(ASN1_INTEGER_set_int64(max, 50)))
+        goto end;
+    /* Pass (min=100, max=50) - should be normalized and succeed */
+    if (!TEST_true(X509v3_asid_add_id_or_range(asid, V3_ASID_ASNUM, min, max)))
+        goto end;
+    min = max = NULL;
+    if (!TEST_true(X509v3_asid_canonize(asid)))
+        goto end;
+    if (!TEST_true(X509v3_asid_is_canonical(asid)))
+        goto end;
+    testresult = 1;
+end:
+    ASN1_INTEGER_free(min);
+    ASN1_INTEGER_free(max);
+    ASIdentifiers_free(asid);
+    return testresult;
+}
+
+/*
+ * Overlapping AS id inside an existing range: adds succeed, canonize fails.
+ */
+static int test_asid_overlap(void)
+{
+    ASIdentifiers *asid = NULL;
+    ASN1_INTEGER *v1 = NULL, *v2 = NULL, *v3 = NULL;
+    int testresult = 0;
+
+    asid = ASIdentifiers_new();
+    if (!TEST_ptr(asid))
+        goto end;
+    v1 = ASN1_INTEGER_new();
+    v2 = ASN1_INTEGER_new();
+    v3 = ASN1_INTEGER_new();
+    if (!TEST_ptr(v1) || !TEST_ptr(v2) || !TEST_ptr(v3))
+        goto end;
+    if (!TEST_true(ASN1_INTEGER_set_int64(v1, 100))
+        || !TEST_true(ASN1_INTEGER_set_int64(v2, 200))
+        || !TEST_true(ASN1_INTEGER_set_int64(v3, 150)))
+        goto end;
+    if (!TEST_true(X509v3_asid_add_id_or_range(asid, V3_ASID_ASNUM, v1, v2)))
+        goto end;
+    v1 = v2 = NULL;
+    if (!TEST_true(X509v3_asid_add_id_or_range(asid, V3_ASID_ASNUM, v3, NULL)))
+        goto end;
+    v3 = NULL;
+    ERR_clear_error();
+    if (!TEST_false(X509v3_asid_canonize(asid)))
+        goto end;
+    {
+        unsigned long err = ERR_peek_last_error();
+
+        if (!TEST_true(err != 0))
+            goto end;
+        if (ERR_GET_REASON(err) != X509V3_R_EXTENSION_VALUE_ERROR)
+            TEST_note("Overlap canonize error reason %lu, expected %d",
+                (unsigned long)ERR_GET_REASON(err), X509V3_R_EXTENSION_VALUE_ERROR);
+    }
+    testresult = 1;
+end:
+    ASN1_INTEGER_free(v1);
+    ASN1_INTEGER_free(v2);
+    ASN1_INTEGER_free(v3);
+    ASIdentifiers_free(asid);
+    return testresult;
+}
+
+/*
+ * Canonize must reject overlapping ranges when data was not built via the
+ * add API (e.g. from the wire).  Build one range via API, then push a second
+ * overlapping range directly onto the stack and expect canonize to fail.
+ */
+static int test_canonize_rejects_overlapping_addr(void)
+{
+    IPAddrBlocks *addr = NULL;
+    IPAddressFamily *f = NULL;
+    IPAddressOrRanges *aors = NULL;
+    IPAddressOrRange *aor = NULL;
+    ASN1_OCTET_STRING *ip1 = NULL, *ip2 = NULL;
+    unsigned char min4[4] = { 192, 168, 0, 100 };
+    unsigned char max4[4] = { 192, 168, 1, 100 };
+    int testresult = 0;
+
+    addr = sk_IPAddressFamily_new_null();
+    if (!TEST_ptr(addr))
+        goto end;
+    ip1 = a2i_IPADDRESS("192.168.0.0");
+    ip2 = a2i_IPADDRESS("192.168.0.255");
+    if (!TEST_ptr(ip1) || !TEST_ptr(ip2))
+        goto end;
+    if (!TEST_true(X509v3_addr_add_range(addr, IANA_AFI_IPV4, NULL, ip1->data, ip2->data)))
+        goto end;
+    f = sk_IPAddressFamily_value(addr, 0);
+    if (!TEST_ptr(f) || !TEST_ptr(f->ipAddressChoice)
+        || f->ipAddressChoice->type != IPAddressChoice_addressesOrRanges
+        || !TEST_ptr(aors = f->ipAddressChoice->u.addressesOrRanges))
+        goto end;
+
+    aor = IPAddressOrRange_new();
+    if (!TEST_ptr(aor))
+        goto end;
+    aor->type = IPAddressOrRange_addressRange;
+    aor->u.addressRange = IPAddressRange_new();
+    if (!TEST_ptr(aor->u.addressRange))
+        goto end;
+    if (aor->u.addressRange->min == NULL
+        && !TEST_ptr(aor->u.addressRange->min = ASN1_BIT_STRING_new()))
+        goto end;
+    if (aor->u.addressRange->max == NULL
+        && !TEST_ptr(aor->u.addressRange->max = ASN1_BIT_STRING_new()))
+        goto end;
+    if (!ASN1_BIT_STRING_set(aor->u.addressRange->min, min4, sizeof(min4))
+        || !ASN1_BIT_STRING_set(aor->u.addressRange->max, max4, sizeof(max4)))
+        goto end;
+    /* Use full bytes (no bits_left); ASN1_BIT_STRING_set leaves flags 0 for full bytes */
+    aor->u.addressRange->min->flags &= ~7;
+    aor->u.addressRange->max->flags &= ~7;
+
+    if (!sk_IPAddressOrRange_push(aors, aor))
+        goto end;
+    aor = NULL;
+
+    if (!TEST_false(X509v3_addr_canonize(addr)))
+        goto end;
+    testresult = 1;
+end:
+    IPAddressOrRange_free(aor);
+    sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
+    ASN1_OCTET_STRING_free(ip1);
+    ASN1_OCTET_STRING_free(ip2);
+    return testresult;
+}
+
+/*
+ * Canonize must reject overlapping AS ids/ranges when data was not built via
+ * the add API.  Add one range via API, then push a second overlapping range
+ * directly and expect canonize to fail.
+ */
+static int test_canonize_rejects_overlapping_asid(void)
+{
+    ASIdentifiers *asid = NULL;
+    ASIdOrRange *aor = NULL;
+    ASN1_INTEGER *v1 = NULL, *v2 = NULL, *v3 = NULL, *v4 = NULL;
+    int testresult = 0;
+
+    asid = ASIdentifiers_new();
+    if (!TEST_ptr(asid))
+        goto end;
+    v1 = ASN1_INTEGER_new();
+    v2 = ASN1_INTEGER_new();
+    v3 = ASN1_INTEGER_new();
+    v4 = ASN1_INTEGER_new();
+    if (!TEST_ptr(v1) || !TEST_ptr(v2) || !TEST_ptr(v3) || !TEST_ptr(v4))
+        goto end;
+    if (!TEST_true(ASN1_INTEGER_set_int64(v1, 100))
+        || !TEST_true(ASN1_INTEGER_set_int64(v2, 200))
+        || !TEST_true(ASN1_INTEGER_set_int64(v3, 150))
+        || !TEST_true(ASN1_INTEGER_set_int64(v4, 250)))
+        goto end;
+    if (!TEST_true(X509v3_asid_add_id_or_range(asid, V3_ASID_ASNUM, v1, v2)))
+        goto end;
+    v1 = v2 = NULL;
+
+    aor = ASIdOrRange_new();
+    if (!TEST_ptr(aor))
+        goto end;
+    aor->type = ASIdOrRange_range;
+    aor->u.range = ASRange_new();
+    if (!TEST_ptr(aor->u.range))
+        goto end;
+    aor->u.range->min = v3;
+    aor->u.range->max = v4;
+    v3 = v4 = NULL;
+
+    if (!TEST_ptr(asid->asnum) || asid->asnum->type != ASIdentifierChoice_asIdsOrRanges
+        || !TEST_ptr(asid->asnum->u.asIdsOrRanges))
+        goto end;
+    if (!sk_ASIdOrRange_push(asid->asnum->u.asIdsOrRanges, aor))
+        goto end;
+    aor = NULL;
+
+    if (!TEST_false(X509v3_asid_canonize(asid)))
+        goto end;
+    testresult = 1;
+end:
+    ASIdOrRange_free(aor);
+    ASN1_INTEGER_free(v1);
+    ASN1_INTEGER_free(v2);
+    ASN1_INTEGER_free(v3);
+    ASN1_INTEGER_free(v4);
+    ASIdentifiers_free(asid);
+    return testresult;
+}
+
 #endif /* OPENSSL_NO_RFC3779 */
 
 OPT_TEST_DECLARE_USAGE("cert.pem\n")
@@ -477,9 +781,15 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_RFC3779
     ADD_TEST(test_asid);
     ADD_TEST(test_addr_ranges);
+    ADD_TEST(test_addr_inverted_range);
+    ADD_TEST(test_addr_overlap);
+    ADD_TEST(test_canonize_rejects_overlapping_addr);
+    ADD_TEST(test_canonize_rejects_overlapping_asid);
     ADD_TEST(test_ext_syntax);
     ADD_TEST(test_addr_fam_len);
     ADD_TEST(test_addr_subset);
+    ADD_TEST(test_asid_overlap);
+    ADD_TEST(test_asid_inverted_range);
 #endif /* OPENSSL_NO_RFC3779 */
     return 1;
 }
