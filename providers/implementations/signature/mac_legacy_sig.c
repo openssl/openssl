@@ -8,7 +8,6 @@
  */
 
 #include <stdbool.h>
-
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/core_dispatch.h>
