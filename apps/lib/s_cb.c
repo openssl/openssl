@@ -414,7 +414,7 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
             const char *name = SSL_group_to_name(s, nid);
 
             if (name == NULL)
-                BIO_printf(out, "Negotiated TLS1.3 group: %d\n", nid);
+                BIO_printf(out, "Negotiated TLS1.3 group NID: %d\n", nid);
             else
                 BIO_printf(out, "Negotiated TLS1.3 group: %s\n", name);
         }
