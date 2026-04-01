@@ -1252,6 +1252,53 @@ int CRYPTO_atomic_store_int(int *dst, int val, CRYPTO_RWLOCK *lock)
     return 1;
 }
 
+int CRYPTO_atomic_load_ptr(void **ptr, void **ret, CRYPTO_RWLOCK *lock)
+{
+#if defined(__GNUC__) && defined(__ATOMIC_RELAXED) && !defined(BROKEN_CLANG_ATOMICS)
+    *ret = __atomic_load_n(ptr, __ATOMIC_RELAXED);
+    return 1;
+#else
+    if ((lock == NULL) || !CRYPTO_THREAD_read_lock(lock))
+        return 0;
+    *ret = *ptr;
+    if (!CRYPTO_THREAD_unlock(lock))
+        return 0;
+    return 1;
+#endif
+}
+
+int CRYPTO_atomic_store_ptr(void **dst, void **val, CRYPTO_RWLOCK *lock)
+{
+#if defined(__GNUC__) && defined(__ATOMIC_RELAXED) && !defined(BROKEN_CLANG_ATOMICS)
+    __atomic_store(dst, val, __ATOMIC_RELAXED);
+    return 1;
+#else
+    if ((lock == NULL) || !CRYPTO_THREAD_read_lock(lock))
+        return 0;
+    *dst = *val;
+    if (!CRYPTO_THREAD_unlock(lock))
+        return 0;
+    return 1;
+#endif
+}
+
+int CRYPTO_atomic_cmp_exch_ptr(void **ptr, void **expect, void *desire, CRYPTO_RWLOCK *lock)
+{
+#if defined(__GNUC__) && defined(__ATOMIC_RELAXED) && !defined(BROKEN_CLANG_ATOMICS)
+    return __atomic_compare_exchange_n(ptr, expect, desire, 0, __ATOMIC_ACQ_REL, __ATOMIC_RELAXED) ? 1 : 0;
+#else
+    if ((lock == NULL) || !CRYPTO_THREAD_write_lock(lock))
+        return 0;
+    if (*ptr == *expect)
+        *ptr = desire;
+    else
+        *expect = *ptr;
+    if (!CRYPTO_THREAD_unlock(lock))
+        return 0;
+    return 1;
+#endif
+}
+
 #ifndef FIPS_MODULE
 int openssl_init_fork_handlers(void)
 {
