@@ -56,7 +56,6 @@ The following name is supported only in OpenSSL's default provider.
 
 The shared secret is the concatenation of a 32 byte L<EVP_PKEY-SM2(7)> shared
 secret followed by a 32 byte L<EVP_PKEY-ML-KEM(7)> shared secret.
-Both algorithms used are FIPS approved.
 
 =back
 

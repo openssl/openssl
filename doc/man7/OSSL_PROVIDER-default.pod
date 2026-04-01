@@ -568,21 +568,21 @@ L<OSSL_PROVIDER-base(7)>
 
 =head1 HISTORY
 
+Base functionality was added in OpenSSL 3.0.
+
+The RIPEMD160 digest was added to the default provider in OpenSSL 3.0.7.
+
+Support for B<X25519MLKEM768>, B<X448MLKEM1024>, B<SecP256r1MLKEM768> and
+B<SecP384r1MLKEM1024> was added in OpenSSL 3.5.
+
+The HKDF-SHA256, HKDF-SHA384 and HKDF-SHA512 algorithms were added in OpenSSL 3.6.
+
 Support for B<LMS> Public Key (SubjectPublicKeyInfo) encoders and decoders
 was added in OpenSSL 4.0.
 
 Support for B<curveSM2MLKEM768> was added in OpenSSL 4.0.
 
-The CSHAKE-128 and CSHAKE-256 algorithms were added in OpenSSL 4.0.
-
-The HKDF-SHA256, HKDF-SHA384 and HKDF-SHA512 algorithms were added in OpenSSL 3.6.
-
-Support for B<X25519MLKEM768>, B<X448MLKEM1024>, B<SecP256r1MLKEM768> and
-B<SecP384r1MLKEM1024> was added in OpenSSL 3.5.
-
-The RIPEMD160 digest was added to the default provider in OpenSSL 3.0.7.
-
-All other functionality was added in OpenSSL 3.0.
+Support for CSHAKE-128 and CSHAKE-256 was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
