@@ -375,7 +375,7 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
         nid = groups[i];
         const char *name = SSL_group_to_name(s, nid);
         if (name == NULL)
-            BIO_printf(out, "%d", nid);
+            BIO_printf(out, "NID %d", nid);
         else
             BIO_puts(out, name);
     }
