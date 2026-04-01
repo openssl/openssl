@@ -232,11 +232,8 @@ static int rand_set_rand_method_internal(const RAND_METHOD *meth,
         return 0;
     if (!RUN_ONCE(&rand_init, do_rand_init))
         return 0;
-
-    if (!CRYPTO_THREAD_write_lock(rand_meth_lock))
-        return 0;
-    default_RAND_meth = meth;
-    CRYPTO_THREAD_unlock(rand_meth_lock);
+    CRYPTO_atomic_store_ptr((void **)&default_RAND_meth, (void **)&meth,
+        rand_meth_lock);
     return 1;
 }
 
@@ -250,24 +247,25 @@ const RAND_METHOD *RAND_get_rand_method(void)
     const RAND_METHOD *tmp_meth = NULL;
 
     if (!RUN_ONCE(&rand_init, do_rand_init))
-        return NULL;
+        goto end;
 
-    if (rand_meth_lock == NULL)
-        return NULL;
-
-    if (!CRYPTO_THREAD_read_lock(rand_meth_lock))
-        return NULL;
-    tmp_meth = default_RAND_meth;
-    CRYPTO_THREAD_unlock(rand_meth_lock);
+    CRYPTO_atomic_load_ptr((void **)&default_RAND_meth, (void **)&tmp_meth,
+        rand_meth_lock);
     if (tmp_meth != NULL)
         return tmp_meth;
 
-    if (!CRYPTO_THREAD_write_lock(rand_meth_lock))
-        return NULL;
-    if (default_RAND_meth == NULL)
-        default_RAND_meth = &ossl_rand_meth;
-    tmp_meth = default_RAND_meth;
-    CRYPTO_THREAD_unlock(rand_meth_lock);
+    /*
+     * We atomically compare and exchange default_RAND_meth
+     * if default_RAND_meth is NULL, we assign ossl_rand_meth to it
+     * If this returns 1, then the exchange was successful, and we can just
+     * return &ossl_rand_meth
+     * If it fails, then the contents of default_RAND_meth are written to tmp_meth
+     * which we can just return as is
+     */
+    if (CRYPTO_atomic_cmp_exch_ptr((void **)&default_RAND_meth, (void **)&tmp_meth,
+            (void *)&ossl_rand_meth, rand_meth_lock))
+        tmp_meth = &ossl_rand_meth;
+end:
     return tmp_meth;
 }
 #endif /* OPENSSL_NO_DEPRECATED_3_0 */
