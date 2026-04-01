@@ -878,8 +878,8 @@ EVP_CIPHER_CTX_iv_noconst               876	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 EVP_CIPHER_CTX_get_updated_iv           877	4_0_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_get_original_iv          878	4_0_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_buf_noconst              879	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
-EVP_CIPHER_CTX_get_num                  880	4_0_0	EXIST::FUNCTION:
-EVP_CIPHER_CTX_set_num                  881	4_0_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_get_num                  880	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
+EVP_CIPHER_CTX_set_num                  881	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
 EVP_CIPHER_CTX_dup                      882	4_0_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_copy                     883	4_0_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_get_app_data             884	4_0_0	EXIST::FUNCTION:

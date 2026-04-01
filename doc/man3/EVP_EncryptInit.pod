@@ -228,8 +228,6 @@ EVP_CIPHER_CTX_mode
  int EVP_CIPHER_CTX_get_tag_length(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_get_type(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_get_mode(const EVP_CIPHER_CTX *ctx);
- int EVP_CIPHER_CTX_get_num(const EVP_CIPHER_CTX *ctx);
- int EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num);
  int EVP_CIPHER_CTX_is_encrypting(const EVP_CIPHER_CTX *ctx);
 
  int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
@@ -253,9 +251,16 @@ EVP_CIPHER_CTX_mode
  #define EVP_CIPHER_CTX_key_length EVP_CIPHER_CTX_get_key_length
  #define EVP_CIPHER_CTX_iv_length EVP_CIPHER_CTX_get_iv_length
  #define EVP_CIPHER_CTX_tag_length EVP_CIPHER_CTX_get_tag_length
- #define EVP_CIPHER_CTX_num EVP_CIPHER_CTX_get_num
  #define EVP_CIPHER_CTX_type EVP_CIPHER_CTX_get_type
  #define EVP_CIPHER_CTX_mode EVP_CIPHER_CTX_get_mode
+
+The following functions and alias have been deprecated since OpenSSL 4.1, and
+can be hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version
+value, see L<openssl_user_macros(7)>:
+
+ int EVP_CIPHER_CTX_get_num(const EVP_CIPHER_CTX *ctx);
+ int EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num);
+ #define EVP_CIPHER_CTX_num EVP_CIPHER_CTX_get_num
 
 The following function has been deprecated since OpenSSL 3.0, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
@@ -840,6 +845,7 @@ Gets or sets the cipher specific "num" parameter for the cipher context I<ctx>.
 Built-in ciphers typically use this to track how much of the current underlying
 block has been "used" already.
 See also EVP_CIPHER_CTX_get_num() and EVP_CIPHER_CTX_set_num().
+This parameter was deprecated in OpenSSL 4.1.
 
 =item "keylen" (B<OSSL_CIPHER_PARAM_KEYLEN>) <unsigned integer>
 
@@ -1944,6 +1950,9 @@ EVP_CIPHER_CTX_reset().
 
 The EVP_CIPHER_CTX_cipher() function was deprecated in OpenSSL 3.0; use
 EVP_CIPHER_CTX_get0_cipher() instead.
+
+The EVP_CIPHER_CTX_get_num(), EVP_CIPHER_CTX_set_num() functions and the
+EVP_CIPHER_CTX_num() macro were deprecated in OpenSSL 4.1.
 
 The EVP_EncryptInit_ex2(), EVP_DecryptInit_ex2(), EVP_CipherInit_ex2(),
 EVP_CIPHER_fetch(), EVP_CIPHER_free(), EVP_CIPHER_up_ref(),
