@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_E_OS_H
+#if !defined(OSSL_E_OS_H)
 #define OSSL_E_OS_H
 
 #include <limits.h>
@@ -365,8 +365,6 @@ typedef _locale_t locale_t;
 #endif
 #endif
 
-#endif
-
 /*
  * Can we use a global destructor?  We can use a global destructor via
  * __attribute__ on anything like a modern gcc/clang.  We can also use
@@ -382,12 +380,14 @@ typedef _locale_t locale_t;
 #if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN64)
 #define OSSL_CLEANUP_USING_DESTRUCTOR
 #define OSSL_DLLMAIN_DESTRUCTOR
+#define OSSL_DLLMAIN_CONSTRUCTOR
 /*
- * destructor will be installed in libcrypto's dllmain.c
- * This means effectively anything not win16 or dos will handle
- * this.
+ * constructor and destructor will be installed in libcrypto's
+ * dllmain.c This means effectively anything not win16 or dos will
+ * handle this.
  */
 void ossl_cleanup_destructor(void);
+void ossl_crypto_constructor(void);
 #else
 #if defined(__has_attribute)
 #if __has_attribute(destructor)
@@ -408,6 +408,13 @@ void ossl_cleanup_destructor(void) __attribute__((destructor));
  * more than 20 years old.
  */
 void ossl_cleanup_destructor(void);
-#endif /* defined (__has_attribute(destructor) */
+#endif /* __has_attribute(destructor) */
+#if __has_attribute(constructor)
+#define OSSL_USE_GLOBAL_CONSTRUCTOR
+/* constructor is installed by compiler */
+void ossl_crypto_constructor(void) __attribute__((constructor));
+#endif /* __has_attribute(constructor) */
 #endif /* defined (__has_attribute) */
 #endif /* defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN64) */
+
+#endif /* !defined(OSSL_E_OS_H) */

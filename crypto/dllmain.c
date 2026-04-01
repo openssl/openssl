@@ -30,13 +30,16 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
+#if defined(OSSL_DLLMAIN_CONSTRUCTOR)
+        ossl_crypto_constructor();
+#endif /* defined(OSSL_DLLMAIN_CONSTRUCTOR) */
         break;
     case DLL_THREAD_ATTACH:
         break;
     case DLL_THREAD_DETACH:
-# ifndef __CYGWIN__
+#ifndef __CYGWIN__
         OPENSSL_thread_stop();
-# endif
+#endif
         break;
     case DLL_PROCESS_DETACH:
 #if defined(OSSL_DLLMAIN_DESTRUCTOR)
