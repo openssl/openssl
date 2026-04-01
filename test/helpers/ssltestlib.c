@@ -660,6 +660,7 @@ int mempacket_append_to_record(BIO *bio, int pktidx, int recidx,
         return 0;
     srcpkt->data = tmp;
 
+    /* Parse the records in the packet looking for the target record index */
     for (i = 0, rem = srcpkt->len, rec = srcpkt->data;
         rem >= DTLS1_RT_HEADER_LENGTH && i < recidx;
         i++, rem -= len, rec += len) {
@@ -672,7 +673,7 @@ int mempacket_append_to_record(BIO *bio, int pktidx, int recidx,
     if (i != recidx || rem < DTLS1_RT_HEADER_LENGTH)
         return 0;
 
-    len = ((rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO]);
+    len = (rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO];
     /* We can only append to the last record */
     if (rem != len + DTLS1_RT_HEADER_LENGTH)
         return 0;
