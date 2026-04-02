@@ -110,6 +110,11 @@ static void *evp_mac_from_algorithm(int name_id,
             mac->final = OSSL_FUNC_mac_final(fns);
             fnmaccnt++;
             break;
+        case OSSL_FUNC_MAC_SQUEEZE:
+            if (mac->squeeze != NULL)
+                break;
+            mac->squeeze = OSSL_FUNC_mac_squeeze(fns);
+            break;
         case OSSL_FUNC_MAC_GETTABLE_PARAMS:
             if (mac->gettable_params != NULL)
                 break;

@@ -6,6 +6,7 @@ digraph mac {
     initialised [fontcolor="#c94c4c"];
     updated [fontcolor="#c94c4c"];
     finaled [fontcolor="#c94c4c"];
+    squeezed [fontcolor="#c94c4c"];
     end [label=freed, color="#deeaee", style="filled"];
 
     begin -> newed [label="EVP_MAC_CTX_new"];
@@ -15,6 +16,11 @@ digraph mac {
     updated -> finaled [label="EVP_MAC_final"];
     updated -> finaled [label="EVP_MAC_finalXOF",
                         fontcolor="#808080", color="#808080"];
+    updated -> squeezed [label="EVP_MAC_squeeze"];
+    squeezed -> squeezed [label="EVP_MAC_squeeze"];
+    squeezed -> end [label="EVP_MAC_CTX_free"];
+    squeezed -> initialised [label="EVP_MAC_init", style=dashed,
+                            color="#034f84", fontcolor="#034f84"];
     /* Once this works it should go back in:
     finaled -> finaled [label="EVP_MAC_final_XOF",
                         fontcolor="#808080", color="#808080"];

@@ -624,6 +624,49 @@ static int xof_fail_test(void)
     return ret;
 }
 
+static int xof_kmac_test(void)
+{
+    int ret;
+    EVP_MAC *mac = NULL;
+    EVP_MAC_CTX *ctx = NULL;
+    OSSL_PARAM params[2], *p = params;
+    static const uint8_t key[] = {
+        0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
+        0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
+        0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
+        0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f
+    };
+    static const char *custom = "My Tagged Application";
+    static const uint8_t in[] = {
+        0x00, 0x01, 0x02, 0x03
+    };
+    static const uint8_t expected[] = {
+        0x3b, 0x1f, 0xba, 0x96, 0x3c, 0xd8, 0xb0, 0xb5,
+        0x9e, 0x8c, 0x1a, 0x6d, 0x71, 0x88, 0x8b, 0x71,
+        0x43, 0x65, 0x1a, 0xf8, 0xba, 0x0a, 0x70, 0x70,
+        0xc0, 0x97, 0x9e, 0x28, 0x11, 0x32, 0x4a, 0xa5
+    };
+    uint8_t out[sizeof(expected)];
+
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_CUSTOM,
+        (void *)custom, strlen(custom));
+    *p = OSSL_PARAM_construct_end();
+
+    ret = TEST_ptr(mac = EVP_MAC_fetch(NULL, "KMAC-128", NULL))
+        && TEST_ptr(ctx = EVP_MAC_CTX_new(mac))
+        && TEST_int_eq(EVP_MAC_init(ctx, key, sizeof(key), params), 1)
+        && TEST_int_eq(EVP_MAC_update(ctx, in, sizeof(in)), 1)
+        && TEST_int_eq(EVP_MAC_squeeze(ctx, out, 1), 1)
+        && TEST_int_eq(EVP_MAC_squeeze(ctx, out + 1, 2), 1)
+        && TEST_int_eq(EVP_MAC_squeeze(ctx, out + 3, 29), 1)
+        && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected))
+        && TEST_int_eq(EVP_MAC_finalXOF(ctx, out, 32), 0)
+        && TEST_int_eq(EVP_MAC_squeeze(ctx, out, 32), 1);
+    EVP_MAC_free(mac);
+    EVP_MAC_CTX_free(ctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(xof_kat_test, OSSL_NELEM(xof_test_data));
@@ -635,5 +678,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(xof_squeeze_large_test, OSSL_NELEM(stride_test_data));
     ADD_ALL_TESTS(xof_squeeze_dup_test, OSSL_NELEM(dupoffset_test_data));
     ADD_TEST(xof_fail_test);
+    ADD_TEST(xof_kmac_test);
     return 1;
 }
