@@ -229,7 +229,7 @@ static int set1_pwd_senderKID(OSSL_CMP_PKIHEADER *hdr, const ASN1_OCTET_STRING *
         if (gn != NULL && gn->type == GEN_DIRNAME
             && (sender = gn->d.directoryName) != NULL
             && (res = X509_NAME_get_index_by_NID(sender, NID_commonName, -1)) >= 0) {
-            ASN1_STRING *astr = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(sender, res));
+            const ASN1_STRING *astr = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(sender, res));
             ASN1_OCTET_STRING *ostr = NULL;
 
             if (!ossl_cmp_asn1_octet_string_set1_bytes(&ostr, ASN1_STRING_get0_data(astr),
