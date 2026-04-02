@@ -243,8 +243,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
     if (ossl_unlikely(count == 0)) {
-        if (ctx->digest == NULL ||
-            (EVP_MD_get_flags(ctx->digest) & EVP_MD_FLAG_UPDATE_NULL) == 0)
+        if (ctx->digest == NULL || (EVP_MD_get_flags(ctx->digest) & EVP_MD_FLAG_UPDATE_NULL) == 0)
             return 1;
     }
 
