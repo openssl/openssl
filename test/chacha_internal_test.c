@@ -17,7 +17,7 @@
 #include "testutil.h"
 #include "crypto/chacha.h"
 #if defined(__powerpc64__) && !defined(OPENSSL_SYS_AIX) && !defined(OPENSSL_SYS_MACOSX)
-# include "crypto/ppc_arch.h"
+#include "crypto/ppc_arch.h"
 #endif
 
 static const unsigned int key[] = {
@@ -190,8 +190,7 @@ static int test_cha_cha_internal(int n)
  * VSR0-VSR25, which aliases FPR0-FPR25; without explicit saves/restores
  * the caller's floating-point state is silently corrupted.
  */
-__attribute__((noinline))
-static int test_chacha20_p10_fpr_abi(void)
+__attribute__((noinline)) static int test_chacha20_p10_fpr_abi(void)
 {
     /*
      * Use a buffer larger than 255 bytes to ensure the 8x path is taken.
@@ -213,9 +212,18 @@ static int test_chacha20_p10_fpr_abi(void)
     register double r24 asm("fr24");
     register double r25 asm("fr25");
 
-    r14 = 14.0; r15 = 15.0; r16 = 16.0; r17 = 17.0;
-    r18 = 18.0; r19 = 19.0; r20 = 20.0; r21 = 21.0;
-    r22 = 22.0; r23 = 23.0; r24 = 24.0; r25 = 25.0;
+    r14 = 14.0;
+    r15 = 15.0;
+    r16 = 16.0;
+    r17 = 17.0;
+    r18 = 18.0;
+    r19 = 19.0;
+    r20 = 20.0;
+    r21 = 21.0;
+    r22 = 22.0;
+    r23 = 23.0;
+    r24 = 24.0;
+    r25 = 25.0;
 
     /* Force the values into the actual FPR registers before the call */
     asm volatile("" : "+d"(r14), "+d"(r15), "+d"(r16), "+d"(r17));
