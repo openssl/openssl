@@ -67,23 +67,36 @@ static void info_cb(const SSL *ssl, int type, int val)
         handshake_finished(ssl);
 }
 
+int tlsv13_ctx_pair(SSL_CTX **s, SSL_CTX **c, char *cert, char *key)
+{
+    const SSL_METHOD *cm = TLS_client_method(), *sm = TLS_server_method();
+    int test, v = TLS1_VERSION;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, sm, cm, v, 0, s, c, cert, key))
+        && TEST_true(SSL_CTX_set_min_proto_version(*s, TLS1_3_VERSION))
+        && TEST_true(SSL_CTX_set_max_proto_version(*s, TLS1_3_VERSION))
+        && TEST_true(SSL_CTX_set_min_proto_version(*c, TLS1_3_VERSION))
+        && TEST_true(SSL_CTX_set_max_proto_version(*c, TLS1_3_VERSION));
+
+    return test;
+}
+
 static int has_extension(const unsigned char *ex, size_t len, unsigned int type)
 {
     while (len >= 4) {
-        size_t elen = (ex[2] << 8) | ex[3];
+        size_t size = (ex[2] << 8) | ex[3];
 
-        if (len < 4 + elen)
+        if (len < 4 + size)
             break;
         if (((ex[0] << 8) | ex[1]) == type)
             return 1;
-        ex += 4 + elen;
-        len -= 4 + elen;
+        ex += 4 + size;
+        len -= 4 + size;
     }
     return 0;
 }
 
-static void parse_server_hello_exts(const unsigned char *buf, size_t len,
-    struct stats *stats)
+static void parse_sh_exts(const unsigned char *buf, size_t len, struct stats *x)
 {
     size_t off = 4, sid_len, ext_len;
 
@@ -102,19 +115,18 @@ static void parse_server_hello_exts(const unsigned char *buf, size_t len,
     if (len < off + ext_len)
         return;
 
-    stats->sh_has_psk = has_extension(buf + off, ext_len, TLSEXT_TYPE_psk);
-    stats->sh_has_supported_versions = has_extension(buf + off, ext_len,
+    x->sh_has_psk = has_extension(buf + off, ext_len, TLSEXT_TYPE_psk);
+    x->sh_has_supported_versions = has_extension(buf + off, ext_len,
         TLSEXT_TYPE_supported_versions);
-
-    TEST_info("ServerHello extensions: psk=%d supported_versions=%d",
-        stats->sh_has_psk, stats->sh_has_supported_versions);
+    TEST_info("sh extensions: psk=%d supported_versions=%d",
+        x->sh_has_psk, x->sh_has_supported_versions);
 }
 
 static void msg_cb(int write_p, int version, int content_type,
     const void *buf, size_t len, SSL *ssl, void *arg)
 {
     const char *endpoint = SSL_is_server(ssl) ? "server" : "client";
-    const char *dir = write_p ? "sent" : "received";
+    const char *dir = write_p ? "write" : "read";
     struct stats *stats = SSL_get_ex_data(ssl, stats_idx);
 
     if (content_type == SSL3_RT_HANDSHAKE && len > 0) {
@@ -126,26 +138,24 @@ static void msg_cb(int write_p, int version, int content_type,
                 stats->nst_msgs++;
         }
         if (mt == SSL3_MT_SERVER_HELLO && stats != NULL)
-            parse_server_hello_exts(buf, len, stats);
+            parse_sh_exts(buf, len, stats);
     }
 }
 
 static int client_hello_cb(SSL *ssl, int *al, void *arg)
 {
-    struct stats *stats = (struct stats *)arg;
+    struct stats *x = (struct stats *)arg;
     const unsigned char *data;
     size_t len;
 
-    stats->ch_has_psk = SSL_client_hello_get0_ext(
+    x->ch_has_psk = SSL_client_hello_get0_ext(
         ssl, TLSEXT_TYPE_psk, &data, &len);
-    stats->ch_has_psk_kex_modes = SSL_client_hello_get0_ext(
+    x->ch_has_psk_kex_modes = SSL_client_hello_get0_ext(
         ssl, TLSEXT_TYPE_psk_kex_modes, &data, &len);
-    stats->ch_has_session_ticket = SSL_client_hello_get0_ext(
+    x->ch_has_session_ticket = SSL_client_hello_get0_ext(
         ssl, TLSEXT_TYPE_session_ticket, &data, &len);
-
-    TEST_info("CH extensions: psk=%d psk_kex_modes=%d session_ticket=%d",
-        stats->ch_has_psk, stats->ch_has_psk_kex_modes,
-        stats->ch_has_session_ticket);
+    TEST_info("ch extensions: psk=%d psk_kex_modes=%d session_ticket=%d",
+        x->ch_has_psk, x->ch_has_psk_kex_modes, x->ch_has_session_ticket);
 
     return SSL_CLIENT_HELLO_SUCCESS;
 }
@@ -173,15 +183,6 @@ static int set_shutdown(SSL *c, SSL *s)
     SSL_set_shutdown(c, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
     SSL_set_shutdown(s, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
     return 1;
-}
-
-int tlsv13_ctx_pair(SSL_CTX **sctx, SSL_CTX **cctx, char *cert, char *pkey)
-{
-    int test;
-    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
-              TLS1_VERSION, 0, sctx, cctx, cert, pkey));
-
-    return test;
 }
 
 static int enable_tickets(SSL_CTX *s, SSL_CTX *c)
