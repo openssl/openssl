@@ -18,6 +18,8 @@
 /* Internal flags that can be queried */
 #define PROV_DIGEST_FLAG_XOF 0x0001
 #define PROV_DIGEST_FLAG_ALGID_ABSENT 0x0002
+#define PROV_DIGEST_FLAG_UPDATE_NULL 0x0004
+
 
 #ifdef __cplusplus
 extern "C" {
