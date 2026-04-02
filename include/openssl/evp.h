@@ -150,6 +150,9 @@ int EVP_default_properties_enable_fips(OSSL_LIB_CTX *libctx, int enable);
 
 #define EVP_MD_FLAG_DIGALGID_CUSTOM 0x0018
 
+/* digest allows NULL updates, this is used by TupleHash */
+#define EVP_MD_FLAG_UPDATE_NULL 0x0200
+
 /* Note if suitable for use in FIPS mode */
 #define EVP_MD_FLAG_FIPS 0x0400
 

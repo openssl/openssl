@@ -41,6 +41,11 @@ int ossl_digest_default_get_params(OSSL_PARAM params[], size_t blksz,
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
+    if (p.updatenull != NULL
+        && !OSSL_PARAM_set_int(p.updatenull, (flags & PROV_DIGEST_FLAG_UPDATE_NULL) != 0)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
+    }
     return 1;
 }
 

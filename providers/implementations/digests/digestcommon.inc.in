@@ -12,8 +12,9 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 -}
 
 {- produce_param_decoder('digest_default_get_params',
-                         (['OSSL_DIGEST_PARAM_BLOCK_SIZE',   'bsize',    'size_t'],
-                          ['OSSL_DIGEST_PARAM_SIZE',         'size',     'size_t'],
-                          ['OSSL_DIGEST_PARAM_XOF',          'xof',      'int'],
-                          ['OSSL_DIGEST_PARAM_ALGID_ABSENT', 'aldid',    'int'],
+                         (['OSSL_DIGEST_PARAM_BLOCK_SIZE',   'bsize',      'size_t'],
+                          ['OSSL_DIGEST_PARAM_SIZE',         'size',       'size_t'],
+                          ['OSSL_DIGEST_PARAM_XOF',          'xof',        'int'],
+                          ['OSSL_DIGEST_PARAM_ALGID_ABSENT', 'aldid',      'int'],
+                          ['OSSL_DIGEST_PARAM_UPDATE_NULL',  'updatenull', 'int'],
                          )); -}

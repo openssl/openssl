@@ -64,7 +64,7 @@
 #define TUPLEHASH_MAX_ENCODED_CUSTOM_STRING \
     (TUPLEHASH_MAX_CUSTOM_STRING + TUPLEHASH_MAX_ENCODED_CUSTOM_HEADER_LEN)
 
-#define TUPLEHASH_FLAGS (PROV_DIGEST_FLAG_XOF | PROV_DIGEST_FLAG_ALGID_ABSENT)
+#define TUPLEHASH_FLAGS (PROV_DIGEST_FLAG_XOF | PROV_DIGEST_FLAG_ALGID_ABSENT | PROV_DIGEST_FLAG_UPDATE_NULL)
 
 /* Fixed value of encode_string("TupleHash") */
 static const unsigned char tuplehash_encoded_string[] = {
@@ -129,21 +129,25 @@ static int init_hash(TUPLEHASH_CTX *ctx)
     if (!ctx->digest_fetched) {
         OSSL_PARAM params[5], *p = params;
         const char *name = (ctx->bitlen == 128 ? "CSHAKE-KECCAK-128" : "CSHAKE-KECCAK-256");
-        EVP_MD *md = EVP_MD_fetch(ctx->libctx, name, ctx->propq);
         uint8_t out[TUPLEHASH_MAX_BYTPEPAD_T];
         size_t out_len;
+        EVP_MD *md = EVP_MD_fetch(ctx->libctx, name, ctx->propq);
+        int w;
 
-        if (md == NULL)
+        w = EVP_MD_get_block_size(md);
+        if (w <= 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_LENGTH);
             return 0;
+        }
         *p++ = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_XOFLEN, &ctx->xoflen);
         *p = OSSL_PARAM_construct_end();
         ret = EVP_DigestInit_ex2(ctx->mdctx, md, params);
         EVP_MD_free(md);
+
         if (ret) {
             ctx->digest_fetched = 1;
             ret = bytepad_encode_custom(out, sizeof(out), &out_len,
-                      (const uint8_t *)ctx->custom, ctx->customlen,
-                      EVP_MD_get_block_size(md))
+                      (const uint8_t *)ctx->custom, ctx->customlen, (size_t)w)
                 && EVP_DigestUpdate(ctx->mdctx, out, out_len);
         }
     }

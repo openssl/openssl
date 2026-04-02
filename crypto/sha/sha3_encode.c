@@ -74,6 +74,10 @@ int ossl_sp800_185_encode_string_header(unsigned char *out,
 {
     size_t i, bits, len, sz;
 
+    if (in_len > (SIZE_MAX / 8)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_LENGTH_TOO_LARGE);
+        return 0;
+    }
     bits = 8 * in_len;
     len = get_encode_size(bits);
     sz = 1 + len;
