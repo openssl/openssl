@@ -450,7 +450,7 @@ uninstall: {- "uninstall_docs" if !$disabled{docs}; -} uninstall_sw {- $disabled
 
 libclean:
 	"$(PERL)" -e "map { m/(.*)\.dll$$/; unlink glob """{.,apps,test,fuzz}/$$1.*"""; } @ARGV" $(SHLIBS)
-	-del /Q /F $(LIBS) libcrypto.* libssl.* ossl_static.pdb
+	-del /Q /F $(LIBS) libcrypto.* libssl.*
 
 clean: libclean
 	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @HTMLDOCS1) || "\@rem" -}
@@ -545,8 +545,6 @@ install_dev: install_runtime_libs
 				       "$(INSTALLTOP)\include\openssl"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(libdir)"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_LIBS) "$(libdir)"
-	@if "$(SHLIBS)"=="" \
-	 "$(PERL)" "$(SRCDIR)\util\copy.pl" ossl_static.pdb "$(libdir)"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(CMAKECONFIGDIR)"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_EXPORTERS_CMAKE) "$(CMAKECONFIGDIR)"
 
