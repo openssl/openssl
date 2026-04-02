@@ -71,6 +71,12 @@ Currently unused.
 This digest method is suitable for use in FIPS mode.
 Currently unused.
 
+=item EVP_MD_FLAG_UPDATE_NULL
+
+This digest method allows the digest update to process NULL input, normally
+the internal update function is skipped if the input length passed to the
+digest update is 0.
+
 =back
 
 This value can also be retrieved with L<EVP_MD_get_flags(3)>.

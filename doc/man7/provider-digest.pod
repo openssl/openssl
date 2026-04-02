@@ -238,6 +238,10 @@ This digest method can only handle one block of input.
 
 This digest method is an extensible-output function (XOF).
 
+=item B<EVP_MD_FLAG_UPDATE_NULL>
+
+This digest method allows NULL input to be processed by OSSL_FUNC_digest_update.
+
 =item B<EVP_MD_FLAG_DIGALGID_NULL>
 
 When setting up a DigestAlgorithmIdentifier, this flag will have the
@@ -256,6 +260,7 @@ Custom DigestAlgorithmIdentifier handling via ctrl, with
 B<EVP_MD_FLAG_DIGALGID_ABSENT> as default.  I<Note: if combined with
 EVP_MD_FLAG_DIGALGID_NULL, the latter will be overridden.>
 Currently unused.
+
 
 =back
 
@@ -314,6 +319,8 @@ L<life_cycle-digest(7)>, L<EVP_DigestInit(3)>
 
 The provider DIGEST interface was introduced in OpenSSL 3.0.
 OSSL_FUNC_digest_copyctx() was added in 3.5 version.
+
+The flag B<EVP_MD_FLAG_UPDATE_NULL> was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

@@ -135,6 +135,8 @@ static const OSSL_ALGORITHM deflt_digests[] = {
 
     { PROV_NAMES_CSHAKE_128, "provider=default", ossl_cshake_128_functions },
     { PROV_NAMES_CSHAKE_256, "provider=default", ossl_cshake_256_functions },
+    { PROV_NAMES_TUPLEHASH_128, "provider=default", ossl_tuplehash_128_functions },
+    { PROV_NAMES_TUPLEHASH_256, "provider=default", ossl_tuplehash_256_functions },
 
 #ifndef OPENSSL_NO_BLAKE2
     /*
