@@ -4969,6 +4969,10 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
      * to grab reference for qc.
      */
     qc->ch = ossl_quic_port_create_outgoing(qc->port, qc->tls);
+    if (qc->ch == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        goto err;
+    }
 
     ossl_quic_channel_set_msg_callback(qc->ch, ql->obj.ssl.ctx->msg_callback, &qc->obj.ssl);
     ossl_quic_channel_set_msg_callback_arg(qc->ch, ql->obj.ssl.ctx->msg_callback_arg);
