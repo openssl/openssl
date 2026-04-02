@@ -18,9 +18,9 @@
 #if defined(_WIN32)
 /* Included before async.h to avoid some warnings */
 #include <windows.h>
+#endif
 #if !defined(OPENSSL_NO_ECH) && !defined(PATH_MAX)
 #define PATH_MAX 4096
-#endif
 #endif
 
 #include <openssl/e_os2.h>
