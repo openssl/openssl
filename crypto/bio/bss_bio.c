@@ -413,7 +413,7 @@ static ossl_ssize_t bio_nwrite(BIO *bio, char **buf, size_t num_)
 
 static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
 {
-    long ret;
+    long ret = 1;
     struct bio_bio_st *b = bio->ptr;
 
     assert(b != NULL);
@@ -436,7 +436,6 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
                 b->buf = NULL;
                 b->size = new_size;
             }
-            ret = 1;
         }
         break;
 
@@ -447,10 +446,7 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
     case BIO_C_MAKE_BIO_PAIR: {
         BIO *other_bio = ptr;
 
-        if (bio_make_pair(bio, other_bio))
-            ret = 1;
-        else
-            ret = 0;
+        ret = bio_make_pair(bio, other_bio) != 0;
     } break;
 
     case BIO_C_DESTROY_BIO_PAIR:
@@ -459,7 +455,6 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
          * BIO_free(bio1); BIO_free(bio2); do the job.
          */
         bio_destroy_pair(bio);
-        ret = 1;
         break;
 
     case BIO_C_GET_WRITE_GUARANTEE:
@@ -489,13 +484,11 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
          * to see if any data is available.)
          */
         b->request = 0;
-        ret = 1;
         break;
 
     case BIO_C_SHUTDOWN_WR:
         /* similar to shutdown(..., SHUT_WR) */
         b->closed = 1;
-        ret = 1;
         break;
 
     case BIO_C_NREAD0:
@@ -534,7 +527,6 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
 
     case BIO_CTRL_SET_CLOSE:
         bio->shutdown = (int)num;
-        ret = 1;
         break;
 
     case BIO_CTRL_PENDING:
@@ -542,8 +534,9 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
             struct bio_bio_st *peer_b = b->peer->ptr;
 
             ret = (long)peer_b->len;
-        } else
+        } else {
             ret = 0;
+        }
         break;
 
     case BIO_CTRL_WPENDING:
@@ -568,27 +561,27 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
             other_b->size = b->size;
         }
 
-        ret = 1;
         break;
 
     case BIO_CTRL_FLUSH:
-        ret = 1;
         break;
 
     case BIO_CTRL_EOF:
         if (b->peer != NULL) {
             struct bio_bio_st *peer_b = b->peer->ptr;
 
-            if (peer_b->len == 0 && peer_b->closed)
-                ret = 1;
-            else
-                ret = 0;
-        } else {
-            ret = 1;
+            ret = (long)(peer_b->len == 0 && peer_b->closed);
         }
+        break;
+    case BIO_CTRL_PUSH:
+    case BIO_CTRL_POP:
+    case BIO_CTRL_GET_KTLS_SEND:
+    case BIO_CTRL_GET_KTLS_RECV:
+        ret = 0;
         break;
 
     default:
+        ERR_raise_data(ERR_LIB_BIO, ERR_R_UNSUPPORTED, "cmd=%d", cmd);
         ret = 0;
     }
     return ret;

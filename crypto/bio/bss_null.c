@@ -58,14 +58,19 @@ static long null_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_SET_CLOSE:
     case BIO_CTRL_FLUSH:
     case BIO_CTRL_DUP:
-        ret = 1;
         break;
+    case BIO_CTRL_PUSH:
+    case BIO_CTRL_POP:
     case BIO_CTRL_GET_CLOSE:
     case BIO_CTRL_INFO:
     case BIO_CTRL_GET:
     case BIO_CTRL_PENDING:
     case BIO_CTRL_WPENDING:
+        ret = 0;
+        break;
+
     default:
+        ERR_raise_data(ERR_LIB_BIO, ERR_R_UNSUPPORTED, "cmd=%d", cmd);
         ret = 0;
         break;
     }
