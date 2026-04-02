@@ -223,7 +223,8 @@ L<EVP_MD_CTX_set_params(3)>, L<provider-digest(7)>, L<OSSL_PROVIDER-default(7)>
 Since OpenSSL 3.4 the SHAKE-128 and SHAKE-256 implementations have no default
 digest length.
 
-CSHAKE-128, CSHAKE-256, TUPLEHASH-128 and TUPLEHASH-256 were added in OpenSSL 4.0
+CSHAKE-128, CSHAKE-256 were added in OpenSSL 4.0.
+TUPLEHASH-128 and TUPLEHASH-256 were added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
