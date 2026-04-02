@@ -31,6 +31,11 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Improved DTLS handshake robustness under UDP reordering by buffering and
+   replaying early ChangeCipherSpec (CCS) records at the expected state.
+
+   *Tong Li*
+
  * The `openssl pkeyutl` command now uses memory-mapped I/O when reading
    raw input from a file for oneshot sign/verify operations (such as Ed25519,
    Ed448, and ML-DSA) on platforms that support it (Unix-like). The
@@ -412,11 +417,6 @@ OpenSSL Releases
    parameter.
 
    *Bob Beck*
-
- * Improved DTLS handshake robustness under UDP reordering by buffering and
-   replaying early ChangeCipherSpec (CCS) records at the expected state.
-
-   *Tong Li*
 
  * Many functions accepting `X509 *` arguments, or returning values
    from a const `X509 *` have been changed to take/return const
