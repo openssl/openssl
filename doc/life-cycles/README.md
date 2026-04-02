@@ -17,4 +17,5 @@ To generate the rendered images, you need to install the following packages:
 Running `make` will produce a number of `.txt` and `.png` files.
 These are the rendered `.dot` files.  The `.txt` files require
 additional editing before they can be added to the manual pages in
-`internal/man7/life_cycle-*.pod`.
+`doc/man7/life_cycle-*.pod`. Any updated `.png` files should be copied to
+`doc/man7/img/*.png`.
