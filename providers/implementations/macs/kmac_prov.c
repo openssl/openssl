@@ -402,7 +402,7 @@ static int kmac_squeeze(void *vmacctx, unsigned char *out, size_t outlen)
 
     if (!kctx->squeezed) {
         /* KMAC XOF mode sets the encoded length to 0 */
-        lbits = (kctx->xof_mode ? 0 : (kctx->out_len * 8));
+        lbits = kctx->xof_mode ? 0 : (kctx->out_len * 8);
         if (!ossl_sp800_185_right_encode(encoded_outlen, sizeof(encoded_outlen), &len, lbits)
             || !EVP_DigestUpdate(ctx, encoded_outlen, len))
             goto err;
