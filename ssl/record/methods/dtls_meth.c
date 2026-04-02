@@ -561,7 +561,7 @@ again:
 
             /*
              * RFC 9147 Section 4.2.2 Says that after the handshake phase (epoch 3+)
-             * if the poech bits do not match the current epoch we should use the
+             * if the epoch bits do not match the current epoch we should use the
              * last epoch value. That would result in dropping the packet.
              */
             if ((epoch64 & DTLS13_UNI_HDR_EPOCH_BITS_MASK) != eebits) {
