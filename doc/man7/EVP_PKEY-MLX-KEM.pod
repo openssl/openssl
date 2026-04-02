@@ -110,7 +110,7 @@ The format of the public keys for the different algorithms is:
 
 =over 4
 
-=item B<SecP256r1MLKEM768> and B<curveSM2MLKEM768>
+=item B<SecP256r1MLKEM768>
 
 A 65 byte EC public key followed by a 1184 byte ML-KEM-768 public key.
 
