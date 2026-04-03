@@ -72,26 +72,26 @@ OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *p, const char *key);
 const OSSL_PARAM *OSSL_PARAM_locate_const(const OSSL_PARAM *p, const char *key);
 
 /* Basic parameter type run-time construction */
-OSSL_PARAM OSSL_PARAM_construct_int(const char *key, int *buf);
-OSSL_PARAM OSSL_PARAM_construct_uint(const char *key, unsigned int *buf);
-OSSL_PARAM OSSL_PARAM_construct_long(const char *key, long int *buf);
-OSSL_PARAM OSSL_PARAM_construct_ulong(const char *key, unsigned long int *buf);
-OSSL_PARAM OSSL_PARAM_construct_int32(const char *key, int32_t *buf);
-OSSL_PARAM OSSL_PARAM_construct_uint32(const char *key, uint32_t *buf);
-OSSL_PARAM OSSL_PARAM_construct_int64(const char *key, int64_t *buf);
-OSSL_PARAM OSSL_PARAM_construct_uint64(const char *key, uint64_t *buf);
-OSSL_PARAM OSSL_PARAM_construct_size_t(const char *key, size_t *buf);
-OSSL_PARAM OSSL_PARAM_construct_time_t(const char *key, time_t *buf);
-OSSL_PARAM OSSL_PARAM_construct_BN(const char *key, unsigned char *buf,
+OSSL_PARAM OSSL_PARAM_construct_int(const char *key, const int *buf);
+OSSL_PARAM OSSL_PARAM_construct_uint(const char *key, const unsigned int *buf);
+OSSL_PARAM OSSL_PARAM_construct_long(const char *key, const long int *buf);
+OSSL_PARAM OSSL_PARAM_construct_ulong(const char *key, const unsigned long int *buf);
+OSSL_PARAM OSSL_PARAM_construct_int32(const char *key, const int32_t *buf);
+OSSL_PARAM OSSL_PARAM_construct_uint32(const char *key, const uint32_t *buf);
+OSSL_PARAM OSSL_PARAM_construct_int64(const char *key, const int64_t *buf);
+OSSL_PARAM OSSL_PARAM_construct_uint64(const char *key, const uint64_t *buf);
+OSSL_PARAM OSSL_PARAM_construct_size_t(const char *key, const size_t *buf);
+OSSL_PARAM OSSL_PARAM_construct_time_t(const char *key, const time_t *buf);
+OSSL_PARAM OSSL_PARAM_construct_BN(const char *key, const unsigned char *buf,
     size_t bsize);
-OSSL_PARAM OSSL_PARAM_construct_double(const char *key, double *buf);
-OSSL_PARAM OSSL_PARAM_construct_utf8_string(const char *key, char *buf,
+OSSL_PARAM OSSL_PARAM_construct_double(const char *key, const double *buf);
+OSSL_PARAM OSSL_PARAM_construct_utf8_string(const char *key, const char *buf,
     size_t bsize);
-OSSL_PARAM OSSL_PARAM_construct_utf8_ptr(const char *key, char **buf,
+OSSL_PARAM OSSL_PARAM_construct_utf8_ptr(const char *key, const char **buf,
     size_t bsize);
-OSSL_PARAM OSSL_PARAM_construct_octet_string(const char *key, void *buf,
+OSSL_PARAM OSSL_PARAM_construct_octet_string(const char *key, const void *buf,
     size_t bsize);
-OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
+OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, const void **buf,
     size_t bsize);
 OSSL_PARAM OSSL_PARAM_construct_end(void);
 

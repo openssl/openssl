@@ -62,16 +62,16 @@ OSSL_PARAM_UNMODIFIED, OSSL_PARAM_modified, OSSL_PARAM_set_all_unmodified
  #define OSSL_PARAM_DEFN(key, type, addr, sz)    \
     { (key), (type), (addr), (sz), OSSL_PARAM_UNMODIFIED }
 
- OSSL_PARAM OSSL_PARAM_construct_TYPE(const char *key, TYPE *buf);
- OSSL_PARAM OSSL_PARAM_construct_BN(const char *key, unsigned char *buf,
+ OSSL_PARAM OSSL_PARAM_construct_TYPE(const char *key, const TYPE *buf);
+ OSSL_PARAM OSSL_PARAM_construct_BN(const char *key, const unsigned char *buf,
                                     size_t bsize);
- OSSL_PARAM OSSL_PARAM_construct_utf8_string(const char *key, char *buf,
+ OSSL_PARAM OSSL_PARAM_construct_utf8_string(const char *key, const char *buf,
                                              size_t bsize);
- OSSL_PARAM OSSL_PARAM_construct_octet_string(const char *key, void *buf,
+ OSSL_PARAM OSSL_PARAM_construct_octet_string(const char *key, const void *buf,
                                               size_t bsize);
- OSSL_PARAM OSSL_PARAM_construct_utf8_ptr(const char *key, char **buf,
+ OSSL_PARAM OSSL_PARAM_construct_utf8_ptr(const char *key, const char **buf,
                                           size_t bsize);
- OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
+ OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, const void **buf,
                                            size_t bsize);
  OSSL_PARAM OSSL_PARAM_construct_end(void);
 

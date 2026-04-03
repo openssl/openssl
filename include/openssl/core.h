@@ -85,7 +85,7 @@ struct ossl_algorithm_st {
 struct ossl_param_st {
     const char *key; /* the name of the parameter */
     unsigned int data_type; /* declare what kind of content is in buffer */
-    void *data; /* value being passed in or out */
+    const void *data; /* value being passed in or out */
     size_t data_size; /* data size */
     size_t return_size; /* returned content size */
 };
