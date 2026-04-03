@@ -3175,6 +3175,8 @@ re_start:
                     do_ssl_shutdown(con);
                     SSL_set_connect_state(con);
                     BIO_closesocket(SSL_get_fd(con));
+                    /* Release the socket BIO so re_start can attach a new one (avoids leak) */
+                    SSL_set_bio(con, NULL, NULL);
                     goto re_start;
                 }
             }
@@ -4261,6 +4263,8 @@ static int user_data_execute(struct user_data_st *user_data, int cmd, char *arg)
         do_ssl_shutdown(user_data->con);
         SSL_set_connect_state(user_data->con);
         BIO_closesocket(SSL_get_fd(user_data->con));
+        /* Release the socket BIO so re_start can attach a new one (avoids leak) */
+        SSL_set_bio(user_data->con, NULL, NULL);
         return USER_DATA_PROCESS_RESTART;
 
     case USER_COMMAND_RENEGOTIATE:

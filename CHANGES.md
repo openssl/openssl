@@ -96,6 +96,12 @@ OpenSSL Releases
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Fixed a memory leak in `openssl s_client` when using the `-reconnect`
+   option or the interactive `reconnect` command.  The previous socket BIO
+   was not released before the client opened a new connection.
+
+   *Herb Enbender*
+
  * Added `-expected-rpks` option to the `openssl s_client`
    and `openssl s_server` commands.  This makes it possible to specify
    one or more public keys expected from the remote peer that are then used
