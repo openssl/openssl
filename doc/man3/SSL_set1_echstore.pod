@@ -20,7 +20,7 @@ SSL_CTX_ech_set_callback,SSL_set1_ech_config_list
 
 =head1 SYNOPSIS
 
- #include <openssl/ech.h>
+  #include <openssl/ech.h>
 
   OSSL_ECHSTORE *OSSL_ECHSTORE_new(OSSL_LIB_CTX *libctx, const char *propq);
   void OSSL_ECHSTORE_free(OSSL_ECHSTORE *es);
@@ -293,9 +293,9 @@ Some externally visible limits:
 
 =item B<OSSL_ECH_MAX_ALPN_LEN> 255, maximum overall length of an ALPN
 
-=item B< OSSL_ECH_OUTERS_MAX> 20, maximum number of extensions compressed via outer-exts
+=item B<OSSL_ECH_OUTERS_MAX> 20, maximum number of extensions compressed via outer-exts
 
-=item B< OSSL_ECH_ALLEXTS_MAX> 32, maximum total number of extensions allowed
+=item B<OSSL_ECH_ALLEXTS_MAX> 32, maximum total number of extensions allowed
 
 =back
 
@@ -306,34 +306,6 @@ ECH version - the only supported version is 0xfe0d currently.
 =item B<OSSL_ECH_RFC9849_VERSION> 0xfe0d, official ECHConfig version
 
 =item B<OSSL_ECH_CURRENT_VERSION> OSSL_ECH_RFC9849_VERSION
-
-=back
-
-Return codes from SSL_ech_get_status
-
-=over 4
-
-=item B<SSL_ECH_STATUS_BACKEND>    4, ECH backend: saw an ech_is_inner
-
-=item B<SSL_ECH_STATUS_GREASE_ECH> 3, GREASEd and got an ECH in return
-
-=item B<SSL_ECH_STATUS_GREASE>     2, ECH GREASE happened
-
-=item B<SSL_ECH_STATUS_SUCCESS>    1, Success
-
-=item B<SSL_ECH_STATUS_FAILED>     0, Some internal or protocol error
-
-=item B<SSL_ECH_STATUS_BAD_CALL>   -100, Some in/out arguments were NULL
-
-=item B<SSL_ECH_STATUS_NOT_TRIED>  -101, ECH wasn't attempted
-
-=item B<SSL_ECH_STATUS_BAD_NAME>   -102, ECH ok but server cert bad
-
-=item B<SSL_ECH_STATUS_NOT_CONFIGURED> -103, ECH wasn't configured
-
-=item B<SSL_ECH_STATUS_FAILED_ECH> -105, We tried, failed and got an ECH, from a verified name
-
-=item B<SSL_ECH_STATUS_FAILED_ECH_BAD_NAME> -106, We tried, failed and got an ECH, from a bad name
 
 =back
 
@@ -380,10 +352,38 @@ OSSL_ECHSTORE_set1_key_and_read_pem(), OSSL_ECHSTORE_read_pem(),
 OSSL_ECHSTORE_num_keys(), OSSL_ECHSTORE_num_entries(),
 OSSL_ECHSTORE_flush_keys(), SSL_CTX_set1_echstore(),
 SSL_ech_set_server_names(), SSL_ech_set_outer_server_name(),
-SSL_ech_set_outer_alpn_protos(), SSL_ech_get1_status(),
+SSL_ech_set_outer_alpn_protos(),
 SSL_ech_set_grease_suite(), SSL_ech_set_grease_type(),
 SSL_ech_get_retry_config() and SSL_CTX_ech_set1_outer_alpn_protos() all return
 zero on error and one on success.
+
+SSL_ech_get1_status() returns one of the following values:
+
+=over 4
+
+=item B<SSL_ECH_STATUS_BACKEND>    4, ECH backend: saw an ech_is_inner
+
+=item B<SSL_ECH_STATUS_GREASE_ECH> 3, GREASEd and got an ECH in return
+
+=item B<SSL_ECH_STATUS_GREASE>     2, ECH GREASE happened
+
+=item B<SSL_ECH_STATUS_SUCCESS>    1, Success
+
+=item B<SSL_ECH_STATUS_FAILED>     0, Some internal or protocol error
+
+=item B<SSL_ECH_STATUS_BAD_CALL>   -100, Some in/out arguments were NULL
+
+=item B<SSL_ECH_STATUS_NOT_TRIED>  -101, ECH wasn't attempted
+
+=item B<SSL_ECH_STATUS_BAD_NAME>   -102, ECH ok but server cert bad
+
+=item B<SSL_ECH_STATUS_NOT_CONFIGURED> -103, ECH wasn't configured
+
+=item B<SSL_ECH_STATUS_FAILED_ECH> -105, We tried, failed and got an ECH, from a verified name
+
+=item B<SSL_ECH_STATUS_FAILED_ECH_BAD_NAME> -106, We tried, failed and got an ECH, from a bad name
+
+=back
 
 SSL_ech_set_callback(), SSL_CTX_ech_set_callback(), OSSL_ECHSTORE_free() have
 no return value.
