@@ -13172,7 +13172,8 @@ static int test_select_next_proto(int idx)
 {
     struct next_proto_st *np = &next_proto_tests[idx];
     int ret = 0;
-    unsigned char *out, *client, *server;
+    const unsigned char *out;
+    unsigned char *client, *server;
     unsigned char outlen;
     unsigned int clientlen, serverlen;
 
@@ -13235,7 +13236,7 @@ static int npn_advert_cb(SSL *ssl, const unsigned char **out,
     }
 }
 
-static int npn_select_cb(SSL *s, unsigned char **out, unsigned char *outlen,
+static int npn_select_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
     const unsigned char *in, unsigned int inlen, void *arg)
 {
     int *idx = (int *)arg;

@@ -2527,7 +2527,7 @@ static int select_alpn(SSL *ssl, const unsigned char **out,
 {
     static unsigned char alpn[] = { 8, 'o', 's', 's', 'l', 't', 'e', 's', 't' };
 
-    if (SSL_select_next_proto((unsigned char **)out, out_len, alpn, sizeof(alpn),
+    if (SSL_select_next_proto(out, out_len, alpn, sizeof(alpn),
             in, in_len)
         == OPENSSL_NPN_NEGOTIATED)
         return SSL_TLSEXT_ERR_OK;
