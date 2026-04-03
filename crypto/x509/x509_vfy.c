@@ -1171,7 +1171,6 @@ trusted:
     return X509_TRUST_UNTRUSTED;
 }
 
-/* Sadly, returns 0 also on internal error. */
 static int check_revocation(X509_STORE_CTX *ctx)
 {
     int i = 0, last = 0, ok = 0;
@@ -1231,7 +1230,7 @@ static int check_revocation(X509_STORE_CTX *ctx)
              */
             if (crl_check_all_enabled || (crl_check_enabled && i == 0)) {
                 ok = check_cert_crl(ctx);
-                if (!ok)
+                if (ok <= 0)
                     return ok;
             } else {
                 ok = verify_cb_ocsp(ctx, X509_V_ERR_OCSP_VERIFY_FAILED);
@@ -1265,7 +1264,7 @@ static int check_revocation(X509_STORE_CTX *ctx)
         for (; i <= last; i++) {
             ctx->error_depth = i;
             ok = check_cert_crl(ctx);
-            if (!ok)
+            if (ok <= 0)
                 return ok;
         }
     }
@@ -1369,7 +1368,6 @@ end:
 }
 #endif
 
-/* Sadly, returns 0 also on internal error. */
 static int check_cert_crl(X509_STORE_CTX *ctx)
 {
     X509_CRL *crl = NULL, *dcrl = NULL;
@@ -1406,22 +1404,25 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
         } else {
             ok = get_crl_delta(ctx, &crl, &dcrl, x);
         }
-        /* If error looking up CRL, nothing we can do except notify callback */
+        if (ok < 0)
+            /* Internal error (e.g., OOM or store failure): propagate -1. */
+            goto done;
+        /* CRL not found: notify callback, which may allow continuing. */
         if (!ok) {
             ok = verify_cb_crl(ctx, X509_V_ERR_UNABLE_TO_GET_CRL);
             goto done;
         }
 
         ok = ctx->check_crl(ctx, crl);
-        if (!ok)
+        if (ok <= 0)
             goto done;
 
         if (dcrl != NULL) {
             ok = ctx->check_crl(ctx, dcrl);
-            if (!ok)
+            if (ok <= 0)
                 goto done;
             ok = ctx->cert_crl(ctx, dcrl, x);
-            if (!ok)
+            if (ok <= 0)
                 goto done;
         } else {
             ok = 1;
@@ -1430,7 +1431,7 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
         /* Don't look in full CRL if delta reason is removefromCRL */
         if (ok != 2) {
             ok = ctx->cert_crl(ctx, crl, x);
-            if (!ok)
+            if (ok <= 0)
                 goto done;
         }
 
@@ -1963,9 +1964,11 @@ static int get_crl_delta(X509_STORE_CTX *ctx,
     /* Lookup CRLs from store */
     skcrl = ctx->lookup_crls(ctx, nm);
 
-    /* If no CRLs found and a near match from get_crl_sk use that */
-    if (skcrl == NULL && crl != NULL)
-        goto done;
+    if (skcrl == NULL) {
+        if (crl != NULL)
+            goto done;
+        return -1;
+    }
 
     get_crl_sk(ctx, &crl, &dcrl, &issuer, &crl_score, &reasons, skcrl);
 
