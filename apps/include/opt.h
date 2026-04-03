@@ -341,8 +341,9 @@ typedef struct options_st {
      * value type:
      *
      *   '-' no value (also the value zero)
-     *   'n' number (type 'int')
-     *   'p' positive number (type 'int')
+     *   'n' any number (type 'int')
+     *   'p' positive number (type 'int', value > 0)
+     *   'N' is a non-negative number (type 'int', value >= 0)
      *   'u' unsigned number (type 'unsigned long')
      *   'l' number (type 'unsigned long')
      *   'M' number (type 'intmax_t')
@@ -356,7 +357,7 @@ typedef struct options_st {
      *   'A' any ASN1, der/pem/b64 format  [OPT_FMT_ASN1]
      *   'c' pem/der/smime format          [OPT_FMT_PDS]
      *
-     * The 'l', 'n' and 'u' value types include the values zero,
+     * The 'l', 'n', 'N' and 'u' value types include the values zero,
      * the 'p' value type does not.
      */
     int valtype;
