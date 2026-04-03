@@ -66,11 +66,12 @@ is 1 client mode is set. If B<client> is 0 server mode is set.
 BIO_set_ssl_renegotiate_bytes() sets the renegotiate byte count of SSL BIO B<b>
 to B<num>. When set after every B<num> bytes of I/O (read and write)
 the SSL session is automatically renegotiated. B<num> must be at
-least 512 bytes.
+least 512 bytes. Setting B<num> to 0 disables byte-based renegotiation.
 
 BIO_set_ssl_renegotiate_timeout() sets the renegotiate timeout of SSL BIO B<b>
 to B<seconds>.
 When the renegotiate timeout elapses the session is automatically renegotiated.
+B<seconds> must be at least 5. Setting B<seconds> to 0 disables timeout-based renegotiation.
 
 BIO_get_num_renegotiates() returns the total number of session
 renegotiations due to I/O or timeout of SSL BIO B<b>.
