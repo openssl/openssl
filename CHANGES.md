@@ -42,6 +42,12 @@ OpenSSL Releases
 
    *John Claus*
 
+ * Added public API for IPAddrBlocks (RFC 3779), mirroring the existing
+   ASIdentifiers API: `IPAddrBlocks_new()`, `IPAddrBlocks_free()`,
+   `d2i_IPAddrBlocks()`, `i2d_IPAddrBlocks()`, and the exported
+   `IPAddrBlocks_it` ASN.1 item for use in custom ASN.1 templates
+   (e.g. RPKI Signed Checklist).  Fixes issue #18528.
+
  * Added AVX2 optimized ML-DSA NTT operations on `x86_64`.
 
    *Marcel Cornu and Tomasz Kantecki*

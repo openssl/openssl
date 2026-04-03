@@ -459,6 +459,70 @@ end:
     return ret;
 }
 
+/*
+ * Regression test for IPAddrBlocks_new/free and d2i/i2d_IPAddrBlocks (issue #18528).
+ * Ensures empty and non-empty IPAddrBlocks round-trip correctly.
+ */
+static int test_ipaddrblocks_api(void)
+{
+    IPAddrBlocks *addr = NULL, *decoded = NULL;
+    ASN1_OCTET_STRING *ip1 = NULL, *ip2 = NULL;
+    unsigned char *der = NULL, *derp;
+    int len;
+    int ret = 0;
+
+    /* Round-trip empty IPAddrBlocks */
+    addr = IPAddrBlocks_new();
+    if (!TEST_ptr(addr))
+        goto end;
+    len = i2d_IPAddrBlocks(addr, &der);
+    if (!TEST_int_ge(len, 0) || !TEST_ptr(der))
+        goto end;
+    derp = der;
+    decoded = d2i_IPAddrBlocks(NULL, (const unsigned char **)&derp, len);
+    if (!TEST_ptr(decoded) || !TEST_int_eq(sk_IPAddressFamily_num(decoded), 0))
+        goto end;
+    IPAddrBlocks_free(addr);
+    IPAddrBlocks_free(decoded);
+    OPENSSL_free(der);
+    addr = decoded = NULL;
+    der = NULL;
+
+    /* Round-trip non-empty IPAddrBlocks and verify structure */
+    addr = IPAddrBlocks_new();
+    if (!TEST_ptr(addr))
+        goto end;
+    if (!TEST_true(X509v3_addr_canonize(addr)))
+        goto end;
+    ip1 = a2i_IPADDRESS(ranges[0].ip1);
+    ip2 = a2i_IPADDRESS(ranges[0].ip2);
+    if (!TEST_ptr(ip1) || !TEST_ptr(ip2))
+        goto end;
+    if (!TEST_true(X509v3_addr_add_range(addr, ranges[0].afi, NULL, ip1->data, ip2->data)))
+        goto end;
+    if (!TEST_true(X509v3_addr_is_canonical(addr)))
+        goto end;
+
+    len = i2d_IPAddrBlocks(addr, &der);
+    if (!TEST_int_ge(len, 0) || !TEST_ptr(der))
+        goto end;
+    derp = der;
+    decoded = d2i_IPAddrBlocks(NULL, (const unsigned char **)&derp, len);
+    if (!TEST_ptr(decoded))
+        goto end;
+    if (!check_addr(decoded, ranges[0].rorp))
+        goto end;
+
+    ret = 1;
+end:
+    IPAddrBlocks_free(addr);
+    IPAddrBlocks_free(decoded);
+    OPENSSL_free(der);
+    ASN1_OCTET_STRING_free(ip1);
+    ASN1_OCTET_STRING_free(ip2);
+    return ret;
+}
+
 #endif /* OPENSSL_NO_RFC3779 */
 
 OPT_TEST_DECLARE_USAGE("cert.pem\n")
@@ -480,6 +544,7 @@ int setup_tests(void)
     ADD_TEST(test_ext_syntax);
     ADD_TEST(test_addr_fam_len);
     ADD_TEST(test_addr_subset);
+    ADD_TEST(test_ipaddrblocks_api);
 #endif /* OPENSSL_NO_RFC3779 */
     return 1;
 }
