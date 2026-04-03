@@ -2608,7 +2608,7 @@ __owur int ssl_set_client_hello_version(SSL_CONNECTION *s);
 __owur int ssl_check_version_downgrade(SSL_CONNECTION *s);
 __owur int ssl_set_version_bound(int method_version, int version, int *bound);
 __owur int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
-    DOWNGRADE *dgrd);
+    DOWNGRADE *dgrd, int *alert);
 __owur int ssl_choose_client_version(SSL_CONNECTION *s, int version,
     RAW_EXTENSION *extensions);
 __owur int ssl_get_min_max_version(const SSL_CONNECTION *s, int *min_version,
