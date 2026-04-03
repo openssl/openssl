@@ -170,6 +170,32 @@ static int test_digest_is_a(void)
     return rv;
 }
 
+static int test_namemap_fetch(void)
+{
+    OSSL_NAMEMAP *nm = ossl_namemap_new(NULL);
+    int ok = 0;
+    int id, id2;
+
+    if (!TEST_ptr(nm) && test_namemap(nm))
+        goto done;
+
+    id = ossl_namemap_add_name(nm, 0, "SHA-256");
+    if (!TEST_int_ne(id, 0))
+        goto done;
+
+    for (size_t i = 0; i < 50000000; i++) {
+        id2 = ossl_namemap_name2num(nm, "SHA-256");
+        if (!TEST_int_eq(id2, id))
+            goto done;
+    }
+
+    ok = 1;
+
+done:
+    ossl_namemap_free(nm);
+    return ok;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_namemap_empty);
@@ -179,5 +205,6 @@ int setup_tests(void)
     ADD_TEST(test_cipherbyname);
     ADD_TEST(test_digest_is_a);
     ADD_TEST(test_cipher_is_a);
+    ADD_TEST(test_namemap_fetch);
     return 1;
 }
