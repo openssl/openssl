@@ -19,14 +19,14 @@ OSSL_provider_init_fn ossl_legacy_provider_init;
 #endif
 const OSSL_PROVIDER_INFO ossl_predefined_providers[] = {
 #ifdef FIPS_MODULE
-    { "fips", NULL, ossl_fips_intern_provider_init, NULL, 1 },
+    { "fips", NULL, NULL, ossl_fips_intern_provider_init, NULL, 1 },
 #else
-    { "default", NULL, ossl_default_provider_init, NULL, 1 },
+    { "default", NULL, NULL, ossl_default_provider_init, NULL, 1 },
 #ifdef STATIC_LEGACY
-    { "legacy", NULL, ossl_legacy_provider_init, NULL, 0 },
+    { "legacy", NULL, NULL, ossl_legacy_provider_init, NULL, 0 },
 #endif
-    { "base", NULL, ossl_base_provider_init, NULL, 0 },
-    { "null", NULL, ossl_null_provider_init, NULL, 0 },
+    { "base", NULL, NULL, ossl_base_provider_init, NULL, 0 },
+    { "null", NULL, NULL, ossl_null_provider_init, NULL, 0 },
 #endif
-    { NULL, NULL, NULL, NULL, 0 }
+    { NULL, NULL, NULL, NULL, NULL, 0 }
 };
