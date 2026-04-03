@@ -24,7 +24,7 @@
 #endif
 #include <openssl/evp.h>
 #include <openssl/sha.h>
-#include <openssl/hmac.h>
+#include <openssl/core_names.h>
 
 DEFINE_SPARSE_ARRAY_OF(BN_BLINDING);
 
@@ -435,9 +435,11 @@ static int derive_kdk(int flen, const unsigned char *from, RSA *rsa,
     unsigned char *buf, int num, unsigned char *kdk)
 {
     int ret = 0;
-    HMAC_CTX *hmac = NULL;
+    EVP_MAC *mac = NULL;
+    EVP_MAC_CTX *mctx = NULL;
     EVP_MD *md = NULL;
-    unsigned int md_len = SHA256_DIGEST_LENGTH;
+    size_t md_len = SHA256_DIGEST_LENGTH;
+    OSSL_PARAM params[2];
     unsigned char d_hash[SHA256_DIGEST_LENGTH] = { 0 };
     /*
      * because we use d as a handle to rsa->d we need to keep it local and
@@ -480,38 +482,48 @@ static int derive_kdk(int flen, const unsigned char *from, RSA *rsa,
         goto err;
     }
 
-    hmac = HMAC_CTX_new();
-    if (hmac == NULL) {
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+        "SHA256", 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    mac = EVP_MAC_fetch(rsa->libctx, "HMAC", NULL);
+    if (mac == NULL) {
+        ERR_raise(ERR_LIB_RSA, ERR_R_CRYPTO_LIB);
+        goto err;
+    }
+    mctx = EVP_MAC_CTX_new(mac);
+    if (mctx == NULL) {
         ERR_raise(ERR_LIB_RSA, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
-    if (HMAC_Init_ex(hmac, d_hash, sizeof(d_hash), md, NULL) <= 0) {
+    if (!EVP_MAC_init(mctx, d_hash, sizeof(d_hash), params)) {
         ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
     if (flen < num) {
         memset(buf, 0, num - flen);
-        if (HMAC_Update(hmac, buf, num - flen) <= 0) {
+        if (!EVP_MAC_update(mctx, buf, num - flen)) {
             ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
             goto err;
         }
     }
-    if (HMAC_Update(hmac, from, flen) <= 0) {
+    if (!EVP_MAC_update(mctx, from, flen)) {
         ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
     md_len = SHA256_DIGEST_LENGTH;
-    if (HMAC_Final(hmac, kdk, &md_len) <= 0) {
+    if (!EVP_MAC_final(mctx, kdk, &md_len, SHA256_DIGEST_LENGTH)) {
         ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     ret = 1;
 
 err:
-    HMAC_CTX_free(hmac);
+    EVP_MAC_CTX_free(mctx);
+    EVP_MAC_free(mac);
     EVP_MD_free(md);
     return ret;
 }

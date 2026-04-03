@@ -96,6 +96,15 @@ OpenSSL Releases
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
+ * Replaced direct HMAC API usage with EVP_MAC in rsa_ossl.c and rsa_pk1.c
+   to remove dependency on the deprecated HMAC API.
+
+   *silvermagnet*
+
+ * Added restrictions on the maximum number of TLS key_shares (16) that a server
+   will pay attention to, as well as the maximum number of supported groups
+   (128) and sig algs (128). Any sent beyond this number are ignored in order
+   to avoid clients sending excessively long lists in these extensions.
  * Added `-expected-rpks` option to the `openssl s_client`
    and `openssl s_server` commands.  This makes it possible to specify
    one or more public keys expected from the remote peer that are then used
