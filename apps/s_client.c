@@ -2519,6 +2519,8 @@ re_start:
         sbio = BIO_new_dgram(sock, BIO_NOCLOSE);
         if (!SSL_set1_initial_peer_addr(con, peer_addr)) {
             BIO_puts(bio_err, "Failed to set the initial peer address\n");
+            BIO_free(sbio);
+            sbio = NULL;
             goto shut;
         }
     } else
