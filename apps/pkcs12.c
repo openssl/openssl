@@ -1155,6 +1155,8 @@ static int get_cert_chain(X509 *cert, X509_STORE *store,
         goto end;
     }
 
+    X509_STORE_CTX_set_flags(store_ctx, X509_V_FLAG_NO_CHECK_TIME);
+
     if (X509_verify_cert(store_ctx) > 0)
         chn = X509_STORE_CTX_get1_chain(store_ctx);
     else if ((i = X509_STORE_CTX_get_error(store_ctx)) == 0)
