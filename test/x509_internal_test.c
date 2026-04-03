@@ -18,6 +18,7 @@
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "crypto/x509.h"
+#include "crypto/evp.h"
 
 /**********************************************************************
  *
@@ -688,6 +689,122 @@ err:
     return test;
 }
 
+/**********************************************************************
+ *
+ * Tests for X509_ALGOR_set_md null pointer fix
+ * (see crypto/asn1/x_algor.c)
+ *
+ ***/
+
+static int test_X509_ALGOR_set_md_sha1(void)
+{
+    X509_ALGOR *alg = NULL;
+    const ASN1_OBJECT *aobj = NULL;
+    int ptype = V_ASN1_EOC;
+    int ret = 0;
+
+    if (!TEST_ptr(alg = X509_ALGOR_new()))
+        goto err;
+    /* SHA-1 has EVP_MD_FLAG_DIGALGID_ABSENT, so parameter type is V_ASN1_UNDEF */
+    if (!TEST_true(X509_ALGOR_set_md(alg, EVP_sha1())))
+        goto err;
+    X509_ALGOR_get0(&aobj, &ptype, NULL, alg);
+    if (!TEST_int_eq(OBJ_obj2nid(aobj), NID_sha1))
+        goto err;
+    if (!TEST_int_eq(ptype, V_ASN1_UNDEF))
+        goto err;
+    ret = 1;
+err:
+    X509_ALGOR_free(alg);
+    return ret;
+}
+
+static int test_X509_ALGOR_set_md_md5(void)
+{
+    X509_ALGOR *alg = NULL;
+    const ASN1_OBJECT *aobj = NULL;
+    int ptype = V_ASN1_EOC;
+    int ret = 0;
+
+    if (!TEST_ptr(alg = X509_ALGOR_new()))
+        goto err;
+    /* MD5 does not have EVP_MD_FLAG_DIGALGID_ABSENT, so parameter type is V_ASN1_NULL */
+    if (!TEST_true(X509_ALGOR_set_md(alg, EVP_md5())))
+        goto err;
+    X509_ALGOR_get0(&aobj, &ptype, NULL, alg);
+    if (!TEST_int_eq(OBJ_obj2nid(aobj), NID_md5))
+        goto err;
+    if (!TEST_int_eq(ptype, V_ASN1_NULL))
+        goto err;
+    ret = 1;
+err:
+    X509_ALGOR_free(alg);
+    return ret;
+}
+
+/*
+ * An EVP_MD with NID_undef type but a name that OBJ_txt2obj() can resolve.
+ * This exercises the OBJ_txt2obj() branch in X509_ALGOR_set_md.
+ */
+static const EVP_MD custom_md_known_oid = {
+    .type = NID_undef,
+    .pkey_type = NID_undef,
+    .type_name = "SHA256", /* OBJ_txt2obj() resolves this via OBJ_sn2nid() */
+};
+
+static int test_X509_ALGOR_set_md_nid_undef_known_name(void)
+{
+    X509_ALGOR *alg = NULL;
+    const ASN1_OBJECT *aobj = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(alg = X509_ALGOR_new()))
+        goto err;
+    /*
+     * NID_undef forces the OBJ_txt2obj() path; name "SHA256" resolves
+     * to the SHA-256 OID so the call must succeed and set the algorithm.
+     */
+    if (!TEST_true(X509_ALGOR_set_md(alg, &custom_md_known_oid)))
+        goto err;
+    X509_ALGOR_get0(&aobj, NULL, NULL, alg);
+    if (!TEST_int_eq(OBJ_obj2nid(aobj), NID_sha256))
+        goto err;
+    ret = 1;
+err:
+    X509_ALGOR_free(alg);
+    return ret;
+}
+
+/*
+ * An EVP_MD with NID_undef type and a name that OBJ_txt2obj() cannot resolve.
+ * Before the null-pointer fix, X509_ALGOR_set0 was called with a NULL obj,
+ * causing undefined behaviour.  After the fix, X509_ALGOR_set_md returns 0.
+ */
+static const EVP_MD custom_md_unknown_oid = {
+    .type = NID_undef,
+    .pkey_type = NID_undef,
+    .type_name = "not-a-known-oid-name",
+};
+
+static int test_X509_ALGOR_set_md_null_obj(void)
+{
+    X509_ALGOR *alg = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(alg = X509_ALGOR_new()))
+        goto err;
+    /*
+     * OBJ_txt2obj("not-a-known-oid-name", 0) returns NULL, so
+     * X509_ALGOR_set_md must return 0 rather than crash.
+     */
+    if (!TEST_false(X509_ALGOR_set_md(alg, &custom_md_unknown_oid)))
+        goto err;
+    ret = 1;
+err:
+    X509_ALGOR_free(alg);
+    return ret;
+}
+
 /* https://github.com/openssl/openssl/issues/26325 */
 static const char *kRootExtensionDuplicity[] = {
     "-----BEGIN CERTIFICATE-----\n",
@@ -948,6 +1065,10 @@ int setup_tests(void)
     ADD_TEST(tests_X509_check_crypto);
     ADD_TEST(tests_x509_check_dpn);
     ADD_TEST(tests_x509_check_akid);
+    ADD_TEST(test_X509_ALGOR_set_md_sha1);
+    ADD_TEST(test_X509_ALGOR_set_md_md5);
+    ADD_TEST(test_X509_ALGOR_set_md_nid_undef_known_name);
+    ADD_TEST(test_X509_ALGOR_set_md_null_obj);
     ADD_TEST(tests_x509_check_ext_duplicity);
     ADD_TEST(tests_x509_check_ext_duplicity_nid_undef);
     ADD_TEST(tests_x509_check_ext_duplicity_nid_dynamic);

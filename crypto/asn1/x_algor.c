@@ -92,6 +92,9 @@ int X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md)
     int md_type = EVP_MD_type(md);
 
     ASN1_OBJECT *obj = (md_type == NID_undef) ? OBJ_txt2obj(EVP_MD_get0_name(md), 0) : OBJ_nid2obj(md_type);
+
+    if (obj == NULL)
+        return 0;
     return X509_ALGOR_set0(alg, obj, type, NULL);
 }
 
