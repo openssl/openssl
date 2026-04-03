@@ -28,6 +28,8 @@
 #define _GNU_SOURCE
 #include <execinfo.h>
 #include <unistd.h>
+#include <limits.h>
+#include <stdlib.h>
 #endif
 
 #include <openssl/crypto.h>
@@ -702,12 +704,16 @@ static ossl_inline pid_t get_tid(void)
 static void *init_contention_data(void)
 {
     struct stack_traces *traces;
-    char fname_fmt[] = "lock-contention-log" FIPS_SFX ".%d.txt";
-    char fname[sizeof(fname_fmt) + sizeof(int) * 3];
+    char fname[PATH_MAX];
+    const char *log_dir;
+    const char *dir;
 
     traces = OPENSSL_zalloc(sizeof(struct stack_traces));
 
-    snprintf(fname, sizeof(fname), fname_fmt, get_tid());
+    log_dir = getenv("OPENSSL_LOCK_CONTENTION_DIR");
+    dir = (log_dir != NULL && log_dir[0] != '\0') ? log_dir : ".";
+    snprintf(fname, sizeof(fname), "%s/lock-contention-log" FIPS_SFX ".%d.txt",
+        dir, get_tid());
 
     traces->fd = open(fname, O_WRONLY | O_APPEND | O_CLOEXEC | O_CREAT, 0600);
 
