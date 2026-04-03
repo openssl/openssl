@@ -162,6 +162,8 @@ operates on an I<int> value instead of a I<uint64_t> value.
 int CRYPTO_atomic_load_ptr(void **ptr, void **ret, CRYPTO_RWLOCK *lock);
 
 CRYPTO_atomic_load_ptr() atomically loads the void* contents of I<*ptr> to the contents of I<*ret>.
+I<lock> will be used to emulate atomic operations on platforms that do not support
+atomic operations.
 
 =item *
 
@@ -169,6 +171,8 @@ int CRYPTO_atomic_store_ptr(void **dst, void **val, CRYPTO_RWLOCK *lock);
 
 CRYPTO_atomic_store_ptr() atomically stores the contents of I<*val> to the location pointed
 to by I<*p>.
+I<lock> will be used to emulate atomic operations on platforms that do not support
+atomic operations.
 
 =item *
 
@@ -178,6 +182,8 @@ CRYPTO_atomic_cmp_exch_ptr() atomically performs a read-modify-write operation. 
 I<*ptr> matches the contents of I<*expect> then the value of I<desire> is stored in I<*ptr> and the
 function returns 1.  If I<*ptr> does not match the contents of I<*expect>, then the contents of
 I<*ptr> are atomically loaded to the contents of I<*expect> and the function returns 0.
+I<lock> will be used to emulate atomic operations on platforms that do not support
+atomic operations.
 
 =item *
 
