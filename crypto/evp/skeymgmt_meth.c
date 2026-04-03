@@ -203,7 +203,10 @@ void EVP_SKEYMGMT_do_all_provided(OSSL_LIB_CTX *libctx,
         (void (*)(void *, void *))fn, arg,
         skeymgmt_from_algorithm,
         (int (*)(void *))EVP_SKEYMGMT_up_ref,
-        (void (*)(void *))EVP_SKEYMGMT_free);
+        (void (*)(void *))EVP_SKEYMGMT_free,
+        /* TODO(FREEZE): Add callbacks to evp_generic_do_all */
+        NULL,
+        NULL);
 }
 
 int EVP_SKEYMGMT_names_do_all(const EVP_SKEYMGMT *skeymgmt,

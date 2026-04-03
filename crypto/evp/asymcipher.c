@@ -622,7 +622,9 @@ void EVP_ASYM_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
         (void (*)(void *, void *))fn, arg,
         evp_asym_cipher_from_algorithm,
         evp_asym_cipher_up_ref,
-        evp_asym_cipher_free);
+        evp_asym_cipher_free,
+        evp_asym_cipher_dup_frozen,
+        evp_asym_cipher_frozen_free);
 }
 
 int EVP_ASYM_CIPHER_names_do_all(const EVP_ASYM_CIPHER *cipher,

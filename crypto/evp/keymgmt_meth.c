@@ -410,7 +410,9 @@ void EVP_KEYMGMT_do_all_provided(OSSL_LIB_CTX *libctx,
         (void (*)(void *, void *))fn, arg,
         keymgmt_from_algorithm,
         evp_keymgmt_up_ref,
-        evp_keymgmt_free);
+        evp_keymgmt_free,
+        evp_keymgmt_dup_frozen,
+        evp_keymgmt_frozen_free);
 }
 
 int EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
