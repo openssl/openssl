@@ -81,7 +81,7 @@ set of CAs.
 
 B<X509_LOOKUP_hash_dir> is a more advanced method, which loads
 certificates and CRLs on demand, and caches them in memory once
-they are loaded. As of OpenSSL 1.0.0, it also checks for newer CRLs
+they are loaded. It also checks for newer CRLs
 upon each lookup, so that newer CRLs are as soon as they appear in
 the directory.
 
@@ -110,12 +110,8 @@ When checking for new CRLs once one CRL for given hash value is
 loaded, hash_dir lookup method checks only for certificates with
 sequence number greater than that of the already cached CRL.
 
-Note that the hash algorithm used for subject name hashing changed in OpenSSL
-1.0.0, and all certificate stores have to be rehashed when moving from OpenSSL
-0.9.8 to 1.0.0.
-
 OpenSSL includes a L<openssl-rehash(1)> utility which creates symlinks with
-hashed names for all files with F<.pem> suffix in a given directory.
+hashed names for all files with suffix like F<.pem> in a given directory.
 
 =head2 OSSL_STORE Method
 
@@ -144,6 +140,7 @@ the number of loaded objects or 0 on error.
 
 =head1 SEE ALSO
 
+L<openssl-rehash(1)>,
 L<PEM_read_PrivateKey(3)>,
 L<X509_STORE_load_locations(3)>,
 L<SSL_CTX_load_verify_locations(3)>,
@@ -151,6 +148,9 @@ L<X509_LOOKUP_meth_new(3)>,
 L<ossl_store(7)>
 
 =head1 HISTORY
+
+The hash algorithm used for subject name hashing changed in OpenSSL 1.0.0. All
+certificate stores had to be rehashed when moving from OpenSSL 0.9.8 to 1.0.0.
 
 The functions X509_load_cert_file_ex(),
 X509_load_cert_crl_file_ex() and X509_LOOKUP_store() were added in
