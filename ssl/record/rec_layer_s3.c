@@ -713,7 +713,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         /* if it went, fall through and send more stuff */
     }
 
-    if (s->rlayer.numwpipes < numpipes) {
+    if (s->rlayer.numwpipes != numpipes) {
+        ssl3_release_write_buffer(s);
         if (!ssl3_setup_write_buffer(s, numpipes, 0)) {
             /* SSLfatal() already called */
             return -1;
