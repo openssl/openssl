@@ -485,106 +485,66 @@ typedef BOOL(WINAPI *MODULE32)(HANDLE, MODULEENTRY32 *);
 
 static int win32_pathbyaddr(void *addr, char *path, int sz)
 {
-    HMODULE dll;
-    HANDLE hModuleSnap = INVALID_HANDLE_VALUE;
-    MODULEENTRY32 me32;
-    CREATETOOLHELP32SNAPSHOT create_snap;
-    CLOSETOOLHELP32SNAPSHOT close_snap;
-    MODULE32 module_first, module_next;
+    HMODULE hModule = NULL;
+    const DWORD wpathSize = 32768; /* 32768 is the maximum possible path length on Windows */
+    WCHAR *wpath = NULL;
+    DWORD wlen, wsz;
+    int utf8len = -1;
 
-    if (addr == NULL) {
-        union {
-            int (*f)(void *, char *, int);
-            void *p;
-        } t = {
-            win32_pathbyaddr
-        };
-        addr = t.p;
-    }
+    if (addr == NULL)
+        addr = win32_pathbyaddr;
 
-    dll = LoadLibrary(TEXT(DLLNAME));
-    if (dll == NULL) {
-        ERR_raise(ERR_LIB_DSO, DSO_R_UNSUPPORTED);
-        return -1;
+    if (!GetModuleHandleExW(
+            GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+            (LPCWSTR)addr, &hModule)) {
+        ERR_raise_data(ERR_LIB_DSO, DSO_R_SYM_FAILURE, "Unable to get module handle (%lu)\n",
+            GetLastError());
+        goto out;
     }
-
-    create_snap = (CREATETOOLHELP32SNAPSHOT)
-        GetProcAddress(dll, "CreateToolhelp32Snapshot");
-    if (create_snap == NULL) {
-        FreeLibrary(dll);
-        ERR_raise(ERR_LIB_DSO, DSO_R_UNSUPPORTED);
-        return -1;
+    wpath = (WCHAR *)OPENSSL_malloc(wpathSize * sizeof(WCHAR));
+    if (wpath == NULL) {
+        ERR_raise_data(ERR_LIB_DSO, DSO_R_NULL_HANDLE, "Path allocation failure (%lu)\n",
+            GetLastError());
+        goto out;
     }
-    /* We take the rest for granted... */
-#ifdef _WIN32_WCE
-    close_snap = (CLOSETOOLHELP32SNAPSHOT)
-        GetProcAddress(dll, "CloseToolhelp32Snapshot");
-#else
-    close_snap = (CLOSETOOLHELP32SNAPSHOT)CloseHandle;
-#endif
-    module_first = (MODULE32)GetProcAddress(dll, "Module32First");
-    module_next = (MODULE32)GetProcAddress(dll, "Module32Next");
+    wlen = GetModuleFileNameW(hModule, wpath, wpathSize);
+    if (wlen == 0 || GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+        ERR_raise_data(ERR_LIB_DSO, DSO_R_NAME_TRANSLATION_FAILED, "Module name fetch failed (%lu)\n",
+            GetLastError());
+        goto out;
+    }
 
     /*
-     * Take a snapshot of current process which includes
-     * list of all involved modules.
+     * If we pass a size of 0 or less, invoke the size-query pattern,
+     * in which we do not actually copy the name to the path buffer,
+     * but return the size the path buffer needs to be for this object
      */
-    hModuleSnap = (*create_snap)(TH32CS_SNAPMODULE, 0);
-    if (hModuleSnap == INVALID_HANDLE_VALUE) {
-        FreeLibrary(dll);
-        ERR_raise(ERR_LIB_DSO, DSO_R_UNSUPPORTED);
-        return -1;
+    if (sz <= 0) {
+        utf8len = (int)(wlen + 1);
+        goto out;
     }
 
-    me32.dwSize = sizeof(me32);
-
-    if (!(*module_first)(hModuleSnap, &me32)) {
-        (*close_snap)(hModuleSnap);
-        FreeLibrary(dll);
-        ERR_raise(ERR_LIB_DSO, DSO_R_FAILURE);
-        return -1;
+    /*
+     * Convert the wide path to UTF-8
+     */
+    wsz = (DWORD)sz;
+    utf8len = WideCharToMultiByte(CP_UTF8, 0, wpath, -1, NULL, 0, NULL, NULL);
+    if (utf8len <= 0 || (DWORD)utf8len > wsz) {
+        ERR_raise_data(ERR_LIB_DSO, DSO_R_NAME_TRANSLATION_FAILED, "UTF8 query failed (%lu)\n",
+            GetLastError());
+        goto out;
     }
 
-    /* Enumerate the modules to find one which includes me. */
-    do {
-        if ((size_t)addr >= (size_t)me32.modBaseAddr && (size_t)addr < (size_t)(me32.modBaseAddr + me32.modBaseSize)) {
-            (*close_snap)(hModuleSnap);
-            FreeLibrary(dll);
-#ifdef _WIN32_WCE
-#if _WIN32_WCE >= 101
-            return WideCharToMultiByte(CP_ACP, 0, me32.szExePath, -1,
-                path, sz, NULL, NULL);
-#else
-            {
-                int i, len = (int)wcslen(me32.szExePath);
-                if (sz <= 0)
-                    return len + 1;
-                if (len >= sz)
-                    len = sz - 1;
-                for (i = 0; i < len; i++)
-                    path[i] = (char)me32.szExePath[i];
-                path[len++] = '\0';
-                return len;
-            }
-#endif
-#else
-            {
-                int len = (int)strlen(me32.szExePath);
-                if (sz <= 0)
-                    return len + 1;
-                if (len >= sz)
-                    len = sz - 1;
-                memcpy(path, me32.szExePath, len);
-                path[len++] = '\0';
-                return len;
-            }
-#endif
-        }
-    } while ((*module_next)(hModuleSnap, &me32));
-
-    (*close_snap)(hModuleSnap);
-    FreeLibrary(dll);
-    return 0;
+    if (WideCharToMultiByte(CP_UTF8, 0, wpath, -1, path, wsz, NULL, NULL) <= 0) {
+        ERR_raise_data(ERR_LIB_DSO, DSO_R_NAME_TRANSLATION_FAILED, "UTF8 translation failed (%lu)\n",
+            GetLastError());
+        goto out;
+    }
+out:
+    OPENSSL_free(wpath);
+    if (hModule != NULL)
+        CloseHandle(hModule);
+    return utf8len;
 }
 
 static void *win32_globallookup(const char *name)
