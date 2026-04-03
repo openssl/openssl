@@ -2109,7 +2109,7 @@ static void check_for_downgrade(SSL_CONNECTION *s, int vers, DOWNGRADE *dgrd)
  * Returns 0 on success or an SSL error reason number on failure.
  */
 int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
-    DOWNGRADE *dgrd)
+    DOWNGRADE *dgrd, int *alert)
 {
     /*-
      * With version-flexible methods we have an initial state with:
@@ -2168,8 +2168,10 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
      * This bit checks there is a supported version present, a little
      * bit further below, we check that that version is TLSv1.3
      */
-    if (!suppversions->present && s->ext.ech.success == 1)
+    if (!suppversions->present && s->ext.ech.success == 1) {
+        *alert = SSL_AD_ILLEGAL_PARAMETER;
         return SSL_R_UNSUPPORTED_PROTOCOL;
+    }
 #endif
 
     /* If we did an HRR then supported versions is mandatory */
@@ -2202,6 +2204,13 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
             return SSL_R_BAD_LEGACY_VERSION;
 
         while (PACKET_get_net_2(&versionslist, &candidate_vers)) {
+#ifndef OPENSSL_NO_ECH
+            /* We MUST reject inner CH offering TLS 1.2 or lower */
+            if (s->ext.ech.success == 1 && ssl_version_cmp(s, candidate_vers, TLS1_3_VERSION) < 0) {
+                *alert = SSL_AD_ILLEGAL_PARAMETER;
+                return SSL_R_UNSUPPORTED_PROTOCOL;
+            }
+#endif
             if (ssl_version_cmp(s, candidate_vers, best_vers) <= 0)
                 continue;
             if (ssl_version_supported(s, candidate_vers, &best_method))
@@ -2213,11 +2222,6 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
         }
 
         if (best_vers > 0) {
-#ifndef OPENSSL_NO_ECH
-            /* ECH needs TLSV1.3 also */
-            if (s->ext.ech.success == 1 && best_vers != TLS1_3_VERSION)
-                return SSL_R_UNSUPPORTED_PROTOCOL;
-#endif
             if (s->hello_retry_request != SSL_HRR_NONE) {
                 /*
                  * This is after a HelloRetryRequest so we better check that we

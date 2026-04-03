@@ -493,6 +493,36 @@ static const unsigned char encoded_inner_no_ech[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
+static const unsigned char invalid_supported_versions_pre[] = {
+    0x03, 0x03, 0x7b, 0xe8, 0xc1, 0x18, 0xd7, 0xd1,
+    0x9c, 0x39, 0xa4, 0xfa, 0xce, 0x75, 0x72, 0x40,
+    0xcf, 0x37, 0xbb, 0x4c, 0xcd, 0xa7, 0x62, 0xda,
+    0x04, 0xd2, 0xdb, 0xe2, 0x89, 0x33, 0x36, 0x15,
+    0x96, 0xc9, 0x00, 0x00, 0x06, 0x13, 0x02, 0x13,
+    0x03, 0x13, 0x01, 0x01, 0x00,
+    0x00, 0x31,
+    0xfd, 0x00, 0x00, 0x09, 0x08,
+    0x00, 0x0a, 0x00, 0x0d, 0x00, 0x2d, 0x00, 0x33,
+    0x00, 0x2b, 0x00, 0x03, 0x02 /* supported versions without version */
+};
+
+static const unsigned char version_ssl_3[] = { 0x03, 0x00 };
+static const unsigned char version_tls_1[] = { 0x03, 0x01 };
+static const unsigned char version_tls_1_1[] = { 0x03, 0x02 };
+static const unsigned char version_tls_1_2[] = { 0x03, 0x03 };
+
+static const unsigned char invalid_supported_versions_post[] = {
+    0x00, 0x00, 0x00, 0x14,
+    0x00, 0x12, 0x00, 0x00, 0x0f, 0x66, 0x6f, 0x6f,
+    0x2e, 0x65, 0x78, 0x61, 0x6d, 0x70, 0x6c, 0x65,
+    0x2e, 0x63, 0x6f, 0x6d,
+    0xfe, 0x0d, 0x00, 0x01, 0x01,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
 /* A set of test vectors */
 static TEST_ECHINNER test_inners[] = {
     /* 1. basic case - copy to show test code works with no change */
@@ -671,6 +701,26 @@ static TEST_ECHINNER test_inners[] = {
         encoded_inner_no_ech, sizeof(encoded_inner_no_ech),
         NULL, 0,
         0, /* expected result */ SSL_R_ECH_REQUIRED },
+    /*
+     * 27-30. ensure the server rejects when we send a version < 1.3 in the
+     * inner CH
+     */
+    { invalid_supported_versions_pre, sizeof(invalid_supported_versions_pre),
+        version_ssl_3, sizeof(version_ssl_3),
+        invalid_supported_versions_post, sizeof(invalid_supported_versions_post),
+        0, /* expected result */ SSL_R_UNSUPPORTED_PROTOCOL },
+    { invalid_supported_versions_pre, sizeof(invalid_supported_versions_pre),
+        version_tls_1, sizeof(version_tls_1),
+        invalid_supported_versions_post, sizeof(invalid_supported_versions_post),
+        0, /* expected result */ SSL_R_UNSUPPORTED_PROTOCOL },
+    { invalid_supported_versions_pre, sizeof(invalid_supported_versions_pre),
+        version_tls_1_1, sizeof(version_tls_1_1),
+        invalid_supported_versions_post, sizeof(invalid_supported_versions_post),
+        0, /* expected result */ SSL_R_UNSUPPORTED_PROTOCOL },
+    { invalid_supported_versions_pre, sizeof(invalid_supported_versions_pre),
+        version_tls_1_2, sizeof(version_tls_1_2),
+        invalid_supported_versions_post, sizeof(invalid_supported_versions_post),
+        0, /* expected result */ SSL_R_UNSUPPORTED_PROTOCOL },
 };
 
 /*

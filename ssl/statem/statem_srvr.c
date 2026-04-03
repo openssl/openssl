@@ -1884,19 +1884,15 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     memcpy(s->s3.client_random, clienthello->random, SSL3_RANDOM_SIZE);
 
     /* Choose the server SSL/TLS/DTLS version. */
-    protverr = ssl_choose_server_version(s, clienthello, &dgrd);
+    al = SSL_AD_PROTOCOL_VERSION;
+    protverr = ssl_choose_server_version(s, clienthello, &dgrd, &al);
 
-#ifndef OPENSSL_NO_ECH
-    if (protverr && s->ext.ech.success == 1) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, protverr);
-    }
-#endif
     if (protverr) {
         if (SSL_IS_FIRST_HANDSHAKE(s)) {
             /* like ssl3_get_record, send alert using remote version number */
             s->version = s->client_version = clienthello->legacy_version;
         }
-        SSLfatal(s, SSL_AD_PROTOCOL_VERSION, protverr);
+        SSLfatal(s, al, protverr);
         goto err;
     }
 
