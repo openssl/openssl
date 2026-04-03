@@ -3863,6 +3863,7 @@ void ssl3_free(SSL *s)
     OPENSSL_free(sc->s3.alpn_selected);
     OPENSSL_free(sc->s3.alpn_proposed);
     ossl_quic_tls_free(sc->qtls);
+    sc->qtls = NULL;
 
 #ifndef OPENSSL_NO_PSK
     OPENSSL_free(sc->s3.tmp.psk);
