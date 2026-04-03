@@ -442,11 +442,13 @@ typedef int(EVP_PBE_KEYGEN_EX)(EVP_CIPHER_CTX *ctx, const char *pass,
 #endif
 #endif
 
+#ifndef OPENSSL_NO_DEPRECATED_4_0
 /* Add some extra combinations */
 #define EVP_get_digestbynid(a) EVP_get_digestbyname(OBJ_nid2sn(a))
 #define EVP_get_digestbyobj(a) EVP_get_digestbynid(OBJ_obj2nid(a))
 #define EVP_get_cipherbynid(a) EVP_get_cipherbyname(OBJ_nid2sn(a))
 #define EVP_get_cipherbyobj(a) EVP_get_cipherbynid(OBJ_obj2nid(a))
+#endif
 
 int EVP_MD_get_type(const EVP_MD *md);
 #define EVP_MD_type EVP_MD_get_type
@@ -1128,8 +1130,10 @@ const EVP_CIPHER *EVP_sm4_ctr(void);
 int EVP_add_cipher(const EVP_CIPHER *cipher);
 int EVP_add_digest(const EVP_MD *digest);
 
+#ifndef OPENSSL_NO_DEPRECATED_4_0
 const EVP_CIPHER *EVP_get_cipherbyname(const char *name);
 const EVP_MD *EVP_get_digestbyname(const char *name);
+#endif
 
 void EVP_CIPHER_do_all(void (*fn)(const EVP_CIPHER *ciph,
                            const char *from, const char *to, void *x),
