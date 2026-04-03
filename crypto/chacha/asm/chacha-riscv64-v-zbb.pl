@@ -245,6 +245,7 @@ $code .= <<___;
 .globl ChaCha20_ctr32@{[$isaext]}
 .type ChaCha20_ctr32@{[$isaext]},\@function
 ChaCha20_ctr32@{[$isaext]}:
+    @{[lpad 0]}
     addi sp, sp, -96
     sd s0, 0(sp)
     sd s1, 8(sp)

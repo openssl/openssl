@@ -611,6 +611,7 @@ $code .= <<___;
 .globl rv64i_zvkb_zvkg_zvkned_aes_gcm_encrypt
 .type rv64i_zvkb_zvkg_zvkned_aes_gcm_encrypt,\@function
 rv64i_zvkb_zvkg_zvkned_aes_gcm_encrypt:
+    @{[lpad 0]}
     srli $T0, $LEN, 4
     beqz $T0, .Lenc_end
     slli $LEN32, $T0, 2
@@ -639,6 +640,7 @@ ___
 $code .= <<___;
 .p2align 3
 aes_gcm_enc_blocks_128:
+    @{[lpad 0]}
     srli $CTR, $FULL_BLOCK_LEN32, 2
     slli $T0, $FULL_BLOCK_LEN32, 2
 
@@ -688,6 +690,7 @@ ___
 $code .= <<___;
 .p2align 3
 aes_gcm_enc_blocks_192:
+    @{[lpad 0]}
     srli $CTR, $FULL_BLOCK_LEN32, 2
     slli $T0, $FULL_BLOCK_LEN32, 2
 
@@ -737,6 +740,7 @@ ___
 $code .= <<___;
 .p2align 3
 aes_gcm_enc_blocks_256:
+    @{[lpad 0]}
     srli $CTR, $FULL_BLOCK_LEN32, 2
     slli $T0, $FULL_BLOCK_LEN32, 2
 
@@ -796,6 +800,7 @@ $code .= <<___;
 .globl rv64i_zvkb_zvkg_zvkned_aes_gcm_decrypt
 .type rv64i_zvkb_zvkg_zvkned_aes_gcm_decrypt,\@function
 rv64i_zvkb_zvkg_zvkned_aes_gcm_decrypt:
+    @{[lpad 0]}
     srli $T0, $LEN, 4
     beqz $T0, .Ldec_end
     slli $LEN32, $T0, 2
@@ -823,6 +828,7 @@ ___
 $code .= <<___;
 .p2align 3
 aes_gcm_dec_blocks_128:
+    @{[lpad 0]}
     srli $CTR, $FULL_BLOCK_LEN32, 2
     slli $T0, $FULL_BLOCK_LEN32, 2
 
@@ -872,6 +878,7 @@ ___
 $code .= <<___;
 .p2align 3
 aes_gcm_dec_blocks_192:
+    @{[lpad 0]}
     srli $CTR, $FULL_BLOCK_LEN32, 2
     slli $T0, $FULL_BLOCK_LEN32, 2
 
@@ -921,6 +928,7 @@ ___
 $code .= <<___;
 .p2align 3
 aes_gcm_dec_blocks_256:
+    @{[lpad 0]}
     srli $CTR, $FULL_BLOCK_LEN32, 2
     slli $T0, $FULL_BLOCK_LEN32, 2
 

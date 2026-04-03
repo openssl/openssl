@@ -425,6 +425,7 @@ $code .= <<___;
 .globl rv64i_zvbb_zvkg_zvkned_aes_xts_encrypt
 .type rv64i_zvbb_zvkg_zvkned_aes_xts_encrypt,\@function
 rv64i_zvbb_zvkg_zvkned_aes_xts_encrypt:
+    @{[lpad 0]}
     @{[compute_xts_iv0]}
 
     # aes block size is 16
@@ -450,6 +451,7 @@ ___
 $code .= <<___;
 .p2align 3
 aes_xts_enc_128:
+    @{[lpad 0]}
     @{[init_first_round]}
     @{[aes_128_load_key]}
 
@@ -499,6 +501,7 @@ ___
 $code .= <<___;
 .p2align 3
 aes_xts_enc_256:
+    @{[lpad 0]}
     @{[init_first_round]}
     @{[aes_256_load_key]}
 
@@ -556,6 +559,7 @@ $code .= <<___;
 .globl rv64i_zvbb_zvkg_zvkned_aes_xts_decrypt
 .type rv64i_zvbb_zvkg_zvkned_aes_xts_decrypt,\@function
 rv64i_zvbb_zvkg_zvkned_aes_xts_decrypt:
+    @{[lpad 0]}
     @{[compute_xts_iv0]}
 
     # aes block size is 16
@@ -579,6 +583,7 @@ ___
 $code .= <<___;
 .p2align 3
 aes_xts_dec_128:
+    @{[lpad 0]}
     @{[init_first_round]}
     @{[aes_128_load_key]}
 
@@ -643,6 +648,7 @@ ___
 $code .= <<___;
 .p2align 3
 aes_xts_dec_256:
+    @{[lpad 0]}
     @{[init_first_round]}
     @{[aes_256_load_key]}
 

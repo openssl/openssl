@@ -76,6 +76,7 @@ $code .= <<___;
 .globl ossl_hwsm3_block_data_order_zvksh
 .type ossl_hwsm3_block_data_order_zvksh,\@function
 ossl_hwsm3_block_data_order_zvksh:
+    @{[lpad 0]}
     # Obtain VLEN and select the corresponding branch
     csrr t0, vlenb
     srl t1, t0, 5
@@ -246,6 +247,7 @@ ossl_hwsm3_block_data_order_zvksh_zvl256:
     @{[vsetivli "zero", 8, "e32", "m1", "ta", "ma"]}
     j ossl_hwsm3_block_data_order_zvksh_single
 ossl_hwsm3_block_data_order_zvksh_zvl128:
+    @{[lpad 0]}
     @{[vsetivli "zero", 8, "e32", "m2", "ta", "ma"]}
 ossl_hwsm3_block_data_order_zvksh_single:
     # Load initial state of hash context (c->A-H).

@@ -624,6 +624,7 @@ $code .= <<___;
 .globl rv64i_zvksed_sm4_set_encrypt_key
 .type rv64i_zvksed_sm4_set_encrypt_key,\@function
 rv64i_zvksed_sm4_set_encrypt_key:
+    @{[lpad 0]}
     @{[vsetivli__x0_4_e32_m1_tu_mu]}
 
     # Load the user key
@@ -680,6 +681,7 @@ $code .= <<___;
 .globl rv64i_zvksed_sm4_set_decrypt_key
 .type rv64i_zvksed_sm4_set_decrypt_key,\@function
 rv64i_zvksed_sm4_set_decrypt_key:
+    @{[lpad 0]}
     @{[vsetivli__x0_4_e32_m1_tu_mu]}
 
     # Load the user key
@@ -738,6 +740,7 @@ $code .= <<___;
 .globl rv64i_zvksed_sm4_encrypt
 .type rv64i_zvksed_sm4_encrypt,\@function
 rv64i_zvksed_sm4_encrypt:
+    @{[lpad 0]}
     @{[vsetivli__x0_4_e32_m1_tu_mu]}
 
     @{[enc_load_key $keys]}
@@ -771,6 +774,7 @@ $code .= <<___;
 .globl rv64i_zvksed_sm4_decrypt
 .type rv64i_zvksed_sm4_decrypt,\@function
 rv64i_zvksed_sm4_decrypt:
+    @{[lpad 0]}
     @{[vsetivli__x0_4_e32_m1_tu_mu]}
 
     @{[dec_load_key $keys]}

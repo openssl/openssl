@@ -79,6 +79,8 @@ $code .= <<___;
 .globl sha512_block_data_order_zvkb_zvknhb
 .type sha512_block_data_order_zvkb_zvknhb,\@function
 sha512_block_data_order_zvkb_zvknhb:
+    @{[lpad 0]}
+
     # H is stored as {a,b,c,d},{e,f,g,h}, but we need {f,e,b,a},{h,g,d,c}
     # The dst vtype is e64m2 and the index vtype is e8mf4.
     # We use index-load with the following index pattern at v1.
