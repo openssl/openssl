@@ -370,9 +370,10 @@ static void ecp_sm2p256_point_G_mul_by_scalar(P256_POINT *R, const BN_ULONG *k)
 static void ecp_sm2p256_point_P_mul_by_scalar(P256_POINT *R, const BN_ULONG *k,
     P256_POINT_AFFINE P)
 {
-    int i, init = 0;
+    int i;
     unsigned int index, mask = 0x0f;
     ALIGN64 P256_POINT precomputed[16];
+    P256_POINT addpt;
 
     memset(R, 0, sizeof(P256_POINT));
 
@@ -397,19 +398,31 @@ static void ecp_sm2p256_point_P_mul_by_scalar(P256_POINT *R, const BN_ULONG *k,
     for (i = 64 - 1; i >= 0; --i) {
         index = (k[i / 16] >> (4 * (i % 16))) & mask;
 
-        if (init == 0) {
-            if (index) {
-                memcpy(R, &precomputed[index], sizeof(P256_POINT));
-                init = 1;
+        /* Always perform 4 doublings per window */
+        ecp_sm2p256_point_double(R, R);
+        ecp_sm2p256_point_double(R, R);
+        ecp_sm2p256_point_double(R, R);
+        ecp_sm2p256_point_double(R, R);
+
+        /* Constant-time select addend from precomputed[0..15] or infinity */
+        memset(&addpt, 0, sizeof(addpt)); /* infinity if index==0 */
+        {
+            unsigned int j, l;
+            P256_POINT tmp;
+            for (j = 1; j < 16; j++) {
+                memcpy(&tmp, &precomputed[j], sizeof(tmp));
+                BN_ULONG m = (BN_ULONG)0 - (BN_ULONG)(index == j);
+
+                for (l = 0; l < P256_LIMBS; l++) {
+                    addpt.X[l] = (addpt.X[l] & ~m) | (tmp.X[l] & m);
+                    addpt.Y[l] = (addpt.Y[l] & ~m) | (tmp.Y[l] & m);
+                    addpt.Z[l] = (addpt.Z[l] & ~m) | (tmp.Z[l] & m);
+                }
             }
-        } else {
-            ecp_sm2p256_point_double(R, R);
-            ecp_sm2p256_point_double(R, R);
-            ecp_sm2p256_point_double(R, R);
-            ecp_sm2p256_point_double(R, R);
-            if (index)
-                ecp_sm2p256_point_add(R, R, &precomputed[index]);
         }
+
+        /* Always add (adding infinity is a no-op) */
+        ecp_sm2p256_point_add(R, R, &addpt);
     }
 }
 
