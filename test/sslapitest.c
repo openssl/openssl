@@ -9264,6 +9264,106 @@ end:
 }
 
 /*
+ * Callback that always returns ABORT for successfully decrypted tickets.
+ * Used by test_ticket_abort_session_leak to exercise the error path in
+ * tls_parse_ctos_psk() that previously leaked the SSL_SESSION.
+ */
+static SSL_TICKET_RETURN dec_tick_abort_cb(SSL *s, SSL_SESSION *ss,
+    const unsigned char *keyname,
+    size_t keyname_length,
+    SSL_TICKET_STATUS status,
+    void *arg)
+{
+    if (status == SSL_TICKET_SUCCESS || status == SSL_TICKET_SUCCESS_RENEW)
+        return SSL_TICKET_RETURN_ABORT;
+
+    return SSL_TICKET_RETURN_IGNORE_RENEW;
+}
+
+/*
+ * Test that returning SSL_TICKET_RETURN_ABORT from the decrypt ticket callback
+ * during TLS 1.3 resumption does not leak the SSL_SESSION allocated by
+ * tls_decrypt_ticket().  Before the fix, tls_parse_ctos_psk() would execute a
+ * bare "return 0" instead of "goto err", bypassing SSL_SESSION_free(sess).
+ * When run under LeakSanitizer the leaked session will be reported.
+ */
+static int test_ticket_abort_session_leak(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    SSL_SESSION *clntsess = NULL;
+    int testresult = 0;
+
+#ifdef OSSL_NO_USABLE_TLS1_3
+    return 1;
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(),
+            TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set_session_cache_mode(sctx, SSL_SESS_CACHE_OFF)))
+        goto end;
+
+    /* First handshake: use the normal gen/dec callbacks to get a ticket */
+    if (!TEST_true(SSL_CTX_set_session_ticket_cb(sctx, gen_tick_cb, dec_tick_cb,
+            NULL)))
+        goto end;
+
+    gen_tick_called = dec_tick_called = tick_key_cb_called = 0;
+    tick_dec_ret = SSL_TICKET_RETURN_USE_RENEW;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+
+    clntsess = SSL_get1_session(clientssl);
+    if (!TEST_ptr(clntsess))
+        goto end;
+
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    /*
+     * Second handshake (resumption): switch to the abort callback.
+     * The server will decrypt the ticket, allocate an SSL_SESSION, then the
+     * callback returns ABORT.  The handshake must fail, and the session
+     * allocated inside tls_decrypt_ticket() must be freed (not leaked).
+     */
+    if (!TEST_true(SSL_CTX_set_session_ticket_cb(sctx, gen_tick_cb,
+            dec_tick_abort_cb, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set_session(clientssl, clntsess)))
+        goto end;
+
+    /* Resumption should fail because the callback aborts */
+    if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL)))
+        goto end;
+
+    testresult = 1;
+
+end:
+    SSL_SESSION_free(clntsess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
  * Test incorrect shutdown.
  * Test 0: client does not shutdown properly,
  *         server does not set SSL_OP_IGNORE_UNEXPECTED_EOF,
@@ -14857,6 +14957,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ssl_pending, 2);
     ADD_ALL_TESTS(test_ssl_get_shared_ciphers, OSSL_NELEM(shared_ciphers_data));
     ADD_ALL_TESTS(test_ticket_callbacks, 20);
+    ADD_TEST(test_ticket_abort_session_leak);
     ADD_ALL_TESTS(test_shutdown, 7);
     ADD_TEST(test_async_shutdown);
     ADD_ALL_TESTS(test_ssl_bio_eof, 2);
