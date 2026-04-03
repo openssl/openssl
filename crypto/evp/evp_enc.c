@@ -966,9 +966,6 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
          * we do the same here to not be disruptive.
          */
         return 1;
-    case EVP_CTRL_SET_PIPELINE_OUTPUT_BUFS: /* Used by DASYNC */
-    default:
-        goto end;
     case EVP_CTRL_AEAD_SET_IVLEN:
         if (arg < 0)
             return 0;
@@ -1111,6 +1108,12 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         params[0] = OSSL_PARAM_construct_octet_string(
             OSSL_CIPHER_PARAM_AEAD_MAC_KEY, ptr, sz);
         break;
+    case EVP_CTRL_PROCESS_UNPROTECTED:
+        params[0] = (OSSL_PARAM) { (arg) ? OSSL_CIPHER_PARAM_PROCESS_UNPROTECTED_ENCRYPT : OSSL_CIPHER_PARAM_PROCESS_UNPROTECTED_DECRYPT, OSSL_PARAM_PTR, ptr, sizeof(ptr), OSSL_PARAM_UNMODIFIED };
+        break;
+    case EVP_CTRL_SET_PIPELINE_OUTPUT_BUFS: /* Used by DASYNC */
+    default:
+        goto end;
     }
 
     if (set_params)

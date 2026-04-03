@@ -164,6 +164,9 @@ my %params = (
     'OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN' =>             "tls1multi_encin",     # octet_string
     'OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN' =>            "tls1multi_enclen",    # size_t
 
+    'OSSL_CIPHER_PARAM_PROCESS_UNPROTECTED_ENCRYPT' =>        "unprotected_enc",     # ptr
+    'OSSL_CIPHER_PARAM_PROCESS_UNPROTECTED_DECRYPT' =>        "unprotected_dec",     # ptr
+
 # digest parameters
     'OSSL_DIGEST_PARAM_XOFLEN' =>       "xoflen",       # size_t
     'OSSL_DIGEST_PARAM_SSL3_MS' =>      "ssl3-ms",      # octet string
@@ -540,6 +543,8 @@ my %params = (
 
     'OSSL_ENCODER_PARAM_CIPHER' =>           '*OSSL_ALG_PARAM_CIPHER',
     'OSSL_ENCODER_PARAM_PROPERTIES' =>       '*OSSL_ALG_PARAM_PROPERTIES',
+    'OSSL_PKEY_PARAM_ASN1_CMS_ENVELOPE_ENCRYPT' =>       'asn1-cms-envelope-encrypt',
+    'OSSL_PKEY_PARAM_ASN1_CMS_ENVELOPE_DECRYPT' =>       'asn1-cms-envelope-decrypt',
 # Currently PVK only, but reusable for others as needed
     'OSSL_ENCODER_PARAM_ENCRYPT_LEVEL' =>    "encrypt-level",
     'OSSL_ENCODER_PARAM_SAVE_PARAMETERS' =>  "save-parameters",# integer
