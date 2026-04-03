@@ -87,7 +87,7 @@ jobs:
       shell: cmd
       run: |
         call "${{ matrix.platform.vcvars }}"
-        perl ../util/checkplatformsyms.pl ../util/platform_symbols/windows-symbols.txt libcrypto-%OSSL_MAJOR%${{ matrix.platform.arch == 'amd64' && '-x64' || '' }}.dll ./libssl-%OSSL_MAJOR%${{ matrix.platform.arch == 'amd64' && '-x64' : '' }}.dll
+        perl ../util/checkplatformsyms.pl ../util/platform_symbols/windows-symbols.txt libcrypto-%OSSL_MAJOR%${{ matrix.platform.arch == 'amd64' && '-x64' || '' }}.dll ./libssl-%OSSL_MAJOR%${{ matrix.platform.arch == 'amd64' && '-x64' || '' }}.dll
     - name: test
       working-directory: _build
       shell: cmd
