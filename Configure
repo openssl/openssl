@@ -505,6 +505,7 @@ my @disablables_features = (
     "asan",
     "asm",
     "async",
+    "ascon128",
     "atexit",
     "autoalginit",
     "autoerrinit",
@@ -1937,6 +1938,7 @@ foreach my $what (sort keys %disabled) {
         # fix-up crypto/directory name(s)
         $skipdir = "ripemd" if $what eq "rmd160";
         $skipdir = "whrlpool" if $what eq "whirlpool";
+        $skipdir = "ascon" if $what eq "ascon128";
 
         my $macro = $disabled_info{$what}->{macro} = "OPENSSL_NO_$WHAT";
         push @{$config{openssl_feature_defines}}, $macro;
