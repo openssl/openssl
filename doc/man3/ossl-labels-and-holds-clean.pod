@@ -1,0 +1,215 @@
+=pod
+
+=head1 NAME
+
+ossl-labels-and-holds - documentation for contribution workflow labels
+and hold handling
+
+=head1 DESCRIPTION
+
+This document describes the labels used during a typical OpenSSL-style
+contribution workflow and explains how they should be applied during
+pull request review.
+
+Labels are used to communicate the state of a pull request, the testing
+status of a contribution, and whether a change is currently blocked.
+
+=head1 CONTRIBUTION REQUIREMENTS
+
+Before a contribution can be accepted into a project using this workflow,
+several requirements must be satisfied.
+
+=head2 Contributor License Agreement (CLA)
+
+Non-trivial contributions should be covered by a valid Contributor
+License Agreement (CLA) where required.
+
+For trivial changes, the following label may be applied:
+
+    cla: trivial
+
+Applying this label indicates that the change is sufficiently small that
+a CLA is not required.
+
+=head2 Code Review
+
+Changes should be reviewed and approved by at least two qualified
+reviewers before being merged.
+
+The author of the pull request should not count as one of the required
+approvals.
+
+Once the necessary approvals are received, a waiting period may be used
+before the change is merged in order to allow additional reviewers the
+opportunity to comment.
+
+=head2 Testing Requirements
+
+Most changes should include appropriate tests. During review, a testing
+label should be applied to indicate the test status of the contribution.
+
+Only one testing label should be present on a pull request at any given
+time.
+
+=head1 LABEL CATEGORIES
+
+Labels are used during triage and review to indicate the state of a
+contribution. Reviewers typically apply labels as the status of a pull
+request changes.
+
+=head2 CLA Labels
+
+=over 4
+
+=item B<cla: trivial>
+
+Indicates that the contribution is trivial and does not require a
+Contributor License Agreement.
+
+=back
+
+=head2 Testing Labels
+
+=over 4
+
+=item B<tests: present>
+
+Tests are included in the pull request and satisfy the testing policy.
+
+=item B<tests: exempted>
+
+Tests are not required for this change.
+
+=item B<tests: deferred>
+
+Tests will be added in a later pull request.
+
+=item B<hold: tests needed>
+
+Tests are required but are currently missing. This label places the
+pull request on hold until tests are provided.
+
+=back
+
+=head2 Severity Labels
+
+=over 4
+
+=item B<severity: urgent>
+
+Indicates that the pull request fixes an urgent problem such as a
+continuous integration failure or a build breakage.
+
+Pull requests with this label may bypass the usual waiting period
+before merging.
+
+=back
+
+=head2 Governance Hold Labels
+
+Certain changes may require additional decisions before they can
+proceed.
+
+=over 4
+
+=item B<hold: needs decision>
+
+A decision is required before the change can proceed.
+
+=back
+
+=head1 APPLYING A HOLD
+
+A hold label is used when a pull request cannot proceed through the
+normal review process.
+
+When applying a hold label, reviewers should:
+
+=over 4
+
+=item *
+
+Apply the appropriate C<hold:*> label.
+
+=item *
+
+Add a comment explaining why the hold is required.
+
+=item *
+
+Describe the action needed to resolve the issue.
+
+=back
+
+Example:
+
+    Label applied:
+        hold: tests needed
+
+    Comment:
+        Additional tests are required before the change
+        can proceed.
+
+=head1 LIFTING A HOLD
+
+A hold may be removed once the blocking condition has been resolved.
+
+The following steps should be followed when lifting a hold:
+
+=over 4
+
+=item *
+
+Verify that the blocking issue has been resolved.
+
+=item *
+
+Remove the hold label.
+
+=item *
+
+Apply any replacement labels if necessary.
+
+=item *
+
+Add a comment explaining why the hold was removed.
+
+=back
+
+Example:
+
+    Hold removed:
+        hold: tests needed
+
+    Replacement label:
+        tests: present
+
+=head1 BEST PRACTICES
+
+Following these recommendations can help streamline the review process:
+
+=over 4
+
+=item *
+
+Provide tests when required.
+
+=item *
+
+Respond promptly to reviewer feedback.
+
+=item *
+
+Keep pull requests focused on a single change whenever possible.
+
+=item *
+
+Ensure labels accurately reflect the current state of the change.
+
+=back
+
+=head1 SEE ALSO
+
+L<openssl(1)>
+
+=cut
