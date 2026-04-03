@@ -7,7 +7,8 @@ CRYPTO_THREAD_lock_new, CRYPTO_THREAD_read_lock, CRYPTO_THREAD_write_lock,
 CRYPTO_THREAD_unlock, CRYPTO_THREAD_lock_free,
 CRYPTO_atomic_add, CRYPTO_atomic_add64, CRYPTO_atomic_and, CRYPTO_atomic_or,
 CRYPTO_atomic_load, CRYPTO_atomic_store, CRYPTO_atomic_load_int,
-CRYPTO_atomic_store_int,
+CRYPTO_atomic_store_int, CRYPTO_atomic_load_ptr, CRYPTO_atomic_store_ptr,
+CRYPTO_atomic_cmp_exch_ptr,
 OSSL_set_max_threads, OSSL_get_max_threads,
 OSSL_get_thread_support_flags, OSSL_THREAD_SUPPORT_FLAG_THREAD_POOL,
 OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN - OpenSSL thread support
@@ -36,6 +37,9 @@ OSSL_THREAD_SUPPORT_FLAG_DEFAULT_SPAWN - OpenSSL thread support
  int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock);
  int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock);
  int CRYPTO_atomic_store_int(int *dst, int val, CRYPTO_RWLOCK *lock);
+ int CRYPTO_atomic_load_ptr(void **ptr, void **ret, CRYPTO_RWLOCK *lock);
+ int CRYPTO_atomic_store_ptr(void **dst, void **val, CRYPTO_RWLOCK *lock);
+ int CRYPTO_atomic_cmp_exch_ptr(void **ptr, void **expect, void *desire, CRYPTO_RWLOCK *lock);
 
  int OSSL_set_max_threads(OSSL_LIB_CTX *ctx, uint64_t max_threads);
  uint64_t OSSL_get_max_threads(OSSL_LIB_CTX *ctx);
@@ -152,6 +156,34 @@ on an I<int> value instead of a I<uint64_t> value.
 
 CRYPTO_atomic_store_int() works identically to CRYPTO_atomic_store() but
 operates on an I<int> value instead of a I<uint64_t> value.
+
+=item *
+
+int CRYPTO_atomic_load_ptr(void **ptr, void **ret, CRYPTO_RWLOCK *lock);
+
+CRYPTO_atomic_load_ptr() atomically loads the void* contents of I<*ptr> to the contents of I<*ret>.
+I<lock> will be used to emulate atomic operations on platforms that do not support
+atomic operations.
+
+=item *
+
+int CRYPTO_atomic_store_ptr(void **dst, void **val, CRYPTO_RWLOCK *lock);
+
+CRYPTO_atomic_store_ptr() atomically stores the contents of I<*val> to the location pointed
+to by I<*p>.
+I<lock> will be used to emulate atomic operations on platforms that do not support
+atomic operations.
+
+=item *
+
+int CRYPTO_atomic_cmp_exch_ptr(void **ptr, void **expect, void *desire, CRYPTO_RWLOCK *lock);
+
+CRYPTO_atomic_cmp_exch_ptr() atomically performs a read-modify-write operation.  If the contents of
+I<*ptr> matches the contents of I<*expect> then the value of I<desire> is stored in I<*ptr> and the
+function returns 1.  If I<*ptr> does not match the contents of I<*expect>, then the contents of
+I<*ptr> are atomically loaded to the contents of I<*expect> and the function returns 0.
+I<lock> will be used to emulate atomic operations on platforms that do not support
+atomic operations.
 
 =item *
 
@@ -281,6 +313,9 @@ CRYPTO_atomic_store(), CRYPTO_atomic_add64(), CRYPTO_atomic_and()
 were added in OpenSSL 3.4.
 
 CRYPTO_atomic_store_int() was added in OpenSSL 4.0.
+
+CRYPTO_atomic_load_ptr(), CRYPTO_atomic_store_ptr(), CRYPTO_atomic_cmp_exch_ptr()
+were added in OpenSSL 4.1
 
 =head1 COPYRIGHT
 

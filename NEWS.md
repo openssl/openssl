@@ -27,7 +27,8 @@ OpenSSL 4.0
 
 ### Major changes between OpenSSL 4.0 and OpenSSL 4.1 [under development]
 
-  * none
+  * Added API calls `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`, and
+    `CRYPTO_atomic_cmp_exch_ptr` have been added.
 
 ### Major changes between OpenSSL 3.6 and OpenSSL 4.0 [under development]
 
