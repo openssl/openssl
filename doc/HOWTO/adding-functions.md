@@ -1,5 +1,5 @@
-MODIFYING OPENSSL SOURCE
-========================
+ADDING FUNCTIONS to OPENSSL
+===========================
 
 This document describes the way to add custom modifications to OpenSSL
 sources.
@@ -58,7 +58,7 @@ public function - as defined above - is added, these files must be updated.
 
 To make such an update, please do the following:
 
-    ./Configure -Werror --strict-warnings [your-options]
+    ./Configure --strict-warnings [your-options]
     make update
 
 If you plan to submit the changes you made to OpenSSL (see
@@ -67,14 +67,19 @@ If you plan to submit the changes you made to OpenSSL (see
 
     make doc-nits
 
-Do note that `make update` also generates files related to OIDs (in the
-`crypto/objects/`  folder) and errors messages.
+`make update` ensures that your functions declarations are added to
+`util/libcrypto.num` or `util/libssl.num`.
+It also generates files related to OIDs (in the `crypto/objects/`  folder)
+and error messages.
+
+More details are at
+  [doc/HOWTO/documenting-functions-macros.md](Documenting Functions and Macros)
 
 If a git merge error occurs in one of these generated files, then the
 generated files need to be removed and regenerated using `make update`.
-To aid in this process, the generated files can be committed separately
+To aid in this process, the generated files should be committed separately
 so they can be removed easily by reverting that commit.
 
-[doc/internal/man7/build.info.pod]: ./doc/internal/man7/build.info.pod
-[Configurations/unix-Makefile.tmpl]: ./Configurations/unix-Makefile.tmpl
-[CONTRIBUTING.md]: ./CONTRIBUTING.md
+[doc/internal/man7/build.info.pod]: ../doc/internal/man7/build.info.pod
+[Configurations/unix-Makefile.tmpl]: ../../Configurations/unix-Makefile.tmpl
+[CONTRIBUTING.md]: ../../CONTRIBUTING.md
