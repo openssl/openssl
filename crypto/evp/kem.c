@@ -564,7 +564,9 @@ void EVP_KEM_do_all_provided(OSSL_LIB_CTX *libctx,
     evp_generic_do_all(libctx, OSSL_OP_KEM, (void (*)(void *, void *))fn, arg,
         evp_kem_from_algorithm,
         evp_kem_up_ref,
-        evp_kem_free);
+        evp_kem_free,
+        evp_kem_dup_frozen,
+        evp_kem_frozen_free);
 }
 
 int EVP_KEM_names_do_all(const EVP_KEM *kem,

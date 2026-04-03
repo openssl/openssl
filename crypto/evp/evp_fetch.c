@@ -755,7 +755,9 @@ void evp_generic_do_all(OSSL_LIB_CTX *libctx, int operation_id,
         const OSSL_ALGORITHM *algodef,
         OSSL_PROVIDER *prov),
     int (*up_ref_method)(void *),
-    void (*free_method)(void *))
+    void (*free_method)(void *),
+    void *(*dup_method)(void *),
+    void (*dup_free_method)(void *))
 {
     struct evp_method_data_st methdata;
     struct filter_data_st data;
@@ -763,7 +765,7 @@ void evp_generic_do_all(OSSL_LIB_CTX *libctx, int operation_id,
     methdata.libctx = libctx;
     methdata.tmp_store = NULL;
     (void)inner_evp_generic_fetch(&methdata, NULL, operation_id, NULL, NULL,
-        new_method, up_ref_method, free_method, NULL, NULL);
+        new_method, up_ref_method, free_method, dup_method, dup_free_method);
 
     data.operation_id = operation_id;
     data.user_fn = user_fn;

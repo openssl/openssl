@@ -538,7 +538,10 @@ void EVP_SIGNATURE_do_all_provided(OSSL_LIB_CTX *libctx,
         (void (*)(void *, void *))fn, arg,
         evp_signature_from_algorithm,
         evp_signature_up_ref,
-        evp_signature_free);
+        evp_signature_free,
+        /* TODO(FREEZE): Add callbacks to evp_generic_do_all */
+        NULL,
+        NULL);
 }
 
 int EVP_SIGNATURE_names_do_all(const EVP_SIGNATURE *signature,

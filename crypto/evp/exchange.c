@@ -744,7 +744,9 @@ void EVP_KEYEXCH_do_all_provided(OSSL_LIB_CTX *libctx,
         (void (*)(void *, void *))fn, arg,
         evp_keyexch_from_algorithm,
         evp_keyexch_up_ref,
-        evp_keyexch_free);
+        evp_keyexch_free,
+        evp_keyexch_dup_frozen,
+        evp_keyexch_frozen_free);
 }
 
 int EVP_KEYEXCH_names_do_all(const EVP_KEYEXCH *keyexch,

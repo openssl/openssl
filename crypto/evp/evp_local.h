@@ -365,7 +365,9 @@ void evp_generic_do_all(OSSL_LIB_CTX *libctx, int operation_id,
         const OSSL_ALGORITHM *algodef,
         OSSL_PROVIDER *prov),
     int (*up_ref_method)(void *),
-    void (*free_method)(void *));
+    void (*free_method)(void *),
+    void *(*dup_method)(void *),
+    void (*dup_free_method)(void *));
 
 /* Internal fetchers for method types that are to be combined with others */
 EVP_KEYMGMT *evp_keymgmt_fetch_by_number(OSSL_LIB_CTX *ctx, int name_id,
