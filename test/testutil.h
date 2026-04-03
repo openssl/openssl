@@ -678,6 +678,10 @@ X509 *X509_from_strings(const char **pem);
  */
 X509_CRL *CRL_from_strings(const char **pem);
 /*
+ * Create a PKEY from an array of strings.
+ */
+EVP_PKEY *EVP_PKEY_from_strings(const char **pem);
+/*
  * Glue an array of strings together.  Return a BIO and put the string
  * into |*out| so we can free it.
  */
