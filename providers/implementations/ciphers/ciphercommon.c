@@ -148,6 +148,25 @@ void ossl_cipher_generic_reset_ctx(PROV_CIPHER_CTX *ctx)
     }
 }
 
+/*
+ * Deep-copy the tlsmac buffer after a shallow dupctx copy.
+ * Must be called after OPENSSL_memdup or *dctx = *sctx to avoid
+ * double-free when both contexts are freed.
+ * Returns 1 on success, 0 on allocation failure.
+ */
+int ossl_cipher_generic_dupctx_tlsmac(PROV_CIPHER_CTX *dst,
+    const PROV_CIPHER_CTX *src)
+{
+    if (src->tlsmac != NULL && src->alloced) {
+        dst->tlsmac = OPENSSL_memdup(src->tlsmac, src->tlsmacsize);
+        if (dst->tlsmac == NULL) {
+            dst->alloced = 0;
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
     const unsigned char *key, size_t keylen,
     const unsigned char *iv, size_t ivlen,

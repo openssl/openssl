@@ -79,16 +79,14 @@ static void *chacha20_dupctx(void *vctx)
     PROV_CHACHA20_CTX *ctx = (PROV_CHACHA20_CTX *)vctx;
     PROV_CHACHA20_CTX *dupctx = NULL;
 
-    if (ctx != NULL) {
-        dupctx = OPENSSL_memdup(ctx, sizeof(*dupctx));
-        if (dupctx != NULL && dupctx->base.tlsmac != NULL && dupctx->base.alloced) {
-            dupctx->base.tlsmac = OPENSSL_memdup(dupctx->base.tlsmac,
-                dupctx->base.tlsmacsize);
-            if (dupctx->base.tlsmac == NULL) {
-                OPENSSL_free(dupctx);
-                dupctx = NULL;
-            }
-        }
+    if (ctx == NULL)
+        return NULL;
+
+    dupctx = OPENSSL_memdup(ctx, sizeof(*dupctx));
+    if (dupctx != NULL
+        && !ossl_cipher_generic_dupctx_tlsmac(&dupctx->base, &ctx->base)) {
+        OPENSSL_clear_free(dupctx, sizeof(*dupctx));
+        return NULL;
     }
     return dupctx;
 }

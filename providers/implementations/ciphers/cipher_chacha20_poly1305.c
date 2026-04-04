@@ -69,13 +69,10 @@ static void *chacha20_poly1305_dupctx(void *provctx)
     if (ctx == NULL)
         return NULL;
     dctx = OPENSSL_memdup(ctx, sizeof(*ctx));
-    if (dctx != NULL && dctx->base.tlsmac != NULL && dctx->base.alloced) {
-        dctx->base.tlsmac = OPENSSL_memdup(dctx->base.tlsmac,
-            dctx->base.tlsmacsize);
-        if (dctx->base.tlsmac == NULL) {
-            OPENSSL_free(dctx);
-            dctx = NULL;
-        }
+    if (dctx != NULL
+        && !ossl_cipher_generic_dupctx_tlsmac(&dctx->base, &ctx->base)) {
+        OPENSSL_clear_free(dctx, sizeof(*dctx));
+        return NULL;
     }
     return dctx;
 }
