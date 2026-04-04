@@ -1852,6 +1852,13 @@ static int ssl_method_error(const SSL_CONNECTION *s, const SSL_METHOD *method)
 {
     int version = method->version;
 
+#ifndef OPENSSL_NO_ECH
+    /* Require at least TLS1.3 in inner CH */
+    if (((s->ext.ech.ch_depth == 1 && s->server == 0) || (s->ext.ech.success == 1 && s->server == 1))
+        && ssl_version_cmp(s, version, TLS1_3_VERSION) < 0)
+        return SSL_R_VERSION_TOO_LOW;
+#endif
+
     if ((s->min_proto_version != 0 && ssl_version_cmp(s, version, s->min_proto_version) < 0) || ssl_security(s, SSL_SECOP_VERSION, 0, version, NULL) == 0)
         return SSL_R_VERSION_TOO_LOW;
 
