@@ -147,7 +147,7 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
 
     if (dgstlen < 0) {
         ERR_raise(ERR_LIB_EC, EC_R_INVALID_LENGTH);
-        goto ret;
+        return NULL;
     }
 
     group = EC_KEY_get0_group(eckey);
@@ -292,7 +292,7 @@ static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
 
     if (dgstlen < 0) {
         ERR_raise(ERR_LIB_EC, EC_R_INVALID_LENGTH);
-        goto ret;
+        return -1;
     }
 
     group = EC_KEY_get0_group(eckey);
