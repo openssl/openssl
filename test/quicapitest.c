@@ -19,6 +19,7 @@
 #include "testutil.h"
 #include "testutil/output.h"
 #include "../ssl/ssl_local.h"
+#include "../ssl/quic/quic_channel_local.h"
 #include "internal/quic_error.h"
 
 static OSSL_LIB_CTX *libctx = NULL;
@@ -3424,6 +3425,73 @@ static int test_quic_peer_addr_v6(void)
         "::2", 4434);
 }
 
+static int test_quic_resize_txe(void)
+{
+    SSL_CTX *cctx = NULL;
+    SSL *clientquic = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    unsigned char msg[] = "resize test";
+    unsigned char buf[sizeof(msg)];
+    size_t numbytes = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method())))
+        goto end;
+
+    if (!TEST_true(qtest_create_quic_objects(libctx, cctx, NULL,
+            cert, privkey, 0,
+            &qtserv, &clientquic,
+            NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        goto end;
+
+    /*
+     * Client writes first to open stream 0 (client-initiated bidirectional).
+     * The server must see the stream before it can write back on it.
+     */
+    if (!TEST_true(SSL_write_ex(clientquic, msg, sizeof(msg), &numbytes))
+        || !TEST_size_t_eq(numbytes, sizeof(msg)))
+        goto end;
+
+    ossl_quic_tserver_tick(qtserv);
+    if (!TEST_true(ossl_quic_tserver_read(qtserv, 0, buf, sizeof(buf),
+            &numbytes)))
+        goto end;
+
+    /*
+     * Increase the server's QTX MDPL above the initial allocation size
+     * (QUIC_MIN_INITIAL_DGRAM_LEN = 1200). All TXEs in the free list have
+     * alloc_len = 1200, so the next write will trigger qtx_resize_txe.
+     */
+    ch = ossl_quic_tserver_get_channel(qtserv);
+    if (!TEST_true(ossl_qtx_set_mdpl(ch->qtx,
+            QUIC_MIN_INITIAL_DGRAM_LEN + 250)))
+        goto end;
+
+    /* Trigger a server write: exercises qtx_resize_txe via qtx_reserve_txe */
+    if (!TEST_true(ossl_quic_tserver_write(qtserv, 0,
+            msg, sizeof(msg), &numbytes))
+        || !TEST_size_t_eq(numbytes, sizeof(msg)))
+        goto end;
+
+    ossl_quic_tserver_tick(qtserv);
+    SSL_handle_events(clientquic);
+
+    if (!TEST_true(SSL_read_ex(clientquic, buf, sizeof(buf), &numbytes))
+        || !TEST_mem_eq(buf, numbytes, msg, sizeof(msg)))
+        goto end;
+
+    ret = 1;
+end:
+    ossl_quic_tserver_free(qtserv);
+    SSL_free(clientquic);
+    SSL_CTX_free(cctx);
+    return ret;
+}
+
 /***********************************************************************************/
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
@@ -3531,6 +3599,7 @@ int setup_tests(void)
     ADD_TEST(test_client_hello_retry);
     ADD_TEST(test_quic_peer_addr_v6);
     ADD_TEST(test_quic_peer_addr_v4);
+    ADD_TEST(test_quic_resize_txe);
 
     return 1;
 err:
