@@ -54,8 +54,9 @@ I<recipcert> ...
 
 =head1 DESCRIPTION
 
-This command handles S/MIME mail. It can encrypt, decrypt, sign
-and verify S/MIME messages.
+This command handles S/MIME according to RFC 2311 (1998) with no CMS support. 
+It can encrypt, decrypt, sign and verify S/MIME 2.0 messages. For newer messages
+use the OpenSSL CMS tool.
 
 =head1 OPTIONS
 
