@@ -408,7 +408,7 @@ int ca_main(int argc, char **argv)
             enddate = opt_arg();
             break;
         case OPT_DAYS:
-            days = atoi(opt_arg());
+            days = opt_int_arg();
             break;
         case OPT_MD:
             dgst = opt_arg();

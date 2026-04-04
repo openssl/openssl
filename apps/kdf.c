@@ -39,7 +39,7 @@ const OPTIONS kdf_options[] = {
     { "digest", OPT_DIGEST, 's', "Digest" },
     { "mac", OPT_MAC, 's', "MAC" },
     { OPT_MORE_STR, 1, '-', "See 'Supported Controls' in the EVP_KDF_ docs\n" },
-    { "keylen", OPT_KEYLEN, 's', "The size of the output derived key" },
+    { "keylen", OPT_KEYLEN, 'p', "The size of the output derived key" },
 
     OPT_SECTION("Output"),
     { "out", OPT_OUT, '>', "Output to filename rather than stdout" },
@@ -101,7 +101,7 @@ int kdf_main(int argc, char **argv)
             out_bin = 1;
             break;
         case OPT_KEYLEN:
-            dkm_len = atoi(opt_arg());
+            dkm_len = opt_int_arg();
             break;
         case OPT_OUT:
             outfile = opt_arg();
@@ -176,7 +176,7 @@ int kdf_main(int argc, char **argv)
         goto err;
 
     if (dkm_len <= 0) {
-        BIO_puts(bio_err, "Invalid derived key length.\n");
+        BIO_puts(bio_err, "Derived key length is mandatory!\n");
         goto err;
     }
     dkm_bytes = app_malloc(dkm_len, "out buffer");

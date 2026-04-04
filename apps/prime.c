@@ -125,7 +125,7 @@ int prime_main(int argc, char **argv)
             generate = 1;
             break;
         case OPT_BITS:
-            bits = atoi(opt_arg());
+            bits = opt_int_arg();
             break;
         case OPT_SAFE:
             safe = 1;

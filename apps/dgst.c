@@ -201,7 +201,7 @@ int dgst_main(int argc, char **argv)
             out_bin = 1;
             break;
         case OPT_XOFLEN:
-            xoflen = atoi(opt_arg());
+            xoflen = opt_int_arg();
             break;
         case OPT_DEBUG:
             debug = 1;

@@ -39,9 +39,9 @@
         { "purpose", OPT_V_PURPOSE, 's',                                                   \
             "certificate chain purpose" },                                                 \
         { "verify_name", OPT_V_VERIFY_NAME, 's', "verification policy name" },             \
-        { "verify_depth", OPT_V_VERIFY_DEPTH, 'n',                                         \
+        { "verify_depth", OPT_V_VERIFY_DEPTH, 'N',                                         \
             "chain depth limit" },                                                         \
-        { "auth_level", OPT_V_VERIFY_AUTH_LEVEL, 'n',                                      \
+        { "auth_level", OPT_V_VERIFY_AUTH_LEVEL, 'N',                                      \
             "chain authentication security level" },                                       \
         { "attime", OPT_V_ATTIME, 'M', "verification epoch time" },                        \
         { "verify_hostname", OPT_V_VERIFY_HOSTNAME, 's',                                   \
@@ -341,8 +341,9 @@ typedef struct options_st {
      * value type:
      *
      *   '-' no value (also the value zero)
-     *   'n' number (type 'int')
-     *   'p' positive number (type 'int')
+     *   'n' any number (type 'int')
+     *   'p' positive number (type 'int', value > 0)
+     *   'N' is a non-negative number (type 'int', value >= 0)
      *   'u' unsigned number (type 'unsigned long')
      *   'l' number (type 'unsigned long')
      *   'M' number (type 'intmax_t')
@@ -356,7 +357,7 @@ typedef struct options_st {
      *   'A' any ASN1, der/pem/b64 format  [OPT_FMT_ASN1]
      *   'c' pem/der/smime format          [OPT_FMT_PDS]
      *
-     * The 'l', 'n' and 'u' value types include the values zero,
+     * The 'l', 'n', 'N' and 'u' value types include the values zero,
      * the 'p' value type does not.
      */
     int valtype;
