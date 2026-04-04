@@ -84,6 +84,14 @@ In this specific case, and probably for factory methods in general, it is
 not safe to modify the factory object after it has been used to create
 other objects.
 
+An B<SSL> connection object created by L<SSL_new(3)> should only be used
+by a single thread at a time.
+While it is possible for one thread to use an B<SSL> object and then pass
+it to another thread, the application must ensure that no two threads
+are using the same B<SSL> object concurrently.
+Each thread handling TLS connections in parallel should create its own
+B<SSL> object from the shared B<SSL_CTX>.
+
 =head1 SEE ALSO
 
 CRYPTO_THREAD_run_once(3),
