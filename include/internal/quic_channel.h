@@ -297,7 +297,6 @@ void ossl_quic_channel_on_new_conn_id(QUIC_CHANNEL *ch,
 
 /* Temporarily exposed during QUIC_PORT transition. */
 int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
-    const QUIC_CONN_ID *peer_scid,
     const QUIC_CONN_ID *peer_dcid);
 
 /* For use by QUIC_PORT. You should not need to call this directly. */
@@ -540,8 +539,7 @@ uint64_t ossl_quic_channel_get_active_conn_id_limit_request(const QUIC_CHANNEL *
 uint64_t ossl_quic_channel_get_active_conn_id_limit_peer_request(const QUIC_CHANNEL *ch);
 
 int ossl_quic_bind_channel(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
-    const QUIC_CONN_ID *scid, const QUIC_CONN_ID *dcid,
-    const QUIC_CONN_ID *odcid);
+    const QUIC_CONN_ID *dcid, const QUIC_CONN_ID *odcid);
 
 void ossl_quic_channel_set_tcause(QUIC_CHANNEL *ch, uint64_t app_error_code,
     const char *app_reason);

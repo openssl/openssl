@@ -3672,7 +3672,6 @@ static void ch_on_idle_timeout(QUIC_CHANNEL *ch)
  * @return         1 on success, 0 on failure to set required elements.
  */
 static int ch_on_new_conn_common(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
-    const QUIC_CONN_ID *peer_scid,
     const QUIC_CONN_ID *peer_dcid,
     const QUIC_CONN_ID *peer_odcid)
 {
@@ -3681,7 +3680,6 @@ static int ch_on_new_conn_common(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
         return 0;
 
     ch->init_dcid = *peer_dcid;
-    ch->cur_remote_dcid = *peer_scid;
     ch->odcid.id_len = 0;
 
     if (peer_odcid != NULL)
@@ -3725,7 +3723,6 @@ static int ch_on_new_conn_common(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
 
 /* Called when we, as a server, get a new incoming connection. */
 int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
-    const QUIC_CONN_ID *peer_scid,
     const QUIC_CONN_ID *peer_dcid)
 {
     if (!ossl_assert(ch->state == QUIC_CHANNEL_STATE_IDLE && ch->is_server))
@@ -3735,7 +3732,7 @@ int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
     if (!ossl_quic_lcidm_generate_initial(ch->lcidm, ch, &ch->cur_local_cid))
         return 0;
 
-    return ch_on_new_conn_common(ch, peer, peer_scid, peer_dcid, NULL);
+    return ch_on_new_conn_common(ch, peer, peer_dcid, NULL);
 }
 
 /**
@@ -3762,7 +3759,6 @@ int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
  *         met (e.g., channel is not idle or not a server, or binding fails).
  */
 int ossl_quic_bind_channel(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
-    const QUIC_CONN_ID *peer_scid,
     const QUIC_CONN_ID *peer_dcid,
     const QUIC_CONN_ID *peer_odcid)
 {
@@ -3781,7 +3777,7 @@ int ossl_quic_bind_channel(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
      * peer_odcid <=> is initial dst conn id chosen by peer in its
      * first initial packet we received without token.
      */
-    return ch_on_new_conn_common(ch, peer, peer_scid, peer_dcid, peer_odcid);
+    return ch_on_new_conn_common(ch, peer, peer_dcid, peer_odcid);
 }
 
 SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch)
