@@ -244,7 +244,10 @@ size_t CRYPTO_128_wrap_pad(void *key, const unsigned char *icv,
  *
  *  @param[in]  key    Key value.
  *  @param[in]  icv    (Non-standard) IV, 4 bytes. NULL = use default_aiv.
- *  @param[out] out    Plaintext. Minimal buffer length = (inlen - 8) bytes.
+ *  @param[out] out    Plaintext. Minimal buffer length = inlen bytes.
+ *                     Although the plaintext is at most (inlen - 8) bytes,
+ *                     the buffer must be at least inlen bytes because inlen
+ *                     bytes are cleansed on error.
  *                     Input and output buffers can overlap if block function
  *                     supports that.
  *  @param[in]  in     Ciphertext as n 64-bit blocks.
