@@ -5558,7 +5558,7 @@ int ssl_init_wbio_buffer(SSL_CONNECTION *s)
         return 1;
     }
 
-    bbio = BIO_new(BIO_f_buffer());
+    bbio = BIO_new_ex2(NULL, BIO_f_buffer());
     if (bbio == NULL || BIO_set_read_buffer_size(bbio, 1) <= 0) {
         BIO_free(bbio);
         ERR_raise(ERR_LIB_SSL, ERR_R_BUF_LIB);

@@ -1401,10 +1401,10 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
 
 #ifndef OPENSSL_NO_DGRAM
             if (SSL_CONNECTION_IS_DTLS(s))
-                next = BIO_new(BIO_s_dgram_mem());
+                next = BIO_new_ex2(NULL, BIO_s_dgram_mem());
             else
 #endif
-                next = BIO_new(BIO_s_mem());
+                next = BIO_new_ex2(NULL, BIO_s_mem());
 
             if (next == NULL) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);

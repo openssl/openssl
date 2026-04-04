@@ -997,30 +997,26 @@ int EVP_PKEY_CTX_get_group_name(EVP_PKEY_CTX *ctx, char *name, size_t namelen)
  * such as the RSA modulus size or the name of an EC curve.
  */
 static EVP_PKEY *evp_pkey_keygen(OSSL_LIB_CTX *libctx, const char *name,
-    const char *propq, const OSSL_PARAM *params)
+    const char *propq, EVP_PKEY **pkey, const OSSL_PARAM *params)
 {
-    EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(libctx, name, propq);
 
     if (ctx != NULL
         && EVP_PKEY_keygen_init(ctx) > 0
         && EVP_PKEY_CTX_set_params(ctx, params))
-        (void)EVP_PKEY_generate(ctx, &pkey);
+        (void)EVP_PKEY_generate(ctx, pkey);
 
     EVP_PKEY_CTX_free(ctx);
-    return pkey;
+    return *pkey;
 }
 
-EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
-    const char *type, ...)
+static EVP_PKEY *evp_pkey_q_keygen_intern(OSSL_LIB_CTX *libctx, const char *propq,
+    const char *type, int exdata, va_list args)
 {
-    va_list args;
     size_t bits;
     char *name;
     OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    EVP_PKEY *ret = NULL;
-
-    va_start(args, type);
+    EVP_PKEY *pkey = NULL;
 
     if (OPENSSL_strcasecmp(type, "RSA") == 0) {
         bits = va_arg(args, size_t);
@@ -1031,8 +1027,36 @@ EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
             name, 0);
     }
 
-    ret = evp_pkey_keygen(libctx, type, propq, params);
+    if (!exdata) {
+        pkey = EVP_PKEY_new_ex();
+        if (pkey == NULL)
+            return NULL;
+    }
+    if (evp_pkey_keygen(libctx, type, propq, &pkey, params) == NULL) {
+        EVP_PKEY_free(pkey);
+        return NULL;
+    }
+    return pkey;
+}
 
+EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
+    const char *type, ...)
+{
+    va_list args;
+    EVP_PKEY *ret = NULL;
+    va_start(args, type);
+    ret = evp_pkey_q_keygen_intern(libctx, propq, type, 1, args);
+    va_end(args);
+    return ret;
+}
+
+EVP_PKEY *EVP_PKEY_Q_keygen_ex(OSSL_LIB_CTX *libctx, const char *propq,
+    const char *type, ...)
+{
+    va_list args;
+    EVP_PKEY *ret = NULL;
+    va_start(args, type);
+    ret = evp_pkey_q_keygen_intern(libctx, propq, type, 0, args);
     va_end(args);
     return ret;
 }

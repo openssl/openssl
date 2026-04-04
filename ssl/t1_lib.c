@@ -2315,7 +2315,7 @@ int ssl_setup_sigalgs(SSL_CTX *ctx)
     const SIGALG_LOOKUP *lu;
     SIGALG_LOOKUP *cache = NULL;
     uint16_t *tls12_sigalgs_list = NULL;
-    EVP_PKEY *tmpkey = EVP_PKEY_new();
+    EVP_PKEY *tmpkey = EVP_PKEY_new_ex();
     int istls;
     int ret = 0;
 

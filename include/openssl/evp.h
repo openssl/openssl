@@ -1333,6 +1333,7 @@ struct ec_key_st *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey);
 #endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
 EVP_PKEY *EVP_PKEY_new(void);
+EVP_PKEY *EVP_PKEY_new_ex(void);
 int EVP_PKEY_up_ref(EVP_PKEY *pkey);
 EVP_PKEY *EVP_PKEY_dup(EVP_PKEY *pkey);
 void EVP_PKEY_free(EVP_PKEY *pkey);
@@ -1868,6 +1869,8 @@ int EVP_PKEY_get_ec_point_conv_form(const EVP_PKEY *pkey);
 int EVP_PKEY_get_field_type(const EVP_PKEY *pkey);
 
 EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
+    const char *type, ...);
+EVP_PKEY *EVP_PKEY_Q_keygen_ex(OSSL_LIB_CTX *libctx, const char *propq,
     const char *type, ...);
 int EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);

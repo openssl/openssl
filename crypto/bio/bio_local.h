@@ -115,6 +115,7 @@ struct bio_st {
     CRYPTO_REF_COUNT references;
     uint64_t num_read;
     uint64_t num_write;
+    int has_exdata;
     CRYPTO_EX_DATA ex_data;
 };
 

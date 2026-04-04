@@ -5411,6 +5411,11 @@ EVP_PKEY *ssl_generate_pkey_group(SSL_CONNECTION *s, uint16_t id)
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
+    pkey = EVP_PKEY_new_ex();
+    if (pkey == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+        goto err;
+    }
     if (EVP_PKEY_keygen(pctx, &pkey) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         EVP_PKEY_free(pkey);
@@ -5443,6 +5448,11 @@ EVP_PKEY *ssl_generate_param_group(SSL_CONNECTION *s, uint16_t id)
     if (EVP_PKEY_paramgen_init(pctx) <= 0)
         goto err;
     if (EVP_PKEY_CTX_set_group_name(pctx, ginf->realname) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+        goto err;
+    }
+    pkey = EVP_PKEY_new_ex();
+    if (pkey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
