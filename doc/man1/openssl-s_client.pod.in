@@ -342,6 +342,12 @@ see L<openssl-verify(1)> for more information.
 The URI of a store containing trusted certificates to use
 for verifying the server's certificate.
 
+When any of B<-verifyCAfile>, B<-verifyCApath>, or B<-verifyCAstore> is
+specified, they are loaded into a separate verification store (via
+L<SSL_CTX_set1_verify_cert_store(3)>) and used for server certificate
+verification instead of the store built from B<-CAfile>, B<-CApath>, and
+B<-CAstore>.
+
 =item B<-chainCAfile> I<file>
 
 A file in PEM format containing trusted certificates to use
