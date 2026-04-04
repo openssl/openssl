@@ -366,7 +366,9 @@ static int kdf_pbkdf2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (p.pw != NULL) {
         if (ctx->lower_bound_checks != 0
             && p.pw->data_size < KDF_PBKDF2_MIN_PASSWORD_LEN) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_PASSWORD_STRENGTH_TOO_WEAK);
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_PASSWORD_STRENGTH_TOO_WEAK,
+                "password length %zu should be at least %d",
+                p.pw->data_size, KDF_PBKDF2_MIN_PASSWORD_LEN);
             return 0;
         }
         if (!pbkdf2_set_membuf(&ctx->pass, &ctx->pass_len, p.pw))
