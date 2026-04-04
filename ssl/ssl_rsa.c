@@ -1010,7 +1010,9 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
             goto out;
         }
     }
-    if (ssl_cert_lookup_by_pkey(pubkey, &i, ctx) == NULL) {
+    if (ssl_cert_lookup_by_pkey(pubkey, &i,
+            sc != NULL ? SSL_CONNECTION_GET_CTX(sc) : ctx)
+        == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         goto out;
     }
