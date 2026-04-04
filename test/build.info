@@ -943,6 +943,13 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[dsa_no_digest_size_test]=../include ../apps/include
     DEPEND[dsa_no_digest_size_test]=../libcrypto.a libtestutil.a
 
+    IF[{- !$disabled{ecx} && !$disabled{tls1_3} -}]
+      PROGRAMS{noinst}=tls13ticket_test
+      SOURCE[tls13ticket_test]=tls13tickettest.c helpers/ssltestlib.c
+      INCLUDE[tls13ticket_test]=../include ../apps/include
+      DEPEND[tls13ticket_test]=../libcrypto ../libssl libtestutil.a
+    ENDIF
+
     SOURCE[tls13encryptiontest]=tls13encryptiontest.c
     INCLUDE[tls13encryptiontest]=.. ../include ../apps/include
     DEPEND[tls13encryptiontest]=../libcrypto.a ../libssl.a libtestutil.a
