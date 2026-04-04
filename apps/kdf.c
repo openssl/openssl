@@ -175,7 +175,10 @@ int kdf_main(int argc, char **argv)
     if (out == NULL)
         goto err;
 
-    OPENSSL_assert(dkm_len > 0);
+    if (dkm_len <= 0) {
+        BIO_puts(bio_err, "Derived key length is mandatory!\n");
+        goto err;
+    }
     dkm_bytes = app_malloc(dkm_len, "out buffer");
     if (dkm_bytes == NULL)
         goto err;
