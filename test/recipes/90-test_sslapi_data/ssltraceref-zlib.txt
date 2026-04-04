@@ -24,9 +24,6 @@ Header:
           secp521r1 (P-521) (25)
           secp384r1 (P-384) (24)
           secp256r1 (P-256) (23)
-        extension_type=session_ticket(35), length=0
-        extension_type=encrypt_then_mac(22), length=0
-        extension_type=extended_master_secret(23), length=0
         extension_type=signature_algorithms(13), length=?
           mldsa65 (0x0905)
           mldsa87 (0x0906)

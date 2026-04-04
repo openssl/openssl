@@ -47,10 +47,6 @@ EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
             return EXT_RETURN_NOT_SENT;
         }
 
-#ifndef OPENSSL_NO_ECH
-        ECH_SAME_EXT(s, context, pkt)
-#endif
-
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_put_bytes_u8(pkt, 0)
@@ -61,10 +57,6 @@ EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
 
         return EXT_RETURN_SENT;
     }
-
-#ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, context, pkt)
-#endif
 
     /* Add a complete RI extension if renegotiating */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_renegotiate)
@@ -160,9 +152,6 @@ EXT_RETURN tls_construct_ctos_srp(SSL_CONNECTION *s, WPACKET *pkt,
     /* Add SRP username if there is one */
     if (s->srp_ctx.login == NULL)
         return EXT_RETURN_NOT_SENT;
-#ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, context, pkt)
-#endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_srp)
         /* Sub-packet for SRP extension */
@@ -276,9 +265,6 @@ EXT_RETURN tls_construct_ctos_ec_pt_formats(SSL_CONNECTION *s, WPACKET *pkt,
     tls1_get_formatlist(s, &pformats, &num_formats);
     if (num_formats == 0)
         return EXT_RETURN_NOT_SENT;
-#ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, context, pkt)
-#endif
 
     /* Add TLS extension ECPointFormats to the ClientHello message */
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_ec_point_formats)
@@ -391,9 +377,6 @@ EXT_RETURN tls_construct_ctos_session_ticket(SSL_CONNECTION *s, WPACKET *pkt,
 
     if (!tls_use_ticket(s))
         return EXT_RETURN_NOT_SENT;
-#ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, context, pkt)
-#endif
 
     if (!s->new_session && s->session != NULL
         && s->session->ext.tick != NULL
@@ -557,9 +540,6 @@ EXT_RETURN tls_construct_ctos_npn(SSL_CONNECTION *s, WPACKET *pkt,
     if (SSL_CONNECTION_GET_CTX(s)->ext.npn_select_cb == NULL
         || !SSL_IS_FIRST_HANDSHAKE(s))
         return EXT_RETURN_NOT_SENT;
-#ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, context, pkt)
-#endif
 
     /*
      * The client advertises an empty extension to indicate its support
@@ -673,9 +653,6 @@ EXT_RETURN tls_construct_ctos_etm(SSL_CONNECTION *s, WPACKET *pkt,
 {
     if (s->options & SSL_OP_NO_ENCRYPT_THEN_MAC)
         return EXT_RETURN_NOT_SENT;
-#ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, context, pkt)
-#endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_encrypt_then_mac)
         || !WPACKET_put_bytes_u16(pkt, 0)) {
@@ -717,9 +694,6 @@ EXT_RETURN tls_construct_ctos_ems(SSL_CONNECTION *s, WPACKET *pkt,
 {
     if (s->options & SSL_OP_NO_EXTENDED_MASTER_SECRET)
         return EXT_RETURN_NOT_SENT;
-#ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, context, pkt)
-#endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_extended_master_secret)
         || !WPACKET_put_bytes_u16(pkt, 0)) {
@@ -748,9 +722,6 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL_CONNECTION *s, WPACKET *pkt
      */
     if (max_version < TLS1_3_VERSION)
         return EXT_RETURN_NOT_SENT;
-#ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, context, pkt)
-#endif
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
         || !WPACKET_start_sub_packet_u16(pkt)

@@ -2902,7 +2902,7 @@ __owur int custom_ext_parse(SSL_CONNECTION *s, unsigned int context,
     const unsigned char *ext_data, size_t ext_size,
     X509 *x, size_t chainidx);
 __owur int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
-    size_t chainidx, int maxversion);
+    size_t chainidx, int minversion, int maxversion);
 
 __owur int custom_exts_copy(custom_ext_methods *dst,
     const custom_ext_methods *src);
