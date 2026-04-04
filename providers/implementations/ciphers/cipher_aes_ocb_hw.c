@@ -80,28 +80,6 @@ static int cipher_hw_aes_ocb_aesni_initkey(PROV_CIPHER_CTX *vctx,
     if (AESNI_CAPABLE)          \
         return &aesni_ocb;
 
-#elif defined(SPARC_AES_CAPABLE)
-
-static int cipher_hw_aes_ocb_t4_initkey(PROV_CIPHER_CTX *vctx,
-    const unsigned char *key,
-    size_t keylen)
-{
-    PROV_AES_OCB_CTX *ctx = (PROV_AES_OCB_CTX *)vctx;
-
-    OCB_SET_KEY_FN(aes_t4_set_encrypt_key, aes_t4_set_decrypt_key,
-        aes_t4_encrypt, aes_t4_decrypt, NULL, NULL);
-    return 1;
-}
-
-#define PROV_CIPHER_HW_declare()               \
-    static const PROV_CIPHER_HW aes_t4_ocb = { \
-        cipher_hw_aes_ocb_t4_initkey,          \
-        NULL                                   \
-    };
-#define PROV_CIPHER_HW_select() \
-    if (SPARC_AES_CAPABLE)      \
-        return &aes_t4_ocb;
-
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 
 static int cipher_hw_aes_ocb_rv64i_zknd_zkne_initkey(PROV_CIPHER_CTX *vctx,

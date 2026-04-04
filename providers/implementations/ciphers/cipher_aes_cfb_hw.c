@@ -77,8 +77,6 @@ IMPLEMENT_CIPHER_HW_COPYCTX(cipher_hw_aes_copyctx, PROV_AES_CTX)
 
 #if defined(AESNI_CAPABLE)
 #include "cipher_aes_cfb_hw_aesni.inc"
-#elif defined(SPARC_AES_CAPABLE)
-#include "cipher_aes_hw_t4.inc"
 #elif defined(S390X_aes_128_CAPABLE)
 #include "cipher_aes_cfb_hw_s390x.inc"
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64

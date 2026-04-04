@@ -24,15 +24,6 @@ static int cipher_hw_des_initkey(PROV_CIPHER_CTX *ctx,
     DES_key_schedule *ks = &dctx->dks.ks;
 
     dctx->dstream.cbc = NULL;
-#if defined(SPARC_DES_CAPABLE)
-    if (SPARC_DES_CAPABLE) {
-        if (ctx->mode == EVP_CIPH_CBC_MODE) {
-            des_t4_key_expand(&deskey[0], ks);
-            dctx->dstream.cbc = ctx->enc ? des_t4_cbc_encrypt : des_t4_cbc_decrypt;
-            return 1;
-        }
-    }
-#endif
     DES_set_key_unchecked(deskey, ks);
     return 1;
 }
