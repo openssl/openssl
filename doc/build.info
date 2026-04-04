@@ -1151,6 +1151,10 @@ DEPEND[html/man3/EVP_DigestVerifyInit.html]=man3/EVP_DigestVerifyInit.pod
 GENERATE[html/man3/EVP_DigestVerifyInit.html]=man3/EVP_DigestVerifyInit.pod
 DEPEND[man/man3/EVP_DigestVerifyInit.3]=man3/EVP_DigestVerifyInit.pod
 GENERATE[man/man3/EVP_DigestVerifyInit.3]=man3/EVP_DigestVerifyInit.pod
+DEPEND[html/man3/EVP_EC_gen.html]=man3/EVP_EC_gen.pod
+GENERATE[html/man3/EVP_EC_gen.html]=man3/EVP_EC_gen.pod
+DEPEND[man/man3/EVP_EC_gen.3]=man3/EVP_EC_gen.pod
+GENERATE[man/man3/EVP_EC_gen.3]=man3/EVP_EC_gen.pod
 DEPEND[html/man3/EVP_EncodeInit.html]=man3/EVP_EncodeInit.pod
 GENERATE[html/man3/EVP_EncodeInit.html]=man3/EVP_EncodeInit.pod
 DEPEND[man/man3/EVP_EncodeInit.3]=man3/EVP_EncodeInit.pod
@@ -3331,6 +3335,7 @@ html/man3/EVP_CIPHER_CTX_get_original_iv.html \
 html/man3/EVP_DigestInit.html \
 html/man3/EVP_DigestSignInit.html \
 html/man3/EVP_DigestVerifyInit.html \
+html/man3/EVP_EC_gen.html \
 html/man3/EVP_EncodeInit.html \
 html/man3/EVP_EncryptInit.html \
 html/man3/EVP_KDF.html \
@@ -4004,6 +4009,7 @@ man/man3/EVP_CIPHER_CTX_get_original_iv.3 \
 man/man3/EVP_DigestInit.3 \
 man/man3/EVP_DigestSignInit.3 \
 man/man3/EVP_DigestVerifyInit.3 \
+man/man3/EVP_EC_gen.3 \
 man/man3/EVP_EncodeInit.3 \
 man/man3/EVP_EncryptInit.3 \
 man/man3/EVP_KDF.3 \

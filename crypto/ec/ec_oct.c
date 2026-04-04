@@ -154,3 +154,45 @@ size_t EC_POINT_point2buf(const EC_GROUP *group, const EC_POINT *point,
     *pbuf = buf;
     return len;
 }
+
+int EVP_EC_affine2oct(const BIGNUM *x, const BIGNUM *y, int field_len,
+    unsigned char **pbuf, size_t *pbsize)
+{
+    unsigned char *buf = NULL;
+    size_t buflen = 0;
+
+    if (x == NULL || y == NULL || pbuf == NULL || pbsize == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    /* Checking if affine coordinates are not too long */
+    if (BN_num_bytes(x) > field_len || BN_num_bytes(y) > field_len) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
+            "EC affine coordinate exceeds field length");
+        return 0;
+    }
+
+    /* Converting (X,Y) to the SEC1 uncompressed point encoding blob */
+    buflen = 1 + 2 * field_len;
+    buf = OPENSSL_malloc(buflen);
+    if (buf == NULL)
+        return 0;
+    buf[0] = POINT_CONVERSION_UNCOMPRESSED;
+    if (BN_bn2binpad(x, buf + 1, field_len) < 0) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
+            "failed to encode X coordinate");
+        OPENSSL_free(buf);
+        return 0;
+    }
+    if (BN_bn2binpad(y, buf + 1 + field_len, field_len) < 0) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
+            "failed to encode Y coordinate");
+        OPENSSL_free(buf);
+        return 0;
+    }
+
+    *pbuf = buf;
+    *pbsize = buflen;
+    return 1;
+}

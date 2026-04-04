@@ -1942,6 +1942,13 @@ const char *EVP_SKEY_get0_provider_name(const EVP_SKEY *skey);
 EVP_SKEY *EVP_SKEY_to_provider(EVP_SKEY *skey, OSSL_LIB_CTX *libctx,
     OSSL_PROVIDER *prov, const char *propquery);
 
+#ifndef OPENSSL_NO_EC
+#define EVP_EC_gen(curve) \
+    EVP_PKEY_Q_keygen(NULL, NULL, "EC", (char *)(strstr(curve, "")))
+int EVP_EC_affine2oct(const BIGNUM *x, const BIGNUM *y, int field_len,
+    unsigned char **pbuf, size_t *pbsize);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

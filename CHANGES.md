@@ -67,6 +67,12 @@ OpenSSL Releases
 
    *Tomáš Mráz*
 
+ * Added `EVP_EC_affine2oct()` converts affine coordinates of an EC point
+   to an octet string conforming to Sec. 2.3.4 of the SECG SEC 1
+   ("Elliptic Curve Cryptography") standard.
+
+   *Igor Ustinov*
+
  * Made more QUIC transport parameters configurable via the
    `SSL_get_value_uint`/`SSL_set_value_uint` functions. Now also configurable:
    `max_udp_payload_size`, `initial_max_data`,
