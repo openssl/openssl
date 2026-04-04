@@ -25,6 +25,8 @@ unsigned char *OPENSSL_asc2uni(const char *asc, int asclen,
         asclen = (int)strlen(asc);
     if (asclen < 0)
         return NULL;
+    if (asclen > (INT_MAX - 2) / 2)
+        return NULL;
     ulen = asclen * 2 + 2;
     if ((unitmp = OPENSSL_malloc(ulen)) == NULL)
         return NULL;

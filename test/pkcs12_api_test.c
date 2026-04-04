@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "internal/nelem.h"
 
@@ -309,6 +310,35 @@ err:
     return ret;
 }
 
+static int test_asc2uni_overflow(void)
+{
+    unsigned char *result = NULL;
+    int unilen = 0;
+
+    /* asclen = INT_MAX/2 + 1 causes asclen * 2 + 2 to overflow int */
+    result = OPENSSL_asc2uni("A", INT_MAX / 2 + 1, &result, &unilen);
+    if (!TEST_ptr_null(result))
+        return 0;
+
+    /* asclen = INT_MAX also overflows */
+    result = OPENSSL_asc2uni("A", INT_MAX, &result, &unilen);
+    if (!TEST_ptr_null(result))
+        return 0;
+
+    /* asclen = INT_MAX/2 is the boundary: (INT_MAX/2)*2+2 fits in int */
+    /* We cannot actually allocate ~2GB so just verify the overflow check */
+    /* does not reject values at or below the safe boundary. */
+    /* asclen = 0 should succeed (just null terminator) */
+    result = OPENSSL_asc2uni("", 0, &result, &unilen);
+    if (!TEST_ptr(result))
+        return 0;
+    if (!TEST_int_eq(unilen, 2))
+        return 0;
+    OPENSSL_free(result);
+
+    return 1;
+}
+
 int setup_tests(void)
 {
     OPTION_CHOICE o;
@@ -350,6 +380,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(pkcs12_create_ex2_test, 3);
     ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero);
     ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_invalid_saltlen);
+    ADD_TEST(test_asc2uni_overflow);
     return 1;
 }
 
