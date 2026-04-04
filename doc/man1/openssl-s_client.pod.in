@@ -531,8 +531,10 @@ input. This implicitly turns on B<-nocommands> as well.
 
 =item B<-quiet>
 
-Inhibit printing of session and certificate information.  This implicitly
-turns on B<-ign_eof> and B<-nocommands> as well.
+Inhibit printing of session and certificate information. This implicitly 
+turns on B<-ign_eof> and B<-nocommands> as well. To silence cert 
+verification output, B<-verify_quiet> should be used too. Even with both 
+options specified, verification failures will still be printed.
 
 =item B<-no_ign_eof>
 

@@ -37,7 +37,7 @@ int ssl_print_tmp_key(BIO *out, SSL *s);
 int init_client(int *sock, const char *host, const char *port,
     const char *bindhost, const char *bindport,
     int family, int type, int protocol, int tfo, int doconn,
-    BIO_ADDR **ba_ret);
+    BIO_ADDR **ba_ret, int quiet);
 int should_retry(int i);
 void do_ssl_shutdown(SSL *ssl);
 
