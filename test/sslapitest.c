@@ -9699,6 +9699,16 @@ static int cert_cb(SSL *s, void *arg)
         int rv;
 
         chain = sk_X509_new_null();
+#ifndef OPENSSL_NO_ML_DSA
+        if (SSL_version(s) >= TLS1_3_VERSION) {
+            if (!TEST_ptr(chain)
+                || !TEST_true(load_chain("root-ml-dsa-44-cert.pem", NULL, NULL, chain))
+                || !TEST_true(load_chain("server-ml-dsa-44-cert.pem", NULL, &x509, NULL))
+                || !TEST_true(load_chain("server-ml-dsa-44-key.pem", &pkey, NULL, NULL)))
+                goto out;
+            goto check;
+        }
+#endif
         if (!TEST_ptr(chain)
             || !TEST_true(load_chain("ca-cert.pem", NULL, NULL, chain))
             || !TEST_true(load_chain("root-cert.pem", NULL, NULL, chain))
@@ -9707,6 +9717,10 @@ static int cert_cb(SSL *s, void *arg)
             || !TEST_true(load_chain("p256-ee-rsa-ca-key.pem", &pkey,
                 NULL, NULL)))
             goto out;
+
+#ifndef OPENSSL_NO_ML_DSA
+    check:
+#endif
         rv = SSL_check_chain(s, x509, pkey, chain);
         /*
          * If the cert doesn't show as valid here (e.g., because we don't
@@ -9749,7 +9763,7 @@ static int test_cert_cb_int(int prot, int tst)
     int testresult = 0, ret;
 
 #ifdef OPENSSL_NO_EC
-    /* We use an EC cert in these tests, so we skip in a no-ec build */
+    /* We use an EC cert in these tests with TLS 1.2 or absent ML-DSA */
     if (tst >= 3)
         return 1;
 #endif
@@ -9780,21 +9794,34 @@ static int test_cert_cb_int(int prot, int tst)
             NULL, NULL)))
         goto end;
 
-    if (tst == 4) {
+    if (tst == 3) {
+        if (!TEST_true(SSL_set1_sigalgs_list(clientssl,
+                "rsa_pss_rsae_sha256:rsa_pkcs1_sha256:"
+                "?ecdsa_secp256r1_sha256:?mldsa44"))
+            || !TEST_true(SSL_set1_sigalgs_list(serverssl,
+                "rsa_pss_rsae_sha256:rsa_pkcs1_sha256:"
+                "?ecdsa_secp256r1_sha256:?mldsa44")))
+            goto end;
+    } else if (tst == 4) {
         /*
          * We cause SSL_check_chain() to fail by specifying sig_algs that
-         * the chain doesn't meet (the root uses an RSA cert)
+         * the chain doesn't meet (root either RSA or ML-DSA).
          */
         if (!TEST_true(SSL_set1_sigalgs_list(clientssl,
-                "ecdsa_secp256r1_sha256")))
+                "ecdsa_secp256r1_sha256"))
+            || !TEST_true(SSL_set1_sigalgs_list(serverssl,
+                "?ecdsa_secp256r1_sha256:?mldsa44")))
             goto end;
     } else if (tst == 5) {
         /*
          * We cause SSL_check_chain() to fail by specifying sig_algs that
-         * the ee cert doesn't meet (the ee uses an ECDSA cert)
+         * the ee cert doesn't meet (the ee uses an ECDSA or ML-DSA cert)
          */
         if (!TEST_true(SSL_set1_sigalgs_list(clientssl,
-                "rsa_pss_rsae_sha256:rsa_pkcs1_sha256")))
+                "rsa_pss_rsae_sha256:rsa_pkcs1_sha256"))
+            || !TEST_true(SSL_set1_sigalgs_list(serverssl,
+                "rsa_pss_rsae_sha256:rsa_pkcs1_sha256:"
+                "?ecdsa_secp256r1_sha256:?mldsa44")))
             goto end;
     }
 
