@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "internal/nelem.h"
 
@@ -309,6 +310,40 @@ err:
     return ret;
 }
 
+static int test_asc2uni_overflow(void)
+{
+    unsigned char *result = NULL;
+    int unilen = 0;
+    int ret = 0;
+
+    /* asclen = INT_MAX/2 causes (INT_MAX/2)*2+2 = INT_MAX+1 overflow */
+    result = OPENSSL_asc2uni("A", INT_MAX / 2, &result, &unilen);
+    if (!TEST_ptr_null(result))
+        goto err;
+
+    /* asclen = INT_MAX/2 + 1 also overflows */
+    result = OPENSSL_asc2uni("A", INT_MAX / 2 + 1, &result, &unilen);
+    if (!TEST_ptr_null(result))
+        goto err;
+
+    /* asclen = INT_MAX also overflows */
+    result = OPENSSL_asc2uni("A", INT_MAX, &result, &unilen);
+    if (!TEST_ptr_null(result))
+        goto err;
+
+    /* asclen = 0 should succeed (just null terminator) */
+    result = OPENSSL_asc2uni("", 0, &result, &unilen);
+    if (!TEST_ptr(result))
+        goto err;
+    if (!TEST_int_eq(unilen, 2))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(result);
+    return ret;
+}
+
 int setup_tests(void)
 {
     OPTION_CHOICE o;
@@ -350,6 +385,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(pkcs12_create_ex2_test, 3);
     ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero);
     ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_invalid_saltlen);
+    ADD_TEST(test_asc2uni_overflow);
     return 1;
 }
 
