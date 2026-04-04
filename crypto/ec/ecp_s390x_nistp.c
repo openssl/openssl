@@ -150,10 +150,25 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
         return NULL;
     }
 
+    if (eckey == NULL) {
+        ERR_raise(ERR_LIB_EC, EC_R_MISSING_PARAMETERS);
+        return NULL;
+    }
+
     group = EC_KEY_get0_group(eckey);
+    if (group == NULL) {
+        ERR_raise(ERR_LIB_EC, EC_R_MISSING_PARAMETERS);
+        return NULL;
+    }
+
     order = EC_GROUP_get0_order(group);
+    if (order == NULL) {
+        ERR_raise(ERR_LIB_EC, EC_R_MISSING_PARAMETERS);
+        return NULL;
+    }
+
     privkey = EC_KEY_get0_private_key(eckey);
-    if (group == NULL || order == NULL || privkey == NULL) {
+    if (privkey == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_MISSING_PARAMETERS);
         return NULL;
     }
@@ -295,9 +310,19 @@ static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
         return -1;
     }
 
+    if (sig == NULL || eckey == NULL) {
+        ERR_raise(ERR_LIB_EC, EC_R_MISSING_PARAMETERS);
+        return -1;
+    }
+
     group = EC_KEY_get0_group(eckey);
+    if (group == NULL) {
+        ERR_raise(ERR_LIB_EC, EC_R_MISSING_PARAMETERS);
+        return -1;
+    }
+
     pubkey = EC_KEY_get0_public_key(eckey);
-    if (eckey == NULL || group == NULL || pubkey == NULL || sig == NULL) {
+    if (pubkey == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_MISSING_PARAMETERS);
         return -1;
     }
