@@ -104,18 +104,21 @@ that has the same OID as a pre-existing one replaces this earlier one.
 X509_get_ext_count(), X509_get_ext(), X509_get_ext_by_NID(),
 X509_get_ext_by_OBJ(), X509_get_ext_by_critical(), X509_delete_ext()
 and X509_add_ext() operate on the extensions of certificate I<x>. They are
-otherwise identical to the X509v3 functions.
+otherwise identical to the X509v3 functions except that X509_delete_ext()
+behaves like X509v3_delete_extension().
 
 X509_CRL_get_ext_count(), X509_CRL_get_ext(), X509_CRL_get_ext_by_NID(),
 X509_CRL_get_ext_by_OBJ(), X509_CRL_get_ext_by_critical(),
 X509_CRL_delete_ext() and X509_CRL_add_ext() operate on the extensions of
-CRL I<x>. They are otherwise identical to the X509v3 functions.
+CRL I<x>. They are otherwise identical to the X509v3 functions except that
+X509_CRL_delete_ext() behaves like X509v3_delete_extension().
 
 X509_REVOKED_get_ext_count(), X509_REVOKED_get_ext(),
 X509_REVOKED_get_ext_by_NID(), X509_REVOKED_get_ext_by_OBJ(),
 X509_REVOKED_get_ext_by_critical(), X509_REVOKED_delete_ext() and
 X509_REVOKED_add_ext() operate on the extensions of CRL entry I<x>.
-They are otherwise identical to the X509v3 functions.
+They are otherwise identical to the X509v3 functions except that
+X509_REVOKED_delete_ext() behaves like X509v3_delete_extension().
 
 =head1 NOTES
 
@@ -135,6 +138,8 @@ X509v3_delete_ext() and its variants are a bit counter-intuitive
 because these functions do not free the extension they delete.
 They return an B<X509_EXTENSION> object which must be explicitly freed
 using X509_EXTENSION_free().
+X509v3_delete_extension() behaves similarly, but it may also deallocate
+the extension stack if it becomes empty, setting it to NULL.
 
 X509v3_add_ext(), X509v3_add_extensions() and X509_add_ext() ignore any
 B<empty> values of the C<subjectKeyIdentifier> (empty OCTET STRING) or the
