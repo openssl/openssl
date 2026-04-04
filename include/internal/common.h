@@ -106,7 +106,6 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
     l |= (((unsigned long)(*((c)++))) << 16),       \
     l |= (((unsigned long)(*((c)++))) << 24))
 
-/* NOTE - c is not incremented as per c2l */
 #define c2ln(c, l1, l2, n)                           \
     {                                                \
         c += n;                                      \
@@ -114,18 +113,25 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
         switch (n) {                                 \
         case 8:                                      \
             l2 = ((unsigned long)(*(--(c)))) << 24;  \
+        /* fall through */                           \
         case 7:                                      \
             l2 |= ((unsigned long)(*(--(c)))) << 16; \
+        /* fall through */                           \
         case 6:                                      \
             l2 |= ((unsigned long)(*(--(c)))) << 8;  \
+        /* fall through */                           \
         case 5:                                      \
             l2 |= ((unsigned long)(*(--(c))));       \
+        /* fall through */                           \
         case 4:                                      \
             l1 = ((unsigned long)(*(--(c)))) << 24;  \
+        /* fall through */                           \
         case 3:                                      \
             l1 |= ((unsigned long)(*(--(c)))) << 16; \
+        /* fall through */                           \
         case 2:                                      \
             l1 |= ((unsigned long)(*(--(c)))) << 8;  \
+        /* fall through */                           \
         case 1:                                      \
             l1 |= ((unsigned long)(*(--(c))));       \
         }                                            \
@@ -150,6 +156,37 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
     l |= ((uint64_t)(*((c)++))) << 8,                 \
     l |= ((uint64_t)(*((c)++))))
 
+#define n2ln(c, l1, l2, n)                           \
+    {                                                \
+        c += n;                                      \
+        l1 = l2 = 0;                                 \
+        switch (n) {                                 \
+        case 8:                                      \
+            l2 = ((unsigned long)(*(--(c))));        \
+        /* fall through */                           \
+        case 7:                                      \
+            l2 |= ((unsigned long)(*(--(c)))) << 8;  \
+        /* fall through */                           \
+        case 6:                                      \
+            l2 |= ((unsigned long)(*(--(c)))) << 16; \
+        /* fall through */                           \
+        case 5:                                      \
+            l2 |= ((unsigned long)(*(--(c)))) << 24; \
+        /* fall through */                           \
+        case 4:                                      \
+            l1 = ((unsigned long)(*(--(c))));        \
+        /* fall through */                           \
+        case 3:                                      \
+            l1 |= ((unsigned long)(*(--(c)))) << 8;  \
+        /* fall through */                           \
+        case 2:                                      \
+            l1 |= ((unsigned long)(*(--(c)))) << 16; \
+        /* fall through */                           \
+        case 1:                                      \
+            l1 |= ((unsigned long)(*(--(c)))) << 24; \
+        }                                            \
+    }
+
 #define l2n(l, c) (*((c)++) = (unsigned char)(((l) >> 24) & 0xff), \
     *((c)++) = (unsigned char)(((l) >> 16) & 0xff),                \
     *((c)++) = (unsigned char)(((l) >> 8) & 0xff),                 \
@@ -164,25 +201,62 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
     *((c)++) = (unsigned char)(((l) >> 8) & 0xff),                  \
     *((c)++) = (unsigned char)(((l)) & 0xff))
 
-/* NOTE - c is not incremented as per l2c */
+/* NOTE - c is not incremented as per l2n */
+#define l2nn(l1, l2, c, n)                                   \
+    {                                                        \
+        c += n;                                              \
+        switch (n) {                                         \
+        case 8:                                              \
+            *(--(c)) = (unsigned char)(((l2)) & 0xff);       \
+        /* fall through */                                   \
+        case 7:                                              \
+            *(--(c)) = (unsigned char)(((l2) >> 8) & 0xff);  \
+        /* fall through */                                   \
+        case 6:                                              \
+            *(--(c)) = (unsigned char)(((l2) >> 16) & 0xff); \
+        /* fall through */                                   \
+        case 5:                                              \
+            *(--(c)) = (unsigned char)(((l2) >> 24) & 0xff); \
+        /* fall through */                                   \
+        case 4:                                              \
+            *(--(c)) = (unsigned char)(((l1)) & 0xff);       \
+        /* fall through */                                   \
+        case 3:                                              \
+            *(--(c)) = (unsigned char)(((l1) >> 8) & 0xff);  \
+        /* fall through */                                   \
+        case 2:                                              \
+            *(--(c)) = (unsigned char)(((l1) >> 16) & 0xff); \
+        /* fall through */                                   \
+        case 1:                                              \
+            *(--(c)) = (unsigned char)(((l1) >> 24) & 0xff); \
+        }                                                    \
+    }
+
 #define l2cn(l1, l2, c, n)                                   \
     {                                                        \
         c += n;                                              \
         switch (n) {                                         \
         case 8:                                              \
             *(--(c)) = (unsigned char)(((l2) >> 24) & 0xff); \
+        /* fall through */                                   \
         case 7:                                              \
             *(--(c)) = (unsigned char)(((l2) >> 16) & 0xff); \
+        /* fall through */                                   \
         case 6:                                              \
             *(--(c)) = (unsigned char)(((l2) >> 8) & 0xff);  \
+        /* fall through */                                   \
         case 5:                                              \
             *(--(c)) = (unsigned char)(((l2)) & 0xff);       \
+        /* fall through */                                   \
         case 4:                                              \
             *(--(c)) = (unsigned char)(((l1) >> 24) & 0xff); \
+        /* fall through */                                   \
         case 3:                                              \
             *(--(c)) = (unsigned char)(((l1) >> 16) & 0xff); \
+        /* fall through */                                   \
         case 2:                                              \
             *(--(c)) = (unsigned char)(((l1) >> 8) & 0xff);  \
+        /* fall through */                                   \
         case 1:                                              \
             *(--(c)) = (unsigned char)(((l1)) & 0xff);       \
         }                                                    \
