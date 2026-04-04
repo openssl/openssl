@@ -3975,8 +3975,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     estat = SSL_ech_get1_status(s, &inner, &outer);
     print_ech_status(bio, s, estat);
     if (estat == SSL_ECH_STATUS_SUCCESS) {
-        BIO_printf(bio, "ECH: inner: %s\n", inner);
-        BIO_printf(bio, "ECH: outer: %s\n", outer);
+        BIO_printf(bio, "ECH: inner: %s\n", inner == NULL ? "<NULL>" : inner);
+        BIO_printf(bio, "ECH: outer: %s\n", outer == NULL ? "<NULL>" : outer);
     }
     if (estat == SSL_ECH_STATUS_FAILED_ECH
         || estat == SSL_ECH_STATUS_FAILED_ECH_BAD_NAME)
