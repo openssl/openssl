@@ -103,6 +103,88 @@ ___
 }
 
 # prepare input data(v24), iv(v28), bit-reversed-iv(v16), bit-reversed-iv-multiplier(v20)
+sub init_first_round2 {
+    my $code=<<___;
+    # load input
+    @{[vsetvli $VL, $LEN32, "e32", "m2", "ta", "ma"]}
+    @{[vle32_v $V24, $INPUT]}
+
+    li $T0, 5
+    # We could simplify the initialization steps if we have `block<=1`.
+    blt $LEN32, $T0, 1f
+
+    # Note: We use `vgmul` for GF(2^128) multiplication. The `vgmul` uses
+    # different order of coefficients. We should use`vbrev8` to reverse the
+    # data when we use `vgmul`.
+    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    @{[vbrev8_v $V0, $V28]}
+    @{[vsetvli "zero", $LEN32, "e32", "m2", "ta", "ma"]}
+    @{[vmv_v_i $V16, 0]}
+    # v16: [r-IV0, r-IV0, ...]
+    @{[vaesz_vs $V16, $V0]}
+
+    # Prepare GF(2^128) multiplier [1, x, ...] in v8.
+    slli $T0, $LEN32, 2
+    @{[vsetvli "zero", $T0, "e32", "m1", "ta", "ma"]}
+    # v2: [`1`, `1`, ...]
+    @{[vmv_v_i $V2, 1]}
+    # v3: [`0`, `1`, ...]
+    @{[vid_v $V3]}
+    @{[vsetvli "zero", $T0, "e64", "m2", "ta", "ma"]}
+    # v4: [`1`, 0, `1`, 0, ...]
+    @{[vzext_vf2 $V4, $V2]}
+    # v6: [`0`, 0, `1`, 0, ...]
+    @{[vzext_vf2 $V6, $V3]}
+    slli $T0, $LEN32, 1
+    @{[vsetvli "zero", $T0, "e32", "m2", "ta", "ma"]}
+    # v8: [1<<0=1, 0, 0, 0, 1<<1=x, 0, 0, 0, ...]
+    @{[vwsll_vv $V8, $V4, $V6]}
+
+    # Compute [r-IV0*1, r-IV0*x, ...] in v16
+    @{[vsetvli "zero", $LEN32, "e32", "m2", "ta", "ma"]}
+    @{[vbrev8_v $V8, $V8]}
+    @{[vgmul_vv $V16, $V8]}
+
+    # Compute [IV0*1, IV0*x, ...] in v28.
+    # Reverse the bits order back.
+    @{[vbrev8_v $V28, $V16]}
+
+    # Prepare the x^n multiplier in v12. The `n` is the aes-xts block number
+    # in a LMUL=4 register group.
+    #   n = ((VLEN*LMUL)/(32*4)) = ((VLEN*4)/(32*4))
+    #     = (VLEN/32)
+    # We could use vsetvli with `e32, m1` to compute the `n` number.
+    @{[vsetvli $T0, "zero", "e32", "m1", "ta", "ma"]}
+    srli $T2, $T0, 1
+    li $T1, 1
+    sll $T0, $T1, $T0
+    sll $T2, $T1, $T2
+    @{[vsetivli "zero", 2, "e64", "m1", "ta", "ma"]}
+    @{[vmv_v_i $V0, 0]}
+    @{[vmv_v_i $V1, 0]}
+    @{[vsetivli "zero", 1, "e64", "m1", "tu", "ma"]}
+    @{[vmv_v_x $V0, $T0]}
+    @{[vmv_v_x $V1, $T2]}
+    @{[vsetivli "zero", 2, "e64", "m1", "ta", "ma"]}
+    @{[vbrev8_v $V0, $V0]}
+    @{[vbrev8_v $V1, $V1]}
+    @{[vsetvli "zero", $LEN32, "e32", "m2", "ta", "ma"]}
+    @{[vmv_v_i $V12, 0]}
+    @{[vaesz_vs $V12, $V0]}  #x^n
+    @{[vmv_v_i $V20, 0]}
+    @{[vaesz_vs $V20, $V1]}  #x^(n/2)
+
+    j 2f
+1:
+    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    @{[vbrev8_v $V16, $V28]}
+2:
+___
+
+    return $code;
+}
+
+# prepare input data(v24), iv(v28), bit-reversed-iv(v16), bit-reversed-iv-multiplier(v20)
 sub init_first_round {
     my $code=<<___;
     # load input
@@ -268,6 +350,53 @@ ___
     return $code;
 }
 
+# prepare xts dec second to last block's input(v24) and iv(v29) and
+# last block's and iv(v28)
+sub handle_xts_dec_last_block2 {
+    my $code=<<___;
+    bnez $TAIL_LENGTH, 1f
+    ret
+1:
+    # load second to last block's ciphertext
+    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    @{[vle32_v $V24, $INPUT]}
+    addi $INPUT, $INPUT, 16
+
+    # setup `x` multiplier with byte-reversed order
+    # 0b00000010 => 0b01000000 (0x40)
+    li $T0, 0x40
+    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    @{[vmv_v_i $V20, 0]}
+    @{[vsetivli "zero", 1, "e8", "m1", "tu", "ma"]}
+    @{[vmv_v_x $V20, $T0]}
+
+    beqz $LENGTH, 1f
+    # slidedown third to last block
+    addi $VL, $VL, -4
+    @{[vsetivli "zero", 4, "e32", "m2", "ta", "ma"]}
+    # multiplier
+    @{[vslidedown_vx $V16, $V16, $VL]}
+
+    # compute IV for last block
+    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    @{[vgmul_vv $V16, $V20]}
+    @{[vbrev8_v $V28, $V16]}
+
+    # compute IV for second to last block
+    @{[vgmul_vv $V16, $V20]}
+    @{[vbrev8_v $V29, $V16]}
+    j 2f
+1:
+    # compute IV for second to last block
+    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    @{[vgmul_vv $V16, $V20]}
+    @{[vbrev8_v $V29, $V16]}
+2:
+___
+
+    return $code;
+}
+
 # Load all 11 round keys to v1-v11 registers.
 sub aes_128_load_key {
     my $code=<<___;
@@ -369,6 +498,46 @@ sub aes_128_dec {
     @{[vaesdm_vs $V24, $V3]}
     @{[vaesdm_vs $V24, $V2]}
     @{[vaesdf_vs $V24, $V1]}
+___
+
+    return $code;
+}
+
+# aes-128 dec with round keys v1-v11
+sub aes_128_dec2 {
+    my $code=<<___;
+    @{[vaesz_vs $V24, $V11]}
+    @{[vaesz_vs $V26, $V11]}
+
+    @{[vaesdm_vs $V24, $V10]}
+    @{[vaesdm_vs $V26, $V10]}
+
+    @{[vaesdm_vs $V24, $V9]}
+    @{[vaesdm_vs $V26, $V9]}
+
+    @{[vaesdm_vs $V24, $V8]}
+    @{[vaesdm_vs $V26, $V8]}
+
+    @{[vaesdm_vs $V24, $V7]}
+    @{[vaesdm_vs $V26, $V7]}
+
+    @{[vaesdm_vs $V24, $V6]}
+    @{[vaesdm_vs $V26, $V6]}
+
+    @{[vaesdm_vs $V24, $V5]}
+    @{[vaesdm_vs $V26, $V5]}
+
+    @{[vaesdm_vs $V24, $V4]}
+    @{[vaesdm_vs $V26, $V4]}
+
+    @{[vaesdm_vs $V24, $V3]}
+    @{[vaesdm_vs $V26, $V3]}
+
+    @{[vaesdm_vs $V24, $V2]}
+    @{[vaesdm_vs $V26, $V2]}
+
+    @{[vaesdf_vs $V24, $V1]}
+    @{[vaesdf_vs $V26, $V1]}
 ___
 
     return $code;
@@ -579,16 +748,114 @@ ___
 $code .= <<___;
 .p2align 3
 aes_xts_dec_128:
-    @{[init_first_round]}
+    @{[init_first_round2]}
     @{[aes_128_load_key]}
+    csrr $T0, vlenb
+    blt $LEN32, $T0, Lsmall
+    @{[vsetvli $VL, $LEN32, "e32", "m2", "ta", "ma"]}
+    slli $T1, $VL, 2
+    add $INPUT, $INPUT, $T1
+    @{[vle32_v $V26, $INPUT]}
+    add $INPUT, $INPUT, $T1
 
+    @{[vmv_v_v $V18, $V16]}
+    @{[vgmul_vv $V18, $V20]}
+    @{[vbrev8_v $V30, $V18]}
+
+    j 4f
+.Ldec_4blocks_loop_128:
+    blt $LEN32, $T0, Ldec_2blocks_128
+    @{[vle32_v $V24, $INPUT]}
+    add $INPUT, $INPUT, $T1
+    @{[vle32_v $V26, $INPUT]}
+    add $INPUT, $INPUT, $T1
+    # update iv
+    @{[vgmul_vv $V16, $V12]}
+    @{[vgmul_vv $V18, $V12]}
+    # reverse the iv's bits order back
+    @{[vbrev8_v $V28, $V16]}
+    @{[vbrev8_v $V30, $V18]}
+4:
+    @{[vxor_vv $V24, $V24, $V28]}
+    @{[vxor_vv $V26, $V26, $V30]}
+    @{[aes_128_dec2]}
+    @{[vxor_vv $V24, $V24, $V28]}
+    @{[vxor_vv $V26, $V26, $V30]}
+
+    @{[vse32_v $V24, $OUTPUT]}
+    add $OUTPUT, $OUTPUT, $T1
+    @{[vse32_v $V26, $OUTPUT]}
+    add $OUTPUT, $OUTPUT, $T1
+
+    sub $LEN32, $LEN32, $T0
+    bnez $LEN32, .Ldec_4blocks_loop_128
+
+    bnez $TAIL_LENGTH, 3f
+    ret
+3:
+    # load second to last block's ciphertext
+    # @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    @{[vle32_v $V24, $INPUT]}
+    addi $INPUT, $INPUT, 16
+
+    # setup `x` multiplier with byte-reversed order
+    # 0b00000010 => 0b01000000 (0x40)
+    li $T0, 0x40
+    # @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    @{[vmv_v_i $V20, 0]}
+    @{[vsetivli "zero", 1, "e8", "m1", "tu", "ma"]}
+    @{[vmv_v_x $V20, $T0]}
+
+    # slidedown third to last block
+    addi $VL, $VL, -4
+    @{[vsetivli "zero", 4, "e32", "m2", "ta", "ma"]}
+    # multiplier
+    @{[vslidedown_vx $V18, $V18, $VL]}
+
+    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    @{[vgmul_vv $V18, $V20]}
+    @{[vbrev8_v $V28, $V18]}
+
+    @{[vgmul_vv $V18, $V20]}
+    @{[vbrev8_v $V29, $V18]}
+
+    ## xts second to last block
+    @{[vxor_vv $V24, $V24, $V29]}
+    @{[aes_128_dec]}
+    @{[vxor_vv $V24, $V24, $V29]}
+    @{[vmv_v_v $V25, $V24]}
+
+    # load last block ciphertext
+    @{[vsetvli "zero", $TAIL_LENGTH, "e8", "m1", "tu", "ma"]}
+    @{[vle8_v $V24, $INPUT]}
+
+    # store second to last block plaintext
+    addi $T0, $OUTPUT, 16
+    @{[vse8_v $V25, $T0]}
+
+    ## xts last block
+    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
+    @{[vxor_vv $V24, $V24, $V28]}
+    @{[aes_128_dec]}
+    @{[vxor_vv $V24, $V24, $V28]}
+
+    # store second to last block plaintext
+    @{[vse32_v $V24, $OUTPUT]}
+
+    ret
+
+Ldec_2blocks_128:
+    @{[vmv_v_v $V16, $V18]}
+    j .Ldec_blocks_128
+
+Lsmall:
     beqz $LEN32, 2f
 
-    @{[vsetvli $VL, $LEN32, "e32", "m4", "ta", "ma"]}
+    @{[vsetvli $VL, $LEN32, "e32", "m2", "ta", "ma"]}
     j 1f
 
 .Ldec_blocks_128:
-    @{[vsetvli $VL, $LEN32, "e32", "m4", "ta", "ma"]}
+    @{[vsetvli $VL, $LEN32, "e32", "m2", "ta", "ma"]}
     # load ciphertext into v24
     @{[vle32_v $V24, $INPUT]}
     # update iv
@@ -610,7 +877,7 @@ aes_xts_dec_128:
     bnez $LEN32, .Ldec_blocks_128
 
 2:
-    @{[handle_xts_dec_last_block]}
+    @{[handle_xts_dec_last_block2]}
 
     ## xts second to last block
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
