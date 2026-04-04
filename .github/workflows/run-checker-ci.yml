@@ -41,8 +41,8 @@ jobs:
           no-tls1_2,
           no-tls1_3,
           enable-trace enable-fips,
-          no-ui,
-          no-quic
+          no-quic,
+          -DOPENSSL_USE_IPV6=0
         ]
     runs-on: ubuntu-latest
     steps:

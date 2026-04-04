@@ -36,7 +36,8 @@ my $proxy = TLSProxy::Proxy->new(
     \&ske_0_p_filter,
     cmdstr(app(["openssl"]), display => 1),
     srctop_file("apps", "server.pem"),
-    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
+    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE}),
+    have_IPv6()
 );
 
 #We must use an anon DHE cipher for this test

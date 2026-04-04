@@ -44,7 +44,8 @@ my $proxy = TLSProxy::Proxy->new(
     \&extms_filter,
     cmdstr(app(["openssl"]), display => 1),
     srctop_file("apps", "server.pem"),
-    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
+    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE}),
+    have_IPv6()
 );
 
 #Note that EXTMS is only relevant for <TLS1.3

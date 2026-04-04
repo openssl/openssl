@@ -82,8 +82,9 @@ sub new {
     my ($filter,
         $execute,
         $cert,
-        $debug) = @_;
-    return init($class, $filter, $execute, $cert, $debug, 0);
+        $debug,
+        $use_IPv6) = @_;
+    return init($class, $filter, $execute, $cert, $debug, 0, $use_IPv6);
 }
 
 sub new_dtls {
@@ -91,8 +92,9 @@ sub new_dtls {
     my ($filter,
         $execute,
         $cert,
-        $debug) = @_;
-    return init($class, $filter, $execute, $cert, $debug, 1);
+        $debug,
+        $use_IPv6) = @_;
+    return init($class, $filter, $execute, $cert, $debug, 1, $use_IPv6);
 }
 
 sub init
@@ -119,7 +121,9 @@ sub init
         $execute,
         $cert,
         $debug,
-        $isdtls) = @_;
+        $isdtls,
+        $use_IPv6) = @_;
+    $use_IPv6 //= $have_IPv6;
 
     my $test_client_port;
 
@@ -128,12 +132,12 @@ sub init
     # this test to fail, so lets harden ourselves against that by doing
     # a test bind to the randomly selected port, and only continue once we
     # find a port that's available.
-    my $test_client_addr = $have_IPv6 ? "[::1]" : "127.0.0.1";
+    my $test_client_addr = $use_IPv6 ? "[::1]" : "127.0.0.1";
     my $found_port = 0;
     for (my $i = 0; $i <= 10; $i++) {
         $test_client_port = 49152 + int(rand(65535 - 49152));
         my $test_sock;
-        if ($useINET6 == 0) {
+        if ($use_IPv6 == 0 || $useINET6 == 0) {
             if ($useSockInet == 0) {
                 $test_sock = IO::Socket::IP->new(LocalPort => $test_client_port,
                                                  LocalAddr => $test_client_addr);

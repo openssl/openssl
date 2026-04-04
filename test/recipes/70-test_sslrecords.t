@@ -59,14 +59,16 @@ sub run_tests
             \&add_empty_recs_filter,
             cmdstr(app([ "openssl" ]), display => 1),
             srctop_file("apps", "server.pem"),
-            (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
+            (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE}),
+            have_IPv6()
         );
     } else {
         $proxy = TLSProxy::Proxy->new(
             \&add_empty_recs_filter,
             cmdstr(app([ "openssl" ]), display => 1),
             srctop_file("apps", "server.pem"),
-            (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
+            (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE}),
+            have_IPv6()
         );
     }
 
