@@ -912,27 +912,15 @@ Build with support for Position Independent Execution.
 
 Don't pin the shared libraries.
 
-By default OpenSSL will attempt to stay in memory until the process exits.
-This is so that libcrypto and libssl can be properly cleaned up automatically
-via an `atexit()` handler.  The handler is registered by libcrypto and cleans
-up both libraries.  On some platforms the `atexit()` handler will run on unload of
-libcrypto (if it has been dynamically loaded) rather than at process exit.
+By default, on supported platforms (such as Linux and GNU Hurd), OpenSSL is built with linker options (e.g., `-Wl,-znodelete`) that prevent the operating system from unloading the libcrypto and libssl shared libraries from memory, even if the application explicitly unloads them using `dlclose()`. On platforms that do not support these options (such as OpenVMS), this feature is disabled by default.
 
-This option can be used to stop OpenSSL from attempting to stay in memory until the
-process exits.  This could lead to crashes if either libcrypto or libssl have
-already been unloaded at the point that the atexit handler is invoked, e.g.  on a
-platform which calls `atexit()` on unload of the library, and libssl is unloaded
-before libcrypto then a crash is likely to happen.
+This option prevents the addition of those linker flags, allowing the shared libraries to be completely unloaded from the process address space. This is useful for applications that dynamically load and unload OpenSSL plugins to conserve memory.
 
 Note that shared library pinning is not automatically disabled for static builds,
 i.e., `no-shared` does not imply `no-pinshared`. This may come as a surprise when
 linking libcrypto statically into a shared third-party library, because in this
 case the shared library will be pinned. To prevent this behaviour, you need to
 configure the static build using `no-shared` and `no-pinshared` together.
-
-Applications can suppress running of the `atexit()` handler at run time by
-using the `OPENSSL_INIT_NO_ATEXIT` option to `OPENSSL_init_crypto()`.
-See the man page for it for further details.
 
 ### no-posix-io
 
