@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -135,6 +135,9 @@ static int setivinv(PROV_GCM_CTX *ctx, unsigned char *in, size_t inl)
     if (!ctx->iv_gen
         || !ctx->key_set
         || ctx->enc)
+        return 0;
+
+    if (inl == 0 || inl > ctx->ivlen)
         return 0;
 
     memcpy(ctx->iv + ctx->ivlen - inl, in, inl);
