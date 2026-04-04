@@ -1208,6 +1208,67 @@ end:
     return rv;
 }
 
+/*
+ * Check whether various public_name values are good or bad according to
+ * our RFC 9849 checker, which imposes some oddball restrictions on those.
+ * Read section 6.1.7 of RFC 9849 for details.
+ */
+static int ech_bad_public_names(void)
+{
+    int rv = 0, i;
+    OSSL_ECHSTORE *es = NULL;
+    OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
+    const char *bad_names[] = {
+        ".dot.", /* leading dot */
+        "dot.", /* trailing dot */
+        ".dot", /* check both, why not */
+        /* a label > 62 chars (70 in this case) */
+        "abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghij.org",
+        /* last label numeric */
+        "last.one.is.numeric.456",
+        "456",
+        /* last label ascii-hex */
+        "last.ah.0x123",
+        "0x123"
+    };
+    const char *good_names[] = {
+        "example.com",
+        "0x123.stuff",
+        "0x",
+        "a-b.c",
+        "example.com.c",
+        "a.b.0x1234567890abcdefX",
+        "a.b.1234567890Y"
+    };
+
+    if (!TEST_ptr(es = OSSL_ECHSTORE_new(libctx, propq)))
+        goto end;
+    for (i = 0; i != OSSL_NELEM(bad_names); i++) {
+        if (verbose)
+            TEST_info("checking bad name |%s|", bad_names[i]);
+        if (!TEST_false(OSSL_ECHSTORE_new_config(es, 0xfe0d, 0, bad_names[i],
+                hpke_suite))) {
+            if (verbose)
+                TEST_info("bad name |%s| erroneously accepted", bad_names[i]);
+            goto end;
+        }
+    }
+    for (i = 0; i != OSSL_NELEM(good_names); i++) {
+        if (verbose)
+            TEST_info("checking good name |%s|", good_names[i]);
+        if (!TEST_true(OSSL_ECHSTORE_new_config(es, 0xfe0d, 0, good_names[i],
+                hpke_suite))) {
+            if (verbose)
+                TEST_info("good name |%s| erroneously rejected", good_names[i]);
+            goto end;
+        }
+    }
+    rv = 1;
+end:
+    OSSL_ECHSTORE_free(es);
+    return rv;
+}
+
 /* values that can be used in helper below */
 #define OSSL_ECH_TEST_BASIC 0
 #define OSSL_ECH_TEST_HRR 1
@@ -2000,6 +2061,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(ech_test_file_read, OSSL_NELEM(fnames));
     ADD_TEST(ech_api_basic_calls);
     ADD_TEST(ech_boring_compat);
+    ADD_TEST(ech_bad_public_names);
     suite_combos = OSSL_NELEM(kem_str_list) * OSSL_NELEM(kdf_str_list)
         * OSSL_NELEM(aead_str_list);
     ADD_ALL_TESTS(test_ech_suites, suite_combos);
