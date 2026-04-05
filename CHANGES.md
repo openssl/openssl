@@ -220,6 +220,10 @@ OpenSSL Releases
 
    *Daniel Kubec*
 
+ * Added `SSL_CTX_is_server()`.
+
+   *Igor Ustinov*
+
  * Added `EVP_MD_CTX_serialize()`/`EVP_MD_CTX_deserialize()` functions.
    These functions allow to export the internal state of a Digest and re-import
    it later to continue a computation from a specific checkpoint.  Only SHA-2
@@ -1050,10 +1054,6 @@ OpenSSL 3.6
    generation to the FIPS provider.
 
    *Dimitri John Ledkov*
-
- * `SSL_CTX_is_server()` was added.
-
-   *Igor Ustinov*
 
 OpenSSL 3.5
 -----------
