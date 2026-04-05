@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -133,6 +133,8 @@ ossl_d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a, const unsigned char **pp,
                 goto err;
             }
             EVP_PKEY_free(ret);
+            if (a != NULL)
+                *a = NULL;
             ret = tmp;
             ERR_pop_to_mark();
             if (EVP_PKEY_type(keytype) != EVP_PKEY_get_base_id(ret))
