@@ -32,6 +32,8 @@ jobs:
       run: |
         choco install nasm
         "C:\Program Files\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+    - name: install jom
+      run:  choco install jom
     - name: prepare the build directory
       run: mkdir _build
     - name: Get zstd
@@ -50,7 +52,7 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-        nmake
+        jom /j4 /S
     - name: Gather openssl version info
       working-directory: _build
       run: |
@@ -81,7 +83,7 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-        nmake test VERBOSE_FAILURE=yes TESTS="-test_fuzz* -test_fipsload" HARNESS_JOBS=4
+        jom test VERBOSE_FAILURE=yes TESTS="-test_fuzz* -test_fipsload" HARNESS_JOBS=4
 
   brotli:
     runs-on: windows-latest
@@ -95,6 +97,8 @@ jobs:
       run: |
         choco install nasm
         "C:\Program Files\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+    - name: install jom
+      run:  choco install jom
     - name: prepare the build directory
       run: mkdir _build
     - name: Get brotli
@@ -113,7 +117,7 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-        nmake
+        jom /j4 /S
     - name: Gather openssl version info
       working-directory: _build
       run: |
@@ -144,4 +148,4 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-        nmake test VERBOSE_FAILURE=yes TESTS="-test_fuzz* -test_fipsload" HARNESS_JOBS=4
+        jom test VERBOSE_FAILURE=yes TESTS="-test_fuzz* -test_fipsload" HARNESS_JOBS=4
