@@ -508,7 +508,6 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_C_SET_CONNECT:
         if (ptr != NULL) {
-            b->init = 1;
             if (num == 0) { /* BIO_set_conn_hostname */
                 char *hold_service = data->param_service;
                 /* We affect the hostname regardless.  However, the input
@@ -524,10 +523,14 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
                     BIO_PARSE_PRIO_HOST);
                 if (hold_service != data->param_service)
                     OPENSSL_free(hold_service);
+                if (ret > 0)
+                    b->init = 1;
             } else if (num == 1) { /* BIO_set_conn_port */
                 OPENSSL_free(data->param_service);
                 if ((data->param_service = OPENSSL_strdup(ptr)) == NULL)
                     ret = 0;
+                else
+                    b->init = 1;
             } else if (num == 2) { /* BIO_set_conn_address */
                 const BIO_ADDR *addr = (const BIO_ADDR *)ptr;
                 char *host = BIO_ADDR_hostname_string(addr, 1);
@@ -542,12 +545,14 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
                     BIO_ADDRINFO_free(data->addr_first);
                     data->addr_first = NULL;
                     data->addr_iter = NULL;
+                    b->init = 1;
                 } else {
                     OPENSSL_free(host);
                     OPENSSL_free(service);
                 }
             } else if (num == 3) { /* BIO_set_conn_ip_family */
                 data->connect_family = *(int *)ptr;
+                b->init = 1;
             } else {
                 ret = 0;
             }
