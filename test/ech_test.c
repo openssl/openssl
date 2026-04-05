@@ -12,6 +12,8 @@
 #include "testutil.h"
 #include "helpers/ssltestlib.h"
 #include "internal/packet.h"
+#include "internal/ssl_unwrap.h"
+#include "../ssl/ssl_local.h"
 
 #ifndef OPENSSL_NO_ECH
 
@@ -39,7 +41,7 @@ static int ch_test_cb(SSL *ssl, int *al, void *arg)
 {
     char *servername = NULL;
     const unsigned char *pos;
-    size_t remaining;
+    size_t remaining = 0;
     unsigned int servname_type;
     PACKET pkt, sni, hostname;
 
@@ -72,6 +74,83 @@ static int ch_test_cb(SSL *ssl, int *al, void *arg)
     return 1;
 give_up:
     return 0;
+}
+
+/* ClientHello callback to validate inner CH */
+static int ch_validation_cb(SSL *ssl, int *al, void *arg)
+{
+    int *exts = NULL;
+    size_t len, i;
+    const unsigned char *p;
+    size_t remaining;
+    PACKET pkt, versions;
+    unsigned int version = 0;
+    unsigned char cipher[TLS_CIPHER_LEN];
+    const SSL_CIPHER *c;
+    int ret = SSL_CLIENT_HELLO_ERROR;
+
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+    /* Skip if we have an outer CH */
+    if (sc->ext.ech.success == 0) {
+        ret = SSL_CLIENT_HELLO_SUCCESS;
+        goto end;
+    }
+
+    if (!TEST_true(SSL_client_hello_get1_extensions_present(ssl, &exts, &len)))
+        goto end;
+
+    for (i = 0; i < len; i++) {
+        if (exts[i] == TLSEXT_TYPE_supported_versions) {
+            /* Retrieve extension into pkt */
+            if (!TEST_true(SSL_client_hello_get0_ext(ssl,
+                    TLSEXT_TYPE_supported_versions, &p, &remaining))
+                || !TEST_true(PACKET_buf_init(&pkt, p, remaining))
+                || !TEST_ptr(&pkt)
+                || !TEST_true(PACKET_as_length_prefixed_1(&pkt, &versions))
+                || !TEST_ptr(&versions))
+                goto end;
+
+            /* Inner CH MUST NOT offer TLS1.2 or below */
+            while (PACKET_get_net_2(&versions, &version))
+                if (!TEST_true(version != SSL3_VERSION)
+                    || !TEST_true(version != TLS1_VERSION)
+                    || !TEST_true(version != TLS1_1_VERSION)
+                    || !TEST_true(version != TLS1_2_VERSION)
+                    || !TEST_true(version != DTLS1_VERSION)
+                    || !TEST_true(version != DTLS1_2_VERSION))
+                    goto end;
+
+            /* No TLS1.2 and below extensions in inner CH */
+        } else if (!TEST_false(exts[i] == TLSEXT_TYPE_extended_master_secret)
+            || !TEST_false(exts[i] == TLSEXT_TYPE_renegotiate)
+            || !TEST_false(exts[i] == TLSEXT_TYPE_srp)
+            || !TEST_false(exts[i] == TLSEXT_TYPE_ec_point_formats)
+            || !TEST_false(exts[i] == TLSEXT_TYPE_session_ticket)
+            || !TEST_false(exts[i] == TLSEXT_TYPE_next_proto_neg)
+            || !TEST_false(exts[i] == TLSEXT_TYPE_encrypt_then_mac)) {
+            goto end;
+        }
+    }
+
+    len = SSL_client_hello_get0_ciphers(ssl, &p);
+    if (!TEST_true(PACKET_buf_init(&pkt, p, len)))
+        goto end;
+
+    /* Ensure we're not sending irrelevant ciphers */
+    while (PACKET_copy_bytes(&pkt, cipher, TLS_CIPHER_LEN)) {
+        c = SSL_CIPHER_find(ssl, cipher);
+        if (!TEST_ptr(c)
+            || !TEST_true(c->valid)
+            || (SSL_is_tls(ssl) && !TEST_int_gt(c->max_tls, TLS1_2_VERSION))
+            || (SSL_is_dtls(ssl) && !TEST_int_lt(c->max_dtls, DTLS1_2_VERSION)))
+            goto end;
+    }
+
+    ret = SSL_CLIENT_HELLO_SUCCESS;
+
+end:
+    OPENSSL_free(exts);
+    return ret;
 }
 
 /*
@@ -1208,6 +1287,67 @@ end:
     return rv;
 }
 
+/*
+ * Check whether various public_name values are good or bad according to
+ * our RFC 9849 checker, which imposes some oddball restrictions on those.
+ * Read section 6.1.7 of RFC 9849 for details.
+ */
+static int ech_bad_public_names(void)
+{
+    int rv = 0, i;
+    OSSL_ECHSTORE *es = NULL;
+    OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
+    const char *bad_names[] = {
+        ".dot.", /* leading dot */
+        "dot.", /* trailing dot */
+        ".dot", /* check both, why not */
+        /* a label > 62 chars (70 in this case) */
+        "abcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghijabcdefghij.org",
+        /* last label numeric */
+        "last.one.is.numeric.456",
+        "456",
+        /* last label ascii-hex */
+        "last.ah.0x123",
+        "0x123"
+    };
+    const char *good_names[] = {
+        "example.com",
+        "0x123.stuff",
+        "0x",
+        "a-b.c",
+        "example.com.c",
+        "a.b.0x1234567890abcdefX",
+        "a.b.1234567890Y"
+    };
+
+    if (!TEST_ptr(es = OSSL_ECHSTORE_new(libctx, propq)))
+        goto end;
+    for (i = 0; i != OSSL_NELEM(bad_names); i++) {
+        if (verbose)
+            TEST_info("checking bad name |%s|", bad_names[i]);
+        if (!TEST_false(OSSL_ECHSTORE_new_config(es, 0xfe0d, 0, bad_names[i],
+                hpke_suite))) {
+            if (verbose)
+                TEST_info("bad name |%s| erroneously accepted", bad_names[i]);
+            goto end;
+        }
+    }
+    for (i = 0; i != OSSL_NELEM(good_names); i++) {
+        if (verbose)
+            TEST_info("checking good name |%s|", good_names[i]);
+        if (!TEST_true(OSSL_ECHSTORE_new_config(es, 0xfe0d, 0, good_names[i],
+                hpke_suite))) {
+            if (verbose)
+                TEST_info("good name |%s| erroneously rejected", good_names[i]);
+            goto end;
+        }
+    }
+    rv = 1;
+end:
+    OSSL_ECHSTORE_free(es);
+    return rv;
+}
+
 /* values that can be used in helper below */
 #define OSSL_ECH_TEST_BASIC 0
 #define OSSL_ECH_TEST_HRR 1
@@ -1217,6 +1357,7 @@ end:
 #define OSSL_ECH_TEST_CBS 5 /* test callbacks */
 #define OSSL_ECH_TEST_V12 6 /* test TLSv1.2 */
 #define OSSL_ECH_TEST_NO_INNER 7 /* test no inner SNI */
+#define OSSL_ECH_TEST_ALL_VERSIONS 8 /* test with TLS1.0-TLS1.3 enabled */
 /* note: early-data is prohibited after HRR so no tests for that */
 
 /*
@@ -1285,6 +1426,14 @@ static int test_ech_roundtrip_helper(int idx, int combo)
         if (!TEST_true(SSL_CTX_set_min_proto_version(cctx, TLS1_2_VERSION)))
             goto end;
     }
+    if (combo == OSSL_ECH_TEST_ALL_VERSIONS) {
+        // Enable TLS1.0, TLS1.1 on client
+        SSL_CTX_set_security_level(cctx, 0);
+        if (!TEST_true(SSL_CTX_set_min_proto_version(cctx, TLS1_VERSION))
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA")))
+            goto end;
+    }
     if (combo == OSSL_ECH_TEST_EARLY || combo == OSSL_ECH_TEST_ENOE) {
         if (!TEST_true(SSL_CTX_set_options(sctx, SSL_OP_NO_ANTI_REPLAY))
             || !TEST_true(SSL_CTX_set_max_early_data(sctx,
@@ -1312,6 +1461,8 @@ static int test_ech_roundtrip_helper(int idx, int combo)
     if (combo == OSSL_ECH_TEST_CBS) {
         SSL_CTX_ech_set_callback(sctx, ech_test_cb);
         SSL_CTX_set_client_hello_cb(sctx, ch_test_cb, NULL);
+    } else {
+        SSL_CTX_set_client_hello_cb(sctx, ch_validation_cb, NULL);
     }
     if (combo != OSSL_ECH_TEST_ENOE
         && !TEST_true(SSL_CTX_set1_echstore(cctx, es)))
@@ -1364,7 +1515,8 @@ static int test_ech_roundtrip_helper(int idx, int combo)
     /* all good */
     if (combo == OSSL_ECH_TEST_BASIC || combo == OSSL_ECH_TEST_HRR
         || combo == OSSL_ECH_TEST_CUSTOM || combo == OSSL_ECH_TEST_CBS
-        || combo == OSSL_ECH_TEST_NO_INNER) {
+        || combo == OSSL_ECH_TEST_NO_INNER
+        || combo == OSSL_ECH_TEST_ALL_VERSIONS) {
         res = 1;
         goto end;
     }
@@ -1463,6 +1615,14 @@ static int test_ech_no_inner(int idx)
     if (verbose)
         TEST_info("Doing: test_ech_no_inner");
     return test_ech_roundtrip_helper(idx, OSSL_ECH_TEST_NO_INNER);
+}
+
+/* ECH with a client offering TLS1.0-TLS1.3 */
+static int test_ech_all_versions_client(int idx)
+{
+    if (verbose)
+        TEST_info("Doing: test_ech_all_versions_client");
+    return test_ech_roundtrip_helper(idx, OSSL_ECH_TEST_ALL_VERSIONS);
 }
 
 /* ECH with early data for the given suite */
@@ -2000,6 +2160,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(ech_test_file_read, OSSL_NELEM(fnames));
     ADD_TEST(ech_api_basic_calls);
     ADD_TEST(ech_boring_compat);
+    ADD_TEST(ech_bad_public_names);
     suite_combos = OSSL_NELEM(kem_str_list) * OSSL_NELEM(kdf_str_list)
         * OSSL_NELEM(aead_str_list);
     ADD_ALL_TESTS(test_ech_suites, suite_combos);
@@ -2012,6 +2173,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(ech_in_out_test, 14);
     ADD_ALL_TESTS(ech_grease_test, 4);
     ADD_ALL_TESTS(test_ech_no_inner, suite_combos);
+    ADD_ALL_TESTS(test_ech_all_versions_client, suite_combos);
     return 1;
 err:
     return 0;

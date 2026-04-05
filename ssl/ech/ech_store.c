@@ -249,8 +249,10 @@ err:
 static int ech_final_config_checks(OSSL_ECHSTORE_ENTRY *ee)
 {
     OSSL_HPKE_SUITE hpke_suite;
-    int ind, num;
-    int goodsuitefound = 0;
+    int ind, num, rv = 0, goodsuitefound = 0;
+    X509_VERIFY_PARAM *vpm = X509_VERIFY_PARAM_new();
+    char *lastlabel = NULL;
+    size_t lllen;
 
     /* check local support for some suite */
     for (ind = 0; ind != (int)ee->nsuites; ind++) {
@@ -267,7 +269,7 @@ static int ech_final_config_checks(OSSL_ECHSTORE_ENTRY *ee)
     }
     if (goodsuitefound == 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
+        goto err;
     }
     /* check no mandatory exts (with high bit set in type) */
     num = (ee->exts == NULL ? 0 : sk_OSSL_ECHEXT_num(ee->exts));
@@ -276,16 +278,48 @@ static int ech_final_config_checks(OSSL_ECHSTORE_ENTRY *ee)
 
         if (oe->type & 0x8000) {
             ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
-            return 0;
+            goto err;
         }
     }
-    /* check public_name rules, as per spec section 4 */
+    /* check public_name rules, as per spec section 6.1.7 */
     if (ee->public_name == NULL
         || ee->public_name[0] == '\0'
         || ee->public_name[0] == '.'
-        || ee->public_name[strlen(ee->public_name) - 1] == '.')
-        return 0;
-    return 1;
+        || ee->public_name[strlen(ee->public_name) - 1] == '.'
+        || strlen(ee->public_name) > 255)
+        goto err;
+    /*
+     * Use X509_VERIFY_PARAM_add1_host to avoid coding same checks twice.
+     * This checks max 63 octets per label, overall length and some other
+     * DNS label checks.
+     */
+    if (X509_VERIFY_PARAM_add1_host(vpm, ee->public_name, 0) == 0)
+        goto err;
+    /*
+     * but we still have to check the last label restrictions, which
+     * are intended to avoid confusion with IP address literals in
+     * encodings browsers support, as per WHATWG (convincing, eh:-)
+     */
+    lastlabel = strrchr(ee->public_name, '.');
+    if (lastlabel == NULL) /* if there are no dots */
+        lastlabel = ee->public_name;
+    lllen = strlen(lastlabel);
+    if (lllen < 2)
+        goto err;
+    if (lastlabel[0] == '.') {
+        lastlabel++;
+        lllen--;
+    }
+    if (strspn(lastlabel, "0123456789") == lllen)
+        goto err;
+    if (lastlabel[0] == '0' && lllen > 2
+        && (lastlabel[1] == 'x' || lastlabel[1] == 'X')
+        && strspn(lastlabel + 2, "0123456789abcdefABCDEF") == (lllen - 2))
+        goto err;
+    rv = 1;
+err:
+    X509_VERIFY_PARAM_free(vpm);
+    return rv;
 }
 
 /**
@@ -393,6 +427,13 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
         ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
         goto err;
     }
+    /*
+     * We don't really handle ECHConfig extensions as of now,
+     * (none are well-defined), so we're only skipping over
+     * whatever we find here. If/when adding real extensions
+     * then it may be necessary to also check that the set of
+     * extensions loaded contain no duplicate types.
+     */
     if (!PACKET_get_length_prefixed_2(&ver_pkt, &exts)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
         goto err;
@@ -774,6 +815,8 @@ int OSSL_ECHSTORE_new_config(OSSL_ECHSTORE *es,
     epkt_mem->data = NULL;
     epkt_mem->length = 0;
     ee->loadtime = time(0);
+    if (ech_final_config_checks(ee) != 1) /* check our work */
+        goto err;
     /* push entry into store */
     if (es->entries == NULL)
         es->entries = sk_OSSL_ECHSTORE_ENTRY_new_null();

@@ -28,11 +28,10 @@ O_LIB="$BLDTOP"
 unset OPENSSL_CONF
 
 export PATH="$O_EXE:$PATH"
-export LD_LIBRARY_PATH="$O_LIB:$LD_LIBRARY_PATH"
 export OPENSSL_ROOT_DIR="$O_LIB"
 
 # Check/Set openssl version
-OPENSSL_VERSION=`openssl version | cut -f 2 -d ' '`
+OPENSSL_VERSION=`$SRCTOP/util/shlib_wrap.sh $SRCTOP/apps/openssl version | cut -f 2 -d ' '`
 ECHCONFIGFILE=$SRCTOP/test/certs/echdir/ech-eg.pem
 httphost=server.example
 httpreq="GET /stats HTTP/1.1\\r\\nConnection: close\\r\\nHost: $httphost\\r\\n\\r\\n"
@@ -94,11 +93,11 @@ then
 fi
 echo "Running openssl s_client against localhost"
 (echo -e $httpreq ; sleep 2) | \
-    $SRCTOP/apps/openssl s_client -connect localhost:8443 \
+    $SRCTOP/util/shlib_wrap.sh $SRCTOP/apps/openssl s_client -connect localhost:8443 \
         -CAfile $SRCTOP/test/certs/rootcert.pem \
         -ech_config_list `cat $bsslpem` \
         -servername $httphost \
-        -tls1_3 -ignore_unexpected_eof
+        -ignore_unexpected_eof
 success=$?
 # bssl server has to be killed
 kill $pids

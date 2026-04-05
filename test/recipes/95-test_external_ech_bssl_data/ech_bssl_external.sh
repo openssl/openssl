@@ -28,11 +28,10 @@ O_LIB="$BLDTOP"
 unset OPENSSL_CONF
 
 export PATH="$O_EXE:$PATH"
-export LD_LIBRARY_PATH="$O_LIB:$LD_LIBRARY_PATH"
 export OPENSSL_ROOT_DIR="$O_LIB"
 
 # Check/Set openssl version
-OPENSSL_VERSION=`openssl version | cut -f 2 -d ' '`
+OPENSSL_VERSION=`$SRCTOP/util/shlib_wrap.sh $SRCTOP/apps/openssl version | cut -f 2 -d ' '`
 ECHCONFIGFILE=$SRCTOP/test/certs/echdir/ech-eg.pem
 httphost=server.example
 httpreq="GET /stats HTTP/1.1\\r\\nConnection: close\\r\\nHost: $httphost\\r\\n\\r\\n"
@@ -68,7 +67,7 @@ fi
 echo "   CWD:                $PWD"
 
 # Start an openssl s_server
-$SRCTOP/apps/openssl s_server \
+$SRCTOP/util/shlib_wrap.sh $SRCTOP/apps/openssl s_server \
     -key $SRCTOP/test/certs/echserver.key -cert $SRCTOP/test/certs/echserver.pem \
     -key2 $SRCTOP/test/certs/echserver.key -cert2 $SRCTOP/test/certs/echserver.pem \
     -CAfile $SRCTOP/test/certs/rootcert.pem \
