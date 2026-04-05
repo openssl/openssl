@@ -746,7 +746,7 @@ int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     const unsigned char *f, int n, int eof);
 
 #if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
-int encode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
+size_t encode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
     const unsigned char *src, int srclen, int ctx_length,
     int *final_wrap_cnt);
 int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
