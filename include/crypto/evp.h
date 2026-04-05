@@ -740,7 +740,7 @@ int evp_pkey_asn1_get0_info(int *ppkey_id, int *ppkey_base_id,
 const EVP_PKEY_ASN1_METHOD *evp_pkey_get0_asn1(const EVP_PKEY *pkey);
 
 /* Base64 encode/decode internal functions */
-int evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
+size_t evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     const unsigned char *f, int dlen, int *wrap_cnt);
 int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     const unsigned char *f, int n, int eof);

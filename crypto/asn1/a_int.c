@@ -441,11 +441,17 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
         i = ASN1_R_ILLEGAL_NEGATIVE_VALUE;
         goto err;
     }
+#if INT_MAX < LONG_MAX
+    if (len > INT_MAX - 1) {
+        i = ASN1_R_TOO_LARGE;
+        goto err;
+    }
+#endif
     /*
      * We must OPENSSL_malloc stuff, even for 0 bytes otherwise it signifies
      * a missing NULL parameter.
      */
-    s = OPENSSL_malloc((int)len + 1);
+    s = OPENSSL_malloc(len == 0 ? 1 : (size_t)len);
     if (s == NULL)
         goto err;
     ret->type = V_ASN1_INTEGER;
@@ -454,11 +460,11 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
             p++;
             len--;
         }
-        memcpy(s, p, (int)len);
+        memcpy(s, p, (size_t)len);
         p += len;
     }
 
-    ASN1_STRING_set0(ret, s, (int)len);
+    ASN1_STRING_set0(ret, s, (int)len); /* len <= INT_MAX checked above */
     if (a != NULL)
         (*a) = ret;
     *pp = p;

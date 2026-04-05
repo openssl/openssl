@@ -28,7 +28,7 @@ void IDEA_cfb64_encrypt(const unsigned char *in, unsigned char *out,
     unsigned char *ivec, int *num, int encrypt)
 {
     register unsigned long v0, v1, t;
-    register int n = *num & 0x07;
+    register int n = *num;
     register long l = length;
     unsigned long ti[2];
     unsigned char *iv, c, cc;
@@ -37,6 +37,7 @@ void IDEA_cfb64_encrypt(const unsigned char *in, unsigned char *out,
         *num = -1;
         return;
     }
+    n = n & 0x07;
 
     iv = (unsigned char *)ivec;
     if (encrypt) {

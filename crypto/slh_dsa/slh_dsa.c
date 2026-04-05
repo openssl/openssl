@@ -232,6 +232,7 @@ static uint8_t *msg_encode(const uint8_t *msg, size_t msg_len,
     const uint8_t *ctx, size_t ctx_len, int encode,
     uint8_t *tmp, size_t tmp_len, size_t *out_len)
 {
+    WPACKET pkt;
     uint8_t *encoded = NULL;
     size_t encoded_len;
 
@@ -240,11 +241,14 @@ static uint8_t *msg_encode(const uint8_t *msg, size_t msg_len,
         *out_len = msg_len;
         return (uint8_t *)msg;
     }
+
     if (ctx_len > SLH_DSA_MAX_CONTEXT_STRING_LEN)
         return NULL;
 
     /* Pure encoding */
     encoded_len = 1 + 1 + ctx_len + msg_len;
+    if (encoded_len < msg_len) /* Check for overflow */
+        return NULL;
     *out_len = encoded_len;
     if (encoded_len <= tmp_len) {
         encoded = tmp;
@@ -253,10 +257,17 @@ static uint8_t *msg_encode(const uint8_t *msg, size_t msg_len,
         if (encoded == NULL)
             return NULL;
     }
-    encoded[0] = 0;
-    encoded[1] = (uint8_t)ctx_len;
-    memcpy(&encoded[2], ctx, ctx_len);
-    memcpy(&encoded[2 + ctx_len], msg, msg_len);
+    if (!WPACKET_init_static_len(&pkt, encoded, encoded_len, 0)
+        || !WPACKET_put_bytes_u8(&pkt, 0)
+        || !WPACKET_put_bytes_u8(&pkt, (uint8_t)ctx_len)
+        || !WPACKET_memcpy(&pkt, ctx, ctx_len)
+        || !WPACKET_memcpy(&pkt, msg, msg_len)
+        || !WPACKET_finish(&pkt)) {
+        if (encoded != tmp)
+            OPENSSL_free(encoded);
+        encoded = NULL;
+        WPACKET_cleanup(&pkt);
+    }
     return encoded;
 }
 

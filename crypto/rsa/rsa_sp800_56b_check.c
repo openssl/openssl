@@ -104,7 +104,7 @@ int ossl_rsa_check_prime_factor_range(const BIGNUM *p, int nbits, BN_CTX *ctx)
         goto err;
 
     /* set low = (√2)(2^(nbits/2 - 1) */
-    if (!BN_copy(low, &ossl_bn_inv_sqrt_2))
+    if (BN_copy(low, &ossl_bn_inv_sqrt_2) == NULL)
         goto err;
 
     if (shift >= 0) {

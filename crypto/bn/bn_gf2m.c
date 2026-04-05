@@ -568,7 +568,7 @@ static int BN_GF2m_mod_inv_vartime(BIGNUM *r, const BIGNUM *a,
     if (BN_is_zero(u))
         goto err;
 
-    if (!BN_copy(v, p))
+    if (BN_copy(v, p) == NULL)
         goto err;
 #if 0
     if (!BN_one(b))
@@ -696,7 +696,7 @@ static int BN_GF2m_mod_inv_vartime(BIGNUM *r, const BIGNUM *a,
     }
 #endif
 
-    if (!BN_copy(r, b))
+    if (BN_copy(r, b) == NULL)
         goto err;
     bn_check_top(r);
     ret = 1;
@@ -881,7 +881,7 @@ int BN_GF2m_mod_exp_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
                 goto err;
         }
     }
-    if (!BN_copy(r, u))
+    if (BN_copy(r, u) == NULL)
         goto err;
     bn_check_top(r);
     ret = 1;
@@ -1020,7 +1020,7 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[],
 
     if (p[0] & 0x1) { /* m is odd */
         /* compute half-trace of a */
-        if (!BN_copy(z, a))
+        if (BN_copy(z, a) == NULL)
             goto err;
         for (j = 1; j <= (p[0] - 1) / 2; j++) {
             if (!BN_GF2m_mod_sqr_arr(z, z, p, ctx))
@@ -1045,7 +1045,7 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[],
             if (!BN_GF2m_mod_arr(rho, rho, p))
                 goto err;
             BN_zero(z);
-            if (!BN_copy(w, rho))
+            if (BN_copy(w, rho) == NULL)
                 goto err;
             for (j = 1; j <= p[0] - 1; j++) {
                 if (!BN_GF2m_mod_sqr_arr(z, z, p, ctx))
@@ -1076,7 +1076,7 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[],
         goto err;
     }
 
-    if (!BN_copy(r, z))
+    if (BN_copy(r, z) == NULL)
         goto err;
     bn_check_top(r);
 

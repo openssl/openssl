@@ -244,6 +244,7 @@ static int test_int_hashtable(int idx)
     /* insert */
     HT_INIT_KEY(&key);
     for (i = 0; i < n_int_tests; i++) {
+        HT_KEY_RESET(&key);
         HT_SET_KEY_FIELD(&key, mykey, int_tests[i]);
         if (!TEST_int_eq(ossl_ht_test_int_insert(ht, TO_HT_KEY(&key),
                              &int_tests[i], NULL),
@@ -280,6 +281,7 @@ static int test_int_hashtable(int idx)
 
     /* delete */
     for (i = 0; i < n_dels; i++) {
+        HT_KEY_RESET(&key);
         HT_SET_KEY_FIELD(&key, mykey, dels[i].data);
         todel = ossl_ht_delete(ht, TO_HT_KEY(&key));
         if (dels[i].should_del) {
@@ -439,6 +441,7 @@ static int test_hashtable_stress(int idx)
             goto end;
         }
         *p = 3 * i + 1;
+        HT_KEY_RESET(&key);
         HT_SET_KEY_FIELD(&key, mykey, *p);
         if (!TEST_int_eq(ossl_ht_test_int_insert(h, TO_HT_KEY(&key),
                              p, NULL),
@@ -455,6 +458,7 @@ static int test_hashtable_stress(int idx)
     /* delete or get in a different order */
     for (i = 0; i < n; i++) {
         const int j = (7 * i + 4) % n * 3 + 1;
+        HT_KEY_RESET(&key);
         HT_SET_KEY_FIELD(&key, mykey, j);
 
         switch (idx % 2) {

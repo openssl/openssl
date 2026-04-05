@@ -30,7 +30,7 @@ X509_REVOKED_get_ext_by_critical, X509_REVOKED_delete_ext, X509_REVOKED_add_ext
  X509_EXTENSION *X509v3_delete_ext(STACK_OF(X509_EXTENSION) *x, int loc);
  X509_EXTENSION *X509v3_delete_extension(STACK_OF(X509_EXTENSION) **x, int loc);
  STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
-                                          X509_EXTENSION *ex, int loc);
+                                          const X509_EXTENSION *ex, int loc);
  STACK_OF(X509_EXTENSION)
       *X509v3_add_extensions(STACK_OF(X509_EXTENSION) **target,
                              const STACK_OF(X509_EXTENSION) *exts);
@@ -87,7 +87,7 @@ If I<loc> is an invalid index value, NULL is returned.
 X509v3_delete_extension() extends X509v3_delete_ext() by deallocating the
 extension stack I<*x> if it becomes empty, and in that case also setting I<*x>
 to NULL.
-This is a convenience wrapper for cases in which extensions are optional and
+This is a convenience wrapper for cases in which a list of extensions is optional and
 should be omitted if the stack becomes empty.
 
 X509v3_add_ext() inserts extension I<ex> to STACK I<*x> at position I<loc>.

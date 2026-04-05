@@ -55,7 +55,7 @@
 # Câmara, D.; Gouvêa, C. P. L.; López, J. & Dahab, R.: Fast Software
 # Polynomial Multiplication on ARM Processors using the NEON Engine.
 #
-# http://conradoplg.cryptoland.net/files/2010/12/mocrysen13.pdf
+# https://conradoplg.modp.net/files/2010/12/mocrysen13.pdf
 
 # ====================================================================
 # Note about "528B" variant. In ARM case it makes lesser sense to

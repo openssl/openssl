@@ -125,7 +125,8 @@ static void rwwriter_fn(int id, int *iterations)
     t1 = ossl_time_now();
 
     for (count = 0;; count++) {
-        new = CRYPTO_zalloc(sizeof(int), NULL, 0);
+        new = OPENSSL_zalloc(sizeof(int));
+        OPENSSL_assert(new != NULL);
         if (contention == 0)
             OSSL_sleep(1000);
         if (!CRYPTO_THREAD_write_lock(rwtorturelock))
@@ -323,7 +324,8 @@ static void writer_fn(int id, int *iterations)
     t1 = ossl_time_now();
 
     for (count = 0;; count++) {
-        new = CRYPTO_malloc(sizeof(uint64_t), NULL, 0);
+        new = OPENSSL_zalloc(sizeof(uint64_t));
+        OPENSSL_assert(new != NULL);
         *new = (uint64_t)0xBAD;
         if (contention == 0)
             OSSL_sleep(1000);

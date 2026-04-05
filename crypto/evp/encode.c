@@ -28,7 +28,7 @@
 
 static unsigned char conv_ascii2bin(unsigned char a,
     const unsigned char *table);
-int evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
+size_t evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     const unsigned char *f, int dlen, int *wrap_cnt);
 int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     const unsigned char *f, int n, int eof);
@@ -376,7 +376,8 @@ void EVP_EncodeInit(EVP_ENCODE_CTX *ctx)
 int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
     const unsigned char *in, int inl)
 {
-    int i, j;
+    int i;
+    size_t j;
     size_t total = 0;
 
     *outl = 0;
@@ -445,20 +446,20 @@ int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 
 void EVP_EncodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)
 {
-    int ret = 0;
+    size_t ret = 0;
     int wrap_cnt = 0;
 
     if (ctx->num != 0) {
         ret = evp_encodeblock_int(ctx, out, ctx->enc_data, ctx->num,
             &wrap_cnt);
-        if (ossl_assert(ret >= 0)) {
+        if (ret > 0) {
             if ((ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) == 0)
                 out[ret++] = '\n';
             out[ret] = '\0';
             ctx->num = 0;
         }
     }
-    *outl = ret;
+    *outl = (int)ret;
 }
 
 int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
@@ -687,7 +688,7 @@ int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     l = ((((unsigned long)a) << 18L) | (((unsigned long)b) << 12L) | (((unsigned long)c) << 6L) | (((unsigned long)d)));
 
     if (eof == -1)
-        eof = (f[2] == '=') + (f[3] == '=');
+        eof = (c == '=') + (d == '=');
 
     switch (eof) {
     case 2:

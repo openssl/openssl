@@ -167,14 +167,15 @@ int OCSP_basic_sign_ctx(OCSP_BASICRESP *brsp,
     const STACK_OF(X509) *certs, unsigned long flags)
 {
     OCSP_RESPID *rid;
+    EVP_PKEY_CTX *pkctx;
     EVP_PKEY *pkey;
 
-    if (ctx == NULL || EVP_MD_CTX_get_pkey_ctx(ctx) == NULL) {
+    if (ctx == NULL || (pkctx = EVP_MD_CTX_get_pkey_ctx(ctx)) == NULL) {
         ERR_raise(ERR_LIB_OCSP, OCSP_R_NO_SIGNER_KEY);
         goto err;
     }
 
-    pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_get_pkey_ctx(ctx));
+    pkey = EVP_PKEY_CTX_get0_pkey(pkctx);
     if (pkey == NULL || !X509_check_private_key(signer, pkey)) {
         ERR_raise(ERR_LIB_OCSP, OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
         goto err;
