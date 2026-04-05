@@ -221,7 +221,10 @@ result for applications that use the nondefault library context.
 The other difference between B<EVP_get_cipherby*> and B<EVP_get_digestby*> and
 EVP_CIPHER_fetch() and EVP_MD_fetch() is that the former functions deal with
 the algorithm aliases, and the newer ones don't (except the ones declared in
-the particular providers).
+the particular providers). Applications wishing to preserve alias handling
+behaviour can first check for an alias using B<OBJ_NAME_get()> (with
+B<OBJ_NAME_TYPE_CIPHER_METH> or B<OBJ_NAME_TYPE_MD_METH>) and fall back to
+EVP_CIPHER_fetch() or EVP_MD_fetch() if no match is found.
 
 =head1 OPENSSL 3.6
 
