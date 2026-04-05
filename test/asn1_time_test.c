@@ -15,8 +15,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <crypto/asn1.h>
 #include <openssl/asn1.h>
+#include <crypto/asn1.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include "testutil.h"
@@ -657,58 +657,64 @@ static struct testdata tbl_testdata_neg_64bit[] = {
 };
 
 /* A baseline time to compare to */
-static ASN1_TIME gtime = {
-    15,
-    V_ASN1_GENERALIZEDTIME,
-    (unsigned char *)"19991231000000Z",
-    0
-};
+static ASN1_TIME *gtime;
 static time_t gtime_t = 946598400;
 
 static int test_table(struct testdata *tbl, int idx)
 {
     int error = 0;
-    ASN1_TIME atime;
+    ASN1_TIME *atime;
     ASN1_TIME *ptime;
     struct testdata *td = &tbl[idx];
     int day, sec;
 
-    atime.data = (unsigned char *)td->data;
-    atime.length = (int)strlen((char *)atime.data);
-    atime.type = td->type;
-    atime.flags = 0;
+    atime = ASN1_STRING_type_new(td->type);
+    if (!TEST_ptr(atime))
+        return 1;
+    if (!TEST_true(ASN1_STRING_set(atime, (const unsigned char *)td->data,
+            (int)strlen(td->data)))) {
+        ASN1_TIME_free(atime);
+        return 1;
+    }
 
-    if (!TEST_int_eq(ASN1_TIME_check(&atime), td->check_result)) {
-        TEST_info("ASN1_TIME_check(%s) unexpected result", atime.data);
+    if (!TEST_int_eq(ASN1_TIME_check(atime), td->check_result)) {
+        TEST_info("ASN1_TIME_check(%s) unexpected result",
+            (const char *)ASN1_STRING_get0_data(atime));
         error = 1;
     }
     if (td->check_result == 0)
         return 1;
 
-    if (!TEST_int_eq(ASN1_TIME_cmp_time_t(&atime, td->t), 0)) {
-        TEST_info("ASN1_TIME_cmp_time_t(%s vs %ld) compare failed", atime.data, (long)td->t);
+    if (!TEST_int_eq(ASN1_TIME_cmp_time_t(atime, td->t), 0)) {
+        TEST_info("ASN1_TIME_cmp_time_t(%s vs %ld) compare failed",
+            (const char *)ASN1_STRING_get0_data(atime), (long)td->t);
         error = 1;
     }
 
-    if (!TEST_true(ASN1_TIME_diff(&day, &sec, &atime, &atime))) {
-        TEST_info("ASN1_TIME_diff(%s) to self failed", atime.data);
+    if (!TEST_true(ASN1_TIME_diff(&day, &sec, atime, atime))) {
+        TEST_info("ASN1_TIME_diff(%s) to self failed",
+            (const char *)ASN1_STRING_get0_data(atime));
         error = 1;
     }
     if (!TEST_int_eq(day, 0) || !TEST_int_eq(sec, 0)) {
-        TEST_info("ASN1_TIME_diff(%s) to self not equal", atime.data);
+        TEST_info("ASN1_TIME_diff(%s) to self not equal",
+            (const char *)ASN1_STRING_get0_data(atime));
         error = 1;
     }
 
-    if (!TEST_true(ASN1_TIME_diff(&day, &sec, &gtime, &atime))) {
-        TEST_info("ASN1_TIME_diff(%s) to baseline failed", atime.data);
+    if (!TEST_true(ASN1_TIME_diff(&day, &sec, gtime, atime))) {
+        TEST_info("ASN1_TIME_diff(%s) to baseline failed",
+            (const char *)ASN1_STRING_get0_data(atime));
         error = 1;
     } else if (!((td->cmp_result == 0 && TEST_true((day == 0 && sec == 0))) || (td->cmp_result == -1 && TEST_true((day < 0 || sec < 0))) || (td->cmp_result == 1 && TEST_true((day > 0 || sec > 0))))) {
-        TEST_info("ASN1_TIME_diff(%s) to baseline bad comparison", atime.data);
+        TEST_info("ASN1_TIME_diff(%s) to baseline bad comparison",
+            (const char *)ASN1_STRING_get0_data(atime));
         error = 1;
     }
 
-    if (!TEST_int_eq(ASN1_TIME_cmp_time_t(&atime, gtime_t), td->cmp_result)) {
-        TEST_info("ASN1_TIME_cmp_time_t(%s) to baseline bad comparison", atime.data);
+    if (!TEST_int_eq(ASN1_TIME_cmp_time_t(atime, gtime_t), td->cmp_result)) {
+        TEST_info("ASN1_TIME_cmp_time_t(%s) to baseline bad comparison",
+            (const char *)ASN1_STRING_get0_data(atime));
         error = 1;
     }
 
@@ -720,15 +726,16 @@ static int test_table(struct testdata *tbl, int idx)
         int local_error = 0;
         if (!TEST_int_eq(ASN1_TIME_cmp_time_t(ptime, td->t), 0)) {
             TEST_info("ASN1_TIME_set(%ld) compare failed (%s->%s)",
-                (long)td->t, td->data, ptime->data);
+                (long)td->t, td->data, (const char *)ASN1_STRING_get0_data(ptime));
             local_error = error = 1;
         }
-        if (!TEST_int_eq(ptime->type, td->expected_type)) {
+        if (!TEST_int_eq(ASN1_STRING_type(ptime), td->expected_type)) {
             TEST_info("ASN1_TIME_set(%ld) unexpected type", (long)td->t);
             local_error = error = 1;
         }
         if (local_error)
-            TEST_info("ASN1_TIME_set() = %*s", ptime->length, ptime->data);
+            TEST_info("ASN1_TIME_set() = %*s", ASN1_STRING_length(ptime),
+                (const char *)ASN1_STRING_get0_data(ptime));
         ASN1_TIME_free(ptime);
     }
 
@@ -746,12 +753,12 @@ static int test_table(struct testdata *tbl, int idx)
             TEST_info("ASN1_TIME_normalize(%s) failed", td->data);
             local_error = error = 1;
         }
-        if (!TEST_int_eq(ptime->type, td->expected_type)) {
+        if (!TEST_int_eq(ASN1_STRING_type(ptime), td->expected_type)) {
             TEST_info("ASN1_TIME_set_string_gmt(%s) unexpected type", td->data);
             local_error = error = 1;
         }
         day = sec = 0;
-        if (!TEST_true(ASN1_TIME_diff(&day, &sec, ptime, &atime)) || !TEST_int_eq(day, 0) || !TEST_int_eq(sec, 0)) {
+        if (!TEST_true(ASN1_TIME_diff(&day, &sec, ptime, atime)) || !TEST_int_eq(day, 0) || !TEST_int_eq(sec, 0)) {
             TEST_info("ASN1_TIME_diff(day=%d, sec=%d, %s) after ASN1_TIME_set_string_gmt() failed", day, sec, td->data);
             local_error = error = 1;
         }
@@ -760,7 +767,8 @@ static int test_table(struct testdata *tbl, int idx)
             local_error = error = 1;
         }
         if (local_error)
-            TEST_info("ASN1_TIME_set_string_gmt() = %*s", ptime->length, ptime->data);
+            TEST_info("ASN1_TIME_set_string_gmt() = %*s", ASN1_STRING_length(ptime),
+                (const char *)ASN1_STRING_get0_data(ptime));
         ASN1_TIME_free(ptime);
     }
 
@@ -775,7 +783,7 @@ static int test_table(struct testdata *tbl, int idx)
             local_error = error = 1;
         }
         day = sec = 0;
-        if (!TEST_true(ASN1_TIME_diff(&day, &sec, ptime, &atime)) || !TEST_int_eq(day, 0) || !TEST_int_eq(sec, 0)) {
+        if (!TEST_true(ASN1_TIME_diff(&day, &sec, ptime, atime)) || !TEST_int_eq(day, 0) || !TEST_int_eq(sec, 0)) {
             TEST_info("ASN1_TIME_diff(day=%d, sec=%d, %s) after ASN1_TIME_set_string() failed", day, sec, td->data);
             local_error = error = 1;
         }
@@ -784,21 +792,25 @@ static int test_table(struct testdata *tbl, int idx)
             local_error = error = 1;
         }
         if (local_error)
-            TEST_info("ASN1_TIME_set_string() = %*s", ptime->length, ptime->data);
+            TEST_info("ASN1_TIME_set_string() = %*s", ASN1_STRING_length(ptime),
+                (const char *)ASN1_STRING_get0_data(ptime));
         ASN1_TIME_free(ptime);
     }
 
     if (td->type == V_ASN1_UTCTIME) {
-        ptime = ASN1_TIME_to_generalizedtime(&atime, NULL);
+        ptime = ASN1_TIME_to_generalizedtime(atime, NULL);
         if (td->convert_result == 1 && !TEST_ptr(ptime)) {
-            TEST_info("ASN1_TIME_to_generalizedtime(%s) failed", atime.data);
+            TEST_info("ASN1_TIME_to_generalizedtime(%s) failed",
+                (const char *)ASN1_STRING_get0_data(atime));
             error = 1;
         } else if (td->convert_result == 0 && !TEST_ptr_null(ptime)) {
-            TEST_info("ASN1_TIME_to_generalizedtime(%s) should have failed", atime.data);
+            TEST_info("ASN1_TIME_to_generalizedtime(%s) should have failed",
+                (const char *)ASN1_STRING_get0_data(atime));
             error = 1;
         }
         if (ptime != NULL && !TEST_int_eq(ASN1_TIME_cmp_time_t(ptime, td->t), 0)) {
-            TEST_info("ASN1_TIME_to_generalizedtime(%s->%s) bad result", atime.data, ptime->data);
+            TEST_info("ASN1_TIME_to_generalizedtime(%s->%s) bad result", (const char *)ASN1_STRING_get0_data(atime),
+                (const char *)ASN1_STRING_get0_data(ptime));
             error = 1;
         }
         ASN1_TIME_free(ptime);
@@ -806,8 +818,9 @@ static int test_table(struct testdata *tbl, int idx)
     /* else cannot simply convert GENERALIZEDTIME to UTCTIME */
 
     if (error)
-        TEST_error("atime=%s", atime.data);
+        TEST_error("atime=%s", (const char *)ASN1_STRING_get0_data(atime));
 
+    ASN1_TIME_free(atime);
     return !error;
 }
 
@@ -1536,6 +1549,14 @@ int setup_tests(void)
      */
     time_t t = -1;
 
+    gtime = ASN1_STRING_type_new(V_ASN1_GENERALIZEDTIME);
+    if (gtime == NULL)
+        return 0;
+    if (!ASN1_STRING_set(gtime,
+            (const unsigned char *)"19991231000000Z", 15)) {
+        ASN1_TIME_free(gtime);
+        return 0;
+    }
     ADD_ALL_TESTS(test_table_pos, OSSL_NELEM(tbl_testdata_pos));
     if (!(t > 0)) {
         TEST_info("Adding negative-sign time_t tests");

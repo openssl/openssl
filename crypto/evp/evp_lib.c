@@ -28,9 +28,9 @@
 #include "crypto/cryptlib.h"
 #include "internal/provider.h"
 #include "evp_local.h"
+#include "crypto/asn1.h"
 
 #if !defined(FIPS_MODULE)
-#include "crypto/asn1.h"
 
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 {

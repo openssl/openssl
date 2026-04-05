@@ -539,21 +539,21 @@ static int test_x509_time(int idx)
 
     /* if t is not NULL but expected_type is ignored(-1), it is an 'OK' case */
     if (t != NULL && x509_format_tests[idx].expected_type != -1) {
-        if (!TEST_int_eq(t->type, x509_format_tests[idx].expected_type)) {
+        if (!TEST_int_eq(ASN1_STRING_type(t), x509_format_tests[idx].expected_type)) {
             TEST_info("test_x509_time(%d) failed: expected_type %d, got %d\n",
-                idx, x509_format_tests[idx].expected_type, t->type);
+                idx, x509_format_tests[idx].expected_type, ASN1_STRING_type(t));
             goto out;
         }
     }
 
     /* if t is not NULL but expected_string is NULL, it is an 'OK' case too */
     if (t != NULL && x509_format_tests[idx].expected_string) {
-        if (!TEST_mem_eq((const char *)t->data, t->length,
+        if (!TEST_mem_eq((const char *)ASN1_STRING_get0_data(t), ASN1_STRING_length(t),
                 x509_format_tests[idx].expected_string,
                 strlen(x509_format_tests[idx].expected_string))) {
             TEST_info("test_x509_time(%d) failed: expected_string %s, got %.*s\n",
-                idx, x509_format_tests[idx].expected_string, t->length,
-                t->data);
+                idx, x509_format_tests[idx].expected_string, ASN1_STRING_length(t),
+                (const char *)ASN1_STRING_get0_data(t));
             goto out;
         }
     }

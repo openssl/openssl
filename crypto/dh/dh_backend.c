@@ -22,8 +22,6 @@
 #include "crypto/dh.h"
 #include "dh_local.h"
 
-#include <crypto/asn1.h>
-
 /*
  * The intention with the "backend" source file is to offer backend functions
  * for legacy backends (EVP_PKEY_ASN1_METHOD) and provider implementations
@@ -204,8 +202,8 @@ DH *ossl_dh_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
         goto decerr;
 
     pstr = pval;
-    pm = pstr->data;
-    pmlen = pstr->length;
+    pm = ASN1_STRING_get0_data(pstr);
+    pmlen = ASN1_STRING_length(pstr);
     switch (OBJ_obj2nid(palg->algorithm)) {
     case NID_dhKeyAgreement:
         dh = d2i_DHparams(NULL, &pm, pmlen);

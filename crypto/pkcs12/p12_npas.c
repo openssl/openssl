@@ -15,8 +15,6 @@
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
 
-#include <crypto/asn1.h>
-
 /* PKCS#12 password change routine */
 
 static int newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass);
@@ -237,7 +235,7 @@ static int alg_get(const X509_ALGOR *alg, int *pnid, int *piter,
             X509_ALGOR_get0(&aoid, NULL, NULL, kdf->prf);
             prfnid = OBJ_obj2nid(aoid);
         }
-        *psaltlen = kdf->salt->value.octet_string->length;
+        *psaltlen = ASN1_STRING_length(kdf->salt->value.octet_string);
         *piter = ASN1_INTEGER_get(kdf->iter);
         *pnid = prfnid;
         *cipherid = encnid;
@@ -248,7 +246,7 @@ static int alg_get(const X509_ALGOR *alg, int *pnid, int *piter,
             goto done;
         *pnid = OBJ_obj2nid(alg->algorithm);
         *piter = ASN1_INTEGER_get(pbe->iter);
-        *psaltlen = pbe->salt->length;
+        *psaltlen = ASN1_STRING_length(pbe->salt);
         *cipherid = NID_undef;
         ret = 1;
         break;

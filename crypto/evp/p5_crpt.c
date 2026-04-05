@@ -15,8 +15,6 @@
 #include <openssl/core_names.h>
 #include <openssl/kdf.h>
 
-#include <crypto/asn1.h>
-
 /*
  * Doesn't do anything now: Builtin PBE algorithms in static table.
  */
@@ -35,7 +33,7 @@ int PKCS5_PBE_keyivgen_ex(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     int ivl, kl;
     PBEPARAM *pbe = NULL;
     int saltlen, iter;
-    unsigned char *salt;
+    const unsigned char *salt;
     int mdsize;
     int rv = 0;
     EVP_KDF *kdf;
@@ -70,8 +68,8 @@ int PKCS5_PBE_keyivgen_ex(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
         iter = 1;
     else
         iter = ASN1_INTEGER_get(pbe->iter);
-    salt = pbe->salt->data;
-    saltlen = pbe->salt->length;
+    salt = ASN1_STRING_get0_data(pbe->salt);
+    saltlen = ASN1_STRING_length(pbe->salt);
 
     if (pass == NULL)
         passlen = 0;
@@ -90,7 +88,7 @@ int PKCS5_PBE_keyivgen_ex(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
         (char *)pass, (size_t)passlen);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
-        salt, saltlen);
+        (void *)salt, saltlen);
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_ITER, &iter);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
         (char *)mdname, 0);

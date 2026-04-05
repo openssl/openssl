@@ -17,8 +17,6 @@
 
 #include "testutil.h"
 
-#include <crypto/asn1.h>
-
 static const char *infile;
 
 static int test_pathlen(void)
@@ -194,17 +192,21 @@ static int test_addr_ranges(void)
         ip1 = a2i_IPADDRESS(ranges[i].ip1);
         if (!TEST_ptr(ip1))
             goto end;
-        if (!TEST_true(ip1->length == 4 || ip1->length == 16))
+        if (!TEST_true(ASN1_STRING_length(ip1) == 4 || ASN1_STRING_length(ip1) == 16))
             goto end;
         ip2 = a2i_IPADDRESS(ranges[i].ip2);
         if (!TEST_ptr(ip2))
             goto end;
-        if (!TEST_int_eq(ip2->length, ip1->length))
+        if (!TEST_int_eq(ASN1_STRING_length(ip2), ASN1_STRING_length(ip1)))
             goto end;
-        if (!TEST_true(memcmp(ip1->data, ip2->data, ip1->length) <= 0))
+        if (!TEST_true(memcmp(ASN1_STRING_get0_data(ip1), ASN1_STRING_get0_data(ip2),
+                           ASN1_STRING_length(ip1))
+                <= 0))
             goto end;
 
-        if (!TEST_true(X509v3_addr_add_range(addr, ranges[i].afi, NULL, ip1->data, ip2->data)))
+        if (!TEST_true(X509v3_addr_add_range(addr, ranges[i].afi, NULL,
+                (unsigned char *)ASN1_STRING_get0_data(ip1),
+                (unsigned char *)ASN1_STRING_get0_data(ip2))))
             goto end;
 
         if (!TEST_true(X509v3_addr_is_canonical(addr)))
@@ -248,7 +250,9 @@ static int test_addr_fam_len(void)
     ip2 = a2i_IPADDRESS(ranges[0].ip2);
     if (!TEST_ptr(ip2))
         goto end;
-    if (!TEST_true(X509v3_addr_add_range(addr, ranges[0].afi, NULL, ip1->data, ip2->data)))
+    if (!TEST_true(X509v3_addr_add_range(addr, ranges[0].afi, NULL,
+            (unsigned char *)ASN1_STRING_get0_data(ip1),
+            (unsigned char *)ASN1_STRING_get0_data(ip2))))
         goto end;
     if (!TEST_true(X509v3_addr_is_canonical(addr)))
         goto end;
@@ -433,7 +437,8 @@ static int test_addr_subset(void)
             || !TEST_ptr(ip1[i] = a2i_IPADDRESS(ranges[i].ip1))
             || !TEST_ptr(ip2[i] = a2i_IPADDRESS(ranges[i].ip2))
             || !TEST_true(X509v3_addr_add_range(addr[i], ranges[i].afi, NULL,
-                ip1[i]->data, ip2[i]->data)))
+                (unsigned char *)ASN1_STRING_get0_data(ip1[i]),
+                (unsigned char *)ASN1_STRING_get0_data(ip2[i]))))
             goto end;
     }
 

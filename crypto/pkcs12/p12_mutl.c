@@ -22,8 +22,6 @@
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
 
-#include <crypto/asn1.h>
-
 static int pkcs12_pbmac1_pbkdf2_key_gen(const char *pass, int passlen,
     unsigned char *salt, int saltlen,
     int id, int iter, int keylen,
@@ -156,7 +154,7 @@ static int PBMAC1_PBKDF2_HMAC(OSSL_LIB_CTX *ctx, const char *propq,
         goto err;
     }
 
-    if (PKCS5_PBKDF2_HMAC(pass, passlen, pbkdf2_salt->data, pbkdf2_salt->length,
+    if (PKCS5_PBKDF2_HMAC(pass, passlen, ASN1_STRING_get0_data(pbkdf2_salt), ASN1_STRING_length(pbkdf2_salt),
             ASN1_INTEGER_get(pbkdf2_param->iter), kdf_md, keylen, key)
         <= 0) {
         ERR_raise(ERR_LIB_PKCS12, ERR_R_INTERNAL_ERROR);
@@ -185,7 +183,8 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
 {
     int ret = 0;
     EVP_MD *md;
-    unsigned char key[EVP_MAX_MD_SIZE], *salt;
+    unsigned char key[EVP_MAX_MD_SIZE];
+    const unsigned char *salt;
     int saltlen, iter;
     char md_name[80];
     int keylen = 0;
@@ -208,8 +207,8 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
 
     libctx = p12->authsafes->ctx.libctx;
     propq = p12->authsafes->ctx.propq;
-    salt = p12->mac->salt->data;
-    saltlen = p12->mac->salt->length;
+    salt = ASN1_STRING_get0_data(p12->mac->salt);
+    saltlen = ASN1_STRING_length(p12->mac->salt);
     if (p12->mac->iter == NULL)
         iter = 1;
     else
@@ -246,7 +245,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
                    || md_nid == NID_id_GostR3411_2012_512)
         && ossl_safe_getenv("LEGACY_GOST_PKCS12") == NULL) {
         keylen = TK26_MAC_KEY_LEN;
-        if (!pkcs12_gen_gost_mac_key(pass, passlen, salt, saltlen, iter,
+        if (!pkcs12_gen_gost_mac_key(pass, passlen, (unsigned char *)salt, saltlen, iter,
                 keylen, key, md)) {
             ERR_raise(ERR_LIB_PKCS12, PKCS12_R_KEY_GEN_ERROR);
             goto err;
@@ -266,7 +265,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
             fetched = 1;
         }
         if (pkcs12_key_gen != NULL) {
-            int res = (*pkcs12_key_gen)(pass, passlen, salt, saltlen, PKCS12_MAC_ID,
+            int res = (*pkcs12_key_gen)(pass, passlen, (unsigned char *)salt, saltlen, PKCS12_MAC_ID,
                 iter, keylen, key, hmac_md, libctx, propq);
 
             if (fetched)
@@ -279,7 +278,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
             if (fetched)
                 EVP_MD_free(hmac_md);
             /* Default to UTF-8 password */
-            if (!PKCS12_key_gen_utf8_ex(pass, passlen, salt, saltlen, PKCS12_MAC_ID,
+            if (!PKCS12_key_gen_utf8_ex(pass, passlen, (unsigned char *)salt, saltlen, PKCS12_MAC_ID,
                     iter, keylen, key, md, libctx, propq)) {
                 ERR_raise(ERR_LIB_PKCS12, PKCS12_R_KEY_GEN_ERROR);
                 goto err;
@@ -287,7 +286,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
         }
     }
     if (EVP_Q_mac(libctx, "HMAC", propq, md_name, NULL, key, keylen,
-            p12->authsafes->d.data->data, p12->authsafes->d.data->length,
+            ASN1_STRING_get0_data(p12->authsafes->d.data), ASN1_STRING_length(p12->authsafes->d.data),
             mac, md_sz, &outlen)
         == NULL)
         goto err;
@@ -424,16 +423,21 @@ static int pkcs12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int salt
         saltlen = PKCS12_SALT_LEN;
     else if (saltlen < 0)
         return 0;
-    if ((p12->mac->salt->data = OPENSSL_malloc(saltlen)) == NULL)
-        return 0;
-    p12->mac->salt->length = saltlen;
-    if (salt == NULL) {
-        if (RAND_bytes_ex(p12->authsafes->ctx.libctx, p12->mac->salt->data,
-                (size_t)saltlen, 0)
-            <= 0)
+    {
+        unsigned char *saltbuf = OPENSSL_malloc(saltlen);
+        if (saltbuf == NULL)
             return 0;
-    } else {
-        memcpy(p12->mac->salt->data, salt, saltlen);
+        if (salt == NULL) {
+            if (RAND_bytes_ex(p12->authsafes->ctx.libctx, saltbuf,
+                    (size_t)saltlen, 0)
+                <= 0) {
+                OPENSSL_free(saltbuf);
+                return 0;
+            }
+        } else {
+            memcpy(saltbuf, salt, saltlen);
+        }
+        ASN1_STRING_set0(p12->mac->salt, saltbuf, saltlen);
     }
     X509_SIG_getm(p12->mac->dinfo, &macalg, NULL);
     if (!X509_ALGOR_set0(macalg, OBJ_nid2obj(nid), V_ASN1_NULL, NULL)) {
