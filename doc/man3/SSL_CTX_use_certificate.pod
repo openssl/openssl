@@ -51,8 +51,15 @@ SSL_CTX_use_cert_and_key, SSL_use_cert_and_key
 
 =head1 DESCRIPTION
 
-These functions load the certificates and private keys into the SSL_CTX
+These functions load the certificates and private keys into the SSL_CTX 
 or SSL object, respectively.
+
+Each SSL_CTX or SSL object can hold multiple certificate and private key 
+pairs simultaneously, provided they are of different key types (for 
+example RSA, ECDSA, or Ed25519). Certificates and private keys are 
+stored internally by key type; loading a new certificate or private key 
+replaces only an existing item of the same type and does not affect 
+other configured types.
 
 The SSL_CTX_* class of functions loads the certificates and keys into the
 SSL_CTX object B<ctx>. The information is passed to SSL objects B<ssl>
@@ -122,21 +129,20 @@ stored at memory location B<d> (length B<len>) to B<ctx>.
 SSL_use_PrivateKey_ASN1() and SSL_use_RSAPrivateKey_ASN1() add the private
 key to B<ssl>.
 
-SSL_CTX_use_PrivateKey_file() adds the first private key found in
-B<file> to B<ctx>. The formatting B<type> of the private key must be specified
-from the known types SSL_FILETYPE_PEM, SSL_FILETYPE_ASN1.
-SSL_CTX_use_RSAPrivateKey_file() adds the first private RSA key found in
-B<file> to B<ctx>. SSL_use_PrivateKey_file() adds the first private key found
-in B<file> to B<ssl>; SSL_use_RSAPrivateKey_file() adds the first private
-RSA key found to B<ssl>. B<ctx> B<MUST NOT> be NULL.
+SSL_CTX_use_PrivateKey_file() adds the first private key found in 
+B<file> to B<ctx>. The formatting B<type> of the private key must be 
+specified from the known types SSL_FILETYPE_PEM, SSL_FILETYPE_ASN1. 
+SSL_CTX_use_RSAPrivateKey_file() adds the first private RSA key found in 
+B<file> to B<ctx>. SSL_use_PrivateKey_file() adds the first private key 
+found in B<file> to B<ssl>; SSL_use_RSAPrivateKey_file() adds the first 
+private RSA key found to B<ssl>. B<ctx> B<MUST NOT> be NULL.
 
-SSL_CTX_check_private_key() checks the consistency of a private key with
-the corresponding certificate loaded into B<ctx>. If more than one
-key/certificate pair (RSA/DSA) is installed, the last item installed will
-be checked. If e.g. the last item was an RSA certificate or key, the RSA
-key/certificate pair will be checked. SSL_check_private_key() performs
-the same check for B<ssl>. If no key/certificate was explicitly added for
-this B<ssl>, the last item added into B<ctx> will be checked.
+SSL_CTX_check_private_key() checks the consistency of a private key with 
+the corresponding certificate loaded into B<ctx>. If more than one 
+key/certificate pair of different types is installed, the consistency of 
+the most recently configured pair of the corresponding key type is 
+checked. Applications that load multiple certificate types should call 
+this function after configuring each certificate and private key pair.
 
 =head1 NOTES
 
