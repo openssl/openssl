@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -1425,7 +1425,10 @@ static int setup_verification_ctx(OSSL_CMP_CTX *ctx)
         out_vpm = X509_STORE_get0_param(out_trusted);
         X509_VERIFY_PARAM_clear_flags(out_vpm, X509_V_FLAG_USE_CHECK_TIME);
 
-        (void)OSSL_CMP_CTX_set_certConf_cb_arg(ctx, out_trusted);
+        if (!OSSL_CMP_CTX_set_certConf_cb_arg(ctx, out_trusted)) {
+            X509_STORE_free(out_trusted);
+            return 0;
+        }
     }
 
     if (opt_disable_confirm)
@@ -1541,7 +1544,7 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host)
             }
             sk_X509_free(tls_extra);
             if (res == 0) {
-                BIO_printf(bio_err, "error: unable to add TLS extra certs\n");
+                BIO_puts(bio_err, "error: unable to add TLS extra certs\n");
                 goto err;
             }
         }
@@ -3384,13 +3387,19 @@ static void print_keyspec(OSSL_CMP_ATAVS *keySpec)
             int paramtype;
             const void *param;
 
+            /* NULL check to prevent dereferencing a NULL pointer when print_keyspec is called */
+            if (alg == NULL) {
+                BIO_puts(mem, "Key algorithm: <absent>\n");
+                break;
+            }
+
             X509_ALGOR_get0(&oid, &paramtype, &param, alg);
-            BIO_printf(mem, "Key algorithm: ");
+            BIO_puts(mem, "Key algorithm: ");
             i2a_ASN1_OBJECT(mem, oid);
             if (paramtype == V_ASN1_UNDEF || alg->parameter == NULL) {
-                BIO_printf(mem, "\n");
+                BIO_puts(mem, "\n");
             } else {
-                BIO_printf(mem, " - ");
+                BIO_puts(mem, " - ");
                 ASN1_item_print(mem, (ASN1_VALUE *)alg,
                     0, ASN1_ITEM_rptr(X509_ALGOR), NULL);
             }
@@ -3705,7 +3714,7 @@ int cmp_main(int argc, char **argv)
                 ret = -1;
             if (ret <= 0) {
                 if (ret == -1)
-                    BIO_printf(bio_err, "Use -help for summary.\n");
+                    BIO_puts(bio_err, "Use -help for summary.\n");
                 goto err;
             }
         }
@@ -3775,8 +3784,7 @@ int cmp_main(int argc, char **argv)
     if (opt_ignore_keyusage)
         (void)OSSL_CMP_CTX_set_option(cmp_ctx, OSSL_CMP_OPT_IGNORE_KEYUSAGE, 1);
     if (opt_no_cache_extracerts)
-        (void)OSSL_CMP_CTX_set_option(cmp_ctx, OSSL_CMP_OPT_NO_CACHE_EXTRACERTS,
-            1);
+        (void)OSSL_CMP_CTX_set_option(cmp_ctx, OSSL_CMP_OPT_NO_CACHE_EXTRACERTS, 1);
 
     if (opt_reqout_only == NULL && (opt_use_mock_srv
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
@@ -3792,10 +3800,14 @@ int cmp_main(int argc, char **argv)
 
         srv_cmp_ctx = OSSL_CMP_SRV_CTX_get0_cmp_ctx(srv_ctx);
         if (!OSSL_CMP_CTX_set_log_cb(srv_cmp_ctx, print_to_bio_err)) {
-            CMP_err1("Cannot set up error reporting and logging for %s", prog);
+            CMP_err1("Cannot set up server-side error reporting and logging for %s", prog);
             goto err;
         }
         OSSL_CMP_CTX_set_log_verbosity(srv_cmp_ctx, opt_verbosity);
+        if (opt_ignore_keyusage)
+            (void)OSSL_CMP_CTX_set_option(srv_cmp_ctx, OSSL_CMP_OPT_IGNORE_KEYUSAGE, 1);
+        if (opt_no_cache_extracerts)
+            (void)OSSL_CMP_CTX_set_option(srv_cmp_ctx, OSSL_CMP_OPT_NO_CACHE_EXTRACERTS, 1);
 
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
         if (opt_port != NULL) { /* act as very basic CMP HTTP server only */

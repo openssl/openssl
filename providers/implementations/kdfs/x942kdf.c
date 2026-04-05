@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -18,6 +18,7 @@
 #include "internal/common.h"
 #include "internal/packet.h"
 #include "internal/der.h"
+#include "internal/fips.h"
 #include "internal/nelem.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
@@ -339,6 +340,12 @@ static void *x942kdf_new(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_KDF_X942KDF))
+        return NULL;
+#endif
+
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL)
         return NULL;
@@ -445,7 +452,7 @@ static int fips_x942kdf_key_check_passed(KDF_X942 *ctx)
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
                 libctx, "X942KDF", "Key size",
-                ossl_fips_config_x942kdf_key_check)) {
+                FIPS_CONFIG_X942KDF_KEY_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }

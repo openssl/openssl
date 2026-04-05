@@ -1469,7 +1469,8 @@ EVP_CIPHER_names_do_all() returns 1 if the callback was called for all names.
 A return value of 0 means that the callback was not called for any names.
 
 EVP_CIPHER_get_params(), EVP_CIPHER_CTX_get_params() and
-EVP_CIPHER_CTX_set_params() return 1 for success and 0 for failure.
+EVP_CIPHER_CTX_set_params() return a positive value for success and 0 or a negative value for
+failure.
 
 =head1 CIPHER LISTING
 
@@ -1495,7 +1496,12 @@ depending on the mode specified.
 To specify additional authenticated data (AAD), a call to EVP_CipherUpdate(),
 EVP_EncryptUpdate() or EVP_DecryptUpdate() should be made with the output
 parameter I<out> set to NULL. In this case, on success, the parameter
-I<outl> is set to the number of bytes authenticated.
+I<outl> is set to the number of AAD bytes processed in that call
+(that is, the value of I<inl>), and does not include any plaintext
+or ciphertext bytes processed by other calls.
+
+If no AAD is used, this call can be omitted. See the mode-specific notes
+below for any exceptions.
 
 When decrypting, the return value of EVP_DecryptFinal() or EVP_CipherFinal()
 indicates whether the operation was successful. If it does not indicate success,
@@ -1974,7 +1980,7 @@ rather than a 0 return value indicating an error.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

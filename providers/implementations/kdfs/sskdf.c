@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -44,6 +44,7 @@
 #include <openssl/params.h>
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
+#include "internal/fips.h"
 #include "internal/numbers.h"
 #include "crypto/evp.h"
 #include "prov/provider_ctx.h"
@@ -86,7 +87,13 @@ struct sskdf_all_set_ctx_params_st {
     int num_info;
 };
 
+static OSSL_FUNC_kdf_newctx_fn sskdf_common_new;
+#ifndef OPENSSL_NO_SSKDF
 static OSSL_FUNC_kdf_newctx_fn sskdf_new;
+#endif
+#ifndef OPENSSL_NO_X963KDF
+static OSSL_FUNC_kdf_newctx_fn x963_new;
+#endif
 static OSSL_FUNC_kdf_dupctx_fn sskdf_dup;
 static OSSL_FUNC_kdf_freectx_fn sskdf_free;
 static OSSL_FUNC_kdf_reset_fn sskdf_reset;
@@ -317,7 +324,7 @@ end:
 }
 #endif /* OPENSSL_NO_SSKDF */
 
-static void *sskdf_new(void *provctx)
+static void *sskdf_common_new(void *provctx)
 {
     KDF_SSKDF *ctx;
 
@@ -330,6 +337,32 @@ static void *sskdf_new(void *provctx)
     }
     return ctx;
 }
+
+#ifndef OPENSSL_NO_SSKDF
+static void *sskdf_new(void *provctx)
+{
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_KDF_SSKDF))
+        return NULL;
+#endif
+
+    return sskdf_common_new(provctx);
+}
+#endif
+
+#ifndef OPENSSL_NO_X963KDF
+static void *x963_new(void *provctx)
+{
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_KDF_X963KDF))
+        return NULL;
+#endif
+
+    return sskdf_common_new(provctx);
+}
+#endif
 
 static void sskdf_reset(void *vctx)
 {
@@ -360,7 +393,7 @@ static void *sskdf_dup(void *vctx)
     const KDF_SSKDF *src = (const KDF_SSKDF *)vctx;
     KDF_SSKDF *dest;
 
-    dest = sskdf_new(src->provctx);
+    dest = sskdf_common_new(src->provctx);
     if (dest != NULL) {
         if (src->macctx != NULL) {
             dest->macctx = EVP_MAC_CTX_dup(src->macctx);
@@ -413,7 +446,7 @@ static int fips_sskdf_key_check_passed(KDF_SSKDF *ctx)
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
                 libctx, "SSKDF", "Key size",
-                ossl_fips_config_sskdf_key_check)) {
+                FIPS_CONFIG_SSKDF_KEY_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
@@ -508,7 +541,7 @@ static int fips_x963kdf_digest_check_passed(KDF_SSKDF *ctx, const EVP_MD *md)
     if (digest_unapproved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
                 libctx, "X963KDF", "Digest",
-                ossl_fips_config_x963kdf_digest_check)) {
+                FIPS_CONFIG_X963KDF_DIGEST_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
             return 0;
         }
@@ -524,7 +557,7 @@ static int fips_x963kdf_key_check_passed(KDF_SSKDF *ctx)
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE1,
                 libctx, "X963KDF", "Key size",
-                ossl_fips_config_x963kdf_key_check)) {
+                FIPS_CONFIG_X963KDF_KEY_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
@@ -759,7 +792,7 @@ const OSSL_DISPATCH ossl_kdf_sskdf_functions[] = {
 
 #ifndef OPENSSL_NO_X963KDF
 const OSSL_DISPATCH ossl_kdf_x963_kdf_functions[] = {
-    { OSSL_FUNC_KDF_NEWCTX, (void (*)(void))sskdf_new },
+    { OSSL_FUNC_KDF_NEWCTX, (void (*)(void))x963_new },
     { OSSL_FUNC_KDF_DUPCTX, (void (*)(void))sskdf_dup },
     { OSSL_FUNC_KDF_FREECTX, (void (*)(void))sskdf_free },
     { OSSL_FUNC_KDF_RESET, (void (*)(void))sskdf_reset },

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -314,17 +314,11 @@ static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
 
         OBJ_obj2txt(name, sizeof(name), cid->hashAlgorithm.algorithm, 0);
 
-        (void)ERR_set_mark();
         dgst = EVP_MD_fetch(NULL, name, NULL);
-        if (dgst == NULL)
-            dgst = (EVP_MD *)EVP_get_digestbyname(name);
-
         if (dgst == NULL) {
-            (void)ERR_clear_last_mark();
             ERR_raise(ERR_LIB_OCSP, OCSP_R_UNKNOWN_MESSAGE_DIGEST);
             goto end;
         }
-        (void)ERR_pop_to_mark();
 
         mdlen = EVP_MD_get_size(dgst);
         if (mdlen <= 0) {

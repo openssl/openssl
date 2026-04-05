@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,17 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/sha.h>
 #include <openssl/core_names.h>
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
-#include "internal/numbers.h"
-#include "crypto/evp.h"
+#include "internal/fips.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
@@ -60,6 +56,12 @@ static void *kdf_snmpkdf_new(void *provctx)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_KDF_SNMPKDF))
+        return NULL;
+#endif
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) != NULL)
         ctx->provctx = provctx;
@@ -167,7 +169,11 @@ static int kdf_snmpkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
 #ifdef FIPS_MODULE
         md = ossl_prov_digest_md(&ctx->digest);
-        if (!EVP_MD_is_a(md, SN_sha1))
+        if (!EVP_MD_is_a(md, SN_sha1)
+            && !EVP_MD_is_a(md, SN_sha224)
+            && !EVP_MD_is_a(md, SN_sha256)
+            && !EVP_MD_is_a(md, SN_sha384)
+            && !EVP_MD_is_a(md, SN_sha512))
             return 0;
 #endif
     }

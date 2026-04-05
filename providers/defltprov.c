@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -372,6 +372,9 @@ static const OSSL_ALGORITHM deflt_kdfs[] = {
     { PROV_NAMES_TLS1_PRF, "provider=default", ossl_kdf_tls1_prf_functions },
     { PROV_NAMES_PBKDF2, "provider=default", ossl_kdf_pbkdf2_functions },
     { PROV_NAMES_PKCS12KDF, "provider=default", ossl_kdf_pkcs12_functions },
+#ifndef OPENSSL_NO_IKEV2KDF
+    { PROV_NAMES_IKEV2KDF, "provider=default", ossl_kdf_ikev2kdf_functions },
+#endif
 #ifndef OPENSSL_NO_SSKDF
     { PROV_NAMES_SSKDF, "provider=default", ossl_kdf_sskdf_functions },
 #endif
@@ -424,8 +427,10 @@ static const OSSL_ALGORITHM deflt_keyexch[] = {
 #endif
     { PROV_NAMES_TLS1_PRF, "provider=default", ossl_kdf_tls1_prf_keyexch_functions },
     { PROV_NAMES_HKDF, "provider=default", ossl_kdf_hkdf_keyexch_functions },
+#ifndef OPENSSL_NO_SCRYPT
     { PROV_NAMES_SCRYPT, "provider=default",
         ossl_kdf_scrypt_keyexch_functions },
+#endif
     { NULL, NULL, NULL }
 };
 
@@ -500,8 +505,10 @@ static const OSSL_ALGORITHM deflt_signature[] = {
     { PROV_NAMES_ML_DSA_87, "provider=default", ossl_ml_dsa_87_signature_functions },
 #endif
     { PROV_NAMES_HMAC, "provider=default", ossl_mac_legacy_hmac_signature_functions },
+#ifndef OPENSSL_NO_SIPHASH
     { PROV_NAMES_SIPHASH, "provider=default",
         ossl_mac_legacy_siphash_signature_functions },
+#endif
 #ifndef OPENSSL_NO_POLY1305
     { PROV_NAMES_POLY1305, "provider=default",
         ossl_mac_legacy_poly1305_signature_functions },
@@ -563,12 +570,15 @@ static const OSSL_ALGORITHM deflt_asym_kem[] = {
     { PROV_NAMES_ML_KEM_768, "provider=default", ossl_ml_kem_asym_kem_functions },
     { PROV_NAMES_ML_KEM_1024, "provider=default", ossl_ml_kem_asym_kem_functions },
 #if !defined(OPENSSL_NO_ECX)
-    { "X25519MLKEM768", "provider=default", ossl_mlx_kem_asym_kem_functions },
-    { "X448MLKEM1024", "provider=default", ossl_mlx_kem_asym_kem_functions },
+    { PROV_NAMES_X25519MLKEM768, "provider=default", ossl_mlx_kem_asym_kem_functions },
+    { PROV_NAMES_X448MLKEM1024, "provider=default", ossl_mlx_kem_asym_kem_functions },
 #endif
 #if !defined(OPENSSL_NO_EC)
-    { "SecP256r1MLKEM768", "provider=default", ossl_mlx_kem_asym_kem_functions },
-    { "SecP384r1MLKEM1024", "provider=default", ossl_mlx_kem_asym_kem_functions },
+    { PROV_NAMES_SecP256r1MLKEM768, "provider=default", ossl_mlx_kem_asym_kem_functions },
+    { PROV_NAMES_SecP384r1MLKEM1024, "provider=default", ossl_mlx_kem_asym_kem_functions },
+#endif
+#if !defined(OPENSSL_NO_SM2)
+    { PROV_NAMES_curveSM2MLKEM768, "provider=default", ossl_mlx_kem_asym_kem_functions },
 #endif
 #endif
     { NULL, NULL, NULL }
@@ -615,12 +625,16 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
         PROV_DESCS_TLS1_PRF_SIGN },
     { PROV_NAMES_HKDF, "provider=default", ossl_kdf_keymgmt_functions,
         PROV_DESCS_HKDF_SIGN },
+#ifndef OPENSSL_NO_SCRYPT
     { PROV_NAMES_SCRYPT, "provider=default", ossl_kdf_keymgmt_functions,
         PROV_DESCS_SCRYPT_SIGN },
+#endif
     { PROV_NAMES_HMAC, "provider=default", ossl_mac_legacy_keymgmt_functions,
         PROV_DESCS_HMAC_SIGN },
+#ifndef OPENSSL_NO_SIPHASH
     { PROV_NAMES_SIPHASH, "provider=default", ossl_mac_legacy_keymgmt_functions,
         PROV_DESCS_SIPHASH_SIGN },
+#endif
 #ifndef OPENSSL_NO_POLY1305
     { PROV_NAMES_POLY1305, "provider=default", ossl_mac_legacy_keymgmt_functions,
         PROV_DESCS_POLY1305_SIGN },
@@ -632,6 +646,8 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
 #ifndef OPENSSL_NO_SM2
     { PROV_NAMES_SM2, "provider=default", ossl_sm2_keymgmt_functions,
         PROV_DESCS_SM2 },
+    { PROV_NAMES_curveSM2, "provider=default", ossl_curve_sm2_keymgmt_functions,
+        PROV_DESCS_curveSM2 },
 #endif
 #ifndef OPENSSL_NO_LMS
     { PROV_NAMES_LMS, "provider=default", ossl_lms_keymgmt_functions,
@@ -655,6 +671,10 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
         PROV_DESCS_SecP256r1MLKEM768 },
     { PROV_NAMES_SecP384r1MLKEM1024, "provider=default", ossl_mlx_p384_kem_kmgmt_functions,
         PROV_DESCS_SecP384r1MLKEM1024 },
+#endif
+#if !defined(OPENSSL_NO_SM2)
+    { PROV_NAMES_curveSM2MLKEM768, "provider=default", ossl_mlx_curve_sm2_kem_kmgmt_functions,
+        PROV_DESCS_curveSM2MLKEM768 },
 #endif
 #endif
 #ifndef OPENSSL_NO_SLH_DSA

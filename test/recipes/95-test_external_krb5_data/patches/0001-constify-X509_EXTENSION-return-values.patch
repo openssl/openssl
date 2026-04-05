@@ -1,0 +1,39 @@
+From d7699a98e33376bccf3221bfd46c9e3519e1fdd2 Mon Sep 17 00:00:00 2001
+From: Bob Beck <beck@openssl.org>
+Date: Mon, 22 Dec 2025 15:34:19 -0700
+Subject: [PATCH] constify X509_EXTENSION return values
+
+---
+ src/plugins/preauth/pkinit/pkinit_crypto_openssl.c | 2 +-
+ src/plugins/tls/k5tls/openssl.c                    | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c b/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c
+index d1fe18e5a..27dfca6e1 100644
+--- a/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c
++++ b/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c
+@@ -2316,7 +2316,7 @@ crypto_retrieve_X509_sans(krb5_context context,
+     char **upns = NULL;
+     unsigned char **dnss = NULL;
+     unsigned int i, num_sans = 0;
+-    X509_EXTENSION *ext = NULL;
++    const X509_EXTENSION *ext = NULL;
+     GENERAL_NAMES *ialt = NULL;
+     GENERAL_NAME *gen = NULL;
+ 
+diff --git a/src/plugins/tls/k5tls/openssl.c b/src/plugins/tls/k5tls/openssl.c
+index aab67c01c..c3a253009 100644
+--- a/src/plugins/tls/k5tls/openssl.c
++++ b/src/plugins/tls/k5tls/openssl.c
+@@ -142,7 +142,7 @@ static GENERAL_NAMES *
+ get_cert_sans(X509 *x)
+ {
+     int ext;
+-    X509_EXTENSION *san_ext;
++    const X509_EXTENSION *san_ext;
+ 
+     ext = X509_get_ext_by_NID(x, NID_subject_alt_name, -1);
+     if (ext < 0)
+-- 
+2.52.0
+

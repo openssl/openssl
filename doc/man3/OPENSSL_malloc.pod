@@ -138,8 +138,8 @@ in the I<freeptr> variable, rather than the returned pointer.
 OPENSSL_clear_realloc() and OPENSSL_clear_free() should be used
 when the buffer at B<addr> holds sensitive information.
 The old buffer is filled with zero's by calling OPENSSL_cleanse()
-before ultimately calling OPENSSL_free(). If the argument to OPENSSL_free() is
-NULL, nothing is done.
+before ultimately calling OPENSSL_free(). If the argument to
+OPENSSL_clear_free() is NULL, nothing is done.
 
 OPENSSL_malloc_array(), OPENSSL_calloc(), OPENSSL_aligned_alloc_array(),
 OPENSSL_realloc_array(), and OPENSSL_clear_realloc_array() are variants

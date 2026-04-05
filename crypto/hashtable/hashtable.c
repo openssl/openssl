@@ -81,9 +81,11 @@
 #if defined(__GNUC__) || defined(__CLANG__)
 #define PREFETCH_NEIGHBORHOOD(x) __builtin_prefetch(x.entries)
 #define PREFETCH(x) __builtin_prefetch(x)
+#define ALIGN __attribute__((aligned(8)))
 #else
 #define PREFETCH_NEIGHBORHOOD(x)
 #define PREFETCH(x)
+#define ALIGN
 #endif
 
 /*
@@ -111,7 +113,7 @@ struct ht_internal_value_st {
 struct ht_neighborhood_entry_st {
     uint64_t hash;
     struct ht_internal_value_st *value;
-};
+} ALIGN;
 
 struct ht_neighborhood_st {
     struct ht_neighborhood_entry_st entries[NEIGHBORHOOD_LEN];
@@ -698,12 +700,15 @@ int ossl_ht_insert(HT *h, HT_KEY *key, HT_VALUE *data, HT_VALUE **olddata)
     if (newval == NULL)
         goto out;
 
+    if (key->cached_hash)
+        hash = key->cached_hash;
+    else
+        hash = key->cached_hash = newval->value.key.cached_hash = h->config.ht_hash_fn(key);
+
     /*
      * we have to take our lock here to prevent other changes
      * to the bucket list
      */
-    hash = h->config.ht_hash_fn(key);
-
     for (i = 0;
         (rc = ossl_ht_insert_locked(h, hash, newval, olddata)) == -1
         && i < 4;
@@ -731,7 +736,10 @@ HT_VALUE *ossl_ht_get(HT *h, HT_KEY *key)
     uint64_t ehash;
     int lockless_reads = h->config.lockless_reads;
 
-    hash = h->config.ht_hash_fn(key);
+    if (key->cached_hash)
+        hash = key->cached_hash;
+    else
+        hash = key->cached_hash = h->config.ht_hash_fn(key);
 
     if (!h->config.no_rcu)
         md = ossl_rcu_deref(&h->md);
@@ -790,7 +798,10 @@ int ossl_ht_delete(HT *h, HT_KEY *key)
     if (h->config.lockless_reads)
         return 0;
 
-    hash = h->config.ht_hash_fn(key);
+    if (key->cached_hash)
+        hash = key->cached_hash;
+    else
+        hash = key->cached_hash = h->config.ht_hash_fn(key);
 
     neigh_idx = hash & h->md->neighborhood_mask;
     PREFETCH_NEIGHBORHOOD(h->md->neighborhoods[neigh_idx]);

@@ -98,8 +98,8 @@ jobs:
             "msquic-openssl": { image: "quay.io/openssl-ci/msquic-openssl"
                               , url: "https://github.com/microsoft/msquic"
                               , role: "both"
-                              }}' ./implementations.json > ./implementations.tmp
-          mv ./implementations.tmp implementations.json
+                              }}' ./implementations_quic.json > ./implementations.tmp
+          mv ./implementations.tmp implementations_quic.json
       - name: Set up docker
         uses: docker/setup-docker-action@efe9e3891a4f7307e689f2100b33a155b900a608 # v4.5.0
         with:
@@ -156,8 +156,8 @@ jobs:
             "msquic-openssl": { image: "quay.io/openssl-ci/msquic-openssl"
                               , url: "https://github.com/microsoft/msquic"
                               , role: "both"
-                              }}' ./implementations.json > ./implementations.tmp
-          mv ./implementations.tmp implementations.json
+                              }}' ./implementations_quic.json > ./implementations.tmp
+          mv ./implementations.tmp implementations_quic.json
       - name: Set up docker
         uses: docker/setup-docker-action@efe9e3891a4f7307e689f2100b33a155b900a608 # v4.5.0
         with:

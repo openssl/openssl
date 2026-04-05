@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -28,6 +28,7 @@
 #include "internal/param_build_set.h"
 
 static OSSL_FUNC_keymgmt_new_fn dsa_newdata;
+static OSSL_FUNC_keymgmt_new_ex_fn dsa_newdata_ex;
 static OSSL_FUNC_keymgmt_free_fn dsa_freedata;
 static OSSL_FUNC_keymgmt_gen_init_fn dsa_gen_init;
 static OSSL_FUNC_keymgmt_gen_set_template_fn dsa_gen_set_template;
@@ -119,11 +120,42 @@ static int dsa_key_todata(DSA *dsa, OSSL_PARAM_BLD *bld, OSSL_PARAM *pubkey,
     return 1;
 }
 
-static void *dsa_newdata(void *provctx)
+static void *dsa_newdata_ex(void *provctx, const OSSL_PARAM params[])
 {
+    DSA *dsa = NULL;
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
+
     if (!ossl_prov_is_running())
         return NULL;
-    return ossl_dsa_new(PROV_LIBCTX_OF(provctx));
+
+#ifndef FIPS_MODULE
+    const OSSL_PARAM *p = NULL;
+
+    if (params != NULL)
+        p = OSSL_PARAM_locate_const(params, "legacy-object");
+
+    /*
+     * This only works because we are in the default provider. We are not
+     * normally allowed to pass complex objects across the provider boundary
+     * like this.
+     */
+    if (p != NULL && OSSL_PARAM_get_octet_ptr(p, (const void **)&dsa, NULL) && dsa != NULL) {
+        if (ossl_lib_ctx_get_concrete(ossl_dsa_get0_libctx(dsa)) != ossl_lib_ctx_get_concrete(libctx))
+            dsa = NULL;
+        else if (!DSA_up_ref(dsa))
+            return NULL;
+    }
+#endif
+
+    if (dsa == NULL)
+        dsa = ossl_dsa_new(libctx);
+
+    return dsa;
+}
+
+static void *dsa_newdata(void *provctx)
+{
+    return dsa_newdata_ex(provctx, NULL);
 }
 
 static void dsa_freedata(void *keydata)
@@ -594,7 +626,7 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
      */
     if (!OSSL_FIPS_IND_ON_UNAPPROVED(gctx, OSSL_FIPS_IND_SETTABLE0,
             gctx->libctx, "DSA", "Keygen",
-            ossl_fips_config_dsa_sign_disallowed))
+            FIPS_CONFIG_DSA_SIGN_DISABLED))
         return 0;
 #endif
 
@@ -707,6 +739,7 @@ static void *dsa_dup(const void *keydata_from, int selection)
 
 const OSSL_DISPATCH ossl_dsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))dsa_newdata },
+    { OSSL_FUNC_KEYMGMT_NEW_EX, (void (*)(void))dsa_newdata_ex },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))dsa_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE, (void (*)(void))dsa_gen_set_template },
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))dsa_gen_set_params },

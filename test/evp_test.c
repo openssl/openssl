@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -698,9 +698,7 @@ static int parse_bin_chunk(const char *value, size_t offset, size_t max,
  **/
 
 typedef struct digest_data_st {
-    /* Digest this test is for */
-    const EVP_MD *digest;
-    EVP_MD *fetched_digest;
+    EVP_MD *digest;
     /* Input to digest */
     STACK_OF(EVP_TEST_BUFFER) *input;
     /* Expected output */
@@ -718,8 +716,7 @@ typedef struct digest_data_st {
 static int digest_test_init(EVP_TEST *t, const char *alg)
 {
     DIGEST_DATA *mdat;
-    const EVP_MD *digest;
-    EVP_MD *fetched_digest;
+    EVP_MD *digest;
 
     if (is_digest_disabled(alg)) {
         TEST_info("skipping, '%s' is disabled", alg);
@@ -727,20 +724,18 @@ static int digest_test_init(EVP_TEST *t, const char *alg)
         return 1;
     }
 
-    if ((digest = fetched_digest = EVP_MD_fetch(libctx, alg, propquery)) == NULL
-        && (digest = EVP_get_digestbyname(alg)) == NULL)
+    if ((digest = EVP_MD_fetch(libctx, alg, propquery)) == NULL)
         return 0;
     if (!TEST_ptr(mdat = OPENSSL_zalloc(sizeof(*mdat)))) {
-        EVP_MD_free(fetched_digest);
+        EVP_MD_free(digest);
         return 0;
     }
     t->data = mdat;
     mdat->digest = digest;
-    mdat->fetched_digest = fetched_digest;
     mdat->pad_type = 0;
     mdat->xof = 0;
     mdat->controls = sk_OPENSSL_STRING_new_null();
-    if (fetched_digest != NULL)
+    if (digest != NULL)
         TEST_info("%s is fetched", alg);
     return 1;
 }
@@ -751,7 +746,7 @@ static void digest_test_cleanup(EVP_TEST *t)
 
     sk_EVP_TEST_BUFFER_pop_free(mdat->input, evp_test_buffer_free);
     OPENSSL_free(mdat->output);
-    EVP_MD_free(mdat->fetched_digest);
+    EVP_MD_free(mdat->digest);
     ctrlfree(mdat->controls);
 }
 
@@ -910,7 +905,7 @@ static int digest_test_run(EVP_TEST *t)
         && !inbuf->count_set) {
         OPENSSL_cleanse(got, got_len);
         if (!TEST_true(EVP_Q_digest(libctx,
-                EVP_MD_get0_name(expected->fetched_digest),
+                EVP_MD_get0_name(expected->digest),
                 NULL, inbuf->buf, inbuf->buflen,
                 got, &size))
             || !TEST_mem_eq(got, size,
@@ -940,8 +935,7 @@ static const EVP_TEST_METHOD digest_test_method = {
 **/
 
 typedef struct cipher_data_st {
-    const EVP_CIPHER *cipher;
-    EVP_CIPHER *fetched_cipher;
+    EVP_CIPHER *cipher;
     int enc;
     /* EVP_CIPH_GCM_MODE, EVP_CIPH_CCM_MODE or EVP_CIPH_OCB_MODE if AEAD */
     int aead;
@@ -993,8 +987,7 @@ static int cipher_test_valid_fragmentation(CIPHER_DATA *cdat)
 
 static int cipher_test_init(EVP_TEST *t, const char *alg)
 {
-    const EVP_CIPHER *cipher;
-    EVP_CIPHER *fetched_cipher;
+    EVP_CIPHER *cipher;
     CIPHER_DATA *cdat;
     int m;
 
@@ -1005,8 +998,7 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
     }
 
     ERR_set_mark();
-    if ((cipher = fetched_cipher = EVP_CIPHER_fetch(libctx, alg, propquery)) == NULL
-        && (cipher = EVP_get_cipherbyname(alg)) == NULL) {
+    if ((cipher = EVP_CIPHER_fetch(libctx, alg, propquery)) == NULL) {
         /* a stitched cipher might not be available */
         if (strstr(alg, "HMAC") != NULL) {
             ERR_pop_to_mark();
@@ -1024,7 +1016,6 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
 
     cdat->init_controls = sk_OPENSSL_STRING_new_null();
     cdat->cipher = cipher;
-    cdat->fetched_cipher = fetched_cipher;
     cdat->enc = -1;
     m = EVP_CIPHER_get_mode(cipher);
     if (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
@@ -1034,7 +1025,7 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
 
     if (data_chunk_size != 0 && !cipher_test_valid_fragmentation(cdat)) {
         ERR_pop_to_mark();
-        EVP_CIPHER_free(fetched_cipher);
+        EVP_CIPHER_free(cipher);
         OPENSSL_free(cdat);
         t->skip = 1;
         TEST_info("skipping, '%s' does not support fragmentation", alg);
@@ -1042,7 +1033,7 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
     }
 
     t->data = cdat;
-    if (fetched_cipher != NULL)
+    if (cipher != NULL)
         TEST_info("%s is fetched", alg);
     return 1;
 }
@@ -1061,7 +1052,7 @@ static void cipher_test_cleanup(EVP_TEST *t)
         OPENSSL_free(cdat->aad[i]);
     OPENSSL_free(cdat->tag);
     OPENSSL_free(cdat->mac_key);
-    EVP_CIPHER_free(cdat->fetched_cipher);
+    EVP_CIPHER_free(cdat->cipher);
     ctrlfree(cdat->init_controls);
 }
 
@@ -1282,18 +1273,23 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     if (expected->iv != NULL) {
         /* Some (e.g., GCM) tests use IVs longer than EVP_MAX_IV_LENGTH. */
         unsigned char iv[128];
+
+        ERR_set_mark();
         if (!TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx_base, iv, sizeof(iv)))
             || ((EVP_CIPHER_get_flags(expected->cipher) & EVP_CIPH_CUSTOM_IV) == 0
                 && !TEST_mem_eq(expected->iv, expected->iv_len, iv,
                     expected->iv_len))) {
             t->err = "INVALID_IV";
+            ERR_clear_last_mark();
             goto err;
         } else {
-            if (fips_no_silent_error && !TEST_false(ERR_peek_error())) {
+            if (fips_no_silent_error && !TEST_int_eq(ERR_count_to_mark(), 0)) {
                 t->err = "GET_UPDATED_IV_SILENT_ERROR";
+                ERR_clear_last_mark();
                 goto err;
             }
         }
+        ERR_clear_last_mark();
     }
 
     /* Test that the cipher dup functions correctly if it is supported */
@@ -1580,17 +1576,21 @@ static int cipher_test_enc(EVP_TEST *t, int enc, size_t out_misalign,
     if (expected->next_iv != NULL) {
         /* Some (e.g., GCM) tests use IVs longer than EVP_MAX_IV_LENGTH. */
         unsigned char iv[128];
+        ERR_set_mark();
         if (!TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv)))
             || !TEST_mem_eq(expected->next_iv, expected->iv_len, iv,
                 expected->iv_len)) {
             t->err = "INVALID_NEXT_IV";
+            ERR_clear_last_mark();
             goto err;
         } else {
-            if (fips_no_silent_error && !TEST_false(ERR_peek_error())) {
+            if (fips_no_silent_error && !TEST_int_eq(ERR_count_to_mark(), 0)) {
                 t->err = "GET_UPDATED_IV_SILENT_ERROR";
+                ERR_clear_last_mark();
                 goto err;
             }
         }
+        ERR_clear_last_mark();
     }
 
     t->err = NULL;
@@ -2746,7 +2746,7 @@ static int pkey_test_ctrl(EVP_TEST *t, EVP_PKEY_CTX *pctx,
 static int pkey_add_control(EVP_TEST *t, STACK_OF(OPENSSL_STRING) *controls,
     const char *value)
 {
-    char *p;
+    const char *p;
 
     if (controls == NULL)
         return 0;
@@ -3541,7 +3541,7 @@ static int pbe_test_run(EVP_TEST *t)
 {
     PBE_DATA *expected = t->data;
     unsigned char *key;
-    EVP_MD *fetched_digest = NULL;
+    EVP_MD *digest = NULL;
     OSSL_LIB_CTX *save_libctx;
 
     save_libctx = OSSL_LIB_CTX_set0_default(libctx);
@@ -3571,16 +3571,16 @@ static int pbe_test_run(EVP_TEST *t)
         }
 #endif
     } else if (expected->pbe_type == PBE_TYPE_PKCS12) {
-        fetched_digest = EVP_MD_fetch(libctx, EVP_MD_get0_name(expected->md),
+        digest = EVP_MD_fetch(libctx, EVP_MD_get0_name(expected->md),
             propquery);
-        if (fetched_digest == NULL) {
+        if (digest == NULL) {
             t->err = "PKCS12_ERROR";
             goto err;
         }
         if (PKCS12_key_gen_uni(expected->pass, (int)expected->pass_len,
                 expected->salt, (int)expected->salt_len,
                 expected->id, expected->iter, (int)expected->key_len,
-                key, fetched_digest)
+                key, digest)
             == 0) {
             t->err = "PKCS12_ERROR";
             goto err;
@@ -3592,7 +3592,7 @@ static int pbe_test_run(EVP_TEST *t)
 
     t->err = NULL;
 err:
-    EVP_MD_free(fetched_digest);
+    EVP_MD_free(digest);
     OPENSSL_free(key);
     OSSL_LIB_CTX_set0_default(save_libctx);
     return 1;

@@ -135,6 +135,8 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item HKDF-SHA512, see L<EVP_KDF-HKDF(7)>
 
+=item IKEV2KDF, see L<EVP_KDF-IKEV2KDF(7)>
+
 =item TLS13-KDF, see L<EVP_KDF-TLS13_KDF(7)>
 
 =item SSKDF, see L<EVP_KDF-SS(7)>
@@ -444,6 +446,10 @@ are also available in the base provider.
 
 =item SLH-DSA-SHAKE-256f
 
+=item LMS
+
+Private keys are not supported for LMS.
+
 =back
 
 In addition to this provider, all of these encoding algorithms are also
@@ -512,6 +518,10 @@ combination with the FIPS provider.
 
 =item SLH-DSA-SHAKE-256f
 
+=item LMS
+
+Private keys are not supported for LMS.
+
 =back
 
 In addition to this provider, all of these decoding algorithms are also
@@ -538,6 +548,9 @@ L<OSSL_PROVIDER-base(7)>
 
 =head1 HISTORY
 
+Support for B<LMS> Public Key (SubjectPublicKeyInfo) encoders and decoders
+was added in OpenSSL 4.0.
+
 The RIPEMD160 digest was added to the default provider in OpenSSL 3.0.7.
 
 The HKDF-SHA256, HKDF-SHA384 and HKDF-SHA512 algorithms were added in OpenSSL 3.6.
@@ -548,7 +561,7 @@ All other functionality was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

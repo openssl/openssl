@@ -231,6 +231,8 @@ void ossl_ml_kem_key_free(ML_KEM_KEY *key);
  */
 ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection);
 
+__owur int ossl_ml_kem_key_fetch_digest(ML_KEM_KEY *key, const char *propq);
+
 /*
  * ----- Import or generate key material.
  */

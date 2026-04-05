@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,8 @@
 #include "internal/cryptlib.h"
 #include "internal/unicode.h"
 #include <openssl/asn1.h>
+
+#include <crypto/asn1.h>
 
 static int traverse_string(const unsigned char *p, int len, int inform,
     int (*rfunc)(unsigned long value, void *in),

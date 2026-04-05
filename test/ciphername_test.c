@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2017 BaishanCloud. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
@@ -172,6 +172,8 @@ static CIPHER_ID_NAME cipher_names[] = {
     { 0x00C3, "TLS_DHE_DSS_WITH_CAMELLIA_256_CBC_SHA256" },
     { 0x00C4, "TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256" },
     { 0x00C5, "TLS_DH_anon_WITH_CAMELLIA_256_CBC_SHA256" },
+    { 0x00C6, "TLS_SM4_GCM_SM3" },
+    { 0x00C7, "TLS_SM4_CCM_SM3" },
     { 0x00FF, "TLS_EMPTY_RENEGOTIATION_INFO_SCSV" },
     { 0x5600, "TLS_FALLBACK_SCSV" },
     { 0xC001, "TLS_ECDH_ECDSA_WITH_NULL_SHA" },

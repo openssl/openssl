@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,6 +20,8 @@
 #include <openssl/objects.h>
 #include <openssl/asn1t.h>
 #include "crypto/dh.h"
+
+#include <crypto/asn1.h>
 
 /* Override the default free and new methods */
 static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,

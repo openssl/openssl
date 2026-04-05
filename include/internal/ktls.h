@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -97,8 +97,8 @@ static ossl_inline int ktls_enable_tx_zerocopy_sendfile(int fd)
  * the entire record is pushed to TCP. It is impossible to send a partial
  * record using this control message.
  */
-static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
-    const void *data, size_t length)
+static ossl_inline int ktls_send_ctrl_message(int fd,
+    unsigned char record_type, const void *data, size_t lengthi, int flags)
 {
     struct msghdr msg = { 0 };
     int cmsg_len = sizeof(record_type);
@@ -120,7 +120,7 @@ static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
     msg.msg_iov = &msg_iov;
     msg.msg_iovlen = 1;
 
-    return sendmsg(fd, &msg, 0);
+    return sendmsg(fd, &msg, flags);
 }
 
 #ifdef OPENSSL_NO_KTLS_RX
@@ -201,16 +201,10 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
  * KTLS enables the sendfile system call to send data from a file over
  * TLS.
  */
-static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off,
-    size_t size, int flags)
+static ossl_inline int ktls_sendfile(int s, int fd, off_t off, size_t size,
+    ossl_ssize_t *sbytes, int flags)
 {
-    off_t sbytes = 0;
-    int ret;
-
-    ret = sendfile(fd, s, off, size, NULL, &sbytes, flags);
-    if (ret == -1 && sbytes == 0)
-        return -1;
-    return sbytes;
+    return sendfile(fd, s, off, size, NULL, sbytes, flags);
 }
 
 #endif /* __FreeBSD__ */
@@ -340,8 +334,8 @@ static ossl_inline int ktls_enable_tx_zerocopy_sendfile(int fd)
  * the entire record is pushed to TCP. It is impossible to send a partial
  * record using this control message.
  */
-static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
-    const void *data, size_t length)
+static ossl_inline int ktls_send_ctrl_message(int fd,
+    unsigned char record_type, const void *data, size_t length, int flags)
 {
     struct msghdr msg;
     int cmsg_len = sizeof(record_type);
@@ -367,16 +361,25 @@ static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
     msg.msg_iov = &msg_iov;
     msg.msg_iovlen = 1;
 
-    return sendmsg(fd, &msg, 0);
+    return sendmsg(fd, &msg, flags);
 }
 
 /*
  * KTLS enables the sendfile system call to send data from a file over TLS.
  * @flags are ignored on Linux. (placeholder for FreeBSD sendfile)
  * */
-static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off, size_t size, int flags)
+static ossl_inline int ktls_sendfile(int s, int fd, off_t off, size_t size, ossl_ssize_t *sbytes, int flags)
 {
-    return sendfile(s, fd, &off, size);
+    ossl_ssize_t sent;
+
+    sent = sendfile(s, fd, &off, size);
+    if (sent >= 0) {
+        *sbytes = sent;
+        return 0;
+    } else {
+        *sbytes = 0;
+        return -1;
+    }
 }
 
 #ifdef OPENSSL_NO_KTLS_RX

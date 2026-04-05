@@ -1,0 +1,42 @@
+From 1caefba8f76f5582a9f8b1a82fc5d0117afa0efb Mon Sep 17 00:00:00 2001
+From: Bob Beck <beck@openssl.org>
+Date: Sun, 22 Feb 2026 12:10:42 -0700
+Subject: [PATCH 1/2] Fix direct ASN1_STRING access in encoder.c
+
+---
+ src/encoder.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/src/encoder.c b/src/encoder.c
+index e5e1019..9a9e8f4 100644
+--- a/src/encoder.c
++++ b/src/encoder.c
+@@ -646,6 +646,7 @@ static int p11prov_ec_set_keypoint_data(const OSSL_PARAM *params, void *key)
+         keypoint->curve_type = V_ASN1_OBJECT;
+     } else {
+         EC_GROUP *group = EC_GROUP_new_from_params(params, NULL, NULL);
++        int len = 0;
+         if (!group) {
+             return RET_OSSL_ERR;
+         }
+@@ -655,12 +656,14 @@ static int p11prov_ec_set_keypoint_data(const OSSL_PARAM *params, void *key)
+             EC_GROUP_free(group);
+             return RET_OSSL_ERR;
+         }
+-        pstr->length = i2d_ECPKParameters(group, &pstr->data);
++        unsigned char *buf = NULL;
++        len = i2d_ECPKParameters(group, &buf);
+         EC_GROUP_free(group);
+-        if (pstr->length <= 0) {
+-            ASN1_STRING_free(pstr);
++        if (len <= 0) {
++            OPENSSL_free(buf);
+             return RET_OSSL_ERR;
+         }
++        ASN1_STRING_set0(pstr, buf, len);
+         keypoint->curve.sequence = pstr;
+         keypoint->curve_type = V_ASN1_SEQUENCE;
+     }
+-- 
+2.52.0
+

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -98,6 +98,7 @@
 #define EVP_PKEY_SLH_DSA_SHAKE_192F NID_SLH_DSA_SHAKE_192f
 #define EVP_PKEY_SLH_DSA_SHAKE_256S NID_SLH_DSA_SHAKE_256s
 #define EVP_PKEY_SLH_DSA_SHAKE_256F NID_SLH_DSA_SHAKE_256f
+#define EVP_PKEY_HSS_LMS NID_id_alg_hss_lms_hashsig
 
 /* Special indicator that the object is uniquely provider side */
 #define EVP_PKEY_KEYMGMT -1
@@ -569,7 +570,7 @@ void *EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data);
 #define EVP_CIPHER_CTX_get_mode(c) EVP_CIPHER_get_mode(EVP_CIPHER_CTX_get0_cipher(c))
 #define EVP_CIPHER_CTX_mode EVP_CIPHER_CTX_get_mode
 
-#define EVP_ENCODE_LENGTH(l) ((((l) + 2) / 3 * 4) + ((l) / 48 + 1) * 2 + 80)
+#define EVP_ENCODE_LENGTH(l) (((((size_t)(l)) + 2) / 3 * 4) + (((size_t)(l)) / 48 + 1) * 2 + 80)
 #define EVP_DECODE_LENGTH(l) (((l) + 3) / 4 * 3 + 80)
 
 #define EVP_SignInit_ex(a, b, c) EVP_DigestInit_ex(a, b, c)

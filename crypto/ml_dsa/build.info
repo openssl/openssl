@@ -4,7 +4,19 @@ $COMMON=ml_dsa_encoders.c ml_dsa_key_compress.c ml_dsa_key.c \
         ml_dsa_matrix.c ml_dsa_ntt.c ml_dsa_params.c ml_dsa_sample.c \
         ml_dsa_sign.c
 
-IF[{- !$disabled{'ml-dsa'} -}]
-  SOURCE[../../libcrypto]=$COMMON
-  SOURCE[../../providers/libfips.a]=$COMMON
+$ML_DSA_ASM=
+IF[{- !$disabled{asm} -}]
+  $ML_DSA_ASM_x86_64=ml_dsa_ntt-x86_64.s
+
+  IF[$ML_DSA_ASM_{- $target{asm_arch} -}]
+    $ML_DSA_ASM=$ML_DSA_ASM_{- $target{asm_arch} -}
+  ENDIF
 ENDIF
+
+IF[{- !$disabled{'ml-dsa'} -}]
+  SOURCE[../../libcrypto]=$COMMON $ML_DSA_ASM
+  SOURCE[../../providers/libfips.a]=$COMMON $ML_DSA_ASM
+ENDIF
+
+# Assembly implementations
+GENERATE[ml_dsa_ntt-x86_64.s]=asm/ml_dsa_ntt-x86_64.pl

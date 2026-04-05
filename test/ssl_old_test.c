@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -2911,7 +2911,7 @@ static int app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 
     if (cb_arg->app_verify) {
         char *s = NULL, buf[256];
-        X509 *c = X509_STORE_CTX_get0_cert(ctx);
+        const X509 *c = X509_STORE_CTX_get0_cert(ctx);
 
         printf("In app_verify_callback, allowing cert. ");
         printf("Arg is: %s\n", cb_arg->string);

@@ -1,4 +1,4 @@
-# Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -102,6 +102,17 @@ sub extension_data
     my $self = shift;
     if (@_) {
         $self->{extension_data} = shift;
+    }
+    my $exts = $self->{extension_data};
+    if (defined($exts) && defined(my $data = $exts->{TLSProxy::Message::EXT_CLIENT_CERT_TYPE})) {
+        die "Invalid client certificate type extension\n"
+            if length($data) != 1;
+        TLSProxy::Certificate->client_type(unpack("C", $data));
+    }
+    if (defined($exts) && defined(my $data = $exts->{TLSProxy::Message::EXT_SERVER_CERT_TYPE})) {
+        die "Invalid server certificate type extension\n"
+            if length($data) != 1;
+        TLSProxy::Certificate->server_type(unpack("C", $data));
     }
     return $self->{extension_data};
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,8 @@
 #include <openssl/x509v3.h>
 #include <openssl/cms.h>
 #include "cms_local.h"
+
+#include <crypto/asn1.h>
 
 ASN1_SEQUENCE(CMS_IssuerAndSerialNumber) = {
     ASN1_SIMPLE(CMS_IssuerAndSerialNumber, issuer, X509_NAME),

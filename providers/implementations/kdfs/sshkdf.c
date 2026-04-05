@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,7 @@
 #include <openssl/core_names.h>
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
+#include "internal/fips.h"
 #include "internal/numbers.h"
 #include "crypto/evp.h"
 #include "prov/provider_ctx.h"
@@ -60,6 +61,16 @@ static void *kdf_sshkdf_new(void *provctx)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    /*
+     * Normally we'd want a call to ossl_deferred_self_test() here, but
+     * according to FIPS 140-3 10.3.A Note18: SSH KDF is not required, since
+     * it is sufficient to self-test the underlying SHA hash functions.
+     * The underlying hash functions are implicitly tested when the hash is
+     * instantiated, so we do not need to have an explicit test here.
+     */
+#endif
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) != NULL) {
         ctx->provctx = provctx;
@@ -145,7 +156,7 @@ static int fips_digest_check_passed(KDF_SSHKDF *ctx, const EVP_MD *md)
     if (digest_unapproved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE0,
                 libctx, "SSHKDF", "Digest",
-                ossl_fips_config_sshkdf_digest_check)) {
+                FIPS_CONFIG_SSHKDF_DIGEST_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
             return 0;
         }
@@ -161,7 +172,7 @@ static int fips_key_check_passed(KDF_SSHKDF *ctx)
     if (!key_approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(ctx, OSSL_FIPS_IND_SETTABLE1,
                 libctx, "SSHKDF", "Key size",
-                ossl_fips_config_sshkdf_key_check)) {
+                FIPS_CONFIG_SSHKDF_KEY_CHECK)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }

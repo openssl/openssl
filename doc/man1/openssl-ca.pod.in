@@ -55,9 +55,8 @@ B<openssl> B<ca>
 [B<-preserveDN>]
 [B<-noemailDN>]
 [B<-batch>]
-[B<-msie_hack>]
+[B<-extfile> I<file>]
 [B<-extensions> I<section>]
-[B<-extfile> I<section>]
 [B<-subj> I<arg>]
 [B<-utf8>]
 [B<-sigopt> I<nm>:I<v>]
@@ -270,13 +269,6 @@ the configuration file which decides which fields should be mandatory
 or match the CA certificate. Check out the B<POLICY FORMAT> section
 for more information.
 
-=item B<-msie_hack>
-
-This is a deprecated option to make this command work with very old versions
-of the IE certificate enrollment control "certenr3". It used UniversalStrings
-for almost everything. Since the old control has various security bugs
-its use is strongly discouraged.
-
 =item B<-preserveDN>
 
 Normally the DN order of a certificate is the same as the order of the
@@ -310,9 +302,9 @@ extension section format.
 
 =item B<-extfile> I<file>
 
-An additional configuration file to read certificate extensions from
-(using the default section unless the B<-extensions> option is also
-used).
+An additional configuration I<file> to read certificate extensions from
+(using its unnamed (C<default>) section unless the B<-extensions> option is
+also used).
 
 =item B<-subj> I<arg>
 
@@ -673,12 +665,6 @@ Sign a certificate request:
 
  openssl ca -in req.pem -out newcert.pem
 
-Sign an SM2 certificate request:
-
- openssl ca -in sm2.csr -out sm2.crt -md sm3 \
-         -sigopt "distid:1234567812345678" \
-         -vfyopt "distid:1234567812345678"
-
 Sign a certificate request, using CA extensions:
 
  openssl ca -in req.pem -extensions v3_ca -out newcert.pem
@@ -850,6 +836,12 @@ and key identifier extensions are included by default.
 
 The B<-engine> option was removed in OpenSSL 4.0.
 
+The B<-msie-hack> option was removed in OpenSSL 4.0.
+
+As of OpenSSL 4.0, the B<ca> utility no longer has specialised built-in logic
+to add the SKID or AKID extensions, they are handled through configuration
+files and command-line options just like any other extension.
+
 =head1 SEE ALSO
 
 L<openssl(1)>,
@@ -862,7 +854,7 @@ L<x509v3_config(5)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

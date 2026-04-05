@@ -302,7 +302,7 @@ inner_loader_fetch(struct loader_data_st *methdata,
     }
 
     /* If we haven't received a name id yet, try to get one for the name */
-    id = scheme != NULL ? ossl_namemap_name2num(namemap, scheme) : 0;
+    id = ossl_namemap_name2num(namemap, scheme);
 
     /*
      * If we haven't found the name yet, chances are that the algorithm to

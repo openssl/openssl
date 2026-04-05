@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -28,7 +28,7 @@ int BIO_printf(BIO *bio, const char *format, ...)
     return ret;
 }
 
-#if defined(_WIN32)
+#if defined(_MSC_VER) && _MSC_VER < 1900
 /*
  * _MSC_VER described here:
  * https://learn.microsoft.com/en-us/cpp/overview/compiler-versions?view=msvc-170
@@ -70,7 +70,9 @@ static int msvc_bio_vprintf(BIO *bio, const char *format, va_list args)
 
     return ret;
 }
+#endif
 
+#ifdef _MSC_VER
 /*
  * This function is for unit test on windows only when built with Visual Studio
  */
@@ -85,13 +87,12 @@ int ossl_BIO_snprintf_msvc(char *buf, size_t n, const char *format, ...)
 
     return ret;
 }
-
 #endif
 
 int BIO_vprintf(BIO *bio, const char *format, va_list args)
 {
     va_list cp_args;
-#if !defined(_MSC_VER) || _MSC_VER > 1900
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
     int sz;
 #endif
     int ret = -1;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -663,6 +663,8 @@ OSSL_CORE_MAKE_FUNC(void, rand_clear_seed,
 /* Basic key object creation */
 #define OSSL_FUNC_KEYMGMT_NEW 1
 OSSL_CORE_MAKE_FUNC(void *, keymgmt_new, (void *provctx))
+#define OSSL_FUNC_KEYMGMT_NEW_EX 17
+OSSL_CORE_MAKE_FUNC(void *, keymgmt_new_ex, (void *provctx, const OSSL_PARAM params[]))
 
 /* Generation, a more complex constructor */
 #define OSSL_FUNC_KEYMGMT_GEN_INIT 2

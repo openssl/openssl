@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -81,11 +81,18 @@ err:
 
 static int cmp_ctx_set_md(OSSL_CMP_CTX *ctx, EVP_MD **pmd, int nid)
 {
-    EVP_MD *md = EVP_MD_fetch(ctx->libctx, OBJ_nid2sn(nid), ctx->propq);
+    const char *name = OBJ_nid2sn(nid);
+    EVP_MD *md;
+
+    if (name == NULL) {
+        ERR_raise_data(ERR_LIB_CMP, CMP_R_UNKNOWN_ALGORITHM_ID, "nid=%d", nid);
+        return 0;
+    }
+    md = EVP_MD_fetch(ctx->libctx, name, ctx->propq);
     /* fetching in advance to be able to throw error early if unsupported */
 
     if (md == NULL) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_UNSUPPORTED_ALGORITHM);
+        ERR_raise_data(ERR_LIB_CMP, CMP_R_UNSUPPORTED_ALGORITHM, "name=%s,nid=%d", name, nid);
         return 0;
     }
     EVP_MD_free(*pmd);
@@ -122,11 +129,20 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
         goto err;
     }
 
+    /*
+     * https://www.rfc-editor.org/rfc/rfc9045.html#name-password-based-message-auth says:
+     * The salt SHOULD be at least 8 octets (64 bits) long.
+     */
     ctx->pbm_slen = 16;
     if (!cmp_ctx_set_md(ctx, &ctx->pbm_owf, NID_sha256))
         goto err;
-    ctx->pbm_itercnt = 500;
+    ctx->pbm_itercnt = 1024;
     ctx->pbm_mac = NID_hmac_sha1;
+    /*
+     * For maximal interoperability with existing deployments, by default using HMAC-SHA1
+     * as required in https://www.rfc-editor.org/rfc/rfc4211.html#section-4.4:
+     * All implementations MUST support SHA-1.
+     */
 
     if (!cmp_ctx_set_md(ctx, &ctx->digest, NID_sha256))
         goto err;
@@ -734,7 +750,7 @@ DEFINE_OSSL_set1_up_ref(OSSL_CMP_CTX, oldCert, X509)
      */
     DEFINE_OSSL_set0(ossl_cmp_ctx, newCert, X509)
 
-    /* Get successfully validated server cert, if any, of current transaction */
+    /* Get successfully validated sender cert, if any, of current transaction */
     DEFINE_OSSL_CMP_CTX_get0(validatedSrvCert, X509)
 
     /*
@@ -968,7 +984,7 @@ DEFINE_set1_ASN1_OCTET_STRING(OSSL_CMP_CTX, transactionID)
         ctx->revocationReason = val;
         break;
     default:
-        ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_OPTION);
+        ERR_raise_data(ERR_LIB_CMP, CMP_R_INVALID_OPTION, "%d", opt);
         return 0;
     }
 
@@ -1030,7 +1046,7 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
     case OSSL_CMP_OPT_REVOCATION_REASON:
         return ctx->revocationReason;
     default:
-        ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_OPTION);
+        ERR_raise_data(ERR_LIB_CMP, CMP_R_INVALID_OPTION, "%d", opt);
         return -1;
     }
 }

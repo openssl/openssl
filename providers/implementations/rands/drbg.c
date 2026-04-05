@@ -1010,7 +1010,7 @@ int ossl_drbg_verify_digest(PROV_DRBG *drbg, OSSL_LIB_CTX *libctx,
     if (!approved) {
         if (!OSSL_FIPS_IND_ON_UNAPPROVED(drbg, OSSL_FIPS_IND_SETTABLE0,
                 libctx, "DRBG", "Digest",
-                ossl_fips_config_restricted_drbg_digests)) {
+                FIPS_CONFIG_DRBG_TRUNC_DIGEST)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
             return 0;
         }

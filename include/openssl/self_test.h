@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -38,6 +38,7 @@ extern "C" {
 #define OSSL_SELF_TEST_TYPE_KAT_ASYM_KEYGEN "KAT_AsymmetricKeyGeneration"
 #define OSSL_SELF_TEST_TYPE_KAT_KEM "KAT_KEM"
 #define OSSL_SELF_TEST_TYPE_KAT_DIGEST "KAT_Digest"
+#define OSSL_SELF_TEST_TYPE_KAT_MAC "KAT_Mac"
 #define OSSL_SELF_TEST_TYPE_KAT_SIGNATURE "KAT_Signature"
 #define OSSL_SELF_TEST_TYPE_PCT_SIGNATURE "PCT_Signature"
 #define OSSL_SELF_TEST_TYPE_KAT_KDF "KAT_KDF"
@@ -79,6 +80,11 @@ extern "C" {
 #define OSSL_SELF_TEST_DESC_KA_DH "DH"
 #define OSSL_SELF_TEST_DESC_KA_ECDH "ECDH"
 #define OSSL_SELF_TEST_DESC_KDF_HKDF "HKDF"
+#define OSSL_SELF_TEST_DESC_KDF_IKEV2KDF_GEN "IKEV2KDF_GEN"
+#define OSSL_SELF_TEST_DESC_KDF_IKEV2KDF_DKM1 "IKEV2KDF_DKM"
+#define OSSL_SELF_TEST_DESC_KDF_IKEV2KDF_DKM2 "IKEV2KDF_DKM(Child_SA)"
+#define OSSL_SELF_TEST_DESC_KDF_IKEV2KDF_DKM3 "IKEV2KDF_DKM(Child_DH)"
+#define OSSL_SELF_TEST_DESC_KDF_IKEV2KDF_REKEY "IKEV2KDF_REKEY"
 #define OSSL_SELF_TEST_DESC_KDF_SSKDF "SSKDF"
 #define OSSL_SELF_TEST_DESC_KDF_X963KDF "X963KDF"
 #define OSSL_SELF_TEST_DESC_KDF_X942KDF "X942KDF"

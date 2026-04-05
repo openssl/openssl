@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -100,6 +100,7 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 #define ARM_CPU_IMP_APPLE 0x61
 #define ARM_CPU_IMP_MICROSOFT 0x6D
 #define ARM_CPU_IMP_AMPERE 0xC0
+#define ARM_CPU_IMP_NVIDIA 0x4E
 
 #define ARM_CPU_PART_CORTEX_A72 0xD08
 #define ARM_CPU_PART_N1 0xD0C
@@ -112,6 +113,8 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 #define ARM_CPU_PART_V3 0xD84
 
 #define QCOM_CPU_PART_ORYON_X1 0x001
+
+#define NVIDIA_CPU_PART_OLYMPUS 0x010
 
 #define APPLE_CPU_PART_M1_ICESTORM 0x022
 #define APPLE_CPU_PART_M1_FIRESTORM 0x023

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -380,8 +380,8 @@ STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
     if (d2i_ASN1_OCTET_STRING(&oct, &p, len) == NULL)
         return NULL;
 
-    p = oct->data;
-    if ((sk = o2i_SCT_LIST(a, &p, oct->length)) != NULL)
+    p = ASN1_STRING_get0_data(oct);
+    if ((sk = o2i_SCT_LIST(a, &p, ASN1_STRING_length(oct))) != NULL)
         *pp += len;
 
     ASN1_OCTET_STRING_free(oct);
@@ -390,14 +390,20 @@ STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
 
 int i2d_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **out)
 {
-    ASN1_OCTET_STRING oct;
+    ASN1_OCTET_STRING *oct;
+    unsigned char *data = NULL;
     int len;
 
-    oct.data = NULL;
-    if ((oct.length = i2o_SCT_LIST(a, &oct.data)) == -1)
+    if ((len = i2o_SCT_LIST(a, &data)) == -1)
         return -1;
 
-    len = i2d_ASN1_OCTET_STRING(&oct, out);
-    OPENSSL_free(oct.data);
+    oct = ASN1_OCTET_STRING_new();
+    if (oct == NULL) {
+        OPENSSL_free(data);
+        return -1;
+    }
+    ASN1_STRING_set0(oct, data, len);
+    len = i2d_ASN1_OCTET_STRING(oct, out);
+    ASN1_OCTET_STRING_free(oct);
     return len;
 }

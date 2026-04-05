@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -19,7 +19,7 @@ plan skip_all => "No external tests in this configuration"
 
 plan tests => 1;
 
-$RPKI_VERSION = "9.6";
+$RPKI_VERSION = "9.7";
 $RPKI_SRC = "rpki-client-".$RPKI_VERSION;
 $RPKI_SUFFIX = ".tar.gz";
 $RPKI_TARBALL = $RPKI_SRC.$RPKI_SUFFIX;

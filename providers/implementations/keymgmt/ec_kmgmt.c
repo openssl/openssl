@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -37,6 +37,7 @@
 #endif
 
 static OSSL_FUNC_keymgmt_new_fn ec_newdata;
+static OSSL_FUNC_keymgmt_new_ex_fn ec_newdata_ex;
 static OSSL_FUNC_keymgmt_gen_init_fn ec_gen_init;
 static OSSL_FUNC_keymgmt_gen_set_template_fn ec_gen_set_template;
 static OSSL_FUNC_keymgmt_gen_set_params_fn ec_gen_set_params;
@@ -70,6 +71,7 @@ static OSSL_FUNC_keymgmt_gettable_params_fn sm2_gettable_params;
 static OSSL_FUNC_keymgmt_settable_params_fn sm2_settable_params;
 static OSSL_FUNC_keymgmt_import_fn sm2_import;
 static OSSL_FUNC_keymgmt_query_operation_name_fn sm2_query_operation_name;
+static OSSL_FUNC_keymgmt_query_operation_name_fn curve_sm2_query_operation_name;
 static OSSL_FUNC_keymgmt_validate_fn sm2_validate;
 #endif
 #endif
@@ -90,8 +92,7 @@ static const char *ec_query_operation_name(int operation_id)
     return NULL;
 }
 
-#ifndef FIPS_MODULE
-#ifndef OPENSSL_NO_SM2
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2)
 static const char *sm2_query_operation_name(int operation_id)
 {
     switch (operation_id) {
@@ -100,7 +101,14 @@ static const char *sm2_query_operation_name(int operation_id)
     }
     return NULL;
 }
-#endif
+static const char *curve_sm2_query_operation_name(int operation_id)
+{
+    switch (operation_id) {
+    case OSSL_OP_KEYEXCH:
+        return "ECDH";
+    }
+    return NULL;
+}
 #endif
 
 /*
@@ -274,11 +282,46 @@ static ossl_inline int otherparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *t
         ecdh_cofactor_mode);
 }
 
-static void *ec_newdata(void *provctx)
+static void *ec_newdata_ex(void *provctx, const OSSL_PARAM params[])
 {
+    EC_KEY *eckey = NULL;
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
+
     if (!ossl_prov_is_running())
         return NULL;
-    return EC_KEY_new_ex(PROV_LIBCTX_OF(provctx), NULL);
+
+#ifndef FIPS_MODULE
+    const OSSL_PARAM *p = NULL;
+
+    if (params != NULL)
+        p = OSSL_PARAM_locate_const(params, "legacy-object");
+
+    /*
+     * This only works because we are in the default provider. We are not
+     * normally allowed to pass complex objects across the provider boundary
+     * like this.
+     */
+    if (p != NULL && OSSL_PARAM_get_octet_ptr(p, (const void **)&eckey, NULL) && eckey != NULL) {
+#ifdef OPENSSL_NO_EC_EXPLICIT_CURVES
+        if (EC_GROUP_check_named_curve(EC_KEY_get0_group(eckey), 0, NULL) == NID_undef)
+            return NULL;
+#endif
+        if (ossl_lib_ctx_get_concrete(ossl_ec_key_get_libctx(eckey)) != ossl_lib_ctx_get_concrete(libctx))
+            eckey = NULL;
+        else if (!EC_KEY_up_ref(eckey))
+            return NULL;
+    }
+#endif
+
+    if (eckey == NULL)
+        eckey = EC_KEY_new_ex(libctx, NULL);
+
+    return eckey;
+}
+
+static void *ec_newdata(void *provctx)
+{
+    return ec_newdata_ex(provctx, NULL);
 }
 
 #ifndef FIPS_MODULE
@@ -1413,6 +1456,7 @@ static void *ec_dup(const void *keydata_from, int selection)
 
 const OSSL_DISPATCH ossl_ec_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))ec_newdata },
+    { OSSL_FUNC_KEYMGMT_NEW_EX, (void (*)(void))ec_newdata_ex },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))ec_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE,
         (void (*)(void))ec_gen_set_template },
@@ -1445,33 +1489,36 @@ const OSSL_DISPATCH ossl_ec_keymgmt_functions[] = {
 
 #ifndef FIPS_MODULE
 #ifndef OPENSSL_NO_SM2
-const OSSL_DISPATCH ossl_sm2_keymgmt_functions[] = {
-    { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))sm2_newdata },
-    { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))sm2_gen_init },
-    { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE,
-        (void (*)(void))ec_gen_set_template },
-    { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))ec_gen_set_params },
-    { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
-        (void (*)(void))ec_gen_settable_params },
-    { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))sm2_gen },
-    { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))ec_gen_cleanup },
-    { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))sm2_load },
-    { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ec_freedata },
-    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*)(void))sm2_get_params },
-    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*)(void))sm2_gettable_params },
-    { OSSL_FUNC_KEYMGMT_SET_PARAMS, (void (*)(void))ec_set_params },
-    { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (void (*)(void))sm2_settable_params },
-    { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ec_has },
-    { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))ec_match },
-    { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))sm2_validate },
-    { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))sm2_import },
-    { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))ec_import_types },
-    { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ec_export },
-    { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))ec_export_types },
-    { OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME,
-        (void (*)(void))sm2_query_operation_name },
-    { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))ec_dup },
-    OSSL_DISPATCH_END
-};
+#define SM2_FUNCS(variant)                                                          \
+    const OSSL_DISPATCH ossl_##variant##_keymgmt_functions[] = {                    \
+        { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))sm2_newdata },                     \
+        { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))sm2_gen_init },               \
+        { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE,                                       \
+            (void (*)(void))ec_gen_set_template },                                  \
+        { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))ec_gen_set_params },    \
+        { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,                                    \
+            (void (*)(void))ec_gen_settable_params },                               \
+        { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))sm2_gen },                         \
+        { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))ec_gen_cleanup },          \
+        { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))sm2_load },                       \
+        { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ec_freedata },                    \
+        { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*)(void))sm2_get_params },           \
+        { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*)(void))sm2_gettable_params }, \
+        { OSSL_FUNC_KEYMGMT_SET_PARAMS, (void (*)(void))ec_set_params },            \
+        { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (void (*)(void))sm2_settable_params }, \
+        { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ec_has },                          \
+        { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))ec_match },                      \
+        { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))sm2_validate },               \
+        { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))sm2_import },                   \
+        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))ec_import_types },        \
+        { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ec_export },                    \
+        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))ec_export_types },        \
+        { OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME,                                   \
+            (void (*)(void))variant##_query_operation_name },                       \
+        { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))ec_dup },                          \
+        OSSL_DISPATCH_END                                                           \
+    }
+SM2_FUNCS(sm2);
+SM2_FUNCS(curve_sm2);
 #endif
 #endif

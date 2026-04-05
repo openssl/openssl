@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -600,6 +600,10 @@ int tls1_alert_code(int code)
         return SSL_AD_HANDSHAKE_FAILURE;
     case TLS13_AD_MISSING_EXTENSION:
         return SSL_AD_HANDSHAKE_FAILURE;
+#ifndef OPENSSL_NO_ECH
+    case SSL_AD_ECH_REQUIRED:
+        return TLS1_AD_ECH_REQUIRED;
+#endif
     default:
         return -1;
     }

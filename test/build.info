@@ -54,7 +54,7 @@ IF[{- !$disabled{tests} -}]
           dtlsv1listentest ct_test threadstest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bio_callback_test bio_memleak_test bio_core_test bio_dgram_test param_build_test \
-          bioprinttest sslapitest ssl_handshake_rtt_test dtlstest sslcorrupttest \
+          sslapitest ssl_handshake_rtt_test dtlstest sslcorrupttest \
           bio_base64_test bio_enc_test pkey_meth_kdf_test evp_kdf_test uitest \
           cipherbytes_test threadstest_fips threadpool_test \
           asn1_encode_test asn1_decode_test asn1_string_table_test asn1_stable_parse_test \
@@ -71,7 +71,11 @@ IF[{- !$disabled{tests} -}]
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
           x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
-          engine_stubs_test base64_simdutf_test
+          engine_stubs_test base64_simdutf_test bio_eof_test ech_test
+
+  IF[{- !$disabled{'ech'} -}]
+    PROGRAMS{noinst}=ech_corrupt_test
+  ENDIF
 
   IF[{- !$disabled{'rpk'} -}]
     PROGRAMS{noinst}=rpktest
@@ -92,6 +96,10 @@ IF[{- !$disabled{tests} -}]
 
   IF[{- !$disabled{comp} && (!$disabled{brotli} || !$disabled{zstd} || !$disabled{zlib}) -}]
     PROGRAMS{noinst}=cert_comp_test
+  ENDIF
+
+  IF[{- !$disabled{dtls} -}]
+    PROGRAMS{noinst}=dtls_ccs_reorder_test
   ENDIF
 
   SOURCE[confdump]=confdump.c
@@ -203,7 +211,9 @@ IF[{- !$disabled{tests} -}]
     DEFINE[evp_test]=NO_LEGACY_MODULE
   ENDIF
 
-  SOURCE[evp_extra_test]=evp_extra_test.c fake_rsaprov.c fake_pipelineprov.c
+  SOURCE[evp_extra_test]=evp_extra_test.c fake_rsaprov.c fake_pipelineprov.c \
+                         helpers/predefined_dsaparams.c \
+                         helpers/predefined_dhparams.c
   INCLUDE[evp_extra_test]=../include ../apps/include \
                           ../providers/common/include \
                           ../providers/implementations/include
@@ -226,6 +236,14 @@ IF[{- !$disabled{tests} -}]
     DEPEND[lms_test]=../libcrypto.a libtestutil.a
   ENDIF
 
+  SOURCE[ech_test]=ech_test.c helpers/ssltestlib.c
+  INCLUDE[ech_test]=../include ../apps/include
+  DEPEND[ech_test]=../libssl.a ../libcrypto.a libtestutil.a
+
+  SOURCE[ech_corrupt_test]=ech_corrupt_test.c helpers/ssltestlib.c
+  INCLUDE[ech_corrupt_test]=../include ../apps/include
+  DEPEND[ech_corrupt_test]=../libssl.a ../libcrypto.a libtestutil.a
+
   SOURCE[evp_extra_test2]=evp_extra_test2.c $INITSRC tls-provider.c
   INCLUDE[evp_extra_test2]=../include ../apps/include
   DEPEND[evp_extra_test2]=../libcrypto libtestutil.a
@@ -234,7 +252,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[evp_libctx_test]=../include ../apps/include
   DEPEND[evp_libctx_test]=../libcrypto.a libtestutil.a
 
-  SOURCE[evp_fetch_prov_test]=evp_fetch_prov_test.c
+  SOURCE[evp_fetch_prov_test]=evp_fetch_prov_test.c fake_cipherprov.c
   INCLUDE[evp_fetch_prov_test]=../include ../apps/include
   DEPEND[evp_fetch_prov_test]=../libcrypto libtestutil.a
 
@@ -545,12 +563,18 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[bio_meth_test]=../include ../apps/include
   DEPEND[bio_meth_test]=../libcrypto libtestutil.a
 
-  SOURCE[bioprinttest]=bioprinttest.c
-  INCLUDE[bioprinttest]=../include ../apps/include
-  IF[{- $config{target} =~ /^VC/ -}]
-    DEPEND[bioprinttest]=../libcrypto.a libtestutil.a
-  ELSE
-    DEPEND[bioprinttest]=../libcrypto libtestutil.a
+  SOURCE[bio_eof_test]=bio_eof_test.c
+  INCLUDE[bio_eof_test]=../include ../apps/include
+  DEPEND[bio_eof_test]=../libcrypto libtestutil.a
+
+  IF[{- !$disabled{sock}
+        && $config{target} !~ /djgpp/i
+        && $config{target} !~ /^(?:VC-|mingw|BC-|Cygwin)/i
+  -}]
+    PROGRAMS{noinst}=bio_socket_sigpipe_test
+    SOURCE[bio_socket_sigpipe_test]=bio_socket_sigpipe_test.c
+    INCLUDE[bio_socket_sigpipe_test]=../include ../apps/include
+    DEPEND[bio_socket_sigpipe_test]=../libcrypto libtestutil.a
   ENDIF
 
   SOURCE[bio_core_test]=bio_core_test.c
@@ -562,15 +586,15 @@ IF[{- !$disabled{tests} -}]
   DEPEND[bio_dgram_test]=../libcrypto libtestutil.a
 
   SOURCE[bio_tfo_test]=bio_tfo_test.c
-  INCLUDE[bio_tfo_test]=../include ../apps/include ..
+  INCLUDE[bio_tfo_test]=../include ../apps/include
   DEPEND[bio_tfo_test]=../libcrypto libtestutil.a
 
   SOURCE[membio_test]=membio_test.c
-  INCLUDE[membio_test]=../include ../apps/include ..
+  INCLUDE[membio_test]=../include ../apps/include
   DEPEND[membio_test]=../libcrypto libtestutil.a
 
   SOURCE[bio_dgram_test]=bio_dgram_test.c
-  INCLUDE[bio_dgram_test]=../include ../apps/include ..
+  INCLUDE[bio_dgram_test]=../include ../apps/include
   DEPEND[bio_dgram_test]=../libcrypto libtestutil.a
 
   SOURCE[params_api_test]=params_api_test.c
@@ -636,6 +660,12 @@ IF[{- !$disabled{tests} -}]
   SOURCE[dtlstest]=dtlstest.c helpers/ssltestlib.c
   INCLUDE[dtlstest]=../include ../apps/include
   DEPEND[dtlstest]=../libcrypto ../libssl libtestutil.a
+
+  IF[{- !$disabled{dtls} -}]
+    SOURCE[dtls_ccs_reorder_test]=dtls_ccs_reorder_test.c helpers/ssltestlib.c
+    INCLUDE[dtls_ccs_reorder_test]=../include ../apps/include
+    DEPEND[dtls_ccs_reorder_test]=../libcrypto ../libssl libtestutil.a
+  ENDIF
 
   SOURCE[sslcorrupttest]=sslcorrupttest.c helpers/ssltestlib.c
   INCLUDE[sslcorrupttest]=../include ../apps/include
@@ -909,7 +939,7 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[dsatest]=../include ../apps/include
     DEPEND[dsatest]=../libcrypto.a libtestutil.a
 
-    SOURCE[dsa_no_digest_size_test]=dsa_no_digest_size_test.c
+    SOURCE[dsa_no_digest_size_test]=dsa_no_digest_size_test.c helpers/predefined_dsaparams.c
     INCLUDE[dsa_no_digest_size_test]=../include ../apps/include
     DEPEND[dsa_no_digest_size_test]=../libcrypto.a libtestutil.a
 
@@ -1131,7 +1161,7 @@ IF[{- !$disabled{tests} -}]
   DEPEND[errtest]=../libcrypto libtestutil.a
 
   SOURCE[aesgcmtest]=aesgcmtest.c
-  INCLUDE[aesgcmtest]=../include ../apps/include ..
+  INCLUDE[aesgcmtest]=../include ../apps/include
   DEPEND[aesgcmtest]=../libcrypto libtestutil.a
 
   PROGRAMS{noinst}=context_internal_test
@@ -1149,19 +1179,19 @@ IF[{- !$disabled{tests} -}]
   PROGRAMS{noinst}=provider_internal_test
   DEFINE[provider_internal_test]=PROVIDER_INIT_FUNCTION_NAME=p_test_init
   SOURCE[provider_internal_test]=provider_internal_test.c p_test.c
-  INCLUDE[provider_internal_test]=../include ../apps/include ..
+  INCLUDE[provider_internal_test]=../include ../apps/include
   DEPEND[provider_internal_test]=../libcrypto.a libtestutil.a
   PROGRAMS{noinst}=provider_test
   DEFINE[provider_test]=PROVIDER_INIT_FUNCTION_NAME=p_test_init
   SOURCE[provider_test]=provider_test.c p_test.c
-  INCLUDE[provider_test]=../include ../apps/include ..
+  INCLUDE[provider_test]=../include ../apps/include
   DEPEND[provider_test]=../libcrypto libtestutil.a
   IF[{- !$disabled{module} -}]
     MODULES{noinst}=p_test p_ossltest
     SOURCE[p_test]=p_test.c
     SOURCE[p_ossltest]=p_ossltest.c ../providers/prov_running.c
-    INCLUDE[p_test]=../include ..
-    INCLUDE[p_ossltest]=../include .. ../providers/common/include ../providers/implementations/include ../providers/implementations
+    INCLUDE[p_test]=../include
+    INCLUDE[p_ossltest]=../include ../crypto ../providers/common/include ../providers/implementations/include ../providers/implementations
     DEPEND[p_ossltest]=../providers/libcommon.a ../libcrypto
     IF[{- defined $target{shared_defflag} -}]
       SOURCE[p_test]=p_test.ld
@@ -1170,7 +1200,7 @@ IF[{- !$disabled{tests} -}]
     ENDIF
     MODULES{noinst}=p_minimal
     SOURCE[p_minimal]=p_minimal.c
-    INCLUDE[p_minimal]=../include ..
+    INCLUDE[p_minimal]=../include
     IF[{- defined $target{shared_defflag} -}]
       SOURCE[p_minimal]=p_minimal.ld
       GENERATE[p_minimal.ld]=../util/providers.num

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -24,6 +24,17 @@ plan skip_all => "QUIC protocol is not supported by this OpenSSL build"
 
 plan skip_all => "These tests are not supported in a fuzz build"
     if config('options') =~ /-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION|enable-fuzz-afl/;
+
+# When we support ECH, the ECH compression scheme affects the ordering
+# of extensions in the ClientHello as the set of compressed extensions
+# need to be contiguous in the outer ClientHello. We would need different
+# trace files to compare against for this test in ECH builds vs. 'no-ech'
+# buiids, so we'll just skip this test in 'no-ech' builds..
+# Note that that ordering will be affected if the ECH compression
+# choices are changed - see the comments in ssl/statem/extensions.c
+# where those choices are embedded in the ext_defs table.
+plan skip_all => "QUIC API trace tests aren't done in no-ech builds"
+    if disabled('ech');
 
 plan tests =>
     ($no_fips ? 0 : 1)          # quicapitest with fips

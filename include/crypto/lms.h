@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -117,6 +117,7 @@ typedef struct lms_params_st {
     const char *digestname; /* One of SHA256, SHA256-192, or SHAKE256 */
     uint32_t n; /* The Digest size (either 24 or 32), Useful for setting up SHAKE */
     uint32_t h; /* The height of a LMS tree which is one of 5, 10, 15, 20, 25) */
+    size_t bit_strength;
 } LMS_PARAMS;
 
 typedef struct lms_pub_key_st {
@@ -155,6 +156,11 @@ int ossl_lms_pubkey_from_params(const OSSL_PARAM *pub, LMS_KEY *lmskey);
 int ossl_lms_pubkey_decode(const unsigned char *pub, size_t publen,
     LMS_KEY *lmskey);
 size_t ossl_lms_pubkey_length(const unsigned char *data, size_t datalen);
+
+const uint8_t *ossl_lms_key_get_pub(const LMS_KEY *key);
+size_t ossl_lms_key_get_pub_len(const LMS_KEY *key);
+size_t ossl_lms_key_get_collision_strength_bits(const LMS_KEY *key);
+size_t ossl_lms_key_get_sig_len(const LMS_KEY *key);
 
 #endif /* OPENSSL_NO_LMS */
 #endif /* OSSL_CRYPTO_LMS_H */

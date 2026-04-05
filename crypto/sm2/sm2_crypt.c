@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  * Ported from Ribose contributions from Botan.
  *
@@ -78,7 +78,7 @@ int ossl_sm2_plaintext_size(const unsigned char *ct, size_t ct_size,
         return 0;
     }
 
-    *pt_size = sm2_ctext->C2->length;
+    *pt_size = ASN1_STRING_length(sm2_ctext->C2);
     SM2_Ciphertext_free(sm2_ctext);
 
     return 1;
@@ -314,14 +314,14 @@ int ossl_sm2_decrypt(const EC_KEY *key,
         goto done;
     }
 
-    if (sm2_ctext->C3->length != hash_size) {
+    if (ASN1_STRING_length(sm2_ctext->C3) != hash_size) {
         ERR_raise(ERR_LIB_SM2, SM2_R_INVALID_ENCODING);
         goto done;
     }
 
-    C2 = sm2_ctext->C2->data;
-    C3 = sm2_ctext->C3->data;
-    msg_len = sm2_ctext->C2->length;
+    C2 = ASN1_STRING_get0_data(sm2_ctext->C2);
+    C3 = ASN1_STRING_get0_data(sm2_ctext->C3);
+    msg_len = ASN1_STRING_length(sm2_ctext->C2);
     if (*ptext_len < (size_t)msg_len) {
         ERR_raise(ERR_LIB_SM2, SM2_R_BUFFER_TOO_SMALL);
         goto done;

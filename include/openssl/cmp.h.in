@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 2007-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -197,6 +197,8 @@ typedef ASN1_BIT_STRING OSSL_CMP_PKIFAILUREINFO;
  *       -- CertReqMsg
  *   }
  */
+#define OSSL_CMP_PKISTATUS_rejected_by_client -5
+#define OSSL_CMP_PKISTATUS_checking_response -4
 #define OSSL_CMP_PKISTATUS_request -3
 #define OSSL_CMP_PKISTATUS_trans -2
 #define OSSL_CMP_PKISTATUS_unspecified -1
@@ -507,8 +509,9 @@ OSSL_CMP_MSG *OSSL_CMP_CTX_server_perform(OSSL_CMP_CTX *client_ctx,
     const OSSL_CMP_MSG *req);
 OSSL_CMP_SRV_CTX *OSSL_CMP_SRV_CTX_new(OSSL_LIB_CTX *libctx, const char *propq);
 void OSSL_CMP_SRV_CTX_free(OSSL_CMP_SRV_CTX *srv_ctx);
-typedef OSSL_CMP_PKISI *(*OSSL_CMP_SRV_cert_request_cb_t)(OSSL_CMP_SRV_CTX *srv_ctx, const OSSL_CMP_MSG *req, int certReqId,
-    const OSSL_CRMF_MSG *crm, const X509_REQ *p10cr,
+typedef OSSL_CMP_PKISI *(*OSSL_CMP_SRV_cert_request_cb_t)(OSSL_CMP_SRV_CTX *srv_ctx,
+    const OSSL_CMP_MSG *req, int certReqId,
+    const OSSL_CRMF_MSG *crm, const X509_REQ *p10,
     X509 **certOut, STACK_OF(X509) **chainOut, STACK_OF(X509) **caPubs);
 typedef OSSL_CMP_PKISI *(*OSSL_CMP_SRV_rr_cb_t)(OSSL_CMP_SRV_CTX *srv_ctx,
     const OSSL_CMP_MSG *req,

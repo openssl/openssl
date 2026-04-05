@@ -20,7 +20,7 @@ X509_PURPOSE_set - functions related to checking the purpose of a certificate
 
  #include <openssl/x509v3.h>
 
- int X509_check_purpose(X509 *x, int id, int ca);
+ int X509_check_purpose(const X509 *x, int id, int ca);
 
  int X509_PURPOSE_get_count(void);
  int X509_PURPOSE_get_unused_id(OSSL_LIB_CTX *libctx);
@@ -62,6 +62,8 @@ Below are the potential ID's that can be checked:
 The checks performed take into account the X.509 extensions
 keyUsage, extendedKeyUsage, and basicConstraints.
 
+No actual check is performed if I<id> is -1.
+
 X509_PURPOSE_get_count() returns the number of currently defined purposes.
 
 X509_PURPOSE_get_unused_id() returns the smallest purpose id not yet used,
@@ -98,6 +100,11 @@ X509_PURPOSE_get_trust() returns the trust id of the given B<X509_PURPOSE>.
 X509_PURPOSE_set() assigns the given I<purpose> id to the location pointed at by
 I<p>.
 This resets to the any purpose if I<purpose> is B<X509_PURPOSE_DEFAULT_ANY>.
+
+=head1 NOTES
+
+X509_check_purpose() fills in various internal fields of the certificate structure I<x>.
+This is safe despite the I<x> argument's type change to I<const X509 *> as of OpenSSL 4.0.
 
 =head1 RETURN VALUES
 
@@ -171,9 +178,11 @@ X509_PURPOSE_add() or X509_PURPOSE_cleanup(void) is being called.
 
 X509_PURPOSE_get_unused_id() was added in OpensSL 3.5.
 
+X509_check_purpose() had its B<X509> parameter converted to const in OpenSSL 4.0.0.
+
 =head1 COPYRIGHT
 
-Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
 Licensed under the Apache License 2.0 (the "License"). You may not use this
 file except in compliance with the License. You can obtain a copy in the file
 LICENSE in the source distribution or at L<https://www.openssl.org/source/license.html>.

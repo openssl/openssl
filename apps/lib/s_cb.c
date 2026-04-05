@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -47,7 +47,7 @@ static const char *lookup(int val, const STRINT_PAIR *list, const char *def)
 
 int verify_callback(int ok, X509_STORE_CTX *ctx)
 {
-    X509 *err_cert;
+    const X509 *err_cert;
     int err, depth;
 
     err_cert = X509_STORE_CTX_get_current_cert(ctx);
@@ -89,17 +89,17 @@ int verify_callback(int ok, X509_STORE_CTX *ctx)
     case X509_V_ERR_CERT_NOT_YET_VALID:
     case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
         if (err_cert != NULL) {
-            BIO_printf(bio_err, "notBefore=");
+            BIO_puts(bio_err, "notBefore=");
             ASN1_TIME_print(bio_err, X509_get0_notBefore(err_cert));
-            BIO_printf(bio_err, "\n");
+            BIO_puts(bio_err, "\n");
         }
         break;
     case X509_V_ERR_CERT_HAS_EXPIRED:
     case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
         if (err_cert != NULL) {
-            BIO_printf(bio_err, "notAfter=");
+            BIO_puts(bio_err, "notAfter=");
             ASN1_TIME_print(bio_err, X509_get0_notAfter(err_cert));
-            BIO_printf(bio_err, "\n");
+            BIO_puts(bio_err, "\n");
         }
         break;
     case X509_V_ERR_NO_EXPLICIT_POLICY:
@@ -148,7 +148,7 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
          * context
          */
         if (!SSL_CTX_check_private_key(ctx)) {
-            BIO_printf(bio_err,
+            BIO_puts(bio_err,
                 "Private key does not match the certificate public key\n");
             return 0;
         }
@@ -164,13 +164,13 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
     if (cert == NULL)
         return 1;
     if (SSL_CTX_use_certificate(ctx, cert) <= 0) {
-        BIO_printf(bio_err, "error setting certificate\n");
+        BIO_puts(bio_err, "error setting certificate\n");
         ERR_print_errors(bio_err);
         return 0;
     }
 
     if (SSL_CTX_use_PrivateKey(ctx, key) <= 0) {
-        BIO_printf(bio_err, "error setting private key\n");
+        BIO_puts(bio_err, "error setting private key\n");
         ERR_print_errors(bio_err);
         return 0;
     }
@@ -179,17 +179,17 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
      * Now we know that a key and cert have been set against the SSL context
      */
     if (!SSL_CTX_check_private_key(ctx)) {
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "Private key does not match the certificate public key\n");
         return 0;
     }
     if (chain && !SSL_CTX_set1_chain(ctx, chain)) {
-        BIO_printf(bio_err, "error setting certificate chain\n");
+        BIO_puts(bio_err, "error setting certificate chain\n");
         ERR_print_errors(bio_err);
         return 0;
     }
     if (build_chain && !SSL_CTX_build_cert_chain(ctx, chflags)) {
-        BIO_printf(bio_err, "error building certificate chain\n");
+        BIO_puts(bio_err, "error building certificate chain\n");
         ERR_print_errors(bio_err);
         return 0;
     }
@@ -274,9 +274,9 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
 
     client = SSL_is_server(s) ? 0 : 1;
     if (shared)
-        nsig = SSL_get_shared_sigalgs(s, 0, NULL, NULL, NULL, NULL, NULL);
+        nsig = SSL_get0_shared_sigalg(s, -1, NULL, NULL);
     else
-        nsig = SSL_get_sigalgs(s, -1, NULL, NULL, NULL, NULL, NULL);
+        nsig = SSL_get0_sigalg(s, -1, NULL, NULL);
     if (nsig == 0)
         return 1;
 
@@ -287,45 +287,19 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
         BIO_puts(out, "Requested ");
     BIO_puts(out, "Signature Algorithms: ");
     for (i = 0; i < nsig; i++) {
-        int hash_nid, sign_nid;
-        unsigned char rhash, rsign;
-        const char *sstr = NULL;
+        const char *name = NULL;
+        unsigned int codepoint;
+
         if (shared)
-            SSL_get_shared_sigalgs(s, i, &sign_nid, &hash_nid, NULL,
-                &rsign, &rhash);
+            SSL_get0_shared_sigalg(s, i, &codepoint, &name);
         else
-            SSL_get_sigalgs(s, i, &sign_nid, &hash_nid, NULL, &rsign, &rhash);
-        if (i)
+            SSL_get0_sigalg(s, i, &codepoint, &name);
+        if (i > 0)
             BIO_puts(out, ":");
-        switch (rsign | rhash << 8) {
-        case 0x0809:
-            BIO_puts(out, "rsa_pss_pss_sha256");
-            continue;
-        case 0x080a:
-            BIO_puts(out, "rsa_pss_pss_sha384");
-            continue;
-        case 0x080b:
-            BIO_puts(out, "rsa_pss_pss_sha512");
-            continue;
-        case 0x081a:
-            BIO_puts(out, "ecdsa_brainpoolP256r1_sha256");
-            continue;
-        case 0x081b:
-            BIO_puts(out, "ecdsa_brainpoolP384r1_sha384");
-            continue;
-        case 0x081c:
-            BIO_puts(out, "ecdsa_brainpoolP512r1_sha512");
-            continue;
-        }
-        sstr = get_sigtype(sign_nid);
-        if (sstr)
-            BIO_printf(out, "%s", sstr);
+        if (name != NULL)
+            BIO_puts(out, name);
         else
-            BIO_printf(out, "0x%02X", (int)rsign);
-        if (hash_nid != NID_undef)
-            BIO_printf(out, "+%s", OBJ_nid2sn(hash_nid));
-        else if (sstr == NULL)
-            BIO_printf(out, "+0x%02X", (int)rhash);
+            BIO_printf(out, "0x%04X", codepoint);
     }
     BIO_puts(out, "\n");
     return 1;
@@ -399,7 +373,8 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
         if (i)
             BIO_puts(out, ":");
         nid = groups[i];
-        BIO_printf(out, "%s", SSL_group_to_name(s, nid));
+        const char *name = SSL_group_to_name(s, nid);
+        BIO_puts(out, ((name != NULL) ? name : "(null)"));
     }
     OPENSSL_free(groups);
     if (noshared) {
@@ -412,7 +387,8 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
         if (i)
             BIO_puts(out, ":");
         nid = SSL_get_shared_group(s, i);
-        BIO_printf(out, "%s", SSL_group_to_name(s, nid));
+        const char *name = SSL_group_to_name(s, nid);
+        BIO_puts(out, ((name != NULL) ? name : "(null)"));
     }
     if (ngroups == 0)
         BIO_puts(out, "NONE");
@@ -723,16 +699,16 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
     if (len > 0) {
         size_t num, i;
 
-        BIO_printf(bio, "   ");
+        BIO_puts(bio, "   ");
         num = len;
         for (i = 0; i < num; i++) {
             if (i % 16 == 0 && i > 0)
-                BIO_printf(bio, "\n   ");
+                BIO_puts(bio, "\n   ");
             BIO_printf(bio, " %02x", ((const unsigned char *)buf)[i]);
         }
         if (i < len)
-            BIO_printf(bio, " ...");
-        BIO_printf(bio, "\n");
+            BIO_puts(bio, " ...");
+        BIO_puts(bio, "\n");
     }
     (void)BIO_flush(bio);
 }
@@ -780,6 +756,10 @@ static const STRINT_PAIR tlsext_types[] = {
     { "certificate authorities", TLSEXT_TYPE_certificate_authorities },
     { "post handshake auth", TLSEXT_TYPE_post_handshake_auth },
     { "early_data", TLSEXT_TYPE_early_data },
+#ifndef OPENSSL_NO_ECH
+    { "encrypted ClientHello (draft-13)", TLSEXT_TYPE_ech },
+    { "outer exts", TLSEXT_TYPE_outer_extensions },
+#endif
     { NULL }
 };
 
@@ -855,7 +835,7 @@ int generate_stateless_cookie_callback(SSL *ssl, unsigned char *cookie,
     /* Initialize a random secret */
     if (!cookie_initialized) {
         if (RAND_bytes(cookie_secret, COOKIE_SECRET_LENGTH) <= 0) {
-            BIO_printf(bio_err, "error setting random cookie secret\n");
+            BIO_puts(bio_err, "error setting random cookie secret\n");
             return 0;
         }
         cookie_initialized = 1;
@@ -864,7 +844,7 @@ int generate_stateless_cookie_callback(SSL *ssl, unsigned char *cookie,
     if (SSL_is_dtls(ssl)) {
         lpeer = peer = BIO_ADDR_new();
         if (peer == NULL) {
-            BIO_printf(bio_err, "memory full\n");
+            BIO_puts(bio_err, "memory full\n");
             return 0;
         }
 
@@ -876,7 +856,7 @@ int generate_stateless_cookie_callback(SSL *ssl, unsigned char *cookie,
 
     /* Create buffer with peer's address and port */
     if (!BIO_ADDR_rawaddress(peer, NULL, &length)) {
-        BIO_printf(bio_err, "Failed getting peer address\n");
+        BIO_puts(bio_err, "Failed getting peer address\n");
         BIO_ADDR_free(lpeer);
         return 0;
     }
@@ -893,7 +873,7 @@ int generate_stateless_cookie_callback(SSL *ssl, unsigned char *cookie,
             cookie_secret, COOKIE_SECRET_LENGTH, buffer, length,
             cookie, DTLS1_COOKIE_LENGTH, cookie_len)
         == NULL) {
-        BIO_printf(bio_err,
+        BIO_puts(bio_err,
             "Error calculating HMAC-SHA1 of buffer with secret\n");
         goto end;
     }
@@ -983,11 +963,11 @@ static void print_chain_flags(SSL *s, int flags)
         BIO_printf(bio_err, "\t%s: %s\n",
             pp->name,
             (flags & pp->retval) ? "OK" : "NOT OK");
-    BIO_printf(bio_err, "\tSuite B: ");
+    BIO_puts(bio_err, "\tSuite B: ");
     if (SSL_set_cert_flags(s, 0) & SSL_CERT_FLAG_SUITEB_128_LOS)
         BIO_puts(bio_err, flags & CERT_PKEY_SUITEB ? "OK\n" : "NOT OK\n");
     else
-        BIO_printf(bio_err, "not tested\n");
+        BIO_puts(bio_err, "not tested\n");
 }
 
 /*
@@ -1109,7 +1089,7 @@ int load_excert(SSL_EXCERT **pexc)
     }
     for (; exc; exc = exc->next) {
         if (exc->certfile == NULL) {
-            BIO_printf(bio_err, "Missing filename\n");
+            BIO_puts(bio_err, "Missing filename\n");
             return 0;
         }
         exc->cert = load_cert(exc->certfile, exc->certform,
@@ -1264,7 +1244,7 @@ void print_verify_detail(SSL *s, BIO *bio)
     if (verify_err == X509_V_OK) {
         const char *peername = SSL_get0_peername(s);
 
-        BIO_printf(bio, "Verification: OK\n");
+        BIO_puts(bio, "Verification: OK\n");
         if (peername != NULL)
             BIO_printf(bio, "Verified peername: %s\n", peername);
     } else {
@@ -1302,7 +1282,7 @@ void print_verify_detail(SSL *s, BIO *bio)
                                                             : "matched the EE",
                 mdpth);
         else
-            BIO_printf(bio, "matched the peer raw public key\n");
+            BIO_puts(bio, "matched the peer raw public key\n");
         OPENSSL_free(hexdata);
     }
 }
@@ -1313,6 +1293,7 @@ void print_ssl_summary(SSL *s)
     const SSL_CIPHER *c;
     X509 *peer = SSL_get0_peer_certificate(s);
     EVP_PKEY *peer_rpk = SSL_get0_peer_rpk(s);
+    const char *local_sigalg = NULL;
     int nid;
 
     BIO_printf(bio_err, "Protocol version: %s\n", SSL_get_version(s));
@@ -1320,6 +1301,9 @@ void print_ssl_summary(SSL *s)
     c = SSL_get_current_cipher(s);
     BIO_printf(bio_err, "Ciphersuite: %s\n", SSL_CIPHER_get_name(c));
     do_print_sigalgs(bio_err, s, 0);
+    if (SSL_get0_signature_name(s, &local_sigalg) > 0
+        && local_sigalg != NULL)
+        BIO_printf(bio_err, "Own signature type: %s\n", local_sigalg);
     if (peer != NULL) {
         BIO_puts(bio_err, "Peer certificate: ");
         X509_NAME_print_ex(bio_err, X509_get_subject_name(peer),
@@ -1331,7 +1315,7 @@ void print_ssl_summary(SSL *s)
             BIO_printf(bio_err, "Signature type: %s\n", sigalg);
         print_verify_detail(s, bio_err);
     } else if (peer_rpk != NULL) {
-        BIO_printf(bio_err, "Peer used raw public key\n");
+        BIO_puts(bio_err, "Peer used raw public key\n");
         if (SSL_get0_peer_signature_name(s, &sigalg))
             BIO_printf(bio_err, "Signature type: %s\n", sigalg);
         print_verify_detail(s, bio_err);
@@ -1597,7 +1581,7 @@ void ssl_ctx_security_debug(SSL_CTX *ctx, int verbose)
 static void keylog_callback(const SSL *ssl, const char *line)
 {
     if (bio_keylog == NULL) {
-        BIO_printf(bio_err, "Keylog callback is invoked without valid file!\n");
+        BIO_puts(bio_err, "Keylog callback is invoked without valid file!\n");
         return;
     }
 
@@ -1666,7 +1650,7 @@ void ssl_print_secure_renegotiation_notes(BIO *bio, SSL *s)
         BIO_printf(bio, "Secure Renegotiation IS%s supported\n",
             SSL_get_secure_renegotiation_support(s) ? "" : " NOT");
     } else {
-        BIO_printf(bio, "This TLS version forbids renegotiation.\n");
+        BIO_puts(bio, "This TLS version forbids renegotiation.\n");
     }
 }
 

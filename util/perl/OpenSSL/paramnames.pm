@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -14,7 +14,8 @@ use warnings;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(generate_public_macros
-                    produce_param_decoder);
+                    produce_param_decoder
+                    produce_param_decoder_with_count);
 
 my $case_sensitive = 1;
 my $need_break = 0;
@@ -225,6 +226,10 @@ my %params = (
     'OSSL_KDF_PARAM_PKCS5' =>        "pkcs5",                    # int
     'OSSL_KDF_PARAM_UKM' =>          "ukm",                      # octet string
     'OSSL_KDF_PARAM_CEK_ALG' =>      "cekalg",                   # utf8 string
+    'OSSL_KDF_PARAM_IKEV2KDF_NI' =>  "ni",                       # octet string
+    'OSSL_KDF_PARAM_IKEV2KDF_NR' =>  "nr",                       # octet string
+    'OSSL_KDF_PARAM_IKEV2KDF_SPII' => "spii",                    # octet string
+    'OSSL_KDF_PARAM_IKEV2KDF_SPIR' => "spir",                    # octet string
     'OSSL_KDF_PARAM_SCRYPT_N' =>     "n",                        # uint64_t
     'OSSL_KDF_PARAM_SCRYPT_R' =>     "r",                        # uint32_t
     'OSSL_KDF_PARAM_SCRYPT_P' =>     "p",                        # uint32_t
@@ -512,6 +517,7 @@ my %params = (
     'OSSL_SIGNATURE_PARAM_MU' =>                 "mu", # int
     'OSSL_SIGNATURE_PARAM_TEST_ENTROPY' =>       "test-entropy",
     'OSSL_SIGNATURE_PARAM_ADD_RANDOM' =>         "additional-random",
+    'OSSL_SIGNATURE_PARAM_TLS_VERSION' =>        "tls-version",
 
 # Asym cipher parameters
     'OSSL_ASYM_CIPHER_PARAM_DIGEST' =>                   '*OSSL_PKEY_PARAM_DIGEST',
@@ -690,6 +696,7 @@ sub generate_public_macros {
 }
 
 sub trie_matched {
+  my $with_count = shift;
   my $field = shift;
   my $num = shift;
   my $indent1 = shift;
@@ -705,6 +712,7 @@ sub trie_matched {
     printf "%s               \"param %%s present >%%d times\", s, $num);\n", $indent2;
     printf "%sreturn 0;\n", $indent2;
     printf "%s}\n", $indent1;
+    printf "%s++*count;\n", $indent1 if $with_count;
     printf "%sr->%s[r->num_%s++] = (OSSL_PARAM *)p;\n", $indent1, $field, $field;
   } else {
     printf "%sif (ossl_unlikely(r->%s != NULL)) {\n", $indent1, $field;
@@ -712,11 +720,13 @@ sub trie_matched {
     printf "%s               \"param %%s is repeated\", s);\n", $indent2;
     printf "%sreturn 0;\n", $indent2;
     printf "%s}\n", $indent1;
+    printf "%s++*count;\n", $indent1 if $with_count;
     printf "%sr->%s = (OSSL_PARAM *)p;\n", $indent1, $field;
   }
 }
 
 sub generate_decoder_from_trie {
+    my $with_count = shift;
     my $n = shift;
     my $trieref = shift;
     my $identmap = shift;
@@ -743,7 +753,7 @@ sub generate_decoder_from_trie {
         }
         print ")) {\n";
         printf "%s/* %s */\n", $indent1, $trieref->{'name'};
-        trie_matched($field, $num, $indent1, $indent2);
+        trie_matched($with_count, $field, $num, $indent1, $indent2);
         printf "%s}\n", $indent0;
 
         # If this is at the top level and it's conditional, we have to
@@ -765,7 +775,7 @@ sub generate_decoder_from_trie {
             printf "%sbreak;\n", $indent1;
             printf "%scase '\\0':\n", $indent0;
             output_ifdef($ifdefs->{$field});
-            trie_matched($field, $num, $indent1, $indent2);
+            trie_matched($with_count, $field, $num, $indent1, $indent2);
             output_endifdef($ifdefs->{$field});
         } else {
             printf "%sbreak;\n", $indent1;
@@ -775,7 +785,7 @@ sub generate_decoder_from_trie {
                 printf "   case '%s':", uc $l if ($l =~ /[a-z]/);
             }
             print "\n";
-            generate_decoder_from_trie($n + 1, $trieref->{$l}, $identmap, $concat_num, $ifdefs);
+            generate_decoder_from_trie($with_count, $n + 1, $trieref->{$l}, $identmap, $concat_num, $ifdefs);
         }
     }
     if ($need_break) {
@@ -848,8 +858,7 @@ sub locate_long_endings {
 }
 
 sub output_param_decoder {
-    my $decoder_name_base = shift;
-    my @params = @_;
+    my ($with_count, $decoder_name_base, @params) = @_;
     my @keys = ();
     my %prms = ();
     my %concat_num = ();
@@ -930,13 +939,15 @@ sub output_param_decoder {
 
     printf "#ifndef %s_decoder\n", $decoder_name_base;
     printf "static int %s_decoder\n", $decoder_name_base;
-    printf "    (const OSSL_PARAM *p, struct %s_st *r)\n", $decoder_name_base;
+    printf "    (const OSSL_PARAM *p, struct %s_st *r", $decoder_name_base;
+    printf "%s)\n", ($with_count ? ", int *count" : "");
     print "{\n";
     print "    const char *s;\n\n";
+    print "    *count = 0;\n" if $with_count;
     print "    memset(r, 0, sizeof(*r));\n";
     print "    if (p != NULL)\n";
     print "        for (; (s = p->key) != NULL; p++)\n";
-    generate_decoder_from_trie(0, \%t, \%prms, \%concat_num, \%ifdefs);
+    generate_decoder_from_trie($with_count, 0, \%t, \%prms, \%concat_num, \%ifdefs);
     print "    return 1;\n";
     print "}\n#endif\n";
     print "/* End of machine generated */";
@@ -946,6 +957,14 @@ sub produce_param_decoder {
     my $s;
 
     open(local *STDOUT, '>', \$s);
-    output_param_decoder(@_);
+    output_param_decoder(0, @_);
+    return $s;
+}
+
+sub produce_param_decoder_with_count {
+    my $s;
+
+    open(local *STDOUT, '>', \$s);
+    output_param_decoder(1, @_);
     return $s;
 }

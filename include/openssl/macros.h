@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -94,6 +94,8 @@
 #define OSSL_DEPRECATED(since) extern
 #define OSSL_DEPRECATED_FOR(since, message) extern
 #define OSSL_DEPRECATED_MESSAGE(message)
+#define OSSL_BEGIN_ALLOW_DEPRECATED
+#define OSSL_END_ALLOW_DEPRECATED
 #endif
 
 /*
@@ -185,8 +187,10 @@
  * 'no-deprecated'.
  */
 
+#undef OPENSSL_NO_DEPRECATED_4_1
 #undef OPENSSL_NO_DEPRECATED_4_0
 #undef OPENSSL_NO_DEPRECATED_3_6
+#undef OPENSSL_NO_DEPRECATED_3_5
 #undef OPENSSL_NO_DEPRECATED_3_4
 #undef OPENSSL_NO_DEPRECATED_3_1
 #undef OPENSSL_NO_DEPRECATED_3_0
@@ -197,6 +201,17 @@
 #undef OPENSSL_NO_DEPRECATED_1_0_0
 #undef OPENSSL_NO_DEPRECATED_0_9_8
 
+#if OPENSSL_API_LEVEL >= 40100
+#ifndef OPENSSL_NO_DEPRECATED
+#define OSSL_DEPRECATEDIN_4_1 OSSL_DEPRECATED(4.1)
+#define OSSL_DEPRECATEDIN_4_1_FOR(msg) OSSL_DEPRECATED_FOR(4.1, msg)
+#else
+#define OPENSSL_NO_DEPRECATED_4_1
+#endif
+#else
+#define OSSL_DEPRECATEDIN_4_1
+#define OSSL_DEPRECATEDIN_4_1_FOR(msg)
+#endif
 #if OPENSSL_API_LEVEL >= 40000
 #ifndef OPENSSL_NO_DEPRECATED
 #define OSSL_DEPRECATEDIN_4_0 OSSL_DEPRECATED(4.0)

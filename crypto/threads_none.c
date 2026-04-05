@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -271,6 +271,13 @@ int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock)
 int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock)
 {
     *ret = *val;
+
+    return 1;
+}
+
+int CRYPTO_atomic_store_int(int *dst, int val, CRYPTO_RWLOCK *lock)
+{
+    *dst = val;
 
     return 1;
 }

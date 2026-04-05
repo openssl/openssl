@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,12 +25,14 @@
 #include <openssl/dsa.h>
 #include <openssl/x509v3.h>
 #include "internal/asn1.h"
+#include "crypto/asn1.h"
 #include "crypto/pkcs7.h"
 #include "crypto/x509.h"
 #include "crypto/x509_acert.h"
 #include "crypto/rsa.h"
+#include "x509_local.h"
 
-int X509_verify(X509 *a, EVP_PKEY *r)
+int X509_verify(const X509 *a, EVP_PKEY *r)
 {
     if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature) != 0)
         return 0;
@@ -74,14 +76,32 @@ int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
         &a->sig_algor, a->signature, a->spkac, r);
 }
 
+/* Detect invalid empty SKID or AKID extensions. */
+
+static int bad_keyid_exts(const STACK_OF(X509_EXTENSION) *exts)
+{
+    int i, n = sk_X509_EXTENSION_num(exts);
+
+    for (i = 0; i < n; ++i) {
+        X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
+
+        if (ossl_ignored_x509_extension(ext, X509V3_ADD_DEFAULT))
+            return 1;
+    }
+    return 0;
+}
+
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
+    const STACK_OF(X509_EXTENSION) *exts;
+
     if (x == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if (sk_X509_EXTENSION_num(X509_get0_extensions(x)) > 0
-        && !X509_set_version(x, X509_VERSION_3))
+    if ((exts = X509_get0_extensions(x)) != NULL
+        && sk_X509_EXTENSION_num(exts) > 0
+        && (bad_keyid_exts(exts) || !X509_set_version(x, X509_VERSION_3)))
         return 0;
 
     /*
@@ -99,10 +119,14 @@ int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
 {
+    const STACK_OF(X509_EXTENSION) *exts;
+
     if (x == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if ((exts = X509_get0_extensions(x)) != NULL && bad_keyid_exts(exts))
+        return 0;
     if (sk_X509_EXTENSION_num(X509_get0_extensions(x)) > 0
         && !X509_set_version(x, X509_VERSION_3))
         return 0;
@@ -139,10 +163,18 @@ X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)
 
 int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
+    STACK_OF(X509_EXTENSION) *exts;
+    int bad = 0;
+
     if (x == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if ((exts = ossl_x509_req_get1_extensions_by_nid(x, NID_ext_req)) != NULL)
+        bad = bad_keyid_exts(exts);
+    sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+    if (bad)
+        return 0;
     x->req_info.enc.modified = 1;
     return ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_REQ_INFO), &x->sig_alg, NULL,
         x->signature, &x->req_info, NULL,
@@ -151,10 +183,18 @@ int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md)
 
 int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx)
 {
+    STACK_OF(X509_EXTENSION) *exts;
+    int bad = 0;
+
     if (x == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if ((exts = ossl_x509_req_get1_extensions_by_nid(x, NID_ext_req)) != NULL)
+        bad = bad_keyid_exts(exts);
+    sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+    if (bad)
+        return 0;
     x->req_info.enc.modified = 1;
     return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_REQ_INFO),
         &x->sig_alg, NULL, x->signature, &x->req_info,
@@ -584,8 +624,7 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
         }
     } else if ((md = EVP_MD_fetch(cert->libctx, OBJ_nid2sn(mdnid),
                     cert->propq))
-            == NULL
-        && (md = (EVP_MD *)EVP_get_digestbynid(mdnid)) == NULL) {
+        == NULL) {
         ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
         return NULL;
     }

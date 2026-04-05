@@ -52,6 +52,13 @@ Regardless of the value, the operation (e.g., key generation) that called the
 continuous test will return an error code if its continuous test fails. The
 operation may then be retried if the error mode has not been triggered.
 
+=item B<defer-tests>
+
+If set to C<1>, the module will not run the self tests during initialization.
+Instead, the self tests will be run on demand when a particular algorithm is
+used.
+The default value of C<0> runs the self tests during initialization.
+
 =item B<module-mac>
 
 The calculated MAC of the FIPS provider file.
@@ -227,7 +234,7 @@ This functionality was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

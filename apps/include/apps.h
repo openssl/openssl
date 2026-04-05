@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,16 @@
 
 #ifndef OSSL_APPS_H
 #define OSSL_APPS_H
+
+#if defined(__linux__) || defined(__sun__) || defined(__hpux)
+/*
+ * Allow open() and stat() to work with files larger than 2GB on 32-bit
+ * systems.  See crypto/o_fopen.c and crypto/bio/bss_file.c.
+ */
+#ifndef _FILE_OFFSET_BITS
+#define _FILE_OFFSET_BITS 64
+#endif
+#endif
 
 #include "internal/common.h" /* for HAS_PREFIX */
 #include "internal/nelem.h"
@@ -22,6 +32,19 @@
 #endif
 
 #include <openssl/e_os2.h>
+#if defined(OPENSSL_SYS_UNIX) && defined(_POSIX_MAPPED_FILES) && _POSIX_MAPPED_FILES > 0
+#include <sys/mman.h>
+#include <unistd.h>
+/*
+ * Map a file read-only into memory.  Returns 1 on success (*out_data and
+ * *out_size set; caller must munmap when done), 0 when file size is 0 (no
+ * error, caller may use buffer path), or -1 on error (message printed to
+ * bio_err).  known_size: (size_t)-1 = stat to get size; 0 = do not map
+ * (return 0); > 0 = use this size (caller obtained it from stat of same path).
+ */
+int app_mmap_file(const char *path, BIO *err_bio, size_t known_size,
+    const unsigned char **out_data, size_t *out_size);
+#endif
 #include <openssl/types.h>
 #include <openssl/bio.h>
 #include <openssl/x509.h>
@@ -78,7 +101,7 @@ void wait_for_async(SSL *s);
 int has_stdin_waiting(void);
 #endif
 
-void corrupt_signature(const ASN1_STRING *signature);
+int corrupt_signature(ASN1_STRING *signature);
 
 /* Helpers for setting X509v3 certificate fields notBefore and notAfter */
 int check_cert_time_string(const char *time, const char *desc);
@@ -163,6 +186,7 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
     EVP_SKEY **pskey);
 EVP_SKEY *load_skey(const char *uri, int format, int maybe_stdin,
     const char *pass, int quiet);
+int load_rpk_file(SSL *ssl, const char *file);
 X509_STORE *setup_verify(const char *CAfile, int noCAfile,
     const char *CApath, int noCApath,
     const char *CAstore, int noCAstore);
@@ -219,7 +243,7 @@ typedef struct ca_db_st {
 #endif
 } CA_DB;
 
-extern int do_updatedb(CA_DB *db, time_t *now);
+extern int do_updatedb(CA_DB *db, const time_t *now);
 
 void app_bail_out(char *fmt, ...);
 /**
@@ -275,6 +299,10 @@ int init_gen_str(EVP_PKEY_CTX **pctx,
     const char *algname, int do_param,
     OSSL_LIB_CTX *libctx, const char *propq);
 int cert_matches_key(const X509 *cert, const EVP_PKEY *pkey);
+int do_EXT_add_nconf(CONF *conf1, CONF *conf2, X509V3_CTX *ctx,
+    X509 *cert, const char *msg, const char *sect);
+int do_EXT_REQ_add_nconf(CONF *conf1, CONF *conf2, X509V3_CTX *ctx,
+    X509_REQ *req, const char *msg, const char *sect);
 int do_X509_sign(X509 *x, int force_v1, EVP_PKEY *pkey, const char *md,
     STACK_OF(OPENSSL_STRING) *sigopts, X509V3_CTX *ext_ctx);
 int do_X509_verify(X509 *x, EVP_PKEY *pkey, STACK_OF(OPENSSL_STRING) *vfyopts);

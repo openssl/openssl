@@ -61,11 +61,11 @@ X509_ATTRIBUTE_get0_data, X509_ATTRIBUTE_get0_object, X509_ATTRIBUTE_get0_type
  int X509_ATTRIBUTE_set1_object(X509_ATTRIBUTE *attr, const ASN1_OBJECT *obj);
  int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
                               const void *data, int len);
- void *X509_ATTRIBUTE_get0_data(X509_ATTRIBUTE *attr, int idx, int atrtype,
-                                void *data);
+ const void *X509_ATTRIBUTE_get0_data(const X509_ATTRIBUTE *attr, int idx,
+                                      int atrtype, void *data);
  int X509_ATTRIBUTE_count(const X509_ATTRIBUTE *attr);
- ASN1_OBJECT *X509_ATTRIBUTE_get0_object(X509_ATTRIBUTE *attr);
- ASN1_TYPE *X509_ATTRIBUTE_get0_type(X509_ATTRIBUTE *attr, int idx);
+ const ASN1_OBJECT *X509_ATTRIBUTE_get0_object(const X509_ATTRIBUTE *attr);
+ const ASN1_TYPE *X509_ATTRIBUTE_get0_type(const X509_ATTRIBUTE *attr, int idx);
 
 =head1 DESCRIPTION
 
@@ -253,7 +253,7 @@ L<PKCS8_pkey_get0_attrs(3)>,
 
 =head1 COPYRIGHT
 
-Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

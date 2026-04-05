@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,6 +25,7 @@
 #include <openssl/prov_ssl.h>
 #include "internal/constant_time.h"
 #include "internal/cryptlib.h"
+#include "internal/fips.h"
 #include "internal/sizes.h"
 #include "crypto/rsa.h"
 #include "prov/provider_ctx.h"
@@ -86,6 +87,13 @@ static void *rsa_newctx(void *provctx)
 
     if (!ossl_prov_is_running())
         return NULL;
+
+#ifdef FIPS_MODULE
+    if (!ossl_deferred_self_test(PROV_LIBCTX_OF(provctx),
+            ST_ID_ASYM_CIPHER_RSA_ENC))
+        return NULL;
+#endif
+
     prsactx = OPENSSL_zalloc(sizeof(PROV_RSA_CTX));
     if (prsactx == NULL)
         return NULL;
@@ -165,7 +173,7 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
         && !OSSL_FIPS_IND_ON_UNAPPROVED(prsactx, OSSL_FIPS_IND_SETTABLE1,
             prsactx->libctx, "RSA Encrypt",
             "PKCS#1 v1.5 padding",
-            ossl_fips_config_rsa_pkcs15_padding_disabled)) {
+            FIPS_CONFIG_RSA_PKCS15_PAD_DISABLED)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PADDING_MODE);
         return 0;
     }
@@ -450,9 +458,12 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
     char mdname[OSSL_MAX_NAME_SIZE];
     char mdprops[OSSL_MAX_PROPQUERY_SIZE] = { '\0' };
     char *str = NULL;
+    int count = 0;
 
-    if (prsactx == NULL || !rsa_set_ctx_params_decoder(params, &p))
+    if (prsactx == NULL || !rsa_set_ctx_params_decoder(params, &p, &count))
         return 0;
+    if (count == 0)
+        return 1;
 
     if (!OSSL_FIPS_IND_SET_CTX_FROM_PARAM(prsactx, OSSL_FIPS_IND_SETTABLE0, p.ind_k))
         return 0;

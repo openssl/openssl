@@ -3,6 +3,16 @@
 =head1 NAME
 
 ASN1_STRING_data,
+BIO_f_reliable,
+DTLSv1_method,
+DTLSv1_server_method,
+DTLSv1_client_method,
+DTLSv1_2_method,
+DTLSv1_2_server_method,
+DTLSv1_2_client_method,
+ERR_get_state,
+ERR_remove_state,
+ERR_remove_thread_state,
 EVP_CIPHER_meth_new,
 EVP_CIPHER_meth_dup,
 EVP_CIPHER_meth_free,
@@ -93,7 +103,6 @@ EVP_PKEY_meth_get_check,
 EVP_PKEY_meth_get_public_check,
 EVP_PKEY_meth_get_param_check,
 EVP_PKEY_meth_get_digest_custom,
-BIO_f_reliable,
 EVP_MD_CTX_update_fn,
 EVP_MD_CTX_set_update_fn,
 EVP_PKEY_asn1_add0,
@@ -122,6 +131,19 @@ EVP_PKEY_asn1_set_set_pub_key,
 EVP_PKEY_asn1_set_get_priv_key,
 EVP_PKEY_asn1_set_get_pub_key,
 EVP_PKEY_asn1_set_security_bits,
+OPENSSL_atexit,
+SSLv3_method,
+SSLv3_server_method,
+SSLv3_client_method,
+TLSv1_method,
+TLSv1_server_method,
+TLSv1_client_method,
+TLSv1_1_method,
+TLSv1_1_server_method,
+TLSv1_1_client_method,
+TLSv1_2_method,
+TLSv1_2_server_method,
+TLSv1_2_client_method,
 ossl-removed-api - API that has been removed from OpenSSL
 
 =head1 SYNOPSIS
@@ -152,6 +174,26 @@ This includes consulting the L<ossl-guide-migration(7)> documentation.
 =over 4
 
 =item ASN1_STRING_data (Deprecated in 1.1.1) - see L<ASN1_STRING_get0_data(3)>
+
+=item BIO_f_reliable (Broken since 3.0.0) - removed without replacement
+
+=item DTLSv1_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item DTLSv1_client_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item DTLSv1_server_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item DTLSv1_2_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item DTLSv1_2_client_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item DTLSv1_2_server_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item ERR_get_state (Deprecated in 3.0.0) - removed, no use with opaque ERR_STATE
+
+=item ERR_remove_state (Deprecated in 1.0.0) - removed, no-op
+
+=item ERR_remove_thread_state (Deprecated in 1.1.0) - removed, no-op
 
 =item EVP_CIPHER_meth_new (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
 
@@ -333,8 +375,6 @@ This includes consulting the L<ossl-guide-migration(7)> documentation.
 
 =item EVP_PKEY_meth_get_digest_custom (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
 
-=item BIO_f_reliable (Broken since 3.0.0) - removed without replacement
-
 =item EVP_MD_CTX_update_fn (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
 
 =item EVP_MD_CTX_set_update_fn (Deprecated in 3.0.0) - consult L<ossl-guide-migration(7)>
@@ -391,6 +431,32 @@ This includes consulting the L<ossl-guide-migration(7)> documentation.
 
 =item EVP_PKEY_asn1_set_security_bits (Deprecated in 3.6.0) - consult L<ossl-guide-migration(7)>
 
+=item OPENSSL_atexit - No longer used, use libc atexit() if you must use this.
+
+=item SSLv3_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item SSLv3_server_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item SSLv3_client_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item TLSv1_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item TLSv1_server_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item TLSv1_client_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item TLSv1_1_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item TLSv1_1_server_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item TLSv1_1_client_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item TLSv1_2_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item TLSv1_2_server_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
+=item TLSv1_2_client_method (Deprecated in 1.1.0) - consult L<ossl-guide-migration(7)>
+
 =back
 
 =head1 SEE ALSO
@@ -399,7 +465,7 @@ L<ossl-guide-migration(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

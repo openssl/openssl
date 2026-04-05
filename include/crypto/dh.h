@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,7 @@
 
 DH *ossl_dh_new_by_nid_ex(OSSL_LIB_CTX *libctx, int nid);
 DH *ossl_dh_new_ex(OSSL_LIB_CTX *libctx);
+OSSL_LIB_CTX *ossl_dh_get0_libctx(const DH *dh);
 void ossl_dh_set0_libctx(DH *d, OSSL_LIB_CTX *libctx);
 int ossl_dh_generate_ffc_parameters(DH *dh, int type, int pbits, int qbits,
     BN_GENCB *cb);

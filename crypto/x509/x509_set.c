@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -140,12 +140,12 @@ const ASN1_TIME *X509_get0_notAfter(const X509 *x)
     return x->cert_info.validity.notAfter;
 }
 
-ASN1_TIME *X509_getm_notBefore(const X509 *x)
+ASN1_TIME *X509_getm_notBefore(X509 *x)
 {
     return x->cert_info.validity.notBefore;
 }
 
-ASN1_TIME *X509_getm_notAfter(const X509 *x)
+ASN1_TIME *X509_getm_notAfter(X509 *x)
 {
     return x->cert_info.validity.notAfter;
 }
@@ -202,7 +202,7 @@ void X509_SIG_INFO_set(X509_SIG_INFO *siginf, int mdnid, int pknid,
     siginf->flags = flags;
 }
 
-int X509_get_signature_info(X509 *x, int *mdnid, int *pknid, int *secbits,
+int X509_get_signature_info(const X509 *x, int *mdnid, int *pknid, int *secbits,
     uint32_t *flags)
 {
     X509_check_purpose(x, -1, -1);
@@ -298,8 +298,8 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
 }
 
 /* Returns 1 on success, 0 on failure */
-int ossl_x509_init_sig_info(X509 *x)
+int ossl_x509_init_sig_info(const X509 *x, X509_SIG_INFO *info)
 {
-    return x509_sig_info_init(&x->siginf, &x->sig_alg, &x->signature,
+    return x509_sig_info_init(info, &x->sig_alg, &x->signature,
         X509_PUBKEY_get0(x->cert_info.key));
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -30,11 +30,14 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
+        OPENSSL_cpuid_setup();
         break;
     case DLL_THREAD_ATTACH:
         break;
     case DLL_THREAD_DETACH:
+#ifndef __CYGWIN__
         OPENSSL_thread_stop();
+#endif
         break;
     case DLL_PROCESS_DETACH:
 #if defined(OSSL_DLLMAIN_DESTRUCTOR)

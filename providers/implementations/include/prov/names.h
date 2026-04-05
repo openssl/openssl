@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -292,6 +292,7 @@
 #define PROV_DESCS_HKDF_SHA384_SIGN "OpenSSL HKDF-SHA384 via EVP_PKEY implementation"
 #define PROV_NAMES_HKDF_SHA512 "HKDF-SHA512:id-alg-hkdf-with-sha512:1.2.840.113549.1.9.16.3.30"
 #define PROV_DESCS_HKDF_SHA512_SIGN "OpenSSL HKDF-SHA512 via EVP_PKEY implementation"
+#define PROV_NAMES_IKEV2KDF "IKEV2KDF"
 #define PROV_NAMES_TLS1_3_KDF "TLS13-KDF"
 #define PROV_NAMES_SSKDF "SSKDF"
 #define PROV_NAMES_PBKDF1 "PBKDF1"
@@ -414,7 +415,9 @@
 #define PROV_DESCS_RSA_PSS "OpenSSL RSA-PSS implementation"
 #define PROV_NAMES_SM2 "SM2:1.2.156.10197.1.301"
 #define PROV_DESCS_SM2 "OpenSSL SM2 implementation"
-#define PROV_NAMES_LMS "LMS"
+#define PROV_NAMES_curveSM2 "curveSM2"
+#define PROV_DESCS_curveSM2 "OpenSSL curveSM2 implementation"
+#define PROV_NAMES_LMS "LMS:id-alg-hss-lms-hashsig:1.2.840.113549.1.9.16.3.17"
 #define PROV_DESCS_LMS "OpenSSL LMS implementation"
 #define PROV_NAMES_ML_DSA_44 "ML-DSA-44:MLDSA44:2.16.840.1.101.3.4.3.17:id-ml-dsa-44"
 #define PROV_DESCS_ML_DSA_44 "OpenSSL ML-DSA-44 implementation"
@@ -436,6 +439,8 @@
 #define PROV_DESCS_SecP256r1MLKEM768 "P-256+ML-KEM-768 TLS hybrid implementation"
 #define PROV_NAMES_SecP384r1MLKEM1024 "SecP384r1MLKEM1024"
 #define PROV_DESCS_SecP384r1MLKEM1024 "P-384+ML-KEM-1024 TLS hybrid implementation"
+#define PROV_NAMES_curveSM2MLKEM768 "curveSM2MLKEM768"
+#define PROV_DESCS_curveSM2MLKEM768 "curveSM2+ML-KEM-768 TLS hybrid implementation"
 #define PROV_NAMES_SLH_DSA_SHA2_128S "SLH-DSA-SHA2-128s:id-slh-dsa-sha2-128s:2.16.840.1.101.3.4.3.20"
 #define PROV_NAMES_SLH_DSA_SHA2_128F "SLH-DSA-SHA2-128f:id-slh-dsa-sha2-128f:2.16.840.1.101.3.4.3.21"
 #define PROV_NAMES_SLH_DSA_SHA2_192S "SLH-DSA-SHA2-192s:id-slh-dsa-sha2-192s:2.16.840.1.101.3.4.3.22"

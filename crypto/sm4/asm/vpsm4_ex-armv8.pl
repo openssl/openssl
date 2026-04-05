@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -476,12 +476,13 @@ sub load_sbox () {
 
 $code.=<<___;
 	adrp $xtmp2, .Lsbox_magic
-	ldr $MaskQ, [$xtmp2, #:lo12:.Lsbox_magic]
-	ldr $TAHMatQ, [$xtmp2, #:lo12:.Lsbox_magic+16]
-	ldr $TALMatQ, [$xtmp2, #:lo12:.Lsbox_magic+32]
-	ldr $ATAHMatQ, [$xtmp2, #:lo12:.Lsbox_magic+48]
-	ldr $ATALMatQ, [$xtmp2, #:lo12:.Lsbox_magic+64]
-	ldr $ANDMaskQ, [$xtmp2, #:lo12:.Lsbox_magic+80]
+	add $xtmp2, $xtmp2, #:lo12:.Lsbox_magic
+	ldr $MaskQ, [$xtmp2]
+	ldr $TAHMatQ, [$xtmp2, 16]
+	ldr $TALMatQ, [$xtmp2, 32]
+	ldr $ATAHMatQ, [$xtmp2, 48]
+	ldr $ATALMatQ, [$xtmp2, 64]
+	ldr $ANDMaskQ, [$xtmp2, 80]
 ___
 }
 

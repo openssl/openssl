@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -59,8 +59,10 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
     { SSL_CHACHA20POLY1305, NID_chacha20_poly1305 }, /* SSL_ENC_CHACHA_IDX 19 */
     { SSL_ARIA128GCM, NID_aria_128_gcm }, /* SSL_ENC_ARIA128GCM_IDX 20 */
     { SSL_ARIA256GCM, NID_aria_256_gcm }, /* SSL_ENC_ARIA256GCM_IDX 21 */
-    { SSL_MAGMA, NID_magma_ctr_acpkm }, /* SSL_ENC_MAGMA_IDX */
-    { SSL_KUZNYECHIK, NID_kuznyechik_ctr_acpkm }, /* SSL_ENC_KUZNYECHIK_IDX */
+    { SSL_MAGMA, NID_magma_ctr_acpkm }, /* SSL_ENC_MAGMA_IDX 22 */
+    { SSL_KUZNYECHIK, NID_kuznyechik_ctr_acpkm }, /* SSL_ENC_KUZNYECHIK_IDX 23 */
+    { SSL_SM4GCM, NID_sm4_gcm }, /* SSL_ENC_SM4GCM_IDX 24 */
+    { SSL_SM4CCM, NID_sm4_ccm }, /* SSL_ENC_SM4CCM_IDX 25 */
 };
 
 /* NB: make sure indices in this table matches values above */
@@ -77,8 +79,9 @@ static const ssl_cipher_table ssl_cipher_table_mac[SSL_MD_NUM_IDX] = {
     { 0, NID_md5_sha1 }, /* SSL_MD_MD5_SHA1_IDX 9 */
     { 0, NID_sha224 }, /* SSL_MD_SHA224_IDX 10 */
     { 0, NID_sha512 }, /* SSL_MD_SHA512_IDX 11 */
-    { SSL_MAGMAOMAC, NID_magma_mac }, /* sSL_MD_MAGMAOMAC_IDX */
-    { SSL_KUZNYECHIKOMAC, NID_kuznyechik_mac } /* SSL_MD_KUZNYECHIKOMAC_IDX */
+    { SSL_MAGMAOMAC, NID_magma_mac }, /* sSL_MD_MAGMAOMAC_IDX 12 */
+    { SSL_KUZNYECHIKOMAC, NID_kuznyechik_mac }, /* SSL_MD_KUZNYECHIKOMAC_IDX 13 */
+    { 0, NID_sm3 }, /* SSL_MD_SM3_IDX 14 */
 };
 
 /* *INDENT-OFF* */
@@ -262,14 +265,12 @@ static const SSL_CIPHER cipher_aliases[] = {
     { 0, SSL_TXT_LOW, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_LOW },
     { 0, SSL_TXT_MEDIUM, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_MEDIUM },
     { 0, SSL_TXT_HIGH, NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, SSL_HIGH },
-    /* FIPS 140-2 approved ciphersuite */
-    { 0, SSL_TXT_FIPS, NULL, 0, 0, 0, ~SSL_eNULL, 0, 0, 0, 0, 0, SSL_FIPS },
 
     /* "EDH-" aliases to "DHE-" labels (for backward compatibility) */
     { 0, SSL3_TXT_EDH_DSS_DES_192_CBC3_SHA, NULL, 0,
-        SSL_kDHE, SSL_aDSS, SSL_3DES, SSL_SHA1, 0, 0, 0, 0, SSL_HIGH | SSL_FIPS },
+        SSL_kDHE, SSL_aDSS, SSL_3DES, SSL_SHA1, 0, 0, 0, 0, SSL_HIGH },
     { 0, SSL3_TXT_EDH_RSA_DES_192_CBC3_SHA, NULL, 0,
-        SSL_kDHE, SSL_aRSA, SSL_3DES, SSL_SHA1, 0, 0, 0, 0, SSL_HIGH | SSL_FIPS },
+        SSL_kDHE, SSL_aRSA, SSL_3DES, SSL_SHA1, 0, 0, 0, 0, SSL_HIGH },
 
 };
 
@@ -1013,17 +1014,17 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
              * has the correct length. We can save a strlen() call:
              * just checking for the '\0' at the right place is
              * sufficient, we have to strncmp() anyway. (We cannot
-             * use strcmp(), because buf is not '\0' terminated.)
+             * use strcasecmp(), because buf is not '\0' terminated.)
              */
             j = found = 0;
             cipher_id = 0;
             while (ca_list[j]) {
-                if (strncmp(buf, ca_list[j]->name, buflen) == 0
+                if (OPENSSL_strncasecmp(buf, ca_list[j]->name, buflen) == 0
                     && (ca_list[j]->name[buflen] == '\0')) {
                     found = 1;
                     break;
                 } else if (ca_list[j]->stdname != NULL
-                    && strncmp(buf, ca_list[j]->stdname, buflen) == 0
+                    && OPENSSL_strncasecmp(buf, ca_list[j]->stdname, buflen) == 0
                     && ca_list[j]->stdname[buflen] == '\0') {
                     found = 1;
                     break;
@@ -1138,9 +1139,10 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
          */
         if (rule == CIPHER_SPECIAL) { /* special command */
             ok = 0;
-            if ((buflen == 8) && HAS_PREFIX(buf, "STRENGTH")) {
+            if ((buflen == 8) && HAS_CASE_PREFIX(buf, "STRENGTH")) {
                 ok = ssl_cipher_strength_sort(head_p, tail_p);
-            } else if (buflen == 10 && CHECK_AND_SKIP_PREFIX(buf, "SECLEVEL=")) {
+            } else if (buflen == 10
+                && CHECK_AND_SKIP_CASE_PREFIX(buf, "SECLEVEL=")) {
                 int level = *buf - '0';
                 if (level < 0 || level > 5) {
                     ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_COMMAND);
@@ -1181,14 +1183,14 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
     const char **prule_str)
 {
     unsigned int suiteb_flags = 0, suiteb_comb2 = 0;
-    if (HAS_PREFIX(*prule_str, "SUITEB128ONLY")) {
+    if (HAS_CASE_PREFIX(*prule_str, "SUITEB128ONLY")) {
         suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS_ONLY;
-    } else if (HAS_PREFIX(*prule_str, "SUITEB128C2")) {
+    } else if (HAS_CASE_PREFIX(*prule_str, "SUITEB128C2")) {
         suiteb_comb2 = 1;
         suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS;
-    } else if (HAS_PREFIX(*prule_str, "SUITEB128")) {
+    } else if (HAS_CASE_PREFIX(*prule_str, "SUITEB128")) {
         suiteb_flags = SSL_CERT_FLAG_SUITEB_128_LOS;
-    } else if (HAS_PREFIX(*prule_str, "SUITEB192")) {
+    } else if (HAS_CASE_PREFIX(*prule_str, "SUITEB192")) {
         suiteb_flags = SSL_CERT_FLAG_SUITEB_192_LOS;
     }
 
@@ -1239,10 +1241,15 @@ static int ciphersuite_cb(const char *elem, int len, void *arg)
     memcpy(name, elem, len);
     name[len] = '\0';
 
-    cipher = ssl3_get_cipher_by_std_name(name);
+    cipher = ssl3_get_tls13_cipher_by_std_name(name);
     if (cipher == NULL)
         /* Ciphersuite not found but return 1 to parse rest of the list */
         return 1;
+
+    /* Suppress duplicates */
+    for (int i = 0; i < sk_SSL_CIPHER_num(ciphersuites); ++i)
+        if (sk_SSL_CIPHER_value(ciphersuites, i)->id == cipher->id)
+            return 1;
 
     if (!sk_SSL_CIPHER_push(ciphersuites, cipher)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -1539,7 +1546,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
      */
     ok = 1;
     rule_p = rule_str;
-    if (HAS_PREFIX(rule_str, "DEFAULT")) {
+    if (HAS_CASE_PREFIX(rule_str, "DEFAULT")) {
         ok = ssl_cipher_process_rulestr(OSSL_default_cipher_list(),
             &head, &tail, ca_list, c);
         rule_p += 7;
@@ -1787,6 +1794,12 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     case SSL_CHACHA20POLY1305:
         enc = "CHACHA20/POLY1305(256)";
         break;
+    case SSL_SM4GCM:
+        enc = "SM4GCM";
+        break;
+    case SSL_SM4CCM:
+        enc = "SM4CCM";
+        break;
     default:
         enc = "unknown";
         break;
@@ -1866,7 +1879,8 @@ const char *OPENSSL_cipher_name(const char *stdname)
 
     if (stdname == NULL)
         return "(NONE)";
-    c = ssl3_get_cipher_by_std_name(stdname);
+    if ((c = ssl3_get_tls13_cipher_by_std_name(stdname)) == NULL)
+        c = ssl3_get_cipher_by_std_name(stdname);
     return SSL_CIPHER_get_name(c);
 }
 
@@ -2202,4 +2216,118 @@ const char *OSSL_default_ciphersuites(void)
     return "TLS_AES_256_GCM_SHA384:"
            "TLS_CHACHA20_POLY1305_SHA256:"
            "TLS_AES_128_GCM_SHA256";
+}
+
+int ssl_cipher_list_to_bytes(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk,
+    WPACKET *pkt)
+{
+    int i;
+    size_t totlen = 0, len, maxlen, maxverok = 0;
+    int empty_reneg_info_scsv = !s->renegotiate
+        && !SSL_CONNECTION_IS_DTLS(s)
+        && ssl_security(s, SSL_SECOP_VERSION, 0, TLS1_VERSION, NULL)
+        && s->min_proto_version <= TLS1_VERSION;
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+
+    /* Set disabled masks for this session */
+    if (!ssl_set_client_disabled(s)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_PROTOCOLS_AVAILABLE);
+        return 0;
+    }
+
+    if (sk == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+#ifdef OPENSSL_MAX_TLS1_2_CIPHER_LENGTH
+#if OPENSSL_MAX_TLS1_2_CIPHER_LENGTH < 6
+#error Max cipher length too short
+#endif
+    /*
+     * Some servers hang if client hello > 256 bytes as hack workaround
+     * chop number of supported ciphers to keep it well below this if we
+     * use TLS v1.2
+     */
+    if (TLS1_get_version(ssl) >= TLS1_2_VERSION)
+        maxlen = OPENSSL_MAX_TLS1_2_CIPHER_LENGTH & ~1;
+    else
+#endif
+        /* Maximum length that can be stored in 2 bytes. Length must be even */
+        maxlen = 0xfffe;
+
+    if (empty_reneg_info_scsv)
+        maxlen -= 2;
+    if (s->mode & SSL_MODE_SEND_FALLBACK_SCSV)
+        maxlen -= 2;
+
+    /* RFC 8701: prepend a GREASE cipher suite value */
+    if ((s->options & SSL_OP_GREASE) && !s->server) {
+        uint16_t grease_cs = ossl_grease_value(s, OSSL_GREASE_CIPHER);
+
+        if (!WPACKET_put_bytes_u16(pkt, grease_cs)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        totlen += 2;
+    }
+
+    for (i = 0; i < sk_SSL_CIPHER_num(sk) && totlen < maxlen; i++) {
+        const SSL_CIPHER *c;
+
+        c = sk_SSL_CIPHER_value(sk, i);
+        /* Skip disabled ciphers */
+        if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED, 0))
+            continue;
+
+        if (!ssl->method->put_cipher_by_char(c, pkt, &len)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+
+        /* Sanity check that the maximum version we offer has ciphers enabled */
+        if (!maxverok) {
+            int minproto = SSL_CONNECTION_IS_DTLS(s) ? c->min_dtls : c->min_tls;
+            int maxproto = SSL_CONNECTION_IS_DTLS(s) ? c->max_dtls : c->max_tls;
+
+            if (ssl_version_cmp(s, maxproto, s->s3.tmp.max_ver) >= 0
+                && ssl_version_cmp(s, minproto, s->s3.tmp.max_ver) <= 0)
+                maxverok = 1;
+        }
+
+        totlen += len;
+    }
+
+    if (totlen == 0 || !maxverok) {
+        const char *maxvertext = !maxverok
+            ? "No ciphers enabled for max supported SSL/TLS version"
+            : NULL;
+
+        SSLfatal_data(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_CIPHERS_AVAILABLE,
+            maxvertext);
+        return 0;
+    }
+
+    if (totlen != 0) {
+        if (empty_reneg_info_scsv) {
+            static const SSL_CIPHER scsv = {
+                0, NULL, NULL, SSL3_CK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            };
+            if (!ssl->method->put_cipher_by_char(&scsv, pkt, &len)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+        }
+        if (s->mode & SSL_MODE_SEND_FALLBACK_SCSV) {
+            static const SSL_CIPHER scsv = {
+                0, NULL, NULL, SSL3_CK_FALLBACK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            };
+            if (!ssl->method->put_cipher_by_char(&scsv, pkt, &len)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+        }
+    }
+
+    return 1;
 }

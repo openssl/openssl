@@ -38,6 +38,7 @@
 PLATFORM={- $config{target} -}
 SRCDIR={- $config{sourcedir} -}
 BLDDIR={- $config{builddir} -}
+RESULT_D=$(BLDDIR)\test-runs
 FIPSKEY={- $config{FIPSKEY} -}
 
 VERSION={- "$config{full_version}" -}
@@ -452,19 +453,19 @@ libclean:
 	-del /Q /F $(LIBS) libcrypto.* libssl.* ossl_static.pdb
 
 clean: libclean
-	{- join("\n\t", map { "-del /Q /F $_" } @HTMLDOCS1) || "\@rem" -}
-	{- join("\n\t", map { "-del /Q /F $_" } @HTMLDOCS3) || "\@rem" -}
-	{- join("\n\t", map { "-del /Q /F $_" } @HTMLDOCS5) || "\@rem" -}
-	{- join("\n\t", map { "-del /Q /F $_" } @HTMLDOCS7) || "\@rem" -}
-	{- join("\n\t", map { "-del /Q /F $_" } @PROGRAMS) || "\@rem" -}
-	{- join("\n\t", map { "-del /Q /F $_" } @MODULES) || "\@rem" -}
-	{- join("\n\t", map { "-del /Q /F $_" } @SCRIPTS) || "\@rem" -}
-	{- join("\n\t", map { "-del /Q /F $_" } @GENERATED_MANDATORY) || "\@rem" -}
-	{- join("\n\t", map { "-del /Q /F $_" } @GENERATED) || "\@rem" -}
+	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @HTMLDOCS1) || "\@rem" -}
+	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @HTMLDOCS3) || "\@rem" -}
+	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @HTMLDOCS5) || "\@rem" -}
+	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @HTMLDOCS7) || "\@rem" -}
+	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @PROGRAMS) || "\@rem" -}
+	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @MODULES) || "\@rem" -}
+	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @SCRIPTS) || "\@rem" -}
+	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @GENERATED_MANDATORY) || "\@rem" -}
+	{- join("\n\t", map { "-if exist $_ del /Q /F $_" } @GENERATED) || "\@rem" -}
 	-del /Q /S /F *.d *.obj *.pdb *.ilk *.manifest
 	-del /Q /S /F apps\*.lib apps\*.rc apps\*.res apps\*.exp
 	-del /Q /S /F test\*.exp
-	-rd /Q /S test\test-runs
+	-@if exist "$(RESULT_D)" rd /Q /S "$(RESULT_D)"
 
 distclean: clean
 	-del /Q /F include\openssl\configuration.h

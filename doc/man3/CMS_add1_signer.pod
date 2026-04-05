@@ -87,6 +87,10 @@ scheme will be used. This is the case for EdDSA (RFC 8419). For SLH-DSA (RFC 981
 and ML-DSA (RFC 9882), the scheme-suggested hash will only be used if B<md> is
 NULL.
 
+Signing with Ed448 is currently not supported for the case of signed-data
+with signedAttributes due to missing support for id-shake256-len (RFC 8419;
+sec 3.1).
+
 CMS_add1_signer() returns an internal pointer to the CMS_SignerInfo
 structure just added, this can be used to set additional attributes
 before it is finalized.

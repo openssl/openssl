@@ -1,4 +1,4 @@
-# Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -333,7 +333,7 @@ sub app {
             $idx=$idx+1;
             my $resultdir = result_dir();
             my $srcdir = srctop_dir();
-            return cmd([ "valgrind", "--leak-check=full", "--show-leak-kinds=all", "--gen-suppressions=all", "--log-file=$resultdir/valgrind.log.$idx", "--suppressions=$srcdir/util/valgrind.suppression", @prog, @cmdargs ],
+            return cmd([ "valgrind", "--leak-check=full", "--show-leak-kinds=all", "--gen-suppressions=all", "--suppressions=$srcdir/util/valgrind.suppression", "--log-file=$resultdir/valgrind.log.$idx", "--suppressions=$srcdir/util/valgrind.suppression", @prog, @cmdargs ],
                        exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
         } else {
             return cmd([ @prog, @cmdargs ],
@@ -363,7 +363,7 @@ sub test {
            $idx=$idx+1;
            my $resultdir = result_dir();
            my $srcdir = srctop_dir();
-           return cmd([ "valgrind", "--leak-check=full", "--show-leak-kinds=all", "--gen-suppressions=all", "--log-file=$resultdir/valgrind.log.$idx", "--suppressions=$srcdir/util/valgrind.suppression", @prog, @cmdargs ],
+           return cmd([ "valgrind", "--leak-check=full", "--show-leak-kinds=all", "--gen-suppressions=all", "--suppressions=$srcdir/util/valgrind.suppression", "--log-file=$resultdir/valgrind.log.$idx", "--suppressions=$srcdir/util/valgrind.suppression", @prog, @cmdargs ],
                    exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
         } else {
             return cmd([ @prog, @cmdargs ],

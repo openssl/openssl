@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -31,6 +31,7 @@
 #include "internal/packet.h"
 #include "internal/dane.h"
 #include "internal/refcount.h"
+#include "internal/tlssigalgs.h"
 #include "internal/tsan_assist.h"
 #include "internal/bio.h"
 #include "internal/ktls.h"
@@ -41,6 +42,9 @@
 #include "record/record.h"
 #include "internal/quic_predef.h"
 #include "internal/quic_tls.h"
+#ifndef OPENSSL_NO_ECH
+#include "ech/ech_local.h"
+#endif
 
 #ifdef OPENSSL_BUILD_SHLIBSSL
 #undef OPENSSL_EXTERN
@@ -151,6 +155,8 @@
 #define SSL_ARIA256GCM 0x00200000U
 #define SSL_MAGMA 0x00400000U
 #define SSL_KUZNYECHIK 0x00800000U
+#define SSL_SM4GCM 0x01000000U
+#define SSL_SM4CCM 0x02000000U
 
 #define SSL_AESGCM (SSL_AES128GCM | SSL_AES256GCM)
 #define SSL_AESCCM (SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8)
@@ -198,7 +204,8 @@
 #define SSL_MD_SHA512_IDX 11
 #define SSL_MD_MAGMAOMAC_IDX 12
 #define SSL_MD_KUZNYECHIKOMAC_IDX 13
-#define SSL_MAX_DIGEST 14
+#define SSL_MD_SM3_IDX 14
+#define SSL_MAX_DIGEST 15
 
 #define SSL_MD_NUM_IDX SSL_MAX_DIGEST
 
@@ -212,6 +219,7 @@
 #define SSL_HANDSHAKE_MAC_GOST94 SSL_MD_GOST94_IDX
 #define SSL_HANDSHAKE_MAC_GOST12_256 SSL_MD_GOST12_256_IDX
 #define SSL_HANDSHAKE_MAC_GOST12_512 SSL_MD_GOST12_512_IDX
+#define SSL_HANDSHAKE_MAC_SM3 SSL_MD_SM3_IDX
 #define SSL_HANDSHAKE_MAC_DEFAULT SSL_HANDSHAKE_MAC_MD5_SHA1
 
 /* Bits 8-15 bits are PRF */
@@ -245,7 +253,7 @@
 #define SSL_LOW 0x00000002U
 #define SSL_MEDIUM 0x00000004U
 #define SSL_HIGH 0x00000008U
-#define SSL_FIPS 0x00000010U
+/* #define SSL_FIPS 0x00000010U obsolete FIPS canister remnant */
 #define SSL_NOT_DEFAULT 0x00000020U
 
 /* we have used 0000003f - 26 bits left to go */
@@ -351,7 +359,9 @@
 #define SSL_ENC_ARIA256GCM_IDX 21
 #define SSL_ENC_MAGMA_IDX 22
 #define SSL_ENC_KUZNYECHIK_IDX 23
-#define SSL_ENC_NUM_IDX 24
+#define SSL_ENC_SM4GCM_IDX 24
+#define SSL_ENC_SM4CCM_IDX 25
+#define SSL_ENC_NUM_IDX 26
 
 /*-
  * SSL_kRSA <- RSA_ENC
@@ -685,11 +695,24 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_compress_certificate,
     TLSEXT_IDX_early_data,
     TLSEXT_IDX_certificate_authorities,
+    TLSEXT_IDX_ech,
+    TLSEXT_IDX_outer_extensions,
+    TLSEXT_IDX_grease1,
+    TLSEXT_IDX_grease2,
     TLSEXT_IDX_padding,
     TLSEXT_IDX_psk,
     /* Dummy index - must always be the last entry */
     TLSEXT_IDX_num_builtins
 } TLSEXT_INDEX;
+
+/* RFC 8701 GREASE seed indices */
+#define OSSL_GREASE_CIPHER 0
+#define OSSL_GREASE_GROUP 1
+#define OSSL_GREASE_EXT1 2
+#define OSSL_GREASE_EXT2 3
+#define OSSL_GREASE_VERSION 4
+#define OSSL_GREASE_SIGALG 5
+#define OSSL_GREASE_LAST_INDEX 5
 
 DEFINE_LHASH_OF_EX(SSL_SESSION);
 /* Needed in ssl_cert.c */
@@ -783,11 +806,6 @@ typedef struct {
 #define TLS_GROUP_ONLY_FOR_TLS1_3 0x00000010U
 
 #define TLS_GROUP_FFDHE_FOR_TLS1_3 (TLS_GROUP_FFDHE | TLS_GROUP_ONLY_FOR_TLS1_3)
-
-/* We limit the number of key shares sent */
-#ifndef OPENSSL_CLIENT_MAX_KEY_SHARES
-#define OPENSSL_CLIENT_MAX_KEY_SHARES 4
-#endif
 
 struct ssl_ctx_st {
     OSSL_LIB_CTX *libctx;
@@ -1068,6 +1086,9 @@ struct ssl_ctx_st {
 #endif
 
         unsigned char cookie_hmac_key[SHA256_DIGEST_LENGTH];
+#ifndef OPENSSL_NO_ECH
+        OSSL_ECH_CTX ech;
+#endif
     } ext;
 
 #ifndef OPENSSL_NO_PSK
@@ -1727,6 +1748,14 @@ struct ssl_connection_st {
         uint8_t client_cert_type_ctos;
         uint8_t server_cert_type;
         uint8_t server_cert_type_ctos;
+
+#ifndef OPENSSL_NO_ECH
+        OSSL_ECH_CONN ech;
+#endif
+
+        /* RFC 8701 GREASE */
+        uint8_t grease_seed[OSSL_GREASE_LAST_INDEX + 1];
+        int grease_seeded;
     } ext;
 
     /*
@@ -1968,6 +1997,7 @@ typedef struct dtls1_state_st {
     unsigned int timeout_duration_us;
 
     unsigned int retransmitting;
+    unsigned int has_change_cipher_spec;
 #ifndef OPENSSL_NO_SCTP
     int shutdown_received;
 #endif
@@ -2197,85 +2227,6 @@ typedef enum downgrade_en {
  * set
  */
 #define TLSEXT_STATUSTYPE_nothing -1
-
-/* Sigalgs values */
-#define TLSEXT_SIGALG_ecdsa_secp256r1_sha256 0x0403
-#define TLSEXT_SIGALG_ecdsa_secp384r1_sha384 0x0503
-#define TLSEXT_SIGALG_ecdsa_secp521r1_sha512 0x0603
-#define TLSEXT_SIGALG_ecdsa_sha224 0x0303
-#define TLSEXT_SIGALG_ecdsa_sha1 0x0203
-#define TLSEXT_SIGALG_rsa_pss_rsae_sha256 0x0804
-#define TLSEXT_SIGALG_rsa_pss_rsae_sha384 0x0805
-#define TLSEXT_SIGALG_rsa_pss_rsae_sha512 0x0806
-#define TLSEXT_SIGALG_rsa_pss_pss_sha256 0x0809
-#define TLSEXT_SIGALG_rsa_pss_pss_sha384 0x080a
-#define TLSEXT_SIGALG_rsa_pss_pss_sha512 0x080b
-#define TLSEXT_SIGALG_rsa_pkcs1_sha256 0x0401
-#define TLSEXT_SIGALG_rsa_pkcs1_sha384 0x0501
-#define TLSEXT_SIGALG_rsa_pkcs1_sha512 0x0601
-#define TLSEXT_SIGALG_rsa_pkcs1_sha224 0x0301
-#define TLSEXT_SIGALG_rsa_pkcs1_sha1 0x0201
-#define TLSEXT_SIGALG_dsa_sha256 0x0402
-#define TLSEXT_SIGALG_dsa_sha384 0x0502
-#define TLSEXT_SIGALG_dsa_sha512 0x0602
-#define TLSEXT_SIGALG_dsa_sha224 0x0302
-#define TLSEXT_SIGALG_dsa_sha1 0x0202
-#define TLSEXT_SIGALG_gostr34102012_256_intrinsic 0x0840
-#define TLSEXT_SIGALG_gostr34102012_512_intrinsic 0x0841
-#define TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256 0xeeee
-#define TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512 0xefef
-#define TLSEXT_SIGALG_gostr34102001_gostr3411 0xeded
-
-#define TLSEXT_SIGALG_ed25519 0x0807
-#define TLSEXT_SIGALG_ed448 0x0808
-#define TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256 0x081a
-#define TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384 0x081b
-#define TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512 0x081c
-#define TLSEXT_SIGALG_mldsa44 0x0904
-#define TLSEXT_SIGALG_mldsa65 0x0905
-#define TLSEXT_SIGALG_mldsa87 0x0906
-
-/* Sigalgs names */
-#define TLSEXT_SIGALG_ecdsa_secp256r1_sha256_name "ecdsa_secp256r1_sha256"
-#define TLSEXT_SIGALG_ecdsa_secp384r1_sha384_name "ecdsa_secp384r1_sha384"
-#define TLSEXT_SIGALG_ecdsa_secp521r1_sha512_name "ecdsa_secp521r1_sha512"
-#define TLSEXT_SIGALG_ecdsa_sha224_name "ecdsa_sha224"
-#define TLSEXT_SIGALG_ecdsa_sha1_name "ecdsa_sha1"
-#define TLSEXT_SIGALG_rsa_pss_rsae_sha256_name "rsa_pss_rsae_sha256"
-#define TLSEXT_SIGALG_rsa_pss_rsae_sha384_name "rsa_pss_rsae_sha384"
-#define TLSEXT_SIGALG_rsa_pss_rsae_sha512_name "rsa_pss_rsae_sha512"
-#define TLSEXT_SIGALG_rsa_pss_pss_sha256_name "rsa_pss_pss_sha256"
-#define TLSEXT_SIGALG_rsa_pss_pss_sha384_name "rsa_pss_pss_sha384"
-#define TLSEXT_SIGALG_rsa_pss_pss_sha512_name "rsa_pss_pss_sha512"
-#define TLSEXT_SIGALG_rsa_pkcs1_sha256_name "rsa_pkcs1_sha256"
-#define TLSEXT_SIGALG_rsa_pkcs1_sha384_name "rsa_pkcs1_sha384"
-#define TLSEXT_SIGALG_rsa_pkcs1_sha512_name "rsa_pkcs1_sha512"
-#define TLSEXT_SIGALG_rsa_pkcs1_sha224_name "rsa_pkcs1_sha224"
-#define TLSEXT_SIGALG_rsa_pkcs1_sha1_name "rsa_pkcs1_sha1"
-#define TLSEXT_SIGALG_dsa_sha256_name "dsa_sha256"
-#define TLSEXT_SIGALG_dsa_sha384_name "dsa_sha384"
-#define TLSEXT_SIGALG_dsa_sha512_name "dsa_sha512"
-#define TLSEXT_SIGALG_dsa_sha224_name "dsa_sha224"
-#define TLSEXT_SIGALG_dsa_sha1_name "dsa_sha1"
-#define TLSEXT_SIGALG_gostr34102012_256_intrinsic_name "gostr34102012_256"
-#define TLSEXT_SIGALG_gostr34102012_512_intrinsic_name "gostr34102012_512"
-#define TLSEXT_SIGALG_gostr34102012_256_intrinsic_alias "gost2012_256"
-#define TLSEXT_SIGALG_gostr34102012_512_intrinsic_alias "gost2012_512"
-#define TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256_name "gost2012_256"
-#define TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512_name "gost2012_512"
-#define TLSEXT_SIGALG_gostr34102001_gostr3411_name "gost2001_gost94"
-
-#define TLSEXT_SIGALG_ed25519_name "ed25519"
-#define TLSEXT_SIGALG_ed448_name "ed448"
-#define TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256_name "ecdsa_brainpoolP256r1tls13_sha256"
-#define TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_name "ecdsa_brainpoolP384r1tls13_sha384"
-#define TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_name "ecdsa_brainpoolP512r1tls13_sha512"
-#define TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256_alias "ecdsa_brainpoolP256r1_sha256"
-#define TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_alias "ecdsa_brainpoolP384r1_sha384"
-#define TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_alias "ecdsa_brainpoolP512r1_sha512"
-#define TLSEXT_SIGALG_mldsa44_name "mldsa44"
-#define TLSEXT_SIGALG_mldsa65_name "mldsa65"
-#define TLSEXT_SIGALG_mldsa87_name "mldsa87"
 
 /* Known PSK key exchange modes */
 #define TLSEXT_KEX_MODE_KE 0x00
@@ -2567,6 +2518,13 @@ __owur STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL_CONNECTION *sc);
 __owur int ssl_x509err2alert(int type);
 void ssl_sort_cipher_list(void);
 int ssl_load_ciphers(SSL_CTX *ctx);
+int ssl_cipher_list_to_bytes(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk,
+    WPACKET *pkt);
+uint16_t ossl_grease_value(SSL_CONNECTION *s, int index);
+static ossl_inline int ossl_is_grease_value(uint16_t val)
+{
+    return (val & 0x0f0f) == 0x0a0a && (val >> 8) == (val & 0xff);
+}
 __owur int ssl_setup_sigalgs(SSL_CTX *ctx);
 int ssl_load_groups(SSL_CTX *ctx);
 int ssl_load_sigalgs(SSL_CTX *ctx);
@@ -2595,6 +2553,7 @@ __owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc);
 
 __owur const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id);
 __owur const SSL_CIPHER *ssl3_get_cipher_by_std_name(const char *stdname);
+__owur const SSL_CIPHER *ssl3_get_tls13_cipher_by_std_name(const char *stdname);
 __owur const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 __owur int ssl3_put_cipher_by_char(const SSL_CIPHER *c, WPACKET *pkt,
     size_t *len);
@@ -2856,7 +2815,7 @@ int tls_choose_sigalg(SSL_CONNECTION *s, int fatalerrs);
 __owur long ssl_get_algorithm2(SSL_CONNECTION *s);
 __owur int tls12_copy_sigalgs(SSL_CONNECTION *s, WPACKET *pkt,
     const uint16_t *psig, size_t psiglen);
-__owur int tls1_save_u16(PACKET *pkt, uint16_t **pdest, size_t *pdestlen);
+__owur int tls1_save_u16(PACKET *pkt, uint16_t **pdest, size_t *pdestlen, size_t maxnum);
 __owur int tls1_save_sigalgs(SSL_CONNECTION *s, PACKET *pkt, int cert);
 __owur int tls1_process_sigalgs(SSL_CONNECTION *s);
 __owur int tls1_set_peer_legacy_sigalg(SSL_CONNECTION *s, const EVP_PKEY *pkey);

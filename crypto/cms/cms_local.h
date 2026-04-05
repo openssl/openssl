@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -389,7 +389,7 @@ struct CMS_ReceiptsFrom_st {
 
 struct CMS_Receipt_st {
     int32_t version;
-    ASN1_OBJECT *contentType;
+    const ASN1_OBJECT *contentType;
     ASN1_OCTET_STRING *signedContentIdentifier;
     ASN1_OCTET_STRING *originatorSignatureValue;
 };

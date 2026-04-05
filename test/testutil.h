@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,7 @@
 
 #include <stdarg.h>
 #include "internal/common.h" /* for HAS_PREFIX */
+#include "internal/err.h" /* for ERR_NUM_ERRORS */
 
 #include <openssl/provider.h>
 #include <openssl/err.h>

@@ -401,6 +401,25 @@ static int test_non_derandomised_ml_kem(void)
     return ret == 0;
 }
 
+static int test_ml_kem_from_data_propq(void)
+{
+    int ret = 0;
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    OSSL_PARAM params[3];
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ML_KEM_SEED, gen_seed, sizeof(gen_seed));
+    params[1] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_PROPERTIES, "fips=no", 0);
+    params[2] = OSSL_PARAM_construct_end();
+
+    ret = TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(testctx, "ML-KEM-768", NULL))
+        && TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
+        && TEST_int_eq(EVP_PKEY_fromdata(ctx, &pkey, OSSL_KEYMGMT_SELECT_KEYPAIR, params), 1);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     int test_rand = 0;
@@ -428,5 +447,6 @@ int setup_tests(void)
     }
 
     ADD_TEST(test_ml_kem);
+    ADD_TEST(test_ml_kem_from_data_propq);
     return 1;
 }

@@ -506,6 +506,22 @@ consistent with the supplied purpose.
 No TLS records were configured to validate the raw public key, or DANE was not
 enabled on the connection.
 
+=item B<X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER: AKID is missing>
+
+Missing Authority Key Identifier.
+
+=item B<X509_V_ERR_EMPTY_AUTHORITY_KEY_IDENTIFIER: AKID has no attributes>
+
+Authority Key Identifier has no attributes.
+
+=item B<X509_V_ERR_AKID_ISSUER_SERIAL_NOT_PAIRED: issuer and serial number must be paired>
+
+Authority Key Identifier issuer and serial number must be paired.
+
+=item B<X509_V_ERR_DUPLICATE_EXTENSION: extension MUST NOT appear more than once>
+
+Certificate includes more than one instance of a particular extension.
+
 =back
 
 =head1 NOTES
@@ -536,7 +552,7 @@ L<X509_free(3)>.
 
 =head1 COPYRIGHT
 
-Copyright 2009-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2009-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

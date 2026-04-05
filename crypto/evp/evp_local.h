@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -104,6 +104,7 @@ struct evp_keymgmt_st {
 
     /* Constructor(s), destructor, information */
     OSSL_FUNC_keymgmt_new_fn *new;
+    OSSL_FUNC_keymgmt_new_ex_fn *new_ex;
     OSSL_FUNC_keymgmt_free_fn *free;
     OSSL_FUNC_keymgmt_get_params_fn *get_params;
     OSSL_FUNC_keymgmt_gettable_params_fn *gettable_params;

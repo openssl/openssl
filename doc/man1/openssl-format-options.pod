@@ -64,7 +64,7 @@ A binary format, encoded or parsed according to Distinguished Encoding Rules
 
 A DER-encoded file containing a PKCS#12 object.
 It might be necessary to provide a decryption password to retrieve
-the private key.
+the private key or certificate.
 
 =item B<PEM>
 

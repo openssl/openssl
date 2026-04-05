@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -27,7 +27,9 @@ use constant {
     TRAILING_DATA => 10,
     SELECT_X25519 => 11,
     NO_KEY_SHARES_IN_HRR => 12,
-    NON_TLS1_3_KEY_SHARE => 13
+    NON_TLS1_3_KEY_SHARE => 13,
+    LARGE_NUM_KEY_SHARES => 14,
+    LARGE_NUM_SUPP_GROUPS => 15
 };
 
 use constant {
@@ -87,7 +89,7 @@ if (disabled("ec")) {
     $proxy->serverflags("-groups P-384");
 }
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 23;
+plan tests => 25;
 ok(TLSProxy::Message->success(), "Success after HRR");
 
 #Test 2: The server sending an HRR requesting a group the client already sent
@@ -148,6 +150,15 @@ SKIP: {
     #Test 7: An acceptable key_share after a list of non-acceptable ones should
     #succeed
     $proxy->clear();
+    # The test assumes that one of the client initial keyshares includes
+    # either X25519 if ECX is enabled or P-256 otherwise.  While the default
+    # groups have been adjusted to make it true for now, the test was brittle,
+    # best to set the client groups explicitly.
+    if (disabled("ecx")) {
+        $proxy->clientflags("-groups P-256");
+    } else {
+        $proxy->clientflags("-groups X25519:P-256");
+    }
     $testtype = ACCEPTABLE_AT_END;
     $proxy->start();
     ok(TLSProxy::Message->success(), "Acceptable key_share at end of list");
@@ -293,7 +304,7 @@ $proxy->start();
 ok(TLSProxy::Message->fail(), "Server sends HRR with no key_shares");
 
 SKIP: {
-    skip "No EC support in this OpenSSL build", 1 if disabled("ec");
+    skip "No EC support in this OpenSSL build", 3 if disabled("ec");
     #Test 23: Trailing data on key_share in ServerHello should fail
     $proxy->clear();
     $direction = CLIENT_TO_SERVER;
@@ -310,6 +321,27 @@ SKIP: {
                 && (${$proxy->message_list}[2]->mt == TLSProxy::Message::MT_CLIENT_HELLO);
     ok(TLSProxy::Message->success() && $ishrr,
        "Client sends a key_share for a Non TLSv1.3 group");
+
+    #Test 24: Client sends a large number of key shares. We should ignore them.
+    $proxy->clear();
+    $direction = CLIENT_TO_SERVER;
+    $testtype = LARGE_NUM_KEY_SHARES;
+    $proxy->clientflags("-groups P-256");
+    $proxy->start();
+    ok(TLSProxy::Message->success(), "Large number of key shares");
+
+    #Test 25: Client sends a large number of supported groups. We should ignore
+    #         them.
+    $proxy->clear();
+    $direction = CLIENT_TO_SERVER;
+    $testtype = LARGE_NUM_SUPP_GROUPS;
+    if (disabled("ecx")) {
+        $proxy->clientflags("-groups P-384");
+    } else {
+        $proxy->clientflags("-groups X25519");
+    }
+    $proxy->start();
+    ok(TLSProxy::Message->success(), "Large number of supported groups");
 }
 
 sub modify_key_shares_filter
@@ -329,22 +361,7 @@ sub modify_key_shares_filter
             my $ext;
             my $suppgroups;
 
-            if ($testtype != NON_TLS1_3_KEY_SHARE) {
-                #Setup supported groups to include some unrecognised groups
-                if (disabled("ecx")) {
-                    $suppgroups = pack "C8",
-                        0x00, 0x06, #List Length
-                        0xff, 0xfe, #Non existing group 1
-                        0xff, 0xff, #Non existing group 2
-                        0x00, 0x17; #P-256
-                } else {
-                    $suppgroups = pack "C8",
-                        0x00, 0x06, #List Length
-                        0xff, 0xfe, #Non existing group 1
-                        0xff, 0xff, #Non existing group 2
-                        0x00, 0x1d; #X25519
-                }
-            } else {
+            if ($testtype == NON_TLS1_3_KEY_SHARE) {
                 if (disabled("ecx")) {
                     $suppgroups = pack "C6",
                         0x00, 0x04, #List Length
@@ -356,6 +373,30 @@ sub modify_key_shares_filter
                         0x00, 0x13,
                         0x00, 0x1d; #X25519
                 }
+            } elsif ($testtype == NOT_IN_SUPPORTED_GROUPS) {
+                $suppgroups = pack "C4",
+                    0x00, 0x02, #List Length
+                    0x00, 0xfe; #Non existing group 1
+            } elsif ($testtype == LARGE_NUM_SUPP_GROUPS) {
+                if (disabled("ecx")) {
+                    $suppgroups = pack "C4",
+                        0x01, 0x02, #List Length
+                        0x00, 0x18; #P-384
+                } else {
+                    $suppgroups = pack "C4",
+                        0x01, 0x02, #List Length
+                        0x00, 0x1d; #X25519
+                }
+                $suppgroups .= pack "C256",
+                    (0xff, 0xff)x128;
+            } else {
+                #Setup supported groups to include some unrecognised groups
+                $suppgroups = pack "C10",
+                    0x00, 0x08, #List Length
+                    0xff, 0xfe, #Non existing group 1
+                    0xff, 0xff, #Non existing group 2
+                    0x00, 0x1d, #X25519
+                    0x00, 0x17; #P-256
             }
 
             if ($testtype == EMPTY_EXTENSION) {
@@ -388,10 +429,6 @@ sub modify_key_shares_filter
                         "155155B95269ED5C87EAA99C2EF5A593".
                         "EDF83495E80380089F831B94D14B1421";  #key_exchange data
                 }
-            } elsif ($testtype == NOT_IN_SUPPORTED_GROUPS) {
-                $suppgroups = pack "C4",
-                    0x00, 0x02, #List Length
-                    0x00, 0xfe; #Non existing group 1
             } elsif ($testtype == GROUP_ID_TOO_SHORT) {
                 $ext = pack "C6H64C1",
                     0x00, 0x25, #List Length
@@ -438,6 +475,15 @@ sub modify_key_shares_filter
                     0x00, 0x31, #key_exchange data length
                     "04EE3B38D1CB800A1A2B702FC8423599F2AC7161E175C865F8".
                     "3DAF78BCBAE561464E8144359BE70CB7989D28A2F43F8F2C";  #key_exchange data
+            } elsif ($testtype == LARGE_NUM_KEY_SHARES) {
+                #We include 17 key shares (we only accept the first 16). We
+                #should just ignore them and still succeed
+                $ext = pack "C6H130C80", 0x00, 0x95, #List Length (149 bytes)
+                    0x00, 0x17, #P-256
+                    0x00, 0x41, #key_exchange data length
+                    "04A798ACF80B2991A0A53D084F4F649A46BE49D061EB5B8CFF9C8EC6AE792507B6".
+                    "F77FE6E446AF3645FD86BB7CFFD2644E45CC00183343C5CEAD67BB017B082007",  #key_exchange data
+                    (0xff, 0xff, 0x00, 0x01, 0xff)x16; #16 dummy key shares
             }
 
             if ($testtype != EMPTY_EXTENSION
@@ -448,7 +494,7 @@ sub modify_key_shares_filter
             if ($testtype == MISSING_EXTENSION) {
                 $message->delete_extension(
                     TLSProxy::Message::EXT_KEY_SHARE);
-            } elsif ($testtype != NOT_IN_SUPPORTED_GROUPS) {
+            } elsif ($testtype != NOT_IN_SUPPORTED_GROUPS && $testtype != LARGE_NUM_SUPP_GROUPS) {
                 $message->set_extension(
                     TLSProxy::Message::EXT_KEY_SHARE, $ext);
             }

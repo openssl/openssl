@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -43,6 +43,10 @@ int bread_conv(BIO *bio, char *data, size_t datal, size_t *read);
 #define BIO_CTRL_SET_KTLS_TX_SEND_CTRL_MSG 74
 #define BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG 75
 #define BIO_CTRL_SET_KTLS_TX_ZEROCOPY_SENDFILE 90
+
+/* Internal BIO flags */
+
+#define BIO_FLAGS_AUTO_EOF 0x80
 
 /*
  * This is used with memory BIOs:
@@ -103,7 +107,7 @@ int ossl_core_bio_vprintf(OSSL_CORE_BIO *cb, const char *format, va_list args);
 
 int ossl_bio_init_core(OSSL_LIB_CTX *libctx, const OSSL_DISPATCH *fns);
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 int ossl_BIO_snprintf_msvc(char *buf, size_t n, const char *fmt, ...);
 #endif
 

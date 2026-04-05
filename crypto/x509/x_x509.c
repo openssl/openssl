@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -304,7 +304,7 @@ void X509_set0_distinguishing_id(X509 *x, ASN1_OCTET_STRING *d_id)
     x->distinguishing_id = d_id;
 }
 
-ASN1_OCTET_STRING *X509_get0_distinguishing_id(X509 *x)
+const ASN1_OCTET_STRING *X509_get0_distinguishing_id(const X509 *x)
 {
     return x->distinguishing_id;
 }

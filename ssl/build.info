@@ -2,6 +2,10 @@ SUBDIRS=record rio quic
 
 LIBS=../libssl
 
+IF[{- !$disabled{ech} -}]
+  SUBDIRS=ech
+ENDIF
+
 SOURCE[../libssl]=\
         pqueue.c \
         statem/statem_srvr.c statem/statem_clnt.c s3_lib.c s3_enc.c \

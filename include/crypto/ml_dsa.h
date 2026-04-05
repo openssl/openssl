@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -80,6 +80,7 @@ __owur ML_DSA_KEY *ossl_ml_dsa_key_new(OSSL_LIB_CTX *libctx, const char *propq,
     int evp_type);
 /* Factory reset for keys that fail initialisation */
 void ossl_ml_dsa_key_reset(ML_DSA_KEY *key);
+__owur int ossl_ml_dsa_key_fetch_digests(ML_DSA_KEY *key, const char *propq);
 __owur int ossl_ml_dsa_key_pub_alloc(ML_DSA_KEY *key);
 __owur int ossl_ml_dsa_key_priv_alloc(ML_DSA_KEY *key);
 void ossl_ml_dsa_key_free(ML_DSA_KEY *key);

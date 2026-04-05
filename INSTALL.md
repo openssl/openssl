@@ -584,6 +584,15 @@ In the following list, always the non-default variant is documented: if
 feature `xxxx` is disabled by default then `enable-xxxx` is documented and
 if feature `xxxx` is enabled by default then `no-xxxx` is documented.
 
+### enable-static-vcruntime
+
+Build binaries that do not require that VC runtimes are installed
+
+This option will produce binaries that are "self contained", that do not
+depend upon VC runtime libraries being installed, so can be used on any
+computer running MS Windows.  Without this option, the build will produce
+binaries that rely on the VC runtimes being installed and available.
+
 ### enable-ktls
 
 Build with Kernel TLS support.
@@ -768,6 +777,10 @@ binary Elliptic curves that would also be disabled by C<no-ec2m>.
 Enable support for explictitly specified elliptic curves not matching the
 well-known ones. Until this option is on, such curves can't be instantiated
 from ASN.1 formats.
+
+### no-ech
+
+Don't build support for Encrypted Client Hello (ECH) extension.
 
 ### enable-ec_nistp_64_gcc_128
 
@@ -1173,7 +1186,7 @@ The `lms` algorithm support is currently limited to verification only as per
 
     no-{aria|bf|blake2|camellia|cast|chacha|cmac|
         des|dh|dsa|
-        ec|ec2m|ecdh|ecdsa|hmac-drbg-kdf|idea|kbkdf|krb5kdf|
+        ec|ec2m|ecdh|ecdsa|hmac-drbg-kdf|idea|ikev2kdf|kbkdf|krb5kdf|
         md4|mdc2|
         ml-dsa|ml-kem|
         ocb|poly1305|pvkkdf|rc2|rc4|rmd160|scrypt|

@@ -25,25 +25,157 @@ OpenSSL Releases
 OpenSSL 4.0
 -----------
 
+### Major changes between OpenSSL 4.0 and OpenSSL 4.1 [under development]
+
+  * none
+
 ### Major changes between OpenSSL 3.6 and OpenSSL 4.0 [under development]
 
-  * The `OPENSSL_sk_set_cmp_thunks()` call was added to the `STACK_OF` api
+OpenSSL 4.0.0 is a feature release adding significant new functionality
+to OpenSSL.
 
-  * The script tool `c_rehash` was removed. Use `openssl rehash` instead.
+This release incorporates the following potentially significant or incompatible
+changes:
 
-  * libcrypto no longer cleans up globally allocated data via atexit()
+  * Removed extra leading '00:' when printing key data such as an RSA modulus
+    in hexadecimal format where the first (most significant) byte is >= 0x80.
 
-  * ENGINE support was removed. The `no-engine` build option and the
-   `OPENSSL_NO_ENGINE` macro is always present.
+  * Standardized the width of hexadecimal dumps to 24 bytes for signatures
+    (to stay within the 80 characters limit) and 16 bytes for everything else.
 
-  * The crypto-mdebug-backtrace configuration option has been entirely removed.
+  * Lower bounds checks are now enforced when using `PKCS5_PBKDF2_HMAC` API
+    with FIPS provider.
 
-  * Support for the SSLv2 Client Hello was removed
+  * Added AKID verification checks when `X509_V_FLAG_X509_STRICT` is set.
+
+  * Augmented CRL verification process with several additional checks.
+
+  * `libcrypto` no longer cleans up globally allocated data via `atexit()`.
+
+  * `OPENSSL_cleanup()` now runs in a global destructor, or not at all
+    by default.
+
+  * `ASN1_STRING` has been made opaque.
+
+  * Signatures of numerous API functions, including those that are related
+    to X509 processing, are changed to include `const` qualifiers for argument
+    and return types, where suitable.
+
+  * Deprecated `X509_cmp_time()`, `X509_cmp_current_time()`,
+    and `X509_cmp_timeframe()` in favor of `X509_check_certificate_times()`.
+
+  * Removed support for the SSLv2 Client Hello.
+
+  * Removed support for SSLv3.  SSLv3 has been deprecated since 2015,
+    and OpenSSL had it disabled by default since version 1.1.0 (2016).
+
+  * Removed support for engines.  The `no-engine` build option
+    and the `OPENSSL_NO_ENGINE` macro are always present.
+
+  * Support of deprecated elliptic curves in TLS according to [RFC 8422] was
+    disabled at compile-time by default. To enable it, use the
+    `enable-tls-deprecated-ec` configuration option.
+
+  * Support of explicit EC curves was disabled at compile-time by default.
+    To enable it, use the `enable-ec_explicit_curves` configuration option.
+
+  * Removed `c_rehash` script tool.  Use `openssl rehash` instead.
+
+  * Removed the deprecated `msie-hack` option from the `openssl ca` command.
+
+  * Removed `BIO_f_reliable()` implementation without replacement.
+    It was broken since 3.0 release without any complaints.
+
+  * Removed deprecated functions `ERR_get_state()`, `ERR_remove_state()`
+    and `ERR_remove_thread_state()`. The `ERR_STATE` object is now always opaque.
+
+  * Dropped `darwin-i386{,-cc}` and `darwin-ppc{,64}{,-cc}` targets
+    from Configurations.
+
+This release adds the following new features:
+
+  * Support for Encrypted Client Hello (ECH, [RFC 9849]).
+    See `doc/designs/ech-api.md` for details.
+
+  * Support for [RFC 8998], signature algorithm `sm2sig_sm3`, key exchange
+    group `curveSM2`, and [tls-hybrid-sm2-mlkem] post-quantum group
+    `curveSM2MLKEM768`.
+
+  * cSHAKE function support as per [SP 800-185].
+
+  * "ML-DSA-MU" digest algorithm support.
+
+  * Support for SNMP KDF and SRTP KDF.
+
+  * FIPS self tests can now be deferred and run as needed when installing
+    the FIPS module with the `-defer_tests` option of the `openssl fipsinstall`
+    command.
+
+  * Support for using either static or dynamic VC runtime linkage
+    on Windows.
+
+  * Support for negotiated FFDHE key exchange in TLS 1.2 in accordance
+    with [RFC 7919].
 
 OpenSSL 3.6
 -----------
 
+### Major changes between OpenSSL 3.6.0 and OpenSSL 3.6.1 [27 Jan 2026]
+
+OpenSSL 3.6.1 is a security patch release. The most severe CVE fixed in this
+release is High.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed Improper validation of PBMAC1 parameters in PKCS#12 MAC verification.
+    ([CVE-2025-11187])
+
+  * Fixed Stack buffer overflow in CMS `AuthEnvelopedData` parsing.
+    ([CVE-2025-15467])
+
+  * Fixed NULL dereference in `SSL_CIPHER_find()` function on unknown cipher ID.
+    ([CVE-2025-15468])
+
+  * Fixed `openssl dgst` one-shot codepath silently truncates inputs >16 MiB.
+    ([CVE-2025-15469])
+
+  * Fixed TLS 1.3 `CompressedCertificate` excessive memory allocation.
+    ([CVE-2025-66199])
+
+  * Fixed Heap out-of-bounds write in `BIO_f_linebuffer` on short writes.
+    ([CVE-2025-68160])
+
+  * Fixed Unauthenticated/unencrypted trailing bytes with low-level OCB
+    function calls.
+    ([CVE-2025-69418])
+
+  * Fixed Out of bounds write in `PKCS12_get_friendlyname()` UTF-8 conversion.
+    ([CVE-2025-69419])
+
+  * Fixed Missing `ASN1_TYPE` validation in `TS_RESP_verify_response()`
+    function.
+    ([CVE-2025-69420])
+
+  * Fixed NULL Pointer Dereference in `PKCS12_item_decrypt_d2i_ex()` function.
+    ([CVE-2025-69421])
+
+  * Fixed Missing `ASN1_TYPE` validation in PKCS#12 parsing.
+    ([CVE-2026-22795])
+
+  * Fixed `ASN1_TYPE` Type Confusion in the `PKCS7_digest_from_attributes()`
+    function.
+    ([CVE-2026-22796])
+
+  * Fixed a regression in `X509_V_FLAG_CRL_CHECK_ALL` flag handling by
+    restoring its pre-3.6.0 behaviour.
+
+  * Fixed a regression in handling stapled OCSP responses causing handshake
+    failures for OpenSSL 3.6.0 servers with various client implementations.
+
 ### Major changes between OpenSSL 3.5 and OpenSSL 3.6 [under development]
+
+OpenSSL 3.6.0 is a feature release adding significant new functionality
+to OpenSSL.
 
 This release incorporates the following potentially significant or incompatible
 changes:
@@ -1992,190 +2124,207 @@ OpenSSL 0.9.x
   * Support for various new platforms
 
 <!-- Links -->
-[CVE-2025-9232]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-9232
-[CVE-2025-9231]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-9231
-[CVE-2025-9230]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-9230
-[CVE-2025-4575]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-4575
-[CVE-2024-13176]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-13176
-[CVE-2024-9143]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-9143
-[CVE-2024-6119]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-6119
-[CVE-2024-5535]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-5535
-[CVE-2024-4741]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-4741
-[CVE-2024-4603]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-4603
-[CVE-2024-2511]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-2511
-[CVE-2024-0727]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-0727
-[CVE-2023-6237]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-6237
-[CVE-2023-6129]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-6129
-[CVE-2023-5678]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-5678
-[CVE-2023-5363]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-5363
-[CVE-2023-4807]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-4807
-[CVE-2023-3817]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-3817
-[CVE-2023-3446]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-3446
-[CVE-2023-2975]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-2975
-[CVE-2023-2650]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-2650
-[CVE-2023-1255]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-1255
-[CVE-2023-0466]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0466
-[CVE-2023-0465]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0465
-[CVE-2023-0464]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0464
-[CVE-2023-0401]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0401
-[CVE-2023-0286]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0286
-[CVE-2023-0217]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0217
-[CVE-2023-0216]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0216
-[CVE-2023-0215]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0215
-[CVE-2022-4450]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-4450
-[CVE-2022-4304]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-4304
-[CVE-2022-4203]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-4203
-[CVE-2022-3996]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-3996
-[CVE-2022-2274]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-2274
-[CVE-2022-2097]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-2097
-[CVE-2020-1971]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1971
-[CVE-2020-1967]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1967
-[CVE-2019-1563]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1563
-[CVE-2019-1559]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1559
-[CVE-2019-1552]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1552
-[CVE-2019-1551]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1551
-[CVE-2019-1549]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1549
-[CVE-2019-1547]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1547
-[CVE-2019-1543]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1543
-[CVE-2018-5407]: https://www.openssl.org/news/vulnerabilities.html#CVE-2018-5407
-[CVE-2018-0739]: https://www.openssl.org/news/vulnerabilities.html#CVE-2018-0739
-[CVE-2018-0737]: https://www.openssl.org/news/vulnerabilities.html#CVE-2018-0737
-[CVE-2018-0735]: https://www.openssl.org/news/vulnerabilities.html#CVE-2018-0735
-[CVE-2018-0734]: https://www.openssl.org/news/vulnerabilities.html#CVE-2018-0734
-[CVE-2018-0733]: https://www.openssl.org/news/vulnerabilities.html#CVE-2018-0733
-[CVE-2018-0732]: https://www.openssl.org/news/vulnerabilities.html#CVE-2018-0732
-[CVE-2017-3738]: https://www.openssl.org/news/vulnerabilities.html#CVE-2017-3738
-[CVE-2017-3737]: https://www.openssl.org/news/vulnerabilities.html#CVE-2017-3737
-[CVE-2017-3736]: https://www.openssl.org/news/vulnerabilities.html#CVE-2017-3736
-[CVE-2017-3735]: https://www.openssl.org/news/vulnerabilities.html#CVE-2017-3735
-[CVE-2017-3733]: https://www.openssl.org/news/vulnerabilities.html#CVE-2017-3733
-[CVE-2017-3732]: https://www.openssl.org/news/vulnerabilities.html#CVE-2017-3732
-[CVE-2017-3731]: https://www.openssl.org/news/vulnerabilities.html#CVE-2017-3731
-[CVE-2017-3730]: https://www.openssl.org/news/vulnerabilities.html#CVE-2017-3730
-[CVE-2016-7055]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-7055
-[CVE-2016-7054]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-7054
-[CVE-2016-7053]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-7053
-[CVE-2016-7052]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-7052
-[CVE-2016-6309]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-6309
-[CVE-2016-6308]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-6308
-[CVE-2016-6307]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-6307
-[CVE-2016-6306]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-6306
-[CVE-2016-6305]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-6305
-[CVE-2016-6304]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-6304
-[CVE-2016-6303]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-6303
-[CVE-2016-6302]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-6302
-[CVE-2016-2183]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2183
-[CVE-2016-2182]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2182
-[CVE-2016-2181]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2181
-[CVE-2016-2180]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2180
-[CVE-2016-2179]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2179
-[CVE-2016-2178]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2178
-[CVE-2016-2177]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2177
-[CVE-2016-2176]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2176
-[CVE-2016-2109]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2109
-[CVE-2016-2107]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2107
-[CVE-2016-2106]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2106
-[CVE-2016-2105]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2105
-[CVE-2016-0800]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-0800
-[CVE-2016-0799]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-0799
-[CVE-2016-0798]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-0798
-[CVE-2016-0797]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-0797
-[CVE-2016-0705]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-0705
-[CVE-2016-0702]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-0702
-[CVE-2016-0701]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-0701
-[CVE-2015-3197]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-3197
-[CVE-2015-3196]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-3196
-[CVE-2015-3195]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-3195
-[CVE-2015-3194]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-3194
-[CVE-2015-3193]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-3193
-[CVE-2015-1793]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-1793
-[CVE-2015-1792]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-1792
-[CVE-2015-1791]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-1791
-[CVE-2015-1790]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-1790
-[CVE-2015-1789]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-1789
-[CVE-2015-1788]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-1788
-[CVE-2015-1787]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-1787
-[CVE-2015-0293]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0293
-[CVE-2015-0291]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0291
-[CVE-2015-0290]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0290
-[CVE-2015-0289]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0289
-[CVE-2015-0288]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0288
-[CVE-2015-0287]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0287
-[CVE-2015-0286]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0286
-[CVE-2015-0285]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0285
-[CVE-2015-0209]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0209
-[CVE-2015-0208]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0208
-[CVE-2015-0207]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0207
-[CVE-2015-0206]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0206
-[CVE-2015-0205]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0205
-[CVE-2015-0204]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0204
-[CVE-2014-8275]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-8275
-[CVE-2014-5139]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-5139
-[CVE-2014-3572]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3572
-[CVE-2014-3571]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3571
-[CVE-2014-3570]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3570
-[CVE-2014-3569]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3569
-[CVE-2014-3568]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3568
-[CVE-2014-3567]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3567
-[CVE-2014-3566]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3566
-[CVE-2014-3513]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3513
-[CVE-2014-3512]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3512
-[CVE-2014-3511]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3511
-[CVE-2014-3510]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3510
-[CVE-2014-3509]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3509
-[CVE-2014-3508]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3508
-[CVE-2014-3507]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3507
-[CVE-2014-3506]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3506
-[CVE-2014-3505]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3505
-[CVE-2014-3470]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3470
-[CVE-2014-0224]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-0224
-[CVE-2014-0221]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-0221
-[CVE-2014-0198]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-0198
-[CVE-2014-0195]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-0195
-[CVE-2014-0160]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-0160
-[CVE-2014-0076]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-0076
-[CVE-2013-6450]: https://www.openssl.org/news/vulnerabilities.html#CVE-2013-6450
-[CVE-2013-6449]: https://www.openssl.org/news/vulnerabilities.html#CVE-2013-6449
-[CVE-2013-4353]: https://www.openssl.org/news/vulnerabilities.html#CVE-2013-4353
-[CVE-2013-0169]: https://www.openssl.org/news/vulnerabilities.html#CVE-2013-0169
-[CVE-2013-0166]: https://www.openssl.org/news/vulnerabilities.html#CVE-2013-0166
-[CVE-2012-2686]: https://www.openssl.org/news/vulnerabilities.html#CVE-2012-2686
-[CVE-2012-2333]: https://www.openssl.org/news/vulnerabilities.html#CVE-2012-2333
-[CVE-2012-2110]: https://www.openssl.org/news/vulnerabilities.html#CVE-2012-2110
-[CVE-2012-0884]: https://www.openssl.org/news/vulnerabilities.html#CVE-2012-0884
-[CVE-2012-0050]: https://www.openssl.org/news/vulnerabilities.html#CVE-2012-0050
-[CVE-2012-0027]: https://www.openssl.org/news/vulnerabilities.html#CVE-2012-0027
-[CVE-2011-4619]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-4619
-[CVE-2011-4577]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-4577
-[CVE-2011-4576]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-4576
-[CVE-2011-4108]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-4108
-[CVE-2011-3210]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-3210
-[CVE-2011-3207]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-3207
-[CVE-2011-0014]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-0014
-[CVE-2010-5298]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-5298
-[CVE-2010-4252]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-4252
-[CVE-2010-4180]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-4180
-[CVE-2010-3864]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-3864
-[CVE-2010-2939]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-2939
-[CVE-2010-1633]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-1633
-[CVE-2010-0740]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-0740
-[CVE-2010-0433]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-0433
-[CVE-2009-3555]: https://www.openssl.org/news/vulnerabilities.html#CVE-2009-3555
-[CVE-2009-0789]: https://www.openssl.org/news/vulnerabilities.html#CVE-2009-0789
-[CVE-2009-0591]: https://www.openssl.org/news/vulnerabilities.html#CVE-2009-0591
-[CVE-2009-0590]: https://www.openssl.org/news/vulnerabilities.html#CVE-2009-0590
-[CVE-2008-5077]: https://www.openssl.org/news/vulnerabilities.html#CVE-2008-5077
-[CVE-2006-4343]: https://www.openssl.org/news/vulnerabilities.html#CVE-2006-4343
-[CVE-2006-4339]: https://www.openssl.org/news/vulnerabilities.html#CVE-2006-4339
-[CVE-2006-3737]: https://www.openssl.org/news/vulnerabilities.html#CVE-2006-3737
-[CVE-2006-2940]: https://www.openssl.org/news/vulnerabilities.html#CVE-2006-2940
-[CVE-2006-2937]: https://www.openssl.org/news/vulnerabilities.html#CVE-2006-2937
-[CVE-2005-2969]: https://www.openssl.org/news/vulnerabilities.html#CVE-2005-2969
-[OpenSSL Guide]: https://docs.openssl.org/master/man7/ossl-guide-introduction
 [CHANGES.md]: ./CHANGES.md
-[README-QUIC.md]: ./README-QUIC.md
-[issue tracker]: https://github.com/openssl/openssl/issues
 [CMVP]: https://csrc.nist.gov/projects/cryptographic-module-validation-program
+[CVE-2005-2969]: https://openssl-library.org/news/vulnerabilities/#CVE-2005-2969
+[CVE-2006-2937]: https://openssl-library.org/news/vulnerabilities/#CVE-2006-2937
+[CVE-2006-2940]: https://openssl-library.org/news/vulnerabilities/#CVE-2006-2940
+[CVE-2006-3737]: https://openssl-library.org/news/vulnerabilities/#CVE-2006-3737
+[CVE-2006-4339]: https://openssl-library.org/news/vulnerabilities/#CVE-2006-4339
+[CVE-2006-4343]: https://openssl-library.org/news/vulnerabilities/#CVE-2006-4343
+[CVE-2008-5077]: https://openssl-library.org/news/vulnerabilities/#CVE-2008-5077
+[CVE-2009-0590]: https://openssl-library.org/news/vulnerabilities/#CVE-2009-0590
+[CVE-2009-0591]: https://openssl-library.org/news/vulnerabilities/#CVE-2009-0591
+[CVE-2009-0789]: https://openssl-library.org/news/vulnerabilities/#CVE-2009-0789
+[CVE-2009-3555]: https://openssl-library.org/news/vulnerabilities/#CVE-2009-3555
+[CVE-2010-0433]: https://openssl-library.org/news/vulnerabilities/#CVE-2010-0433
+[CVE-2010-0740]: https://openssl-library.org/news/vulnerabilities/#CVE-2010-0740
+[CVE-2010-1633]: https://openssl-library.org/news/vulnerabilities/#CVE-2010-1633
+[CVE-2010-2939]: https://openssl-library.org/news/vulnerabilities/#CVE-2010-2939
+[CVE-2010-3864]: https://openssl-library.org/news/vulnerabilities/#CVE-2010-3864
+[CVE-2010-4180]: https://openssl-library.org/news/vulnerabilities/#CVE-2010-4180
+[CVE-2010-4252]: https://openssl-library.org/news/vulnerabilities/#CVE-2010-4252
+[CVE-2010-5298]: https://openssl-library.org/news/vulnerabilities/#CVE-2010-5298
+[CVE-2011-0014]: https://openssl-library.org/news/vulnerabilities/#CVE-2011-0014
+[CVE-2011-3207]: https://openssl-library.org/news/vulnerabilities/#CVE-2011-3207
+[CVE-2011-3210]: https://openssl-library.org/news/vulnerabilities/#CVE-2011-3210
+[CVE-2011-4108]: https://openssl-library.org/news/vulnerabilities/#CVE-2011-4108
+[CVE-2011-4576]: https://openssl-library.org/news/vulnerabilities/#CVE-2011-4576
+[CVE-2011-4577]: https://openssl-library.org/news/vulnerabilities/#CVE-2011-4577
+[CVE-2011-4619]: https://openssl-library.org/news/vulnerabilities/#CVE-2011-4619
+[CVE-2012-0027]: https://openssl-library.org/news/vulnerabilities/#CVE-2012-0027
+[CVE-2012-0050]: https://openssl-library.org/news/vulnerabilities/#CVE-2012-0050
+[CVE-2012-0884]: https://openssl-library.org/news/vulnerabilities/#CVE-2012-0884
+[CVE-2012-2110]: https://openssl-library.org/news/vulnerabilities/#CVE-2012-2110
+[CVE-2012-2333]: https://openssl-library.org/news/vulnerabilities/#CVE-2012-2333
+[CVE-2012-2686]: https://openssl-library.org/news/vulnerabilities/#CVE-2012-2686
+[CVE-2013-0166]: https://openssl-library.org/news/vulnerabilities/#CVE-2013-0166
+[CVE-2013-0169]: https://openssl-library.org/news/vulnerabilities/#CVE-2013-0169
+[CVE-2013-4353]: https://openssl-library.org/news/vulnerabilities/#CVE-2013-4353
+[CVE-2013-6449]: https://openssl-library.org/news/vulnerabilities/#CVE-2013-6449
+[CVE-2013-6450]: https://openssl-library.org/news/vulnerabilities/#CVE-2013-6450
+[CVE-2014-0076]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-0076
+[CVE-2014-0160]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-0160
+[CVE-2014-0195]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-0195
+[CVE-2014-0198]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-0198
+[CVE-2014-0221]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-0221
+[CVE-2014-0224]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-0224
+[CVE-2014-3470]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3470
+[CVE-2014-3505]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3505
+[CVE-2014-3506]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3506
+[CVE-2014-3507]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3507
+[CVE-2014-3508]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3508
+[CVE-2014-3509]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3509
+[CVE-2014-3510]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3510
+[CVE-2014-3511]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3511
+[CVE-2014-3512]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3512
+[CVE-2014-3513]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3513
+[CVE-2014-3566]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3566
+[CVE-2014-3567]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3567
+[CVE-2014-3568]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3568
+[CVE-2014-3569]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3569
+[CVE-2014-3570]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3570
+[CVE-2014-3571]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3571
+[CVE-2014-3572]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3572
+[CVE-2014-5139]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-5139
+[CVE-2014-8275]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-8275
+[CVE-2015-0204]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0204
+[CVE-2015-0205]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0205
+[CVE-2015-0206]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0206
+[CVE-2015-0207]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0207
+[CVE-2015-0208]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0208
+[CVE-2015-0209]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0209
+[CVE-2015-0285]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0285
+[CVE-2015-0286]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0286
+[CVE-2015-0287]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0287
+[CVE-2015-0288]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0288
+[CVE-2015-0289]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0289
+[CVE-2015-0290]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0290
+[CVE-2015-0291]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0291
+[CVE-2015-0293]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0293
+[CVE-2015-1787]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-1787
+[CVE-2015-1788]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-1788
+[CVE-2015-1789]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-1789
+[CVE-2015-1790]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-1790
+[CVE-2015-1791]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-1791
+[CVE-2015-1792]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-1792
+[CVE-2015-1793]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-1793
+[CVE-2015-3193]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-3193
+[CVE-2015-3194]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-3194
+[CVE-2015-3195]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-3195
+[CVE-2015-3196]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-3196
+[CVE-2015-3197]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-3197
+[CVE-2016-0701]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-0701
+[CVE-2016-0702]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-0702
+[CVE-2016-0705]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-0705
+[CVE-2016-0797]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-0797
+[CVE-2016-0798]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-0798
+[CVE-2016-0799]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-0799
+[CVE-2016-0800]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-0800
+[CVE-2016-2105]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2105
+[CVE-2016-2106]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2106
+[CVE-2016-2107]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2107
+[CVE-2016-2109]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2109
+[CVE-2016-2176]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2176
+[CVE-2016-2177]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2177
+[CVE-2016-2178]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2178
+[CVE-2016-2179]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2179
+[CVE-2016-2180]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2180
+[CVE-2016-2181]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2181
+[CVE-2016-2182]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2182
+[CVE-2016-2183]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2183
+[CVE-2016-6302]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-6302
+[CVE-2016-6303]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-6303
+[CVE-2016-6304]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-6304
+[CVE-2016-6305]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-6305
+[CVE-2016-6306]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-6306
+[CVE-2016-6307]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-6307
+[CVE-2016-6308]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-6308
+[CVE-2016-6309]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-6309
+[CVE-2016-7052]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-7052
+[CVE-2016-7053]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-7053
+[CVE-2016-7054]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-7054
+[CVE-2016-7055]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-7055
+[CVE-2017-3730]: https://openssl-library.org/news/vulnerabilities/#CVE-2017-3730
+[CVE-2017-3731]: https://openssl-library.org/news/vulnerabilities/#CVE-2017-3731
+[CVE-2017-3732]: https://openssl-library.org/news/vulnerabilities/#CVE-2017-3732
+[CVE-2017-3733]: https://openssl-library.org/news/vulnerabilities/#CVE-2017-3733
+[CVE-2017-3735]: https://openssl-library.org/news/vulnerabilities/#CVE-2017-3735
+[CVE-2017-3736]: https://openssl-library.org/news/vulnerabilities/#CVE-2017-3736
+[CVE-2017-3737]: https://openssl-library.org/news/vulnerabilities/#CVE-2017-3737
+[CVE-2017-3738]: https://openssl-library.org/news/vulnerabilities/#CVE-2017-3738
+[CVE-2018-0732]: https://openssl-library.org/news/vulnerabilities/#CVE-2018-0732
+[CVE-2018-0733]: https://openssl-library.org/news/vulnerabilities/#CVE-2018-0733
+[CVE-2018-0734]: https://openssl-library.org/news/vulnerabilities/#CVE-2018-0734
+[CVE-2018-0735]: https://openssl-library.org/news/vulnerabilities/#CVE-2018-0735
+[CVE-2018-0737]: https://openssl-library.org/news/vulnerabilities/#CVE-2018-0737
+[CVE-2018-0739]: https://openssl-library.org/news/vulnerabilities/#CVE-2018-0739
+[CVE-2018-5407]: https://openssl-library.org/news/vulnerabilities/#CVE-2018-5407
+[CVE-2019-1543]: https://openssl-library.org/news/vulnerabilities/#CVE-2019-1543
+[CVE-2019-1547]: https://openssl-library.org/news/vulnerabilities/#CVE-2019-1547
+[CVE-2019-1549]: https://openssl-library.org/news/vulnerabilities/#CVE-2019-1549
+[CVE-2019-1551]: https://openssl-library.org/news/vulnerabilities/#CVE-2019-1551
+[CVE-2019-1552]: https://openssl-library.org/news/vulnerabilities/#CVE-2019-1552
+[CVE-2019-1559]: https://openssl-library.org/news/vulnerabilities/#CVE-2019-1559
+[CVE-2019-1563]: https://openssl-library.org/news/vulnerabilities/#CVE-2019-1563
+[CVE-2020-1967]: https://openssl-library.org/news/vulnerabilities/#CVE-2020-1967
+[CVE-2020-1971]: https://openssl-library.org/news/vulnerabilities/#CVE-2020-1971
+[CVE-2022-2097]: https://openssl-library.org/news/vulnerabilities/#CVE-2022-2097
+[CVE-2022-2274]: https://openssl-library.org/news/vulnerabilities/#CVE-2022-2274
+[CVE-2022-3996]: https://openssl-library.org/news/vulnerabilities/#CVE-2022-3996
+[CVE-2022-4203]: https://openssl-library.org/news/vulnerabilities/#CVE-2022-4203
+[CVE-2022-4304]: https://openssl-library.org/news/vulnerabilities/#CVE-2022-4304
+[CVE-2022-4450]: https://openssl-library.org/news/vulnerabilities/#CVE-2022-4450
+[CVE-2023-0215]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-0215
+[CVE-2023-0216]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-0216
+[CVE-2023-0217]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-0217
+[CVE-2023-0286]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-0286
+[CVE-2023-0401]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-0401
+[CVE-2023-0464]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-0464
+[CVE-2023-0465]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-0465
+[CVE-2023-0466]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-0466
+[CVE-2023-1255]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-1255
+[CVE-2023-2650]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-2650
+[CVE-2023-2975]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-2975
+[CVE-2023-3446]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-3446
+[CVE-2023-3817]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-3817
+[CVE-2023-4807]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-4807
+[CVE-2023-5363]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-5363
+[CVE-2023-5678]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-5678
+[CVE-2023-6129]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-6129
+[CVE-2023-6237]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-6237
+[CVE-2024-0727]: https://openssl-library.org/news/vulnerabilities/#CVE-2024-0727
+[CVE-2024-2511]: https://openssl-library.org/news/vulnerabilities/#CVE-2024-2511
+[CVE-2024-4603]: https://openssl-library.org/news/vulnerabilities/#CVE-2024-4603
+[CVE-2024-4741]: https://openssl-library.org/news/vulnerabilities/#CVE-2024-4741
+[CVE-2024-5535]: https://openssl-library.org/news/vulnerabilities/#CVE-2024-5535
+[CVE-2024-6119]: https://openssl-library.org/news/vulnerabilities/#CVE-2024-6119
+[CVE-2024-9143]: https://openssl-library.org/news/vulnerabilities/#CVE-2024-9143
+[CVE-2024-13176]: https://openssl-library.org/news/vulnerabilities/#CVE-2024-13176
+[CVE-2025-4575]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-4575
+[CVE-2025-9230]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-9230
+[CVE-2025-9231]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-9231
+[CVE-2025-9232]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-9232
+[CVE-2025-11187]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-11187
+[CVE-2025-15467]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-15467
+[CVE-2025-15468]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-15468
+[CVE-2025-15469]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-15469
+[CVE-2025-66199]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-66199
+[CVE-2025-68160]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-68160
+[CVE-2025-69418]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-69418
+[CVE-2025-69419]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-69419
+[CVE-2025-69420]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-69420
+[CVE-2025-69421]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-69421
+[CVE-2026-22795]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-22795
+[CVE-2026-22796]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-22796
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
+[OpenSSL Guide]: https://docs.openssl.org/master/man7/ossl-guide-introduction
+[README-QUIC.md]: ./README-QUIC.md
+[RFC 7919]: https://datatracker.ietf.org/doc/html/rfc7919
+[RFC 8422]: https://datatracker.ietf.org/doc/html/rfc8422
+[RFC 8998]: https://datatracker.ietf.org/doc/html/rfc8998#name-iana-considerations
+[RFC 9849]: https://datatracker.ietf.org/doc/html/rfc9849
+[SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final
 [SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final
+[issue tracker]: https://github.com/openssl/openssl/issues
 [jitterentropy-library]: https://github.com/smuellerDD/jitterentropy-library

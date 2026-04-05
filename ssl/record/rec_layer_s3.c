@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -529,13 +529,18 @@ int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int writing, int ret,
                 ERR_new();
                 ERR_set_debug(file, line, 0);
                 ossl_statem_fatal(s, al, SSL_R_RECORD_LAYER_FAILURE, NULL);
+            } else {
+                /*
+                 * Some failure but there is no alert code. We don't log an
+                 * error for this. The record layer should have logged an error
+                 * already or, if not, its due to some sys call error which will be
+                 * reported via SSL_ERROR_SYSCALL and errno. We do still set the
+                 * state machine into an error state via ossl_statem_send_fatal().
+                 * This doesn't actually send an alert because we are using
+                 * SSL_AD_NO_ALERT.
+                 */
+                ossl_statem_send_fatal(s, SSL_AD_NO_ALERT);
             }
-            /*
-             * else some failure but there is no alert code. We don't log an
-             * error for this. The record layer should have logged an error
-             * already or, if not, its due to some sys call error which will be
-             * reported via SSL_ERROR_SYSCALL and errno.
-             */
         }
         /*
          * The record layer distinguishes the cases of EOF, non-fatal
@@ -1253,6 +1258,31 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     int use_early_data = 0;
     uint32_t max_early_data;
     COMP_METHOD *compm = (comp == NULL) ? NULL : comp->method;
+
+    if (direction == OSSL_RECORD_DIRECTION_READ) {
+        if (SSL_CONNECTION_IS_DTLS(s)) {
+            if (s->rlayer.curr_rec < s->rlayer.num_recs) {
+                /*
+                 * We are trying to move to the next epoch, but we've still got
+                 * trailing record data to process. This should not happen in
+                 * normal circumstances. The CCS must have arrived early, but
+                 * this remaining record data is unexpected.
+                 */
+                SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
+                return 0;
+            }
+        } else {
+            if (!ossl_assert(s->rlayer.curr_rec == s->rlayer.num_recs)) {
+                /*
+                 * How can this happen? We're trying to change to the next
+                 * record layer - but that should only happen on a record
+                 * boundary. We should never be able to get here.
+                 */
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+        }
+    }
 
     meth = ssl_select_next_record_layer(s, direction, level);
 

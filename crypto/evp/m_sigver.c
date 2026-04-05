@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -217,8 +217,6 @@ reinitialize:
              */
             evp_md_ctx_clear_digest(ctx, 1, 0);
 
-            /* legacy code support for engines */
-            ERR_set_mark();
             /*
              * This might be requested by a later call to EVP_MD_CTX_get0_md().
              * In that case the "explicit fetch" rules apply for that
@@ -229,16 +227,11 @@ reinitialize:
             ctx->fetched_digest = EVP_MD_fetch(locpctx->libctx, mdname, props);
             if (ctx->fetched_digest != NULL) {
                 ctx->digest = ctx->reqdigest = ctx->fetched_digest;
-            } else {
-                /* legacy engine support : remove the mark when this is deleted */
-                ctx->reqdigest = ctx->digest = EVP_get_digestbyname(mdname);
                 if (ctx->digest == NULL) {
-                    (void)ERR_clear_last_mark();
                     ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
                     goto err;
                 }
             }
-            (void)ERR_pop_to_mark();
         }
     }
 

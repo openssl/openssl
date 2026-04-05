@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -311,10 +311,12 @@ int ts_main(int argc, char **argv)
     if (!app_RAND_load())
         goto end;
 
+    if (digestname == NULL)
+        digestname = "sha256";
     if (!opt_md(digestname, &md))
         goto opthelp;
     if (mode == OPT_REPLY && passin && !app_passwd(passin, NULL, &password, NULL)) {
-        BIO_printf(bio_err, "Error getting password.\n");
+        BIO_puts(bio_err, "Error getting password.\n");
         goto end;
     }
 
@@ -337,7 +339,7 @@ int ts_main(int argc, char **argv)
         if ((in != NULL) && (queryfile != NULL))
             goto opthelp;
         if (in == NULL) {
-            if ((conf == NULL) || (token_in != 0))
+            if (conf == NULL || token_in != 0 || queryfile == NULL)
                 goto opthelp;
         }
         ret = !reply_command(conf, section, queryfile,
@@ -462,8 +464,6 @@ static TS_REQ *create_query(BIO *data_bio, const char *digest, const EVP_MD *md,
     ASN1_OBJECT *policy_obj = NULL;
     ASN1_INTEGER *nonce_asn1 = NULL;
 
-    if (md == NULL && (md = EVP_get_digestbyname("sha256")) == NULL)
-        goto err;
     if ((ts_req = TS_REQ_new()) == NULL)
         goto err;
     if (!TS_REQ_set_version(ts_req, 1))
@@ -503,7 +503,7 @@ err:
     if (!ret) {
         TS_REQ_free(ts_req);
         ts_req = NULL;
-        BIO_printf(bio_err, "could not create query\n");
+        BIO_puts(bio_err, "could not create query\n");
         ERR_print_errors(bio_err);
     }
     TS_MSG_IMPRINT_free(msg_imprint);
@@ -567,30 +567,33 @@ err:
 static ASN1_INTEGER *create_nonce(int bits)
 {
     unsigned char buf[20];
+    ASN1_INTEGER *ret = NULL;
     ASN1_INTEGER *nonce = NULL;
     int len = (bits - 1) / 8 + 1;
-    int i;
 
     if (len > (int)sizeof(buf))
         goto err;
-    if (RAND_bytes(buf, len) <= 0)
-        goto err;
 
-    /* Find the first non-zero byte and creating ASN1_INTEGER object. */
-    for (i = 0; i < len && !buf[i]; ++i)
-        continue;
+    /* Make a random nonce with a non-zero first byte */
+    do {
+        if (RAND_bytes(buf, len) <= 0)
+            goto err;
+    } while (!buf[0]);
+
     if ((nonce = ASN1_INTEGER_new()) == NULL)
         goto err;
-    OPENSSL_free(nonce->data);
-    nonce->length = len - i;
-    nonce->data = app_malloc(nonce->length + 1, "nonce buffer");
-    memcpy(nonce->data, buf + i, nonce->length);
-    return nonce;
+
+    if (!ASN1_STRING_set(nonce, buf, len))
+        goto err;
+
+    ret = nonce;
+    nonce = NULL;
 
 err:
-    BIO_printf(bio_err, "could not create nonce\n");
+    if (ret == NULL)
+        BIO_puts(bio_err, "could not create nonce\n");
     ASN1_INTEGER_free(nonce);
-    return NULL;
+    return ret;
 }
 
 /*
@@ -623,9 +626,9 @@ static int reply_command(CONF *conf, const char *section,
         response = create_response(conf, section, queryfile,
             passin, inkey, md, signer, chain, policy);
         if (response != NULL)
-            BIO_printf(bio_err, "Response has been generated.\n");
+            BIO_puts(bio_err, "Response has been generated.\n");
         else
-            BIO_printf(bio_err, "Response is not generated.\n");
+            BIO_puts(bio_err, "Response is not generated.\n");
     }
     if (response == NULL)
         goto end;
@@ -936,7 +939,7 @@ static TS_VERIFY_CTX *create_verify_ctx(const char *data, const char *digest,
             unsigned char *hexstr = OPENSSL_hexstr2buf(digest, &imprint_len);
             f |= TS_VFY_IMPRINT;
             if (!TS_VERIFY_CTX_set0_imprint(ctx, hexstr, imprint_len)) {
-                BIO_printf(bio_err, "invalid digest string\n");
+                BIO_puts(bio_err, "invalid digest string\n");
                 goto err;
             }
         }
@@ -988,14 +991,14 @@ static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
 
     cert_ctx = X509_STORE_new();
     if (cert_ctx == NULL) {
-        BIO_printf(bio_err, "memory allocation failure\n");
+        BIO_puts(bio_err, "memory allocation failure\n");
         return NULL;
     }
     X509_STORE_set_verify_cb(cert_ctx, verify_cb);
     if (CApath != NULL) {
         lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_hash_dir());
         if (lookup == NULL) {
-            BIO_printf(bio_err, "memory allocation failure\n");
+            BIO_puts(bio_err, "memory allocation failure\n");
             goto err;
         }
         if (X509_LOOKUP_add_dir(lookup, CApath, X509_FILETYPE_PEM) <= 0) {
@@ -1007,7 +1010,7 @@ static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
     if (CAfile != NULL) {
         lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
         if (lookup == NULL) {
-            BIO_printf(bio_err, "memory allocation failure\n");
+            BIO_puts(bio_err, "memory allocation failure\n");
             goto err;
         }
         if (X509_LOOKUP_load_file_ex(lookup, CAfile, X509_FILETYPE_PEM, libctx,
@@ -1021,7 +1024,7 @@ static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
     if (CAstore != NULL) {
         lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_store());
         if (lookup == NULL) {
-            BIO_printf(bio_err, "memory allocation failure\n");
+            BIO_puts(bio_err, "memory allocation failure\n");
             goto err;
         }
         if (X509_LOOKUP_add_store_ex(lookup, CAstore, libctx, propq) <= 0) {

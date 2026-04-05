@@ -27,7 +27,7 @@ void DES_cfb64_encrypt(const unsigned char *in, unsigned char *out,
 {
     register DES_LONG v0, v1;
     register long l = length;
-    register int n = *num;
+    register int n = *num & 0x07;
     DES_LONG ti[2];
     unsigned char *iv, c, cc;
 

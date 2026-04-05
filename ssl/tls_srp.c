@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -254,7 +254,7 @@ int SSL_set_srp_server_param(SSL *s, const BIGNUM *N, const BIGNUM *g,
 
     if (N != NULL) {
         if (sc->srp_ctx.N != NULL) {
-            if (!BN_copy(sc->srp_ctx.N, N)) {
+            if (BN_copy(sc->srp_ctx.N, N) == NULL) {
                 BN_free(sc->srp_ctx.N);
                 sc->srp_ctx.N = NULL;
             }
@@ -263,7 +263,7 @@ int SSL_set_srp_server_param(SSL *s, const BIGNUM *N, const BIGNUM *g,
     }
     if (g != NULL) {
         if (sc->srp_ctx.g != NULL) {
-            if (!BN_copy(sc->srp_ctx.g, g)) {
+            if (BN_copy(sc->srp_ctx.g, g) == NULL) {
                 BN_free(sc->srp_ctx.g);
                 sc->srp_ctx.g = NULL;
             }
@@ -272,7 +272,7 @@ int SSL_set_srp_server_param(SSL *s, const BIGNUM *N, const BIGNUM *g,
     }
     if (sa != NULL) {
         if (sc->srp_ctx.s != NULL) {
-            if (!BN_copy(sc->srp_ctx.s, sa)) {
+            if (BN_copy(sc->srp_ctx.s, sa) == NULL) {
                 BN_free(sc->srp_ctx.s);
                 sc->srp_ctx.s = NULL;
             }
@@ -281,7 +281,7 @@ int SSL_set_srp_server_param(SSL *s, const BIGNUM *N, const BIGNUM *g,
     }
     if (v != NULL) {
         if (sc->srp_ctx.v != NULL) {
-            if (!BN_copy(sc->srp_ctx.v, v)) {
+            if (BN_copy(sc->srp_ctx.v, v) == NULL) {
                 BN_free(sc->srp_ctx.v);
                 sc->srp_ctx.v = NULL;
             }

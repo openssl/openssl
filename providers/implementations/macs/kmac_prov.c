@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -278,7 +278,7 @@ static int kmac_setkey(struct kmac_data_st *kctx, const unsigned char *key,
             if (!OSSL_FIPS_IND_ON_UNAPPROVED(kctx, OSSL_FIPS_IND_SETTABLE1,
                     PROV_LIBCTX_OF(kctx->provctx),
                     "KMAC", "Key size",
-                    ossl_fips_config_kmac_key_check)) {
+                    FIPS_CONFIG_KMAC_KEY_CHECK)) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
                 return 0;
             }
@@ -463,7 +463,7 @@ static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
             if (!OSSL_FIPS_IND_ON_UNAPPROVED(kctx, OSSL_FIPS_IND_SETTABLE0,
                     PROV_LIBCTX_OF(kctx->provctx),
                     "KMAC", "length",
-                    ossl_fips_config_no_short_mac)) {
+                    FIPS_CONFIG_NO_SHORT_MAC)) {
                 ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_OUTPUT_LENGTH);
                 return 0;
             }

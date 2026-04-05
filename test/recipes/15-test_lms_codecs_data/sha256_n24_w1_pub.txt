@@ -1,0 +1,12 @@
+lms-type: SHA256-N24-H5 (0xa)
+lm-ots-type: SHA256-N24-W1 (0x5)
+Id:
+    bb:9c:1b:5f:cf:12:86:c4:1f:7d:cd:e9:fb:53:a5:39
+LMS Public-Key:
+pub:
+    00:00:00:0a:00:00:00:05:bb:9c:1b:5f:cf:12:86:c4:
+    1f:7d:cd:e9:fb:53:a5:39:c7:e3:e5:ee:f5:fa:b8:78:
+    bd:36:c0:4e:ab:54:de:f7:cc:25:8c:32:a8:42:c4:fd
+K:
+    c7:e3:e5:ee:f5:fa:b8:78:bd:36:c0:4e:ab:54:de:f7:
+    cc:25:8c:32:a8:42:c4:fd

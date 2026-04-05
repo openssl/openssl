@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,7 @@
 #define OPENSSL_SUPPRESS_DEPRECATED /* EVP_PKEY_get1/set1_RSA */
 
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
@@ -284,6 +285,166 @@ err:
     return ret;
 }
 
+static int test_drop_empty_cert_keyids(void)
+{
+    static const unsigned char commonName[] = "test";
+    BIO *bio = NULL;
+    CONF *conf = NULL;
+    X509 *x = NULL;
+    X509_NAME *subject = NULL;
+    X509_NAME_ENTRY *name_entry = NULL;
+    X509_EXTENSION *ext = NULL;
+    const STACK_OF(X509_EXTENSION) *exts;
+    X509V3_CTX ctx;
+    int ret = 0;
+
+    if (!TEST_ptr(x = X509_new())
+        || !TEST_int_eq(X509_set_version(x, X509_VERSION_3), 1)
+        || !TEST_int_eq(ASN1_INTEGER_set(X509_get_serialNumber(x), 1), 1)
+        || !TEST_ptr(subject = X509_NAME_new()))
+        goto err;
+
+    name_entry = X509_NAME_ENTRY_create_by_NID(NULL, NID_commonName,
+        MBSTRING_ASC, commonName, -1);
+    if (!TEST_ptr(name_entry)
+        || !TEST_int_eq(X509_NAME_add_entry(subject, name_entry, -1, 0), 1)
+        || !TEST_int_eq(X509_set_subject_name(x, subject), 1)
+        || !TEST_int_eq(X509_set_issuer_name(x, subject), 1)
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(x), 0))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(x), 24 * 3600))
+        || !TEST_int_eq(X509_set_pubkey(x, pubkey), 1))
+        goto err;
+
+    /*
+     * Check that X509_add_ext() does not create non-NULL empty stack when
+     * adding an ignored extension (from initial NULL state).
+     */
+    X509V3_set_ctx(&ctx, x, x, NULL, NULL, X509V3_CTX_REPLACE);
+    if (!TEST_ptr(ext = X509V3_EXT_conf(NULL, &ctx, "subjectKeyIdentifier", "none"))
+        || !TEST_int_eq(X509_add_ext(x, ext, -1), 1)
+        || !TEST_ptr_null(X509_get0_extensions(x)))
+        goto err;
+
+    /* Add non-empty SKID */
+    if (!TEST_ptr(bio = BIO_new(BIO_s_mem()))
+        || !TEST_int_ge(BIO_printf(bio, "subjectKeyIdentifier = hash\n"), 0)
+        || !TEST_ptr(conf = NCONF_new(NULL))
+        || !TEST_int_gt(NCONF_load_bio(conf, bio, NULL), 0))
+        goto err;
+    (void)BIO_reset(bio);
+
+    X509V3_set_nconf(&ctx, conf);
+    if (!TEST_true(X509V3_EXT_add_nconf(conf, &ctx, "default", x))
+        || !TEST_ptr(exts = X509_get0_extensions(x))
+        || !TEST_int_eq(sk_X509_EXTENSION_num(exts), 1))
+        goto err;
+
+    /* Request "empty" SKID in order to drop any previous value */
+    NCONF_free(conf);
+    if (!TEST_ptr(conf = NCONF_new(NULL))
+        || !TEST_int_ge(BIO_printf(bio, "subjectKeyIdentifier = none\n"), 0)
+        || !TEST_int_gt(NCONF_load_bio(conf, bio, NULL), 0))
+        goto err;
+
+    X509V3_set_nconf(&ctx, conf);
+    if (!TEST_true(X509V3_EXT_add_nconf(conf, &ctx, "default", x))
+        || !TEST_int_gt(X509_sign(x, privkey, signmd), 0)
+        || !TEST_ptr_null(X509_get0_extensions(x)))
+        goto err;
+
+    /*
+     * Now check that a non-empty extension is actually added via
+     * X509_add_ext().
+     */
+    X509_EXTENSION_free(ext);
+    if (!TEST_ptr(ext = X509V3_EXT_conf(NULL, &ctx, "subjectKeyIdentifier", "hash"))
+        || !TEST_int_eq(X509_add_ext(x, ext, -1), 1)
+        || !TEST_int_gt(X509_sign(x, privkey, signmd), 0)
+        || !TEST_ptr(exts = X509_get0_extensions(x))
+        || !TEST_int_eq(sk_X509_EXTENSION_num(exts), 1))
+        goto err;
+
+    ret = 1;
+err:
+    BIO_free(bio);
+    NCONF_free(conf);
+    X509_NAME_ENTRY_free(name_entry);
+    X509_NAME_free(subject);
+    X509_EXTENSION_free(ext);
+    X509_free(x);
+    return ret;
+}
+
+static int test_drop_empty_csr_keyids(void)
+{
+    static const unsigned char commonName[] = "test";
+    BIO *bio = NULL;
+    CONF *conf = NULL;
+    X509_REQ *x = NULL;
+    X509_NAME *subject = NULL;
+    X509_NAME_ENTRY *name_entry = NULL;
+    X509_EXTENSION *ext = NULL;
+    STACK_OF(X509_EXTENSION) *exts = NULL;
+    X509V3_CTX ctx;
+    int ret = 0;
+
+    if (!TEST_ptr(x = X509_REQ_new())
+        || !TEST_int_eq(X509_REQ_set_version(x, X509_REQ_VERSION_1), 1)
+        || !TEST_ptr(subject = X509_NAME_new()))
+        goto err;
+
+    name_entry = X509_NAME_ENTRY_create_by_NID(NULL, NID_commonName,
+        MBSTRING_ASC, commonName, -1);
+    if (!TEST_ptr(name_entry)
+        || !TEST_int_eq(X509_NAME_add_entry(subject, name_entry, -1, 0), 1)
+        || !TEST_int_eq(X509_REQ_set_subject_name(x, subject), 1)
+        || !TEST_int_eq(X509_REQ_set_pubkey(x, pubkey), 1))
+        goto err;
+
+    /* Add non-empty SKID, CSRs have no issuer, so no AKID */
+    if (!TEST_ptr(bio = BIO_new(BIO_s_mem()))
+        || !TEST_int_ge(BIO_printf(bio, "subjectKeyIdentifier = hash\n"), 0)
+        || !TEST_ptr(conf = NCONF_new(NULL))
+        || !TEST_int_gt(NCONF_load_bio(conf, bio, NULL), 0))
+        goto err;
+    (void)BIO_reset(bio);
+
+    X509V3_set_ctx(&ctx, NULL, NULL, x, NULL, X509V3_CTX_REPLACE);
+    X509V3_set_nconf(&ctx, conf);
+    if (!TEST_true(X509V3_EXT_REQ_add_nconf(conf, &ctx, "default", x))
+        || !TEST_int_eq(X509_REQ_get_attr_count(x), 1)
+        || !TEST_ptr(exts = X509_REQ_get_extensions(x))
+        || !TEST_int_eq(sk_X509_EXTENSION_num(exts), 1))
+        goto err;
+    sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+    exts = NULL;
+
+    /* Request an "empty" SKID in order to drop the previous SKID */
+    NCONF_free(conf);
+    if (!TEST_ptr(conf = NCONF_new(NULL))
+        || !TEST_int_ge(BIO_printf(bio, "subjectKeyIdentifier = none\n"), 0)
+        || !TEST_int_gt(NCONF_load_bio(conf, bio, NULL), 0))
+        goto err;
+
+    X509V3_set_nconf(&ctx, conf);
+    if (!TEST_true(X509V3_EXT_REQ_add_nconf(conf, &ctx, "default", x))
+        || !TEST_int_gt(X509_REQ_sign(x, privkey, signmd), 0)
+        || !TEST_int_eq(X509_REQ_get_attr_count(x), 0))
+        goto err;
+
+    ret = 1;
+
+err:
+    BIO_free(bio);
+    NCONF_free(conf);
+    X509_NAME_ENTRY_free(name_entry);
+    X509_NAME_free(subject);
+    X509_EXTENSION_free(ext);
+    sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+    X509_REQ_free(x);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("<pss-self-signed-cert.pem>\n")
 
 int setup_tests(void)
@@ -321,6 +482,8 @@ int setup_tests(void)
     ADD_TEST(test_x509_delete_last_extension);
     ADD_TEST(test_x509_crl_delete_last_extension);
     ADD_TEST(test_x509_revoked_delete_last_extension);
+    ADD_TEST(test_drop_empty_cert_keyids);
+    ADD_TEST(test_drop_empty_csr_keyids);
     return 1;
 }
 

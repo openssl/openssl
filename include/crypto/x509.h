@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,8 +14,11 @@
 #include "internal/refcount.h"
 #include <openssl/asn1.h>
 #include <openssl/x509.h>
+#include <openssl/x509_vfy.h>
 #include <openssl/conf.h>
 #include "crypto/types.h"
+
+#include <crypto/asn1.h>
 
 /* Internal X509 structures and functions: not for application use */
 
@@ -216,7 +219,7 @@ struct x509_store_ctx_st { /* X509_STORE_CTX */
     X509_STORE *store;
     /* The following are set by the caller */
     /* The cert to check */
-    X509 *cert;
+    X509 *cert; /* XXX should really be made const */
     /* chain of X509s - untrusted - passed in */
     STACK_OF(X509) *untrusted;
     /* set of CRLs passed in */
@@ -231,9 +234,9 @@ struct x509_store_ctx_st { /* X509_STORE_CTX */
     /* error callback */
     int (*verify_cb)(int ok, X509_STORE_CTX *ctx);
     /* get issuers cert from ctx */
-    int (*get_issuer)(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
+    X509_STORE_CTX_get_issuer_fn get_issuer;
     /* check issued */
-    int (*check_issued)(X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
+    X509_STORE_CTX_check_issued_fn check_issued;
     /* Check revocation status of chain */
     int (*check_revocation)(X509_STORE_CTX *ctx);
     /* retrieve CRL */
@@ -264,7 +267,7 @@ struct x509_store_ctx_st { /* X509_STORE_CTX */
     /* When something goes wrong, this is why */
     int error_depth;
     int error;
-    X509 *current_cert;
+    X509 *current_cert; /* XXX should really be made const */
     /* cert currently being tested as valid issuer */
     X509 *current_issuer;
     /* current CRL */
@@ -312,9 +315,9 @@ struct x509_object_st {
 
 int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc);
 int ossl_x509_set1_time(int *modified, ASN1_TIME **ptm, const ASN1_TIME *tm);
-int ossl_x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags);
-int ossl_x509v3_cache_extensions(X509 *x);
-int ossl_x509_init_sig_info(X509 *x);
+int ossl_x509_print_ex_brief(BIO *bio, const X509 *cert, unsigned long neg_cflags);
+int ossl_x509v3_cache_extensions(const X509 *x);
+int ossl_x509_init_sig_info(const X509 *x, X509_SIG_INFO *info);
 
 int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
@@ -324,10 +327,12 @@ int ossl_x509_req_set0_libctx(X509_REQ *x, OSSL_LIB_CTX *libctx,
 int ossl_asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *type,
     void *data, unsigned char *md, unsigned int *len,
     OSSL_LIB_CTX *libctx, const char *propq);
-int ossl_x509_add_cert_new(STACK_OF(X509) **sk, X509 *cert, int flags);
+int ossl_x509_add_cert_new(STACK_OF(X509) **sk, const X509 *cert, int flags);
 int ossl_x509_add_certs_new(STACK_OF(X509) **p_sk, const STACK_OF(X509) *certs, int flags);
 
 STACK_OF(X509_ATTRIBUTE) *ossl_x509at_dup(const STACK_OF(X509_ATTRIBUTE) *x);
+STACK_OF(X509_EXTENSION) *
+ossl_x509_req_get1_extensions_by_nid(const X509_REQ *req, int nid);
 
 int ossl_x509_PUBKEY_get0_libctx(OSSL_LIB_CTX **plibctx, const char **ppropq,
     const X509_PUBKEY *key);

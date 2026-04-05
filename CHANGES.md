@@ -27,87 +27,290 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
-OpenSSL 4.0
 -----------
+
+### Changes between 4.0 and 4.1 [xx XXX xxxx]
+
+ * Improved DTLS handshake robustness under UDP reordering by buffering and
+   replaying early ChangeCipherSpec (CCS) records at the expected state.
+
+   *Tong Li*
+
+ * The `openssl pkeyutl` command now uses memory-mapped I/O when reading
+   raw input from a file for oneshot sign/verify operations (such as Ed25519,
+   Ed448, and ML-DSA) on platforms that support it (Unix-like). The
+   `openssl dgst` command uses the same approach for one-shot sign/verify
+   when the input is from a file, removing the previous 16 MB limit for
+   file-based input. This improves performance and supports large files
+   without doubling memory use. Other platforms and stdin input continue to
+   use the existing buffer-based path.
+
+   *John Claus*
+
+ * Added AVX2 optimized ML-DSA NTT operations on `x86_64`.
+
+   *Marcel Cornu and Tomasz Kantecki*
+
+ * Changed the output of the -disabled option for the list command.
+   Displaying disabled features, protocols, and algorithms, in relevant sections.
+   Disabled features are now generated at configuration time.
+
+   *Paul Louvel*
+
+ * Added `CTLOG_STORE_add0_log()` to add individual CT logs to a `CTLOG_STORE`.
+
+   *Tim Perry*
+
+ * Dropped `no-ecdsa` and `no-ecdh` options from `Configure` as these options
+   did not really disable the implementations. Use `no-ec` to disable the
+   elliptic curve support.
+
+   *Tomáš Mráz*
+
+ * Made more QUIC transport parameters configurable via the
+   `SSL_get_value_uint`/`SSL_set_value_uint` functions. Now also configurable:
+   `max_udp_payload_size`, `initial_max_data`,
+   `initial_max_stream_data_bidi_local`, `initial_max_stream_data_uni`,
+   `ack_delay_exponent`, `max_ack_delay`.
+
+   *Nikolas Gauder*
+
+ * Add new verification error `X509_V_ERR_DUPLICATE_EXTENSION` with descriptive
+   message for certificates containing duplicate X.509 extensions, which are
+   explicitly prohibited by [RFC 5280].
+
+   *Daniel Kubec*
+
+ * Added support for RFC 8701 GREASE (Generate Random Extensions And Sustain
+   Extensibility). When `SSL_OP_GREASE` is set, the TLS client injects
+   reserved GREASE values into cipher suites, supported versions, supported
+   groups, signature algorithms, key share, and extensions in the ClientHello
+   to prevent ecosystem ossification. The `openssl s_client` command gains a
+   `-grease` option to enable this.
+
+   *William McCormack*
+
+ * Added IKEV2 KDF (EVP_KDF-IKEV2KDF) implementation.
+
+   *Helen Zhang*
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
- * OPENSSL_cleanup() now runs in a global destructor, or not at all by default.
+ * Added `-expected-rpks` option to the `openssl s_client`
+   and `openssl s_server` commands.  This makes it possible to specify
+   one or more public keys expected from the remote peer that are then used
+   to authenticate the connection.
 
-   OpenSSL_cleanup() will no longer by default free global objects when run from
-   an application. Instead it sets a flag for a global destructor to do this after
-   the process exits, and after subordinate libraries using OpenSSL have run their
-   destructors. If destructor support is not available, OpenSSL_cleanup() will do
-   nothing, leaving the global objects to be cleaned up by the Operating System.
+   *Viktor Dukhovni*
 
-   *Bob Beck*
+ * Added `-hmac-env` and `-hmac-stdin` options to `openssl dgst` command.
 
- * Added CSHAKE as per [SP 800-185]
+   *Igor Ustinov*
 
-   *Shane Lontis*
-
- * Added `OPENSSL_sk_set_cmp_thunks()` api to allow for proper typecasting
-   during comparison of elements in a `STACK_OF` structure
-
-   *Neil Horman*
-
- * Added configure options to disable KDF algorithms for
-   hmac-drbg-kdf, kbkdf, krb5kdf, pvkkdf, snmpkdf, sskdf, sshkdf, x942kdf and x963kdf.
+ * Added LMS support for signature verification to `openssl pkeyutl` command.
+   To enable this, LMS `SubjectPublicKeyInfo` encoder and decoders were
+   added, and the LMS keymanager and signature code were updated.
 
    *Shane Lontis*
 
- * Support of deprecated elliptic curves in TLS according to RFC 8422 was
-   disabled at compile-time by default. To enable it, use the
-   `enable-tls-deprecated-ec` compilation option.
+ * Added new `SSL_get0_sigalg()` and `SSL_get0_shared_sigalg()` functions
+   to report the TLS signature algorithm name and codepoint for the peer
+   advertised and shared algorithms respectively.  These supersede the existing
+   `SSL_get_sigalgs()` and `SSL_get_shared_sigalgs()` functions, which are only
+   a good fit for TLS 1.2.  The names reported are the IANA names,
+   and are expected to consistently match the names expected
+   in `SignatureAlgorithms` configuration settings, see `SSL_CONF_cmd(3)`
+   for details.  Previously reported names were not always directly usable
+   for configurations, and were mostly OpenSSL-specific aliases that rarely
+   matched the official IANA codepoint names.
 
-   *Dmitry Belyavskiy*
+   There is an associated change in how signature algorithms are reported by the
+   `openssl s_client` and `openssl s_server` commands.  They now use
+   the new functions and report the IANA registered names of each signature
+   scheme.  Example new output:
 
- * Remove support for an SSLv2 Client Hello. When a client wanted to support
-   both SSLv2 and higher versions like SSLv3 or even TLSv1, it needed to
-   send an SSLv2 Client Hello. SSLv2 support itself was removed in version
-   1.1.0, but there was still compatibility code for clients sending an SSLv2
-   Client Hello. Since we no longer support SSLv2 Client Hello,
-   SSL_client_hello_isv2() is now deprecated and always returns 0.
+       Signature Algorithms: mldsa65:mldsa87:mldsa44:ecdsa_secp256r1_sha256:ecdsa_secp384r1_sha384:ecdsa_secp521r1_sha512:ed25519:ed448:ecdsa_brainpoolP256r1tls13_sha256:ecdsa_brainpoolP384r1tls13_sha384:ecdsa_brainpoolP512r1tls13_sha512:rsa_pss_pss_sha256:rsa_pss_pss_sha384:rsa_pss_pss_sha512:rsa_pss_rsae_sha256:rsa_pss_rsae_sha384:rsa_pss_rsae_sha512:rsa_pkcs1_sha256:rsa_pkcs1_sha384:rsa_pkcs1_sha512:ecdsa_sha224:rsa_pkcs1_sha224:dsa_sha224:dsa_sha256:dsa_sha384:dsa_sha512
 
-   *Kurt Roeckx*
+   *Viktor Dukhovni*
+
+ * Implemented client-side predicted keyshare floating.  When a tuple loses
+   the last element that was tagged for transmission of a predicted client
+   keyshare (by default `*X25519MLKEM768` and `*X25519` in their respective
+   tuples), either because the group is not enabled at compile-time, or
+   because it is removed by configuration (e.g. `DEFAULT:-<groupname>`), if
+   the tuple remains non-empty, the keyshare is inherited by the first (i.e.
+   most preferred) remaining element of the tuple.
+
+   *Viktor Dukhovni*
+
+ * Added support for [RFC 8998], signature algorithm `sm2sig_sm3`, key exchange
+   group `curveSM2`, and [tls-hybrid-sm2-mlkem] post-quantum group
+   `curveSM2MLKEM768`.
+
+   Verification of SM2-signed certificates required changing the default
+   *distinguishing identifier* from empty to the constant ASCII string
+   "1234567812345678".  An explicit empty distinguishing identifier value may
+   need to be used to verify or create signatures that are compatible with
+   versions of OpenSSL prior to 4.0.  With the command-line tools an empty
+   value can be specified with the use of either the **-pkeyopt**
+   (`openssl-pkeyutl(1)`) or **-sigopt** (`openssl-dgst(1)`) option with a
+   value of "distid:".
+
+   *Viktor Dukhovni*
+
+ * Added support for TLS 1.3 SM cipher suites `TLS_SM4_GCM_SM3`
+   and `TLS_SM4_CCM_SM3` from [RFC 8998].
+
+   *Milan Brož*
+
+ * Added cSHAKE function support as per [SP 800-185].
+
+   *Shane Lontis*
 
  * Added "ML-DSA-MU" digest algorithm support.
 
    *Shane Lontis*
 
- * Support of explicit EC curves was disabled by default, an error will occur if
-   an explicit EC curve doesn't match any known one. New configuration option,
-   `enable-ec_explicit_curves` is added.
+ * Added SNMP KDF (`EVP_KDF_SNMPKDF`) to `EVP_KDF`.
 
-   *Dmitry Belyavskiy*
+   *Barry Fussell and Helen Zhang*
 
- * Removed configure options can now only be disabled. You may continue to use
-   `disable-<feature>`, which will remain supported. Using `enable-<feature>`
-   for a removed feature is no longer permitted.
+ * Added SRTP KDF (`EVP_KDF_SRTPKDF`) to `EVP_KDF`
+
+   *Barry Fussell and Helen Zhang*
+
+ * Implemented [RFC 7919], adding support for negotiated FFDHE key exchange
+   in TLS 1.2.
+
+   *Joachim Vandersmissen* (with additional support from *Viktor Dukhovni*)
+
+ * Added AKID verification checks when `X509_V_FLAG_X509_STRICT` is set.
+   Raise `X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER` when AKID is not present.
+   Raise `X509_V_ERR_EMPTY_AUTHORITY_KEY_IDENTIFIER` when AKID has no attributes.
+   Raise `X509_V_ERR_AKID_ISSUER_SERIAL_NOT_PAIRED` when `authorityCertIssuer`
+   and `authorityCertSerialNumber` fields are not paired.
+
+   *Daniel Kubec*
+
+ * Implemented [RFC 9849], adding support for Encrypted Client Hello (ECH).
+   See `doc/design/ech-api.md` for details.
+
+   *Stephen Farrell* (with much support from *Matt Caswell* and *Tomáš Mráz*)
+
+ * Added the `OSSL_ESS_check_signing_certs_ex()` call.
+   This API call is an extension to `OSSL_ESS_check_signing_certs()` that adds
+   the ability to specify a library context and property query when fetching
+   algorithms to validate a given certificate.
+
+   *Neil Horman*
+
+ * Added `OPENSSL_sk_set_cmp_thunks()` API to allow for proper typecasting
+   during comparison of elements in a `STACK_OF` structure.
+
+   *Neil Horman*
+
+ * Added `ASN1_BIT_STRING_set1()` function to set a bit string to a value,
+   including the length in bytes and the number of unused bits.  Internally,
+   `ASN1_BIT_STRING_set_bit()` has also been modified to keep the number
+   of unused bits correct when changing an `ASN1_BIT_STRING`.
+
+   *Bob Beck*
+
+ * Added `SSL_CTX_get0_alpn_protos()` and `SSL_get0_alpn_protos()` functions.
+
+   *Daniel Kubec*
+
+ * Added `EVP_MD_CTX_serialize()`/`EVP_MD_CTX_deserialize()` functions.
+   These functions allow to export the internal state of a Digest and re-import
+   it later to continue a computation from a specific checkpoint.  Only SHA-2
+   and the SHA-3 family (Keccak, SHAKE, SHA-3) of functions currently support
+   this functionality.
+
+   *Simo Sorce*
+
+ * Added `BIO_set_send_flags()` function that allows setting flags passed to
+   `send()`, `sendto()`, and `sendmsg()`.  The main intention is to allow
+   setting the `MSG_NOSIGNAL` flag to avoid a crash on receiving the `SIGPIPE`
+   signal.
+
+   *Igor Ustinov*
+
+ * FIPS self tests can now be deferred and run as needed when installing
+   the FIPS module with the `-defer_tests` option of the `openssl fipsinstall`
+   command.
+
+   *Simo Sorce*
+
+ * Lower bounds checks are now enforced when using `PKCS5_PBKDF2_HMAC` API
+   with FIPS provider.
+
+   When using the FIPS provider via the `PKCS5_PBKDF2_HMAC` API,
+   password protected encrypted files will now have lower bounds
+   checks (minimum iteration count, minimum password length, salt
+   size and derived key lengths) enforced by default.  Prior to
+   upgrading to this version, users may want to check if their
+   password protected key–stores are encrypted using short passwords,
+   salts, low iteration counts for PBKDF or weaker ciphers. To
+   upgrade to the new defaults one can decrypt the keys with a
+   previous OpenSSL version or the default provider, and then
+   re-encrypt them with the newer OpenSSL (using the FIPS provider),
+   thus upgrading to longer password, salt length and AES-256 CBC.
+
+   *Dimitri John Ledkov*
+
+ * Added support for using either static or dynamic VC runtime linkage
+   on Windows.  Using the `enable-static-vcruntime` configuration option,
+   OpenSSL can now be configured to use the static or dynamic `vcruntime.dll`
+   linkage.  The multithreaded or single threaded static VC runtime is selected
+   based on the `enable-threads` option.
+
+   *Neil Horman*
+
+ * Added configure options to disable KDF algorithms for `hmac-drbg-kdf`,
+   `kbkdf`, `krb5kdf`, `pvkkdf`, `snmpkdf`, `sskdf`, `sshkdf`, `x942kdf`,
+   and `x963kdf`.
+
+   *Shane Lontis*
+
+ * Removed configure options can now only be disabled.  You may continue
+   to use `disable-<feature>` syntax, which will remain supported.  Using
+   `enable-<feature>` for a removed feature is no longer permitted.
 
    *Andrew Dinh*
 
- * Support for SSLv3 was removed. SSLv3 has been deprecated since
-   2015, and OpenSSL had it disabled by default since 1.1.0 (2016).
+ * Added restrictions on the maximum number of TLS `key_share`s (16)
+   that a server will pay attention to, as well as the maximum number
+   of supported `group`s (128) and `sig_alg`s (128).  Any sent beyond
+   these limits are ignored, in order to avoid clients sending excessively
+   long lists in these extensions.
 
-   *Kurt Roeckx*
+   *Matt Caswell*
 
- * The script tool `c_rehash` was removed. Use `openssl rehash` instead.
+ * Removed specialised built-in logic for adding the SKID and AKID extensions
+   from `openssl x509`, `openssl req`, and `openssl ca` commands,
+   these extensions are handled through configuration files and command-line
+   options just like any other extension.  See their documentation and also
+   `x509v3_config(5)` for additional details.
 
-   *Norbert Pocs*
+   Updated the syntax of the `subjectKeyIdentifier` (SKID) and
+   `authorityKeyIdentifier` (AKID) extensions, introducing the `nonss` qualifier
+   for the `keyid` and `issuer` keywords.
 
- * libcrypto no longer cleans up globally allocated data on process exit. This data
-   is cleaned up automatically by the OS instead. Some memory leak detectors
-   may report spurious allocated and reachable memory at application exit. To
-   avoid such spurious leak detection reports the application may call
-   `OPENSSL_cleanup()` before the process exits.
+   The x509 "mini-CA" now attempts to find extension settings in the default
+   configuration file even if neither the `-extfile` nor the `-extensions`
+   option is explicitly specified.  Failure to open the default configuration
+   is silently ignored.
 
-   *Alexandr Nedvedicky*
+   The settings in the stock OpenSSL 4.0 configuration file arrange for
+   addition of the requisite SKID and AKID extensions.  Other configuration
+   files may need to be adjusted if desired.
 
- * The crypto-mdebug-backtrace configuration option has been entirely removed.
-   The option has been a no-op since 1.0.2.
+   *Viktor Dukhovni*
 
-   *Neil Horman*
+ * Enabled Server verification by default in `s_server`
+   when the `-verify_return_error` option is enabled.
+
+   *Ryan Hooper*
 
  * Removed extra leading '00:' when printing key data such as an RSA modulus
    in hexadecimal format where the first (most significant) byte is >= 0x80.
@@ -116,99 +319,518 @@ OpenSSL 4.0
 
    *David von Oheimb*
 
- * Standardized the width of hexadecimal dumps to 24 bytes for signatures (to
-   stay within the 80 characters limit) and 16 bytes for everything else.
+ * Standardized the width of hexadecimal dumps to 24 bytes for signatures
+   (to stay within the 80 characters limit) and 16 bytes for everything else.
 
    *Beat Bolli*
 
- * The deprecated function `ASN1_STRING_data` has been removed.
+ * Updated the default group list to append `SecP256r1MKEM768` and
+   `curveSM2MLKEM768` to the first tuple in that order after `*X25519MLKEM768`.
+   Also inserted a penultimate tuple with `curveSM2` (just before the `FFDHE`
+   groups).
 
-   *Bob Beck*
+   *Viktor Dukhovni*
 
-* The ASN1_STRING_FLAG_X509_TIME define has been removed.
+ * Consolidated processing of SM2 and EdDSA signatures with essentially
+   identical code for ECDSA in the `openssl speed` command.  The output format
+   has changed slightly to report the EC curve name rather than its bit size.
 
-   *Bob Beck*
+   *Viktor Dukhovni*
 
- * Remove needless 'const' from scalar types in the public API, mostly for AES and Camellia
+ * CRLs with a malformed Issuing Distribution Point extensions are now rejected.
 
-   *David von Oheimb*
+   *Daniel Kubec*
 
- * Various function parameters have been constified,
-   in particular for X509-related functions.
+ * CRLs with malformed `CRL Number` or `Delta CRL Indicator` extensions
+   are now rejected.
 
-   *David von Oheimb*
+   *Daniel Kubec*
 
-* `X509_ALGOR_set_md()` now returns a value indicating success or failure.
+ * Fixed CRLs with invalid `ASN1_TIME` in `invalidityDate` extensions,
+   where verification incorrectly succeeded.  Enforced proper handling
+   of `ASN1_TIME` validation results so that any CRL containing invalid
+   time fields is rejected immediately, preventing the error from propagating
+   to verification.
 
-   *David von Oheimb*
+   *Daniel Kubec*
 
- * Drop darwin-i386{,-cc} and darwin-ppc{,64}{,-cc} targets from Configurations.
+ * CRLs with a `Certificate Issuer` extension in a certificate revocation entry
+   are now rejected, unless the `Indirect` flag is set to `TRUE`
+   in the `Issuing Distribution Point` extension of the CRL.
 
-   *Daniel Kubec and Eugene Syromiatnikov*
+   *Daniel Kubec*
 
- * Added `-hmac-env` and `-hmac-stdin` options to openssl-dgst.
+ * `SSL_get_error()` no longer depends on the state of the error stack,
+   so it is no longer necessary to empty the error queue before the
+   TLS/SSL I/O operations.
 
    *Igor Ustinov*
 
- * Added SSL_CTX_get0_alpn_protos() and SSL_get0_alpn_protos().
+ * `ASN1_STRING` has been made opaque.
+
+   Access to values from `ASN1_STRING` and related types should be done with the
+   appropriate accessor functions.  The various `ASN1_STRING_FLAG` values have
+   been made private.
+
+   *Bob Beck*
+
+ * `OPENSSL_cleanup()` now runs in a global destructor, or not at all by default.
+
+   `OpenSSL_cleanup()` will no longer by default free global objects when run from
+   an application. Instead it sets a flag for a global destructor to do this after
+   the process exits, and after subordinate libraries using OpenSSL have run their
+   destructors. If destructor support is not available, `OpenSSL_cleanup()` will do
+   nothing, leaving the global objects to be cleaned up by the Operating System.
+
+   *Bob Beck*
+
+ * `X509_ALGOR_set_md()` function now returns a value indicating success
+    or failure.
+
+   *David von Oheimb*
+
+ * Added documentation for `X509_cmp_time()`, `X509_cmp_current_time()`,
+   and `X509_cmp_timeframe()`, and deprecated them.
+   Added a new function, `X509_check_certificate_times()`, as well as
+   the `<openssl/posix_time.h>` interface from BoringSSL/LibreSSL.
+   For details of these functions and non-deprecated replacement
+   strategies, see `X509_check_certificate_times(3)`.
+
+   *Bob Beck*
+
+ * Const-corrected `time_t` arguments for `X509_cmp_time()`, `X509_time_adj()`,
+   and `X509_time_adj_ex()`.
+
+   *Frederik Wedel-Heinen*
+
+ * Made `X509_ATTRIBUTE` accessor functions const-correct. The functions
+   `X509_ATTRIBUTE_get0_object()`, `X509_ATTRIBUTE_get0_type()`, and
+   `X509_ATTRIBUTE_get0_data()` now accept `const X509_ATTRIBUTE *` and
+   return const pointers. Related PKCS12 functions `PKCS12_get_attr_gen()`,
+   `PKCS12_get_attr()`, and `PKCS8_get_attr()` have also been updated to
+   return `const ASN1_TYPE *`.
+
+   *kovan*
+
+ * Constified various function return values, particularly in X509 and related
+   areas, and when functions were returning non-const objects owned by a const
+   parameter.
+
+   *Bob Beck*
+
+ * Many functions accepting `X509 *` arguments, or returning values
+   from a const `X509 *` have been changed to take/return const
+   arguments. The most visible changes are places where pointer values
+   are returned from a const `X509 *` object. In many places where
+   these were non const values being returned from a const object,
+   these pointer values have now been made const. The goal of this
+   change is to enable future improvements in X.509 certificate
+   handling. For full details see the relevant section in
+   ossl-migration-guide(7).
+
+   *Bob Beck*
+
+ * Constified various function parameters, in particular for X509-related
+   functions.
+
+   *David von Oheimb*
+
+ * Constified various X509-related functions: `X509_get_pathlen()`,
+   `X509_check_ca()`, `X509_check_purpose()`, `X509_get_proxy_pathlen()`,
+   `X509_get_extension_flags()`, `X509_get_key_usage()`,
+   `X509_get_extended_key_usage()`, `X509_get0_subject_key_id()`,
+   `X509_get0_authority_key_id()`, `X509_get0_authority_issuer()`,
+   `X509_get0_authority_serial()`, `X509_get0_distinguishing_id()`.
+
+   *Bob Beck*
+
+ * Removed needless `const` qualifiers from scalar type arguments in the public
+   APIs, mostly for AES and Camellia.
+
+   *David von Oheimb*
+
+ * Fixed a bug that allowed TLS 1.2 ciphers to be added to the TLS 1.3
+   `ciphersuites` list, and for that list to contain duplicates.
+   Cipher configuration strings for both TLS 1.2 and 1.3 are now
+   case-insensitive.
+
+   *Viktor Dukhovni*
+
+ * Deprecated `ASN1_OBJECT_new()` function.
+   Refer to `ossl-migration-guide(7)` for more info.
+
+   *Frederik Wedel-Heinen*
+
+ * Deprecated `X509_NAME_get_text_by_NID()` and `X509_NAME_get_text_by_OBJ()`
+   functions, and documented them as such.
+
+   *Bob Beck*
+
+ * Removed the `SSL_TXT_FIPS` option.  This was a remnant of the old FIPS
+   canister and wasn't used anymore.
+
+   *Dr Paul Dale*
+
+ * Removed `OPENSSL_atexit()` function.
+
+   *Bob Beck*
+
+ * Critical extension enforcement for `EXFLAG_BCONS_CRITICAL`,
+   `EXFLAG_AKID_CRITICAL`, `EXFLAG_SKID_CRITICAL`, and `EXFLAG_SAN_CRITICAL` is
+   incorrect. These checks were intended as CA requirements to prevent
+   misinterpretation by verifiers that don't support certain extensions
+   However, since we do support these extensions, there is no requirement for
+   them to be marked as critical. Enforcing that on `X509_V_FLAG_X509_STRICT` was a mistake.
 
    *Daniel Kubec*
 
- * Enabled Server verification by default in `s_server` when option
-   verify_return_error is enabled.
+ * Support of deprecated elliptic curves in TLS according to [RFC 8422] was
+   disabled at compile-time by default. To enable it, use the
+   `enable-tls-deprecated-ec` configuration option.
 
-   *Ryan Hooper*
+   *Dmitry Belyavskiy*
 
- * Fixed CRLs with invalid ASN1_TIME in invalidityDate extensions,
-   where verification incorrectly succeeded. Enforced proper
-   handling of ASN1_TIME validation results so that any CRL
-   containing invalid time fields is rejected immediately,
-   preventing the error from propagating to verification.
+ * Removed support for an SSLv2 Client Hello.  When a client wanted to support
+   both SSLv2 and higher versions like SSLv3 or even TLSv1, it needed to
+   send an SSLv2 Client Hello.  SSLv2 support itself was removed
+   in OpenSSL 1.1.0, but there was still compatibility code for clients sending
+   an SSLv2 Client Hello.  Since we no longer support SSLv2 Client Hello,
+   `SSL_client_hello_isv2()` is now deprecated and always returns 0.
 
-   *Daniel Kubec*
+   *Kurt Roeckx*
 
- * Reject CRLs with a Certificate Issuer extension in a certificate revocation
-   entry unless the Indirect flag is set to TRUE in the IDP extension of the CRL.
+ * Removed support for SSLv3.  SSLv3 has been deprecated since 2015, and OpenSSL
+   had it disabled by default since version 1.1.0 (2016).
 
-   *Daniel Kubec*
+   *Kurt Roeckx*
 
- * ENGINE support was removed. The `no-engine` build option and the
-   `OPENSSL_NO_ENGINE` macro is always present.
-   Applications using `ENGINE_` functions unguarded with `OPENSSL_NO_ENGINE`
-   can be built by defining a macro `OPENSSL_ENGINE_STUBS`, however all these
-   functions will return error when called. Provider API should be used to
-   replace ENGINEs functionality.
+ * Support of explicit EC curves was disabled by default, an error will occur
+   if an explicit EC curve doesn't match any known one.  A new configuration
+   option, `enable-ec_explicit_curves`, is added.
 
-   *Milan Broz*, *Neil Horman*, *Norbert Pocs*
+   *Dmitry Belyavskiy*
 
- * BIO_f_reliable() implementation was removed without replacement.
+ * Removed `c_rehash` script tool. Use `openssl rehash` instead.
+
+   *Norbert Pócs*
+
+ * `libcrypto` no longer cleans up globally allocated data via `atexit()`.
+   This data is cleaned up automatically by the OS.  Some memory leak detectors
+   may report spurious allocated and reachable memory at application exit.
+   To avoid such spurious leak detection reports the application may call
+   `OPENSSL_cleanup()` before the process exits.
+
+   *Alexandr Nedvedicky*
+
+ * Removed the `crypto-mdebug-backtrace` configuration option entirely.
+   The option has been a no-op since OpenSSL 1.0.2.
+
+   *Neil Horman*
+
+ * Removed the deprecated function `ASN1_STRING_data()`.
+
+   *Bob Beck*
+
+ * Removed the `ASN1_STRING_FLAG_X509_TIME` define.
+
+   *Bob Beck*
+
+ * Dropped `darwin-i386{,-cc}` and `darwin-ppc{,64}{,-cc}` targets
+   from Configurations.
+
+   *Daniel Kubec and Eugene Syromiatnikov*
+
+ * Removed support for engines.  The `no-engine` build option
+   and the `OPENSSL_NO_ENGINE` macro are always present.  Applications that use
+   `ENGINE_` functions without `OPENSSL_NO_ENGINE` guards can be built
+   by defining a macro `OPENSSL_ENGINE_STUBS`;  however, all these functions
+   will return error when called.  Provider API should be used to replace
+   engine functionality.
+
+   *Milan Brož*, *Neil Horman*, *Norbert Pócs*
+
+ * Removed `BIO_f_reliable()` implementation without replacement.
    It was broken since 3.0 release without any complaints.
 
    *Tomáš Mráz*
 
- * Added SNMP KDF (EVP_KDF_SNMPKDF) to EVP_KDF
+ * Removed deprecated functions `ERR_get_state()`, `ERR_remove_state()`
+   and `ERR_remove_thread_state()`. The `ERR_STATE` object is now always opaque.
 
-   *Barry Fussell and Helen Zhang*
+   *Tomáš Mráz*
 
- * Added `EVP_MD_CTX_serialize()`/`EVP_MD_CTX_deserialize()` functions. These
-   functions allow to export the internal state of a Digest and re-import it
-   later to continue a computation from a specific checkpoint.  Only SHA-2 and
-   the SHA-3 family (Keccak, SHAKE, SHA-3) of functions currently support this
-   functionality
+ * Removed the deprecated `msie-hack` option from the `openssl ca` command.
 
-   *Simo Sorce*
-
- * Added SRTP KDF (EVP_KDF_SRTPKDF) to EVP_KDF
-
-   *Barry Fussell and Helen Zhang*
-
- * Implemented RFC7919, adding support for negotiated FFDHE key exchange
-   in TLS 1.2.
-
-   *Joachim Vandersmissen* (with additional support from *Viktor Dukhovni*)
+   *Bob Beck*
 
 OpenSSL 3.6
 -----------
+
+### Changes between 3.6.0 and 3.6.1 [27 Jan 2026]
+
+ * Fixed Improper validation of PBMAC1 parameters in PKCS#12 MAC verification.
+
+   Severity: Moderate
+
+   Issue summary: PBMAC1 parameters in PKCS#12 files are missing validation
+   which can trigger a stack-based buffer overflow, invalid pointer or NULL
+   pointer dereference during MAC verification.
+
+   Impact summary: The stack buffer overflow or NULL pointer dereference may
+   cause a crash leading to Denial of Service for an application that parses
+   untrusted PKCS#12 files. The buffer overflow may also potentially enable
+   code execution depending on platform mitigations.
+
+   Reported by: Stanislav Fort (Aisle Research) and Petr Šimeček (Aisle
+   Research) and Hamza (Metadust)
+
+   ([CVE-2025-11187])
+
+   *Tomáš Mráz*
+
+ * Fixed Stack buffer overflow in CMS `AuthEnvelopedData` parsing.
+
+   Severity: High
+
+   Issue summary: Parsing CMS `AuthEnvelopedData` message with maliciously
+   crafted AEAD parameters can trigger a stack buffer overflow.
+
+   Impact summary: A stack buffer overflow may lead to a crash, causing Denial
+   of Service, or potentially remote code execution.
+
+   Reported by: Stanislav Fort (Aisle Research)
+
+   ([CVE-2025-15467])
+
+   *Igor Ustinov*
+
+ * Fixed NULL dereference in `SSL_CIPHER_find()` function on unknown cipher ID.
+
+   Severity: Low
+
+   Issue summary: If an application using the `SSL_CIPHER_find()` function
+   in a QUIC protocol client or server receives an unknown cipher suite from
+   the peer, a NULL dereference occurs.
+
+   Impact summary: A NULL pointer dereference leads to abnormal termination
+   of the running process causing Denial of Service.
+
+   Reported by: Stanislav Fort (Aisle Research)
+
+   ([CVE-2025-15468])
+
+   *Stanislav Fort*
+
+ * Fixed `openssl dgst` one-shot codepath silently truncates inputs >16 MiB.
+
+   Severity: Low
+
+   Issue summary: The `openssl dgst` command-line tool silently truncates input
+   data to 16 MiB when using one-shot signing algorithms and reports success
+   instead of an error.
+
+   Impact summary: A user signing or verifying files larger than 16 MiB with
+   one-shot algorithms (such as Ed25519, Ed448, or ML-DSA) may believe the
+   entire file is authenticated while trailing data beyond 16 MiB remains
+   unauthenticated.
+
+   Reported by: Stanislav Fort (Aisle Research)
+
+   ([CVE-2025-15469])
+
+   *Viktor Dukhovni*
+
+ * Fixed TLS 1.3 `CompressedCertificate` excessive memory allocation.
+
+   Severity: Low
+
+   Issue summary: A TLS 1.3 connection using certificate compression can be
+   forced to allocate a large buffer before decompression without checking
+   against the configured certificate size limit.
+
+   Impact summary: An attacker can cause per-connection memory allocations
+   of up to approximately 22 MiB and extra CPU work, potentially leading
+   to service degradation or resource exhaustion (Denial of Service).
+
+   Reported by: Tomas Dulka (Aisle Research) and Stanislav Fort (Aisle
+   Research)
+
+   ([CVE-2025-66199])
+
+   *Tomas Dulka and Stanislav Fort*
+
+ * Fixed Heap out-of-bounds write in `BIO_f_linebuffer` on short writes.
+
+   Severity: Low
+
+   Issue summary: Writing large, newline-free data into a BIO chain using the
+   line-buffering filter where the next BIO performs short writes can trigger
+   a heap-based out-of-bounds write.
+
+   Impact summary: This out-of-bounds write can cause memory corruption
+   which typically results in a crash, leading to Denial of Service for
+   an application.
+
+   Reported by: Petr Simecek (Aisle Research) and Stanislav Fort (Aisle
+   Research)
+
+   ([CVE-2025-68160])
+
+   *Stanislav Fort and Neil Horman*
+
+ * Fixed Unauthenticated/unencrypted trailing bytes with low-level OCB
+   function calls.
+
+   Severity: Low
+
+   Issue summary: When using the low-level OCB API directly with AES-NI or
+   other hardware-accelerated code paths, inputs whose length is not a multiple
+   of 16 bytes can leave the final partial block unencrypted and
+   unauthenticated.
+
+   Impact summary: The trailing 1-15 bytes of a message may be exposed in
+   cleartext on encryption and are not covered by the authentication tag,
+   allowing an attacker to read or tamper with those bytes without detection.
+
+   Reported by: Stanislav Fort (Aisle Research)
+
+   ([CVE-2025-69418])
+
+   *Stanislav Fort*
+
+ * Fixed Out of bounds write in `PKCS12_get_friendlyname()` UTF-8 conversion.
+
+   Severity: Low
+
+   Issue summary: Calling `PKCS12_get_friendlyname()` function on a maliciously
+   crafted PKCS#12 file with a `BMPString` (UTF-16BE) friendly name containing
+   non-ASCII BMP code point can trigger a one byte write before the allocated
+   buffer.
+
+   Impact summary: The out-of-bounds write can cause a memory corruption
+   which can have various consequences including a Denial of Service.
+
+   Reported by: Stanislav Fort (Aisle Research)
+
+   ([CVE-2025-69419])
+
+   *Norbert Pócs*
+
+ * Fixed Missing `ASN1_TYPE` validation in `TS_RESP_verify_response()` function.
+
+   Severity: Low
+
+   Issue summary: A type confusion vulnerability exists in the TimeStamp
+   Response verification code where an `ASN1_TYPE` union member is accessed
+   without first validating the type, causing an invalid or NULL pointer
+   dereference when processing a malformed `TimeStamp` Response file.
+
+   Impact summary: An application calling `TS_RESP_verify_response()`
+   with a malformed TimeStamp Response can be caused to dereference an invalid
+   or NULL pointer when reading, resulting in a Denial of Service.
+
+   Reported by: Luigino Camastra (Aisle Research)
+
+   ([CVE-2025-69420])
+
+   *Bob Beck*
+
+ * Fixed NULL Pointer Dereference in `PKCS12_item_decrypt_d2i_ex()` function.
+
+   Severity: Low
+
+   Issue summary: Processing a malformed PKCS#12 file can trigger a NULL
+   pointer dereference in the `PKCS12_item_decrypt_d2i_ex()` function.
+
+   Impact summary: A NULL pointer dereference can trigger a crash which leads
+   to Denial of Service for an application processing PKCS#12 files.
+
+   Reported by: Luigino Camastra (Aisle Research)
+
+   ([CVE-2025-69421])
+
+   *Luigino Camastra*
+
+ * Fixed Missing `ASN1_TYPE` validation in PKCS#12 parsing.
+
+   Severity: Low
+
+   Issue summary: An invalid or NULL pointer dereference can happen in
+   an application processing a malformed PKCS#12 file.
+
+   Impact summary: An application processing a malformed PKCS#12 file can be
+   caused to dereference an invalid or NULL pointer on memory read, resulting
+   in a Denial of Service.
+
+   Reported by: Luigino Camastra (Aisle Research)
+
+   ([CVE-2026-22795])
+
+   *Bob Beck*
+
+ * Fixed `ASN1_TYPE` Type Confusion in the `PKCS7_digest_from_attributes()`
+   function.
+
+   Severity: Low
+
+   Issue summary: A type confusion vulnerability exists in the signature
+   verification of signed PKCS#7 data where an `ASN1_TYPE` union member
+   is accessed without first validating the type, causing an invalid or NULL
+   pointer dereference when processing malformed PKCS#7 data.
+
+   Impact summary: An application performing signature verification of PKCS#7
+   data or calling directly the `PKCS7_digest_from_attributes()` function can be
+   caused to dereference an invalid or NULL pointer when reading, resulting in
+   a Denial of Service.
+
+   Reported by: Luigino Camastra (Aisle Research)
+
+   ([CVE-2026-22796])
+
+   *Bob Beck*
+
+ * RISC-V capabilities string format has changed to include the base
+   architecture and the vector length for the V extension.
+   <!-- https://github.com/openssl/openssl/pull/28760 -->
+
+   *Bernd Edlinger*
+
+ * Fixed a regression in `X509_V_FLAG_CRL_CHECK_ALL` flag handling by restoring
+   its pre-3.6.0 behaviour of being ignored when `X509_V_FLAG_CRL_CHECK` flag
+   is not set, and no longer implying the latter flag instead.
+   <!-- https://github.com/openssl/openssl/pull/28797 -->
+
+   *Carter Thaxton*
+
+ * Fixed a regression that caused generation of empty stapled OCSP responses
+   when at least one certificate in the certificate chain had a stapled OCSP
+   response present, causing handshake failures for OpenSSL 3.6.0 servers
+   with various client implementations, including GnuTLS and BoringSSL.
+   <!-- https://github.com/openssl/openssl/pull/28955 -->
+
+   *Martin Rauch*
+
+ * Fixed exit code of `openssl x509` command with `-checkend` option in use.
+   <!-- https://github.com/openssl/openssl/pull/29155 -->
+
+   *Stefan Rieche*
+
+ * Fixed incorrect acceptance of some malformed ECDSA signatures on s390x.
+   <!-- https://github.com/openssl/openssl/pull/29214 -->
+
+   *Holger Dengler*
+
+ * Source code has been reformatted with `clang-format`.
+   <!-- https://github.com/openssl/openssl/pull/29245 -->
+
+   *Bob Beck*
+
+ * Reverted a change in behaviour of the single stapled OCSP response API
+   with respect to the ownership of the OCSP response object that caused
+   a memory leak.
+   <!-- https://github.com/openssl/openssl/pull/29251 -->
+
+   *Remi Gacogne and Tomáš Mráz*
 
 ### Changes between 3.5 and 3.6.0 [1 Oct 2025]
 
@@ -383,6 +1005,13 @@ OpenSSL 3.6
 
    *Dimitri John Ledkov*
 
+ * `SSL_add1_host()` and `SSL_set1_host()` were deprecated. The new replacement functions
+   `SSL_add1_dnsname()`, `SSL_set1_dnsname()`, `SSL_add1_ipaddr()`, and `SSL_set1_ipaddr()` were added.
+   API was added to support checking multiple names against a certificate with
+   `X509_VERIFY_PARAM`.  See `X509_VERIFY_PARAM_set_flags(3)` for full details.
+
+   *Bob Beck*
+
  * Added `X509_CRL_get0_tbs_sigalg()` accessor for the signature
    `AlgorithmIdentifier` inside CRL's `TBSCertList`.
 
@@ -422,7 +1051,7 @@ OpenSSL 3.6
 
    *Dimitri John Ledkov*
 
- * SSL_CTX_is_server() was added.
+ * `SSL_CTX_is_server()` was added.
 
    *Igor Ustinov*
 
@@ -462,10 +1091,10 @@ OpenSSL 3.5
 
    *Stanislav Fort and Tomáš Mráz*
 
- * Fix Out-of-bounds read in HTTP client no_proxy handling
+ * Fix Out-of-bounds read in HTTP client `no_proxy` handling
 
    Issue summary: An application using the OpenSSL HTTP client API functions
-   may trigger an out-of-bounds read if the "no_proxy" environment variable is
+   may trigger an out-of-bounds read if the `no_proxy` environment variable is
    set and the host portion of the authority component of the HTTP URL is an
    IPv6 address.
 
@@ -566,10 +1195,10 @@ OpenSSL 3.5
 
    *Tomas Mraz*
 
- * Aligned the behaviour of TLS and DTLS in the event of a no_renegotiation
+ * Aligned the behaviour of TLS and DTLS in the event of a `no_renegotiation`
    alert being received. Older versions of OpenSSL failed with DTLS if a
-   no_renegotiation alert was received. All versions of OpenSSL do this for TLS.
-   From 3.2 a bug was exposed that meant that DTLS ignored no_rengotiation. We
+   `no_renegotiation` alert was received. All versions of OpenSSL do this for TLS.
+   From 3.2 a bug was exposed that meant that DTLS ignored `no_rengotiation`. We
    have now restored the original behaviour and brought DTLS back into line with
    TLS.
 
@@ -21769,207 +22398,224 @@ ndif
 
 <!-- Links -->
 
-[CVE-2025-9232]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-9232
-[CVE-2025-9231]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-9231
-[CVE-2025-9230]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-9230
-[CVE-2025-4575]: https://www.openssl.org/news/vulnerabilities.html#CVE-2025-4575
-[CVE-2024-13176]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-13176
-[CVE-2024-9143]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-9143
-[CVE-2024-6119]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-6119
-[CVE-2024-5535]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-5535
-[CVE-2024-4741]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-4741
-[CVE-2024-4603]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-4603
-[CVE-2024-2511]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-2511
-[CVE-2024-0727]: https://www.openssl.org/news/vulnerabilities.html#CVE-2024-0727
-[CVE-2023-6237]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-6237
-[CVE-2023-6129]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-6129
-[CVE-2023-5678]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-5678
-[CVE-2023-5363]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-5363
-[CVE-2023-4807]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-4807
-[CVE-2023-3817]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-3817
-[CVE-2023-3446]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-3446
-[CVE-2023-2975]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-2975
-[RFC 2578 (STD 58), section 3.5]: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
-[CVE-2023-2650]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-2650
-[CVE-2023-1255]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-1255
-[CVE-2023-0466]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0466
-[CVE-2023-0465]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0465
-[CVE-2023-0464]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0464
-[CVE-2023-0401]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0401
-[CVE-2023-0286]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0286
-[CVE-2023-0217]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0217
-[CVE-2023-0216]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0216
-[CVE-2023-0215]: https://www.openssl.org/news/vulnerabilities.html#CVE-2023-0215
-[CVE-2022-4450]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-4450
-[CVE-2022-4304]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-4304
-[CVE-2022-4203]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-4203
-[CVE-2022-3996]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-3996
-[CVE-2022-2274]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-2274
-[CVE-2022-2097]: https://www.openssl.org/news/vulnerabilities.html#CVE-2022-2097
-[CVE-2020-1971]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1971
-[CVE-2020-1967]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1967
-[CVE-2019-1563]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1563
-[CVE-2019-1559]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1559
-[CVE-2019-1552]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1552
-[CVE-2019-1551]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1551
-[CVE-2019-1549]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1549
-[CVE-2019-1547]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1547
-[CVE-2019-1543]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1543
-[CVE-2018-5407]: https://www.openssl.org/news/vulnerabilities.html#CVE-2018-5407
-[CVE-2018-0739]: https://www.openssl.org/news/vulnerabilities.html#CVE-2018-0739
-[CVE-2018-0737]: https://www.openssl.org/news/vulnerabilities.html#CVE-2018-0737
-[CVE-2018-0735]: https://www.openssl.org/news/vulnerabilities.html#CVE-2018-0735
-[CVE-2018-0734]: https://www.openssl.org/news/vulnerabilities.html#CVE-2018-0734
-[CVE-2018-0733]: https://www.openssl.org/news/vulnerabilities.html#CVE-2018-0733
-[CVE-2018-0732]: https://www.openssl.org/news/vulnerabilities.html#CVE-2018-0732
-[CVE-2017-3738]: https://www.openssl.org/news/vulnerabilities.html#CVE-2017-3738
-[CVE-2017-3737]: https://www.openssl.org/news/vulnerabilities.html#CVE-2017-3737
-[CVE-2017-3736]: https://www.openssl.org/news/vulnerabilities.html#CVE-2017-3736
-[CVE-2017-3735]: https://www.openssl.org/news/vulnerabilities.html#CVE-2017-3735
-[CVE-2017-3733]: https://www.openssl.org/news/vulnerabilities.html#CVE-2017-3733
-[CVE-2017-3732]: https://www.openssl.org/news/vulnerabilities.html#CVE-2017-3732
-[CVE-2017-3731]: https://www.openssl.org/news/vulnerabilities.html#CVE-2017-3731
-[CVE-2017-3730]: https://www.openssl.org/news/vulnerabilities.html#CVE-2017-3730
-[CVE-2016-7055]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-7055
-[CVE-2016-7054]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-7054
-[CVE-2016-7053]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-7053
-[CVE-2016-7052]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-7052
-[CVE-2016-6309]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-6309
-[CVE-2016-6308]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-6308
-[CVE-2016-6307]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-6307
-[CVE-2016-6306]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-6306
-[CVE-2016-6305]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-6305
-[CVE-2016-6304]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-6304
-[CVE-2016-6303]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-6303
-[CVE-2016-6302]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-6302
-[CVE-2016-2183]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2183
-[CVE-2016-2182]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2182
-[CVE-2016-2181]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2181
-[CVE-2016-2180]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2180
-[CVE-2016-2179]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2179
-[CVE-2016-2178]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2178
-[CVE-2016-2177]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2177
-[CVE-2016-2176]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2176
-[CVE-2016-2109]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2109
-[CVE-2016-2107]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2107
-[CVE-2016-2106]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2106
-[CVE-2016-2105]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-2105
-[CVE-2016-0800]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-0800
-[CVE-2016-0799]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-0799
-[CVE-2016-0798]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-0798
-[CVE-2016-0797]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-0797
-[CVE-2016-0705]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-0705
-[CVE-2016-0702]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-0702
-[CVE-2016-0701]: https://www.openssl.org/news/vulnerabilities.html#CVE-2016-0701
-[CVE-2015-3197]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-3197
-[CVE-2015-3196]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-3196
-[CVE-2015-3195]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-3195
-[CVE-2015-3194]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-3194
-[CVE-2015-3193]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-3193
-[CVE-2015-1793]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-1793
-[CVE-2015-1792]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-1792
-[CVE-2015-1791]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-1791
-[CVE-2015-1790]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-1790
-[CVE-2015-1789]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-1789
-[CVE-2015-1788]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-1788
-[CVE-2015-1787]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-1787
-[CVE-2015-0293]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0293
-[CVE-2015-0291]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0291
-[CVE-2015-0290]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0290
-[CVE-2015-0289]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0289
-[CVE-2015-0288]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0288
-[CVE-2015-0287]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0287
-[CVE-2015-0286]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0286
-[CVE-2015-0285]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0285
-[CVE-2015-0209]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0209
-[CVE-2015-0208]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0208
-[CVE-2015-0207]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0207
-[CVE-2015-0206]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0206
-[CVE-2015-0205]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0205
-[CVE-2015-0204]: https://www.openssl.org/news/vulnerabilities.html#CVE-2015-0204
-[CVE-2014-8275]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-8275
-[CVE-2014-5139]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-5139
-[CVE-2014-3572]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3572
-[CVE-2014-3571]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3571
-[CVE-2014-3570]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3570
-[CVE-2014-3569]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3569
-[CVE-2014-3568]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3568
-[CVE-2014-3567]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3567
-[CVE-2014-3566]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3566
-[CVE-2014-3513]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3513
-[CVE-2014-3512]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3512
-[CVE-2014-3511]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3511
-[CVE-2014-3510]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3510
-[CVE-2014-3509]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3509
-[CVE-2014-3508]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3508
-[CVE-2014-3507]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3507
-[CVE-2014-3506]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3506
-[CVE-2014-3505]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3505
-[CVE-2014-3470]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-3470
-[CVE-2014-0224]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-0224
-[CVE-2014-0221]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-0221
-[CVE-2014-0195]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-0195
-[CVE-2014-0160]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-0160
-[CVE-2014-0076]: https://www.openssl.org/news/vulnerabilities.html#CVE-2014-0076
-[CVE-2013-6450]: https://www.openssl.org/news/vulnerabilities.html#CVE-2013-6450
-[CVE-2013-4353]: https://www.openssl.org/news/vulnerabilities.html#CVE-2013-4353
-[CVE-2013-0169]: https://www.openssl.org/news/vulnerabilities.html#CVE-2013-0169
-[CVE-2013-0166]: https://www.openssl.org/news/vulnerabilities.html#CVE-2013-0166
-[CVE-2012-2686]: https://www.openssl.org/news/vulnerabilities.html#CVE-2012-2686
-[CVE-2012-2333]: https://www.openssl.org/news/vulnerabilities.html#CVE-2012-2333
-[CVE-2012-2110]: https://www.openssl.org/news/vulnerabilities.html#CVE-2012-2110
-[CVE-2012-0884]: https://www.openssl.org/news/vulnerabilities.html#CVE-2012-0884
-[CVE-2012-0050]: https://www.openssl.org/news/vulnerabilities.html#CVE-2012-0050
-[CVE-2012-0027]: https://www.openssl.org/news/vulnerabilities.html#CVE-2012-0027
-[CVE-2011-4619]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-4619
-[CVE-2011-4577]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-4577
-[CVE-2011-4576]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-4576
-[CVE-2011-4109]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-4109
-[CVE-2011-4108]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-4108
-[CVE-2011-3210]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-3210
-[CVE-2011-3207]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-3207
-[CVE-2011-0014]: https://www.openssl.org/news/vulnerabilities.html#CVE-2011-0014
-[CVE-2010-4252]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-4252
-[CVE-2010-4180]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-4180
-[CVE-2010-3864]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-3864
-[CVE-2010-1633]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-1633
-[CVE-2010-0740]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-0740
-[CVE-2010-0433]: https://www.openssl.org/news/vulnerabilities.html#CVE-2010-0433
-[CVE-2009-4355]: https://www.openssl.org/news/vulnerabilities.html#CVE-2009-4355
-[CVE-2009-3555]: https://www.openssl.org/news/vulnerabilities.html#CVE-2009-3555
-[CVE-2009-3245]: https://www.openssl.org/news/vulnerabilities.html#CVE-2009-3245
-[CVE-2009-1386]: https://www.openssl.org/news/vulnerabilities.html#CVE-2009-1386
-[CVE-2009-1379]: https://www.openssl.org/news/vulnerabilities.html#CVE-2009-1379
-[CVE-2009-1378]: https://www.openssl.org/news/vulnerabilities.html#CVE-2009-1378
-[CVE-2009-1377]: https://www.openssl.org/news/vulnerabilities.html#CVE-2009-1377
-[CVE-2009-0789]: https://www.openssl.org/news/vulnerabilities.html#CVE-2009-0789
-[CVE-2009-0591]: https://www.openssl.org/news/vulnerabilities.html#CVE-2009-0591
-[CVE-2009-0590]: https://www.openssl.org/news/vulnerabilities.html#CVE-2009-0590
-[CVE-2008-5077]: https://www.openssl.org/news/vulnerabilities.html#CVE-2008-5077
-[CVE-2008-1678]: https://www.openssl.org/news/vulnerabilities.html#CVE-2008-1678
-[CVE-2008-1672]: https://www.openssl.org/news/vulnerabilities.html#CVE-2008-1672
-[CVE-2008-0891]: https://www.openssl.org/news/vulnerabilities.html#CVE-2008-0891
-[CVE-2007-5135]: https://www.openssl.org/news/vulnerabilities.html#CVE-2007-5135
-[CVE-2007-4995]: https://www.openssl.org/news/vulnerabilities.html#CVE-2007-4995
-[CVE-2006-4343]: https://www.openssl.org/news/vulnerabilities.html#CVE-2006-4343
-[CVE-2006-4339]: https://www.openssl.org/news/vulnerabilities.html#CVE-2006-4339
-[CVE-2006-3738]: https://www.openssl.org/news/vulnerabilities.html#CVE-2006-3738
-[CVE-2006-2940]: https://www.openssl.org/news/vulnerabilities.html#CVE-2006-2940
-[CVE-2006-2937]: https://www.openssl.org/news/vulnerabilities.html#CVE-2006-2937
-[CVE-2005-2969]: https://www.openssl.org/news/vulnerabilities.html#CVE-2005-2969
-[CVE-2004-0112]: https://www.openssl.org/news/vulnerabilities.html#CVE-2004-0112
-[CVE-2004-0079]: https://www.openssl.org/news/vulnerabilities.html#CVE-2004-0079
-[CVE-2003-0851]: https://www.openssl.org/news/vulnerabilities.html#CVE-2003-0851
-[CVE-2003-0545]: https://www.openssl.org/news/vulnerabilities.html#CVE-2003-0545
-[CVE-2003-0544]: https://www.openssl.org/news/vulnerabilities.html#CVE-2003-0544
-[CVE-2003-0543]: https://www.openssl.org/news/vulnerabilities.html#CVE-2003-0543
-[CVE-2003-0078]: https://www.openssl.org/news/vulnerabilities.html#CVE-2003-0078
-[CVE-2002-0659]: https://www.openssl.org/news/vulnerabilities.html#CVE-2002-0659
-[CVE-2002-0657]: https://www.openssl.org/news/vulnerabilities.html#CVE-2002-0657
-[CVE-2002-0656]: https://www.openssl.org/news/vulnerabilities.html#CVE-2002-0656
-[CVE-2002-0655]: https://www.openssl.org/news/vulnerabilities.html#CVE-2002-0655
 [CMVP]: https://csrc.nist.gov/projects/cryptographic-module-validation-program
+[CVE-2002-0655]: https://openssl-library.org/news/vulnerabilities/#CVE-2002-0655
+[CVE-2002-0656]: https://openssl-library.org/news/vulnerabilities/#CVE-2002-0656
+[CVE-2002-0657]: https://openssl-library.org/news/vulnerabilities/#CVE-2002-0657
+[CVE-2002-0659]: https://openssl-library.org/news/vulnerabilities/#CVE-2002-0659
+[CVE-2003-0078]: https://openssl-library.org/news/vulnerabilities/#CVE-2003-0078
+[CVE-2003-0543]: https://openssl-library.org/news/vulnerabilities/#CVE-2003-0543
+[CVE-2003-0544]: https://openssl-library.org/news/vulnerabilities/#CVE-2003-0544
+[CVE-2003-0545]: https://openssl-library.org/news/vulnerabilities/#CVE-2003-0545
+[CVE-2003-0851]: https://openssl-library.org/news/vulnerabilities/#CVE-2003-0851
+[CVE-2004-0079]: https://openssl-library.org/news/vulnerabilities/#CVE-2004-0079
+[CVE-2004-0112]: https://openssl-library.org/news/vulnerabilities/#CVE-2004-0112
+[CVE-2005-2969]: https://openssl-library.org/news/vulnerabilities/#CVE-2005-2969
+[CVE-2006-2937]: https://openssl-library.org/news/vulnerabilities/#CVE-2006-2937
+[CVE-2006-2940]: https://openssl-library.org/news/vulnerabilities/#CVE-2006-2940
+[CVE-2006-3738]: https://openssl-library.org/news/vulnerabilities/#CVE-2006-3738
+[CVE-2006-4339]: https://openssl-library.org/news/vulnerabilities/#CVE-2006-4339
+[CVE-2006-4343]: https://openssl-library.org/news/vulnerabilities/#CVE-2006-4343
+[CVE-2007-4995]: https://openssl-library.org/news/vulnerabilities/#CVE-2007-4995
+[CVE-2007-5135]: https://openssl-library.org/news/vulnerabilities/#CVE-2007-5135
+[CVE-2008-0891]: https://openssl-library.org/news/vulnerabilities/#CVE-2008-0891
+[CVE-2008-1672]: https://openssl-library.org/news/vulnerabilities/#CVE-2008-1672
+[CVE-2008-1678]: https://openssl-library.org/news/vulnerabilities/#CVE-2008-1678
+[CVE-2008-5077]: https://openssl-library.org/news/vulnerabilities/#CVE-2008-5077
+[CVE-2009-0590]: https://openssl-library.org/news/vulnerabilities/#CVE-2009-0590
+[CVE-2009-0591]: https://openssl-library.org/news/vulnerabilities/#CVE-2009-0591
+[CVE-2009-0789]: https://openssl-library.org/news/vulnerabilities/#CVE-2009-0789
+[CVE-2009-1377]: https://openssl-library.org/news/vulnerabilities/#CVE-2009-1377
+[CVE-2009-1378]: https://openssl-library.org/news/vulnerabilities/#CVE-2009-1378
+[CVE-2009-1379]: https://openssl-library.org/news/vulnerabilities/#CVE-2009-1379
+[CVE-2009-1386]: https://openssl-library.org/news/vulnerabilities/#CVE-2009-1386
+[CVE-2009-3245]: https://openssl-library.org/news/vulnerabilities/#CVE-2009-3245
+[CVE-2009-3555]: https://openssl-library.org/news/vulnerabilities/#CVE-2009-3555
+[CVE-2009-4355]: https://openssl-library.org/news/vulnerabilities/#CVE-2009-4355
+[CVE-2010-0433]: https://openssl-library.org/news/vulnerabilities/#CVE-2010-0433
+[CVE-2010-0740]: https://openssl-library.org/news/vulnerabilities/#CVE-2010-0740
+[CVE-2010-1633]: https://openssl-library.org/news/vulnerabilities/#CVE-2010-1633
+[CVE-2010-3864]: https://openssl-library.org/news/vulnerabilities/#CVE-2010-3864
+[CVE-2010-4180]: https://openssl-library.org/news/vulnerabilities/#CVE-2010-4180
+[CVE-2010-4252]: https://openssl-library.org/news/vulnerabilities/#CVE-2010-4252
+[CVE-2011-0014]: https://openssl-library.org/news/vulnerabilities/#CVE-2011-0014
+[CVE-2011-3207]: https://openssl-library.org/news/vulnerabilities/#CVE-2011-3207
+[CVE-2011-3210]: https://openssl-library.org/news/vulnerabilities/#CVE-2011-3210
+[CVE-2011-4108]: https://openssl-library.org/news/vulnerabilities/#CVE-2011-4108
+[CVE-2011-4109]: https://openssl-library.org/news/vulnerabilities/#CVE-2011-4109
+[CVE-2011-4576]: https://openssl-library.org/news/vulnerabilities/#CVE-2011-4576
+[CVE-2011-4577]: https://openssl-library.org/news/vulnerabilities/#CVE-2011-4577
+[CVE-2011-4619]: https://openssl-library.org/news/vulnerabilities/#CVE-2011-4619
+[CVE-2012-0027]: https://openssl-library.org/news/vulnerabilities/#CVE-2012-0027
+[CVE-2012-0050]: https://openssl-library.org/news/vulnerabilities/#CVE-2012-0050
+[CVE-2012-0884]: https://openssl-library.org/news/vulnerabilities/#CVE-2012-0884
+[CVE-2012-2110]: https://openssl-library.org/news/vulnerabilities/#CVE-2012-2110
+[CVE-2012-2333]: https://openssl-library.org/news/vulnerabilities/#CVE-2012-2333
+[CVE-2012-2686]: https://openssl-library.org/news/vulnerabilities/#CVE-2012-2686
+[CVE-2013-0166]: https://openssl-library.org/news/vulnerabilities/#CVE-2013-0166
+[CVE-2013-0169]: https://openssl-library.org/news/vulnerabilities/#CVE-2013-0169
+[CVE-2013-4353]: https://openssl-library.org/news/vulnerabilities/#CVE-2013-4353
+[CVE-2013-6450]: https://openssl-library.org/news/vulnerabilities/#CVE-2013-6450
+[CVE-2014-0076]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-0076
+[CVE-2014-0160]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-0160
+[CVE-2014-0195]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-0195
+[CVE-2014-0221]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-0221
+[CVE-2014-0224]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-0224
+[CVE-2014-3470]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3470
+[CVE-2014-3505]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3505
+[CVE-2014-3506]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3506
+[CVE-2014-3507]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3507
+[CVE-2014-3508]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3508
+[CVE-2014-3509]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3509
+[CVE-2014-3510]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3510
+[CVE-2014-3511]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3511
+[CVE-2014-3512]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3512
+[CVE-2014-3513]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3513
+[CVE-2014-3566]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3566
+[CVE-2014-3567]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3567
+[CVE-2014-3568]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3568
+[CVE-2014-3569]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3569
+[CVE-2014-3570]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3570
+[CVE-2014-3571]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3571
+[CVE-2014-3572]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-3572
+[CVE-2014-5139]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-5139
+[CVE-2014-8275]: https://openssl-library.org/news/vulnerabilities/#CVE-2014-8275
+[CVE-2015-0204]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0204
+[CVE-2015-0205]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0205
+[CVE-2015-0206]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0206
+[CVE-2015-0207]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0207
+[CVE-2015-0208]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0208
+[CVE-2015-0209]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0209
+[CVE-2015-0285]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0285
+[CVE-2015-0286]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0286
+[CVE-2015-0287]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0287
+[CVE-2015-0288]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0288
+[CVE-2015-0289]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0289
+[CVE-2015-0290]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0290
+[CVE-2015-0291]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0291
+[CVE-2015-0293]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-0293
+[CVE-2015-1787]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-1787
+[CVE-2015-1788]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-1788
+[CVE-2015-1789]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-1789
+[CVE-2015-1790]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-1790
+[CVE-2015-1791]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-1791
+[CVE-2015-1792]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-1792
+[CVE-2015-1793]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-1793
+[CVE-2015-3193]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-3193
+[CVE-2015-3194]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-3194
+[CVE-2015-3195]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-3195
+[CVE-2015-3196]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-3196
+[CVE-2015-3197]: https://openssl-library.org/news/vulnerabilities/#CVE-2015-3197
+[CVE-2016-0701]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-0701
+[CVE-2016-0702]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-0702
+[CVE-2016-0705]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-0705
+[CVE-2016-0797]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-0797
+[CVE-2016-0798]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-0798
+[CVE-2016-0799]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-0799
+[CVE-2016-0800]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-0800
+[CVE-2016-2105]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2105
+[CVE-2016-2106]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2106
+[CVE-2016-2107]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2107
+[CVE-2016-2109]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2109
+[CVE-2016-2176]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2176
+[CVE-2016-2177]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2177
+[CVE-2016-2178]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2178
+[CVE-2016-2179]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2179
+[CVE-2016-2180]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2180
+[CVE-2016-2181]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2181
+[CVE-2016-2182]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2182
+[CVE-2016-2183]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-2183
+[CVE-2016-6302]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-6302
+[CVE-2016-6303]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-6303
+[CVE-2016-6304]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-6304
+[CVE-2016-6305]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-6305
+[CVE-2016-6306]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-6306
+[CVE-2016-6307]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-6307
+[CVE-2016-6308]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-6308
+[CVE-2016-6309]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-6309
+[CVE-2016-7052]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-7052
+[CVE-2016-7053]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-7053
+[CVE-2016-7054]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-7054
+[CVE-2016-7055]: https://openssl-library.org/news/vulnerabilities/#CVE-2016-7055
+[CVE-2017-3730]: https://openssl-library.org/news/vulnerabilities/#CVE-2017-3730
+[CVE-2017-3731]: https://openssl-library.org/news/vulnerabilities/#CVE-2017-3731
+[CVE-2017-3732]: https://openssl-library.org/news/vulnerabilities/#CVE-2017-3732
+[CVE-2017-3733]: https://openssl-library.org/news/vulnerabilities/#CVE-2017-3733
+[CVE-2017-3735]: https://openssl-library.org/news/vulnerabilities/#CVE-2017-3735
+[CVE-2017-3736]: https://openssl-library.org/news/vulnerabilities/#CVE-2017-3736
+[CVE-2017-3737]: https://openssl-library.org/news/vulnerabilities/#CVE-2017-3737
+[CVE-2017-3738]: https://openssl-library.org/news/vulnerabilities/#CVE-2017-3738
+[CVE-2018-0732]: https://openssl-library.org/news/vulnerabilities/#CVE-2018-0732
+[CVE-2018-0733]: https://openssl-library.org/news/vulnerabilities/#CVE-2018-0733
+[CVE-2018-0734]: https://openssl-library.org/news/vulnerabilities/#CVE-2018-0734
+[CVE-2018-0735]: https://openssl-library.org/news/vulnerabilities/#CVE-2018-0735
+[CVE-2018-0737]: https://openssl-library.org/news/vulnerabilities/#CVE-2018-0737
+[CVE-2018-0739]: https://openssl-library.org/news/vulnerabilities/#CVE-2018-0739
+[CVE-2018-5407]: https://openssl-library.org/news/vulnerabilities/#CVE-2018-5407
+[CVE-2019-1543]: https://openssl-library.org/news/vulnerabilities/#CVE-2019-1543
+[CVE-2019-1547]: https://openssl-library.org/news/vulnerabilities/#CVE-2019-1547
+[CVE-2019-1549]: https://openssl-library.org/news/vulnerabilities/#CVE-2019-1549
+[CVE-2019-1551]: https://openssl-library.org/news/vulnerabilities/#CVE-2019-1551
+[CVE-2019-1552]: https://openssl-library.org/news/vulnerabilities/#CVE-2019-1552
+[CVE-2019-1559]: https://openssl-library.org/news/vulnerabilities/#CVE-2019-1559
+[CVE-2019-1563]: https://openssl-library.org/news/vulnerabilities/#CVE-2019-1563
+[CVE-2020-1967]: https://openssl-library.org/news/vulnerabilities/#CVE-2020-1967
+[CVE-2020-1971]: https://openssl-library.org/news/vulnerabilities/#CVE-2020-1971
+[CVE-2022-2097]: https://openssl-library.org/news/vulnerabilities/#CVE-2022-2097
+[CVE-2022-2274]: https://openssl-library.org/news/vulnerabilities/#CVE-2022-2274
+[CVE-2022-3996]: https://openssl-library.org/news/vulnerabilities/#CVE-2022-3996
+[CVE-2022-4203]: https://openssl-library.org/news/vulnerabilities/#CVE-2022-4203
+[CVE-2022-4304]: https://openssl-library.org/news/vulnerabilities/#CVE-2022-4304
+[CVE-2022-4450]: https://openssl-library.org/news/vulnerabilities/#CVE-2022-4450
+[CVE-2023-0215]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-0215
+[CVE-2023-0216]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-0216
+[CVE-2023-0217]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-0217
+[CVE-2023-0286]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-0286
+[CVE-2023-0401]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-0401
+[CVE-2023-0464]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-0464
+[CVE-2023-0465]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-0465
+[CVE-2023-0466]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-0466
+[CVE-2023-1255]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-1255
+[CVE-2023-2650]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-2650
+[CVE-2023-2975]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-2975
+[CVE-2023-3446]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-3446
+[CVE-2023-3817]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-3817
+[CVE-2023-4807]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-4807
+[CVE-2023-5363]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-5363
+[CVE-2023-5678]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-5678
+[CVE-2023-6129]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-6129
+[CVE-2023-6237]: https://openssl-library.org/news/vulnerabilities/#CVE-2023-6237
+[CVE-2024-0727]: https://openssl-library.org/news/vulnerabilities/#CVE-2024-0727
+[CVE-2024-2511]: https://openssl-library.org/news/vulnerabilities/#CVE-2024-2511
+[CVE-2024-4603]: https://openssl-library.org/news/vulnerabilities/#CVE-2024-4603
+[CVE-2024-4741]: https://openssl-library.org/news/vulnerabilities/#CVE-2024-4741
+[CVE-2024-5535]: https://openssl-library.org/news/vulnerabilities/#CVE-2024-5535
+[CVE-2024-6119]: https://openssl-library.org/news/vulnerabilities/#CVE-2024-6119
+[CVE-2024-9143]: https://openssl-library.org/news/vulnerabilities/#CVE-2024-9143
+[CVE-2024-13176]: https://openssl-library.org/news/vulnerabilities/#CVE-2024-13176
+[CVE-2025-4575]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-4575
+[CVE-2025-9230]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-9230
+[CVE-2025-9231]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-9231
+[CVE-2025-9232]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-9232
+[CVE-2025-11187]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-11187
+[CVE-2025-15467]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-15467
+[CVE-2025-15468]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-15468
+[CVE-2025-15469]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-15469
+[CVE-2025-66199]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-66199
+[CVE-2025-68160]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-68160
+[CVE-2025-69418]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-69418
+[CVE-2025-69419]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-69419
+[CVE-2025-69420]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-69420
+[CVE-2025-69421]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-69421
+[CVE-2026-22795]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-22795
+[CVE-2026-22796]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-22796
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
+[RFC 2578 (STD 58), section 3.5]: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
+[RFC 7919]: https://datatracker.ietf.org/doc/html/rfc7919
+[RFC 8422]: https://datatracker.ietf.org/doc/html/rfc8422
+[RFC 8998]: https://datatracker.ietf.org/doc/html/rfc8998#name-iana-considerations
+[RFC 9849]: https://datatracker.ietf.org/doc/html/rfc9849
 [SP 800-132]: https://csrc.nist.gov/pubs/sp/800/132/final
-[SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final
 [SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final
+[SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final
+[tls-hybrid-sm2-mlkem]: https://datatracker.ietf.org/doc/html/draft-yang-tls-hybrid-sm2-mlkem-03#name-iana-considerations

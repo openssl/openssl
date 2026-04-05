@@ -3,7 +3,7 @@
 =head1 NAME
 
 EVP_SIGNATURE-LMS
-- The EVP_PKEY Leighton-Micali Signature (LMS) implementation
+- The EVP_PKEY B<LMS> signature implementation
 
 =head1 DESCRIPTION
 
@@ -23,6 +23,9 @@ that specify the digest name are not necessary.
 
 LMS support is disabled by default at compile-time.
 To enable, specify the B<enable-lms> build configuration option.
+
+For backwards compatibility reasons EVP_DigestVerifyInit_ex() and
+EVP_DigestVerify() may also be used, but the digest passed in I<mdname> must be NULL.
 
 LMS should only be used for older deployments.
 New deployments should use either L<EVP_SIGNATURE-ML-DSA(7)>
@@ -56,10 +59,12 @@ L<provider-signature(7)>,
 =head1 HISTORY
 
 This functionality was added in OpenSSL 3.6.
+Support for EVP_DigestVerifyInit_ex() and  EVP_DigestVerify() was added in
+OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
-Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

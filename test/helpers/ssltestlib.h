@@ -74,6 +74,11 @@ void bio_s_maybe_retry_free(void);
 
 int mempacket_swap_epoch(BIO *bio);
 int mempacket_move_packet(BIO *bio, int d, int s);
+int mempacket_find_record(BIO *bio, int rectype, int hs_msg_type,
+    int *pktidx, int *recidx);
+int mempacket_split_packet_at(BIO *bio, int pktidx, int recidx);
+int mempacket_append_to_record(BIO *bio, int pktidx, int recidx,
+    unsigned char *data, size_t datalen);
 int mempacket_dup_last_packet(BIO *bio);
 int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
     int type);

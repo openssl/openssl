@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,8 +16,9 @@
 
 #define NAMEMAP_HT_BUCKETS 512
 
+#define NAMEMAP_NAME_LEN 64
 HT_START_KEY_DEFN(namenum_key)
-HT_DEF_KEY_FIELD_CHAR_ARRAY(name, 64)
+HT_DEF_KEY_FIELD_CHAR_ARRAY(name, NAMEMAP_NAME_LEN)
 HT_END_KEY_DEFN(NAMENUM_KEY)
 
 /*-
@@ -140,28 +141,9 @@ int ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
 
 int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name)
 {
-    int number = 0;
-    HT_VALUE *val;
-    NAMENUM_KEY key;
-
-#ifndef FIPS_MODULE
-    if (namemap == NULL)
-        namemap = ossl_namemap_stored(NULL);
-#endif
-
-    if (namemap == NULL)
+    if (name == NULL)
         return 0;
-
-    HT_INIT_KEY(&key);
-    HT_SET_KEY_STRING_CASE(&key, name, name);
-
-    val = ossl_ht_get(namemap->namenum_ht, TO_HT_KEY(&key));
-
-    if (val != NULL)
-        /* We store a (small) int directly instead of a pointer to it. */
-        number = (int)(intptr_t)val->value;
-
-    return number;
+    return ossl_namemap_name2num_n(namemap, name, strlen(name));
 }
 
 int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
@@ -179,8 +161,11 @@ int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
     if (namemap == NULL)
         return 0;
 
-    HT_INIT_KEY(&key);
-    HT_SET_KEY_STRING_CASE_N(&key, name, name, (int)name_len);
+    if (name_len > NAMEMAP_NAME_LEN)
+        name_len = NAMEMAP_NAME_LEN;
+
+    HT_INIT_RAW_KEY(&key);
+    HT_COPY_RAW_KEY_CASE(TO_HT_KEY(&key), name, name_len);
 
     val = ossl_ht_get(namemap->namenum_ht, TO_HT_KEY(&key));
 
@@ -271,8 +256,9 @@ static int namemap_add_name(OSSL_NAMEMAP *namemap, int number,
     /* Using tsan_store alone here is safe since we're under lock */
     tsan_store(&namemap->max_number, number);
 
-    HT_INIT_KEY(&key);
-    HT_SET_KEY_STRING_CASE(&key, name, name);
+    HT_INIT_RAW_KEY(&key);
+    HT_COPY_RAW_KEY_CASE(TO_HT_KEY(&key), name, strlen(name));
+
     val.value = (void *)(intptr_t)number;
     ret = ossl_ht_insert(namemap->namenum_ht, TO_HT_KEY(&key), &val, NULL);
     if (ret <= 0) {

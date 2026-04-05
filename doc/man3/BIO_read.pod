@@ -52,7 +52,9 @@ For implementing this, unfortunately the data needs to be read byte-by-byte.
 
 BIO_write() attempts to write I<len> bytes from I<buf> to BIO I<b>.
 
-BIO_puts() attempts to write a NUL-terminated string I<buf> to BIO I<b>.
+BIO_puts() attempts to write a NUL-terminated string I<buf> to BIO I<b>,
+without the terminating NUL byte and without appending '\n'
+(so, similar to fputs(3), and not puts(3)).
 
 =head1 RETURN VALUES
 
@@ -60,6 +62,11 @@ BIO_read_ex() returns 1 if data was successfully read, and 0 otherwise.
 
 BIO_write_ex() returns 1 if no error was encountered writing data, 0 otherwise.
 Requesting to write 0 bytes is not considered an error.
+
+BIO_read() returns the number of bytes read on success.
+A return value of 0 indicates that end-of-file was reached, or that a read
+of zero bytes was requested.
+A negative return value indicates an error condition.
 
 BIO_write() returns -2 if the "write" operation is not implemented by the BIO
 or -1 on other errors.
@@ -119,7 +126,7 @@ I<written> parameter of the function can be NULL since OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

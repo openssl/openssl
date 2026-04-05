@@ -525,6 +525,170 @@ int mempacket_move_packet(BIO *bio, int d, int s)
     return 1;
 }
 
+/*
+ * Find the first DTLS record with content type rectype.
+ * If hs_msg_type >= 0, only match epoch-0 handshake records whose
+ * first handshake byte equals hs_msg_type.
+ */
+int mempacket_find_record(BIO *bio, int rectype, int hs_msg_type,
+    int *pktidx, int *recidx)
+{
+    MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
+    int numpkts = sk_MEMPACKET_num(ctx->pkts);
+    int i, j, rem, len, payload_len;
+    unsigned char *rec;
+
+    for (i = 0; i < numpkts; i++) {
+        MEMPACKET *thispkt = sk_MEMPACKET_value(ctx->pkts, i);
+
+        if (thispkt == NULL)
+            continue;
+        for (j = 0, rem = thispkt->len, rec = thispkt->data;
+            rem >= DTLS1_RT_HEADER_LENGTH;
+            j++, rem -= len, rec += len) {
+            payload_len = (rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO];
+            len = payload_len + DTLS1_RT_HEADER_LENGTH;
+            if (rem < len)
+                return 0;
+            if (rec[RECORD_CONTENT_TYPE] != (unsigned char)rectype)
+                continue;
+            if (hs_msg_type >= 0
+                && ((rec[RECORD_EPOCH_HI] | rec[RECORD_EPOCH_LO]) != 0
+                    || payload_len < 1
+                    || rec[DTLS1_RT_HEADER_LENGTH]
+                        != (unsigned char)hs_msg_type))
+                continue;
+            *pktidx = i;
+            *recidx = j;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/*
+ * Split packet pktidx before record recidx and insert the tail at pktidx + 1.
+ * Splitting at either boundary (before record 0 or after the last record)
+ * is treated as a successful no-op.
+ */
+int mempacket_split_packet_at(BIO *bio, int pktidx, int recidx)
+{
+    MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
+    MEMPACKET *srcpkt, *newpkt;
+    int numpkts = sk_MEMPACKET_num(ctx->pkts);
+    int rem, len, i, split_off = 0;
+    unsigned char *rec;
+
+    if (pktidx < 0 || pktidx >= numpkts || recidx < 0)
+        return 0;
+
+    srcpkt = sk_MEMPACKET_value(ctx->pkts, pktidx);
+    if (srcpkt == NULL)
+        return 0;
+
+    for (i = 0, rem = srcpkt->len, rec = srcpkt->data;
+        rem >= DTLS1_RT_HEADER_LENGTH && i < recidx;
+        i++, rem -= len, rec += len) {
+        len = ((rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO])
+            + DTLS1_RT_HEADER_LENGTH;
+        if (rem < len)
+            return 0;
+        split_off += len;
+    }
+
+    if (i != recidx)
+        return 0;
+
+    if (split_off == 0 || split_off == srcpkt->len)
+        return 1;
+
+    newpkt = OPENSSL_malloc(sizeof(*newpkt));
+    if (newpkt == NULL)
+        return 0;
+
+    newpkt->len = srcpkt->len - split_off;
+    newpkt->data = OPENSSL_malloc(newpkt->len);
+    if (newpkt->data == NULL) {
+        OPENSSL_free(newpkt);
+        return 0;
+    }
+
+    memcpy(newpkt->data, srcpkt->data + split_off, newpkt->len);
+    newpkt->type = srcpkt->type;
+    if (pktidx + 1 < numpkts
+        && sk_MEMPACKET_value(ctx->pkts, pktidx + 1) != NULL)
+        newpkt->num = sk_MEMPACKET_value(ctx->pkts, pktidx + 1)->num;
+    else
+        newpkt->num = srcpkt->num + 1;
+
+    if (sk_MEMPACKET_insert(ctx->pkts, newpkt, pktidx + 1) <= 0) {
+        OPENSSL_free(newpkt->data);
+        OPENSSL_free(newpkt);
+        return 0;
+    }
+
+    srcpkt->len = split_off;
+
+    numpkts = sk_MEMPACKET_num(ctx->pkts);
+    for (i = pktidx + 2; i < numpkts; i++)
+        sk_MEMPACKET_value(ctx->pkts, i)->num++;
+
+    return 1;
+}
+
+/*
+ * Append arbitrary data to a given record. The record must be the last record
+ * in the packet
+ */
+int mempacket_append_to_record(BIO *bio, int pktidx, int recidx,
+    unsigned char *data, size_t datalen)
+{
+    MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
+    MEMPACKET *srcpkt;
+    size_t rem, len;
+    int i;
+    unsigned char *rec, *tmp;
+
+    if (ctx == NULL)
+        return 0;
+    srcpkt = sk_MEMPACKET_value(ctx->pkts, pktidx);
+    if (srcpkt == NULL)
+        return 0;
+
+    tmp = OPENSSL_realloc(srcpkt->data, srcpkt->len + datalen);
+    if (tmp == NULL)
+        return 0;
+    srcpkt->data = tmp;
+
+    /* Parse the records in the packet looking for the target record index */
+    for (i = 0, rem = srcpkt->len, rec = srcpkt->data;
+        rem >= DTLS1_RT_HEADER_LENGTH && i < recidx;
+        i++, rem -= len, rec += len) {
+        len = ((rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO])
+            + DTLS1_RT_HEADER_LENGTH;
+        if (rem < len)
+            return 0;
+    }
+
+    if (i != recidx || rem < DTLS1_RT_HEADER_LENGTH)
+        return 0;
+
+    len = (rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO];
+    /* We can only append to the last record */
+    if (rem != len + DTLS1_RT_HEADER_LENGTH)
+        return 0;
+
+    /* Check we can fit the extra data in the record */
+    if (0xffff - len < datalen)
+        return 0;
+    len += datalen;
+    rec[RECORD_LEN_HI] = (len >> 8) & 0xff;
+    rec[RECORD_LEN_LO] = len & 0xff;
+    memcpy(srcpkt->data + srcpkt->len, data, datalen);
+    srcpkt->len += (int)datalen;
+    return 1;
+}
+
 int mempacket_dup_last_packet(BIO *bio)
 {
     MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);

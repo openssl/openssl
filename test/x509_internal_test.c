@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -567,6 +567,378 @@ static int tests_x509_check_dpn(void)
     return test;
 }
 
+/* https://github.com/openssl/openssl/issues/20027 */
+static const time_t mendel_verify_time = 1753284700; /* July 23th, 2025 */
+
+static const char *kRootMendelsonAKIDKeyNULL[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIE5zCCA8+gAwIBAgIJAMgskwXwf1MLMA0GCSqGSIb3DQEBBQUAMIIBADELMAkG\n",
+    "A1UEBhMCREUxEDAOBgNVBAgTB0dlcm1hbnkxDzANBgNVBAcTBkJlcmxpbjEiMCAG\n",
+    "A1UEChMZbWVuZGVsc29uLWUtY29tbWVyY2UgR21iSDFFMEMGA1UECxM8KGMpIDIw\n",
+    "MTYgbWVuZGVsc29uLWUtY29tbWVyY2UgR21iSCAtIGZvciBhdXRob3JpemVkIHVz\n",
+    "ZSBvbmx5MT4wPAYDVQQDEzVtZW5kZWxzb24gUHVibGljIFByaW1hcnkgQ2VydGlm\n",
+    "aWNhdGlvbiBBdXRob3JpdHkgLSBSNjEjMCEGCSqGSIb3DQEJARYUY2FAbWVuZGVs\n",
+    "c29uLWUtYy5jb20wHhcNMTYwNjI5MTEwNDMxWhcNMjYwNjI3MTEwNDMxWjCCAQAx\n",
+    "CzAJBgNVBAYTAkRFMRAwDgYDVQQIEwdHZXJtYW55MQ8wDQYDVQQHEwZCZXJsaW4x\n",
+    "IjAgBgNVBAoTGW1lbmRlbHNvbi1lLWNvbW1lcmNlIEdtYkgxRTBDBgNVBAsTPChj\n",
+    "KSAyMDE2IG1lbmRlbHNvbi1lLWNvbW1lcmNlIEdtYkggLSBmb3IgYXV0aG9yaXpl\n",
+    "ZCB1c2Ugb25seTE+MDwGA1UEAxM1bWVuZGVsc29uIFB1YmxpYyBQcmltYXJ5IENl\n",
+    "cnRpZmljYXRpb24gQXV0aG9yaXR5IC0gUjYxIzAhBgkqhkiG9w0BCQEWFGNhQG1l\n",
+    "bmRlbHNvbi1lLWMuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA\n",
+    "9wUk/mmMB1I3G3MdEyWdbhxM1hGNVOhEAvdyY+S2MxRP2W35kQ5HbztUofk/eACU\n",
+    "6tz5PuCp0zIVEW2GJdwkNn9B6OUjKZpOLErXBP6o+KRzqq0NtVLOo5Zy/zQ4NPsN\n",
+    "MNRwHdyoXVbBTZ1PSINb43mhlTTDO8B2oPArCaDFqMfdvvQRtKpD1RRM60Q+dDz8\n",
+    "PV5AbvUTwvfOmCXqEq2IcEzh3bLzAJCRvGOxM5YAkTlfA+M6OED8zDnsgRVuG6E9\n",
+    "Lqioh7zvUpmnA+ghKATtQ8Qwg5b+6TctJmxBbwVctZATuhiYXYSlhu2u06UyjPVj\n",
+    "bnP/kNfd8spvPgI9L3SH/QIDAQABo2AwXjAPBgNVHRMBAf8EBTADAQH/MA4GA1Ud\n",
+    "DwEB/wQEAwIBBjA7BgNVHR8ENDAyMDCgLqAshipodHRwOi8vY2EubWVuZGVsc29u\n",
+    "LWUtYy5jb20vbWVuZGVsc29uNi5jcmwwDQYJKoZIhvcNAQEFBQADggEBAN37IQQ5\n",
+    "rb6TxWczML/cg9cPDa16Jpj/t0yxg97oKRFsqBm0C+rySlWGFzsbj3YKUQVfabKT\n",
+    "DylOwjj2xIi6gsxWYcWz+kWzRDTs8IYLSLs8WQDtZIErI1eQTGfpfj/stH9fQ9D4\n",
+    "0+xDDqPH+6dH8JzQ/OTx0D4apRxcdAaDQUlTI/5U5nRuQqZlI0B9rUgQZN/whl6z\n",
+    "zaaCSj3gmP6AKqGznrvQGzu6W9zg9CezrxlZAeHsa0JDbZOqNvmNk3rsAA07H304\n",
+    "+UXXZovSGVK73OGw5s+KHTKe6+1/dOFkCJfFnX5pLMrihc5UqSig4JdKPoyvpgNJ\n",
+    "3mzVzjn/SyMJWo4=\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+static const char *kLeafMendelsonAKIDKeyNULL[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIGBjCCBO6gAwIBAgIBKjANBgkqhkiG9w0BAQUFADCCAQAxCzAJBgNVBAYTAkRF\n",
+    "MRAwDgYDVQQIEwdHZXJtYW55MQ8wDQYDVQQHEwZCZXJsaW4xIjAgBgNVBAoTGW1l\n",
+    "bmRlbHNvbi1lLWNvbW1lcmNlIEdtYkgxRTBDBgNVBAsTPChjKSAyMDE2IG1lbmRl\n",
+    "bHNvbi1lLWNvbW1lcmNlIEdtYkggLSBmb3IgYXV0aG9yaXplZCB1c2Ugb25seTE+\n",
+    "MDwGA1UEAxM1bWVuZGVsc29uIFB1YmxpYyBQcmltYXJ5IENlcnRpZmljYXRpb24g\n",
+    "QXV0aG9yaXR5IC0gUjYxIzAhBgkqhkiG9w0BCQEWFGNhQG1lbmRlbHNvbi1lLWMu\n",
+    "Y29tMCAXDTE2MDYyOTExMDUwOVoYDzIwMjYwMTAxMDEwMTAxWjCB2zELMAkGA1UE\n",
+    "BhMCREUxEDAOBgNVBAgTB0dlcm1hbnkxDzANBgNVBAcTBkJlcmxpbjEiMCAGA1UE\n",
+    "ChMZbWVuZGVsc29uLWUtY29tbWVyY2UgR21iSDFFMEMGA1UECxM8KGMpIDIwMTYg\n",
+    "bWVuZGVsc29uLWUtY29tbWVyY2UgR21iSCAtIGZvciBhdXRob3JpemVkIHVzZSBv\n",
+    "bmx5MT4wPAYDVQQDEzVtZW5kZWxzb24gUHVibGljIFByaW1hcnkgQ2VydGlmaWNh\n",
+    "dGlvbiBBdXRob3JpdHkgLSBJNjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC\n",
+    "ggEBAN/6W8TW8YYHgKxHxXg6Cy1pZRhXHr6WBqaUwTglNBf788y3XJdaG/e1kwaw\n",
+    "MuYAdOYWt8sm2xYmpmJorcY7m4gTdcuMH8fCarDsRVdT2BMXxZ9JTIG4E9YflzOQ\n",
+    "MvOn+tZ6UyPkgbfX2zfKydSH5FJiY31QNbBb3MI1zAFUYC3mqmMEgrHwm5qTFrYb\n",
+    "p3v8ZBnBiWRR9H72IaV1ZjGP90Hyh6w/pQjo+TJnLIklLaTv6Cd70SWGhnhJwdPP\n",
+    "/9YvzfSXt9sW8wj6PkXT2cqW08o4hkmcc95MoIdsH6re+Gv0d3qt1a3yMnEdHHF8\n",
+    "g+t0P2VezEF+k0Mdib83HC8QAaMCAwEAAaOCAakwggGlMA8GA1UdEwEB/wQFMAMB\n",
+    "Af8wggEkBgNVHSMEggEbMIIBF6GCAQikggEEMIIBADELMAkGA1UEBhMCREUxEDAO\n",
+    "BgNVBAgTB0dlcm1hbnkxDzANBgNVBAcTBkJlcmxpbjEiMCAGA1UEChMZbWVuZGVs\n",
+    "c29uLWUtY29tbWVyY2UgR21iSDFFMEMGA1UECxM8KGMpIDIwMTYgbWVuZGVsc29u\n",
+    "LWUtY29tbWVyY2UgR21iSCAtIGZvciBhdXRob3JpemVkIHVzZSBvbmx5MT4wPAYD\n",
+    "VQQDEzVtZW5kZWxzb24gUHVibGljIFByaW1hcnkgQ2VydGlmaWNhdGlvbiBBdXRo\n",
+    "b3JpdHkgLSBSNjEjMCEGCSqGSIb3DQEJARYUY2FAbWVuZGVsc29uLWUtYy5jb22C\n",
+    "CQDILJMF8H9TCzAdBgNVHQ4EFgQUbPFwN+UTRvxdmehaSgrotrmrMv4wDgYDVR0P\n",
+    "AQH/BAQDAgGGMDsGA1UdHwQ0MDIwMKAuoCyGKmh0dHA6Ly9jYS5tZW5kZWxzb24t\n",
+    "ZS1jLmNvbS9tZW5kZWxzb242LmNybDANBgkqhkiG9w0BAQUFAAOCAQEAV66ufDx8\n",
+    "XusBk+G0z59P8+MYxdTJfnv6Q9ezZJ9zumVzp4CuuUp+8qtlC1+zN7HIgiR7C6eB\n",
+    "fvAopruYUTa8m+7ZMN/vBi7XkmAX7oUM4hZYd/2yoUjL/AXF1p4fgKcCJmgvlctC\n",
+    "tQrG+VdXOAmGGAhbfnOZPg+kRfO7MYKLn2BL266aPeEsBVg/xWw/NWOFYgCXeHb8\n",
+    "2huxL0Ir8yK2Qv3Nqlbt/6irYMAvElCuQCrp7wqX8tXvE7/HmT/JKHTzTW+APp0A\n",
+    "KHq3GiYk+/XgxHxfyVdo55iQOTqZSIigK8Yj2gFhocxCBifF6gbnbo6LTwH+I4Er\n",
+    "TAjrRai7UZlqjw==\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+static int tests_x509_check_akid(void)
+{
+    X509 *root = NULL, *leaf = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_STORE *store = NULL;
+    X509_VERIFY_PARAM *param = NULL;
+    STACK_OF(X509) *x509s = NULL;
+    int test;
+
+    test = TEST_ptr(ctx = X509_STORE_CTX_new())
+        && TEST_ptr(store = X509_STORE_new())
+        && TEST_ptr(param = X509_VERIFY_PARAM_new())
+        && TEST_ptr(x509s = sk_X509_new_null())
+        && TEST_ptr((root = X509_from_strings(kRootMendelsonAKIDKeyNULL)))
+        && TEST_ptr((leaf = X509_from_strings(kLeafMendelsonAKIDKeyNULL)))
+        && TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL));
+
+    if (test != 1)
+        goto err;
+    if (!TEST_true(sk_X509_push(x509s, root)))
+        goto err;
+    root = NULL;
+
+    X509_STORE_CTX_set0_trusted_stack(ctx, x509s);
+    X509_VERIFY_PARAM_set_depth(param, 16);
+    X509_VERIFY_PARAM_set_time(param, mendel_verify_time);
+    X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_X509_STRICT);
+    X509_STORE_CTX_set0_param(ctx, param);
+    param = NULL;
+    ERR_clear_error();
+
+    test = TEST_int_eq(X509_verify_cert(ctx), 0)
+        && TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+            X509_V_ERR_MISSING_SUBJECT_KEY_IDENTIFIER);
+
+err:
+    OSSL_STACK_OF_X509_free(x509s);
+    X509_VERIFY_PARAM_free(param);
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    X509_free(leaf);
+    X509_free(root);
+
+    return test;
+}
+
+/* https://github.com/openssl/openssl/issues/26325 */
+static const char *kRootExtensionDuplicity[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIDhDCCAmygAwIBAgIDCxQYMA0GCSqGSIb3DQEBCwUAMHoxCzAJBgNVBAYTAlVO\n",
+    "MQ8wDQYDVQQIDAZNeSBTVDExFTATBgNVBAcMDE1ZIExvY2FsaXR5MTEUMBIGA1UE\n",
+    "CgwLTVkgQ29tcGFueTExETAPBgNVBAsMCE15IFVuaXQxMRowGAYDVQQDDBF3d3cu\n",
+    "bXljb21wYW55LmNvbTAeFw0xOTA2MTkwODU1NTlaFw0yOTA2MTkwODU1NTlaMHox\n",
+    "CzAJBgNVBAYTAlVOMQ8wDQYDVQQIDAZNeSBTVDExFTATBgNVBAcMDE1ZIExvY2Fs\n",
+    "aXR5MTEUMBIGA1UECgwLTXkgQ29tcGFueTExETAPBgNVBAsMCE15IFVuaXQxMRow\n",
+    "GAYDVQQDDBF3d3cubXljb21wYW55LmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEP\n",
+    "ADCCAQoCggEBALVNKQrEfNWp3s0FOW+9RAjXOMvhAprV/FsWo6M72Mq/EwaV4Ny+\n",
+    "Q2CZ2Bs09KmRw43RG4dHHkB5/ewE7HhohQcHVH+tcWrM0IdgQIzKva2vICFZkp6O\n",
+    "am71qSe8+qtLSkzlTYJv4oeTLmMA2SSwTTP74hB29MS6O8scaLcM+OqfaGzr6k/Z\n",
+    "GnMMjI/zf4rbrLGPJcGGZ4jIMkrYm1PnwAwg6ijXrU0kb8DBgVvpmrluYfQdBvy6\n",
+    "bSib3P9ckyCGqqszn50qQZqqa2n6Ol/CBwRsCuYuhazRsBcXiULQ1lv2JQG86ILb\n",
+    "h/SXXfB4A6p0ti3tmcTMIPN5AI3y/EvUUwkCAwEAAaMTMBEwDwYDVR0TAQH/BAUw\n",
+    "AwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAS6joG5vUo2kMLX0bcpjKzE3h40ZypVgJ\n",
+    "bSCLu/alVcIDzdLTK/SOp2NMvtGmn+BMRvfzW+Lk58sMZ2QC3x+RZKHV+pDsT+Lj\n",
+    "Zi1bhpvtzrN62PmYZXGTu0xPME3SlBLilUFIRgH5lrxzlBdRURMCbHJOblAfzVdw\n",
+    "EBCtDVdGcox/mzu1Jo/sJQb59a49ZQpvwp7m7kZE0q6dBgElYX4JaRYhbwsv/tP2\n",
+    "jEA+jQYNORgFvCOkITbaO4Avc7BXSCGkDHoH6GsANf0bdtaMQCbUMeaC2CYUzRoC\n",
+    "fTEJ9LvFu7syeEDpUbgPXgRqpUQLyxoVYxWjXZ3CG5jeRmJzAEAoyg==\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+static const char *kCertExtensionDuplicity[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIENDCCAxygAwIBAgIVASygDp5oUEVMj9bx6z7bj3ce5ypQMA0GCSqGSIb3DQEB\n",
+    "CwUAMHoxCzAJBgNVBAYTAlVOMQ8wDQYDVQQIDAZNeSBTVDExFTATBgNVBAcMDE1Z\n",
+    "IExvY2FsaXR5MTEUMBIGA1UECgwLTXkgQ29tcGFueTExETAPBgNVBAsMCE15IFVu\n",
+    "aXQxMRowGAYDVQQDDBF3d3cubXljb21wYW55LmNvbTAiGA8yMDE5MDYxOTA4NTU1\n",
+    "OVoYDzIwMjkwNjE5MDg1NTU5WjB7MQswCQYDVQQGEwJVTjEPMA0GA1UECAwGTXkg\n",
+    "U1QxMRUwEwYDVQQHDAxNWSBMb2NhbGl0eTExFDASBgNVBAoMC015IENvbXBhbnkx\n",
+    "MREwDwYDVQQLDAhNeSBVbml0MTEbMBkGA1UEAwwSd3d3Lm15Y29tcGFueTEuY29t\n",
+    "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtU0pCsR81anezQU5b71E\n",
+    "CNc4y+ECmtX8WxajozvYyr8TBpXg3L5DYJnYGzT0qZHDjdEbh0ceQHn97ATseGiF\n",
+    "BwdUf61xaszQh2BAjMq9ra8gIVmSno5qbvWpJ7z6q0tKTOVNgm/ih5MuYwDZJLBN\n",
+    "M/viEHb0xLo7yxxotwz46p9obOvqT9kacwyMj/N/itussY8lwYZniMgyStibU+fA\n",
+    "DCDqKNetTSRvwMGBW+mauW5h9B0G/LptKJvc/1yTIIaqqzOfnSpBmqprafo6X8IH\n",
+    "BGwK5i6FrNGwFxeJQtDWW/YlAbzogtuH9Jdd8HgDqnS2Le2ZxMwg83kAjfL8S9RT\n",
+    "CQIDAQABo4GrMIGoMFIGCCsGAQUFBwELBEYwRDBCBggrBgEFBQcwBYY2ZnRwOi8v\n",
+    "NjYuMjMzLjIuMjM1L2Z8M2YvTUI5JT94dV89WEdlYXxIMFgmcTRpRm1YIXs9dS89\n",
+    "MFIGCCsGAQUFBwELBEYwRDBCBggrBgEFBQcwBYY2ZnRwOi8vNjouMjMzLjIuMjM1\n",
+    "L2Z8M2YvTUI5JT94dV89WEdlYXxIMFgmcTRpRm1YIXs9dS89MA0GCSqGSIb3DQEB\n",
+    "CwUAA4IBAQCoLSlKFFlg2xSGf9PFrXayO9ODk4pUkzb/+u0fsf6Vekwo/0dFNxSM\n",
+    "1sPtfoyprGMd7DK8R0rELq7k4+TaypV1JFBj9G9///dCTdX8Fg1SMRamIY0cs8Cu\n",
+    "VJCPWpLD6RQzZm9WkUqcc1yhjW8eO7OABazKwFQBLRS97ocztbyNvPbsZ0xInSMV\n",
+    "7E3xOj4XeibJ2y+EHUbMRDPtwZuy+E1m/kYScLAqIweVaxrWQnCC1HcARxL6eHx9\n",
+    "8kzGS23XAT9jLvdxwNs23GXiAjzxifJmR7oujP+uALF+FfHdJb7vr6l8lVNzRnDH\n",
+    "utv/6BamvgrYfDmA6GO3UItEgYozDtaN\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+/*
+ * The following test checks for a duplicate extension with a known build-time
+ * NID, which is detected in constant time.
+ * */
+static int tests_x509_check_ext_duplicity(void)
+{
+    X509 *root = NULL, *leaf = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_STORE *store = NULL;
+    X509_VERIFY_PARAM *param = NULL;
+    STACK_OF(X509) *x509s = NULL;
+    const time_t verify_time = 1753284700; /* July 23th, 2025 */
+    int test;
+
+    test = TEST_ptr(ctx = X509_STORE_CTX_new())
+        && TEST_ptr(store = X509_STORE_new())
+        && TEST_ptr(param = X509_VERIFY_PARAM_new())
+        && TEST_ptr(x509s = sk_X509_new_null())
+        && TEST_ptr((root = X509_from_strings(kRootExtensionDuplicity)))
+        && TEST_ptr((leaf = X509_from_strings(kCertExtensionDuplicity)))
+        && TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL));
+
+    if (test != 1)
+        goto err;
+    if (!TEST_true(sk_X509_push(x509s, root)))
+        goto err;
+    root = NULL;
+
+    X509_STORE_CTX_set0_trusted_stack(ctx, x509s);
+    X509_VERIFY_PARAM_set_depth(param, 16);
+    X509_VERIFY_PARAM_set_time(param, verify_time);
+    X509_STORE_CTX_set0_param(ctx, param);
+    param = NULL;
+    ERR_clear_error();
+
+    test = TEST_int_eq(X509_verify_cert(ctx), 0)
+        && TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+            X509_V_ERR_DUPLICATE_EXTENSION);
+
+err:
+    OSSL_STACK_OF_X509_free(x509s);
+    X509_VERIFY_PARAM_free(param);
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    X509_free(leaf);
+    X509_free(root);
+
+    return test;
+}
+
+/*
+ * This test checks for a duplicate extension with an undefined NID, where the
+ * duplicate is detected via OID.
+ */
+static int tests_x509_check_ext_duplicity_nid_undef(void)
+{
+    X509 *root = NULL, *leaf = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_STORE *store = NULL;
+    X509_VERIFY_PARAM *param = NULL;
+    STACK_OF(X509) *x509s = NULL;
+    ASN1_OBJECT *obj1 = NULL, *obj2 = NULL;
+    ASN1_OCTET_STRING *oct1 = NULL, *oct2 = NULL;
+    X509_EXTENSION *ext1 = NULL, *ext2 = NULL;
+    const unsigned char data[] = { 0x04, 0x03, 0x41, 0x42, 0x43 };
+    const time_t verify_time = 1753284700; /* July 23th, 2025 */
+    const char *unknown_oid = "1.2.3.4.5.6.7.8.9";
+    int test;
+
+    test = TEST_ptr(ctx = X509_STORE_CTX_new())
+        && TEST_ptr(store = X509_STORE_new())
+        && TEST_ptr(param = X509_VERIFY_PARAM_new())
+        && TEST_ptr(x509s = sk_X509_new_null())
+        && TEST_ptr((root = X509_from_strings(kRootMendelsonAKIDKeyNULL)))
+        && TEST_ptr((leaf = X509_from_strings(kLeafMendelsonAKIDKeyNULL)))
+        && TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL))
+        && TEST_ptr(obj1 = OBJ_txt2obj(unknown_oid, 1))
+        && TEST_ptr(oct1 = ASN1_OCTET_STRING_new())
+        && TEST_int_eq(ASN1_OCTET_STRING_set(oct1, data, sizeof(data)), 1)
+        && TEST_ptr(ext1 = X509_EXTENSION_create_by_OBJ(NULL, obj1, 0, oct1))
+        && TEST_int_eq(X509_add_ext(leaf, ext1, -1), 1)
+        && TEST_ptr(obj2 = OBJ_txt2obj(unknown_oid, 1))
+        && TEST_ptr(oct2 = ASN1_OCTET_STRING_new())
+        && TEST_int_eq(ASN1_OCTET_STRING_set(oct2, data, sizeof(data)), 1)
+        && TEST_ptr(ext2 = X509_EXTENSION_create_by_OBJ(NULL, obj2, 0, oct2))
+        && TEST_int_eq(X509_add_ext(leaf, ext2, -1), 1);
+
+    if (test != 1)
+        goto err;
+    if (!TEST_true(sk_X509_push(x509s, root)))
+        goto err;
+    root = NULL;
+
+    X509_STORE_CTX_set0_trusted_stack(ctx, x509s);
+    X509_VERIFY_PARAM_set_depth(param, 16);
+    X509_VERIFY_PARAM_set_time(param, verify_time);
+    X509_STORE_CTX_set0_param(ctx, param);
+    param = NULL;
+    ERR_clear_error();
+
+    test = TEST_int_eq(X509_verify_cert(ctx), 0)
+        && TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+            X509_V_ERR_DUPLICATE_EXTENSION);
+
+err:
+    ASN1_OBJECT_free(obj1);
+    ASN1_OCTET_STRING_free(oct1);
+    X509_EXTENSION_free(ext1);
+    ASN1_OBJECT_free(obj2);
+    ASN1_OCTET_STRING_free(oct2);
+    X509_EXTENSION_free(ext2);
+    OSSL_STACK_OF_X509_free(x509s);
+    X509_VERIFY_PARAM_free(param);
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    X509_free(leaf);
+    X509_free(root);
+
+    return test;
+}
+
+/*
+ * This test checks for a duplicate extension with a dynamically registered NID,
+ * where the duplicate is detected via OID.
+ */
+static int tests_x509_check_ext_duplicity_nid_dynamic(void)
+{
+    X509 *root = NULL, *leaf = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_STORE *store = NULL;
+    X509_VERIFY_PARAM *param = NULL;
+    STACK_OF(X509) *x509s = NULL;
+    ASN1_OBJECT *obj1 = NULL, *obj2 = NULL;
+    ASN1_OCTET_STRING *oct1 = NULL, *oct2 = NULL;
+    X509_EXTENSION *ext1 = NULL, *ext2 = NULL;
+    const unsigned char data[] = { 0x04, 0x03, 0x41, 0x42, 0x43 };
+    const time_t verify_time = 1753284700; /* July 23th, 2025 */
+    const char *oid = "1.2.3.4.5.6.7.8.9";
+    const char *sn = "testOID";
+    const char *ln = "testOID Long Name";
+    int nid;
+    int test;
+
+    test = TEST_ptr(ctx = X509_STORE_CTX_new())
+        && TEST_ptr(store = X509_STORE_new())
+        && TEST_ptr(param = X509_VERIFY_PARAM_new())
+        && TEST_ptr(x509s = sk_X509_new_null())
+        && TEST_ptr((root = X509_from_strings(kRootMendelsonAKIDKeyNULL)))
+        && TEST_ptr((leaf = X509_from_strings(kLeafMendelsonAKIDKeyNULL)))
+        && TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL))
+        && TEST_true((nid = OBJ_create(oid, sn, ln)) != NID_undef)
+        && TEST_ptr(obj1 = OBJ_nid2obj(nid))
+        && TEST_ptr(oct1 = ASN1_OCTET_STRING_new())
+        && TEST_int_eq(ASN1_OCTET_STRING_set(oct1, data, sizeof(data)), 1)
+        && TEST_ptr(ext1 = X509_EXTENSION_create_by_OBJ(NULL, obj1, 0, oct1))
+        && TEST_int_eq(X509_add_ext(leaf, ext1, -1), 1)
+        && TEST_ptr(obj2 = OBJ_nid2obj(nid))
+        && TEST_ptr(oct2 = ASN1_OCTET_STRING_new())
+        && TEST_int_eq(ASN1_OCTET_STRING_set(oct2, data, sizeof(data)), 1)
+        && TEST_ptr(ext2 = X509_EXTENSION_create_by_OBJ(NULL, obj2, 0, oct2))
+        && TEST_int_eq(X509_add_ext(leaf, ext2, -1), 1);
+
+    if (test != 1)
+        goto err;
+    if (!TEST_true(sk_X509_push(x509s, root)))
+        goto err;
+    root = NULL;
+
+    X509_STORE_CTX_set0_trusted_stack(ctx, x509s);
+    X509_VERIFY_PARAM_set_depth(param, 16);
+    X509_VERIFY_PARAM_set_time(param, verify_time);
+    X509_STORE_CTX_set0_param(ctx, param);
+    param = NULL;
+    ERR_clear_error();
+
+    test = TEST_int_eq(X509_verify_cert(ctx), 0)
+        && TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+            X509_V_ERR_DUPLICATE_EXTENSION);
+
+err:
+    ASN1_OBJECT_free(obj1);
+    ASN1_OCTET_STRING_free(oct1);
+    X509_EXTENSION_free(ext1);
+    ASN1_OBJECT_free(obj2);
+    ASN1_OCTET_STRING_free(oct2);
+    X509_EXTENSION_free(ext2);
+    OSSL_STACK_OF_X509_free(x509s);
+    X509_VERIFY_PARAM_free(param);
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    X509_free(leaf);
+    X509_free(root);
+
+    return test;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_standard_exts);
@@ -575,5 +947,10 @@ int setup_tests(void)
     ADD_TEST(tests_X509_check_time);
     ADD_TEST(tests_X509_check_crypto);
     ADD_TEST(tests_x509_check_dpn);
+    ADD_TEST(tests_x509_check_akid);
+    ADD_TEST(tests_x509_check_ext_duplicity);
+    ADD_TEST(tests_x509_check_ext_duplicity_nid_undef);
+    ADD_TEST(tests_x509_check_ext_duplicity_nid_dynamic);
+
     return 1;
 }

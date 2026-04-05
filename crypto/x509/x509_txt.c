@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -223,6 +223,12 @@ const char *X509_verify_cert_error_string(long n)
         return "Certificate public key has explicit ECC parameters";
     case X509_V_ERR_RPK_UNTRUSTED:
         return "Raw public key untrusted, no trusted keys configured";
+    case X509_V_ERR_EMPTY_AUTHORITY_KEY_IDENTIFIER:
+        return "Empty Authority Key Identifier";
+    case X509_V_ERR_AKID_ISSUER_SERIAL_NOT_PAIRED:
+        return "Authority Key Identifier issuer and serial number must be paired";
+    case X509_V_ERR_DUPLICATE_EXTENSION:
+        return "Certificate includes more than one instance of a particular extension";
 
         /*
          * Entries must be kept consistent with include/openssl/x509_vfy.h.in

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,9 +14,11 @@
 #include <openssl/objects.h>
 #include <openssl/x509_acert.h>
 
+#include <crypto/asn1.h>
+
 static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
 {
-    ASN1_OBJECT *aobj;
+    const ASN1_OBJECT *aobj;
     int i, j, count;
     int ret = 0;
 
@@ -40,7 +42,7 @@ static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
         goto err;
 
     for (i = 0; i < count; i++) {
-        ASN1_TYPE *at;
+        const ASN1_TYPE *at;
         int type;
         ASN1_BIT_STRING *bs;
 
@@ -62,8 +64,10 @@ static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
         case V_ASN1_SEQUENCE:
             if (BIO_puts(bp, "\n") <= 0)
                 goto err;
-            ASN1_parse_dump(bp, at->value.sequence->data,
-                at->value.sequence->length, i, 1);
+            if (ASN1_parse_dump(bp, at->value.sequence->data,
+                    at->value.sequence->length, i, 1)
+                <= 0)
+                goto err;
             break;
         default:
             if (BIO_printf(bp, "unable to print attribute of type 0x%X\n",
@@ -240,8 +244,8 @@ int X509_ACERT_print_ex(BIO *bp, X509_ACERT *x, unsigned long nmflags,
             if (BIO_printf(bp, "%8sExtensions:\n", "") <= 0)
                 goto err;
             for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
-                ASN1_OBJECT *obj;
-                X509_EXTENSION *ex;
+                const ASN1_OBJECT *obj;
+                const X509_EXTENSION *ex;
                 int critical;
 
                 ex = sk_X509_EXTENSION_value(exts, i);

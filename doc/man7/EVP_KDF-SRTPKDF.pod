@@ -31,29 +31,30 @@ The supported parameters are:
 =item "cipher" (B<OSSL_KDF_PARAM_CIPHER>) <UTF8 string>
 
 This parameter sets the cipher to be used for the key derivation.
-Typically "AES-128-CTR" or "AES-256-CTR" is used.
+It must be set to one of "AES-128-CTR", "AES-192-CTR" or "AES-256-CTR".
 
 =item "key" (B<OSSL_KDF_PARAM_KEY>) <octet string>
 
-This parameter sets the master key value. This is typically 16 bytes
-for AES-128 or 32 bytes for AES-256.
+This parameter sets the master key value. This must be 16 bytes for AES-128,
+24 bytes for AES-192 or 32 bytes for AES-256.
 
 =item "salt" (B<OSSL_KDF_PARAM_SALT>) <octet string>
 
-This parameter sets the master salt value. This is typically 14 bytes
-as specified in RFC 3711.
+This parameter sets the master salt value. The must be at least 14 bytes.
+Note that larger salts are truncated.
 
 =item "kdr" (B<OSSL_KDF_PARAM_SRTPKDF_KDR>) <unsigned integer>
 
 This parameter sets the key derivation rate (KDR). The KDR controls
 how often keys are rederived. If not set or set to zero, no key
-rederivation is performed. The KDR value is power of 2 (range 2^0 to 2^24).
+rederivation is performed. The KDR value is power of 2 in the range 2^0 to 2^24.
 
 =item "index" (B<OSSL_KDF_PARAM_SRTPKDF_INDEX>) <octet string>
 
-This parameter sets the index value used in key derivation. For RTP
-packets, this is typically a 48-bit (6 byte) value. For RTCP packets,
-this is typically a 32-bit (4 byte) value. If not set, defaults to zero.
+This parameter sets the index value used in key derivation. The length must be
+at least 6 bytes for RTP packets, or at least 4 bytes for RTCP packets.
+Note that larger index values are truncated.
+If it is not set, or it has zero length, no key rederivation is performed.
 
 =item "label" (B<OSSL_KDF_PARAM_SRTPKDF_LABEL>) <unsigned integer>
 
@@ -89,7 +90,7 @@ A context for SRTP can be obtained by calling:
  EVP_KDF *kdf = EVP_KDF_fetch(NULL, "SRTP", NULL);
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
-The output length of the SRTP KDF operation is determined by the label:
+The output length of the SRTP KDF derive operation is determined by the label:
 
 =over 4
 

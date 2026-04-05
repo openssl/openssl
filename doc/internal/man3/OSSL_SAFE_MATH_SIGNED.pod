@@ -80,7 +80,7 @@ This example is of a function that computes the size of a record that
 has a four byte element count which is followed by that many elements.
 It returns zero on overflow.
 
- OSSL_SAFE_MATH_UNSIGNED(sizet, size_t, SIZE_MAX)
+ OSSL_SAFE_MATH_UNSIGNED(sizet, size_t)
 
  size_t compute_record_size(uint32_t n)
  {

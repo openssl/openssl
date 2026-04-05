@@ -820,6 +820,7 @@ EVP_R_XTS_DATA_UNIT_IS_TOO_LARGE:191:xts data unit is too large
 EVP_R_XTS_DUPLICATED_KEYS:192:xts duplicated keys
 HTTP_R_ASN1_LEN_EXCEEDS_MAX_RESP_LEN:108:asn1 len exceeds max resp len
 HTTP_R_CONNECT_FAILURE:100:connect failure
+HTTP_R_CONTENT_TYPE_MISMATCH:131:content type mismatch
 HTTP_R_ERROR_PARSING_ASN1_LENGTH:109:error parsing asn1 length
 HTTP_R_ERROR_PARSING_CONTENT_LENGTH:119:error parsing content length
 HTTP_R_ERROR_PARSING_URL:101:error parsing url
@@ -1063,6 +1064,7 @@ PROV_R_INIT_CALL_OUT_OF_ORDER:238:init call out of order
 PROV_R_INSUFFICIENT_DRBG_STRENGTH:181:insufficient drbg strength
 PROV_R_INVALID_AAD:108:invalid aad
 PROV_R_INVALID_AEAD:231:invalid aead
+PROV_R_INVALID_CIPHER:260:invalid cipher
 PROV_R_INVALID_CONFIG_DATA:211:invalid config data
 PROV_R_INVALID_CONSTANT_LENGTH:157:invalid constant length
 PROV_R_INVALID_CURVE:176:invalid curve
@@ -1074,6 +1076,7 @@ PROV_R_INVALID_DIGEST_SIZE:218:invalid digest size
 PROV_R_INVALID_EDDSA_INSTANCE_FOR_ATTEMPTED_OPERATION:243:\
 	invalid eddsa instance for attempted operation
 PROV_R_INVALID_FUNCTION_NAME:258:invalid function name
+PROV_R_INVALID_INDEX_LENGTH:259:invalid index length
 PROV_R_INVALID_INPUT_LENGTH:230:invalid input length
 PROV_R_INVALID_ITERATION_COUNT:123:invalid iteration count
 PROV_R_INVALID_IV_LENGTH:109:invalid iv length
@@ -1086,11 +1089,14 @@ PROV_R_INVALID_MAC:151:invalid mac
 PROV_R_INVALID_MEMORY_SIZE:235:invalid memory size
 PROV_R_INVALID_MGF1_MD:167:invalid mgf1 md
 PROV_R_INVALID_MODE:125:invalid mode
+PROV_R_INVALID_NONCE_LENGTH:264:invalid nonce length
 PROV_R_INVALID_OUTPUT_LENGTH:217:invalid output length
 PROV_R_INVALID_PADDING_MODE:168:invalid padding mode
+PROV_R_INVALID_PARAMETERS_FOR_DKM:261:invalid parameters for dkm
 PROV_R_INVALID_PREHASHED_DIGEST_LENGTH:241:invalid prehashed digest length
 PROV_R_INVALID_PUBINFO:198:invalid pubinfo
 PROV_R_INVALID_SALT_LENGTH:112:invalid salt length
+PROV_R_INVALID_SECRET_LENGTH:265:invalid secret length
 PROV_R_INVALID_SEED_LENGTH:154:invalid seed length
 PROV_R_INVALID_SIGNATURE_SIZE:179:invalid signature size
 PROV_R_INVALID_STATE:212:invalid state
@@ -1108,10 +1114,12 @@ PROV_R_MISSING_CEK_ALG:144:missing cek alg
 PROV_R_MISSING_CIPHER:155:missing cipher
 PROV_R_MISSING_CONFIG_DATA:213:missing config data
 PROV_R_MISSING_CONSTANT:156:missing constant
+PROV_R_MISSING_DKM:262:missing dkm
 PROV_R_MISSING_EID:255:missing eid
 PROV_R_MISSING_KEY:128:missing key
 PROV_R_MISSING_MAC:150:missing mac
 PROV_R_MISSING_MESSAGE_DIGEST:129:missing message digest
+PROV_R_MISSING_NONCE:263:missing nonce
 PROV_R_MISSING_OID:209:missing OID
 PROV_R_MISSING_PASS:130:missing pass
 PROV_R_MISSING_SALT:131:missing salt
@@ -1346,6 +1354,7 @@ SSL_R_BAD_DH_VALUE:102:bad dh value
 SSL_R_BAD_DIGEST_LENGTH:111:bad digest length
 SSL_R_BAD_EARLY_DATA:233:bad early data
 SSL_R_BAD_ECC_CERT:304:bad ecc cert
+SSL_R_BAD_ECHCONFIG_EXTENSION:425:bad echconfig extension
 SSL_R_BAD_ECPOINT:306:bad ecpoint
 SSL_R_BAD_EXTENSION:110:bad extension
 SSL_R_BAD_HANDSHAKE_LENGTH:332:bad handshake length
@@ -1426,6 +1435,8 @@ SSL_R_DTLS_MESSAGE_TOO_BIG:334:dtls message too big
 SSL_R_DUPLICATE_COMPRESSION_ID:309:duplicate compression id
 SSL_R_ECC_CERT_NOT_FOR_SIGNING:318:ecc cert not for signing
 SSL_R_ECDH_REQUIRED_FOR_SUITEB_MODE:374:ecdh required for suiteb mode
+SSL_R_ECH_DECODE_ERROR:426:ech decode error
+SSL_R_ECH_REQUIRED:424:ech required
 SSL_R_EE_KEY_TOO_SMALL:399:ee key too small
 SSL_R_EMPTY_RAW_PUBLIC_KEY:349:empty raw public key
 SSL_R_EMPTY_SRTP_PROTECTION_PROFILE_LIST:354:empty srtp protection profile list
@@ -1847,6 +1858,7 @@ X509_R_IDP_MISMATCH:128:idp mismatch
 X509_R_INVALID_ATTRIBUTES:138:invalid attributes
 X509_R_INVALID_DIRECTORY:113:invalid directory
 X509_R_INVALID_DISTPOINT:143:invalid distpoint
+X509_R_INVALID_EXTENSION:146:invalid extension
 X509_R_INVALID_FIELD_NAME:119:invalid field name
 X509_R_INVALID_TRUST:123:invalid trust
 X509_R_ISSUER_MISMATCH:129:issuer mismatch

@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -97,6 +97,7 @@ int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
 int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock);
 int CRYPTO_atomic_load_int(int *val, int *ret, CRYPTO_RWLOCK *lock);
 int CRYPTO_atomic_store(uint64_t *dst, uint64_t val, CRYPTO_RWLOCK *lock);
+int CRYPTO_atomic_store_int(int *dst, int val, CRYPTO_RWLOCK *lock);
 
 /* No longer needed, so this is a no-op */
 #define OPENSSL_malloc_init() \
@@ -516,7 +517,6 @@ int CRYPTO_memcmp(const void *in_a, const void *in_b, size_t len);
 /* Library initialisation functions */
 void OPENSSL_cleanup(void);
 int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
-int OPENSSL_atexit(void (*handler)(void));
 void OPENSSL_thread_stop(void);
 void OPENSSL_thread_stop_ex(OSSL_LIB_CTX *ctx);
 

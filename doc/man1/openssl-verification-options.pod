@@ -73,8 +73,40 @@ The most crucial input to certificate validation is a I<trust store>,
 which includes a collection of certificates and validation options.
 This is akin to what is used in the trust stores of Mozilla Firefox,
 or Apple's and Microsoft's certificate stores, ...
-By default all self-signed certificates in the trust store
+By default all apparently self-signed certificates in the trust store
 are considered to be trust anchors, for all or for specified purposes.
+
+For efficiency reasons, apparently self-signed certificates (based on certificate metadata)
+are not subjected to cryptographic self-signature check.
+A certificate is apparently self-signed if and only if all of the following conditions are met:
+
+=over 4
+
+=item *
+
+it is self-issued, i.e., its C<subject> and C<issuer> fields are equal,
+
+=item *
+
+the algorithm identifiers of its public key and signature match,
+
+=item *
+
+if it has an authorityKeyIdentifier (AKID) extension containing the C<keyIdentifier> field,
+its value matches the subjectKeyIdentifier (SKID) extension if present,
+
+=item *
+
+if it has an AKID containing the C<authorityCertSerialNumber> field,
+its value equals the serial number of the certificate, and
+
+=item *
+
+if it has an AKID containing the C<authorityCertIssuer> field
+and its C<GeneralNames> include at least one C<directoryName>,
+the first such name equals the C<issuer> field of the certificate.
+
+=back
 
 Independent of any extended key usage (EKU) X.509v3 extension included,
 from the OpenSSL perspective a trust anchor certificate should be augmented
@@ -114,7 +146,7 @@ It has a positive trust attribute accepting
 the EKU associated with the intended purpose
 or it does not have any positive trust attribute
 and one of the following compatibility conditions apply:
-It is self-signed or the B<-partial_chain> option is given
+It is apparently self-signed or the B<-partial_chain> option is given
 (which corresponds to the B<X509_V_FLAG_PARTIAL_CHAIN> flag being set).
 
 =back
@@ -144,7 +176,7 @@ the subjectKeyIdentifier and authorityKeyIdentifier extensions are very useful.
 The subject alternative names (SAN) and issuer alternative names given in
 subjectAltName or issuerAltName extensions are not relevant for chain building.
 
-Once a self-signed certificate has been added, chain construction stops.
+Once a apparently self-signed certificate has been added, chain construction stops.
 In this case it must fully match a trust anchor, otherwise chain building fails.
 
 A candidate issuer certificate matches a subject certificate
@@ -180,6 +212,12 @@ it must allow for certificate signing (keyCertSign).
 The lookup first searches for issuer certificates in the trust store.
 If it does not find a match there it consults
 the list of untrusted ("intermediate" CA) certificates, if provided.
+If one issuer certificate was found in the trust store, the list of
+untrusted certificates will not be consulted anymore to find further
+issuer certificates. Therefore, either only the root certificate or an
+uninterrupted chain to the root certificate must be provided in the trust
+store for a successful verification, if B<X509_V_FLAG_PARTIAL_CHAIN>
+is not enabled.
 
 =head2 Certification Path Validation
 
@@ -204,7 +242,7 @@ in the L</Certificate Extensions> section below.
 The third step is to check the trust settings on the last certificate or
 trust anchor, which typically is given as a self-signed root CA certificate.
 If specified, it must be trusted for the given use.
-For compatibility, a self-signed certificate
+For compatibility, an apparently self-signed certificate
 with no trust attributes is considered to be valid for all uses.
 
 The fourth, and final, step is to check the validity of the certificate chain.
@@ -316,10 +354,6 @@ among others, the following certificate well-formedness conditions are checked:
 
 =item *
 
-The basicConstraints of CA certificates must be marked critical.
-
-=item *
-
 CA certificates must explicitly include the keyUsage extension.
 
 =item *
@@ -349,13 +383,8 @@ The signatureAlgorithm field and the cert signature must be consistent.
 
 =item *
 
-Any given authorityKeyIdentifier and any given subjectKeyIdentifier
-must not be marked critical.
-
-=item *
-
 The authorityKeyIdentifier must be given for X.509v3 certs unless they
-are self-signed.
+are apparently self-signed.
 
 =item *
 
@@ -427,7 +456,7 @@ This certificate may be self-issued or belong to an intermediate CA.
 =item B<-check_ss_sig>
 
 Verify the signature of
-the last certificate in a chain if the certificate is supposedly self-signed.
+the last certificate in a chain if the certificate is apparently self-signed.
 This is prohibited and will result in an error if it is a non-conforming CA
 certificate with key usage restrictions not including the keyCertSign bit.
 This verification is disabled by default because it doesn't add any security.
@@ -452,7 +481,7 @@ Since B<-trusted_first> is always on, this option has no effect.
 
 Parse I<file> as a set of one or more certificates.
 Each of them qualifies as trusted if has a suitable positive trust attribute
-or it is self-signed or the B<-partial_chain> option is specified.
+or it is apparently self-signed or the B<-partial_chain> option is specified.
 This option implies the B<-no-CAfile>, B<-no-CApath>, and B<-no-CAstore> options
 and it cannot be used with the B<-CAfile>, B<-CApath> or B<-CAstore> options, so
 only certificates specified using the B<-trusted> option are trust anchors.
@@ -503,7 +532,7 @@ and thus the commands L<openssl-s_client(1)> and L<openssl-s_server(1)>
 check for consistency with
 TLS server (C<sslserver>) or TLS client use (C<sslclient>), respectively.
 By default, CMS signature validation, which can be done via L<openssl-cms(1)>,
-checks for consistency with S/MIME signing use (C<smimesign>).
+checks for consistency with the S/MIME signing purpose (C<smimesign>).
 
 While IETF RFC 5280 says that B<id-kp-serverAuth> and B<id-kp-clientAuth>
 are only for WWW use, in practice they are used for all kinds of TLS clients
@@ -537,7 +566,7 @@ the subject certificate.
 
 Use a set of verification parameters, also known as verification method,
 identified by I<name>. The currently predefined methods are named C<ssl_client>,
-C<ssl_server>, C<smime_sign> with alias C<pkcs7>, C<code_sign>, and C<default>.
+C<ssl_server>, C<smime_sign> with alias C<pkcs7>, C<smime_encrypt>, C<code_sign>, and C<default>.
 These mimic the combinations of purpose and trust settings used in SSL/(D)TLS,
 CMS/PKCS7 (including S/MIME), and code signing.
 
@@ -646,6 +675,13 @@ C<sslclient>, C<nssslserver>, C<sslserver>, C<smimesign>, or C<smimeencrypt>,
 it checks that any present EKU extension (that does not contain
 B<anyExtendedKeyUsage>) contains the respective EKU as detailed below.
 Moreover, it does these checks even for trust anchor certificates.
+
+=head3 Duplicate Extensions
+
+According to RFC 5280 section 4.2, a certificate MUST NOT include more
+than one instance of a particular extension. If a duplicate extension is
+detected, the certificate is rejected.
+This check applies to all certificates: end-entity certificates, intermediate CA certificates, and root CA (trust anchor) certificates.
 
 =head3 Checks Implied by Specific Predefined Policies
 
@@ -777,11 +813,12 @@ L<openssl-cms(1)>
 
 Since OpenSSL 1.1.0, the B<-trusted_first> option is always enabled.
 
-The checks enabled by B<-x509_strict> have been extended in OpenSSL 3.0.
+The checks enabled by B<-x509_strict> have been extended in OpenSSL 3.0,
+which has been partially reverted in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

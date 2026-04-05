@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,8 +16,9 @@
 #include "evp_local.h"
 
 #if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
-
+#if !defined(_M_ARM64EC)
 #define HAS_IA32CAP_IS_64
+#endif /* !defined(_M_ARM64EC) */
 #endif
 
 #include "enc_b64_avx2.h"
@@ -25,7 +26,7 @@
 
 static unsigned char conv_ascii2bin(unsigned char a,
     const unsigned char *table);
-int evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
+size_t evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     const unsigned char *f, int dlen, int *wrap_cnt);
 static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     const unsigned char *f, int n, int eof);
@@ -373,7 +374,8 @@ void EVP_EncodeInit(EVP_ENCODE_CTX *ctx)
 int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
     const unsigned char *in, int inl)
 {
-    int i, j;
+    int i;
+    size_t j;
     size_t total = 0;
 
     *outl = 0;
@@ -451,20 +453,20 @@ int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 
 void EVP_EncodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)
 {
-    int ret = 0;
+    size_t ret = 0;
     int wrap_cnt = 0;
 
     if (ctx->num != 0) {
         ret = evp_encodeblock_int(ctx, out, ctx->enc_data, ctx->num,
             &wrap_cnt);
-        if (ossl_assert(ret >= 0)) {
+        if (ret > 0) {
             if ((ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) == 0)
                 out[ret++] = '\n';
             out[ret] = '\0';
             ctx->num = 0;
         }
     }
-    *outl = ret;
+    *outl = (int)ret;
 }
 
 int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
@@ -472,14 +474,14 @@ int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
     int wrap_cnt = 0;
 
 #if defined(__AVX2__)
-    return encode_base64_avx2(NULL, t, f, dlen, 0, &wrap_cnt);
+    return (int)encode_base64_avx2(NULL, t, f, dlen, 0, &wrap_cnt);
 #elif defined(HAS_IA32CAP_IS_64)
     if ((OPENSSL_ia32cap_P[2] & (1u << 5)) != 0)
-        return encode_base64_avx2(NULL, t, f, dlen, 0, &wrap_cnt);
+        return (int)encode_base64_avx2(NULL, t, f, dlen, 0, &wrap_cnt);
     else
-        return evp_encodeblock_int(NULL, t, f, dlen, &wrap_cnt);
+        return (int)evp_encodeblock_int(NULL, t, f, dlen, &wrap_cnt);
 #else
-    return evp_encodeblock_int(NULL, t, f, dlen, &wrap_cnt);
+    return (int)evp_encodeblock_int(NULL, t, f, dlen, &wrap_cnt);
 #endif
 }
 
@@ -680,7 +682,7 @@ static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     l = ((((unsigned long)a) << 18L) | (((unsigned long)b) << 12L) | (((unsigned long)c) << 6L) | (((unsigned long)d)));
 
     if (eof == -1)
-        eof = (f[2] == '=') + (f[3] == '=');
+        eof = (c == '=') + (d == '=');
 
     switch (eof) {
     case 2:

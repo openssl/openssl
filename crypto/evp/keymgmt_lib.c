@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -33,7 +33,7 @@ int evp_keymgmt_util_try_import(const OSSL_PARAM params[], void *arg)
 
     /* Just in time creation of keydata */
     if (data->keydata == NULL) {
-        if ((data->keydata = evp_keymgmt_newdata(data->keymgmt)) == NULL) {
+        if ((data->keydata = evp_keymgmt_newdata(data->keymgmt, NULL)) == NULL) {
             ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
             return 0;
         }
@@ -320,7 +320,7 @@ void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
 {
     void *keydata = NULL;
 
-    if ((keydata = evp_keymgmt_newdata(keymgmt)) == NULL
+    if ((keydata = evp_keymgmt_newdata(keymgmt, NULL)) == NULL
         || !evp_keymgmt_import(keymgmt, keydata, selection, params)
         || !evp_keymgmt_util_assign_pkey(target, keymgmt, keydata)) {
         evp_keymgmt_freedata(keymgmt, keydata);

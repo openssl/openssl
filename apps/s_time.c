@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -348,7 +348,7 @@ next:
 
     /* Get an SSL object so we can reuse the session id */
     if ((scon = doConnection(NULL, host, ctx)) == NULL) {
-        BIO_printf(bio_err, "Unable to get connection\n");
+        BIO_puts(bio_err, "Unable to get connection\n");
         goto end;
     }
 
@@ -466,7 +466,7 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
     /* ok, lets connect */
     i = SSL_connect(serverCon);
     if (i <= 0) {
-        BIO_printf(bio_err, "ERROR\n");
+        BIO_puts(bio_err, "ERROR\n");
         if (verify_args.error != X509_V_OK)
             BIO_printf(bio_err, "verify error:%s\n",
                 X509_verify_cert_error_string(verify_args.error));

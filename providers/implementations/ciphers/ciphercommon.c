@@ -650,6 +650,10 @@ int ossl_cipher_common_set_ctx_params(PROV_CIPHER_CTX *ctx, const struct ossl_ci
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
+        if (ctx->blocksize > 0 && num >= (unsigned int)ctx->blocksize) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
         ctx->num = num;
     }
     return 1;

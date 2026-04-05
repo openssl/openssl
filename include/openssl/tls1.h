@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -78,6 +78,9 @@ extern "C" {
 #define TLS1_AD_BAD_CERTIFICATE_HASH_VALUE 114
 #define TLS1_AD_UNKNOWN_PSK_IDENTITY 115 /* fatal */
 #define TLS1_AD_NO_APPLICATION_PROTOCOL 120 /* fatal */
+#ifndef OPENSSL_NO_ECH
+#define TLS1_AD_ECH_REQUIRED 121 /* fatal */
+#endif
 
 /* ExtensionType values from RFC3546 / RFC4366 / RFC6066 */
 #define TLSEXT_TYPE_server_name 0
@@ -165,6 +168,11 @@ extern "C" {
 #ifndef OPENSSL_NO_NEXTPROTONEG
 /* This is not an IANA defined extension number */
 #define TLSEXT_TYPE_next_proto_neg 13172
+#endif
+
+#ifndef OPENSSL_NO_ECH
+#define TLSEXT_TYPE_ech 0xfe0d
+#define TLSEXT_TYPE_outer_extensions 0xfd00
 #endif
 
 /* NameType value from RFC3546 */
@@ -276,6 +284,11 @@ __owur int SSL_export_keying_material_early(SSL *s, unsigned char *out,
 
 int SSL_get_peer_signature_type_nid(const SSL *s, int *pnid);
 int SSL_get_signature_type_nid(const SSL *s, int *pnid);
+
+int SSL_get0_sigalg(SSL *s, int idx, unsigned int *codepoint,
+    const char **name);
+int SSL_get0_shared_sigalg(SSL *s, int idx, unsigned int *codepoint,
+    const char **name);
 
 int SSL_get_sigalgs(SSL *s, int idx,
     int *psign, int *phash, int *psignandhash,
@@ -661,6 +674,10 @@ int SSL_CTX_set_tlsext_ticket_key_evp_cb(SSL_CTX *ctx, int (*fp)(SSL *, unsigned
 #define TLS1_CK_RSA_PSK_WITH_ARIA_128_GCM_SHA256 0x0300C06E
 #define TLS1_CK_RSA_PSK_WITH_ARIA_256_GCM_SHA384 0x0300C06F
 
+/* SM ciphersuites from RFC8998 */
+#define TLS1_3_CK_SM4_GCM_SM3 0x030000C6
+#define TLS1_3_CK_SM4_CCM_SM3 0x030000C7
+
 /* a bundle of RFC standard cipher names, generated from ssl3_ciphers[] */
 #define TLS1_RFC_RSA_WITH_AES_128_SHA "TLS_RSA_WITH_AES_128_CBC_SHA"
 #define TLS1_RFC_DHE_DSS_WITH_AES_128_SHA "TLS_DHE_DSS_WITH_AES_128_CBC_SHA"
@@ -853,6 +870,8 @@ int SSL_CTX_set_tlsext_ticket_key_evp_cb(SSL_CTX *ctx, int (*fp)(SSL *, unsigned
 #define TLS1_RFC_DHE_PSK_WITH_ARIA_256_GCM_SHA384 "TLS_DHE_PSK_WITH_ARIA_256_GCM_SHA384"
 #define TLS1_RFC_RSA_PSK_WITH_ARIA_128_GCM_SHA256 "TLS_RSA_PSK_WITH_ARIA_128_GCM_SHA256"
 #define TLS1_RFC_RSA_PSK_WITH_ARIA_256_GCM_SHA384 "TLS_RSA_PSK_WITH_ARIA_256_GCM_SHA384"
+#define TLS1_3_RFC_SM4_GCM_SM3 "TLS_SM4_GCM_SM3"
+#define TLS1_3_RFC_SM4_CCM_SM3 "TLS_SM4_CCM_SM3"
 
 /*
  * XXX Backward compatibility alert: Older versions of OpenSSL gave some DHE

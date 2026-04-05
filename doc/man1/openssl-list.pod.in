@@ -251,7 +251,7 @@ be displayed.
 
 =item B<-disabled>
 
-Display a list of disabled features, those that were compiled out
+Display a list of disabled features, protocols, and algorithms, those that were compiled out
 of the installation.
 
 =item B<-objects>

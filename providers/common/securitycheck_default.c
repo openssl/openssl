@@ -16,12 +16,6 @@
 #include "prov/securitycheck.h"
 #include "internal/nelem.h"
 
-/* Disable the security checks in the default provider */
-int ossl_fips_config_securitycheck_enabled(OSSL_LIB_CTX *libctx)
-{
-    return 0;
-}
-
 int ossl_digest_rsa_sign_get_md_nid(const EVP_MD *md)
 {
     int mdnid;

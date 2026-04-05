@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -555,7 +555,7 @@ const char *evp_keymgmt_util_query_operation_name(EVP_KEYMGMT *keymgmt,
 /*
  * KEYMGMT provider interface functions
  */
-void *evp_keymgmt_newdata(const EVP_KEYMGMT *keymgmt);
+void *evp_keymgmt_newdata(const EVP_KEYMGMT *keymgmt, const OSSL_PARAM params[]);
 void evp_keymgmt_freedata(const EVP_KEYMGMT *keymgmt, void *keyddata);
 int evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt,
     void *keydata, OSSL_PARAM params[]);

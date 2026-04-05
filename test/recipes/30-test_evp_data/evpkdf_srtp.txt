@@ -94,7 +94,8 @@ Ctrl.kdr = kdr:0
 Ctrl.index = hexindex:000000000000
 Ctrl.label = label:0
 Output = C61E7A93744F39EE10734AFE3FF7A087
-Result = KDF_CTRL_ERROR
+Result = KDF_DERIVE_ERROR
+Reason = missing cipher
 
 # Negative Test case 2, invalid cipher
 FIPSversion = >=4.0.0
@@ -107,6 +108,7 @@ Ctrl.index = hexindex:000000000000
 Ctrl.label = label:0
 Output = C61E7A93744F39EE10734AFE3FF7A087
 Result = KDF_CTRL_ERROR
+Reason = invalid cipher
 
 # Negative Test case 3, missing key
 FIPSversion = >=4.0.0
@@ -118,6 +120,7 @@ Ctrl.index = hexindex:000000000000
 Ctrl.label = label:0
 Output = C61E7A93744F39EE10734AFE3FF7A087
 Result = KDF_DERIVE_ERROR
+Reason = missing key
 
 # Negative Test case 4, missing salt
 FIPSversion = >=4.0.0
@@ -129,6 +132,7 @@ Ctrl.index = hexindex:000000000000
 Ctrl.label = label:0
 Output = C61E7A93744F39EE10734AFE3FF7A087
 Result = KDF_DERIVE_ERROR
+Reason = missing salt
 
 # Negative Test case 5, invalid label
 FIPSversion = >=4.0.0
@@ -140,7 +144,8 @@ Ctrl.kdr = kdr:0
 Ctrl.index = hexindex:000000000000
 Ctrl.label = label:8
 Output = C61E7A93744F39EE10734AFE3FF7A087
-Result = KDF_DERIVE_ERROR
+Result = KDF_CTRL_ERROR
+Reason = invalid label
 
 # Negative Test case 6, invalid kdr (not power of 2)
 FIPSversion = >=4.0.0
@@ -152,7 +157,8 @@ Ctrl.kdr = kdr:5
 Ctrl.index = hexindex:000000000000
 Ctrl.label = label:0
 Output = C61E7A93744F39EE10734AFE3FF7A087
-Result = KDF_DERIVE_ERROR
+Result = KDF_CTRL_ERROR
+Reason = invalid kdr
 
 # Negative Test case 7, invalid kdr (kdr out of range)
 FIPSversion = >=4.0.0
@@ -164,7 +170,8 @@ Ctrl.kdr = kdr:0x10000000
 Ctrl.index = hexindex:000000000000
 Ctrl.label = label:0
 Output = C61E7A93744F39EE10734AFE3FF7A087
-Result = KDF_DERIVE_ERROR
+Result = KDF_CTRL_ERROR
+Reason = invalid kdr
 
 # Additional tests from 
 # https://github.com/usnistgov/ACVP-Server/tree/master/gen-val/json-files/kdf-components-srtp-1.0
@@ -394,3 +401,69 @@ Ctrl.hexsalt = hexsalt:E1D109B42D6C16A8830F9E7DDF4B
 Ctrl.index = hexindex:8E5BDF08FA78
 Ctrl.label = label:2
 Output = B27816A7A139D73E71A55FCD7006
+
+# The following tests are copies of one of the above tests with
+# invalid sizes for different inputs.
+
+# Test index size too small for label 0 (SRTP)
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
+Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
+Ctrl.kdr = kdr:1
+Ctrl.index = hexindex:08284B49F5
+Ctrl.label = label:0
+Output = A920DF50EAA111D03FBE9B203121C07D
+Result = KDF_DERIVE_ERROR
+Reason = invalid index length
+
+# Test index size too small for label 4 (SRTCP)
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
+Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
+Ctrl.kdr = kdr:1
+Ctrl.index = hexindex:69B621
+Ctrl.label = label:4
+Output = FA02251D693645BC1001f83C5A13CB3E3D77F7EA
+Result = KDF_DERIVE_ERROR
+Reason = invalid index length
+
+# Test salt size is too small
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:8C307F105F79D5D2C26B1A933AE22CD5
+Ctrl.hexsalt = hexsalt:563B
+Ctrl.kdr = kdr:1
+Ctrl.index = hexindex:69B62109
+Ctrl.label = label:4
+Output = FA02251D693645BC1001f83C5A13CB3E3D77F7EA
+Result = KDF_CTRL_ERROR
+Reason = invalid salt length
+
+# Test invalid key size fails
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:8C307F
+Ctrl.hexsalt = hexsalt:563B4C15458D977B68080242CEE1
+Ctrl.kdr = kdr:1
+Ctrl.index = hexindex:69B62109
+Ctrl.label = label:4
+Output = FA02251D693645BC1001f83C5A13CB3E3D77F7EA
+Result = KDF_CTRL_ERROR
+Reason = invalid key length
+
+# Test Case 1.3, variation, zero length index
+FIPSversion = >=4.0.0
+KDF = SRTPKDF
+Ctrl.cipher = cipher:AES-128-CTR
+Ctrl.hexkey = hexkey:E1F97A0D3E018BE0D64FA32C06DE4139
+Ctrl.hexsalt = hexsalt:0EC675AD498AFEEBB6960B3AABE6
+Ctrl.index = hexindex:
+Ctrl.kdr = kdr:1
+Ctrl.label = label:0
+Output = C61E7A93744F39EE10734AFE3FF7A087

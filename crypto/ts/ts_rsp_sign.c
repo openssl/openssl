@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -487,7 +487,7 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
         return 0;
     }
     digest = msg_imprint->hashed_msg;
-    if (digest->length != md_size) {
+    if (ASN1_STRING_length(digest) != md_size) {
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
             "Bad message digest.");
         TS_RESP_CTX_add_failure_info(ctx, TS_INFO_BAD_DATA_FORMAT);

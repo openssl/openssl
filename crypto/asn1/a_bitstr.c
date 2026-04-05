@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,60 +13,50 @@
 #include <openssl/asn1.h>
 #include "asn1_local.h"
 
+#include <crypto/asn1.h>
+
+static void
+asn1_bit_string_clear_unused_bits(ASN1_BIT_STRING *abs)
+{
+    abs->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
+}
+
+static int asn1_bit_string_set_unused_bits(ASN1_BIT_STRING *abs,
+    uint8_t unused_bits)
+{
+    if (unused_bits > 7)
+        return 0;
+
+    asn1_bit_string_clear_unused_bits(abs);
+
+    abs->flags |= ASN1_STRING_FLAG_BITS_LEFT | unused_bits;
+
+    return 1;
+}
+
 int ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, int len)
 {
     return ASN1_STRING_set(x, d, len);
 }
 
-int ossl_i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
+int ossl_i2c_ASN1_BIT_STRING(const ASN1_BIT_STRING *a, unsigned char **pp)
 {
-    int ret, j, bits, len;
+    int ret = 0, bits = 0, len;
     unsigned char *p, *d;
 
     if (a == NULL)
-        return 0;
+        goto err;
 
     len = a->length;
 
-    if (len > 0) {
-        if (a->flags & ASN1_STRING_FLAG_BITS_LEFT) {
-            bits = (int)a->flags & 0x07;
-        } else {
-            for (; len > 0; len--) {
-                if (a->data[len - 1])
-                    break;
-            }
+    if (len > INT_MAX - 1)
+        goto err;
 
-            if (len == 0) {
-                bits = 0;
-            } else {
-                j = a->data[len - 1];
-                if (j & 0x01)
-                    bits = 0;
-                else if (j & 0x02)
-                    bits = 1;
-                else if (j & 0x04)
-                    bits = 2;
-                else if (j & 0x08)
-                    bits = 3;
-                else if (j & 0x10)
-                    bits = 4;
-                else if (j & 0x20)
-                    bits = 5;
-                else if (j & 0x40)
-                    bits = 6;
-                else if (j & 0x80)
-                    bits = 7;
-                else
-                    bits = 0; /* should not happen */
-            }
-        }
-    } else
-        bits = 0;
+    if ((len > 0) && (a->flags & ASN1_STRING_FLAG_BITS_LEFT))
+        bits = (int)a->flags & 0x07;
 
-    ret = 1 + len;
     if (pp == NULL)
-        return ret;
+        goto done;
 
     p = *pp;
 
@@ -78,6 +68,11 @@ int ossl_i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
         p[-1] &= (0xff << bits);
     }
     *pp = p;
+
+done:
+    ret = len + 1;
+
+err:
     return ret;
 }
 
@@ -176,8 +171,26 @@ int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
         a->length = w + 1;
     }
     a->data[w] = ((a->data[w]) & iv) | v;
+
     while ((a->length > 0) && (a->data[a->length - 1] == 0))
         a->length--;
+
+    if (a->length > 0) {
+        uint8_t u8 = a->data[a->length - 1];
+        uint8_t unused_bits = 7;
+
+        /* Only keep least significant bit; count trailing zeroes. */
+        u8 &= 0x100 - u8;
+        if ((u8 & 0x0f) != 0)
+            unused_bits -= 4;
+        if ((u8 & 0x33) != 0)
+            unused_bits -= 2;
+        if ((u8 & 0x55) != 0)
+            unused_bits -= 1;
+
+        if (!asn1_bit_string_set_unused_bits(a, unused_bits))
+            return 0;
+    }
     return 1;
 }
 
@@ -252,4 +265,32 @@ int ASN1_BIT_STRING_get_length(const ASN1_BIT_STRING *abs, size_t *out_length,
     *out_unused_bits = unused_bits;
 
     return 1;
+}
+
+int ASN1_BIT_STRING_set1(ASN1_BIT_STRING *abs, const uint8_t *data, size_t length,
+    int unused_bits)
+{
+    if (abs == NULL)
+        return 0;
+
+    if (length > INT_MAX || unused_bits < 0 || unused_bits > 7)
+        return 0;
+
+    if (length == 0 && unused_bits != 0)
+        return 0;
+
+    if (length > 0 && (data[length - 1] & ((1 << unused_bits) - 1)) != 0)
+        return 0;
+
+    /*
+     * XXX - ASN1_STRING_set() and asn1_bit_string_set_unused_bits() preserve the
+     * state of flags irrelevant to ASN1_BIT_STRING. Should we explicitly
+     * clear them?
+     */
+
+    if (!ASN1_STRING_set(abs, data, (int)length))
+        return 0;
+    abs->type = V_ASN1_BIT_STRING;
+
+    return asn1_bit_string_set_unused_bits(abs, unused_bits);
 }

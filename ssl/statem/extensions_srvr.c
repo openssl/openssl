@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,8 +12,15 @@
 #include "statem_local.h"
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
+#ifndef OPENSSL_NO_ECH
+#include <openssl/rand.h>
+#include <openssl/trace.h>
+#endif
 
 #define COOKIE_STATE_FORMAT_VERSION 1
+
+#define MAX_SUPPORTED_GROUPS 128
+#define MAX_KEY_SHARES 16
 
 /*
  * 2 bytes for packet length, 2 bytes for format version, 2 bytes for
@@ -652,28 +659,42 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
     const uint16_t *clntgroups, size_t clnt_num_groups,
     const uint16_t *srvrgroups, size_t srvr_num_groups,
     uint16_t **keyshares_arr, PACKET **encoded_pubkey_arr,
-    size_t *keyshares_cnt, size_t *keyshares_max)
+    size_t *keyshares_cnt)
 {
     PACKET encoded_pubkey;
     size_t key_share_pos = 0;
     size_t previous_key_share_pos = 0;
     unsigned int group_id = 0;
+    unsigned int i;
+
+    /*
+     * Theoretically there is no limit on the number of keyshares as long as
+     * they are less than 2^16 bytes in total. It costs us something for each
+     * keyshare to confirm the groups are valid, so we restrict this to a
+     * sensible number (MAX_KEY_SHARES == 16). Any keyshares over this limit are
+     * simply ignored.
+     */
 
     /* Prepare memory to hold the extracted key share groups and related pubkeys */
-    *keyshares_arr = OPENSSL_malloc_array(*keyshares_max,
+    *keyshares_arr = OPENSSL_malloc_array(MAX_KEY_SHARES,
         sizeof(**keyshares_arr));
     if (*keyshares_arr == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto failure;
     }
-    *encoded_pubkey_arr = OPENSSL_malloc_array(*keyshares_max,
+    *encoded_pubkey_arr = OPENSSL_malloc_array(MAX_KEY_SHARES,
         sizeof(**encoded_pubkey_arr));
     if (*encoded_pubkey_arr == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto failure;
     }
 
-    while (PACKET_remaining(key_share_list) > 0) {
+    /*
+     * We limit the number of key shares we are willing to process to
+     * MAX_KEY_SHARES regardless of whether we include them in keyshares_arr or
+     * not.
+     */
+    for (i = 0; PACKET_remaining(key_share_list) > 0 && i < MAX_KEY_SHARES; i++) {
         /* Get the group_id for the current share and its encoded_pubkey */
         if (!PACKET_get_net_2(key_share_list, &group_id)
             || !PACKET_get_length_prefixed_2(key_share_list, &encoded_pubkey)
@@ -739,35 +760,6 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
         /* Memorize this key share group ID and its encoded point */
         (*keyshares_arr)[*keyshares_cnt] = group_id;
         (*encoded_pubkey_arr)[(*keyshares_cnt)++] = encoded_pubkey;
-
-        /*
-         * Memory management (remark: While limiting the client to only allow
-         * a maximum of OPENSSL_CLIENT_MAX_KEY_SHARES to be sent, the server can
-         * handle any number of key shares)
-         */
-        if (*keyshares_cnt == *keyshares_max) {
-            PACKET *tmp_pkt;
-            uint16_t *tmp = OPENSSL_realloc_array(*keyshares_arr,
-                *keyshares_max + GROUPLIST_INCREMENT,
-                sizeof(**keyshares_arr));
-
-            if (tmp == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto failure;
-            }
-
-            *keyshares_arr = tmp;
-            tmp_pkt = OPENSSL_realloc_array(*encoded_pubkey_arr,
-                *keyshares_max + GROUPLIST_INCREMENT,
-                sizeof(**encoded_pubkey_arr));
-            if (tmp_pkt == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                goto failure;
-            }
-
-            *encoded_pubkey_arr = tmp_pkt;
-            *keyshares_max += GROUPLIST_INCREMENT;
-        }
     }
 
     return EXTRACTION_SUCCESS;
@@ -837,7 +829,6 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
     PACKET *encoded_pubkey_arr = NULL;
     uint16_t *keyshares_arr = NULL;
     size_t keyshares_cnt = 0;
-    size_t keyshares_max = GROUPLIST_INCREMENT;
     /* We conservatively assume that we did not find a suitable group */
     uint16_t group_id_candidate = 0;
     KS_EXTRACTION_RESULT ks_extraction_result;
@@ -892,7 +883,7 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
         clntgroups, clnt_num_groups,
         srvrgroups, srvr_num_groups,
         &keyshares_arr, &encoded_pubkey_arr,
-        &keyshares_cnt, &keyshares_max);
+        &keyshares_cnt);
 
     if (ks_extraction_result == EXTRACTION_FAILURE) /* Fatal error during tests */
         return 0; /* Memory already freed and SSLfatal already called */
@@ -1235,9 +1226,16 @@ int tls_parse_ctos_supported_groups(SSL_CONNECTION *s, PACKET *pkt,
         OPENSSL_free(s->ext.peer_supportedgroups);
         s->ext.peer_supportedgroups = NULL;
         s->ext.peer_supportedgroups_len = 0;
+        /*
+         * We only pay attention to the first 128 supported groups and ignore
+         * any beyond that limit. Theoretically this could cause problems if
+         * the client also uses one of these groups (say in a key share extension)
+         * - but why would any valid client be sending such a huge supported
+         * groups list?
+         */
         if (!tls1_save_u16(&supported_groups_list,
                 &s->ext.peer_supportedgroups,
-                &s->ext.peer_supportedgroups_len)) {
+                &s->ext.peer_supportedgroups_len, MAX_SUPPORTED_GROUPS)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -1514,7 +1512,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     if (sess == NULL)
         return 1;
 
-    binderoffset = PACKET_data(pkt) - (const unsigned char *)s->init_buf->data;
+    binderoffset = PACKET_data(pkt) - PACKET_msg_start(pkt);
     hashsize = EVP_MD_get_size(md);
     if (hashsize <= 0)
         goto err;
@@ -1535,9 +1533,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
     }
-    if (tls_psk_do_binder(s, md, (const unsigned char *)s->init_buf->data,
-            binderoffset, PACKET_data(&binder), NULL, sess, 0,
-            ext)
+    if (tls_psk_do_binder(s, md, PACKET_msg_start(pkt), binderoffset,
+            PACKET_data(&binder), NULL, sess, 0, ext)
         != 1) {
         /* SSLfatal() already called */
         goto err;
@@ -2440,3 +2437,165 @@ int tls_parse_ctos_server_cert_type(SSL_CONNECTION *sc, PACKET *pkt,
     SSLfatal(sc, SSL_AD_UNSUPPORTED_CERTIFICATE, SSL_R_BAD_EXTENSION);
     return 0;
 }
+
+#ifndef OPENSSL_NO_ECH
+/*
+ * ECH handling for edge cases (GREASE/inner) and errors.
+ * return 1 for good, 0 otherwise
+ *
+ * Real ECH handling (i.e. decryption) happens before, via
+ * ech_early_decrypt(), but if that failed (e.g. decryption
+ * failed, which may be down to GREASE) then we end up here,
+ * processing the ECH from the outer CH.
+ * Otherwise, we only expect to see an inner ECH with a fixed
+ * value here.
+ */
+int tls_parse_ctos_ech(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
+    X509 *x, size_t chainidx)
+{
+    unsigned int echtype = 0;
+
+    if (s->ext.ech.grease == OSSL_ECH_IS_GREASE) {
+        /* GREASE is fine */
+        return 1;
+    }
+    if (s->ext.ech.es == NULL) {
+        /* If not configured for ECH then we ignore it */
+        return 1;
+    }
+    if (s->ext.ech.attempted_type != TLSEXT_TYPE_ech) {
+        /* if/when new versions of ECH are added we'll update here */
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    /*
+     * we only allow "inner" which is one octet, valued 0x01
+     * and only if we decrypted ok or are a backend
+     */
+    if (PACKET_get_1(pkt, &echtype) != 1
+        || echtype != OSSL_ECH_INNER_CH_TYPE
+        || PACKET_remaining(pkt) != 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    if (s->ext.ech.success != 1 && s->ext.ech.backend != 1) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    /* yay - we're ok with this */
+    OSSL_TRACE_BEGIN(TLS)
+    {
+        BIO_printf(trc_out, "ECH seen in inner as expected.\n");
+    }
+    OSSL_TRACE_END(TLS);
+    return 1;
+}
+
+/*
+ * Answer an ECH, as needed
+ * return 1 for good, 0 otherwise
+ *
+ * Return most-recent ECH config for retry, as needed.
+ * If doing HRR we include the confirmation value, but
+ * for now, we'll just add the zeros - the real octets
+ * will be added later via ech_calc_ech_confirm() which
+ * is called when constructing the server hello.
+ */
+EXT_RETURN tls_construct_stoc_ech(SSL_CONNECTION *s, WPACKET *pkt,
+    unsigned int context, X509 *x,
+    size_t chainidx)
+{
+    unsigned char *rcfgs = NULL;
+    size_t rcfgslen = 0;
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+
+    if (context == SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST
+        && (s->ext.ech.success == 1 || s->ext.ech.backend == 1)
+        && s->ext.ech.attempted_type == TLSEXT_TYPE_ech) {
+        unsigned char eightzeros[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+        if (!WPACKET_put_bytes_u16(pkt, s->ext.ech.attempted_type)
+            || !WPACKET_sub_memcpy_u16(pkt, eightzeros, 8)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        OSSL_TRACE_BEGIN(TLS)
+        {
+            BIO_printf(trc_out, "set 8 zeros for ECH accept confirm in HRR\n");
+        }
+        OSSL_TRACE_END(TLS);
+        return EXT_RETURN_SENT;
+    }
+    /* GREASE or error => random confirmation in HRR case */
+    if (context == SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST
+        && s->ext.ech.attempted_type == TLSEXT_TYPE_ech
+        && s->ext.ech.attempted == 1) {
+        unsigned char randomconf[8];
+
+        if (RAND_bytes_ex(sctx->libctx, randomconf, 8,
+                RAND_DRBG_STRENGTH)
+            <= 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        if (!WPACKET_put_bytes_u16(pkt, s->ext.ech.attempted_type)
+            || !WPACKET_sub_memcpy_u16(pkt, randomconf, 8)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        OSSL_TRACE_BEGIN(TLS)
+        {
+            BIO_printf(trc_out, "set random for ECH acccpt confirm in HRR\n");
+        }
+        OSSL_TRACE_END(TLS);
+        return EXT_RETURN_SENT;
+    }
+    /* in other HRR circumstances: don't set */
+    if (context == SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST)
+        return EXT_RETURN_NOT_SENT;
+    /* If in some weird state we ignore and send nothing */
+    if (s->ext.ech.grease != OSSL_ECH_IS_GREASE
+        || s->ext.ech.attempted_type != TLSEXT_TYPE_ech)
+        return EXT_RETURN_NOT_SENT;
+    /*
+     * If the client GREASEd, or we think it did, return the
+     * most-recently loaded ECHConfigList, as the value of the
+     * extension. Most-recently loaded can be anywhere in the
+     * list, depending on changing or non-changing file names.
+     */
+    if (s->ext.ech.es == NULL) {
+        OSSL_TRACE_BEGIN(TLS)
+        {
+            BIO_printf(trc_out, "ECH - not sending ECHConfigList to client "
+                                "even though they GREASE'd as I've no loaded configs\n");
+        }
+        OSSL_TRACE_END(TLS);
+        return EXT_RETURN_NOT_SENT;
+    }
+    if (ossl_ech_get_retry_configs(s, &rcfgs, &rcfgslen) != 1) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (rcfgslen == 0) {
+        OSSL_TRACE_BEGIN(TLS)
+        {
+            BIO_printf(trc_out, "ECH - not sending ECHConfigList to client "
+                                "even though they GREASE'd and I have configs but "
+                                "I've no configs set to be returned\n");
+        }
+        OSSL_TRACE_END(TLS);
+        OPENSSL_free(rcfgs);
+        return EXT_RETURN_NOT_SENT;
+    }
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_ech)
+        || !WPACKET_start_sub_packet_u16(pkt)
+        || !WPACKET_sub_memcpy_u16(pkt, rcfgs, rcfgslen)
+        || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        OPENSSL_free(rcfgs);
+        return 0;
+    }
+    OPENSSL_free(rcfgs);
+    return EXT_RETURN_SENT;
+}
+#endif /* END OPENSSL_NO_ECH */

@@ -9,16 +9,17 @@ X509_cmp_time, X509_cmp_current_time, X509_cmp_timeframe - X509 time functions
 
  int X509_check_certificate_times(const X509_VERIFY_PARAM *vpm, const X509 *x,
                                   int *error);
- ASN1_TIME *X509_time_adj(ASN1_TIME *asn1_time, long offset_sec, time_t *in_tm);
+ ASN1_TIME *X509_time_adj(ASN1_TIME *asn1_time, long offset_sec,
+                          const time_t *in_tm);
  ASN1_TIME *X509_time_adj_ex(ASN1_TIME *asn1_time, int offset_day, long
-                             offset_sec, time_t *in_tm);
+                             offset_sec, const time_t *in_tm);
  ASN1_TIME *X509_gmtime_adj(ASN1_TIME *asn1_time, long offset_sec);
 
 The following functions have been deprecated since OpenSSL 4.0, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
 see L<openssl_user_macros(7)>:
 
- int X509_cmp_time(const ASN1_TIME *asn1_time, time_t *in_tm);
+ int X509_cmp_time(const ASN1_TIME *asn1_time, const time_t *in_tm);
  int X509_cmp_current_time(const ASN1_TIME *asn1_time);
  int X509_cmp_timeframe(const X509_VERIFY_PARAM *vpm,
                         const ASN1_TIME *start, const ASN1_TIME *end);
@@ -88,9 +89,9 @@ value it points to will be set to an error code when the certificate
 is not temporally valid, or 0 when the certificate is temporally valid.
 
 The integer pointed to by I<error> will be set to
-X509_V_ERROR_ERROR_IN_CERT_NOT_BEFORE_FIELD
+X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD
 or
-X509_V_ERROR_ERROR_IN_CERT_NOT_AFTER_FIELD
+X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD
 if the certificate has an invalid notBefore or notAfter field, respectively.
 
 The integer pointed to by I<error> will be set to
@@ -135,7 +136,7 @@ L<ASN1_GENERALIZEDTIME_check(3)>
 L<ASN1_UTCTIME_check(3)>
 L<ASN1_TIME_to_tm(3)>
 L<OPENSSL_tm_to_posix(3)> L<OPENSSL_posix_to_tm(3)>
-L<ERR_error_string_n(3)>
+L<X509_verify_cert_error_string(3)>
 
 =head1 HISTORY
 
@@ -153,7 +154,7 @@ X509_check_certificate_times() was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
-Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

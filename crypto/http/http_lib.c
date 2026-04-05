@@ -55,6 +55,7 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
     char **ppath, char **pquery, char **pfrag)
 {
     const char *p, *tmp;
+    const char *authority_end;
     const char *scheme, *scheme_end;
     const char *user, *user_end;
     const char *host, *host_end;
@@ -92,7 +93,10 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
 
     /* parse optional "userinfo@" */
     user = user_end = host = p;
-    host = strchr(p, '@');
+    authority_end = strpbrk(p, "/?#");
+    if (authority_end == NULL)
+        authority_end = p + strlen(p);
+    host = memchr(p, '@', authority_end - p);
     if (host != NULL)
         user_end = host++;
     else

@@ -12,6 +12,7 @@ use OpenSSL::Test::Utils;
 
 our $fips_mode;
 our $fips_3_4;
+our $fips_3_5;
 
 my @curves = ("prime256v1", "secp384r1", "secp521r1");
 
@@ -44,6 +45,19 @@ push @curves_non_fips,
     "brainpoolP256r1", "brainpoolP384r1", "brainpoolP512r1";
 
 push @curves_tls_1_2, @curves_non_fips if !$fips_mode;
+
+my @curves_no_nid = ();
+push @curves_no_nid, qw(X25519MLKEM768)
+    unless (disabled("ml-kem") || disabled("ecx") || ($fips_mode && !$fips_3_5));
+push @curves_no_nid, qw(SecP256r1MLKEM768 SecP384r1MLKEM1024)
+    unless (disabled("ml-kem") || ($fips_mode && !$fips_3_5));
+push @curves_no_nid, qw(curveSM2)
+    unless ($fips_mode || disabled("sm2"));
+push @curves_no_nid, qw(curveSM2MLKEM768)
+    unless ($fips_mode || disabled("sm2") || disabled("ml-kem"));
+
+push @curves_tls_1_3, @curves_no_nid;
+push @curves, @curves_no_nid;
 
 our @tests = ();
 

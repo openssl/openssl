@@ -31,7 +31,7 @@ by SSL_want().
 
 SSL_want() examines the internal state information of the SSL object. Its
 return values are similar to that of L<SSL_get_error(3)>.
-Unlike L<SSL_get_error(3)>, which also evaluates the
+Unlike L<SSL_get_error(3)>, which also evaluates (indirectly) the
 error queue, the results are obtained by examining an internal state flag
 only. The information must therefore only be used for normal operation under
 nonblocking I/O. Error conditions are not handled and must be treated
@@ -116,7 +116,7 @@ SSL_want_retry_verify() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2001-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
