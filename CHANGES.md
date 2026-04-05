@@ -585,6 +585,173 @@ OpenSSL Releases
 OpenSSL 3.6
 -----------
 
+### Changes between 3.6.1 and 3.6.2 [7 Apr 2026]
+
+ * Fixed incorrect failure handling in RSA KEM RSASVE encapsulation.
+
+   Severity: Moderate
+
+   Issue summary: Applications using RSASVE key encapsulation to establish
+   a secret encryption key can send contents of an uninitialized memory buffer
+   to a malicious peer.
+
+   Impact summary: The uninitialized buffer might contain sensitive data
+   from the previous execution of the application process which leads
+   to sensitive data leakage to an attacker.
+
+   Reported by: Simo Sorce (Red Hat).
+
+   ([CVE-2026-31790])
+
+   *Nikola Pajkovsky*
+
+ * Fixed loss of key agreement group tuple structure when the `DEFAULT` keyword
+   is used in the server-side configuration of the key-agreement group list.
+
+   Severity: Low
+
+   Issue summary: An OpenSSL TLS 1.3 server may fail to negotiate the expected
+   preferred key exchange group when its key exchange group configuration
+   includes the default by using the 'DEFAULT' keyword.
+
+   Impact summary: A less preferred key exchange may be used even when a more
+   preferred group is supported by both client and server, if the group
+   was not included among the client's initial predicated keyshares.
+   This will sometimes be the case with the new hybrid post-quantum groups,
+   if the client chooses to defer their use until specifically requested by
+   the server.
+   <!-- https://github.com/openssl/openssl/pull/30111 -->
+
+ * Fixed out-of-bounds read in AES-CFB-128 on x86-64 CPUs with AVX-512 support.
+
+   Severity: Low
+
+   Issue summary: Applications using AES-CFB128 encryption or decryption on
+   systems with AVX-512 and VAES support can trigger an out-of-bounds read
+   of up to 15 bytes when processing partial cipher blocks.
+
+   Impact summary: This out-of-bounds read may trigger a crash which leads to
+   Denial of Service for an application if the input buffer ends at a memory
+   page boundary and the following page is unmapped. There is no information
+   disclosure as the over-read bytes are not written to output.
+
+   Reported by: Stanislav Fort (Aisle Research), Pavel Kohout (Aisle Research),
+   and Alex Gaynor (Anthropic).
+
+   ([CVE-2026-28386])
+
+   *Stanislav Fort, Pavel Kohout, and Alex Gaynor*
+
+ * Fixed potential use-after-free in DANE client code.
+
+   Severity: Low
+
+   Issue summary: An uncommon configuration of clients performing DANE
+   TLSA-based server authentication, when paired with uncommon server DANE TLSA
+   records, may result in a use-after-free and/or double-free on the client
+   side.
+
+   Impact summary: A use after free can have a range of potential consequences
+   such as the corruption of valid data, crashes, or execution of arbitrary
+   code.
+
+   Reported by: Igor Morgenstern (Aisle Research).
+
+   ([CVE-2026-28387])
+
+   *Viktor Dukhovni*
+
+ * Fixed NULL pointer dereference when processing a delta CRL.
+
+   Severity: Low
+
+   Issue summary: When a delta CRL that contains a Delta CRL Indicator extension
+   is processed, a NULL pointer dereference might happen if the required CRL
+   Number extension is missing.
+
+   Impact summary: A NULL pointer dereference can trigger a crash which
+   leads to a Denial of Service for an application.
+
+   Reported by: Igor Morgenstern (Aisle Research).
+
+   ([CVE-2026-28388])
+
+   *Igor Morgenstern*
+
+ * Fixed possible NULL dereference when processing CMS KeyAgreeRecipientInfo.
+
+   Severity: Low
+
+   Issue summary: During processing of a crafted CMS EnvelopedData message
+   with KeyAgreeRecipientInfo a NULL pointer dereference can happen.
+
+   Impact summary: Applications that process attacker-controlled CMS data may
+   crash before authentication or cryptographic operations occur resulting in
+   Denial of Service.
+
+   Reported by: Nathan Sportsman (Praetorian), Daniel Rhea,
+   Jaeho Nam (Seoul National University), Muhammad Daffa,
+   Zhanpeng Liu (Tencent Xuanwu Lab), Guannan Wang (Tencent Xuanwu Lab),
+   Guancheng Li (Tencent Xuanwu Lab), and Joshua Rogers.
+
+   ([CVE-2026-28389])
+
+   *Neil Horman*
+
+ * Fixed possible NULL dereference when processing CMS
+   KeyTransportRecipientInfo.
+
+   Severity: Low
+
+   Issue summary: During processing of a crafted CMS EnvelopedData message
+   with KeyTransportRecipientInfo a NULL pointer dereference can happen.
+
+   Impact summary: Applications that process attacker-controlled CMS data may
+   crash before authentication or cryptographic operations occur resulting in
+   Denial of Service.
+
+   Reported by: Muhammad Daffa, Zhanpeng Liu (Tencent Xuanwu Lab),
+   Guannan Wang (Tencent Xuanwu Lab), Guancheng Li (Tencent Xuanwu Lab),
+   Joshua Rogers, and Chanho Kim.
+
+   ([CVE-2026-28390])
+
+   *Neil Horman*
+
+ * Fixed heap buffer overflow in hexadecimal conversion.
+
+   Severity: Low
+
+   Issue summary: Converting an excessively large OCTET STRING value to
+   a hexadecimal string leads to a heap buffer overflow on 32 bit platforms.
+
+   Impact summary: A heap buffer overflow may lead to a crash or possibly
+   an attacker controlled code execution or other undefined behavior.
+
+   Reported by: Quoc Tran (Xint.io - US Team).
+
+   ([CVE-2026-31789])
+
+   *Igor Ustinov*
+
+ * Fixed usage of `openssl s_client -connect HOST -proxy PROXY` with `HOST`
+   containing a raw IPv6 address.
+   <!-- https://github.com/openssl/openssl/pull/30384 -->
+
+   *Peter Zhang*
+
+ * Fixed broken detection of plantext HTTP over TLS.
+   <!-- https://github.com/openssl/openssl/pull/30411 -->
+
+   *Matt Caswell*
+
+ * Fixed performance regressions introduced in 3.6 caused by the lack
+   of usage of CPU-capability-specific optimisations with non-EVP APIs,
+   as the capability detection was no longer performed during library load.
+   <!-- https://github.com/openssl/openssl/pull/30557 -->
+
+   *Bob Beck*
+
 ### Changes between 3.6.0 and 3.6.1 [27 Jan 2026]
 
  * Fixed Improper validation of PBMAC1 parameters in PKCS#12 MAC verification.
@@ -22615,8 +22782,16 @@ ndif
 [CVE-2025-69419]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-69419
 [CVE-2025-69420]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-69420
 [CVE-2025-69421]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-69421
+[CVE-2026-2673]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-2673
 [CVE-2026-22795]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-22795
 [CVE-2026-22796]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-22796
+[CVE-2026-28386]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-28386
+[CVE-2026-28387]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-28387
+[CVE-2026-28388]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-28388
+[CVE-2026-28389]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-28389
+[CVE-2026-28390]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-28390
+[CVE-2026-31789]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-31789
+[CVE-2026-31790]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-31790
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [RFC 2578 (STD 58), section 3.5]: https://datatracker.ietf.org/doc/html/rfc2578#section-3.5
 [RFC 7919]: https://datatracker.ietf.org/doc/html/rfc7919
