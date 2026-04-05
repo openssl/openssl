@@ -216,6 +216,15 @@ OpenSSL Releases
 
    *Bob Beck*
 
+ * Added `SSL_add1_dnsname()`, `SSL_set1_dnsname()`, `SSL_add1_ipaddr()`,
+   and `SSL_set1_ipaddr()` functions as a replacement for `SSL_add1_host()`
+   and `SSL_set1_host()` that are deprecated now.  The new replacement API
+   functions was added to support checking multiple names against a certificate
+   with `X509_VERIFY_PARAM`.  See `X509_VERIFY_PARAM_set_flags(3)` for full
+   details.
+
+   *Bob Beck*
+
  * Added `SSL_CTX_get0_alpn_protos()` and `SSL_get0_alpn_protos()` functions.
 
    *Daniel Kubec*
@@ -1008,13 +1017,6 @@ OpenSSL 3.6
    stores between FIPS and non-FIPS implementations.
 
    *Dimitri John Ledkov*
-
- * `SSL_add1_host()` and `SSL_set1_host()` were deprecated. The new replacement functions
-   `SSL_add1_dnsname()`, `SSL_set1_dnsname()`, `SSL_add1_ipaddr()`, and `SSL_set1_ipaddr()` were added.
-   API was added to support checking multiple names against a certificate with
-   `X509_VERIFY_PARAM`.  See `X509_VERIFY_PARAM_set_flags(3)` for full details.
-
-   *Bob Beck*
 
  * Added `X509_CRL_get0_tbs_sigalg()` accessor for the signature
    `AlgorithmIdentifier` inside CRL's `TBSCertList`.
