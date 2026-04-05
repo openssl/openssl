@@ -468,9 +468,9 @@ int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
 
 #ifdef HAVE_AVX2
     if (HAVE_AVX2())
-        return encode_base64_avx2(NULL, t, f, dlen, 0, &wrap_cnt);
+        return (int)encode_base64_avx2(NULL, t, f, dlen, 0, &wrap_cnt);
 #endif
-    return evp_encodeblock_int(NULL, t, f, dlen, &wrap_cnt);
+    return (int)evp_encodeblock_int(NULL, t, f, dlen, &wrap_cnt);
 }
 
 void EVP_DecodeInit(EVP_ENCODE_CTX *ctx)
