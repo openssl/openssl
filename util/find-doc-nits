@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2002-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2002-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -49,7 +49,7 @@ our($opt_a);
 sub help {
     print <<EOF;
 Find small errors (nits) in documentation.  Options:
-    -a List undocumented env vars
+    -a List undocumented env vars (scans .c, .in, .t, and .pl files)
     -c List undocumented commands, undocumented options and unimplemented options.
     -d Detailed list of undocumented (implies -u)
     -e Detailed list of new undocumented (implies -v)
@@ -1285,7 +1285,6 @@ sub check_env_vars {
     my @env_files;
     my @except_dirs = (
         "$config{sourcedir}/demos",
-        "$config{sourcedir}/test",
     );
     my @except_env_files = (
         "$config{sourcedir}/providers/implementations/kem/template_kem.c",
@@ -1296,6 +1295,80 @@ sub check_env_vars {
     );
     my @env_headers;
     my @env_macro;
+
+    # Used only in tests, release tooling, ASM generators, or bundled
+    # third-party trees; not documented in openssl-env(7).
+    my %ignored_env = map { $_ => 1 } qw(
+        ADD_DEPENDS_DEBUG
+        ASAN_OPTIONS
+        ASM
+        AUTHOR_TESTING
+        BLDTOP
+        CERTS_DIR
+        CN2
+        CT_DIR
+        ECSTRESS
+        EVP_TEST_EXTENDED
+        EXE_SHELL
+        FILEPREFIX
+        FIPSKEY
+        HARNESS_ACTIVE
+        HARNESS_FAILLOG
+        HARNESS_JOBS
+        HARNESS_OSSL_LEVEL
+        HARNESS_TAP_COPY
+        HARNESS_TIMER
+        HARNESS_VERBOSE
+        HARNESS_VERBOSE_FAILURE
+        HARNESS_VERBOSE_FAILURE_PROGRESS
+        LANG
+        LC_ALL
+        LHASH_WORKERS
+        LIBPATH
+        MALLOC_PERTURB_
+        MSAN_OPTIONS
+        MSYS2_ARG_CONV_EXCL
+        MYKEY
+        NO_ADDR_VALIDATE
+        NO_FIPS
+        NO_LEGACY
+        NUMBER_OF_PROCESSORS
+        OPENSSL_CMP_ASPECTS
+        OPENSSL_CMP_CONFIG
+        OPENSSL_CMP_SERVER
+        OPENSSL_TEST_GETCOUNTS
+        OPENSSL_TEST_RAND_ORDER
+        OPENSSL_TEST_RAND_SEED
+        OSSL_RUN_CI_TESTS
+        PREV_RELEASE_DATE
+        PREV_RELEASE_TEXT
+        RELEASE
+        RELEASE_DATE
+        RELEASE_TEXT
+        REPORT_FAILURES
+        REPORT_FAILURES_PROGRESS
+        RETAIN_SEED
+        RPKI_DOWNLOAD_URL
+        RPKI_SRC
+        RPKI_TARBALL
+        SHLIB_VERSION_NUMBER
+        SOURCE_DATE_EPOCH
+        SRCTOP
+        SSL_CIPHER_SUITES
+        SSL_SESSION_FILE
+        SSL_TESTS
+        TEMP
+        TESTDATADIR
+        TEST_CERTS_DIR
+        TMP
+        TOP
+        TSDNSECT
+        VERBOSE
+        VERBOSE_FAILURE
+        VERBOSE_FAILURE_PROGRESS
+        VF
+        VFP
+    );
 
     if (open my $gs_file, '<', "$config{sourcedir}/.gitmodules") {
         while (<$gs_file>) {
@@ -1324,12 +1397,12 @@ sub check_env_vars {
     while (<$glf_pipe>) {
         $git_ok = 1;
         s/\R$//; # better chomp
-        push @env_files, $_ if /\.c$|\.in$/;
+        push @env_files, $_ if /\.(?:c|in|t|pl)$/;
     }
     close $glf_pipe;
     # git call has failed, trying to find files manually
     if (!$git_ok) {
-        find(sub { push @env_files, $File::Find::name if /\.c$|\.in$/; },
+        find(sub { push @env_files, $File::Find::name if /\.(?:c|in|t|pl)$/; },
              $config{sourcedir});
     }
 
@@ -1341,33 +1414,36 @@ sub check_env_vars {
         open my $fh, '<', $filename or die "Can't open $filename: $!";
         while (my $line = <$fh>) {
             # for windows
-            # for .in files
-            push @{$env_list{$1}}, "${filename}:$."
-                if ($line =~ /GetEnvironmentVariableW\([\s\S]*"([^"]+)",/
-                    || $line =~ /\$ENV\{([^}"']+)\}/);
-            # this also handles ossl_safe_getenv
-            if ($line =~ /getenv\(([^()\s]+)\)/) {
-                my $env1 = $1;
-                if ($env1 =~ /"([^"]+)"/) {
-                    push @{$env_list{$1}}, "${filename}:$.";
-                } elsif ($env1 =~ /([A-Z0-9_])/) {
-                    push(@env_macro, $env1);
-                }
+            if ($line =~ /GetEnvironmentVariableW\([\s\S]*"([^"]+)",/) {
+                push @{$env_list{$1}}, "${filename}:$.";
             }
-            # match ternary operators; $1 - true, $2 - false
-            if ($line =~ /env\(\s*[^?]+\?\s*([^:( ]+)\s*:\s*([^(]+)\s*\)/) {
-                my ($env1, $env2) = ($1, $2);
-                # if it's a string just add to the list
-                # otherwise look for the constant value later
-                if ($env1 =~ /"([^"]+)"/) {
-                    push @{$env_list{$1}}, "${filename}:$.";
-                } else {
-                    push(@env_macro, $env1);
+            # for .in and Perl (.t/.pl) files: $ENV{NAME}, $ENV{'NAME'}, $ENV{"NAME"}
+            while ($line =~ /\$ENV\{['"]?([^}'"]+)['"]?\}/g) {
+                push @{$env_list{$1}}, "${filename}:$." unless $1 =~ /^\$/;
+            }
+            # C/in only: getenv and ternary (no-op for .t/.pl)
+            if ($filename !~ /\.(?:t|pl)$/) {
+                if ($line =~ /getenv\(([^()\s]+)\)/) {
+                    my $env1 = $1;
+                    if ($env1 =~ /"([^"]+)"/) {
+                        push @{$env_list{$1}}, "${filename}:$.";
+                    } elsif ($env1 =~ /([A-Z0-9_])/) {
+                        push(@env_macro, $env1);
+                    }
                 }
-                if ($env2 =~ /"([^"]+)"/) {
-                    push @{$env_list{$1}}, "${filename}:$.";
-                } else {
-                    push(@env_macro, $env2);
+                # match ternary operators; $1 - true, $2 - false
+                if ($line =~ /env\(\s*[^?]+\?\s*([^:( ]+)\s*:\s*([^(]+)\s*\)/) {
+                    my ($env1, $env2) = ($1, $2);
+                    if ($env1 =~ /"([^"]+)"/) {
+                        push @{$env_list{$1}}, "${filename}:$.";
+                    } else {
+                        push(@env_macro, $env1);
+                    }
+                    if ($env2 =~ /"([^"]+)"/) {
+                        push @{$env_list{$1}}, "${filename}:$.";
+                    } else {
+                        push(@env_macro, $env2);
+                    }
                 }
             }
         }
@@ -1387,6 +1463,8 @@ sub check_env_vars {
             }
         }
     }
+
+    delete @env_list{keys %ignored_env};
 
     # need to save the value before starting to delete from the hash
     my $number_of_env = scalar keys %env_list;

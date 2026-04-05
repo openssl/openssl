@@ -51,6 +51,15 @@ OpenSSL Releases
 
    *Marcel Cornu and Tomasz Kantecki*
 
+ * Extended `util/find-doc-nits` option `-a` to scan `.t` and `.pl` files for
+   environment variable usage, alongside `.c` and `.in`.  Variables that exist
+   only for tests, build scripts, assembly generators, or bundled third-party
+   code are listed in that script and are exempt from the `openssl-env(7)`
+   documentation check, so `make doc-nits` reports only omissions that matter
+   for library and application users.
+
+   *Herbenderbler*
+
  * Changed the output of the -disabled option for the list command.
    Displaying disabled features, protocols, and algorithms, in relevant sections.
    Disabled features are now generated at configuration time.
