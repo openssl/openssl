@@ -124,3 +124,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_offset, OSSL_NELEM(tests));
     return 1;
 }
+
+void cleanup_tests(void)
+{
+    ASN1_TIME_free(the_asn1_time);
+}

@@ -1578,3 +1578,8 @@ int setup_tests(void)
     ADD_TEST(test_gmtime_range);
     return 1;
 }
+
+void cleanup_tests(void)
+{
+    ASN1_TIME_free(gtime);
+}
