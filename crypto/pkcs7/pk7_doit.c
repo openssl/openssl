@@ -74,8 +74,8 @@ static ASN1_OCTET_STRING *pkcs7_get1_data(PKCS7 *p7)
     if (PKCS7_type_is_other(p7) && (p7->d.other != NULL)
         && (p7->d.other->type == V_ASN1_SEQUENCE)
         && (p7->d.other->value.sequence != NULL)
-        && (p7->d.other->value.sequence->length > 0)) {
-        const unsigned char *data = p7->d.other->value.sequence->data;
+        && (ASN1_STRING_length(p7->d.other->value.sequence) > 0)) {
+        const unsigned char *data = ASN1_STRING_get0_data(p7->d.other->value.sequence);
         long len;
         int inf, tag, class;
 
@@ -83,7 +83,7 @@ static ASN1_OCTET_STRING *pkcs7_get1_data(PKCS7 *p7)
         if (os == NULL)
             return NULL;
         inf = ASN1_get_object(&data, &len, &tag, &class,
-            p7->d.other->value.sequence->length);
+            ASN1_STRING_length(p7->d.other->value.sequence));
         if (inf != V_ASN1_CONSTRUCTED || tag != V_ASN1_SEQUENCE
             || !ASN1_OCTET_STRING_set(os, data, len)) {
             ASN1_OCTET_STRING_free(os);
@@ -205,7 +205,7 @@ static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
         EVP_PKEY_CTX_ctrl_str(pctx, "rsa_pkcs1_implicit_rejection", "0");
 
     ret = evp_pkey_decrypt_alloc(pctx, &ek, &eklen, fixlen,
-        ri->enc_key->data, ri->enc_key->length);
+        ASN1_STRING_get0_data(ri->enc_key), ASN1_STRING_length(ri->enc_key));
     if (ret <= 0)
         goto err;
 
@@ -378,7 +378,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
     if (bio == NULL) {
         if (PKCS7_is_detached(p7)) {
             bio = BIO_new(BIO_s_null());
-        } else if (os != NULL && os->length > 0) {
+        } else if (os != NULL && ASN1_STRING_length(os) > 0) {
             /*
              * bio needs a copy of os->data instead of a pointer because
              * the data will be used after os has been freed
@@ -386,7 +386,9 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
             bio = BIO_new(BIO_s_mem());
             if (bio != NULL) {
                 BIO_set_mem_eof_return(bio, 0);
-                if (BIO_write(bio, os->data, os->length) != os->length) {
+                if (BIO_write(bio, ASN1_STRING_get0_data(os),
+                        ASN1_STRING_length(os))
+                    != ASN1_STRING_length(os)) {
                     BIO_free_all(bio);
                     bio = NULL;
                 }
@@ -661,8 +663,9 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     if (in_bio != NULL) {
         bio = in_bio;
     } else {
-        if (data_body->length > 0)
-            bio = BIO_new_mem_buf(data_body->data, data_body->length);
+        if (ASN1_STRING_length(data_body) > 0)
+            bio = BIO_new_mem_buf(ASN1_STRING_get0_data(data_body),
+                ASN1_STRING_length(data_body));
         else {
             bio = BIO_new(BIO_s_mem());
             if (bio == NULL)
@@ -1113,7 +1116,8 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
             ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST);
             goto err;
         }
-        if ((message_digest->length != (int)md_len) || (memcmp(message_digest->data, md_dat, md_len))) {
+        if ((ASN1_STRING_length(message_digest) != (int)md_len)
+            || (memcmp(ASN1_STRING_get0_data(message_digest), md_dat, md_len))) {
             ERR_raise(ERR_LIB_PKCS7, PKCS7_R_DIGEST_FAILURE);
             ret = -1;
             goto err;
@@ -1143,7 +1147,8 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
         goto err;
     }
 
-    i = EVP_VerifyFinal_ex(mdc_tmp, os->data, os->length, pkey, libctx, propq);
+    i = EVP_VerifyFinal_ex(mdc_tmp, ASN1_STRING_get0_data(os),
+        ASN1_STRING_length(os), pkey, libctx, propq);
     if (i <= 0) {
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_SIGNATURE_FAILURE);
         ret = -1;

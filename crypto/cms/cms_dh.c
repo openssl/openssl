@@ -110,8 +110,8 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     if (alg->parameter->type != V_ASN1_SEQUENCE)
         goto err;
 
-    p = alg->parameter->value.sequence->data;
-    plen = alg->parameter->value.sequence->length;
+    p = ASN1_STRING_get0_data(alg->parameter->value.sequence);
+    plen = ASN1_STRING_length(alg->parameter->value.sequence);
     kekalg = d2i_X509_ALGOR(NULL, &p, plen);
     if (kekalg == NULL)
         goto err;

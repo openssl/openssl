@@ -18,8 +18,6 @@
 #include "crypto/evp.h"
 #include "internal/sizes.h"
 
-#include <crypto/asn1.h>
-
 /* KEM Recipient Info (KEMRI) routines */
 
 int ossl_cms_RecipientInfo_kemri_get0_alg(CMS_RecipientInfo *ri,
@@ -363,7 +361,7 @@ int ossl_cms_RecipientInfo_kemri_decrypt(const CMS_ContentInfo *cms,
     size_t kem_ct_len;
     unsigned char *kem_secret = NULL;
     size_t kem_secret_len = 0;
-    unsigned char *enckey = NULL;
+    const unsigned char *enckey = NULL;
     size_t enckeylen;
     unsigned char *cek = NULL;
     size_t ceklen;
@@ -400,8 +398,8 @@ int ossl_cms_RecipientInfo_kemri_decrypt(const CMS_ContentInfo *cms,
         goto err;
 
     /* Attempt to decrypt CEK */
-    enckeylen = kemri->encryptedKey->length;
-    enckey = kemri->encryptedKey->data;
+    enckeylen = (size_t)ASN1_STRING_length(kemri->encryptedKey);
+    enckey = ASN1_STRING_get0_data(kemri->encryptedKey);
     if (!cms_kek_cipher(&cek, &ceklen, kem_secret, kem_secret_len, enckey, enckeylen, kemri, 0))
         goto err;
     ec = ossl_cms_get0_env_enc_content(cms);

@@ -89,10 +89,11 @@ unsigned int X509v3_addr_get_afi(const IPAddressFamily *f)
 {
     if (f == NULL
         || f->addressFamily == NULL
-        || f->addressFamily->data == NULL
-        || f->addressFamily->length < 2)
+        || ASN1_STRING_get0_data(f->addressFamily) == NULL
+        || ASN1_STRING_length(f->addressFamily) < 2)
         return 0;
-    return (f->addressFamily->data[0] << 8) | f->addressFamily->data[1];
+    return (ASN1_STRING_get0_data(f->addressFamily)[0] << 8)
+        | ASN1_STRING_get0_data(f->addressFamily)[1];
 }
 
 /*
@@ -103,27 +104,30 @@ static int addr_expand(unsigned char *addr,
     const ASN1_BIT_STRING *bs,
     const int length, const unsigned char fill)
 {
-    if (bs->length < 0 || bs->length > length)
+    int bs_length = ASN1_STRING_length(bs);
+    const unsigned char *bs_data = ASN1_STRING_get0_data(bs);
+
+    if (bs_length < 0 || bs_length > length)
         return 0;
-    if (bs->length > 0) {
-        memcpy(addr, bs->data, bs->length);
+    if (bs_length > 0) {
+        memcpy(addr, bs_data, bs_length);
         if ((bs->flags & 7) != 0) {
             unsigned char mask = 0xFF >> (8 - (bs->flags & 7));
 
             if (fill == 0)
-                addr[bs->length - 1] &= ~mask;
+                addr[bs_length - 1] &= ~mask;
             else
-                addr[bs->length - 1] |= mask;
+                addr[bs_length - 1] |= mask;
         }
     }
-    memset(addr + bs->length, fill, length - bs->length);
+    memset(addr + bs_length, fill, length - bs_length);
     return 1;
 }
 
 /*
  * Extract the prefix length from a bitstring.
  */
-#define addr_prefixlen(bs) ((int)((bs)->length * 8 - ((bs)->flags & 7)))
+#define addr_prefixlen(bs) ((int)(ASN1_STRING_length(bs) * 8 - ((bs)->flags & 7)))
 
 /*
  * i2r handler for one address bitstring.
@@ -135,7 +139,7 @@ static int i2r_address(BIO *out,
     unsigned char addr[ADDR_RAW_BUF_LEN];
     int i, n;
 
-    if (bs->length < 0)
+    if (ASN1_STRING_length(bs) < 0)
         return 0;
     switch (afi) {
     case IANA_AFI_IPV4:
@@ -157,11 +161,13 @@ static int i2r_address(BIO *out,
         if (i == 0)
             BIO_puts(out, ":");
         break;
-    default:
-        for (i = 0; i < bs->length; i++)
-            BIO_printf(out, "%s%02x", (i > 0 ? ":" : ""), bs->data[i]);
+    default: {
+        const unsigned char *bs_data = ASN1_STRING_get0_data(bs);
+        for (i = 0; i < ASN1_STRING_length(bs); i++)
+            BIO_printf(out, "%s%02x", (i > 0 ? ":" : ""), bs_data[i]);
         BIO_printf(out, "[%d]", (int)(bs->flags & 7));
         break;
+    }
     }
     return 1;
 }
@@ -223,8 +229,8 @@ static int i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method,
             BIO_printf(out, "%*sUnknown AFI %u", indent, "", afi);
             break;
         }
-        if (f->addressFamily->length > 2) {
-            switch (f->addressFamily->data[2]) {
+        if (ASN1_STRING_length(f->addressFamily) > 2) {
+            switch (ASN1_STRING_get0_data(f->addressFamily)[2]) {
             case 1:
                 BIO_puts(out, " (Unicast)");
                 break;
@@ -251,7 +257,7 @@ static int i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method,
                 break;
             default:
                 BIO_printf(out, " (Unknown SAFI %u)",
-                    (unsigned)f->addressFamily->data[2]);
+                    (unsigned)ASN1_STRING_get0_data(f->addressFamily)[2]);
                 break;
             }
         }
@@ -518,7 +524,8 @@ static IPAddressFamily *make_IPAddressFamily(IPAddrBlocks *addr,
 
     for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
         f = sk_IPAddressFamily_value(addr, i);
-        if (f->addressFamily->length == keylen && !memcmp(f->addressFamily->data, key, keylen))
+        if (ASN1_STRING_length(f->addressFamily) == keylen
+            && !memcmp(ASN1_STRING_get0_data(f->addressFamily), key, keylen))
             return f;
     }
 
@@ -679,15 +686,18 @@ static int IPAddressFamily_cmp(const IPAddressFamily *const *a_,
 {
     const ASN1_OCTET_STRING *a = (*a_)->addressFamily;
     const ASN1_OCTET_STRING *b = (*b_)->addressFamily;
-    int len = ((a->length <= b->length) ? a->length : b->length);
-    int cmp = memcmp(a->data, b->data, len);
+    int a_length = ASN1_STRING_length(a);
+    int b_length = ASN1_STRING_length(b);
+    int len = (a_length <= b_length) ? a_length : b_length;
+    int cmp = memcmp(ASN1_STRING_get0_data(a), ASN1_STRING_get0_data(b), len);
 
-    return cmp ? cmp : a->length - b->length;
+    return cmp ? cmp : a_length - b_length;
 }
 
 static int IPAddressFamily_check_len(const IPAddressFamily *f)
 {
-    if (f->addressFamily->length < 2 || f->addressFamily->length > 3)
+    if (ASN1_STRING_length(f->addressFamily) < 2
+        || ASN1_STRING_length(f->addressFamily) > 3)
         return 0;
     else
         return 1;

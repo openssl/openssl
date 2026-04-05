@@ -18,8 +18,6 @@
 #include "pcy_local.h"
 #include "ext_dat.h"
 
-#include <crypto/asn1.h>
-
 /* Certificate policies extension support: this one is a bit complex... */
 
 static int i2r_certpol(X509V3_EXT_METHOD *method, STACK_OF(POLICYINFO) *pol,
@@ -340,10 +338,17 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
                 not->noticeref = nref;
             } else
                 nref = not->noticeref;
-            if (ia5org)
-                nref->organization->type = V_ASN1_IA5STRING;
-            else
-                nref->organization->type = V_ASN1_VISIBLESTRING;
+            /*
+             * XXX why does NOTICEREF not have a way to create/set the
+             * organization to be the correct type in the first place?
+             */
+            ASN1_STRING_free(nref->organization);
+            nref->organization = ASN1_STRING_type_new(ia5org ? V_ASN1_IA5STRING
+                                                             : V_ASN1_VISIBLESTRING);
+            if (nref->organization == NULL) {
+                ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+                goto err;
+            }
             if (!ASN1_STRING_set(nref->organization, cnf->value,
                     (int)strlen(cnf->value))) {
                 ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
@@ -445,8 +450,8 @@ static void print_qualifiers(BIO *out, STACK_OF(POLICYQUALINFO) *quals,
         switch (OBJ_obj2nid(qualinfo->pqualid)) {
         case NID_id_qt_cps:
             BIO_printf(out, "%*sCPS: %.*s", indent, "",
-                qualinfo->d.cpsuri->length,
-                qualinfo->d.cpsuri->data);
+                ASN1_STRING_length(qualinfo->d.cpsuri),
+                ASN1_STRING_get0_data(qualinfo->d.cpsuri));
             break;
 
         case NID_id_qt_unotice:
@@ -470,8 +475,8 @@ static void print_notice(BIO *out, USERNOTICE *notice, int indent)
         NOTICEREF *ref;
         ref = notice->noticeref;
         BIO_printf(out, "%*sOrganization: %.*s\n", indent, "",
-            ref->organization->length,
-            ref->organization->data);
+            ASN1_STRING_length(ref->organization),
+            ASN1_STRING_get0_data(ref->organization));
         BIO_printf(out, "%*sNumber%s: ", indent, "",
             sk_ASN1_INTEGER_num(ref->noticenos) > 1 ? "s" : "");
         for (i = 0; i < sk_ASN1_INTEGER_num(ref->noticenos); i++) {
@@ -495,8 +500,8 @@ static void print_notice(BIO *out, USERNOTICE *notice, int indent)
     }
     if (notice->exptext)
         BIO_printf(out, "%*sExplicit Text: %.*s", indent, "",
-            notice->exptext->length,
-            notice->exptext->data);
+            ASN1_STRING_length(notice->exptext),
+            ASN1_STRING_get0_data(notice->exptext));
 }
 
 void X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent)

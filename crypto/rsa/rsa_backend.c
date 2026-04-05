@@ -20,7 +20,7 @@
 #include <openssl/evp.h>
 #ifndef FIPS_MODULE
 #include <openssl/x509.h>
-#include "crypto/asn1.h"
+#include "crypto/asn1.h" /* for ossl_x509_algor_mgf1_decode(), ossl_x509_algor_get_md() */
 #endif
 #include "internal/sizes.h"
 #include "internal/param_build_set.h"

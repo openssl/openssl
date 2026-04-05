@@ -19,39 +19,40 @@
 #include <openssl/rsa.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
-#include <crypto/asn1.h>
-
 int RSA_sign_ASN1_OCTET_STRING(int type,
     const unsigned char *m, unsigned int m_len,
     unsigned char *sigret, unsigned int *siglen,
     RSA *rsa)
 {
-    ASN1_OCTET_STRING sig;
-    int i, j, ret = 1;
-    unsigned char *p, *s;
+    ASN1_OCTET_STRING *sig;
+    int i, j = 0, ret = 0;
+    unsigned char *p, *s = NULL;
 
-    sig.type = V_ASN1_OCTET_STRING;
-    sig.length = m_len;
-    sig.data = (unsigned char *)m;
+    sig = ASN1_OCTET_STRING_new();
+    if (sig == NULL)
+        return 0;
+    if (!ASN1_STRING_set(sig, m, m_len))
+        goto err;
 
-    i = i2d_ASN1_OCTET_STRING(&sig, NULL);
+    i = i2d_ASN1_OCTET_STRING(sig, NULL);
     j = RSA_size(rsa);
     if (i > (j - RSA_PKCS1_PADDING_SIZE)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
-        return 0;
+        goto err;
     }
     s = OPENSSL_malloc((unsigned int)j + 1);
     if (s == NULL)
-        return 0;
+        goto err;
     p = s;
-    i2d_ASN1_OCTET_STRING(&sig, &p);
+    i2d_ASN1_OCTET_STRING(sig, &p);
     i = RSA_private_encrypt(i, s, sigret, rsa, RSA_PKCS1_PADDING);
     if (i <= 0)
-        ret = 0;
-    else
-        *siglen = i;
-
+        goto err;
+    *siglen = i;
+    ret = 1;
+err:
     OPENSSL_clear_free(s, (unsigned int)j + 1);
+    ASN1_OCTET_STRING_free(sig);
     return ret;
 }
 
@@ -83,7 +84,7 @@ int RSA_verify_ASN1_OCTET_STRING(int dtype,
     if (sig == NULL)
         goto err;
 
-    if (((unsigned int)sig->length != m_len) || (memcmp(m, sig->data, m_len) != 0)) {
+    if (((unsigned int)ASN1_STRING_length(sig) != m_len) || (memcmp(m, ASN1_STRING_get0_data(sig), m_len) != 0)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_BAD_SIGNATURE);
     } else {
         ret = 1;

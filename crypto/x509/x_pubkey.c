@@ -17,7 +17,6 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/x509.h"
 #include <openssl/rsa.h>
@@ -296,8 +295,8 @@ X509_PUBKEY *X509_PUBKEY_dup(const X509_PUBKEY *a)
     if ((pubkey->algor = X509_ALGOR_dup(a->algor)) == NULL
         || (pubkey->public_key = ASN1_BIT_STRING_new()) == NULL
         || !ASN1_BIT_STRING_set(pubkey->public_key,
-            a->public_key->data,
-            a->public_key->length)) {
+            (unsigned char *)ASN1_STRING_get0_data(a->public_key),
+            ASN1_STRING_length(a->public_key))) {
         x509_pubkey_ex_free((ASN1_VALUE **)&pubkey,
             ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL));
         ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
@@ -1020,8 +1019,8 @@ int X509_PUBKEY_get0_param(ASN1_OBJECT **ppkalg,
     if (ppkalg)
         *ppkalg = pub->algor->algorithm;
     if (pk) {
-        *pk = pub->public_key->data;
-        *ppklen = pub->public_key->length;
+        *pk = ASN1_STRING_get0_data(pub->public_key);
+        *ppklen = ASN1_STRING_length(pub->public_key);
     }
     if (pa)
         *pa = pub->algor;
