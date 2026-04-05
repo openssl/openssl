@@ -18,8 +18,6 @@
 #include "testutil.h"
 #include "internal/nelem.h"
 
-#include <crypto/asn1.h>
-
 typedef struct {
     const char *data;
     int time_result;
@@ -58,27 +56,28 @@ static TESTDATA tests[] = {
 };
 
 static time_t the_time = 975628800;
-static ASN1_TIME the_asn1_time = {
-    15,
-    V_ASN1_GENERALIZEDTIME,
-    (unsigned char *)"20001201000000Z",
-    0
-};
+static ASN1_TIME *the_asn1_time;
 
 static int test_offset(int idx)
 {
-    ASN1_TIME at;
+    ASN1_TIME *at;
     const TESTDATA *testdata = &tests[idx];
     int ret = -2;
     int day, sec;
 
-    at.data = (unsigned char *)testdata->data;
-    at.length = (int)strlen(testdata->data);
-    at.type = testdata->type;
-    at.flags = 0;
+    at = ASN1_STRING_type_new(testdata->type);
+    if (!TEST_ptr(at))
+        return 0;
+    if (!TEST_true(ASN1_STRING_set(at, (const unsigned char *)testdata->data,
+            (int)strlen(testdata->data)))) {
+        ASN1_TIME_free(at);
+        return 0;
+    }
 
-    if (!TEST_true(ASN1_TIME_diff(&day, &sec, &the_asn1_time, &at))) {
-        TEST_info("ASN1_TIME_diff() failed for %s\n", at.data);
+    if (!TEST_true(ASN1_TIME_diff(&day, &sec, the_asn1_time, at))) {
+        TEST_info("ASN1_TIME_diff() failed for %s\n",
+            (const char *)ASN1_STRING_get0_data(at));
+        ASN1_TIME_free(at);
         return 0;
     }
     if (day > 0)
@@ -93,22 +92,40 @@ static int test_offset(int idx)
         ret = 0;
 
     if (!TEST_int_eq(testdata->time_result, ret)) {
-        TEST_info("ASN1_TIME_diff() test failed for %s day=%d sec=%d\n", at.data, day, sec);
+        TEST_info("ASN1_TIME_diff() test failed for %s day=%d sec=%d\n",
+            (const char *)ASN1_STRING_get0_data(at), day, sec);
+        ASN1_TIME_free(at);
         return 0;
     }
 
-    ret = ASN1_TIME_cmp_time_t(&at, the_time);
+    ret = ASN1_TIME_cmp_time_t(at, the_time);
 
     if (!TEST_int_eq(testdata->time_result, ret)) {
-        TEST_info("ASN1_UTCTIME_cmp_time_t() test failed for %s\n", at.data);
+        TEST_info("ASN1_UTCTIME_cmp_time_t() test failed for %s\n",
+            (const char *)ASN1_STRING_get0_data(at));
+        ASN1_TIME_free(at);
         return 0;
     }
 
+    ASN1_TIME_free(at);
     return 1;
 }
 
 int setup_tests(void)
 {
+    the_asn1_time = ASN1_STRING_type_new(V_ASN1_GENERALIZEDTIME);
+    if (the_asn1_time == NULL)
+        return 0;
+    if (!ASN1_STRING_set(the_asn1_time,
+            (const unsigned char *)"20001201000000Z", 15)) {
+        ASN1_TIME_free(the_asn1_time);
+        return 0;
+    }
     ADD_ALL_TESTS(test_offset, OSSL_NELEM(tests));
     return 1;
+}
+
+void cleanup_tests(void)
+{
+    ASN1_TIME_free(the_asn1_time);
 }

@@ -119,8 +119,8 @@ DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
     if (dhx->vparams != NULL) {
         /* The counter has a maximum value of 4 * numbits(p) - 1 */
         int counter = (int)BN_get_word(dhx->vparams->counter);
-        ossl_ffc_params_set_validate_params(params, dhx->vparams->seed->data,
-            dhx->vparams->seed->length,
+        ossl_ffc_params_set_validate_params(params, ASN1_STRING_get0_data(dhx->vparams->seed),
+            ASN1_STRING_length(dhx->vparams->seed),
             counter);
         ASN1_BIT_STRING_free(dhx->vparams->seed);
         BN_free(dhx->vparams->counter);

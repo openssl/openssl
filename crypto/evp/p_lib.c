@@ -788,8 +788,8 @@ const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len)
     }
     os = evp_pkey_get_legacy((EVP_PKEY *)pkey);
     if (os != NULL) {
-        *len = os->length;
-        return os->data;
+        *len = ASN1_STRING_length(os);
+        return ASN1_STRING_get0_data(os);
     }
     return NULL;
 }
@@ -804,8 +804,8 @@ const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len)
     }
     os = evp_pkey_get_legacy((EVP_PKEY *)pkey);
     if (os != NULL) {
-        *len = os->length;
-        return os->data;
+        *len = ASN1_STRING_length(os);
+        return ASN1_STRING_get0_data(os);
     }
     return NULL;
 }
@@ -822,8 +822,8 @@ const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len)
     }
     os = evp_pkey_get_legacy((EVP_PKEY *)pkey);
     if (os != NULL) {
-        *len = os->length;
-        return os->data;
+        *len = ASN1_STRING_length(os);
+        return ASN1_STRING_get0_data(os);
     }
     return NULL;
 }

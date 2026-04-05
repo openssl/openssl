@@ -694,8 +694,8 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
 
     if (params->order == NULL
         || params->base == NULL
-        || params->base->data == NULL
-        || params->base->length == 0) {
+        || ASN1_STRING_get0_data(params->base) == NULL
+        || ASN1_STRING_length(params->base) == 0) {
         ERR_raise(ERR_LIB_EC, EC_R_ASN1_ERROR);
         goto err;
     }
@@ -704,11 +704,11 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
         goto err;
 
     /* set the point conversion form */
-    EC_GROUP_set_point_conversion_form(ret, (point_conversion_form_t)(params->base->data[0] & ~0x01));
+    EC_GROUP_set_point_conversion_form(ret, (point_conversion_form_t)(ASN1_STRING_get0_data(params->base)[0] & ~0x01));
 
     /* extract the ec point */
-    if (!EC_POINT_oct2point(ret, point, params->base->data,
-            params->base->length, NULL)) {
+    if (!EC_POINT_oct2point(ret, point, ASN1_STRING_get0_data(params->base),
+            ASN1_STRING_length(params->base), NULL)) {
         ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
         goto err;
     }

@@ -21,8 +21,6 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-#include <crypto/asn1.h>
-
 void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force, int keep_fetched)
 {
     if (ctx->algctx != NULL) {
@@ -89,7 +87,7 @@ EVP_MD_CTX *evp_md_ctx_new_ex(EVP_PKEY *pkey, const ASN1_OCTET_STRING *id,
         goto err;
     }
 
-    if (id != NULL && EVP_PKEY_CTX_set1_id(pctx, id->data, id->length) <= 0)
+    if (id != NULL && EVP_PKEY_CTX_set1_id(pctx, ASN1_STRING_get0_data(id), ASN1_STRING_length(id)) <= 0)
         goto err;
 
     EVP_MD_CTX_set_pkey_ctx(ctx, pctx);

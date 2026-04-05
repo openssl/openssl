@@ -25,8 +25,6 @@
 #include <openssl/ocsp.h>
 #include <openssl/pem.h>
 
-#include <crypto/asn1.h>
-
 #ifndef W_OK
 #ifdef OPENSSL_SYS_VMS
 #include <unistd.h>
