@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -3544,6 +3544,101 @@ static int evp_test_name_parsing(void)
     return 1;
 }
 
+#ifndef OPENSSL_NO_EC
+/*
+ * Test that d2i_PrivateKey() NULLs out *a when the legacy path frees it
+ * internally due to a key type mismatch. Before the fix, *a was left
+ * as a dangling pointer.
+ */
+static int test_d2i_PrivateKey_type_mismatch(void)
+{
+    int ok = 0;
+    OSSL_PROVIDER *provider = NULL;
+    EVP_PKEY *rsa_key = NULL;
+    EVP_PKEY *saved_ptr = NULL;
+    EVP_PKEY *result = NULL;
+    EVP_PKEY *ec_key = NULL;
+    EVP_PKEY_CTX *gctx = NULL;
+    PKCS8_PRIV_KEY_INFO *p8inf = NULL;
+    unsigned char *ec_der = NULL, *ec_der_tmp = NULL;
+    const unsigned char *p;
+    int ec_der_len;
+
+    if (!TEST_ptr(provider = OSSL_PROVIDER_load(NULL, "default")))
+        goto err;
+
+    /* Generate an EC P-256 key */
+    gctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL);
+    if (!TEST_ptr(gctx)
+        || !TEST_int_gt(EVP_PKEY_keygen_init(gctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_group_name(gctx, "P-256"), 0)
+        || !TEST_int_gt(EVP_PKEY_keygen(gctx, &ec_key), 0))
+        goto err;
+    EVP_PKEY_CTX_free(gctx);
+    gctx = NULL;
+
+    /* Encode as PKCS#8 DER so the legacy PKCS#8 path is exercised */
+    p8inf = EVP_PKEY2PKCS8(ec_key);
+    if (!TEST_ptr(p8inf))
+        goto err;
+    ec_der_len = i2d_PKCS8_PRIV_KEY_INFO(p8inf, NULL);
+    if (!TEST_int_gt(ec_der_len, 0))
+        goto err;
+    ec_der = OPENSSL_malloc(ec_der_len);
+    if (!TEST_ptr(ec_der))
+        goto err;
+    ec_der_tmp = ec_der;
+    if (!TEST_int_eq(i2d_PKCS8_PRIV_KEY_INFO(p8inf, &ec_der_tmp), ec_der_len))
+        goto err;
+
+    /* Generate an RSA key as the existing *a */
+    gctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
+    if (!TEST_ptr(gctx)
+        || !TEST_int_gt(EVP_PKEY_keygen_init(gctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_keygen_bits(gctx, 2048), 0)
+        || !TEST_int_gt(EVP_PKEY_keygen(gctx, &rsa_key), 0))
+        goto err;
+
+    saved_ptr = rsa_key;
+
+    /* Extra ref so the free inside the function does not deallocate */
+    if (!TEST_true(EVP_PKEY_up_ref(rsa_key)))
+        goto err;
+
+    /* RSA requested but EC PKCS#8 given -- triggers type mismatch path */
+    p = ec_der;
+    ERR_clear_error();
+    result = d2i_PrivateKey(EVP_PKEY_RSA, &rsa_key, &p, ec_der_len);
+
+    if (!TEST_ptr_null(result)) {
+        /* Modern decoder handled it; legacy path not taken */
+        EVP_PKEY_free(result);
+        EVP_PKEY_free(saved_ptr);
+        ok = 1;
+        goto err;
+    }
+
+    /*
+     * After the fix, *a must be NULL because the function freed the
+     * original key internally.  Before the fix, *a would still point
+     * to freed memory (dangling pointer).
+     */
+    if (!TEST_ptr_null(rsa_key))
+        TEST_info("*a not NULLed after internal free -- dangling pointer bug");
+    else
+        ok = 1;
+
+    EVP_PKEY_free(saved_ptr);
+err:
+    EVP_PKEY_CTX_free(gctx);
+    EVP_PKEY_free(ec_key);
+    PKCS8_PRIV_KEY_INFO_free(p8inf);
+    OSSL_PROVIDER_unload(provider);
+    OPENSSL_free(ec_der);
+    return ok;
+}
+#endif /* OPENSSL_NO_EC */
+
 int setup_tests(void)
 {
     if (!test_get_libctx(&mainctx, &nullprov, NULL, NULL, NULL)) {
@@ -3558,6 +3653,7 @@ int setup_tests(void)
     ADD_TEST(test_new_keytype);
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_d2i_PrivateKey_ex, 2);
+    ADD_TEST(test_d2i_PrivateKey_type_mismatch);
     ADD_TEST(test_ec_tofrom_data_select);
 #ifndef OPENSSL_NO_ECX
     ADD_TEST(test_ecx_tofrom_data_select);
