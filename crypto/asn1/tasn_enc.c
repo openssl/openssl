@@ -542,7 +542,7 @@ static int asn1_ex_i2c(const ASN1_VALUE **pval, unsigned char *cout, int *putype
     if (it->itype == ASN1_ITYPE_MSTRING) {
         /* If MSTRING type set the underlying type */
         strtmp = (ASN1_STRING *)*pval;
-        utype = strtmp->type;
+        utype = ASN1_STRING_type(strtmp);
         *putype = utype;
     } else if (it->utype == V_ASN1_ANY) {
         /* If ANY set type and pointer to value */
@@ -629,8 +629,8 @@ static int asn1_ex_i2c(const ASN1_VALUE **pval, unsigned char *cout, int *putype
             /* Special return code */
             return -2;
         }
-        cont = strtmp->data;
-        len = strtmp->length;
+        cont = ASN1_STRING_get0_data(strtmp);
+        len = ASN1_STRING_length(strtmp);
 
         break;
     }

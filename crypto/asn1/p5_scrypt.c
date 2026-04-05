@@ -243,7 +243,8 @@ int PKCS5_v2_scrypt_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
     const EVP_CIPHER *c, const EVP_MD *md, int en_de,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
-    unsigned char *salt, key[EVP_MAX_KEY_LENGTH];
+    const unsigned char *salt;
+    unsigned char key[EVP_MAX_KEY_LENGTH];
     uint64_t p, r, N;
     size_t saltlen;
     size_t keylen = 0;
@@ -294,8 +295,8 @@ int PKCS5_v2_scrypt_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
 
     /* it seems that its all OK */
 
-    salt = sparam->salt->data;
-    saltlen = sparam->salt->length;
+    salt = ASN1_STRING_get0_data(sparam->salt);
+    saltlen = ASN1_STRING_length(sparam->salt);
     if (EVP_PBE_scrypt_ex(pass, passlen, salt, saltlen, N, r, p, 0, key,
             keylen, libctx, propq)
         == 0)
