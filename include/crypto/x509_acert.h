@@ -67,4 +67,7 @@ struct X509_acert_st {
     X509_ALGOR sig_alg;
     ASN1_BIT_STRING signature;
 };
+
+int ossl_check_acert_time(const X509_STORE_CTX *ctx, const X509_ACERT *acert);
+
 #endif

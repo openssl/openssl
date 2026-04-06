@@ -15,7 +15,9 @@
 # include <openssl/asn1.h>
 # include <openssl/x509.h>
 # include <openssl/conf.h>
+# include <openssl/x509_acert.h>
 # include "crypto/types.h"
+# include "crypto/x509_acert.h"
 
 /* Internal X509 structures and functions: not for application use */
 
@@ -283,6 +285,20 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
 
     OSSL_LIB_CTX *libctx;
     char *propq;
+
+    /* chain of attribute certificates - untrusted - passed in */
+    STACK_OF(X509_ACERT) *attr_certs;
+
+    /* Error specific to validating the attribute certificates */
+    int acert_error;
+    /* index of the first attribute certificate in attr_certs that was invalid */
+    int invalid_acert_index;
+    /* retrieve CRL for an attribute certificate */
+    int (*get_acrl) (const X509_STORE_CTX *ctx, X509_CRL **crl, const X509_ACERT *x);
+    /* Check CRL validity */
+    int (*check_acrl) (const X509_STORE_CTX *ctx, const X509_CRL *crl);
+    /* Check attribute certificate against CRL */
+    int (*acert_crl) (const X509_STORE_CTX *ctx, const X509_CRL *crl, const X509_ACERT *x);
 };
 
 /* PKCS#8 private key info structure */

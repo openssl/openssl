@@ -326,3 +326,61 @@ const STACK_OF(X509_EXTENSION) *X509_ACERT_get0_extensions(const X509_ACERT *x)
 {
     return x->acinfo->extensions;
 }
+
+OSSL_ISSUER_SERIAL *X509_get0_issuer_serial(const X509 *x)
+{
+    return NULL; /* Stub implementation. To be replaced. */
+}
+
+int X509_ACERT_get_ext_count(const X509_ACERT *x)
+{
+    return 0; /* Stub implementation. To be replaced. */
+}
+
+X509_EXTENSION *X509_ACERT_get0_ext(const X509_ACERT *x, int loc)
+{
+    return 0; /* Stub implementation. To be replaced. */
+}
+
+int X509_ACERT_get_ext_by_NID(const X509_ACERT *x, int nid, int lastpos)
+{
+    return 0; /* Stub implementation. To be replaced. */
+}
+
+int X509_ACERT_get_ext_by_OBJ(const X509_ACERT *x, const ASN1_OBJECT *obj,
+                              int lastpos)
+{
+    return 0; /* Stub implementation. To be replaced. */
+}
+
+int X509_ACERT_get_ext_by_critical(const X509_ACERT *x, int crit, int lastpos)
+{
+    return 0; /* Stub implementation. To be replaced. */
+}
+
+int X509_ACERT_add1_ext(X509_ACERT *x, const X509_EXTENSION *ex, int loc)
+{
+    return 0; /* Stub implementation. To be replaced. */
+}
+
+X509_EXTENSION *X509_ACERT_delete_ext(X509_ACERT *x, int loc)
+{
+    return NULL;
+}
+
+int ossl_check_acert_time(const X509_STORE_CTX *ctx, const X509_ACERT *acert)
+{
+    return 0; /* Stub implementation. To be replaced. */
+}
+
+int X509_ACERT_EXT_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
+                             X509_ACERT *acert)
+{
+    return 0; /* Stub implementation. To be replaced. */
+}
+
+int X509_ACERT_EXT_add_conf(LHASH_OF(CONF_VALUE) *conf, X509V3_CTX *ctx,
+                            const char *section, X509_ACERT *acert)
+{
+    return 0; /* Stub implementation. To be replaced. */
+}
