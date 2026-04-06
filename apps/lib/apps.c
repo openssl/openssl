@@ -2147,6 +2147,9 @@ X509_NAME *parse_name(const char *cp, int chtype, int canmulti,
             BIO_printf(bio_err,
                 "%s: Error adding %s name attribute \"/%s=%s\"\n",
                 opt_getprog(), desc, typestr, valstr);
+            if (strcmp(typestr, "C") == 0) {
+            BIO_printf(bio_err, "Country Code should only be two characters.\n");
+            }
             goto err;
         }
     }
