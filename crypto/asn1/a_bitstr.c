@@ -15,25 +15,6 @@
 
 #include <crypto/asn1.h>
 
-static void
-asn1_bit_string_clear_unused_bits(ASN1_BIT_STRING *abs)
-{
-    abs->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
-}
-
-static int asn1_bit_string_set_unused_bits(ASN1_BIT_STRING *abs,
-    uint8_t unused_bits)
-{
-    if (unused_bits > 7)
-        return 0;
-
-    asn1_bit_string_clear_unused_bits(abs);
-
-    abs->flags |= ASN1_STRING_FLAG_BITS_LEFT | unused_bits;
-
-    return 1;
-}
-
 int ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, int len)
 {
     return ASN1_STRING_set(x, d, len);
@@ -187,9 +168,7 @@ int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
             unused_bits -= 2;
         if ((u8 & 0x55) != 0)
             unused_bits -= 1;
-
-        if (!asn1_bit_string_set_unused_bits(a, unused_bits))
-            return 0;
+        ossl_asn1_bit_string_set_unused_bits(a, unused_bits);
     }
     return 1;
 }
