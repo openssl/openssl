@@ -2,20 +2,33 @@
 
 =head1 NAME
 
-OBJ_NAME_do_all, OBJ_NAME_do_all_sorted - iterate over objects of a given type
+OBJ_NAME_do_all, OBJ_NAME_do_all_sorted,
+OBJ_NAME,
+OBJ_NAME_TYPE_MD_METH, OBJ_NAME_TYPE_CIPHER_METH, OBJ_NAME_TYPE_PKEY_METH,
+OBJ_NAME_TYPE_COMP_METH, OBJ_NAME_TYPE_MAC_METH, OBJ_NAME_TYPE_KDF_METH
+- iterate over objects of a given type
 
 =head1 SYNOPSIS
 
  #include <openssl/objects.h>
 
- typedef struct obj_name_st {
+ typedef struct obj_name_st OBJ_NAME;
+ struct obj_name_st {
      int type;
      int alias;
      const char *name;
      const char *data;
- } OBJ_NAME;
+ };
 
- void OBJ_NAME_do_all(int type, void (*fn)(const OBJ_NAME *, void *arg),
+ #define OBJ_NAME_TYPE_MD_METH     0x01
+ #define OBJ_NAME_TYPE_CIPHER_METH 0x02
+ #define OBJ_NAME_TYPE_PKEY_METH   0x03
+ #define OBJ_NAME_TYPE_COMP_METH   0x04
+ #define OBJ_NAME_TYPE_MAC_METH    0x05
+ #define OBJ_NAME_TYPE_KDF_METH    0x06
+
+ void OBJ_NAME_do_all(int type,
+                      void (*fn)(const OBJ_NAME *, void *arg),
                       void *arg);
  void OBJ_NAME_do_all_sorted(int type,
                              void (*fn)(const OBJ_NAME *, void *arg),
@@ -24,12 +37,14 @@ OBJ_NAME_do_all, OBJ_NAME_do_all_sorted - iterate over objects of a given type
 =head1 DESCRIPTION
 
 OBJ_NAME_do_all() calls the function I<fn> for each object of type I<type>
-in the internal object name table. The I<arg> value is passed as the second
-argument to each call of I<fn>. The order in which objects are iterated is
-undefined.
+in the internal globally defined name table. This table maps algorithm names
+to their implementations and is used by OpenSSL to look up ciphers, digests,
+and other cryptographic methods by name. The I<arg> value is passed as the
+second argument to each call of I<fn>. The order in which objects are
+iterated is undefined.
 
-OBJ_NAME_do_all_sorted() is similar to OBJ_NAME_do_all() except that the
-objects are iterated in sorted order by name.
+OBJ_NAME_do_all_sorted() is similar to OBJ_NAME_do_all(), except that the
+objects being iterated over are sorted by name using strcmp(3).
 
 The I<type> argument specifies which category of objects to iterate over.
 The following type values are defined:
@@ -71,7 +86,7 @@ contains type-specific data associated with the object.
 =head1 NOTES
 
 These functions are typically used to enumerate available algorithms,
-for example to display a list of supported digest or cipher algorithms.
+for example, to display a list of supported digest or cipher algorithms.
 
 B<These functions are not thread safe.> They must not be called concurrently
 with functions that modify the object name table, such as OBJ_NAME_add() or
