@@ -415,6 +415,13 @@ EVP_seed_cfb                            define
 EVP_sm4_cfb                             define
 EXT_UTF8STRING                          define
 OBJ_cleanup                             define deprecated 1.1.0
+OBJ_NAME                                datatype
+OBJ_NAME_TYPE_CIPHER_METH               define
+OBJ_NAME_TYPE_COMP_METH                 define
+OBJ_NAME_TYPE_KDF_METH                  define
+OBJ_NAME_TYPE_MAC_METH                  define
+OBJ_NAME_TYPE_MD_METH                   define
+OBJ_NAME_TYPE_PKEY_METH                 define
 OCSP_parse_url                          define
 OCSP_REQ_CTX                            datatype deprecated 3.0.0
 OCSP_REQ_CTX_add1_header                define deprecated 3.0.0
