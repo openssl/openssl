@@ -300,24 +300,29 @@ void OBJ_NAME_do_all(int type, void (*fn)(const OBJ_NAME *, void *arg),
     d.fn = fn;
     d.arg = arg;
 
+    if (!CRYPTO_THREAD_read_lock(obj_lock))
+        return;
+
     lh_OBJ_NAME_doall_OBJ_DOALL(names_lh, do_all_fn, &d);
+
+    CRYPTO_THREAD_unlock(obj_lock);
 }
 
-struct doall_sorted {
+typedef struct doall_sorted {
     int type;
     int n;
     const OBJ_NAME **names;
-};
+} OBJ_DOALL_SORTED;
 
-static void do_all_sorted_fn(const OBJ_NAME *name, void *d_)
+static void do_all_sorted_fn(const OBJ_NAME *name, OBJ_DOALL_SORTED *d)
 {
-    struct doall_sorted *d = d_;
-
     if (name->type != d->type)
         return;
 
     d->names[d->n++] = name;
 }
+
+IMPLEMENT_LHASH_DOALL_ARG_CONST(OBJ_NAME, OBJ_DOALL_SORTED);
 
 static int do_all_sorted_cmp(const void *n1_, const void *n2_)
 {
@@ -335,19 +340,26 @@ void OBJ_NAME_do_all_sorted(int type,
     int n;
 
     d.type = type;
+    d.n = 0;
     d.names = OPENSSL_malloc_array(lh_OBJ_NAME_num_items(names_lh), sizeof(*d.names));
     /* Really should return an error if !d.names...but its a void function! */
-    if (d.names != NULL) {
-        d.n = 0;
-        OBJ_NAME_do_all(type, do_all_sorted_fn, &d);
+    if (d.names == NULL)
+        return;
 
-        qsort((void *)d.names, d.n, sizeof(*d.names), do_all_sorted_cmp);
+    if (!CRYPTO_THREAD_read_lock(obj_lock))
+        goto end;
 
-        for (n = 0; n < d.n; ++n)
-            fn(d.names[n], arg);
+    lh_OBJ_NAME_doall_OBJ_DOALL_SORTED(names_lh, do_all_sorted_fn, &d);
 
-        OPENSSL_free((void *)d.names);
-    }
+    qsort((void *)d.names, d.n, sizeof(*d.names), do_all_sorted_cmp);
+
+    for (n = 0; n < d.n; ++n)
+        fn(d.names[n], arg);
+
+    CRYPTO_THREAD_unlock(obj_lock);
+
+end:
+    OPENSSL_free((void *)d.names);
 }
 
 static int free_type;
