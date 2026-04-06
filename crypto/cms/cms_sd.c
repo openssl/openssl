@@ -1117,6 +1117,10 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
             goto err;
         if (EVP_PKEY_sign(pctx, sig, &siglen, md, mdlen) <= 0)
             goto err;
+        if (siglen > INT_MAX) {
+            ERR_raise(ERR_LIB_CMS, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
         ASN1_STRING_set0(si->signature, sig, (int)siglen);
         sig = NULL;
     } else {
@@ -1263,6 +1267,10 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
 
     EVP_MD_CTX_reset(mctx);
 
+    if (siglen > INT_MAX) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     ASN1_STRING_set0(si->signature, abuf, (int)siglen);
 
     return 1;

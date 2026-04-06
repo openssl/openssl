@@ -277,6 +277,10 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     if (!EVP_CipherInit_ex(kemri->ctx, NULL, NULL, kek, NULL, enc))
         goto err;
     /* obtain output length of ciphered key */
+    if (inlen > INT_MAX) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     if (!EVP_CipherUpdate(kemri->ctx, NULL, &outlen, in, (int)inlen))
         goto err;
     out = OPENSSL_malloc(outlen);
@@ -339,12 +343,20 @@ int ossl_cms_RecipientInfo_kemri_encrypt(const CMS_ContentInfo *cms,
     if (EVP_PKEY_encapsulate(kemri->pctx, kem_ct, &kem_ct_len, kem_secret, &kem_secret_len) <= 0)
         goto err;
 
+    if (kem_ct_len > INT_MAX) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     ASN1_STRING_set0(kemri->kemct, kem_ct, (int)kem_ct_len);
     kem_ct = NULL;
 
     if (!cms_kek_cipher(&enckey, &enckeylen, kem_secret, kem_secret_len, ec->key, ec->keylen,
             kemri, 1))
         goto err;
+    if (enckeylen > INT_MAX) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     ASN1_STRING_set0(kemri->encryptedKey, enckey, (int)enckeylen);
 
     rv = 1;
