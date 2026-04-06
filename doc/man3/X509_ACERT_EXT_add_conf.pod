@@ -27,7 +27,7 @@ These functions return 1 on success and 0 on failure.
 =head1 HISTORY
 
 X509_ACERT_EXT_add_nconf() and X509_ACERT_EXT_add_conf() were added in
-OpenSSL 4.0.
+OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

@@ -178,7 +178,7 @@ X509v3_add_extensions() was added in OpenSSL 3.4.
 X509_ACERT_add1_ext(), X509_ACERT_delete_ext(), X509_ACERT_get0_ext(),
 X509_ACERT_get_ext_by_NID(), X509_ACERT_get_ext_by_OBJ(),
 X509_ACERT_get_ext_by_critical(), and X509_ACERT_get_ext_count() were added in
-OpenSSL 4.0.
+OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
