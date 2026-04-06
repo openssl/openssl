@@ -483,10 +483,14 @@ int dgst_main(int argc, char **argv)
         BIO_set_fp(in, stdin, BIO_NOCLOSE);
         if (oneshot_sign)
             ret = do_fp_oneshot_sign(out, signctx, in, separator, out_bin,
-                sigkey, sigbuf, siglen, NULL, NULL);
+                      sigkey, sigbuf, siglen, NULL, NULL)
+                ? EXIT_SUCCESS
+                : EXIT_FAILURE;
         else
             ret = do_fp(out, buf, inp, separator, out_bin, xoflen,
-                sigkey, sigbuf, siglen, NULL, md_name, "stdin");
+                      sigkey, sigbuf, siglen, NULL, md_name, "stdin")
+                ? EXIT_SUCCESS
+                : EXIT_FAILURE;
     } else {
         const char *sig_name = NULL;
 
@@ -502,12 +506,12 @@ int dgst_main(int argc, char **argv)
                 continue;
             } else {
                 if (oneshot_sign) {
-                    if (do_fp_oneshot_sign(out, signctx, in, separator, out_bin,
+                    if (!do_fp_oneshot_sign(out, signctx, in, separator, out_bin,
                             sigkey, sigbuf, siglen, sig_name,
                             argv[i]))
                         ret = EXIT_FAILURE;
                 } else {
-                    if (do_fp(out, buf, inp, separator, out_bin, xoflen,
+                    if (!do_fp(out, buf, inp, separator, out_bin, xoflen,
                             sigkey, sigbuf, siglen, sig_name, md_name, argv[i]))
                         ret = EXIT_FAILURE;
                 }
@@ -649,13 +653,17 @@ static void print_verify_result(BIO *out, int i)
         BIO_puts(bio_err, "Error verifying data\n");
 }
 
+/*
+ * Returns 1 on success, 0 on failure.  Do not use EXIT_SUCCESS / EXIT_FAILURE
+ * here; reserve those for main() and exit(3) (issue #30562).
+ */
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen,
     EVP_PKEY *key, unsigned char *sigin, int siglen,
     const char *sig_name, const char *md_name,
     const char *file)
 {
     size_t len = BUFSIZE;
-    int i, ret = EXIT_FAILURE;
+    int i, ret = 0;
     unsigned char *allocated_buf = NULL;
 
     while (BIO_pending(bp) || !BIO_eof(bp)) {
@@ -673,7 +681,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen
         i = EVP_DigestVerifyFinal(ctx, sigin, (unsigned int)siglen);
         print_verify_result(out, i);
         if (i > 0)
-            ret = EXIT_SUCCESS;
+            ret = 1;
         goto end;
     }
     if (key != NULL) {
@@ -715,7 +723,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen
             goto end;
     }
     print_out(out, buf, len, sep, binout, sig_name, md_name, file);
-    ret = EXIT_SUCCESS;
+    ret = 1;
 end:
     if (allocated_buf != NULL)
         OPENSSL_clear_free(allocated_buf, len);
@@ -765,12 +773,14 @@ static int do_oneshot_verify_sign(EVP_MD_CTX *ctx, BIO *out,
  * For these we need to buffer all input and then do the sign on the
  * total buffered input. These algorithms set a NULL digest name which is
  * then used inside EVP_DigestVerify() and EVP_DigestSign().
+ * Returns 1 on success, 0 on failure.  Do not use EXIT_SUCCESS / EXIT_FAILURE
+ * here; reserve those for main() and exit(3) (issue #30562).
  */
 static int do_fp_oneshot_sign(BIO *out, EVP_MD_CTX *ctx, BIO *in, int sep, int binout,
     EVP_PKEY *key, unsigned char *sigin, int siglen,
     const char *sig_name, const char *file)
 {
-    int ret = EXIT_FAILURE;
+    int ret = 0;
     size_t buflen = 0;
     size_t maxlen = 16 * 1024 * 1024;
     uint8_t *buf = NULL;
@@ -783,14 +793,12 @@ static int do_fp_oneshot_sign(BIO *out, EVP_MD_CTX *ctx, BIO *in, int sep, int b
 
         if (r == 1) {
             ret = do_oneshot_verify_sign(ctx, out, sigin, siglen, key, data,
-                      filesize, sep, binout, sig_name, file)
-                ? EXIT_SUCCESS
-                : EXIT_FAILURE;
+                filesize, sep, binout, sig_name, file);
             munmap((void *)data, filesize);
             return ret;
         }
         if (r == -1)
-            return EXIT_FAILURE; /* error already printed */
+            return 0; /* error already printed */
         /* r == 0: empty file, fall through to buffer path */
     }
 #endif
@@ -799,11 +807,9 @@ static int do_fp_oneshot_sign(BIO *out, EVP_MD_CTX *ctx, BIO *in, int sep, int b
         const char *display_file = file != NULL ? file : "stdin";
 
         if (!bio_to_mem(&buf, &buflen, maxlen, in))
-            return EXIT_FAILURE;
+            return 0;
         ret = do_oneshot_verify_sign(ctx, out, sigin, siglen, key, buf, buflen,
-                  sep, binout, sig_name, display_file)
-            ? EXIT_SUCCESS
-            : EXIT_FAILURE;
+            sep, binout, sig_name, display_file);
         OPENSSL_clear_free(buf, buflen);
     }
 
