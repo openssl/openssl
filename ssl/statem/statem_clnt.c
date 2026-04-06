@@ -1943,8 +1943,9 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
                 SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_READ)) {
             /* SSLfatal() already called */
             goto err;
-        } else
+        } else {
             s->dtls13_process_hello = 1;
+        }
     }
 
     OPENSSL_free(extensions);

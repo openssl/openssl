@@ -345,8 +345,8 @@ static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, struct pqueue_st *qu
     }
 
     /*
-     * DTLS 1.3 if we have more data in the TLS_BUFFER and it doesn't
-     * get copied over in dtls_free lets copy it over here so it doesn't get lost.
+     * DTLS 1.3 if we have more data in the TLS_BUFFER lets process it now instead of
+     * waiting for it to be retransmitted.
      */
     if (rdata->rbuf.left > 0) {
         memcpy(rl->rbuf.buf, rdata->rbuf.buf + rdata->rbuf.offset, rdata->rbuf.left);
