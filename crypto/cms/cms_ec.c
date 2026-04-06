@@ -288,7 +288,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
         if (enckeylen > INT_MAX || enckeylen == 0)
             goto err;
         ASN1_STRING_set0(pubkey, penc, (int)enckeylen);
-        ossl_asn1_string_set_bits_left(pubkey, 0);
+        ossl_asn1_bit_string_set_unused_bits(pubkey, 0);
 
         penc = NULL;
         (void)X509_ALGOR_set0(talg, OBJ_nid2obj(NID_X9_62_id_ecPublicKey),

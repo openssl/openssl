@@ -183,7 +183,7 @@ EVP_PKEY *ossl_d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a,
     OSSL_LIB_CTX *libctx, const char *propq);
 X509_ALGOR *ossl_X509_ALGOR_from_nid(int nid, int ptype, void *pval);
 
-void ossl_asn1_string_set_bits_left(ASN1_STRING *str, unsigned int num);
+void ossl_asn1_bit_string_set_unused_bits(ASN1_STRING *str, unsigned int num);
 
 int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
     long len, const ASN1_ITEM *it, int tag, int aclass,

@@ -240,7 +240,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
         if (penclen <= 0)
             goto err;
         ASN1_STRING_set0(pubkey, penc, penclen);
-        ossl_asn1_string_set_bits_left(pubkey, 0);
+        ossl_asn1_bit_string_set_unused_bits(pubkey, 0);
 
         penc = NULL;
         (void)X509_ALGOR_set0(talg, OBJ_nid2obj(NID_dhpublicnumber),
