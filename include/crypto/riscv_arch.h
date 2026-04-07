@@ -27,7 +27,7 @@ extern unsigned int OPENSSL_riscv_hwcap_P;
 #define VECTOR_CAPABLE (OPENSSL_riscv_hwcap_P & COMPAT_HWCAP_ISA_V)
 #define ZVX_MIN 15
 #define ZVX_MAX 23
-#define IS_IN_DEPEND_VECTOR(offset) ((ZVX_MIN >= offset) && (offset <= ZVX_MAX))
+#define IS_IN_DEPEND_VECTOR(offset) ((ZVX_MIN <= offset) && (offset <= ZVX_MAX))
 #endif
 #endif
 #endif
