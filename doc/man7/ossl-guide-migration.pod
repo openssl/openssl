@@ -66,11 +66,19 @@ The flags member of B<ASN1_STRING> has become inaccessible, and the definitions
 of the flags are no longer public. This includes the public definition
 of the flags:
 
-ASN1_STRING_FLAG_NDEF, 
-ASN1_STRING_FLAG_CONT, 
-ASN1_STRING_FLAG_MSTRING, 
-ASN1_STRING_FLAG_EMBED, 
-ASN1_STRING_FLAG_BITS_LEFT
+=over 4
+
+=item B<ASN1_STRING_FLAG_NDEF>
+
+=item B<ASN1_STRING_FLAG_CONT>
+
+=item B<ASN1_STRING_FLAG_MSTRING>
+
+=item B<ASN1_STRING_FLAG_EMBED>
+
+=item B<ASN1_STRING_FLAG_BITS_LEFT>
+
+=back
 
 For the first four values, these were internal use flags which were never
 user settable in a way that would not cause things to break.
