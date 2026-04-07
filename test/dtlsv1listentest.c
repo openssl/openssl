@@ -452,7 +452,7 @@ typedef struct {
         DROP } outtype;
 } tests;
 
-static tests testpackets[9] = {
+static tests testpackets[] = {
     { clienthello_nocookie, sizeof(clienthello_nocookie), VERIFY },
     { clienthello_nocookie_frag, sizeof(clienthello_nocookie_frag), VERIFY },
     { clienthello_nocookie_short, sizeof(clienthello_nocookie_short), DROP },
@@ -464,7 +464,7 @@ static tests testpackets[9] = {
     { record_short, sizeof(record_short), DROP }
 };
 
-static tests testpackets13[9] = {
+static tests testpackets13[] = {
     { clienthello13_nocookie, sizeof(clienthello13_nocookie), VERIFY },
     { clienthello13_nocookie_frag, sizeof(clienthello13_nocookie_frag), VERIFY },
     { clienthello_nocookie_short, sizeof(clienthello_nocookie_short), DROP },
@@ -508,6 +508,40 @@ static int cookie_verify(SSL *ssl, const unsigned char *cookie,
 /*
  * Combined DTLS listen test covering both DTLS 1.2 and DTLS 1.3 packet
  * variants.
+ * 0: Test that DTLS 1.2 without a cookie is accepted by DTLSv1_listen().
+ * 1: Test that a fragmented DTLS 1.2 ClientHello without a cookie is
+ *   accepted by DTLSv1_listen().
+ * 2: Test that a truncated DTLS 1.2 ClientHello without a cookie is
+ *   dropped by DTLSv1_listen().
+ * 3: Test that a second fragment of a DTLS 1.2 ClientHello without a
+ *   cookie is dropped by DTLSv1_listen() (it cannot reconstruct a full
+ *   ClientHello from it).
+ * 4: Test that a DTLS 1.2 ClientHello with a good cookie is accepted by
+ *   DTLSv1_listen().
+ * 5: Test that a fragmented DTLS 1.2 ClientHello with a good cookie is
+ *   accepted by DTLSv1_listen().
+ * 6: Test that a DTLS 1.2 ClientHello with a bad cookie is rejected by
+ *   DTLSv1_listen() with a HelloVerifyRequest.
+ * 7: Test that a DTLS 1.2 ClientHello with a truncated cookie is dropped
+ *   by DTLSv1_listen().
+ * 8: Test that a short record is dropped by DTLSv1_listen().
+ * 9: Test that DTLS 1.3 without a cookie is accepted by DTLSv1_listen().
+ * 10: Test that a fragmented DTLS 1.3 ClientHello without a cookie is
+ *   accepted by DTLSv1_listen().
+ * 11: Test that a truncated DTLS 1.3 ClientHello without a cookie is
+ *   dropped by DTLSv1_listen().
+ * 12: Test that a second fragment of a DTLS 1.3 ClientHello without a
+ *   cookie is dropped by DTLSv1_listen() (it cannot reconstruct a full
+ *   ClientHello from it).
+ * 13: Test that a DTLS 1.3 ClientHello with a good cookie is accepted by
+ *   DTLSv1_listen().
+ * 14: Test that a fragmented DTLS 1.3 ClientHello with a good cookie is
+ *   accepted by DTLSv1_listen().
+ * 15: Test that a DTLS 1.3 ClientHello with a bad cookie is rejected by
+ *   DTLSv1_listen() with a HelloVerifyRequest.
+ * 16: Test that a DTLS 1.3 ClientHello with a truncated cookie is dropped
+ *   by DTLSv1_listen().
+ * 17: Test that a short record is dropped by DTLSv1_listen().
  */
 static int dtls_listen_test(int i)
 {

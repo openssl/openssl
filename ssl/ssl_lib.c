@@ -7362,6 +7362,8 @@ int SSL_stateless(SSL *s)
             if (!sc->rlayer.rrlmethod->get_sequence(sc->rlayer.rrl, &dtls_rl_read_seq)
                 || !sc->rlayer.wrlmethod->get_sequence(sc->rlayer.wrl, &dtls_rl_write_seq))
                 return 0;
+        } else {
+            return 0;
         }
     }
 
@@ -7383,6 +7385,8 @@ int SSL_stateless(SSL *s)
             if (!sc->rlayer.rrlmethod->set_sequence(sc->rlayer.rrl, dtls_rl_read_seq)
                 || !sc->rlayer.wrlmethod->set_sequence(sc->rlayer.wrl, dtls_rl_write_seq))
                 return 0;
+        } else {
+            return 0;
         }
     }
 
