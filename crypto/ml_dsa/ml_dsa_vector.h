@@ -8,9 +8,7 @@
  */
 
 #include <assert.h>
-#include <stddef.h>
 #include "ml_dsa_poly.h"
-#include "ml_dsa_hash.h"
 
 struct vector_st {
     POLY *poly;
@@ -144,22 +142,6 @@ vector_mult_scalar(const VECTOR *lhs, const POLY *rhs, VECTOR *out)
 
     for (i = 0; i < lhs->num_poly; i++)
         ossl_ml_dsa_poly_ntt_mult(lhs->poly + i, rhs, out->poly + i);
-}
-
-static ossl_inline ossl_unused int
-vector_expand_S(EVP_MD_CTX *h_ctx, const EVP_MD *md, int eta,
-    const uint8_t *seed, VECTOR *s1, VECTOR *s2)
-{
-    return ossl_ml_dsa_vector_expand_S(h_ctx, md, eta, seed, s1, s2);
-}
-
-static ossl_inline ossl_unused void
-vector_expand_mask(VECTOR *out, const uint8_t *rho_prime, size_t rho_prime_len,
-    uint32_t kappa, uint32_t gamma1,
-    EVP_MD_CTX *h_ctx, const EVP_MD *md)
-{
-    ossl_ml_dsa_vector_expand_mask(out, rho_prime, rho_prime_len, kappa, gamma1,
-        h_ctx, md);
 }
 
 /* Scale back previously rounded value */

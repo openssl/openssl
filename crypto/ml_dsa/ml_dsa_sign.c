@@ -163,6 +163,7 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
     uint8_t *out_sig)
 {
     int ret = 0;
+    const OSSL_ML_DSA_SAMPLE_OPS *sample_ops = ossl_ml_dsa_sample_ops();
     const ML_DSA_PARAMS *params = priv->params;
     EVP_MD_CTX *md_ctx = NULL;
     uint32_t k = (uint32_t)params->k, l = (uint32_t)params->l;
@@ -220,7 +221,7 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
     signature_init(&sig, p, k, p + k, l, c_tilde, c_tilde_len);
     /* End of the allocated blob setup */
 
-    if (!matrix_expand_A(md_ctx, priv->shake128_md, priv->rho, &a_ntt))
+    if (!sample_ops->matrix_expand_A(md_ctx, priv->shake128_md, priv->rho, &a_ntt))
         goto err;
 
     if (!shake_xof_3(md_ctx, priv->shake256_md, priv->K, sizeof(priv->K),
@@ -245,8 +246,8 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
         VECTOR *ct0 = &w1;
         uint32_t z_max, r0_max, ct0_max, h_ones;
 
-        vector_expand_mask(&y, rho_prime, sizeof(rho_prime), (uint32_t)kappa,
-            gamma1, md_ctx, priv->shake256_md);
+        sample_ops->vector_expand_mask(&y, rho_prime, sizeof(rho_prime),
+            (uint32_t)kappa, gamma1, md_ctx, priv->shake256_md);
         vector_copy(y_ntt, &y);
         vector_ntt(y_ntt);
 
@@ -323,6 +324,7 @@ static int ml_dsa_verify_internal(const ML_DSA_KEY *pub,
     const uint8_t *sig_enc, size_t sig_enc_len)
 {
     int ret = 0;
+    const OSSL_ML_DSA_SAMPLE_OPS *sample_ops = ossl_ml_dsa_sample_ops();
     uint8_t *alloc = NULL, *w1_encoded;
     POLY *p, *c_ntt;
     MATRIX a_ntt;
@@ -371,7 +373,7 @@ static int ml_dsa_verify_internal(const ML_DSA_KEY *pub,
     vector_init(&ct1_ntt, p + k, k);
 
     if (!ossl_ml_dsa_sig_decode(&sig, sig_enc, sig_enc_len, pub->params)
-        || !matrix_expand_A(md_ctx, pub->shake128_md, pub->rho, &a_ntt))
+        || !sample_ops->matrix_expand_A(md_ctx, pub->shake128_md, pub->rho, &a_ntt))
         goto err;
 
     /* Compute verifiers challenge c_ntt = NTT(SampleInBall(c_tilde)) */
