@@ -202,6 +202,29 @@ jobs:
             qemucpu: "rv64,zbb=true,zbkb=true,zknh=true,zksh=true",
             opensslcapsname: riscvcap, # OPENSSL_riscvcap
             opensslcaps: "rv64gc_inlineasm" # for uploading artifact
+          }, {
+            # hwprobe path: RV64GC without V, no OPENSSL_riscvcap override.
+            # Forces the hwprobe_to_cap() code path (skipped when OPENSSL_riscvcap is set).
+            # V is absent so AT_HWCAP V bit is clear (VECTOR_CAPABLE=false).
+            # The rv64 CPU model includes ZBB/ZBC/ZBS/ZBKB by default.
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,zbb=true,zbc=true,zbs=true,zbkb=true,v=false",
+            # No opensslcapsname: hwprobe is used for capability detection.
+            opensslcaps: "rv64gc_novector_hwprobe",
+          }, {
+            # hwprobe path: RV64GC + V + ZVKNED (vlen=128), no OPENSSL_riscvcap override.
+            # Forces the hwprobe_to_cap() code path (skipped when OPENSSL_riscvcap is set).
+            # V is present so AT_HWCAP V bit is set (VECTOR_CAPABLE=true).
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,v=true,vlen=128,zvkned=true",
+            # No opensslcapsname: hwprobe is used for capability detection.
+            opensslcaps: "rv64gc_v_zvkned_hwprobe",
           }
         ]
     runs-on: ubuntu-latest
