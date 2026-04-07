@@ -470,9 +470,6 @@ static ml_kem_scalar_inverse_ntt_fn scalar_inverse_ntt_p = scalar_inverse_ntt;
 
 static CRYPTO_ONCE ml_kem_ntt_once = CRYPTO_ONCE_STATIC_INIT;
 
-static void scalar_ntt_ppc(scalar *p);
-static void scalar_inverse_ntt_ppc(scalar *p);
-
 #if defined(_ARCH_PPC64)
 #include "crypto/ppc_arch.h"
 #endif
