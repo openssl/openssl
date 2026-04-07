@@ -161,6 +161,10 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
     if (EVP_PKEY_encrypt(pctx, NULL, &eklen, key, keylen) <= 0)
         goto err;
 
+    if (eklen > INT_MAX) {
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     ek = OPENSSL_malloc(eklen);
     if (ek == NULL)
         goto err;
@@ -168,10 +172,6 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
     if (EVP_PKEY_encrypt(pctx, ek, &eklen, key, keylen) <= 0)
         goto err;
 
-    if (eklen > INT_MAX) {
-        ERR_raise(ERR_LIB_PKCS7, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
     ASN1_STRING_set0(ri->enc_key, ek, (int)eklen);
     ek = NULL;
 

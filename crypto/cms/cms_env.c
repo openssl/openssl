@@ -565,6 +565,10 @@ static int cms_RecipientInfo_ktri_encrypt(const CMS_ContentInfo *cms,
     if (EVP_PKEY_encrypt(pctx, NULL, &eklen, ec->key, ec->keylen) <= 0)
         goto err;
 
+    if (eklen > INT_MAX) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     ek = OPENSSL_malloc(eklen);
     if (ek == NULL)
         goto err;
@@ -572,10 +576,6 @@ static int cms_RecipientInfo_ktri_encrypt(const CMS_ContentInfo *cms,
     if (EVP_PKEY_encrypt(pctx, ek, &eklen, ec->key, ec->keylen) <= 0)
         goto err;
 
-    if (eklen > INT_MAX) {
-        ERR_raise(ERR_LIB_CMS, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
     ASN1_STRING_set0(ktri->encryptedKey, ek, (int)eklen);
     ek = NULL;
 
@@ -798,10 +798,6 @@ CMS_RecipientInfo *CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid,
     kekri->key = key;
     kekri->keylen = keylen;
 
-    if (idlen > INT_MAX) {
-        ERR_raise(ERR_LIB_CMS, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
     ASN1_STRING_set0(kekri->kekid->keyIdentifier, id, (int)idlen);
 
     kekri->kekid->date = date;
@@ -923,6 +919,10 @@ static int cms_RecipientInfo_kekri_encrypt(const CMS_ContentInfo *cms,
         goto err;
     }
 
+    if (ec->keylen > INT_MAX - 8) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     /* 8 byte prefix for AES wrap ciphers */
     wkey = OPENSSL_malloc(ec->keylen + 8);
     if (wkey == NULL)
@@ -935,10 +935,6 @@ static int cms_RecipientInfo_kekri_encrypt(const CMS_ContentInfo *cms,
     }
 
     EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
-    if (ec->keylen > INT_MAX) {
-        ERR_raise(ERR_LIB_CMS, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
     if (!EVP_EncryptInit_ex(ctx, cipher, NULL, kekri->key, NULL)
         || !EVP_EncryptUpdate(ctx, wkey, &wkeylen, ec->key, (int)ec->keylen)
         || !EVP_EncryptFinal_ex(ctx, wkey + wkeylen, &outlen)) {

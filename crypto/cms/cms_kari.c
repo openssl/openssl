@@ -458,11 +458,6 @@ int ossl_cms_RecipientInfo_kari_encrypt(const CMS_ContentInfo *cms,
         if (!cms_kek_cipher(&enckey, &enckeylen, ec->key, ec->keylen,
                 kari, 1))
             return 0;
-        if (enckeylen > INT_MAX) {
-            OPENSSL_free(enckey);
-            ERR_raise(ERR_LIB_CMS, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
         ASN1_STRING_set0(rek->encryptedKey, enckey, (int)enckeylen);
     }
 
