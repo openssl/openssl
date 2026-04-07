@@ -33,7 +33,6 @@ static int tls1_PRF(SSL_CONNECTION *s,
     unsigned char *out, size_t olen, int fatal)
 {
     const EVP_MD *md = ssl_prf_md(s);
-    EVP_KDF *kdf;
     EVP_KDF_CTX *kctx = NULL;
     OSSL_PARAM params[9], *p = params;
     const char *mdname;
@@ -46,13 +45,7 @@ static int tls1_PRF(SSL_CONNECTION *s,
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    kdf = EVP_KDF_fetch(SSL_CONNECTION_GET_CTX(s)->libctx,
-        OSSL_KDF_NAME_TLS1_PRF,
-        SSL_CONNECTION_GET_CTX(s)->propq);
-    if (kdf == NULL)
-        goto err;
-    kctx = EVP_KDF_CTX_new(kdf);
-    EVP_KDF_free(kdf);
+    kctx = EVP_KDF_CTX_new(SSL_CONNECTION_GET_CTX(s)->tls1prf);
     if (kctx == NULL)
         goto err;
     mdname = EVP_MD_get0_name(md);

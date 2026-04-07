@@ -4228,7 +4228,7 @@ static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
 {
     unsigned char *senc = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
-    SSL_HMAC *hctx = NULL;
+    SSL_HMAC hctx, *constructed_hctx = NULL;
     unsigned char *p, *encdata1, *encdata2, *macdata1, *macdata2;
     const unsigned char *const_p;
     int len, slen_full, slen, lenfinal;
@@ -4264,8 +4264,7 @@ static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
-    hctx = ssl_hmac_new(tctx);
-    if (hctx == NULL) {
+    if ((constructed_hctx = ssl_hmac_construct(tctx, &hctx)) == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SSL_LIB);
         goto err;
     }
@@ -4316,13 +4315,13 @@ static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
 
         if (tctx->ext.ticket_key_evp_cb != NULL)
             ret = tctx->ext.ticket_key_evp_cb(ssl, key_name, iv, ctx,
-                ssl_hmac_get0_EVP_MAC_CTX(hctx),
+                ssl_hmac_get0_EVP_MAC_CTX(&hctx),
                 1);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
         else if (tctx->ext.ticket_key_cb != NULL)
             /* if 0 is returned, write an empty ticket */
             ret = tctx->ext.ticket_key_cb(ssl, key_name, iv, ctx,
-                ssl_hmac_get0_HMAC_CTX(hctx), 1);
+                ssl_hmac_get0_HMAC_CTX(&hctx), 1);
 #endif
 
         if (ret == 0) {
@@ -4343,7 +4342,7 @@ static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
             }
             OPENSSL_free(senc);
             EVP_CIPHER_CTX_free(ctx);
-            ssl_hmac_free(hctx);
+            ssl_hmac_destruct(constructed_hctx);
             return CON_FUNC_SUCCESS;
         }
         if (ret < 0) {
@@ -4356,28 +4355,17 @@ static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
             goto err;
         }
     } else {
-        EVP_CIPHER *cipher = EVP_CIPHER_fetch(sctx->libctx, "AES-256-CBC",
-            sctx->propq);
-
-        if (cipher == NULL) {
-            /* Error is already recorded */
-            SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
-            goto err;
-        }
-
-        iv_len = EVP_CIPHER_get_iv_length(cipher);
+        iv_len = EVP_CIPHER_get_iv_length(sctx->tktenc);
         if (iv_len < 0
             || RAND_bytes_ex(sctx->libctx, iv, iv_len, 0) <= 0
-            || !EVP_EncryptInit_ex(ctx, cipher, NULL,
+            || !EVP_EncryptInit_ex(ctx, sctx->tktenc, NULL,
                 tctx->ext.secure->tick_aes_key, iv)
-            || !ssl_hmac_init(hctx, tctx->ext.secure->tick_hmac_key,
+            || !ssl_hmac_init(&hctx, tctx->ext.secure->tick_hmac_key,
                 sizeof(tctx->ext.secure->tick_hmac_key),
                 "SHA256")) {
-            EVP_CIPHER_free(cipher);
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        EVP_CIPHER_free(cipher);
         memcpy(key_name, tctx->ext.tick_key_name,
             sizeof(tctx->ext.tick_key_name));
     }
@@ -4403,11 +4391,11 @@ static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
         || encdata1 + len != encdata2
         || len + lenfinal > slen + EVP_MAX_BLOCK_LENGTH
         || !WPACKET_get_total_written(pkt, &macendoffset)
-        || !ssl_hmac_update(hctx,
+        || !ssl_hmac_update(&hctx,
             (unsigned char *)s->init_buf->data + macoffset,
             macendoffset - macoffset)
         || !WPACKET_reserve_bytes(pkt, EVP_MAX_MD_SIZE, &macdata1)
-        || !ssl_hmac_final(hctx, macdata1, &hlen, EVP_MAX_MD_SIZE)
+        || !ssl_hmac_final(&hctx, macdata1, &hlen, EVP_MAX_MD_SIZE)
         || hlen > EVP_MAX_MD_SIZE
         || !WPACKET_allocate_bytes(pkt, hlen, &macdata2)
         || macdata1 != macdata2) {
@@ -4425,7 +4413,7 @@ static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
 err:
     OPENSSL_free(senc);
     EVP_CIPHER_CTX_free(ctx);
-    ssl_hmac_free(hctx);
+    ssl_hmac_destruct(constructed_hctx);
     return ok;
 }
 

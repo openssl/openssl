@@ -20,6 +20,7 @@
 #include <openssl/ocsp.h>
 #include <openssl/dh.h>
 #include <openssl/async.h>
+#include <openssl/kdf.h>
 #include <openssl/ct.h>
 #include <openssl/trace.h>
 #include <openssl/core_names.h>
@@ -4263,6 +4264,17 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
             goto err;
     }
 
+    if ((ret->hmac = EVP_MAC_fetch(libctx, "HMAC", propq)) == NULL)
+        goto err;
+    if ((ret->sha256 = EVP_MD_fetch(libctx, "SHA2-256", propq)) == NULL)
+        goto err;
+    if ((ret->tktenc = EVP_CIPHER_fetch(libctx, "AES-256-CBC", propq)) == NULL)
+        goto err;
+#if !defined(OPENSSL_NO_TLS1) && !defined(OPENSSL_NO_TLS1_1) && !defined(OPENSSL_NO_TLS1_2)
+    if ((ret->tls1prf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_TLS1_PRF, propq)) == NULL)
+        goto err;
+#endif
+
     ret->method = meth;
     ret->min_proto_version = 0;
     ret->max_proto_version = 0;
@@ -4339,15 +4351,6 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         goto err;
     }
-
-    /*
-     * If these aren't available from the provider we'll get NULL returns.
-     * That's fine but will cause errors later if SSLv3 is negotiated
-     */
-    ERR_set_mark();
-    ret->md5 = EVP_MD_fetch(libctx, "MD5", propq);
-    ret->sha1 = EVP_MD_fetch(libctx, "SHA1", propq);
-    ERR_pop_to_mark();
 
     if ((ret->ca_names = sk_X509_NAME_new_null()) == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
@@ -4590,6 +4593,13 @@ void SSL_CTX_free(SSL_CTX *a)
     if (a->sessions != NULL)
         SSL_CTX_flush_sessions_ex(a, 0);
 
+    EVP_MAC_free(a->hmac);
+    EVP_MD_free(a->sha256);
+    EVP_CIPHER_free(a->tktenc);
+#if !defined(OPENSSL_NO_TLS1) && !defined(OPENSSL_NO_TLS1_1) && !defined(OPENSSL_NO_TLS1_2)
+    EVP_KDF_free(a->tls1prf);
+#endif
+
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_CTX, a, &a->ex_data);
     lh_SSL_SESSION_free(a->sessions);
     X509_STORE_free(a->cert_store);
@@ -4617,9 +4627,6 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->ext.tuples);
     OPENSSL_free(a->ext.alpn);
     OPENSSL_secure_clear_free(a->ext.secure, sizeof(*a->ext.secure));
-
-    ssl_evp_md_free(a->md5);
-    ssl_evp_md_free(a->sha1);
 
     for (j = 0; j < SSL_ENC_NUM_IDX; j++)
         ssl_evp_cipher_free(a->ssl_cipher_methods[j]);
