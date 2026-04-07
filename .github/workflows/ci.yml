@@ -25,7 +25,26 @@ env:
   OSSL_RUN_CI_TESTS: 1
 
 jobs:
+  check_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      docs_only: ${{ steps.filter.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            docs_only:
+              - 'doc/**'
+              - '*.md'
+              - '*.pod'
+              - 'README*'
+
   check_update:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - name: install unifdef
@@ -68,6 +87,8 @@ jobs:
   # We are not as strict with libraries, but rather adapt to what's
   # expected to be available in a certain version of each platform.
   check-c99:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -79,6 +100,8 @@ jobs:
       run: make -s -j4
 
   basic_gcc:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -113,6 +136,8 @@ jobs:
         path: artifacts.tar.gz
 
   basic_clang:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -138,6 +163,8 @@ jobs:
         path: artifacts.tar.gz
 
   linux-arm64:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-24.04-arm
     steps:
     - uses: actions/checkout@v6
@@ -163,6 +190,8 @@ jobs:
         path: artifacts.tar.gz
 
   gcc-min-version:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     container:
       image: docker.io/gcc:9
@@ -188,6 +217,8 @@ jobs:
       run: .github/workflows/make-test
 
   linux-x86:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -229,6 +260,8 @@ jobs:
         path: artifacts.tar.gz
 
   freebsd-x86_64:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -273,6 +306,8 @@ jobs:
         path: artifacts.tar.gz
 
   minimal:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -298,6 +333,8 @@ jobs:
         path: artifacts.tar.gz
 
   no-deprecated:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -323,6 +360,8 @@ jobs:
         path: artifacts.tar.gz
 
   no-shared-ubuntu:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -348,6 +387,8 @@ jobs:
         path: artifacts.tar.gz
 
   no-shared-macos:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: macos-14
     steps:
     - uses: actions/checkout@v6
@@ -373,6 +414,8 @@ jobs:
         path: artifacts.tar.gz
 
   non-caching:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -402,6 +445,8 @@ jobs:
         path: artifacts.tar.gz
 
   address_ub_sanitizer:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -431,6 +476,8 @@ jobs:
         path: artifacts.tar.gz
 
   fuzz_tests:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -461,6 +508,8 @@ jobs:
         if-no-files-found: ignore
 
   memory_sanitizer:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -491,6 +540,8 @@ jobs:
         path: artifacts.tar.gz
 
   threads_sanitizer:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -520,6 +571,8 @@ jobs:
         path: artifacts.tar.gz
 
   enable_non-default_options:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -547,6 +600,8 @@ jobs:
         path: artifacts.tar.gz
 
   full_featured:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -580,6 +635,8 @@ jobs:
         path: artifacts.tar.gz
 
   no-legacy:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -605,6 +662,8 @@ jobs:
         path: artifacts.tar.gz
 
   legacy:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -635,6 +694,8 @@ jobs:
   # - That building, testing and installing works with a read-only source
   #   tree
   out-of-readonly-source-and-install-ubuntu:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -677,6 +738,8 @@ jobs:
       working-directory: ./build
 
   out-of-readonly-source-and-install-macos:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: macos-15
     steps:
     - uses: actions/checkout@v6
@@ -719,6 +782,8 @@ jobs:
       working-directory: ./build
 
   external-tests-misc:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -763,6 +828,8 @@ jobs:
         grep -q "Reading symbols from.*libcrypto\.so\.4\.debug" results
 
   external-tests-oqs-provider:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -781,6 +848,8 @@ jobs:
       run: make test TESTS="test_external_oqsprovider"
 
   external-tests-pkcs11-provider:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     container: fedora:latest
     steps:
@@ -812,6 +881,8 @@ jobs:
         ./util/opensslwrap.sh version -c
 
   external-tests-pyca:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -845,6 +916,8 @@ jobs:
       run: make test TESTS="test_external_pyca" VERBOSE=1
 
   external-test-bssl:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -869,6 +942,8 @@ jobs:
       run: make test TESTS='test_external_ech_bssl' V=1
 
   external-test-nss:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6

@@ -15,7 +15,26 @@ env:
   OSSL_RUN_CI_TESTS: 1
 
 jobs:
+  check_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      docs_only: ${{ steps.filter.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            docs_only:
+              - 'doc/**'
+              - '*.md'
+              - '*.pod'
+              - 'README*'
+
   run-checker:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     strategy:
       fail-fast: false
       matrix:

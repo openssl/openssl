@@ -13,7 +13,23 @@ permissions:
   contents: read
 
 jobs:
+  check_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      docs_only: ${{ steps.filter.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            docs_only:
+              - 'doc/**'
+              - '*.md'
+
   shared:
+    needs: check_changes
+    if: needs.check_changes.outputs.docs_only != 'true'
     # Run a job for each of the specified target architectures:
     strategy:
       matrix:
