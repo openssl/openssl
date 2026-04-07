@@ -52,6 +52,9 @@ jobs:
         #   opensslcaps: optional; if opensslcapsname (see above) is set, then
         #                this string will be used as content for the OpenSSL
         #                capabilities variable.
+        #   capscheck: optional; ERE pattern passed to grep -E to assert that
+        #              "openssl info -cpusettings" output contains expected
+        #              capabilities when using the hwprobe detection path.
         #   ppa:   Launchpad PPA repository to download packages from.
         platform: [
           # Scalar Crypto
@@ -214,6 +217,8 @@ jobs:
             qemucpu: "rv64,zbb=true,zbc=true,zbs=true,zbkb=true,v=false",
             # No opensslcapsname: hwprobe is used for capability detection.
             opensslcaps: "rv64gc_novector_hwprobe",
+            # ZBB must be detected
+            capscheck: "_ZBB",
           }, {
             # hwprobe path: RV64GC + V + ZVKNED (vlen=128), no OPENSSL_riscvcap override.
             # Forces the hwprobe_to_cap() code path (skipped when OPENSSL_riscvcap is set).
@@ -225,6 +230,8 @@ jobs:
             qemucpu: "rv64,v=true,vlen=128,zvkned=true",
             # No opensslcapsname: hwprobe is used for capability detection.
             opensslcaps: "rv64gc_v_zvkned_hwprobe",
+            # Both V and ZVKNED must be detected.
+            capscheck: "_V_ZVKNED|_ZVKNED.*_V",
           }
         ]
     runs-on: ubuntu-latest
@@ -282,6 +289,13 @@ jobs:
     - name: get openssl cpu info
       if: matrix.platform.tests != 'none'
       run: QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }} ./util/opensslwrap.sh info -cpusettings
+
+    - name: check detected capabilities
+      if: matrix.platform.capscheck != ''
+      run: |
+        QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }} \
+          ./util/opensslwrap.sh info -cpusettings | \
+          grep -qE "${{ matrix.platform.capscheck }}"
 
     - name: make all tests
       if: github.event_name == 'push' && matrix.platform.tests == ''
