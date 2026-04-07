@@ -531,7 +531,7 @@ static int win32_pathbyaddr(void *addr, char *path, int sz)
      */
     wsz = (DWORD)sz;
     utf8len = WideCharToMultiByte(CP_UTF8, 0, wpath, -1, NULL, 0, NULL, NULL);
-    if (utf8len <= 0 || utf8len > wsz) {
+    if (utf8len <= 0 || (DWORD)utf8len > wsz) {
         OPENSSL_free(wpath);
         ERR_raise_data(ERR_LIB_DSO, DSO_R_NAME_TRANSLATION_FAILED, "UTF8 query failed (%lu)\n",
             GetLastError());
