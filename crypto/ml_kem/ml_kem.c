@@ -477,8 +477,10 @@ static void scalar_inverse_ntt_ppc(scalar *p);
 #include "crypto/ppc_arch.h"
 #endif
 
+#if defined(MLKEM_NTT_PPC_ASM) && defined(_ARCH_PPC64)
 void mlkem_ntt_ppc(uint16_t *c);
 void mlkem_inverse_ntt_ppc(uint16_t *c);
+#endif
 
 /*
  * Initialize NTT function pointers to PPC64le implementations if available.

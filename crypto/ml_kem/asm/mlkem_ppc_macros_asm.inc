@@ -14,7 +14,7 @@
  */
 
 /* ===================================================================== */
-/* Barrett reduce vectors and constatnts */
+/* Barrett reduce vectors and constants */
 #define V_kPrime16 1
 #define V_kPrime32 2
 #define V_kBarrettMultiplier 3
@@ -72,7 +72,7 @@
  *
  * This macro handles 8 coefficients elements.
  * Input vectors: x0, x1
- * Ouput vector:  updated peer
+ * Output vector:  updated peer
  * Scratch vectors: v6, v7, v10, v11, v12, v13
  *
  * Barrett_reduce_delayed-

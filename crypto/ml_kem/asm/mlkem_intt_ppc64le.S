@@ -117,7 +117,7 @@
  *
  * Assuming input registers and output vectors as follows,
  *   input offsets - curr (0, r11, r15, r17), peer (r10, r12, r16, r18)
- *   ouput vectors - v20, v21, v22, v23, v24, v25, v26
+ *   output vectors - v20, v21, v22, v23, v24, v25, v26
  */
 .macro _intt_layer_reduce_4x
         /* even - curr, odd - peer, odd is the updated peer */
@@ -261,7 +261,7 @@
  *
  * Assuming input registers and output vectors as follows,
  *   input offsets - curr (0, r11, r15, r17), peer (r10, r12, r16, r18)
- *   ouput vectors - v20, v21, v22, v23, v24, v25, v26
+ *   output vectors - v20, v21, v22, v23, v24, v25, v26
  */
 .macro _intt_scalar_reduce_4x _zeta1, _zeta2, _zeta3, _zeta4
         /* Load peer */
@@ -426,7 +426,7 @@
  *   start+next+next              start+len*2+next+next
  *   start+next+next+next         start+len*2+next+next+next
  *
- *   The resulting coeffients then store back to each leg's offset.
+ *   The resulting coefficients then store back to each leg's offset.
  *
  *   Each vector has the same corresponding zeta except len=4 and len=2.
  *

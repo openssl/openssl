@@ -104,7 +104,7 @@
  *
  * Assuming input registers and output vectors as follows,
  *   input offsets - curr (0, r11, r15, r17), peer (r10, r12, r16, r18)
- *   ouput vectors - v20, v21, v22, v23, v24, v25, v26
+ *   output vectors - v20, v21, v22, v23, v24, v25, v26
  */
 .macro _ntt_scalar_reduce_4x _zeta1, _zeta2, _zeta3, _zeta4
         /* Load peer */
@@ -253,7 +253,7 @@
  *
  * Assuming input registers and output vectors as follows,
  *   input offsets - curr (0, r11, r15, r17), peer (r10, r12, r16, r18)
- *   ouput vectors - v20, v21, v22, v23, v24, v25, v26
+ *   output vectors - v20, v21, v22, v23, v24, v25, v26
  */
 .macro _layer_reduce_4x
         zeta_scalar_mul 14, V_Z1, 20, 21       /* peer * zeta */
