@@ -10,6 +10,14 @@ name: Cross Compile for RISC-V Extensions
 on:
   pull_request:
     types: [opened, reopened, edited, synchronize]
+    paths-ignore:
+      - 'doc/**'
+      - '*.md'
+      - '*.pod'
+      - 'README*'
+      - 'funding.json'
+      - 'LICENSE.txt'
+      - 'VERSION.dat'
   push:
   schedule:
     - cron: '35 02 * * *'

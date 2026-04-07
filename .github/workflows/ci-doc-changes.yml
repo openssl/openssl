@@ -1,0 +1,125 @@
+# Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: Documentation and Installability CI
+
+on: [pull_request, push]
+
+permissions:
+  contents: read
+
+env:
+  OSSL_RUN_CI_TESTS: 1
+
+jobs:
+  check_docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+    - name: config
+      run: ./config --strict-warnings --banner=Configured enable-fips && perl configdata.pm --dump
+    - name: make build_generated
+      run: make -s build_generated
+    - name: make doc-nits
+      run: make doc-nits
+    - name: make help
+      run: make help
+    - name: make md-nits
+      run: |
+          sudo gem install mdl
+          make md-nits
+
+  # out-of-source-and-install checks multiple things at the same time:
+  # - That building, testing and installing works from an out-of-source
+  #   build tree
+  # - That building, testing and installing works with a read-only source
+  #   tree
+  out-of-readonly-source-and-install-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        path: ./source
+        persist-credentials: false
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+      working-directory: ./source
+    - name: make source read-only
+      run: chmod -R a-w ./source
+    - name: create build and install directories
+      run: |
+        mkdir ./build
+        mkdir ./install
+    - name: config
+      run: |
+        ../source/config --banner=Configured enable-demos enable-h3demo enable-fips enable-lms enable-quic enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd)
+        perl configdata.pm --dump
+      working-directory: ./build
+    - name: make
+      run: make -s -j4
+      working-directory: ./build
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
+      working-directory: ./build
+    - name: make test
+      run: ../source/.github/workflows/make-test
+      working-directory: ./build
+    - name: save artifacts
+      if: success() || failure()
+      uses: actions/upload-artifact@v5
+      with:
+        name: "ci@out-of-readonly-source-and-install-ubuntu"
+        path: build/artifacts.tar.gz
+    - name: make install
+      run: make install
+      working-directory: ./build
+
+  out-of-readonly-source-and-install-macos:
+    runs-on: macos-15
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        path: ./source
+        persist-credentials: false
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+      working-directory: ./source
+    - name: make source read-only
+      run: chmod -R a-w ./source
+    - name: create build and install directories
+      run: |
+        mkdir ./build
+        mkdir ./install
+    - name: config
+      run: |
+        ../source/config --banner=Configured enable-fips enable-lms enable-demos enable-h3demo enable-quic enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd)
+        perl configdata.pm --dump
+      working-directory: ./build
+    - name: make
+      run: make -s -j4
+      working-directory: ./build
+    - name: get cpu info
+      run: |
+        sysctl machdep.cpu
+        ./util/opensslwrap.sh version -c
+      working-directory: ./build
+    - name: make test
+      run: ../source/.github/workflows/make-test
+      working-directory: ./build
+    - name: save artifacts
+      if: success() || failure()
+      uses: actions/upload-artifact@v5
+      with:
+        name: "ci@out-of-readonly-source-and-install-macos-15"
+        path: build/artifacts.tar.gz
+    - name: make install
+      run: make install
+      working-directory: ./build
