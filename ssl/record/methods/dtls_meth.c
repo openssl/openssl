@@ -352,6 +352,7 @@ static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, struct pqueue_st *qu
         memcpy(rl->rbuf.buf, rdata->rbuf.buf + rdata->rbuf.offset, rdata->rbuf.left);
         rl->rbuf.left = rdata->rbuf.left;
         rl->rbuf.offset = 0;
+        rdata->rbuf.left = 0;
     }
 
     if (pqueue_insert(queue, item) == NULL) {

@@ -830,7 +830,6 @@ static int test_swap_records_dtls13(int idx)
          * New Session Tickets are dropped/discarded. Thus we get into a
          * scenario where the server must resend the New Session Tickets.
          */
-        OSSL_sleep(1000);
         if (!TEST_int_le(ret = SSL_read(cssl, buf, sizeof(buf)), 0))
             goto end;
 
