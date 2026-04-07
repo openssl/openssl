@@ -4270,7 +4270,7 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         goto err;
     if ((ret->tktenc = EVP_CIPHER_fetch(libctx, "AES-256-CBC", propq)) == NULL)
         goto err;
-#if !defined(OPENSSL_NO_TLS1) && !defined(OPENSSL_NO_TLS1_1) && !defined(OPENSSL_NO_TLS1_2)
+#if defined(OPENSSL_HAVE_TLS1PRF)
     if ((ret->tls1prf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_TLS1_PRF, propq)) == NULL)
         goto err;
 #endif
@@ -4596,7 +4596,7 @@ void SSL_CTX_free(SSL_CTX *a)
     EVP_MAC_free(a->hmac);
     EVP_MD_free(a->sha256);
     EVP_CIPHER_free(a->tktenc);
-#if !defined(OPENSSL_NO_TLS1) && !defined(OPENSSL_NO_TLS1_1) && !defined(OPENSSL_NO_TLS1_2)
+#ifdef OPENSSL_HAVE_TLS1PRF
     EVP_KDF_free(a->tls1prf);
 #endif
 

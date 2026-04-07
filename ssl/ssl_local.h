@@ -807,6 +807,14 @@ typedef struct {
 
 #define TLS_GROUP_FFDHE_FOR_TLS1_3 (TLS_GROUP_FFDHE | TLS_GROUP_ONLY_FOR_TLS1_3)
 
+#if !defined(OPENSSL_NO_TLS1)      \
+    || !defined(OPENSSL_NO_TLS1_1) \
+    || !defined(OPENSSL_NO_TLS1_2) \
+    || !defined(OPENSSL_NO_DTLS1)  \
+    || !defined(OPENSSL_NO_DTLS1_2)
+#define OPENSSL_HAVE_TLS1PRF
+#endif
+
 struct ssl_ctx_st {
     OSSL_LIB_CTX *libctx;
 
@@ -821,7 +829,7 @@ struct ssl_ctx_st {
     EVP_MAC *hmac;
     EVP_MD *sha256;
     EVP_CIPHER *tktenc;
-#if !defined(OPENSSL_NO_TLS1) && !defined(OPENSSL_NO_TLS1_1) && !defined(OPENSSL_NO_TLS1_2)
+#ifdef OPENSSL_HAVE_TLS1PRF
     EVP_KDF *tls1prf;
 #endif
     /*
