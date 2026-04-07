@@ -460,6 +460,7 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_DTLS1_2
 static int test_dtls_data_after_ccs(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -518,6 +519,7 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+#endif
 
 int setup_tests(void)
 {
@@ -533,7 +535,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_dtls_ccs_full_hs, OSSL_NELEM(full_hs_tests));
     ADD_ALL_TESTS(test_dtls_ccs_before_nst, OSSL_NELEM(nst_versions));
     ADD_ALL_TESTS(test_dtls_ccs_resume, OSSL_NELEM(resume_tests));
+#ifndef OPENSSL_NO_DTLS1_2
     ADD_TEST(test_dtls_data_after_ccs);
+#endif
 
     return 1;
 }
