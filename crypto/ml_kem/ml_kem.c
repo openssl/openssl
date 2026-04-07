@@ -480,6 +480,16 @@ static void scalar_inverse_ntt_ppc(scalar *p);
 #if defined(MLKEM_NTT_PPC_ASM) && defined(_ARCH_PPC64)
 void mlkem_ntt_ppc(uint16_t *c);
 void mlkem_inverse_ntt_ppc(uint16_t *c);
+
+static void scalar_ntt_ppc(scalar *s)
+{
+    mlkem_ntt_ppc(s->c);
+}
+
+static void scalar_inverse_ntt_ppc(scalar *s)
+{
+    mlkem_inverse_ntt_ppc(s->c);
+}
 #endif
 
 /*
@@ -496,16 +506,6 @@ static void ml_kem_ntt_init(void)
     }
 #endif
 #endif
-}
-
-static void scalar_ntt_ppc(scalar *s)
-{
-    mlkem_ntt_ppc(s->c);
-}
-
-static void scalar_inverse_ntt_ppc(scalar *s)
-{
-    mlkem_inverse_ntt_ppc(s->c);
 }
 
 /*-
