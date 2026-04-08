@@ -456,6 +456,13 @@ static __owur int sample_scalar(scalar *out, EVP_MD_CTX *mdctx)
     return 1;
 }
 
+static CRYPTO_ONCE ml_kem_ntt_once = CRYPTO_ONCE_STATIC_INIT;
+
+#if defined(_ARCH_PPC64)
+#include "crypto/ppc_arch.h"
+#endif
+
+#if defined(MLKEM_NTT_PPC_ASM) && defined(_ARCH_PPC64)
 /*
  * PPC64LE Platform supports.
  */
@@ -465,16 +472,9 @@ typedef void (*ml_kem_scalar_inverse_ntt_fn)(scalar *p);
 static void scalar_ntt(scalar *p);
 static void scalar_inverse_ntt(scalar *p);
 
-static ml_kem_scalar_ntt_fn scalar_ntt_p = scalar_ntt;
-static ml_kem_scalar_inverse_ntt_fn scalar_inverse_ntt_p = scalar_inverse_ntt;
+static ml_kem_scalar_ntt_fn scalar_ntt_generic = scalar_ntt;
+static ml_kem_scalar_inverse_ntt_fn scalar_inverse_ntt_generic = scalar_inverse_ntt;
 
-static CRYPTO_ONCE ml_kem_ntt_once = CRYPTO_ONCE_STATIC_INIT;
-
-#if defined(_ARCH_PPC64)
-#include "crypto/ppc_arch.h"
-#endif
-
-#if defined(MLKEM_NTT_PPC_ASM) && defined(_ARCH_PPC64)
 void mlkem_ntt_ppc(uint16_t *c);
 void mlkem_inverse_ntt_ppc(uint16_t *c);
 
@@ -487,6 +487,9 @@ static void scalar_inverse_ntt_ppc(scalar *s)
 {
     mlkem_inverse_ntt_ppc(s->c);
 }
+#else
+#define scalar_ntt_generic scalar_ntt
+#define scalar_inverse_ntt_generic scalar_inverse_ntt
 #endif
 
 /*
@@ -497,9 +500,9 @@ static void ml_kem_ntt_init(void)
 {
 #if defined(MLKEM_NTT_PPC_ASM) && defined(_ARCH_PPC64)
 #if defined(__LITTLE_ENDIAN__) || (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
-    if (OPENSSL_ppccap_P && PPC_CRYPTO207) {
-        scalar_ntt_p = scalar_ntt_ppc;
-        scalar_inverse_ntt_p = scalar_inverse_ntt_ppc;
+    if (OPENSSL_ppccap_P & PPC_CRYPTO207) {
+        scalar_ntt_generic = scalar_ntt_ppc;
+        scalar_inverse_ntt_generic = scalar_inverse_ntt_ppc;
     }
 #endif
 #endif
@@ -955,7 +958,7 @@ vector_decode_decompress_ntt(scalar *out, const uint8_t *in, int bits, int rank)
     for (; rank-- > 0; in += stride, ++out) {
         scalar_decode(out, in, bits);
         scalar_decompress(out, bits);
-        scalar_ntt_p(out);
+        scalar_ntt_generic(out);
     }
 }
 
@@ -1001,7 +1004,7 @@ matrix_mult_intt(scalar *out, const scalar *m, const scalar *a, int rank)
         scalar_mult(out, m++, ar = a);
         for (j = rank - 1; j > 0; --j)
             scalar_mult_add(out, m++, ++ar);
-        scalar_inverse_ntt_p(out);
+        scalar_inverse_ntt_generic(out);
     }
 }
 
@@ -1174,7 +1177,7 @@ static __owur int gencbd_vector_ntt(scalar *out, CBD_FUNC cbd, uint8_t *counter,
         input[ML_KEM_RANDOM_BYTES] = (*counter)++;
         if (!cbd(out, input, mdctx, key))
             return 0;
-        scalar_ntt_p(out++);
+        scalar_ntt_generic(out++);
     } while (--rank > 0);
     return 1;
 }
@@ -1221,7 +1224,7 @@ static __owur int encrypt_cpa(uint8_t out[ML_KEM_SHARED_SECRET_BYTES],
         return 0;
     /* FIPS 203 "v" scalar */
     inner_product(&v, key->t, y, rank);
-    scalar_inverse_ntt_p(&v);
+    scalar_inverse_ntt_generic(&v);
     /* FIPS 203 "u" vector */
     matrix_mult_intt(u, key->m, y, rank);
 
@@ -1263,7 +1266,7 @@ decrypt_cpa(uint8_t out[ML_KEM_SHARED_SECRET_BYTES],
     scalar_decode(&v, ctext + vinfo->u_vector_bytes, dv);
     scalar_decompress(&v, dv);
     inner_product(&mask, key->s, u, rank);
-    scalar_inverse_ntt_p(&mask);
+    scalar_inverse_ntt_generic(&mask);
     scalar_sub(&v, &mask);
     scalar_compress(&v, 1);
     scalar_encode_1(out, &v);
