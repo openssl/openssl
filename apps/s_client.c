@@ -2720,7 +2720,7 @@ re_start:
                          "xmlns='jabber:%s' to='%s' version='1.0'>",
             starttls_proto == PROTO_XMPP ? "client" : "server",
             protohost ? protohost : host);
-        seen = BIO_read(sbio, mbuf, BUFSIZZ);
+        seen = BIO_read(sbio, mbuf, BUFSIZZ - 1);
         if (seen < 0) {
             BIO_printf(bio_err, "BIO_read failed\n");
             goto end;
@@ -2729,7 +2729,7 @@ re_start:
         while (!strstr(mbuf, "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'")
             && !strstr(mbuf,
                 "<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"")) {
-            seen = BIO_read(sbio, mbuf, BUFSIZZ);
+            seen = BIO_read(sbio, mbuf, BUFSIZZ - 1);
 
             if (seen <= 0)
                 goto shut;
@@ -2738,7 +2738,7 @@ re_start:
         }
         BIO_puts(sbio,
             "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
-        seen = BIO_read(sbio, sbuf, BUFSIZZ);
+        seen = BIO_read(sbio, sbuf, BUFSIZZ - 1);
         if (seen < 0) {
             BIO_puts(bio_err, "BIO_read failed\n");
             goto shut;
@@ -2963,7 +2963,7 @@ re_start:
                 "Didn't find STARTTLS in server response,"
                 " trying anyway...\n");
         BIO_puts(sbio, "STARTTLS\r\n");
-        mbuf_len = BIO_read(sbio, mbuf, BUFSIZZ);
+        mbuf_len = BIO_read(sbio, mbuf, BUFSIZZ - 1);
         if (mbuf_len < 0) {
             BIO_puts(bio_err, "BIO_read failed\n");
             goto end;
@@ -3004,7 +3004,7 @@ re_start:
                 "Didn't find STARTTLS in server response,"
                 " trying anyway...\n");
         BIO_puts(sbio, "STARTTLS\r\n");
-        mbuf_len = BIO_read(sbio, mbuf, BUFSIZZ);
+        mbuf_len = BIO_read(sbio, mbuf, BUFSIZZ - 1);
         if (mbuf_len < 0) {
             BIO_puts(bio_err, "BIO_read failed\n");
             goto end;
