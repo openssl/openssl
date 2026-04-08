@@ -1489,7 +1489,10 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pk
 #ifndef OPENSSL_NO_ECH
     /* same session ID is used for inner/outer when doing ECH */
     if (s->ext.ech.es != NULL) {
-        sess_id_len = sizeof(s->tmp_session_id);
+        if (SSL_IS_QUIC_HANDSHAKE(s))
+            sess_id_len = 0;
+        else
+            sess_id_len = sizeof(s->tmp_session_id);
     } else {
 #endif
         if (s->new_session || s->session->ssl_version == TLS1_3_VERSION) {

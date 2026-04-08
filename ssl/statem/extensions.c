@@ -722,8 +722,12 @@ static int verify_extension(SSL_CONNECTION *s, unsigned int context,
         ENDPOINT role = ENDPOINT_BOTH;
         custom_ext_method *meth = NULL;
 
-        if ((context & SSL_EXT_CLIENT_HELLO) != 0)
-            role = ENDPOINT_SERVER;
+        if ((context & SSL_EXT_CLIENT_HELLO) != 0) {
+            if (s->ext.ech.attempted == 1 && s->ext.ech.ch_depth == 1)
+                role = ENDPOINT_CLIENT;
+            else
+                role = ENDPOINT_SERVER;
+        }
         else if ((context & SSL_EXT_TLS1_2_SERVER_HELLO) != 0)
             role = ENDPOINT_CLIENT;
 
@@ -812,7 +816,7 @@ int tls_collect_extensions(SSL_CONNECTION *s, PACKET *packet,
      * Initialise server side custom extensions. Client side is done during
      * construction of extensions for the ClientHello.
      */
-    if ((context & SSL_EXT_CLIENT_HELLO) != 0)
+    if ((context & SSL_EXT_CLIENT_HELLO) != 0 && s->ext.ech.attempted == 0)
         custom_ext_init(&s->cert->custext);
 
     num_exts = OSSL_NELEM(ext_defs) + (exts != NULL ? exts->meths_count : 0);
@@ -1072,7 +1076,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
     /* Add custom extensions first */
-    if ((context & SSL_EXT_CLIENT_HELLO) != 0) {
+    if ((context & SSL_EXT_CLIENT_HELLO) != 0 && s->ext.ech.attempted == 0) {
         /* On the server side with initialise during ClientHello parsing */
         custom_ext_init(&s->cert->custext);
     }
