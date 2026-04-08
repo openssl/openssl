@@ -19,14 +19,35 @@ permissions:
   contents: read
 
 jobs:
+  check_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      docs_only: ${{ steps.filter.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dorny/paths-filter@9d7afb8d214ad99e78fbd4247752c4caed2b6e4c # v4.0.0
+        id: filter
+        with:
+          filters: |
+            docs_only:
+              - 'doc/**'
+              - '*.md'
+              - '*.pod'
+              - 'README*'
+              - 'funding.json'
+              - 'LICENSE.txt'
+              - 'VERSION.dat'
+
   cross-compilation-riscv:
+    needs: check_changes
     # pull request title contains 'riscv'
     # pull request title contains 'RISC-V'
     # pull request body contains '[riscv ci]'
     # push event commit message contains '[riscv ci]'
     # cron job
     # manual dispatch
-    if: contains(github.event.pull_request.title, 'riscv') || contains(github.event.pull_request.title, 'RISC-V') || contains(github.event.pull_request.body, '[riscv ci]') || contains(github.event.head_commit.message, '[riscv ci]') || (github.event_name == 'schedule' && github.repository == 'openssl/openssl') || github.event_name == 'workflow_dispatch'
+    if: needs.check_changes.outputs.docs_only != 'true' && (contains(github.event.pull_request.title, 'riscv') || contains(github.event.pull_request.title, 'RISC-V') || contains(github.event.pull_request.body, '[riscv ci]') || contains(github.event.head_commit.message, '[riscv ci]') || (github.event_name == 'schedule' && github.repository == 'openssl/openssl') || github.event_name == 'workflow_dispatch')
     strategy:
       fail-fast: false
       matrix:
