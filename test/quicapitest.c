@@ -3486,7 +3486,7 @@ static int test_ech(void)
     /* set echconfig for client */
     if (!TEST_true(SSL_set1_ech_config_list(clientquic,
             (unsigned char *)ec_pub, ec_publen))
-            || !TEST_true(SSL_set_tlsext_host_name(clientquic, inner)))
+        || !TEST_true(SSL_set_tlsext_host_name(clientquic, inner)))
         goto err;
 
     ret = SSL_connect(clientquic);
