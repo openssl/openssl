@@ -3634,7 +3634,7 @@ int setup_tests(void)
     ADD_TEST(test_client_hello_retry);
     ADD_TEST(test_quic_peer_addr_v6);
     ADD_TEST(test_quic_peer_addr_v4);
-#ifndef OPENSSL_NO_ECH
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ECH)
     ADD_TEST(test_ech);
 #endif
 
