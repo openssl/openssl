@@ -22,9 +22,7 @@
 #include "internal/quic_error.h"
 
 static OSSL_LIB_CTX *libctx = NULL;
-#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ECH)
 static char *propq = NULL;
-#endif
 static OSSL_PROVIDER *defctxnull = NULL;
 static char *certsdir = NULL;
 static char *cert = NULL;
@@ -3427,10 +3425,18 @@ static int test_quic_peer_addr_v6(void)
         "::2", 4434);
 }
 
-#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ECH)
 /* Test ECH with quic */
 static int test_ech(void)
 {
+    /*
+     * Don't try this test if various ECC things are set of unavailable
+     * or we're in a no-ech build
+     */
+#if defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_ECX) \
+    || defined(OPENSSL_NO_ECH) || !defined(OPENSSL_NO_EC_NISTP_64_GCC_128)
+    propq = NULL; /* avoid unused var warning */
+    return 1;
+#else
     SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
     SSL_CTX *sctx = SSL_CTX_new_ex(libctx, NULL, TLS_method());
     SSL *clientquic = NULL;
@@ -3526,8 +3532,8 @@ err:
     BIO_free_all(in);
 
     return testresult;
-}
 #endif
+}
 
 /***********************************************************************************/
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
@@ -3636,9 +3642,7 @@ int setup_tests(void)
     ADD_TEST(test_client_hello_retry);
     ADD_TEST(test_quic_peer_addr_v6);
     ADD_TEST(test_quic_peer_addr_v4);
-#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ECH)
     ADD_TEST(test_ech);
-#endif
 
     return 1;
 err:
