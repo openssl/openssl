@@ -30,7 +30,7 @@ OpenSSL 3.5
 ### Major changes between OpenSSL 3.5.5 and OpenSSL 3.5.6 [7 Apr 2026]
 
 OpenSSL 3.5.6 is a security patch release. The most severe CVE fixed in this
-release is Medium.
+release is Moderate.
 
 This release incorporates the following bug fixes and mitigations:
 
