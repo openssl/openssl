@@ -23,8 +23,10 @@ OSSL_STORE_expect() helps applications filter what OSSL_STORE_load() returns
 by specifying a B<OSSL_STORE_INFO> type.
 By default, no expectations on the types of objects to be loaded are made.
 I<expected_type> may be 0 to indicate explicitly that no expectation is made,
-or it may be any of the known object types (see
-L<OSSL_STORE_INFO(3)/SUPPORTED OBJECTS>) except for B<OSSL_STORE_INFO_NAME>.
+in which case the store will request all available key material from the decoder
+(equivalent to B<OSSL_KEYMGMT_SELECT_ALL>), or it may be any of the known
+object types (see L<OSSL_STORE_INFO(3)/SUPPORTED OBJECTS>) except for
+B<OSSL_STORE_INFO_NAME>.
 For example, if C<file:/foo/bar/store.pem> contains several objects of different
 type and only certificates are interesting, the application can simply say
 that it expects the type B<OSSL_STORE_INFO_CERT>.
