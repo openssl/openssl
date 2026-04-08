@@ -13,28 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  check_changes:
-    runs-on: ubuntu-latest
-    outputs:
-      docs_only: ${{ steps.filter.outputs.docs_only }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@9d7afb8d214ad99e78fbd4247752c4caed2b6e4c # v4.0.0
-        id: filter
-        with:
-          filters: |
-            docs_only:
-              - 'doc/**'
-              - '*.md'
-              - '*.pod'
-              - 'README*'
-              - 'funding.json'
-              - 'LICENSE.txt'
-              - 'VERSION.dat'
-
   cross-compilation:
-    needs: check_changes
-    if: needs.check_changes.outputs.docs_only != 'true'
     strategy:
       fail-fast: false
       matrix:
