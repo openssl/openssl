@@ -22,6 +22,7 @@
 #include "internal/quic_error.h"
 
 static OSSL_LIB_CTX *libctx = NULL;
+static char *propq = NULL;
 static OSSL_PROVIDER *defctxnull = NULL;
 static char *certsdir = NULL;
 static char *cert = NULL;
@@ -3424,6 +3425,108 @@ static int test_quic_peer_addr_v6(void)
         "::2", 4434);
 }
 
+#ifndef OPENSSL_NO_ECH
+/* Test ECH with quic */
+static int test_ech(void)
+{
+    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    SSL_CTX *sctx = SSL_CTX_new_ex(libctx, NULL, TLS_method());
+    SSL *clientquic = NULL;
+    char *rinner = NULL, *router = NULL;
+    const char *inner = "inner.example.com";
+    QUIC_TSERVER *qtserv = NULL;
+    int testresult = 0;
+    int ret;
+    /* p256 ech key pair with public name server.example */
+    const char echpem[] = "-----BEGIN PRIVATE KEY-----\n"
+                          "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg+Ygt9nhASeoYbzo2\n"
+                          "Nz/jGFAdeTo25SVYWQvnf86qzbahRANCAARS9QqkjJU311J7kS8LsyISJ8xYFbJ5\n"
+                          "5BX/pu4QiFXJ3dEGrjYh4PDH/ehFfaqZgtRRg2r/AP+vwkLiP2mqCfdv\n"
+                          "-----END PRIVATE KEY-----\n"
+                          "-----BEGIN ECHCONFIG-----\n"
+                          "AGL+DQBezwAQAEEEUvUKpIyVN9dSe5EvC7MiEifMWBWyeeQV/6buEIhVyd3RBq42\n"
+                          "IeDwx/3oRX2qmYLUUYNq/wD/r8JC4j9pqgn3bwAEAAEAAQAOc2VydmVyLmV4YW1w\n"
+                          "bGUAAA==\n"
+                          "-----END ECHCONFIG-----\n";
+    const char ec_pub[] = "AGL+DQBezwAQAEEEUvUKpIyVN9dSe5EvC7MiEifMWBWyeeQV/6buEIhVyd3RBq42"
+                          "IeDwx/3oRX2qmYLUUYNq/wD/r8JC4j9pqgn3bwAEAAEAAQAOc2VydmVyLmV4YW1w"
+                          "bGUAAA==";
+    size_t ec_publen = sizeof(ec_pub) - 1;
+    BIO *in = NULL;
+    OSSL_ECHSTORE *es = NULL;
+
+    /*
+     * TODO(ECH): setup_tests() does some weird stuff that causes
+     * reading our PEM private key to fail, the calls below fix
+     * that and as we're the last test that's probably ok for now,
+     * but better to do something better, whatever that is...
+     */
+    OSSL_PROVIDER_unload(defctxnull);
+    defctxnull = OSSL_PROVIDER_load(NULL, "default");
+
+    /* make an OSSL_ECHSTORE for echpem */
+    if ((in = BIO_new(BIO_s_mem())) == NULL
+        || BIO_write(in, echpem, (int)strlen(echpem)) <= 0
+        || !TEST_ptr(es = OSSL_ECHSTORE_new(libctx, propq))
+        || !TEST_true(OSSL_ECHSTORE_read_pem(es, in, OSSL_ECH_FOR_RETRY)))
+        goto err;
+
+    /* set OSSL_ECHSTORE for server */
+    if (!TEST_ptr(sctx) || !TEST_true(SSL_CTX_set1_echstore(sctx, es)))
+        goto err;
+
+    if (!TEST_ptr(cctx)
+        || !TEST_true(qtest_create_quic_objects(libctx, cctx, sctx, cert,
+            privkey,
+            QTEST_FLAG_FAKE_TIME,
+            &qtserv,
+            &clientquic, NULL, NULL)))
+        goto err;
+
+    /* set echconfig for client */
+    if (!TEST_true(SSL_set1_ech_config_list(clientquic,
+            (unsigned char *)ec_pub, ec_publen))
+            || !TEST_true(SSL_set_tlsext_host_name(clientquic, inner)))
+        goto err;
+
+    ret = SSL_connect(clientquic);
+    if (!TEST_int_le(ret, 0))
+        goto err;
+    /* we expect the connection to succeed */
+    if (!TEST_int_eq(SSL_get_error(clientquic, ret), SSL_ERROR_WANT_READ)
+        || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        goto err;
+    SSL_set_verify_result(clientquic, X509_V_OK);
+    if (!TEST_int_eq(SSL_ech_get1_status(clientquic, &rinner, &router),
+            SSL_ECH_STATUS_SUCCESS))
+        goto err;
+
+    testresult = 1;
+err:
+    /*
+     * TODO(ECH): valgrind tells me we're leaking some stuff from qtserv,
+     * (I think).  Not sure why, the specific lines involved are:
+     * ==519327==    by 0x1BF60C: qtest_get_bio_method (quictestlib.c:1278)
+     * ==519327==    by 0x1BD3AA: qtest_create_quic_objects (quictestlib.c:322)
+     * ==519327==    by 0x1BC95F: qtest_create_quic_objects (quictestlib.c:153)
+     * ==519327==    by 0x1BC931: qtest_create_quic_objects (quictestlib.c:147)
+     * ==519327==    by 0x1BD4F9: qtest_create_quic_objects (quictestlib.c:343)
+     * ==519327==    by 0x1BF60C: qtest_get_bio_method (quictestlib.c:1278)
+     * ==519327==    by 0x1BD3AA: qtest_create_quic_objects (quictestlib.c:322)
+     */
+    ossl_quic_tserver_free(qtserv);
+    SSL_free(clientquic);
+    OPENSSL_free(router);
+    OPENSSL_free(rinner);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    OSSL_ECHSTORE_free(es);
+    BIO_free_all(in);
+
+    return testresult;
+}
+#endif
+
 /***********************************************************************************/
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
@@ -3531,6 +3634,9 @@ int setup_tests(void)
     ADD_TEST(test_client_hello_retry);
     ADD_TEST(test_quic_peer_addr_v6);
     ADD_TEST(test_quic_peer_addr_v4);
+#ifndef OPENSSL_NO_ECH
+    ADD_TEST(test_ech);
+#endif
 
     return 1;
 err:
