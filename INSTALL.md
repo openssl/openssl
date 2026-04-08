@@ -916,8 +916,8 @@ By default, on supported platforms (such as Linux and GNU Hurd), OpenSSL
 is built with linker options (e.g., `-Wl,-znodelete`) that prevent the
 operating system from unloading the libcrypto and libssl shared libraries
 from memory, even if the application explicitly unloads them using
-`dlclose()`. On platforms that do not support these options (such as
-OpenVMS), this feature is disabled by default.
+`dlclose()`. On platforms that do not support these options, this feature
+is disabled by default.
 
 This option prevents the addition of those linker flags, allowing the
 shared libraries to be completely unloaded from the process address space.
