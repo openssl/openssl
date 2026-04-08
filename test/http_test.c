@@ -287,6 +287,8 @@ err:
     return res;
 }
 
+static int test_http_url_invalid(const char *url);
+
 static int test_http_url_frag_ok(const char *url, int exp_ssl, const char *exp_host,
     const char *exp_port, const char *exp_path, const char *exp_frag)
 {
@@ -398,7 +400,8 @@ static int test_http_url_ipv4(void)
 
 static int test_http_url_ipv6(void)
 {
-    return test_http_url_ok("http://[FF01::101]:6", 0, "[FF01::101]", "6", "/");
+    return test_http_url_ok("http://[FF01::101]:6", 0, "[FF01::101]", "6", "/")
+        && test_http_url_invalid("http://[FF01::101/path]");
 }
 
 static int test_http_url_invalid(const char *url)
