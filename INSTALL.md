@@ -912,9 +912,17 @@ Build with support for Position Independent Execution.
 
 Don't pin the shared libraries.
 
-By default, on supported platforms (such as Linux and GNU Hurd), OpenSSL is built with linker options (e.g., `-Wl,-znodelete`) that prevent the operating system from unloading the libcrypto and libssl shared libraries from memory, even if the application explicitly unloads them using `dlclose()`. On platforms that do not support these options (such as OpenVMS), this feature is disabled by default.
+By default, on supported platforms (such as Linux and GNU Hurd), OpenSSL
+is built with linker options (e.g., `-Wl,-znodelete`) that prevent the
+operating system from unloading the libcrypto and libssl shared libraries
+from memory, even if the application explicitly unloads them using
+`dlclose()`. On platforms that do not support these options (such as
+OpenVMS), this feature is disabled by default.
 
-This option prevents the addition of those linker flags, allowing the shared libraries to be completely unloaded from the process address space. This is useful for applications that dynamically load and unload OpenSSL plugins to conserve memory.
+This option prevents the addition of those linker flags, allowing the
+shared libraries to be completely unloaded from the process address space.
+This is useful for applications that dynamically load and unload OpenSSL
+plugins to conserve memory.
 
 Note that shared library pinning is not automatically disabled for static builds,
 i.e., `no-shared` does not imply `no-pinshared`. This may come as a surprise when
