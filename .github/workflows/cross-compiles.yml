@@ -28,6 +28,9 @@ jobs:
               - '*.md'
               - '*.pod'
               - 'README*'
+              - 'funding.json'
+              - 'LICENSE.txt'
+              - 'VERSION.dat'
 
   cross-compilation:
     needs: check_changes

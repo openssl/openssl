@@ -31,6 +31,9 @@ jobs:
               - '*.md'
               - '*.pod'
               - 'README*'
+              - 'funding.json'
+              - 'LICENSE.txt'
+              - 'VERSION.dat'
 
   run-checker:
     needs: check_changes
