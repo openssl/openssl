@@ -180,7 +180,7 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
     if (RISCV_HAS_V())
         BIO_snprintf(ossl_cpu_info_str + strlen(ossl_cpu_info_str),
             sizeof(ossl_cpu_info_str) - strlen(ossl_cpu_info_str),
-            " vlen:%lu", riscv_vlen());
+            " vlen:%zu", riscv_vlen());
     if ((env = getenv("OPENSSL_riscvcap")) != NULL)
         BIO_snprintf(ossl_cpu_info_str + strlen(ossl_cpu_info_str),
             sizeof(ossl_cpu_info_str) - strlen(ossl_cpu_info_str),
