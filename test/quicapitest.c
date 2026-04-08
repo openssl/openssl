@@ -22,7 +22,9 @@
 #include "internal/quic_error.h"
 
 static OSSL_LIB_CTX *libctx = NULL;
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ECH)
 static char *propq = NULL;
+#endif
 static OSSL_PROVIDER *defctxnull = NULL;
 static char *certsdir = NULL;
 static char *cert = NULL;
