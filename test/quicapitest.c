@@ -3425,7 +3425,7 @@ static int test_quic_peer_addr_v6(void)
         "::2", 4434);
 }
 
-#ifndef OPENSSL_NO_ECH
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ECH)
 /* Test ECH with quic */
 static int test_ech(void)
 {
