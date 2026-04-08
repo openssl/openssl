@@ -19,13 +19,15 @@ jobs:
       docs_only: ${{ steps.filter.outputs.docs_only }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v4
+      - uses: dorny/paths-filter@9d7afb8d214ad99e78fbd4247752c4caed2b6e4c # v4.0.0
         id: filter
         with:
           filters: |
             docs_only:
               - 'doc/**'
               - '*.md'
+              - '*.pod'
+              - 'README*'
 
   shared:
     needs: check_changes
