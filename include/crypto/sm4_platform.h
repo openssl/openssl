@@ -35,10 +35,11 @@ static inline int vpsm4_ex_capable(void)
 #define HWSM4_cbc_encrypt sm4_v8_cbc_encrypt
 #define HWSM4_ecb_encrypt sm4_v8_ecb_encrypt
 #define HWSM4_ctr32_encrypt_blocks sm4_v8_ctr32_encrypt_blocks
-#elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
-/* RV64 support */
+#elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv)
+/* RISC-V support */
 #include "riscv_arch.h"
-/* Zvksed extension (vector crypto SM4). */
+#if __riscv_xlen == 64
+/* RV64 Zvksed extension (vector crypto SM4). */
 int rv64i_zvksed_sm4_set_encrypt_key(const unsigned char *userKey,
     SM4_KEY *key);
 int rv64i_zvksed_sm4_set_decrypt_key(const unsigned char *userKey,
@@ -53,6 +54,27 @@ void rv64i_zvksed_sm4_cbc_encrypt(const unsigned char *in, unsigned char *out,
 void rv64i_zvksed_sm4_cbc_decrypt(const unsigned char *in, unsigned char *out,
     size_t len, const SM4_KEY *key,
     unsigned char *iv, int enc);
+#endif
+/* Scalar Zksed SM4 support. */
+#if __riscv_xlen == 64
+int rv64i_zksed_sm4_set_encrypt_key(const unsigned char *userKey,
+    SM4_KEY *key);
+int rv64i_zksed_sm4_set_decrypt_key(const unsigned char *userKey,
+    SM4_KEY *key);
+void rv64i_zksed_sm4_encrypt(const unsigned char *in, unsigned char *out,
+    const SM4_KEY *key);
+void rv64i_zksed_sm4_decrypt(const unsigned char *in, unsigned char *out,
+    const SM4_KEY *key);
+#elif __riscv_xlen == 32
+int rv32i_zksed_sm4_set_encrypt_key(const unsigned char *userKey,
+    SM4_KEY *key);
+int rv32i_zksed_sm4_set_decrypt_key(const unsigned char *userKey,
+    SM4_KEY *key);
+void rv32i_zksed_sm4_encrypt(const unsigned char *in, unsigned char *out,
+    const SM4_KEY *key);
+void rv32i_zksed_sm4_decrypt(const unsigned char *in, unsigned char *out,
+    const SM4_KEY *key);
+#endif
 #elif (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
 /* Intel x86_64 support */
 #include "internal/cryptlib.h"
