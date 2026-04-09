@@ -17,7 +17,6 @@
 #include <stdlib.h>
 #endif
 
-
 #if defined(OPENSSL_SYS_WIN32) && defined(_MSC_VER)
 #define ROTL(a, n) (_lrotl(a, n))
 #else

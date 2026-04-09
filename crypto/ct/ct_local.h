@@ -26,7 +26,6 @@
 #define MAX_SCT_SIZE 65535
 #define MAX_SCT_LIST_SIZE MAX_SCT_SIZE
 
-
 /* Signed Certificate Timestamp */
 struct sct_st {
     sct_version_t version;
