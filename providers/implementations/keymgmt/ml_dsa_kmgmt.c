@@ -278,8 +278,8 @@ static int ml_dsa_key_fromdata(ML_DSA_KEY *key, const OSSL_PARAM params[],
     /* Error if the supplied public key does not match the generated key */
     if (pk_len == 0
         || seed_len + sk_len == 0
-        || memcmp(ossl_ml_dsa_key_get_pub(key), pk, pk_len) == 0)
-        return 1;
+        || (pk != NULL && memcmp(ossl_ml_dsa_key_get_pub(key), pk, pk_len) == 0))
+    return 1;
     ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
         "explicit %s public key does not match private",
         key_params->alg);
