@@ -347,7 +347,8 @@ int tls_parse_ctos_status_request(SSL_CONNECTION *s, PACKET *pkt,
     if (x != NULL)
         return 1;
 
-    /* We only care about this extension if the application
+    /*
+     * We only care about this extension if the application
      * registered a callback. Otherwise, there is nothing to
      * tell us that a response is needed.
      */
