@@ -570,6 +570,8 @@ int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
             ERR_clear_last_mark();
             return ret;
         }
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return -1;
     }
 
     if (EVP_DigestVerifyUpdate(ctx, tbs, tbslen) <= 0)
