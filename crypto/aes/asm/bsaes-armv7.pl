@@ -706,7 +706,7 @@ ___
 
 $code.=<<___;
 #ifndef __KERNEL__
-# include "arm_arch.h"
+# include "arch/arm_arch.h"
 
 # define VFP_ABI_PUSH	vstmdb	sp!,{d8-d15}
 # define VFP_ABI_POP	vldmia	sp!,{d8-d15}

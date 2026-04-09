@@ -113,7 +113,7 @@ my @D = map(8*$_, (25..29));
 my @T = map([ 8*$_, 8*($_+1), 8*($_+2), 8*($_+3), 8*($_+4) ], (30,35,40,45,50));
 
 $code.=<<___;
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 
 #if defined(__thumb2__)
 .syntax	unified

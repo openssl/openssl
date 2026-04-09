@@ -16,7 +16,7 @@
 #include <unistd.h>
 #include <openssl/bn.h>
 #include "internal/cryptlib.h"
-#include "crypto/sparc_arch.h"
+#include "arch/sparc_arch.h"
 
 #if defined(__GNUC__) && defined(__linux)
 __attribute__((visibility("hidden")))

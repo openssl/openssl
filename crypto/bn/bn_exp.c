@@ -29,7 +29,7 @@
 
 #undef SPARC_T4_MONT
 #if defined(OPENSSL_BN_ASM_MONT) && (defined(__sparc__) || defined(__sparc))
-#include "crypto/sparc_arch.h"
+#include "arch/sparc_arch.h"
 #define SPARC_T4_MONT
 #endif
 

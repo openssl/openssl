@@ -131,7 +131,7 @@ sub _data_word()
 }
 
 $code=<<___;
-#include "s390x_arch.h"
+#include "arch/s390x_arch.h"
 
 .text
 

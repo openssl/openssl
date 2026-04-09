@@ -240,7 +240,7 @@ my $odd=@_[24];
 
 PERLASM_BEGIN($output);
 
-INCLUDE	("s390x_arch.h");
+INCLUDE	("arch/s390x_arch.h");
 TEXT	();
 
 ################

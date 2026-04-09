@@ -14,7 +14,7 @@
 #include <signal.h>
 #include "internal/cryptlib.h"
 #include "crypto/ctype.h"
-#include "s390x_arch.h"
+#include "arch/s390x_arch.h"
 
 #if defined(OPENSSL_SYS_LINUX) && !defined(FIPS_MODULE)
 #include <sys/types.h>

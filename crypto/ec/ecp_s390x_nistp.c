@@ -18,7 +18,7 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include "ec_local.h"
-#include "s390x_arch.h"
+#include "arch/s390x_arch.h"
 
 /* Size of parameter blocks */
 #define S390X_SIZE_PARAM 4096

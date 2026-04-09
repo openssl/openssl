@@ -124,7 +124,7 @@ $m1=$s11;
 $FRAMESIZE=14;
 
 $code=<<___;
-#include "mips_arch.h"
+#include "arch/mips_arch.h"
 
 .text
 

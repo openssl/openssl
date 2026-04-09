@@ -14,7 +14,7 @@
 #include "internal/common.h" /* for ossl_assert() */
 
 #ifdef S390X_EC_ASM
-#include "s390x_arch.h"
+#include "arch/s390x_arch.h"
 #endif
 
 ECX_KEY *ossl_ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type, int haspubkey,

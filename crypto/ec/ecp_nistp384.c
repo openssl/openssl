@@ -720,7 +720,7 @@ void p384_felem_square_reduce(felem out, const felem in);
 void p384_felem_mul_reduce(felem out, const felem in1, const felem in2);
 
 #if defined(_ARCH_PPC64)
-#include "crypto/ppc_arch.h"
+#include "arch/ppc_arch.h"
 #endif
 
 static void felem_select(void)

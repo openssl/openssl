@@ -368,7 +368,7 @@ void gcm_ghash_4bit_x86(u64 Xi[2], const u128 Htable[16], const u8 *inp,
     size_t len);
 #endif
 #elif defined(__arm__) || defined(__arm) || defined(__aarch64__) || defined(_M_ARM64)
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 #if __ARM_MAX_ARCH__ >= 7
 #define GHASH_ASM_ARM
 #define PMULL_CAPABLE (OPENSSL_armcap_P & ARMV8_PMULL)
@@ -385,21 +385,21 @@ void gcm_ghash_v8(u64 Xi[2], const u128 Htable[16], const u8 *inp,
     size_t len);
 #endif
 #elif defined(__sparc__) || defined(__sparc)
-#include "crypto/sparc_arch.h"
+#include "arch/sparc_arch.h"
 #define GHASH_ASM_SPARC
 void gcm_init_vis3(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_vis3(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_vis3(u64 Xi[2], const u128 Htable[16], const u8 *inp,
     size_t len);
 #elif defined(OPENSSL_CPUID_OBJ) && (defined(__powerpc__) || defined(__POWERPC__) || defined(_ARCH_PPC))
-#include "crypto/ppc_arch.h"
+#include "arch/ppc_arch.h"
 #define GHASH_ASM_PPC
 void gcm_init_p8(u128 Htable[16], const u64 Xi[2]);
 void gcm_gmult_p8(u64 Xi[2], const u128 Htable[16]);
 void gcm_ghash_p8(u64 Xi[2], const u128 Htable[16], const u8 *inp,
     size_t len);
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
-#include "crypto/riscv_arch.h"
+#include "arch/riscv_arch.h"
 #define GHASH_ASM_RV64I
 /* Zbc/Zbkc (scalar crypto with clmul) based routines. */
 void gcm_init_rv64i_zbc(u128 Htable[16], const u64 Xi[2]);

@@ -71,7 +71,7 @@ $SAVED_REGS_MASK = ($flavour =~ /nubi/i) ? "0x0003f000" : "0x00030000";
 ($in0,$in1,$tmp0,$tmp1,$tmp2,$tmp3,$tmp4) = ($a4,$a5,$a6,$a7,$at,$t0,$t1);
 
 $code.=<<___;
-#include "mips_arch.h"
+#include "arch/mips_arch.h"
 
 #ifdef MIPSEB
 # define MSB 0

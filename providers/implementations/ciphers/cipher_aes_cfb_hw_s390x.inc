@@ -12,7 +12,7 @@
  * This file is included by cipher_aes_cfb_hw.c
  */
 
-#include "s390x_arch.h"
+#include "arch/s390x_arch.h"
 
 #include <stdio.h>
 

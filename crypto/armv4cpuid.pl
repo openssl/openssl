@@ -22,7 +22,7 @@ open OUT,"| \"$^X\" $xlate $flavour \"$output\""
 *STDOUT=*OUT;
 
 $code.=<<___;
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 
 #if defined(__thumb2__) && !defined(__APPLE__)
 .syntax	unified

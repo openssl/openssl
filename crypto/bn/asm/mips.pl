@@ -111,7 +111,7 @@ $gp=$v1 if ($flavour =~ /nubi/i);
 $minus4=$v1;
 
 $code.=<<___;
-#include "mips_arch.h"
+#include "arch/mips_arch.h"
 
 #if defined(_MIPS_ARCH_MIPS64R6)
 # define ddivu(rs,rt)

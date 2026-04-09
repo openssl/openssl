@@ -605,7 +605,7 @@ void p521_felem_square(largefelem out, const felem in);
 void p521_felem_mul(largefelem out, const felem in1, const felem in2);
 
 #if defined(_ARCH_PPC64)
-#include "crypto/ppc_arch.h"
+#include "arch/ppc_arch.h"
 #endif
 
 static void felem_select(void)

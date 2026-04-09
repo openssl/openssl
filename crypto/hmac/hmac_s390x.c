@@ -10,7 +10,7 @@
 /* We need to use some engine deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#include "crypto/s390x_arch.h"
+#include "arch/s390x_arch.h"
 #include "hmac_local.h"
 #include "openssl/obj_mac.h"
 #include "openssl/evp.h"

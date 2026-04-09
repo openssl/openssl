@@ -68,7 +68,7 @@ my ($ctx,$inp,$len,$padbit) = map("%r$_",(2..5));
 
 PERLASM_BEGIN($output);
 
-INCLUDE	("s390x_arch.h");
+INCLUDE	("arch/s390x_arch.h");
 TEXT	();
 
 ################

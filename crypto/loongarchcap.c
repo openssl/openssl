@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 #include <sys/auxv.h>
-#include "loongarch_arch.h"
+#include "arch/loongarch_arch.h"
 
 unsigned int OPENSSL_loongarch_hwcap_P = 0;
 

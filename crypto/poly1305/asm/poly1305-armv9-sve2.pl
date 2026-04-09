@@ -104,7 +104,7 @@ my ($pwr,$mask) = map("x$_",(25..26));
 my $is_base2_26 = "w17";
 
 $code.=<<___;
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 
 .text
 

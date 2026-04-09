@@ -12,7 +12,7 @@
 
 #include <openssl/opensslconf.h>
 #include "internal/sm3.h"
-#include "crypto/riscv_arch.h"
+#include "arch/riscv_arch.h"
 #include <stdio.h>
 
 void ossl_hwsm3_block_data_order_zvksh(SM3_CTX *c, const void *p, size_t num);

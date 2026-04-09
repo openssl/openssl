@@ -55,7 +55,7 @@ my ($mac,$nonce)=($inp,$len);
 my ($h0,$h1,$h2,$r0,$r1,$s1,$t0,$t1,$d0,$d1,$d2) = map("x$_",(4..14));
 
 $code.=<<___;
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 
 .text
 

@@ -343,7 +343,7 @@ $FRAMESIZE=16;	# large enough to accommodate NUBI saved registers
 $SAVED_REGS_MASK = ($flavour =~ /nubi/i) ? "0xc0fff008" : "0xc0ff0000";
 
 $code=<<___;
-#include "mips_arch.h"
+#include "arch/mips_arch.h"
 
 .text
 
