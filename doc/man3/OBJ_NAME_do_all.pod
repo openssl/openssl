@@ -77,8 +77,8 @@ KDF methods.
 
 =back
 
-The callback function I<fn> receives a pointer to an B<OBJ_NAME> structure
-containing information about each object. The I<type> field indicates the
+The callback function I<fn> receives a pointer to an immutable B<OBJ_NAME>
+structure containing information about each object. The I<type> field indicates the
 object type. The I<alias> field is nonzero if this name is an alias for
 another name. The I<name> field contains the object name. The I<data> field
 contains type-specific data associated with the object.
