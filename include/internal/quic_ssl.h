@@ -181,6 +181,14 @@ int ossl_quic_conn_poll_events(SSL *ssl, uint64_t events, int do_tick,
 int ossl_quic_get_notifier_fd(SSL *ssl);
 void ossl_quic_enter_blocking_section(SSL *ssl, QUIC_REACTOR_WAIT_CTX *wctx);
 void ossl_quic_leave_blocking_section(SSL *ssl, QUIC_REACTOR_WAIT_CTX *wctx);
+int ossl_quic_read_early_data(SSL *s, void *buf, size_t num, size_t *readbytes);
+int ossl_quic_write_early_data(SSL *s, const void *buf, size_t num, size_t *written);
+int ossl_quic_get_early_data_status(const SSL *s);
+int ossl_quic_set_max_early_data(SSL *ssl, uint32_t max_early_data);
+uint32_t ossl_quic_get_max_early_data(const SSL *ssl);
+int ossl_quic_set_recv_max_early_data(SSL *ssl, uint32_t recv_max_early_data);
+uint32_t ossl_quic_get_recv_max_early_data(const SSL *ssl);
+void ossl_quic_update_params(SSL *s);
 
 #endif
 

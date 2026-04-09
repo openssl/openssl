@@ -434,7 +434,7 @@ void ossl_quic_channel_bind_qrx(QUIC_CHANNEL *tserver_ch, OSSL_QRX *qrx)
 
 QUIC_CHANNEL *ossl_quic_channel_alloc(const QUIC_CHANNEL_ARGS *args)
 {
-    QUIC_CHANNEL *ch = NULL;
+    QUIC_CHANNEL *ch;
 
     if ((ch = OPENSSL_zalloc(sizeof(*ch))) == NULL)
         return NULL;
@@ -450,10 +450,8 @@ QUIC_CHANNEL *ossl_quic_channel_alloc(const QUIC_CHANNEL_ARGS *args)
     ch->use_qlog = args->use_qlog;
 
     if (ch->use_qlog && args->qlog_title != NULL) {
-        if ((ch->qlog_title = OPENSSL_strdup(args->qlog_title)) == NULL) {
-            OPENSSL_free(ch);
-            return NULL;
-        }
+        if ((ch->qlog_title = OPENSSL_strdup(args->qlog_title)) == NULL)
+            goto err;
     }
 #endif
 
@@ -473,10 +471,18 @@ QUIC_CHANNEL *ossl_quic_channel_alloc(const QUIC_CHANNEL_ARGS *args)
     if (!ossl_quic_rxfc_init(&ch->conn_rxfc, NULL,
             ch->tx_init_max_data,
             DEFAULT_CONN_RXFC_MAX_WND_MUL * ch->tx_init_max_data,
-            get_time, ch))
-        return NULL;
+            get_time, ch)) {
+        goto err;
+    }
 
     return ch;
+
+err:
+#ifndef OPENSSL_NO_QLOG
+    OPENSSL_free(ch->qlog_title);
+#endif
+    OPENSSL_free(ch);
+    return NULL;
 }
 
 void ossl_quic_channel_free(QUIC_CHANNEL *ch)
@@ -1614,7 +1620,7 @@ static int ch_on_transport_params(const unsigned char *params,
                 goto malformed;
             }
 
-            assert(ch->max_local_streams_bidi == 0);
+            assert(ch->resumed || ch->max_local_streams_bidi == 0);
             ch->max_local_streams_bidi = v;
             ch->rx_init_max_streams_bidi = v;
             got_initial_max_streams_bidi = 1;
@@ -1633,7 +1639,7 @@ static int ch_on_transport_params(const unsigned char *params,
                 goto malformed;
             }
 
-            assert(ch->max_local_streams_uni == 0);
+            assert(ch->resumed || ch->max_local_streams_uni == 0);
             ch->max_local_streams_uni = v;
             ch->rx_init_max_streams_uni = v;
             got_initial_max_streams_uni = 1;
@@ -4342,4 +4348,43 @@ uint64_t ossl_quic_channel_get_active_conn_id_limit_request(const QUIC_CHANNEL *
 uint64_t ossl_quic_channel_get_active_conn_id_limit_peer_request(const QUIC_CHANNEL *ch)
 {
     return ch->rx_active_conn_id_limit;
+}
+
+/*
+ * The function updates QUIC protocol parameters from session.
+ * It complements code implemented ch_on_transport_params) where
+ * protocol parameters are saved to session.
+ *
+ * Function here is called on behalf of SSL_set_session() which
+ * populates QUIC protocol parameters from session.
+ *
+ * We will need to revisit the code which handles session and
+ * parameters. Server may want to override parameters from session because the
+ * session might be resumed on different network path.  So we may want to
+ * re-think which parameters are kept along the ssession.
+ */
+void ossl_quic_update_parms_from_session(QUIC_CHANNEL *ch)
+{
+    SSL_SESSION *session;
+
+    if (ch == NULL || ch->tls == NULL)
+        return;
+
+    session = SSL_CONNECTION_FROM_SSL(ch->tls)->session;
+    if (session == NULL)
+        return;
+
+    ch->tx_init_max_stream_data_bidi_local = session->quic_params.init_max_stream_data_bidi_local;
+    ch->tx_init_max_stream_data_bidi_remote = session->quic_params.init_max_stream_data_bidi_remote;
+    ch->tx_init_max_stream_data_uni = session->quic_params.init_max_stream_data_uni;
+    ch->rx_max_udp_payload_size = session->quic_params.max_udp_payload_size;
+    ch->tx_init_max_data = session->quic_params.init_max_data;
+    ch->max_idle_timeout_local_req = /* sent in transport params */
+        session->quic_params.max_idle_timeout;
+    ch->max_idle_timeout = /* negotiated value */
+        session->quic_params.max_idle_timeout;
+    ch->rx_active_conn_id_limit = session->quic_params.active_conn_id_limit;
+    ch->max_local_streams_bidi = session->quic_params.max_local_streams_bidi;
+    ch->max_local_streams_uni = session->quic_params.max_local_streams_uni;
+    ch->resumed = 1;
 }

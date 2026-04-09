@@ -21,6 +21,7 @@
 #include "statem/statem_local.h"
 #ifndef OPENSSL_NO_QUIC
 #include "internal/quic_types.h"
+#include "internal/quic_ssl.h"
 #endif
 
 static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
@@ -936,6 +937,11 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
 
     SSL_SESSION_free(sc->session);
     sc->session = session;
+
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC(s))
+        ossl_quic_update_params(s);
+#endif
 
     return 1;
 }

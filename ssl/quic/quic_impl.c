@@ -5976,3 +5976,50 @@ int ossl_quic_set_diag_title(SSL_CTX *ctx, const char *title)
 
     return 1;
 }
+
+int ossl_quic_read_early_data(SSL *s, void *buf, size_t num, size_t *readbytes)
+{
+    return 0;
+}
+
+int ossl_quic_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
+{
+    return 0;
+}
+
+int ossl_quic_get_early_data_status(const SSL *s)
+{
+    return 0;
+}
+
+int ossl_quic_set_max_early_data(SSL *ssl, uint32_t max_early_data)
+{
+    return 0;
+}
+
+uint32_t ossl_quic_get_max_early_data(const SSL *ssl)
+{
+    return 0;
+}
+
+int ossl_quic_set_recv_max_early_data(SSL *ssl, uint32_t recv_max_early_data)
+{
+    return 0;
+}
+
+uint32_t ossl_quic_get_recv_max_early_data(const SSL *ssl)
+{
+    return 0;
+}
+
+void ossl_quic_update_params(SSL *s)
+{
+    QCTX ctx;
+
+    if (!expect_quic_conn_only(s, &ctx))
+        return;
+
+    qctx_lock(&ctx);
+    ossl_quic_update_parms_from_session(ctx.qc->ch);
+    qctx_unlock(&ctx);
+}
