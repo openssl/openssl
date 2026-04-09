@@ -195,14 +195,14 @@ static int template_public_test(int tstid)
         || !TEST_str_eq(utf, "foo")
         /* Check NULL octet string */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "octet_s"))
-        || !TEST_ptr_null(p->data)
+        || !TEST_size_t_eq(p->data_size, 0)
         /* Check UTF8 pointer */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "utf8_p"))
         || !TEST_true(OSSL_PARAM_get_utf8_ptr(p, &cutf))
         || !TEST_str_eq(cutf, "bar-boom")
         /* Check NULL octet ptr */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "octet_p"))
-        || !TEST_ptr_null(p->data)
+        || !TEST_size_t_eq(p->data_size, 0)
         /* Check BN (zero BN becomes unsigned integer) */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "zeronumber"))
         || !TEST_str_eq(p->key, "zeronumber")
