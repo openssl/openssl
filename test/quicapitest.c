@@ -3436,8 +3436,7 @@ static int test_ech(void)
     propq = NULL; /* avoid unused var warning */
     return 1;
 #else
-    SSL_CTX *cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
-    SSL_CTX *sctx = SSL_CTX_new_ex(libctx, NULL, TLS_method());
+    SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientquic = NULL;
     char *rinner = NULL, *router = NULL;
     const char *inner = "inner.example.com";
@@ -3462,10 +3461,7 @@ static int test_ech(void)
     BIO *in = NULL;
     OSSL_ECHSTORE *es = NULL;
 
-    /*
-     * TODO(ECH): without this we get odd behaviours including
-     * CI fails and valgrind reporting odd leaks
-     */
+    /* HPKE and FIPS are not friends, so don't test in that case */
     if (is_fips) {
         TEST_info("No real ECH test as is_fips is set\n");
         return 1;
@@ -3489,6 +3485,8 @@ static int test_ech(void)
         || !TEST_true(OSSL_ECHSTORE_read_pem(es, in, OSSL_ECH_FOR_RETRY)))
         goto err;
 
+    cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
+    sctx = SSL_CTX_new_ex(libctx, NULL, TLS_method());
     /* set OSSL_ECHSTORE for server */
     if (!TEST_ptr(sctx) || !TEST_true(SSL_CTX_set1_echstore(sctx, es)))
         goto err;
