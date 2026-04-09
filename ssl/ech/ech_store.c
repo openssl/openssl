@@ -1114,7 +1114,7 @@ int OSSL_ECHSTORE_read_pem(OSSL_ECHSTORE *es, BIO *in, int for_retry)
      * the BIO_f_buffer allows us to seek back to the start.
      */
     BIO_push(fbio, in);
-    if (!PEM_read_bio_PrivateKey(fbio, &priv, NULL, NULL)
+    if (!PEM_read_bio_PrivateKey_ex(fbio, &priv, NULL, NULL, es->libctx, es->propq)
         && BIO_seek(fbio, 0) < 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;

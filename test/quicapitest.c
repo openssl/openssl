@@ -3442,7 +3442,6 @@ static int test_ech(void)
     const char *inner = "inner.example.com";
     QUIC_TSERVER *qtserv = NULL;
     int testresult = 0;
-    int ret;
     /* p256 ech key pair with public name server.example */
     const char echpem[] = "-----BEGIN PRIVATE KEY-----\n"
                           "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg+Ygt9nhASeoYbzo2\n"
@@ -3468,15 +3467,6 @@ static int test_ech(void)
     } else {
         TEST_info("Doing real ECH test as is_fips is not set\n");
     }
-
-    /*
-     * TODO(ECH): setup_tests() does some weird stuff that causes
-     * reading our PEM private key to fail, the calls below fix
-     * that and as we're the last test that's probably ok for now,
-     * but better to do something better, whatever that is...
-     */
-    OSSL_PROVIDER_unload(defctxnull);
-    defctxnull = OSSL_PROVIDER_load(NULL, "default");
 
     /* make an OSSL_ECHSTORE for echpem */
     if ((in = BIO_new(BIO_s_mem())) == NULL
@@ -3504,13 +3494,8 @@ static int test_ech(void)
             (unsigned char *)ec_pub, ec_publen))
         || !TEST_true(SSL_set_tlsext_host_name(clientquic, inner)))
         goto err;
-
-    ret = SSL_connect(clientquic);
-    if (!TEST_int_le(ret, 0))
-        goto err;
     /* we expect the connection to succeed */
-    if (!TEST_int_eq(SSL_get_error(clientquic, ret), SSL_ERROR_WANT_READ)
-        || !TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+    if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
         goto err;
     SSL_set_verify_result(clientquic, X509_V_OK);
     if (!TEST_int_eq(SSL_ech_get1_status(clientquic, &rinner, &router),
@@ -3519,17 +3504,6 @@ static int test_ech(void)
 
     testresult = 1;
 err:
-    /*
-     * TODO(ECH): valgrind tells me we're leaking some stuff from qtserv,
-     * (I think).  Not sure why, the specific lines involved are:
-     * ==519327==    by 0x1BF60C: qtest_get_bio_method (quictestlib.c:1278)
-     * ==519327==    by 0x1BD3AA: qtest_create_quic_objects (quictestlib.c:322)
-     * ==519327==    by 0x1BC95F: qtest_create_quic_objects (quictestlib.c:153)
-     * ==519327==    by 0x1BC931: qtest_create_quic_objects (quictestlib.c:147)
-     * ==519327==    by 0x1BD4F9: qtest_create_quic_objects (quictestlib.c:343)
-     * ==519327==    by 0x1BF60C: qtest_get_bio_method (quictestlib.c:1278)
-     * ==519327==    by 0x1BD3AA: qtest_create_quic_objects (quictestlib.c:322)
-     */
     ossl_quic_tserver_free(qtserv);
     SSL_free(clientquic);
     OPENSSL_free(router);
