@@ -7,7 +7,17 @@
 
 name: Cross Compile
 
-on: [pull_request, push]
+on:
+  pull_request:
+  push:
+    paths-ignore:
+      - 'doc/**'
+      - '*.md'
+      - '*.pod'
+      - 'README*'
+      - 'funding.json'
+      - 'LICENSE.txt'
+      - 'VERSION.dat'
 
 permissions:
   contents: read
