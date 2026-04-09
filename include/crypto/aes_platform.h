@@ -204,6 +204,13 @@ void ossl_aes_cfb128_vaes_enc(const unsigned char *in, unsigned char *out,
 void ossl_aes_cfb128_vaes_dec(const unsigned char *in, unsigned char *out,
     size_t len, const AES_KEY *ks,
     const unsigned char ivec[16], ossl_ssize_t *num);
+
+void ossl_aes_ctr_vaes(const unsigned char *in, unsigned char *out,
+                           size_t length, const AES_KEY *key,
+                           unsigned char *counter,
+                           unsigned char *ecount_buf, unsigned int *num);
+int ossl_aes_ctr_vaes_eligible(void);
+
 int ossl_aes_cfb128_vaes_eligible(void);
 
 void aesni_encrypt(const unsigned char *in, unsigned char *out,

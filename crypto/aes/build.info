@@ -74,11 +74,11 @@ IF[{- !$disabled{asm} -}]
 ENDIF
 
 $COMMON=aes_misc.c aes_ecb.c $AESASM
-SOURCE[../../libcrypto]=$COMMON aes_cfb.c aes_ofb.c aes_wrap.c
+SOURCE[../../libcrypto]=$COMMON aes_cfb.c aes_ofb.c aes_wrap.c aes_ctr_vaes_intrinsic.c
 IF[{- !$disabled{'deprecated-3.0'} -}]
   SOURCE[../../libcrypto]=aes_ige.c
 ENDIF
-SOURCE[../../providers/libfips.a]=$COMMON
+SOURCE[../../providers/libfips.a]=$COMMON aes_ctr_vaes_intrinsic.c
 
 # Implementations are now spread across several libraries, so the defines
 # need to be applied to all affected libraries and modules.

@@ -13,7 +13,42 @@
  */
 
 #define cipher_hw_aesni_ofb128 ossl_cipher_hw_generic_ofb128
-#define cipher_hw_aesni_ctr    ossl_cipher_hw_generic_ctr
+
+
+#if !(defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
+#define cipher_hw_vaes_ctr ossl_cipher_hw_generic_ctr
+#else
+
+/* active in 64-bit builds when AES-NI, AVX512F, and VAES are detected */
+static int aes_ctr_vaes_wrapper(
+    PROV_CIPHER_CTX* dat,
+    unsigned char *out,
+    const unsigned char *in,
+    size_t len)
+{
+    unsigned int num;
+    const AES_KEY *key = (const AES_KEY *)dat->ks;
+
+    num = (unsigned int)dat->num;
+    ossl_aes_ctr_vaes(in, out, len, key, dat->iv, dat->buf, &num);
+    dat->num = (int)num;
+
+    return 1;
+}
+
+/* CTR mode with VAES support */
+static int cipher_hw_aesni_ctr(PROV_CIPHER_CTX *ctx, unsigned char *out,
+                               const unsigned char *in, size_t len)
+{
+    /* Use VAES only when the payload is large enough to amortize the
+     * per-call setup cost (counter init). */
+    if (ossl_aes_ctr_vaes_eligible() && len >= 64) {
+        return aes_ctr_vaes_wrapper(ctx, out, in, len);
+    }
+    return ossl_cipher_hw_generic_ctr(ctx, out, in, len);
+}
+#define cipher_hw_vaes_ctr aes_ctr_vaes_wrapper
+#endif
 
 static int cipher_hw_aesni_initkey(PROV_CIPHER_CTX *dat,
                                    const unsigned char *key, size_t keylen)
