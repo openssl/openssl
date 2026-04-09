@@ -343,8 +343,8 @@ int tls_parse_ctos_status_request(SSL_CONNECTION *s, PACKET *pkt,
      * registered a callback. Otherwise, there is nothing to
      * tell us that a response is needed.
      */
-    if (SSL_CONNECTION_GET_CTX(s) == NULL
-        || SSL_CONNECTION_GET_CTX(s)->ext.status_cb == NULL)
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    if (sctx == NULL || sctx->ext.status_cb == NULL)
         return 1;
 
     /* We ignore this in a resumption handshake */
