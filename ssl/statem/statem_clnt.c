@@ -1489,6 +1489,10 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pk
 #ifndef OPENSSL_NO_ECH
     /* same session ID is used for inner/outer when doing ECH */
     if (s->ext.ech.es != NULL) {
+        if (s->version != TLS1_3_VERSION) {
+            SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_R_UNSUPPORTED_SSL_VERSION);
+            return CON_FUNC_ERROR;
+        }
         if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
             sess_id_len = sizeof(s->tmp_session_id);
         else
