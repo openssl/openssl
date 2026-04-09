@@ -315,16 +315,17 @@ static int rsasve_generate(PROV_RSA_CTX *prsactx,
     /* Step(3): out = RSAEP((n,e), z) */
     ret = RSA_public_encrypt((int)nlen, secret, out, prsactx->rsa,
         RSA_NO_PADDING);
-    if (ret) {
-        ret = 1;
-        if (outlen != NULL)
-            *outlen = nlen;
-        if (secretlen != NULL)
-            *secretlen = nlen;
-    } else {
+    if (ret <= 0 || ret != (int)nlen) {
         OPENSSL_cleanse(secret, nlen);
+        return 0;
     }
-    return ret;
+
+    if (outlen != NULL)
+        *outlen = nlen;
+    if (secretlen != NULL)
+        *secretlen = nlen;
+
+    return 1;
 }
 
 /**

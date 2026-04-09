@@ -294,7 +294,7 @@ int ossl_ec_GFp_mont_field_set_to_one(const EC_GROUP *group, BIGNUM *r,
         return 0;
     }
 
-    if (!BN_copy(r, group->field_data2))
+    if (BN_copy(r, group->field_data2) == NULL)
         return 0;
     return 1;
 }

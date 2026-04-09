@@ -21,9 +21,9 @@ functions
                                               const ASN1_OBJECT *obj, int crit,
                                               ASN1_OCTET_STRING *data);
 
- const ASN1_OBJECT *X509_EXTENSION_get_object(X509_EXTENSION *ex);
+ const ASN1_OBJECT *X509_EXTENSION_get_object(const X509_EXTENSION *ex);
  int X509_EXTENSION_get_critical(const X509_EXTENSION *ex);
- const ASN1_OCTET_STRING *X509_EXTENSION_get_data(X509_EXTENSION *ne);
+ const ASN1_OCTET_STRING *X509_EXTENSION_get_data(const X509_EXTENSION *ne);
 
 =head1 DESCRIPTION
 

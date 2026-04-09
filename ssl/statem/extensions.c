@@ -53,6 +53,7 @@
  */
 #ifndef OPENSSL_NO_ECH
 static int init_ech(SSL_CONNECTION *s, unsigned int context);
+static int final_ech(SSL_CONNECTION *s, unsigned int context, int sent);
 #endif /* OPENSSL_NO_ECH */
 
 static int final_renegotiate(SSL_CONNECTION *s, unsigned int context, int sent);
@@ -452,7 +453,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         init_ech,
         tls_parse_ctos_ech, tls_parse_stoc_ech,
         tls_construct_stoc_ech, tls_construct_ctos_ech,
-        NULL },
+        final_ech },
     { TLSEXT_TYPE_outer_extensions,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_ONLY,
         OSSL_ECH_HANDLING_CALL_BOTH,
@@ -1227,6 +1228,16 @@ static int init_ech(SSL_CONNECTION *s, unsigned int context)
     }
     if ((context & SSL_EXT_CLIENT_HELLO) != 0)
         s->ext.ech.done = 0;
+    return 1;
+}
+
+static int final_ech(SSL_CONNECTION *s, unsigned int context, int sent)
+{
+    if (s->server && s->ext.ech.success == 1
+        && s->ext.ech.inner_ech_seen_ok != 1) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_ECH_REQUIRED);
+        return 0;
+    }
     return 1;
 }
 #endif /* OPENSSL_NO_ECH */

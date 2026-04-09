@@ -299,6 +299,11 @@ static int buf2hexstr_sep(char *str, size_t str_n, size_t *strlength,
     int has_sep = (sep != CH_ZERO);
     size_t i, len = has_sep ? buflen * 3 : 1 + buflen * 2;
 
+    if (buflen > (has_sep ? SIZE_MAX / 3 : (SIZE_MAX - 1) / 2)) {
+        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_TOO_MANY_BYTES);
+        return 0;
+    }
+
     if (len == 0)
         ++len;
     if (strlength != NULL)
@@ -344,7 +349,13 @@ char *ossl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep)
     if (buflen == 0)
         return OPENSSL_zalloc(1);
 
-    tmp_n = (sep != CH_ZERO) ? buflen * 3 : 1 + buflen * 2;
+    if ((sep != CH_ZERO && (size_t)buflen > SIZE_MAX / 3)
+        || (sep == CH_ZERO && (size_t)buflen > (SIZE_MAX - 1) / 2)) {
+        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_TOO_MANY_BYTES);
+        return NULL;
+    }
+
+    tmp_n = (sep != CH_ZERO) ? (size_t)buflen * 3 : 1 + (size_t)buflen * 2;
     if ((tmp = OPENSSL_malloc(tmp_n)) == NULL)
         return NULL;
 

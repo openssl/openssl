@@ -31,6 +31,28 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Improved DTLS handshake robustness under UDP reordering by buffering and
+   replaying early ChangeCipherSpec (CCS) records at the expected state.
+
+   *Tong Li*
+
+ * `EVP_CIPHER_CTX_get_num()` and `EVP_CIPHER_CTX_set_num()' have been deprecated.
+
+   Refer to ossl-migration-guide(7) for more info.
+
+   *Shane Lontis*
+
+ * The `openssl pkeyutl` command now uses memory-mapped I/O when reading
+   raw input from a file for oneshot sign/verify operations (such as Ed25519,
+   Ed448, and ML-DSA) on platforms that support it (Unix-like). The
+   `openssl dgst` command uses the same approach for one-shot sign/verify
+   when the input is from a file, removing the previous 16 MB limit for
+   file-based input. This improves performance and supports large files
+   without doubling memory use. Other platforms and stdin input continue to
+   use the existing buffer-based path.
+
+   *John Claus*
+
  * Added AVX2 optimized ML-DSA NTT operations on `x86_64`.
 
    *Marcel Cornu and Tomasz Kantecki*
@@ -40,6 +62,10 @@ OpenSSL Releases
    Disabled features are now generated at configuration time.
 
    *Paul Louvel*
+
+ * Added `CTLOG_STORE_add0_log()` to add individual CT logs to a `CTLOG_STORE`.
+
+   *Tim Perry*
 
  * Dropped `no-ecdsa` and `no-ecdh` options from `Configure` as these options
    did not really disable the implementations. Use `no-ec` to disable the
@@ -70,16 +96,9 @@ OpenSSL Releases
 
    *William McCormack*
 
-### Changes between 3.6 and 4.0 [xx XXX xxxx]
+ * Added IKEV2 KDF (EVP_KDF-IKEV2KDF) implementation.
 
- * Added support for RFC 8701 GREASE (Generate Random Extensions And Sustain
-   Extensibility). When `SSL_OP_GREASE` is set, the TLS client injects
-   reserved GREASE values into cipher suites, supported versions, supported
-   groups, signature algorithms, key share, and extensions in the ClientHello
-   to prevent ecosystem ossification. The `openssl s_client` command gains a
-   `-grease` option to enable this.
-
-   *William McCormack*
+   *Helen Zhang*
 
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
@@ -203,9 +222,22 @@ OpenSSL Releases
 
    *Bob Beck*
 
+ * Added `SSL_add1_dnsname()`, `SSL_set1_dnsname()`, `SSL_add1_ipaddr()`,
+   and `SSL_set1_ipaddr()` functions as a replacement for `SSL_add1_host()`
+   and `SSL_set1_host()` that are deprecated now.  The new replacement API
+   functions was added to support checking multiple names against a certificate
+   with `X509_VERIFY_PARAM`.  See `X509_VERIFY_PARAM_set_flags(3)` for full
+   details.
+
+   *Bob Beck*
+
  * Added `SSL_CTX_get0_alpn_protos()` and `SSL_get0_alpn_protos()` functions.
 
    *Daniel Kubec*
+
+ * Added `SSL_CTX_is_server()`.
+
+   *Igor Ustinov*
 
  * Added `EVP_MD_CTX_serialize()`/`EVP_MD_CTX_deserialize()` functions.
    These functions allow to export the internal state of a Digest and re-import
@@ -404,11 +436,6 @@ OpenSSL Releases
    parameter.
 
    *Bob Beck*
-
- * Improved DTLS handshake robustness under UDP reordering by buffering and
-   replaying early ChangeCipherSpec (CCS) records at the expected state.
-
-   *Tong Li*
 
  * Many functions accepting `X509 *` arguments, or returning values
    from a const `X509 *` have been changed to take/return const
@@ -997,13 +1024,6 @@ OpenSSL 3.6
 
    *Dimitri John Ledkov*
 
- * `SSL_add1_host()` and `SSL_set1_host()` were deprecated. The new replacement functions
-   `SSL_add1_dnsname()`, `SSL_set1_dnsname()`, `SSL_add1_ipaddr()`, and `SSL_set1_ipaddr()` were added.
-   API was added to support checking multiple names against a certificate with
-   `X509_VERIFY_PARAM`.  See `X509_VERIFY_PARAM_set_flags(3)` for full details.
-
-   *Bob Beck*
-
  * Added `X509_CRL_get0_tbs_sigalg()` accessor for the signature
    `AlgorithmIdentifier` inside CRL's `TBSCertList`.
 
@@ -1042,10 +1062,6 @@ OpenSSL 3.6
    generation to the FIPS provider.
 
    *Dimitri John Ledkov*
-
- * `SSL_CTX_is_server()` was added.
-
-   *Igor Ustinov*
 
 OpenSSL 3.5
 -----------

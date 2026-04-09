@@ -414,6 +414,7 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
     EVP_MD_CTX *hash;
     size_t md_size;
     EVP_MD_CTX *hmac = NULL, *mac_ctx;
+    EVP_PKEY_CTX *pkctx;
     unsigned char header[13];
     int t;
     int ret = 0;
@@ -466,8 +467,13 @@ static int tls1_mac(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec, unsigned char *md
             &rec->orig_len);
         *p++ = OSSL_PARAM_construct_end();
 
-        if (!EVP_PKEY_CTX_set_params(EVP_MD_CTX_get_pkey_ctx(mac_ctx),
-                tls_hmac_params))
+        pkctx = EVP_MD_CTX_get_pkey_ctx(mac_ctx);
+        if (pkctx == NULL) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto end;
+        }
+
+        if (!EVP_PKEY_CTX_set_params(pkctx, tls_hmac_params))
             goto end;
     }
 

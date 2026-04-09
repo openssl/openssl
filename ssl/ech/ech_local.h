@@ -43,6 +43,7 @@
 
 #define OSSL_ECH_OUTER_CH_TYPE 0 /* outer ECHClientHello enum */
 #define OSSL_ECH_INNER_CH_TYPE 1 /* inner ECHClientHello enum */
+#define OSSL_ECH_UNKNOWN_CH_TYPE -1 /* we don't know yet */
 
 #define OSSL_ECH_CIPHER_LEN 4 /* ECHCipher length (2 for kdf, 2 for aead) */
 
@@ -242,6 +243,7 @@ typedef struct ossl_ech_conn_st {
      * not.
      */
     int retry_configs_ok;
+    int inner_ech_seen_ok; /* set if we see inner ECH as expected */
     int grease; /* 1 if we're GREASEing, 0 otherwise */
     char *grease_suite; /* HPKE suite string for GREASEing */
     unsigned char *sent; /* GREASEy ECH value sent, in case needed for re-tx */

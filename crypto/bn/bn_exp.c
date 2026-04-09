@@ -206,7 +206,7 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 
     if (m->neg) {
         /* ignore sign of 'm' */
-        if (!BN_copy(aa, m))
+        if (BN_copy(aa, m) == NULL)
             goto err;
         aa->neg = 0;
         if (BN_RECP_CTX_set(&recp, aa, ctx) <= 0)

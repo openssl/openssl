@@ -148,7 +148,7 @@ static int extract_keypair(const EVP_PKEY *pkey,
     ret = 1;
 end:
     if (ret != 1) {
-        OSSL_PARAM_free(keypair);
+        OSSL_PARAM_clear_free(keypair);
         keypair = NULL;
     }
     *p_keypair = keypair;
@@ -306,7 +306,7 @@ end:
     EVP_PKEY_free(params);
     EVP_PKEY_free(pkey);
     OSSL_PARAM_free(public_key);
-    OSSL_PARAM_free(keypair);
+    OSSL_PARAM_clear_free(keypair);
     OSSL_LIB_CTX_free(libctx);
 
     return ret;

@@ -13,6 +13,7 @@
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "internal/property.h"
+#include "internal/refcount.h"
 #include "../crypto/property/property_local.h"
 
 /*
@@ -22,7 +23,18 @@
  * passed around, and used as a tag of sorts.
  */
 struct ossl_provider_st {
-    int x;
+    /* Flag bits */
+    unsigned int flag_initialized : 1;
+    unsigned int flag_activated : 1;
+
+    /* Getting and setting the flags require synchronization */
+    CRYPTO_RWLOCK *flag_lock;
+
+    /* OpenSSL library side data */
+    CRYPTO_REF_COUNT refcnt;
+    CRYPTO_RWLOCK *activatecnt_lock; /* For the activatecnt counter */
+    int activatecnt;
+    char *name;
 };
 
 static int add_property_names(const char *n, ...)
@@ -419,8 +431,16 @@ err:
 
 static int test_property(void)
 {
-    static OSSL_PROVIDER fake_provider1 = { 1 };
-    static OSSL_PROVIDER fake_provider2 = { 2 };
+    static OSSL_PROVIDER fake_provider1 = {
+        .flag_initialized = 1,
+        .flag_activated = 1,
+        .name = "fake-provider1"
+    };
+    static OSSL_PROVIDER fake_provider2 = {
+        .flag_initialized = 1,
+        .flag_activated = 1,
+        .name = "fake-provider2"
+    };
     static const OSSL_PROVIDER *fake_prov1 = &fake_provider1;
     static const OSSL_PROVIDER *fake_prov2 = &fake_provider2;
     static const struct {
@@ -568,7 +588,11 @@ static int test_query_cache_stochastic(void)
     void *result;
     int errors = 0;
     int v[10001];
-    OSSL_PROVIDER prov = { 1 };
+    OSSL_PROVIDER prov = {
+        .flag_initialized = 1,
+        .flag_activated = 1,
+        .name = "dummy-test-provider"
+    };
 
     if (!TEST_ptr(store = ossl_method_store_new(NULL))
         || !add_property_names("n", NULL))

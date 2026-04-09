@@ -13,7 +13,7 @@ use OpenSSL::Test::Utils;
 use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_dir/;
 use Cwd qw(abs_path);
 
-plan tests => 5;
+plan tests => 6;
 setup("test_rand");
 
 ok(run(test(["rand_test", srctop_file("test", "default.cnf")])));
@@ -41,8 +41,15 @@ SKIP: {
     chomp(@randdata);
     ok($success && $randdata[0] eq $expected,
        "rand with ossltest provider: Check rand output is as expected");
+}
+
+{
+    my $success;
+    my @randdata;
 
     @randdata = run(app(['openssl', 'rand', '-hex', '2K' ]),
                     capture => 1, statusvar => \$success);
     chomp(@randdata);
+    ok($success && length($randdata[0]) == 4096,
+       "rand: Check rand output is of expected length");
 }

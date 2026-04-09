@@ -693,8 +693,9 @@ const OSSL_PARAM *EVP_MD_CTX_gettable_params(EVP_MD_CTX *ctx)
     if (ossl_unlikely(pctx != NULL)
         && (pctx->operation == EVP_PKEY_OP_VERIFYCTX
             || pctx->operation == EVP_PKEY_OP_SIGNCTX)
-        && pctx->op.sig.algctx != NULL
-        && pctx->op.sig.signature->gettable_ctx_md_params != NULL)
+        && pctx->op.sig.signature != NULL
+        && pctx->op.sig.signature->gettable_ctx_md_params != NULL
+        && pctx->op.sig.algctx != NULL)
         return pctx->op.sig.signature->gettable_ctx_md_params(
             pctx->op.sig.algctx);
 

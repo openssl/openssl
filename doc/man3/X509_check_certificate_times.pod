@@ -89,9 +89,9 @@ value it points to will be set to an error code when the certificate
 is not temporally valid, or 0 when the certificate is temporally valid.
 
 The integer pointed to by I<error> will be set to
-X509_V_ERROR_ERROR_IN_CERT_NOT_BEFORE_FIELD
+X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD
 or
-X509_V_ERROR_ERROR_IN_CERT_NOT_AFTER_FIELD
+X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD
 if the certificate has an invalid notBefore or notAfter field, respectively.
 
 The integer pointed to by I<error> will be set to

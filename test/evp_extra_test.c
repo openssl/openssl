@@ -6131,6 +6131,45 @@ static int test_invalid_ctx_for_digest(void)
     return ret;
 }
 
+static int test_evp_cipher_negative_length(void)
+{
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    unsigned char key[16] = { 0 };
+    unsigned char iv[16] = { 0 };
+    unsigned char buffer[32] = { 0 };
+    int outl = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
+        goto end;
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, "AES-128-CBC", testpropq)))
+        goto end;
+
+    /* Initialize encryption context */
+    if (!TEST_int_eq(EVP_EncryptInit_ex2(ctx, cipher, key, iv, NULL), 1))
+        goto end;
+
+    /* Test EVP_EncryptUpdate with negative length - should fail */
+    if (!TEST_int_eq(EVP_EncryptUpdate(ctx, buffer, &outl, (unsigned char *)"test", -1), 0))
+        goto end;
+
+    /* Reinitialize for decryption */
+    if (!TEST_int_eq(EVP_DecryptInit_ex2(ctx, cipher, key, iv, NULL), 1))
+        goto end;
+
+    /* Test EVP_DecryptUpdate with negative length - should fail */
+    if (!TEST_int_eq(EVP_DecryptUpdate(ctx, buffer, &outl, (unsigned char *)"test", -1), 0))
+        goto end;
+
+    ret = 1;
+end:
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
 static int test_evp_cipher_pipeline(void)
 {
     OSSL_PROVIDER *fake_pipeline = NULL;
@@ -6346,6 +6385,8 @@ end:
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 
 static int sign_hits = 0;
+static int encap_hits = 0;
+static int flen_ne_ret_hits = 0;
 
 static int do_sign_with_method(EVP_PKEY *pkey)
 {
@@ -6386,6 +6427,28 @@ static int tst_rsa_priv_enc(int flen, const unsigned char *from, unsigned char *
         return 0;
     sign_hits++;
     return orig_rsa_priv_enc(flen, from, to, rsa, padding);
+}
+
+static int tst_rsa_pub_enc(int flen, const unsigned char *from, unsigned char *to,
+    RSA *rsa, int padding)
+{
+    const char *marker = RSA_get_ex_data(rsa, rsa_ex_idx);
+
+    if (marker == NULL || strcmp(marker, "kem-test") != 0)
+        return 0;
+    encap_hits++;
+    return -1;
+}
+
+static int tst_rsa_pub_enc_flen_ne_ret(int flen, const unsigned char *from, unsigned char *to,
+    RSA *rsa, int padding)
+{
+    const char *marker = RSA_get_ex_data(rsa, rsa_ex_idx);
+
+    if (marker == NULL || strcmp(marker, "kem-test-flen-ne-ret") != 0)
+        return 0;
+    flen_ne_ret_hits++;
+    return flen - 1;
 }
 
 /* Test that a low level RSA method still gets used even with a provider */
@@ -6438,6 +6501,86 @@ static int test_low_level_rsa_method(void)
     testresult = 1;
 err:
     BN_free(e);
+    RSA_free(rsa);
+    EVP_PKEY_free(pkey);
+    RSA_meth_free(method);
+    return testresult;
+}
+
+static int test_low_level_rsa_kem_public_encrypt_failure(int idx)
+{
+    RSA *rsa = NULL;
+    const RSA_METHOD *def = RSA_get_default_method();
+    RSA_METHOD *method = RSA_meth_dup(def);
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    unsigned char *ct = NULL;
+    unsigned char *secret = NULL;
+    size_t ctlen = 0, secretlen = 0;
+    int testresult = 0;
+
+    if (nullprov != NULL) {
+        testresult = TEST_skip("Test does not support a non-default library context");
+        goto err;
+    }
+
+    if (!TEST_ptr(method)
+        || !TEST_ptr(pkey = load_example_rsa_key()))
+        goto err;
+
+    rsa_ex_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, NULL);
+    if (!TEST_int_ne(rsa_ex_idx, -1) || !TEST_ptr(rsa = EVP_PKEY_get1_RSA(pkey)))
+        goto err;
+
+    switch (idx) {
+    case 0:
+        if (!TEST_true(RSA_set_ex_data(rsa, rsa_ex_idx, (void *)"kem-test"))
+            || !TEST_true(RSA_meth_set_pub_enc(method, tst_rsa_pub_enc)))
+            goto err;
+        break;
+    case 1:
+        if (!TEST_true(RSA_set_ex_data(rsa, rsa_ex_idx, (void *)"kem-test-flen-ne-ret"))
+            || !TEST_true(RSA_meth_set_pub_enc(method, tst_rsa_pub_enc_flen_ne_ret)))
+            goto err;
+        break;
+    default:
+        goto err;
+    };
+    if (!TEST_true(RSA_set_method(rsa, method))
+        || !TEST_int_gt(EVP_PKEY_assign_RSA(pkey, rsa), 0))
+        goto err;
+    rsa = NULL;
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, NULL))
+        || !TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), 1)
+        || !TEST_int_eq(EVP_PKEY_CTX_set_kem_op(ctx, "RSASVE"), 1)
+        || !TEST_int_eq(EVP_PKEY_encapsulate(ctx, NULL, &ctlen, NULL, &secretlen), 1)
+        || !TEST_ptr(ct = OPENSSL_malloc(ctlen))
+        || !TEST_ptr(secret = OPENSSL_malloc(secretlen)))
+        goto err;
+
+    encap_hits = flen_ne_ret_hits = 0;
+    if (!TEST_int_eq(EVP_PKEY_encapsulate(ctx, ct, &ctlen, secret, &secretlen), 0))
+        goto err;
+
+    switch (idx) {
+    case 0:
+        if (!TEST_int_eq(encap_hits, 1))
+            goto err;
+        break;
+    case 1:
+        if (!TEST_int_eq(flen_ne_ret_hits, 1))
+            goto err;
+        break;
+    default:
+        goto err;
+    }
+    testresult = 1;
+
+err:
+    OPENSSL_free(secret);
+    OPENSSL_free(ct);
+    EVP_PKEY_CTX_free(ctx);
     RSA_free(rsa);
     EVP_PKEY_free(pkey);
     RSA_meth_free(method);
@@ -6869,6 +7012,8 @@ int setup_tests(void)
 
     ADD_TEST(test_invalid_ctx_for_digest);
 
+    ADD_TEST(test_evp_cipher_negative_length);
+
     ADD_TEST(test_evp_cipher_pipeline);
 
 #ifndef OPENSSL_NO_ML_KEM
@@ -6880,6 +7025,7 @@ int setup_tests(void)
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_low_level_rsa_method);
+    ADD_ALL_TESTS(test_low_level_rsa_kem_public_encrypt_failure, 2);
 #ifndef OPENSSL_NO_DSA
     ADD_TEST(test_low_level_dsa_method);
 #endif

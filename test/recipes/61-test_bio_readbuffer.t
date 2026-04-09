@@ -16,7 +16,7 @@ setup('test_bio_readbuffer');
 my $pemfile = srctop_file("test", "certs", "leaf.pem");
 my $derfile = 'readbuffer_leaf.der';
 
-plan tests => 3;
+plan tests => 4;
 
 ok(run(app([ 'openssl', 'x509', '-inform', 'PEM', '-in', $pemfile,
              '-outform', 'DER', '-out', $derfile])),
@@ -27,3 +27,7 @@ ok(run(test(["bio_readbuffer_test", $derfile])),
 
 ok(run(test(["bio_readbuffer_test", $pemfile])),
    "Running bio_readbuffer_test $pemfile");
+
+ok(run(app([ 'openssl', 'x509', '-inform', 'DER', '-outform', 'PEM',
+             '-noout' ], stdin => $derfile)),
+   "Test stdin read buffer in openssl app");

@@ -303,6 +303,8 @@ int ossl_uint_set_remove(UINT_SET *s, const UINT_RANGE *range)
              * handled by the above cases.
              */
             y = create_set_item(end + 1, z->range.end);
+            if (y == NULL)
+                return 0;
             ossl_list_uint_set_insert_after(s, z, y);
             z->range.end = start - 1;
             break;

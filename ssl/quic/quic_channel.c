@@ -3672,7 +3672,6 @@ static void ch_on_idle_timeout(QUIC_CHANNEL *ch)
  * @return         1 on success, 0 on failure to set required elements.
  */
 static int ch_on_new_conn_common(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
-    const QUIC_CONN_ID *peer_scid,
     const QUIC_CONN_ID *peer_dcid,
     const QUIC_CONN_ID *peer_odcid)
 {
@@ -3681,7 +3680,6 @@ static int ch_on_new_conn_common(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
         return 0;
 
     ch->init_dcid = *peer_dcid;
-    ch->cur_remote_dcid = *peer_scid;
     ch->odcid.id_len = 0;
 
     if (peer_odcid != NULL)
@@ -3725,7 +3723,6 @@ static int ch_on_new_conn_common(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
 
 /* Called when we, as a server, get a new incoming connection. */
 int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
-    const QUIC_CONN_ID *peer_scid,
     const QUIC_CONN_ID *peer_dcid)
 {
     if (!ossl_assert(ch->state == QUIC_CHANNEL_STATE_IDLE && ch->is_server))
@@ -3735,7 +3732,7 @@ int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
     if (!ossl_quic_lcidm_generate_initial(ch->lcidm, ch, &ch->cur_local_cid))
         return 0;
 
-    return ch_on_new_conn_common(ch, peer, peer_scid, peer_dcid, NULL);
+    return ch_on_new_conn_common(ch, peer, peer_dcid, NULL);
 }
 
 /**
@@ -3762,7 +3759,6 @@ int ossl_quic_channel_on_new_conn(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
  *         met (e.g., channel is not idle or not a server, or binding fails).
  */
 int ossl_quic_bind_channel(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
-    const QUIC_CONN_ID *peer_scid,
     const QUIC_CONN_ID *peer_dcid,
     const QUIC_CONN_ID *peer_odcid)
 {
@@ -3781,7 +3777,7 @@ int ossl_quic_bind_channel(QUIC_CHANNEL *ch, const BIO_ADDR *peer,
      * peer_odcid <=> is initial dst conn id chosen by peer in its
      * first initial packet we received without token.
      */
-    return ch_on_new_conn_common(ch, peer, peer_scid, peer_dcid, peer_odcid);
+    return ch_on_new_conn_common(ch, peer, peer_dcid, peer_odcid);
 }
 
 SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch)
@@ -4145,9 +4141,16 @@ int ossl_quic_channel_set_max_data_request(QUIC_CHANNEL *ch, uint64_t max_data)
     if (ossl_quic_channel_have_generated_transport_params(ch))
         return 0;
 
+    if (max_data > UINT64_MAX / DEFAULT_CONN_RXFC_MAX_WND_MUL)
+        return 0;
+
+    if (!ossl_quic_rxfc_init(&ch->conn_rxfc, NULL,
+            max_data, DEFAULT_CONN_RXFC_MAX_WND_MUL * max_data,
+            get_time, ch))
+        return 0;
+
     ch->tx_init_max_data = max_data;
-    ossl_quic_rxfc_init(&ch->conn_rxfc, NULL,
-        max_data, DEFAULT_CONN_RXFC_MAX_WND_MUL * max_data, get_time, ch);
+
     return 1;
 }
 
@@ -4201,11 +4204,17 @@ int ossl_quic_channel_set_max_streams_request(QUIC_CHANNEL *ch, uint64_t max_str
         return 0;
 
     if (is_uni) {
+        if (!ossl_quic_rxfc_init_standalone(&ch->max_streams_uni_rxfc,
+                max_streams, get_time, ch))
+            return 0;
+
         ch->tx_init_max_streams_uni = max_streams;
-        ossl_quic_rxfc_init_standalone(&ch->max_streams_uni_rxfc, max_streams, get_time, ch);
     } else {
+        if (!ossl_quic_rxfc_init_standalone(&ch->max_streams_bidi_rxfc,
+                max_streams, get_time, ch))
+            return 0;
+
         ch->tx_init_max_streams_bidi = max_streams;
-        ossl_quic_rxfc_init_standalone(&ch->max_streams_bidi_rxfc, max_streams, get_time, ch);
     }
 
     return 1;
@@ -4226,8 +4235,19 @@ int ossl_quic_channel_set_ack_delay_exponent_request(QUIC_CHANNEL *ch, uint64_t 
     if (ossl_quic_channel_have_generated_transport_params(ch))
         return 0;
 
+    /*
+     * ossl_quic_tx_packetiser_args_st::ack_delay_exponent is uint32_t,
+     * but quic_channel_st::tx_ack_delay_exp is unsigned char, checking
+     * against the smaller type.
+     */
+    if (exp > UCHAR_MAX)
+        return 0;
+
+    if (!ossl_quic_tx_packetiser_set_ack_delay_exponent(ch->txp, (uint32_t)exp))
+        return 0;
+
     ch->tx_ack_delay_exp = (unsigned char)exp;
-    ossl_quic_tx_packetiser_set_ack_delay_exponent(ch->txp, (uint32_t)exp);
+
     return 1;
 }
 
@@ -4264,6 +4284,9 @@ uint64_t ossl_quic_channel_get_max_ack_delay_peer_request(const QUIC_CHANNEL *ch
 int ossl_quic_channel_set_disable_active_migration_request(QUIC_CHANNEL *ch, uint64_t disable)
 {
     if (ossl_quic_channel_have_generated_transport_params(ch))
+        return 0;
+
+    if (disable > UCHAR_MAX)
         return 0;
 
     ch->tx_disable_active_migration = (unsigned char)disable;

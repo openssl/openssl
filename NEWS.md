@@ -172,7 +172,7 @@ This release incorporates the following bug fixes and mitigations:
   * Fixed a regression in handling stapled OCSP responses causing handshake
     failures for OpenSSL 3.6.0 servers with various client implementations.
 
-### Major changes between OpenSSL 3.5 and OpenSSL 3.6 [under development]
+### Major changes between OpenSSL 3.5 and OpenSSL 3.6.0 [1 Oct 2025]
 
 OpenSSL 3.6.0 is a feature release adding significant new functionality
 to OpenSSL.

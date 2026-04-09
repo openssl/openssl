@@ -334,7 +334,7 @@ static int b64_write(BIO *b, const char *in, int inl)
     int i;
     BIO_B64_CTX *ctx;
     BIO *next;
-    int encoded_length;
+    size_t encoded_length;
     unsigned char *encoded;
     int n_bytes_enc;
 
@@ -393,7 +393,12 @@ static int b64_write(BIO *b, const char *in, int inl)
 
     encoded_length = EVP_ENCODE_LENGTH(inl);
 
-    if (ctx->encoded_buf == NULL || (size_t)encoded_length > ctx->encoded_buf_len) {
+    if (encoded_length > SIZE_MAX / 2) {
+        ERR_raise(ERR_LIB_BIO, BIO_R_LENGTH_TOO_LONG);
+        return -1;
+    }
+
+    if (ctx->encoded_buf == NULL || encoded_length > ctx->encoded_buf_len) {
         OPENSSL_free(ctx->encoded_buf);
         ctx->encoded_buf = OPENSSL_malloc(encoded_length);
         if (ctx->encoded_buf == NULL) {

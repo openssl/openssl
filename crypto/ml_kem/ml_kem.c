@@ -1449,6 +1449,30 @@ static int encap(uint8_t *ctext, uint8_t secret[ML_KEM_SHARED_SECRET_BYTES],
 }
 
 /*
+ * Hash the input message |m'| and public key digest |h|
+ * to obtain |K| and |r|.
+ */
+static int hash_kr(uint8_t *out, uint8_t *in,
+    EVP_MD_CTX *mdctx, const ML_KEM_KEY *key)
+{
+    unsigned int sz, wanted;
+
+    wanted = ML_KEM_SHARED_SECRET_BYTES + ML_KEM_RANDOM_BYTES;
+    return (EVP_DigestInit_ex(mdctx, key->sha3_512_md, NULL)
+        && EVP_DigestUpdate(mdctx, in, ML_KEM_RANDOM_BYTES)
+        && EVP_DigestUpdate(mdctx, key->pkhash, ML_KEM_PKHASH_BYTES)
+        && EVP_DigestFinal_ex(mdctx, out, &sz)
+        && ossl_assert(sz == wanted));
+}
+
+/*-
+ * Decap needs space for: Kbar | K | r | m'
+ * We slice up a single buffer to hold them all.
+ * We don't need to cleanse the public pkhash value.
+ */
+#define DECAP_BUFFER_SZ (2 * ML_KEM_SHARED_SECRET_BYTES + 2 * ML_KEM_RANDOM_BYTES)
+
+/*
  * FIPS 203, Section 6.3, Algorithm 18: ML-KEM.Decaps_internal
  *
  * Barring failure of the supporting SHA3/SHAKE primitives, this is fully
@@ -1463,11 +1487,11 @@ static int decap(uint8_t secret[ML_KEM_SHARED_SECRET_BYTES],
     const uint8_t *ctext, uint8_t *tmp_ctext, scalar *tmp,
     EVP_MD_CTX *mdctx, const ML_KEM_KEY *key)
 {
-    uint8_t decrypted[ML_KEM_SHARED_SECRET_BYTES + ML_KEM_PKHASH_BYTES];
-    uint8_t failure_key[ML_KEM_RANDOM_BYTES];
-    uint8_t Kr[ML_KEM_SHARED_SECRET_BYTES + ML_KEM_RANDOM_BYTES];
+    uint8_t buf[DECAP_BUFFER_SZ];
+    uint8_t *failure_key = buf; /* Kbar */
+    uint8_t *Kr = failure_key + ML_KEM_SHARED_SECRET_BYTES;
     uint8_t *r = Kr + ML_KEM_SHARED_SECRET_BYTES;
-    const uint8_t *pkhash = key->pkhash;
+    uint8_t *m = r + ML_KEM_RANDOM_BYTES; /* m' */
     const ML_KEM_VINFO *vinfo = key->vinfo;
     int i;
     uint8_t mask;
@@ -1493,20 +1517,18 @@ static int decap(uint8_t secret[ML_KEM_SHARED_SECRET_BYTES],
             vinfo->algorithm_name);
         return 0;
     }
-    decrypt_cpa(decrypted, ctext, tmp, key);
-    memcpy(decrypted + ML_KEM_SHARED_SECRET_BYTES, pkhash, ML_KEM_PKHASH_BYTES);
-    if (!hash_g(Kr, decrypted, sizeof(decrypted), mdctx, key)
-        || !encrypt_cpa(tmp_ctext, decrypted, r, tmp, mdctx, key)) {
+    decrypt_cpa(m, ctext, tmp, key);
+    if (!hash_kr(Kr, m, mdctx, key)
+        || !encrypt_cpa(tmp_ctext, m, r, tmp, mdctx, key)) {
         memcpy(secret, failure_key, ML_KEM_SHARED_SECRET_BYTES);
-        OPENSSL_cleanse(decrypted, ML_KEM_SHARED_SECRET_BYTES);
-        return 1;
+        goto end;
     }
     mask = constant_time_eq_int_8(0,
         CRYPTO_memcmp(ctext, tmp_ctext, vinfo->ctext_bytes));
     for (i = 0; i < ML_KEM_SHARED_SECRET_BYTES; i++)
         secret[i] = constant_time_select_8(mask, Kr[i], failure_key[i]);
-    OPENSSL_cleanse(decrypted, ML_KEM_SHARED_SECRET_BYTES);
-    OPENSSL_cleanse(Kr, sizeof(Kr));
+end:
+    OPENSSL_cleanse(buf, DECAP_BUFFER_SZ);
     return 1;
 }
 

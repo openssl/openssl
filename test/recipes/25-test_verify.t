@@ -30,7 +30,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 212;
+plan tests => 213;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -612,6 +612,17 @@ ok(verify("ee-expired2", "", ["root-cert"], ["ca-cert"], "-attime",
 ok(!verify("ee-expired2", "", ["root-cert"], ["ca-cert"], "-attime",
            "2073566278"), "Certificate invalid at time 2073566278");
 
+# CVE-2026-28388
+my $cve_28388_stderr = "cve-2026-28388.err";
+run(app(["openssl", "verify",
+         "-attime", "1739527200",
+         "-CAfile", srctop_file(@certspath, "cve-2026-28388-ca.pem"),
+         "-crl_check", "-use_deltas",
+         "-CRLfile", srctop_file(@certspath, "cve-2026-28388-crls.pem"),
+         srctop_file(@certspath, "cve-2026-28388-leaf.pem")],
+         stderr => $cve_28388_stderr));
+ok(grep(/CRL is not yet valid/, do { open my $fh, '<', $cve_28388_stderr; <$fh> }),
+   "CVE-2026-28388");
 
 # CAstore option
 my $rootcertname = "root-cert";

@@ -56,7 +56,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => $no_fips ? 58 : 63;
+plan tests => 59 + ($no_fips ? 0 : 5);
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -107,7 +107,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "Skipping legacy PKCS#12 test because the required algorithms are disabled", 1
+    skip "Skipping legacy PKCS#12 test because the required algorithms are disabled", 2
         if disabled("des") || disabled("rc2") || disabled("legacy");
     # Test reading legacy PKCS#12 file
     ok(run(app(["openssl", "pkcs12", "-export",
@@ -115,8 +115,12 @@ SKIP: {
                 "-passin", "pass:v3-certs",
                 "-provider", "default", "-provider", "legacy",
                 "-nokeys", "-passout", "pass:v3-certs", "-descert",
-                "-out", $outfile3])),
+                "-out", $outfile3], stderr => "outerr2.txt")),
     "test_pkcs12_passcerts_legacy");
+    open DATA, "outerr2.txt";
+    my @match = grep /:error:/, <DATA>;
+    close DATA;
+    ok(scalar @match > 0 ? 0 : 1, "test_pkcs12_passcerts_legacy_outerr2_empty");
 }
 
 # Test export of PEM file with both cert and key

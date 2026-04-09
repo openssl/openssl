@@ -118,10 +118,11 @@ Filename to output to, or standard output by default.
 Digitally sign the digest using the given private key.
 
 Note that for algorithms that only support one-shot signing
-(such as Ed25519, ED448, ML-DSA-44, ML-DSA-65 andML-DSA-87) the digest must not
+(such as Ed25519, ED448, ML-DSA-44, ML-DSA-65 and ML-DSA-87) the digest must not
 be set. For these algorithms the input is buffered (and not digested) before
-signing. For these algorithms, if the input is larger than 16MB an error
-will occur.
+signing. When the input is from a file, memory-mapped I/O is used on
+supported platforms (Unix\-like), allowing large files without a size limit; when
+input is from stdin or on unsupported platforms, input is limited to 16MB.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>
 
@@ -143,6 +144,10 @@ see L<openssl-passphrase-options(1)>.
 
 Verify the signature using the public key in "filename".
 The output is either "Verified OK" or "Verification Failure".
+For one-shot verification algorithms (e.g. Ed25519, Ed448), when the input
+is from a file, memory-mapped I/O is used on supported platforms (Unix\-like),
+allowing large files; when input is from stdin or on unsupported platforms,
+input is limited to 16MB.
 
 =item B<-prverify> I<filename>
 
@@ -330,6 +335,11 @@ The FIPS-related options were removed in OpenSSL 1.1.0.
 The B<-engine> and B<-engine_impl> options were removed in OpenSSL 4.0.
 
 The B<-hmac-env> and B<-hmac-stdin> options were added in OpenSSL 4.0.
+
+Since OpenSSL 4.1, one-shot sign and verify (e.g. Ed25519, Ed448) with input
+from a file uses memory-mapped I/O on supported platforms (Unix\-like), allowing
+large files to be processed without the previous 16MB limit for file-based
+input.
 
 =head1 COPYRIGHT
 

@@ -73,6 +73,15 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #define SHUT_RDWR SD_BOTH
 #endif
 
+/*
+ * Recent MINGW versions use Windows-style unsigned INVALID_SOCKET.
+ * Since OpenSSL uses int, this only silences an already-ignored warning.
+ */
+#if defined(__MINGW32__) && defined(INVALID_SOCKET)
+#undef INVALID_SOCKET
+#define INVALID_SOCKET (INT_PTR)(~0)
+#endif
+
 #else
 #if defined(__APPLE__)
 /*

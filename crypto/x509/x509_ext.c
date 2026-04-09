@@ -42,21 +42,13 @@ const X509_EXTENSION *X509_CRL_get_ext(const X509_CRL *x, int loc)
     return X509v3_get_ext(x->crl.extensions, loc);
 }
 
-static X509_EXTENSION *delete_ext(STACK_OF(X509_EXTENSION) **sk, int loc)
-{
-    X509_EXTENSION *ret = X509v3_delete_ext(*sk, loc);
-
-    /* Empty extension lists are omitted. */
-    if (*sk != NULL && sk_X509_EXTENSION_num(*sk) == 0) {
-        sk_X509_EXTENSION_pop_free(*sk, X509_EXTENSION_free);
-        *sk = NULL;
-    }
-    return ret;
-}
-
 X509_EXTENSION *X509_CRL_delete_ext(X509_CRL *x, int loc)
 {
-    return delete_ext(&x->crl.extensions, loc);
+    X509_EXTENSION *ret = X509v3_delete_extension(&x->crl.extensions, loc);
+
+    if (ret != NULL)
+        x->crl.enc.modified = 1;
+    return ret;
 }
 
 void *X509_CRL_get_ext_d2i(const X509_CRL *x, int nid, int *crit, int *idx)
@@ -176,7 +168,7 @@ const X509_EXTENSION *X509_REVOKED_get_ext(const X509_REVOKED *x, int loc)
 
 X509_EXTENSION *X509_REVOKED_delete_ext(X509_REVOKED *x, int loc)
 {
-    return delete_ext(&x->extensions, loc);
+    return X509v3_delete_extension(&x->extensions, loc);
 }
 
 int X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex, int loc)

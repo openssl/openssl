@@ -103,7 +103,7 @@ int ossl_quic_gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len,
 #define QUIC_MAX_ACK_DELAY_EXP 20
 
 #define QUIC_DEFAULT_MAX_ACK_DELAY 25
-#define QUIC_MAX_MAX_ACK_DELAY 16384
+#define QUIC_MAX_MAX_ACK_DELAY 16383 /* RFC 9000 s. 18.2 */
 
 #define QUIC_MIN_ACTIVE_CONN_ID_LIMIT 2
 

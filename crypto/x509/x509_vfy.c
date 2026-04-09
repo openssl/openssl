@@ -1305,7 +1305,7 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
         goto end;
     }
 
-    if (OCSP_basic_verify(bs, ctx->chain, ctx->store, OCSP_TRUSTOTHER) <= 0) {
+    if (OCSP_basic_verify(bs, ctx->chain, ctx->store, 0) <= 0) {
         ret = X509_V_ERR_OCSP_SIGNATURE_FAILURE;
         goto end;
     }
@@ -1620,6 +1620,8 @@ static int check_delta_base(X509_CRL *delta, X509_CRL *base)
     if (ASN1_INTEGER_cmp(delta->base_crl_number, base->crl_number) > 0)
         return 0;
     /* Delta CRL number must exceed full CRL number */
+    if (delta->crl_number == NULL)
+        return 0;
     return ASN1_INTEGER_cmp(delta->crl_number, base->crl_number) > 0;
 }
 

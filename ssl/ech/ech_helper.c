@@ -85,9 +85,11 @@ int ossl_ech_helper_get_ch_offsets(const unsigned char *ch, size_t ch_len,
 
     if (ch == NULL || ch_len == 0 || sessid_off == NULL || exts_off == NULL
         || ech_off == NULL || echtype == NULL || ech_len == NULL
-        || sni_off == NULL || inner == NULL)
+        || sni_off == NULL || inner == NULL || exts_len == NULL)
         return 0;
     *sessid_off = *exts_off = *ech_off = *sni_off = *sni_len = *ech_len = 0;
+    *exts_len = 0;
+    *inner = OSSL_ECH_UNKNOWN_CH_TYPE;
     *echtype = 0xffff;
     if (!PACKET_buf_init(&pkt, ch, ch_len))
         return 0;

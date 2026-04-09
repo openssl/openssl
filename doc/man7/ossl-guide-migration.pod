@@ -17,6 +17,19 @@ L<https://github.com/openssl/openssl/blob/master/CHANGES.md>.
 For an overview of some of the key concepts introduced in OpenSSL 3.0 see
 L<crypto(7)>.
 
+=head1 OPENSSL 4.1
+
+=head2 Main Changes from OpenSSL 4.0
+
+=head3 Deprecation of EVP_CIPHER_CTX_get_num() and EVP_CIPHER_CTX_set_num()
+
+These functions have been deprecated in OpenSSL 4.1 since they were primarily
+used by engines, which were removed in OpenSSL 4.0.
+OpenSSL Provider algorithms maintain their state internally and should not
+expose this information. If required the state should be set and get
+via an OSSL_PARAM, bearing in mind that the bounds must be checked if setting
+this value.
+
 =head1 OPENSSL 4.0
 
 =head2 Main Changes from OpenSSL 3.6

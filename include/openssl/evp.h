@@ -552,9 +552,12 @@ int EVP_CIPHER_CTX_get_original_iv(EVP_CIPHER_CTX *ctx, void *buf, size_t len);
 OSSL_DEPRECATEDIN_3_0
 unsigned char *EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx);
 #endif
-int EVP_CIPHER_CTX_get_num(const EVP_CIPHER_CTX *ctx);
+#ifndef OPENSSL_NO_DEPRECATED_4_1
+OSSL_DEPRECATEDIN_4_1 int EVP_CIPHER_CTX_get_num(const EVP_CIPHER_CTX *ctx);
 #define EVP_CIPHER_CTX_num EVP_CIPHER_CTX_get_num
-int EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num);
+OSSL_DEPRECATEDIN_4_1 int EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num);
+#endif
+
 EVP_CIPHER_CTX *EVP_CIPHER_CTX_dup(const EVP_CIPHER_CTX *in);
 int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in);
 void *EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx);
@@ -570,7 +573,7 @@ void *EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data);
 #define EVP_CIPHER_CTX_get_mode(c) EVP_CIPHER_get_mode(EVP_CIPHER_CTX_get0_cipher(c))
 #define EVP_CIPHER_CTX_mode EVP_CIPHER_CTX_get_mode
 
-#define EVP_ENCODE_LENGTH(l) ((((l) + 2) / 3 * 4) + ((l) / 48 + 1) * 2 + 80)
+#define EVP_ENCODE_LENGTH(l) (((((size_t)(l)) + 2) / 3 * 4) + (((size_t)(l)) / 48 + 1) * 2 + 80)
 #define EVP_DECODE_LENGTH(l) (((l) + 3) / 4 * 3 + 80)
 
 #define EVP_SignInit_ex(a, b, c) EVP_DigestInit_ex(a, b, c)

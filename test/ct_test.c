@@ -508,6 +508,131 @@ static int test_ctlog_from_base64(void)
         return 0;
     return 1;
 }
+
+static int test_ctlog_store_add0_log(void)
+{
+    CTLOG_STORE *store = NULL;
+    CTLOG *log = NULL;
+    const CTLOG *found = NULL;
+    const uint8_t *log_id = NULL;
+    size_t log_id_len = 0;
+    int result = 0;
+    const char pkey_base64[] = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEmXg8sUUzwBYaWrRb+V0IopzQ6o3U"
+                               "yEJ04r5ZrRXGdpYM8K+hB0pXrGRLI0eeWz+3skXrS0IO83AhA3GpRL6s6w==";
+    const char name[] = "test log";
+
+    if (!TEST_ptr(store = CTLOG_STORE_new()))
+        goto end;
+    if (!TEST_true(CTLOG_new_from_base64(&log, pkey_base64, name)))
+        goto end;
+
+    CTLOG_get0_log_id(log, &log_id, &log_id_len);
+    if (!TEST_size_t_eq(log_id_len, CT_V1_HASHLEN))
+        goto end;
+    if (!TEST_ptr_null(CTLOG_STORE_get0_log_by_id(store, log_id, log_id_len)))
+        goto end;
+
+    if (!TEST_true(CTLOG_STORE_add0_log(store, log)))
+        goto end;
+    log = NULL;
+
+    found = CTLOG_STORE_get0_log_by_id(store, log_id, log_id_len);
+    if (!TEST_ptr(found))
+        goto end;
+    if (!TEST_str_eq(CTLOG_get0_name(found), name))
+        goto end;
+
+    result = 1;
+
+end:
+    CTLOG_STORE_free(store);
+    CTLOG_free(log);
+    return result;
+}
+
+static int test_ctlog_store_add0_log_validates_sct(void)
+{
+    CTLOG_STORE *store = NULL;
+    CTLOG *log = NULL;
+    CT_POLICY_EVAL_CTX *ct_policy_ctx = NULL;
+    X509 *cert = NULL, *issuer = NULL;
+    STACK_OF(SCT) *scts = NULL;
+    const X509_EXTENSION *sct_extension = NULL;
+    int result = 0;
+    const char pkey_base64[] = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEmXg8sUUzwBYaWrRb+V0IopzQ6o3U"
+                               "yEJ04r5ZrRXGdpYM8K+hB0pXrGRLI0eeWz+3skXrS0IO83AhA3GpRL6s6w==";
+
+    if (!TEST_ptr(store = CTLOG_STORE_new()))
+        goto end;
+    if (!TEST_true(CTLOG_new_from_base64(&log, pkey_base64, "test")))
+        goto end;
+    if (!TEST_true(CTLOG_STORE_add0_log(store, log)))
+        goto end;
+    log = NULL;
+
+    if (!TEST_ptr(ct_policy_ctx = CT_POLICY_EVAL_CTX_new()))
+        goto end;
+    CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE(ct_policy_ctx, store);
+    CT_POLICY_EVAL_CTX_set_time(ct_policy_ctx, 1580335307000ULL);
+
+    if (!TEST_ptr(cert = load_pem_cert(certs_dir, "embeddedSCTs1.pem")))
+        goto end;
+    if (!TEST_ptr(issuer = load_pem_cert(certs_dir, "embeddedSCTs1_issuer.pem")))
+        goto end;
+    CT_POLICY_EVAL_CTX_set1_cert(ct_policy_ctx, cert);
+    CT_POLICY_EVAL_CTX_set1_issuer(ct_policy_ctx, issuer);
+
+    sct_extension = X509_get_ext(cert,
+        X509_get_ext_by_NID(cert, NID_ct_precert_scts, -1));
+    if (!TEST_ptr(sct_extension))
+        goto end;
+    if (!TEST_ptr(scts = X509V3_EXT_d2i(sct_extension)))
+        goto end;
+    if (!TEST_int_eq(sk_SCT_num(scts), 1))
+        goto end;
+    if (!TEST_int_ge(SCT_LIST_validate(scts, ct_policy_ctx), 0))
+        goto end;
+    if (!TEST_int_eq(SCT_get_validation_status(sk_SCT_value(scts, 0)),
+            SCT_VALIDATION_STATUS_VALID))
+        goto end;
+
+    result = 1;
+
+end:
+    CTLOG_STORE_free(store);
+    CTLOG_free(log);
+    CT_POLICY_EVAL_CTX_free(ct_policy_ctx);
+    X509_free(cert);
+    X509_free(issuer);
+    SCT_LIST_free(scts);
+    return result;
+}
+
+static int test_ctlog_store_add0_log_null(void)
+{
+    CTLOG_STORE *store = NULL;
+    CTLOG *log = NULL;
+    int result = 0;
+    const char pkey_base64[] = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEmXg8sUUzwBYaWrRb+V0IopzQ6o3U"
+                               "yEJ04r5ZrRXGdpYM8K+hB0pXrGRLI0eeWz+3skXrS0IO83AhA3GpRL6s6w==";
+
+    if (!TEST_ptr(store = CTLOG_STORE_new()))
+        goto end;
+    if (!TEST_false(CTLOG_STORE_add0_log(store, NULL)))
+        goto end;
+
+    if (!TEST_true(CTLOG_new_from_base64(&log, pkey_base64, "test")))
+        goto end;
+    if (!TEST_false(CTLOG_STORE_add0_log(NULL, log)))
+        goto end;
+
+    result = 1;
+
+end:
+    CTLOG_STORE_free(store);
+    CTLOG_free(log);
+    return result;
+}
 #endif
 
 int setup_tests(void)
@@ -528,6 +653,9 @@ int setup_tests(void)
     ADD_TEST(test_encode_tls_sct);
     ADD_TEST(test_default_ct_policy_eval_ctx_time_is_now);
     ADD_TEST(test_ctlog_from_base64);
+    ADD_TEST(test_ctlog_store_add0_log);
+    ADD_TEST(test_ctlog_store_add0_log_validates_sct);
+    ADD_TEST(test_ctlog_store_add0_log_null);
 #else
     printf("No CT support\n");
 #endif

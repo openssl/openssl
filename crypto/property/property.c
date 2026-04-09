@@ -12,9 +12,14 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <openssl/crypto.h>
+#include <openssl/provider.h>
 #include "internal/property.h"
 #include "internal/provider.h"
+#include "internal/hashtable.h"
 #include "internal/tsan_assist.h"
+#include "internal/list.h"
+#include "internal/hashfunc.h"
+#include "internal/time.h"
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
 #include <openssl/trace.h>
@@ -37,11 +42,40 @@
 #endif
 
 /*
+ * To keep random cull distributions from being unbiased, we should keep both
+ * CACHE_SIZE and NUM_SHARDS as powers of 2
+ */
+#if (CACHE_SIZE != 0 && (CACHE_SIZE & (CACHE_SIZE - 1)))
+#error "CACHE_SIZE must be a power of 2"
+#endif
+
+#if (NUM_SHARDS != 0 && (NUM_SHARDS & (NUM_SHARDS - 1)))
+#error "NUM_SHARDS must be a power of 2"
+#endif
+/*
  * The number of elements in the query cache before we initiate a flush.
  * If reducing this, also ensure the stochastic test in test/property_test.c
  * isn't likely to fail.
  */
 #define IMPL_CACHE_FLUSH_THRESHOLD (CACHE_SIZE / NUM_SHARDS)
+
+#if defined(__GNUC__) || defined(__clang__)
+/*
+ * ALLOW_VLA enables the use of dynamically sized arrays
+ * in ossl_method_store_cache_[get|set].  This is done for
+ * performance reasons, as moving the stack pointer is
+ * way faster than getting memory from heap.  This introduces
+ * the potential for stack overflows, but we check for that
+ * by capping the size of the buffer to a large value
+ * MAX_PROP_QUERY as there shouldn't be any property queries that long.
+ */
+#define ALLOW_VLA
+#endif
+
+/*
+ * Max allowed length of our property query
+ */
+#define MAX_PROP_QUERY 4096
 
 typedef struct {
     void *method;
@@ -57,24 +91,48 @@ typedef struct {
 
 DEFINE_STACK_OF(IMPLEMENTATION)
 
-typedef struct {
-    const OSSL_PROVIDER *provider;
-    const char *query;
-    METHOD method;
-    char body[1];
+typedef struct query_st {
+    OSSL_LIST_MEMBER(lru_entry, struct query_st); /* member of our linked list */
+    void *saptr; /* pointer to our owning STORED_ALGORITHM */
+    int nid; /* nid of this query */
+    uint64_t specific_hash; /* hash of [nid,prop_query,prov] tuple */
+    uint64_t generic_hash; /* hash of [nid,prop_query] tuple */
+    METHOD method; /* METHOD for this query */
+    TSAN_QUALIFIER uint32_t used; /* flag to indicate used since last cull */
 } QUERY;
 
-DEFINE_LHASH_OF_EX(QUERY);
+/*
+ * This is our key to lookup queries
+ * It has no key data as we allocate and marshall
+ * it dynamically in ossl_method_store_cache_[set|get]
+ */
+typedef struct query_key {
+    HT_KEY key_header;
+} QUERY_KEY;
+
+IMPLEMENT_HT_VALUE_TYPE_FNS(QUERY, cache, static)
+
+DEFINE_LIST_OF(lru_entry, QUERY);
+
+typedef OSSL_LIST(lru_entry) QUERY_LRU_LIST;
 
 typedef struct {
     int nid;
     STACK_OF(IMPLEMENTATION) *impls;
-    LHASH_OF(QUERY) *cache;
 } ALGORITHM;
 
 typedef struct {
     SPARSE_ARRAY_OF(ALGORITHM) * algs;
 
+    HT *cache;
+    /*
+     * This is a list of every element in our query
+     * cache.  NOTE: Its named lru list, but to avoid
+     * having to remove/insert to the list a bunch, it
+     * actually just uses a heuristic with the QUERY used
+     * flag to identify recently used QUERY elements
+     */
+    QUERY_LRU_LIST lru_list;
     /*
      * Lock to protect each shard of |algs| from concurrent writing,
      * when individual implementations or queries are inserted.  This is used
@@ -84,11 +142,6 @@ typedef struct {
 
     /* query cache specific values */
 
-    /* Count of the query cache entries for all algs */
-    size_t cache_nelem;
-
-    /* Flag: 1 if query cache entries for all algs need flushing */
-    int cache_need_flush;
 } STORED_ALGORITHMS;
 
 struct ossl_method_store_st {
@@ -102,13 +155,6 @@ struct ossl_method_store_st {
      */
     CRYPTO_RWLOCK *biglock;
 };
-
-typedef struct {
-    LHASH_OF(QUERY) *cache;
-    size_t nelem;
-    uint32_t seed;
-    unsigned char using_global_seed;
-} IMPL_CACHE_FLUSH;
 
 DEFINE_SPARSE_ARRAY_OF(ALGORITHM);
 
@@ -201,22 +247,6 @@ static int ossl_property_unlock(STORED_ALGORITHMS *p)
     return p != 0 ? CRYPTO_THREAD_unlock(p->lock) : 0;
 }
 
-static unsigned long query_hash(const QUERY *a)
-{
-    return OPENSSL_LH_strhash(a->query);
-}
-
-static int query_cmp(const QUERY *a, const QUERY *b)
-{
-    int res = strcmp(a->query, b->query);
-
-    if (res == 0 && a->provider != NULL && b->provider != NULL)
-        res = b->provider > a->provider ? 1
-            : b->provider < a->provider ? -1
-                                        : 0;
-    return res;
-}
-
 static void impl_free(IMPLEMENTATION *impl)
 {
     if (impl != NULL) {
@@ -225,18 +255,66 @@ static void impl_free(IMPLEMENTATION *impl)
     }
 }
 
-static void impl_cache_free(QUERY *elem)
+static ossl_inline void impl_cache_free(QUERY *elem)
 {
     if (elem != NULL) {
+        STORED_ALGORITHMS *sa = elem->saptr;
+
+#ifndef NDEBUG
+        if (elem->ossl_list_lru_entry.list != NULL)
+            ossl_list_lru_entry_remove(&sa->lru_list, elem);
+#else
+        ossl_list_lru_entry_remove(&sa->lru_list, elem);
+#endif
         ossl_method_free(&elem->method);
         OPENSSL_free(elem);
     }
 }
 
-static void impl_cache_flush_alg(ossl_uintmax_t idx, ALGORITHM *alg)
+/*
+ * This is the registered free function for all of our
+ * allocated QUERY hashtables
+ */
+static void query_free(HT_VALUE *v)
 {
-    lh_QUERY_doall(alg->cache, &impl_cache_free);
-    lh_QUERY_flush(alg->cache);
+    QUERY *elem = ossl_ht_cache_QUERY_from_value(v);
+    impl_cache_free(elem);
+}
+
+static void impl_cache_flush_alg(ALGORITHM *alg, STORED_ALGORITHMS *sa)
+{
+    QUERY *q, *qn;
+    uint64_t hash;
+    QUERY_KEY key;
+
+    /*
+     * Instead of iterating over the hashtable with the
+     * ossl_ht_foreach_until function, we just traverse the
+     * linked list, as it much faster this way, as we avoid having
+     * to visit lots of potentially empty nodes
+     */
+    OSSL_LIST_FOREACH_DELSAFE(q, qn, lru_entry, &sa->lru_list)
+    {
+        /*
+         * Check for a match by nid, as we're only deleting QUERY elements
+         * that are for the nid specified in alg
+         */
+        if (q->nid == alg->nid) {
+            /*
+             * We can accelerate hash table operations here, by creating a key
+             * with a cached hash value, to avoid having to compute it again
+             * NOTE: Each QUERY contains 2 possible hash values, that we use in
+             * a priority order.  Every QUERY has a generic_hash, which is the computed
+             * hash of the [nid, prop_query] tuple, and may have a specific_hash,
+             * which is the computed has of the [nid, prop_query, provider] tuple.
+             * We use the specific hash if its available, otherwise use the
+             * generic_hash
+             */
+            hash = (q->specific_hash != 0) ? q->specific_hash : q->generic_hash;
+            HT_INIT_KEY_CACHED(&key, hash);
+            ossl_ht_delete(sa->cache, TO_HT_KEY(&key));
+        }
+    }
 }
 
 static void alg_cleanup(ossl_uintmax_t idx, ALGORITHM *a, void *arg)
@@ -245,8 +323,6 @@ static void alg_cleanup(ossl_uintmax_t idx, ALGORITHM *a, void *arg)
 
     if (a != NULL) {
         sk_IMPLEMENTATION_pop_free(a->impls, &impl_free);
-        lh_QUERY_doall(a->cache, &impl_cache_free);
-        lh_QUERY_free(a->cache);
         OPENSSL_free(a);
     }
     if (sa != NULL)
@@ -262,14 +338,24 @@ static void stored_algs_free(STORED_ALGORITHMS *sa)
         ossl_sa_ALGORITHM_doall_arg(sa[i].algs, &alg_cleanup, &sa[i]);
         ossl_sa_ALGORITHM_free(sa[i].algs);
         CRYPTO_THREAD_lock_free(sa[i].lock);
+        ossl_ht_free(sa[i].cache);
     }
 
     OPENSSL_free(sa);
 }
 
-static STORED_ALGORITHMS *stored_algs_new(void)
+static STORED_ALGORITHMS *stored_algs_new(OSSL_LIB_CTX *ctx)
 {
     STORED_ALGORITHMS *ret;
+    HT_CONFIG ht_conf = {
+        .ctx = ctx,
+        .ht_free_fn = query_free,
+        .ht_hash_fn = NULL,
+        .init_neighborhoods = 1,
+        .collision_check = 1,
+        .lockless_reads = 0,
+        .no_rcu = 1
+    };
 
     ret = OPENSSL_calloc(NUM_SHARDS, sizeof(STORED_ALGORITHMS));
     if (ret == NULL)
@@ -282,6 +368,9 @@ static STORED_ALGORITHMS *stored_algs_new(void)
 
         ret[i].lock = CRYPTO_THREAD_lock_new();
         if (ret[i].lock == NULL)
+            goto err;
+        ret[i].cache = ossl_ht_new(&ht_conf);
+        if (ret[i].cache == NULL)
             goto err;
     }
 
@@ -304,7 +393,7 @@ OSSL_METHOD_STORE *ossl_method_store_new(OSSL_LIB_CTX *ctx)
     res = OPENSSL_zalloc(sizeof(*res));
     if (res != NULL) {
         res->ctx = ctx;
-        if ((res->algs = stored_algs_new()) == NULL
+        if ((res->algs = stored_algs_new(ctx)) == NULL
             || (res->biglock = CRYPTO_THREAD_lock_new()) == NULL) {
             ossl_method_store_free(res);
             return NULL;
@@ -445,8 +534,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
     alg = ossl_method_store_retrieve(sa, nid);
     if (alg == NULL) {
         if ((alg = OPENSSL_zalloc(sizeof(*alg))) == NULL
-            || (alg->impls = sk_IMPLEMENTATION_new_null()) == NULL
-            || (alg->cache = lh_QUERY_new(&query_hash, &query_cmp)) == NULL)
+            || (alg->impls = sk_IMPLEMENTATION_new_null()) == NULL)
             goto err;
         alg->nid = nid;
         if (!ossl_method_store_insert(sa, alg))
@@ -836,8 +924,7 @@ fin:
 static void ossl_method_cache_flush_alg(STORED_ALGORITHMS *sa,
     ALGORITHM *alg)
 {
-    sa->cache_nelem -= lh_QUERY_num_items(alg->cache);
-    impl_cache_flush_alg(0, alg);
+    impl_cache_flush_alg(alg, sa);
 }
 
 static void ossl_method_cache_flush(STORED_ALGORITHMS *sa, int nid)
@@ -855,119 +942,387 @@ int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
 
         if (!ossl_property_write_lock(sa))
             return 0;
-        ossl_sa_ALGORITHM_doall(sa->algs, &impl_cache_flush_alg);
-        sa->cache_nelem = 0;
+        ossl_ht_flush(sa->cache);
         ossl_property_unlock(sa);
     }
 
     return 1;
 }
 
-IMPLEMENT_LHASH_DOALL_ARG(QUERY, IMPL_CACHE_FLUSH);
-
 /*
- * Flush an element from the query cache (perhaps).
- *
- * In order to avoid taking a write lock or using atomic operations
- * to keep accurate least recently used (LRU) or least frequently used
- * (LFU) information, the procedure used here is to stochastically
- * flush approximately half the cache.
- *
- * This procedure isn't ideal, LRU or LFU would be better.  However,
- * in normal operation, reaching a full cache would be unexpected.
- * It means that no steady state of algorithm queries has been reached.
- * That is, it is most likely an attack of some form.  A suboptimal clearance
- * strategy that doesn't degrade performance of the normal case is
- * preferable to a more refined approach that imposes a performance
- * impact.
+ * Generate some randomness in our hash table when we need it, since
+ * The use of this particular code occurs before our algorithms are
+ * registered, preventing the use of the RAND_bytes apis.
+ * Based off of:
+ * https://doi.org/10.18637/jss.v008.i14
  */
-static void impl_cache_flush_cache(QUERY *c, IMPL_CACHE_FLUSH *state)
+static ossl_inline void generate_random_seed(uint32_t *seed)
 {
-    uint32_t n;
+    OSSL_TIME ts;
 
-    /*
-     * Implement the 32 bit xorshift as suggested by George Marsaglia in:
-     *      https://doi.org/10.18637/jss.v008.i14
-     *
-     * This is a very fast PRNG so there is no need to extract bits one at a
-     * time and use the entire value each time.
-     */
-    n = state->seed;
-    n ^= n << 13;
-    n ^= n >> 17;
-    n ^= n << 5;
-    state->seed = n;
-
-    if ((n & 1) != 0)
-        impl_cache_free(lh_QUERY_delete(state->cache, c));
-    else
-        state->nelem++;
-}
-
-static void impl_cache_flush_one_alg(ossl_uintmax_t idx, ALGORITHM *alg,
-    void *v)
-{
-    IMPL_CACHE_FLUSH *state = (IMPL_CACHE_FLUSH *)v;
-    unsigned long orig_down_load = lh_QUERY_get_down_load(alg->cache);
-
-    state->cache = alg->cache;
-    lh_QUERY_set_down_load(alg->cache, 0);
-    lh_QUERY_doall_IMPL_CACHE_FLUSH(state->cache, &impl_cache_flush_cache,
-        state);
-    lh_QUERY_set_down_load(alg->cache, orig_down_load);
-}
-
-static void ossl_method_cache_flush_some(STORED_ALGORITHMS *sa)
-{
-    IMPL_CACHE_FLUSH state;
-    static TSAN_QUALIFIER uint32_t global_seed = 1;
-
-    state.nelem = 0;
-    state.using_global_seed = 0;
-    if ((state.seed = OPENSSL_rdtsc()) == 0) {
-        /* If there is no timer available, seed another way */
-        state.using_global_seed = 1;
-        state.seed = tsan_load(&global_seed);
+    if (*seed == 0) {
+        *seed = OPENSSL_rdtsc();
+        if (*seed == 0) {
+            ts = ossl_time_now();
+            *seed = (uint32_t)ts.t;
+        }
     }
 
-    sa->cache_need_flush = 0;
-    ossl_sa_ALGORITHM_doall_arg(sa->algs, &impl_cache_flush_one_alg, &state);
-    sa->cache_nelem = state.nelem;
-
-    /* Without a timer, update the global seed */
-    if (state.using_global_seed)
-        tsan_add(&global_seed, state.seed);
+    *seed ^= *seed << 13;
+    *seed ^= *seed >> 17;
+    *seed ^= *seed << 5;
 }
 
-int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
-    int nid, const char *prop_query, void **method)
+/*
+ * Cull items from the QUERY cache.
+ *
+ * We don't want to let our QUERY cache grow too large, so if we grow beyond
+ * its threshold, randomly discard some entries.
+ *
+ * We do this with an lru-like heuristic, and some randomness.
+ *
+ * the process is:
+ * 1) Iterate over each element in the QUERY hashtable, for each element:
+ * 2) If its used flag is set, its been recently used, so skip it.
+ * 3) Otherwise, consult the sa->seed value.  Check the low order bit of sa->seed,
+ *    which at cache creation is randomly generated.  If the bit is set, select the QUERY
+ *    precomputed hash value, and delete it form the table.
+ * 4) Shift the seed value right one bit.
+ * 5) Repeat steps 1-4 until the number of requested entries have been removed
+ * 6) Update our sa->seed by xoring the current sa->seed with the last hash that was eliminated.
+ */
+static void QUERY_cache_select_cull(ALGORITHM *alg, STORED_ALGORITHMS *sa,
+    size_t cullcount, uint32_t seed)
+{
+    size_t culled = 0;
+    uint64_t hash = 0;
+    uint32_t used = 0;
+    QUERY *q, *qn;
+    QUERY_KEY key;
+
+cull_again:
+    OSSL_LIST_FOREACH_DELSAFE(q, qn, lru_entry, &sa->lru_list)
+    {
+        /*
+         * Skip QUERY elements that have been recently used
+         * reset this flag so all elements have to continuously
+         * demonstrate use.
+         */
+        used = tsan_load(&q->used);
+        tsan_store(&q->used, 0);
+        if (used)
+            continue;
+        /*
+         * If the low order bit in the seed is set, we can delete this entry
+         */
+        if (seed & 0x1) {
+            /*
+             * Select the hash value to delete in priority order, specific if its
+             * given, generic otherwise
+             */
+            hash = (q->specific_hash != 0) ? q->specific_hash : q->generic_hash;
+            HT_INIT_KEY_CACHED(&key, hash);
+            if (ossl_ht_delete(sa->cache, TO_HT_KEY(&key))) {
+                culled++;
+                if (culled == cullcount)
+                    break;
+            }
+            generate_random_seed(&seed);
+        } else {
+            seed = seed >> 1;
+        }
+    }
+    /*
+     * If we didn't cull our requested number of entries
+     * try again.  Note that the used flag is cleared on
+     * all entries now, so every entry is fair game
+     */
+    if (culled < cullcount)
+        goto cull_again;
+}
+
+static ossl_inline int ossl_method_store_cache_get_locked(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
+    int nid, const char *prop_query, size_t keylen, STORED_ALGORITHMS *sa, QUERY **post_insert,
+    void **method)
 {
     ALGORITHM *alg;
-    QUERY elem, *r;
+    QUERY *r = NULL;
     int res = 0;
-    STORED_ALGORITHMS *sa;
+    QUERY_KEY key;
+    HT_VALUE *v = NULL;
+    uint64_t generic_hash;
+#ifdef ALLOW_VLA
+    uint8_t keybuf[keylen];
+#else
+    uint8_t *keybuf;
+#endif
 
-    if (nid <= 0 || store == NULL || prop_query == NULL)
-        return 0;
+    *post_insert = NULL;
 
-    sa = stored_algs_shard(store, nid);
-    if (!ossl_property_read_lock(sa))
-        return 0;
+#ifndef ALLOW_VLA
+    keybuf = OPENSSL_malloc(keylen);
+    if (keybuf == NULL)
+        goto err;
+#endif
+
     alg = ossl_method_store_retrieve(sa, nid);
     if (alg == NULL)
         goto err;
 
-    elem.query = prop_query;
-    elem.provider = prov;
-    r = lh_QUERY_retrieve(alg->cache, &elem);
-    if (r == NULL)
-        goto err;
+    /*
+     * Marshall our lookup key.
+     * the key is always [nid,prop_query] and may include
+     * the address of the provider on the end if given
+     */
+    keylen = 0;
+    memcpy(&keybuf[keylen], &nid, sizeof(int));
+    keylen += sizeof(int);
+    memcpy(&keybuf[keylen], prop_query, strlen(prop_query));
+    keylen += strlen(prop_query);
+    if (prov != NULL) {
+        memcpy(&keybuf[keylen], &prov, sizeof(OSSL_PROVIDER *));
+        keylen += sizeof(OSSL_PROVIDER *);
+    }
+
+    HT_INIT_KEY_EXTERNAL(&key, keybuf, keylen);
+
+    r = ossl_ht_cache_QUERY_get(sa->cache, TO_HT_KEY(&key), &v);
+    if (r == NULL) {
+        if (prov != NULL)
+            goto err;
+        /*
+         * We don't have a providerless entry for this lookup
+         * (it likely got culled), so we need to rebuild one
+         * we can used the cached hash value from the above lookup
+         * to scan the lru list for a good match
+         */
+        generic_hash = HT_KEY_GET_HASH(&key);
+        OSSL_LIST_FOREACH(r, lru_entry, &sa->lru_list)
+        {
+            if (r->generic_hash == generic_hash) {
+                /*
+                 * We found an entry for which the generic_hash
+                 * (that is the hash of the [nid,propquery] tuple
+                 * matches what we tried, and failed to look up
+                 * above, so duplicate this as our new generic lookup
+                 */
+                r = OPENSSL_memdup(r, sizeof(*r));
+                if (r == NULL)
+                    goto err;
+                r->generic_hash = generic_hash;
+                r->specific_hash = 0;
+                r->used = 0;
+                ossl_list_lru_entry_init_elem(r);
+                HT_INIT_KEY_CACHED(&key, generic_hash);
+                /*
+                 * We need to take a reference here to represent the hash table
+                 * ownership.  We will take a second reference below as the caller
+                 * owns it as well
+                 */
+                if (!ossl_method_up_ref(&r->method)) {
+                    impl_cache_free(r);
+                    r = NULL;
+                }
+                /*
+                 * Inform the caller that we need to insert this newly created
+                 * QUERY into the hash table.  We do this because we only
+                 * hold the read lock here, so after the caller drops it, we
+                 * can then take the write lock to do the insert
+                 */
+                *post_insert = r;
+                break;
+            }
+        }
+        if (r == NULL)
+            goto err;
+    }
+    tsan_store(&r->used, 1);
     if (ossl_method_up_ref(&r->method)) {
         *method = r->method.method;
         res = 1;
     }
 err:
+#ifndef ALLOW_VLA
+    OPENSSL_free(keybuf);
+#endif
+    return res;
+}
+
+int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
+    int nid, const char *prop_query, void **method)
+{
+    size_t keylen = sizeof(int) + ((prop_query == NULL) ? 1 : strlen(prop_query))
+        + sizeof(OSSL_PROVIDER *);
+    int ret;
+    STORED_ALGORITHMS *sa;
+    QUERY *post_insert = NULL;
+    QUERY_KEY key;
+
+    if (nid <= 0 || store == NULL || prop_query == NULL)
+        return 0;
+
+    if (keylen > MAX_PROP_QUERY)
+        return 0;
+
+    sa = stored_algs_shard(store, nid);
+    if (!ossl_property_read_lock(sa))
+        return 0;
+
+    /*
+     * Note: We've bifurcated this function into a locked and unlocked variant
+     * Not because of any specific need to do the locked work from some other location,
+     * but rather because in the interests of performance, we allocate a buffer on the
+     * stack which can be an arbitrary size.  In order to allow for clamping of that
+     * value, we check the keylen above for size limit, and then use this call to create
+     * a new stack frame in which we can safely do that stack allocation.
+     */
+    ret = ossl_method_store_cache_get_locked(store, prov, nid, prop_query, keylen, sa,
+        &post_insert, method);
+
     ossl_property_unlock(sa);
+
+    if (ret == 1 && post_insert != NULL) {
+        if (!ossl_property_write_lock(sa)) {
+            impl_cache_free(post_insert);
+            *method = NULL;
+            ret = 0;
+        } else {
+            HT_INIT_KEY_CACHED(&key, post_insert->generic_hash);
+
+            if (!ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), post_insert, NULL)) {
+                /*
+                 * We raced with another thread that added the same QUERY, pitch this one
+                 */
+                impl_cache_free(post_insert);
+                *method = NULL;
+                ret = 0;
+            } else {
+                ossl_list_lru_entry_insert_tail(&sa->lru_list, post_insert);
+            }
+            ossl_property_unlock(sa);
+        }
+    }
+    return ret;
+}
+
+static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
+    int nid, const char *prop_query, size_t keylen, STORED_ALGORITHMS *sa, void *method,
+    int (*method_up_ref)(void *),
+    void (*method_destruct)(void *))
+{
+    QUERY *old = NULL, *p = NULL;
+    ALGORITHM *alg;
+    QUERY_KEY key;
+    int res = 1;
+    size_t cullcount;
+#ifdef ALLOW_VLA
+    uint8_t keybuf[keylen];
+#else
+    uint8_t *keybuf;
+#endif
+
+#ifndef ALLOW_VLA
+    keybuf = OPENSSL_malloc(keylen);
+    if (keybuf == NULL)
+        goto err;
+#endif
+
+    alg = ossl_method_store_retrieve(sa, nid);
+    if (alg == NULL)
+        goto err;
+    if (ossl_ht_count(sa->cache) > IMPL_CACHE_FLUSH_THRESHOLD) {
+        uint32_t seed = 0;
+
+        generate_random_seed(&seed);
+        /*
+         * Cull between 1 and 25% of this cache
+         */
+        cullcount = ossl_ht_count(sa->cache);
+        /*
+         * If this cache has less than 25% of the total entries
+         * in the STORED_ALGORITHMS shard, don't bother culling
+         * Just wait until we try to add to a larger cache
+         */
+        if (cullcount >= 4) {
+            cullcount = seed % (cullcount >> 2);
+            cullcount = (cullcount < 1) ? 1 : cullcount;
+            QUERY_cache_select_cull(alg, sa, cullcount, seed);
+        }
+    }
+
+    /*
+     * Marshall our lookup key
+     * NOTE: Provider cant be NULL here so we always add it
+     */
+    keylen = 0;
+    memcpy(&keybuf[keylen], &nid, sizeof(int));
+    keylen += sizeof(int);
+    memcpy(&keybuf[keylen], prop_query, strlen(prop_query));
+    keylen += strlen(prop_query);
+    memcpy(&keybuf[keylen], &prov, sizeof(OSSL_PROVIDER *));
+    keylen += sizeof(OSSL_PROVIDER *);
+
+    HT_INIT_KEY_EXTERNAL(&key, keybuf, keylen);
+
+    if (method == NULL) {
+        ossl_ht_delete(sa->cache, TO_HT_KEY(&key));
+        goto end;
+    }
+    p = OPENSSL_malloc(sizeof(*p));
+    if (p != NULL) {
+        p->saptr = sa;
+        p->nid = nid;
+        p->used = 0;
+        ossl_list_lru_entry_init_elem(p);
+        p->method.method = method;
+        p->method.up_ref = method_up_ref;
+        p->method.free = method_destruct;
+        if (!ossl_method_up_ref(&p->method))
+            goto err;
+
+        if (!ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), p, &old)) {
+            impl_cache_free(p);
+            goto err;
+        }
+        p->specific_hash = HT_KEY_GET_HASH(&key);
+        p->generic_hash = 0;
+        if (old != NULL)
+            impl_cache_free(old);
+        ossl_list_lru_entry_insert_head(&sa->lru_list, p);
+        /*
+         * We also want to add this method into the cache against a key computed _only_
+         * from nid and property query.  This lets us match in the event someone does a lookup
+         * against a NULL provider (i.e. the "any provided alg will do" match
+         */
+        keylen -= sizeof(OSSL_PROVIDER *);
+        HT_INIT_KEY_EXTERNAL(&key, keybuf, keylen);
+        old = p;
+        p = OPENSSL_memdup(p, sizeof(*p));
+        if (p == NULL)
+            goto err;
+
+        ossl_list_lru_entry_init_elem(p);
+        if (!ossl_method_up_ref(&p->method))
+            goto err;
+        if (ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), p, NULL)) {
+            p->specific_hash = 0;
+            p->generic_hash = old->generic_hash = HT_KEY_GET_HASH(&key);
+            ossl_list_lru_entry_insert_tail(&sa->lru_list, p);
+        } else {
+            impl_cache_free(p);
+            p = NULL;
+            goto err;
+        }
+
+        goto end;
+    }
+err:
+    res = 0;
+    OPENSSL_free(p);
+end:
+#ifndef ALLOW_VLA
+    OPENSSL_free(keybuf);
+#endif
     return res;
 }
 
@@ -976,11 +1331,10 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int (*method_up_ref)(void *),
     void (*method_destruct)(void *))
 {
-    QUERY elem, *old, *p = NULL;
-    ALGORITHM *alg;
     STORED_ALGORITHMS *sa;
-    size_t len;
     int res = 1;
+    size_t keylen = sizeof(int) + ((prop_query == NULL) ? 1 : strlen(prop_query))
+        + sizeof(OSSL_PROVIDER *);
 
     if (nid <= 0 || store == NULL || prop_query == NULL)
         return 0;
@@ -988,49 +1342,20 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     if (!ossl_assert(prov != NULL))
         return 0;
 
+    if (keylen > MAX_PROP_QUERY)
+        return 0;
+
     sa = stored_algs_shard(store, nid);
     if (!ossl_property_write_lock(sa))
         return 0;
-    if (sa->cache_need_flush)
-        ossl_method_cache_flush_some(sa);
-    alg = ossl_method_store_retrieve(sa, nid);
-    if (alg == NULL)
-        goto err;
 
-    if (method == NULL) {
-        elem.query = prop_query;
-        elem.provider = prov;
-        if ((old = lh_QUERY_delete(alg->cache, &elem)) != NULL) {
-            impl_cache_free(old);
-            sa->cache_nelem--;
-        }
-        goto end;
-    }
-    p = OPENSSL_malloc(sizeof(*p) + (len = strlen(prop_query)));
-    if (p != NULL) {
-        p->query = p->body;
-        p->provider = prov;
-        p->method.method = method;
-        p->method.up_ref = method_up_ref;
-        p->method.free = method_destruct;
-        if (!ossl_method_up_ref(&p->method))
-            goto err;
-        memcpy((char *)p->query, prop_query, len + 1);
-        if ((old = lh_QUERY_insert(alg->cache, p)) != NULL) {
-            impl_cache_free(old);
-            goto end;
-        }
-        if (!lh_QUERY_error(alg->cache)) {
-            if (++sa->cache_nelem >= IMPL_CACHE_FLUSH_THRESHOLD)
-                sa->cache_need_flush = 1;
-            goto end;
-        }
-        ossl_method_free(&p->method);
-    }
-err:
-    res = 0;
-    OPENSSL_free(p);
-end:
+    /*
+     * As with cache_get_locked, we do this to allow ourselves the opportunity to make sure
+     * keylen isn't so large that the stack allocation of keylen bytes will case a stack
+     * overflow
+     */
+    res = ossl_method_store_cache_set_locked(store, prov, nid, prop_query, keylen, sa, method,
+        method_up_ref, method_destruct);
     ossl_property_unlock(sa);
     return res;
 }

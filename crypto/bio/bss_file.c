@@ -218,8 +218,19 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_INFO:
         if (b->flags & BIO_FLAGS_UPLINK_INTERNAL)
             ret = UP_ftell(b->ptr);
-        else
+        else {
+#if defined(OPENSSL_SYS_WINDOWS)
+            /*
+             * On Windows, for non-seekable files (stdin), ftell() is undefined.
+             */
+            if (GetFileType((HANDLE)_get_osfhandle(_fileno(fp))) != FILE_TYPE_DISK)
+                ret = -1;
+            else
+                ret = ftell(fp);
+#else
             ret = ftell(fp);
+#endif
+        }
         break;
     case BIO_C_SET_FILE_PTR:
         file_free(b);

@@ -65,11 +65,41 @@ the external-mu API is a viable alternative.
 HASH-ML-DSA is not used in protocols such as X509 & CMS (See RFC 9981 and 9982),
 and is not presently implemented as an independent OpenSSL signature algorithm.
 
-OpenSSL accepts the following digest names: "SHAKE-256", "SHAKE-128", "SHA-224",
-"SHA-256", "SHA-384", "SHA-512", "SHA3-224", "SHA3-256", "SHA3-384" and "SHA3-512".
+It is the users responsibility to chose a digest that has the minimum required
+security strength. To match the security category for B<ML-DSA-44>, B<ML-DSA-65>
+and B<ML-DSA-87> the user should chose a digest that has a security strength of
+at least 128 bits, 192 bits and 256 bits respectively.
+
+OpenSSL accepts the following digest names:
+
+=over 4
+
+=item "SHA-224" and "SHA3-224"
+
+These digests have a security strength of 112 bits.
+
+=item "SHA-256" and "SHA3-256"
+
+These digests have a security strength of 128 bits.
+
+=item "SHA-384" and "SHA3-384"
+
+These digests have a security strength of 192 bits.
+
+=item "SHA-512" and "SHA3-512"
+
+These digests have a security strength of 256 bits.
+
+=item "SHAKE-128" and "SHAKE-256"
+
+For SHAKE-128 and SHAKE-256 the expected XOF digest
+lengths are 32 and 64 respectively which correspond to a security strength of
+128 and 256 bits respectively.
+
+=back
+
 The total size of the C<HashedMessage> passed to EVP_DigestUpdate() MUST match
-the size of the digest. For SHAKE-128 and SHAKE-256 the expected XOF digest
-lengths are 32 and 64 respectively.
+the size of the digest.
 
 =item "properties" (B<OSSL_DIGEST_PARAM_MU_PROPERTIES>) <utf8 string>
 

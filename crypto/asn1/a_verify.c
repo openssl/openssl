@@ -90,6 +90,7 @@ static int item_verify(const ASN1_ITEM *it, const X509_ALGOR *alg,
     const ASN1_BIT_STRING *signature, const void *data,
     EVP_MD_CTX *ctx, OSSL_LIB_CTX *libctx, const char *propq)
 {
+    EVP_PKEY_CTX *pctx;
     EVP_PKEY *pkey;
     EVP_MD *type = NULL;
     unsigned char *buf_in = NULL;
@@ -97,7 +98,14 @@ static int item_verify(const ASN1_ITEM *it, const X509_ALGOR *alg,
     int mdnid, pknid;
     size_t inll = 0;
 
-    pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_get_pkey_ctx(ctx));
+    pctx = EVP_MD_CTX_get_pkey_ctx(ctx);
+
+    if (pctx == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_CONTEXT_NOT_INITIALISED);
+        return -1;
+    }
+
+    pkey = EVP_PKEY_CTX_get0_pkey(pctx);
 
     if (pkey == NULL) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_NULL_PARAMETER);

@@ -242,9 +242,9 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
     }
 
     if ((src->meth->flags & EC_FLAGS_CUSTOM_CURVE) == 0) {
-        if (!BN_copy(dest->order, src->order))
+        if (BN_copy(dest->order, src->order) == NULL)
             return 0;
-        if (!BN_copy(dest->cofactor, src->cofactor))
+        if (BN_copy(dest->cofactor, src->cofactor) == NULL)
             return 0;
     }
 
@@ -348,7 +348,7 @@ static int ec_guess_cofactor(EC_GROUP *group)
         if (!BN_set_bit(q, BN_num_bits(group->field) - 1))
             goto err;
     } else {
-        if (!BN_copy(q, group->field))
+        if (BN_copy(q, group->field) == NULL)
             goto err;
     }
 
@@ -411,12 +411,12 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
     if (!EC_POINT_copy(group->generator, generator))
         return 0;
 
-    if (!BN_copy(group->order, order))
+    if (BN_copy(group->order, order) == NULL)
         return 0;
 
     /* Either take the provided positive cofactor, or try to compute it */
     if (cofactor != NULL && !BN_is_zero(cofactor)) {
-        if (!BN_copy(group->cofactor, cofactor))
+        if (BN_copy(group->cofactor, cofactor) == NULL)
             return 0;
     } else if (!ec_guess_cofactor(group)) {
         BN_zero(group->cofactor);
@@ -451,7 +451,7 @@ int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx)
 {
     if (group->order == NULL)
         return 0;
-    if (!BN_copy(order, group->order))
+    if (BN_copy(order, group->order) == NULL)
         return 0;
 
     return !BN_is_zero(order);
@@ -499,7 +499,7 @@ int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor,
 {
     if (group->cofactor == NULL)
         return 0;
-    if (!BN_copy(cofactor, group->cofactor))
+    if (BN_copy(cofactor, group->cofactor) == NULL)
         return 0;
 
     return !BN_is_zero(group->cofactor);
@@ -930,6 +930,9 @@ int EC_POINT_get_affine_coordinates(const EC_GROUP *group,
     const EC_POINT *point, BIGNUM *x, BIGNUM *y,
     BN_CTX *ctx)
 {
+    BN_CTX *new_ctx = NULL;
+    int ret = 0;
+
     if (group->meth->point_get_affine_coordinates == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
@@ -942,7 +945,24 @@ int EC_POINT_get_affine_coordinates(const EC_GROUP *group,
         ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
         return 0;
     }
-    return group->meth->point_get_affine_coordinates(group, point, x, y, ctx);
+    if (point->Z_is_one) {
+        if (group->meth->field_decode != NULL) {
+            if (ctx == NULL && (ctx = new_ctx = BN_CTX_new_ex(group->libctx)) == NULL) {
+                ERR_raise(ERR_LIB_EC, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+            if ((x != NULL && !group->meth->field_decode(group, x, point->X, ctx))
+                || (y != NULL && !group->meth->field_decode(group, y, point->Y, ctx)))
+                goto err;
+        } else if ((x != NULL && BN_copy(x, point->X) == NULL)
+            || (y != NULL && BN_copy(y, point->Y) == NULL))
+            goto err;
+        ret = 1;
+    } else
+        ret = group->meth->point_get_affine_coordinates(group, point, x, y, ctx);
+err:
+    BN_CTX_free(new_ctx);
+    return ret;
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0

@@ -22,8 +22,6 @@
 static char *cert = NULL;
 static char *privkey = NULL;
 
-#ifndef OPENSSL_NO_DTLS
-
 static unsigned int infinite_timer_cb(SSL *s, unsigned int timer_us)
 {
     (void)s;
@@ -462,7 +460,64 @@ end:
     return testresult;
 }
 
-#endif /* OPENSSL_NO_DTLS */
+static int test_dtls_data_after_ccs(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *sssl = NULL, *cssl = NULL;
+    BIO *bio;
+    int testresult = 0, ret;
+    int target_pkt, target_rec;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL)))
+        goto end;
+
+    DTLS_set_timer_cb(sssl, infinite_timer_cb);
+    DTLS_set_timer_cb(cssl, infinite_timer_cb);
+
+    if (!TEST_int_le(SSL_connect(cssl), 0))
+        goto end;
+
+    if (!TEST_int_le(SSL_accept(sssl), 0))
+        goto end;
+
+    if (!TEST_int_le(SSL_connect(cssl), 0))
+        goto end;
+
+    bio = SSL_get_wbio(cssl);
+    if (!TEST_ptr(bio)
+        || !TEST_true(reorder_ccs(bio, SSL3_MT_CLIENT_KEY_EXCHANGE)))
+        goto end;
+
+    if (!TEST_true(mempacket_find_record(bio, SSL3_RT_HANDSHAKE,
+            SSL3_MT_CLIENT_KEY_EXCHANGE,
+            &target_pkt, &target_rec)))
+        goto end;
+    if (!TEST_true(mempacket_append_to_record(bio, target_pkt, target_rec,
+            (unsigned char *)"test data", 9)))
+        goto end;
+
+    ret = SSL_accept(sssl);
+    if (!TEST_int_le(ret, 0))
+        goto end;
+    if (!TEST_int_eq(SSL_get_error(sssl, ret), SSL_ERROR_SSL))
+        goto end;
+    if (!TEST_int_eq(ERR_GET_REASON(ERR_get_error()), SSL_R_UNEXPECTED_MESSAGE))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(sssl);
+    SSL_free(cssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 
 int setup_tests(void)
 {
@@ -475,11 +530,10 @@ int setup_tests(void)
         || !TEST_ptr(privkey = test_get_argument(1)))
         return 0;
 
-#ifndef OPENSSL_NO_DTLS
     ADD_ALL_TESTS(test_dtls_ccs_full_hs, OSSL_NELEM(full_hs_tests));
     ADD_ALL_TESTS(test_dtls_ccs_before_nst, OSSL_NELEM(nst_versions));
     ADD_ALL_TESTS(test_dtls_ccs_resume, OSSL_NELEM(resume_tests));
-#endif
+    ADD_TEST(test_dtls_data_after_ccs);
 
     return 1;
 }

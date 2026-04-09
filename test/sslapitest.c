@@ -119,11 +119,14 @@ static int error_writing_log = 0;
 #ifndef OPENSSL_NO_OCSP
 static int ocsp_server_called = 0;
 static int ocsp_client_called = 0;
+static int ocsp_verify_error = X509_V_OK;
 #ifndef OSSL_NO_USABLE_TLS1_3
 static int ocsp_verify_cb_called = 0;
 #endif
 static int cdummyarg = 1;
 static X509 *ocspcert = NULL;
+static const char *ocsp_signer_key = "subinterCA.key";
+static const char *ocsp_signer_cert = "subinterCA.pem";
 #endif
 
 #define CLIENT_VERSION_LEN 2
@@ -1856,7 +1859,7 @@ static int test_cleanse_plaintext(void)
 
 #ifndef OPENSSL_NO_OCSP
 static OCSP_RESPONSE *create_ocsp_resp(X509 *ssl_cert, X509 *issuer, int status,
-    char *signer_key_files, char *signer_cert_files)
+    const char *signer_key_files, const char *signer_cert_files)
 {
     ASN1_TIME *thisupd = X509_gmtime_adj(NULL, 0);
     ASN1_TIME *nextupd = X509_time_adj_ex(NULL, 1, 0, NULL);
@@ -1929,7 +1932,8 @@ static int ocsp_server_cb_single(SSL *s, void *arg)
     SSL_get0_chain_certs(s, &server_certs);
     issuer = sk_X509_value(server_certs, 0);
 
-    ocsp_resp = create_ocsp_resp(ssl_cert, issuer, V_OCSP_CERTSTATUS_GOOD, "subinterCA.key", "subinterCA.pem");
+    ocsp_resp = create_ocsp_resp(ssl_cert, issuer, V_OCSP_CERTSTATUS_GOOD,
+        ocsp_signer_key, ocsp_signer_cert);
     if (!TEST_ptr(ocsp_resp))
         return SSL_TLSEXT_ERR_ALERT_FATAL;
 
@@ -1965,6 +1969,13 @@ static int ocsp_client_cb_single(SSL *s, void *arg)
 
     ocsp_client_called = 1;
     return 1;
+}
+
+static int verify_cb_capture_error(int preverify_ok, X509_STORE_CTX *x509_ctx)
+{
+    if (!preverify_ok && ocsp_verify_error == X509_V_OK)
+        ocsp_verify_error = X509_STORE_CTX_get_error(x509_ctx);
+    return preverify_ok;
 }
 
 static int test_tlsext_status_type(void)
@@ -2093,9 +2104,59 @@ static int test_tlsext_status_type(void)
         || !TEST_true(ocsp_server_called))
         goto end;
 
+    /*
+     * Test that a stapled OCSP response signed by the leaf certificate
+     * (unauthorized signer) is rejected when X509_V_FLAG_OCSP_RESP_CHECK
+     * is enabled.  Reuse the existing sctx/cctx, adding only the trust
+     * anchor, verify callback, and OCSP response check flag.
+     */
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    ocsp_signer_key = "leaf.key";
+    ocsp_signer_cert = "leaf.pem";
+    ocsp_server_called = 0;
+    ocsp_verify_error = X509_V_OK;
+    cdummyarg = 1;
+
+    {
+        char *root = test_mk_file_path(certsdir, "rootCA.pem");
+
+        if (!TEST_ptr(root)
+            || !TEST_true(SSL_CTX_load_verify_locations(cctx, root, NULL))) {
+            OPENSSL_free(root);
+            goto end;
+        }
+        OPENSSL_free(root);
+    }
+    SSL_CTX_set_verify(cctx, SSL_VERIFY_PEER, verify_cb_capture_error);
+    {
+        X509_VERIFY_PARAM *vpm = X509_VERIFY_PARAM_new();
+
+        if (!TEST_ptr(vpm))
+            goto end;
+        X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_OCSP_RESP_CHECK);
+        if (!TEST_true(SSL_CTX_set1_param(cctx, vpm))) {
+            X509_VERIFY_PARAM_free(vpm);
+            goto end;
+        }
+        X509_VERIFY_PARAM_free(vpm);
+    }
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL))
+        || !TEST_int_eq(ocsp_server_called, 1)
+        || !TEST_int_eq(ocsp_verify_error, X509_V_ERR_OCSP_VERIFY_FAILED))
+        goto end;
+
     testresult = 1;
 
 end:
+    ocsp_signer_key = "subinterCA.key";
+    ocsp_signer_cert = "subinterCA.pem";
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);

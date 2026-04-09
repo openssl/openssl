@@ -1862,8 +1862,6 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
             OSSL_TRACE_END(TLS);
             s->ext.ech.success = 1;
         }
-        /* we're done with that hrrsignal (if we got one) */
-        s->ext.ech.hrrsignal_p = NULL;
         if (!hrr && s->ext.ech.success == 1) {
             if (ossl_ech_swaperoo(s) != 1
                 || ossl_ech_intbuf_fetch(s, &abuf, &alen) != 1
@@ -1871,12 +1869,25 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-        } else if (!hrr) {
+        } else if (hrr == 1 && s->ext.ech.success == 1) {
+            OSSL_TRACE(TLS, "ECH HRR accept ok, continuing.\n");
             /*
              * If we got retry_configs then we should be validating
              * the outer CH, so we better set the hostname for the
              * connection accordingly.
              */
+        } else if (!hrr && s->ext.ech.success == 0
+            && s->ext.ech.hrrsignal_p != NULL) {
+            /*
+             * we previously saw a good HRR ECH acceptance but now
+             * the SH.random ECH acceptance signal is bad so that's an
+             * illegal protocol error
+             */
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_ECH_REQUIRED);
+            goto err;
+        } else {
+            OSSL_TRACE1(TLS, "ECH falling back to public_name: %s\n",
+                s->ext.ech.outer_hostname != NULL ? s->ext.ech.outer_hostname : "NONE");
             s->ext.ech.former_inner = s->ext.hostname;
             s->ext.hostname = NULL;
             if (s->ext.ech.outer_hostname != NULL) {

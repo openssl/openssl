@@ -98,9 +98,7 @@ static int ec_GFp_s390x_nistp_mul(const EC_GROUP *group, EC_POINT *r,
 
         memset(&param, 0, sizeof(param));
 
-        if (group->meth->point_get_affine_coordinates(group, point_ptr,
-                x, y, ctx)
-                != 1
+        if (EC_POINT_get_affine_coordinates(group, point_ptr, x, y, ctx) != 1
             || BN_bn2binpad(x, param + S390X_OFF_SRC_X(len), len) == -1
             || BN_bn2binpad(y, param + S390X_OFF_SRC_Y(len), len) == -1
             || BN_bn2binpad(scalar_ptr,
@@ -109,9 +107,7 @@ static int ec_GFp_s390x_nistp_mul(const EC_GROUP *group, EC_POINT *r,
             || s390x_pcc(fc, param) != 0
             || BN_bin2bn(param + S390X_OFF_RES_X(len), len, x) == NULL
             || BN_bin2bn(param + S390X_OFF_RES_Y(len), len, y) == NULL
-            || group->meth->point_set_affine_coordinates(group, r,
-                   x, y, ctx)
-                != 1)
+            || EC_POINT_set_affine_coordinates(group, r, x, y, ctx) != 1)
             goto ret;
 
         rc = 1;
@@ -333,9 +329,7 @@ static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
         goto ret;
     }
 
-    if (group->meth->point_get_affine_coordinates(group, pubkey,
-            x, y, ctx)
-            != 1
+    if (EC_POINT_get_affine_coordinates(group, pubkey, x, y, ctx) != 1
         || BN_bn2binpad(x, param + S390X_OFF_X(len), len) == -1
         || BN_bn2binpad(y, param + S390X_OFF_Y(len), len) == -1) {
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
