@@ -739,11 +739,15 @@ static int full_client_hello_callback(SSL *s, int *al, void *arg)
         0x2c };
 #endif
     const int expected_extensions[] = {
-        65281,
-#ifndef OPENSSL_NO_EC
-        11, 10,
+#if defined(OPENSSL_NO_EC) && defined(OPENSSL_NO_ECH)
+        65281, 35, 22, 23, 13
+#elif defined(OPENSSL_NO_EC)
+        13, 65281, 35, 22, 23
+#elif defined(OPENSSL_NO_ECH)
+        65281, 11, 10, 35, 22, 23, 13
+#else
+        10, 13, 65281, 11, 35, 22, 23
 #endif
-        35, 22, 23, 13
     };
     size_t len;
 
@@ -759,7 +763,7 @@ static int full_client_hello_callback(SSL *s, int *al, void *arg)
         return SSL_CLIENT_HELLO_ERROR;
     if (!SSL_client_hello_get1_extensions_present(s, &exts, &len))
         return SSL_CLIENT_HELLO_ERROR;
-    if (len != OSSL_NELEM(expected_extensions) || memcmp(exts, expected_extensions, len * sizeof(*exts)) != 0) {
+    if (!TEST_mem_eq(exts, len * sizeof(*exts), expected_extensions, sizeof(expected_extensions))) {
         printf("ClientHello callback expected extensions mismatch\n");
         OPENSSL_free(exts);
         return SSL_CLIENT_HELLO_ERROR;

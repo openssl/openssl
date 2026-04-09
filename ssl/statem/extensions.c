@@ -1023,7 +1023,6 @@ int should_add_extension(SSL_CONNECTION *s, unsigned int extctx,
         || ((extctx & SSL_EXT_TLS1_3_ONLY) != 0
             && (thisctx & SSL_EXT_CLIENT_HELLO) != 0
             && (SSL_CONNECTION_IS_DTLS(s) || max_version < TLS1_3_VERSION))
-        /* Skip TLS1.2 extensions in ECH inner CH */
         || ((extctx & SSL_EXT_TLS1_2_AND_BELOW_ONLY) != 0
             && (thisctx & SSL_EXT_CLIENT_HELLO) != 0
             && ssl_version_cmp(s, minversion, TLS1_3_VERSION) >= 0))
@@ -1049,7 +1048,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
     const EXTENSION_DEFINITION *thisexd;
     int for_comp = (context & SSL_EXT_TLS1_3_CERTIFICATE_COMPRESSION) != 0;
 #ifndef OPENSSL_NO_ECH
-    int pass;
+    int pass, passes;
 #endif
 
     if (!WPACKET_start_sub_packet_u16(pkt)
@@ -1094,7 +1093,8 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
      * extensions are contiguous in the encoding. The actual
      * compression happens later in ech_encode_inner().
      */
-    for (pass = 0; pass <= s->ext.ech.attempted; pass++)
+    passes = (context & SSL_EXT_CLIENT_HELLO) != 0 ? 2 : 1;
+    for (pass = 0; pass < passes; pass++)
 #endif
 
         for (i = 0, thisexd = ext_defs; i < OSSL_NELEM(ext_defs);
@@ -1105,7 +1105,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
             EXT_RETURN ret;
 
 #ifndef OPENSSL_NO_ECH
-            if (s->ext.ech.attempted) {
+            if ((context & SSL_EXT_CLIENT_HELLO) != 0) {
                 /* do compressed in pass 0, non-compressed in pass 1 */
                 if (ossl_ech_2bcompressed((int)i) == pass)
                     continue;
