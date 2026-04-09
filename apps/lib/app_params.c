@@ -69,7 +69,6 @@ static int describe_param_type(char *buf, size_t bufsz, const OSSL_PARAM *param)
             param->data_size);
     if (printed_len > 0) {
         buf += printed_len;
-        bufsz -= printed_len;
     }
     *buf = '\0';
     return 1;
