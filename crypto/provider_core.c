@@ -22,6 +22,7 @@
 #endif
 #include "crypto/evp.h" /* evp_method_store_cache_flush */
 #include "crypto/rand.h"
+#include "crypto/evp/evp_local.h"
 #include "internal/nelem.h"
 #include "internal/thread_once.h"
 #include "internal/provider.h"
@@ -1404,6 +1405,8 @@ int ossl_provider_activate(OSSL_PROVIDER *prov, int upcalls, int aschild)
 
     if (prov == NULL)
         return 0;
+
+    evp_flush_thread_local_caches();
 #ifndef FIPS_MODULE
     /*
      * If aschild is true, then we only actually do the activation if the
@@ -1421,6 +1424,8 @@ int ossl_provider_activate(OSSL_PROVIDER *prov, int upcalls, int aschild)
 int ossl_provider_deactivate(OSSL_PROVIDER *prov, int removechildren)
 {
     int count;
+
+    evp_flush_thread_local_caches();
 
     if (prov == NULL
         || (count = provider_deactivate(prov, 1, removechildren)) < 0)
