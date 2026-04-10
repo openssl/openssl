@@ -21,6 +21,7 @@
 
 #define MAX_SUPPORTED_GROUPS 128
 #define MAX_KEY_SHARES 16
+#define MAX_PRE_SHARED_KEYS 16
 
 /*
  * 2 bytes for packet length, 2 bytes for format version, 2 bytes for
@@ -1332,7 +1333,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
 
     s->ext.ticket_expected = 0;
-    for (id = 0; PACKET_remaining(&identities) != 0; id++) {
+    for (id = 0; PACKET_remaining(&identities) != 0 && id < MAX_PRE_SHARED_KEYS; id++) {
         PACKET identity;
         unsigned long ticket_agel;
         size_t idlen;
