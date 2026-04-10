@@ -347,6 +347,7 @@ void ossl_ctx_thread_stop(OSSL_LIB_CTX *ctx)
 static void init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands)
 {
     THREAD_EVENT_HANDLER *curr, *prev = NULL, *tmp;
+    THREAD_EVENT_HANDLER *tocall = NULL, *idx = NULL;
 #ifndef FIPS_MODULE
     GLOBAL_TEVENT_REGISTER *gtr;
 #endif
@@ -371,20 +372,33 @@ static void init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands)
             curr = curr->next;
             continue;
         }
-        curr->handfn(curr->arg);
         if (prev == NULL)
             *hands = curr->next;
         else
             prev->next = curr->next;
 
-        tmp = curr;
-        curr = curr->next;
+        tmp = curr->next;
 
-        OPENSSL_free(tmp);
+        if (tocall == NULL)
+            tocall = curr;
+        else
+            idx->next = curr;
+
+        idx = curr;
+        idx->next = NULL;
+
+        curr = tmp;
     }
 #ifndef FIPS_MODULE
     CRYPTO_THREAD_unlock(gtr->lock);
 #endif
+    idx = tocall;
+    while (idx != NULL) {
+        tmp = idx;
+        idx = idx->next;
+        tmp->handfn(tmp->arg);
+        OPENSSL_free(tmp);
+    }
 }
 
 int ossl_init_thread_start(const void *index, void *arg,
