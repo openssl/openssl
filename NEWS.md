@@ -31,6 +31,8 @@ OpenSSL 4.1
   * API calls `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`, and
     `CRYPTO_atomic_cmp_exch_ptr` have been added.
 
+  * Fixed verification of DSA certificates signed with SHA-384 or SHA-512.
+
 OpenSSL 4.0
 -----------
 
