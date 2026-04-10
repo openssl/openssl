@@ -1,0 +1,202 @@
+# Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: Cross Compile for AArch64 Extensions
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+  push:
+  schedule:
+    - cron: '05 03 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cross-compilation-aarch64:
+    # pull request title contains 'aarch64'
+    # pull request title contains 'arm64'
+    # pull request body contains '[aarch64 ci]'
+    # push event commit message contains '[aarch64 ci]'
+    # cron job
+    # manual dispatch
+    if: contains(github.event.pull_request.title, 'aarch64') || contains(github.event.pull_request.title, 'AArch64') || contains(github.event.pull_request.title, 'arm64') || contains(github.event.pull_request.body, '[aarch64 ci]') || contains(github.event.head_commit.message, '[aarch64 ci]') || (github.event_name == 'schedule' && github.repository == 'openssl/openssl') || github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        # The platform matrix specifies:
+        #   arch: the architecture to build for, this defines the tool-chain
+        #         prefix {arch}- and the Debian compiler package gcc-{arch}
+        #         name.
+        #   libs: the Debian package for the necessary link/runtime libraries.
+        #   target: the OpenSSL configuration target to use, this is passed
+        #           directly to the config command line.
+        #   fips:   set to "no" to disable building FIPS, leave unset to
+        #           build the FIPS provider.
+        #   tests: omit this to run all the tests using QEMU, set it to "none"
+        #          to never run the tests, otherwise its value is passed to
+        #          the "make test" command to allow selective disabling of
+        #          tests.
+        #   qemucpu: optional; string that describes CPU properties.
+        #            The string will be used to set the QEMU_CPU variable.
+        #   opensslcapsname: optional; string that describes the postfix of the
+        #                    OpenSSL environment variable that defines CPU
+        #                    capabilities. E.g. "foo" will result in an
+        #                    environment variable with the name OPENSSL_foo.
+        #   opensslcaps: optional; if opensslcapsname (see above) is set, then
+        #                this string will be used as content for the OpenSSL
+        #                capabilities variable.
+        #   capslabel: label used for artifacts.
+        platform: [
+          {
+            # Baseline Armv8 crypto extensions:
+            #   include/crypto/aes_platform.h
+            #   providers/implementations/ciphers/cipher_aes_hw_armv8.inc
+            #   crypto/sha/asm/sha1-armv8.pl
+            #   crypto/aes/asm/aes-sha256-armv8.pl
+            arch: aarch64-linux-gnu,
+            libs: libc6-dev-arm64-cross,
+            target: linux-aarch64,
+            fips: no,
+            qemucpu: max,
+            opensslcapsname: armcap, # OPENSSL_armcap
+            opensslcaps: "0x1d",
+            capslabel: armv8-crypto
+          }, {
+            # PMULL-enabled AES-GCM / GHASH:
+            #   include/crypto/aes_platform.h
+            #   crypto/modes/asm/aes-gcm-armv8_64.pl
+            #   crypto/modes/asm/ghashv8-armx.pl
+            arch: aarch64-linux-gnu,
+            libs: libc6-dev-arm64-cross,
+            target: linux-aarch64,
+            fips: no,
+            qemucpu: max,
+            opensslcapsname: armcap, # OPENSSL_armcap
+            opensslcaps: "0x3d",
+            capslabel: armv8-pmull
+          }, {
+            # SHA512 extension:
+            #   crypto/aes/asm/aes-sha512-armv8.pl
+            arch: aarch64-linux-gnu,
+            libs: libc6-dev-arm64-cross,
+            target: linux-aarch64,
+            fips: no,
+            qemucpu: max,
+            opensslcapsname: armcap, # OPENSSL_armcap
+            opensslcaps: "0x7d",
+            capslabel: armv8-sha512
+          }, {
+            # SHA3-accelerated path. Since OPENSSL_armcap short-circuits runtime
+            # detection, include the derived "worth using" and unroll bits too:
+            #   crypto/sha/sha3.c
+            #   providers/implementations/digests/sha3_prov.c
+            #   providers/implementations/ciphers/cipher_aes_gcm_hw_armv8.inc
+            #   providers/implementations/ciphers/cipher_aes_hw_armv8.inc
+            arch: aarch64-linux-gnu,
+            libs: libc6-dev-arm64-cross,
+            target: linux-aarch64,
+            fips: no,
+            qemucpu: max,
+            opensslcapsname: armcap, # OPENSSL_armcap
+            opensslcaps: "0x1987d",
+            capslabel: armv8-sha3
+          }, {
+            # SVE2 Poly1305 path. OPENSSL_armcap requires the derived
+            # ARMV9_SVE2_POLY1305 bit to be set explicitly when capability
+            # probing is overridden:
+            #   crypto/poly1305/asm/poly1305-armv8.pl
+            #   crypto/chacha/asm/chacha-armv8-sve.pl
+            arch: aarch64-linux-gnu,
+            libs: libc6-dev-arm64-cross,
+            target: linux-aarch64,
+            fips: no,
+            qemucpu: max,
+            opensslcapsname: armcap, # OPENSSL_armcap
+            opensslcaps: "0x2601d",
+            capslabel: armv9-sve2-poly1305
+          }
+        ]
+    runs-on: ubuntu-latest
+    steps:
+    - name: install packages
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install \
+            gcc-${{ matrix.platform.arch }} \
+            ${{ matrix.platform.libs }}
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+
+    - name: config with FIPS
+      if: matrix.platform.fips != 'no'
+      run: |
+        ./config --banner=Configured --strict-warnings enable-fips enable-lms \
+                 --cross-compile-prefix=${{ matrix.platform.arch }}- \
+                 ${{ matrix.platform.target }}
+    - name: config without FIPS
+      if: matrix.platform.fips == 'no'
+      run: |
+        ./config --banner=Configured --strict-warnings enable-lms \
+                 --cross-compile-prefix=${{ matrix.platform.arch }}- \
+                 ${{ matrix.platform.target }}
+    - name: config dump
+      run: ./configdata.pm --dump
+
+    - name: make
+      run: make -s -j4
+
+    - name: install qemu
+      if: matrix.platform.tests != 'none'
+      run: sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install qemu-user
+
+    - name: Set QEMU environment
+      if: matrix.platform.qemucpu != ''
+      run: echo "QEMU_CPU=${{ matrix.platform.qemucpu }}" >> $GITHUB_ENV
+
+    - name: Set OpenSSL caps environment
+      if: matrix.platform.opensslcapsname != ''
+      run: echo "OPENSSL_${{ matrix.platform.opensslcapsname }}=\
+                 ${{ matrix.platform.opensslcaps }}" >> $GITHUB_ENV
+
+    - name: get cpu info
+      run: cat /proc/cpuinfo
+
+    - name: get openssl cpu info
+      if: matrix.platform.tests != 'none'
+      run: QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }} ./util/opensslwrap.sh info -cpusettings
+
+    - name: make all tests
+      if: github.event_name == 'push' && matrix.platform.tests == ''
+      run: |
+        .github/workflows/make-test \
+                  TESTS="-test_afalg" \
+                  QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
+    - name: make some tests
+      if: github.event_name == 'push' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
+      run: |
+        .github/workflows/make-test \
+                  TESTS="${{ matrix.platform.tests }} -test_afalg" \
+                  QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
+    - name: make evp tests
+      if: github.event_name == 'pull_request' && matrix.platform.tests != 'none'
+      run: |
+        .github/workflows/make-test \
+                  TESTS="test_evp*" \
+                  QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
+    - name: save artifacts
+      if: success() || failure()
+      uses: actions/upload-artifact@v5
+      with:
+        name: "cross-compiles-aarch64@${{ matrix.platform.capslabel }}"
+        path: artifacts.tar.gz
+        if-no-files-found: ignore
