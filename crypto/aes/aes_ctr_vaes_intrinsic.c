@@ -278,28 +278,89 @@ void ossl_aes_ctr_vaes(const unsigned char *in, unsigned char *out,
             return;
     }
 
-    /* Process full 16-byte blocks with VAES */
+    /* Process full 16-byte blocks with VAES.
+     *
+     * The VAES loop uses 64-bit counter arithmetic (no carry into the
+     * upper 64 bits).  If processing all requested blocks would overflow
+     * the low 64 bits of the BE counter:
+     *   Phase 1 — VAES processes the safe blocks before the boundary.
+     *   Phase 2 — Scalar handles 1 block to cross the 64-bit carry.
+     *   Phase 3 — VAES resumes for the remaining bulk (>= 512 bytes),
+     *             since the counter low-64 is now near zero and safe.
+     * Any final partial block is always handled by the scalar path.
+     */
     {
         size_t block_bytes = (l / 16) * 16;
         if (block_bytes > 0) {
-            switch (nr) {
-            case 12:
-                ctr_process_12(in, out, block_bytes, key, counter);
-                break;
-            case 14:
-                ctr_process_14(in, out, block_bytes, key, counter);
-                break;
-            default:   /* 10 (AES-128) */
-                ctr_process_10(in, out, block_bytes, key, counter);
-                break;
+            size_t total_blocks = block_bytes / 16;
+            /* Read low 64 bits of the big-endian counter (bytes 8..15) */
+            uint64_t ctr_lo = ((uint64_t)counter[8]  << 56)
+                            | ((uint64_t)counter[9]  << 48)
+                            | ((uint64_t)counter[10] << 40)
+                            | ((uint64_t)counter[11] << 32)
+                            | ((uint64_t)counter[12] << 24)
+                            | ((uint64_t)counter[13] << 16)
+                            | ((uint64_t)counter[14] << 8)
+                            | ((uint64_t)counter[15]);
+
+            /* Clamp to the number of blocks safe for 64-bit arithmetic */
+            size_t safe_blocks = (ctr_lo <= UINT64_MAX - total_blocks)
+                               ? total_blocks
+                               : (size_t)(UINT64_MAX - ctr_lo);
+            size_t safe_bytes = safe_blocks * 16;
+
+            /* Phase 1: VAES for the safe portion before the boundary */
+            if (safe_bytes > 0) {
+                switch (nr) {
+                case 12:
+                    ctr_process_12(in, out, safe_bytes, key, counter);
+                    break;
+                case 14:
+                    ctr_process_14(in, out, safe_bytes, key, counter);
+                    break;
+                default:   /* 10 (AES-128) */
+                    ctr_process_10(in, out, safe_bytes, key, counter);
+                    break;
+                }
+                in  += safe_bytes;
+                out += safe_bytes;
+                l   -= safe_bytes;
             }
-            in  += block_bytes;
-            out += block_bytes;
-            l   -= block_bytes;
+
+            /* Phase 2 & 3: only entered when clamping actually occurred */
+            if (safe_blocks < total_blocks && l > 0) {
+                /* Phase 2: scalar encrypts 1 block across the carry */
+                CRYPTO_ctr128_encrypt(in, out, 16, key, counter,
+                                     ecount_buf, num,
+                                     (block128_f)aesni_encrypt);
+                in  += 16;
+                out += 16;
+                l   -= 16;
+
+                /* Phase 3: counter low-64 is now ~0 — VAES is safe again.
+                 * Resume VAES if enough data remains (>= 512 bytes). */
+                if (l >= 512) {
+                    size_t resume_bytes = (l / 16) * 16;
+                    switch (nr) {
+                    case 12:
+                        ctr_process_12(in, out, resume_bytes, key, counter);
+                        break;
+                    case 14:
+                        ctr_process_14(in, out, resume_bytes, key, counter);
+                        break;
+                    default:
+                        ctr_process_10(in, out, resume_bytes, key, counter);
+                        break;
+                    }
+                    in  += resume_bytes;
+                    out += resume_bytes;
+                    l   -= resume_bytes;
+                }
+            }
         }
     }
 
-    /* Handle remaining partial block via scalar path */
+    /* Handle any remaining bytes (partial block or small tail) */
     if (l > 0)
         CRYPTO_ctr128_encrypt(in, out, l, key, counter,
                               ecount_buf, num, (block128_f)aesni_encrypt);
