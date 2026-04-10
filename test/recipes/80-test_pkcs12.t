@@ -56,7 +56,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => 65 + ($no_fips ? 0 : 5);
+plan tests => 68 + ($no_fips ? 0 : 5);
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -141,6 +141,25 @@ ok(run(app(["openssl", "pkcs12",
             "-passin", "pass:v3-certs",
             "-nomacver", "-nodes"])),
   "test_import_pkcs12_cert_key_cert");
+
+# Regression test for reading key and certificates from stdin (single pass).
+# Previously the input was read twice (key, then certs), so with stdin the
+# certificate(s) preceding the private key were silently dropped.
+{
+    my $out_stdin = "out_stdin_cert_then_key.p12";
+    ok(run(app(["openssl", "pkcs12", "-export",
+                "-passout", "pass:v3-certs", "-nomac", "-out", $out_stdin],
+               stdin => srctop_file(@path, "cert-key-cert.pem"))),
+       "test_export_pkcs12_stdin_cert_then_key");
+    my @stdin_certs = run(app(["openssl", "pkcs12", "-in", $out_stdin,
+                               "-passin", "pass:v3-certs",
+                               "-nomacver", "-nokeys"]), capture => 1);
+    ok(grep(/^-----BEGIN CERTIFICATE-----/, @stdin_certs) == 2,
+       "test_export_pkcs12_stdin_keeps_all_certs");
+    ok(run(app(["openssl", "pkcs12", "-in", $out_stdin,
+                "-passin", "pass:v3-certs", "-nomacver", "-nodes"])),
+       "test_import_pkcs12_stdin_cert_then_key");
+}
 
 ok(run(app(["openssl", "pkcs12", "-export", "-out", $outfile5,
             "-in", srctop_file(@path, "ee-cert.pem"), "-caname", "testname",
