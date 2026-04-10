@@ -33,6 +33,14 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * The `openssl pkcs12 -export` command now reads the private key and
+   certificate(s) from the `-in` input in a single pass when `-inkey` is
+   not used, so they may appear in any order.  Previously the input was
+   read twice, and when it was not seekable (e.g. standard input from a
+   pipe) certificates preceding the private key were silently dropped.
+
+   *John Claus*
+
  * Changed the OpenSSL FIPS provider so that every algorithm advertised with
    `fips=yes` explicitly exposes the `fips-indicator` as a gettable context
    parameter and returns 1 for an approved operation.  The absence of an
