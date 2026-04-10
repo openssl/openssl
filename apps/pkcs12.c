@@ -587,19 +587,43 @@ int pkcs12_main(int argc, char **argv)
             BIO_puts(bio_err, "Warning: -chain option ignored with -nocerts\n");
         }
 
-        if (!(options & NOKEYS)) {
-            key = load_key(keyname ? keyname : infile,
-                FORMAT_PEM, 1, passin,
-                keyname ? "private key from -inkey file" : "private key from -in file");
-            if (key == NULL)
-                goto export_end;
+        /*
+         * Load key and/or certs.  When -inkey is set, key comes from -inkey
+         * and certs from -in.  When -inkey is not set, both come from -in
+         * and may appear in any order (we use load_key_certs_crls for that).
+         */
+        if (keyname != NULL) {
+            if (!(options & NOKEYS)) {
+                key = load_key(keyname, FORMAT_PEM, 1, passin,
+                    "private key from -inkey file");
+                if (key == NULL)
+                    goto export_end;
+            }
+            if (!(options & NOCERTS)) {
+                if (!load_certs(infile, 1, &certs, passin,
+                        "certificates from -in file"))
+                    goto export_end;
+            }
+        } else {
+            /* Key and/or certs from -in file; order does not matter */
+            if (!(options & NOKEYS) && (options & NOCERTS)) {
+                if (!load_key_certs_crls(infile, FORMAT_PEM, 1, passin,
+                        "private key from -in file", 0,
+                        &key, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
+                    goto export_end;
+            } else if ((options & NOKEYS) && !(options & NOCERTS)) {
+                if (!load_certs(infile, 1, &certs, passin,
+                        "certificates from -in file"))
+                    goto export_end;
+            } else if (!(options & NOKEYS) && !(options & NOCERTS)) {
+                if (!load_key_certs_crls(infile, FORMAT_PEM, 1, passin,
+                        "key and certificates from -in file", 0,
+                        &key, NULL, NULL, NULL, &certs, NULL, NULL, NULL))
+                    goto export_end;
+            }
         }
 
-        /* Load all certs in input file */
         if (!(options & NOCERTS)) {
-            if (!load_certs(infile, 1, &certs, passin,
-                    "certificates from -in file"))
-                goto export_end;
             if (sk_X509_num(certs) < 1) {
                 BIO_printf(bio_err, "No certificate in -in file %s\n", infile);
                 goto export_end;
