@@ -1,21 +1,20 @@
 #!/usr/bin/env python
-# Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-# A python program written to parse (version 42) of the ACVP test vectors for
-# ML_KEM. The 2 files that can be processed by this utility can be downloaded
+# A python program written to parse (version 1) of the ACVP test vectors for
+# TupleHash. The 2 files that can be processed by this utility can be downloaded
 # from
-#  https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/ML-KEM-keyGen-FIPS203/internalProjection.json
-#  https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/ML-KEM-encapDecap-FIPS203/internalProjection.json
+#  https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/TupleHash-128-1.0/internalProjection.json
+#  https://github.com/usnistgov/ACVP-Server/blob/master/gen-val/json-files/TupleHash-256-1.0/internalProjection.json
 # and output from this utility to
-#  test/recipes/30-test_evp_data/evppkey_ml_kem_keygen.txt
-#  test/recipes/30-test_evp_data/evppkey_ml_kem_encapdecap.txt
+#  test/tuplehash.inc
 #
-# e.g. python3 mlkem_parse.py ~/Downloads/keygen.json > ./test/recipes/30-test_evp_data/evppkey_ml_kem_keygen.txt
+# e.g. python3 tuplehash_parse.py ~/Downloads/tuple.json > test/tuplehash.inc
 #
 import json
 import argparse
