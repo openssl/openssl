@@ -87,6 +87,10 @@ DEFINE_AES_ENCRYPT_FUNCS(14)   /* AES-256 */
 
 /* ------------------------------------------------------------------ */
 /* Counter initialisation                                             */
+/*                                                                    */
+/* Counters are kept in little-endian form (full 128-bit byte swap)   */
+/* and incremented with 64-bit arithmetic.  This is safe for all      */
+/* practical counter values — encrypting data less than 2^68 bytes    */
 /* ------------------------------------------------------------------ */
 
 static inline __m512i ctr_swap_mask(void)
@@ -103,7 +107,9 @@ static inline __m512i ctr_swap_mask(void)
 
 static inline __m512i ctr_init4(const unsigned char *iv, __m512i swap)
 {
-    __m512i c = _mm512_broadcast_i64x2(*(const __m128i *)iv);
+    /* unaligned 128-bit load for iv and broadcast                    */
+    __m128i iv128 = _mm_loadu_si128((const __m128i *)iv);
+    __m512i c = _mm512_broadcast_i64x2(iv128);
     c = _mm512_shuffle_epi8(c, swap);
     c = _mm512_add_epi64(c, _mm512_set_epi64(0, 3, 0, 2, 0, 1, 0, 0));
     return c;
@@ -125,10 +131,12 @@ static void ctr_process_##NR(                                                  \
     const unsigned char *in, unsigned char *out,                               \
     size_t len, const AES_KEY *key, unsigned char *iv)                         \
 {                                                                              \
-    const __m128i *src_rk = (const __m128i *)key->rd_key;                      \
+    const unsigned char *rk_bytes = (const unsigned char *)key->rd_key;        \
     __m512i rk[NR + 1];                                                        \
-    for (int i = 0; i <= NR; i++)                                              \
-        rk[i] = _mm512_broadcast_i32x4(src_rk[i]);                             \
+    for (int i = 0; i <= NR; i++) {                                            \
+        __m128i t = _mm_loadu_si128((const __m128i *)(rk_bytes + i * 16));     \
+        rk[i] = _mm512_broadcast_i32x4(t);                                     \
+    }                                                                          \
                                                                                \
     const __m512i *p_in  = (const __m512i *)in;                                \
     __m512i       *p_out = (__m512i *)out;                                     \
@@ -231,6 +239,13 @@ static void ctr_process_##NR(                                                  \
     {                                                                          \
         __m512i c_be = _mm512_shuffle_epi8(c1, swap);                          \
         _mm512_mask_storeu_epi64((__m128i *)iv, 0x03, c_be);                   \
+    }                                                                          \
+                                                                               \
+    /* Clear round-key material from the stack                              */ \
+    {                                                                          \
+        __m512i z = _mm512_setzero_si512();                                    \
+        for (int i = 0; i <= NR; i++)                                          \
+            rk[i] = z;                                                         \
     }                                                                          \
 }
 
