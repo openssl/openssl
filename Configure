@@ -511,7 +511,6 @@ my @disablables_features = (
     "asan",
     "asm",
     "async",
-    "atexit",
     "autoalginit",
     "autoerrinit",
     "autoload-config",
@@ -596,6 +595,7 @@ my @disablables_int = qw(
     );
 
 my %deprecated_disablables = (
+    "atexit" => undef,
     "engine" => undef,
     "static-engine" => undef,
     "dynamic-engine" => undef,
@@ -619,6 +619,7 @@ my %deprecated_disablables = (
 # All of the following are disabled by default:
 
 our %disabled = ( # "what"         => "comment"
+                  "atexit"              => "default",
                   "fips"                => "default",
                   "fips-jitter"         => "default",
                   "asan"                => "default",
@@ -664,7 +665,7 @@ our %disabled = ( # "what"         => "comment"
 my @disable_cascades = (
     # "what"            => [ "cascade", ... ]
     "bulk"              => [ "shared", "dso",
-                             "argon2", "aria", "async", "atexit", "autoload-config",
+                             "argon2", "aria", "async", "autoload-config",
                              "blake2", "bf", "camellia", "cast", "chacha",
                              "cmac", "cms", "cmp", "comp", "ct",
                              "des", "dgram", "dh", "dsa",
