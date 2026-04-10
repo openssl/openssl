@@ -2021,6 +2021,13 @@ EOF
               push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
           }
       }
+      my $wrapflags = '';
+      if (defined $unified_info{wraps}->{$args{bin}}) {
+          $wrapflags = join(' ',
+                            map { "-Wl,--wrap=$_" }
+                            @{$unified_info{wraps}->{$args{bin}}});
+          $wrapflags = ' ' . $wrapflags;
+      }
       my $linkflags = join("", map { $_." " } @linkdirs);
       my $linklibs = join("", map { $_." " } @linklibs);
       my $cmd = '$(CC)';
@@ -2038,7 +2045,7 @@ EOF
       return <<"EOF";
 $bin: $deps
 	rm -f $bin
-	\$\${LDCMD:-$cmd} $cmdflags $linkflags\$(BIN_LDFLAGS) \\
+	\$\${LDCMD:-$cmd} $cmdflags $linkflags\$(BIN_LDFLAGS)$wrapflags \\
 		-o $bin \\
 		$objs \\
 		$linklibs\$(BIN_EX_LIBS)
