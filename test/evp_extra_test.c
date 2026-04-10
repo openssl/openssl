@@ -5251,7 +5251,6 @@ static int test_evp_diff_order_init(int idx)
         if (tl > 0)
             taglen = tl;
 
-        // change here
         get_tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
             tag_keyiv, taglen);
         get_tagparams[1] = OSSL_PARAM_construct_end();
