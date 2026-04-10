@@ -153,15 +153,15 @@ sub modify_psk_filter
         #Deliberately break the connection
         $message->set_extension(TLSProxy::Message::EXT_SUPPORTED_GROUPS, "");
     } else {
-        my $psklist = pack "C184",
-            0x00, 0x8c, #Identities length
+        my $psklist = pack "C*",
+            0x00, 0x77, #Identities length
             ((
                 0x00, 0x01, #Identity length
                 0x01, #Identity data
                 0x00, 0x00, 0x00, 0x00 #Obfuscated ticket age
-            ) x 20), #20 identities
-            0x00, 0x28, #Binder length
-            (0x01) x 40; #Twenty fake binders, each with 1 length byte, and 1 payload byte
+            ) x 17), #17 identities
+            0x00, 0x22, #Binder length
+            (0x01) x 34; #17 fake binders, each with 1 length byte, and 1 payload byte
         $message->set_extension(TLSProxy::Message::EXT_PSK, $psklist);
     }
     $message->repack();
