@@ -105,6 +105,11 @@ zero and I<unused_bits> is nonzero, I<unused_bits> is less than 0 or
 greater than 7, or any unused bit in the last octet of I<data> is
 nonzero.
 
+=head1 HISTORY
+
+Functions ASN1_BIT_STRING_get_length() and ASN1_BIT_STRING_set1() were
+added in OpenSSL version 4.0.
+
 =head1 COPYRIGHT
 
 Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
