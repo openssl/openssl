@@ -30,7 +30,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 219;
+plan tests => 221;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -361,6 +361,17 @@ SKIP: {
         "accept cert generated with EC and SHA3-384");
     ok(verify("ee-cert-ec-sha3-512", "", ["root-cert"], ["ca-cert-ec-named"], ),
         "accept cert generated with EC and SHA3-512");
+}
+
+# DSA chains using id-dsa-with-sha384 / id-dsa-with-sha512 (GitHub issue #30432)
+SKIP: {
+    skip "DSA is not supported by this OpenSSL build", 2
+        if disabled("dsa");
+
+    ok(verify("ee-cert-dsa-sha384", "", ["root-cert-dsa-sha384"], [], ),
+        "accept DSA cert chain with SHA-384 signatures");
+    ok(verify("ee-cert-dsa-sha512", "", ["root-cert-dsa-sha512"], [], ),
+        "accept DSA cert chain with SHA-512 signatures");
 }
 # Same as above but with base provider used for decoding
 SKIP: {
