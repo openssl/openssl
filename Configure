@@ -2141,6 +2141,7 @@ if ($builder eq "unified") {
         my %includes = ();
         my %defines = ();
         my %depends = ();
+        my %wraps = ();
         my %generate = ();
         my %imagedocs = ();
         my %htmldocs = ();
@@ -2396,6 +2397,11 @@ if ($builder eq "unified") {
                                 \$attributes{depends}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
+            qr/^\s* WRAP ${index_re} \s* = \s* ${value_re} \s* $/x
+            => sub { $push_to->(\%wraps, $expand_variables->($+{INDEX}),
+                                undef, undef,
+                                tokenize($expand_variables->($+{VALUE})))
+             if !@skip || $skip[$#skip] > 0; },
             qr/^\s* GENERATE ${index_re} ${attribs_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%generate, $expand_variables->($+{INDEX}),
                                 \$attributes{generate}, $+{ATTRIBS},
@@ -2679,6 +2685,13 @@ if ($builder eq "unified") {
                         if grep { $v eq $_ } @{$config{defines}};
                     push @{$config{defines}}, $v;
                 }
+            }
+        }
+
+        foreach my $dest (keys %wraps) {
+            my $ddest = cleanfile($buildd, $dest, $blddir);
+            foreach my $fn (@{$wraps{$dest}}) {
+                push @{$unified_info{wraps}->{$ddest}}, $fn;
             }
         }
 
