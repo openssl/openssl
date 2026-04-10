@@ -232,8 +232,9 @@ static int rand_set_rand_method_internal(const RAND_METHOD *meth,
         return 0;
     if (!RUN_ONCE(&rand_init, do_rand_init))
         return 0;
-    CRYPTO_atomic_store_ptr((void **)&default_RAND_meth, (void **)&meth,
-        rand_meth_lock);
+    if (!CRYPTO_atomic_store_ptr((void **)&default_RAND_meth, (void **)&meth,
+            rand_meth_lock))
+        return 0;
     return 1;
 }
 
