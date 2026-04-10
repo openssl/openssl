@@ -167,6 +167,14 @@ OpenSSL 4.2
 
    *Daniel Kubec*
 
+ * The `openssl pkcs12 -export` command now reads the private key and
+   certificate(s) from the `-in` input in a single pass when `-inkey` is
+   not used, so they may appear in any order.  Previously the input was
+   read twice, and when it was not seekable (e.g. standard input from a
+   pipe) certificates preceding the private key were silently dropped.
+
+   *John Claus*
+
  * Added optimized ML-KEM implementation for x86 platforms that support the
    AVX2 vector instruction set.
 
