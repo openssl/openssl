@@ -34,6 +34,10 @@ OpenSSL 3.5
 
    *Marcel Cornu and Tomasz Kantecki*
 
+ * Added AVX512 optimized SHAKE x4 operations for ML-DSA on x86_64.
+
+   *Marcel Cornu and Tomasz Kantecki*
+
 ### Changes between 3.5.8 and 3.5.9 [29 Sep 2026]
 
  * Fixed DTLS retransmissions of handshake messages from a stale buffer offset.
