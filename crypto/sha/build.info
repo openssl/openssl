@@ -65,7 +65,7 @@ ENDIF
 $KECCAK1600ASM=keccak1600.c
 IF[{- !$disabled{asm} -}]
   $KECCAK1600ASM_x86=
-  $KECCAK1600ASM_x86_64=keccak1600-x86_64.s
+  $KECCAK1600ASM_x86_64=keccak1600-x86_64.s keccak1600x4-avx512vl.s sha3_x4_avx512vl.c
 
   $KECCAK1600ASM_s390x=keccak1600-s390x.S
 
@@ -197,5 +197,9 @@ GENERATE[keccak1600-avx512.S]=asm/keccak1600-avx512.pl
 GENERATE[keccak1600-avx512vl.S]=asm/keccak1600-avx512vl.pl
 GENERATE[keccak1600-mmx.S]=asm/keccak1600-mmx.pl
 GENERATE[keccak1600p8-ppc.S]=asm/keccak1600p8-ppc.pl
+
+# keccak1600x4-avx512vl.s supports multi-squeeze
+# Currently only used in ML-DSA on x86_64 with AVX-512VL support
+GENERATE[keccak1600x4-avx512vl.s]=asm/keccak1600x4-avx512vl.pl
 
 GENERATE[sha1-thumb.S]=asm/sha1-thumb.pl
