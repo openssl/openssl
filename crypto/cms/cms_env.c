@@ -19,6 +19,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
+#include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include "internal/sizes.h"
@@ -115,14 +116,18 @@ cms_auth_enveloped_data_init(CMS_ContentInfo *cms)
 int ossl_cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd)
 {
     EVP_PKEY *pkey;
+    EVP_PKEY_CTX *pctx;
     int i;
 
     switch (ri->type) {
     case CMS_RECIPINFO_TRANS:
         pkey = ri->d.ktri->pkey;
+        pctx = ri->d.ktri->pctx;
+        if (pkey == NULL)
+            return 0;
         break;
     case CMS_RECIPINFO_AGREE: {
-        EVP_PKEY_CTX *pctx = ri->d.kari->pctx;
+        pctx = ri->d.kari->pctx;
 
         if (pctx == NULL)
             return 0;
@@ -144,18 +149,62 @@ int ossl_cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd)
     else if (EVP_PKEY_is_a(pkey, "RSA"))
         return ossl_cms_rsa_envelope(ri, cmd);
 
-    /* Something else? We'll give engines etc a chance to handle this */
-    if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
-        return 1;
-    i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_ENVELOPE, cmd, ri);
-    if (i == -2) {
-        ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
-        return 0;
+    /* Now give engines, providers, etc a chance to handle this */
+    if (pkey->ameth != NULL && pkey->ameth->pkey_ctrl != NULL) {
+        i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_ENVELOPE, cmd, ri);
+        if (i == -2) {
+            ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+            return 0;
+        }
+        if (i <= 0) {
+            ERR_raise(ERR_LIB_CMS, CMS_R_CTRL_FAILURE);
+            return 0;
+        }
+    } else {
+        X509_ALGOR *alg;
+        if (!CMS_RecipientInfo_ktri_get0_algs(ri, NULL, NULL, &alg))
+            return 0;
+
+        if (pctx == NULL)
+            return 0;
+
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+        if (cmd) { /* dec */
+            unsigned char *aid = NULL;
+            int aid_len = i2d_X509_ALGOR(alg, &aid);
+
+            if (aid_len <= 0)
+                return 0;
+
+            params[0] = OSSL_PARAM_construct_octet_string(
+                OSSL_ASYM_CIPHER_PARAM_KEY_ENC_ALGORITHM_ID,
+                aid, aid_len);
+
+            if (!EVP_PKEY_CTX_set_params(pctx, params)) {
+                OPENSSL_free(aid);
+                return 0;
+            }
+            OPENSSL_free(aid);
+        } else { /* enc */
+            unsigned char aid[OSSL_MAX_ALGORITHM_ID_SIZE];
+            const unsigned char *pp = aid;
+            size_t aid_len = 0;
+
+            params[0] = OSSL_PARAM_construct_octet_string(
+                OSSL_ASYM_CIPHER_PARAM_KEY_ENC_ALGORITHM_ID,
+                aid, sizeof(aid));
+
+            if (EVP_PKEY_CTX_get_params(pctx, params) <= 0)
+                return 0;
+            if ((aid_len = params[0].return_size) == 0) {
+                ERR_raise(ERR_LIB_CMS, ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
+                return 0;
+            }
+            if (d2i_X509_ALGOR(&alg, &pp, (long)aid_len) == NULL)
+                return 0;
+        }
     }
-    if (i <= 0) {
-        ERR_raise(ERR_LIB_CMS, CMS_R_CTRL_FAILURE);
-        return 0;
-    }
+
     return 1;
 }
 
