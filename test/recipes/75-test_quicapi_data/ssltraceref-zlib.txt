@@ -31,9 +31,6 @@ Header:
           curveSM2 (41)
           ffdhe2048 (256)
           ffdhe3072 (257)
-        extension_type=session_ticket(35), length=0
-        extension_type=encrypt_then_mac(22), length=0
-        extension_type=extended_master_secret(23), length=0
         extension_type=signature_algorithms(13), length=?
           mldsa65 (0x0905)
           mldsa87 (0x0906)
@@ -56,8 +53,6 @@ Header:
           rsa_pkcs1_sha384 (0x0501)
           rsa_pkcs1_sha512 (0x0601)
           sm2sig_sm3 (0x0708)
-        extension_type=supported_versions(43), length=3
-          TLS 1.3 (772)
         extension_type=psk_key_exchange_modes(45), length=2
           psk_dhe_ke (1)
         extension_type=key_share(51), length=1258
@@ -69,6 +64,8 @@ Header:
           zlib (1)
         extension_type=application_layer_protocol_negotiation(16), length=11
           ossltest
+        extension_type=supported_versions(43), length=3
+          TLS 1.3 (772)
 
 Sent Frame: Crypto
     Offset: 0

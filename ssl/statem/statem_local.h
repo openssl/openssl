@@ -269,7 +269,7 @@ __owur int tls_parse_all_extensions(SSL_CONNECTION *s, int context,
     RAW_EXTENSION *exts,
     X509 *x, size_t chainidx, int fin);
 __owur int should_add_extension(SSL_CONNECTION *s, unsigned int extctx,
-    unsigned int thisctx, int max_version);
+    unsigned int thisctx, int minversion, int max_version);
 __owur int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);

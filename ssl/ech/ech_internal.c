@@ -465,6 +465,8 @@ int ossl_ech_encode_inner(SSL_CONNECTION *s, unsigned char **encoded,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
+    /* We are building the inner CH */
+    s->ext.ech.ch_depth = 1;
     if ((inner_mem = BUF_MEM_new()) == NULL
         || !WPACKET_init(&inner, inner_mem)
         /* We don't add the type and 3-octet header as usually done */
@@ -485,6 +487,9 @@ int ossl_ech_encode_inner(SSL_CONNECTION *s, unsigned char **encoded,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
+    /* Reset depth back to outer CH */
+    s->ext.ech.ch_depth = 0;
+
     /* Now handle extensions */
     if (!WPACKET_start_sub_packet_u16(&inner)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);

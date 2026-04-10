@@ -171,7 +171,7 @@ int custom_ext_parse(SSL_CONNECTION *s, unsigned int context,
  * buffer.
  */
 int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
-    size_t chainidx, int maxversion)
+    size_t chainidx, int minversion, int maxversion)
 {
     custom_ext_methods *exts = &s->cert->custext;
     custom_ext_method *meth;
@@ -185,7 +185,7 @@ int custom_ext_add(SSL_CONNECTION *s, int context, WPACKET *pkt, X509 *x,
 
         meth = exts->meths + i;
 
-        if (!should_add_extension(s, meth->context, context, maxversion))
+        if (!should_add_extension(s, meth->context, context, minversion, maxversion))
             continue;
 
         if ((context & (SSL_EXT_TLS1_2_SERVER_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS | SSL_EXT_TLS1_3_CERTIFICATE | SSL_EXT_TLS1_3_RAW_PUBLIC_KEY | SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST)) != 0) {
