@@ -643,9 +643,10 @@ Do not build support for async operations.
 
 Do not use `atexit()` in libcrypto builds.
 
-`atexit()` has varied semantics between platforms and can cause SIGSEGV in some
-circumstances. This option disables the atexit registration of OPENSSL_cleanup.
-By default, NonStop configurations use `no-atexit`.
+Before version 4.0, OpenSSL used to set `atexit()` handler for cleaning up
+global data, and this option allowed to disable that functionality.  `atexit()`
+handler setup was removed in OpenSSL 4.0, so `no-atexit` option is retained
+for compatibility reasons only, always present, and does nothing.
 
 ### no-autoalginit
 
