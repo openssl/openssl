@@ -254,6 +254,7 @@ my @x=map("\"$_\"",@x);
 # Generic code path that handles all lengths on pre-SSSE3 processors.
 $code.=<<___;
 .globl	ChaCha20_ctr32
+.hidden ChaCha20_ctr32
 .type	ChaCha20_ctr32,\@function,5
 .align	64
 ChaCha20_ctr32:

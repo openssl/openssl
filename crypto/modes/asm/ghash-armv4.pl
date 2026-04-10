@@ -179,6 +179,7 @@ rem_4bit_get:
 .size	rem_4bit_get,.-rem_4bit_get
 
 .global	gcm_ghash_4bit
+.hidden gcm_ghash_4bit
 .type	gcm_ghash_4bit,%function
 .align	4
 gcm_ghash_4bit:
@@ -295,6 +296,7 @@ $code.=<<___;
 .size	gcm_ghash_4bit,.-gcm_ghash_4bit
 
 .global	gcm_gmult_4bit
+.hidden gcm_gmult_4bit
 .type	gcm_gmult_4bit,%function
 gcm_gmult_4bit:
 	stmdb	sp!,{r4-r11,lr}
@@ -431,6 +433,7 @@ $code.=<<___;
 .fpu	neon
 
 .global	gcm_init_neon
+.hidden gcm_init_neon
 .type	gcm_init_neon,%function
 .align	4
 gcm_init_neon:
@@ -452,6 +455,7 @@ gcm_init_neon:
 .size	gcm_init_neon,.-gcm_init_neon
 
 .global	gcm_gmult_neon
+.hidden gcm_gmult_neon
 .type	gcm_gmult_neon,%function
 .align	4
 gcm_gmult_neon:
@@ -470,6 +474,7 @@ gcm_gmult_neon:
 .size	gcm_gmult_neon,.-gcm_gmult_neon
 
 .global	gcm_ghash_neon
+.hidden gcm_ghash_neon
 .type	gcm_ghash_neon,%function
 .align	4
 gcm_ghash_neon:

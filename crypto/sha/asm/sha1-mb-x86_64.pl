@@ -368,6 +368,7 @@ $code.=<<___;
 .extern	OPENSSL_ia32cap_P
 
 .globl	sha1_multi_block
+.hidden sha1_multi_block
 .type	sha1_multi_block,\@function,3
 .align	32
 sha1_multi_block:

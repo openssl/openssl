@@ -36,6 +36,7 @@ $code.=<<___;
 
 .align	5
 .global	OPENSSL_atomic_add
+.hidden OPENSSL_atomic_add
 .type	OPENSSL_atomic_add,%function
 OPENSSL_atomic_add:
 #if __ARM_ARCH__>=6
@@ -146,6 +147,7 @@ CRYPTO_memcmp:
 
 .align	5
 .global	_armv7_neon_probe
+.hidden _armv7_neon_probe
 .type	_armv7_neon_probe,%function
 _armv7_neon_probe:
 	vorr	q0,q0,q0
@@ -153,6 +155,7 @@ _armv7_neon_probe:
 .size	_armv7_neon_probe,.-_armv7_neon_probe
 
 .global	_armv7_tick
+.hidden _armv7_tick
 .type	_armv7_tick,%function
 _armv7_tick:
 #ifdef	__APPLE__
@@ -164,6 +167,7 @@ _armv7_tick:
 .size	_armv7_tick,.-_armv7_tick
 
 .global	_armv8_aes_probe
+.hidden _armv8_aes_probe
 .type	_armv8_aes_probe,%function
 _armv8_aes_probe:
 #if defined(__thumb2__) && !defined(__APPLE__)
@@ -175,6 +179,7 @@ _armv8_aes_probe:
 .size	_armv8_aes_probe,.-_armv8_aes_probe
 
 .global	_armv8_sha1_probe
+.hidden _armv8_sha1_probe
 .type	_armv8_sha1_probe,%function
 _armv8_sha1_probe:
 #if defined(__thumb2__) && !defined(__APPLE__)
@@ -186,6 +191,7 @@ _armv8_sha1_probe:
 .size	_armv8_sha1_probe,.-_armv8_sha1_probe
 
 .global	_armv8_sha256_probe
+.hidden _armv8_sha256_probe
 .type	_armv8_sha256_probe,%function
 _armv8_sha256_probe:
 #if defined(__thumb2__) && !defined(__APPLE__)
@@ -196,6 +202,7 @@ _armv8_sha256_probe:
 	bx	lr
 .size	_armv8_sha256_probe,.-_armv8_sha256_probe
 .global	_armv8_pmull_probe
+.hidden _armv8_pmull_probe
 .type	_armv8_pmull_probe,%function
 _armv8_pmull_probe:
 #if defined(__thumb2__) && !defined(__APPLE__)
@@ -208,6 +215,7 @@ _armv8_pmull_probe:
 #endif
 
 .global	OPENSSL_instrument_bus
+.hidden OPENSSL_instrument_bus
 .type	OPENSSL_instrument_bus,%function
 OPENSSL_instrument_bus:
 	eor	r0,r0,r0
@@ -221,6 +229,7 @@ OPENSSL_instrument_bus:
 .size	OPENSSL_instrument_bus,.-OPENSSL_instrument_bus
 
 .global	OPENSSL_instrument_bus2
+.hidden OPENSSL_instrument_bus2
 .type	OPENSSL_instrument_bus2,%function
 OPENSSL_instrument_bus2:
 	eor	r0,r0,r0

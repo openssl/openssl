@@ -290,6 +290,7 @@ WORD64(0x5fcb6fab,0x3ad6faec, 0x6c44198c,0x4a475817)
 #endif
 
 .global	sha512_block_data_order
+.hidden sha512_block_data_order
 .type	sha512_block_data_order,%function
 sha512_block_data_order:
 .Lsha512_block_data_order:
@@ -618,6 +619,7 @@ $code.=<<___;
 .fpu	neon
 
 .global	sha512_block_data_order_neon
+.hidden sha512_block_data_order_neon
 .type	sha512_block_data_order_neon,%function
 .align	4
 sha512_block_data_order_neon:

@@ -122,6 +122,7 @@ $code=<<___;
 
 .extern	OPENSSL_ia32cap_P
 .globl	$func
+.hidden $func
 .type	$func,\@abi-omnipotent
 .align	16
 $func:

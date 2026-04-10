@@ -129,6 +129,7 @@ $code.=<<___;
 .text
 
 .globl	rsaz_1024_sqr_avx2
+.hidden rsaz_1024_sqr_avx2
 .type	rsaz_1024_sqr_avx2,\@function,5
 .align	64
 rsaz_1024_sqr_avx2:		# 702 cycles, 14% faster than rsaz_1024_mul_avx2
@@ -880,6 +881,7 @@ $bp="%r13";	# reassigned argument
 
 $code.=<<___;
 .globl	rsaz_1024_mul_avx2
+.hidden rsaz_1024_mul_avx2
 .type	rsaz_1024_mul_avx2,\@function,5
 .align	64
 rsaz_1024_mul_avx2:
@@ -1491,6 +1493,7 @@ my @T = map("%r$_",(8..11));
 
 $code.=<<___;
 .globl	rsaz_1024_red2norm_avx2
+.hidden rsaz_1024_red2norm_avx2
 .type	rsaz_1024_red2norm_avx2,\@abi-omnipotent
 .align	32
 rsaz_1024_red2norm_avx2:
@@ -1532,6 +1535,7 @@ $code.=<<___;
 .size	rsaz_1024_red2norm_avx2,.-rsaz_1024_red2norm_avx2
 
 .globl	rsaz_1024_norm2red_avx2
+.hidden rsaz_1024_norm2red_avx2
 .type	rsaz_1024_norm2red_avx2,\@abi-omnipotent
 .align	32
 rsaz_1024_norm2red_avx2:
@@ -1576,6 +1580,7 @@ my ($out,$inp,$power) = $win64 ? ("%rcx","%rdx","%r8d") : ("%rdi","%rsi","%edx")
 
 $code.=<<___;
 .globl	rsaz_1024_scatter5_avx2
+.hidden rsaz_1024_scatter5_avx2
 .type	rsaz_1024_scatter5_avx2,\@abi-omnipotent
 .align	32
 rsaz_1024_scatter5_avx2:
@@ -1603,6 +1608,7 @@ rsaz_1024_scatter5_avx2:
 .size	rsaz_1024_scatter5_avx2,.-rsaz_1024_scatter5_avx2
 
 .globl	rsaz_1024_gather5_avx2
+.hidden rsaz_1024_gather5_avx2
 .type	rsaz_1024_gather5_avx2,\@abi-omnipotent
 .align	32
 rsaz_1024_gather5_avx2:
@@ -1761,6 +1767,7 @@ ___
 $code.=<<___;
 .extern	OPENSSL_ia32cap_P
 .globl	rsaz_avx2_eligible
+.hidden rsaz_avx2_eligible
 .type	rsaz_avx2_eligible,\@abi-omnipotent
 .align	32
 rsaz_avx2_eligible:
@@ -1958,6 +1965,7 @@ print <<___;	# assembler is too old
 .text
 
 .globl	rsaz_avx2_eligible
+.hidden rsaz_avx2_eligible
 .type	rsaz_avx2_eligible,\@abi-omnipotent
 rsaz_avx2_eligible:
 	xor	%eax,%eax
@@ -1965,11 +1973,17 @@ rsaz_avx2_eligible:
 .size	rsaz_avx2_eligible,.-rsaz_avx2_eligible
 
 .globl	rsaz_1024_sqr_avx2
+.hidden rsaz_1024_sqr_avx2
 .globl	rsaz_1024_mul_avx2
+.hidden rsaz_1024_mul_avx2
 .globl	rsaz_1024_norm2red_avx2
+.hidden rsaz_1024_norm2red_avx2
 .globl	rsaz_1024_red2norm_avx2
+.hidden rsaz_1024_red2norm_avx2
 .globl	rsaz_1024_scatter5_avx2
+.hidden rsaz_1024_scatter5_avx2
 .globl	rsaz_1024_gather5_avx2
+.hidden rsaz_1024_gather5_avx2
 .type	rsaz_1024_sqr_avx2,\@abi-omnipotent
 rsaz_1024_sqr_avx2:
 rsaz_1024_mul_avx2:

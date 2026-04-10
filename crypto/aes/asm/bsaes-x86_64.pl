@@ -1065,6 +1065,7 @@ if (0 && !$win64) {	# following four functions are unsupported interface
 			# used for benchmarking...
 $code.=<<___;
 .globl	bsaes_enc_key_convert
+.hidden bsaes_enc_key_convert
 .type	bsaes_enc_key_convert,\@function,2
 .align	16
 bsaes_enc_key_convert:
@@ -1078,6 +1079,7 @@ bsaes_enc_key_convert:
 .size	bsaes_enc_key_convert,.-bsaes_enc_key_convert
 
 .globl	bsaes_encrypt_128
+.hidden bsaes_encrypt_128
 .type	bsaes_encrypt_128,\@function,4
 .align	16
 bsaes_encrypt_128:
@@ -1111,6 +1113,7 @@ bsaes_encrypt_128:
 .size	bsaes_encrypt_128,.-bsaes_encrypt_128
 
 .globl	bsaes_dec_key_convert
+.hidden bsaes_dec_key_convert
 .type	bsaes_dec_key_convert,\@function,2
 .align	16
 bsaes_dec_key_convert:
@@ -1125,6 +1128,7 @@ bsaes_dec_key_convert:
 .size	bsaes_dec_key_convert,.-bsaes_dec_key_convert
 
 .globl	bsaes_decrypt_128
+.hidden bsaes_decrypt_128
 .type	bsaes_decrypt_128,\@function,4
 .align	16
 bsaes_decrypt_128:
@@ -1170,6 +1174,7 @@ my ($inp,$out,$len,$key)=("%r12","%r13","%r14","%r15");
 if ($ecb) {
 $code.=<<___;
 .globl	bsaes_ecb_encrypt_blocks
+.hidden bsaes_ecb_encrypt_blocks
 .type	bsaes_ecb_encrypt_blocks,\@abi-omnipotent
 .align	16
 bsaes_ecb_encrypt_blocks:
@@ -1389,6 +1394,7 @@ $code.=<<___;
 .size	bsaes_ecb_encrypt_blocks,.-bsaes_ecb_encrypt_blocks
 
 .globl	bsaes_ecb_decrypt_blocks
+.hidden bsaes_ecb_decrypt_blocks
 .type	bsaes_ecb_decrypt_blocks,\@abi-omnipotent
 .align	16
 bsaes_ecb_decrypt_blocks:
@@ -1612,6 +1618,7 @@ ___
 $code.=<<___;
 .extern	asm_AES_cbc_encrypt
 .globl	ossl_bsaes_cbc_encrypt
+.hidden ossl_bsaes_cbc_encrypt
 .type	ossl_bsaes_cbc_encrypt,\@abi-omnipotent
 .align	16
 ossl_bsaes_cbc_encrypt:
@@ -1918,6 +1925,7 @@ $code.=<<___;
 .size	ossl_bsaes_cbc_encrypt,.-ossl_bsaes_cbc_encrypt
 
 .globl	ossl_bsaes_ctr32_encrypt_blocks
+.hidden ossl_bsaes_ctr32_encrypt_blocks
 .type	ossl_bsaes_ctr32_encrypt_blocks,\@abi-omnipotent
 .align	16
 ossl_bsaes_ctr32_encrypt_blocks:
@@ -2178,6 +2186,7 @@ $arg6=~s/d$//;
 
 $code.=<<___;
 .globl	ossl_bsaes_xts_encrypt
+.hidden ossl_bsaes_xts_encrypt
 .type	ossl_bsaes_xts_encrypt,\@abi-omnipotent
 .align	16
 ossl_bsaes_xts_encrypt:
@@ -2578,6 +2587,7 @@ $code.=<<___;
 .size	ossl_bsaes_xts_encrypt,.-ossl_bsaes_xts_encrypt
 
 .globl	ossl_bsaes_xts_decrypt
+.hidden ossl_bsaes_xts_decrypt
 .type	ossl_bsaes_xts_decrypt,\@abi-omnipotent
 .align	16
 ossl_bsaes_xts_decrypt:

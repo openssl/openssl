@@ -132,6 +132,7 @@ $code.=<<___;
 .extern	OPENSSL_ia32cap_P
 
 .globl	aesni_cbc_sha1_enc
+.hidden aesni_cbc_sha1_enc
 .type	aesni_cbc_sha1_enc,\@abi-omnipotent
 .align	32
 aesni_cbc_sha1_enc:
@@ -841,6 +842,7 @@ sub body_40_59_dec () {	# ((b^c)&(c^d))^c
 
 $code.=<<___;
 .globl	aesni256_cbc_sha1_dec
+.hidden aesni256_cbc_sha1_dec
 .type	aesni256_cbc_sha1_dec,\@abi-omnipotent
 .align	32
 aesni256_cbc_sha1_dec:

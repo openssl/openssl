@@ -103,6 +103,7 @@ $code=<<___;
 .extern	OPENSSL_ia32cap_P
 
 .globl	bn_mul_mont
+.hidden bn_mul_mont
 .type	bn_mul_mont,\@function,6
 .align	16
 bn_mul_mont:

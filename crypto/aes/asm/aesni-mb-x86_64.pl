@@ -111,6 +111,7 @@ $code.=<<___;
 .extern	OPENSSL_ia32cap_P
 
 .globl	aesni_multi_cbc_encrypt
+.hidden aesni_multi_cbc_encrypt
 .type	aesni_multi_cbc_encrypt,\@function,3
 .align	32
 aesni_multi_cbc_encrypt:
@@ -393,6 +394,7 @@ $code.=<<___;
 .size	aesni_multi_cbc_encrypt,.-aesni_multi_cbc_encrypt
 
 .globl	aesni_multi_cbc_decrypt
+.hidden aesni_multi_cbc_decrypt
 .type	aesni_multi_cbc_decrypt,\@function,3
 .align	32
 aesni_multi_cbc_decrypt:

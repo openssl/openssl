@@ -412,6 +412,7 @@ ___
 #		struct { u128 Xi,H,Htbl[9]; } *Xip);
 $code.=<<___;
 .globl	aesni_gcm_decrypt
+.hidden aesni_gcm_decrypt
 .type	aesni_gcm_decrypt,\@function,6
 .align	32
 aesni_gcm_decrypt:
@@ -640,6 +641,7 @@ _aesni_ctr32_6x:
 .size	_aesni_ctr32_6x,.-_aesni_ctr32_6x
 
 .globl	aesni_gcm_encrypt
+.hidden aesni_gcm_encrypt
 .type	aesni_gcm_encrypt,\@function,6
 .align	32
 aesni_gcm_encrypt:
@@ -1087,6 +1089,7 @@ $code=<<___;	# assembler is too old
 .text
 
 .globl	aesni_gcm_encrypt
+.hidden aesni_gcm_encrypt
 .type	aesni_gcm_encrypt,\@abi-omnipotent
 aesni_gcm_encrypt:
 .cfi_startproc
@@ -1096,6 +1099,7 @@ aesni_gcm_encrypt:
 .size	aesni_gcm_encrypt,.-aesni_gcm_encrypt
 
 .globl	aesni_gcm_decrypt
+.hidden aesni_gcm_decrypt
 .type	aesni_gcm_decrypt,\@abi-omnipotent
 aesni_gcm_decrypt:
 .cfi_startproc

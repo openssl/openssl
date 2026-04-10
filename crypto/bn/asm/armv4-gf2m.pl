@@ -173,6 +173,7 @@ ___
 {
 $code.=<<___;
 .global	bn_GF2m_mul_2x2
+.hidden bn_GF2m_mul_2x2
 .type	bn_GF2m_mul_2x2,%function
 .align	5
 bn_GF2m_mul_2x2:

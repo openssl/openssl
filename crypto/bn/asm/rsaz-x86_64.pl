@@ -100,6 +100,7 @@ $code.=<<___;
 .extern	OPENSSL_ia32cap_P
 
 .globl	rsaz_512_sqr
+.hidden rsaz_512_sqr
 .type	rsaz_512_sqr,\@function,5
 .align	32
 rsaz_512_sqr:				# 25-29% faster than rsaz_512_mul
@@ -811,6 +812,7 @@ ___
 my ($out,$ap,$bp,$mod,$n0) = ("%rdi","%rsi","%rdx","%rcx","%r8");
 $code.=<<___;
 .globl	rsaz_512_mul
+.hidden rsaz_512_mul
 .type	rsaz_512_mul,\@function,5
 .align	32
 rsaz_512_mul:
@@ -924,6 +926,7 @@ ___
 my ($out,$ap,$bp,$mod,$n0,$pwr) = ("%rdi","%rsi","%rdx","%rcx","%r8","%r9d");
 $code.=<<___;
 .globl	rsaz_512_mul_gather4
+.hidden rsaz_512_mul_gather4
 .type	rsaz_512_mul_gather4,\@function,6
 .align	32
 rsaz_512_mul_gather4:
@@ -1393,6 +1396,7 @@ ___
 my ($out,$ap,$mod,$n0,$tbl,$pwr) = ("%rdi","%rsi","%rdx","%rcx","%r8","%r9d");
 $code.=<<___;
 .globl	rsaz_512_mul_scatter4
+.hidden rsaz_512_mul_scatter4
 .type	rsaz_512_mul_scatter4,\@function,6
 .align	32
 rsaz_512_mul_scatter4:
@@ -1520,6 +1524,7 @@ ___
 my ($out,$inp,$mod,$n0) = ("%rdi","%rsi","%rdx","%rcx");
 $code.=<<___;
 .globl	rsaz_512_mul_by_one
+.hidden rsaz_512_mul_by_one
 .type	rsaz_512_mul_by_one,\@function,4
 .align	32
 rsaz_512_mul_by_one:
@@ -2129,6 +2134,7 @@ ___
 my ($out,$inp,$power)= $win64 ? ("%rcx","%rdx","%r8d") : ("%rdi","%rsi","%edx");
 $code.=<<___;
 .globl	rsaz_512_scatter4
+.hidden rsaz_512_scatter4
 .type	rsaz_512_scatter4,\@abi-omnipotent
 .align	16
 rsaz_512_scatter4:
@@ -2149,6 +2155,7 @@ rsaz_512_scatter4:
 .size	rsaz_512_scatter4,.-rsaz_512_scatter4
 
 .globl	rsaz_512_gather4
+.hidden rsaz_512_gather4
 .type	rsaz_512_gather4,\@abi-omnipotent
 .align	16
 rsaz_512_gather4:
