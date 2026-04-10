@@ -31,6 +31,10 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added AVX512 optimized SHAKE x4 operations for ML-DSA on x86_64.
+
+   *Marcel Cornu and Tomasz Kantecki*
+
  * Added -testmode option for `s_time` app.
 
    *Jakub Zelenka*
