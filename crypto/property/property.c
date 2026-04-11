@@ -133,6 +133,13 @@ typedef struct {
      * flag to identify recently used QUERY elements
      */
     QUERY_LRU_LIST lru_list;
+
+    /*
+     * This is where QUERY's go to die.  We can't free them until the libctx
+     * is freed, so we store them here until such time as ossl_method_store_free
+     * is called
+     */
+    QUERY_LRU_LIST attic;
     /*
      * Lock to protect each shard of |algs| from concurrent writing,
      * when individual implementations or queries are inserted.  This is used
@@ -266,8 +273,7 @@ static ossl_inline void impl_cache_free(QUERY *elem)
 #else
         ossl_list_lru_entry_remove(&sa->lru_list, elem);
 #endif
-        ossl_method_free(&elem->method);
-        OPENSSL_free(elem);
+        ossl_list_lru_entry_insert_tail(&sa->attic, elem);
     }
 }
 
@@ -331,6 +337,8 @@ static void alg_cleanup(ossl_uintmax_t idx, ALGORITHM *a, void *arg)
 
 static void stored_algs_free(STORED_ALGORITHMS *sa)
 {
+    QUERY *q, *qn;
+
     if (sa == NULL)
         return;
 
@@ -339,6 +347,10 @@ static void stored_algs_free(STORED_ALGORITHMS *sa)
         ossl_sa_ALGORITHM_free(sa[i].algs);
         CRYPTO_THREAD_lock_free(sa[i].lock);
         ossl_ht_free(sa[i].cache);
+        OSSL_LIST_FOREACH_DELSAFE(q, qn, lru_entry, &sa[i].attic) {
+            ossl_method_free(&q->method);
+            OPENSSL_free(q);
+        }
     }
 
     OPENSSL_free(sa);
