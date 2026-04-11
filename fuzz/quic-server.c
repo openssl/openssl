@@ -8,6 +8,9 @@
  * or in the file LICENSE in the source distribution.
  */
 
+/* We need to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/bio.h>
@@ -25,7 +28,9 @@ static OSSL_TIME fake_now_cb(void *arg)
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
+#ifndef OPENSSL_NO_DEPRECATED_4_2
     STACK_OF(SSL_COMP) *comp_methods;
+#endif
 
     FuzzerSetRand();
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS | OPENSSL_INIT_ASYNC, NULL);
@@ -35,9 +40,11 @@ int FuzzerInitialize(int *argc, char ***argv)
     if (SSL_get_ex_data_X509_STORE_CTX_idx() == 0) {
         /* Just suppress warning */
     }
+#ifndef OPENSSL_NO_DEPRECATED_4_2
     comp_methods = SSL_COMP_get_compression_methods();
     if (comp_methods != NULL)
         sk_SSL_COMP_sort(comp_methods);
+#endif
 
     return 1;
 }
