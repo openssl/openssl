@@ -5042,12 +5042,11 @@ static int seen_name(const char *name)
 
 static void collect_cipher_cb(EVP_CIPHER *ciph, void *arg)
 {
-    EVP_CIPHER_TEST_INFO *tmp = NULL;
     EVP_CIPHER_TEST_INFO *info = NULL;
     const char *name0 = NULL;
     int taglen = 0;
 
-    (void)arg;
+    size_t *allocated = arg;
 
     if (ciph == NULL)
         return;
@@ -5081,13 +5080,11 @@ static void collect_cipher_cb(EVP_CIPHER *ciph, void *arg)
         || EVP_CIPHER_is_a(ciph, "AES-256-CBC-HMAC-SHA512-ETM"))
         return;
 
-    tmp = OPENSSL_realloc(cipher_list,
-        (cipher_list_n + 1) * sizeof(*tmp));
-
-    if (tmp == NULL)
+    /* First pass only counts ciphers to allocate memory */
+    if (allocated != NULL) {
+        (*allocated)++;
         return;
-
-    cipher_list = tmp;
+    }
 
     info = &cipher_list[cipher_list_n];
 
@@ -5106,8 +5103,19 @@ static void collect_cipher_cb(EVP_CIPHER *ciph, void *arg)
 
 static int setup_cipher_list(void)
 {
+    size_t cipher_list_size = 0;
     cipher_list = NULL;
     cipher_list_n = 0;
+
+    /* first pass goes through counting only for allocating */
+    EVP_CIPHER_do_all_provided(NULL, collect_cipher_cb, &cipher_list_size);
+
+    if (!TEST_size_t_gt(cipher_list_size, 0))
+        return 0;
+
+    cipher_list = OPENSSL_malloc(cipher_list_size * sizeof(*cipher_list));
+    if (!TEST_ptr(cipher_list))
+        return 0;
 
     EVP_CIPHER_do_all_provided(NULL, collect_cipher_cb, NULL);
     return TEST_true(cipher_list_n > 0);
