@@ -262,12 +262,6 @@ static int down_ref_providers(OSSL_PROVIDER *prov, void *arg)
 
 static void context_deinit_objs(OSSL_LIB_CTX *ctx)
 {
-    /* P2. We want evp_method_store to be cleaned up before the provider store */
-    if (ctx->evp_method_store != NULL) {
-        ossl_method_store_free(ctx->evp_method_store);
-        ctx->evp_method_store = NULL;
-    }
-
     /* P2. */
     if (ctx->drbg != NULL) {
         ossl_rand_ctx_free(ctx->drbg);
@@ -311,6 +305,12 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
     if (ctx->provider_store != NULL) {
         ossl_provider_store_free(ctx->provider_store);
         ctx->provider_store = NULL;
+    }
+
+    /* P2. We want evp_method_store to be cleaned up before the provider store */
+    if (ctx->evp_method_store != NULL) {
+        ossl_method_store_free(ctx->evp_method_store);
+        ctx->evp_method_store = NULL;
     }
 
     /* Default priority. */
