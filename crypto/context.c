@@ -10,6 +10,7 @@
 #include "crypto/cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/trace.h>
+#include <openssl/provider.h>
 #include "internal/thread_once.h"
 #include "internal/property.h"
 #include "internal/cryptlib.h"
@@ -253,6 +254,12 @@ err:
     return 0;
 }
 
+static int down_ref_providers(OSSL_PROVIDER *prov, void *arg)
+{
+    ossl_provider_free(prov);
+    return 1;
+}
+
 static void context_deinit_objs(OSSL_LIB_CTX *ctx)
 {
     /* P2. We want evp_method_store to be cleaned up before the provider store */
@@ -381,6 +388,7 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
         ctx->comp_methods = NULL;
     }
 #endif
+    OSSL_PROVIDER_do_all(ctx, down_ref_providers, NULL);
 }
 
 static int context_deinit(OSSL_LIB_CTX *ctx)

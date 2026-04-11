@@ -1415,6 +1415,10 @@ int ossl_provider_activate(OSSL_PROVIDER *prov, int upcalls, int aschild)
     if ((count = provider_activate(prov, 1, upcalls)) > 0)
         return count == 1 ? provider_flush_store_cache(prov) : 1;
 
+    /*
+     * leak a reference
+     */
+    ossl_provider_up_ref(prov);
     return 0;
 }
 
