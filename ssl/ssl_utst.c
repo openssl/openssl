@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* SSL_test_functions() is deprecated but still needs to be implemented */
+#include "internal/deprecated.h"
+
 #include "ssl_local.h"
 
 #ifndef OPENSSL_NO_UNIT_TEST

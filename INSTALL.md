@@ -1098,6 +1098,8 @@ Enable additional unit test APIs.
 
 This should not typically be used in production deployments.
 
+This option is deprecated and will be removed in OpenSSL 5.0.
+
 ### no-uplink
 
 Don't build support for UPLINK interface.
