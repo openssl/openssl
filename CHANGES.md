@@ -31,6 +31,11 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Deprecated the `enable-unit-test` configure option and the
+   `SSL_test_functions()` function. Both will be removed in OpenSSL 5.0.
+
+   *Jakub Zelenka*
+
  * Added -testmode option for `s_time` app.
 
    *Jakub Zelenka*
