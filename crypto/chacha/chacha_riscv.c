@@ -2,7 +2,7 @@
  * This file is dual-licensed, meaning that you can use it under your
  * choice of either of the following two licenses:
  *
- * Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,7 @@
  * or
  *
  * Copyright (c) 2023, Jerry Shih <jerry.shih@sifive.com>
+ * Copyright (c) 2026, Julian Zhu <julian.oerv@isrc.iscas.ac.cn>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,6 +49,14 @@ void ChaCha20_ctr32_v_zbb(unsigned char *out, const unsigned char *inp,
     size_t len, const unsigned int key[8],
     const unsigned int counter[4]);
 
+void ChaCha20_ctr32_riscv64(unsigned char *out, const unsigned char *inp,
+    size_t len, const unsigned int key[8],
+    const unsigned int counter[4]);
+
+void ChaCha20_ctr32_riscv64_zbb(unsigned char *out, const unsigned char *inp,
+    size_t len, const unsigned int key[8],
+    const unsigned int counter[4]);
+
 void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp, size_t len,
     const unsigned int key[8], const unsigned int counter[4])
 {
@@ -59,7 +68,9 @@ void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp, size_t len,
         } else {
             ChaCha20_ctr32_v_zbb(out, inp, len, key, counter);
         }
+    } else if (RISCV_HAS_ZBB()) {
+        ChaCha20_ctr32_riscv64_zbb(out, inp, len, key, counter);
     } else {
-        ChaCha20_ctr32_c(out, inp, len, key, counter);
+        ChaCha20_ctr32_riscv64(out, inp, len, key, counter);
     }
 }
