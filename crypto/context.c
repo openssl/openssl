@@ -130,7 +130,7 @@ static int context_init(OSSL_LIB_CTX *ctx)
     exdata_done = 1;
 
     /* P2. We want evp_method_store to be cleaned up before the provider store */
-    ctx->evp_method_store = ossl_method_store_new(ctx);
+    ctx->evp_method_store = ossl_method_store_new(ctx, 0);
     if (ctx->evp_method_store == NULL)
         goto err;
     OSSL_TRACE1(QUERY, "context_init: allocating store %p\n", ctx->evp_method_store);
@@ -152,7 +152,7 @@ static int context_init(OSSL_LIB_CTX *ctx)
      * P2. We want decoder_store/decoder_cache to be cleaned up before the
      * provider store
      */
-    ctx->decoder_store = ossl_method_store_new(ctx);
+    ctx->decoder_store = ossl_method_store_new(ctx, 1);
     if (ctx->decoder_store == NULL)
         goto err;
     ctx->decoder_cache = ossl_decoder_cache_new(ctx);
@@ -160,12 +160,12 @@ static int context_init(OSSL_LIB_CTX *ctx)
         goto err;
 
     /* P2. We want encoder_store to be cleaned up before the provider store */
-    ctx->encoder_store = ossl_method_store_new(ctx);
+    ctx->encoder_store = ossl_method_store_new(ctx, 1);
     if (ctx->encoder_store == NULL)
         goto err;
 
     /* P2. We want loader_store to be cleaned up before the provider store */
-    ctx->store_loader_store = ossl_method_store_new(ctx);
+    ctx->store_loader_store = ossl_method_store_new(ctx, 1);
     if (ctx->store_loader_store == NULL)
         goto err;
 #endif

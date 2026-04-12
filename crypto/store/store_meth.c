@@ -94,7 +94,7 @@ static void *get_tmp_loader_store(void *data)
     struct loader_data_st *methdata = data;
 
     if (methdata->tmp_store == NULL)
-        methdata->tmp_store = ossl_method_store_new(methdata->libctx);
+        methdata->tmp_store = ossl_method_store_new(methdata->libctx, 1);
     return methdata->tmp_store;
 }
 

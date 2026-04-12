@@ -161,6 +161,7 @@ struct ossl_method_store_st {
      * ossl_method_construct_unreserve_store()
      */
     CRYPTO_RWLOCK *biglock;
+    int externally_refcounted;
 };
 
 DEFINE_SPARSE_ARRAY_OF(ALGORITHM);
@@ -398,13 +399,14 @@ err:
  * The OSSL_LIB_CTX param here allows access to underlying property data needed
  * for computation
  */
-OSSL_METHOD_STORE *ossl_method_store_new(OSSL_LIB_CTX *ctx)
+OSSL_METHOD_STORE *ossl_method_store_new(OSSL_LIB_CTX *ctx, int ext_ref)
 {
     OSSL_METHOD_STORE *res;
 
     res = OPENSSL_zalloc(sizeof(*res));
     if (res != NULL) {
         res->ctx = ctx;
+        res->externally_refcounted = ext_ref;
         if ((res->algs = stored_algs_new(ctx)) == NULL
             || (res->biglock = CRYPTO_THREAD_lock_new()) == NULL) {
             ossl_method_store_free(res);
@@ -905,12 +907,20 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
         }
     }
 fin:
-    if (ret && ossl_method_up_ref(&best_impl->method)) {
-        *method = best_impl->method.method;
-        if (prov_rw != NULL)
-            *prov_rw = best_impl->provider;
+    if (store->externally_refcounted) {
+        if (ret && ossl_method_up_ref(&best_impl->method)) {
+            *method = best_impl->method.method;
+            if (prov_rw != NULL)
+                *prov_rw = best_impl->provider;
+        } else {
+            ret = 0;
+        }
     } else {
-        ret = 0;
+        if (ret) {
+            *method = best_impl->method.method;
+            if (prov_rw != NULL)
+                *prov_rw = best_impl->provider;
+        }
     }
 
 #ifndef FIPS_MODULE
@@ -1131,9 +1141,11 @@ static ossl_inline int ossl_method_store_cache_get_locked(OSSL_METHOD_STORE *sto
                  * ownership.  We will take a second reference below as the caller
                  * owns it as well
                  */
-                if (!ossl_method_up_ref(&r->method)) {
-                    impl_cache_free(r);
-                    r = NULL;
+                if (store->externally_refcounted) {
+                    if (!ossl_method_up_ref(&r->method)) {
+                        impl_cache_free(r);
+                        r = NULL;
+                    }
                 }
                 /*
                  * Inform the caller that we need to insert this newly created
@@ -1149,7 +1161,12 @@ static ossl_inline int ossl_method_store_cache_get_locked(OSSL_METHOD_STORE *sto
             goto err;
     }
     tsan_store(&r->used, 1);
-    if (ossl_method_up_ref(&r->method)) {
+    if (store->externally_refcounted) {
+        if (ossl_method_up_ref(&r->method)) {
+            *method = r->method.method;
+            res = 1;
+        }
+    } else {
         *method = r->method.method;
         res = 1;
     }

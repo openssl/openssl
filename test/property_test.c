@@ -72,7 +72,7 @@ static int test_property_string(void)
      * pristine state.
      */
     if (TEST_ptr(ctx = OSSL_LIB_CTX_new())
-        && TEST_ptr(store = ossl_method_store_new(ctx))
+        && TEST_ptr(store = ossl_method_store_new(ctx, 1))
         && TEST_int_eq(ossl_property_name(ctx, "fnord", 0), 0)
         && TEST_int_ne(ossl_property_name(ctx, "fnord", 1), 0)
         && TEST_int_ne(ossl_property_name(ctx, "name", 1), 0)
@@ -165,7 +165,7 @@ static int test_property_parse(int n)
     OSSL_PROPERTY_LIST *p = NULL, *q = NULL;
     int r = 0;
 
-    if (TEST_ptr(store = ossl_method_store_new(NULL))
+    if (TEST_ptr(store = ossl_method_store_new(NULL, 1))
         && add_property_names("sky", "groan", "cold", "today", "tomorrow", "n",
             NULL)
         && TEST_ptr(p = ossl_parse_property(NULL, parser_tests[n].defn))
@@ -185,7 +185,7 @@ static int test_property_query_value_create(void)
     int r = 0;
 
     /* The property value used here must not be used in other test cases */
-    if (TEST_ptr(store = ossl_method_store_new(NULL))
+    if (TEST_ptr(store = ossl_method_store_new(NULL, 1))
         && add_property_names("wood", NULL)
         && TEST_ptr(p = ossl_parse_query(NULL, "wood=oak", 0)) /* undefined */
         && TEST_ptr(q = ossl_parse_query(NULL, "wood=oak", 1)) /* creates */
@@ -233,7 +233,7 @@ static int test_property_parse_error(int n)
     int r = 0;
     const char *ps;
 
-    if (!TEST_ptr(store = ossl_method_store_new(NULL))
+    if (!TEST_ptr(store = ossl_method_store_new(NULL, 1))
         || !add_property_names("a", "n", NULL))
         goto err;
     ps = parse_error_tests[n].ps;
@@ -283,7 +283,7 @@ static int test_property_merge(int n)
     OSSL_PROPERTY_LIST *q_combined = NULL, *prop = NULL;
     int r = 0;
 
-    if (TEST_ptr(store = ossl_method_store_new(NULL))
+    if (TEST_ptr(store = ossl_method_store_new(NULL, 1))
         && add_property_names("colour", "urn", "clouds", "pot", "day", "night",
             NULL)
         && TEST_ptr(prop = ossl_parse_property(NULL, merge_tests[n].prop))
@@ -307,7 +307,7 @@ static int test_property_defn_cache(void)
     OSSL_PROPERTY_LIST *red = NULL, *blue = NULL, *blue2 = NULL;
     int r;
 
-    r = TEST_ptr(store = ossl_method_store_new(NULL))
+    r = TEST_ptr(store = ossl_method_store_new(NULL, 1))
         && add_property_names("red", "blue", NULL)
         && TEST_ptr(red = ossl_parse_property(NULL, "red"))
         && TEST_ptr(blue = ossl_parse_property(NULL, "blue"))
@@ -368,7 +368,7 @@ static int test_definition_compares(int n)
     OSSL_PROPERTY_LIST *d = NULL, *q = NULL;
     int r;
 
-    r = TEST_ptr(store = ossl_method_store_new(NULL))
+    r = TEST_ptr(store = ossl_method_store_new(NULL, 1))
         && add_property_names("alpha", "omega", NULL)
         && TEST_ptr(d = ossl_parse_property(NULL, definition_tests[n].defn))
         && TEST_ptr(q = ossl_parse_query(NULL, definition_tests[n].query, 0))
@@ -397,7 +397,7 @@ static int test_register_deregister(void)
     OSSL_METHOD_STORE *store;
     OSSL_PROVIDER prov = { 1 };
 
-    if (!TEST_ptr(store = ossl_method_store_new(NULL))
+    if (!TEST_ptr(store = ossl_method_store_new(NULL, 1))
         || !add_property_names("position", NULL))
         goto err;
 
@@ -479,7 +479,7 @@ static int test_property(void)
     int ret = 0;
     void *result;
 
-    if (!TEST_ptr(store = ossl_method_store_new(NULL))
+    if (!TEST_ptr(store = ossl_method_store_new(NULL, 1))
         || !add_property_names("fast", "colour", "sky", "furry", NULL))
         goto err;
 
@@ -594,7 +594,7 @@ static int test_query_cache_stochastic(void)
         .name = "dummy-test-provider"
     };
 
-    if (!TEST_ptr(store = ossl_method_store_new(NULL))
+    if (!TEST_ptr(store = ossl_method_store_new(NULL, 1))
         || !add_property_names("n", NULL))
         goto err;
 

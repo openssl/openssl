@@ -49,7 +49,7 @@ static void *get_tmp_evp_method_store(void *data)
     struct evp_method_data_st *methdata = data;
 
     if (methdata->tmp_store == NULL) {
-        methdata->tmp_store = ossl_method_store_new(methdata->libctx);
+        methdata->tmp_store = ossl_method_store_new(methdata->libctx, 0);
         OSSL_TRACE1(QUERY, "Allocating a new tmp_store %p\n", (void *)methdata->tmp_store);
     } else {
         OSSL_TRACE1(QUERY, "Using the existing tmp_store %p\n", (void *)methdata->tmp_store);
@@ -351,7 +351,12 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
             if (name_id == 0) {
                 ERR_raise_data(ERR_LIB_EVP, ERR_R_FETCH_FAILED,
                     "Algorithm %s cannot be found", name != NULL ? name : "<null>");
-                free_method(method);
+                /*
+                 * Note, we would normally call free_method here to drop the refcount
+                 * but because we are allowing the method store cache to exclusively
+                 * own methods once construct, and this method is already in the store
+                 * we leave it alone here, alowing method store cleanup to handle the freeing
+                 */
                 method = NULL;
             } else {
                 meth_id = evp_method_id(name_id, operation_id);
