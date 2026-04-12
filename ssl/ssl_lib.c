@@ -1084,6 +1084,27 @@ int SSL_set_generate_session_id(SSL *ssl, GEN_SESSION_CB cb)
     return 1;
 }
 
+int SSL_CTX_set_session_id_collision_cb(SSL_CTX *ctx,
+                                        GEN_SESSION_COLLISION_CB cb)
+{
+    if (!CRYPTO_THREAD_write_lock(ctx->lock))
+        return 0;
+    ctx->session_id_collision_cb = cb;
+    CRYPTO_THREAD_unlock(ctx->lock);
+    return 1;
+}
+
+int SSL_set_session_id_collision_cb(SSL *ssl, GEN_SESSION_COLLISION_CB cb)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+
+    if (sc == NULL || !CRYPTO_THREAD_write_lock(ssl->lock))
+        return 0;
+    sc->session_id_collision_cb = cb;
+    CRYPTO_THREAD_unlock(ssl->lock);
+    return 1;
+}
+
 int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
     unsigned int id_len)
 {
