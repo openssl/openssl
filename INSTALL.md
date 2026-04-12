@@ -817,6 +817,12 @@ external test suites are currently supported:
 See the file [test/README-external.md](test/README-external.md)
 for further details.
 
+### enable-unit-tests
+
+Enable building and running unit tests.
+
+This works only on platforms supporting ld `--wrap` option like Linux and BSD.
+
 ### no-filenames
 
 Don't compile in filename and line number information (e.g.  for errors and

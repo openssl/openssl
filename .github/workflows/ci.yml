@@ -88,12 +88,14 @@ jobs:
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: localegen
       run: sudo locale-gen tr_TR.UTF-8
+    - name: cmocka
+      run: sudo apt-get -y install libcmocka-dev
     - name: fipsvendor
       # Make one fips build use a customized FIPS vendor
       run: echo "FIPS_VENDOR=CI" >> VERSION.dat
     - name: config
       # enable-quic is on by default, but we leave it here to check we're testing the explicit enable somewhere
-      run: CC=gcc ./config --strict-warnings --banner=Configured enable-demos enable-h3demo enable-ec_explicit_curves enable-sslkeylog enable-fips enable-quic enable-lms && perl configdata.pm --dump
+      run: CC=gcc ./config --strict-warnings --banner=Configured enable-demos enable-h3demo enable-ec_explicit_curves enable-sslkeylog enable-fips enable-quic enable-lms enable-unit-tests && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
