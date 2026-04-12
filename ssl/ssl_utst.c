@@ -9,7 +9,7 @@
 
 #include "ssl_local.h"
 
-#ifndef OPENSSL_NO_UNIT_TEST
+#ifndef OPENSSL_NO_SSL_TEST_FUNCTIONS
 
 static const struct openssl_ssl_test_functions ssl_test_functions = {
     ssl_init_wbio_buffer,

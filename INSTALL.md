@@ -1092,9 +1092,9 @@ Don't build with the User Interface (UI) console method
 
 The User Interface console method enables text based console prompts.
 
-### enable-unit-test
+### enable-ssl-test-functions
 
-Enable additional unit test APIs.
+Enable exposing SSL_test_functions for ovewriting ssl_init_wbio_buffer.
 
 This should not typically be used in production deployments.
 
