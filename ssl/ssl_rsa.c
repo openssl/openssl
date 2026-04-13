@@ -1091,7 +1091,7 @@ out:
 int SSL_use_cert_and_key(SSL *ssl, X509 *x509, EVP_PKEY *privatekey,
     STACK_OF(X509) *chain, int override)
 {
-    return ssl_set_cert_and_key(ssl, NULL, x509, privatekey, chain, override);
+    return ssl_set_cert_and_key(ssl, SSL_get_SSL_CTX(ssl), x509, privatekey, chain, override);
 }
 
 int SSL_CTX_use_cert_and_key(SSL_CTX *ctx, X509 *x509, EVP_PKEY *privatekey,
