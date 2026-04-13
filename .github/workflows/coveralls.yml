@@ -47,7 +47,7 @@ jobs:
           MATRIX=$(cat << EOF
           [{
               "branch": "openssl-4.0",
-              "extra_config": "enable-fips enable-tfo enable-lms"
+              "extra_config": "enable-fips enable-tfo enable-lms enable-crypto-mdebug enable-allocfail-tests"
             },{
               "branch": "openssl-3.6",
               "extra_config": "no-afalgeng enable-fips enable-tfo enable-lms"
