@@ -104,7 +104,7 @@ struct record_functions_st {
         unsigned char *key, size_t keylen,
         unsigned char *iv, size_t ivlen,
         unsigned char *mackey, size_t mackeylen,
-        const EVP_CIPHER *snciph, size_t snoffs,
+        const EVP_CIPHER *snciph,
         const EVP_CIPHER *ciph,
         size_t taglen,
         int mactype,
@@ -295,9 +295,8 @@ struct ossl_record_layer_st {
 
     /* cryptographic state */
     EVP_CIPHER_CTX *enc_ctx;
-    /* cryptographic state for DTLS sequence numbers */
+    /* cryptographic state for DTLS 1.3 encrypted sequence numbers */
     EVP_CIPHER_CTX *sn_enc_ctx;
-    size_t sn_enc_offs;
 
     /* TLSv1.3 MAC ctx, only used with integrity-only cipher */
     EVP_MAC_CTX *mac_ctx;
@@ -444,7 +443,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl);
 
 size_t dtls_get_rec_header_size(uint8_t hdr_first_byte);
 int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t seqlen,
-    unsigned char *rec_data, size_t rec_data_offs);
+    unsigned char *rec_data);
 int dtls_get_more_records(OSSL_RECORD_LAYER *rl);
 
 int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,

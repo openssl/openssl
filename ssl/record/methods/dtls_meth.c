@@ -405,21 +405,31 @@ static int dtls_retrieve_rlayer_buffered_record(OSSL_RECORD_LAYER *rl,
 
 /* rfc9147 section 4.2.3 */
 int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t seqlen,
-    unsigned char *rec_data, size_t rec_data_offs)
+    unsigned char *rec_data)
 {
     unsigned char mask[16];
     int outlen, inlen;
-    unsigned char *iv, *in;
+    unsigned char *in, *iv;
     size_t i;
+    unsigned char zeros[16] = { 0 };
 
-    if (ossl_assert(sizeof(mask) > rec_data_offs))
-        inlen = (int)(sizeof(mask) - rec_data_offs);
-    else
-        return 0;
+    inlen = (int)(sizeof(mask));
 
-    iv = rec_data_offs == 0 ? NULL : rec_data;
-    in = rec_data + rec_data_offs;
+    in = rec_data;
+    iv = NULL;
     memset(mask, 0, sizeof(mask));
+
+    /*
+     * When the AEAD is based on ChaCha20, the first 4 bytes of the ciphertext
+     * are treated as the block counter and the next 12 bytes as the nonce.
+     * These are passed together as the IV (counter || nonce) to reinitialise
+     * the cipher, and a zero block is encrypted to produce the mask.
+     */
+    if (EVP_CIPHER_CTX_get_nid(ctx) == NID_chacha20) {
+        iv = rec_data;
+        in = zeros;
+        inlen = sizeof(zeros);
+    }
 
     if (!ossl_assert(inlen >= 0)
         || (size_t)inlen > sizeof(mask)
@@ -714,8 +724,7 @@ again:
                 && !dtls_crypt_sequence_number(rl->sn_enc_ctx,
                     recseqnum + recseqnumoffs,
                     recseqnumlen,
-                    rl->packet + rechdrlen,
-                    rl->sn_enc_offs)))) {
+                    rl->packet + rechdrlen)))) {
         /* sequence number encryption failed dump record */
         rr->length = 0;
         rl->packet_length = 0;
@@ -875,7 +884,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     unsigned char *snkey, unsigned char *key, size_t keylen,
     unsigned char *iv, size_t ivlen,
     unsigned char *mackey, size_t mackeylen,
-    const EVP_CIPHER *snciph, size_t snoffs,
+    const EVP_CIPHER *snciph,
     const EVP_CIPHER *ciph, size_t taglen,
     int mactype,
     const EVP_MD *md, COMP_METHOD *comp,
@@ -922,7 +931,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
     ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key, keylen,
         iv, ivlen, mackey, mackeylen,
-        snciph, snoffs, ciph, taglen, mactype, md,
+        snciph, ciph, taglen, mactype, md,
         comp);
 
 err:
