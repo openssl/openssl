@@ -136,6 +136,7 @@ static OSSL_DECODER_CLEANUP file_load_cleanup;
 
 #ifdef _WIN32
 #define OSSL_is_drive_letter(c) (((c) >= 'A' && (c) <= 'Z') || ((c) >= 'a' && (c) <= 'z'))
+#define OSSL_is_abs_drive_prefix(p) (OSSL_is_drive_letter((p)[0]) && (p)[1] == ':' && (p)[2] == '/')
 #endif
 
 /*
@@ -148,7 +149,6 @@ static OSSL_DECODER_CLEANUP file_load_cleanup;
  * On success it populates the file stat buffer pointed at by |st|
  * (unless |st| is NULL) and returns the derived pathname, otherwise NULL.
  */
-#define OSSL_is_abs_drive_prefix(p) (OSSL_is_drive_letter(*(p)) && *((p) + 1) == ':' && *((p) + 2) == '/')
 static const char *ossl_file_stat(const char *uri, struct stat *st)
 {
     const char *path = uri, *q;
