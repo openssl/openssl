@@ -46,6 +46,9 @@ jobs:
           else
           MATRIX=$(cat << EOF
           [{
+              "branch": "master",
+              "extra_config": "enable-fips enable-tfo enable-lms enable-crypto-mdebug enable-allocfail-tests"
+            }, {
               "branch": "openssl-4.0",
               "extra_config": "enable-fips enable-tfo enable-lms enable-crypto-mdebug enable-allocfail-tests"
             },{
@@ -60,9 +63,6 @@ jobs:
             }, {
               "branch": "openssl-3.0",
               "extra_config": "no-afalgeng enable-fips"
-            }, {
-              "branch": "master",
-              "extra_config": "enable-fips enable-tfo enable-lms enable-crypto-mdebug enable-allocfail-tests"
           }]
           EOF
           )
