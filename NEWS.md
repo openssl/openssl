@@ -29,7 +29,7 @@ OpenSSL 4.0
 
   * none
 
-### Major changes between OpenSSL 3.6 and OpenSSL 4.0 [under development]
+### Major changes between OpenSSL 3.6 and OpenSSL 4.0
 
 OpenSSL 4.0.0 is a feature release adding significant new functionality
 to OpenSSL.

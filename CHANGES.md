@@ -29,7 +29,7 @@ OpenSSL Releases
 
 -----------
 
-### Changes between 4.0 and 4.1 [xx XXX xxxx]
+### Changes between 4.0 and 4.1 [14 Mar 2026]
 
  * Improved DTLS handshake robustness under UDP reordering by buffering and
    replaying early ChangeCipherSpec (CCS) records at the expected state.
