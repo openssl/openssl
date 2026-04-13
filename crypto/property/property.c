@@ -98,7 +98,6 @@ typedef struct query_st {
     uint64_t specific_hash; /* hash of [nid,prop_query,prov] tuple */
     uint64_t generic_hash; /* hash of [nid,prop_query] tuple */
     METHOD method; /* METHOD for this query */
-    TSAN_QUALIFIER uint32_t used; /* flag to indicate used since last cull */
 } QUERY;
 
 /*
@@ -971,98 +970,6 @@ int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
     return 1;
 }
 
-/*
- * Generate some randomness in our hash table when we need it, since
- * The use of this particular code occurs before our algorithms are
- * registered, preventing the use of the RAND_bytes apis.
- * Based off of:
- * https://doi.org/10.18637/jss.v008.i14
- */
-static ossl_inline void generate_random_seed(uint32_t *seed)
-{
-    OSSL_TIME ts;
-
-    if (*seed == 0) {
-        *seed = OPENSSL_rdtsc();
-        if (*seed == 0) {
-            ts = ossl_time_now();
-            *seed = (uint32_t)ts.t;
-        }
-    }
-
-    *seed ^= *seed << 13;
-    *seed ^= *seed >> 17;
-    *seed ^= *seed << 5;
-}
-
-/*
- * Cull items from the QUERY cache.
- *
- * We don't want to let our QUERY cache grow too large, so if we grow beyond
- * its threshold, randomly discard some entries.
- *
- * We do this with an lru-like heuristic, and some randomness.
- *
- * the process is:
- * 1) Iterate over each element in the QUERY hashtable, for each element:
- * 2) If its used flag is set, its been recently used, so skip it.
- * 3) Otherwise, consult the sa->seed value.  Check the low order bit of sa->seed,
- *    which at cache creation is randomly generated.  If the bit is set, select the QUERY
- *    precomputed hash value, and delete it form the table.
- * 4) Shift the seed value right one bit.
- * 5) Repeat steps 1-4 until the number of requested entries have been removed
- * 6) Update our sa->seed by xoring the current sa->seed with the last hash that was eliminated.
- */
-static void QUERY_cache_select_cull(ALGORITHM *alg, STORED_ALGORITHMS *sa,
-    size_t cullcount, uint32_t seed)
-{
-    size_t culled = 0;
-    uint64_t hash = 0;
-    uint32_t used = 0;
-    QUERY *q, *qn;
-    QUERY_KEY key;
-
-cull_again:
-    OSSL_LIST_FOREACH_DELSAFE(q, qn, lru_entry, &sa->lru_list)
-    {
-        /*
-         * Skip QUERY elements that have been recently used
-         * reset this flag so all elements have to continuously
-         * demonstrate use.
-         */
-        used = tsan_load(&q->used);
-        tsan_store(&q->used, 0);
-        if (used)
-            continue;
-        /*
-         * If the low order bit in the seed is set, we can delete this entry
-         */
-        if (seed & 0x1) {
-            /*
-             * Select the hash value to delete in priority order, specific if its
-             * given, generic otherwise
-             */
-            hash = (q->specific_hash != 0) ? q->specific_hash : q->generic_hash;
-            HT_INIT_KEY_CACHED(&key, hash);
-            if (ossl_ht_delete(sa->cache, TO_HT_KEY(&key))) {
-                culled++;
-                if (culled == cullcount)
-                    break;
-            }
-            generate_random_seed(&seed);
-        } else {
-            seed = seed >> 1;
-        }
-    }
-    /*
-     * If we didn't cull our requested number of entries
-     * try again.  Note that the used flag is cleared on
-     * all entries now, so every entry is fair game
-     */
-    if (culled < cullcount)
-        goto cull_again;
-}
-
 static ossl_inline int ossl_method_store_cache_get_locked(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int nid, const char *prop_query, size_t keylen, STORED_ALGORITHMS *sa, QUERY **post_insert,
     void **method)
@@ -1133,7 +1040,6 @@ static ossl_inline int ossl_method_store_cache_get_locked(OSSL_METHOD_STORE *sto
                     goto err;
                 r->generic_hash = generic_hash;
                 r->specific_hash = 0;
-                r->used = 0;
                 ossl_list_lru_entry_init_elem(r);
                 HT_INIT_KEY_CACHED(&key, generic_hash);
                 /*
@@ -1160,7 +1066,6 @@ static ossl_inline int ossl_method_store_cache_get_locked(OSSL_METHOD_STORE *sto
         if (r == NULL)
             goto err;
     }
-    tsan_store(&r->used, 1);
     if (store->externally_refcounted) {
         if (ossl_method_up_ref(&r->method)) {
             *method = r->method.method;
@@ -1243,7 +1148,6 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
     ALGORITHM *alg;
     QUERY_KEY key;
     int res = 1;
-    size_t cullcount;
 #ifdef ALLOW_VLA
     uint8_t keybuf[keylen];
 #else
@@ -1259,25 +1163,6 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
     alg = ossl_method_store_retrieve(sa, nid);
     if (alg == NULL)
         goto err;
-    if (ossl_ht_count(sa->cache) > IMPL_CACHE_FLUSH_THRESHOLD) {
-        uint32_t seed = 0;
-
-        generate_random_seed(&seed);
-        /*
-         * Cull between 1 and 25% of this cache
-         */
-        cullcount = ossl_ht_count(sa->cache);
-        /*
-         * If this cache has less than 25% of the total entries
-         * in the STORED_ALGORITHMS shard, don't bother culling
-         * Just wait until we try to add to a larger cache
-         */
-        if (cullcount >= 4) {
-            cullcount = seed % (cullcount >> 2);
-            cullcount = (cullcount < 1) ? 1 : cullcount;
-            QUERY_cache_select_cull(alg, sa, cullcount, seed);
-        }
-    }
 
     /*
      * Marshall our lookup key
@@ -1301,7 +1186,6 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
     if (p != NULL) {
         p->saptr = sa;
         p->nid = nid;
-        p->used = 0;
         ossl_list_lru_entry_init_elem(p);
         p->method.method = method;
         p->method.up_ref = method_up_ref;
