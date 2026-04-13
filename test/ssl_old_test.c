@@ -1284,7 +1284,7 @@ int main(int argc, char *argv[])
         no_protocol = 0;
 
     /*
-     * Testing was requested for a compiled-out protocol (e.g. SSLv3).
+     * Testing was requested for a compiled-out protocol (e.g. TLSv1, etc.).
      * Ideally, we would error out, but the generic test wrapper can't know
      * when to expect failure. So we do nothing and return success.
      */

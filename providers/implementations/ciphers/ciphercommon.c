@@ -276,15 +276,9 @@ int ossl_cipher_generic_block_update(void *vctx, unsigned char *out,
                 return 0;
             }
             padval = (unsigned char)(padnum - 1);
-            if (ctx->tlsversion == SSL3_VERSION) {
-                if (padnum > 1)
-                    memset(out + inl, 0, padnum - 1);
-                *(out + inl + padnum - 1) = padval;
-            } else {
-                /* we need to add 'padnum' padding bytes of value padval */
-                for (loop = inl; loop < inl + padnum; loop++)
-                    out[loop] = padval;
-            }
+            /* we need to add 'padnum' padding bytes of value padval */
+            for (loop = inl; loop < inl + padnum; loop++)
+                out[loop] = padval;
             inl += padnum;
         }
 

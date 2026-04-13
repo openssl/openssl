@@ -530,7 +530,6 @@ end:
 #endif /* OPENSSL_NO_COMP */
 #endif
 
-/* This function is also used by the SSLv3 implementation */
 int tls1_allocate_write_buffers(OSSL_RECORD_LAYER *rl,
     OSSL_RECORD_TEMPLATE *templates,
     size_t numtempl, size_t *prefix)
@@ -552,7 +551,6 @@ int tls1_allocate_write_buffers(OSSL_RECORD_LAYER *rl,
     return 1;
 }
 
-/* This function is also used by the SSLv3 implementation */
 int tls1_initialise_write_packets(OSSL_RECORD_LAYER *rl,
     OSSL_RECORD_TEMPLATE *templates,
     size_t numtempl,

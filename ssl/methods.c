@@ -13,7 +13,7 @@
 #include "ssl_local.h"
 
 /*-
- * TLS/SSLv3 methods
+ * TLS methods
  */
 
 IMPLEMENT_tls_meth_func(TLS_ANY_VERSION, 0, 0,
@@ -42,7 +42,7 @@ IMPLEMENT_tls_meth_func(TLS1_VERSION, SSL_METHOD_NO_SUITEB, SSL_OP_NO_TLSv1,
     ossl_statem_accept, ossl_statem_connect, TLSv1_enc_data)
 #endif
 /*-
- * TLS/SSLv3 server methods
+ * TLS server methods
  */
 IMPLEMENT_tls_meth_func(TLS_ANY_VERSION, 0, 0,
     TLS_server_method,
@@ -71,7 +71,7 @@ IMPLEMENT_tls_meth_func(TLS1_VERSION, SSL_METHOD_NO_SUITEB, SSL_OP_NO_TLSv1,
     ssl_undefined_function, TLSv1_enc_data)
 #endif
 /*-
- * TLS/SSLv3 client methods
+ * TLS client methods
  */
 IMPLEMENT_tls_meth_func(TLS_ANY_VERSION, 0, 0,
     TLS_client_method,
