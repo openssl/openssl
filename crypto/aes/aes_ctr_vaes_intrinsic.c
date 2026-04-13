@@ -22,9 +22,20 @@
 /* Forward declaration — defined in aesni-x86_64.pl assembly          */
 void aesni_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key);
 
-/* Enable AVX-512 and VAES for this compilation unit                  */
-#pragma GCC target("avx512f,avx512dq,avx512bw,vaes,aes")
-
+/* Portable compiler abstractions for inlining and ISA target selection */
+#if defined(__GNUC__)       /* GCC and Clang */
+# define OSSL_FUNC_ALWAYS_INLINE   __attribute__((always_inline))
+# define OSSL_FUNC_NOINLINE        __attribute__((noinline))
+# pragma GCC target("avx512f,avx512dq,avx512bw,vaes,aes")
+  /* GCC/Clang require this pragma to make AVX-512/VAES intrinsics available.
+   * MSVC does not need it: all intrinsics are always declared in <immintrin.h>. */
+#elif defined(_MSC_VER)     /* MSVC */
+# define OSSL_FUNC_ALWAYS_INLINE   __forceinline
+# define OSSL_FUNC_NOINLINE        __declspec(noinline)
+#else                       /* Other compilers */
+# define OSSL_FUNC_ALWAYS_INLINE
+# define OSSL_FUNC_NOINLINE
+#endif
 #include <immintrin.h>
 
 #define AES_BLOCK_SIZE 16
@@ -36,7 +47,7 @@ void aesni_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *k
 /* ------------------------------------------------------------------ */
 
 #define DEFINE_AES_ENCRYPT_FUNCS(ROUNDS)                                       \
-__attribute__((always_inline))                                                 \
+OSSL_FUNC_ALWAYS_INLINE                                                 \
 static inline void AesEnc_4x512_##ROUNDS(                                      \
     __m512i *b1, __m512i *b2, __m512i *b3, __m512i *b4,                        \
     const __m512i *rk)                                                         \
@@ -57,7 +68,7 @@ static inline void AesEnc_4x512_##ROUNDS(                                      \
     *b4 = _mm512_aesenclast_epi128(*b4, rk[ROUNDS]);                           \
 }                                                                              \
                                                                                \
-__attribute__((always_inline))                                                 \
+OSSL_FUNC_ALWAYS_INLINE                                                 \
 static inline void AesEnc_2x512_##ROUNDS(                                      \
     __m512i *b1, __m512i *b2, const __m512i *rk)                               \
 {                                                                              \
@@ -71,7 +82,7 @@ static inline void AesEnc_2x512_##ROUNDS(                                      \
     *b2 = _mm512_aesenclast_epi128(*b2, rk[ROUNDS]);                           \
 }                                                                              \
                                                                                \
-__attribute__((always_inline))                                                 \
+OSSL_FUNC_ALWAYS_INLINE                                                 \
 static inline void AesEnc_1x512_##ROUNDS(                                      \
     __m512i *b1, const __m512i *rk)                                            \
 {                                                                              \
@@ -126,7 +137,7 @@ static inline __m512i ctr_init4(const unsigned char *iv, __m512i swap)
 /* ------------------------------------------------------------------ */
 
 #define DEFINE_CTR_BLOCK(NR)                                                   \
-__attribute__((noinline))                                                      \
+OSSL_FUNC_NOINLINE                                                      \
 static void ctr_process_##NR(                                                  \
     const unsigned char *in, unsigned char *out,                               \
     size_t len, const AES_KEY *key, unsigned char *iv)                         \
@@ -379,5 +390,8 @@ int ossl_aes_ctr_vaes_eligible(void)
         && (OPENSSL_ia32cap_P[2] & (1 << 30))    /* AVX512BW           */
         && (OPENSSL_ia32cap_P[3] & (1 << 9));    /* AVX512VAES         */
 }
+
+#undef OSSL_FUNC_ALWAYS_INLINE
+#undef OSSL_FUNC_NOINLINE
 
 #endif /* __x86_64__ || _M_AMD64 */
