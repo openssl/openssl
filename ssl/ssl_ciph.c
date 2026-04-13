@@ -458,13 +458,12 @@ int ssl_cipher_get_evp_md_mac(SSL_CTX *ctx, const SSL_CIPHER *sslc,
 }
 
 int ssl_cipher_get_evp_cipher_sn(SSL_CTX *ctx, const SSL_CIPHER *sslc,
-    const EVP_CIPHER **enc, size_t *inputoffs)
+    const EVP_CIPHER **enc)
 {
     int i = ssl_cipher_info_lookup(ssl_cipher_table_cipher, sslc->algorithm_enc);
 
     if (i == -1) {
         *enc = NULL;
-        *inputoffs = 0;
     } else {
         if (i == SSL_ENC_NULL_IDX) {
             /*
@@ -478,16 +477,12 @@ int ssl_cipher_get_evp_cipher_sn(SSL_CTX *ctx, const SSL_CIPHER *sslc,
 
             *enc = NULL;
 
-            if ((sslc->algorithm_enc & SSL_AES128_ANY) != 0) {
+            if ((sslc->algorithm_enc & SSL_AES128_ANY) != 0)
                 ecbnid = NID_aes_128_ecb;
-                *inputoffs = 0;
-            } else if ((sslc->algorithm_enc & SSL_AES256_ANY) != 0) {
+            else if ((sslc->algorithm_enc & SSL_AES256_ANY) != 0)
                 ecbnid = NID_aes_256_ecb;
-                *inputoffs = 0;
-            } else if (ossl_assert((sslc->algorithm_enc & SSL_CHACHA20) != 0)) {
+            else if (ossl_assert((sslc->algorithm_enc & SSL_CHACHA20) != 0))
                 ecbnid = NID_chacha20;
-                *inputoffs = 4;
-            }
 
             if (ecbnid != NID_undef)
                 *enc = ssl_evp_cipher_fetch(ctx->libctx, OBJ_nid2sn(ecbnid), ctx->propq);
@@ -500,7 +495,7 @@ int ssl_cipher_get_evp_cipher_sn(SSL_CTX *ctx, const SSL_CIPHER *sslc,
 }
 
 int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
-    const EVP_CIPHER **snenc, size_t *snencoffs,
+    const EVP_CIPHER **snenc,
     const EVP_CIPHER **enc,
     const EVP_MD **md,
     int *mac_pkey_type, size_t *mac_secret_size,
@@ -534,7 +529,7 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
 
     if (!ssl_cipher_get_evp_cipher(ctx, c, enc)
         || (snenc != NULL
-            && !ssl_cipher_get_evp_cipher_sn(ctx, c, snenc, snencoffs)))
+            && !ssl_cipher_get_evp_cipher_sn(ctx, c, snenc)))
         return 0;
 
     if (!ssl_cipher_get_evp_md_mac(ctx, c, md, mac_pkey_type,
