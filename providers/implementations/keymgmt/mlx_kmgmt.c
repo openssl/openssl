@@ -367,8 +367,17 @@ load_slot(OSSL_LIB_CTX *libctx, const char *propq, const char *pname,
     if (group != NULL)
         parr[1] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
             group, 0);
-    if (EVP_PKEY_fromdata(ctx, ppkey, selection, parr) > 0)
+    if (*ppkey == NULL) {
+        *ppkey = EVP_PKEY_new_ex();
+        if (*ppkey == NULL)
+            goto err;
+    }
+    if (EVP_PKEY_fromdata(ctx, ppkey, selection, parr) > 0) {
         ret = 1;
+    } else {
+        EVP_PKEY_free(*ppkey);
+        *ppkey = NULL;
+    }
 
 err:
     EVP_PKEY_CTX_free(ctx);
@@ -686,9 +695,9 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
         return key;
 
     /* For now, using the same "propq" for all components */
-    key->mkey = EVP_PKEY_Q_keygen(key->libctx, key->propq,
+    key->mkey = EVP_PKEY_Q_keygen_ex(key->libctx, key->propq,
         key->minfo->algorithm_name);
-    key->xkey = EVP_PKEY_Q_keygen(key->libctx, key->propq,
+    key->xkey = EVP_PKEY_Q_keygen_ex(key->libctx, key->propq,
         key->xinfo->algorithm_name,
         key->xinfo->group_name);
     if (key->mkey != NULL && key->xkey != NULL) {

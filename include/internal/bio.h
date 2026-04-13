@@ -31,7 +31,6 @@ struct bio_method_st {
     int (*brecvmmsg)(BIO *, BIO_MSG *, size_t, size_t, uint64_t, size_t *);
 };
 
-void bio_free_ex_data(BIO *bio);
 void bio_cleanup(void);
 
 /* Old style to new style BIO_METHOD conversion functions */

@@ -715,6 +715,7 @@ BIO *BIO_new_from_core_bio(OSSL_LIB_CTX *libctx, OSSL_CORE_BIO *corebio);
 BIO *BIO_new_fp(FILE *stream, int close_flag);
 #endif
 BIO *BIO_new_ex(OSSL_LIB_CTX *libctx, const BIO_METHOD *method);
+BIO *BIO_new_ex2(OSSL_LIB_CTX *libctx, const BIO_METHOD *method);
 BIO *BIO_new(const BIO_METHOD *type);
 int BIO_free(BIO *a);
 void BIO_set_data(BIO *a, void *ptr);
@@ -768,6 +769,7 @@ const BIO_METHOD *BIO_s_dgram_mem(void);
 #endif
 const BIO_METHOD *BIO_s_secmem(void);
 BIO *BIO_new_mem_buf(const void *buf, int len);
+BIO *BIO_new_mem_buf_ex(const void *buf, int len);
 #ifndef OPENSSL_NO_SOCK
 const BIO_METHOD *BIO_s_socket(void);
 const BIO_METHOD *BIO_s_connect(void);

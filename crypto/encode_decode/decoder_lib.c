@@ -155,7 +155,7 @@ int OSSL_DECODER_from_data(OSSL_DECODER_CTX *ctx, const unsigned char **pdata,
         return 0;
     }
 
-    membio = BIO_new_mem_buf(*pdata, (int)*pdata_len);
+    membio = BIO_new_mem_buf_ex(*pdata, (int)*pdata_len);
     if (OSSL_DECODER_from_bio(ctx, membio)) {
         *pdata_len = (size_t)BIO_get_mem_data(membio, pdata);
         ret = 1;
@@ -934,7 +934,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
         p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_DATA);
         if (p == NULL || p->data_type != OSSL_PARAM_OCTET_STRING)
             goto end;
-        new_data.bio = BIO_new_mem_buf(p->data, (int)p->data_size);
+        new_data.bio = BIO_new_mem_buf_ex(p->data, (int)p->data_size);
         if (new_data.bio == NULL)
             goto end;
         bio = new_data.bio;

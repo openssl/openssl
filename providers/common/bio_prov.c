@@ -231,7 +231,7 @@ BIO *ossl_bio_new_from_core_bio(PROV_CTX *provctx, OSSL_CORE_BIO *corebio)
     if (corebiometh == NULL)
         return NULL;
 
-    if ((outbio = BIO_new(corebiometh)) == NULL)
+    if ((outbio = BIO_new_ex2(NULL, corebiometh)) == NULL)
         return NULL;
     if (!ossl_prov_bio_up_ref(corebio)) {
         BIO_free(outbio);

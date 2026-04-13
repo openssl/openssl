@@ -119,11 +119,15 @@ int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
 
 int EVP_PKEY_set_ex_data(EVP_PKEY *key, int idx, void *arg)
 {
+    if (!key->has_exdata)
+        return 0;
     return CRYPTO_set_ex_data(&key->ex_data, idx, arg);
 }
 
 void *EVP_PKEY_get_ex_data(const EVP_PKEY *key, int idx)
 {
+    if (!key->has_exdata)
+        return NULL;
     return CRYPTO_get_ex_data(&key->ex_data, idx);
 }
 #endif /* !FIPS_MODULE */
@@ -1432,7 +1436,7 @@ size_t EVP_PKEY_get1_encoded_public_key(EVP_PKEY *pkey, unsigned char **ppub)
 
 /*- All methods below can also be used in FIPS_MODULE */
 
-EVP_PKEY *EVP_PKEY_new(void)
+static EVP_PKEY *evp_pkey_new_intern(int exdata)
 {
     EVP_PKEY *ret = OPENSSL_zalloc(sizeof(*ret));
 
@@ -1453,7 +1457,8 @@ EVP_PKEY *EVP_PKEY_new(void)
 
 #ifndef FIPS_MODULE
     ret->save_parameters = 1;
-    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EVP_PKEY, ret, &ret->ex_data)) {
+    ret->has_exdata = exdata;
+    if (exdata && !CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EVP_PKEY, ret, &ret->ex_data)) {
         ERR_raise(ERR_LIB_EVP, ERR_R_CRYPTO_LIB);
         goto err;
     }
@@ -1465,6 +1470,16 @@ err:
     CRYPTO_THREAD_lock_free(ret->lock);
     OPENSSL_free(ret);
     return NULL;
+}
+
+EVP_PKEY *EVP_PKEY_new(void)
+{
+    return evp_pkey_new_intern(1);
+}
+
+EVP_PKEY *EVP_PKEY_new_ex(void)
+{
+    return evp_pkey_new_intern(0);
 }
 
 /*
@@ -1684,8 +1699,8 @@ EVP_PKEY *EVP_PKEY_dup(EVP_PKEY *pkey)
 done:
 #ifndef FIPS_MODULE
     /* copy auxiliary data */
-    if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_EVP_PKEY,
-            &dup_pk->ex_data, &pkey->ex_data))
+    dup_pk->has_exdata = pkey->has_exdata;
+    if (pkey->has_exdata && !CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_EVP_PKEY, &dup_pk->ex_data, &pkey->ex_data))
         goto err;
 
     if (pkey->attributes != NULL) {
@@ -1759,7 +1774,8 @@ void EVP_PKEY_free(EVP_PKEY *x)
     REF_ASSERT_ISNT(i < 0);
     evp_pkey_free_it(x);
 #ifndef FIPS_MODULE
-    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EVP_PKEY, x, &x->ex_data);
+    if (x->has_exdata)
+        CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EVP_PKEY, x, &x->ex_data);
 #endif
     CRYPTO_THREAD_lock_free(x->lock);
     CRYPTO_FREE_REF(&x->references);
