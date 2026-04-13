@@ -34,51 +34,6 @@ static int ssl3_cbc_copy_mac(size_t *reclen,
     OSSL_LIB_CTX *libctx);
 
 /*-
- * ssl3_cbc_remove_padding removes padding from the decrypted, SSLv3, CBC
- * record in |recdata| by updating |reclen| in constant time. It also extracts
- * the MAC from the underlying record and places a pointer to it in |mac|. The
- * MAC data can either be newly allocated memory, or a pointer inside the
- * |recdata| buffer. If allocated then |*alloced| is set to 1, otherwise it is
- * set to 0.
- *
- * origreclen: the original record length before any changes were made
- * block_size: the block size of the cipher used to encrypt the record.
- * mac_size: the size of the MAC to be extracted
- * aead: 1 if an AEAD cipher is in use, or 0 otherwise
- * returns:
- *   0: if the record is publicly invalid.
- *   1: if the record is publicly valid. If the padding removal fails then the
- *      MAC returned is random.
- */
-int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
-    size_t origreclen,
-    unsigned char *recdata,
-    unsigned char **mac,
-    int *alloced,
-    size_t block_size, size_t mac_size,
-    OSSL_LIB_CTX *libctx)
-{
-    size_t padding_length;
-    size_t good;
-    const size_t overhead = 1 /* padding length byte */ + mac_size;
-
-    /*
-     * These lengths are all public so we can test them in non-constant time.
-     */
-    if (overhead > *reclen)
-        return 0;
-
-    padding_length = recdata[*reclen - 1];
-    good = constant_time_ge_s(*reclen, padding_length + overhead);
-    /* SSLv3 requires that the padding is minimal. */
-    good &= constant_time_ge_s(block_size, padding_length + 1);
-    *reclen -= good & (padding_length + 1);
-
-    return ssl3_cbc_copy_mac(reclen, origreclen, recdata, mac, alloced,
-        block_size, mac_size, good, libctx);
-}
-
-/*-
  * tls1_cbc_remove_padding_and_mac removes padding from the decrypted, TLS, CBC
  * record in |recdata| by updating |reclen| in constant time. It also extracts
  * the MAC from the underlying record and places a pointer to it in |mac|. The

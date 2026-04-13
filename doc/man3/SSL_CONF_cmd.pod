@@ -246,7 +246,7 @@ See L<openssl-ciphers(1)> for more information.
 =item B<-min_protocol> I<minprot>, B<-max_protocol> I<maxprot>
 
 Sets the minimum and maximum supported protocol.
-Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
+Currently supported protocol values are B<TLSv1>, B<TLSv1.1>,
 B<TLSv1.2>, B<TLSv1.3> for TLS; B<DTLSv1>, B<DTLSv1.2> for DTLS, and B<None>
 for no limit.
 If either the lower or upper bound is not specified then only the other bound
@@ -309,11 +309,14 @@ operations are permitted.
 
 =item B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>
 
-Disables protocol support for SSLv3, TLSv1.0, TLSv1.1, TLSv1.2 or TLSv1.3 by
-setting the corresponding options B<SSL_OP_NO_SSLv3>, B<SSL_OP_NO_TLSv1>,
+Disables protocol support for TLSv1.0, TLSv1.1, TLSv1.2 or TLSv1.3 by
+setting the corresponding options B<SSL_OP_NO_TLSv1>,
 B<SSL_OP_NO_TLSv1_1>, B<SSL_OP_NO_TLSv1_2> and B<SSL_OP_NO_TLSv1_3>
 respectively. These options are deprecated, use B<-min_protocol> and
 B<-max_protocol> instead.
+
+Note that B<-no_ssl3> is a no-op since support for SSLv3 was removed in OpenSSL
+4.0.
 
 =item B<-anti_replay>, B<-no_anti_replay>
 
@@ -493,7 +496,7 @@ This is a synonym for the "Groups" command.
 
 This sets the minimum supported SSL, TLS or DTLS version.
 
-Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
+Currently supported protocol values are B<TLSv1>, B<TLSv1.1>,
 B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1> and B<DTLSv1.2>.
 The SSL and TLS bounds apply only to TLS-based contexts, while the DTLS bounds
 apply only to DTLS-based contexts.
@@ -505,7 +508,7 @@ The value B<None> applies to both types of contexts and disables the limits.
 
 This sets the maximum supported SSL, TLS or DTLS version.
 
-Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
+Currently supported protocol values are B<TLSv1>, B<TLSv1.1>,
 B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1> and B<DTLSv1.2>.
 The SSL and TLS bounds apply only to TLS-based contexts, while the DTLS bounds
 apply only to DTLS-based contexts.
@@ -528,7 +531,7 @@ effect.
 Only enabling some protocol versions does not disable the other protocol
 versions.
 
-Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
+Currently supported protocol values are B<TLSv1>, B<TLSv1.1>,
 B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1> and B<DTLSv1.2>.
 The special value B<ALL> refers to all supported versions.
 
@@ -560,7 +563,7 @@ B<Compression>: SSL/TLS compression support, disabled by default. Inverse
 of B<SSL_OP_NO_COMPRESSION>.
 
 B<EmptyFragments>: use empty fragments as a countermeasure against a
-SSL 3.0/TLS 1.0 protocol vulnerability affecting CBC ciphers. It
+TLS 1.0 protocol vulnerability affecting CBC ciphers. It
 is set by default. Inverse of B<SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS>.
 
 B<Bugs>: enable various bug workarounds. Same as B<SSL_OP_ALL>.
@@ -728,16 +731,15 @@ argument.
 The order of operations is significant. This can be used to set either defaults
 or values which cannot be overridden. For example if an application calls:
 
- SSL_CONF_cmd(ctx, "Protocol", "-SSLv3");
+ SSL_CONF_cmd(ctx, "Protocol", "-TLSv1");
  SSL_CONF_cmd(ctx, userparam, uservalue);
 
-it will disable SSLv3 support by default but the user can override it. If
+it will disable TLSv1 support by default but the user can override it. If
 however the call sequence is:
 
  SSL_CONF_cmd(ctx, userparam, uservalue);
- SSL_CONF_cmd(ctx, "Protocol", "-SSLv3");
-
-SSLv3 is B<always> disabled and attempt to override this by the user are
+ SSL_CONF_cmd(ctx, "Protocol", "-TLSv1");
+TLSv1 is B<always> disabled and attempt to override this by the user are
 ignored.
 
 By checking the return code of SSL_CONF_cmd() it is possible to query if a
@@ -792,22 +794,22 @@ Set supported signature algorithms:
 
 There are various ways to select the supported protocols.
 
-This set the minimum protocol version to TLSv1, and so disables SSLv3.
+This set the minimum protocol version to TLSv1.1, and so disables TLSv1.
 This is the recommended way to disable protocols.
 
- SSL_CONF_cmd(ctx, "MinProtocol", "TLSv1");
+ SSL_CONF_cmd(ctx, "MinProtocol", "TLSv1.1");
 
-The following also disables SSLv3:
+The following also disables TLSv1:
 
- SSL_CONF_cmd(ctx, "Protocol", "-SSLv3");
+ SSL_CONF_cmd(ctx, "Protocol", "-TLSv1");
 
 The following will first enable all protocols, and then disable
-SSLv3.
+TLSv1.
 If no protocol versions were disabled before this has the same effect as
-"-SSLv3", but if some versions were disables this will re-enable them before
-disabling SSLv3.
+"-TLSv1", but if some versions were disables this will re-enable them before
+disabling TLSv1.
 
- SSL_CONF_cmd(ctx, "Protocol", "ALL,-SSLv3");
+ SSL_CONF_cmd(ctx, "Protocol", "ALL,-TLSv1");
 
 Only enable TLSv1.2:
 

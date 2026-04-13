@@ -100,10 +100,6 @@ of the following:
 
 =over 4
 
-=item SSL3_VERSION
-
-The connection uses the SSLv3 protocol.
-
 =item TLS1_VERSION
 
 The connection uses the TLSv1.0 protocol.

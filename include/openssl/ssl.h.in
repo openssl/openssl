@@ -346,7 +346,7 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 /* In TLSv1.3 allow a non-(ec)dhe based kex_mode */
 #define SSL_OP_ALLOW_NO_DHE_KEX SSL_OP_BIT(10)
 /*
- * Disable SSL 3.0/TLS 1.0 CBC vulnerability workaround that was added
+ * Disable TLS 1.0 CBC vulnerability workaround that was added
  * in OpenSSL 0.9.6d.  Usually (depending on the application protocol)
  * the workaround is not needed.  Unfortunately some broken SSL/TLS
  * implementations cannot handle it at all, which is why we include it

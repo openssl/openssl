@@ -108,8 +108,8 @@ processed.
 
 Due to automatic protocol version negotiation, I<version> is not
 necessarily the protocol version used by the sender of the message: If
-a TLS 1.0 ClientHello message is received by an SSL 3.0-only server,
-I<version> will be B<SSL3_VERSION>.
+a TLS 1.1 ClientHello message is received by an TLS 1-only server,
+I<version> will be B<TLS1_VERSION>.
 
 Pseudo content type values may be sent at various points during the processing
 of data. The following pseudo content types are currently defined:
