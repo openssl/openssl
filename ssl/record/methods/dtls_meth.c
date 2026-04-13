@@ -421,15 +421,33 @@ int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t s
     in = rec_data + rec_data_offs;
     memset(mask, 0, sizeof(mask));
 
-    if (!ossl_assert(inlen >= 0)
+    /*
+     * When the AEAD is based on ChaCha20, the first 4 bytes of the ciphertext
+     * are treated as the block counter and the next 12 bytes as the nonce.
+     * These are passed together as the IV (counter || nonce) to reinitialise
+     * the cipher, and a zero block is encrypted to produce the mask.
+     */
+    if (EVP_CIPHER_CTX_get_nid(ctx) == NID_chacha20) {
+        static const unsigned char zeros[16] = { 0 };
+
+        /* rec_data[0..3]  = block counter, rec_data[4..15] = nonce */
+        if (!EVP_CIPHER_CTX_set_padding(ctx, 0)
+            || EVP_CipherInit_ex2(ctx, NULL, NULL, rec_data, 1, NULL) <= 0
+            || EVP_CipherUpdate(ctx, mask, &outlen, zeros, (int)seqlen) <= 0
+            || outlen != (int)seqlen
+            || EVP_CipherFinal_ex(ctx, mask + outlen, &outlen) <= 0
+            || outlen != 0)
+            return 0;
+    } else if (!ossl_assert(inlen >= 0)
         || (size_t)inlen > sizeof(mask)
         || !EVP_CIPHER_CTX_set_padding(ctx, 0)
         || EVP_CipherInit_ex2(ctx, NULL, NULL, iv, 1, NULL) <= 0
         || EVP_CipherUpdate(ctx, mask, &outlen, in, inlen) <= 0
         || outlen != inlen
         || EVP_CipherFinal_ex(ctx, mask + outlen, &outlen) <= 0
-        || outlen != 0)
+        || outlen != 0) {
         return 0;
+    }
 
     if (!ossl_assert(seqlen <= sizeof(mask)))
         return 0;
