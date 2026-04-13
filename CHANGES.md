@@ -100,6 +100,12 @@ OpenSSL Releases
 
    *Helen Zhang*
 
+ * The B<openssl pkcs12 -export> command now accepts key and certificate(s)
+   in any order in the B<-in> file when B<-inkey> is not used.
+   Previously the private key had to appear before the certificates.
+
+   *John Claus*
+
 ### Changes between 3.6 and 4.0 [xx XXX xxxx]
 
  * Added `-expected-rpks` option to the `openssl s_client`

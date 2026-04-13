@@ -883,7 +883,7 @@ jobs:
         mkdir nss
         cd nss
         git clone --depth 1 --branch NSS_3_112_3_RTM https://github.com/nss-dev/nss.git
-        hg clone https://hg.mozilla.org/projects/nspr -r NSPR_4_36_BRANCH
+        git clone --depth 1 https://github.com/nss-dev/nspr.git
         cd nss
         USE_64=1 make nss_build_all
         USE_64=1 make install
