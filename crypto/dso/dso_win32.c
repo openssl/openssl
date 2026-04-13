@@ -485,9 +485,8 @@ typedef BOOL(WINAPI *MODULE32)(HANDLE, MODULEENTRY32 *);
 
 static int win32_pathbyaddr(void *addr, char *path, int sz)
 {
-    int n = 0;
     HMODULE hModule = NULL;
-    const DWORD wpathSize = 32768; // 32768 is the maximum possible path length on Windows
+    const DWORD wpathSize = 32768; /* 32768 is the maximum possible path length on Windows */
     WCHAR *wpath = NULL;
     DWORD wlen, wsz;
     int utf8len;
