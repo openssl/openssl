@@ -142,6 +142,20 @@ const EVP_MD *EVP_sha512(void)
         return &shake##bitlen##_md;                        \
     }
 
+#define EVP_MD_SHAKE_LEN(bitlen)                           \
+    const EVP_MD *EVP_shake##bitlen##_len(void)            \
+    {                                                      \
+        static const EVP_MD shake##bitlen##_md = {         \
+            NID_shake##bitlen##_len,                       \
+            0,                                             \
+            SIZE_MAX,                                      \
+            EVP_MD_FLAG_XOF,                               \
+            EVP_ORIG_GLOBAL,                               \
+            (KECCAK1600_WIDTH - bitlen * 2) / 8            \
+        };                                                 \
+        return &shake##bitlen##_md;                        \
+    }
+
 EVP_MD_SHA3(224)
 EVP_MD_SHA3(256)
 EVP_MD_SHA3(384)
@@ -149,3 +163,5 @@ EVP_MD_SHA3(512)
 
 EVP_MD_SHAKE(128)
 EVP_MD_SHAKE(256)
+EVP_MD_SHAKE_LEN(128)
+EVP_MD_SHAKE_LEN(256)

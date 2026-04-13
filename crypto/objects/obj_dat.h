@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[9582] = {
+static const unsigned char so[9600] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1354,9 +1354,11 @@ static const unsigned char so[9582] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x0D,  /* [ 9549] OBJ_id_smime_ori */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x0D,0x03,  /* [ 9559] OBJ_id_smime_ori_kem */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x03,0x11,  /* [ 9570] OBJ_id_alg_hss_lms_hashsig */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x11,  /* [ 9581] OBJ_shake128_len */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x12,  /* [ 9590] OBJ_shake256_len */
 };
 
-#define NUM_NID 1502
+#define NUM_NID 1504
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2860,9 +2862,11 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-smime-ori", "id-smime-ori", NID_id_smime_ori, 10, &so[9549]},
     {"id-smime-ori-kem", "id-smime-ori-kem", NID_id_smime_ori_kem, 11, &so[9559]},
     {"id-alg-hss-lms-hashsig", "id-alg-hss-lms-hashsig", NID_id_alg_hss_lms_hashsig, 11, &so[9570]},
+    {"id-shake128-len", "shake128-len", NID_shake128_len, 9, &so[9581]},
+    {"id-shake256-len", "shake256-len", NID_shake256_len, 9, &so[9590]},
 };
 
-#define NUM_SN 1493
+#define NUM_SN 1495
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3670,6 +3674,8 @@ static const unsigned int sn_objs[NUM_SN] = {
     1119,    /* "id-rsassa-pkcs1-v1_5-with-sha3-512" */
      973,    /* "id-scrypt" */
      512,    /* "id-set" */
+    1502,    /* "id-shake128-len" */
+    1503,    /* "id-shake256-len" */
     1461,    /* "id-slh-dsa-sha2-128f" */
     1460,    /* "id-slh-dsa-sha2-128s" */
     1463,    /* "id-slh-dsa-sha2-192f" */
@@ -4359,7 +4365,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1289,    /* "zstd" */
 };
 
-#define NUM_LN 1493
+#define NUM_LN 1495
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -5783,7 +5789,9 @@ static const unsigned int ln_objs[NUM_LN] = {
      670,    /* "sha512WithRSAEncryption" */
       42,    /* "shaWithRSAEncryption" */
     1100,    /* "shake128" */
+    1502,    /* "shake128-len" */
     1101,    /* "shake256" */
+    1503,    /* "shake256-len" */
     1279,    /* "signedAssertion" */
       52,    /* "signingTime" */
      454,    /* "simpleSecurityObject" */
@@ -5856,7 +5864,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1350
+#define NUM_OBJ 1352
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -6927,6 +6935,8 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1103,    /* OBJ_hmac_sha3_256                2 16 840 1 101 3 4 2 14 */
     1104,    /* OBJ_hmac_sha3_384                2 16 840 1 101 3 4 2 15 */
     1105,    /* OBJ_hmac_sha3_512                2 16 840 1 101 3 4 2 16 */
+    1502,    /* OBJ_shake128_len                 2 16 840 1 101 3 4 2 17 */
+    1503,    /* OBJ_shake256_len                 2 16 840 1 101 3 4 2 18 */
     1196,    /* OBJ_kmac128                      2 16 840 1 101 3 4 2 19 */
     1197,    /* OBJ_kmac256                      2 16 840 1 101 3 4 2 20 */
      802,    /* OBJ_dsa_with_SHA224              2 16 840 1 101 3 4 3 1 */

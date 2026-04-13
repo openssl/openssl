@@ -3366,6 +3366,16 @@
 #define NID_hmac_sha3_512               1105
 #define OBJ_hmac_sha3_512               OBJ_nist_hashalgs,16L
 
+#define SN_shake128_len         "id-shake128-len"
+#define LN_shake128_len         "shake128-len"
+#define NID_shake128_len                1502
+#define OBJ_shake128_len                OBJ_nist_hashalgs,17L
+
+#define SN_shake256_len         "id-shake256-len"
+#define LN_shake256_len         "shake256-len"
+#define NID_shake256_len                1503
+#define OBJ_shake256_len                OBJ_nist_hashalgs,18L
+
 #define SN_kmac128              "KMAC128"
 #define LN_kmac128              "kmac128"
 #define NID_kmac128             1196

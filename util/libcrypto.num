@@ -5719,3 +5719,5 @@ CTLOG_STORE_add0_log                    ?	4_1_0	EXIST::FUNCTION:CT
 CRYPTO_atomic_load_ptr                  ?	4_1_0	EXIST::FUNCTION:
 CRYPTO_atomic_store_ptr                 ?	4_1_0	EXIST::FUNCTION:
 CRYPTO_atomic_cmp_exch_ptr              ?	4_1_0	EXIST::FUNCTION:
+EVP_shake128_len                        5716    4_1_0   EXIST:FUNCTION:
+EVP_shake256_len                        5717    4_1_0   EXIST:FUNCTION:
