@@ -23,7 +23,7 @@
 void aesni_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key);
 
 /* Portable compiler abstractions for inlining and ISA target selection */
-#if defined(__GNUC__)       /* GCC and Clang */
+#if defined(__GNUC__) || defined(__clang__)       /* GCC, Clang, and clang-cl */
 # define OSSL_FUNC_ALWAYS_INLINE   __attribute__((always_inline))
 # define OSSL_FUNC_NOINLINE        __attribute__((noinline))
 # pragma GCC target("avx512f,avx512dq,avx512bw,vaes,aes")
