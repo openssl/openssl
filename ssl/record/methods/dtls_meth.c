@@ -617,8 +617,7 @@ again:
                 && !dtls_crypt_sequence_number(rl->sn_enc_ctx,
                     recseqnum + recseqnumoffs,
                     recseqnumlen,
-                    rl->packet + rechdrlen,
-                    rl->sn_enc_offs)))) {
+                    rl->packet + rechdrlen)))) {
         /* sequence number encryption failed dump record */
         rr->length = 0;
         rl->packet_length = 0;
@@ -772,7 +771,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     unsigned char *snkey, unsigned char *key, size_t keylen,
     unsigned char *iv, size_t ivlen,
     unsigned char *mackey, size_t mackeylen,
-    const EVP_CIPHER *snciph, size_t snoffs,
+    const EVP_CIPHER *snciph,
     const EVP_CIPHER *ciph, size_t taglen,
     int mactype,
     const EVP_MD *md, COMP_METHOD *comp,
@@ -828,7 +827,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
     ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key, keylen,
         iv, ivlen, mackey, mackeylen,
-        snciph, snoffs, ciph, taglen, mactype, md,
+        snciph, ciph, taglen, mactype, md,
         comp);
 
 err:

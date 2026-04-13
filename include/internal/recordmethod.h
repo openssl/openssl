@@ -127,7 +127,6 @@ struct ossl_record_method_st {
         unsigned char *mackey,
         size_t mackeylen,
         const EVP_CIPHER *snciph,
-        size_t snoffs,
         const EVP_CIPHER *ciph,
         size_t taglen,
         int mactype,
