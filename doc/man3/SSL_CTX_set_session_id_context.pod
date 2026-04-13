@@ -38,9 +38,6 @@ is set by the SSL/TLS server. The SSL_CTX_set_session_id_context() and
 SSL_set_session_id_context() functions are therefore only useful on the
 server side.
 
-OpenSSL clients will check the session id context returned by the server
-when reusing a session.
-
 The maximum length of the B<sid_ctx> is limited to
 B<SSL_MAX_SID_CTX_LENGTH>.
 
@@ -51,11 +48,24 @@ certificates are used, stored sessions
 will not be reused but a fatal error will be flagged and the handshake
 will fail.
 
-If a server returns a different session id context to an OpenSSL client
-when reusing a session, an error will be flagged and the handshake will
-fail. OpenSSL servers will always return the correct session id context,
-as an OpenSSL server checks the session id context itself before reusing
-a session as described above.
+If a client attempts to resume a session and the server detects that the session
+id context associated with the session is different to the current session id
+context then the resumption will fail. The handshake will continue normally but
+no resumption will occur.
+
+It is vital that the session id context is set before any session resumption
+occurs. Sessions get created early in the handshake. If the session id context
+is not set by the time the session gets created then the session will be
+associated with an empty session id context. The already created session will
+not get updated if the  session id context is later set. In particular the
+callback set via the L<SSL_CTX_set_tlsext_servername_callback(3)> function will
+be invoked after the session gets created, so if the session id context is set
+in the callback then this will be too late for the current handshake and the
+session id context setting will be ignored with respect to resumption. Typically
+the session id context should be set before the TLS handshake starts, but it may
+occur as late as in the callback set via the L<SSL_CTX_set_client_hello_cb(3)>
+function.
+
 
 =head1 RETURN VALUES
 
