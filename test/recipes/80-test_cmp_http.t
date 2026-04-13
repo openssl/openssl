@@ -257,12 +257,14 @@ sub load_tests {
     my $file = data_file("test_$aspect.csv");
     my $result_dir = result_dir();
     my @result;
+    my $openssl_app = cmdstr(app([qw(openssl)]));
 
     open(my $data, '<', $file) || die "Cannot open '$file' for reading: $!";
   LOOP:
     while (my $line = <$data>) {
         chomp $line;
         $line =~ s{\r\n}{\n}g; # adjust line endings
+        $line =~ s{_OPENSSL_APP}{$openssl_app}g;
         $line =~ s{_CA_DN}{$ca_dn}g;
         $line =~ s{_SERVER_DN}{$server_dn}g;
         $line =~ s{_SERVER_HOST}{$server_host}g;
