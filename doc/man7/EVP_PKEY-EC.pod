@@ -239,6 +239,13 @@ For EC Keys, L<EVP_PKEY_private_check(3)> and L<EVP_PKEY_pairwise_check(3)>
 conform to SP800-56Ar3 I<Private key validity> and
 I<Owner Assurance of Pair-wise Consistency> respectively.
 
+=head1 NOTES
+
+"qx" (B<OSSL_PKEY_PARAM_EC_PUB_X>) and "qy" (B<OSSL_PKEY_PARAM_EC_PUB_Y>)
+can be used for getting the EC public key affine coordinates. To set
+them call EVP_EC_affine2oct() to convert affine coordinates to
+an octet string and then use "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>).
+
 =head1 EXAMPLES
 
 An B<EVP_PKEY> context can be obtained by calling:
