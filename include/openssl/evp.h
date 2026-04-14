@@ -17,6 +17,7 @@
 #endif
 
 #include <stdarg.h>
+#include <string.h>
 
 #ifndef OPENSSL_NO_STDIO
 #include <stdio.h>
@@ -1945,6 +1946,16 @@ const char *EVP_SKEY_get0_provider_name(const EVP_SKEY *skey);
 EVP_SKEY *EVP_SKEY_to_provider(EVP_SKEY *skey, OSSL_LIB_CTX *libctx,
     OSSL_PROVIDER *prov, const char *propquery);
 
+/*
+ * The seemingly redundant expression (char *)(strstr(curve, "")) serves to
+ * cast const char * to char *, while avoiding accidental casting of improper
+ * (non-string) types.
+ * The direct cast of the result of strstr() to char * is necessary in C++,
+ * where strstr can return const char *.
+ */
+#define EVP_EC_gen(curve)               \
+    EVP_PKEY_Q_keygen(NULL, NULL, "EC", \
+        (curve) ? (char *)(strstr(curve, "")) : NULL)
 int EVP_EC_affine2oct(const BIGNUM *x, const BIGNUM *y, size_t field_len,
     unsigned char **pbuf, size_t *pbsize);
 
