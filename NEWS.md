@@ -7,6 +7,7 @@ release. For more details please read the CHANGES file.
 OpenSSL Releases
 ----------------
 
+ - [OpenSSL 4.1](#openssl-41)
  - [OpenSSL 4.0](#openssl-40)
  - [OpenSSL 3.6](#openssl-36)
  - [OpenSSL 3.5](#openssl-35)
@@ -22,7 +23,7 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
-OpenSSL 4.0
+OpenSSL 4.1
 -----------
 
 ### Major changes between OpenSSL 4.0 and OpenSSL 4.1 [under development]
@@ -30,7 +31,10 @@ OpenSSL 4.0
   * API calls `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`, and
     `CRYPTO_atomic_cmp_exch_ptr` have been added.
 
-### Major changes between OpenSSL 3.6 and OpenSSL 4.0 [under development]
+OpenSSL 4.0
+-----------
+
+### Major changes between OpenSSL 3.6 and OpenSSL 4.0.0 [14 Apr 2026]
 
 OpenSSL 4.0.0 is a feature release adding significant new functionality
 to OpenSSL.

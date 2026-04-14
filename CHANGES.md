@@ -105,7 +105,7 @@ OpenSSL Releases
 
    *Helen Zhang*
 
-### Changes between 3.6 and 4.0 [xx XXX xxxx]
+### Changes between 3.6 and 4.0.0 [14 Apr 2026]
 
  * Added `-expected-rpks` option to the `openssl s_client`
    and `openssl s_server` commands.  This makes it possible to specify
