@@ -205,6 +205,8 @@ err:
         ERR_print_errors(bio_err);
     if (dkm_len > 0)
         OPENSSL_clear_free(dkm_bytes, dkm_len);
+    else
+        OPENSSL_free(dkm_bytes);
     sk_OPENSSL_STRING_free(opts);
     EVP_KDF_free(kdf);
     EVP_KDF_CTX_free(ctx);
