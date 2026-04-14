@@ -203,7 +203,8 @@ int kdf_main(int argc, char **argv)
 err:
     if (ret != 0)
         ERR_print_errors(bio_err);
-    OPENSSL_clear_free(dkm_bytes, dkm_len);
+    if (dkm_len > 0)
+        OPENSSL_clear_free(dkm_bytes, dkm_len);
     sk_OPENSSL_STRING_free(opts);
     EVP_KDF_free(kdf);
     EVP_KDF_CTX_free(ctx);
