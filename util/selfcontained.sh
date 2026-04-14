@@ -14,6 +14,6 @@ check_headers() {
 
 check_headers $(find $SRCTOP/include -name '*.h')
 #check_headers $(find $SRCTOP/crypto -name '*.h')
-#check_headers $(find $SRCTOP/ssl -name '*.h')
+check_headers $(find $SRCTOP/ssl -name '*.h')
 #check_headers $(find $SRCTOP/apps -name '*.h')
 #check_headers $(find $SRCTOP/providers -name '*.h')

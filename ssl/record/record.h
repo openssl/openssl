@@ -8,7 +8,9 @@
  */
 
 #include <openssl/core_dispatch.h>
+
 #include "internal/recordmethod.h"
+#include "internal/statem.h"
 
 /*****************************************************************************
  *                                                                           *
