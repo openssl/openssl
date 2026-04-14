@@ -23,39 +23,18 @@
  * Public key bytes:   800 (0x0320)
  * Private key bytes: 1632 (0x0660)
  */
+/* clang-format off */
 static const ML_COMMON_SPKI_FMT ml_kem_512_spkifmt = {
-    {
-        0x30,
-        0x82,
-        0x03,
-        0x32,
-        0x30,
-        0x0b,
-        0x06,
-        0x09,
-        0x60,
-        0x86,
-        0x48,
-        0x01,
-        0x65,
-        0x03,
-        0x04,
-        0x04,
-        0x01,
-        0x03,
-        0x82,
-        0x03,
-        0x21,
-        0x00,
-    }
+    { 0x30, 0x82, 0x03, 0x32, 0x30, 0x0b, 0x06, 0x09, 0x60, 0x86, 0x48,
+      0x01, 0x65, 0x03, 0x04, 0x04, 0x01, 0x03, 0x82, 0x03, 0x21, 0x00 }
 };
 static const ML_COMMON_PKCS8_FMT ml_kem_512_p8fmt[NUM_PKCS8_FORMATS] = {
-    { "seed-priv", 0x06aa, 0, 0x308206a6, 0x0440, 6, 0x40, 0x04820660, 0x4a, 0x0660, 0, 0 },
-    { "priv-only", 0x0664, 0, 0x04820660, 0, 0, 0, 0, 0x04, 0x0660, 0, 0 },
-    { "oqskeypair", 0x0984, 0, 0x04820980, 0, 0, 0, 0, 0x04, 0x0660, 0x0664, 0x0320 },
-    { "seed-only", 0x0042, 2, 0x8040, 0, 2, 0x40, 0, 0, 0, 0, 0 },
-    { "bare-priv", 0x0660, 4, 0, 0, 0, 0, 0, 0, 0x0660, 0, 0 },
-    { "bare-seed", 0x0040, 4, 0, 0, 0, 0x40, 0, 0, 0, 0, 0 },
+    { "seed-priv",  0x06aa, 0, 0x308206a6, 0x0440, 6, 0x40, 0x04820660, 0x4a, 0x0660, 0,      0      },
+    { "priv-only",  0x0664, 0, 0x04820660, 0,      0, 0,    0,          0x04, 0x0660, 0,      0      },
+    { "oqskeypair", 0x0984, 0, 0x04820980, 0,      0, 0,    0,          0x04, 0x0660, 0x0664, 0x0320 },
+    { "seed-only",  0x0042, 2, 0x8040,     0,      2, 0x40, 0,          0,    0,      0,      0      },
+    { "bare-priv",  0x0660, 4, 0,          0,      0, 0,    0,          0,    0x0660, 0,      0      },
+    { "bare-seed",  0x0040, 4, 0,          0,      0, 0x40, 0,          0,    0,      0,      0      },
 };
 
 /*-
@@ -64,103 +43,16 @@ static const ML_COMMON_PKCS8_FMT ml_kem_512_p8fmt[NUM_PKCS8_FORMATS] = {
  * Private key bytes: 2400 (0x0960)
  */
 static const ML_COMMON_SPKI_FMT ml_kem_768_spkifmt = {
-    {
-        0x30,
-        0x82,
-        0x04,
-        0xb2,
-        0x30,
-        0x0b,
-        0x06,
-        0x09,
-        0x60,
-        0x86,
-        0x48,
-        0x01,
-        0x65,
-        0x03,
-        0x04,
-        0x04,
-        0x02,
-        0x03,
-        0x82,
-        0x04,
-        0xa1,
-        0x00,
-    }
+    { 0x30, 0x82, 0x04, 0xb2, 0x30, 0x0b, 0x06, 0x09, 0x60, 0x86, 0x48,
+      0x01, 0x65, 0x03, 0x04, 0x04, 0x02, 0x03, 0x82, 0x04, 0xa1, 0x00 }
 };
 static const ML_COMMON_PKCS8_FMT ml_kem_768_p8fmt[NUM_PKCS8_FORMATS] = {
-    {
-        "seed-priv",
-        0x09aa,
-        0,
-        0x308209a6,
-        0x0440,
-        6,
-        0x40,
-        0x04820960,
-        0x4a,
-        0x0960,
-        0,
-        0,
-    },
-    {
-        "priv-only",
-        0x0964,
-        0,
-        0x04820960,
-        0,
-        0,
-        0,
-        0,
-        0x04,
-        0x0960,
-        0,
-        0,
-    },
-    { "oqskeypair", 0x0e04, 0, 0x04820e00, 0, 0, 0, 0, 0x04, 0x0960, 0x0964, 0x04a0 },
-    {
-        "seed-only",
-        0x0042,
-        2,
-        0x8040,
-        0,
-        2,
-        0x40,
-        0,
-        0,
-        0,
-        0,
-        0,
-    },
-    {
-        "bare-priv",
-        0x0960,
-        4,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0x0960,
-        0,
-        0,
-    },
-    {
-        "bare-seed",
-        0x0040,
-        4,
-        0,
-        0,
-        0,
-        0x40,
-        0,
-        0,
-        0,
-        0,
-        0,
-    },
+    { "seed-priv",  0x09aa, 0, 0x308209a6, 0x0440, 6, 0x40, 0x04820960, 0x4a, 0x0960, 0,      0      },
+    { "priv-only",  0x0964, 0, 0x04820960, 0,      0, 0,    0,          0x04, 0x0960, 0,      0      },
+    { "oqskeypair", 0x0e04, 0, 0x04820e00, 0,      0, 0,    0,          0x04, 0x0960, 0x0964, 0x04a0 },
+    { "seed-only",  0x0042, 2, 0x8040,     0,      2, 0x40, 0,          0,    0,      0,      0      },
+    { "bare-priv",  0x0960, 4, 0,          0,      0, 0,    0,          0,    0x0960, 0,      0      },
+    { "bare-seed",  0x0040, 4, 0,          0,      0, 0x40, 0,          0,    0,      0,      0      },
 };
 
 /*-
@@ -169,39 +61,18 @@ static const ML_COMMON_PKCS8_FMT ml_kem_768_p8fmt[NUM_PKCS8_FORMATS] = {
  * Public key bytes:  1568 (0x0620)
  */
 static const ML_COMMON_SPKI_FMT ml_kem_1024_spkifmt = {
-    {
-        0x30,
-        0x82,
-        0x06,
-        0x32,
-        0x30,
-        0x0b,
-        0x06,
-        0x09,
-        0x60,
-        0x86,
-        0x48,
-        0x01,
-        0x65,
-        0x03,
-        0x04,
-        0x04,
-        0x03,
-        0x03,
-        0x82,
-        0x06,
-        0x21,
-        0x00,
-    }
+    { 0x30, 0x82, 0x06, 0x32, 0x30, 0x0b, 0x06, 0x09, 0x60, 0x86, 0x48,
+      0x01, 0x65, 0x03, 0x04, 0x04, 0x03, 0x03, 0x82, 0x06, 0x21, 0x00 }
 };
 static const ML_COMMON_PKCS8_FMT ml_kem_1024_p8fmt[NUM_PKCS8_FORMATS] = {
-    { "seed-priv", 0x0caa, 0, 0x30820ca6, 0x0440, 6, 0x40, 0x04820c60, 0x4a, 0x0c60, 0, 0 },
-    { "priv-only", 0x0c64, 0, 0x04820c60, 0, 0, 0, 0, 0x04, 0x0c60, 0, 0 },
-    { "oqskeypair", 0x1284, 0, 0x04821280, 0, 0, 0, 0, 0x04, 0x0c60, 0x0c64, 0x0620 },
-    { "seed-only", 0x0042, 2, 0x8040, 0, 2, 0x40, 0, 0, 0, 0, 0 },
-    { "bare-priv", 0x0c60, 4, 0, 0, 0, 0, 0, 0, 0x0c60, 0, 0 },
-    { "bare-seed", 0x0040, 4, 0, 0, 0, 0x40, 0, 0, 0, 0, 0 },
+    { "seed-priv",  0x0caa, 0, 0x30820ca6, 0x0440, 6, 0x40, 0x04820c60, 0x4a, 0x0c60, 0,      0      },
+    { "priv-only",  0x0c64, 0, 0x04820c60, 0,      0, 0,    0,          0x04, 0x0c60, 0,      0      },
+    { "oqskeypair", 0x1284, 0, 0x04821280, 0,      0, 0,    0,          0x04, 0x0c60, 0x0c64, 0x0620 },
+    { "seed-only",  0x0042, 2, 0x8040,     0,      2, 0x40, 0,          0,    0,      0,      0      },
+    { "bare-priv",  0x0c60, 4, 0,          0,      0, 0,    0,          0,    0x0c60, 0,      0      },
+    { "bare-seed",  0x0040, 4, 0,          0,      0, 0x40, 0,          0,    0,      0,      0      },
 };
+/* clang-format on */
 
 /* Indices of slots in the `codecs` table below */
 #define ML_KEM_512_CODEC 0
@@ -214,7 +85,7 @@ static const ML_COMMON_PKCS8_FMT ml_kem_1024_p8fmt[NUM_PKCS8_FORMATS] = {
 static const ML_COMMON_CODEC codecs[3] = {
     { &ml_kem_512_spkifmt, ml_kem_512_p8fmt },
     { &ml_kem_768_spkifmt, ml_kem_768_p8fmt },
-    { &ml_kem_1024_spkifmt, ml_kem_1024_p8fmt }
+    { &ml_kem_1024_spkifmt, ml_kem_1024_p8fmt },
 };
 
 /* Retrieve the parameters of one of the ML-KEM variants */
@@ -417,8 +288,7 @@ int ossl_ml_kem_i2d_pubkey(const ML_KEM_KEY *key, unsigned char **out)
     }
     publen = key->vinfo->pubkey_bytes;
 
-    if (out != NULL
-        && (*out = OPENSSL_malloc(publen)) == NULL)
+    if ((*out = OPENSSL_malloc(publen)) == NULL)
         return 0;
     if (!ossl_ml_kem_encode_public_key(*out, publen, key)) {
         ERR_raise_data(ERR_LIB_OSSL_ENCODER, ERR_R_INTERNAL_ERROR,
