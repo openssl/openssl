@@ -17,7 +17,7 @@
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
-#include "crypto/lms_sig.h"
+#include "crypto/hss_sig.h"
 #include "internal/fips.h"
 
 static OSSL_FUNC_signature_newctx_fn lms_newctx;
@@ -30,7 +30,7 @@ static OSSL_FUNC_signature_digest_verify_fn lms_digest_verify;
 typedef struct {
     OSSL_LIB_CTX *libctx;
     char *propq;
-    LMS_KEY *key;
+    HSS_LMS_KEY *key;
     EVP_MD *md;
 } PROV_LMS_CTX;
 
@@ -79,7 +79,7 @@ static int setdigest(PROV_LMS_CTX *ctx, const char *digestname)
      * If the optional digestname passed in by the user is different
      * then return an error.
      */
-    LMS_KEY *key = ctx->key;
+    LMS_KEY *key = &ctx->key->public;
     const char *pub_digestname = key->ots_params->digestname;
 
     if (ctx->md != NULL) {
@@ -97,7 +97,7 @@ end:
 static int lms_verify_msg_init(void *vctx, void *vkey, const OSSL_PARAM params[])
 {
     PROV_LMS_CTX *ctx = (PROV_LMS_CTX *)vctx;
-    LMS_KEY *key = (LMS_KEY *)vkey;
+    HSS_LMS_KEY *key = (HSS_LMS_KEY *)vkey;
 
     if (!ossl_prov_is_running() || ctx == NULL)
         return 0;
@@ -116,19 +116,23 @@ static int lms_verify(void *vctx, const unsigned char *sigbuf, size_t sigbuf_len
 {
     int ret = 0;
     PROV_LMS_CTX *ctx = (PROV_LMS_CTX *)vctx;
-    LMS_KEY *pub = ctx->key;
-    LMS_SIG *sig = NULL;
+    HSS_LMS_KEY *pub = ctx->key;
+    HSS_SIG *sig = NULL;
 
     /* A root public key is required to perform a verify operation */
     if (pub == NULL)
         return 0;
 
-    /* Decode the LMS signature data into a LMS_SIG object */
-    if (!ossl_lms_sig_decode(&sig, pub, sigbuf, sigbuf_len))
+    sig = ossl_hss_sig_new();
+    if (sig == NULL)
         return 0;
 
-    ret = ossl_lms_sig_verify(sig, pub, ctx->md, msg, msglen);
-    ossl_lms_sig_free(sig);
+    /* Decode the HSS signature data into a HSS_SIG object */
+    if (!ossl_hss_sig_decode(sig, pub, pub->L, sigbuf, sigbuf_len))
+        goto end;
+    ret = ossl_hss_sig_verify(sig, pub, ctx->md, msg, msglen);
+end:
+    ossl_hss_sig_free(sig);
     return ret;
 }
 

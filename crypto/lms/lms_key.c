@@ -31,13 +31,14 @@ LMS_KEY *ossl_lms_key_new(OSSL_LIB_CTX *libctx)
  */
 void ossl_lms_key_free(LMS_KEY *lmskey)
 {
-    LMS_PUB_KEY *pub;
+    HSS_LMS_PUB_KEY *pub;
 
     if (lmskey == NULL)
         return;
 
     pub = &lmskey->pub;
-    OPENSSL_free(pub->encoded);
+    if (pub->allocated)
+        OPENSSL_free(pub->encoded);
     OPENSSL_free(lmskey);
 }
 

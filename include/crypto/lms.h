@@ -18,6 +18,7 @@
 #ifndef OPENSSL_NO_LMS
 #include "types.h"
 #include <openssl/params.h>
+#include "internal/packet.h"
 
 /*
  * Numeric identifiers associated with Leighton-Micali Signatures (LMS)
@@ -73,6 +74,14 @@
 #define LMS_MAX_DIGEST_SIZE 32
 #define LMS_MAX_PUBKEY \
     (LMS_SIZE_LMS_TYPE + LMS_SIZE_OTS_TYPE + LMS_SIZE_I + LMS_MAX_DIGEST_SIZE)
+#define HSS_MAX_PUBKEY (4 + LMS_MAX_PUBKEY)
+
+/*
+ * HSS minimum and maximum number of LMS trees
+ * A tree of height 1 can be used to represent a LMS tree.
+ */
+#define HSS_MIN_L 1
+#define HSS_MAX_L 8
 
 /*
  * Refer to RFC 8554 Section 4.1.
@@ -120,9 +129,10 @@ typedef struct lms_params_st {
     size_t bit_strength;
 } LMS_PARAMS;
 
-typedef struct lms_pub_key_st {
+typedef struct hss_lms_pub_key_st {
     /*
      * A buffer containing an encoded public key of the form
+     * An optional u32str(L) followed by
      * u32str(lmstype) || u32str(otstype) || I[16] || K[n]
      */
     unsigned char *encoded; /* encoded public key data */
@@ -133,18 +143,46 @@ typedef struct lms_pub_key_st {
      * It is a pointer into the encoded buffer
      */
     unsigned char *K;
-} LMS_PUB_KEY;
+    int allocated; /* Set to 1 if encoded needs to be freed */
+} HSS_LMS_PUB_KEY;
 
 typedef struct lms_key_st {
     const LMS_PARAMS *lms_params;
     const LM_OTS_PARAMS *ots_params;
     OSSL_LIB_CTX *libctx;
     unsigned char *Id; /* A pointer to 16 bytes (I[16]) */
-    LMS_PUB_KEY pub;
+    HSS_LMS_PUB_KEY pub;
 } LMS_KEY;
 
+typedef struct hss_lms_info_st {
+    int len, hss, n;
+} HSS_LMS_INFO;
+
+/*
+ * A HSS key currently just contains the LMS public key
+ * (i.e. the root of the tree), since we only support verification.
+ */
+typedef struct hss_key_st {
+    uint32_t L; /* The number of Levels in the tree */
+    LMS_KEY public;
+    OSSL_LIB_CTX *libctx;
+    char *propq;
+} HSS_LMS_KEY;
+
+const HSS_LMS_INFO *ossl_hss_lms_getinfo(size_t len);
 const LMS_PARAMS *ossl_lms_params_get(uint32_t lms_type);
 const LM_OTS_PARAMS *ossl_lm_ots_params_get(uint32_t ots_type);
+
+HSS_LMS_KEY *ossl_hss_lms_key_new(OSSL_LIB_CTX *libctx, const char *propq);
+void ossl_hss_lms_key_free(HSS_LMS_KEY *hss);
+const LMS_KEY *ossl_hss_lms_key_get_public(const HSS_LMS_KEY *hsskey);
+int ossl_hss_lms_pubkey_decode(const HSS_LMS_INFO *info,
+    const unsigned char *pub, size_t publen, HSS_LMS_KEY *hsskey);
+int ossl_hss_lms_pubkey_from_params(const OSSL_PARAM *pub, const OSSL_PARAM *l,
+    HSS_LMS_KEY *hss);
+int ossl_hss_lms_key_equal(const HSS_LMS_KEY *hsskey1, const HSS_LMS_KEY *hsskey2,
+    int selection);
+int ossl_hss_lms_key_valid(const HSS_LMS_KEY *hsskey, int selection);
 
 LMS_KEY *ossl_lms_key_new(OSSL_LIB_CTX *libctx);
 void ossl_lms_key_free(LMS_KEY *lmskey);
@@ -152,11 +190,10 @@ int ossl_lms_key_equal(const LMS_KEY *key1, const LMS_KEY *key2, int selection);
 int ossl_lms_key_valid(const LMS_KEY *key, int selection);
 int ossl_lms_key_has(const LMS_KEY *key, int selection);
 
+int ossl_lms_pubkey_from_pkt(PACKET *pkt, LMS_KEY *lmskey);
 int ossl_lms_pubkey_from_params(const OSSL_PARAM *pub, LMS_KEY *lmskey);
 int ossl_lms_pubkey_decode(const unsigned char *pub, size_t publen,
     LMS_KEY *lmskey);
-size_t ossl_lms_pubkey_length(const unsigned char *data, size_t datalen);
-
 const uint8_t *ossl_lms_key_get_pub(const LMS_KEY *key);
 size_t ossl_lms_key_get_pub_len(const LMS_KEY *key);
 size_t ossl_lms_key_get_collision_strength_bits(const LMS_KEY *key);

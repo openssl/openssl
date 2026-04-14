@@ -16,10 +16,10 @@
 #include "internal/encoder.h"
 #include "internal/nelem.h"
 #include "internal/packet.h"
-#include "prov/lms_codecs.h"
+#include "prov/hss_lms_codecs.h"
 
 /*-
- * The DER ASN.1 encoding of LMS public keys prepends 20 bytes
+ * The DER ASN.1 encoding of HSS public keys prepends 20 bytes
  * to the encoded public key:
  *
  * - 2 byte outer sequence tag and length
@@ -29,10 +29,9 @@
  * -  2 byte bit string tag and length
  * -    1 bitstring lead byte
  *
- * A HSS key with a single tree also represents LMS public key.
- * This has 4 extra bytes after the above data with the value 0x00, 0x00, 0x00, 0x01
- *
- * The LMS public key consists of
+ * The HSS public key consists of
+ *  4 byte L (which is the number of levels ranging from 1..8). For LMS this is 1
+ * Followed by a LMS public key of
  *  4 byte LMS type
  *  4 byte OTS type
  *  16 byte Id
@@ -40,16 +39,13 @@
  *  i.e. 24 + n bytes
  */
 
-#define LMS_SPKI_OVERHEAD 20
-#define HSS_HEADER 4
-#define HSS_LMS_SPKI_OVERHEAD (LMS_SPKI_OVERHEAD + HSS_HEADER)
+#define HSS_LMS_SPKI_OVERHEAD 20
 #define HSS_LMS_HEADER(n) {                                           \
     0x30, 0x2E + n, 0x30, 0x0d,                                       \
     0x06, 0x0b,                                                       \
     0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x09, 0x10, 0x03, 0x11, \
     0x03, 0x1D + n,                                                   \
-    0x00,                                                             \
-    0x00, 0x00, 0x00, 0x01                                            \
+    0x00                                                              \
 }
 
 typedef struct {
@@ -86,35 +82,35 @@ static const LMS_SPKI_FMT *find_spkifmt(const uint8_t *pk, int pk_len)
     return NULL;
 }
 
-LMS_KEY *
-ossl_lms_d2i_PUBKEY(const uint8_t *pk, int pk_len, PROV_CTX *provctx)
+HSS_LMS_KEY *
+ossl_hss_lms_d2i_PUBKEY(const uint8_t *pk, int pk_len, PROV_CTX *provctx)
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
-    LMS_KEY *ret;
+    HSS_LMS_KEY *ret;
     const LMS_SPKI_FMT *spkifmt;
 
     spkifmt = find_spkifmt(pk, pk_len);
     if (spkifmt == NULL)
         return NULL;
 
-    if ((ret = ossl_lms_key_new(libctx)) == NULL)
-        return NULL;
-
     pk += sizeof(spkifmt->header);
     pk_len -= sizeof(spkifmt->header);
 
-    if (!ossl_lms_pubkey_decode(pk, (size_t)pk_len, ret)) {
+    if ((ret = ossl_hss_lms_key_new(libctx, NULL)) == NULL)
+        return NULL;
+    if (!ossl_hss_lms_pubkey_decode(NULL, pk, (size_t)pk_len, ret)) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_BAD_ENCODING,
             "error parsing LMS public key from input SPKI");
-        ossl_lms_key_free(ret);
+        ossl_hss_lms_key_free(ret);
         return NULL;
     }
 
     return ret;
 }
 
-int ossl_lms_i2d_pubkey(const LMS_KEY *key, unsigned char **out)
+int ossl_hss_lms_i2d_pubkey(const HSS_LMS_KEY *hss, unsigned char **out)
 {
+    const LMS_KEY *key = &hss->public;
     if (key->pub.encoded == NULL || key->pub.encodedlen == 0) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_NOT_A_PUBLIC_KEY,
             "no LMS public key data available");
@@ -122,16 +118,14 @@ int ossl_lms_i2d_pubkey(const LMS_KEY *key, unsigned char **out)
     }
     if (out != NULL) {
         WPACKET pkt;
-        size_t sz = HSS_HEADER + key->pub.encodedlen;
+        size_t sz = key->pub.encodedlen;
         uint8_t *buf = OPENSSL_malloc(sz);
         int ret;
 
         if (buf == NULL)
             return 0;
         ret = WPACKET_init_static_len(&pkt, buf, sz, 0)
-            /* Output HSS format which has a 4 byte value (L = 1) */
-            && WPACKET_memcpy(&pkt, hss_lms_32_spkifmt.header + sizeof(hss_lms_32_spkifmt.header) - HSS_HEADER, HSS_HEADER)
-            /* Output the LMS encoded public key */
+            /* Output the HSS or LMS encoded public key */
             && WPACKET_memcpy(&pkt, key->pub.encoded, key->pub.encodedlen);
         WPACKET_cleanup(&pkt);
         if (ret == 0) {
@@ -140,7 +134,7 @@ int ossl_lms_i2d_pubkey(const LMS_KEY *key, unsigned char **out)
         }
         *out = buf;
     }
-    return (int)key->pub.encodedlen + HSS_HEADER;
+    return (int)key->pub.encodedlen;
 }
 
 static const char *get_digest(const char *name)
@@ -150,12 +144,13 @@ static const char *get_digest(const char *name)
     return strcmp(name, "SHA256-192") == 0 ? "SHA256" : name;
 }
 
-int ossl_lms_key_to_text(BIO *out, const LMS_KEY *key, int selection)
+int ossl_hss_lms_key_to_text(BIO *out, const HSS_LMS_KEY *hss, int selection)
 {
+    const LMS_KEY *key;
     const LMS_PARAMS *lms_params;
     const LM_OTS_PARAMS *ots_params;
 
-    if (out == NULL || key == NULL) {
+    if (out == NULL || hss == NULL || (key = &hss->public) == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -167,6 +162,10 @@ int ossl_lms_key_to_text(BIO *out, const LMS_KEY *key, int selection)
         ERR_raise_data(ERR_LIB_PROV, PROV_R_MISSING_KEY,
             "no LMS key material available");
         return 0;
+    }
+    if (hss->L > 1) {
+        if (BIO_printf(out, "HSS Public-Key:\nLevels: %d\n", (int)hss->L) <= 0)
+            return 0;
     }
     if (BIO_printf(out, "lms-type: %s-N%d-H%d (0x%x)\n",
             get_digest(lms_params->digestname),
@@ -186,8 +185,6 @@ int ossl_lms_key_to_text(BIO *out, const LMS_KEY *key, int selection)
         if (BIO_printf(out, "LMS Public-Key:\n") <= 0)
             return 0;
     }
-    if (!ossl_bio_print_labeled_buf(out, "pub:", key->pub.encoded, key->pub.encodedlen))
-        return 0;
     if (!ossl_bio_print_labeled_buf(out, "K:", key->pub.K, lms_params->n))
         return 0;
     return 1;

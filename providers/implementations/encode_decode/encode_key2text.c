@@ -33,7 +33,7 @@
 #include "prov/endecoder_local.h"
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
-#include "prov/lms_codecs.h"
+#include "prov/hss_lms_codecs.h"
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 
@@ -624,9 +624,9 @@ static int ml_dsa_to_text(BIO *out, const void *key, int selection)
 #endif /* OPENSSL_NO_ML_DSA */
 
 #ifndef OPENSSL_NO_LMS
-static int lms_to_text(BIO *out, const void *key, int selection)
+static int hss_lms_to_text(BIO *out, const void *key, int selection)
 {
-    return ossl_lms_key_to_text(out, (LMS_KEY *)key, selection);
+    return ossl_hss_lms_key_to_text(out, (HSS_LMS_KEY *)key, selection);
 }
 #endif /* OPENSSL_NO_LMS */
 
@@ -754,5 +754,5 @@ MAKE_TEXT_ENCODER(slh_dsa_shake_256f, slh_dsa);
 #endif
 
 #ifndef OPENSSL_NO_LMS
-MAKE_TEXT_ENCODER(lms, lms);
+MAKE_TEXT_ENCODER(hss_lms, hss_lms);
 #endif

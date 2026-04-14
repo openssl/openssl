@@ -141,6 +141,7 @@ push @files, qw(
                ) unless $no_ml_kem;
 push @files, qw(
                 evppkey_lms_sigver.txt
+                evppkey_hss_sigver.txt
                ) unless $no_lms;
 push @files, qw(
                 evppkey_ecdsa_rfc6979.txt

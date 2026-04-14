@@ -3,18 +3,19 @@
 =head1 NAME
 
 EVP_PKEY-LMS, EVP_KEYMGMT-LMS, LMS
-- EVP_PKEY Leighton-Micali Signature (LMS) keytype and algorithm support
+- EVP_PKEY Leighton-Micali Signature (LMS) and Hierarchical Signature System (HSS)
+keytype and algorithm support
 
 =head1 DESCRIPTION
 
 The B<LMS> keytype is implemented in OpenSSL's default and FIPS providers.
-The OpenSSL providers only support LMS signature verification, as this is a
+The OpenSSL providers only support LMS/HSS signature verification, as this is a
 [SP 800-208](https://csrc.nist.gov/pubs/sp/800/208/final) requirement for
 FIPS software modules.
 
-=head2 Common LMS parameters
+=head2 Common LMS/HSS parameters
 
-LMS public keys are encoded in XDR format (i.e. not ASN1 format).
+LMS/HSS public keys are encoded in XDR format.
 The following parameters are used by EVP_PKEY_fromdata() and by the
 LMS keymanager for import and export.
 
@@ -22,8 +23,18 @@ LMS keymanager for import and export.
 
 =item "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>) <octet string>
 
-Used for getting and setting the encoding of an LMS public key. The public key
-is expected to be in XDR format.
+Used for getting and setting the encoding of either an LMS/HSS public key.
+The public key is expected to be in XDR format.
+An LMS public key can be represented in either LMS form or in HSS form
+by prepending an additional 4 byte header for the height containing the
+value 00 00 00 01.
+See RFC 8554 Appendix F. for an example of a HSS public key.
+
+=item "l" (B<OSSL_PKEY_PARAM_HSS_LMS_L>) <integer>
+
+An optional value representing the number of levels.
+For HSS this must be in the range of 1 to 8. For LMS this must be 1.
+If "pub" specifies this value it must match
 
 =back
 
@@ -53,11 +64,15 @@ Recommendation for Stateful Hash-Based Signature Schemes
 
 Commercial National Security Algorithm Suite
 
+=item RFC 9802
+
+Section 5.1 describes the SubjectPublicKeyInfo format.
+
 =back
 
 =head1 NOTES
 
-LMS support is disabled by default at compile-time.
+LMS/HSS support is disabled by default at compile-time.
 To enable it, specify the B<enable-lms> build configuration option.
 
 =head1 EXAMPLES
@@ -103,6 +118,7 @@ L<provider-keymgmt(7)>
 This functionality was added in OpenSSL 3.6.
 The gettable "mandatory-digest" and support for loading LMS public keys in
 SubjectPublicKeyInfo format was added in OpenSSL 4.0.
+HSS support was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

@@ -82,7 +82,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/keymgmt/dh_kmgmt.inc \
          providers/implementations/keymgmt/dsa_kmgmt.inc \
          providers/implementations/keymgmt/ecx_kmgmt.inc \
-         providers/implementations/keymgmt/lms_kmgmt.inc \
+         providers/implementations/keymgmt/hss_lms_kmgmt.inc \
          providers/implementations/keymgmt/mac_legacy_kmgmt.inc \
          providers/implementations/keymgmt/ml_dsa_kmgmt.inc \
          providers/implementations/keymgmt/ml_kem_kmgmt.inc \
@@ -206,7 +206,7 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/keymgmt/dh_kmgmt.inc \
        providers/implementations/keymgmt/dsa_kmgmt.inc \
        providers/implementations/keymgmt/ecx_kmgmt.inc \
-       providers/implementations/keymgmt/lms_kmgmt.inc \
+       providers/implementations/keymgmt/hss_lms_kmgmt.inc \
        providers/implementations/keymgmt/mac_legacy_kmgmt.inc \
        providers/implementations/keymgmt/ml_dsa_kmgmt.inc \
        providers/implementations/keymgmt/ml_kem_kmgmt.inc \
@@ -336,8 +336,8 @@ GENERATE[providers/implementations/keymgmt/dsa_kmgmt.inc]=\
     providers/implementations/keymgmt/dsa_kmgmt.inc.in
 GENERATE[providers/implementations/keymgmt/ecx_kmgmt.inc]=\
     providers/implementations/keymgmt/ecx_kmgmt.inc.in
-GENERATE[providers/implementations/keymgmt/lms_kmgmt.inc]=\
-    providers/implementations/keymgmt/lms_kmgmt.inc.in
+GENERATE[providers/implementations/keymgmt/hss_lms_kmgmt.inc]=\
+    providers/implementations/keymgmt/hss_lms_kmgmt.inc.in
 GENERATE[providers/implementations/keymgmt/mac_legacy_kmgmt.inc]=\
     providers/implementations/keymgmt/mac_legacy_kmgmt.inc.in
 GENERATE[providers/implementations/keymgmt/ml_dsa_kmgmt.inc]=\

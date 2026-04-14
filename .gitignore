@@ -131,7 +131,7 @@ providers/implementations/signature/ecdsa_sig.inc
 providers/implementations/keymgmt/dh_kmgmt.inc
 providers/implementations/keymgmt/dsa_kmgmt.inc
 providers/implementations/keymgmt/ecx_kmgmt.inc
-providers/implementations/keymgmt/lms_kmgmt.inc
+providers/implementations/keymgmt/hss_lms_kmgmt.inc
 providers/implementations/keymgmt/mac_legacy_kmgmt.inc
 providers/implementations/keymgmt/ml_dsa_kmgmt.inc
 providers/implementations/keymgmt/ml_kem_kmgmt.inc

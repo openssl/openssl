@@ -3,31 +3,31 @@
 =head1 NAME
 
 EVP_SIGNATURE-LMS
-- The EVP_PKEY B<LMS> signature implementation
+- The EVP_PKEY B<LMS> and B<HSS> signature implementation
 
 =head1 DESCRIPTION
 
 The B<LMS> EVP_PKEY implementation supports Leighton-Micali Signatures (LMS)
-described in [RFC 8554](https://datatracker.ietf.org/doc/html/rfc8854)
+and Hierarchical Signature System (HSS) described in [RFC 8554](https://datatracker.ietf.org/doc/html/rfc8854)
 and [SP 800-208](https://csrc.nist.gov/pubs/sp/800/208/final).
-The OpenSSL providers only support LMS signature verification, as this is a
+The OpenSSL providers only support HSS/LMS signature verification, as this is a
 [SP 800-208](https://csrc.nist.gov/pubs/sp/800/208/final) requirement for
 FIPS software modules.
 
 EVP_PKEY_verify_message_init() and EVP_PKEY_verify() are the only supported
-functions used for LMS signatures. Streaming is not currently supported,
+functions used for HSS/LMS signatures. Streaming is not currently supported,
 and since the signature data contains data related to the digest used, functions
 that specify the digest name are not necessary.
 
 =head1 NOTES
 
-LMS support is disabled by default at compile-time.
+LMS/HSS support is disabled by default at compile-time.
 To enable, specify the B<enable-lms> build configuration option.
 
 For backwards compatibility reasons EVP_DigestVerifyInit_ex() and
 EVP_DigestVerify() may also be used, but the digest passed in I<mdname> must be NULL.
 
-LMS should only be used for older deployments.
+LMS/HSS should only be used for older deployments.
 New deployments should use either L<EVP_SIGNATURE-ML-DSA(7)>
 or <L/EVP_SIGNATURE-SLH-DSA(7)>.
 
@@ -35,7 +35,7 @@ or <L/EVP_SIGNATURE-SLH-DSA(7)>.
 
 Error checking has been omitted from the following examples
 
-=head2 LMS signature verification
+=head2 LMS or HSS signature verification
 
  /* See L<EVP_PKEY-LMS(7)/EXAMPLES for an example of loading a LMS |pub| key */
  ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pub, propq);
@@ -61,6 +61,7 @@ L<provider-signature(7)>,
 This functionality was added in OpenSSL 3.6.
 Support for EVP_DigestVerifyInit_ex() and  EVP_DigestVerify() was added in
 OpenSSL 4.0.
+Support for HSS was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
