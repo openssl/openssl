@@ -200,10 +200,10 @@ DTLSv1_2_method(), DTLSv1_2_server_method() and DTLSv1_2_client_method()
 were deprecated in the OpenSSL 1.1.0 release.
 
 Migrating applications should use
-TLS_method(), TLS_server_method(), TLS_client_method(),
+DTLS_method(), DTLS_server_method(), DTLS_client_method(),
 TLS_method(), TLS_server_method(), TLS_client_method(),
 instead and set the version with the SSL_CTX_set_min_proto_version() and/or
-SSL_CTX_set_max_proto_version() api's.
+SSL_CTX_set_max_proto_version() API's.
 
 =head3 Deprecation of EVP_MD_CTX_get0_md_data()
 
