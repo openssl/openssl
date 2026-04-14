@@ -47,8 +47,8 @@ SKIP: {
     skip "Skipping FIPS tests", 1
         if $no_fips;
 
-    # LMS is only present after OpenSSL 3.6
-    run(test(["fips_version_test", "-config", $provconf, ">=3.6.0"]),
+    # HSS is only present after OpenSSL 4.1
+    run(test(["fips_version_test", "-config", $provconf, ">=4.1.0"]),
              capture => 1, statusvar => \my $exit2);
     skip "FIPS provider version is too old for HSS test", 1
         if !$exit2;

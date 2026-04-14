@@ -26,6 +26,8 @@ HSS_SIG *ossl_hss_sig_new(void)
         if (ret->lmskeys == NULL || ret->lmssigs == NULL) {
             sk_LMS_SIG_free(ret->lmssigs);
             sk_LMS_KEY_free(ret->lmskeys);
+            OPENSSL_free(ret);
+            ret = NULL;
         }
     }
     return ret;
@@ -36,6 +38,8 @@ HSS_SIG *ossl_hss_sig_new(void)
  */
 void ossl_hss_sig_free(HSS_SIG *hss_sig)
 {
+    if (hss_sig == NULL)
+        return;
     sk_LMS_SIG_pop_free(hss_sig->lmssigs, ossl_lms_sig_free);
     sk_LMS_KEY_pop_free(hss_sig->lmskeys, ossl_lms_key_free);
     OPENSSL_free(hss_sig);

@@ -45,7 +45,8 @@ void ossl_hss_lms_key_free(HSS_LMS_KEY *hsskey)
     if (hsskey == NULL)
         return;
 
-    OPENSSL_free(hsskey->public.pub.encoded);
+    if (hsskey->public.pub.allocated)
+        OPENSSL_free(hsskey->public.pub.encoded);
     OPENSSL_free(hsskey->propq);
     OPENSSL_free(hsskey);
 }
@@ -66,7 +67,7 @@ int ossl_hss_lms_key_equal(const HSS_LMS_KEY *hsskey1, const HSS_LMS_KEY *hsskey
 {
     const LMS_KEY *key1, *key2;
 
-    if (hsskey1 == NULL || hsskey1 == NULL) /* Assume that this is an error */
+    if (hsskey1 == NULL || hsskey2 == NULL) /* Assume that this is an error */
         return 0;
 
     key1 = &hsskey1->public;
