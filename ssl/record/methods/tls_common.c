@@ -1388,7 +1388,7 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     unsigned char *snkey, unsigned char *key, size_t keylen,
     unsigned char *iv, size_t ivlen,
     unsigned char *mackey, size_t mackeylen,
-    const EVP_CIPHER *snciph, size_t snoffs,
+    const EVP_CIPHER *snciph,
     const EVP_CIPHER *ciph, size_t taglen,
     int mactype,
     const EVP_MD *md, COMP_METHOD *comp,
@@ -1432,7 +1432,7 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
     ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key, keylen,
         iv, ivlen, mackey, mackeylen,
-        snciph, snoffs, ciph, taglen, mactype, md,
+        snciph, ciph, taglen, mactype, md,
         comp);
 
 err:
@@ -1748,8 +1748,7 @@ int tls_post_encryption_processing_default(OSSL_RECORD_LAYER *rl,
         if (!ossl_assert(DTLS13_UNI_HDR_SEQ_OFF + seqnumlen <= rechdrlen)
             || (rl->sn_enc_ctx != NULL
                 && !dtls_crypt_sequence_number(rl->sn_enc_ctx, recordstart + DTLS13_UNI_HDR_SEQ_OFF,
-                    seqnumlen, recordstart + rechdrlen,
-                    rl->sn_enc_offs))) {
+                    seqnumlen, recordstart + rechdrlen))) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
         }

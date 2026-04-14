@@ -181,7 +181,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     unsigned char *key, size_t keylen,
     unsigned char *iv, size_t ivlen,
     unsigned char *mackey, size_t mackeylen,
-    const EVP_CIPHER *snciph, size_t snoffs,
+    const EVP_CIPHER *snciph,
     const EVP_CIPHER *ciph, size_t taglen,
     int mactype, const EVP_MD *md,
     const SSL_COMP *comp, const EVP_MD *kdfdigest);

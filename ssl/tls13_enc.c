@@ -373,13 +373,12 @@ int tls13_setup_key_block(SSL_CONNECTION *s)
 {
     const EVP_CIPHER *c;
     const EVP_CIPHER *snc = NULL, **p_snc = SSL_CONNECTION_IS_DTLS(s) ? &snc : NULL;
-    size_t snoffs = 0;
     const EVP_MD *hash;
     int mac_type = NID_undef;
     size_t mac_secret_size = 0;
 
     s->session->cipher = s->s3.tmp.new_cipher;
-    if (!ssl_cipher_get_evp(SSL_CONNECTION_GET_CTX(s), s->session, p_snc, &snoffs, &c,
+    if (!ssl_cipher_get_evp(SSL_CONNECTION_GET_CTX(s), s->session, p_snc, &c,
             &hash, &mac_type, &mac_secret_size, NULL, 0)) {
         /* Error is already recorded */
         SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
@@ -390,7 +389,6 @@ int tls13_setup_key_block(SSL_CONNECTION *s)
     s->s3.tmp.new_sym_enc = c;
     ssl_evp_cipher_free(s->s3.tmp.new_sym_enc_sn);
     s->s3.tmp.new_sym_enc_sn = snc;
-    s->s3.tmp.new_sym_enc_sn_offs = snoffs;
     ssl_evp_md_free(s->s3.tmp.new_hash);
     s->s3.tmp.new_hash = hash;
     s->s3.tmp.new_mac_pkey_type = mac_type;
@@ -550,7 +548,6 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
     unsigned char *iv = iv_intern;
     unsigned char key[EVP_MAX_KEY_LENGTH];
     unsigned char snkey[EVP_MAX_KEY_LENGTH];
-    size_t sn_input_offs = 0;
     unsigned char secret[EVP_MAX_MD_SIZE];
     unsigned char hashval[EVP_MAX_MD_SIZE];
     unsigned char *hash = hashval;
@@ -616,8 +613,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
              */
             if (!ssl_cipher_get_evp_cipher(sctx, sslcipher, &cipher)
                 || (SSL_CONNECTION_IS_DTLS(s)
-                    && !ssl_cipher_get_evp_cipher_sn(sctx, sslcipher, &sncipher,
-                        &sn_input_offs))) {
+                    && !ssl_cipher_get_evp_cipher_sn(sctx, sslcipher, &sncipher))) {
                 /* Error is already recorded */
                 SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
                 goto err;
@@ -731,7 +727,6 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
 
         if (SSL_CONNECTION_IS_DTLS(s)) {
             sncipher = s->s3.tmp.new_sym_enc_sn;
-            sn_input_offs = s->s3.tmp.new_sym_enc_sn_offs;
         }
         if (!ssl3_digest_cached_records(s, 1)
             || !ssl_handshake_hash(s, hashval, sizeof(hashval), &hashlen)) {
@@ -843,7 +838,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
 
     if (!ssl_set_new_record_layer(s, s->version, direction, level, secret,
             hashlen, snkey, key, keylen, iv, ivlen,
-            NULL, 0, sncipher, sn_input_offs, cipher, taglen,
+            NULL, 0, sncipher, cipher, taglen,
             mac_pkey_type, mac_md, NULL, md)) {
         /* SSLfatal already called */
         goto err;
@@ -875,7 +870,6 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
     unsigned char key[EVP_MAX_KEY_LENGTH];
     unsigned char snkey[EVP_MAX_KEY_LENGTH];
     const EVP_CIPHER *snenc = NULL;
-    size_t snoffs = 0;
     unsigned char *insecret;
     unsigned char secret[EVP_MAX_MD_SIZE];
     char *log_label;
@@ -917,14 +911,13 @@ int tls13_update_key(SSL_CONNECTION *s, int sending)
             goto err;
         }
         snenc = s->s3.tmp.new_sym_enc_sn;
-        snoffs = s->s3.tmp.new_sym_enc_sn_offs;
     }
 
     if (!ssl_set_new_record_layer(s, s->version, direction,
             OSSL_RECORD_PROTECTION_LEVEL_APPLICATION,
             insecret, hashlen, snkey, key, keylen,
             iv, ivlen, NULL, 0,
-            snenc, snoffs,
+            snenc,
             s->s3.tmp.new_sym_enc,
             taglen, NID_undef, NULL, NULL, md)) {
         /* SSLfatal already called */

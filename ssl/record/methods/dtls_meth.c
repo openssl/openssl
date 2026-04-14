@@ -405,20 +405,16 @@ static int dtls_retrieve_rlayer_buffered_record(OSSL_RECORD_LAYER *rl,
 
 /* rfc9147 section 4.2.3 */
 int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t seqlen,
-    unsigned char *rec_data, size_t rec_data_offs)
+    unsigned char *rec_data)
 {
     unsigned char mask[16];
     int outlen, inlen;
-    unsigned char *iv, *in;
+    unsigned char *in;
     size_t i;
 
-    if (ossl_assert(sizeof(mask) > rec_data_offs))
-        inlen = (int)(sizeof(mask) - rec_data_offs);
-    else
-        return 0;
+    inlen = (int)(sizeof(mask));
 
-    iv = rec_data_offs == 0 ? NULL : rec_data;
-    in = rec_data + rec_data_offs;
+    in = rec_data;
     memset(mask, 0, sizeof(mask));
 
     /*
@@ -433,15 +429,15 @@ int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t s
         /* rec_data[0..3]  = block counter, rec_data[4..15] = nonce */
         if (!EVP_CIPHER_CTX_set_padding(ctx, 0)
             || EVP_CipherInit_ex2(ctx, NULL, NULL, rec_data, 1, NULL) <= 0
-            || EVP_CipherUpdate(ctx, mask, &outlen, zeros, (int)seqlen) <= 0
-            || outlen != (int)seqlen
+            || EVP_CipherUpdate(ctx, mask, &outlen, zeros, sizeof(zeros)) <= 0
+            || outlen != sizeof(zeros)
             || EVP_CipherFinal_ex(ctx, mask + outlen, &outlen) <= 0
             || outlen != 0)
             return 0;
     } else if (!ossl_assert(inlen >= 0)
         || (size_t)inlen > sizeof(mask)
         || !EVP_CIPHER_CTX_set_padding(ctx, 0)
-        || EVP_CipherInit_ex2(ctx, NULL, NULL, iv, 1, NULL) <= 0
+        || EVP_CipherInit_ex2(ctx, NULL, NULL, NULL, 1, NULL) <= 0
         || EVP_CipherUpdate(ctx, mask, &outlen, in, inlen) <= 0
         || outlen != inlen
         || EVP_CipherFinal_ex(ctx, mask + outlen, &outlen) <= 0
@@ -732,8 +728,7 @@ again:
                 && !dtls_crypt_sequence_number(rl->sn_enc_ctx,
                     recseqnum + recseqnumoffs,
                     recseqnumlen,
-                    rl->packet + rechdrlen,
-                    rl->sn_enc_offs)))) {
+                    rl->packet + rechdrlen)))) {
         /* sequence number encryption failed dump record */
         rr->length = 0;
         rl->packet_length = 0;
@@ -893,7 +888,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     unsigned char *snkey, unsigned char *key, size_t keylen,
     unsigned char *iv, size_t ivlen,
     unsigned char *mackey, size_t mackeylen,
-    const EVP_CIPHER *snciph, size_t snoffs,
+    const EVP_CIPHER *snciph,
     const EVP_CIPHER *ciph, size_t taglen,
     int mactype,
     const EVP_MD *md, COMP_METHOD *comp,
@@ -940,7 +935,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
 
     ret = (*retrl)->funcs->set_crypto_state(*retrl, level, snkey, key, keylen,
         iv, ivlen, mackey, mackeylen,
-        snciph, snoffs, ciph, taglen, mactype, md,
+        snciph, ciph, taglen, mactype, md,
         comp);
 
 err:
