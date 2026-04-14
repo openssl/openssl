@@ -11,7 +11,9 @@
 #define OSSL_SSL_RECORD_RECORD_H
 
 #include <openssl/core_dispatch.h>
+
 #include "internal/recordmethod.h"
+#include "internal/statem.h"
 
 /*****************************************************************************
  *                                                                           *

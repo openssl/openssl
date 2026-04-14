@@ -13,6 +13,10 @@
 #if !defined(OSSL_SSL_SSL_CERT_TABLE_H)
 #define OSSL_SSL_SSL_CERT_TABLE_H
 
+#include <openssl/evp.h>
+
+#include "ssl_local.h"
+
 static const SSL_CERT_LOOKUP ssl_cert_info[] = {
     { EVP_PKEY_RSA, SSL_aRSA }, /* SSL_PKEY_RSA */
     { EVP_PKEY_RSA_PSS, SSL_aRSA }, /* SSL_PKEY_RSA_PSS_SIGN */

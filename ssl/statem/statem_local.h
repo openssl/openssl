@@ -14,11 +14,17 @@
  *                                                                           *
  *****************************************************************************/
 
+#if !defined(OSSL_SSL_STATEM_STATEM_LOCAL_H)
+#define OSSL_SSL_STATEM_STATEM_LOCAL_H
+
+#include <internal/packet.h>
+#include <internal/statem.h>
+
+#include "../ssl_local.h"
+
 /* Max message length definitions */
 
 /* The spec allows for a longer length than this, but we limit it */
-#if !defined(OSSL_SSL_STATEM_STATEM_LOCAL_H)
-#define OSSL_SSL_STATEM_STATEM_LOCAL_H
 
 #define HELLO_VERIFY_REQUEST_MAX_LENGTH 258
 #define END_OF_EARLY_DATA_MAX_LENGTH 0
