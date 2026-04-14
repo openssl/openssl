@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,130 +12,8 @@
 #include "internal/cryptlib.h"
 #include "bn_local.h"
 
-/* The old slow way */
-#if 0
-int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
-           BN_CTX *ctx)
-{
-    int i, nm, nd;
-    int ret = 0;
-    BIGNUM *D;
-
-    bn_check_top(m);
-    bn_check_top(d);
-    if (BN_is_zero(d)) {
-        ERR_raise(ERR_LIB_BN, BN_R_DIV_BY_ZERO);
-        return 0;
-    }
-
-    if (BN_ucmp(m, d) < 0) {
-        if (rem != NULL) {
-            if (BN_copy(rem, m) == NULL)
-                return 0;
-        }
-        if (dv != NULL)
-            BN_zero(dv);
-        return 1;
-    }
-
-    BN_CTX_start(ctx);
-    D = BN_CTX_get(ctx);
-    if (dv == NULL)
-        dv = BN_CTX_get(ctx);
-    if (rem == NULL)
-        rem = BN_CTX_get(ctx);
-    if (D == NULL || dv == NULL || rem == NULL)
-        goto end;
-
-    nd = BN_num_bits(d);
-    nm = BN_num_bits(m);
-    if (BN_copy(D, d) == NULL)
-        goto end;
-    if (BN_copy(rem, m) == NULL)
-        goto end;
-
-    /*
-     * The next 2 are needed so we can do a dv->d[0]|=1 later since
-     * BN_lshift1 will only work once there is a value :-)
-     */
-    BN_zero(dv);
-    if (bn_wexpand(dv, 1) == NULL)
-        goto end;
-    bn_set_top(dv, 1);
-
-    if (!BN_lshift(D, D, nm - nd))
-        goto end;
-    for (i = nm - nd; i >= 0; i--) {
-        if (!BN_lshift1(dv, dv))
-            goto end;
-        if (BN_ucmp(rem, D) >= 0) {
-            dv->d[0] |= 1;
-            if (!BN_usub(rem, rem, D))
-                goto end;
-        }
-/* CAN IMPROVE (and have now :=) */
-        if (!BN_rshift1(D, D))
-            goto end;
-    }
-    rem->neg = BN_is_zero(rem) ? 0 : m->neg;
-    dv->neg = m->neg ^ d->neg;
-    ret = 1;
- end:
-    BN_CTX_end(ctx);
-    return ret;
-}
-
-#else
-
 #if defined(BN_DIV3W)
 BN_ULONG bn_div_3_words(const BN_ULONG *m, BN_ULONG d1, BN_ULONG d0);
-#elif 0
-/*
- * This is #if-ed away, because it's a reference for assembly implementations,
- * where it can and should be made constant-time. But if you want to test it,
- * just replace 0 with 1.
- */
-#if BN_BITS2 == 64 && defined(__SIZEOF_INT128__) && __SIZEOF_INT128__ == 16
-#undef BN_ULLONG
-#define BN_ULLONG uint128_t
-#define BN_LLONG
-#endif
-
-#ifdef BN_LLONG
-#define BN_DIV3W
-/*
- * Interface is somewhat quirky, |m| is pointer to most significant limb,
- * and less significant limb is referred at |m[-1]|. This means that caller
- * is responsible for ensuring that |m[-1]| is valid. Second condition that
- * has to be met is that |d0|'s most significant bit has to be set. Or in
- * other words divisor has to be "bit-aligned to the left." bn_div_fixed_top
- * does all this. The subroutine considers four limbs, two of which are
- * "overlapping," hence the name...
- */
-static BN_ULONG bn_div_3_words(const BN_ULONG *m, BN_ULONG d1, BN_ULONG d0)
-{
-    BN_ULLONG R = ((BN_ULLONG)m[0] << BN_BITS2) | m[-1];
-    BN_ULLONG D = ((BN_ULLONG)d0 << BN_BITS2) | d1;
-    BN_ULONG Q = 0, mask;
-    int i;
-
-    for (i = 0; i < BN_BITS2; i++) {
-        Q <<= 1;
-        if (R >= D) {
-            Q |= 1;
-            R -= D;
-        }
-        D >>= 1;
-    }
-
-    mask = 0 - (Q >> (BN_BITS2 - 1)); /* does it overflow? */
-
-    Q <<= 1;
-    Q |= (R >= D);
-
-    return (Q | mask) & BN_MASK2;
-}
-#endif
 #endif
 
 static int bn_left_align(BIGNUM *num)
@@ -463,4 +341,3 @@ err:
     BN_CTX_end(ctx);
     return 0;
 }
-#endif
