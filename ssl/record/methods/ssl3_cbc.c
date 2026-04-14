@@ -138,9 +138,8 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
     void (*md_final_raw)(void *ctx, unsigned char *md_out);
     void (*md_transform)(void *ctx, const unsigned char *block);
     size_t md_size, md_block_size = 64;
-    size_t header_length, variance_blocks,
-           len, max_mac_bytes, num_blocks,
-           num_starting_blocks, k, mac_end_offset, c, index_a, index_b;
+    size_t header_length, variance_blocks, len, max_mac_bytes, num_blocks,
+        num_starting_blocks, k, mac_end_offset, c, index_a, index_b;
     size_t bits; /* at most 18 bits */
     unsigned char length_bytes[MAX_HASH_BIT_COUNT_BYTES];
     /* hmac_pad is the masked HMAC key. */
