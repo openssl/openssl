@@ -412,6 +412,44 @@ size_t OSSL_FN_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b);
 
 /**
+ * Divide two OSSL_FN numbers.  Truncates the result to fit in q and r.
+ *
+ * @param[out]          q       The OSSL_FN for the quotient
+ * @param[out]          r       The OSSL_FN for the remainder
+ * @param[in]           n       The first operand (numerator)
+ * @param[in]           d       The second operand (denominator)
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that the OSSL_FN_CTX has free
+ * space for 1 frame, 4 numbers, and 4 * max(n->dsize, d->dsize) + 2 limbs.
+ * Note that this provides an upper bound.  Actual use of the arena may be
+ * smaller - see OSSL_FN_div_ctx_size() for an exact, conditional value.
+ */
+int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
+    OSSL_FN_CTX *ctx);
+
+/**
+ * Calculate modulo of two OSSL_FN numbers.  Truncates the result to fit in r.
+ *
+ * @param[out]          r       The OSSL_FN for the remainder
+ * @param[in]           n       The first operand (numerator)
+ * @param[in]           d       The second operand (denominator)
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function has the same requirements on ctx as OSSL_FN_div().
+ *       It is equivalent to OSSL_FN_div(NULL, r, n, d, ctx).
+ */
+static inline int OSSL_FN_mod(OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
+    OSSL_FN_CTX *ctx)
+{
+    return OSSL_FN_div(NULL, r, n, d, ctx);
+}
+
+/**
  * Calculate the square of one OSSL_FN number.  Truncates the result to fit in r.
  *
  * @param[out]          r       The OSSL_FN for the result
