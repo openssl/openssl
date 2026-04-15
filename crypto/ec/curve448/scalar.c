@@ -210,6 +210,7 @@ void ossl_curve448_scalar_encode(unsigned char ser[C448_SCALAR_BYTES],
 void ossl_curve448_scalar_halve(curve448_scalar_t out, const curve448_scalar_t a)
 {
     c448_word_t mask = 0 - (a->limb[0] & 1);
+    mask = value_barrier_c448(mask);
     c448_dword_t chain = 0;
     unsigned int i;
 
