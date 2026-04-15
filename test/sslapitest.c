@@ -9768,6 +9768,9 @@ static int test_cert_cb_int(int prot, int tst)
         return 1;
 #endif
 
+    if (!fips_provider_version_ge(libctx, 3, 5, 0))
+        return TEST_skip("FIPS provider does not support MLKEM algorithms");
+
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
             TLS_client_method(),
             prot,
