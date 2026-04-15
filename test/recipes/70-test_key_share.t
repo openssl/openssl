@@ -48,6 +48,7 @@ use constant {
 my $testtype;
 my $direction;
 my $selectedgroupid;
+my $fatal_alert = 0;
 
 my $test_name = "test_key_share";
 setup($test_name);
@@ -90,7 +91,7 @@ if (disabled("ec")) {
     $proxy->serverflags("-groups P-384");
 }
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 25;
+plan tests => 26;
 ok(TLSProxy::Message->success(), "Success after HRR");
 
 #Test 2: The server sending an HRR requesting a group the client already sent
@@ -242,25 +243,32 @@ if (disabled("ecx")) {
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Non offered key_share");
 
-#Test 16: Too short group_id in ServerHello should fail
+#Test 16: Missing key_share in ServerHello should fail with missing_extension
+$proxy->clear();
+$fatal_alert = 0;
+$testtype = MISSING_EXTENSION;
+$proxy->start();
+ok($fatal_alert, "Missing key_share extension in ServerHello");
+
+#Test 17: Too short group_id in ServerHello should fail
 $proxy->clear();
 $testtype = GROUP_ID_TOO_SHORT;
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Group id too short in ServerHello");
 
-#Test 17: key_exchange length mismatch in ServerHello should fail
+#Test 18: key_exchange length mismatch in ServerHello should fail
 $proxy->clear();
 $testtype = KEX_LEN_MISMATCH;
 $proxy->start();
 ok(TLSProxy::Message->fail(), "key_exchange length mismatch in ServerHello");
 
-#Test 18: Zero length key_exchange in ServerHello should fail
+#Test 19: Zero length key_exchange in ServerHello should fail
 $proxy->clear();
 $testtype = ZERO_LEN_KEX_DATA;
 $proxy->start();
 ok(TLSProxy::Message->fail(), "zero length key_exchange data in ServerHello");
 
-#Test 19: Trailing data on key_share in ServerHello should fail
+#Test 20: Trailing data on key_share in ServerHello should fail
 $proxy->clear();
 $testtype = TRAILING_DATA;
 $proxy->start();
@@ -269,7 +277,7 @@ ok(TLSProxy::Message->fail(), "key_share trailing data in ServerHello");
 SKIP: {
     skip "No TLSv1.2 support in this OpenSSL build", 2 if disabled("tls1_2");
 
-    #Test 20: key_share should not be sent if the client is not capable of
+    #Test 21: key_share should not be sent if the client is not capable of
     #         negotiating TLSv1.3
     $proxy->clear();
     $proxy->filter(undef);
@@ -281,7 +289,7 @@ SKIP: {
        "No key_share for TLS<=1.2 client");
     $proxy->filter(\&modify_key_shares_filter);
 
-    #Test 21: A server not capable of negotiating TLSv1.3 should not attempt to
+    #Test 22: A server not capable of negotiating TLSv1.3 should not attempt to
     #         process a key_share
     $proxy->clear();
     $direction = CLIENT_TO_SERVER;
@@ -291,7 +299,7 @@ SKIP: {
     ok(TLSProxy::Message->success(), "Ignore key_share for TLS<=1.2 server");
 }
 
-#Test 22: The server sending an HRR but not requesting a new key_share should
+#Test 23: The server sending an HRR but not requesting a new key_share should
 #         fail
 $proxy->clear();
 $direction = SERVER_TO_CLIENT;
@@ -306,7 +314,7 @@ ok(TLSProxy::Message->fail(), "Server sends HRR with no key_shares");
 
 SKIP: {
     skip "No EC support in this OpenSSL build", 3 if disabled("ec");
-    #Test 23: Trailing data on key_share in ServerHello should fail
+    #Test 24: Client sends a key_share for a non-TLSv1.3 group
     $proxy->clear();
     $direction = CLIENT_TO_SERVER;
     if (disabled("ecx")) {
@@ -323,7 +331,7 @@ SKIP: {
     ok(TLSProxy::Message->success() && $ishrr,
        "Client sends a key_share for a Non TLSv1.3 group");
 
-    #Test 24: Client sends a large number of key shares. We should ignore them.
+    #Test 25: Client sends a large number of key shares. We should ignore them.
     $proxy->clear();
     $direction = CLIENT_TO_SERVER;
     $testtype = LARGE_NUM_KEY_SHARES;
@@ -331,7 +339,7 @@ SKIP: {
     $proxy->start();
     ok(TLSProxy::Message->success(), "Large number of key shares");
 
-    #Test 25: Client sends a large number of supported groups. We should ignore
+    #Test 26: Client sends a large number of supported groups. We should ignore
     #         them.
     $proxy->clear();
     $direction = CLIENT_TO_SERVER;
@@ -348,6 +356,15 @@ SKIP: {
 sub modify_key_shares_filter
 {
     my $proxy = shift;
+
+    if ($testtype == MISSING_EXTENSION
+            && $direction == SERVER_TO_CLIENT
+            && $proxy->flight == 2) {
+        $fatal_alert = 1
+            if @{$proxy->record_list}[-1]->is_fatal_alert(0)
+               == TLSProxy::Message::AL_DESC_MISSING_EXTENSION;
+        return;
+    }
 
     # We're only interested in the initial ClientHello/SererHello/HRR
     if (($direction == CLIENT_TO_SERVER && $proxy->flight != 0
@@ -504,11 +521,12 @@ sub modify_key_shares_filter
         } elsif ($message->mt == TLSProxy::Message::MT_SERVER_HELLO
                      && $direction == SERVER_TO_CLIENT) {
             my $ext;
-            my $key_share =
-                $message->extension_data->{TLSProxy::Message::EXT_KEY_SHARE};
-            $selectedgroupid = unpack("n", $key_share);
+            my $key_share;
 
             if ($testtype == LOOK_ONLY) {
+                $key_share =
+                    $message->extension_data->{TLSProxy::Message::EXT_KEY_SHARE};
+                $selectedgroupid = unpack("n", $key_share);
                 return;
             }
             if ($testtype == NO_KEY_SHARES_IN_HRR) {
@@ -517,6 +535,14 @@ sub modify_key_shares_filter
                 $message->repack();
                 return;
             }
+            if ($testtype == MISSING_EXTENSION) {
+                $message->delete_extension(TLSProxy::Message::EXT_KEY_SHARE);
+                $message->repack();
+                return;
+            }
+            $key_share =
+                $message->extension_data->{TLSProxy::Message::EXT_KEY_SHARE};
+            $selectedgroupid = unpack("n", $key_share);
             if ($testtype == SELECT_X25519) {
                 $ext = pack "C4H64",
                     0x00, 0x1d, #x25519
@@ -549,5 +575,3 @@ sub modify_key_shares_filter
         }
     }
 }
-
-
