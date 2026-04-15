@@ -60,7 +60,7 @@ IF[{- !$disabled{tests} -}]
           asn1_encode_test asn1_decode_test asn1_string_table_test asn1_stable_parse_test \
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
           recordlentest drbgtest rand_status_test sslbuffertest \
-          time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
+          time_offset_test pemtest dtls13_internal_test ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest fatalerrtest tls13ccstest \
           sysdefaulttest errtest ssl_ctx_test build_wincrypt_test \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
@@ -699,6 +699,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[pemtest]=pemtest.c
   INCLUDE[pemtest]=../include ../apps/include
   DEPEND[pemtest]=../libcrypto libtestutil.a
+
+  SOURCE[dtls13_internal_test]=dtls13_internal_test.c
+  INCLUDE[dtls13_internal_test]=.. ../include ../apps/include
+  DEPEND[dtls13_internal_test]=../libssl ../libcrypto libtestutil.a
 
   SOURCE[ssl_cert_table_internal_test]=ssl_cert_table_internal_test.c
   INCLUDE[ssl_cert_table_internal_test]=.. ../include ../apps/include

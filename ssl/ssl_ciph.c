@@ -503,13 +503,12 @@ int ssl_cipher_get_evp_cipher_sn(SSL_CTX *ctx, const SSL_CIPHER *sslc,
 
             *enc = NULL;
 
-            if ((sslc->algorithm_enc & SSL_AES128_ANY) != 0) {
+            if ((sslc->algorithm_enc & SSL_AES128_ANY) != 0)
                 ecbnid = NID_aes_128_ecb;
-            } else if ((sslc->algorithm_enc & SSL_AES256_ANY) != 0) {
+            else if ((sslc->algorithm_enc & SSL_AES256_ANY) != 0)
                 ecbnid = NID_aes_256_ecb;
-            } else if (ossl_assert((sslc->algorithm_enc & SSL_CHACHA20) != 0)) {
+            else if (ossl_assert((sslc->algorithm_enc & SSL_CHACHA20) != 0))
                 ecbnid = NID_chacha20;
-            }
 
             if (ecbnid != NID_undef)
                 *enc = ssl_evp_cipher_fetch(ctx->libctx, OBJ_nid2sn(ecbnid), ctx->propq);

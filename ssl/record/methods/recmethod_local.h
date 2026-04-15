@@ -293,7 +293,7 @@ struct ossl_record_layer_st {
 
     /* cryptographic state */
     EVP_CIPHER_CTX *enc_ctx;
-    /* cryptographic state for DTLS sequence numbers */
+    /* cryptographic state for DTLS 1.3 encrypted sequence numbers */
     EVP_CIPHER_CTX *sn_enc_ctx;
 
     /* TLSv1.3 MAC ctx, only used with integrity-only cipher */
