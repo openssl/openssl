@@ -221,7 +221,7 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
             return 0;
         }
-        if (!ctx->enc || ctx->taglen == UNINITIALISED_SIZET) {
+        if (!ctx->enc || (p.tag->data != NULL && ctx->taglen == UNINITIALISED_SIZET)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             return 0;
         }
