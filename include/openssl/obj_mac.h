@@ -3096,6 +3096,10 @@
 
 #define OBJ_aes         OBJ_nistAlgorithms,1L
 
+#define SN_id_aes               "id-aes"
+#define NID_id_aes              1502
+#define OBJ_id_aes              OBJ_nistAlgorithms,1L
+
 #define SN_aes_128_ecb          "AES-128-ECB"
 #define LN_aes_128_ecb          "aes-128-ecb"
 #define NID_aes_128_ecb         418
