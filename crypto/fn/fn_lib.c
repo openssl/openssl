@@ -115,16 +115,13 @@ OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b)
 
     if (al < bl) {
         ERR_raise_data(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL,
-            "Needs to be at least %d, but is only %d",
-            bl, al);
+            "Needs to be at least %zu bytes, but is only %zu bytes",
+            bl * sizeof(OSSL_FN_ULONG), al * sizeof(OSSL_FN_ULONG));
         return 0;
     }
 
-    size_t t = ossl_fn_totalsize(bl);
-
-    memcpy(a, b, t);
-    a->dsize = (int)al; /* Restore to its original size */
-    memset(&a->d[a->dsize], 0, sizeof(OSSL_FN_ULONG) * (a->dsize - b->dsize));
+    memcpy(a->d, b->d, bl * sizeof(OSSL_FN_ULONG));
+    memset(a->d + bl, 0, (al - bl) * sizeof(OSSL_FN_ULONG));
     return a;
 }
 
