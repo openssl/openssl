@@ -37,7 +37,6 @@ static void evp_mac_free(void *vmac)
     if (ref > 0)
         return;
     OPENSSL_free(mac->type_name);
-    ossl_provider_free(mac->prov);
     CRYPTO_FREE_REF(&mac->refcnt);
     OPENSSL_free(mac);
 }
@@ -160,9 +159,6 @@ static void *evp_mac_from_algorithm(int name_id,
         goto err;
     }
 
-    if (prov != NULL && !ossl_provider_up_ref(prov))
-        goto err;
-
     mac->prov = prov;
 
     return mac;
@@ -182,12 +178,12 @@ EVP_MAC *EVP_MAC_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
 
 int EVP_MAC_up_ref(EVP_MAC *mac)
 {
-    return evp_mac_up_ref(mac);
+    return 1;
 }
 
 void EVP_MAC_free(EVP_MAC *mac)
 {
-    evp_mac_free(mac);
+    return;
 }
 
 const OSSL_PROVIDER *EVP_MAC_get0_provider(const EVP_MAC *mac)
