@@ -4135,128 +4135,121 @@ typedef struct {
     size_t aeadtaglen;
 } cipher_params;
 
-static int test_evp_cipher_parameter_sizes(void)
+static const cipher_params evp_cipher_parameter_tests[] = {
+    /* --- AES GCM --- */
+    { "AES-128-GCM", 12, 12, 16 },
+    { "AES-192-GCM", 12, 12, 16 },
+    { "AES-256-GCM", 12, 12, 16 },
+
+    /* --- AES CCM --- */
+    { "AES-128-CCM", 7, 7, 12 },
+    { "AES-192-CCM", 7, 7, 12 },
+    { "AES-256-CCM", 7, 7, 12 },
+
+    /* --- AES OCB --- */
+    { "AES-128-OCB", 12, 12, 16 },
+    { "AES-192-OCB", 12, 12, 16 },
+    { "AES-256-OCB", 12, 12, 16 },
+
+    /* --- AES CBC --- */
+    { "AES-128-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "AES-192-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "AES-256-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
+
+    /* --- AES CTR --- */
+    { "AES-128-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "AES-192-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "AES-256-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
+
+    /* --- AES CFB/OFB --- */
+    { "AES-128-CFB", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "AES-192-CFB", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "AES-256-CFB", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "AES-128-OFB", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "AES-192-OFB", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "AES-256-OFB", 16, 16, OSSL_PARAM_UNMODIFIED },
+
+    /* --- AES XTS (no tag) --- */
+    { "AES-128-XTS", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "AES-256-XTS", 16, 16, OSSL_PARAM_UNMODIFIED },
+
+    /* --- ChaCha20 & ChaCha20-Poly1305 --- */
+    { "ChaCha20", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "ChaCha20-Poly1305", 12, OSSL_PARAM_UNMODIFIED, 16 },
+
+    /* --- Camellia --- */
+    { "CAMELLIA-128-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "CAMELLIA-192-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "CAMELLIA-256-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "CAMELLIA-128-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "CAMELLIA-192-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "CAMELLIA-256-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "CAMELLIA-128-GCM", 12, 12, 16 },
+    { "CAMELLIA-192-GCM", 12, 12, 16 },
+    { "CAMELLIA-256-GCM", 12, 12, 16 },
+
+    /* --- ARIA --- */
+    { "ARIA-128-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "ARIA-192-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "ARIA-256-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "ARIA-128-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "ARIA-192-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "ARIA-256-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "ARIA-128-GCM", 12, 12, 16 },
+    { "ARIA-192-GCM", 12, 12, 16 },
+    { "ARIA-256-GCM", 12, 12, 16 },
+
+    /* --- SM4 --- */
+    { "SM4-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "SM4-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
+    { "SM4-GCM", 12, 12, 16 },
+
+    /* --- 3DES --- */
+    { "DES-EDE3-CBC", 8, 8, OSSL_PARAM_UNMODIFIED },
+
+    /* --- RC4 --- (no IV, no tag) */
+    { "RC4", 0, 0, OSSL_PARAM_UNMODIFIED },
+};
+
+static int test_evp_cipher_parameter_sizes(int i)
 {
-    static const cipher_params tests[] = {
-        /* --- AES GCM --- */
-        { "AES-128-GCM", 12, 12, 16 },
-        { "AES-192-GCM", 12, 12, 16 },
-        { "AES-256-GCM", 12, 12, 16 },
-
-        /* --- AES CCM --- */
-        { "AES-128-CCM", 7, 7, 12 },
-        { "AES-192-CCM", 7, 7, 12 },
-        { "AES-256-CCM", 7, 7, 12 },
-
-        /* --- AES OCB --- */
-        { "AES-128-OCB", 12, 12, 16 },
-        { "AES-192-OCB", 12, 12, 16 },
-        { "AES-256-OCB", 12, 12, 16 },
-
-        /* --- AES CBC --- */
-        { "AES-128-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "AES-192-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "AES-256-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
-
-        /* --- AES CTR --- */
-        { "AES-128-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "AES-192-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "AES-256-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
-
-        /* --- AES CFB/OFB --- */
-        { "AES-128-CFB", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "AES-192-CFB", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "AES-256-CFB", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "AES-128-OFB", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "AES-192-OFB", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "AES-256-OFB", 16, 16, OSSL_PARAM_UNMODIFIED },
-
-        /* --- AES XTS (no tag) --- */
-        { "AES-128-XTS", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "AES-256-XTS", 16, 16, OSSL_PARAM_UNMODIFIED },
-
-        /* --- ChaCha20 & ChaCha20-Poly1305 --- */
-        { "ChaCha20", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "ChaCha20-Poly1305", 12, OSSL_PARAM_UNMODIFIED, 16 },
-
-        /* --- Camellia --- */
-        { "CAMELLIA-128-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "CAMELLIA-192-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "CAMELLIA-256-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "CAMELLIA-128-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "CAMELLIA-192-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "CAMELLIA-256-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "CAMELLIA-128-GCM", 12, 12, 16 },
-        { "CAMELLIA-192-GCM", 12, 12, 16 },
-        { "CAMELLIA-256-GCM", 12, 12, 16 },
-
-        /* --- ARIA --- */
-        { "ARIA-128-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "ARIA-192-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "ARIA-256-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "ARIA-128-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "ARIA-192-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "ARIA-256-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "ARIA-128-GCM", 12, 12, 16 },
-        { "ARIA-192-GCM", 12, 12, 16 },
-        { "ARIA-256-GCM", 12, 12, 16 },
-
-        /* --- SM4 --- */
-        { "SM4-CBC", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "SM4-CTR", 16, 16, OSSL_PARAM_UNMODIFIED },
-        { "SM4-GCM", 12, 12, 16 },
-
-        /* --- 3DES --- */
-        { "DES-EDE3-CBC", 8, 8, OSSL_PARAM_UNMODIFIED },
-
-        /* --- RC4 --- (no IV, no tag) */
-        { "RC4", 0, 0, OSSL_PARAM_UNMODIFIED },
-    };
-
     EVP_CIPHER_CTX *ctx = NULL;
     EVP_CIPHER *cipher = NULL;
     OSSL_PARAM params[6];
-    size_t i, ivlen, taglen;
+    size_t ivlen = OSSL_PARAM_UNMODIFIED, taglen = OSSL_PARAM_UNMODIFIED;
 
-    for (i = 0; i < OSSL_NELEM(tests); i++) {
-        const cipher_params *t = &tests[i];
-        taglen = OSSL_PARAM_UNMODIFIED;
-        ivlen = OSSL_PARAM_UNMODIFIED;
+    const cipher_params *t = evp_cipher_parameter_tests + i;
 
-        params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_IV,
-            NULL, 0);
-        params[1] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV,
-            NULL, 0);
-        params[2] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-            NULL, 0);
-        params[3] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &ivlen);
-        params[4] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN, &taglen);
-        params[5] = OSSL_PARAM_construct_end();
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_IV,
+        NULL, 0);
+    params[1] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV,
+        NULL, 0);
+    params[2] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        NULL, 0);
+    params[3] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &ivlen);
+    params[4] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN, &taglen);
+    params[5] = OSSL_PARAM_construct_end();
 
-        if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
-            goto err;
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
+        goto err;
 
-        if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, t->cipher_name, "")))
-            goto next_iteration;
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, t->cipher_name, "")))
+        goto skip;
 
-        if (!TEST_true(EVP_CipherInit_ex2(ctx, cipher, NULL, NULL, 1, NULL))
-            || !TEST_true(EVP_CIPHER_CTX_get_params(ctx, params))
-            || !TEST_size_t_eq(params[0].return_size, t->ivlen)
-            || !TEST_size_t_eq(params[1].return_size, t->updatedivlen)
-            || !TEST_size_t_eq(params[2].return_size, t->aeadtaglen)
-            || !TEST_size_t_eq(ivlen, t->ivlen)
-            || !TEST_size_t_eq(taglen, t->aeadtaglen)) {
-            TEST_error("test_evp_cipher_parameter_sizes() failed cipher: %s\n", t->cipher_name);
-            goto err;
-        }
-
-    next_iteration:
-        EVP_CIPHER_CTX_free(ctx);
-        ctx = NULL;
-        EVP_CIPHER_free(cipher);
-        cipher = NULL;
+    if (!TEST_true(EVP_CipherInit_ex2(ctx, cipher, NULL, NULL, 1, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_get_params(ctx, params))
+        || !TEST_size_t_eq(params[0].return_size, t->ivlen)
+        || !TEST_size_t_eq(params[1].return_size, t->updatedivlen)
+        || !TEST_size_t_eq(params[2].return_size, t->aeadtaglen)
+        || !TEST_size_t_eq(ivlen, t->ivlen)
+        || !TEST_size_t_eq(taglen, t->aeadtaglen)) {
+        TEST_error("test_evp_cipher_parameter_sizes() failed cipher: %s\n", t->cipher_name);
+        goto err;
     }
 
+skip:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
     return 1;
 
 err:
@@ -6528,7 +6521,8 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_RSA_legacy);
 #endif
-    ADD_TEST(test_evp_cipher_parameter_sizes);
+    ADD_ALL_TESTS(test_evp_cipher_parameter_sizes,
+        sizeof(evp_cipher_parameter_tests));
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     ADD_TEST(test_decrypt_null_chunks);
 #endif
