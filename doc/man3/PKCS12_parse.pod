@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-PKCS12_parse - parse a PKCS#12 structure
+PKCS12_parse, PKCS12_parse_ex - parse a PKCS#12 structure
 
 =head1 SYNOPSIS
 
@@ -10,6 +10,9 @@ PKCS12_parse - parse a PKCS#12 structure
 
  int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
                   STACK_OF(X509) **ca);
+ int PKCS12_parse_ex(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
+                     STACK_OF(X509) **ca, EVP_SKEY **skey,
+                     OSSL_LIB_CTX *libctx, const char *propq);
 
 =head1 DESCRIPTION
 
@@ -19,13 +22,34 @@ B<p12> is the B<PKCS12> structure to parse. B<pass> is the passphrase to use.
 If successful the private key will be written to B<*pkey>, the corresponding
 certificate to B<*cert> and any additional certificates to B<*ca>.
 
+PKCS12_parse_ex() is an extended version of PKCS12_parse() that additionally
+supports extracting symmetric secret keys and allows specifying a library context
+and property query string.
+
+In addition to the parameters described for PKCS12_parse(), PKCS12_parse_ex()
+accepts the following:
+
+B<skey> - if not NULL, any symmetric secret key found in the PKCS#12 structure
+will be written to B<*skey>. This is particularly useful for PKCS#12 files
+created by Java's keytool utility, which stores symmetric keys in secretBag
+structures.
+
+B<libctx> - the library context to use for cryptographic operations. If NULL,
+the default library context is used.
+
+B<propq> - an optional property query string. If NULL, the default property
+query is used.
+
 =head1 NOTES
 
-Each of the parameters B<pkey>, B<cert>, and B<ca> can be NULL in which case
-the private key, the corresponding certificate, or the additional certificates,
-respectively, will be discarded.
-If any of B<pkey> and B<cert> is non-NULL the variable it points to is
+Each of the parameters B<pkey>, B<cert>, B<ca>, and B<skey> (for PKCS12_parse_ex())
+can be NULL in which case the private key, the corresponding certificate, the
+additional certificates, or the symmetric secret key, respectively, will be
+discarded.
+
+If any of B<pkey>, B<cert>, or B<skey> is non-NULL the variable it points to is
 initialized.
+
 If B<ca> is non-NULL and B<*ca> is NULL a new STACK will be allocated.
 If B<ca> is non-NULL and B<*ca> is a valid STACK
 then additional certificates are appended in the given order to B<*ca>.
@@ -45,9 +69,10 @@ L<UI_OpenSSL(3)>, for example.
 
 =head1 RETURN VALUES
 
-PKCS12_parse() returns 1 for success and zero if an error occurred.
+PKCS12_parse() and PKCS12_parse_ex() return 1 for success and zero if an error
+occurred.
 
-The error can be obtained from L<ERR_get_error(3)>
+The error can be obtained from L<ERR_get_error(3)>.
 
 =head1 BUGS
 
@@ -65,9 +90,13 @@ Attributes currently cannot be stored in the private key B<EVP_PKEY> structure.
 L<d2i_PKCS12(3)>,
 L<passphrase-encoding(7)>
 
+=head1 HISTORY
+
+PKCS12_parse_ex() was added in OpenSSL 4.1.0.
+
 =head1 COPYRIGHT
 
-Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
