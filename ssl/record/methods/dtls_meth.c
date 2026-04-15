@@ -416,6 +416,7 @@ int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t s
     inlen = (int)(sizeof(mask));
 
     in = rec_data;
+    iv = NULL;
     memset(mask, 0, sizeof(mask));
 
     /*
