@@ -6522,7 +6522,7 @@ int setup_tests(void)
     ADD_TEST(test_RSA_legacy);
 #endif
     ADD_ALL_TESTS(test_evp_cipher_parameter_sizes,
-        sizeof(evp_cipher_parameter_tests));
+        OSSL_NELEM(evp_cipher_parameter_tests));
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     ADD_TEST(test_decrypt_null_chunks);
 #endif
