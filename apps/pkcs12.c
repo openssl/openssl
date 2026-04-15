@@ -28,6 +28,7 @@
 #define INFO 0x4
 #define CLCERTS 0x8
 #define CACERTS 0x10
+#define RAW 0x20
 
 #define PASSWD_BUF_SIZE 2048
 
@@ -111,8 +112,9 @@ typedef enum OPTION_choice {
     OPT_PBMAC1_PBKDF2,
     OPT_PBMAC1_PBKDF2_MD,
 #ifndef OPENSSL_NO_DES
-    OPT_LEGACY_ALG
+    OPT_LEGACY_ALG,
 #endif
+    OPT_RAW
 } OPTION_CHOICE;
 
 const OPTIONS pkcs12_options[] = {
@@ -124,7 +126,7 @@ const OPTIONS pkcs12_options[] = {
     { "passout", OPT_PASSOUT, 's', "Output file pass phrase source" },
     { "password", OPT_PASSWORD, 's', "Set PKCS#12 import/export password source" },
     { "twopass", OPT_TWOPASS, '-', "Separate MAC, encryption passwords" },
-    { "nokeys", OPT_NOKEYS, '-', "Don't output private keys" },
+    { "nokeys", OPT_NOKEYS, '-', "Don't output private keys or symmetric keys" },
     { "nocerts", OPT_NOCERTS, '-', "Don't output certificates" },
     { "noout", OPT_NOOUT, '-', "Don't output anything, just verify PKCS#12 input" },
 #ifndef OPENSSL_NO_DES
@@ -144,6 +146,7 @@ const OPTIONS pkcs12_options[] = {
     { "nomacver", OPT_NOMACVER, '-', "Don't verify integrity MAC" },
     { "clcerts", OPT_CLCERTS, '-', "Only output client certificates" },
     { "cacerts", OPT_CACERTS, '-', "Only output CA certificates" },
+    { "raw", OPT_RAW, '-', "Output secret keys as raw binary (no metadata)" },
     { "", OPT_CIPHER, '-', "Any supported cipher for output encryption" },
     { "noenc", OPT_NOENC, '-', "Don't encrypt private keys" },
     { "nodes", OPT_NODES, '-', "Don't encrypt private keys; deprecated" },
@@ -267,6 +270,9 @@ int pkcs12_main(int argc, char **argv)
             break;
         case OPT_INFO:
             options |= INFO;
+            break;
+        case OPT_RAW:
+            options |= RAW;
             break;
         case OPT_CHAIN:
             chain = 1;
@@ -1036,6 +1042,152 @@ int dump_certs_pkeys_bags(BIO *out, const STACK_OF(PKCS12_SAFEBAG) *bags,
     return 1;
 }
 
+/*
+ * Display information about a secret bag containing an encrypted symmetric key
+ */
+static void dump_secret_bag_info(const PKCS12_SAFEBAG *bag)
+{
+    const ASN1_TYPE *bag_obj;
+    const unsigned char *p;
+    X509_SIG *p8enc = NULL;
+    const X509_ALGOR *alg = NULL;
+    const ASN1_OCTET_STRING *enc_data = NULL;
+
+    BIO_puts(bio_err, "Secret bag\n");
+    BIO_puts(bio_err, "Bag Type: ");
+    i2a_ASN1_OBJECT(bio_err, PKCS12_SAFEBAG_get0_bag_type(bag));
+    BIO_puts(bio_err, "\n");
+
+    /* For pkcs8ShroudedKeyBag, show encryption details */
+    if (PKCS12_SAFEBAG_get_bag_nid(bag) == NID_pkcs8ShroudedKeyBag) {
+        bag_obj = PKCS12_SAFEBAG_get0_bag_obj(bag);
+        if (bag_obj != NULL && bag_obj->type == V_ASN1_OCTET_STRING) {
+            p = ASN1_STRING_get0_data(bag_obj->value.octet_string);
+            p8enc = d2i_X509_SIG(NULL, &p,
+                ASN1_STRING_length(bag_obj->value.octet_string));
+            if (p8enc != NULL) {
+                X509_SIG_get0(p8enc, &alg, &enc_data);
+                BIO_puts(bio_err, "Secret Key Encryption: ");
+                alg_print(alg);
+                BIO_printf(bio_err, "Encrypted data length: %d bytes\n",
+                    ASN1_STRING_length(enc_data));
+                X509_SIG_free(p8enc);
+            }
+        }
+    } else {
+        BIO_puts(bio_err, "Bag Value: ");
+        print_attribute(bio_err, PKCS12_SAFEBAG_get0_bag_obj(bag));
+    }
+}
+
+/*
+ * Extract and output a symmetric secret key from a secret bag
+ * Returns 1 on success, 0 on failure
+ */
+static int dump_secret_bag_key(BIO *out, const PKCS12_SAFEBAG *bag,
+    const char *pass, int passlen,
+    const STACK_OF(X509_ATTRIBUTE) *attrs, int options,
+    const EVP_CIPHER *enc)
+{
+    const ASN1_TYPE *bag_obj;
+    const unsigned char *p;
+    X509_SIG *p8enc = NULL;
+    PKCS8_PRIV_KEY_INFO *p8inf = NULL;
+    const unsigned char *raw_key = NULL;
+    int raw_key_len = 0;
+    int ret = 0;
+
+    /* Only handle pkcs8ShroudedKeyBag */
+    if (PKCS12_SAFEBAG_get_bag_nid(bag) != NID_pkcs8ShroudedKeyBag)
+        return 1;
+
+    bag_obj = PKCS12_SAFEBAG_get0_bag_obj(bag);
+    if (bag_obj == NULL || bag_obj->type != V_ASN1_OCTET_STRING)
+        return 0;
+
+    /* Parse and decrypt the encrypted key */
+    p = ASN1_STRING_get0_data(bag_obj->value.octet_string);
+    p8enc = d2i_X509_SIG(NULL, &p,
+        ASN1_STRING_length(bag_obj->value.octet_string));
+    if (p8enc == NULL)
+        return 0;
+
+    /* Decrypt to get PKCS8_PRIV_KEY_INFO */
+    p8inf = PKCS8_decrypt_ex(p8enc, pass, passlen,
+        app_get0_libctx(), app_get0_propq());
+    X509_SIG_free(p8enc);
+
+    if (p8inf == NULL)
+        return 0;
+
+    /* Extract raw key bytes and algorithm information */
+    const ASN1_OBJECT *algoid = NULL;
+    const X509_ALGOR *alg = NULL;
+    if (PKCS8_pkey_get0(&algoid, &raw_key, &raw_key_len, &alg, p8inf)) {
+        if (raw_key != NULL && raw_key_len > 0) {
+            if (options & RAW) {
+                /* -raw option: output raw binary key */
+                BIO_write(out, raw_key, raw_key_len);
+                ret = 1;
+            } else if (enc == NULL) {
+                /* -noenc/-nodes specified: output key in hex format */
+                print_attribs(out, attrs, "Bag Attributes");
+
+                /* Display algorithm information */
+                if (algoid != NULL) {
+                    int nid = OBJ_obj2nid(algoid);
+                    const char *ln = OBJ_nid2ln(nid);
+
+                    BIO_puts(out, "Algorithm: ");
+                    if (ln != NULL && strcmp(ln, "undefined") != 0) {
+                        BIO_puts(out, ln);
+                    } else {
+                        /* Show numeric OID if no name available */
+                        i2a_ASN1_OBJECT(out, algoid);
+                    }
+                    BIO_puts(out, "\n");
+                }
+
+                BIO_printf(out, "Key Length: %d bytes\n", raw_key_len);
+                BIO_puts(out, "Key Data:\n");
+                for (int i = 0; i < raw_key_len; i++) {
+                    BIO_printf(out, "%02X", raw_key[i]);
+                    if ((i + 1) % 32 == 0)
+                        BIO_puts(out, "\n");
+                }
+                if (raw_key_len % 32 != 0)
+                    BIO_puts(out, "\n");
+                ret = 1;
+            } else {
+                /* No -noenc/-nodes: only show metadata, not key data */
+                print_attribs(out, attrs, "Bag Attributes");
+
+                /* Display algorithm information */
+                if (algoid != NULL) {
+                    int nid = OBJ_obj2nid(algoid);
+                    const char *ln = OBJ_nid2ln(nid);
+
+                    BIO_puts(out, "Algorithm: ");
+                    if (ln != NULL && strcmp(ln, "undefined") != 0) {
+                        BIO_puts(out, ln);
+                    } else {
+                        /* Show numeric OID if no name available */
+                        i2a_ASN1_OBJECT(out, algoid);
+                    }
+                    BIO_puts(out, "\n");
+                }
+
+                BIO_printf(out, "Key Length: %d bytes\n", raw_key_len);
+                BIO_puts(out, "Symmetric Key (use -noenc to output)\n");
+                ret = 1;
+            }
+        }
+    }
+
+    PKCS8_PRIV_KEY_INFO_free(p8inf);
+    return ret;
+}
+
 int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
     const char *pass, int passlen, int options,
     char *pempass, const EVP_CIPHER *enc)
@@ -1110,13 +1262,13 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
         break;
 
     case NID_secretBag:
-        if (options & INFO)
-            BIO_puts(bio_err, "Secret bag\n");
-        print_attribs(out, attrs, "Bag Attributes");
-        BIO_puts(bio_err, "Bag Type: ");
-        i2a_ASN1_OBJECT(bio_err, PKCS12_SAFEBAG_get0_bag_type(bag));
-        BIO_puts(bio_err, "\nBag Value: ");
-        print_attribute(out, PKCS12_SAFEBAG_get0_bag_obj(bag));
+        if (options & INFO) {
+            dump_secret_bag_info(bag);
+            print_attribs(out, attrs, "Bag Attributes");
+        }
+        if (!(options & INFO) && !(options & NOKEYS)) {
+            return dump_secret_bag_key(out, bag, pass, passlen, attrs, options, enc);
+        }
         return 1;
 
     case NID_safeContentsBag:
