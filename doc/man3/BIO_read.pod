@@ -81,6 +81,16 @@ the first NUL character contained in the data read.
 In any case the trailing NUL that is added after the data read
 is not included in the length returned.
 
+BIO_puts() returns the number of bytes written on success or various negative
+values on error: -1 when written value is larger than INT_MAX, the BIO is
+uninitialized, I<size> is less than 0, or I<b> is NULL. -2 might be returned,
+when a BIO with an unsupported method is passed.
+
+BIO_get_line() returns the number of bytes placed in buf (excluding
+the final NUL terminator) on success. Returns -1 on error (e.g., invalid
+arguments, uninitialized BIO). Returns 0 if end-of-file is reached before any
+bytes are read.
+
 All other functions return either the amount of data successfully read or
 written (if the return value is positive) or that no data was successfully
 read or written if the result is 0 or -1. If the return value is -2 then
