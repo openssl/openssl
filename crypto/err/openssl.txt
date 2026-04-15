@@ -1276,6 +1276,7 @@ RSA_R_INVALID_PADDING_MODE:141:invalid padding mode
 RSA_R_INVALID_PSS_PARAMETERS:149:invalid pss parameters
 RSA_R_INVALID_PSS_SALTLEN:146:invalid pss saltlen
 RSA_R_INVALID_REQUEST:175:invalid request
+RSA_R_INVALID_RSA_KEY_VERSION:182:invalid RSA key version
 RSA_R_INVALID_SALT_LENGTH:150:invalid salt length
 RSA_R_INVALID_STRENGTH:176:invalid strength
 RSA_R_INVALID_TRAILER:139:invalid trailer
