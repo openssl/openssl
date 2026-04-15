@@ -5715,6 +5715,15 @@ OPENSSL_sk_set_cmp_thunks               5712	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_set1                    5713	4_0_0	EXIST::FUNCTION:
 OSSL_ESS_check_signing_certs_ex         5714	4_0_0	EXIST::FUNCTION:
 X509v3_delete_extension                 5715	4_0_0	EXIST::FUNCTION:
+PKCS8_PRIV_KEY_INFO_get1_skey           ?	4_1_0	EXIST::FUNCTION:
+PKCS12_decrypt_secretbag                ?	4_1_0	EXIST::FUNCTION:
+PKCS12_PARSE_CTX_new                    ?	4_1_0	EXIST::FUNCTION:
+PKCS12_PARSE_CTX_free                   ?	4_1_0	EXIST::FUNCTION:
+PKCS12_PARSE_CTX_set_pkey               ?	4_1_0	EXIST::FUNCTION:
+PKCS12_PARSE_CTX_set_cert               ?	4_1_0	EXIST::FUNCTION:
+PKCS12_PARSE_CTX_set_ca                 ?	4_1_0	EXIST::FUNCTION:
+PKCS12_PARSE_CTX_set_skey               ?	4_1_0	EXIST::FUNCTION:
+PKCS12_parse_ex                         ?	4_1_0	EXIST::FUNCTION:
 CTLOG_STORE_add0_log                    ?	4_1_0	EXIST::FUNCTION:CT
 CRYPTO_atomic_load_ptr                  ?	4_1_0	EXIST::FUNCTION:
 CRYPTO_atomic_store_ptr                 ?	4_1_0	EXIST::FUNCTION:

@@ -1499,3 +1499,4 @@ HKDF_SHA512		1498
 id_smime_ori		1499
 id_smime_ori_kem		1500
 id_alg_hss_lms_hashsig		1501
+id_aes		1502
