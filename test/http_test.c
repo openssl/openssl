@@ -379,6 +379,14 @@ static int test_http_keep_alive_1_require_no(void)
     return test_http_keep_alive('1', 2, 0);
 }
 
+static int test_http_adapt_proxy_empty_server(void)
+{
+    const char *proxy = "http://proxy.local:8080";
+
+    return TEST_str_eq(OSSL_HTTP_adapt_proxy(proxy, "abc", "", 0), proxy)
+        && TEST_str_eq(OSSL_HTTP_adapt_proxy(proxy, "abc", "[]", 0), proxy);
+}
+
 void cleanup_tests(void)
 {
     X509_free(x509);
@@ -414,5 +422,6 @@ int setup_tests(void)
     ADD_TEST(test_http_keep_alive_1_require_yes);
     ADD_TEST(test_http_keep_alive_0_require_no);
     ADD_TEST(test_http_keep_alive_1_require_no);
+    ADD_TEST(test_http_adapt_proxy_empty_server);
     return 1;
 }

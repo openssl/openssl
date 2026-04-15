@@ -32,7 +32,9 @@ see L<openssl_user_macros(7)>:
 
 =head1 DESCRIPTION
 
-OSSL_HTTP_adapt_proxy() takes an optional proxy hostname I<proxy>
+OSSL_HTTP_adapt_proxy() determines whether a proxy should be used
+when connecting to the given I<server>.
+It takes an optional proxy hostname I<proxy>
 and returns it transformed according to the optional I<no_proxy> parameter,
 I<server>, I<use_ssl>, and the applicable environment variable, as follows.
 If I<proxy> is NULL, take any default value from the C<http_proxy>
@@ -40,11 +42,13 @@ environment variable, or from C<https_proxy> if I<use_ssl> is nonzero.
 If this still does not yield a proxy hostname,
 take any further default value from the C<HTTP_PROXY>
 environment variable, or from C<HTTPS_PROXY> if I<use_ssl> is nonzero.
-If I<no_proxy> is NULL, take any default exclusion value from the C<no_proxy>
-environment variable, or else from C<NO_PROXY>.
-Return the determined proxy host unless the exclusion value,
-which is a list of proxy hosts separated by C<,> and/or whitespace,
-contains I<server>.
+Return the determined proxy host if I<server> is the empty string
+or I<server> is not in the exclusion list.
+The exclusion list is a list of server hosts separated by C<,>
+and/or whitespace.
+They may be given via the I<no_proxy> parameter.
+If it is NULL, the exclusion list is taken from the C<no_proxy>
+environment variable if set, otherwise from C<NO_PROXY>.
 Otherwise return NULL.
 When I<server> is a string delimited by C<[> and C<]>, which are used for IPv6
 addresses, the enclosing C<[> and C<]> are stripped prior to comparison.
