@@ -55,9 +55,9 @@ typedef int64_t dsword_t;
 #endif
 
 #if C448_WORD_BITS == 64
-# define value_barrier_c448(x) value_barrier_64(x)
+#define value_barrier_c448(x) value_barrier_64(x)
 #elif C448_WORD_BITS == 32
-# define value_barrier_c448(x) value_barrier_32(x)
+#define value_barrier_c448(x) value_barrier_32(x)
 #endif
 
 /*
