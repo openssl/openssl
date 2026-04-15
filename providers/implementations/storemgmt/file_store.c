@@ -140,16 +140,17 @@ static OSSL_DECODER_CLEANUP file_load_cleanup;
 #endif
 
 /*
- * ossl_file_stat() handles URIs that may be interpreted as a reference to a local file.
+ * uri_file_stat() handles URIs that may be interpreted as a reference to a local file.
  * It attempts to derive from the given |uri| a file pathname that points to an
  * existing file. To this end it takes the full |uri| as a filename (which may be
  * an absolute or relative name, such as file.pem) or takes a postfix of |uri|,
  * such as path-to-file if |uri| is of the form file:path-to-file
  * or /path-to-file if |uri| is of the form file://localhost/path-to-file.
+ * The returned pathname is a pointer inside |uri|, or NULL on error.
  * On success it populates the file stat buffer pointed at by |st|
  * (unless |st| is NULL) and returns the derived pathname, otherwise NULL.
  */
-static const char *ossl_file_stat(const char *uri, struct stat *st)
+static const char *uri_file_stat(const char *uri, struct stat *st)
 {
     const char *path = uri, *q;
     struct stat local_st;
@@ -207,7 +208,7 @@ static const char *ossl_file_stat(const char *uri, struct stat *st)
         }
     }
 #ifdef _WIN32
-    /* Windows "file://" URIs with a drive letter are usually required to have an extra '/' before the drive letter */
+    /* Windows "file://" URIs with a drive letter are usually required to have an extra '/' before the drive letter, e.g., "file:///C:/path" */
     if (path[0] == '/' && OSSL_is_abs_drive_prefix(path + 1))
         path++; /* Skip past the slash, making the path a normal Windows path */
 #endif
@@ -278,7 +279,7 @@ static void *file_open(void *provctx, const char *uri)
 {
     struct file_ctx_st *ctx = NULL;
     struct stat st;
-    const char *path = ossl_file_stat(uri, &st);
+    const char *path = uri_file_stat(uri, &st);
     BIO *bio;
 
     if (path == NULL)
