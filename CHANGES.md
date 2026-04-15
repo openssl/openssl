@@ -55,6 +55,12 @@ OpenSSL Releases
 
    *Shane Lontis*
 
+ * The functions `ASN1_BIT_STRING_name_print()`, `ASN1_BIT_STRING_num_asc(),
+   and `ASN1_BIT_STRING_set_asc()`, have been deprecated. Refer to the manual
+   pages for more information.
+
+   *Bob Beck*
+
  * The API functions `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`, and
    `CRYPTO_atomic_cmp_exch_ptr` have been added to libcrypto.
 

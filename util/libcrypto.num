@@ -2587,9 +2587,9 @@ ASN1_BIT_STRING_set_bit                 2585	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_get_bit                 2586	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_check                   2587	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_get_length              2588	4_0_0	EXIST::FUNCTION:
-ASN1_BIT_STRING_name_print              2589	4_0_0	EXIST::FUNCTION:
-ASN1_BIT_STRING_num_asc                 2590	4_0_0	EXIST::FUNCTION:
-ASN1_BIT_STRING_set_asc                 2591	4_0_0	EXIST::FUNCTION:
+ASN1_BIT_STRING_name_print              2589	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
+ASN1_BIT_STRING_num_asc                 2590	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
+ASN1_BIT_STRING_set_asc                 2591	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
 d2i_ASN1_INTEGER                        2592	4_0_0	EXIST::FUNCTION:
 i2d_ASN1_INTEGER                        2593	4_0_0	EXIST::FUNCTION:
 ASN1_INTEGER_free                       2594	4_0_0	EXIST::FUNCTION:

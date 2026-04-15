@@ -12,6 +12,8 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_1)
+OSSL_BEGIN_ALLOW_DEPRECATED
 int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
     BIT_STRING_BITNAME *tbl, int indent)
 {
@@ -69,3 +71,5 @@ int ASN1_BIT_STRING_num_asc(const char *name, BIT_STRING_BITNAME *tbl)
     }
     return -1;
 }
+OSSL_END_ALLOW_DEPRECATED
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
