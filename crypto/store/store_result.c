@@ -572,6 +572,7 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
             EVP_PKEY *pkey = NULL;
             X509 *cert = NULL;
             STACK_OF(X509) *chain = NULL;
+            EVP_SKEY *skey = NULL;
 
             data->object_type = OSSL_OBJECT_PKCS12;
 
@@ -612,11 +613,13 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
                 }
             }
 
-            if (PKCS12_parse(p12, pass, &pkey, &cert, &chain)) {
+            if (PKCS12_parse_ex(p12, pass, &pkey, &cert, &chain, &skey,
+                    libctx, propq)) {
                 STACK_OF(OSSL_STORE_INFO) *infos = NULL;
                 OSSL_STORE_INFO *osi_pkey = NULL;
                 OSSL_STORE_INFO *osi_cert = NULL;
                 OSSL_STORE_INFO *osi_ca = NULL;
+                OSSL_STORE_INFO *osi_skey = NULL;
 
                 ok = 1; /* Parsing went through correctly! */
 
@@ -639,6 +642,15 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
                         else
                             ok = 0;
                     }
+                    if (ok && skey != NULL) {
+                        if ((osi_skey = OSSL_STORE_INFO_new_SKEY(skey)) != NULL
+                            /* clearing skey here avoids case distinctions */
+                            && (skey = NULL) == NULL
+                            && sk_OSSL_STORE_INFO_push(infos, osi_skey) != 0)
+                            osi_skey = NULL;
+                        else
+                            ok = 0;
+                    }
                     while (ok && sk_X509_num(chain) > 0) {
                         X509 *ca = sk_X509_value(chain, 0);
 
@@ -653,9 +665,11 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
                 EVP_PKEY_free(pkey);
                 X509_free(cert);
                 OSSL_STACK_OF_X509_free(chain);
+                EVP_SKEY_free(skey);
                 OSSL_STORE_INFO_free(osi_pkey);
                 OSSL_STORE_INFO_free(osi_cert);
                 OSSL_STORE_INFO_free(osi_ca);
+                OSSL_STORE_INFO_free(osi_skey);
                 if (!ok) {
                     sk_OSSL_STORE_INFO_pop_free(infos, OSSL_STORE_INFO_free);
                     infos = NULL;
