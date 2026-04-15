@@ -19,12 +19,27 @@
 
 static void evp_keymgmt_free(void *data)
 {
-    EVP_KEYMGMT_free(data);
+    int ref = 0;
+    EVP_KEYMGMT *keymgmt = data;
+
+    if (keymgmt == NULL)
+        return;
+
+    CRYPTO_DOWN_REF(&keymgmt->refcnt, &ref);
+    if (ref > 0)
+        return;
+    OPENSSL_free(keymgmt->type_name);
+    CRYPTO_FREE_REF(&keymgmt->refcnt);
+    OPENSSL_free(keymgmt);
 }
 
 static int evp_keymgmt_up_ref(void *data)
 {
-    return EVP_KEYMGMT_up_ref(data);
+    int ref = 0;
+    EVP_KEYMGMT *keymgmt = data;
+
+    CRYPTO_UP_REF(&keymgmt->refcnt, &ref);
+    return 1;
 }
 
 static void *keymgmt_new(void)
@@ -258,11 +273,6 @@ static void *keymgmt_from_algorithm(int name_id,
         return NULL;
     }
     keymgmt->prov = prov;
-    if (prov != NULL && !ossl_provider_up_ref(prov)) {
-        EVP_KEYMGMT_free(keymgmt);
-        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-        return NULL;
-    }
 
 #ifndef FIPS_MODULE
     keymgmt->legacy_alg = get_legacy_alg_type_from_keymgmt(keymgmt);
@@ -293,26 +303,12 @@ EVP_KEYMGMT *EVP_KEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 
 int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt)
 {
-    int ref = 0;
-
-    CRYPTO_UP_REF(&keymgmt->refcnt, &ref);
     return 1;
 }
 
 void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt)
 {
-    int ref = 0;
-
-    if (keymgmt == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&keymgmt->refcnt, &ref);
-    if (ref > 0)
-        return;
-    OPENSSL_free(keymgmt->type_name);
-    ossl_provider_free(keymgmt->prov);
-    CRYPTO_FREE_REF(&keymgmt->refcnt);
-    OPENSSL_free(keymgmt);
+    return;
 }
 
 const OSSL_PROVIDER *EVP_KEYMGMT_get0_provider(const EVP_KEYMGMT *keymgmt)
