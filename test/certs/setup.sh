@@ -414,6 +414,15 @@ REQMASK=MASK:0x800 ./mkcert.sh req badalt7-key "O = Bad NC Test Certificate 7" \
     "email.1 = good@good.org" "email.2 = any@good.com" \
     "IP = 127.0.0.1" "IP = 192.168.0.1"
 
+# A wildcard DNS-ID that matches an explicitly excluded host in ncca3.
+./mkcert.sh req wildcard-nc-key "O = Wildcard NC Test Certificate" | \
+    ./mkcert.sh geneealt wildcard-nc-key wildcard-nc-cert ncca3-key ncca3-cert \
+    "DNS.1 = *.ok.good.com"
+
+./mkcert.sh req wildcard-nc-ok-key "O = Wildcard NC OK Test Certificate" | \
+    ./mkcert.sh geneealt wildcard-nc-ok-key wildcard-nc-ok-cert \
+    ncca3-key ncca3-cert "DNS.1 = *.good.ok.good.com"
+
 # NC CA4 only permits URIs matching good.org.
 
 NC="permitted;URI:good.org"

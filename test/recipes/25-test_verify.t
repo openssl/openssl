@@ -30,7 +30,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 216;
+plan tests => 218;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -466,6 +466,13 @@ ok(!verify("badalt9-cert", "", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
 
 ok(!verify("badalt10-cert", "", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
    "Name constraints nested DNS name excluded");
+
+ok(!verify("wildcard-nc-cert", "", ["root-cert"], ["ncca1-cert", "ncca3-cert"]),
+   "Name constraints wildcard DNS SAN rejected when overlapping excluded name");
+
+ok(verify("wildcard-nc-ok-cert", "", ["root-cert"], ["ncca1-cert", "ncca3-cert"],
+          "-verify_hostname", "www.good.ok.good.com"),
+   "Name constraints wildcard DNS SAN accepted when fully permitted");
 
 ok(!verify("bad-othername-cert", "", ["root-cert"], ["nccaothername-cert"], ),
    "CVE-2022-4203 type confusion test");
