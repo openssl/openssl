@@ -134,7 +134,7 @@ void OSSL_FN_clear(OSSL_FN *f);
  *
  * @param[out]  a       The destination OSSL_FN
  * @param[in]   b       The source OSSL_FN
- * @returns     1 on success, 0 on error.
+ * @returns     The destination on success, NULL on error.
  */
 OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b);
 
@@ -162,6 +162,7 @@ OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b);
  **/
 OSSL_FN_CTX *OSSL_FN_CTX_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
     size_t max_n_numbers, size_t max_n_limbs);
+
 /**
  * Allocate a new OSSL_FN_CTX in secure memory, given a set of input numbers.
  * Other than allocating in secure memory, this function does exactly the same
@@ -169,6 +170,7 @@ OSSL_FN_CTX *OSSL_FN_CTX_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
  **/
 OSSL_FN_CTX *OSSL_FN_CTX_secure_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
     size_t max_n_numbers, size_t max_n_limbs);
+
 /**
  * Free an OSSL_FN_CTX.
  *
