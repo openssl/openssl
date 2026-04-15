@@ -23,6 +23,8 @@
 
 #include <crypto/asn1.h>
 
+static void evp_md_free(void *arg);
+
 void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force, int keep_fetched)
 {
     if (ctx->algctx != NULL) {
@@ -756,11 +758,11 @@ conclude:
 EVP_MD *evp_md_new(void)
 {
     EVP_MD *md = OPENSSL_zalloc(sizeof(*md));
-
     if (md != NULL && !CRYPTO_NEW_REF(&md->refcnt, 1)) {
         OPENSSL_free(md);
         return NULL;
     }
+
     return md;
 }
 
@@ -952,8 +954,6 @@ static void *evp_md_from_algorithm(int name_id,
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         goto err;
     }
-    if (prov != NULL && !ossl_provider_up_ref(prov))
-        goto err;
 
     md->prov = prov;
 
@@ -965,18 +965,35 @@ static void *evp_md_from_algorithm(int name_id,
     return md;
 
 err:
-    EVP_MD_free(md);
+    evp_md_free(md);
     return NULL;
 }
 
-static int evp_md_up_ref(void *md)
+static int evp_md_up_ref(void *arg)
 {
-    return EVP_MD_up_ref(md);
+    int ref = 0;
+    EVP_MD *md = arg;
+
+    if (md->origin == EVP_ORIG_DYNAMIC)
+        CRYPTO_UP_REF(&md->refcnt, &ref);
+    return 1;
 }
 
-static void evp_md_free(void *md)
+static void evp_md_free(void *arg)
 {
-    EVP_MD_free(md);
+    int i;
+    EVP_MD *md = arg;
+
+    if (md == NULL || md->origin != EVP_ORIG_DYNAMIC)
+        return;
+
+    CRYPTO_DOWN_REF(&md->refcnt, &i);
+    if (i > 0)
+        return;
+
+    OPENSSL_free(md->type_name);
+    CRYPTO_FREE_REF(&md->refcnt);
+    OPENSSL_free(md);
 }
 
 EVP_MD *EVP_MD_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
@@ -990,28 +1007,12 @@ EVP_MD *EVP_MD_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 
 int EVP_MD_up_ref(EVP_MD *md)
 {
-    int ref = 0;
-
-    if (md->origin == EVP_ORIG_DYNAMIC)
-        CRYPTO_UP_REF(&md->refcnt, &ref);
     return 1;
 }
 
 void EVP_MD_free(EVP_MD *md)
 {
-    int i;
-
-    if (md == NULL || md->origin != EVP_ORIG_DYNAMIC)
-        return;
-
-    CRYPTO_DOWN_REF(&md->refcnt, &i);
-    if (i > 0)
-        return;
-
-    OPENSSL_free(md->type_name);
-    ossl_provider_free(md->prov);
-    CRYPTO_FREE_REF(&md->refcnt);
-    OPENSSL_free(md);
+    return;
 }
 
 void EVP_MD_do_all_provided(OSSL_LIB_CTX *libctx,
