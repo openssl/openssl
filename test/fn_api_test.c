@@ -149,6 +149,17 @@ static const OSSL_FN_ULONG ex_add_num3_num3[] = {
     OSSL_FN_ULONG64_C(0xfdb97530, 0xeca86420),
     OSSL_FN_ULONG_C(0x1),
 };
+static const OSSL_FN_ULONG ex_add_num0_num7[] = {
+    OSSL_FN_ULONG64_C(0x80000000, 0x00000001),
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+#if OSSL_FN_BYTES == 4
+    OSSL_FN_ULONG_C(0xffffffff)
+#elif OSSL_FN_BYTES == 8
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff)
+#else
+#error "OpenSSL doesn't support large numbers on this platform"
+#endif
+};
 
 static int test_add_common(struct test_case_st test_case)
 {
@@ -227,6 +238,7 @@ static struct test_case_st test_add_cases[] = {
     ADD_CASE(14, num3, num1, ex_add_num1_num3), /* Commutativity check */
     ADD_CASE(15, num3, num2, ex_add_num2_num3), /* Commutativity check */
     ADD_CASE(16, num3, num3, ex_add_num3_num3),
+    ADD_CASE(17, num0, num7, ex_add_num0_num7),
 };
 
 static int test_add(int i)
@@ -266,6 +278,7 @@ static struct test_case_st test_add_truncated_cases[] = {
     ADD_TRUNCATED_CASE(14, num3, num1, ex_add_num1_num3), /* Commutativity check */
     ADD_TRUNCATED_CASE(15, num3, num2, ex_add_num2_num3), /* Commutativity check */
     ADD_TRUNCATED_CASE(16, num3, num3, ex_add_num3_num3),
+    ADD_TRUNCATED_CASE(17, num0, num7, ex_add_num0_num7),
 };
 
 static int test_add_truncated(int i)
@@ -326,6 +339,22 @@ static const OSSL_FN_ULONG ex_sub_num3_num2[] = {
 };
 static const OSSL_FN_ULONG ex_sub_num3_num3[] = {
     OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+};
+static const OSSL_FN_ULONG ex_sub_num0_num7[] = {
+    OSSL_FN_ULONG64_C(0x80000000, 0x00000001),
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+    OSSL_FN_ULONG_C(0x1),
+};
+static const OSSL_FN_ULONG ex_sub_num7_num0[] = {
+    OSSL_FN_ULONG64_C(0x7fffffff, 0xffffffff),
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
+#if OSSL_FN_BYTES == 4
+    OSSL_FN_ULONG_C(0xfffffffe)
+#elif OSSL_FN_BYTES == 8
+    OSSL_FN_ULONG64_C(0xffffffff, 0xfffffffe)
+#else
+#error "OpenSSL doesn't support large numbers on this platform"
+#endif
 };
 
 static int test_sub_common(struct test_case_st test_case)
@@ -405,6 +434,8 @@ static struct test_case_st test_sub_cases[] = {
     SUB_CASE(14, num3, num1, ex_sub_num3_num1, EXTENDED_LIMB_ZERO),
     SUB_CASE(15, num3, num2, ex_sub_num3_num2, EXTENDED_LIMB_ZERO),
     SUB_CASE(16, num3, num3, ex_sub_num3_num3, EXTENDED_LIMB_ZERO),
+    SUB_CASE(17, num0, num7, ex_sub_num0_num7, EXTENDED_LIMB_MINUS_ONE),
+    SUB_CASE(18, num7, num0, ex_sub_num7_num0, EXTENDED_LIMB_ZERO),
 };
 
 static int test_sub(int i)
@@ -444,6 +475,8 @@ static struct test_case_st test_sub_truncated_cases[] = {
     SUB_TRUNCATED_CASE(14, num3, num1, ex_sub_num3_num1),
     SUB_TRUNCATED_CASE(15, num3, num2, ex_sub_num3_num2),
     SUB_TRUNCATED_CASE(16, num3, num3, ex_sub_num3_num3),
+    SUB_TRUNCATED_CASE(17, num0, num7, ex_sub_num0_num7),
+    SUB_TRUNCATED_CASE(18, num7, num0, ex_sub_num7_num0),
 };
 
 static int test_sub_truncated(int i)
@@ -979,10 +1012,10 @@ static int test_sqr_truncated(int i)
 
 int setup_tests(void)
 {
-    ADD_ALL_TESTS(test_add, 16);
-    ADD_ALL_TESTS(test_add_truncated, 16);
-    ADD_ALL_TESTS(test_sub, 16);
-    ADD_ALL_TESTS(test_sub_truncated, 16);
+    ADD_ALL_TESTS(test_add, 17);
+    ADD_ALL_TESTS(test_add_truncated, 17);
+    ADD_ALL_TESTS(test_sub, 18);
+    ADD_ALL_TESTS(test_sub_truncated, 18);
     ADD_ALL_TESTS(test_mul_feature_r_is_operand, 4);
     ADD_ALL_TESTS(test_mul, OSSL_NELEM(test_mul_cases));
     ADD_ALL_TESTS(test_mul_truncated, OSSL_NELEM(test_mul_truncate_cases));
