@@ -25,6 +25,8 @@
 
 OSSL_SAFE_MATH_SIGNED(int, int)
 
+static void evp_cipher_free(void *arg);
+
 int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
 {
     if (ctx == NULL)
@@ -1498,8 +1500,6 @@ static void *evp_cipher_from_algorithm(const int name_id,
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         goto err;
     }
-    if (prov != NULL && !ossl_provider_up_ref(prov))
-        goto err;
 
     cipher->prov = prov;
 
@@ -1511,18 +1511,32 @@ static void *evp_cipher_from_algorithm(const int name_id,
     return cipher;
 
 err:
-    EVP_CIPHER_free(cipher);
+    evp_cipher_free(cipher);
     return NULL;
 }
 
-static int evp_cipher_up_ref(void *cipher)
+static int evp_cipher_up_ref(void *arg)
 {
-    return EVP_CIPHER_up_ref(cipher);
+    int ref = 0;
+    EVP_CIPHER *cipher = arg;
+
+    if (cipher->origin == EVP_ORIG_DYNAMIC)
+        CRYPTO_UP_REF(&cipher->refcnt, &ref);
+    return 1;
 }
 
-static void evp_cipher_free(void *cipher)
+static void evp_cipher_free(void *arg)
 {
-    EVP_CIPHER_free(cipher);
+    int i;
+    EVP_CIPHER *cipher = arg;
+
+    if (cipher == NULL || cipher->origin != EVP_ORIG_DYNAMIC)
+        return;
+
+    CRYPTO_DOWN_REF(&cipher->refcnt, &i);
+    if (i > 0)
+        return;
+    evp_cipher_free_int(cipher);
 }
 
 EVP_CIPHER *EVP_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
@@ -1557,32 +1571,19 @@ int EVP_CIPHER_can_pipeline(const EVP_CIPHER *cipher, int enc)
 
 int EVP_CIPHER_up_ref(EVP_CIPHER *cipher)
 {
-    int ref = 0;
-
-    if (cipher->origin == EVP_ORIG_DYNAMIC)
-        CRYPTO_UP_REF(&cipher->refcnt, &ref);
     return 1;
 }
 
 void evp_cipher_free_int(EVP_CIPHER *cipher)
 {
     OPENSSL_free(cipher->type_name);
-    ossl_provider_free(cipher->prov);
     CRYPTO_FREE_REF(&cipher->refcnt);
     OPENSSL_free(cipher);
 }
 
 void EVP_CIPHER_free(EVP_CIPHER *cipher)
 {
-    int i;
-
-    if (cipher == NULL || cipher->origin != EVP_ORIG_DYNAMIC)
-        return;
-
-    CRYPTO_DOWN_REF(&cipher->refcnt, &i);
-    if (i > 0)
-        return;
-    evp_cipher_free_int(cipher);
+    return;
 }
 
 void EVP_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
