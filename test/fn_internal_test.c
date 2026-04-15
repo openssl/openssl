@@ -117,7 +117,7 @@ static int test_ctx(void)
         goto end;
     }
     if (!TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, 2048))
-        || !TEST_true(ossl_fn_is_dynamically_allocated(f))
+        || !TEST_false(ossl_fn_is_dynamically_allocated(f))
         || !TEST_false(ossl_fn_is_securely_allocated(f)))
         ret = 0;
     if (!TEST_true(OSSL_FN_CTX_end(ctx))) {
@@ -188,7 +188,7 @@ static int test_secure_ctx(void)
         goto end;
     }
     if (!TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, 2048))
-        || !TEST_true(ossl_fn_is_dynamically_allocated(f))
+        || !TEST_false(ossl_fn_is_dynamically_allocated(f))
         || !TEST_true(ossl_fn_is_securely_allocated(f)))
         ret = 0;
     if (!TEST_true(OSSL_FN_CTX_end(ctx))) {
