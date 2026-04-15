@@ -10,24 +10,42 @@
 #include "internal/deprecated.h" /* including crypto/sha.h requires this */
 
 /*
+ * Tuple Hash is defined in NIST SP800-185 Appendix A.
+ *
+ * Given
+ *   X = zero or more strings (including NULL) e.g "abc", NULL, "d"
+ *   S = An optional Customization String
+ *   L = output bitlen
+ *   K relates to either SHAKE128 or SHAKE256
+ *   c = 256 or 512 that relate to (SHAKE128 or SHAKE256)
+ *   w = 168 or 136 relate to rate (SHAKE128 or SHAKE256)
+ *
+ * TupleHash(K, X, L ,S) is defined as
+ *   (1) Z = ""
+ *   (2) For all X: Z = Z || encode_string(X[i])
+ *   (3) newX = z || right_encode(L)
+ *   (4) T = bytepad(encode_string("TupleHash" || encode_string(S), w)
+ *   (5) return Keccak[c](T || newX || 00, L)
  * NOTES:
- * (1) The code is a bit complex because it needs to defer operations since it
- *  needs to fetch "CSHAKE-KECCAK" internally and this can't be done in the init()
- *  because it relies on parameters such as 'properties' and 'customization',
- *  which are set up later via a call to set_ctx_params().
- * (2) update() being passed an empty buffer is a valid input tuple. (Internally
- * this is encoded as 0x01, 0x00).
- * (3) If the update is not called then it calls update with an empty tuple in
- * either the final() or squeeze().
- * (4) This algorithm uses "CSHAKE-KECCAK" which by default sets secure xof lengths
- * (OSSL_DIGEST_PARAM_XOFLEN) that are used by EVP_DigestFinal_ex(). This differs
- * from SHAKE where the xof length MUST be set (since the initial implementation
- * shipped with BAD defaults - and the only safe way to fix it was to make the
- * user set the value)
- * (5) This code uses CSHAKE-KECCAK rather than CSHAKE as the algorithm to fetch,
- * There is not much difference in code flow other than this requires
- * bytepad_encode_custom() to be called, and has one less fetch (since CSHAKE
- * fetches CSHAKE-KECCAK also).
+ * - The code is a bit complex because we use a digest to process the input data.
+ *   It needs to defer operations since it needs to fetch "CSHAKE-KECCAK"
+ *   internally and this can't be done in the init() because it relies on
+ *   parameters such as 'properties' and 'customization' S to be setup before
+ *   (4) can be done, which are set up later via a call to set_ctx_params().
+ * - The update() is used to process an input tuple in X (2).
+ *   The update() allows NULL as a valid input tuple. (Internally
+ *   this is encoded as 0x01, 0x00).
+ * - If the update() is not called then it calls update() with an empty tuple in
+ *   either the final() or squeeze().
+ * - This algorithm uses "CSHAKE-KECCAK" which by default sets secure xof lengths
+ *   (OSSL_DIGEST_PARAM_XOFLEN) that are used by EVP_DigestFinal_ex(). This differs
+ *   from SHAKE where the xof length MUST be set (since the initial implementation
+ *   shipped with BAD defaults - and the only safe way to fix it was to make the
+ *   user set the value)
+ * - This code uses CSHAKE-KECCAK rather than CSHAKE as the algorithm to fetch,
+ *   There is not much difference in code flow other than this requires
+ *   bytepad_encode_custom() to be called, and has one less fetch (since CSHAKE
+ *   fetches CSHAKE-KECCAK also).
  */
 #include <string.h>
 #include <openssl/evp.h>
@@ -177,6 +195,10 @@ static void *tuplehash_newctx(void *provctx, size_t bitlen)
 
     if (ossl_unlikely(!ossl_prov_is_running()))
         return NULL;
+    /*
+     * There is no FIPS self test here since the FIPS 140-3 IG requires only one
+     * SHA3 self test, which is done via SHA3_newctx() when the digest is created.
+     */
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL) {
         ctx->mdctx = EVP_MD_CTX_new();
@@ -328,7 +350,12 @@ static int on_final(TUPLEHASH_CTX *ctx)
         size_t lbits = (ctx->xof_mode ? 0 : (ctx->xoflen * 8));
 
         ctx->finalized = 1;
-        /* If there was no update, run the update with an empty tuple */
+
+        /*
+         * init_hash() does not get called until tuplehash_update() gets called,
+         * so if you call squeeze() or final() init_hash() would not have been
+         * called yet, In this case call tuplehash_update() with an empty tuple
+         */
         if (!ctx->digest_fetched
             && !tuplehash_update(ctx, NULL, 0))
             return 0;
@@ -437,5 +464,5 @@ static int tuplehash_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
 /* ossl_tuplehash_128_functions */
 IMPLEMENT_TUPLEHASH_functions(128)
-    /* ossl_tuplehash_256_functions */
-    IMPLEMENT_TUPLEHASH_functions(256)
+/* ossl_tuplehash_256_functions */
+IMPLEMENT_TUPLEHASH_functions(256)

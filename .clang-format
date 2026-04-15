@@ -1348,6 +1348,7 @@ StatementMacros:
   - "IMPLEMENT_TEST_SUITE_PROTECTED_PVK"
   - "IMPLEMENT_TEST_SUITE_UNPROTECTED_PVK"
   - "IMPLEMENT_tls_meth_func"
+  - "IMPLEMENT_TUPLEHASH_functions"
   - "IMPLEMENT_var_keylen_cipher"
   - "IMPLEMENT_var_keylen_cipher_func"
   - "IMPLEMENT_WRAP_CIPHER"
@@ -1379,6 +1380,9 @@ StatementMacros:
   # job formatting this macro.
   - "ASN1_EX_TEMPLATE_TYPE"
   - "LAZY"
+  - "PROV_FUNC_DIGEST_GET_PARAM"
+  - "PROV_DISPATCH_FUNC_DIGEST_GET_PARAMS"
+  - "PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END"
 #
 # Include sorting should be disabled until post 4.0
 #
