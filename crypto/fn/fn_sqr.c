@@ -49,12 +49,10 @@ int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx)
 
     if (rr != r) {
         /*
-         * Because OSSL_FN_copy() expects to make a full copy, but r
-         * may be smaller than rr, rr's size is modified to truncate.
+         * We use OSSL_FN_copy_truncate() here, because OSSL_FN_copy() expects
+         * to make a full copy, but r may be smaller than rr
          */
-        rr->dsize = r->dsize;
-        if (OSSL_FN_copy(r, rr) == NULL)
-            goto err;
+        OSSL_FN_copy_truncate(r, rr);
     }
 
 #ifdef BN_SQR_COMBA
