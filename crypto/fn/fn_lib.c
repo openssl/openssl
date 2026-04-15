@@ -127,3 +127,21 @@ OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b)
     memset(&a->d[a->dsize], 0, sizeof(OSSL_FN_ULONG) * (a->dsize - b->dsize));
     return a;
 }
+
+OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b)
+{
+    if (ossl_unlikely(a == b))
+        return a;
+
+    size_t al = a->dsize;
+    size_t bl = b->dsize;
+
+    if (ossl_unlikely(al > bl)) {
+        memcpy(a->d, b->d, bl * sizeof(OSSL_FN_ULONG));
+        memset(&a->d[bl], 0, sizeof(OSSL_FN_ULONG) * (al - bl));
+    } else {
+        memcpy(a->d, b->d, al * sizeof(OSSL_FN_ULONG));
+    }
+
+    return a;
+}
