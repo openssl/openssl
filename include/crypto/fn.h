@@ -139,6 +139,16 @@ void OSSL_FN_clear(OSSL_FN *f);
 OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b);
 
 /**
+ * Copy the contents of one OSSL_FN instance to another,
+ * normally the shorter one, truncating the high bytes.
+ *
+ * @param[out]  a       The destination OSSL_FN
+ * @param[in]   b       The source OSSL_FN
+ * @returns     the destination.
+ */
+OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b);
+
+/**
  * Allocate a new OSSL_FN_CTX, given a set of input numbers.
  *
  * @param[in]   libctx          OpenSSL library context (currently unused)
