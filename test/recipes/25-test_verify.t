@@ -30,7 +30,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 215;
+plan tests => 216;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -656,11 +656,12 @@ SKIP: {
 }
 
 # Windows file: URIs should have a path part starting with a slash, i.e.
-# file://authority/C:/what/ever/foo.pem and file:///C:/what/ever/foo.pem
-# file://C:/what/ever/foo.pem is non-standard and may not be accepted.
+# file://authority/C:/what/ever/foo.pem and file:///C:/what/ever/foo.pem.
+# So file://C:/what/ever/foo.pem is non-standard and may not be accepted.
 # See RFC 8089 for details.
 $abs_cert = "/" . $abs_cert if ($^O eq "MSWin32");
 
 ok(vfy_root("-CAstore", "file://".$abs_cert), "CAstore file:///path");
+ok(vfy_root("-CAstore", "file:".$abs_cert), "CAstore file:/path"); # we allow dropping the "//" before an empty authority part
 ok(vfy_root("-CAstore", "file://localhost".$abs_cert), "CAstore file://localhost/path");
 ok(!vfy_root("-CAstore", "file://otherhost".$abs_cert), "CAstore file://otherhost/path");
