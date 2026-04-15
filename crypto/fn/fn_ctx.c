@@ -139,7 +139,7 @@ int OSSL_FN_CTX_start(OSSL_FN_CTX *ctx)
 
 int OSSL_FN_CTX_end(OSSL_FN_CTX *ctx)
 {
-    if (!ossl_assert(ctx != NULL))
+    if (!ossl_assert(ctx != NULL) || !ossl_assert(ctx->last_frame != NULL))
         return 0;
 
     struct ossl_fn_ctx_frame_st *last_frame = ctx->last_frame;
@@ -170,7 +170,6 @@ OSSL_FN *OSSL_FN_CTX_get_limbs(OSSL_FN_CTX *ctx, size_t limbs)
     memset(fn, 0, totalsize);
     fn->dsize = (int)limbs;
     fn->is_securely_allocated = ctx->is_securely_allocated;
-    fn->is_dynamically_allocated = 1;
 
     return fn;
 }
