@@ -1263,9 +1263,14 @@ typedef struct {
     size_t gidmax; /* The memory allocation chunk size for the group IDs */
     size_t gidcnt; /* Number of groups */
     uint16_t *gid_arr; /* The IDs of the supported groups (flat list) */
-    size_t tplmax; /* The memory allocation chunk size for the tuple counters */
-    size_t tplcnt; /* Number of tuples */
-    size_t *tuplcnt_arr; /* The number of groups inside a tuple */
+    size_t tplmax; /* Allocated length of tuplcnt_arr */
+    /*
+     * Number of *closed* (fully parsed) tuples.  During parsing there is
+     * always one additional active tuple being built, stored at index tplcnt.
+     * tuplcnt_arr therefore always needs at least tplcnt + 1 allocated slots.
+     */
+    size_t tplcnt;
+    size_t *tuplcnt_arr; /* Per-tuple group counts; [0..tplcnt-1] closed, [tplcnt] active */
     size_t ksidmax; /* The memory allocation chunk size */
     size_t ksidcnt; /* Number of key shares */
     uint16_t *ksid_arr; /* The IDs of the key share groups (flat list) */
@@ -1599,9 +1604,18 @@ done:
     return retval;
 }
 
+/*
+ * Ensure tuplcnt_arr has room for at least tplcnt + 2 entries so that
+ * close_tuple() can safely increment tplcnt and write the new active-tuple
+ * slot at index tplcnt + 1.  Must be called before that increment.
+ */
 static int grow_tuples(gid_cb_st *garg)
 {
-    if (garg->tplcnt == garg->tplmax) {
+    /*
+     * tplcnt + 1 is the index close_tuple() will write to after incrementing;
+     * reallocate before it would reach the end of the allocated array.
+     */
+    if (garg->tplcnt + 1 >= garg->tplmax) {
         size_t *tmp = OPENSSL_realloc_array(garg->tuplcnt_arr,
             garg->tplmax + GROUPLIST_INCREMENT,
             sizeof(*garg->tuplcnt_arr));
@@ -1614,6 +1628,13 @@ static int grow_tuples(gid_cb_st *garg)
     return 1;
 }
 
+/*
+ * Finalise the active tuple (at index tplcnt) and open a fresh one.
+ * tplcnt is the count of closed tuples; the active tuple lives at tplcnt
+ * throughout parsing.  After this call tplcnt is incremented and the new
+ * active tuple at the updated index is initialised to 0.
+ * Empty tuples (gidcnt == 0) are discarded without advancing tplcnt.
+ */
 static int close_tuple(gid_cb_st *garg)
 {
     size_t gidcnt = garg->tuplcnt_arr[garg->tplcnt];
@@ -1622,19 +1643,22 @@ static int close_tuple(gid_cb_st *garg)
         uint16_t gid = garg->gid_arr[garg->gidcnt - gidcnt];
 
         /*
-         * All groups in tuple marked for keyshare prediction were unknown
-         * select the first known group in the tuple.
+         * All groups in the tuple that were marked for keyshare prediction
+         * were unknown (unrecognised); select the first known group instead.
          */
         garg->ksid_arr[garg->ksidcnt++] = gid;
     }
-    /* Reset for the next tuple */
+    /* Reset keyshare state for the next tuple */
     garg->want_keyshare = 0;
 
     if (gidcnt == 0)
-        return 1;
+        return 1; /* Discard empty tuple; no need to open a new slot */
+
+    /* Grow before the increment: the new active slot will be at tplcnt + 1 */
     if (!grow_tuples(garg))
         return 0;
 
+    /* Promote closed tuple and initialise the new active tuple slot */
     garg->tuplcnt_arr[++garg->tplcnt] = 0;
     return 1;
 }
