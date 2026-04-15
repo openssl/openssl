@@ -19,12 +19,27 @@
 
 static void evp_kem_free(void *data)
 {
-    EVP_KEM_free(data);
+    int i;
+    EVP_KEM *kem = data;
+
+    if (kem == NULL)
+        return;
+
+    CRYPTO_DOWN_REF(&kem->refcnt, &i);
+    if (i > 0)
+        return;
+    OPENSSL_free(kem->type_name);
+    CRYPTO_FREE_REF(&kem->refcnt);
+    OPENSSL_free(kem);
 }
 
 static int evp_kem_up_ref(void *data)
 {
-    return EVP_KEM_up_ref(data);
+    int ref = 0;
+    EVP_KEM *kem = data;
+
+    CRYPTO_UP_REF(&kem->refcnt, &ref);
+    return 1;
 }
 
 static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
@@ -287,8 +302,7 @@ static EVP_KEM *evp_kem_new(OSSL_PROVIDER *prov)
     if (kem == NULL)
         return NULL;
 
-    if (!CRYPTO_NEW_REF(&kem->refcnt, 1)
-        || !ossl_provider_up_ref(prov)) {
+    if (!CRYPTO_NEW_REF(&kem->refcnt, 1)) {
         CRYPTO_FREE_REF(&kem->refcnt);
         OPENSSL_free(kem);
         return NULL;
@@ -430,25 +444,11 @@ err:
 
 void EVP_KEM_free(EVP_KEM *kem)
 {
-    int i;
-
-    if (kem == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&kem->refcnt, &i);
-    if (i > 0)
-        return;
-    OPENSSL_free(kem->type_name);
-    ossl_provider_free(kem->prov);
-    CRYPTO_FREE_REF(&kem->refcnt);
-    OPENSSL_free(kem);
+    return;
 }
 
 int EVP_KEM_up_ref(EVP_KEM *kem)
 {
-    int ref = 0;
-
-    CRYPTO_UP_REF(&kem->refcnt, &ref);
     return 1;
 }
 
