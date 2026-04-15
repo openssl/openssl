@@ -71,7 +71,6 @@ static void evp_rand_free(void *vrand)
     if (ref > 0)
         return;
     OPENSSL_free(rand->type_name);
-    ossl_provider_free(rand->prov);
     CRYPTO_FREE_REF(&rand->refcnt);
     OPENSSL_free(rand);
 }
@@ -269,11 +268,6 @@ static void *evp_rand_from_algorithm(int name_id,
         return NULL;
     }
 
-    if (prov != NULL && !ossl_provider_up_ref(prov)) {
-        evp_rand_free(rand);
-        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
-        return NULL;
-    }
     rand->prov = prov;
 
     return rand;
@@ -289,12 +283,12 @@ EVP_RAND *EVP_RAND_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
 
 int EVP_RAND_up_ref(EVP_RAND *rand)
 {
-    return evp_rand_up_ref(rand);
+    return 1;
 }
 
 void EVP_RAND_free(EVP_RAND *rand)
 {
-    evp_rand_free(rand);
+    return;
 }
 
 int evp_rand_get_number(const EVP_RAND *rand)
