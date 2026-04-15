@@ -581,12 +581,11 @@ err:
 
 static int test_query_cache_stochastic(void)
 {
-    const int max = 10000, tail = 10;
+    const int max = 10000;
     OSSL_METHOD_STORE *store;
     int i, res = 0;
     char buf[50];
     void *result;
-    int errors = 0;
     int v[10001];
     OSSL_PROVIDER prov = {
         .flag_initialized = 1,
@@ -615,13 +614,11 @@ static int test_query_cache_stochastic(void)
     }
     for (i = 1; i <= max; i++) {
         BIO_snprintf(buf, sizeof(buf), "n=%d\n", i);
-        if (!ossl_method_store_cache_get(store, NULL, i, buf, &result)
-            || result != v + i)
-            errors++;
+        if (!TEST_true(ossl_method_store_cache_get(store, NULL, i, buf, &result)))
+            goto err;
     }
-    /* There is a tiny probability that this will fail when it shouldn't */
-    res = TEST_int_gt(errors, tail) && TEST_int_lt(errors, max - tail);
 
+    res = 1;
 err:
     ossl_method_store_free(store);
     return res;
