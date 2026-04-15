@@ -350,6 +350,10 @@ void bn_mul_low_recursive(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
 }
 #endif /* BN_RECURSION */
 
+/*
+ * This function doesn't zero out the rest of r in case of nr>na+nb;
+ * it's the calling function's responsibility to do so.
+ */
 void bn_mul_truncated(BN_ULONG *r, int nr, const BN_ULONG *a, int na,
     const BN_ULONG *b, int nb)
 {

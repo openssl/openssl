@@ -43,8 +43,8 @@ int OSSL_FN_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
      * in |r|.
      *
      * For each stage, |stage_limbs| is used to hold the number
-     * of limbs being treated in that stage, and |borrow| is
-     * used to transport the borrow from one stage to the other.
+     * of limbs being treated in that stage, and |carry| is
+     * used to transport the carry from one stage to the other.
      */
     size_t stage_limbs;
     OSSL_FN_ULONG carry;
@@ -71,7 +71,7 @@ int OSSL_FN_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
         *rp = t2;
         carry &= (t2 == 0);
     }
-    if (stage_limbs == rs)
+    if (stage_limbs == rs - min)
         return 1;
 
     /* Stage 3 */
@@ -139,9 +139,9 @@ int OSSL_FN_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
         OSSL_FN_ULONG t3 = (t1 - t2 - borrow) & OSSL_FN_MASK;
 
         *rp = t3;
-        borrow &= (t1 <= t2);
+        borrow = (t1 < t2 + borrow);
     }
-    if (stage_limbs == rs)
+    if (stage_limbs == rs - min)
         return 1;
 
     /* Stage 3 */
