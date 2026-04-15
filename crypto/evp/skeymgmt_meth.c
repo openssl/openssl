@@ -17,6 +17,8 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
+static void evp_skeymgmt_free(void *data);
+
 void *evp_skeymgmt_generate(const EVP_SKEYMGMT *skeymgmt, const OSSL_PARAM params[])
 {
     void *provctx = ossl_provider_ctx(EVP_SKEYMGMT_get0_provider(skeymgmt));
@@ -52,7 +54,7 @@ static void *skeymgmt_new(void)
     if ((skeymgmt = OPENSSL_zalloc(sizeof(*skeymgmt))) == NULL)
         return NULL;
     if (!CRYPTO_NEW_REF(&skeymgmt->refcnt, 1)) {
-        EVP_SKEYMGMT_free(skeymgmt);
+        OPENSSL_free(skeymgmt);
         return NULL;
     }
     return skeymgmt;
@@ -70,7 +72,7 @@ static void *skeymgmt_from_algorithm(int name_id,
 
     skeymgmt->name_id = name_id;
     if ((skeymgmt->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
-        EVP_SKEYMGMT_free(skeymgmt);
+        evp_skeymgmt_free(skeymgmt);
         return NULL;
     }
     skeymgmt->description = algodef->algorithm_description;
@@ -112,53 +114,29 @@ static void *skeymgmt_from_algorithm(int name_id,
     if (skeymgmt->free == NULL
         || skeymgmt->import == NULL
         || skeymgmt->export == NULL) {
-        EVP_SKEYMGMT_free(skeymgmt);
+        evp_skeymgmt_free(skeymgmt);
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
     }
 
-    if (!ossl_provider_up_ref(prov)) {
-        EVP_SKEYMGMT_free(skeymgmt);
-        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-        return NULL;
-    }
     skeymgmt->prov = prov;
 
     return skeymgmt;
 }
 
-EVP_SKEYMGMT *evp_skeymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
-    const char *name,
-    const char *properties)
-{
-    return evp_generic_fetch_from_prov(prov,
-        OSSL_OP_SKEYMGMT,
-        name, properties,
-        skeymgmt_from_algorithm,
-        (int (*)(void *))EVP_SKEYMGMT_up_ref,
-        (void (*)(void *))EVP_SKEYMGMT_free);
-}
-
-EVP_SKEYMGMT *EVP_SKEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
-    const char *properties)
-{
-    return evp_generic_fetch(ctx, OSSL_OP_SKEYMGMT, algorithm, properties,
-        skeymgmt_from_algorithm,
-        (int (*)(void *))EVP_SKEYMGMT_up_ref,
-        (void (*)(void *))EVP_SKEYMGMT_free);
-}
-
-int EVP_SKEYMGMT_up_ref(EVP_SKEYMGMT *skeymgmt)
+static int evp_skeymgmt_up_ref(void *data)
 {
     int ref = 0;
+    EVP_SKEYMGMT *skeymgmt = data;
 
     CRYPTO_UP_REF(&skeymgmt->refcnt, &ref);
     return 1;
 }
 
-void EVP_SKEYMGMT_free(EVP_SKEYMGMT *skeymgmt)
+static void evp_skeymgmt_free(void *data)
 {
     int ref = 0;
+    EVP_SKEYMGMT *skeymgmt = data;
 
     if (skeymgmt == NULL)
         return;
@@ -167,9 +145,38 @@ void EVP_SKEYMGMT_free(EVP_SKEYMGMT *skeymgmt)
     if (ref > 0)
         return;
     OPENSSL_free(skeymgmt->type_name);
-    ossl_provider_free(skeymgmt->prov);
     CRYPTO_FREE_REF(&skeymgmt->refcnt);
     OPENSSL_free(skeymgmt);
+}
+EVP_SKEYMGMT *evp_skeymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
+    const char *name,
+    const char *properties)
+{
+    return evp_generic_fetch_from_prov(prov,
+        OSSL_OP_SKEYMGMT,
+        name, properties,
+        skeymgmt_from_algorithm,
+        evp_skeymgmt_up_ref,
+        evp_skeymgmt_free);
+}
+
+EVP_SKEYMGMT *EVP_SKEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
+    const char *properties)
+{
+    return evp_generic_fetch(ctx, OSSL_OP_SKEYMGMT, algorithm, properties,
+        skeymgmt_from_algorithm,
+        evp_skeymgmt_up_ref,
+        evp_skeymgmt_free);
+}
+
+int EVP_SKEYMGMT_up_ref(EVP_SKEYMGMT *skeymgmt)
+{
+    return 1;
+}
+
+void EVP_SKEYMGMT_free(EVP_SKEYMGMT *skeymgmt)
+{
+    return;
 }
 
 const OSSL_PROVIDER *EVP_SKEYMGMT_get0_provider(const EVP_SKEYMGMT *skeymgmt)
@@ -200,8 +207,8 @@ void EVP_SKEYMGMT_do_all_provided(OSSL_LIB_CTX *libctx,
     evp_generic_do_all(libctx, OSSL_OP_SKEYMGMT,
         (void (*)(void *, void *))fn, arg,
         skeymgmt_from_algorithm,
-        (int (*)(void *))EVP_SKEYMGMT_up_ref,
-        (void (*)(void *))EVP_SKEYMGMT_free);
+        evp_skeymgmt_up_ref,
+        evp_skeymgmt_free);
 }
 
 int EVP_SKEYMGMT_names_do_all(const EVP_SKEYMGMT *skeymgmt,
