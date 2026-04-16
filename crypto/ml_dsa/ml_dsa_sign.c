@@ -235,17 +235,16 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
     if (!matrix_expand_A(md_ctx, priv->shake128_md, priv->rho, &a_ntt))
         goto err;
 
+    /*
+     * rho_prime is derived from the secret K and must remain tainted
+     * throughout the rejection loop: knowing it would let an attacker
+     * reconstruct every mask y and recover c*s1 = z - y from the final
+     * signature.  Do NOT declassify it.
+     */
     if (!shake_xof_3(md_ctx, priv->shake256_md, priv->K, sizeof(priv->K),
             rnd, rnd_len, mu, mu_len,
             rho_prime, sizeof(rho_prime)))
         goto err;
-    /*
-     * rho_prime is derived from K (secret) but its value is implicitly
-     * revealed by the number of rejection-loop iterations an observer can
-     * time.  Declassify it so that the mask expansion and matrix multiply
-     * below do not produce spurious Valgrind warnings.
-     */
-    CONSTTIME_DECLASSIFY(rho_prime, sizeof(rho_prime));
 
     vector_copy(&s1_ntt, &priv->s1);
     vector_ntt(&s1_ntt);
@@ -324,18 +323,23 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
             continue;
 
         /*
-         * sig.z and sig.hint are the public outputs of the signature.
-         * They were computed from secret data (s1, s2, t0) so Valgrind
-         * considers them tainted, but both rejection checks above have
-         * already verified that they lie within the ranges required by
-         * the scheme's security proof — so they do not leak the key.
-         * Declassify them before encoding so that the encoded signature
-         * bytes and any subsequent verify call do not inherit the taint.
+         * The iteration has passed both rejection tests: the signature is
+         * accepted.  Declassify all three public outputs before encoding.
          *
-         * sig.c_tilde is already clean: it is the hash of the public
-         * message representative mu and the public commitment w1, neither
-         * of which depends on secret data.
+         * sig.z and sig.hint were computed from secret key material (s1,
+         * s2, t0) and carry taint, but the rejection checks above have
+         * verified they lie within the ranges required by the security
+         * proof, so they reveal nothing about the key.
+         *
+         * c_tilde = H(mu || w1) carries taint that propagated from the
+         * secret rho_prime through y → w → w1.  It is the Fiat-Shamir
+         * challenge commitment and is published as part of the signature.
+         * We defer its declassification to here (rather than immediately
+         * after the SHAKE call) so that Valgrind can check that
+         * poly_sample_in_ball_ntt and the NTT challenge arithmetic are
+         * data-oblivious with respect to their tainted inputs.
          */
+        CONSTTIME_DECLASSIFY(c_tilde, c_tilde_len);
         CONSTTIME_DECLASSIFY(sig.z.poly, l * sizeof(*sig.z.poly));
         CONSTTIME_DECLASSIFY(sig.hint.poly, k * sizeof(*sig.hint.poly));
 
