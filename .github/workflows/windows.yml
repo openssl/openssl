@@ -234,3 +234,24 @@ jobs:
 # Disable testing for now. TBD: Need local cygwin installation to debug .
 #    - name: Run openssl tests
 #      run: bash -c "cd openssl && make V=1 test"
+
+  mingw64:
+    runs-on: ubuntu-latest
+    env:
+      CC: x86_64-w64-mingw32-gcc
+      CXX: x86_64-w64-mingw32-g++
+      AR: x86_64-w64-mingw32-ar
+      RANLIB: x86_64-w64-mingw32-ranlib
+      RC: x86_64-w64-mingw32-windres
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+    - name: install MINGW64
+      run: sudo apt-get install -y mingw-w64
+    - name: config
+# Once fixed, enable strict-warnings
+#      run: ./config --strict-warnings --banner=Configured mingw64
+      run: ./config --banner=Configured mingw64
+    - name: make
+      run: make -j4 -s
