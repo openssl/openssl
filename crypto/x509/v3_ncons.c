@@ -635,11 +635,12 @@ static int nc_dns(ASN1_IA5STRING *dns, ASN1_IA5STRING *base, int excluded)
      * expansion of the wildcard could match the excluded name.
      */
     if (excluded && dns->length > 2
-            && dns->data[0] == '*' && dns->data[1] == '.'
-            && (base_dot = ia5memchr(base, baseptr, '.')) != NULL
-            && dns->length - 2 == IA5_OFFSET_LEN(base, base_dot + 1)
-            && ia5ncasecmp((char *)dns->data + 2, base_dot + 1,
-                           dns->length - 2) == 0)
+        && dns->data[0] == '*' && dns->data[1] == '.'
+        && (base_dot = ia5memchr(base, baseptr, '.')) != NULL
+        && dns->length - 2 == IA5_OFFSET_LEN(base, base_dot + 1)
+        && ia5ncasecmp((char *)dns->data + 2, base_dot + 1,
+               dns->length - 2)
+            == 0)
         return X509_V_OK;
 
     if (dns->length < base->length)
