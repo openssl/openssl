@@ -9700,7 +9700,8 @@ static int cert_cb(SSL *s, void *arg)
 
         chain = sk_X509_new_null();
 #ifndef OPENSSL_NO_ML_DSA
-        if (SSL_version(s) >= TLS1_3_VERSION) {
+        if (SSL_version(s) >= TLS1_3_VERSION
+            && fips_provider_version_ge(libctx, 3, 5, 0)) {
             if (!TEST_ptr(chain)
                 || !TEST_true(load_chain("root-ml-dsa-44-cert.pem", NULL, NULL, chain))
                 || !TEST_true(load_chain("server-ml-dsa-44-cert.pem", NULL, &x509, NULL))
