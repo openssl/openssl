@@ -49,6 +49,11 @@ void test_fail_memory_message(const char *prefix, const char *file,
 __owur int setup_test_framework(int argc, char *argv[]);
 __owur int pulldown_test_framework(int ret);
 
+void mfail_install(void);
+void mfail_init(void);
+int mfail_should_skip(int slow);
+int mfail_run_test(const char *test_case_name, int (*test_fn)(void));
+
 __owur int run_tests(const char *test_prog_name);
 void set_test_title(const char *title);
 

@@ -33,7 +33,9 @@ typedef struct test_info {
     int num;
 
     /* flags */
-    int subtest : 1;
+    unsigned int subtest : 1;
+    unsigned int mfail : 1;
+    unsigned int mfail_slow : 1;
 } TEST_INFO;
 
 static TEST_INFO all_tests[1024];
@@ -44,6 +46,7 @@ static int single_iter = -1;
 static int level = 0;
 static int seed = 0;
 static int rand_order = 0;
+static int mfail_added = 0;
 
 /*
  * A parameterised test runs a loop of test cases.
@@ -77,6 +80,19 @@ void add_all_tests(const char *test_case_name, int (*test_fn)(int idx),
         ++num_test_cases;
     else
         num_test_cases += num;
+}
+
+void add_mfail_test(const char *test_case_name, int (*test_fn)(void), int slow)
+{
+    assert(num_tests != OSSL_NELEM(all_tests));
+    all_tests[num_tests].test_case_name = test_case_name;
+    all_tests[num_tests].test_fn = test_fn;
+    all_tests[num_tests].num = -1;
+    all_tests[num_tests].mfail = 1;
+    all_tests[num_tests].mfail_slow = slow ? 1 : 0;
+    ++num_tests;
+    ++num_test_cases;
+    mfail_added = 1;
 }
 
 static int gcd(int a, int b)
@@ -305,6 +321,9 @@ int run_tests(const char *test_prog_name)
 
     test_flush_tapout();
 
+    if (mfail_added)
+        mfail_init();
+
     for (i = 0; i < num_tests; i++)
         permute[i] = i;
     if (rand_order != 0)
@@ -333,7 +352,14 @@ int run_tests(const char *test_prog_name)
         } else if (all_tests[i].num == -1) {
             set_test_title(all_tests[i].test_case_name);
             ERR_clear_error();
-            verdict = all_tests[i].test_fn();
+            if (all_tests[i].mfail)
+                if (mfail_should_skip(all_tests[i].mfail_slow))
+                    verdict = TEST_skip("mfail test skipped");
+                else
+                    verdict = mfail_run_test(all_tests[i].test_case_name,
+                        all_tests[i].test_fn);
+            else
+                verdict = all_tests[i].test_fn();
             finalize(verdict != 0);
             test_verdict(verdict, "%d - %s", test_case_count + 1, test_title);
             if (verdict == 0)

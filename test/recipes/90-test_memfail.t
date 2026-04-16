@@ -65,6 +65,8 @@ my ($x509skipcount, $x509malloccount) = get_count_info("$resultdir/x509countinfo
 #
 plan tests => $hsmalloccount + $x509malloccount;
 
+$ENV{OPENSSL_TEST_MFAIL_DISABLE} = "1";
+
 sub run_memfail_test {
     my $skipcount = $_[0];
     my @mallocseq = (1..$_[1]);

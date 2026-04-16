@@ -31,6 +31,8 @@ int main(int argc, char *argv[])
     int setup_res;
     int gi_ret;
 
+    mfail_install();
+
     gi_ret = global_init();
 
     test_open_streams();
