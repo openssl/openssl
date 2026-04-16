@@ -18,8 +18,7 @@
 #include "internal/hashtable.h"
 #include "internal/hashfunc.h"
 #include "internal/tsan_assist.h"
-#include "internal/list.h"
-#include "internal/hashfunc.h"
+#include "internal/threads_common.h"
 #include "internal/time.h"
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
@@ -258,7 +257,6 @@ static ossl_inline void impl_cache_free(QUERY *elem)
 {
     if (elem != NULL) {
         STORED_ALGORITHMS *sa = elem->saptr;
-        assert(elem->next_attic == NULL);
         if (sa->attic == NULL) {
             elem->next_attic = NULL;
         } else {
@@ -1191,6 +1189,22 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
     p = OPENSSL_malloc(sizeof(*p));
     if (p != NULL) {
 
+        /*
+         * Tsan has a very strange complaint here.  It indicates a read-after-write race,
+         * with malloc above being the write point, and the CRYPTO_atomic_load_ptr call
+         * in ossl_method_store_cache_get_atomic as the read point.
+         *
+         * However, the pointer itself is immutable (i.e. the pointer value is the
+         * pointer value for the lifetime of that heap allocation).
+         *
+         * I think tsan is getting confused because we hold the write lock for the store
+         * here during the allocation, but don't take the read lock when doing cache lookups
+         * (which is intentional, as we use atomics to traverse the list and insert to it)
+         *
+         * As such this seems like a false positive to me, so here we mark the address as
+         * benign to quiet the checker.  We do the same below.
+         */
+        TSAN_BENIGN(p, "Unpublished value is safe on subsequent read");
         if (!CRYPTO_atomic_store_ptr((void **)&p->next, &mynullptr, sa->lock))
             goto err;
 
@@ -1235,6 +1249,10 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
         if (p == NULL)
             goto err;
 
+        /*
+         * See comments above about this being a benign write
+         */
+        TSAN_BENIGN(p, "Unpublished value is safe on subsequent read");
         if (!CRYPTO_atomic_store_ptr((void **)&p->next, &mynullptr, sa->lock))
             goto err;
 
