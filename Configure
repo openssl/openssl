@@ -61,6 +61,17 @@ EOF
 #               given with --prefix.
 #               This becomes the value of OPENSSLDIR in Makefile and in C.
 #               (Default: PREFIX/ssl)
+# --runtime-openssldir
+#               Runtime path for OpenSSL configuration files (openssl.cnf,
+#               certs/, etc.).  Sets OPENSSLDIR in the C binary only; the
+#               Makefile's OPENSSLDIR (used for `make install`) is still
+#               derived from --openssldir / PREFIX/ssl.
+#               Follows the same absolute/relative rules as --openssldir.
+#               (Default: same as OPENSSLDIR)
+# --runtime-dir Runtime prefix for the modules directory.  LIBDIR is
+#               appended to compute MODULESDIR in the C binary.
+#               (Default: same as PREFIX, i.e. LIBDIR is appended as for
+#               install paths)
 # --banner=".." Output specified text instead of default completion banner
 #
 # -w            Don't wait after showing a Configure warning
@@ -1065,6 +1076,14 @@ while (@argvcopy)
                 elsif (/^--openssldir=(.*)$/)
                         {
                         $config{openssldir}=$1;
+                        }
+                elsif (/^--runtime-openssldir=(.*)$/)
+                        {
+                        $config{runtime_openssldir}=$1;
+                        }
+                elsif (/^--runtime-dir=(.*)$/)
+                        {
+                        $config{runtime_dir}=$1;
                         }
                 elsif (/^--with-jitter-include=(.*)$/)
                         {

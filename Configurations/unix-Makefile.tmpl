@@ -317,6 +317,16 @@ OPENSSLDIR={- #
                            : catdir($prefix, $config{openssldir}))
                       : catdir($prefix, "ssl");
               $openssldir -}
+RUNTIME_OPENSSLDIR={- # RUNTIME_OPENSSLDIR: the OPENSSLDIR path baked into the C binary.
+                      # When --runtime-openssldir is given this can differ from
+                      # OPENSSLDIR (which is used only for `make install`).
+                      our $runtime_openssldir =
+                          $config{runtime_openssldir} ?
+                              (file_name_is_absolute($config{runtime_openssldir}) ?
+                                   $config{runtime_openssldir}
+                                   : catdir($prefix, $config{runtime_openssldir}))
+                              : $openssldir;
+                      $runtime_openssldir -}
 LIBDIR={- our $libdir = $config{libdir};
           unless ($libdir) {
               $libdir = "lib$target{multilib}";
@@ -326,6 +336,18 @@ LIBDIR={- our $libdir = $config{libdir};
 libdir={- file_name_is_absolute($libdir)
           ? $libdir : '$(INSTALLTOP)/$(LIBDIR)' -}
 MODULESDIR=$(libdir)/ossl-modules
+# RUNTIMEDIR / runtimedir: runtime lib directory for module lookup.
+# --runtime-dir acts as a prefix (same semantics as --prefix); LIBDIR is
+# appended automatically.  MODULESDIR above is still used for `make install`;
+# RUNTIME_MODULESDIR is only passed as a -D flag baked into the binary.
+RUNTIMEDIR={- # When --runtime-dir is given LIBDIR is appended to form the
+               # runtime lib path.
+               our $runtime_dir = $config{runtime_dir}
+                   ? catdir($config{runtime_dir}, $libdir) : $libdir;
+               file_name_is_absolute($runtime_dir) ? "" : $runtime_dir -}
+runtimedir={- file_name_is_absolute($runtime_dir)
+               ? $runtime_dir : '$(INSTALLTOP)/$(RUNTIMEDIR)' -}
+RUNTIME_MODULESDIR=$(runtimedir)/ossl-modules
 
 # Convenience variable for those who want to set the rpath in shared
 # libraries and applications
@@ -440,8 +462,8 @@ LIB_CPPFLAGS={- our $lib_cppflags =
                           @{$config{shared_cppflag}});
                 join(' ', $lib_cppflags,
                           (map { '-D'.$_ }
-                               'OPENSSLDIR="\"$(OPENSSLDIR)\""',
-                               'MODULESDIR="\"$(MODULESDIR)\""'),
+                               'OPENSSLDIR="\"$(RUNTIME_OPENSSLDIR)\""',
+                               'MODULESDIR="\"$(RUNTIME_MODULESDIR)\""'),
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
 LIB_CFLAGS={- join(' ', $target{lib_cflags} || (),
                         $target{shared_cflag} || (),
