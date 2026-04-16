@@ -147,45 +147,6 @@ static int cipher_hw_aesni_xts_initkey(PROV_CIPHER_CTX *ctx,
     if (AESNI_CAPABLE)              \
         return &aesni_xts;
 
-#elif defined(SPARC_AES_CAPABLE)
-
-static int cipher_hw_aes_xts_t4_initkey(PROV_CIPHER_CTX *ctx,
-    const unsigned char *key, size_t keylen)
-{
-    PROV_AES_XTS_CTX *xctx = (PROV_AES_XTS_CTX *)ctx;
-    OSSL_xts_stream_fn stream_enc = NULL;
-    OSSL_xts_stream_fn stream_dec = NULL;
-
-    /* Note: keylen is the size of 2 keys */
-    switch (keylen) {
-    case 32:
-        stream_enc = aes128_t4_xts_encrypt;
-        stream_dec = aes128_t4_xts_decrypt;
-        break;
-    case 64:
-        stream_enc = aes256_t4_xts_encrypt;
-        stream_dec = aes256_t4_xts_decrypt;
-        break;
-    default:
-        return 0;
-    }
-
-    XTS_SET_KEY_FN(aes_t4_set_encrypt_key, aes_t4_set_decrypt_key,
-        aes_t4_encrypt, aes_t4_decrypt,
-        stream_enc, stream_dec);
-    return 1;
-}
-
-#define PROV_CIPHER_HW_declare_xts()           \
-    static const PROV_CIPHER_HW aes_xts_t4 = { \
-        cipher_hw_aes_xts_t4_initkey,          \
-        NULL,                                  \
-        cipher_hw_aes_xts_copyctx              \
-    };
-#define PROV_CIPHER_HW_select_xts() \
-    if (SPARC_AES_CAPABLE)          \
-        return &aes_xts_t4;
-
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 
 static int cipher_hw_aes_xts_rv64i_zknd_zkne_initkey(PROV_CIPHER_CTX *ctx,

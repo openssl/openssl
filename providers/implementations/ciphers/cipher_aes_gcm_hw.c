@@ -136,8 +136,6 @@ static const PROV_GCM_HW aes_gcm = {
 #include "cipher_aes_gcm_hw_s390x.inc"
 #elif defined(AESNI_CAPABLE)
 #include "cipher_aes_gcm_hw_aesni.inc"
-#elif defined(SPARC_AES_CAPABLE)
-#include "cipher_aes_gcm_hw_t4.inc"
 #elif defined(AES_PMULL_CAPABLE) && defined(AES_GCM_ASM)
 #include "cipher_aes_gcm_hw_armv8.inc"
 #elif defined(PPC_AES_GCM_CAPABLE) && defined(_ARCH_PPC64)
