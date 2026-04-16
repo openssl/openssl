@@ -278,9 +278,11 @@ static void impl_cache_flush_alg(ALGORITHM *alg, STORED_ALGORITHMS *sa)
      */
     for (i = 0; i < MAX_ALGS; i++)
     {
-        q = sa->caches[i];
+        if (!CRYPTO_atomic_load_ptr((void **)&sa->caches[i], (void **)&q, sa->alock))
+            return;
         while (q != NULL) {
-            qn = q->next;
+            if (!CRYPTO_atomic_load_ptr((void **)&q->next, (void **)&qn, sa->alock))
+                return;
             /*
              * Check for a match by nid, as we're only deleting QUERY elements
              * that are for the nid specified in alg
@@ -945,10 +947,13 @@ int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
         if (!ossl_property_write_lock(sa))
             return 0;
         for (j = 0; j < MAX_ALGS; j++) {
-            idx = sa->caches[j];
-            CRYPTO_atomic_store_ptr((void **)&sa->caches[j], &killptr, sa->alock);
+            if (!CRYPTO_atomic_load_ptr((void **)&sa->caches[j], (void **)&idx, sa->alock))
+                return 0;
+            if (!CRYPTO_atomic_store_ptr((void **)&sa->caches[j], &killptr, sa->alock))
+                return 0;
             while (idx != NULL) {
-                tmp = idx->next;
+                if (!CRYPTO_atomic_load_ptr((void **)&idx->next, (void **)&tmp, sa->alock))
+                    return 0;
                 impl_cache_free(idx);
                 idx = tmp;
             }
@@ -984,7 +989,8 @@ static ossl_inline int ossl_method_store_cache_get_atomic(OSSL_METHOD_STORE *sto
          * we can used the cached hash value from the above lookup
          * to scan the lru list for a good match
          */
-        r = sa->caches[nididx];
+        if (!CRYPTO_atomic_load_ptr((void **)&sa->caches[nididx], (void **)&r, sa->alock))
+            goto err;
         while (r != NULL) {
             if (r->nid == nid && r->prop_query_hash == prop_query_hash) {
                 /*
@@ -1017,7 +1023,8 @@ static ossl_inline int ossl_method_store_cache_get_atomic(OSSL_METHOD_STORE *sto
                 *post_insert = r;
                 break;
             }
-            r = r->next;
+            if (!CRYPTO_atomic_load_ptr((void **)&r->next, (void **)&r, sa->alock))
+                goto err;
         }
         if (r == NULL)
             goto err;
@@ -1041,8 +1048,8 @@ static ossl_inline int ossl_method_store_del_from_list(STORED_ALGORITHMS *sa, QU
     QUERY *idx;
     QUERY *expect;
 
-    idx = sa->caches[nididx];
-
+    if (!CRYPTO_atomic_load_ptr((void **)&sa->caches[nididx], (void **)&idx, sa->alock))
+        return 0;
     /*
      * Check if we're at the head of the list
      */
@@ -1050,7 +1057,7 @@ static ossl_inline int ossl_method_store_del_from_list(STORED_ALGORITHMS *sa, QU
         /*
          * We need to update the head pointer
          */
-        expect = sa->caches[nididx];
+        expect = idx;
         if (!CRYPTO_atomic_cmp_exch_ptr((void **)&sa->caches[nididx], (void **)&expect, p->next, sa->alock))
             return 0;
         impl_cache_free(p);
@@ -1087,11 +1094,11 @@ static ossl_inline QUERY *ossl_method_store_find_in_list(STORED_ALGORITHMS *sa, 
     if (!CRYPTO_atomic_load_ptr((void **)&sa->caches[nididx], (void **)&idx, sa->alock))
         return NULL;
     while (idx != NULL) {
-        if (!CRYPTO_atomic_load_ptr((void **)&idx->prov, (void **)&idxprov, sa->lock))
+        if (!CRYPTO_atomic_load_ptr((void **)&idx->prov, (void **)&idxprov, sa->alock))
             return NULL;
-        if (!CRYPTO_atomic_load_int(&idx->nid, &idxnid, sa->lock))
+        if (!CRYPTO_atomic_load_int(&idx->nid, &idxnid, sa->alock))
             return NULL;
-        if (!CRYPTO_atomic_load(&idx->prop_query_hash, &idxprophash, sa->lock))
+        if (!CRYPTO_atomic_load(&idx->prop_query_hash, &idxprophash, sa->alock))
             return NULL;
         if (idxprov == prov && idxnid == nid && idxprophash == prop_query_hash)
             break;
@@ -1110,11 +1117,13 @@ static ossl_inline int ossl_method_store_cache_in_list(STORED_ALGORITHMS *sa, QU
     /*
      * We have to start by traversing the whole list to look for duplicates
      */
-    idx = sa->caches[nididx];
+    if (!CRYPTO_atomic_load_ptr((void **)&sa->caches[nididx], (void **)&idx, sa->alock))
+        return 0;
     while (idx != NULL) {
         if (idx->prov == p->prov && idx->nid == p->nid && idx->prop_query_hash == p->prop_query_hash)
             return 0;
-        idx = idx->next;
+        if (!CRYPTO_atomic_load_ptr((void **)&idx->next, (void **)&idx, sa->alock))
+            return 0;
     }
 
     /*
@@ -1205,16 +1214,16 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
          * benign to quiet the checker.  We do the same below.
          */
         TSAN_BENIGN(p, "Unpublished value is safe on subsequent read");
-        if (!CRYPTO_atomic_store_ptr((void **)&p->next, &mynullptr, sa->lock))
+        if (!CRYPTO_atomic_store_ptr((void **)&p->next, &mynullptr, sa->alock))
             goto err;
 
-        if (!CRYPTO_atomic_store_ptr((void **)&p->next_attic, &mynullptr, sa->lock))
+        if (!CRYPTO_atomic_store_ptr((void **)&p->next_attic, &mynullptr, sa->alock))
             goto err;
 
-        if (!CRYPTO_atomic_store_ptr(&p->saptr, (void **)&sa, sa->lock))
+        if (!CRYPTO_atomic_store_ptr(&p->saptr, (void **)&sa, sa->alock))
             goto err;
 
-        if (!CRYPTO_atomic_store_int(&p->nid, nid, sa->lock))
+        if (!CRYPTO_atomic_store_int(&p->nid, nid, sa->alock))
             goto err;
 
         if (!CRYPTO_atomic_store_ptr((void **)&p->prov, (void **)&prov, sa->alock))
@@ -1253,16 +1262,16 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
          * See comments above about this being a benign write
          */
         TSAN_BENIGN(p, "Unpublished value is safe on subsequent read");
-        if (!CRYPTO_atomic_store_ptr((void **)&p->next, &mynullptr, sa->lock))
+        if (!CRYPTO_atomic_store_ptr((void **)&p->next, &mynullptr, sa->alock))
             goto err;
 
-        if (!CRYPTO_atomic_store_ptr((void **)&p->next_attic, &mynullptr, sa->lock))
+        if (!CRYPTO_atomic_store_ptr((void **)&p->next_attic, &mynullptr, sa->alock))
             goto err;
 
-        if (!CRYPTO_atomic_store_ptr(&p->saptr, (void **)&sa, sa->lock))
+        if (!CRYPTO_atomic_store_ptr(&p->saptr, (void **)&sa, sa->alock))
             goto err;
 
-        if (!CRYPTO_atomic_store_int(&p->nid, nid, sa->lock))
+        if (!CRYPTO_atomic_store_int(&p->nid, nid, sa->alock))
             goto err;
 
         if (!CRYPTO_atomic_store_ptr((void **)&p->prov, (void **)&mynullptr, sa->alock))
