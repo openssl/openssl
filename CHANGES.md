@@ -205,6 +205,14 @@ OpenSSL 4.2
 
    *Alex Gaynor*
 
+ * Added `SSL_client_hello_get0_extensions()`, a zero-copy accessor for the
+   raw extensions block of a ClientHello, for use in the ClientHello
+   callback.  Unlike `SSL_client_hello_get1_extensions_present()`, it
+   exposes every extension as received on the wire, including GREASE
+   values and extension types unknown to the library.
+
+   *Sergei Khomenkov*
+
 OpenSSL 4.1
 -----------
 

@@ -1884,6 +1884,10 @@ static int full_client_hello_callback(SSL *s, int *al, void *arg)
     int *ctr = arg;
     const unsigned char *p;
     int *exts;
+    const unsigned char *ext_data = NULL, *e, *body;
+    size_t ext_len, ext_len_null, off, ext_body_len, body_len;
+    size_t ncrosschecked = 0;
+    unsigned int ext_type;
 #ifdef OPENSSL_NO_EC
     const unsigned char expected_ciphers[] = { 0x00, 0x9d };
 #else
@@ -1909,6 +1913,41 @@ static int full_client_hello_callback(SSL *s, int *al, void *arg)
             SSL_client_hello_get0_compression_methods(s, &p), 1)
         || !TEST_int_eq(*p, 0))
         return SSL_CLIENT_HELLO_ERROR;
+
+    /* Test SSL_client_hello_get0_extensions: raw extension buffer */
+
+    /* Test out==NULL (length-only query) */
+    ext_len_null = SSL_client_hello_get0_extensions(s, NULL);
+    if (!TEST_size_t_gt(ext_len_null, 0))
+        return SSL_CLIENT_HELLO_ERROR;
+
+    ext_len = SSL_client_hello_get0_extensions(s, &ext_data);
+    if (!TEST_size_t_gt(ext_len, 0) || !TEST_ptr(ext_data))
+        return SSL_CLIENT_HELLO_ERROR;
+    if (!TEST_size_t_eq(ext_len_null, ext_len))
+        return SSL_CLIENT_HELLO_ERROR;
+
+    /*
+     * Walk the whole block: the entries must tile it exactly, and every
+     * extension the library recognises must match SSL_client_hello_get0_ext().
+     */
+    for (off = 0; off < ext_len; off += 4 + ext_body_len) {
+        if (!TEST_size_t_ge(ext_len - off, 4))
+            return SSL_CLIENT_HELLO_ERROR;
+        e = ext_data + off;
+        ext_type = ((unsigned int)e[0] << 8) | e[1];
+        ext_body_len = ((size_t)e[2] << 8) | e[3];
+        if (!TEST_size_t_le(ext_body_len, ext_len - off - 4))
+            return SSL_CLIENT_HELLO_ERROR;
+        if (!SSL_client_hello_get0_ext(s, ext_type, &body, &body_len))
+            continue;
+        if (!TEST_mem_eq(body, body_len, e + 4, ext_body_len))
+            return SSL_CLIENT_HELLO_ERROR;
+        ncrosschecked++;
+    }
+    if (!TEST_size_t_eq(ncrosschecked, OSSL_NELEM(expected_extensions)))
+        return SSL_CLIENT_HELLO_ERROR;
+
     if (!SSL_client_hello_get1_extensions_present(s, &exts, &len))
         return SSL_CLIENT_HELLO_ERROR;
     if (len != OSSL_NELEM(expected_extensions) || memcmp(exts, expected_extensions, len * sizeof(*exts)) != 0) {
