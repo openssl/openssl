@@ -489,7 +489,7 @@ static int win32_pathbyaddr(void *addr, char *path, int sz)
     const DWORD wpathSize = 32768; /* 32768 is the maximum possible path length on Windows */
     WCHAR *wpath = NULL;
     DWORD wlen, wsz;
-    int utf8len;
+    int utf8len = -1;
 
     if (addr == NULL)
         addr = win32_pathbyaddr;
@@ -499,20 +499,19 @@ static int win32_pathbyaddr(void *addr, char *path, int sz)
             (LPCWSTR)addr, &hModule)) {
         ERR_raise_data(ERR_LIB_DSO, DSO_R_SYM_FAILURE, "Unable to get module handle (%lu)\n",
             GetLastError());
-        return -1;
+        goto out;
     }
     wpath = (WCHAR *)OPENSSL_malloc(wpathSize * sizeof(WCHAR));
     if (wpath == NULL) {
         ERR_raise_data(ERR_LIB_DSO, DSO_R_NULL_HANDLE, "Path allocation failure (%lu)\n",
             GetLastError());
-        return -1;
+        goto out;
     }
     wlen = GetModuleFileNameW(hModule, wpath, wpathSize);
     if (wlen == 0 || GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-        OPENSSL_free(wpath);
         ERR_raise_data(ERR_LIB_DSO, DSO_R_NAME_TRANSLATION_FAILED, "Module name fetch failed (%lu)\n",
             GetLastError());
-        return -1;
+        goto out;
     }
 
     /*
@@ -521,8 +520,8 @@ static int win32_pathbyaddr(void *addr, char *path, int sz)
      * but return the size the path buffer needs to be for this object
      */
     if (sz <= 0) {
-        OPENSSL_free(wpath);
-        return (int)(wlen + 1);
+        utf8len = (int)(wlen + 1);
+        goto out;
     }
 
     /*
@@ -531,19 +530,20 @@ static int win32_pathbyaddr(void *addr, char *path, int sz)
     wsz = (DWORD)sz;
     utf8len = WideCharToMultiByte(CP_UTF8, 0, wpath, -1, NULL, 0, NULL, NULL);
     if (utf8len <= 0 || (DWORD)utf8len > wsz) {
-        OPENSSL_free(wpath);
         ERR_raise_data(ERR_LIB_DSO, DSO_R_NAME_TRANSLATION_FAILED, "UTF8 query failed (%lu)\n",
             GetLastError());
-        return -1;
+        goto out;
     }
 
     if (WideCharToMultiByte(CP_UTF8, 0, wpath, -1, path, wsz, NULL, NULL) <= 0) {
-        OPENSSL_free(wpath);
         ERR_raise_data(ERR_LIB_DSO, DSO_R_NAME_TRANSLATION_FAILED, "UTF8 translation failed (%lu)\n",
             GetLastError());
-        return -1;
+        goto out;
     }
+out:
     OPENSSL_free(wpath);
+    if (hModule != NULL)
+        CloseHandle(hModule);
     return utf8len;
 }
 
