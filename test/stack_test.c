@@ -255,6 +255,15 @@ static int test_uchar_stack(int reserve)
         goto end;
     sk_uchar_sort(r);
     sk_uchar_sort(q);
+    for (i = 0; i < n; i++) {
+        int idx = sk_uchar_find(q, v + i);
+
+        if (!TEST_int_ge(idx, 0)
+            || !TEST_uchar_eq(*sk_uchar_value(q, idx), v[i])) {
+            TEST_info("uchar sorted find %d", i);
+            goto end;
+        }
+    }
 
     /* pop */
     for (i = 0; i < n; i++) {
