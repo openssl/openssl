@@ -1,0 +1,89 @@
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: Constant-time validation (daily)
+# Verifies that ML-KEM and ML-DSA signing do not branch on secret data.
+#
+# The library is built with enable-ct-validation, which defines
+# OPENSSL_CONSTANT_TIME_VALIDATION and causes secret regions to be marked
+# as "uninitialised" from Valgrind memcheck's perspective.  The tests are
+# then run via "make test" with OSSL_VALGRIND_CT=yes, which makes
+# OpenSSL::Test::test() wrap every test binary with:
+#
+#   valgrind --tool=memcheck --track-origins=yes --error-exitcode=1
+#
+# The wrapper chain (util/wrap.pl -> util/shlib_wrap.sh) is preserved, so
+# LD_LIBRARY_PATH is set correctly for shared-library builds.  Any
+# control-flow branch or memory index that depends on secret data causes
+# valgrind to exit with code 1, which propagates back through the test
+# harness and fails the job.
+#
+# See include/internal/constant_time.h for the CONSTTIME_SECRET /
+# CONSTTIME_DECLASSIFY macro documentation.
+#
+# Architecture note: Valgrind's memcheck supports x86_64, aarch64, s390x,
+# and ppc64 well.  GitHub Actions provides hosted runners for x86_64
+# (ubuntu-latest) and aarch64 (ubuntu-24.04-arm); we test both here.
+# s390x and ppc64 runners are not available in the public GitHub Actions
+# fleet, so they are not included.
+#
+# Package note: on Debian/Ubuntu the valgrind package bundles the C headers
+# (valgrind/memcheck.h) — no separate -dev package is required.  On Fedora
+# the headers are in valgrind-devel; see Configure for the full list.
+
+on:
+  schedule:
+    - cron: '45 03 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ct-validation:
+    if: github.repository == 'openssl/openssl'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64
+            runs-on: ubuntu-latest
+          - name: linux-aarch64
+            runs-on: ubuntu-24.04-arm
+
+    name: CT validation (${{ matrix.name }})
+    runs-on: ${{ matrix.runs-on }}
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Install valgrind
+        # On Debian/Ubuntu the main 'valgrind' package includes
+        # /usr/include/valgrind/memcheck.h — no separate -dev package needed.
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install valgrind
+
+      - name: Configure with CT validation enabled
+        run: |
+          ./Configure enable-ct-validation
+          ./configdata.pm --dump
+
+      - name: Build
+        run: make -j$(nproc)
+
+      - name: Run ML-KEM and ML-DSA CT validation under Valgrind
+        # OSSL_VALGRIND_CT=yes causes OpenSSL::Test::test() to wrap each
+        # test binary with valgrind --track-origins=yes --error-exitcode=1.
+        # util/wrap.pl -> util/shlib_wrap.sh sets LD_LIBRARY_PATH first, so
+        # the shared libraries are found correctly.
+        run: |
+          make TESTS="test_internal_ml_kem test_internal_ml_dsa" \
+               OSSL_VALGRIND_CT=yes \
+               test

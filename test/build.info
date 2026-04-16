@@ -328,6 +328,11 @@ IF[{- !$disabled{tests} -}]
     SOURCE[ml_dsa_test]=ml_dsa_test.c
     INCLUDE[ml_dsa_test]=../include ../apps/include
     DEPEND[ml_dsa_test]=../libcrypto.a libtestutil.a
+
+    PROGRAMS{noinst}=ml_dsa_internal_test
+    SOURCE[ml_dsa_internal_test]=ml_dsa_internal_test.c
+    INCLUDE[ml_dsa_internal_test]=../include ../apps/include
+    DEPEND[ml_dsa_internal_test]=../libcrypto.a libtestutil.a
   ENDIF
 
   PROGRAMS{noinst}=aeswrap_test

@@ -15,10 +15,6 @@
 #include "internal/constant_time.h"
 #include "internal/sha3.h"
 
-#if defined(OPENSSL_CONSTANT_TIME_VALIDATION)
-#include <valgrind/memcheck.h>
-#endif
-
 #if ML_KEM_SEED_BYTES != ML_KEM_SHARED_SECRET_BYTES + ML_KEM_RANDOM_BYTES
 #error "ML-KEM keygen seed length != shared secret + random bytes length"
 #endif
@@ -146,30 +142,6 @@ static void scalar_encode(uint8_t *out, const scalar *s, int bits);
 #define U_VECTOR_BYTES(b) ((DEGREE / 8) * ML_KEM_##b##_DU * ML_KEM_##b##_RANK)
 #define V_SCALAR_BYTES(b) ((DEGREE / 8) * ML_KEM_##b##_DV)
 #define CTEXT_BYTES(b) (U_VECTOR_BYTES(b) + V_SCALAR_BYTES(b))
-
-#if defined(OPENSSL_CONSTANT_TIME_VALIDATION)
-
-/*
- * CONSTTIME_SECRET takes a pointer and a number of bytes and marks that region
- * of memory as secret. Secret data is tracked as it flows to registers and
- * other parts of a memory. If secret data is used as a condition for a branch,
- * or as a memory index, it will trigger warnings in valgrind.
- */
-#define CONSTTIME_SECRET(ptr, len) VALGRIND_MAKE_MEM_UNDEFINED(ptr, len)
-
-/*
- * CONSTTIME_DECLASSIFY takes a pointer and a number of bytes and marks that
- * region of memory as public. Public data is not subject to constant-time
- * rules.
- */
-#define CONSTTIME_DECLASSIFY(ptr, len) VALGRIND_MAKE_MEM_DEFINED(ptr, len)
-
-#else
-
-#define CONSTTIME_SECRET(ptr, len)
-#define CONSTTIME_DECLASSIFY(ptr, len)
-
-#endif
 
 /*
  * Indices of slots in the vinfo tables below

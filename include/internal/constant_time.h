@@ -477,4 +477,31 @@ static ossl_inline void constant_time_lookup(void *out,
  */
 void err_clear_last_constant_time(int clear);
 
+/*
+ * Valgrind-based constant-time validation helpers.
+ *
+ * CONSTTIME_SECRET marks a region of memory as secret.  Valgrind's memcheck
+ * tool will then flag any control-flow branch or memory index that depends on
+ * those bytes as an error, because the branch/index would vary with the secret
+ * and could therefore leak it via a timing side-channel.
+ *
+ * CONSTTIME_DECLASSIFY marks a region as no longer secret.  Call this:
+ *   - on values that are derived from, but do not expose, secret data (e.g.
+ *     the rejection decision in ML-DSA, or the public outputs of a KEM), and
+ *   - on all secret regions before returning from a function, so that callers
+ *     do not inherit spurious "uninitialised" state from Valgrind's perspective.
+ *
+ * Both macros are no-ops unless the library is built with
+ * enable-ct-validation (which defines OPENSSL_CONSTANT_TIME_VALIDATION and
+ * requires valgrind headers at build time).
+ */
+#if defined(OPENSSL_CONSTANT_TIME_VALIDATION)
+#include <valgrind/memcheck.h>
+#define CONSTTIME_SECRET(ptr, len) VALGRIND_MAKE_MEM_UNDEFINED((ptr), (len))
+#define CONSTTIME_DECLASSIFY(ptr, len) VALGRIND_MAKE_MEM_DEFINED((ptr), (len))
+#else
+#define CONSTTIME_SECRET(ptr, len)
+#define CONSTTIME_DECLASSIFY(ptr, len)
+#endif
+
 #endif /* OSSL_INTERNAL_CONSTANT_TIME_H */

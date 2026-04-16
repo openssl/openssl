@@ -365,6 +365,19 @@ sub test {
            my $srcdir = srctop_dir();
            return cmd([ "valgrind", "--leak-check=full", "--show-leak-kinds=all", "--gen-suppressions=all", "--suppressions=$srcdir/util/valgrind.suppression", "--log-file=$resultdir/valgrind.log.$idx", "--suppressions=$srcdir/util/valgrind.suppression", @prog, @cmdargs ],
                    exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+        } elsif (defined $ENV{OSSL_VALGRIND_CT}) {
+           # Constant-time validation mode: mark secret data as undefined and
+           # fail immediately if any branch or memory index depends on it.
+           # Unlike OSSL_USE_VALGRIND this writes to stdout (not a log file)
+           # and uses --error-exitcode so the test fails on any CT violation.
+           # Set OSSL_VALGRIND_CT=yes when building with enable-ct-validation.
+           return cmd([ "valgrind",
+                        "--tool=memcheck",
+                        "--track-origins=yes",
+                        "--error-exitcode=1",
+                        "--num-callers=20",
+                        @prog, @cmdargs ],
+                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
         } else {
             return cmd([ @prog, @cmdargs ],
                    exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
