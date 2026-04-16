@@ -31,6 +31,12 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added SSL_client_hello_get0_extensions() to provide zero-copy access
+   to the raw extension bytes from a ClientHello message, complementing
+   the existing SSL_client_hello_get0_ciphers() and related functions.
+
+   *Sergei Khomenkov*
+
  * Improved DTLS handshake robustness under UDP reordering by buffering and
    replaying early ChangeCipherSpec (CCS) records at the expected state.
 

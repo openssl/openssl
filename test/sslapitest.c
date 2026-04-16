@@ -732,6 +732,12 @@ static int full_client_hello_callback(SSL *s, int *al, void *arg)
     int *ctr = arg;
     const unsigned char *p;
     int *exts;
+    const unsigned char *ext_data = NULL;
+    size_t ext_len, ext_len_null, ext_offset, ext_body_len;
+    unsigned int ext_type;
+    const unsigned char *single_ext_data = NULL;
+    size_t single_ext_len = 0;
+    int found_crosscheck;
 #ifdef OPENSSL_NO_EC
     const unsigned char expected_ciphers[] = { 0x00, 0x9d };
 #else
@@ -757,6 +763,52 @@ static int full_client_hello_callback(SSL *s, int *al, void *arg)
             SSL_client_hello_get0_compression_methods(s, &p), 1)
         || !TEST_int_eq(*p, 0))
         return SSL_CLIENT_HELLO_ERROR;
+
+    /* Test SSL_client_hello_get0_extensions: raw extension buffer */
+
+    /* Test out==NULL (length-only query) */
+    ext_len_null = SSL_client_hello_get0_extensions(s, NULL);
+    if (!TEST_size_t_gt(ext_len_null, 0))
+        return SSL_CLIENT_HELLO_ERROR;
+
+    ext_len = SSL_client_hello_get0_extensions(s, &ext_data);
+    if (!TEST_size_t_gt(ext_len, 0) || !TEST_ptr(ext_data))
+        return SSL_CLIENT_HELLO_ERROR;
+    if (!TEST_size_t_eq(ext_len_null, ext_len))
+        return SSL_CLIENT_HELLO_ERROR;
+
+    /*
+     * Walk all extensions to find one with non-zero body that is also
+     * recognized by SSL_client_hello_get0_ext, then cross-check its data.
+     */
+    ext_offset = 0;
+    found_crosscheck = 0;
+    while (ext_offset + 4 <= ext_len) {
+        ext_type = ((unsigned int)ext_data[ext_offset] << 8) | ext_data[ext_offset + 1];
+        ext_body_len = ((size_t)ext_data[ext_offset + 2] << 8)
+                       | ext_data[ext_offset + 3];
+        if (!TEST_size_t_le(ext_body_len, ext_len - ext_offset - 4))
+            return SSL_CLIENT_HELLO_ERROR;
+
+        if (ext_body_len > 0
+            && SSL_client_hello_get0_ext(s, ext_type,
+                                         &single_ext_data,
+                                         &single_ext_len) == 1) {
+            if (!TEST_size_t_eq(single_ext_len, ext_body_len))
+                return SSL_CLIENT_HELLO_ERROR;
+            if (!TEST_mem_eq(single_ext_data, single_ext_len,
+                             ext_data + ext_offset + 4, ext_body_len))
+                return SSL_CLIENT_HELLO_ERROR;
+            found_crosscheck = 1;
+            break;
+        }
+        ext_offset += 4 + ext_body_len;
+    }
+    if (!TEST_int_eq(found_crosscheck, 1)) {
+        TEST_info("No recognized non-zero-body extension found for cross-check");
+        return SSL_CLIENT_HELLO_ERROR;
+    }
+
     if (!SSL_client_hello_get1_extensions_present(s, &exts, &len))
         return SSL_CLIENT_HELLO_ERROR;
     if (len != OSSL_NELEM(expected_extensions) || memcmp(exts, expected_extensions, len * sizeof(*exts)) != 0) {
