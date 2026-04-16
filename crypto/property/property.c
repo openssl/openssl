@@ -1235,6 +1235,12 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
         if (p == NULL)
             goto err;
 
+        if (!CRYPTO_atomic_store_ptr((void **)&p->next, &mynullptr, sa->lock))
+            goto err;
+
+        if (!CRYPTO_atomic_store_ptr((void **)&p->next_attic, &mynullptr, sa->lock))
+            goto err;
+
         if (!CRYPTO_atomic_store_ptr(&p->saptr, (void **)&sa, sa->lock))
             goto err;
 
