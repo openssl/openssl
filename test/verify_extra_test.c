@@ -556,6 +556,37 @@ static int yolo_ip_validation(const uint8_t *name, size_t len)
     return 1;
 }
 
+static const char *valid_emails[] = {
+    "@bb",
+    "b@bb",
+    "b@b-b",
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@bb",
+    "b@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "b@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb."
+    "ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc."
+    "ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    NULL,
+};
+
+static const char *invalid_emails[] = {
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@bb",
+    "b@b",
+    "b@bb.",
+    "b@bb..bb",
+    "b@bb-.bb",
+    "b@-bb.bb",
+    "b@bb.-bb",
+    "@",
+    "@b",
+    "b@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "b@aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb."
+    "ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc."
+    "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    NULL,
+};
+
 static int test_vpm_input_validation(void)
 {
     const char *utf8mail = "学生@muppetry.ca";
@@ -589,6 +620,14 @@ static int test_vpm_input_validation(void)
         if (!TEST_true(X509_VERIFY_PARAM_set1_email(vpm, multiname_emails[i], 0)))
             goto err;
         if (!TEST_false(X509_VERIFY_PARAM_set1_host(vpm, multiname_emails[i], 0)))
+            goto err;
+    }
+    for (size_t i = 0; valid_emails[i] != NULL; i++) {
+        if (!TEST_true(X509_VERIFY_PARAM_set1_email(vpm, valid_emails[i], 0)))
+            goto err;
+    }
+    for (size_t i = 0; invalid_emails[i] != NULL; i++) {
+        if (TEST_true(X509_VERIFY_PARAM_set1_email(vpm, invalid_emails[i], 0)))
             goto err;
     }
     for (size_t i = 0; multiname_ips[i] != NULL; i++) {
