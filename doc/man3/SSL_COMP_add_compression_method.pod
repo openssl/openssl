@@ -3,17 +3,27 @@
 =head1 NAME
 
 SSL_COMP_add_compression_method, SSL_COMP_get_compression_methods,
-SSL_COMP_get0_name, SSL_COMP_get_id, SSL_COMP_free_compression_methods
+SSL_COMP_set0_compression_methods, SSL_COMP_get_name, SSL_COMP_get0_name,
+SSL_COMP_get_id, SSL_get_current_compression, SSL_get_current_expansion,
+SSL_COMP_free_compression_methods
 - handle SSL/TLS integrated compression methods
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
+The following functions have been deprecated since OpenSSL 4.1, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
+
  int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
  STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
+ STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP) *meths);
+ const char *SSL_COMP_get_name(const COMP_METHOD *comp);
  const char *SSL_COMP_get0_name(const SSL_COMP *comp);
  int SSL_COMP_get_id(const SSL_COMP *comp);
+ const COMP_METHOD *SSL_get_current_compression(const SSL *s);
+ const COMP_METHOD *SSL_get_current_expansion(const SSL *s);
 
 The following function has been deprecated since OpenSSL 1.1.0, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
@@ -34,6 +44,13 @@ compression methods or NULL on error.
 SSL_COMP_get0_name() returns the name of the compression method B<comp>.
 
 SSL_COMP_get_id() returns the id of the compression method B<comp>.
+
+SSL_get_current_compression() returns the B<COMP_METHOD> for the compression
+algorithm in use on the connection B<s>, or NULL if compression is not active.
+
+SSL_get_current_expansion() returns the B<COMP_METHOD> for the expansion
+(decompression) algorithm in use on the connection B<s>, or NULL if expansion
+is not active.
 
 SSL_COMP_free_compression_methods() releases any resources acquired to
 maintain the internal table of compression methods.
@@ -97,7 +114,10 @@ NULL on error.
 
 SSL_COMP_get0_name() returns the name of the compression method or NULL on error.
 
-SSL_COMP_get_id() returns the name of the compression method or -1 on error.
+SSL_COMP_get_id() returns the id of the compression method or -1 on error.
+
+SSL_get_current_compression() and SSL_get_current_expansion() return a pointer
+to the compression or expansion method in use, or NULL if none or on error.
 
 =head1 SEE ALSO
 
@@ -106,11 +126,19 @@ L<ssl(7)>
 =head1 HISTORY
 
 The SSL_COMP_free_compression_methods() function was deprecated in OpenSSL 1.1.0.
-The SSL_COMP_get0_name() and SSL_comp_get_id() functions were added in OpenSSL 1.1.0d.
+The SSL_COMP_get0_name() and SSL_COMP_get_id() functions were added in OpenSSL 1.1.0d.
+
+SSL_COMP_add_compression_method(), SSL_COMP_get_compression_methods(),
+SSL_COMP_set0_compression_methods(), SSL_COMP_get_name(), SSL_COMP_get0_name(),
+SSL_COMP_get_id(), SSL_get_current_compression(), and SSL_get_current_expansion()
+were deprecated in OpenSSL 4.1.
+TLS record-level compression is obsolete and a security liability
+(see the CRIME attack). Use B<SSL_OP_NO_COMPRESSION> to disable compression
+instead. These functions will be removed in a future version.
 
 =head1 COPYRIGHT
 
-Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
