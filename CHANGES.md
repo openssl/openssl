@@ -31,6 +31,14 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added the ASCON-AEAD128 cipher as specified in NIST SP 800-232. ASCON-AEAD128
+   provides authenticated encryption with associated data (AEAD) using 128-bit
+   keys, nonces, and tags. The cipher is available through the EVP interface and
+   the default provider. This implementation only supports byte-aligned inputs
+   and full-length tags.
+
+   *Dominic Cunningham, Billy Bob Brumley*
+
  * Added support for Ed25519 and Ed448 certificates in DTLS 1.2. Previously,
    these certificate types were only supported in TLS 1.2 and TLS 1.3.
 
