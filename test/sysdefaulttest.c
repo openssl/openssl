@@ -11,6 +11,7 @@
 #include <openssl/opensslconf.h>
 
 #include <string.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
 #include <openssl/tls1.h>
@@ -35,6 +36,8 @@ static int test_func(void)
             TEST_info("min/max version setting incorrect");
             goto err;
         }
+        if (!TEST_long_eq(ERR_peek_error(), 0))
+            goto err;
     }
     ret = 1;
 err:

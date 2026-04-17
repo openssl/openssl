@@ -1290,11 +1290,14 @@ providers/fips.module.sources.new: configdata.pm
 	  for x in crypto/bn/asm/*.pl crypto/bn/asm/*.S \
 		   crypto/aes/asm/*.pl crypto/aes/asm/*.S \
 		   crypto/ec/asm/*.pl \
+		   crypto/ml_dsa/asm/*.pl \
+		   crypto/ml_kem/asm/*.pl \
 		   crypto/modes/asm/*.pl \
 		   crypto/sha/asm/*.pl \
+		   crypto/slh_dsa/asm/*.pl \
 		   crypto/*cpuid.pl crypto/*cpuid.S \
 		   crypto/*cap.c; do \
-	    echo "$$x"; \
+	    test -e "$$x" && echo "$$x"; \
 	  done \
 	) | grep -v sm2p256 | sort | uniq > providers/fips.module.sources.new
 	rm -rf sources-tmp

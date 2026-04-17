@@ -1263,9 +1263,14 @@ typedef struct {
     size_t gidmax; /* The memory allocation chunk size for the group IDs */
     size_t gidcnt; /* Number of groups */
     uint16_t *gid_arr; /* The IDs of the supported groups (flat list) */
-    size_t tplmax; /* The memory allocation chunk size for the tuple counters */
-    size_t tplcnt; /* Number of tuples */
-    size_t *tuplcnt_arr; /* The number of groups inside a tuple */
+    size_t tplmax; /* Allocated length of tuplcnt_arr */
+    /*
+     * Number of *closed* (fully parsed) tuples.  During parsing there is
+     * always one additional active tuple being built, stored at index tplcnt.
+     * tuplcnt_arr therefore always needs at least tplcnt + 1 allocated slots.
+     */
+    size_t tplcnt;
+    size_t *tuplcnt_arr; /* Per-tuple group counts; [0..tplcnt-1] closed, [tplcnt] active */
     size_t ksidmax; /* The memory allocation chunk size */
     size_t ksidcnt; /* Number of key shares */
     uint16_t *ksid_arr; /* The IDs of the key share groups (flat list) */
@@ -1599,9 +1604,18 @@ done:
     return retval;
 }
 
+/*
+ * Ensure tuplcnt_arr has room for at least tplcnt + 2 entries so that
+ * close_tuple() can safely increment tplcnt and write the new active-tuple
+ * slot at index tplcnt + 1.  Must be called before that increment.
+ */
 static int grow_tuples(gid_cb_st *garg)
 {
-    if (garg->tplcnt == garg->tplmax) {
+    /*
+     * tplcnt + 1 is the index close_tuple() will write to after incrementing;
+     * reallocate before it would reach the end of the allocated array.
+     */
+    if (garg->tplcnt + 1 >= garg->tplmax) {
         size_t *tmp = OPENSSL_realloc_array(garg->tuplcnt_arr,
             garg->tplmax + GROUPLIST_INCREMENT,
             sizeof(*garg->tuplcnt_arr));
@@ -1614,6 +1628,13 @@ static int grow_tuples(gid_cb_st *garg)
     return 1;
 }
 
+/*
+ * Finalise the active tuple (at index tplcnt) and open a fresh one.
+ * tplcnt is the count of closed tuples; the active tuple lives at tplcnt
+ * throughout parsing.  After this call tplcnt is incremented and the new
+ * active tuple at the updated index is initialised to 0.
+ * Empty tuples (gidcnt == 0) are discarded without advancing tplcnt.
+ */
 static int close_tuple(gid_cb_st *garg)
 {
     size_t gidcnt = garg->tuplcnt_arr[garg->tplcnt];
@@ -1622,19 +1643,22 @@ static int close_tuple(gid_cb_st *garg)
         uint16_t gid = garg->gid_arr[garg->gidcnt - gidcnt];
 
         /*
-         * All groups in tuple marked for keyshare prediction were unknown
-         * select the first known group in the tuple.
+         * All groups in the tuple that were marked for keyshare prediction
+         * were unknown (unrecognised); select the first known group instead.
          */
         garg->ksid_arr[garg->ksidcnt++] = gid;
     }
-    /* Reset for the next tuple */
+    /* Reset keyshare state for the next tuple */
     garg->want_keyshare = 0;
 
     if (gidcnt == 0)
-        return 1;
+        return 1; /* Discard empty tuple; no need to open a new slot */
+
+    /* Grow before the increment: the new active slot will be at tplcnt + 1 */
     if (!grow_tuples(garg))
         return 0;
 
+    /* Promote closed tuple and initialise the new active tuple slot */
     garg->tuplcnt_arr[++garg->tplcnt] = 0;
     return 1;
 }
@@ -3208,7 +3232,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
     SSL_TICKET_STATUS ret = SSL_TICKET_FATAL_ERR_OTHER;
     size_t mlen;
     unsigned char tick_hmac[EVP_MAX_MD_SIZE];
-    SSL_HMAC *hctx = NULL;
+    SSL_HMAC hctx, *constructed_hctx = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
     SSL_CTX *tctx = s->session_ctx;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
@@ -3239,8 +3263,8 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
     }
 
     /* Initialize session ticket encryption and HMAC contexts */
-    hctx = ssl_hmac_new(tctx);
-    if (hctx == NULL) {
+
+    if ((constructed_hctx = ssl_hmac_construct(tctx, &hctx)) == NULL) {
         ret = SSL_TICKET_FATAL_ERR_MALLOC;
         goto end;
     }
@@ -3263,14 +3287,14 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
                 nctick,
                 nctick + TLSEXT_KEYNAME_LENGTH,
                 ctx,
-                ssl_hmac_get0_EVP_MAC_CTX(hctx),
+                ssl_hmac_get0_EVP_MAC_CTX(&hctx),
                 0);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
         else if (tctx->ext.ticket_key_cb != NULL)
             /* if 0 is returned, write an empty ticket */
             rv = tctx->ext.ticket_key_cb(SSL_CONNECTION_GET_USER_SSL(s), nctick,
                 nctick + TLSEXT_KEYNAME_LENGTH,
-                ctx, ssl_hmac_get0_HMAC_CTX(hctx), 0);
+                ctx, ssl_hmac_get0_HMAC_CTX(&hctx), 0);
 #endif
         if (rv < 0) {
             ret = SSL_TICKET_FATAL_ERR_OTHER;
@@ -3283,8 +3307,6 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
         if (rv == 2)
             renew_ticket = 1;
     } else {
-        EVP_CIPHER *aes256cbc = NULL;
-
         /* Check key name matches */
         if (memcmp(etick, tctx->ext.tick_key_name,
                 TLSEXT_KEYNAME_LENGTH)
@@ -3293,22 +3315,16 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
             goto end;
         }
 
-        aes256cbc = EVP_CIPHER_fetch(sctx->libctx, "AES-256-CBC",
-            sctx->propq);
-        if (aes256cbc == NULL
-            || ssl_hmac_init(hctx, tctx->ext.secure->tick_hmac_key,
-                   sizeof(tctx->ext.secure->tick_hmac_key),
-                   "SHA256")
+        if (ssl_hmac_init(&hctx, tctx->ext.secure->tick_hmac_key,
+                sizeof(tctx->ext.secure->tick_hmac_key), "SHA256")
                 <= 0
-            || EVP_DecryptInit_ex(ctx, aes256cbc, NULL,
+            || EVP_DecryptInit_ex(ctx, tctx->tktenc, NULL,
                    tctx->ext.secure->tick_aes_key,
                    etick + TLSEXT_KEYNAME_LENGTH)
                 <= 0) {
-            EVP_CIPHER_free(aes256cbc);
             ret = SSL_TICKET_FATAL_ERR_OTHER;
             goto end;
         }
-        EVP_CIPHER_free(aes256cbc);
         if (SSL_CONNECTION_IS_TLS13(s))
             renew_ticket = 1;
     }
@@ -3316,7 +3332,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
      * Attempt to process session ticket, first conduct sanity and integrity
      * checks on ticket.
      */
-    mlen = ssl_hmac_size(hctx);
+    mlen = ssl_hmac_size(&hctx);
     if (mlen == 0) {
         ret = SSL_TICKET_FATAL_ERR_OTHER;
         goto end;
@@ -3335,8 +3351,8 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
     }
     eticklen -= mlen;
     /* Check HMAC of encrypted ticket */
-    if (ssl_hmac_update(hctx, etick, eticklen) <= 0
-        || ssl_hmac_final(hctx, tick_hmac, NULL, sizeof(tick_hmac)) <= 0) {
+    if (ssl_hmac_update(&hctx, etick, eticklen) <= 0
+        || ssl_hmac_final(&hctx, tick_hmac, NULL, sizeof(tick_hmac)) <= 0) {
         ret = SSL_TICKET_FATAL_ERR_OTHER;
         goto end;
     }
@@ -3398,7 +3414,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL_CONNECTION *s,
 
 end:
     EVP_CIPHER_CTX_free(ctx);
-    ssl_hmac_free(hctx);
+    ssl_hmac_destruct(constructed_hctx);
 
     /*
      * If set, the decrypt_ticket_cb() is called unless a fatal error was
@@ -5012,41 +5028,28 @@ uint8_t SSL_SESSION_get_max_fragment_length(const SSL_SESSION *session)
 /*
  * Helper functions for HMAC access with legacy support included.
  */
-SSL_HMAC *ssl_hmac_new(const SSL_CTX *ctx)
+SSL_HMAC *ssl_hmac_construct(const SSL_CTX *ctx, SSL_HMAC *hctx)
 {
-    SSL_HMAC *ret = OPENSSL_zalloc(sizeof(*ret));
-    EVP_MAC *mac = NULL;
-
-    if (ret == NULL)
+    if (hctx == NULL)
         return NULL;
+    hctx->ctx = NULL;
 #ifndef OPENSSL_NO_DEPRECATED_3_0
+    hctx->old_ctx = NULL;
     if (ctx->ext.ticket_key_evp_cb == NULL
-        && ctx->ext.ticket_key_cb != NULL) {
-        if (!ssl_hmac_old_new(ret))
-            goto err;
-        return ret;
-    }
+        && ctx->ext.ticket_key_cb != NULL)
+        return ssl_hmac_old_construct(hctx);
 #endif
-    mac = EVP_MAC_fetch(ctx->libctx, "HMAC", ctx->propq);
-    if (mac == NULL || (ret->ctx = EVP_MAC_CTX_new(mac)) == NULL)
-        goto err;
-    EVP_MAC_free(mac);
-    return ret;
-err:
-    EVP_MAC_CTX_free(ret->ctx);
-    EVP_MAC_free(mac);
-    OPENSSL_free(ret);
-    return NULL;
+    hctx->ctx = EVP_MAC_CTX_new(ctx->hmac);
+    return hctx->ctx != NULL ? hctx : NULL;
 }
 
-void ssl_hmac_free(SSL_HMAC *ctx)
+void ssl_hmac_destruct(SSL_HMAC *ctx)
 {
     if (ctx != NULL) {
         EVP_MAC_CTX_free(ctx->ctx);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-        ssl_hmac_old_free(ctx);
+        ssl_hmac_old_destruct(ctx);
 #endif
-        OPENSSL_free(ctx);
     }
 }
 

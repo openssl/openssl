@@ -7,6 +7,7 @@ release. For more details please read the CHANGES file.
 OpenSSL Releases
 ----------------
 
+ - [OpenSSL 4.1](#openssl-41)
  - [OpenSSL 4.0](#openssl-40)
  - [OpenSSL 3.6](#openssl-36)
  - [OpenSSL 3.5](#openssl-35)
@@ -22,14 +23,18 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
-OpenSSL 4.0
+OpenSSL 4.1
 -----------
 
 ### Major changes between OpenSSL 4.0 and OpenSSL 4.1 [under development]
 
-  * none
+  * API calls `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`, and
+    `CRYPTO_atomic_cmp_exch_ptr` have been added.
 
-### Major changes between OpenSSL 3.6 and OpenSSL 4.0 [under development]
+OpenSSL 4.0
+-----------
+
+### Major changes between OpenSSL 3.6 and OpenSSL 4.0.0 [14 Apr 2026]
 
 OpenSSL 4.0.0 is a feature release adding significant new functionality
 to OpenSSL.
@@ -120,6 +125,39 @@ This release adds the following new features:
 OpenSSL 3.6
 -----------
 
+### Major changes between OpenSSL 3.6.1 and OpenSSL 3.6.2 [7 Apr 2026]
+
+OpenSSL 3.6.2 is a security patch release. The most severe CVE fixed in this
+release is Moderate.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed incorrect failure handling in RSA KEM RSASVE encapsulation.
+    ([CVE-2026-31790])
+
+  * Fixed loss of key agreement group tuple structure when the `DEFAULT` keyword
+    is used in the server-side configuration of the key-agreement group list.
+    ([CVE-2026-2673])
+
+  * Fixed out-of-bounds read in AES-CFB-128 on x86-64 CPUs with AVX-512 support.
+    ([CVE-2026-28386])
+
+  * Fixed potential use-after-free in DANE client code.
+    ([CVE-2026-28387])
+
+  * Fixed NULL pointer dereference when processing a delta CRL.
+    ([CVE-2026-28388])
+
+  * Fixed possible NULL dereference when processing CMS KeyAgreeRecipientInfo.
+    ([CVE-2026-28389])
+
+  * Fixed possible NULL dereference when processing CMS
+    KeyTransportRecipientInfo.
+    ([CVE-2026-28390])
+
+  * Fixed heap buffer overflow in hexadecimal conversion.
+    ([CVE-2026-31789])
+
 ### Major changes between OpenSSL 3.6.0 and OpenSSL 3.6.1 [27 Jan 2026]
 
 OpenSSL 3.6.1 is a security patch release. The most severe CVE fixed in this
@@ -172,7 +210,7 @@ This release incorporates the following bug fixes and mitigations:
   * Fixed a regression in handling stapled OCSP responses causing handshake
     failures for OpenSSL 3.6.0 servers with various client implementations.
 
-### Major changes between OpenSSL 3.5 and OpenSSL 3.6 [under development]
+### Major changes between OpenSSL 3.5 and OpenSSL 3.6.0 [1 Oct 2025]
 
 OpenSSL 3.6.0 is a feature release adding significant new functionality
 to OpenSSL.
@@ -2315,8 +2353,16 @@ OpenSSL 0.9.x
 [CVE-2025-69419]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-69419
 [CVE-2025-69420]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-69420
 [CVE-2025-69421]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-69421
+[CVE-2026-2673]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-2673
 [CVE-2026-22795]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-22795
 [CVE-2026-22796]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-22796
+[CVE-2026-28386]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-28386
+[CVE-2026-28387]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-28387
+[CVE-2026-28388]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-28388
+[CVE-2026-28389]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-28389
+[CVE-2026-28390]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-28390
+[CVE-2026-31789]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-31789
+[CVE-2026-31790]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-31790
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [OpenSSL Guide]: https://docs.openssl.org/master/man7/ossl-guide-introduction
 [README-QUIC.md]: ./README-QUIC.md

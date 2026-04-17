@@ -197,7 +197,7 @@ const OPTIONS x509_options[] = {
         "[CC]YYMMDDHHMMSSZ value for notBefore certificate field" },
     { "not_after", OPT_NOT_AFTER, 's',
         "[CC]YYMMDDHHMMSSZ value for notAfter certificate field, overrides -days" },
-    { "days", OPT_DAYS, 'n',
+    { "days", OPT_DAYS, 'p',
         "Number of days until newly generated certificate expires - default 30" },
     { "preserve_dates", OPT_PRESERVE_DATES, '-',
         "Preserve existing validity dates" },
@@ -492,7 +492,7 @@ int x509_main(int argc, char **argv)
             not_after = opt_arg();
             break;
         case OPT_DAYS:
-            days = atoi(opt_arg());
+            days = opt_int_arg();
             if (days <= UNSET_DAYS) {
                 BIO_printf(bio_err, "%s: -days parameter arg must be >= -1\n",
                     prog);

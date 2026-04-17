@@ -9699,6 +9699,17 @@ static int cert_cb(SSL *s, void *arg)
         int rv;
 
         chain = sk_X509_new_null();
+#ifndef OPENSSL_NO_ML_DSA
+        if (SSL_version(s) >= TLS1_3_VERSION
+            && fips_provider_version_ge(libctx, 3, 5, 0)) {
+            if (!TEST_ptr(chain)
+                || !TEST_true(load_chain("root-ml-dsa-44-cert.pem", NULL, NULL, chain))
+                || !TEST_true(load_chain("server-ml-dsa-44-cert.pem", NULL, &x509, NULL))
+                || !TEST_true(load_chain("server-ml-dsa-44-key.pem", &pkey, NULL, NULL)))
+                goto out;
+            goto check;
+        }
+#endif
         if (!TEST_ptr(chain)
             || !TEST_true(load_chain("ca-cert.pem", NULL, NULL, chain))
             || !TEST_true(load_chain("root-cert.pem", NULL, NULL, chain))
@@ -9707,6 +9718,10 @@ static int cert_cb(SSL *s, void *arg)
             || !TEST_true(load_chain("p256-ee-rsa-ca-key.pem", &pkey,
                 NULL, NULL)))
             goto out;
+
+#ifndef OPENSSL_NO_ML_DSA
+    check:
+#endif
         rv = SSL_check_chain(s, x509, pkey, chain);
         /*
          * If the cert doesn't show as valid here (e.g., because we don't
@@ -9749,7 +9764,7 @@ static int test_cert_cb_int(int prot, int tst)
     int testresult = 0, ret;
 
 #ifdef OPENSSL_NO_EC
-    /* We use an EC cert in these tests, so we skip in a no-ec build */
+    /* We use an EC cert in these tests with TLS 1.2 or absent ML-DSA */
     if (tst >= 3)
         return 1;
 #endif
@@ -9780,21 +9795,34 @@ static int test_cert_cb_int(int prot, int tst)
             NULL, NULL)))
         goto end;
 
-    if (tst == 4) {
+    if (tst == 3) {
+        if (!TEST_true(SSL_set1_sigalgs_list(clientssl,
+                "rsa_pss_rsae_sha256:rsa_pkcs1_sha256:"
+                "?ecdsa_secp256r1_sha256:?mldsa44"))
+            || !TEST_true(SSL_set1_sigalgs_list(serverssl,
+                "rsa_pss_rsae_sha256:rsa_pkcs1_sha256:"
+                "?ecdsa_secp256r1_sha256:?mldsa44")))
+            goto end;
+    } else if (tst == 4) {
         /*
          * We cause SSL_check_chain() to fail by specifying sig_algs that
-         * the chain doesn't meet (the root uses an RSA cert)
+         * the chain doesn't meet (root either RSA or ML-DSA).
          */
         if (!TEST_true(SSL_set1_sigalgs_list(clientssl,
-                "ecdsa_secp256r1_sha256")))
+                "ecdsa_secp256r1_sha256"))
+            || !TEST_true(SSL_set1_sigalgs_list(serverssl,
+                "?ecdsa_secp256r1_sha256:?mldsa44")))
             goto end;
     } else if (tst == 5) {
         /*
          * We cause SSL_check_chain() to fail by specifying sig_algs that
-         * the ee cert doesn't meet (the ee uses an ECDSA cert)
+         * the ee cert doesn't meet (the ee uses an ECDSA or ML-DSA cert)
          */
         if (!TEST_true(SSL_set1_sigalgs_list(clientssl,
-                "rsa_pss_rsae_sha256:rsa_pkcs1_sha256")))
+                "rsa_pss_rsae_sha256:rsa_pkcs1_sha256"))
+            || !TEST_true(SSL_set1_sigalgs_list(serverssl,
+                "rsa_pss_rsae_sha256:rsa_pkcs1_sha256:"
+                "?ecdsa_secp256r1_sha256:?mldsa44")))
             goto end;
     }
 
@@ -11169,11 +11197,13 @@ static int secret_cb(SSL *s, void *secretin, int *secret_len,
 /*
  * Test the session_secret_cb which is designed for use with EAP-FAST
  */
-static int test_session_secret_cb(void)
+static int test_session_secret_cb(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
-    SSL_SESSION *secret_sess = NULL;
+    SSL_SESSION *secret_sess = NULL, *server_sess = NULL;
+    unsigned int sess_len;
+    const unsigned char *sessid;
     int testresult = 0;
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
@@ -11207,12 +11237,20 @@ static int test_session_secret_cb(void)
             NULL, NULL)))
         goto end;
 
-    /*
-     * No session ids for EAP-FAST - otherwise the state machine gets very
-     * confused.
-     */
-    if (!TEST_true(SSL_SESSION_set1_id(secret_sess, NULL, 0)))
-        goto end;
+    if (idx == 0) {
+        /*
+         * Normal case: no session id
+         */
+        if (!TEST_true(SSL_SESSION_set1_id(secret_sess, NULL, 0)))
+            goto end;
+    } else {
+        /*
+         * Set an explicit session id. Normally we don't support this, but we
+         * can get away with it if we reset the session id later
+         */
+        if (!TEST_true(SSL_SESSION_set1_id(secret_sess, (unsigned char *)"sessionid", 9)))
+            goto end;
+    }
 
     if (!TEST_true(SSL_set_min_proto_version(clientssl, TLS1_2_VERSION))
         || !TEST_true(SSL_set_max_proto_version(serverssl, TLS1_2_VERSION))
@@ -11223,13 +11261,39 @@ static int test_session_secret_cb(void)
         || !TEST_true(SSL_set_session(clientssl, secret_sess)))
         goto end;
 
+    if (idx == 1) {
+        /*
+         * We just send the ClientHello here. We expect this to fail with
+         * SSL_ERROR_WANT_READ
+         */
+        if (!TEST_int_le(SSL_connect(clientssl), 0))
+            goto end;
+        /* Reset the session id to avoid confusing the state machine */
+        if (!TEST_true(SSL_SESSION_set1_id(secret_sess, NULL, 0)))
+            goto end;
+    }
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
         goto end;
 
+    /* Check that session resumption was successful */
+    if (!TEST_true(SSL_session_reused(clientssl))
+        || !TEST_true(SSL_session_reused(serverssl)))
+        goto end;
+
+    if (idx == 1) {
+        server_sess = SSL_get1_session(serverssl);
+        if (!TEST_ptr(server_sess))
+            goto end;
+        sessid = SSL_SESSION_get_id(server_sess, &sess_len);
+
+        if (!TEST_mem_eq(sessid, sess_len, "sessionid", 9))
+            goto end;
+    }
     testresult = 1;
 
 end:
     SSL_SESSION_free(secret_sess);
+    SSL_SESSION_free(server_sess);
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
@@ -14882,7 +14946,7 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_ssl_dup);
-    ADD_TEST(test_session_secret_cb);
+    ADD_ALL_TESTS(test_session_secret_cb, 2);
 #ifndef OPENSSL_NO_DH
     ADD_ALL_TESTS(test_set_tmp_dh, 11);
     ADD_ALL_TESTS(test_dh_auto, 7);

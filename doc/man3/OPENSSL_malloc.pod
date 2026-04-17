@@ -13,7 +13,7 @@ CRYPTO_malloc_array, CRYPTO_aligned_alloc_array, CRYPTO_calloc,
 CRYPTO_realloc, CRYPTO_realloc_array, CRYPTO_free,
 OPENSSL_strdup, OPENSSL_strndup,
 OPENSSL_memdup, OPENSSL_strlcpy, OPENSSL_strlcat, OPENSSL_strtoul,
-CRYPTO_strdup, CRYPTO_strndup,
+CRYPTO_strdup, CRYPTO_strndup, CRYPTO_memdup,
 OPENSSL_mem_debug_push, OPENSSL_mem_debug_pop,
 CRYPTO_mem_debug_push, CRYPTO_mem_debug_pop,
 CRYPTO_clear_realloc, CRYPTO_clear_realloc_array, CRYPTO_clear_free,
@@ -69,6 +69,7 @@ OPENSSL_MALLOC_SEED
  void CRYPTO_free(void *str, const char *file, int line);
  char *CRYPTO_strdup(const char *p, const char *file, int line);
  char *CRYPTO_strndup(const char *p, size_t num, const char *file, int line);
+ void *CRYPTO_memdup(void *data, size_t s, const char *file, int line);
  void *CRYPTO_clear_realloc(void *p, size_t old_len, size_t num,
                             const char *file, int line);
  void *CRYPTO_clear_realloc_array(void *p, size_t old_len, size_t num,
@@ -238,14 +239,16 @@ OPENSSL_malloc(), OPENSSL_aligned_alloc(), OPENSSL_zalloc(), OPENSSL_realloc(),
 OPENSSL_malloc_array(), OPENSSL_aligned_alloc_array(), OPENSSL_calloc(),
 OPENSSL_realloc_array(),
 OPENSSL_clear_realloc(), OPENSSL_clear_realloc_array(),
-CRYPTO_malloc(), CRYPTO_zalloc(), CRYPTO_realloc(),
-CRYPTO_malloc_array(), CRYPTO_calloc(), CRYPTO_realloc_array(),
+OPENSSL_strdup(), OPENSSL_strndup(), OPENSSL_memdup(),
+CRYPTO_malloc(), CRYPTO_aligned_alloc(), CRYPTO_zalloc(), CRYPTO_realloc(),
+CRYPTO_malloc_array(), CRYPTO_aligned_alloc_array(), CRYPTO_calloc(),
+CRYPTO_realloc_array(),
 CRYPTO_clear_realloc(), CRYPTO_clear_realloc_array(),
-OPENSSL_strdup(), and OPENSSL_strndup()
+CRYPTO_strdup(), CRYPTO_strndup(), and CRYPTO_memdup()
 return a pointer to allocated memory or NULL on error.
 
-OPENSSL_aligned_alloc() and OPENSSL_aligned_alloc_array() set B<freeptr>
-to NULL on error.
+OPENSSL_aligned_alloc(), OPENSSL_aligned_alloc_array(), CRYPTO_aligned_alloc(),
+and CRYPTO_aligned_alloc_array() set B<freeptr> to NULL on error.
 
 CRYPTO_set_mem_functions() returns 1 on success or 0 on failure (almost
 always because allocations have already happened).

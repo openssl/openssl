@@ -319,7 +319,7 @@ int ocsp_main(int argc, char **argv)
             break;
         case OPT_TIMEOUT:
 #ifndef OPENSSL_NO_SOCK
-            req_timeout = atoi(opt_arg());
+            req_timeout = opt_int_arg();
 #endif
             break;
         case OPT_URL:
@@ -515,7 +515,7 @@ int ocsp_main(int argc, char **argv)
             accept_count = opt_int_arg();
             break;
         case OPT_NDAYS:
-            ndays = atoi(opt_arg());
+            ndays = opt_int_arg();
             break;
         case OPT_RSIGNER:
             rsignfile = opt_arg();
@@ -567,7 +567,7 @@ int ocsp_main(int argc, char **argv)
             break;
         case OPT_MULTI:
 #ifdef HTTP_DAEMON
-            n_responders = atoi(opt_arg());
+            n_responders = opt_int_arg();
 #endif
             break;
         case OPT_PROV_CASES:

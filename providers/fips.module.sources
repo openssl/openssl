@@ -257,6 +257,7 @@ crypto/lhash/lhash_local.h
 crypto/loongarch64cpuid.pl
 crypto/loongarchcap.c
 crypto/mem_clr.c
+crypto/ml_dsa/asm/ml_dsa_ntt-x86_64.pl
 crypto/ml_dsa/ml_dsa_encoders.c
 crypto/ml_dsa/ml_dsa_hash.h
 crypto/ml_dsa/ml_dsa_key.c
@@ -634,10 +635,9 @@ providers/common/securitycheck.c
 providers/common/securitycheck_fips.c
 providers/fips/fips_entry.c
 providers/fips/fipsindicator.c
+providers/fips/fipsparams.inc.in
 providers/fips/fipsprov.c
 providers/fips/include/fips/fipsindicator.h
-providers/fips/include/fips_indicator_params.inc
-providers/fips/include/fips_selftest_params.inc
 providers/fips/include/fipscommon.h
 providers/fips/self_test.c
 providers/fips/self_test.h

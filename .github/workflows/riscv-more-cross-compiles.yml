@@ -52,6 +52,9 @@ jobs:
         #   opensslcaps: optional; if opensslcapsname (see above) is set, then
         #                this string will be used as content for the OpenSSL
         #                capabilities variable.
+        #   capscheck: optional; ERE pattern passed to grep -E to assert that
+        #              "openssl info -cpusettings" output contains expected
+        #              capabilities when using the hwprobe detection path.
         #   ppa:   Launchpad PPA repository to download packages from.
         platform: [
           # Scalar Crypto
@@ -202,6 +205,35 @@ jobs:
             qemucpu: "rv64,zbb=true,zbkb=true,zknh=true,zksh=true",
             opensslcapsname: riscvcap, # OPENSSL_riscvcap
             opensslcaps: "rv64gc_inlineasm" # for uploading artifact
+          }, {
+            # hwprobe path: RV64GC without V, no OPENSSL_riscvcap override.
+            # Forces the hwprobe_to_cap() code path (skipped when OPENSSL_riscvcap is set).
+            # V is absent so AT_HWCAP V bit is clear (VECTOR_CAPABLE=false).
+            # The rv64 CPU model includes ZBB/ZBC/ZBS/ZBKB by default.
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,zbb=true,zbc=true,zbs=true,zbkb=true,v=false",
+            # No opensslcapsname: hwprobe is used for capability detection.
+            opensslcaps: "rv64gc_novector_hwprobe",
+            # ZBB must be detected
+            capscheck: "_ZBB",
+          }, {
+            # hwprobe path: RV64GC + V + ZVKNED (vlen=128), no OPENSSL_riscvcap override.
+            # Forces the hwprobe_to_cap() code path (skipped when OPENSSL_riscvcap is set).
+            # V is present so AT_HWCAP V bit is set (VECTOR_CAPABLE=true).
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,v=true,vlen=128,zvkned=true",
+            # No opensslcapsname: hwprobe is used for capability detection.
+            opensslcaps: "rv64gc_v_zvkned_hwprobe",
+            # V must be detected. ZVKNED is not reported by QEMU 8.2.2 (ubuntu-latest)
+            # via hwprobe despite being set in QEMU_CPU; tighten once CI moves to a
+            # newer QEMU that reports all Zvk* extensions via hwprobe.
+            capscheck: "_V",
           }
         ]
     runs-on: ubuntu-latest
@@ -259,6 +291,13 @@ jobs:
     - name: get openssl cpu info
       if: matrix.platform.tests != 'none'
       run: QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }} ./util/opensslwrap.sh info -cpusettings
+
+    - name: check detected capabilities
+      if: matrix.platform.capscheck != ''
+      run: |
+        QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }} \
+          ./util/opensslwrap.sh info -cpusettings | \
+          grep -qE "${{ matrix.platform.capscheck }}"
 
     - name: make all tests
       if: github.event_name == 'push' && matrix.platform.tests == ''

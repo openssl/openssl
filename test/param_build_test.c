@@ -117,7 +117,11 @@ static int template_public_test(int tstid)
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, "negativebignumber", nbn))
         || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(bld, "utf8_s", "foo",
             sizeof("foo")))
+        || !TEST_true(OSSL_PARAM_BLD_push_octet_string(bld, "octet_s", NULL,
+            0))
         || !TEST_true(OSSL_PARAM_BLD_push_utf8_ptr(bld, "utf8_p", "bar-boom",
+            0))
+        || !TEST_true(OSSL_PARAM_BLD_push_octet_ptr(bld, "octet_p", NULL,
             0))
         || !TEST_true(OSSL_PARAM_BLD_push_int(bld, "i", -6))
         || !TEST_ptr(params_blt = OSSL_PARAM_BLD_to_param(bld)))
@@ -189,10 +193,16 @@ static int template_public_test(int tstid)
         || !TEST_str_eq(p->data, "foo")
         || !TEST_true(OSSL_PARAM_get_utf8_string(p, &utf, 0))
         || !TEST_str_eq(utf, "foo")
+        /* Check NULL octet string */
+        || !TEST_ptr(p = OSSL_PARAM_locate(params, "octet_s"))
+        || !TEST_size_t_eq(p->data_size, 0)
         /* Check UTF8 pointer */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "utf8_p"))
         || !TEST_true(OSSL_PARAM_get_utf8_ptr(p, &cutf))
         || !TEST_str_eq(cutf, "bar-boom")
+        /* Check NULL octet ptr */
+        || !TEST_ptr(p = OSSL_PARAM_locate(params, "octet_p"))
+        || !TEST_size_t_eq(p->data_size, 0)
         /* Check BN (zero BN becomes unsigned integer) */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "zeronumber"))
         || !TEST_str_eq(p->key, "zeronumber")

@@ -19,5 +19,6 @@ system_default = ssl_default_sect
 
 [ssl_default_sect]
 SignatureAlgorithms = RSA+SHA256:nonex
+Ciphersuites = INVALID_CIPHERSUITE
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2

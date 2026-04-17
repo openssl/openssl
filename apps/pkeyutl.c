@@ -266,7 +266,7 @@ int pkeyutl_main(int argc, char **argv)
             kdfalg = opt_arg();
             break;
         case OPT_KDFLEN:
-            kdflen = atoi(opt_arg());
+            kdflen = opt_int_arg();
             break;
         case OPT_REV:
             rev = 1;

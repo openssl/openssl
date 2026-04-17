@@ -299,8 +299,8 @@ DEF_SCRIPT(check_cwm, "check stream obeys cwm")
  * ============================================================================
  */
 static SCRIPT_INFO *const scripts[] = {
-    USE(simple_conn)
-        USE(simple_thread)
-            USE(ssl_poll)
-                USE(check_cwm)
+    USE(simple_conn),
+    USE(simple_thread),
+    USE(ssl_poll),
+    USE(check_cwm)
 };

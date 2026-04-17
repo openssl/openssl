@@ -21,6 +21,7 @@
 
 #define MAX_SUPPORTED_GROUPS 128
 #define MAX_KEY_SHARES 16
+#define MAX_PRE_SHARED_KEYS 16
 
 /*
  * 2 bytes for packet length, 2 bytes for format version, 2 bytes for
@@ -345,6 +346,15 @@ int tls_parse_ctos_status_request(SSL_CONNECTION *s, PACKET *pkt,
 
     /* Not defined if we get one of these in a client Certificate */
     if (x != NULL)
+        return 1;
+
+    /*
+     * We only care about this extension if the application
+     * registered a callback. Otherwise, there is nothing to
+     * tell us that a response is needed.
+     */
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    if (sctx == NULL || sctx->ext.status_cb == NULL)
         return 1;
 
     if (!PACKET_get_1(pkt, (unsigned int *)&s->ext.status_type)) {
@@ -1332,7 +1342,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
 
     s->ext.ticket_expected = 0;
-    for (id = 0; PACKET_remaining(&identities) != 0; id++) {
+    for (id = 0; PACKET_remaining(&identities) != 0 && id < MAX_PRE_SHARED_KEYS; id++) {
         PACKET identity;
         unsigned long ticket_agel;
         size_t idlen;
@@ -1503,7 +1513,12 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             SSL_SESSION_free(sess);
             sess = NULL;
             s->ext.early_data_ok = 0;
-            s->ext.ticket_expected = 0;
+            /*
+             * We fall back to a full handshake. The new session ticket will be
+             * issued to the client with the newly negotiated ciphersuite,
+             * allowing successful resumption on future connections.
+             */
+            s->ext.ticket_expected = 1;
             continue;
         }
         break;
@@ -2465,7 +2480,7 @@ int tls_parse_ctos_ech(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
     if (s->ext.ech.attempted_type != TLSEXT_TYPE_ech) {
         /* if/when new versions of ECH are added we'll update here */
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
         return 0;
     }
     /*
@@ -2473,13 +2488,17 @@ int tls_parse_ctos_ech(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
      * and only if we decrypted ok or are a backend
      */
     if (PACKET_get_1(pkt, &echtype) != 1
-        || echtype != OSSL_ECH_INNER_CH_TYPE
         || PACKET_remaining(pkt) != 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
     }
+    if (echtype != OSSL_ECH_INNER_CH_TYPE) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    s->ext.ech.inner_ech_seen_ok = 1;
     if (s->ext.ech.success != 1 && s->ext.ech.backend != 1) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
         return 0;
     }
     /* yay - we're ok with this */

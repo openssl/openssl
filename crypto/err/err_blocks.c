@@ -15,7 +15,7 @@ void ERR_new(void)
 {
     ERR_STATE *es;
 
-    es = ossl_err_get_state_int();
+    es = ossl_err_get_state_int(1);
     if (es == NULL)
         return;
 
@@ -28,7 +28,7 @@ void ERR_set_debug(const char *file, int line, const char *func)
 {
     ERR_STATE *es;
 
-    es = ossl_err_get_state_int();
+    es = ossl_err_get_state_int(1);
     if (es == NULL)
         return;
 
@@ -52,7 +52,7 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
     unsigned long flags = 0;
     size_t i;
 
-    es = ossl_err_get_state_int();
+    es = ossl_err_get_state_int(1);
     if (es == NULL)
         return;
     i = es->top;

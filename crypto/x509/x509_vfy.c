@@ -1620,6 +1620,8 @@ static int check_delta_base(X509_CRL *delta, X509_CRL *base)
     if (ASN1_INTEGER_cmp(delta->base_crl_number, base->crl_number) > 0)
         return 0;
     /* Delta CRL number must exceed full CRL number */
+    if (delta->crl_number == NULL)
+        return 0;
     return ASN1_INTEGER_cmp(delta->crl_number, base->crl_number) > 0;
 }
 

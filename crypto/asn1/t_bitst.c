@@ -19,7 +19,8 @@ int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
     char first = 1;
     int last_seen_bit = -1;
 
-    BIO_printf(out, "%*s", indent, "");
+    if (BIO_printf(out, "%*s", indent, "") < 0)
+        return 0;
     for (bnam = tbl; bnam->lname; bnam++) {
         /*
          * Skip duplicate entries for the same bit in the BIT_STRING_BITNAME
@@ -32,12 +33,15 @@ int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
 
         if (ASN1_BIT_STRING_get_bit(bs, bnam->bitnum)) {
             if (!first)
-                BIO_puts(out, ", ");
-            BIO_puts(out, bnam->lname);
+                if (BIO_puts(out, ", ") < 1)
+                    return 0;
+            if (BIO_puts(out, bnam->lname) < 1)
+                return 0;
             first = 0;
         }
     }
-    BIO_puts(out, "\n");
+    if (BIO_puts(out, "\n") < 1)
+        return 0;
     return 1;
 }
 

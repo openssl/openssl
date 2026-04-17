@@ -456,6 +456,58 @@ static __owur int sample_scalar(scalar *out, EVP_MD_CTX *mdctx)
     return 1;
 }
 
+static CRYPTO_ONCE ml_kem_ntt_once = CRYPTO_ONCE_STATIC_INIT;
+
+#if defined(_ARCH_PPC64)
+#include "crypto/ppc_arch.h"
+#endif
+
+#if defined(MLKEM_NTT_PPC_ASM) && defined(_ARCH_PPC64)
+/*
+ * PPC64LE Platform supports.
+ */
+typedef void (*ml_kem_scalar_ntt_fn)(scalar *p);
+typedef void (*ml_kem_scalar_inverse_ntt_fn)(scalar *p);
+
+static void scalar_ntt_generic(scalar *p);
+static void scalar_inverse_ntt_generic(scalar *p);
+
+static ml_kem_scalar_ntt_fn scalar_ntt = scalar_ntt_generic;
+static ml_kem_scalar_inverse_ntt_fn scalar_inverse_ntt = scalar_inverse_ntt_generic;
+
+void mlkem_ntt_ppc(uint16_t *c);
+void mlkem_inverse_ntt_ppc(uint16_t *c);
+
+static void scalar_ntt_ppc(scalar *s)
+{
+    mlkem_ntt_ppc(s->c);
+}
+
+static void scalar_inverse_ntt_ppc(scalar *s)
+{
+    mlkem_inverse_ntt_ppc(s->c);
+}
+#else
+#define scalar_ntt_generic scalar_ntt
+#define scalar_inverse_ntt_generic scalar_inverse_ntt
+#endif
+
+/*
+ * Initialize NTT function pointers to PPC64le implementations if available.
+ * Scalar implementations are used by default.
+ */
+static void ml_kem_ntt_init(void)
+{
+#if defined(MLKEM_NTT_PPC_ASM) && defined(_ARCH_PPC64)
+#if defined(__LITTLE_ENDIAN__) || (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+    if (OPENSSL_ppccap_P & PPC_CRYPTO207) {
+        scalar_ntt = scalar_ntt_ppc;
+        scalar_inverse_ntt = scalar_inverse_ntt_ppc;
+    }
+#endif
+#endif
+}
+
 /*-
  * reduce_once reduces 0 <= x < 2*kPrime, mod kPrime.
  *
@@ -506,7 +558,7 @@ static void scalar_mult_const(scalar *s, uint16_t a)
  * elements in GF(3329^2), with the coefficients of the elements being
  * consecutive entries in |s->c|.
  */
-static void scalar_ntt(scalar *s)
+static void scalar_ntt_generic(scalar *s)
 {
     const uint16_t *roots = kNTTRoots;
     uint16_t *end = s->c + DEGREE;
@@ -538,7 +590,7 @@ static void scalar_ntt(scalar *s)
  * iFFT to account for the fact that 3329 does not have a 512th root of unity,
  * using the precomputed 128 roots of unity stored in InverseNTTRoots.
  */
-static void scalar_inverse_ntt(scalar *s)
+static void scalar_inverse_ntt_generic(scalar *s)
 {
     const uint16_t *roots = kInverseNTTRoots;
     uint16_t *end = s->c + DEGREE;
@@ -1616,6 +1668,8 @@ void ossl_ml_kem_key_reset(ML_KEM_KEY *key)
 /* Retrieve the parameters of one of the ML-KEM variants */
 const ML_KEM_VINFO *ossl_ml_kem_get_vinfo(int evp_type)
 {
+    (void)CRYPTO_THREAD_run_once(&ml_kem_ntt_once, ml_kem_ntt_init);
+
     switch (evp_type) {
     case EVP_PKEY_ML_KEM_512:
         return &vinfo_map[ML_KEM_512_VINFO];

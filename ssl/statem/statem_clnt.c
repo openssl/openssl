@@ -1489,7 +1489,14 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pk
 #ifndef OPENSSL_NO_ECH
     /* same session ID is used for inner/outer when doing ECH */
     if (s->ext.ech.es != NULL) {
-        sess_id_len = sizeof(s->tmp_session_id);
+        if (s->version != TLS1_3_VERSION) {
+            SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_R_UNSUPPORTED_SSL_VERSION);
+            return CON_FUNC_ERROR;
+        }
+        if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
+            sess_id_len = sizeof(s->tmp_session_id);
+        else
+            sess_id_len = 0;
     } else {
 #endif
         if (s->new_session || s->session->ssl_version == TLS1_3_VERSION) {
@@ -1862,8 +1869,6 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
             OSSL_TRACE_END(TLS);
             s->ext.ech.success = 1;
         }
-        /* we're done with that hrrsignal (if we got one) */
-        s->ext.ech.hrrsignal_p = NULL;
         if (!hrr && s->ext.ech.success == 1) {
             if (ossl_ech_swaperoo(s) != 1
                 || ossl_ech_intbuf_fetch(s, &abuf, &alen) != 1
@@ -1871,12 +1876,25 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-        } else if (!hrr) {
+        } else if (hrr == 1 && s->ext.ech.success == 1) {
+            OSSL_TRACE(TLS, "ECH HRR accept ok, continuing.\n");
             /*
              * If we got retry_configs then we should be validating
              * the outer CH, so we better set the hostname for the
              * connection accordingly.
              */
+        } else if (!hrr && s->ext.ech.success == 0
+            && s->ext.ech.hrrsignal_p != NULL) {
+            /*
+             * we previously saw a good HRR ECH acceptance but now
+             * the SH.random ECH acceptance signal is bad so that's an
+             * illegal protocol error
+             */
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_ECH_REQUIRED);
+            goto err;
+        } else {
+            OSSL_TRACE1(TLS, "ECH falling back to public_name: %s\n",
+                s->ext.ech.outer_hostname != NULL ? s->ext.ech.outer_hostname : "NONE");
             s->ext.ech.former_inner = s->ext.hostname;
             s->ext.hostname = NULL;
             if (s->ext.ech.outer_hostname != NULL) {
@@ -3070,7 +3088,6 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
     unsigned int sess_len;
     RAW_EXTENSION *exts = NULL;
     PACKET nonce;
-    EVP_MD *sha256 = NULL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     PACKET_null_init(&nonce);
@@ -3180,25 +3197,16 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
      * We choose the former approach because this fits in with assumptions
      * elsewhere in OpenSSL. The session ID is set to the SHA256 hash of the
      * ticket.
-     */
-    sha256 = EVP_MD_fetch(sctx->libctx, "SHA2-256", sctx->propq);
-    if (sha256 == NULL) {
-        /* Error is already recorded */
-        SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
-        goto err;
-    }
-    /*
+     *
      * We use sess_len here because EVP_Digest expects an int
      * but s->session->session_id_length is a size_t
      */
     if (!EVP_Digest(s->session->ext.tick, ticklen,
             s->session->session_id, &sess_len,
-            sha256, NULL)) {
+            sctx->sha256, NULL)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
-    EVP_MD_free(sha256);
-    sha256 = NULL;
     s->session->session_id_length = sess_len;
     s->session->not_resumable = 0;
 
@@ -3237,7 +3245,6 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
 
     return MSG_PROCESS_CONTINUE_READING;
 err:
-    EVP_MD_free(sha256);
     OPENSSL_free(exts);
     return MSG_PROCESS_ERROR;
 }

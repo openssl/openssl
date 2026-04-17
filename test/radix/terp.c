@@ -858,4 +858,4 @@ err:
 }
 
 #define SCRIPT(name) (&script_info_##name)
-#define USE(name) SCRIPT(name),
+#define USE(name) SCRIPT(name)

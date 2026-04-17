@@ -103,10 +103,9 @@ static const PROV_GCM_HW rv64i_zvkb_zvkg_zvkned_gcm = {
 };
 
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits) {
-    if (RISCV_HAS_ZVKNED()) {
-      if (RISCV_HAS_ZVKB() && RISCV_HAS_ZVKG() && riscv_vlen() >= 128) {
+    if (RISCV_HAS_ZVKNED() && riscv_vlen() >= 128) {
+      if (RISCV_HAS_ZVKB() && RISCV_HAS_ZVKG())
         return &rv64i_zvkb_zvkg_zvkned_gcm;
-      }
       return &rv64i_zvkned_gcm;
     }
 

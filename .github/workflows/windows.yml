@@ -41,6 +41,8 @@ jobs:
       run: |
         choco install nasm ${{ matrix.platform.arch == 'x86' && '--x86' || '' }}
         "C:\Program Files${{ matrix.platform.arch == 'x86' && ' (x86)' || '' }}\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+    - name: install jom
+      run: choco install jom
     - name: prepare the build directory
       run: mkdir _build
     - name: config
@@ -55,7 +57,7 @@ jobs:
       shell: cmd
       run: |
         call "${{ matrix.platform.vcvars }}"
-        nmake /S
+        jom /j4 /S
     - name: download coreinfo
       run: |
         mkdir _build\coreinfo
@@ -93,7 +95,7 @@ jobs:
       shell: cmd
       run: |
         call "${{ matrix.platform.vcvars }}"
-        nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
+        jom test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
     - name: install
       # Run on 64 bit only as 32 bit is slow enough already
       if: ${{ matrix.platform.arch == 'amd64' }}
@@ -102,7 +104,7 @@ jobs:
       run: |
         call "${{ matrix.platform.vcvars }}"
         mkdir _dest
-        nmake install DESTDIR=_dest
+        jom /j4 install DESTDIR=_dest
 
   plain:
     runs-on: windows-2022
@@ -114,6 +116,8 @@ jobs:
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: prepare the build directory
       run: mkdir _build
+    - name: install jom
+      run:  choco install jom
     - name: config
       working-directory: _build
       shell: cmd
@@ -126,7 +130,7 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-        nmake /S
+        jom /j4 /S
     - name: download coreinfo
       run: |
         mkdir _build\coreinfo
@@ -155,6 +159,8 @@ jobs:
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: prepare the build directory
       run: mkdir _build
+    - name: install jom
+      run:  choco install jom
     - name: config
       working-directory: _build
       shell: cmd
@@ -167,7 +173,7 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-        nmake
+        jom /j4 /S
     - name: download coreinfo
       run: |
         mkdir _build\coreinfo
@@ -184,7 +190,7 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-        nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
+        jom test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
 
   cygwin:
     # Run a job for each of the specified target architectures:

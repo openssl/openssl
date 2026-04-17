@@ -999,7 +999,7 @@ void X509_PUBKEY_set0_public_key(X509_PUBKEY *pub,
     unsigned char *penc, int penclen)
 {
     ASN1_STRING_set0(pub->public_key, penc, penclen);
-    ossl_asn1_string_set_bits_left(pub->public_key, 0);
+    ossl_asn1_bit_string_set_unused_bits(pub->public_key, 0);
 }
 
 int X509_PUBKEY_set0_param(X509_PUBKEY *pub, ASN1_OBJECT *aobj,

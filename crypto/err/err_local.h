@@ -112,6 +112,6 @@ static ossl_inline void err_clear(ERR_STATE *es, size_t i, int deall)
     es->err_func[i] = NULL;
 }
 
-ERR_STATE *ossl_err_get_state_int(void);
+ERR_STATE *ossl_err_get_state_int(int save_sys_error);
 void ossl_err_string_int(unsigned long e, const char *func,
     char *buf, size_t len);

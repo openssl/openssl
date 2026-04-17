@@ -46,11 +46,14 @@ jobs:
           else
           MATRIX=$(cat << EOF
           [{
+              "branch": "master",
+              "extra_config": "enable-fips enable-tfo enable-lms enable-crypto-mdebug enable-allocfail-tests"
+            }, {
               "branch": "openssl-4.0",
-              "extra_config": "no-afalgeng enable-fips enable-tfo"
+              "extra_config": "enable-fips enable-tfo enable-lms enable-crypto-mdebug enable-allocfail-tests"
             },{
               "branch": "openssl-3.6",
-              "extra_config": "no-afalgeng enable-fips enable-tfo"
+              "extra_config": "no-afalgeng enable-fips enable-tfo enable-lms"
             },{
               "branch": "openssl-3.5",
               "extra_config": "no-afalgeng enable-fips enable-tfo"
@@ -58,20 +61,8 @@ jobs:
               "branch": "openssl-3.4",
               "extra_config": "no-afalgeng enable-fips enable-tfo"
             }, {
-              "branch": "openssl-3.3",
-              "extra_config": "no-afalgeng enable-fips enable-tfo"
-            }, {
-              "branch": "openssl-3.2",
-              "extra_config": "no-afalgeng enable-fips enable-tfo"
-            }, {
-              "branch": "openssl-3.1",
-              "extra_config": "no-afalgeng enable-fips"
-            }, {
               "branch": "openssl-3.0",
               "extra_config": "no-afalgeng enable-fips"
-            }, {
-              "branch": "master",
-              "extra_config": "enable-fips enable-tfo enable-lms enable-crypto-mdebug enable-allocfail-tests"
           }]
           EOF
           )

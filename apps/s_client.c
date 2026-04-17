@@ -684,7 +684,7 @@ const OPTIONS s_client_options[] = {
     { "key", OPT_KEY, 's', "Private key file to use; default: -cert file" },
     { "keyform", OPT_KEYFORM, 'f', "Key format (DER/PEM)" },
     { "pass", OPT_PASS, 's', "Private key and cert file pass phrase source" },
-    { "verify", OPT_VERIFY, 'p', "Turn on peer certificate verification" },
+    { "verify", OPT_VERIFY, 'p', "Turn on peer certificate verification, set depth" },
     { "nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options" },
     { "CApath", OPT_CAPATH, '/', "PEM format directory of CA's" },
     { "CAfile", OPT_CAFILE, '<', "PEM format file of CA's" },
@@ -1221,7 +1221,7 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_VERIFY:
             verify = SSL_VERIFY_PEER;
-            verify_args.depth = atoi(opt_arg());
+            verify_args.depth = opt_int_arg();
             if (!c_quiet)
                 BIO_printf(bio_err, "verify depth is %d\n", verify_args.depth);
             break;
@@ -1402,7 +1402,7 @@ int s_client_main(int argc, char **argv)
                 min_version = TLS1_VERSION;
             break;
         case OPT_SRP_STRENGTH:
-            srp_arg.strength = atoi(opt_arg());
+            srp_arg.strength = opt_int_arg();
             BIO_printf(bio_err, "SRP minimal length for N is %d\n",
                 srp_arg.strength);
             if (min_version < TLS1_VERSION)
@@ -1648,7 +1648,7 @@ int s_client_main(int argc, char **argv)
             sni_outer_name = opt_arg();
             break;
         case OPT_ECH_SELECT:
-            ech_select = atoi(opt_arg());
+            ech_select = opt_int_arg();
             break;
         case OPT_ECH_GREASE:
             ech_grease = 1;
@@ -1657,7 +1657,13 @@ int s_client_main(int argc, char **argv)
             ech_grease_suite = opt_arg();
             break;
         case OPT_ECH_GREASE_TYPE:
-            ech_grease_type = atoi(opt_arg());
+            ech_grease_type = opt_int_arg();
+            if (ech_grease_type != (ech_grease_type & 0xFFFF)) {
+                BIO_printf(bio_err,
+                    "%s: invalid GREASE ECH type 0x%8x\n permitted values are 0-FFFF",
+                    prog, ech_grease_type);
+                goto opthelp;
+            }
             break;
         case OPT_ECH_IGNORE_CONFIG_ID:
             ech_ignore_cid = 1;
@@ -1678,13 +1684,13 @@ int s_client_main(int argc, char **argv)
             keymatexportlabel = opt_arg();
             break;
         case OPT_KEYMATEXPORTLEN:
-            keymatexportlen = atoi(opt_arg());
+            keymatexportlen = opt_int_arg();
             break;
         case OPT_ASYNC:
             async = 1;
             break;
         case OPT_MAXFRAGLEN:
-            len = atoi(opt_arg());
+            len = opt_int_arg();
             switch (len) {
             case 512:
                 maxfraglen = TLSEXT_max_fragment_length_512;
@@ -1706,16 +1712,16 @@ int s_client_main(int argc, char **argv)
             }
             break;
         case OPT_MAX_SEND_FRAG:
-            max_send_fragment = atoi(opt_arg());
+            max_send_fragment = opt_int_arg();
             break;
         case OPT_SPLIT_SEND_FRAG:
-            split_send_fragment = atoi(opt_arg());
+            split_send_fragment = opt_int_arg();
             break;
         case OPT_MAX_PIPELINES:
-            max_pipelines = atoi(opt_arg());
+            max_pipelines = opt_int_arg();
             break;
         case OPT_READ_BUF:
-            read_buf_len = atoi(opt_arg());
+            read_buf_len = opt_int_arg();
             break;
         case OPT_KEYLOG_FILE:
             keylog_file = opt_arg();
@@ -2720,7 +2726,7 @@ re_start:
                          "xmlns='jabber:%s' to='%s' version='1.0'>",
             starttls_proto == PROTO_XMPP ? "client" : "server",
             protohost ? protohost : host);
-        seen = BIO_read(sbio, mbuf, BUFSIZZ);
+        seen = BIO_read(sbio, mbuf, BUFSIZZ - 1);
         if (seen < 0) {
             BIO_printf(bio_err, "BIO_read failed\n");
             goto end;
@@ -2729,7 +2735,7 @@ re_start:
         while (!strstr(mbuf, "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'")
             && !strstr(mbuf,
                 "<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"")) {
-            seen = BIO_read(sbio, mbuf, BUFSIZZ);
+            seen = BIO_read(sbio, mbuf, BUFSIZZ - 1);
 
             if (seen <= 0)
                 goto shut;
@@ -2738,7 +2744,7 @@ re_start:
         }
         BIO_puts(sbio,
             "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
-        seen = BIO_read(sbio, sbuf, BUFSIZZ);
+        seen = BIO_read(sbio, sbuf, BUFSIZZ - 1);
         if (seen < 0) {
             BIO_puts(bio_err, "BIO_read failed\n");
             goto shut;
@@ -2963,7 +2969,7 @@ re_start:
                 "Didn't find STARTTLS in server response,"
                 " trying anyway...\n");
         BIO_puts(sbio, "STARTTLS\r\n");
-        mbuf_len = BIO_read(sbio, mbuf, BUFSIZZ);
+        mbuf_len = BIO_read(sbio, mbuf, BUFSIZZ - 1);
         if (mbuf_len < 0) {
             BIO_puts(bio_err, "BIO_read failed\n");
             goto end;
@@ -3004,7 +3010,7 @@ re_start:
                 "Didn't find STARTTLS in server response,"
                 " trying anyway...\n");
         BIO_puts(sbio, "STARTTLS\r\n");
-        mbuf_len = BIO_read(sbio, mbuf, BUFSIZZ);
+        mbuf_len = BIO_read(sbio, mbuf, BUFSIZZ - 1);
         if (mbuf_len < 0) {
             BIO_puts(bio_err, "BIO_read failed\n");
             goto end;
@@ -3975,8 +3981,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     estat = SSL_ech_get1_status(s, &inner, &outer);
     print_ech_status(bio, s, estat);
     if (estat == SSL_ECH_STATUS_SUCCESS) {
-        BIO_printf(bio, "ECH: inner: %s\n", inner);
-        BIO_printf(bio, "ECH: outer: %s\n", outer);
+        BIO_printf(bio, "ECH: inner: %s\n", inner == NULL ? "<NULL>" : inner);
+        BIO_printf(bio, "ECH: outer: %s\n", outer == NULL ? "<NULL>" : outer);
     }
     if (estat == SSL_ECH_STATUS_FAILED_ECH
         || estat == SSL_ECH_STATUS_FAILED_ECH_BAD_NAME)
