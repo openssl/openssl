@@ -112,16 +112,16 @@ void OSSL_FN_CTX_free(OSSL_FN_CTX *ctx)
         OPENSSL_free(ctx);
 }
 
-int OSSL_FN_CTX_start(OSSL_FN_CTX *ctx)
+const void *OSSL_FN_CTX_start(OSSL_FN_CTX *ctx)
 {
     if (!ossl_assert(ctx != NULL))
-        return 0;
+        return NULL;
 
     struct ossl_fn_ctx_frame_st *last_frame = ctx->last_frame;
     size_t used = (last_frame == NULL) ? 0 : last_frame->free_memory - ctx->memory;
 
     if (ctx->msize - used < sizeof(struct ossl_fn_ctx_frame_st))
-        return 0;
+        return NULL;
 
     if (ctx->last_frame == NULL)
         ctx->last_frame = (struct ossl_fn_ctx_frame_st *)ctx->memory;
@@ -134,15 +134,18 @@ int OSSL_FN_CTX_start(OSSL_FN_CTX *ctx)
     frame->free_memory = frame->memory;
     frame->msize = ctx->msize - used - sizeof(*frame);
 
-    return 1;
+    return ctx->last_frame;
 }
 
-int OSSL_FN_CTX_end(OSSL_FN_CTX *ctx)
+int OSSL_FN_CTX_end(OSSL_FN_CTX *ctx, const void *token)
 {
     if (!ossl_assert(ctx != NULL) || !ossl_assert(ctx->last_frame != NULL))
         return 0;
 
     struct ossl_fn_ctx_frame_st *last_frame = ctx->last_frame;
+
+    if (last_frame != token)
+        return 0;
 
     ctx->last_frame = last_frame->previous_frame;
 
