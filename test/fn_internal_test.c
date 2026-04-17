@@ -97,6 +97,7 @@ static int test_ctx(void)
     int ret = 1;
     OSSL_FN_CTX *ctx = NULL;
     OSSL_FN *f = NULL;
+    const void *token = NULL;
 
     /*
      * Make a CTX that is likely to contain two 2048-bit or one 4096-bit OSSL_FN
@@ -111,7 +112,7 @@ static int test_ctx(void)
     }
 
     /* Check that we can get 1 2048-bit OSSL_FN instance, and check its metadata */
-    if (!TEST_true(OSSL_FN_CTX_start(ctx))) {
+    if (!TEST_ptr(token = OSSL_FN_CTX_start(ctx))) {
         ret = 0;
         /* It's pointless to try more tests after this failure */
         goto end;
@@ -120,14 +121,14 @@ static int test_ctx(void)
         || !TEST_false(ossl_fn_is_dynamically_allocated(f))
         || !TEST_false(ossl_fn_is_securely_allocated(f)))
         ret = 0;
-    if (!TEST_true(OSSL_FN_CTX_end(ctx))) {
+    if (!TEST_true(OSSL_FN_CTX_end(ctx, token))) {
         ret = 0;
         /* It's pointless to try more tests after this failure */
         goto end;
     }
 
     /* Check that we can get 2 2048-bit OSSL_FN instances, but not 3 */
-    if (!TEST_true(OSSL_FN_CTX_start(ctx))) {
+    if (!TEST_ptr(token = OSSL_FN_CTX_start(ctx))) {
         ret = 0;
         /* It's pointless to try more tests after this failure */
         goto end;
@@ -136,14 +137,14 @@ static int test_ctx(void)
         || !TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, 2048))
         || !TEST_ptr_null(f = OSSL_FN_CTX_get_bits(ctx, 2048)))
         ret = 0;
-    if (!TEST_true(OSSL_FN_CTX_end(ctx))) {
+    if (!TEST_true(OSSL_FN_CTX_end(ctx, token))) {
         ret = 0;
         /* It's pointless to try more tests after this failure */
         goto end;
     }
 
     /* Check that we can get 1 4096-bit OSSL_FN instance, but not 2 */
-    if (!TEST_true(OSSL_FN_CTX_start(ctx))) {
+    if (!TEST_ptr(token = OSSL_FN_CTX_start(ctx))) {
         ret = 0;
         /* It's pointless to try more tests after this failure */
         goto end;
@@ -151,7 +152,7 @@ static int test_ctx(void)
     if (!TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, 4096))
         || !TEST_ptr_null(f = OSSL_FN_CTX_get_bits(ctx, 2048)))
         ret = 0;
-    if (!TEST_true(OSSL_FN_CTX_end(ctx))) {
+    if (!TEST_true(OSSL_FN_CTX_end(ctx, token))) {
         ret = 0;
         /* It's pointless to try more tests after this failure */
         goto end;
@@ -168,6 +169,7 @@ static int test_secure_ctx(void)
     int ret = 1;
     OSSL_FN_CTX *ctx = NULL;
     OSSL_FN *f = NULL;
+    const void *token = NULL;
 
     /*
      * Make a CTX that is likely to contain two 2048-bit OSSL_FN and one frame
@@ -182,7 +184,7 @@ static int test_secure_ctx(void)
     }
 
     /* Check that we can get 1 2048-bit OSSL_FN instance, and check its metadata */
-    if (!TEST_true(OSSL_FN_CTX_start(ctx))) {
+    if (!TEST_ptr(token = OSSL_FN_CTX_start(ctx))) {
         ret = 0;
         /* It's pointless to try more tests after this failure */
         goto end;
@@ -191,7 +193,7 @@ static int test_secure_ctx(void)
         || !TEST_false(ossl_fn_is_dynamically_allocated(f))
         || !TEST_true(ossl_fn_is_securely_allocated(f)))
         ret = 0;
-    if (!TEST_true(OSSL_FN_CTX_end(ctx))) {
+    if (!TEST_true(OSSL_FN_CTX_end(ctx, token))) {
         ret = 0;
         /* It's pointless to try more tests after this failure */
         goto end;
