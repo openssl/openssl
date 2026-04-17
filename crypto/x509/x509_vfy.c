@@ -1321,8 +1321,8 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
         if (cert_id_md_oid != NULL) {
             ERR_set_mark();
             fetched_cert_id_md = EVP_MD_fetch(ctx->libctx,
-                                              OBJ_nid2sn(OBJ_obj2nid(cert_id_md_oid)),
-                                              ctx->propq);
+                OBJ_nid2sn(OBJ_obj2nid(cert_id_md_oid)),
+                ctx->propq);
             if (fetched_cert_id_md != NULL)
                 cert_id_md = fetched_cert_id_md;
             else
