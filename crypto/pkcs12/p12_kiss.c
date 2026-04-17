@@ -366,8 +366,10 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
     case NID_secretBag:
         if (skey != NULL && *skey == NULL) {
             *skey = parse_secret_bag_key(bag, pass, passlen, libctx, propq);
-            if (*skey == NULL && PKCS12_SAFEBAG_get_bag_nid(bag) == NID_pkcs8ShroudedKeyBag)
+            if (*skey == NULL && PKCS12_SAFEBAG_get_bag_nid(bag) == NID_pkcs8ShroudedKeyBag) {
+                ERR_raise(ERR_LIB_PKCS12, PKCS12_R_PARSE_ERROR);
                 return 0; /* Failed to parse expected secret key */
+            }
         }
         return 1;
 
