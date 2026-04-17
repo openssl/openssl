@@ -109,13 +109,15 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
                 goto err;
             }
             piv = aparams.iv;
-            if (ec->taglen > 0
-                && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                       ec->taglen, ec->tag)
-                    <= 0) {
+
+            if (ec->taglen < 4 || ec->taglen > 16
+                || EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)ec->taglen, ec->tag) <= 0) {
                 ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_AEAD_SET_TAG_ERROR);
                 goto err;
             }
+        } else if (auth) {
+            ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_CONTENT_ENCRYPTION_ALGORITHM);
+            goto err;
         }
     }
     len = EVP_CIPHER_CTX_get_key_length(ctx);
