@@ -478,6 +478,29 @@ static ossl_inline void constant_time_lookup(void *out,
 void err_clear_last_constant_time(int clear);
 
 /*
+ * Return whether a value that can only be 0 or 1 is non-zero, in constant time
+ * in practice!  The return value is a mask that is all ones if true, and all
+ * zeros otherwise (twos-complement arithmetic assumed for unsigned values).
+ *
+ * Although this is used in constant-time selects, we omit a value barrier
+ * here.  Value barriers impede auto-vectorization (likely because it forces
+ * the value to transit through a general-purpose register). On AArch64, this
+ * is a difference of 2x.
+ *
+ * We usually add value barriers to selects because Clang turns consecutive
+ * selects with the same condition into a branch instead of CMOV/CSEL.
+ * Omitting it seems to be safe so far (David Benjamin, Chromium).  This is
+ * used in the |reduce_once| functions in ML-KEM and ML-DSA in BoringSSL, and
+ * is now also used in OpenSSL.  Any use in new contexts requires careful prior
+ * evaluation and should otherwise be avoided.
+ */
+#if 0
+#define constish_time_true(b) (~constant_time_is_zero(b));
+#else
+#define constish_time_true(b) (0u - (b))
+#endif
+
+/*
  * Valgrind-based constant-time validation helpers.
  *
  * CONSTTIME_SECRET marks a region of memory as secret.  Valgrind's memcheck
