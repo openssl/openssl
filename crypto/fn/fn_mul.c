@@ -16,13 +16,13 @@
 
 int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx)
 {
-    if (!OSSL_FN_CTX_start(ctx))
-        return 0;
-
     size_t al = (size_t)a->dsize;
     size_t bl = (size_t)b->dsize;
     size_t rl = (size_t)r->dsize;
     size_t max = (size_t)(al + bl);
+    const void *token = OSSL_FN_CTX_start(ctx);
+    if (token == NULL)
+        return 0;
 
     int ret = 0;
 #ifdef BN_MUL_COMBA
@@ -60,6 +60,6 @@ end:
 
     ret = 1;
 err:
-    OSSL_FN_CTX_end(ctx);
+    OSSL_FN_CTX_end(ctx, token);
     return ret;
 }

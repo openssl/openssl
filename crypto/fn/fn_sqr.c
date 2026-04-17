@@ -16,7 +16,8 @@
 
 int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx)
 {
-    if (!OSSL_FN_CTX_start(ctx))
+    const void *token = OSSL_FN_CTX_start(ctx);
+    if (token == NULL)
         return 0;
 
     size_t al = (size_t)a->dsize;
@@ -70,6 +71,6 @@ end:
     }
 
 err:
-    OSSL_FN_CTX_end(ctx);
+    OSSL_FN_CTX_end(ctx, token);
     return ret;
 }

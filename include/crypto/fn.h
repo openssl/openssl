@@ -184,9 +184,10 @@ void OSSL_FN_CTX_free(OSSL_FN_CTX *ctx);
  * call this must also clean up with a OSSL_FN_CTX_end() call.
  *
  * @param[in]   ctx     The OSSL_FN_CTX to start the frame in.
- * @returns     1 on success, 0 on error.
+ * @returns     Ownership token of the started frame, NULL on error.
+ *              This token must be passed to OSSL_FN_CTX_end().
  */
-int OSSL_FN_CTX_start(OSSL_FN_CTX *ctx);
+const void *OSSL_FN_CTX_start(OSSL_FN_CTX *ctx);
 
 /**
  * End the last OSSL_FN_CTX frame, resetting back to the previous
@@ -194,9 +195,15 @@ int OSSL_FN_CTX_start(OSSL_FN_CTX *ctx);
  * this function before returning.
  *
  * @param[in]   ctx     The OSSL_FN_CTX to start the frame in.
+ * @param[in]   token   Ownership token returned by OSSL_FN_CTX_start().
  * @returns     1 on success, 0 on error.
+ *
+ * @note The token parameter is validated but not used for choosing a
+ * frame; only the most recent frame can be ended. Passing an incorrect
+ * token indicates a programming error and the function will fail.
+ * If NULL is passed, nothing will be done but the function will return 1.
  */
-int OSSL_FN_CTX_end(OSSL_FN_CTX *ctx);
+int OSSL_FN_CTX_end(OSSL_FN_CTX *ctx, const void *token);
 
 /**
  * Get a suitably sized OSSL_FN from an OSSL_FN_CTX.
