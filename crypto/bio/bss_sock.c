@@ -118,10 +118,10 @@ static int sock_read(BIO *b, char *out, int outl)
             ret = readsocket(b->num, out, outl);
         BIO_clear_retry_flags(b);
         if (ret <= 0) {
-            if (BIO_sock_should_retry(ret))
-                BIO_set_retry_read(b);
-            else if (ret == 0)
+            if (ret == 0)
                 b->flags |= BIO_FLAGS_IN_EOF;
+            else if (BIO_sock_should_retry(ret))
+                BIO_set_retry_read(b);
         }
     }
     return ret;
