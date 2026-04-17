@@ -8,17 +8,17 @@
  */
 
 #ifndef OSSL_PROV_CIPHER_ASCON_AEAD128_H
-# define OSSL_PROV_CIPHER_ASCON_AEAD128_H
+#define OSSL_PROV_CIPHER_ASCON_AEAD128_H
 
-# include <openssl/opensslconf.h>
-# ifndef OPENSSL_NO_ASCON128
+#include <openssl/opensslconf.h>
+#ifndef OPENSSL_NO_ASCON128
 
-# include <stdint.h>
-# include <stdbool.h>
-# include <openssl/core.h>
-# define OSSL_INCLUDE_PROVIDER 1
-# include "crypto/ascon.h"  /* ASCON algorithm header */
-# undef OSSL_INCLUDE_PROVIDER
+#include <stdint.h>
+#include <stdbool.h>
+#include <openssl/core.h>
+#define OSSL_INCLUDE_PROVIDER 1
+#include "crypto/ascon.h" /* ASCON algorithm header */
+#undef OSSL_INCLUDE_PROVIDER
 
 /*********************************************************************
  *
@@ -27,9 +27,9 @@
  *****/
 
 /* ASCON-AEAD128 uses a fixed 16-byte (128-bit) tag length */
-# ifndef FIXED_TAG_LENGTH
-#  define FIXED_TAG_LENGTH ASCON_AEAD_TAG_MIN_SECURE_LEN
-# endif
+#ifndef FIXED_TAG_LENGTH
+#define FIXED_TAG_LENGTH ASCON_AEAD_TAG_MIN_SECURE_LEN
+#endif
 
 /* Direction enum for encryption/decryption */
 typedef enum direction_et {
@@ -38,8 +38,7 @@ typedef enum direction_et {
 } direction_t;
 
 /* ASCON-AEAD128 AEAD cipher context structure */
-struct ascon_aead128_ctx_st
-{
+struct ascon_aead128_ctx_st {
     void *provctx;
     ASCON_AEAD_CTX *internal_ctx; /* a handle for the implementation internal context */
 
@@ -47,14 +46,14 @@ struct ascon_aead128_ctx_st
     uint8_t iv[ASCON_AEAD_NONCE_LEN]; /* storing the IV (nonce) for get_updated_iv */
     uint8_t key[ASCON_AEAD128_KEY_LEN]; /* storing the key for reinitialization */
 
-    size_t tag_len;          /* tag length being used */
+    size_t tag_len; /* tag length being used */
 
-    direction_t direction;  /* either encryption or decryption */
-    bool is_tag_set;               /* whether a tag has been computed or set */
-    bool is_ongoing;        /* true = operation has started */
-    bool assoc_data_processed;  /* whether associated data has been processed */
-    bool iv_set;             /* whether the IV has been set */
-    bool key_set;             /* whether the key has been set */
+    direction_t direction; /* either encryption or decryption */
+    bool is_tag_set; /* whether a tag has been computed or set */
+    bool is_ongoing; /* true = operation has started */
+    bool assoc_data_processed; /* whether associated data has been processed */
+    bool iv_set; /* whether the IV has been set */
+    bool key_set; /* whether the key has been set */
 };
 
 /*********************************************************************
@@ -66,6 +65,6 @@ struct ascon_aead128_ctx_st
 /* Dispatch table for ASCON-AEAD128 */
 extern const OSSL_DISPATCH ossl_ascon_aead128_functions[];
 
-# endif /* OPENSSL_NO_ASCON128 */
+#endif /* OPENSSL_NO_ASCON128 */
 
 #endif /* OSSL_PROV_CIPHER_ASCON_AEAD128_H */

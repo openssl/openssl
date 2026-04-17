@@ -15,7 +15,7 @@
 #include <stdbool.h>
 
 /* semi-portable inline declaration */
-# define ASCON_INLINE ossl_inline
+#define ASCON_INLINE ossl_inline
 
 #define ROR64(x, i) ((x << (64 - i)) | (x >> i))
 
@@ -102,11 +102,10 @@
 #define ASCONFLG_DEC 0x0000000000000002ULL /* in decrypt mode? */
 #define ASCONFLG_DOMAINSEP 0x8000000000000000ULL /* ready to absorb non-AAD? */
 
-
 static ASCON_INLINE void ascon_aead128_update(ascon_aead128_ctx *ctx,
-                                              unsigned char *out,
-                                              const unsigned char *in,
-                                              size_t len)
+    unsigned char *out,
+    const unsigned char *in,
+    size_t len)
 {
     uint64_t s0, s1, s2, s3, s4, flags;
     unsigned char pad = 0x01;
@@ -171,20 +170,20 @@ static ASCON_INLINE void ascon_aead128_update(ascon_aead128_ctx *ctx,
 }
 
 static void ascon_aead128_encrypt_update(ascon_aead128_ctx *ctx, unsigned char *ct,
-                                         const unsigned char *pt, size_t len)
+    const unsigned char *pt, size_t len)
 {
     ascon_aead128_update(ctx, ct, pt, len);
 }
 
 static void ascon_aead128_decrypt_update(ascon_aead128_ctx *ctx, unsigned char *pt,
-                                       const unsigned char *ct, size_t len)
+    const unsigned char *ct, size_t len)
 {
     ctx->flags |= ASCONFLG_DEC;
     ascon_aead128_update(ctx, pt, ct, len);
 }
 
 static void ascon_aead128_init(ascon_aead128_ctx *ctx, const unsigned char *k,
-                               const unsigned char *n)
+    const unsigned char *n)
 {
     uint64_t s0, s1, s2, s3, s4, k0, k1;
 
@@ -208,7 +207,7 @@ static void ascon_aead128_init(ascon_aead128_ctx *ctx, const unsigned char *k,
 }
 
 static void ascon_aead128_aad_update(ascon_aead128_ctx *ctx, const unsigned char *in,
-                                     size_t len)
+    size_t len)
 {
     uint64_t flags;
 
@@ -243,36 +242,36 @@ static void ascon_aead128_final(ascon_aead128_ctx *ctx, unsigned char *tag)
 
 /* Provider compatibility wrapper functions */
 void ossl_ascon_aead128_init(ASCON_AEAD_CTX *ctx, const unsigned char *k,
-                             const unsigned char *n)
+    const unsigned char *n)
 {
     ascon_aead128_init(ctx, k, n);
 }
 
 void ossl_ascon_aead128_assoc_data_update(ASCON_AEAD_CTX *ctx,
-                                          const unsigned char *in, size_t inl)
+    const unsigned char *in, size_t inl)
 {
     ascon_aead128_aad_update(ctx, in, inl);
 }
 
 size_t ossl_ascon_aead128_encrypt_update(ASCON_AEAD_CTX *ctx,
-                                         unsigned char *out,
-                                         const unsigned char *in, size_t inl)
+    unsigned char *out,
+    const unsigned char *in, size_t inl)
 {
     ascon_aead128_encrypt_update(ctx, out, in, inl);
     return inl;
 }
 
 size_t ossl_ascon_aead128_decrypt_update(ASCON_AEAD_CTX *ctx,
-                                         unsigned char *out,
-                                         const unsigned char *in, size_t inl)
+    unsigned char *out,
+    const unsigned char *in, size_t inl)
 {
     ascon_aead128_decrypt_update(ctx, out, in, inl);
     return inl;
 }
 
 size_t ossl_ascon_aead128_encrypt_final(ASCON_AEAD_CTX *ctx,
-                                        unsigned char *out,
-                                        unsigned char *tag, size_t tag_len)
+    unsigned char *out,
+    unsigned char *tag, size_t tag_len)
 {
     unsigned char computed_tag[16];
 
@@ -286,10 +285,10 @@ size_t ossl_ascon_aead128_encrypt_final(ASCON_AEAD_CTX *ctx,
 }
 
 size_t ossl_ascon_aead128_decrypt_final(ASCON_AEAD_CTX *ctx,
-                                        unsigned char *out,
-                                        bool *is_tag_valid,
-                                        const unsigned char *tag,
-                                        size_t tag_len)
+    unsigned char *out,
+    bool *is_tag_valid,
+    const unsigned char *tag,
+    size_t tag_len)
 {
     unsigned char computed_tag[16];
 
