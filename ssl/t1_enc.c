@@ -455,8 +455,18 @@ int tls1_export_keying_material(SSL_CONNECTION *s, unsigned char *out,
      * than passing separate values into the TLS PRF to ensure that the
      * concatenation of values does not create a prohibited label.
      */
+    /* Guard against integer overflow when computing vallen */
+    if (llen > SIZE_MAX - SSL3_RANDOM_SIZE * 2) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
     vallen = llen + SSL3_RANDOM_SIZE * 2;
     if (use_context) {
+        /* contextlen already bounded to 0xffff above; 2 + contextlen <= 0x10001 */
+        if (vallen > SIZE_MAX - 2 - contextlen) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+            return 0;
+        }
         vallen += 2 + contextlen;
     }
 
@@ -464,14 +474,23 @@ int tls1_export_keying_material(SSL_CONNECTION *s, unsigned char *out,
     if (val == NULL)
         goto ret;
     currentvalpos = 0;
+    /* Verify each write fits within the allocated buffer */
+    if (currentvalpos + llen > vallen)
+        goto err1;
     memcpy(val + currentvalpos, label, llen);
     currentvalpos += llen;
+    if (currentvalpos + SSL3_RANDOM_SIZE > vallen)
+        goto err1;
     memcpy(val + currentvalpos, s->s3.client_random, SSL3_RANDOM_SIZE);
     currentvalpos += SSL3_RANDOM_SIZE;
+    if (currentvalpos + SSL3_RANDOM_SIZE > vallen)
+        goto err1;
     memcpy(val + currentvalpos, s->s3.server_random, SSL3_RANDOM_SIZE);
     currentvalpos += SSL3_RANDOM_SIZE;
 
     if (use_context) {
+        if (currentvalpos + 2 + contextlen > vallen)
+            goto err1;
         val[currentvalpos] = (contextlen >> 8) & 0xff;
         currentvalpos++;
         val[currentvalpos] = contextlen & 0xff;
