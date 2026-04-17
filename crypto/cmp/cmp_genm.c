@@ -203,7 +203,7 @@ static int selfsigned_verify_cb(int ok, X509_STORE_CTX *store_ctx)
         for (i = 0; i < sk_X509_num(trust); i++) {
             issuer = sk_X509_value(trust, i);
             if ((*check_issued)(store_ctx, cert, issuer)) {
-                if (X509_add_cert(chain, cert, X509_ADD_FLAG_UP_REF))
+                if (X509_add_cert(chain, issuer, X509_ADD_FLAG_UP_REF))
                     ok = 1;
                 break;
             }
@@ -236,6 +236,7 @@ static int verify_ss_cert(OSSL_LIB_CTX *libctx, const char *propq,
     if ((csc = X509_STORE_CTX_new_ex(libctx, propq)) == NULL
         || !X509_STORE_CTX_init(csc, ts, target, untrusted))
         goto err;
+    X509_STORE_CTX_set_flags(csc, X509_V_FLAG_CHECK_SS_SIGNATURE);
     X509_STORE_CTX_set_verify_cb(csc, selfsigned_verify_cb);
     ok = X509_verify_cert(csc) > 0;
 
@@ -254,7 +255,8 @@ verify_ss_cert_trans(OSSL_CMP_CTX *ctx, X509 *trusted /* may be NULL */,
     int res = 0;
 
     if (trusted != NULL) {
-        X509_VERIFY_PARAM *vpm = X509_STORE_get0_param(ts);
+        X509_VERIFY_PARAM *vpm = (ts == NULL) ? NULL
+                                              : X509_STORE_get0_param(ts);
 
         if ((ts = X509_STORE_new()) == NULL)
             return 0;
