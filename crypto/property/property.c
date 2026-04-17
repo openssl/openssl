@@ -1189,7 +1189,7 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
         } else {
             HT_INIT_KEY_CACHED(&key, post_insert->generic_hash);
 
-            if (!ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), post_insert, NULL)) {
+            if (ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), post_insert, NULL) <= 0) {
                 /*
                  * We raced with another thread that added the same QUERY, pitch this one
                  */
@@ -1280,7 +1280,7 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
         if (!ossl_method_up_ref(&p->method))
             goto err;
 
-        if (!ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), p, &old)) {
+        if (ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), p, &old) <= 0) {
             impl_cache_free(p);
             goto err;
         }
@@ -1304,7 +1304,7 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
         ossl_list_lru_entry_init_elem(p);
         if (!ossl_method_up_ref(&p->method))
             goto err;
-        if (ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), p, NULL)) {
+        if (ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), p, NULL) > 0) {
             p->specific_hash = 0;
             p->generic_hash = old->generic_hash = HT_KEY_GET_HASH(&key);
             ossl_list_lru_entry_insert_tail(&sa->lru_list, p);
