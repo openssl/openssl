@@ -440,9 +440,9 @@ BIO *ossl_cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
             if (ptype == V_ASN1_INTEGER && pval != NULL) {
                 int val = ASN1_INTEGER_get((ASN1_INTEGER *)pval);
 
-                if (EVP_MD_is_a(digest, SN_shake128_len) && val > 0)
+                if (EVP_MD_is_a(digest, LN_shake128_len) && val > 0)
                     xof_len = (size_t)val / 8;
-                else if (EVP_MD_is_a(digest, SN_shake256_len) && val > 0)
+                else if (EVP_MD_is_a(digest, LN_shake256_len) && val > 0)
                     xof_len = (size_t)val / 8;
             }
         }
@@ -477,6 +477,8 @@ int ossl_cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
     const ASN1_OBJECT *mdoid;
     X509_ALGOR_get0(&mdoid, NULL, NULL, mdalg);
     nid = OBJ_obj2nid(mdoid);
+    char alg[OSSL_MAX_NAME_SIZE]; 
+           
     /* Look for digest type to match signature */
     for (;;) {
         EVP_MD_CTX *mtmp;
@@ -486,12 +488,19 @@ int ossl_cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
             return 0;
         }
         BIO_get_md_ctx(chain, &mtmp);
-        if (EVP_MD_CTX_get_type(mtmp) == nid || OBJ_sn2nid(EVP_MD_CTX_get0_name(mtmp)) == nid
+        OBJ_obj2txt(alg, sizeof(alg), mdoid, 0);
+        EVP_MD *md = EVP_MD_CTX_get0_md(mtmp);
+
+        if (md && EVP_MD_CTX_get_type(mtmp) == nid || OBJ_sn2nid(EVP_MD_CTX_get0_name(mtmp)) == nid
             /*
              * Workaround for broken implementations that use signature
              * algorithm OID instead of digest.
              */
-            || EVP_MD_get_pkey_type(EVP_MD_CTX_get0_md(mtmp)) == nid)
+            || EVP_MD_get_pkey_type(md) == nid
+            /*
+             * Workground if there is no legacy function.
+             */
+            || EVP_MD_is_a(md, alg))
             return EVP_MD_CTX_copy_ex(mctx, mtmp);
         chain = BIO_next(chain);
     }

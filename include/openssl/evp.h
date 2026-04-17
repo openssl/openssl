@@ -880,8 +880,6 @@ const EVP_MD *EVP_sha3_384(void);
 const EVP_MD *EVP_sha3_512(void);
 const EVP_MD *EVP_shake128(void);
 const EVP_MD *EVP_shake256(void);
-const EVP_MD *EVP_shake128_len(void);
-const EVP_MD *EVP_shake256_len(void);
 
 #ifndef OPENSSL_NO_MDC2
 const EVP_MD *EVP_mdc2(void);
