@@ -88,6 +88,9 @@ IF[{- !$disabled{tests} -}]
   IF[{- !$disabled{quic} -}]
     PROGRAMS{noinst}=priority_queue_test quicfaultstest quicapitest \
                      quic_newcid_test quic_srt_gen_test
+    IF[{- $config{target} =~ /^(?:VC-|mingw|BC-)/ -}]
+      PROGRAMS{noinst}=rio_notifier_test
+    ENDIF
   ENDIF
 
   IF[{- !$disabled{quic} && !$disabled{qlog} -}]
@@ -385,6 +388,12 @@ IF[{- !$disabled{tests} -}]
   DEPEND[packettest]=../libcrypto libtestutil.a
 
   IF[{- !$disabled{'quic'} -}]
+    IF[{- $config{target} =~ /^(?:VC-|mingw|BC-)/ -}]
+      SOURCE[rio_notifier_test]=rio_notifier_test.c
+      INCLUDE[rio_notifier_test]=.. ../include ../apps/include
+      DEPEND[rio_notifier_test]=../libcrypto.a ../libssl.a libtestutil.a
+    ENDIF
+
       SOURCE[quic_wire_test]=quic_wire_test.c
       INCLUDE[quic_wire_test]=../include ../apps/include
       DEPEND[quic_wire_test]=../libcrypto.a ../libssl.a libtestutil.a
