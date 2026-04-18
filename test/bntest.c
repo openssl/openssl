@@ -1215,6 +1215,105 @@ err:
     return st;
 }
 
+typedef struct sum_all_alias_st {
+    const char *hex;
+    int negative;
+} SUM_ALL_ALIAS;
+
+static int test_sum_all_alias_signed(const SUM_ALL_ALIAS *test)
+{
+    BIGNUM *alias = NULL, *orig = NULL, *expected = NULL;
+    int st = 0;
+
+    if (!TEST_true(BN_hex2bn(&alias, test->hex)))
+        goto err;
+    if (test->negative && !BN_is_zero(alias))
+        BN_set_negative(alias, 1);
+
+    if (!TEST_ptr(orig = BN_dup(alias))
+        || !TEST_ptr(expected = BN_new()))
+        goto err;
+
+    if (!TEST_true(BN_add(expected, orig, orig))
+        || !TEST_true(BN_add(alias, alias, alias))
+        || !TEST_BN_eq(expected, alias)
+        || !TEST_true(BN_copy(alias, orig))
+        || !TEST_true(BN_sub(expected, orig, orig))
+        || !TEST_true(BN_sub(alias, alias, alias))
+        || !TEST_BN_eq(expected, alias))
+        goto err;
+
+    st = 1;
+err:
+    BN_free(alias);
+    BN_free(orig);
+    BN_free(expected);
+    return st;
+}
+
+static int test_sum_all_alias_unsigned(const char *hex)
+{
+    BIGNUM *alias = NULL, *orig = NULL, *expected = NULL;
+    int st = 0;
+
+    if (!TEST_true(BN_hex2bn(&alias, hex))
+        || !TEST_ptr(orig = BN_dup(alias))
+        || !TEST_ptr(expected = BN_new()))
+        goto err;
+
+    if (!TEST_true(BN_uadd(expected, orig, orig))
+        || !TEST_true(BN_uadd(alias, alias, alias))
+        || !TEST_BN_eq(expected, alias)
+        || !TEST_true(BN_copy(alias, orig))
+        || !TEST_true(BN_usub(expected, orig, orig))
+        || !TEST_true(BN_usub(alias, alias, alias))
+        || !TEST_BN_eq(expected, alias))
+        goto err;
+
+    st = 1;
+err:
+    BN_free(alias);
+    BN_free(orig);
+    BN_free(expected);
+    return st;
+}
+
+static int test_sum_all_alias(void)
+{
+    static const SUM_ALL_ALIAS signed_tests[] = {
+        { "2A", 0 },
+        { "2A", 1 },
+        { "0", 0 },
+        { "FEDCBA98765432100123456789ABCDEFFEDCBA98765432100123456789ABCDEF",
+          0 },
+        { "FEDCBA98765432100123456789ABCDEFFEDCBA98765432100123456789ABCDEF",
+          1 }
+    };
+    static const char *const unsigned_tests[] = {
+        "2A",
+        "0",
+        "FEDCBA98765432100123456789ABCDEFFEDCBA98765432100123456789ABCDEF"
+    };
+    static int status = -1;
+    size_t i;
+
+    if (status != -1)
+        return status;
+
+    status = 0;
+    for (i = 0; i < OSSL_NELEM(signed_tests); i++) {
+        if (!test_sum_all_alias_signed(&signed_tests[i]))
+            return status;
+    }
+    for (i = 0; i < OSSL_NELEM(unsigned_tests); i++) {
+        if (!test_sum_all_alias_unsigned(unsigned_tests[i]))
+            return status;
+    }
+
+    status = 1;
+    return status;
+}
+
 static int file_sum(STANZA *s)
 {
     BIGNUM *a = NULL, *b = NULL, *sum = NULL, *ret = NULL;
@@ -1238,7 +1337,6 @@ static int file_sum(STANZA *s)
     /*
      * Test that the functions work when |r| and |a| point to the same BIGNUM,
      * or when |r| and |b| point to the same BIGNUM.
-     * There is no test for all of |r|, |a|, and |b| pointint to the same BIGNUM.
      */
     if (!TEST_true(BN_copy(ret, a))
         || !TEST_true(BN_add(ret, ret, b))
@@ -1260,6 +1358,10 @@ static int file_sum(STANZA *s)
         || !equalBN("Sum - B (r is b)", a, ret))
         goto err;
 
+    /* Test the fully aliased |r| == |a| == |b| case once. */
+    if (!test_sum_all_alias())
+        goto err;
+
     /*
      * Test BN_uadd() and BN_usub() with the prerequisites they are
      * documented as having. Note that these functions are frequently used
@@ -1277,8 +1379,6 @@ static int file_sum(STANZA *s)
         /*
          * Test that the functions work when |r| and |a| point to the same
          * BIGNUM, or when |r| and |b| point to the same BIGNUM.
-         * There is no test for all of |r|, |a|, and |b| pointint to the same
-         * BIGNUM.
          */
         if (!TEST_true(BN_copy(ret, a))
             || !TEST_true(BN_uadd(ret, ret, b))
