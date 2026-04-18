@@ -228,9 +228,9 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
      * with enable-ct-validation.
      */
     CONSTTIME_SECRET(priv->K, sizeof(priv->K));
-    CONSTTIME_SECRET(priv->s1.poly, l * sizeof(*priv->s1.poly));
-    CONSTTIME_SECRET(priv->s2.poly, k * sizeof(*priv->s2.poly));
-    CONSTTIME_SECRET(priv->t0.poly, k * sizeof(*priv->t0.poly));
+    CONSTTIME_SECRET_VECTOR(priv->s1);
+    CONSTTIME_SECRET_VECTOR(priv->s2);
+    CONSTTIME_SECRET_VECTOR(priv->t0);
 
     if (!matrix_expand_A(md_ctx, priv->shake128_md, priv->rho, &a_ntt))
         goto err;
@@ -298,14 +298,13 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
          * is (indistinguishable from) independent of this one, so an
          * observer learns nothing about the secret key beyond the number of
          * iterations, which is itself safe to reveal.
-         * Declassify the bound-check scalars before branching on them so
-         * that Valgrind does not flag these intentional leaks.
+         * Declassify the bound-check output so that Valgrind does not flag
+         * these intentional leaks.
          */
         z_max = vector_max(&sig.z);
         r0_max = vector_max_signed(r0);
-        CONSTTIME_DECLASSIFY(&z_max, sizeof(z_max));
-        CONSTTIME_DECLASSIFY(&r0_max, sizeof(r0_max));
-        if (value_barrier_32(constant_time_ge(z_max, gamma1 - params->beta)
+        if (constant_time_declassify_u32(
+                constant_time_ge(z_max, gamma1 - params->beta)
                 | constant_time_ge(r0_max, gamma2 - params->beta)))
             continue;
 
@@ -316,9 +315,8 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
         ct0_max = vector_max(ct0);
         h_ones = (uint32_t)vector_count_ones(&sig.hint);
         /* Same reasoning applies to the leak as above */
-        CONSTTIME_DECLASSIFY(&ct0_max, sizeof(ct0_max));
-        CONSTTIME_DECLASSIFY(&h_ones, sizeof(h_ones));
-        if (value_barrier_32(constant_time_ge(ct0_max, gamma2)
+        if (constant_time_declassify_u32(
+                constant_time_ge(ct0_max, gamma2)
                 | constant_time_lt(params->omega, h_ones)))
             continue;
 
@@ -340,8 +338,8 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
          * data-oblivious with respect to their tainted inputs.
          */
         CONSTTIME_DECLASSIFY(c_tilde, c_tilde_len);
-        CONSTTIME_DECLASSIFY(sig.z.poly, l * sizeof(*sig.z.poly));
-        CONSTTIME_DECLASSIFY(sig.hint.poly, k * sizeof(*sig.hint.poly));
+        CONSTTIME_DECLASSIFY_VECTOR(sig.z);
+        CONSTTIME_DECLASSIFY_VECTOR(sig.hint);
 
         ret = ossl_ml_dsa_sig_encode(&sig, params, out_sig);
         break;
@@ -358,9 +356,9 @@ err:
      * zeroed and freed above; rho_prime is stack-allocated and cleansed.
      */
     CONSTTIME_DECLASSIFY(priv->K, sizeof(priv->K));
-    CONSTTIME_DECLASSIFY(priv->s1.poly, l * sizeof(*priv->s1.poly));
-    CONSTTIME_DECLASSIFY(priv->s2.poly, k * sizeof(*priv->s2.poly));
-    CONSTTIME_DECLASSIFY(priv->t0.poly, k * sizeof(*priv->t0.poly));
+    CONSTTIME_DECLASSIFY_VECTOR(priv->s1);
+    CONSTTIME_DECLASSIFY_VECTOR(priv->s2);
+    CONSTTIME_DECLASSIFY_VECTOR(priv->t0);
     return ret;
 }
 

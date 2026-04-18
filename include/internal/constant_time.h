@@ -527,4 +527,23 @@ void err_clear_last_constant_time(int clear);
 #define CONSTTIME_DECLASSIFY(ptr, len)
 #endif
 
+static ossl_inline uint32_t constant_time_declassify_u32(uint32_t v)
+{
+    /*
+     * Return |v| through a value barrier to be safe. Valgrind-based
+     * constant-time validation is partly to check the compiler has not undone
+     * any constant-time work. Any place |OPENSSL_CONSTANT_TIME_VALIDATION|
+     * influences optimizations, this validation is inaccurate.
+     *
+     * However, by sending pointers through valgrind, we likely inhibit escape
+     * analysis. On local variables, particularly booleans, we likely
+     * significantly impact optimizations.
+     *
+     * Thus, to be safe, stick a value barrier, in hopes of comparably
+     * inhibiting compiler analysis.
+     */
+    CONSTTIME_DECLASSIFY(&v, sizeof(v));
+    return value_barrier_32(v);
+}
+
 #endif /* OSSL_INTERNAL_CONSTANT_TIME_H */

@@ -15,6 +15,11 @@ struct vector_st {
     size_t num_poly;
 };
 
+#define CONSTTIME_SECRET_VECTOR(v) \
+    CONSTTIME_SECRET(v.poly, v.num_poly * sizeof(POLY));
+#define CONSTTIME_DECLASSIFY_VECTOR(v) \
+    CONSTTIME_DECLASSIFY(v.poly, v.num_poly * sizeof(POLY));
+
 /**
  * @brief Initialize a Vector object.
  *
