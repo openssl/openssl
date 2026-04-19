@@ -1007,11 +1007,18 @@ EVP_MD *EVP_MD_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 
 int EVP_MD_up_ref(EVP_MD *md)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    return evp_md_up_ref(md);
+#else
     return 1;
+#endif
 }
 
 void EVP_MD_free(EVP_MD *md)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    evp_md_free(md);
+#endif
     return;
 }
 
