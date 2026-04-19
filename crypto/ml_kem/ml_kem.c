@@ -2028,7 +2028,7 @@ int ossl_ml_kem_decap(uint8_t *shared_secret, size_t slen,
     EVP_MD_CTX *mdctx;
     int ret = 0;
 #if defined(OPENSSL_CONSTANT_TIME_VALIDATION)
-    int classify_bytes = 2 * sizeof(scalar) + ML_KEM_RANDOM_BYTES;
+    int classify_bytes;
 #endif
 
     /* Need a private key here */
@@ -2047,6 +2047,9 @@ int ossl_ml_kem_decap(uint8_t *shared_secret, size_t slen,
      * Data derived from |s| and |z| defaults secret, and to avoid side-channel
      * leaks should not influence control flow.
      */
+#if defined(OPENSSL_CONSTANT_TIME_VALIDATION)
+    classify_bytes = vinfo->rank * sizeof(scalar) + ML_KEM_RANDOM_BYTES;
+#endif
     CONSTTIME_SECRET(key->s, classify_bytes);
 
     /*-
