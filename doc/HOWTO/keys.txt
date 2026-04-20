@@ -102,5 +102,4 @@ it may be reasonable to avoid protecting it with a password, since
 otherwise someone would have to type in the password every time the
 server needs to access the key.
 
-To generate keys using C code refer to the demos located in
-https://github.com/openssl/openssl/blob/master/demos/pkey.
+To generate keys using C code refer to the demos in demos/pkey/.
