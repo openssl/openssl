@@ -35,7 +35,7 @@ you want an RSA private key, or if you want a DSA private key:
 
 The private keys created by these commands are not passphrase protected;
 it might or might not be the desirable thing.  Further information on how to
-create private keys can be found at https://github.com/openssl/openssl/blob/master/doc/HOWTO/keys.txt.
+create private keys can be found in doc/HOWTO/keys.txt.
 The rest of this text assumes you have a private key in the file privkey.pem.
 
 
