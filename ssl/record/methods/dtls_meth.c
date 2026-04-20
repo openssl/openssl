@@ -596,12 +596,12 @@ again:
              */
             if ((epoch64 & DTLS13_UNI_HDR_EPOCH_BITS_MASK) != eebits) {
                 /*
-                 * Since we do not transition out of early data until after we receive the next
-                 * record if we are in Early Data (epoch 1) and get an
-                 * epoch 2 record we must increment the epoch
+                 * Since we do not transition out of epoch 0 or early data until after
+                 * we receive the next record if we are in epoch 0 or Early Data (epoch 1)
+                 * and get an epoch 2 record we must update the epoch
                  */
-                if (epoch64 == 1 && ((epoch64 & DTLS13_UNI_HDR_EPOCH_BITS_MASK) + 1) == eebits) {
-                    epoch64++;
+                if (eebits == 2 && (epoch64 == 1 || epoch64 == 0)) {
+                    epoch64 = 2;
                 } else {
                     rr->length = 0;
                     rl->packet_length = 0;
