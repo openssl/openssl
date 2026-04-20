@@ -1060,7 +1060,7 @@ static int ech_test_file_read(int run)
     fullname = OPENSSL_malloc(fnlen);
     if (fullname == NULL)
         goto end;
-    snprintf(fullname, fnlen, "%s/%s", certsdir, ft->fname);
+    BIO_snprintf(fullname, fnlen, "%s/%s", certsdir, ft->fname);
     if (verbose)
         TEST_info("testing read of %s", fullname);
     in = BIO_new_file(fullname, "r");
@@ -1320,7 +1320,7 @@ static int test_ech_roundtrip_helper(int idx, int combo)
     aeadind = idx % aeadsz;
     /* initialise early data stuff, just in case */
     memset(ed, 'A', sizeof(ed));
-    snprintf(suitestr, 100, "%s,%s,%s", kem_str_list[kemind],
+    BIO_snprintf(suitestr, 100, "%s,%s,%s", kem_str_list[kemind],
         kdf_str_list[kdfind], aead_str_list[aeadind]);
     if (verbose)
         TEST_info("Doing: iter: %d, suite: %s", idx, suitestr);
