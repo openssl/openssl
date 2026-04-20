@@ -600,9 +600,10 @@ again:
                  * we receive the next record if we are in epoch 0 or Early Data (epoch 1)
                  * and get an epoch 2 record we must update the epoch
                  */
-                if ((epoch64 == 1 && ((epoch64 & DTLS13_UNI_HDR_EPOCH_BITS_MASK) + 1) == eebits)
-                    || (epoch64 == 0 && ((epoch64 & DTLS13_UNI_HDR_EPOCH_BITS_MASK) + 2) == eebits)) {
-                    epoch64 = (epoch64 & !DTLS13_UNI_HDR_EPOCH_BITS_MASK) + eebits;
+                if (epoch64 == 1 && ((epoch64 & DTLS13_UNI_HDR_EPOCH_BITS_MASK) + 1) == eebits) {
+                    epoch64++;
+                } else if (epoch64 == 0 && ((epoch64 & DTLS13_UNI_HDR_EPOCH_BITS_MASK) + 2) == eebits) {
+                    epoch64 += 2;
                 } else {
                     rr->length = 0;
                     rl->packet_length = 0;
