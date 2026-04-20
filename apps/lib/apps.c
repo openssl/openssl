@@ -2324,11 +2324,15 @@ int encode_private_key(BIO *out, const char *output_type, const EVP_PKEY *pkey,
     if (ectx == NULL)
         return 0;
 
-    if (cipher != NULL)
-        if (!OSSL_ENCODER_CTX_set_cipher(ectx, EVP_CIPHER_get0_name(cipher), NULL)
-            || !OSSL_ENCODER_CTX_set_passphrase(ectx, (const unsigned char *)pass,
-                strlen(pass)))
+    if (cipher != NULL) {
+        if (!OSSL_ENCODER_CTX_set_cipher(ectx, EVP_CIPHER_get0_name(cipher), NULL))
             goto end;
+        OSSL_ENCODER_CTX_set_passphrase_ui(ectx, get_ui_method(), NULL);
+        if (pass != NULL
+            && !OSSL_ENCODER_CTX_set_passphrase(ectx,
+                (const unsigned char *)pass, strlen(pass)))
+            goto end;
+    }
 
     if (encopt != NULL) {
         int i, n = sk_OPENSSL_STRING_num(encopt);
