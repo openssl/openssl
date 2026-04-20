@@ -31,6 +31,13 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Fixed a NULL pointer dereference when using KBKDF with KMAC and a
+   zero-length key derivation key `Ki`. KMAC keys may be any length per
+   SP 800-185, including zero; the KMAC implementation no longer rejects
+   such keys solely based on length.
+
+   *John Claus*
+
  * Improved DTLS handshake robustness under UDP reordering by buffering and
    replaying early ChangeCipherSpec (CCS) records at the expected state.
 

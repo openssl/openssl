@@ -462,11 +462,24 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (p.sep != NULL && !OSSL_PARAM_get_int(p.sep, &ctx->use_separator))
         return 0;
 
-    /* Set up digest context, if we can. */
-    if (ctx->ctx_init != NULL && ctx->ki_len != 0) {
-        if ((ctx->is_kmac && !kmac_init(ctx->ctx_init, ctx->label, ctx->label_len))
-            || !EVP_MAC_init(ctx->ctx_init, ctx->ki, ctx->ki_len, NULL))
-            return 0;
+    /*
+     * Initialize the MAC PRF. KMAC-based KBKDF uses a shortcut derive path
+     * that calls EVP_MAC_update/final on ctx_init, so the MAC must be inited
+     * even when Ki is empty (SP 800-185 allows len(K) == 0).
+     */
+    if (ctx->ctx_init != NULL) {
+        if (ctx->is_kmac) {
+            const unsigned char *ki = ctx->ki;
+
+            if (ctx->ki_len == 0 && ki == NULL)
+                ki = (const unsigned char *)"";
+            if (!kmac_init(ctx->ctx_init, ctx->label, ctx->label_len)
+                || !EVP_MAC_init(ctx->ctx_init, ki, ctx->ki_len, NULL))
+                return 0;
+        } else if (ctx->ki_len != 0) {
+            if (!EVP_MAC_init(ctx->ctx_init, ctx->ki, ctx->ki_len, NULL))
+                return 0;
+        }
     }
     return 1;
 }

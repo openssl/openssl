@@ -101,7 +101,6 @@ static OSSL_FUNC_mac_final_fn kmac_final;
 
 /* Maximum key size in bytes = 512 (4096 bits) */
 #define KMAC_MAX_KEY 512
-#define KMAC_MIN_KEY 4
 
 /*
  * Maximum Encoded Key size will be padded to a multiple of the blocksize
@@ -262,7 +261,19 @@ static int kmac_setkey(struct kmac_data_st *kctx, const unsigned char *key,
     const EVP_MD *digest = ossl_prov_digest_md(&kctx->digest);
     int w = EVP_MD_get_block_size(digest);
 
-    if (keylen < KMAC_MIN_KEY || keylen > KMAC_MAX_KEY) {
+    /*
+     * SP 800-185 allows any key length including zero; ossl_sp800_185_encode_string
+     * requires a non-NULL pointer when in_len is zero.
+     */
+    if (key == NULL) {
+        if (keylen == 0) {
+            key = (const unsigned char *)"";
+        } else {
+            ERR_raise(ERR_LIB_PROV, PROV_R_NULL_LENGTH_POINTER);
+            return 0;
+        }
+    }
+    if (keylen > KMAC_MAX_KEY) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
