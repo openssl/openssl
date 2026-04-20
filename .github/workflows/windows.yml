@@ -255,3 +255,42 @@ jobs:
       run: ./config --banner=Configured mingw64
     - name: make
       run: make -j4 -s
+
+  msys2-mingw64:
+    runs-on: windows-latest
+    env:
+      MSYSTEM: UCRT64
+      CHERE_INVOKING: 'yes'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: install MSYS2
+        run: |
+          $url = 'https://github.com/msys2/msys2-installer/releases/download/nightly-x86_64/msys2-base-x86_64-latest.sfx.exe'
+          (New-Object System.Net.WebClient).DownloadFile($url, 'msys2.exe')
+          # Remove preinstalled MSYS2
+          if (Test-Path C:\msys64) { Remove-Item -Recurse -Force C:\msys64 }
+          .\msys2.exe -y -oC:\
+          Remove-Item msys2.exe
+
+      - name: update MSYS2
+        run: |
+          C:\msys64\usr\bin\bash.exe -lc ' '
+          # Update core and then normal update
+          C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'
+          C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'
+
+      - name: install dependencies
+        run: C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -S --needed perl git make mingw-w64-ucrt-x86_64-gcc'
+
+      - name: config
+# Once fixed, enable strict-warnings
+#       run: C:\msys64\usr\bin\bash.exe -lc './config --strict-warnings --banner=Configured mingw64'
+        run: C:\msys64\usr\bin\bash.exe -lc './config --banner=Configured mingw64'
+
+      - name: make
+        run: C:\msys64\usr\bin\bash.exe -lc 'make -j4 -s'
+# Tests are broken for now
+#      - name: test
+#        run: C:\msys64\usr\bin\bash.exe -lc 'make test'
