@@ -283,11 +283,18 @@ EVP_RAND *EVP_RAND_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
 
 int EVP_RAND_up_ref(EVP_RAND *rand)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    return evp_rand_up_ref(rand);
+#else
     return 1;
+#endif
 }
 
 void EVP_RAND_free(EVP_RAND *rand)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    evp_rand_free(rand);
+#endif
     return;
 }
 
