@@ -467,12 +467,19 @@ err:
 
 void EVP_SIGNATURE_free(EVP_SIGNATURE *signature)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    evp_signature_free(signature);
+#endif
     return;
 }
 
 int EVP_SIGNATURE_up_ref(EVP_SIGNATURE *signature)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    return evp_signature_up_ref(signature);
+#else
     return 1;
+#endif
 }
 
 OSSL_PROVIDER *EVP_SIGNATURE_get0_provider(const EVP_SIGNATURE *signature)
