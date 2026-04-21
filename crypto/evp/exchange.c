@@ -173,12 +173,19 @@ err:
 
 void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    evp_keyexch_free(exchange);
+#endif
     return;
 }
 
 int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    return evp_keyexch_up_ref(exchange);
+#else
     return 1;
+#endif
 }
 
 OSSL_PROVIDER *EVP_KEYEXCH_get0_provider(const EVP_KEYEXCH *exchange)
