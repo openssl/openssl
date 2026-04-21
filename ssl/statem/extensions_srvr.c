@@ -1489,6 +1489,10 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                  */
                 s->ext.early_data_ok = 1;
             }
+
+            /* If the ticket is for an old cipher, send a new ticket. */
+            if (sess->cipher->id != s->s3.tmp.new_cipher->id)
+                s->ext.ticket_expected = 1;
         }
 
         md = ssl_md(sctx, sess->cipher->algorithm2);
