@@ -28,6 +28,10 @@ OpenSSL 4.1
 
 ### Major changes between OpenSSL 4.0 and OpenSSL 4.1 [under development]
 
+  * Added support for Java keytool PKCS#12 files with symmetric keys.
+    New API `PKCS12_parse_ex()` with `PKCS12_PARSE_CTX` has been added;
+    `PKCS12_parse()` has been deprecated.
+
   * API calls `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`, and
     `CRYPTO_atomic_cmp_exch_ptr` have been added.
 

@@ -2,32 +2,74 @@
 
 =head1 NAME
 
-PKCS12_parse - parse a PKCS#12 structure
+PKCS12_parse_ex, PKCS12_PARSE_CTX_new, PKCS12_PARSE_CTX_free,
+PKCS12_PARSE_CTX_set_pkey, PKCS12_PARSE_CTX_set_cert,
+PKCS12_PARSE_CTX_set_ca, PKCS12_PARSE_CTX_set_skey,
+PKCS12_parse
+- parse a PKCS#12 structure
 
 =head1 SYNOPSIS
 
  #include <openssl/pkcs12.h>
+
+ PKCS12_PARSE_CTX *PKCS12_PARSE_CTX_new(void);
+ void PKCS12_PARSE_CTX_free(PKCS12_PARSE_CTX *ctx);
+ void PKCS12_PARSE_CTX_set_pkey(PKCS12_PARSE_CTX *ctx, EVP_PKEY **pkey);
+ void PKCS12_PARSE_CTX_set_cert(PKCS12_PARSE_CTX *ctx, X509 **cert);
+ void PKCS12_PARSE_CTX_set_ca(PKCS12_PARSE_CTX *ctx, STACK_OF(X509) **ca);
+ void PKCS12_PARSE_CTX_set_skey(PKCS12_PARSE_CTX *ctx, EVP_SKEY **skey);
+
+ int PKCS12_parse_ex(PKCS12 *p12, const char *pass, PKCS12_PARSE_CTX *ctx,
+                     OSSL_LIB_CTX *libctx, const char *propq);
+
+Deprecated since OpenSSL 4.1:
 
  int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
                   STACK_OF(X509) **ca);
 
 =head1 DESCRIPTION
 
-PKCS12_parse() parses a PKCS12 structure.
+PKCS12_parse_ex() parses a PKCS12 structure, extracting the components
+specified by the parse context B<ctx>.
 
 B<p12> is the B<PKCS12> structure to parse. B<pass> is the passphrase to use.
-If successful the private key will be written to B<*pkey>, the corresponding
-certificate to B<*cert> and any additional certificates to B<*ca>.
+B<ctx> is a B<PKCS12_PARSE_CTX> that specifies which components to extract.
+B<libctx> and B<propq> specify the library context and property query string
+for algorithm lookups.
+
+PKCS12_PARSE_CTX_new() allocates a new parse context. All output pointers
+are initially NULL, meaning no components will be extracted until configured
+via the setter functions.
+
+PKCS12_PARSE_CTX_free() frees the parse context. It does not free any
+extracted objects.
+
+PKCS12_PARSE_CTX_set_pkey() configures the context to extract the private key
+into B<*pkey>.
+
+PKCS12_PARSE_CTX_set_cert() configures the context to extract the matching
+certificate into B<*cert>.
+
+PKCS12_PARSE_CTX_set_ca() configures the context to extract additional
+certificates into B<*ca>.
+
+PKCS12_PARSE_CTX_set_skey() configures the context to extract a symmetric
+secret key into B<*skey>. This is used for PKCS#12 files containing
+SecretBag structures, such as those created by Java's keytool utility.
+
+PKCS12_parse() is a deprecated wrapper around PKCS12_parse_ex() that
+extracts the private key, certificate, and CA certificates. It does not
+support symmetric key extraction or custom library contexts.
 
 =head1 NOTES
 
-Each of the parameters B<pkey>, B<cert>, and B<ca> can be NULL in which case
-the private key, the corresponding certificate, or the additional certificates,
-respectively, will be discarded.
-If any of B<pkey> and B<cert> is non-NULL the variable it points to is
-initialized.
-If B<ca> is non-NULL and B<*ca> is NULL a new STACK will be allocated.
-If B<ca> is non-NULL and B<*ca> is a valid STACK
+Each output pointer configured via the setter functions can be left
+unconfigured (NULL) to skip extraction of that component.
+
+If B<PKCS12_PARSE_CTX_set_cert> or B<PKCS12_PARSE_CTX_set_ca> is called,
+the corresponding pointer variables are initialized on success.
+If B<ca> is configured and B<*ca> is NULL, a new STACK will be allocated.
+If B<ca> is configured and B<*ca> is a valid STACK,
 then additional certificates are appended in the given order to B<*ca>.
 
 The B<friendlyName> and B<localKeyID> attributes (if present) on each
@@ -45,9 +87,35 @@ L<UI_OpenSSL(3)>, for example.
 
 =head1 RETURN VALUES
 
-PKCS12_parse() returns 1 for success and zero if an error occurred.
+PKCS12_parse_ex() and PKCS12_parse() return 1 for success and zero if an
+error occurred.
 
 The error can be obtained from L<ERR_get_error(3)>
+
+=head1 EXAMPLES
+
+Extract all components including symmetric keys from a PKCS#12 file:
+
+ PKCS12_PARSE_CTX *ctx = PKCS12_PARSE_CTX_new();
+ EVP_PKEY *pkey = NULL;
+ X509 *cert = NULL;
+ STACK_OF(X509) *ca = NULL;
+ EVP_SKEY *skey = NULL;
+
+ PKCS12_PARSE_CTX_set_pkey(ctx, &pkey);
+ PKCS12_PARSE_CTX_set_cert(ctx, &cert);
+ PKCS12_PARSE_CTX_set_ca(ctx, &ca);
+ PKCS12_PARSE_CTX_set_skey(ctx, &skey);
+
+ if (PKCS12_parse_ex(p12, password, ctx, NULL, NULL)) {
+     /* use pkey, cert, ca, skey */
+ }
+
+ EVP_PKEY_free(pkey);
+ X509_free(cert);
+ OSSL_STACK_OF_X509_free(ca);
+ EVP_SKEY_free(skey);
+ PKCS12_PARSE_CTX_free(ctx);
 
 =head1 BUGS
 
@@ -65,9 +133,18 @@ Attributes currently cannot be stored in the private key B<EVP_PKEY> structure.
 L<d2i_PKCS12(3)>,
 L<passphrase-encoding(7)>
 
+=head1 HISTORY
+
+PKCS12_parse_ex(), PKCS12_PARSE_CTX_new(), PKCS12_PARSE_CTX_free(),
+PKCS12_PARSE_CTX_set_pkey(), PKCS12_PARSE_CTX_set_cert(),
+PKCS12_PARSE_CTX_set_ca(), and PKCS12_PARSE_CTX_set_skey()
+were added in OpenSSL 4.1.
+
+PKCS12_parse() was deprecated in OpenSSL 4.1.
+
 =head1 COPYRIGHT
 
-Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
