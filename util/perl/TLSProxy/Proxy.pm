@@ -340,8 +340,13 @@ sub start
         #different one that doesn't get confused.
         ." -ext_cache"
         ." -accept $self->{server_addr}:0"
-        ." -cert ".$self->cert." -cert2 ".$self->cert
         ." -naccept ".$self->serverconnects;
+    if (defined $self->cert) {
+        $execcmd .= " -cert ".$self->cert." -cert2 ".$self->cert;
+    } else {
+        $execcmd .= " -nocert";
+    }
+
     if ($self->{isdtls}) {
         $execcmd .= " -dtls -max_protocol DTLSv1.2"
                     # TLSProxy does not support message fragmentation. So
