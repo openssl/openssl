@@ -506,6 +506,10 @@ struct quic_channel_st {
      * from control frame queue (CFQ)
      */
     unsigned int path_response_limit;
+    /* number of path challenge frames received */
+    unsigned int path_challenge_rx;
+    /* number of path response frames sent */
+    unsigned int path_response_tx;
 };
 
 #endif

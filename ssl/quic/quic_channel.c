@@ -4098,3 +4098,13 @@ uint64_t ossl_quic_channel_get_max_idle_timeout_actual(const QUIC_CHANNEL *ch)
 {
     return ch->max_idle_timeout;
 }
+
+uint64_t ossl_quic_channel_get_path_challenge_count(const QUIC_CHANNEL *ch)
+{
+    return ch->path_challenge_rx;
+}
+
+uint64_t ossl_quic_channel_get_path_response_count(const QUIC_CHANNEL *ch)
+{
+    return ch->path_response_tx;
+}
