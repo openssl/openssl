@@ -937,6 +937,16 @@ static void free_path_response(unsigned char *buf, size_t buf_len, void *arg)
 
     ch->path_response_limit--;
 
+    /*
+     * Assume path response frame is being freed on behalf of
+     * finished TX operation. This is for unit testing purposes
+     * only. The counter is also bumped when channel is being
+     * destroyed and CFQ (control frame queue) is freed.
+     * This currently does not matter for check_pc_flood
+     * in test/radix/quic_tests.c.
+     */
+    ch->path_response_tx++;
+
     OPENSSL_free(buf);
 }
 
@@ -990,6 +1000,8 @@ static int depack_do_frame_path_challenge(PACKET *pkt,
         ch->seen_path_challenge = 1;
         ch->path_response_limit++;
     }
+
+    ch->path_challenge_rx++;
 
     return 1;
 

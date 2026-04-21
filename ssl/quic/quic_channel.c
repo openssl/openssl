@@ -4361,3 +4361,13 @@ uint64_t ossl_quic_channel_get_active_conn_id_limit_peer_request(const QUIC_CHAN
 {
     return ch->rx_active_conn_id_limit;
 }
+
+uint64_t ossl_quic_channel_get_path_challenge_count(const QUIC_CHANNEL *ch)
+{
+    return ch->path_challenge_rx;
+}
+
+uint64_t ossl_quic_channel_get_path_response_count(const QUIC_CHANNEL *ch)
+{
+    return ch->path_response_tx;
+}
