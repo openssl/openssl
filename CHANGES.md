@@ -70,6 +70,15 @@ OpenSSL Releases
 
    *Bob Beck*
 
+ * Added support for parsing Java-generated PKCS#12 files containing symmetric
+   keys. The `openssl pkcs12` command can now extract symmetric secret keys
+   from PKCS#12 files created by Java's keytool utility. New API functions
+   `PKCS12_parse_ex()` with `PKCS12_PARSE_CTX` for selective extraction of
+   keys, certificates, and symmetric keys from PKCS#12 files.
+   `PKCS12_parse()` has been deprecated in favour of `PKCS12_parse_ex()`.
+
+   *Dmitry Belyavskiy*
+
  * The API functions `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`, and
    `CRYPTO_atomic_cmp_exch_ptr` have been added to libcrypto.
 
