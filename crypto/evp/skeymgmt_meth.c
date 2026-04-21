@@ -171,11 +171,18 @@ EVP_SKEYMGMT *EVP_SKEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 
 int EVP_SKEYMGMT_up_ref(EVP_SKEYMGMT *skeymgmt)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    return evp_skeymgmt_up_ref(skeymgmt);
+#else
     return 1;
+#endif
 }
 
 void EVP_SKEYMGMT_free(EVP_SKEYMGMT *skeymgmt)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    evp_skeymgmt_free(skeymgmt);
+#endif
     return;
 }
 
