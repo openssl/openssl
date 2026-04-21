@@ -444,12 +444,19 @@ err:
 
 void EVP_KEM_free(EVP_KEM *kem)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    evp_kem_free(kem);
+#endif
     return;
 }
 
 int EVP_KEM_up_ref(EVP_KEM *kem)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    return evp_kem_up_ref(kem);
+#else
     return 1;
+#endif
 }
 
 OSSL_PROVIDER *EVP_KEM_get0_provider(const EVP_KEM *kem)
