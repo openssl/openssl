@@ -178,11 +178,18 @@ EVP_MAC *EVP_MAC_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
 
 int EVP_MAC_up_ref(EVP_MAC *mac)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    return evp_mac_up_ref(mac);
+#else
     return 1;
+#endif
 }
 
 void EVP_MAC_free(EVP_MAC *mac)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    evp_mac_free(mac);
+#endif
     return;
 }
 
