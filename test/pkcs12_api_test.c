@@ -11,6 +11,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "internal/deprecated.h"
 #include "internal/nelem.h"
 
 #include <openssl/pkcs12.h>
