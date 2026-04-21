@@ -475,6 +475,8 @@ void ossl_quic_channel_set_tcause(QUIC_CHANNEL *ch, uint64_t app_error_code,
     const char *app_reason);
 
 void ossl_ch_reset_rx_state(QUIC_CHANNEL *ch);
+uint64_t ossl_quic_channel_get_path_challenge_count(const QUIC_CHANNEL *ch);
+uint64_t ossl_quic_channel_get_path_response_count(const QUIC_CHANNEL *ch);
 #endif
 
 #endif
