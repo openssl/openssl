@@ -180,6 +180,35 @@ PKCS8_PRIV_KEY_INFO *PKCS12_decrypt_skey(const PKCS12_SAFEBAG *bag,
     return PKCS12_decrypt_skey_ex(bag, pass, passlen, NULL, NULL);
 }
 
+PKCS8_PRIV_KEY_INFO *PKCS12_decrypt_secretbag(const PKCS12_SAFEBAG *bag,
+    const char *pass, int passlen,
+    OSSL_LIB_CTX *ctx, const char *propq)
+{
+    const ASN1_TYPE *bag_obj;
+    const unsigned char *p;
+    X509_SIG *p8enc = NULL;
+    PKCS8_PRIV_KEY_INFO *p8inf = NULL;
+
+    if (PKCS12_SAFEBAG_get_nid(bag) != NID_secretBag)
+        return NULL;
+    if (PKCS12_SAFEBAG_get_bag_nid(bag) != NID_pkcs8ShroudedKeyBag)
+        return NULL;
+
+    bag_obj = PKCS12_SAFEBAG_get0_bag_obj(bag);
+    if (bag_obj == NULL || bag_obj->type != V_ASN1_OCTET_STRING)
+        return NULL;
+
+    p = ASN1_STRING_get0_data(bag_obj->value.octet_string);
+    p8enc = d2i_X509_SIG(NULL, &p,
+        ASN1_STRING_length(bag_obj->value.octet_string));
+    if (p8enc == NULL)
+        return NULL;
+
+    p8inf = PKCS8_decrypt_ex(p8enc, pass, passlen, ctx, propq);
+    X509_SIG_free(p8enc);
+    return p8inf;
+}
+
 int PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes)
 {
     if (ASN1_item_pack(safes, ASN1_ITEM_rptr(PKCS12_AUTHSAFES),
