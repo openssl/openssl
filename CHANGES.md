@@ -40,6 +40,15 @@ OpenSSL 4.2
 
    *Madan Mohan Manokar*
 
+ * Added support for parsing Java-generated PKCS#12 files containing symmetric
+   keys. The `openssl pkcs12` command can now extract symmetric secret keys
+   from PKCS#12 files created by Java's keytool utility. New API functions
+   `PKCS12_parse_ex()` with `PKCS12_PARSE_CTX` for selective extraction of
+   keys, certificates, and symmetric keys from PKCS#12 files.
+   <!-- https://github.com/openssl/openssl/pull/30973 -->
+
+   *Dmitry Belyavskiy*
+
 OpenSSL 4.1
 -----------
 
