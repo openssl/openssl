@@ -12,6 +12,7 @@
  * Test PKCS12 parsing with fuzzed input.
  */
 
+#include "internal/deprecated.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/pkcs12.h>
@@ -27,13 +28,30 @@ int FuzzerInitialize(int *argc, char ***argv)
     return 1;
 }
 
+static void fuzz_pkcs12_parse(PKCS12 *p12, const char *pass)
+{
+    PKCS12_PARSE_CTX *ctx;
+    EVP_PKEY *pkey = NULL;
+    X509 *cert = NULL;
+    STACK_OF(X509) *ca = NULL;
+
+    ctx = PKCS12_PARSE_CTX_new();
+    if (ctx == NULL)
+        return;
+    PKCS12_PARSE_CTX_set_pkey(ctx, &pkey);
+    PKCS12_PARSE_CTX_set_cert(ctx, &cert);
+    PKCS12_PARSE_CTX_set_ca(ctx, &ca);
+    PKCS12_parse_ex(p12, pass, ctx, NULL, NULL);
+    PKCS12_PARSE_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    X509_free(cert);
+    OSSL_STACK_OF_X509_free(ca);
+}
+
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
     PKCS12 *p12;
     BIO *in;
-    EVP_PKEY *pkey = NULL;
-    X509 *cert = NULL;
-    STACK_OF(X509) *ca = NULL;
 
     if (len == 0 || len > INT_MAX)
         return 0;
@@ -45,18 +63,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         PKCS12_verify_mac(p12, NULL, 0);
         PKCS12_verify_mac(p12, "", 0);
 
-        PKCS12_parse(p12, NULL, &pkey, &cert, &ca);
-        EVP_PKEY_free(pkey);
-        X509_free(cert);
-        OSSL_STACK_OF_X509_free(ca);
-
-        pkey = NULL;
-        cert = NULL;
-        ca = NULL;
-        PKCS12_parse(p12, "", &pkey, &cert, &ca);
-        EVP_PKEY_free(pkey);
-        X509_free(cert);
-        OSSL_STACK_OF_X509_free(ca);
+        fuzz_pkcs12_parse(p12, NULL);
+        fuzz_pkcs12_parse(p12, "");
 
         PKCS12_free(p12);
     }

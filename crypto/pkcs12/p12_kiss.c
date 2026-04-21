@@ -8,40 +8,79 @@
  */
 
 #include <stdio.h>
+#include "internal/deprecated.h"
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
+#include "p12_local.h"
 #include "crypto/x509.h" /* for ossl_x509_add_cert_new() */
 
 /* Simplified PKCS#12 routines */
 
 static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,
-    EVP_PKEY **pkey, STACK_OF(X509) *ocerts);
+    PKCS12_PARSE_CTX *ctx,
+    OSSL_LIB_CTX *libctx, const char *propq);
 
 static int parse_bags(const STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
-    int passlen, EVP_PKEY **pkey, STACK_OF(X509) *ocerts,
+    int passlen, PKCS12_PARSE_CTX *ctx,
     OSSL_LIB_CTX *libctx, const char *propq);
 
 static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
-    EVP_PKEY **pkey, STACK_OF(X509) *ocerts,
+    PKCS12_PARSE_CTX *ctx,
     OSSL_LIB_CTX *libctx, const char *propq);
 
+PKCS12_PARSE_CTX *PKCS12_PARSE_CTX_new(void)
+{
+    return OPENSSL_zalloc(sizeof(PKCS12_PARSE_CTX));
+}
+
+void PKCS12_PARSE_CTX_free(PKCS12_PARSE_CTX *ctx)
+{
+    OPENSSL_free(ctx);
+}
+
+void PKCS12_PARSE_CTX_set_pkey(PKCS12_PARSE_CTX *ctx, EVP_PKEY **pkey)
+{
+    ctx->pkey = pkey;
+}
+
+void PKCS12_PARSE_CTX_set_cert(PKCS12_PARSE_CTX *ctx, X509 **cert)
+{
+    ctx->cert = cert;
+}
+
+void PKCS12_PARSE_CTX_set_ca(PKCS12_PARSE_CTX *ctx, STACK_OF(X509) **ca)
+{
+    ctx->ca = ca;
+}
+
+void PKCS12_PARSE_CTX_set_skey(PKCS12_PARSE_CTX *ctx, EVP_SKEY **skey)
+{
+    ctx->skey = skey;
+}
+
 /*
- * Parse and decrypt a PKCS#12 structure returning user key, user cert and
- * other (CA) certs. Note either ca should be NULL, *ca should be NULL, or it
- * should point to a valid STACK structure. pkey and/or cert may be NULL;
- * if non-NULL the variables they point to can be passed uninitialised.
+ * Parse and decrypt a PKCS#12 structure returning user key, user cert,
+ * other (CA) certs, and/or symmetric secret key according to ctx settings.
  */
 
-int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
-    STACK_OF(X509) **ca)
+int PKCS12_parse_ex(PKCS12 *p12, const char *pass,
+    PKCS12_PARSE_CTX *ctx,
+    OSSL_LIB_CTX *libctx, const char *propq)
 {
-    STACK_OF(X509) *ocerts = NULL;
     X509 *x = NULL;
 
-    if (pkey != NULL)
-        *pkey = NULL;
-    if (cert != NULL)
-        *cert = NULL;
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (ctx->pkey != NULL)
+        *ctx->pkey = NULL;
+    if (ctx->cert != NULL)
+        *ctx->cert = NULL;
+    if (ctx->skey != NULL)
+        *ctx->skey = NULL;
+    ctx->ocerts = NULL;
 
     /* Check for NULL PKCS12 structure */
 
@@ -76,13 +115,13 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
     }
 
     /* If needed, allocate stack for other certificates */
-    if ((cert != NULL || ca != NULL)
-        && (ocerts = sk_X509_new_null()) == NULL) {
+    if ((ctx->cert != NULL || ctx->ca != NULL)
+        && (ctx->ocerts = sk_X509_new_null()) == NULL) {
         ERR_raise(ERR_LIB_PKCS12, ERR_R_CRYPTO_LIB);
         goto err;
     }
 
-    if (!parse_pk12(p12, pass, -1, pkey, ocerts)) {
+    if (!parse_pk12(p12, pass, -1, ctx, libctx, propq)) {
         int err = ERR_peek_last_error();
 
         if (ERR_GET_LIB(err) != ERR_LIB_EVP
@@ -92,51 +131,76 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
     }
 
     /* Split the certs in ocerts over *cert and *ca as far as requested */
-    while ((x = sk_X509_shift(ocerts)) != NULL) {
-        if (pkey != NULL && *pkey != NULL
-            && cert != NULL && *cert == NULL) {
+    while ((x = sk_X509_shift(ctx->ocerts)) != NULL) {
+        if (ctx->pkey != NULL && *ctx->pkey != NULL
+            && ctx->cert != NULL && *ctx->cert == NULL) {
             int match;
 
             ERR_set_mark();
-            match = X509_check_private_key(x, *pkey);
+            match = X509_check_private_key(x, *ctx->pkey);
             ERR_pop_to_mark();
             if (match) {
-                *cert = x;
+                *ctx->cert = x;
                 continue;
             }
         }
 
-        if (ca != NULL) {
-            if (!ossl_x509_add_cert_new(ca, x, X509_ADD_FLAG_DEFAULT))
+        if (ctx->ca != NULL) {
+            if (!ossl_x509_add_cert_new(ctx->ca, x, X509_ADD_FLAG_DEFAULT))
                 goto err;
             continue;
         }
         X509_free(x);
     }
-    sk_X509_free(ocerts);
+    sk_X509_free(ctx->ocerts);
+    ctx->ocerts = NULL;
 
     return 1;
 
 err:
 
-    if (pkey != NULL) {
-        EVP_PKEY_free(*pkey);
-        *pkey = NULL;
+    if (ctx->pkey != NULL) {
+        EVP_PKEY_free(*ctx->pkey);
+        *ctx->pkey = NULL;
     }
-    if (cert != NULL) {
-        X509_free(*cert);
-        *cert = NULL;
+    if (ctx->cert != NULL) {
+        X509_free(*ctx->cert);
+        *ctx->cert = NULL;
+    }
+    if (ctx->skey != NULL) {
+        EVP_SKEY_free(*ctx->skey);
+        *ctx->skey = NULL;
     }
     X509_free(x);
-    OSSL_STACK_OF_X509_free(ocerts);
+    OSSL_STACK_OF_X509_free(ctx->ocerts);
+    ctx->ocerts = NULL;
     return 0;
+}
+
+int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
+    STACK_OF(X509) **ca)
+{
+    PKCS12_PARSE_CTX *ctx;
+    int ret;
+
+    ctx = PKCS12_PARSE_CTX_new();
+    if (ctx == NULL)
+        return 0;
+
+    PKCS12_PARSE_CTX_set_pkey(ctx, pkey);
+    PKCS12_PARSE_CTX_set_cert(ctx, cert);
+    PKCS12_PARSE_CTX_set_ca(ctx, ca);
+
+    ret = PKCS12_parse_ex(p12, pass, ctx, NULL, NULL);
+    PKCS12_PARSE_CTX_free(ctx);
+    return ret;
 }
 
 /* Parse the outer PKCS#12 structure */
 
-/* pkey and/or ocerts may be NULL */
 static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,
-    EVP_PKEY **pkey, STACK_OF(X509) *ocerts)
+    PKCS12_PARSE_CTX *ctx,
+    OSSL_LIB_CTX *libctx, const char *propq)
 {
     STACK_OF(PKCS7) *asafes;
     STACK_OF(PKCS12_SAFEBAG) *bags;
@@ -158,8 +222,10 @@ static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,
             sk_PKCS7_pop_free(asafes, PKCS7_free);
             return 0;
         }
-        if (!parse_bags(bags, pass, passlen, pkey, ocerts,
-                p7->ctx.libctx, p7->ctx.propq)) {
+        /* Use provided libctx/propq if available, otherwise from p7 */
+        if (!parse_bags(bags, pass, passlen, ctx,
+                libctx != NULL ? libctx : p7->ctx.libctx,
+                propq != NULL ? propq : p7->ctx.propq)) {
             sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
             sk_PKCS7_pop_free(asafes, PKCS7_free);
             return 0;
@@ -170,24 +236,22 @@ static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,
     return 1;
 }
 
-/* pkey and/or ocerts may be NULL */
 static int parse_bags(const STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
-    int passlen, EVP_PKEY **pkey, STACK_OF(X509) *ocerts,
+    int passlen, PKCS12_PARSE_CTX *ctx,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
     int i;
     for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
         if (!parse_bag(sk_PKCS12_SAFEBAG_value(bags, i),
-                pass, passlen, pkey, ocerts,
+                pass, passlen, ctx,
                 libctx, propq))
             return 0;
     }
     return 1;
 }
 
-/* pkey and/or ocerts may be NULL */
 static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
-    EVP_PKEY **pkey, STACK_OF(X509) *ocerts,
+    PKCS12_PARSE_CTX *ctx,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
     PKCS8_PRIV_KEY_INFO *p8;
@@ -210,29 +274,29 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
 
     switch (PKCS12_SAFEBAG_get_nid(bag)) {
     case NID_keyBag:
-        if (pkey == NULL || *pkey != NULL)
+        if (ctx->pkey == NULL || *ctx->pkey != NULL)
             return 1;
-        *pkey = EVP_PKCS82PKEY_ex(PKCS12_SAFEBAG_get0_p8inf(bag),
+        *ctx->pkey = EVP_PKCS82PKEY_ex(PKCS12_SAFEBAG_get0_p8inf(bag),
             libctx, propq);
-        if (*pkey == NULL)
+        if (*ctx->pkey == NULL)
             return 0;
         break;
 
     case NID_pkcs8ShroudedKeyBag:
-        if (pkey == NULL || *pkey != NULL)
+        if (ctx->pkey == NULL || *ctx->pkey != NULL)
             return 1;
         if ((p8 = PKCS12_decrypt_skey_ex(bag, pass, passlen,
                  libctx, propq))
             == NULL)
             return 0;
-        *pkey = EVP_PKCS82PKEY_ex(p8, libctx, propq);
+        *ctx->pkey = EVP_PKCS82PKEY_ex(p8, libctx, propq);
         PKCS8_PRIV_KEY_INFO_free(p8);
-        if (!(*pkey))
+        if (!(*ctx->pkey))
             return 0;
         break;
 
     case NID_certBag:
-        if (ocerts == NULL
+        if (ctx->ocerts == NULL
             || PKCS12_SAFEBAG_get_bag_nid(bag) != NID_x509Certificate)
             return 1;
         if ((x509 = PKCS12_SAFEBAG_get1_cert_ex(bag, libctx, propq)) == NULL)
@@ -256,16 +320,35 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
             }
         }
 
-        if (!sk_X509_push(ocerts, x509)) {
+        if (!sk_X509_push(ctx->ocerts, x509)) {
             X509_free(x509);
             return 0;
         }
 
         break;
 
+    case NID_secretBag:
+        if (ctx->skey == NULL || *ctx->skey != NULL)
+            return 1;
+        if (PKCS12_SAFEBAG_get_bag_nid(bag) != NID_pkcs8ShroudedKeyBag)
+            return 1;
+        {
+            PKCS8_PRIV_KEY_INFO *p8sb = PKCS12_decrypt_secretbag(bag, pass,
+                passlen, libctx, propq);
+            if (p8sb == NULL)
+                return 0;
+            *ctx->skey = PKCS8_PRIV_KEY_INFO_get1_skey(p8sb, libctx, propq);
+            PKCS8_PRIV_KEY_INFO_free(p8sb);
+            if (*ctx->skey == NULL) {
+                ERR_raise(ERR_LIB_PKCS12, PKCS12_R_PARSE_ERROR);
+                return 0;
+            }
+        }
+        return 1;
+
     case NID_safeContentsBag:
-        return parse_bags(PKCS12_SAFEBAG_get0_safes(bag), pass, passlen, pkey,
-            ocerts, libctx, propq);
+        return parse_bags(PKCS12_SAFEBAG_get0_safes(bag), pass, passlen, ctx,
+            libctx, propq);
 
     default:
         return 1;

@@ -4058,7 +4058,7 @@ PKCS12_BAGS_it                          4055	4_0_0	EXIST::FUNCTION:
 PKCS12_SAFEBAGS_it                      4056	4_0_0	EXIST::FUNCTION:
 PKCS12_AUTHSAFES_it                     4057	4_0_0	EXIST::FUNCTION:
 PKCS12_PBE_add                          4058	4_0_0	EXIST::FUNCTION:
-PKCS12_parse                            4059	4_0_0	EXIST::FUNCTION:
+PKCS12_parse                            4059	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
 PKCS12_create                           4060	4_0_0	EXIST::FUNCTION:
 PKCS12_create_ex                        4061	4_0_0	EXIST::FUNCTION:
 PKCS12_create_ex2                       4062	4_0_0	EXIST::FUNCTION:
