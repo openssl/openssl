@@ -121,7 +121,6 @@ sub get_records
                 $epoch,
                 $seq,
                 $len,
-                0,
                 $len,       # len_real
                 $len,       # decrypt_len
                 $data,      # data
@@ -133,7 +132,6 @@ sub get_records
                 $content_type,
                 $version,
                 $len,
-                0,
                 $len,  # len_real
                 $len,  # decrypt_len
                 $data, # data
@@ -215,7 +213,6 @@ sub new_dtls
         $epoch,
         $seq,
         $len,
-        $sslv2,
         $len_real,
         $decrypt_len,
         $data,
@@ -227,7 +224,6 @@ sub new_dtls
         $epoch,
         $seq,
         $len,
-        $sslv2,
         $len_real,
         $decrypt_len,
         $data,
@@ -241,7 +237,6 @@ sub new
         $content_type,
         $version,
         $len,
-        $sslv2,
         $len_real,
         $decrypt_len,
         $data,
@@ -254,7 +249,6 @@ sub new
         0, #epoch
         0, #seq
         $len,
-        $sslv2,
         $len_real,
         $decrypt_len,
         $data,
@@ -271,7 +265,6 @@ sub init
         $epoch,
         $seq,
         $len,
-        $sslv2,
         $len_real,
         $decrypt_len,
         $data,
@@ -285,7 +278,6 @@ sub init
         epoch => $epoch,
         seq => $seq,
         len => $len,
-        sslv2 => $sslv2,
         len_real => $len_real,
         decrypt_len => $decrypt_len,
         data => $data,
@@ -388,27 +380,23 @@ sub reconstruct_record
     }
     $self->{sent} = 1;
 
-    if ($self->sslv2) {
-        $data = pack('n', $self->len | 0x8000);
+    if($self->{isdtls}) {
+        my $seqhi = ($self->seq >> 32) & 0xffff;
+        my $seqmi = ($self->seq >> 16) & 0xffff;
+        my $seqlo = ($self->seq >> 0) & 0xffff;
+        $data = pack('Cnnnnnn', $self->content_type, $self->version,
+                     $self->epoch, $seqhi, $seqmi, $seqlo, $self->len);
     } else {
-        if($self->{isdtls}) {
-            my $seqhi = ($self->seq >> 32) & 0xffff;
-            my $seqmi = ($self->seq >> 16) & 0xffff;
-            my $seqlo = ($self->seq >> 0) & 0xffff;
-            $data = pack('Cnnnnnn', $self->content_type, $self->version,
-                         $self->epoch, $seqhi, $seqmi, $seqlo, $self->len);
-        } else {
-            if (TLSProxy::Proxy->is_tls13() && $self->encrypted) {
-                $data = pack('Cnn', $self->outer_content_type, $self->version,
-                             $self->len);
-            }
-            else {
-                $data = pack('Cnn', $self->content_type, $self->version,
-                             $self->len);
-            }
+        if (TLSProxy::Proxy->is_tls13() && $self->encrypted) {
+            $data = pack('Cnn', $self->outer_content_type, $self->version,
+                         $self->len);
         }
-
+        else {
+            $data = pack('Cnn', $self->content_type, $self->version,
+                         $self->len);
+        }
     }
+
     $data .= $self->data;
 
     return $data;
@@ -419,11 +407,6 @@ sub flight
 {
     my $self = shift;
     return $self->{flight};
-}
-sub sslv2
-{
-    my $self = shift;
-    return $self->{sslv2};
 }
 sub len_real
 {
