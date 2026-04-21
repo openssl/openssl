@@ -3055,6 +3055,7 @@ err:
 
 static int test_RSA_verify_recover_rejects_short_buffer(void)
 {
+    int fipsver = 0;
     int ret = 0;
     int recovered_cap = 0;
     EVP_PKEY *pkey = NULL;
@@ -3066,6 +3067,13 @@ static int test_RSA_verify_recover_rejects_short_buffer(void)
     const unsigned char shortbuf_expected[] = { 0xa5, 0x5a };
     unsigned char digest[32];
     size_t i;
+
+    if (!TEST_int_ge(fipsver = fips_provider_version_match(testctx,
+                         "!3.0.0 !3.0.8 !3.0.9 !3.1.2"),
+            0))
+        goto done;
+    if (fipsver == 0)
+        return TEST_skip("Test skipped for old FIPS providers");
 
     for (i = 0; i < sizeof(digest); i++)
         digest[i] = (unsigned char)i;
