@@ -56,7 +56,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => 80 + ($no_fips ? 0 : 5);
+plan tests => 97 + ($no_fips ? 0 : 5);
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -598,5 +598,98 @@ ok(run(test(["pkcs12_api_test",
              "-pass", "password",
              "-num-skeys", "1",
              ])), "Test PKCS12_parse_ex() with symmetric key");
+
+# Test OSSL_STORE with Java symmetric key file
+{
+    my @output = run(app(["openssl", "storeutl",
+                         "-passin", "pass:password",
+                         srctop_file("test", "recipes", "80-test_pkcs12_data", "java-skey.p12")]),
+                    capture => 1);
+    ok(@output > 0, "Test OSSL_STORE loads symmetric key from PKCS#12");
+
+    my $output_text = join("", @output);
+    like($output_text, qr/Symmetric key/, "OSSL_STORE output shows symmetric key");
+}
+
+# Test PKCS#12 files with multiple symmetric keys
+{
+    my $multi_p12 = srctop_file("test", "recipes", "80-test_pkcs12_data", "multi-skey.p12");
+    my $mskey_out = "mskey-out.bin";
+    my $mskey_raw = "mskey-raw.bin";
+
+    # Test 1: Info display shows both keys with their friendly names
+    my @multi_info = run(app(["openssl", "pkcs12", "-info", "-in", $multi_p12,
+                              "-passin", "pass:password"]), capture => 1);
+
+    ok(grep(/friendlyName:\s+key1/, @multi_info) == 1,
+       "test multi-skey PKCS#12 shows key1 friendly name");
+
+    ok(grep(/friendlyName:\s+key2/, @multi_info) == 1,
+       "test multi-skey PKCS#12 shows key2 friendly name");
+
+    # Test 2: Default extraction shows both keys with metadata
+    ok(run(app(["openssl", "pkcs12", "-in", $multi_p12, "-nocerts",
+                "-out", $mskey_out, "-passin", "pass:password"])),
+       "test multi-skey PKCS#12 extract without -noenc");
+
+    open my $fh, '<', $mskey_out or die "Cannot open $mskey_out: $!";
+    my $content = do { local $/; <$fh> };
+    close $fh;
+    ok($content =~ /Key Length: 32 bytes/ && $content =~ /Key Length: 16 bytes/,
+       "test multi-skey output shows both key lengths");
+    ok(($content =~ s/Symmetric Key \(use -noenc to output\)//g) == 2,
+       "test multi-skey output shows two encrypted key placeholders");
+
+    # Test 3: Extract with -noenc should output both keys in hex
+    ok(run(app(["openssl", "pkcs12", "-in", $multi_p12, "-nocerts",
+                "-out", $mskey_out, "-passin", "pass:password", "-noenc"])),
+       "test multi-skey PKCS#12 extract with -noenc");
+
+    open $fh, '<', $mskey_out or die "Cannot open $mskey_out: $!";
+    $content = do { local $/; <$fh> };
+    close $fh;
+    ok($content =~ /0101010101010101/,
+       "test multi-skey -noenc output contains key1 hex data");
+    ok($content =~ /0202020202020202/,
+       "test multi-skey -noenc output contains key2 hex data");
+
+    # Test 4: Extract as raw binary - both keys concatenated
+    ok(run(app(["openssl", "pkcs12", "-in", $multi_p12, "-nocerts",
+                "-out", $mskey_raw, "-passin", "pass:password", "-raw"])),
+       "test multi-skey PKCS#12 extract with -raw option");
+
+    ok(-s $mskey_raw == 48,
+       "test multi-skey raw output is 48 bytes (32 + 16)");
+
+    open $fh, '<:raw', $mskey_raw or die "Cannot open $mskey_raw: $!";
+    my $raw_content = do { local $/; <$fh> };
+    close $fh;
+    ok(substr($raw_content, 0, 32) eq ("\x01" x 32),
+       "test multi-skey raw key1 is correct");
+    ok(substr($raw_content, 32, 16) eq ("\x02" x 16),
+       "test multi-skey raw key2 is correct");
+
+    unlink $mskey_out, $mskey_raw;
+}
+
+# Test PKCS12_parse_ex() with multiple symmetric keys
+ok(run(test(["pkcs12_api_test",
+             "-in", srctop_file("test", "recipes", "80-test_pkcs12_data", "multi-skey.p12"),
+             "-pass", "password",
+             "-num-skeys", "2",
+             ])), "Test PKCS12_parse_ex() with multiple symmetric keys");
+
+# Test OSSL_STORE with multiple symmetric keys
+{
+    my @output = run(app(["openssl", "storeutl",
+                         "-passin", "pass:password",
+                         srctop_file("test", "recipes", "80-test_pkcs12_data", "multi-skey.p12")]),
+                    capture => 1);
+    ok(@output > 0, "Test OSSL_STORE loads multiple symmetric keys from PKCS#12");
+
+    my $output_text = join("", @output);
+    my @skey_matches = ($output_text =~ /Symmetric key/g);
+    ok(scalar @skey_matches == 2, "OSSL_STORE output shows two symmetric keys");
+}
 
 SetConsoleOutputCP($savedcp) if (defined($savedcp));
