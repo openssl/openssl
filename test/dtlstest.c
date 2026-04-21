@@ -807,7 +807,11 @@ static int test_swap_records_dtls13(int idx)
     }
 
     if (idx == 3) {
-        if (!TEST_int_le(SSL_connect(cssl), 0))
+        /*
+         * Now that we are processing APP Data before the ACK
+         * We can now read this data
+         */
+        if (!TEST_int_eq(SSL_read(cssl, buf, sizeof(buf)), (int)sizeof(msg)))
             goto end;
     }
     /*
@@ -847,11 +851,7 @@ static int test_swap_records_dtls13(int idx)
     /*
      * Recv flight 5 (app data)
      */
-    if (idx == 3) {
-        /* Since App Data was inserted before the ACK it will be dropped */
-        if (!TEST_int_le(ret = SSL_read(cssl, buf, sizeof(buf)), 0))
-            goto end;
-    } else {
+    if (idx != 3) {
         if (!TEST_int_eq(SSL_read(cssl, buf, sizeof(buf)), (int)sizeof(msg)))
             goto end;
     }
