@@ -209,7 +209,7 @@ useful internally because the type is opaque and there exist no setter functions
 Hence, there never was a real use case for the function and calls to it can
 simply be removed.
 
-=head3 Semantic change of EVP_get_cipherby* and EVP_get_digestby* functions
+=head3 Practical behavior change of EVP_get_cipherby* and EVP_get_digestby* functions
 
 Before 4.0 functions B<EVP_get_cipherby*> and B<EVP_get_digestby*> were often
 used as fallback for EVP_CIPHER_fetch() and EVP_MD_fetch() implying the
