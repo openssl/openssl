@@ -56,7 +56,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => 66 + ($no_fips ? 0 : 5);
+plan tests => 71 + ($no_fips ? 0 : 5);
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -534,5 +534,38 @@ ok(run(test(["pkcs12_api_test",
              "-pass", "password",
              "-num-skeys", "1",
              ])), "Test PKCS12_parse_ex() with symmetric key");
+
+# Test OSSL_STORE with Java symmetric key file
+{
+    my @output = run(app(["openssl", "storeutl",
+                         "-passin", "pass:password",
+                         srctop_file("test", "recipes", "80-test_pkcs12_data", "java-skey.p12")]),
+                    capture => 1);
+    ok(@output > 0, "Test OSSL_STORE loads symmetric key from PKCS#12");
+
+    my $output_text = join("", @output);
+    like($output_text, qr/Symmetric key/, "OSSL_STORE output shows symmetric key");
+}
+
+
+# Test PKCS12_parse_ex() with multiple symmetric keys
+ok(run(test(["pkcs12_api_test",
+             "-in", srctop_file("test", "recipes", "80-test_pkcs12_data", "multi-skey.p12"),
+             "-pass", "password",
+             "-num-skeys", "2",
+             ])), "Test PKCS12_parse_ex() with multiple symmetric keys");
+
+# Test OSSL_STORE with multiple symmetric keys
+{
+    my @output = run(app(["openssl", "storeutl",
+                         "-passin", "pass:password",
+                         srctop_file("test", "recipes", "80-test_pkcs12_data", "multi-skey.p12")]),
+                    capture => 1);
+    ok(@output > 0, "Test OSSL_STORE loads multiple symmetric keys from PKCS#12");
+
+    my $output_text = join("", @output);
+    my @skey_matches = ($output_text =~ /Symmetric key/g);
+    ok(scalar @skey_matches == 2, "OSSL_STORE output shows two symmetric keys");
+}
 
 SetConsoleOutputCP($savedcp) if (defined($savedcp));
