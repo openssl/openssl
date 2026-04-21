@@ -1116,7 +1116,8 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
             ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST);
             goto err;
         }
-        if ((ASN1_STRING_length(message_digest) != (int)md_len) || (memcmp(ASN1_STRING_get0_data(message_digest), md_dat, md_len))) {
+        if ((ASN1_STRING_length(message_digest) != (int)md_len)
+            || (memcmp(ASN1_STRING_get0_data(message_digest), md_dat, md_len))) {
             ERR_raise(ERR_LIB_PKCS7, PKCS7_R_DIGEST_FAILURE);
             ret = -1;
             goto err;
