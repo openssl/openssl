@@ -806,19 +806,10 @@ static int test_swap_records_dtls13(int idx)
             goto end;
     }
 
-    if (idx == 3) {
-        if (!TEST_int_le(SSL_connect(cssl), 0))
-            goto end;
-    }
     /*
      * Recv Server's ACK
      */
     if (!TEST_int_gt(SSL_connect(cssl), 0))
-        goto end;
-
-    /* App data was not received early, so it should not be pending */
-    if (!TEST_int_eq(SSL_pending(cssl), 0)
-        || !TEST_false(SSL_has_pending(cssl)))
         goto end;
 
     if (idx == 1 || idx == 2) {
@@ -830,6 +821,12 @@ static int test_swap_records_dtls13(int idx)
          * New Session Tickets are dropped/discarded. Thus we get into a
          * scenario where the server must resend the New Session Tickets.
          */
+
+        /* App data was not received early, so it should not be pending */
+        if (!TEST_int_eq(SSL_pending(cssl), 0)
+            || !TEST_false(SSL_has_pending(cssl)))
+            goto end;
+
         if (!TEST_int_le(ret = SSL_read(cssl, buf, sizeof(buf)), 0))
             goto end;
 
@@ -837,22 +834,23 @@ static int test_swap_records_dtls13(int idx)
         if (!TEST_int_le(ret = SSL_read(sssl, buf, sizeof(buf)), 0))
             goto end;
 
-        /* Client can should now read the new Session Ticket */
+        /* Client can now read the new Session Ticket */
         if (!TEST_int_le(ret = SSL_read(cssl, buf, sizeof(buf)), 0))
             goto end;
 
         if (!TEST_int_eq(SSL_write(sssl, msg, sizeof(msg)), (int)sizeof(msg)))
             goto end;
-    }
-    /*
-     * Recv flight 5 (app data)
-     */
-    if (idx == 3) {
-        /* Since App Data was inserted before the ACK it will be dropped */
-        if (!TEST_int_le(ret = SSL_read(cssl, buf, sizeof(buf)), 0))
+
+        if (!TEST_int_eq(SSL_read(cssl, buf, sizeof(buf)), (int)sizeof(msg)))
             goto end;
     } else {
+        /*
+         * Recv flight 5 (app data)
+         */
         if (!TEST_int_eq(SSL_read(cssl, buf, sizeof(buf)), (int)sizeof(msg)))
+            goto end;
+
+        if (!TEST_mem_eq(buf, sizeof(msg), msg, sizeof(msg)))
             goto end;
     }
 
