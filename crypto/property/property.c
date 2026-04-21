@@ -895,6 +895,9 @@ fin:
         }
     } else {
         if (ret) {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+	    ossl_method_up_ref(&best_impl->method);
+#endif
             *method = best_impl->method.method;
             if (prov_rw != NULL)
                 *prov_rw = best_impl->provider;
@@ -1035,6 +1038,9 @@ static ossl_inline int ossl_method_store_cache_get_atomic(OSSL_METHOD_STORE *sto
             res = 1;
         }
     } else {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+	ossl_method_up_ref(&r->method);
+#endif
         *method = r->method.method;
         res = 1;
     }
