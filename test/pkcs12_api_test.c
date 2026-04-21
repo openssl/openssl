@@ -65,6 +65,7 @@ static const char *expected_cert_file = NULL;
 static const char *expected_ca_file = NULL;
 static const char *expected_key_file = NULL;
 static int mismatched_key_pass = 0;
+static int num_skeys = 0;
 
 static int changepass(PKCS12 *p12, EVP_PKEY *key, X509 *cert, STACK_OF(X509) *ca)
 {
@@ -383,6 +384,181 @@ err:
     return TEST_true(ret);
 }
 
+static int test_parse_ex_libctx(int idx)
+{
+    int ret = 0;
+    BIO *bio = NULL;
+    PKCS12 *p12 = NULL;
+    PKCS12_PARSE_CTX *ctx = NULL;
+    EVP_PKEY *key = NULL;
+    X509 *cert = NULL;
+    int prebound = (idx == 0);
+
+    if (in_file == NULL || !has_key || !has_cert || mismatched_key_pass)
+        return 1;
+
+    TEST_info("libctx propagation: %s decode", prebound ? "prebound" : "ordinary");
+
+    bio = BIO_new_file(in_file, "rb");
+    if (!TEST_ptr(bio))
+        goto err;
+
+    if (prebound) {
+        p12 = PKCS12_init_ex(NID_pkcs7_data, testctx, "provider=default");
+        if (!TEST_ptr(p12))
+            goto err;
+    }
+    if (!TEST_ptr(d2i_PKCS12_bio(bio, &p12)))
+        goto err;
+    BIO_free(bio);
+    bio = NULL;
+
+    if (!TEST_ptr(ctx = PKCS12_PARSE_CTX_new()))
+        goto err;
+    PKCS12_PARSE_CTX_set_pkey(ctx, &key);
+    PKCS12_PARSE_CTX_set_cert(ctx, &cert);
+
+    if (!TEST_true(PKCS12_parse_ex(p12, in_pass, ctx,
+            testctx, "provider=default")))
+        goto err;
+
+    if (!TEST_ptr(key) || !TEST_ptr(cert))
+        goto err;
+
+    ret = 1;
+
+err:
+    BIO_free(bio);
+    PKCS12_PARSE_CTX_free(ctx);
+    PKCS12_free(p12);
+    EVP_PKEY_free(key);
+    X509_free(cert);
+    return ret;
+}
+
+static int test_parse_ex_skey(void)
+{
+    PKCS12 *p12 = NULL;
+    PKCS12_PARSE_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    X509 *cert = NULL;
+    STACK_OF(X509) *ca = NULL;
+    STACK_OF(EVP_SKEY) *skeys = NULL;
+    EVP_SKEY *skey = NULL;
+    const unsigned char *raw_key = NULL;
+    size_t raw_key_len = 0;
+    int ret = 0;
+
+    if (in_file == NULL || mismatched_key_pass)
+        return 1;
+
+    if (!TEST_ptr(p12 = PKCS12_load(in_file)))
+        goto err;
+
+    if (!TEST_ptr(ctx = PKCS12_PARSE_CTX_new()))
+        goto err;
+
+    PKCS12_PARSE_CTX_set_pkey(ctx, &pkey);
+    PKCS12_PARSE_CTX_set_cert(ctx, &cert);
+    PKCS12_PARSE_CTX_set_ca(ctx, &ca);
+    PKCS12_PARSE_CTX_set_skeys(ctx, &skeys);
+
+    if (!TEST_true(PKCS12_parse_ex(p12, in_pass, ctx,
+            testctx, "provider=default")))
+        goto err;
+
+    if ((has_key && !TEST_ptr(pkey)) || (!has_key && !TEST_ptr_null(pkey)))
+        goto err;
+    if ((has_cert && !TEST_ptr(cert)) || (!has_cert && !TEST_ptr_null(cert)))
+        goto err;
+    if (num_skeys > 0) {
+        if (!TEST_ptr(skeys)
+            || !TEST_int_eq(sk_EVP_SKEY_num(skeys), num_skeys))
+            goto err;
+    } else {
+        if (!TEST_ptr_null(skeys))
+            goto err;
+    }
+
+    if (num_skeys == 1 && skeys != NULL) {
+        skey = sk_EVP_SKEY_value(skeys, 0);
+        if (!TEST_ptr(skey))
+            goto err;
+        if (!TEST_true(EVP_SKEY_get0_raw_key(skey, &raw_key, &raw_key_len)))
+            goto err;
+        if (!TEST_size_t_eq(raw_key_len, 32))
+            goto err;
+        for (size_t i = 0; i < raw_key_len; i++) {
+            if (!TEST_uchar_eq(raw_key[i], 0x41))
+                goto err;
+        }
+        if (!TEST_str_eq(EVP_SKEY_get0_skeymgmt_name(skey), "AES"))
+            goto err;
+    }
+
+    ret = 1;
+
+err:
+    PKCS12_PARSE_CTX_free(ctx);
+    PKCS12_free(p12);
+    EVP_PKEY_free(pkey);
+    X509_free(cert);
+    OSSL_STACK_OF_X509_free(ca);
+    sk_EVP_SKEY_pop_free(skeys, EVP_SKEY_free);
+    return ret;
+}
+
+static int test_parse_ex_skey_libctx(int idx)
+{
+    PKCS12 *src = NULL, *p12 = NULL;
+    STACK_OF(PKCS7) *safes = NULL;
+    PKCS12_PARSE_CTX *ctx = NULL;
+    STACK_OF(EVP_SKEY) *skeys = NULL;
+    int ret = 0;
+
+    if (in_file == NULL || num_skeys == 0)
+        return 1;
+
+    if (!TEST_ptr(src = PKCS12_load(in_file))
+        || !TEST_ptr(safes = PKCS12_unpack_authsafes(src)))
+        goto err;
+
+    if (!TEST_ptr(p12 = PKCS12_init_ex(NID_pkcs7_data, testctx,
+                      idx < 2 ? "provider=missing" : "provider=default")))
+        goto err;
+
+    /* Omit the MAC so the test reaches decryption of the secret bag. */
+    if (!TEST_true(PKCS12_pack_authsafes(p12, safes))
+        || !TEST_ptr(ctx = PKCS12_PARSE_CTX_new()))
+        goto err;
+    PKCS12_PARSE_CTX_set_skeys(ctx, &skeys);
+
+    if (idx < 2) {
+        /* Neither NULL nor an empty query should use the stored query. */
+        if (!TEST_true(PKCS12_parse_ex(p12, in_pass, ctx,
+                testctx, idx == 0 ? NULL : ""))
+            || !TEST_ptr(skeys)
+            || !TEST_int_eq(sk_EVP_SKEY_num(skeys), num_skeys))
+            goto err;
+    } else {
+        /* The default library context contains only the null provider. */
+        if (!TEST_false(PKCS12_parse_ex(p12, in_pass, ctx,
+                NULL, idx == 2 ? NULL : "provider=default"))
+            || !TEST_ptr_null(skeys))
+            goto err;
+        ERR_clear_error();
+    }
+
+    ret = 1;
+err:
+    sk_EVP_SKEY_pop_free(skeys, EVP_SKEY_free);
+    PKCS12_PARSE_CTX_free(ctx);
+    sk_PKCS7_pop_free(safes, PKCS7_free);
+    PKCS12_free(p12);
+    PKCS12_free(src);
+    return ret;
+}
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
@@ -396,6 +572,7 @@ typedef enum OPTION_choice {
     OPT_EXPECTED_CA,
     OPT_EXPECTED_KEY,
     OPT_MISMATCHED_P12,
+    OPT_IN_NUM_SKEYS,
     OPT_LEGACY,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
@@ -414,6 +591,7 @@ const OPTIONS *test_get_options(void)
         { "expected-ca", OPT_EXPECTED_CA, '<', "PEM file of expected CA certificates in order" },
         { "expected-key", OPT_EXPECTED_KEY, '<', "PEM file of expected private key" },
         { "mismatched-key-pass", OPT_MISMATCHED_P12, '-', "Input has key encrypted with a different password" },
+        { "num-skeys", OPT_IN_NUM_SKEYS, 'n', "Number of symmetric keys in the input file" },
         { "legacy", OPT_LEGACY, '-', "Test the legacy APIs" },
         { NULL }
     };
@@ -430,11 +608,18 @@ static int test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero(void)
 
     if (mismatched_key_pass)
         return TEST_skip("not applicable with mismatched key password");
+
     if (!TEST_ptr(p12 = PKCS12_load(in_file)))
         return 0;
     if (!TEST_true(PKCS12_parse(p12, in_pass, &key, &cert, &ca)))
         goto err;
     PKCS12_free(p12);
+    p12 = NULL;
+
+    if (key == NULL && cert == NULL && ca == NULL) {
+        ret = 1;
+        goto err;
+    }
 
     if (!TEST_ptr(p12 = PKCS12_create_ex2("pass", NULL, key, cert, ca,
                       NID_undef, NID_undef, 0, -1, 0,
@@ -460,11 +645,18 @@ static int test_PKCS12_set_pbmac1_pbkdf2_invalid_saltlen(void)
 
     if (mismatched_key_pass)
         return TEST_skip("not applicable with mismatched key password");
+
     if (!TEST_ptr(p12 = PKCS12_load(in_file)))
         return 0;
     if (!TEST_true(PKCS12_parse(p12, in_pass, &key, &cert, &ca)))
         goto err;
     PKCS12_free(p12);
+    p12 = NULL;
+
+    if (key == NULL && cert == NULL && ca == NULL) {
+        ret = 1;
+        goto err;
+    }
 
     if (!TEST_ptr(p12 = PKCS12_create_ex2("pass", NULL, key, cert, ca,
                       NID_undef, NID_undef, 0, -1, 0,
@@ -649,6 +841,9 @@ int setup_tests(void)
         case OPT_MISMATCHED_P12:
             mismatched_key_pass = 1;
             break;
+        case OPT_IN_NUM_SKEYS:
+            num_skeys = opt_int_arg();
+            break;
         case OPT_TEST_CASES:
             break;
         default:
@@ -672,6 +867,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(pkcs12_create_ex2_test, 3);
     ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero);
     ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_invalid_saltlen);
+    ADD_TEST(test_parse_ex_skey);
+    ADD_ALL_TESTS(test_parse_ex_libctx, 2);
+    ADD_ALL_TESTS(test_parse_ex_skey_libctx, 4);
     return 1;
 }
 
