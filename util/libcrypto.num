@@ -5738,3 +5738,12 @@ i2d_IPAddrBlocks                        ?	4_1_0	EXIST::FUNCTION:RFC3779
 IPAddrBlocks_free                       ?	4_1_0	EXIST::FUNCTION:RFC3779
 IPAddrBlocks_new                        ?	4_1_0	EXIST::FUNCTION:RFC3779
 IPAddrBlocks_it                         ?	4_1_0	EXIST::FUNCTION:RFC3779
+PKCS8_PRIV_KEY_INFO_get1_skey           ?	4_2_0	EXIST::FUNCTION:
+PKCS12_decrypt_secretbag                ?	4_2_0	EXIST::FUNCTION:
+PKCS12_PARSE_CTX_new                    ?	4_2_0	EXIST::FUNCTION:
+PKCS12_PARSE_CTX_free                   ?	4_2_0	EXIST::FUNCTION:
+PKCS12_PARSE_CTX_set_pkey               ?	4_2_0	EXIST::FUNCTION:
+PKCS12_PARSE_CTX_set_cert               ?	4_2_0	EXIST::FUNCTION:
+PKCS12_PARSE_CTX_set_ca                 ?	4_2_0	EXIST::FUNCTION:
+PKCS12_PARSE_CTX_set_skeys              ?	4_2_0	EXIST::FUNCTION:
+PKCS12_parse_ex                         ?	4_2_0	EXIST::FUNCTION:

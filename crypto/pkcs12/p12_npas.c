@@ -99,7 +99,9 @@ static int newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass)
         if (bagnid == NID_pkcs7_data)
             p7new = PKCS12_pack_p7data(bags);
         else
-            p7new = PKCS12_pack_p7encdata_ex(pbe_nid, newpass, -1, NULL,
+            p7new = PKCS12_pack_p7encdata_ex(
+                cipherid != NID_undef ? cipherid : pbe_nid,
+                newpass, -1, NULL,
                 pbe_saltlen, pbe_iter, bags,
                 p7->ctx.libctx, p7->ctx.propq);
         if (p7new == NULL || !sk_PKCS7_push(newsafes, p7new)) {
