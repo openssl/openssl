@@ -6242,7 +6242,8 @@ static int test_evp_final_no_tag(int idx)
         goto err;
 
     ctext_len += len;
-    if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16, tag)))
+    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16, tag),
+            0))
         goto err;
     EVP_CIPHER_CTX_free(ctx);
 

@@ -2958,8 +2958,9 @@ int speed_main(int argc, char **argv)
                             exit(1);
                         }
 
-                        if (!EVP_CIPHER_CTX_ctrl(loopargs[k].ctx, EVP_CTRL_AEAD_GET_TAG,
-                                TAG_LEN, &loopargs[k].tag)) {
+                        if (EVP_CIPHER_CTX_ctrl(loopargs[k].ctx, EVP_CTRL_AEAD_GET_TAG,
+                                TAG_LEN, &loopargs[k].tag)
+                            <= 0) {
                             BIO_puts(bio_err, "\nFailed to get the tag\n");
                             dofail();
                             exit(1);
