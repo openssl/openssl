@@ -38,11 +38,46 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: install nasm
+      shell: pwsh
       run: |
-        choco install nasm ${{ matrix.platform.arch == 'x86' && '--x86' || '' }}
-        "C:\Program Files${{ matrix.platform.arch == 'x86' && ' (x86)' || '' }}\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
-    - name: install jom
-      run: choco install jom
+        $ErrorActionPreference = 'Stop'
+        $isX86 = '${{ matrix.platform.arch }}' -eq 'x86'
+        $chocoExtra = @()
+        if ($isX86) { $chocoExtra += '--x86' }
+        $chocoOk = $false
+        foreach ($i in 1..5) {
+          choco install nasm @chocoExtra -y --no-progress
+          if ($LASTEXITCODE -eq 0) { $chocoOk = $true; break }
+          Write-Host "choco install nasm failed (attempt $i), retrying in 20s..."
+          Start-Sleep -Seconds 20
+        }
+        $progNasm = if ($isX86) {
+          Join-Path ${env:ProgramFiles(x86)} 'NASM'
+        } else {
+          Join-Path $env:ProgramFiles 'NASM'
+        }
+        $nasmDir = $null
+        if ($chocoOk -and (Test-Path (Join-Path $progNasm 'nasm.exe'))) {
+          $nasmDir = $progNasm
+        }
+        if ($null -eq $nasmDir) {
+          Write-Host 'Installing NASM from nasm.us (Chocolatey unavailable or incomplete)'
+          $ver = '2.16.03'
+          $rel = if ($isX86) { 'win32' } else { 'win64' }
+          $url = "https://www.nasm.us/pub/nasm/releasebuilds/$ver/$rel/nasm-$ver-$rel.zip"
+          $zip = Join-Path $env:RUNNER_TEMP "nasm-$ver-$rel.zip"
+          $dest = Join-Path $env:RUNNER_TEMP "nasm-$ver-$rel"
+          Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
+          if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
+          Expand-Archive -Path $zip -DestinationPath $dest -Force
+          $inner = Get-ChildItem -LiteralPath $dest -Directory | Select-Object -First 1
+          if ($null -eq $inner) { throw 'NASM zip: no top-level directory' }
+          $nasmDir = $inner.FullName
+        }
+        if (-not (Test-Path (Join-Path $nasmDir 'nasm.exe'))) {
+          throw "nasm.exe missing under $nasmDir"
+        }
+        Add-Content -Path $env:GITHUB_PATH -Value $nasmDir
     - name: prepare the build directory
       run: mkdir _build
     - name: config
@@ -57,7 +92,7 @@ jobs:
       shell: cmd
       run: |
         call "${{ matrix.platform.vcvars }}"
-        jom /j4 /S
+        nmake /S
     - name: download coreinfo
       run: |
         mkdir _build\coreinfo
@@ -95,7 +130,7 @@ jobs:
       shell: cmd
       run: |
         call "${{ matrix.platform.vcvars }}"
-        jom test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
+        nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
     - name: install
       # Run on 64 bit only as 32 bit is slow enough already
       if: ${{ matrix.platform.arch == 'amd64' }}
@@ -104,7 +139,7 @@ jobs:
       run: |
         call "${{ matrix.platform.vcvars }}"
         mkdir _dest
-        jom /j4 install DESTDIR=_dest
+        nmake install DESTDIR=_dest
 
   plain:
     runs-on: windows-2022
@@ -114,10 +149,42 @@ jobs:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
+    - name: install nasm
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $isX86 = $false
+        $chocoOk = $false
+        foreach ($i in 1..5) {
+          choco install nasm -y --no-progress
+          if ($LASTEXITCODE -eq 0) { $chocoOk = $true; break }
+          Write-Host "choco install nasm failed (attempt $i), retrying in 20s..."
+          Start-Sleep -Seconds 20
+        }
+        $progNasm = Join-Path $env:ProgramFiles 'NASM'
+        $nasmDir = $null
+        if ($chocoOk -and (Test-Path (Join-Path $progNasm 'nasm.exe'))) {
+          $nasmDir = $progNasm
+        }
+        if ($null -eq $nasmDir) {
+          Write-Host 'Installing NASM from nasm.us (Chocolatey unavailable or incomplete)'
+          $ver = '2.16.03'
+          $url = "https://www.nasm.us/pub/nasm/releasebuilds/$ver/win64/nasm-$ver-win64.zip"
+          $zip = Join-Path $env:RUNNER_TEMP "nasm-$ver-win64.zip"
+          $dest = Join-Path $env:RUNNER_TEMP "nasm-$ver-win64"
+          Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
+          if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
+          Expand-Archive -Path $zip -DestinationPath $dest -Force
+          $inner = Get-ChildItem -LiteralPath $dest -Directory | Select-Object -First 1
+          if ($null -eq $inner) { throw 'NASM zip: no top-level directory' }
+          $nasmDir = $inner.FullName
+        }
+        if (-not (Test-Path (Join-Path $nasmDir 'nasm.exe'))) {
+          throw "nasm.exe missing under $nasmDir"
+        }
+        Add-Content -Path $env:GITHUB_PATH -Value $nasmDir
     - name: prepare the build directory
       run: mkdir _build
-    - name: install jom
-      run:  choco install jom
     - name: config
       working-directory: _build
       shell: cmd
@@ -130,7 +197,7 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-        jom /j4 /S
+        nmake /S
     - name: download coreinfo
       run: |
         mkdir _build\coreinfo
@@ -159,8 +226,6 @@ jobs:
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: prepare the build directory
       run: mkdir _build
-    - name: install jom
-      run:  choco install jom
     - name: config
       working-directory: _build
       shell: cmd
@@ -173,7 +238,7 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-        jom /j4 /S
+        nmake
     - name: download coreinfo
       run: |
         mkdir _build\coreinfo
@@ -190,7 +255,7 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-        jom test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
+        nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
 
   cygwin:
     # Run a job for each of the specified target architectures:

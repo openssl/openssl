@@ -31,6 +31,13 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Fixed buffer BIO control operations to reject invalid length arguments
+   (negative values, values larger than `INT_MAX`, or a NULL data pointer
+   when a non-zero length is supplied for `BIO_set_buffer_read_data`, and
+   invalid arguments for `BIO_CTRL_PEEK` on a buffer BIO). Previously some
+   combinations could invoke `memcpy` with an invalid size. Invalid
+   arguments are now rejected before altering buffered data or retry state.
+
  * Improved DTLS handshake robustness under UDP reordering by buffering and
    replaying early ChangeCipherSpec (CCS) records at the expected state.
 
