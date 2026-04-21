@@ -1571,7 +1571,11 @@ int EVP_CIPHER_can_pipeline(const EVP_CIPHER *cipher, int enc)
 
 int EVP_CIPHER_up_ref(EVP_CIPHER *cipher)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    return evp_cipher_up_ref(cipher);
+#else
     return 1;
+#endif
 }
 
 void evp_cipher_free_int(EVP_CIPHER *cipher)
@@ -1583,6 +1587,9 @@ void evp_cipher_free_int(EVP_CIPHER *cipher)
 
 void EVP_CIPHER_free(EVP_CIPHER *cipher)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    evp_cipher_free(cipher);
+#endif
     return;
 }
 
