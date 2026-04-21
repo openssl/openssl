@@ -57,7 +57,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my $no_err =  disabled('err') || disabled('autoerrinit');
 
-plan tests => 68 + ($no_fips ? 0 : 5);
+plan tests => 70 + ($no_fips ? 0 : 5);
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -367,6 +367,16 @@ subtest "pkcs12 -clcerts/-cacerts filtering and -name" => sub {
        "-cacerts outputs the CA certificate");
 };
 
+# Test PKCS12_parse_ex libctx propagation (PR #30937)
+# mixed.p12 uses AES-encrypted cert safe, exercising PKCS7 context propagation
+ok(run(test(["pkcs12_api_test",
+             "-in", "mixed.p12",
+             "-pass", "",
+             "-has-key", 1,
+             "-has-cert", 1,
+             "-has-ca", 1,
+             ])), "Test PKCS12_parse_ex libctx propagation (PR #30937)");
+
 # Tests for pkcs12_parse
 ok(run(test(["pkcs12_api_test",
              "-in", $outfile1,
@@ -602,5 +612,13 @@ unless ($no_fips) {
         }
     }
 }
+
+
+# Test PKCS12_parse_ex() with Java symmetric key file
+ok(run(test(["pkcs12_api_test",
+             "-in", srctop_file("test", "recipes", "80-test_pkcs12_data", "java-skey.p12"),
+             "-pass", "password",
+             "-num-skeys", "1",
+             ])), "Test PKCS12_parse_ex() with symmetric key");
 
 SetConsoleOutputCP($savedcp) if (defined($savedcp));
