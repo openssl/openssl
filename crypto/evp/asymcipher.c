@@ -455,12 +455,19 @@ err:
 
 void EVP_ASYM_CIPHER_free(EVP_ASYM_CIPHER *cipher)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    evp_asym_cipher_free(cipher);
+#endif
     return;
 }
 
 int EVP_ASYM_CIPHER_up_ref(EVP_ASYM_CIPHER *cipher)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    return evp_asym_cipher_up_ref(cipher);
+#else
     return 1;
+#endif
 }
 
 OSSL_PROVIDER *EVP_ASYM_CIPHER_get0_provider(const EVP_ASYM_CIPHER *cipher)
