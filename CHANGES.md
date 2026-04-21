@@ -33,7 +33,13 @@ OpenSSL 4.1
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
- * none yet
+ * Added support for parsing Java-generated PKCS#12 files containing symmetric
+   keys. The `openssl pkcs12` command can now extract symmetric secret keys
+   from PKCS#12 files created by Java's keytool utility. New API functions
+   `PKCS12_parse_ex()` with `PKCS12_PARSE_CTX` for selective extraction of
+   keys, certificates, and symmetric keys from PKCS#12 files.
+
+   *Dmitry Belyavskiy*
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
