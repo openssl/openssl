@@ -988,8 +988,19 @@ static int rsa_verify_recover(void *vprsactx,
             break;
 
         case RSA_PKCS1_PADDING: {
+            int mdsize = EVP_MD_get_size(prsactx->md);
             size_t sltmp;
 
+            if (mdsize <= 0) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_LENGTH);
+                return 0;
+            }
+            if (routsize < (size_t)mdsize) {
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL,
+                    "buffer size is %d, should be %d",
+                    routsize, mdsize);
+                return 0;
+            }
             ret = ossl_rsa_verify(prsactx->mdnid, NULL, 0, rout, &sltmp,
                 sig, siglen, prsactx->rsa);
             if (ret <= 0) {
