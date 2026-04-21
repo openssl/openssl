@@ -520,7 +520,7 @@ unless ($no_fips) {
                                 stderr => "outerr.txt"),
                                 capture => 1);
                     open DATA, "outerr.txt";
-                    my @match = grep /:PKCS12_parse:parse error:/, <DATA>;
+                    my @match = grep /:PKCS12_parse_ex:parse error:/, <DATA>;
                     close DATA;
                     ok(scalar @match > 0, "Test against CVE-2026-22795 , missing ASN1_TYPE validation in cert, sha256mac");
                     }
@@ -544,7 +544,7 @@ unless ($no_fips) {
                             stderr => "outerr.txt"),
                             capture => 1);
                 open DATA, "outerr.txt";
-                my @match = grep /:PKCS12_parse:parse error:/, <DATA>;
+                my @match = grep /:PKCS12_parse_ex:parse error:/, <DATA>;
                 close DATA;
                 ok(scalar @match > 0, "Test against CVE-2026-22795 , missing ASN1_TYPE validation in cert, pbmac1");
             }
@@ -569,7 +569,7 @@ unless ($no_fips) {
                                 stderr => "outerr.txt"),
                                 capture => 1);
                     open DATA, "outerr.txt";
-                    my @match = grep /:PKCS12_parse:parse error:/, <DATA>;
+                    my @match = grep /:PKCS12_parse_ex:parse error:/, <DATA>;
                     close DATA;
                     ok(scalar @match > 0, "Test against CVE-2026-22795 , missing ASN1_TYPE validation in keys, sha256mac");
                 }
@@ -594,7 +594,7 @@ unless ($no_fips) {
                             stderr => "outerr.txt"),
                             capture => 1);
                 open DATA, "outerr.txt";
-                my @match = grep /:PKCS12_parse:parse error:/, <DATA>;
+                my @match = grep /:PKCS12_parse_ex:parse error:/, <DATA>;
                 close DATA;
                 ok(scalar @match > 0, "Test against CVE-2026-22795 , missing ASN1_TYPE validation in keys, pbmac1");
             }

@@ -49,6 +49,19 @@ struct pkcs12_bag_st {
     } value;
 };
 
+struct pkcs12_parse_ctx_st {
+    EVP_PKEY **pkey;
+    X509 **cert;
+    STACK_OF(X509) **ca;
+    STACK_OF(EVP_SKEY) **skeys;
+    /* internal: temporary cert collection used during parsing */
+    STACK_OF(X509) *ocerts;
+};
+
 const PKCS7_CTX *ossl_pkcs12_get0_pkcs7ctx(const PKCS12 *p12);
+int ossl_pkcs12_verify_mac(PKCS12 *p12, const char *pass, int passlen,
+    OSSL_LIB_CTX *libctx, const char *propq);
+STACK_OF(PKCS7) *ossl_pkcs12_unpack_authsafes_ex(const PKCS12 *p12,
+    OSSL_LIB_CTX *libctx, const char *propq);
 
 #endif /* !defined(OSSL_LIBCRYPTO_PKCS12_P12_LOCAL_H) */
