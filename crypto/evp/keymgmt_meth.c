@@ -303,11 +303,18 @@ EVP_KEYMGMT *EVP_KEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 
 int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    return evp_keymgmt_up_ref(keymgmt);
+#else
     return 1;
+#endif
 }
 
 void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt)
 {
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    evp_keymgmt_free(keymgmt);
+#endif
     return;
 }
 
