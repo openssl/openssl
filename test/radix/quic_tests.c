@@ -294,6 +294,188 @@ DEF_SCRIPT(check_cwm, "check stream obeys cwm")
     OP_WRITE_FAIL(C);
 }
 
+struct mutcbk_ctx {
+    QUIC_PKT_HDR mutctx_qhdrin;
+    OSSL_QTX_IOVEC mutctx_iov;
+    const unsigned char *mutctx_inject;
+    size_t mutctx_inject_sz;
+    int mutctx_done;
+};
+
+static int mutcbk_inject_frames(const QUIC_PKT_HDR *hdrin,
+    const OSSL_QTX_IOVEC *iovecin, size_t numin, QUIC_PKT_HDR **hdrout,
+    const OSSL_QTX_IOVEC **iovecout, size_t *numout, void *arg)
+{
+    struct mutcbk_ctx *mutctx = (struct mutcbk_ctx *)arg;
+    size_t i;
+    size_t grow_allowance = 1200; /* QUIC_MIN_INITIAL_DGRAM_LEN */
+    size_t bufsz = 0;
+    char *buf;
+
+    /*
+     * make injection callback a one shot event,
+     * callback is invoked for every packet we
+     * want to modify only one packet here.
+     */
+    if (mutctx->mutctx_done)
+        return 0;
+
+    mutctx->mutctx_done = 1;
+
+    for (i = 0; i < numin; i++)
+        bufsz += iovecin[i].buf_len;
+
+    mutctx->mutctx_iov.buf_len = bufsz; /* keeps old size */
+    grow_allowance -= (bufsz < grow_allowance) ? bufsz : grow_allowance;
+    /* AEAD tag (16 bytes) + long header (14 bytes) */
+    grow_allowance -= (30 < grow_allowance) ? 30 : grow_allowance;
+
+    grow_allowance -= (hdrin->dst_conn_id.id_len < grow_allowance) ? hdrin->dst_conn_id.id_len : grow_allowance;
+    grow_allowance -= (hdrin->src_conn_id.id_len < grow_allowance) ? hdrin->src_conn_id.id_len : grow_allowance;
+
+    if (grow_allowance == 0) {
+        TEST_info("mutcbk_inject_frames() not enough space to inject");
+        return 0;
+    }
+    bufsz += grow_allowance;
+
+    /* discard const */
+    OPENSSL_free((char *)mutctx->mutctx_iov.buf);
+    mutctx->mutctx_iov.buf = OPENSSL_malloc(bufsz);
+    /* discard const */
+    buf = (char *)mutctx->mutctx_iov.buf;
+    if (buf == NULL) {
+        TEST_info("mutcbk_inject_frames() OPENSSL_malloc() failed");
+        return 0;
+    }
+
+    for (i = 0; i < numin; i++) {
+        memcpy(buf, iovecin[i].buf, iovecin[i].buf_len);
+        buf += iovecin[i].buf_len;
+    }
+
+    /* discard const */
+    buf = (char *)mutctx->mutctx_iov.buf;
+    if (mutctx->mutctx_inject != NULL) {
+        memmove(buf + mutctx->mutctx_inject_sz, buf,
+            mutctx->mutctx_iov.buf_len);
+        memcpy(buf, mutctx->mutctx_inject, mutctx->mutctx_inject_sz);
+    }
+    /*
+     * perhaps needed to have not looked at yet
+     */
+    mutctx->mutctx_qhdrin = *hdrin;
+    *hdrout = &mutctx->mutctx_qhdrin;
+    mutctx->mutctx_iov.buf_len += mutctx->mutctx_inject_sz;
+    *iovecout = &mutctx->mutctx_iov;
+    *numout = 1;
+
+    return 1;
+}
+
+static void mutcbk_finish_injecct_frames(void *arg)
+{
+    struct mutcbk_ctx *mutctx = (struct mutcbk_ctx *)arg;
+
+    OPENSSL_free((char *)mutctx->mutctx_iov.buf);
+    mutctx->mutctx_iov.buf = NULL;
+}
+
+/* 16 path challenge frames */
+#define PATH_CHALLENGE_FRAMES \
+    "\x1a"                    \
+    "ABCDEFGH"                \
+    "\x1a"                    \
+    "ABCDEFGH"                \
+    "\x1a"                    \
+    "ABCDEFGH"                \
+    "\x1a"                    \
+    "ABCDEFGH"                \
+    "\x1a"                    \
+    "ABCDEFGH"                \
+    "\x1a"                    \
+    "ABCDEFGH"                \
+    "\x1a"                    \
+    "ABCDEFGH"                \
+    "\x1a"                    \
+    "ABCDEFGH"                \
+    "\x1a"                    \
+    "ABCDEFGH"                \
+    "\x1a"                    \
+    "ABCDEFGH"                \
+    "\x1a"                    \
+    "ABCDEFGH"                \
+    "\x1a"                    \
+    "ABCDEFGH"                \
+    "\x1a"                    \
+    "ABCDEFGH"                \
+    "\x1a"                    \
+    "ABCDEFGH"                \
+    "\x1a"                    \
+    "ABCDEFGH"                \
+    "\x1a"                    \
+    "ABCDEFGH"
+
+DEF_FUNC(mount_flood)
+{
+    int ok = 0;
+    SSL *ssl;
+    QUIC_CHANNEL *ch;
+    static struct mutcbk_ctx mutctx = { 0 };
+    static const unsigned char *inject_frames = (const unsigned char *)PATH_CHALLENGE_FRAMES;
+
+    mutctx.mutctx_inject = inject_frames;
+    mutctx.mutctx_inject_sz = sizeof(PATH_CHALLENGE_FRAMES) - 1;
+    REQUIRE_SSL(ssl);
+    ch = ossl_quic_conn_get_channel(ssl);
+    if (!TEST_ptr(ch))
+        goto err;
+
+    if (!TEST_true(ossl_quic_channel_set_mutator(ch, mutcbk_inject_frames,
+            mutcbk_finish_injecct_frames, &mutctx)))
+        goto err;
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(check_flood_stats)
+{
+    int ok = 0;
+    SSL *ssl;
+    QUIC_CHANNEL *ch;
+    uint64_t path_response_count;
+    uint64_t path_challenge_count;
+
+    REQUIRE_SSL(ssl);
+    ch = ossl_quic_conn_get_channel(ssl);
+    if (!TEST_ptr(ch))
+        goto err;
+
+    path_challenge_count = ossl_quic_channel_get_path_challenge_count(ch);
+    path_response_count = ossl_quic_channel_get_path_response_count(ch);
+
+    if (TEST_uint64_t_ne(path_challenge_count, 16))
+        goto err;
+    if (TEST_uint64_t_ne(path_response_count, 1))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_SCRIPT(check_pc_flood, "check path challenge flood")
+{
+    OP_SIMPLE_PAIR_CONN();
+    OP_SELECT_SSL(0, C);
+    OP_FUNC(mount_flood);
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+    OP_WRITE_B(C, "attack");
+    OP_SELECT_SSL(0, S);
+    OP_FUNC(check_flood_stats);
+}
+
 /*
  * List of Test Scripts
  * ============================================================================
@@ -302,5 +484,6 @@ static SCRIPT_INFO *const scripts[] = {
     USE(simple_conn),
     USE(simple_thread),
     USE(ssl_poll),
-    USE(check_cwm)
+    USE(check_cwm),
+    USE(check_pc_flood),
 };
