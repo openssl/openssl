@@ -281,9 +281,10 @@ static void cbc_decrypt_##NR(                                                  \
                                                                                \
     /* Clear round-key material from the stack                              */ \
     {                                                                          \
-        __m512i z = _mm512_setzero_si512();                                    \
+        /* Use of volatile prevents dead-store elimination by compilers. */    \
+        volatile __m512i *vrk = (volatile __m512i *)(volatile void *)rk;       \
         for (int i = 0; i <= NR; i++)                                          \
-            rk[i] = z;                                                         \
+            vrk[i] = _mm512_setzero_si512();                                   \
     }                                                                          \
 }
 
