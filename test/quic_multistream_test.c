@@ -373,19 +373,6 @@ static void s_unlock(struct helper *h, struct helper_local *hl);
 #define ACQUIRE_S() s_lock(h, hl)
 #define ACQUIRE_S_NOHL() s_lock(h, NULL)
 
-static int check_rejected(struct helper *h, struct helper_local *hl)
-{
-    uint64_t stream_id = hl->check_op->arg2;
-
-    if (!ossl_quic_tserver_stream_has_peer_stop_sending(ACQUIRE_S(), stream_id, NULL)
-        || !ossl_quic_tserver_stream_has_peer_reset_stream(ACQUIRE_S(), stream_id, NULL)) {
-        h->check_spin_again = 1;
-        return 0;
-    }
-
-    return 1;
-}
-
 static int check_stream_reset(struct helper *h, struct helper_local *hl)
 {
     uint64_t stream_id = hl->check_op->arg2, aec = 0;

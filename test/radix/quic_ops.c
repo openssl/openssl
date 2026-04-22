@@ -399,6 +399,7 @@ DEF_FUNC(hf_accept_stream_none)
     SSL *conn, *stream;
 
     F_POP2(conn_name, flags);
+    REQUIRE_SSL(conn);
 
     if (!TEST_ptr(conn = RADIX_PROCESS_get_ssl(RP(), conn_name)))
         goto err;
@@ -511,6 +512,45 @@ DEF_FUNC(hf_conclude)
 
     if (!TEST_true(SSL_stream_conclude(ssl, 0)))
         goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_conclude_fail)
+{
+    int ok = 0;
+    SSL *ssl;
+
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_false(SSL_stream_conclude(ssl, 0))) {
+        /*
+         * Here we consider situation when talking to
+         * remote peer which rejects all incoming streams
+         * (see SSL_set_incoming_stream_policy(3ossl)).
+         * The SSL_new_stream(3ossl) creates just local
+         * end for outbound stream, it does no signaling
+         * to remote peer there is a new stream to handle.
+         * The remote peer gets notified about new stream
+         * with the first SSL_write(3ossl) to stream object.
+         * Remote peer receives the first STREAM frame and
+         * checks the stream policy, if policy orders
+         * to reject the stream the remote peer sends
+         * STREAM_RESET frame back, so local end here
+         * can move send stream state from QUIC_SSTREAM_STATE_READY
+         * to QUIC_SSTREAM_STATE_RESET_RECVD/QUIC_SSTREAM_STATE_NONE
+         * If SSL_stream_conclude() follows SSL_write() immediately
+         & the local send stream state may still be in
+         * QUIC_SSTREAM_STATE_READY and call succeeds.
+         * Using F_SPIN_AGAIN() makes radix framework to retry
+         * call to hf_conclude_fail() function. The radix
+         * framework keeps trying until test deadline elapes,
+         * see TERP_execute() for details.
+         */
+        F_SPIN_AGAIN();
+    }
 
     ok = 1;
 err:
@@ -1069,8 +1109,10 @@ err:
         OP_PUSH_U64(1),                                      \
         OP_FUNC(hf_new_stream))
 
-#define OP_ACCEPT_STREAM_NONE(conn_name) \
-    (OP_SELECT_SSL(0, conn_name),        \
+#define OP_ACCEPT_STREAM_NONE(conn_name, flags) \
+    (OP_SELECT_SSL(0, conn_name),               \
+        OP_PUSH_PZ(#conn_name),                 \
+        OP_PUSH_U64(flags),                     \
         OP_FUNC(hf_accept_stream_none))
 
 #define OP_ACCEPT_CONN_WAIT(listener_name, conn_name, flags) \
@@ -1122,6 +1164,10 @@ err:
     (OP_SELECT_SSL(0, name), \
         OP_FUNC(hf_conclude))
 
+#define OP_CONCLUDE_FAIL(name) \
+    (OP_SELECT_SSL(0, name),   \
+        OP_FUNC(hf_conclude_fail))
+
 #define OP_READ_EXPECT(name, buf, buf_len) \
     (OP_SELECT_SSL(0, name),               \
         OP_PUSH_BUFP(buf, buf_len),        \
@@ -1130,7 +1176,7 @@ err:
 #define OP_READ_EXPECT_B(name, buf) \
     OP_READ_EXPECT(name, (buf), sizeof(buf))
 
-#define OP_READ_FAIL()       \
+#define OP_READ_FAIL(name)   \
     (OP_SELECT_SSL(0, name), \
         OP_PUSH_U64(0),      \
         OP_FUNC(hf_read_fail))
