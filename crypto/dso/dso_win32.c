@@ -55,6 +55,8 @@ static HINSTANCE LoadLibraryA(LPCSTR lpLibFileName)
 }
 #endif
 
+#define GETPROCADDRESS(h, name, type) ((type)(void (*)(void))GetProcAddress((h), (name)))
+
 /* Part of the hack in "win32_load" ... */
 #define DSO_MAX_TRANSLATED_SIZE 256
 
@@ -177,7 +179,7 @@ static DSO_FUNC_TYPE win32_bind_func(DSO *dso, const char *symname)
         ERR_raise(ERR_LIB_DSO, DSO_R_NULL_HANDLE);
         return NULL;
     }
-    sym.f = GetProcAddress(*ptr, symname);
+    sym.f = GETPROCADDRESS(*ptr, symname, FARPROC);
     if (sym.p == NULL) {
         ERR_raise_data(ERR_LIB_DSO, DSO_R_SYM_FAILURE, "symname(%s)", symname);
         return NULL;
@@ -491,8 +493,15 @@ static int win32_pathbyaddr(void *addr, char *path, int sz)
     DWORD wlen, wsz;
     int utf8len = -1;
 
-    if (addr == NULL)
-        addr = win32_pathbyaddr;
+    if (addr == NULL) {
+        union {
+            int (*f)(void *, char *, int);
+            void *p;
+        } t = {
+            win32_pathbyaddr
+        };
+        addr = t.p;
+    }
 
     if (!GetModuleHandleExW(
             GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
@@ -566,8 +575,7 @@ static void *win32_globallookup(const char *name)
         return NULL;
     }
 
-    create_snap = (CREATETOOLHELP32SNAPSHOT)
-        GetProcAddress(dll, "CreateToolhelp32Snapshot");
+    create_snap = GETPROCADDRESS(dll, "CreateToolhelp32Snapshot", CREATETOOLHELP32SNAPSHOT);
     if (create_snap == NULL) {
         FreeLibrary(dll);
         ERR_raise(ERR_LIB_DSO, DSO_R_UNSUPPORTED);
@@ -575,13 +583,12 @@ static void *win32_globallookup(const char *name)
     }
     /* We take the rest for granted... */
 #ifdef _WIN32_WCE
-    close_snap = (CLOSETOOLHELP32SNAPSHOT)
-        GetProcAddress(dll, "CloseToolhelp32Snapshot");
+    close_snap = GETPROCADDRESS(dll, "CloseToolhelp32Snapshot", CLOSETOOLHELP32SNAPSHOT);
 #else
     close_snap = (CLOSETOOLHELP32SNAPSHOT)CloseHandle;
 #endif
-    module_first = (MODULE32)GetProcAddress(dll, "Module32First");
-    module_next = (MODULE32)GetProcAddress(dll, "Module32Next");
+    module_first = GETPROCADDRESS(dll, "Module32First", MODULE32);
+    module_next = GETPROCADDRESS(dll, "Module32Next", MODULE32);
 
     hModuleSnap = (*create_snap)(TH32CS_SNAPMODULE, 0);
     if (hModuleSnap == INVALID_HANDLE_VALUE) {
@@ -599,7 +606,7 @@ static void *win32_globallookup(const char *name)
     }
 
     do {
-        if ((ret.f = GetProcAddress(me32.hModule, name))) {
+        if ((ret.f = GETPROCADDRESS(me32.hModule, name, FARPROC))) {
             (*close_snap)(hModuleSnap);
             FreeLibrary(dll);
             return ret.p;
