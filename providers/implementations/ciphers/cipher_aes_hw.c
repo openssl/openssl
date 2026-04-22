@@ -14,6 +14,7 @@
 #include "internal/deprecated.h"
 
 #include <openssl/proverr.h>
+#include "internal/thread_once.h"
 #include "cipher_aes.h"
 
 static int cipher_hw_aes_initkey(PROV_CIPHER_CTX *dat,

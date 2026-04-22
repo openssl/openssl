@@ -62,14 +62,20 @@ static int cipher_hw_aesni_cbc(PROV_CIPHER_CTX *ctx, unsigned char *out,
 }
 
 #else
-/* Cache the CPUID check so we don't read OPENSSL_ia32cap_P[] on every call */
+
+static int vaes_cached;
+static CRYPTO_ONCE vaes_cached_once = CRYPTO_ONCE_STATIC_INIT;
+
+DEFINE_RUN_ONCE_STATIC(vaes_cached_init)
+{
+    vaes_cached = ossl_aes_cbc_vaes_eligible();
+    return 1;
+}
+
 static int aes_cbc_vaes_capable(void)
 {
-    static int cached = -1;
-
-    if (cached == -1)
-        cached = ossl_aes_cbc_vaes_eligible();
-    return cached;
+    RUN_ONCE(&vaes_cached_once, vaes_cached_init);
+    return vaes_cached;
 }
 
 /* active in 64-bit builds when AES-NI, AVX512F, and VAES are detected */
