@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/quic_stream_map.h"
+
 #if defined(_AIX)
 /*
  * Some versions of AIX define macros for events and revents for use when
@@ -21,6 +23,135 @@
  * Test Scripts
  * ============================================================================
  */
+
+DEF_FUNC(check_rejected)
+{
+    QUIC_CHANNEL *ch;
+    SSL *ssl, *stream;
+    QUIC_STREAM *qs;
+    uint64_t stream_id;
+    int ok = 0;
+
+    REQUIRE_SSL_2(ssl, stream);
+    ch = ossl_quic_conn_get_channel(ssl);
+    if (!TEST_ptr(ch))
+        goto err;
+
+    stream_id = SSL_get_stream_id(stream);
+    qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(ch), stream_id);
+    if (!TEST_ptr(qs))
+        goto err;
+
+    if (qs->peer_stop_sending)
+        ok = 1;
+    else if (ossl_quic_stream_recv_is_reset(qs))
+        ok = 1;
+
+err:
+
+    return ok;
+}
+
+/*
+ * Multi-stream test
+ */
+DEF_SCRIPT(multi_stream, "multi stream test")
+{
+    OP_SIMPLE_PAIR_CONN();
+    OP_WRITE_B(C, "apple");
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+    OP_SET_INCOMING_STREAM_POLICY(C, SSL_INCOMING_STREAM_POLICY_ACCEPT, 42 /* error code */);
+    OP_SET_INCOMING_STREAM_POLICY(S, SSL_INCOMING_STREAM_POLICY_ACCEPT, 42 /* error code */);
+    OP_READ_EXPECT_B(S, "apple");
+    OP_WRITE_B(S, "orange");
+    OP_READ_EXPECT_B(C, "orange");
+
+    OP_NEW_STREAM(C, C0, 0 /* bidirectional stream */);
+    OP_WRITE_B(C0, "flamingo");
+    OP_ACCEPT_STREAM_WAIT(S, S0, 0 /* bidirectional stream */);
+    OP_READ_EXPECT_B(S0, "flamingo");
+    OP_CONCLUDE(C0);
+    OP_EXPECT_FIN(S0);
+    OP_WRITE_B(S0, "gargoyle");
+    OP_READ_EXPECT_B(C0, "gargoyle");
+    OP_CONCLUDE(S0);
+    OP_EXPECT_FIN(C0);
+
+    OP_NEW_STREAM(C, C1, SSL_STREAM_FLAG_UNI);
+    OP_WRITE_B(C1, "elephant");
+    OP_ACCEPT_STREAM_WAIT(S, S1, SSL_STREAM_FLAG_UNI);
+    OP_READ_EXPECT_B(S1, "elephant");
+    OP_CONCLUDE(C1);
+    OP_EXPECT_FIN(S1);
+    OP_READ_FAIL(S1);
+    OP_WRITE_FAIL(S1);
+
+    OP_ACCEPT_STREAM_NONE(C, SSL_STREAM_FLAG_UNI);
+
+    OP_NEW_STREAM(S, S2, 0 /* bidirectional stream */);
+    OP_WRITE_B(S2, "frog");
+    OP_ACCEPT_STREAM_WAIT(C, C2, 0 /* bidirectional stream */);
+    OP_READ_EXPECT_B(C2, "frog");
+    OP_CONCLUDE(S2);
+    OP_EXPECT_FIN(C2);
+
+    OP_ACCEPT_STREAM_NONE(C, 0);
+
+    OP_NEW_STREAM(S, S3, 0 /* bidirectional stream */);
+    OP_WRITE_B(S3, "mixture");
+    OP_CONCLUDE(S3);
+
+    OP_ACCEPT_STREAM_WAIT(C, C3, 0 /* bidirectional stream */);
+    OP_READ_EXPECT_B(C3, "mixture");
+    OP_EXPECT_FIN(C3);
+    OP_WRITE_B(C3, "ramble");
+    OP_READ_EXPECT_B(S3, "ramble");
+    OP_CONCLUDE(C3);
+    OP_EXPECT_FIN(S3);
+
+    OP_NEW_STREAM(S, S4, SSL_STREAM_FLAG_UNI);
+    OP_WRITE_B(S4, "yonder");
+    OP_CONCLUDE(S4);
+    OP_ACCEPT_STREAM_WAIT(C, C4, SSL_STREAM_FLAG_UNI);
+    OP_ACCEPT_STREAM_NONE(C, SSL_STREAM_FLAG_UNI);
+    OP_READ_EXPECT_B(C4, "yonder");
+    OP_EXPECT_FIN(C4);
+    OP_WRITE_FAIL(C4);
+
+    OP_SET_INCOMING_STREAM_POLICY(C, SSL_INCOMING_STREAM_POLICY_REJECT, 42 /* application error code */);
+    OP_NEW_STREAM(S, S5, 0 /* bidirectional stream */);
+    OP_WRITE_B(S5, "unseen");
+    /*
+     * The client `C` uses a reject stream policy. The conclude operation
+     * is doomed to fail because server stream object `SS` does
+     * not represent working/established stream.
+     */
+    OP_CONCLUDE_FAIL(S5);
+    OP_ACCEPT_STREAM_NONE(C, 0);
+    OP_SELECT_SSL(0, S);
+    OP_SELECT_SSL(1, S5);
+    /*
+     * Stream S6 is rejected because of reject policy on client side.
+     */
+    OP_FUNC(check_rejected);
+
+    OP_SET_INCOMING_STREAM_POLICY(C, SSL_INCOMING_STREAM_POLICY_AUTO, 0 /* app. error code */);
+    OP_NEW_STREAM(S, S6, 0 /* bidirectional stream */);
+    OP_WRITE_B(S6, "UNSEEN");
+    OP_CONCLUDE_FAIL(S6);
+    OP_ACCEPT_STREAM_NONE(C, 0);
+    OP_SELECT_SSL(0, S);
+    OP_SELECT_SSL(1, S6);
+    /*
+     * Remember the client (`C`) and server `C` got created by
+     * OP_SIMPLE_PAIR_CON() which creates QUIC connection objects switched to
+     * default (implicit) stream mode (see SSL_set_default_stream_mode(3ossl)).
+     * The stream policy on client `C` is AUTO now which in combination with
+     * default stream mode makes `C` to reject incoming stream `S6`
+     * (see SSL_set_incoming_stream_policy(3ossl) for details).
+     */
+    OP_FUNC(check_rejected);
+}
 
 /*
  * Simple single-stream test
@@ -317,6 +448,7 @@ DEF_SCRIPT(check_cwm, "check stream obeys cwm")
  */
 static SCRIPT_INFO *const scripts[] = {
     USE(simple_stream),
+    USE(multi_stream),
     USE(simple_conn),
     USE(simple_thread),
     USE(ssl_poll),
