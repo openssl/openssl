@@ -11,7 +11,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "internal/deprecated.h"
+#define OPENSSL_SUPPRESS_DEPRECATED
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -3545,7 +3545,7 @@ static int pkcs12_recreate_test(void)
     p12_parsed = d2i_PKCS12_bio(bio, &p12_parsed);
     if (!TEST_ptr(p12_parsed))
         goto err;
-    if (!TEST_int_eq(PKCS12_parse(p12_parsed, "pass", &pkey_parsed,
+    if (!TEST_int_eq(compat_pkcs12_parse(p12_parsed, "pass", &pkey_parsed,
                          &cert_parsed, NULL),
             1))
         goto err;

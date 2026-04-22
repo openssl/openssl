@@ -12,7 +12,6 @@
  * Test PKCS12 parsing with fuzzed input.
  */
 
-#include "internal/deprecated.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/pkcs12.h>
