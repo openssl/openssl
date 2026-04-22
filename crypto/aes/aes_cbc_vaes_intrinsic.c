@@ -314,14 +314,17 @@ void ossl_aes_cbc_vaes_decrypt(const unsigned char *in, unsigned char *out,
     full_bytes = (len / AES_BLOCK_SIZE) * AES_BLOCK_SIZE;
     if (full_bytes > 0) {
         switch (nr) {
+        case 10:
+            cbc_decrypt_10(in, out, full_bytes, (const AES_KEY *)key, ivec);
+            break;
         case 12:
             cbc_decrypt_12(in, out, full_bytes, (const AES_KEY *)key, ivec);
             break;
         case 14:
             cbc_decrypt_14(in, out, full_bytes, (const AES_KEY *)key, ivec);
             break;
-        default:   /* 10 (AES-128) */
-            cbc_decrypt_10(in, out, full_bytes, (const AES_KEY *)key, ivec);
+        default: /* invalid key size */
+            aesni_cbc_encrypt(in, out, len, (const AES_KEY *)key, ivec, 0);
             break;
         }
     }
