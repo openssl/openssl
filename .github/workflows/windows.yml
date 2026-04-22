@@ -236,13 +236,23 @@ jobs:
 #      run: bash -c "cd openssl && make V=1 test"
 
   mingw64:
+    strategy:
+      matrix:
+        platform:
+          - arch: mingw64
+            target: x86_64
+            #  Avoid MINGW bug in headers. Remove when CI is upgraded.
+            config: enable-demos -Wno-array-bounds
+          - arch: mingw
+            target: i686
+            config: -Wno-array-bounds -Wno-stringop-overflow
     runs-on: ubuntu-latest
     env:
-      CC: x86_64-w64-mingw32-gcc
-      CXX: x86_64-w64-mingw32-g++
-      AR: x86_64-w64-mingw32-ar
-      RANLIB: x86_64-w64-mingw32-ranlib
-      RC: x86_64-w64-mingw32-windres
+      CC: ${{ matrix.platform.target }}-w64-mingw32-gcc
+      CXX: ${{ matrix.platform.target }}-w64-mingw32-g++
+      AR: ${{ matrix.platform.target }}-w64-mingw32-ar
+      RANLIB: ${{ matrix.platform.target }}-w64-mingw32-ranlib
+      RC: ${{ matrix.platform.target }}-w64-mingw32-windres
     steps:
     - uses: actions/checkout@v6
       with:
@@ -250,16 +260,26 @@ jobs:
     - name: install MINGW64
       run: sudo apt-get install -y mingw-w64
     - name: config
-# Once fixed, enable strict-warnings
-#      run: ./config --strict-warnings --banner=Configured mingw64
-      run: ./config --banner=Configured mingw64
+      run: ./config ${{ matrix.platform.arch }}  --strict-warnings --banner=Configured ${{ matrix.platform.config }}
     - name: make
       run: make -j4 -s
 
   msys2-mingw64:
+    strategy:
+      matrix:
+        platform:
+          - arch: UCRT64
+            cc: gcc
+            pkgs:  mingw-w64-ucrt-x86_64-gcc
+            config: mingw64 enable-demos
+          - arch: CLANG64
+            cc: clang
+            pkgs: mingw-w64-clang-x86_64-clang
+            config: mingw64
     runs-on: windows-latest
     env:
-      MSYSTEM: UCRT64
+      CC: ${{ matrix.platform.cc }}
+      MSYSTEM: ${{ matrix.platform.arch }}
       CHERE_INVOKING: 'yes'
     steps:
       - uses: actions/checkout@v6
@@ -282,12 +302,10 @@ jobs:
           C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -Syuu'
 
       - name: install dependencies
-        run: C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -S --needed perl git make mingw-w64-ucrt-x86_64-gcc'
+        run: C:\msys64\usr\bin\bash.exe -lc 'pacman --noconfirm -S --needed perl git make ${{ matrix.platform.pkgs }}'
 
       - name: config
-# Once fixed, enable strict-warnings
-#       run: C:\msys64\usr\bin\bash.exe -lc './config --strict-warnings --banner=Configured mingw64'
-        run: C:\msys64\usr\bin\bash.exe -lc './config --banner=Configured mingw64'
+        run: C:\msys64\usr\bin\bash.exe -lc './config --strict-warnings --banner=Configured ${{ matrix.platform.config }}'
 
       - name: make
         run: C:\msys64\usr\bin\bash.exe -lc 'make -j4 -s'
