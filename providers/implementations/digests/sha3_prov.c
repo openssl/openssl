@@ -468,7 +468,8 @@ const OSSL_DISPATCH ossl_sha3_224_functions[] = {
     { OSSL_FUNC_DIGEST_FREECTX, OSSL_FPTR keccak_freectx },
     { OSSL_FUNC_DIGEST_DUPCTX, OSSL_FPTR keccak_dupctx },
     { OSSL_FUNC_DIGEST_COPYCTX, OSSL_FPTR keccak_copyctx },
-    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS, OSSL_FPTR ossl_digest_default_gettable_params }
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS, OSSL_FPTR ossl_digest_default_gettable_params },
+    { 0, NULL }
 };
 
 /* ossl_sha3_256_functions */
@@ -483,7 +484,8 @@ const OSSL_DISPATCH ossl_sha3_256_functions[] = {
     { OSSL_FUNC_DIGEST_FREECTX, OSSL_FPTR keccak_freectx },
     { OSSL_FUNC_DIGEST_DUPCTX, OSSL_FPTR keccak_dupctx },
     { OSSL_FUNC_DIGEST_COPYCTX, OSSL_FPTR keccak_copyctx },
-    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS, OSSL_FPTR ossl_digest_default_gettable_params }
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS, OSSL_FPTR ossl_digest_default_gettable_params },
+    { 0, NULL }
 };
 
 const OSSL_DISPATCH ossl_sha3_384_functions[] = {
@@ -497,7 +499,8 @@ const OSSL_DISPATCH ossl_sha3_384_functions[] = {
     { OSSL_FUNC_DIGEST_FREECTX, OSSL_FPTR keccak_freectx },
     { OSSL_FUNC_DIGEST_DUPCTX, OSSL_FPTR keccak_dupctx },
     { OSSL_FUNC_DIGEST_COPYCTX, OSSL_FPTR keccak_copyctx },
-    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS, OSSL_FPTR ossl_digest_default_gettable_params }
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS, OSSL_FPTR ossl_digest_default_gettable_params },
+    { 0, NULL }
 };
 
 const OSSL_DISPATCH ossl_sha3_512_functions[] = {
