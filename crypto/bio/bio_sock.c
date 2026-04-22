@@ -437,7 +437,7 @@ int BIO_socket_wait(int fd, int for_read, time_t max_time)
     time_t now;
 
 #ifdef _WIN32
-    if ((SOCKET)fd == INVALID_SOCKET)
+    if (fd == INVALID_SOCKET)
 #else
     if (fd < 0 || fd >= FD_SETSIZE)
 #endif
