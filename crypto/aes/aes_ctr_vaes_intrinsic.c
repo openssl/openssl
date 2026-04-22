@@ -254,9 +254,10 @@ static void ctr_process_##NR(                                                  \
                                                                                \
     /* Clear round-key material from the stack                              */ \
     {                                                                          \
-        __m512i z = _mm512_setzero_si512();                                    \
+        /* Use of volatile prevents dead-store elimination by compilers. */    \
+        volatile __m512i *vrk = (volatile __m512i *)(volatile void *)rk;       \
         for (int i = 0; i <= NR; i++)                                          \
-            rk[i] = z;                                                         \
+            vrk[i] = _mm512_setzero_si512();                                   \
     }                                                                          \
 }
 
@@ -323,14 +324,19 @@ void ossl_aes_ctr_vaes(const unsigned char *in, unsigned char *out,
             /* Phase 1: VAES for the safe portion before the boundary */
             if (safe_bytes > 0) {
                 switch (nr) {
+                case 10:
+                    ctr_process_10(in, out, safe_bytes, key, counter);
+                    break;
                 case 12:
                     ctr_process_12(in, out, safe_bytes, key, counter);
                     break;
                 case 14:
                     ctr_process_14(in, out, safe_bytes, key, counter);
                     break;
-                default:   /* 10 (AES-128) */
-                    ctr_process_10(in, out, safe_bytes, key, counter);
+                default: /* invalid key size */
+                    CRYPTO_ctr128_encrypt(in, out, safe_bytes, key, counter,
+                                         ecount_buf, num,
+                                         (block128_f)aesni_encrypt);
                     break;
                 }
                 in  += safe_bytes;
@@ -353,14 +359,19 @@ void ossl_aes_ctr_vaes(const unsigned char *in, unsigned char *out,
                 if (l >= 512) {
                     size_t resume_bytes = (l / 16) * 16;
                     switch (nr) {
+                    case 10:
+                        ctr_process_10(in, out, resume_bytes, key, counter);
+                        break;
                     case 12:
                         ctr_process_12(in, out, resume_bytes, key, counter);
                         break;
                     case 14:
                         ctr_process_14(in, out, resume_bytes, key, counter);
                         break;
-                    default:
-                        ctr_process_10(in, out, resume_bytes, key, counter);
+                    default: /* invalid key size */
+                        CRYPTO_ctr128_encrypt(in, out, resume_bytes, key,
+                                             counter, ecount_buf, num,
+                                             (block128_f)aesni_encrypt);
                         break;
                     }
                     in  += resume_bytes;
