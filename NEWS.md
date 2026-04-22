@@ -28,6 +28,8 @@ OpenSSL 4.1
 
 ### Major changes between OpenSSL 4.0 and OpenSSL 4.1 [under development]
 
+  * Added `SSL_client_hello_get0_extensions()` for zero-copy access to the
+    raw ClientHello extensions buffer during the client hello callback.
   * API calls `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`, and
     `CRYPTO_atomic_cmp_exch_ptr` have been added.
 

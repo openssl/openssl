@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_CTX_set_client_hello_cb, SSL_client_hello_cb_fn, SSL_client_hello_isv2, SSL_client_hello_get0_legacy_version, SSL_client_hello_get0_random, SSL_client_hello_get0_session_id, SSL_client_hello_get0_ciphers, SSL_client_hello_get0_compression_methods, SSL_client_hello_get1_extensions_present, SSL_client_hello_get_extension_order, SSL_client_hello_get0_ext - callback functions for early server-side ClientHello processing
+SSL_CTX_set_client_hello_cb, SSL_client_hello_cb_fn, SSL_client_hello_isv2, SSL_client_hello_get0_legacy_version, SSL_client_hello_get0_random, SSL_client_hello_get0_session_id, SSL_client_hello_get0_ciphers, SSL_client_hello_get0_compression_methods, SSL_client_hello_get0_extensions, SSL_client_hello_get1_extensions_present, SSL_client_hello_get_extension_order, SSL_client_hello_get0_ext - callback functions for early server-side ClientHello processing
 
 =head1 SYNOPSIS
 
@@ -15,6 +15,7 @@ SSL_CTX_set_client_hello_cb, SSL_client_hello_cb_fn, SSL_client_hello_isv2, SSL_
  size_t SSL_client_hello_get0_ciphers(SSL *s, const unsigned char **out);
  size_t SSL_client_hello_get0_compression_methods(SSL *s,
                                                   const unsigned char **out);
+ size_t SSL_client_hello_get0_extensions(SSL *s, const unsigned char **out);
  int SSL_client_hello_get1_extensions_present(SSL *s, int **out,
                                               size_t *outlen);
  int SSL_client_hello_get_extension_order(SSL *s, uint16_t *exts,
@@ -54,6 +55,18 @@ SSL_client_hello_get0_ciphers(), and
 SSL_client_hello_get0_compression_methods() provide access to the corresponding
 ClientHello fields, returning the field length and optionally setting an out
 pointer to the octets of that field.
+
+SSL_client_hello_get0_extensions() provides access to the raw extension
+bytes from the ClientHello, returning the total length and optionally
+setting an out pointer to the octets. The pointer returned via B<out> is
+valid only for the duration of the ClientHello callback; it must not be
+used after the callback returns. Unlike
+SSL_client_hello_get1_extensions_present(), this function returns all
+extensions as received on the wire, including any GREASE values and
+extension types not otherwise known to the library. The returned data
+uses the standard TLS extension wire format (a sequence of
+type(2 bytes), length(2 bytes), data(length bytes) entries). The
+2-byte total extensions length prefix is not included.
 
 Similarly, SSL_client_hello_get0_ext() provides access to individual extensions
 from the ClientHello on a per-extension basis.  For the provided wire
@@ -125,8 +138,8 @@ SSL_CLIENT_HELLO_RETRY to suspend processing.
 SSL_client_hello_isv2() returns 0.
 
 SSL_client_hello_get0_random(), SSL_client_hello_get0_session_id(),
-SSL_client_hello_get0_ciphers(), and
-SSL_client_hello_get0_compression_methods() return the length of the
+SSL_client_hello_get0_ciphers(), SSL_client_hello_get0_compression_methods(),
+and SSL_client_hello_get0_extensions() return the length of the
 corresponding ClientHello fields.  If zero is returned, the output pointer
 should not be assumed to be valid.
 
@@ -151,6 +164,8 @@ SSL_client_hello_get0_ext(), and SSL_client_hello_get1_extensions_present()
 were added in OpenSSL 1.1.1.
 SSL_client_hello_get_extension_order()
 was added in OpenSSL 3.2.0.
+SSL_client_hello_get0_extensions()
+was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

@@ -7047,6 +7047,20 @@ size_t SSL_client_hello_get0_compression_methods(SSL *s, const unsigned char **o
     return sc->clienthello->compressions_len;
 }
 
+size_t SSL_client_hello_get0_extensions(SSL *s, const unsigned char **out)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+
+    if (sc == NULL)
+        return 0;
+
+    if (sc->clienthello == NULL)
+        return 0;
+    if (out != NULL)
+        *out = PACKET_data(&sc->clienthello->extensions);
+    return PACKET_remaining(&sc->clienthello->extensions);
+}
+
 int SSL_client_hello_get1_extensions_present(SSL *s, int **out, size_t *outlen)
 {
     RAW_EXTENSION *ext;
