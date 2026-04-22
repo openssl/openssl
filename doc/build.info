@@ -1955,6 +1955,10 @@ DEPEND[html/man3/PKCS12_create.html]=man3/PKCS12_create.pod
 GENERATE[html/man3/PKCS12_create.html]=man3/PKCS12_create.pod
 DEPEND[man/man3/PKCS12_create.3]=man3/PKCS12_create.pod
 GENERATE[man/man3/PKCS12_create.3]=man3/PKCS12_create.pod
+DEPEND[html/man3/PKCS12_decrypt_secretbag.html]=man3/PKCS12_decrypt_secretbag.pod
+GENERATE[html/man3/PKCS12_decrypt_secretbag.html]=man3/PKCS12_decrypt_secretbag.pod
+DEPEND[man/man3/PKCS12_decrypt_secretbag.3]=man3/PKCS12_decrypt_secretbag.pod
+GENERATE[man/man3/PKCS12_decrypt_secretbag.3]=man3/PKCS12_decrypt_secretbag.pod
 DEPEND[html/man3/PKCS12_decrypt_skey.html]=man3/PKCS12_decrypt_skey.pod
 GENERATE[html/man3/PKCS12_decrypt_skey.html]=man3/PKCS12_decrypt_skey.pod
 DEPEND[man/man3/PKCS12_decrypt_skey.3]=man3/PKCS12_decrypt_skey.pod
@@ -3544,6 +3548,7 @@ html/man3/PKCS12_add_friendlyname_asc.html \
 html/man3/PKCS12_add_localkeyid.html \
 html/man3/PKCS12_add_safe.html \
 html/man3/PKCS12_create.html \
+html/man3/PKCS12_decrypt_secretbag.html \
 html/man3/PKCS12_decrypt_skey.html \
 html/man3/PKCS12_gen_mac.html \
 html/man3/PKCS12_get_friendlyname.html \
@@ -4220,6 +4225,7 @@ man/man3/PKCS12_add_friendlyname_asc.3 \
 man/man3/PKCS12_add_localkeyid.3 \
 man/man3/PKCS12_add_safe.3 \
 man/man3/PKCS12_create.3 \
+man/man3/PKCS12_decrypt_secretbag.3 \
 man/man3/PKCS12_decrypt_skey.3 \
 man/man3/PKCS12_gen_mac.3 \
 man/man3/PKCS12_get_friendlyname.3 \
