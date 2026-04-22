@@ -14658,6 +14658,290 @@ end:
     return testresult;
 }
 
+/*
+ * Test calling SSL_write() after SSL_read() has signalled SSL_ERROR_WANT_WRITE
+ * This scenario is allowed.
+ */
+static int test_write_after_read_want_write(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+    unsigned char buf = 0;
+    BIO *tmp = NULL;
+    BIO *bretry = BIO_new(bio_s_always_retry());
+
+    if (!TEST_ptr(bretry))
+        goto end;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), 0, 0,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+            NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /*
+     * Force the client into a state where the next SSL_read will give us
+     * SSL_ERROR_WANT_WRITE
+     */
+    tmp = SSL_get_wbio(clientssl);
+    if (!TEST_ptr(tmp) || !TEST_true(BIO_up_ref(tmp))) {
+        tmp = NULL;
+        goto end;
+    }
+    SSL_set0_wbio(clientssl, bretry);
+    bretry = NULL;
+    if (!TEST_true(SSL_key_update(clientssl, SSL_KEY_UPDATE_NOT_REQUESTED)))
+        goto end;
+    if (!TEST_int_le(SSL_read(clientssl, &buf, sizeof(buf)), 0))
+        goto end;
+    if (!TEST_int_eq(SSL_get_error(clientssl, 0), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    SSL_set0_wbio(clientssl, tmp);
+    tmp = NULL;
+
+    /* Now check we can write without error */
+    if (!TEST_int_gt(SSL_write(clientssl, &buf, sizeof(buf)), 0))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_free(bretry);
+    BIO_free(tmp);
+
+    return testresult;
+}
+
+/*
+ * Test calling SSL_write() after SSL_read() has signalled SSL_ERROR_WANT_READ
+ * This scenario is allowed.
+ */
+static int test_write_after_read_want_read(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+    unsigned char buf = 0;
+    BIO *mem = BIO_new(BIO_s_mem());
+    BIO *tmp = NULL;
+
+    if (!TEST_ptr(mem))
+        goto end;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), 0, 0,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+            NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* Send an app data record to the client */
+    if (!TEST_int_gt(SSL_write(serverssl, &buf, sizeof(buf)), 0))
+        goto end;
+
+    /* Temporarily replace the client's rbio */
+    tmp = SSL_get_rbio(clientssl);
+    if (!TEST_ptr(tmp) || !TEST_true(BIO_up_ref(tmp))) {
+        tmp = NULL;
+        goto end;
+    }
+    BIO_up_ref(mem);
+    SSL_set0_rbio(clientssl, mem);
+
+    /*
+     * Move a byte of data from the record that the server wrote into the
+     * client's temporary rbio
+     */
+    if (!TEST_int_eq(BIO_read(tmp, &buf, 1), 1))
+        goto end;
+    if (!TEST_int_eq(BIO_write(mem, &buf, 1), 1))
+        goto end;
+
+    /*
+     * We expect to only be able to read a partial record, and therefore will
+     * get an SSL_ERROR_WANT_READ.
+     */
+    if (!TEST_int_le(SSL_read(clientssl, &buf, sizeof(buf)), 0))
+        goto end;
+
+    if (!TEST_int_eq(SSL_get_error(clientssl, 0), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* Resurrect the client's original rbio */
+    SSL_set0_rbio(clientssl, tmp);
+    tmp = NULL;
+    BIO_free(mem);
+    mem = NULL;
+
+    /* Now check we can write without error */
+    if (!TEST_int_gt(SSL_write(clientssl, &buf, sizeof(buf)), 0))
+        goto end;
+
+    /*
+     * Also check that we are still able to read the partial record we started
+     * to read earlier.
+     */
+    if (!TEST_int_eq(SSL_read(clientssl, &buf, sizeof(buf)), 1))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_free(mem);
+    BIO_free(tmp);
+
+    return testresult;
+}
+
+/*
+ * Test calling SSL_read() after SSL_write() has signalled SSL_ERROR_WANT_READ
+ * This scenario is allowed.
+ */
+static int test_read_after_write_want_read(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+    unsigned char buf = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_2_VERSION, TLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+            NULL)))
+        goto end;
+    SSL_set_options(serverssl, SSL_OP_ALLOW_CLIENT_RENEGOTIATION);
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_true(SSL_renegotiate(clientssl)))
+        goto end;
+    if (!TEST_int_le(SSL_write(clientssl, &buf, sizeof(buf)), 0))
+        goto end;
+    /*
+     * The server has not processed the reneg yet, so we should get an
+     * SSL_ERROR_WANT_READ response.
+     */
+    if (!TEST_int_eq(SSL_get_error(clientssl, 0), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /* Now complete the handshake and send some data on the server side */
+    if (!TEST_int_gt(SSL_write(serverssl, &buf, sizeof(buf)), 0))
+        goto end;
+
+    /* Now check we can read without error */
+    if (!TEST_int_gt(SSL_read(clientssl, &buf, sizeof(buf)), 0))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test calling SSL_read() after SSL_wrote() has signalled SSL_ERROR_WANT_WRITE
+ * This scenario is NOT allowed.
+ */
+static int test_read_after_write_want_write(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+    unsigned char buf = 0;
+    BIO *bretry = BIO_new(bio_s_always_retry());
+    BIO *tmp;
+
+    if (!TEST_ptr(bretry))
+        goto end;
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_2_VERSION, TLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    SSL_set_options(serverssl, SSL_OP_ALLOW_CLIENT_RENEGOTIATION);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+            NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /*
+     * Force the server into a state so that SSL_write will cause
+     * SSL_ERROR_WANT_WRITE
+     */
+    tmp = SSL_get_wbio(serverssl);
+    if (!TEST_ptr(tmp) || !TEST_true(BIO_up_ref(tmp))) {
+        tmp = NULL;
+        goto end;
+    }
+    SSL_set0_wbio(serverssl, bretry);
+    bretry = NULL;
+
+    if (!TEST_int_le(SSL_write(serverssl, &buf, sizeof(buf)), 0))
+        goto end;
+
+    if (!TEST_int_eq(SSL_get_error(serverssl, 0), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    SSL_set0_wbio(serverssl, tmp);
+    tmp = NULL;
+
+    /*
+     * Force the server into a state such that an SSL_read call will try and
+     * write something.
+     */
+    if (!TEST_true(SSL_renegotiate(clientssl)))
+        goto end;
+    if (!TEST_int_le(SSL_write(clientssl, &buf, sizeof(buf)), 0))
+        goto end;
+    if (!TEST_int_eq(SSL_get_error(clientssl, 0), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * Now call SSL_read(). We expect this to cause a fatal error. You are not
+     * allowed to call SSL_read() after SSL_write().
+     */
+    if (!TEST_int_le(SSL_read(serverssl, &buf, sizeof(buf)), 0))
+        goto end;
+    if (!TEST_int_eq(SSL_get_error(serverssl, 0), SSL_ERROR_SSL))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
 int setup_tests(void)
@@ -15003,7 +15287,14 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_http_verbs, 3);
 #if !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_TEST(test_grease);
+    ADD_TEST(test_write_after_read_want_write);
+    ADD_TEST(test_write_after_read_want_read);
 #endif
+#ifndef OPENSSL_NO_TLS1_2
+    ADD_TEST(test_read_after_write_want_read);
+    ADD_TEST(test_read_after_write_want_write);
+#endif
+
     return 1;
 
 err:
