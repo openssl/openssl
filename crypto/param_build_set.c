@@ -73,6 +73,11 @@ int ossl_param_build_set_bn_pad(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
         return OSSL_PARAM_BLD_push_BN_pad(bld, key, bn, sz);
     p = OSSL_PARAM_locate(p, key);
     if (p != NULL) {
+        /* Size probe: NULL data means "report the required size". */
+        if (p->data == NULL) {
+            p->return_size = sz;
+            return 1;
+        }
         if (sz > p->data_size) {
             ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_TOO_SMALL_BUFFER);
             return 0;
