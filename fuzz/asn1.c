@@ -277,9 +277,6 @@ static ASN1_PCTX *pctx;
         TYPE *type = D2I(NULL, &p, (long)len); \
                                                \
         if (type != NULL) {                    \
-            BIO *bio = BIO_new(BIO_s_null());  \
-                                               \
-            BIO_free(bio);                     \
             I2D(type, &der);                   \
             OPENSSL_free(der);                 \
             TYPE##_free(type);                 \
@@ -290,6 +287,8 @@ int FuzzerInitialize(int *argc, char ***argv)
 {
     FuzzerSetRand();
     pctx = ASN1_PCTX_new();
+    if (pctx == NULL)
+        return 0;
     ASN1_PCTX_set_flags(pctx, ASN1_PCTX_FLAGS_SHOW_ABSENT | ASN1_PCTX_FLAGS_SHOW_SEQUENCE | ASN1_PCTX_FLAGS_SHOW_SSOF | ASN1_PCTX_FLAGS_SHOW_TYPE | ASN1_PCTX_FLAGS_SHOW_FIELD_STRUCT_NAME);
     ASN1_PCTX_set_str_flags(pctx, ASN1_STRFLGS_UTF8_CONVERT | ASN1_STRFLGS_SHOW_TYPE | ASN1_STRFLGS_DUMP_ALL);
 
