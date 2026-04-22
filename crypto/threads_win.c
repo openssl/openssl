@@ -340,7 +340,8 @@ static struct rcu_qp *update_qp(CRYPTO_RCU_LOCK *lock, uint32_t *curr_id)
     /* update the reader index to be the prior qp */
     tmp = lock->current_alloc_idx;
 #if (defined(NO_INTERLOCKEDOR64))
-    CRYPTO_THREAD_write_lock(lock->rw_lock);
+    /* This cannot fail, avoid unused result warning */
+    ossl_unused int r = CRYPTO_THREAD_write_lock(lock->rw_lock);
     lock->reader_idx = tmp;
     CRYPTO_THREAD_unlock(lock->rw_lock);
 #else
