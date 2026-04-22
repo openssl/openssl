@@ -317,16 +317,6 @@ errx(int status, const char *fmt, ...)
     exit(status);
 }
 
-static void
-warnx(const char *fmt, ...)
-{
-    va_list ap;
-
-    va_start(ap, fmt);
-    vwarnx(fmt, ap);
-    va_end(ap);
-}
-
 /*
  * we can get away with this mock-up on windows.
  * we generate payload for any URL we obtain in
