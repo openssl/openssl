@@ -215,8 +215,7 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
     int pknid, mdnid, md_size;
-    EVP_MD *fetched_md = NULL;
-    const EVP_MD *md;
+    EVP_MD *md;
     const EVP_PKEY_ASN1_METHOD *ameth;
 
     siginf->mdnid = NID_undef;
@@ -278,19 +277,14 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
         break;
     default:
         /* Security bits: half number of bits in digest */
-        ERR_set_mark();
-        fetched_md = EVP_MD_fetch(libctx, OBJ_nid2sn(mdnid), propq);
-        if (fetched_md != NULL)
-            md = fetched_md;
-        else
-            md = EVP_get_digestbynid(mdnid);
-        ERR_pop_to_mark();
+        md = EVP_MD_fetch(libctx, OBJ_nid2sn(mdnid), propq);
         if (md == NULL) {
-            ERR_raise(ERR_LIB_X509, X509_R_ERROR_GETTING_MD_BY_NID);
+            ERR_raise_data(ERR_LIB_X509, X509_R_ERROR_GETTING_MD_BY_NID,
+                "nid=%d name=%s", mdnid, OBJ_nid2sn(mdnid));
             return 0;
         }
         md_size = EVP_MD_get_size(md);
-        EVP_MD_free(fetched_md);
+        EVP_MD_free(md);
         if (md_size <= 0)
             return 0;
         siginf->secbits = md_size * 4;

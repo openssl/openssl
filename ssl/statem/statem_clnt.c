@@ -3752,11 +3752,7 @@ static int tls_construct_cke_gost(SSL_CONNECTION *s, WPACKET *pkt)
      * data
      */
     ukm_hash = EVP_MD_CTX_new();
-    ERR_set_mark();
     ukm_md = EVP_MD_fetch(sctx->libctx, OBJ_nid2sn(dgst_nid), sctx->propq);
-    if (ukm_md == NULL)
-        ukm_md = (EVP_MD *)EVP_get_digestbynid(dgst_nid);
-    ERR_pop_to_mark();
     if (ukm_hash == NULL
         || ukm_md == NULL
         || EVP_DigestInit_ex(ukm_hash, ukm_md, NULL) <= 0
