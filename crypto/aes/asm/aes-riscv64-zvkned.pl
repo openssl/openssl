@@ -420,7 +420,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_cbc_enc_128:
-    @{[lpad 0]}
     # Load all 11 round keys to v1-v11 registers.
     @{[aes_128_load_key $KEYP]}
 
@@ -456,7 +455,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_cbc_enc_192:
-    @{[lpad 0]}
     # Load all 13 round keys to v1-v13 registers.
     @{[aes_192_load_key $KEYP]}
 
@@ -492,7 +490,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_cbc_enc_256:
-    @{[lpad 0]}
     # Load all 15 round keys to v1-v15 registers.
     @{[aes_256_load_key $KEYP]}
 
@@ -562,7 +559,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_cbc_dec_128:
-    @{[lpad 0]}
     # Load all 11 round keys to v1-v11 registers.
     @{[aes_128_load_key $KEYP]}
 
@@ -655,7 +651,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_cbc_dec_192:
-    @{[lpad 0]}
     # Load all 13 round keys to v1-v13 registers.
     @{[aes_192_load_key $KEYP]}
 
@@ -693,7 +688,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_cbc_dec_256:
-    @{[lpad 0]}
     # Load all 15 round keys to v1-v15 registers.
     @{[aes_256_load_key $KEYP]}
 
@@ -769,7 +763,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_ecb_enc_128:
-    @{[lpad 0]}
     # Load all 11 round keys to v1-v11 registers.
     @{[aes_128_load_key $KEYP]}
 
@@ -797,7 +790,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_ecb_enc_192:
-    @{[lpad 0]}
     # Load all 13 round keys to v1-v13 registers.
     @{[aes_192_load_key $KEYP]}
 
@@ -825,7 +817,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_ecb_enc_256:
-    @{[lpad 0]}
     # Load all 15 round keys to v1-v15 registers.
     @{[aes_256_load_key $KEYP]}
 
@@ -884,7 +875,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_ecb_dec_128:
-    @{[lpad 0]}
     # Load all 11 round keys to v1-v11 registers.
     @{[aes_128_load_key $KEYP]}
 
@@ -912,7 +902,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_ecb_dec_192:
-    @{[lpad 0]}
     # Load all 13 round keys to v1-v13 registers.
     @{[aes_192_load_key $KEYP]}
 
@@ -940,7 +929,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_ecb_dec_256:
-    @{[lpad 0]}
     # Load all 15 round keys to v1-v15 registers.
     @{[aes_256_load_key $KEYP]}
 
@@ -1015,7 +1003,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_set_key_128:
-    @{[lpad 0]}
     # Store the number of rounds
     li $T1, 10
     sw $T1, 240($KEYP)
@@ -1068,7 +1055,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_set_key_256:
-    @{[lpad 0]}
     # Store the number of rounds
     li $T1, 14
     sw $T1, 240($KEYP)
@@ -1174,7 +1160,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_enc_128:
-    @{[lpad 0]}
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
 
     @{[vle32_v $V1, $INP]}
@@ -1221,7 +1206,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_enc_192:
-    @{[lpad 0]}
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
 
     @{[vle32_v $V1, $INP]}
@@ -1273,7 +1257,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_enc_256:
-    @{[lpad 0]}
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
 
     @{[vle32_v $V1, $INP]}
@@ -1356,7 +1339,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_dec_128:
-    @{[lpad 0]}
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
 
     @{[vle32_v $V1, $INP]}
@@ -1404,7 +1386,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_dec_192:
-    @{[lpad 0]}
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
 
     @{[vle32_v $V1, $INP]}
@@ -1458,7 +1439,6 @@ ___
 $code .= <<___;
 .p2align 3
 L_dec_256:
-    @{[lpad 0]}
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
 
     @{[vle32_v $V1, $INP]}
