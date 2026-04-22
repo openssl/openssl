@@ -285,8 +285,6 @@ int main(int argc, char *argv[])
     int fd;
     unsigned long port;
 #ifdef _WIN32
-    static const char *progname;
-
     progname = argv[0];
 #endif
 
