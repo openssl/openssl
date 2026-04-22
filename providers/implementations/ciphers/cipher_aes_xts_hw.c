@@ -263,12 +263,12 @@ static int cipher_hw_aes_xts_rv64i_zvkned_initkey(PROV_CIPHER_CTX *ctx,
         cipher_hw_aes_xts_copyctx                                  \
     };
 
-#define PROV_CIPHER_HW_select_xts()                                                        \
-    if (RISCV_HAS_ZVBB() && RISCV_HAS_ZVKG() && RISCV_HAS_ZVKNED() && riscv_vlen() >= 128) \
-        return &aes_xts_rv64i_zvbb_zvkg_zvkned;                                            \
-    if (RISCV_HAS_ZVKNED() && riscv_vlen() >= 128)                                         \
-        return &aes_xts_rv64i_zvkned;                                                      \
-    else if (RISCV_HAS_ZKND_AND_ZKNE())                                                    \
+#define PROV_CIPHER_HW_select_xts()                                                                               \
+    if (RISCV_HAS_ZVBB() && RISCV_HAS_ZVKG() && RISCV_HAS_ZVKNED() && riscv_vlen() >= 128 && riscv_vlen() < 2048) \
+        return &aes_xts_rv64i_zvbb_zvkg_zvkned;                                                                   \
+    if (RISCV_HAS_ZVKNED() && riscv_vlen() >= 128)                                                                \
+        return &aes_xts_rv64i_zvkned;                                                                             \
+    else if (RISCV_HAS_ZKND_AND_ZKNE())                                                                           \
         return &aes_xts_rv64i_zknd_zkne;
 
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
