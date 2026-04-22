@@ -25,6 +25,9 @@
 #if defined(_WIN32)
 #include <windows.h>
 #if defined(WINAPI_FAMILY_PARTITION)
+#if !defined(WINAPI_PARTITION_SYSTEM)
+#define WINAPI_PARTITION_SYSTEM 0
+#endif
 #if !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP | WINAPI_PARTITION_SYSTEM)
 /*
  * While VirtualLock is available under the app partition (e.g. UWP),
