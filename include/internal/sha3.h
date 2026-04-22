@@ -48,7 +48,11 @@ struct keccak_st {
     int xof_state;
 };
 
-KECCAK1600_CTX *ossl_shake256_new(void);
+KECCAK1600_CTX *ossl_sha3_new(size_t bitlen);
+KECCAK1600_CTX *ossl_shake_new(size_t bitlen);
+KECCAK1600_CTX *ossl_keccak_new(size_t bitlen);
+KECCAK1600_CTX *ossl_cshake_keccak_new(size_t bitlen);
+
 void ossl_sha3_reset(KECCAK1600_CTX *ctx);
 int ossl_sha3_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen);
 int ossl_keccak_init(KECCAK1600_CTX *ctx, unsigned char pad,
