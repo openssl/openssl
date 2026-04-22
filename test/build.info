@@ -77,7 +77,7 @@ IF[{- !$disabled{tests} -}]
   ENDIF
 
   IF[{- !$disabled{'allocfail-tests'} -}]
-    PROGRAMS{noninst}=handshake-memfail
+    PROGRAMS{noinst}=handshake-memfail load_key_certs_crls_memfail
   ENDIF
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
@@ -590,6 +590,13 @@ IF[{- !$disabled{tests} -}]
   SOURCE[handshake-memfail]=handshake-memfail.c helpers/ssltestlib.c
   INCLUDE[handshake-memfail]=../include ../apps/include
   DEPEND[handshake-memfail]=../libcrypto.a ../libssl.a libtestutil.a
+
+  SOURCE[load_key_certs_crls_memfail]=load_key_certs_crls_memfail.c ../apps/lib/apps.c \
+          ../apps/lib/app_rand.c ../apps/lib/app_provider.c ../apps/lib/app_libctx.c \
+          ../apps/lib/fmt.c ../apps/lib/apps_ui.c ../apps/lib/app_x509.c \
+          ../crypto/asn1/a_time.c ../crypto/ctype.c
+  INCLUDE[load_key_certs_crls_memfail]=.. ../include ../apps/include
+  DEPEND[load_key_certs_crls_memfail]=libtestutil.a ../libcrypto.a ../libssl.a
 
   SOURCE[ssl_handshake_rtt_test]=ssl_handshake_rtt_test.c helpers/ssltestlib.c
   INCLUDE[ssl_handshake_rtt_test]=../include ../apps/include ..
