@@ -103,6 +103,21 @@ static int test_x509_tbs_cache(void)
     return ret;
 }
 
+static int test_x509_verify_with_new(void)
+{
+    int ret;
+    EVP_PKEY *pkey = NULL;
+    X509 *x = NULL;
+
+    ret = TEST_ptr(x = X509_new())
+        && TEST_ptr(pkey = EVP_PKEY_new())
+        && TEST_int_eq(X509_verify(x, pkey), -1)
+        && TEST_int_eq(X509_verify(x, pubkey), -1);
+    X509_free(x);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
 /*
  * Test for Regression discussed in PR #19388
  * In order for this simple test to fail, it requires the digest used for
@@ -484,6 +499,7 @@ int setup_tests(void)
     ADD_TEST(test_x509_revoked_delete_last_extension);
     ADD_TEST(test_drop_empty_cert_keyids);
     ADD_TEST(test_drop_empty_csr_keyids);
+    ADD_TEST(test_x509_verify_with_new);
     return 1;
 }
 
