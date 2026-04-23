@@ -27,6 +27,12 @@
 #if defined(__x86_64__) || defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64)
 #if ((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 10)) || (defined(__clang__) && (__clang_major__ >= 11)))
 
+/* Function prototypes */
+void ossl_aes_cbc_vaes_decrypt(const unsigned char *in, unsigned char *out,
+    size_t len, const void *key,
+    unsigned char ivec[16], int enc);
+int ossl_aes_cbc_vaes_eligible(void);
+
 #include <openssl/modes.h>
 
 /* Forward declarations -- defined in aesni-x86_64.pl assembly        */
