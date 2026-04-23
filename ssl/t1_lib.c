@@ -1537,15 +1537,14 @@ static int grow_tuples(gid_cb_st *garg)
     static size_t max_tplcnt = (~(size_t)0) / sizeof(size_t);
 
     /*
-     * tplcnt + 1 is the index close_tuple() will write to after incrementing;
-     * reallocate before it would reach the end of the allocated array.
+     * Ensure we have room for at least one additional tuple.
+     * (tplcnt + 1 are in active use).
      */
     if (garg->tplcnt + 1 == garg->tplmax) {
         size_t newcnt = garg->tplmax + GROUPLIST_INCREMENT;
         size_t newsz = newcnt * sizeof(size_t);
         size_t *tmp;
 
-        /* This uses OPENSSL_realloc_array() in newer releases */
         if (newsz > max_tplcnt
             || (tmp = OPENSSL_realloc(garg->tuplcnt_arr, newsz)) == NULL)
             return 0;
