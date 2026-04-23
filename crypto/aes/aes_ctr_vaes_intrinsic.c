@@ -17,7 +17,17 @@
 
 #if defined(__x86_64__) || defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64)
 
+#if ( (defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 10)) || \
+      (defined(__clang__) && (__clang_major__ >= 11)) )
+
 #include <openssl/modes.h>
+
+/* Function prototypes */
+void ossl_aes_ctr_vaes(const unsigned char *in, unsigned char *out,
+                       size_t length, const AES_KEY *key,
+                       unsigned char *counter,
+                       unsigned char *ecount_buf, unsigned int *num);
+int ossl_aes_ctr_vaes_eligible(void);
 
 /* Forward declaration — defined in aesni-x86_64.pl assembly          */
 void aesni_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key);
@@ -26,7 +36,9 @@ void aesni_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *k
 #if defined(__GNUC__) || defined(__clang__)       /* GCC, Clang, and clang-cl */
 # define OSSL_FUNC_ALWAYS_INLINE   __attribute__((always_inline))
 # define OSSL_FUNC_NOINLINE        __attribute__((noinline))
-# pragma GCC target("avx512f,avx512dq,avx512bw,vaes,aes")
+#if defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 10)
+#  pragma GCC target("avx512f,avx512dq,avx512bw,vaes,aes")
+# endif
   /* GCC/Clang require this pragma to make AVX-512/VAES intrinsics available.
    * MSVC does not need it: all intrinsics are always declared in <immintrin.h>. */
 #elif defined(_MSC_VER)     /* MSVC */
@@ -405,4 +417,5 @@ int ossl_aes_ctr_vaes_eligible(void)
 #undef OSSL_FUNC_ALWAYS_INLINE
 #undef OSSL_FUNC_NOINLINE
 
+#endif /* compiler version guard */
 #endif /* __x86_64__ || _M_AMD64 */
