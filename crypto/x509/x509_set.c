@@ -278,9 +278,11 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     default:
         /* Security bits: half number of bits in digest */
         {
-            const char *md_name = OBJ_nid2sn(mdnid);
+            char md_name[80];
+            ASN1_OBJECT *md_obj = OBJ_nid2obj(mdnid);
 
-            if (md_name == NULL) {
+            if (md_obj == NULL
+                || i2t_ASN1_OBJECT(md_name, sizeof(md_name), md_obj) <= 0) {
                 ERR_raise_data(ERR_LIB_X509, X509_R_ERROR_GETTING_MD_BY_NID,
                     "nid=%d", mdnid);
                 return 0;

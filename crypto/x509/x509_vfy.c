@@ -1318,9 +1318,9 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
         sr_cert_id = (OCSP_CERTID *)OCSP_SINGLERESP_get0_id(sr);
         OCSP_id_get0_info(NULL, &cert_id_md_oid, NULL, NULL, sr_cert_id);
         if (cert_id_md_oid != NULL) {
-            const char *md_name = OBJ_nid2sn(OBJ_obj2nid(cert_id_md_oid));
+            char md_name[80];
 
-            if (md_name != NULL)
+            if (i2t_ASN1_OBJECT(md_name, sizeof(md_name), cert_id_md_oid) > 0)
                 cert_id_md = EVP_MD_fetch(ctx->libctx, md_name, ctx->propq);
         }
 
