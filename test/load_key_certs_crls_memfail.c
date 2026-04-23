@@ -34,6 +34,8 @@ static int do_load_key_certs_crls(int allow_failure)
 
     if (certfile == NULL)
         return 0;
+    if (app_create_libctx() == NULL)
+        goto err;
 
     (void)snprintf(uri, sizeof(uri), "file:%s", certfile);
     if (!TEST_true(load_key_certs_crls(uri, FORMAT_UNDEF, 0, NULL, "cert",
@@ -68,9 +70,6 @@ int setup_tests(void)
 {
     int ret = 0;
     char *opmode = NULL;
-
-    if (app_create_libctx() == NULL)
-        return 0;
 
     if (!TEST_ptr(opmode = test_get_argument(0)))
         goto err;
