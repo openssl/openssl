@@ -1317,12 +1317,12 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
         /* determine the md algorithm which was used to create cert id */
         sr_cert_id = (OCSP_CERTID *)OCSP_SINGLERESP_get0_id(sr);
         OCSP_id_get0_info(NULL, &cert_id_md_oid, NULL, NULL, sr_cert_id);
-        if (cert_id_md_oid != NULL)
-            cert_id_md = EVP_MD_fetch(ctx->libctx,
-                OBJ_nid2sn(OBJ_obj2nid(cert_id_md_oid)),
-                ctx->propq);
-        else
-            cert_id_md = NULL;
+        if (cert_id_md_oid != NULL) {
+            const char *md_name = OBJ_nid2sn(OBJ_obj2nid(cert_id_md_oid));
+
+            if (md_name != NULL)
+                cert_id_md = EVP_MD_fetch(ctx->libctx, md_name, ctx->propq);
+        }
 
         /* search the stack for the requested OCSP response */
         cert_id = OCSP_cert_to_id(cert_id_md, ctx->current_cert, ctx->current_issuer);

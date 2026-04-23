@@ -277,11 +277,20 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
         break;
     default:
         /* Security bits: half number of bits in digest */
-        md = EVP_MD_fetch(libctx, OBJ_nid2sn(mdnid), propq);
-        if (md == NULL) {
-            ERR_raise_data(ERR_LIB_X509, X509_R_ERROR_GETTING_MD_BY_NID,
-                "nid=%d name=%s", mdnid, OBJ_nid2sn(mdnid));
-            return 0;
+        {
+            const char *md_name = OBJ_nid2sn(mdnid);
+
+            if (md_name == NULL) {
+                ERR_raise_data(ERR_LIB_X509, X509_R_ERROR_GETTING_MD_BY_NID,
+                    "nid=%d", mdnid);
+                return 0;
+            }
+            md = EVP_MD_fetch(libctx, md_name, propq);
+            if (md == NULL) {
+                ERR_raise_data(ERR_LIB_X509, X509_R_ERROR_GETTING_MD_BY_NID,
+                    "nid=%d name=%s", mdnid, md_name);
+                return 0;
+            }
         }
         md_size = EVP_MD_get_size(md);
         EVP_MD_free(md);
