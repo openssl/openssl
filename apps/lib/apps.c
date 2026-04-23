@@ -2463,7 +2463,7 @@ unsigned char *next_protos_parse(size_t *outlen, const char *in)
     return out;
 }
 
-int check_cert_might_be_valid(BIO *bio, X509 *x, const char *checkhost,
+int check_cert_might_be_valid(BIO *bio, BIO *b_err, X509 *x, const char *checkhost,
     const char *checkemail, const char *checkip)
 {
     int ret = 0;
@@ -2473,27 +2473,27 @@ int check_cert_might_be_valid(BIO *bio, X509 *x, const char *checkhost,
     X509_VERIFY_PARAM *vpm = NULL;
 
     if (x == NULL) {
-        maybe_printf(bio, "Internal error, NULL certificate\n");
+        maybe_printf(b_err, "Internal error, NULL certificate\n");
         goto err;
     }
 
     if ((store = X509_STORE_new()) == NULL) {
-        ERR_print_errors(bio);
+        ERR_print_errors(b_err);
         goto err;
     }
 
     if (!X509_STORE_add_cert(store, x)) {
-        maybe_printf(bio, "Malloc failed or internal error\n");
+        maybe_printf(b_err, "Malloc failed or internal error\n");
         goto err;
     }
 
     if ((vpm = X509_STORE_get0_param(store)) == NULL) {
-        maybe_printf(bio, "Malloc failed or internal error\n");
+        maybe_printf(b_err, "Malloc failed or internal error\n");
         goto err;
     }
 
     if ((ctx = X509_STORE_CTX_new()) == NULL) {
-        maybe_printf(bio, "Malloc failed or internal error\n");
+        maybe_printf(b_err, "Malloc failed or internal error\n");
         goto err;
     }
 
@@ -2514,33 +2514,33 @@ int check_cert_might_be_valid(BIO *bio, X509 *x, const char *checkhost,
     X509_VERIFY_PARAM_set_trust(vpm, X509_TRUST_OK_ANY_EKU);
 
     if (!X509_VERIFY_PARAM_set1_ip_asc(vpm, checkip)) {
-        maybe_printf(bio, "Invalid IP address: %s\n", checkip);
+        maybe_printf(b_err, "Invalid IP address: %s\n", checkip);
         goto err;
     }
 
     if (!X509_VERIFY_PARAM_set1_host(vpm, checkhost, 0)) {
-        maybe_printf(bio, "Invalid host name: %s\n", checkhost);
+        maybe_printf(b_err, "Invalid host name: %s\n", checkhost);
         goto err;
     }
 
     if (!X509_VERIFY_PARAM_set1_email(vpm, checkemail, 0)) {
-        maybe_printf(bio, "Invalid email address: %s\n", checkemail);
+        maybe_printf(b_err, "Invalid email address: %s\n", checkemail);
         goto err;
     }
 
     if (!X509_VERIFY_PARAM_set1_ip_asc(vpm, checkip)) {
-        maybe_printf(bio, "Invalid IP address: %s\n", checkip);
+        maybe_printf(b_err, "Invalid IP address: %s\n", checkip);
         goto err;
     }
 
     if (!X509_STORE_CTX_init(ctx, store, x, NULL)) {
-        maybe_printf(bio, "Malloc failed or internal error\n");
+        maybe_printf(b_err, "Malloc failed or internal error\n");
         goto err;
     }
 
     /* We might be verifying for ANY purpose ... */
     if (!X509_STORE_CTX_set_purpose(ctx, X509_PURPOSE_ANY)) {
-        maybe_printf(bio, "Malloc failed or internal error\n");
+        maybe_printf(b_err, "Malloc failed or internal error\n");
         goto err;
     }
 
