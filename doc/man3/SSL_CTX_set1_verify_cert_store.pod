@@ -93,16 +93,24 @@ All these functions return 1 for success and 0 for failure.
 =head1 SEE ALSO
 
 L<ssl(7)>,
-L<SSL_CTX_add_extra_chain_cert(3)>
-L<SSL_CTX_set0_chain(3)>
-L<SSL_CTX_set1_chain(3)>
-L<SSL_CTX_add0_chain_cert(3)>
-L<SSL_CTX_add1_chain_cert(3)>
-L<SSL_set0_chain(3)>
-L<SSL_set1_chain(3)>
-L<SSL_add0_chain_cert(3)>
-L<SSL_add1_chain_cert(3)>
-L<SSL_CTX_build_cert_chain(3)>
+L<SSL_CTX_load_verify_dir(3)>,
+L<SSL_CTX_load_verify_file(3)>,
+L<SSL_CTX_load_verify_store(3)>,
+L<SSL_CTX_set_default_verify_paths(3)>,
+L<SSL_CTX_set_default_verify_dir(3)>,
+L<SSL_CTX_set_default_verify_file(3)>,
+L<SSL_CTX_set_default_verify_store(3)>,
+L<SSL_CTX_load_verify_locations(3)>,
+L<SSL_CTX_add_extra_chain_cert(3)>,
+L<SSL_CTX_set0_chain(3)>,
+L<SSL_CTX_set1_chain(3)>,
+L<SSL_CTX_add0_chain_cert(3)>,
+L<SSL_CTX_add1_chain_cert(3)>,
+L<SSL_set0_chain(3)>,
+L<SSL_set1_chain(3)>,
+L<SSL_add0_chain_cert(3)>,
+L<SSL_add1_chain_cert(3)>,
+L<SSL_CTX_build_cert_chain(3)>,
 L<SSL_build_cert_chain(3)>
 
 =head1 HISTORY
