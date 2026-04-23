@@ -1654,6 +1654,11 @@ static int test_fromdata_ec(void)
     BIGNUM *a = NULL;
     BIGNUM *b = NULL;
     BIGNUM *p = NULL;
+    OSSL_PARAM probe[2] = {
+        OSSL_PARAM_DEFN(OSSL_PKEY_PARAM_PRIV_KEY, OSSL_PARAM_UNSIGNED_INTEGER,
+            NULL, 0),
+        OSSL_PARAM_END
+    };
 
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new()))
         goto err;
@@ -1775,6 +1780,15 @@ static int test_fromdata_ec(void)
             goto err;
         BN_free(bn_priv);
         bn_priv = NULL;
+
+        /*
+         * Probe the EC private-key BN length via the explicit-params
+         * path; with NULL data, return_size receives the required
+         * buffer size.
+         */
+        if (!TEST_true(EVP_PKEY_get_params(pk, probe))
+            || !TEST_size_t_gt(probe[0].return_size, 0))
+            goto err;
 
         ret = test_print_key_using_pem(alg, pk)
             && test_print_key_using_encoder(alg, pk);
