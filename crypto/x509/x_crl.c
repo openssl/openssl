@@ -370,10 +370,10 @@ static int setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp)
 
     if (idp->onlysomereasons) {
         crl->idp_flags |= IDP_REASONS;
-        if (idp->onlysomereasons->length > 0)
-            crl->idp_reasons = idp->onlysomereasons->data[0];
-        if (idp->onlysomereasons->length > 1)
-            crl->idp_reasons |= (idp->onlysomereasons->data[1] << 8);
+        if (ASN1_STRING_length(idp->onlysomereasons) > 0)
+            crl->idp_reasons = ASN1_STRING_get0_data(idp->onlysomereasons)[0];
+        if (ASN1_STRING_length(idp->onlysomereasons) > 1)
+            crl->idp_reasons |= ASN1_STRING_get0_data(idp->onlysomereasons)[1] << 8;
         crl->idp_reasons &= CRLDP_ALL_REASONS;
     }
 

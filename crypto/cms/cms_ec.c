@@ -26,8 +26,8 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
 
     if (ptype == V_ASN1_SEQUENCE) {
         const ASN1_STRING *pstr = pval;
-        const unsigned char *pm = pstr->data;
-        size_t pmlen = (size_t)pstr->length;
+        const unsigned char *pm = ASN1_STRING_get0_data(pstr);
+        size_t pmlen = (size_t)ASN1_STRING_length(pstr);
         int selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
 
         ctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "DER", NULL, "EC",

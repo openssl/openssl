@@ -533,18 +533,19 @@ static int append_ia5(STACK_OF(OPENSSL_STRING) **sk,
     char *emtmp;
 
     /* First some sanity checks */
-    if (email->type != V_ASN1_IA5STRING)
+    if (ASN1_STRING_type(email) != V_ASN1_IA5STRING)
         return 1;
-    if (email->data == NULL || email->length == 0)
+    if (ASN1_STRING_get0_data(email) == NULL || ASN1_STRING_length(email) == 0)
         return 1;
-    if (memchr(email->data, 0, email->length) != NULL)
+    if (memchr(ASN1_STRING_get0_data(email), 0, ASN1_STRING_length(email)) != NULL)
         return 1;
     if (*sk == NULL)
         *sk = sk_OPENSSL_STRING_new(sk_strcmp);
     if (*sk == NULL)
         return 0;
 
-    emtmp = OPENSSL_strndup((char *)email->data, email->length);
+    emtmp = OPENSSL_strndup((char *)ASN1_STRING_get0_data(email),
+        ASN1_STRING_length(email));
     if (emtmp == NULL) {
         X509_email_free(*sk);
         *sk = NULL;
@@ -828,17 +829,20 @@ static int do_check_string(const ASN1_STRING *a, int cmp_type, equal_fn equal,
 {
     int rv = 0;
 
-    if (!a->data || !a->length)
+    if (!ASN1_STRING_get0_data(a) || !ASN1_STRING_length(a))
         return 0;
     if (cmp_type > 0) {
-        if (cmp_type != a->type)
+        if (cmp_type != ASN1_STRING_type(a))
             return 0;
         if (cmp_type == V_ASN1_IA5STRING)
-            rv = equal(a->data, a->length, (unsigned char *)b, blen, flags);
-        else if (a->length == (int)blen && !memcmp(a->data, b, blen))
+            rv = equal(ASN1_STRING_get0_data(a), ASN1_STRING_length(a),
+                (unsigned char *)b, blen, flags);
+        else if (ASN1_STRING_length(a) == (int)blen
+            && !memcmp(ASN1_STRING_get0_data(a), b, blen))
             rv = 1;
         if (rv > 0 && peername != NULL) {
-            *peername = OPENSSL_strndup((char *)a->data, a->length);
+            *peername = OPENSSL_strndup((char *)ASN1_STRING_get0_data(a),
+                ASN1_STRING_length(a));
             if (*peername == NULL)
                 return -1;
         }

@@ -89,40 +89,40 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
         case NID_id_on_SmtpUTF8Mailbox:
             if (gen->d.otherName->value->type != V_ASN1_UTF8STRING
                 || !x509v3_add_len_value_uchar("othername: SmtpUTF8Mailbox",
-                    gen->d.otherName->value->value.utf8string->data,
-                    gen->d.otherName->value->value.utf8string->length,
+                    ASN1_STRING_get0_data(gen->d.otherName->value->value.utf8string),
+                    ASN1_STRING_length(gen->d.otherName->value->value.utf8string),
                     &ret))
                 return NULL;
             break;
         case NID_XmppAddr:
             if (gen->d.otherName->value->type != V_ASN1_UTF8STRING
                 || !x509v3_add_len_value_uchar("othername: XmppAddr",
-                    gen->d.otherName->value->value.utf8string->data,
-                    gen->d.otherName->value->value.utf8string->length,
+                    ASN1_STRING_get0_data(gen->d.otherName->value->value.utf8string),
+                    ASN1_STRING_length(gen->d.otherName->value->value.utf8string),
                     &ret))
                 return NULL;
             break;
         case NID_SRVName:
             if (gen->d.otherName->value->type != V_ASN1_IA5STRING
                 || !x509v3_add_len_value_uchar("othername: SRVName",
-                    gen->d.otherName->value->value.ia5string->data,
-                    gen->d.otherName->value->value.ia5string->length,
+                    ASN1_STRING_get0_data(gen->d.otherName->value->value.ia5string),
+                    ASN1_STRING_length(gen->d.otherName->value->value.ia5string),
                     &ret))
                 return NULL;
             break;
         case NID_ms_upn:
             if (gen->d.otherName->value->type != V_ASN1_UTF8STRING
                 || !x509v3_add_len_value_uchar("othername: UPN",
-                    gen->d.otherName->value->value.utf8string->data,
-                    gen->d.otherName->value->value.utf8string->length,
+                    ASN1_STRING_get0_data(gen->d.otherName->value->value.utf8string),
+                    ASN1_STRING_length(gen->d.otherName->value->value.utf8string),
                     &ret))
                 return NULL;
             break;
         case NID_NAIRealm:
             if (gen->d.otherName->value->type != V_ASN1_UTF8STRING
                 || !x509v3_add_len_value_uchar("othername: NAIRealm",
-                    gen->d.otherName->value->value.utf8string->data,
-                    gen->d.otherName->value->value.utf8string->length,
+                    ASN1_STRING_get0_data(gen->d.otherName->value->value.utf8string),
+                    ASN1_STRING_length(gen->d.otherName->value->value.utf8string),
                     &ret))
                 return NULL;
             break;
@@ -136,15 +136,15 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
             /* check if the value is something printable */
             if (gen->d.otherName->value->type == V_ASN1_IA5STRING) {
                 if (x509v3_add_len_value_uchar(othername,
-                        gen->d.otherName->value->value.ia5string->data,
-                        gen->d.otherName->value->value.ia5string->length,
+                        ASN1_STRING_get0_data(gen->d.otherName->value->value.ia5string),
+                        ASN1_STRING_length(gen->d.otherName->value->value.ia5string),
                         &ret))
                     return ret;
             }
             if (gen->d.otherName->value->type == V_ASN1_UTF8STRING) {
                 if (x509v3_add_len_value_uchar(othername,
-                        gen->d.otherName->value->value.utf8string->data,
-                        gen->d.otherName->value->value.utf8string->length,
+                        ASN1_STRING_get0_data(gen->d.otherName->value->value.utf8string),
+                        ASN1_STRING_length(gen->d.otherName->value->value.utf8string),
                         &ret))
                     return ret;
             }
@@ -165,20 +165,23 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
         break;
 
     case GEN_EMAIL:
-        if (!x509v3_add_len_value_uchar("email", gen->d.ia5->data,
-                gen->d.ia5->length, &ret))
+        if (!x509v3_add_len_value_uchar("email",
+                ASN1_STRING_get0_data(gen->d.ia5),
+                ASN1_STRING_length(gen->d.ia5), &ret))
             return NULL;
         break;
 
     case GEN_DNS:
-        if (!x509v3_add_len_value_uchar("DNS", gen->d.ia5->data,
-                gen->d.ia5->length, &ret))
+        if (!x509v3_add_len_value_uchar("DNS",
+                ASN1_STRING_get0_data(gen->d.ia5),
+                ASN1_STRING_length(gen->d.ia5), &ret))
             return NULL;
         break;
 
     case GEN_URI:
-        if (!x509v3_add_len_value_uchar("URI", gen->d.ia5->data,
-                gen->d.ia5->length, &ret))
+        if (!x509v3_add_len_value_uchar("URI",
+                ASN1_STRING_get0_data(gen->d.ia5),
+                ASN1_STRING_length(gen->d.ia5), &ret))
             return NULL;
         break;
 
@@ -189,7 +192,9 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
         break;
 
     case GEN_IPADD:
-        tmp = ossl_ipaddr_to_asc(gen->d.ip->data, gen->d.ip->length);
+        tmp = ossl_ipaddr_to_asc(
+            (unsigned char *)ASN1_STRING_get0_data(gen->d.ip),
+            ASN1_STRING_length(gen->d.ip));
         if (tmp == NULL || !X509V3_add_value("IP Address", tmp, &ret))
             ret = NULL;
         OPENSSL_free(tmp);
@@ -224,28 +229,28 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
         switch (nid) {
         case NID_id_on_SmtpUTF8Mailbox:
             BIO_printf(out, "othername:SmtpUTF8Mailbox:%.*s",
-                gen->d.otherName->value->value.utf8string->length,
-                gen->d.otherName->value->value.utf8string->data);
+                ASN1_STRING_length(gen->d.otherName->value->value.utf8string),
+                ASN1_STRING_get0_data(gen->d.otherName->value->value.utf8string));
             break;
         case NID_XmppAddr:
             BIO_printf(out, "othername:XmppAddr:%.*s",
-                gen->d.otherName->value->value.utf8string->length,
-                gen->d.otherName->value->value.utf8string->data);
+                ASN1_STRING_length(gen->d.otherName->value->value.utf8string),
+                ASN1_STRING_get0_data(gen->d.otherName->value->value.utf8string));
             break;
         case NID_SRVName:
             BIO_printf(out, "othername:SRVName:%.*s",
-                gen->d.otherName->value->value.ia5string->length,
-                gen->d.otherName->value->value.ia5string->data);
+                ASN1_STRING_length(gen->d.otherName->value->value.ia5string),
+                ASN1_STRING_get0_data(gen->d.otherName->value->value.ia5string));
             break;
         case NID_ms_upn:
             BIO_printf(out, "othername:UPN:%.*s",
-                gen->d.otherName->value->value.utf8string->length,
-                gen->d.otherName->value->value.utf8string->data);
+                ASN1_STRING_length(gen->d.otherName->value->value.utf8string),
+                ASN1_STRING_get0_data(gen->d.otherName->value->value.utf8string));
             break;
         case NID_NAIRealm:
             BIO_printf(out, "othername:NAIRealm:%.*s",
-                gen->d.otherName->value->value.utf8string->length,
-                gen->d.otherName->value->value.utf8string->data);
+                ASN1_STRING_length(gen->d.otherName->value->value.utf8string),
+                ASN1_STRING_get0_data(gen->d.otherName->value->value.utf8string));
             break;
         default:
             BIO_printf(out, "othername:<unsupported>");
@@ -283,7 +288,9 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
         break;
 
     case GEN_IPADD:
-        tmp = ossl_ipaddr_to_asc(gen->d.ip->data, gen->d.ip->length);
+        tmp = ossl_ipaddr_to_asc(
+            (unsigned char *)ASN1_STRING_get0_data(gen->d.ip),
+            ASN1_STRING_length(gen->d.ip));
         if (tmp == NULL)
             return 0;
         BIO_printf(out, "IP Address:%s", tmp);

@@ -14,7 +14,6 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include "crypto/asn1.h"
 #include "crypto/x509.h"
 #include "crypto/evp.h"
 
@@ -265,8 +264,8 @@ int X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent)
     const unsigned char *s;
     int i, n;
 
-    n = sig->length;
-    s = sig->data;
+    n = ASN1_STRING_length(sig);
+    s = ASN1_STRING_get0_data(sig);
     for (i = 0; i < n; i++) {
         if ((i % 24) == 0) {
             if (i > 0 && BIO_write(bp, "\n", 1) <= 0)
@@ -528,7 +527,7 @@ int ossl_serial_number_print(BIO *out, const ASN1_INTEGER *bs, int indent)
     uint64_t ul;
     const char *neg;
 
-    if (bs->length == 0) {
+    if (ASN1_STRING_length(bs) == 0) {
         if (BIO_puts(out, " (Empty)") <= 0)
             return -1;
         return 0;
@@ -539,7 +538,7 @@ int ossl_serial_number_print(BIO *out, const ASN1_INTEGER *bs, int indent)
     ERR_pop_to_mark();
 
     if (ok) { /* Reading an int64_t succeeded: print decimal and hex. */
-        if (bs->type == V_ASN1_NEG_INTEGER) {
+        if (ASN1_STRING_type(bs) == V_ASN1_NEG_INTEGER) {
             ul = 0 - (uint64_t)l;
             neg = "-";
         } else {
@@ -549,15 +548,18 @@ int ossl_serial_number_print(BIO *out, const ASN1_INTEGER *bs, int indent)
         if (BIO_printf(out, " %s%ju (%s0x%jx)", neg, ul, neg, ul) <= 0)
             return -1;
     } else { /* Reading an int64_t failed: just print hex. */
-        neg = (bs->type == V_ASN1_NEG_INTEGER) ? " (Negative)" : "";
+        const unsigned char *bs_data = ASN1_STRING_get0_data(bs);
+        int bs_len = ASN1_STRING_length(bs);
+
+        neg = (ASN1_STRING_type(bs) == V_ASN1_NEG_INTEGER) ? " (Negative)" : "";
         if (BIO_printf(out, "\n%*s%s", indent, "", neg) <= 0)
             return -1;
 
-        for (i = 0; i < bs->length - 1; i++) {
-            if (BIO_printf(out, "%02x%c", bs->data[i], ':') <= 0)
+        for (i = 0; i < bs_len - 1; i++) {
+            if (BIO_printf(out, "%02x%c", bs_data[i], ':') <= 0)
                 return -1;
         }
-        if (BIO_printf(out, "%02x", bs->data[i]) <= 0)
+        if (BIO_printf(out, "%02x", bs_data[i]) <= 0)
             return -1;
     }
     return 0;

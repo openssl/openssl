@@ -146,8 +146,9 @@ int ossl_ignored_x509_extension(const X509_EXTENSION *ex, int flags)
      * - either of X509V3_add1_i2d() or X509V3_EXT_add_nconf_sk(),
      *   with a flags (or ctx->flags) value that allows replacement.
      */
-    if (ex->value.length == 2
-        && (ex->value.data[0] == 0x30 || ex->value.data[0] == 0x04)) {
+    if (ASN1_STRING_length(&ex->value) == 2
+        && (ASN1_STRING_get0_data(&ex->value)[0] == 0x30
+            || ASN1_STRING_get0_data(&ex->value)[0] == 0x04)) {
         ASN1_OBJECT *obj = ex->object;
         ASN1_OBJECT *skid = OBJ_nid2obj(NID_subject_key_identifier);
         ASN1_OBJECT *akid = OBJ_nid2obj(NID_authority_key_identifier);

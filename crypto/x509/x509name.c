@@ -41,11 +41,11 @@ int X509_NAME_get_text_by_OBJ(const X509_NAME *name, const ASN1_OBJECT *obj,
         return -1;
     data = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(name, i));
     if (buf == NULL)
-        return data->length;
+        return ASN1_STRING_length(data);
     if (len <= 0)
         return 0;
-    i = (data->length > (len - 1)) ? (len - 1) : data->length;
-    memcpy(buf, data->data, i);
+    i = (ASN1_STRING_length(data) > (len - 1)) ? (len - 1) : ASN1_STRING_length(data);
+    memcpy(buf, ASN1_STRING_get0_data(data), i);
     buf[i] = '\0';
     return i;
 }

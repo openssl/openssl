@@ -55,8 +55,8 @@ unsigned long X509_issuer_and_serial_hash(const X509 *a)
         goto err;
     if (!EVP_DigestUpdate(ctx, (unsigned char *)f, strlen(f)))
         goto err;
-    if (!EVP_DigestUpdate(ctx, (unsigned char *)a->cert_info.serialNumber.data,
-            (unsigned long)a->cert_info.serialNumber.length))
+    if (!EVP_DigestUpdate(ctx, ASN1_STRING_get0_data(&a->cert_info.serialNumber),
+            (unsigned long)ASN1_STRING_length(&a->cert_info.serialNumber)))
         goto err;
     if (!EVP_DigestFinal_ex(ctx, &(md[0]), NULL))
         goto err;

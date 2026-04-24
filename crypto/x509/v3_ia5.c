@@ -14,8 +14,6 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
-#include <crypto/asn1.h>
-
 const X509V3_EXT_METHOD ossl_v3_ns_ia5_list[8] = {
     EXT_IA5STRING(NID_netscape_base_url),
     EXT_IA5STRING(NID_netscape_revocation_url),
@@ -31,12 +29,12 @@ char *i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5)
 {
     char *tmp;
 
-    if (ia5 == NULL || ia5->length <= 0)
+    if (ia5 == NULL || ASN1_STRING_length(ia5) <= 0)
         return NULL;
-    if ((tmp = OPENSSL_malloc(ia5->length + 1)) == NULL)
+    if ((tmp = OPENSSL_malloc(ASN1_STRING_length(ia5) + 1)) == NULL)
         return NULL;
-    memcpy(tmp, ia5->data, ia5->length);
-    tmp[ia5->length] = 0;
+    memcpy(tmp, ASN1_STRING_get0_data(ia5), ASN1_STRING_length(ia5));
+    tmp[ASN1_STRING_length(ia5)] = 0;
     return tmp;
 }
 
@@ -44,6 +42,11 @@ ASN1_IA5STRING *s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method,
     X509V3_CTX *ctx, const char *str)
 {
     ASN1_IA5STRING *ia5;
+    int len;
+#ifdef CHARSET_EBCDIC
+    char *tmp;
+#endif
+
     if (str == NULL) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NULL_ARGUMENT);
         return NULL;
@@ -52,12 +55,24 @@ ASN1_IA5STRING *s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method,
         ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         return NULL;
     }
-    if (!ASN1_STRING_set((ASN1_STRING *)ia5, str, (int)strlen(str))) {
+    len = (int)strlen(str);
+#ifdef CHARSET_EBCDIC
+    if ((tmp = OPENSSL_malloc(len)) == NULL) {
         ASN1_IA5STRING_free(ia5);
         return NULL;
     }
-#ifdef CHARSET_EBCDIC
-    ebcdic2ascii(ia5->data, ia5->data, ia5->length);
+    ebcdic2ascii(tmp, str, (size_t)len);
+    if (!ASN1_STRING_set((ASN1_STRING *)ia5, tmp, len)) {
+        OPENSSL_free(tmp);
+        ASN1_IA5STRING_free(ia5);
+        return NULL;
+    }
+    OPENSSL_free(tmp);
+#else
+    if (!ASN1_STRING_set((ASN1_STRING *)ia5, str, len)) {
+        ASN1_IA5STRING_free(ia5);
+        return NULL;
+    }
 #endif /* CHARSET_EBCDIC */
     return ia5;
 }

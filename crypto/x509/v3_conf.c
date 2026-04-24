@@ -167,9 +167,8 @@ static X509_EXTENSION *do_ext_i2d(const X509V3_EXT_METHOD *method,
         ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         goto err;
     }
-    ext_oct->data = ext_der;
+    ASN1_STRING_set0(ext_oct, ext_der, ext_len);
     ext_der = NULL;
-    ext_oct->length = ext_len;
 
     ext = X509_EXTENSION_create_by_NID(NULL, ext_nid, crit, ext_oct);
     if (!ext) {
@@ -264,8 +263,7 @@ static X509_EXTENSION *v3_generic_extension(const char *ext, const char *value,
         goto err;
     }
 
-    oct->data = ext_der;
-    oct->length = ext_len;
+    ASN1_STRING_set0(oct, ext_der, ext_len);
     ext_der = NULL;
 
     extension = X509_EXTENSION_create_by_OBJ(NULL, obj, crit, oct);

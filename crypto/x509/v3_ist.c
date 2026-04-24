@@ -15,8 +15,6 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
-#include <crypto/asn1.h>
-
 /*
  * Issuer Sign Tool (1.2.643.100.112) The name of the tool used to signs the subject (ASN1_SEQUENCE)
  * This extension is required to obtain the status of a qualified certificate at Russian Federation.
@@ -101,7 +99,8 @@ static int i2r_issuer_sign_tool(X509V3_EXT_METHOD *method,
     }
     if (ist->signTool != NULL) {
         BIO_printf(out, "%*ssignTool    : ", indent, "");
-        BIO_write(out, ist->signTool->data, ist->signTool->length);
+        BIO_write(out, ASN1_STRING_get0_data(ist->signTool),
+            ASN1_STRING_length(ist->signTool));
         new_line = 1;
     }
     if (ist->cATool != NULL) {
@@ -109,7 +108,8 @@ static int i2r_issuer_sign_tool(X509V3_EXT_METHOD *method,
             BIO_write(out, "\n", 1);
         }
         BIO_printf(out, "%*scATool      : ", indent, "");
-        BIO_write(out, ist->cATool->data, ist->cATool->length);
+        BIO_write(out, ASN1_STRING_get0_data(ist->cATool),
+            ASN1_STRING_length(ist->cATool));
         new_line = 1;
     }
     if (ist->signToolCert != NULL) {
@@ -117,7 +117,8 @@ static int i2r_issuer_sign_tool(X509V3_EXT_METHOD *method,
             BIO_write(out, "\n", 1);
         }
         BIO_printf(out, "%*ssignToolCert: ", indent, "");
-        BIO_write(out, ist->signToolCert->data, ist->signToolCert->length);
+        BIO_write(out, ASN1_STRING_get0_data(ist->signToolCert),
+            ASN1_STRING_length(ist->signToolCert));
         new_line = 1;
     }
     if (ist->cAToolCert != NULL) {
@@ -125,7 +126,8 @@ static int i2r_issuer_sign_tool(X509V3_EXT_METHOD *method,
             BIO_write(out, "\n", 1);
         }
         BIO_printf(out, "%*scAToolCert  : ", indent, "");
-        BIO_write(out, ist->cAToolCert->data, ist->cAToolCert->length);
+        BIO_write(out, ASN1_STRING_get0_data(ist->cAToolCert),
+            ASN1_STRING_length(ist->cAToolCert));
         new_line = 1;
     }
     return 1;

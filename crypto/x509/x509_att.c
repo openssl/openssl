@@ -362,7 +362,7 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
             ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
             return 0;
         }
-        atype = stmp->type;
+        atype = ASN1_STRING_type(stmp);
     } else if (len != -1) {
         if ((stmp = ASN1_STRING_type_new(attrtype)) == NULL
             || !ASN1_STRING_set(stmp, data, len)) {

@@ -14,7 +14,6 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include "cms_local.h"
-#include "crypto/asn1.h"
 #include "crypto/x509.h"
 
 static BIO *cms_get_text_bio(BIO *out, unsigned int flags)
@@ -604,7 +603,8 @@ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
         goto err;
 
     /* Set content to digest */
-    rct_cont = BIO_new_mem_buf(os->data, os->length);
+    rct_cont = BIO_new_mem_buf(ASN1_STRING_get0_data(os),
+        ASN1_STRING_length(os));
     if (rct_cont == NULL)
         goto err;
 

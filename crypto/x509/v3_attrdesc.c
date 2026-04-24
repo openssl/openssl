@@ -70,7 +70,9 @@ static int i2r_HASH(X509V3_EXT_METHOD *method,
         return 0;
     if (hash->hashValue == NULL)
         return 0;
-    return ossl_bio_print_hex(out, hash->hashValue->data, hash->hashValue->length);
+    return ossl_bio_print_hex(out,
+        (unsigned char *)ASN1_STRING_get0_data(hash->hashValue),
+        ASN1_STRING_length(hash->hashValue));
 }
 
 static int i2r_INFO_SYNTAX_POINTER(X509V3_EXT_METHOD *method,
@@ -100,7 +102,9 @@ static int i2r_OSSL_INFO_SYNTAX(X509V3_EXT_METHOD *method,
     case OSSL_INFO_SYNTAX_TYPE_CONTENT:
         if (BIO_printf(out, "%*sContent: ", indent, "") <= 0)
             return 0;
-        if (BIO_printf(out, "%.*s", info->choice.content->length, info->choice.content->data) <= 0)
+        if (BIO_printf(out, "%.*s", ASN1_STRING_length(info->choice.content),
+                ASN1_STRING_get0_data(info->choice.content))
+            <= 0)
             return 0;
         if (BIO_puts(out, "\n") <= 0)
             return 0;
@@ -145,18 +149,22 @@ static int i2r_OSSL_ATTRIBUTE_DESCRIPTOR(X509V3_EXT_METHOD *method,
     if (BIO_printf(out, "%*sSyntax:\n", indent, "") <= 0)
         return 0;
     if (BIO_printf(out, "%*s%.*s", indent + 4, "",
-            ad->attributeSyntax->length, ad->attributeSyntax->data)
+            ASN1_STRING_length(ad->attributeSyntax),
+            ASN1_STRING_get0_data(ad->attributeSyntax))
         <= 0)
         return 0;
     if (BIO_puts(out, "\n\n") <= 0)
         return 0;
     if (ad->name != NULL) {
-        if (BIO_printf(out, "%*sName: %.*s\n", indent, "", ad->name->length, ad->name->data) <= 0)
+        if (BIO_printf(out, "%*sName: %.*s\n", indent, "", ASN1_STRING_length(ad->name),
+                ASN1_STRING_get0_data(ad->name))
+            <= 0)
             return 0;
     }
     if (ad->description != NULL) {
         if (BIO_printf(out, "%*sDescription: %.*s\n", indent, "",
-                ad->description->length, ad->description->data)
+                ASN1_STRING_length(ad->description),
+                ASN1_STRING_get0_data(ad->description))
             <= 0)
             return 0;
     }

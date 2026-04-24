@@ -17,23 +17,25 @@
 #include <openssl/x509.h>
 #include <openssl/err.h>
 
-#include <crypto/asn1.h>
-
 int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si,
     STACK_OF(X509_ALGOR) *cap)
 {
     ASN1_STRING *seq;
+    unsigned char *seq_data = NULL;
+    int seq_len;
 
     if ((seq = ASN1_STRING_new()) == NULL) {
         ERR_raise(ERR_LIB_PKCS7, ERR_R_ASN1_LIB);
         return 0;
     }
-    seq->length = ASN1_item_i2d((ASN1_VALUE *)cap, &seq->data,
+    seq_len = ASN1_item_i2d((ASN1_VALUE *)cap, &seq_data,
         ASN1_ITEM_rptr(X509_ALGORS));
-    if (ASN1_STRING_length(seq) <= 0 || ASN1_STRING_get0_data(seq) == NULL) {
+    if (seq_len <= 0 || seq_data == NULL) {
+        OPENSSL_free(seq_data);
         ASN1_STRING_free(seq);
         return 1;
     }
+    ASN1_STRING_set0(seq, seq_data, seq_len);
     if (!PKCS7_add_signed_attribute(si, NID_SMIMECapabilities,
             V_ASN1_SEQUENCE, seq)) {
         ASN1_STRING_free(seq);

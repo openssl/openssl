@@ -216,7 +216,7 @@ static int policy_cache_set_int(long *out, ASN1_INTEGER *value)
 {
     if (value == NULL)
         return 1;
-    if (value->type == V_ASN1_NEG_INTEGER)
+    if (ASN1_STRING_type(value) == V_ASN1_NEG_INTEGER)
         return 0;
     *out = ASN1_INTEGER_get(value);
     return 1;

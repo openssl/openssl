@@ -1029,13 +1029,13 @@ static int validate_certificate_time(const ASN1_TIME *ctm)
      *  validity dates through the year 2049 as UTCTime; certificate validity
      *  dates in 2050 or later MUST be encoded as GeneralizedTime."
      */
-    switch (ctm->type) {
+    switch (ASN1_STRING_type(ctm)) {
     case V_ASN1_UTCTIME:
-        if (ctm->length != (int)(utctime_length))
+        if (ASN1_STRING_length(ctm) != (int)(utctime_length))
             return 0;
         break;
     case V_ASN1_GENERALIZEDTIME:
-        if (ctm->length != (int)(generalizedtime_length))
+        if (ASN1_STRING_length(ctm) != (int)(generalizedtime_length))
             return 0;
         break;
     default:
@@ -1047,11 +1047,11 @@ static int validate_certificate_time(const ASN1_TIME *ctm)
      * flexible format than what's mandated by RFC 5280.
      * Digit and date ranges will be verified in the conversion methods.
      */
-    for (i = 0; i < ctm->length - 1; i++) {
-        if (!ossl_ascii_isdigit(ctm->data[i]))
+    for (i = 0; i < ASN1_STRING_length(ctm) - 1; i++) {
+        if (!ossl_ascii_isdigit(ASN1_STRING_get0_data(ctm)[i]))
             return 0;
     }
-    if (ctm->data[ctm->length - 1] != upper_z)
+    if (ASN1_STRING_get0_data(ctm)[ASN1_STRING_length(ctm) - 1] != upper_z)
         return 0;
 
     return 1;
@@ -2496,9 +2496,9 @@ ASN1_TIME *X509_time_adj_ex(ASN1_TIME *s,
         time(&t);
 
     if (s != NULL && (s->flags & ASN1_STRING_FLAG_MSTRING) == 0) {
-        if (s->type == V_ASN1_UTCTIME)
+        if (ASN1_STRING_type(s) == V_ASN1_UTCTIME)
             return ASN1_UTCTIME_adj(s, t, offset_day, offset_sec);
-        if (s->type == V_ASN1_GENERALIZEDTIME)
+        if (ASN1_STRING_type(s) == V_ASN1_GENERALIZEDTIME)
             return ASN1_GENERALIZEDTIME_adj(s, t, offset_day, offset_sec);
     }
     return ASN1_TIME_adj(s, t, offset_day, offset_sec);
