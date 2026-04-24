@@ -2646,8 +2646,8 @@ i2d_ASN1_BMPSTRING                      2644	4_0_0	EXIST::FUNCTION:
 ASN1_BMPSTRING_free                     2645	4_0_0	EXIST::FUNCTION:
 ASN1_BMPSTRING_new                      2646	4_0_0	EXIST::FUNCTION:
 ASN1_BMPSTRING_it                       2647	4_0_0	EXIST::FUNCTION:
-UTF8_getc                               2648	4_0_0	EXIST::FUNCTION:
-UTF8_putc                               2649	4_0_0	EXIST::FUNCTION:
+UTF8_getc                               2648	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
+UTF8_putc                               2649	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
 d2i_ASN1_PRINTABLE                      2650	4_0_0	EXIST::FUNCTION:
 i2d_ASN1_PRINTABLE                      2651	4_0_0	EXIST::FUNCTION:
 ASN1_PRINTABLE_free                     2652	4_0_0	EXIST::FUNCTION:

@@ -618,8 +618,10 @@ DECLARE_ASN1_FUNCTIONS(ASN1_UTF8STRING)
 DECLARE_ASN1_FUNCTIONS(ASN1_NULL)
 DECLARE_ASN1_FUNCTIONS(ASN1_BMPSTRING)
 
-int UTF8_getc(const unsigned char *str, int len, unsigned long *val);
-int UTF8_putc(unsigned char *str, int len, unsigned long value);
+#if !defined(OPENSSL_NO_DEPRECATED_4_1)
+OSSL_DEPRECATEDIN_4_1 int UTF8_getc(const unsigned char *str, int len, unsigned long *val);
+OSSL_DEPRECATEDIN_4_1 int UTF8_putc(unsigned char *str, int len, unsigned long value);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
 
 /* clang-format off */
 {-

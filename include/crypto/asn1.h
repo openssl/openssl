@@ -192,4 +192,7 @@ int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
 
 ASN1_TIME *ossl_asn1_time_from_tm(ASN1_TIME *s, struct tm *ts, int type);
 
+int ossl_utf8_getc_internal(const unsigned char *str, int len, uint32_t *val);
+int ossl_utf8_putc_internal(unsigned char *str, int len, uint32_t value);
+
 #endif /* ndef OSSL_CRYPTO_ASN1_H */

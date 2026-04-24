@@ -12,11 +12,12 @@
 #pragma once
 
 #include <openssl/e_os2.h>
+#include <stdint.h>
 
 typedef enum {
-    SURROGATE_MIN = 0xd800UL,
-    SURROGATE_MAX = 0xdfffUL,
-    UNICODE_MAX = 0x10ffffUL,
+    SURROGATE_MIN = UINT32_C(0xd800),
+    SURROGATE_MAX = UINT32_C(0xdfff),
+    UNICODE_MAX = UINT32_C(0x10ffff),
     UNICODE_LIMIT
 } UNICODE_CONSTANTS;
 
