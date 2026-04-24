@@ -292,6 +292,7 @@ static int SNMPKDF(const EVP_MD *evp_md,
     size_t mdsize = 0, len = 0;
     unsigned int md_len = 0;
     int ret = 0;
+    int value = 0;
 
     /* Limited to SHA-1 and SHA-2 hashes presently */
     if (okey == NULL || keylen == 0)
@@ -303,9 +304,10 @@ static int SNMPKDF(const EVP_MD *evp_md,
         goto err;
     }
 
-    mdsize = EVP_MD_get_size(evp_md);
-    if (mdsize <= 0 || mdsize > keylen)
+    value = EVP_MD_get_size(evp_md);
+    if (value <= 0 || (size_t)value > keylen)
         goto err;
+    mdsize = (size_t)value;
 
     if (!EVP_DigestInit_ex(md, evp_md, NULL))
         goto err;
@@ -324,7 +326,7 @@ static int SNMPKDF(const EVP_MD *evp_md,
         || !EVP_DigestFinal_ex(md, digest, &md_len))
         goto err;
 
-    memcpy(okey, digest, md_len);
+    memcpy(okey, digest, (keylen < md_len) ? keylen : md_len);
 
     ret = 1;
 
