@@ -129,6 +129,12 @@ OpenSSL Releases
 
    *William McCormack*
 
+ * The undocumented public functions `UTF8_putc()` and `UTF8_getc()`
+   were deprecated, and their functionality moved internal to the
+   library. No public replacement is planned.
+
+   *Bob Beck*
+
  * Added IKEV2 KDF (EVP_KDF-IKEV2KDF) implementation.
 
    *Helen Zhang*

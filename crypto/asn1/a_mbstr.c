@@ -16,15 +16,15 @@
 #include <crypto/asn1.h>
 
 static int traverse_string(const unsigned char *p, int len, int inform,
-    int (*rfunc)(unsigned long value, void *in),
+    int (*rfunc)(uint32_t value, void *in),
     void *arg);
-static int in_utf8(unsigned long value, void *arg);
-static int out_utf8(unsigned long value, void *arg);
-static int type_str(unsigned long value, void *arg);
-static int cpy_asc(unsigned long value, void *arg);
-static int cpy_bmp(unsigned long value, void *arg);
-static int cpy_univ(unsigned long value, void *arg);
-static int cpy_utf8(unsigned long value, void *arg);
+static int in_utf8(uint32_t value, void *arg);
+static int out_utf8(uint32_t value, void *arg);
+static int type_str(uint32_t value, void *arg);
+static int cpy_asc(uint32_t value, void *arg);
+static int cpy_bmp(uint32_t value, void *arg);
+static int cpy_univ(uint32_t value, void *arg);
+static int cpy_utf8(uint32_t value, void *arg);
 
 /*
  * These functions take a string in UTF8, ASCII or multibyte form and a mask
@@ -52,7 +52,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
     ASN1_STRING *dest;
     unsigned char *p;
     int nchar;
-    int (*cpyfunc)(unsigned long, void *) = NULL;
+    int (*cpyfunc)(uint32_t, void *) = NULL;
     if (len == -1) {
         size_t len_s = strlen((const char *)in);
 
@@ -224,10 +224,10 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
  */
 
 static int traverse_string(const unsigned char *p, int len, int inform,
-    int (*rfunc)(unsigned long value, void *in),
+    int (*rfunc)(uint32_t value, void *in),
     void *arg)
 {
-    unsigned long value;
+    uint32_t value;
     int ret;
     while (len) {
         if (inform == MBSTRING_ASC) {
@@ -238,13 +238,13 @@ static int traverse_string(const unsigned char *p, int len, int inform,
             value |= *p++;
             len -= 2;
         } else if (inform == MBSTRING_UNIV) {
-            value = ((unsigned long)*p++) << 24;
-            value |= ((unsigned long)*p++) << 16;
+            value = ((uint32_t)*p++) << 24;
+            value |= ((uint32_t)*p++) << 16;
             value |= *p++ << 8;
             value |= *p++;
             len -= 4;
         } else {
-            ret = UTF8_getc(p, len, &value);
+            ret = ossl_utf8_getc_internal(p, len, &value);
             if (ret < 0)
                 return -1;
             len -= ret;
@@ -263,7 +263,7 @@ static int traverse_string(const unsigned char *p, int len, int inform,
 
 /* Just count number of characters */
 
-static int in_utf8(unsigned long value, void *arg)
+static int in_utf8(uint32_t value, void *arg)
 {
     int *nchar;
 
@@ -276,11 +276,11 @@ static int in_utf8(unsigned long value, void *arg)
 
 /* Determine size of output as a UTF8 String */
 
-static int out_utf8(unsigned long value, void *arg)
+static int out_utf8(uint32_t value, void *arg)
 {
     int *outlen, len;
 
-    len = UTF8_putc(NULL, -1, value);
+    len = ossl_utf8_putc_internal(NULL, -1, value);
     if (len <= 0)
         return len;
     outlen = arg;
@@ -293,10 +293,10 @@ static int out_utf8(unsigned long value, void *arg)
  * "mask".
  */
 
-static int type_str(unsigned long value, void *arg)
+static int type_str(uint32_t value, void *arg)
 {
-    unsigned long usable_types = *((unsigned long *)arg);
-    unsigned long types = usable_types;
+    uint32_t usable_types = *((uint32_t *)arg);
+    uint32_t types = usable_types;
     const int native = value > INT_MAX ? INT_MAX : ossl_fromascii(value);
 
     /*
@@ -332,13 +332,13 @@ static int type_str(unsigned long value, void *arg)
         types &= ~B_ASN1_UTF8STRING;
     if (!types)
         return -1;
-    *((unsigned long *)arg) = types;
+    *((uint32_t *)arg) = types;
     return 1;
 }
 
 /* Copy one byte per character ASCII like strings */
 
-static int cpy_asc(unsigned long value, void *arg)
+static int cpy_asc(uint32_t value, void *arg)
 {
     unsigned char **p, *q;
     p = arg;
@@ -350,7 +350,7 @@ static int cpy_asc(unsigned long value, void *arg)
 
 /* Copy two byte per character BMPStrings */
 
-static int cpy_bmp(unsigned long value, void *arg)
+static int cpy_bmp(uint32_t value, void *arg)
 {
     unsigned char **p, *q;
     p = arg;
@@ -363,7 +363,7 @@ static int cpy_bmp(unsigned long value, void *arg)
 
 /* Copy four byte per character UniversalStrings */
 
-static int cpy_univ(unsigned long value, void *arg)
+static int cpy_univ(uint32_t value, void *arg)
 {
     unsigned char **p, *q;
     p = arg;
@@ -378,13 +378,13 @@ static int cpy_univ(unsigned long value, void *arg)
 
 /* Copy to a UTF8String */
 
-static int cpy_utf8(unsigned long value, void *arg)
+static int cpy_utf8(uint32_t value, void *arg)
 {
     unsigned char **p;
     int ret;
     p = arg;
     /* We already know there is enough room so pass 0xff as the length */
-    ret = UTF8_putc(*p, 0xff, value);
+    ret = ossl_utf8_putc_internal(*p, 0xff, value);
     if (ret < 0)
         return ret;
     *p += ret;
