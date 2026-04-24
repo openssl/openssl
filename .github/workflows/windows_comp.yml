@@ -30,10 +30,14 @@ jobs:
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: install nasm
       run: |
-        choco install nasm
+        Invoke-WebRequest -Uri "https://openssl-library.org/nasm-3.01-installer-x64.exe" -OutFile nasm-installer.exe
+        Start-Process -FilePath .\nasm-installer.exe -ArgumentList '/S' -Wait
         "C:\Program Files\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - name: install jom
-      run:  choco install jom
+      run: |
+        mkdir C:\jom
+        Invoke-WebRequest -Uri "https://openssl-library.org/jom-1.1.7.exe" -OutFile C:\jom\jom.exe
+        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - name: prepare the build directory
       run: mkdir _build
     - name: Get zstd
@@ -95,10 +99,14 @@ jobs:
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: install nasm
       run: |
-        choco install nasm
+        Invoke-WebRequest -Uri "https://openssl-library.org/nasm-3.01-installer-x64.exe" -OutFile nasm-installer.exe
+        Start-Process -FilePath .\nasm-installer.exe -ArgumentList '/S' -Wait
         "C:\Program Files\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - name: install jom
-      run:  choco install jom
+      run: |
+        mkdir C:\jom
+        Invoke-WebRequest -Uri "https://openssl-library.org/jom-1.1.7.exe" -OutFile C:\jom\jom.exe
+        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - name: prepare the build directory
       run: mkdir _build
     - name: Get brotli

@@ -39,10 +39,14 @@ jobs:
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: install nasm
       run: |
-        choco install nasm ${{ matrix.platform.arch == 'x86' && '--x86' || '' }}
+        Invoke-WebRequest -Uri "https://openssl-library.org/nasm-3.01-installer-${{ matrix.platform.arch == 'x86' && 'x86' || 'x64' }}.exe" -OutFile nasm-installer.exe
+        Start-Process -FilePath .\nasm-installer.exe -ArgumentList '/S' -Wait
         "C:\Program Files${{ matrix.platform.arch == 'x86' && ' (x86)' || '' }}\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - name: install jom
-      run: choco install jom
+      run: |
+        mkdir C:\jom
+        Invoke-WebRequest -Uri "https://openssl-library.org/jom-1.1.7.exe" -OutFile C:\jom\jom.exe
+        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - name: prepare the build directory
       run: mkdir _build
     - name: config
@@ -117,7 +121,10 @@ jobs:
     - name: prepare the build directory
       run: mkdir _build
     - name: install jom
-      run:  choco install jom
+      run: |
+        mkdir C:\jom
+        Invoke-WebRequest -Uri "https://openssl-library.org/jom-1.1.7.exe" -OutFile C:\jom\jom.exe
+        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - name: config
       working-directory: _build
       shell: cmd
@@ -160,7 +167,10 @@ jobs:
     - name: prepare the build directory
       run: mkdir _build
     - name: install jom
-      run:  choco install jom
+      run: |
+        mkdir C:\jom
+        Invoke-WebRequest -Uri "https://openssl-library.org/jom-1.1.7.exe" -OutFile C:\jom\jom.exe
+        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - name: config
       working-directory: _build
       shell: cmd
