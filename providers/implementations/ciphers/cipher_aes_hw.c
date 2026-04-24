@@ -14,6 +14,7 @@
 #include "internal/deprecated.h"
 
 #include <openssl/proverr.h>
+#define ALLOW_RUN_ONCE_IN_FIPS
 #include "internal/thread_once.h"
 #include "cipher_aes.h"
 

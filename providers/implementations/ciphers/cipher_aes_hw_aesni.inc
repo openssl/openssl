@@ -50,8 +50,7 @@ static int cipher_hw_aesni_initkey(PROV_CIPHER_CTX *dat,
 }
 
 #if !(defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)) \
-    || (!((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 10)) || \
-          (defined(__clang__) && (__clang_major__ >= 11))))
+    || (!((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 8)) || (defined(__clang__) && (__clang_major__ >= 7)) || (defined(_MSC_VER) && (_MSC_VER >= 1927))))
 
 static int cipher_hw_aesni_cbc(PROV_CIPHER_CTX *ctx, unsigned char *out,
                                const unsigned char *in, size_t len)
