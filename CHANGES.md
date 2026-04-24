@@ -31,6 +31,15 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * SubjectPublicKeyInfo blobs whose AlgorithmIdentifier uses id-RSAES-OAEP
+   (NID_rsaesOaep, 1.2.840.113549.1.1.7) with a plain RSAPublicKey body
+   are now decoded as RSA keys.  This is required for interoperability
+   with TPM 1.2 Endorsement Key certificates per TCG Credential Profiles
+   V1.2 section 3.2.7.  The OAEP AlgorithmIdentifier parameters are not
+   interpreted.
+
+   *Craig Lorentzen*
+
  * Added test framework for testing function memory allocation failures.
 
    *Jakub Zelenka*
