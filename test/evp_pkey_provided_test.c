@@ -1747,6 +1747,18 @@ static int test_fromdata_ec(void)
             || !TEST_BN_eq(group_b, b))
             goto err;
 
+        /*
+         * Probe the EC private-key BN length via the explicit-params
+         * path; with NULL data, return_size receives the required
+         * (padded) buffer size, which equals the byte length of the
+         * group order.
+         */
+        probe[0].return_size = OSSL_PARAM_UNMODIFIED;
+        if (!TEST_true(EVP_PKEY_get_params(pk, probe))
+            || !TEST_size_t_eq(probe[0].return_size,
+                BN_num_bytes(EC_GROUP_get0_order(group))))
+            goto err;
+
         EC_GROUP_free(group);
         group = NULL;
         BN_free(group_p);
@@ -1780,15 +1792,6 @@ static int test_fromdata_ec(void)
             goto err;
         BN_free(bn_priv);
         bn_priv = NULL;
-
-        /*
-         * Probe the EC private-key BN length via the explicit-params
-         * path; with NULL data, return_size receives the required
-         * buffer size.
-         */
-        if (!TEST_true(EVP_PKEY_get_params(pk, probe))
-            || !TEST_size_t_gt(probe[0].return_size, 0))
-            goto err;
 
         ret = test_print_key_using_pem(alg, pk)
             && test_print_key_using_encoder(alg, pk);
