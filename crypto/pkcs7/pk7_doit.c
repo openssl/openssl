@@ -663,9 +663,9 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     if (in_bio != NULL) {
         bio = in_bio;
     } else {
-        int data_body_len = ASN1_STRING_length(data_body); 
+        int data_body_len = ASN1_STRING_length(data_body);
         if (data_body_len > 0)
-            bio = BIO_new_mem_buf(ASN1_STRING_get0_data(data_body), 
+            bio = BIO_new_mem_buf(ASN1_STRING_get0_data(data_body),
                 data_body_len);
         else {
             bio = BIO_new(BIO_s_mem());
