@@ -66,6 +66,7 @@ jobs:
             #   crypto/sha/asm/sha256-riscv64-zbb.pl
             #   crypto/sha/asm/sha512-riscv64-zbb.pl
             #   crypto/sm3/asm/sm3-riscv64-zbb.pl
+            #   crypto/sh3/asm/keccak1600-riscv64-zbb.pl
             arch: riscv64-linux-gnu,
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64,
