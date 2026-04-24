@@ -211,10 +211,10 @@ int X509_get_signature_info(const X509 *x, int *mdnid, int *pknid, int *secbits,
 
 /* Modify *siginf according to alg and sig. Return 1 on success, else 0. */
 static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
-    const ASN1_STRING *sig, const EVP_PKEY *pubkey)
+    const ASN1_STRING *sig, const EVP_PKEY *pubkey, OSSL_LIB_CTX *libctx, char *propq)
 {
     int pknid, mdnid, md_size;
-    const EVP_MD *md;
+    EVP_MD *md;
     const EVP_PKEY_ASN1_METHOD *ameth;
 
     siginf->mdnid = NID_undef;
@@ -276,11 +276,12 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
         break;
     default:
         /* Security bits: half number of bits in digest */
-        if ((md = EVP_get_digestbynid(mdnid)) == NULL) {
+        if ((md = EVP_MD_fetch(libctx, OBJ_nid2sn(mdnid), propq)) == NULL) {
             ERR_raise(ERR_LIB_X509, X509_R_ERROR_GETTING_MD_BY_NID);
             return 0;
         }
         md_size = EVP_MD_get_size(md);
+        EVP_MD_free(md);
         if (md_size <= 0)
             return 0;
         siginf->secbits = md_size * 4;
@@ -301,5 +302,5 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
 int ossl_x509_init_sig_info(const X509 *x, X509_SIG_INFO *info)
 {
     return x509_sig_info_init(info, &x->sig_alg, &x->signature,
-        X509_PUBKEY_get0(x->cert_info.key));
+        X509_PUBKEY_get0(x->cert_info.key), x->libctx, x->propq);
 }
