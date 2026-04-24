@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-ASN1_STRING_new, ASN1_STRING_type_new, ASN1_STRING_free -
+ASN1_STRING_new, ASN1_STRING_type_new, ASN1_STRING_free,
+ASN1_STRING_new_not_owned -
 ASN1_STRING allocation functions
 
 =head1 SYNOPSIS
@@ -11,6 +12,7 @@ ASN1_STRING allocation functions
 
  ASN1_STRING *ASN1_STRING_new(void);
  ASN1_STRING *ASN1_STRING_type_new(int type);
+ ASN1_STRING *ASN1_STRING_new_not_owned(int type, const uint8_t *data, size_t length);
  void ASN1_STRING_free(ASN1_STRING *a);
 
 =head1 DESCRIPTION
@@ -21,6 +23,15 @@ is undefined.
 ASN1_STRING_type_new() returns an allocated B<ASN1_STRING> structure of
 type I<type>.
 
+ASN1_STRING_new_not_owned() returns an allocated B<ASN1_STRING>
+structure of type I<type>, and sets the data returned string to the
+bytes at I<data> of length I<len>. Ownership of I<data> is not
+transferred, and it is the caller's responsibility to ensure that
+I<data> outlives any successfully returned result. The provided I<type>
+must not be V_ASN1_BIT_STRING, the provided I<length> must be greater
+than 0, and I<data> must not be NULL. It is an error if the provided
+data size exceeds the internal limit of the ASN1_STRING implementation.
+
 ASN1_STRING_free() frees up I<a>.
 If I<a> is NULL nothing is done.
 
@@ -29,16 +40,26 @@ If I<a> is NULL nothing is done.
 Other string types call the B<ASN1_STRING> functions. For example
 ASN1_OCTET_STRING_new() calls ASN1_STRING_type_new(V_ASN1_OCTET_STRING).
 
+ASN1_STRING_new_not_owned() does not automatically call strlen()
+to determine a length, or guarantee that the data is a C string. The
+data contained in the string and the lifetime of it are the
+responsibility of the caller.
+
 =head1 RETURN VALUES
 
-ASN1_STRING_new() and ASN1_STRING_type_new() return a valid
-B<ASN1_STRING> structure or NULL if an error occurred.
+ASN1_STRING_new(), ASN1_STRING_type_new(), and
+ASN1_STRING_new_not_owned() return a valid B<ASN1_STRING>
+structure or NULL if an error occurred.
 
 ASN1_STRING_free() does not return a value.
 
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>
+
+=head1 HISTORY
+
+ASN1_STRING_new_not_owned() was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

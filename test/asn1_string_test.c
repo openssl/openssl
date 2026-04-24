@@ -659,9 +659,96 @@ asn1_bit_string_set1_test(int idx)
     return abs_set1_test(abs_set1_tests, idx);
 }
 
+static int
+asn1_string_new_not_owned_test(void)
+{
+    int success = 0;
+    ASN1_STRING *tmp = NULL;
+    char *tmpstring = NULL;
+    static const uint8_t data[] = { 0xba, 0xdb, 0x0b, 0xba, 0xdb, 0x0b, 0xba, 0xdb, 0x0b };
+    static const uint8_t data2[] = { 0xba, 0xdb, 0x0b, 0xba, 0xdb, 0x0b, 0xba, 0xdb, 0x0b };
+
+    if (!TEST_ptr(tmp = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, data, sizeof(data))))
+        goto err;
+
+    ASN1_STRING_clear_free(tmp);
+    tmp = NULL;
+
+    if (!TEST_mem_eq(data, sizeof(data), data2, sizeof(data2)))
+        goto err;
+
+    if (!TEST_ptr(tmp = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, data, sizeof(data))))
+        goto err;
+
+    if (!TEST_true(ASN1_STRING_set(tmp, "muppet", (int)strlen("muppet"))))
+        goto err;
+
+    if (!TEST_mem_eq(data, sizeof(data), data2, sizeof(data2)))
+        goto err;
+
+    if (!TEST_int_eq(ASN1_STRING_length(tmp), (int)strlen("muppet")))
+        goto err;
+
+    if (!TEST_mem_eq(ASN1_STRING_get0_data(tmp), strlen("muppet"), "muppet", strlen("muppet")))
+        goto err;
+
+    ASN1_STRING_clear_free(tmp);
+    tmp = NULL;
+
+    if (!TEST_ptr(tmp = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, data, sizeof(data))))
+        goto err;
+
+    if (!TEST_ptr(tmpstring = strdup("puppet")))
+        goto err;
+
+    ASN1_STRING_set0(tmp, tmpstring, 4);
+
+    if (!TEST_mem_eq(data, sizeof(data), data2, sizeof(data2)))
+        goto err;
+
+    if (!TEST_int_eq(ASN1_STRING_length(tmp), 4))
+        goto err;
+
+    if (!TEST_mem_eq(ASN1_STRING_get0_data(tmp), strlen("puppet"), "puppet", strlen("puppet")))
+        goto err;
+
+    memset((uint8_t *)ASN1_STRING_get0_data(tmp), 'z', ASN1_STRING_length(tmp));
+
+    if (!TEST_mem_eq(data, sizeof(data), data2, sizeof(data2)))
+        goto err;
+
+    if (!TEST_mem_eq(tmpstring, strlen("puppet"), "zzzzet", strlen("puppet")))
+        goto err;
+
+    ASN1_STRING_clear_free(tmp);
+    tmpstring = NULL;
+    tmp = NULL;
+
+    if (TEST_ptr(tmp = ASN1_STRING_new_not_owned(V_ASN1_BIT_STRING, data, sizeof(data))))
+        goto err;
+
+    if (TEST_ptr(tmp = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, NULL, sizeof(data))))
+        goto err;
+
+    if (TEST_ptr(tmp = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, data, 0)))
+        goto err;
+
+    if (!TEST_mem_eq(data, sizeof(data), data2, sizeof(data2)))
+        goto err;
+
+    success = 1;
+
+err:
+    ASN1_STRING_clear_free(tmp);
+    free(tmpstring);
+
+    return success;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(asn1_bit_string_get_length_test, OSSL_NELEM(abs_get_length_tests));
     ADD_ALL_TESTS(asn1_bit_string_set1_test, OSSL_NELEM(abs_set1_tests));
+    ADD_TEST(asn1_string_new_not_owned_test);
     return 1;
 }
