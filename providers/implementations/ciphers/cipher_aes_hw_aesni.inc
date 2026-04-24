@@ -15,8 +15,9 @@
 #define cipher_hw_aesni_ofb128 ossl_cipher_hw_generic_ofb128
 
 #if !(defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)) \
-    || (!((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 10)) || (defined(__clang__) && (__clang_major__ >= 11))))
+    || (!((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 8)) || (defined(__clang__) && (__clang_major__ >= 7)) || (defined(_MSC_VER) && (_MSC_VER >= 1927))))
 #define cipher_hw_vaes_ctr ossl_cipher_hw_generic_ctr
+#define cipher_hw_aesni_ctr ossl_cipher_hw_generic_ctr
 #else
 
 /* active in 64-bit builds when AES-NI, AVX512F, and VAES are detected */

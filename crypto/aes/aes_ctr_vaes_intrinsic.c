@@ -17,7 +17,8 @@
 
 #if defined(__x86_64__) || defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64)
 
-#if ((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 10)) || (defined(__clang__) && (__clang_major__ >= 11)))
+#if ((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 8)) \
+    || (defined(__clang__) && (__clang_major__ >= 7)) || (defined(_MSC_VER) && (_MSC_VER >= 1927)))
 
 #include <openssl/modes.h>
 
@@ -32,22 +33,40 @@ int ossl_aes_ctr_vaes_eligible(void);
 void aesni_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *key);
 
 /* Portable compiler abstractions for inlining and ISA target selection */
-#if defined(__GNUC__) || defined(__clang__) /* GCC, Clang, and clang-cl */
-#define OSSL_FUNC_ALWAYS_INLINE __attribute__((always_inline))
-#define OSSL_FUNC_NOINLINE __attribute__((noinline))
-#if defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 10)
-#pragma GCC target("avx512f,avx512dq,avx512bw,vaes,aes")
+#define STRINGIFY_IMPL_(a) #a
+#define STRINGIFY_(a) STRINGIFY_IMPL_(a)
+
+#ifdef __clang__
+# define OPENSSL_TARGET_VAES512 \
+    _Pragma(STRINGIFY_(clang attribute push( \
+        __attribute__((target("avx512f,avx512dq,avx512bw,vaes,aes"))), \
+        apply_to = function)))
+# define OPENSSL_UNTARGET_VAES512 _Pragma("clang attribute pop")
+#elif defined(__GNUC__)
+# define OPENSSL_TARGET_VAES512 \
+    _Pragma("GCC push_options") \
+    _Pragma(STRINGIFY_(GCC target("avx512f,avx512dq,avx512bw,vaes,aes")))
+# define OPENSSL_UNTARGET_VAES512 _Pragma("GCC pop_options")
+#else
+/* MSVC: all intrinsics are always available via <immintrin.h>. */
+# define OPENSSL_TARGET_VAES512
+# define OPENSSL_UNTARGET_VAES512
 #endif
-/* GCC/Clang require this pragma to make AVX-512/VAES intrinsics available.
- * MSVC does not need it: all intrinsics are always declared in <immintrin.h>. */
-#elif defined(_MSC_VER) /* MSVC */
-#define OSSL_FUNC_ALWAYS_INLINE __forceinline
-#define OSSL_FUNC_NOINLINE __declspec(noinline)
-#else /* Other compilers */
-#define OSSL_FUNC_ALWAYS_INLINE
-#define OSSL_FUNC_NOINLINE
+
+#if defined(__GNUC__) || defined(__clang__)
+# define OSSL_FUNC_ALWAYS_INLINE __attribute__((always_inline))
+# define OSSL_FUNC_NOINLINE __attribute__((noinline))
+#elif defined(_MSC_VER)
+# define OSSL_FUNC_ALWAYS_INLINE __forceinline
+# define OSSL_FUNC_NOINLINE __declspec(noinline)
+#else
+# define OSSL_FUNC_ALWAYS_INLINE
+# define OSSL_FUNC_NOINLINE
 #endif
+
 #include <immintrin.h>
+
+OPENSSL_TARGET_VAES512
 
 #define AES_BLOCK_SIZE 16
 
@@ -413,8 +432,13 @@ int ossl_aes_ctr_vaes_eligible(void)
         && (OPENSSL_ia32cap_P[3] & (1 << 9)); /* AVX512VAES         */
 }
 
+OPENSSL_UNTARGET_VAES512
+
+#undef OPENSSL_TARGET_VAES512
+#undef OPENSSL_UNTARGET_VAES512
+#undef STRINGIFY_IMPL_
+#undef STRINGIFY_
 #undef OSSL_FUNC_ALWAYS_INLINE
 #undef OSSL_FUNC_NOINLINE
-
-#endif /* compiler version guard */
+#endif /* GCC >= 8 || Clang >= 7 || MSVC */
 #endif /* __x86_64__ || _M_AMD64 */
