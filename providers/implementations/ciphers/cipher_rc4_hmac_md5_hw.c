@@ -197,7 +197,7 @@ static void cipher_hw_rc4_hmac_md5_init_mackey(PROV_CIPHER_CTX *bctx,
 
     memset(hmac_key, 0, sizeof(hmac_key));
 
-    if (len > (int)sizeof(hmac_key)) {
+    if (len > sizeof(hmac_key)) {
         MD5_Init(&ctx->head);
         MD5_Update(&ctx->head, key, len);
         MD5_Final(hmac_key, &ctx->head);

@@ -1115,9 +1115,7 @@ int EVP_CIPHER_CTX_get_algor_params(EVP_CIPHER_CTX *ctx, X509_ALGOR *alg)
         params[i] = OSSL_PARAM_construct_octet_string(derk, der, derl);
         if (EVP_CIPHER_CTX_get_params(ctx, params)
             && OSSL_PARAM_modified(&params[i])
-            && d2i_ASN1_TYPE(&type, (const unsigned char **)&derp,
-                   (int)derl)
-                != NULL) {
+            && d2i_ASN1_TYPE(&type, (const unsigned char **)&derp, derl) != NULL) {
             /*
              * Don't free alg->parameter, see comment further up.
              * Worst case, alg->parameter gets assigned its own value.

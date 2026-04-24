@@ -203,7 +203,7 @@ long TXT_DB_write(BIO *out, TXT_DB *db)
             if (pp[j] != NULL)
                 l += (long)strlen(pp[j]);
         }
-        if (!BUF_MEM_grow_clean(buf, (int)(l * 2 + nn)))
+        if (!BUF_MEM_grow_clean(buf, (l * 2 + nn)))
             goto err;
 
         p = buf->data;

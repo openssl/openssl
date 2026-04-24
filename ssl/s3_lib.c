@@ -4227,7 +4227,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                     cptr[i] = TLSEXT_nid_unknown | clist[i];
             }
         }
-        return (int)clistlen;
+        return clistlen;
     }
 
     case SSL_CTRL_SET_GROUPS:
@@ -4359,14 +4359,14 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         if (sc->ext.peer_ecpointformats == NULL)
             return 0;
         *pformat = sc->ext.peer_ecpointformats;
-        return (int)sc->ext.peer_ecpointformats_len;
+        return sc->ext.peer_ecpointformats_len;
     }
 
     case SSL_CTRL_GET_IANA_GROUPS: {
         if (parg != NULL) {
             *(uint16_t **)parg = (uint16_t *)sc->ext.peer_supportedgroups;
         }
-        return (int)sc->ext.peer_supportedgroups_len;
+        return sc->ext.peer_supportedgroups_len;
     }
 
     case SSL_CTRL_SET_MSG_CALLBACK_ARG:

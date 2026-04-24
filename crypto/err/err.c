@@ -570,7 +570,7 @@ char *ERR_error_string(unsigned long e, char *ret)
 
     if (ret == NULL)
         ret = buf;
-    ERR_error_string_n(e, ret, (int)sizeof(buf));
+    ERR_error_string_n(e, ret, sizeof(buf));
     return ret;
 }
 

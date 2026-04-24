@@ -303,7 +303,7 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
         ctx->ibuf_off = 0;
         ctx->ibuf_len = (int)num;
-        memcpy(ctx->ibuf, ptr, (int)num);
+        memcpy(ctx->ibuf, ptr, num);
         ret = 1;
         break;
     case BIO_C_SET_BUFF_SIZE:

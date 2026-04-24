@@ -521,7 +521,7 @@ int ossl_ech_encode_inner(SSL_CONNECTION *s, unsigned char **encoded,
     }
     /* now copy the rest, as "proper" exts, into encoded inner */
     for (ind = 0; ind < TLSEXT_IDX_num_builtins; ind++) {
-        if (raws[ind].present == 0 || ossl_ech_2bcompressed((int)ind) == 1)
+        if (raws[ind].present == 0 || ossl_ech_2bcompressed(ind) == 1)
             continue;
         if (!WPACKET_put_bytes_u16(&inner, raws[ind].type)
             || !WPACKET_sub_memcpy_u16(&inner, PACKET_data(&raws[ind].data),
@@ -646,9 +646,9 @@ size_t ossl_ech_calc_padding(SSL_CONNECTION *s, OSSL_ECHSTORE_ENTRY *ee,
         }
     }
     /* padding is after the inner client hello has been encoded */
-    length_with_snipadding = innersnipadding + (int)encoded_len;
+    length_with_snipadding = innersnipadding + encoded_len;
     length_of_padding = 31 - ((length_with_snipadding - 1) % 32);
-    length_with_padding = (int)encoded_len + length_of_padding
+    length_with_padding = encoded_len + length_of_padding
         + innersnipadding;
     /*
      * Finally - make sure final result is longer than padding target

@@ -370,7 +370,7 @@ static int ech_decode_one_entry(OSSL_ECHSTORE_ENTRY **rent, PACKET *pkt,
         ERR_raise(ERR_LIB_SSL, SSL_R_ECH_DECODE_ERROR);
         goto err;
     }
-    ech_content_length = (unsigned int)PACKET_remaining(&ver_pkt);
+    ech_content_length = PACKET_remaining(&ver_pkt);
     switch (ee->version) {
     case OSSL_ECH_RFC9849_VERSION:
         break;

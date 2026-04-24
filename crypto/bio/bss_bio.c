@@ -694,12 +694,12 @@ int BIO_new_bio_pair(BIO **bio1_p, size_t writebuf1,
         goto err;
 
     if (writebuf1) {
-        r = BIO_set_write_buf_size(bio1, (long)writebuf1);
+        r = BIO_set_write_buf_size(bio1, writebuf1);
         if (!r)
             goto err;
     }
     if (writebuf2) {
-        r = BIO_set_write_buf_size(bio2, (long)writebuf2);
+        r = BIO_set_write_buf_size(bio2, writebuf2);
         if (!r)
             goto err;
     }

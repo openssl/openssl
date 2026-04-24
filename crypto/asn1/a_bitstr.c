@@ -94,11 +94,11 @@ ASN1_BIT_STRING *ossl_c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
     ossl_asn1_bit_string_set_unused_bits(ret, i);
 
     if (len-- > 1) { /* using one because of the bits left byte */
-        s = OPENSSL_malloc((int)len);
+        s = OPENSSL_malloc(len);
         if (s == NULL) {
             goto err;
         }
-        memcpy(s, p, (int)len);
+        memcpy(s, p, len);
         s[len - 1] &= (0xff << i);
         p += len;
     } else

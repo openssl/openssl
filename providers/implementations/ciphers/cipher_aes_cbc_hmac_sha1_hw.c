@@ -634,7 +634,7 @@ static void aesni_cbc_hmac_sha1_set_mac_key(void *vctx,
 
     memset(hmac_key, 0, sizeof(hmac_key));
 
-    if (len > (int)sizeof(hmac_key)) {
+    if (len > sizeof(hmac_key)) {
         SHA1_Init(&ctx->head);
         sha1_update(&ctx->head, mac, len);
         SHA1_Final(hmac_key, &ctx->head);

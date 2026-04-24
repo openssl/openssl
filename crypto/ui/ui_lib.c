@@ -375,9 +375,9 @@ char *UI_construct_prompt(UI *ui, const char *phrase_desc,
 
         if (phrase_desc == NULL)
             return NULL;
-        len = sizeof(prompt1) - 1 + (int)strlen(phrase_desc);
+        len = sizeof(prompt1) - 1 + strlen(phrase_desc);
         if (object_name != NULL)
-            len += sizeof(prompt2) - 1 + (int)strlen(object_name);
+            len += sizeof(prompt2) - 1 + strlen(object_name);
         len += sizeof(prompt3) - 1;
 
         if ((prompt = OPENSSL_malloc(len + 1)) == NULL)

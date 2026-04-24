@@ -258,7 +258,7 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
         /*
          * We just checked that s->init_num > 0 so this cast should be safe
          */
-        if (((unsigned int)s->init_num) > curr_mtu)
+        if (s->init_num > curr_mtu)
             len = curr_mtu;
         else
             len = s->init_num;
@@ -1227,12 +1227,12 @@ int dtls1_buffer_message(SSL_CONNECTION *s, int is_ccs)
     if (is_ccs) {
         /* For DTLS1_BAD_VER the header length is non-standard */
         if (!ossl_assert(s->d1->w_msg_hdr.msg_len + ((s->version == DTLS1_BAD_VER) ? 3 : DTLS1_CCS_HEADER_LENGTH)
-                == (unsigned int)s->init_num)) {
+                == s->init_num)) {
             dtls1_hm_fragment_free(frag);
             return 0;
         }
     } else {
-        if (!ossl_assert(s->d1->w_msg_hdr.msg_len + DTLS1_HM_HEADER_LENGTH == (unsigned int)s->init_num)) {
+        if (!ossl_assert(s->d1->w_msg_hdr.msg_len + DTLS1_HM_HEADER_LENGTH == s->init_num)) {
             dtls1_hm_fragment_free(frag);
             return 0;
         }
@@ -1437,7 +1437,7 @@ int dtls1_close_construct_packet(SSL_CONNECTION *s, WPACKET *pkt, int htype)
         s->d1->w_msg_hdr.msg_len = msglen - DTLS1_HM_HEADER_LENGTH;
         s->d1->w_msg_hdr.frag_len = msglen - DTLS1_HM_HEADER_LENGTH;
     }
-    s->init_num = (int)msglen;
+    s->init_num = msglen;
     s->init_off = 0;
 
     if (htype != DTLS1_MT_HELLO_VERIFY_REQUEST) {

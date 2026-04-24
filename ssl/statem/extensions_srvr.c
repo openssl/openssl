@@ -402,8 +402,7 @@ int tls_parse_ctos_status_request(SSL_CONNECTION *s, PACKET *pkt,
         }
 
         id_data = PACKET_data(&responder_id);
-        id = d2i_OCSP_RESPID(NULL, &id_data,
-            (int)PACKET_remaining(&responder_id));
+        id = d2i_OCSP_RESPID(NULL, &id_data, PACKET_remaining(&responder_id));
         if (id == NULL) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             return 0;
@@ -435,7 +434,7 @@ int tls_parse_ctos_status_request(SSL_CONNECTION *s, PACKET *pkt,
 
         sk_X509_EXTENSION_pop_free(s->ext.ocsp.exts,
             X509_EXTENSION_free);
-        s->ext.ocsp.exts = d2i_X509_EXTENSIONS(NULL, &ext_data, (int)PACKET_remaining(&exts));
+        s->ext.ocsp.exts = d2i_X509_EXTENSIONS(NULL, &ext_data, PACKET_remaining(&exts));
         if (s->ext.ocsp.exts == NULL || ext_data != PACKET_end(&exts)) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
             return 0;

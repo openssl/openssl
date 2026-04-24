@@ -3222,7 +3222,7 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic)
             if (sc->s3.tmp.ciphers_raw == NULL)
                 return 0;
             *(unsigned char **)parg = sc->s3.tmp.ciphers_raw;
-            return (int)sc->s3.tmp.ciphers_rawlen;
+            return sc->s3.tmp.ciphers_rawlen;
         } else {
             return TLS_CIPHER_LEN;
         }

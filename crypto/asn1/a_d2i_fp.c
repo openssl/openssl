@@ -162,7 +162,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
         diff = len - off;
         if (diff == 0)
             goto err;
-        inf = ASN1_get_object(&q, &slen, &tag, &xclass, (int)diff);
+        inf = ASN1_get_object(&q, &slen, &tag, &xclass, (long)diff);
         if (inf & 0x80) {
             unsigned long e;
 

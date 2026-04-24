@@ -222,7 +222,7 @@ static int handle_symlink(const char *filename, const char *fullpath)
         return -1;
 
     n = readlink(fullpath, linktarget, sizeof(linktarget));
-    if (n < 0 || n >= (int)sizeof(linktarget))
+    if (n < 0 || n >= (ssize_t)sizeof(linktarget))
         return -1;
     linktarget[n] = 0;
 

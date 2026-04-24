@@ -522,7 +522,7 @@ static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
     }
     /* Fixed field must be at least 4 bytes and invocation field at least 8 */
     if ((len < EVP_GCM_TLS_FIXED_IV_LEN)
-        || (ctx->ivlen - (int)len) < EVP_GCM_TLS_EXPLICIT_IV_LEN)
+        || (ctx->ivlen - len) < EVP_GCM_TLS_EXPLICIT_IV_LEN)
         return 0;
     if (len > 0)
         memcpy(ctx->iv, iv, len);

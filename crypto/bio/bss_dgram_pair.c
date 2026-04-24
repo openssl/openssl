@@ -740,7 +740,7 @@ static long dgram_mem_ctrl(BIO *bio, int cmd, long num, void *ptr)
 
     /* BIO_dgram_set_mtu */
     case BIO_CTRL_DGRAM_SET_MTU: /* Non-threadsafe */
-        ret = (long)dgram_pair_ctrl_set_mtu(bio, (uint32_t)num);
+        ret = (long)dgram_pair_ctrl_set_mtu(bio, num);
         break;
 
     case BIO_CTRL_DGRAM_SET0_LOCAL_ADDR:
@@ -817,13 +817,13 @@ int BIO_new_bio_dgram_pair(BIO **pbio1, size_t writebuf1,
         goto err;
 
     if (writebuf1 > 0) {
-        r = BIO_set_write_buf_size(bio1, (long)writebuf1);
+        r = BIO_set_write_buf_size(bio1, writebuf1);
         if (r == 0)
             goto err;
     }
 
     if (writebuf2 > 0) {
-        r = BIO_set_write_buf_size(bio2, (long)writebuf2);
+        r = BIO_set_write_buf_size(bio2, writebuf2);
         if (r == 0)
             goto err;
     }
