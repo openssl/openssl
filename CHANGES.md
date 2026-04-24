@@ -109,6 +109,12 @@ OpenSSL Releases
 
    *Bob Beck*
 
+ * The API function `ASN1_STRING_new_not_owned` has been added to the
+   libcrypto. It provides the ability to construct an ASN1_STRING with data
+   for which ownership is not taken by the created ASN1_STRING object.
+
+   *Bob Beck*
+
  * Added AVX2 optimized ML-DSA NTT operations on `x86_64`.
 
    *Marcel Cornu and Tomasz Kantecki*

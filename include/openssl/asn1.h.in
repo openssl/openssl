@@ -530,6 +530,8 @@ void ASN1_STRING_clear_free(ASN1_STRING *a);
 int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str);
 DECLARE_ASN1_DUP_FUNCTION(ASN1_STRING)
 ASN1_STRING *ASN1_STRING_type_new(int type);
+ASN1_STRING *ASN1_STRING_new_not_owned(int type, const uint8_t *data,
+    size_t length);
 int ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b);
 /*
  * Since this is used to store all sorts of things, via macros, for now,
