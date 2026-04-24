@@ -11,6 +11,7 @@
 #include <string.h>
 #include "internal/cryptlib.h"
 #include "internal/sizes.h"
+#include "internal/unicode.h"
 #include "crypto/asn1.h"
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
@@ -67,7 +68,7 @@ static int do_esc_char(unsigned long c, unsigned short flags, char *do_quotes,
     unsigned char chtmp;
     char tmphex[HEX_SIZE(long) + 3];
 
-    if (c > 0xffffffffL)
+    if (c > UNICODE_MAX)
         return -1;
     if (c > 0xffff) {
         BIO_snprintf(tmphex, sizeof(tmphex), "\\W%08lX", c);
