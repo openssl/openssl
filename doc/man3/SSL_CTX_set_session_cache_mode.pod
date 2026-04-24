@@ -8,8 +8,8 @@ SSL_CTX_set_session_cache_mode, SSL_CTX_get_session_cache_mode - enable/disable 
 
  #include <openssl/ssl.h>
 
- long SSL_CTX_set_session_cache_mode(SSL_CTX ctx, long mode);
- long SSL_CTX_get_session_cache_mode(SSL_CTX ctx);
+ long SSL_CTX_set_session_cache_mode(SSL_CTX *ctx, long mode);
+ long SSL_CTX_get_session_cache_mode(SSL_CTX *ctx);
 
 =head1 DESCRIPTION
 
