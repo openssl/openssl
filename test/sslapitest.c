@@ -12439,7 +12439,7 @@ static int test_legacy_ec_point_formats(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
-    const char *pformats = NULL;
+    const unsigned char *pformats = NULL;
     int nformats;
     int testresult = 0;
 

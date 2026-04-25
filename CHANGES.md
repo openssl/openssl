@@ -31,6 +31,34 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * EC key point format simplification.
+
+   The point conversion form (compressed, uncompressed, or hybrid)
+   is now a single value on the `EC_GROUP` and round-trips
+   unchanged through import and export of `EC_KEY` objects.
+
+   Freshly generated keys have their public point encoded in
+   uncompressed form.  A `point-format` supplied at key generation
+   time via `OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT` is
+   validated (an invalid value is rejected) but otherwise ignored
+   on the generated key.  EC parameter generation continues to
+   honour the requested form on the group's generator; imported
+   keys keep their form.
+
+   The `ec_point_formats` extension no longer affects TLS 1.2
+   X.509 certificate selection or acceptance.  OpenSSL now
+   accepts an EC certificate in any point form it can decode,
+   and sends any EC certificate it has regardless of point form.
+   TLS 1.3 disregards the extension entirely.
+
+   The RFC 4492/8422 section 5.1.2 requirement that the peer's
+   point-format list contain "uncompressed" is now enforced on
+   both sides (previously client-only), and only when an ECC
+   TLS 1.2 ciphersuite is negotiated -- a missing "uncompressed"
+   is ignored under TLS 1.3 or with a non-ECC cipher.
+
+   *Viktor Dukhovni*
+
  * Added unit tests setup activated via `enable-unit-tests` option. This works
    only on platforms with ld `--wrap` support (Linux, BSD).
 
@@ -51,7 +79,7 @@ OpenSSL Releases
    *Adriano Sela Aviles*
 
  * SubjectPublicKeyInfo blobs whose AlgorithmIdentifier uses id-RSAES-OAEP
-   (NID_rsaesOaep, 1.2.840.113549.1.1.7) with a plain RSAPublicKey body
+   (`NID_rsaesOaep`, 1.2.840.113549.1.1.7) with a plain RSAPublicKey body
    are now decoded as RSA keys.  This is required for interoperability
    with TPM 1.2 Endorsement Key certificates per TCG Credential Profiles
    V1.2 section 3.2.7.  The OAEP AlgorithmIdentifier parameters are not

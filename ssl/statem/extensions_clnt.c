@@ -1763,46 +1763,6 @@ int tls_parse_stoc_server_name(SSL_CONNECTION *s, PACKET *pkt,
     return 1;
 }
 
-int tls_parse_stoc_ec_pt_formats(SSL_CONNECTION *s, PACKET *pkt,
-    unsigned int context,
-    X509 *x, size_t chainidx)
-{
-    size_t ecpointformats_len;
-    PACKET ecptformatlist;
-
-    if (!PACKET_as_length_prefixed_1(pkt, &ecptformatlist)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-        return 0;
-    }
-    if (!s->hit) {
-        ecpointformats_len = PACKET_remaining(&ecptformatlist);
-        if (ecpointformats_len == 0) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_LENGTH);
-            return 0;
-        }
-
-        s->ext.peer_ecpointformats_len = 0;
-        OPENSSL_free(s->ext.peer_ecpointformats);
-        s->ext.peer_ecpointformats = OPENSSL_malloc(ecpointformats_len);
-        if (s->ext.peer_ecpointformats == NULL) {
-            s->ext.peer_ecpointformats_len = 0;
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-
-        s->ext.peer_ecpointformats_len = ecpointformats_len;
-
-        if (!PACKET_copy_bytes(&ecptformatlist,
-                s->ext.peer_ecpointformats,
-                ecpointformats_len)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-    }
-
-    return 1;
-}
-
 int tls_parse_stoc_session_ticket(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx)
