@@ -370,9 +370,28 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                 method = NULL;
             } else {
                 meth_id = evp_method_id(name_id, operation_id);
+                /*
+                 * Don't populate the per-query cache when OPENSSL_NO_CACHED_FETCH
+                 * is in effect.  In that build mode every provider query forces
+                 * no_cache=1 (see ossl_provider_query_operation), so impls
+                 * never enter the libctx's main method store -- they are
+                 * constructed into a per-fetch tmp_store that is freed
+                 * immediately afterwards.  ossl_method_store_remove_all_provided
+                 * (called from OSSL_PROVIDER_unload via provider_remove_store_methods)
+                 * walks alg->impls and only flushes cache entries on algorithms
+                 * where at least one impl was removed.  Because alg->impls is
+                 * empty in this mode, the per-shard cache is never flushed and
+                 * stale entries pointing at deactivated providers' methods are
+                 * served indefinitely on subsequent fetches.  Skipping the
+                 * cache_set call here keeps every fetch on the full
+                 * construction path, which is the documented intent of
+                 * no-cached-fetch.
+                 */
+#if !defined(OPENSSL_NO_CACHED_FETCH)
                 if (meth_id != 0)
                     ossl_method_store_cache_set(store, prov, meth_id, propq,
                         method, up_ref_method, free_method);
+#endif
             }
         }
 
