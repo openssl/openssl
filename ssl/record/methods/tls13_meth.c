@@ -236,7 +236,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
                (unsigned int)rec->length)
             <= 0
         || EVP_CipherFinal_ex(enc_ctx, rec->data + lenu, &lenf) <= 0
-        || (size_t)(lenu + lenf) != rec->length) {
+        || (size_t)lenu + lenf != rec->length) {
         return 0;
     }
     if (sending) {
