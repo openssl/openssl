@@ -250,17 +250,8 @@ static ossl_inline int otherparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *t
 {
     int ecdh_cofactor_mode = 0, group_check = 0;
     const char *name = NULL;
-    point_conversion_form_t format;
 
     if (ec == NULL)
-        return 0;
-
-    format = EC_KEY_get_conv_form(ec);
-    name = ossl_ec_pt_format_id2name((int)format);
-    if (name != NULL
-        && !ossl_param_build_set_utf8_string(tmpl, params,
-            OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
-            name))
         return 0;
 
     group_check = EC_KEY_get_flags(ec) & EC_FLAG_CHECK_NAMED_GROUP_MASK;
@@ -512,19 +503,21 @@ static int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
         return 0;
 
-    tmpl = OSSL_PARAM_BLD_new();
-    if (tmpl == NULL)
+    if ((bnctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(ec))) == NULL)
         return 0;
+    BN_CTX_start(bnctx);
 
-    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
-        bnctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(ec));
-        if (bnctx == NULL) {
-            ok = 0;
-            goto end;
-        }
-        BN_CTX_start(bnctx);
-        ok = ok && ossl_ec_group_todata(EC_KEY_get0_group(ec), tmpl, NULL, ossl_ec_key_get_libctx(ec), ossl_ec_key_get0_propq(ec), bnctx, &genbuf);
+    if ((tmpl = OSSL_PARAM_BLD_new()) == NULL) {
+        ok = 0;
+        goto end;
     }
+    /*
+     * OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT is added based on the group's
+     * asn1_form by the call below.
+     */
+    ok = ossl_ec_group_todata(EC_KEY_get0_group(ec), tmpl, NULL,
+        ossl_ec_key_get_libctx(ec), ossl_ec_key_get0_propq(ec),
+        bnctx, &genbuf);
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         int include_private = selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
@@ -748,6 +741,10 @@ static int common_get_params(void *key, OSSL_PARAM params[], int sm2)
             goto err;
     }
 
+    /*
+     * OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT is added based on the group's
+     * asn1_form by ossl_ec_group_todata() below.
+     */
     ret = ec_get_ecm_params(ecg, params)
         && ossl_ec_group_todata(ecg, NULL, params, libctx, propq, bnctx,
             &genbuf)
@@ -1303,6 +1300,18 @@ static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
     /* Whether you want it or not, you get a keypair, not just one half */
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        /*
+         * A generated key's public point has been serialised
+         * in uncompressed form for many releases, regardless
+         * of anything requested on the ctx or inherited from
+         * the template -- callers who consume the SPKI, EC
+         * PKCS#8 or other encodings rely on that.  With group
+         * and key form now consolidated on a single field on
+         * the group, force it to uncompressed here rather
+         * than start emitting compressed public points where
+         * no caller was expecting them.
+         */
+        EC_KEY_set_conv_form(ec, POINT_CONVERSION_UNCOMPRESSED);
 #ifndef FIPS_MODULE
         if (gctx->dhkem_ikm != NULL && gctx->dhkem_ikmlen != 0)
             ret = ret && ossl_ec_generate_key_dhkem(ec, gctx->dhkem_ikm, gctx->dhkem_ikmlen);
@@ -1376,8 +1385,21 @@ static void *sm2_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     ret = ec_gen_assign_group(ec, gctx->gen_group);
 
     /* Whether you want it or not, you get a keypair, not just one half */
-    if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
+    if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        /*
+         * A generated key's public point has been serialised
+         * in uncompressed form for many releases, regardless
+         * of anything requested on the ctx or inherited from
+         * the template -- callers who consume the SPKI, EC
+         * PKCS#8 or other encodings rely on that.  With group
+         * and key form now consolidated on a single field on
+         * the group, force it to uncompressed here rather
+         * than start emitting compressed public points where
+         * no caller was expecting them.
+         */
+        EC_KEY_set_conv_form(ec, POINT_CONVERSION_UNCOMPRESSED);
         ret = ret && EC_KEY_generate_key(ec);
+    }
 
     if (ret)
         return ec;

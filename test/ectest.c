@@ -802,37 +802,22 @@ static int char2_curve_test(int n)
         || !TEST_true(BN_add(yplusone, y, BN_value_one())))
         goto err;
 
-/* Change test based on whether binary point compression is enabled or not. */
-#ifdef OPENSSL_EC_BIN_PT_COMP
     /*
      * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
      * and therefore setting the coordinates should fail.
-     */
-    if (!TEST_false(EC_POINT_set_affine_coordinates(group, P, x, yplusone, ctx))
-        || !TEST_true(EC_POINT_set_compressed_coordinates(group, P, x,
-            test->y_bit,
-            ctx))
-        || !TEST_int_gt(EC_POINT_is_on_curve(group, P, ctx), 0)
-        || !TEST_true(BN_hex2bn(&z, test->order))
-        || !TEST_true(BN_hex2bn(&cof, test->cof))
-        || !TEST_true(EC_GROUP_set_generator(group, P, z, cof))
-        || !TEST_true(EC_POINT_get_affine_coordinates(group, P, x, y, ctx)))
-        goto err;
-    TEST_info("%s -- Generator", test->name);
-    test_output_bignum("x", x);
-    test_output_bignum("y", y);
-    /* G_y value taken from the standard: */
-    if (!TEST_true(BN_hex2bn(&z, test->y))
-        || !TEST_BN_eq(y, z))
-        goto err;
-#else
-    /*
-     * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
-     * and therefore setting the coordinates should fail.
+     *
+     * Set the generator point P from its affine coordinates, and
+     * independently recover the same point Q from x and the y-bit via
+     * compressed coordinates.  The two must agree, which exercises both
+     * the affine and compressed binary point formats in a single pass.
      */
     if (!TEST_false(EC_POINT_set_affine_coordinates(group, P, x, yplusone, ctx))
         || !TEST_true(EC_POINT_set_affine_coordinates(group, P, x, y, ctx))
         || !TEST_int_gt(EC_POINT_is_on_curve(group, P, ctx), 0)
+        || !TEST_true(EC_POINT_set_compressed_coordinates(group, Q, x,
+            test->ybit, ctx))
+        || !TEST_int_gt(EC_POINT_is_on_curve(group, Q, ctx), 0)
+        || !TEST_int_eq(0, EC_POINT_cmp(group, P, Q, ctx))
         || !TEST_true(BN_hex2bn(&z, test->order))
         || !TEST_true(BN_hex2bn(&cof, test->cof))
         || !TEST_true(EC_GROUP_set_generator(group, P, z, cof)))
@@ -840,7 +825,6 @@ static int char2_curve_test(int n)
     TEST_info("%s -- Generator:", test->name);
     test_output_bignum("x", x);
     test_output_bignum("y", y);
-#endif
 
     if (!TEST_int_eq(EC_GROUP_get_degree(group), test->degree)
         || !TEST_int_eq(EC_GROUP_security_bits(group), test->security)
@@ -971,26 +955,19 @@ static int char2_field_tests(void)
         || !TEST_ptr(cof = BN_new())
         || !TEST_ptr(yplusone = BN_new())
         || !TEST_true(BN_hex2bn(&x, "6"))
-/* Change test based on whether binary point compression is enabled or not. */
-#ifdef OPENSSL_EC_BIN_PT_COMP
-        || !TEST_true(EC_POINT_set_compressed_coordinates(group, Q, x, 1, ctx))
-#else
         || !TEST_true(BN_hex2bn(&y, "8"))
-        || !TEST_true(EC_POINT_set_affine_coordinates(group, Q, x, y, ctx))
-#endif
-    )
+        || !TEST_true(EC_POINT_set_affine_coordinates(group, Q, x, y, ctx)))
         goto err;
     if (!TEST_int_gt(EC_POINT_is_on_curve(group, Q, ctx), 0)) {
-/* Change test based on whether binary point compression is enabled or not. */
-#ifdef OPENSSL_EC_BIN_PT_COMP
-        if (!TEST_true(EC_POINT_get_affine_coordinates(group, Q, x, y, ctx)))
-            goto err;
-#endif
         TEST_info("Point is not on curve");
         test_output_bignum("x", x);
         test_output_bignum("y", y);
         goto err;
     }
+    /* The same point recovered from compressed coordinates must agree. */
+    if (!TEST_true(EC_POINT_set_compressed_coordinates(group, R, x, 1, ctx))
+        || !TEST_int_eq(0, EC_POINT_cmp(group, R, Q, ctx)))
+        goto err;
 
     TEST_note("A cyclic subgroup:");
     k = 100;
@@ -1018,8 +995,6 @@ static int char2_field_tests(void)
         || !TEST_true(EC_POINT_is_at_infinity(group, P)))
         goto err;
 
-/* Change test based on whether binary point compression is enabled or not. */
-#ifdef OPENSSL_EC_BIN_PT_COMP
     len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_COMPRESSED,
         buf, sizeof(buf), ctx);
     if (!TEST_size_t_ne(len, 0)
@@ -1028,7 +1003,6 @@ static int char2_field_tests(void)
         goto err;
     test_output_memory("Generator as octet string, compressed form:",
         buf, len);
-#endif
 
     len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_UNCOMPRESSED,
         buf, sizeof(buf), ctx);
@@ -1039,8 +1013,6 @@ static int char2_field_tests(void)
     test_output_memory("Generator as octet string, uncompressed form:",
         buf, len);
 
-/* Change test based on whether binary point compression is enabled or not. */
-#ifdef OPENSSL_EC_BIN_PT_COMP
     len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_HYBRID, buf, sizeof(buf),
         ctx);
     if (!TEST_size_t_ne(len, 0)
@@ -1049,7 +1021,6 @@ static int char2_field_tests(void)
         goto err;
     test_output_memory("Generator as octet string, hybrid form:",
         buf, len);
-#endif
 
     if (!TEST_true(EC_POINT_invert(group, P, ctx))
         || !TEST_int_eq(0, EC_POINT_cmp(group, P, R, ctx)))

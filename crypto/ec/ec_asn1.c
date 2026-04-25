@@ -1063,7 +1063,7 @@ int i2d_ECPrivateKey(const EC_KEY *a, unsigned char **out)
             goto err;
         }
 
-        publen = EC_KEY_key2buf(a, a->conv_form, &pub, NULL);
+        publen = EC_KEY_key2buf(a, EC_KEY_get_conv_form(a), &pub, NULL);
 
         if (publen == 0 || publen > INT_MAX) {
             ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
@@ -1164,7 +1164,7 @@ int i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
     }
 
     buf_len = EC_POINT_point2oct(a->group, a->pub_key,
-        a->conv_form, NULL, 0, NULL);
+        EC_KEY_get_conv_form(a), NULL, 0, NULL);
 
     if (buf_len > INT_MAX) {
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -1179,7 +1179,7 @@ int i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
             return 0;
         new_buffer = 1;
     }
-    if (!EC_POINT_point2oct(a->group, a->pub_key, a->conv_form,
+    if (!EC_POINT_point2oct(a->group, a->pub_key, EC_KEY_get_conv_form(a),
             *out, buf_len, NULL)) {
         ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
         if (new_buffer) {

@@ -655,7 +655,6 @@ EC_KEY *ossl_ec_key_dup(const EC_KEY *src, int selection)
     /* copy the rest */
     if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0) {
         ret->enc_flag = src->enc_flag;
-        ret->conv_form = src->conv_form;
     }
 
     ret->version = src->version;
