@@ -306,9 +306,6 @@ int tls_parse_ctos_srp(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 int tls_parse_ctos_early_data(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);
-int tls_parse_ctos_ec_pt_formats(SSL_CONNECTION *s, PACKET *pkt,
-    unsigned int context,
-    X509 *x, size_t chainidx);
 int tls_parse_ctos_supported_groups(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidxl);
@@ -516,9 +513,6 @@ int tls_parse_stoc_early_data(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);
 int tls_parse_stoc_maxfragmentlen(SSL_CONNECTION *s, PACKET *pkt,
-    unsigned int context,
-    X509 *x, size_t chainidx);
-int tls_parse_stoc_ec_pt_formats(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);
 int tls_parse_stoc_session_ticket(SSL_CONNECTION *s, PACKET *pkt,

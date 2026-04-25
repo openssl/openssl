@@ -59,8 +59,6 @@ static int final_ech(SSL_CONNECTION *s, unsigned int context, int sent);
 static int final_renegotiate(SSL_CONNECTION *s, unsigned int context, int sent);
 static int init_server_name(SSL_CONNECTION *s, unsigned int context);
 static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent);
-static int final_ec_pt_formats(SSL_CONNECTION *s, unsigned int context,
-    int sent);
 static int init_session_ticket(SSL_CONNECTION *s, unsigned int context);
 #ifndef OPENSSL_NO_OCSP
 static int init_status_request(SSL_CONNECTION *s, unsigned int context);
@@ -109,6 +107,9 @@ static EXT_RETURN tls_construct_compress_certificate(SSL_CONNECTION *sc, WPACKET
     unsigned int context,
     X509 *x, size_t chainidx);
 static int tls_parse_compress_certificate(SSL_CONNECTION *sc, PACKET *pkt,
+    unsigned int context,
+    X509 *x, size_t chainidx);
+static int tls_parse_ec_pt_formats(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);
 
@@ -217,9 +218,9 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
             | SSL_EXT_TLS1_2_AND_BELOW_ONLY,
         OSSL_ECH_HANDLING_COMPRESS,
-        init_ec_point_formats, tls_parse_ctos_ec_pt_formats, tls_parse_stoc_ec_pt_formats,
+        init_ec_point_formats, tls_parse_ec_pt_formats, tls_parse_ec_pt_formats,
         tls_construct_stoc_ec_pt_formats, tls_construct_ctos_ec_pt_formats,
-        final_ec_pt_formats },
+        NULL },
     { /*
        * "supported_groups" is spread across several specifications.
        * It was originally specified as "elliptic_curves" in RFC 4492,
@@ -745,6 +746,55 @@ static int verify_extension(SSL_CONNECTION *s, unsigned int context,
 
     /* Unknown extension. We allow it */
     *found = NULL;
+    return 1;
+}
+
+/*
+ * Parse an ec_point_formats extension off the wire (one function for
+ * both sides).  The peer's list is retained verbatim for
+ * SSL_get0_ec_point_formats() and for the RFC 4492/8422 section 5.1.2
+ * 'uncompressed must be present' check.
+ *
+ * The check is gated on the negotiated ciphersuite -- a TLS 1.3
+ * handshake or a non-ECC TLS 1.2 ciphersuite makes the extension moot
+ * and any missing 'uncompressed' codepoint is ignored.  On the client
+ * the chosen ciphersuite is already locked in by the time we parse
+ * ServerHello, so the check happens inline here.  On the server it's
+ * deferred to tls_construct_stoc_ec_pt_formats(), the first point at
+ * which s->s3.tmp.new_cipher is set for TLS 1.2.
+ */
+static int tls_parse_ec_pt_formats(SSL_CONNECTION *s, PACKET *pkt,
+    unsigned int context, X509 *x, size_t chainidx)
+{
+    PACKET list;
+
+    if (!PACKET_as_length_prefixed_1(pkt, &list)
+        || PACKET_remaining(&list) == 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+    if (!s->hit
+        && !PACKET_memdup(&list, &s->ext.peer_ecpointformats,
+            &s->ext.peer_ecpointformats_len)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (!s->server) {
+        unsigned long alg_k = s->s3.tmp.new_cipher->algorithm_mkey;
+        unsigned long alg_a = s->s3.tmp.new_cipher->algorithm_auth;
+
+        if (((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))
+            && memchr(PACKET_data(&list),
+                   TLSEXT_ECPOINTFORMAT_uncompressed,
+                   PACKET_remaining(&list))
+                == NULL) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
+            return 0;
+        }
+    }
+
     return 1;
 }
 
@@ -1358,45 +1408,6 @@ static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
     default:
         return 1;
     }
-}
-
-static int final_ec_pt_formats(SSL_CONNECTION *s, unsigned int context,
-    int sent)
-{
-    unsigned long alg_k, alg_a;
-
-    if (s->server)
-        return 1;
-
-    alg_k = s->s3.tmp.new_cipher->algorithm_mkey;
-    alg_a = s->s3.tmp.new_cipher->algorithm_auth;
-
-    /*
-     * If we are client and using an elliptic curve cryptography cipher
-     * suite, then if server returns an EC point formats lists extension it
-     * must contain uncompressed.
-     */
-    if (s->ext.ecpointformats != NULL
-        && s->ext.ecpointformats_len > 0
-        && s->ext.peer_ecpointformats != NULL
-        && s->ext.peer_ecpointformats_len > 0
-        && ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))) {
-        /* we are using an ECC cipher */
-        size_t i;
-        unsigned char *list = s->ext.peer_ecpointformats;
-
-        for (i = 0; i < s->ext.peer_ecpointformats_len; i++) {
-            if (*list++ == TLSEXT_ECPOINTFORMAT_uncompressed)
-                break;
-        }
-        if (i == s->ext.peer_ecpointformats_len) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-                SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
-            return 0;
-        }
-    }
-
-    return 1;
 }
 
 static int init_session_ticket(SSL_CONNECTION *s, unsigned int context)

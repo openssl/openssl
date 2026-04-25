@@ -31,6 +31,36 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * EC key point format simplification.
+
+   The point conversion form (compressed, uncompressed, or
+   hybrid) was kept both on the `EC_KEY` and its `EC_group`, and
+   the two could disagree -- a key imported as compressed could
+   re-encode as uncompressed.  The group is now the single source
+   of truth, and the point form round-trips unchanged through
+   import and export.
+
+   The point-format option at key generation is now a documented
+   no-op (it had had no effect for several releases).  Imported
+   keys still keep their form.  `EVP_PKEY_fromdata()` and openssl
+   pkey -text now report the form a loaded EC key actually has,
+   and re-encoding via PEM or DER preserves it.
+
+   The `ec_point_formats` extension has been decoupled from TLS 1.2
+   X.509 selection and acceptance.  TLS 1.3 disregards the
+   extension already, and we now accept EC certificates in any
+   point form we support, or send any EC certificate we have
+   regardless of its point form also in TLS 1.2.
+
+   The RFC 4492/8422 section 5.1.2 requirement that the peer's
+   point format contain "uncompressed" used to be enforced on the
+   client side only.  It is now also enforced by the server.
+   Both sides enforce the restriction only when an ECC TLS 1.2
+   ciphersuite has been negotiated, so a missing "uncompressed"
+   is ignored under TLS 1.3 or with a non-ECC cipher.
+
+   *Viktor Dukhovni*
+
  * Added -testmode option for `s_time` app.
 
    *Jakub Zelenka*
@@ -41,7 +71,7 @@ OpenSSL Releases
    *Adriano Sela Aviles*
 
  * SubjectPublicKeyInfo blobs whose AlgorithmIdentifier uses id-RSAES-OAEP
-   (NID_rsaesOaep, 1.2.840.113549.1.1.7) with a plain RSAPublicKey body
+   (`NID_rsaesOaep`, 1.2.840.113549.1.1.7) with a plain RSAPublicKey body
    are now decoded as RSA keys.  This is required for interoperability
    with TPM 1.2 Endorsement Key certificates per TCG Credential Profiles
    V1.2 section 3.2.7.  The OAEP AlgorithmIdentifier parameters are not
