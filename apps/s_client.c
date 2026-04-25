@@ -9,6 +9,7 @@
  */
 
 #include "internal/e_os.h"
+#include <inttypes.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -186,7 +187,7 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
     }
     if (max_psk_len > INT_MAX || key_len > (long)max_psk_len) {
         BIO_printf(bio_err,
-            "psk buffer of callback is too small (%d) for key (%ld)\n",
+            "psk buffer of callback is too small (%u) for key (%ld)\n",
             max_psk_len, key_len);
         OPENSSL_free(key);
         return 0;
@@ -340,7 +341,7 @@ static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
     ext_buf[3] = (unsigned char)(inlen);
     memcpy(ext_buf + 4, in, inlen);
 
-    BIO_snprintf(pem_name, sizeof(pem_name), "SERVERINFO FOR EXTENSION %d",
+    BIO_snprintf(pem_name, sizeof(pem_name), "SERVERINFO FOR EXTENSION %u",
         ext_type);
     PEM_write_bio(bio_c_out, pem_name, "", ext_buf, (long)(4 + inlen));
     return 1;
@@ -1710,7 +1711,7 @@ int s_client_main(int argc, char **argv)
                 break;
             default:
                 BIO_printf(bio_err,
-                    "%s: Max Fragment Len %u is out of permitted values",
+                    "%s: Max Fragment Len %d is out of permitted values",
                     prog, len);
                 goto opthelp;
             }
@@ -3850,8 +3851,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 #endif
 
         BIO_printf(bio,
-            "---\nSSL handshake has read %ju bytes "
-            "and written %ju bytes\n",
+            "---\nSSL handshake has read %" PRIu64 " bytes "
+            "and written %" PRIu64 " bytes\n",
             BIO_number_read(SSL_get_rbio(s)),
             BIO_number_written(SSL_get_wbio(s)));
     }
