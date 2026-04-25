@@ -104,7 +104,7 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 #endif
     if (x->ext.tick_lifetime_hint) {
         if (BIO_printf(bp,
-                "\n    TLS session ticket lifetime hint: %ld (seconds)",
+                "\n    TLS session ticket lifetime hint: %lu (seconds)",
                 x->ext.tick_lifetime_hint)
             <= 0)
             goto err;
@@ -123,7 +123,7 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
         if (!ssl_cipher_get_evp(NULL, x, NULL, NULL, NULL, NULL, &comp, 0))
             goto err;
         if (comp == NULL) {
-            if (BIO_printf(bp, "\n    Compression: %d", x->compress_meth) <= 0)
+            if (BIO_printf(bp, "\n    Compression: %u", x->compress_meth) <= 0)
                 goto err;
         } else {
             if (BIO_printf(bp, "\n    Compression: %d (%s)", comp->id,
