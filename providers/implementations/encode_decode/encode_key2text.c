@@ -357,7 +357,8 @@ static int ec_to_text(BIO *out, const void *key, int selection)
             goto err;
         }
 
-        pub_len = EC_KEY_key2buf(ec, EC_KEY_get_conv_form(ec), &pub, NULL);
+        pub_len = EC_KEY_key2buf(ec,
+            EC_GROUP_get_point_conversion_form(group), &pub, NULL);
         if (pub_len == 0)
             goto err;
     }

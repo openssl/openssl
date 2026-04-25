@@ -2408,7 +2408,12 @@ int EVP_PKEY_get_ec_point_conv_form(const EVP_PKEY *pkey)
         if (ec == NULL)
             return 0;
 
-        return EC_KEY_get_conv_form(ec);
+        /*
+         * Read the form from the group rather than the deprecated
+         * EC_KEY_get_conv_form().  EC_KEY_set_conv_form() and
+         * EC_KEY_oct2key() both keep the group's asn1_form in sync.
+         */
+        return EC_GROUP_get_point_conversion_form(EC_KEY_get0_group(ec));
 #else
         return 0;
 #endif
