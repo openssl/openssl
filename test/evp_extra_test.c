@@ -4036,12 +4036,12 @@ err:
     return ret;
 }
 
-static int test_RSA_verify_recover_rejects_short_buffer(void)
+static int do_RSA_verify_recover_rejects_short_buffer(EVP_PKEY *pkey,
+    const char *propq)
 {
-    int fipsver = 0;
     int ret = 0;
     int recovered_cap = 0;
-    EVP_PKEY *pkey = NULL;
+    EVP_MD *sha256 = NULL;
     EVP_PKEY_CTX *sign_ctx = NULL, *verify_ctx = NULL;
     unsigned char *sig = NULL, *recovered = NULL;
     size_t sig_len = 0, recovered_len = 0;
@@ -4051,23 +4051,17 @@ static int test_RSA_verify_recover_rejects_short_buffer(void)
     unsigned char digest[32];
     size_t i;
 
-    if (!TEST_int_ge(fipsver = fips_provider_version_match(testctx,
-                         "!3.0.0 !3.0.8 !3.0.9 !3.1.2"),
-            0))
-        goto done;
-    if (fipsver == 0)
-        return TEST_skip("Test skipped for old FIPS providers");
-
     for (i = 0; i < sizeof(digest); i++)
         digest[i] = (unsigned char)i;
 
-    if (!TEST_ptr(pkey = load_example_rsa_key())
-        || !TEST_ptr(sign_ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, NULL))
+    if (!TEST_ptr(pkey)
+        || !TEST_ptr(sha256 = EVP_MD_fetch(testctx, "SHA2-256", propq))
+        || !TEST_ptr(sign_ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, propq))
         || !TEST_int_gt(EVP_PKEY_sign_init(sign_ctx), 0)
         || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_padding(sign_ctx,
                             RSA_PKCS1_PADDING),
             0)
-        || !TEST_int_gt(EVP_PKEY_CTX_set_signature_md(sign_ctx, EVP_sha256()),
+        || !TEST_int_gt(EVP_PKEY_CTX_set_signature_md(sign_ctx, sha256),
             0)
         || !TEST_int_gt(EVP_PKEY_sign(sign_ctx, NULL, &sig_len, digest,
                             sizeof(digest)),
@@ -4079,12 +4073,12 @@ static int test_RSA_verify_recover_rejects_short_buffer(void)
         || !TEST_int_gt(recovered_cap = EVP_PKEY_get_size(pkey), 0)
         || !TEST_ptr(recovered = OPENSSL_malloc(recovered_cap))
         || !TEST_ptr(verify_ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey,
-                         NULL))
+                         propq))
         || !TEST_int_gt(EVP_PKEY_verify_recover_init(verify_ctx), 0)
         || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_padding(verify_ctx,
                             RSA_PKCS1_PADDING),
             0)
-        || !TEST_int_gt(EVP_PKEY_CTX_set_signature_md(verify_ctx, EVP_sha256()),
+        || !TEST_int_gt(EVP_PKEY_CTX_set_signature_md(verify_ctx, sha256),
             0))
         goto done;
 
@@ -4112,11 +4106,59 @@ static int test_RSA_verify_recover_rejects_short_buffer(void)
 
     ret = 1;
 done:
+    EVP_MD_free(sha256);
     EVP_PKEY_CTX_free(sign_ctx);
     EVP_PKEY_CTX_free(verify_ctx);
-    EVP_PKEY_free(pkey);
     OPENSSL_free(sig);
     OPENSSL_free(recovered);
+    return ret;
+}
+
+static int test_RSA_verify_recover_rejects_short_buffer(void)
+{
+    int ret = 0;
+    EVP_PKEY *pkey = NULL;
+
+    if (!TEST_ptr(pkey = load_example_rsa_key()))
+        goto done;
+
+    ret = do_RSA_verify_recover_rejects_short_buffer(pkey, NULL);
+
+done:
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+static int test_RSA_verify_recover_rejects_short_buffer_fips(void)
+{
+    static const char fips_propq[] = "provider=fips";
+    int fipsver = 0;
+    int ret = 0;
+    EVP_PKEY *pkey = NULL;
+    OSSL_PROVIDER *fipsprov = NULL;
+
+    if (!OSSL_PROVIDER_available(testctx, "fips"))
+        return TEST_skip("Test requires FIPS provider");
+
+    if (!TEST_ptr(fipsprov = OSSL_PROVIDER_load(testctx, "fips")))
+        goto done;
+    if (!TEST_int_ge(fipsver = fips_provider_version_match(testctx,
+                         "!3.0.0 !3.0.8 !3.0.9 !3.1.2"),
+            0))
+        goto done;
+    if (fipsver == 0) {
+        ret = TEST_skip("Test skipped for old FIPS providers");
+        goto done;
+    }
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(testctx, fips_propq, "RSA",
+                      (size_t)OPENSSL_RSA_FIPS_MIN_MODULUS_BITS)))
+        goto done;
+
+    ret = do_RSA_verify_recover_rejects_short_buffer(pkey, fips_propq);
+
+done:
+    EVP_PKEY_free(pkey);
+    OSSL_PROVIDER_unload(fipsprov);
     return ret;
 }
 
@@ -8043,6 +8085,7 @@ int setup_tests(void)
     ADD_TEST(test_RSA_OAEP_set_get_params);
     ADD_TEST(test_RSA_OAEP_set_null_label);
     ADD_TEST(test_RSA_verify_recover_rejects_short_buffer);
+    ADD_TEST(test_RSA_verify_recover_rejects_short_buffer_fips);
     ADD_TEST(test_RSA_encrypt);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_RSA_legacy);
