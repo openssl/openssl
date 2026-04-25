@@ -1,0 +1,338 @@
+# Generated with generate_ssl_tests.pl
+
+num_tests = 10
+
+test-0 = 0-tls12-compressed-spki-both-sides-ok
+test-1 = 1-tls12-compressed-spki-client-no-option
+test-2 = 2-tls12-compressed-spki-server-no-option
+test-3 = 3-tls13-compressed-spki
+test-4 = 4-tls12-mixed-both-sides-ok
+test-5 = 5-tls12-mixed-client-no-option
+test-6 = 6-tls12-mixed-server-no-option
+test-7 = 7-tls13-mixed
+test-8 = 8-tls12-mixed-uncompressed
+test-9 = 9-tls13-mixed-uncompressed
+# ===========================================================
+
+[0-tls12-compressed-spki-both-sides-ok]
+ssl_conf = 0-tls12-compressed-spki-both-sides-ok-ssl
+
+[0-tls12-compressed-spki-both-sides-ok-ssl]
+server = 0-tls12-compressed-spki-both-sides-ok-server
+client = 0-tls12-compressed-spki-both-sides-ok-client
+
+[0-tls12-compressed-spki-both-sides-ok-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-cert.pem
+CipherString = DEFAULT
+MaxProtocol = TLSv1.2
+MinProtocol = TLSv1.2
+Options = LegacyECPointFormats
+PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-key.pem
+
+[0-tls12-compressed-spki-both-sides-ok-client]
+CipherString = ECDHE-ECDSA-AES128-GCM-SHA256
+MaxProtocol = TLSv1.2
+MinProtocol = TLSv1.2
+Options = LegacyECPointFormats
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/p384-root.pem
+VerifyMode = Peer
+
+[test-0]
+ExpectedProtocol = TLSv1.2
+ExpectedResult = Success
+ExpectedServerCertType = P-256
+
+
+# ===========================================================
+
+[1-tls12-compressed-spki-client-no-option]
+ssl_conf = 1-tls12-compressed-spki-client-no-option-ssl
+
+[1-tls12-compressed-spki-client-no-option-ssl]
+server = 1-tls12-compressed-spki-client-no-option-server
+client = 1-tls12-compressed-spki-client-no-option-client
+
+[1-tls12-compressed-spki-client-no-option-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-cert.pem
+CipherString = DEFAULT
+MaxProtocol = TLSv1.2
+MinProtocol = TLSv1.2
+Options = LegacyECPointFormats
+PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-key.pem
+
+[1-tls12-compressed-spki-client-no-option-client]
+CipherString = ECDHE-ECDSA-AES128-GCM-SHA256
+MaxProtocol = TLSv1.2
+MinProtocol = TLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/p384-root.pem
+VerifyMode = Peer
+
+[test-1]
+ExpectedResult = ServerFail
+ExpectedServerAlert = HandshakeFailure
+
+
+# ===========================================================
+
+[2-tls12-compressed-spki-server-no-option]
+ssl_conf = 2-tls12-compressed-spki-server-no-option-ssl
+
+[2-tls12-compressed-spki-server-no-option-ssl]
+server = 2-tls12-compressed-spki-server-no-option-server
+client = 2-tls12-compressed-spki-server-no-option-client
+
+[2-tls12-compressed-spki-server-no-option-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-cert.pem
+CipherString = DEFAULT
+MaxProtocol = TLSv1.2
+MinProtocol = TLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-key.pem
+
+[2-tls12-compressed-spki-server-no-option-client]
+CipherString = ECDHE-ECDSA-AES128-GCM-SHA256
+MaxProtocol = TLSv1.2
+MinProtocol = TLSv1.2
+Options = LegacyECPointFormats
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/p384-root.pem
+VerifyMode = Peer
+
+[test-2]
+ExpectedResult = ServerFail
+ExpectedServerAlert = HandshakeFailure
+
+
+# ===========================================================
+
+[3-tls13-compressed-spki]
+ssl_conf = 3-tls13-compressed-spki-ssl
+
+[3-tls13-compressed-spki-ssl]
+server = 3-tls13-compressed-spki-server
+client = 3-tls13-compressed-spki-client
+
+[3-tls13-compressed-spki-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-cert.pem
+CipherString = DEFAULT
+MaxProtocol = TLSv1.3
+MinProtocol = TLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-key.pem
+
+[3-tls13-compressed-spki-client]
+CipherString = DEFAULT
+MaxProtocol = TLSv1.3
+MinProtocol = TLSv1.3
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/p384-root.pem
+VerifyMode = Peer
+
+[test-3]
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedServerCertType = P-256
+
+
+# ===========================================================
+
+[4-tls12-mixed-both-sides-ok]
+ssl_conf = 4-tls12-mixed-both-sides-ok-ssl
+
+[4-tls12-mixed-both-sides-ok-ssl]
+server = 4-tls12-mixed-both-sides-ok-server
+client = 4-tls12-mixed-both-sides-ok-client
+
+[4-tls12-mixed-both-sides-ok-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256
+ECDSA.Certificate = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-cert.pem
+ECDSA.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-key.pem
+MaxProtocol = TLSv1.2
+MinProtocol = TLSv1.2
+Options = LegacyECPointFormats
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+SignatureAlgorithms = ecdsa_secp256r1_sha256:rsa_pkcs1_sha256
+
+[4-tls12-mixed-both-sides-ok-client]
+CipherString = ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256
+EC.VerifyCAFile = ${ENV::TEST_CERTS_DIR}/p384-root.pem
+MaxProtocol = TLSv1.2
+MinProtocol = TLSv1.2
+Options = LegacyECPointFormats
+SignatureAlgorithms = ecdsa_secp256r1_sha256:rsa_pkcs1_sha256
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-4]
+ExpectedProtocol = TLSv1.2
+ExpectedResult = Success
+ExpectedServerCertType = P-256
+
+
+# ===========================================================
+
+[5-tls12-mixed-client-no-option]
+ssl_conf = 5-tls12-mixed-client-no-option-ssl
+
+[5-tls12-mixed-client-no-option-ssl]
+server = 5-tls12-mixed-client-no-option-server
+client = 5-tls12-mixed-client-no-option-client
+
+[5-tls12-mixed-client-no-option-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256
+ECDSA.Certificate = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-cert.pem
+ECDSA.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-key.pem
+MaxProtocol = TLSv1.2
+MinProtocol = TLSv1.2
+Options = LegacyECPointFormats
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+SignatureAlgorithms = ecdsa_secp256r1_sha256:rsa_pkcs1_sha256
+
+[5-tls12-mixed-client-no-option-client]
+CipherString = ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256
+EC.VerifyCAFile = ${ENV::TEST_CERTS_DIR}/p384-root.pem
+MaxProtocol = TLSv1.2
+MinProtocol = TLSv1.2
+SignatureAlgorithms = ecdsa_secp256r1_sha256:rsa_pkcs1_sha256
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-5]
+ExpectedProtocol = TLSv1.2
+ExpectedResult = Success
+ExpectedServerCertType = RSA
+
+
+# ===========================================================
+
+[6-tls12-mixed-server-no-option]
+ssl_conf = 6-tls12-mixed-server-no-option-ssl
+
+[6-tls12-mixed-server-no-option-ssl]
+server = 6-tls12-mixed-server-no-option-server
+client = 6-tls12-mixed-server-no-option-client
+
+[6-tls12-mixed-server-no-option-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256
+ECDSA.Certificate = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-cert.pem
+ECDSA.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-key.pem
+MaxProtocol = TLSv1.2
+MinProtocol = TLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+SignatureAlgorithms = ecdsa_secp256r1_sha256:rsa_pkcs1_sha256
+
+[6-tls12-mixed-server-no-option-client]
+CipherString = ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256
+EC.VerifyCAFile = ${ENV::TEST_CERTS_DIR}/p384-root.pem
+MaxProtocol = TLSv1.2
+MinProtocol = TLSv1.2
+Options = LegacyECPointFormats
+SignatureAlgorithms = ecdsa_secp256r1_sha256:rsa_pkcs1_sha256
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-6]
+ExpectedProtocol = TLSv1.2
+ExpectedResult = Success
+ExpectedServerCertType = RSA
+
+
+# ===========================================================
+
+[7-tls13-mixed]
+ssl_conf = 7-tls13-mixed-ssl
+
+[7-tls13-mixed-ssl]
+server = 7-tls13-mixed-server
+client = 7-tls13-mixed-client
+
+[7-tls13-mixed-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+ECDSA.Certificate = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-cert.pem
+ECDSA.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-key.pem
+MaxProtocol = TLSv1.3
+MinProtocol = TLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+SignatureAlgorithms = ecdsa_secp256r1_sha256:rsa_pss_rsae_sha256
+
+[7-tls13-mixed-client]
+CipherString = DEFAULT
+EC.VerifyCAFile = ${ENV::TEST_CERTS_DIR}/p384-root.pem
+MaxProtocol = TLSv1.3
+MinProtocol = TLSv1.3
+SignatureAlgorithms = ecdsa_secp256r1_sha256:rsa_pss_rsae_sha256
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-7]
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedServerCertType = P-256
+
+
+# ===========================================================
+
+[8-tls12-mixed-uncompressed]
+ssl_conf = 8-tls12-mixed-uncompressed-ssl
+
+[8-tls12-mixed-uncompressed-ssl]
+server = 8-tls12-mixed-uncompressed-server
+client = 8-tls12-mixed-uncompressed-client
+
+[8-tls12-mixed-uncompressed-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256
+ECDSA.Certificate = ${ENV::TEST_CERTS_DIR}/server-ecdsa-cert.pem
+ECDSA.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ecdsa-key.pem
+MaxProtocol = TLSv1.2
+MinProtocol = TLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+SignatureAlgorithms = ecdsa_secp256r1_sha256:rsa_pkcs1_sha256
+
+[8-tls12-mixed-uncompressed-client]
+CipherString = ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256
+MaxProtocol = TLSv1.2
+MinProtocol = TLSv1.2
+SignatureAlgorithms = ecdsa_secp256r1_sha256:rsa_pkcs1_sha256
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-8]
+ExpectedProtocol = TLSv1.2
+ExpectedResult = Success
+ExpectedServerCertType = P-256
+
+
+# ===========================================================
+
+[9-tls13-mixed-uncompressed]
+ssl_conf = 9-tls13-mixed-uncompressed-ssl
+
+[9-tls13-mixed-uncompressed-ssl]
+server = 9-tls13-mixed-uncompressed-server
+client = 9-tls13-mixed-uncompressed-client
+
+[9-tls13-mixed-uncompressed-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+ECDSA.Certificate = ${ENV::TEST_CERTS_DIR}/server-ecdsa-cert.pem
+ECDSA.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ecdsa-key.pem
+MaxProtocol = TLSv1.3
+MinProtocol = TLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+SignatureAlgorithms = ecdsa_secp256r1_sha256:rsa_pss_rsae_sha256
+
+[9-tls13-mixed-uncompressed-client]
+CipherString = DEFAULT
+MaxProtocol = TLSv1.3
+MinProtocol = TLSv1.3
+SignatureAlgorithms = ecdsa_secp256r1_sha256:rsa_pss_rsae_sha256
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-9]
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedServerCertType = P-256
+
+

@@ -1886,13 +1886,7 @@ int tls1_check_group_id(SSL_CONNECTION *s, uint16_t group_id,
 void tls1_get_formatlist(SSL_CONNECTION *s, const unsigned char **pformats,
     size_t *num_formats)
 {
-    /*
-     * If we have a custom point format list use it otherwise use default
-     */
-    if (s->ext.ecpointformats) {
-        *pformats = s->ext.ecpointformats;
-        *num_formats = s->ext.ecpointformats_len;
-    } else if ((s->options & SSL_OP_LEGACY_EC_POINT_FORMATS) != 0) {
+    if ((s->options & SSL_OP_LEGACY_EC_POINT_FORMATS) != 0) {
         *pformats = ecformats_all;
         /* For Suite B we don't support char2 fields */
         if (tls1_suiteb(s))
@@ -1911,6 +1905,8 @@ static int tls1_check_pkey_comp(SSL_CONNECTION *s, EVP_PKEY *pkey)
     unsigned char comp_id;
     size_t i;
     int point_conv;
+    const unsigned char *own_formats;
+    size_t own_formats_len;
 
     /* If not an EC key nothing to check */
     if (!EVP_PKEY_is_a(pkey, "EC"))
@@ -1944,6 +1940,21 @@ static int tls1_check_pkey_comp(SSL_CONNECTION *s, EVP_PKEY *pkey)
      */
     if (s->ext.peer_ecpointformats == NULL)
         return 1;
+    /*
+     * The cert's point form must also be in our OWN advertised list -- we
+     * mustn't commit to a cert in a form we told the peer we don't speak.
+     * Without this the server's cert-selection happily picks (and the
+     * client happily decodes-and-then-rejects) a leaf whose form is in the
+     * peer's list but not ours, leaving the peer to alert illegal_parameter
+     * on receipt instead of catching the mismatch before it's wire-visible.
+     */
+    tls1_get_formatlist(s, &own_formats, &own_formats_len);
+    for (i = 0; i < own_formats_len; i++) {
+        if (own_formats[i] == comp_id)
+            break;
+    }
+    if (i == own_formats_len)
+        return 0;
 
     for (i = 0; i < s->ext.peer_ecpointformats_len; i++) {
         if (s->ext.peer_ecpointformats[i] == comp_id)
@@ -2920,12 +2931,10 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
 
     if (pkeyid == EVP_PKEY_EC) {
 
-        /* Check point compression is permitted */
-        if (!tls1_check_pkey_comp(s, pkey)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-                SSL_R_ILLEGAL_POINT_COMPRESSION);
-            return 0;
-        }
+        /*
+         * No point-format check on the peer's cert -- we accept any
+         * form we can decode.  Own-cert selection stays careful.
+         */
 
         /* For TLS 1.3 or Suite B check curve matches signature algorithm */
         if (SSL_CONNECTION_IS_TLS13(s) || tls1_suiteb(s)) {

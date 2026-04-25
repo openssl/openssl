@@ -16,6 +16,7 @@
 #include "internal/nelem.h"
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/tlsgroups.h"
 #include "../ssl_local.h"
 #include "statem_local.h"
 #include <openssl/ocsp.h>
@@ -1363,40 +1364,67 @@ static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
 static int final_ec_pt_formats(SSL_CONNECTION *s, unsigned int context,
     int sent)
 {
-    unsigned long alg_k, alg_a;
-
-    if (s->server)
-        return 1;
-
-    alg_k = s->s3.tmp.new_cipher->algorithm_mkey;
-    alg_a = s->s3.tmp.new_cipher->algorithm_auth;
+    size_t i;
 
     /*
-     * If we are client and using an elliptic curve cryptography cipher
-     * suite, then if server returns an EC point formats lists extension it
-     * must contain uncompressed.
+     * Nothing to enforce if the peer didn't send ec_point_formats; in
+     * TLS 1.3 the framework already skips the parse hook so this stays
+     * NULL and we no-op here.
      */
-    if (s->ext.ecpointformats != NULL
-        && s->ext.ecpointformats_len > 0
-        && s->ext.peer_ecpointformats != NULL
-        && s->ext.peer_ecpointformats_len > 0
-        && ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))) {
-        /* we are using an ECC cipher */
-        size_t i;
-        unsigned char *list = s->ext.peer_ecpointformats;
+    if (s->ext.peer_ecpointformats == NULL
+        || s->ext.peer_ecpointformats_len == 0)
+        return 1;
 
-        for (i = 0; i < s->ext.peer_ecpointformats_len; i++) {
-            if (*list++ == TLSEXT_ECPOINTFORMAT_uncompressed)
+    /*
+     * Decide whether the peer is committing to ECDHE.  RFC 4492 sections 5.1
+     * (client) and 5.2 (server) require the uncompressed point format to be
+     * included in the ec_point_formats list, and this is carried forward in
+     * RFC 8422 section 5.1.2.
+     *
+     * The signal we use to gate the receiver-side enforcement differs by side,
+     * because the data we have is asymmetric:
+     *
+     *   Server: cipher selection happens later (in
+     *     tls_post_process_client_hello), so s->s3.tmp.new_cipher is
+     *     still NULL here.  Use the client's supported_groups list
+     *     (peer_supportedgroups), populated by the parse hook before
+     *     this final hook fires -- if the client advertised any EC
+     *     group, the enforcement applies.
+     *
+     *   Client: by the time we parse ServerHello, the cipher is
+     *     locked in.  The server doesn't typically echo
+     *     supported_groups in a TLS 1.2 ServerHello, so
+     *     peer_supportedgroups is usually empty here; the cipher
+     *     suite is the trustworthy signal -- if it's ECDHE/ECDSA the
+     *     enforcement applies.
+     */
+    if (s->server) {
+        for (i = 0; i < s->ext.peer_supportedgroups_len; i++) {
+            if (is_ecdhe_group(s->ext.peer_supportedgroups[i]))
                 break;
         }
-        if (i == s->ext.peer_ecpointformats_len) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-                SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
-            return 0;
-        }
+        if (i == s->ext.peer_supportedgroups_len)
+            return 1;
+    } else {
+        unsigned long alg_k = s->s3.tmp.new_cipher->algorithm_mkey;
+        unsigned long alg_a = s->s3.tmp.new_cipher->algorithm_auth;
+
+        if ((alg_k & SSL_kECDHE) == 0 && (alg_a & SSL_aECDSA) == 0)
+            return 1;
     }
 
-    return 1;
+    /*
+     * The peer wants ECDHE.  Their advertised list of point formats must
+     * include uncompressed -- we put uncompressed ECDHE public points on
+     * the wire and won't accept anything else from them either.
+     */
+    for (i = 0; i < s->ext.peer_ecpointformats_len; i++) {
+        if (s->ext.peer_ecpointformats[i] == TLSEXT_ECPOINTFORMAT_uncompressed)
+            return 1;
+    }
+    SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+        SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
+    return 0;
 }
 
 static int init_session_ticket(SSL_CONNECTION *s, unsigned int context)

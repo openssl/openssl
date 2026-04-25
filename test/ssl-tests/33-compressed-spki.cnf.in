@@ -1,0 +1,345 @@
+# -*- mode: perl; -*-
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+
+## SSL test configurations
+##
+## The server presents a TLS leaf certificate (server-ec-compressed-cert.pem)
+## whose SubjectPublicKeyInfo's bit-string starts with 0x02 or 0x03 -- i.e. a
+## P-256 named-curve public key encoded in COMPRESSED form, anchored to the
+## P-384 EC root.
+##
+## TLS 1.2 ec_point_formats (RFC 4492) requires both peers to opt into legacy
+## compressed support, exposed via SSL_OP_LEGACY_EC_POINT_FORMATS / the
+## "LegacyECPointFormats" SSL_CONF Options token.  Without it on either side
+## the per-side ec_point_formats list contains only 'uncompressed', and
+## tls1_check_pkey_comp() refuses to use a compressed-form leaf -- on the
+## server when selecting a cert against the client's advertised list, on the
+## client when verifying the server's cert against the server's advertised
+## list.
+##
+## TLS 1.3 dropped the ec_point_formats extension entirely; a compressed-form
+## leaf is just bytes the receiver decodes, so the option is irrelevant.
+
+package ssltests;
+use OpenSSL::Test::Utils;
+
+# Shared bits for the mixed-cert (RSA + EC-compressed) stanzas below.  The
+# server loads BOTH an RSA leaf (anchored to ssltests_base.pm's default
+# rootcert.pem) and the compressed-form EC leaf (anchored to p384-root.pem);
+# the per-key-type prefixes ("ECDSA.", "EC.") are arbitrary distinct strings
+# stripped before SSL_CONF command matching -- they exist solely to keep
+# duplicate directive names from colliding.  Slot dispatch is by the loaded
+# cert's key type, not the prefix.  do_store() appends each VerifyCAFile to
+# the verify_store, so the EC.VerifyCAFile below adds p384-root.pem on top
+# of the base's rootcert.pem default rather than replacing it.
+my $mixed_server = {
+    "Certificate"        => test_pem("servercert.pem"),
+    "PrivateKey"         => test_pem("serverkey.pem"),
+    "ECDSA.Certificate"  => test_pem("server-ec-compressed-cert.pem"),
+    "ECDSA.PrivateKey"   => test_pem("server-ec-compressed-key.pem"),
+};
+
+my $mixed_client = {
+    "EC.VerifyCAFile" => test_pem("p384-root.pem"),
+};
+
+# Variant of the above where the EC leaf is the stock P-256 uncompressed-form
+# cert (server-ecdsa-cert.pem).  Both server-ecdsa-cert.pem and servercert.pem
+# chain to ssltests_base.pm's default VerifyCAFile (rootcert.pem), so the
+# client side needs no overrides.
+my $uncompressed_server = {
+    "Certificate"        => test_pem("servercert.pem"),
+    "PrivateKey"         => test_pem("serverkey.pem"),
+    "ECDSA.Certificate"  => test_pem("server-ecdsa-cert.pem"),
+    "ECDSA.PrivateKey"   => test_pem("server-ecdsa-key.pem"),
+};
+
+# Every stanza below is EC-specific and requires both TLS 1.2 and TLS 1.3.
+# In any build that lacks one of those, emit no tests at all -- there's
+# nothing meaningful to exercise here.  The recipe's %conf_dependent_tests
+# entry skips the reference-comparison check under the same conditions.
+our @tests = ();
+
+unless (disabled("ec") || disabled("tls1_2") || disabled("tls1_3")) {
+@tests = (
+    {
+        name => "tls12-compressed-spki-both-sides-ok",
+        server => {
+            "Certificate" => test_pem("server-ec-compressed-cert.pem"),
+            "PrivateKey"  => test_pem("server-ec-compressed-key.pem"),
+            "MinProtocol" => "TLSv1.2",
+            "MaxProtocol" => "TLSv1.2",
+            "Options"     => "LegacyECPointFormats",
+        },
+        client => {
+            "VerifyCAFile" => test_pem("p384-root.pem"),
+            "MinProtocol"  => "TLSv1.2",
+            "MaxProtocol"  => "TLSv1.2",
+            "CipherString" => "ECDHE-ECDSA-AES128-GCM-SHA256",
+            "Options"      => "LegacyECPointFormats",
+        },
+        test => {
+            "ExpectedResult"         => "Success",
+            "ExpectedProtocol"       => "TLSv1.2",
+            "ExpectedServerCertType" => "P-256",
+        },
+    },
+
+    {
+        # Client did not opt in: its ec_point_formats lists 'uncompressed'
+        # only.  tls1_check_pkey_comp() on the server compares its leaf cert's
+        # point form against the *peer's* advertised formats; the cert is
+        # compressed, the peer advertises only uncompressed, so cert selection
+        # finds nothing and the server aborts with handshake_failure.
+        name => "tls12-compressed-spki-client-no-option",
+        server => {
+            "Certificate" => test_pem("server-ec-compressed-cert.pem"),
+            "PrivateKey"  => test_pem("server-ec-compressed-key.pem"),
+            "MinProtocol" => "TLSv1.2",
+            "MaxProtocol" => "TLSv1.2",
+            "Options"     => "LegacyECPointFormats",
+        },
+        client => {
+            "VerifyCAFile" => test_pem("p384-root.pem"),
+            "MinProtocol"  => "TLSv1.2",
+            "MaxProtocol"  => "TLSv1.2",
+            "CipherString" => "ECDHE-ECDSA-AES128-GCM-SHA256",
+        },
+        test => {
+            "ExpectedResult"      => "ServerFail",
+            "ExpectedServerAlert" => "HandshakeFailure",
+        },
+    },
+
+    {
+        # Server did not opt in: its own ec_point_formats lists 'uncompressed'
+        # only.  tls1_check_pkey_comp() now (correctly) checks the cert's
+        # form against BOTH the server's own and the peer's advertised lists;
+        # the cert is compressed, the server's own list is uncompressed-only,
+        # the cert is dropped from the candidate set, no other usable cert
+        # exists, and the server aborts with handshake_failure -- before
+        # anything cert-shaped is wire-visible.
+        name => "tls12-compressed-spki-server-no-option",
+        server => {
+            "Certificate" => test_pem("server-ec-compressed-cert.pem"),
+            "PrivateKey"  => test_pem("server-ec-compressed-key.pem"),
+            "MinProtocol" => "TLSv1.2",
+            "MaxProtocol" => "TLSv1.2",
+        },
+        client => {
+            "VerifyCAFile" => test_pem("p384-root.pem"),
+            "MinProtocol"  => "TLSv1.2",
+            "MaxProtocol"  => "TLSv1.2",
+            "CipherString" => "ECDHE-ECDSA-AES128-GCM-SHA256",
+            "Options"      => "LegacyECPointFormats",
+        },
+        test => {
+            "ExpectedResult"      => "ServerFail",
+            "ExpectedServerAlert" => "HandshakeFailure",
+        },
+    },
+
+    {
+        # TLS 1.3 omits ec_point_formats; the option is irrelevant and the
+        # compressed SPKI just decodes.
+        name => "tls13-compressed-spki",
+        server => {
+            "Certificate" => test_pem("server-ec-compressed-cert.pem"),
+            "PrivateKey"  => test_pem("server-ec-compressed-key.pem"),
+            "MinProtocol" => "TLSv1.3",
+            "MaxProtocol" => "TLSv1.3",
+        },
+        client => {
+            "VerifyCAFile" => test_pem("p384-root.pem"),
+            "MinProtocol"  => "TLSv1.3",
+            "MaxProtocol"  => "TLSv1.3",
+        },
+        test => {
+            "ExpectedResult"         => "Success",
+            "ExpectedProtocol"       => "TLSv1.3",
+            "ExpectedServerCertType" => "P-256",
+        },
+    },
+
+    # ----------------------------------------------------------------------
+    # Mixed-cert RSA-fallback stanzas.  The server presents BOTH an RSA leaf
+    # (servercert.pem under root-cert.pem) and the P-256 compressed-SPKI EC
+    # leaf (server-ec-compressed-cert.pem under p384-root.pem).  Both peers
+    # advertise sigalgs preferring ECDSA over RSA, so the EC leaf is used
+    # whenever it's eligible; when point-format negotiation rules it out (one
+    # side or the other didn't opt into compressed), tls1_check_pkey_comp()
+    # filters the EC cert and the server falls back to RSA.  TLS 1.3 dropped
+    # ec_point_formats, so the EC leaf is always eligible there.
+    # ----------------------------------------------------------------------
+
+    {
+        # Both sides opted in: ECDHE-ECDSA picked, EC leaf used.
+        name => "tls12-mixed-both-sides-ok",
+        server => {
+            %$mixed_server,
+            "MinProtocol"         => "TLSv1.2",
+            "MaxProtocol"         => "TLSv1.2",
+            "Options"             => "LegacyECPointFormats",
+            "SignatureAlgorithms" => "ecdsa_secp256r1_sha256:rsa_pkcs1_sha256",
+            "CipherString"        => "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256",
+        },
+        client => {
+            %$mixed_client,
+            "MinProtocol"         => "TLSv1.2",
+            "MaxProtocol"         => "TLSv1.2",
+            "Options"             => "LegacyECPointFormats",
+            "SignatureAlgorithms" => "ecdsa_secp256r1_sha256:rsa_pkcs1_sha256",
+            "CipherString"        => "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256",
+        },
+        test => {
+            "ExpectedResult"         => "Success",
+            "ExpectedProtocol"       => "TLSv1.2",
+            "ExpectedServerCertType" => "P-256",
+        },
+    },
+
+    {
+        # Client did not opt in.  Server's selection sees the peer
+        # advertises only 'uncompressed' point format, so the compressed EC
+        # leaf is filtered; cert selection falls back to the RSA leaf and
+        # the handshake completes with ECDHE-RSA.
+        name => "tls12-mixed-client-no-option",
+        server => {
+            %$mixed_server,
+            "MinProtocol"         => "TLSv1.2",
+            "MaxProtocol"         => "TLSv1.2",
+            "Options"             => "LegacyECPointFormats",
+            "SignatureAlgorithms" => "ecdsa_secp256r1_sha256:rsa_pkcs1_sha256",
+            "CipherString"        => "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256",
+        },
+        client => {
+            %$mixed_client,
+            "MinProtocol"         => "TLSv1.2",
+            "MaxProtocol"         => "TLSv1.2",
+            "SignatureAlgorithms" => "ecdsa_secp256r1_sha256:rsa_pkcs1_sha256",
+            "CipherString"        => "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256",
+        },
+        test => {
+            "ExpectedResult"         => "Success",
+            "ExpectedProtocol"       => "TLSv1.2",
+            "ExpectedServerCertType" => "RSA",
+        },
+    },
+
+    {
+        # Server did not opt in.  After the tls1_check_pkey_comp() fix the
+        # server compares its cert's point form against its OWN advertised
+        # list too; the compressed EC leaf is filtered and selection falls
+        # back to RSA.  Without the fix the server would have committed to
+        # the EC leaf and the client would have alerted illegal_parameter
+        # on receipt.
+        name => "tls12-mixed-server-no-option",
+        server => {
+            %$mixed_server,
+            "MinProtocol"         => "TLSv1.2",
+            "MaxProtocol"         => "TLSv1.2",
+            "SignatureAlgorithms" => "ecdsa_secp256r1_sha256:rsa_pkcs1_sha256",
+            "CipherString"        => "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256",
+        },
+        client => {
+            %$mixed_client,
+            "MinProtocol"         => "TLSv1.2",
+            "MaxProtocol"         => "TLSv1.2",
+            "Options"             => "LegacyECPointFormats",
+            "SignatureAlgorithms" => "ecdsa_secp256r1_sha256:rsa_pkcs1_sha256",
+            "CipherString"        => "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256",
+        },
+        test => {
+            "ExpectedResult"         => "Success",
+            "ExpectedProtocol"       => "TLSv1.2",
+            "ExpectedServerCertType" => "RSA",
+        },
+    },
+
+    {
+        # TLS 1.3 omits ec_point_formats and rsa_pkcs1_* is forbidden for
+        # handshake signatures, so we use rsa_pss_rsae_sha256 (the cert's
+        # key OID is rsaEncryption -- _rsae_, not _pss_).  EC is always
+        # eligible here; ECDSA wins by sigalg preference.
+        name => "tls13-mixed",
+        server => {
+            %$mixed_server,
+            "MinProtocol"         => "TLSv1.3",
+            "MaxProtocol"         => "TLSv1.3",
+            "SignatureAlgorithms" => "ecdsa_secp256r1_sha256:rsa_pss_rsae_sha256",
+        },
+        client => {
+            %$mixed_client,
+            "MinProtocol"         => "TLSv1.3",
+            "MaxProtocol"         => "TLSv1.3",
+            "SignatureAlgorithms" => "ecdsa_secp256r1_sha256:rsa_pss_rsae_sha256",
+        },
+        test => {
+            "ExpectedResult"         => "Success",
+            "ExpectedProtocol"       => "TLSv1.3",
+            "ExpectedServerCertType" => "P-256",
+        },
+    },
+
+    # ----------------------------------------------------------------------
+    # Control: same RSA-vs-EC sigalg-preference setup, but the EC leaf is in
+    # the standard uncompressed SPKI form.  Neither side opts into legacy
+    # compressed support; each side's ec_point_formats list is the default
+    # ('uncompressed' only).  An uncompressed leaf is admitted by every
+    # branch of tls1_check_pkey_comp() unconditionally, so the EC cert is
+    # selected and the RSA cert is unused -- demonstrating that the
+    # point-format machinery filters only compressed leaves.
+    # ----------------------------------------------------------------------
+
+    {
+        name => "tls12-mixed-uncompressed",
+        server => {
+            %$uncompressed_server,
+            "MinProtocol"         => "TLSv1.2",
+            "MaxProtocol"         => "TLSv1.2",
+            "SignatureAlgorithms" => "ecdsa_secp256r1_sha256:rsa_pkcs1_sha256",
+            "CipherString"        => "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256",
+        },
+        client => {
+            "MinProtocol"         => "TLSv1.2",
+            "MaxProtocol"         => "TLSv1.2",
+            "SignatureAlgorithms" => "ecdsa_secp256r1_sha256:rsa_pkcs1_sha256",
+            "CipherString"        => "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256",
+        },
+        test => {
+            "ExpectedResult"         => "Success",
+            "ExpectedProtocol"       => "TLSv1.2",
+            "ExpectedServerCertType" => "P-256",
+        },
+    },
+
+    {
+        # TLS 1.3 omits ec_point_formats entirely; this is the same setup
+        # as tls12-mixed-uncompressed but at TLS 1.3, kept for parity with
+        # the rest of the matrix.
+        name => "tls13-mixed-uncompressed",
+        server => {
+            %$uncompressed_server,
+            "MinProtocol"         => "TLSv1.3",
+            "MaxProtocol"         => "TLSv1.3",
+            "SignatureAlgorithms" => "ecdsa_secp256r1_sha256:rsa_pss_rsae_sha256",
+        },
+        client => {
+            "MinProtocol"         => "TLSv1.3",
+            "MaxProtocol"         => "TLSv1.3",
+            "SignatureAlgorithms" => "ecdsa_secp256r1_sha256:rsa_pss_rsae_sha256",
+        },
+        test => {
+            "ExpectedResult"         => "Success",
+            "ExpectedProtocol"       => "TLSv1.3",
+            "ExpectedServerCertType" => "P-256",
+        },
+    },
+);
+}
