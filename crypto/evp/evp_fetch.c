@@ -352,11 +352,21 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                 ERR_raise_data(ERR_LIB_EVP, ERR_R_FETCH_FAILED,
                     "Algorithm %s cannot be found", name != NULL ? name : "<null>");
                 /*
-                 * Note, we would normally call free_method here to drop the refcount
-                 * but because we are allowing the method store cache to exclusively
-                 * own methods once construct, and this method is already in the store
-                 * we leave it alone here, alowing method store cleanup to handle the freeing
+                 * The method store cache exclusively owns methods once
+                 * constructed, so normally we leave the freeing to the
+                 * store's cleanup.  However, when OPENSSL_NO_CACHED_FETCH
+                 * is defined, ossl_method_store_fetch() takes an extra
+                 * reference for the caller (see property.c).  In the
+                 * corner case where the user passed a colon-separated
+                 * name string (e.g. "SHA256:BogusName"), a get from the
+                 * temporary store can succeed by matching only the first
+                 * sub-name, but the second name2num lookup against the
+                 * full string here still fails -- leaving us holding a
+                 * caller reference we must drop.
                  */
+#if defined(OPENSSL_NO_CACHED_FETCH)
+                free_method(method);
+#endif
                 method = NULL;
             } else {
                 meth_id = evp_method_id(name_id, operation_id);
