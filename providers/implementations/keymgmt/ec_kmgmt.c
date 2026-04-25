@@ -250,17 +250,8 @@ static ossl_inline int otherparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *t
 {
     int ecdh_cofactor_mode = 0, group_check = 0;
     const char *name = NULL;
-    point_conversion_form_t format;
 
     if (ec == NULL)
-        return 0;
-
-    format = EC_KEY_get_conv_form(ec);
-    name = ossl_ec_pt_format_id2name((int)format);
-    if (name != NULL
-        && !ossl_param_build_set_utf8_string(tmpl, params,
-            OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
-            name))
         return 0;
 
     group_check = EC_KEY_get_flags(ec) & EC_FLAG_CHECK_NAMED_GROUP_MASK;
@@ -512,19 +503,21 @@ static int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
         return 0;
 
-    tmpl = OSSL_PARAM_BLD_new();
-    if (tmpl == NULL)
+    if ((bnctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(ec))) == NULL)
         return 0;
+    BN_CTX_start(bnctx);
 
-    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
-        bnctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(ec));
-        if (bnctx == NULL) {
-            ok = 0;
-            goto end;
-        }
-        BN_CTX_start(bnctx);
-        ok = ok && ossl_ec_group_todata(EC_KEY_get0_group(ec), tmpl, NULL, ossl_ec_key_get_libctx(ec), ossl_ec_key_get0_propq(ec), bnctx, &genbuf);
+    if ((tmpl = OSSL_PARAM_BLD_new()) == NULL) {
+        ok = 0;
+        goto end;
     }
+    /*
+     * OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT is added based on the group's
+     * asn1_form by the call below.
+     */
+    ok = ossl_ec_group_todata(EC_KEY_get0_group(ec), tmpl, NULL,
+        ossl_ec_key_get_libctx(ec), ossl_ec_key_get0_propq(ec),
+        bnctx, &genbuf);
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         int include_private = selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
@@ -748,6 +741,10 @@ static int common_get_params(void *key, OSSL_PARAM params[], int sm2)
             goto err;
     }
 
+    /*
+     * OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT is added based on the group's
+     * asn1_form by ossl_ec_group_todata() below.
+     */
     ret = ec_get_ecm_params(ecg, params)
         && ossl_ec_group_todata(ecg, NULL, params, libctx, propq, bnctx,
             &genbuf)
@@ -970,7 +967,6 @@ struct ec_gen_ctx {
     OSSL_LIB_CTX *libctx;
     char *group_name;
     char *encoding;
-    char *pt_format;
     char *group_check;
     char *field_type;
     BIGNUM *p, *a, *b, *order, *cofactor;
@@ -1102,10 +1098,10 @@ static int ec_gen_set_params(void *genctx, const OSSL_PARAM params[])
 
     COPY_INT_PARAM(params, OSSL_PKEY_PARAM_USE_COFACTOR_ECDH, gctx->ecdh_mode);
 
+    /* The point format was never effective in keygen, and is now ignored */
     COPY_UTF8_PARAM(params, OSSL_PKEY_PARAM_GROUP_NAME, gctx->group_name);
     COPY_UTF8_PARAM(params, OSSL_PKEY_PARAM_EC_FIELD_TYPE, gctx->field_type);
     COPY_UTF8_PARAM(params, OSSL_PKEY_PARAM_EC_ENCODING, gctx->encoding);
-    COPY_UTF8_PARAM(params, OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT, gctx->pt_format);
     COPY_UTF8_PARAM(params, OSSL_PKEY_PARAM_EC_GROUP_CHECK_TYPE, gctx->group_check);
 
     COPY_BN_PARAM(params, OSSL_PKEY_PARAM_EC_P, gctx->p);
@@ -1140,12 +1136,6 @@ static int ec_gen_set_group_from_params(struct ec_gen_ctx *gctx)
     if (gctx->encoding != NULL
         && !OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_EC_ENCODING,
             gctx->encoding, 0))
-        goto err;
-
-    if (gctx->pt_format != NULL
-        && !OSSL_PARAM_BLD_push_utf8_string(bld,
-            OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
-            gctx->pt_format, 0))
         goto err;
 
     if (gctx->group_name != NULL) {
@@ -1283,13 +1273,6 @@ static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
                 goto err;
             EC_GROUP_set_asn1_flag(gctx->gen_group, flags);
         }
-        if (gctx->pt_format != NULL) {
-            int format = ossl_ec_pt_format_name2id(gctx->pt_format);
-
-            if (format < 0)
-                goto err;
-            EC_GROUP_set_point_conversion_form(gctx->gen_group, format);
-        }
     }
 #ifdef FIPS_MODULE
     if (!ossl_fips_ind_ec_key_check(OSSL_FIPS_IND_GET(gctx),
@@ -1363,13 +1346,6 @@ static void *sm2_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
                 goto err;
             EC_GROUP_set_asn1_flag(gctx->gen_group, flags);
         }
-        if (gctx->pt_format != NULL) {
-            int format = ossl_ec_pt_format_name2id(gctx->pt_format);
-
-            if (format < 0)
-                goto err;
-            EC_GROUP_set_point_conversion_form(gctx->gen_group, format);
-        }
     }
 
     /* We must always assign a group, no matter what */
@@ -1405,7 +1381,6 @@ static void ec_gen_cleanup(void *genctx)
     BN_free(gctx->cofactor);
     OPENSSL_free(gctx->group_name);
     OPENSSL_free(gctx->field_type);
-    OPENSSL_free(gctx->pt_format);
     OPENSSL_free(gctx->encoding);
     OPENSSL_free(gctx->seed);
     OPENSSL_free(gctx->gen);

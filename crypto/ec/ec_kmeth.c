@@ -90,7 +90,6 @@ EC_KEY *ossl_ec_key_new_method_int(OSSL_LIB_CTX *libctx, const char *propq)
 
     ret->meth = EC_KEY_get_default_method();
     ret->version = 1;
-    ret->conv_form = POINT_CONVERSION_UNCOMPRESSED;
 
 /* No ex_data inside the FIPS provider */
 #ifndef FIPS_MODULE

@@ -301,7 +301,6 @@ struct ec_key_st {
     EC_POINT *pub_key;
     BIGNUM *priv_key;
     unsigned int enc_flag;
-    point_conversion_form_t conv_form;
     CRYPTO_REF_COUNT references;
     int flags;
 #ifndef FIPS_MODULE
