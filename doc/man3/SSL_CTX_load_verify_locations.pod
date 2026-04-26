@@ -30,7 +30,7 @@ SSL_CTX_set_default_verify_store, SSL_CTX_load_verify_locations
 SSL_CTX_load_verify_dir(), SSL_CTX_load_verify_file(),
 SSL_CTX_load_verify_store(), and SSL_CTX_load_verify_locations() specify
 the locations at which trusted CA certificates are located.
-For details see the L</NOTES> below.
+For details, see the L</NOTES> below.
 The SSL context I<ctx> must not be NULL.
 
 Details of the certificate verification and chain checking process are
@@ -38,7 +38,7 @@ described in L<openssl-verification-options(1)/Certification Path Validation>.
 
 SSL_CTX_set_default_verify_paths() specifies the default locations from
 which trusted CA certificates in PEM format are loaded when needed.
-For details see the L</NOTES> below.
+For details, see the L</NOTES> below.
 
 There is one default directory, one default file, and one default store.
 The default CA certificates directory is called F<certs> in the default OpenSSL
@@ -68,8 +68,8 @@ used.
 The CA certificates specified by calling the above functions are used
 as trust anchors for peer certificate verification purposes unless overridden
 by L<SSL_CTX_set0_verify_cert_store(3)>, L<SSL_CTX_set1_verify_cert_store(3)>,
-by L<SSL_set0_verify_cert_store(3)>, or L<SSL_set1_verify_cert_store(3)>.
-They are used as trust anchors for
+L<SSL_set0_verify_cert_store(3)>, or L<SSL_set1_verify_cert_store(3)>.
+They are also used as trust anchors for
 building the client or server's own certificate chain unless overridden
 by L<SSL_CTX_set0_chain_cert_store(3)>, L<SSL_CTX_set1_chain_cert_store(3)>,
 L<SSL_set0_chain_cert_store(3)>, or L<SSL_set1_chain_cert_store(3)>.
@@ -84,16 +84,17 @@ format. The file can contain several CA certificates identified by
  ... (CA certificate in base64 encoding) ...
  -----END CERTIFICATE-----
 
-sequences. Before, between, and after the certificates text is allowed
+sequences. Before, between, and after the certificates text is allowed,
 which can be used, e.g., for descriptions of the certificates.
 
-The I<CApath> is not immediately processed on execution of the SSL_CTX_load_verify_locations() and SSL_CTX_load_verify_dir() functions.
+The I<CApath> is not immediately processed on execution of the
+SSL_CTX_load_verify_locations() and SSL_CTX_load_verify_dir() functions.
 With SSL_CTX_load_verify_dir() it must not be NULL.
 If I<CApath> is not NULL, it points to a directory containing CA certificates
 in PEM format. The files each contain exactly one CA certificate. The files are
 looked up by the CA subject name hash value, which must hence be available.
 If more than one CA certificate with the same subject name hash value exist, the
-extension must be different (e.g. 9d66eef0.0, 9d66eef0.1 etc). The search
+extension must be different (e.g., C<9d66eef0.0>, C<9d66eef0.1>, etc). The search
 is performed in the ordering of the extension number, regardless of other
 properties of the certificates.
 Use the L<openssl-rehash(1)> utility to create the necessary links.
@@ -175,7 +176,6 @@ for use as I<CApath>:
 =head1 SEE ALSO
 
 L<openssl-rehash(1)>,
-L<ssl(7)>, ossl_store-file(7),
 L<SSL_CTX_set0_verify_cert_store(3)>,
 L<SSL_CTX_set1_verify_cert_store(3)>,
 L<SSL_CTX_set0_chain_cert_store(3)>,
@@ -189,7 +189,8 @@ L<SSL_get_client_CA_list(3)>,
 L<SSL_CTX_use_certificate(3)>,
 L<SSL_CTX_add_extra_chain_cert(3)>,
 L<SSL_CTX_set_cert_store(3)>,
-L<SSL_CTX_set_client_CA_list(3)>
+L<SSL_CTX_set_client_CA_list(3)>,
+L<ssl(7)>, ossl_store-file(7)
 
 =head1 COPYRIGHT
 
