@@ -265,9 +265,14 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
     if (inf == NULL)
         goto end;
 
+    /* Count the number of certs and CRLs and make x point to the last X509_INFO */
     for (j = 0; j < sk_X509_INFO_num(inf); j++) {
         tmp = sk_X509_INFO_value(inf, j);
-        if (tmp->x509 != NULL || tmp->crl != NULL) {
+        if (tmp->x509 != NULL) {
+            x = tmp;
+            num++;
+        }
+        if (tmp->crl != NULL) {
             x = tmp;
             num++;
         }
