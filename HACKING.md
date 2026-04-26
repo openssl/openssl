@@ -4,6 +4,48 @@ MODIFYING OPENSSL SOURCE
 This document describes the way to add custom modifications to OpenSSL
 sources.
 
+Repository layout
+-----------------
+
+If you are new to the OpenSSL source tree, these top-level directories are the
+main places to start:
+
+-   `crypto/` contains most of the `libcrypto` implementation, including
+    cryptographic algorithms, ASN.1 handling, encoders and decoders, provider
+    support code, and other shared library internals.
+-   `ssl/` contains the `libssl` implementation, including the TLS and DTLS
+    protocol stack, QUIC support, and handshake logic.
+-   `providers/` contains provider modules that implement algorithm dispatch for
+    OpenSSL 3.x and later.
+-   `include/openssl/` contains the public header files installed for
+    applications that use OpenSSL.
+-   `doc/` contains user-facing and internal documentation written mostly as
+    POD files.
+-   `test/` contains regression, unit, and integration tests, plus the test
+    recipes that drive them.
+-   `apps/` contains the source for the `openssl` command-line application and
+    related utility code.
+-   `Configurations/` contains platform and build-system templates used by
+    `Configure` and generated makefiles.
+-   `util/` contains helper scripts and bookkeeping inputs used to generate and
+    maintain derived files such as ordinals, errors, and documentation support
+    files.
+-   `demos/` contains small example programs that show how to use OpenSSL
+    APIs.
+
+Some important top-level files are also worth knowing about:
+
+-   `Configure` is the main configuration entry point used before building.
+-   `build.info` files describe what source files belong to each library or
+    program and how they are built.
+-   `CHANGES.md`, `NEWS.md`, and `README*.md` files describe release history,
+    current project notes, and subsystem-specific guidance.
+
+As a rough guide, `crypto/`, `ssl/`, `include/openssl/`, `providers/`, and
+`test/` are the directories contributors most often touch. `Configurations/`
+and `util/` are more specialized, but they often matter when adding new source
+files, public APIs, generated files, or platform-specific build changes.
+
 If you are adding new C source files
 ------------------------------------
 

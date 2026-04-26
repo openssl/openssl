@@ -7,6 +7,9 @@ Please visit our [Getting Started] page for other ideas about how to contribute.
 
 Development is done on GitHub in the [openssl/openssl] repository.
 
+If you need a quick tour of the repository layout before making changes, see
+[HACKING.md](HACKING.md).
+
   [openssl/openssl]: <https://github.com/openssl/openssl>
 
 To request a new feature, ask a question, or report a bug,
