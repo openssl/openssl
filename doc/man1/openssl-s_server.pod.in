@@ -344,7 +344,7 @@ Download CRLs from distribution points given in CDP extensions of certificates
 A file in PEM format containing trusted CA certificates (root and/or
 intermediate) used to verify the client certificate chain.
 
-This and the following two options B<-verifyCApath> and B<-verifyCAstore>
+This and the following two options, B<-verifyCApath> and B<-verifyCAstore>,
 take precedence over the B<-CAfile>, B<-CApath>, and B<-CAstore> options.
 
 =item B<-verifyCApath> I<dir>
@@ -360,8 +360,8 @@ URI of a store containing trusted certificates to use
 for verifying client certificates.
 The URI may indicate a single certificate, as well as a collection of them.
 With URIs in the C<file:> scheme, this is generally treated like B<-verifyCApath> or
-B<-verifyCAfile>, depending on if the URI indicates a directory or a single file.
-See L<ossl_store-file(7)> for more information on the C<file:> scheme.
+B<-verifyCAfile>, depending on whether the URI points to a directory or a single file.
+See L<ossl_store(7)> for more information on stores and supported schemes.
 
 Note that B<-CAfile> is the sole source of acceptable issuing
 CA names sent to the client in the Certificate Request message during the
@@ -373,7 +373,7 @@ contribute to this list.
 A file in PEM format containing trusted certificates to use
 when attempting to build the server certificate chain.
 
-This and the following two options B<-chainCApath> and B<-chainCAstore>
+This and the following two options, B<-chainCApath> and B<-chainCAstore>,
 take precedence over the B<-CAfile>, B<-CApath>, and B<-CAstore> options.
 
 =item B<-chainCApath> I<dir>
@@ -389,8 +389,8 @@ The URI of a store containing trusted certificates to use
 for building the server certificate chain provided to the client.
 The URI may indicate a single certificate, as well as a collection of them.
 With URIs in the C<file:> scheme, this is generally treated like B<-chainCApath> or
-B<-chainCAfile>, depending on if the URI indicates a directory or a single file.
-See L<ossl_store-file(7)> for more information on the C<file:> scheme.
+B<-chainCAfile>, depending on whether the URI points to a directory or a single file.
+See L<ossl_store(7)> for more information on stores and supported schemes.
 
 =item B<-nocert>
 
@@ -810,7 +810,7 @@ Pre-compresses certificates (RFC8879) that will be sent during the handshake.
 The certificates loaded via the B<-CAfile>, B<-CApath>, and B<-CAstore> options
 are used as trust anchors when verifying client certificates unless
 overridden by B<-verifyCAfile>, B<-verifyCApath>, or B<-verifyCAstore> options.
-They are used as trust anchors when attempting
+They are also used as trust anchors when attempting
 to build the server certificate chain provided to clients unless
 overridden by B<-chainCAfile>, B<-chainCApath>, or B<-chainCAstore> options.
 
@@ -983,7 +983,7 @@ L<SSL_CONF_cmd(3)>,
 L<SSL_CTX_set_max_send_fragment(3)>,
 L<SSL_CTX_set_split_send_fragment(3)>,
 L<SSL_CTX_set_max_pipelines(3)>,
-L<ossl_store-file(7)>
+L<ossl_store(7)>
 
 =head1 HISTORY
 
