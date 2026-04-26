@@ -7063,6 +7063,68 @@ end:
     return ret;
 }
 
+static int test_EVP_CIPHER_get_type(void)
+{
+    const EVP_CIPHER *cipher = NULL;
+    int base_type, variant_type, nid;
+    int ret = 0;
+
+    // Get the base type from CFB64 (should be NID_des_ede3_cfb64)
+    cipher = EVP_des_ede3_cfb64();
+    base_type = EVP_CIPHER_get_type(cipher);
+
+    // Test CFB64 - should map to the same base_type
+    variant_type = EVP_CIPHER_get_type(cipher);
+    nid = EVP_CIPHER_get_nid(cipher);
+
+    // Verify the returned type
+    if (!TEST_int_eq(variant_type, base_type))
+        goto end;
+
+    // Verify that variant_type and nid are same for 64-bit variants
+    if (!TEST_int_eq(variant_type, nid))
+        goto end;
+
+    if (!TEST_int_eq(NID_des_ede3_cfb64, variant_type))
+        goto end;
+
+    // Test CFB8 - should map to the same base_type
+    cipher = EVP_des_ede3_cfb8();
+    variant_type = EVP_CIPHER_get_type(cipher);
+    nid = EVP_CIPHER_get_nid(cipher);
+
+    // Verify the returned type
+    if (!TEST_int_eq(variant_type, base_type))
+        goto end;
+
+    // Verify that variant_type and nid are different for variants
+    if (!TEST_int_ne(variant_type, nid))
+        goto end;
+
+    if (!TEST_int_eq(NID_des_ede3_cfb64, variant_type))
+        goto end;
+
+    // Test CFB1 - should map to the same base_type
+    cipher = EVP_des_ede3_cfb1();
+    variant_type = EVP_CIPHER_get_type(cipher);
+    nid = EVP_CIPHER_get_nid(cipher);
+
+    // Verify the returned type
+    if (!TEST_int_eq(variant_type, base_type))
+        goto end;
+
+    // Verify that variant_type and nid are different for variants
+    if (!TEST_int_ne(variant_type, nid))
+        goto end;
+
+    if (!TEST_int_eq(NID_des_ede3_cfb64, variant_type))
+        goto end;
+
+    ret = 1;
+end:
+    return ret;
+}
+
 static int test_evp_cipher_pipeline(void)
 {
     OSSL_PROVIDER *fake_pipeline = NULL;
@@ -7913,6 +7975,8 @@ int setup_tests(void)
     ADD_TEST(test_evp_cipher_negative_length);
 
     ADD_TEST(test_evp_cipher_pipeline);
+
+    ADD_TEST(test_EVP_CIPHER_get_type);
 
 #ifndef OPENSSL_NO_ML_KEM
     ADD_ALL_TESTS(test_ml_kem_seed_only, 2);
