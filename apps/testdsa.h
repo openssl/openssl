@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_APPS_TESTDSA_H)
+#define OSSL_APPS_TESTDSA_H
+
 #include <openssl/param_build.h>
 
 /* used by speed.c */
@@ -1497,3 +1500,5 @@ err:
     EVP_PKEY_CTX_free(pctx);
     return pkey;
 }
+
+#endif /* !defined(OSSL_APPS_TESTDSA_H) */
