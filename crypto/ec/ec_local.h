@@ -8,6 +8,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_EC_EC_LOCAL_H)
+#define OSSL_LIBCRYPTO_EC_EC_LOCAL_H
+
 #include <stdlib.h>
 
 #include <openssl/obj_mac.h>
@@ -794,3 +797,5 @@ static ossl_inline int ec_point_ladder_post(const EC_GROUP *group,
 
     return 1;
 }
+
+#endif /* !defined(OSSL_LIBCRYPTO_EC_EC_LOCAL_H) */

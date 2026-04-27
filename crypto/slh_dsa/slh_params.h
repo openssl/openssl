@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_SLH_DSA_SLH_PARAMS_H)
+#define OSSL_LIBCRYPTO_SLH_DSA_SLH_PARAMS_H
+
 #include <openssl/e_os2.h>
 
 /*
@@ -37,3 +40,5 @@ typedef struct slh_dsa_params_st {
 } SLH_DSA_PARAMS;
 
 const SLH_DSA_PARAMS *ossl_slh_dsa_params_get(const char *alg);
+
+#endif /* !defined(OSSL_LIBCRYPTO_SLH_DSA_SLH_PARAMS_H) */

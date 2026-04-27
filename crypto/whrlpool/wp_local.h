@@ -7,6 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_WHRLPOOL_WP_LOCAL_H)
+#define OSSL_LIBCRYPTO_WHRLPOOL_WP_LOCAL_H
+
 #include <openssl/whrlpool.h>
 
 void whirlpool_block(WHIRLPOOL_CTX *, const void *, size_t);
+
+#endif /* !defined(OSSL_LIBCRYPTO_WHRLPOOL_WP_LOCAL_H) */

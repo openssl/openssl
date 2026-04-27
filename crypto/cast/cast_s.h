@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_CAST_CAST_S_H)
+#define OSSL_LIBCRYPTO_CAST_CAST_S_H
+
 const CAST_LONG CAST_S_table0[256] = {
     0x30fb40d4,
     0x9fa0ff0b,
@@ -2078,3 +2081,5 @@ const CAST_LONG CAST_S_table7[256] = {
     0x8db2a283,
     0xea8bf59e,
 };
+
+#endif /* !defined(OSSL_LIBCRYPTO_CAST_CAST_S_H) */

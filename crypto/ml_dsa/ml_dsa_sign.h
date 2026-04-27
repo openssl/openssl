@@ -7,9 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_ML_DSA_ML_DSA_SIGN_H)
+#define OSSL_LIBCRYPTO_ML_DSA_ML_DSA_SIGN_H
+
 struct ml_dsa_sig_st {
     VECTOR z;
     VECTOR hint;
     uint8_t *c_tilde;
     size_t c_tilde_len;
 };
+
+#endif /* !defined(OSSL_LIBCRYPTO_ML_DSA_ML_DSA_SIGN_H) */

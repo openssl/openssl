@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_IDEA_IDEA_LOCAL_H)
+#define OSSL_LIBCRYPTO_IDEA_IDEA_LOCAL_H
+
 #define idea_mul(r, a, b, ul)                                          \
     ul = (unsigned long)a * b;                                         \
     if (ul != 0) {                                                     \
@@ -120,3 +123,5 @@
     ul = x2 ^ t0; /* do the swap to x3 */ \
     x2 = x3 ^ t1;                         \
     x3 = ul;
+
+#endif /* !defined(OSSL_LIBCRYPTO_IDEA_IDEA_LOCAL_H) */

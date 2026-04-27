@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_VMS_RMS_H)
+#define OSSL_LIBCRYPTO_VMS_RMS_H
+
 #ifdef NAML$C_MAXRSS
 
 #define CC_RMS_NAMX cc$rms_naml
@@ -58,3 +61,5 @@
 #endif /* def NAM$M_NO_SHORT_UPCASE [else] */
 
 #endif /* def NAML$C_MAXRSS [else] */
+
+#endif /* !defined(OSSL_LIBCRYPTO_VMS_RMS_H) */

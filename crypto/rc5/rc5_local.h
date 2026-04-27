@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_RC5_RC5_LOCAL_H)
+#define OSSL_LIBCRYPTO_RC5_RC5_LOCAL_H
+
 #include <stdlib.h>
 
 #undef c2l
@@ -143,3 +146,5 @@
     a &= RC5_32_MASK;        \
     a = ROTATE_r32(a, b);    \
     a ^= b;
+
+#endif /* !defined(OSSL_LIBCRYPTO_RC5_RC5_LOCAL_H) */

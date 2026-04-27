@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_RIPEMD_RMDCONST_H)
+#define OSSL_LIBCRYPTO_RIPEMD_RMDCONST_H
+
 #define KL0 0x00000000L
 #define KL1 0x5A827999L
 #define KL2 0x6ED9EBA1L
@@ -348,3 +351,5 @@
 #define SR78 11
 #define WR79 11
 #define SR79 11
+
+#endif /* !defined(OSSL_LIBCRYPTO_RIPEMD_RMDCONST_H) */

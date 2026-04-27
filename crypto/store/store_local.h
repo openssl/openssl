@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_STORE_STORE_LOCAL_H)
+#define OSSL_LIBCRYPTO_STORE_STORE_LOCAL_H
+
 #include <openssl/core_dispatch.h>
 #include "internal/thread_once.h"
 #include "internal/refcount.h"
@@ -175,3 +178,5 @@ struct ossl_load_result_data_st {
     OSSL_STORE_CTX *ctx;
 };
 OSSL_CALLBACK ossl_store_handle_load_result;
+
+#endif /* !defined(OSSL_LIBCRYPTO_STORE_STORE_LOCAL_H) */

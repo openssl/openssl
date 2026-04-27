@@ -12,6 +12,9 @@
  * of the ext_nid values.
  */
 
+#if !defined(OSSL_LIBCRYPTO_X509_STANDARD_EXTS_H)
+#define OSSL_LIBCRYPTO_X509_STANDARD_EXTS_H
+
 static const X509V3_EXT_METHOD *const standard_exts[] = {
     &ossl_v3_nscert,
     &ossl_v3_ns_ia5_list[0],
@@ -97,3 +100,5 @@ static const X509V3_EXT_METHOD *const standard_exts[] = {
 /* Number of standard extensions */
 
 #define STANDARD_EXTENSION_COUNT OSSL_NELEM(standard_exts)
+
+#endif /* !defined(OSSL_LIBCRYPTO_X509_STANDARD_EXTS_H) */

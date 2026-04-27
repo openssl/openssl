@@ -6,6 +6,9 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#if !defined(OSSL_LIBCRYPTO_X509_X509_LOCAL_H)
+#define OSSL_LIBCRYPTO_X509_X509_LOCAL_H
+
 #include <openssl/safestack.h>
 #include <openssl/x509_vfy.h>
 
@@ -195,3 +198,5 @@ int ossl_x509_check_rfc822(X509 *x, const char *chk, size_t chklen,
     unsigned int flags);
 int ossl_x509_check_smtputf8(X509 *x, const char *chk, size_t chklen,
     unsigned int flags);
+
+#endif /* !defined(OSSL_LIBCRYPTO_X509_X509_LOCAL_H) */

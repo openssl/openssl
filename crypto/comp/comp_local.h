@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_COMP_COMP_LOCAL_H)
+#define OSSL_LIBCRYPTO_COMP_COMP_LOCAL_H
+
 struct comp_method_st {
     int type; /* NID for compression library */
     const char *name; /* A text string to identify the library */
@@ -28,3 +31,5 @@ struct comp_ctx_st {
     unsigned long expand_out;
     void *data;
 };
+
+#endif /* !defined(OSSL_LIBCRYPTO_COMP_COMP_LOCAL_H) */

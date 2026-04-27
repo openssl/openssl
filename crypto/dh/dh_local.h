@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_DH_DH_LOCAL_H)
+#define OSSL_LIBCRYPTO_DH_DH_LOCAL_H
+
 #include <openssl/dh.h>
 #include "internal/refcount.h"
 #include "internal/ffc.h"
@@ -57,3 +60,5 @@ struct dh_method {
     int (*generate_params)(DH *dh, int prime_len, int generator,
         BN_GENCB *cb);
 };
+
+#endif /* !defined(OSSL_LIBCRYPTO_DH_DH_LOCAL_H) */

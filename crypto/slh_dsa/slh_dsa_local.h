@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_SLH_DSA_SLH_DSA_LOCAL_H)
+#define OSSL_LIBCRYPTO_SLH_DSA_SLH_DSA_LOCAL_H
+
 #include "crypto/slh_dsa.h"
 #include "slh_hash.h"
 #include "slh_params.h"
@@ -93,3 +96,5 @@ __owur int ossl_slh_fors_pk_from_sig(SLH_DSA_HASH_CTX *ctx, PACKET *sig_rpkt,
     const uint8_t *md, const uint8_t *pk_seed,
     uint8_t *adrs,
     uint8_t *pk_out, size_t pk_out_len);
+
+#endif /* !defined(OSSL_LIBCRYPTO_SLH_DSA_SLH_DSA_LOCAL_H) */

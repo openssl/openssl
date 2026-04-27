@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_PKCS12_P12_LOCAL_H)
+#define OSSL_LIBCRYPTO_PKCS12_P12_LOCAL_H
+
 struct PKCS12_MAC_DATA_st {
     X509_SIG *dinfo;
     ASN1_OCTET_STRING *salt;
@@ -43,3 +46,5 @@ struct pkcs12_bag_st {
 };
 
 const PKCS7_CTX *ossl_pkcs12_get0_pkcs7ctx(const PKCS12 *p12);
+
+#endif /* !defined(OSSL_LIBCRYPTO_PKCS12_P12_LOCAL_H) */

@@ -9,6 +9,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_SM3_SM3_LOCAL_H)
+#define OSSL_LIBCRYPTO_SM3_SM3_LOCAL_H
+
 #include <string.h>
 #include "internal/cryptlib.h"
 #include "internal/sm3.h"
@@ -131,3 +134,5 @@ void ossl_sm3_transform(SM3_CTX *c, const unsigned char *data);
 #define SM3_F 0x163138aaUL
 #define SM3_G 0xe38dee4dUL
 #define SM3_H 0xb0fb0e4eUL
+
+#endif /* !defined(OSSL_LIBCRYPTO_SM3_SM3_LOCAL_H) */

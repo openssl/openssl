@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_ML_DSA_ML_DSA_VECTOR_H)
+#define OSSL_LIBCRYPTO_ML_DSA_ML_DSA_VECTOR_H
+
 #include <assert.h>
 #include "ml_dsa_poly.h"
 
@@ -272,3 +275,5 @@ vector_use_hint(const VECTOR *h, const VECTOR *r, uint32_t gamma2, VECTOR *out)
     for (i = 0; i < out->num_poly; i++)
         poly_use_hint(h->poly + i, r->poly + i, gamma2, out->poly + i);
 }
+
+#endif /* !defined(OSSL_LIBCRYPTO_ML_DSA_ML_DSA_VECTOR_H) */

@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_RC2_RC2_LOCAL_H)
+#define OSSL_LIBCRYPTO_RC2_RC2_LOCAL_H
+
 #undef c2l
 #define c2l(c, l) (l = ((unsigned long)(*((c)++))), \
     l |= ((unsigned long)(*((c)++))) << 8L,         \
@@ -83,3 +86,5 @@
             *(--(c)) = (unsigned char)(((l1)) & 0xff);        \
         }                                                     \
     }
+
+#endif /* !defined(OSSL_LIBCRYPTO_RC2_RC2_LOCAL_H) */
