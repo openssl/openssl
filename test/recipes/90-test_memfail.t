@@ -73,7 +73,7 @@ plan tests => $total_malloccount;
 
 sub run_memfail_test {
     my $skipcount = $_[0];
-    my @mallocseq = (1..$_[1]);
+    my @mallocseq = (0..$_[1] - 1);
     my @cmd = $_[2];
 
     for my $idx (@mallocseq) {
