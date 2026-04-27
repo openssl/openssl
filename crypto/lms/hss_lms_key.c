@@ -25,7 +25,6 @@ HSS_LMS_KEY *ossl_hss_lms_key_new(OSSL_LIB_CTX *libctx, const char *propq)
     if (hsskey == NULL)
         return NULL;
 
-    hsskey->libctx = libctx;
     if (propq != NULL) {
         hsskey->propq = OPENSSL_strdup(propq);
         if (hsskey->propq == NULL)

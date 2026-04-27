@@ -2,12 +2,12 @@
 
 =head1 NAME
 
-EVP_SIGNATURE-LMS
+EVP_SIGNATURE-HSS-LMS
 - The EVP_PKEY B<LMS> and B<HSS> signature implementation
 
 =head1 DESCRIPTION
 
-The B<LMS> EVP_PKEY implementation supports Leighton-Micali Signatures (LMS)
+The B<HSS-LMS> EVP_PKEY implementation supports Leighton-Micali Signatures (LMS)
 and Hierarchical Signature System (HSS) described in [RFC 8554](https://datatracker.ietf.org/doc/html/rfc8854)
 and [SP 800-208](https://csrc.nist.gov/pubs/sp/800/208/final).
 The OpenSSL providers only support HSS/LMS signature verification, as this is a

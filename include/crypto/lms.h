@@ -155,7 +155,9 @@ typedef struct lms_key_st {
 } LMS_KEY;
 
 typedef struct hss_lms_info_st {
-    int len, hss, n;
+    size_t len;
+    int hss;
+    uint32_t n;
 } HSS_LMS_INFO;
 
 /*
@@ -165,7 +167,6 @@ typedef struct hss_lms_info_st {
 typedef struct hss_key_st {
     uint32_t L; /* The number of Levels in the tree */
     LMS_KEY public;
-    OSSL_LIB_CTX *libctx;
     char *propq;
 } HSS_LMS_KEY;
 

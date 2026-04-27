@@ -27,10 +27,10 @@ static const HSS_LMS_INFO hss_lms_info[] = {
 
 const HSS_LMS_INFO *ossl_hss_lms_getinfo(size_t len)
 {
-    int i;
+    size_t i;
 
-    for (i = 0; i < (int)OSSL_NELEM(hss_lms_info); ++i) {
-        if (len == (size_t)hss_lms_info[i].len)
+    for (i = 0; i < OSSL_NELEM(hss_lms_info); ++i) {
+        if (len == hss_lms_info[i].len)
             return hss_lms_info + i;
     }
     return NULL;
@@ -133,7 +133,8 @@ int ossl_hss_lms_pubkey_decode(const HSS_LMS_INFO *info,
     pkey->encodedlen = publen;
     return 1;
 err:
-    OPENSSL_free(pkey->encoded);
+    if (pkey->allocated)
+        OPENSSL_free(pkey->encoded);
     pkey->encoded = NULL;
     pkey->allocated = 0;
     return 0;
