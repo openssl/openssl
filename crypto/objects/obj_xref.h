@@ -10,6 +10,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_OBJECTS_OBJ_XREF_H)
+#define OSSL_LIBCRYPTO_OBJECTS_OBJ_XREF_H
+
+/* clang-format off */
+
+#include <openssl/objects.h>
 
 typedef struct {
     int sign_id;
@@ -151,3 +157,6 @@ static const nid_triple *const sigoid_srt_xref[] = {
     &sigoid_srt[47],
     &sigoid_srt[52],
 };
+/* clang-format on */
+
+#endif /* !defined(OSSL_LIBCRYPTO_OBJECTS_OBJ_XREF_H) */
