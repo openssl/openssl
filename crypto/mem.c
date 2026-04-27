@@ -191,6 +191,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
     void *ptr;
 
     INCREMENT(malloc_count);
+    FAILTEST();
     if (malloc_impl != CRYPTO_malloc) {
         ptr = malloc_impl(num, file, line);
         if (ptr != NULL || num == 0)
@@ -201,7 +202,6 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
     if (ossl_unlikely(num == 0))
         return NULL;
 
-    FAILTEST();
     if (allow_customize) {
         /*
          * Disallow customization after the first allocation. We only set this
@@ -266,6 +266,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
     void *ret;
 
     INCREMENT(realloc_count);
+    FAILTEST();
     if (realloc_impl != CRYPTO_realloc) {
         ret = realloc_impl(str, num, file, line);
 
@@ -283,7 +284,6 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
         return NULL;
     }
 
-    FAILTEST();
     ret = realloc(str, num);
 
 err:

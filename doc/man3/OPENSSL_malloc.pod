@@ -321,6 +321,10 @@ the caller may need to fall back to a non-aligned memory allocation
 Before OpenSSL 4.0, the call to OPENSSL_aligned_alloc() did not have
 an explicit upper limit on the value of I<alignment>.
 
+Before OpenSSL 4.1, allocations done by custom memory functions
+and zero-sized allocations did not progress allocation counter
+used against B<OPENSSL_MALLOC_FAILURES> specification.
+
 =head1 COPYRIGHT
 
 Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
