@@ -2690,9 +2690,9 @@ static const uint8_t argon2_ad[] = {
     0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
     0x04, 0x04, 0x04, 0x04
 };
-const uint32_t argon2_lanes = 4;
-const uint32_t argon2_memcost = 32;
-const uint32_t argon2_iterations = 3;
+static const uint32_t argon2_lanes = 4;
+static const uint32_t argon2_memcost = 32;
+static const uint32_t argon2_iterations = 3;
 
 static int test_argon2_helper(void)
 {
@@ -2727,14 +2727,14 @@ static int test_argon2_helper(void)
 
     if (!TEST_true(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2D_TYPE,
             argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
-            4, 32, 3, NULL, optionals)))
+            argon2_lanes, argon2_memcost, argon2_iterations, NULL, optionals)))
         goto err;
     if (!TEST_mem_eq(out, outlen, expected1, sizeof(expected1)))
         goto err;
 
     if (!TEST_true(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2I_TYPE,
             argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
-            4, 32, 3, NULL, optionals)))
+            argon2_lanes, argon2_memcost, argon2_iterations, NULL, optionals)))
         goto err;
     if (!TEST_mem_eq(out, outlen, expected2, sizeof(expected2)))
         goto err;
@@ -2742,7 +2742,7 @@ static int test_argon2_helper(void)
     optionals[2] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_PROPERTIES, "provider=default", 0);
     if (!TEST_true(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2ID_TYPE,
             argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
-            4, 32, 3, NULL, optionals)))
+            argon2_lanes, argon2_memcost, argon2_iterations, NULL, optionals)))
         goto err;
     if (!TEST_mem_eq(out, outlen, expected3, sizeof(expected3)))
         goto err;
@@ -2767,53 +2767,53 @@ static int test_argon2_helper_fail(void)
 
     /* Bad algorithm type */
     if (!TEST_false(EVP_KDF_argon2(out, outlen, 500,
-        argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
-        4, 32, 3, NULL, optionals)))
+            argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
+            argon2_lanes, argon2_memcost, argon2_iterations, NULL, optionals)))
         goto err;
 
     /* wrong type for properties */
     optionals[2] = OSSL_PARAM_construct_int32(OSSL_ALG_PARAM_PROPERTIES, &rubbish);
     if (!TEST_false(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2D_TYPE,
-        argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
-        4, 32, 3, NULL, optionals)))
+            argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
+            argon2_lanes, argon2_memcost, argon2_iterations, NULL, optionals)))
         goto err;
     /* Unknown property query */
     optionals[2] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_PROPERTIES, "provider=error", 0);
     if (!TEST_false(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2D_TYPE,
-        argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
-        4, 32, 3, NULL, optionals)))
+            argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
+            argon2_lanes, argon2_memcost, argon2_iterations, NULL, optionals)))
         goto err;
     optionals[2] = OSSL_PARAM_construct_end();
 
     /* Invalid argon2_password */
     if (!TEST_false(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2D_TYPE,
-        NULL, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
-        4, 32, 3, NULL, optionals)))
+            NULL, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
+            argon2_lanes, argon2_memcost, argon2_iterations, NULL, optionals)))
         goto err;
     if (!TEST_false(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2D_TYPE,
-        argon2_pass, 0, argon2_salt, sizeof(argon2_salt),
-        4, 32, 3, NULL, optionals)))
+            argon2_pass, 0, argon2_salt, sizeof(argon2_salt),
+            argon2_lanes, argon2_memcost, argon2_iterations, NULL, optionals)))
         goto err;
     /* Invalid argon2_salt */
     if (!TEST_false(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2D_TYPE,
-        argon2_pass, sizeof(argon2_pass), argon2_salt,
-        0, 4, 32, 3, NULL, optionals)))
+            argon2_pass, sizeof(argon2_pass), argon2_salt,
+            0, argon2_lanes, argon2_memcost, argon2_iterations, NULL, optionals)))
         goto err;
     /* Invalid lane */
     if (!TEST_false(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2D_TYPE,
-         argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
-         0, 32, 3, NULL, optionals)))
-         goto err;
+            argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
+            0, argon2_memcost, argon2_iterations, NULL, optionals)))
+        goto err;
     /* Invalid memory cost */
     if (!TEST_false(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2D_TYPE,
-         argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
-         4, 0, 3, NULL, optionals)))
-         goto err;
+            argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
+            argon2_lanes, 0, argon2_iterations, NULL, optionals)))
+        goto err;
     /* Invalid iterations */
     if (!TEST_false(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2D_TYPE,
-         argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
-         4, 32, 0, NULL, optionals)))
-         goto err;
+            argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
+            argon2_lanes, argon2_memcost, 0, NULL, optionals)))
+        goto err;
     ret = 1;
 err:
     ERR_pop_to_mark();
