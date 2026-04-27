@@ -11,7 +11,9 @@
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_TDES_H
 
 #include <openssl/des.h>
+#include <openssl/evp.h>
 #include <openssl/core_dispatch.h>
+#include "prov/ciphercommon.h"
 #include "prov/securitycheck.h"
 #include "crypto/des_platform.h"
 

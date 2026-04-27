@@ -12,6 +12,7 @@
 
 #include <openssl/des.h>
 #include "crypto/des_platform.h"
+#include "prov/ciphercommon.h"
 
 #define TDES_FLAGS 0
 

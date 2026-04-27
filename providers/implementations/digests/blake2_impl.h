@@ -18,6 +18,9 @@
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_DIGESTS_BLAKE2_IMPL_H
 
 #include <string.h>
+
+#include <openssl/e_os2.h>
+
 #include "internal/endian.h"
 
 static ossl_inline uint32_t load32(const uint8_t *src)

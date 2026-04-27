@@ -11,6 +11,10 @@
 #define OSSL_PROV_CIPHERCOMMON_CCM_H
 #pragma once
 
+#include <stddef.h>
+#include <stdint.h>
+
+#include "prov/ciphercommon.h"
 #include "ciphercommon_aead.h"
 
 typedef struct prov_ccm_hw_st PROV_CCM_HW;
