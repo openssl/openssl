@@ -78,6 +78,19 @@ int EVP_KDF_names_do_all(const EVP_KDF *kdf,
 #define EVP_KDF_SSHKDF_TYPE_INTEGRITY_KEY_CLI_TO_SRV 69
 #define EVP_KDF_SSHKDF_TYPE_INTEGRITY_KEY_SRV_TO_CLI 70
 
+/* Helper API functions */
+
+#define EVP_KDF_ARGON2ID_TYPE 0
+#define EVP_KDF_ARGON2I_TYPE 1
+#define EVP_KDF_ARGON2D_TYPE 2
+
+int EVP_KDF_argon2(uint8_t *out, size_t outlen,
+    int alg_type,
+    const uint8_t *pass, size_t passlen,
+    const uint8_t *salt, size_t saltlen,
+    uint32_t lanes, uint32_t memorycost, uint32_t iterations,
+    OSSL_LIB_CTX *libctx, const OSSL_PARAM *optionals);
+
 /**** The legacy PKEY-based KDF API follows. ****/
 
 #define EVP_PKEY_CTRL_TLS_MD (EVP_PKEY_ALG_CTRL)
