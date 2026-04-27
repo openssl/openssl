@@ -11,6 +11,8 @@
 #if !defined(OSSL_LIBCRYPTO_ML_DSA_ML_DSA_MATRIX_H)
 #define OSSL_LIBCRYPTO_ML_DSA_ML_DSA_MATRIX_H
 
+#include "ml_dsa_local.h"
+
 struct matrix_st {
     POLY *m_poly;
     size_t k, l;

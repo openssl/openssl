@@ -7,10 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* size limits: this stuff is taken straight from RFC3280 */
-
 #if !defined(OSSL_LIBCRYPTO_ASN1_TBL_STANDARD_H)
 #define OSSL_LIBCRYPTO_ASN1_TBL_STANDARD_H
+
+/* size limits: this stuff is taken straight from RFC3280 */
+
+#include <openssl/asn1.h>
+#include <openssl/obj_mac.h>
 
 #define ub_name 32768
 #define ub_common_name 64

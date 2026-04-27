@@ -10,6 +10,8 @@
 #if !defined(OSSL_LIBCRYPTO_X509_EXT_DAT_H)
 #define OSSL_LIBCRYPTO_X509_EXT_DAT_H
 
+#include <openssl/x509v3.h>
+
 int ossl_v3_name_cmp(const char *name, const char *cmp);
 
 extern const X509V3_EXT_METHOD ossl_v3_bcons, ossl_v3_nscert, ossl_v3_key_usage, ossl_v3_ext_ku;

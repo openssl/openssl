@@ -13,6 +13,8 @@
 #ifndef OSSL_CRYPTO_EC_CURVE448_ED448_H
 #define OSSL_CRYPTO_EC_CURVE448_ED448_H
 
+#include <openssl/types.h>
+
 #include "point_448.h"
 
 /* Number of bytes in an EdDSA public key. */

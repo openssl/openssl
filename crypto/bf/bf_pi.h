@@ -10,6 +10,8 @@
 #if !defined(OSSL_LIBCRYPTO_BF_BF_PI_H)
 #define OSSL_LIBCRYPTO_BF_BF_PI_H
 
+#include <openssl/blowfish.h>
+
 static const BF_KEY bf_init = {
     { 0x243f6a88L, 0x85a308d3L, 0x13198a2eL, 0x03707344L,
         0xa4093822L, 0x299f31d0L, 0x082efa98L, 0xec4e6c89L,

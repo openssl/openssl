@@ -10,6 +10,8 @@
 #if !defined(OSSL_LIBCRYPTO_CAST_CAST_S_H)
 #define OSSL_LIBCRYPTO_CAST_CAST_S_H
 
+#include <openssl/cast.h>
+
 const CAST_LONG CAST_S_table0[256] = {
     0x30fb40d4,
     0x9fa0ff0b,

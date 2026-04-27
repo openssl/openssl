@@ -29,12 +29,6 @@ static LHASH_OF(OBJ_NAME) *names_lh = NULL;
 static int names_type_num = OBJ_NAME_TYPE_NUM;
 static CRYPTO_RWLOCK *obj_lock = NULL;
 
-struct name_funcs_st {
-    unsigned long (*hash_func)(const char *name);
-    int (*cmp_func)(const char *a, const char *b);
-    void (*free_func)(const char *, int, const char *);
-};
-
 static STACK_OF(NAME_FUNCS) *name_funcs_stack;
 
 /*

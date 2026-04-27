@@ -10,6 +10,8 @@
 #if !defined(OSSL_LIBCRYPTO_DES_SPR_H)
 #define OSSL_LIBCRYPTO_DES_SPR_H
 
+#include <openssl/des.h>
+
 const DES_LONG DES_SPtrans[8][64] = {
     {
         /* nibble 0 */

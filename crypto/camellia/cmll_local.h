@@ -25,6 +25,8 @@
 #ifndef OSSL_CRYPTO_CAMELLIA_CMLL_LOCAL_H
 #define OSSL_CRYPTO_CAMELLIA_CMLL_LOCAL_H
 
+#include <openssl/camellia.h>
+
 typedef unsigned int u32;
 typedef unsigned char u8;
 

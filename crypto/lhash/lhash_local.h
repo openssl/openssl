@@ -10,6 +10,7 @@
 #define OSSL_LIBCRYPTO_LHASH_LHASH_LOCAL_H
 
 #include <openssl/crypto.h>
+#include <openssl/lhash.h>
 
 #include "internal/tsan_assist.h"
 
