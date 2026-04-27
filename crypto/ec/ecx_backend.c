@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -29,7 +29,8 @@ int ossl_ecx_public_from_private(ECX_KEY *key)
 {
     switch (key->type) {
     case ECX_KEY_TYPE_X25519:
-        ossl_x25519_public_from_private(key->pubkey, key->privkey);
+        ossl_x25519_public_from_private(key->pubkey, key->privkey,
+            key->x25519_scalar_mode);
         break;
     case ECX_KEY_TYPE_ED25519:
         if (!ossl_ed25519_public_from_private(key->libctx, key->pubkey,
@@ -111,6 +112,7 @@ ECX_KEY *ossl_ecx_key_dup(const ECX_KEY *key, int selection)
     ret->haspubkey = 0;
     ret->keylen = key->keylen;
     ret->type = key->type;
+    ret->x25519_scalar_mode = key->x25519_scalar_mode;
 
     if (!CRYPTO_NEW_REF(&ret->references, 1))
         goto err;

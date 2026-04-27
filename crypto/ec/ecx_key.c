@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -42,6 +42,7 @@ ECX_KEY *ossl_ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type, int haspubkey
         break;
     }
     ret->type = type;
+    ret->x25519_scalar_mode = OSSL_X25519_SCALAR_MODE_RFC7748;
 
     if (!CRYPTO_NEW_REF(&ret->references, 1))
         goto err;
@@ -142,7 +143,9 @@ int ossl_ecx_compute_key(ECX_KEY *peer, ECX_KEY *priv, size_t keylen,
             }
         } else
 #endif
-            if (ossl_x25519(secret, priv->privkey, peer->pubkey) == 0) {
+            if (ossl_x25519(secret, priv->privkey, peer->pubkey,
+                    priv->x25519_scalar_mode)
+                == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
             return 0;
         }
