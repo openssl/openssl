@@ -10,7 +10,9 @@
 #if !defined(OSSL_APPS_INCLUDE_NAMES_H)
 #define OSSL_APPS_INCLUDE_NAMES_H
 
+#include <openssl/evp.h>
 #include <openssl/safestack.h>
+#include <openssl/types.h>
 
 /* Standard comparing function for names */
 int name_cmp(const char *const *a, const char *const *b);

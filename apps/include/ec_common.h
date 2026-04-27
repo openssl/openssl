@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+
 #ifndef OPENSSL_NO_EC
 static const char *point_format_options[] = {
     "uncompressed",

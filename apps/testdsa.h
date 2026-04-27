@@ -10,6 +10,9 @@
 #if !defined(OSSL_APPS_TESTDSA_H)
 #define OSSL_APPS_TESTDSA_H
 
+#include <openssl/core_names.h>
+#include <openssl/evp.h>
+#include <openssl/params.h>
 #include <openssl/param_build.h>
 
 /* used by speed.c */
