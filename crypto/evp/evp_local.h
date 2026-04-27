@@ -11,6 +11,10 @@
 #define OSSL_LIBCRYPTO_EVP_EVP_LOCAL_H
 
 #include <openssl/core_dispatch.h>
+#include <openssl/evp.h>
+
+#include <crypto/evp.h>
+
 #include "internal/refcount.h"
 
 #define EVP_CTRL_RET_UNSUPPORTED -1

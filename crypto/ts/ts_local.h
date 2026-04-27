@@ -7,13 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_TS_TS_LOCAL_H)
+#define OSSL_LIBCRYPTO_TS_TS_LOCAL_H
+
+#include <openssl/asn1.h>
+#include <openssl/ts.h>
+#include <openssl/x509.h>
+
 /*-
  * MessageImprint ::= SEQUENCE  {
  *      hashAlgorithm                AlgorithmIdentifier,
  *      hashedMessage                OCTET STRING  }
  */
-#if !defined(OSSL_LIBCRYPTO_TS_TS_LOCAL_H)
-#define OSSL_LIBCRYPTO_TS_TS_LOCAL_H
 
 struct TS_msg_imprint_st {
     X509_ALGOR *hash_algo;

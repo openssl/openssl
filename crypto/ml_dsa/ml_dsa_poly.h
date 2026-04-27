@@ -11,6 +11,8 @@
 
 #include <openssl/crypto.h>
 
+#include "ml_dsa_local.h"
+
 #define ML_DSA_NUM_POLY_COEFFICIENTS 256
 
 /* Polynomial object with 256 coefficients. The coefficients are unsigned 32 bits */

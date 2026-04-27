@@ -11,6 +11,7 @@
 #define OSSL_CRYPTO_RISCV_ARCH_H
 
 #include <ctype.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #if defined(OPENSSL_SYS_LINUX) && !defined(FIPS_MODULE)

@@ -10,6 +10,7 @@
 #ifndef OSSL_CRYPTO_CMS_LOCAL_H
 #define OSSL_CRYPTO_CMS_LOCAL_H
 
+#include <openssl/cms.h>
 #include <openssl/x509.h>
 
 /*

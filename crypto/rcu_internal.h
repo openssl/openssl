@@ -11,6 +11,8 @@
 #define OPENSSL_RCU_INTERNAL_H
 #pragma once
 
+#include <internal/rcu.h>
+
 struct rcu_qp;
 
 struct rcu_cb_item {

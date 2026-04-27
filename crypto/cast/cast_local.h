@@ -10,6 +10,8 @@
 #if !defined(OSSL_LIBCRYPTO_CAST_CAST_LOCAL_H)
 #define OSSL_LIBCRYPTO_CAST_CAST_LOCAL_H
 
+#include <openssl/cast.h>
+
 #ifdef OPENSSL_SYS_WIN32
 #include <stdlib.h>
 #endif

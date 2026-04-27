@@ -10,6 +10,11 @@
 #if !defined(OSSL_LIBCRYPTO_X509_PCY_LOCAL_H)
 #define OSSL_LIBCRYPTO_X509_PCY_LOCAL_H
 
+#include <openssl/asn1.h>
+#include <openssl/safestack.h>
+#include <openssl/types.h>
+#include <openssl/x509v3.h>
+
 typedef struct X509_POLICY_DATA_st X509_POLICY_DATA;
 
 DEFINE_STACK_OF(X509_POLICY_DATA)

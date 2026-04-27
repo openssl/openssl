@@ -10,6 +10,9 @@
 #if !defined(OSSL_LIBCRYPTO_OCSP_OCSP_LOCAL_H)
 #define OSSL_LIBCRYPTO_OCSP_OCSP_LOCAL_H
 
+#include <openssl/ocsp.h>
+#include <openssl/x509v3.h>
+
 #include "crypto/x509.h" /* for ossl_x509_add_cert_new() */
 
 /*-  CertID ::= SEQUENCE {
