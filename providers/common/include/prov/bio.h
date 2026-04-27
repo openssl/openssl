@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_COMMON_INCLUDE_PROV_BIO_H)
+#define OSSL_PROVIDERS_COMMON_INCLUDE_PROV_BIO_H
+
 #include <stdarg.h>
 #include <openssl/bio.h>
 #include <openssl/core.h>
@@ -30,3 +33,5 @@ int ossl_prov_bio_printf(OSSL_CORE_BIO *bio, const char *format, ...);
 
 BIO_METHOD *ossl_bio_prov_init_bio_method(void);
 BIO *ossl_bio_new_from_core_bio(PROV_CTX *provctx, OSSL_CORE_BIO *corebio);
+
+#endif /* !defined(OSSL_PROVIDERS_COMMON_INCLUDE_PROV_BIO_H) */

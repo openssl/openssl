@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_DES_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_DES_H
+
 #include <openssl/des.h>
 #include "crypto/des_platform.h"
 
@@ -31,3 +34,5 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_des_ofb64(void);
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_des_cfb64(void);
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_des_cfb1(void);
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_des_cfb8(void);
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_DES_H) */

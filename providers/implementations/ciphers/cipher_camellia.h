@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_CAMELLIA_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_CAMELLIA_H
+
 #include <openssl/camellia.h>
 #include "prov/ciphercommon.h"
 #include "crypto/cmll_platform.h"
@@ -28,3 +31,5 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_camellia_cfb128(size_t keybits);
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_camellia_cfb1(size_t keybits);
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_camellia_cfb8(size_t keybits);
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_camellia_ctr(size_t keybits);
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_CAMELLIA_H) */

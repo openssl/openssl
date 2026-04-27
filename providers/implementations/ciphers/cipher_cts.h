@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_CTS_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_CTS_H
+
 #include "crypto/evp.h"
 
 /* NOTE: The underlying block cipher is CBC so we reuse most of the code */
@@ -50,3 +53,5 @@ OSSL_FUNC_cipher_final_fn ossl_cipher_cbc_cts_block_final;
 
 const char *ossl_cipher_cbc_cts_mode_id2name(unsigned int id);
 int ossl_cipher_cbc_cts_mode_name2id(const char *name);
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_CTS_H) */

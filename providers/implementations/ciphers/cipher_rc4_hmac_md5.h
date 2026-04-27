@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_RC4_HMAC_MD5_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_RC4_HMAC_MD5_H
+
 #include <openssl/rc4.h>
 #include <openssl/md5.h>
 #include "prov/ciphercommon.h"
@@ -34,3 +37,5 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_rc4_hmac_md5(size_t keybits);
 
 void rc4_md5_enc(RC4_KEY *key, const void *in0, void *out,
     MD5_CTX *ctx, const void *inp, size_t blocks);
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_RC4_HMAC_MD5_H) */

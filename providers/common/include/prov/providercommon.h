@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_COMMON_INCLUDE_PROV_PROVIDERCOMMON_H)
+#define OSSL_PROVIDERS_COMMON_INCLUDE_PROV_PROVIDERCOMMON_H
+
 #include <openssl/provider.h>
 #include <openssl/core_dispatch.h>
 
@@ -30,3 +33,5 @@ static ossl_inline int ossl_param_is_empty(const OSSL_PARAM params[])
 {
     return params == NULL || params->key == NULL;
 }
+
+#endif /* !defined(OSSL_PROVIDERS_COMMON_INCLUDE_PROV_PROVIDERCOMMON_H) */

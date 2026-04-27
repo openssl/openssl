@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_KDFEXCHANGE_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_KDFEXCHANGE_H
+
 #include <stdlib.h>
 #include <openssl/crypto.h>
 #include "internal/refcount.h"
@@ -21,3 +24,5 @@ typedef struct kdf_data_st KDF_DATA;
 KDF_DATA *ossl_kdf_data_new(void *provctx);
 void ossl_kdf_data_free(KDF_DATA *kdfdata);
 int ossl_kdf_data_up_ref(KDF_DATA *kdfdata);
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_KDFEXCHANGE_H) */

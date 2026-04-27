@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_COMMON_INCLUDE_PROV_PROVIDER_UTIL_H)
+#define OSSL_PROVIDERS_COMMON_INCLUDE_PROV_PROVIDER_UTIL_H
+
 #include <openssl/provider.h>
 #include <openssl/types.h>
 
@@ -109,3 +112,5 @@ void ossl_prov_cache_exported_algorithms(const OSSL_ALGORITHM_CAPABLE *in,
 /* Duplicate a lump of memory safely */
 int ossl_prov_memdup(const void *src, size_t src_len,
     unsigned char **dest, size_t *dest_len);
+
+#endif /* !defined(OSSL_PROVIDERS_COMMON_INCLUDE_PROV_PROVIDER_UTIL_H) */
