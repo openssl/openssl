@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_DSO_DSO_LOCAL_H)
+#define OSSL_LIBCRYPTO_DSO_DSO_LOCAL_H
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/dso.h"
@@ -104,3 +107,5 @@ struct dso_meth_st {
     /* Perform global symbol lookup, i.e. among *all* modules */
     void *(*globallookup)(const char *symname);
 };
+
+#endif /* !defined(OSSL_LIBCRYPTO_DSO_DSO_LOCAL_H) */

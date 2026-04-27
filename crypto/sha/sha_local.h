@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_SHA_SHA_LOCAL_H)
+#define OSSL_LIBCRYPTO_SHA_SHA_LOCAL_H
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -440,3 +443,5 @@ static void HASH_BLOCK_DATA_ORDER(SHA_CTX *c, const void *p, size_t num)
 #endif
 
 #endif
+
+#endif /* !defined(OSSL_LIBCRYPTO_SHA_SHA_LOCAL_H) */

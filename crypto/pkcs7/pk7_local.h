@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_PKCS7_PK7_LOCAL_H)
+#define OSSL_LIBCRYPTO_PKCS7_PK7_LOCAL_H
+
 #include "crypto/pkcs7.h"
 
 STACK_OF(X509) *pkcs7_get0_certificates(const PKCS7 *p7);
@@ -15,3 +18,5 @@ OSSL_LIB_CTX *ossl_pkcs7_ctx_get0_libctx(const PKCS7_CTX *ctx);
 const char *ossl_pkcs7_ctx_get0_propq(const PKCS7_CTX *ctx);
 
 int ossl_pkcs7_ctx_propagate(const PKCS7 *from, PKCS7 *to);
+
+#endif /* !defined(OSSL_LIBCRYPTO_PKCS7_PK7_LOCAL_H) */

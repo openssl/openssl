@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_SLH_DSA_SLH_ADRS_H)
+#define OSSL_LIBCRYPTO_SLH_DSA_SLH_ADRS_H
+
 #include <openssl/e_os2.h>
 
 /*
@@ -69,3 +72,5 @@ typedef struct slh_adrs_func_st {
 } SLH_ADRS_FUNC;
 
 const SLH_ADRS_FUNC *ossl_slh_get_adrs_fn(int is_compressed);
+
+#endif /* !defined(OSSL_LIBCRYPTO_SLH_DSA_SLH_ADRS_H) */

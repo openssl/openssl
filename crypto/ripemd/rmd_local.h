@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_RIPEMD_RMD_LOCAL_H)
+#define OSSL_LIBCRYPTO_RIPEMD_RMD_LOCAL_H
+
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/opensslconf.h>
@@ -103,3 +106,5 @@ void ripemd160_block_data_order(RIPEMD160_CTX *c, const void *p, size_t num);
         a = ROTATE(a, s) + e;        \
         c = ROTATE(c, 10);           \
     }
+
+#endif /* !defined(OSSL_LIBCRYPTO_RIPEMD_RMD_LOCAL_H) */

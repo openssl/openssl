@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_X509_EXT_DAT_H)
+#define OSSL_LIBCRYPTO_X509_EXT_DAT_H
+
 int ossl_v3_name_cmp(const char *name, const char *cmp);
 
 extern const X509V3_EXT_METHOD ossl_v3_bcons, ossl_v3_nscert, ossl_v3_key_usage, ossl_v3_ext_ku;
@@ -49,3 +52,5 @@ extern const X509V3_EXT_METHOD ossl_v3_time_specification;
 extern const X509V3_EXT_METHOD ossl_v3_attribute_mappings;
 extern const X509V3_EXT_METHOD ossl_v3_allowed_attribute_assignments;
 extern const X509V3_EXT_METHOD ossl_v3_aa_issuing_dist_point;
+
+#endif /* !defined(OSSL_LIBCRYPTO_X509_EXT_DAT_H) */

@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_DES_SPR_H)
+#define OSSL_LIBCRYPTO_DES_SPR_H
+
 const DES_LONG DES_SPtrans[8][64] = {
     {
         /* nibble 0 */
@@ -545,3 +548,5 @@ const DES_LONG DES_SPtrans[8][64] = {
         0x00820080L,
     }
 };
+
+#endif /* !defined(OSSL_LIBCRYPTO_DES_SPR_H) */

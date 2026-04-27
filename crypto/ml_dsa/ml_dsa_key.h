@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_ML_DSA_ML_DSA_KEY_H)
+#define OSSL_LIBCRYPTO_ML_DSA_ML_DSA_KEY_H
+
 #include <openssl/e_os2.h>
 #include "ml_dsa_local.h"
 #include "ml_dsa_vector.h"
@@ -54,3 +57,5 @@ struct ml_dsa_key_st {
     VECTOR s1; /* private secret of size L with short coefficients (-4..4) or (-2..2) */
     /* The s1->poly block is allocated and has space for s2 and t0 also */
 };
+
+#endif /* !defined(OSSL_LIBCRYPTO_ML_DSA_ML_DSA_KEY_H) */

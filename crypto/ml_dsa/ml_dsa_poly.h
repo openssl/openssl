@@ -6,6 +6,9 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#if !defined(OSSL_LIBCRYPTO_ML_DSA_ML_DSA_POLY_H)
+#define OSSL_LIBCRYPTO_ML_DSA_ML_DSA_POLY_H
+
 #include <openssl/crypto.h>
 
 #define ML_DSA_NUM_POLY_COEFFICIENTS 256
@@ -182,3 +185,5 @@ poly_max_signed(const POLY *p, uint32_t *mx)
         *mx = maximum(*mx, abs);
     }
 }
+
+#endif /* !defined(OSSL_LIBCRYPTO_ML_DSA_ML_DSA_POLY_H) */

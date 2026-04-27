@@ -7,5 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_CONF_CONF_LOCAL_H)
+#define OSSL_LIBCRYPTO_CONF_CONF_LOCAL_H
+
 #include <openssl/conftypes.h>
 void ossl_config_add_ssl_module(void);
+
+#endif /* !defined(OSSL_LIBCRYPTO_CONF_CONF_LOCAL_H) */

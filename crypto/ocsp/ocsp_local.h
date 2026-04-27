@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_OCSP_OCSP_LOCAL_H)
+#define OSSL_LIBCRYPTO_OCSP_OCSP_LOCAL_H
+
 #include "crypto/x509.h" /* for ossl_x509_add_cert_new() */
 
 /*-  CertID ::= SEQUENCE {
@@ -244,3 +247,5 @@ struct ocsp_service_locator_st {
     ASN1_item_verify_ex(ASN1_ITEM_rptr(OCSP_RESPDATA), \
         &(a)->signatureAlgorithm, (a)->signature,      \
         &(a)->tbsResponseData, NULL, r, libctx, propq)
+
+#endif /* !defined(OSSL_LIBCRYPTO_OCSP_OCSP_LOCAL_H) */

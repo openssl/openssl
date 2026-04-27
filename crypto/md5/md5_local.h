@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_MD5_MD5_LOCAL_H)
+#define OSSL_LIBCRYPTO_MD5_MD5_LOCAL_H
+
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/e_os2.h>
@@ -92,3 +95,5 @@ void md5_block_data_order(MD5_CTX *c, const void *p, size_t num);
         a = ROTATE(a, s);                    \
         a += b;                              \
     };
+
+#endif /* !defined(OSSL_LIBCRYPTO_MD5_MD5_LOCAL_H) */

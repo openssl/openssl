@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_CAST_CAST_LOCAL_H)
+#define OSSL_LIBCRYPTO_CAST_CAST_LOCAL_H
+
 #ifdef OPENSSL_SYS_WIN32
 #include <stdlib.h>
 #endif
@@ -166,3 +169,5 @@ extern const CAST_LONG CAST_S_table4[256];
 extern const CAST_LONG CAST_S_table5[256];
 extern const CAST_LONG CAST_S_table6[256];
 extern const CAST_LONG CAST_S_table7[256];
+
+#endif /* !defined(OSSL_LIBCRYPTO_CAST_CAST_LOCAL_H) */

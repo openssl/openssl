@@ -8,6 +8,9 @@
  */
 
 /* A 'k' by 'l' Matrix object ('k' rows and 'l' columns) containing polynomial scalars */
+#if !defined(OSSL_LIBCRYPTO_ML_DSA_ML_DSA_MATRIX_H)
+#define OSSL_LIBCRYPTO_ML_DSA_ML_DSA_MATRIX_H
+
 struct matrix_st {
     POLY *m_poly;
     size_t k, l;
@@ -42,3 +45,5 @@ matrix_expand_A(EVP_MD_CTX *g_ctx, const EVP_MD *md, const uint8_t *rho,
 {
     return ossl_ml_dsa_matrix_expand_A(g_ctx, md, rho, out);
 }
+
+#endif /* !defined(OSSL_LIBCRYPTO_ML_DSA_ML_DSA_MATRIX_H) */

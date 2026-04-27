@@ -6,6 +6,9 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#if !defined(OSSL_LIBCRYPTO_LHASH_LHASH_LOCAL_H)
+#define OSSL_LIBCRYPTO_LHASH_LHASH_LOCAL_H
+
 #include <openssl/crypto.h>
 
 #include "internal/tsan_assist.h"
@@ -33,3 +36,5 @@ struct lhash_st {
     unsigned long num_items;
     int error;
 };
+
+#endif /* !defined(OSSL_LIBCRYPTO_LHASH_LHASH_LOCAL_H) */

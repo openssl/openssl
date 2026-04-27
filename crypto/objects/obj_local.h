@@ -7,8 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_OBJECTS_OBJ_LOCAL_H)
+#define OSSL_LIBCRYPTO_OBJECTS_OBJ_LOCAL_H
+
 typedef struct name_funcs_st NAME_FUNCS;
 DEFINE_STACK_OF(NAME_FUNCS)
 DEFINE_LHASH_OF_EX(OBJ_NAME);
 typedef struct added_obj_st ADDED_OBJ;
 DEFINE_LHASH_OF_EX(ADDED_OBJ);
+
+#endif /* !defined(OSSL_LIBCRYPTO_OBJECTS_OBJ_LOCAL_H) */

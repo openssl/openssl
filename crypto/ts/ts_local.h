@@ -12,6 +12,9 @@
  *      hashAlgorithm                AlgorithmIdentifier,
  *      hashedMessage                OCTET STRING  }
  */
+#if !defined(OSSL_LIBCRYPTO_TS_TS_LOCAL_H)
+#define OSSL_LIBCRYPTO_TS_TS_LOCAL_H
+
 struct TS_msg_imprint_st {
     X509_ALGOR *hash_algo;
     ASN1_OCTET_STRING *hashed_msg;
@@ -150,3 +153,5 @@ struct TS_verify_ctx {
     /* Must be set only with TS_VFY_TSA_NAME. */
     GENERAL_NAME *tsa_name;
 };
+
+#endif /* !defined(OSSL_LIBCRYPTO_TS_TS_LOCAL_H) */

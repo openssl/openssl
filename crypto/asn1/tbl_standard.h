@@ -9,6 +9,9 @@
 
 /* size limits: this stuff is taken straight from RFC3280 */
 
+#if !defined(OSSL_LIBCRYPTO_ASN1_TBL_STANDARD_H)
+#define OSSL_LIBCRYPTO_ASN1_TBL_STANDARD_H
+
 #define ub_name 32768
 #define ub_common_name 64
 #define ub_locality_name 128
@@ -59,3 +62,5 @@ static const ASN1_STRING_TABLE tbl_standard[] = {
     { NID_dnsName, 0, -1, B_ASN1_UTF8STRING, STABLE_NO_MASK },
     { NID_id_on_SmtpUTF8Mailbox, 1, ub_email_address, B_ASN1_UTF8STRING, STABLE_NO_MASK }
 };
+
+#endif /* !defined(OSSL_LIBCRYPTO_ASN1_TBL_STANDARD_H) */
