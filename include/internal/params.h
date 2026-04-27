@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_INTERNAL_PARAMS_H)
+#define OSSL_INTERNAL_PARAMS_H
+
 #include <stddef.h>
 #include <openssl/params.h>
 
@@ -39,3 +42,5 @@ int ossl_param_get1_octet_string(const OSSL_PARAM *params, const char *name,
  */
 int ossl_param_get1_concat_octet_string(size_t n, OSSL_PARAM *params[],
     unsigned char **out, size_t *out_len);
+
+#endif /* !defined(OSSL_INTERNAL_PARAMS_H) */

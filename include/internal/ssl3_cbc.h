@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_INTERNAL_SSL3_CBC_H)
+#define OSSL_INTERNAL_SSL3_CBC_H
+
 #include <openssl/evp.h>
 
 /* tls_pad.c */
@@ -38,3 +41,5 @@ __owur int ssl3_cbc_digest_record(const EVP_MD *md,
     size_t data_plus_mac_plus_padding_size,
     const unsigned char *mac_secret,
     size_t mac_secret_length, char is_sslv3);
+
+#endif /* !defined(OSSL_INTERNAL_SSL3_CBC_H) */

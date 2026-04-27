@@ -9,6 +9,9 @@
 
 /* @brief Internal LMS helper functions */
 
+#if !defined(OSSL_CRYPTO_LMS_UTIL_H)
+#define OSSL_CRYPTO_LMS_UTIL_H
+
 #include "internal/packet.h"
 #include <openssl/params.h>
 #include <openssl/core_names.h>
@@ -50,3 +53,5 @@ static ossl_unused ossl_inline int lms_evp_md_ctx_init(EVP_MD_CTX *ctx, const EV
     }
     return EVP_DigestInit_ex2(ctx, md, p);
 }
+
+#endif /* !defined(OSSL_CRYPTO_LMS_UTIL_H) */

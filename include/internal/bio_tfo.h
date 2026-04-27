@@ -13,6 +13,9 @@
  */
 
 /* If a supported OS is added here, update test/bio_tfo_test.c */
+#if !defined(OSSL_INTERNAL_BIO_TFO_H)
+#define OSSL_INTERNAL_BIO_TFO_H
+
 #if defined(TCP_FASTOPEN) && !defined(OPENSSL_NO_TFO)
 
 #if defined(OPENSSL_SYS_MACOSX) || defined(__FreeBSD__)
@@ -149,3 +152,5 @@
 #endif
 
 #endif
+
+#endif /* !defined(OSSL_INTERNAL_BIO_TFO_H) */

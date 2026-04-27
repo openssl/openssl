@@ -7,4 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_OPENSSL_ECDSA_H)
+#define OSSL_OPENSSL_ECDSA_H
+
 #include <openssl/ec.h>
+
+#endif /* !defined(OSSL_OPENSSL_ECDSA_H) */

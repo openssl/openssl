@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_INTERNAL_NAMEMAP_H)
+#define OSSL_INTERNAL_NAMEMAP_H
+
 #include "internal/cryptlib.h"
 
 typedef struct ossl_namemap_st OSSL_NAMEMAP;
@@ -39,3 +42,5 @@ int ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
  */
 int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
     const char *names, const char separator);
+
+#endif /* !defined(OSSL_INTERNAL_NAMEMAP_H) */
