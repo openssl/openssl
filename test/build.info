@@ -702,7 +702,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[dtls13_internal_test]=dtls13_internal_test.c
   INCLUDE[dtls13_internal_test]=.. ../include ../apps/include
-  DEPEND[dtls13_internal_test]=../libssl ../libcrypto libtestutil.a
+  DEPEND[dtls13_internal_test]=../libssl.a ../libcrypto.a libtestutil.a
 
   SOURCE[ssl_cert_table_internal_test]=ssl_cert_table_internal_test.c
   INCLUDE[ssl_cert_table_internal_test]=.. ../include ../apps/include
