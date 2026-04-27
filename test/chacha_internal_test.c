@@ -17,7 +17,7 @@
 #include "testutil.h"
 #include "crypto/chacha.h"
 #if defined(__powerpc64__) && !defined(OPENSSL_SYS_AIX) && !defined(OPENSSL_SYS_MACOSX)
-#include "crypto/ppc_arch.h"
+#include "arch/ppc_arch.h"
 #endif
 
 static const unsigned int key[] = {

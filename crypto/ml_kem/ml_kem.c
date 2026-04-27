@@ -408,7 +408,7 @@ static __owur int sample_scalar(scalar *out, EVP_MD_CTX *mdctx)
 static CRYPTO_ONCE ml_kem_ntt_once = CRYPTO_ONCE_STATIC_INIT;
 
 #if defined(_ARCH_PPC64)
-#include "crypto/ppc_arch.h"
+#include "arch/ppc_arch.h"
 #endif
 
 #if defined(MLKEM_NTT_PPC_ASM) && defined(_ARCH_PPC64)
