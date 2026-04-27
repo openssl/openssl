@@ -60,6 +60,9 @@ if ($opt eq '-H') {
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_APPS_PROGS_H)
+#define OSSL_APPS_PROGS_H
+
 #include "function.h"
 
 EOF
@@ -74,6 +77,7 @@ EOF
     }
     print "\n";
     print "extern FUNCTION functions[];\n";
+    print "\n#endif /* !defined(OSSL_APPS_PROGS_H) */\n";
 }
 
 if ($opt eq '-C') {
