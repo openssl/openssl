@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_PKEY-LMS, EVP_KEYMGMT-LMS, LMS, HSS
+EVP_PKEY-HSS-LMS, EVP_KEYMGMT-HSS-LMS, LMS, HSS
 - EVP_PKEY Leighton-Micali Signature (LMS) and Hierarchical Signature System (HSS)
 keytype and algorithm support
 

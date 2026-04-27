@@ -37,7 +37,7 @@ Error checking has been omitted from the following examples
 
 =head2 LMS or HSS signature verification
 
- /* See L<EVP_PKEY-LMS(7)/EXAMPLES for an example of loading a LMS |pub| key */
+ /* See L<EVP_PKEY-HSS-LMS(7)/EXAMPLES for an example of loading a LMS |pub| key */
  ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pub, propq);
  sig = EVP_SIGNATURE_fetch(libctx, "LMS", propq);
  EVP_PKEY_verify_message_init(ctx, sig, NULL);
@@ -53,7 +53,7 @@ Error checking has been omitted from the following examples
 
 =head1 SEE ALSO
 
-L<EVP_PKEY-LMS(7)>,
+L<EVP_PKEY-HSS-LMS(7)>,
 L<provider-signature(7)>,
 
 =head1 HISTORY
