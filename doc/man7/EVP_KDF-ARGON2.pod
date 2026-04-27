@@ -160,6 +160,12 @@ using 2 lanes, 2 threads, and memory cost of 65536:
      return retval;
  }
 
+This example uses a simpler one shot function using the same parameters:
+
+ return EVP_KDF_argon2(result, outlen, EVP_KDF_ARGON2D_TYPE,
+     pwd, strlen((const char *)pwd), salt, strlen((const char *)salt),
+     lanes, memcost, 1, NULL, NULL);
+
 =head1 NOTES
 
 "ARGON2I", "ARGON2D", and "ARGON2ID" are the names for this implementation; it
@@ -177,6 +183,7 @@ L<EVP_KDF_CTX_free(3)>,
 L<EVP_KDF_CTX_set_params(3)>,
 L<EVP_KDF_derive(3)>,
 L<EVP_KDF(3)/PARAMETERS>
+L<EVP_KDF_argon2(3)>
 
 =head1 HISTORY
 

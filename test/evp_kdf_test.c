@@ -2341,6 +2341,160 @@ err:
 }
 #endif /* OPENSSL_NO_KBKDF */
 
+#ifndef OPENSSL_NO_ARGON2
+
+/*
+ * Test vectors from
+ * https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-argon2
+ */
+static const uint8_t argon2_pass[] = {
+    0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+    0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+    0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+    0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01
+};
+static const uint8_t argon2_salt[] = {
+    0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
+    0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02
+};
+static const uint8_t argon2_secret[] = {
+    0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03
+};
+static const uint8_t argon2_ad[] = {
+    0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
+    0x04, 0x04, 0x04, 0x04
+};
+const uint32_t argon2_lanes = 4;
+const uint32_t argon2_memcost = 32;
+const uint32_t argon2_iterations = 3;
+
+static int test_argon2_helper(void)
+{
+    int ret = 0;
+    uint8_t out[32];
+    size_t outlen = sizeof(out);
+
+    static const uint8_t expected1[] = {
+        0x51, 0x2b, 0x39, 0x1b, 0x6f, 0x11, 0x62, 0x97,
+        0x53, 0x71, 0xd3, 0x09, 0x19, 0x73, 0x42, 0x94,
+        0xf8, 0x68, 0xe3, 0xbe, 0x39, 0x84, 0xf3, 0xc1,
+        0xa1, 0x3a, 0x4d, 0xb9, 0xfa, 0xbe, 0x4a, 0xcb
+    };
+    static const uint8_t expected2[] = {
+        0xc8, 0x14, 0xd9, 0xd1, 0xdc, 0x7f, 0x37, 0xaa,
+        0x13, 0xf0, 0xd7, 0x7f, 0x24, 0x94, 0xbd, 0xa1,
+        0xc8, 0xde, 0x6b, 0x01, 0x6d, 0xd3, 0x88, 0xd2,
+        0x99, 0x52, 0xa4, 0xc4, 0x67, 0x2b, 0x6c, 0xe8
+    };
+    const uint8_t expected3[] = {
+        0x0d, 0x64, 0x0d, 0xf5, 0x8d, 0x78, 0x76, 0x6c,
+        0x08, 0xc0, 0x37, 0xa3, 0x4a, 0x8b, 0x53, 0xc9,
+        0xd0, 0x1e, 0xf0, 0x45, 0x2d, 0x75, 0xb6, 0x5e,
+        0xb5, 0x25, 0x20, 0xe9, 0x6b, 0x01, 0xe6, 0x59
+    };
+    OSSL_PARAM optionals[4];
+
+    optionals[0] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET, (uint8_t *)argon2_secret, sizeof(argon2_secret));
+    optionals[1] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_ARGON2_AD, (uint8_t *)argon2_ad, sizeof(argon2_ad));
+    optionals[2] = OSSL_PARAM_construct_end();
+    optionals[3] = OSSL_PARAM_construct_end();
+
+    if (!TEST_true(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2D_TYPE,
+            argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
+            4, 32, 3, NULL, optionals)))
+        goto err;
+    if (!TEST_mem_eq(out, outlen, expected1, sizeof(expected1)))
+        goto err;
+
+    if (!TEST_true(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2I_TYPE,
+            argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
+            4, 32, 3, NULL, optionals)))
+        goto err;
+    if (!TEST_mem_eq(out, outlen, expected2, sizeof(expected2)))
+        goto err;
+
+    optionals[2] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_PROPERTIES, "provider=default", 0);
+    if (!TEST_true(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2ID_TYPE,
+            argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
+            4, 32, 3, NULL, optionals)))
+        goto err;
+    if (!TEST_mem_eq(out, outlen, expected3, sizeof(expected3)))
+        goto err;
+    ret = 1;
+err:
+    return ret;
+}
+
+static int test_argon2_helper_fail(void)
+{
+    int ret = 0;
+    int32_t rubbish = 1;
+    uint8_t out[32];
+    size_t outlen = 32;
+    OSSL_PARAM optionals[4];
+
+    ERR_set_mark();
+    optionals[0] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET, (uint8_t *)argon2_secret, sizeof(argon2_secret));
+    optionals[1] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_ARGON2_AD, (uint8_t *)argon2_ad, sizeof(argon2_ad));
+    optionals[2] = OSSL_PARAM_construct_end();
+    optionals[3] = OSSL_PARAM_construct_end();
+
+    /* Bad algorithm type */
+    if (!TEST_false(EVP_KDF_argon2(out, outlen, 500,
+        argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
+        4, 32, 3, NULL, optionals)))
+        goto err;
+
+    /* wrong type for properties */
+    optionals[2] = OSSL_PARAM_construct_int32(OSSL_ALG_PARAM_PROPERTIES, &rubbish);
+    if (!TEST_false(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2D_TYPE,
+        argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
+        4, 32, 3, NULL, optionals)))
+        goto err;
+    /* Unknown property query */
+    optionals[2] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_PROPERTIES, "provider=error", 0);
+    if (!TEST_false(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2D_TYPE,
+        argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
+        4, 32, 3, NULL, optionals)))
+        goto err;
+    optionals[2] = OSSL_PARAM_construct_end();
+
+    /* Invalid argon2_password */
+    if (!TEST_false(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2D_TYPE,
+        NULL, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
+        4, 32, 3, NULL, optionals)))
+        goto err;
+    if (!TEST_false(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2D_TYPE,
+        argon2_pass, 0, argon2_salt, sizeof(argon2_salt),
+        4, 32, 3, NULL, optionals)))
+        goto err;
+    /* Invalid argon2_salt */
+    if (!TEST_false(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2D_TYPE,
+        argon2_pass, sizeof(argon2_pass), argon2_salt,
+        0, 4, 32, 3, NULL, optionals)))
+        goto err;
+    /* Invalid lane */
+    if (!TEST_false(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2D_TYPE,
+         argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
+         0, 32, 3, NULL, optionals)))
+         goto err;
+    /* Invalid memory cost */
+    if (!TEST_false(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2D_TYPE,
+         argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
+         4, 0, 3, NULL, optionals)))
+         goto err;
+    /* Invalid iterations */
+    if (!TEST_false(EVP_KDF_argon2(out, outlen, EVP_KDF_ARGON2D_TYPE,
+         argon2_pass, sizeof(argon2_pass), argon2_salt, sizeof(argon2_salt),
+         4, 32, 0, NULL, optionals)))
+         goto err;
+    ret = 1;
+err:
+    ERR_pop_to_mark();
+    return ret;
+}
+#endif
+
 int setup_tests(void)
 {
     ADD_TEST(test_kdf_pbkdf1);
@@ -2424,6 +2578,10 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_KBKDF
     ADD_TEST(test_kbkdf_mac_change);
+#endif
+#ifndef OPENSSL_NO_ARGON2
+    ADD_TEST(test_argon2_helper);
+    ADD_TEST(test_argon2_helper_fail);
 #endif
     return 1;
 }
