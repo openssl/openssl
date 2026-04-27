@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_APPS_TESTRSA_H)
+#define OSSL_APPS_TESTRSA_H
+
 static unsigned char test512[] = {
     0x30,
     0x82,
@@ -5976,3 +5979,5 @@ static unsigned char test15360[] = {
     0x91, 0x29, 0x6e, 0x08, 0x37, 0xd6, 0xaa, 0xd2, 0xf8, 0x4f,
     0x5e, 0x00, 0x16, 0x52
 };
+
+#endif /* !defined(OSSL_APPS_TESTRSA_H) */
