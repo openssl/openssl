@@ -83,7 +83,8 @@ sub run_memfail_test {
         # passing
         #
         $ENV{OPENSSL_MALLOC_FAILURES} = "$skipcount\@0;$idx\@0;1\@100;0\@0";
-        ok(run(test(@cmd)));
+        ok(run(test(@cmd))) || \
+            print STDERR "# OPENSSL_MALLOC_FAILURES=$ENV{OPENSSL_MALLOC_FAILURES}\n";
     }
 }
 
