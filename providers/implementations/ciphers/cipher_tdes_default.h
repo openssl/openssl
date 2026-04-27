@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_TDES_DEFAULT_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_TDES_DEFAULT_H
+
 #include "prov/ciphercommon.h"
 #include "cipher_tdes.h"
 
@@ -23,3 +26,5 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_ede2_cfb(void);
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_desx_cbc(void);
 
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_wrap_cbc(void);
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_TDES_DEFAULT_H) */

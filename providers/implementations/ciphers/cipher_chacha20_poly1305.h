@@ -9,6 +9,9 @@
 
 /* Dispatch functions for chacha20_poly1305 cipher */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_CHACHA20_POLY1305_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_CHACHA20_POLY1305_H
+
 #include "include/crypto/poly1305.h"
 #include "cipher_chacha20.h"
 
@@ -43,3 +46,5 @@ typedef struct prov_cipher_hw_chacha_aead_st {
 } PROV_CIPHER_HW_CHACHA20_POLY1305;
 
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_chacha20_poly1305(size_t keybits);
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_CHACHA20_POLY1305_H) */

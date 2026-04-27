@@ -7,4 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_FILE_STORE_LOCAL_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_FILE_STORE_LOCAL_H
+
 extern const OSSL_ALGORITHM ossl_any_to_obj_algorithm[];
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_FILE_STORE_LOCAL_H) */

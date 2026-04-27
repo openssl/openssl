@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_ENDECODER_LOCAL_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_ENDECODER_LOCAL_H
+
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/types.h>
@@ -26,3 +29,5 @@ void *ossl_prov_import_key(const OSSL_DISPATCH *fns, void *provctx,
 void ossl_prov_free_key(const OSSL_DISPATCH *fns, void *key);
 int ossl_read_der(PROV_CTX *provctx, OSSL_CORE_BIO *cin, unsigned char **data,
     long *len);
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_ENDECODER_LOCAL_H) */

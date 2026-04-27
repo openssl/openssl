@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_H
+
 #include <openssl/aes.h>
 #include "prov/ciphercommon.h"
 #include "crypto/aes_platform.h"
@@ -55,3 +58,5 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_ecb(size_t keybits);
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_cbc(size_t keybits);
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_ofb128(size_t keybits);
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_ctr(size_t keybits);
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_H) */

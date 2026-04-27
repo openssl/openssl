@@ -7,7 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_ECKEM_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_ECKEM_H
+
 #define KEM_MODE_UNDEFINED 0
 #define KEM_MODE_DHKEM 1
 
 int ossl_eckem_modename2id(const char *name);
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_ECKEM_H) */

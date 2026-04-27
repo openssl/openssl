@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_COMMON_INCLUDE_PROV_SECURITYCHECK_H)
+#define OSSL_PROVIDERS_COMMON_INCLUDE_PROV_SECURITYCHECK_H
+
 #include "crypto/types.h"
 #include <openssl/ec.h>
 
@@ -36,3 +39,5 @@ int ossl_digest_get_approved_nid(const EVP_MD *md);
 
 /* Functions that have different implementations for the FIPS_MODULE */
 int ossl_digest_rsa_sign_get_md_nid(const EVP_MD *md);
+
+#endif /* !defined(OSSL_PROVIDERS_COMMON_INCLUDE_PROV_SECURITYCHECK_H) */
