@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_CRYPTO_BN_DH_H)
+#define OSSL_CRYPTO_BN_DH_H
+
 #define declare_dh_bn(x)                       \
     extern const BIGNUM ossl_bignum_dh##x##_p; \
     extern const BIGNUM ossl_bignum_dh##x##_q; \
@@ -41,3 +44,5 @@ extern const BIGNUM ossl_bignum_modp_3072_q;
 extern const BIGNUM ossl_bignum_modp_4096_q;
 extern const BIGNUM ossl_bignum_modp_6144_q;
 extern const BIGNUM ossl_bignum_modp_8192_q;
+
+#endif /* !defined(OSSL_CRYPTO_BN_DH_H) */

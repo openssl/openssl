@@ -8,6 +8,9 @@
  */
 
 /* This header can move into provider when legacy support is removed */
+#if !defined(OSSL_CRYPTO_MODES_H)
+#define OSSL_CRYPTO_MODES_H
+
 #include <openssl/modes.h>
 
 #if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
@@ -229,3 +232,5 @@ struct siv128_context {
 };
 
 #endif /* OPENSSL_NO_SIV */
+
+#endif /* !defined(OSSL_CRYPTO_MODES_H) */

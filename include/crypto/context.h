@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_CRYPTO_CONTEXT_H)
+#define OSSL_CRYPTO_CONTEXT_H
+
 #include <openssl/core.h>
 
 void *ossl_provider_store_new(OSSL_LIB_CTX *);
@@ -48,3 +51,5 @@ void ossl_release_default_drbg_ctx(void);
 #if defined(OPENSSL_THREADS)
 void ossl_threads_ctx_free(void *);
 #endif
+
+#endif /* !defined(OSSL_CRYPTO_CONTEXT_H) */

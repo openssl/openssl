@@ -13,4 +13,9 @@
  * This header file only exists for compatibility reasons with older
  * applications which #include <openssl/ossl_typ.h>.
  */
+#if !defined(OSSL_OPENSSL_OSSL_TYP_H)
+#define OSSL_OPENSSL_OSSL_TYP_H
+
 #include <openssl/types.h>
+
+#endif /* !defined(OSSL_OPENSSL_OSSL_TYP_H) */

@@ -11,6 +11,9 @@
  * Unfortunate workaround to avoid symbol conflict with wincrypt.h
  * See https://github.com/openssl/openssl/issues/9981
  */
+#if !defined(OSSL_OPENSSL_TYPES_H)
+#define OSSL_OPENSSL_TYPES_H
+
 #ifdef _WIN32
 #define WINCRYPT_USE_SYMBOL_PREFIX
 #undef X509_NAME
@@ -247,3 +250,5 @@ typedef struct ossl_echstore_st OSSL_ECHSTORE;
 #endif
 
 #endif /* OPENSSL_TYPES_H */
+
+#endif /* !defined(OSSL_OPENSSL_TYPES_H) */
