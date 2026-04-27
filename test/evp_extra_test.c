@@ -7062,58 +7062,58 @@ end:
     EVP_CIPHER_CTX_free(ctx);
     return ret;
 }
-
-static int test_EVP_CIPHER_get_type(void)
+#ifndef OPENSSL_NO_DES
+static int test_EVP_CIPHER_get_type_des_ede3(void)
 {
     const EVP_CIPHER *cipher = NULL;
     int base_type, variant_type, nid;
     int ret = 0;
 
-    // Get the base type from CFB64 (should be NID_des_ede3_cfb64)
+    /* Get the base type from CFB64 (should be NID_des_ede3_cfb64) */
     cipher = EVP_des_ede3_cfb64();
     base_type = EVP_CIPHER_get_type(cipher);
 
-    // Test CFB64 - should map to the same base_type
+    /* Test CFB64 - should map to the same base_type */
     variant_type = EVP_CIPHER_get_type(cipher);
     nid = EVP_CIPHER_get_nid(cipher);
 
-    // Verify the returned type
+    /* Verify the returned type */
     if (!TEST_int_eq(variant_type, base_type))
         goto end;
 
-    // Verify that variant_type and nid are same for 64-bit variants
+    /* Verify that variant_type and nid are same for 64-bit variants */
     if (!TEST_int_eq(variant_type, nid))
         goto end;
 
     if (!TEST_int_eq(NID_des_ede3_cfb64, variant_type))
         goto end;
 
-    // Test CFB8 - should map to the same base_type
+    /* Test CFB8 - should map to the same base_type */
     cipher = EVP_des_ede3_cfb8();
     variant_type = EVP_CIPHER_get_type(cipher);
     nid = EVP_CIPHER_get_nid(cipher);
 
-    // Verify the returned type
+    /* Verify the returned type */
     if (!TEST_int_eq(variant_type, base_type))
         goto end;
 
-    // Verify that variant_type and nid are different for variants
+    /* Verify that variant_type and nid are different for variants */
     if (!TEST_int_ne(variant_type, nid))
         goto end;
 
     if (!TEST_int_eq(NID_des_ede3_cfb64, variant_type))
         goto end;
 
-    // Test CFB1 - should map to the same base_type
+    /* Test CFB1 - should map to the same base_type */
     cipher = EVP_des_ede3_cfb1();
     variant_type = EVP_CIPHER_get_type(cipher);
     nid = EVP_CIPHER_get_nid(cipher);
 
-    // Verify the returned type
+    /* Verify the returned type */
     if (!TEST_int_eq(variant_type, base_type))
         goto end;
 
-    // Verify that variant_type and nid are different for variants
+    /* Verify that variant_type and nid are different for variants */
     if (!TEST_int_ne(variant_type, nid))
         goto end;
 
@@ -7124,6 +7124,7 @@ static int test_EVP_CIPHER_get_type(void)
 end:
     return ret;
 }
+#endif /*OPENSSL_NO_DES */
 
 static int test_evp_cipher_pipeline(void)
 {
@@ -7928,7 +7929,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_iv_aes, 13);
 #ifndef OPENSSL_NO_DES
     ADD_ALL_TESTS(test_evp_iv_des, 6);
-#endif
+    ADD_TEST(test_EVP_CIPHER_get_type_des_ede3);
+#endif /* OPENSSL_NO_DES */
 #ifndef OPENSSL_NO_BF
     ADD_ALL_TESTS(test_evp_bf_default_keylen, 4);
 #endif
@@ -7975,8 +7977,6 @@ int setup_tests(void)
     ADD_TEST(test_evp_cipher_negative_length);
 
     ADD_TEST(test_evp_cipher_pipeline);
-
-    ADD_TEST(test_EVP_CIPHER_get_type);
 
 #ifndef OPENSSL_NO_ML_KEM
     ADD_ALL_TESTS(test_ml_kem_seed_only, 2);
