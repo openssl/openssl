@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_SSL_RECORD_RECORD_H)
+#define OSSL_SSL_RECORD_RECORD_H
+
 #include <openssl/core_dispatch.h>
 #include "internal/recordmethod.h"
 
@@ -189,3 +192,5 @@ OSSL_CORE_MAKE_FUNC(void, rlayer_msg_callback, (int write_p, int version, int co
 OSSL_CORE_MAKE_FUNC(int, rlayer_security, (void *cbarg, int op, int bits, int nid, void *other))
 #define OSSL_FUNC_RLAYER_PADDING 4
 OSSL_CORE_MAKE_FUNC(size_t, rlayer_padding, (void *cbarg, int type, size_t len))
+
+#endif /* !defined(OSSL_SSL_RECORD_RECORD_H) */

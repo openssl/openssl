@@ -10,6 +10,9 @@
 /*
  * Certificate table information. NB: table entries must match SSL_PKEY indices
  */
+#if !defined(OSSL_SSL_SSL_CERT_TABLE_H)
+#define OSSL_SSL_SSL_CERT_TABLE_H
+
 static const SSL_CERT_LOOKUP ssl_cert_info[] = {
     { EVP_PKEY_RSA, SSL_aRSA }, /* SSL_PKEY_RSA */
     { EVP_PKEY_RSA_PSS, SSL_aRSA }, /* SSL_PKEY_RSA_PSS_SIGN */
@@ -21,3 +24,5 @@ static const SSL_CERT_LOOKUP ssl_cert_info[] = {
     { EVP_PKEY_ED25519, SSL_aECDSA }, /* SSL_PKEY_ED25519 */
     { EVP_PKEY_ED448, SSL_aECDSA } /* SSL_PKEY_ED448 */
 };
+
+#endif /* !defined(OSSL_SSL_SSL_CERT_TABLE_H) */

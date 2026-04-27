@@ -14,4 +14,9 @@
  *                                                                           *
  *****************************************************************************/
 
+#if !defined(OSSL_SSL_RECORD_RECORD_LOCAL_H)
+#define OSSL_SSL_RECORD_RECORD_LOCAL_H
+
 #define MAX_WARN_ALERT_COUNT 5
+
+#endif /* !defined(OSSL_SSL_RECORD_RECORD_LOCAL_H) */
