@@ -294,39 +294,39 @@ APPS_OPENSSL="{- use File::Spec::Functions;
 # Normally it is left empty.
 DESTDIR=
 
-# Do not edit these manually. Use Configure with --prefix or --openssldir
-# to change this!  Short explanation in the top comment in Configure
-INSTALLTOP={- # $prefix is used in the OPENSSLDIR perl snippet
-	      #
+# Do not edit these manually. Use Configure with --prefix, --openssldir, or
+# --install-prefix to change this!  Short explanation in the top comment in Configure
+INSTALLTOP={- # $prefix: runtime base baked into binaries.
+              # When --install-prefix is given, INSTALLTOP points to the
+              # staging/sandbox area for `make install` while $prefix retains
+              # its role as the runtime base.
 	      our $prefix = $config{prefix} || "/usr/local";
-              $prefix -}
-OPENSSLDIR={- #
-	      # The logic here is that if no --openssldir was given,
-	      # OPENSSLDIR will get the value from $prefix plus "/ssl".
-	      # If --openssldir was given and the value is an absolute
-	      # path, OPENSSLDIR will get its value without change.
-	      # If the value from --openssldir is a relative path,
-	      # OPENSSLDIR will get $prefix with the --openssldir
-	      # value appended as a subdirectory.
-	      #
+              $config{install_prefix} || $prefix -}
+OPENSSLDIR={- # OPENSSLDIR is the install destination for config files.
+              # When --install-prefix is given, it is derived from that value;
+              # otherwise it matches the baked path (BAKED_OPENSSLDIR).
+              #
+              # The logic for the install path:
+              #   no --openssldir:   install_base/ssl
+              #   relative --openssldir: install_base/openssldir
+              #   absolute --openssldir: openssldir unchanged
+              # where install_base is --install-prefix if given, else --prefix.
               use File::Spec::Functions;
+              our $install_base = $config{install_prefix} || $prefix;
               our $openssldir =
                   $config{openssldir} ?
                       (file_name_is_absolute($config{openssldir}) ?
                            $config{openssldir}
-                           : catdir($prefix, $config{openssldir}))
-                      : catdir($prefix, "ssl");
+                           : catdir($install_base, $config{openssldir}))
+                      : catdir($install_base, "ssl");
               $openssldir -}
-RUNTIME_OPENSSLDIR={- # RUNTIME_OPENSSLDIR: the OPENSSLDIR path baked into the C binary.
-                      # When --runtime-openssldir is given this can differ from
-                      # OPENSSLDIR (which is used only for `make install`).
-                      our $runtime_openssldir =
-                          $config{runtime_openssldir} ?
-                              (file_name_is_absolute($config{runtime_openssldir}) ?
-                                   $config{runtime_openssldir}
-                                   : catdir($prefix, $config{runtime_openssldir}))
-                              : $openssldir;
-                      $runtime_openssldir -}
+BAKED_OPENSSLDIR={- # Path baked into the binary for config file lookup.
+                    # Always derived from --prefix (the runtime location).
+                    $config{openssldir} ?
+                        (file_name_is_absolute($config{openssldir}) ?
+                             $config{openssldir}
+                             : catdir($prefix, $config{openssldir}))
+                        : catdir($prefix, "ssl") -}
 LIBDIR={- our $libdir = $config{libdir};
           unless ($libdir) {
               $libdir = "lib$target{multilib}";
@@ -336,18 +336,11 @@ LIBDIR={- our $libdir = $config{libdir};
 libdir={- file_name_is_absolute($libdir)
           ? $libdir : '$(INSTALLTOP)/$(LIBDIR)' -}
 MODULESDIR=$(libdir)/ossl-modules
-# RUNTIMEDIR / runtimedir: runtime lib directory for module lookup.
-# --runtime-dir acts as a prefix (same semantics as --prefix); LIBDIR is
-# appended automatically.  MODULESDIR above is still used for `make install`;
-# RUNTIME_MODULESDIR is only passed as a -D flag baked into the binary.
-RUNTIMEDIR={- # When --runtime-dir is given LIBDIR is appended to form the
-               # runtime lib path.
-               our $runtime_dir = $config{runtime_dir}
-                   ? catdir($config{runtime_dir}, $libdir) : $libdir;
-               file_name_is_absolute($runtime_dir) ? "" : $runtime_dir -}
-runtimedir={- file_name_is_absolute($runtime_dir)
-               ? $runtime_dir : '$(INSTALLTOP)/$(RUNTIMEDIR)' -}
-RUNTIME_MODULESDIR=$(runtimedir)/ossl-modules
+BAKED_MODULESDIR={- # Path baked into the binary for provider module lookup.
+                    # Always derived from --prefix (the runtime location).
+                    file_name_is_absolute($libdir)
+                        ? catdir($libdir, "ossl-modules")
+                        : catdir($prefix, $libdir, "ossl-modules") -}
 
 # Convenience variable for those who want to set the rpath in shared
 # libraries and applications
@@ -462,8 +455,8 @@ LIB_CPPFLAGS={- our $lib_cppflags =
                           @{$config{shared_cppflag}});
                 join(' ', $lib_cppflags,
                           (map { '-D'.$_ }
-                               'OPENSSLDIR="\"$(RUNTIME_OPENSSLDIR)\""',
-                               'MODULESDIR="\"$(RUNTIME_MODULESDIR)\""'),
+                               'OPENSSLDIR="\"$(BAKED_OPENSSLDIR)\""',
+                               'MODULESDIR="\"$(BAKED_MODULESDIR)\""'),
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
 LIB_CFLAGS={- join(' ', $target{lib_cflags} || (),
                         $target{shared_cflag} || (),

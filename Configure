@@ -27,7 +27,7 @@ use OpenSSL::config;
 my $orig_death_handler = $SIG{__DIE__};
 $SIG{__DIE__} = \&death_handler;
 
-my $usage="Usage: Configure [no-<feature> ...] [enable-<feature> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]thread-pool] [[no-]default-thread-pool] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] [--help] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<feature> ...] [enable-<feature> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]thread-pool] [[no-]default-thread-pool] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--install-prefix=DIR] [--with-xxx[=vvv]] [--config=FILE] [--help] os/compiler[:flags]\n";
 
 my $banner = <<"EOF";
 
@@ -54,24 +54,26 @@ EOF
 #               directory as this script.
 # --prefix      prefix for the OpenSSL installation, which includes the
 #               directories bin, lib, include, share/man, share/doc/openssl
-#               This becomes the value of INSTALLTOP in Makefile
+#               This becomes the value of INSTALLTOP in Makefile and is also
+#               the base for paths baked into compiled binaries (OPENSSLDIR,
+#               MODULESDIR).
 #               (Default: /usr/local)
 # --openssldir  OpenSSL data area, such as openssl.cnf, certificates and keys.
 #               If it's a relative directory, it will be added on the directory
 #               given with --prefix.
 #               This becomes the value of OPENSSLDIR in Makefile and in C.
 #               (Default: PREFIX/ssl)
-# --runtime-openssldir
-#               Runtime path for OpenSSL configuration files (openssl.cnf,
-#               certs/, etc.).  Sets OPENSSLDIR in the C binary only; the
-#               Makefile's OPENSSLDIR (used for `make install`) is still
-#               derived from --openssldir / PREFIX/ssl.
-#               Follows the same absolute/relative rules as --openssldir.
-#               (Default: same as OPENSSLDIR)
-# --runtime-dir Runtime prefix for the modules directory.  LIBDIR is
-#               appended to compute MODULESDIR in the C binary.
-#               (Default: same as PREFIX, i.e. LIBDIR is appended as for
-#               install paths)
+# --install-prefix
+#               Override the installation base used by `make install`, while
+#               keeping --prefix as the path baked into compiled binaries.
+#               Useful when building for a target system: set --prefix to the
+#               final runtime location (e.g. /usr/local) and --install-prefix
+#               to a staging area or build sandbox; `make install` places files
+#               under the staging area, but the binaries encode the final paths.
+#               Relative --openssldir is interpreted relative to --install-prefix
+#               for installation and relative to --prefix for the baked value.
+#               Must be an absolute path.
+#               (Default: same as --prefix)
 # --banner=".." Output specified text instead of default completion banner
 #
 # -w            Don't wait after showing a Configure warning
@@ -419,6 +421,7 @@ $config{perl_archname} = $Config{archname};
 
 $config{prefix}="";
 $config{openssldir}="";
+$config{install_prefix}="";
 $config{processor}="";
 $config{libdir}="";
 my $auto_threads=1;    # enable threads automatically? true by default
@@ -1077,13 +1080,9 @@ while (@argvcopy)
                         {
                         $config{openssldir}=$1;
                         }
-                elsif (/^--runtime-openssldir=(.*)$/)
+                elsif (/^--install-prefix=(.*)$/)
                         {
-                        $config{runtime_openssldir}=$1;
-                        }
-                elsif (/^--runtime-dir=(.*)$/)
-                        {
-                        $config{runtime_dir}=$1;
+                        $config{install_prefix}=$1;
                         }
                 elsif (/^--with-jitter-include=(.*)$/)
                         {
@@ -1559,6 +1558,11 @@ foreach (keys %useradd) {
 if ($config{prefix} && !$config{CROSS_COMPILE}) {
     die "Directory given with --prefix MUST be absolute\n"
         unless file_name_is_absolute($config{prefix});
+}
+
+if ($config{install_prefix} && !$config{CROSS_COMPILE}) {
+    die "Directory given with --install-prefix MUST be absolute\n"
+        unless file_name_is_absolute($config{install_prefix});
 }
 
 if (grep { $_ =~ /(?:^|\s)-static(?:\s|$)/ } @{$config{LDFLAGS}}) {
