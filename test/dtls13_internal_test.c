@@ -14,7 +14,9 @@
 static const char *cipher_names[] = {
     "aes-128-ecb",
     "aes-256-ecb",
+#if !defined(OPENSSL_NO_CHACHA)
     "chacha20",
+#endif
 };
 
 static int test_dtls_crypt_sequence_number(int idx)
