@@ -3168,7 +3168,7 @@ static int test_RSA_verify_recover_rejects_short_buffer_fips(void)
         goto done;
     }
     if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(testctx, fips_propq, "RSA",
-                      (size_t)OPENSSL_RSA_FIPS_MIN_MODULUS_BITS)))
+                      (size_t)2048)))
         goto done;
 
     ret = do_RSA_verify_recover_rejects_short_buffer(pkey, fips_propq);
