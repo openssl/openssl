@@ -44,6 +44,8 @@ typedef struct b64_struct {
     unsigned char tmp[B64_BLOCK_SIZE];
     unsigned char *encoded_buf;
     size_t encoded_buf_len;
+    int encoded_len;
+    int encoded_off;
 } BIO_B64_CTX;
 
 static const BIO_METHOD methods_b64 = {
@@ -111,6 +113,51 @@ static int b64_free(BIO *a)
     return 1;
 }
 
+static int b64_write_buffer(BIO *b, BIO *next, unsigned char *buf,
+    int *buf_len, int *buf_off)
+{
+    int n;
+    int i;
+
+    if (!ossl_assert(*buf_off >= 0)) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
+    if (!ossl_assert(*buf_len >= *buf_off)) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
+
+    n = *buf_len - *buf_off;
+    if (n > 0 && !ossl_assert(buf != NULL)) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
+    while (n > 0) {
+        i = BIO_write(next, &(buf[*buf_off]), n);
+        if (i <= 0) {
+            BIO_copy_next_retry(b);
+            return i;
+        }
+        *buf_off += i;
+        if (!ossl_assert(*buf_len >= *buf_off)) {
+            ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
+        n -= i;
+    }
+    *buf_off = 0;
+    *buf_len = 0;
+
+    return 1;
+}
+
+static int b64_write_pending(BIO_B64_CTX *ctx)
+{
+    return ctx->encoded_len != ctx->encoded_off
+        || ctx->buf_len != ctx->buf_off;
+}
+
 /*
  * Unless `BIO_FLAGS_BASE64_NO_NL` is set, this BIO ignores leading lines that
  * aren't exclusively composed of valid Base64 characters (followed by <CRLF>
@@ -141,6 +188,8 @@ static int b64_read(BIO *b, char *out, int outl)
         ctx->buf_len = 0;
         ctx->buf_off = 0;
         ctx->tmp_len = 0;
+        ctx->encoded_len = 0;
+        ctx->encoded_off = 0;
         EVP_DecodeInit(ctx->base64);
     }
 
@@ -330,7 +379,6 @@ static int b64_read(BIO *b, char *out, int outl)
 static int b64_write(BIO *b, const char *in, int inl)
 {
     int ret = 0;
-    int n;
     int i;
     BIO_B64_CTX *ctx;
     BIO *next;
@@ -350,6 +398,8 @@ static int b64_write(BIO *b, const char *in, int inl)
         ctx->buf_len = 0;
         ctx->buf_off = 0;
         ctx->tmp_len = 0;
+        ctx->encoded_len = 0;
+        ctx->encoded_off = 0;
         EVP_EncodeInit(ctx->base64);
         if (BIO_get_flags(b) & BIO_FLAGS_BASE64_NO_NL)
             evp_encode_ctx_set_flags(ctx->base64, EVP_ENCODE_CTX_NO_NEWLINES);
@@ -366,27 +416,30 @@ static int b64_write(BIO *b, const char *in, int inl)
         ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
         return -1;
     }
-    n = ctx->buf_len - ctx->buf_off;
-    while (n > 0) {
-        i = BIO_write(next, &(ctx->buf[ctx->buf_off]), n);
-        if (i <= 0) {
-            BIO_copy_next_retry(b);
-            return i;
-        }
-        ctx->buf_off += i;
-        if (!ossl_assert(ctx->buf_off <= (int)sizeof(ctx->buf))) {
-            ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-            return -1;
-        }
-        if (!ossl_assert(ctx->buf_len >= ctx->buf_off)) {
-            ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
-            return -1;
-        }
-        n -= i;
+    if (!ossl_assert(ctx->encoded_off >= 0)) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
+        return -1;
     }
-    /* at this point all pending data has been written */
-    ctx->buf_off = 0;
-    ctx->buf_len = 0;
+    if (!ossl_assert(ctx->encoded_len >= ctx->encoded_off)) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
+    if (!ossl_assert((size_t)ctx->encoded_len <= ctx->encoded_buf_len)) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
+
+    i = b64_write_buffer(b, next, ctx->encoded_buf, &ctx->encoded_len,
+        &ctx->encoded_off);
+    if (i <= 0)
+        return i;
+    i = b64_write_buffer(b, next, ctx->buf, &ctx->buf_len, &ctx->buf_off);
+    if (i <= 0)
+        return i;
+    if (!ossl_assert(ctx->buf_off <= (int)sizeof(ctx->buf))) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
 
     if (in == NULL || inl <= 0)
         return 0;
@@ -400,6 +453,8 @@ static int b64_write(BIO *b, const char *in, int inl)
 
     if (ctx->encoded_buf == NULL || encoded_length > ctx->encoded_buf_len) {
         OPENSSL_free(ctx->encoded_buf);
+        ctx->encoded_buf = NULL;
+        ctx->encoded_buf_len = 0;
         ctx->encoded_buf = OPENSSL_malloc(encoded_length);
         if (ctx->encoded_buf == NULL) {
             ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
@@ -419,10 +474,19 @@ static int b64_write(BIO *b, const char *in, int inl)
             (unsigned char *)in, inl)) {
         return -1;
     }
+    /*
+     * The encoder state has consumed the input.  Keep any unwritten encoded
+     * output pending so a later retry or flush can complete it.
+     */
     ret += inl;
-    i = BIO_write(next, encoded, n_bytes_enc);
-    if (i <= 0)
-        BIO_copy_next_retry(b);
+    ctx->encoded_len = n_bytes_enc;
+    ctx->encoded_off = 0;
+    /*
+     * Try to write it now, but the input is consumed into encoder state, so
+     * report it as written even if downstream cannot accept all encoded output.
+     */
+    (void)b64_write_buffer(b, next, ctx->encoded_buf, &ctx->encoded_len,
+        &ctx->encoded_off);
     return ret;
 }
 
@@ -447,6 +511,8 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
         ctx->cont = 1;
         ctx->start = 1;
         ctx->encode = B64_NONE;
+        ctx->encoded_len = 0;
+        ctx->encoded_off = 0;
         ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_EOF: /* More to read */
@@ -456,11 +522,16 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     case BIO_CTRL_WPENDING: /* More to write in buffer */
+        if (!ossl_assert(ctx->encoded_len >= ctx->encoded_off)) {
+            ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
         if (!ossl_assert(ctx->buf_len >= ctx->buf_off)) {
             ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
             return -1;
         }
-        ret = ctx->buf_len - ctx->buf_off;
+        ret = (long)(ctx->encoded_len - ctx->encoded_off)
+            + (ctx->buf_len - ctx->buf_off);
         if (ret == 0 && ctx->encode != B64_NONE
             && EVP_ENCODE_CTX_num(ctx->base64) != 0)
             ret = 1;
@@ -480,9 +551,9 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
         if (ctx->encode == B64_ENCODE) {
             /* do a final write */
         again:
-            while (ctx->buf_len != ctx->buf_off) {
+            while (b64_write_pending(ctx)) {
                 i = b64_write(b, NULL, 0);
-                if (i < 0)
+                if (i < 0 || (i == 0 && b64_write_pending(ctx)))
                     return i;
             }
             if (EVP_ENCODE_CTX_num(ctx->base64) != 0) {
