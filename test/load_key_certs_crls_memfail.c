@@ -24,7 +24,7 @@
 char *default_config_file = NULL;
 
 static char *certfile = NULL;
-static int mcount, rcount, fcount, scount;
+static int mcount, rcount, fcount, scount, srcount;
 
 static int do_load_key_certs_crls(int allow_failure)
 {
@@ -60,7 +60,8 @@ static int test_alloc_failures(void)
 static int test_report_alloc_counts(void)
 {
     CRYPTO_get_alloc_counts(&mcount, &rcount, &fcount);
-    TEST_info("skip: %d count %d\n", scount, mcount - scount);
+    TEST_info("skip: %d count %d\n",
+        scount + srcount, mcount + rcount - scount - srcount);
     return 1;
 }
 
@@ -79,7 +80,7 @@ int setup_tests(void)
         goto err;
 
     if (strcmp(opmode, "count") == 0) {
-        CRYPTO_get_alloc_counts(&scount, &rcount, &fcount);
+        CRYPTO_get_alloc_counts(&scount, &srcount, &fcount);
         ADD_TEST(test_record_alloc_counts);
         ADD_TEST(test_report_alloc_counts);
     } else {
