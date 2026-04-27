@@ -10,6 +10,9 @@
 #ifndef OSSL_APPS_UI_H
 #define OSSL_APPS_UI_H
 
+#include <openssl/types.h>
+#include <openssl/ui.h>
+
 #define PW_MIN_LENGTH 4
 typedef struct pw_cb_data {
     const void *password;
