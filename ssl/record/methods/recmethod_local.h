@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_SSL_RECORD_METHODS_RECMETHOD_LOCAL_H)
+#define OSSL_SSL_RECORD_METHODS_RECMETHOD_LOCAL_H
+
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -534,3 +537,5 @@ int tls_write_records_default(OSSL_RECORD_LAYER *rl,
 #define TLS_BUFFER_is_app_buffer(b) ((b)->app_buffer)
 
 void ossl_tls_buffer_release(TLS_BUFFER *b);
+
+#endif /* !defined(OSSL_SSL_RECORD_METHODS_RECMETHOD_LOCAL_H) */
