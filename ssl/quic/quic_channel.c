@@ -433,8 +433,9 @@ QUIC_CHANNEL *ossl_quic_channel_new(const QUIC_CHANNEL_ARGS *args)
     ch->use_qlog = args->use_qlog;
 
     if (ch->use_qlog && args->qlog_title != NULL) {
+        OPENSSL_free(ch->qlog_title);
         if ((ch->qlog_title = OPENSSL_strdup(args->qlog_title)) == NULL) {
-            OPENSSL_free(ch);
+            ossl_quic_channel_free(ch);
             return NULL;
         }
     }
