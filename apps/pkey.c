@@ -9,14 +9,16 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "apps.h"
-#include "progs.h"
-#include "ec_common.h"
-#include <openssl/pem.h>
-#include <openssl/err.h>
-#include <openssl/encoder.h>
-#include <openssl/evp.h>
+
 #include <openssl/core_names.h>
+#include <openssl/encoder.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
+
+#include "apps.h"
+#include "ec_common.h"
+#include "progs.h"
 
 typedef enum OPTION_choice {
     OPT_COMMON,

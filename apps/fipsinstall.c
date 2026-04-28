@@ -7,14 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/provider.h>
-#include <openssl/params.h>
-#include <openssl/fips_names.h>
 #include <openssl/core_names.h>
-#include <openssl/self_test.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/fips_names.h>
 #include <openssl/fipskey.h>
+#include <openssl/params.h>
+#include <openssl/provider.h>
+#include <openssl/self_test.h>
+
 #include "apps.h"
 #include "progs.h"
 

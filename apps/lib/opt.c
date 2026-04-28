@@ -11,21 +11,25 @@
  * This file is also used by the test suite. Do not #include "apps.h".
  */
 #include "opt.h"
-#include "fmt.h"
-#include "app_libctx.h"
+
+#include <string.h>
+
 #include "internal/nelem.h"
 #include "internal/numbers.h"
-#include <string.h>
+
+#include "app_libctx.h"
+#include "fmt.h"
 #if !defined(OPENSSL_SYS_MSDOS)
 #include <unistd.h>
 #endif
 
-#include <stdlib.h>
-#include <errno.h>
 #include <ctype.h>
+#include <errno.h>
 #include <limits.h>
-#include <openssl/err.h>
+#include <stdlib.h>
+
 #include <openssl/bio.h>
+#include <openssl/err.h>
 #include <openssl/x509v3.h>
 
 #define MAX_OPT_HELP_WIDTH 30

@@ -8,13 +8,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"
 #include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
+
 #include <openssl/e_os2.h>
+
+#include "internal/e_os.h"
 #include "internal/nelem.h"
 #include "internal/sockets.h" /* for openssl_fdset() */
 
@@ -31,23 +33,25 @@
 typedef unsigned int u_int;
 #endif
 
-#include "apps.h"
-#include "progs.h"
-#include <openssl/x509.h>
-#include <openssl/ssl.h>
+#include <openssl/async.h>
+#include <openssl/bn.h>
 #include <openssl/err.h>
+#include <openssl/ocsp.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
-#include <openssl/ocsp.h>
-#include <openssl/bn.h>
+#include <openssl/ssl.h>
 #include <openssl/trace.h>
-#include <openssl/async.h>
+#include <openssl/x509.h>
+
+#include "apps.h"
+#include "progs.h"
 #ifndef OPENSSL_NO_CT
 #include <openssl/ct.h>
 #endif
+#include "internal/sockets.h"
+
 #include "s_apps.h"
 #include "timeouts.h"
-#include "internal/sockets.h"
 
 #if defined(__has_feature)
 #if __has_feature(memory_sanitizer)

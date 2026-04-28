@@ -7,22 +7,23 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include "apps.h"
-#include "progs.h"
+#include <sys/types.h>
+
 #include <openssl/bio.h>
-#include <openssl/err.h>
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/x509.h>
+#include <openssl/opensslconf.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <openssl/x509.h>
+
+#include "apps.h"
+#include "progs.h"
 
 #define DEFBITS 2048
 #define DEFPRIMES 2

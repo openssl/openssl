@@ -9,31 +9,33 @@
 
 /* We need to use some deprecated APIs */
 #include "internal/nelem.h"
+
 #include "openssl/bio.h"
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#include "internal/e_os.h"
-
 #include <string.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/provider.h>
-#include <openssl/safestack.h>
-#include <openssl/kdf.h>
-#include <openssl/encoder.h>
-#include <openssl/decoder.h>
-#include <openssl/store.h>
+
 #include <openssl/core_names.h>
+#include <openssl/decoder.h>
+#include <openssl/encoder.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/kdf.h>
+#include <openssl/provider.h>
 #include <openssl/rand.h>
 #include <openssl/safestack.h>
 #include <openssl/ssl.h>
+#include <openssl/store.h>
 #include <openssl/tls1.h>
-#include "apps.h"
+
+#include "internal/e_os.h"
+
 #include "app_params.h"
-#include "progs.h"
-#include "opt.h"
-#include "names.h"
+#include "apps.h"
 #include "configuration.h"
+#include "names.h"
+#include "opt.h"
+#include "progs.h"
 
 static int verbose = 0;
 static const char *select_name = NULL;

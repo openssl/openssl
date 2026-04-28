@@ -26,15 +26,15 @@
 
 #undef _POSIX_C_SOURCE
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <inet.h>
-#include <unistd.h>
-#include <string.h>
 #include <errno.h>
-#include <starlet.h>
+#include <inet.h>
 #include <iodef.h>
+#include <netinet/in.h>
+#include <starlet.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 #ifdef __alpha
 #include <iosbdef.h>
 #else
@@ -97,12 +97,12 @@ typedef struct _iosb { /* Copied from IOSBDEF.H for Alpha  */
 
 #endif /* End of IOSBDEF */
 
-#include <efndef.h>
-#include <stdlib.h>
-#include <ssdef.h>
-#include <time.h>
-#include <stdarg.h>
 #include <descrip.h>
+#include <efndef.h>
+#include <ssdef.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <time.h>
 
 #include "vms_term_sock.h"
 

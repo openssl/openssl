@@ -11,6 +11,7 @@
 #define OSSL_APPS_FUNCTION_H
 
 #include <openssl/lhash.h>
+
 #include "opt.h"
 
 #define DEPRECATED_NO_ALTERNATIVE "unknown"

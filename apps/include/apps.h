@@ -20,15 +20,15 @@
 #endif
 #endif
 
-#include "internal/common.h" /* for HAS_PREFIX */
-#include "internal/nelem.h"
 #include <assert.h>
-
 #include <stdarg.h>
 #include <sys/types.h>
+
+#include "internal/common.h" /* for HAS_PREFIX */
+#include "internal/nelem.h"
 #ifndef OPENSSL_NO_POSIX_IO
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #endif
 
 #include <openssl/e_os2.h>
@@ -45,19 +45,21 @@
 int app_mmap_file(const char *path, BIO *err_bio, size_t known_size,
     const unsigned char **out_data, size_t *out_size);
 #endif
-#include <openssl/types.h>
-#include <openssl/bio.h>
-#include <openssl/x509.h>
-#include <openssl/conf.h>
-#include <openssl/txt_db.h>
-#include <openssl/ocsp.h>
-#include <openssl/http.h>
 #include <signal.h>
-#include "apps_ui.h"
-#include "opt.h"
-#include "fmt.h"
-#include "platform.h"
+
+#include <openssl/bio.h>
+#include <openssl/conf.h>
+#include <openssl/http.h>
+#include <openssl/ocsp.h>
+#include <openssl/txt_db.h>
+#include <openssl/types.h>
+#include <openssl/x509.h>
+
 #include "app_libctx.h"
+#include "apps_ui.h"
+#include "fmt.h"
+#include "opt.h"
+#include "platform.h"
 
 /*
  * quick macro when you need to pass an unsigned char instead of a char.

@@ -24,25 +24,27 @@
 
 /* We need to use some deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
-#include "internal/e_os.h"
-
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
-#include "apps.h"
-#include "progs.h"
-#include "internal/nelem.h"
-#include "internal/numbers.h"
+
+#include <openssl/async.h>
+#include <openssl/core_names.h>
 #include <openssl/crypto.h>
-#include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include <openssl/core_names.h>
-#include <openssl/async.h>
 #include <openssl/prov_ssl.h>
 #include <openssl/provider.h>
+#include <openssl/rand.h>
+
+#include "internal/e_os.h"
+#include "internal/nelem.h"
+#include "internal/numbers.h"
+
+#include "apps.h"
+#include "progs.h"
 #if !defined(OPENSSL_SYS_MSDOS)
 #include <unistd.h>
 #endif
@@ -67,14 +69,16 @@ BOOL
 
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
+
 #include "./testrsa.h"
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
-#include <openssl/x509.h>
 #include <openssl/dsa.h>
-#include "./testdsa.h"
 #include <openssl/modes.h>
+#include <openssl/x509.h>
+
+#include "./testdsa.h"
 
 #ifndef HAVE_FORK
 #if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_VXWORKS)

@@ -7,12 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h" /* LIST_SEPARATOR_CHAR */
-#include "apps.h"
 #include <openssl/bio.h>
+#include <openssl/conf.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#include <openssl/conf.h>
+
+#include "internal/e_os.h" /* LIST_SEPARATOR_CHAR */
+
+#include "apps.h"
 
 static char *save_rand_file;
 static STACK_OF(OPENSSL_STRING) *randfiles;

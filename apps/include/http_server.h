@@ -30,9 +30,9 @@
 #if !defined(NO_FORK) && !defined(OPENSSL_NO_SOCK) \
     && !defined(OPENSSL_NO_POSIX_IO)
 #define HTTP_DAEMON
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <signal.h>
 #define MAXERRLEN 1000 /* limit error text sent to syslog to 1000 bytes */
 #endif
 

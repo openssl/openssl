@@ -7,9 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/trace.h>
-#include "apps.h"
 #include "log.h"
+
+#include <openssl/trace.h>
+
+#include "apps.h"
 
 static int verbosity = LOG_INFO;
 
