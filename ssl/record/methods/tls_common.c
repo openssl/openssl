@@ -1398,7 +1398,7 @@ err:
 static void tls_int_free(OSSL_RECORD_LAYER *rl)
 {
     BIO_free(rl->prev);
-    BIO_free(rl->bio);
+    BIO_free_all(rl->bio);
     BIO_free(rl->next);
     ossl_tls_buffer_release(&rl->rbuf);
 
