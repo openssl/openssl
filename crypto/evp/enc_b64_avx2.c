@@ -69,7 +69,7 @@ static __m256i lookup_pshufb_std(__m256i input)
 OPENSSL_UNTARGET_AVX2
 
 OPENSSL_TARGET_AVX2
-static inline __m256i lookup_pshufb_srp(__m256i input)
+static ossl_inline __m256i lookup_pshufb_srp(__m256i input)
 {
     const __m256i zero = _mm256_setzero_si256();
     const __m256i hi = _mm256_set1_epi8((char)0x80);
@@ -100,7 +100,7 @@ static inline __m256i lookup_pshufb_srp(__m256i input)
 OPENSSL_UNTARGET_AVX2
 
 OPENSSL_TARGET_AVX2
-static inline __m256i shift_right_zeros(__m256i v, int n)
+static ossl_inline __m256i shift_right_zeros(__m256i v, int n)
 {
     switch (n) {
     case 0:
@@ -142,7 +142,7 @@ static inline __m256i shift_right_zeros(__m256i v, int n)
 OPENSSL_UNTARGET_AVX2
 
 OPENSSL_TARGET_AVX2
-static inline __m256i shift_left_zeros(__m256i v, int n)
+static ossl_inline __m256i shift_left_zeros(__m256i v, int n)
 {
     switch (n) {
     case 0:
@@ -208,7 +208,7 @@ static const uint8_t shuffle_masks[16][16] = {
  * Insert a line feed character in the 64-byte input at index K in [0,32).
  */
 OPENSSL_TARGET_AVX2
-static inline __m256i insert_line_feed32(__m256i input, int K)
+static ossl_inline __m256i insert_line_feed32(__m256i input, int K)
 {
     __m256i line_feed_vector = _mm256_set1_epi8('\n');
     __m128i identity = _mm_setr_epi8(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
@@ -236,7 +236,7 @@ static inline __m256i insert_line_feed32(__m256i input, int K)
 OPENSSL_UNTARGET_AVX2
 
 OPENSSL_TARGET_AVX2
-static inline size_t ins_nl_gt32(__m256i v, uint8_t *out, int stride,
+static ossl_inline size_t ins_nl_gt32(__m256i v, uint8_t *out, int stride,
     int *wrap_cnt)
 {
     const int until_nl = stride - *wrap_cnt;
@@ -267,7 +267,7 @@ static inline size_t ins_nl_gt32(__m256i v, uint8_t *out, int stride,
 OPENSSL_UNTARGET_AVX2
 
 OPENSSL_TARGET_AVX2
-static inline size_t insert_nl_gt16(const __m256i v0,
+static ossl_inline size_t insert_nl_gt16(const __m256i v0,
     uint8_t *output,
     int wrap_max, int *wrap_cnt)
 {
@@ -345,7 +345,7 @@ static inline size_t insert_nl_gt16(const __m256i v0,
 OPENSSL_UNTARGET_AVX2
 
 OPENSSL_TARGET_AVX2
-static inline size_t insert_nl_2nd_vec_stride_12(const __m256i v0,
+static ossl_inline size_t insert_nl_2nd_vec_stride_12(const __m256i v0,
     uint8_t *output,
     int dummy_stride,
     int *wrap_cnt)
@@ -379,7 +379,7 @@ static inline size_t insert_nl_2nd_vec_stride_12(const __m256i v0,
 OPENSSL_UNTARGET_AVX2
 
 OPENSSL_TARGET_AVX2
-static inline __m256i insert_newlines_by_mask(__m256i data, __m256i mask)
+static ossl_inline __m256i insert_newlines_by_mask(__m256i data, __m256i mask)
 {
     __m256i newline = _mm256_set1_epi8('\n');
 
@@ -389,7 +389,7 @@ static inline __m256i insert_newlines_by_mask(__m256i data, __m256i mask)
 OPENSSL_UNTARGET_AVX2
 
 OPENSSL_TARGET_AVX2
-static inline size_t insert_nl_str4(const __m256i v0, uint8_t *output)
+static ossl_inline size_t insert_nl_str4(const __m256i v0, uint8_t *output)
 {
     __m256i shuffling_mask = _mm256_setr_epi8(0, 1, 2, 3, (char)0xFF, 4, 5, 6,
         7, (char)0xFF, 8, 9, 10, 11, (char)0xFF, 12,
@@ -447,7 +447,7 @@ static inline size_t insert_nl_str4(const __m256i v0, uint8_t *output)
 OPENSSL_UNTARGET_AVX2
 
 OPENSSL_TARGET_AVX2
-static inline size_t insert_nl_str8(const __m256i v0, uint8_t *output)
+static ossl_inline size_t insert_nl_str8(const __m256i v0, uint8_t *output)
 {
     __m256i shuffling_mask = _mm256_setr_epi8(0, 1, 2, 3, 4, 5, 6, 7, (char)0xFF,
         8, 9, 10, 11, 12, 13, 14,
