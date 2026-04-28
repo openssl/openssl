@@ -72,10 +72,10 @@ void CRYPTO_THREAD_clean_local(void);
 
 #if defined(_MSC_VER)
 #if (!defined(_M_IX86) || _MSC_VER > 1600)
-#define USE_INTERLOCKEDOR64
+#define OSSL_USE_INTERLOCKEDOR64
 #endif
 #elif defined(__MINGW64__)
-#define USE_INTERLOCKEDOR64
+#define OSSL_USE_INTERLOCKEDOR64
 #endif
 
 #if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE) && !defined(BROKEN_CLANG_ATOMICS) \
