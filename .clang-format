@@ -1382,47 +1382,37 @@ StatementMacros:
 #
 # Include sorting should be disabled until post 4.0
 #
-#SortIncludes:
-#  Enabled:         false
-#  IgnoreCase:      false
-#  IgnoreExtension: false
-SortIncludes:    Never
-IncludeBlocks:   Preserve
+SortIncludes:
+  Enabled:         true
+  IgnoreCase:      false
+IncludeBlocks:   Regroup
 IncludeCategories:
-#  # deprecated must always be first
-#  - Regex:           '^"internal/deprecated.h"'
-#    Priority:        -10
-#    SortPriority:    0
-#    CaseSensitive:   false
-#  # bio_local is special
-#  - Regex:           '^"bio_local.h"'
-#    Priority:        -1
-#    SortPriority:    0
-#    CaseSensitive:   false
-#  - Regex:           '^"crypto/.*\.h"'
-#    Priority:        5
-#    SortPriority:    0
-#    CaseSensitive:   false
-#  - Regex:           '^"internal/.*\.h"'
-#    Priority:        4
-#    SortPriority:    0
-#    CaseSensitive:   false
-#  - Regex:           '^<openssl/.*\.h>'
-#    Priority:        3
-#    SortPriority:    0
-#    CaseSensitive:   false
-#  - Regex:           '^<.*\.h>'
-#    Priority:        1
-#    SortPriority:    0
-#    CaseSensitive:   false
-#  # we do not currently include C++ style files, in case we ever do?
-#  - Regex:           '^<.*'
-#    Priority:        2
-#    SortPriority:    0
-#    CaseSensitive:   false
-#  - Regex:           '.*'
-#    Priority:        6
-#    SortPriority:    0
-#    CaseSensitive:   false
+  # deprecated must always be first
+  - Regex:           '^"internal/deprecated.h"'
+    Priority:        -10
+    SortPriority:    0
+  # bio_local is special
+  - Regex:           '^"bio_local.h"'
+    Priority:        -1
+    SortPriority:    0
+  - Regex:           '^["<]crypto/.*\.h[>"]'
+    Priority:        5
+    SortPriority:    0
+  - Regex:           '^["<]internal/.*\.h[>"]'
+    Priority:        4
+    SortPriority:    0
+  - Regex:           '^<openssl/.*\.h>'
+    Priority:        3
+    SortPriority:    0
+  - Regex:           '^<.*\.h>'
+    Priority:        1
+    SortPriority:    0
+  # we do not currently include C++ style files, in case we ever do?
+  - Regex:           '^<.*'
+    Priority:        2
+    SortPriority:    0
+  - Regex:           '.*'
+    Priority:        6
+    SortPriority:    0
 ...
 
