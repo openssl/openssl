@@ -25,6 +25,10 @@ print <<"EOF";
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_BN_BN_PRIME_H)
+#define OSSL_LIBCRYPTO_BN_BN_PRIME_H
+
+/* clang-format off */
 EOF
 
 
@@ -50,3 +54,5 @@ for (my $i = 0; $i <= $#primes; $i++) {
     printf " %5d,", $primes[$i];
 }
 print "\n};\n";
+print "/* clang-format on */\n";
+print "\n#endif /* !defined(OSSL_LIBCRYPTO_BN_BN_PRIME_H) */\n"
