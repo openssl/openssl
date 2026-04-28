@@ -37,6 +37,10 @@
 #define NUM_SHARDS 4
 #endif
 
+#ifndef MAX_CACHE_LINES
+#define MAX_CACHE_LINES 8
+#endif
+
 #if defined(__GNUC__) || defined(__clang__)
 /*
  * ALLOW_VLA enables the use of dynamically sized arrays
@@ -71,6 +75,7 @@ DEFINE_STACK_OF(IMPLEMENTATION)
 
 typedef struct query_st {
     OSSL_LIST_MEMBER(lru_entry, struct query_st); /* member of our linked list */
+    struct query_st *next;
     void *saptr; /* pointer to our owning STORED_ALGORITHM */
     int nid; /* nid of this query */
     uint64_t specific_hash; /* hash of [nid,prop_query,prov] tuple */
@@ -102,6 +107,8 @@ typedef struct {
     SPARSE_ARRAY_OF(ALGORITHM) * algs;
 
     HT *cache;
+    QUERY *cache_lists[MAX_CACHE_LINES];
+
     /*
      * This is a list of every element in our query
      * cache.  NOTE: Its named lru list, but to avoid
@@ -116,10 +123,13 @@ typedef struct {
      * by the appropriate functions here.
      */
     CRYPTO_RWLOCK *lock;
+    CRYPTO_RWLOCK *alock;
 
     /* query cache specific values */
 
 } STORED_ALGORITHMS;
+
+static int ossl_method_store_atomic_insert_to_list(STORED_ALGORITHMS *sa, int nid, QUERY *new);
 
 struct ossl_method_store_st {
     OSSL_LIB_CTX *ctx;
@@ -322,6 +332,7 @@ static void stored_algs_free(STORED_ALGORITHMS *sa)
         ossl_sa_ALGORITHM_doall_arg(sa[i].algs, &alg_cleanup, &sa[i]);
         ossl_sa_ALGORITHM_free(sa[i].algs);
         CRYPTO_THREAD_lock_free(sa[i].lock);
+        CRYPTO_THREAD_lock_free(sa[i].alock);
         ossl_ht_free(sa[i].cache);
     }
 
@@ -352,6 +363,9 @@ static STORED_ALGORITHMS *stored_algs_new(OSSL_LIB_CTX *ctx)
 
         ret[i].lock = CRYPTO_THREAD_lock_new();
         if (ret[i].lock == NULL)
+            goto err;
+        ret[i].alock = CRYPTO_THREAD_lock_new();
+        if (ret[i].alock == NULL)
             goto err;
         ret[i].cache = ossl_ht_new(&ht_conf);
         if (ret[i].cache == NULL)
@@ -1099,10 +1113,29 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
                 ret = 0;
             } else {
                 ossl_list_lru_entry_insert_tail(&sa->lru_list, post_insert);
+                ossl_method_store_atomic_insert_to_list(sa, nid, post_insert);
             }
             ossl_property_unlock(sa);
         }
     }
+    return ret;
+}
+
+static int ossl_method_store_atomic_insert_to_list(STORED_ALGORITHMS *sa, int nid, QUERY *new)
+{
+    nid = nid % MAX_CACHE_LINES;
+    QUERY *headptr;
+    int ret = 0;
+
+    if (!CRYPTO_atomic_load_ptr((void **)&sa->cache_lists[nid], (void **)&headptr, sa->alock))
+        goto out;
+try_again:
+    if (!CRYPTO_atomic_store_ptr((void **)&new->next, (void **)&headptr, sa->alock))
+        goto out;
+    if (!CRYPTO_atomic_cmp_exch_ptr((void **)&sa->cache_lists[nid], (void **)&headptr, new, sa->alock))
+        goto try_again;
+    ret = 1;
+out:
     return ret;
 }
 
@@ -1173,6 +1206,8 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
         if (old != NULL)
             impl_cache_free(old);
         ossl_list_lru_entry_insert_head(&sa->lru_list, p);
+        ossl_method_store_atomic_insert_to_list(sa, nid, p);
+
         /*
          * We also want to add this method into the cache against a key computed _only_
          * from nid and property query.  This lets us match in the event someone does a lookup
@@ -1194,6 +1229,7 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
             p->specific_hash = 0;
             p->generic_hash = old->generic_hash = HT_KEY_GET_HASH(&key);
             ossl_list_lru_entry_insert_tail(&sa->lru_list, p);
+            ossl_method_store_atomic_insert_to_list(sa, nid, p);
         } else {
             impl_cache_free_unlinked(p);
             p = NULL;
