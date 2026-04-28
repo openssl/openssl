@@ -326,16 +326,24 @@ start:
     if ((sc->s3.change_cipher_spec /* set when we receive ChangeCipherSpec,
                                     * reset by ssl3_get_finished */
             && (rr->type != SSL3_RT_HANDSHAKE))
-        || (is_dtls13 && rr->epoch >= 3
+        || (is_dtls13 && rr->epoch >= 3 /* For DTLS 1.3 we can receive
+                                         * Application Data before we
+                                         * receive an expecting ACK
+                                         * message */
             && (current_state == TLS_ST_CW_FINISHED
                 || current_state == TLS_ST_CW_KEY_UPDATE
                 || current_state == TLS_ST_SW_KEY_UPDATE
                 || current_state == TLS_ST_SW_SESSION_TICKET)
             && rr->type == SSL3_RT_APPLICATION_DATA)) {
         /*
-         * We now have application data between CCS and Finished. Most likely
-         * the packets were reordered on their way, so buffer the application
-         * data for later processing rather than dropping the connection.
+         * For DTLS 1.3 we received Application Data while we are
+         * waiting for an Acknowledgement record. Buffer this data so
+         * it can be processed once we have received the Acknowledgement.
+         *
+         * For non-DTLS 1.3 we now have application data between CCS and
+         * Finished. Most likely the packets were reordered on their way,
+         * so buffer the application data for later processing rather than
+         * dropping the connection.
          */
         if (dtls_buffer_record(sc, rr) < 0) {
             /* SSLfatal() already called */
