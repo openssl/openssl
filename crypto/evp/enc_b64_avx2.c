@@ -7,6 +7,7 @@
 
 #if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
 #if !defined(_M_ARM64EC)
+#if defined(HAVE_AVX2_INTRINSICS)
 #define STRINGIFY_IMPLEMENTATION_(a) #a
 #define STRINGIFY(a) STRINGIFY_IMPLEMENTATION_(a)
 
@@ -668,5 +669,6 @@ size_t encode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
     return (size_t)(out - (uint8_t *)dst) + evp_encodeblock_int(ctx, out, src + i, srclen - i, final_wrap_cnt);
 }
 OPENSSL_UNTARGET_AVX2
+#endif /* defined(HAVE_AVX2_INTRINSICS) */
 #endif /* !defined(_M_ARM64EC) */
 #endif
