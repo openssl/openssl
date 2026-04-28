@@ -12,8 +12,8 @@
 #include <openssl/safestack.h>
 #include <openssl/x509_vfy.h>
 
-#include "internal/refcount.h"
 #include "internal/hashtable.h"
+#include "internal/refcount.h"
 
 #include <crypto/asn1.h>
 

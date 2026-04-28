@@ -44,10 +44,11 @@
 #include "internal/deprecated.h"
 
 #include <assert.h>
-
 #include <stdlib.h>
-#include <openssl/crypto.h>
+
 #include <openssl/aes.h>
+#include <openssl/crypto.h>
+
 #include "aes_local.h"
 
 #if defined(OPENSSL_AES_CONST_TIME) && !defined(AES_ASM)

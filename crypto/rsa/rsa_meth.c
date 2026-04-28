@@ -14,8 +14,10 @@
 #include "internal/deprecated.h"
 
 #include <string.h>
-#include "rsa_local.h"
+
 #include <openssl/err.h>
+
+#include "rsa_local.h"
 
 RSA_METHOD *RSA_meth_new(const char *name, int flags)
 {

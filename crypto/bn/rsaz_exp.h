@@ -20,7 +20,9 @@
 #define RSAZ_ENABLED
 
 #include <openssl/bn.h>
+
 #include "internal/constant_time.h"
+
 #include "bn_local.h"
 
 void RSAZ_1024_mod_exp_avx2(BN_ULONG result[16],

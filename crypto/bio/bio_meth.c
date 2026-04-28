@@ -8,6 +8,7 @@
  */
 
 #include "bio_local.h"
+
 #include "internal/thread_once.h"
 
 CRYPTO_REF_COUNT bio_type_count;

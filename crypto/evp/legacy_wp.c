@@ -14,6 +14,7 @@
 #include "internal/deprecated.h"
 
 #include <openssl/whrlpool.h>
+
 #include "crypto/evp.h"
 
 static const EVP_MD whirlpool_md = {

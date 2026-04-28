@@ -9,13 +9,17 @@
 
 #include <assert.h>
 #include <limits.h>
+
 #include <openssl/cms.h>
 #include <openssl/core_names.h>
-#include <openssl/err.h>
 #include <openssl/decoder.h>
+#include <openssl/err.h>
+
 #include "internal/sizes.h"
+
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+
 #include "cms_local.h"
 
 static int kem_cms_decrypt(CMS_RecipientInfo *ri)

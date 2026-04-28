@@ -8,7 +8,9 @@
  */
 
 #include <openssl/err.h>
+
 #include "crypto/ctype.h"
+
 #include "bn_local.h"
 
 /* Must 'OPENSSL_free' the returned data */

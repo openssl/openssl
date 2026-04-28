@@ -7,8 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h"
 #include "internal/packet.h"
+
+#include "internal/cryptlib.h"
 #if !defined OPENSSL_NO_QUIC && !defined FIPS_MODULE
 #include "internal/packet_quic.h"
 #endif

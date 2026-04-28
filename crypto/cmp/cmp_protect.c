@@ -9,8 +9,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cmp_local.h"
 #include "crypto/asn1.h" /* for ossl_X509_ALGOR_from_nid() */
+
+#include "cmp_local.h"
 
 /*
  * This function is also used by the internal verify_PBMAC() in cmp_vfy.c.

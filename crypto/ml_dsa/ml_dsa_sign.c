@@ -7,19 +7,22 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "ml_dsa_sign.h"
+
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
-#include <openssl/rand.h>
 #include <openssl/err.h>
+#include <openssl/params.h>
 #include <openssl/proverr.h>
+#include <openssl/rand.h>
+
 #include "internal/common.h"
 #include "internal/constant_time.h"
-#include "ml_dsa_local.h"
-#include "ml_dsa_key.h"
-#include "ml_dsa_matrix.h"
-#include "ml_dsa_sign.h"
+
 #include "ml_dsa_hash.h"
+#include "ml_dsa_key.h"
+#include "ml_dsa_local.h"
+#include "ml_dsa_matrix.h"
 
 #define ML_DSA_MAX_LAMBDA 256 /* bit strength for ML-DSA-87 */
 

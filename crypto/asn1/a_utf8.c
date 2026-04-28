@@ -8,9 +8,11 @@
  */
 
 #include <stdio.h>
+
+#include <openssl/asn1.h>
+
 #include "internal/cryptlib.h"
 #include "internal/unicode.h"
-#include <openssl/asn1.h>
 
 /* UTF8 utilities */
 

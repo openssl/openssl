@@ -8,10 +8,12 @@
  */
 
 #include <string.h> /* memset */
+
 #include <openssl/core_names.h>
+
 #include "internal/ffc.h"
-#include "internal/param_build_set.h"
 #include "internal/nelem.h"
+#include "internal/param_build_set.h"
 
 #ifndef FIPS_MODULE
 #include <openssl/asn1.h> /* ossl_ffc_params_print */

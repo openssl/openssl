@@ -7,8 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"
 #include <errno.h>
+
+#include "internal/e_os.h"
 
 /*
  * The routines really come from the Levitte Programming, so to make life

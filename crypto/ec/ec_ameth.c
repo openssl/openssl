@@ -14,16 +14,20 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/x509.h>
-#include <openssl/ec.h>
-#include <openssl/bn.h>
+
 #include <openssl/asn1t.h>
+#include <openssl/bn.h>
+#include <openssl/core_names.h>
+#include <openssl/ec.h>
+#include <openssl/param_build.h>
+#include <openssl/x509.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/x509.h"
-#include <openssl/core_names.h>
-#include <openssl/param_build.h>
+
 #include "ec_local.h"
 
 static int eckey_param2type(int *pptype, void **ppval, const EC_KEY *ec_key)

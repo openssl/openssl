@@ -13,12 +13,15 @@
 #ifndef OSSL_CRYPTO_EC_CURVE448_WORD_H
 #define OSSL_CRYPTO_EC_CURVE448_WORD_H
 
-#include <string.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include <openssl/e_os2.h>
-#include "curve448utils.h"
+
 #include "internal/constant_time.h"
+
+#include "curve448utils.h"
 
 #ifdef INT128_MAX
 #include "arch_64/arch_intrinsics.h"

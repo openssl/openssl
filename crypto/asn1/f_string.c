@@ -8,11 +8,13 @@
  */
 
 #include <stdio.h>
-#include "crypto/ctype.h"
-#include "internal/cryptlib.h"
-#include <openssl/buffer.h>
-#include <openssl/asn1.h>
 
+#include <openssl/asn1.h>
+#include <openssl/buffer.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/ctype.h"
 #include <crypto/asn1.h>
 
 int i2a_ASN1_STRING(BIO *bp, const ASN1_STRING *a, int type)

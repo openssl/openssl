@@ -7,12 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <string.h>
-#include <openssl/err.h>
-#include <openssl/cryptoerr.h>
-#include <openssl/provider.h>
-#include <openssl/core_names.h>
 #include "internal/provider.h"
+
+#include <string.h>
+
+#include <openssl/core_names.h>
+#include <openssl/cryptoerr.h>
+#include <openssl/err.h>
+#include <openssl/provider.h>
+
 #include "provider_local.h"
 
 OSSL_PROVIDER *OSSL_PROVIDER_try_load_ex(OSSL_LIB_CTX *libctx, const char *name,

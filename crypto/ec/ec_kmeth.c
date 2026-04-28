@@ -14,8 +14,10 @@
 #include "internal/deprecated.h"
 
 #include <string.h>
+
 #include <openssl/ec.h>
 #include <openssl/err.h>
+
 #include "ec_local.h"
 
 static const EC_KEY_METHOD openssl_ec_key_method = {

@@ -84,11 +84,14 @@
  *
  */
 
+#include "internal/threads_common.h"
+
 #include <openssl/crypto.h>
+
+#include "internal/cryptlib.h"
+
 #include <crypto/cryptlib.h>
 #include <crypto/sparse_array.h>
-#include "internal/cryptlib.h"
-#include "internal/threads_common.h"
 
 /**
  * @struct CTX_TABLE_ENTRY

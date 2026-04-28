@@ -7,9 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/crypto.h>
 #include <openssl/bn.h>
+#include <openssl/crypto.h>
+
 #include "crypto/ppc_arch.h"
+
 #include "bn_local.h"
 
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,

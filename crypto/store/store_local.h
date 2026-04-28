@@ -11,14 +11,15 @@
 #define OSSL_LIBCRYPTO_STORE_STORE_LOCAL_H
 
 #include <openssl/core_dispatch.h>
-#include "internal/thread_once.h"
-#include "internal/refcount.h"
 #include <openssl/dsa.h>
 #include <openssl/evp.h>
 #include <openssl/lhash.h>
-#include <openssl/x509.h>
 #include <openssl/store.h>
+#include <openssl/x509.h>
+
 #include "internal/passphrase.h"
+#include "internal/refcount.h"
+#include "internal/thread_once.h"
 
 /*-
  *  OSSL_STORE_INFO stuff

@@ -7,10 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/self_test.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include <openssl/self_test.h>
+
 #include "internal/cryptlib.h"
+
 #include "crypto/context.h"
 
 typedef struct self_test_cb_st {

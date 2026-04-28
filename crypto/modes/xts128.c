@@ -8,8 +8,11 @@
  */
 
 #include <string.h>
+
 #include <openssl/crypto.h>
+
 #include "internal/endian.h"
+
 #include "crypto/modes.h"
 
 #ifndef STRICT_ALIGNMENT

@@ -7,18 +7,21 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/err.h>
-#include <openssl/ui.h>
-#include <openssl/params.h>
-#include <openssl/encoder.h>
 #include <openssl/core_names.h>
+#include <openssl/encoder.h>
+#include <openssl/err.h>
+#include <openssl/params.h>
 #include <openssl/provider.h>
 #include <openssl/safestack.h>
 #include <openssl/trace.h>
-#include "internal/provider.h"
-#include "internal/property.h"
+#include <openssl/ui.h>
+
 #include "internal/namemap.h"
+#include "internal/property.h"
+#include "internal/provider.h"
+
 #include "crypto/evp.h"
+
 #include "encoder_local.h"
 
 DEFINE_STACK_OF(OSSL_ENCODER)

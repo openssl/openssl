@@ -14,8 +14,9 @@
  *
  */
 
-#include <openssl/opensslconf.h>
 #include <openssl/crypto.h>
+#include <openssl/opensslconf.h>
+
 #include "rsaz_exp.h"
 
 #ifndef RSAZ_ENABLED

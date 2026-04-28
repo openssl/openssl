@@ -13,9 +13,10 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/rc5.h>
-#include "rc5_local.h"
 #include <openssl/opensslv.h>
+#include <openssl/rc5.h>
+
+#include "rc5_local.h"
 
 void RC5_32_ecb_encrypt(const unsigned char *in, unsigned char *out,
     RC5_32_KEY *ks, int encrypt)

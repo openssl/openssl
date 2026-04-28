@@ -27,9 +27,11 @@
 #include <string.h>
 
 #include "internal/cryptlib.h"
-#include "crypto/bn.h"
-#include "ec_local.h"
 #include "internal/refcount.h"
+
+#include "crypto/bn.h"
+
+#include "ec_local.h"
 
 #if BN_BITS2 != 64
 #define TOBN(hi, lo) lo, hi

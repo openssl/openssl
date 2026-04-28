@@ -14,11 +14,14 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
 #include <openssl/objects.h>
+#include <openssl/rsa.h>
 #include <openssl/x509.h>
+
+#include "internal/cryptlib.h"
+
 #include <crypto/asn1.h>
 
 int RSA_sign_ASN1_OCTET_STRING(int type,

@@ -9,8 +9,9 @@
 #include <openssl/macros.h>
 
 #ifndef OPENSSL_NO_RC2
-#include "crypto/evp.h"
 #include <openssl/rc2.h>
+
+#include "crypto/evp.h"
 
 IMPLEMENT_BLOCK_CIPHER(rc2, ks, RC2, EVP_RC2_KEY, NID_rc2,
     8,

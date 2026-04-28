@@ -8,12 +8,14 @@
  */
 
 #include <stddef.h>
-#include <openssl/x509.h>
+
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
-#include "x509_local.h"
+#include <openssl/x509.h>
 
 #include <crypto/asn1.h>
+
+#include "x509_local.h"
 
 ASN1_SEQUENCE(X509_EXTENSION) = {
     ASN1_SIMPLE(X509_EXTENSION, object, ASN1_OBJECT),

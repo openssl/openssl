@@ -11,10 +11,11 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include "crypto/s390x_arch.h"
+
 #include "hmac_local.h"
-#include "openssl/obj_mac.h"
-#include "openssl/evp.h"
 #include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
 
 #ifdef OPENSSL_HMAC_S390X
 

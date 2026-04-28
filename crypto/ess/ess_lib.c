@@ -8,10 +8,13 @@
  */
 
 #include <string.h>
-#include <openssl/x509v3.h>
+
 #include <openssl/err.h>
 #include <openssl/ess.h>
+#include <openssl/x509v3.h>
+
 #include "internal/sizes.h"
+
 #include "crypto/ess.h"
 #include "crypto/x509.h"
 

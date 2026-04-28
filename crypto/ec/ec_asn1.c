@@ -14,13 +14,17 @@
 #include "internal/deprecated.h"
 
 #include <string.h>
-#include "ec_local.h"
-#include <openssl/err.h>
+
 #include <openssl/asn1t.h>
+#include <openssl/err.h>
 #include <openssl/objects.h>
+
 #include "internal/nelem.h"
+
 #include "crypto/asn1.h"
 #include "crypto/asn1_dsa.h"
+
+#include "ec_local.h"
 
 #ifndef FIPS_MODULE
 

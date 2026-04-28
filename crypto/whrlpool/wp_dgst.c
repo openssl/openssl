@@ -58,9 +58,11 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/crypto.h>
-#include "wp_local.h"
 #include <string.h>
+
+#include <openssl/crypto.h>
+
+#include "wp_local.h"
 
 int WHIRLPOOL_Init(WHIRLPOOL_CTX *c)
 {

@@ -12,6 +12,7 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/sha.h>
+
 #include "crypto/loongarch_arch.h"
 
 void sha256_block_data_order_la64v100(void *ctx, const void *in, size_t num);

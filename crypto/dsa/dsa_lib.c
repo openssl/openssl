@@ -14,11 +14,14 @@
 #include "internal/deprecated.h"
 
 #include <openssl/bn.h>
+
+#include "internal/common.h"
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
-#include "internal/common.h"
-#include "crypto/dsa.h"
+
 #include "crypto/dh.h" /* required by DSA_dup_DH() */
+#include "crypto/dsa.h"
+
 #include "dsa_local.h"
 
 static DSA *dsa_new_intern(OSSL_LIB_CTX *libctx);

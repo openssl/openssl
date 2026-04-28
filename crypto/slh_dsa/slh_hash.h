@@ -13,11 +13,12 @@
 
 #include <openssl/e_os2.h>
 
+#include "internal/packet.h"
+
 #include "crypto/slh_dsa.h"
 
 #include "slh_adrs.h"
 #include "slh_hash.h"
-#include "internal/packet.h"
 
 #define SLH_HASH_FUNC_DECLARE(ctx, hashf) \
     const SLH_HASH_FUNC *hashf = ctx->hash_func

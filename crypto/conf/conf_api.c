@@ -9,12 +9,15 @@
 
 /* Part of the code in here was originally in conf.c, which is now removed */
 
-#include "internal/e_os.h"
-#include "internal/cryptlib.h"
 #include <stdlib.h>
 #include <string.h>
+
 #include <openssl/conf.h>
 #include <openssl/conf_api.h>
+
+#include "internal/cryptlib.h"
+#include "internal/e_os.h"
+
 #include "conf_local.h"
 
 static void value_free_hash(const CONF_VALUE *a, LHASH_OF(CONF_VALUE) *conf);

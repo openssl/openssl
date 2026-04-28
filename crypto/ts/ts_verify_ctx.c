@@ -7,9 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/ts.h>
+
+#include "internal/cryptlib.h"
+
 #include "ts_local.h"
 
 TS_VERIFY_CTX *TS_VERIFY_CTX_new(void)

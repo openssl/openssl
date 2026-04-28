@@ -8,13 +8,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"
 #include "crypto/cryptlib.h"
+
 #include <openssl/safestack.h>
 
+#include "internal/e_os.h"
+
 #if defined(_WIN32) && !defined(OPENSSL_SYS_UEFI)
-#include <tchar.h>
 #include <signal.h>
+#include <tchar.h>
 #ifdef __WATCOMC__
 #if defined(_UNICODE) || defined(__UNICODE__)
 #define _vsntprintf _vsnwprintf

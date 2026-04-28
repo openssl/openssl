@@ -7,11 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include <errno.h>
 #include "bio_local.h"
-#include "internal/cryptlib.h"
+
+#include <errno.h>
+#include <stdio.h>
+
 #include <openssl/rand.h>
+
+#include "internal/cryptlib.h"
 
 /*
  * BIO_put and BIO_get both add to the digest, BIO_gets returns the digest

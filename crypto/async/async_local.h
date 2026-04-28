@@ -23,8 +23,9 @@
 #include <windows.h>
 #endif
 
-#include "crypto/async.h"
 #include <openssl/crypto.h>
+
+#include "crypto/async.h"
 
 typedef struct async_ctx_st async_ctx;
 typedef struct async_pool_st async_pool;

@@ -11,6 +11,7 @@
 #define OSSL_LIBCRYPTO_SLH_DSA_SLH_DSA_LOCAL_H
 
 #include "crypto/slh_dsa.h"
+
 #include "slh_hash.h"
 #include "slh_params.h"
 

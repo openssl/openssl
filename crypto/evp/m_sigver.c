@@ -8,13 +8,17 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include "crypto/evp.h"
-#include "internal/provider.h"
-#include "internal/numbers.h" /* includes SIZE_MAX */
+
 #include "internal/common.h"
+#include "internal/cryptlib.h"
+#include "internal/numbers.h" /* includes SIZE_MAX */
+#include "internal/provider.h"
+
+#include "crypto/evp.h"
+
 #include "evp_local.h"
 
 /*

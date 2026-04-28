@@ -8,12 +8,16 @@
  */
 
 #include <stdio.h>
-#include "crypto/ctype.h"
-#include "internal/cryptlib.h"
+
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include "crypto/x509.h"
+
+#include "internal/cryptlib.h"
+
 #include "crypto/asn1.h"
+#include "crypto/ctype.h"
+#include "crypto/x509.h"
+
 #include "x509_local.h"
 
 /*

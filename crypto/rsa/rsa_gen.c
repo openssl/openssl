@@ -21,9 +21,12 @@
 
 #include <stdio.h>
 #include <time.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/bn.h>
 #include <openssl/self_test.h>
+
+#include "internal/cryptlib.h"
+
 #include "prov/providercommon.h"
 #include "rsa_local.h"
 

@@ -14,6 +14,7 @@
 #include "internal/deprecated.h"
 
 #include <openssl/rc5.h>
+
 #include "rc5_local.h"
 
 int RC5_32_set_key(RC5_32_KEY *key, int len, const unsigned char *data,

@@ -8,15 +8,19 @@
  */
 
 #include <string.h>
-#include <openssl/trace.h>
-#include <openssl/err.h>
+
 #include <openssl/conf.h>
-#include <openssl/safestack.h>
+#include <openssl/err.h>
 #include <openssl/provider.h>
-#include "internal/provider.h"
+#include <openssl/safestack.h>
+#include <openssl/trace.h>
+
 #include "internal/cryptlib.h"
-#include "provider_local.h"
+#include "internal/provider.h"
+
 #include "crypto/context.h"
+
+#include "provider_local.h"
 
 DEFINE_STACK_OF(OSSL_PROVIDER)
 

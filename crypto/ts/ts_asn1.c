@@ -7,9 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/ts.h>
-#include <openssl/err.h>
 #include <openssl/asn1t.h>
+#include <openssl/err.h>
+#include <openssl/ts.h>
+
 #include "ts_local.h"
 
 ASN1_SEQUENCE(TS_MSG_IMPRINT) = {

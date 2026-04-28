@@ -15,14 +15,18 @@
 #include "internal/deprecated.h"
 
 #include <string.h>
-#include <openssl/params.h>
+
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/opensslv.h>
 #include <openssl/param_build.h>
-#include "crypto/ec.h"
-#include "crypto/bn.h"
+#include <openssl/params.h>
+
 #include "internal/nelem.h"
+
+#include "crypto/bn.h"
+#include "crypto/ec.h"
+
 #include "ec_local.h"
 
 /* functions for EC_GROUP objects */

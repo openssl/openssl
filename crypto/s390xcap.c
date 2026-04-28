@@ -7,21 +7,24 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <setjmp.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <setjmp.h>
-#include <signal.h>
+
 #include "internal/cryptlib.h"
+
 #include "crypto/ctype.h"
+
 #include "s390x_arch.h"
 
 #if defined(OPENSSL_SYS_LINUX) && !defined(FIPS_MODULE)
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <asm/zcrypt.h>
+#include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 #endif
 

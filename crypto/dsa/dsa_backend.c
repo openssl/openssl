@@ -19,9 +19,9 @@
 #include <openssl/x509.h>
 #endif
 #include "crypto/dsa.h"
-#include "dsa_local.h"
-
 #include <crypto/asn1.h>
+
+#include "dsa_local.h"
 
 /*
  * The intention with the "backend" source file is to offer backend functions

@@ -7,21 +7,24 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/core_names.h>
 #include <openssl/bio.h>
-#include <openssl/params.h>
-#include <openssl/provider.h>
-#include <openssl/evperr.h>
+#include <openssl/core_names.h>
 #include <openssl/ecerr.h>
+#include <openssl/evperr.h>
+#include <openssl/params.h>
 #include <openssl/pkcs12err.h>
-#include <openssl/x509err.h>
+#include <openssl/provider.h>
 #include <openssl/trace.h>
+#include <openssl/x509err.h>
+
 #include "internal/bio.h"
-#include "internal/provider.h"
-#include "internal/namemap.h"
-#include "crypto/decoder.h"
-#include "encoder_local.h"
 #include "internal/e_os.h"
+#include "internal/namemap.h"
+#include "internal/provider.h"
+
+#include "crypto/decoder.h"
+
+#include "encoder_local.h"
 
 struct decoder_process_data_st {
     OSSL_DECODER_CTX *ctx;

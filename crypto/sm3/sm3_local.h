@@ -13,6 +13,7 @@
 #define OSSL_LIBCRYPTO_SM3_SM3_LOCAL_H
 
 #include <string.h>
+
 #include "internal/cryptlib.h"
 #include "internal/sm3.h"
 

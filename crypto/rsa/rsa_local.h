@@ -11,6 +11,7 @@
 #define OSSL_CRYPTO_RSA_LOCAL_H
 
 #include "internal/refcount.h"
+
 #include "crypto/rsa.h"
 
 #define RSA_MAX_PRIME_NUM 5

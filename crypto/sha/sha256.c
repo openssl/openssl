@@ -13,15 +13,16 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/opensslconf.h>
-
 #include <stdlib.h>
 #include <string.h>
 
 #include <openssl/crypto.h>
-#include <openssl/sha.h>
+#include <openssl/opensslconf.h>
 #include <openssl/opensslv.h>
+#include <openssl/sha.h>
+
 #include "internal/endian.h"
+
 #include "crypto/sha.h"
 
 int SHA224_Init(SHA256_CTX *c)

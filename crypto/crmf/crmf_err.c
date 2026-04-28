@@ -8,8 +8,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/err.h>
 #include <openssl/crmferr.h>
+#include <openssl/err.h>
+
 #include "crypto/crmferr.h"
 
 #ifndef OPENSSL_NO_CRMF

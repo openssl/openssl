@@ -7,13 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <string.h>
-#include "crypto/ctype.h"
 #include <assert.h>
+#include <string.h>
 
 #include <openssl/err.h>
 #include <openssl/lhash.h>
+
 #include "internal/common.h"
+
+#include "crypto/ctype.h"
+
 #include "store_local.h"
 
 static CRYPTO_RWLOCK *registry_lock;

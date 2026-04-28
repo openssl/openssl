@@ -12,12 +12,13 @@
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 
-#include "crypto/err.h"
+#include "internal/dsoerr.h"
+
 #include "crypto/asn1err.h"
 #include "crypto/asyncerr.h"
+#include "crypto/bioerr.h"
 #include "crypto/bnerr.h"
 #include "crypto/buffererr.h"
-#include "crypto/bioerr.h"
 #include "crypto/cmserr.h"
 #include "crypto/comperr.h"
 #include "crypto/conferr.h"
@@ -25,8 +26,8 @@
 #include "crypto/cterr.h"
 #include "crypto/dherr.h"
 #include "crypto/dsaerr.h"
-#include "internal/dsoerr.h"
 #include "crypto/ecerr.h"
+#include "crypto/err.h"
 #include "crypto/evperr.h"
 #include "crypto/httperr.h"
 #include "crypto/objectserr.h"

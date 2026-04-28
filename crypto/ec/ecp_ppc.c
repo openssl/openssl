@@ -8,7 +8,9 @@
  */
 
 #include "internal/cryptlib.h"
+
 #include "crypto/ppc_arch.h"
+
 #include "ec_local.h"
 
 void ecp_nistz256_mul_mont(unsigned long res[4], const unsigned long a[4],

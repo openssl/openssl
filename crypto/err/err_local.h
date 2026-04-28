@@ -11,8 +11,10 @@
 #define OSSL_LIBCRYPTO_ERR_ERR_LOCAL_H
 
 #include <string.h>
-#include <openssl/err.h>
+
 #include <openssl/e_os2.h>
+#include <openssl/err.h>
+
 #include "internal/err.h"
 
 #define ERR_FLAG_MARK 0x01

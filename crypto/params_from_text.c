@@ -8,11 +8,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/common.h" /* for HAS_PREFIX */
+#include <openssl/buffer.h>
 #include <openssl/ebcdic.h>
 #include <openssl/err.h>
 #include <openssl/params.h>
-#include <openssl/buffer.h>
+
+#include "internal/common.h" /* for HAS_PREFIX */
 
 /*
  * When processing text to params, we're trying to be smart with numbers.

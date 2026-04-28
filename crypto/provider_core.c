@@ -8,31 +8,35 @@
  */
 
 #include <assert.h>
+
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/provider.h>
-#include <openssl/params.h>
 #include <openssl/opensslv.h>
+#include <openssl/params.h>
+#include <openssl/provider.h>
+
 #include "crypto/cryptlib.h"
 #ifndef FIPS_MODULE
 #include "crypto/decoder.h" /* ossl_decoder_store_cache_flush */
 #include "crypto/encoder.h" /* ossl_encoder_store_cache_flush */
 #include "crypto/store.h" /* ossl_store_loader_store_cache_flush */
 #endif
-#include "crypto/evp.h" /* evp_method_store_cache_flush */
-#include "crypto/rand.h"
-#include "internal/nelem.h"
-#include "internal/thread_once.h"
-#include "internal/provider.h"
-#include "internal/refcount.h"
 #include "internal/bio.h"
 #include "internal/core.h"
-#include "provider_local.h"
+#include "internal/nelem.h"
+#include "internal/provider.h"
+#include "internal/refcount.h"
+#include "internal/thread_once.h"
+
 #include "crypto/context.h"
+#include "crypto/evp.h" /* evp_method_store_cache_flush */
+#include "crypto/rand.h"
+
+#include "provider_local.h"
 #ifndef FIPS_MODULE
-#include <openssl/self_test.h>
 #include <openssl/indicator.h>
+#include <openssl/self_test.h>
 #endif
 
 /*

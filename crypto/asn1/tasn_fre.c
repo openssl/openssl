@@ -8,9 +8,11 @@
  */
 
 #include <stddef.h>
+
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
+
 #include "asn1_local.h"
 
 /* Free up an ASN1 structure */

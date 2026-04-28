@@ -15,15 +15,17 @@
  * See ssl/ssltest.c for some hints on how this can be used.
  */
 
-#include "internal/e_os.h"
+#include "bio_local.h"
+
 #include <assert.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "bio_local.h"
-#include <openssl/err.h>
 #include <openssl/crypto.h>
+#include <openssl/err.h>
+
+#include "internal/e_os.h"
 
 static int bio_new(BIO *bio);
 static int bio_free(BIO *bio);

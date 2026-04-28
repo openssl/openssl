@@ -7,10 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
 #include <errno.h>
+#include <stdio.h>
+
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
+
 #include "internal/bio.h"
 
 /*

@@ -7,21 +7,25 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/hpke_util.h"
+
 #include <string.h>
+
 #include <openssl/core_names.h>
+#include <openssl/err.h>
+#include <openssl/hpke.h>
 #include <openssl/kdf.h>
 #include <openssl/params.h>
-#include <openssl/err.h>
 #include <openssl/proverr.h>
-#include <openssl/hpke.h>
-#include <openssl/sha.h>
 #include <openssl/rand.h>
+#include <openssl/sha.h>
+
+#include "internal/common.h"
+#include "internal/nelem.h"
+#include "internal/packet.h"
+
 #include "crypto/ecx.h"
 #include "crypto/rand.h"
-#include "internal/hpke_util.h"
-#include "internal/packet.h"
-#include "internal/nelem.h"
-#include "internal/common.h"
 
 /*
  * Delimiter used in OSSL_HPKE_str2suite

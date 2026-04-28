@@ -14,8 +14,9 @@
 #include "internal/deprecated.h"
 
 #include <openssl/ec.h>
-#include "ec_local.h"
 #include <openssl/err.h>
+
+#include "ec_local.h"
 
 ECDSA_SIG *ECDSA_do_sign(const unsigned char *dgst, int dlen, EC_KEY *eckey)
 {

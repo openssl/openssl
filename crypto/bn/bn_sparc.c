@@ -8,9 +8,13 @@
  */
 
 #include <stdlib.h>
+
 #include <openssl/bn.h>
+
 #include "internal/cryptlib.h"
+
 #include "crypto/sparc_arch.h"
+
 #include "bn_local.h" /* for definition of bn_mul_mont */
 
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,

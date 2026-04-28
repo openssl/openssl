@@ -14,6 +14,7 @@
 #include "internal/deprecated.h"
 
 #include <openssl/rc2.h>
+
 #include "rc2_local.h"
 
 /*

@@ -7,13 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include <openssl/core_names.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
-#include <openssl/core_names.h>
 #include <openssl/params.h>
+
 #include "internal/endian.h"
+
 #include "crypto/modes.h"
 #include "crypto/siv.h"
 

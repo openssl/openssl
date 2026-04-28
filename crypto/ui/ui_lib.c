@@ -8,11 +8,14 @@
  */
 
 #include <string.h>
-#include "internal/cryptlib.h"
-#include <openssl/e_os2.h>
+
 #include <openssl/buffer.h>
-#include <openssl/ui.h>
+#include <openssl/e_os2.h>
 #include <openssl/err.h>
+#include <openssl/ui.h>
+
+#include "internal/cryptlib.h"
+
 #include "ui_local.h"
 
 UI *UI_new(void)

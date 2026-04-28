@@ -11,15 +11,17 @@
 #define OSSL_LIBCRYPTO_ENCODE_DECODE_ENCODER_LOCAL_H
 
 #include <openssl/core_dispatch.h>
-#include <openssl/types.h>
-#include <openssl/safestack.h>
-#include <openssl/encoder.h>
 #include <openssl/decoder.h>
-#include "crypto/decoder.h"
+#include <openssl/encoder.h>
+#include <openssl/safestack.h>
+#include <openssl/types.h>
+
 #include "internal/cryptlib.h"
 #include "internal/passphrase.h"
 #include "internal/property.h"
 #include "internal/refcount.h"
+
+#include "crypto/decoder.h"
 
 struct ossl_endecode_base_st {
     OSSL_PROVIDER *prov;

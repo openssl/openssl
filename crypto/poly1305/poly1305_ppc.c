@@ -9,6 +9,7 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/types.h>
+
 #include "crypto/poly1305.h"
 #include "crypto/ppc_arch.h"
 

@@ -8,8 +8,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cmp_local.h"
 #include <openssl/cmp_util.h>
+
+#include "cmp_local.h"
 
 static const X509_VERIFY_PARAM *get0_trustedStore_vpm(const OSSL_CMP_CTX *ctx)
 {

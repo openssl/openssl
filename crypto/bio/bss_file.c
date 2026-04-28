@@ -25,9 +25,11 @@
 #endif
 #endif
 
-#include <stdio.h>
-#include <errno.h>
 #include "bio_local.h"
+
+#include <errno.h>
+#include <stdio.h>
+
 #include <openssl/err.h>
 
 #if !defined(OPENSSL_NO_STDIO)

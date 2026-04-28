@@ -8,12 +8,13 @@
  */
 
 #include <openssl/asn1t.h>
+#include <openssl/cms.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
-#include <openssl/cms.h>
-#include "cms_local.h"
 
 #include <crypto/asn1.h>
+
+#include "cms_local.h"
 
 ASN1_SEQUENCE(CMS_IssuerAndSerialNumber) = {
     ASN1_SIMPLE(CMS_IssuerAndSerialNumber, issuer, X509_NAME),

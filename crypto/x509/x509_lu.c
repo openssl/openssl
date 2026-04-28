@@ -8,13 +8,17 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include "internal/hashtable.h"
-#include "internal/hashfunc.h"
-#include "internal/refcount.h"
+
 #include <openssl/x509.h>
-#include "crypto/x509.h"
 #include <openssl/x509v3.h>
+
+#include "internal/cryptlib.h"
+#include "internal/hashfunc.h"
+#include "internal/hashtable.h"
+#include "internal/refcount.h"
+
+#include "crypto/x509.h"
+
 #include "x509_local.h"
 
 #define X509_OBJS_HT_BUCKETS 8

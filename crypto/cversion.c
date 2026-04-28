@@ -8,10 +8,12 @@
  */
 
 #include <stdio.h>
+
 #include <openssl/bio.h>
-#include "internal/e_os.h"
-#include "internal/cryptlib.h"
+
 #include "internal/common.h"
+#include "internal/cryptlib.h"
+#include "internal/e_os.h"
 #include "internal/thread_once.h"
 
 #include "buildinf.h"

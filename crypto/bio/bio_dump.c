@@ -11,8 +11,9 @@
  * Stolen from tjh's ssl/ssl_trc.c stuff.
  */
 
-#include <stdio.h>
 #include "bio_local.h"
+
+#include <stdio.h>
 
 #define DUMP_WIDTH 16
 #define DUMP_WIDTH_LESS_INDENT(i) (DUMP_WIDTH - ((i - (i > 6 ? 6 : i) + 3) / 4))

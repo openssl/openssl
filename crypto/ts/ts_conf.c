@@ -9,11 +9,12 @@
 
 #include <string.h>
 
+#include <openssl/conf_api.h>
 #include <openssl/crypto.h>
-#include "internal/cryptlib.h"
 #include <openssl/pem.h>
 #include <openssl/ts.h>
-#include <openssl/conf_api.h>
+
+#include "internal/cryptlib.h"
 
 /* Macro definitions for the configuration file. */
 #define BASE_SECTION "tsa"

@@ -36,17 +36,17 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
 #include <descrip.h>
+#include <errno.h>
+#include <lib$routines.h>
+#include <libfildef.h>
 #include <namdef.h>
 #include <rmsdef.h>
-#include <libfildef.h>
-#include <lib$routines.h>
-#include <strdef.h>
+#include <stddef.h>
+#include <stdlib.h>
 #include <str$routines.h>
+#include <strdef.h>
+#include <string.h>
 #include <stsdef.h>
 #ifndef LPDIR_H
 #include "LPdir.h"

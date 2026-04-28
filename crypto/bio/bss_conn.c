@@ -7,10 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include <errno.h>
-
 #include "bio_local.h"
+
+#include <errno.h>
+#include <stdio.h>
+
 #include "internal/bio_tfo.h"
 #include "internal/ktls.h"
 

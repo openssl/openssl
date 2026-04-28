@@ -21,15 +21,17 @@
  */
 #undef UNICODE
 
+#include "bio_local.h"
+
 #include <assert.h>
 #include <string.h>
 
-#include "bio_local.h"
 #include <openssl/crypto.h>
 
 #ifndef OPENSSL_NO_SOCK
-#include <openssl/err.h>
 #include <openssl/buffer.h>
+#include <openssl/err.h>
+
 #include "internal/thread_once.h"
 
 CRYPTO_RWLOCK *bio_lookup_lock;

@@ -8,12 +8,15 @@
  */
 
 #include <assert.h>
+
 #include <openssl/cms.h>
-#include <openssl/err.h>
 #include <openssl/core_names.h>
+#include <openssl/err.h>
+
 #include "crypto/asn1.h"
-#include "crypto/rsa.h"
 #include "crypto/evp.h"
+#include "crypto/rsa.h"
+
 #include "cms_local.h"
 
 static RSA_OAEP_PARAMS *rsa_oaep_decode(const X509_ALGOR *alg)

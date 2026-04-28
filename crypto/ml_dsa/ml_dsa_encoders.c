@@ -11,10 +11,12 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/proverr.h>
+
+#include "internal/packet.h"
+
 #include "ml_dsa_hash.h"
 #include "ml_dsa_key.h"
 #include "ml_dsa_sign.h"
-#include "internal/packet.h"
 
 #define POLY_COEFF_NUM_BYTES(bits) ((bits) * (ML_DSA_NUM_POLY_COEFFICIENTS / 8))
 /* Cast mod_sub result in support of left-shifts that create 64-bit values. */

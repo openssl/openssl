@@ -12,9 +12,11 @@
  * (2) University of Haifa, Israel
  */
 
-#include <openssl/opensslconf.h>
-#include "internal/common.h"
 #include "rsaz_exp.h"
+
+#include <openssl/opensslconf.h>
+
+#include "internal/common.h"
 
 #ifndef RSAZ_ENABLED
 NON_EMPTY_TRANSLATION_UNIT

@@ -14,7 +14,9 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
+
 #include <openssl/rc5.h>
+
 #include "rc5_local.h"
 
 void RC5_32_cbc_encrypt(const unsigned char *in, unsigned char *out,

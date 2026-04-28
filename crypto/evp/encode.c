@@ -7,12 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include <limits.h>
 #include <assert.h>
-#include "internal/cryptlib.h"
+#include <limits.h>
+#include <stdio.h>
+
 #include <openssl/evp.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/evp.h"
+
 #include "evp_local.h"
 
 #if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))

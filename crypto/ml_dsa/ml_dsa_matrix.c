@@ -7,9 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "ml_dsa_matrix.h"
+
 #include "ml_dsa_local.h"
 #include "ml_dsa_vector.h"
-#include "ml_dsa_matrix.h"
 
 /*
  * Matrix multiply of a k*l matrix of polynomials by a 1 * l vector of

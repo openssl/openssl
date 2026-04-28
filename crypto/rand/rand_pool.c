@@ -7,13 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "crypto/rand_pool.h"
+
 #include <stdio.h>
 #include <time.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/opensslconf.h>
-#include "crypto/rand.h"
+
+#include "internal/cryptlib.h"
 #include "internal/thread_once.h"
-#include "crypto/rand_pool.h"
+
+#include "crypto/rand.h"
 
 /*
  * Allocate memory and initialize a new random pool

@@ -14,8 +14,9 @@
  * fill in parameter data for the same key and data fields.
  */
 
-#include <openssl/core_names.h>
 #include "internal/param_build_set.h"
+
+#include <openssl/core_names.h>
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 

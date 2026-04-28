@@ -13,9 +13,11 @@
  */
 #include "internal/deprecated.h"
 
-#include "dsa_local.h"
 #include <string.h>
+
 #include <openssl/err.h>
+
+#include "dsa_local.h"
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 DSA_METHOD *DSA_meth_new(const char *name, int flags)

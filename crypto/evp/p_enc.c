@@ -11,11 +11,14 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/rsa.h>
+
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/rsa.h>
 #include <openssl/x509.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/evp.h"
 
 int EVP_PKEY_encrypt_old(unsigned char *ek, const unsigned char *key,

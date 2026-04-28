@@ -15,8 +15,9 @@
 #include "internal/deprecated.h"
 
 #include <openssl/idea.h>
-#include "idea_local.h"
 #include <openssl/opensslv.h>
+
+#include "idea_local.h"
 
 const char *IDEA_options(void)
 {

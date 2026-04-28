@@ -14,8 +14,10 @@
  */
 
 #include <string.h>
-#include "internal/bio.h"
+
 #include <openssl/asn1.h>
+
+#include "internal/bio.h"
 #include "internal/cryptlib.h"
 
 /* Must be large enough for biggest tag+length */

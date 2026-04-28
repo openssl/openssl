@@ -14,6 +14,7 @@
 #include "internal/deprecated.h"
 
 #include <openssl/mdc2.h>
+
 #include "crypto/evp.h"
 
 static const EVP_MD mdc2_md = {

@@ -15,11 +15,15 @@
 #include "internal/deprecated.h"
 
 #include <string.h>
+
 #include <openssl/err.h>
-#include "crypto/bn.h"
-#include "ec_local.h"
+
 #include "internal/common.h"
 #include "internal/constant_time.h"
+
+#include "crypto/bn.h"
+
+#include "ec_local.h"
 
 #define P256_LIMBS (256 / BN_BITS2)
 

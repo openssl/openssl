@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/ocsp.h>
 #include <openssl/http.h>
+#include <openssl/ocsp.h>
 
 #ifndef OPENSSL_NO_OCSP
 

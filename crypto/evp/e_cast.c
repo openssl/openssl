@@ -11,6 +11,7 @@
 
 #ifndef OPENSSL_NO_CAST
 #include <openssl/cast.h>
+
 #include "crypto/evp.h"
 
 IMPLEMENT_BLOCK_CIPHER(cast5, ks, CAST, EVP_CAST_KEY,

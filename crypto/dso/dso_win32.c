@@ -8,6 +8,7 @@
  */
 
 #include "internal/e_os.h"
+
 #include "dso_local.h"
 
 #if defined(DSO_WIN32)

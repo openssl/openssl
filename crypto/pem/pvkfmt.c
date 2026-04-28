@@ -18,16 +18,18 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/bn.h>
+#include <openssl/core_names.h>
+#include <openssl/dsa.h>
+#include <openssl/kdf.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
-#include <openssl/bn.h>
-#include <openssl/dsa.h>
 #include <openssl/rsa.h>
-#include <openssl/kdf.h>
-#include <openssl/core_names.h>
+
 #include "internal/cryptlib.h"
-#include "crypto/pem.h"
+
 #include "crypto/evp.h"
+#include "crypto/pem.h"
 
 /*
  * Utility function: read a DWORD (4 byte unsigned integer) in little endian

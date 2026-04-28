@@ -7,9 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/core_dispatch.h>
-#include "crypto/lms.h"
 #include <string.h>
+
+#include <openssl/core_dispatch.h>
+
+#include "crypto/lms.h"
 
 /**
  * @brief Create a new LMS_KEY object

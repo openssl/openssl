@@ -8,15 +8,19 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/ec.h>
 #include <openssl/rand.h>
+
+#include "internal/constant_time.h"
+#include "internal/cryptlib.h"
+
 #include "crypto/ecx.h"
-#include "ec_local.h"
+
 #include "curve448/curve448_local.h"
+#include "ec_local.h"
 #include "ecx_backend.h"
 #include "s390x_arch.h"
-#include "internal/constant_time.h"
 
 static void s390x_x25519_mod_p(unsigned char u[32])
 {

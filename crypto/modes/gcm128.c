@@ -8,9 +8,12 @@
  */
 
 #include <string.h>
+
 #include <openssl/crypto.h>
+
 #include "internal/cryptlib.h"
 #include "internal/endian.h"
+
 #include "crypto/modes.h"
 
 #if defined(__GNUC__) && !defined(STRICT_ALIGNMENT)

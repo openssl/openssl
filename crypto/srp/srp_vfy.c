@@ -15,15 +15,17 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #ifndef OPENSSL_NO_SRP
-#include "internal/cryptlib.h"
-#include "crypto/evp.h"
+#include <openssl/buffer.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
 #include <openssl/sha.h>
 #include <openssl/srp.h>
-#include <openssl/evp.h>
-#include <openssl/buffer.h>
-#include <openssl/rand.h>
 #include <openssl/txt_db.h>
-#include <openssl/err.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/evp.h"
 
 #define SRP_RANDOM_SALT_LEN 20
 #define MAX_LEN 2500
