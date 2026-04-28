@@ -129,7 +129,8 @@ typedef struct {
 
 } STORED_ALGORITHMS;
 
-static int ossl_method_store_atomic_insert_to_list(STORED_ALGORITHMS *sa, int nid, QUERY *new);
+static int ossl_method_store_atomic_insert_to_list(STORED_ALGORITHMS *sa, QUERY *new);
+static int ossl_method_store_atomic_remove_from_list(STORED_ALGORITHMS *sa, QUERY *old);
 
 struct ossl_method_store_st {
     OSSL_LIB_CTX *ctx;
@@ -306,6 +307,7 @@ static void impl_cache_flush_alg(ALGORITHM *alg, STORED_ALGORITHMS *sa)
              */
             hash = (q->specific_hash != 0) ? q->specific_hash : q->generic_hash;
             HT_INIT_KEY_CACHED(&key, hash);
+            ossl_method_store_atomic_remove_from_list(sa, q);
             ossl_ht_delete(sa->cache, TO_HT_KEY(&key));
         }
     }
@@ -1113,7 +1115,7 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
                 ret = 0;
             } else {
                 ossl_list_lru_entry_insert_tail(&sa->lru_list, post_insert);
-                ossl_method_store_atomic_insert_to_list(sa, nid, post_insert);
+                ossl_method_store_atomic_insert_to_list(sa, post_insert);
             }
             ossl_property_unlock(sa);
         }
@@ -1121,9 +1123,44 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     return ret;
 }
 
-static int ossl_method_store_atomic_insert_to_list(STORED_ALGORITHMS *sa, int nid, QUERY *new)
+static int ossl_method_store_atomic_remove_from_list(STORED_ALGORITHMS *sa, QUERY *old)
 {
-    nid = nid % MAX_CACHE_LINES;
+    int nid = old->nid % MAX_CACHE_LINES;
+    int ret = 0;
+    QUERY *idx, *next, *oldnext;
+
+    if (!CRYPTO_atomic_load_ptr((void **)&sa->cache_lists[nid], (void **)&idx, sa->alock))
+        goto out;
+    if (idx == old) {
+        if (!CRYPTO_atomic_load_ptr((void **)&idx->next, (void **)&next, sa->alock))
+            goto out;
+        if (!CRYPTO_atomic_store_ptr((void **)&sa->cache_lists[nid], (void **)&next, sa->alock))
+            goto out;
+        ret = 1;
+        goto out;
+    }
+    while (idx != NULL) {
+        if (!CRYPTO_atomic_load_ptr((void **)&idx->next, (void **)&next, sa->alock))
+            goto out;
+        if (next == old) {
+        try_again:
+            if (!CRYPTO_atomic_load_ptr((void **)&old->next, (void **)&oldnext, sa->alock))
+                goto out;
+            if (!CRYPTO_atomic_cmp_exch_ptr((void **)&idx->next, (void **)&next, oldnext, sa->alock))
+                goto try_again;
+            ret = 1;
+            goto out;
+        }
+        if (!CRYPTO_atomic_load_ptr((void **)&idx->next, (void **)&idx, sa->alock))
+            goto out;
+    }
+out:
+    return ret;
+}
+
+static int ossl_method_store_atomic_insert_to_list(STORED_ALGORITHMS *sa, QUERY *new)
+{
+    int nid = new->nid % MAX_CACHE_LINES;
     QUERY *headptr;
     int ret = 0;
 
@@ -1206,7 +1243,7 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
         if (old != NULL)
             impl_cache_free(old);
         ossl_list_lru_entry_insert_head(&sa->lru_list, p);
-        ossl_method_store_atomic_insert_to_list(sa, nid, p);
+        ossl_method_store_atomic_insert_to_list(sa, p);
 
         /*
          * We also want to add this method into the cache against a key computed _only_
@@ -1229,7 +1266,7 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
             p->specific_hash = 0;
             p->generic_hash = old->generic_hash = HT_KEY_GET_HASH(&key);
             ossl_list_lru_entry_insert_tail(&sa->lru_list, p);
-            ossl_method_store_atomic_insert_to_list(sa, nid, p);
+            ossl_method_store_atomic_insert_to_list(sa, p);
         } else {
             impl_cache_free_unlinked(p);
             p = NULL;
