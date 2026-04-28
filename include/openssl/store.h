@@ -17,9 +17,10 @@
 #endif
 
 #include <stdarg.h>
-#include <openssl/types.h>
+
 #include <openssl/pem.h>
 #include <openssl/storeerr.h>
+#include <openssl/types.h>
 
 #ifdef __cplusplus
 extern "C" {

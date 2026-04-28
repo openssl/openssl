@@ -14,8 +14,8 @@
 #include <assert.h>
 #include <string.h>
 
-#include <openssl/e_os2.h> /* For 'ossl_inline' */
 #include <openssl/crypto.h>
+#include <openssl/e_os2.h> /* For 'ossl_inline' */
 
 #include "internal/safe_math.h"
 

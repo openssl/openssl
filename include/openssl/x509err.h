@@ -12,9 +12,9 @@
 #define OPENSSL_X509ERR_H
 #pragma once
 
+#include <openssl/cryptoerr_legacy.h>
 #include <openssl/opensslconf.h>
 #include <openssl/symhacks.h>
-#include <openssl/cryptoerr_legacy.h>
 
 /*
  * X509 reason codes.

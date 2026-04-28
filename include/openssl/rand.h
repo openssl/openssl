@@ -17,10 +17,11 @@
 #endif
 
 #include <stdlib.h>
-#include <openssl/types.h>
+
 #include <openssl/e_os2.h>
-#include <openssl/randerr.h>
 #include <openssl/evp.h>
+#include <openssl/randerr.h>
+#include <openssl/types.h>
 
 #ifdef __cplusplus
 extern "C" {

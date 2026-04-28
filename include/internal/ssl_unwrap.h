@@ -11,6 +11,7 @@
 #define OSSL_SSL_UNWRAP_H
 
 #include <openssl/ssl.h>
+
 #include "internal/quic_predef.h"
 
 #define SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, c)             \

@@ -26,8 +26,8 @@ use OpenSSL::stackhash qw(generate_lhash_macros);
 #define HEADER_LHASH_H
 #endif
 
-#include <openssl/e_os2.h>
 #include <openssl/bio.h>
+#include <openssl/e_os2.h>
 #ifndef OPENSSL_NO_STDIO
 #include <stdio.h>
 #endif

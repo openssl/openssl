@@ -12,9 +12,9 @@
 #pragma once
 
 #include "internal/e_os.h"
-#include "internal/time.h"
 #include "internal/quic_types.h"
 #include "internal/quic_wire.h"
+#include "internal/time.h"
 
 #ifndef OPENSSL_NO_QUIC
 

@@ -27,10 +27,10 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 #include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_NO_CT
-#include <openssl/types.h>
-#include <openssl/safestack.h>
-#include <openssl/x509.h>
 #include <openssl/cterr.h>
+#include <openssl/safestack.h>
+#include <openssl/types.h>
+#include <openssl/x509.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

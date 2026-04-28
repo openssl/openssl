@@ -12,10 +12,11 @@
 #if !defined(OSSL_CRYPTO_LMS_UTIL_H)
 #define OSSL_CRYPTO_LMS_UTIL_H
 
-#include "internal/packet.h"
-#include <openssl/params.h>
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
+#include <openssl/params.h>
+
+#include "internal/packet.h"
 
 /* XXX beck Fascinatingly, the above can define OPENSSL_NO_LMS for us. */
 #undef OPENSSL_NO_LMS

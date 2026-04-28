@@ -31,10 +31,10 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 #include <openssl/x509.h>
 #endif
 
-#include <openssl/opensslconf.h>
-#include <openssl/lhash.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
+#include <openssl/lhash.h>
+#include <openssl/opensslconf.h>
 #include <openssl/symhacks.h>
 
 #ifdef __cplusplus

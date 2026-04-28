@@ -29,8 +29,8 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #include <openssl/crypto.h>
 #endif
-#include <openssl/safestack.h>
 #include <openssl/pem.h>
+#include <openssl/safestack.h>
 #include <openssl/types.h>
 #include <openssl/uierr.h>
 

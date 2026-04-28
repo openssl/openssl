@@ -26,8 +26,8 @@ use OpenSSL::stackhash qw(generate_stack_string_macros
 #define HEADER_SAFESTACK_H
 #endif
 
-#include <openssl/stack.h>
 #include <openssl/e_os2.h>
+#include <openssl/stack.h>
 
 #ifdef __cplusplus
 extern "C" {

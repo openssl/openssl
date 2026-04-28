@@ -19,11 +19,10 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 #define OPENSSL_ESS_H
 #pragma once
 
+#include <openssl/esserr.h>
 #include <openssl/opensslconf.h>
-
 #include <openssl/safestack.h>
 #include <openssl/x509.h>
-#include <openssl/esserr.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -18,13 +18,13 @@
 #define BIO_FLAGS_UPLINK_INTERNAL 0
 #endif
 
-#include "internal/common.h"
-
-#include <openssl/crypto.h>
-#include <openssl/buffer.h>
-#include <openssl/bio.h>
 #include <openssl/asn1.h>
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
+
+#include "internal/common.h"
 
 typedef struct ex_callback_st EX_CALLBACK;
 DEFINE_STACK_OF(EX_CALLBACK)

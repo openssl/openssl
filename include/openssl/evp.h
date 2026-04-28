@@ -22,14 +22,14 @@
 #include <stdio.h>
 #endif
 
-#include <openssl/opensslconf.h>
-#include <openssl/types.h>
+#include <openssl/bio.h>
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
-#include <openssl/symhacks.h>
-#include <openssl/bio.h>
 #include <openssl/evperr.h>
+#include <openssl/opensslconf.h>
 #include <openssl/params.h>
+#include <openssl/symhacks.h>
+#include <openssl/types.h>
 
 #define EVP_MAX_MD_SIZE 64 /* longest known is SHA512 */
 #define EVP_MAX_KEY_LENGTH 64

@@ -34,12 +34,12 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 #include <stdio.h>
 #endif
 
-#include <openssl/safestack.h>
-#include <openssl/opensslv.h>
-#include <openssl/types.h>
-#include <openssl/opensslconf.h>
-#include <openssl/cryptoerr.h>
 #include <openssl/core.h>
+#include <openssl/cryptoerr.h>
+#include <openssl/opensslconf.h>
+#include <openssl/opensslv.h>
+#include <openssl/safestack.h>
+#include <openssl/types.h>
 
 #ifdef CHARSET_EBCDIC
 #include <openssl/ebcdic.h>

@@ -17,10 +17,10 @@
 #define HEADER_EC_H
 #endif
 
+#include <string.h>
+
 #include <openssl/opensslconf.h>
 #include <openssl/types.h>
-
-#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {

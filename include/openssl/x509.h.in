@@ -25,20 +25,20 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 #define HEADER_X509_H
 #endif
 
-#include <openssl/e_os2.h>
-#include <openssl/types.h>
-#include <openssl/symhacks.h>
-#include <openssl/buffer.h>
-#include <openssl/evp.h>
-#include <openssl/bio.h>
 #include <openssl/asn1.h>
-#include <openssl/safestack.h>
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
+#include <openssl/e_os2.h>
 #include <openssl/ec.h>
+#include <openssl/evp.h>
+#include <openssl/safestack.h>
+#include <openssl/symhacks.h>
+#include <openssl/types.h>
 
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
 #include <openssl/dh.h>
+#include <openssl/dsa.h>
+#include <openssl/rsa.h>
 #endif
 
 #include <openssl/sha.h>
@@ -297,8 +297,8 @@ typedef struct SCRYPT_PARAMS_st {
 }
 #endif
 
-#include <openssl/x509_vfy.h>
 #include <openssl/pkcs7.h>
+#include <openssl/x509_vfy.h>
 
 #ifdef __cplusplus
 extern "C" {

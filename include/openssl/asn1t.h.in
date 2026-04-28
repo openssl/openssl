@@ -25,8 +25,9 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 #endif
 
 #include <stddef.h>
-#include <openssl/e_os2.h>
+
 #include <openssl/asn1.h>
+#include <openssl/e_os2.h>
 
 #ifdef OPENSSL_BUILD_SHLIBCRYPTO
 #undef OPENSSL_EXTERN

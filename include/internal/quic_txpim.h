@@ -11,10 +11,11 @@
 #define OSSL_QUIC_TXPIM_H
 
 #include <openssl/ssl.h>
-#include "internal/quic_types.h"
-#include "internal/quic_predef.h"
-#include "internal/quic_cfq.h"
+
 #include "internal/quic_ackm.h"
+#include "internal/quic_cfq.h"
+#include "internal/quic_predef.h"
+#include "internal/quic_types.h"
 
 #ifndef OPENSSL_NO_QUIC
 

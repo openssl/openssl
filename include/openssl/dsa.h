@@ -16,17 +16,17 @@
 #define HEADER_DSA_H
 #endif
 
+#include <stdlib.h>
+
 #include <openssl/opensslconf.h>
 #include <openssl/types.h>
 
-#include <stdlib.h>
-
 #ifndef OPENSSL_NO_DSA
-#include <openssl/e_os2.h>
 #include <openssl/asn1.h>
 #include <openssl/bio.h>
-#include <openssl/crypto.h>
 #include <openssl/bn.h>
+#include <openssl/crypto.h>
+#include <openssl/e_os2.h>
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #include <openssl/dh.h>
 #endif

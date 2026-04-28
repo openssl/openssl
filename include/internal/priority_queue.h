@@ -12,6 +12,7 @@
 #pragma once
 
 #include <stdlib.h>
+
 #include <openssl/e_os2.h>
 
 #define PRIORITY_QUEUE_OF(type) OSSL_PRIORITY_QUEUE_##type

@@ -16,12 +16,12 @@
 #define HEADER_PEM_H
 #endif
 
-#include <openssl/e_os2.h>
 #include <openssl/bio.h>
-#include <openssl/safestack.h>
+#include <openssl/e_os2.h>
 #include <openssl/evp.h>
-#include <openssl/x509.h>
 #include <openssl/pemerr.h>
+#include <openssl/safestack.h>
+#include <openssl/x509.h>
 #ifndef OPENSSL_NO_STDIO
 #include <stdio.h>
 #endif
