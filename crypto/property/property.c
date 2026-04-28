@@ -16,9 +16,9 @@
 #include "internal/property.h"
 #include "internal/provider.h"
 #include "internal/hashtable.h"
+#include "internal/hashfunc.h"
 #include "internal/tsan_assist.h"
 #include "internal/list.h"
-#include "internal/hashfunc.h"
 #include "internal/time.h"
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
@@ -78,21 +78,12 @@ typedef struct query_st {
     struct query_st *next;
     void *saptr; /* pointer to our owning STORED_ALGORITHM */
     int nid; /* nid of this query */
+    OSSL_PROVIDER *prov; /*provider this belongs to */
     uint64_t specific_hash; /* hash of [nid,prop_query,prov] tuple */
     uint64_t generic_hash; /* hash of [nid,prop_query] tuple */
+    uint64_t prop_hash; /* hash of the property string */
     METHOD method; /* METHOD for this query */
 } QUERY;
-
-/*
- * This is our key to lookup queries
- * It has no key data as we allocate and marshall
- * it dynamically in ossl_method_store_cache_[set|get]
- */
-typedef struct query_key {
-    HT_KEY key_header;
-} QUERY_KEY;
-
-IMPLEMENT_HT_VALUE_TYPE_FNS(QUERY, cache, static)
 
 DEFINE_LIST_OF(lru_entry, QUERY);
 
@@ -106,7 +97,6 @@ typedef struct {
 typedef struct {
     SPARSE_ARRAY_OF(ALGORITHM) * algs;
 
-    HT *cache;
     QUERY *cache_lists[MAX_CACHE_LINES];
 
     /*
@@ -131,6 +121,9 @@ typedef struct {
 
 static int ossl_method_store_atomic_insert_to_list(STORED_ALGORITHMS *sa, QUERY *new);
 static int ossl_method_store_atomic_remove_from_list(STORED_ALGORITHMS *sa, QUERY *old);
+static QUERY *ossl_method_store_atomic_find_in_list(STORED_ALGORITHMS *sa, int nid,
+    OSSL_PROVIDER *prov, uint64_t prop_hash);
+static void ossl_cache_lists_flush(STORED_ALGORITHMS *sa);
 
 struct ossl_method_store_st {
     OSSL_LIB_CTX *ctx;
@@ -266,21 +259,9 @@ static ossl_inline void impl_cache_free(QUERY *elem)
     }
 }
 
-/*
- * This is the registered free function for all of our
- * allocated QUERY hashtables
- */
-static void query_free(HT_VALUE *v)
-{
-    QUERY *elem = ossl_ht_cache_QUERY_from_value(v);
-    impl_cache_free(elem);
-}
-
 static void impl_cache_flush_alg(ALGORITHM *alg, STORED_ALGORITHMS *sa)
 {
     QUERY *q, *qn;
-    uint64_t hash;
-    QUERY_KEY key;
 
     /*
      * Instead of iterating over the hashtable with the
@@ -305,10 +286,7 @@ static void impl_cache_flush_alg(ALGORITHM *alg, STORED_ALGORITHMS *sa)
              * We use the specific hash if its available, otherwise use the
              * generic_hash
              */
-            hash = (q->specific_hash != 0) ? q->specific_hash : q->generic_hash;
-            HT_INIT_KEY_CACHED(&key, hash);
             ossl_method_store_atomic_remove_from_list(sa, q);
-            ossl_ht_delete(sa->cache, TO_HT_KEY(&key));
         }
     }
 }
@@ -333,9 +311,9 @@ static void stored_algs_free(STORED_ALGORITHMS *sa)
     for (int i = 0; i < NUM_SHARDS; ++i) {
         ossl_sa_ALGORITHM_doall_arg(sa[i].algs, &alg_cleanup, &sa[i]);
         ossl_sa_ALGORITHM_free(sa[i].algs);
+        ossl_cache_lists_flush(&sa[i]);
         CRYPTO_THREAD_lock_free(sa[i].lock);
         CRYPTO_THREAD_lock_free(sa[i].alock);
-        ossl_ht_free(sa[i].cache);
     }
 
     OPENSSL_free(sa);
@@ -344,15 +322,6 @@ static void stored_algs_free(STORED_ALGORITHMS *sa)
 static STORED_ALGORITHMS *stored_algs_new(OSSL_LIB_CTX *ctx)
 {
     STORED_ALGORITHMS *ret;
-    HT_CONFIG ht_conf = {
-        .ctx = ctx,
-        .ht_free_fn = query_free,
-        .ht_hash_fn = NULL,
-        .init_neighborhoods = 1,
-        .collision_check = 1,
-        .lockless_reads = 0,
-        .no_rcu = 1
-    };
 
     ret = OPENSSL_calloc(NUM_SHARDS, sizeof(STORED_ALGORITHMS));
     if (ret == NULL)
@@ -368,9 +337,6 @@ static STORED_ALGORITHMS *stored_algs_new(OSSL_LIB_CTX *ctx)
             goto err;
         ret[i].alock = CRYPTO_THREAD_lock_new();
         if (ret[i].alock == NULL)
-            goto err;
-        ret[i].cache = ossl_ht_new(&ht_conf);
-        if (ret[i].cache == NULL)
             goto err;
     }
 
@@ -935,6 +901,22 @@ static void ossl_method_cache_flush(STORED_ALGORITHMS *sa, int nid)
         ossl_method_cache_flush_alg(sa, alg);
 }
 
+static void ossl_cache_lists_flush(STORED_ALGORITHMS *sa)
+{
+    int i;
+    QUERY *idx;
+
+    for (i = 0; i < MAX_CACHE_LINES; i++) {
+        for (;;) {
+            if (!CRYPTO_atomic_load_ptr((void **)&sa->cache_lists[i], (void **)&idx, sa->alock))
+                break;
+            if (idx == NULL)
+                break;
+            ossl_method_store_atomic_remove_from_list(sa, idx);
+        }
+    }
+}
+
 int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
 {
     for (int i = 0; i < NUM_SHARDS; ++i) {
@@ -942,7 +924,7 @@ int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
 
         if (!ossl_property_write_lock(sa))
             return 0;
-        ossl_ht_flush(sa->cache);
+        ossl_cache_lists_flush(sa);
         ossl_property_unlock(sa);
     }
 
@@ -954,106 +936,25 @@ static ossl_inline int ossl_method_store_cache_get_locked(OSSL_METHOD_STORE *sto
     void **method)
 {
     ALGORITHM *alg;
+    uint64_t prop_hash;
     QUERY *r = NULL;
     int res = 0;
-    QUERY_KEY key;
-    HT_VALUE *v = NULL;
-    uint64_t generic_hash;
-#ifdef ALLOW_VLA
-    uint8_t keybuf[keylen];
-#else
-    uint8_t *keybuf;
-#endif
 
     *post_insert = NULL;
-
-#ifndef ALLOW_VLA
-    keybuf = OPENSSL_malloc(keylen);
-    if (keybuf == NULL)
-        goto err;
-#endif
 
     alg = ossl_method_store_retrieve(sa, nid);
     if (alg == NULL)
         goto err;
 
-    /*
-     * Marshall our lookup key.
-     * the key is always [nid,prop_query] and may include
-     * the address of the provider on the end if given
-     */
-    keylen = 0;
-    memcpy(&keybuf[keylen], &nid, sizeof(int));
-    keylen += sizeof(int);
-    memcpy(&keybuf[keylen], prop_query, strlen(prop_query));
-    keylen += strlen(prop_query);
-    if (prov != NULL) {
-        memcpy(&keybuf[keylen], &prov, sizeof(OSSL_PROVIDER *));
-        keylen += sizeof(OSSL_PROVIDER *);
-    }
+    prop_hash = ossl_fnv1a_hash((uint8_t *)prop_query, strlen(prop_query));
 
-    HT_INIT_KEY_EXTERNAL(&key, keybuf, keylen);
+    r = ossl_method_store_atomic_find_in_list(sa, nid, prov, prop_hash);
 
-    r = ossl_ht_cache_QUERY_get(sa->cache, TO_HT_KEY(&key), &v);
-    if (r == NULL) {
-        if (prov != NULL)
-            goto err;
-        /*
-         * We don't have a providerless entry for this lookup
-         * (it likely got culled), so we need to rebuild one
-         * we can used the cached hash value from the above lookup
-         * to scan the lru list for a good match
-         */
-        generic_hash = HT_KEY_GET_HASH(&key);
-        OSSL_LIST_FOREACH(r, lru_entry, &sa->lru_list)
-        {
-            if (r->generic_hash == generic_hash) {
-                /*
-                 * We found an entry for which the generic_hash
-                 * (that is the hash of the [nid,propquery] tuple
-                 * matches what we tried, and failed to look up
-                 * above, so duplicate this as our new generic lookup
-                 */
-                r = OPENSSL_memdup(r, sizeof(*r));
-                if (r == NULL)
-                    goto err;
-                r->generic_hash = generic_hash;
-                r->specific_hash = 0;
-                ossl_list_lru_entry_init_elem(r);
-                HT_INIT_KEY_CACHED(&key, generic_hash);
-                /*
-                 * We need to take a reference here to represent the hash table
-                 * ownership.  We will take a second reference below as the caller
-                 * owns it as well
-                 */
-                if (!ossl_method_up_ref(&r->method)) {
-                    OPENSSL_free(r);
-                    r = NULL;
-                }
-                /*
-                 * Inform the caller that we need to insert this newly created
-                 * QUERY into the hash table.  We do this because we only
-                 * hold the read lock here, so after the caller drops it, we
-                 * can then take the write lock to do the insert
-                 */
-                *post_insert = r;
-                break;
-            }
-        }
-        if (r == NULL)
-            goto err;
-    }
-    if (ossl_method_up_ref(&r->method)) {
+    if (r != NULL && ossl_method_up_ref(&r->method)) {
         *method = r->method.method;
         res = 1;
-    } else if (*post_insert == r) {
-        impl_cache_free_unlinked(r);
-        *post_insert = NULL;
     }
 err:
-#ifndef ALLOW_VLA
-    OPENSSL_free(keybuf);
-#endif
     return res;
 }
 
@@ -1065,7 +966,6 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int ret;
     STORED_ALGORITHMS *sa;
     QUERY *post_insert = NULL;
-    QUERY_KEY key;
 
     if (nid <= 0 || store == NULL || prop_query == NULL)
         return 0;
@@ -1090,36 +990,6 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
 
     ossl_property_unlock(sa);
 
-    if (ret == 1 && post_insert != NULL) {
-        if (!ossl_property_write_lock(sa)) {
-            ossl_method_free(&post_insert->method);
-            impl_cache_free_unlinked(post_insert);
-            *method = NULL;
-            ret = 0;
-        } else {
-            int insert_rc;
-
-            HT_INIT_KEY_CACHED(&key, post_insert->generic_hash);
-
-            insert_rc = ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key),
-                post_insert, NULL);
-            if (insert_rc != 1) {
-                /*
-                 * Another thread may have inserted the same QUERY, or the
-                 * hash table insertion itself may have failed. Drop this
-                 * pending entry and the caller-visible method reference.
-                 */
-                ossl_method_free(&post_insert->method);
-                impl_cache_free_unlinked(post_insert);
-                *method = NULL;
-                ret = 0;
-            } else {
-                ossl_list_lru_entry_insert_tail(&sa->lru_list, post_insert);
-                ossl_method_store_atomic_insert_to_list(sa, post_insert);
-            }
-            ossl_property_unlock(sa);
-        }
-    }
     return ret;
 }
 
@@ -1136,6 +1006,7 @@ static int ossl_method_store_atomic_remove_from_list(STORED_ALGORITHMS *sa, QUER
             goto out;
         if (!CRYPTO_atomic_store_ptr((void **)&sa->cache_lists[nid], (void **)&next, sa->alock))
             goto out;
+        impl_cache_free(old);
         ret = 1;
         goto out;
     }
@@ -1148,8 +1019,31 @@ static int ossl_method_store_atomic_remove_from_list(STORED_ALGORITHMS *sa, QUER
                 goto out;
             if (!CRYPTO_atomic_cmp_exch_ptr((void **)&idx->next, (void **)&next, oldnext, sa->alock))
                 goto try_again;
+            impl_cache_free(old);
             ret = 1;
             goto out;
+        }
+        if (!CRYPTO_atomic_load_ptr((void **)&idx->next, (void **)&idx, sa->alock))
+            goto out;
+    }
+out:
+    return ret;
+}
+
+static QUERY *ossl_method_store_atomic_find_in_list(STORED_ALGORITHMS *sa, int nid,
+    OSSL_PROVIDER *prov, uint64_t prop_hash)
+{
+    int nididx = nid % MAX_CACHE_LINES;
+    QUERY *idx;
+    QUERY *ret = NULL;
+
+    if (!CRYPTO_atomic_load_ptr((void **)&sa->cache_lists[nididx], (void **)&idx, sa->alock))
+        goto out;
+
+    while (idx != NULL) {
+        if (idx->nid == nid && idx->prop_hash == prop_hash && idx->prov == prov) {
+            ret = idx;
+            break;
         }
         if (!CRYPTO_atomic_load_ptr((void **)&idx->next, (void **)&idx, sa->alock))
             goto out;
@@ -1183,47 +1077,33 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
 {
     QUERY *old = NULL, *p = NULL;
     ALGORITHM *alg;
-    QUERY_KEY key;
+    uint64_t prop_hash = ossl_fnv1a_hash((uint8_t *)prop_query, strlen(prop_query));
     int res = 1;
-    int insert_rc;
-#ifdef ALLOW_VLA
-    uint8_t keybuf[keylen];
-#else
-    uint8_t *keybuf;
-#endif
-
-#ifndef ALLOW_VLA
-    keybuf = OPENSSL_malloc(keylen);
-    if (keybuf == NULL)
-        goto err;
-#endif
 
     alg = ossl_method_store_retrieve(sa, nid);
     if (alg == NULL)
         goto err;
 
-    /*
-     * Marshall our lookup key
-     * NOTE: Provider cant be NULL here so we always add it
-     */
-    keylen = 0;
-    memcpy(&keybuf[keylen], &nid, sizeof(int));
-    keylen += sizeof(int);
-    memcpy(&keybuf[keylen], prop_query, strlen(prop_query));
-    keylen += strlen(prop_query);
-    memcpy(&keybuf[keylen], &prov, sizeof(OSSL_PROVIDER *));
-    keylen += sizeof(OSSL_PROVIDER *);
-
-    HT_INIT_KEY_EXTERNAL(&key, keybuf, keylen);
-
     if (method == NULL) {
-        ossl_ht_delete(sa->cache, TO_HT_KEY(&key));
+        p = ossl_method_store_atomic_find_in_list(sa, nid, prov, prop_hash);
+        if (p != NULL)
+            ossl_method_store_atomic_remove_from_list(sa, p);
         goto end;
+    }
+
+    p = ossl_method_store_atomic_find_in_list(sa, nid, prov, prop_hash);
+    if (p != NULL) {
+        ossl_method_store_atomic_remove_from_list(sa, p);
+        p = ossl_method_store_atomic_find_in_list(sa, nid, NULL, prop_hash);
+        if (p != NULL)
+            ossl_method_store_atomic_remove_from_list(sa, p);
     }
     p = OPENSSL_malloc(sizeof(*p));
     if (p != NULL) {
         p->saptr = sa;
         p->nid = nid;
+        p->prov = prov;
+        p->prop_hash = prop_hash;
         ossl_list_lru_entry_init_elem(p);
         p->method.method = method;
         p->method.up_ref = method_up_ref;
@@ -1231,17 +1111,6 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
         if (!ossl_method_up_ref(&p->method))
             goto err;
 
-        insert_rc = ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), p,
-            &old);
-        if (insert_rc != 1) {
-            impl_cache_free_unlinked(p);
-            p = NULL;
-            goto err;
-        }
-        p->specific_hash = HT_KEY_GET_HASH(&key);
-        p->generic_hash = 0;
-        if (old != NULL)
-            impl_cache_free(old);
         ossl_list_lru_entry_insert_head(&sa->lru_list, p);
         ossl_method_store_atomic_insert_to_list(sa, p);
 
@@ -1250,28 +1119,16 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
          * from nid and property query.  This lets us match in the event someone does a lookup
          * against a NULL provider (i.e. the "any provided alg will do" match
          */
-        keylen -= sizeof(OSSL_PROVIDER *);
-        HT_INIT_KEY_EXTERNAL(&key, keybuf, keylen);
         old = p;
         p = OPENSSL_memdup(p, sizeof(*p));
         if (p == NULL)
             goto err;
-
+        p->prov = NULL;
         ossl_list_lru_entry_init_elem(p);
         if (!ossl_method_up_ref(&p->method))
             goto err;
-        insert_rc = ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), p,
-            NULL);
-        if (insert_rc == 1) {
-            p->specific_hash = 0;
-            p->generic_hash = old->generic_hash = HT_KEY_GET_HASH(&key);
-            ossl_list_lru_entry_insert_tail(&sa->lru_list, p);
-            ossl_method_store_atomic_insert_to_list(sa, p);
-        } else {
-            impl_cache_free_unlinked(p);
-            p = NULL;
-            goto err;
-        }
+        ossl_list_lru_entry_insert_tail(&sa->lru_list, p);
+        ossl_method_store_atomic_insert_to_list(sa, p);
 
         goto end;
     }
@@ -1279,9 +1136,6 @@ err:
     res = 0;
     OPENSSL_free(p);
 end:
-#ifndef ALLOW_VLA
-    OPENSSL_free(keybuf);
-#endif
     return res;
 }
 
