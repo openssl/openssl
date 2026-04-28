@@ -18,6 +18,7 @@
 #include "internal/hashtable.h"
 #include "internal/hashfunc.h"
 #include "internal/tsan_assist.h"
+#include "internal/threads_common.h"
 #include "internal/list.h"
 #include "internal/time.h"
 #include <openssl/lhash.h>
@@ -935,16 +936,11 @@ static ossl_inline int ossl_method_store_cache_get_locked(OSSL_METHOD_STORE *sto
     int nid, const char *prop_query, size_t keylen, STORED_ALGORITHMS *sa, QUERY **post_insert,
     void **method)
 {
-    ALGORITHM *alg;
     uint64_t prop_hash;
     QUERY *r = NULL;
     int res = 0;
 
     *post_insert = NULL;
-
-    alg = ossl_method_store_retrieve(sa, nid);
-    if (alg == NULL)
-        goto err;
 
     prop_hash = ossl_fnv1a_hash((uint8_t *)prop_query, strlen(prop_query));
 
@@ -954,7 +950,7 @@ static ossl_inline int ossl_method_store_cache_get_locked(OSSL_METHOD_STORE *sto
         *method = r->method.method;
         res = 1;
     }
-err:
+
     return res;
 }
 
@@ -974,8 +970,6 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
         return 0;
 
     sa = stored_algs_shard(store, nid);
-    if (!ossl_property_read_lock(sa))
-        return 0;
 
     /*
      * Note: We've bifurcated this function into a locked and unlocked variant
@@ -987,8 +981,6 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
      */
     ret = ossl_method_store_cache_get_locked(store, prov, nid, prop_query, keylen, sa,
         &post_insert, method);
-
-    ossl_property_unlock(sa);
 
     return ret;
 }
@@ -1075,7 +1067,7 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
     int (*method_up_ref)(void *),
     void (*method_destruct)(void *))
 {
-    QUERY *old = NULL, *p = NULL;
+    QUERY *p = NULL;
     ALGORITHM *alg;
     uint64_t prop_hash = ossl_fnv1a_hash((uint8_t *)prop_query, strlen(prop_query));
     int res = 1;
@@ -1100,6 +1092,7 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
     }
     p = OPENSSL_malloc(sizeof(*p));
     if (p != NULL) {
+        TSAN_BENIGN(p, "Unpublished value is safe on subsequent read");
         p->saptr = sa;
         p->nid = nid;
         p->prov = prov;
@@ -1119,10 +1112,10 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
          * from nid and property query.  This lets us match in the event someone does a lookup
          * against a NULL provider (i.e. the "any provided alg will do" match
          */
-        old = p;
         p = OPENSSL_memdup(p, sizeof(*p));
         if (p == NULL)
             goto err;
+        TSAN_BENIGN(p, "Unpublished value is safe on subsequent read");
         p->prov = NULL;
         ossl_list_lru_entry_init_elem(p);
         if (!ossl_method_up_ref(&p->method))
