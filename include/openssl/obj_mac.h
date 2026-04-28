@@ -10,9 +10,10 @@
  */
 
 #ifndef OPENSSL_OBJ_MAC_H
-# define OPENSSL_OBJ_MAC_H
-# pragma once
+#define OPENSSL_OBJ_MAC_H
+#pragma once
 
+/* clang-format off */
 #define SN_undef                        "UNDEF"
 #define LN_undef                        "undefined"
 #define NID_undef                       0
@@ -6649,6 +6650,7 @@
 #define LN_ML_KEM_1024          "ML-KEM-1024"
 #define NID_ML_KEM_1024         1456
 #define OBJ_ML_KEM_1024         OBJ_nistKems,3L
+/* clang-format on */
 
 #endif /* OPENSSL_OBJ_MAC_H */
 

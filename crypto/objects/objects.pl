@@ -148,9 +148,10 @@ print <<"EOF";
  */
 
 #ifndef OPENSSL_OBJ_MAC_H
-# define OPENSSL_OBJ_MAC_H
-# pragma once
+#define OPENSSL_OBJ_MAC_H
+#pragma once
 
+/* clang-format off */
 #define SN_undef                        "UNDEF"
 #define LN_undef                        "undefined"
 #define NID_undef                       0
@@ -177,6 +178,7 @@ foreach (sort { $a <=> $b } keys %ordern)
 	}
 
 print <<EOF;
+/* clang-format on */
 
 #endif /* OPENSSL_OBJ_MAC_H */
 EOF
