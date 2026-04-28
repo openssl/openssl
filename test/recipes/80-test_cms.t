@@ -1468,7 +1468,7 @@ subtest "encrypt to three recipients with RSA-OAEP, key only decrypt" => sub {
 };
 
 subtest "EdDSA tests for CMS" => sub {
-    plan tests => 2;
+    plan tests => 3;
 
     SKIP: {
         skip "ECX (EdDSA) is not supported in this build", 2
@@ -1477,6 +1477,7 @@ subtest "EdDSA tests for CMS" => sub {
         my $crt1 = srctop_file("test", "certs", "root-ed25519.pem");
         my $key1 = srctop_file("test", "certs", "root-ed25519.privkey.pem");
         my $sig1 = "sig1.cms";
+        my $sig2 = srctop_file("test", "recipes", "80-test_cms_data", "ed448_shake256-len.cms");
 
         ok(run(app(["openssl", "cms", @prov, "-sign", "-md", "sha512", "-in", $smcont,
                     "-signer", $crt1, "-inkey", $key1, "-out", $sig1])),
@@ -1485,6 +1486,10 @@ subtest "EdDSA tests for CMS" => sub {
         ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig1,
                     "-CAfile", $crt1, "-content", $smcont])),
            "accept CMS verify with Ed25519");
+
+        ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig2,
+                    "-inform", "DER", "-noverify"])),  
+           "accept CMS verify with Ed448 shake256-len");
     }
 };
 
