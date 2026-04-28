@@ -7,9 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/err.h>
-#include "internal/common.h"
 #include "internal/quic_wire_pkt.h"
+
+#include <openssl/err.h>
+
+#include "internal/common.h"
 
 int ossl_quic_hdr_protector_init(QUIC_HDR_PROTECTOR *hpr,
     OSSL_LIB_CTX *libctx,

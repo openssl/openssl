@@ -11,8 +11,10 @@
 #define OSSL_QUIC_OBJ_LOCAL_H
 
 #include <openssl/ssl.h>
-#include "internal/quic_predef.h"
+
 #include "internal/quic_engine.h"
+#include "internal/quic_predef.h"
+
 #include "../ssl_local.h"
 
 #ifndef OPENSSL_NO_QUIC

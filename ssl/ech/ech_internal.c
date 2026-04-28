@@ -7,12 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/ssl.h>
 #include <openssl/ech.h>
-#include <openssl/rand.h>
 #include <openssl/kdf.h>
+#include <openssl/rand.h>
+#include <openssl/ssl.h>
+
 #include "internal/ech_helpers.h"
 #include "internal/ssl_unwrap.h"
+
 #include "../ssl_local.h"
 #include "../statem/statem_local.h"
 #include "ech_local.h"

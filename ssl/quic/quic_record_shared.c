@@ -1,6 +1,8 @@
 #include "quic_record_shared.h"
-#include "internal/quic_record_util.h"
+
 #include "internal/common.h"
+#include "internal/quic_record_util.h"
+
 #include "../ssl_local.h"
 
 /* Constants used for key derivation in QUIC v1. */

@@ -9,14 +9,17 @@
  */
 
 #if defined(__TANDEM) && defined(_SPT_MODEL_)
-#include <spthread.h>
 #include <spt_extensions.h> /* timeval */
+#include <spthread.h>
 #endif
 #include <stdio.h>
+
 #include <openssl/rand.h>
-#include "internal/refcount.h"
+
 #include "internal/cryptlib.h"
+#include "internal/refcount.h"
 #include "internal/ssl_unwrap.h"
+
 #include "ssl_local.h"
 #include "statem/statem_local.h"
 

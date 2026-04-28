@@ -8,6 +8,7 @@
  */
 
 #include <assert.h>
+
 #include "../../ssl_local.h"
 #include "../record_local.h"
 #include "recmethod_local.h"

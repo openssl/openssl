@@ -9,13 +9,16 @@
 
 #include <assert.h>
 #include <limits.h>
-#include <string.h>
 #include <stdio.h>
-#include "../ssl_local.h"
-#include "statem_local.h"
+#include <string.h>
+
+#include <openssl/buffer.h>
+
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
-#include <openssl/buffer.h>
+
+#include "../ssl_local.h"
+#include "statem_local.h"
 
 #define RSMBLY_BITMASK_SIZE(msg_len) (((msg_len) + 7) / 8)
 

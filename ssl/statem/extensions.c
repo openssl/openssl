@@ -8,18 +8,21 @@
  */
 
 #if defined(__TANDEM) && defined(_SPT_MODEL_)
-#include <spthread.h>
 #include <spt_extensions.h> /* timeval */
+#include <spthread.h>
 #endif
 
 #include <string.h>
-#include "internal/nelem.h"
+
+#include <openssl/core_names.h>
+#include <openssl/ocsp.h>
+
 #include "internal/cryptlib.h"
+#include "internal/nelem.h"
 #include "internal/ssl_unwrap.h"
+
 #include "../ssl_local.h"
 #include "statem_local.h"
-#include <openssl/ocsp.h>
-#include <openssl/core_names.h>
 
 /*
  * values for ext_defs ech_handling field

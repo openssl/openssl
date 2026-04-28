@@ -8,10 +8,12 @@
  */
 
 #include "internal/quic_fc.h"
-#include "internal/quic_error.h"
-#include "internal/common.h"
-#include "internal/safe_math.h"
+
 #include <assert.h>
+
+#include "internal/common.h"
+#include "internal/quic_error.h"
+#include "internal/safe_math.h"
 
 OSSL_SAFE_MATH_UNSIGNED(uint64_t, uint64_t)
 

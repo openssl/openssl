@@ -8,9 +8,11 @@
  */
 
 #include "internal/quic_ackm.h"
-#include "internal/uint_set.h"
-#include "internal/common.h"
+
 #include <assert.h>
+
+#include "internal/common.h"
+#include "internal/uint_set.h"
 
 DEFINE_LIST_OF(tx_history, OSSL_ACKM_TX_PKT);
 

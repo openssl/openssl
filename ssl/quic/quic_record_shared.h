@@ -11,6 +11,7 @@
 #define OSSL_QUIC_RECORD_SHARED_H
 
 #include <openssl/ssl.h>
+
 #include "internal/quic_types.h"
 #include "internal/quic_wire_pkt.h"
 

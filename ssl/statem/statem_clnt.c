@@ -9,26 +9,29 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <time.h>
-#include <assert.h>
-#include "../ssl_local.h"
-#include "statem_local.h"
+
+#include <openssl/bn.h>
 #include <openssl/buffer.h>
-#include <openssl/rand.h>
-#include <openssl/objects.h>
+#include <openssl/core_names.h>
+#include <openssl/dh.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
-#include <openssl/dh.h>
-#include <openssl/rsa.h>
-#include <openssl/bn.h>
-#include <openssl/trace.h>
-#include <openssl/core_names.h>
-#include <openssl/param_build.h>
-#include "internal/cryptlib.h"
-#include "internal/comp.h"
-#include "internal/ssl_unwrap.h"
+#include <openssl/objects.h>
 #include <openssl/ocsp.h>
+#include <openssl/param_build.h>
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <openssl/trace.h>
+
+#include "internal/comp.h"
+#include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
+
+#include "../ssl_local.h"
+#include "statem_local.h"
 
 static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
     RAW_EXTENSION *extensions);

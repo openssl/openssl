@@ -9,18 +9,21 @@
  */
 
 #include <stdio.h>
-#include "ssl_local.h"
-#include "record/record_local.h"
-#include "internal/ktls.h"
-#include "internal/cryptlib.h"
-#include "internal/ssl_unwrap.h"
+
 #include <openssl/comp.h>
+#include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
-#include <openssl/rand.h>
 #include <openssl/obj_mac.h>
-#include <openssl/core_names.h>
+#include <openssl/rand.h>
 #include <openssl/trace.h>
+
+#include "internal/cryptlib.h"
+#include "internal/ktls.h"
+#include "internal/ssl_unwrap.h"
+
+#include "record/record_local.h"
+#include "ssl_local.h"
 
 /* seed1 through seed5 are concatenated */
 static int tls1_PRF(SSL_CONNECTION *s,

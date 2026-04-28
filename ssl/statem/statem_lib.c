@@ -9,20 +9,23 @@
  */
 
 #include <limits.h>
-#include <string.h>
 #include <stdio.h>
-#include "../ssl_local.h"
-#include "statem_local.h"
-#include "internal/cryptlib.h"
-#include "internal/ssl_unwrap.h"
+#include <string.h>
+
 #include <openssl/buffer.h>
 #include <openssl/core_names.h>
-#include <openssl/objects.h>
-#include <openssl/evp.h>
-#include <openssl/rsa.h>
-#include <openssl/x509.h>
-#include <openssl/trace.h>
 #include <openssl/encoder.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/rsa.h>
+#include <openssl/trace.h>
+#include <openssl/x509.h>
+
+#include "internal/cryptlib.h"
+#include "internal/ssl_unwrap.h"
+
+#include "../ssl_local.h"
+#include "statem_local.h"
 
 /*
  * Map error codes to TLS/SSL alart types.

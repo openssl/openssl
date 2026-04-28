@@ -7,13 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/ssl.h>
+#include <openssl/core_names.h>
 #include <openssl/ech.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <openssl/ssl.h>
+
 #include "../ssl_local.h"
 #include "ech_local.h"
-#include <openssl/rand.h>
-#include <openssl/evp.h>
-#include <openssl/core_names.h>
 
 /* a size for some crypto vars */
 #define OSSL_ECH_CRYPTO_VAR_SIZE 2048

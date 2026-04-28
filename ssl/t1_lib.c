@@ -7,27 +7,30 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
-#include <openssl/objects.h>
+
+#include <openssl/bn.h>
+#include <openssl/conf.h>
+#include <openssl/core_names.h>
+#include <openssl/ct.h>
+#include <openssl/dh.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
-#include <openssl/core_names.h>
+#include <openssl/objects.h>
 #include <openssl/ocsp.h>
-#include <openssl/conf.h>
-#include <openssl/x509v3.h>
-#include <openssl/dh.h>
-#include <openssl/bn.h>
-#include <openssl/provider.h>
 #include <openssl/param_build.h>
+#include <openssl/provider.h>
+#include <openssl/x509v3.h>
+
 #include "internal/nelem.h"
 #include "internal/sizes.h"
-#include "internal/tlsgroups.h"
 #include "internal/ssl_unwrap.h"
-#include "ssl_local.h"
+#include "internal/tlsgroups.h"
+
 #include "quic/quic_local.h"
-#include <openssl/ct.h>
+#include "ssl_local.h"
 
 #define MAX_SIGALGS 128
 

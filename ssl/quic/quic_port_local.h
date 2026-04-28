@@ -10,9 +10,9 @@
 #ifndef OSSL_QUIC_PORT_LOCAL_H
 #define OSSL_QUIC_PORT_LOCAL_H
 
+#include "internal/list.h"
 #include "internal/quic_port.h"
 #include "internal/quic_reactor.h"
-#include "internal/list.h"
 
 #ifndef OPENSSL_NO_QUIC
 

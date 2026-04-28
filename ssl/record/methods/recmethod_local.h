@@ -11,8 +11,9 @@
 #define OSSL_SSL_RECORD_METHODS_RECMETHOD_LOCAL_H
 
 #include <openssl/bio.h>
-#include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
+
 #include "../../ssl_local.h"
 #include "../record_local.h"
 

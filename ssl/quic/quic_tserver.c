@@ -8,12 +8,14 @@
  */
 
 #include "internal/quic_tserver.h"
-#include "internal/quic_channel.h"
-#include "internal/quic_statm.h"
-#include "internal/quic_port.h"
-#include "internal/quic_engine.h"
+
 #include "internal/common.h"
+#include "internal/quic_channel.h"
+#include "internal/quic_engine.h"
+#include "internal/quic_port.h"
+#include "internal/quic_statm.h"
 #include "internal/time.h"
+
 #include "quic_local.h"
 
 /*

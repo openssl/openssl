@@ -8,10 +8,12 @@
  */
 
 #include "internal/quic_engine.h"
+
 #include "internal/quic_port.h"
+
+#include "../ssl_local.h"
 #include "quic_engine_local.h"
 #include "quic_port_local.h"
-#include "../ssl_local.h"
 
 /*
  * QUIC Engine

@@ -8,10 +8,12 @@
  */
 
 #include "internal/json_enc.h"
+
+#include <stdbool.h>
+#include <string.h>
+
 #include "internal/nelem.h"
 #include "internal/numbers.h"
-#include <string.h>
-#include <stdbool.h>
 
 /*
  * wbuf

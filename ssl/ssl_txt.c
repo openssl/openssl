@@ -9,10 +9,12 @@
  */
 
 #include <stdio.h>
+
 #include <openssl/buffer.h>
-#include "ssl_local.h"
 
 #include "internal/comp.h"
+
+#include "ssl_local.h"
 
 #ifndef OPENSSL_NO_STDIO
 int SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *x)

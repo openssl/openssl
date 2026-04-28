@@ -9,11 +9,14 @@
  */
 
 #include <stdio.h>
-#include "ssl_local.h"
-#include <openssl/evp.h>
+
 #include <openssl/core_names.h>
+#include <openssl/evp.h>
+
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
+
+#include "ssl_local.h"
 
 void ssl3_cleanup_key_block(SSL_CONNECTION *s)
 {

@@ -7,9 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/ssl.h>
 #include <openssl/ech.h>
+#include <openssl/ssl.h>
+
 #include "internal/ssl_unwrap.h"
+
 #include "../ssl_local.h"
 
 int SSL_CTX_set1_echstore(SSL_CTX *ctx, OSSL_ECHSTORE *es)

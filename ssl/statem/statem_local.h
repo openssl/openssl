@@ -19,7 +19,6 @@
 
 #include <internal/packet.h>
 #include <internal/statem.h>
-#include <internal/statem.h>
 
 #include "../ssl_local.h"
 

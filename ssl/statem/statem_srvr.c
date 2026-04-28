@@ -9,30 +9,32 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"
-
 #include <stdio.h>
-#include "../ssl_local.h"
-#include "statem_local.h"
+
+#include <openssl/asn1t.h>
+#include <openssl/bn.h>
+#include <openssl/buffer.h>
+#include <openssl/comp.h>
+#include <openssl/core_names.h>
+#include <openssl/dh.h>
+#include <openssl/evp.h>
+#include <openssl/md5.h>
+#include <openssl/objects.h>
+#include <openssl/ocsp.h>
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <openssl/trace.h>
+#include <openssl/x509.h>
+
+#include "internal/comp.h"
 #include "internal/constant_time.h"
 #include "internal/cryptlib.h"
-#include "internal/ssl_unwrap.h"
+#include "internal/e_os.h"
 #include "internal/sizes.h"
-#include <openssl/buffer.h>
-#include <openssl/rand.h>
-#include <openssl/objects.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/dh.h>
-#include <openssl/rsa.h>
-#include <openssl/bn.h>
-#include <openssl/md5.h>
-#include <openssl/trace.h>
-#include <openssl/core_names.h>
-#include <openssl/asn1t.h>
-#include <openssl/comp.h>
-#include "internal/comp.h"
-#include <openssl/ocsp.h>
+#include "internal/ssl_unwrap.h"
+
+#include "../ssl_local.h"
+#include "statem_local.h"
 
 #define TICKET_NONCE_SIZE 8
 

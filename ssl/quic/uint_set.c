@@ -8,8 +8,10 @@
  */
 
 #include "internal/uint_set.h"
-#include "internal/common.h"
+
 #include <assert.h>
+
+#include "internal/common.h"
 
 /*
  * uint64_t Integer Sets

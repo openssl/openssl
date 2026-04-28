@@ -16,9 +16,9 @@
 #ifndef HEADER_ECH_LOCAL_H
 #define HEADER_ECH_LOCAL_H
 
-#include <openssl/ssl.h>
 #include <openssl/ech.h>
 #include <openssl/hpke.h>
+#include <openssl/ssl.h>
 
 #include <internal/packet.h>
 #include <internal/ssl.h>

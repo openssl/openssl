@@ -7,8 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "ssl_local.h"
 #include "internal/ssl_unwrap.h"
+
+#include "ssl_local.h"
 
 int ssl3_do_change_cipher_spec(SSL_CONNECTION *s)
 {
