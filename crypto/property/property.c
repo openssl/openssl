@@ -34,9 +34,10 @@
  * delivered the best performance for 16 or
  * more threads, and close to best performance at below 16 threads.
  */
-#ifndef NUM_SHARDS
-#define NUM_SHARDS 4
+#ifndef NUM_SHARDS_BITS
+#define NUM_SHARDS_BITS 2
 #endif
+#define NUM_SHARDS (1 << NUM_SHARDS_BITS)
 
 #ifndef MAX_CACHE_LINES
 #define MAX_CACHE_LINES 8
@@ -247,14 +248,11 @@ static void impl_cache_flush_alg(ALGORITHM *alg, STORED_ALGORITHMS *sa)
      * to visit lots of potentially empty nodes
      */
     for (i = 0; i < MAX_CACHE_LINES; i++) {
-restart_list:
         if (!CRYPTO_atomic_load_ptr((void **)&sa->cache_lists[i], (void **)&q, sa->alock))
             return;
         while (q != NULL) {
-            if (q->nid == alg->nid) {
+            if (q->nid == alg->nid)
                 ossl_method_store_atomic_archive(sa, q);
-                goto restart_list;
-            }
             if (!CRYPTO_atomic_load_ptr((void **)&q->next, (void **)&q, sa->alock))
                 return;
         }
@@ -982,7 +980,7 @@ static int ossl_method_store_atomic_archive(STORED_ALGORITHMS *sa, QUERY *old)
 static QUERY *ossl_method_store_atomic_find_in_list(STORED_ALGORITHMS *sa, int nid,
     OSSL_PROVIDER *prov, uint64_t prop_hash)
 {
-    int nididx = nid % MAX_CACHE_LINES;
+    int nididx = (nid >> NUM_SHARDS_BITS) % MAX_CACHE_LINES;
     int archived;
     QUERY *idx;
     QUERY *ret = NULL;
@@ -991,7 +989,7 @@ static QUERY *ossl_method_store_atomic_find_in_list(STORED_ALGORITHMS *sa, int n
         goto out;
 
     while (idx != NULL) {
-        if (CRYPTO_atomic_load_int(&idx->archived, &archived, sa->alock))
+        if (!CRYPTO_atomic_load_int(&idx->archived, &archived, sa->alock))
             goto out;
         if (archived == 0 && idx->nid == nid && idx->prop_hash == prop_hash && idx->prov == prov) {
             ret = idx;
@@ -1006,7 +1004,7 @@ out:
 
 static int ossl_method_store_atomic_insert_to_list(STORED_ALGORITHMS *sa, QUERY *new)
 {
-    int nid = new->nid % MAX_CACHE_LINES;
+    int nid = (new->nid >> NUM_SHARDS_BITS) % MAX_CACHE_LINES;
     QUERY *headptr;
     int ret = 0;
 
@@ -1028,13 +1026,8 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
     void (*method_destruct)(void *))
 {
     QUERY *p = NULL;
-    ALGORITHM *alg;
     uint64_t prop_hash = ossl_fnv1a_hash((uint8_t *)prop_query, strlen(prop_query));
     int res = 1;
-
-    alg = ossl_method_store_retrieve(sa, nid);
-    if (alg == NULL)
-        goto err;
 
     if (method == NULL) {
         p = ossl_method_store_atomic_find_in_list(sa, nid, prov, prop_hash);
