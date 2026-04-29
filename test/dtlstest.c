@@ -843,7 +843,7 @@ static int test_swap_records_dtls13(int idx)
 
         if (!TEST_int_eq(SSL_read(cssl, buf, sizeof(buf)), (int)sizeof(msg)))
             goto end;
-    } else if (idx == 3) {
+    } else {
         /*
          * Recv flight 5 (app data)
          */

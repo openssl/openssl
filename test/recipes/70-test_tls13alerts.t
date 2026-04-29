@@ -73,10 +73,23 @@ sub run_tests
     $proxy->clear();
     $proxy->filter(\&alert_filter);
     if ($run_test_as_dtls == 1) {
+        # Use a large MTU to prevent a race condition on IPv6. With the
+        # default MTU of 1500, the IPv6/UDP overhead (48 bytes) limits the
+        # usable datagram payload to 1452 bytes, causing the server's
+        # CertificateVerify to spill into a second datagram. This creates a
+        # race between that second server datagram and the client's fatal
+        # alert (triggered by the corrupted ServerHello) arriving at the
+        # proxy. If the client's alert arrives first, the proxy still holds
+        # a partial CertificateVerify fragment in $payload and dies with
+        # "Changed peer, but we still have fragment data". By using a large
+        # MTU the entire server flight fits in one datagram, $payload is
+        # always fully cleared before any client packet can arrive, and the
+        # race is eliminated.
+        $proxy->serverflags("-mtu 16384");
         if (disabled("ec")) {
-            $proxy->clientflags("-groups ffdhe2048:ffdhe3072");
+            $proxy->clientflags("-groups ffdhe2048:ffdhe3072 -mtu 16384");
         } else {
-            $proxy->clientflags("-groups P-256:P-384");
+            $proxy->clientflags("-groups P-256:P-384 -mtu 16384");
         }
     }
     $proxy_start_success = $proxy->start();
