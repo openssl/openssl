@@ -1919,13 +1919,14 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
 {
     int i, ret;
     TLS_BUFFER *thiswb;
-    size_t tmpwrit = 0;
+    size_t tmpwrit = 0, left;
 
     if (rl->nextwbuf >= rl->numwpipes)
         return OSSL_RECORD_RETURN_SUCCESS;
 
     for (;;) {
         thiswb = &rl->wbuf[rl->nextwbuf];
+        left = TLS_BUFFER_get_left(thiswb);
 
         clear_sys_error();
         if (rl->bio != NULL) {
@@ -1935,13 +1936,24 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
                     return ret;
             }
             i = BIO_write(rl->bio, (char *)&(TLS_BUFFER_get_buf(thiswb)[TLS_BUFFER_get_offset(thiswb)]),
-                (unsigned int)TLS_BUFFER_get_left(thiswb));
+                (unsigned int)left);
             if (i >= 0) {
                 tmpwrit = i;
-                if (i == 0 && BIO_should_retry(rl->bio))
-                    ret = OSSL_RECORD_RETURN_RETRY;
-                else
+                if (i == 0 && left != 0) {
+                    if (BIO_should_retry(rl->bio)) {
+                        ret = OSSL_RECORD_RETURN_RETRY;
+                    } else {
+                        /*
+                         * Treat this as a fatal I/O condition. Do not queue an
+                         * SSL reason: a zero return with no retry flag may come
+                         * from a custom BIO and does not imply an SSL library
+                         * or protocol error.
+                         */
+                        ret = OSSL_RECORD_RETURN_FATAL;
+                    }
+                } else {
                     ret = OSSL_RECORD_RETURN_SUCCESS;
+                }
             } else {
                 if (BIO_should_retry(rl->bio)) {
                     ret = OSSL_RECORD_RETURN_RETRY;
@@ -1964,7 +1976,7 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
          * Treat i == 0 as success rather than an error for zero byte
          * writes to permit this case.
          */
-        if (i >= 0 && tmpwrit == TLS_BUFFER_get_left(thiswb)) {
+        if (i >= 0 && tmpwrit == left) {
             TLS_BUFFER_set_left(thiswb, 0);
             TLS_BUFFER_add_offset(thiswb, tmpwrit);
             if (++(rl->nextwbuf) < rl->numwpipes)
