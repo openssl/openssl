@@ -235,6 +235,51 @@ OSSL_FN *OSSL_FN_CTX_get_bytes(OSSL_FN_CTX *ctx, size_t bytes);
  */
 OSSL_FN *OSSL_FN_CTX_get_bits(OSSL_FN_CTX *ctx, size_t bits);
 
+/**
+ * Shift OSSL_FN left (in the direction of the most significant bits),
+ * equivalent of a *= 2^n
+ *
+ * @param[in, out]    a    shiftable long number
+ * @param[in]         n    How many bits to shift
+ * @returns           bits pushed out from the last limb
+ *
+ * @note If n includes a whole-limb shift, limbs shifted out by that step are
+ * discarded; the return value is only the carry produced by the remaining
+ * intra-limb shift.
+ */
+OSSL_FN_ULONG OSSL_FN_lshift(OSSL_FN *a, int n);
+
+/**
+ * Return the number of significant bits in OSSL_FN.
+ *
+ * @param[in]    a    the long number
+ * @returns      the number of significant bits in a
+ *
+ * @note This function is not constant-time.
+ */
+int OSSL_FN_num_bits(const OSSL_FN *a);
+
+/**
+ * Compare two OSSL_FN.
+ *
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @returns             -1 if a<b or a is invalid,
+ *                      0 if a==b or both are invalid,
+ *                      1 if a>b or b is invalid.
+ *
+ * @note This function is not constant-time.
+ */
+int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b);
+
+/**
+ * Convert a hex-represented long number to OSSL_FN.
+ * @param[out] r    OSSL_FN to be set. Should be allocated and have enough size
+ * @param[in]  hex  hex-represented long number
+ * @returns   1 on success, 0 on error
+ */
+int OSSL_FN_hex2fn(OSSL_FN *r, const char *hex);
+
 /*
  * Arithmetic functions treat the OSSL_FN 'd' array as a large 2's complement
  * unsigned integer, least significant limb first.  All carrys or borrows are
