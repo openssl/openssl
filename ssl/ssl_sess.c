@@ -1172,30 +1172,19 @@ int SSL_set_session_ticket_ext_cb(SSL *s, tls_session_ticket_ext_cb_fn cb,
 int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
-
-    if (sc == NULL)
+    if (sc == NULL || ext_len < 0 || ext_len > 0xffff)
         return 0;
-
-    if (sc->version >= TLS1_VERSION) {
-        OPENSSL_free(sc->ext.session_ticket);
-        sc->ext.session_ticket = NULL;
+    OPENSSL_free(sc->ext.session_ticket);
+    if (ext_data != NULL) {
         sc->ext.session_ticket = OPENSSL_malloc(sizeof(TLS_SESSION_TICKET_EXT) + ext_len);
-        if (sc->ext.session_ticket == NULL)
-            return 0;
-
-        if (ext_data != NULL) {
-            sc->ext.session_ticket->length = ext_len;
-            sc->ext.session_ticket->data = sc->ext.session_ticket + 1;
-            memcpy(sc->ext.session_ticket->data, ext_data, ext_len);
-        } else {
-            sc->ext.session_ticket->length = 0;
-            sc->ext.session_ticket->data = NULL;
-        }
-
-        return 1;
+        if (sc->ext.session_ticket == NULL) return 0;
+        sc->ext.session_ticket->length = ext_len;
+        sc->ext.session_ticket->data = sc->ext.session_ticket + 1;
+        memcpy(sc->ext.session_ticket->data, ext_data, ext_len);
+    } else {
+        sc->ext.session_ticket = NULL;
     }
-
-    return 0;
+    return 1;
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_4
