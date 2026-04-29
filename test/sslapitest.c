@@ -13067,6 +13067,70 @@ end:
     return testresult;
 }
 
+/*
+ * Test that a BIO returning 0 without a retry flag for a write with a positive
+ * length is not treated as a successful write.
+ */
+static int test_data_write_zero_no_retry(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    BIO *bzero = BIO_new(bio_s_no_retry_zero());
+    const SSL_METHOD *smeth = TLS_server_method();
+    const SSL_METHOD *cmeth = TLS_client_method();
+    unsigned char inbuf[1] = { 0 };
+    size_t written;
+    unsigned long errcode;
+    int err, min_version = 0, max_version = 0, testresult = 0;
+
+    if (tst == 1) {
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_DTLS1_2)
+        smeth = DTLS_server_method();
+        cmeth = DTLS_client_method();
+        min_version = max_version = DTLS1_2_VERSION;
+#else
+        BIO_free(bzero);
+        return TEST_skip("DTLS 1.2 not supported");
+#endif
+    }
+
+    if (!TEST_ptr(bzero))
+        goto end;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, min_version,
+            max_version, &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+            NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    SSL_set0_wbio(clientssl, bzero);
+    bzero = NULL;
+
+    ERR_clear_error();
+    if (!TEST_false(SSL_write_ex(clientssl, inbuf, sizeof(inbuf), &written)))
+        goto end;
+
+    err = SSL_get_error(clientssl, 0);
+    errcode = ERR_get_error();
+    if (!TEST_int_eq(err, SSL_ERROR_SYSCALL)
+        || !TEST_ulong_eq(errcode, 0))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_free_all(bzero);
+    return testresult;
+}
+
 struct resume_servername_cb_data {
     int i;
     SSL_CTX *cctx;
@@ -15030,6 +15094,7 @@ int setup_tests(void)
     ADD_TEST(test_rstate_string);
     ADD_ALL_TESTS(test_handshake_retry, 16);
     ADD_TEST(test_data_retry);
+    ADD_ALL_TESTS(test_data_write_zero_no_retry, 2);
     ADD_ALL_TESTS(test_multi_resume, 5);
     ADD_ALL_TESTS(test_select_next_proto, OSSL_NELEM(next_proto_tests));
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_NEXTPROTONEG)
@@ -15081,6 +15146,7 @@ void cleanup_tests(void)
     bio_s_mempacket_test_free();
     bio_s_always_retry_free();
     bio_s_maybe_retry_free();
+    bio_s_no_retry_zero_free();
     OSSL_PROVIDER_unload(defctxnull);
     OSSL_LIB_CTX_free(libctx);
 }
