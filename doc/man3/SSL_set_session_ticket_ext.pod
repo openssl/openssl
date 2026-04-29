@@ -1,0 +1,6 @@
+=pod
+=head1 NAME
+SSL_set_session_ticket_ext, SSL_set_session_secret_cb - set EAP-FAST session ticket and secret callback
+=head1 DESCRIPTION
+SSL_set_session_ticket_ext() sets the session ticket extension data for EAP-FAST (RFC 4851).
+=cut
