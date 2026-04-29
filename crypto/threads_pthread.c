@@ -53,9 +53,14 @@
 #define TSAN_FAKE_LOCK(x)          \
     __tsan_mutex_pre_lock((x), 0); \
     __tsan_mutex_post_lock((x), 0, 0)
+
+#define TSAN_LOAD_MEM_ORDER __ATOMIC_ACQUIRE
+#define TSAN_STORE_MEM_ORDER __ATOMIC_RELEASE
 #else
 #define TSAN_FAKE_UNLOCK(x)
 #define TSAN_FAKE_LOCK(x)
+#define TSAN_LOAD_MEM_ORDER __ATOMIC_RELAXED
+#define TSAN_STORE_MEM_ORDER __ATOMIC_RELAXED
 #endif
 
 #if defined(__sun)
@@ -1255,7 +1260,7 @@ int CRYPTO_atomic_store_int(int *dst, int val, CRYPTO_RWLOCK *lock)
 int CRYPTO_atomic_load_ptr(void **ptr, void **ret, CRYPTO_RWLOCK *lock)
 {
 #if defined(__GNUC__) && defined(__ATOMIC_RELAXED) && !defined(BROKEN_CLANG_ATOMICS)
-    *ret = __atomic_load_n(ptr, __ATOMIC_RELAXED);
+    *ret = __atomic_load_n(ptr, TSAN_LOAD_MEM_ORDER);
     return 1;
 #else
     if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
@@ -1270,7 +1275,7 @@ int CRYPTO_atomic_load_ptr(void **ptr, void **ret, CRYPTO_RWLOCK *lock)
 int CRYPTO_atomic_store_ptr(void **dst, void **val, CRYPTO_RWLOCK *lock)
 {
 #if defined(__GNUC__) && defined(__ATOMIC_RELAXED) && !defined(BROKEN_CLANG_ATOMICS)
-    __atomic_store(dst, val, __ATOMIC_RELAXED);
+    __atomic_store(dst, val, TSAN_STORE_MEM_ORDER);
     return 1;
 #else
     if (lock == NULL || !CRYPTO_THREAD_write_lock(lock))
