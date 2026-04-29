@@ -666,11 +666,13 @@ static int test_query_cache_set_duplicate(void)
     /*
      * Re-adding the same cache key exercises cleanup for a temporary generic
      * QUERY that cannot be inserted because a providerless entry already
-     * exists.
+     * exists.  Note: Under the lockless store, the cleanup is an archival operation
+     * That keeps the old entry around until the libctx is freed, as so the refcount
+     * is monotonically incremented here
      */
     ossl_method_store_cache_set(store, &prov, 1, "", &refs, counted_up_ref,
         counted_down_ref);
-    if (!TEST_int_eq(refs, 3)
+    if (!TEST_int_eq(refs, 5)
         || !TEST_true(ossl_method_store_cache_get(store, &prov, 1, "",
             &result))
         || !TEST_ptr_eq(result, &refs))
