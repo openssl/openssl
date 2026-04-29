@@ -1178,8 +1178,10 @@ int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
 
     if (sc->version >= TLS1_VERSION) {
         OPENSSL_free(sc->ext.session_ticket);
-        sc->ext.session_ticket = NULL;
         sc->ext.session_ticket = OPENSSL_malloc(sizeof(TLS_SESSION_TICKET_EXT) + ext_len);
+        if (sc->ext.session_ticket == NULL) return 0;
+        sc->ext.session_ticket->data = NULL;
+        sc->ext.session_ticket->length = 0;
         if (sc->ext.session_ticket == NULL)
             return 0;
 
