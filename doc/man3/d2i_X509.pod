@@ -496,8 +496,8 @@ to parse data from FILE pointer I<fp>.
 B<i2d_I<TYPE>>() encodes the structure pointed to by I<a> into DER format.
 If I<ppout> is not NULL, it writes the DER encoded data to the buffer
 at I<*ppout>, and increments it to point after the data just written.
-If the return value is negative an error occurred, otherwise it
-returns the length of the encoded data.
+A positive return value contains the length of the encoded data.
+A zero or negative return value indicates that an error occurred.
 
 If I<*ppout> is NULL memory will be allocated for a buffer and the encoded
 data written to it. In this case I<*ppout> is not incremented and it points
@@ -585,8 +585,8 @@ B<I<TYPE>> structure or NULL if an error occurs.  If the "reuse" capability has
 been used with a valid structure being passed in via I<a>, then the object is
 freed in the event of error and I<*a> is set to NULL.
 
-B<i2d_I<TYPE>>() returns the number of bytes successfully encoded or a negative
-value if an error occurs.
+B<i2d_I<TYPE>>() returns the number of bytes successfully encoded or <= 0
+if an error occurs.
 
 B<i2d_I<TYPE>_bio>() and B<i2d_I<TYPE>_fp>(),
 as well as i2d_ASN1_bio_stream(),
@@ -605,7 +605,7 @@ Allocate and encode the DER encoding of an X509 structure:
 
  buf = NULL;
  len = i2d_X509(x, &buf);
- if (len < 0)
+ if (len <= 0)
      /* error */
 
 Attempt to decode a buffer:
