@@ -56,7 +56,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => 59 + ($no_fips ? 0 : 5);
+plan tests => 61 + ($no_fips ? 0 : 5);
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -209,20 +209,23 @@ for my $instance (sort keys %pbmac1_tests) {
     }
 }
 
-# Test pbmac1 pkcs12 good files, RFC 9579
-for my $file ("pbmac1_256_256.good.p12", "pbmac1_512_256.good.p12", "pbmac1_512_512.good.p12")
+# Test pbmac1 pkcs12 good files, RFC 9579, and one extra with shorter key
+# length
+for my $file ("pbmac1_256_256.good.p12", "pbmac1_512_256.good.p12",
+              "pbmac1_512_512.good.p12",
+              "pbmac1_256_256.good-shorter-key-len.p12")
 {
     my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
     ok(run(app(["openssl", "pkcs12", "-in", $path, "-password", "pass:1234", "-noenc"])),
       "test pbmac1 pkcs12 file $file");
 }
 
-# Test pbmac1 pkcs12 bad files, RFC 9579 and CVE-2025-11187
+# Test pbmac1 pkcs12 bad files, RFC 9579, CVE-2025-11187 and CVE-2026-34181
 for my $file ("pbmac1_256_256.bad-iter.p12", "pbmac1_256_256.bad-salt.p12",
               "pbmac1_256_256.no-len.p12", "pbmac1_256_256.bad-len.p12",
               "pbmac1_256_256.bad-salt-type.p12", "pbmac1_256_256.negative-len.p12",
               "pbmac1_256_256.no-salt.p12", "pbmac1_256_256.very-big-len.p12",
-              "pbmac1_256_256.zero-len.p12")
+              "pbmac1_256_256.zero-len.p12", "pbmac1_256_256.bad-key-len.p12")
 {
     my $path = srctop_file("test", "recipes", "80-test_pkcs12_data", $file);
     with({ exit_checker => sub { return shift == 1; } },
