@@ -50,10 +50,16 @@ in B<*sess>. The SSL_SESSION object should, as a minimum, set the master key,
 the ciphersuite and the protocol version. See
 L<SSL_CTX_set_psk_use_session_callback(3)> for details.
 
-It is also possible for the callback to succeed but not supply a PSK. In this
-case no PSK will be used but the handshake will continue. To do this the
-callback should return successfully and ensure that B<*sess> is
-NULL.
+It is also possible for the callback to succeed but not supply a PSK. To do this
+the callback should return successfully and ensure that B<*sess> is NULL. In
+this case no PSK will be used and, if a certificate has also been configured,
+then the handshake will continue. If no certificate has been configured then the
+handshake will fail with a "decrypt_error" alert. This alert is the same one
+that is used in the event that a valid PSK identity is found but the TLSv1.3
+"binder" fails to verify. It is used to prevent an attacker from being able to
+determine whether a PSK identity is valid or not based on the alert received
+(see Appendix E.6 of RFC8446). Note that this is not a constant time check and
+so timing side channels may still exist.
 
 Identity hints are not relevant for TLSv1.3. A server application wishing to use
 PSK ciphersuites for TLSv1.2 and below may call SSL_CTX_use_psk_identity_hint()
