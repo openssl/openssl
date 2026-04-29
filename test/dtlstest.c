@@ -254,6 +254,7 @@ static int test_dtls_drop_records_dtls1(int idx)
 #define DTLS13_TOTAL_RECORDS \
     (DTLS13_TOTAL_HAND_RECORDS_FULL + DTLS13_TOTAL_HAND_RECORDS_RESM)
 
+#if !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS)
 /**
  * test_dtls_drop_records_dtls13 tests DTLS 1.3 implementation robustness against
  * dropped records
@@ -314,6 +315,7 @@ static int test_dtls_drop_records_dtls13(int idx)
 
     return test_dtls_drop_records(serverwbio, DTLS1_3_VERSION, 0, doresumption, epoch, idx);
 }
+#endif /* !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS) */
 
 static int test_dtls_drop_records(int serverwbio, int minversion, int maxversion,
     int doresumption, int epoch, int idx)
