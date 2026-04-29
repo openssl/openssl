@@ -59,6 +59,9 @@ void set_always_retry_err_val(int err);
 const BIO_METHOD *bio_s_maybe_retry(void);
 void bio_s_maybe_retry_free(void);
 
+const BIO_METHOD *bio_s_no_retry_zero(void);
+void bio_s_no_retry_zero_free(void);
+
 /* Packet types - value 0 is reserved */
 #define INJECT_PACKET 1
 #define INJECT_PACKET_IGNORE_REC_SEQ 2
