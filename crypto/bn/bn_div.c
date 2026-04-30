@@ -12,6 +12,106 @@
 #include "internal/cryptlib.h"
 #include "bn_local.h"
 
+/*-
+ * BN_div computes  dv := num / divisor, rounding towards
+ * zero, and sets up rm  such that  dv*divisor + rm = num  holds.
+ * Thus:
+ *     dv->neg == num->neg ^ divisor->neg  (unless the result is zero)
+ *     rm->neg == num->neg                 (unless the remainder is zero)
+ * If 'dv' or 'rm' is NULL, the respective value is not returned.
+ */
+int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
+    BN_CTX *ctx)
+{
+    int ret;
+
+    if (BN_is_zero(divisor)) {
+        ERR_raise(ERR_LIB_BN, BN_R_DIV_BY_ZERO);
+        return 0;
+    }
+
+    /* TODO(FIXNUM): TO BE REMOVED */
+    if ((dv != NULL && dv->data == NULL)
+        || (rm != NULL && rm->data == NULL)
+        || num->data == NULL
+        || divisor->data == NULL) {
+        /*
+         * Invalid zero-padding would have particularly bad consequences so don't
+         * just rely on bn_check_top() here (bn_check_top() works only for
+         * BN_DEBUG builds)
+         */
+        if (divisor->d[divisor->top - 1] == 0) {
+            ERR_raise(ERR_LIB_BN, BN_R_NOT_INITIALIZED);
+            return 0;
+        }
+
+        ret = bn_div_fixed_top(dv, rm, num, divisor, ctx);
+
+        if (ret) {
+            if (dv != NULL)
+                bn_correct_top(dv);
+            if (rm != NULL)
+                bn_correct_top(rm);
+        }
+
+        return ret;
+    }
+
+    bn_check_top(num);
+    bn_check_top(divisor);
+    bn_check_top(dv);
+    bn_check_top(rm);
+
+    /* The largest possible size for the dividend and remainder */
+    size_t max_res = num->top;
+    /* Save num->neg early, in case |dv| or |rm| aliases |num|. */
+    int num_neg = num->neg;
+
+    assert(max_res <= INT_MAX);
+
+    /*
+     * Acquire the writable result BIGNUMs before sizing the OSSL_FN_CTX.
+     * bn_acquire_ossl_fn() may expand the underlying OSSL_FN, which in
+     * turn changes the operand's dmax if it aliases a result.
+     */
+    OSSL_FN *dvf = (dv == NULL) ? NULL : bn_acquire_ossl_fn(dv, (int)max_res);
+    OSSL_FN *rmf = (rm == NULL) ? NULL : bn_acquire_ossl_fn(rm, (int)max_res);
+
+    /* Calculate total number of limbs for OSSL_FN_CTX */
+    size_t numcopy_limbs = ((num->dmax <= divisor->dmax) ? divisor->dmax : num->dmax) + 1;
+    size_t divcopy_limbs = divisor->dmax;
+    size_t tmp_limbs = divisor->dmax + 1;
+    size_t res_limbs = num->dmax;
+    size_t max_ctx_limbs = numcopy_limbs + divcopy_limbs + res_limbs + tmp_limbs;
+
+    /*
+     * Unfortunately, OSSL_FN_CTX and BN_CTX are too wildly different to
+     * be interchangeable.  We must therefore create an OSSL_FN_CTX here.
+     * (OSSL_FN_CTX is only really useful within OSSL_FN functionality)
+     */
+    OSSL_FN_CTX *fnctx = OSSL_FN_CTX_new(NULL, 1, 4, max_ctx_limbs);
+
+    ret = OSSL_FN_div(dvf, rmf, num->data, divisor->data, fnctx);
+
+    if (ret) {
+        if (dv != NULL) {
+            bn_release(dv, (int)max_res);
+            dv->neg = BN_is_zero(dv) ? 0 : num_neg ^ divisor->neg;
+            /* This clears a possibly set BN_FLG_FIXED_TOP */
+            bn_correct_top(dv);
+        }
+        if (rm != NULL) {
+            bn_release(rm, (int)max_res);
+            rm->neg = BN_is_zero(rm) ? 0 : num_neg;
+            /* This clears a possibly set BN_FLG_FIXED_TOP */
+            bn_correct_top(rm);
+        }
+    }
+
+    OSSL_FN_CTX_free(fnctx);
+    return ret;
+}
+
 #if defined(BN_DIV3W)
 BN_ULONG bn_div_3_words(const BN_ULONG *m, BN_ULONG d1, BN_ULONG d0);
 #endif
@@ -77,46 +177,6 @@ static int bn_left_align(BIGNUM *num)
 #endif /* __<cpu> */
 #endif /* __GNUC__ */
 #endif /* OPENSSL_NO_ASM */
-
-/*-
- * BN_div computes  dv := num / divisor, rounding towards
- * zero, and sets up rm  such that  dv*divisor + rm = num  holds.
- * Thus:
- *     dv->neg == num->neg ^ divisor->neg  (unless the result is zero)
- *     rm->neg == num->neg                 (unless the remainder is zero)
- * If 'dv' or 'rm' is NULL, the respective value is not returned.
- */
-int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
-    BN_CTX *ctx)
-{
-    int ret;
-
-    if (BN_is_zero(divisor)) {
-        ERR_raise(ERR_LIB_BN, BN_R_DIV_BY_ZERO);
-        return 0;
-    }
-
-    /*
-     * Invalid zero-padding would have particularly bad consequences so don't
-     * just rely on bn_check_top() here (bn_check_top() works only for
-     * BN_DEBUG builds)
-     */
-    if (divisor->d[divisor->top - 1] == 0) {
-        ERR_raise(ERR_LIB_BN, BN_R_NOT_INITIALIZED);
-        return 0;
-    }
-
-    ret = bn_div_fixed_top(dv, rm, num, divisor, ctx);
-
-    if (ret) {
-        if (dv != NULL)
-            bn_correct_top(dv);
-        if (rm != NULL)
-            bn_correct_top(rm);
-    }
-
-    return ret;
-}
 
 /*
  * It's argued that *length* of *significant* part of divisor is public.
