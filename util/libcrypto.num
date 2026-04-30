@@ -5753,3 +5753,4 @@ EVP_KDF_CTX_get1_SKEY                   ?	4_2_0	EXIST::FUNCTION:
 EVP_KDF_CTX_get0_IV                     ?	4_2_0	EXIST::FUNCTION:
 PKCS12_check_version                    ?	4_2_0	EXIST::FUNCTION:
 CRYPTO_new_ex_data_ex                   ?	4_2_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_get1_ip_asc_ex        ?	4_2_0	EXIST::FUNCTION:

@@ -250,6 +250,12 @@ OpenSSL 4.2
 
    *Daiki Ueno and Clemens Lang*
 
+ * Added `X509_VERIFY_PARAM_get1_ip_asc_ex()` to retrieve all IP addresses
+   configured via `X509_VERIFY_PARAM_set1_ip()`, `X509_VERIFY_PARAM_add1_ip()`,
+   `X509_VERIFY_PARAM_set1_ip_asc()`, or `X509_VERIFY_PARAM_add1_ip_asc()`.
+
+   *Stephen Wall*
+
 OpenSSL 4.1
 -----------
 
