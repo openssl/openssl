@@ -70,6 +70,12 @@ section 5.9.
 The DTLSv1.3 implementation modifies the epoch according to RFC9147 section 6.1
 for DTLSv1.3 connections.
 
+### DTLS 1.3 Sequence Numbers
+
+Sequence numbers from the Unified Header are Encrypted. Please see RFC9147
+section 4.2.3. This procedure requires at least 16 bytes and thus padding
+is required for smaller payloads.
+
 #### DTLS 1.3 Transcript Hash
 
 The DTLSv1.3 implementation does not include the message sequence number,
@@ -113,17 +119,16 @@ There's need for a lot more corner case testing:
 
 ### Known issues
 
-#### Dropped records handling
+SCTP for DTLS 1.3 is not supported. SCTP is only supported up to DTLS 1.2.
+Currently there is a draft for updating SCTP to support DLTS 1.3.
+<https://www.ietf.org/archive/id/draft-tuexen-tsvwg-rfc6083-bis-04.html>
 
-The implementation is only partially able to handle dropped records. For example
-`test_dtls13ack` has a disabled test case that fails when compressed certificates
-are sent. It seems like the implementation is not able to properly handle the
-case were the last flight of the client is dropped if it contains a client cert.
-In that case it should retransmit the CompressedCertificate and CertificateVerify
-messages in epoch 2, but it chooses to do it in epoch 3.
-
-There's a need to setup a test that checks dropped records in several scenarios
-and configurations in order to properly fix and verify.
+Race condition when the Server sends data right away once the connection is
+established. Since the Server must send an ACK to acknowledge the Client's
+Finish message the data may arrive before the ACK message. In the case of
+when application data arrives before an expected ACK message the application
+data will be buffered and processed once the ACK message has been read and
+processed.
 
 Implementation progress
 -----------------------
@@ -140,7 +145,6 @@ is not covered by these workitems and must be implemented separately.
 
 | Summary                | #PR    |
 |------------------------|--------|
-| EndOfEarlyData message | -      |
 | DTLSv1.3 Fuzzer        | -      |
 
 ### Changes from DTLS 1.2 and/or TLS 1.3
