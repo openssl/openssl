@@ -532,15 +532,17 @@ following OSSL_PARAM keys:
 
 Sets or gets the digest length for extendable output functions.
 The value should not exceed what can be given using a B<size_t>.
-It may be used by SHAKE-128, CSHAKE-128, SHAKE-256 and CSHAKE-256, to set the
-output length used by EVP_DigestFinal_ex() and EVP_DigestFinal().
+It may be used by the SHAKE, CSHAKE, TurboSHAKE and KangarooTwelve XOF
+algorithms to set the output length used by EVP_DigestFinal_ex() and
+EVP_DigestFinal().
 
 =item "size" (B<OSSL_DIGEST_PARAM_SIZE>) <unsigned integer>
 
 Sets or gets a fixed digest length.
 The value should not exceed what can be given using a B<size_t>.
 It may be used by BLAKE2B-512 to set the output length used by
-EVP_DigestFinal_ex() and EVP_DigestFinal().
+EVP_DigestFinal_ex() and EVP_DigestFinal().  It may be used by the SHAKE,
+CSHAKE, TurboSHAKE and KangarooTwelve XOF algorithms as an alias of "xoflen".
 
 =back
 
@@ -558,10 +560,17 @@ It is used by the MDC2 algorithm.
 Sets the function name string.
 It is used by L<EVP_MD-CSHAKE(7)>.
 
-=item "customization" (B<OSSL_DIGEST_PARAM_CUSTOMIZATION>)<UTF8 string>
+=item "customization" (B<OSSL_DIGEST_PARAM_CUSTOMIZATION>)<UTF8 string or octet string>
 
 Sets a customisation string.
-It is used by L<EVP_MD-CSHAKE(7)>.
+It is used by L<EVP_MD-CSHAKE(7)> as a UTF8 string with a length of at most
+512 bytes, and by L<EVP_MD-KANGAROOTWELVE(7)> as an octet string with a length
+of at most 512 bytes.
+
+=item "domain-separator" (B<OSSL_DIGEST_PARAM_DOMAIN_SEPARATOR>) <unsigned integer>
+
+Sets the TurboSHAKE domain separator.
+It is used by L<EVP_MD-TURBOSHAKE(7)>.
 
 =item "properties" (B<OSSL_DIGEST_PARAM_PROPERTIES>)<UTF8 string>
 

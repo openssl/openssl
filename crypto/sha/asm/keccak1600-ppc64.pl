@@ -37,6 +37,10 @@
 #	much better (but watch out for them generating code specific
 #	to processor they execute on).
 
+use FindBin qw($Bin);
+use lib "$Bin";
+require "keccak1600-common.pl";
+
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
@@ -94,6 +98,12 @@ $code.=<<___;
 .align	5
 KeccakF1600_int:
 	li	r0,24
+	mtctr	r0
+	b	.Loop
+
+.type	KeccakP1600_12_int,\@function
+KeccakP1600_12_int:
+	li	r0,12
 	mtctr	r0
 	b	.Loop
 .align	4
@@ -395,6 +405,13 @@ KeccakF1600:
 	.long	0
 .size	KeccakF1600,.-KeccakF1600
 ___
+
+my ($p12) = $code =~ /(^\.type\tKeccakF1600,.*?^\.size\tKeccakF1600,\.\-KeccakF1600$)/ms
+    or die "failed to duplicate KeccakF1600";
+$p12 = rename_labels($p12, "KeccakF1600", "KeccakP1600_12");
+$p12 =~ s/KeccakF1600_int/KeccakP1600_12_int/g;
+$p12 =~ s/(\tsubi\tr12,r12,8[^\n]*\n)/$1\taddi\tr12,r12,`8*12`\n/;
+$code .= "\n$p12\n";
 if (!$LITTLE_ENDIAN) {
 $code.=<<___;
 .type	dword_le_load,\@function
@@ -648,6 +665,15 @@ SHA3_absorb:
 	.long	0
 .size	SHA3_absorb,.-SHA3_absorb
 ___
+
+($p12) = $code =~ /(^\.globl\tSHA3_absorb\n.*?^\.size\tSHA3_absorb,\.\-SHA3_absorb$)/ms
+    or die "failed to duplicate SHA3_absorb";
+$p12 = rename_labels($p12, "SHA3_absorb", "ossl_keccak1600_p12_absorb");
+$p12 =~ s/KeccakF1600_int/KeccakP1600_12_int/g;
+$p12 =~ s/(\tsubi\tr12,r12,8[^\n]*\n)/$1\taddi\tr12,r12,`8*12`\n/;
+$p12 =~ s/iotas\[24\]/iotas[12]/g;
+$p12 =~ s/-8\*24/-8*12/g;
+$code .= "\n$p12\n";
 {
 my ($A_flat,$out,$len,$bsz) = map("r$_",(28..31));
 $code.=<<___;
@@ -729,6 +755,12 @@ SHA3_squeeze:
 	.long	0
 .size	SHA3_squeeze,.-SHA3_squeeze
 ___
+
+($p12) = $code =~ /(^\.globl\tSHA3_squeeze\n.*?^\.size\tSHA3_squeeze,\.\-SHA3_squeeze$)/ms
+    or die "failed to duplicate SHA3_squeeze";
+$p12 = rename_labels($p12, "SHA3_squeeze", "ossl_keccak1600_p12_squeeze");
+$p12 =~ s/KeccakF1600/KeccakP1600_12/g;
+$code .= "\n$p12\n";
 }
 
 # Ugly hack here, because PPC assembler syntax seem to vary too

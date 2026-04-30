@@ -30,6 +30,10 @@
 # amount of instruction and assumed instruction issue rate. It's ~2.5x
 # faster than compiler-generated code.
 
+use FindBin qw($Bin);
+use lib "$Bin";
+require "keccak1600-common.pl";
+
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
@@ -79,6 +83,17 @@ __KeccakF1600:
 	lg	@C[3],$A[4][3]($src)
 	lg	@C[4],$A[4][4]($src)
 	larl	$iotas,iotas
+	j	.Loop
+
+.LKeccakP1600_12_int:
+	st${g}	%r14,$SIZE_T*14($sp)
+	lg	@C[0],$A[4][0]($src)
+	lg	@C[1],$A[4][1]($src)
+	lg	@C[2],$A[4][2]($src)
+	lg	@C[3],$A[4][3]($src)
+	lg	@C[4],$A[4][4]($src)
+	larl	$iotas,iotas
+	la	$iotas,96($iotas)
 	j	.Loop
 
 .align	16
@@ -337,6 +352,7 @@ $code.=<<___;
 ___
 }
 {
+my $p12_start = length($code);
 $code.=<<___;
 .type	KeccakF1600,\@function
 .align	32
@@ -392,9 +408,15 @@ KeccakF1600:
 	br	%r14
 .size	KeccakF1600,.-KeccakF1600
 ___
+
+my $p12 = rename_labels(substr($code, $p12_start),
+                        "KeccakF1600", "KeccakP1600_12");
+$p12 =~ s/__KeccakF1600/.LKeccakP1600_12_int/g;
+$code .= $p12;
 }
 { my ($A_flat,$inp,$len,$bsz) = map("%r$_",(2..5));
 
+my $p12_start = length($code);
 $code.=<<___;
 .globl	SHA3_absorb
 .type	SHA3_absorb,\@function
@@ -472,9 +494,15 @@ SHA3_absorb:
 	br	%r14
 .size	SHA3_absorb,.-SHA3_absorb
 ___
+
+my $p12 = rename_labels(substr($code, $p12_start),
+                        "SHA3_absorb", "ossl_keccak1600_p12_absorb");
+$p12 =~ s/__KeccakF1600/.LKeccakP1600_12_int/g;
+$code .= $p12;
 }
 { my ($A_flat,$out,$len,$bsz,$next) = map("%r$_",(2..6));
 
+my $p12_start = length($code);
 $code.=<<___;
 .globl	SHA3_squeeze
 .type	SHA3_squeeze,\@function
@@ -524,6 +552,11 @@ SHA3_squeeze:
 	br	%r14
 .size	SHA3_squeeze,.-SHA3_squeeze
 ___
+
+my $p12 = rename_labels(substr($code, $p12_start),
+                        "SHA3_squeeze", "ossl_keccak1600_p12_squeeze");
+$p12 =~ s/\.LKeccakF1600/.LKeccakP1600_12/g;
+$code .= $p12;
 }
 $code.=<<___;
 .align	256
