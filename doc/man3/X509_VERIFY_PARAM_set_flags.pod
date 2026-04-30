@@ -423,9 +423,6 @@ The documentation was changed to align with the implementation.
 
 The X509_VERIFY_PARAM_get_purpose() function was added in OpenSSL 3.5.
 
-The signature for X509_VERIFY_PARAM_get1_ip_asc() changed to add a index
-parameter in Openssl 4.0.
-
 =head1 COPYRIGHT
 
 Copyright 2009-2026 The OpenSSL Project Authors. All Rights Reserved.
