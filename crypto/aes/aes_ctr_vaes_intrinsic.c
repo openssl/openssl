@@ -10,12 +10,14 @@
  * Implements AES-CTR encryption with VAES (AVX-512)
  */
 
+#include "internal/deprecated.h"
+
 #include <openssl/opensslconf.h>
 #include "internal/cryptlib.h"
 #include <openssl/aes.h>
 #include "aes_local.h"
 
-#if defined(__x86_64__) || defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64)
+#if (defined(__x86_64__) || defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64)) && !defined(OPENSSL_NO_ASM)
 
 #if ((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 8)) \
     || (defined(__clang__) && (__clang_major__ >= 7)) || (defined(_MSC_VER) && (_MSC_VER >= 1927)))
@@ -54,13 +56,13 @@ void aesni_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *k
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
-#define OSSL_FUNC_ALWAYS_INLINE __attribute__((always_inline))
+#define OSSL_FUNC_ALWAYS_INLINE static inline __attribute__((always_inline))
 #define OSSL_FUNC_NOINLINE __attribute__((noinline))
 #elif defined(_MSC_VER)
-#define OSSL_FUNC_ALWAYS_INLINE __forceinline
+#define OSSL_FUNC_ALWAYS_INLINE static __forceinline
 #define OSSL_FUNC_NOINLINE __declspec(noinline)
 #else
-#define OSSL_FUNC_ALWAYS_INLINE
+#define OSSL_FUNC_ALWAYS_INLINE static inline
 #define OSSL_FUNC_NOINLINE
 #endif
 
@@ -78,7 +80,7 @@ OPENSSL_TARGET_VAES512
 
 #define DEFINE_AES_ENCRYPT_FUNCS(ROUNDS)                    \
     OSSL_FUNC_ALWAYS_INLINE                                 \
-    static inline void AesEnc_4x512_##ROUNDS(               \
+    void AesEnc_4x512_##ROUNDS(                             \
         __m512i *b1, __m512i *b2, __m512i *b3, __m512i *b4, \
         const __m512i *rk)                                  \
     {                                                       \
@@ -99,7 +101,7 @@ OPENSSL_TARGET_VAES512
     }                                                       \
                                                             \
     OSSL_FUNC_ALWAYS_INLINE                                 \
-    static inline void AesEnc_2x512_##ROUNDS(               \
+    void AesEnc_2x512_##ROUNDS(                             \
         __m512i *b1, __m512i *b2, const __m512i *rk)        \
     {                                                       \
         *b1 = _mm512_xor_si512(*b1, rk[0]);                 \
@@ -113,7 +115,7 @@ OPENSSL_TARGET_VAES512
     }                                                       \
                                                             \
     OSSL_FUNC_ALWAYS_INLINE                                 \
-    static inline void AesEnc_1x512_##ROUNDS(               \
+    void AesEnc_1x512_##ROUNDS(                             \
         __m512i *b1, const __m512i *rk)                     \
     {                                                       \
         *b1 = _mm512_xor_si512(*b1, rk[0]);                 \
@@ -441,4 +443,4 @@ OPENSSL_UNTARGET_VAES512
 #undef OSSL_FUNC_ALWAYS_INLINE
 #undef OSSL_FUNC_NOINLINE
 #endif /* GCC >= 8 || Clang >= 7 || MSVC */
-#endif /* __x86_64__ || _M_AMD64 */
+#endif /* __x86_64__ || _M_AMD64 && !OPENSSL_NO_ASM */
