@@ -59,6 +59,10 @@
 #	Cortex-A57 to 25% on Cortex-A53. While in comparison to older
 #	compiler this code is at least 2x faster...
 
+use FindBin qw($Bin);
+use lib "$Bin";
+require "keccak1600-common.pl";
+
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
@@ -131,6 +135,13 @@ KeccakF1600_int:
 	AARCH64_SIGN_LINK_REGISTER
 	adrp	$C[2],iotas
 	add	$C[2],$C[2],:lo12:iotas
+	stp	$C[2],x30,[sp,#16]		// 32 bytes on top are mine
+	b	.Loop
+.LKeccakP1600_12_int:
+	AARCH64_SIGN_LINK_REGISTER
+	adrp	$C[2],iotas
+	add	$C[2],$C[2],:lo12:iotas
+	add	$C[2],$C[2],#96
 	stp	$C[2],x30,[sp,#16]		// 32 bytes on top are mine
 	b	.Loop
 .align	4
@@ -305,7 +316,10 @@ $code.=<<___;
 	AARCH64_VALIDATE_LINK_REGISTER
 	ret
 .size	KeccakF1600_int,.-KeccakF1600_int
+___
 
+my $p12_start = length($code);
+$code.=<<___;
 .type	KeccakF1600,%function
 .align	5
 KeccakF1600:
@@ -362,6 +376,15 @@ KeccakF1600:
 	AARCH64_VALIDATE_LINK_REGISTER
 	ret
 .size	KeccakF1600,.-KeccakF1600
+___
+
+my $p12 = rename_labels(substr($code, $p12_start),
+                        "KeccakF1600", "KeccakP1600_12");
+$p12 =~ s/KeccakF1600_int/.LKeccakP1600_12_int/g;
+$code .= $p12;
+
+$p12_start = length($code);
+$code.=<<___;
 
 .globl	SHA3_absorb
 .type	SHA3_absorb,%function
@@ -469,8 +492,15 @@ $code.=<<___;
 	ret
 .size	SHA3_absorb,.-SHA3_absorb
 ___
+
+$p12 = rename_labels(substr($code, $p12_start),
+                     "SHA3_absorb", "ossl_keccak1600_p12_absorb");
+$p12 =~ s/KeccakF1600_int/.LKeccakP1600_12_int/g;
+$code .= $p12;
+
 {
 my ($A_flat,$out,$len,$bsz) = map("x$_",(19..22));
+$p12_start = length($code);
 $code.=<<___;
 .globl	SHA3_squeeze
 .type	SHA3_squeeze,%function
@@ -545,6 +575,11 @@ SHA3_squeeze:
 	ret
 .size	SHA3_squeeze,.-SHA3_squeeze
 ___
+
+$p12 = rename_labels(substr($code, $p12_start),
+                     "SHA3_squeeze", "ossl_keccak1600_p12_squeeze");
+$p12 =~ s/KeccakF1600/KeccakP1600_12/g;
+$code .= $p12;
 }								}}}
 								{{{
 my @A = map([ "v".$_.".16b", "v".($_+1).".16b", "v".($_+2).".16b",
