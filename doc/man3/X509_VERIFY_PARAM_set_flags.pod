@@ -275,7 +275,7 @@ address SAN in the certificate.
 X509_VERIFY_PARAM_set1_email() calls X509_VERIFY_PARAM_set_rfc822(), and
 X509_VERIFY_PARAM_set_smtputf8() and succeeds if either call succeeds.
 
-X509_VERIFY_PARAM_get1_ip_asc() returns the expected IP address as a string.
+X509_VERIFY_PARAM_get1_ip_asc() returns the first expected IP address as a string.
 The caller is responsible for freeing it.
 
 X509_VERIFY_PARAM_get1_ip_asc_ex() returns a string containing the I<n>th
