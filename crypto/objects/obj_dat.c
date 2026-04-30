@@ -162,8 +162,7 @@ static unsigned long added_obj_hash(const ADDED_OBJ *ca)
  */
 static int obj_equivalent(const ASN1_OBJECT *a, const ASN1_OBJECT *b)
 {
-    return a->length == b->length
-        && memcmp(a->data, b->data, (size_t)a->length) == 0
+    return OBJ_cmp(a, b) == 0
         && (a->sn == NULL) == (b->sn == NULL)
         && strcmp(a->sn ? a->sn : "", b->sn ? b->sn : "") == 0
         && (a->ln == NULL) == (b->ln == NULL)
@@ -182,10 +181,7 @@ static int added_obj_cmp(const ADDED_OBJ *ca, const ADDED_OBJ *cb)
     b = cb->obj;
     switch (ca->type) {
     case ADDED_DATA:
-        i = (a->length - b->length);
-        if (i)
-            return i;
-        return memcmp(a->data, b->data, (size_t)a->length);
+        return OBJ_cmp(a, b);
     case ADDED_SNAME:
         if (a->sn == NULL)
             return -1;
@@ -296,16 +292,7 @@ const char *OBJ_nid2ln(int n)
 
 static int obj_cmp(const ASN1_OBJECT *const *ap, const unsigned int *bp)
 {
-    int j;
-    const ASN1_OBJECT *a = *ap;
-    const ASN1_OBJECT *b = &nid_objs[*bp];
-
-    j = (a->length - b->length);
-    if (j)
-        return j;
-    if (a->length == 0)
-        return 0;
-    return memcmp(a->data, b->data, a->length);
+    return OBJ_cmp(*ap, &nid_objs[*bp]);
 }
 
 IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, obj);
