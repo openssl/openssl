@@ -15,7 +15,6 @@
 #include <openssl/provider.h>
 #include "internal/property.h"
 #include "internal/provider.h"
-#include "internal/hashtable.h"
 #include "internal/hashfunc.h"
 #include "internal/tsan_assist.h"
 #include "internal/threads_common.h"
@@ -39,27 +38,10 @@
 #endif
 #define NUM_SHARDS (1 << NUM_SHARDS_BITS)
 
-#ifndef MAX_CACHE_LINES
-#define MAX_CACHE_LINES 8
+#ifndef MAX_CACHE_LINES_BITS
+#define MAX_CACHE_LINES_BITS 3
 #endif
-
-#if defined(__GNUC__) || defined(__clang__)
-/*
- * ALLOW_VLA enables the use of dynamically sized arrays
- * in ossl_method_store_cache_[get|set].  This is done for
- * performance reasons, as moving the stack pointer is
- * way faster than getting memory from heap.  This introduces
- * the potential for stack overflows, but we check for that
- * by capping the size of the buffer to a large value
- * MAX_PROP_QUERY as there shouldn't be any property queries that long.
- */
-#define ALLOW_VLA
-#endif
-
-/*
- * Max allowed length of our property query
- */
-#define MAX_PROP_QUERY 4096
+#define MAX_CACHE_LINES (1 << MAX_CACHE_LINES_BITS)
 
 typedef struct {
     void *method;
@@ -81,8 +63,6 @@ typedef struct query_st {
     int nid; /* nid of this query */
     int archived; /* Mark entry as no longer findable */
     OSSL_PROVIDER *prov; /*provider this belongs to */
-    uint64_t specific_hash; /* hash of [nid,prop_query,prov] tuple */
-    uint64_t generic_hash; /* hash of [nid,prop_query] tuple */
     uint64_t prop_hash; /* hash of the property string */
     METHOD method; /* METHOD for this query */
 } QUERY;
@@ -930,15 +910,12 @@ int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
     return 1;
 }
 
-static ossl_inline int ossl_method_store_cache_get_locked(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
-    int nid, const char *prop_query, size_t keylen, STORED_ALGORITHMS *sa, QUERY **post_insert,
-    void **method)
+static ossl_inline int ossl_method_store_cache_get_atomic(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
+    int nid, const char *prop_query, STORED_ALGORITHMS *sa, void **method)
 {
     uint64_t prop_hash;
     QUERY *r = NULL;
     int res = 0;
-
-    *post_insert = NULL;
 
     prop_hash = ossl_fnv1a_hash((uint8_t *)prop_query, strlen(prop_query));
 
@@ -955,30 +932,19 @@ static ossl_inline int ossl_method_store_cache_get_locked(OSSL_METHOD_STORE *sto
 int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int nid, const char *prop_query, void **method)
 {
-    size_t keylen = sizeof(int) + ((prop_query == NULL) ? 1 : strlen(prop_query))
-        + sizeof(OSSL_PROVIDER *);
     int ret;
     STORED_ALGORITHMS *sa;
-    QUERY *post_insert = NULL;
 
     if (nid <= 0 || store == NULL || prop_query == NULL)
-        return 0;
-
-    if (keylen > MAX_PROP_QUERY)
         return 0;
 
     sa = stored_algs_shard(store, nid);
 
     /*
-     * Note: We've bifurcated this function into a locked and unlocked variant
-     * Not because of any specific need to do the locked work from some other location,
-     * but rather because in the interests of performance, we allocate a buffer on the
-     * stack which can be an arbitrary size.  In order to allow for clamping of that
-     * value, we check the keylen above for size limit, and then use this call to create
-     * a new stack frame in which we can safely do that stack allocation.
+     * Do an atomic linked list walk to search for our entry
      */
-    ret = ossl_method_store_cache_get_locked(store, prov, nid, prop_query, keylen, sa,
-        &post_insert, method);
+    ret = ossl_method_store_cache_get_atomic(store, prov, nid, prop_query, sa,
+        method);
 
     return ret;
 }
@@ -986,6 +952,21 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
 static int ossl_method_store_atomic_archive(STORED_ALGORITHMS *sa, QUERY *old)
 {
     if (!CRYPTO_atomic_store_int(&old->archived, 1, sa->alock))
+        return 0;
+    return 1;
+}
+
+static ossl_inline int ossl_method_store_put_in_archive(STORED_ALGORITHMS *sa, QUERY *old)
+{
+    /*
+     * point the item we're remoing's next pointer to the top of the archive list
+     */
+    if (!CRYPTO_atomic_load_ptr((void **)&sa->archive, (void **)&old->next, sa->alock))
+        return 0;
+    /*
+     * And update the head of the archive list to be our new entry
+     */
+    if (!CRYPTO_atomic_store_ptr((void **)&sa->archive, (void **)&old, sa->alock))
         return 0;
     return 1;
 }
@@ -999,45 +980,102 @@ static void ossl_method_store_atomic_clean_archive(STORED_ALGORITHMS *sa)
     QUERY *idx, *idxn;
     int archived;
     int i;
+    int lock_failed;
 
+    /*
+     * For each of our linked lists
+     */
     for (i = 0; i < MAX_CACHE_LINES; i++) {
     restart_list:
+        /*
+         * Get the head of the list
+         */
         if (!CRYPTO_atomic_load_ptr((void **)&sa->cache_lists[i], (void **)&idx, sa->alock))
             continue;
+        /*
+         * If its NULL, the list is currently empty, move on to the next one
+         */
         if (idx == NULL)
             continue;
+        /*
+         * Get its archived value
+         */
         if (!CRYPTO_atomic_load_int(&idx->archived, &archived, sa->alock))
             continue;
+        /*
+         * Also fetch its next pointer to idxn
+         */
         if (!CRYPTO_atomic_load_ptr((void **)&idx->next, (void **)&idxn, sa->alock))
             continue;
+        /*
+         * If its been archived, we want to move it to the archive list
+         */
         if (archived == 1) {
-            if (!CRYPTO_atomic_store_ptr((void **)&sa->cache_lists[i], (void **)&idxn, sa->alock))
-                continue;
-            if (!CRYPTO_atomic_load_ptr((void **)&sa->archive, (void **)&idx->next, sa->alock))
-                continue;
-            if (!CRYPTO_atomic_store_ptr((void **)&sa->archive, (void **)&idx, sa->alock))
+            /*
+             * We know this is the current list head we're working with
+             * so store the next pointer to be the new list head
+             */
+            if (!CRYPTO_atomic_cmp_exch_ptr((void **)&sa->cache_lists[i], (void **)&idx, idxn, sa->alock,
+                    &lock_failed)) {
+                if (lock_failed)
+                    continue;
+                else
+                    goto restart_list;
+            }
+
+            if (!ossl_method_store_put_in_archive(sa, idx))
                 continue;
             goto restart_list;
         }
 
+        /*
+         * At this point our state is:
+         * idx - points to an element in cache_lists[i]
+         * idxn points to the next entry (i.e. idx->next)
+         */
         while (idx != NULL) {
+            /*
+             * We know idx isn't archived, so we start looking at idxn
+             */
             if (idxn != NULL) {
-                if (CRYPTO_atomic_load_int(&idxn->archived, &archived, sa->alock))
+                /*
+                 * if its not NULL, see if its archived
+                 */
+                if (!CRYPTO_atomic_load_int(&idxn->archived, &archived, sa->alock))
                     break;
+                /*
+                 * If it is, remove it
+                 */
                 if (archived == 1) {
+                    /*
+                     * Start by making idx skip idxn in the list
+                     */
                     if (!CRYPTO_atomic_load_ptr((void **)&idxn->next, (void **)&idx->next, sa->alock))
                         break;
-                    if (!CRYPTO_atomic_load_ptr((void **)&sa->archive, (void **)&idxn->next, sa->alock))
+
+                    if (!ossl_method_store_put_in_archive(sa, idxn))
                         break;
-                    if (!CRYPTO_atomic_store_ptr((void **)&sa->archive, (void **)&idxn, sa->alock))
+
+                    /*
+                     * Idx just got a new next pointer above, so just update idxn, so we are sure that idx
+                     * still isn't archived
+                     */
+                    if (!CRYPTO_atomic_load_ptr((void **)&idx->next, (void **)&idxn, sa->alock))
                         break;
-                }
-                if (!CRYPTO_atomic_load_ptr((void **)&idx->next, (void **)&idx, sa->alock))
-                    break;
-                if (idx != NULL) {
+                } else {
+                    /*
+                     * idxn wasn't archived, so we need to advance both pointers here
+                     */
+                    idx = idxn;
                     if (!CRYPTO_atomic_load_ptr((void **)&idx->next, (void **)&idxn, sa->alock))
                         break;
                 }
+            } else {
+                /*
+                 * idxn is NULL, that means we're at the end of the list.
+                 * Just advance idx to idxn and the loop will break on the next iteration
+                 */
+                idx = idxn;
             }
         }
     }
@@ -1046,7 +1084,7 @@ static void ossl_method_store_atomic_clean_archive(STORED_ALGORITHMS *sa)
 static QUERY *ossl_method_store_atomic_find_in_list(STORED_ALGORITHMS *sa, int nid,
     OSSL_PROVIDER *prov, uint64_t prop_hash)
 {
-    int nididx = (nid >> NUM_SHARDS_BITS) % MAX_CACHE_LINES;
+    int nididx = (nid >> NUM_SHARDS_BITS) & (MAX_CACHE_LINES - 1);
     int archived;
     QUERY *idx;
     QUERY *ret = NULL;
@@ -1070,7 +1108,7 @@ out:
 
 static int ossl_method_store_atomic_insert_to_list(STORED_ALGORITHMS *sa, QUERY *new)
 {
-    int nid = (new->nid >> NUM_SHARDS_BITS) % MAX_CACHE_LINES;
+    int nid = (new->nid >> NUM_SHARDS_BITS) & (MAX_CACHE_LINES - 1);
     QUERY *headptr;
     int ret = 0;
 
@@ -1086,8 +1124,8 @@ out:
     return ret;
 }
 
-static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
-    int nid, const char *prop_query, size_t keylen, STORED_ALGORITHMS *sa, void *method,
+static ossl_inline int ossl_method_store_cache_set_atomic(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
+    int nid, const char *prop_query, STORED_ALGORITHMS *sa, void *method,
     int (*method_up_ref)(void *),
     void (*method_destruct)(void *))
 {
@@ -1123,7 +1161,10 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
         if (!ossl_method_up_ref(&p->method))
             goto err;
 
-        ossl_method_store_atomic_insert_to_list(sa, p);
+        if (!ossl_method_store_atomic_insert_to_list(sa, p)) {
+            ossl_method_free(&p->method);
+            goto err;
+        }
 
         /*
          * We also want to add this method into the cache against a key computed _only_
@@ -1137,7 +1178,10 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
         p->prov = NULL;
         if (!ossl_method_up_ref(&p->method))
             goto err;
-        ossl_method_store_atomic_insert_to_list(sa, p);
+        if (!ossl_method_store_atomic_insert_to_list(sa, p)) {
+            ossl_method_free(&p->method);
+            goto err;
+        }
 
         goto end;
     }
@@ -1155,8 +1199,6 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
 {
     STORED_ALGORITHMS *sa;
     int res = 1;
-    size_t keylen = sizeof(int) + ((prop_query == NULL) ? 1 : strlen(prop_query))
-        + sizeof(OSSL_PROVIDER *);
 
     if (nid <= 0 || store == NULL || prop_query == NULL)
         return 0;
@@ -1164,23 +1206,13 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     if (!ossl_assert(prov != NULL))
         return 0;
 
-    if (keylen > MAX_PROP_QUERY)
-        return 0;
-
     sa = stored_algs_shard(store, nid);
-#if 0
-    if (!ossl_property_write_lock(sa))
-        return 0;
-#endif
+
     /*
-     * As with cache_get_locked, we do this to allow ourselves the opportunity to make sure
-     * keylen isn't so large that the stack allocation of keylen bytes will case a stack
-     * overflow
+     * Do an atomic insert into the appropriate cache linked list
      */
-    res = ossl_method_store_cache_set_locked(store, prov, nid, prop_query, keylen, sa, method,
+    res = ossl_method_store_cache_set_atomic(store, prov, nid, prop_query, sa, method,
         method_up_ref, method_destruct);
-#if 0
-    ossl_property_unlock(sa);
-#endif
+
     return res;
 }
