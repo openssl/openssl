@@ -22,7 +22,7 @@ X509_VERIFY_PARAM_set1_rfc822, X509_VERIFY_PARAM_add1_rfc822,
 X509_VERIFY_PARAM_set1_smtputf8, X509_VERIFY_PARAM_add1_smtputf8,
 X509_VERIFY_PARAM_set1_ip, X509_VERIFY_PARAM_add1_ip,
 X509_VERIFY_PARAM_set1_ip_asc, X509_VERIFY_PARAM_add1_ip_asc,
-X509_VERIFY_PARAM_get1_ip_asc,
+X509_VERIFY_PARAM_get1_ip_asc, X509_VERIFY_PARAM_get1_ip_asc_ex,
 X509_VERIFY_PARAM_set1_host_input_validation,
 X509_VERIFY_PARAM_set1_rfc822_input_validation,
 X509_VERIFY_PARAM_set1_smtputf8_input_validation,
@@ -82,7 +82,8 @@ X509_VERIFY_PARAM_set1_ip_input_validation
                                   const char *email, size_t emaillen);
  int X509_VERIFY_PARAM_add1_smtputf8(X509_VERIFY_PARAM *param,
                                  const char *email, size_t emaillen);
- char *X509_VERIFY_PARAM_get1_ip_asc(X509_VERIFY_PARAM *param, int n);
+ char *X509_VERIFY_PARAM_get1_ip_asc(X509_VERIFY_PARAM *param);
+ char *X509_VERIFY_PARAM_get1_ip_asc_ex(X509_VERIFY_PARAM *param, int n);
  int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
                                const unsigned char *ip, size_t iplen);
  int X509_VERIFY_PARAM_add1_ip(X509_VERIFY_PARAM *param,
@@ -274,7 +275,10 @@ address SAN in the certificate.
 X509_VERIFY_PARAM_set1_email() calls X509_VERIFY_PARAM_set_rfc822(), and
 X509_VERIFY_PARAM_set_smtputf8() and succeeds if either call succeeds.
 
-X509_VERIFY_PARAM_get1_ip_asc() returns a string containing the I<n>th
+X509_VERIFY_PARAM_get1_ip_asc() returns the expected IP address as a string.
+The caller is responsible for freeing it.
+
+X509_VERIFY_PARAM_get1_ip_asc_ex() returns a string containing the I<n>th
 expected IP address that has been set using X509_VERIFY_PARAM_set1_ip(),
 X509_VERIFY_PARAM_add1_ip(), X509_VERIFY_PARAM_set1_ip_asc(), or
 X509_VERIFY_PARAM_add1_ip_asc().  To obtain all addresses start with
@@ -544,8 +548,7 @@ The documentation was changed to align with the implementation.
 
 The X509_VERIFY_PARAM_get_purpose() function was added in OpenSSL 3.5.
 
-The signature for X509_VERIFY_PARAM_get1_ip_asc() changed to add a index
-parameter in Openssl 4.0.
+The X509_VERIFY_PARAM_get1_ip_asc_ex() function was added in Openssl 4.0.
 
 =head1 COPYRIGHT
 
