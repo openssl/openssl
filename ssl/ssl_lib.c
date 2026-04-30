@@ -1217,7 +1217,7 @@ int SSL_add1_host(SSL *s, const char *host)
             /* We didn't want it; only to check if it *is* an IP address */
             ASN1_OCTET_STRING_free(ip);
 
-            old_ip = X509_VERIFY_PARAM_get1_ip_asc(sc->param);
+            old_ip = X509_VERIFY_PARAM_get1_ip_asc(sc->param, 0);
             if (old_ip != NULL) {
                 OPENSSL_free(old_ip);
                 /* There can be only one IP address */
