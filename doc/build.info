@@ -5053,6 +5053,10 @@ DEPEND[man/man7/openssl_user_macros.7]=man7/openssl_user_macros.pod
 GENERATE[man/man7/openssl_user_macros.7]=man7/openssl_user_macros.pod
 DEPEND[man7/openssl_user_macros.pod]{pod}=man7/openssl_user_macros.pod.in
 GENERATE[man7/openssl_user_macros.pod]=man7/openssl_user_macros.pod.in
+DEPEND[html/man7/ossl-guide-dtlsv13.html]=man7/ossl-guide-dtlsv13.pod
+GENERATE[html/man7/ossl-guide-dtlsv13.html]=man7/ossl-guide-dtlsv13.pod
+DEPEND[man/man7/ossl-guide-dtlsv13.7]=man7/ossl-guide-dtlsv13.pod
+GENERATE[man/man7/ossl-guide-dtlsv13.7]=man7/ossl-guide-dtlsv13.pod
 DEPEND[html/man7/ossl-guide-introduction.html]=man7/ossl-guide-introduction.pod
 GENERATE[html/man7/ossl-guide-introduction.html]=man7/ossl-guide-introduction.pod
 DEPEND[man/man7/ossl-guide-introduction.7]=man7/ossl-guide-introduction.pod
@@ -5342,6 +5346,7 @@ html/man7/openssl-quic-concurrency.html \
 html/man7/openssl-quic.html \
 html/man7/openssl-threads.html \
 html/man7/openssl_user_macros.html \
+html/man7/ossl-guide-dtlsv13.html \
 html/man7/ossl-guide-introduction.html \
 html/man7/ossl-guide-libcrypto-introduction.html \
 html/man7/ossl-guide-libraries-introduction.html \
@@ -5508,6 +5513,7 @@ man/man7/openssl-quic-concurrency.7 \
 man/man7/openssl-quic.7 \
 man/man7/openssl-threads.7 \
 man/man7/openssl_user_macros.7 \
+man/man7/ossl-guide-dtlsv13.7 \
 man/man7/ossl-guide-introduction.7 \
 man/man7/ossl-guide-libcrypto-introduction.7 \
 man/man7/ossl-guide-libraries-introduction.7 \
