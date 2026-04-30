@@ -5904,6 +5904,10 @@ static int is_digest_disabled(const char *name)
     if (HAS_CASE_PREFIX(name, "BLAKE"))
         return 1;
 #endif
+#ifdef OPENSSL_NO_KT
+    if (HAS_CASE_PREFIX(name, "KT"))
+        return 1;
+#endif
 #ifdef OPENSSL_NO_MD2
     if (OPENSSL_strcasecmp(name, "MD2") == 0)
         return 1;
@@ -5926,6 +5930,10 @@ static int is_digest_disabled(const char *name)
 #endif
 #ifdef OPENSSL_NO_SM3
     if (OPENSSL_strcasecmp(name, "SM3") == 0)
+        return 1;
+#endif
+#ifdef OPENSSL_NO_TURBOSHAKE
+    if (HAS_CASE_PREFIX(name, "TURBOSHAKE"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_WHIRLPOOL
