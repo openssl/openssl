@@ -33,7 +33,11 @@ OpenSSL 4.1
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
- * none yet
+ * Added `X509_VERIFY_PARAM_get1_ip_asc_ex()` to retrieve all IP addresses
+   configured via `X509_VERIFY_PARAM_set1_ip()`, `X509_VERIFY_PARAM_add1_ip()`,
+   `X509_VERIFY_PARAM_set1_ip_asc()`, or `X509_VERIFY_PARAM_add1_ip_asc()`.
+
+   *Stephen Wall*
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
