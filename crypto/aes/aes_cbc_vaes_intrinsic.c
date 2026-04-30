@@ -174,7 +174,7 @@ DEFINE_AES_DECRYPT_FUNCS(14) /* AES-256 */
         size_t blocks = len / AES_BLOCK_SIZE;                                      \
                                                                                    \
         /* Save last ciphertext block for IV update (in-place safe)             */ \
-        __m128i saved_iv;                                                          \
+        __m128i saved_iv = _mm_setzero_si128();                                    \
         int has_blocks = (blocks > 0);                                             \
         if (has_blocks)                                                            \
             saved_iv = _mm_loadu_si128(pa + blocks - 1);                           \
