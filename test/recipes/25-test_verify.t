@@ -30,7 +30,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 176;
+plan tests => 178;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -540,6 +540,38 @@ run(app(["openssl", "verify",
          stderr => $cve_28388_stderr));
 ok(grep(/CRL is not yet valid/, do { open my $fh, '<', $cve_28388_stderr; <$fh> }),
    "CVE-2026-28388");
+
+# Delta CRLs must not be accepted as complete CRLs
+my $delta_crl_as_complete_stderr = "delta-crl-as-complete.err";
+ok(!run(app(["openssl", "verify", "-auth_level", "1",
+             "-CAfile",
+             srctop_file(@certspath, "delta-crl-as-complete-ca.pem"),
+             "-no_check_time", "-crl_check",
+             "-CRLfile",
+             srctop_file(@certspath, "delta-crl-as-complete-delta.pem"),
+             srctop_file(@certspath, "delta-crl-as-complete-leaf.pem")],
+             stderr => $delta_crl_as_complete_stderr))
+   && grep(/unable to get certificate CRL/,
+           do { open my $fh, '<', $delta_crl_as_complete_stderr; <$fh> }),
+   "Delta CRL is not accepted as complete CRL");
+
+my $delta_crl_as_complete_reasons_stderr =
+    "delta-crl-as-complete-reasons.err";
+ok(!run(app(["openssl", "verify", "-auth_level", "1",
+             "-CAfile",
+             srctop_file(@certspath, "delta-crl-as-complete-ca.pem"),
+             "-no_check_time", "-crl_check", "-extended_crl",
+             "-CRLfile",
+             srctop_file(@certspath,
+                         "delta-crl-as-complete-delta-reasons.pem"),
+             srctop_file(@certspath, "delta-crl-as-complete-leaf.pem")],
+             stderr => $delta_crl_as_complete_reasons_stderr))
+   && grep(/unable to get certificate CRL/,
+           do {
+               open my $fh, '<', $delta_crl_as_complete_reasons_stderr;
+               <$fh>
+           }),
+   "Delta CRL with onlySomeReasons is not accepted as complete CRL");
 
 # CAstore option
 my $rootcertname = "root-cert";
