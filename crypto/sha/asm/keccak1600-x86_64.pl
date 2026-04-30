@@ -50,6 +50,10 @@
 #	improved by 14% by replacing rotates with double-precision
 #	shift with same register as source and destination.
 
+use FindBin qw($Bin);
+use lib "$Bin";
+require "keccak1600-common.pl";
+
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
@@ -347,7 +351,10 @@ $code.=<<___;
 	ret
 .cfi_endproc
 .size	__KeccakF1600,.-__KeccakF1600
+___
 
+my $p12_start = length($code);
+$code.=<<___;
 .type	KeccakF1600,\@abi-omnipotent
 .align	32
 KeccakF1600:
@@ -409,8 +416,14 @@ KeccakF1600:
 .size	KeccakF1600,.-KeccakF1600
 ___
 
+my $p12 = rename_labels(substr($code, $p12_start),
+                        "KeccakF1600", "KeccakP1600_12");
+$p12 =~ s/lea\tiotas\(%rip\)/lea\t96+iotas(%rip)/;
+$code .= $p12;
+
 { my ($A_flat,$inp,$len,$bsz) = ("%rdi","%rsi","%rdx","%rcx");
      ($A_flat,$inp) = ("%r8","%r9");
+$p12_start = length($code);
 $code.=<<___;
 .globl	SHA3_absorb
 .type	SHA3_absorb,\@function,4
@@ -502,10 +515,17 @@ SHA3_absorb:
 .cfi_endproc
 .size	SHA3_absorb,.-SHA3_absorb
 ___
+
+$p12 = rename_labels(substr($code, $p12_start),
+                     "SHA3_absorb", "ossl_keccak1600_p12_absorb");
+$p12 =~ s/\n\tlea\tiotas\(%rip\),\Q$iotas\E\n/\n/;
+$p12 =~ s/\n\tcall\t__KeccakF1600/\n\tlea\t96+iotas(%rip),$iotas\n\n\tcall\t__KeccakF1600/;
+$code .= $p12;
 }
 { my ($A_flat,$out,$len,$bsz,$next) = ("%rdi","%rsi","%rdx","%rcx","%r8");
      ($out,$len,$bsz) = ("%r12","%r13","%r14");
 
+$p12_start = length($code);
 $code.=<<___;
 .globl	SHA3_squeeze
 .type	SHA3_squeeze,\@function,5
@@ -565,6 +585,12 @@ SHA3_squeeze:
 .cfi_endproc
 .size	SHA3_squeeze,.-SHA3_squeeze
 ___
+
+$p12 = rename_labels(substr($code, $p12_start),
+                     "SHA3_squeeze", "ossl_keccak1600_p12_squeeze");
+$p12 =~ s/KeccakF1600/KeccakP1600_12/g;
+$p12 =~ s/(pop\t%r12\n)\.cfi_pop\t%r13/$1.cfi_pop\t%r12/;
+$code .= $p12;
 }
 $code.=<<___;
 .section .rodata align=256
