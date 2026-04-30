@@ -1,0 +1,175 @@
+=pod
+
+=head1 NAME
+
+ossl-guide-dtlsv13 - OpenSSL DTLSv1.3
+
+=head1 INTRODUCTION
+
+This page provides an introduction to the DTLSv1.3 protocol.
+It explains the concepts behind the protocol and how it differs
+from previous versions of DTLS.
+
+=head1 DESCRIPTION
+
+DTLSv1.3 is a version of the Datagram Transport Layer Security (DTLS)
+protocol. DTLSv1.3 is defined in RFC 9147. It is based on TLSv1.3 and provides
+similar security guarantees to TLSv1.3 but is designed to work over datagram
+transport protocols such as UDP.
+
+The Supported Versions extension in the ClientHello and ServerHello is updated to
+include support for DTLSv1.3 by adding the value 0xFEFD to the list of supported
+versions.
+
+The TLSv1.3 state machine has been updated to support the DTLSv1.3 protocol.
+The main difference in the state machine between TLSv1.3 and DTLSv1.3 is the
+addition of Acknowledgement messages that are used to acknowledge the receipt of
+messages in the DTLSv1.3 protocol. This allows either the client or the server
+to signal to the peer that they have received and processed a handshake message.
+This prevents unnecessary retransmissions of messages.
+
+A major difference between DTLSv1.3 and DTLSv1.2 is the addition of the Unified
+Header. This Unified Header is in plaintext, and it contains an encrypted sequence
+number. The handshake header follows the Unified Header, and both the handshake
+header and all of its contents are encrypted.
+
+       struct {
+           ContentType type;
+           ProtocolVersion legacy_record_version;
+           uint16 epoch_val = 0;
+           uint48 sequence_number;
+           uint16 length;
+           opaque fragment[DTLSPlaintext.length];
+       } DTLSPlaintext;
+
+       struct {
+            opaque content[DTLSPlaintext.length];
+            ContentType type;
+            uint8 zeros[length_of_padding];
+       } DTLSInnerPlaintext;
+
+       struct {
+           opaque unified_hdr[variable];
+           opaque encrypted_record[length];
+       } DTLSCiphertext;
+
+=head1 UNIFIED HEADER
+
+The first byte of a Unified Header indicates which fields are present in the Unified Header.
+
+       0 1 2 3 4 5 6 7
+       +-+-+-+-+-+-+-+-+
+       |0|0|1|C|S|L|E E|
+       +-+-+-+-+-+-+-+-+
+       | Connection ID |   Legend:
+       | (if any,      |
+       /  length as    /   C   - Connection ID (CID) present
+       |  negotiated)  |   S   - Sequence number length
+       +-+-+-+-+-+-+-+-+   L   - Length present
+       |  8 or 16 bit  |   E   - Epoch
+       |Sequence Number|
+       +-+-+-+-+-+-+-+-+
+       | 16 bit Length |
+       | (if present)  |
+       +-+-+-+-+-+-+-+-+
+
+When OpenSSL is generating a Unified Header it will always have Connection ID (C) set to
+zero. The Sequence Number will always be set to 1, indicating a 2 byte Sequence Number.
+Lastly the length bit will always be set indicating a length is present in the Unified
+Header.
+
+=head2 Epoch
+
+The Epoch value is incremented every time the cryptographic parameters change.
+ClientHello and ServerHello use an Epoch of 0. Only the client uses an Epoch of 1
+when it is sending Early Data. The rest of the handshake messages use an Epoch of 2.
+
+=head2 Encrypted Sequence Numbers
+
+The Sequence Number in the Unified Header is encrypted. For each Epoch, it always
+starts at 0, but since it is encrypted, it will not appear as zero when viewing it
+on the wire. The Sequence Number increments with every new DTLSv1.3 record.
+
+=head1 ACKNOWLEDGEMENT MESSAGE
+
+DTLSv1.3 adds explicit Acknowledgement messages to the protocol. There are also
+implicit acknowledgements in DTLSv1.3. For instance, when the client receives
+ServerHello, that ServerHello implicitly acknowledges the receipt of the ClientHello
+message. Also, ClientFinished implicitly acknowledges the receipt of ServerFinished.
+The new explicit Acknowledgement messages are used for the server to acknowledge the
+receipt of the ClientFinished message. The client uses an explicit Acknowledgement
+message to acknowledge the receipt of NewSessionTicket messages. Both the server and
+the client use the explicit Acknowledgement to acknowledge the receipt of KeyUpdate
+messages.
+
+When the server sends data immediately after the connection is established, there is
+a potential race condition where the Application Data may be received by the client
+before the Acknowledgement message for the ClientFinished message is received. OpenSSL
+buffers the Application Data until the Acknowledgement message is received and processed.
+
+=head1 END OF EARLY DATA MESSAGE
+
+In DTLSv1.3, the End of Early Data message is not sent. Instead, when the client
+starts sending messages in Epoch 2, this signals to the server that the client has
+finished sending Early Data.
+
+=head1 HELLO RETRY REQUEST
+
+To utilize HelloRetryRequest and cookie exchange to validate the client in DTLSv1.3,
+use the L<SSL_stateless(3)> function. L<DTLSv1_listen(3)> will still use HelloVerifyRequest to
+validate the client.
+
+=head1 APPLICATION DATA
+
+When either the DTLSv1.3 client or server is awaiting an Acknowledgement message,
+Application Data will be buffered until the Acknowledgement message is received and processed.
+Once either the DTLSv1.3 client or server processes the Acknowledgement message it will then
+process the buffered Application Data.
+
+Another scenario when Application Data is buffered is when multiple handshake messages like
+the NewSessionTicket are received with Application Data. The Application Data will be buffered
+until all the handshake messages have been processed.
+
+=head1 SCTP
+
+Even though DTLSv1.3 is enabled, the client will only perform a DTLSv1.2 or DTLSv1.0 handshake.
+If a DTLSv1.3 over SCTP compatible client connects to an OpenSSL server, the server will
+downgrade to DTLSv1.2 or earlier.
+
+=head1 CONNECTION ID
+
+OpenSSL does not support Connection IDs in DTLSv1.3. If a client that supports Connection
+IDs connects to an OpenSSL server, the server will ignore the Connection ID and will not
+include a Connection ID in its responses.
+
+=head1 HOW TO UTILIZE DTLSV1.3 IN OPENSSL
+
+=head2 SSL_set_min_proto_version and SSL_set_max_proto_version
+
+Use L<SSL_set_min_proto_version(3)> and L<SSL_set_max_proto_version(3)> with the
+DTLS1_3_VERSION macro to set the minimum and maximum protocol version to DTLSv1.3.
+
+=head2 SSL_CTX_set_min_proto_version and SSL_CTX_set_max_proto_version
+
+Use L<SSL_CTX_set_min_proto_version(3)> and L<SSL_CTX_set_max_proto_version(3)> with
+the DTLS1_3_VERSION macro to set the minimum and maximum protocol version to DTLSv1.3.
+
+=head2 s_client
+
+Use the min_protocol and max_protocol parameters and set them to DTLSv1.3.
+Use the -dtls option to specify that you want to use DTLS instead of TLS.
+
+=head2 s_server
+
+Use the min_protocol and max_protocol parameters and set them to DTLSv1.3.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
