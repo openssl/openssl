@@ -814,47 +814,27 @@ static int test_swap_records_dtls13(int idx)
     if (!TEST_int_gt(SSL_connect(cssl), 0))
         goto end;
 
-    if (idx == 1 || idx == 2) {
-        /*
-         * The Client is waiting to read the ACK from the server and then
-         * the new session tickets. In that order. Since we are moving packets
-         * around we need to let DTLS1.3 do what it does and retransmit the
-         * New Session Tickets. The reason being is before the ACK all the
-         * New Session Tickets are dropped/discarded. Thus we get into a
-         * scenario where the server must resend the New Session Tickets.
-         */
-
+    if (idx != 3) {
         /* App data was not received early, so it should not be pending */
         if (!TEST_int_eq(SSL_pending(cssl), 0)
             || !TEST_false(SSL_has_pending(cssl)))
             goto end;
-
-        if (!TEST_int_le(ret = SSL_read(cssl, buf, sizeof(buf)), 0))
-            goto end;
-
-        /* Have the server resend the New Session Tickets */
-        if (!TEST_int_le(ret = SSL_read(sssl, buf, sizeof(buf)), 0))
-            goto end;
-
-        /* Client can now read the new Session Ticket */
-        if (!TEST_int_le(ret = SSL_read(cssl, buf, sizeof(buf)), 0))
-            goto end;
-
-        if (!TEST_int_eq(SSL_write(sssl, msg, sizeof(msg)), (int)sizeof(msg)))
-            goto end;
-
-        if (!TEST_int_eq(SSL_read(cssl, buf, sizeof(buf)), (int)sizeof(msg)))
-            goto end;
-    } else {
-        /*
-         * Recv flight 5 (app data)
-         */
-        if (!TEST_int_eq(SSL_read(cssl, buf, sizeof(buf)), (int)sizeof(msg)))
-            goto end;
-
-        if (!TEST_mem_eq(buf, sizeof(msg), msg, sizeof(msg)))
-            goto end;
     }
+
+    if (!TEST_int_eq(ret = SSL_read(cssl, buf, sizeof(buf)), (int)sizeof(msg)))
+        goto end;
+
+    if (!TEST_mem_eq(buf, sizeof(msg), msg, sizeof(msg)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_write(sssl, msg, sizeof(msg)), (int)sizeof(msg)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_read(cssl, buf, sizeof(buf)), (int)sizeof(msg)))
+        goto end;
+
+    if (!TEST_mem_eq(buf, sizeof(msg), msg, sizeof(msg)))
+        goto end;
 
     testresult = 1;
 end:

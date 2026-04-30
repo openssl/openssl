@@ -333,12 +333,17 @@ start:
             && (current_state == TLS_ST_CW_FINISHED
                 || current_state == TLS_ST_CW_KEY_UPDATE
                 || current_state == TLS_ST_SW_KEY_UPDATE
-                || current_state == TLS_ST_SW_SESSION_TICKET)
+                || current_state == TLS_ST_SW_SESSION_TICKET
+                || (current_state == TLS_ST_OK && SSL_in_init(s)))
             && rr->type == SSL3_RT_APPLICATION_DATA)) {
         /*
          * For DTLS 1.3 we received Application Data while we are
          * waiting for an Acknowledgement record. Buffer this data so
          * it can be processed once we have received the Acknowledgement.
+         * When DTLS 1.3 receives application data and it is already
+         * in TLS_ST_OK and is processing a handshake message like
+         * NewSessionTicket or KeyUpdate the application data is
+         * buffered.
          *
          * For non-DTLS 1.3 we now have application data between CCS and
          * Finished. Most likely the packets were reordered on their way,
@@ -351,6 +356,10 @@ start:
         }
         if (!ssl_release_record(sc, rr, 0))
             return -1;
+
+        if (is_dtls13 && current_state == TLS_ST_OK && SSL_in_init(s)) {
+            return -1;
+        }
         goto start;
     }
 
