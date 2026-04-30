@@ -484,10 +484,12 @@ int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx)
                     BIO_printf(bio, "Expected email address = %s\n", str);
                 break;
             case X509_V_ERR_IP_ADDRESS_MISMATCH:
-                str = X509_VERIFY_PARAM_get1_ip_asc(vpm);
-                if (str != NULL)
-                    BIO_printf(bio, "Expected IP address = %s\n", str);
-                OPENSSL_free(str);
+                BIO_printf(bio, "Expected IP address(es) = ");
+                while ((str = X509_VERIFY_PARAM_get1_ip_asc(vpm, idx++)) != NULL) {
+                    BIO_printf(bio, "%s%s\n", idx == 1 ? "" : ", ", str);
+                    OPENSSL_free(str);
+                }
+                BIO_printf(bio, "\n");
                 break;
             default:
                 break;
