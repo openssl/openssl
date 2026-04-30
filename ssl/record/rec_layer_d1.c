@@ -333,7 +333,8 @@ start:
             && (current_state == TLS_ST_CW_FINISHED
                 || current_state == TLS_ST_CW_KEY_UPDATE
                 || current_state == TLS_ST_SW_KEY_UPDATE
-                || current_state == TLS_ST_SW_SESSION_TICKET)
+                || current_state == TLS_ST_SW_SESSION_TICKET
+                || (current_state == TLS_ST_OK && SSL_in_init(s)))
             && rr->type == SSL3_RT_APPLICATION_DATA)) {
         /*
          * For DTLS 1.3 we received Application Data while we are
@@ -351,6 +352,10 @@ start:
         }
         if (!ssl_release_record(sc, rr, 0))
             return -1;
+
+        if (is_dtls13 && current_state == TLS_ST_OK && SSL_in_init(s)) {
+            return -1;
+        }
         goto start;
     }
 
