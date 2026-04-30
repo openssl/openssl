@@ -45,6 +45,15 @@ OpenSSL Releases
 
    *Craig Lorentzen*
 
+ * Added TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
+
+   *Filip Skokan*
+
+ * The cSHAKE implementation now accepts customization strings of 512 bytes,
+   matching the documented limit.
+
+   *Filip Skokan*
+
  * Do not issue TLS1.3 session tickets if the server has explicitly disabled
    them via `SSL_OP_NO_TICKET` and also turned off the session cache with
    `SSL_SESS_CACHE_OFF`. Both conditions together indicate a clear intent to
@@ -23081,6 +23090,7 @@ ndif
 [RFC 8998]: https://datatracker.ietf.org/doc/html/rfc8998#name-iana-considerations
 [RFC 9149]: https://datatracker.ietf.org/doc/html/rfc9149
 [RFC 9849]: https://datatracker.ietf.org/doc/html/rfc9849
+[RFC 9861]: https://datatracker.ietf.org/doc/html/rfc9861
 [SP 800-132]: https://csrc.nist.gov/pubs/sp/800/132/final
 [SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final
 [SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final
