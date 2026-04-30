@@ -110,6 +110,8 @@ static int buffer_cmp(const X509_BUFFER *const *a, const X509_BUFFER *const *b)
         return -1;
     if ((*a)->len > (*b)->len)
         return 1;
+    if ((*b)->len == 0)
+        return 0;
     return memcmp((*a)->data, (*b)->data, (*b)->len);
 }
 
