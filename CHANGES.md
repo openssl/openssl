@@ -34,7 +34,9 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
- * none yet
+ * Added TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
+
+   *Filip Skokan*
 
 OpenSSL 4.1
 -----------
@@ -24179,6 +24181,7 @@ ndif
 [RFC 9846]: https://datatracker.ietf.org/doc/html/rfc9846
 [RFC 9846 Section 4.3.10]: https://datatracker.ietf.org/doc/html/rfc9846#section-4.3.10
 [RFC 9849]: https://datatracker.ietf.org/doc/html/rfc9849
+[RFC 9861]: https://datatracker.ietf.org/doc/html/rfc9861
 [SECG SEC 1 Section 2.3.4]: https://www.secg.org/sec1-v2.pdf#subsubsection.2.3.4
 [SP 800-132]: https://csrc.nist.gov/pubs/sp/800/132/final
 [SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final
