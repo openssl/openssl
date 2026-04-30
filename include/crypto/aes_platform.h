@@ -124,6 +124,49 @@ void gcm_ghash_p8(u64 Xi[2], const u128 Htable[16], const u8 *inp, size_t len);
 #define HWAES_ctr32_encrypt_blocks_unroll12_eor3 aes_v8_ctr32_encrypt_blocks_unroll12_eor3
 #define AES_PMULL_CAPABLE ((OPENSSL_armcap_P & ARMV8_PMULL) && (OPENSSL_armcap_P & ARMV8_AES))
 #define AES_UNROLL12_EOR3_CAPABLE (OPENSSL_armcap_P & ARMV8_UNROLL12_EOR3)
+#if defined(__aarch64__) || defined(_M_ARM64)
+/*
+ * AES_SME_CAPABLE: true when both FEAT_SME (streaming SVE mode) and
+ * FEAT_SSVE_AES (AESE/AESD in Streaming SVE mode) are available.
+ * Requires that the OS supports SME context management (Linux >= 6.2).
+ * When __ARM_MAX_ARCH__ < 9 the compiler cannot emit SME instructions
+ * itself, but the assembly routines are still linked in on aarch64 and
+ * the runtime check will always be false on such a build.
+ */
+/*
+ * On aarch64, __ARM_ARCH__ is hard-coded to 8 by GCC/Clang, so
+ * __ARM_MAX_ARCH__ is not a reliable indicator for SME availability.
+ * Rely on runtime capability bits instead.
+ */
+#define AES_SME_CAPABLE \
+    ((OPENSSL_armcap_P & ARMV9_SME) && (OPENSSL_armcap_P & ARMV9_SME_AES))
+/*
+ * aes_v8_sme_ctr32_encrypt_blocks:
+ *   AES-CTR encrypt/decrypt using Streaming SVE (SME).
+ *   Processes NVEC = SVL/16 blocks per AES instruction (VLA).
+ *   Signature matches aes_v8_ctr32_encrypt_blocks.
+ *
+ * aes_v8_sme_cbc_decrypt:
+ *   AES-CBC decrypt using Streaming SVE (SME).
+ *   length must be a multiple of AES_BLOCK_SIZE.
+ *   Updates ivec to the last ciphertext block on return.
+ *
+ * These symbols are always present in the aarch64 build (the assembly
+ * is unconditionally linked) so they can be referenced regardless of
+ * __ARM_MAX_ARCH__.  The runtime AES_SME_CAPABLE guard prevents them
+ * from being called on hardware without FEAT_SME.
+ */
+void aes_v8_sme_ctr32_encrypt_blocks(const unsigned char *in,
+    unsigned char *out,
+    size_t blocks,
+    const AES_KEY *key,
+    const unsigned char ivec[16]);
+void aes_v8_sme_cbc_decrypt(const unsigned char *in,
+    unsigned char *out,
+    size_t length,
+    const AES_KEY *key,
+    unsigned char *ivec);
+#endif /* __aarch64__ || _M_ARM64 */
 #define AES_GCM_ENC_BYTES 512
 #define AES_GCM_DEC_BYTES 512
 #if __ARM_MAX_ARCH__ >= 8 && (defined(__aarch64__) || defined(_M_ARM64))

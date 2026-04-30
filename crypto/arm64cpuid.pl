@@ -128,6 +128,24 @@ _armv8_sve_get_vl_bytes:
 	ret
 .size	_armv8_sve_get_vl_bytes,.-_armv8_sve_get_vl_bytes
 
+.globl	_armv9_sme_probe
+.type	_armv9_sme_probe,%function
+_armv9_sme_probe:
+	AARCH64_VALID_CALL_TARGET
+	// rdsvl xzr, #1 -- reads streaming SVE vector length; SIGILL if no FEAT_SME
+	.inst	0x04bf583f
+	ret
+.size	_armv9_sme_probe,.-_armv9_sme_probe
+
+.globl	_armv9_sme_get_svl_bytes
+.type	_armv9_sme_get_svl_bytes,%function
+_armv9_sme_get_svl_bytes:
+	AARCH64_VALID_CALL_TARGET
+	// rdsvl x0, #1 -- returns streaming SVE vector length in bytes
+	.inst	0x04bf5820
+	ret
+.size	_armv9_sme_get_svl_bytes,.-_armv9_sme_get_svl_bytes
+
 .globl	_armv8_cpuid_probe
 .type	_armv8_cpuid_probe,%function
 _armv8_cpuid_probe:
