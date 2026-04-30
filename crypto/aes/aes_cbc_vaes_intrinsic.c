@@ -19,12 +19,14 @@
  * ZMM registers, falling back to 8, 4, then single-block processing.
  */
 
+#include "internal/deprecated.h"
+
 #include <openssl/opensslconf.h>
 #include "internal/cryptlib.h"
 #include <openssl/aes.h>
 #include "aes_local.h"
 
-#if defined(__x86_64__) || defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64)
+#if (defined(__x86_64__) || defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64)) && !defined(OPENSSL_NO_ASM)
 #if ((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 8)) \
     || (defined(__clang__) && (__clang_major__ >= 7)) || (defined(_MSC_VER) && (_MSC_VER >= 1927)))
 
@@ -48,31 +50,31 @@ void aesni_decrypt(const unsigned char *in, unsigned char *out,
 #define STRINGIFY_(a) STRINGIFY_IMPL_(a)
 
 #ifdef __clang__
-# define OPENSSL_TARGET_VAES512 \
-    _Pragma(STRINGIFY_(clang attribute push( \
+#define OPENSSL_TARGET_VAES512                                         \
+    _Pragma(STRINGIFY_(clang attribute push(                           \
         __attribute__((target("avx512f,avx512dq,avx512bw,vaes,aes"))), \
         apply_to = function)))
-# define OPENSSL_UNTARGET_VAES512 _Pragma("clang attribute pop")
+#define OPENSSL_UNTARGET_VAES512 _Pragma("clang attribute pop")
 #elif defined(__GNUC__)
-# define OPENSSL_TARGET_VAES512 \
+#define OPENSSL_TARGET_VAES512  \
     _Pragma("GCC push_options") \
-    _Pragma(STRINGIFY_(GCC target("avx512f,avx512dq,avx512bw,vaes,aes")))
-# define OPENSSL_UNTARGET_VAES512 _Pragma("GCC pop_options")
+        _Pragma(STRINGIFY_(GCC target("avx512f,avx512dq,avx512bw,vaes,aes")))
+#define OPENSSL_UNTARGET_VAES512 _Pragma("GCC pop_options")
 #else
 /* MSVC: all intrinsics are always available via <immintrin.h>. */
-# define OPENSSL_TARGET_VAES512
-# define OPENSSL_UNTARGET_VAES512
+#define OPENSSL_TARGET_VAES512
+#define OPENSSL_UNTARGET_VAES512
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
-# define OSSL_FUNC_ALWAYS_INLINE __attribute__((always_inline))
-# define OSSL_FUNC_NOINLINE __attribute__((noinline))
+#define OSSL_FUNC_ALWAYS_INLINE static inline __attribute__((always_inline))
+#define OSSL_FUNC_NOINLINE __attribute__((noinline))
 #elif defined(_MSC_VER)
-# define OSSL_FUNC_ALWAYS_INLINE __forceinline
-# define OSSL_FUNC_NOINLINE __declspec(noinline)
+#define OSSL_FUNC_ALWAYS_INLINE static __forceinline
+#define OSSL_FUNC_NOINLINE __declspec(noinline)
 #else
-# define OSSL_FUNC_ALWAYS_INLINE
-# define OSSL_FUNC_NOINLINE
+#define OSSL_FUNC_ALWAYS_INLINE static inline
+#define OSSL_FUNC_NOINLINE
 #endif
 
 #include <immintrin.h>
@@ -89,7 +91,7 @@ OPENSSL_TARGET_VAES512
 
 #define DEFINE_AES_DECRYPT_FUNCS(ROUNDS)                    \
     OSSL_FUNC_ALWAYS_INLINE                                 \
-    static inline void AesDec_4x512_##ROUNDS(               \
+    void AesDec_4x512_##ROUNDS(                             \
         __m512i *b1, __m512i *b2, __m512i *b3, __m512i *b4, \
         const __m512i *rk)                                  \
     {                                                       \
@@ -110,7 +112,7 @@ OPENSSL_TARGET_VAES512
     }                                                       \
                                                             \
     OSSL_FUNC_ALWAYS_INLINE                                 \
-    static inline void AesDec_2x512_##ROUNDS(               \
+    void AesDec_2x512_##ROUNDS(                             \
         __m512i *b1, __m512i *b2, const __m512i *rk)        \
     {                                                       \
         *b1 = _mm512_xor_si512(*b1, rk[0]);                 \
@@ -124,7 +126,7 @@ OPENSSL_TARGET_VAES512
     }                                                       \
                                                             \
     OSSL_FUNC_ALWAYS_INLINE                                 \
-    static inline void AesDec_1x512_##ROUNDS(               \
+    void AesDec_1x512_##ROUNDS(                             \
         __m512i *b1, const __m512i *rk)                     \
     {                                                       \
         *b1 = _mm512_xor_si512(*b1, rk[0]);                 \
@@ -380,4 +382,4 @@ OPENSSL_UNTARGET_VAES512
 #undef OSSL_FUNC_ALWAYS_INLINE
 #undef OSSL_FUNC_NOINLINE
 #endif /* GCC >= 8 || Clang >= 7 || MSVC */
-#endif /* __x86_64__ || _M_AMD64 */
+#endif /* __x86_64__ || _M_AMD64 && !OPENSSL_NO_ASM */
