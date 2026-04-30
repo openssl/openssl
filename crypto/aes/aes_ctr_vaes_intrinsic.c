@@ -37,31 +37,31 @@ void aesni_encrypt(const unsigned char *in, unsigned char *out, const AES_KEY *k
 #define STRINGIFY_(a) STRINGIFY_IMPL_(a)
 
 #ifdef __clang__
-# define OPENSSL_TARGET_VAES512 \
-    _Pragma(STRINGIFY_(clang attribute push( \
+#define OPENSSL_TARGET_VAES512                                         \
+    _Pragma(STRINGIFY_(clang attribute push(                           \
         __attribute__((target("avx512f,avx512dq,avx512bw,vaes,aes"))), \
         apply_to = function)))
-# define OPENSSL_UNTARGET_VAES512 _Pragma("clang attribute pop")
+#define OPENSSL_UNTARGET_VAES512 _Pragma("clang attribute pop")
 #elif defined(__GNUC__)
-# define OPENSSL_TARGET_VAES512 \
+#define OPENSSL_TARGET_VAES512  \
     _Pragma("GCC push_options") \
-    _Pragma(STRINGIFY_(GCC target("avx512f,avx512dq,avx512bw,vaes,aes")))
-# define OPENSSL_UNTARGET_VAES512 _Pragma("GCC pop_options")
+        _Pragma(STRINGIFY_(GCC target("avx512f,avx512dq,avx512bw,vaes,aes")))
+#define OPENSSL_UNTARGET_VAES512 _Pragma("GCC pop_options")
 #else
 /* MSVC: all intrinsics are always available via <immintrin.h>. */
-# define OPENSSL_TARGET_VAES512
-# define OPENSSL_UNTARGET_VAES512
+#define OPENSSL_TARGET_VAES512
+#define OPENSSL_UNTARGET_VAES512
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
-# define OSSL_FUNC_ALWAYS_INLINE __attribute__((always_inline))
-# define OSSL_FUNC_NOINLINE __attribute__((noinline))
+#define OSSL_FUNC_ALWAYS_INLINE __attribute__((always_inline))
+#define OSSL_FUNC_NOINLINE __attribute__((noinline))
 #elif defined(_MSC_VER)
-# define OSSL_FUNC_ALWAYS_INLINE __forceinline
-# define OSSL_FUNC_NOINLINE __declspec(noinline)
+#define OSSL_FUNC_ALWAYS_INLINE __forceinline
+#define OSSL_FUNC_NOINLINE __declspec(noinline)
 #else
-# define OSSL_FUNC_ALWAYS_INLINE
-# define OSSL_FUNC_NOINLINE
+#define OSSL_FUNC_ALWAYS_INLINE
+#define OSSL_FUNC_NOINLINE
 #endif
 
 #include <immintrin.h>
