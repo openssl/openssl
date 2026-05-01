@@ -456,8 +456,18 @@ int tls1_export_keying_material(SSL_CONNECTION *s, unsigned char *out,
      * concatenation of values does not create a prohibited label.
      */
     vallen = llen + SSL3_RANDOM_SIZE * 2;
+    if (vallen < llen) {
+        /* integer overflow */
+        ERR_raise(ERR_LIB_SSL, ERR_R_OVERFLOW);
+        return 0;
+    }
     if (use_context) {
         vallen += 2 + contextlen;
+        if (vallen < 2 + contextlen) {
+            /* integer overflow */
+            ERR_raise(ERR_LIB_SSL, ERR_R_OVERFLOW);
+            return 0;
+        }
     }
 
     val = OPENSSL_malloc(vallen);
