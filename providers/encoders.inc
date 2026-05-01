@@ -92,7 +92,7 @@ ENCODER_TEXT("SLH-DSA-SHAKE-256s", slh_dsa_shake_256s, yes),
 ENCODER_TEXT("SLH-DSA-SHAKE-256f", slh_dsa_shake_256f, yes),
 #endif
 #ifndef OPENSSL_NO_LMS
-ENCODER_TEXT("LMS", lms, yes),
+ENCODER_TEXT("LMS", hss_lms, yes),
 #endif
 
 /*
@@ -427,6 +427,6 @@ ENCODER_w_structure("EC", ec, yes, pem, X9_62),
 #endif
 
 #ifndef OPENSSL_NO_LMS
-ENCODER_w_structure("LMS", lms, yes, der, SubjectPublicKeyInfo),
-ENCODER_w_structure("LMS", lms, yes, pem, SubjectPublicKeyInfo),
+ENCODER_w_structure("LMS", hss_lms, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("LMS", hss_lms, yes, pem, SubjectPublicKeyInfo),
 #endif /* OPENSSL_NO_LMS */

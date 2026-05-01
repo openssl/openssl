@@ -51,6 +51,13 @@ OpenSSL Releases
 
    *Neil Horman*
 
+ * Added support for HSS signature verification. This is an extension of LMS with
+   up to 8 levels of LMS trees. Since HSS and LMS share the same OID, HSS shares the
+   same key manager and reuses most of the LMS code. The existing LMS decoders have
+   been updated to handle either LMS or HSS public keys.
+
+   *Shane Lontis*
+
  * The `openssl pkeyutl` command now uses memory-mapped I/O when reading
    raw input from a file for oneshot sign/verify operations (such as Ed25519,
    Ed448, and ML-DSA) on platforms that support it (Unix-like). The

@@ -60,40 +60,29 @@ static int lmsxdr2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
     struct lmsxdr2key_ctx_st *ctx = vctx;
-    LMS_KEY *key = NULL;
-    unsigned char buf[LMS_MAX_PUBKEY];
-    size_t length;
-    int ok = 0, inlen, readlen;
+    HSS_LMS_KEY *key = NULL;
+    unsigned char buf[HSS_MAX_PUBKEY];
+    size_t len;
+    int ok = 0;
     BIO *in;
 
     in = ossl_bio_new_from_core_bio(ctx->provctx, cin);
     if (in == NULL)
         return 0;
 
+    ERR_set_mark();
+    len = BIO_read(in, buf, sizeof(buf));
+    ERR_pop_to_mark();
+
+    const HSS_LMS_INFO *info = ossl_hss_lms_getinfo(len);
+    if (info == NULL)
+        goto next;
+
     ctx->selection = selection;
-
-    /* Read the header to determine the size */
-    ERR_set_mark();
-    readlen = BIO_read(in, buf, 4);
-    ERR_pop_to_mark();
-    if (readlen != 4)
-        goto next;
-
-    length = ossl_lms_pubkey_length(buf, 4);
-    if (length <= 4)
-        goto next;
-    inlen = (int)length - 4;
-
-    ERR_set_mark();
-    readlen = BIO_read(in, buf + 4, inlen);
-    ERR_pop_to_mark();
-    if (readlen != inlen)
-        goto next;
-
     if (selection == 0 || (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
-        key = ossl_lms_key_new(PROV_LIBCTX_OF(ctx->provctx));
-        if (key == NULL || !ossl_lms_pubkey_decode(buf, length, key)) {
-            ossl_lms_key_free(key);
+        key = ossl_hss_lms_key_new(PROV_LIBCTX_OF(ctx->provctx), NULL);
+        if (key != NULL && !ossl_hss_lms_pubkey_decode(info, buf, len, key)) {
+            ossl_hss_lms_key_free(key);
             key = NULL;
         }
     }
@@ -128,7 +117,7 @@ next:
     }
 
     BIO_free(in);
-    ossl_lms_key_free(key);
+    ossl_hss_lms_key_free(key);
     return ok;
 }
 
@@ -138,7 +127,7 @@ static int lmsxdr2key_export_object(void *vctx,
     void *export_cbarg)
 {
     struct lmsxdr2key_ctx_st *ctx = vctx;
-    OSSL_FUNC_keymgmt_export_fn *export = ossl_prov_get_keymgmt_export(ossl_lms_keymgmt_functions);
+    OSSL_FUNC_keymgmt_export_fn *export = ossl_prov_get_keymgmt_export(ossl_hss_lms_keymgmt_functions);
     void *keydata;
 
     if (reference_sz == sizeof(keydata) && export != NULL) {
@@ -154,7 +143,7 @@ static int lmsxdr2key_export_object(void *vctx,
     return 0;
 }
 
-const OSSL_DISPATCH ossl_xdr_to_lms_decoder_functions[] = {
+const OSSL_DISPATCH ossl_xdr_to_hss_lms_decoder_functions[] = {
     { OSSL_FUNC_DECODER_NEWCTX, (void (*)(void))lmsxdr2key_newctx },
     { OSSL_FUNC_DECODER_FREECTX, (void (*)(void))lmsxdr2key_freectx },
     { OSSL_FUNC_DECODER_DOES_SELECTION,

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 202-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -25,9 +25,10 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 
 plan skip_all => 'LMS is not supported in this build' if disabled('lms');
-plan tests => 2;
+plan tests => 4;
 
 ok(run(test(["lms_test"])), "running lms_test");
+ok(run(test(["lms_test", "-keytype", "HSS"])), "running HSS test");
 
 SKIP: {
     skip "Skipping FIPS tests", 1
@@ -38,7 +39,19 @@ SKIP: {
              capture => 1, statusvar => \my $exit);
     skip "FIPS provider version is too old for LMS test", 1
         if !$exit;
-
     ok(run(test(["lms_test", "-config",  $provconf])),
        "running lms_test with fips");
+}
+
+SKIP: {
+    skip "Skipping FIPS tests", 1
+        if $no_fips;
+
+    # HSS is only present after OpenSSL 4.1
+    run(test(["fips_version_test", "-config", $provconf, ">=4.1.0"]),
+             capture => 1, statusvar => \my $exit2);
+    skip "FIPS provider version is too old for HSS test", 1
+        if !$exit2;
+    ok(run(test(["lms_test", "-config",  $provconf, "-keytype", "HSS"])),
+       "running HSS test with fips");
 }

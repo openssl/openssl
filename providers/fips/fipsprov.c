@@ -645,7 +645,7 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
         ossl_cmac_legacy_keymgmt_functions, PROV_DESCS_CMAC_SIGN },
 #endif
 #ifndef OPENSSL_NO_LMS
-    { PROV_NAMES_LMS, FIPS_DEFAULT_PROPERTIES, ossl_lms_keymgmt_functions,
+    { PROV_NAMES_LMS, FIPS_DEFAULT_PROPERTIES, ossl_hss_lms_keymgmt_functions,
         PROV_DESCS_LMS },
 #endif
 #ifndef OPENSSL_NO_ML_KEM

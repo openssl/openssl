@@ -191,7 +191,7 @@ for signature generation, but may be used for verification for legacy use cases.
 
 =item CMAC, see L<EVP_SIGNATURE-CMAC(7)>
 
-=item LMS, see L<EVP_SIGNATURE-LMS(7)>
+=item LMS, see L<EVP_SIGNATURE-HSS-LMS(7)>
 
 =back
 

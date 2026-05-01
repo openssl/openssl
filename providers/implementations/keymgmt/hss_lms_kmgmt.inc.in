@@ -11,14 +11,16 @@
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
 
-{- produce_param_decoder('lms_import',
+{- produce_param_decoder('hss_lms_import',
                          (['OSSL_PKEY_PARAM_PUB_KEY',           'pub',     'octet_string'],
+                          ['OSSL_PKEY_PARAM_HSS_LMS_L',         'l',       'int'],
                          )); -}
 
-{- produce_param_decoder('lms_get_params',
+{- produce_param_decoder('hss_lms_get_params',
                          (['OSSL_PKEY_PARAM_BITS',              'bits',    'int'],
                           ['OSSL_PKEY_PARAM_SECURITY_BITS',     'secbits', 'int'],
                           ['OSSL_PKEY_PARAM_MAX_SIZE',          'maxsize', 'int'],
                           ['OSSL_PKEY_PARAM_MANDATORY_DIGEST',  'dgstp',   'utf8_string'],
                           ['OSSL_PKEY_PARAM_PUB_KEY',           'pubkey',  'octet_string'],
+                          ['OSSL_PKEY_PARAM_HSS_LMS_L',         'l',       'int'],
                          )); -}

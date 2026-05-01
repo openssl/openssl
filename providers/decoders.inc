@@ -127,8 +127,8 @@ DECODER_w_structure("ML-DSA-87", der, SubjectPublicKeyInfo, ml_dsa_87, yes, "SPK
 #endif /* OPENSSL_NO_ML_DSA */
 
 #ifndef OPENSSL_NO_LMS
-DECODER("LMS", xdr, lms, yes, "XDRtoLMS"),
-DECODER_w_structure("LMS", der, SubjectPublicKeyInfo, lms, yes, "SPKItoLMS-DER"),
+DECODER("LMS", xdr, hss_lms, yes, "XDRtoLMS"),
+DECODER_w_structure("LMS", der, SubjectPublicKeyInfo, hss_lms, yes, "SPKItoLMS-DER"),
 #endif
 
 /*

@@ -1176,7 +1176,8 @@ use `TLS_method()` instead.
 Build with support for the specified algorithm.
 
 The `lms` algorithm support is currently limited to verification only as per
-[SP 800-208](https://csrc.nist.gov/pubs/sp/800/208/final).
+[SP 800-208](https://csrc.nist.gov/pubs/sp/800/208/final). HSS is also enabled
+by this option.
 
 ### no-{algorithm}
 
