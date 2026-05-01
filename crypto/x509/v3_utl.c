@@ -1081,7 +1081,7 @@ int X509_check_ip_asc(const X509 *x, const char *ipasc, unsigned int flags)
     return do_x509_check(x, (char *)ipout, iplen, flags, GEN_IPADD, 0, NULL);
 }
 
-char *ossl_ipaddr_to_asc(unsigned char *p, int len)
+char *ossl_ipaddr_to_asc(const unsigned char *p, int len)
 {
     /*
      * 40 is enough space for the longest IPv6 address + nul terminator byte

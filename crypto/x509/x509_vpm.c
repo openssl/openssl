@@ -864,8 +864,7 @@ static const unsigned char *int_X509_VERIFY_PARAM_get0_ip(X509_VERIFY_PARAM *par
 char *X509_VERIFY_PARAM_get1_ip_asc(X509_VERIFY_PARAM *param)
 {
     size_t iplen;
-    /* XXX casts away const */
-    unsigned char *ip = (unsigned char *)int_X509_VERIFY_PARAM_get0_ip(param, &iplen, 0);
+    const unsigned char *ip = int_X509_VERIFY_PARAM_get0_ip(param, &iplen, 0);
 
     return ip == NULL ? NULL : ossl_ipaddr_to_asc(ip, (int)iplen);
 }
