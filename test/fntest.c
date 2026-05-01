@@ -427,6 +427,8 @@ static int file_modmul(STANZA *s)
     BIGNUM *a = NULL, *b = NULL, *m = NULL, *mod_mul = NULL, *ret = NULL;
     OSSL_FN *af = NULL, *bf = NULL, *rf = NULL, *mf = NULL;
     OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN_MONT_CTX *mont = NULL;
+    const void *token = NULL;
     int a_neg = 0, b_neg = 0, st = 0;
     int r_acq = 0;
     int nlimbs = 0;
@@ -467,11 +469,69 @@ static int file_modmul(STANZA *s)
     if (!equalBN("A * B (mod M)", mod_mul, ret))
         goto err;
 
+    if (BN_is_odd(m)) {
+        /* Test the Montgomery version. */
+        if (!TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+            goto err;
+        r_acq = 1;
+
+        if (!TEST_ptr(mont = OSSL_FN_MONT_CTX_new(mf)))
+            goto err;
+
+        size_t max = 0, tmp;
+        tmp = OSSL_FN_to_mont_ctx_size(NULL, af, mont);
+        if (tmp > max)
+            max = tmp;
+        tmp = OSSL_FN_to_mont_ctx_size(NULL, bf, mont);
+        if (tmp > max)
+            max = tmp;
+        tmp = OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont);
+        if (tmp > max)
+            max = tmp;
+        tmp = OSSL_FN_from_mont_ctx_size(NULL, NULL, mont);
+        if (tmp > max)
+            max = tmp;
+        OSSL_FN_CTX_free(ctx);
+        ctx = NULL;
+        if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                          max + OSSL_FN_CTX_size(1, 3, 3 * (size_t)nlimbs)))
+            || !TEST_ptr(token = OSSL_FN_CTX_start(ctx)))
+            goto err;
+
+        OSSL_FN *am, *bm, *rm;
+        if (!TEST_ptr(am = OSSL_FN_CTX_get_limbs(ctx, nlimbs))
+            || !TEST_ptr(bm = OSSL_FN_CTX_get_limbs(ctx, nlimbs))
+            || !TEST_ptr(rm = OSSL_FN_CTX_get_limbs(ctx, nlimbs)))
+            goto err;
+
+        /*
+         * OSSL_FN is unsigned, so the multiplication is on absolute values.
+         * If the operands have different signs, the non-negative modular
+         * residue of A * B is M - ((|A| * |B|) mod M), unless that is zero.
+         */
+        if (!TEST_true(OSSL_FN_to_mont(am, af, mont, ctx))
+            || !TEST_true(OSSL_FN_to_mont(bm, bf, mont, ctx))
+            || !TEST_true(OSSL_FN_mul_mont_quick(rm, am, bm, mont, ctx))
+            || !TEST_true(OSSL_FN_from_mont(rf, rm, mont, ctx)))
+            goto err;
+        bn_release(ret, nlimbs);
+        r_acq = 0;
+        if ((a_neg ^ b_neg) && !BN_is_zero(ret)) {
+            if (!TEST_true(BN_sub(ret, m, ret)))
+                goto err;
+        }
+        if (!equalBN("A * B (mod M)", mod_mul, ret))
+            goto err;
+    }
+
     st = 1;
 err:
     if (r_acq)
         bn_release(ret, nlimbs);
+    if (token != NULL)
+        OSSL_FN_CTX_end(ctx, token);
     OSSL_FN_CTX_free(ctx);
+    OSSL_FN_MONT_CTX_free(mont);
     BN_free(a);
     BN_free(b);
     BN_free(m);
@@ -485,6 +545,8 @@ static int file_modsqr(STANZA *s)
     BIGNUM *a = NULL, *m = NULL, *mod_sqr = NULL, *ret = NULL;
     OSSL_FN *af = NULL, *rf = NULL, *mf = NULL;
     OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN_MONT_CTX *mont = NULL;
+    const void *token = NULL;
     int st = 0;
     int r_acq = 0;
     int nlimbs = 0;
@@ -515,11 +577,55 @@ static int file_modsqr(STANZA *s)
     if (!equalBN("A^2 (mod M)", mod_sqr, ret))
         goto err;
 
+    if (BN_is_odd(m)) {
+        /* Test the Montgomery version. */
+        if (!TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+            goto err;
+        r_acq = 1;
+
+        if (!TEST_ptr(mont = OSSL_FN_MONT_CTX_new(mf)))
+            goto err;
+
+        size_t max = 0, tmp;
+        tmp = OSSL_FN_to_mont_ctx_size(NULL, af, mont);
+        if (tmp > max)
+            max = tmp;
+        tmp = OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont);
+        if (tmp > max)
+            max = tmp;
+        tmp = OSSL_FN_from_mont_ctx_size(NULL, NULL, mont);
+        if (tmp > max)
+            max = tmp;
+        OSSL_FN_CTX_free(ctx);
+        ctx = NULL;
+        if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                          max + OSSL_FN_CTX_size(1, 3, 3 * (size_t)nlimbs)))
+            || !TEST_ptr(token = OSSL_FN_CTX_start(ctx)))
+            goto err;
+
+        OSSL_FN *am, *rm;
+        if (!TEST_ptr(am = OSSL_FN_CTX_get_limbs(ctx, nlimbs))
+            || !TEST_ptr(rm = OSSL_FN_CTX_get_limbs(ctx, nlimbs)))
+            goto err;
+
+        if (!TEST_true(OSSL_FN_to_mont(am, af, mont, ctx))
+            || !TEST_true(OSSL_FN_mul_mont_quick(rm, am, am, mont, ctx))
+            || !TEST_true(OSSL_FN_from_mont(rf, rm, mont, ctx)))
+            goto err;
+        bn_release(ret, nlimbs);
+        r_acq = 0;
+        if (!equalBN("A ^ 2 (mod M)", mod_sqr, ret))
+            goto err;
+    }
+
     st = 1;
 err:
     if (r_acq)
         bn_release(ret, nlimbs);
+    if (token != NULL)
+        OSSL_FN_CTX_end(ctx, token);
     OSSL_FN_CTX_free(ctx);
+    OSSL_FN_MONT_CTX_free(mont);
     BN_free(a);
     BN_free(m);
     BN_free(mod_sqr);
