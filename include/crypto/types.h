@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,7 @@
 /* At some point in the future, this may move to include/openssl/types.h */
 typedef struct ossl_fn_st OSSL_FN;
 typedef struct ossl_fn_ctx_st OSSL_FN_CTX;
+typedef struct ossl_fn_mont_ctx_st OSSL_FN_MONT_CTX;
 
 #ifdef OPENSSL_NO_DEPRECATED_3_0
 typedef struct rsa_st RSA;
