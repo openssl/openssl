@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -179,4 +179,14 @@ struct ossl_fn_ctx_frame_st {
 
 /* end OSSL_FN_CTX internals */
 
+/* OSSL_FN_MONT_ CTX internals (used for Montgomery multiplication) */
+struct ossl_fn_mont_ctx_st {
+    const OSSL_FN *N; /* The modulus */
+    const OSSL_FN *RR; /* used to convert to Montgomery form,
+                          possibly zero-padded */
+    OSSL_FN_ULONG n0[2]; /* least significant word(s) of Ni */
+    int ri; /* number of bits in R */
+    unsigned int is_securely_allocated : 1; /* Flag: alloced securely */
+    OSSL_FN_ULONG memory[];
+};
 #endif
