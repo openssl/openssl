@@ -153,169 +153,177 @@ DEFINE_AES_DECRYPT_FUNCS(14) /* AES-256 */
 /* feedback to all four lanes simultaneously.                         */
 /* ------------------------------------------------------------------ */
 
-#define DEFINE_CBC_DECRYPT(NR)                                                     \
-    OSSL_FUNC_NOINLINE                                                             \
-    static void cbc_decrypt_##NR(                                                  \
-        const unsigned char *in, unsigned char *out, size_t len,                   \
-        const AES_KEY *key, unsigned char *iv)                                     \
-    {                                                                              \
-        const unsigned char *rk_bytes = (const unsigned char *)key->rd_key;        \
-        __m512i rk[NR + 1];                                                        \
-        for (int i = 0; i <= NR; i++) {                                            \
-            __m128i t = _mm_loadu_si128((const __m128i *)(rk_bytes + i * 16));     \
-            rk[i] = _mm512_broadcast_i32x4(t);                                     \
-        }                                                                          \
-                                                                                   \
-        __m512i a1, a2, a3, a4;                                                    \
-        __m512i b1, b2, b3, b4;                                                    \
-                                                                                   \
-        const __m128i *pa = (const __m128i *)in;                                   \
-        __m512i *po = (__m512i *)out;                                              \
-        size_t blocks = len / AES_BLOCK_SIZE;                                      \
-                                                                                   \
-        /* Save last ciphertext block for IV update (in-place safe)             */ \
-        __m128i saved_iv = _mm_setzero_si128();                                    \
-        int has_blocks = (blocks > 0);                                             \
-        if (has_blocks)                                                            \
-            saved_iv = _mm_loadu_si128(pa + blocks - 1);                           \
-                                                                                   \
-        if (blocks >= 4) {                                                         \
-            /* Build b1 = [IV | ct[0] | ct[1] | ct[2]]                          */ \
-            __m512i idx = _mm512_set_epi64(5, 4, 3, 2, 1, 0, 0, 0);                \
-            __m512i ct0;                                                           \
-                                                                                   \
-            b1 = _mm512_maskz_loadu_epi64(0x03, iv);                               \
-            ct0 = _mm512_loadu_si512(pa);                                          \
-            ct0 = _mm512_permutexvar_epi64(idx, ct0);                              \
-            b1 = _mm512_mask_blend_epi64(0xFC, b1, ct0);                           \
-                                                                                   \
-            /* --- 16-block (4 x zmm) main loop ---                             */ \
-            while (blocks >= 16) {                                                 \
-                __m128i last;                                                      \
-                                                                                   \
-                a1 = _mm512_loadu_si512(pa);                                       \
-                a2 = _mm512_loadu_si512(pa + 4);                                   \
-                a3 = _mm512_loadu_si512(pa + 8);                                   \
-                a4 = _mm512_loadu_si512(pa + 12);                                  \
-                                                                                   \
-                b2 = _mm512_loadu_si512(pa + 3);                                   \
-                b3 = _mm512_loadu_si512(pa + 7);                                   \
-                b4 = _mm512_loadu_si512(pa + 11);                                  \
-                                                                                   \
-                last = _mm_loadu_si128(pa + 15);                                   \
-                                                                                   \
-                AesDec_4x512_##NR(&a1, &a2, &a3, &a4, rk);                         \
-                                                                                   \
-                a1 = _mm512_xor_si512(a1, b1);                                     \
-                a2 = _mm512_xor_si512(a2, b2);                                     \
-                a3 = _mm512_xor_si512(a3, b3);                                     \
-                a4 = _mm512_xor_si512(a4, b4);                                     \
-                                                                                   \
-                _mm512_storeu_si512(po, a1);                                       \
-                _mm512_storeu_si512(po + 1, a2);                                   \
-                _mm512_storeu_si512(po + 2, a3);                                   \
-                _mm512_storeu_si512(po + 3, a4);                                   \
-                                                                                   \
-                /* Build next b1 from last ciphertext block                     */ \
-                b1 = _mm512_maskz_loadu_epi64(0x03, &last);                        \
-                if (blocks > 16) {                                                 \
-                    __m512i nx = _mm512_loadu_si512(pa + 16);                      \
-                    nx = _mm512_permutexvar_epi64(idx, nx);                        \
-                    b1 = _mm512_mask_blend_epi64(0xFC, b1, nx);                    \
-                }                                                                  \
-                                                                                   \
-                pa += 16;                                                          \
-                po += 4;                                                           \
-                blocks -= 16;                                                      \
-            }                                                                      \
-                                                                                   \
-            /* --- 8-block (2 x zmm) ---                                        */ \
-            if (blocks >= 8) {                                                     \
-                __m128i last8;                                                     \
-                                                                                   \
-                a1 = _mm512_loadu_si512(pa);                                       \
-                a2 = _mm512_loadu_si512(pa + 4);                                   \
-                b2 = _mm512_loadu_si512(pa + 3);                                   \
-                last8 = _mm_loadu_si128(pa + 7);                                   \
-                                                                                   \
-                AesDec_2x512_##NR(&a1, &a2, rk);                                   \
-                a1 = _mm512_xor_si512(a1, b1);                                     \
-                a2 = _mm512_xor_si512(a2, b2);                                     \
-                                                                                   \
-                _mm512_storeu_si512(po, a1);                                       \
-                _mm512_storeu_si512(po + 1, a2);                                   \
-                                                                                   \
-                b1 = _mm512_maskz_loadu_epi64(0x03, &last8);                       \
-                pa += 8;                                                           \
-                po += 2;                                                           \
-                blocks -= 8;                                                       \
-                                                                                   \
-                if (blocks >= 4) {                                                 \
-                    __m512i nx = _mm512_loadu_si512(pa);                           \
-                    nx = _mm512_permutexvar_epi64(idx, nx);                        \
-                    b1 = _mm512_mask_blend_epi64(0xFC, b1, nx);                    \
-                }                                                                  \
-            }                                                                      \
-                                                                                   \
-            /* --- 4-block (1 x zmm) ---                                        */ \
-            if (blocks >= 4) {                                                     \
-                __m128i last4;                                                     \
-                                                                                   \
-                a1 = _mm512_loadu_si512(pa);                                       \
-                last4 = _mm_loadu_si128(pa + 3);                                   \
-                                                                                   \
-                AesDec_1x512_##NR(&a1, rk);                                        \
-                a1 = _mm512_xor_si512(a1, b1);                                     \
-                _mm512_storeu_si512(po, a1);                                       \
-                                                                                   \
-                b1 = _mm512_maskz_loadu_epi64(0x03, &last4);                       \
-                pa += 4;                                                           \
-                po += 1;                                                           \
-                blocks -= 4;                                                       \
-            }                                                                      \
-                                                                                   \
-            /* --- Remaining 1-3 blocks ---                                     */ \
-            {                                                                      \
-                __m128i *po128 = (__m128i *)po;                                    \
-                while (blocks > 0) {                                               \
-                    __m128i ct = _mm_loadu_si128(pa);                              \
-                    a1 = _mm512_maskz_loadu_epi64(0x03, pa);                       \
-                    AesDec_1x512_##NR(&a1, rk);                                    \
-                    a1 = _mm512_xor_si512(a1, b1);                                 \
-                    _mm512_mask_storeu_epi64(po128, 0x03, a1);                     \
-                    b1 = _mm512_maskz_loadu_epi64(0x03, &ct);                      \
-                    pa++;                                                          \
-                    po128++;                                                       \
-                    blocks--;                                                      \
-                }                                                                  \
-            }                                                                      \
-        } else {                                                                   \
-            /* Less than 4 blocks -- process individually                       */ \
-            __m128i *po128 = (__m128i *)po;                                        \
-            b1 = _mm512_maskz_loadu_epi64(0x03, iv);                               \
-            while (blocks > 0) {                                                   \
-                __m128i ct = _mm_loadu_si128(pa);                                  \
-                a1 = _mm512_maskz_loadu_epi64(0x03, pa);                           \
-                AesDec_1x512_##NR(&a1, rk);                                        \
-                a1 = _mm512_xor_si512(a1, b1);                                     \
-                _mm512_mask_storeu_epi64(po128, 0x03, a1);                         \
-                b1 = _mm512_maskz_loadu_epi64(0x03, &ct);                          \
-                pa++;                                                              \
-                po128++;                                                           \
-                blocks--;                                                          \
-            }                                                                      \
-        }                                                                          \
-                                                                                   \
-        if (has_blocks)                                                            \
-            _mm_storeu_si128((__m128i *)iv, saved_iv);                             \
-                                                                                   \
-        /* Clear round-key material from the stack                              */ \
-        {                                                                          \
-            /* Use of volatile prevents dead-store elimination by compilers. */    \
-            volatile __m512i *vrk = (volatile __m512i *)(volatile void *)rk;       \
-            for (int i = 0; i <= NR; i++)                                          \
-                vrk[i] = _mm512_setzero_si512();                                   \
-        }                                                                          \
+#define DEFINE_CBC_DECRYPT(NR)                                                      \
+    OSSL_FUNC_NOINLINE                                                              \
+    static void cbc_decrypt_##NR(                                                   \
+        const unsigned char *in, unsigned char *out, size_t len,                    \
+        const AES_KEY *key, unsigned char *iv)                                      \
+    {                                                                               \
+        const unsigned char *rk_bytes = (const unsigned char *)key->rd_key;         \
+        __m512i rk[NR + 1];                                                         \
+        for (int i = 0; i <= NR; i++) {                                             \
+            __m128i t = _mm_loadu_si128((const __m128i *)(rk_bytes + i * 16));      \
+            rk[i] = _mm512_broadcast_i32x4(t);                                      \
+        }                                                                           \
+                                                                                    \
+        __m512i a1, a2, a3, a4;                                                     \
+        __m512i b1, b2, b3, b4;                                                     \
+                                                                                    \
+        const __m128i *pa = (const __m128i *)in;                                    \
+        __m512i *po = (__m512i *)out;                                               \
+        size_t blocks = len / AES_BLOCK_SIZE;                                       \
+                                                                                    \
+        /* Save last ciphertext block for IV update (in-place safe)             */  \
+        __m128i saved_iv = _mm_setzero_si128();                                     \
+        int has_blocks = (blocks > 0);                                              \
+        if (has_blocks)                                                             \
+            saved_iv = _mm_loadu_si128(pa + blocks - 1);                            \
+                                                                                    \
+        if (blocks >= 4) {                                                          \
+            /* Build b1 = [IV | ct[0] | ct[1] | ct[2]]                          */  \
+            __m512i idx = _mm512_set_epi64(5, 4, 3, 2, 1, 0, 0, 0);                 \
+            __m512i ct0;                                                            \
+                                                                                    \
+            /* CBC C[0]=IV; 0x03 loads one 128-bit block (two 64-bit lanes). */     \
+            b1 = _mm512_maskz_loadu_epi64(0x03, iv);                                \
+            ct0 = _mm512_loadu_si512(pa);                                           \
+            ct0 = _mm512_permutexvar_epi64(idx, ct0);                               \
+            b1 = _mm512_mask_blend_epi64(0xFC, b1, ct0);                            \
+                                                                                    \
+            /* --- 16-block (4 x zmm) main loop ---                             */  \
+            while (blocks >= 16) {                                                  \
+                __m128i last;                                                       \
+                                                                                    \
+                a1 = _mm512_loadu_si512(pa);                                        \
+                a2 = _mm512_loadu_si512(pa + 4);                                    \
+                a3 = _mm512_loadu_si512(pa + 8);                                    \
+                a4 = _mm512_loadu_si512(pa + 12);                                   \
+                                                                                    \
+                b2 = _mm512_loadu_si512(pa + 3);                                    \
+                b3 = _mm512_loadu_si512(pa + 7);                                    \
+                b4 = _mm512_loadu_si512(pa + 11);                                   \
+                                                                                    \
+                last = _mm_loadu_si128(pa + 15);                                    \
+                                                                                    \
+                AesDec_4x512_##NR(&a1, &a2, &a3, &a4, rk);                          \
+                                                                                    \
+                a1 = _mm512_xor_si512(a1, b1);                                      \
+                a2 = _mm512_xor_si512(a2, b2);                                      \
+                a3 = _mm512_xor_si512(a3, b3);                                      \
+                a4 = _mm512_xor_si512(a4, b4);                                      \
+                                                                                    \
+                _mm512_storeu_si512(po, a1);                                        \
+                _mm512_storeu_si512(po + 1, a2);                                    \
+                _mm512_storeu_si512(po + 2, a3);                                    \
+                _mm512_storeu_si512(po + 3, a4);                                    \
+                                                                                    \
+                /* Build next b1 from last ciphertext block                     */  \
+                b1 = _mm512_maskz_loadu_epi64(0x03, &last);                         \
+                if (blocks > 16) {                                                  \
+                    size_t rem = blocks - 16;                                       \
+                    /* Load only available lookahead blocks to avoid OOB read. */   \
+                    /* One AES block is 16 bytes, it maps to two 64-bit lanes. */   \
+                    /* 0x03 (00000011) for 1 block (2 lanes), */                    \
+                    /* 0x0F (00001111) for 2 blocks (4 lanes), */                   \
+                    /* 0x3F (00111111) for 3 or more blocks (6 lanes). */           \
+                    __mmask8 nxmask = (rem >= 3) ? 0x3F : (rem == 2 ? 0x0F : 0x03); \
+                    __m512i nx = _mm512_maskz_loadu_epi64(nxmask, pa + 16);         \
+                    nx = _mm512_permutexvar_epi64(idx, nx);                         \
+                    b1 = _mm512_mask_blend_epi64(0xFC, b1, nx);                     \
+                }                                                                   \
+                                                                                    \
+                pa += 16;                                                           \
+                po += 4;                                                            \
+                blocks -= 16;                                                       \
+            }                                                                       \
+                                                                                    \
+            /* --- 8-block (2 x zmm) ---                                        */  \
+            if (blocks >= 8) {                                                      \
+                __m128i last8;                                                      \
+                                                                                    \
+                a1 = _mm512_loadu_si512(pa);                                        \
+                a2 = _mm512_loadu_si512(pa + 4);                                    \
+                b2 = _mm512_loadu_si512(pa + 3);                                    \
+                last8 = _mm_loadu_si128(pa + 7);                                    \
+                                                                                    \
+                AesDec_2x512_##NR(&a1, &a2, rk);                                    \
+                a1 = _mm512_xor_si512(a1, b1);                                      \
+                a2 = _mm512_xor_si512(a2, b2);                                      \
+                                                                                    \
+                _mm512_storeu_si512(po, a1);                                        \
+                _mm512_storeu_si512(po + 1, a2);                                    \
+                                                                                    \
+                b1 = _mm512_maskz_loadu_epi64(0x03, &last8);                        \
+                pa += 8;                                                            \
+                po += 2;                                                            \
+                blocks -= 8;                                                        \
+                                                                                    \
+                if (blocks >= 4) {                                                  \
+                    __m512i nx = _mm512_loadu_si512(pa);                            \
+                    nx = _mm512_permutexvar_epi64(idx, nx);                         \
+                    b1 = _mm512_mask_blend_epi64(0xFC, b1, nx);                     \
+                }                                                                   \
+            }                                                                       \
+                                                                                    \
+            /* --- 4-block (1 x zmm) ---                                        */  \
+            if (blocks >= 4) {                                                      \
+                __m128i last4;                                                      \
+                                                                                    \
+                a1 = _mm512_loadu_si512(pa);                                        \
+                last4 = _mm_loadu_si128(pa + 3);                                    \
+                                                                                    \
+                AesDec_1x512_##NR(&a1, rk);                                         \
+                a1 = _mm512_xor_si512(a1, b1);                                      \
+                _mm512_storeu_si512(po, a1);                                        \
+                                                                                    \
+                b1 = _mm512_maskz_loadu_epi64(0x03, &last4);                        \
+                pa += 4;                                                            \
+                po += 1;                                                            \
+                blocks -= 4;                                                        \
+            }                                                                       \
+                                                                                    \
+            /* --- Remaining 1-3 blocks ---                                     */  \
+            {                                                                       \
+                __m128i *po128 = (__m128i *)po;                                     \
+                while (blocks > 0) {                                                \
+                    __m128i ct = _mm_loadu_si128(pa);                               \
+                    a1 = _mm512_maskz_loadu_epi64(0x03, pa);                        \
+                    AesDec_1x512_##NR(&a1, rk);                                     \
+                    a1 = _mm512_xor_si512(a1, b1);                                  \
+                    _mm512_mask_storeu_epi64(po128, 0x03, a1);                      \
+                    b1 = _mm512_maskz_loadu_epi64(0x03, &ct);                       \
+                    pa++;                                                           \
+                    po128++;                                                        \
+                    blocks--;                                                       \
+                }                                                                   \
+            }                                                                       \
+        } else {                                                                    \
+            /* Less than 4 blocks -- process individually                       */  \
+            __m128i *po128 = (__m128i *)po;                                         \
+            b1 = _mm512_maskz_loadu_epi64(0x03, iv);                                \
+            while (blocks > 0) {                                                    \
+                __m128i ct = _mm_loadu_si128(pa);                                   \
+                a1 = _mm512_maskz_loadu_epi64(0x03, pa);                            \
+                AesDec_1x512_##NR(&a1, rk);                                         \
+                a1 = _mm512_xor_si512(a1, b1);                                      \
+                _mm512_mask_storeu_epi64(po128, 0x03, a1);                          \
+                b1 = _mm512_maskz_loadu_epi64(0x03, &ct);                           \
+                pa++;                                                               \
+                po128++;                                                            \
+                blocks--;                                                           \
+            }                                                                       \
+        }                                                                           \
+                                                                                    \
+        if (has_blocks)                                                             \
+            _mm_storeu_si128((__m128i *)iv, saved_iv);                              \
+                                                                                    \
+        /* Clear round-key material from the stack                              */  \
+        {                                                                           \
+            /* Use of volatile prevents dead-store elimination by compilers. */     \
+            volatile __m512i *vrk = (volatile __m512i *)(volatile void *)rk;        \
+            for (int i = 0; i <= NR; i++)                                           \
+                vrk[i] = _mm512_setzero_si512();                                    \
+        }                                                                           \
     }
 
 DEFINE_CBC_DECRYPT(10) /* AES-128 */
