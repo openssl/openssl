@@ -112,4 +112,22 @@ static ossl_inline OSSL_FN *ossl_fn_copy_internal(OSSL_FN *dest,
     return dest;
 }
 
+/* Used for Montgomery multiplication */
+struct ossl_fn_mont_ctx_st {
+    OSSL_FN *N; /* The modulus */
+    OSSL_FN *RR; /* used to convert to Montgomery form,
+                  possibly zero-padded */
+    OSSL_FN_ULONG n0[2]; /* least significant word(s) of Ni */
+    int ri; /* number of bits in R */
+    OSSL_FN_ULONG memory[];
+};
+
+/*
+ * Internal function for Montgomery multiplication.
+ * The caller must ensure that r, a, b, and mont->N are of the same size,
+ * a and b are less than mont->N.
+ */
+int ossl_fn_mul_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
+    OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
+
 #endif

@@ -1,0 +1,21 @@
+#! /usr/bin/env perl
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+use strict;
+use OpenSSL::Test;              # get 'plan'
+use OpenSSL::Test::Simple;
+use OpenSSL::Test::Utils;
+use OpenSSL::Test qw/:DEFAULT srctop_file/;
+
+setup("test_fn_mod_mul");
+
+plan tests => 1;
+
+ok(run(test(["fn_mod_mul_test",
+             srctop_file("test", "recipes", "10-test_bn_data", "bnmod.txt")])),
+   "running fn_mod_mul_test");

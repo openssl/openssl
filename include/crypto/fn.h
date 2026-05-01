@@ -341,7 +341,7 @@ int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the square of one OSSL_FN number.  Truncates the result to fit in r.
+ * Calculate the square of one OSSL_FN number. Truncates the result to fit in r.
  *
  * @param[out]          r       The OSSL_FN for the result
  * @param[in]           a       The operand
@@ -354,6 +354,74 @@ int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * frame (currently 32 bytes).
  */
 int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx);
+
+/**
+ * Initialize a Montgomery context for modulus mod.
+ * @param[in]           mod     The modulus
+ * @returns             An allocated OSSL_FN_MONT_CTX, or NULL on error.
+ */
+OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_new(const OSSL_FN *mod);
+
+/**
+ * Free an OSSL_FN_MONT_CTX.
+ *
+ * @param[in]   ctx     The OSSL_FN_MONT_CTX to be freed. This may be NULL.
+ */
+void OSSL_FN_MONT_CTX_free(OSSL_FN_MONT_CTX *ctx);
+
+/**
+ * Fulfil the Montgomery multiplication.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @param[in]           mont    The Montgomery context
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that r, a, b, and mont->N are of
+ * the same size, a and b are less than mont->N, ctx has free space for
+ * one temporary OSSL_FN with mont->N->dsize+2 limbs, plus one frame.
+ */
+int OSSL_FN_mul_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
+    OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
+
+/**
+ * Convert a number to Montgomery representation: r = a * R mod N,
+ * where R = 2^(length of libm in bits).
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           mont    The Montgomery context
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that r, a, and mont->N are of
+ * the same size, a is less than mont->N, ctx has free space for
+ * one temporary OSSL_FN with mont->N->dsize+2 limbs, plus one frame.
+ */
+int OSSL_FN_to_mont(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
+
+/**
+ * Convert a number from Montgomery representation: r = a * R^(-1) mod N,
+ * where R = 2^(length of libm in bits).
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           mont    The Montgomery context
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that r, a, and mont->N are of
+ * the same size, a is less than mont->N, ctx has free space for
+ * one temporary OSSL_FN with mont->N->dsize+2 limbs, plus one frame.
+ */
+int OSSL_FN_from_mont(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
 
 #ifdef __cplusplus
 }
