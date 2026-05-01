@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -186,5 +186,23 @@ static ossl_inline size_t ossl_fn_ctx_calculate_arena_size(size_t max_n_frames,
 }
 
 /* end OSSL_FN_CTX internals */
+
+/* OSSL_FN_MONT_ CTX internals (used for Montgomery multiplication) */
+struct ossl_fn_mont_ctx_st {
+    OSSL_FN *N; /* The modulus */
+    OSSL_FN *RR; /* used to convert to Montgomery form,
+                  possibly zero-padded */
+    OSSL_FN_ULONG n0[2]; /* least significant word(s) of Ni */
+    int ri; /* number of bits in R */
+    OSSL_FN_ULONG memory[];
+};
+
+/*
+ * Internal function for Montgomery multiplication.
+ * The caller must ensure that r, a, b, and mont->N are of the same size,
+ * a and b are less than mont->N.
+ */
+int ossl_fn_mul_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
+    OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
 
 #endif
