@@ -1354,6 +1354,10 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         }
 
         idlen = PACKET_remaining(&identity);
+        if (idlen == 0) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            return 0;
+        }
         if (s->psk_find_session_cb != NULL
             && !s->psk_find_session_cb(ussl, PACKET_data(&identity), idlen,
                 &sess)) {
