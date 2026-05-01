@@ -1,5 +1,5 @@
 SUBDIRS=bio cipher digest keyexch mac kdf pkey signature \
-        encrypt encode sslecho dtlsecho
+        encrypt encode sslecho
 
 IF[{- !$disabled{"h3demo"} -}]
  IF[{- !$disabled{"quic"} -}]
@@ -19,6 +19,7 @@ ENDIF
 
 IF[{- !$disabled{"dgram"} -}]
     SUBDIRS=guide
+    SUBDIRS=dtlsecho
 ENDIF
 
 IF[{- !$disabled{"des"} -}]
