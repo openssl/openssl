@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-openssl-dtlsv13 - OpenSSL DTLSv1.3
+ossl-guide-dtlsv13 - OpenSSL DTLSv1.3
 
 =head1 INTRODUCTION
 
@@ -36,7 +36,7 @@ header and all of its contents are encrypted.
        struct {
            ContentType type;
            ProtocolVersion legacy_record_version;
-           uint16 epoch = 0;
+           uint16 epoch_val = 0;
            uint48 sequence_number;
            uint16 length;
            opaque fragment[DTLSPlaintext.length];
@@ -119,7 +119,7 @@ To utilize HelloRetryRequest and cookie exchange to validate the client in DTLSv
 use the L<SSL_stateless(3)> function. L<DTLSv1_listen(3)> will still use HelloVerifyRequest to
 validate the client.
 
-=head1 DTLSv1.3 Application Data
+=head1 APPLICATION DATA
 
 When either the DTLSv1.3 client or server is awaiting an Acknowledgement message,
 Application Data will be buffered until the Acknowledgement message is received and processed.
@@ -136,7 +136,7 @@ Even though DTLSv1.3 is enabled, the client will only perform a DTLSv1.2 or DTLS
 If a DTLSv1.3 over SCTP compatible client connects to an OpenSSL server, the server will
 downgrade to DTLSv1.2 or earlier.
 
-=head1 Connection ID
+=head1 CONNECTION ID
 
 OpenSSL does not support Connection IDs in DTLSv1.3. If a client that supports Connection
 IDs connects to an OpenSSL server, the server will ignore the Connection ID and will not
@@ -157,6 +157,7 @@ the DTLS1_3_VERSION macro to set the minimum and maximum protocol version to DTL
 =head2 s_client
 
 Use the min_protocol and max_protocol parameters and set them to DTLSv1.3.
+Use the -dtls option to specify that you want to use DTLS instead of TLS.
 
 =head2 s_server
 
