@@ -861,13 +861,18 @@ static const unsigned char *int_X509_VERIFY_PARAM_get0_ip(X509_VERIFY_PARAM *par
     return NULL;
 }
 
-char *X509_VERIFY_PARAM_get1_ip_asc(X509_VERIFY_PARAM *param)
+char *X509_VERIFY_PARAM_get1_ip_asc_ex(X509_VERIFY_PARAM *param, int idx)
 {
     size_t iplen;
     /* XXX casts away const */
-    unsigned char *ip = (unsigned char *)int_X509_VERIFY_PARAM_get0_ip(param, &iplen, 0);
+    unsigned char *ip = (unsigned char *)int_X509_VERIFY_PARAM_get0_ip(param, &iplen, idx);
 
     return ip == NULL ? NULL : ossl_ipaddr_to_asc(ip, (int)iplen);
+}
+
+char *X509_VERIFY_PARAM_get1_ip_asc(X509_VERIFY_PARAM *param)
+{
+    return X509_VERIFY_PARAM_get1_ip_asc_ex(param, 0)
 }
 
 int X509_VERIFY_PARAM_set1_ip_asc(X509_VERIFY_PARAM *param, const char *ipasc)

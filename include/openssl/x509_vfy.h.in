@@ -787,6 +787,7 @@ int X509_VERIFY_PARAM_add1_smtputf8(X509_VERIFY_PARAM *param,
 void X509_VERIFY_PARAM_set1_smtputf8_input_validation(X509_VERIFY_PARAM *param,
     int (*validate_smtputf8)(const char *name, size_t len));
 char *X509_VERIFY_PARAM_get1_ip_asc(X509_VERIFY_PARAM *param);
+char *X509_VERIFY_PARAM_get1_ip_asc_ex(X509_VERIFY_PARAM *param, int idx);
 int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
     const uint8_t *ip, size_t iplen);
 void X509_VERIFY_PARAM_set1_ip_input_validation(X509_VERIFY_PARAM *param,
