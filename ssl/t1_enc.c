@@ -458,14 +458,14 @@ int tls1_export_keying_material(SSL_CONNECTION *s, unsigned char *out,
     vallen = llen + SSL3_RANDOM_SIZE * 2;
     if (vallen < llen) {
         /* integer overflow */
-        ERR_raise(ERR_LIB_SSL, ERR_R_OVERFLOW);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
     if (use_context) {
         vallen += 2 + contextlen;
         if (vallen < 2 + contextlen) {
             /* integer overflow */
-            ERR_raise(ERR_LIB_SSL, ERR_R_OVERFLOW);
+            ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
     }
