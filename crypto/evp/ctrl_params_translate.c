@@ -1277,6 +1277,11 @@ static int fix_rsa_padding_mode(enum state state,
          * of the rest for us, along with the POST_CTRL_TO_PARAMS && OSSL_ACTION_GET
          * code section further down.
          */
+        if (ctx->p2 == NULL) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+            return -1;
+        }
+
         ctx->orig_p2 = ctx->p2;
         ctx->p2 = ctx->name_buf;
         ctx->p1 = sizeof(ctx->name_buf);
@@ -1398,6 +1403,11 @@ static int fix_rsa_pss_saltlen(enum state state,
          * of the rest for us, along with the POST_CTRL_TO_PARAMS && OSSL_ACTION_GET
          * code section further down.
          */
+        if (ctx->p2 == NULL) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+            return -1;
+        }
+
         ctx->orig_p2 = ctx->p2;
         ctx->p2 = ctx->name_buf;
         ctx->p1 = sizeof(ctx->name_buf);
