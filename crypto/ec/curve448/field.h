@@ -69,10 +69,101 @@ mask_t gf_deserialize(gf x, const uint8_t serial[SER_BYTES], int with_hibit,
 /* clang-format off */
 #define LIMBPERM(i) (i)
 #if (ARCH_WORD_BITS == 32)
-#include "arch_32/f_impl.inc" /* Bring in the inline implementations */
+#define GF_HEADROOM 2
+#define LIMB(x) ((x) & ((1 << 28) - 1)), ((x) >> 28)
+#define FIELD_LITERAL(a, b, c, d, e, f, g, h)                                      \
+    {                                                                              \
+        {                                                                          \
+            LIMB(a), LIMB(b), LIMB(c), LIMB(d), LIMB(e), LIMB(f), LIMB(g), LIMB(h) \
+        }                                                                          \
+    }
+
+#define LIMB_PLACE_VALUE(i) 28
+
+void gf_add_RAW(gf out, const gf a, const gf b)
+{
+    unsigned int i;
+
+    for (i = 0; i < NLIMBS; i++)
+        out->limb[i] = a->limb[i] + b->limb[i];
+}
+
+void gf_sub_RAW(gf out, const gf a, const gf b)
+{
+    unsigned int i;
+
+    for (i = 0; i < NLIMBS; i++)
+        out->limb[i] = a->limb[i] - b->limb[i];
+}
+
+void gf_bias(gf a, int amt)
+{
+    unsigned int i;
+    uint32_t co1 = ((1 << 28) - 1) * amt, co2 = co1 - amt;
+
+    for (i = 0; i < NLIMBS; i++)
+        a->limb[i] += (i == NLIMBS / 2) ? co2 : co1;
+}
+
+void gf_weak_reduce(gf a)
+{
+    uint32_t mask = (1 << 28) - 1;
+    uint32_t tmp = a->limb[NLIMBS - 1] >> 28;
+    unsigned int i;
+
+    a->limb[NLIMBS / 2] += tmp;
+    for (i = NLIMBS - 1; i > 0; i--)
+        a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 28);
+    a->limb[0] = (a->limb[0] & mask) + tmp;
+}
 #define LIMB_MASK(i) (((1) << LIMB_PLACE_VALUE(i)) - 1)
 #elif (ARCH_WORD_BITS == 64)
-#include "arch_64/f_impl.inc" /* Bring in the inline implementations */
+#define GF_HEADROOM 9999 /* Everything is reduced anyway */
+#define FIELD_LITERAL(a, b, c, d, e, f, g, h) \
+    {                                         \
+        {                                     \
+            a, b, c, d, e, f, g, h            \
+        }                                     \
+    }
+
+#define LIMB_PLACE_VALUE(i) 56
+
+void gf_add_RAW(gf out, const gf a, const gf b)
+{
+    unsigned int i;
+
+    for (i = 0; i < NLIMBS; i++)
+        out->limb[i] = a->limb[i] + b->limb[i];
+
+    gf_weak_reduce(out);
+}
+
+void gf_sub_RAW(gf out, const gf a, const gf b)
+{
+    uint64_t co1 = ((1ULL << 56) - 1) * 2, co2 = co1 - 2;
+    unsigned int i;
+
+    for (i = 0; i < NLIMBS; i++)
+        out->limb[i] = a->limb[i] - b->limb[i] + ((i == NLIMBS / 2) ? co2 : co1);
+
+    gf_weak_reduce(out);
+}
+
+void gf_bias(gf a, int amt)
+{
+}
+
+void gf_weak_reduce(gf a)
+{
+    uint64_t mask = (1ULL << 56) - 1;
+    uint64_t tmp = a->limb[NLIMBS - 1] >> 56;
+    unsigned int i;
+
+    a->limb[NLIMBS / 2] += tmp;
+    for (i = NLIMBS - 1; i > 0; i--)
+        a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);
+    a->limb[0] = (a->limb[0] & mask) + tmp;
+}
 #define LIMB_MASK(i) (((1ULL) << LIMB_PLACE_VALUE(i)) - 1)
 #endif
 /* clang-format on */
