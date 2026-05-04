@@ -94,6 +94,8 @@ int ossl_quic_stream_map_init(QUIC_STREAM_MAP *qsm,
     QUIC_CHANNEL *ch)
 {
     qsm->map = lh_QUIC_STREAM_new(hash_stream, cmp_stream);
+    if (qsm->map == NULL)
+        return 0;
     qsm->active_list.prev = qsm->active_list.next = &qsm->active_list;
     qsm->accept_list.prev = qsm->accept_list.next = &qsm->accept_list;
     qsm->ready_for_gc_list.prev = qsm->ready_for_gc_list.next
@@ -123,6 +125,8 @@ static void release_each(QUIC_STREAM *stream, void *arg)
 
 void ossl_quic_stream_map_cleanup(QUIC_STREAM_MAP *qsm)
 {
+    if (qsm->map == NULL)
+        return;
     lh_QUIC_STREAM_set_down_load(qsm->map, 0);
     ossl_quic_stream_map_visit(qsm, release_each, qsm);
 
