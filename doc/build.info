@@ -2831,6 +2831,10 @@ DEPEND[html/man3/SSL_set_session_secret_cb.html]=man3/SSL_set_session_secret_cb.
 GENERATE[html/man3/SSL_set_session_secret_cb.html]=man3/SSL_set_session_secret_cb.pod
 DEPEND[man/man3/SSL_set_session_secret_cb.3]=man3/SSL_set_session_secret_cb.pod
 GENERATE[man/man3/SSL_set_session_secret_cb.3]=man3/SSL_set_session_secret_cb.pod
+DEPEND[html/man3/SSL_set_session_ticket_ext.html]=man3/SSL_set_session_ticket_ext.pod
+GENERATE[html/man3/SSL_set_session_ticket_ext.html]=man3/SSL_set_session_ticket_ext.pod
+DEPEND[man/man3/SSL_set_session_ticket_ext.3]=man3/SSL_set_session_ticket_ext.pod
+GENERATE[man/man3/SSL_set_session_ticket_ext.3]=man3/SSL_set_session_ticket_ext.pod
 DEPEND[html/man3/SSL_set_shutdown.html]=man3/SSL_set_shutdown.pod
 GENERATE[html/man3/SSL_set_shutdown.html]=man3/SSL_set_shutdown.pod
 DEPEND[man/man3/SSL_set_shutdown.3]=man3/SSL_set_shutdown.pod
@@ -3759,6 +3763,7 @@ html/man3/SSL_set_quic_tls_cbs.html \
 html/man3/SSL_set_retry_verify.html \
 html/man3/SSL_set_session.html \
 html/man3/SSL_set_session_secret_cb.html \
+html/man3/SSL_set_session_ticket_ext.html \
 html/man3/SSL_set_shutdown.html \
 html/man3/SSL_set_verify_result.html \
 html/man3/SSL_shutdown.html \
@@ -4434,6 +4439,7 @@ man/man3/SSL_set_quic_tls_cbs.3 \
 man/man3/SSL_set_retry_verify.3 \
 man/man3/SSL_set_session.3 \
 man/man3/SSL_set_session_secret_cb.3 \
+man/man3/SSL_set_session_ticket_ext.3 \
 man/man3/SSL_set_shutdown.3 \
 man/man3/SSL_set_verify_result.3 \
 man/man3/SSL_shutdown.3 \
