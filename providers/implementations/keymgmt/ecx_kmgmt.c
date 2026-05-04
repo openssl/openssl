@@ -35,6 +35,7 @@ static OSSL_FUNC_keymgmt_new_fn x25519_new_key;
 static OSSL_FUNC_keymgmt_new_fn x448_new_key;
 static OSSL_FUNC_keymgmt_new_fn ed25519_new_key;
 static OSSL_FUNC_keymgmt_new_fn ed448_new_key;
+static OSSL_FUNC_keymgmt_free_fn ecx_free_key;
 static OSSL_FUNC_keymgmt_gen_init_fn x25519_gen_init;
 static OSSL_FUNC_keymgmt_gen_init_fn x448_gen_init;
 static OSSL_FUNC_keymgmt_gen_init_fn ed25519_gen_init;
@@ -993,10 +994,15 @@ static int ed448_validate(const void *keydata, int selection, int checktype)
     return ecx_validate(keydata, selection, ECX_KEY_TYPE_ED448, ED448_KEYLEN);
 }
 
+static void ecx_free_key(void *keydata)
+{
+    ossl_ecx_key_free((ECX_KEY *)keydata);
+}
+
 #define MAKE_KEYMGMT_FUNCTIONS(alg)                                                   \
     const OSSL_DISPATCH ossl_##alg##_keymgmt_functions[] = {                          \
         { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))alg##_new_key },                     \
-        { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ossl_ecx_key_free },                \
+        { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ecx_free_key },                     \
         { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*)(void))alg##_get_params },           \
         { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*)(void))alg##_gettable_params }, \
         { OSSL_FUNC_KEYMGMT_SET_PARAMS, (void (*)(void))alg##_set_params },           \
