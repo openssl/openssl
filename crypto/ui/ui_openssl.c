@@ -665,11 +665,7 @@ static int noecho_fgets(char *buf, int size, FILE *tty)
             break;
         }
         size--;
-#if defined(_WIN32)
-        i = _getch();
-#else
         i = getch();
-#endif
         if (i == '\r')
             i = '\n';
         *(p++) = i;
