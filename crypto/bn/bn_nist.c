@@ -585,9 +585,6 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
         rp[6] = (unsigned int)acc;
 
         carry = (int)(acc >> 32);
-#if BN_BITS2 == 64
-        rp[7] = carry;
-#endif
     }
 #else
     {
