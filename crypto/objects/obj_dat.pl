@@ -209,8 +209,8 @@ printf "static const unsigned int obj_objs[NUM_OBJ] = {\n";
 # Compare DER; prefer shorter; if some length, use the "smaller" encoding.
 sub obj_cmp
 {
-    my $A = defined($obj_len{$obj{$nid{$a}}}) ? $obj_len{$obj{$nid{$a}}} : 0;
-    my $B = defined($obj_len{$obj{$nid{$b}}}) ? $obj_len{$obj{$nid{$b}}} : 0;
+    my $A = $obj_len{$obj{$nid{$a}}} // 0;
+    my $B = $obj_len{$obj{$nid{$b}}} // 0;
     my $r = $A - $B;
     return $r if $r != 0;
     return 0 if $A == 0;
