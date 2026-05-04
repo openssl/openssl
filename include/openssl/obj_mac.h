@@ -2300,6 +2300,11 @@
 #define NID_dsaWithSHA          66
 #define OBJ_dsaWithSHA          OBJ_algorithm,13L
 
+#define SN_mdc2WithRSASignature         "RSA-MDC2-2"
+#define LN_mdc2WithRSASignature         "mdc2WithRSASignature"
+#define NID_mdc2WithRSASignature                1502
+#define OBJ_mdc2WithRSASignature                OBJ_algorithm,14L
+
 #define SN_shaWithRSAEncryption         "RSA-SHA"
 #define LN_shaWithRSAEncryption         "shaWithRSAEncryption"
 #define NID_shaWithRSAEncryption                42
