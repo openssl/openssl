@@ -33,6 +33,7 @@ typedef struct {
     size_t tag_len;
     size_t tls_payload_length;
     size_t tls_aad_pad_sz;
+    unsigned int iv_state; /* set to one of IV_STATE_XXX */
 } PROV_CHACHA20_POLY1305_CTX;
 
 typedef struct prov_cipher_hw_chacha_aead_st {
