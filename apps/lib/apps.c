@@ -3012,7 +3012,8 @@ end:
 }
 
 ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
-    const char *path, const char *proxy, const char *no_proxy, SSL_CTX *ssl_ctx,
+    const char *path, const char *proxy,
+    const char *no_proxy, SSL_CTX *ssl_ctx,
     const STACK_OF(CONF_VALUE) *headers,
     const char *content_type,
     ASN1_VALUE *req, const ASN1_ITEM *req_it,
