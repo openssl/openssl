@@ -206,6 +206,10 @@ controlled with the following environment variables:
     OPENSSL_TEST_MFAIL_START=N      Start iteration from point N, skipping
                                     earlier points that are already fixed.
 
+    OPENSSL_TEST_MFAIL_BACKTRACE=1  Print a backtrace at the call site of each
+                                    injected allocation failure. Link with
+                                    -rdynamic for readable symbol names.
+
 For example, to debug a failure at allocation point 42:
 
     $ OPENSSL_TEST_MFAIL_POINT=42 ./test/crltest -test test_crl_diff_mfail

@@ -10,10 +10,17 @@
 #include "../testutil.h"
 #include "tu_local.h"
 
+#if defined(__GLIBC__) || defined(__APPLE__) || defined(__FreeBSD__)
+#define HAVE_EXECINFO_H
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <openssl/crypto.h>
+#ifdef HAVE_EXECINFO_H
+#include <execinfo.h>
+#endif
 
 static int mfail_fail_after = -1;
 static int mfail_alloc_count = 0;
@@ -24,6 +31,11 @@ static int mfail_do_skip_slow = 0;
 static int mfail_single_point = -1;
 static int mfail_start_point = 0;
 static int mfail_installed = 0;
+#ifdef HAVE_EXECINFO_H
+static int mfail_do_backtrace = 0;
+#endif
+
+#define BT_BUF_SIZE 1024
 
 static int should_fail(void)
 {
@@ -36,12 +48,34 @@ static int should_fail(void)
     return 0;
 }
 
+#ifdef HAVE_EXECINFO_H
+static void mfail_backtrace(void)
+{
+    int nptrs;
+    void *buffer[BT_BUF_SIZE];
+    char **strings;
+
+    if (!mfail_do_backtrace)
+        return;
+
+    nptrs = backtrace(buffer, BT_BUF_SIZE);
+    strings = backtrace_symbols(buffer, nptrs);
+    if (strings != NULL) {
+        for (int j = 0; j < nptrs; j++)
+            printf("%s\n", strings[j]);
+        free(strings);
+    }
+}
+#endif
+
 static void *mfail_malloc(size_t num, const char *file, int line)
 {
     if (num == 0)
         return NULL;
-    if (should_fail())
+    if (should_fail()) {
+        mfail_backtrace();
         return NULL;
+    }
     return malloc(num);
 }
 
@@ -53,8 +87,10 @@ static void *mfail_realloc(void *addr, size_t num, const char *file, int line)
         free(addr);
         return NULL;
     }
-    if (should_fail())
+    if (should_fail()) {
+        mfail_backtrace();
         return NULL;
+    }
     return realloc(addr, num);
 }
 
@@ -117,6 +153,10 @@ void mfail_init(void)
 
     mfail_do_skip_all = env_is_true("OPENSSL_TEST_MFAIL_SKIP_ALL");
     mfail_do_skip_slow = env_is_true("OPENSSL_TEST_MFAIL_SKIP_SLOW");
+
+#ifdef HAVE_EXECINFO_H
+    mfail_do_backtrace = env_is_true("OPENSSL_TEST_MFAIL_BACKTRACE");
+#endif
 
     env = getenv("OPENSSL_TEST_MFAIL_POINT");
     if (env != NULL && *env != '\0')
