@@ -405,23 +405,26 @@ void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock)
     return;
 }
 
+CRYPTO_RCU_CB_ITEM *ossl_rcu_cb_item_new(void)
+{
+    return OPENSSL_zalloc(sizeof(CRYPTO_RCU_CB_ITEM));
+}
+
+void ossl_rcu_cb_item_free(CRYPTO_RCU_CB_ITEM *item)
+{
+    OPENSSL_free(item);
+}
+
 /*
  * Note, must be called under the protection of ossl_rcu_write_lock
  */
-int ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data)
+void ossl_rcu_call(CRYPTO_RCU_LOCK *lock, CRYPTO_RCU_CB_ITEM *item,
+    rcu_cb_fn cb, void *data)
 {
-    struct rcu_cb_item *new;
-
-    new = OPENSSL_zalloc(sizeof(struct rcu_cb_item));
-    if (new == NULL)
-        return 0;
-    new->data = data;
-    new->fn = cb;
-
-    new->next = lock->cb_items;
-    lock->cb_items = new;
-
-    return 1;
+    item->fn = cb;
+    item->data = data;
+    item->next = lock->cb_items;
+    lock->cb_items = item;
 }
 
 void *ossl_rcu_uptr_deref(void **p)
