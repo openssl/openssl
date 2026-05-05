@@ -2478,7 +2478,7 @@ int check_cert_might_be_valid(BIO *bio, BIO *b_err, X509 *x, const char *checkho
     }
 
     if ((store = X509_STORE_new()) == NULL) {
-        ERR_print_errors(b_err);
+        maybe_printf(b_err, "Malloc failed or internal error\n");
         goto err;
     }
 
@@ -2586,6 +2586,7 @@ int check_cert_might_be_valid(BIO *bio, BIO *b_err, X509 *x, const char *checkho
     X509_STORE_CTX_cleanup(ctx);
 
 err:
+    ERR_print_errors(b_err);
     X509_STORE_free(store);
     X509_STORE_CTX_free(ctx);
     return ret;
