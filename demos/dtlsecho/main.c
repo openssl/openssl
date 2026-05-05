@@ -172,6 +172,7 @@ int main(int argc, char **argv)
     char *rem_server_ip = NULL;
 
     struct sockaddr_in addr;
+    int received_new_session_ack = 0;
 
 #if !defined(OPENSSL_SYS_WINDOWS)
     /* Ignore SIGPIPE so that server can continue running when client pipe closes abruptly */
@@ -250,12 +251,14 @@ int main(int argc, char **argv)
                      * it will return -1 on the SSL_read until it receives
                      * those acks. For that scenario, let's keep us in the loop.
                      */
-                    printf("SSL_read returned %d\n", rxlen);
+                    if (received_new_session_ack)
+                        printf("SSL_read returned %d\n", rxlen);
                     continue;
                 }
                 ERR_print_errors_fp(stderr);
                 break;
             }
+            received_new_session_ack = 1;
             /* Insure null terminated input */
             rxbuf[rxlen] = 0;
             /* Look for kill switch */

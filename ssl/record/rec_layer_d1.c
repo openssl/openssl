@@ -340,6 +340,10 @@ start:
          * For DTLS 1.3 we received Application Data while we are
          * waiting for an Acknowledgement record. Buffer this data so
          * it can be processed once we have received the Acknowledgement.
+         * When DTLS 1.3 receives application data and it is already
+         * in TLS_ST_OK and is processing a handshake message like
+         * NewSessionTicket or KeyUpdate the application data is
+         * buffered.
          *
          * For non-DTLS 1.3 we now have application data between CCS and
          * Finished. Most likely the packets were reordered on their way,
