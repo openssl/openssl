@@ -862,7 +862,7 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
 err:
     if (item == NULL)
         dtls1_hm_fragment_free(frag);
-    return 0;
+    return DTLS1_HM_BAD_FRAGMENT;
 }
 
 static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
