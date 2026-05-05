@@ -749,6 +749,62 @@ static int verify_extension(SSL_CONNECTION *s, unsigned int context,
 }
 
 /*
+ * Verify that all extensions in |packet| are known built-in or custom
+ * extension types. This is used for TLS 1.3 server extension responses where
+ * unknown extensions are not ignored.
+ */
+int tls_validate_no_unknown_extensions(SSL_CONNECTION *s, PACKET *packet,
+    unsigned int context)
+{
+    PACKET extensions = *packet;
+    custom_ext_methods *exts = &s->cert->custext;
+    ENDPOINT role = ENDPOINT_BOTH;
+
+    if ((context & SSL_EXT_CLIENT_HELLO) != 0) {
+#ifndef OPENSSL_NO_ECH
+        if (s->ext.ech.attempted == 1 && s->ext.ech.ch_depth == 1)
+            role = ENDPOINT_CLIENT;
+        else
+            role = ENDPOINT_SERVER;
+#else
+        role = ENDPOINT_SERVER;
+#endif
+    } else if ((context & SSL_EXT_TLS1_2_SERVER_HELLO) != 0) {
+        role = ENDPOINT_CLIENT;
+    }
+
+    while (PACKET_remaining(&extensions) > 0) {
+        unsigned int type;
+        size_t i;
+        PACKET extension;
+        const EXTENSION_DEFINITION *thisext;
+
+        if (!PACKET_get_net_2(&extensions, &type)
+            || !PACKET_get_length_prefixed_2(&extensions, &extension)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            return 0;
+        }
+
+        for (i = 0, thisext = ext_defs; i < OSSL_NELEM(ext_defs);
+            i++, thisext++) {
+            if (type == thisext->type)
+                break;
+        }
+        if (i < OSSL_NELEM(ext_defs))
+            continue;
+
+        if (exts != NULL && custom_ext_find(exts, role, type, NULL) != NULL)
+            continue;
+
+        SSLfatal(s, SSL_AD_UNSUPPORTED_EXTENSION,
+            SSL_R_UNSOLICITED_EXTENSION);
+        return 0;
+    }
+
+    return 1;
+}
+
+/*
  * Check whether the context defined for an extension |extctx| means whether
  * the extension is relevant for the current context |thisctx| or not. Returns
  * 1 if the extension is relevant for this context, and 0 otherwise
@@ -857,7 +913,8 @@ int tls_collect_extensions(SSL_CONNECTION *s, PACKET *packet,
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
             goto err;
         }
-        idx = (unsigned int)(thisex - raw_extensions);
+        idx = thisex == NULL ? (unsigned int)OSSL_NELEM(ext_defs)
+                             : (unsigned int)(thisex - raw_extensions);
         /*-
          * Check that we requested this extension (if appropriate). Requests can
          * be sent in the ClientHello and CertificateRequest. Unsolicited

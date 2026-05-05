@@ -1799,6 +1799,8 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
     if (hrr) {
         if (!tls_collect_extensions(s, &extpkt, SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST,
                 &extensions, NULL, 1)
+            || !tls_validate_no_unknown_extensions(s, &extpkt,
+                SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST)
             || !tls_parse_extension(s, TLSEXT_IDX_ech,
                 SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST,
                 extensions, NULL, 0)) {
@@ -1959,6 +1961,9 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
         goto err;
     }
+    if (SSL_CONNECTION_IS_TLS13(s)
+        && !tls_validate_no_unknown_extensions(s, &extpkt, context))
+        goto err;
 
     s->hit = 0;
 
