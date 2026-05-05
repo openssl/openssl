@@ -19,6 +19,8 @@ on:
       extra_config:
         description: Extra options for configuration script
         default: ""
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
 
 permissions:
   contents: read
@@ -46,28 +48,7 @@ jobs:
           else
           MATRIX=$(cat << EOF
           [{
-              "branch": "openssl-3.6",
-              "extra_config": "no-afalgeng enable-fips enable-tfo"
-            },{
-              "branch": "openssl-3.5",
-              "extra_config": "no-afalgeng enable-fips enable-tfo"
-            },{
-              "branch": "openssl-3.4",
-              "extra_config": "no-afalgeng enable-fips enable-tfo"
-            }, {
-              "branch": "openssl-3.3",
-              "extra_config": "no-afalgeng enable-fips enable-tfo"
-            }, {
-              "branch": "openssl-3.2",
-              "extra_config": "no-afalgeng enable-fips enable-tfo"
-            }, {
-              "branch": "openssl-3.1",
-              "extra_config": "no-afalgeng enable-fips"
-            }, {
-              "branch": "openssl-3.0",
-              "extra_config": "no-afalgeng enable-fips"
-            }, {
-              "branch": "master",
+              "branch": "openssl-4.0",
               "extra_config": "enable-fips enable-tfo enable-lms enable-crypto-mdebug enable-allocfail-tests"
           }]
           EOF
@@ -90,7 +71,7 @@ jobs:
     - uses: actions/checkout@v6
       with:
         submodules: recursive
-        ref: ${{ matrix.branches.branch }}
+        ref: ${{ github.event.pull_request.head.sha }}
         persist-credentials: false
     - name: cache commit id
       run: |
