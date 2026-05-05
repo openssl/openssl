@@ -169,8 +169,15 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 
         diff--;
         if ((*(q++) & V_ASN1_PRIMITIVE_TAG) == V_ASN1_PRIMITIVE_TAG) {
+            unsigned int i = 0;
             /* Multi-byte tag.  See if we have the whole thing yet */
             do {
+                if (i > 4) {
+                    /* The tag value must fit into int */
+                    ERR_raise(ERR_LIB_ASN1, ASN1_R_HEADER_TOO_LONG);
+                    goto err;
+                }
+                ++i;
                 diff--;
             } while (diff > 0 && *(q++) & 0x80);
 
