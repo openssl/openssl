@@ -47,61 +47,65 @@ my $testcount = 3;
 
 plan tests => $testcount;
 (undef, my $session) = tempfile();
+my $found_first_client_finish_msg = 0;
 
 #Test 1: Check that records are acked during an uninterrupted handshake
 $proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
 $proxy->clientflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -groups ?X25519:?P-256");
 $proxy->sessionfile($session);
 TLSProxy::Message->successondata(1);
-skip "TLSProxy could not start", $testcount if !$proxy->start();
 
-my @expected = get_expected_ack_record_numbers();
-my @actual = get_actual_acked_record_numbers();
-my @missing = record_numbers_missing(\@expected, \@actual);
-my $expected_count = @expected;
-my $missing_count = @missing;
+SKIP: {
+    skip "TLSProxy could not start", $testcount if !$proxy->start();
 
-ok($missing_count == 0 && $expected_count == 3,
-    "Check that all record numbers are acked");
+    my @expected = get_expected_ack_record_numbers();
+    my @actual = get_actual_acked_record_numbers();
+    my @missing = record_numbers_missing(\@expected, \@actual);
+    my $expected_count = @expected;
+    my $missing_count = @missing;
 
-# Test 2: Check that records that are missing are not acked during a handshake
-$proxy->clear();
-my $found_first_client_finish_msg = 0;
-$proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
-$proxy->clientflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -groups ?X25519:?P-256");
-$proxy->sessionfile($session);
-$proxy->filter(\&drop_first_client_finish_filter);
-TLSProxy::Message->successondata(1);
-$proxy->start();
+    ok($missing_count == 0 && $expected_count == 3,
+        "Check that all record numbers are acked");
 
-@expected = get_expected_ack_record_numbers();
-@actual = get_actual_acked_record_numbers();
-@missing = record_numbers_missing(\@expected, \@actual);
-$expected_count = @expected;
-$missing_count = @missing;
+    # Test 2: Check that records that are missing are not acked during a handshake
+    $proxy->clear();
+    $found_first_client_finish_msg = 0;
+    $proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
+    $proxy->clientflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -groups ?X25519:?P-256");
+    $proxy->sessionfile($session);
+    $proxy->filter(\&drop_first_client_finish_filter);
+    TLSProxy::Message->successondata(1);
+    $proxy->start();
 
-ok($missing_count == 1 && $expected_count == 4,
-   "Check that all record numbers except one are acked");
+    @expected = get_expected_ack_record_numbers();
+    @actual = get_actual_acked_record_numbers();
+    @missing = record_numbers_missing(\@expected, \@actual);
+    $expected_count = @expected;
+    $missing_count = @missing;
 
-# Test 3: Check that client cert and verify messages are also acked
-$proxy->clear();
-$proxy->filter(undef);
-$found_first_client_finish_msg = 0;
-$proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -Verify 1");
-$proxy->clientflags("-mtu 2000 -min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -groups ?X25519:?P-256"
-                    ." -cert ".srctop_file("apps", "server.pem"));
-$proxy->sessionfile($session);
-TLSProxy::Message->successondata(1);
-$proxy->start();
+    ok($missing_count == 1 && $expected_count == 4,
+    "Check that all record numbers except one are acked");
 
-@expected = get_expected_ack_record_numbers();
-@actual = get_actual_acked_record_numbers();
-@missing = record_numbers_missing(\@expected, \@actual);
-$expected_count = @expected;
-$missing_count = @missing;
+    # Test 3: Check that client cert and verify messages are also acked
+    $proxy->clear();
+    $proxy->filter(undef);
+    $found_first_client_finish_msg = 0;
+    $proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -Verify 1");
+    $proxy->clientflags("-mtu 2000 -min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -groups ?X25519:?P-256"
+                        ." -cert ".srctop_file("apps", "server.pem"));
+    $proxy->sessionfile($session);
+    TLSProxy::Message->successondata(1);
+    $proxy->start();
 
-ok($missing_count == 0 && $expected_count == 5,
-    "Check that all record numbers are acked");
+    @expected = get_expected_ack_record_numbers();
+    @actual = get_actual_acked_record_numbers();
+    @missing = record_numbers_missing(\@expected, \@actual);
+    $expected_count = @expected;
+    $missing_count = @missing;
+
+    ok($missing_count == 0 && $expected_count == 5,
+        "Check that all record numbers are acked");
+}
 
 unlink $session;
 
