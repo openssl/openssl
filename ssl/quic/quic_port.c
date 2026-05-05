@@ -562,6 +562,7 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch, SSL **us
                 ql->obj.ssl.ctx->new_pending_conn_arg))
             goto err;
     qc->tls = tls;
+    qc->ch = ch;
     *user_sslp = user_ssl;
 
     /* Override the user_ssl of the inner connection. */
@@ -574,9 +575,7 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch, SSL **us
     return qc->tls;
 
 err:
-    if (qc != NULL)
-        qc->ch = NULL;
-    if (tls != NULL && tls != user_ssl && (qc == NULL || qc->tls != tls))
+    if (tls != NULL && tls != user_ssl)
         SSL_free(tls);
     SSL_free(user_ssl);
     *user_sslp = NULL;

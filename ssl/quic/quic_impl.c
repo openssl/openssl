@@ -5186,7 +5186,6 @@ static QUIC_CONNECTION *create_qc_from_incoming_conn(QUIC_LISTENER *ql, QUIC_CHA
 #if defined(OPENSSL_THREADS)
     qc->mutex = ql->mutex;
 #endif
-    qc->tls = ossl_quic_channel_get0_tls(ch);
     qc->started = 1;
     qc->as_server = 1;
     qc->as_server_state = 1;
@@ -5195,6 +5194,27 @@ static QUIC_CONNECTION *create_qc_from_incoming_conn(QUIC_LISTENER *ql, QUIC_CHA
     qc->incoming_stream_policy = SSL_INCOMING_STREAM_POLICY_AUTO;
     qc->last_error = SSL_ERROR_NONE;
     qc_update_reject_policy(qc);
+
+    /*
+     * Detach the channel from the freshly-built qc before handing it back.
+     *
+     * qc->ch was set to @p ch above so the in-function initialisers
+     * (e.g. qc_update_reject_policy()) can reach the channel during setup.
+     * Once setup is done we clear it again because, at this point, the qc
+     * does NOT yet own the channel: @p ch is still owned by the caller of
+     * port_new_handshake_layer(), which only commits ownership (by setting
+     * qc->ch = ch on the success path) after the rest of channel
+     * construction has succeeded.
+     *
+     * Leaving qc->ch set here would mean any error path that does
+     * SSL_free(user_ssl) before the commit point cascades into
+     * qc_cleanup() -> ossl_quic_channel_free(qc->ch) and frees a channel
+     * the caller is still using -- the use-after-free / double-free class
+     * of bug we hit before. Resetting to NULL makes SSL_free(user_ssl)
+     * safe at any point until the caller explicitly hands ch over.
+     */
+    qc->ch = NULL;
+
     return qc;
 
 err:
