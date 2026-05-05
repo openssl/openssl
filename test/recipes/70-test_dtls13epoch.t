@@ -54,9 +54,11 @@ $proxy->serverflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3");
 $proxy->clientflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -groups ?X25519:?P-256");
 $proxy->filter(\&current_record_epoch_filter);
 TLSProxy::Message->successondata(1);
-skip "TLS Proxy did not start", 1 if !$proxy->start();
-ok(!$epoch_check_failed
-   && $latest_epoch == 3, "Epoch changes correctly during handshake");
+SKIP: {
+    skip "TLS Proxy did not start", 1 if !$proxy->start();
+    ok(!$epoch_check_failed
+       && $latest_epoch == 3, "Epoch changes correctly during handshake");
+}
 
 sub current_record_epoch_filter
 {
