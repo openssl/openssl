@@ -588,7 +588,6 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
     QUIC_CHANNEL_ARGS args = { 0 };
     QUIC_CHANNEL *ch;
     SSL *user_ssl = NULL;
-    int ch_cleaned = 0;
 
     args.port = port;
     args.is_server = is_server;
@@ -658,10 +657,8 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
     /*
      * And finally init the channel struct
      */
-    if (!ossl_quic_channel_init(ch)) {
-        ch_cleaned = 1;
+    if (!ossl_quic_channel_init(ch))
         goto err;
-    }
 
     ossl_qtx_set_bio(ch->qtx, port->net_wbio);
     return ch;
@@ -670,11 +667,7 @@ err:
     if (user_ssl != NULL)
         ((QUIC_CONNECTION *)user_ssl)->ch = NULL;
 
-    if (ch_cleaned)
-        OPENSSL_free(ch);
-    else
-        ossl_quic_channel_free(ch);
-
+    ossl_quic_channel_free(ch);
     SSL_free(user_ssl);
 
     return NULL;
