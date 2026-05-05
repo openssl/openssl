@@ -1,4 +1,11 @@
 repos:
+  - repo: "local"
+    hooks:
+      - id: "no-whitespace-in-filenames"
+        name: "Reject filenames containing whitespace"
+        entry: "filenames must not contain whitespace"
+        language: "fail"
+        files: '\s'
   - repo: "https://github.com/codespell-project/codespell"
     rev: "v2.4.1"
     hooks:

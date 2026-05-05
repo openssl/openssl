@@ -640,8 +640,8 @@ clean: libclean ## Clean the workspace, keep the configuration
 	$(RM) $(MANDOCS7)
 	$(RM) $(PROGRAMS) $(TESTPROGS) $(MODULES) $(FIPSMODULE) $(SCRIPTS)
 	$(RM) $(GENERATED_MANDATORY) $(GENERATED)
-	-find . -name '*{- platform->depext() -}' \! -name '.*' \! -type d -exec $(RM) {} \;
-	-find . -name '*{- platform->objext() -}' \! -name '.*' \! -type d -exec $(RM) {} \;
+	-find . \( -name '*{- platform->depext() -}' -o -name '*{- platform->objext() -}' \) \
+		\! -name '.*' \! -type d | xargs $(RM);
 	$(RM) core
 	$(RM) tags TAGS doc-nits md-nits
 	$(RM) -r $(RESULT_D)
