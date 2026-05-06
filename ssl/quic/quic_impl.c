@@ -4655,9 +4655,8 @@ int ossl_quic_get_key_update_type(const SSL *s)
  *
  * @return Pointer to the SSL object on success, or NULL on failure.
  */
-static SSL *alloc_port_user_ssl(QUIC_CHANNEL *ch, void *arg)
+static SSL *alloc_port_user_ssl(QUIC_CHANNEL *ch, QUIC_LISTENER *ql)
 {
-    QUIC_LISTENER *ql = arg;
     QUIC_CONNECTION *qc = create_qc_from_incoming_conn(ql, ch);
 
     return (qc == NULL) ? NULL : &qc->obj.ssl;
@@ -4707,7 +4706,7 @@ SSL *ossl_quic_new_listener(SSL_CTX *ctx, uint64_t flags)
     port_args.channel_ctx = ctx;
     port_args.is_multi_conn = 1;
     port_args.get_conn_user_ssl = alloc_port_user_ssl;
-    port_args.user_ssl_arg = ql;
+    port_args.ql = ql;
     if ((flags & SSL_LISTENER_FLAG_NO_VALIDATE) == 0)
         port_args.do_addr_validation = 1;
     ql->port = ossl_quic_engine_create_port(ql->engine, &port_args);
@@ -4764,7 +4763,7 @@ SSL *ossl_quic_new_listener_from(SSL *ssl, uint64_t flags)
     port_args.channel_ctx = ssl->ctx;
     port_args.is_multi_conn = 1;
     port_args.get_conn_user_ssl = alloc_port_user_ssl;
-    port_args.user_ssl_arg = ql;
+    port_args.ql = ql;
     if ((flags & SSL_LISTENER_FLAG_NO_VALIDATE) == 0)
         port_args.do_addr_validation = 1;
     ql->port = ossl_quic_engine_create_port(ctx.qd->engine, &port_args);

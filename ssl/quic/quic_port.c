@@ -117,7 +117,7 @@ QUIC_PORT *ossl_quic_port_new(const QUIC_PORT_ARGS *args)
     port->is_multi_conn = args->is_multi_conn;
     port->validate_addr = args->do_addr_validation;
     port->get_conn_user_ssl = args->get_conn_user_ssl;
-    port->user_ssl_arg = args->user_ssl_arg;
+    port->ql = args->ql;
 
     if (!port_init(port)) {
         OPENSSL_free(port);
@@ -540,11 +540,11 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch, SSL **us
      */
     if (!ossl_assert(port->get_conn_user_ssl != NULL))
         return NULL;
-    user_ssl = port->get_conn_user_ssl(ch, port->user_ssl_arg);
+    user_ssl = port->get_conn_user_ssl(ch, port->ql);
     if (user_ssl == NULL)
         return NULL;
     qc = (QUIC_CONNECTION *)user_ssl;
-    ql = (QUIC_LISTENER *)port->user_ssl_arg;
+    ql = (QUIC_LISTENER *)port->ql;
 
     /*
      * We expect the user_ssl to be newly created so it must not have an
@@ -575,7 +575,7 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch, SSL **us
     return qc->tls;
 
 err:
-    if (tls != NULL && tls != user_ssl)
+    if (tls != NULL)
         SSL_free(tls);
     SSL_free(user_ssl);
     *user_sslp = NULL;
