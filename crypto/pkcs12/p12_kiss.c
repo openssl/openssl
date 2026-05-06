@@ -10,20 +10,26 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
+#include <openssl/core_names.h>
+#include <openssl/objects.h>
 #include "crypto/x509.h" /* for ossl_x509_add_cert_new() */
 
 /* Simplified PKCS#12 routines */
 
 static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,
-    EVP_PKEY **pkey, STACK_OF(X509) *ocerts);
+    EVP_PKEY **pkey, STACK_OF(X509) *ocerts, EVP_SKEY **skey,
+    OSSL_LIB_CTX *libctx, const char *propq);
 
 static int parse_bags(const STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
-    int passlen, EVP_PKEY **pkey, STACK_OF(X509) *ocerts,
+    int passlen, EVP_PKEY **pkey, STACK_OF(X509) *ocerts, EVP_SKEY **skey,
     OSSL_LIB_CTX *libctx, const char *propq);
 
 static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
-    EVP_PKEY **pkey, STACK_OF(X509) *ocerts,
+    EVP_PKEY **pkey, STACK_OF(X509) *ocerts, EVP_SKEY **skey,
     OSSL_LIB_CTX *libctx, const char *propq);
+
+static EVP_SKEY *parse_secret_bag_key(PKCS12_SAFEBAG *bag, const char *pass,
+    int passlen, OSSL_LIB_CTX *libctx, const char *propq);
 
 /*
  * Parse and decrypt a PKCS#12 structure returning user key, user cert and
@@ -35,6 +41,12 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
 int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
     STACK_OF(X509) **ca)
 {
+    return PKCS12_parse_ex(p12, pass, pkey, cert, ca, NULL, NULL, NULL);
+}
+
+int PKCS12_parse_ex(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
+    STACK_OF(X509) **ca, EVP_SKEY **skey, OSSL_LIB_CTX *libctx, const char *propq)
+{
     STACK_OF(X509) *ocerts = NULL;
     X509 *x = NULL;
 
@@ -42,6 +54,8 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
         *pkey = NULL;
     if (cert != NULL)
         *cert = NULL;
+    if (skey != NULL)
+        *skey = NULL;
 
     /* Check for NULL PKCS12 structure */
 
@@ -82,7 +96,7 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
         goto err;
     }
 
-    if (!parse_pk12(p12, pass, -1, pkey, ocerts)) {
+    if (!parse_pk12(p12, pass, -1, pkey, ocerts, skey, libctx, propq)) {
         int err = ERR_peek_last_error();
 
         if (ERR_GET_LIB(err) != ERR_LIB_EVP
@@ -127,6 +141,10 @@ err:
         X509_free(*cert);
         *cert = NULL;
     }
+    if (skey != NULL) {
+        EVP_SKEY_free(*skey);
+        *skey = NULL;
+    }
     X509_free(x);
     OSSL_STACK_OF_X509_free(ocerts);
     return 0;
@@ -134,9 +152,10 @@ err:
 
 /* Parse the outer PKCS#12 structure */
 
-/* pkey and/or ocerts may be NULL */
+/* pkey, ocerts, and/or skey may be NULL */
 static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,
-    EVP_PKEY **pkey, STACK_OF(X509) *ocerts)
+    EVP_PKEY **pkey, STACK_OF(X509) *ocerts, EVP_SKEY **skey,
+    OSSL_LIB_CTX *libctx, const char *propq)
 {
     STACK_OF(PKCS7) *asafes;
     STACK_OF(PKCS12_SAFEBAG) *bags;
@@ -158,8 +177,10 @@ static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,
             sk_PKCS7_pop_free(asafes, PKCS7_free);
             return 0;
         }
-        if (!parse_bags(bags, pass, passlen, pkey, ocerts,
-                p7->ctx.libctx, p7->ctx.propq)) {
+        /* Use provided libctx/propq if available, otherwise from p7 */
+        if (!parse_bags(bags, pass, passlen, pkey, ocerts, skey,
+                libctx != NULL ? libctx : p7->ctx.libctx,
+                propq != NULL ? propq : p7->ctx.propq)) {
             sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
             sk_PKCS7_pop_free(asafes, PKCS7_free);
             return 0;
@@ -170,24 +191,103 @@ static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,
     return 1;
 }
 
-/* pkey and/or ocerts may be NULL */
+/* pkey, ocerts, and/or skey may be NULL */
 static int parse_bags(const STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
-    int passlen, EVP_PKEY **pkey, STACK_OF(X509) *ocerts,
+    int passlen, EVP_PKEY **pkey, STACK_OF(X509) *ocerts, EVP_SKEY **skey,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
     int i;
     for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
         if (!parse_bag(sk_PKCS12_SAFEBAG_value(bags, i),
-                pass, passlen, pkey, ocerts,
+                pass, passlen, pkey, ocerts, skey,
                 libctx, propq))
             return 0;
     }
     return 1;
 }
 
-/* pkey and/or ocerts may be NULL */
+/*
+ * Parse a secret bag containing an encrypted symmetric key.
+ * Java keytool stores symmetric keys in secretBags containing
+ * pkcs8ShroudedKeyBag structures with the encrypted key bytes.
+ * Returns EVP_SKEY on success, NULL on failure or if not applicable.
+ */
+static EVP_SKEY *parse_secret_bag_key(PKCS12_SAFEBAG *bag, const char *pass,
+    int passlen, OSSL_LIB_CTX *libctx, const char *propq)
+{
+    int bag_nid = PKCS12_SAFEBAG_get_bag_nid(bag);
+    const ASN1_TYPE *bag_obj;
+    const unsigned char *p;
+    X509_SIG *p8enc = NULL;
+    PKCS8_PRIV_KEY_INFO *p8inf = NULL;
+    const unsigned char *raw_key = NULL;
+    int raw_key_len = 0;
+    EVP_SKEY *skey = NULL;
+
+    /* Only handle pkcs8ShroudedKeyBag within secretBag */
+    if (bag_nid != NID_pkcs8ShroudedKeyBag)
+        return NULL;
+
+    bag_obj = PKCS12_SAFEBAG_get0_bag_obj(bag);
+    if (bag_obj == NULL || bag_obj->type != V_ASN1_OCTET_STRING)
+        return NULL;
+
+    /* The bag object is an OCTET STRING containing X509_SIG (EncryptedPrivateKeyInfo) */
+    p = ASN1_STRING_get0_data(bag_obj->value.octet_string);
+    p8enc = d2i_X509_SIG(NULL, &p, ASN1_STRING_length(bag_obj->value.octet_string));
+    if (p8enc == NULL)
+        return NULL;
+
+    /* Decrypt EncryptedPrivateKeyInfo to get PKCS8_PRIV_KEY_INFO */
+    p8inf = PKCS8_decrypt_ex(p8enc, pass, passlen, libctx, propq);
+    X509_SIG_free(p8enc);
+
+    if (p8inf == NULL)
+        return NULL;
+
+    /* Extract the private key bytes from PKCS8_PRIV_KEY_INFO */
+    const ASN1_OBJECT *algoid = NULL;
+    if (PKCS8_pkey_get0(&algoid, &raw_key, &raw_key_len, NULL, p8inf)) {
+        if (raw_key != NULL && raw_key_len > 0) {
+            const char *skey_type = OSSL_SKEY_TYPE_GENERIC;
+
+            /* Determine key type from algorithm OID if available */
+            if (algoid != NULL) {
+                int nid = OBJ_obj2nid(algoid);
+
+                /* Map common symmetric key algorithm OIDs to EVP_SKEY types */
+                switch (nid) {
+                case NID_id_aes:
+                case NID_aes_128_cbc:
+                case NID_aes_192_cbc:
+                case NID_aes_256_cbc:
+                case NID_aes_128_ecb:
+                case NID_aes_192_ecb:
+                case NID_aes_256_ecb:
+                case NID_aes_128_gcm:
+                case NID_aes_192_gcm:
+                case NID_aes_256_gcm:
+                    skey_type = OSSL_SKEY_TYPE_AES;
+                    break;
+                default:
+                    /* Use generic for unknown or other algorithms */
+                    skey_type = OSSL_SKEY_TYPE_GENERIC;
+                    break;
+                }
+            }
+
+            skey = EVP_SKEY_import_raw_key(libctx, skey_type,
+                (unsigned char *)raw_key, raw_key_len, propq);
+        }
+    }
+
+    PKCS8_PRIV_KEY_INFO_free(p8inf);
+    return skey;
+}
+
+/* pkey, ocerts, and/or skey may be NULL */
 static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
-    EVP_PKEY **pkey, STACK_OF(X509) *ocerts,
+    EVP_PKEY **pkey, STACK_OF(X509) *ocerts, EVP_SKEY **skey,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
     PKCS8_PRIV_KEY_INFO *p8;
@@ -263,9 +363,19 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
 
         break;
 
+    case NID_secretBag:
+        if (skey != NULL && *skey == NULL) {
+            *skey = parse_secret_bag_key(bag, pass, passlen, libctx, propq);
+            if (*skey == NULL && PKCS12_SAFEBAG_get_bag_nid(bag) == NID_pkcs8ShroudedKeyBag) {
+                ERR_raise(ERR_LIB_PKCS12, PKCS12_R_PARSE_ERROR);
+                return 0; /* Failed to parse expected secret key */
+            }
+        }
+        return 1;
+
     case NID_safeContentsBag:
         return parse_bags(PKCS12_SAFEBAG_get0_safes(bag), pass, passlen, pkey,
-            ocerts, libctx, propq);
+            ocerts, skey, libctx, propq);
 
     default:
         return 1;
