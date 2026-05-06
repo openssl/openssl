@@ -36,9 +36,9 @@ static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip);
 
 static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc);
 static int nc_match_single(int effective_type, GENERAL_NAME *gen,
-    GENERAL_NAME *base);
+    GENERAL_NAME *base, int excluded);
 static int nc_dn(const X509_NAME *sub, const X509_NAME *nm);
-static int nc_dns(ASN1_IA5STRING *sub, ASN1_IA5STRING *dns);
+static int nc_dns(ASN1_IA5STRING *sub, ASN1_IA5STRING *dns, int excluded);
 static int nc_email(ASN1_IA5STRING *sub, ASN1_IA5STRING *eml);
 static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base);
 static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base);
@@ -532,7 +532,7 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
             continue;
         if (match == 0)
             match = 1;
-        r = nc_match_single(effective_type, gen, sub->base);
+        r = nc_match_single(effective_type, gen, sub->base, 0);
         if (r == X509_V_OK)
             match = 2;
         else if (r != X509_V_ERR_PERMITTED_VIOLATION)
@@ -552,7 +552,7 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
         if (!nc_minmax_valid(sub))
             return X509_V_ERR_SUBTREE_MINMAX;
 
-        r = nc_match_single(effective_type, gen, sub->base);
+        r = nc_match_single(effective_type, gen, sub->base, 1);
         if (r == X509_V_OK)
             return X509_V_ERR_EXCLUDED_VIOLATION;
         else if (r != X509_V_ERR_PERMITTED_VIOLATION)
@@ -563,7 +563,7 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 }
 
 static int nc_match_single(int effective_type, GENERAL_NAME *gen,
-    GENERAL_NAME *base)
+    GENERAL_NAME *base, int excluded)
 {
     switch (gen->type) {
     case GEN_OTHERNAME:
@@ -583,7 +583,7 @@ static int nc_match_single(int effective_type, GENERAL_NAME *gen,
         return nc_dn(gen->d.directoryName, base->d.directoryName);
 
     case GEN_DNS:
-        return nc_dns(gen->d.dNSName, base->d.dNSName);
+        return nc_dns(gen->d.dNSName, base->d.dNSName, excluded);
 
     case GEN_EMAIL:
         return nc_email(gen->d.rfc822Name, base->d.rfc822Name);
@@ -620,13 +620,27 @@ static int nc_dn(const X509_NAME *nm, const X509_NAME *base)
     return X509_V_OK;
 }
 
-static int nc_dns(ASN1_IA5STRING *dns, ASN1_IA5STRING *base)
+static int nc_dns(ASN1_IA5STRING *dns, ASN1_IA5STRING *base, int excluded)
 {
     char *baseptr = (char *)base->data;
     char *dnsptr = (char *)dns->data;
+    char *base_dot;
 
     /* Empty matches everything */
     if (base->length == 0)
+        return X509_V_OK;
+
+    /*
+     * When checking excluded subtrees, a DNS wildcard is a match if any
+     * expansion of the wildcard could match the excluded name.
+     */
+    if (excluded && dns->length > 2
+        && dns->data[0] == '*' && dns->data[1] == '.'
+        && (base_dot = ia5memchr(base, baseptr, '.')) != NULL
+        && dns->length - 2 == IA5_OFFSET_LEN(base, base_dot + 1)
+        && ia5ncasecmp((char *)dns->data + 2, base_dot + 1,
+               dns->length - 2)
+            == 0)
         return X509_V_OK;
 
     if (dns->length < base->length)
