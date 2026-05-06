@@ -371,6 +371,15 @@ Check that the certificate matches the specified email address.
 
 Check that the certificate matches the specified IP address.
 
+Certificate checking is done with X.509 certificate verification,
+which will fail when encountering an error. As such, when combining
+the B<-checkhost>, B<-checkemail>, and B<-checkip> flags, verify will
+indicate success if all checks pass, and will indicate failure if they
+do not. A diagnostic message of only the first encountered failed
+check that stops certificate verification will be printed in the
+failing case. If a specific diagnostic message is needed for
+individual checks they should be tried individually.
+
 =back
 
 =head2 Certificate Output Options
