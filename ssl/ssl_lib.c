@@ -1533,6 +1533,9 @@ void ossl_ssl_connection_free(SSL *ssl)
     OPENSSL_free(s->client_cert_type);
     OPENSSL_free(s->server_cert_type);
 
+    /* Free DTLS 1.3 listen transcript data */
+    OPENSSL_free(s->dtls13_listen_saved_hrr);
+
     OSSL_STACK_OF_X509_free(s->verified_chain);
 
     if (ssl->method != NULL)

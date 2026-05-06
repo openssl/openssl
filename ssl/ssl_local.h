@@ -1927,6 +1927,16 @@ struct ssl_connection_st {
 
     /* DTLS 1.3 needs to know when we have processed the Client/Server Hello */
     int dtls13_process_hello;
+
+    /*
+     * DTLS 1.3 DTLSv1_listen() transcript data: stores ClientHello1 hash and
+     * HRR message across multiple calls to DTLSv1_listen() so the transcript
+     * can be properly set up when the second ClientHello is received.
+     */
+    unsigned char dtls13_listen_ch1_hash[EVP_MAX_MD_SIZE];
+    size_t dtls13_listen_ch1_hash_len;
+    unsigned char *dtls13_listen_saved_hrr;
+    size_t dtls13_listen_saved_hrr_len;
 };
 
 /*
@@ -2818,6 +2828,10 @@ __owur const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s,
     STACK_OF(SSL_CIPHER) *clnt,
     STACK_OF(SSL_CIPHER) *srvr);
 __owur int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep);
+int create_synthetic_message_hash(SSL_CONNECTION *s,
+    const unsigned char *hashval,
+    size_t hashlen, const unsigned char *hrr,
+    size_t hrrlen);
 __owur int ssl3_new(SSL *s);
 void ssl3_free(SSL *s);
 __owur int ssl3_read(SSL *s, void *buf, size_t len, size_t *readbytes);

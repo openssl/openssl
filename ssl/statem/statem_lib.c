@@ -143,9 +143,18 @@ int tls_setup_handshake(SSL_CONNECTION *s)
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
-    if (!ssl3_init_finished_mac(s)) {
-        /* SSLfatal() already called */
-        return 0;
+    /*
+     * For DTLS 1.3 after DTLSv1_listen() sent an HRR, the transcript hash
+     * has already been set up with the synthetic message_hash and HRR.
+     * Don't reinitialize it here.
+     */
+    if (!(s->server && SSL_CONNECTION_IS_DTLS(s)
+            && s->hello_retry_request == SSL_HRR_PENDING
+            && s->s3.handshake_buffer != NULL)) {
+        if (!ssl3_init_finished_mac(s)) {
+            /* SSLfatal() already called */
+            return 0;
+        }
     }
 
     /* Reset any extension flags */
@@ -2324,6 +2333,18 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
                  */
                 if (best_vers != version1_3)
                     return SSL_R_UNSUPPORTED_PROTOCOL;
+                /*
+                 * In the stateless listen path (DTLSv1_listen), SSL_clear() is
+                 * called on every iteration, resetting s->version to SSL3_VERSION.
+                 * Unlike the stateful HRR path where s->version was already set
+                 * to (D)TLS1_3_VERSION by the first ClientHello processing, here
+                 * we must set it explicitly so that SSL_CONNECTION_IS_VERSION13()
+                 * returns true during the subsequent SSL_accept() call.
+                 */
+                s->version = best_vers;
+                ssl->method = best_method;
+                if (!ssl_set_record_protocol_version(s, best_vers))
+                    return ERR_R_INTERNAL_ERROR;
                 return 0;
             }
             check_for_downgrade(s, best_vers, dgrd);

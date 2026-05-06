@@ -503,8 +503,12 @@ int dtls1_handle_timeout(SSL_CONNECTION *s)
 
 #define LISTEN_SUCCESS 2
 #define LISTEN_SEND_VERIFY_REQUEST 1
+#define LISTEN_SEND_HELLO_RETRY_REQUEST 3
 
 #ifndef OPENSSL_NO_SOCK
+/* The HelloRetryRequest sentinel random value from RFC 8446 s4.1.3 */
+extern const unsigned char hrrrandom[];
+
 int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
 {
     int next, n, ret = 0;
@@ -517,6 +521,12 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
     BIO *rbio, *wbio;
     BIO_ADDR *tmpclient = NULL;
     PACKET pkt, msgpkt, msgpayload, session, cookiepkt;
+    PACKET ciphers, compmeths, extensions, ext_data;
+    int dtls13;
+    unsigned char hrr_cookie[SSL_COOKIE_LENGTH];
+    size_t hrr_cookie_len;
+    const SSL_CIPHER *hrr_cipher = NULL;
+    unsigned int ext_type;
     SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
 
     if (s == NULL)
@@ -709,14 +719,113 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
         }
 
         /*
-         * Check if we have a cookie or not. If not we need to send a
-         * HelloVerifyRequest.
+         * Scan the extensions in the ClientHello to determine whether the
+         * client supports DTLS 1.3, and if so whether a TLS 1.3 cookie
+         * extension is present.
          */
-        if (PACKET_remaining(&cookiepkt) == 0) {
+        dtls13 = 0;
+        hrr_cookie_len = 0;
+        memset(&ciphers, 0, sizeof(ciphers));
+
+        if (PACKET_get_length_prefixed_2(&msgpayload, &ciphers)
+            && PACKET_remaining(&ciphers) > 0
+            && PACKET_get_length_prefixed_1(&msgpayload, &compmeths)
+            && PACKET_remaining(&compmeths) > 0
+            && PACKET_get_length_prefixed_2(&msgpayload, &extensions)) {
+            while (PACKET_remaining(&extensions) > 0) {
+                if (!PACKET_get_net_2(&extensions, &ext_type)
+                    || !PACKET_get_length_prefixed_2(&extensions,
+                        &ext_data))
+                    break;
+                if (ext_type == TLSEXT_TYPE_supported_versions) {
+                    /*
+                     * supported_versions in a ClientHello is a
+                     * ProtocolVersion list prefixed with a 1-byte length.
+                     */
+                    PACKET sv_list;
+                    unsigned int sv;
+
+                    if (!PACKET_get_length_prefixed_1(&ext_data, &sv_list))
+                        break;
+                    while (PACKET_get_net_2(&sv_list, &sv)) {
+                        if (sv == DTLS1_3_VERSION) {
+                            dtls13 = 1;
+                            break;
+                        }
+                    }
+                } else if (ext_type == TLSEXT_TYPE_cookie) {
+                    /*
+                     * TLS 1.3 cookie extension: 2-byte length-prefixed
+                     * cookie value. Save it for DTLS 1.3 verification.
+                     */
+                    PACKET cookie_data;
+
+                    if (PACKET_get_length_prefixed_2(&ext_data,
+                            &cookie_data)
+                        && PACKET_remaining(&cookie_data) <= SSL_COOKIE_LENGTH) {
+                        hrr_cookie_len = PACKET_remaining(&cookie_data);
+                        memcpy(hrr_cookie, PACKET_data(&cookie_data),
+                            hrr_cookie_len);
+                    }
+                }
+            }
+        }
+
+        /*
+         * Check if we have a cookie or not. If not we need to send a
+         * HelloVerifyRequest (DTLS <= 1.2) or HelloRetryRequest (DTLS 1.3).
+         *
+         * We take the HRR path if gen_stateless_cookie_cb is set AND the
+         * legacy cookie field is empty AND dtls13==1 (supported_versions
+         * extension was parsed and indicates DTLS 1.3 support).
+         *
+         * Note: Fragmented DTLS 1.3 ClientHellos are rejected earlier with
+         * SSL_R_FRAGMENTED_CLIENT_HELLO because we cannot compute the
+         * transcript hash without the full message.
+         *
+         * If the legacy cookie is non-empty we always go through the legacy
+         * HelloVerifyRequest path, even if stateless callbacks are registered,
+         * so that a DTLS <= 1.2 client with a legacy cookie is handled correctly.
+         *
+         * If gen_stateless_cookie_cb is NULL we fall through to the legacy
+         * HelloVerifyRequest path, allowing callers that only set the legacy
+         * callbacks to continue working.
+         */
+        if (ssl->ctx->gen_stateless_cookie_cb != NULL
+            && PACKET_remaining(&cookiepkt) == 0) {
+            if (hrr_cookie_len > 0) {
+                if (ssl->ctx->verify_stateless_cookie_cb == NULL) {
+                    ERR_raise(ERR_LIB_SSL, SSL_R_NO_VERIFY_COOKIE_CALLBACK);
+                    /* This is fatal */
+                    ret = -1;
+                    goto end;
+                }
+                if (ssl->ctx->verify_stateless_cookie_cb(ssl, hrr_cookie,
+                        hrr_cookie_len)
+                    == 0) {
+                    next = LISTEN_SEND_HELLO_RETRY_REQUEST;
+                } else {
+                    next = LISTEN_SUCCESS;
+                }
+            } else {
+                /*
+                 * No TLS cookie found. If msgseq == 1, this is a response to
+                 * our previous HRR, so the client should have included a cookie.
+                 * If we can't find it (likely due to fragmentation), we must
+                 * not send another HRR or we'll create an infinite loop.
+                 */
+                if (msgseq == 1) {
+                    ERR_raise(ERR_LIB_SSL, SSL_R_COOKIE_MISMATCH);
+                    ret = -1;
+                    goto end;
+                }
+                next = LISTEN_SEND_HELLO_RETRY_REQUEST;
+            }
+        } else if (PACKET_remaining(&cookiepkt) == 0) {
             next = LISTEN_SEND_VERIFY_REQUEST;
         } else {
             /*
-             * We have a cookie, so lets check it.
+             * DTLS <= 1.2: verify via the legacy app cookie callback.
              */
             if (ssl->ctx->app_verify_cookie_cb == NULL) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_NO_VERIFY_COOKIE_CALLBACK);
@@ -729,7 +838,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
                 == 0) {
                 /*
                  * We treat invalid cookies in the same was as no cookie as
-                 * per RFC6347
+-                * per RFC6347
                  */
                 next = LISTEN_SEND_VERIFY_REQUEST;
             } else {
@@ -885,6 +994,276 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
                 goto end;
             }
         }
+
+        if (next == LISTEN_SEND_HELLO_RETRY_REQUEST) {
+            WPACKET wpkt;
+            size_t wreclen;
+            unsigned int hrr_cipher_id = 0;
+            unsigned int cipher_id;
+            STACK_OF(SSL_CIPHER) *srvr_ciphers = SSL_get_ciphers(ssl);
+            PACKET ciphers_copy = ciphers;
+            size_t hrr_body_len;
+            const unsigned char *hrr_start = NULL;
+            const EVP_MD *md;
+            EVP_MD_CTX *ctx;
+            unsigned int hash_size;
+
+            /*
+             * DTLS 1.3 requires the transcript hash to include the full
+             * ClientHello1. DTLSv1_listen() is stateless and cannot reassemble
+             * fragments, so if the ClientHello is fragmented we cannot compute
+             * the correct transcript hash. The handshake would fail later with
+             * a transcript mismatch.
+             *
+             * This is a fundamental limitation: DTLSv1_listen() cannot support
+             * DTLS 1.3 with fragmented ClientHellos. Applications using large
+             * key exchanges (e.g., post-quantum ML-KEM) that cause fragmentation
+             * must use SSL_accept() directly instead of DTLSv1_listen().
+             */
+            if (fraglen < msglen) {
+                ERR_raise(ERR_LIB_SSL, SSL_R_FRAGMENTED_CLIENT_HELLO);
+                ret = -1;
+                goto end;
+            }
+            /*
+             * Select the best mutually supported TLS 1.3 cipher from the
+             * client's cipher list.  We walk ciphers (which holds the raw
+             * 2-byte cipher IDs offered by the client) and for each one:
+             *   1. Look it up with SSL_CIPHER_find().
+             *   2. Skip it if it is not a TLS 1.3 cipher (min_tls != TLS1_3_VERSION).
+             *   3. Skip it if the server does not have it enabled.
+             * We pick the first match (client-preference order), if no match
+             * we exit with an error
+             */
+
+            while (PACKET_get_net_2(&ciphers_copy, &cipher_id)) {
+                unsigned char client_cipher_id[2];
+                const SSL_CIPHER *cipher;
+
+                client_cipher_id[0] = (unsigned char)(cipher_id >> 8);
+                client_cipher_id[1] = (unsigned char)(cipher_id & 0xff);
+                cipher = SSL_CIPHER_find(ssl, client_cipher_id);
+                if (cipher == NULL)
+                    continue;
+                /* Only TLS 1.3 ciphersuites are valid in an HRR */
+                if (cipher->min_tls != TLS1_3_VERSION)
+                    continue;
+                /* Confirm the server has this cipher enabled */
+                if (srvr_ciphers != NULL
+                    && sk_SSL_CIPHER_find(srvr_ciphers, cipher) < 0)
+                    continue;
+                /* Found a mutually acceptable TLS 1.3 cipher */
+                hrr_cipher = cipher;
+                hrr_cipher_id = cipher_id;
+                break;
+            }
+
+            if (hrr_cipher_id == 0) {
+                /*
+                 * No mutually acceptable TLS 1.3 cipher was found.
+                 * Since fragmented ClientHellos are rejected earlier,
+                 * we know the cipher list was present but had no match.
+                 */
+                ERR_raise(ERR_LIB_SSL, SSL_R_NO_SHARED_CIPHER);
+                ret = -1;
+                goto end;
+            }
+
+            /* Generate the stateless cookie via the TLS 1.3 callback */
+            if (ssl->ctx->gen_stateless_cookie_cb == NULL) {
+                ERR_raise(ERR_LIB_SSL, SSL_R_NO_COOKIE_CALLBACK_SET);
+                ret = -1;
+                goto end;
+            }
+            hrr_cookie_len = SSL_COOKIE_LENGTH;
+            if (ssl->ctx->gen_stateless_cookie_cb(ssl, hrr_cookie,
+                    &hrr_cookie_len)
+                == 0) {
+                ERR_raise(ERR_LIB_SSL, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
+                ret = -1;
+                goto end;
+            }
+
+            if (!WPACKET_init_static_len(&wpkt, wbuf,
+                    ssl_get_max_send_fragment(s) + DTLS1_RT_HEADER_LENGTH, 0)
+                /* Record header */
+                || !WPACKET_put_bytes_u8(&wpkt, SSL3_RT_HANDSHAKE)
+                || !WPACKET_put_bytes_u16(&wpkt, DTLS1_2_VERSION)
+                || !WPACKET_memcpy(&wpkt, seq, SEQ_NUM_SIZE)
+                /* Record body length (filled by sub-packet close) */
+                || !WPACKET_start_sub_packet_u16(&wpkt)
+                /* Handshake message type */
+                || !WPACKET_put_bytes_u8(&wpkt, SSL3_MT_SERVER_HELLO)
+                /*
+                 * Handshake message length: written at offset 1 within the
+                 * handshake header (3 bytes), we will patch it up the same
+                 * way DTLSv1_listen does for HelloVerifyRequest.
+                 */
+                || !WPACKET_put_bytes_u24(&wpkt, 0) /* placeholder length */
+                /* msg_seq = 0 (this is the server's first handshake message) */
+                || !WPACKET_put_bytes_u16(&wpkt, 0)
+                /* fragment_offset = 0 (never fragment an HRR) */
+                || !WPACKET_put_bytes_u24(&wpkt, 0)
+                /* fragment_length == message_length: use a sub-packet */
+                || !WPACKET_start_sub_packet_u24(&wpkt)
+                /* ServerHello body */
+                || !WPACKET_put_bytes_u16(&wpkt, DTLS1_2_VERSION)
+                || !WPACKET_memcpy(&wpkt, hrrrandom, SSL3_RANDOM_SIZE)
+                /* legacy_session_id: empty for DTLS 1.3 */
+                || !WPACKET_put_bytes_u8(&wpkt, 0)
+                /* cipher_suite: best mutually supported TLS 1.3 cipher */
+                || !WPACKET_put_bytes_u16(&wpkt, hrr_cipher_id)
+                /* legacy_compression_method: null */
+                || !WPACKET_put_bytes_u8(&wpkt, 0)
+                /* Extensions (u16-prefixed block) */
+                || !WPACKET_start_sub_packet_u16(&wpkt)
+                /* supported_versions extension: type + u16 data len + u16 version */
+                || !WPACKET_put_bytes_u16(&wpkt, TLSEXT_TYPE_supported_versions)
+                || !WPACKET_start_sub_packet_u16(&wpkt)
+                || !WPACKET_put_bytes_u16(&wpkt, DTLS1_3_VERSION)
+                || !WPACKET_close(&wpkt) /* supported_versions ext data */
+                /* cookie extension: type + u16 data len + u16 cookie len + cookie */
+                || !WPACKET_put_bytes_u16(&wpkt, TLSEXT_TYPE_cookie)
+                || !WPACKET_start_sub_packet_u16(&wpkt)
+                || !WPACKET_sub_memcpy_u16(&wpkt, hrr_cookie, hrr_cookie_len)
+                || !WPACKET_close(&wpkt) /* cookie ext data */
+                || !WPACKET_close(&wpkt) /* extensions block */
+                || !WPACKET_close(&wpkt) /* fragment (inner sub-packet) */
+                || !WPACKET_close(&wpkt) /* record body */
+                || !WPACKET_get_total_written(&wpkt, &wreclen)
+                || !WPACKET_finish(&wpkt)) {
+                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+                WPACKET_cleanup(&wpkt);
+                ret = -1;
+                goto end;
+            }
+
+            /*
+             * Patch the handshake message length field (bytes 1-3 of the
+             * handshake header) to equal the fragment length (bytes 9-11).
+             * These are located at DTLS1_RT_HEADER_LENGTH+1 and
+             * DTLS1_RT_HEADER_LENGTH+DTLS1_HM_HEADER_LENGTH-3 respectively,
+             * matching the same fixup done for HelloVerifyRequest above.
+             */
+            memcpy(&wbuf[DTLS1_RT_HEADER_LENGTH + 1],
+                &wbuf[DTLS1_RT_HEADER_LENGTH + DTLS1_HM_HEADER_LENGTH - 3],
+                3);
+
+            /*
+             * Save the HRR message (handshake portion, without record header)
+             * for later transcript hash reconstruction. We need the HRR in
+             * DTLS format (full 12-byte handshake header + body) because
+             * ssl3_finish_mac/ssl3_digest_cached_records expects DTLS-format
+             * messages and will strip out the DTLS-specific fields when
+             * computing the actual transcript hash.
+             */
+            hrr_start = wbuf + DTLS1_RT_HEADER_LENGTH;
+
+            /* HRR body length is in bytes 1-3 of handshake header */
+            hrr_body_len = ((size_t)hrr_start[1] << 16)
+                | ((size_t)hrr_start[2] << 8)
+                | (size_t)hrr_start[3];
+            /*
+             * Store the full DTLS handshake message (12-byte header + body).
+             */
+            s->dtls13_listen_saved_hrr_len = DTLS1_HM_HEADER_LENGTH + hrr_body_len;
+            OPENSSL_free(s->dtls13_listen_saved_hrr);
+            s->dtls13_listen_saved_hrr = OPENSSL_malloc(s->dtls13_listen_saved_hrr_len);
+            if (s->dtls13_listen_saved_hrr != NULL) {
+                /* Copy full DTLS handshake message (header + body) */
+                memcpy(s->dtls13_listen_saved_hrr, hrr_start, s->dtls13_listen_saved_hrr_len);
+            } else {
+                s->dtls13_listen_saved_hrr_len = 0;
+            }
+
+            /*
+             * Compute hash of ClientHello1 for transcript reconstruction.
+             * For DTLS 1.3, the hash is computed over the TLS 1.3 style message:
+             * first 4 bytes of handshake header (msg_type + msg_length) plus body.
+             *
+             * Get the hash algorithm from the selected cipher.
+             * For TLS 1.3 ciphers, the hash is determined by the cipher.
+             */
+            md = ssl_md(SSL_CONNECTION_GET_CTX(s), hrr_cipher->algorithm2);
+            if (md == NULL) {
+                ERR_raise(ERR_LIB_SSL, SSL_R_NO_SUITABLE_DIGEST_ALGORITHM);
+                ret = -1;
+                goto end;
+            }
+
+            ctx = EVP_MD_CTX_new();
+            if (ctx == NULL) {
+                ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
+                ret = -1;
+                goto end;
+            }
+
+            if (!EVP_DigestInit_ex(ctx, md, NULL)) {
+                EVP_MD_CTX_free(ctx);
+                ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
+                ret = -1;
+                goto end;
+            }
+
+            /*
+             * Hash the ClientHello1 in TLS 1.3 style:
+             * - First 4 bytes of DTLS header (msg_type + msg_length)
+             * - Body (skip message_seq, fragment_offset, fragment_length)
+             *
+             * 'data' points to start of handshake message (msg_type)
+             * 'fraglen' is the length of the fragment body
+             */
+            if (!EVP_DigestUpdate(ctx, data, SSL3_HM_HEADER_LENGTH)
+                || !EVP_DigestUpdate(ctx, data + DTLS1_HM_HEADER_LENGTH, fraglen)) {
+                EVP_MD_CTX_free(ctx);
+                ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
+                ret = -1;
+                goto end;
+            }
+
+            if (!EVP_DigestFinal_ex(ctx, s->dtls13_listen_ch1_hash, &hash_size)) {
+                EVP_MD_CTX_free(ctx);
+                ERR_raise(ERR_LIB_SSL, ERR_R_EVP_LIB);
+                ret = -1;
+                goto end;
+            }
+            s->dtls13_listen_ch1_hash_len = hash_size;
+            EVP_MD_CTX_free(ctx);
+
+            if (s->msg_callback) {
+                s->msg_callback(1, DTLS1_2_VERSION, SSL3_RT_HEADER,
+                    wbuf, DTLS1_RT_HEADER_LENGTH,
+                    ssl, s->msg_callback_arg);
+                s->msg_callback(1, DTLS1_2_VERSION, SSL3_RT_HANDSHAKE,
+                    wbuf + DTLS1_RT_HEADER_LENGTH,
+                    wreclen - DTLS1_RT_HEADER_LENGTH,
+                    ssl, s->msg_callback_arg);
+            }
+
+            if ((tmpclient = BIO_ADDR_new()) == NULL) {
+                ERR_raise(ERR_LIB_SSL, ERR_R_BIO_LIB);
+                goto end;
+            }
+
+            if (BIO_dgram_get_peer(rbio, tmpclient) > 0)
+                (void)BIO_dgram_set_peer(wbio, tmpclient);
+            BIO_ADDR_free(tmpclient);
+            tmpclient = NULL;
+
+            if (BIO_write(wbio, wbuf, (int)wreclen) < (int)wreclen) {
+                if (BIO_should_retry(wbio))
+                    goto end;
+                ret = -1;
+                goto end;
+            }
+
+            if (BIO_flush(wbio) <= 0) {
+                if (BIO_should_retry(wbio))
+                    goto end;
+                ret = -1;
+                goto end;
+            }
+        }
     } while (next != LISTEN_SUCCESS);
 
     /*
@@ -900,6 +1279,89 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
      * SSL object
      */
     SSL_set_options(ssl, SSL_OP_COOKIE_EXCHANGE);
+
+    if (dtls13) {
+        /*
+         * For DTLS 1.3 we sent a HelloRetryRequest rather than a
+         * HelloVerifyRequest.  Signal this to the state machine so that the
+         * subsequent SSL_accept() call handles the second ClientHello
+         * correctly (transcript hash, key_share selection, etc.).
+         *
+         * Also set new_cipher to the cipher we advertised in the HRR.
+         * tls_early_post_process_client_hello checks that the cipher in the
+         * second ClientHello matches new_cipher when hello_retry_request is
+         * SSL_HRR_PENDING.
+         */
+        s->hello_retry_request = SSL_HRR_PENDING;
+
+        if (hrr_cipher == NULL) {
+            /*
+             * Second invocation: we went straight to LISTEN_SUCCESS without
+             * sending an HRR, so hrr_cipher was never set this call.
+             * Re-select from the client's cipher list now.
+             */
+            unsigned int cipher_id;
+            STACK_OF(SSL_CIPHER) *srvr_ciphers = SSL_get_ciphers(ssl);
+            PACKET cp = ciphers;
+
+            while (PACKET_get_net_2(&cp, &cipher_id)) {
+                unsigned char client_cipher_id[2];
+                const SSL_CIPHER *client_cipher;
+
+                client_cipher_id[0] = (unsigned char)(cipher_id >> 8);
+                client_cipher_id[1] = (unsigned char)(cipher_id & 0xff);
+                client_cipher = SSL_CIPHER_find(ssl, client_cipher_id);
+                if (client_cipher == NULL || client_cipher->min_tls != TLS1_3_VERSION)
+                    continue;
+                if (srvr_ciphers != NULL
+                    && sk_SSL_CIPHER_find(srvr_ciphers, client_cipher) < 0)
+                    continue;
+                hrr_cipher = client_cipher;
+                break;
+            }
+        }
+
+        if (hrr_cipher != NULL)
+            s->s3.tmp.new_cipher = hrr_cipher;
+
+        /*
+         * Set up the transcript hash for DTLS 1.3.
+         * If we sent an HRR (dtls13_listen_ch1_hash_len > 0), we need to:
+         * 1. Initialize the transcript with a synthetic message_hash of ClientHello1
+         * 2. Add the HRR to the transcript
+         *
+         * The subsequent SSL_accept() will then add ClientHello2 to the transcript.
+         */
+        if (s->dtls13_listen_ch1_hash_len > 0 && s->dtls13_listen_saved_hrr_len > 0) {
+            /*
+             * Create the synthetic message_hash. This:
+             * 1. Reinitializes the transcript hash
+             * 2. Injects message_hash(Hash(ClientHello1)) into the transcript
+             */
+            if (!create_synthetic_message_hash(s, s->dtls13_listen_ch1_hash,
+                    s->dtls13_listen_ch1_hash_len, NULL, 0)) {
+                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+                ret = -1;
+                goto end;
+            }
+
+            /*
+             * Now add the HRR to the transcript.
+             * The HRR was saved in DTLS format (12-byte header + body).
+             */
+            if (!ssl3_finish_mac(s, s->dtls13_listen_saved_hrr, s->dtls13_listen_saved_hrr_len)) {
+                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+                ret = -1;
+                goto end;
+            }
+
+            /* Clean up the saved transcript data - no longer needed */
+            OPENSSL_free(s->dtls13_listen_saved_hrr);
+            s->dtls13_listen_saved_hrr = NULL;
+            s->dtls13_listen_saved_hrr_len = 0;
+            s->dtls13_listen_ch1_hash_len = 0;
+        }
+    }
 
     /*
      * Tell the state machine that we've done the initial hello verify
