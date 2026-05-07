@@ -7,6 +7,34 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * FIPS 202 Section 5.1 Specifies a padding mode that is added to the last
+ * block that consists of a 1 bit followed by padding zero bits and a trailing
+ * 1 bit (where the bits are in LSB order)
+ *
+ * For a given input message special algorithm context bits are appended:
+ * i.e.
+ *   KECCAK[c] = (No tag is used)
+ *   SHA3   = 01
+ *   SHAKE  = 1111
+ *   CSHAKE_KECCAK = 00 (See NIST SP800-185 3.3 : i.e. it has 2 trailing zero bits)
+ * Note that KMAC and TupleHash use CSHAKE_KECCAK.
+ * The OpenSSL implementation only allows input messages that are in bytes,
+ * so the above concatenated bits will start on a byte boundary.
+ * Following these bits will be a 1 bit then the padding zeros which gives
+ *
+ *   KECCAK[c] = 1000
+ *   SHA3   = 0110
+ *   SHAKE  = 11111000
+ *   CSHAKE_KECCAK = 0010 (See NIST SP800-185 3.3 : i.e. KMAC uses cSHAKE with a fixed string)
+ *
+ *   Which gives the following padding values as bytes.
+ */
+#define KECCAK_PADDING 0x01
+#define SHA3_PADDING 0x06
+#define SHAKE_PADDING 0x1f
+#define CSHAKE_KECCAK_PADDING 0x04
+
 #include <string.h>
 #include "internal/sha3.h"
 #include "internal/common.h"
@@ -239,6 +267,12 @@ int ossl_shake_squeeze_default(KECCAK1600_CTX *ctx, unsigned char *out, size_t o
     return 1;
 }
 
+static PROV_SHA3_METHOD sha3_generic_meth = {
+    ossl_sha3_absorb_default,
+    ossl_sha3_final_default,
+    NULL
+};
+
 static PROV_SHA3_METHOD shake_generic_meth = {
     ossl_sha3_absorb_default,
     ossl_sha3_final_default,
@@ -261,6 +295,17 @@ static size_t sha3_absorb_s390x(KECCAK1600_CTX *ctx, const unsigned char *inp, s
         s390x_kimd(inp, len - rem, fc, ctx->A);
     }
     return rem;
+}
+
+static int sha3_final_s390x(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
+{
+    unsigned int fc;
+
+    fc = ctx->pad | S390X_KLMD_DUFOP;
+    fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KLMD_NIP : 0;
+    s390x_klmd(ctx->buf, ctx->bufsz, NULL, 0, fc, ctx->A);
+    memcpy(out, ctx->A, outlen);
+    return 1;
 }
 
 static int shake_final_s390x(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
@@ -308,11 +353,117 @@ static int shake_squeeze_s390x(KECCAK1600_CTX *ctx, unsigned char *out, size_t o
     return 1;
 }
 
+static int keccakc_final_s390x(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen,
+    int padding)
+{
+    size_t bsz = ctx->block_size;
+    size_t num = ctx->bufsz;
+    size_t needed = outlen;
+    unsigned int fc;
+
+    fc = ctx->pad;
+    fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KIMD_NIP : 0;
+    if (outlen == 0)
+        return 1;
+    memset(ctx->buf + num, 0, bsz - num);
+    ctx->buf[num] = padding;
+    ctx->buf[bsz - 1] |= 0x80;
+    s390x_kimd(ctx->buf, bsz, fc, ctx->A);
+    num = needed > bsz ? bsz : needed;
+    memcpy(out, ctx->A, num);
+    needed -= num;
+    if (needed > 0)
+        s390x_klmd(NULL, 0, out + bsz, needed,
+            ctx->pad | S390X_KLMD_PS | S390X_KLMD_DUFOP, ctx->A);
+
+    return 1;
+}
+
+static int keccakc_squeeze_s390x(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen,
+    int padding)
+{
+    size_t len;
+    unsigned int fc;
+
+    /*
+     * On the first squeeze call, finish the absorb process
+     * by adding the trailing padding and then doing
+     * a final absorb.
+     */
+    if (ctx->xof_state != XOF_STATE_SQUEEZE) {
+        len = ctx->block_size - ctx->bufsz;
+        memset(ctx->buf + ctx->bufsz, 0, len);
+        ctx->buf[ctx->bufsz] = padding;
+        ctx->buf[ctx->block_size - 1] |= 0x80;
+        fc = ctx->pad;
+        fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KIMD_NIP : 0;
+        s390x_kimd(ctx->buf, ctx->block_size, fc, ctx->A);
+        ctx->bufsz = 0;
+        /* reuse ctx->bufsz to count bytes squeezed from current sponge */
+    }
+    if (ctx->bufsz != 0 || ctx->xof_state != XOF_STATE_SQUEEZE) {
+        len = ctx->block_size - ctx->bufsz;
+        if (outlen < len)
+            len = outlen;
+        memcpy(out, (char *)ctx->A + ctx->bufsz, len);
+        out += len;
+        outlen -= len;
+        ctx->bufsz += len;
+        if (ctx->bufsz == ctx->block_size)
+            ctx->bufsz = 0;
+    }
+    if (outlen == 0)
+        return 1;
+    s390x_klmd(NULL, 0, out, outlen, ctx->pad | S390X_KLMD_PS, ctx->A);
+    ctx->bufsz = outlen % ctx->block_size;
+
+    return 1;
+}
+
+static int keccak_squeeze_s390x(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
+{
+    return keccakc_squeeze_s390x(ctx, out, outlen, KECCAK_PADDING);
+}
+
+static int cshake_keccak_squeeze_s390x(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
+{
+    return keccakc_squeeze_s390x(ctx, out, outlen, CSHAKE_KECCAK_PADDING);
+}
+
+static int keccak_final_s390x(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
+{
+    return keccakc_final_s390x(ctx, out, outlen, KECCAK_PADDING);
+}
+
+static int cshake_keccak_final_s390x(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
+{
+    return keccakc_final_s390x(ctx, out, outlen, CSHAKE_KECCAK_PADDING);
+}
+
+static PROV_SHA3_METHOD sha3_s390x_meth = {
+    sha3_absorb_s390x,
+    sha3_final_s390x,
+    NULL,
+};
+
 static PROV_SHA3_METHOD shake_s390x_meth = {
     sha3_absorb_s390x,
     shake_final_s390x,
     shake_squeeze_s390x
 };
+
+static PROV_SHA3_METHOD keccak_s390x_meth = {
+    sha3_absorb_s390x,
+    keccak_final_s390x,
+    keccak_squeeze_s390x,
+};
+
+static PROV_SHA3_METHOD cshake_keccak_s390x_meth = {
+    sha3_absorb_s390x,
+    cshake_keccak_final_s390x,
+    cshake_keccak_squeeze_s390x,
+};
+
 #elif defined(__aarch64__) && defined(KECCAK1600_ASM)
 
 size_t SHA3_absorb_cext(uint64_t A[5][5], const unsigned char *inp, size_t len,
@@ -325,6 +476,12 @@ static size_t sha3_absorb_arm(KECCAK1600_CTX *ctx, const unsigned char *inp, siz
     return SHA3_absorb_cext(ctx->A, inp, len, ctx->block_size);
 }
 
+static PROV_SHA3_METHOD sha3_ARMSHA3_meth = {
+    sha3_absorb_arm,
+    ossl_sha3_final_default,
+    NULL
+};
+
 static PROV_SHA3_METHOD shake_ARMSHA3_meth = {
     sha3_absorb_arm,
     ossl_sha3_final_default,
@@ -332,19 +489,150 @@ static PROV_SHA3_METHOD shake_ARMSHA3_meth = {
 };
 #endif
 
-KECCAK1600_CTX *ossl_shake256_new(void)
+KECCAK1600_CTX *ossl_sha3_new(size_t bitlen)
 {
     KECCAK1600_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx == NULL)
         return NULL;
-    ossl_keccak_init(ctx, '\x1f', 256, 0);
+    ossl_sha3_init(ctx, (uint8_t)SHA3_PADDING, bitlen);
+    ctx->meth = sha3_generic_meth;
+#if defined(S390_SHA3)
+    {
+        int type;
+        switch (bitlen) {
+        case 224:
+            type = S390X_SHA3_224;
+            break;
+        case 256:
+            type = S390X_SHA3_256;
+            break;
+        case 384:
+            type = S390X_SHA3_384;
+            break;
+        case 512:
+            type = S390X_SHA3_512;
+            break;
+        default:
+            OPENSSL_free(ctx);
+            return NULL;
+        }
+        if (S390_SHA3_CAPABLE(type)) {
+            ctx->pad = type;
+            ctx->meth = sha3_s390x_meth;
+        }
+    }
+#elif defined(__aarch64__) && defined(KECCAK1600_ASM)
+    if (OPENSSL_armcap_P & ARMV8_HAVE_SHA3_AND_WORTH_USING)
+        ctx->meth = sha3_ARMSHA3_meth;
+#endif
+    return ctx;
+}
+
+KECCAK1600_CTX *ossl_shake_new(size_t bitlen)
+{
+    KECCAK1600_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+
+    if (ctx == NULL)
+        return NULL;
+    ossl_keccak_init(ctx, (uint8_t)SHAKE_PADDING, bitlen, 0);
     ctx->md_size = SIZE_MAX;
+
     ctx->meth = shake_generic_meth;
 #if defined(S390_SHA3)
-    if (S390_SHA3_CAPABLE(S390X_SHAKE_256)) {
-        ctx->pad = S390X_SHAKE_256;
-        ctx->meth = shake_s390x_meth;
+    {
+        int type;
+        switch (bitlen) {
+        case 128:
+            type = S390X_SHAKE_128;
+            break;
+        case 256:
+            type = S390X_SHAKE_256;
+            break;
+        default:
+            OPENSSL_free(ctx);
+            return NULL;
+        }
+        if (S390_SHA3_CAPABLE(type)) {
+            ctx->pad = type;
+            ctx->meth = shake_s390x_meth;
+        }
+    }
+#elif defined(__aarch64__) && defined(KECCAK1600_ASM)
+    if (OPENSSL_armcap_P & ARMV8_HAVE_SHA3_AND_WORTH_USING)
+        ctx->meth = shake_ARMSHA3_meth;
+#endif
+    return ctx;
+}
+
+KECCAK1600_CTX *ossl_keccak_new(size_t bitlen)
+{
+    KECCAK1600_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+
+    if (ctx == NULL)
+        return NULL;
+
+    ossl_sha3_init(ctx, (uint8_t)KECCAK_PADDING, bitlen);
+    ctx->meth = shake_generic_meth;
+#if defined(S390_SHA3)
+    {
+        int type;
+        switch (bitlen) {
+        case 224:
+            type = S390X_KECCAK_224;
+            break;
+        case 256:
+            type = S390X_KECCAK_256;
+            break;
+        case 384:
+            type = S390X_KECCAK_384;
+            break;
+        case 512:
+            type = S390X_KECCAK_512;
+            break;
+        default:
+            OPENSSL_free(ctx);
+            return NULL;
+        }
+        if (S390_SHA3_CAPABLE(type)) {
+            ctx->pad = type;
+            ctx->meth = keccak_s390x_meth;
+        }
+    }
+#elif defined(__aarch64__) && defined(KECCAK1600_ASM)
+    if (OPENSSL_armcap_P & ARMV8_HAVE_SHA3_AND_WORTH_USING)
+        ctx->meth = shake_ARMSHA3_meth;
+#endif
+    return ctx;
+}
+
+KECCAK1600_CTX *ossl_cshake_keccak_new(size_t bitlen)
+{
+    KECCAK1600_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+
+    if (ctx == NULL)
+        return NULL;
+
+    ossl_keccak_init(ctx, (uint8_t)CSHAKE_KECCAK_PADDING, bitlen, 2 * bitlen);
+    ctx->meth = shake_generic_meth;
+#if defined(S390_SHA3)
+    {
+        int type;
+        switch (bitlen) {
+        case 128:
+            type = S390X_SHAKE_128;
+            break;
+        case 256:
+            type = S390X_SHAKE_256;
+            break;
+        default:
+            OPENSSL_free(ctx);
+            return NULL;
+        }
+        if (S390_SHA3_CAPABLE(type)) {
+            ctx->pad = type;
+            ctx->meth = cshake_keccak_s390x_meth;
+        }
     }
 #elif defined(__aarch64__) && defined(KECCAK1600_ASM)
     if (OPENSSL_armcap_P & ARMV8_HAVE_SHA3_AND_WORTH_USING)

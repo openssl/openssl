@@ -411,7 +411,7 @@ static int slh_hash_shake_precache(SLH_DSA_HASH_CTX *hctx, const uint8_t *pkseed
 {
     KECCAK1600_CTX *ctx = NULL, *seedctx = NULL;
 
-    ctx = ossl_shake256_new();
+    ctx = ossl_shake_new(256);
     if (ctx == NULL)
         return 0;
     seedctx = OPENSSL_memdup(ctx, sizeof(*ctx));

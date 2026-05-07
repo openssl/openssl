@@ -28,48 +28,36 @@
 #define CSHAKE_KECCAK_FLAGS PROV_DIGEST_FLAG_XOF
 
 /*
- * FIPS 202 Section 5.1 Specifies a padding mode that is added to the last
- * block that consists of a 1 bit followed by padding zero bits and a trailing
- * 1 bit (where the bits are in LSB order)
- *
- * For a given input message special algorithm context bits are appended:
- * i.e.
- *   KECCAK[c] = (No tag is used)
- *   SHA3   = 01
- *   SHAKE  = 1111
- *   CSHAKE_KECCAK = 00 (See NIST SP800-185 3.3 : i.e. it has 2 trailing zero bits)
- * Note that KMAC and TupleHash use CSHAKE_KECCAK.
- * The OpenSSL implementation only allows input messages that are in bytes,
- * so the above concatenated bits will start on a byte boundary.
- * Following these bits will be a 1 bit then the padding zeros which gives
- *
- *   KECCAK[c] = 1000
- *   SHA3   = 0110
- *   SHAKE  = 11111000
- *   CSHAKE_KECCAK = 0010 (See NIST SP800-185 3.3 : i.e. KMAC uses cSHAKE with a fixed string)
- *
- *   Which gives the following padding values as bytes.
- */
-#define KECCAK_PADDING 0x01
-#define SHA3_PADDING 0x06
-#define SHAKE_PADDING 0x1f
-#define CSHAKE_KECCAK_PADDING 0x04
-
-#if defined(OPENSSL_CPUID_OBJ) && defined(__s390__) && defined(KECCAK1600_ASM)
-/*
- * IBM S390X support
- */
-#include "s390x_arch.h"
-#define S390_SHA3 1
-#define S390_SHA3_CAPABLE(name) \
-    ((OPENSSL_s390xcap_P.kimd[0] & S390X_CAPBIT(S390X_##name)) && (OPENSSL_s390xcap_P.klmd[0] & S390X_CAPBIT(S390X_##name)))
-#endif
-
-/*
  * Forward declaration of any unique methods implemented here. This is not strictly
  * necessary for the compiler, but provides an assurance that the signatures
  * of the functions in the dispatch table are correct.
  */
+static OSSL_FUNC_digest_newctx_fn sha3_224_newctx;
+static OSSL_FUNC_digest_newctx_fn sha3_256_newctx;
+static OSSL_FUNC_digest_newctx_fn sha3_384_newctx;
+static OSSL_FUNC_digest_newctx_fn sha3_512_newctx;
+static OSSL_FUNC_digest_newctx_fn keccak_224_newctx;
+static OSSL_FUNC_digest_newctx_fn keccak_256_newctx;
+static OSSL_FUNC_digest_newctx_fn keccak_384_newctx;
+static OSSL_FUNC_digest_newctx_fn keccak_512_newctx;
+static OSSL_FUNC_digest_newctx_fn shake_128_newctx;
+static OSSL_FUNC_digest_newctx_fn shake_256_newctx;
+static OSSL_FUNC_digest_newctx_fn cshake_keccak_128_newctx;
+static OSSL_FUNC_digest_newctx_fn cshake_keccak_256_newctx;
+static OSSL_FUNC_digest_get_params_fn sha3_224_get_params;
+static OSSL_FUNC_digest_get_params_fn sha3_256_get_params;
+static OSSL_FUNC_digest_get_params_fn sha3_384_get_params;
+static OSSL_FUNC_digest_get_params_fn sha3_512_get_params;
+static OSSL_FUNC_digest_get_params_fn shake_128_get_params;
+static OSSL_FUNC_digest_get_params_fn shake_256_get_params;
+static OSSL_FUNC_digest_get_params_fn cshake_keccak_128_get_params;
+static OSSL_FUNC_digest_get_params_fn cshake_keccak_256_get_params;
+
+#define keccak_224_get_params sha3_224_get_params
+#define keccak_256_get_params sha3_256_get_params
+#define keccak_384_get_params sha3_384_get_params
+#define keccak_512_get_params sha3_512_get_params
+
 static OSSL_FUNC_digest_init_fn keccak_init;
 static OSSL_FUNC_digest_init_fn keccak_init_params;
 static OSSL_FUNC_digest_update_fn keccak_update;
@@ -83,18 +71,6 @@ static OSSL_FUNC_digest_get_ctx_params_fn shake_get_ctx_params;
 static OSSL_FUNC_digest_gettable_ctx_params_fn shake_gettable_ctx_params;
 static OSSL_FUNC_digest_set_ctx_params_fn shake_set_ctx_params;
 static OSSL_FUNC_digest_settable_ctx_params_fn shake_settable_ctx_params;
-
-static PROV_SHA3_METHOD sha3_generic_md = {
-    ossl_sha3_absorb_default,
-    ossl_sha3_final_default,
-    NULL
-};
-
-static PROV_SHA3_METHOD shake_generic_md = {
-    ossl_sha3_absorb_default,
-    ossl_sha3_final_default,
-    ossl_shake_squeeze_default
-};
 
 static int keccak_init(void *vctx, ossl_unused const OSSL_PARAM params[])
 {
@@ -149,355 +125,6 @@ static int shake_squeeze(void *vctx, unsigned char *out, size_t *outl,
         *outl = outlen;
     return ret;
 }
-
-#if defined(S390_SHA3)
-
-static sha3_absorb_fn s390x_sha3_absorb;
-static sha3_final_fn s390x_sha3_final;
-static sha3_final_fn s390x_shake_final;
-
-/*-
- * The platform specific parts of the absorb() and final() for S390X.
- */
-static size_t s390x_sha3_absorb(KECCAK1600_CTX *ctx, const unsigned char *inp, size_t len)
-{
-    size_t rem = len % ctx->block_size;
-    unsigned int fc;
-
-    if (len - rem > 0) {
-        fc = ctx->pad;
-        fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KIMD_NIP : 0;
-        s390x_kimd(inp, len - rem, fc, ctx->A);
-    }
-    return rem;
-}
-
-static int s390x_sha3_final(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
-{
-    unsigned int fc;
-
-    fc = ctx->pad | S390X_KLMD_DUFOP;
-    fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KLMD_NIP : 0;
-    s390x_klmd(ctx->buf, ctx->bufsz, NULL, 0, fc, ctx->A);
-    memcpy(out, ctx->A, outlen);
-    return 1;
-}
-
-static int s390x_shake_final(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
-{
-    unsigned int fc;
-
-    fc = ctx->pad | S390X_KLMD_DUFOP;
-    fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KLMD_NIP : 0;
-    s390x_klmd(ctx->buf, ctx->bufsz, out, outlen, fc, ctx->A);
-    return 1;
-}
-
-static int s390x_shake_squeeze(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
-{
-    unsigned int fc;
-    size_t len;
-
-    /*
-     * On the first squeeze call, finish the absorb process (incl. padding).
-     */
-    if (ctx->xof_state != XOF_STATE_SQUEEZE) {
-        fc = ctx->pad;
-        fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KLMD_NIP : 0;
-        s390x_klmd(ctx->buf, ctx->bufsz, out, outlen, fc, ctx->A);
-        ctx->bufsz = outlen % ctx->block_size;
-        /* reuse ctx->bufsz to count bytes squeezed from current sponge */
-        return 1;
-    }
-    if (ctx->bufsz != 0) {
-        len = ctx->block_size - ctx->bufsz;
-        if (outlen < len)
-            len = outlen;
-        memcpy(out, (char *)ctx->A + ctx->bufsz, len);
-        out += len;
-        outlen -= len;
-        ctx->bufsz += len;
-        if (ctx->bufsz == ctx->block_size)
-            ctx->bufsz = 0;
-    }
-    if (outlen == 0)
-        return 1;
-    s390x_klmd(NULL, 0, out, outlen, ctx->pad | S390X_KLMD_PS, ctx->A);
-    ctx->bufsz = outlen % ctx->block_size;
-
-    return 1;
-}
-
-static int s390x_keccakc_final(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen,
-    int padding)
-{
-    size_t bsz = ctx->block_size;
-    size_t num = ctx->bufsz;
-    size_t needed = outlen;
-    unsigned int fc;
-
-    fc = ctx->pad;
-    fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KIMD_NIP : 0;
-    if (outlen == 0)
-        return 1;
-    memset(ctx->buf + num, 0, bsz - num);
-    ctx->buf[num] = padding;
-    ctx->buf[bsz - 1] |= 0x80;
-    s390x_kimd(ctx->buf, bsz, fc, ctx->A);
-    num = needed > bsz ? bsz : needed;
-    memcpy(out, ctx->A, num);
-    needed -= num;
-    if (needed > 0)
-        s390x_klmd(NULL, 0, out + bsz, needed,
-            ctx->pad | S390X_KLMD_PS | S390X_KLMD_DUFOP, ctx->A);
-
-    return 1;
-}
-
-static int s390x_keccak_final(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
-{
-    return s390x_keccakc_final(ctx, out, outlen, 0x01);
-}
-
-static int s390x_cshake_keccak_final(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
-{
-    return s390x_keccakc_final(ctx, out, outlen, 0x04);
-}
-
-static int s390x_keccakc_squeeze(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen,
-    int padding)
-{
-    size_t len;
-    unsigned int fc;
-
-    /*
-     * On the first squeeze call, finish the absorb process
-     * by adding the trailing padding and then doing
-     * a final absorb.
-     */
-    if (ctx->xof_state != XOF_STATE_SQUEEZE) {
-        len = ctx->block_size - ctx->bufsz;
-        memset(ctx->buf + ctx->bufsz, 0, len);
-        ctx->buf[ctx->bufsz] = padding;
-        ctx->buf[ctx->block_size - 1] |= 0x80;
-        fc = ctx->pad;
-        fc |= ctx->xof_state == XOF_STATE_INIT ? S390X_KIMD_NIP : 0;
-        s390x_kimd(ctx->buf, ctx->block_size, fc, ctx->A);
-        ctx->bufsz = 0;
-        /* reuse ctx->bufsz to count bytes squeezed from current sponge */
-    }
-    if (ctx->bufsz != 0 || ctx->xof_state != XOF_STATE_SQUEEZE) {
-        len = ctx->block_size - ctx->bufsz;
-        if (outlen < len)
-            len = outlen;
-        memcpy(out, (char *)ctx->A + ctx->bufsz, len);
-        out += len;
-        outlen -= len;
-        ctx->bufsz += len;
-        if (ctx->bufsz == ctx->block_size)
-            ctx->bufsz = 0;
-    }
-    if (outlen == 0)
-        return 1;
-    s390x_klmd(NULL, 0, out, outlen, ctx->pad | S390X_KLMD_PS, ctx->A);
-    ctx->bufsz = outlen % ctx->block_size;
-
-    return 1;
-}
-
-static int s390x_keccak_squeeze(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
-{
-    return s390x_keccakc_squeeze(ctx, out, outlen, KECCAK_PADDING);
-}
-
-static int s390x_cshake_keccak_squeeze(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
-{
-    return s390x_keccakc_squeeze(ctx, out, outlen, CSHAKE_KECCAK_PADDING);
-}
-
-static PROV_SHA3_METHOD sha3_s390x_md = {
-    s390x_sha3_absorb,
-    s390x_sha3_final,
-    NULL,
-};
-
-static PROV_SHA3_METHOD keccak_s390x_md = {
-    s390x_sha3_absorb,
-    s390x_keccak_final,
-    s390x_keccak_squeeze,
-};
-
-static PROV_SHA3_METHOD shake_s390x_md = {
-    s390x_sha3_absorb,
-    s390x_shake_final,
-    s390x_shake_squeeze,
-};
-
-static PROV_SHA3_METHOD cshake_keccak_s390x_md = {
-    s390x_sha3_absorb,
-    s390x_cshake_keccak_final,
-    s390x_cshake_keccak_squeeze,
-};
-
-#define SHAKE_SET_MD(uname, typ)      \
-    if (S390_SHA3_CAPABLE(uname)) {   \
-        ctx->pad = S390X_##uname;     \
-        ctx->meth = typ##_s390x_md;   \
-    } else {                          \
-        ctx->meth = shake_generic_md; \
-    }
-
-#define SHA3_SET_MD(uname, typ)      \
-    if (S390_SHA3_CAPABLE(uname)) {  \
-        ctx->pad = S390X_##uname;    \
-        ctx->meth = typ##_s390x_md;  \
-    } else {                         \
-        ctx->meth = sha3_generic_md; \
-    }
-#define CSHAKE_KECCAK_SET_MD(bitlen)         \
-    if (S390_SHA3_CAPABLE(SHAKE_##bitlen)) { \
-        ctx->pad = S390X_SHAKE_##bitlen;     \
-        ctx->meth = cshake_keccak_s390x_md;  \
-    } else {                                 \
-        ctx->meth = shake_generic_md;        \
-    }
-#elif defined(__aarch64__) && defined(KECCAK1600_ASM)
-#include "arm_arch.h"
-
-static sha3_absorb_fn armsha3_sha3_absorb;
-
-size_t SHA3_absorb_cext(uint64_t A[5][5], const unsigned char *inp, size_t len,
-    size_t r);
-/*-
- * Hardware-assisted ARMv8.2 SHA3 extension version of the absorb()
- */
-static size_t armsha3_sha3_absorb(KECCAK1600_CTX *ctx, const unsigned char *inp, size_t len)
-{
-    return SHA3_absorb_cext(ctx->A, inp, len, ctx->block_size);
-}
-
-static PROV_SHA3_METHOD sha3_ARMSHA3_md = {
-    armsha3_sha3_absorb,
-    ossl_sha3_final_default,
-    NULL
-};
-static PROV_SHA3_METHOD shake_ARMSHA3_md = {
-    armsha3_sha3_absorb,
-    ossl_sha3_final_default,
-    ossl_shake_squeeze_default
-};
-#define SHAKE_SET_MD(uname, typ)                              \
-    if (OPENSSL_armcap_P & ARMV8_HAVE_SHA3_AND_WORTH_USING) { \
-        ctx->meth = shake_ARMSHA3_md;                         \
-    } else {                                                  \
-        ctx->meth = shake_generic_md;                         \
-    }
-
-#define SHA3_SET_MD(uname, typ)                               \
-    if (OPENSSL_armcap_P & ARMV8_HAVE_SHA3_AND_WORTH_USING) { \
-        ctx->meth = sha3_ARMSHA3_md;                          \
-    } else {                                                  \
-        ctx->meth = sha3_generic_md;                          \
-    }
-#define CSHAKE_KECCAK_SET_MD(bitlen)                          \
-    if (OPENSSL_armcap_P & ARMV8_HAVE_SHA3_AND_WORTH_USING) { \
-        ctx->meth = shake_ARMSHA3_md;                         \
-    } else {                                                  \
-        ctx->meth = shake_generic_md;                         \
-    }
-#else
-#define SHA3_SET_MD(uname, typ) ctx->meth = sha3_generic_md;
-#define CSHAKE_KECCAK_SET_MD(bitlen) ctx->meth = shake_generic_md;
-#define SHAKE_SET_MD(uname, typ) ctx->meth = shake_generic_md;
-#endif /* S390_SHA3 */
-
-#define SHA3_newctx(typ, uname, name, bitlen, pad)        \
-    static OSSL_FUNC_digest_newctx_fn name##_newctx;      \
-    static void *name##_newctx(void *provctx)             \
-    {                                                     \
-        KECCAK1600_CTX *ctx;                              \
-                                                          \
-        DIGEST_PROV_CHECK(provctx, SHA3_256);             \
-        if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) \
-            return NULL;                                  \
-        ossl_sha3_init(ctx, pad, bitlen);                 \
-        SHA3_SET_MD(uname, typ)                           \
-        return ctx;                                       \
-    }
-
-#define SHAKE_newctx(typ, uname, name, bitlen, mdlen, pad) \
-    static OSSL_FUNC_digest_newctx_fn name##_newctx;       \
-    static void *name##_newctx(void *provctx)              \
-    {                                                      \
-        KECCAK1600_CTX *ctx;                               \
-                                                           \
-        DIGEST_PROV_CHECK(provctx, SHA3_256);              \
-        if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)  \
-            return NULL;                                   \
-        ossl_keccak_init(ctx, pad, bitlen, mdlen);         \
-        if (mdlen == 0)                                    \
-            ctx->md_size = SIZE_MAX;                       \
-        SHAKE_SET_MD(uname, typ)                           \
-        return ctx;                                        \
-    }
-
-#define CSHAKE_KECCAK_newctx(uname, bitlen, pad)          \
-    static OSSL_FUNC_digest_newctx_fn uname##_newctx;     \
-    static void *uname##_newctx(void *provctx)            \
-    {                                                     \
-        KECCAK1600_CTX *ctx;                              \
-                                                          \
-        DIGEST_PROV_CHECK(provctx, SHA3_256);             \
-        if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) \
-            return NULL;                                  \
-        ossl_keccak_init(ctx, pad, bitlen, 2 * bitlen);   \
-        CSHAKE_KECCAK_SET_MD(bitlen)                      \
-        return ctx;                                       \
-    }
-
-#define KMAC_newctx(uname, bitlen, pad)                   \
-    static OSSL_FUNC_digest_newctx_fn uname##_newctx;     \
-    static void *uname##_newctx(void *provctx)            \
-    {                                                     \
-        KECCAK1600_CTX *ctx;                              \
-                                                          \
-        DIGEST_PROV_CHECK(provctx, SHA3_256);             \
-        if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) \
-            return NULL;                                  \
-        ossl_keccak_init(ctx, pad, bitlen, 2 * bitlen);   \
-        KMAC_SET_MD(bitlen)                               \
-        return ctx;                                       \
-    }
-
-#define PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags)  \
-    PROV_FUNC_DIGEST_GET_PARAM(name, blksize, dgstsize, flags)                \
-    const OSSL_DISPATCH ossl_##name##_functions[] = {                         \
-        { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))name##_newctx },           \
-        { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))keccak_update },           \
-        { OSSL_FUNC_DIGEST_FINAL, (void (*)(void))keccak_final },             \
-        { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))keccak_freectx },         \
-        { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))keccak_dupctx },           \
-        { OSSL_FUNC_DIGEST_COPYCTX, (void (*)(void))keccak_copyctx },         \
-        { OSSL_FUNC_DIGEST_SERIALIZE, (void (*)(void))name##_serialize },     \
-        { OSSL_FUNC_DIGEST_DESERIALIZE, (void (*)(void))name##_deserialize }, \
-        PROV_DISPATCH_FUNC_DIGEST_GET_PARAMS(name)
-
-#define PROV_FUNC_SHA3_DIGEST(name, bitlen, blksize, dgstsize, flags)     \
-    PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags), \
-        { OSSL_FUNC_DIGEST_INIT, (void (*)(void))keccak_init },           \
-        PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
-
-#define PROV_FUNC_SHAKE_DIGEST(name, bitlen, blksize, dgstsize, flags)             \
-    PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags),          \
-        { OSSL_FUNC_DIGEST_SQUEEZE, (void (*)(void))shake_squeeze },               \
-        { OSSL_FUNC_DIGEST_INIT, (void (*)(void))keccak_init_params },             \
-        { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))shake_set_ctx_params }, \
-        { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,                                    \
-            (void (*)(void))shake_settable_ctx_params },                           \
-        { OSSL_FUNC_DIGEST_GET_CTX_PARAMS, (void (*)(void))shake_get_ctx_params }, \
-        { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS,                                    \
-            (void (*)(void))shake_gettable_ctx_params },                           \
-        PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
 static void keccak_freectx(void *vctx)
 {
@@ -656,6 +283,24 @@ static int KECCAK_Deserialize(KECCAK1600_CTX *c, int impl_id,
         return KECCAK_Deserialize(vctx, id, in, inlen);                \
     }
 
+#define KECCAK_SER_ID 0x010000
+#define SHAKE_SER_ID 0x020000
+#define SHA3_SER_ID 0x040000
+#define CSHAKE_KECCAK_SER_ID 0x080000
+
+IMPLEMENT_SERIALIZE_FNS(sha3_224, SHA3_SER_ID + 224)
+IMPLEMENT_SERIALIZE_FNS(sha3_256, SHA3_SER_ID + 256)
+IMPLEMENT_SERIALIZE_FNS(sha3_384, SHA3_SER_ID + 384)
+IMPLEMENT_SERIALIZE_FNS(sha3_512, SHA3_SER_ID + 512)
+IMPLEMENT_SERIALIZE_FNS(keccak_224, KECCAK_SER_ID + 224)
+IMPLEMENT_SERIALIZE_FNS(keccak_256, KECCAK_SER_ID + 256)
+IMPLEMENT_SERIALIZE_FNS(keccak_384, KECCAK_SER_ID + 384)
+IMPLEMENT_SERIALIZE_FNS(keccak_512, KECCAK_SER_ID + 512)
+IMPLEMENT_SERIALIZE_FNS(shake_128, SHAKE_SER_ID + 128)
+IMPLEMENT_SERIALIZE_FNS(shake_256, SHAKE_SER_ID + 256)
+IMPLEMENT_SERIALIZE_FNS(cshake_keccak_128, CSHAKE_KECCAK_SER_ID + 128)
+IMPLEMENT_SERIALIZE_FNS(cshake_keccak_256, CSHAKE_KECCAK_SER_ID + 256)
+
 static const OSSL_PARAM *shake_gettable_ctx_params(ossl_unused void *ctx,
     ossl_unused void *provctx)
 {
@@ -704,62 +349,311 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-#define KECCAK_SER_ID 0x010000
-#define SHAKE_SER_ID 0x020000
-#define SHA3_SER_ID 0x040000
-#define CSHAKE_KECCAK_SER_ID 0x080000
+static void *sha3_224_newctx(void *provctx)
+{
+    DIGEST_PROV_CHECK(provctx, SHA3_256);
+    return ossl_sha3_new(224);
+}
+static void *sha3_256_newctx(void *provctx)
+{
+    DIGEST_PROV_CHECK(provctx, SHA3_256);
+    return ossl_sha3_new(256);
+}
+static void *sha3_384_newctx(void *provctx)
+{
+    DIGEST_PROV_CHECK(provctx, SHA3_256);
+    return ossl_sha3_new(384);
+}
+static void *sha3_512_newctx(void *provctx)
+{
+    DIGEST_PROV_CHECK(provctx, SHA3_256);
+    return ossl_sha3_new(512);
+}
+static void *keccak_224_newctx(void *provctx)
+{
+    DIGEST_PROV_CHECK(provctx, SHA3_256);
+    return ossl_keccak_new(224);
+}
+static void *keccak_256_newctx(void *provctx)
+{
+    DIGEST_PROV_CHECK(provctx, SHA3_256);
+    return ossl_keccak_new(256);
+}
+static void *keccak_384_newctx(void *provctx)
+{
+    DIGEST_PROV_CHECK(provctx, SHA3_256);
+    return ossl_keccak_new(384);
+}
+static void *keccak_512_newctx(void *provctx)
+{
+    DIGEST_PROV_CHECK(provctx, SHA3_256);
+    return ossl_keccak_new(512);
+}
+static void *shake_128_newctx(void *provctx)
+{
+    DIGEST_PROV_CHECK(provctx, SHA3_256);
+    return ossl_shake_new(128);
+}
+static void *shake_256_newctx(void *provctx)
+{
+    DIGEST_PROV_CHECK(provctx, SHA3_256);
+    return ossl_shake_new(256);
+}
 
-#define IMPLEMENT_SHA3_functions(bitlen)                                           \
-    SHA3_newctx(sha3, SHA3_##bitlen, sha3_##bitlen, bitlen, (uint8_t)SHA3_PADDING) \
-        IMPLEMENT_SERIALIZE_FNS(sha3_##bitlen, SHA3_SER_ID + bitlen)               \
-            PROV_FUNC_SHA3_DIGEST(sha3_##bitlen, bitlen,                           \
-                SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen),                       \
-                SHA3_FLAGS)
+static void *cshake_keccak_128_newctx(void *provctx)
+{
+    DIGEST_PROV_CHECK(provctx, SHA3_256);
+    return ossl_cshake_keccak_new(128);
+}
+static void *cshake_keccak_256_newctx(void *provctx)
+{
+    DIGEST_PROV_CHECK(provctx, SHA3_256);
+    return ossl_cshake_keccak_new(256);
+}
 
-#define IMPLEMENT_KECCAK_functions(bitlen)                                                 \
-    SHA3_newctx(keccak, KECCAK_##bitlen, keccak_##bitlen, bitlen, (uint8_t)KECCAK_PADDING) \
-        IMPLEMENT_SERIALIZE_FNS(keccak_##bitlen, KECCAK_SER_ID + bitlen)                   \
-            PROV_FUNC_SHA3_DIGEST(keccak_##bitlen, bitlen,                                 \
-                SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen),                               \
-                SHA3_FLAGS)
+static int sha3_224_get_params(OSSL_PARAM params[])
+{
+    return ossl_digest_default_get_params(params,
+        SHA3_BLOCKSIZE(224), SHA3_MDSIZE(224), SHA3_FLAGS);
+}
+static int sha3_256_get_params(OSSL_PARAM params[])
+{
+    return ossl_digest_default_get_params(params,
+        SHA3_BLOCKSIZE(256), SHA3_MDSIZE(256), SHA3_FLAGS);
+}
+static int sha3_384_get_params(OSSL_PARAM params[])
+{
+    return ossl_digest_default_get_params(params,
+        SHA3_BLOCKSIZE(384), SHA3_MDSIZE(384), SHA3_FLAGS);
+}
+static int sha3_512_get_params(OSSL_PARAM params[])
+{
+    return ossl_digest_default_get_params(params,
+        SHA3_BLOCKSIZE(512), SHA3_MDSIZE(512), SHA3_FLAGS);
+}
 
-#define IMPLEMENT_SHAKE_functions(bitlen)                              \
-    SHAKE_newctx(shake, SHAKE_##bitlen, shake_##bitlen, bitlen,        \
-        0 /* no default md length */, (uint8_t)SHAKE_PADDING)          \
-        IMPLEMENT_SERIALIZE_FNS(shake_##bitlen, SHAKE_SER_ID + bitlen) \
-            PROV_FUNC_SHAKE_DIGEST(shake_##bitlen, bitlen,             \
-                SHA3_BLOCKSIZE(bitlen), 0,                             \
-                SHAKE_FLAGS)
+static int shake_128_get_params(OSSL_PARAM params[])
+{
+    return ossl_digest_default_get_params(params,
+        SHA3_BLOCKSIZE(128), 0, SHAKE_FLAGS);
+}
+static int shake_256_get_params(OSSL_PARAM params[])
+{
+    return ossl_digest_default_get_params(params,
+        SHA3_BLOCKSIZE(256), 0, SHAKE_FLAGS);
+}
 
-#define IMPLEMENT_CSHAKE_KECCAK_functions(bitlen)                                        \
-    CSHAKE_KECCAK_newctx(cshake_keccak_##bitlen, bitlen, (uint8_t)CSHAKE_KECCAK_PADDING) \
-        IMPLEMENT_SERIALIZE_FNS(cshake_keccak_##bitlen, CSHAKE_KECCAK_SER_ID + bitlen)   \
-            PROV_FUNC_SHAKE_DIGEST(cshake_keccak_##bitlen, bitlen,                       \
-                SHA3_BLOCKSIZE(bitlen),                                                  \
-                CSHAKE_KECCAK_MDSIZE(bitlen),                                            \
-                CSHAKE_KECCAK_FLAGS)
+static int cshake_keccak_128_get_params(OSSL_PARAM params[])
+{
+    return ossl_digest_default_get_params(params,
+        SHA3_BLOCKSIZE(128), CSHAKE_KECCAK_MDSIZE(128), CSHAKE_KECCAK_FLAGS);
+}
+static int cshake_keccak_256_get_params(OSSL_PARAM params[])
+{
+    return ossl_digest_default_get_params(params,
+        SHA3_BLOCKSIZE(256), CSHAKE_KECCAK_MDSIZE(256), CSHAKE_KECCAK_FLAGS);
+}
+
+#define OSSL_FPTR (void (*)(void))
 
 /* ossl_sha3_224_functions */
-IMPLEMENT_SHA3_functions(224)
+const OSSL_DISPATCH ossl_sha3_224_functions[] = {
+    { OSSL_FUNC_DIGEST_NEWCTX, OSSL_FPTR sha3_224_newctx },
+    { OSSL_FUNC_DIGEST_SERIALIZE, OSSL_FPTR sha3_224_serialize },
+    { OSSL_FUNC_DIGEST_DESERIALIZE, OSSL_FPTR sha3_224_deserialize },
+    { OSSL_FUNC_DIGEST_GET_PARAMS, OSSL_FPTR sha3_224_get_params },
+    { OSSL_FUNC_DIGEST_INIT, OSSL_FPTR keccak_init },
+    { OSSL_FUNC_DIGEST_UPDATE, OSSL_FPTR keccak_update },
+    { OSSL_FUNC_DIGEST_FINAL, OSSL_FPTR keccak_final },
+    { OSSL_FUNC_DIGEST_FREECTX, OSSL_FPTR keccak_freectx },
+    { OSSL_FUNC_DIGEST_DUPCTX, OSSL_FPTR keccak_dupctx },
+    { OSSL_FUNC_DIGEST_COPYCTX, OSSL_FPTR keccak_copyctx },
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS, OSSL_FPTR ossl_digest_default_gettable_params },
+    { 0, NULL }
+};
+
 /* ossl_sha3_256_functions */
-IMPLEMENT_SHA3_functions(256)
-/* ossl_sha3_384_functions */
-IMPLEMENT_SHA3_functions(384)
-/* ossl_sha3_512_functions */
-IMPLEMENT_SHA3_functions(512)
-/* ossl_keccak_224_functions */
-IMPLEMENT_KECCAK_functions(224)
-/* ossl_keccak_256_functions */
-IMPLEMENT_KECCAK_functions(256)
-/* ossl_keccak_384_functions */
-IMPLEMENT_KECCAK_functions(384)
-/* ossl_keccak_512_functions */
-IMPLEMENT_KECCAK_functions(512)
-/* ossl_shake_128_functions */
-IMPLEMENT_SHAKE_functions(128)
-/* ossl_shake_256_functions */
-IMPLEMENT_SHAKE_functions(256)
-/* ossl_cshake_keccak_128_functions */
-IMPLEMENT_CSHAKE_KECCAK_functions(128)
-    /* ossl_cshake_keccak_256_functions */
-    IMPLEMENT_CSHAKE_KECCAK_functions(256)
+const OSSL_DISPATCH ossl_sha3_256_functions[] = {
+    { OSSL_FUNC_DIGEST_NEWCTX, OSSL_FPTR sha3_256_newctx },
+    { OSSL_FUNC_DIGEST_SERIALIZE, OSSL_FPTR sha3_256_serialize },
+    { OSSL_FUNC_DIGEST_DESERIALIZE, OSSL_FPTR sha3_256_deserialize },
+    { OSSL_FUNC_DIGEST_GET_PARAMS, OSSL_FPTR sha3_256_get_params },
+    { OSSL_FUNC_DIGEST_INIT, OSSL_FPTR keccak_init },
+    { OSSL_FUNC_DIGEST_UPDATE, OSSL_FPTR keccak_update },
+    { OSSL_FUNC_DIGEST_FINAL, OSSL_FPTR keccak_final },
+    { OSSL_FUNC_DIGEST_FREECTX, OSSL_FPTR keccak_freectx },
+    { OSSL_FUNC_DIGEST_DUPCTX, OSSL_FPTR keccak_dupctx },
+    { OSSL_FUNC_DIGEST_COPYCTX, OSSL_FPTR keccak_copyctx },
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS, OSSL_FPTR ossl_digest_default_gettable_params },
+    { 0, NULL }
+};
+
+const OSSL_DISPATCH ossl_sha3_384_functions[] = {
+    { OSSL_FUNC_DIGEST_NEWCTX, OSSL_FPTR sha3_384_newctx },
+    { OSSL_FUNC_DIGEST_SERIALIZE, OSSL_FPTR sha3_384_serialize },
+    { OSSL_FUNC_DIGEST_DESERIALIZE, OSSL_FPTR sha3_384_deserialize },
+    { OSSL_FUNC_DIGEST_GET_PARAMS, OSSL_FPTR sha3_384_get_params },
+    { OSSL_FUNC_DIGEST_INIT, OSSL_FPTR keccak_init },
+    { OSSL_FUNC_DIGEST_UPDATE, OSSL_FPTR keccak_update },
+    { OSSL_FUNC_DIGEST_FINAL, OSSL_FPTR keccak_final },
+    { OSSL_FUNC_DIGEST_FREECTX, OSSL_FPTR keccak_freectx },
+    { OSSL_FUNC_DIGEST_DUPCTX, OSSL_FPTR keccak_dupctx },
+    { OSSL_FUNC_DIGEST_COPYCTX, OSSL_FPTR keccak_copyctx },
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS, OSSL_FPTR ossl_digest_default_gettable_params },
+    { 0, NULL }
+};
+
+const OSSL_DISPATCH ossl_sha3_512_functions[] = {
+    { OSSL_FUNC_DIGEST_NEWCTX, OSSL_FPTR sha3_512_newctx },
+    { OSSL_FUNC_DIGEST_SERIALIZE, OSSL_FPTR sha3_512_serialize },
+    { OSSL_FUNC_DIGEST_DESERIALIZE, OSSL_FPTR sha3_512_deserialize },
+    { OSSL_FUNC_DIGEST_GET_PARAMS, OSSL_FPTR sha3_512_get_params },
+    { OSSL_FUNC_DIGEST_INIT, OSSL_FPTR keccak_init },
+    { OSSL_FUNC_DIGEST_UPDATE, OSSL_FPTR keccak_update },
+    { OSSL_FUNC_DIGEST_FINAL, OSSL_FPTR keccak_final },
+    { OSSL_FUNC_DIGEST_FREECTX, OSSL_FPTR keccak_freectx },
+    { OSSL_FUNC_DIGEST_DUPCTX, OSSL_FPTR keccak_dupctx },
+    { OSSL_FUNC_DIGEST_COPYCTX, OSSL_FPTR keccak_copyctx },
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS, OSSL_FPTR ossl_digest_default_gettable_params },
+    { 0, NULL }
+};
+
+const OSSL_DISPATCH ossl_keccak_224_functions[] = {
+    { OSSL_FUNC_DIGEST_NEWCTX, OSSL_FPTR keccak_224_newctx },
+    { OSSL_FUNC_DIGEST_SERIALIZE, OSSL_FPTR keccak_224_serialize },
+    { OSSL_FUNC_DIGEST_DESERIALIZE, OSSL_FPTR keccak_224_deserialize },
+    { OSSL_FUNC_DIGEST_GET_PARAMS, OSSL_FPTR keccak_224_get_params },
+    { OSSL_FUNC_DIGEST_INIT, OSSL_FPTR keccak_init },
+    { OSSL_FUNC_DIGEST_UPDATE, OSSL_FPTR keccak_update },
+    { OSSL_FUNC_DIGEST_FINAL, OSSL_FPTR keccak_final },
+    { OSSL_FUNC_DIGEST_FREECTX, OSSL_FPTR keccak_freectx },
+    { OSSL_FUNC_DIGEST_DUPCTX, OSSL_FPTR keccak_dupctx },
+    { OSSL_FUNC_DIGEST_COPYCTX, OSSL_FPTR keccak_copyctx },
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS, OSSL_FPTR ossl_digest_default_gettable_params },
+    { 0, NULL }
+};
+
+const OSSL_DISPATCH ossl_keccak_256_functions[] = {
+    { OSSL_FUNC_DIGEST_NEWCTX, OSSL_FPTR keccak_256_newctx },
+    { OSSL_FUNC_DIGEST_SERIALIZE, OSSL_FPTR keccak_256_serialize },
+    { OSSL_FUNC_DIGEST_DESERIALIZE, OSSL_FPTR keccak_256_deserialize },
+    { OSSL_FUNC_DIGEST_GET_PARAMS, OSSL_FPTR keccak_256_get_params },
+    { OSSL_FUNC_DIGEST_INIT, OSSL_FPTR keccak_init },
+    { OSSL_FUNC_DIGEST_UPDATE, OSSL_FPTR keccak_update },
+    { OSSL_FUNC_DIGEST_FINAL, OSSL_FPTR keccak_final },
+    { OSSL_FUNC_DIGEST_FREECTX, OSSL_FPTR keccak_freectx },
+    { OSSL_FUNC_DIGEST_DUPCTX, OSSL_FPTR keccak_dupctx },
+    { OSSL_FUNC_DIGEST_COPYCTX, OSSL_FPTR keccak_copyctx },
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS, OSSL_FPTR ossl_digest_default_gettable_params },
+    { 0, NULL }
+};
+
+const OSSL_DISPATCH ossl_keccak_384_functions[] = {
+    { OSSL_FUNC_DIGEST_NEWCTX, OSSL_FPTR keccak_384_newctx },
+    { OSSL_FUNC_DIGEST_SERIALIZE, OSSL_FPTR keccak_384_serialize },
+    { OSSL_FUNC_DIGEST_DESERIALIZE, OSSL_FPTR keccak_384_deserialize },
+    { OSSL_FUNC_DIGEST_GET_PARAMS, OSSL_FPTR keccak_384_get_params },
+    { OSSL_FUNC_DIGEST_INIT, OSSL_FPTR keccak_init },
+    { OSSL_FUNC_DIGEST_UPDATE, OSSL_FPTR keccak_update },
+    { OSSL_FUNC_DIGEST_FINAL, OSSL_FPTR keccak_final },
+    { OSSL_FUNC_DIGEST_FREECTX, OSSL_FPTR keccak_freectx },
+    { OSSL_FUNC_DIGEST_DUPCTX, OSSL_FPTR keccak_dupctx },
+    { OSSL_FUNC_DIGEST_COPYCTX, OSSL_FPTR keccak_copyctx },
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS, OSSL_FPTR ossl_digest_default_gettable_params },
+    { 0, NULL }
+};
+
+const OSSL_DISPATCH ossl_keccak_512_functions[] = {
+    { OSSL_FUNC_DIGEST_NEWCTX, OSSL_FPTR keccak_512_newctx },
+    { OSSL_FUNC_DIGEST_SERIALIZE, OSSL_FPTR keccak_512_serialize },
+    { OSSL_FUNC_DIGEST_DESERIALIZE, OSSL_FPTR keccak_512_deserialize },
+    { OSSL_FUNC_DIGEST_GET_PARAMS, OSSL_FPTR keccak_512_get_params },
+    { OSSL_FUNC_DIGEST_INIT, OSSL_FPTR keccak_init },
+    { OSSL_FUNC_DIGEST_UPDATE, OSSL_FPTR keccak_update },
+    { OSSL_FUNC_DIGEST_FINAL, OSSL_FPTR keccak_final },
+    { OSSL_FUNC_DIGEST_FREECTX, OSSL_FPTR keccak_freectx },
+    { OSSL_FUNC_DIGEST_DUPCTX, OSSL_FPTR keccak_dupctx },
+    { OSSL_FUNC_DIGEST_COPYCTX, OSSL_FPTR keccak_copyctx },
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS, OSSL_FPTR ossl_digest_default_gettable_params },
+    { 0, NULL }
+};
+
+const OSSL_DISPATCH ossl_shake_128_functions[] = {
+    { OSSL_FUNC_DIGEST_NEWCTX, OSSL_FPTR shake_128_newctx },
+    { OSSL_FUNC_DIGEST_GET_PARAMS, OSSL_FPTR shake_128_get_params },
+    { OSSL_FUNC_DIGEST_SERIALIZE, OSSL_FPTR shake_128_serialize },
+    { OSSL_FUNC_DIGEST_DESERIALIZE, OSSL_FPTR shake_128_deserialize },
+    { OSSL_FUNC_DIGEST_INIT, OSSL_FPTR keccak_init_params },
+    { OSSL_FUNC_DIGEST_UPDATE, OSSL_FPTR keccak_update },
+    { OSSL_FUNC_DIGEST_FINAL, OSSL_FPTR keccak_final },
+    { OSSL_FUNC_DIGEST_SQUEEZE, OSSL_FPTR shake_squeeze },
+    { OSSL_FUNC_DIGEST_FREECTX, OSSL_FPTR keccak_freectx },
+    { OSSL_FUNC_DIGEST_DUPCTX, OSSL_FPTR keccak_dupctx },
+    { OSSL_FUNC_DIGEST_COPYCTX, OSSL_FPTR keccak_copyctx },
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS, OSSL_FPTR ossl_digest_default_gettable_params },
+    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, OSSL_FPTR shake_set_ctx_params },
+    { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS, OSSL_FPTR shake_settable_ctx_params },
+    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS, OSSL_FPTR shake_get_ctx_params },
+    { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS, OSSL_FPTR shake_gettable_ctx_params },
+    { 0, NULL }
+};
+
+const OSSL_DISPATCH ossl_shake_256_functions[] = {
+    { OSSL_FUNC_DIGEST_NEWCTX, OSSL_FPTR shake_256_newctx },
+    { OSSL_FUNC_DIGEST_GET_PARAMS, OSSL_FPTR shake_256_get_params },
+    { OSSL_FUNC_DIGEST_SERIALIZE, OSSL_FPTR shake_256_serialize },
+    { OSSL_FUNC_DIGEST_DESERIALIZE, OSSL_FPTR shake_256_deserialize },
+    { OSSL_FUNC_DIGEST_INIT, OSSL_FPTR keccak_init_params },
+    { OSSL_FUNC_DIGEST_UPDATE, OSSL_FPTR keccak_update },
+    { OSSL_FUNC_DIGEST_FINAL, OSSL_FPTR keccak_final },
+    { OSSL_FUNC_DIGEST_SQUEEZE, OSSL_FPTR shake_squeeze },
+    { OSSL_FUNC_DIGEST_FREECTX, OSSL_FPTR keccak_freectx },
+    { OSSL_FUNC_DIGEST_DUPCTX, OSSL_FPTR keccak_dupctx },
+    { OSSL_FUNC_DIGEST_COPYCTX, OSSL_FPTR keccak_copyctx },
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS, OSSL_FPTR ossl_digest_default_gettable_params },
+    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, OSSL_FPTR shake_set_ctx_params },
+    { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS, OSSL_FPTR shake_settable_ctx_params },
+    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS, OSSL_FPTR shake_get_ctx_params },
+    { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS, OSSL_FPTR shake_gettable_ctx_params },
+    { 0, NULL }
+};
+
+const OSSL_DISPATCH ossl_cshake_keccak_128_functions[] = {
+    { OSSL_FUNC_DIGEST_NEWCTX, OSSL_FPTR cshake_keccak_128_newctx },
+    { OSSL_FUNC_DIGEST_SERIALIZE, OSSL_FPTR cshake_keccak_128_serialize },
+    { OSSL_FUNC_DIGEST_DESERIALIZE, OSSL_FPTR cshake_keccak_128_deserialize },
+    { OSSL_FUNC_DIGEST_GET_PARAMS, OSSL_FPTR cshake_keccak_128_get_params },
+    { OSSL_FUNC_DIGEST_INIT, OSSL_FPTR keccak_init_params },
+    { OSSL_FUNC_DIGEST_UPDATE, OSSL_FPTR keccak_update },
+    { OSSL_FUNC_DIGEST_FINAL, OSSL_FPTR keccak_final },
+    { OSSL_FUNC_DIGEST_SQUEEZE, OSSL_FPTR shake_squeeze },
+    { OSSL_FUNC_DIGEST_FREECTX, OSSL_FPTR keccak_freectx },
+    { OSSL_FUNC_DIGEST_DUPCTX, OSSL_FPTR keccak_dupctx },
+    { OSSL_FUNC_DIGEST_COPYCTX, OSSL_FPTR keccak_copyctx },
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS, OSSL_FPTR ossl_digest_default_gettable_params },
+    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, OSSL_FPTR shake_set_ctx_params },
+    { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS, OSSL_FPTR shake_settable_ctx_params },
+    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS, OSSL_FPTR shake_get_ctx_params },
+    { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS, OSSL_FPTR shake_gettable_ctx_params },
+    { 0, NULL }
+};
+
+const OSSL_DISPATCH ossl_cshake_keccak_256_functions[] = {
+    { OSSL_FUNC_DIGEST_NEWCTX, OSSL_FPTR cshake_keccak_256_newctx },
+    { OSSL_FUNC_DIGEST_SERIALIZE, OSSL_FPTR cshake_keccak_256_serialize },
+    { OSSL_FUNC_DIGEST_DESERIALIZE, OSSL_FPTR cshake_keccak_256_deserialize },
+    { OSSL_FUNC_DIGEST_GET_PARAMS, OSSL_FPTR cshake_keccak_256_get_params },
+    { OSSL_FUNC_DIGEST_INIT, OSSL_FPTR keccak_init_params },
+    { OSSL_FUNC_DIGEST_UPDATE, OSSL_FPTR keccak_update },
+    { OSSL_FUNC_DIGEST_FINAL, OSSL_FPTR keccak_final },
+    { OSSL_FUNC_DIGEST_SQUEEZE, OSSL_FPTR shake_squeeze },
+    { OSSL_FUNC_DIGEST_FREECTX, OSSL_FPTR keccak_freectx },
+    { OSSL_FUNC_DIGEST_DUPCTX, OSSL_FPTR keccak_dupctx },
+    { OSSL_FUNC_DIGEST_COPYCTX, OSSL_FPTR keccak_copyctx },
+    { OSSL_FUNC_DIGEST_GETTABLE_PARAMS, OSSL_FPTR ossl_digest_default_gettable_params },
+    { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, OSSL_FPTR shake_set_ctx_params },
+    { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS, OSSL_FPTR shake_settable_ctx_params },
+    { OSSL_FUNC_DIGEST_GET_CTX_PARAMS, OSSL_FPTR shake_get_ctx_params },
+    { OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS, OSSL_FPTR shake_gettable_ctx_params },
+    { 0, NULL }
+};
