@@ -4679,7 +4679,7 @@ SSL *ossl_quic_new_listener(SSL_CTX *ctx, uint64_t flags)
 
     if ((ql = OPENSSL_zalloc(sizeof(*ql))) == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_CRYPTO_LIB, NULL);
-        goto err;
+        return NULL;
     }
 
 #if defined(OPENSSL_THREADS)
@@ -4727,8 +4727,8 @@ SSL *ossl_quic_new_listener(SSL_CTX *ctx, uint64_t flags)
     return &ql->obj.ssl;
 
 err:
-    if (ql != NULL)
-        ossl_quic_engine_free(ql->engine);
+    ossl_quic_port_free(ql->port);
+    ossl_quic_engine_free(ql->engine);
 
 #if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_free(&ql->mutex);
