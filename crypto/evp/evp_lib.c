@@ -1031,7 +1031,7 @@ EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
         name = va_arg(args, char *);
         if (name == NULL) {
             ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
-            return NULL;
+            goto end;
         }
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
             name, 0);
@@ -1039,6 +1039,7 @@ EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
 
     ret = evp_pkey_keygen(libctx, type, propq, params);
 
+end:
     va_end(args);
     return ret;
 }
