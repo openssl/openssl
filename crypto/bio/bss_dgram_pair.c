@@ -268,6 +268,7 @@ struct bio_dgram_pair_st {
     unsigned int local_addr_enable : 1; /* Can use BIO_MSG->local? */
     unsigned int role : 1; /* Determines lock order */
     unsigned int grows_on_write : 1; /* Set for BIO_s_dgram_mem only */
+    unsigned int peekmode : 1; /* If set, reads peek instead of consuming */
 };
 
 #define MIN_BUF_LEN (1024)
@@ -755,6 +756,12 @@ static long dgram_mem_ctrl(BIO *bio, int cmd, long num, void *ptr)
         ret = (long)dgram_pair_ctrl_eof(bio);
         break;
 
+    /* BIO_CTRL_DGRAM_SET_PEEK_MODE: Enable/disable peek mode for reads */
+    case BIO_CTRL_DGRAM_SET_PEEK_MODE: /* Non-threadsafe */
+        b->peekmode = (num > 0);
+        ret = 1;
+        break;
+
     default:
         ret = 0;
         break;
@@ -964,6 +971,15 @@ static ossl_ssize_t dgram_pair_read_actual(BIO *bio, char *buf, size_t sz,
     if (trunc > 0 && !ossl_assert(dgram_pair_read_inner(readb, NULL, trunc) == trunc))
         /* We were somehow not able to read/skip the entire datagram. */
         return -BIO_R_TRANSFER_ERROR;
+
+    /*
+     * In peek mode, restore the buffer state so the datagram remains
+     * available for the next read.
+     */
+    if (b->peekmode) {
+        readb->rbuf.idx[1] = saved_idx;
+        readb->rbuf.count = saved_count;
+    }
 
     if (local != NULL)
         *local = hdr.dst_addr;

@@ -505,19 +505,220 @@ int dtls1_handle_timeout(SSL_CONNECTION *s)
 #define LISTEN_SEND_VERIFY_REQUEST 1
 
 #ifndef OPENSSL_NO_SOCK
+
+/*
+ * Peek at incoming DTLS packet and check if the client supports DTLS 1.3.
+ *
+ * Detection is performed by examining the ClientHello extensions for:
+ *   1. supported_versions extension (43) containing DTLS1_3_VERSION (authoritative)
+ *   2. TLS 1.3-only extensions as fallback indicators (for fragmented packets)
+ *
+ * Fallback rationale: If the ClientHello is fragmented, the supported_versions
+ * extension may not be in the first fragment. However, TLS 1.3-only extensions
+ * like key_share are definitive proof that this is a TLS 1.3+ ClientHello since
+ * these extensions simply do not exist in DTLS 1.2 or earlier.
+ *
+ * This function uses BIO_CTRL_DGRAM_SET_PEEK_MODE to read the packet
+ * without consuming it from the BIO, allowing SSL_stateless() to
+ * subsequently read the same packet.
+ *
+ * Returns:
+ *   1  - Client supports DTLS 1.3
+ *   0  - Client does not support DTLS 1.3 or packet couldn't be parsed
+ *  -1  - Error (BIO read failure)
+ */
+static int dtls_peek_supports_dtls13(BIO *rbio)
+{
+    unsigned char *buf = NULL;
+    int bytesread;
+    int ret = 0;
+    int has_supported_versions_with_dtls13 = 0;
+    int has_tls13_only_extension = 0;
+    PACKET pkt, msgpkt, msgpayload, session, cookiepkt, ciphers, comp, exts, ext;
+    unsigned int rectype, versmajor, msgtype, exttype, verslen;
+    size_t fragoff, fraglen, msglen;
+    unsigned int exts_len;
+    size_t bytes_available;
+
+    buf = OPENSSL_malloc(DTLS1_RT_HEADER_LENGTH + SSL3_RT_MAX_PLAIN_LENGTH);
+    if (buf == NULL)
+        return -1;
+
+    /* Enable peek mode so packet stays in the BIO for later processing */
+    BIO_ctrl(rbio, BIO_CTRL_DGRAM_SET_PEEK_MODE, 1, NULL);
+
+    clear_sys_error();
+    bytesread = BIO_read(rbio, buf, SSL3_RT_MAX_PLAIN_LENGTH + DTLS1_RT_HEADER_LENGTH);
+
+    /* Disable peek mode */
+    BIO_ctrl(rbio, BIO_CTRL_DGRAM_SET_PEEK_MODE, 0, NULL);
+
+    if (bytesread <= 0) {
+        ret = -1;
+        goto end;
+    }
+
+    /* Need at least record header */
+    if (bytesread < DTLS1_RT_HEADER_LENGTH)
+        goto end;
+
+    if (!PACKET_buf_init(&pkt, buf, bytesread))
+        goto end;
+
+    /* Parse record header: type (1) + version (2) + epoch (2) + seq (6) + len (2) */
+    if (!PACKET_get_1(&pkt, &rectype)
+        || !PACKET_get_1(&pkt, &versmajor)
+        || !PACKET_forward(&pkt, 1) /* skip version minor */
+        || !PACKET_forward(&pkt, 8) /* skip epoch + sequence */
+        || !PACKET_get_length_prefixed_2(&pkt, &msgpkt))
+        goto end;
+
+    /* Must be handshake record with DTLS version major */
+    if (rectype != SSL3_RT_HANDSHAKE || versmajor != DTLS1_VERSION_MAJOR)
+        goto end;
+
+    /* Parse handshake header: type (1) + length (3) + seq (2) + frag_off (3) + frag_len (3) */
+    if (!PACKET_get_1(&msgpkt, &msgtype)
+        || !PACKET_get_net_3_len(&msgpkt, &msglen)
+        || !PACKET_forward(&msgpkt, 2)
+        || !PACKET_get_net_3_len(&msgpkt, &fragoff)
+        || !PACKET_get_net_3_len(&msgpkt, &fraglen)
+        || !PACKET_get_sub_packet(&msgpkt, &msgpayload, fraglen))
+        goto end;
+
+    /* Must be ClientHello */
+    if (msgtype != SSL3_MT_CLIENT_HELLO)
+        goto end;
+
+    /*
+     * For a non-first fragment (fragoff != 0), we're starting mid-message.
+     * We cannot reliably parse the structure, so we must return 0 and let
+     * the caller handle it (likely wait for more fragments or use legacy path).
+     */
+    if (fragoff != 0)
+        goto end;
+
+    /*
+     * Parse ClientHello fields up to extensions:
+     * - legacy_version (2)
+     * - random (32)
+     * - session_id (1 + variable)
+     * - cookie (1 + variable)  [DTLS only]
+     * - cipher_suites (2 + variable)
+     * - compression_methods (1 + variable)
+     * - extensions (2 + variable)
+     */
+    if (!PACKET_forward(&msgpayload, 2 + 32) /* skip legacy version + random */
+        || !PACKET_get_length_prefixed_1(&msgpayload, &session)
+        || !PACKET_get_length_prefixed_1(&msgpayload, &cookiepkt)
+        || !PACKET_get_length_prefixed_2(&msgpayload, &ciphers)
+        || !PACKET_get_length_prefixed_1(&msgpayload, &comp))
+        goto end;
+
+    if (PACKET_remaining(&msgpayload) == 0)
+        goto end;
+
+    /*
+     * For fragmented ClientHellos, the extensions may be truncated.
+     * We need to handle the case where the extensions length field
+     * indicates more data than we actually have in this fragment.
+     * Read the length manually and take whatever bytes are available.
+     */
+    if (!PACKET_get_net_2(&msgpayload, &exts_len))
+        goto end;
+
+    bytes_available = PACKET_remaining(&msgpayload);
+
+    /* Take the minimum of declared length and available bytes */
+    if (bytes_available < exts_len)
+        exts_len = (unsigned int)bytes_available;
+
+    if (!PACKET_get_sub_packet(&msgpayload, &exts, exts_len))
+        goto end;
+
+    /*
+     * Scan extensions looking for:
+     * - supported_versions with DTLS1_3_VERSION
+     * - Any TLS 1.3-only extension (fallback for fragmented packets)
+     *
+     * Note: In a fragmented ClientHello, we may only see partial extensions.
+     * If we find ANY TLS 1.3-only extension, we know this must be a TLS 1.3+
+     * client since these extensions are undefined in earlier versions.
+     */
+    while (PACKET_remaining(&exts) >= 4) {
+        if (!PACKET_get_net_2(&exts, &exttype)
+            || !PACKET_get_length_prefixed_2(&exts, &ext))
+            break; /* Possibly truncated due to fragmentation */
+
+        switch (exttype) {
+        case TLSEXT_TYPE_supported_versions:
+            /* supported_versions format: length (1) + versions (2 bytes each) */
+            if (!PACKET_get_1(&ext, &verslen))
+                break;
+
+            /* Check each version in the list */
+            while (verslen >= 2 && PACKET_remaining(&ext) >= 2) {
+                unsigned int version;
+
+                if (!PACKET_get_net_2(&ext, &version))
+                    break;
+
+                if (version == DTLS1_3_VERSION) {
+                    has_supported_versions_with_dtls13 = 1;
+                    break;
+                }
+                verslen -= 2;
+            }
+            break;
+
+        case TLSEXT_TYPE_key_share:
+        case TLSEXT_TYPE_psk_kex_modes:
+        case TLSEXT_TYPE_early_data:
+        case TLSEXT_TYPE_psk:
+        case TLSEXT_TYPE_cookie:
+        case TLSEXT_TYPE_post_handshake_auth:
+        case TLSEXT_TYPE_certificate_authorities:
+        case TLSEXT_TYPE_compress_certificate:
+            has_tls13_only_extension = 1;
+            break;
+
+        default:
+            break;
+        }
+
+        /*
+         * If we found supported_versions with DTLS 1.3, that's authoritative.
+         * We can stop scanning.
+         */
+        if (has_supported_versions_with_dtls13)
+            break;
+    }
+
+    if (has_supported_versions_with_dtls13 || has_tls13_only_extension)
+        ret = 1;
+
+end:
+    OPENSSL_free(buf);
+    return ret;
+}
+
 int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
 {
     int next, n, ret = 0;
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
     unsigned char seq[SEQ_NUM_SIZE];
     const unsigned char *data;
-    unsigned char *buf = NULL, *wbuf;
+    unsigned char *buf = NULL, *wbuf = NULL;
     size_t fragoff, fraglen, msglen;
     unsigned int rectype, versmajor, versminor, msgseq, msgtype, clientvers, cookielen;
     BIO *rbio, *wbio;
     BIO_ADDR *tmpclient = NULL;
     PACKET pkt, msgpkt, msgpayload, session, cookiepkt;
     SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    int has_stateless_cb, has_legacy_cb;
+    int use_stateless = 0;
+    int peek_supported = 0;
+    int dtls13 = 0;
 
     if (s == NULL)
         return -1;
@@ -525,6 +726,99 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
     if (s->handshake_func == NULL) {
         /* Not properly initialized yet */
         SSL_set_accept_state(ssl);
+    }
+
+    rbio = SSL_get_rbio(ssl);
+    wbio = SSL_get_wbio(ssl);
+
+    if (!rbio || !wbio) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_BIO_NOT_SET);
+        return -1;
+    }
+
+    /*
+     * Check which cookie callbacks are configured:
+     * - Stateless callbacks: Used for TLS 1.3 / DTLS 1.3 (HelloRetryRequest)
+     * - Legacy callbacks: Used for DTLS 1.2 and earlier (HelloVerifyRequest)
+     */
+    has_stateless_cb = (ssl->ctx->gen_stateless_cookie_cb != NULL);
+    has_legacy_cb = (ssl->ctx->app_gen_cookie_cb != NULL);
+
+    /* If only legacy callbacks are set DTLS max version to DTLSv1.2*/
+    if (!has_stateless_cb && has_legacy_cb)
+        SSL_set_max_proto_version(ssl, DTLS1_2_VERSION);
+
+    /*
+     * Decide whether to use SSL_stateless() (DTLS 1.3 path) or the legacy
+     * HelloVerifyRequest path based on callback configuration and packet inspection.
+     *
+     * Cases:
+     * 1. Only stateless callbacks set: Use SSL_stateless() for all clients.
+     *    No need to peek - just pass directly to SSL_stateless().
+     *    DTLS 1.2 clients won't complete handshake anyway since there are
+     *    no legacy callbacks to generate HelloVerifyRequest cookies.
+     *
+     * 2. Only legacy callbacks set: Use legacy path for all clients.
+     *    DTLS 1.3 clients will fail but that's expected if server doesn't
+     *    support DTLS 1.3 stateless cookies.
+     *
+     * 3. Both callbacks set AND peek supported: Peek at packet to determine
+     *    client version. Route DTLS 1.3 clients to SSL_stateless(), others
+     *    to legacy path.
+     *
+     * 4. Both callbacks set but peek NOT supported: Fall through to legacy
+     *    path. DTLS 1.3 clients will not work but DTLS 1.2 clients will.
+     *
+     * 5. No callbacks set: Will fail later when trying to generate cookie.
+     */
+    if (has_stateless_cb) {
+        if (!has_legacy_cb) {
+            /* Only stateless callbacks - use SSL_stateless() for all clients */
+            use_stateless = 1;
+        } else {
+            /*
+             * Both callback types configured. We need to peek at the packet to
+             * determine if the client supports DTLS 1.3. The SSL_stateless()
+             * path requires peek because it calls SSL_clear() internally which
+             * would wipe any pre-read packet buffer.
+             */
+            peek_supported = BIO_ctrl(rbio, BIO_CTRL_DGRAM_SET_PEEK_MODE, 1, NULL) > 0;
+            if (peek_supported) {
+                BIO_ctrl(rbio, BIO_CTRL_DGRAM_SET_PEEK_MODE, 0, NULL);
+
+                dtls13 = dtls_peek_supports_dtls13(rbio);
+
+                if (dtls13 < 0) {
+                    /* BIO read error */
+                    return -1;
+                }
+                use_stateless = (dtls13 == 1);
+            } else {
+                /*
+                 * Peek not supported - fall back to legacy path with max
+                 * version DTLS 1.2
+                 */
+                SSL_set_max_proto_version(ssl, DTLS1_2_VERSION);
+            }
+        }
+
+        if (use_stateless) {
+            /*
+             * Use SSL_stateless() for the DTLS 1.3 HelloRetryRequest exchange.
+             * If we peeked, the packet is still in the BIO. If we didn't peek
+             * (only stateless callbacks set), SSL_stateless() will read fresh.
+             */
+            ret = SSL_stateless(ssl);
+            if (ret > 0) {
+                /*
+                 * Cookie verified — populate the client address so the caller
+                 * can connect the socket, matching what the legacy path does.
+                 */
+                if (BIO_dgram_get_peer(rbio, client) <= 0)
+                    BIO_ADDR_clear(client);
+            }
+            return ret;
+        }
     }
 
     /* Ensure there is no state left over from a previous invocation */
@@ -716,7 +1010,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
             next = LISTEN_SEND_VERIFY_REQUEST;
         } else {
             /*
-             * We have a cookie, so lets check it.
+             * DTLS <= 1.2: verify via the legacy app cookie callback.
              */
             if (ssl->ctx->app_verify_cookie_cb == NULL) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_NO_VERIFY_COOKIE_CALLBACK);
@@ -728,8 +1022,8 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
                     (unsigned int)PACKET_remaining(&cookiepkt))
                 == 0) {
                 /*
-                 * We treat invalid cookies in the same was as no cookie as
-                 * per RFC6347
+                 * We treat invalid cookies the same as no cookie
+                 * per RFC 6347 d
                  */
                 next = LISTEN_SEND_VERIFY_REQUEST;
             } else {

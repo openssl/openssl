@@ -312,6 +312,7 @@ typedef struct mempacket_test_ctx_st {
     unsigned int dropepoch;
     int droprec;
     int duprec;
+    int peekmode; /* If set, BIO_read peeks instead of consuming */
 } MEMPACKET_TEST_CTX;
 
 static int mempacket_test_new(BIO *bi);
@@ -388,6 +389,18 @@ static int mempacket_test_read(BIO *bio, char *out, int outl)
         BIO_set_retry_read(bio);
         return -1;
     }
+
+    /*
+     * If peek mode is enabled, don't remove the packet from the queue.
+     * Just return a copy of the data without modifying state.
+     */
+    if (ctx->peekmode) {
+        if (outl > thispkt->len)
+            outl = thispkt->len;
+        memcpy(out, thispkt->data, outl);
+        return outl;
+    }
+
     (void)sk_MEMPACKET_shift(ctx->pkts);
     ctx->currpkt++;
 
@@ -911,6 +924,10 @@ static long mempacket_test_ctrl(BIO *bio, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_DGRAM_QUERY_MTU:
         ret = 1500;
+        break;
+    case BIO_CTRL_DGRAM_SET_PEEK_MODE:
+        ctx->peekmode = (int)num;
+        ret = 1;
         break;
     case BIO_CTRL_RESET:
     case BIO_CTRL_DUP:
