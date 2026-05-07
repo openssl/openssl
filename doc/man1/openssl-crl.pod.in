@@ -87,6 +87,14 @@ for testing.
 Specify the date output format. Values are: rfc_822 and iso_8601.
 Defaults to rfc_822.
 
+Note that despite its name, the rfc_822 format does not conform to RFC 822
+or its successors RFC 2822 and RFC 5322. It outputs dates in the format
+"Mmm DD HH:MM:SS YYYY GMT" (e.g., "Jul 31 22:20:50 2017 GMT"). The month
+appears before the day, unlike all three RFCs, which put the day first.
+The 4-digit year differs from RFC 822 (which used 2-digit years), and the
+timezone name "GMT" is obsolete per RFC 2822 and RFC 5322 (which require
+numeric offsets such as "+0000").
+
 =item B<-text>
 
 Print out the CRL in text form.
