@@ -544,7 +544,7 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch, SSL **us
     if (user_ssl == NULL)
         return NULL;
     qc = (QUIC_CONNECTION *)user_ssl;
-    ql = (QUIC_LISTENER *)port->ql;
+    ql = port->ql;
 
     /*
      * We expect the user_ssl to be newly created so it must not have an
@@ -575,8 +575,7 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch, SSL **us
     return qc->tls;
 
 err:
-    if (tls != NULL)
-        SSL_free(tls);
+    SSL_free(tls);
     SSL_free(user_ssl);
     *user_sslp = NULL;
 
