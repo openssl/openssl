@@ -1340,6 +1340,30 @@ static void set_legacy_nid(const char *name, void *vlegacy_nid)
 }
 #endif
 
+static int evp_cipher_up_ref(void *c)
+{
+    EVP_CIPHER *cipher = (EVP_CIPHER *)c;
+    int ref = 0;
+
+    if (cipher->origin == EVP_ORIG_DYNAMIC)
+        CRYPTO_UP_REF(&cipher->refcnt, &ref);
+    return 1;
+}
+
+static void evp_cipher_free(void *c)
+{
+    EVP_CIPHER *cipher = (EVP_CIPHER *)c;
+    int i;
+
+    if (cipher == NULL || cipher->origin != EVP_ORIG_DYNAMIC)
+        return;
+
+    CRYPTO_DOWN_REF(&cipher->refcnt, &i);
+    if (i > 0)
+        return;
+    evp_cipher_free_int(cipher);
+}
+
 static void *evp_cipher_from_algorithm(const int name_id,
     const OSSL_ALGORITHM *algodef,
     OSSL_PROVIDER *prov)
@@ -1511,18 +1535,8 @@ static void *evp_cipher_from_algorithm(const int name_id,
     return cipher;
 
 err:
-    EVP_CIPHER_free(cipher);
+    evp_cipher_free(cipher);
     return NULL;
-}
-
-static int evp_cipher_up_ref(void *cipher)
-{
-    return EVP_CIPHER_up_ref(cipher);
-}
-
-static void evp_cipher_free(void *cipher)
-{
-    EVP_CIPHER_free(cipher);
 }
 
 EVP_CIPHER *EVP_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
@@ -1557,11 +1571,11 @@ int EVP_CIPHER_can_pipeline(const EVP_CIPHER *cipher, int enc)
 
 int EVP_CIPHER_up_ref(EVP_CIPHER *cipher)
 {
-    int ref = 0;
-
-    if (cipher->origin == EVP_ORIG_DYNAMIC)
-        CRYPTO_UP_REF(&cipher->refcnt, &ref);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    return evp_cipher_up_ref(cipher);
+#else
     return 1;
+#endif
 }
 
 void evp_cipher_free_int(EVP_CIPHER *cipher)
@@ -1574,15 +1588,9 @@ void evp_cipher_free_int(EVP_CIPHER *cipher)
 
 void EVP_CIPHER_free(EVP_CIPHER *cipher)
 {
-    int i;
-
-    if (cipher == NULL || cipher->origin != EVP_ORIG_DYNAMIC)
-        return;
-
-    CRYPTO_DOWN_REF(&cipher->refcnt, &i);
-    if (i > 0)
-        return;
-    evp_cipher_free_int(cipher);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    evp_cipher_free(cipher);
+#endif
 }
 
 void EVP_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
