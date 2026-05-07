@@ -810,10 +810,18 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
         }
     }
 fin:
-    if (ret && ossl_method_up_ref(&best_impl->method)) {
+    if (ret) {
         *method = best_impl->method.method;
         if (prov_rw != NULL)
             *prov_rw = best_impl->provider;
+#ifdef OPENSSL_NO_CACHED_FETCH
+        if (!ossl_method_up_ref(&best_impl->method)) {
+            ret = 0;
+            *method = NULL;
+            if (prov_rw != NULL)
+                *prov_rw = NULL;
+        }
+#endif
     } else {
         ret = 0;
     }
@@ -921,9 +929,15 @@ static ossl_inline int ossl_method_store_cache_get_atomic(OSSL_METHOD_STORE *sto
 
     r = ossl_method_store_atomic_find_in_list(sa, nid, prov, prop_hash);
 
-    if (r != NULL && ossl_method_up_ref(&r->method)) {
+    if (r != NULL) {
         *method = r->method.method;
         res = 1;
+#ifdef OPENSSL_NO_CACHED_FETCH
+        if (!ossl_method_up_ref(&r->method)) {
+            *method = NULL;
+            res = 0;
+        }
+#endif
     }
 
     return res;
