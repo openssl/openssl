@@ -3563,6 +3563,29 @@ end:
     return ret;
 }
 
+static int test_ssl_new_mfail(void)
+{
+    int ret = 0;
+    SSL_CTX *cctx = NULL;
+    SSL *clientquic = NULL;
+
+    if (!TEST_ptr(cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method())))
+        goto err;
+
+    MFAIL_start();
+    clientquic = SSL_new(cctx);
+    MFAIL_end();
+
+    if (clientquic != NULL)
+        ret = 1;
+
+err:
+    SSL_free(clientquic);
+    SSL_CTX_free(cctx);
+
+    return ret;
+}
+
 /***********************************************************************************/
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
@@ -3675,6 +3698,11 @@ int setup_tests(void)
     ADD_TEST(test_quic_peer_addr_v4);
     ADD_TEST(test_ech);
     ADD_TEST(test_quic_resize_txe);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    ADD_MFAIL_NO_CHECK_TEST(test_ssl_new_mfail);
+#else
+    ADD_MFAIL_TEST(test_ssl_new_mfail);
+#endif
 
     return 1;
 err:
