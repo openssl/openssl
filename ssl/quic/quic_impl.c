@@ -681,6 +681,9 @@ static void quic_unref_port_bios(QUIC_PORT *port)
 {
     BIO *b;
 
+    if (port == NULL)
+        return;
+
     b = ossl_quic_port_get_net_rbio(port);
     BIO_free_all(b);
 
@@ -1861,6 +1864,7 @@ static int create_channel(QUIC_CONNECTION *qc, SSL_CTX *ctx)
     if (qc->port == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
         ossl_quic_engine_free(qc->engine);
+        qc->engine = NULL;
         return 0;
     }
 
@@ -1868,7 +1872,9 @@ static int create_channel(QUIC_CONNECTION *qc, SSL_CTX *ctx)
     if (qc->ch == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
         ossl_quic_port_free(qc->port);
+        qc->port = NULL;
         ossl_quic_engine_free(qc->engine);
+        qc->engine = NULL;
         return 0;
     }
 
