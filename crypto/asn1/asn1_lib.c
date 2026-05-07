@@ -289,7 +289,11 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
     const char *data = _data;
     size_t len;
 
-    if (len_in < 0) {
+    if (len_in < -1) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_SMALL);
+        return 0;
+    }
+    if (len_in == -1) {
         if (data == NULL)
             return 0;
         len = strlen(data);
