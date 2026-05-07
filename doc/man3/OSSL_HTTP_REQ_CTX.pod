@@ -87,9 +87,12 @@ For backward compatibility, I<path> may begin with C<http://> and thus convey
 an absoluteURI. In this case it indicates HTTP proxy use and provides also the
 server (and optionally the port) that the proxy shall forward the request to.
 In this case the I<server> and I<port> arguments must be NULL.
+The I<server>, I<port>, and I<path> arguments must not contain CR or LF
+characters.
 
 OSSL_HTTP_REQ_CTX_add1_header() adds header I<name> with value I<value> to the
 context I<rctx>. It can be called more than once to add multiple header lines.
+The I<name> and I<value> arguments must not contain CR or LF characters.
 For example, to add a C<Host> header for C<example.com> you would call:
 
  OSSL_HTTP_REQ_CTX_add1_header(ctx, "Host", "example.com");
@@ -141,6 +144,7 @@ The HTTP header C<Content-Length> is filled out with the length of the request.
 I<content_type> must be NULL if I<req> is NULL.
 If I<content_type> isn't NULL,
 the HTTP header C<Content-Type> is also added with the given string value.
+The I<content_type> argument must not contain CR or LF characters.
 The header lines are added to the internal memory B<BIO> for the request header.
 
 OSSL_HTTP_REQ_CTX_nbio() attempts to send the request prepared in I<rctx>

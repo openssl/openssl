@@ -158,6 +158,7 @@ pre-established with a TLS proxy using the HTTP CONNECT method,
 optionally using proxy client credentials I<proxyuser> and I<proxypass>,
 to connect with TLS protection ultimately to I<server> and I<port>.
 If the I<port> argument is NULL or the empty string it defaults to "443".
+The I<server> and I<port> arguments must not contain CR or LF characters.
 If the I<timeout> parameter is > 0 this indicates the maximum number of
 seconds the connection setup is allowed to take.
 A value <= 0 enables waiting indefinitely, i.e., no timeout.
@@ -178,6 +179,9 @@ else HTTP POST with the contents of I<req> and optional I<content_type>, where
 the length of the data in I<req> does not need to be determined in advance: the
 BIO will be read on-the-fly while sending the request, which supports streaming.
 The optional list I<headers> may contain additional custom HTTP header lines.
+
+The I<path>, I<headers> names and values, and I<content_type> must not contain
+CR or LF characters.
 
 If the I<expected_content_type> argument is not NULL,
 the client will check that the specified content-type string
