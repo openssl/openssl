@@ -43,8 +43,8 @@ Notes for Android platforms
     make
 
 **Note**: 64-bit devices running Android 15 (API Level 35) and above may require
-native libraries with a 16 KB page file size. OpenSSL libraries with a 16 KB
-page file size are built by default on version 3.6.0 and above. For prior
+native libraries with a 16 KB page size. OpenSSL libraries with a 16 KB
+page size are built by default on version 3.6.0 and above. For prior
 versions of OpenSSL, you can pass the argument `-Wl,-z,max-page-size=16384`
 to Configure while building OpenSSL for 64-bit devices.
 
