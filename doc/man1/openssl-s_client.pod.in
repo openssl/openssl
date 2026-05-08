@@ -726,9 +726,6 @@ The I<protocols> list is a comma-separated list of protocol names that
 the client should advertise support for. The list should contain the most
 desirable protocols first.  Protocol names are printable ASCII strings,
 for example "http/1.1" or "spdy/3".
-An empty list of protocols is treated specially and will cause the
-client to advertise support for the TLS extension but disconnect just
-after receiving ServerHello with a list of server supported protocols.
 The flag B<-nextprotoneg> cannot be specified if B<-tls1_3> is used.
 
 =item B<-ct>, B<-noct>
