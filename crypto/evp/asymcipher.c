@@ -19,12 +19,27 @@
 
 static void evp_asym_cipher_free(void *data)
 {
-    EVP_ASYM_CIPHER_free(data);
+    EVP_ASYM_CIPHER *cipher = (EVP_ASYM_CIPHER *)data;
+    int i;
+
+    if (cipher == NULL)
+        return;
+    CRYPTO_DOWN_REF(&cipher->refcnt, &i);
+    if (i > 0)
+        return;
+    OPENSSL_free(cipher->type_name);
+    ossl_provider_free(cipher->prov);
+    CRYPTO_FREE_REF(&cipher->refcnt);
+    OPENSSL_free(cipher);
 }
 
 static int evp_asym_cipher_up_ref(void *data)
 {
-    return EVP_ASYM_CIPHER_up_ref(data);
+    EVP_ASYM_CIPHER *cipher = (EVP_ASYM_CIPHER *)data;
+    int ref = 0;
+
+    CRYPTO_UP_REF(&cipher->refcnt, &ref);
+    return 1;
 }
 
 static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
@@ -444,25 +459,18 @@ err:
 
 void EVP_ASYM_CIPHER_free(EVP_ASYM_CIPHER *cipher)
 {
-    int i;
-
-    if (cipher == NULL)
-        return;
-    CRYPTO_DOWN_REF(&cipher->refcnt, &i);
-    if (i > 0)
-        return;
-    OPENSSL_free(cipher->type_name);
-    ossl_provider_free(cipher->prov);
-    CRYPTO_FREE_REF(&cipher->refcnt);
-    OPENSSL_free(cipher);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    evp_asym_cipher_free(cipher);
+#endif
 }
 
 int EVP_ASYM_CIPHER_up_ref(EVP_ASYM_CIPHER *cipher)
 {
-    int ref = 0;
-
-    CRYPTO_UP_REF(&cipher->refcnt, &ref);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    return evp_asym_cipher_up_ref(cipher);
+#else
     return 1;
+#endif
 }
 
 OSSL_PROVIDER *EVP_ASYM_CIPHER_get0_provider(const EVP_ASYM_CIPHER *cipher)
