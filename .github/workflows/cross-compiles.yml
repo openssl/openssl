@@ -149,6 +149,12 @@ jobs:
             target: linux-ppc64le,
             fips: no
           }, {
+            arch: loongarch64-linux-gnu,
+            label: loongarch64,
+            libs: libc6-dev-loong64-cross,
+            target: linux64-loongarch64,
+            fips: no
+          }, {
             arch: riscv64-linux-gnu,
             label: riscv64,
             # Pin the vector spec version, otherwise qemu-user emits a
