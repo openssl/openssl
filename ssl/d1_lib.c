@@ -542,6 +542,16 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
     }
 
     /*
+     * DTLSv1_listen cannot properly support DTLSv1.3. DTLv1.3 requires
+     * an HRR and to determine what to use either an HRR or an HVR we
+     * need to peek at the ClientHello and see if DTLSv1.3 is in the
+     * supported versions extension. This would require handling
+     * fragmentation. Thus we would need to know more state in a
+     * stateless function.
+     */
+    SSL_set_max_proto_version(ssl, DTLS1_2_VERSION);
+
+    /*
      * Note: This check deliberately excludes DTLS1_BAD_VER because that version
      * requires the MAC to be calculated *including* the first ClientHello
      * (without the cookie). Since DTLSv1_listen is stateless that cannot be
