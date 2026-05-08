@@ -71,6 +71,8 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item CSHAKE, see L<EVP_MD-CSHAKE(7)>
 
+=item TUPLEHASH, see L<EVP_MD-TUPLEHASH(7)>
+
 =item CSHAKE-KECCAK, see L<EVP_MD-CSHAKE-KECCAK(7)>
 
 It is used internally as a sub algorithm of CSHAKE.

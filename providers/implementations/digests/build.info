@@ -26,7 +26,7 @@ ENDIF
 SOURCE[$COMMON_GOAL]=digestcommon.c
 
 SOURCE[$SHA2_GOAL]=sha2_prov.c
-SOURCE[$SHA3_GOAL]=sha3_prov.c cshake_prov.c
+SOURCE[$SHA3_GOAL]=sha3_prov.c cshake_prov.c tuplehash_prov.c
 
 SOURCE[$NULL_GOAL]=null_prov.c
 
