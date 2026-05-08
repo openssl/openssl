@@ -305,6 +305,7 @@ static int dgram_mem_init(BIO *bio)
     b = bio->ptr;
 
     if (ring_buf_init(&b->rbuf, b->req_buf_len) == 0) {
+        dgram_pair_free(bio);
         ERR_raise(ERR_LIB_BIO, ERR_R_BIO_LIB);
         return 0;
     }
