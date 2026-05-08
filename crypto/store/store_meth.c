@@ -16,8 +16,9 @@
 #include "store_local.h"
 #include "crypto/context.h"
 
-int OSSL_STORE_LOADER_up_ref(OSSL_STORE_LOADER *loader)
+static int up_ref_loader(void *method)
 {
+    OSSL_STORE_LOADER *loader = (OSSL_STORE_LOADER *)method;
     int ref = 0;
 
     if (loader->prov != NULL)
@@ -25,8 +26,10 @@ int OSSL_STORE_LOADER_up_ref(OSSL_STORE_LOADER *loader)
     return 1;
 }
 
-void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *loader)
+static void free_loader(void *method)
 {
+    OSSL_STORE_LOADER *loader = (OSSL_STORE_LOADER *)method;
+
     if (loader != NULL && loader->prov != NULL) {
         int i;
 
@@ -37,6 +40,22 @@ void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *loader)
         CRYPTO_FREE_REF(&loader->refcnt);
     }
     OPENSSL_free(loader);
+}
+
+int OSSL_STORE_LOADER_up_ref(OSSL_STORE_LOADER *loader)
+{
+#ifdef OPENSSL_NO_CACHED_FETCH
+    return up_ref_loader(loader);
+#else
+    return 1;
+#endif
+}
+
+void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *loader)
+{
+#ifdef OPENSSL_NO_CACHED_FETCH
+    free_loader(loader);
+#endif
 }
 
 /*
@@ -59,16 +78,6 @@ static OSSL_STORE_LOADER *new_loader(OSSL_PROVIDER *prov)
     loader->prov = prov;
 
     return loader;
-}
-
-static int up_ref_loader(void *method)
-{
-    return OSSL_STORE_LOADER_up_ref(method);
-}
-
-static void free_loader(void *method)
-{
-    OSSL_STORE_LOADER_free(method);
 }
 
 /* Data to be passed through ossl_method_construct() */
@@ -237,7 +246,7 @@ static void *loader_from_algorithm(int scheme_id, const OSSL_ALGORITHM *algodef,
         || loader->p_eof == NULL
         || loader->p_close == NULL) {
         /* Only set_ctx_params is optional */
-        OSSL_STORE_LOADER_free(loader);
+        free_loader(loader);
         ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_LOADER_INCOMPLETE);
         return NULL;
     }
@@ -282,7 +291,7 @@ static void *construct_loader(const OSSL_ALGORITHM *algodef,
 /* Intermediary function to avoid ugly casts, used below */
 static void destruct_loader(void *method, void *data)
 {
-    OSSL_STORE_LOADER_free(method);
+    free_loader(method);
 }
 
 /* Fetching support.  Can fetch by numeric identity or by scheme */
