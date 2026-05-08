@@ -176,12 +176,18 @@ EVP_KDF *EVP_KDF_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
 
 int EVP_KDF_up_ref(EVP_KDF *kdf)
 {
+#ifdef OPENSSL_NO_CACHED_FETCH
     return evp_kdf_up_ref(kdf);
+#else
+    return 1;
+#endif
 }
 
 void EVP_KDF_free(EVP_KDF *kdf)
 {
+#ifdef OPENSSL_NO_CACHED_FETCH
     evp_kdf_free(kdf);
+#endif
 }
 
 const OSSL_PARAM *EVP_KDF_gettable_params(const EVP_KDF *kdf)
