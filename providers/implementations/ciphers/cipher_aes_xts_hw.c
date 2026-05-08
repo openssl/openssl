@@ -193,12 +193,37 @@ static int cipher_hw_aes_xts_rv64i_zknd_zkne_initkey(PROV_CIPHER_CTX *ctx,
     size_t keylen)
 {
     PROV_AES_XTS_CTX *xctx = (PROV_AES_XTS_CTX *)ctx;
-    OSSL_xts_stream_fn stream_enc = NULL;
-    OSSL_xts_stream_fn stream_dec = NULL;
+    size_t bytes = keylen / 2;
+    size_t bits = bytes * 8;
 
-    XTS_SET_KEY_FN(rv64i_zkne_set_encrypt_key, rv64i_zknd_set_decrypt_key,
-        rv64i_zkne_encrypt, rv64i_zknd_decrypt,
-        stream_enc, stream_dec);
+    if (ctx->enc) {
+        if (RISCV_HAS_ZKNE()) {
+            rv64i_zkne_set_encrypt_key(key, (int)bits, &xctx->ks1.ks);
+            xctx->xts.block1 = (block128_f)rv64i_zkne_encrypt;
+        } else {
+            AES_set_encrypt_key(key, (int)bits, &xctx->ks1.ks);
+            xctx->xts.block1 = (block128_f)AES_encrypt;
+        }
+    } else {
+        if (RISCV_HAS_ZKND()) {
+            rv64i_zknd_set_decrypt_key(key, (int)bits, &xctx->ks1.ks);
+            xctx->xts.block1 = (block128_f)rv64i_zknd_decrypt;
+        } else {
+            AES_set_decrypt_key(key, (int)bits, &xctx->ks1.ks);
+            xctx->xts.block1 = (block128_f)AES_decrypt;
+        }
+    }
+    /* Tweak key always uses the encrypt direction */
+    if (RISCV_HAS_ZKNE()) {
+        rv64i_zkne_set_encrypt_key(key + bytes, (int)bits, &xctx->ks2.ks);
+        xctx->xts.block2 = (block128_f)rv64i_zkne_encrypt;
+    } else {
+        AES_set_encrypt_key(key + bytes, (int)bits, &xctx->ks2.ks);
+        xctx->xts.block2 = (block128_f)AES_encrypt;
+    }
+    xctx->xts.key1 = &xctx->ks1;
+    xctx->xts.key2 = &xctx->ks2;
+    xctx->stream = NULL;
     return 1;
 }
 
@@ -268,51 +293,64 @@ static int cipher_hw_aes_xts_rv64i_zvkned_initkey(PROV_CIPHER_CTX *ctx,
         return &aes_xts_rv64i_zvbb_zvkg_zvkned;                                            \
     if (RISCV_HAS_ZVKNED() && riscv_vlen() >= 128)                                         \
         return &aes_xts_rv64i_zvkned;                                                      \
-    else if (RISCV_HAS_ZKND_AND_ZKNE())                                                    \
+    else if (RISCV_HAS_ZKNE() || RISCV_HAS_ZKND())                                         \
         return &aes_xts_rv64i_zknd_zkne;
 
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
 
-static int cipher_hw_aes_xts_rv32i_zknd_zkne_initkey(PROV_CIPHER_CTX *ctx,
+static int cipher_hw_aes_xts_rv32i_zkne_initkey(PROV_CIPHER_CTX *ctx,
     const unsigned char *key,
     size_t keylen)
 {
     PROV_AES_XTS_CTX *xctx = (PROV_AES_XTS_CTX *)ctx;
+    size_t bytes = keylen / 2;
+    size_t bits = bytes * 8;
 
-    XTS_SET_KEY_FN(rv32i_zkne_set_encrypt_key, rv32i_zknd_zkne_set_decrypt_key,
-        rv32i_zkne_encrypt, rv32i_zknd_decrypt,
-        NULL, NULL);
+    /*
+     * On RV32, the decrypt key schedule (rv32i_zknd_zkne_set_decrypt_key)
+     * needs both Zkne and Zknd. Select the best available paths independently.
+     */
+    if (ctx->enc) {
+        if (RISCV_HAS_ZBKB_AND_ZKNE()) {
+            rv32i_zbkb_zkne_set_encrypt_key(key, (int)bits, &xctx->ks1.ks);
+        } else {
+            rv32i_zkne_set_encrypt_key(key, (int)bits, &xctx->ks1.ks);
+        }
+        xctx->xts.block1 = (block128_f)rv32i_zkne_encrypt;
+    } else {
+        if (RISCV_HAS_ZKND_AND_ZKNE()) {
+            if (RISCV_HAS_ZBKB())
+                rv32i_zbkb_zknd_zkne_set_decrypt_key(key, (int)bits, &xctx->ks1.ks);
+            else
+                rv32i_zknd_zkne_set_decrypt_key(key, (int)bits, &xctx->ks1.ks);
+            xctx->xts.block1 = (block128_f)rv32i_zknd_decrypt;
+        } else {
+            AES_set_decrypt_key(key, (int)bits, &xctx->ks1.ks);
+            xctx->xts.block1 = (block128_f)AES_decrypt;
+        }
+    }
+    /* Tweak key always uses the encrypt direction */
+    if (RISCV_HAS_ZBKB_AND_ZKNE()) {
+        rv32i_zbkb_zkne_set_encrypt_key(key + bytes, (int)bits, &xctx->ks2.ks);
+    } else {
+        rv32i_zkne_set_encrypt_key(key + bytes, (int)bits, &xctx->ks2.ks);
+    }
+    xctx->xts.block2 = (block128_f)rv32i_zkne_encrypt;
+    xctx->xts.key1 = &xctx->ks1;
+    xctx->xts.key2 = &xctx->ks2;
+    xctx->stream = NULL;
     return 1;
 }
 
-static int cipher_hw_aes_xts_rv32i_zbkb_zknd_zkne_initkey(PROV_CIPHER_CTX *ctx,
-    const unsigned char *key,
-    size_t keylen)
-{
-    PROV_AES_XTS_CTX *xctx = (PROV_AES_XTS_CTX *)ctx;
-
-    XTS_SET_KEY_FN(rv32i_zbkb_zkne_set_encrypt_key, rv32i_zbkb_zknd_zkne_set_decrypt_key,
-        rv32i_zkne_encrypt, rv32i_zknd_decrypt,
-        NULL, NULL);
-    return 1;
-}
-
-#define PROV_CIPHER_HW_declare_xts()                             \
-    static const PROV_CIPHER_HW aes_xts_rv32i_zknd_zkne = {      \
-        cipher_hw_aes_xts_rv32i_zknd_zkne_initkey,               \
-        NULL,                                                    \
-        cipher_hw_aes_xts_copyctx                                \
-    };                                                           \
-    static const PROV_CIPHER_HW aes_xts_rv32i_zbkb_zknd_zkne = { \
-        cipher_hw_aes_xts_rv32i_zbkb_zknd_zkne_initkey,          \
-        NULL,                                                    \
-        cipher_hw_aes_xts_copyctx                                \
+#define PROV_CIPHER_HW_declare_xts()                   \
+    static const PROV_CIPHER_HW aes_xts_rv32i_zkne = { \
+        cipher_hw_aes_xts_rv32i_zkne_initkey,          \
+        NULL,                                          \
+        cipher_hw_aes_xts_copyctx                      \
     };
-#define PROV_CIPHER_HW_select_xts()           \
-    if (RISCV_HAS_ZBKB_AND_ZKND_AND_ZKNE())   \
-        return &aes_xts_rv32i_zbkb_zknd_zkne; \
-    if (RISCV_HAS_ZKND_AND_ZKNE())            \
-        return &aes_xts_rv32i_zknd_zkne;
+#define PROV_CIPHER_HW_select_xts() \
+    if (RISCV_HAS_ZKNE())           \
+        return &aes_xts_rv32i_zkne;
 #else
 /* The generic case */
 #define PROV_CIPHER_HW_declare_xts()

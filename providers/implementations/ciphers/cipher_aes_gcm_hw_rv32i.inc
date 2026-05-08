@@ -8,12 +8,15 @@
  */
 
 /*-
- * RISC-V 32 ZKND ZKNE support for AES GCM.
+ * RISC-V 32 ZKNE support for AES GCM.
  * This file is included by cipher_aes_gcm_hw.c
+ *
+ * GCM uses AES only in the encrypt direction (CTR mode), so only Zkne is
+ * required; Zknd is not needed.
  */
 
-static int rv32i_zknd_zkne_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
-                                       size_t keylen)
+static int rv32i_zkne_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
+                                  size_t keylen)
 {
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
     AES_KEY *ks = &actx->ks.ks;
@@ -23,9 +26,9 @@ static int rv32i_zknd_zkne_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *k
     return 1;
 }
 
-static int rv32i_zbkb_zknd_zkne_gcm_initkey(PROV_GCM_CTX *ctx,
-                                            const unsigned char *key,
-                                            size_t keylen)
+static int rv32i_zbkb_zkne_gcm_initkey(PROV_GCM_CTX *ctx,
+                                       const unsigned char *key,
+                                       size_t keylen)
 {
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
     AES_KEY *ks = &actx->ks.ks;
@@ -35,8 +38,8 @@ static int rv32i_zbkb_zknd_zkne_gcm_initkey(PROV_GCM_CTX *ctx,
     return 1;
 }
 
-static const PROV_GCM_HW rv32i_zknd_zkne_gcm = {
-    rv32i_zknd_zkne_gcm_initkey,
+static const PROV_GCM_HW rv32i_zkne_gcm = {
+    rv32i_zkne_gcm_initkey,
     ossl_gcm_setiv,
     ossl_gcm_aad_update,
     generic_aes_gcm_cipher_update,
@@ -44,8 +47,8 @@ static const PROV_GCM_HW rv32i_zknd_zkne_gcm = {
     ossl_gcm_one_shot
 };
 
-static const PROV_GCM_HW rv32i_zbkb_zknd_zkne_gcm = {
-    rv32i_zbkb_zknd_zkne_gcm_initkey,
+static const PROV_GCM_HW rv32i_zbkb_zkne_gcm = {
+    rv32i_zbkb_zkne_gcm_initkey,
     ossl_gcm_setiv,
     ossl_gcm_aad_update,
     generic_aes_gcm_cipher_update,
@@ -55,9 +58,9 @@ static const PROV_GCM_HW rv32i_zbkb_zknd_zkne_gcm = {
 
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
 {
-    if (RISCV_HAS_ZBKB_AND_ZKND_AND_ZKNE())
-        return &rv32i_zbkb_zknd_zkne_gcm;
-    if (RISCV_HAS_ZKND_AND_ZKNE())
-        return &rv32i_zknd_zkne_gcm;
+    if (RISCV_HAS_ZBKB_AND_ZKNE())
+        return &rv32i_zbkb_zkne_gcm;
+    if (RISCV_HAS_ZKNE())
+        return &rv32i_zkne_gcm;
     return &aes_gcm;
 }

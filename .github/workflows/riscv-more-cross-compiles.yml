@@ -74,6 +74,28 @@ jobs:
             opensslcapsname: riscvcap, # OPENSSL_riscvcap
             opensslcaps: "rv64gc_zbb_zbc_zbkb_zknd_zkne"
           }, {
+            # RV64GC with Zkne only (no Zknd)
+            #   crypto/aes/asm/aes-riscv64-zkn.pl (encrypt path)
+            #   providers/implementations/ciphers/cipher_aes_hw_rv64i.inc
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,zkne=true,zknd=false",
+            opensslcapsname: riscvcap, # OPENSSL_riscvcap
+            opensslcaps: "rv64gc_zkne"
+          }, {
+            # RV64GC with Zknd only (no Zkne)
+            #   crypto/aes/asm/aes-riscv64-zkn.pl (decrypt path)
+            #   providers/implementations/ciphers/cipher_aes_hw_rv64i.inc
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,zknd=true,zkne=false",
+            opensslcapsname: riscvcap, # OPENSSL_riscvcap
+            opensslcaps: "rv64gc_zknd"
+          }, {
             # RV64GC ZBC ZBB, but without ZBKB
             #   crypto/modes/gcm128.c
             arch: riscv64-linux-gnu,

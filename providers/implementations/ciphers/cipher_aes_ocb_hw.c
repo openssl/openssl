@@ -109,9 +109,28 @@ static int cipher_hw_aes_ocb_rv64i_zknd_zkne_initkey(PROV_CIPHER_CTX *vctx,
     size_t keylen)
 {
     PROV_AES_OCB_CTX *ctx = (PROV_AES_OCB_CTX *)vctx;
+    block128_f fn_enc, fn_dec;
 
-    OCB_SET_KEY_FN(rv64i_zkne_set_encrypt_key, rv64i_zknd_set_decrypt_key,
-        rv64i_zkne_encrypt, rv64i_zknd_decrypt, NULL, NULL);
+    CRYPTO_ocb128_cleanup(&ctx->ocb);
+
+    if (RISCV_HAS_ZKNE()) {
+        rv64i_zkne_set_encrypt_key(key, (int)(keylen * 8), &ctx->ksenc.ks);
+        fn_enc = (block128_f)rv64i_zkne_encrypt;
+    } else {
+        AES_set_encrypt_key(key, (int)(keylen * 8), &ctx->ksenc.ks);
+        fn_enc = (block128_f)AES_encrypt;
+    }
+    if (RISCV_HAS_ZKND()) {
+        rv64i_zknd_set_decrypt_key(key, (int)(keylen * 8), &ctx->ksdec.ks);
+        fn_dec = (block128_f)rv64i_zknd_decrypt;
+    } else {
+        AES_set_decrypt_key(key, (int)(keylen * 8), &ctx->ksdec.ks);
+        fn_dec = (block128_f)AES_decrypt;
+    }
+    if (!CRYPTO_ocb128_init(&ctx->ocb, &ctx->ksenc.ks, &ctx->ksdec.ks,
+            fn_enc, fn_dec, NULL))
+        return 0;
+    ctx->key_set = 1;
     return 1;
 }
 
@@ -147,47 +166,59 @@ static int cipher_hw_aes_ocb_rv64i_zvkned_initkey(PROV_CIPHER_CTX *vctx,
 #define PROV_CIPHER_HW_select()                    \
     if (RISCV_HAS_ZVKNED() && riscv_vlen() >= 128) \
         return &aes_rv64i_zvkned_ocb;              \
-    else if (RISCV_HAS_ZKND_AND_ZKNE())            \
+    else if (RISCV_HAS_ZKNE() || RISCV_HAS_ZKND()) \
         return &aes_rv64i_zknd_zkne_ocb;
 
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
 
-static int cipher_hw_aes_ocb_rv32i_zknd_zkne_initkey(PROV_CIPHER_CTX *vctx,
+static int cipher_hw_aes_ocb_rv32i_zkne_initkey(PROV_CIPHER_CTX *vctx,
     const unsigned char *key,
     size_t keylen)
 {
     PROV_AES_OCB_CTX *ctx = (PROV_AES_OCB_CTX *)vctx;
+    block128_f fn_enc, fn_dec;
 
-    OCB_SET_KEY_FN(rv32i_zkne_set_encrypt_key, rv32i_zknd_zkne_set_decrypt_key,
-        rv32i_zkne_encrypt, rv32i_zknd_decrypt, NULL, NULL);
+    CRYPTO_ocb128_cleanup(&ctx->ocb);
+
+    /*
+     * On RV32, the encrypt key schedule (rv32i_zkne_set_encrypt_key) only
+     * needs Zkne. The decrypt key schedule (rv32i_zknd_zkne_set_decrypt_key)
+     * needs both Zkne and Zknd (uses aes32esi from Zkne for InvMixColumns).
+     * Select the best available encrypt and decrypt paths independently.
+     */
+    if (RISCV_HAS_ZBKB_AND_ZKNE()) {
+        rv32i_zbkb_zkne_set_encrypt_key(key, (int)(keylen * 8), &ctx->ksenc.ks);
+    } else {
+        rv32i_zkne_set_encrypt_key(key, (int)(keylen * 8), &ctx->ksenc.ks);
+    }
+    fn_enc = (block128_f)rv32i_zkne_encrypt;
+
+    if (RISCV_HAS_ZKND_AND_ZKNE()) {
+        if (RISCV_HAS_ZBKB())
+            rv32i_zbkb_zknd_zkne_set_decrypt_key(key, (int)(keylen * 8), &ctx->ksdec.ks);
+        else
+            rv32i_zknd_zkne_set_decrypt_key(key, (int)(keylen * 8), &ctx->ksdec.ks);
+        fn_dec = (block128_f)rv32i_zknd_decrypt;
+    } else {
+        AES_set_decrypt_key(key, (int)(keylen * 8), &ctx->ksdec.ks);
+        fn_dec = (block128_f)AES_decrypt;
+    }
+
+    if (!CRYPTO_ocb128_init(&ctx->ocb, &ctx->ksenc.ks, &ctx->ksdec.ks,
+            fn_enc, fn_dec, NULL))
+        return 0;
+    ctx->key_set = 1;
     return 1;
 }
 
-static int cipher_hw_aes_ocb_rv32i_zbkb_zknd_zkne_initkey(PROV_CIPHER_CTX *vctx,
-    const unsigned char *key,
-    size_t keylen)
-{
-    PROV_AES_OCB_CTX *ctx = (PROV_AES_OCB_CTX *)vctx;
-
-    OCB_SET_KEY_FN(rv32i_zbkb_zkne_set_encrypt_key, rv32i_zbkb_zknd_zkne_set_decrypt_key,
-        rv32i_zkne_encrypt, rv32i_zknd_decrypt, NULL, NULL);
-    return 1;
-}
-
-#define PROV_CIPHER_HW_declare()                                 \
-    static const PROV_CIPHER_HW aes_rv32i_zknd_zkne_ocb = {      \
-        cipher_hw_aes_ocb_rv32i_zknd_zkne_initkey,               \
-        NULL                                                     \
-    };                                                           \
-    static const PROV_CIPHER_HW aes_rv32i_zbkb_zknd_zkne_ocb = { \
-        cipher_hw_aes_ocb_rv32i_zbkb_zknd_zkne_initkey,          \
-        NULL                                                     \
+#define PROV_CIPHER_HW_declare()                       \
+    static const PROV_CIPHER_HW aes_rv32i_zkne_ocb = { \
+        cipher_hw_aes_ocb_rv32i_zkne_initkey,          \
+        NULL                                           \
     };
-#define PROV_CIPHER_HW_select()               \
-    if (RISCV_HAS_ZBKB_AND_ZKND_AND_ZKNE())   \
-        return &aes_rv32i_zbkb_zknd_zkne_ocb; \
-    if (RISCV_HAS_ZKND_AND_ZKNE())            \
-        return &aes_rv32i_zknd_zkne_ocb;
+#define PROV_CIPHER_HW_select() \
+    if (RISCV_HAS_ZKNE())       \
+        return &aes_rv32i_zkne_ocb;
 #else
 #define PROV_CIPHER_HW_declare()
 #define PROV_CIPHER_HW_select()
