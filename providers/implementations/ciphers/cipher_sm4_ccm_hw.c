@@ -62,6 +62,8 @@ static const PROV_CCM_HW ccm_sm4 = {
 
 #if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 #include "cipher_sm4_ccm_hw_rv64i.inc"
+#elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
+#include "cipher_sm4_ccm_hw_rv32i.inc"
 #elif defined(OPENSSL_CPUID_OBJ) && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
 #include "cipher_sm4_ccm_hw_x86_64.inc"
 #else

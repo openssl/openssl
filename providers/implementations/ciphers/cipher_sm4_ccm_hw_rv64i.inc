@@ -32,10 +32,31 @@ static const PROV_CCM_HW rv64i_zvksed_sm4_ccm = {
     ossl_ccm_generic_gettag
 };
 
+static int rv64i_zksed_sm4_ccm_initkey(PROV_CCM_CTX *ctx,
+                                       const unsigned char *key,
+                                       size_t keylen)
+{
+    PROV_SM4_CCM_CTX *actx = (PROV_SM4_CCM_CTX *)ctx;
+
+    SM4_HW_CCM_SET_KEY_FN(rv64i_zksed_sm4_set_encrypt_key,
+                          rv64i_zksed_sm4_encrypt, NULL, NULL);
+    return 1;
+}
+
+static const PROV_CCM_HW rv64i_zksed_sm4_ccm = {
+    rv64i_zksed_sm4_ccm_initkey,
+    ossl_ccm_generic_setiv,
+    ossl_ccm_generic_setaad,
+    ossl_ccm_generic_auth_encrypt,
+    ossl_ccm_generic_auth_decrypt,
+    ossl_ccm_generic_gettag
+};
+
 const PROV_CCM_HW *ossl_prov_sm4_hw_ccm(size_t keybits)
 {
     if (RISCV_HAS_ZVKB_AND_ZVKSED() && riscv_vlen() >= 128)
         return &rv64i_zvksed_sm4_ccm;
-    else
-        return &ccm_sm4;
+    if (RISCV_HAS_ZKSED())
+        return &rv64i_zksed_sm4_ccm;
+    return &ccm_sm4;
 }

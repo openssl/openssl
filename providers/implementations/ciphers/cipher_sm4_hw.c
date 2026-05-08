@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/proverr.h>
 #include "cipher_sm4.h"
 
 static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
@@ -136,6 +137,8 @@ IMPLEMENT_CIPHER_HW_COPYCTX(cipher_hw_sm4_copyctx, PROV_SM4_CTX)
 
 #if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 #include "cipher_sm4_hw_rv64i.inc"
+#elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
+#include "cipher_sm4_hw_rv32i.inc"
 #elif defined(OPENSSL_CPUID_OBJ) && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
 #include "cipher_sm4_hw_x86_64.inc"
 #else

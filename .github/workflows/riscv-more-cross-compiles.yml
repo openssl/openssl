@@ -94,6 +94,17 @@ jobs:
             opensslcapsname: riscvcap, # OPENSSL_riscvcap
             opensslcaps: "rv64gc_zbc"
           }, {
+            # RV64GC with scalar ZKSED only
+            #   crypto/sm4/asm/sm4-riscv-zksed.pl
+            #   providers/implementations/ciphers/cipher_sm4*_rv64i.inc
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            qemucpu: "rv64,zksed=true",
+            opensslcapsname: riscvcap, # OPENSSL_riscvcap
+            opensslcaps: "rv64gc_zksed"
+          }, {
           # Vector Crypto
             # RV64GC V ZBB, but without ZVKB
             # For chacha20 vector-only path from #24069
