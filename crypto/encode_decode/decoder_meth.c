@@ -26,12 +26,29 @@
 
 static void ossl_decoder_free(void *data)
 {
-    OSSL_DECODER_free(data);
+    OSSL_DECODER *decoder = (OSSL_DECODER *)data;
+    int ref = 0;
+
+    if (decoder == NULL)
+        return;
+
+    CRYPTO_DOWN_REF(&decoder->base.refcnt, &ref);
+    if (ref > 0)
+        return;
+    OPENSSL_free(decoder->base.name);
+    ossl_property_free(decoder->base.parsed_propdef);
+    ossl_provider_free(decoder->base.prov);
+    CRYPTO_FREE_REF(&decoder->base.refcnt);
+    OPENSSL_free(decoder);
 }
 
 static int ossl_decoder_up_ref(void *data)
 {
-    return OSSL_DECODER_up_ref(data);
+    OSSL_DECODER *decoder = (OSSL_DECODER *)data;
+    int ref = 0;
+
+    CRYPTO_UP_REF(&decoder->base.refcnt, &ref);
+    return 1;
 }
 
 /* Simple method structure constructor and destructor */
@@ -51,27 +68,23 @@ static OSSL_DECODER *ossl_decoder_new(void)
 
 int OSSL_DECODER_up_ref(OSSL_DECODER *decoder)
 {
-    int ref = 0;
-
-    CRYPTO_UP_REF(&decoder->base.refcnt, &ref);
+#ifdef OSSL_DECODER_fetch
+    return ossl_decoder_up_ref(decoder);
+#else
+    if (decoder->base.id == 0)
+        return ossl_decoder_up_ref(decoder);
     return 1;
+#endif
 }
 
 void OSSL_DECODER_free(OSSL_DECODER *decoder)
 {
-    int ref = 0;
-
-    if (decoder == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&decoder->base.refcnt, &ref);
-    if (ref > 0)
-        return;
-    OPENSSL_free(decoder->base.name);
-    ossl_property_free(decoder->base.parsed_propdef);
-    ossl_provider_free(decoder->base.prov);
-    CRYPTO_FREE_REF(&decoder->base.refcnt);
-    OPENSSL_free(decoder);
+#ifdef OSSL_DECODER_fetch
+    ossl_decoder_free(decoder);
+#else
+    if (decoder != NULL && decoder->base.id == 0)
+        ossl_decoder_free(decoder);
+#endif
 }
 
 /* Data to be passed through ossl_method_construct() */
