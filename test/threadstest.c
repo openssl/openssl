@@ -1372,7 +1372,7 @@ static void test_obj_create_worker(void)
 
     for (i = 0; i < 4; i++) {
         now = time(NULL);
-        snprintf(name, sizeof(name), "Time in Seconds = %ld", (long)now);
+        BIO_snprintf(name, sizeof(name), "Time in Seconds = %ld", (long)now);
         while (now == time(NULL))
             /* no-op */;
         nid = OBJ_create(NULL, NULL, name);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -122,14 +122,29 @@ int ossl_spki2typespki_der_decode(unsigned char *der, long len, int selection,
         goto end;
     X509_ALGOR_get0(&oid, NULL, NULL, algor);
 
+    /*
+     * Resolve the SPKI AlgorithmIdentifier OID to the key type name expected
+     * by the downstream provider decoder.  Most OIDs map one-to-one to a key
+     * type via OBJ_obj2txt(), but a few need special handling:
+     *
+     *   - SM2 abuses id-ecPublicKey, so the EC parameters must be inspected
+     *     to tell EC and SM2 apart.
+     *   - TPM 1.2 Endorsement Key certificates use NID_rsaesOaep with a
+     *     plain RSAPublicKey body per TCG Credential Profiles V1.2 section
+     *     3.2.7; the OAEP AlgorithmIdentifier parameters are not interpreted
+     *     here.  Keep this in sync with x509_pubkey_decode() and
+     *     x509_pubkey_ex_d2i_ex() in crypto/x509/x_pubkey.c.
+     */
+    dataname[0] = '\0';
 #ifndef OPENSSL_NO_EC
-    /* SM2 abuses the EC oid, so this could actually be SM2 */
     if (OBJ_obj2nid(oid) == NID_X9_62_id_ecPublicKey
         && ossl_x509_algor_is_sm2(algor))
-        strcpy(dataname, "SM2");
-    else
+        OPENSSL_strlcpy(dataname, "SM2", sizeof(dataname));
 #endif
-        if (OBJ_obj2txt(dataname, sizeof(dataname), oid, 0) <= 0)
+    if (dataname[0] == '\0' && OBJ_obj2nid(oid) == NID_rsaesOaep)
+        OPENSSL_strlcpy(dataname, "RSA", sizeof(dataname));
+    if (dataname[0] == '\0'
+        && OBJ_obj2txt(dataname, sizeof(dataname), oid, 0) <= 0)
         goto end;
 
     ossl_X509_PUBKEY_INTERNAL_free(xpub);

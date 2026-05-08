@@ -7,6 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_ECX_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_ECX_H
+
+#include <stddef.h>
+
+#include <openssl/bn.h>
+#include <openssl/ec.h>
+
 #include "crypto/types.h"
 
 #ifndef OPENSSL_NO_EC
@@ -29,3 +37,5 @@ int ossl_ecx_dhkem_derive_private(ECX_KEY *ecx, unsigned char *privout,
 int ossl_ec_dhkem_derive_private(EC_KEY *ec, BIGNUM *privout,
     const unsigned char *ikm, size_t ikmlen);
 #endif
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_ECX_H) */

@@ -126,8 +126,8 @@ static int write_a_request(SSL *stream, const char *request_start,
 }
 
 /*
- * Simple application to send basic HTTP/1.0 requests to a server and print the
- * response on the screen. Note that HTTP/1.0 over QUIC is not a real protocol
+ * Simple application to send basic HTTP/1.1 requests to a server and print the
+ * response on the screen. Note that HTTP/1.1 over QUIC is not a real protocol
  * and will not be supported by real world servers. This is for demonstration
  * purposes only.
  */
@@ -139,9 +139,9 @@ int main(int argc, char *argv[])
     BIO *bio = NULL;
     int res = EXIT_FAILURE;
     int ret;
-    unsigned char alpn[] = { 8, 'h', 't', 't', 'p', '/', '1', '.', '0' };
-    const char *request1_start = "GET /request1.html HTTP/1.0\r\nConnection: close\r\nHost: ";
-    const char *request2_start = "GET /request2.html HTTP/1.0\r\nConnection: close\r\nHost: ";
+    unsigned char alpn[] = { 8, 'h', 't', 't', 'p', '/', '1', '.', '1' };
+    const char *request1_start = "GET /request1.html HTTP/1.1\r\nConnection: close\r\nHost: ";
+    const char *request2_start = "GET /request2.html HTTP/1.1\r\nConnection: close\r\nHost: ";
     size_t readbytes;
     char buf[160];
     BIO_ADDR *peer_addr = NULL;
@@ -351,7 +351,7 @@ int main(int argc, char *argv[])
     }
 
     /*
-     * In our hypothetical HTTP/1.0 over QUIC protocol that we are using we
+     * In our hypothetical HTTP/1.1 over QUIC protocol that we are using we
      * assume that the server will respond with a server initiated stream
      * containing the data requested in our uni-directional stream. This doesn't
      * really make sense to do in a real protocol, but its just for

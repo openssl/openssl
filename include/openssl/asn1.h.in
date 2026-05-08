@@ -545,7 +545,11 @@ int ASN1_STRING_type(const ASN1_STRING *x);
 const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_BIT_STRING)
-int ASN1_BIT_STRING_set(ASN1_BIT_STRING *a, unsigned char *d, int length);
+#ifndef OPENSSL_NO_DEPRECATED_4_1
+OSSL_DEPRECATEDIN_4_1_FOR("use ASN1_BIT_STRING_set1()")
+int ASN1_BIT_STRING_set(ASN1_BIT_STRING *a,
+    unsigned char *d, int length);
+#endif
 int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value);
 int ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n);
 int ASN1_BIT_STRING_check(const ASN1_BIT_STRING *a,

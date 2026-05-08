@@ -11,6 +11,7 @@
  * Unfortunate workaround to avoid symbol conflict with wincrypt.h
  * See https://github.com/openssl/openssl/issues/9981
  */
+
 #ifdef _WIN32
 #define WINCRYPT_USE_SYMBOL_PREFIX
 #undef X509_NAME

@@ -855,6 +855,31 @@ static int test_crl_idp_malformed2(void)
     return test;
 }
 
+static int test_crl_diff_mfail(void)
+{
+    X509_CRL *base_crl = NULL, *newer_crl = NULL, *delta = NULL;
+    int ret = 0;
+
+    base_crl = CRL_from_strings(kBasicCRL);
+    newer_crl = CRL_from_strings(kRevokedCRL);
+    if (!TEST_ptr(base_crl) || !TEST_ptr(newer_crl))
+        goto err;
+
+    MFAIL_start();
+    delta = X509_CRL_diff(base_crl, newer_crl, NULL, NULL, 0);
+    MFAIL_end();
+
+    if (delta == NULL)
+        goto err;
+
+    ret = 1;
+err:
+    X509_CRL_free(delta);
+    X509_CRL_free(base_crl);
+    X509_CRL_free(newer_crl);
+    return ret;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(test_root = X509_from_strings(kCRLTestRoot))
@@ -878,6 +903,7 @@ int setup_tests(void)
     ADD_TEST(test_unknown_critical_crl1);
     ADD_TEST(test_unknown_critical_crl2);
     ADD_ALL_TESTS(test_reuse_crl, 6);
+    ADD_MFAIL_TEST(test_crl_diff_mfail);
 
     return 1;
 }

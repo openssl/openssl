@@ -30,6 +30,13 @@ expose this information. If required the state should be set and get
 via an OSSL_PARAM, bearing in mind that the bounds must be checked if setting
 this value.
 
+=head3 Deprecation of ASN1_BIT_STRING_set()
+
+This function was deprecated in OpenSSL 4.1 in favour of
+ASN1_BIT_STRING_set1(). The new functions in addition to what
+ASN1_BIT_STRING_set() does, validates the function arguments and sets
+unused bits after setting the BIT STRING value.
+
 =head1 OPENSSL 4.0
 
 =head2 Main Changes from OpenSSL 3.6
@@ -233,6 +240,27 @@ The function ASN1_OBJECT_new() has been deprecated in 4.0. The function is only
 useful internally because the type is opaque and there exist no setter functions.
 Hence, there never was a real use case for the function and calls to it can
 simply be removed.
+
+=head3 Practical behaviour change of EVP_get_cipherby* and EVP_get_digestby* functions
+
+Before 4.0 functions B<EVP_get_cipherby*> and B<EVP_get_digestby*> were often
+used as fallback for EVP_CIPHER_fetch() and EVP_MD_fetch() implying the
+possibility to access an algorithm implementation provided by an engine. In
+case when an engine-provided algorithm was not available, these functions on
+success return the implementation from the default OpenSSL library context with
+default properties. Version 4.0 doesn't support engines, so, on success, these
+functions always return the implementation from the default OpenSSL library
+context with default properties. This is probably not the desired result for
+applications that use a nondefault library context.
+
+The other difference between B<EVP_get_cipherby*>/B<EVP_get_digestby*> and
+EVP_CIPHER_fetch()/EVP_MD_fetch() is that the former functions deal with
+algorithm aliases algorithm aliases added via OBJ_NAME_add(), and the newer
+ones don't (except the ones declared in a specific provider as explicit
+aliases). Applications wishing to preserve alias handling behaviour can first
+check for an alias using B<OBJ_NAME_get()> (with B<OBJ_NAME_TYPE_CIPHER_METH>
+or B<OBJ_NAME_TYPE_MD_METH>) and fall back to EVP_CIPHER_fetch() or
+EVP_MD_fetch() if no match is found.
 
 =head1 OPENSSL 3.6
 

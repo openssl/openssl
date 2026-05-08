@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_DSA_DSA_LOCAL_H)
+#define OSSL_LIBCRYPTO_DSA_DSA_LOCAL_H
+
 #include <openssl/dsa.h>
 #include "internal/refcount.h"
 #include "internal/ffc.h"
@@ -70,3 +73,5 @@ struct dsa_method {
 DSA_SIG *ossl_dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa,
     unsigned int nonce_type, const char *digestname,
     OSSL_LIB_CTX *libctx, const char *propq);
+
+#endif /* !defined(OSSL_LIBCRYPTO_DSA_DSA_LOCAL_H) */

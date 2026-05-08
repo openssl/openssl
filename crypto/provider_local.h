@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_PROVIDER_LOCAL_H)
+#define OSSL_LIBCRYPTO_PROVIDER_LOCAL_H
+
 #include <openssl/core.h>
 
 typedef struct {
@@ -31,3 +34,5 @@ int ossl_provider_info_add_to_store(OSSL_LIB_CTX *libctx,
 int ossl_provider_info_add_parameter(OSSL_PROVIDER_INFO *provinfo,
     const char *name,
     const char *value);
+
+#endif /* !defined(OSSL_LIBCRYPTO_PROVIDER_LOCAL_H) */

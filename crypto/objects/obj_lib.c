@@ -59,5 +59,7 @@ int OBJ_cmp(const ASN1_OBJECT *a, const ASN1_OBJECT *b)
     ret = (a->length - b->length);
     if (ret)
         return ret;
+    if (a->length == 0)
+        return 0;
     return memcmp(a->data, b->data, a->length);
 }

@@ -242,77 +242,49 @@ static TXE *qtx_alloc_txe(size_t alloc_len)
 }
 
 /*
- * Ensures there is at least one TXE in the free list, allocating a new entry
- * if necessary. The returned TXE is in the free list; it is not popped.
- *
- * alloc_len is a hint which may be used to determine the TXE size if allocation
- * is necessary. Returns NULL on allocation failure.
+ * Ensure that qtx->cons has a TXE attached with allocated size of at least
+ * min_size.  Returns pointer to the TXE on success or NULL on failure.
  */
-static TXE *qtx_ensure_free_txe(OSSL_QTX *qtx, size_t alloc_len)
+static TXE *qtx_get_cons_txe(OSSL_QTX *qtx, size_t min_size)
 {
-    TXE *txe;
-
-    txe = ossl_list_txe_head(&qtx->free);
-    if (txe != NULL)
-        return txe;
-
-    txe = qtx_alloc_txe(alloc_len);
-    if (txe == NULL)
-        return NULL;
-
-    ossl_list_txe_insert_tail(&qtx->free, txe);
-    return txe;
-}
-
-/*
- * Resize the data buffer attached to an TXE to be n bytes in size. The address
- * of the TXE might change; the new address is returned, or NULL on failure, in
- * which case the original TXE remains valid.
- */
-static TXE *qtx_resize_txe(OSSL_QTX *qtx, TXE *txe, size_t n)
-{
-    TXE *txe2;
-
-    /* Should never happen. */
-    if (txe == NULL)
-        return NULL;
-
-    if (n >= SIZE_MAX - sizeof(TXE))
+    if (min_size >= SIZE_MAX - sizeof(TXE))
         return NULL;
 
     /*
-     * to resize txe, the caller must detach it from the list first,
-     * fail if txe is still attached.
+     * If there is no coalescing in progress, try to get a TXE
+     * from the free list (and remove it from there), or allocate a new one.
      */
-    if (!ossl_assert(ossl_list_txe_prev(txe) == NULL
-            && ossl_list_txe_next(txe) == NULL))
-        return NULL;
+    if (qtx->cons == NULL) {
+        TXE *txe = ossl_list_txe_head(&qtx->free);
 
-    /*
-     * NOTE: We do not clear old memory, although it does contain decrypted
-     * data.
-     */
-    txe2 = OPENSSL_realloc(txe, sizeof(TXE) + n);
-    if (txe2 == NULL)
-        return NULL;
+        if (txe != NULL) {
+            ossl_list_txe_remove(&qtx->free, txe);
+        } else {
+            if ((txe = qtx_alloc_txe(min_size)) == NULL)
+                return NULL;
+        }
 
-    if (qtx->cons == txe)
-        qtx->cons = txe2;
+        txe->data_len = 0;
+        qtx->cons = txe;
+        qtx->cons_count = 0;
+    }
 
-    txe2->alloc_len = n;
-    return txe2;
-}
+    /* Resize TXE if it's too small. */
+    if (qtx->cons->alloc_len < min_size) {
+        /*
+         * NOTE: We do not clear old memory, although it does contain decrypted
+         * data.
+         */
+        TXE *realloc_txe = OPENSSL_realloc(qtx->cons, sizeof(TXE) + min_size);
 
-/*
- * Ensure the data buffer attached to an TXE is at least n bytes in size.
- * Returns NULL on failure.
- */
-static TXE *qtx_reserve_txe(OSSL_QTX *qtx, TXE *txe, size_t n)
-{
-    if (txe->alloc_len >= n)
-        return txe;
+        if (realloc_txe == NULL)
+            return NULL;
 
-    return qtx_resize_txe(qtx, txe, n);
+        realloc_txe->alloc_len = min_size;
+        qtx->cons = realloc_txe;
+    }
+
+    return qtx->cons;
 }
 
 /* Move a TXE from pending to free. */
@@ -730,24 +702,6 @@ err:
     return ret;
 }
 
-static TXE *qtx_ensure_cons(OSSL_QTX *qtx)
-{
-    TXE *txe = qtx->cons;
-
-    if (txe != NULL)
-        return txe;
-
-    txe = qtx_ensure_free_txe(qtx, qtx->mdpl);
-    if (txe == NULL)
-        return NULL;
-
-    ossl_list_txe_remove(&qtx->free, txe);
-    qtx->cons = txe;
-    qtx->cons_count = 0;
-    txe->data_len = 0;
-    return txe;
-}
-
 static QLOG *qtx_get_qlog(OSSL_QTX *qtx)
 {
     if (qtx->get_qlog_cb == NULL)
@@ -840,22 +794,14 @@ int ossl_qtx_write_pkt(OSSL_QTX *qtx, const OSSL_QTX_PKT *pkt)
          *	- detached.
          *
          * if txe is detached (not member of free/tx list), then it is kept
-         * in qtx->cons. The qtx_ensure_cons() here either returns the txe
-         * from free list or existing ->cons txe. The txe we obtain here
-         * is detached.
+         * in qtx->cons. The qtx_get_cons_txe() here makes sure that qtx->cons
+         * points at a (new or existing) detached txe and has at least MDPL
+         * bytes allocated.
          */
-        txe = qtx_ensure_cons(qtx);
-        if (txe == NULL)
-            return 0; /* allocation failure */
-
-        /*
-         * Ensure TXE has at least MDPL bytes allocated. This should only be
-         * possible if the MDPL has increased.
-         */
-        txe = qtx_reserve_txe(qtx, txe, qtx->mdpl);
+        txe = qtx_get_cons_txe(qtx, qtx->mdpl);
         if (txe == NULL) {
             /*
-             * realloc of txe failed. however it is still kept in ->cons,
+             * If realloc of txe has failed. it is still kept in ->cons,
              * no memory leak.
              * The question is what we should do here to handle error,
              * is doing `return 0` enough? or shall we discard ->cons and

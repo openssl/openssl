@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_FIPS_INCLUDE_FIPSCOMMON_H)
+#define OSSL_PROVIDERS_FIPS_INCLUDE_FIPSCOMMON_H
+
 #ifdef FIPS_MODULE
 #include <openssl/types.h>
 
@@ -17,3 +20,5 @@
 int ossl_fips_config(OSSL_LIB_CTX *libctx, enum fips_config_id id);
 
 #endif
+
+#endif /* !defined(OSSL_PROVIDERS_FIPS_INCLUDE_FIPSCOMMON_H) */

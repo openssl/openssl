@@ -155,8 +155,6 @@ struct script_op {
 #define OPK_S_EXPECT_FIN 9
 #define OPK_C_CONCLUDE 10
 #define OPK_S_CONCLUDE 11
-#define OPK_C_DETACH 12
-#define OPK_C_ATTACH 13
 #define OPK_C_NEW_STREAM 14
 #define OPK_S_NEW_STREAM 15
 #define OPK_C_ACCEPT_STREAM_WAIT 16
@@ -243,10 +241,6 @@ struct script_op {
     { OPK_C_CONCLUDE, NULL, 0, NULL, #stream_name }
 #define OP_S_CONCLUDE(stream_name) \
     { OPK_S_CONCLUDE, NULL, 0, NULL, #stream_name }
-#define OP_C_DETACH(stream_name) \
-    { OPK_C_DETACH, NULL, 0, NULL, #stream_name }
-#define OP_C_ATTACH(stream_name) \
-    { OPK_C_ATTACH, NULL, 0, NULL, #stream_name }
 #define OP_C_NEW_STREAM_BIDI(stream_name, expect_id) \
     { OPK_C_NEW_STREAM, NULL, 0, NULL, #stream_name, (expect_id) }
 #define OP_C_NEW_STREAM_BIDI_EX(stream_name, expect_id, flags) \
@@ -1449,36 +1443,6 @@ static int run_script_worker(struct helper *h, const struct script_op *script,
                 S_SPIN_AGAIN();
         } break;
 
-        case OPK_C_DETACH: {
-            SSL *c_stream;
-
-            if (!TEST_ptr_null(c_tgt))
-                goto out; /* don't overwrite existing stream with same name */
-
-            if (!TEST_ptr(op->stream_name))
-                goto out;
-
-            if (!TEST_ptr(c_stream = ossl_quic_detach_stream(h->c_conn)))
-                goto out;
-
-            if (!TEST_true(helper_local_set_c_stream(hl, op->stream_name, c_stream)))
-                goto out;
-        } break;
-
-        case OPK_C_ATTACH: {
-            if (!TEST_ptr(c_tgt))
-                goto out;
-
-            if (!TEST_ptr(op->stream_name))
-                goto out;
-
-            if (!TEST_true(ossl_quic_attach_stream(h->c_conn, c_tgt)))
-                goto out;
-
-            if (!TEST_true(helper_local_set_c_stream(hl, op->stream_name, NULL)))
-                goto out;
-        } break;
-
         case OPK_C_NEW_STREAM: {
             SSL *c_stream;
             uint64_t flags = op->arg1;
@@ -2078,17 +2042,7 @@ static CRYPTO_THREAD_RETVAL run_script_child_thread(void *arg)
 
 /* 1. Simple single-stream test */
 static const struct script_op script_1[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-    OP_C_WRITE(DEFAULT, "apple", 5),
-    OP_C_CONCLUDE(DEFAULT),
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-    OP_S_EXPECT_FIN(a),
-    OP_S_WRITE(a, "orange", 6),
-    OP_S_CONCLUDE(a),
-    OP_C_READ_EXPECT(DEFAULT, "orange", 6),
-    OP_C_EXPECT_FIN(DEFAULT),
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
@@ -2181,52 +2135,22 @@ static const struct script_op script_2[] = {
 
 /* 3. Default stream detach/reattach test */
 static const struct script_op script_3[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_WRITE(DEFAULT, "apple", 5),
-    OP_C_DETACH(a), /* DEFAULT becomes stream 'a' */
-    OP_C_WRITE_FAIL(DEFAULT),
-
-    OP_C_WRITE(a, "by", 2),
-
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "appleby", 7),
-
-    OP_S_WRITE(a, "hello", 5),
-    OP_C_READ_EXPECT(a, "hello", 5),
-
-    OP_C_WRITE_FAIL(DEFAULT),
-    OP_C_ATTACH(a),
-    OP_C_WRITE(DEFAULT, "is here", 7),
-    OP_S_READ_EXPECT(a, "is here", 7),
-
-    OP_C_DETACH(a),
-    OP_C_CONCLUDE(a),
-    OP_S_EXPECT_FIN(a),
+    /*
+     * SSL_attach_stream()/SSL_detach_stream() no longer exists,
+     * there is no reason to keep their private implementation
+     * with test
+     */
 
     OP_END
 };
 
 /* 4. Default stream mode test */
 static const struct script_op script_4[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-    OP_C_WRITE_FAIL(DEFAULT),
-
-    OP_S_NEW_STREAM_BIDI(a, S_BIDI_ID(0)),
-    OP_S_WRITE(a, "apple", 5),
-
-    OP_C_READ_FAIL(DEFAULT),
-
-    OP_C_ACCEPT_STREAM_WAIT(a),
-    OP_C_READ_EXPECT(a, "apple", 5),
-
-    OP_C_ATTACH(a),
-    OP_C_WRITE(DEFAULT, "orange", 6),
-    OP_S_READ_EXPECT(a, "orange", 6),
+    /*
+     * SSL_attach_stream()/SSL_detach_stream() no longer exists,
+     * there is no reason to keep their private implementation
+     * with test
+     */
 
     OP_END
 };

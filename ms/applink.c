@@ -35,6 +35,12 @@
 
 #ifndef APPMACROS_ONLY
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#pragma GCC diagnostic ignored "-Wmissing-prototypes"
+#endif
+
 /*
  * Normally, do not define APPLINK_NO_INCLUDES.  Define it if you are using
  * symbol preprocessing and do not want the preprocessing to affect the
@@ -144,6 +150,10 @@ __declspec(dllexport) void **
 
     return OPENSSL_ApplinkTable;
 }
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 #ifdef __cplusplus
 }

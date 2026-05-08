@@ -114,7 +114,7 @@ const OPTIONS enc_options[] = {
     { "S", OPT_UPPER_S, 's', "Salt, in hex" },
     { "iv", OPT_IV, 's', "IV in hex" },
     { "md", OPT_MD, 's', "Use specified digest to create a key from the passphrase" },
-    { "k", OPT_K, 's', "Passphrase (Deprecated" },
+    { "k", OPT_K, 's', "Passphrase (Deprecated)" },
     { "kfile", OPT_KFILE, '<', "Read passphrase from file (Deprecated)" },
     { "pass", OPT_PASS, 's', "Passphrase source" },
     { "iter", OPT_ITER, 'p',

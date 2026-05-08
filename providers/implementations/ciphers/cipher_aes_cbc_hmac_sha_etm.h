@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_CBC_HMAC_SHA_ETM_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_CBC_HMAC_SHA_ETM_H
+
 #include <openssl/proverr.h>
 #include "prov/ciphercommon.h"
 #include "crypto/aes_platform.h"
@@ -69,3 +72,5 @@ typedef struct {
 } CIPH_DIGEST;
 
 #endif /* AES_CBC_HMAC_SHA_ETM_CAPABLE */
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_CBC_HMAC_SHA_ETM_H) */

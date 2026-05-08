@@ -1284,7 +1284,7 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
     OCSP_CERTID *sr_cert_id = NULL;
     ASN1_GENERALIZEDTIME *rev, *thisupd, *nextupd;
     ASN1_OBJECT *cert_id_md_oid;
-    EVP_MD *cert_id_md;
+    EVP_MD *cert_id_md = NULL;
     OCSP_CERTID *cert_id = NULL;
     int ret = V_OCSP_CERTSTATUS_UNKNOWN;
     int num;
@@ -1317,13 +1317,17 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
         /* determine the md algorithm which was used to create cert id */
         sr_cert_id = (OCSP_CERTID *)OCSP_SINGLERESP_get0_id(sr);
         OCSP_id_get0_info(NULL, &cert_id_md_oid, NULL, NULL, sr_cert_id);
-        if (cert_id_md_oid != NULL)
-            cert_id_md = (EVP_MD *)EVP_get_digestbyobj(cert_id_md_oid);
-        else
-            cert_id_md = NULL;
+        if (cert_id_md_oid != NULL) {
+            char md_name[80];
+
+            if (i2t_ASN1_OBJECT(md_name, sizeof(md_name), cert_id_md_oid) > 0)
+                cert_id_md = EVP_MD_fetch(ctx->libctx, md_name, ctx->propq);
+        }
 
         /* search the stack for the requested OCSP response */
         cert_id = OCSP_cert_to_id(cert_id_md, ctx->current_cert, ctx->current_issuer);
+        EVP_MD_free(cert_id_md);
+        cert_id_md = NULL;
         if (cert_id == NULL) {
             ret = X509_V_ERR_OCSP_RESP_INVALID;
             goto end;

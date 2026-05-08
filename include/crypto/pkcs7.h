@@ -11,6 +11,8 @@
 #define OSSL_CRYPTO_PKCS7_H
 #pragma once
 
+#include <openssl/pkcs7.h>
+
 void ossl_pkcs7_resolve_libctx(PKCS7 *p7);
 
 void ossl_pkcs7_set0_libctx(PKCS7 *p7, OSSL_LIB_CTX *ctx);

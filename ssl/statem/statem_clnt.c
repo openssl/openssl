@@ -3701,6 +3701,7 @@ static int tls_construct_cke_gost(SSL_CONNECTION *s, WPACKET *pkt)
     unsigned int md_len;
     unsigned char shared_ukm[32], tmp[256];
     EVP_MD_CTX *ukm_hash = NULL;
+    EVP_MD *ukm_md = NULL;
     int dgst_nid = NID_id_GostR3411_94;
     unsigned char *pms = NULL;
     size_t pmslen = 0;
@@ -3751,8 +3752,10 @@ static int tls_construct_cke_gost(SSL_CONNECTION *s, WPACKET *pkt)
      * data
      */
     ukm_hash = EVP_MD_CTX_new();
+    ukm_md = EVP_MD_fetch(sctx->libctx, OBJ_nid2sn(dgst_nid), sctx->propq);
     if (ukm_hash == NULL
-        || EVP_DigestInit(ukm_hash, EVP_get_digestbynid(dgst_nid)) <= 0
+        || ukm_md == NULL
+        || EVP_DigestInit_ex(ukm_hash, ukm_md, NULL) <= 0
         || EVP_DigestUpdate(ukm_hash, s->s3.client_random,
                SSL3_RANDOM_SIZE)
             <= 0
@@ -3760,9 +3763,12 @@ static int tls_construct_cke_gost(SSL_CONNECTION *s, WPACKET *pkt)
                SSL3_RANDOM_SIZE)
             <= 0
         || EVP_DigestFinal_ex(ukm_hash, shared_ukm, &md_len) <= 0) {
+        EVP_MD_free(ukm_md);
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
+    EVP_MD_free(ukm_md);
+    ukm_md = NULL;
     EVP_MD_CTX_free(ukm_hash);
     ukm_hash = NULL;
     if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, EVP_PKEY_OP_ENCRYPT,

@@ -13,6 +13,8 @@
 #ifndef OSSL_CRYPTO_EC_CURVE448_ARCH_64_INTRINSICS_H
 #define OSSL_CRYPTO_EC_CURVE448_ARCH_64_INTRINSICS_H
 
+#include <stdint.h>
+
 #include "internal/constant_time.h"
 
 #define ARCH_WORD_BITS 64

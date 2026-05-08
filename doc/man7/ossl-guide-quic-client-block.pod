@@ -16,7 +16,7 @@ ossl-guide-quic-client-block
 
 This page will present various source code samples demonstrating how to write
 a simple blocking QUIC client application which connects to a server, sends an
-HTTP/1.0 request to it, and reads back the response. Note that HTTP/1.0 over
+HTTP/1.1 request to it, and reads back the response. Note that HTTP/1.1 over
 QUIC is non-standard and will not be supported by real world servers. This is
 for demonstration purposes only.
 
@@ -205,7 +205,7 @@ simple client that we developed in L<ossl-guide-tls-client-block(7)> did not use
 it. However QUIC mandates that the TLS handshake used in establishing a QUIC
 connection must use ALPN.
 
-    unsigned char alpn[] = { 8, 'h', 't', 't', 'p', '/', '1', '.', '0' };
+    unsigned char alpn[] = { 8, 'h', 't', 't', 'p', '/', '1', '.', '1' };
 
     /* SSL_set_alpn_protos returns 0 for success! */
     if (SSL_set_alpn_protos(ssl, alpn, sizeof(alpn)) != 0) {
@@ -215,7 +215,7 @@ connection must use ALPN.
 
 The ALPN is specified using a length prefixed array of unsigned chars (it is not
 a NUL terminated string). Our original TLS blocking client demo was using
-HTTP/1.0. We will use the same for this example. Unlike most OpenSSL functions
+HTTP/1.1. We will use the same for this example. Unlike most OpenSSL functions
 L<SSL_set_alpn_protos(3)> returns zero for success and nonzero for failure.
 
 =head2 Setting the peer address

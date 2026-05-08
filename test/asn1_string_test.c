@@ -225,14 +225,14 @@ abs_get_length_test(const struct abs_get_length_test *tbl, int idx)
 
     p = test->der;
     if (!TEST_ptr(abs = d2i_ASN1_BIT_STRING(NULL, &p, test->der_len))) {
-        TEST_info("%s, (idx=%d) - d2i_ASN1_BIT_STRING faled", __func__, idx);
+        TEST_info("%s, (idx=%d) - d2i_ASN1_BIT_STRING faled", OPENSSL_FUNC, idx);
         goto err;
     }
 
     ret = ASN1_BIT_STRING_get_length(abs, &length, &unused_bits);
     if (!TEST_int_eq(test->valid, ret)) {
         TEST_info("%s (idx=%d): %s ASN1_BIT_STRING_get_length want %d, got %d\n",
-            __func__, idx, test->descr, test->valid, ret);
+            OPENSSL_FUNC, idx, test->descr, test->valid, ret);
         goto err;
     }
     if (!test->valid)
@@ -240,7 +240,7 @@ abs_get_length_test(const struct abs_get_length_test *tbl, int idx)
 
     if (!TEST_size_t_eq(length, test->length)
         || !TEST_int_eq(unused_bits, test->unused_bits)) {
-        TEST_info("%s: (idx=%d) %s: want (%zu, %d), got (%zu, %d)\n", __func__,
+        TEST_info("%s: (idx=%d) %s: want (%zu, %d), got (%zu, %d)\n", OPENSSL_FUNC,
             idx, test->descr, test->length, test->unused_bits, length,
             unused_bits);
         goto err;
@@ -615,14 +615,14 @@ abs_set1_test(const struct abs_set1_test *tbl, int idx)
     int success = 0;
 
     if (!TEST_ptr(abs = ASN1_BIT_STRING_new())) {
-        TEST_info("%s: (idx = %d) %s ASN1_BIT_STRING_new()", __func__, idx, test->descr);
+        TEST_info("%s: (idx = %d) %s ASN1_BIT_STRING_new()", OPENSSL_FUNC, idx, test->descr);
         goto err;
     }
 
     ret = ASN1_BIT_STRING_set1(abs, test->data, test->length, test->unused_bits);
     if (!TEST_int_eq(ret, test->valid)) {
         TEST_info("%s: (idx = %d) %s ASN1_BIT_STRING_set1(): want %d, got %d",
-            __func__, idx, test->descr, test->valid, ret);
+            OPENSSL_FUNC, idx, test->descr, test->valid, ret);
         goto err;
     }
 
@@ -632,14 +632,14 @@ abs_set1_test(const struct abs_set1_test *tbl, int idx)
     der = NULL;
     if (!TEST_int_eq((der_len = i2d_ASN1_BIT_STRING(abs, &der)), test->der_len)) {
         TEST_info("%s: (idx=%d), %s i2d_ASN1_BIT_STRING(): want %d, got %d",
-            __func__, idx, test->descr, test->der_len, der_len);
+            OPENSSL_FUNC, idx, test->descr, test->der_len, der_len);
         if (der_len < 0)
             der_len = 0;
         goto err;
     }
 
     if (!TEST_mem_eq(der, der_len, test->der, test->der_len)) {
-        TEST_info("%s: (idx = %d)  %s DER mismatch", __func__, idx, test->descr);
+        TEST_info("%s: (idx = %d)  %s DER mismatch", OPENSSL_FUNC, idx, test->descr);
         goto err;
     }
 

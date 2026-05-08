@@ -1057,9 +1057,12 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
                 if (ok)
                     pcert = NULL;
             } else if (pcerts != NULL) {
-                ok = X509_add_cert(*pcerts,
-                    OSSL_STORE_INFO_get1_CERT(info),
-                    X509_ADD_FLAG_DEFAULT);
+                X509 *cert = OSSL_STORE_INFO_get1_CERT(info);
+
+                ok = cert != NULL
+                    && X509_add_cert(*pcerts, cert, X509_ADD_FLAG_DEFAULT);
+                if (!ok)
+                    X509_free(cert);
             }
             ncerts += ok;
             break;
@@ -1069,7 +1072,11 @@ int load_key_certs_crls(const char *uri, int format, int maybe_stdin,
                 if (ok)
                     pcrl = NULL;
             } else if (pcrls != NULL) {
-                ok = sk_X509_CRL_push(*pcrls, OSSL_STORE_INFO_get1_CRL(info));
+                X509_CRL *crl = OSSL_STORE_INFO_get1_CRL(info);
+
+                ok = crl != NULL && sk_X509_CRL_push(*pcrls, crl);
+                if (!ok)
+                    X509_CRL_free(crl);
             }
             ncrls += ok;
             break;
@@ -2324,11 +2331,15 @@ int encode_private_key(BIO *out, const char *output_type, const EVP_PKEY *pkey,
     if (ectx == NULL)
         return 0;
 
-    if (cipher != NULL)
-        if (!OSSL_ENCODER_CTX_set_cipher(ectx, EVP_CIPHER_get0_name(cipher), NULL)
-            || !OSSL_ENCODER_CTX_set_passphrase(ectx, (const unsigned char *)pass,
-                strlen(pass)))
+    if (cipher != NULL) {
+        if (!OSSL_ENCODER_CTX_set_cipher(ectx, EVP_CIPHER_get0_name(cipher), NULL))
             goto end;
+        OSSL_ENCODER_CTX_set_passphrase_ui(ectx, get_ui_method(), NULL);
+        if (pass != NULL
+            && !OSSL_ENCODER_CTX_set_passphrase(ectx,
+                (const unsigned char *)pass, strlen(pass)))
+            goto end;
+    }
 
     if (encopt != NULL) {
         int i, n = sk_OPENSSL_STRING_num(encopt);

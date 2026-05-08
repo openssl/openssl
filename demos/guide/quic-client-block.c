@@ -109,8 +109,8 @@ static BIO *create_socket_bio(const char *hostname, const char *port,
 }
 
 /*
- * Simple application to send a basic HTTP/1.0 request to a server and
- * print the response on the screen. Note that HTTP/1.0 over QUIC is
+ * Simple application to send a basic HTTP/1.1 request to a server and
+ * print the response on the screen. Note that HTTP/1.1 over QUIC is
  * non-standard and will not typically be supported by real world servers. This
  * is for demonstration purposes only.
  */
@@ -121,8 +121,8 @@ int main(int argc, char *argv[])
     BIO *bio = NULL;
     int res = EXIT_FAILURE;
     int ret;
-    unsigned char alpn[] = { 8, 'h', 't', 't', 'p', '/', '1', '.', '0' };
-    const char *request_start = "GET / HTTP/1.0\r\nConnection: close\r\nHost: ";
+    unsigned char alpn[] = { 8, 'h', 't', 't', 'p', '/', '1', '.', '1' };
+    const char *request_start = "GET / HTTP/1.1\r\nConnection: close\r\nHost: ";
     const char *request_end = "\r\n\r\n";
     size_t written, readbytes;
     char buf[160];

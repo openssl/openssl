@@ -159,7 +159,7 @@ object it will return NULL.
 
 This section will present various source code samples demonstrating how to write
 a simple multi-stream QUIC client application which connects to a server, send
-some HTTP/1.0 requests to it, and read back the responses. Note that HTTP/1.0
+some HTTP/1.1 requests to it, and read back the responses. Note that HTTP/1.1
 over QUIC is non-standard and will not be supported by real world servers. This
 is for demonstration purposes only.
 
@@ -349,7 +349,7 @@ arrived and is available for us to accept. In the event of an error it will
 return B<NULL>.
 
     /*
-     * In our hypothetical HTTP/1.0 over QUIC protocol that we are using we
+     * In our hypothetical HTTP/1.1 over QUIC protocol that we are using we
      * assume that the server will respond with a server initiated stream
      * containing the data requested in our uni-directional stream. This doesn't
      * really make sense to do in a real protocol, but its just for

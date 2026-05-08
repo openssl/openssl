@@ -72,7 +72,6 @@ jobs:
           { openssl: 'openssl-3.6', openssh: 'openssl-3.6', openssl_config: 'no-docs'},
           { openssl: 'openssl-3.5', openssh: 'openssl-3.5', openssl_config: 'no-docs'},
           { openssl: 'openssl-3.4', openssh: 'openssl-3.4', openssl_config: 'no-docs'},
-          { openssl: 'openssl-3.3', openssh: 'openssl-3.3', openssl_config: 'no-docs'},
           { openssl: 'openssl-3.0', openssh: 'openssl-3.0', openssl_config: ''}
         ]
     runs-on: ubuntu-latest

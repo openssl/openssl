@@ -37,7 +37,7 @@ jobs:
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
-      run: make -s -j
+      run: make -s -j4
     - name: get cpu info
       run: |
         cat /proc/cpuinfo
@@ -73,7 +73,7 @@ jobs:
     - name: config dump
       run: ./configdata.pm --dump
     - name: make
-      run: make -s -j
+      run: make -s -j4
     - name: get cpu info
       run: |
         cat /proc/cpuinfo

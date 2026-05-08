@@ -587,7 +587,7 @@ static const OSSL_ALGORITHM fips_asym_kem[] = {
     { PROV_NAMES_ML_KEM_1024, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_asym_kem_functions },
 #if !defined(OPENSSL_NO_ECX)
     { PROV_NAMES_X25519MLKEM768, FIPS_DEFAULT_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
-    { PROV_NAMES_X448MLKEM1024, FIPS_DEFAULT_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
+    { PROV_NAMES_X448MLKEM1024, FIPS_UNAPPROVED_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
 #endif
 #if !defined(OPENSSL_NO_EC)
     { PROV_NAMES_SecP256r1MLKEM768, FIPS_DEFAULT_PROPERTIES, ossl_mlx_kem_asym_kem_functions },

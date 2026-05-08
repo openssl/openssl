@@ -299,7 +299,7 @@ struct quic_stream_st {
      *            STOP_SENDING.]
      *
      *            TODO(QUIC FUTURE): Implement the latter case (currently we
-                                     just always do STOP_SENDING).
+     *                               just always do STOP_SENDING).
      *
      *         and;
      *
@@ -315,6 +315,7 @@ struct quic_stream_st {
     unsigned int ready_for_gc : 1;
     /* Set to 1 if this is currently counted in the shutdown flush stream count. */
     unsigned int shutdown_flush : 1;
+    unsigned int have_final_size : 1;
 };
 
 #define QUIC_STREAM_INITIATOR_CLIENT 0

@@ -747,54 +747,6 @@ err:
     return ok;
 }
 
-DEF_FUNC(hf_detach)
-{
-    int ok = 0;
-    const char *conn_name, *stream_name;
-    SSL *conn, *stream;
-
-    F_POP2(conn_name, stream_name);
-    if (!TEST_ptr(conn = RADIX_PROCESS_get_ssl(RP(), conn_name)))
-        goto err;
-
-    if (!TEST_ptr(stream = ossl_quic_detach_stream(conn)))
-        goto err;
-
-    if (!TEST_true(RADIX_PROCESS_set_ssl(RP(), stream_name, stream))) {
-        SSL_free(stream);
-        goto err;
-    }
-
-    ok = 1;
-err:
-    return ok;
-}
-
-DEF_FUNC(hf_attach)
-{
-    int ok = 0;
-    const char *conn_name, *stream_name;
-    SSL *conn, *stream;
-
-    F_POP2(conn_name, stream_name);
-
-    if (!TEST_ptr(conn = RADIX_PROCESS_get_ssl(RP(), conn_name)))
-        goto err;
-
-    if (!TEST_ptr(stream = RADIX_PROCESS_get_ssl(RP(), stream_name)))
-        goto err;
-
-    if (!TEST_true(ossl_quic_attach_stream(conn, stream)))
-        goto err;
-
-    if (!TEST_true(RADIX_PROCESS_set_ssl(RP(), stream_name, NULL)))
-        goto err;
-
-    ok = 1;
-err:
-    return ok;
-}
-
 DEF_FUNC(hf_expect_fin)
 {
     int ok = 0, ret;
@@ -1214,16 +1166,6 @@ err:
         OP_PUSH_U64(error_code),                          \
         OP_PUSH_PZ(reason),                               \
         OP_FUNC(hf_shutdown_wait))
-
-#define OP_DETACH(conn_name, stream_name) \
-    (OP_SELECT_SSL(0, conn_name),         \
-        OP_PUSH_PZ(#stream_name),         \
-        OP_FUNC(hf_detach))
-
-#define OP_ATTACH(conn_name, stream_name) \
-    (OP_SELECT_SSL(0, conn_name),         \
-        OP_PUSH_PZ(stream_name),          \
-        OP_FUNC(hf_attach))
 
 #define OP_EXPECT_FIN(name)  \
     (OP_SELECT_SSL(0, name), \

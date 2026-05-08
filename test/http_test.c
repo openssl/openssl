@@ -575,6 +575,14 @@ static int test_hdr_resp_hdr_limit_256(void)
     return test_http_resp_hdr_limit(256);
 }
 
+static int test_http_adapt_proxy_empty_server(void)
+{
+    const char *proxy = "http://proxy.local:8080";
+
+    return TEST_str_eq(OSSL_HTTP_adapt_proxy(proxy, "abc", "", 0), proxy)
+        && TEST_str_eq(OSSL_HTTP_adapt_proxy(proxy, "abc", "[]", 0), proxy);
+}
+
 void cleanup_tests(void)
 {
     X509_free(x509);
@@ -625,5 +633,6 @@ int setup_tests(void)
     ADD_TEST(test_hdr_resp_hdr_limit_none);
     ADD_TEST(test_hdr_resp_hdr_limit_short);
     ADD_TEST(test_hdr_resp_hdr_limit_256);
+    ADD_TEST(test_http_adapt_proxy_empty_server);
     return 1;
 }

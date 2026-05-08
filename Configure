@@ -518,6 +518,7 @@ my @disablables_features = (
     "crypto-mdebug",
     "allocfail-tests",
     "ct",
+    "ct-validation",
     "default-thread-pool",
     "demos",
     "h3demo",
@@ -620,6 +621,7 @@ our %disabled = ( # "what"         => "comment"
                   "buildtest-c++"       => "default",
                   "crypto-mdebug"       => "default",
                   "allocfail-tests"     => "default",
+                  "ct-validation"       => "default",
                   "demos"               => "default",
                   "h3demo"              => "default",
                   "hqinterop"           => "default",
@@ -1673,6 +1675,46 @@ unless ($disabled{"fuzz-libfuzzer"} && $disabled{"fuzz-afl"}
         && $disabled{asan} && $disabled{ubsan} && $disabled{msan}) {
     push @{$config{cflags}}, "-fno-omit-frame-pointer", "-g";
     push @{$config{cxxflags}}, "-fno-omit-frame-pointer", "-g" if $config{CXX};
+}
+
+# Valgrind-based constant-time validation: marks secret data as "undefined"
+# to Valgrind's memcheck tool, so that any control flow or memory indexing
+# that depends on secret data is flagged as an error.  Requires valgrind
+# headers at build time and running the tests under valgrind at test time.
+# Use |make TESTS="test_internal_ml_kem test_internal_ml_dsa" test| under
+# valgrind after building with this option.
+#
+# Package names for the required valgrind headers:
+#   Debian/Ubuntu  : valgrind          (headers bundled in the main package)
+#   Fedora/RHEL    : valgrind-devel
+#   Alpine         : valgrind-dev
+#   Arch Linux     : valgrind
+unless ($disabled{"ct-validation"}) {
+    # Probe for <valgrind/memcheck.h> so that we give a clear error here
+    # rather than a cryptic compile failure inside constant_time.h later.
+    my $cc = ($config{CROSS_COMPILE} // "").$config{CC};
+    my $probe_src = "ct_valgrind_probe_$$.c";
+    my $probe_obj = "ct_valgrind_probe_$$.o";
+    open(my $fh, ">", $probe_src)
+        or die "Cannot write probe file '$probe_src': $!";
+    print $fh "#include <valgrind/memcheck.h>\n";
+    close($fh);
+    my $probe_ok = (system("$cc -c -o $probe_obj $probe_src 2>/dev/null") == 0);
+    unlink($probe_src, $probe_obj);
+    if (!$probe_ok) {
+        die <<EOT;
+
+***** enable-ct-validation requires <valgrind/memcheck.h> at build time,
+***** but the header was not found by '$cc'.
+*****
+***** Install the appropriate package and re-run Configure:
+*****   Debian/Ubuntu : sudo apt-get install valgrind
+*****   Fedora/RHEL   : sudo dnf install valgrind-devel
+*****   Alpine        : sudo apk add valgrind-dev
+*****   Arch Linux    : sudo pacman -S valgrind
+EOT
+    }
+    push @{$config{openssl_feature_defines}}, "OPENSSL_CONSTANT_TIME_VALIDATION";
 }
 #
 # Platform fix-ups

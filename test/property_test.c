@@ -60,6 +60,21 @@ static void down_ref(void *p)
 {
 }
 
+static int counted_up_ref(void *p)
+{
+    int *refs = p;
+
+    (*refs)++;
+    return 1;
+}
+
+static void counted_down_ref(void *p)
+{
+    int *refs = p;
+
+    (*refs)--;
+}
+
 static int test_property_string(void)
 {
     OSSL_LIB_CTX *ctx;
@@ -627,6 +642,51 @@ err:
     return res;
 }
 
+static int test_query_cache_set_duplicate(void)
+{
+    OSSL_METHOD_STORE *store = NULL;
+    int res = 0;
+    int refs = 0;
+    void *result = NULL;
+    OSSL_PROVIDER prov = {
+        .flag_initialized = 1,
+        .flag_activated = 1,
+        .name = "dummy-test-provider"
+    };
+
+    if (!TEST_ptr(store = ossl_method_store_new(NULL))
+        || !TEST_true(ossl_method_store_add(store, &prov, 1, "", &refs,
+            counted_up_ref, counted_down_ref))
+        || !TEST_true(ossl_method_store_cache_set(store, &prov, 1, "", &refs,
+            counted_up_ref,
+            counted_down_ref))
+        || !TEST_int_eq(refs, 3))
+        goto err;
+
+    /*
+     * Re-adding the same cache key exercises cleanup for a temporary generic
+     * QUERY that cannot be inserted because a providerless entry already
+     * exists.
+     */
+    ossl_method_store_cache_set(store, &prov, 1, "", &refs, counted_up_ref,
+        counted_down_ref);
+    if (!TEST_int_eq(refs, 3)
+        || !TEST_true(ossl_method_store_cache_get(store, &prov, 1, "",
+            &result))
+        || !TEST_ptr_eq(result, &refs))
+        goto err;
+
+    counted_down_ref(result);
+    result = NULL;
+    res = 1;
+
+err:
+    ossl_method_store_free(store);
+    if (!TEST_int_eq(refs, 0))
+        res = 0;
+    return res;
+}
+
 static int test_fips_mode(void)
 {
     int ret = 0;
@@ -739,6 +799,7 @@ int setup_tests(void)
     ADD_TEST(test_register_deregister);
     ADD_TEST(test_property);
     ADD_TEST(test_query_cache_stochastic);
+    ADD_TEST(test_query_cache_set_duplicate);
     ADD_TEST(test_fips_mode);
     ADD_ALL_TESTS(test_property_list_to_string, OSSL_NELEM(to_string_tests));
     ADD_TEST(test_property_list_to_string_bounds);

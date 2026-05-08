@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_ERR_ERR_LOCAL_H)
+#define OSSL_LIBCRYPTO_ERR_ERR_LOCAL_H
+
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/e_os2.h>
@@ -115,3 +118,5 @@ static ossl_inline void err_clear(ERR_STATE *es, size_t i, int deall)
 ERR_STATE *ossl_err_get_state_int(int save_sys_error);
 void ossl_err_string_int(unsigned long e, const char *func,
     char *buf, size_t len);
+
+#endif /* !defined(OSSL_LIBCRYPTO_ERR_ERR_LOCAL_H) */

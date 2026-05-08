@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_IDEA_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_IDEA_H
+
 #include <openssl/idea.h>
 #include "prov/ciphercommon.h"
 
@@ -22,3 +25,5 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_idea_cbc(size_t keybits);
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_idea_ecb(size_t keybits);
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_idea_ofb64(size_t keybits);
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_idea_cfb64(size_t keybits);
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_IDEA_H) */

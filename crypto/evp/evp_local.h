@@ -7,7 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_EVP_EVP_LOCAL_H)
+#define OSSL_LIBCRYPTO_EVP_EVP_LOCAL_H
+
 #include <openssl/core_dispatch.h>
+#include <openssl/evp.h>
+
+#include <crypto/evp.h>
+
 #include "internal/refcount.h"
 
 #define EVP_CTRL_RET_UNSUPPORTED -1
@@ -390,3 +397,5 @@ int evp_names_do_all(OSSL_PROVIDER *prov, int number,
     void (*fn)(const char *name, void *data),
     void *data);
 int evp_cipher_cache_constants(EVP_CIPHER *cipher);
+
+#endif /* !defined(OSSL_LIBCRYPTO_EVP_EVP_LOCAL_H) */

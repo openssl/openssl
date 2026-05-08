@@ -7,7 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(APPS_INCLUDE_EC_COMMON_H)
+#define APPS_INCLUDE_EC_COMMON_H
+
 #ifndef OPENSSL_NO_EC
+#include <stddef.h>
+
 static const char *point_format_options[] = {
     "uncompressed",
     "compressed",
@@ -21,3 +26,5 @@ static const char *asn1_encoding_options[] = {
     NULL
 };
 #endif
+
+#endif /* !defined(APPS_INCLUDE_EC_COMMON_H) */

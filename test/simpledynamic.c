@@ -52,7 +52,7 @@ int sd_load(const char *filename, SD *lib, ossl_unused int type)
 
 int sd_sym(SD lib, const char *symname, SD_SYM *sym)
 {
-    *sym = (SD_SYM)GetProcAddress(lib, symname);
+    *sym = (SD_SYM)(uintptr_t)GetProcAddress(lib, symname);
     return *sym != NULL;
 }
 

@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_SEEDING_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_SEEDING_H
+
 #include "prov/provider_ctx.h"
 #include "crypto/rand_pool.h"
 
@@ -28,3 +31,5 @@ size_t ossl_prov_get_nonce(PROV_CTX *prov_ctx, unsigned char **pout,
     const void *salt, size_t salt_len);
 void ossl_prov_cleanup_nonce(PROV_CTX *prov_ctx, unsigned char *buf,
     size_t len);
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_SEEDING_H) */

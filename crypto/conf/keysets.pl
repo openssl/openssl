@@ -73,7 +73,10 @@ print <<"EOF";
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#if !defined(OSSL_LIBCRYPTO_CONF_CONF_DEF_H)
+#define OSSL_LIBCRYPTO_CONF_CONF_DEF_H
 
+/* clang-format off */
 #define CONF_NUMBER       $NUMBER
 #define CONF_UPPER        $UPPER
 #define CONF_LOWER        $LOWER
@@ -123,3 +126,5 @@ for ($i = 0; $i < 128; $i++) {
 }
 print "\n};\n";
 print "#endif\n";
+print "/* clang-format on */\n";
+print "\n#endif /* !defined(OSSL_LIBCRYPTO_CONF_CONF_DEF_H) */\n";

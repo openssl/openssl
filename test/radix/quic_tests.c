@@ -23,6 +23,23 @@
  */
 
 /*
+ * Simple single-stream test
+ */
+DEF_SCRIPT(simple_stream, "single stream test")
+{
+    OP_SIMPLE_PAIR_CONN();
+    OP_WRITE_B(C, "apple");
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+    OP_CONCLUDE(C);
+    OP_READ_EXPECT_B(S, "apple");
+    OP_EXPECT_FIN(S);
+    OP_WRITE_B(S, "orange");
+    OP_READ_EXPECT_B(C, "orange");
+    OP_CONCLUDE(S);
+    OP_EXPECT_FIN(C);
+}
+
+/*
  * Test: simple_conn
  * -----------------
  */
@@ -299,8 +316,9 @@ DEF_SCRIPT(check_cwm, "check stream obeys cwm")
  * ============================================================================
  */
 static SCRIPT_INFO *const scripts[] = {
+    USE(simple_stream),
     USE(simple_conn),
     USE(simple_thread),
     USE(ssl_poll),
-    USE(check_cwm)
+    USE(check_cwm),
 };

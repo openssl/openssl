@@ -283,7 +283,7 @@ int EVP_CIPHER_get_type(const EVP_CIPHER *cipher)
     case NID_des_ede3_cfb8:
     case NID_des_ede3_cfb1:
 
-        return NID_des_cfb64;
+        return NID_des_ede3_cfb64;
 
     default:
 #ifdef FIPS_MODULE
@@ -1029,6 +1029,10 @@ EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
         params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS, &bits);
     } else if (OPENSSL_strcasecmp(type, "EC") == 0) {
         name = va_arg(args, char *);
+        if (name == NULL) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+            return NULL;
+        }
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
             name, 0);
     }

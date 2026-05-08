@@ -39,27 +39,27 @@
 
 #define ENGINE_FUNC(ret_type, name, args, default_val) \
     OSSL_DEPRECATED_MESSAGE(#name ENGINE_INFO_MSG)     \
-    static inline ret_type name args                   \
+    static ossl_inline ret_type name args              \
     {                                                  \
         return default_val; /* stub return */          \
     }
 
 #define ENGINE_FUNC_NOARGS(ret_type, name, default_val) \
     OSSL_DEPRECATED_MESSAGE(#name ENGINE_INFO_MSG)      \
-    static inline ret_type name(void)                   \
+    static ossl_inline ret_type name(void)              \
     {                                                   \
         return default_val; /* stub return */           \
     }
 
 #define ENGINE_VOID_FUNC(name, args)               \
     OSSL_DEPRECATED_MESSAGE(#name ENGINE_INFO_MSG) \
-    static inline void name args                   \
+    static ossl_inline void name args              \
     {                                              \
     }
 
 #define ENGINE_VOID_FUNC_NOARGS(name)              \
     OSSL_DEPRECATED_MESSAGE(#name ENGINE_INFO_MSG) \
-    static inline void name(void)                  \
+    static ossl_inline void name(void)             \
     {                                              \
     }
 #else /* OPENSSL_ENGINE_STUBS */

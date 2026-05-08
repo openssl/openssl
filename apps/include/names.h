@@ -7,7 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_APPS_INCLUDE_NAMES_H)
+#define OSSL_APPS_INCLUDE_NAMES_H
+
+#include <openssl/evp.h>
 #include <openssl/safestack.h>
+#include <openssl/types.h>
 
 /* Standard comparing function for names */
 int name_cmp(const char *const *a, const char *const *b);
@@ -15,3 +20,5 @@ int name_cmp(const char *const *a, const char *const *b);
 void collect_names(const char *name, void *vdata);
 /* Sorts and prints a stack of names to |out| */
 void print_names(BIO *out, STACK_OF(OPENSSL_CSTRING) *names);
+
+#endif /* !defined(OSSL_APPS_INCLUDE_NAMES_H) */

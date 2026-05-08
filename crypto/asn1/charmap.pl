@@ -101,6 +101,10 @@ print <<EOF;
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_ASN1_CHARMAP_H)
+#define OSSL_LIBCRYPTO_ASN1_CHARMAP_H
+
+/* clang-format off */
 #define CHARTYPE_HOST_ANY $HOST_ANY
 #define CHARTYPE_HOST_DOT $HOST_DOT
 #define CHARTYPE_HOST_HYPHEN $HOST_HYPHEN
@@ -120,4 +124,7 @@ for($i = 0; $i < 128; $i++) {
 	print(",") if ($i != 127);
 }
 print("\n};\n");
+print "/* clang-format on */\n";
+print "\n#endif /* !defined(OSSL_LIBCRYPTO_ASN1_CHARMAP_H) */\n";
+
 

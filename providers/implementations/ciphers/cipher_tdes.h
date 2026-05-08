@@ -7,8 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_TDES_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_TDES_H
+
 #include <openssl/des.h>
+#include <openssl/evp.h>
 #include <openssl/core_dispatch.h>
+#include "prov/ciphercommon.h"
 #include "prov/securitycheck.h"
 #include "crypto/des_platform.h"
 
@@ -108,3 +113,5 @@ int ossl_cipher_hw_tdes_ecb(PROV_CIPHER_CTX *ctx, unsigned char *out,
 
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_ede3_cbc(void);
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_ede3_ecb(void);
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_TDES_H) */

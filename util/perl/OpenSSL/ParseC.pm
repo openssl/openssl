@@ -75,6 +75,22 @@ my @opensslcpphandlers = (
 #if$1 OPENSSL_NO_DEPRECATEDIN_$2
 EOF
       }
+    },
+    # Do the same for modern CPP definition tests.
+    { regexp   => qr/#if (\!defined).*OPENSSL_NO_DEPRECATED_(\d+_\d+(?:_\d+)?).*$/,
+      massager => sub {
+          return (<<"EOF");
+#ifndef OPENSSL_NO_DEPRECATEDIN_$2
+EOF
+      }
+    },
+    # Do the same for modern CPP definition tests.
+    { regexp   => qr/#if (defined).*OPENSSL_NO_DEPRECATED_(\d+_\d+(?:_\d+)?).*$/,
+      massager => sub {
+          return (<<"EOF");
+#ifdef OPENSSL_NO_DEPRECATEDIN_$2
+EOF
+      }
     }
 );
 my @cpphandlers = (

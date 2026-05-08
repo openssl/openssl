@@ -12,6 +12,7 @@
 #include "ml_dsa_vector.h"
 #include "ml_dsa_matrix.h"
 #include "ml_dsa_hash.h"
+#include "internal/constant_time.h"
 #include "internal/sha3.h"
 #include "internal/packet.h"
 
@@ -325,6 +326,23 @@ int ossl_ml_dsa_poly_sample_in_ball(POLY *out_c, const uint8_t *seed, int seed_l
      */
     OPENSSL_load_u64_le(&signs, block);
 
+    /*
+     * SampleInBall implements a Fisher-Yates shuffle whose rejection-sampling
+     * inner loop and data-dependent array index unavoidably leak the structure
+     * of the challenge polynomial via memory-access pattern and branch timing.
+     * This is safe: c_tilde = H(mu ‖ w1) is the Fiat-Shamir commitment and is
+     * published in the accepted signature, so the SHAKE bytes that build c are
+     * effectively public.  See the BoringSSL design discussion at
+     * https://boringssl-review.googlesource.com/c/boringssl/+/67747/comment/8d8f01ac_70af3f21/
+     *
+     * The first 8 bytes (the sign bits loaded into |signs| above) are left
+     * tainted: they determine only the ±1 values written into c, which flow
+     * into the CT arithmetic of cs1/cs2/ct0 alongside the already-tainted
+     * secret polynomials and cause no spurious violations there.
+     * Only the rejection-sampling bytes need to be declassified.
+     */
+    CONSTTIME_DECLASSIFY(block + offset, sizeof(block) - offset);
+
     poly_zero(out_c);
 
     /* Loop tau times */
@@ -337,6 +355,8 @@ int ossl_ml_dsa_poly_sample_in_ball(POLY *out_c, const uint8_t *seed, int seed_l
                 /* squeeze another block if the bytes from block have been used */
                 if (!EVP_DigestSqueeze(h_ctx, block, sizeof(block)))
                     return 0;
+                /* See comment above for why the block is declassified. */
+                CONSTTIME_DECLASSIFY(block, sizeof(block));
                 offset = 0;
             }
 

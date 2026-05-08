@@ -9,6 +9,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_OBJECTS_OBJ_DAT_H)
+#define OSSL_LIBCRYPTO_OBJECTS_OBJ_DAT_H
+
+/* clang-format off */
+
+#include <openssl/asn1.h>
+#include <openssl/objects.h>
+
+#include <crypto/asn1.h>
+
 /* Serialized OID's */
 static const unsigned char so[9582] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
@@ -7209,3 +7219,6 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1168,    /* OBJ_uacurve8                     1 2 804 2 1 1 1 1 3 1 1 2 8 */
     1169,    /* OBJ_uacurve9                     1 2 804 2 1 1 1 1 3 1 1 2 9 */
 };
+/* clang-format on */
+
+#endif /* !defined(OSSL_LIBCRYPTO_OBJECTS_OBJ_DAT_H) */

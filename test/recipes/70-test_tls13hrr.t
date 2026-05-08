@@ -177,7 +177,6 @@ sub hrr_filter
             $hrr_record->content_type(),
             $hrr_record->version(),
             $hrr_record->len(),
-            $hrr_record->sslv2(),
             $hrr_record->len_real(),
             $hrr_record->decrypt_len(),
             $hrr_record->data(),

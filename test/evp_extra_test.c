@@ -2689,8 +2689,10 @@ static int test_EVP_SM2(void)
 #ifndef OPENSSL_NO_X963KDF
     uint8_t ciphertext[128];
     size_t ctext_len = sizeof(ciphertext);
+    size_t ctext_len_param = 0;
     uint8_t plaintext[8];
     size_t ptext_len = sizeof(plaintext);
+    size_t ptext_len_param = 0;
     OSSL_PARAM sparams[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     OSSL_PARAM gparams[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     int i;
@@ -2818,7 +2820,8 @@ static int test_EVP_SM2(void)
         if (!TEST_true(EVP_PKEY_CTX_set_params(cctx, sparams)))
             goto done;
 
-        if (!TEST_true(EVP_PKEY_encrypt(cctx, ciphertext, &ctext_len, kMsg,
+        ctext_len_param = ctext_len;
+        if (!TEST_true(EVP_PKEY_encrypt(cctx, ciphertext, &ctext_len_param, kMsg,
                 sizeof(kMsg))))
             goto done;
 
@@ -2828,8 +2831,9 @@ static int test_EVP_SM2(void)
         if (!TEST_true(EVP_PKEY_CTX_set_params(cctx, sparams)))
             goto done;
 
-        if (!TEST_int_gt(EVP_PKEY_decrypt(cctx, plaintext, &ptext_len, ciphertext,
-                             ctext_len),
+        ptext_len_param = ptext_len;
+        if (!TEST_int_gt(EVP_PKEY_decrypt(cctx, plaintext, &ptext_len_param, ciphertext,
+                             ctext_len_param),
                 0))
             goto done;
 
@@ -2849,7 +2853,7 @@ static int test_EVP_SM2(void)
             goto done;
         }
 
-        if (!TEST_true(ptext_len == sizeof(kMsg)))
+        if (!TEST_true(ptext_len_param == sizeof(kMsg)))
             goto done;
 
         if (!TEST_true(memcmp(plaintext, kMsg, sizeof(kMsg)) == 0))
@@ -6242,7 +6246,8 @@ static int test_evp_final_no_tag(int idx)
         goto err;
 
     ctext_len += len;
-    if (!TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16, tag)))
+    if (!TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16, tag),
+            0))
         goto err;
     EVP_CIPHER_CTX_free(ctx);
 
@@ -7061,6 +7066,69 @@ end:
     EVP_CIPHER_CTX_free(ctx);
     return ret;
 }
+#ifndef OPENSSL_NO_DES
+static int test_EVP_CIPHER_get_type_des_ede3(void)
+{
+    const EVP_CIPHER *cipher = NULL;
+    int base_type, variant_type, nid;
+    int ret = 0;
+
+    /* Get the base type from CFB64 (should be NID_des_ede3_cfb64) */
+    cipher = EVP_des_ede3_cfb64();
+    base_type = EVP_CIPHER_get_type(cipher);
+
+    /* Test CFB64 - should map to the same base_type */
+    variant_type = EVP_CIPHER_get_type(cipher);
+    nid = EVP_CIPHER_get_nid(cipher);
+
+    /* Verify the returned type */
+    if (!TEST_int_eq(variant_type, base_type))
+        goto end;
+
+    /* Verify that variant_type and nid are same for 64-bit variants */
+    if (!TEST_int_eq(variant_type, nid))
+        goto end;
+
+    if (!TEST_int_eq(NID_des_ede3_cfb64, variant_type))
+        goto end;
+
+    /* Test CFB8 - should map to the same base_type */
+    cipher = EVP_des_ede3_cfb8();
+    variant_type = EVP_CIPHER_get_type(cipher);
+    nid = EVP_CIPHER_get_nid(cipher);
+
+    /* Verify the returned type */
+    if (!TEST_int_eq(variant_type, base_type))
+        goto end;
+
+    /* Verify that variant_type and nid are different for variants */
+    if (!TEST_int_ne(variant_type, nid))
+        goto end;
+
+    if (!TEST_int_eq(NID_des_ede3_cfb64, variant_type))
+        goto end;
+
+    /* Test CFB1 - should map to the same base_type */
+    cipher = EVP_des_ede3_cfb1();
+    variant_type = EVP_CIPHER_get_type(cipher);
+    nid = EVP_CIPHER_get_nid(cipher);
+
+    /* Verify the returned type */
+    if (!TEST_int_eq(variant_type, base_type))
+        goto end;
+
+    /* Verify that variant_type and nid are different for variants */
+    if (!TEST_int_ne(variant_type, nid))
+        goto end;
+
+    if (!TEST_int_eq(NID_des_ede3_cfb64, variant_type))
+        goto end;
+
+    ret = 1;
+end:
+    return ret;
+}
+#endif /*OPENSSL_NO_DES */
 
 static int test_evp_cipher_pipeline(void)
 {
@@ -7865,7 +7933,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_iv_aes, 13);
 #ifndef OPENSSL_NO_DES
     ADD_ALL_TESTS(test_evp_iv_des, 6);
-#endif
+    ADD_TEST(test_EVP_CIPHER_get_type_des_ede3);
+#endif /* OPENSSL_NO_DES */
 #ifndef OPENSSL_NO_BF
     ADD_ALL_TESTS(test_evp_bf_default_keylen, 4);
 #endif

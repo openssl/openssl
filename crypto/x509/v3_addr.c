@@ -417,7 +417,10 @@ static int make_addressPrefix(IPAddressOrRange **result, unsigned char *addr,
     aor->type = IPAddressOrRange_addressPrefix;
     if (aor->u.addressPrefix == NULL && (aor->u.addressPrefix = ASN1_BIT_STRING_new()) == NULL)
         goto err;
-    if (!ASN1_BIT_STRING_set(aor->u.addressPrefix, addr, bytelen))
+    /* BIT_STRING is a typedef of STRING
+     * this function allows to set value without checking invalid bits
+     * as they are nullified after setting */
+    if (!ASN1_STRING_set(aor->u.addressPrefix, addr, bytelen))
         goto err;
     if (bitlen > 0)
         aor->u.addressPrefix->data[bytelen - 1] &= ~(0xFF >> bitlen);
@@ -461,9 +464,8 @@ static int make_addressRange(IPAddressOrRange **result,
 
     for (i = length; i > 0 && min[i - 1] == 0x00; --i)
         ;
-    if (!ASN1_BIT_STRING_set(aor->u.addressRange->min, min, i))
+    if (!ASN1_BIT_STRING_set1(aor->u.addressRange->min, min, i, 0))
         goto err;
-    ossl_asn1_bit_string_set_unused_bits(aor->u.addressRange->min, 0);
     if (i > 0) {
         unsigned char b = min[i - 1];
         int j = 1;
@@ -475,9 +477,8 @@ static int make_addressRange(IPAddressOrRange **result,
 
     for (i = length; i > 0 && max[i - 1] == 0xFF; --i)
         ;
-    if (!ASN1_BIT_STRING_set(aor->u.addressRange->max, max, i))
+    if (!ASN1_BIT_STRING_set1(aor->u.addressRange->max, max, i, 0))
         goto err;
-    ossl_asn1_bit_string_set_unused_bits(aor->u.addressRange->max, 0);
     if (i > 0) {
         unsigned char b = max[i - 1];
         int j = 1;

@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_CT_CT_LOCAL_H)
+#define OSSL_LIBCRYPTO_CT_CT_LOCAL_H
+
 #include <stddef.h>
 #include <openssl/ct.h>
 #include <openssl/evp.h>
@@ -215,3 +218,5 @@ __owur int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len);
  * Handlers for Certificate Transparency X509v3/OCSP extensions
  */
 extern const X509V3_EXT_METHOD ossl_v3_ct_scts[3];
+
+#endif /* !defined(OSSL_LIBCRYPTO_CT_CT_LOCAL_H) */

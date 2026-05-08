@@ -255,6 +255,14 @@ static void impl_free(IMPLEMENTATION *impl)
     }
 }
 
+static ossl_inline void impl_cache_free_unlinked(QUERY *elem)
+{
+    if (elem != NULL) {
+        ossl_method_free(&elem->method);
+        OPENSSL_free(elem);
+    }
+}
+
 static ossl_inline void impl_cache_free(QUERY *elem)
 {
     if (elem != NULL) {
@@ -266,8 +274,7 @@ static ossl_inline void impl_cache_free(QUERY *elem)
 #else
         ossl_list_lru_entry_remove(&sa->lru_list, elem);
 #endif
-        ossl_method_free(&elem->method);
-        OPENSSL_free(elem);
+        impl_cache_free_unlinked(elem);
     }
 }
 
@@ -1120,7 +1127,7 @@ static ossl_inline int ossl_method_store_cache_get_locked(OSSL_METHOD_STORE *sto
                  * owns it as well
                  */
                 if (!ossl_method_up_ref(&r->method)) {
-                    impl_cache_free(r);
+                    OPENSSL_free(r);
                     r = NULL;
                 }
                 /*
@@ -1140,6 +1147,9 @@ static ossl_inline int ossl_method_store_cache_get_locked(OSSL_METHOD_STORE *sto
     if (ossl_method_up_ref(&r->method)) {
         *method = r->method.method;
         res = 1;
+    } else if (*post_insert == r) {
+        impl_cache_free_unlinked(r);
+        *post_insert = NULL;
     }
 err:
 #ifndef ALLOW_VLA
@@ -1183,17 +1193,25 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
 
     if (ret == 1 && post_insert != NULL) {
         if (!ossl_property_write_lock(sa)) {
-            impl_cache_free(post_insert);
+            ossl_method_free(&post_insert->method);
+            impl_cache_free_unlinked(post_insert);
             *method = NULL;
             ret = 0;
         } else {
+            int insert_rc;
+
             HT_INIT_KEY_CACHED(&key, post_insert->generic_hash);
 
-            if (!ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), post_insert, NULL)) {
+            insert_rc = ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key),
+                post_insert, NULL);
+            if (insert_rc != 1) {
                 /*
-                 * We raced with another thread that added the same QUERY, pitch this one
+                 * Another thread may have inserted the same QUERY, or the
+                 * hash table insertion itself may have failed. Drop this
+                 * pending entry and the caller-visible method reference.
                  */
-                impl_cache_free(post_insert);
+                ossl_method_free(&post_insert->method);
+                impl_cache_free_unlinked(post_insert);
                 *method = NULL;
                 ret = 0;
             } else {
@@ -1214,6 +1232,7 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
     ALGORITHM *alg;
     QUERY_KEY key;
     int res = 1;
+    int insert_rc;
     size_t cullcount;
 #ifdef ALLOW_VLA
     uint8_t keybuf[keylen];
@@ -1280,8 +1299,11 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
         if (!ossl_method_up_ref(&p->method))
             goto err;
 
-        if (!ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), p, &old)) {
-            impl_cache_free(p);
+        insert_rc = ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), p,
+            &old);
+        if (insert_rc != 1) {
+            impl_cache_free_unlinked(p);
+            p = NULL;
             goto err;
         }
         p->specific_hash = HT_KEY_GET_HASH(&key);
@@ -1304,12 +1326,14 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
         ossl_list_lru_entry_init_elem(p);
         if (!ossl_method_up_ref(&p->method))
             goto err;
-        if (ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), p, NULL)) {
+        insert_rc = ossl_ht_cache_QUERY_insert(sa->cache, TO_HT_KEY(&key), p,
+            NULL);
+        if (insert_rc == 1) {
             p->specific_hash = 0;
             p->generic_hash = old->generic_hash = HT_KEY_GET_HASH(&key);
             ossl_list_lru_entry_insert_tail(&sa->lru_list, p);
         } else {
-            impl_cache_free(p);
+            impl_cache_free_unlinked(p);
             p = NULL;
             goto err;
         }

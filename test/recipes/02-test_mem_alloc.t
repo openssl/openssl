@@ -14,6 +14,7 @@ plan skip_all => "This test should not be run under valgrind"
     if ( defined $ENV{OSSL_USE_VALGRIND} );
 
 {
+    local $ENV{"OPENSSL_TEST_MFAIL_DISABLE"} = 1;
     local $ENV{"ASAN_OPTIONS"} = "allocator_may_return_null=true";
     local $ENV{"MSAN_OPTIONS"} = "allocator_may_return_null=true";
 

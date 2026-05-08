@@ -7,7 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_SLH_DSA_SLH_DSA_KEY_H)
+#define OSSL_LIBCRYPTO_SLH_DSA_SLH_DSA_KEY_H
+
+#include <openssl/crypto.h>
 #include <openssl/e_os2.h>
+
+#include "crypto/slh_dsa.h"
+
+#include "slh_params.h"
+#include "slh_adrs.h"
+#include "slh_hash.h"
 
 #define SLH_DSA_MAX_N 32
 #define SLH_DSA_SK_SEED(key) ((key)->priv)
@@ -48,3 +58,5 @@ struct slh_dsa_key_st {
     EVP_MD *md_sha512; /* Used for SHA-512 hashes */
     EVP_MAC *hmac;
 };
+
+#endif /* !defined(OSSL_LIBCRYPTO_SLH_DSA_SLH_DSA_KEY_H) */

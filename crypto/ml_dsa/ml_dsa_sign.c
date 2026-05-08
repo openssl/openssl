@@ -14,6 +14,7 @@
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include "internal/common.h"
+#include "internal/constant_time.h"
 #include "ml_dsa_local.h"
 #include "ml_dsa_key.h"
 #include "ml_dsa_matrix.h"
@@ -220,9 +221,26 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
     signature_init(&sig, p, k, p + k, l, c_tilde, c_tilde_len);
     /* End of the allocated blob setup */
 
+    /*
+     * Mark the private key material as secret before we start computing with
+     * it.  Any control-flow branch or memory-index that transitively depends
+     * on these bytes will be flagged by Valgrind when the library is built
+     * with enable-ct-validation.
+     */
+    CONSTTIME_SECRET(priv->K, sizeof(priv->K));
+    CONSTTIME_SECRET_VECTOR(priv->s1);
+    CONSTTIME_SECRET_VECTOR(priv->s2);
+    CONSTTIME_SECRET_VECTOR(priv->t0);
+
     if (!matrix_expand_A(md_ctx, priv->shake128_md, priv->rho, &a_ntt))
         goto err;
 
+    /*
+     * rho_prime is derived from the secret K and must remain tainted
+     * throughout the rejection loop: knowing it would let an attacker
+     * reconstruct every mask y and recover c*s1 = z - y from the final
+     * signature.  Do NOT declassify it.
+     */
     if (!shake_xof_3(md_ctx, priv->shake256_md, priv->K, sizeof(priv->K),
             rnd, rnd_len, mu, mu_len,
             rho_prime, sizeof(rho_prime)))
@@ -276,12 +294,17 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
         vector_low_bits(r0, gamma2, r0);
 
         /*
-         * Leaking that the signature is rejected is fine as the next attempt at a
-         * signature will be (indistinguishable from) independent of this one.
+         * Leaking that the signature is rejected is fine: the next attempt
+         * is (indistinguishable from) independent of this one, so an
+         * observer learns nothing about the secret key beyond the number of
+         * iterations, which is itself safe to reveal.
+         * Declassify the bound-check output so that Valgrind does not flag
+         * these intentional leaks.
          */
         z_max = vector_max(&sig.z);
         r0_max = vector_max_signed(r0);
-        if (value_barrier_32(constant_time_ge(z_max, gamma1 - params->beta)
+        if (constant_time_declassify_u32(
+                constant_time_ge(z_max, gamma1 - params->beta)
                 | constant_time_ge(r0_max, gamma2 - params->beta)))
             continue;
 
@@ -292,9 +315,32 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
         ct0_max = vector_max(ct0);
         h_ones = (uint32_t)vector_count_ones(&sig.hint);
         /* Same reasoning applies to the leak as above */
-        if (value_barrier_32(constant_time_ge(ct0_max, gamma2)
+        if (constant_time_declassify_u32(
+                constant_time_ge(ct0_max, gamma2)
                 | constant_time_lt(params->omega, h_ones)))
             continue;
+
+        /*
+         * The iteration has passed both rejection tests: the signature is
+         * accepted.  Declassify all three public outputs before encoding.
+         *
+         * sig.z and sig.hint were computed from secret key material (s1,
+         * s2, t0) and carry taint, but the rejection checks above have
+         * verified they lie within the ranges required by the security
+         * proof, so they reveal nothing about the key.
+         *
+         * c_tilde = H(mu || w1) carries taint that propagated from the
+         * secret rho_prime through y → w → w1.  It is the Fiat-Shamir
+         * challenge commitment and is published as part of the signature.
+         * We defer its declassification to here (rather than immediately
+         * after the SHAKE call) so that Valgrind can check that
+         * poly_sample_in_ball_ntt and the NTT challenge arithmetic are
+         * data-oblivious with respect to their tainted inputs.
+         */
+        CONSTTIME_DECLASSIFY(c_tilde, c_tilde_len);
+        CONSTTIME_DECLASSIFY_VECTOR(sig.z);
+        CONSTTIME_DECLASSIFY_VECTOR(sig.hint);
+
         ret = ossl_ml_dsa_sig_encode(&sig, params, out_sig);
         break;
     }
@@ -302,6 +348,17 @@ err:
     EVP_MD_CTX_free(md_ctx);
     OPENSSL_clear_free(alloc, alloc_len);
     OPENSSL_cleanse(rho_prime, sizeof(rho_prime));
+    /*
+     * Declassify the private key material before returning.  The key struct
+     * is not owned here, so we do not free it, but we must remove the
+     * "secret" taint so that the caller does not inherit spurious Valgrind
+     * "uninitialised" state.  The polynomial data in |alloc| was already
+     * zeroed and freed above; rho_prime is stack-allocated and cleansed.
+     */
+    CONSTTIME_DECLASSIFY(priv->K, sizeof(priv->K));
+    CONSTTIME_DECLASSIFY_VECTOR(priv->s1);
+    CONSTTIME_DECLASSIFY_VECTOR(priv->s2);
+    CONSTTIME_DECLASSIFY_VECTOR(priv->t0);
     return ret;
 }
 

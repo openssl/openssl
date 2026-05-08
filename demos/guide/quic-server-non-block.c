@@ -51,15 +51,6 @@ static void errx(int status, const char *fmt, ...)
     va_end(ap);
     exit(status);
 }
-
-static void warnx(const char *fmt, ...)
-{
-    va_list ap;
-
-    va_start(ap, fmt);
-    vwarnx(fmt, ap);
-    va_end(ap);
-}
 #endif
 
 /*
@@ -463,7 +454,7 @@ err:
     return ok;
 }
 
-/* Minimal QUIC HTTP/1.0 server. */
+/* Minimal QUIC HTTP/1.1 server. */
 int main(int argc, char *argv[])
 {
     int res = EXIT_FAILURE;

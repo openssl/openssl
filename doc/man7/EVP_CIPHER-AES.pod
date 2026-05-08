@@ -69,6 +69,10 @@ The AES-SIV and AES-WRAP mode implementations do not support streaming. That
 means to obtain correct results there can be only one L<EVP_EncryptUpdate(3)>
 or L<EVP_DecryptUpdate(3)> call after the initialization of the context.
 
+When wrapping with AES-WRAP-PAD ciphers, the output buffer must be at least
+I<inl> rounded up to the cipher block size (8 bytes) plus the block size.
+That is, the minimum output buffer size is C<((inl + 7) / 8) * 8 + 8> bytes.
+
 The AES-XTS implementations allow streaming to be performed, but each
 L<EVP_EncryptUpdate(3)> or L<EVP_DecryptUpdate(3)> call requires each input
 to be a multiple of the blocksize. Only the final EVP_EncryptUpdate() or

@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_BIO_BIO_LOCAL_H)
+#define OSSL_LIBCRYPTO_BIO_BIO_LOCAL_H
+
 #include "internal/e_os.h"
 #include "internal/sockets.h"
 #include "internal/bio_addr.h"
@@ -178,3 +181,5 @@ void bio_sock_cleanup_int(void);
 #endif
 
 #endif
+
+#endif /* !defined(OSSL_LIBCRYPTO_BIO_BIO_LOCAL_H) */

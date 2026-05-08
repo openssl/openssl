@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_CBC_HMAC_SHA_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_CBC_HMAC_SHA_H
+
 #include "prov/ciphercommon.h"
 #include "crypto/aes_platform.h"
 
@@ -63,3 +66,5 @@ typedef struct prov_aes_hmac_sha256_ctx_st {
 #define NO_PAYLOAD_LENGTH ((size_t)-1)
 
 #endif /* AES_CBC_HMAC_SHA_CAPABLE */
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_CBC_HMAC_SHA_H) */

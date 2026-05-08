@@ -14,9 +14,18 @@
  *                                                                           *
  *****************************************************************************/
 
+#if !defined(OSSL_SSL_STATEM_STATEM_LOCAL_H)
+#define OSSL_SSL_STATEM_STATEM_LOCAL_H
+
+#include <internal/packet.h>
+#include <internal/statem.h>
+
+#include "../ssl_local.h"
+
 /* Max message length definitions */
 
 /* The spec allows for a longer length than this, but we limit it */
+
 #define HELLO_VERIFY_REQUEST_MAX_LENGTH 258
 #define END_OF_EARLY_DATA_MAX_LENGTH 0
 #define HELLO_RETRY_REQUEST_MAX_LENGTH 20000
@@ -591,3 +600,5 @@ EXT_RETURN tls_construct_stoc_ech(SSL_CONNECTION *s, WPACKET *pkt,
 int tls_parse_stoc_ech(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     X509 *x, size_t chainidx);
 #endif
+
+#endif /* !defined(OSSL_SSL_STATEM_STATEM_LOCAL_H) */

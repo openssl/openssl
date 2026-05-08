@@ -2582,7 +2582,7 @@ i2d_ASN1_BIT_STRING                     2580	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_free                    2581	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_new                     2582	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_it                      2583	4_0_0	EXIST::FUNCTION:
-ASN1_BIT_STRING_set                     2584	4_0_0	EXIST::FUNCTION:
+ASN1_BIT_STRING_set                     2584	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
 ASN1_BIT_STRING_set_bit                 2585	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_get_bit                 2586	4_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_check                   2587	4_0_0	EXIST::FUNCTION:
@@ -4687,8 +4687,8 @@ X509_CRL_print                          4684	4_0_0	EXIST::FUNCTION:
 X509_REQ_print_ex                       4685	4_0_0	EXIST::FUNCTION:
 X509_REQ_print                          4686	4_0_0	EXIST::FUNCTION:
 X509_NAME_entry_count                   4687	4_0_0	EXIST::FUNCTION:
-X509_NAME_get_text_by_NID               4688	4_0_0	EXIST::FUNCTION:DEPRECATED_4_0
-X509_NAME_get_text_by_OBJ               4689	4_0_0	EXIST::FUNCTION:DEPRECATED_4_0
+X509_NAME_get_text_by_NID               4688	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_0
+X509_NAME_get_text_by_OBJ               4689	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_0
 X509_NAME_get_index_by_NID              4690	4_0_0	EXIST::FUNCTION:
 X509_NAME_get_index_by_OBJ              4691	4_0_0	EXIST::FUNCTION:
 X509_NAME_get_entry                     4692	4_0_0	EXIST::FUNCTION:
@@ -5719,3 +5719,4 @@ CTLOG_STORE_add0_log                    ?	4_1_0	EXIST::FUNCTION:CT
 CRYPTO_atomic_load_ptr                  ?	4_1_0	EXIST::FUNCTION:
 CRYPTO_atomic_store_ptr                 ?	4_1_0	EXIST::FUNCTION:
 CRYPTO_atomic_cmp_exch_ptr              ?	4_1_0	EXIST::FUNCTION:
+EVP_EC_affine2oct                       ?	4_1_0	EXIST::FUNCTION:

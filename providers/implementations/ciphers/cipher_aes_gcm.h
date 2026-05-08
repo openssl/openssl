@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_GCM_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_GCM_H
+
 #include <openssl/aes.h>
 #include "prov/ciphercommon.h"
 #include "prov/ciphercommon_gcm.h"
@@ -43,3 +46,5 @@ typedef struct prov_aes_gcm_ctx_st {
 } PROV_AES_GCM_CTX;
 
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits);
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_GCM_H) */

@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_SIV_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_SIV_H
+
 #include "prov/ciphercommon.h"
 #include "crypto/aes_platform.h"
 #include "crypto/siv.h"
@@ -34,3 +37,5 @@ typedef struct prov_siv_ctx_st {
 } PROV_AES_SIV_CTX;
 
 const PROV_CIPHER_HW_AES_SIV *ossl_prov_cipher_hw_aes_siv(size_t keybits);
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_SIV_H) */

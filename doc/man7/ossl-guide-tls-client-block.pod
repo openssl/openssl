@@ -15,7 +15,7 @@ ossl-guide-tls-client-block
 =head1 SIMPLE BLOCKING TLS CLIENT EXAMPLE
 
 This page will present various source code samples demonstrating how to write
-a simple TLS client application which connects to a server, sends an HTTP/1.0
+a simple TLS client application which connects to a server, sends an HTTP/1.1
 request to it, and reads back the response.
 
 We use a blocking socket for the purposes of this example. This means that
@@ -353,7 +353,7 @@ chunks. First we write the start of the request. Secondly we write the hostname
 we are sending the request to. Finally we send the end of the request.
 
     size_t written;
-    const char *request_start = "GET / HTTP/1.0\r\nConnection: close\r\nHost: ";
+    const char *request_start = "GET / HTTP/1.1\r\nConnection: close\r\nHost: ";
     const char *request_end = "\r\n\r\n";
 
     /* Write an HTTP GET request to the peer */

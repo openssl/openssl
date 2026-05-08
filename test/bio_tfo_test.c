@@ -81,6 +81,9 @@ static int test_bio_tfo(int idx)
 
     /* ACCEPT SOCKET */
     if (!TEST_ptr(abio = BIO_new_accept("localhost:0"))
+#if !OPENSSL_USE_IPV6
+        || !TEST_true(BIO_set_accept_ip_family(abio, BIO_FAMILY_IPV4))
+#endif
         || !TEST_true(BIO_set_nbio_accept(abio, 1))
         || !TEST_true(BIO_set_tfo_accept(abio, server_tfo))
         || !TEST_int_gt(BIO_do_accept(abio), 0)
@@ -93,6 +96,9 @@ static int test_bio_tfo(int idx)
 
     /* CLIENT SOCKET */
     if (!TEST_ptr(cbio = BIO_new_connect("localhost"))
+#if !OPENSSL_USE_IPV6
+        || !TEST_long_gt(BIO_set_conn_ip_family(cbio, BIO_FAMILY_IPV4), 0)
+#endif
         || !TEST_long_gt(BIO_set_conn_port(cbio, port), 0)
         || !TEST_long_gt(BIO_set_nbio(cbio, 1), 0)
         || !TEST_long_gt(BIO_set_tfo(cbio, client_tfo), 0)) {
@@ -236,7 +242,11 @@ static int test_fd_tfo(int idx)
 
     /* ADDRESS SETUP */
     memset(&hints, 0, sizeof(hints));
+#if OPENSSL_USE_IPV6
     hints.ai_family = AF_UNSPEC;
+#else
+    hints.ai_family = AF_INET;
+#endif
     hints.ai_socktype = SOCK_STREAM;
     if (!TEST_int_eq(getaddrinfo(NULL, "0", &hints, &ai), 0))
         goto err;
@@ -248,12 +258,14 @@ static int test_fd_tfo(int idx)
         addrlen = sizeof(((struct sockaddr_in *)ai->ai_addr)->sin_addr);
         BIO_printf(bio_err, "Using IPv4\n");
         break;
+#if OPENSSL_USE_IPV6
     case AF_INET6:
         port = ((struct sockaddr_in6 *)ai->ai_addr)->sin6_port;
         addr = &((struct sockaddr_in6 *)ai->ai_addr)->sin6_addr;
         addrlen = sizeof(((struct sockaddr_in6 *)ai->ai_addr)->sin6_addr);
         BIO_printf(bio_err, "Using IPv6\n");
         break;
+#endif
     default:
         BIO_printf(bio_err, "Unknown address family %d\n", ai->ai_family);
         goto err;
@@ -280,11 +292,13 @@ static int test_fd_tfo(int idx)
         addr = &((struct sockaddr_in *)&sstorage)->sin_addr;
         addrlen = sizeof(((struct sockaddr_in *)&sstorage)->sin_addr);
         break;
+#if OPENSSL_USE_IPV6
     case AF_INET6:
         port = ((struct sockaddr_in6 *)&sstorage)->sin6_port;
         addr = &((struct sockaddr_in6 *)&sstorage)->sin6_addr;
         addrlen = sizeof(((struct sockaddr_in6 *)&sstorage)->sin6_addr);
         break;
+#endif
     default:
         goto err;
     }

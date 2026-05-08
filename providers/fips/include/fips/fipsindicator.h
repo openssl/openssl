@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_FIPS_INCLUDE_FIPS_FIPSINDICATOR_H)
+#define OSSL_PROVIDERS_FIPS_INCLUDE_FIPS_FIPSINDICATOR_H
+
 #ifdef FIPS_MODULE
 
 #include <openssl/core.h> /* OSSL_CALLBACK, OSSL_LIB_CTX */
@@ -161,3 +164,5 @@ int ossl_fips_ind_digest_sign_check(OSSL_FIPS_IND *ind, int id,
 #define OSSL_FIPS_IND_COPY(dst, src)
 
 #endif
+
+#endif /* !defined(OSSL_PROVIDERS_FIPS_INCLUDE_FIPS_FIPSINDICATOR_H) */

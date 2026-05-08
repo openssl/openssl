@@ -178,7 +178,9 @@ size_t CRYPTO_128_unwrap(void *key, const unsigned char *iv,
  *
  *  @param[in]  key    Key value.
  *  @param[in]  icv    (Non-standard) IV, 4 bytes. NULL = use default_aiv.
- *  @param[out] out    Ciphertext. Minimal buffer length = (inlen + 15) bytes.
+ *  @param[out] out    Ciphertext. Minimal buffer length =
+ *                     (inlen rounded up to 8 + 8) bytes, i.e.
+ *                     ((inlen + 7) / 8) * 8 + 8.
  *                     Input and output buffers can overlap if block function
  *                     supports that.
  *  @param[in]  in     Plaintext as n 64-bit blocks, n >= 2.

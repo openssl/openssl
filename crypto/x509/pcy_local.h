@@ -7,6 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_X509_PCY_LOCAL_H)
+#define OSSL_LIBCRYPTO_X509_PCY_LOCAL_H
+
+#include <openssl/asn1.h>
+#include <openssl/safestack.h>
+#include <openssl/types.h>
+#include <openssl/x509v3.h>
+
 typedef struct X509_POLICY_DATA_st X509_POLICY_DATA;
 
 DEFINE_STACK_OF(X509_POLICY_DATA)
@@ -169,3 +177,5 @@ int ossl_policy_node_match(const X509_POLICY_LEVEL *lvl,
     const X509_POLICY_NODE *node, const ASN1_OBJECT *oid);
 
 const X509_POLICY_CACHE *ossl_policy_cache_set(X509 *x);
+
+#endif /* !defined(OSSL_LIBCRYPTO_X509_PCY_LOCAL_H) */

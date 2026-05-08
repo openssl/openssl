@@ -2372,6 +2372,7 @@ int tls_parse_stoc_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     PACKET cookie;
 
     if (!PACKET_as_length_prefixed_2(pkt, &cookie)
+        || PACKET_remaining(&cookie) == 0
         || !PACKET_memdup(&cookie, &s->ext.tls13_cookie,
             &s->ext.tls13_cookie_len)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);

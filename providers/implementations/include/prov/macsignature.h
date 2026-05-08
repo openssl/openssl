@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_MACSIGNATURE_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_MACSIGNATURE_H
+
 #include <stdlib.h>
 #include <openssl/crypto.h>
 #include "internal/refcount.h"
@@ -27,3 +30,5 @@ typedef struct mac_key_st MAC_KEY;
 MAC_KEY *ossl_mac_key_new(OSSL_LIB_CTX *libctx, int cmac);
 void ossl_mac_key_free(MAC_KEY *mackey);
 int ossl_mac_key_up_ref(MAC_KEY *mackey);
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_MACSIGNATURE_H) */

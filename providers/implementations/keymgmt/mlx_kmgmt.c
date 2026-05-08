@@ -719,15 +719,17 @@ static void *mlx_kem_dup(const void *vkey, int selection)
         || (ret = OPENSSL_memdup(key, sizeof(*ret))) == NULL)
         return NULL;
 
-    if (ret->propq != NULL
-        && (ret->propq = OPENSSL_strdup(ret->propq)) == NULL) {
+    ret->mkey = ret->xkey = NULL;
+
+    if (key->propq != NULL
+        && (ret->propq = OPENSSL_strdup(key->propq)) == NULL) {
         OPENSSL_free(ret);
         return NULL;
     }
 
     /* Absent key material, nothing left to do */
-    if (ret->mkey == NULL) {
-        if (ret->xkey == NULL)
+    if (key->mkey == NULL) {
+        if (key->xkey == NULL)
             return ret;
         /* Fail if the source key is an inconsistent state */
         OPENSSL_free(ret->propq);
@@ -737,7 +739,6 @@ static void *mlx_kem_dup(const void *vkey, int selection)
 
     switch (selection & OSSL_KEYMGMT_SELECT_KEYPAIR) {
     case 0:
-        ret->xkey = ret->mkey = NULL;
         ret->state = MLX_HAVE_NOKEYS;
         return ret;
     case OSSL_KEYMGMT_SELECT_KEYPAIR:

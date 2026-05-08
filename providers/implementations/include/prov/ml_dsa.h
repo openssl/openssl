@@ -7,8 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_ML_DSA_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_ML_DSA_H
+
 #include "crypto/ml_dsa.h"
 #include "prov/provider_ctx.h"
 
 ML_DSA_KEY *
 ossl_prov_ml_dsa_new(PROV_CTX *provctx, const char *propq, int evp_type);
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_ML_DSA_H) */

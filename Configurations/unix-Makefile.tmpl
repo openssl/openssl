@@ -600,6 +600,12 @@ list-tests: ## List available tests that can be invoked via "make test TESTS=<na
 
 ##@ Workspace cleaning
 
+cov-clean: ## Remove all coverage data files
+	-find . \( -name '*.gcda' -o -name '*.gcno' \) \! -type d | xargs $(RM)
+
+cov-reset: ## Remove runtime coverage counters
+	-find . -name '*.gcda' \! -type d | xargs $(RM)
+
 libclean:
 	@set -e; for s in $(SHLIB_INFO); do \
 		if [ "$$s" = ";" ]; then continue; fi; \
@@ -642,7 +648,7 @@ clean: libclean ## Clean the workspace, keep the configuration
 	$(RM) providers/fips*.new
 	-find . -type l \! -name '.*' \! -path './pkcs11-provider/*' -exec $(RM) {} \;
 
-distclean: clean ## Clean and remove the configuration
+distclean: clean cov-clean ## Clean and remove the configuration
 	$(RM) include/openssl/configuration.h
 	$(RM) configdata.pm
 	$(RM) Makefile

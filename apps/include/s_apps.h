@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_APPS_INCLUDE_S_APPS_H)
+#define OSSL_APPS_INCLUDE_S_APPS_H
+
 #include <openssl/opensslconf.h>
 
 #include <openssl/ssl.h>
@@ -112,3 +115,5 @@ int set_up_srp_verifier_file(SSL_CTX *ctx, srpsrvparm *srp_callback_parm,
     char *srpuserseed, char *srp_verifier_file);
 void lookup_srp_user(srpsrvparm *srp_callback_parm, BIO *bio_s_out);
 #endif /* OPENSSL_NO_SRP */
+
+#endif /* !defined(OSSL_APPS_INCLUDE_S_APPS_H) */

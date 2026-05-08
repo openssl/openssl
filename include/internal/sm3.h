@@ -13,6 +13,8 @@
 #define OSSL_INTERNAL_SM3_H
 #pragma once
 
+#include <stddef.h>
+
 #include <openssl/opensslconf.h>
 
 #ifdef OPENSSL_NO_SM3

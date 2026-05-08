@@ -347,7 +347,7 @@ int i2o_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp)
             if ((sct_len = i2o_SCT(sk_SCT_value(a, i), NULL)) == -1)
                 goto err;
         }
-        len2 += 2 + sct_len;
+        len2 += (size_t)sct_len + 2;
     }
 
     if (len2 > MAX_SCT_LIST_SIZE)

@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_LIBCRYPTO_PEM_PEM_LOCAL_H)
+#define OSSL_LIBCRYPTO_PEM_PEM_LOCAL_H
+
 #include <openssl/core_dispatch.h>
 #include <openssl/pem.h>
 #include <openssl/encoder.h>
@@ -162,3 +165,5 @@
 #define IMPLEMENT_PEM_provided_rw_cb(name, TYPE, type, str, asn1) \
     IMPLEMENT_PEM_read(name, TYPE, str, asn1)                     \
     IMPLEMENT_PEM_provided_write_cb(name, TYPE, type, str, asn1)
+
+#endif /* !defined(OSSL_LIBCRYPTO_PEM_PEM_LOCAL_H) */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1398,7 +1398,7 @@ err:
 static void tls_int_free(OSSL_RECORD_LAYER *rl)
 {
     BIO_free(rl->prev);
-    BIO_free(rl->bio);
+    BIO_free_all(rl->bio);
     BIO_free(rl->next);
     ossl_tls_buffer_release(&rl->rbuf);
 
@@ -1944,7 +1944,7 @@ int tls_set1_bio(OSSL_RECORD_LAYER *rl, BIO *bio)
 {
     if (bio != NULL && !BIO_up_ref(bio))
         return 0;
-    BIO_free(rl->bio);
+    BIO_free_all(rl->bio);
     rl->bio = bio;
 
     return 1;

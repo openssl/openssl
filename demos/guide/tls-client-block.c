@@ -94,7 +94,7 @@ static BIO *create_socket_bio(const char *hostname, const char *port, int family
 }
 
 /*
- * Simple application to send a basic HTTP/1.0 request to a server and
+ * Simple application to send a basic HTTP/1.1 request to a server and
  * print the response on the screen.
  */
 int main(int argc, char *argv[])
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
     BIO *bio = NULL;
     int res = EXIT_FAILURE;
     int ret;
-    const char *request_start = "GET / HTTP/1.0\r\nConnection: close\r\nHost: ";
+    const char *request_start = "GET / HTTP/1.1\r\nConnection: close\r\nHost: ";
     const char *request_end = "\r\n\r\n";
     size_t written, readbytes;
     char buf[160];

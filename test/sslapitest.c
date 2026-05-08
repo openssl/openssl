@@ -3604,6 +3604,52 @@ static int test_ssl_bio_change_wbio(void)
     return execute_test_ssl_bio(0, CHANGE_WBIO);
 }
 
+/*
+ * Regression for GH #30458: tls_set1_bio() must BIO_free_all the old chain
+ * when the write BIO is replaced, not only the top BIO.
+ */
+static int test_ssl_set_wbio_chain_no_leak(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    BIO *bio = NULL, *filter = NULL, *chain1 = NULL;
+    int testresult = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, TLS_method())))
+        goto end;
+    if (!TEST_ptr(ssl = SSL_new(ctx)))
+        goto end;
+
+    if (!TEST_ptr(filter = BIO_new(BIO_f_nbio_test())))
+        goto end;
+    if (!TEST_ptr(bio = BIO_new(BIO_s_mem()))) {
+        BIO_free(filter);
+        filter = NULL;
+        goto end;
+    }
+    if (!TEST_ptr(chain1 = BIO_push(filter, bio))) {
+        BIO_free_all(filter);
+        filter = bio = NULL;
+        goto end;
+    }
+    filter = bio = NULL;
+
+    SSL_set0_wbio(ssl, chain1);
+    chain1 = NULL;
+    SSL_set0_wbio(ssl, NULL);
+
+    testresult = 1;
+
+end:
+    BIO_free(filter);
+    BIO_free(bio);
+    BIO_free(chain1);
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+
+    return testresult;
+}
+
 #if !defined(OPENSSL_NO_TLS1_2) || defined(OSSL_NO_USABLE_TLS1_3)
 typedef struct {
     /* The list of sig algs */
@@ -14835,6 +14881,7 @@ int setup_tests(void)
     ADD_TEST(test_ssl_bio_pop_ssl_bio);
     ADD_TEST(test_ssl_bio_change_rbio);
     ADD_TEST(test_ssl_bio_change_wbio);
+    ADD_TEST(test_ssl_set_wbio_chain_no_leak);
 #if !defined(OPENSSL_NO_TLS1_2) || defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_set_sigalgs, OSSL_NELEM(testsigalgs) * 2);
     ADD_TEST(test_keylog);

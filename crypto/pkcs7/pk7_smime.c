@@ -200,7 +200,7 @@ static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si)
     }
 
     if (osdig != NULL)
-        return PKCS7_add1_attrib_digest(si, osdig->data, osdig->length);
+        return PKCS7_add1_attrib_digest(si, ASN1_STRING_get0_data(osdig), ASN1_STRING_length(osdig));
 
     ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_MATCHING_DIGEST_TYPE_FOUND);
     return 0;

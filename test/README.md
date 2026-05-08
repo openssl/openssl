@@ -185,6 +185,35 @@ To run the tests using the order defined by the random seed `42`:
 
     $ make OPENSSL_TEST_RAND_ORDER=42 test
 
+Memory Allocation Failure Tests
+-------------------------------
+
+Some tests use the `ADD_MFAIL_TEST` framework to exhaustively verify that
+functions handle every possible allocation failure gracefully. These tests
+run repeatedly, failing one allocation later each iteration, and can be
+controlled with the following environment variables:
+
+    OPENSSL_TEST_MFAIL_DISABLE=1    Disable mfail custom allocator installation.
+
+    OPENSSL_TEST_MFAIL_SKIP_ALL=1   Skip all mfail tests.
+
+    OPENSSL_TEST_MFAIL_SKIP_SLOW=1  Skip only slow mfail tests
+                                    (registered with ADD_MFAIL_SLOW_TEST).
+
+    OPENSSL_TEST_MFAIL_POINT=N      Run only failure point N (0-indexed),
+                                    useful for debugging a specific failure.
+
+    OPENSSL_TEST_MFAIL_START=N      Start iteration from point N, skipping
+                                    earlier points that are already fixed.
+
+For example, to debug a failure at allocation point 42:
+
+    $ OPENSSL_TEST_MFAIL_POINT=42 ./test/crltest -test test_crl_diff_mfail
+
+Or to skip already-fixed points and collect remaining failures:
+
+    $ OPENSSL_TEST_MFAIL_START=13 make TESTS=test_crl test
+
 Running Tests under Valgrind
 ----------------------------
 

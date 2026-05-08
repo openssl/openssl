@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_GCM_SIV_H)
+#define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_GCM_SIV_H
+
 #include <openssl/aes.h>
 #include "prov/ciphercommon.h"
 #include "crypto/aes_platform.h"
@@ -74,3 +77,5 @@ static ossl_inline uint64_t GSWAP8(uint64_t n)
     result <<= 32;
     return result | GSWAP4(n >> 32);
 }
+
+#endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_GCM_SIV_H) */

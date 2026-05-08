@@ -3485,83 +3485,6 @@ int ossl_quic_set_default_stream_mode(SSL *s, uint32_t mode)
 }
 
 /*
- * SSL_detach_stream
- * -----------------
- */
-QUIC_TAKES_LOCK
-SSL *ossl_quic_detach_stream(SSL *s)
-{
-    QCTX ctx;
-    QUIC_XSO *xso = NULL;
-
-    if (!expect_quic_conn_only(s, &ctx))
-        return NULL;
-
-    qctx_lock(&ctx);
-
-    /* Calling this function inhibits default XSO autocreation. */
-    /* QC ref to any default XSO is transferred to us and to caller. */
-    qc_set_default_xso_keep_ref(ctx.qc, NULL, /*touch=*/1, &xso);
-
-    qctx_unlock(&ctx);
-
-    return xso != NULL ? &xso->obj.ssl : NULL;
-}
-
-/*
- * SSL_attach_stream
- * -----------------
- */
-QUIC_TAKES_LOCK
-int ossl_quic_attach_stream(SSL *conn, SSL *stream)
-{
-    QCTX ctx;
-    QUIC_XSO *xso;
-    int nref;
-
-    if (!expect_quic_conn_only(conn, &ctx))
-        return 0;
-
-    if (stream == NULL || stream->type != SSL_TYPE_QUIC_XSO)
-        return QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_PASSED_NULL_PARAMETER,
-            "stream to attach must be a valid QUIC stream");
-
-    xso = (QUIC_XSO *)stream;
-
-    qctx_lock(&ctx);
-
-    if (ctx.qc->default_xso != NULL) {
-        qctx_unlock(&ctx);
-        return QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED,
-            "connection already has a default stream");
-    }
-
-    /*
-     * It is a caller error for the XSO being attached as a default XSO to have
-     * more than one ref.
-     */
-    if (!CRYPTO_GET_REF(&xso->obj.ssl.references, &nref)) {
-        qctx_unlock(&ctx);
-        return QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_INTERNAL_ERROR,
-            "ref");
-    }
-
-    if (nref != 1) {
-        qctx_unlock(&ctx);
-        return QUIC_RAISE_NON_NORMAL_ERROR(&ctx, ERR_R_PASSED_INVALID_ARGUMENT,
-            "stream being attached must have "
-            "only 1 reference");
-    }
-
-    /* Caller's reference to the XSO is transferred to us. */
-    /* Calling this function inhibits default XSO autocreation. */
-    qc_set_default_xso(ctx.qc, xso, /*touch=*/1);
-
-    qctx_unlock(&ctx);
-    return 1;
-}
-
-/*
  * SSL_set_incoming_stream_policy
  * ------------------------------
  */
@@ -4473,14 +4396,14 @@ static void quic_classify_stream(QUIC_CONNECTION *qc,
     uint64_t *app_error_code)
 {
     int local_init;
-    uint64_t final_size;
+    uint64_t scratch_pad; /* throw away value */
 
     local_init = (ossl_quic_stream_is_server_init(qs) == qc->as_server);
 
     if (app_error_code != NULL)
         *app_error_code = UINT64_MAX;
     else
-        app_error_code = &final_size; /* throw away value */
+        app_error_code = &scratch_pad;
 
     if (!ossl_quic_stream_is_bidi(qs) && local_init != is_write) {
         /*
@@ -4513,7 +4436,7 @@ static void quic_classify_stream(QUIC_CONNECTION *qc,
         *app_error_code = !is_write
             ? qs->peer_reset_stream_aec
             : qs->peer_stop_sending_aec;
-    } else if (is_write && ossl_quic_sstream_get_final_size(qs->sstream, &final_size)) {
+    } else if (is_write && qs->have_final_size) {
         /*
          * Stream has been finished. Stream reset takes precedence over this for
          * the write case as peer may not have received all data.
