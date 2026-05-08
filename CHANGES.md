@@ -31,6 +31,22 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * When loading an X25519, X448, Ed25519, or Ed448 private key from a
+   PKCS#8 v2 (RFC 5958) `OneAsymmetricKey` structure, the optional
+   `publicKey` field, when present, is now used as the loaded key's
+   public value instead of being silently re-derived from the private
+   key.  The supplied length must match the curve key length (32 for
+   X25519/Ed25519, 56 for X448, 57 for Ed448); a mismatched length now
+   causes the load to fail.  This mirrors the existing handling of the
+   `publicKey` field in the inner `ECPrivateKey` structure (RFC 5915)
+   for traditional EC keys and improves interoperability with
+   implementations (for example Rust's `ring` crate and Bouncy Castle)
+   that emit PKCS#8 v2 with an explicit public key.  No consistency
+   check is performed at load time; callers that require
+   derive-and-compare can invoke `EVP_PKEY_check()`.
+
+   *Alexander Vassilevski*
+
  * SubjectPublicKeyInfo blobs whose AlgorithmIdentifier uses id-RSAES-OAEP
    (NID_rsaesOaep, 1.2.840.113549.1.1.7) with a plain RSAPublicKey body
    are now decoded as RSA keys.  This is required for interoperability
