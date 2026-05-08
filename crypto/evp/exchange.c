@@ -21,12 +21,27 @@
 
 static void evp_keyexch_free(void *data)
 {
-    EVP_KEYEXCH_free(data);
+    EVP_KEYEXCH *exchange = (EVP_KEYEXCH *)data;
+    int i;
+
+    if (exchange == NULL)
+        return;
+    CRYPTO_DOWN_REF(&exchange->refcnt, &i);
+    if (i > 0)
+        return;
+    OPENSSL_free(exchange->type_name);
+    ossl_provider_free(exchange->prov);
+    CRYPTO_FREE_REF(&exchange->refcnt);
+    OPENSSL_free(exchange);
 }
 
 static int evp_keyexch_up_ref(void *data)
 {
-    return EVP_KEYEXCH_up_ref(data);
+    EVP_KEYEXCH *exchange = (EVP_KEYEXCH *)data;
+    int ref = 0;
+
+    CRYPTO_UP_REF(&exchange->refcnt, &ref);
+    return 1;
 }
 
 static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
@@ -160,25 +175,18 @@ err:
 
 void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange)
 {
-    int i;
-
-    if (exchange == NULL)
-        return;
-    CRYPTO_DOWN_REF(&exchange->refcnt, &i);
-    if (i > 0)
-        return;
-    OPENSSL_free(exchange->type_name);
-    ossl_provider_free(exchange->prov);
-    CRYPTO_FREE_REF(&exchange->refcnt);
-    OPENSSL_free(exchange);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    evp_keyexch_free(exchange);
+#endif
 }
 
 int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange)
 {
-    int ref = 0;
-
-    CRYPTO_UP_REF(&exchange->refcnt, &ref);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    return evp_keyexch_up_ref(exchange);
+#else
     return 1;
+#endif
 }
 
 OSSL_PROVIDER *EVP_KEYEXCH_get0_provider(const EVP_KEYEXCH *exchange)
