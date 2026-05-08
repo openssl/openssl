@@ -52,27 +52,17 @@ static OSSL_ENCODER *ossl_encoder_new(void)
 
 int OSSL_ENCODER_up_ref(OSSL_ENCODER *encoder)
 {
-    int ref = 0;
-
-    CRYPTO_UP_REF(&encoder->base.refcnt, &ref);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    return ossl_encoder_up_ref(encoder);
+#else
     return 1;
 }
 
 void OSSL_ENCODER_free(OSSL_ENCODER *encoder)
 {
-    int ref = 0;
-
-    if (encoder == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&encoder->base.refcnt, &ref);
-    if (ref > 0)
-        return;
-    OPENSSL_free(encoder->base.name);
-    ossl_property_free(encoder->base.parsed_propdef);
-    ossl_provider_free(encoder->base.prov);
-    CRYPTO_FREE_REF(&encoder->base.refcnt);
-    OPENSSL_free(encoder);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    ossl_encoder_free(encoder);
+#endif
 }
 
 /* Data to be passed through ossl_method_construct() */
