@@ -5,6 +5,7 @@
 OSSL_HTTP_open,
 OSSL_HTTP_bio_cb_t,
 OSSL_HTTP_proxy_connect,
+OSSL_HTTP_REQ_CTX_proxy_connect,
 OSSL_HTTP_set1_request,
 OSSL_HTTP_exchange,
 OSSL_HTTP_get,
@@ -26,6 +27,9 @@ OSSL_HTTP_close
  int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
                              const char *proxyuser, const char *proxypass,
                              int timeout, BIO *bio_err, const char *prog);
+ int OSSL_HTTP_REQ_CTX_proxy_connect(OSSL_HTTP_REQ_CTX *rctx,
+                                     const char *user, const char *pass,
+                                     BIO *bio_err, const char *prog);
  int OSSL_HTTP_set1_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
                             const STACK_OF(CONF_VALUE) *headers,
                             const char *content_type, BIO *req,
@@ -63,16 +67,16 @@ defaulting to 80 for HTTP or 443 for HTTPS.
 Then this internal BIO is used for setting up a connection
 and for exchanging one or more request and response.
 
-If I<bio> is given and I<rbio> is NULL then this I<bio> is used instead.
-If both I<bio> and I<rbio> are given (which may be memory BIOs for instance)
-then no explicit connection is set up, but
-I<bio> is used for writing requests and I<rbio> for reading responses.
-As soon as the client has flushed I<bio> the server must be ready to provide
-a response or indicate a waiting condition via I<rbio>.
+Alternatively, if I<bio> is given, OSSL_HTTP_open() does not set up a socket connection
+but uses I<bio> for writing requests and I<rbio> for reading responses,
+where in case I<rbio> is NULL it defaults to I<bio>.
+I<bio> and I<rbio> may be memory BIOs for instance.
+As soon as the client has finished writing to I<bio> and flushed I<bio>,
+the server must be ready to provide a response or indicate a waiting condition
+because then the client starts reading from I<rbio> (or from I<bio> taken as its default).
+Even when I<bio> is given, the I<server> (and the optional I<port>) argument should
+still be given for supporting proper HTTP request header setup and diagnostic output.
 
-If I<bio> is given,
-it is an error to provide non-NULL I<proxy> or I<no_proxy> arguments,
-while I<server> and I<port> arguments may be given to support diagnostic output.
 If I<bio> is NULL the optional I<proxy> parameter can be used to set an
 HTTP(S) proxy to use (unless overridden by "no_proxy" settings).
 If TLS is not used this defaults to the environment variable C<http_proxy>
@@ -81,7 +85,9 @@ If I<use_ssl> != 0 it defaults to C<https_proxy> if set, else C<HTTPS_PROXY>.
 An empty proxy string C<""> forbids using a proxy.
 Otherwise, the format is
 C<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>,
-where any userinfo, path, query, and fragment given is ignored.
+where any path, query, and fragment given is ignored
+and any given userinfo is taken as HTTP(S) proxy client credentials by calling
+OSSL_HTTP_REQ_CTX_proxy_connect() on SSL connection setup just before using I<bio_update_fn>.
 If the host string is an IPv6 address, it must be enclosed in C<[> and C<]>.
 The default proxy port number is 80, or 443 in case "https:" is given.
 The HTTP client functions connect via the given proxy unless the I<server>
@@ -89,8 +95,8 @@ is found in the optional list I<no_proxy> of proxy hostnames or IP addresses
 separated by C<,> and/or whitespace (if not NULL;
 default is the environment variable C<no_proxy> if set, else C<NO_PROXY>).
 Proxying plain HTTP is supported directly,
-while using a proxy for HTTPS connections requires a suitable callback function
-such as OSSL_HTTP_proxy_connect(), described below.
+while using a proxy for HTTPS connections requires a suitable helper function
+such as OSSL_HTTP_REQ_CTX_proxy_connect(), described below.
 
 If I<use_ssl> is nonzero a TLS connection is requested
 and the I<bio_update_fn> parameter must be provided.
@@ -105,10 +111,12 @@ I<bio_update_fn> is a BIO connect/disconnect callback function with prototype
 The callback function may modify the BIO provided in the I<bio> argument,
 whereby it may use an optional custom defined argument I<arg>,
 which can for instance point to an B<SSL_CTX> structure.
-During connection establishment, just after calling BIO_do_connect_retry(), the
+During connection establishment, just after calling BIO_do_connect_retry()
+(and calling OSSL_HTTP_REQ_CTX_proxy_connect() in case I<use_ssl> is nonzero), the
 callback function is invoked with the I<connect> argument being 1 and
 I<detail> being 1 if I<use_ssl> is nonzero (i.e., HTTPS is requested), else 0.
 On disconnect I<connect> is 0 and I<detail> is 1 if no error occurred, else 0.
+
 For instance, on connect the callback may push an SSL BIO to implement HTTPS;
 after disconnect it may do some diagnostic output and pop and free the SSL BIO.
 
@@ -155,21 +163,30 @@ OSSL_HTTP_proxy_connect() may be used by an above BIO connect callback function
 to set up an SSL/TLS connection via an HTTPS proxy.
 It promotes the given BIO I<bio> representing a connection
 pre-established with a TLS proxy using the HTTP CONNECT method,
-optionally using proxy client credentials I<proxyuser> and I<proxypass>,
+optionally using HTTPS proxy client credentials I<proxyuser> and I<proxypass>,
 to connect with TLS protection ultimately to I<server> and I<port>.
 If the I<port> argument is NULL or the empty string it defaults to "443".
 If the I<timeout> parameter is > 0 this indicates the maximum number of
 seconds the connection setup is allowed to take.
 A value <= 0 enables waiting indefinitely, i.e., no timeout.
-Since this function is typically called by applications such as
+Since this function can be directly called by applications such as
 L<openssl-s_client(1)> it uses the I<bio_err> and I<prog> parameters (unless
-NULL) to print additional diagnostic information in a user-oriented way.
+NULL) to print diagnostic information in a user-oriented way.
+
+OSSL_HTTP_REQ_CTX_proxy_connect() improves OSSL_HTTP_proxy_connect() as follows.
+It does nothing if I<rctx> indicates that no proxy is used or SSL/TLS is not used.
+Otherwise it calls OSSL_HTTP_proxy_connect(),
+taking the needed BIO, server, port, and timeout information from I<rctx>
+and passing on the I<bio_err> and I<prog> parameters.
+The proxy user and password information is taken if present from the proxy URL
+in I<rctx> and otherwise defaults to the optional I<user> and I<pass> parameters.
 
 OSSL_HTTP_set1_request() sets up in I<rctx> the request header and content data
 and expectations on the response using the following parameters.
 If <rctx> indicates using a proxy for HTTP (but not HTTPS), the server host
 (and optionally port) needs to be placed in the header; thus it must be present
-in I<rctx>.
+in I<rctx>. When an HTTP proxy is used, any userinfo given as part of the proxy URL
+is placed in the HTTP request header as proxy client credentials.
 For backward compatibility, the server (and optional port) may also be given in
 the I<path> argument beginning with C<http://> (thus giving an absoluteURI).
 If I<path> is NULL it defaults to "/".
@@ -248,7 +265,8 @@ See also L<OSSL_trace_enabled(3)> and L<openssl-env(7)>.
 
 OSSL_HTTP_open() returns on success a B<OSSL_HTTP_REQ_CTX>, else NULL.
 
-OSSL_HTTP_proxy_connect() and OSSL_HTTP_set1_request()
+OSSL_HTTP_proxy_connect(), OSSL_HTTP_REQ_CTX_proxy_connect(),
+and OSSL_HTTP_set1_request()
 return 1 on success, 0 on error.
 
 On success, OSSL_HTTP_exchange(), OSSL_HTTP_get(), and OSSL_HTTP_transfer()
@@ -271,7 +289,9 @@ L<OSSL_trace_enabled(3)>, and L<openssl-env(7)>.
 
 =head1 HISTORY
 
-All the functions described here were added in OpenSSL 3.0.
+OSSL_HTTP_REQ_CTX_proxy_connect() was added in OpenSSL 4.0.
+
+All other functions described here were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
