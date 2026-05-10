@@ -357,6 +357,22 @@ struct ossl_record_layer_st {
     /* DTLS curr mtu size */
     size_t curr_mtu;
 
+#ifndef OPENSSL_NO_SOCK
+    /*
+     * DTLS peer address for writes. When set (family != AF_UNSPEC), the
+     * record layer will use BIO_sendmmsg() with this address instead of
+     * BIO_write(). This is used by listener-created connections that share
+     * the listener's network BIO.
+     */
+    BIO_ADDR peer;
+#endif
+
+    /*
+     * Use URXE queue for reading instead of BIO. Only set for listener-created
+     * DTLS connections where s->d1->rx exists.
+     */
+    unsigned int use_urxe : 1;
+
     /*
      * Whether we are currently in a handshake or not. Only maintained for DTLS
      */
@@ -376,6 +392,8 @@ struct ossl_record_layer_st {
     OSSL_FUNC_rlayer_msg_callback_fn *msg_callback;
     OSSL_FUNC_rlayer_security_fn *security;
     OSSL_FUNC_rlayer_padding_fn *padding;
+    OSSL_FUNC_rlayer_get_urxe_packet_fn *get_urxe_packet;
+    OSSL_FUNC_rlayer_release_urxe_packet_fn *release_urxe_packet;
 
     size_t max_pipelines;
 
@@ -484,6 +502,10 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
 int tls_retry_write_records(OSSL_RECORD_LAYER *rl);
 int tls_get_alert_code(OSSL_RECORD_LAYER *rl);
 int tls_set1_bio(OSSL_RECORD_LAYER *rl, BIO *bio);
+#ifndef OPENSSL_NO_SOCK
+int tls_set1_peer(OSSL_RECORD_LAYER *rl, const BIO_ADDR *peer);
+#endif
+void tls_set_use_urxe(OSSL_RECORD_LAYER *rl, int use_urxe);
 int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
     uint8_t *type, const unsigned char **data, size_t *datalen,
     uint64_t *epoch, uint64_t *seq_num);

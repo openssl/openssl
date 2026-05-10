@@ -1152,11 +1152,65 @@ static size_t rlayer_padding_wrapper(void *cbarg, int type, size_t len)
         s->rlayer.record_padding_arg);
 }
 
+/*
+ * Callbacks for URXE listener-based connections to read packets from their
+ * receive queue.
+ */
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+static OSSL_FUNC_rlayer_get_urxe_packet_fn rlayer_dtls_get_urxe_packet;
+static int rlayer_dtls_get_urxe_packet(void *cbarg, unsigned char **data,
+    size_t *len, void **packet_handle)
+{
+    SSL_CONNECTION *s = cbarg;
+    DGRAM_URXE *urxe;
+
+    if (s == NULL || s->d1 == NULL || s->d1->rx == NULL)
+        return 0;
+
+    urxe = ossl_dtls_read_datagram(s->d1->rx);
+
+    /*
+     * If no datagrams available and we have a parent listener, try to pump
+     * the demux to get more data from the network.
+     *
+     * This is safe because dtls_listener_drive_pending() releases the mutex
+     * before calling SSL_accept() on connections, so the packet handler
+     * callback can acquire the mutex when needed.
+     */
+    if (urxe == NULL && s->d1->listener != NULL) {
+        ossl_dgram_demux_pump(s->d1->rx->demux);
+        urxe = ossl_dtls_read_datagram(s->d1->rx);
+    }
+
+    if (urxe == NULL)
+        return 0;
+
+    *data = ossl_dgram_urxe_data(urxe);
+    *len = urxe->data_len;
+    *packet_handle = urxe;
+    return 1;
+}
+
+static OSSL_FUNC_rlayer_release_urxe_packet_fn rlayer_dtls_release_urxe_packet;
+static void rlayer_dtls_release_urxe_packet(void *cbarg, void *packet_handle)
+{
+    SSL_CONNECTION *s = cbarg;
+    DGRAM_URXE *urxe = packet_handle;
+
+    if (s != NULL && s->d1 != NULL && s->d1->rx != NULL && urxe != NULL)
+        ossl_dtls_rx_release_urxe(s->d1->rx, urxe);
+}
+#endif
+
 static const OSSL_DISPATCH rlayer_dispatch[] = {
     { OSSL_FUNC_RLAYER_SKIP_EARLY_DATA, (void (*)(void))ossl_statem_skip_early_data },
     { OSSL_FUNC_RLAYER_MSG_CALLBACK, (void (*)(void))rlayer_msg_callback_wrapper },
     { OSSL_FUNC_RLAYER_SECURITY, (void (*)(void))rlayer_security_wrapper },
     { OSSL_FUNC_RLAYER_PADDING, (void (*)(void))rlayer_padding_wrapper },
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    { OSSL_FUNC_RLAYER_GET_URXE_PACKET, (void (*)(void))rlayer_dtls_get_urxe_packet },
+    { OSSL_FUNC_RLAYER_RELEASE_URXE_PACKET, (void (*)(void))rlayer_dtls_release_urxe_packet },
+#endif
     OSSL_DISPATCH_END
 };
 
@@ -1255,6 +1309,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     COMP_METHOD *compm = (comp == NULL) ? NULL : comp->method;
     uint64_t epoch_zero;
     uint64_t seq;
+    int use_urxe = 0;
 
     if (direction == OSSL_RECORD_DIRECTION_READ) {
         if (SSL_CONNECTION_IS_DTLS(s)) {
@@ -1453,14 +1508,25 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
             rlayer_dispatch_tmp[j++] = rlayer_dispatch[i];
         }
 
+#ifndef OPENSSL_NO_DTLS
+        if (SSL_CONNECTION_IS_DTLS(s) && s->d1 != NULL) {
+
+            /*
+             * For DTLS listener-created connections, use the URXE queue for
+             * reading. This is determined by the existence of s->d1->rx.
+             */
+            if (direction == OSSL_RECORD_DIRECTION_READ && s->d1->rx != NULL)
+                use_urxe = 1;
+        }
+#endif
+
         rlret = meth->new_record_layer(sctx->libctx, sctx->propq, version,
             s->server, direction, level, epoch,
             secret, secretlen, snkey, key, keylen,
             iv,
             ivlen, mackey, mackeylen, snciph, ciph,
             taglen, mactype, md, compm, kdfdigest,
-            prev,
-            thisbio, next, settings,
+            prev, thisbio, next, use_urxe, settings,
             options, rlayer_dispatch_tmp, s,
             s->rlayer.rlarg, &newrl);
         BIO_free(prev);

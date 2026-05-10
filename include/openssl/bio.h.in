@@ -806,6 +806,7 @@ int BIO_sock_should_retry(int i);
 int BIO_sock_non_fatal_error(int error);
 int BIO_err_is_non_fatal(unsigned int errcode);
 int BIO_socket_wait(int fd, int for_read, time_t max_time);
+int BIO_socket_ready(int fd, int for_read);
 #endif
 long BIO_set_send_flags(BIO *b, int flags);
 int BIO_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds);

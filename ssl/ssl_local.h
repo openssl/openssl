@@ -46,6 +46,25 @@
 #ifndef OPENSSL_NO_ECH
 #include "ech/ech_local.h"
 #endif
+#include "internal/thread_arch.h"
+#include "internal/bio_addr.h"
+#include "internal/dtls_record_rx.h"
+#include "internal/dgram_conn_lookup.h"
+#include "internal/rio_notifier.h"
+
+/*
+ * Forward declarations for DTLS listener types. These are defined in the
+ * headers above when DTLS is enabled, but we need forward declarations
+ * for the pointer types used in structures when DTLS is disabled.
+ * DGRAM_DEMUX requires either QUIC or DTLS to be enabled.
+ */
+#if defined(OPENSSL_NO_QUIC) && defined(OPENSSL_NO_DTLS)
+typedef struct dgram_demux_st DGRAM_DEMUX;
+#endif
+#ifdef OPENSSL_NO_DTLS
+typedef struct dtls_rx_st DTLS_RX;
+typedef struct dgram_conn_lookup_st DGRAM_CONN_LOOKUP;
+#endif
 
 #ifdef OPENSSL_BUILD_SHLIBSSL
 #undef OPENSSL_EXTERN
@@ -1310,8 +1329,11 @@ typedef struct cert_pkey_st CERT_PKEY;
 #define SSL_TYPE_QUIC_XSO 0x81
 #define SSL_TYPE_QUIC_LISTENER 0x82
 #define SSL_TYPE_QUIC_DOMAIN 0x83
+#define SSL_TYPE_DTLS_LISTENER 0x01
 
 #define SSL_TYPE_IS_QUIC(x) (((x) & 0x80) != 0)
+#define IS_DTLS_LISTENER(ssl) \
+    ((ssl) != NULL && (ssl)->type == SSL_TYPE_DTLS_LISTENER)
 
 struct ssl_st {
     int type;
@@ -2161,7 +2183,145 @@ typedef struct dtls1_state_st {
 
     DTLS_timer_cb timer_cb;
 
+#ifndef OPENSSL_NO_SOCK
+    /*
+     * Peer address for listener-created connections. When set, the record
+     * layer will use BIO_sendmmsg() with this address for writes instead
+     * of BIO_write(). This allows multiple connections to share the
+     * listener's network BIO.
+     */
+    BIO_ADDR peer_addr;
+#endif
+
+#ifndef OPENSSL_NO_DTLS
+    /*
+     * DTLS_RX structure is used by the DTLS Listener and
+     * contains the DGRAM_DEMUX and DGRAM_URXE_LIST of
+     * pending packets.
+     */
+    DTLS_RX *rx;
+
+    /*
+     * Reference to the parent listener for connections created via
+     * SSL_accept_connection(). This allows the connection to trigger
+     * the listener's demux pump when reading data.
+     */
+    SSL *listener;
+
+    /*
+     * Timestamp when this connection was created (for listener-created
+     * connections). Used to detect and clean up stale pending connections
+     * that haven't completed their handshake within the timeout period.
+     */
+    OSSL_TIME created_at;
+
+    /*
+     * Set when this connection is being driven by dtls_listener_drive_pending().
+     * Used to prevent multiple threads from driving the same connection
+     * concurrently and to allow the demux pump to be called without holding
+     * the listener mutex.
+     */
+    unsigned int being_driven : 1;
+#endif
+
 } DTLS1_STATE;
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+/*
+ * Define stack of SSL for DTLS listener incoming connections.
+ */
+DEFINE_STACK_OF(SSL)
+
+/*
+ * DTLS listener SSL object type. This implements the API personality
+ * layer for DTLS listener objects, providing server-side connection
+ * demultiplexing for DTLS 1.3.
+ */
+typedef struct dtls_listener_st {
+    /* SSL object common header. */
+    struct ssl_st ssl;
+
+    /*
+     * Mutex protecting listener-owned data structures accessed across threads:
+     * - pending_conns: pending connection lookup table
+     * - established_conns: established connection lookup table
+     * - incoming_connections: queue of completed connections awaiting accept
+     *
+     * Accessed from:
+     * - Listener thread: packet handling, driving handshakes
+     * - Connection thread: unregistering via SSL_free -> dtls1_free
+     */
+    CRYPTO_MUTEX *mutex;
+
+    /* Datagram demultiplexer for incoming connections. */
+    DGRAM_DEMUX *demux;
+
+    /* The network BIOs for sending and receiving datagrams. */
+    BIO *net_rbio;
+    BIO *net_wbio;
+
+    /* Queue of incoming connections awaiting accept. */
+    STACK_OF(SSL) *incoming_connections;
+
+    /*
+     * Use DGRAM_CONN_LOOKUP to find pending connections.
+     */
+    DGRAM_CONN_LOOKUP *pending_conns;
+
+    /*
+     * Use DGRAM_CONN_LOOKUP to keep track of established connections.
+     */
+    DGRAM_CONN_LOOKUP *established_conns;
+
+    /* Have we started listening yet? */
+    TSAN_QUALIFIER int listening;
+
+    /*
+     * Set by ossl_dtls_tick() when the network BIO returns a hard error.
+     * Once set, ossl_dtls_accept_connection() returns NULL immediately.
+     */
+    int fatal;
+
+    /* Require HelloVerifyRequest + cookie for DTLS 1.0/1.2 */
+    unsigned int require_hvr_cookie : 1;
+
+    /* Require HelloRetryRequest + cookie for DTLS 1.3 */
+    unsigned int require_hrr_cookie : 1;
+
+    /* Using the notifier architecture */
+    unsigned int have_notifier : 1;
+
+    /* Notifier has been signalled */
+    int signalled_notifier;
+
+    /*
+     * Time callback for customizable time source (primarily for testing).
+     * If NULL, ossl_time_now() is used.
+     */
+    OSSL_TIME (*now_cb)(void *arg);
+    void *now_cb_arg;
+
+    /*
+     * Timeout for pending connections. Connections that haven't completed
+     * their handshake within this duration are considered stale and removed.
+     * Default: 30 seconds. Set to ossl_time_infinite() to disable.
+     */
+    OSSL_TIME pending_timeout;
+
+    CRYPTO_CONDVAR *notifier_cv;
+
+    /*
+     * Notifier for signaling events related to this listener.
+     */
+    RIO_NOTIFIER notifier;
+
+    /*
+     * Count of threads currently blocked waiting in poll().
+     */
+    size_t cur_blocking_waiters;
+} DTLS_LISTENER;
+
+#endif /* !OPENSSL_NO_DTLS && !OPENSSL_NO_SOCK */
 
 /*
  * From ECC-TLS draft, used in encoding the curve type in ECParameters
@@ -2801,6 +2961,52 @@ __owur size_t dtls1_min_mtu(SSL_CONNECTION *s);
 void dtls1_hm_fragment_free(hm_fragment *frag);
 void dtls1_sent_msg_free(dtls_sent_msg *msg);
 __owur int dtls1_query_mtu(SSL_CONNECTION *s);
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags);
+void ossl_dtls_listener_free(SSL *ssl);
+SSL *ossl_dtls_get0_listener(const SSL *ssl);
+int ossl_dtls_listen(SSL *ssl);
+SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags);
+void ossl_dtls_listener_set0_net_rbio(SSL *s, BIO *bio);
+void ossl_dtls_listener_set0_net_wbio(SSL *s, BIO *bio);
+BIO *ossl_dtls_listener_get_net_rbio(const SSL *s);
+BIO *ossl_dtls_listener_get_net_wbio(const SSL *s);
+
+/* Established connections API - these handle their own locking */
+SSL *ossl_dtls_listener_find_established_conn(DTLS_LISTENER *dl,
+    const DGRAM_URXE *urxe);
+void ossl_dtls_listener_unregister_established_conn(SSL *s,
+    const BIO_ADDR *peer_addr);
+void ossl_dtls_listener_clear_established_conns(DTLS_LISTENER *dl);
+
+size_t ossl_dtls_get_accept_connection_queue_len(SSL *ssl);
+int ossl_dtls_listener_set_override_now_cb(SSL *s,
+    OSSL_TIME (*now_cb)(void *arg),
+    void *now_cb_arg);
+int ossl_dtls_listener_set_pending_timeout(SSL *s, OSSL_TIME timeout);
+OSSL_TIME ossl_dtls_listener_get_pending_timeout(const SSL *s);
+
+/* DTLS poll event functions - used by SSL_poll() */
+int ossl_dtls_listener_poll_events(SSL *s, uint64_t events, int do_tick,
+    uint64_t *revents);
+int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
+    uint64_t *revents);
+void ossl_dtls_listener_enter_blocking_section(SSL *s);
+void ossl_dtls_listener_leave_blocking_section(SSL *s);
+int ossl_dtls_tick(DTLS_LISTENER *dl);
+
+/* DTLS Listener internal cookie callbacks */
+int ossl_dtls_listener_gen_cookie_cb(SSL *ssl, unsigned char *cookie,
+    unsigned int *cookie_len);
+int ossl_dtls_listener_verify_cookie_cb(SSL *ssl, const unsigned char *cookie,
+    unsigned int cookie_len);
+int ossl_dtls_listener_gen_stateless_cookie_cb(SSL *ssl, unsigned char *cookie,
+    size_t *cookie_len);
+int ossl_dtls_listener_verify_stateless_cookie_cb(SSL *ssl,
+    const unsigned char *cookie,
+    size_t cookie_len);
+#endif /* !OPENSSL_NO_DTLS && !OPENSSL_NO_SOCK */
 
 __owur int tls1_new(SSL *s);
 void tls1_free(SSL *s);

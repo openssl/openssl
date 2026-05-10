@@ -10,10 +10,16 @@
 #include "internal/common.h"
 #include "internal/quic_ssl.h"
 #include "internal/quic_reactor_wait_ctx.h"
+#include "internal/ssl_unwrap.h"
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include "../ssl_local.h"
 #include "poll_builder.h"
+
+#ifdef OPENSSL_NO_QUIC
+/* Stub type when QUIC is disabled so function signatures remain consistent */
+typedef int QUIC_REACTOR_WAIT_CTX;
+#endif
 
 #if defined(_AIX)
 /*
@@ -158,11 +164,183 @@ static void postpoll_translation_cleanup_ssl_quic(SSL *ssl,
     if (ossl_quic_get_notifier_fd(ssl) != -1)
         ossl_quic_leave_blocking_section(ssl, wctx);
 }
+#endif /* OPENSSL_NO_QUIC */
 
+#ifndef OPENSSL_NO_DTLS
+static int poll_translate_ssl_dtls_listener(SSL *ssl,
+    RIO_POLL_BUILDER *rpb,
+    uint64_t events)
+{
+    BIO *rbio;
+    BIO_POLL_DESCRIPTOR desc;
+
+    rbio = SSL_get_rbio(ssl);
+    if (rbio == NULL)
+        return 0;
+
+    if (!BIO_get_rpoll_descriptor(rbio, &desc)
+        || desc.type != BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD) {
+        ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
+            "DTLS listener requires a socket BIO for blocking poll");
+        return 0;
+    }
+
+    if (!ossl_rio_poll_builder_add_fd(rpb, desc.value.fd, /*r=*/1, /*w=*/0))
+        return 0;
+
+    return 1;
+}
+
+static int poll_translate_ssl_dtls_conn(SSL *ssl,
+    RIO_POLL_BUILDER *rpb,
+    uint64_t events,
+    int *abort_blocking)
+{
+    BIO *rbio, *wbio;
+    BIO_POLL_DESCRIPTOR rdesc, wdesc;
+    int rfd = -1, wfd = -1, nfd = -1;
+    SSL_CONNECTION *sc;
+    DTLS_LISTENER *dl = NULL;
+    int has_pending;
+
+    sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+
+    if (sc != NULL && sc->d1 != NULL && sc->d1->listener != NULL)
+        dl = (DTLS_LISTENER *)sc->d1->listener;
+
+    if ((events & SSL_POLL_EVENT_R) != 0) {
+        rbio = SSL_get_rbio(ssl);
+
+        if (rbio == NULL && dl != NULL) {
+            /*
+             * Listener-based DTLS connection. First, pump the listener's
+             * demux to ensure any pending datagrams on the socket are
+             * routed to their respective connection URXE queues.
+             */
+            ossl_dtls_tick(dl);
+
+            /*
+             * Now check the URXE buffer. If data has been demuxed into
+             * this connection's receive queue, abort blocking immediately -
+             * there is no need to wait on the socket FD.
+             */
+            if (sc->d1->rx != NULL) {
+                ossl_crypto_mutex_lock(sc->d1->rx->mutex);
+                has_pending = !ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending);
+                ossl_crypto_mutex_unlock(sc->d1->rx->mutex);
+                if (has_pending) {
+                    *abort_blocking = 1;
+                    return 1;
+                }
+            }
+
+            /*
+             * Add the notifier FD for the DTLS listener (if multi-threaded
+             * mode is enabled). This ensures we get woken up if another thread
+             * demuxes data to this connection's URXE queue without the
+             * underlying network socket ever becoming readable from our
+             * perspective.
+             */
+            if (dl->have_notifier) {
+                nfd = ossl_rio_notifier_as_fd(&dl->notifier);
+                if (nfd != -1) {
+                    if (!ossl_rio_poll_builder_add_fd(rpb, nfd, /*r=*/1, /*w=*/0))
+                        return 0;
+
+                    /* Tell listener we need to receive notifications. */
+                    ossl_dtls_listener_enter_blocking_section(sc->d1->listener);
+
+                    /*
+                     * Only after the above call returns is it guaranteed that
+                     * any readiness events will cause the notifier to become
+                     * readable. Therefore, it is possible data was demuxed to
+                     * our URXE queue after our initial check above but before
+                     * we entered the blocking section. Re-check now.
+                     */
+                    if (sc->d1->rx != NULL) {
+                        ossl_crypto_mutex_lock(sc->d1->rx->mutex);
+                        has_pending = !ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending);
+                        ossl_crypto_mutex_unlock(sc->d1->rx->mutex);
+                        if (has_pending) {
+                            ossl_dtls_listener_leave_blocking_section(sc->d1->listener);
+                            *abort_blocking = 1;
+                            return 1;
+                        }
+                    }
+                }
+            }
+
+            /*
+             * URXE buffer is empty. Fall back to the listener's rbio so the
+             * OS-level poll() wakes us up when the shared socket becomes
+             * readable and new datagrams may arrive.
+             */
+            rbio = SSL_get_rbio(sc->d1->listener);
+        }
+
+        if (rbio != NULL) {
+            if (BIO_get_rpoll_descriptor(rbio, &rdesc)
+                && rdesc.type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD)
+                rfd = rdesc.value.fd;
+        }
+    }
+
+    if ((events & SSL_POLL_EVENT_W) != 0) {
+        wbio = SSL_get_wbio(ssl);
+        if (wbio != NULL) {
+            if (BIO_get_wpoll_descriptor(wbio, &wdesc)
+                && wdesc.type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD)
+                wfd = wdesc.value.fd;
+        }
+    }
+
+    /* If same FD for read and write, combine them */
+    if (rfd != -1 && wfd == rfd) {
+        if (!ossl_rio_poll_builder_add_fd(rpb, rfd, /*r=*/1, /*w=*/1))
+            return 0;
+    } else {
+        if (rfd != -1)
+            if (!ossl_rio_poll_builder_add_fd(rpb, rfd, /*r=*/1, /*w=*/0))
+                return 0;
+        if (wfd != -1)
+            if (!ossl_rio_poll_builder_add_fd(rpb, wfd, /*r=*/0, /*w=*/1))
+                return 0;
+    }
+
+    return 1;
+}
+
+static void postpoll_translation_cleanup_ssl_dtls_conn(SSL *ssl, uint64_t events)
+{
+    SSL_CONNECTION *sc;
+    DTLS_LISTENER *dl;
+
+    /*
+     * We only enter blocking section when read events are requested.
+     * Don't call leave if we never entered.
+     */
+    if ((events & SSL_POLL_EVENT_R) == 0)
+        return;
+
+    sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    if (sc == NULL || sc->d1 == NULL || sc->d1->listener == NULL)
+        return;
+
+    /* Need to mirror the enter blocking section call */
+    if (SSL_get_rbio(ssl) != NULL)
+        return;
+
+    dl = (DTLS_LISTENER *)sc->d1->listener;
+    if (dl->have_notifier && ossl_rio_notifier_as_fd(&dl->notifier) != -1)
+        ossl_dtls_listener_leave_blocking_section(sc->d1->listener);
+}
+#endif /* OPENSSL_NO_DTLS */
+
+#if !defined(OPENSSL_NO_QUIC) || !defined(OPENSSL_NO_DTLS)
 static void postpoll_translation_cleanup(SSL_POLL_ITEM *items,
     size_t num_items,
     size_t stride,
-    QUIC_REACTOR_WAIT_CTX *wctx)
+    ossl_unused QUIC_REACTOR_WAIT_CTX *wctx)
 {
     SSL_POLL_ITEM *item;
     SSL *ssl;
@@ -185,6 +363,17 @@ static void postpoll_translation_cleanup(SSL_POLL_ITEM *items,
                 postpoll_translation_cleanup_ssl_quic(ssl, wctx);
                 break;
 #endif
+
+#ifndef OPENSSL_NO_DTLS
+            case SSL_TYPE_DTLS_LISTENER:
+                /* Listeners don't enter blocking sections */
+                break;
+            case SSL_TYPE_SSL_CONNECTION:
+                if (SSL_is_dtls(ssl))
+                    postpoll_translation_cleanup_ssl_dtls_conn(ssl, item->events);
+                break;
+#endif
+
             default:
                 break;
             }
@@ -198,7 +387,7 @@ static void postpoll_translation_cleanup(SSL_POLL_ITEM *items,
 static int poll_translate(SSL_POLL_ITEM *items,
     size_t num_items,
     size_t stride,
-    QUIC_REACTOR_WAIT_CTX *wctx,
+    ossl_unused QUIC_REACTOR_WAIT_CTX *wctx,
     RIO_POLL_BUILDER *rpb,
     OSSL_TIME *p_earliest_wakeup_deadline,
     int *abort_blocking,
@@ -209,8 +398,10 @@ static int poll_translate(SSL_POLL_ITEM *items,
     size_t result_count = 0;
     SSL *ssl;
     OSSL_TIME earliest_wakeup_deadline = ossl_time_infinite();
+#ifndef OPENSSL_NO_QUIC
     struct timeval timeout;
     int is_infinite = 0;
+#endif
     size_t i;
 
     for (i = 0; i < num_items; ++i) {
@@ -247,6 +438,27 @@ static int poll_translate(SSL_POLL_ITEM *items,
                 break;
 #endif
 
+#ifndef OPENSSL_NO_DTLS
+            case SSL_TYPE_DTLS_LISTENER:
+                if (!poll_translate_ssl_dtls_listener(ssl, rpb, item->events))
+                    FAIL_ITEM(i);
+                break;
+            case SSL_TYPE_SSL_CONNECTION:
+                if (SSL_is_dtls(ssl)) {
+                    if (!poll_translate_ssl_dtls_conn(ssl, rpb, item->events,
+                            abort_blocking))
+                        FAIL_ITEM(i);
+
+                    if (*abort_blocking)
+                        goto out;
+
+                } else {
+                    ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
+                        "SSL_poll currently only supports DTLS listeners for DTLS connections");
+                }
+                break;
+#endif
+
             default:
                 ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
                     "SSL_poll currently only supports QUIC SSL "
@@ -271,7 +483,12 @@ static int poll_translate(SSL_POLL_ITEM *items,
     }
 
 out:
-    if (!ok)
+    /*
+     * On abort_blocking, the item which triggered the abort has already
+     * balanced its own enter/leave of the blocking section (see
+     * poll_translate_ssl_quic()); only items 0..i-1 still need cleanup here.
+     */
+    if (!ok || *abort_blocking)
         postpoll_translation_cleanup(items, i, stride, wctx);
 
     *p_earliest_wakeup_deadline = earliest_wakeup_deadline;
@@ -311,7 +528,9 @@ static int poll_block(SSL_POLL_ITEM *items,
      *   TODO(QUIC POLLING): In the future we will do reverse translation here
      *   also to facilitate a more efficient readout.
      */
+#ifndef OPENSSL_NO_QUIC
     ossl_quic_reactor_wait_ctx_init(&wctx);
+#endif
     ossl_rio_poll_builder_init(&rpb);
 
     if (!poll_translate(items, num_items, stride, &wctx, &rpb,
@@ -320,8 +539,10 @@ static int poll_block(SSL_POLL_ITEM *items,
             p_result_count))
         goto out;
 
-    if (abort_blocking)
+    if (abort_blocking) {
+        ok = 1; /* Data is already available, this is success not failure */
         goto out;
+    }
 
     earliest_wakeup_deadline = ossl_time_min(earliest_wakeup_deadline,
         user_deadline);
@@ -332,7 +553,9 @@ static int poll_block(SSL_POLL_ITEM *items,
 
 out:
     ossl_rio_poll_builder_cleanup(&rpb);
+#ifndef OPENSSL_NO_QUIC
     ossl_quic_reactor_wait_ctx_cleanup(&wctx);
+#endif
     return ok;
 }
 #endif
@@ -347,14 +570,14 @@ static int poll_readout(SSL_POLL_ITEM *items,
     size_t i, result_count = 0;
     SSL_POLL_ITEM *item;
     SSL *ssl;
-#ifndef OPENSSL_NO_QUIC
+#if !defined(OPENSSL_NO_QUIC) || !defined(OPENSSL_NO_DTLS)
     uint64_t events;
 #endif
     uint64_t revents;
 
     for (i = 0; i < num_items; ++i) {
         item = &ITEM_N(items, stride, i);
-#ifndef OPENSSL_NO_QUIC
+#if !defined(OPENSSL_NO_QUIC) || !defined(OPENSSL_NO_DTLS)
         events = item->events;
 #endif
         revents = 0;
@@ -381,10 +604,35 @@ static int poll_readout(SSL_POLL_ITEM *items,
                 break;
 #endif
 
+#ifndef OPENSSL_NO_DTLS
+            case SSL_TYPE_DTLS_LISTENER:
+                if (!ossl_dtls_listener_poll_events(ssl, events, do_tick, &revents))
+                    /* above call raises ERR */
+                    FAIL_ITEM(i);
+
+                if (revents != 0)
+                    ++result_count;
+                break;
+            case SSL_TYPE_SSL_CONNECTION:
+                if (SSL_is_dtls(ssl)) {
+                    if (!ossl_dtls_conn_poll_events(ssl, events, do_tick, &revents))
+                        /* above call raises ERR */
+                        FAIL_ITEM(i);
+
+                    if (revents != 0)
+                        ++result_count;
+                } else {
+                    /* TLS Connections not supported */
+                    ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
+                        "SSL_poll currently only supports QUIC and DTLS SSL objects");
+                    FAIL_ITEM(i);
+                }
+                break;
+#endif
+
             default:
                 ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
-                    "SSL_poll currently only supports QUIC SSL "
-                    "objects");
+                    "SSL_poll currently only supports QUIC and DTLS SSL objects");
                 FAIL_ITEM(i);
             }
             break;
@@ -462,7 +710,7 @@ int SSL_poll(SSL_POLL_ITEM *items,
          * point onwards.
          */
         do_tick = 1;
-#ifndef OPENSSL_NO_QUIC
+#if !defined(OPENSSL_NO_QUIC) || !defined(OPENSSL_NO_DTLS)
         if (!poll_block(items, num_items, stride, deadline, &result_count)) {
             ok = 0;
             goto out;

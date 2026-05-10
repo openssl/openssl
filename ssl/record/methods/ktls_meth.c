@@ -413,6 +413,7 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     const EVP_MD *md, COMP_METHOD *comp,
     const EVP_MD *kdfdigest, BIO *prev, BIO *transport,
     BIO *next,
+    int use_urxe,
     const OSSL_PARAM *settings, const OSSL_PARAM *options,
     const OSSL_DISPATCH *fns, void *cbarg, void *rlarg,
     OSSL_RECORD_LAYER **retrl)
@@ -594,6 +595,8 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     tls_release_record,
     tls_get_alert_code,
     tls_set1_bio,
+    NULL, /* set1_peer: Not used for KTLS */
+    NULL, /* set_use_urxe: Not used for KTLS */
     tls_set_protocol_version,
     tls_set_plain_alerts,
     tls_set_first_handshake,
