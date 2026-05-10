@@ -13,8 +13,13 @@
 #include <openssl/err.h>
 #include <openssl/conf.h>
 #include "internal/nelem.h"
+#include "../ssl/ssl_local.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
+
+#ifndef OPENSSL_NO_SOCK
+#include "internal/sockets.h"
+#endif
 
 static char *cert = NULL;
 static char *privkey = NULL;
@@ -622,43 +627,38 @@ err:
     OPENSSL_free(peer);
     return success;
 }
-#endif
 
 #ifndef OPENSSL_NO_DTLS1_3
 /*
- * Verify that a DTLS client completes a full handshake through DTLSv1_listen()
- * and negotiates DTLS 1.3.
+ * Test that DTLSv1_listen() clamps the max version to DTLS 1.2.
  *
- * DTLSv1_listen() uses the legacy DTLS 1.2 HelloVerifyRequest mechanism for
- * the stateless cookie exchange, so the client must allow DTLS 1.2 as a
- * minimum to handle that exchange.  The server is pinned to DTLS 1.3 only,
- * which forces the final negotiated version to be DTLS 1.3.  After the
- * handshake completes we verify that DTLS 1.3 was actually selected and that
- * application data can be exchanged in both directions.
+ * DTLSv1_listen() only supports the legacy HelloVerifyRequest mechanism
+ * which is not used in DTLS 1.3. When called, it automatically clamps the
+ * max protocol version to DTLS 1.2 to ensure HelloVerifyRequest is used.
+ *
+ * This test verifies that when both client and server support DTLS 1.0-1.3,
+ * using DTLSv1_listen() results in a DTLS 1.2 connection (not 1.3).
+ *
+ * For DTLS 1.3 with HelloRetryRequest cookies, use SSL_new_listener() instead.
  */
-static int test_dtls13_listen(void)
+static int test_dtls_listen_dtls13_negotiated_to_dtls12(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
-    const char msg[] = "Hello DTLS 1.3";
+    const char msg[] = "Hello DTLS 1.2 via DTLSv1_listen";
     char buf[sizeof(msg)];
     size_t written, readbytes;
     int testresult = 0;
 
     /*
-     * Server: DTLS 1.3 only.
-     * Client: DTLS 1.0 minimum so it can handle the HelloVerifyRequest from
-     * DTLSv1_listen(), but prefers DTLS 1.3 as max — the server will enforce
-     * DTLS 1.3 for the actual handshake.
+     * Both server and client support DTLS 1.0 through DTLS 1.3.
+     * DTLSv1_listen() should clamp the server's max to DTLS 1.2,
+     * resulting in a DTLS 1.2 negotiated connection.
      */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            DTLS1_VERSION, DTLS1_3_VERSION,
             &sctx, &cctx, cert, privkey)))
-        goto end;
-
-    /* Allow the client to speak DTLS 1.2 only for the cookie exchange */
-    if (!TEST_true(SSL_CTX_set_min_proto_version(cctx, DTLS1_VERSION)))
         goto end;
 
     SSL_CTX_set_cookie_generate_cb(sctx, cookie_gen);
@@ -669,19 +669,21 @@ static int test_dtls13_listen(void)
         goto end;
 
     /*
-     * The last argument of create_bare_ssl_connection() requests that
-     * DTLSv1_listen() is used on the server before SSL_accept().
+     * Use DTLSv1_listen() which will clamp max version to DTLS 1.2.
      */
     if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
             SSL_ERROR_NONE, 1, 1)))
         goto end;
 
-    /* Confirm DTLS 1.3 was actually negotiated */
-    if (!TEST_int_eq(SSL_version(serverssl), DTLS1_3_VERSION)
-        || !TEST_int_eq(SSL_version(clientssl), DTLS1_3_VERSION))
+    /*
+     * Verify DTLS 1.2 was negotiated (not 1.3) because DTLSv1_listen()
+     * clamped the max version.
+     */
+    if (!TEST_int_eq(SSL_version(serverssl), DTLS1_2_VERSION)
+        || !TEST_int_eq(SSL_version(clientssl), DTLS1_2_VERSION))
         goto end;
 
-    /* Exchange a short application-data message in each direction. */
+    /* Exchange a short application-data message to verify connection works */
     if (!TEST_true(SSL_write_ex(clientssl, msg, sizeof(msg), &written))
         || !TEST_size_t_eq(written, sizeof(msg)))
         goto end;
@@ -746,7 +748,9 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
 #endif /* OPENSSL_NO_DTLS1_3 */
+#endif /* OPENSSL_NO_SOCK */
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
@@ -765,7 +769,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(dtls_listen_test,
         (int)OSSL_NELEM(testpackets) + (int)OSSL_NELEM(testpackets13));
 #ifndef OPENSSL_NO_DTLS1_3
-    ADD_TEST(test_dtls13_listen);
+    ADD_TEST(test_dtls_listen_dtls13_negotiated_to_dtls12);
     ADD_TEST(test_dtls13_listen_client_dtls13_only);
 #endif
 #endif

@@ -451,15 +451,22 @@ static int state_machine(SSL_CONNECTION *s, int server)
 
         /*
          * Ok, we now need to push on a buffering BIO ...but not with
-         * SCTP
+         * SCTP or DTLS listener-created connections (which need BIO_sendmmsg
+         * for explicit peer addressing and the buffer BIO doesn't support it).
          */
 #ifndef OPENSSL_NO_SCTP
         if (!SSL_CONNECTION_IS_DTLS(s) || !BIO_dgram_is_sctp(SSL_get_wbio(ssl)))
 #endif
-            if (!ssl_init_wbio_buffer(s)) {
-                SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
-                goto end;
-            }
+            if (!SSL_CONNECTION_IS_DTLS(s)
+                || s->d1 == NULL
+#ifndef OPENSSL_NO_SOCK
+                || BIO_ADDR_family(&s->d1->peer_addr) == AF_UNSPEC
+#endif
+            )
+                if (!ssl_init_wbio_buffer(s)) {
+                    SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
+                    goto end;
+                }
 
         if ((SSL_in_before(ssl))
             || s->renegotiate) {

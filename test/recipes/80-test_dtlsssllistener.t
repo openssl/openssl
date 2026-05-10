@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -9,12 +9,12 @@
 use OpenSSL::Test::Utils;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
-setup("test_dtlsv1listen");
+setup("test_dtlsssllistener");
 
 plan skip_all => "No DTLS protocols are supported by this OpenSSL build"
     if alldisabled(available_protocols("dtls"));
 
 plan tests => 1;
 
-ok(run(test(["dtlsv1listentest", srctop_file("apps", "server.pem"),
-             srctop_file("apps", "server.pem")])), "running dtlsv1listentest");
+ok(run(test(["dtlsssllistenertest", srctop_file("apps", "server.pem"),
+             srctop_file("apps", "server.pem")])), "running dtlsssllistenertest");

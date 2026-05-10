@@ -583,6 +583,7 @@ static const OSSL_RECORD_METHOD quic_tls_record_method = {
     quic_release_record,
     quic_get_alert_code,
     quic_set1_bio,
+    NULL, /* set1_peer: Not used for QUIC */
     quic_set_protocol_version,
     quic_set_plain_alerts,
     quic_set_first_handshake,

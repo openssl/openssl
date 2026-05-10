@@ -46,6 +46,14 @@ struct ssl_connection_st *ossl_quic_obj_get0_handshake_layer(QUIC_OBJ *obj);
     SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, const)
 #endif
 
+#ifndef OPENSSL_NO_DTLS
+
+#define IS_DTLS(ssl) \
+    ((ssl) != NULL && ((ssl)->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS) != 0)
+#else
+#define IS_DTLS(ssl) 0
+#endif
+
 #ifndef OPENSSL_NO_QUIC
 
 #define IS_QUIC_METHOD(m) \

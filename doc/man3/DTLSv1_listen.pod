@@ -16,11 +16,13 @@ DTLSv1_listen
 =head1 DESCRIPTION
 
 SSL_stateless() statelessly listens for new incoming (D)TLSv1.3 connections.
-DTLSv1_listen() statelessly listens for new incoming DTLS connections. If a
-ClientHello is received that does not contain a cookie, then they respond with a
-request for a new ClientHello that does contain a cookie. If a ClientHello is
-received with a cookie that is verified then the function returns in order to
-enable the handshake to be completed (for example by using SSL_accept()).
+DTLSv1_listen() statelessly listens for new incoming DTLS 1.0 and DTLS 1.2
+connections. B<DTLSv1_listen() does not support DTLS 1.3>; for DTLS 1.3 server
+applications, use L<SSL_new_listener(3)> instead. If a ClientHello is received
+that does not contain a cookie, then they respond with a request for a new
+ClientHello that does contain a cookie. If a ClientHello is received with a
+cookie that is verified then the function returns in order to enable the
+handshake to be completed (for example by using SSL_accept()).
 
 =head1 NOTES
 
@@ -106,8 +108,11 @@ start.
 SSL_stateless() cannot be used with QUIC SSL objects and returns an error if
 called on such an object.
 
-For DTLS1.3 to utilize Hello Retry Requests instead of Hello Verify Request,
-please use SSL_stateless() instead of DTLSv1_listen().
+DTLSv1_listen() cannot be used with DTLS 1.3. If the SSL object is configured
+for DTLS 1.3 only (i.e., both minimum and maximum protocol versions are set to
+DTLS 1.3), DTLSv1_listen() will fail. For DTLS 1.3 server applications that
+require address validation via HelloRetryRequest (HRR), use
+L<SSL_new_listener(3)> with the B<SSL_LISTENER_FLAG_REQUIRE_HRR> flag instead.
 
 =head1 RETURN VALUES
 
@@ -135,7 +140,8 @@ errors as non-fatal), whilst return codes >0 indicate success.
 
 =head1 SEE ALSO
 
-L<SSL_CTX_set_cookie_generate_cb(3)>, L<SSL_CTX_set_cookie_verify_cb(3)>,
+L<SSL_new_listener(3)>, L<SSL_CTX_set_cookie_generate_cb(3)>,
+L<SSL_CTX_set_cookie_verify_cb(3)>,
 L<SSL_CTX_set_stateless_cookie_generate_cb(3)>,
 L<SSL_CTX_set_stateless_cookie_verify_cb(3)>, L<SSL_get_error(3)>,
 L<SSL_accept(3)>, L<ssl(7)>, L<bio(7)>
@@ -146,6 +152,9 @@ The SSL_stateless() function was added in OpenSSL 1.1.1.
 
 The DTLSv1_listen() return codes were clarified in OpenSSL 1.1.0.
 The type of "peer" also changed in OpenSSL 1.1.0.
+
+DTLSv1_listen() was restricted to DTLS 1.0 and DTLS 1.2 only in OpenSSL 3.5.
+DTLS 1.3 applications should use L<SSL_new_listener(3)> instead.
 
 =head1 COPYRIGHT
 
