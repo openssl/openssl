@@ -118,7 +118,7 @@ static int dtls_buffer_record(SSL_CONNECTION *s, TLS_RECORD *rec)
 
 #ifndef OPENSSL_NO_SCTP
     /* Store bio_dgram_sctp_rcvinfo struct */
-    if (BIO_dgram_is_sctp(s->rbio) && (ossl_statem_get_state(s) == TLS_ST_SR_FINISHED || ossl_statem_get_state(s) == TLS_ST_CR_FINISHED)) {
+    if (s->rbio != NULL && BIO_dgram_is_sctp(s->rbio) && (ossl_statem_get_state(s) == TLS_ST_SR_FINISHED || ossl_statem_get_state(s) == TLS_ST_CR_FINISHED)) {
         BIO_ctrl(s->rbio, BIO_CTRL_DGRAM_SCTP_GET_RCVINFO,
             sizeof(rdata->recordinfo), &rdata->recordinfo);
     }
@@ -154,7 +154,7 @@ static void dtls_unbuffer_record(SSL_CONNECTION *s)
 
 #ifndef OPENSSL_NO_SCTP
         /* Restore bio_dgram_sctp_rcvinfo struct */
-        if (BIO_dgram_is_sctp(s->rbio)) {
+        if (s->rbio != NULL && BIO_dgram_is_sctp(s->rbio)) {
             BIO_ctrl(s->rbio, BIO_CTRL_DGRAM_SCTP_SET_RCVINFO,
                 sizeof(rdata->recordinfo), &rdata->recordinfo);
         }
@@ -433,7 +433,7 @@ start:
          * app data. If there was an alert and there is no message to read
          * anymore, finally set shutdown.
          */
-        if (BIO_dgram_is_sctp(SSL_get_rbio(s)) && sc->d1->shutdown_received
+        if (SSL_get_rbio(s) != NULL && BIO_dgram_is_sctp(SSL_get_rbio(s)) && sc->d1->shutdown_received
             && BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s)) <= 0) {
             sc->shutdown |= SSL_RECEIVED_SHUTDOWN;
             return 0;
@@ -503,7 +503,7 @@ start:
              * after a close_notify alert. We have to check this first so
              * that nothing gets discarded.
              */
-            if (BIO_dgram_is_sctp(SSL_get_rbio(s)) && BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s)) > 0) {
+            if (SSL_get_rbio(s) != NULL && BIO_dgram_is_sctp(SSL_get_rbio(s)) && BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s)) > 0) {
                 sc->d1->shutdown_received = 1;
                 sc->rwstate = SSL_READING;
                 BIO_clear_retry_flags(SSL_get_rbio(s));

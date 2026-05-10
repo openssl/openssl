@@ -1396,6 +1396,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         uint64_t epoch = 0;
         OSSL_DISPATCH rlayer_dispatch_tmp[OSSL_NELEM(rlayer_dispatch)];
         size_t i, j;
+        BIO_ADDR *peer;
 
         if (direction == OSSL_RECORD_DIRECTION_READ) {
             prev = s->rlayer.rrlnext;
@@ -1441,14 +1442,26 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
             rlayer_dispatch_tmp[j++] = rlayer_dispatch[i];
         }
 
+        /*
+         * For DTLS record layers on listener-created connections, pass the
+         * peer address if it was set via SSL_set1_initial_peer_addr().
+         */
+        peer = NULL;
+
+#ifndef OPENSSL_NO_SOCK
+        if (SSL_CONNECTION_IS_DTLS(s)
+            && s->d1 != NULL
+            && BIO_ADDR_family(&s->d1->peer_addr) != AF_UNSPEC)
+            peer = &s->d1->peer_addr;
+#endif
+
         rlret = meth->new_record_layer(sctx->libctx, sctx->propq, version,
             s->server, direction, level, epoch,
             secret, secretlen, snkey, key, keylen,
             iv,
             ivlen, mackey, mackeylen, snciph, ciph,
             taglen, mactype, md, compm, kdfdigest,
-            prev,
-            thisbio, next, NULL, NULL, settings,
+            prev, thisbio, next, NULL, peer, settings,
             options, rlayer_dispatch_tmp, s,
             s->rlayer.rlarg, &newrl);
         BIO_free(prev);

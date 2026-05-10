@@ -17,6 +17,7 @@
 #include "internal/e_os.h"
 #include "internal/packet.h"
 #include "internal/ssl3_cbc.h"
+#include "internal/dtls_record_rx.h"
 #include "../../ssl_local.h"
 #include "../record_local.h"
 #include "recmethod_local.h"
@@ -391,7 +392,57 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
          */
 
         clear_sys_error();
-        if (bio != NULL) {
+
+        /*
+         * For DTLS listener-created connections, read from the URXE queue
+         * instead of the BIO. These connections are identified by having
+         * peer set and a DTLS_RX queue.
+         *
+         * However, we must first check rl->prev for buffered records from
+         * a previous epoch's record layer.
+         */
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+        if (rl->isdtls && BIO_ADDR_family(&rl->peer) != AF_UNSPEC
+            && rl->prev == NULL) {
+            SSL_CONNECTION *sc = (SSL_CONNECTION *)rl->cbarg;
+
+            if (sc != NULL && sc->d1 != NULL && sc->d1->rx != NULL) {
+                DGRAM_URXE *urxe = ossl_dtls_read_datagram(sc->d1->rx);
+
+                /*
+                 * If no datagrams available and we have a parent listener,
+                 * trigger the listener's demux pump to get more data from
+                 * the network.
+                 */
+                if (urxe == NULL && sc->d1->listener != NULL) {
+                    ossl_dgram_demux_pump(sc->d1->rx->demux);
+                    urxe = ossl_dtls_read_datagram(sc->d1->rx);
+                }
+
+                if (urxe != NULL) {
+                    unsigned char *urxe_data = ossl_dgram_urxe_data(urxe);
+                    size_t tocopy = urxe->data_len;
+
+                    if (tocopy > max - left)
+                        tocopy = max - left;
+
+                    memcpy(pkt + len + left, urxe_data, tocopy);
+                    bioread = tocopy;
+                    ret = OSSL_RECORD_RETURN_SUCCESS;
+
+                    /* Release URXE back to demux */
+                    ossl_dtls_rx_release_urxe(sc->d1->rx, urxe);
+                } else {
+                    /* No datagrams available */
+                    ret = OSSL_RECORD_RETURN_RETRY;
+                }
+            } else {
+                /* Fallback - shouldn't happen for properly configured connections */
+                ret = OSSL_RECORD_RETURN_RETRY;
+            }
+        } else
+#endif
+            if (bio != NULL) {
             ret = BIO_read(bio, pkt + len + left, (int)(max - left));
             if (ret > 0) {
                 bioread = ret;
@@ -1956,21 +2007,70 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
                 if (ret != OSSL_RECORD_RETURN_SUCCESS)
                     return ret;
             }
-            i = BIO_write(rl->bio, (char *)&(TLS_BUFFER_get_buf(thiswb)[TLS_BUFFER_get_offset(thiswb)]),
-                (unsigned int)TLS_BUFFER_get_left(thiswb));
-            if (i >= 0) {
-                tmpwrit = i;
-                if (i == 0 && BIO_should_retry(rl->bio))
-                    ret = OSSL_RECORD_RETURN_RETRY;
-                else
+
+#ifndef OPENSSL_NO_SOCK
+            /*
+             * For DTLS connections created via a listener (where rl->peer is
+             * set), use BIO_sendmmsg() with an explicit peer address. This
+             * allows multiple connections to share the listener's network BIO.
+             *
+             * For non-listener DTLS connections (where rl->peer is not set),
+             * continue using BIO_write() which relies on either a connected
+             * socket or the BIO's stored peer address set via BIO_dgram_set_peer().
+             */
+            if (rl->isdtls && BIO_ADDR_family(&rl->peer) != AF_UNSPEC) {
+                BIO_MSG msg;
+                size_t processed = 0;
+
+                memset(&msg, 0, sizeof(msg));
+                msg.data = (char *)&(TLS_BUFFER_get_buf(thiswb)[TLS_BUFFER_get_offset(thiswb)]);
+                msg.data_len = TLS_BUFFER_get_left(thiswb);
+                msg.peer = &rl->peer;
+
+                ERR_set_mark();
+                if (BIO_sendmmsg(rl->bio, &msg, sizeof(msg), 1, 0, &processed)
+                    && processed == 1) {
+                    ERR_clear_last_mark();
+                    tmpwrit = msg.data_len;
                     ret = OSSL_RECORD_RETURN_SUCCESS;
-            } else {
-                if (BIO_should_retry(rl->bio)) {
-                    ret = OSSL_RECORD_RETURN_RETRY;
+                    i = (int)tmpwrit;
                 } else {
-                    ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
-                        "tls_retry_write_records failure");
-                    ret = OSSL_RECORD_RETURN_FATAL;
+                    unsigned long err = ERR_peek_last_error();
+                    /*
+                     * For BIO_sendmmsg, we use BIO_err_is_non_fatal() instead
+                     * of BIO_should_retry() to check for transient errors.
+                     */
+                    if (BIO_err_is_non_fatal(err)) {
+                        ERR_pop_to_mark();
+                        ret = OSSL_RECORD_RETURN_RETRY;
+                        i = 0;
+                    } else {
+                        ERR_clear_last_mark();
+                        ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
+                            "tls_retry_write_records BIO_sendmmsg failure");
+                        ret = OSSL_RECORD_RETURN_FATAL;
+                        i = -1;
+                    }
+                }
+            } else
+#endif
+            {
+                i = BIO_write(rl->bio, (char *)&(TLS_BUFFER_get_buf(thiswb)[TLS_BUFFER_get_offset(thiswb)]),
+                    (unsigned int)TLS_BUFFER_get_left(thiswb));
+                if (i >= 0) {
+                    tmpwrit = i;
+                    if (i == 0 && BIO_should_retry(rl->bio))
+                        ret = OSSL_RECORD_RETURN_RETRY;
+                    else
+                        ret = OSSL_RECORD_RETURN_SUCCESS;
+                } else {
+                    if (BIO_should_retry(rl->bio)) {
+                        ret = OSSL_RECORD_RETURN_RETRY;
+                    } else {
+                        ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
+                            "tls_retry_write_records failure");
+                        ret = OSSL_RECORD_RETURN_FATAL;
+                    }
                 }
             }
         } else {
@@ -2028,6 +2128,23 @@ int tls_set1_bio(OSSL_RECORD_LAYER *rl, BIO *bio)
 
     return 1;
 }
+
+#ifndef OPENSSL_NO_SOCK
+int tls_set1_peer(OSSL_RECORD_LAYER *rl, const BIO_ADDR *peer)
+{
+    if (!rl->isdtls) {
+        /* Non-DTLS record layers don't use peer address - no-op */
+        return 1;
+    }
+
+    if (peer != NULL)
+        rl->peer = *peer;
+    else
+        BIO_ADDR_clear(&rl->peer);
+
+    return 1;
+}
+#endif
 
 size_t tls_get_record_header_len(OSSL_RECORD_LAYER *rl)
 {
@@ -2208,6 +2325,7 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_release_record,
     tls_get_alert_code,
     tls_set1_bio,
+    NULL,
     tls_set_protocol_version,
     tls_set_plain_alerts,
     tls_set_first_handshake,

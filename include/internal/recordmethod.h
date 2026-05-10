@@ -250,6 +250,14 @@ struct ossl_record_method_st {
      */
     int (*set1_bio)(OSSL_RECORD_LAYER *rl, BIO *bio);
 
+    /*
+     * Update the peer address for DTLS write record layers. When set
+     * (family != AF_UNSPEC), the record layer will use BIO_sendmmsg()
+     * with this address instead of BIO_write(). This is used by
+     * listener-created connections that share the listener's network BIO.
+     */
+    int (*set1_peer)(OSSL_RECORD_LAYER *rl, const BIO_ADDR *peer);
+
     /* Called when protocol negotiation selects a protocol version to use */
     int (*set_protocol_version)(OSSL_RECORD_LAYER *rl, int version);
 
