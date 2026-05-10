@@ -1655,14 +1655,25 @@ int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
 CON_FUNC_RETURN dtls_construct_hello_verify_request(SSL_CONNECTION *s,
     WPACKET *pkt)
 {
-    unsigned int cookie_leni;
+    unsigned int cookie_leni = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
+    int cb_ret = 0;
 
-    if (sctx->app_gen_cookie_cb == NULL
-        || sctx->app_gen_cookie_cb(SSL_CONNECTION_GET_USER_SSL(s), s->d1->cookie,
-               &cookie_leni)
-            == 0
-        || cookie_leni > sizeof(s->d1->cookie)) {
+#if !defined(OPENSSL_NO_DTLS)
+    DTLS_LISTENER *dl = (s->d1 != NULL && s->d1->listener != NULL)
+        ? (DTLS_LISTENER *)s->d1->listener
+        : NULL;
+
+    if (dl != NULL && dl->require_hvr_cookie && sctx->app_gen_cookie_cb == NULL) {
+        cb_ret = ossl_dtls_listener_gen_cookie_cb(ussl, s->d1->cookie, &cookie_leni);
+    } else
+#endif
+        if (sctx->app_gen_cookie_cb != NULL) {
+        cb_ret = sctx->app_gen_cookie_cb(ussl, s->d1->cookie, &cookie_leni);
+    }
+
+    if (cb_ret == 0 || cookie_leni > sizeof(s->d1->cookie)) {
         SSLfatal(s, SSL_AD_NO_ALERT, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
         return CON_FUNC_ERROR;
     }
@@ -2096,20 +2107,31 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     }
     if (SSL_CONNECTION_IS_DTLS(s)) {
         if ((SSL_get_options(ssl) & SSL_OP_COOKIE_EXCHANGE) && clienthello->dtls_cookie_len != 0) {
-            if (sctx->app_verify_cookie_cb != NULL) {
-                if (sctx->app_verify_cookie_cb(ussl, clienthello->dtls_cookie,
-                        (unsigned int)clienthello->dtls_cookie_len)
-                    == 0) {
-                    SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
-                        SSL_R_COOKIE_MISMATCH);
-                    goto err;
-                    /* else cookie verification succeeded */
-                }
-                /* default verification */
-            } else if (s->d1->cookie_len != clienthello->dtls_cookie_len
-                || memcmp(clienthello->dtls_cookie, s->d1->cookie,
+            int verify_ret = 0;
+
+#if !defined(OPENSSL_NO_DTLS)
+            DTLS_LISTENER *dl = (s->d1 != NULL && s->d1->listener != NULL)
+                ? (DTLS_LISTENER *)s->d1->listener
+                : NULL;
+
+            if (dl != NULL && dl->require_hvr_cookie && sctx->app_verify_cookie_cb == NULL) {
+                verify_ret = ossl_dtls_listener_verify_cookie_cb(ussl,
+                    clienthello->dtls_cookie,
+                    (unsigned int)clienthello->dtls_cookie_len);
+            } else
+#endif
+                if (sctx->app_verify_cookie_cb != NULL) {
+                verify_ret = sctx->app_verify_cookie_cb(ussl, clienthello->dtls_cookie,
+                    (unsigned int)clienthello->dtls_cookie_len);
+            } else if (s->d1->cookie_len == clienthello->dtls_cookie_len
+                && memcmp(clienthello->dtls_cookie, s->d1->cookie,
                        s->d1->cookie_len)
-                    != 0) {
+                    == 0) {
+                /* default verification succeeded */
+                verify_ret = 1;
+            }
+
+            if (verify_ret == 0) {
                 SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_COOKIE_MISMATCH);
                 goto err;
             }

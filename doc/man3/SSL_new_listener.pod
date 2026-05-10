@@ -5,8 +5,13 @@
 SSL_new_listener, SSL_new_listener_from, SSL_is_listener, SSL_get0_listener,
 SSL_listen, SSL_listen_ex,
 SSL_accept_connection, SSL_get_accept_connection_queue_len,
+SSL_listener_set_pending_timeout, SSL_listener_get_pending_timeout,
 SSL_new_from_listener,
-SSL_ACCEPT_CONNECTION_NO_BLOCK - SSL object interface for abstracted connection
+SSL_ACCEPT_CONNECTION_NO_BLOCK,
+SSL_LISTENER_FLAG_NO_VALIDATE,
+SSL_LISTENER_FLAG_REQUIRE_HVR,
+SSL_LISTENER_FLAG_REQUIRE_HRR,
+SSL_LISTENER_FLAG_SINGLE_THREAD - SSL object interface for abstracted connection
 acceptance
 
 =head1 SYNOPSIS
@@ -23,9 +28,18 @@ acceptance
  int SSL_listen_ex(SSL *ssl, SSL *new_conn);
 
  #define SSL_ACCEPT_CONNECTION_NO_BLOCK
+
+ #define SSL_LISTENER_FLAG_NO_VALIDATE
+ #define SSL_LISTENER_FLAG_REQUIRE_HVR
+ #define SSL_LISTENER_FLAG_REQUIRE_HRR
+ #define SSL_LISTENER_FLAG_SINGLE_THREAD
+
  SSL *SSL_accept_connection(SSL *ssl, uint64_t flags);
 
  size_t SSL_get_accept_connection_queue_len(SSL *ssl);
+
+ int SSL_listener_set_pending_timeout(SSL *ssl, uint64_t timeout_ms);
+ uint64_t SSL_listener_get_pending_timeout(const SSL *ssl);
 
  SSL *SSL_new_from_listener(SSL *ssl, uint64_t flags);
 
@@ -165,12 +179,25 @@ next pending connection, removing it from the queue. The returned connection
 count is a point-in-time value, the actual number of connections that will
 ultimately be returned may be different.
 
-Currently, listener SSL objects are only supported for QUIC server usage via
-L<OSSL_QUIC_server_method(3)>, or QUIC client-only usage via
+The SSL_listener_set_pending_timeout() function sets the timeout in milliseconds
+for pending connections on a DTLS listener. Pending connections are those that
+have begun the handshake but have not yet completed it. If a pending connection
+does not complete its handshake within the specified timeout, it will be
+automatically cleaned up to prevent resource exhaustion from abandoned or slow
+connections. The I<timeout_ms> parameter specifies the timeout in milliseconds.
+A value of B<UINT64_MAX> disables timeout checking. The default timeout is 30
+seconds. Returns 1 on success, 0 on failure.
+
+The SSL_listener_get_pending_timeout() function returns the current pending
+connection timeout in milliseconds for a DTLS listener. Returns B<UINT64_MAX>
+if timeout checking is disabled, or 0 if the SSL object is not a DTLS listener.
+
+Currently, listener SSL objects are supported for QUIC server usage via
+L<OSSL_QUIC_server_method(3)>, QUIC client-only usage via
 L<OSSL_QUIC_client_method(3)> or L<OSSL_QUIC_client_thread_method(3)> (see
-L</CLIENT-ONLY USAGE>). It is expected that the listener interface, which
-provides an abstracted API for connection acceptance, will be expanded to
-support other protocols, such as TLS over TCP, plain TCP or DTLS in future.
+L</CLIENT-ONLY USAGE>), and DTLS server usage via L<DTLS_server_method(3)>.
+The listener interface provides an abstracted API for connection acceptance
+that may be expanded to support other protocols in the future.
 
 SSL_listen() and SSL_accept_connection() are "I/O" functions, meaning that they
 update the value returned by L<SSL_get_error(3)> if they fail.
@@ -202,6 +229,111 @@ incoming and outgoing connections.
 The I<flags> argument of SSL_new_from_listener() is reserved and must be set to
 0.
 
+=head1 DTLS LISTENER USAGE
+
+The SSL_new_listener() function supports DTLS when called with an SSL_CTX
+created using L<DTLS_server_method(3)> or L<DTLS_method(3)>. A DTLS listener
+provides server-side connection demultiplexing, allowing multiple DTLS clients
+to connect to the same UDP socket.
+
+For DTLS listeners, the following flags control address validation behavior:
+
+=over 4
+
+=item B<SSL_LISTENER_FLAG_NO_VALIDATE>
+
+Disables all address validation. The listener will not send HelloVerifyRequest
+(for DTLS 1.0/1.2) or HelloRetryRequest with cookie (for DTLS 1.3). This is
+faster but provides no protection against amplification attacks. Not
+recommended for use in untrusted network environments.
+
+=item B<SSL_LISTENER_FLAG_REQUIRE_HVR>
+
+Requires HelloVerifyRequest (HVR) cookie exchange for DTLS 1.0 and DTLS 1.2
+connections. The listener will send an HVR with a cookie, and the client must
+respond with a ClientHello containing the valid cookie before the handshake
+proceeds. This provides protection against amplification attacks for pre-1.3
+DTLS versions.
+
+=item B<SSL_LISTENER_FLAG_REQUIRE_HRR>
+
+Requires HelloRetryRequest (HRR) cookie exchange for DTLS 1.3 connections.
+The listener will send an HRR with a cookie extension, and the client must
+respond with a second ClientHello containing the valid cookie. This provides
+protection against amplification attacks for DTLS 1.3.
+
+=item B<SSL_LISTENER_FLAG_SINGLE_THREAD>
+
+Specifies that the DTLS listener will operate in single-threaded mode. When
+this flag is set, the listener and all connections accepted from it should
+only be used from a single thread at a time. Single-threaded mode avoids the
+overhead of synchronization mechanisms and notifiers.
+
+If this flag is not set, the listener initializes internal synchronization
+mechanisms that allow connections accepted from the listener to be safely
+used from multiple threads concurrently.
+
+This flag is only applicable to DTLS listeners.
+
+=back
+
+Both B<SSL_LISTENER_FLAG_REQUIRE_HVR> and B<SSL_LISTENER_FLAG_REQUIRE_HRR> may
+be specified together to enable address validation for all supported DTLS
+versions.
+
+For DTLS listeners, SSL_accept_connection() returns a connection after cookie
+validation is complete (if required) or after receiving the first ClientHello
+(if B<SSL_LISTENER_FLAG_NO_VALIDATE> is set). The handshake is B<not> complete
+at this point. The application must call L<SSL_do_handshake(3)> or
+L<SSL_accept(3)> to complete the handshake before sending or receiving
+application data.
+
+If cookie generation and verification callbacks have not been set on the
+SSL_CTX using L<SSL_CTX_set_cookie_generate_cb(3)> and
+L<SSL_CTX_set_cookie_verify_cb(3)> (for HVR) or
+L<SSL_CTX_set_stateless_cookie_generate_cb(3)> and
+L<SSL_CTX_set_stateless_cookie_verify_cb(3)> (for HRR), the DTLS listener will
+install internal default callbacks automatically. These internal callbacks
+generate and verify cookies based on the client's address, providing basic
+amplification attack protection without requiring application-specific
+callback implementations.
+
+An example DTLS server using the listener API in single threaded mode which only
+accepts one connection at a time. A typical implementation would utilize L<SSL_poll(3)>
+and can accept multiple connections concurrently.
+
+ SSL_CTX *ctx = SSL_CTX_new(DTLS_server_method());
+ SSL_CTX_use_certificate_file(ctx, "server.pem", SSL_FILETYPE_PEM);
+ SSL_CTX_use_PrivateKey_file(ctx, "key.pem", SSL_FILETYPE_PEM);
+
+ /* Create listener with HVR and HRR requirements in single-threaded mode */
+ SSL *listener = SSL_new_listener(ctx,
+     SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR
+     | SSL_LISTENER_FLAG_SINGLE_THREAD);
+
+ /* Set up UDP socket BIO */
+ BIO *bio = BIO_new_dgram(socket_fd, BIO_NOCLOSE);
+ SSL_set_bio(listener, bio, bio);
+
+ /* Start listening */
+ SSL_listen(listener);
+
+ /* Accept connections (blocking) */
+ while ((conn = SSL_accept_connection(listener, 0)) != NULL) {
+     /*
+      * conn has passed cookie validation but handshake is not complete.
+      * Complete the handshake with SSL_do_handshake() or SSL_accept().
+      */
+     if (SSL_do_handshake(conn) != 1) {
+         /* Handle handshake error or retry */
+     }
+     /* Handle the connection... */
+ }
+
+Note that SSL_new_listener_from() and SSL_listen_ex() are not supported for
+DTLS listeners and will return NULL or an error if called with a DTLS SSL
+object.
+
 =head1 RETURN VALUES
 
 SSL_new_listener() and SSL_new_listener_from() return a new listener SSL object
@@ -226,6 +358,13 @@ on failure. On success, the caller assumes ownership of the reference.
 SSL_get_accept_connection_queue_len() returns a nonnegative value, or 0 if the
 queue is empty, or called on an unsupported SSL object type.
 
+SSL_listener_set_pending_timeout() returns 1 on success, or 0 on failure (if
+the SSL object is not a DTLS listener).
+
+SSL_listener_get_pending_timeout() returns the timeout in milliseconds,
+B<UINT64_MAX> if timeout checking is disabled, or 0 if the SSL object is not a
+DTLS listener.
+
 SSL_new_from_listener() returns a pointer to a new SSL object on success or NULL
 on failure. On success, the caller assumes ownership of the reference.
 
@@ -240,17 +379,41 @@ returned from SSL_accept_connection(), calls to SSL_get0_listener() made from
 such SSL callbacks will return NULL.  This can be used as an indicator within
 the callback that the referenced SSL object has not yet been accepted.
 
+=head1 THREAD SAFETY
+
+For DTLS listeners, the network BIOs (set via L<SSL_set_bio(3)>) must not be
+changed concurrently with any other operations on the listener or its
+connections. This includes SSL_accept_connection(), L<SSL_poll(3)>,
+L<SSL_handle_events(3)>, and any I/O operations on connections created from
+the listener.
+
+The BIO should typically be configured once before calling SSL_listen() and
+not modified afterward while the listener is in use. Changing the BIO while
+other threads are actively using the listener or its connections results in
+undefined behavior.
+
+When using B<SSL_LISTENER_FLAG_SINGLE_THREAD>, all operations on the listener
+and its connections must be performed from a single thread at a time. No
+additional synchronization is provided in this mode.
+
 =head1 SEE ALSO
 
-L<OSSL_QUIC_server_method(3)>, L<SSL_free(3)>, L<SSL_set_bio(3)>,
-L<SSL_handle_events(3)>, L<SSL_get_rpoll_descriptor(3)>,
-L<SSL_set_blocking_mode(3)>
+L<OSSL_QUIC_server_method(3)>, L<DTLS_server_method(3)>, L<DTLSv1_listen(3)>,
+L<SSL_free(3)>, L<SSL_set_bio(3)>, L<SSL_handle_events(3)>,
+L<SSL_get_rpoll_descriptor(3)>, L<SSL_set_blocking_mode(3)>,
+L<SSL_CTX_set_cookie_generate_cb(3)>, L<SSL_CTX_set_cookie_verify_cb(3)>,
+L<SSL_CTX_set_stateless_cookie_generate_cb(3)>,
+L<SSL_CTX_set_stateless_cookie_verify_cb(3)>
 
 =head1 HISTORY
 
 These functions were added in OpenSSL 3.5.
 
-SSL_listen_ex() was added in OpenSSL 4.0
+SSL_listen_ex() was added in OpenSSL 4.0.
+
+DTLS listener support (including B<SSL_LISTENER_FLAG_REQUIRE_HVR>,
+B<SSL_LISTENER_FLAG_REQUIRE_HRR> and B<SSL_LISTENER_FLAG_SINGLE_THREAD>
+flags) was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
