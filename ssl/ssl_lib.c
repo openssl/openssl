@@ -648,10 +648,57 @@ int ossl_ssl_connection_reset(SSL *s)
      * back.
      */
     if (s->method != s->defltmeth) {
+        /*
+         * For DTLS listener-created connections, we need to preserve the
+         * peer_addr, rx (DTLS_RX), listener, and created_at across method changes.
+         * These are set during connection creation and must survive SSL_clear().
+         * The ssl_deinit/ssl_init sequence would otherwise free the old d1
+         * structure and allocate a new one, losing these values.
+         */
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+        BIO_ADDR saved_peer_addr = { 0 };
+        DTLS_RX *saved_rx = NULL;
+        SSL *saved_listener = NULL;
+        OSSL_TIME saved_created_at = ossl_time_zero();
+        int is_dtls_listener_conn = 0;
+
+        if (SSL_CONNECTION_IS_DTLS(sc) && sc->d1 != NULL
+            && sc->d1->listener != NULL) {
+            is_dtls_listener_conn = 1;
+            saved_peer_addr = sc->d1->peer_addr;
+            saved_rx = sc->d1->rx;
+            saved_listener = sc->d1->listener;
+            saved_created_at = sc->d1->created_at;
+            /*
+             * Prevent dtls1_free from freeing rx and releasing the listener
+             * reference - we'll restore them after ssl_init.
+             */
+            sc->d1->rx = NULL;
+            sc->d1->listener = NULL;
+        }
+#endif
+
         s->method->ssl_deinit(s);
         s->method = s->defltmeth;
-        if (!s->method->ssl_init(s))
+        if (!s->method->ssl_init(s)) {
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+            if (is_dtls_listener_conn) {
+                ossl_dtls_rx_free(saved_rx);
+                SSL_free(saved_listener);
+            }
+#endif
             return 0;
+        }
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+        /* Restore DTLS listener connection state */
+        if (is_dtls_listener_conn && sc->d1 != NULL) {
+            sc->d1->peer_addr = saved_peer_addr;
+            sc->d1->rx = saved_rx;
+            sc->d1->listener = saved_listener;
+            sc->d1->created_at = saved_created_at;
+        }
+#endif
     } else {
         if (!s->method->ssl_clear(s))
             return 0;
@@ -994,6 +1041,12 @@ int SSL_is_dtls(const SSL *s)
 #ifndef OPENSSL_NO_QUIC
     if (s->type == SSL_TYPE_QUIC_CONNECTION || s->type == SSL_TYPE_QUIC_XSO)
         return 0;
+#endif
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    /* DTLS listener is always DTLS */
+    if (IS_DTLS_LISTENER(s))
+        return 1;
 #endif
 
     if (sc == NULL)
@@ -1459,8 +1512,15 @@ void ossl_ssl_connection_free(SSL *ssl)
     SSL_CONNECTION *s;
 
     s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
-    if (s == NULL)
+    if (s == NULL) {
+        /*
+         * This is not an SSL_CONNECTION (e.g., DTLS listener).
+         * Still need to call ssl_deinit which handles type-specific cleanup.
+         */
+        if (ssl != NULL && ssl->method != NULL)
+            ssl->method->ssl_deinit(ssl);
         return;
+    }
 
     if (s->d1 != NULL && s->rlayer.wrl != NULL)
         dtls1_clear_current_wrl_from_sent_buffer(s);
@@ -1572,6 +1632,13 @@ void SSL_set0_rbio(SSL *s, BIO *rbio)
     }
 #endif
 
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (IS_DTLS_LISTENER(s)) {
+        ossl_dtls_listener_set0_net_rbio(s, rbio);
+        return;
+    }
+#endif
+
     if (sc == NULL)
         return;
 
@@ -1587,6 +1654,13 @@ void SSL_set0_wbio(SSL *s, BIO *wbio)
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s)) {
         ossl_quic_conn_set0_net_wbio(s, wbio);
+        return;
+    }
+#endif
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (IS_DTLS_LISTENER(s)) {
+        ossl_dtls_listener_set0_net_wbio(s, wbio);
         return;
     }
 #endif
@@ -1661,6 +1735,11 @@ BIO *SSL_get_rbio(const SSL *s)
         return ossl_quic_conn_get_net_rbio(s);
 #endif
 
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (IS_DTLS_LISTENER(s))
+        return ossl_dtls_listener_get_net_rbio(s);
+#endif
+
     if (sc == NULL)
         return NULL;
 
@@ -1674,6 +1753,11 @@ BIO *SSL_get_wbio(const SSL *s)
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s))
         return ossl_quic_conn_get_net_wbio(s);
+#endif
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (IS_DTLS_LISTENER(s))
+        return ossl_dtls_listener_get_net_wbio(s);
 #endif
 
     if (sc == NULL)
@@ -4877,6 +4961,19 @@ int ossl_ssl_get_error(const SSL *s, int i, int check_err)
     {
         if (SSL_want_read(s)) {
             bio = SSL_get_rbio(s);
+            /*
+             * rbio can be NULL for DTLS listener-created connections that
+             * read from DTLS_RX queue instead of a BIO.
+             */
+            if (bio == NULL) {
+#ifndef OPENSSL_NO_DTLS
+                if (sc != NULL && SSL_CONNECTION_IS_DTLS(sc)
+                    && sc->d1 != NULL && sc->d1->listener != NULL)
+                    return SSL_ERROR_WANT_READ;
+#endif
+                /* Unexpected NULL BIO */
+                return SSL_ERROR_SYSCALL;
+            }
             if (BIO_should_read(bio))
                 return SSL_ERROR_WANT_READ;
             else if (BIO_should_write(bio))
@@ -4907,6 +5004,19 @@ int ossl_ssl_get_error(const SSL *s, int i, int check_err)
              * present
              */
             bio = sc->wbio;
+            /*
+             * wbio can be NULL for DTLS listener-created connections that
+             * use the listener's shared BIO via BIO_sendmmsg().
+             */
+            if (bio == NULL) {
+#ifndef OPENSSL_NO_DTLS
+                if (sc != NULL && SSL_CONNECTION_IS_DTLS(sc)
+                    && sc->d1 != NULL && sc->d1->listener != NULL)
+                    return SSL_ERROR_WANT_WRITE;
+#endif
+                /* Unexpected NULL BIO */
+                return SSL_ERROR_SYSCALL;
+            }
             if (BIO_should_write(bio))
                 return SSL_ERROR_WANT_WRITE;
             else if (BIO_should_read(bio))
@@ -7752,13 +7862,40 @@ int SSL_get_blocking_mode(SSL *s)
 int SSL_set1_initial_peer_addr(SSL *s, const BIO_ADDR *peer_addr)
 {
 #ifndef OPENSSL_NO_QUIC
-    if (!IS_QUIC(s))
-        return 0;
-
-    return ossl_quic_conn_set_initial_peer_addr(s, peer_addr);
-#else
-    return 0;
+    if (IS_QUIC(s))
+        return ossl_quic_conn_set_initial_peer_addr(s, peer_addr);
 #endif
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    /* Handle DTLS connections */
+    if (IS_DTLS(s)) {
+        SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+
+        if (sc == NULL || sc->d1 == NULL)
+            return 0;
+
+        if (peer_addr != NULL) {
+            if (!BIO_ADDR_copy(&sc->d1->peer_addr, peer_addr))
+                return 0;
+        } else {
+            BIO_ADDR_clear(&sc->d1->peer_addr);
+        }
+
+        /*
+         * Update the record layers' peer address if they exist.
+         * This is needed for listener-created connections where the record
+         * layer is created before the peer address is set.
+         */
+        if (sc->rlayer.wrlmethod != NULL && sc->rlayer.wrl != NULL)
+            sc->rlayer.wrlmethod->set1_peer(sc->rlayer.wrl, peer_addr);
+        if (sc->rlayer.rrlmethod != NULL && sc->rlayer.rrl != NULL)
+            sc->rlayer.rrlmethod->set1_peer(sc->rlayer.rrl, peer_addr);
+
+        return 1;
+    }
+#endif
+
+    return 0;
 }
 
 int SSL_shutdown_ex(SSL *ssl, uint64_t flags,
@@ -7819,13 +7956,16 @@ int SSL_is_connection(SSL *s)
 SSL *SSL_get0_listener(SSL *s)
 {
 #ifndef OPENSSL_NO_QUIC
-    if (!IS_QUIC(s))
-        return NULL;
-
-    return ossl_quic_get0_listener(s);
-#else
-    return NULL;
+    if (IS_QUIC(s))
+        return ossl_quic_get0_listener(s);
 #endif
+
+#ifndef OPENSSL_NO_DTLS
+    if (IS_DTLS(s))
+        return ossl_dtls_get0_listener(s);
+#endif
+
+    return NULL;
 }
 
 SSL *SSL_get0_domain(SSL *s)
@@ -8035,14 +8175,21 @@ int SSL_set_value_uint(SSL *s, uint32_t class_, uint32_t id,
 
 SSL *SSL_new_listener(SSL_CTX *ctx, uint64_t flags)
 {
-#ifndef OPENSSL_NO_QUIC
-    if (!IS_QUIC_CTX(ctx))
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_NULL_SSL_CTX);
         return NULL;
+    }
 
-    return ossl_quic_new_listener(ctx, flags);
-#else
-    return NULL;
+#ifndef OPENSSL_NO_QUIC
+    if (IS_QUIC_CTX(ctx))
+        return ossl_quic_new_listener(ctx, flags);
 #endif
+
+#ifndef OPENSSL_NO_DTLS
+    if (SSL_CTX_IS_DTLS(ctx))
+        return ossl_dtls_new_listener(ctx, flags);
+#endif
+    return NULL;
 }
 
 SSL *SSL_new_listener_from(SSL *ssl, uint64_t flags)
@@ -8050,7 +8197,6 @@ SSL *SSL_new_listener_from(SSL *ssl, uint64_t flags)
 #ifndef OPENSSL_NO_QUIC
     if (!IS_QUIC(ssl))
         return NULL;
-
     return ossl_quic_new_listener_from(ssl, flags);
 #else
     return NULL;
@@ -8062,7 +8208,6 @@ SSL *SSL_new_from_listener(SSL *ssl, uint64_t flags)
 #ifndef OPENSSL_NO_QUIC
     if (!IS_QUIC(ssl))
         return NULL;
-
     return ossl_quic_new_from_listener(ssl, flags);
 #else
     return NULL;
@@ -8072,37 +8217,52 @@ SSL *SSL_new_from_listener(SSL *ssl, uint64_t flags)
 SSL *SSL_accept_connection(SSL *ssl, uint64_t flags)
 {
 #ifndef OPENSSL_NO_QUIC
-    if (!IS_QUIC(ssl))
-        return NULL;
-
-    return ossl_quic_accept_connection(ssl, flags);
-#else
-    return NULL;
+    if (IS_QUIC(ssl))
+        return ossl_quic_accept_connection(ssl, flags);
 #endif
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (IS_DTLS(ssl))
+        return ossl_dtls_accept_connection(ssl, flags);
+#endif
+
+    return NULL;
 }
 
 size_t SSL_get_accept_connection_queue_len(SSL *ssl)
 {
 #ifndef OPENSSL_NO_QUIC
-    if (!IS_QUIC(ssl))
-        return 0;
-
-    return ossl_quic_get_accept_connection_queue_len(ssl);
-#else
-    return 0;
+    if (IS_QUIC(ssl))
+        return ossl_quic_get_accept_connection_queue_len(ssl);
 #endif
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (IS_DTLS(ssl))
+        return ossl_dtls_get_accept_connection_queue_len(ssl);
+#endif
+
+    return 0;
 }
 
 int SSL_get_peer_addr(SSL *ssl, BIO_ADDR *peer_addr)
 {
 #ifndef OPENSSL_NO_QUIC
-    if (!IS_QUIC(ssl))
-        return 0;
-
-    return ossl_quic_get_peer_addr(ssl, peer_addr);
-#else
-    return 0;
+    if (IS_QUIC(ssl))
+        return ossl_quic_get_peer_addr(ssl, peer_addr);
 #endif
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+
+    if (sc != NULL && sc->d1 != NULL
+        && BIO_ADDR_family(&sc->d1->peer_addr) != AF_UNSPEC) {
+        if (!BIO_ADDR_copy(peer_addr, &sc->d1->peer_addr))
+            return 0;
+        return 1;
+    }
+#endif
+
+    return 0;
 }
 
 int SSL_listen_ex(SSL *listener, SSL *new_conn)
@@ -8120,13 +8280,50 @@ int SSL_listen_ex(SSL *listener, SSL *new_conn)
 int SSL_listen(SSL *ssl)
 {
 #ifndef OPENSSL_NO_QUIC
-    if (!IS_QUIC(ssl))
-        return 0;
-
-    return ossl_quic_listen(ssl);
-#else
-    return 0;
+    if (IS_QUIC(ssl))
+        return ossl_quic_listen(ssl);
 #endif
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (IS_DTLS(ssl))
+        return ossl_dtls_listen(ssl);
+#endif
+
+    return 0;
+}
+
+int SSL_listener_set_pending_timeout(SSL *ssl, uint64_t timeout_ms)
+{
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (IS_DTLS(ssl)) {
+        OSSL_TIME timeout;
+
+        if (timeout_ms == UINT64_MAX)
+            timeout = ossl_time_infinite();
+        else
+            timeout = ossl_ms2time(timeout_ms);
+
+        return ossl_dtls_listener_set_pending_timeout(ssl, timeout);
+    }
+#endif
+
+    return 0;
+}
+
+uint64_t SSL_listener_get_pending_timeout(const SSL *ssl)
+{
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (IS_DTLS(ssl)) {
+        OSSL_TIME timeout = ossl_dtls_listener_get_pending_timeout(ssl);
+
+        if (ossl_time_is_infinite(timeout))
+            return UINT64_MAX;
+
+        return ossl_time2ms(timeout);
+    }
+#endif
+
+    return 0;
 }
 
 SSL *SSL_new_domain(SSL_CTX *ctx, uint64_t flags)

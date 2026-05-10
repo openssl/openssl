@@ -810,6 +810,10 @@ SSL_VALUE_STREAM_WRITE_BUF_USED         define
 SSL_VALUE_STREAM_WRITE_BUF_AVAIL        define
 SSL_WRITE_FLAG_CONCLUDE                 define
 SSL_LISTENER_FLAG_NO_ACCEPT             define
+SSL_LISTENER_FLAG_NO_VALIDATE           define
+SSL_LISTENER_FLAG_SINGLE_THREAD         define
+SSL_LISTENER_FLAG_REQUIRE_HRR           define
+SSL_LISTENER_FLAG_REQUIRE_HVR           define
 TLS_DEFAULT_CIPHERSUITES                define deprecated 3.0.0
 X509_CRL_http_nbio                      define deprecated 3.0.0
 X509_http_nbio                          define deprecated 3.0.0
