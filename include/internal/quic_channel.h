@@ -15,6 +15,7 @@
 #include "internal/quic_record_tx.h"
 #include "internal/quic_wire.h"
 #include "internal/quic_predef.h"
+#include "internal/quic_demux.h"
 #include "internal/qlog.h"
 #include "internal/time.h"
 #include "internal/thread.h"
