@@ -271,7 +271,7 @@ ASN1_TIME *ossl_asn1_time_from_tm(ASN1_TIME *s, struct tm *ts, int type)
     if (tmps == NULL)
         return NULL;
 
-    if (!ASN1_STRING_set(tmps, NULL, len))
+    if (!ASN1_STRING_set_data(tmps, NULL, len))
         goto err;
 
     tmps->type = type;

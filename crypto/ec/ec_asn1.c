@@ -966,9 +966,10 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 
     if (priv_key->privateKey) {
         ASN1_OCTET_STRING *pkey = priv_key->privateKey;
-        if (EC_KEY_oct2priv(ret, ASN1_STRING_get0_data(pkey),
-                ASN1_STRING_length(pkey))
-            == 0)
+        size_t pkey_len = ASN1_STRING_length_ex(pkey);
+        if (pkey_len > INT_MAX)
+            goto err;
+        if (EC_KEY_oct2priv(ret, ASN1_STRING_get0_data(pkey), (int)pkey_len) == 0)
             goto err;
     } else {
         ERR_raise(ERR_LIB_EC, EC_R_MISSING_PRIVATE_KEY);
@@ -987,11 +988,13 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 
     if (priv_key->publicKey) {
         const unsigned char *pub_oct;
-        int pub_oct_len;
+        size_t pub_oct_len;
 
         pub_oct = ASN1_STRING_get0_data(priv_key->publicKey);
-        pub_oct_len = ASN1_STRING_length(priv_key->publicKey);
-        if (!EC_KEY_oct2key(ret, pub_oct, pub_oct_len, NULL)) {
+        pub_oct_len = ASN1_STRING_length_ex(priv_key->publicKey);
+        if (pub_oct_len > INT_MAX)
+            goto err;
+        if (!EC_KEY_oct2key(ret, pub_oct, (int)pub_oct_len, NULL)) {
             ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
             goto err;
         }

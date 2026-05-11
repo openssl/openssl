@@ -186,7 +186,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
             && !(same_issuer && !ss)) {
             ikeyid = X509V3_EXT_d2i(ext);
             /* Ignore empty keyids in the issuer cert */
-            if (ASN1_STRING_length(ikeyid) == 0) {
+            if (ASN1_STRING_length_ex(ikeyid) == 0) {
                 ASN1_OCTET_STRING_free(ikeyid);
                 ikeyid = NULL;
             }

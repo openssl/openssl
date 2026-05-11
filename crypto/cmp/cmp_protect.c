@@ -73,7 +73,11 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
 
         pbm_str = (ASN1_STRING *)ppval;
         pbm_str_uc = ASN1_STRING_get0_data(pbm_str);
-        pbm = d2i_OSSL_CRMF_PBMPARAMETER(NULL, &pbm_str_uc, ASN1_STRING_length(pbm_str));
+        if (ASN1_STRING_length_ex(pbm_str) > INT_MAX) {
+            ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_ALGORITHM_OID);
+            goto end;
+        }
+        pbm = d2i_OSSL_CRMF_PBMPARAMETER(NULL, &pbm_str_uc, (long)ASN1_STRING_length_ex(pbm_str));
         if (pbm == NULL) {
             ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_ALGORITHM_OID);
             goto end;
@@ -81,7 +85,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
 
         if (!OSSL_CRMF_pbm_new(ctx->libctx, ctx->propq,
                 pbm, prot_part_der, prot_part_der_len,
-                ASN1_STRING_get0_data(ctx->secretValue), ASN1_STRING_length(ctx->secretValue),
+                ASN1_STRING_get0_data(ctx->secretValue), ASN1_STRING_length_ex(ctx->secretValue),
                 &protection, &sig_len))
             goto end;
 
@@ -202,7 +206,7 @@ static X509_ALGOR *pbmac_algor(const OSSL_CMP_CTX *ctx)
         goto err;
     if ((pbm_der_len = i2d_OSSL_CRMF_PBMPARAMETER(pbm, &pbm_der)) < 0)
         goto err;
-    if (!ASN1_STRING_set(pbm_str, pbm_der, pbm_der_len))
+    if (!ASN1_STRING_set_data(pbm_str, pbm_der, pbm_der_len))
         goto err;
     alg = ossl_X509_ALGOR_from_nid(NID_id_PasswordBasedMAC,
         V_ASN1_SEQUENCE, pbm_str);

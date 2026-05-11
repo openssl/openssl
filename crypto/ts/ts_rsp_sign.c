@@ -298,7 +298,7 @@ int TS_RESP_CTX_set_status_info(TS_RESP_CTX *ctx,
     }
     if (text) {
         if ((utf8_text = ASN1_UTF8STRING_new()) == NULL
-            || !ASN1_STRING_set(utf8_text, text, (int)strlen(text))) {
+            || !ASN1_STRING_set_string(utf8_text, text)) {
             ERR_raise(ERR_LIB_TS, ERR_R_ASN1_LIB);
             goto err;
         }
@@ -487,7 +487,7 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
         return 0;
     }
     digest = msg_imprint->hashed_msg;
-    if (ASN1_STRING_length(digest) != md_size) {
+    if (ASN1_STRING_length_ex(digest) != (size_t)md_size) {
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
             "Bad message digest.");
         TS_RESP_CTX_add_failure_info(ctx, TS_INFO_BAD_DATA_FORMAT);
@@ -645,7 +645,7 @@ static int ossl_ess_add1_signing_cert(PKCS7_SIGNER_INFO *si,
 
     p = pp;
     i2d_ESS_SIGNING_CERT(sc, &p);
-    if ((seq = ASN1_STRING_new()) == NULL || !ASN1_STRING_set(seq, pp, len)) {
+    if ((seq = ASN1_STRING_new()) == NULL || !ASN1_STRING_set_data(seq, pp, len)) {
         ASN1_STRING_free(seq);
         OPENSSL_free(pp);
         return 0;
@@ -676,7 +676,7 @@ static int ossl_ess_add1_signing_cert_v2(PKCS7_SIGNER_INFO *si,
 
     p = pp;
     i2d_ESS_SIGNING_CERT_V2(sc, &p);
-    if ((seq = ASN1_STRING_new()) == NULL || !ASN1_STRING_set(seq, pp, len)) {
+    if ((seq = ASN1_STRING_new()) == NULL || !ASN1_STRING_set_data(seq, pp, len)) {
         ASN1_STRING_free(seq);
         OPENSSL_free(pp);
         return 0;

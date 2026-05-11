@@ -227,7 +227,7 @@ int ossl_cmp_sk_ASN1_UTF8STRING_push_str(STACK_OF(ASN1_UTF8STRING) *sk,
         return 0;
     if ((utf8string = ASN1_UTF8STRING_new()) == NULL)
         return 0;
-    if (!ASN1_STRING_set(utf8string, text, len))
+    if (!ASN1_STRING_set_data(utf8string, (const uint8_t *)text, len))
         goto err;
     if (!sk_ASN1_UTF8STRING_push(sk, utf8string))
         goto err;
