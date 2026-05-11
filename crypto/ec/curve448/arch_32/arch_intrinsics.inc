@@ -10,6 +10,8 @@
  * Originally written by Mike Hamburg
  */
 
+/* IWYU pragma: private, include word.h */
+
 #ifndef OSSL_CRYPTO_EC_CURVE448_ARCH_32_INTRINSICS_H
 #define OSSL_CRYPTO_EC_CURVE448_ARCH_32_INTRINSICS_H
 
