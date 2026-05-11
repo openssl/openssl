@@ -365,7 +365,7 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
         atype = stmp->type;
     } else if (len != -1) {
         if ((stmp = ASN1_STRING_type_new(attrtype)) == NULL
-            || !ASN1_STRING_set(stmp, data, len)) {
+            || !ASN1_STRING_set_data(stmp, data, len)) {
             ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
             goto err;
         }

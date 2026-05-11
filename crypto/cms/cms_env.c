@@ -278,11 +278,16 @@ BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
     CMS_ContentInfo *ci;
     BIO *bio = NULL;
     int res = 0;
+    size_t secret_len = 0;
 
     if (env == NULL) {
         ERR_raise(ERR_LIB_CMS, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
+
+    if (secret != NULL
+        && (secret_len = ASN1_STRING_length_ex(secret)) > INT_MAX)
+        return NULL;
 
     if ((ci = CMS_ContentInfo_new_ex(libctx, propq)) == NULL
         || (bio = BIO_new(BIO_s_mem())) == NULL)
@@ -291,7 +296,7 @@ BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
     ci->d.envelopedData = env;
     if (secret != NULL
         && CMS_decrypt_set1_password(ci, (unsigned char *)ASN1_STRING_get0_data(secret),
-               ASN1_STRING_length(secret))
+               (int)secret_len)
             != 1)
         goto end;
     res = CMS_decrypt(ci, secret == NULL ? pkey : NULL,

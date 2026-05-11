@@ -244,7 +244,7 @@ int X509_ocspid_print(BIO *bp, const X509 *x)
         goto err;
 
     if (!EVP_Digest(ASN1_STRING_get0_data(keybstr),
-            ASN1_STRING_length(keybstr), SHA1md, NULL, md, NULL))
+            ASN1_STRING_length_ex(keybstr), SHA1md, NULL, md, NULL))
         goto err;
     for (i = 0; i < SHA_DIGEST_LENGTH; i++) {
         if (BIO_printf(bp, "%02X", SHA1md[i]) <= 0)

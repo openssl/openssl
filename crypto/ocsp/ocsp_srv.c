@@ -301,7 +301,7 @@ int OCSP_RESPID_match_ex(OCSP_RESPID *respid, X509 *cert, OSSL_LIB_CTX *libctx,
         if (!X509_pubkey_digest(cert, sha1, md, NULL))
             goto err;
 
-        ret = (ASN1_STRING_length(respid->value.byKey) == SHA_DIGEST_LENGTH)
+        ret = (ASN1_STRING_length_ex(respid->value.byKey) == SHA_DIGEST_LENGTH)
             && (memcmp(ASN1_STRING_get0_data(respid->value.byKey), md,
                     SHA_DIGEST_LENGTH)
                 == 0);

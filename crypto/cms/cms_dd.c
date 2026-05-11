@@ -92,7 +92,7 @@ int ossl_cms_DigestedData_do_final(const CMS_ContentInfo *cms, BIO *chain,
         else
             r = 1;
     } else {
-        if (!ASN1_STRING_set(dd->digest, md, mdlen))
+        if (!ASN1_STRING_set_data(dd->digest, md, mdlen))
             goto err;
         r = 1;
     }

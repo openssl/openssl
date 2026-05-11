@@ -131,7 +131,7 @@ CMS_ReceiptRequest *CMS_ReceiptRequest_create0_ex(
     if (id)
         ASN1_STRING_set0(rr->signedContentIdentifier, id, idlen);
     else {
-        if (!ASN1_STRING_set(rr->signedContentIdentifier, NULL, 32)) {
+        if (!ASN1_STRING_set_data(rr->signedContentIdentifier, NULL, 32)) {
             ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
             goto err;
         }

@@ -983,7 +983,7 @@ static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, long len,
             ASN1_STRING_set0(stmp, (unsigned char *)cont /* UGLY CAST! */, ilen);
             *free_cont = 0;
         } else {
-            if (!ASN1_STRING_set(stmp, cont, ilen)) {
+            if (!ASN1_STRING_set_data(stmp, cont, len)) {
                 ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
                 ASN1_STRING_free(stmp);
                 *pval = NULL;

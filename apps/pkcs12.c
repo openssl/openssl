@@ -833,7 +833,7 @@ int pkcs12_main(int argc, char **argv)
                     ASN1_INTEGER_get(pbkdf2_param->iter));
                 BIO_printf(bio_err, "Key length: %ld, Salt length: %d\n",
                     ASN1_INTEGER_get(pbkdf2_param->keylength),
-                    ASN1_STRING_length(pbkdf2_param->salt->value.octet_string));
+                    (int)ASN1_STRING_length_ex(pbkdf2_param->salt->value.octet_string));
                 if (pbkdf2_param->prf == NULL) {
                     prfnid = NID_hmacWithSHA1;
                 } else {
@@ -847,8 +847,8 @@ int pkcs12_main(int argc, char **argv)
             BIO_printf(bio_err, ", Iteration %ld\n",
                 tmaciter != NULL ? ASN1_INTEGER_get(tmaciter) : 1L);
             BIO_printf(bio_err, "MAC length: %ld, salt length: %ld\n",
-                tmac != NULL ? ASN1_STRING_length(tmac) : 0L,
-                tsalt != NULL ? ASN1_STRING_length(tsalt) : 0L);
+                tmac != NULL ? (long)ASN1_STRING_length_ex(tmac) : 0L,
+                tsalt != NULL ? (long)ASN1_STRING_length_ex(tsalt) : 0L);
         }
     }
 
@@ -1231,7 +1231,7 @@ static int alg_print(const X509_ALGOR *alg)
             }
             BIO_printf(bio_err, ", Salt length: %d, Cost(N): %ld, "
                                 "Block size(r): %ld, Parallelism(p): %ld",
-                ASN1_STRING_length(kdf->salt),
+                (int)ASN1_STRING_length_ex(kdf->salt),
                 ASN1_INTEGER_get(kdf->costParameter),
                 ASN1_INTEGER_get(kdf->blockSize),
                 ASN1_INTEGER_get(kdf->parallelizationParameter));
@@ -1282,25 +1282,25 @@ void print_attribute(BIO *out, const ASN1_TYPE *av)
     switch (av->type) {
     case V_ASN1_BMPSTRING:
         value = OPENSSL_uni2asc(ASN1_STRING_get0_data(av->value.bmpstring),
-            ASN1_STRING_length(av->value.bmpstring));
+            (int)ASN1_STRING_length_ex(av->value.bmpstring));
         BIO_printf(out, "%s\n", value);
         OPENSSL_free(value);
         break;
 
     case V_ASN1_UTF8STRING:
-        BIO_printf(out, "%.*s\n", ASN1_STRING_length(av->value.utf8string),
+        BIO_printf(out, "%.*s\n", (int)ASN1_STRING_length_ex(av->value.utf8string),
             ASN1_STRING_get0_data(av->value.utf8string));
         break;
 
     case V_ASN1_OCTET_STRING:
         hex_print(out, ASN1_STRING_get0_data(av->value.octet_string),
-            ASN1_STRING_length(av->value.octet_string));
+            (int)ASN1_STRING_length_ex(av->value.octet_string));
         BIO_puts(out, "\n");
         break;
 
     case V_ASN1_BIT_STRING:
         hex_print(out, ASN1_STRING_get0_data(av->value.bit_string),
-            ASN1_STRING_length(av->value.bit_string));
+            (int)ASN1_STRING_length_ex(av->value.bit_string));
         BIO_puts(out, "\n");
         break;
 

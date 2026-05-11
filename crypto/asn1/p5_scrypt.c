@@ -173,7 +173,7 @@ static X509_ALGOR *pkcs5_scrypt_set(const unsigned char *salt, int saltlen,
         saltlen = PKCS5_DEFAULT_PBE2_SALT_LEN;
 
     /* This will either copy salt or grow the buffer */
-    if (ASN1_STRING_set(sparam->salt, salt, saltlen) == 0) {
+    if (ASN1_STRING_set_data(sparam->salt, salt, saltlen) == 0) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
         goto err;
     }
