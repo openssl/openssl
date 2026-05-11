@@ -70,7 +70,7 @@ section 5.9.
 The DTLSv1.3 implementation modifies the epoch according to RFC9147 section 6.1
 for DTLSv1.3 connections.
 
-### DLTS 1.3 Sequence Numbers
+### DTLS 1.3 Sequence Numbers
 
 Sequence numbers from the Unified Header are Encrypted. Please see RFC9147
 section 4.2.3. This procedure requires at least 16 bytes and thus padding
