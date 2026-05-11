@@ -44,8 +44,8 @@ DEF_FUNC(check_rejected)
 
     if (qs->peer_stop_sending)
         ok = 1;
-    else if (ossl_quic_stream_recv_is_reset(qs))
-        ok = 1;
+    else
+        F_SPIN_AGAIN();
 
 err:
 
