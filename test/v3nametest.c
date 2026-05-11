@@ -149,7 +149,7 @@ static int set_altname(X509 *crt, ...)
         ia5 = ASN1_IA5STRING_new();
         if (ia5 == NULL)
             goto out;
-        if (!ASN1_STRING_set(ia5, name, -1))
+        if (!ASN1_STRING_set_string(ia5, name))
             goto out;
         switch (type) {
         case GEN_EMAIL:

@@ -1077,8 +1077,8 @@ end_of_options:
             X509 *xi = sk_X509_value(cert_sk, i);
             const ASN1_INTEGER *serialNumber = X509_get0_serialNumber(xi);
             const unsigned char *psn = ASN1_STRING_get0_data(serialNumber);
-            const int snl = ASN1_STRING_length(serialNumber);
-            const int filen_len = 2 * (snl > 0 ? snl : 1) + sizeof(".pem");
+            const size_t snl = ASN1_STRING_length_ex(serialNumber);
+            const size_t filen_len = 2 * (snl > 0 ? snl : 1) + sizeof(".pem");
             char *n = new_cert + outdirlen;
 
             if (outdirlen + filen_len > PATH_MAX) {
@@ -1089,7 +1089,7 @@ end_of_options:
             if (snl > 0) {
                 static const char HEX_DIGITS[] = "0123456789ABCDEF";
 
-                for (j = 0; j < snl; j++, psn++) {
+                for (j = 0; (size_t)j < snl; j++, psn++) {
                     *n++ = HEX_DIGITS[*psn >> 4];
                     *n++ = HEX_DIGITS[*psn & 0x0F];
                 }
@@ -1523,8 +1523,10 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
             goto end;
         }
         if (type != V_ASN1_BMPSTRING && type != V_ASN1_UTF8STRING) {
-            j = ASN1_PRINTABLE_type(ASN1_STRING_get0_data(str),
-                ASN1_STRING_length(str));
+            size_t tmp = ASN1_STRING_length_ex(str);
+            if (tmp > INT_MAX)
+                goto end;
+            j = ASN1_PRINTABLE_type(ASN1_STRING_get0_data(str), (int)tmp);
             if ((j == V_ASN1_T61STRING && type != V_ASN1_T61STRING)
                 || (j == V_ASN1_IA5STRING && type == V_ASN1_PRINTABLESTRING)) {
                 BIO_puts(bio_err,
@@ -1901,9 +1903,9 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     /* We now just add it to the database as DB_TYPE_VAL('V') */
     row[DB_type] = OPENSSL_strdup("V");
     tm = X509_get0_notAfter(ret);
-    row[DB_exp_date] = app_malloc(ASN1_STRING_length(tm) + 1, "row expdate");
-    memcpy(row[DB_exp_date], ASN1_STRING_get0_data(tm), ASN1_STRING_length(tm));
-    row[DB_exp_date][ASN1_STRING_length(tm)] = '\0';
+    row[DB_exp_date] = app_malloc(ASN1_STRING_length_ex(tm) + 1, "row expdate");
+    memcpy(row[DB_exp_date], ASN1_STRING_get0_data(tm), ASN1_STRING_length_ex(tm));
+    row[DB_exp_date][ASN1_STRING_length_ex(tm)] = '\0';
     row[DB_rev_date] = NULL;
     row[DB_file] = OPENSSL_strdup("unknown");
     if ((row[DB_type] == NULL) || (row[DB_file] == NULL)
@@ -2137,9 +2139,9 @@ static int do_revoke(X509 *x509, CA_DB *db, REVINFO_TYPE rev_type,
         /* We now just add it to the database as DB_TYPE_REV('V') */
         row[DB_type] = OPENSSL_strdup("V");
         tm = X509_get0_notAfter(x509);
-        row[DB_exp_date] = app_malloc(ASN1_STRING_length(tm) + 1, "row exp_data");
-        memcpy(row[DB_exp_date], ASN1_STRING_get0_data(tm), ASN1_STRING_length(tm));
-        row[DB_exp_date][ASN1_STRING_length(tm)] = '\0';
+        row[DB_exp_date] = app_malloc(ASN1_STRING_length_ex(tm) + 1, "row exp_data");
+        memcpy(row[DB_exp_date], ASN1_STRING_get0_data(tm), ASN1_STRING_length_ex(tm));
+        row[DB_exp_date][ASN1_STRING_length_ex(tm)] = '\0';
         row[DB_rev_date] = NULL;
         row[DB_file] = OPENSSL_strdup("unknown");
 
@@ -2350,7 +2352,7 @@ static char *make_revocation_str(REVINFO_TYPE rev_type, const char *rev_arg)
     const char *reason = NULL, *other = NULL;
     ASN1_OBJECT *otmp;
     ASN1_UTCTIME *revtm = NULL;
-    int i;
+    size_t i;
 
     switch (rev_type) {
     case REV_NONE:
@@ -2407,12 +2409,12 @@ static char *make_revocation_str(REVINFO_TYPE rev_type, const char *rev_arg)
     if (!revtm)
         return NULL;
 
-    i = ASN1_STRING_length(revtm) + 1;
+    i = ASN1_STRING_length_ex(revtm) + 1;
 
     if (reason)
-        i += (int)(strlen(reason) + 1);
+        i += strlen(reason) + 1;
     if (other)
-        i += (int)(strlen(other) + 1);
+        i += strlen(other) + 1;
 
     str = app_malloc(i, "revocation reason");
     OPENSSL_strlcpy(str, (const char *)ASN1_STRING_get0_data(revtm), i);
@@ -2492,7 +2494,7 @@ static int old_entry_print(const ASN1_OBJECT *obj, const ASN1_STRING *str)
 {
     char buf[25], *pbuf;
     const char *p;
-    int j;
+    size_t j;
 
     j = i2a_ASN1_OBJECT(bio_err, obj);
     pbuf = buf;
@@ -2514,7 +2516,7 @@ static int old_entry_print(const ASN1_OBJECT *obj, const ASN1_STRING *str)
         BIO_printf(bio_err, "ASN.1 %2d:'", ASN1_STRING_type(str));
 
     p = (const char *)ASN1_STRING_get0_data(str);
-    for (j = ASN1_STRING_length(str); j > 0; j--) {
+    for (j = ASN1_STRING_length_ex(str); j > 0; j--) {
         if ((*p >= ' ') && (*p <= '~'))
             BIO_printf(bio_err, "%c", *p);
         else if (*p & 0x80)

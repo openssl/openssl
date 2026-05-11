@@ -169,16 +169,18 @@ void *X509V3_EXT_d2i(const X509_EXTENSION *ext)
     const X509V3_EXT_METHOD *method;
     const unsigned char *p;
     const ASN1_STRING *extvalue;
-    int extlen;
+    size_t extlen;
 
     if ((method = X509V3_EXT_get(ext)) == NULL)
         return NULL;
     extvalue = X509_EXTENSION_get_data(ext);
     p = ASN1_STRING_get0_data(extvalue);
-    extlen = ASN1_STRING_length(extvalue);
+    extlen = ASN1_STRING_length_ex(extvalue);
+    if (extlen > INT_MAX)
+        return NULL;
     if (method->it)
-        return ASN1_item_d2i(NULL, &p, extlen, ASN1_ITEM_ptr(method->it));
-    return method->d2i(NULL, &p, extlen);
+        return ASN1_item_d2i(NULL, &p, (int)extlen, ASN1_ITEM_ptr(method->it));
+    return method->d2i(NULL, &p, (int)extlen);
 }
 
 /*-

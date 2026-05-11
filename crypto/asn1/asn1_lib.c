@@ -552,7 +552,7 @@ char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
         current = sk_ASN1_UTF8STRING_value(text, i);
         if (i > 0)
             length += sep_len;
-        length += ASN1_STRING_length(current);
+        length += ASN1_STRING_length_ex(current);
         if (max_len != 0 && length > max_len)
             return NULL;
     }
@@ -562,7 +562,7 @@ char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
     p = result;
     for (i = 0; i < sk_ASN1_UTF8STRING_num(text); i++) {
         current = sk_ASN1_UTF8STRING_value(text, i);
-        length = ASN1_STRING_length(current);
+        length = ASN1_STRING_length_ex(current);
         if (i > 0 && sep_len > 0) {
             strncpy(p, sep, sep_len + 1); /* using + 1 to silence gcc warning */
             p += sep_len;

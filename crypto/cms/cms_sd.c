@@ -304,7 +304,7 @@ static int ossl_cms_add1_signing_cert(CMS_SignerInfo *si,
 
     p = pp;
     i2d_ESS_SIGNING_CERT(sc, &p);
-    if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set(seq, pp, len)) {
+    if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set_data(seq, pp, len)) {
         ASN1_STRING_free(seq);
         OPENSSL_free(pp);
         return 0;
@@ -329,7 +329,7 @@ static int ossl_cms_add1_signing_cert_v2(CMS_SignerInfo *si,
 
     p = pp;
     i2d_ESS_SIGNING_CERT_V2(sc, &p);
-    if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set(seq, pp, len)) {
+    if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set_data(seq, pp, len)) {
         ASN1_STRING_free(seq);
         OPENSSL_free(pp);
         return 0;

@@ -142,6 +142,7 @@ TS_VERIFY_CTX *TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx)
     X509_ALGOR *md_alg;
     ASN1_OCTET_STRING *msg;
     const ASN1_INTEGER *nonce;
+    size_t tmp;
 
     OPENSSL_assert(req != NULL);
     if (ret)
@@ -162,8 +163,11 @@ TS_VERIFY_CTX *TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx)
     if ((ret->md_alg = X509_ALGOR_dup(md_alg)) == NULL)
         goto err;
     msg = imprint->hashed_msg;
-    ret->imprint_len = ASN1_STRING_length(msg);
-    if (ret->imprint_len <= 0)
+    tmp = ASN1_STRING_length_ex(msg);
+    if (tmp > INT_MAX)
+        goto err;
+    ret->imprint_len = (unsigned int)tmp;
+    if (ret->imprint_len == 0)
         goto err;
     if ((ret->imprint = OPENSSL_malloc(ret->imprint_len)) == NULL)
         goto err;

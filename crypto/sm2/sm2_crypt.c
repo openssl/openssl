@@ -78,7 +78,7 @@ int ossl_sm2_plaintext_size(const unsigned char *ct, size_t ct_size,
         return 0;
     }
 
-    *pt_size = ASN1_STRING_length(sm2_ctext->C2);
+    *pt_size = ASN1_STRING_length_ex(sm2_ctext->C2);
     SM2_Ciphertext_free(sm2_ctext);
 
     return 1;
@@ -309,7 +309,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
     uint8_t *msg_mask = NULL;
     const uint8_t *C2 = NULL;
     const uint8_t *C3 = NULL;
-    int msg_len = 0;
+    size_t c3_len, msg_len = 0;
     EVP_MD_CTX *hash = NULL;
     OSSL_LIB_CTX *libctx = ossl_ec_key_get_libctx(key);
     const char *propq = ossl_ec_key_get0_propq(key);
@@ -326,14 +326,18 @@ int ossl_sm2_decrypt(const EC_KEY *key,
         goto done;
     }
 
-    if (ASN1_STRING_length(sm2_ctext->C3) != hash_size) {
+    msg_len = ASN1_STRING_length_ex(sm2_ctext->C2);
+    if (msg_len > INT_MAX)
+        goto done;
+
+    c3_len = ASN1_STRING_length_ex(sm2_ctext->C3);
+    if (c3_len > INT_MAX || c3_len != (size_t)hash_size) {
         ERR_raise(ERR_LIB_SM2, SM2_R_INVALID_ENCODING);
         goto done;
     }
 
     C2 = ASN1_STRING_get0_data(sm2_ctext->C2);
     C3 = ASN1_STRING_get0_data(sm2_ctext->C3);
-    msg_len = ASN1_STRING_length(sm2_ctext->C2);
     if (*ptext_len < (size_t)msg_len) {
         ERR_raise(ERR_LIB_SM2, SM2_R_BUFFER_TOO_SMALL);
         goto done;
@@ -378,7 +382,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
 
     if (BN_bn2binpad(x2, x2y2, field_size) < 0
         || BN_bn2binpad(y2, x2y2 + field_size, field_size) < 0
-        || !ossl_ecdh_kdf_X9_63(msg_mask, msg_len, x2y2, 2 * field_size,
+        || !ossl_ecdh_kdf_X9_63(msg_mask, (int)msg_len, x2y2, 2 * field_size,
             NULL, 0, digest, libctx, propq)) {
         ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
         goto done;
@@ -389,7 +393,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
         goto done;
     }
 
-    for (i = 0; i != msg_len; ++i)
+    for (i = 0; i != (int)msg_len; ++i)
         ptext_buf[i] = C2[i] ^ msg_mask[i];
 
     hash = EVP_MD_CTX_new();
@@ -400,7 +404,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
 
     if (!EVP_DigestInit(hash, digest)
         || !EVP_DigestUpdate(hash, x2y2, field_size)
-        || !EVP_DigestUpdate(hash, ptext_buf, msg_len)
+        || !EVP_DigestUpdate(hash, ptext_buf, (int)msg_len)
         || !EVP_DigestUpdate(hash, x2y2 + field_size, field_size)
         || !EVP_DigestFinal(hash, computed_C3, NULL)) {
         ERR_raise(ERR_LIB_SM2, ERR_R_EVP_LIB);
@@ -413,7 +417,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
     }
 
     rc = 1;
-    *ptext_len = msg_len;
+    *ptext_len = (int)msg_len;
 
 done:
     if (rc == 0)

@@ -82,7 +82,8 @@ int asn1parse_main(int argc, char **argv)
     const unsigned char *ctmpbuf;
     int indent = 0, noout = 0, dump = 0, informat = FORMAT_PEM;
     int offset = 0, ret = 1, i, j;
-    long num, tmplen;
+    long num;
+    size_t tmplen;
     const unsigned char *tmpbuf;
     unsigned int length = 0;
     OPTION_CHOICE o;
@@ -241,12 +242,12 @@ int asn1parse_main(int argc, char **argv)
 
     if (sk_OPENSSL_STRING_num(osk)) {
         tmpbuf = str;
-        tmplen = num;
+        tmplen = (size_t)num;
         for (i = 0; i < sk_OPENSSL_STRING_num(osk); i++) {
             ASN1_TYPE *atmp;
             int typ;
             j = strtol(sk_OPENSSL_STRING_value(osk, i), NULL, 0);
-            if (j <= 0 || j >= tmplen) {
+            if (j <= 0 || (size_t)j >= tmplen) {
                 BIO_printf(bio_err, "'%s' is out of range\n",
                     sk_OPENSSL_STRING_value(osk, i));
                 continue;
@@ -255,7 +256,7 @@ int asn1parse_main(int argc, char **argv)
             tmplen -= j;
             atmp = at;
             ctmpbuf = tmpbuf;
-            at = d2i_ASN1_TYPE(NULL, &ctmpbuf, tmplen);
+            at = d2i_ASN1_TYPE(NULL, &ctmpbuf, (long)tmplen);
             ASN1_TYPE_free(atmp);
             if (!at) {
                 BIO_puts(bio_err, "Error parsing structure\n");
@@ -272,11 +273,16 @@ int asn1parse_main(int argc, char **argv)
             }
             /* hmm... this is a little evil but it works */
             tmpbuf = ASN1_STRING_get0_data(at->value.asn1_string);
-            tmplen = ASN1_STRING_length(at->value.asn1_string);
+            tmplen = ASN1_STRING_length_ex(at->value.asn1_string);
+            if (tmplen > INT_MAX) {
+                BIO_puts(bio_err, "ASN.1 string length exceeds INT_MAX\n");
+                ERR_print_errors(bio_err);
+                goto end;
+            }
         }
         /* XXX casts away const */
         str = (unsigned char *)tmpbuf;
-        num = tmplen;
+        num = (int)tmplen;
     }
 
     if (offset < 0 || offset >= num) {
