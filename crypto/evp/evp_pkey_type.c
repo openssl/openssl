@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "openssl/obj_mac.h"
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include "crypto/evp.h"

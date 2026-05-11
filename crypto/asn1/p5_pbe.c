@@ -12,7 +12,13 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/rand.h>
+#include <string.h>
 #include "crypto/evp.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/objects.h"
 
 /* PKCS#5 password based encryption structure */
 

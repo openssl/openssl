@@ -7,6 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/common.h"
+#include "openssl/bio.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/ecerr.h"
+#include "openssl/evperr.h"
+#include "openssl/indicator.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "opt.h"
+#include <stdint.h>
 #define OPENSSL_SUPPRESS_DEPRECATED /* EVP_PKEY_new_CMAC_key */
 #include <stdio.h>
 #include <string.h>

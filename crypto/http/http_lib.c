@@ -13,7 +13,9 @@
 #include <openssl/httperr.h>
 #include <openssl/bio.h> /* for BIO_snprintf() */
 #include <openssl/err.h>
+#include "internal/common.h"
 #include "internal/cryptlib.h" /* for ossl_assert() */
+#include "openssl/crypto.h"
 #ifndef OPENSSL_NO_SOCK
 #include "internal/bio_addr.h" /* for NI_MAXHOST */
 #endif

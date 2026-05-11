@@ -12,6 +12,11 @@
 
 #include <openssl/pem.h>
 #include <openssl/x509.h>
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/safestack.h"
+#include "opt.h"
 #include "testutil.h"
 
 /*

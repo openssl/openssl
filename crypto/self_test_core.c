@@ -10,8 +10,11 @@
 #include <openssl/self_test.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include <stddef.h>
 #include "internal/cryptlib.h"
 #include "crypto/context.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
 
 typedef struct self_test_cb_st {
     OSSL_CALLBACK *cb;

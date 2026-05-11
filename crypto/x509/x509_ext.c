@@ -14,6 +14,8 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include "crypto/x509.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
 #include <openssl/x509v3.h>
 
 int X509_CRL_get_ext_count(const X509_CRL *x)

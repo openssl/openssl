@@ -12,6 +12,7 @@
 #include <openssl/crypto.h>
 #include "fuzzer.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 

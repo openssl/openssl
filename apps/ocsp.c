@@ -7,7 +7,25 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "app_libctx.h"
+#include "fmt.h"
+#include "log.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/conf.h"
+#include "openssl/http.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/ocsp.h"
+#include "openssl/safestack.h"
+#include "openssl/txt_db.h"
+#include "openssl/x509.h"
+#include "openssl/x509_vfy.h"
+#include "opt.h"
 #include <openssl/opensslconf.h>
+#include <signal.h>
+#include <sys/stat.h>
+#include <sys/syslog.h>
 
 #ifdef OPENSSL_SYS_VMS
 /* So fd_set and friends get properly defined on OpenVMS */

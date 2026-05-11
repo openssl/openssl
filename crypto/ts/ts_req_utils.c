@@ -12,6 +12,11 @@
 #include <openssl/objects.h>
 #include <openssl/x509v3.h>
 #include <openssl/ts.h>
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
 #include "ts_local.h"
 
 int TS_REQ_set_version(TS_REQ *a, long version)

@@ -22,11 +22,18 @@
 #include <openssl/dh.h>
 #include <openssl/decoder.h>
 #include <openssl/ui.h>
+#include <string.h>
 #include "internal/cryptlib.h"
 #include "internal/passphrase.h"
 #include "crypto/asn1.h"
 #include "crypto/x509.h"
 #include "crypto/evp.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/pemerr.h"
 #include "pem_local.h"
 
 int ossl_pem_check_suffix(const char *pem_str, const char *suffix);

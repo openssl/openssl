@@ -8,6 +8,9 @@
  */
 
 /* We need to use the deprecated RSA low level calls */
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evperr.h"
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>

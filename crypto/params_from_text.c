@@ -9,10 +9,18 @@
  */
 
 #include "internal/common.h" /* for HAS_PREFIX */
+#include "openssl/bio.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/cryptoerr.h"
 #include <openssl/ebcdic.h>
 #include <openssl/err.h>
 #include <openssl/params.h>
 #include <openssl/buffer.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 
 /*
  * When processing text to params, we're trying to be smart with numbers.

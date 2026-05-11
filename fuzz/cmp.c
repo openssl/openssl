@@ -11,11 +11,22 @@
  * Test CMP DER parsing.
  */
 
+#include <limits.h>
 #include <openssl/bio.h>
 #include <openssl/cmp.h>
 #include "../crypto/cmp/cmp_local.h"
 #include <openssl/err.h>
+#include <stddef.h>
+#include <stdint.h>
 #include "fuzzer.h"
+#include "openssl/asn1.h"
+#include "openssl/cmp_util.h"
+#include "openssl/cmperr.h"
+#include "openssl/crmf.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
 
 int FuzzerInitialize(int *argc, char ***argv)
 {

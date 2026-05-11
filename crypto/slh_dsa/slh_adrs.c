@@ -6,6 +6,7 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#include <stdint.h>
 #include <string.h>
 #include <openssl/byteorder.h>
 #include "slh_adrs.h"

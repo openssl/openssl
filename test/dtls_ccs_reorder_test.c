@@ -15,8 +15,16 @@
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include <openssl/x509.h>
+#include <string.h>
 
 #include "helpers/ssltestlib.h"
+#include "internal/nelem.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/params.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
 #include "testutil.h"
 
 static char *cert = NULL;

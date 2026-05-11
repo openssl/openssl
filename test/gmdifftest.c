@@ -8,6 +8,7 @@
  */
 
 #include <openssl/crypto.h>
+#include <time.h>
 
 #include "testutil.h"
 

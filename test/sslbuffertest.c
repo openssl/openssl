@@ -8,6 +8,10 @@
  * or in the file LICENSE in the source distribution.
  */
 
+#include "internal/statem.h"
+#include "openssl/crypto.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/ssl3.h"
 #include <string.h>
 #include <openssl/ssl.h>
 #include <openssl/bio.h>

@@ -11,6 +11,8 @@
  * SRP is deprecated, so we're going to have to use some deprecated APIs in
  * order to test it.
  */
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/opensslconf.h>

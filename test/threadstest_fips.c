@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
 #if defined(_WIN32)
 #include <windows.h>
 #endif

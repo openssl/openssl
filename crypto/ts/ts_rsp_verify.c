@@ -11,9 +11,23 @@
 #include <openssl/objects.h>
 #include <openssl/ts.h>
 #include <openssl/pkcs7.h>
+#include <string.h>
 #include "internal/cryptlib.h"
+#include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "crypto/ess.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/ess.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/safestack.h"
+#include "openssl/tserr.h"
+#include "openssl/x509.h"
+#include "openssl/x509_vfy.h"
+#include "openssl/x509v3.h"
 #include "ts_local.h"
 
 static int ts_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted,

@@ -12,6 +12,8 @@
 #include <openssl/posix_time.h>
 
 #include "../testutil.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
 
 int test_asn1_string_to_time_t(const char *asn1_string, time_t *out_time_t)
 {

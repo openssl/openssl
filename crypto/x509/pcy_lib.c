@@ -11,6 +11,8 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
 #include "pcy_local.h"
 
 /* accessor functions */

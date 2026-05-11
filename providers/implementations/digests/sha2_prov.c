@@ -22,6 +22,10 @@
 #include <openssl/params.h>
 #include <openssl/proverr.h>
 #include <openssl/core_names.h>
+#include "openssl/e_os2.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
 #include "crypto/sha.h"

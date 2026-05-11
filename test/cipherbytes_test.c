@@ -19,6 +19,7 @@
 #include <openssl/tls1.h>
 
 #include "internal/nelem.h"
+#include "openssl/safestack.h"
 #include "testutil.h"
 
 static SSL_CTX *ctx;

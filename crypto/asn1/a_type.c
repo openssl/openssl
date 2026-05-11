@@ -12,6 +12,8 @@
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
 #include "asn1_local.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
 
 int ASN1_TYPE_get(const ASN1_TYPE *a)
 {

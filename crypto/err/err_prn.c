@@ -12,7 +12,9 @@
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
+#include <string.h>
 #include "err_local.h"
+#include "openssl/bio.h"
 
 #define ERR_PRINT_BUF_SIZE 4096
 void ERR_print_errors_cb(int (*cb)(const char *str, size_t len, void *u),

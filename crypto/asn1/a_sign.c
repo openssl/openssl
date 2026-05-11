@@ -21,6 +21,12 @@
 #include <openssl/core_names.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+#include "openssl/asn1.h"
+#include "openssl/asn1err.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/params.h"
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 

@@ -10,6 +10,7 @@
 /*
  * Low level APIs are deprecated for public use, but still ok for internal use.
  */
+#include "crypto/types.h"
 #include "internal/deprecated.h"
 
 #include <openssl/byteorder.h>
@@ -27,6 +28,8 @@
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
 #include <openssl/proverr.h>
+#include "internal/nelem.h"
+#include "internal/packet.h"
 #include "internal/passphrase.h"
 #include "internal/cryptlib.h"
 #include "crypto/ecx.h"
@@ -34,6 +37,12 @@
 #include "crypto/rsa.h"
 #include "crypto/ml_dsa.h"
 #include "crypto/slh_dsa.h"
+#include "openssl/bio.h"
+#include "openssl/e_os2.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/rsa.h"
 #include "prov/implementations.h"
 #include "prov/bio.h"
 #include "prov/provider_ctx.h"
@@ -45,6 +54,8 @@
 #include "providers/implementations/encode_decode/encode_key2any.inc"
 
 #include <crypto/asn1.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #if defined(OPENSSL_NO_DH) && defined(OPENSSL_NO_DSA) && defined(OPENSSL_NO_EC)
 #define OPENSSL_NO_KEYPARAMS

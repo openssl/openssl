@@ -15,6 +15,7 @@
  * See ssl/ssltest.c for some hints on how this can be used.
  */
 
+#include "internal/bio.h"
 #include "internal/e_os.h"
 #include <assert.h>
 #include <limits.h>
@@ -22,6 +23,10 @@
 #include <string.h>
 
 #include "bio_local.h"
+#include "openssl/bio.h"
+#include "openssl/bioerr.h"
+#include "openssl/core.h"
+#include "openssl/e_os2.h"
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 

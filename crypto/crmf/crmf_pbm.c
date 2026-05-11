@@ -14,9 +14,19 @@
 #include "crmf_local.h"
 #include <openssl/rand.h> /* for RAND_bytes_ex() */
 #include "internal/sizes.h" /* for OSSL_MAX_NAME_SIZE */
+#include "openssl/asn1.h"
+#include "openssl/crmf.h"
+#include "openssl/crmferr.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/x509.h"
 #include <openssl/err.h>
 
 #include <crypto/asn1.h>
+#include <stddef.h>
+#include <stdint.h>
 
 /*-
  * creates and initializes OSSL_CRMF_PBMPARAMETER (section 4.4)

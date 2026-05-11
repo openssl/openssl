@@ -7,11 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 #include <openssl/err.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "internal/common.h"
+#include "internal/quic_fc.h"
+#include "internal/quic_predef.h"
+#include "internal/quic_statm.h"
 #include "internal/time.h"
 #include "internal/quic_stream.h"
 #include "internal/quic_sf_list.h"
 #include "internal/ring_buf.h"
+#include "internal/uint_set.h"
+#include "openssl/crypto.h"
 
 struct quic_rstream_st {
     SFRAME_LIST fl;

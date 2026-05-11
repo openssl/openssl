@@ -7,11 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 #include <crypto/asn1.h>
 #include "ext_dat.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
 
 static const char *const WEEKDAY_NAMES[7] = {
     "SUN",

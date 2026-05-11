@@ -6,10 +6,17 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#include "crypto/slh_dsa.h"
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
+#include "crypto/slh_dsa/slh_adrs.h"
+#include "crypto/slh_dsa/slh_hash.h"
+#include "crypto/slh_dsa/slh_params.h"
+#include "internal/packet.h"
+#include "openssl/crypto.h"
 #include "slh_dsa_local.h"
 #include "slh_dsa_key.h"
 

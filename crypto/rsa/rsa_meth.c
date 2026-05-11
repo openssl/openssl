@@ -14,6 +14,7 @@
 #include "internal/deprecated.h"
 
 #include <string.h>
+#include "openssl/crypto.h"
 #include "rsa_local.h"
 #include <openssl/err.h>
 

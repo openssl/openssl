@@ -14,13 +14,25 @@
 #include <openssl/ssl.h>
 #include <openssl/core_names.h>
 #include <openssl/ocsp.h>
+#include <time.h>
 
 #include "../../ssl/ssl_local.h"
+#include "internal/common.h"
 #include "internal/ssl_unwrap.h"
 #include "internal/sockets.h"
 #include "internal/nelem.h"
 #include "handshake.h"
 #include "../testutil.h"
+#include "internal/statem.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/safestack.h"
+#include "openssl/tls1.h"
+#include "openssl/x509.h"
+#include "test/helpers/ssl_test_ctx.h"
 
 #if !defined(OPENSSL_NO_SCTP) && !defined(OPENSSL_NO_SOCK)
 #include <netinet/sctp.h>

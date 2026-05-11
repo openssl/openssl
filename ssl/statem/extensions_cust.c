@@ -10,9 +10,23 @@
 /* Custom extension utility functions */
 
 #include <openssl/ct.h>
+#include <stddef.h>
+#include <string.h>
 #include "../ssl_local.h"
+#include "internal/common.h"
 #include "internal/cryptlib.h"
+#include "internal/packet.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/statem.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/ech.h"
+#include "openssl/err.h"
+#include "openssl/ssl.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
+#include "openssl/trace.h"
+#include "ssl/ech/ech_local.h"
 #include "statem_local.h"
 
 typedef struct {

@@ -9,6 +9,12 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/pkcs12err.h"
 #include <openssl/pkcs12.h>
 #include <openssl/trace.h>
 

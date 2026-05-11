@@ -15,7 +15,16 @@
 #include "app_libctx.h"
 #include "internal/nelem.h"
 #include "internal/numbers.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/evp.h"
+#include "openssl/objects.h"
+#include "openssl/x509_vfy.h"
+#include <inttypes.h>
+#include <stdint.h>
 #include <string.h>
+#include <time.h>
 #if !defined(OPENSSL_SYS_MSDOS)
 #include <unistd.h>
 #endif

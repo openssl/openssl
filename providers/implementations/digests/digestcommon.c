@@ -13,6 +13,7 @@
 #include "prov/digestcommon.h"
 #include "internal/common.h"
 
+#include "openssl/params.h"
 #include "providers/implementations/digests/digestcommon.inc"
 
 int ossl_digest_default_get_params(OSSL_PARAM params[], size_t blksz,

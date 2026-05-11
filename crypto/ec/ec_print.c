@@ -11,6 +11,7 @@
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 #include "ec_local.h"
+#include "openssl/ec.h"
 
 /* the return value must be freed (using OPENSSL_free()) */
 char *EC_POINT_point2hex(const EC_GROUP *group,

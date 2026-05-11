@@ -25,6 +25,8 @@
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
 #include <openssl/core_names.h>
+#include "openssl/evp.h"
+#include "openssl/x509.h"
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_DH

@@ -15,6 +15,12 @@
 #include <openssl/err.h>
 
 #include "helpers/ssltestlib.h"
+#include "internal/common.h"
+#include "internal/statem.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
+#include "openssl/tls1.h"
 #include "testutil.h"
 
 /* for SSL_READ_ETM() */

@@ -22,6 +22,8 @@
 #include <openssl/sha.h>
 #include "crypto/dsa.h"
 #include "dsa_local.h"
+#include "internal/ffc.h"
+#include "openssl/crypto.h"
 
 int ossl_dsa_generate_ffc_parameters(DSA *dsa, int type, int pbits, int qbits,
     BN_GENCB *cb)

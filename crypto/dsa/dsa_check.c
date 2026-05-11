@@ -18,6 +18,12 @@
 #include <openssl/bn.h>
 #include "dsa_local.h"
 #include "crypto/dsa.h"
+#include "internal/ffc.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/dsa.h"
+#include "openssl/dsaerr.h"
+#include "openssl/err.h"
 
 static int dsa_precheck_params(const DSA *dsa, int *ret)
 {

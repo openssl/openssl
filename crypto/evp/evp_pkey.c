@@ -19,6 +19,13 @@
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/x509.h"
+#include "openssl/asn1.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/evperr.h"
+#include "openssl/objects.h"
 
 /* Extract a private key from a PKCS8 structure */
 

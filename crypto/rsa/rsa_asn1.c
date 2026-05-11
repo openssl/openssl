@@ -18,6 +18,9 @@
 #include <openssl/bn.h>
 #include <openssl/x509.h>
 #include <openssl/asn1t.h>
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/rsa.h"
 #include "rsa_local.h"
 
 /*

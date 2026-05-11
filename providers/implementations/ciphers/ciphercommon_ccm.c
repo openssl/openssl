@@ -10,8 +10,16 @@
 /* Dispatch functions for ccm mode */
 
 #include <openssl/proverr.h>
+#include "openssl/core.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/params.h"
+#include <stddef.h>
+#include <string.h>
 #include "prov/ciphercommon.h"
 #include "prov/ciphercommon_ccm.h"
+#include "prov/ciphercommon_aead.h"
 #include "prov/providercommon.h"
 
 #include "providers/implementations/ciphers/ciphercommon_ccm.inc"

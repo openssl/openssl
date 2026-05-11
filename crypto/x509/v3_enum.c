@@ -11,6 +11,9 @@
 #include "internal/cryptlib.h"
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
 
 static ENUMERATED_NAMES crl_reasons[] = {
     { CRL_REASON_UNSPECIFIED, "Unspecified", "unspecified" },

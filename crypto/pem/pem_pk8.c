@@ -9,6 +9,10 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/pemerr.h"
 #include <openssl/core_dispatch.h>
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
@@ -17,6 +21,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/pem.h>
 #include <openssl/encoder.h>
+#include <string.h>
 
 static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder,
     int nid, const EVP_CIPHER *enc,

@@ -10,6 +10,16 @@
 /*
  * Because of *asn1_*
  */
+#include "openssl/conf.h"
+#include "openssl/ec.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/safestack.h"
+#include "openssl/ssl.h"
+#include "openssl/tls1.h"
+#include "openssl/x509.h"
+#include <stdlib.h>
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <string.h>

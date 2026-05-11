@@ -13,6 +13,15 @@
 /* Test first part of SSL server handshake. */
 
 /* We need to use some deprecated APIs */
+#include "openssl/bio.h"
+#include "openssl/comp.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/pem.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
+#include <limits.h>
+#include <stdint.h>
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <time.h>

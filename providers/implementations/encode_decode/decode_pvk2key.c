@@ -29,9 +29,16 @@
 #include "internal/sizes.h"
 #include "crypto/pem.h" /* For internal PVK and "blob" headers */
 #include "crypto/rsa.h"
+#include "openssl/bio.h"
+#include "openssl/core.h"
+#include "openssl/dsa.h"
+#include "openssl/e_os2.h"
+#include "openssl/pemerr.h"
+#include "openssl/rsa.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "prov/endecoder_local.h"
+#include "prov/provider_ctx.h"
 #include "providers/implementations/encode_decode/decode_pvk2key.inc"
 
 struct pvk2key_ctx_st; /* Forward declaration */

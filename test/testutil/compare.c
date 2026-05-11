@@ -8,6 +8,10 @@
  */
 
 #include "../testutil.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include <stddef.h>
+#include <string.h>
 
 static void strip_line_ends(char *str)
 {

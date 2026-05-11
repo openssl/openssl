@@ -16,7 +16,12 @@
 #include <openssl/proverr.h>
 #include <openssl/param_build.h>
 #include "internal/param_build_set.h"
+#include "internal/refcount.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
 #include "prov/implementations.h"
+#include "prov/provider_util.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/macsignature.h"

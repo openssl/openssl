@@ -8,12 +8,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <openssl/crypto.h>
 #include <openssl/provider.h>
 #include "internal/property.h"
+#include "internal/common.h"
+#include "internal/cryptlib.h"
 #include "internal/provider.h"
 #include "internal/hashtable.h"
 #include "internal/tsan_assist.h"
@@ -24,6 +27,9 @@
 #include <openssl/rand.h>
 #include <openssl/trace.h>
 #include "crypto/sparse_array.h"
+#include "openssl/bio.h"
+#include "openssl/e_os2.h"
+#include "openssl/safestack.h"
 #include "property_local.h"
 #include "crypto/context.h"
 

@@ -9,12 +9,31 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "app_libctx.h"
+#include "fmt.h"
+#include "internal/common.h"
 #include "internal/e_os.h"
+#include "openssl/bio.h"
+#include "openssl/buffer.h"
+#include "openssl/crypto.h"
+#include "openssl/ech.h"
+#include "openssl/evp.h"
+#include "openssl/http.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/safestack.h"
+#include "openssl/srtp.h"
+#include "openssl/ssl3.h"
+#include "openssl/tls1.h"
+#include "openssl/x509_vfy.h"
+#include "opt.h"
 
+#include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/select.h>
+#include <unistd.h>
 #if defined(_WIN32)
 /* Included before async.h to avoid some warnings */
 #include <windows.h>

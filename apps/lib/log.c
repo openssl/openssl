@@ -8,7 +8,11 @@
  */
 
 #include <openssl/trace.h>
+#include <stdarg.h>
+#include <sys/syslog.h>
 #include "apps.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
 #include "log.h"
 
 static int verbosity = LOG_INFO;

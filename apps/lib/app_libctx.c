@@ -8,6 +8,8 @@
  */
 #include "app_libctx.h"
 #include "apps.h"
+#include "openssl/crypto.h"
+#include "opt.h"
 
 static OSSL_LIB_CTX *app_libctx = NULL;
 static const char *app_propq = NULL;

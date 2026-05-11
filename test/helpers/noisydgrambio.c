@@ -8,6 +8,12 @@
  */
 
 #include <openssl/bio.h>
+#include "internal/time.h"
+#include "openssl/bioerr.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include <stddef.h>
+#include <stdint.h>
 #include "quictestlib.h"
 #include "../testutil.h"
 

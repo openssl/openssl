@@ -12,6 +12,8 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 
+#include "openssl/buffer.h"
+#include "openssl/crypto.h"
 #include "testutil.h"
 
 /* 2047 bytes of "#ooooooooo..." + NUL terminator */

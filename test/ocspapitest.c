@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
@@ -15,7 +16,13 @@
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
 #include <openssl/pem.h>
+#include <time.h>
 
+#include "openssl/bio.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/safestack.h"
+#include "openssl/x509v3.h"
 #include "testutil.h"
 
 static const char *certstr;

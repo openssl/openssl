@@ -12,6 +12,7 @@
 #include "internal/cryptlib.h"
 #include "internal/endian.h"
 #include "crypto/modes.h"
+#include "openssl/modes.h"
 
 #if defined(__GNUC__) && !defined(STRICT_ALIGNMENT)
 typedef size_t size_t_aX __attribute((__aligned__(1)));

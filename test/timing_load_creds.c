@@ -7,10 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <openssl/e_os2.h>
+#include <sys/time.h>
 
 #ifdef OPENSSL_SYS_UNIX
 #include <sys/stat.h>

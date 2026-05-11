@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "openssl/crypto.h"
+#include <string.h>
+#include <sys/socket.h>
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_NO_SOCK) && !defined(__DJGPP__)
 
 #include "internal/sockets.h"

@@ -7,14 +7,29 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/nelem.h"
+#include "internal/packet.h"
+#include "internal/quic_demux.h"
+#include "internal/quic_predef.h"
 #include "internal/quic_record_rx.h"
+#include "internal/quic_record_util.h"
 #include "internal/quic_rx_depack.h"
 #include "internal/quic_record_tx.h"
 #include "internal/quic_ackm.h"
 #include "internal/quic_cc.h"
 #include "internal/quic_ssl.h"
+#include "internal/quic_types.h"
+#include "internal/quic_wire_pkt.h"
+#include "internal/time.h"
+#include "openssl/bio.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
+#include "openssl/ssl.h"
 #include "testutil.h"
 #include "quic_record_test_util.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 
 static const QUIC_CONN_ID empty_conn_id = { 0, { 0 } };
 

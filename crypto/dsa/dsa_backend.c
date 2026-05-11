@@ -12,6 +12,16 @@
  * internal use.
  */
 #include "internal/deprecated.h"
+#include "internal/ffc.h"
+#include "openssl/asn1.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/dsa.h"
+#include "openssl/dsaerr.h"
+#include "openssl/e_os2.h"
+#include "openssl/params.h"
 
 #include <openssl/core_names.h>
 #include <openssl/err.h>

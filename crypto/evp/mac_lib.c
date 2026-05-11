@@ -18,6 +18,9 @@
 #include "crypto/evp.h"
 #include "internal/provider.h"
 #include "evp_local.h"
+#include "openssl/crypto.h"
+#include "openssl/evperr.h"
+#include "openssl/params.h"
 
 EVP_MAC_CTX *EVP_MAC_CTX_new(EVP_MAC *mac)
 {

@@ -8,6 +8,8 @@
  */
 
 #include <openssl/obj_mac.h>
+#include "internal/der.h"
+#include <stddef.h>
 #include "internal/packet.h"
 #include "prov/der_rsa.h"
 #include "prov/der_digests.h"

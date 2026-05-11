@@ -17,8 +17,15 @@
 #include "cms_local.h"
 #include "crypto/evp.h"
 #include "internal/sizes.h"
+#include "openssl/asn1.h"
+#include "openssl/cmserr.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/params.h"
 
 #include <crypto/asn1.h>
+#include <stddef.h>
+#include <stdint.h>
 
 /* KEM Recipient Info (KEMRI) routines */
 

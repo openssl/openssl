@@ -12,10 +12,19 @@
  */
 
 /* For SSL3_VERSION */
+#include "prov/ciphercommon.h"
+#include <stdint.h>
 #include <string.h>
 #include <openssl/prov_ssl.h>
 #include <openssl/proverr.h>
 #include "ciphercommon_local.h"
+#include "internal/common.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/params.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "internal/skey.h"

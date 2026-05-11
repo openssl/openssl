@@ -14,6 +14,9 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
+#include "openssl/asn1err.h"
+#include "openssl/safestack.h"
+#include "openssl/x509_vfy.h"
 #include "testutil.h"
 
 /*

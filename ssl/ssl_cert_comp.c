@@ -8,6 +8,8 @@
  */
 
 #include <stdio.h>
+#include "openssl/crypto.h"
+#include "openssl/tls1.h"
 #include "ssl_local.h"
 #include "internal/e_os.h"
 #include "internal/refcount.h"

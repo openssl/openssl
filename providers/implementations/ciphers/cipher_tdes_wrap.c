@@ -13,14 +13,25 @@
  */
 #include "internal/deprecated.h"
 
+#include <limits.h>
 #include <openssl/sha.h>
 #include <openssl/rand.h>
 #include <openssl/proverr.h>
+#include <stddef.h>
+#include <string.h>
 #include "cipher_tdes_default.h"
 #include "crypto/evp.h"
 #include "crypto/sha.h"
+#include "openssl/buffer.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "prov/ciphercommon.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "providers/implementations/ciphers/cipher_tdes.h"
 
 #define TDES_WRAP_FLAGS PROV_CIPHER_FLAG_CUSTOM_IV | PROV_CIPHER_FLAG_RAND_KEY
 

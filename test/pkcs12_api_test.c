@@ -18,6 +18,13 @@
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
 
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/provider.h"
+#include "openssl/safestack.h"
+#include "opt.h"
 #include "testutil.h"
 #include "helpers/pkcs12.h"
 

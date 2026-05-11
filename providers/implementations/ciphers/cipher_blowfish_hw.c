@@ -14,6 +14,9 @@
 #include "internal/deprecated.h"
 
 #include "cipher_blowfish.h"
+#include "openssl/blowfish.h"
+#include "prov/ciphercommon.h"
+#include <stddef.h>
 
 static int cipher_hw_blowfish_initkey(PROV_CIPHER_CTX *ctx,
     const unsigned char *key, size_t keylen)

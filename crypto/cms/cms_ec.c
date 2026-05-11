@@ -12,10 +12,20 @@
 #include <openssl/cms.h>
 #include <openssl/err.h>
 #include <openssl/decoder.h>
+#include <stddef.h>
 #include "internal/sizes.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "cms_local.h"
+#include "openssl/asn1.h"
+#include "openssl/cmserr.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/ec.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/x509.h"
 
 static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
     OSSL_LIB_CTX *libctx, const char *propq)

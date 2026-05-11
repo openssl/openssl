@@ -7,6 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/bio.h"
+#include "internal/refcount.h"
+#include "openssl/bio.h"
+#include "openssl/bioerr.h"
+#include "openssl/core.h"
+#include "openssl/err.h"
+#include <limits.h>
+#include <stdint.h>
+#include <time.h>
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>

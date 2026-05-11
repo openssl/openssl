@@ -8,6 +8,11 @@
  */
 
 #include <openssl/macros.h>
+#include "internal/common.h"
+#include "internal/quic_channel.h"
+#include "internal/quic_engine.h"
+#include "internal/quic_predef.h"
+#include "internal/quic_reactor.h"
 #include "quic_local.h"
 #include "internal/time.h"
 #include "internal/thread.h"

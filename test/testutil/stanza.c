@@ -12,8 +12,11 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "internal/common.h"
 #include "internal/nelem.h"
 #include "../testutil.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
 #include "tu_local.h"
 
 int test_start_file(STANZA *s, const char *testfile)

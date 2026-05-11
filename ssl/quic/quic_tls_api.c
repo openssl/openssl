@@ -8,9 +8,16 @@
  */
 
 #include <openssl/ssl.h>
+#include <stddef.h>
+#include <stdint.h>
 #include "internal/ssl_unwrap.h"
 #include "internal/quic_tls.h"
 #include "../ssl_local.h"
+#include "internal/statem.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/sslerr.h"
 
 static int crypto_send_cb(const unsigned char *buf, size_t buf_len,
     size_t *consumed, void *arg)

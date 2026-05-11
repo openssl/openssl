@@ -12,7 +12,15 @@
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
+#include "app_libctx.h"
 #include "apps.h"
+#include "fmt.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/params.h"
+#include "openssl/pemerr.h"
+#include "openssl/safestack.h"
+#include "opt.h"
 #include "progs.h"
 #include <openssl/core_names.h>
 #include <openssl/bio.h>
@@ -27,6 +35,7 @@
 #include <openssl/bn.h>
 #include <openssl/lhash.h>
 #include <openssl/rsa.h>
+#include <unistd.h>
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif

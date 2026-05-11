@@ -7,10 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <string.h>
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
+#include "internal/packet.h"
 #include "internal/packet_quic.h"
+#include "internal/quic_vlint.h"
 #include "testutil.h"
 
 static const unsigned char simple1[] = { 0xff };

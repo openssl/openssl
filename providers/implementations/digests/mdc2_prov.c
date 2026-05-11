@@ -21,6 +21,8 @@
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include <internal/common.h>
+#include "openssl/core_dispatch.h"
+#include "openssl/e_os2.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
 #include "providers/implementations/digests/mdc2_prov.inc"

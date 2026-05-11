@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/nelem.h"
 #include "internal/qlog.h"
+#include "internal/time.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
 #include "testutil.h"
+#include <stddef.h>
+#include <stdint.h>
 
 /*
  * Unfortunately, this must be expressed as an array and not a string literal as

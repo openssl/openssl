@@ -12,6 +12,10 @@
 #include <openssl/safestack.h>
 
 #include "apps.h"
+#include "fmt.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "opt.h"
 #include "progs.h"
 
 /**

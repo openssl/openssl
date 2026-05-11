@@ -22,7 +22,14 @@
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
+#include <string.h>
 #include "crypto/evp.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/pemerr.h"
+#include "openssl/safestack.h"
 
 #ifndef OPENSSL_NO_STDIO
 STACK_OF(X509_INFO)

@@ -12,6 +12,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <openssl/x509.h>
+#include "openssl/crypto.h"
+#include <strings.h>
 #include "testutil.h"
 #include "testutil/output.h"
 

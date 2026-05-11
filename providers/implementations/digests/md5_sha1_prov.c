@@ -18,9 +18,13 @@
 #include <openssl/evp.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/e_os2.h"
 #include "prov/md5_sha1.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 static OSSL_FUNC_digest_set_ctx_params_fn md5_sha1_set_ctx_params;
 static OSSL_FUNC_digest_settable_ctx_params_fn md5_sha1_settable_ctx_params;

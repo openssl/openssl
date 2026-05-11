@@ -17,6 +17,11 @@
 #include "internal/provider.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+#include "internal/refcount.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 int EVP_SKEY_export(const EVP_SKEY *skey, int selection,
     OSSL_CALLBACK *export_cb, void *export_cbarg)

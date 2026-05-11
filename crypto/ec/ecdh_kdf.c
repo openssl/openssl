@@ -19,6 +19,7 @@
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include "ec_local.h"
+#include "openssl/params.h"
 
 /* Key derivation function from X9.63/SECG */
 int ossl_ecdh_kdf_X9_63(unsigned char *out, size_t outlen,

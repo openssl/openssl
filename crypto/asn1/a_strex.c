@@ -7,8 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
+#include "internal/common.h"
 #include "internal/cryptlib.h"
 #include "internal/sizes.h"
 #include "internal/unicode.h"
@@ -20,6 +22,11 @@
 #include <inttypes.h>
 
 #include "charmap.h"
+#include "openssl/asn1err.h"
+#include "openssl/bio.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
 
 /*
  * ASN1_STRING_print_ex() and X509_NAME_print_ex(). Enhanced string and name

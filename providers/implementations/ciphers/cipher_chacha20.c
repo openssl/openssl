@@ -11,7 +11,15 @@
 
 #include <openssl/proverr.h>
 #include <openssl/params.h>
+#include <stddef.h>
 #include "cipher_chacha20.h"
+#include "crypto/chacha.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "prov/ciphercommon.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "providers/implementations/ciphers/cipher_chacha20.inc"

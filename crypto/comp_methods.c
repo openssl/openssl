@@ -13,6 +13,7 @@
 
 #include "internal/cryptlib.h"
 #include "internal/comp.h"
+#include "openssl/safestack.h"
 
 #define SSL_COMP_NULL_IDX 0
 #define SSL_COMP_ZLIB_IDX 1

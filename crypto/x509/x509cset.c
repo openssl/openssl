@@ -15,6 +15,8 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include "crypto/x509.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
 
 int X509_CRL_set_version(X509_CRL *x, long version)
 {

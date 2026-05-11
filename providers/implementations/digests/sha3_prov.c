@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <string.h>
 #include <openssl/byteorder.h>
 #include <openssl/core_names.h>
@@ -18,9 +19,12 @@
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "internal/sha3.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/e_os2.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
 #include "internal/common.h"
+#include "prov/providercommon.h"
 #include "providers/implementations/digests/sha3_prov.inc"
 
 #define SHA3_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT

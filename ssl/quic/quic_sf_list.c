@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/quic_predef.h"
+#include "internal/quic_record_rx.h"
 #include "internal/uint_set.h"
 #include "internal/common.h"
+#include "openssl/crypto.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "internal/quic_sf_list.h"
 
 struct stream_frame_st {

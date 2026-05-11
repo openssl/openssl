@@ -25,6 +25,7 @@
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 
+#include "openssl/evp.h"
 #include "testutil.h"
 
 #include <openssl/rsa.h>

@@ -7,8 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/quic_predef.h"
 #include "internal/quic_srtm.h"
+#include "internal/quic_types.h"
 #include "testutil.h"
+#include <stdint.h>
 
 static char ptrs[8];
 

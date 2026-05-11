@@ -31,6 +31,11 @@
 #include <openssl/core_names.h>
 #include <openssl/x509.h>
 #include <openssl/encoder.h>
+#include "openssl/bio.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
+#include "openssl/params.h"
+#include "opt.h"
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "crypto/bn_dh.h" /* _bignum_ffdhe2048_p */

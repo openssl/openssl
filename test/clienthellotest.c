@@ -19,6 +19,9 @@
 
 #include "internal/packet.h"
 
+#include "openssl/prov_ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/tls1.h"
 #include "testutil.h"
 
 #define CLIENT_VERSION_LEN 2

@@ -15,6 +15,8 @@
 #include <openssl/asn1.h>
 #include <openssl/x509.h>
 #include <openssl/types.h>
+#include "openssl/crypto.h"
+#include "openssl/x509_vfy.h"
 #include "x509_local.h"
 
 #include <crypto/asn1.h>

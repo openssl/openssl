@@ -8,10 +8,18 @@
  */
 
 #include "internal/quic_engine.h"
+#include "internal/list.h"
 #include "internal/quic_port.h"
+#include "internal/quic_predef.h"
+#include "internal/quic_reactor.h"
+#include "internal/thread_arch.h"
+#include "internal/time.h"
+#include "openssl/crypto.h"
 #include "quic_engine_local.h"
 #include "quic_port_local.h"
 #include "../ssl_local.h"
+#include <assert.h>
+#include <stdint.h>
 
 /*
  * QUIC Engine

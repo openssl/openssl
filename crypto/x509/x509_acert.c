@@ -14,6 +14,15 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "x509_acert.h"
+#include "crypto/x509_acert.h"
+#include "openssl/asn1.h"
+#include "openssl/conf.h"
+#include "openssl/crypto.h"
+#include "openssl/objects.h"
+#include "openssl/pem.h"
+#include "openssl/safestack.h"
+#include "openssl/x509_acert.h"
+#include "openssl/x509err.h"
 
 /*
  * OpenSSL ASN.1 template translation of RFC 5755 4.1.

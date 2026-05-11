@@ -8,7 +8,14 @@
  */
 
 #include "internal/quic_cc.h"
+#include "internal/quic_predef.h"
 #include "internal/quic_types.h"
+#include "internal/time.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/params.h"
+#include <stddef.h>
+#include <stdint.h>
 
 typedef struct ossl_cc_dummy_st {
     size_t max_dgram_len;

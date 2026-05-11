@@ -15,6 +15,9 @@
 #include "internal/sslconf.h"
 #include "internal/core.h"
 #include "internal/cryptlib.h"
+#include "openssl/conferr.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
 
 typedef struct ssl_module_st SSL_MODULE;
 

@@ -13,6 +13,7 @@
 #include <openssl/crypto.h>
 #include <internal/thread.h>
 #include <internal/thread_arch.h>
+#include <stdint.h>
 
 #if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
 

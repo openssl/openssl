@@ -8,6 +8,11 @@
  */
 
 #include "cipher_sm4.h"
+#include "crypto/sm4.h"
+#include "openssl/evp.h"
+#include "openssl/modes.h"
+#include "prov/ciphercommon.h"
+#include <stddef.h>
 
 static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
     const unsigned char *key, size_t keylen)

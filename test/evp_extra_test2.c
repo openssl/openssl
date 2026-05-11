@@ -8,6 +8,18 @@
  */
 
 /* We need to use some deprecated APIs */
+#include "openssl/bio.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/params.h"
+#include "openssl/pemerr.h"
+#include "openssl/x509.h"
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 /*

@@ -14,6 +14,7 @@
 #include "internal/deprecated.h"
 
 #include "des_local.h"
+#include "openssl/des.h"
 
 /*
  * The input and output are loaded in multiples of 8 bits. What this means is

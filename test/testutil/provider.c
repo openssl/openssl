@@ -8,9 +8,14 @@
  */
 
 #include "../testutil.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/params.h"
+#include "opt.h"
 #include <ctype.h>
 #include <openssl/provider.h>
 #include <openssl/core_names.h>
+#include <stdio.h>
 #include <string.h>
 
 int test_get_libctx(OSSL_LIB_CTX **libctx, OSSL_PROVIDER **default_null_prov,

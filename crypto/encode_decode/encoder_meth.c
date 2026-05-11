@@ -12,13 +12,23 @@
 #include <openssl/encoder.h>
 #include <openssl/encodererr.h>
 #include <openssl/ui.h>
+#include "internal/common.h"
+#include <stddef.h>
+#include <string.h>
 #include "internal/core.h"
+#include "internal/cryptlib.h"
 #include "internal/namemap.h"
+#include "internal/passphrase.h"
 #include "internal/property.h"
 #include "internal/provider.h"
 #include "crypto/encoder.h"
 #include "encoder_local.h"
 #include "crypto/context.h"
+#include "internal/refcount.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/params.h"
 
 /*
  * Encoder can have multiple names, separated with colons in a name string

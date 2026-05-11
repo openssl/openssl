@@ -17,6 +17,8 @@
 #include "internal/cryptlib.h"
 #include "crypto/evp.h"
 #include "crypto/context.h"
+#include "openssl/core.h"
+#include "openssl/safestack.h"
 
 DEFINE_STACK_OF(OSSL_PROVIDER)
 

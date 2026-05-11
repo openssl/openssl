@@ -7,10 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 
 #include "bio_local.h"
+#include "internal/bio.h"
+#include "internal/cryptlib.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
 
 #if defined(OPENSSL_NO_POSIX_IO)
 /*

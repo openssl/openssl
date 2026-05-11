@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "internal/common.h"
 #include "internal/thread_once.h"
 #include <openssl/bio.h>
 #include <openssl/crypto.h>

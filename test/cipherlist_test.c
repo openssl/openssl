@@ -8,6 +8,7 @@
  * or in the file LICENSE in the source distribution.
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -19,6 +20,9 @@
 #include <openssl/tls1.h>
 
 #include "internal/nelem.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
+#include "openssl/sslerr.h"
 #include "testutil.h"
 
 typedef struct cipherlist_test_fixture {

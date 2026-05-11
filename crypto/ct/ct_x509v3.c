@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/ct.h"
+#include "openssl/obj_mac.h"
+#include "openssl/safestack.h"
+#include "openssl/x509v3.h"
 #ifdef OPENSSL_NO_CT
 #error "CT is disabled"
 #endif

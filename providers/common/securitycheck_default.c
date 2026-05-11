@@ -13,6 +13,7 @@
 #include <openssl/core.h>
 #include <openssl/core_names.h>
 #include <openssl/obj_mac.h>
+#include "openssl/crypto.h"
 #include "prov/securitycheck.h"
 #include "internal/nelem.h"
 

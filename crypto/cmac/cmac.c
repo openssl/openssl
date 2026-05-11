@@ -13,6 +13,7 @@
  */
 #include "internal/deprecated.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,6 +22,8 @@
 #include <openssl/err.h>
 #include "crypto/cmac.h"
 #include "internal/common.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
 
 #define LOCAL_BUF_SIZE 2048
 struct CMAC_CTX_st {

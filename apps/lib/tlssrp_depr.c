@@ -14,6 +14,8 @@
  * eventually disappear. In the meantime, to continue to support them, we
  * need to access deprecated SRP APIs.
  */
+#include "openssl/crypto.h"
+#include "openssl/ssl3.h"
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/bn.h>

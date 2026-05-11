@@ -7,7 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/constant_time.h"
 #include "ml_dsa_local.h"
+#include <stdint.h>
 
 /* Key Compression related functions (Rounding & hints) */
 

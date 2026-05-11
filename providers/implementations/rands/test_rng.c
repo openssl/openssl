@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <openssl/core_dispatch.h>
@@ -18,6 +20,8 @@
 #include <openssl/proverr.h>
 #include <openssl/randerr.h>
 #include "internal/common.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
 #include "prov/securitycheck.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"

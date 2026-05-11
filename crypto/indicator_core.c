@@ -12,6 +12,8 @@
 #include <openssl/params.h>
 #include "internal/cryptlib.h"
 #include "crypto/context.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
 
 typedef struct indicator_cb_st {
     OSSL_INDICATOR_CALLBACK *cb;

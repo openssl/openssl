@@ -18,6 +18,9 @@
 #include "internal/cryptlib.h"
 #include "crypto/siphash.h"
 
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "providers/implementations/macs/siphash_prov.inc"

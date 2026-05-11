@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include "internal/common.h"
 #include "internal/e_os.h"
 #include "internal/cryptlib.h"
 #include "internal/thread_once.h"

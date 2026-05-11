@@ -8,6 +8,13 @@
  */
 
 #include "apps.h"
+#include "openssl/bio.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/params.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
 #include "app_params.h"
 
 /* Maximum number of bytes that will be output for an octet string body */

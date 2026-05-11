@@ -15,7 +15,12 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
+#include <string.h>
 #include "crypto/x509.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/macros.h"
+#include "openssl/x509err.h"
 
 OSSL_BEGIN_ALLOW_DEPRECATED
 #if !defined(OPENSSL_NO_DEPRECATED_4_0)

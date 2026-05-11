@@ -8,7 +8,9 @@
  */
 
 #include <openssl/obj_mac.h>
+#include "internal/der.h"
 #include "internal/packet.h"
+#include "openssl/bn.h"
 #include "prov/der_ec.h"
 #include "prov/der_sm2.h"
 

@@ -17,8 +17,14 @@
 /* Dispatch functions for AES CCM mode */
 
 #include "cipher_aes_ccm.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "prov/ciphercommon.h"
+#include "prov/ciphercommon_aead.h"
+#include "prov/ciphercommon_ccm.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include <stddef.h>
 
 static void *aes_ccm_newctx(void *provctx, size_t keybits)
 {

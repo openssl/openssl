@@ -8,6 +8,7 @@
  */
 
 /* This is the C source file where we include this header directly */
+#include "openssl/crypto.h"
 #include <openssl/sslerr_legacy.h>
 #include <openssl/ssl.h>
 

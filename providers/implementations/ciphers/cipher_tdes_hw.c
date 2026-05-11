@@ -13,8 +13,10 @@
  */
 #include "internal/deprecated.h"
 
+#include "openssl/des.h"
 #include "prov/ciphercommon.h"
 #include "cipher_tdes.h"
+#include <stddef.h>
 
 #define ks1 tks.ks[0]
 #define ks2 tks.ks[1]

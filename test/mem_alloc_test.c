@@ -13,6 +13,10 @@
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/types.h>
+#include "internal/nelem.h"
+#include "openssl/crypto.h"
+#include "openssl/cryptoerr.h"
+#include "openssl/macros.h"
 #include "testutil.h"
 
 #ifndef USE_CUSTOM_ALLOC_FNS

@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
+#include "openssl/crypto.h"
+#include "opt.h"
 #include "progs.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>

@@ -11,6 +11,9 @@
 #include <openssl/types.h>
 #include <openssl/evp.h>
 #include <openssl/core.h>
+#include "internal/common.h"
+#include <stdint.h>
+#include <string.h>
 #include "internal/cryptlib.h"
 #include "internal/thread_once.h"
 #include "internal/property.h"
@@ -20,6 +23,11 @@
 #include "crypto/decoder.h"
 #include "crypto/evp.h" /* evp_local.h needs it */
 #include "evp_local.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/evperr.h"
+#include "openssl/trace.h"
 
 #define NAME_SEPARATOR ':'
 

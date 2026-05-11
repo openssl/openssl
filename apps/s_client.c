@@ -8,15 +8,40 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "app_libctx.h"
+#include "fmt.h"
+#include "internal/common.h"
 #include "internal/e_os.h"
+#include <assert.h>
 #include <ctype.h>
+#include <limits.h>
+#include <netinet/in.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <openssl/e_os2.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <time.h>
 #include "internal/nelem.h"
 #include "internal/sockets.h" /* for openssl_fdset() */
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/conf.h"
+#include "openssl/crypto.h"
+#include "openssl/ech.h"
+#include "openssl/evp.h"
+#include "openssl/http.h"
+#include "openssl/objects.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/quic.h"
+#include "openssl/safestack.h"
+#include "openssl/srtp.h"
+#include "openssl/tls1.h"
+#include "openssl/x509_vfy.h"
+#include "opt.h"
 
 #ifndef OPENSSL_NO_SOCK
 

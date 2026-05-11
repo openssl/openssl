@@ -7,10 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/params.h"
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
+#include <stddef.h>
 #ifndef FIPS_MODULE
 #include "crypto/evp.h"
 #endif

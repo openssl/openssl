@@ -15,7 +15,13 @@
 #include <openssl/aes.h>
 #include <openssl/proverr.h>
 #include "crypto/modes.h"
+#include "fips/fipsindicator.h"
 #include "internal/thread_once.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/e_os2.h"
+#include "openssl/evp.h"
+#include "openssl/params.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"

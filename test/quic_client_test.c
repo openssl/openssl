@@ -6,13 +6,17 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#include <netinet/in.h>
 #include <stdio.h>
 #include <openssl/ssl.h>
 #include <openssl/quic.h>
 #include <openssl/bio.h>
+#include <sys/socket.h>
+#include <unistd.h>
 #include "internal/common.h"
 #include "internal/sockets.h"
 #include "internal/time.h"
+#include "openssl/crypto.h"
 #include "testutil.h"
 
 static const char msg1[] = "GET LICENSE.txt\r\n";

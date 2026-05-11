@@ -9,6 +9,21 @@
 
 #include <openssl/ssl.h>
 #include <openssl/hpke.h>
+#include "internal/nelem.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/ech.h"
+#include "openssl/evp.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
+#include "openssl/x509_vfy.h"
+#include "opt.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include <time.h>
 #include "testutil.h"
 #include "helpers/ssltestlib.h"
 #include "internal/packet.h"

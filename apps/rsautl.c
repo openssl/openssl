@@ -10,6 +10,13 @@
 #include <openssl/opensslconf.h>
 
 #include "apps.h"
+#include "fmt.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/x509.h"
+#include "opt.h"
 #include "progs.h"
 #include <string.h>
 #include <openssl/err.h>

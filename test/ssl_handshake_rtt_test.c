@@ -13,6 +13,9 @@
  */
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 #define OPENSSL_SUPPRESS_DEPRECATED
+#include "internal/statem.h"
+#include "openssl/prov_ssl.h"
+#include <stdint.h>
 #endif
 
 #include <stdio.h>

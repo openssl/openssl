@@ -14,13 +14,20 @@
  *      generalTime    GeneralizedTime }
  */
 
+#include <limits.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include "crypto/asn1.h"
 #include "crypto/ctype.h"
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include "asn1_local.h"
+#include "openssl/asn1.h"
+#include "openssl/asn1err.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 IMPLEMENT_ASN1_MSTRING(ASN1_TIME, B_ASN1_TIME)
 

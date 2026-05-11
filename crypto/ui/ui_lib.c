@@ -13,6 +13,8 @@
 #include <openssl/buffer.h>
 #include <openssl/ui.h>
 #include <openssl/err.h>
+#include "openssl/crypto.h"
+#include "openssl/uierr.h"
 #include "ui_local.h"
 
 UI *UI_new(void)

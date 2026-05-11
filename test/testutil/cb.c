@@ -9,6 +9,7 @@
 
 #include "output.h"
 #include "tu_local.h"
+#include <stddef.h>
 
 int openssl_error_cb(const char *str, size_t len, void *u)
 {

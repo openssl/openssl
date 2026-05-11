@@ -15,11 +15,22 @@
 #include <openssl/asn1.h>
 #include <openssl/cms.h>
 #include <openssl/core_names.h>
+#include "crypto/asn1.h"
+#include "internal/common.h"
+#include <stddef.h>
 #include "internal/sizes.h"
 #include "internal/cryptlib.h"
 #include "crypto/x509.h"
 #include "cms_local.h"
 #include "internal/cms.h"
+#include "openssl/cmserr.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/params.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
 
 static STACK_OF(CMS_CertificateChoices)
     **

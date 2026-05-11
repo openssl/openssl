@@ -11,9 +11,14 @@
 #include <stdio.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
+#include <string.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 
+#include "internal/nelem.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/objects.h"
 #include "standard_methods.h"
 
 typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);

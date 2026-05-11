@@ -19,8 +19,11 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/ec.h>
+#include <stddef.h>
 #include "internal/passphrase.h"
 #include "internal/nelem.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
 #include "prov/implementations.h"
 #include "prov/bio.h"
 #include "prov/provider_ctx.h"

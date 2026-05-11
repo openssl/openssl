@@ -10,6 +10,9 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include "openssl/asn1.h"
+#include "openssl/safestack.h"
+#include "openssl/x509_acert.h"
 #include "x509_acert.h"
 
 #include <crypto/asn1.h>

@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "internal/cryptlib.h"
+#include "openssl/crypto.h"
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 

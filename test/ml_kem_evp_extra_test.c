@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,6 +22,9 @@
 #include <openssl/rand.h>
 #include <crypto/ml_kem.h>
 #include "crypto/evp.h"
+#include "internal/nelem.h"
+#include "openssl/core_dispatch.h"
+#include "opt.h"
 #include "testutil.h"
 
 static OSSL_LIB_CTX *testctx = NULL;

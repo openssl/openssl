@@ -9,7 +9,12 @@
 
 #include <stdlib.h>
 #include "crypto/cryptlib.h"
+#include "internal/cryptlib.h"
+#include "internal/nelem.h"
 #include "internal/thread_once.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 int ossl_do_ex_data_init(OSSL_LIB_CTX *ctx)
 {

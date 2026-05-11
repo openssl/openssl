@@ -8,12 +8,17 @@
  */
 
 /* socket-related functions used by s_client and s_server */
+#include "openssl/crypto.h"
+#include "openssl/ssl.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
 #include <openssl/opensslconf.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 /*
  * With IPv6, it looks like Digital has mixed up the proper order of

@@ -9,6 +9,10 @@
  */
 
 #include "internal/nelem.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "opt.h"
 #include "testutil.h"
 
 #include <stdio.h>

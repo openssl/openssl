@@ -11,11 +11,16 @@
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <string.h>
 #include "crypto/evp.h"
 #include "internal/provider.h"
 #include "internal/numbers.h" /* includes SIZE_MAX */
 #include "internal/common.h"
 #include "evp_local.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evperr.h"
 
 /*
  * If we get the "NULL" md then the name comes back as "UNDEF". We want to use

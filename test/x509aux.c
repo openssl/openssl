@@ -16,6 +16,9 @@
 #include <openssl/pem.h>
 #include <openssl/conf.h>
 #include <openssl/err.h>
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/pemerr.h"
 #include "testutil.h"
 
 static int test_certs(int num)

@@ -13,8 +13,10 @@
  * References to Sections in the comments below refer to RFC 9180.
  */
 
+#include "crypto/types.h"
 #include "internal/deprecated.h"
 
+#include <stdint.h>
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
@@ -27,6 +29,9 @@
 #include <openssl/rand.h>
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
+#include "openssl/core.h"
+#include "openssl/e_os2.h"
+#include "openssl/obj_mac.h"
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
 #include "prov/securitycheck.h"

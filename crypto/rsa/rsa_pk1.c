@@ -15,6 +15,7 @@
 
 #include "internal/constant_time.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
@@ -24,8 +25,12 @@
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
+#include <string.h>
 #include "internal/cryptlib.h"
 #include "crypto/rsa.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/rsaerr.h"
 #include "rsa_local.h"
 
 int RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,

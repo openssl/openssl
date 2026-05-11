@@ -14,6 +14,10 @@
 
 #include <openssl/asn1.h>
 #include <openssl/x509.h>
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/macros.h"
+#include "openssl/x509_vfy.h"
 #include "testutil.h"
 #include "internal/nelem.h"
 

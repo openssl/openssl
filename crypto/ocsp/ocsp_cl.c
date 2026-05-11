@@ -7,8 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <time.h>
+#include "crypto/x509.h"
 #include "internal/cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/objects.h>
@@ -18,6 +20,11 @@
 #include <openssl/ocsp.h>
 #include <openssl/posix_time.h>
 #include "ocsp_local.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/ocsperr.h"
+#include "openssl/safestack.h"
 
 /*
  * Utility functions related to sending OCSP requests and extracting relevant

@@ -12,6 +12,8 @@
 #include <openssl/rsa.h>
 #include <openssl/bn.h>
 #include "crypto/rsa.h"
+#include "openssl/crypto.h"
+#include "openssl/provider.h"
 #include "testutil.h"
 
 static OSSL_PROVIDER *prov_null = NULL;

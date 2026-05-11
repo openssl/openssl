@@ -15,6 +15,12 @@
 #include <openssl/evp.h>
 #include <openssl/store.h>
 #include <openssl/ui.h>
+#include "internal/nelem.h"
+#include "openssl/bio.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/pem.h"
+#include "openssl/x509.h"
 #include "testutil.h"
 #include "fake_rsaprov.h"
 

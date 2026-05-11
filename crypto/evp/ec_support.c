@@ -12,6 +12,9 @@
 #include <openssl/err.h>
 #include "crypto/ec.h"
 #include "internal/nelem.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
 
 typedef struct ec_name2nid_st {
     const char *name;

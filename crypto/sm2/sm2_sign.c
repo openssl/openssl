@@ -15,9 +15,12 @@
 #include "crypto/sm2err.h"
 #include "crypto/ec.h" /* ossl_ec_group_do_inverse_ord() */
 #include "internal/numbers.h"
+#include "openssl/crypto.h"
+#include "openssl/ec.h"
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/bn.h>
+#include <stdint.h>
 #include <string.h>
 
 /*

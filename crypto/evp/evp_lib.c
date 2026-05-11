@@ -11,8 +11,11 @@
  * EVP _meth_ APIs are deprecated for public use, but still ok for
  * internal use.
  */
+#include "internal/common.h"
 #include "internal/deprecated.h"
 
+#include <limits.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include "internal/cryptlib.h"
@@ -28,6 +31,11 @@
 #include "crypto/cryptlib.h"
 #include "internal/provider.h"
 #include "evp_local.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evperr.h"
+#include "openssl/obj_mac.h"
 
 #if !defined(FIPS_MODULE)
 #include "crypto/asn1.h"

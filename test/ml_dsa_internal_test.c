@@ -19,9 +19,11 @@
  * all three parameter sets using a fully deterministic key and message.
  */
 
+#include <stdint.h>
 #include <string.h>
 #include <openssl/evp.h>
 #include "crypto/ml_dsa.h"
+#include "openssl/crypto.h"
 #include "testutil.h"
 
 /* Fixed 32-byte seed used for all three parameter-set tests. */

@@ -9,7 +9,13 @@
  *
  * Originally written by Mike Hamburg
  */
+#include <assert.h>
 #include <openssl/crypto.h>
+#include "crypto/ec/curve448/curve448utils.h"
+#include "internal/constant_time.h"
+#include "openssl/e_os2.h"
+#include <stdint.h>
+#include <string.h>
 #include "word.h"
 #include "field.h"
 

@@ -12,6 +12,12 @@
 #include <openssl/core.h>
 #include <openssl/core_names.h>
 #include "crypto/evp.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/pkcs12err.h"
+#include "openssl/x509.h"
 #include <openssl/pkcs12.h>
 
 #include <crypto/asn1.h>

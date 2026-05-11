@@ -24,6 +24,12 @@
 #include "crypto/bn.h"
 #include "internal/nelem.h"
 #include "ec_local.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/ec.h"
+#include "openssl/ecerr.h"
+#include "openssl/obj_mac.h"
 
 /* functions for EC_GROUP objects */
 

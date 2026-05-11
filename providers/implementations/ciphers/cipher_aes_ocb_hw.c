@@ -11,9 +11,14 @@
  * This file uses the low level AES functions (which are deprecated for
  * non-internal use) in order to implement provider AES ciphers.
  */
+#include "crypto/aes_platform.h"
 #include "internal/deprecated.h"
 
 #include "cipher_aes_ocb.h"
+#include "openssl/aes.h"
+#include "openssl/modes.h"
+#include "prov/ciphercommon.h"
+#include <stddef.h>
 
 #define OCB_SET_KEY_FN(fn_set_enc_key, fn_set_dec_key,                          \
     fn_block_enc, fn_block_dec,                                                 \

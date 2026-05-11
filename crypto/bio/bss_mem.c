@@ -7,10 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 #include "bio_local.h"
+#include "internal/bio.h"
 #include "internal/cryptlib.h"
+#include "openssl/bio.h"
+#include "openssl/bioerr.h"
+#include "openssl/buffer.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
 
 static int mem_write(BIO *h, const char *buf, int num);
 static int mem_read(BIO *h, char *buf, int size);

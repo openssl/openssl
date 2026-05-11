@@ -13,6 +13,8 @@
 #include <openssl/dsa.h>
 #include <openssl/evp.h>
 #include "crypto/evp.h"
+#include "openssl/evperr.h"
+#include "openssl/params.h"
 
 static int dsa_paramgen_check(EVP_PKEY_CTX *ctx)
 {

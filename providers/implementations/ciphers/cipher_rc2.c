@@ -16,7 +16,16 @@
 #include "internal/deprecated.h"
 
 #include <openssl/proverr.h>
+#include <stddef.h>
 #include "cipher_rc2.h"
+#include "openssl/asn1.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/core_names.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/params.h"
+#include "prov/ciphercommon.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 

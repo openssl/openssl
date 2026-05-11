@@ -12,9 +12,19 @@
  * use where we're using them to implement the higher level EVP interface, as is
  * the case here.
  */
+#include "crypto/aes_platform.h"
+#include "crypto/modes.h"
+#include "internal/cryptlib.h"
 #include "internal/deprecated.h"
 
 #include "cipher_aes_cbc_hmac_sha.h"
+#include "openssl/aes.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/sha.h"
+#include "prov/ciphercommon.h"
+#include <stddef.h>
+#include <string.h>
 
 #if !defined(AES_CBC_HMAC_SHA_CAPABLE) || !defined(AESNI_CAPABLE)
 int ossl_cipher_capable_aes_cbc_hmac_sha1(void)

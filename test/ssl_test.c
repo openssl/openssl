@@ -17,6 +17,12 @@
 
 #include "helpers/handshake.h"
 #include "helpers/ssl_test_ctx.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
 #include "testutil.h"
 
 static CONF *conf = NULL;

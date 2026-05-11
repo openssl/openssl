@@ -10,6 +10,16 @@
  */
 
 #include "cmp_local.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/cmp.h"
+#include "openssl/cmperr.h"
+#include "openssl/conf.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/http.h"
+#include "openssl/safestack.h"
+#include "openssl/x509v3.h"
 
 static int keep_alive(int want_keep_alive, int body_type, BIO **bios)
 {
