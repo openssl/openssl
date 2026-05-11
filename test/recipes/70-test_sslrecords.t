@@ -146,7 +146,8 @@ sub run_tests
     $proxy_start_success = $proxy->start();
 
     if ($run_test_as_dtls == 1) {
-        ok($proxy_start_success == 0, "Unrecognised record type in DTLS1.2");
+        # RFC 9147: DTLS silently discards invalid records
+        ok($proxy_start_success, "Unrecognised record type in DTLS1.2");
     } else {
         ok($fatal_alert, "Unrecognised record type in TLS1.2");
     }
@@ -166,7 +167,8 @@ sub run_tests
         $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
         $proxy_start_success = $proxy->start();
         if ($run_test_as_dtls == 1) {
-            ok($proxy_start_success == 0, "Unrecognised record type in DTLSv1");
+            # RFC 9147: DTLS silently discards invalid records
+            ok($proxy_start_success, "Unrecognised record type in DTLSv1");
         } else {
             ok($fatal_alert, "Unrecognised record type in TLSv1.1");
         }

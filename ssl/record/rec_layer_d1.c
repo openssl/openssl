@@ -383,8 +383,9 @@ start:
             || !PACKET_get_1(&alert, &alert_level)
             || !PACKET_get_1(&alert, &alert_descr)
             || PACKET_remaining(&alert) != 0) {
-            SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_INVALID_ALERT);
-            return -1;
+            if (!ssl_release_record(sc, rr, 0))
+                return -1;
+            goto start;
         }
 
         if (sc->msg_callback)
@@ -407,10 +408,8 @@ start:
                 return -1;
 
             sc->rlayer.alert_count++;
-            if (sc->rlayer.alert_count == MAX_WARN_ALERT_COUNT) {
-                SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE,
-                    SSL_R_TOO_MANY_WARN_ALERTS);
-                return -1;
+            if (sc->rlayer.alert_count >= MAX_WARN_ALERT_COUNT) {
+                goto start;
             }
 
             if (alert_descr == SSL_AD_CLOSE_NOTIFY) {
@@ -454,8 +453,9 @@ start:
             SSL_CTX_remove_session(sc->session_ctx, sc->session);
             return 0;
         } else {
-            SSLfatal(sc, SSL_AD_ILLEGAL_PARAMETER, SSL_R_UNKNOWN_ALERT_TYPE);
-            return -1;
+            if (!ssl_release_record(sc, rr, 0))
+                return -1;
+            goto start;
         }
 
         goto start;
@@ -573,8 +573,9 @@ start:
 
     switch (rr->type) {
     default:
-        SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_RECORD);
-        return -1;
+        if (!ssl_release_record(sc, rr, 0))
+            return -1;
+        goto start;
     case SSL3_RT_CHANGE_CIPHER_SPEC:
     case SSL3_RT_ALERT:
     case SSL3_RT_HANDSHAKE:
@@ -597,11 +598,11 @@ start:
             sc->s3.in_read_app_data = 2;
             return -1;
         } else {
-            SSLfatal(sc, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_RECORD);
-            return -1;
+            if (!ssl_release_record(sc, rr, 0))
+                return -1;
+            goto start;
         }
     }
-    /* not reached */
 }
 
 /*

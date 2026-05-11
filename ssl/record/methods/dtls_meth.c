@@ -163,16 +163,17 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
         unsigned char *mac;
 
         if (rr->orig_len < mac_size) {
-            RLAYERfatal(rl, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_TOO_SHORT);
-            return 0;
+            rr->length = 0;
+            rl->packet_length = 0;
+            goto end;
         }
         rr->length -= mac_size;
         mac = rr->data + rr->length;
         i = rl->funcs->mac(rl, rr, md, 0 /* not send */);
         if (i == 0 || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0) {
-            RLAYERfatal(rl, SSL_AD_BAD_RECORD_MAC,
-                SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
-            return 0;
+            rr->length = 0;
+            rl->packet_length = 0;
+            goto end;
         }
         /*
          * We've handled the mac now - there is no MAC inside the encrypted
