@@ -110,5 +110,6 @@ typedef struct srpsrvparm_st {
 
 int set_up_srp_verifier_file(SSL_CTX *ctx, srpsrvparm *srp_callback_parm,
     char *srpuserseed, char *srp_verifier_file);
+void cleanup_srp(srpsrvparm *srp_callback_parm);
 void lookup_srp_user(srpsrvparm *srp_callback_parm, BIO *bio_s_out);
 #endif /* OPENSSL_NO_SRP */

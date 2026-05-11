@@ -3121,10 +3121,7 @@ int s_server_main(int argc, char *argv[])
 end:
     SSL_CTX_free(ctx);
 #ifndef OPENSSL_NO_SRP
-    SRP_user_pwd_free(srp_callback_parm.user);
-    srp_callback_parm.user = NULL;
-    SRP_VBASE_free(srp_callback_parm.vb);
-    srp_callback_parm.vb = NULL;
+    cleanup_srp(&srp_callback_parm);
 #endif
     SSL_SESSION_free(psksess);
     set_keylog_file(NULL, NULL);
