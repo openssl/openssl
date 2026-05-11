@@ -12,7 +12,7 @@
 #pragma once
 
 #include <openssl/macros.h>
-#include <openssl/ssl.h>
+#include <openssl/types.h>
 
 #ifndef OPENSSL_NO_QUIC
 

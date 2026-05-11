@@ -19,7 +19,7 @@
 extern "C" {
 #endif
 
-#include <openssl/ssl.h>
+#include <openssl/types.h>
 #include <openssl/hpke.h>
 
 #ifndef OPENSSL_NO_ECH
