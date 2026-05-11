@@ -25,5 +25,11 @@ int ASN1_OCTET_STRING_cmp(const ASN1_OCTET_STRING *a,
 int ASN1_OCTET_STRING_set(ASN1_OCTET_STRING *x, const unsigned char *d,
     int len)
 {
-    return ASN1_STRING_set(x, d, len);
+    if (len < -1) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_SMALL);
+        return 0;
+    }
+    if (len == -1)
+        return ASN1_STRING_set_string(x, (const char *)d);
+    return ASN1_STRING_set_data(x, d, len);
 }

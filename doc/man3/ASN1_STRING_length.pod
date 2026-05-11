@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+ASN1_STRING_set_data, ASN1_STRING_set_string, ASN1_STRING_length_ex,
 ASN1_STRING_dup, ASN1_STRING_cmp, ASN1_STRING_set, ASN1_STRING_length,
 ASN1_STRING_type, ASN1_STRING_get0_data,
 ASN1_STRING_to_UTF8 - ASN1_STRING utility functions
@@ -10,18 +11,29 @@ ASN1_STRING_to_UTF8 - ASN1_STRING utility functions
 
  #include <openssl/asn1.h>
 
- int ASN1_STRING_length(ASN1_STRING *x);
  const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x);
 
  ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *a);
 
  int ASN1_STRING_cmp(ASN1_STRING *a, ASN1_STRING *b);
 
- int ASN1_STRING_set(ASN1_STRING *str, const void *data, int len);
-
  int ASN1_STRING_type(const ASN1_STRING *x);
 
  int ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in);
+
+ int ASN1_STRING_set_data(ASN1_STRING *str, const uint8_t *data, size_t len);
+
+ int ASN1_STRING_set_string(ASN1_STRING *str, const char *data);
+
+ size_t ASN1_STRING_length_ex(const ASN1_STRING *x);
+
+The following functions have been deprecated since OpenSSL 4.1, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
+
+ int ASN1_STRING_set(ASN1_STRING *str, const void *data, int len);
+
+ int ASN1_STRING_length(ASN1_STRING *x);
 
 =head1 DESCRIPTION
 
@@ -38,9 +50,25 @@ ASN1_STRING_dup() returns a copy of the structure I<a>.
 ASN1_STRING_cmp() compares I<a> and I<b> returning 0 if the two
 are identical. The string types and content are compared.
 
-ASN1_STRING_set() sets the data of string I<str> to the buffer
-I<data> or length I<len>. The supplied data is copied. If I<len>
-is -1 then the length is determined by strlen(data).
+ASN1_STRING_set() allocates memory for string I<str> to hold I<len>
+bytes of data. Any previously allocated memory owned by I<str> will be
+freed or re-used.  If I<data> is not NULL, I<len> bytes are copied
+from the memory pointed to by I<data> to I<str>. If I<len> is -1 then
+the length is determined by strlen(data).
+
+ASN1_STRING_set_data() allocates memory for string I<str> to hold
+I<len> bytes of data. Any previously allocated memory owned by I<str>
+will be freed or re-used.  If I<data> is not NULL, I<len> bytes are
+copied from the memory pointed to by I<data> to I<str>. It is an error
+to use this function on a string of type B<ASN1_BIT_STRING>.
+
+ASN1_STRING_set_string() allocates memory for the string I<str> and makes
+a copy of the characters from I<cstring>. Any previously
+allocated memory owned by I<str> will be freed or re-used.  I<cstring>
+must point to a valid NUL-terminated C string, and must not be
+NULL. The terminating NUL byte is not included in the data copied into
+I<str>.  It is an error to use this function on a string of type
+B<ASN1_BIT_STRING>.
 
 ASN1_STRING_type() returns the type of I<x>, using standard constants
 such as B<V_ASN1_OCTET_STRING>.
@@ -70,8 +98,9 @@ actual string type itself: for example for an IA5String the data will
 be ASCII, for a BMPString two bytes per character in big endian
 format, and for a UTF8String it will be in UTF8 format.
 
-Similar care should be take to ensure the data is in the correct format
-when calling ASN1_STRING_set().
+Similar care should be taken to ensure the data is in the correct
+format when calling ASN1_STRING_set(), ASN1_STRING_set_data(), or
+ASN1_STRING_set_string().
 
 =head1 RETURN VALUES
 
@@ -86,7 +115,8 @@ error occurred.
 ASN1_STRING_cmp() returns an integer greater than, equal to, or less than 0,
 according to whether I<a> is greater than, equal to, or less than I<b>.
 
-ASN1_STRING_set() returns 1 on success or 0 on error.
+ASN1_STRING_set(), ASN1_STRING_set_data(), and
+ASN1_STRING_set_string() return 1 on success or 0 on error or failure.
 
 ASN1_STRING_type() returns the type of I<x>.
 
@@ -96,6 +126,11 @@ negative value if an error occurred.
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>
+
+=head1 HISTORY
+
+ASN1_STRING_set_data(), ASN1_STRING_set_string(), and ASN1_STRING_length_ex()
+were added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
