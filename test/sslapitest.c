@@ -1461,6 +1461,144 @@ end:
     return testresult;
 }
 
+#ifndef OSSL_NO_USABLE_TLS1_3
+/*
+ * Test kTLS with SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER: retry SSL_write() after
+ * SSL_ERROR_WANT_WRITE using a different buffer pointer (same content) and
+ * verify that the data arrives intact.
+ */
+static int test_ktls_moving_write_buffer(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    BIO *bio_retry = NULL, *bio_orig = NULL;
+    int testresult = 0, cfd = -1, sfd = -1;
+    unsigned char *buf_orig = NULL, *buf_retry = NULL;
+    unsigned char outbuf[1024];
+    const size_t bufsz = sizeof(outbuf);
+    size_t written, readbytes, totread = 0, i;
+
+    /* kTLS requires real sockets */
+    if (!TEST_true(create_test_sockets(&cfd, &sfd, SOCK_STREAM, NULL)))
+        goto end;
+
+    /* Skip if the kernel does not support kTLS */
+    if (!ktls_chk_platform(cfd)) {
+        testresult = TEST_skip("Kernel does not support KTLS");
+        goto end;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx,
+            TLS_server_method(), TLS_client_method(),
+            TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_128_GCM_SHA256"))
+        || !TEST_true(SSL_CTX_set_ciphersuites(sctx, "TLS_AES_128_GCM_SHA256")))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects2(sctx, cctx, &serverssl,
+            &clientssl, sfd, cfd)))
+        goto end;
+
+    /* Enable kTLS on the writing side (client) */
+    if (!TEST_true(SSL_set_options(clientssl, SSL_OP_ENABLE_KTLS)))
+        goto end;
+
+    SSL_set_mode(clientssl, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+    SSL_set_mode(clientssl, SSL_MODE_ENABLE_PARTIAL_WRITE);
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* Get a reference to the original BIO to replace it later. */
+    bio_orig = SSL_get_wbio(clientssl);
+    if (!TEST_ptr(bio_orig) || !TEST_true(BIO_up_ref(bio_orig))) {
+        bio_orig = NULL;
+        goto end;
+    }
+
+    /* Skip if kTLS TX was not activated for this cipher */
+    if (!BIO_get_ktls_send(bio_orig)) {
+        testresult = TEST_skip("kTLS send not supported");
+        goto end;
+    }
+
+    /* Swap write BIO to force WANT_WRITE */
+    bio_retry = BIO_new(bio_s_always_retry());
+    if (!TEST_ptr(bio_retry))
+        goto end;
+
+    SSL_set0_wbio(clientssl, bio_retry);
+    bio_retry = NULL; /* ownership transferred to clientssl */
+
+    /* Allocate two buffers with identical content but different addresses */
+    buf_orig = OPENSSL_malloc(bufsz);
+    buf_retry = OPENSSL_malloc(bufsz);
+    if (!TEST_ptr(buf_orig) || !TEST_ptr(buf_retry))
+        goto end;
+
+    for (i = 0; i < bufsz; i++)
+        buf_orig[i] = buf_retry[i] = (unsigned char)(i & 0xff);
+
+    /* First write attempt - will fail with WANT_WRITE */
+    if (!TEST_false(SSL_write_ex(clientssl, buf_orig, bufsz, &written))
+        || !TEST_int_eq(SSL_get_error(clientssl, 0), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /* Restore the real socket BIO so the retry can actually send data */
+    SSL_set0_wbio(clientssl, bio_orig);
+    bio_orig = NULL;
+
+    /* Poison and free the original buffer */
+    memset(buf_orig, 0xDE, bufsz);
+    OPENSSL_free(buf_orig);
+    buf_orig = NULL;
+
+    /* Retry with a different buffer pointer */
+    if (!TEST_true(SSL_write_ex(clientssl, buf_retry, bufsz, &written)))
+        goto end;
+
+    /* Read the data on the server side */
+    totread = 0;
+    while (totread < bufsz) {
+        if (!SSL_read_ex(serverssl, outbuf + totread, bufsz - totread,
+                &readbytes)) {
+            if (!TEST_int_eq(SSL_get_error(serverssl, 0), SSL_ERROR_WANT_READ))
+                goto end;
+        } else {
+            totread += readbytes;
+        }
+    }
+
+    /* Verify data integrity */
+    if (!TEST_mem_eq(buf_retry, bufsz, outbuf, totread))
+        goto end;
+
+    testresult = 1;
+end:
+    OPENSSL_free(buf_orig);
+    OPENSSL_free(buf_retry);
+    if (clientssl != NULL) {
+        SSL_shutdown(clientssl);
+        SSL_free(clientssl);
+    }
+    if (serverssl != NULL) {
+        SSL_shutdown(serverssl);
+        SSL_free(serverssl);
+    }
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_free_all(bio_orig);
+    if (cfd != -1)
+        close(cfd);
+    if (sfd != -1)
+        close(sfd);
+    return testresult;
+}
+#endif /* !defined(OSSL_NO_USABLE_TLS1_3) */
+
 static struct ktls_test_cipher {
     int tls_version;
     const char *cipher;
@@ -14930,6 +15068,9 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_ktls, NUM_KTLS_TEST_CIPHERS * 4);
     ADD_ALL_TESTS(test_ktls_sendfile, NUM_KTLS_TEST_CIPHERS * 2);
+#endif
+#ifndef OSSL_NO_USABLE_TLS1_3
+    ADD_TEST(test_ktls_moving_write_buffer);
 #endif
 #endif
     ADD_TEST(test_large_message_tls);
