@@ -123,7 +123,7 @@ DEF_SCRIPT(multi_stream, "multi stream test")
     OP_WRITE_B(S5, "unseen");
     /*
      * The client `C` uses a reject stream policy. The conclude operation
-     * is doomed to fail because server stream object `SS` does
+     * is doomed to fail because server stream object `S5` does
      * not represent working/established stream.
      */
     OP_CONCLUDE_FAIL(S5);
@@ -131,7 +131,7 @@ DEF_SCRIPT(multi_stream, "multi stream test")
     OP_SELECT_SSL(0, S);
     OP_SELECT_SSL(1, S5);
     /*
-     * Stream S6 is rejected because of reject policy on client side.
+     * Stream S5 is rejected because of reject policy on client side.
      */
     OP_FUNC(check_rejected);
 
@@ -143,7 +143,7 @@ DEF_SCRIPT(multi_stream, "multi stream test")
     OP_SELECT_SSL(0, S);
     OP_SELECT_SSL(1, S6);
     /*
-     * Remember the client (`C`) and server `C` got created by
+     * Remember the client `C` and server `S` got created by
      * OP_SIMPLE_PAIR_CON() which creates QUIC connection objects switched to
      * default (implicit) stream mode (see SSL_set_default_stream_mode(3ossl)).
      * The stream policy on client `C` is AUTO now which in combination with
