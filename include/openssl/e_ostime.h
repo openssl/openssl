@@ -21,6 +21,7 @@
  * substantial set of headers on some platforms (e.g. <winsock2.h> on Win32).
  */
 
+/* IWYU pragma: begin_exports */
 #if defined(OPENSSL_SYS_WINDOWS)
 #if !defined(_WINSOCKAPI_)
 /*
@@ -34,5 +35,6 @@
 #else
 #include <sys/time.h>
 #endif
+/* IWYU pragma: end_exports */
 
 #endif
