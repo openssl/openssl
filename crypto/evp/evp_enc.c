@@ -1589,8 +1589,12 @@ void EVP_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
     void (*fn)(EVP_CIPHER *mac, void *arg),
     void *arg)
 {
+    struct EVP_CIPHER_do_all_provided_thunk t;
+
+    t.fn = fn;
+    t.arg = arg;
     evp_generic_do_all(libctx, OSSL_OP_CIPHER,
-        (void (*)(void *, void *))fn, arg,
+        EVP_CIPHER_do_all_provided_thunk, &t,
         evp_cipher_from_algorithm, evp_cipher_up_ref,
         evp_cipher_free);
 }
