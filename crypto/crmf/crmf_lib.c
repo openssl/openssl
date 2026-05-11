@@ -601,6 +601,7 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecer
     EVP_CIPHER *cipher = NULL; /* used cipher */
     int cikeysize = 0; /* key size from cipher */
     unsigned char *iv = NULL; /* initial vector for symmetric encryption */
+    int iv_len; /* iv length */
     unsigned char *outbuf = NULL; /* decryption output buffer */
     const unsigned char *p = NULL; /* needed for decoding ASN1 */
     int n, outlen = 0;
@@ -655,11 +656,13 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecer
     } else {
         goto end;
     }
-    if ((iv = OPENSSL_malloc(EVP_CIPHER_get_iv_length(cipher))) == NULL)
+
+    iv_len = EVP_CIPHER_get_iv_length(cipher);
+    if ((iv = OPENSSL_malloc(iv_len)) == NULL)
         goto end;
-    if (ASN1_TYPE_get_octetstring(ecert->symmAlg->parameter, iv,
-            EVP_CIPHER_get_iv_length(cipher))
-        != EVP_CIPHER_get_iv_length(cipher)) {
+    if (ecert->symmAlg->parameter == NULL
+        || ASN1_TYPE_get_octetstring(ecert->symmAlg->parameter, iv, iv_len)
+            != iv_len) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_MALFORMED_IV);
         goto end;
     }
