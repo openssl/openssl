@@ -473,10 +473,15 @@ static int ktls_initialise_write_packets(OSSL_RECORD_LAYER *rl,
     wb->type = templates[0].type;
 
     /*
+     * Free any internal buffer allocated during a previous write retry
+     * (see tls_retry_write_records).  App buffers are not ours to free.
+     */
+    if (!TLS_BUFFER_is_app_buffer(wb))
+        OPENSSL_free(TLS_BUFFER_get_buf(wb));
+
+    /*
      * ktls doesn't modify the buffer, but to avoid a warning we need
      * to discard the const qualifier.
-     * This doesn't leak memory because the buffers have never been allocated
-     * with KTLS
      */
     TLS_BUFFER_set_buf(wb, (unsigned char *)templates[0].buf);
     TLS_BUFFER_set_offset(wb, 0);
@@ -549,10 +554,7 @@ static int ktls_alloc_buffers(OSSL_RECORD_LAYER *rl)
 
 static int ktls_free_buffers(OSSL_RECORD_LAYER *rl)
 {
-    /* We use the application buffer directly for writing */
-    if (rl->direction == OSSL_RECORD_DIRECTION_WRITE)
-        return 1;
-
+    /* Write buffer may be an app buffer or an internally allocated copy */
     return tls_free_buffers(rl);
 }
 
