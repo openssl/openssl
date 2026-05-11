@@ -525,7 +525,7 @@ DEF_FUNC(hf_conclude_fail)
 
     REQUIRE_SSL(ssl);
 
-    if (!TEST_false(SSL_stream_conclude(ssl, 0))) {
+    if (TEST_true(SSL_stream_conclude(ssl, 0))) {
         /*
          * Here we consider situation when talking to
          * remote peer which rejects all incoming streams
@@ -542,11 +542,11 @@ DEF_FUNC(hf_conclude_fail)
          * can move send stream state from QUIC_SSTREAM_STATE_READY
          * to QUIC_SSTREAM_STATE_RESET_RECVD/QUIC_SSTREAM_STATE_NONE
          * If SSL_stream_conclude() follows SSL_write() immediately
-         & the local send stream state may still be in
+         * the local send stream state may still be in
          * QUIC_SSTREAM_STATE_READY and call succeeds.
-         * Using F_SPIN_AGAIN() makes radix framework to retry
+         * Using F_SPIN_AGAIN() makes radix framework retry
          * call to hf_conclude_fail() function. The radix
-         * framework keeps trying until test deadline elapes,
+         * framework keeps trying until test deadline elapses,
          * see TERP_execute() for details.
          */
         F_SPIN_AGAIN();
