@@ -381,7 +381,7 @@ STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
         return NULL;
 
     p = ASN1_STRING_get0_data(oct);
-    if ((sk = o2i_SCT_LIST(a, &p, ASN1_STRING_length(oct))) != NULL)
+    if ((sk = o2i_SCT_LIST(a, &p, ASN1_STRING_length_ex(oct))) != NULL)
         *pp += len;
 
     ASN1_OCTET_STRING_free(oct);

@@ -50,6 +50,8 @@ static X509_CERT_AUX *aux_get(X509 *x)
 int X509_alias_set1(X509 *x, const unsigned char *name, int len)
 {
     X509_CERT_AUX *aux;
+    size_t len_s;
+
     if (!name) {
         if (!x || !x->aux || !x->aux->alias)
             return 1;
@@ -59,14 +61,25 @@ int X509_alias_set1(X509 *x, const unsigned char *name, int len)
     }
     if ((aux = aux_get(x)) == NULL)
         return 0;
+
+    if (len < -1)
+        return 0;
+
+    if (len == -1)
+        len_s = strlen((const char *)name);
+    else
+        len_s = len;
+
     if (aux->alias == NULL && (aux->alias = ASN1_UTF8STRING_new()) == NULL)
         return 0;
-    return ASN1_STRING_set(aux->alias, name, len);
+    return ASN1_STRING_set_data(aux->alias, name, len_s);
 }
 
 int X509_keyid_set1(X509 *x, const unsigned char *id, int len)
 {
     X509_CERT_AUX *aux;
+    size_t len_s;
+
     if (!id) {
         if (!x || !x->aux || !x->aux->keyid)
             return 1;
@@ -76,10 +89,19 @@ int X509_keyid_set1(X509 *x, const unsigned char *id, int len)
     }
     if ((aux = aux_get(x)) == NULL)
         return 0;
+
+    if (len < -1)
+        return 0;
+
+    if (len == -1)
+        len_s = strlen((const char *)id);
+    else
+        len_s = len;
+
     if (aux->keyid == NULL
         && (aux->keyid = ASN1_OCTET_STRING_new()) == NULL)
         return 0;
-    return ASN1_STRING_set(aux->keyid, id, len);
+    return ASN1_STRING_set_data(aux->keyid, id, len_s);
 }
 
 const unsigned char *X509_alias_get0(const X509 *x, int *len)
