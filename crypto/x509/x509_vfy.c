@@ -7,6 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "crypto/asn1.h"
+#include "internal/common.h"
+#include "internal/nelem.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/safestack.h"
+#include "openssl/x509_vfy.h"
+#include "openssl/x509err.h"
+#include <stdint.h>
+#include <string.h>
 #define OPENSSL_SUPPRESS_DEPRECATED
 #include "internal/deprecated.h"
 

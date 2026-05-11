@@ -13,6 +13,7 @@
  */
 #include "internal/deprecated.h"
 
+#include <stdint.h>
 #include <string.h> /* memcpy */
 #include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
@@ -24,9 +25,13 @@
 #include <openssl/prov_ssl.h>
 #include <openssl/proverr.h>
 #include "internal/nelem.h"
+#include "internal/packet.h"
 #include "internal/sizes.h"
 #include "internal/cryptlib.h"
 #include "internal/sm3.h"
+#include "openssl/core.h"
+#include "openssl/e_os2.h"
+#include "openssl/ec.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"

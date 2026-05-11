@@ -11,6 +11,9 @@
 #include "internal/e_os.h"
 #include "crypto/cryptlib.h"
 #include <openssl/safestack.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #if defined(_WIN32) && !defined(OPENSSL_SYS_UEFI)
 #include <tchar.h>

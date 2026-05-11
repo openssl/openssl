@@ -7,8 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "crypto/ml_dsa/ml_dsa_poly.h"
 #include "ml_dsa_local.h"
 #include "ml_dsa_vector.h"
+#include <stddef.h>
 #include "ml_dsa_matrix.h"
 
 /*

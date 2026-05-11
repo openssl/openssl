@@ -9,7 +9,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "crypto/cmp/cmp_local.h"
 #include "helpers/cmp_testlib.h"
+#include "openssl/asn1.h"
+#include "openssl/cmp.h"
+#include "openssl/crypto.h"
+#include "test/testutil.h"
+#include <string.h>
 
 typedef struct test_fixture {
     const char *test_case_name;

@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "openssl/evp.h"
 #include <openssl/macros.h>
 
 #ifndef OPENSSL_NO_CAST

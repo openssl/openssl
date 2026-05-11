@@ -8,6 +8,7 @@
  */
 
 #include <assert.h>
+#include <stdint.h>
 #include <string.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -17,10 +18,14 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/self_test.h>
+#include "crypto/types.h"
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
 #include <openssl/param_build.h>
 #include "crypto/ecx.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"

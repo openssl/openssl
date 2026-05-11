@@ -11,6 +11,7 @@
  * RSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
+#include "fips/fipsindicator.h"
 #include "internal/deprecated.h"
 
 #include <openssl/crypto.h>
@@ -28,11 +29,14 @@
 #include "internal/fips.h"
 #include "internal/sizes.h"
 #include "crypto/rsa.h"
+#include "openssl/core.h"
+#include "openssl/e_os2.h"
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/securitycheck.h"
 #include <stdlib.h>
+#include <string.h>
 #include "providers/implementations/asymciphers/rsa_enc.inc"
 
 static OSSL_FUNC_asym_cipher_newctx_fn rsa_newctx;

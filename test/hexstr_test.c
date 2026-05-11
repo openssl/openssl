@@ -14,7 +14,10 @@
 
 #include "internal/nelem.h"
 #include "internal/cryptlib.h"
+#include "openssl/crypto.h"
 #include "testutil.h"
+#include <stddef.h>
+#include <string.h>
 
 struct testdata {
     const char *in;

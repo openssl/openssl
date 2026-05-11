@@ -11,7 +11,11 @@
 #include "internal/quic_error.h"
 #include "internal/common.h"
 #include "internal/safe_math.h"
+#include "internal/time.h"
+#include "openssl/quic.h"
 #include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
 
 OSSL_SAFE_MATH_UNSIGNED(uint64_t, uint64_t)
 

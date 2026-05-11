@@ -26,9 +26,16 @@
 #include "internal/passphrase.h"
 #include "crypto/pem.h" /* For internal PVK and "blob" headers */
 #include "crypto/rsa.h"
+#include "openssl/bio.h"
+#include "openssl/core.h"
+#include "openssl/dsa.h"
+#include "openssl/evp.h"
+#include "openssl/pemerr.h"
+#include "openssl/rsa.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "prov/endecoder_local.h"
+#include "prov/provider_ctx.h"
 
 struct msblob2key_ctx_st; /* Forward declaration */
 typedef void *b2i_of_void_fn(const unsigned char **in, unsigned int bitlen,

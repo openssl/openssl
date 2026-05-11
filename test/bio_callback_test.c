@@ -6,6 +6,7 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#include "openssl/crypto.h"
 #define OPENSSL_SUPPRESS_DEPRECATED
 #include <stdio.h>
 #include <string.h>

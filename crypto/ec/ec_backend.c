@@ -12,11 +12,20 @@
  * but still ok for internal use.
  */
 #include "internal/deprecated.h"
+#include "openssl/asn1.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/ec.h"
+#include "openssl/ecerr.h"
+#include "openssl/obj_mac.h"
 
 #include <openssl/core_names.h>
 #include <openssl/objects.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+#include <stddef.h>
 #ifndef FIPS_MODULE
 #include <openssl/x509.h>
 #endif

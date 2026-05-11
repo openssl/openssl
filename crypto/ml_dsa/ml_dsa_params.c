@@ -9,6 +9,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <openssl/evp.h>
+#include "crypto/ml_dsa.h"
 #include "ml_dsa_local.h"
 
 /* See FIPS 204 Section 4 Table 1 & Table 2 */

@@ -48,6 +48,16 @@
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 #include <openssl/prov_ssl.h>
+#include "openssl/aes.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/opensslv.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "prov/provider_ctx.h"
 #include "prov/digestcommon.h"
 #include "prov/ciphercommon.h"
@@ -58,6 +68,7 @@
 #include "internal/provider.h"
 #include "crypto/context.h"
 #include "internal/core.h"
+#include "prov/providercommon.h"
 
 /**
  * @brief Release resources and clean up the context.

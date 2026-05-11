@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <limits.h>
 #include <assert.h>
@@ -15,13 +16,20 @@
 #include <openssl/rand.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
+#include <string.h>
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
 #include "internal/core.h"
 #include "internal/common.h"
+#include "internal/refcount.h"
 #include "internal/safe_math.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/evperr.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
 
 OSSL_SAFE_MATH_SIGNED(int, int)
 

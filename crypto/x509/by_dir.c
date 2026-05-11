@@ -7,6 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "openssl/bio.h"
+#include "openssl/buffer.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/safestack.h"
+#include "openssl/x509_vfy.h"
+#include "openssl/x509err.h"
+#include <string.h>
 #if defined(__TANDEM) && defined(_SPT_MODEL_)
 /*
  * These definitions have to come first in SPT due to scoping of the

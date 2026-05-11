@@ -23,6 +23,7 @@
    <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/crypto.h>

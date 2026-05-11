@@ -8,6 +8,14 @@
  */
 
 /* We need to use some deprecated APIs */
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/ec.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "opt.h"
+#include <stdint.h>
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>

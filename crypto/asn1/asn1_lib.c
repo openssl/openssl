@@ -9,9 +9,15 @@
 
 #include <stdio.h>
 #include <limits.h>
+#include "crypto/asn1.h"
 #include "internal/cryptlib.h"
 #include <openssl/asn1.h>
+#include <string.h>
 #include "asn1_local.h"
+#include "openssl/asn1err.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/safestack.h"
 
 static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
     long max);

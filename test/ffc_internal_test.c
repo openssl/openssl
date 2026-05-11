@@ -24,6 +24,8 @@
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#include "openssl/dh.h"
+#include "openssl/obj_mac.h"
 #include "testutil.h"
 
 #include "internal/ffc.h"

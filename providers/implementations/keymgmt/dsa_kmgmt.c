@@ -11,6 +11,9 @@
  * DSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
+#include "fips/fipsindicator.h"
+#include "internal/common.h"
+#include "internal/cryptlib.h"
 #include "internal/deprecated.h"
 
 #include <openssl/core_dispatch.h>
@@ -18,6 +21,14 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
+#include "internal/ffc.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/dsa.h"
+#include "openssl/e_os2.h"
+#include "openssl/param_build.h"
+#include "openssl/params.h"
+#include <stddef.h>
 #include "prov/securitycheck.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"

@@ -14,6 +14,13 @@
  */
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE /* make sure dladdr is declared */
+#include "crypto/dso_conf.h"
+#include "internal/dso.h"
+#include "internal/dsoerr.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include <string.h>
 #endif
 
 #include "dso_local.h"

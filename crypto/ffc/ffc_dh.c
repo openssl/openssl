@@ -10,6 +10,12 @@
 #include "internal/ffc.h"
 #include "internal/nelem.h"
 #include "crypto/bn_dh.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include <stddef.h>
+#include <stdint.h>
 
 #ifndef OPENSSL_NO_DH
 

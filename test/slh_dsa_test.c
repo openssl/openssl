@@ -12,8 +12,16 @@
 #include <openssl/param_build.h>
 #include <openssl/rand.h>
 #include <openssl/pem.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "crypto/slh_dsa.h"
 #include "internal/nelem.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/params.h"
+#include "openssl/provider.h"
+#include "opt.h"
 #include "testutil.h"
 #include "slh_dsa.inc"
 

@@ -10,6 +10,7 @@
 #include "internal/deprecated.h"
 
 #include "cipher_aes_cbc_hmac_sha_etm.h"
+#include "openssl/core.h"
 #include "prov/providercommon.h"
 #include "prov/ciphercommon_aead.h"
 #include "prov/implementations.h"

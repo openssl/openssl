@@ -8,6 +8,9 @@
  */
 
 #include "internal/e_os.h"
+#include <errno.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 #include <openssl/crypto.h>
@@ -15,6 +18,8 @@
 #include "internal/cryptlib.h"
 #include "internal/thread_once.h"
 #include "internal/to_hex.h"
+#include "openssl/cryptoerr.h"
+#include "openssl/err.h"
 
 #define DEFAULT_SEPARATOR ':'
 #define CH_ZERO '\0'

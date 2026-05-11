@@ -13,6 +13,18 @@
  */
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 #define OPENSSL_SUPPRESS_DEPRECATED
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/e_os2.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/provider.h"
+#include "openssl/x509.h"
+#include "openssl/x509_vfy.h"
+#include "opt.h"
+#include <stdint.h>
+#include <stdlib.h>
+#include <time.h>
 #endif
 
 #if defined(_WIN32)

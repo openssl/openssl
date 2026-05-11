@@ -16,6 +16,12 @@
 #include <openssl/core_names.h>
 #include "internal/common.h"
 #include "internal/fips.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/e_os2.h"
+#include "openssl/evp.h"
+#include "openssl/params.h"
+#include "prov/provider_util.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/hmac_drbg.h"

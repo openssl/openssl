@@ -13,10 +13,22 @@
 #include <openssl/ts.h>
 #include <openssl/pkcs7.h>
 #include <openssl/crypto.h>
+#include <string.h>
+#include <time.h>
 #include "internal/cryptlib.h"
 #include "internal/sizes.h"
 #include "internal/time.h"
 #include "crypto/ess.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/err.h"
+#include "openssl/ess.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/safestack.h"
+#include "openssl/tserr.h"
+#include "openssl/x509.h"
+#include "openssl/x509v3.h"
 #include "ts_local.h"
 
 DEFINE_STACK_OF_CONST(EVP_MD)

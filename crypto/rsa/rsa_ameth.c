@@ -13,6 +13,7 @@
  */
 #include "internal/deprecated.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
@@ -23,6 +24,17 @@
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/rsa.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/params.h"
+#include "openssl/rsa.h"
+#include "openssl/rsaerr.h"
 #include "rsa_local.h"
 
 /* Set any parameters associated with pkey */

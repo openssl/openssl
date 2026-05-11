@@ -16,8 +16,13 @@
 #include <openssl/rand.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/proverr.h>
+#include "fips/fipsindicator.h"
 #include "internal/cryptlib.h"
 #include "internal/thread_once.h"
+#include "openssl/core.h"
+#include "openssl/e_os2.h"
+#include "openssl/evp.h"
+#include "openssl/params.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"

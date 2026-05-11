@@ -21,6 +21,14 @@
 #include <openssl/err.h>
 #include <openssl/self_test.h>
 #include <openssl/proverr.h>
+#include "internal/ffc.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/dh.h"
+#include "openssl/e_os2.h"
+#include "openssl/obj_mac.h"
+#include "openssl/param_build.h"
+#include "openssl/params.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"

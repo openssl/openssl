@@ -7,10 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <string.h>
 #include <openssl/ssl.h>
 #include "helpers/quictestlib.h"
 #include "internal/quic_error.h"
+#include "internal/quic_tserver.h"
+#include "internal/quic_wire_pkt.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/quic.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
 #include "testutil.h"
 
 static char *cert = NULL;

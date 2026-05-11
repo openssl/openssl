@@ -7,9 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/nelem.h"
 #include "internal/packet.h"
+#include "internal/quic_predef.h"
 #include "internal/quic_txpim.h"
 #include "testutil.h"
+#include <stddef.h>
 
 static int test_txpim(void)
 {

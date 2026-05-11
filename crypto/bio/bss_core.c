@@ -8,9 +8,14 @@
  */
 
 #include <openssl/core_dispatch.h>
+#include <stddef.h>
 #include "bio_local.h"
 #include "internal/cryptlib.h"
 #include "crypto/context.h"
+#include "openssl/bio.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
 
 typedef struct {
     OSSL_FUNC_BIO_read_ex_fn *c_bio_read_ex;

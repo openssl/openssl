@@ -7,11 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/x509_vfy.h"
+#include "opt.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
+#include <sys/socket.h>
+#include <time.h>
 
 #ifndef OPENSSL_NO_SOCK
 

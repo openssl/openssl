@@ -9,6 +9,11 @@
  */
 
 #include <stdio.h>
+#include "internal/statem.h"
+#include "openssl/crypto.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/tls1.h"
 #include "ssl_local.h"
 #include "internal/ssl_unwrap.h"
 

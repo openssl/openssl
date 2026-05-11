@@ -25,6 +25,16 @@
 #include <openssl/ssl.h>
 #include "internal/nelem.h"
 #include "internal/refcount.h"
+#include "openssl/bio.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/pem.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/x509.h"
 
 #include <crypto/asn1.h>
 

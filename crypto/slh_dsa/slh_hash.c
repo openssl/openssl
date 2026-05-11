@@ -7,12 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "crypto/slh_dsa.h"
+#include "crypto/slh_dsa/slh_adrs.h"
+#include "crypto/slh_dsa/slh_hash.h"
+#include "crypto/slh_dsa/slh_params.h"
 #include "internal/deprecated.h" /* PKCS1_MGF1() */
 
+#include <stdint.h>
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include <openssl/rsa.h> /* PKCS1_MGF1() */
+#include "internal/packet.h"
+#include "openssl/crypto.h"
+#include "openssl/params.h"
 #include "slh_dsa_local.h"
 #include "slh_dsa_key.h"
 

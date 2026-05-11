@@ -9,10 +9,17 @@
 
 #include <openssl/crypto.h>
 #include "crypto/store.h"
+#include "internal/common.h"
 #include "internal/core.h"
+#include "internal/cryptlib.h"
 #include "internal/namemap.h"
 #include "internal/property.h"
 #include "internal/provider.h"
+#include "internal/refcount.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/storeerr.h"
 #include "store_local.h"
 #include "crypto/context.h"
 

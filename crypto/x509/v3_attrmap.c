@@ -11,6 +11,11 @@
 #include <openssl/x509v3.h>
 #include <crypto/x509.h>
 #include "ext_dat.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
 
 ASN1_SEQUENCE(OSSL_ATAV) = {
     ASN1_SIMPLE(OSSL_ATAV, type, ASN1_OBJECT),

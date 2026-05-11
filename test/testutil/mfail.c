@@ -8,6 +8,7 @@
  */
 
 #include "../testutil.h"
+#include "openssl/err.h"
 #include "tu_local.h"
 
 #include <stdlib.h>

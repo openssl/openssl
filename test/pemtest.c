@@ -11,6 +11,8 @@
 #include <openssl/bio.h>
 #include <openssl/pem.h>
 
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
 #include "testutil.h"
 #include "internal/nelem.h"
 

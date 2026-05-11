@@ -17,11 +17,23 @@
 #include <openssl/provider.h>
 #include <openssl/trace.h>
 #include <crypto/bn.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 #include "internal/bio.h"
+#include "internal/common.h"
 #include "internal/ffc.h"
+#include "internal/passphrase.h"
+#include "internal/property.h"
 #include "internal/provider.h"
 #include "internal/encoder.h"
 #include "encoder_local.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/encodererr.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
 
 /* Number of octets per line */
 #define LABELED_BUF_PRINT_WIDTH 16

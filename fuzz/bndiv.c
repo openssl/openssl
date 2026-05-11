@@ -13,10 +13,12 @@
  * sign(a), and 0 <= r <= b
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include "fuzzer.h"
+#include "openssl/crypto.h"
 
 /* 256 kB */
 #define MAX_LEN (256 * 1000)

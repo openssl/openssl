@@ -11,10 +11,20 @@
  * DES low level APIs are deprecated for public use, but still ok for internal
  * use.
  */
+#include "fips/fipsindicator.h"
 #include "internal/deprecated.h"
 
 #include <openssl/rand.h>
 #include <openssl/proverr.h>
+#include "openssl/core_names.h"
+#include "openssl/crypto.h"
+#include "openssl/des.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/params.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "prov/ciphercommon.h"
 #include "cipher_tdes.h"
 #include "prov/implementations.h"

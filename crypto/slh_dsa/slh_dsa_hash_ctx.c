@@ -8,10 +8,12 @@
  */
 #include <stddef.h>
 #include <openssl/crypto.h>
+#include "crypto/slh_dsa.h"
 #include "slh_dsa_local.h"
 #include "slh_dsa_key.h"
 #include <openssl/evp.h>
 #include <openssl/sha.h>
+#include <stdint.h>
 #include "crypto/evp.h"
 
 /**

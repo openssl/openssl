@@ -9,6 +9,9 @@
 
 #include <openssl/evp.h>
 #include <openssl/provider.h>
+#include "openssl/crypto.h"
+#include "opt.h"
+#include <stddef.h>
 #include "testutil.h"
 
 static OSSL_LIB_CTX *libctx = NULL;

@@ -13,6 +13,7 @@
  */
 #include "internal/deprecated.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <openssl/opensslconf.h>
 #include <openssl/byteorder.h>

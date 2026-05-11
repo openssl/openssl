@@ -50,6 +50,9 @@
  * searched for a match until an empty entry is found.
  */
 
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include <stdint.h>
 #include <string.h>
 #include <internal/rcu.h>
 #include <internal/hashtable.h>

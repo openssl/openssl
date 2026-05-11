@@ -8,17 +8,26 @@
  */
 
 #include <stdio.h>
+#include "internal/common.h"
 #include "internal/cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "openssl/x509v3err.h"
 #include "x509_local.h"
 #include "pcy_local.h"
 #include "ext_dat.h"
 
 #include <crypto/asn1.h>
+#include <string.h>
 
 /* Certificate policies extension support: this one is a bit complex... */
 

@@ -7,8 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/common.h"
 #include "internal/e_os.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <limits.h>
 #include <errno.h>
@@ -19,10 +21,29 @@
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include <openssl/core_names.h>
+#include "internal/nelem.h"
+#include "internal/recordmethod.h"
+#include "internal/statem.h"
+#include "openssl/bio.h"
+#include "openssl/comp.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/dtls1.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/params.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl2.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
+#include <string.h>
 #include "record_local.h"
 #include "internal/packet.h"
 #include "internal/comp.h"
 #include "internal/ssl_unwrap.h"
+#include "ssl/record/record.h"
 
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL_CONNECTION *s)
 {

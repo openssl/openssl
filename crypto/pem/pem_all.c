@@ -23,6 +23,10 @@
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/dh.h>
+#include "openssl/crypto.h"
+#include "openssl/ec.h"
+#include "openssl/err.h"
+#include <string.h>
 #include "pem_local.h"
 
 static RSA *pkey_get_rsa(EVP_PKEY *key, RSA **rsa);

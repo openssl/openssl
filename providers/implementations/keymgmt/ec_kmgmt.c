@@ -11,6 +11,8 @@
  * ECDH/ECDSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
+#include "fips/fipsindicator.h"
+#include "internal/cryptlib.h"
 #include "internal/deprecated.h"
 
 #include <string.h>
@@ -23,6 +25,13 @@
 #include <openssl/self_test.h>
 #include "crypto/bn.h"
 #include "crypto/ec.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/ec.h"
+#include "openssl/obj_mac.h"
+#include "openssl/param_build.h"
+#include "openssl/params.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"

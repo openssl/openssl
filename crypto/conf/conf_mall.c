@@ -16,6 +16,7 @@
 #include "internal/provider.h"
 #include "crypto/rand.h"
 #include "conf_local.h"
+#include "openssl/evp.h"
 
 /* Load all OpenSSL builtin modules */
 

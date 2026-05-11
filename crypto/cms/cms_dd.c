@@ -14,8 +14,16 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include "cms_local.h"
+#include "openssl/asn1.h"
+#include "openssl/cmserr.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/x509.h"
 
 #include <crypto/asn1.h>
+#include <string.h>
 
 /* CMS DigestedData Utilities */
 

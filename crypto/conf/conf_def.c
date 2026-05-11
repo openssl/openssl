@@ -9,9 +9,16 @@
 
 /* Part of the code in here was originally in conf.c, which is now removed */
 
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include "internal/common.h"
 #include "internal/e_os.h" /* struct stat */
+#include "openssl/bio.h"
+#include "openssl/bioerr.h"
+#include "openssl/conferr.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
 #ifdef __TANDEM
 #include <sys/types.h> /* needed for stat.h */
 #include <sys/stat.h> /* struct stat */

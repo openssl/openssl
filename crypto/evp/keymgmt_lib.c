@@ -8,12 +8,21 @@
  */
 
 #include <openssl/core_names.h>
+#include "internal/common.h"
+#include <stddef.h>
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
 #include "crypto/evp.h"
 #include "internal/core.h"
 #include "internal/provider.h"
 #include "evp_local.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/evperr.h"
+#include "openssl/obj_mac.h"
+#include "openssl/params.h"
 
 /*
  * match_type() checks if two EVP_KEYMGMT are matching key types.  This

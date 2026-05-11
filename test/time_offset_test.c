@@ -15,6 +15,7 @@
 
 #include <openssl/asn1.h>
 #include <openssl/x509.h>
+#include "openssl/crypto.h"
 #include "testutil.h"
 #include "internal/nelem.h"
 

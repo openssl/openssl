@@ -12,6 +12,7 @@
 #include <openssl/err.h>
 #include <openssl/macros.h>
 
+#include "openssl/bio.h"
 #include "testutil.h"
 
 #if defined(OPENSSL_SYS_WINDOWS)

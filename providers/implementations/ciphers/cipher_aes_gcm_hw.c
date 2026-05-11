@@ -13,9 +13,14 @@
  * This file uses the low level AES functions (which are deprecated for
  * non-internal use) in order to implement provider AES ciphers.
  */
+#include "crypto/aes_platform.h"
 #include "internal/deprecated.h"
 
 #include "cipher_aes_gcm.h"
+#include "openssl/aes.h"
+#include "openssl/modes.h"
+#include "prov/ciphercommon_gcm.h"
+#include <stddef.h>
 
 static int aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     size_t keylen)

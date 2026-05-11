@@ -14,6 +14,9 @@
 #include "internal/deprecated.h"
 
 #include "cipher_seed.h"
+#include "openssl/seed.h"
+#include "prov/ciphercommon.h"
+#include <stddef.h>
 
 static int cipher_hw_seed_initkey(PROV_CIPHER_CTX *ctx,
     const unsigned char *key, size_t keylen)

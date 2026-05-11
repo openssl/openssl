@@ -7,10 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 #include <openssl/bio.h>
 #include <openssl/safestack.h>
+#include "openssl/crypto.h"
 #include "opt.h"
 
 static BIO *bio_in = NULL;

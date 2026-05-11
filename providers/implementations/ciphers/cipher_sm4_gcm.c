@@ -10,8 +10,13 @@
 /* Dispatch functions for SM4 GCM mode */
 
 #include "cipher_sm4_gcm.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "prov/ciphercommon_aead.h"
+#include "prov/ciphercommon_gcm.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include <stddef.h>
 
 static OSSL_FUNC_cipher_freectx_fn sm4_gcm_freectx;
 

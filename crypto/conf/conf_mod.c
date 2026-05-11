@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/common.h"
 #include "internal/cryptlib.h"
 #include "internal/rcu.h"
 #include <stdio.h>
@@ -19,7 +20,12 @@
 #include "internal/thread_once.h"
 #include <openssl/x509.h>
 #include <openssl/trace.h>
+#include <string.h>
 #include "conf_local.h"
+#include "openssl/bio.h"
+#include "openssl/conferr.h"
+#include "openssl/err.h"
+#include "openssl/safestack.h"
 
 DEFINE_STACK_OF(CONF_MODULE)
 DEFINE_STACK_OF(CONF_IMODULE)

@@ -11,8 +11,14 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/bio.h>
+#include <stddef.h>
+#include <stdint.h>
 #include "fuzzer.h"
+#include "internal/packet.h"
+#include "internal/quic_predef.h"
 #include "internal/quic_srtm.h"
+#include "internal/quic_types.h"
+#include "openssl/crypto.h"
 
 int FuzzerInitialize(int *argc, char ***argv)
 {

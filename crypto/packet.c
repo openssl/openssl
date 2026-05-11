@@ -7,7 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/common.h"
 #include "internal/cryptlib.h"
+#include "internal/quic_vlint.h"
+#include "openssl/buffer.h"
+#include "openssl/crypto.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "internal/packet.h"
 #if !defined OPENSSL_NO_QUIC && !defined FIPS_MODULE
 #include "internal/packet_quic.h"

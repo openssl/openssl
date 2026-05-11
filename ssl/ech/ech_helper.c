@@ -9,9 +9,15 @@
 
 #include <openssl/ssl.h>
 #include <openssl/ech.h>
+#include <stddef.h>
+#include <stdint.h>
 #include "../ssl_local.h"
 #include "ech_local.h"
 #include "internal/ech_helpers.h"
+#include "internal/packet.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/tls1.h"
 
 /* used in ECH crypto derivations (odd format for EBCDIC goodness) */
 /* "tls ech" */

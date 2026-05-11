@@ -13,6 +13,10 @@
 #include <openssl/x509_acert.h>
 #include "crypto/asn1.h"
 #include "ext_dat.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
 
 #include <crypto/asn1.h>
 

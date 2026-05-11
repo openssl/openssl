@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <string.h>
 #include <openssl/core_names.h>
 #include <openssl/kdf.h>
@@ -22,6 +23,8 @@
 #include "internal/packet.h"
 #include "internal/nelem.h"
 #include "internal/common.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
 
 /*
  * Delimiter used in OSSL_HPKE_str2suite

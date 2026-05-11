@@ -8,7 +8,11 @@
  */
 
 #include <openssl/core.h>
+#include <stddef.h>
 #include "bio_local.h"
+#include "internal/refcount.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
 
 /*-
  * Core BIO structure

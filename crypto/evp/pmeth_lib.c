@@ -13,6 +13,8 @@
  */
 #include "internal/deprecated.h"
 
+#include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <openssl/evp.h>
@@ -20,7 +22,15 @@
 #include <openssl/dh.h>
 #include <openssl/rsa.h>
 #include <openssl/kdf.h>
+#include <string.h>
 #include "internal/cryptlib.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evperr.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/params.h"
 #ifndef FIPS_MODULE
 #include "crypto/asn1.h"
 #endif

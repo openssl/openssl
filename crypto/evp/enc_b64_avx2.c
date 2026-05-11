@@ -4,6 +4,7 @@
 #include "internal/cryptlib.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+#include "openssl/e_os2.h"
 
 #if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
 #if !defined(_M_ARM64EC)

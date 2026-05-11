@@ -9,12 +9,18 @@
 
 #include "internal/deprecated.h"
 
+#include <limits.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include <openssl/dh.h>
+#include <stddef.h>
 #include "crypto/dh.h"
 #include "crypto/evp.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/evperr.h"
 
 static int dh_paramgen_check(EVP_PKEY_CTX *ctx)
 {

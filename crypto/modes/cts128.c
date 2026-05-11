@@ -10,6 +10,7 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include "crypto/modes.h"
+#include "openssl/modes.h"
 
 /*
  * Trouble with Ciphertext Stealing, CTS, mode is that there is no

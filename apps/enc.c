@@ -11,7 +11,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include "app_libctx.h"
 #include "apps.h"
+#include "fmt.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/params.h"
+#include "openssl/safestack.h"
+#include "opt.h"
 #include "progs.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>

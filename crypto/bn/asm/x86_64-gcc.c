@@ -8,6 +8,8 @@
  */
 
 #include "../bn_local.h"
+#include "openssl/bn.h"
+#include <stddef.h>
 #if !(defined(__GNUC__) && __GNUC__ >= 2)
 /* clang-format off */
 # include "../bn_asm.c"         /* kind of dirty hack for Sun Studio */

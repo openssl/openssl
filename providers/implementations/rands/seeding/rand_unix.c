@@ -9,6 +9,13 @@
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#include <errno.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ipc.h>
+#include <sys/select.h>
+#include <time.h>
 #endif
 #include "internal/e_os.h"
 #include <stdio.h>

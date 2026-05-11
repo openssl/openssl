@@ -9,8 +9,12 @@
 
 #include "../testutil.h"
 #include "internal/nelem.h"
+#include "openssl/crypto.h"
+#include "opt.h"
 #include "tu_local.h"
 #include "output.h"
+#include <stdarg.h>
+#include <stddef.h>
 
 static int used[100] = { 0 };
 

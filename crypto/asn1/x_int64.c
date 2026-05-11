@@ -7,12 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include <openssl/asn1t.h>
 #include <openssl/bn.h>
+#include <string.h>
 #include "asn1_local.h"
+#include "openssl/asn1.h"
+#include "openssl/asn1err.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 /*
  * Custom primitive types for handling int32_t, int64_t, uint32_t, uint64_t.

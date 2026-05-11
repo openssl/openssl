@@ -9,7 +9,16 @@
 
 #include "../../ssl_local.h"
 #include "../record_local.h"
+#include "internal/recordmethod.h"
+#include "openssl/bio.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
 #include "recmethod_local.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 
 #if defined(OPENSSL_SMALL_FOOTPRINT) \
     || !(defined(AES_ASM) && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)))

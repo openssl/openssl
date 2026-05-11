@@ -19,6 +19,9 @@
 #include "internal/cryptlib.h"
 #include "crypto/poly1305.h"
 
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "providers/implementations/macs/poly1305_prov.inc"

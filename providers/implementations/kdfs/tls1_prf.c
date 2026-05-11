@@ -50,8 +50,10 @@
  * Low level APIs (such as DH) are deprecated for public use, but still ok for
  * internal use.
  */
+#include "fips/fipsindicator.h"
 #include "internal/deprecated.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -63,6 +65,11 @@
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "crypto/evp.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"

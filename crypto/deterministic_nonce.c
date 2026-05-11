@@ -14,6 +14,8 @@
 #include <openssl/kdf.h>
 #include "internal/deterministic_nonce.h"
 #include "crypto/bn.h"
+#include "openssl/crypto.h"
+#include "openssl/params.h"
 
 /*
  * Convert a Bit String to an Integer (See RFC 6979 Section 2.3.2)

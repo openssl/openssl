@@ -8,6 +8,9 @@
  */
 
 #include <openssl/core_dispatch.h>
+#include "openssl/core.h"
+#include "prov/provider_ctx.h"
+#include <stddef.h>
 #include "prov/seeding.h"
 #include "prov/providercommon.h"
 

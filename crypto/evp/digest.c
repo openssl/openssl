@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
@@ -20,6 +21,12 @@
 #include "internal/common.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+#include "internal/refcount.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evperr.h"
+#include "openssl/obj_mac.h"
 
 #include <crypto/asn1.h>
 

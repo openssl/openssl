@@ -11,6 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include "crypto/evp.h"
+#include "openssl/obj_mac.h"
 #include <openssl/pkcs12.h>
 #include <openssl/objects.h>
 

@@ -8,14 +8,26 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "internal/time.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/dtls1.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
 #include "ssl_local.h"
 #include <openssl/asn1t.h>
 #include <openssl/encoder.h>
 #include <openssl/x509.h>
 
 #include <crypto/asn1.h>
+#include <string.h>
 
 typedef struct {
     uint32_t version;

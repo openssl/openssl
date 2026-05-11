@@ -26,12 +26,18 @@
 #include <openssl/kdf.h>
 #include <openssl/rand.h>
 #include "internal/cryptlib.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/e_os2.h"
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
 #include "prov/securitycheck.h"
 #include "prov/providercommon.h"
 
 #include <openssl/hpke.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "internal/hpke_util.h"
 #include "crypto/ec.h"
 #include "prov/ecx.h"

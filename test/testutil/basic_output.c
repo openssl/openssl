@@ -8,6 +8,7 @@
  */
 
 #include "../testutil.h"
+#include "openssl/e_os2.h"
 #include "output.h"
 #include "tu_local.h"
 

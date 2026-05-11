@@ -8,6 +8,7 @@
  */
 
 #include <openssl/crypto.h>
+#include <stdint.h>
 #include "internal/e_os.h"
 #include "internal/time.h"
 

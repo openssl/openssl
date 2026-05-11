@@ -17,6 +17,8 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/provider.h>
 #include <openssl/crypto.h>
+#include "openssl/bio.h"
+#include "prov/provider_ctx.h"
 #include "testutil.h"
 #include "filterprov.h"
 #include "prov/bio.h"

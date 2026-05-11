@@ -9,8 +9,13 @@
 
 #include <assert.h>
 #include <openssl/core_dispatch.h>
+#include <stdarg.h>
+#include <stddef.h>
 #include "internal/cryptlib.h"
+#include "openssl/bio.h"
+#include "openssl/core.h"
 #include "prov/bio.h"
+#include "prov/provider_ctx.h"
 
 static OSSL_FUNC_BIO_new_file_fn *c_bio_new_file = NULL;
 static OSSL_FUNC_BIO_new_membuf_fn *c_bio_new_membuf = NULL;

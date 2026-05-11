@@ -14,6 +14,10 @@
 #include <openssl/err.h>
 #include <openssl/lhash.h>
 #include "internal/common.h"
+#include "internal/thread_once.h"
+#include "openssl/crypto.h"
+#include "openssl/store.h"
+#include "openssl/storeerr.h"
 #include "store_local.h"
 
 static CRYPTO_RWLOCK *registry_lock;

@@ -15,6 +15,8 @@
  */
 #include "internal/deprecated.h"
 
+#include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -23,6 +25,12 @@
 #include <openssl/pkcs12.h>
 #include <openssl/objects.h>
 #include <openssl/posix_time.h>
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objectserr.h"
+#include <time.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 

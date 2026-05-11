@@ -8,6 +8,21 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "app_libctx.h"
+#include "internal/common.h"
+#include "openssl/bio.h"
+#include "openssl/conf.h"
+#include "openssl/e_os2.h"
+#include "openssl/obj_mac.h"
+#include "openssl/params.h"
+#include "openssl/safestack.h"
+#include "openssl/sha.h"
+#include "opt.h"
+#include <errno.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdint.h>
+#include <sys/select.h>
 #undef SECONDS
 #define SECONDS 3
 #define PKEY_SECONDS 10

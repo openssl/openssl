@@ -19,6 +19,13 @@
 #include <openssl/self_test.h>
 #include "dh_local.h"
 #include "crypto/dh.h"
+#include "internal/ffc.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/dh.h"
+#include "openssl/dherr.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
 
 /*-
  * Check that p and g are suitable enough

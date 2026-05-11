@@ -24,6 +24,9 @@
 #include <openssl/ec.h>
 
 #include "crypto/evp.h"
+#include "openssl/asn1err.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
     long length)

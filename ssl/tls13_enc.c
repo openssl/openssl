@@ -7,7 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdlib.h>
+#include "internal/common.h"
+#include "internal/recordmethod.h"
+#include "internal/statem.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/params.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
+#include "ssl/record/record.h"
 #include "ssl_local.h"
 #include "internal/ktls.h"
 #include "record/record_local.h"
@@ -16,6 +29,7 @@
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
+#include <string.h>
 
 #define TLS13_MAX_LABEL_LEN 249
 

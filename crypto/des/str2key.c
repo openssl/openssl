@@ -13,8 +13,12 @@
  */
 #include "internal/deprecated.h"
 
+#include <limits.h>
 #include <openssl/crypto.h>
+#include <stddef.h>
+#include <string.h>
 #include "des_local.h"
+#include "openssl/des.h"
 
 void DES_string_to_key(const char *str, DES_cblock *key)
 {

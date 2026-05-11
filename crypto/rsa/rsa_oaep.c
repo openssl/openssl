@@ -34,6 +34,10 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/rsaerr.h"
+#include <string.h>
 #include "rsa_local.h"
 
 int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,

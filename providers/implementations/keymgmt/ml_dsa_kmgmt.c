@@ -13,9 +13,17 @@
 #include <openssl/param_build.h>
 #include <openssl/proverr.h>
 #include <openssl/self_test.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "crypto/ml_dsa.h"
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/params.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"

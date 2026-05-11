@@ -15,6 +15,13 @@
  * We need to use the SRP deprecated APIs in order to implement the SSL SRP
  * APIs - which are themselves deprecated.
  */
+#include "internal/statem.h"
+#include "openssl/bn.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
+#include <string.h>
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/crypto.h>

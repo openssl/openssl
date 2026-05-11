@@ -19,6 +19,7 @@
 #include <openssl/opensslv.h>
 #include <openssl/evp.h>
 #include <openssl/sha.h>
+#include <string.h>
 
 /* The implementation is in crypto/md32_common.inc */
 

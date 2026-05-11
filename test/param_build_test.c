@@ -8,10 +8,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <string.h>
 #include <openssl/params.h>
 #include <openssl/param_build.h>
+#include <time.h>
 #include "internal/nelem.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
 #include "testutil.h"
 
 static const OSSL_PARAM params_empty[] = { OSSL_PARAM_END };

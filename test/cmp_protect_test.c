@@ -9,7 +9,18 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "crypto/cmp/cmp_local.h"
 #include "helpers/cmp_testlib.h"
+#include "openssl/asn1.h"
+#include "openssl/cmp.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/provider.h"
+#include "openssl/rand.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
+#include "openssl/x509_vfy.h"
+#include "test/testutil.h"
 
 static const char *ir_protected_f;
 static const char *genm_prot_Ed_f;

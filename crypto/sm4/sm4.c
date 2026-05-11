@@ -10,6 +10,7 @@
  */
 
 #include <openssl/e_os2.h>
+#include <stdint.h>
 #include "crypto/sm4.h"
 
 static const uint8_t SM4_S[256] = {

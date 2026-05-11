@@ -12,6 +12,7 @@
  * ECDSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
+#include "crypto/ec.h"
 #include "internal/deprecated.h"
 
 #include <string.h>
@@ -21,6 +22,12 @@
 #include <openssl/objects.h>
 #include <openssl/opensslconf.h>
 #include "internal/nelem.h"
+#include "openssl/asn1.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
+#include "openssl/ec.h"
+#include "openssl/ecerr.h"
+#include "openssl/evp.h"
 
 typedef struct {
     int field_type, /* either NID_X9_62_prime_field or

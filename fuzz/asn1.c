@@ -16,6 +16,8 @@
  */
 
 /* We need to use some deprecated APIs */
+#include "openssl/crypto.h"
+#include <stdint.h>
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>

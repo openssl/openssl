@@ -8,7 +8,9 @@
  */
 
 #include <openssl/crypto.h>
+#include <stdlib.h>
 #include "../testutil.h"
+#include "opt.h"
 #include "output.h"
 #include "tu_local.h"
 

@@ -8,6 +8,7 @@
  */
 
 #include "crypto/evp.h"
+#include "openssl/evp.h"
 
 IMPLEMENT_BLOCK_CIPHER(seed, ks, SEED, EVP_SEED_KEY, NID_seed,
     16, 16, 16, 128, EVP_CIPH_FLAG_DEFAULT_ASN1)

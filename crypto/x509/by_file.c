@@ -15,6 +15,13 @@
 #include <openssl/buffer.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/pemerr.h"
+#include "openssl/safestack.h"
+#include "openssl/x509_vfy.h"
+#include "openssl/x509err.h"
 #include "x509_local.h"
 
 #include <crypto/asn1.h>

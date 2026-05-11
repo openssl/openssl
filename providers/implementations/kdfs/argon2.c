@@ -10,6 +10,7 @@
  *
  */
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdarg.h>
@@ -28,6 +29,8 @@
 #include "internal/numbers.h"
 #include "internal/endian.h"
 #include "crypto/evp.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"

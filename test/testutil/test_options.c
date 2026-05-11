@@ -8,6 +8,7 @@
  */
 
 #include "../testutil.h"
+#include "opt.h"
 #include "tu_local.h"
 
 /* An overridable list of command line options */

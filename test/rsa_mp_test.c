@@ -24,6 +24,7 @@
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 
+#include "openssl/safestack.h"
 #include "testutil.h"
 
 #include <openssl/rsa.h>

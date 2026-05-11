@@ -7,6 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <openssl/bio.h>

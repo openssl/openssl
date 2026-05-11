@@ -16,6 +16,9 @@
 #include "internal/core.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+#include "internal/refcount.h"
+#include "openssl/crypto.h"
+#include "openssl/evperr.h"
 
 static int evp_kdf_up_ref(void *vkdf)
 {

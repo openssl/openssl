@@ -11,6 +11,8 @@
  * ECDH and ECDSA low level APIs are deprecated for public use, but still ok
  * for internal use.
  */
+#include "crypto/ec.h"
+#include "internal/common.h"
 #include "internal/deprecated.h"
 
 #include <stdio.h>
@@ -25,6 +27,16 @@
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
 #include "ec_local.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/ecerr.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/params.h"
 
 static int eckey_param2type(int *pptype, void **ppval, const EC_KEY *ec_key)
 {

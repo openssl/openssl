@@ -15,6 +15,7 @@
 
 #include <openssl/crypto.h>
 #include "des_local.h"
+#include "openssl/des.h"
 #include "spr.h"
 
 void DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)

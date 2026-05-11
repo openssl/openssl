@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
 #include <openssl/evp.h>

@@ -8,9 +8,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/common.h"
+#include "internal/dane.h"
 #include "internal/e_os.h"
 
+#include <errno.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 
 #include "internal/nelem.h"
@@ -23,6 +27,18 @@
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include "internal/refcount.h"
+#include "internal/statem.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/lhash.h"
+#include "openssl/objects.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/safestack.h"
+#include "openssl/ssl.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
+#include "openssl/x509.h"
+#include "openssl/x509_vfy.h"
 #include "ssl_local.h"
 #include "ssl_cert_table.h"
 #include "internal/thread_once.h"

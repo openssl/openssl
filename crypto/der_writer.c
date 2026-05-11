@@ -7,11 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include "internal/common.h"
 #include "internal/cryptlib.h"
 #include "internal/der.h"
 #include "crypto/bn.h"
+#include "internal/packet.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
 
 static int int_start_context(WPACKET *pkt, int tag)
 {

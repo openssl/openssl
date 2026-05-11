@@ -7,8 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "openssl/bio.h"
 #include "opt.h"
 #include <openssl/ui.h>
+#include <stdarg.h>
 #include "apps_ui.h"
 
 /* This function is defined here due to visibility of bio_err */

@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
@@ -17,6 +18,16 @@
 #include "crypto/asn1.h"
 #include "crypto/x509.h"
 #include "crypto/evp.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/safestack.h"
+#include "openssl/sha.h"
+#include "openssl/x509_vfy.h"
+#include "openssl/x509err.h"
 
 void OSSL_STACK_OF_X509_free(STACK_OF(X509) *certs)
 {

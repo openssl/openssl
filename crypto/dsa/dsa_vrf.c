@@ -15,6 +15,8 @@
 
 #include "internal/cryptlib.h"
 #include "dsa_local.h"
+#include "openssl/crypto.h"
+#include "openssl/dsa.h"
 
 int DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
     DSA *dsa)

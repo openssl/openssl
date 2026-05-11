@@ -18,12 +18,17 @@
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 #include <openssl/opensslconf.h>
+#include "internal/common.h"
+#include "internal/cryptlib.h"
 #include "internal/thread_once.h"
 #include "internal/threads_common.h"
 #include "crypto/ctype.h"
 #include "internal/constant_time.h"
 #include "internal/e_os.h"
 #include "err_local.h"
+#include "openssl/core.h"
+#include "openssl/lhash.h"
+#include "openssl/macros.h"
 
 #ifndef OPENSSL_NO_ERR
 static int err_load_strings(const ERR_STRING_DATA *str);

@@ -7,10 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "openssl/ech.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
+#include "fmt.h"
+#include "openssl/crypto.h"
+#include "opt.h"
 #include "progs.h"
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
@@ -23,6 +28,7 @@
 
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include <time.h>
 
 #ifndef OPENSSL_NO_ECH
 

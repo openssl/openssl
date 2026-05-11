@@ -15,6 +15,11 @@
 #include <openssl/params.h>
 #include <openssl/proverr.h>
 #include <openssl/rand.h>
+#include "crypto/ml_kem.h"
+#include "openssl/core.h"
+#include "openssl/e_os2.h"
+#include <stddef.h>
+#include <stdint.h>
 #include "prov/implementations.h"
 #include "prov/mlx_kem.h"
 #include "prov/provider_ctx.h"

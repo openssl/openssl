@@ -13,6 +13,7 @@
  */
 #include "internal/deprecated.h"
 
+#include <stdint.h>
 #include <string.h>
 
 #include <openssl/bio.h>
@@ -25,6 +26,10 @@
 #include "internal/core.h"
 #include "internal/nelem.h"
 #include "crypto/evp.h" /* For the internal API */
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/params.h"
+#include "openssl/x509.h"
 #include "testutil.h"
 
 typedef struct {

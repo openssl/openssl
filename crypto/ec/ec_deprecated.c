@@ -11,6 +11,9 @@
  * Suppress deprecation warnings for EC low level implementations that are
  * kept until removal.
  */
+#include "openssl/bn.h"
+#include <limits.h>
+#include <stddef.h>
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/crypto.h>

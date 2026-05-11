@@ -22,14 +22,23 @@
  * ECDSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
+#include "internal/common.h"
 #include "internal/deprecated.h"
 
+#include <stdint.h>
 #include <string.h>
 
 #include "internal/cryptlib.h"
 #include "crypto/bn.h"
 #include "ec_local.h"
 #include "internal/refcount.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/ec.h"
+#include "openssl/ecerr.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
 
 #if BN_BITS2 != 64
 #define TOBN(hi, lo) lo, hi

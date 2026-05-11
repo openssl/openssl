@@ -19,6 +19,9 @@
 
 #include "v3_admis.h"
 #include "ext_dat.h"
+#include "openssl/bio.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
 
 ASN1_SEQUENCE(NAMING_AUTHORITY) = {
     ASN1_OPT(NAMING_AUTHORITY, namingAuthorityId, ASN1_OBJECT),

@@ -9,6 +9,8 @@
  */
 
 /* Test ML-DSA operation.  */
+#include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -17,6 +19,8 @@
 #include "internal/nelem.h"
 #include "fuzzer.h"
 #include "crypto/ml_dsa.h"
+#include "openssl/crypto.h"
+#include "openssl/params.h"
 
 /**
  * @brief Consumes an 8-bit unsigned integer from a buffer.

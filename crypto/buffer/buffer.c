@@ -9,7 +9,10 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 #include <openssl/buffer.h>
+#include <string.h>
 
 /*
  * LIMIT_BEFORE_EXPANSION is the maximum n such that (n+3)/3*4 < 2**31. That

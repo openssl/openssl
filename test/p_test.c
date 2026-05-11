@@ -13,6 +13,9 @@
  * a parameter request it makes to the loading library.
  */
 
+#include "openssl/macros.h"
+#include "openssl/macros.h"
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 

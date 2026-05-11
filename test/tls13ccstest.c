@@ -10,6 +10,10 @@
 #include <openssl/ssl.h>
 #include <string.h>
 #include "helpers/ssltestlib.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/ssl3.h"
 #include "testutil.h"
 #include "internal/packet.h"
 

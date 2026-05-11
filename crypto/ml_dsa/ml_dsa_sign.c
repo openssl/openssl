@@ -13,6 +13,12 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
+#include "crypto/ml_dsa.h"
+#include "crypto/ml_dsa/ml_dsa_poly.h"
+#include "crypto/ml_dsa/ml_dsa_vector.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "internal/common.h"
 #include "internal/constant_time.h"
 #include "ml_dsa_local.h"
@@ -20,6 +26,9 @@
 #include "ml_dsa_matrix.h"
 #include "ml_dsa_sign.h"
 #include "ml_dsa_hash.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
 
 #define ML_DSA_MAX_LAMBDA 256 /* bit strength for ML-DSA-87 */
 

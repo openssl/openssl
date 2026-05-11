@@ -7,7 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
@@ -16,6 +18,7 @@
 #include <openssl/crypto.h>
 
 #include "internal/nelem.h"
+#include "openssl/e_os2.h"
 #include "testutil.h"
 
 #define MAX_SAMPLES 500000

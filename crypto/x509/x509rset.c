@@ -14,6 +14,8 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include "crypto/x509.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 int X509_REQ_set_version(X509_REQ *x, long version)
 {

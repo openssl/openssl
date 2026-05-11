@@ -14,6 +14,8 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include "openssl/bio.h"
+#include "openssl/opensslv.h"
 #include "prov/bio.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"

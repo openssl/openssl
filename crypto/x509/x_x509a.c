@@ -13,6 +13,10 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include "crypto/x509.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
 
 /*
  * X509_CERT_AUX routines. These are used to encode additional user

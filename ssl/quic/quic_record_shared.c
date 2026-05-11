@@ -2,6 +2,15 @@
 #include "internal/quic_record_util.h"
 #include "internal/common.h"
 #include "../ssl_local.h"
+#include "internal/quic_types.h"
+#include "internal/quic_wire_pkt.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 
 /* Constants used for key derivation in QUIC v1. */
 static const unsigned char quic_v1_iv_label[] = {

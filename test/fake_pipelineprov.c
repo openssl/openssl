@@ -17,6 +17,13 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/proverr.h>
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/provider.h"
+#include <stddef.h>
 #include "prov/providercommon.h"
 #include "prov/ciphercommon.h"
 #include "prov/ciphercommon_aead.h"

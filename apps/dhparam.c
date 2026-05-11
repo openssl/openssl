@@ -13,7 +13,13 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include "app_libctx.h"
 #include "apps.h"
+#include "fmt.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/params.h"
+#include "opt.h"
 #include "progs.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>

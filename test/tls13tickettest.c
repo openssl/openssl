@@ -8,7 +8,10 @@
  */
 
 #include <openssl/ssl.h>
+#include <string.h>
 #include "helpers/ssltestlib.h"
+#include "openssl/crypto.h"
+#include "openssl/prov_ssl.h"
 #include "testutil.h"
 
 struct stats {

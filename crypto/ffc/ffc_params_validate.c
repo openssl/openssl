@@ -17,6 +17,7 @@
 #include <openssl/bn.h>
 #include <openssl/dsaerr.h>
 #include <openssl/dherr.h>
+#include <stddef.h>
 #include "internal/ffc.h"
 
 /* FIPS186-4 A.2.2 Unverifiable partial validation of Generator g */

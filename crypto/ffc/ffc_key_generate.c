@@ -8,6 +8,8 @@
  */
 
 #include "internal/ffc.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
 
 /*
  * SP800-56Ar3 5.6.1.1.4 Key pair generation by testing candidates.

@@ -7,12 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <openssl/rand.h>
 #include <openssl/asn1t.h>
+#include "internal/nelem.h"
 #include "internal/numbers.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 #include "testutil.h"
 
 #ifdef __GNUC__

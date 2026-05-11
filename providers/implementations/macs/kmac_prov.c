@@ -55,6 +55,10 @@
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include <openssl/fips_names.h>
+#include "fips/fipsindicator.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
 #include "prov/securitycheck.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"

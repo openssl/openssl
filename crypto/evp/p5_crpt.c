@@ -10,12 +10,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "internal/cryptlib.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evperr.h"
+#include "openssl/params.h"
 #include <openssl/x509.h>
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include <openssl/kdf.h>
 
 #include <crypto/asn1.h>
+#include <string.h>
 
 /*
  * Doesn't do anything now: Builtin PBE algorithms in static table.

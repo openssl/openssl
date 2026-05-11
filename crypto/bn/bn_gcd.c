@@ -7,9 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "crypto/bn.h"
 #include "internal/cryptlib.h"
 #include "bn_local.h"
 #include "internal/constant_time.h"
+#include "openssl/bn.h"
+#include "openssl/bnerr.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
 
 /*
  * bn_mod_inverse_no_branch is a special version of BN_mod_inverse. It does

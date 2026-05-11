@@ -7,6 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "openssl/crypto.h"
+#include "openssl/x509.h"
+#include <stdint.h>
+#include <time.h>
 #ifdef OPENSSL_NO_CT
 #error "CT is disabled"
 #endif

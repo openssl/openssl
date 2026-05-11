@@ -20,6 +20,7 @@
 #include <openssl/tls1.h>
 
 #include "internal/nelem.h"
+#include "openssl/safestack.h"
 #include "testutil.h"
 
 typedef struct cipher_id_name {

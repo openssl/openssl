@@ -15,11 +15,16 @@
 #include <openssl/kdf.h>
 #include <openssl/core.h>
 #include <openssl/core_names.h>
+#include <string.h>
 #include "crypto/evp.h"
 #include "internal/numbers.h"
 #include "internal/provider.h"
 #include "evp_local.h"
 #include "internal/param_build_set.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/params.h"
 
 EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf)
 {

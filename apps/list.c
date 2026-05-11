@@ -8,8 +8,17 @@
  */
 
 /* We need to use some deprecated APIs */
+#include "app_libctx.h"
+#include "function.h"
 #include "internal/nelem.h"
 #include "openssl/bio.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/params.h"
+#include "openssl/prov_ssl.h"
+#include <stdint.h>
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include "internal/e_os.h"

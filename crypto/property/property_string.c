@@ -12,6 +12,9 @@
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
 #include "crypto/lhash.h"
+#include "internal/cryptlib.h"
+#include "openssl/err.h"
+#include "openssl/safestack.h"
 #include "property_local.h"
 #include "crypto/context.h"
 

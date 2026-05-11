@@ -9,7 +9,9 @@
 
 #include <openssl/macros.h>
 #include <openssl/objects.h>
+#include "internal/quic_ssl.h"
 #include "quic_local.h"
+#include "ssl/ssl_local.h"
 
 /*
  * NOTE: An endpoint method can be used to create a quic connection

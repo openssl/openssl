@@ -12,6 +12,11 @@
  * the code in this file can be removed too. Until then we have to use
  * the deprecated APIs.
  */
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
+#include "openssl/ssl3.h"
+#include "ssl_test_ctx.h"
+#include <string.h>
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/srp.h>

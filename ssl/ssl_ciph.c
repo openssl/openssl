@@ -12,6 +12,22 @@
 /*
  * Because of *asn1_*
  */
+#include "internal/common.h"
+#include "internal/packet.h"
+#include "internal/statem.h"
+#include "openssl/bio.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/safestack.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
+#include <stdint.h>
+#include <string.h>
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>

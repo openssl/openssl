@@ -9,10 +9,14 @@
 
 /* Internal tests for the x509 and x509v3 modules */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <openssl/ssl.h>
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "../ssl/ssl_local.h"

@@ -9,6 +9,8 @@
 
 /* An OpenSSL-based HPKE implementation of RFC9180 */
 
+#include <limits.h>
+#include <stdint.h>
 #include <string.h>
 #include <openssl/rand.h>
 #include <openssl/kdf.h>
@@ -20,6 +22,8 @@
 #include "internal/hpke_util.h"
 #include "internal/nelem.h"
 #include "internal/common.h"
+#include "openssl/crypto.h"
+#include "openssl/params.h"
 
 /* default buffer size for keys and internal buffers we use */
 #define OSSL_HPKE_MAXSIZE 512

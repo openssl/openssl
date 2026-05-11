@@ -10,6 +10,12 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/core_names.h>
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/params.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 

@@ -17,6 +17,9 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/err.h>
+#include "internal/refcount.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"

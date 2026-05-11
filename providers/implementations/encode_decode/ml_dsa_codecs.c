@@ -7,14 +7,25 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <string.h>
 #include <openssl/byteorder.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include <openssl/x509.h>
 #include <openssl/core_names.h>
+#include "crypto/ml_dsa.h"
 #include "internal/encoder.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/evp.h"
+#include "openssl/objects.h"
+#include "prov/ml_common_codecs.h"
 #include "prov/ml_dsa.h"
+#include "prov/provider_ctx.h"
 #include "prov/ml_dsa_codecs.h"
 
 /*-

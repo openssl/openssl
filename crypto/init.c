@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/common.h"
+#include "internal/cryptlib.h"
 #include "internal/e_os.h"
 #include "crypto/cryptlib.h"
 #include <openssl/err.h>
@@ -20,6 +22,7 @@
 #include "internal/err.h"
 #include "crypto/err.h"
 #include "crypto/objects.h"
+#include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>
 #include "internal/thread_once.h"
@@ -31,6 +34,7 @@
 #include <openssl/ssl.h> /* for OPENSSL_INIT_(NO_)?LOAD_SSL_STRINGS */
 #include "crypto/bn.h"
 #include "crypto/ctype.h"
+#include "openssl/crypto.h"
 #include "sslerr.h"
 
 #ifdef S390X_MOD_EXP

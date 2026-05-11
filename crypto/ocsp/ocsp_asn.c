@@ -11,6 +11,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/ocsp.h>
 #include "ocsp_local.h"
+#include "openssl/crypto.h"
 
 ASN1_SEQUENCE(OCSP_SIGNATURE) = {
     ASN1_EMBED(OCSP_SIGNATURE, signatureAlgorithm, X509_ALGOR),

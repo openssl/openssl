@@ -8,6 +8,8 @@
  */
 
 #include <openssl/bio.h>
+#include "openssl/crypto.h"
+#include <stddef.h>
 #include "testutil.h"
 
 #define TEST_FLAG_EOF_BEHAVIOUR 0x1000

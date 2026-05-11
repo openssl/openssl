@@ -9,14 +9,27 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
 #include <openssl/asn1t.h>
 
 #include "cmp_local.h"
 #include "internal/crmf.h"
+#include "openssl/asn1.h"
+#include "openssl/asn1err.h"
+#include "openssl/cmperr.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
+#include "openssl/x509v3.h"
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/cmp.h>
 #include <openssl/crmf.h>
+#include <stdint.h>
 
 /* ASN.1 declarations from RFC 9810 */
 ASN1_SEQUENCE(OSSL_CMP_REVANNCONTENT) = {

@@ -9,6 +9,8 @@
 
 #include "crypto/rand.h"
 #include "internal/common.h"
+#include "openssl/rand.h"
+#include <stdint.h>
 
 /*
  * Implementation an optimal random integer in a range function.

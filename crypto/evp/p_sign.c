@@ -13,6 +13,8 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include "crypto/evp.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 int EVP_SignFinal_ex(EVP_MD_CTX *ctx, unsigned char *sigret,
     unsigned int *siglen, EVP_PKEY *pkey, OSSL_LIB_CTX *libctx,

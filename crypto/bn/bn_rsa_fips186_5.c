@@ -22,11 +22,15 @@
  * FIPS 186-5 Table A.1 includes an additional entry for 4096 which has been
  * included here.
  */
+#include <stdint.h>
 #include <stdio.h>
 #include <openssl/bn.h>
 #include "bn_local.h"
 #include "crypto/bn.h"
 #include "internal/nelem.h"
+#include "openssl/bnerr.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
 
 #if BN_BITS2 == 64
 #define BN_DEF(lo, hi) (BN_ULONG)hi << 32 | lo

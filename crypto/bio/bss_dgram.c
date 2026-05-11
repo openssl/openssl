@@ -9,6 +9,21 @@
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#include "internal/bio.h"
+#include "internal/common.h"
+#include "internal/sockets.h"
+#include "openssl/bio.h"
+#include "openssl/bioerr.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include <limits.h>
+#include <netinet/in.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
 #endif
 
 #include <stdio.h>

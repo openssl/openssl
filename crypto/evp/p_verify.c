@@ -13,6 +13,8 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include "crypto/evp.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 int EVP_VerifyFinal_ex(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
     unsigned int siglen, EVP_PKEY *pkey, OSSL_LIB_CTX *libctx,

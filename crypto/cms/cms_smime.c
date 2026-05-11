@@ -13,9 +13,21 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
+#include <stddef.h>
 #include "cms_local.h"
 #include "crypto/asn1.h"
 #include "crypto/x509.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/cmserr.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/pkcs7.h"
+#include "openssl/safestack.h"
+#include "openssl/x509_vfy.h"
 
 static BIO *cms_get_text_bio(BIO *out, unsigned int flags)
 {

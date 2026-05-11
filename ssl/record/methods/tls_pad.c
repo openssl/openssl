@@ -9,10 +9,14 @@
 
 #include <openssl/rand.h>
 #include <openssl/evp.h>
+#include <stddef.h>
+#include <string.h>
 
+#include "internal/common.h"
 #include "internal/constant_time.h"
 #include "internal/cryptlib.h"
 #include "internal/ssl3_cbc.h"
+#include "openssl/crypto.h"
 
 /*
  * This file has no dependencies on the rest of libssl because it is shared
