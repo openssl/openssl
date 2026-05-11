@@ -2571,9 +2571,9 @@ ASN1_STRING_copy                        2569	4_0_0	EXIST::FUNCTION:
 ASN1_STRING_dup                         2570	4_0_0	EXIST::FUNCTION:
 ASN1_STRING_type_new                    2571	4_0_0	EXIST::FUNCTION:
 ASN1_STRING_cmp                         2572	4_0_0	EXIST::FUNCTION:
-ASN1_STRING_set                         2573	4_0_0	EXIST::FUNCTION:
+ASN1_STRING_set                         2573	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
 ASN1_STRING_set0                        2574	4_0_0	EXIST::FUNCTION:
-ASN1_STRING_length                      2575	4_0_0	EXIST::FUNCTION:
+ASN1_STRING_length                      2575	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
 ASN1_STRING_length_set                  2576	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 ASN1_STRING_type                        2577	4_0_0	EXIST::FUNCTION:
 ASN1_STRING_get0_data                   2578	4_0_0	EXIST::FUNCTION:
@@ -5722,3 +5722,6 @@ CRYPTO_atomic_cmp_exch_ptr              ?	4_1_0	EXIST::FUNCTION:
 EVP_EC_affine2oct                       ?	4_1_0	EXIST::FUNCTION:
 OPENSSL_sk_set_copy_thunks              ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_new_not_owned               ?	4_1_0	EXIST::FUNCTION:
+ASN1_STRING_set_data                    ?	4_1_0	EXIST::FUNCTION:
+ASN1_STRING_set_string                  ?	4_1_0	EXIST::FUNCTION:
+ASN1_STRING_length_ex                   ?	4_1_0	EXIST::FUNCTION:
