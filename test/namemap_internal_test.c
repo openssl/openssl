@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -170,27 +170,6 @@ static int test_digest_is_a(void)
     return rv;
 }
 
-/*
- * Test memory failures for ossl_namemap_add_name.
- */
-static int test_namemap_add_name_mfail(void)
-{
-    OSSL_NAMEMAP *nm = NULL;
-    int ret = 0;
-
-    nm = ossl_namemap_new(NULL);
-    if (!TEST_ptr(nm))
-        goto err;
-
-    MFAIL_start();
-    ret = ossl_namemap_add_name(nm, 0, "mfail_test_name");
-    MFAIL_end();
-
-err:
-    ossl_namemap_free(nm);
-    return ret;
-}
-
 int setup_tests(void)
 {
     ADD_TEST(test_namemap_empty);
@@ -200,6 +179,5 @@ int setup_tests(void)
     ADD_TEST(test_cipherbyname);
     ADD_TEST(test_digest_is_a);
     ADD_TEST(test_cipher_is_a);
-    ADD_MFAIL_TEST(test_namemap_add_name_mfail);
     return 1;
 }

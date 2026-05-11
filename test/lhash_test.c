@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2025 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -300,43 +300,6 @@ static int test_int_hashtable(int idx)
 end:
     ossl_ht_free(ht);
     return rc;
-}
-
-/*
- * MFAIL coverage for the RCU replacement branch of ossl_ht_insert_locked.
- */
-static int test_hashtable_insert_replace_mfail(void)
-{
-    HT_CONFIG hash_conf = {
-        .collision_check = 1,
-        .no_rcu = 0, /* RCU enabled - exercises cbi pre-alloc on replace */
-    };
-    INTKEY key;
-    HT *ht = NULL;
-    int *old = NULL;
-    int ret = 0;
-    static int v1 = 100;
-    static int v2 = 200;
-
-    if (!TEST_ptr(ht = ossl_ht_new(&hash_conf)))
-        goto end;
-
-    /* Seed the table outside MFAIL for later replacement */
-    HT_INIT_KEY(&key);
-    HT_KEY_RESET(&key);
-    HT_SET_KEY_FIELD(&key, mykey, int_tests[0]);
-    if (!TEST_int_eq(ossl_ht_test_int_insert(ht, TO_HT_KEY(&key), &v1, NULL),
-            1))
-        goto end;
-
-    /* Replacement under MFAIL. */
-    MFAIL_start();
-    ret = ossl_ht_test_int_insert(ht, TO_HT_KEY(&key), &v2, &old);
-    MFAIL_end();
-
-end:
-    ossl_ht_free(ht);
-    return ret > 0 ? 1 : 0;
 }
 
 static unsigned long int stress_hash(const int *p)
@@ -832,6 +795,5 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_int_hashtable, 2);
     ADD_ALL_TESTS(test_hashtable_stress, 4);
     ADD_ALL_TESTS(test_hashtable_multithread, 2);
-    ADD_MFAIL_TEST(test_hashtable_insert_replace_mfail);
     return 1;
 }

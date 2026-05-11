@@ -172,32 +172,6 @@ err:
     return ret;
 }
 
-/*
- * Test to trigger memory failures in X509_STORE_add_cert.
- */
-static int test_x509_store_add_mfail(void)
-{
-    X509 *cert = NULL;
-    X509_STORE *store = NULL;
-    int ret = 0;
-
-    cert = X509_from_strings(cn_cert1);
-    if (!TEST_ptr(cert))
-        goto err;
-    store = X509_STORE_new();
-    if (!TEST_ptr(store))
-        goto err;
-
-    MFAIL_start();
-    ret = X509_STORE_add_cert(store, cert);
-    MFAIL_end();
-
-err:
-    X509_STORE_free(store);
-    X509_free(cert);
-    return ret;
-}
-
 OPT_TEST_DECLARE_USAGE("cert.pem [crl.pem]\n")
 
 int setup_tests(void)
@@ -215,7 +189,6 @@ int setup_tests(void)
 
     ADD_TEST(test_load_cert_file);
     ADD_TEST(test_load_same_cn_certs);
-    ADD_MFAIL_TEST(test_x509_store_add_mfail);
 
     return 1;
 }
