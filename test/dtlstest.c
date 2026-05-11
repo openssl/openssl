@@ -1127,11 +1127,12 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_DTLS1_2
 /*
  * Records with unknown record types during handshake are discarded.
  * Record type 0x99 is not a valid DTLS record type (valid: 20-23).
  */
-static int test_dtls_unknown_record_type(void)
+static int test_dtls12_unknown_record_type(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
@@ -1149,15 +1150,9 @@ static int test_dtls_unknown_record_type(void)
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_VERSION, 0,
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
             &sctx, &cctx, cert, privkey)))
         return 0;
-
-#ifdef OPENSSL_NO_DTLS1_2
-    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
-        || !TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0")))
-        goto end;
-#endif
 
     c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
     if (!TEST_ptr(c_to_s_fbio))
@@ -1192,6 +1187,70 @@ end:
 
     return testresult;
 }
+#endif
+
+#ifndef OPENSSL_NO_DTLS1
+static int test_dtls1_unknown_record_type(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO *c_to_s_fbio = NULL, *c_to_s_mempacket = NULL;
+    int testresult = 0;
+    /* Record with unknown type 0x99 at epoch 0 - DTLSv1 version */
+    static const unsigned char unknown_type_record[] = {
+        0x99, /* Unknown record type (valid types are 20-23) */
+        0xFE, 0xFF, /* DTLSv1 version */
+        0x00, 0x00, /* Epoch 0 */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x05, /* Sequence 5 */
+        0x00, 0x04, /* Length = 4 bytes */
+        0x74, 0x65, 0x73, 0x74 /* Payload: "test" */
+    };
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_VERSION, DTLS1_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    /* DTLSv1 requires SECLEVEL=0 for older cipher suites */
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+        || !TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0")))
+        goto end;
+
+    c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
+    if (!TEST_ptr(c_to_s_fbio))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, c_to_s_fbio)))
+        goto end;
+
+    c_to_s_mempacket = SSL_get_wbio(clientssl);
+    if (!TEST_ptr(c_to_s_mempacket))
+        goto end;
+    c_to_s_mempacket = BIO_next(c_to_s_mempacket);
+    if (!TEST_ptr(c_to_s_mempacket))
+        goto end;
+
+    mempacket_test_inject(c_to_s_mempacket, (char *)unknown_type_record,
+        sizeof(unknown_type_record), 1, INJECT_PACKET_IGNORE_REC_SEQ);
+
+    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE, 0, 0))) {
+        TEST_info("Handshake failed - unknown record type not silently discarded");
+        goto end;
+    }
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+#endif
 
 /*
  * Malformed alert records (not exactly 2 bytes) should be discarded.
@@ -1469,7 +1528,12 @@ int setup_tests(void)
     ADD_TEST(test_dtls_etm_short_record);
     ADD_TEST(test_dtls_unexpected_app_data);
     ADD_TEST(test_dtls_encrypted_overflow);
-    ADD_TEST(test_dtls_unknown_record_type);
+#ifndef OPENSSL_NO_DTLS1_2
+    ADD_TEST(test_dtls12_unknown_record_type);
+#endif
+#ifndef OPENSSL_NO_DTLS1
+    ADD_TEST(test_dtls1_unknown_record_type);
+#endif
     ADD_TEST(test_dtls_malformed_alert);
     ADD_TEST(test_dtls_too_many_warnings);
     ADD_TEST(test_dtls_unknown_alert_level);
