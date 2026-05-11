@@ -11,7 +11,7 @@
 #define OPENSSL_MACROS_H
 #pragma once
 
-#include <openssl/opensslconf.h>
+#include <openssl/configuration.h>
 #include <openssl/opensslv.h>
 
 /* Helper macros for CPP string composition */
