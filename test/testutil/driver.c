@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,6 +19,9 @@
 
 #include "platform.h" /* From libapps */
 
+#include "mfail.h"
+#include <time.h>
+
 #if defined(_WIN32) && !defined(__BORLANDC__)
 #define strdup _strdup
 #endif
@@ -35,7 +38,7 @@ typedef struct test_info {
     /* flags */
     unsigned int subtest : 1;
     unsigned int mfail : 1;
-    unsigned int mfail_slow : 1;
+    int mfail_flags;
 } TEST_INFO;
 
 static TEST_INFO all_tests[1024];
@@ -46,7 +49,6 @@ static int single_iter = -1;
 static int level = 0;
 static int seed = 0;
 static int rand_order = 0;
-static int mfail_added = 0;
 
 /*
  * A parameterised test runs a loop of test cases.
@@ -82,17 +84,16 @@ void add_all_tests(const char *test_case_name, int (*test_fn)(int idx),
         num_test_cases += num;
 }
 
-void add_mfail_test(const char *test_case_name, int (*test_fn)(void), int slow)
+void add_mfail_test(const char *test_case_name, int (*test_fn)(void), int flags)
 {
     assert(num_tests != OSSL_NELEM(all_tests));
     all_tests[num_tests].test_case_name = test_case_name;
     all_tests[num_tests].test_fn = test_fn;
     all_tests[num_tests].num = -1;
     all_tests[num_tests].mfail = 1;
-    all_tests[num_tests].mfail_slow = slow ? 1 : 0;
+    all_tests[num_tests].mfail_flags = flags;
     ++num_tests;
     ++num_test_cases;
-    mfail_added = 1;
 }
 
 static int gcd(int a, int b)
@@ -294,6 +295,64 @@ static void test_verdict(int verdict,
     test_flush_tapout();
 }
 
+static double mfail_elapsed_secs(clock_t start)
+{
+    return (double)(clock() - start) / CLOCKS_PER_SEC;
+}
+
+static int mfail_should_skip(void)
+{
+    if (!mfail_is_installed())
+        return 1;
+    return mfail_env_skip_all();
+}
+
+static int mfail_run_test(const char *test_case_name,
+    int (*test_fn)(void), int flags)
+{
+    int ret = 1;
+    int no_check = (flags & MFAIL_TEST_NO_CHECK) != 0;
+    clock_t start = clock();
+
+    mfail_init(0, 0);
+
+    while (mfail_has_next()) {
+        int rv;
+
+        ERR_clear_error();
+        rv = test_fn();
+
+        if (mfail_was_triggered()) {
+            if (!no_check && !TEST_int_eq(rv, 0)) {
+                TEST_error("mfail test '%s': allocation failure at point %d "
+                           "not handled",
+                    test_case_name, mfail_get_point());
+                ret = 0;
+            }
+        } else if (mfail_get_mode() == MFAIL_MODE_SINGLE) {
+            TEST_info("mfail test '%s': point %d is beyond the last "
+                      "allocation point, test %s",
+                test_case_name, mfail_get_point(),
+                rv == 1 ? "succeeded" : "failed");
+        } else if (!TEST_int_eq(rv, 1)) {
+            TEST_error("mfail test '%s': no injection but test failed",
+                test_case_name);
+            ret = 0;
+        }
+    }
+
+    if (ret != 0 && mfail_was_slow_skipped())
+        return TEST_skip("mfail test '%s': %d allocations exceeds slow "
+                         "threshold %d",
+            test_case_name, mfail_get_total(),
+            mfail_get_slow_threshold());
+
+    TEST_info("mfail test '%s': %d allocations, %d iterations, %.6f seconds",
+        test_case_name, mfail_get_total(), mfail_iterations(),
+        mfail_elapsed_secs(start));
+    return ret;
+}
+
 int run_tests(const char *test_prog_name)
 {
     int num_failed = 0;
@@ -320,9 +379,6 @@ int run_tests(const char *test_prog_name)
     }
 
     test_flush_tapout();
-
-    if (mfail_added)
-        mfail_init();
 
     for (i = 0; i < num_tests; i++)
         permute[i] = i;
@@ -353,11 +409,11 @@ int run_tests(const char *test_prog_name)
             set_test_title(all_tests[i].test_case_name);
             ERR_clear_error();
             if (all_tests[i].mfail)
-                if (mfail_should_skip(all_tests[i].mfail_slow))
+                if (mfail_should_skip())
                     verdict = TEST_skip("mfail test skipped");
                 else
                     verdict = mfail_run_test(all_tests[i].test_case_name,
-                        all_tests[i].test_fn);
+                        all_tests[i].test_fn, all_tests[i].mfail_flags);
             else
                 verdict = all_tests[i].test_fn();
             finalize(verdict != 0);
