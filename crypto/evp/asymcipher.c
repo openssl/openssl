@@ -513,8 +513,12 @@ void EVP_ASYM_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
         void *arg),
     void *arg)
 {
+    struct EVP_ASYM_CIPHER_do_all_provided_thunk t;
+
+    t.fn = fn;
+    t.arg = arg;
     evp_generic_do_all(libctx, OSSL_OP_ASYM_CIPHER,
-        (void (*)(void *, void *))fn, arg,
+        EVP_ASYM_CIPHER_do_all_provided_thunk, &t,
         evp_asym_cipher_from_algorithm,
         evp_asym_cipher_up_ref,
         evp_asym_cipher_free);

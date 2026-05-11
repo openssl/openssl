@@ -207,8 +207,12 @@ void EVP_SKEYMGMT_do_all_provided(OSSL_LIB_CTX *libctx,
     void (*fn)(EVP_SKEYMGMT *skeymgmt, void *arg),
     void *arg)
 {
+    struct EVP_SKEYMGMT_do_all_provided_thunk t;
+
+    t.fn = fn;
+    t.arg = arg;
     evp_generic_do_all(libctx, OSSL_OP_SKEYMGMT,
-        (void (*)(void *, void *))fn, arg,
+        EVP_SKEYMGMT_do_all_provided_thunk, &t,
         skeymgmt_from_algorithm,
         evp_skeymgmt_up_ref,
         evp_skeymgmt_free);
