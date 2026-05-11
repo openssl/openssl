@@ -15,6 +15,8 @@
 #include "internal/thread_once.h"
 
 #include "buildinf.h"
+#include "openssl/crypto.h"
+#include "openssl/opensslv.h"
 
 unsigned long OpenSSL_version_num(void)
 {

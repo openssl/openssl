@@ -8,6 +8,7 @@
  */
 
 #include "../testutil.h"
+#include <stdint.h>
 
 /*
  * This is an implementation of the algorithm used by the GNU C library's

@@ -11,7 +11,15 @@
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
 #include <openssl/proverr.h>
+#include <stddef.h>
+#include <string.h>
 #include "internal/nelem.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/params.h"
+#include "openssl/provider.h"
 #include "testutil.h"
 
 #define TEST_KEM_ENCAP 0

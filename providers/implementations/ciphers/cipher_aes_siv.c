@@ -13,10 +13,22 @@
  * This file uses the low level AES functions (which are deprecated for
  * non-internal use) in order to implement provider AES ciphers.
  */
+#include "crypto/modes.h"
+#include "crypto/siv.h"
 #include "internal/deprecated.h"
 
 #include <openssl/proverr.h>
+#include <stddef.h>
+#include <stdint.h>
 #include "cipher_aes_siv.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/modes.h"
+#include "openssl/params.h"
+#include "prov/ciphercommon.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/ciphercommon_aead.h"

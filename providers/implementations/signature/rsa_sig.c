@@ -11,8 +11,10 @@
  * RSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
+#include "fips/fipsindicator.h"
 #include "internal/deprecated.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
@@ -25,8 +27,12 @@
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
+#include "internal/packet.h"
 #include "internal/sizes.h"
 #include "crypto/rsa.h"
+#include "openssl/bio.h"
+#include "openssl/core.h"
+#include "openssl/e_os2.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"

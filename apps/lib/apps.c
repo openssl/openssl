@@ -7,6 +7,33 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "app_libctx.h"
+#include "apps_ui.h"
+#include "fmt.h"
+#include "internal/common.h"
+#include "openssl/asn1.h"
+#include "openssl/async.h"
+#include "openssl/bio.h"
+#include "openssl/buffer.h"
+#include "openssl/conf.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/lhash.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/params.h"
+#include "openssl/pemerr.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
+#include "openssl/txt_db.h"
+#include "openssl/x509_vfy.h"
+#include "opt.h"
+#include <stdarg.h>
+#include <stdint.h>
+#include <sys/mman.h>
+#include <sys/select.h>
+#include <unistd.h>
 #if !defined(_POSIX_C_SOURCE) && defined(OPENSSL_SYS_VMS)
 /*
  * On VMS, you need to define this to get the declaration of fileno().  The

@@ -16,6 +16,8 @@
 #include <openssl/e_os2.h>
 #include <string.h>
 
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
 #include "testutil.h"
 #include "internal/nelem.h"
 

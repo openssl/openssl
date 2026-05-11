@@ -19,6 +19,14 @@
 #include <openssl/pem.h>
 
 #include "../testutil.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/pkcs7.h"
+#include "openssl/safestack.h"
 #include "pkcs12.h" /* from the same directory */
 
 /* Set this to > 0 write test data to file */

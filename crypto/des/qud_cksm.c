@@ -21,6 +21,7 @@
 #include "internal/deprecated.h"
 
 #include "des_local.h"
+#include "openssl/des.h"
 
 #define Q_B0(a) (((DES_LONG)(a)))
 #define Q_B1(a) (((DES_LONG)(a)) << 8)

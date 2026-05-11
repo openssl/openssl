@@ -16,6 +16,14 @@
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "cms_local.h"
+#include "openssl/asn1.h"
+#include "openssl/bn.h"
+#include "openssl/cmserr.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/x509.h"
 
 static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     X509_ALGOR *alg, ASN1_BIT_STRING *pubkey)

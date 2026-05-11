@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include <string.h>
 #define OPENSSL_SUPPRESS_DEPRECATED /* for BIO_get_callback */
 
 #include <stdio.h>

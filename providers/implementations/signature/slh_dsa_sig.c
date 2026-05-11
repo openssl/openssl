@@ -12,6 +12,16 @@
 #include <openssl/rand.h>
 #include <openssl/proverr.h>
 #include <openssl/self_test.h>
+#include "internal/packet.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/evp.h"
+#include "openssl/params.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"

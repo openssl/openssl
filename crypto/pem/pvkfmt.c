@@ -16,6 +16,7 @@
  * RSA and DSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
+#include "internal/common.h"
 #include "internal/deprecated.h"
 
 #include <openssl/pem.h>
@@ -25,9 +26,18 @@
 #include <openssl/rsa.h>
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
+#include <stddef.h>
+#include <string.h>
 #include "internal/cryptlib.h"
 #include "crypto/pem.h"
 #include "crypto/evp.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/params.h"
+#include "openssl/pemerr.h"
 
 /*
  * Utility function: read a DWORD (4 byte unsigned integer) in little endian

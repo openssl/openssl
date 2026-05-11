@@ -8,6 +8,7 @@
  */
 
 #include <openssl/crypto.h>
+#include <stddef.h>
 
 #include "testutil.h"
 #include "internal/e_os.h"

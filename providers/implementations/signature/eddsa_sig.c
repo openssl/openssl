@@ -14,9 +14,17 @@
 #include <openssl/params.h>
 #include <openssl/evp.h>
 #include <openssl/proverr.h>
+#include "crypto/types.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "internal/common.h"
 #include "internal/nelem.h"
+#include "internal/packet.h"
 #include "internal/sizes.h"
+#include "openssl/core.h"
+#include "openssl/e_os2.h"
+#include "openssl/obj_mac.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/securitycheck.h"

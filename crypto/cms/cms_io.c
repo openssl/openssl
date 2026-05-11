@@ -13,6 +13,11 @@
 #include <openssl/pem.h>
 #include <openssl/cms.h>
 #include "cms_local.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
 
 #include <crypto/asn1.h>
 

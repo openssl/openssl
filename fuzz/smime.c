@@ -9,9 +9,14 @@
  */
 
 #include "fuzzer.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
 #include <openssl/err.h>
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
+#include <stdint.h>
 #include <stdio.h>
 
 int FuzzerInitialize(int *argc, char ***argv)

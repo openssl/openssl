@@ -11,10 +11,28 @@
  * callback functions used by s_client, s_server, and s_time,
  * as well as other common logic for those apps
  */
+#include <assert.h>
+#include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> /* for memcpy() and strcmp() */
 #include "apps.h"
+#include "fmt.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/dtls1.h"
+#include "openssl/ec.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/safestack.h"
+#include "openssl/ssl3.h"
+#include "openssl/tls1.h"
+#include "openssl/x509_vfy.h"
+#include "opt.h"
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/err.h>

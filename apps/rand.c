@@ -7,10 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "app_libctx.h"
 #include "apps.h"
+#include "fmt.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "opt.h"
 #include "progs.h"
 
 #include <ctype.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 

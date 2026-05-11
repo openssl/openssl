@@ -11,6 +11,7 @@
  * ECDSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
+#include "fips/fipsindicator.h"
 #include "internal/deprecated.h"
 
 #include <string.h> /* memcpy */
@@ -23,9 +24,15 @@
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include "internal/nelem.h"
+#include "internal/packet.h"
 #include "internal/sizes.h"
 #include "internal/cryptlib.h"
 #include "internal/deterministic_nonce.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/e_os2.h"
+#include "openssl/ec.h"
+#include "openssl/obj_mac.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"

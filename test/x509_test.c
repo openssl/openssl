@@ -7,6 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "openssl/bio.h"
+#include "openssl/conf.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include <stddef.h>
 #define OPENSSL_SUPPRESS_DEPRECATED /* EVP_PKEY_get1/set1_RSA */
 
 #include <openssl/x509.h>

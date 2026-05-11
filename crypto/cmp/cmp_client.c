@@ -10,6 +10,23 @@
  */
 
 #include "cmp_local.h"
+#include "crypto/x509.h"
+#include "internal/common.h"
+#include "internal/cryptlib.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/cmp.h"
+#include "openssl/cmperr.h"
+#include "openssl/crmf.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
+#include "openssl/x509_vfy.h"
+#include <limits.h>
+#include <stdint.h>
+#include <time.h>
 
 #define IS_CREP(t) ((t) == OSSL_CMP_PKIBODY_IP || (t) == OSSL_CMP_PKIBODY_CP \
     || (t) == OSSL_CMP_PKIBODY_KUP)

@@ -11,6 +11,14 @@
 #include <openssl/core_names.h>
 #include <openssl/rand.h>
 #include <openssl/hpke.h>
+#include "internal/nelem.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/provider.h"
+#include "opt.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "testutil.h"
 
 /* a size to use for stack buffers */

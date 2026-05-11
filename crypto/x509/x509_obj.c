@@ -12,8 +12,14 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/buffer.h>
+#include <string.h>
 #include "crypto/x509.h"
 #include "crypto/ctype.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/x509err.h"
 
 /*
  * Limit to ensure we don't overflow: much greater than

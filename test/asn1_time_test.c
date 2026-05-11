@@ -19,6 +19,8 @@
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include "openssl/crypto.h"
+#include <time.h>
 #include "testutil.h"
 #include "internal/deprecated.h"
 #include "internal/nelem.h"

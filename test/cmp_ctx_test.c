@@ -9,9 +9,26 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "crypto/cmp/cmp_local.h"
 #include "helpers/cmp_testlib.h"
+#include "openssl/asn1.h"
+#include "openssl/cmp.h"
+#include "openssl/cmp_util.h"
+#include "openssl/cmperr.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/http.h"
+#include "openssl/macros.h"
+#include "openssl/obj_mac.h"
+#include "openssl/rand.h"
+#include "openssl/safestack.h"
+#include "openssl/trace.h"
+#include "openssl/x509.h"
+#include "openssl/x509v3.h"
+#include "test/testutil.h"
 
 #include <openssl/x509_vfy.h>
+#include <string.h>
 
 typedef struct test_fixture {
     const char *test_case_name;

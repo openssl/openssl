@@ -19,18 +19,25 @@
 
 #include "internal/deprecated.h" /* including crypto/sha.h requires this */
 
+#include <stdint.h>
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include <openssl/core_names.h>
 #include "crypto/ml_dsa.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/params.h"
 #include "prov/provider_ctx.h"
 #include "prov/digestcommon.h"
 #include "prov/der_pq_dsa.h"
 #include "prov/implementations.h"
 #include "internal/common.h"
 #include "internal/sha3.h"
+#include "prov/providercommon.h"
 #include "providers/implementations/digests/ml_dsa_mu_prov.inc"
 
 #define SHAKE256_SIZE 64

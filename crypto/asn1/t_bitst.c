@@ -9,8 +9,13 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/macros.h"
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
+#include <string.h>
 
 #if !defined(OPENSSL_NO_DEPRECATED_4_1)
 OSSL_BEGIN_ALLOW_DEPRECATED

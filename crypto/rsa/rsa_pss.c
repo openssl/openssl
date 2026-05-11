@@ -11,6 +11,7 @@
  * RSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
+#include "crypto/rsa.h"
 #include "internal/deprecated.h"
 
 #include <stdio.h>
@@ -20,6 +21,12 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/rsaerr.h"
+#include <string.h>
 #include "rsa_local.h"
 
 static const unsigned char zeroes[] = { 0, 0, 0, 0, 0, 0, 0, 0 };

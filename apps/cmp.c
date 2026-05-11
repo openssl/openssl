@@ -10,13 +10,33 @@
  */
 
 /* This app is disabled when OPENSSL_NO_CMP is defined. */
+#include "app_libctx.h"
+#include "apps_ui.h"
+#include "fmt.h"
+#include "internal/common.h"
 #include "internal/e_os.h"
 
+#include <errno.h>
+#include <limits.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 
 #include "apps.h"
 #include "http_server.h"
+#include "internal/nelem.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/conf.h"
+#include "openssl/evp.h"
+#include "openssl/http.h"
+#include "openssl/macros.h"
+#include "openssl/obj_mac.h"
+#include "openssl/pem.h"
+#include "openssl/safestack.h"
+#include "openssl/x509_vfy.h"
+#include "openssl/x509v3.h"
+#include "opt.h"
 #include "s_apps.h"
 #include "progs.h"
 

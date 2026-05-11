@@ -11,6 +11,7 @@
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/obj_mac.h>
+#include <stddef.h>
 #include "internal/nelem.h"
 #include "crypto/rsa.h"
 

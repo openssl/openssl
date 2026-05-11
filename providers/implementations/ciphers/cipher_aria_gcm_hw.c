@@ -12,6 +12,9 @@
  */
 
 #include "cipher_aria_gcm.h"
+#include "crypto/aria.h"
+#include "prov/ciphercommon_gcm.h"
+#include <stddef.h>
 
 static int aria_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     size_t keylen)

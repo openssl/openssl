@@ -7,9 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <netdb.h>
+#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/poll.h>
+#include <time.h>
 #include "bio_local.h"
+#include "internal/common.h"
+#include "openssl/bio.h"
+#include "openssl/bioerr.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 #ifndef OPENSSL_NO_SOCK
 #define SOCKET_PROTOCOL IPPROTO_TCP

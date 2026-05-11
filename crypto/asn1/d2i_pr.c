@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
@@ -20,6 +21,11 @@
 #include "crypto/x509.h"
 #include "internal/asn1.h"
 #include "internal/sizes.h"
+#include "openssl/asn1err.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/safestack.h"
 
 static EVP_PKEY *
 d2i_PrivateKey_decoder(int keytype, EVP_PKEY **a, const unsigned char **pp,

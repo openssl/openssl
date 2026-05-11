@@ -11,8 +11,11 @@
  * HMAC low level APIs are deprecated for public use, but still ok for internal
  * use.
  */
+#include "fips/fipsindicator.h"
 #include "internal/deprecated.h"
 
+#include <limits.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
@@ -25,6 +28,13 @@
 #include "internal/fips.h"
 #include "internal/numbers.h"
 #include "crypto/evp.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/params.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"

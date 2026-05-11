@@ -11,6 +11,9 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/pkcs12.h>
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
 #include "p12_local.h"
 #include "crypto/pkcs7.h"
 

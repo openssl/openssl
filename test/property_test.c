@@ -10,6 +10,10 @@
 
 #include <stdarg.h>
 #include <openssl/evp.h>
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include <stddef.h>
+#include <string.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "internal/property.h"

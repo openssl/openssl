@@ -33,6 +33,11 @@
  * - PEM_read_bio_{TYPE}_PUBKEY()
  */
 
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/ec.h"
+#include "openssl/x509.h"
 #include <stdlib.h>
 #include <string.h>
 

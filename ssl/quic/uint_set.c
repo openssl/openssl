@@ -9,7 +9,9 @@
 
 #include "internal/uint_set.h"
 #include "internal/common.h"
+#include "openssl/crypto.h"
 #include <assert.h>
+#include <stdint.h>
 
 /*
  * uint64_t Integer Sets

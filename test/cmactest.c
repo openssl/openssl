@@ -23,6 +23,7 @@
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 
+#include "openssl/bio.h"
 #include "testutil.h"
 
 static const char xtskey[32] = {

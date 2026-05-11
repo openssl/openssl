@@ -7,12 +7,23 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/common.h"
+#include "internal/cryptlib.h"
 #include "internal/namemap.h"
 #include "internal/tsan_assist.h"
 #include "internal/hashtable.h"
 #include "internal/sizes.h"
 #include "crypto/context.h"
 #include "crypto/evp.h"
+#include "openssl/crypto.h"
+#include "openssl/cryptoerr.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 
 #define NAMEMAP_HT_BUCKETS 512
 

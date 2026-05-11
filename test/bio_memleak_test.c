@@ -11,6 +11,9 @@
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 
+#include "openssl/asn1.h"
+#include "openssl/obj_mac.h"
+#include "openssl/pkcs7.h"
 #include "testutil.h"
 
 static int test_bio_memleak(void)

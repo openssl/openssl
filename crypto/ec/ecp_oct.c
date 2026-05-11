@@ -16,8 +16,13 @@
 
 #include <openssl/err.h>
 #include <openssl/symhacks.h>
+#include <stddef.h>
 
 #include "ec_local.h"
+#include "openssl/bn.h"
+#include "openssl/bnerr.h"
+#include "openssl/ec.h"
+#include "openssl/ecerr.h"
 
 int ossl_ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
     EC_POINT *point,

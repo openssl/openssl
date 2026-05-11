@@ -19,6 +19,7 @@
 #include <openssl/proverr.h>
 #include <openssl/self_test.h>
 #include "internal/common.h"
+#include "openssl/macros.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"

@@ -12,6 +12,11 @@
 #include <openssl/param_build.h>
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include <stddef.h>
+#include <string.h>
 #include "testutil.h"
 #include "fake_cipherprov.h"
 

@@ -13,8 +13,12 @@
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
+#include "crypto/types.h"
+#include <stddef.h>
 #include "internal/cryptlib.h"
 #include "crypto/ecx.h"
+#include "openssl/core.h"
+#include "openssl/e_os2.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/securitycheck.h"

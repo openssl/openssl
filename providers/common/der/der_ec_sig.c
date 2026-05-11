@@ -8,7 +8,10 @@
  */
 
 #include <openssl/obj_mac.h>
+#include "internal/der.h"
+#include <stddef.h>
 #include "internal/packet.h"
+#include "openssl/bn.h"
 #include "prov/der_ec.h"
 
 /* Aliases so we can have a uniform MD_CASE */

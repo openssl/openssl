@@ -12,6 +12,9 @@
  */
 
 /* SRP is deprecated, so we're going to have to use some deprecated APIs */
+#include "apps_ui.h"
+#include "openssl/crypto.h"
+#include "opt.h"
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/opensslconf.h>

@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
+#include <stdint.h>
 #include <string.h>
 #include <openssl/types.h>
+#include "internal/nelem.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include <sys/time.h>
 #include "testutil.h"
 #include "internal/numbers.h"
 #include "internal/time.h"

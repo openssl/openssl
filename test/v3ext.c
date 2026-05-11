@@ -15,6 +15,9 @@
 #include <openssl/err.h>
 #include "internal/nelem.h"
 
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/conf.h"
 #include "testutil.h"
 
 #include <crypto/asn1.h>

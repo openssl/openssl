@@ -12,6 +12,7 @@
 #include <openssl/err.h>
 #include "crypto/sm2err.h"
 #include "crypto/sm2.h"
+#include "openssl/bn.h"
 #include <openssl/ec.h> /* EC_KEY and EC_GROUP functions */
 
 /*

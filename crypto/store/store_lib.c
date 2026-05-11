@@ -7,6 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/common.h"
+#include "internal/passphrase.h"
+#include "openssl/asn1.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/evp.h"
+#include "openssl/params.h"
+#include "openssl/storeerr.h"
+#include "openssl/x509.h"
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>

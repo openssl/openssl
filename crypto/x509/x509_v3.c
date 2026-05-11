@@ -15,6 +15,9 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/x509err.h"
 #include "x509_local.h"
 
 #include <crypto/asn1.h>

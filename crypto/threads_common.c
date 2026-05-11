@@ -87,6 +87,8 @@
 #include <openssl/crypto.h>
 #include <crypto/cryptlib.h>
 #include <crypto/sparse_array.h>
+#include "internal/common.h"
+#include <stdint.h>
 #include "internal/cryptlib.h"
 #include "internal/threads_common.h"
 

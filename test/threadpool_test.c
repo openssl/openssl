@@ -7,11 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <string.h>
 #include <internal/cryptlib.h>
 #include <internal/thread_arch.h>
 #include <internal/thread.h>
 #include <openssl/thread.h>
+#include "internal/nelem.h"
+#include "openssl/crypto.h"
 #include "testutil.h"
 
 static int test_thread_reported_flags(void)

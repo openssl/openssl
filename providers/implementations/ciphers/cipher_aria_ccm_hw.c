@@ -12,6 +12,10 @@
  */
 
 #include "cipher_aria_ccm.h"
+#include "crypto/aria.h"
+#include "openssl/modes.h"
+#include "prov/ciphercommon_ccm.h"
+#include <stddef.h>
 
 static int ccm_aria_initkey(PROV_CCM_CTX *ctx,
     const unsigned char *key, size_t keylen)

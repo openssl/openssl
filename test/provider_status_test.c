@@ -15,6 +15,10 @@
 #include <openssl/self_test.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
+#include "openssl/bio.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "opt.h"
 #include "testutil.h"
 
 typedef enum OPTION_choice {

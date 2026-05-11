@@ -11,6 +11,7 @@
  * CMAC low level APIs are deprecated for public use, but still ok for internal
  * use.
  */
+#include "fips/fipsindicator.h"
 #include "internal/deprecated.h"
 
 #include <openssl/core_dispatch.h>
@@ -20,8 +21,12 @@
 #include <openssl/cmac.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
+#include <stddef.h>
 
 #include "internal/cryptlib.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
 #include "prov/securitycheck.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"

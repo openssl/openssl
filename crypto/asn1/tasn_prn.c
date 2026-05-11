@@ -17,6 +17,9 @@
 #include <openssl/x509v3.h>
 #include "crypto/asn1.h"
 #include "asn1_local.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
 
 /*
  * Print routines.

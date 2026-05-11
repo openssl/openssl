@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
@@ -18,6 +19,11 @@
 #include "crypto/asn1.h"
 #include "crypto/x509.h"
 #include "crypto/evp.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/safestack.h"
+#include "openssl/x509err.h"
 #include "x509_local.h"
 
 int X509_set_version(X509 *x, long version)

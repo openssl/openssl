@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <string.h>
 #include <openssl/e_os2.h>
 #include <openssl/byteorder.h>

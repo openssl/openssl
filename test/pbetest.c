@@ -9,6 +9,7 @@
 
 #include <string.h>
 
+#include "openssl/crypto.h"
 #include "testutil.h"
 
 #include <openssl/evp.h>

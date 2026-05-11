@@ -13,6 +13,12 @@
 #include <openssl/bn.h>
 #include <openssl/x509v3.h>
 #include <openssl/ts.h>
+#include "internal/nelem.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/conf.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
 #include "ts_local.h"
 
 struct status_map_st {

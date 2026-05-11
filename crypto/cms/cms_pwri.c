@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+#include <limits.h>
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
@@ -15,9 +16,20 @@
 #include <openssl/cms.h>
 #include <openssl/rand.h>
 #include <openssl/aes.h>
+#include <stddef.h>
+#include <string.h>
 #include "internal/sizes.h"
 #include "crypto/asn1.h"
 #include "cms_local.h"
+#include "openssl/asn1.h"
+#include "openssl/cmserr.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
 
 int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri,
     unsigned char *pass, ossl_ssize_t passlen)

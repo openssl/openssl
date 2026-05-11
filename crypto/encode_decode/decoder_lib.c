@@ -16,12 +16,24 @@
 #include <openssl/pkcs12err.h>
 #include <openssl/x509err.h>
 #include <openssl/trace.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
 #include "internal/bio.h"
+#include "internal/common.h"
+#include "internal/passphrase.h"
+#include "internal/property.h"
 #include "internal/provider.h"
 #include "internal/namemap.h"
 #include "crypto/decoder.h"
 #include "encoder_local.h"
 #include "internal/e_os.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/decoder.h"
+#include "openssl/decodererr.h"
+#include "openssl/err.h"
+#include "openssl/safestack.h"
 
 struct decoder_process_data_st {
     OSSL_DECODER_CTX *ctx;

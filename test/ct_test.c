@@ -8,6 +8,7 @@
  */
 
 #include <ctype.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,8 +18,12 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include "openssl/bio.h"
+#include "openssl/obj_mac.h"
+#include "openssl/safestack.h"
 #include "testutil.h"
 #include <openssl/crypto.h>
+#include <time.h>
 
 #ifndef OPENSSL_NO_CT
 

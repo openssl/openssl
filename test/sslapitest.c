@@ -13,6 +13,33 @@
  */
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 #define OPENSSL_SUPPRESS_DEPRECATED
+#include "internal/packet.h"
+#include "internal/refcount.h"
+#include "internal/statem.h"
+#include "internal/time.h"
+#include "internal/tlssigalgs.h"
+#include "openssl/asn1.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/hmac.h"
+#include "openssl/obj_mac.h"
+#include "openssl/params.h"
+#include "openssl/pem.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/safestack.h"
+#include "openssl/sha.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
+#include "openssl/x509.h"
+#include "openssl/x509_vfy.h"
+#include "ssl/record/record.h"
+#include <limits.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <time.h>
 #endif
 
 #include <stdio.h>

@@ -11,7 +11,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "app_libctx.h"
 #include "apps.h"
+#include "fmt.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/safestack.h"
+#include "opt.h"
 #include "progs.h"
 #include <openssl/err.h>
 #include <openssl/objects.h>

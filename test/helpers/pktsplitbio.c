@@ -7,7 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include <openssl/bio.h>
+#include "internal/packet.h"
+#include "internal/quic_wire_pkt.h"
+#include "openssl/crypto.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "quictestlib.h"
 #include "../testutil.h"
 

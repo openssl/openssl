@@ -7,9 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <netinet/in.h>
+#include <stdint.h>
 #include <string.h>
 #include <openssl/bio.h>
 #include <openssl/rand.h>
+#include "internal/nelem.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include <sys/socket.h>
 #include "testutil.h"
 #include "internal/sockets.h"
 #include "internal/bio_addr.h"

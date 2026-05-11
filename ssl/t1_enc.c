@@ -9,6 +9,17 @@
  */
 
 #include <stdio.h>
+#include "internal/recordmethod.h"
+#include "internal/statem.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/params.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
+#include "ssl/record/record.h"
 #include "ssl_local.h"
 #include "record/record_local.h"
 #include "internal/ktls.h"
@@ -21,6 +32,7 @@
 #include <openssl/obj_mac.h>
 #include <openssl/core_names.h>
 #include <openssl/trace.h>
+#include <string.h>
 
 /* seed1 through seed5 are concatenated */
 static int tls1_PRF(SSL_CONNECTION *s,

@@ -11,6 +11,8 @@
 /*
  * Test slh-dsa operation.
  */
+#include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -20,6 +22,10 @@
 #include "crypto/slh_dsa.h"
 #include "internal/nelem.h"
 #include "fuzzer.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/params.h"
 
 /**
  * @brief Consumes an 8-bit unsigned integer from a buffer.

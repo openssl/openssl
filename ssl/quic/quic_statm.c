@@ -8,6 +8,8 @@
  */
 
 #include "internal/quic_statm.h"
+#include "internal/quic_predef.h"
+#include "internal/time.h"
 
 void ossl_statm_update_rtt(OSSL_STATM *statm,
     OSSL_TIME ack_delay,

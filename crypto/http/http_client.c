@@ -9,6 +9,7 @@
  */
 
 #include "internal/e_os.h"
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "crypto/ctype.h"
@@ -21,8 +22,14 @@
 #include <openssl/buffer.h>
 #include <openssl/http.h>
 #include <openssl/trace.h>
+#include <time.h>
 #include "internal/sockets.h"
 #include "internal/common.h" /* for ossl_assert() */
+#include "openssl/bio.h"
+#include "openssl/bioerr.h"
+#include "openssl/conf.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
 
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */

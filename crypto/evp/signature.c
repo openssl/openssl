@@ -13,12 +13,18 @@
 #include <openssl/core_names.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
+#include "internal/common.h"
 #include "internal/numbers.h" /* includes SIZE_MAX */
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
 #include "internal/core.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+#include "internal/refcount.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/evperr.h"
+#include "openssl/params.h"
 
 static void evp_signature_free(void *data)
 {

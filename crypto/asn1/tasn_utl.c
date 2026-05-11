@@ -16,6 +16,8 @@
 #include <openssl/objects.h>
 #include <openssl/err.h>
 #include "asn1_local.h"
+#include "openssl/asn1err.h"
+#include "openssl/crypto.h"
 
 /* Utility functions for manipulating fields and offsets */
 

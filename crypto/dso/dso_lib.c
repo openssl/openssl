@@ -8,7 +8,11 @@
  */
 
 #include "dso_local.h"
+#include "internal/dso.h"
+#include "internal/dsoerr.h"
 #include "internal/refcount.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 static DSO *DSO_new_method(DSO_METHOD *meth)
 {

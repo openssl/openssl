@@ -7,8 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 #include "internal/quic_srt_gen.h"
+#include "internal/quic_types.h"
+#include "openssl/crypto.h"
+#include "openssl/params.h"
+#include "openssl/sha.h"
+#include <assert.h>
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
+#include <stddef.h>
+#include <string.h>
 
 struct quic_srt_gen_st {
     EVP_MAC *mac;

@@ -7,8 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/nelem.h"
+#include "internal/quic_predef.h"
+#include "internal/quic_statm.h"
+#include "internal/quic_types.h"
+#include "internal/quic_wire.h"
+#include "internal/time.h"
+#include "openssl/crypto.h"
 #include "testutil.h"
 #include <openssl/ssl.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "internal/quic_ackm.h"
 #include "internal/quic_cc.h"
 

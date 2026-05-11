@@ -7,6 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/recordmethod.h"
+#include "internal/statem.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
+#include "ssl/record/record.h"
 #include "ssl_local.h"
 #include "internal/ssl_unwrap.h"
 

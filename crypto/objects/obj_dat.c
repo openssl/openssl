@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "crypto/ctype.h"
 #include <limits.h>
+#include "internal/common.h"
 #include "internal/cryptlib.h"
 #include "internal/thread_once.h"
 #include "internal/tsan_assist.h"
@@ -18,8 +19,16 @@
 #include "crypto/asn1/asn1_local.h"
 #include "crypto/objects.h"
 #include <openssl/bn.h>
+#include <string.h>
 #include "crypto/asn1.h"
 #include "obj_local.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/objectserr.h"
 
 /* obj_dat.h is generated from objects.txt and obj_mac.{num,h} by obj_dat.pl */
 #include "obj_dat.h"

@@ -26,6 +26,7 @@
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 
+#include "openssl/params.h"
 #include "testutil.h"
 #include "internal/nelem.h"
 

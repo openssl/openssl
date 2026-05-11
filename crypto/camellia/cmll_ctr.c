@@ -15,6 +15,7 @@
 
 #include <openssl/camellia.h>
 #include <openssl/modes.h>
+#include <stddef.h>
 
 void Camellia_ctr128_encrypt(const unsigned char *in, unsigned char *out,
     size_t length, const CAMELLIA_KEY *key,

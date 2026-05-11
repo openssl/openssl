@@ -7,6 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/nelem.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/params.h"
+#include <stdint.h>
 #include <string.h>
 #include <openssl/opensslconf.h>
 #include <openssl/rand.h>

@@ -14,6 +14,9 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "crypto/x509.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/objects.h"
 
 ASN1_SEQUENCE_enc(X509_CINF, enc, 0) = {
     ASN1_EXP_OPT(X509_CINF, version, ASN1_INTEGER, 0),

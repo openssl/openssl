@@ -20,13 +20,19 @@
 #include "internal/cryptlib.h"
 #include "internal/asn1.h"
 #include "internal/sizes.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/params.h"
 #include "prov/bio.h"
 #include "prov/decoders.h"
 #include "prov/implementations.h"
 #include "prov/endecoder_local.h"
+#include "prov/provider_ctx.h"
 #include "providers/implementations/encode_decode/decode_epki2pki.inc"
 
 #include <crypto/asn1.h>
+#include <stddef.h>
 
 static OSSL_FUNC_decoder_newctx_fn epki2pki_newctx;
 static OSSL_FUNC_decoder_freectx_fn epki2pki_freectx;

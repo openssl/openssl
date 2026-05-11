@@ -7,12 +7,29 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <arpa/inet.h>
+#include <errno.h>
+#include <netinet/in.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <string.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 #include "internal/e_os.h"
 #include "internal/nelem.h"
 #include "ssltestlib.h"
 #include "../testutil.h"
+#include "openssl/crypto.h"
+#include "openssl/dtls1.h"
+#include "openssl/pem.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/safestack.h"
+#include "openssl/sha.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/x509.h"
 
 #if (!defined(OPENSSL_NO_KTLS) || !defined(OPENSSL_NO_QUIC)) && !defined(OPENSSL_NO_POSIX_IO) && !defined(OPENSSL_NO_SOCK)
 #define OSSL_USE_SOCKETS 1

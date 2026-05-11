@@ -10,6 +10,7 @@
 #include "crypto/cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/trace.h>
+#include <string.h>
 #include "internal/thread_once.h"
 #include "internal/property.h"
 #include "internal/cryptlib.h"
@@ -18,6 +19,9 @@
 #include "internal/provider.h"
 #include "internal/conf.h"
 #include "crypto/decoder.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
 #include "crypto/context.h"
 
 struct ossl_lib_ctx_st {

@@ -20,6 +20,10 @@
 #include <openssl/objects.h>
 #include <openssl/asn1t.h>
 #include "crypto/dh.h"
+#include "internal/ffc.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/dh.h"
 
 #include <crypto/asn1.h>
 

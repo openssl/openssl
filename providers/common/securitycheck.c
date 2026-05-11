@@ -8,6 +8,8 @@
  */
 
 #include "internal/deprecated.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
 
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
@@ -18,6 +20,7 @@
 #include <openssl/proverr.h>
 #include <openssl/core_names.h>
 #include <openssl/obj_mac.h>
+#include <stddef.h>
 #include "prov/securitycheck.h"
 
 #define OSSL_FIPS_MIN_SECURITY_STRENGTH_BITS 112

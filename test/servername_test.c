@@ -20,6 +20,9 @@
 
 #include "internal/packet.h"
 
+#include "openssl/prov_ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/tls1.h"
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "helpers/ssltestlib.h"

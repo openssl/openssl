@@ -11,6 +11,7 @@
  * DH low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
+#include "internal/common.h"
 #include "internal/deprecated.h"
 
 #include <stdio.h>
@@ -25,6 +26,15 @@
 #include "crypto/dh.h"
 #include "crypto/evp.h"
 #include "dh_local.h"
+#include "openssl/bio.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/dh.h"
+#include "openssl/dherr.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/objects.h"
+#include "openssl/params.h"
 
 /*
  * i2d/d2i like DH parameter functions which use the appropriate routine for

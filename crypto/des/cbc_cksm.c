@@ -14,6 +14,7 @@
 #include "internal/deprecated.h"
 
 #include "des_local.h"
+#include "openssl/des.h"
 
 DES_LONG DES_cbc_cksum(const unsigned char *in, DES_cblock *output,
     long length, DES_key_schedule *schedule,

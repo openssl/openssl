@@ -7,8 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <string.h>
 #include <openssl/crypto.h>
+#include "crypto/slh_dsa.h"
+#include "crypto/slh_dsa/slh_adrs.h"
+#include "crypto/slh_dsa/slh_hash.h"
+#include "internal/packet.h"
 #include "slh_dsa_local.h"
 #include "slh_dsa_key.h"
 

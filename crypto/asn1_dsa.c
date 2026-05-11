@@ -23,6 +23,7 @@
 
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
+#include <stddef.h>
 #include "crypto/asn1_dsa.h"
 #include "internal/packet.h"
 

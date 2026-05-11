@@ -7,8 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "crypto/bn.h"
 #include "internal/cryptlib.h"
 #include "bn_local.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
 
 BN_ULONG BN_mod_word(const BIGNUM *a, BN_ULONG w)
 {

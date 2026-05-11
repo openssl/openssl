@@ -16,7 +16,10 @@
 #include "internal/cryptlib.h"
 
 #include <openssl/aes.h>
+#include <stddef.h>
+#include <string.h>
 #include "aes_local.h"
+#include "openssl/crypto.h"
 
 /* XXX: probably some better way to do this */
 #if defined(__i386__) || defined(__x86_64__)

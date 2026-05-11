@@ -9,6 +9,9 @@
 
 #include "internal/e_os.h" /* LIST_SEPARATOR_CHAR */
 #include "apps.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
+#include "opt.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>

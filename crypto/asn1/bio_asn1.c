@@ -13,10 +13,16 @@
  * provided to add prefix and suffix data.
  */
 
+#include <limits.h>
 #include <string.h>
 #include "internal/bio.h"
 #include <openssl/asn1.h>
+#include "internal/common.h"
 #include "internal/cryptlib.h"
+#include "openssl/bio.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 /* Must be large enough for biggest tag+length */
 #define DEFAULT_ASN1_BUF_SIZE 20

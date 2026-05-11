@@ -9,6 +9,8 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>

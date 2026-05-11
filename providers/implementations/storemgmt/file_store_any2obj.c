@@ -33,11 +33,16 @@
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include <openssl/params.h>
+#include <stddef.h>
 #include "internal/asn1.h"
 #include "internal/sizes.h"
 #include "crypto/pem.h" /* For internal PVK and "blob" headers */
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
 #include "prov/bio.h"
 #include "prov/file_store_local.h"
+#include "prov/provider_ctx.h"
 #include "providers/implementations/storemgmt/file_store_any2obj.inc"
 
 /*

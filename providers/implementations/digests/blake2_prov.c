@@ -7,15 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/core_names.h>
 #include <openssl/proverr.h>
 #include <openssl/err.h>
 #include "internal/cryptlib.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/e_os2.h"
+#include "openssl/params.h"
 #include "prov/blake2.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 #include "providers/implementations/digests/blake2_prov.inc"
 
 static OSSL_FUNC_digest_gettable_ctx_params_fn blake_gettable_ctx_params;

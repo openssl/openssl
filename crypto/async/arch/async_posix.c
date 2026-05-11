@@ -9,6 +9,9 @@
 
 /* This must be the first #include file */
 #include "../async_local.h"
+#include "openssl/async.h"
+#include <sys/ucontext.h>
+#include <ucontext.h>
 
 #ifdef ASYNC_POSIX
 

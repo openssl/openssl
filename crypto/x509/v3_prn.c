@@ -11,6 +11,13 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 

@@ -12,6 +12,7 @@
  * use.
  */
 #include "internal/deprecated.h"
+#include "openssl/des.h"
 
 #include <stdio.h>
 

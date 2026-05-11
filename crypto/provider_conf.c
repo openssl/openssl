@@ -15,6 +15,9 @@
 #include <openssl/provider.h>
 #include "internal/provider.h"
 #include "internal/cryptlib.h"
+#include "openssl/conferr.h"
+#include "openssl/crypto.h"
+#include "openssl/cryptoerr.h"
 #include "provider_local.h"
 #include "crypto/context.h"
 

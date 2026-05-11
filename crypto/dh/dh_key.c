@@ -13,12 +13,21 @@
  */
 #include "internal/deprecated.h"
 
+#include <limits.h>
 #include <stdio.h>
+#include <string.h>
 #include "internal/cryptlib.h"
 #include "dh_local.h"
 #include "crypto/bn.h"
 #include "crypto/dh.h"
 #include "crypto/security_bits.h"
+#include "internal/ffc.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
+#include "openssl/dh.h"
+#include "openssl/dherr.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
 
 #ifdef FIPS_MODULE
 #define MIN_STRENGTH 112

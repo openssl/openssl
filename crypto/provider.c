@@ -13,6 +13,8 @@
 #include <openssl/provider.h>
 #include <openssl/core_names.h>
 #include "internal/provider.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
 #include "provider_local.h"
 
 OSSL_PROVIDER *OSSL_PROVIDER_try_load_ex(OSSL_LIB_CTX *libctx, const char *name,

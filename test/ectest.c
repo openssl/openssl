@@ -16,6 +16,11 @@
 
 #include <string.h>
 #include "internal/nelem.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/params.h"
 #include "testutil.h"
 
 #include <openssl/ec.h>

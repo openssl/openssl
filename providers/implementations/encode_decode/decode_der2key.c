@@ -26,6 +26,9 @@
 #include <openssl/x509.h>
 #include <openssl/proverr.h>
 #include <openssl/asn1t.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "internal/cryptlib.h" /* ossl_assert() */
 #include "crypto/dh.h"
 #include "crypto/dsa.h"
@@ -37,7 +40,17 @@
 #include "crypto/slh_dsa.h"
 #include "crypto/x509.h"
 #include "crypto/ml_kem.h"
+#include "internal/sizes.h"
+#include "openssl/asn1.h"
+#include "openssl/core.h"
+#include "openssl/dh.h"
+#include "openssl/dsa.h"
+#include "openssl/e_os2.h"
+#include "openssl/ec.h"
+#include "openssl/evp.h"
 #include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/rsa.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "prov/endecoder_local.h"
@@ -45,6 +58,7 @@
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
 #include "prov/lms_codecs.h"
+#include "prov/provider_ctx.h"
 #include "providers/implementations/encode_decode/decode_der2key.inc"
 
 #ifndef OPENSSL_NO_SLH_DSA

@@ -11,6 +11,17 @@
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
 #include "crypto/x509.h" /* for ossl_x509_add_cert_new() */
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/evperr.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/pkcs12err.h"
+#include "openssl/pkcs7.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
 
 /* Simplified PKCS#12 routines */
 

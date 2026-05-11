@@ -19,6 +19,8 @@
 #include "internal/bio.h"
 #include "internal/thread_once.h"
 #include "comp_local.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
 
 COMP_METHOD *COMP_brotli(void);
 

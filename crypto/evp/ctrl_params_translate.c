@@ -13,8 +13,10 @@
  * configured.  When we drop #legacy EVP_PKEYs, this source should be
  * possible to drop as well.
  */
+#include "internal/common.h"
 #include "internal/deprecated.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 /* The following includes get us all the EVP_PKEY_CTRL macros */
@@ -36,6 +38,15 @@
 #include "crypto/evp.h"
 #include "crypto/dh.h"
 #include "crypto/ec.h"
+#include "internal/sizes.h"
+#include "openssl/bio.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/rsaerr.h"
 
 struct translation_ctx_st; /* Forwarding */
 struct translation_st; /* Forwarding */

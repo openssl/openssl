@@ -10,7 +10,12 @@
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/x509_acert.h>
+#include <stddef.h>
 
+#include "internal/nelem.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
 #include "testutil.h"
 
 static int test_print_acert(int idx)

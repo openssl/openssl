@@ -14,6 +14,7 @@
 #include "internal/deprecated.h"
 
 #include "des_local.h"
+#include "openssl/des.h"
 
 void DES_ecb3_encrypt(const_DES_cblock *input, DES_cblock *output,
     DES_key_schedule *ks1, DES_key_schedule *ks2,

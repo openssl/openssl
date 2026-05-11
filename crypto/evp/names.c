@@ -15,6 +15,9 @@
 #include "internal/namemap.h"
 #include "crypto/objects.h"
 #include "crypto/evp.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/objects.h"
 
 int EVP_add_cipher(const EVP_CIPHER *c)
 {

@@ -20,9 +20,13 @@
  * MD5 and SHA-1 low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
+#include "internal/common.h"
 #include "internal/deprecated.h"
+#include "openssl/crypto.h"
 
 #include <openssl/evp.h>
+#include <stddef.h>
+#include <string.h>
 #ifndef FIPS_MODULE
 #include <openssl/md5.h>
 #endif

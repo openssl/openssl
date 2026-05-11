@@ -14,6 +14,12 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/ts.h>
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/safestack.h"
+#include <string.h>
 #include "ts_local.h"
 
 int TS_ASN1_INTEGER_print_bio(BIO *bio, const ASN1_INTEGER *num)

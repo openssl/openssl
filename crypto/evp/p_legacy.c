@@ -21,6 +21,7 @@
 #include "crypto/types.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+#include "openssl/evperr.h"
 
 int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
 {

@@ -10,7 +10,11 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include "helpers/ssltestlib.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/prov_ssl.h"
 #include "testutil.h"
+#include <stdio.h>
 #include <string.h>
 
 static char *cert = NULL;

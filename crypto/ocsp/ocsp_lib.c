@@ -15,6 +15,12 @@
 #include <openssl/x509v3.h>
 #include <openssl/ocsp.h>
 #include "ocsp_local.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/ocsperr.h"
 #include <openssl/asn1t.h>
 
 /* Convert a certificate and its issuer to an OCSP_CERTID */

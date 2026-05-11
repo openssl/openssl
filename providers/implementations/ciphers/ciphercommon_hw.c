@@ -7,7 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "openssl/modes.h"
 #include "prov/ciphercommon.h"
+#include <stddef.h>
 
 /*-
  * The generic cipher functions for cipher modes cbc, ecb, ofb, cfb and ctr.

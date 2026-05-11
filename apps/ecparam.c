@@ -8,6 +8,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include <string.h>
 #include <openssl/opensslconf.h>
 #include <openssl/evp.h>
@@ -17,7 +18,15 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+#include "app_libctx.h"
 #include "apps.h"
+#include "fmt.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/ec.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "opt.h"
 #include "progs.h"
 #include "ec_common.h"
 

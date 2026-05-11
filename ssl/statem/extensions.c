@@ -7,6 +7,28 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/common.h"
+#include "internal/packet.h"
+#include "internal/statem.h"
+#include "internal/tsan_assist.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/ech.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/params.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/safestack.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
+#include "openssl/trace.h"
+#include "openssl/x509.h"
+#include "openssl/x509_vfy.h"
+#include "ssl/ech/ech_local.h"
+#include <stdint.h>
 #if defined(__TANDEM) && defined(_SPT_MODEL_)
 #include <spthread.h>
 #include <spt_extensions.h> /* timeval */

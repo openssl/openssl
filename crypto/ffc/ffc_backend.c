@@ -10,6 +10,9 @@
 #include <openssl/core_names.h>
 #include "internal/ffc.h"
 #include "internal/sizes.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/params.h"
 
 /*
  * The intention with the "backend" source file is to offer backend functions

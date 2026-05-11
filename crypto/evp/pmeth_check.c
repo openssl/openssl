@@ -13,6 +13,10 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include "crypto/bn.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evperr.h"
 #ifndef FIPS_MODULE
 #include "crypto/asn1.h"
 #endif

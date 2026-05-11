@@ -12,10 +12,14 @@
  * Fuzz the SCT parser.
  */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <openssl/ct.h>
 #include <openssl/err.h>
 #include "fuzzer.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
 
 int FuzzerInitialize(int *argc, char ***argv)
 {

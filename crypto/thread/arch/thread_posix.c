@@ -7,7 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/time.h"
+#include "openssl/crypto.h"
 #include <internal/thread_arch.h>
+#include <pthread.h>
+#include <time.h>
 
 #if defined(OPENSSL_THREADS_POSIX)
 #define _GNU_SOURCE

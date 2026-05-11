@@ -9,10 +9,40 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/common.h"
+#include "internal/dane.h"
 #include "internal/e_os.h"
 #include "internal/e_winsock.h"
+#include "internal/packet.h"
+#include "internal/quic_ssl.h"
+#include "internal/quic_tls.h"
+#include "internal/statem.h"
+#include "internal/time.h"
+#include "internal/tsan_assist.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/buffer.h"
+#include "openssl/crypto.h"
+#include "openssl/dtls1.h"
+#include "openssl/e_os2.h"
+#include "openssl/evp.h"
+#include "openssl/lhash.h"
+#include "openssl/obj_mac.h"
+#include "openssl/params.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/quic.h"
+#include "openssl/safestack.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
+#include "openssl/x509.h"
+#include "openssl/x509_vfy.h"
+#include "ssl/ech/ech_local.h"
+#include "ssl/record/record.h"
 #include "ssl_local.h"
 
+#include <limits.h>
 #include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/x509v3.h>
@@ -25,6 +55,11 @@
 #include <openssl/trace.h>
 #include <openssl/core_names.h>
 #include <openssl/provider.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/types.h>
+#include <time.h>
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
 #include "internal/refcount.h"

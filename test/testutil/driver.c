@@ -8,14 +8,20 @@
  */
 
 #include "../testutil.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "opt.h"
 #include "output.h"
 #include "tu_local.h"
 
+#include <stdarg.h>
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
 #include "internal/nelem.h"
 #include <openssl/bio.h>
+#include <time.h>
 
 #include "platform.h" /* From libapps */
 

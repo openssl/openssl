@@ -10,6 +10,7 @@
 /*
  * Low level APIs are deprecated for public use, but still ok for internal use.
  */
+#include "crypto/types.h"
 #include "internal/deprecated.h"
 
 #include <openssl/core.h>
@@ -19,6 +20,7 @@
 #include <openssl/err.h>
 #include <openssl/safestack.h>
 #include <openssl/proverr.h>
+#include <stddef.h>
 #include "crypto/dh.h" /* ossl_dh_get0_params() */
 #include "crypto/dsa.h" /* ossl_dsa_get0_params() */
 #include "crypto/ec.h" /* ossl_ec_key_get_libctx */
@@ -27,6 +29,16 @@
 #include "crypto/rsa.h" /* RSA_PSS_PARAMS_30, etc... */
 #include "crypto/ml_dsa.h"
 #include "crypto/slh_dsa.h"
+#include "internal/ffc.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/dh.h"
+#include "openssl/dsa.h"
+#include "openssl/e_os2.h"
+#include "openssl/ec.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/rsa.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "internal/encoder.h"

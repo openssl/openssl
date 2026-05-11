@@ -12,6 +12,9 @@
  * internal use.
  */
 #include "internal/deprecated.h"
+#include "openssl/crypto.h"
+#include "openssl/md5.h"
+#include "openssl/sha.h"
 
 #include <string.h>
 #include "prov/md5_sha1.h"

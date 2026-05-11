@@ -12,6 +12,11 @@
 #include "internal/ffc.h"
 #include "internal/param_build_set.h"
 #include "internal/nelem.h"
+#include "openssl/bio.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
 
 #ifndef FIPS_MODULE
 #include <openssl/asn1.h> /* ossl_ffc_params_print */

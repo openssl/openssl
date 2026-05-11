@@ -9,6 +9,8 @@
 
 #include <openssl/crypto.h>
 #include "apps.h"
+#include "openssl/bio.h"
+#include "opt.h"
 #include "progs.h"
 
 typedef enum OPTION_choice {

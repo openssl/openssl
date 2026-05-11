@@ -15,6 +15,9 @@
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
 #include <openssl/tls1.h>
+#include "openssl/crypto.h"
+#include "openssl/prov_ssl.h"
+#include "opt.h"
 #include "testutil.h"
 
 static int expect_failure = 0;

@@ -10,6 +10,10 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/pkcs7.h"
+#include <string.h>
 #include "p12_local.h"
 #include "crypto/pkcs7/pk7_local.h"
 #include <crypto/asn1.h>

@@ -16,6 +16,7 @@
 #include <openssl/safestack.h> /* evp_local.h needs it */
 #include "crypto/evp.h" /* evp_local.h needs it */
 #include "evp_local.h"
+#include "openssl/evperr.h"
 
 /*
  * EVP_CTRL_RET_UNSUPPORTED = -1 is the returned value from any ctrl function

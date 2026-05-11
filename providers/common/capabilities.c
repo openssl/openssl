@@ -17,6 +17,8 @@
 #include "internal/nelem.h"
 #include "internal/tlsgroups.h"
 #include "internal/tlssigalgs.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
 #include "prov/providercommon.h"
 #include "internal/e_os.h"
 #include "crypto/ml_kem.h"

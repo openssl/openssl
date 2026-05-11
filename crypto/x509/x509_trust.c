@@ -11,6 +11,16 @@
 #include "internal/cryptlib.h"
 #include <openssl/x509v3.h>
 #include "crypto/x509.h"
+#include "internal/nelem.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
+#include "openssl/x509_vfy.h"
+#include "openssl/x509err.h"
 
 static int tr_cmp(const X509_TRUST *const *a, const X509_TRUST *const *b);
 static void trtable_free(X509_TRUST *p);

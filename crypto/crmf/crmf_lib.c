@@ -27,10 +27,31 @@
  */
 
 #include "crmf_local.h"
+#include <limits.h>
 #include <openssl/asn1t.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "internal/constant_time.h"
+#include "internal/crmf.h"
 #include "internal/sizes.h" /* for OSSL_MAX_NAME_SIZE */
 #include "crypto/x509.h" /* for ossl_x509_check_private_key() */
+#include "openssl/asn1.h"
+#include "openssl/asn1err.h"
+#include "openssl/bio.h"
+#include "openssl/cms.h"
+#include "openssl/crmf.h"
+#include "openssl/crmferr.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
+#include "openssl/x509_vfy.h"
+#include "openssl/x509v3.h"
 
 /*-
  * atyp = Attribute Type

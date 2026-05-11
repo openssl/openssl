@@ -18,6 +18,9 @@
 #include <stdlib.h>
 
 #include "internal/nelem.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
 
 #include <openssl/hmac.h>
 #include <openssl/sha.h>

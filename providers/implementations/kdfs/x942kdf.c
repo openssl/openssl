@@ -8,6 +8,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "fips/fipsindicator.h"
 #include "internal/e_os.h"
 #include <openssl/core_names.h>
 #include <openssl/core_dispatch.h>
@@ -15,11 +16,17 @@
 #include <openssl/evp.h>
 #include <openssl/params.h>
 #include <openssl/proverr.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "internal/common.h"
 #include "internal/packet.h"
 #include "internal/der.h"
 #include "internal/fips.h"
 #include "internal/nelem.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"

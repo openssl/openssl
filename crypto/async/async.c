@@ -13,6 +13,11 @@
  * cost of this is not having certain buffer overrun/underrun checks etc for
  * this source file :-(
  */
+#include "internal/cryptlib.h"
+#include "openssl/async.h"
+#include "openssl/asyncerr.h"
+#include "openssl/crypto.h"
+#include <limits.h>
 #undef _FORTIFY_SOURCE
 
 /* This must be the first #include file */

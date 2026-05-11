@@ -20,6 +20,8 @@
 #include <openssl/asn1t.h>
 #include <openssl/rand.h>
 #include "crypto/asn1_dsa.h"
+#include "openssl/crypto.h"
+#include "openssl/dsa.h"
 
 /* Override the default free and new methods */
 static int dsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,

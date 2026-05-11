@@ -14,8 +14,11 @@
 #include "internal/deprecated.h"
 
 #include "internal/cryptlib.h"
+#include "openssl/err.h"
+#include "openssl/rsaerr.h"
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
+#include <string.h>
 
 int RSA_padding_add_none(unsigned char *to, int tlen,
     const unsigned char *from, int flen)

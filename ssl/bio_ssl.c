@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +15,10 @@
 #include <openssl/crypto.h>
 #include "internal/bio.h"
 #include <openssl/err.h>
+#include "internal/statem.h"
+#include "openssl/bio.h"
+#include "openssl/ssl.h"
+#include <time.h>
 #include "ssl_local.h"
 #include "internal/ssl_unwrap.h"
 #include "internal/sockets.h"

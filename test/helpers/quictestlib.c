@@ -8,10 +8,25 @@
  */
 
 #include <assert.h>
+#include <netinet/in.h>
 #include <openssl/configuration.h>
 #include <openssl/bio.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
 #include "internal/e_os.h" /* For struct timeval */
 #include "quictestlib.h"
+#include "internal/quic_channel.h"
+#include "internal/quic_tserver.h"
+#include "internal/quic_wire.h"
+#include "internal/thread_arch.h"
+#include "internal/time.h"
+#include "openssl/crypto.h"
+#include "openssl/quic.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
 #include "ssltestlib.h"
 #include "../testutil.h"
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)

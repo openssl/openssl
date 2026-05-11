@@ -11,7 +11,16 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "app_libctx.h"
 #include "apps.h"
+#include "fmt.h"
+#include "openssl/bio.h"
+#include "openssl/conf.h"
+#include "openssl/evp.h"
+#include "openssl/pkcs7.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
+#include "opt.h"
 #include "progs.h"
 #include <openssl/crypto.h>
 #include <openssl/pem.h>

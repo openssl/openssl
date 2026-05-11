@@ -9,6 +9,9 @@
 
 #include <openssl/opensslconf.h>
 #include "internal/cryptlib.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include <stdint.h>
 #include <stdio.h>
 #include <openssl/rsa.h>
 #include <openssl/objects.h>

@@ -8,6 +8,9 @@
  */
 
 #include "../testutil.h"
+#include "openssl/bio.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
 #include "output.h"
 #include "tu_local.h"
 

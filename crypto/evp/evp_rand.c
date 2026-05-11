@@ -20,6 +20,11 @@
 #include "internal/core.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+#include "internal/refcount.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/err.h"
+#include "openssl/evperr.h"
+#include "openssl/params.h"
 
 struct evp_rand_st {
     OSSL_PROVIDER *prov;

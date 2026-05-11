@@ -11,10 +11,24 @@
  * This file uses the low level AES functions (which are deprecated for
  * non-internal use) in order to implement provider AES ciphers.
  */
+#include "internal/common.h"
 #include "internal/deprecated.h"
 
+#include <limits.h>
 #include <openssl/proverr.h>
+#include <stddef.h>
+#include <stdint.h>
 #include "cipher_aes.h"
+#include "openssl/aes.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/evperr.h"
+#include "openssl/modes.h"
+#include "openssl/params.h"
+#include "prov/ciphercommon.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "providers/implementations/ciphers/cipher_aes_wrp.inc"

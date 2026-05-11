@@ -12,7 +12,21 @@
 /* CMP functions for PKIHeader handling */
 
 #include "cmp_local.h"
+#include "internal/common.h"
+#include "openssl/asn1.h"
+#include "openssl/cmp.h"
+#include "openssl/cmperr.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
+#include "openssl/x509v3.h"
+#include <limits.h>
 #include <openssl/rand.h> /* for RAND_bytes_ex() */
+#include <stdint.h>
+#include <time.h>
 
 int ossl_cmp_hdr_set_pvno(OSSL_CMP_PKIHEADER *hdr, int pvno)
 {

@@ -7,9 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include "apps.h"
+#include "fmt.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/params.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
+#include "opt.h"
 #include "progs.h"
 #include "ec_common.h"
 #include <openssl/pem.h>

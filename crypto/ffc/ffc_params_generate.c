@@ -32,6 +32,9 @@
 #include <openssl/dsaerr.h>
 #include "crypto/bn.h"
 #include "internal/ffc.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
 
 /*
  * Verify that the passed in L, N pair for DH or DSA is valid.

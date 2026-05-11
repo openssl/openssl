@@ -11,11 +11,14 @@
  * DSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
+#include "crypto/types.h"
 #include "internal/deprecated.h"
 
 #include <assert.h>
+#include <limits.h>
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/nelem.h"
 #include "internal/refcount.h"
 #include "internal/namemap.h"
 #include <openssl/bn.h>
@@ -32,6 +35,7 @@
 #include <openssl/encoder.h>
 #include <openssl/core_names.h>
 #include <openssl/provider.h>
+#include <string.h>
 
 #include "internal/numbers.h" /* includes SIZE_MAX */
 #include "internal/ffc.h"
@@ -41,6 +45,13 @@
 #include "crypto/ec.h"
 #include "crypto/ecx.h"
 #include "crypto/rsa.h"
+#include "openssl/bio.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/evperr.h"
+#include "openssl/obj_mac.h"
+#include "openssl/x509.h"
 #ifndef FIPS_MODULE
 #include "crypto/asn1.h"
 #include "crypto/x509.h"

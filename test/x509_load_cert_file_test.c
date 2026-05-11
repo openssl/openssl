@@ -5,6 +5,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>

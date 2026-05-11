@@ -11,11 +11,14 @@
  * MD4 low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
+#include "crypto/md32_common.inc"
 #include "internal/deprecated.h"
 
 #include <stdio.h>
 #include <openssl/opensslv.h>
+#include <string.h>
 #include "md4_local.h"
+#include "openssl/md4.h"
 
 /*
  * Implemented from RFC1186 The MD4 Message-Digest Algorithm

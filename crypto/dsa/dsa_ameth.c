@@ -25,6 +25,16 @@
 #include "crypto/evp.h"
 #include "internal/ffc.h"
 #include "dsa_local.h"
+#include "openssl/bio.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/dsa.h"
+#include "openssl/dsaerr.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/params.h"
 
 static int dsa_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
 {

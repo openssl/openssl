@@ -14,7 +14,21 @@
 #include <openssl/provider.h>
 #include <openssl/params.h>
 #include <openssl/opensslv.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
 #include "crypto/cryptlib.h"
+#include "internal/common.h"
+#include "internal/cryptlib.h"
+#include "internal/dso.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "openssl/trace.h"
 #ifndef FIPS_MODULE
 #include "crypto/decoder.h" /* ossl_decoder_store_cache_flush */
 #include "crypto/encoder.h" /* ossl_encoder_store_cache_flush */

@@ -21,6 +21,10 @@
 #include "dsa_local.h"
 #include <openssl/asn1.h>
 #include "internal/deterministic_nonce.h"
+#include "openssl/crypto.h"
+#include "openssl/dsa.h"
+#include "openssl/dsaerr.h"
+#include "openssl/err.h"
 
 #define MIN_DSA_SIGN_QBITS 128
 #define MAX_DSA_SIGN_RETRIES 8

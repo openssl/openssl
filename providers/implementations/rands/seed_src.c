@@ -18,6 +18,8 @@
 #include <openssl/randerr.h>
 #include <openssl/proverr.h>
 #include "internal/common.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "crypto/rand.h"

@@ -13,6 +13,9 @@
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/trace.h>
+#include "openssl/err.h"
+#include "openssl/ssl.h"
+#include <stdint.h>
 #include "ssl_local.h"
 #include "internal/thread_once.h"
 #include "internal/rio_notifier.h" /* for ossl_wsa_cleanup() */

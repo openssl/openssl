@@ -14,6 +14,7 @@
 #include "internal/deprecated.h"
 
 #include "cipher_tdes_default.h"
+#include "providers/implementations/ciphers/cipher_tdes.h"
 
 #define ossl_cipher_hw_tdes_wrap_initkey ossl_cipher_hw_tdes_ede3_initkey
 

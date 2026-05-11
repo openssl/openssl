@@ -12,6 +12,7 @@
 #include <openssl/safestack.h>
 #include "names.h"
 #include "internal/e_os.h"
+#include "openssl/crypto.h"
 
 int name_cmp(const char *const *a, const char *const *b)
 {

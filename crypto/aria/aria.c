@@ -22,6 +22,7 @@
 #include "crypto/aria.h"
 
 #include <assert.h>
+#include <stdint.h>
 #include <string.h>
 
 #ifndef OPENSSL_SMALL_FOOTPRINT

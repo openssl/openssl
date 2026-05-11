@@ -18,6 +18,8 @@
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/self_test.h>
+#include "internal/ffc.h"
+#include "openssl/crypto.h"
 #include "prov/providercommon.h"
 #include "crypto/dsa.h"
 #include "dsa_local.h"
