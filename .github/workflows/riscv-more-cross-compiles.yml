@@ -98,6 +98,7 @@ jobs:
             # RV64GC V ZBB, but without ZVKB
             # For chacha20 vector-only path from #24069
             #   crypto/chacha/asm/chacha-riscv64-v-zbb.pl
+            #   crypto/poly1305/asm/poly1305-riscv64.pl
             arch: riscv64-linux-gnu,
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64,
