@@ -202,7 +202,7 @@ int ossl_slh_dsa_key_equal(const SLH_DSA_KEY *key1, const SLH_DSA_KEY *key2,
         if (!key_checked
             && (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
             if (key1->has_priv && key2->has_priv) {
-                if (memcmp(key1->priv, key2->priv,
+                if (CRYPTO_memcmp(key1->priv, key2->priv,
                         key1->params->pk_len)
                     != 0)
                     return 0;
