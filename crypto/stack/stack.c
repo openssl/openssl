@@ -33,6 +33,7 @@ struct stack_st {
     OPENSSL_sk_compfunc comp;
     int (*cmp_thunk)(OPENSSL_sk_compfunc, const void *, const void *);
     OPENSSL_sk_freefunc_thunk free_thunk;
+    OPENSSL_sk_copyfunc_thunk copy_thunk;
 };
 
 OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk,
@@ -88,7 +89,12 @@ static OPENSSL_STACK *internal_copy(const OPENSSL_STACK *sk,
         for (i = 0; i < ret->num; ++i) {
             if (sk->data[i] == NULL)
                 continue;
-            if ((ret->data[i] = copy_func(sk->data[i])) == NULL) {
+            if (ret->copy_thunk != NULL)
+                ret->data[i] = ret->copy_thunk(copy_func, sk->data[i]);
+            else
+                ret->data[i] = copy_func(sk->data[i]);
+
+            if (ret->data[i] == NULL) {
                 while (--i >= 0)
                     free_with_thunk(ret, free_func, ret->data[i]);
                 goto err;
@@ -262,6 +268,14 @@ OPENSSL_STACK *OPENSSL_sk_set_cmp_thunks(OPENSSL_STACK *st, int (*c_thunk)(int (
 {
     if (st != NULL)
         st->cmp_thunk = c_thunk;
+
+    return st;
+}
+
+OPENSSL_STACK *OPENSSL_sk_set_copy_thunks(OPENSSL_STACK *st, OPENSSL_sk_copyfunc_thunk cp_thunk)
+{
+    if (st != NULL)
+        st->copy_thunk = cp_thunk;
 
     return st;
 }
