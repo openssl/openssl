@@ -47,6 +47,16 @@ OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk,
     return old;
 }
 
+static void free_with_thunk(OPENSSL_STACK *sk, OPENSSL_sk_freefunc free_func, const void *data)
+{
+    if (data == NULL)
+        return;
+    if (sk->free_thunk != NULL)
+        sk->free_thunk(free_func, (void *)data);
+    else
+        free_func((void *)data);
+}
+
 static OPENSSL_STACK *internal_copy(const OPENSSL_STACK *sk,
     OPENSSL_sk_copyfunc copy_func,
     OPENSSL_sk_freefunc free_func)
@@ -80,8 +90,7 @@ static OPENSSL_STACK *internal_copy(const OPENSSL_STACK *sk,
                 continue;
             if ((ret->data[i] = copy_func(sk->data[i])) == NULL) {
                 while (--i >= 0)
-                    if (ret->data[i] != NULL)
-                        free_func((void *)ret->data[i]);
+                    free_with_thunk(ret, free_func, ret->data[i]);
                 goto err;
             }
         }
@@ -460,14 +469,9 @@ void OPENSSL_sk_pop_free(OPENSSL_STACK *st, OPENSSL_sk_freefunc func)
     if (st == NULL)
         return;
 
-    for (i = 0; i < st->num; i++) {
-        if (st->data[i] != NULL) {
-            if (st->free_thunk != NULL)
-                st->free_thunk(func, (void *)st->data[i]);
-            else
-                func((void *)st->data[i]);
-        }
-    }
+    for (i = 0; i < st->num; i++)
+        free_with_thunk(st, func, st->data[i]);
+
     OPENSSL_sk_free(st);
 }
 
