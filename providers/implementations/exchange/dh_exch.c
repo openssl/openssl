@@ -113,12 +113,15 @@ static int dh_init(void *vpdhctx, void *vdh, const OSSL_PARAM params[])
 static int dh_match_params(DH *priv, DH *peer)
 {
     int ret;
+    int ignore_q = 1;
     FFC_PARAMS *dhparams_priv = ossl_dh_get0_params(priv);
     FFC_PARAMS *dhparams_peer = ossl_dh_get0_params(peer);
 
+    if (dhparams_priv != NULL && dhparams_priv->q != NULL)
+        ignore_q = 0;
     ret = dhparams_priv != NULL
         && dhparams_peer != NULL
-        && ossl_ffc_params_cmp(dhparams_priv, dhparams_peer, 1);
+        && ossl_ffc_params_cmp(dhparams_priv, dhparams_peer, ignore_q);
     if (!ret)
         ERR_raise(ERR_LIB_PROV, PROV_R_MISMATCHING_DOMAIN_PARAMETERS);
     return ret;
