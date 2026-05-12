@@ -435,9 +435,9 @@ OpenSSL Releases
 
  * Added restrictions on the maximum number of TLS `key_share`s (16)
    that a server will pay attention to, as well as the maximum number
-   of supported `group`s (128) and `sig_alg`s (128).  Any sent beyond
-   these limits are ignored, in order to avoid clients sending excessively
-   long lists in these extensions.
+   of supported `group`s (128), `sig_alg`s (128) and OCSP responder ids (16).
+   Any sent beyond these limits are ignored, in order to avoid clients sending
+   excessively long lists in these extensions.
    <!-- https://github.com/openssl/openssl/pull/30263 -->
 
    *Matt Caswell*
