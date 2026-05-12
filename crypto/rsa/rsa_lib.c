@@ -17,9 +17,10 @@
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/param_build.h>
+#include "internal/common.h"
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
-#include "internal/common.h"
+#include "internal/zeroization.h"
 #include "crypto/bn.h"
 #include "crypto/evp.h"
 #include "crypto/rsa.h"
@@ -137,13 +138,8 @@ void RSA_free(RSA *r)
     CRYPTO_THREAD_lock_free(r->lock);
     CRYPTO_FREE_REF(&r->references);
 
-#ifdef OPENSSL_PEDANTIC_ZEROIZATION
-    BN_clear_free(r->n);
-    BN_clear_free(r->e);
-#else
-    BN_free(r->n);
-    BN_free(r->e);
-#endif
+    ossl_public_bn_free(r->n);
+    ossl_public_bn_free(r->e);
     BN_clear_free(r->d);
     BN_clear_free(r->p);
     BN_clear_free(r->q);
@@ -384,11 +380,11 @@ int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
         return 0;
 
     if (n != NULL) {
-        BN_free(r->n);
+        ossl_public_bn_free(r->n);
         r->n = n;
     }
     if (e != NULL) {
-        BN_free(r->e);
+        ossl_public_bn_free(r->e);
         r->e = e;
     }
     if (d != NULL) {
