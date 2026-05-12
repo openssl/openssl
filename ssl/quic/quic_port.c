@@ -1799,8 +1799,10 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
          * forget qrx so channel can create a new one
          * with valid initial encryption level keys.
          */
-        qrx_src = qrx;
-        qrx = NULL;
+        if (qrx != NULL) {
+            qrx_src = qrx;
+            qrx = NULL;
+        }
     }
 
     port_bind_channel(port, &e->peer, &hdr.dst_conn_id,
