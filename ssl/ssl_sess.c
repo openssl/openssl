@@ -1177,12 +1177,17 @@ int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
     OPENSSL_free(sc->ext.session_ticket);
     if (ext_data != NULL) {
         sc->ext.session_ticket = OPENSSL_malloc(sizeof(TLS_SESSION_TICKET_EXT) + ext_len);
-        if (sc->ext.session_ticket == NULL) return 0;
+        if (sc->ext.session_ticket == NULL)
+            return 0;
         sc->ext.session_ticket->length = ext_len;
         sc->ext.session_ticket->data = sc->ext.session_ticket + 1;
         memcpy(sc->ext.session_ticket->data, ext_data, ext_len);
     } else {
-        sc->ext.session_ticket = NULL;
+        sc->ext.session_ticket = OPENSSL_malloc(sizeof(TLS_SESSION_TICKET_EXT));
+        if (sc->ext.session_ticket == NULL)
+            return 0;
+        sc->ext.session_ticket->data = NULL;
+        sc->ext.session_ticket->length = 0;
     }
     return 1;
 }
