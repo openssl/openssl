@@ -363,19 +363,25 @@ int ossl_ht_flush(HT *h)
 
 void ossl_ht_free(HT *h)
 {
+    int flush_ok;
+
     if (h == NULL)
         return;
 
     ossl_ht_write_lock(h);
-    ossl_ht_flush_internal(h);
+    flush_ok = ossl_ht_flush_internal(h);
     ossl_ht_write_unlock(h);
     /* Freeing the lock does a final sync for us */
     if (!h->config.no_rcu) {
         CRYPTO_THREAD_lock_free(h->atomic_lock);
         ossl_rcu_lock_free(h->lock);
     }
-    OPENSSL_free(h->md->neighborhood_ptr_to_free);
-    OPENSSL_free(h->md);
+    if (flush_ok) {
+        OPENSSL_free(h->md->neighborhood_ptr_to_free);
+        OPENSSL_free(h->md);
+    } else {
+        free_oldmd(h->md);
+    }
     OPENSSL_free(h);
     return;
 }
