@@ -2,7 +2,7 @@
 # This file is dual-licensed, meaning that you can use it under your
 # choice of either of the following two licenses:
 #
-# Copyright 2023-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License"). You can obtain
 # a copy in the file LICENSE in the source distribution or at
@@ -508,6 +508,15 @@ sub vsub_vx {
     return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7));
 }
 
+sub vand_vx {
+    # vand.vx vd, vs2, rs1
+    my $template = 0b001001_1_00000_00000_100_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $rs1 = read_reg shift;
+    return ".word ".($template | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7));
+}
+
 sub vid_v {
     # vid.v vd
     my $template = 0b0101001_00000_10001_010_00000_1010111;
@@ -599,6 +608,15 @@ sub vluxei32_v {
     return ".word ".($template | ($vm << 25) | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7));
 }
 
+sub vlseg4e32_v {
+    # vlseg4e32.v vd, (rs1)
+    my $template = 0b011000_0_00000_00000_110_00000_0000111;
+    my $vd = read_vreg shift;
+    my $rs1 = read_reg shift;
+    my $vm = read_mask_vreg shift;
+    return ".word ".($template | ($vm << 25) | ($rs1 << 15) | ($vd << 7));
+}
+
 sub vmerge_vim {
     # vmerge.vim vd, vs2, imm, v0
     my $template = 0b0101110_00000_00000_011_00000_1010111;
@@ -668,6 +686,22 @@ sub vmv_v_v {
     return ".word ".($template | ($vs1 << 15) | ($vd << 7));
 }
 
+sub vmv_x_s {
+    # vmv.x.s rd, vs2
+    my $template = 0b010000_1_00000_00000_010_00000_1010111;
+    my $rd = read_reg shift;
+    my $vs2 = read_vreg shift;
+    return ".word ".($template | ($vs2 << 20) | ($rd << 7));
+}
+
+sub vmv_s_x {
+    # vmv.s.x vd, rs1
+    my $template = 0b010000_1_00000_00000_110_00000_1010111;
+    my $vd = read_vreg shift;
+    my $rs1 = read_reg shift;
+    return ".word ".($template | ($rs1 << 15) | ($vd << 7));
+}
+
 sub vor_vv {
     # vor.vv vd, vs2, vs1
     my $template = 0b0010101_00000_00000_000_00000_1010111;
@@ -684,6 +718,15 @@ sub vor_vv_v0t {
     my $vs2 = read_vreg shift;
     my $vs1 = read_vreg shift;
     return ".word ".($template | ($vs2 << 20) | ($vs1 << 15) | ($vd << 7));
+}
+
+sub vor_vx {
+    # vor.vx vd, vs2, rs1
+    my $template = 0b001010_1_00000_00000_100_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $rs1 = read_reg shift;
+    return ".word ".($template | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7));
 }
 
 sub vse8_v {
@@ -844,6 +887,24 @@ sub vsrl_vx {
     return ".word ".($template | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7));
 }
 
+sub vnsrl_wx {
+    # vnsrl.wx vd, vs2, rs1
+    my $template = 0b101100_1_00000_00000_100_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $rs1 = read_reg shift;
+    return ".word ".($template | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7));
+}
+
+sub vnsrl_wi {
+    # vnsrl.wi vd, vs2, uimm
+    my $template = 0b101100_1_00000_00000_011_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $uimm = shift;
+    return ".word ".($template | ($vs2 << 20) | ($uimm << 15) | ($vd << 7));
+}
+
 sub vsse32_v {
     # vse32.v vs3, (rs1), rs2
     my $template = 0b0000101_00000_00000_110_00000_0100111;
@@ -878,6 +939,42 @@ sub vxor_vv {
     my $vs2 = read_vreg shift;
     my $vs1 = read_vreg shift;
     return ".word ".($template | ($vs2 << 20) | ($vs1 << 15) | ($vd << 7));
+}
+
+sub vwmulu_vv {
+    # vwmulu.vv vd, vs2, vs1
+    my $template = 0b111000_1_00000_00000_010_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $vs1 = read_vreg shift;
+    return ".word ".($template | ($vs2 << 20) | ($vs1 << 15) | ($vd << 7));
+}
+
+sub vwmulu_vx {
+    # vwmulu.vx vd, vs2, rs1
+    my $template = 0b111000_1_00000_00000_110_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    my $rs1 = read_reg shift;
+    return ".word ".($template | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7));
+}
+
+sub vwmaccu_vv {
+    # vwmaccu.vv vd, vs1, vs2
+    my $template = 0b111100_1_00000_00000_010_00000_1010111;
+    my $vd = read_vreg shift;
+    my $vs1 = read_vreg shift;
+    my $vs2 = read_vreg shift;
+    return ".word ".($template | ($vs2 << 20) | ($vs1 << 15) | ($vd << 7));
+}
+
+sub vwmaccu_vx {
+    # vwmaccu.vx vd, rs1, vs2
+    my $template = 0b111100_1_00000_00000_110_00000_1010111;
+    my $vd = read_vreg shift;
+    my $rs1 = read_reg shift;
+    my $vs2 = read_vreg shift;
+    return ".word ".($template | ($vs2 << 20) | ($rs1 << 15) | ($vd << 7));
 }
 
 sub vzext_vf2 {
@@ -1120,13 +1217,5 @@ sub vsm3me_vv {
     return ".word ".($template | ($vs2 << 20) | ($vs1 << 15 ) | ($vd << 7));
 }
 
-sub vrgather_vv{
-    # vrgather.vv vd, vs2, vs1
-    my $template = 0b11001_00000_00000_000_00000_1010111;
-    my $vd = read_vreg shift;
-    my $vs2 = read_vreg shift;
-    my $vs1 = read_vreg shift;
-    return ".word ".($template | ($vs2 << 20) | ($vs1 << 15 ) | ($vd << 7));
-}
 
 1;
