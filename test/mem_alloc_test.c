@@ -196,7 +196,7 @@ static int secure_memory_is_secure;
 static void *my_malloc(const size_t num,
     const char *const file, const int line)
 {
-    void *const p = malloc(num);
+    void *const p = num > 0 ? malloc(num) : NULL;
 
 #if CUSTOM_FN_PRINT_CALLS
     if (file == test_fn || file == NULL
@@ -209,13 +209,21 @@ static void *my_malloc(const size_t num,
 
     return p;
 }
+
 static void *my_realloc(void *const addr, const size_t num,
     const char *const file, const int line)
 {
 #if CUSTOM_FN_PRINT_CALLS
     const uintptr_t old_addr = (uintptr_t)addr;
 #endif
-    void *const p = realloc(addr, num);
+    void *p = NULL;
+
+    if (addr == NULL && num > 0)
+        p = malloc(num);
+    else if (num == 0)
+        free(addr);
+    else
+        p = realloc(addr, num);
 
 #if CUSTOM_FN_PRINT_CALLS
     if (file == test_fn || file == NULL
