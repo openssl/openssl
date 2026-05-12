@@ -106,7 +106,6 @@ my $ignored = qr/(?| ^i2d_
                  |   ^IMPLEMENT_
                  |   ^_?DECLARE_
                  |   ^sk_
-                 |   ^SKM_DEFINE_STACK_OF_INTERNAL
                  |   ^lh_
                  |   ^DEFINE_LHASH_OF_(INTERNAL|DEPRECATED)
                  |   ^OSSL_HTO[BL]E(16|32|64)   # undefed
