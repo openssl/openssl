@@ -747,7 +747,8 @@ static int bio_zstd_flush(BIO *b)
 static long bio_zstd_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     BIO_ZSTD_CTX *ctx;
-    int ret = 0, *ip;
+    long ret = 0;
+    int *ip;
     size_t ibs, obs;
     unsigned char *tmp;
     BIO *next = BIO_next(b);
@@ -826,15 +827,15 @@ static long bio_zstd_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
 
     case BIO_CTRL_WPENDING:
-        if (ctx->compress.outbuf.pos < ctx->compress.outbuf.size)
-            ret = 1;
+        if (ctx->compress.outbuf.pos > ctx->compress.write_pos)
+            ret = (long)(ctx->compress.outbuf.pos - ctx->compress.write_pos);
         else
             ret = BIO_ctrl(next, cmd, num, ptr);
         break;
 
     case BIO_CTRL_PENDING:
-        if (ctx->decompress.inbuf.pos < ctx->decompress.inbuf.size)
-            ret = 1;
+        if (ctx->decompress.inbuf.size > ctx->decompress.inbuf.pos)
+            ret = (long)(ctx->decompress.inbuf.size - ctx->decompress.inbuf.pos);
         else
             ret = BIO_ctrl(next, cmd, num, ptr);
         break;
