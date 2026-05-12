@@ -35,6 +35,8 @@ extern "C" {
 
 #define STACK_OF(type) struct stack_st_##type
 
+#define SKM_DEFINE_STACK_OF_INTERNAL(t1, t2, t3) SKM_DEFINE_STACK_OF(t1, t2, t3)
+
 #define SKM_DEFINE_STACK_OF(t1, t2, t3)                                                                                    \
     STACK_OF(t1);                                                                                                          \
     typedef int (*sk_##t1##_compfunc)(const t3 *const *a, const t3 *const *b);                                             \
