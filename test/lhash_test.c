@@ -32,6 +32,8 @@
 
 DEFINE_LHASH_OF_EX(int);
 
+static void hashtable_intfree(HT_VALUE *v);
+
 static int int_tests[] = { 65537, 13, 1, 3, -5, 6, 7, 4, -10, -12, -14, 22, 9,
     -17, 16, 17, -23, 35, 37, 173, 11 };
 static const size_t n_int_tests = OSSL_NELEM(int_tests);
@@ -339,6 +341,47 @@ static int test_hashtable_insert_replace_mfail(void)
 end:
     ossl_ht_free(ht);
     return ret > 0 ? 1 : 0;
+}
+
+static int test_hashtable_free_mfail(void)
+{
+    HT_CONFIG hash_conf = {
+        .ht_free_fn = hashtable_intfree,
+        .collision_check = 1,
+        .no_rcu = 0,
+    };
+    INTKEY key;
+    HT *ht = NULL;
+    int *p;
+    size_t i;
+
+    if (!TEST_ptr(ht = ossl_ht_new(&hash_conf)))
+        return 0;
+
+    /* Seed values. */
+    HT_INIT_KEY(&key);
+    for (i = 0; i < n_int_tests; i++) {
+        if (!TEST_ptr(p = OPENSSL_malloc(sizeof(*p))))
+            goto end;
+        *p = int_tests[i];
+        HT_KEY_RESET(&key);
+        HT_SET_KEY_FIELD(&key, mykey, *p);
+        if (!TEST_int_eq(ossl_ht_test_int_insert(ht, TO_HT_KEY(&key),
+                             p, NULL),
+                1)) {
+            OPENSSL_free(p);
+            goto end;
+        }
+    }
+    MFAIL_start();
+    ossl_ht_free(ht);
+    MFAIL_end();
+    ht = NULL;
+
+    return 1;
+end:
+    ossl_ht_free(ht);
+    return 0;
 }
 
 static unsigned long int stress_hash(const int *p)
@@ -837,5 +880,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_hashtable_stress, 4);
     ADD_ALL_TESTS(test_hashtable_multithread, 2);
     ADD_MFAIL_TEST(test_hashtable_insert_replace_mfail);
+    ADD_MFAIL_NO_CHECK_TEST(test_hashtable_free_mfail);
     return 1;
 }
