@@ -629,8 +629,8 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
      */
     if (p == NULL) {
         const char *base_ = base;
-        int l, h, i = 0, c = 0;
-        char *p1;
+        int i = 0, c = 0;
+        const char *p1;
 
         for (i = 0; i < num; ++i) {
             p1 = &(base_[i * size]);
