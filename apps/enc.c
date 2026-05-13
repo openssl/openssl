@@ -162,7 +162,7 @@ static EVP_SKEY *skey_from_params(const EVP_CIPHER *cipher, const char *skeymgmt
 
     skey = EVP_SKEY_import(app_get0_libctx(), EVP_SKEYMGMT_get0_name(mgmt),
         app_get0_propq(), OSSL_SKEYMGMT_SELECT_ALL, params);
-    OSSL_PARAM_free(params);
+    app_params_free(params);
     EVP_SKEYMGMT_free(mgmt);
 
     return skey;
