@@ -1470,8 +1470,7 @@ static int test_ktls_moving_write_buffer(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
-    SSL_CONNECTION *clientsc;
-    BIO *bretry = NULL, *tmp = NULL;
+    BIO *bio_retry = NULL, *bio_orig = NULL;
     int testresult = 0, cfd = -1, sfd = -1;
     unsigned char *buf_orig = NULL, *buf_retry = NULL;
     unsigned char outbuf[1024];
@@ -1502,9 +1501,6 @@ static int test_ktls_moving_write_buffer(void)
             &clientssl, sfd, cfd)))
         goto end;
 
-    if (!TEST_ptr(clientsc = SSL_CONNECTION_FROM_SSL_ONLY(clientssl)))
-        goto end;
-
     /* Enable kTLS on the writing side (client) */
     if (!TEST_true(SSL_set_options(clientssl, SSL_OP_ENABLE_KTLS)))
         goto end;
@@ -1515,11 +1511,26 @@ static int test_ktls_moving_write_buffer(void)
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
         goto end;
 
+    /* Get a reference to the original BIO to replace it later. */
+    bio_orig = SSL_get_wbio(clientssl);
+    if (!TEST_ptr(bio_orig) || !TEST_true(BIO_up_ref(bio_orig))) {
+        bio_orig = NULL;
+        goto end;
+    }
+
     /* Skip if kTLS TX was not activated for this cipher */
-    if (!BIO_get_ktls_send(clientsc->wbio)) {
+    if (!BIO_get_ktls_send(bio_orig)) {
         testresult = TEST_skip("kTLS send not supported");
         goto end;
     }
+
+    /* Swap write BIO to force WANT_WRITE */
+    bio_retry = BIO_new(bio_s_always_retry());
+    if (!TEST_ptr(bio_retry))
+        goto end;
+
+    SSL_set0_wbio(clientssl, bio_retry);
+    bio_retry = NULL; /* ownership transferred to clientssl */
 
     /* Allocate two buffers with identical content but different addresses */
     buf_orig = OPENSSL_malloc(bufsz);
@@ -1530,27 +1541,14 @@ static int test_ktls_moving_write_buffer(void)
     for (i = 0; i < bufsz; i++)
         buf_orig[i] = buf_retry[i] = (unsigned char)(i & 0xff);
 
-    /* Swap write BIO to force WANT_WRITE */
-    bretry = BIO_new(bio_s_always_retry());
-    if (!TEST_ptr(bretry))
-        goto end;
-
-    tmp = SSL_get_wbio(clientssl);
-    if (!TEST_ptr(tmp) || !TEST_true(BIO_up_ref(tmp))) {
-        tmp = NULL;
-        goto end;
-    }
-    SSL_set0_wbio(clientssl, bretry);
-    bretry = NULL; /* ownership transferred to clientssl */
-
     /* First write attempt - will fail with WANT_WRITE */
     if (!TEST_false(SSL_write_ex(clientssl, buf_orig, bufsz, &written))
         || !TEST_int_eq(SSL_get_error(clientssl, 0), SSL_ERROR_WANT_WRITE))
         goto end;
 
     /* Restore the real socket BIO so the retry can actually send data */
-    SSL_set0_wbio(clientssl, tmp);
-    tmp = NULL;
+    SSL_set0_wbio(clientssl, bio_orig);
+    bio_orig = NULL;
 
     /* Poison and free the original buffer */
     memset(buf_orig, 0xDE, bufsz);
@@ -1591,7 +1589,7 @@ end:
     }
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
-    BIO_free_all(tmp);
+    BIO_free_all(bio_orig);
     if (cfd != -1)
         close(cfd);
     if (sfd != -1)
