@@ -399,7 +399,6 @@ DEF_FUNC(hf_accept_stream_none)
     SSL *conn, *stream;
 
     F_POP2(conn_name, flags);
-    REQUIRE_SSL(conn);
 
     if (!TEST_ptr(conn = RADIX_PROCESS_get_ssl(RP(), conn_name)))
         goto err;
