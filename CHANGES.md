@@ -31,6 +31,19 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added size_t variants of the symmetric cipher update and final APIs:
+     EVP_EncryptUpdate_ex(), EVP_EncryptFinal_ex2(),
+     EVP_DecryptUpdate_ex(), EVP_DecryptFinal_ex2(),
+     EVP_CipherUpdate_ex(),  EVP_CipherFinal_ex2(),
+     EVP_CipherUpdateAAD().
+   The new functions take and return size_t lengths and require the
+   caller to declare the size of the output buffer explicitly through
+   a max_outl argument.  They reject a NULL output buffer.
+   Additional authenticated data (AAD) must be passed through
+   EVP_CipherUpdateAAD() instead of the legacy "out == NULL".
+
+   *Milan Brož*
+
  * SubjectPublicKeyInfo blobs whose AlgorithmIdentifier uses id-RSAES-OAEP
    (NID_rsaesOaep, 1.2.840.113549.1.1.7) with a plain RSAPublicKey body
    are now decoded as RSA keys.  This is required for interoperability

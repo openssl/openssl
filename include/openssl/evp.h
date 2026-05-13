@@ -692,10 +692,15 @@ __owur int EVP_EncryptInit_ex2(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
     const OSSL_PARAM params[]);
 __owur int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
     int *outl, const unsigned char *in, int inl);
+__owur int EVP_EncryptUpdate_ex(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    size_t *outl, size_t max_outl,
+    const unsigned char *in, size_t inl);
 __owur int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out,
     int *outl);
 __owur int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out,
     int *outl);
+__owur int EVP_EncryptFinal_ex2(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    size_t *outl, size_t max_outl);
 
 __owur int EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
     const unsigned char *key, const unsigned char *iv);
@@ -710,10 +715,15 @@ __owur int EVP_DecryptInit_ex2(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
     const OSSL_PARAM params[]);
 __owur int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
     int *outl, const unsigned char *in, int inl);
+__owur int EVP_DecryptUpdate_ex(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    size_t *outl, size_t max_outl,
+    const unsigned char *in, size_t inl);
 __owur int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm,
     int *outl);
 __owur int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm,
     int *outl);
+__owur int EVP_DecryptFinal_ex2(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    size_t *outl, size_t max_outl);
 
 __owur int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
     const unsigned char *key, const unsigned char *iv,
@@ -731,6 +741,11 @@ __owur int EVP_CipherInit_ex2(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
     int enc, const OSSL_PARAM params[]);
 __owur int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
     int *outl, const unsigned char *in, int inl);
+__owur int EVP_CipherUpdate_ex(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    size_t *outl, size_t max_outl,
+    const unsigned char *in, size_t inl);
+__owur int EVP_CipherUpdateAAD(EVP_CIPHER_CTX *ctx, const unsigned char *in,
+    size_t inl);
 __owur int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm,
     int *outl);
 __owur int EVP_CipherPipelineEncryptInit(EVP_CIPHER_CTX *ctx,
@@ -752,6 +767,8 @@ __owur int EVP_CipherPipelineFinal(EVP_CIPHER_CTX *ctx,
     const size_t *outsize);
 __owur int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm,
     int *outl);
+__owur int EVP_CipherFinal_ex2(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    size_t *outl, size_t max_outl);
 
 __owur int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *s,
     EVP_PKEY *pkey);

@@ -13,16 +13,23 @@ EVP_CIPHER_CTX_copy,
 EVP_EncryptInit_ex,
 EVP_EncryptInit_ex2,
 EVP_EncryptUpdate,
+EVP_EncryptUpdate_ex,
 EVP_EncryptFinal_ex,
+EVP_EncryptFinal_ex2,
 EVP_DecryptInit_ex,
 EVP_DecryptInit_ex2,
 EVP_DecryptUpdate,
+EVP_DecryptUpdate_ex,
 EVP_DecryptFinal_ex,
+EVP_DecryptFinal_ex2,
 EVP_CipherInit_ex,
 EVP_CipherInit_ex2,
 EVP_CipherInit_SKEY,
 EVP_CipherUpdate,
+EVP_CipherUpdate_ex,
+EVP_CipherUpdateAAD,
 EVP_CipherFinal_ex,
+EVP_CipherFinal_ex2,
 EVP_CIPHER_CTX_set_key_length,
 EVP_CIPHER_CTX_ctrl,
 EVP_EncryptInit,
@@ -125,8 +132,12 @@ EVP_CIPHER_CTX_mode
                          const OSSL_PARAM params[]);
  int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
                        int *outl, const unsigned char *in, int inl);
+ int EVP_EncryptUpdate_ex(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                          size_t *outl, size_t max_outl,
+                          const unsigned char *in, size_t inl);
  int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
-
+ int EVP_EncryptFinal_ex2(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                          size_t *outl, size_t max_outl);
  int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                         ENGINE *impl, const unsigned char *key, const unsigned char *iv);
  int EVP_DecryptInit_ex2(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
@@ -134,7 +145,12 @@ EVP_CIPHER_CTX_mode
                          const OSSL_PARAM params[]);
  int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
                        int *outl, const unsigned char *in, int inl);
+ int EVP_DecryptUpdate_ex(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                          size_t *outl, size_t max_outl,
+                          const unsigned char *in, size_t inl);
  int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
+ int EVP_DecryptFinal_ex2(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                          size_t *outl, size_t max_outl);
 
  int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                        ENGINE *impl, const unsigned char *key, const unsigned char *iv, int enc);
@@ -146,7 +162,14 @@ EVP_CIPHER_CTX_mode
                          int enc, const OSSL_PARAM params[]);
  int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
                       int *outl, const unsigned char *in, int inl);
+ int EVP_CipherUpdate_ex(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                         size_t *outl, size_t max_outl,
+                         const unsigned char *in, size_t inl);
+ int EVP_CipherUpdateAAD(EVP_CIPHER_CTX *ctx,
+                         const unsigned char *in, size_t inl);
  int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
+ int EVP_CipherFinal_ex2(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                         size_t *outl, size_t max_outl);
 
  int EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                      const unsigned char *key, const unsigned char *iv);
@@ -399,10 +422,12 @@ specified.
 This legacy function is the same as EVP_EncryptInit_ex2() except B<params> will
 be NULL. I<impl> B<must> be NULL.
 
-=item EVP_EncryptUpdate()
+=item EVP_EncryptUpdate_ex()
 
 Encrypts I<inl> bytes from the buffer I<in> and writes the encrypted version to
-I<out>. The pointers I<out> and I<in> may point to the same location, in which
+I<out>. The function takes an explicit I<max_outl> argument that specifies the
+size, in bytes, of the output buffer.
+The pointers I<out> and I<in> may point to the same location, in which
 case the encryption will be done in-place. However, in-place encryption is
 guaranteed to work only if the encryption context (I<ctx>) has processed data in
 multiples of the block size. If the context contains an incomplete data block
@@ -422,10 +447,11 @@ bytes.
 For stream ciphers, the amount of data written can be anything from zero
 bytes to inl bytes.
 Thus, the buffer pointed to by I<out> must contain sufficient room for the
-operation being performed.
+operation being performed. The call fails if operation produces more
+than I<max_outl> bytes.
 The actual number of bytes written is placed in I<outl>.
 
-If padding is enabled (the default) then EVP_EncryptFinal_ex() encrypts
+If padding is enabled (the default) then EVP_EncryptFinal_ex2() encrypts
 the "final" data, that is any data that remains in a partial block.
 It uses standard block padding (aka PKCS padding) as described in
 the NOTES section, below. The encrypted
@@ -434,20 +460,26 @@ one cipher block. The number of bytes written is placed in I<outl>. After
 this function is called the encryption operation is finished and no further
 calls to EVP_EncryptUpdate() should be made.
 
-If padding is disabled then EVP_EncryptFinal_ex() will not encrypt any more
+If padding is disabled then EVP_EncryptFinal_ex2() will not encrypt any more
 data and it will return an error if any data remains in a partial block:
 that is if the total data length is not a multiple of the block size.
 
-=item EVP_DecryptInit_ex2(), EVP_DecryptInit_ex(), EVP_DecryptUpdate()
-and EVP_DecryptFinal_ex()
+=item EVP_EncryptUpdate(), EncryptFinal_ex()
+
+These legacy functions are the same as EVP_EncryptUpdate_ex() and
+EVP_EncryptFinal_ex() except all length arguments are I<int> instead of I<size_t>
+and have omitted I<max_outl> argument.
+
+=item EVP_DecryptInit_ex2(), EVP_DecryptInit_ex(), EVP_DecryptUpdate_ex()
+and EVP_DecryptFinal_ex2()
 
 These functions are the corresponding decryption operations.
 EVP_DecryptFinal() will return an error code if padding is enabled and the
 final block is not correctly formatted. The parameters and restrictions are
 identical to the encryption operations. I<ctx> B<MUST NOT> be NULL.
 
-=item EVP_CipherInit_ex2(), EVP_CipherInit_ex(), EVP_CipherUpdate() and
-EVP_CipherFinal_ex()
+=item EVP_CipherInit_ex2(), EVP_CipherInit_ex(), EVP_CipherUpdate_ex() and
+EVP_CipherFinal_ex2()
 
 These functions can be used for decryption or encryption. The operation
 performed depends on the value of the I<enc> parameter. It should be set to 1
@@ -1402,15 +1434,15 @@ EVP_CIPHER_CTX_dup() returns a new EVP_CIPHER_CTX if successful or NULL on failu
 
 EVP_CIPHER_CTX_copy() returns 1 if successful or 0 for failure.
 
-EVP_EncryptInit_ex2(), EVP_EncryptUpdate() and EVP_EncryptFinal_ex()
+EVP_EncryptInit_ex2(), EVP_EncryptUpdate_ex() and EVP_EncryptFinal_ex2()
 return 1 for success and 0 for failure.
 
-EVP_DecryptInit_ex2() and EVP_DecryptUpdate() return 1 for success and 0 for failure.
-EVP_DecryptFinal_ex() returns 0 if the decrypt failed or 1 for success.
+EVP_DecryptInit_ex2() and EVP_DecryptUpdate_ex() return 1 for success and 0 for failure.
+EVP_DecryptFinal_ex2() returns 0 if the decrypt failed or 1 for success.
 
-EVP_CipherInit_ex2(), EVP_CipherInit_SKEY() and EVP_CipherUpdate() return 1 for
+EVP_CipherInit_ex2(), EVP_CipherInit_SKEY() and EVP_CipherUpdate_ex() return 1 for
 success and 0 for failure.
-EVP_CipherFinal_ex() returns 0 for an encryption/decryption failure or 1 for
+EVP_CipherFinal_ex2() returns 0 for an encryption/decryption failure or 1 for
 success.
 
 EVP_Cipher() returns 1 on success and <= 0 on failure, if the flag
@@ -1500,9 +1532,12 @@ The EVP interface for Authenticated Encryption with Associated Data (AEAD)
 modes are subtly altered and several additional I<ctrl> operations are supported
 depending on the mode specified.
 
-To specify additional authenticated data (AAD), a call to EVP_CipherUpdate(),
-EVP_EncryptUpdate() or EVP_DecryptUpdate() should be made with the output
-parameter I<out> set to NULL. In this case, on success, the parameter
+To specify additional authenticated data (AAD) should be made using
+EVP_CipherUpdateAAD() call.
+
+The legacy EVP_CipherUpdate() EVP_EncryptUpdate() or EVP_DecryptUpdate()
+used for AAD the output parameter I<out> set to NULL.
+In this case, on success, the parameter
 I<outl> is set to the number of AAD bytes processed in that call
 (that is, the value of I<inl>), and does not include any plaintext
 or ciphertext bytes processed by other calls.
@@ -1510,19 +1545,19 @@ or ciphertext bytes processed by other calls.
 If no AAD is used, this call can be omitted. See the mode-specific notes
 below for any exceptions.
 
-When decrypting, the return value of EVP_DecryptFinal() or EVP_CipherFinal()
+When decrypting, the return value of EVP_DecryptFinal_ex2() or EVP_CipherFinal_ex2()
 indicates whether the operation was successful. If it does not indicate success,
 the authentication operation has failed and any output data B<MUST NOT> be used
 as it is corrupted.
 
 Please note that the number of authenticated bytes returned by
-EVP_CipherUpdate() depends on the cipher used. Stream ciphers, such as ChaCha20
+EVP_CipherUpdate_ex() depends on the cipher used. Stream ciphers, such as ChaCha20
 or ciphers in GCM mode, can handle 1 byte at a time, resulting in an effective
 "block" size of 1. Conversely, ciphers in OCB mode must process data one block
 at a time, and the block size is returned.
 
 Regardless of the returned size, it is safe to pass unpadded data to an
-EVP_CipherUpdate() call in a single operation.
+EVP_CipherUpdate_ex() call in a single operation.
 
 =head2 GCM and OCB Modes
 
@@ -1611,14 +1646,16 @@ For SIV mode ciphers the behaviour of the EVP interface is subtly
 altered and several additional ctrl operations are supported.
 
 To specify any additional authenticated data (AAD) and/or a Nonce, a call to
-EVP_CipherUpdate(), EVP_EncryptUpdate() or EVP_DecryptUpdate() should be made
-with the output parameter I<out> set to NULL.
+EVP_CipherUpdateAAD() should be made.
+
+The legacy EVP_CipherUpdate(), EVP_EncryptUpdate() or EVP_DecryptUpdate()
+used for AAD the output parameter I<out> set to NULL.
 
 RFC5297 states that the Nonce is the last piece of AAD before the actual
 encrypt/decrypt takes place. The API does not differentiate the Nonce from
 other AAD.
 
-When decrypting the return value of EVP_DecryptFinal() or EVP_CipherFinal()
+When decrypting the return value of EVP_DecryptFinal_ex2() or EVP_CipherFinal_ex2()
 indicates if the operation was successful. If it does not indicate success
 the authentication operation has failed and any output data B<MUST NOT>
 be used as it is corrupted.
@@ -1716,13 +1753,16 @@ If padding is disabled then the decryption operation will always succeed if
 the total amount of data decrypted is a multiple of the block size.
 
 The functions EVP_EncryptInit(), EVP_EncryptInit_ex(),
-EVP_EncryptFinal(), EVP_DecryptInit(), EVP_DecryptInit_ex(),
-EVP_CipherInit(), EVP_CipherInit_ex() and EVP_CipherFinal() are obsolete
-but are retained for compatibility with existing code. New code should
-use EVP_EncryptInit_ex2(), EVP_EncryptFinal_ex(), EVP_DecryptInit_ex2(),
-EVP_DecryptFinal_ex(), EVP_CipherInit_ex2() and EVP_CipherFinal_ex()
-because they can reuse an existing context without allocating and freeing
-it up on each call.
+EVP_EncryptFinal(), EVP_EncryptFinal_ex(), EVP_EncryptUpdate(), EVP_DecryptInit(),
+EVP_DecryptInit_ex(), EVP_DecryptUpdate(), EVP_CipherInit(), EVP_CipherInit_ex(),
+EVP_CipherUpdate(), EVP_CipherFinal(), and EVP_CipherFinal_ex() are obsolete but
+are retained for compatibility with existing code.
+New code should use EVP_EncryptInit_ex2(), EVP_EncryptUpdate_ex(),
+EVP_EncryptFinal_ex2(), EVP_DecryptInit_ex2(), EVP_DecryptUpdate_ex(),
+EVP_DecryptFinal_ex2(), EVP_CipherInit_ex2(), EVP_CipherUpdate_ex() and
+EVP_CipherFinal_ex2() because they can reuse an existing context without allocating
+and freeing it up on each call. Also they use size_t length parameters.
+New code should prefer the size_t variant of API.
 
 There are some differences between functions EVP_CipherInit() and
 EVP_CipherInit_ex(), significant in some circumstances. EVP_CipherInit() fills
@@ -1777,7 +1817,8 @@ Encrypt a string using IDEA:
          return 0;
      }
 
-     if (!EVP_EncryptUpdate(ctx, outbuf, &outlen, intext, strlen(intext))) {
+     if (!EVP_EncryptUpdate_ex(ctx, outbuf, &outlen, sizeof(outbuf),
+                               intext, strlen(intext))) {
          /* Error */
          EVP_CIPHER_CTX_free(ctx);
          return 0;
@@ -1786,7 +1827,8 @@ Encrypt a string using IDEA:
       * Buffer passed to EVP_EncryptFinal() must be after data just
       * encrypted to avoid overwriting it.
       */
-     if (!EVP_EncryptFinal_ex(ctx, outbuf + outlen, &tmplen)) {
+     if (!EVP_EncryptFinal_ex2(ctx, outbuf + outlen, &tmplen,
+                               sizeof(outbuf) - outlen)) {
          /* Error */
          EVP_CIPHER_CTX_free(ctx);
          return 0;
@@ -1853,14 +1895,15 @@ with a 128-bit key:
          inlen = fread(inbuf, 1, 1024, in);
          if (inlen <= 0)
              break;
-         if (!EVP_CipherUpdate(ctx, outbuf, &outlen, inbuf, inlen)) {
+         if (!EVP_CipherUpdate_ex(ctx, outbuf, &outlen, sizeof(outbuf),
+                                  inbuf, inlen)) {
              /* Error */
              EVP_CIPHER_CTX_free(ctx);
              return 0;
          }
          fwrite(outbuf, 1, outlen, out);
      }
-     if (!EVP_CipherFinal_ex(ctx, outbuf, &outlen)) {
+     if (!EVP_CipherFinal_ex2(ctx, outbuf, &outlen, sizeof(outbuf))) {
          /* Error */
          EVP_CIPHER_CTX_free(ctx);
          return 0;
@@ -1874,7 +1917,8 @@ with a 128-bit key:
 Encryption using AES-CBC with a 256-bit key with "CS1" ciphertext stealing.
 
  int encrypt(const unsigned char *key, const unsigned char *iv,
-             const unsigned char *msg, size_t msg_len, unsigned char *out)
+             const unsigned char *msg, size_t msg_len, unsigned char *out,
+             size_t out_max)
  {
     /*
      * This assumes that key size is 32 bytes and the iv is 16 bytes.
@@ -1904,9 +1948,9 @@ Encryption using AES-CBC with a 256-bit key with "CS1" ciphertext stealing.
          goto err;
 
      /* NOTE: CTS mode does not support multiple calls to EVP_CipherUpdate() */
-     if (!EVP_CipherUpdate(ctx, out, &outlen, msg, msg_len))
+     if (!EVP_CipherUpdate_ex(ctx, out, &outlen, out_max, msg, msg_len))
          goto err;
-      if (!EVP_CipherFinal_ex(ctx, out + outlen, &len))
+      if (!EVP_CipherFinal_ex2(ctx, out + outlen, &len, out_max - outlen))
          goto err;
      ret = 1;
  err:
@@ -1987,6 +2031,10 @@ EVP_CipherInit_SKEY() was added in OpenSSL 3.5.
 Prior to OpenSSL 3.5, passing a NULL I<ctx> to
 B<EVP_CIPHER_CTX_get_block_size()> would result in a NULL pointer dereference,
 rather than a 0 return value indicating an error.
+
+The EVP_EncryptUpdate_ex(), EVP_EncryptFinal_ex2(), EVP_DecryptUpdate_ex(),
+EVP_DecryptFinal_ex2(), EVP_CipherUpdate_ex(), EVP_CipherFinal_ex2(), and
+EVP_CipherUpdateAAD() were added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
