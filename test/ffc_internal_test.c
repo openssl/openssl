@@ -690,7 +690,9 @@ err:
     DH_free(dh);
     return ret;
 }
+#endif /* OPENSSSL_NO_DH */
 
+#ifndef OPENSSL_NO_DSA
 static int ffc_params_copy_mfail(void)
 {
     int ret = 0;
@@ -731,13 +733,14 @@ err:
     BN_free(g);
     return ret;
 }
-#endif /* OPENSSL_NO_DH */
+#endif /* OPENSSL_NO_DSA */
 
 int setup_tests(void)
 {
 #ifndef OPENSSL_NO_DSA
     ADD_TEST(ffc_params_validate_pq_test);
     ADD_TEST(ffc_params_validate_g_unverified_test);
+    ADD_MFAIL_TEST(ffc_params_copy_mfail);
 #endif /* OPENSSL_NO_DSA */
 #ifndef OPENSSL_NO_DH
     ADD_TEST(ffc_params_gen_test);
@@ -747,7 +750,6 @@ int setup_tests(void)
     ADD_TEST(ffc_private_validate_test);
     ADD_ALL_TESTS(ffc_private_gen_test, 10);
     ADD_TEST(ffc_params_copy_test);
-    ADD_MFAIL_TEST(ffc_params_copy_mfail);
 #endif /* OPENSSL_NO_DH */
     return 1;
 }
