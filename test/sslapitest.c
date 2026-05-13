@@ -1579,11 +1579,11 @@ static int test_ktls_moving_write_buffer(void)
 end:
     OPENSSL_free(buf_orig);
     OPENSSL_free(buf_retry);
-    if (clientssl) {
+    if (clientssl != NULL) {
         SSL_shutdown(clientssl);
         SSL_free(clientssl);
     }
-    if (serverssl) {
+    if (serverssl != NULL) {
         SSL_shutdown(serverssl);
         SSL_free(serverssl);
     }
