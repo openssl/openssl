@@ -5519,6 +5519,64 @@ static int test_aes_rc4_keylen_change_cve_2023_5363(void)
 }
 #endif
 
+/*
+ * AES-SIV reuse-without-rekey:
+ *   msg1: legit non-empty CT, tag verifies, final_ret=0
+ *   msg2: no reinit (or reinit with key=NULL), set forged tag,
+ *         AAD only, DecryptFinal -> does stale final_ret leak through?
+ */
+static int test_aes_siv_ctx_reuse(void)
+{
+    unsigned char key[32] = { 7 }; /* AES-128-SIV => 2*16 */
+    unsigned char pt[9] = "payload!";
+    unsigned char ct[9], tagbuf[16], out[16], zero16[16] = { 0 };
+    unsigned char aad[14] = "forged header";
+    int outl, ret = 0;
+    EVP_CIPHER_CTX *e = NULL, *d = NULL;
+    EVP_CIPHER *c = EVP_CIPHER_fetch(NULL, "AES-128-SIV", NULL);
+
+    if (c == NULL) {
+        return TEST_skip("AES-128-SIV cipher is not available");
+    }
+
+    /* produce a valid (ct,tag) for msg1 */
+    e = EVP_CIPHER_CTX_new();
+    if (!TEST_ptr(e)
+        || !TEST_true(EVP_EncryptInit_ex2(e, c, key, NULL, NULL))
+        || !TEST_true(EVP_EncryptUpdate(e, NULL, &outl, (unsigned char *)"hdr1", 4))
+        || !TEST_true(EVP_EncryptUpdate(e, ct, &outl, pt, sizeof(pt)))
+        || !TEST_true(EVP_EncryptFinal_ex(e, out, &outl))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(e, EVP_CTRL_AEAD_GET_TAG, 16, tagbuf))) {
+        EVP_CIPHER_CTX_free(e);
+        goto err;
+    }
+    EVP_CIPHER_CTX_free(e);
+
+    /* msg1 decrypt */
+    d = EVP_CIPHER_CTX_new();
+    if (!TEST_ptr(d)
+        || !TEST_true(EVP_DecryptInit_ex2(d, c, key, NULL, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(d, EVP_CTRL_AEAD_SET_TAG, 16, tagbuf))
+        || !TEST_true(EVP_DecryptUpdate(d, NULL, &outl, (unsigned char *)"hdr1", 4))
+        || !TEST_true(EVP_DecryptUpdate(d, out, &outl, ct, sizeof(ct)))
+        || !TEST_true(EVP_DecryptFinal_ex(d, out, &outl)))
+        goto err;
+
+    /* msg2 on SAME ctx, reinit with key=NULL => initkey skipped, final_ret should be reset */
+    if (!TEST_true(EVP_DecryptInit_ex2(d, NULL, NULL, NULL, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(d, EVP_CTRL_AEAD_SET_TAG, 16, zero16))
+        || !TEST_true(EVP_DecryptUpdate(d, NULL, &outl, aad, sizeof(aad))) /* forged AAD */
+        || !TEST_false(EVP_DecryptFinal_ex(d, out, &outl)))
+        goto err;
+
+    ret = 1;
+
+err:
+    EVP_CIPHER_CTX_free(d);
+    EVP_CIPHER_free(c);
+    return ret;
+}
+
 static int test_invalid_ctx_for_digest(void)
 {
     int ret;
@@ -6075,6 +6133,9 @@ int setup_tests(void)
 #endif
 
     ADD_ALL_TESTS(test_aead_oneshot_roundtrip, 2 * OSSL_NELEM(aead_oneshot_cfgs));
+
+    /* Test case for CVE-2026-45446 */
+    ADD_TEST(test_aes_siv_ctx_reuse);
 
     ADD_TEST(test_invalid_ctx_for_digest);
 
