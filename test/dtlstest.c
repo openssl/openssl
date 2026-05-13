@@ -682,20 +682,17 @@ end:
 }
 
 /*
- * Test that invalid DTLS records are discarded.
- *
- * We inject various malformed records and verify:
- * 1. No alert is sent (connection survives)
- * 2. Data exchange can still complete
+ * Test that invalid DTLS records at the record layer are silently discarded.
+ * All cases test post-handshake (epoch 1) records that fail validation
+ * at the record layer level.
  */
 
 #define SILENT_DISCARD_INVALID_VERSION 0
-#define SILENT_DISCARD_INVALID_TYPE 1
-#define SILENT_DISCARD_LENGTH_UNDERFLOW 2
-#define SILENT_DISCARD_FUTURE_EPOCH 3
-#define SILENT_DISCARD_BAD_MAC 4
-#define SILENT_DISCARD_ETM_BAD_MAC 5
-#define SILENT_DISCARD_NUM_TESTS 6
+#define SILENT_DISCARD_LENGTH_UNDERFLOW 1
+#define SILENT_DISCARD_FUTURE_EPOCH 2
+#define SILENT_DISCARD_BAD_MAC 3
+#define SILENT_DISCARD_ETM_BAD_MAC 4
+#define SILENT_DISCARD_NUM_TESTS 5
 
 /* Invalid DTLS version (0x00, 0x00) */
 static const unsigned char sd_invalid_version[] = {
@@ -705,19 +702,6 @@ static const unsigned char sd_invalid_version[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x10,
     0x00, 0x04,
     0x01, 0x02, 0x03, 0x04
-};
-
-/* Invalid content type (0xFF) */
-static const unsigned char sd_invalid_type[] = {
-    0xFF, /* Invalid content type */
-    0xFE, 0xFD, /* DTLS 1.2 version */
-    0x00, 0x01, /* Epoch 1 */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x21, /* Sequence 33 */
-    0x00, 0x20, /* Length = 32 (same as bad_mac for fair comparison) */
-    0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xBA, 0xBE,
-    0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-    0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
-    0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00, 0x99
 };
 
 /* Length underflow: zero length record */
@@ -794,10 +778,6 @@ static int test_dtls_malformed_record(int idx)
         malformed = sd_invalid_version;
         malformed_len = sizeof(sd_invalid_version);
         break;
-    case SILENT_DISCARD_INVALID_TYPE:
-        malformed = sd_invalid_type;
-        malformed_len = sizeof(sd_invalid_type);
-        break;
     case SILENT_DISCARD_LENGTH_UNDERFLOW:
         malformed = sd_length_underflow;
         malformed_len = sizeof(sd_length_underflow);
@@ -858,10 +838,6 @@ static int test_dtls_malformed_record(int idx)
             (int)malformed_len))
         goto end;
 
-    /*
-     * Read the malformed record. The connection should be kept alive (SSL_ERROR_WANT_READ) instead of causing a fatal error
-     * (SSL_ERROR_SSL).
-     */
     ret = SSL_read(cssl, buf, sizeof(buf));
     err = SSL_get_error(cssl, ret);
 
@@ -873,7 +849,7 @@ static int test_dtls_malformed_record(int idx)
         goto end;
     }
 
-    /* Verify connection still works */
+    /* Verify connection still works after silent discard */
     if (!TEST_int_eq(SSL_write(sssl, msg, sizeof(msg)), (int)sizeof(msg)))
         goto end;
 
@@ -974,7 +950,7 @@ end:
 }
 
 /*
- * Records with unexpected app data during handshake are discarded.
+ * Unexpected app data during handshake triggers fatal alert.
  */
 static int test_dtls_unexpected_app_data(void)
 {
@@ -1021,15 +997,9 @@ static int test_dtls_unexpected_app_data(void)
     mempacket_test_inject(c_to_s_mempacket, (char *)app_data_record,
         sizeof(app_data_record), 1, INJECT_PACKET_IGNORE_REC_SEQ);
 
-    /*
-     * If properly implemented, the handshake should succeed despite the
-     * injected app data.
-     */
-    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_NONE, 0, 0))) {
-        TEST_info("Handshake failed - RFC 9147 violation");
+    if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL, 0, 0)))
         goto end;
-    }
 
     testresult = 1;
 end:
@@ -1129,8 +1099,7 @@ end:
 
 #ifndef OPENSSL_NO_DTLS1_2
 /*
- * Records with unknown record types during handshake are discarded.
- * Record type 0x99 is not a valid DTLS record type (valid: 20-23).
+ * Unknown record type (0x99) during DTLSv1.2 handshake triggers fatal alert.
  */
 static int test_dtls12_unknown_record_type(void)
 {
@@ -1172,11 +1141,9 @@ static int test_dtls12_unknown_record_type(void)
     mempacket_test_inject(c_to_s_mempacket, (char *)unknown_type_record,
         sizeof(unknown_type_record), 1, INJECT_PACKET_IGNORE_REC_SEQ);
 
-    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_NONE, 0, 0))) {
-        TEST_info("Handshake failed - unknown record type not silently discarded");
+    if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL, 0, 0)))
         goto end;
-    }
 
     testresult = 1;
 end:
@@ -1190,6 +1157,9 @@ end:
 #endif
 
 #ifndef OPENSSL_NO_DTLS1
+/*
+ * Unknown record type (0x99) during DTLSv1 handshake triggers fatal alert.
+ */
 static int test_dtls1_unknown_record_type(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -1212,7 +1182,6 @@ static int test_dtls1_unknown_record_type(void)
             &sctx, &cctx, cert, privkey)))
         return 0;
 
-    /* DTLSv1 requires SECLEVEL=0 for older cipher suites */
     if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
         || !TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0")))
         goto end;
@@ -1235,11 +1204,9 @@ static int test_dtls1_unknown_record_type(void)
     mempacket_test_inject(c_to_s_mempacket, (char *)unknown_type_record,
         sizeof(unknown_type_record), 1, INJECT_PACKET_IGNORE_REC_SEQ);
 
-    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_NONE, 0, 0))) {
-        TEST_info("Handshake failed - unknown record type not silently discarded");
+    if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL, 0, 0)))
         goto end;
-    }
 
     testresult = 1;
 end:
@@ -1253,8 +1220,7 @@ end:
 #endif
 
 /*
- * Malformed alert records (not exactly 2 bytes) should be discarded.
- * Inject during handshake when epoch 0 is active so alert reaches parser.
+ * Malformed alert records (not exactly 2 bytes) trigger fatal alert.
  */
 static int test_dtls_malformed_alert(void)
 {
@@ -1266,8 +1232,8 @@ static int test_dtls_malformed_alert(void)
         SSL3_RT_ALERT,
         0xFE, 0xFD,
         0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x06, /* Seq 6 - low to avoid replay window issues */
-        0x00, 0x03,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x06,
+        0x00, 0x03, /* Length = 3 bytes (invalid: alerts must be exactly 2) */
         0x01, 0x00, 0x99
     };
 
@@ -1301,11 +1267,9 @@ static int test_dtls_malformed_alert(void)
     mempacket_test_inject(c_to_s_mempacket, (char *)malformed_alert,
         sizeof(malformed_alert), 1, INJECT_PACKET_IGNORE_REC_SEQ);
 
-    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_NONE, 0, 0))) {
-        TEST_info("Handshake failed - RFC 9147 violation");
+    if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL, 0, 0)))
         goto end;
-    }
 
     testresult = 1;
 end:
@@ -1318,8 +1282,7 @@ end:
 }
 
 /*
- * Too many consecutive warning alerts should be discarded.
- * Inject 7 warning alerts during handshake to exceed MAX_WARN_ALERT_COUNT (5).
+ * Too many consecutive warning alerts (exceeds MAX_WARN_ALERT_COUNT) triggers fatal alert.
  */
 static int test_dtls_too_many_warnings(void)
 {
@@ -1332,9 +1295,9 @@ static int test_dtls_too_many_warnings(void)
         SSL3_RT_ALERT,
         0xFE, 0xFD,
         0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x0A, /* Seq 10 base - low to avoid replay window issues */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x0A,
         0x00, 0x02,
-        0x01, 0x32 /* Warning (1), user_cancelled (90) - no special handling */
+        0x01, 0x32
     };
     unsigned char warning_alert[sizeof(warning_alert_template)];
 
@@ -1367,16 +1330,14 @@ static int test_dtls_too_many_warnings(void)
 
     for (i = 0; i < 7; i++) {
         memcpy(warning_alert, warning_alert_template, sizeof(warning_alert));
-        warning_alert[10] = (unsigned char)(0x0A + i); /* Seq 10-16 */
+        warning_alert[10] = (unsigned char)(0x0A + i);
         mempacket_test_inject(c_to_s_mempacket, (char *)warning_alert,
             sizeof(warning_alert), 1 + i, INJECT_PACKET_IGNORE_REC_SEQ);
     }
 
-    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_NONE, 0, 0))) {
-        TEST_info("Handshake failed - RFC 9147 violation");
+    if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL, 0, 0)))
         goto end;
-    }
 
     testresult = 1;
 end:
@@ -1389,8 +1350,7 @@ end:
 }
 
 /*
- * An alert record with an unknown alert level is discarded.
- * Inject alert with invalid level (3) during handshake.
+ * Unknown alert level (not 1 or 2) triggers fatal alert.
  */
 static int test_dtls_unknown_alert_level(void)
 {
@@ -1402,9 +1362,9 @@ static int test_dtls_unknown_alert_level(void)
         SSL3_RT_ALERT,
         0xFE, 0xFD,
         0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x10, /* Seq 16 - low to avoid replay window issues */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x10,
         0x00, 0x02,
-        0x03, 0x00
+        0x03, 0x00 /* Invalid alert level 3 (valid: 1=warning, 2=fatal) */
     };
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
@@ -1437,11 +1397,9 @@ static int test_dtls_unknown_alert_level(void)
     mempacket_test_inject(c_to_s_mempacket, (char *)bad_level_alert,
         sizeof(bad_level_alert), 1, INJECT_PACKET_IGNORE_REC_SEQ);
 
-    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_NONE, 0, 0))) {
-        TEST_info("Handshake failed - RFC 9147 violation");
+    if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL, 0, 0)))
         goto end;
-    }
 
     testresult = 1;
 end:
