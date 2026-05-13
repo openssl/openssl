@@ -540,13 +540,8 @@ int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void))
     return (*lock == ONCE_DONE);
 }
 
-int CRYPTO_THREAD_init_local(CRYPTO_THREAD_LOCAL *key, void (*cleanup)(void *))
+int ossl_thread_init_local(CRYPTO_THREAD_LOCAL *key, void (*cleanup)(void *))
 {
-
-#ifndef FIPS_MODULE
-    if (!ossl_init_thread())
-        return 0;
-#endif
 
     *key = TlsAlloc();
     if (*key == TLS_OUT_OF_INDEXES)
