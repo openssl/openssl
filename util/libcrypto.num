@@ -5722,5 +5722,5 @@ CRYPTO_atomic_cmp_exch_ptr              ?	4_1_0	EXIST::FUNCTION:
 EVP_EC_affine2oct                       ?	4_1_0	EXIST::FUNCTION:
 OPENSSL_sk_set_copy_thunks              ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_new_not_owned               ?	4_1_0	EXIST::FUNCTION:
-X509_VERIFY_PARAM_set1_ocsp_verify_other ?	4_1_0	EXIST::FUNCTION:
-X509_VERIFY_PARAM_get0_ocsp_verify_other ?	4_1_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_ocsp_extra_untrusted ?	4_1_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_get0_ocsp_extra_untrusted ?	4_1_0	EXIST::FUNCTION:
