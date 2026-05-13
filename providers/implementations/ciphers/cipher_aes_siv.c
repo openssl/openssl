@@ -192,6 +192,7 @@ static int aes_siv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     PROV_AES_SIV_CTX *ctx = (PROV_AES_SIV_CTX *)vctx;
     const OSSL_PARAM *p;
     unsigned int speed = 0;
+    SIV128_CONTEXT *sctx = &ctx->siv;
 
     if (ossl_param_is_empty(params))
         return 1;
@@ -226,6 +227,8 @@ static int aes_siv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         if (keylen != ctx->keylen)
             return 0;
     }
+    sctx->final_ret = -1;
+
     return 1;
 }
 
