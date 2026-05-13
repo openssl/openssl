@@ -170,7 +170,10 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
         rr->length -= mac_size;
         mac = rr->data + rr->length;
         i = rl->funcs->mac(rl, rr, md, 0 /* not send */);
-        if (i == 0 || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0) {
+        if (i == 0) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
+            goto end;
+        } else if (CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0) {
             rr->length = 0;
             rl->packet_length = 0;
             goto end;
