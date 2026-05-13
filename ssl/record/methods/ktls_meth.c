@@ -552,12 +552,6 @@ static int ktls_alloc_buffers(OSSL_RECORD_LAYER *rl)
     return tls_alloc_buffers(rl);
 }
 
-static int ktls_free_buffers(OSSL_RECORD_LAYER *rl)
-{
-    /* Write buffer may be an app buffer or an internally allocated copy */
-    return tls_free_buffers(rl);
-}
-
 static struct record_functions_st ossl_ktls_funcs = {
     ktls_set_crypto_state,
     ktls_cipher,
@@ -604,5 +598,5 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     NULL,
     tls_increment_sequence_ctr,
     ktls_alloc_buffers,
-    ktls_free_buffers
+    tls_free_buffers
 };
