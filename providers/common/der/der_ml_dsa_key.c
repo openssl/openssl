@@ -11,7 +11,6 @@
  * DSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
-#include "crypto/ml_dsa.h"
 #include "internal/deprecated.h"
 #include <openssl/obj_mac.h>
 #include <openssl/evp.h>
@@ -23,6 +22,7 @@
 #include "prov/der_ml_dsa.h"
 #include "prov/der_pq_dsa.h"
 #include "prov/der_digests.h"
+#include "crypto/ml_dsa.h"
 
 #define SET_OID(oid, oidlen, oidname)  \
     (oid) = ossl_der_oid_id_##oidname; \

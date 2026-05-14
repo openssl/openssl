@@ -13,7 +13,6 @@
  * References to Sections in the comments below refer to RFC 9180.
  */
 
-#include "crypto/types.h"
 #include "internal/deprecated.h"
 
 #include <stdint.h>
@@ -42,6 +41,7 @@
 #include "internal/hpke_util.h"
 #include "prov/eckem.h"
 #include "providers/implementations/kem/ecx_kem.inc"
+#include "crypto/types.h"
 
 #define MAX_ECX_KEYLEN X448_KEYLEN
 

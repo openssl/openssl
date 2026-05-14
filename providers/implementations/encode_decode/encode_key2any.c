@@ -10,7 +10,6 @@
 /*
  * Low level APIs are deprecated for public use, but still ok for internal use.
  */
-#include "crypto/types.h"
 #include "internal/deprecated.h"
 
 #include <openssl/byteorder.h>
@@ -52,6 +51,7 @@
 #include "prov/ml_kem_codecs.h"
 #include "prov/lms_codecs.h"
 #include "providers/implementations/encode_decode/encode_key2any.inc"
+#include "crypto/types.h"
 
 #include <crypto/asn1.h>
 #include <stddef.h>

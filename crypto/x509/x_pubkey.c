@@ -11,9 +11,6 @@
  * DSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
-#include "crypto/ecx.h"
-#include "crypto/types.h"
-#include "internal/common.h"
 #include "internal/deprecated.h"
 
 #include <stdio.h>
@@ -42,6 +39,9 @@
 #include "openssl/obj_mac.h"
 #include "openssl/objects.h"
 #include "openssl/x509err.h"
+#include "crypto/ecx.h"
+#include "crypto/types.h"
+#include "internal/common.h"
 
 struct X509_pubkey_st {
     X509_ALGOR *algor;

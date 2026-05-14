@@ -11,7 +11,6 @@
  * RSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
-#include "fips/fipsindicator.h"
 #include "internal/deprecated.h"
 
 #include <stdlib.h>
@@ -39,6 +38,7 @@
 #include "prov/der_rsa.h"
 #include "prov/securitycheck.h"
 #include "internal/fips.h"
+#include "fips/fipsindicator.h"
 
 #define rsa_set_ctx_params_no_digest_st rsa_set_ctx_params_st
 

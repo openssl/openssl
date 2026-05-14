@@ -11,9 +11,6 @@
  * DSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
-#include "fips/fipsindicator.h"
-#include "internal/common.h"
-#include "internal/cryptlib.h"
 #include "internal/deprecated.h"
 
 #include <openssl/core_dispatch.h>
@@ -37,6 +34,9 @@
 #include "internal/sizes.h"
 #include "internal/nelem.h"
 #include "internal/param_build_set.h"
+#include "fips/fipsindicator.h"
+#include "internal/common.h"
+#include "internal/cryptlib.h"
 
 static OSSL_FUNC_keymgmt_new_fn dsa_newdata;
 static OSSL_FUNC_keymgmt_new_ex_fn dsa_newdata_ex;

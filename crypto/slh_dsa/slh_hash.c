@@ -7,10 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "crypto/slh_dsa.h"
-#include "crypto/slh_dsa/slh_adrs.h"
-#include "crypto/slh_dsa/slh_hash.h"
-#include "crypto/slh_dsa/slh_params.h"
 #include "internal/deprecated.h" /* PKCS1_MGF1() */
 
 #include <stdint.h>
@@ -28,6 +24,10 @@
 #include "internal/sha3.h"
 #include "crypto/evp.h"
 #include "crypto/sha.h"
+#include "crypto/slh_dsa.h"
+#include "crypto/slh_dsa/slh_adrs.h"
+#include "crypto/slh_dsa/slh_hash.h"
+#include "crypto/slh_dsa/slh_params.h"
 
 #define MAX_DIGEST_SIZE 64 /* SHA-512 is used for security category 3 & 5 */
 #define NIBBLE_MASK 15

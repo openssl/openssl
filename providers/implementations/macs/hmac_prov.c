@@ -11,7 +11,6 @@
  * HMAC low level APIs are deprecated for public use, but still ok for internal
  * use.
  */
-#include "fips/fipsindicator.h"
 #include "internal/deprecated.h"
 
 #include <string.h>
@@ -36,6 +35,7 @@
 #include "prov/providercommon.h"
 #include "prov/securitycheck.h"
 #include "providers/implementations/macs/hmac_prov.inc"
+#include "fips/fipsindicator.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly

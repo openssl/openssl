@@ -11,7 +11,6 @@
  * HMAC low level APIs are deprecated for public use, but still ok for internal
  * use.
  */
-#include "internal/common.h"
 #include "internal/deprecated.h"
 
 #include <stdio.h>
@@ -24,6 +23,7 @@
 #include "hmac_local.h"
 #include "openssl/crypto.h"
 #include "openssl/evp.h"
+#include "internal/common.h"
 
 int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
     const EVP_MD *md, ENGINE *impl)

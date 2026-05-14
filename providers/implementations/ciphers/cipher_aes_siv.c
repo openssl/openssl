@@ -13,8 +13,6 @@
  * This file uses the low level AES functions (which are deprecated for
  * non-internal use) in order to implement provider AES ciphers.
  */
-#include "crypto/modes.h"
-#include "crypto/siv.h"
 #include "internal/deprecated.h"
 
 #include <openssl/proverr.h>
@@ -34,6 +32,8 @@
 #include "prov/ciphercommon_aead.h"
 #include "prov/provider_ctx.h"
 #include "providers/implementations/ciphers/cipher_aes_siv.inc"
+#include "crypto/modes.h"
+#include "crypto/siv.h"
 
 #define siv_stream_update siv_cipher
 #define SIV_FLAGS AEAD_FLAGS

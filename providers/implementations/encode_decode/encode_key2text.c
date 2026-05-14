@@ -10,7 +10,6 @@
 /*
  * Low level APIs are deprecated for public use, but still ok for internal use.
  */
-#include "crypto/types.h"
 #include "internal/deprecated.h"
 
 #include <openssl/core.h>
@@ -46,6 +45,7 @@
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
 #include "prov/lms_codecs.h"
+#include "crypto/types.h"
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 

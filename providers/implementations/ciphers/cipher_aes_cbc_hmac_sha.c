@@ -12,7 +12,6 @@
  * use where we're using them to implement the higher level EVP interface, as is
  * the case here.
  */
-#include "internal/common.h"
 #include "internal/deprecated.h"
 
 /* Dispatch functions for AES_CBC_HMAC_SHA ciphers */
@@ -35,6 +34,7 @@
 #include "prov/ciphercommon.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "internal/common.h"
 
 #ifndef AES_CBC_HMAC_SHA_CAPABLE
 #define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags) \

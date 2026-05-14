@@ -11,7 +11,6 @@
  * DES low level APIs are deprecated for public use, but still ok for internal
  * use.
  */
-#include "fips/fipsindicator.h"
 #include "internal/deprecated.h"
 
 #include <openssl/rand.h>
@@ -29,6 +28,7 @@
 #include "cipher_tdes.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "fips/fipsindicator.h"
 
 void *ossl_tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
     size_t ivbits, uint64_t flags, const PROV_CIPHER_HW *hw)

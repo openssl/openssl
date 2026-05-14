@@ -12,7 +12,6 @@
  * EC_KEY low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
-#include "crypto/ec.h"
 #include "internal/deprecated.h"
 
 #include "internal/cryptlib.h"
@@ -33,6 +32,7 @@
 #include "prov/providercommon.h"
 #include "prov/ecx.h"
 #include "crypto/bn.h"
+#include "crypto/ec.h"
 
 static int ecdsa_keygen_pairwise_test(EC_KEY *eckey, OSSL_CALLBACK *cb,
     void *cbarg);

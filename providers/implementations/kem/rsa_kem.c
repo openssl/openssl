@@ -11,7 +11,6 @@
  * RSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
-#include "fips/fipsindicator.h"
 #include "internal/deprecated.h"
 #include "internal/nelem.h"
 #include <openssl/crypto.h>
@@ -34,6 +33,7 @@
 #include "prov/implementations.h"
 #include "prov/securitycheck.h"
 #include "providers/implementations/kem/rsa_kem.inc"
+#include "fips/fipsindicator.h"
 
 static OSSL_FUNC_kem_newctx_fn rsakem_newctx;
 static OSSL_FUNC_kem_encapsulate_init_fn rsakem_encapsulate_init;

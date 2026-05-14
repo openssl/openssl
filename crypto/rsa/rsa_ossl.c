@@ -11,7 +11,6 @@
  * RSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
-#include "crypto/rsa.h"
 #include "internal/deprecated.h"
 
 #include "internal/cryptlib.h"
@@ -35,6 +34,7 @@
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
+#include "crypto/rsa.h"
 
 DEFINE_SPARSE_ARRAY_OF(BN_BLINDING);
 
