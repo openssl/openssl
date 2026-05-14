@@ -11,7 +11,6 @@
  * DSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
-#include "fips/fipsindicator.h"
 #include "internal/deprecated.h"
 
 #include <string.h>
@@ -38,6 +37,7 @@
 #include "prov/securitycheck.h"
 #include "prov/der_dsa.h"
 #include "crypto/dsa.h"
+#include "fips/fipsindicator.h"
 
 static OSSL_FUNC_signature_newctx_fn dsa_newctx;
 static OSSL_FUNC_signature_sign_init_fn dsa_sign_init;

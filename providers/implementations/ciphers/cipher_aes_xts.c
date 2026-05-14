@@ -13,7 +13,6 @@
  * use where we're using them to implement the higher level EVP interface, as is
  * the case here.
  */
-#include "crypto/modes.h"
 #include "internal/deprecated.h"
 
 #include <openssl/proverr.h>
@@ -32,6 +31,7 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "providers/implementations/ciphers/cipher_aes_xts.inc"
+#include "crypto/modes.h"
 
 #define AES_XTS_FLAGS PROV_CIPHER_FLAG_CUSTOM_IV
 #define AES_XTS_IV_BITS 128

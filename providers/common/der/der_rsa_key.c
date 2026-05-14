@@ -11,8 +11,6 @@
  * RSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
-#include "crypto/rsa.h"
-#include "internal/common.h"
 #include "internal/deprecated.h"
 
 #include <openssl/obj_mac.h>
@@ -28,6 +26,8 @@
 #include "openssl/rsaerr.h"
 #include "prov/der_rsa.h"
 #include "prov/der_digests.h"
+#include "crypto/rsa.h"
+#include "internal/common.h"
 
 /* More complex pre-compiled sequences. */
 

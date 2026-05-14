@@ -13,7 +13,6 @@
  * This file uses the low level AES functions (which are deprecated for
  * non-internal use) in order to implement provider AES ciphers.
  */
-#include "crypto/aes_platform.h"
 #include "internal/deprecated.h"
 
 #include "cipher_aes_ccm.h"
@@ -21,6 +20,7 @@
 #include "openssl/modes.h"
 #include "prov/ciphercommon_ccm.h"
 #include <stddef.h>
+#include "crypto/aes_platform.h"
 
 #define AES_HW_CCM_SET_KEY_FN(fn_set_enc_key, fn_blk, fn_ccm_enc, fn_ccm_dec) \
     fn_set_enc_key(key, (int)(keylen * 8), &actx->ccm.ks.ks);                 \

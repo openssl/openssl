@@ -11,7 +11,6 @@
  * ECDH low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
-#include "fips/fipsindicator.h"
 #include "internal/deprecated.h"
 
 #include <string.h>
@@ -34,6 +33,7 @@
 #include "prov/securitycheck.h"
 #include "crypto/ec.h" /* ossl_ecdh_kdf_X9_63() */
 #include "providers/implementations/exchange/ecdh_exch.inc"
+#include "fips/fipsindicator.h"
 
 static OSSL_FUNC_keyexch_newctx_fn ecdh_newctx;
 static OSSL_FUNC_keyexch_init_fn ecdh_init;

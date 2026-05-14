@@ -11,10 +11,10 @@
  * ECDH and ECDSA low level APIs are deprecated for public use, but still ok
  * for internal use.
  */
-#include "crypto/ec.h"
-#include "internal/common.h"
 #include "internal/deprecated.h"
 
+#include "crypto/ec.h"
+#include "internal/common.h"
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/x509.h>

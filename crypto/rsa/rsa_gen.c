@@ -17,7 +17,6 @@
  * RSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
-#include "crypto/rsa.h"
 #include "internal/deprecated.h"
 
 #include <stdint.h>
@@ -36,6 +35,7 @@
 #include "openssl/safestack.h"
 #include "prov/providercommon.h"
 #include "rsa_local.h"
+#include "crypto/rsa.h"
 
 static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg);
 static int rsa_keygen(OSSL_LIB_CTX *libctx, RSA *rsa, int bits, int primes,

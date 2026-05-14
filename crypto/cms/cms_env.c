@@ -11,9 +11,9 @@
  * Low level key APIs (DH etc) are deprecated for public use, but still ok for
  * internal use.
  */
-#include "internal/common.h"
 #include "internal/deprecated.h"
 
+#include "internal/common.h"
 #include "internal/cryptlib.h"
 #include <limits.h>
 #include <openssl/asn1t.h>
