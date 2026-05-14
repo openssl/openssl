@@ -9,6 +9,7 @@
 
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include "bio_local.h"
 #include "internal/bio.h"
 #include "internal/refcount.h"
 #include "openssl/bio.h"
@@ -22,7 +23,6 @@
 #include <errno.h>
 #include <openssl/crypto.h>
 #include "internal/numbers.h"
-#include "bio_local.h"
 
 /*
  * Helper macro for the callback to determine whether an operator expects a
