@@ -12,7 +12,6 @@
  * use where we're using them to implement the higher level EVP interface, as is
  * the case here.
  */
-#include "crypto/modes.h"
 #include "internal/deprecated.h"
 
 #include <openssl/evp.h>
@@ -22,6 +21,7 @@
 #include <stdint.h>
 #include "cipher_aes_gcm_siv.h"
 #include "openssl/e_os2.h"
+#include "crypto/modes.h"
 
 static ossl_inline void mulx_ghash(uint64_t *a)
 {

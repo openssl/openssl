@@ -11,7 +11,6 @@
  * DSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
-#include "crypto/types.h"
 #include "internal/deprecated.h"
 
 #include <assert.h>
@@ -59,6 +58,7 @@
 #include "internal/provider.h"
 #include "internal/common.h"
 #include "evp_local.h"
+#include "crypto/types.h"
 
 static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str,
     int len, EVP_KEYMGMT *keymgmt);

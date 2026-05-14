@@ -11,7 +11,6 @@
  * HMAC low level APIs are deprecated for public use, but still ok for internal
  * use.
  */
-#include "fips/fipsindicator.h"
 #include "internal/deprecated.h"
 
 #include <stdint.h>
@@ -42,6 +41,7 @@
 #include "internal/fips.h"
 #include "internal/params.h"
 #include "internal/sizes.h"
+#include "fips/fipsindicator.h"
 
 #define HKDF_MAXBUF 2048
 #define HKDF_MAXINFO (32 * 1024)

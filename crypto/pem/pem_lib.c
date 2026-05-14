@@ -10,7 +10,6 @@
 /*
  * We need to use some EVP_PKEY_asn1 deprecated APIs
  */
-#include "internal/common.h"
 #include "internal/deprecated.h"
 
 #include <limits.h>
@@ -35,6 +34,7 @@
 #include "openssl/err.h"
 #include "openssl/macros.h"
 #include "openssl/pemerr.h"
+#include "internal/common.h"
 
 #define MIN_LENGTH 4
 

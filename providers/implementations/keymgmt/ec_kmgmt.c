@@ -11,8 +11,6 @@
  * ECDH/ECDSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
-#include "fips/fipsindicator.h"
-#include "internal/cryptlib.h"
 #include "internal/deprecated.h"
 
 #include <string.h>
@@ -38,6 +36,8 @@
 #include "prov/securitycheck.h"
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
+#include "fips/fipsindicator.h"
+#include "internal/cryptlib.h"
 
 #ifndef FIPS_MODULE
 #ifndef OPENSSL_NO_SM2

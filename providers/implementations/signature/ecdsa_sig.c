@@ -11,7 +11,6 @@
  * ECDSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
-#include "fips/fipsindicator.h"
 #include "internal/deprecated.h"
 
 #include <string.h> /* memcpy */
@@ -40,6 +39,7 @@
 #include "prov/der_ec.h"
 #include "crypto/ec.h"
 #include "internal/fips.h"
+#include "fips/fipsindicator.h"
 
 struct ecdsa_all_set_ctx_params_st {
     OSSL_PARAM *digest; /* ecdsa_set_ctx_params */

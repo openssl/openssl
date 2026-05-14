@@ -11,7 +11,6 @@
  * ECDSA low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
-#include "crypto/ec.h"
 #include "internal/deprecated.h"
 
 #include <string.h>
@@ -26,6 +25,7 @@
 #include "openssl/ec.h"
 #include "openssl/ecerr.h"
 #include "openssl/evp.h"
+#include "crypto/ec.h"
 
 #define MIN_ECDSA_SIGN_ORDERBITS 64
 /*

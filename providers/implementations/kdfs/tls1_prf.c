@@ -50,7 +50,6 @@
  * Low level APIs (such as DH) are deprecated for public use, but still ok for
  * internal use.
  */
-#include "fips/fipsindicator.h"
 #include "internal/deprecated.h"
 
 #include <stdint.h>
@@ -79,6 +78,7 @@
 #include "internal/fips.h"
 #include "internal/params.h"
 #include "internal/safe_math.h"
+#include "fips/fipsindicator.h"
 
 OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
 

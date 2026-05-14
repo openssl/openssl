@@ -13,7 +13,6 @@
  * configured.  When we drop #legacy EVP_PKEYs, this source should be
  * possible to drop as well.
  */
-#include "internal/common.h"
 #include "internal/deprecated.h"
 
 #include <stdlib.h>
@@ -47,6 +46,7 @@
 #include "openssl/obj_mac.h"
 #include "openssl/objects.h"
 #include "openssl/rsaerr.h"
+#include "internal/common.h"
 
 struct translation_ctx_st; /* Forwarding */
 struct translation_st; /* Forwarding */

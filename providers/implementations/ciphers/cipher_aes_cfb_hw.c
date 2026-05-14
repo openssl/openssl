@@ -11,7 +11,6 @@
  * This file uses the low level AES functions (which are deprecated for
  * non-internal use) in order to implement provider AES ciphers.
  */
-#include "crypto/aes_platform.h"
 #include "internal/deprecated.h"
 
 #include <openssl/proverr.h>
@@ -22,6 +21,7 @@
 #include "openssl/err.h"
 #include "openssl/modes.h"
 #include "prov/ciphercommon.h"
+#include "crypto/aes_platform.h"
 
 static int cipher_hw_aes_initkey(PROV_CIPHER_CTX *dat,
     const unsigned char *key, size_t keylen)

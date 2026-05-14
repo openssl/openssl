@@ -11,7 +11,6 @@
  * This file uses the low level AES functions (which are deprecated for
  * non-internal use) in order to implement provider AES ciphers.
  */
-#include "internal/common.h"
 #include "internal/deprecated.h"
 
 #include <limits.h>
@@ -32,6 +31,7 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "providers/implementations/ciphers/cipher_aes_wrp.inc"
+#include "internal/common.h"
 
 /* AES wrap with padding has IV length of 4, without padding 8 */
 #define AES_WRAP_PAD_IVLEN 4

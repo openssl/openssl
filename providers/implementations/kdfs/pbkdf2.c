@@ -11,7 +11,6 @@
  * HMAC low level APIs are deprecated for public use, but still ok for internal
  * use.
  */
-#include "fips/fipsindicator.h"
 #include "internal/deprecated.h"
 
 #include <limits.h>
@@ -41,6 +40,7 @@
 #include "prov/provider_util.h"
 #include "prov/securitycheck.h"
 #include "providers/implementations/kdfs/pbkdf2.inc"
+#include "fips/fipsindicator.h"
 
 /* Constants specified in SP800-132 */
 #define KDF_PBKDF2_MIN_KEY_LEN_BITS 112

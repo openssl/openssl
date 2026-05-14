@@ -11,7 +11,6 @@
  * DH low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
-#include "fips/fipsindicator.h"
 #include "internal/deprecated.h"
 
 #include <string.h>
@@ -34,6 +33,7 @@
 #include "prov/securitycheck.h"
 #include "crypto/dh.h"
 #include "providers/implementations/exchange/dh_exch.inc"
+#include "fips/fipsindicator.h"
 
 static OSSL_FUNC_keyexch_newctx_fn dh_newctx;
 static OSSL_FUNC_keyexch_init_fn dh_init;
