@@ -42,7 +42,7 @@ int ASN1_mbstring_copy(ASN1_STRING **out, const unsigned char *in, int len,
 }
 
 int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
-    int inform, unsigned long mask,
+    int inform, unsigned long mask_in,
     long minsize, long maxsize)
 {
     int str_type;
@@ -52,6 +52,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
     ASN1_STRING *dest;
     unsigned char *p;
     int nchar;
+    uint32_t mask = (uint32_t)mask_in;
     int (*cpyfunc)(uint32_t, void *) = NULL;
     if (len == -1) {
         size_t len_s = strlen((const char *)in);
