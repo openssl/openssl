@@ -9,16 +9,6 @@
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
-#include "internal/sockets.h"
-#include "openssl/bio.h"
-#include "openssl/bioerr.h"
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <unistd.h>
 #endif
 
 /*
@@ -36,6 +26,16 @@
 
 #include "bio_local.h"
 #include <openssl/crypto.h>
+#include "internal/sockets.h"
+#include "openssl/bio.h"
+#include "openssl/bioerr.h"
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
 
 #ifndef OPENSSL_NO_SOCK
 #include <openssl/err.h>
