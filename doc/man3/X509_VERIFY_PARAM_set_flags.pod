@@ -329,7 +329,7 @@ the corresponding verification parameters.
 If the provided function succeeds, the corresponding
 input will be accepted for use in certificate verification.
 
-509_VERIFY_PARAM_set1_ocsp_extra_untrusted() sets further certificates used to
+X509_VERIFY_PARAM_set1_ocsp_extra_untrusted() sets further certificates used to
 check OCSP responses that does not include the needed signer certificate
 or intermediate CA certificates.
 
@@ -346,7 +346,7 @@ X509_VERIFY_PARAM_set1_host(), X509_VERIFY_PARAM_add1_host(),
 X509_VERIFY_PARAM_set1_email(),
 X509_VERIFY_PARAM_set1_ip(), X509_VERIFY_PARAM_add1_ip(),
 X509_VERIFY_PARAM_set1_ip_asc(), X509_VERIFY_PARAM_add1_ip_asc() and
-X509_VERIFY_PARAM_set1_ocsp_extra_untrusted()return 1 for success and 0 for
+X509_VERIFY_PARAM_set1_ocsp_extra_untrusted() return 1 for success and 0 for
 failure.
 
 X509_VERIFY_PARAM_get0_host(), X509_VERIFY_PARAM_get0_email(), and
@@ -556,7 +556,7 @@ The documentation was changed to align with the implementation.
 The X509_VERIFY_PARAM_get_purpose() function was added in OpenSSL 3.5.
 
 The functions X509_VERIFY_PARAM_set1_ocsp_extra_untrusted() and
-X509_VERIFY_PARAM_get0_ocsp_extra_untrusted() were added in OpenSSL 4.1
+X509_VERIFY_PARAM_get0_ocsp_extra_untrusted() were added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

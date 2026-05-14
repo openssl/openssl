@@ -918,7 +918,7 @@ int X509_VERIFY_PARAM_set1_ocsp_extra_untrusted(X509_VERIFY_PARAM *param,
     STACK_OF(X509) *ocsp_extra_untrusted)
 {
     int i;
-    X509 *x509, *dx509;
+    X509 *x509;
 
     if (param == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
@@ -926,24 +926,20 @@ int X509_VERIFY_PARAM_set1_ocsp_extra_untrusted(X509_VERIFY_PARAM *param,
     }
     sk_X509_pop_free(param->ocsp_extra_untrusted, X509_free);
 
-    if (ocsp_extra_untrusted == NULL) {
+    if (sk_X509_num(ocsp_extra_untrusted) <= 0) {
         param->ocsp_extra_untrusted = NULL;
         return 1;
     }
 
-    param->ocsp_extra_untrusted = sk_X509_new_null();
+    param->ocsp_extra_untrusted = sk_X509_new_reserve(NULL, sk_X509_num(ocsp_extra_untrusted));
     if (param->ocsp_extra_untrusted == NULL)
         return 0;
 
     for (i = 0; i < sk_X509_num(ocsp_extra_untrusted); i++) {
-        x509 = sk_X509_value(ocsp_extra_untrusted, i);
-        dx509 = X509_dup(x509);
-        if (dx509 == NULL)
+        x509 = X509_dup(sk_X509_value(ocsp_extra_untrusted, i));
+        if (x509 == NULL)
             return 0;
-        if (!sk_X509_push(param->ocsp_extra_untrusted, dx509)) {
-            X509_free(dx509);
-            return 0;
-        }
+        (void)sk_X509_push(param->ocsp_extra_untrusted, x509); /* cannot fail */
     }
     return 1;
 }

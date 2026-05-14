@@ -267,6 +267,7 @@ int ocsp_main(int argc, char **argv)
     STACK_OF(OPENSSL_STRING) *reqnames = NULL;
     STACK_OF(X509) *sign_other = NULL, *verify_other = NULL, *rother = NULL;
     STACK_OF(X509) *issuers = NULL;
+    STACK_OF(X509) *x509_tmp = NULL;
     X509 *issuer = NULL, *cert = NULL;
     STACK_OF(X509) *rca_certs = NULL;
     EVP_MD *resp_certid_md = NULL;
@@ -874,12 +875,14 @@ done_resp:
             }
         }
 
-        i = OCSP_basic_verify(bs, verify_other, store, verify_flags);
-        if (i <= 0 && issuers) {
-            i = OCSP_basic_verify(bs, issuers, store, verify_flags);
-            if (i > 0)
-                ERR_clear_error();
-        }
+        x509_tmp = sk_X509_dup(verify_other);
+
+        if (sk_X509_num(issuers) > 0)
+            for (i = 0; i < sk_X509_num(issuers); i++)
+                sk_X509_push(x509_tmp, sk_X509_value(issuers, i));
+
+        i = OCSP_basic_verify(bs, x509_tmp, store, verify_flags);
+
         if (i <= 0) {
             BIO_puts(bio_err, "Response Verify Failure\n");
             ERR_print_errors(bio_err);

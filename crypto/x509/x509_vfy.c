@@ -1288,7 +1288,7 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
     ASN1_OBJECT *cert_id_md_oid;
     EVP_MD *cert_id_md = NULL;
     OCSP_CERTID *cert_id = NULL;
-    STACK_OF(X509) *ocsp_extra_untrusted = NULL;
+    STACK_OF(X509) *ocsp_extra_untrusted = NULL, *x509_tmp = NULL;
     int ret = V_OCSP_CERTSTATUS_UNKNOWN;
     int num;
 
@@ -1310,9 +1310,13 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
 
     ocsp_extra_untrusted = X509_VERIFY_PARAM_get0_ocsp_extra_untrusted(ctx->param);
 
-    i = OCSP_basic_verify(bs, ctx->chain, ctx->store, 0);
-    if (i <= 0 && ocsp_extra_untrusted != NULL)
-        i = OCSP_basic_verify(bs, ocsp_extra_untrusted, ctx->store, 0);
+    x509_tmp = sk_X509_dup(ctx->chain);
+
+    if (sk_X509_num(ocsp_extra_untrusted) > 0)
+        for (i = 0; i < sk_X509_num(ocsp_extra_untrusted); i++)
+            sk_X509_push(x509_tmp, sk_X509_value(ocsp_extra_untrusted, i));
+
+    i = OCSP_basic_verify(bs, x509_tmp, ctx->store, 0);
 
     if (i <= 0) {
         ret = X509_V_ERR_OCSP_SIGNATURE_FAILURE;
