@@ -14,7 +14,7 @@
 #include <openssl/macros.h>
 #include <stdint.h>
 #include "internal/numbers.h"
-#include "word.h"
+#include "../word.h"
 
 #ifndef UINT128_MAX
 /* No support for 128 bit ints, so do nothing here */
