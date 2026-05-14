@@ -14,14 +14,14 @@
  * eventually disappear. In the meantime, to continue to support them, we
  * need to access deprecated SRP APIs.
  */
-#include "openssl/crypto.h"
-#include "openssl/ssl3.h"
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/bn.h>
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/srp.h>
+#include "openssl/crypto.h"
+#include "openssl/ssl3.h"
 #include "apps_ui.h"
 #include "apps.h"
 #include "s_apps.h"

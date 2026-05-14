@@ -8,10 +8,6 @@
  */
 
 /* We need to use the OPENSSL_fork_*() deprecated APIs */
-#include "internal/common.h"
-#include "openssl/e_os2.h"
-#include <pthread.h>
-#include <stdint.h>
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #if !defined(__GNUC__) || !defined(__ATOMIC_ACQ_REL) || defined(BROKEN_CLANG_ATOMICS) || defined(OPENSSL_NO_STDIO)
@@ -48,6 +44,10 @@
 #include "internal/time.h"
 #endif
 #include "rcu_internal.h"
+#include "internal/common.h"
+#include "openssl/e_os2.h"
+#include <pthread.h>
+#include <stdint.h>
 
 #if defined(__SANITIZE_THREAD__)
 #define TSAN_FAKE_UNLOCK(x)          \

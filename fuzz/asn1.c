@@ -16,8 +16,6 @@
  */
 
 /* We need to use some deprecated APIs */
-#include "openssl/crypto.h"
-#include <stdint.h>
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
@@ -42,6 +40,8 @@
 #include <openssl/x509_acert.h>
 #include "internal/nelem.h"
 #include "fuzzer.h"
+#include "openssl/crypto.h"
+#include <stdint.h>
 
 static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(ACCESS_DESCRIPTION),

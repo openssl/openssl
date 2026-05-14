@@ -12,6 +12,21 @@
 /*
  * Because of *asn1_*
  */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
+#include <stdio.h>
+#include <ctype.h>
+#include <openssl/objects.h>
+#include <openssl/comp.h>
+#include <openssl/crypto.h>
+#include <openssl/conf.h>
+#include <openssl/trace.h>
+#include "internal/nelem.h"
+#include "ssl_local.h"
+#include "internal/thread_once.h"
+#include "internal/cryptlib.h"
+#include "internal/comp.h"
+#include "internal/ssl_unwrap.h"
 #include "internal/common.h"
 #include "internal/packet.h"
 #include "internal/statem.h"
@@ -28,21 +43,6 @@
 #include "openssl/tls1.h"
 #include <stdint.h>
 #include <string.h>
-#define OPENSSL_SUPPRESS_DEPRECATED
-
-#include <stdio.h>
-#include <ctype.h>
-#include <openssl/objects.h>
-#include <openssl/comp.h>
-#include <openssl/crypto.h>
-#include <openssl/conf.h>
-#include <openssl/trace.h>
-#include "internal/nelem.h"
-#include "ssl_local.h"
-#include "internal/thread_once.h"
-#include "internal/cryptlib.h"
-#include "internal/comp.h"
-#include "internal/ssl_unwrap.h"
 
 /* NB: make sure indices in these tables match values above */
 

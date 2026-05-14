@@ -15,6 +15,15 @@
  * We need to use the SRP deprecated APIs in order to implement the SSL SRP
  * APIs - which are themselves deprecated.
  */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
+#ifndef OPENSSL_NO_SRP
+#include <openssl/srp.h>
+#include <openssl/crypto.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
+#include "ssl_local.h"
+#include "internal/ssl_unwrap.h"
 #include "internal/statem.h"
 #include "openssl/bn.h"
 #include "openssl/prov_ssl.h"
@@ -22,16 +31,6 @@
 #include "openssl/ssl3.h"
 #include "openssl/sslerr.h"
 #include <string.h>
-#define OPENSSL_SUPPRESS_DEPRECATED
-
-#include <openssl/crypto.h>
-#include <openssl/rand.h>
-#include <openssl/err.h>
-#include "ssl_local.h"
-#include "internal/ssl_unwrap.h"
-
-#ifndef OPENSSL_NO_SRP
-#include <openssl/srp.h>
 
 /*
  * The public API SSL_CTX_SRP_CTX_free() is deprecated so we use
