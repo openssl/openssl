@@ -9,6 +9,7 @@
 
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include "bio_local.h"
 #include "internal/bio.h"
 #include "internal/sockets.h"
 #include "openssl/bio.h"
@@ -21,7 +22,6 @@
 #include <sys/socket.h>
 #include <stdio.h>
 #include <errno.h>
-#include "bio_local.h"
 
 #ifndef OPENSSL_NO_SOCK
 

@@ -15,8 +15,6 @@
  * See ssl/ssltest.c for some hints on how this can be used.
  */
 
-#include "internal/bio.h"
-#include "internal/e_os.h"
 #include <assert.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -29,6 +27,8 @@
 #include "openssl/e_os2.h"
 #include <openssl/err.h>
 #include <openssl/crypto.h>
+#include "internal/bio.h"
+#include "internal/e_os.h"
 
 static int bio_new(BIO *bio);
 static int bio_free(BIO *bio);
