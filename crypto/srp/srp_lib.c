@@ -12,13 +12,13 @@
  */
 
 /* All the SRP APIs in this file are deprecated */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
+#ifndef OPENSSL_NO_SRP
 #include "openssl/bn.h"
 #include "openssl/crypto.h"
 #include <stddef.h>
 #include <string.h>
-#define OPENSSL_SUPPRESS_DEPRECATED
-
-#ifndef OPENSSL_NO_SRP
 #include "internal/cryptlib.h"
 #include <openssl/sha.h>
 #include <openssl/srp.h>

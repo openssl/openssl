@@ -8,11 +8,11 @@
  */
 
 /* We need to use the low level ASN1 items until they are removed */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include "internal/nelem.h"
 #include "openssl/crypto.h"
 #include <string.h>
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/asn1.h>

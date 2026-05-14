@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "openssl/crypto.h"
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
@@ -21,6 +20,7 @@
 
 #include <openssl/bio.h>
 #include <openssl/lhash.h>
+#include "openssl/crypto.h"
 #include "lhash_local.h"
 
 #ifndef OPENSSL_NO_STDIO

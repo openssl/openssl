@@ -12,14 +12,6 @@
  */
 
 /* All the SRP APIs in this file are deprecated */
-#include "openssl/bio.h"
-#include "openssl/bn.h"
-#include "openssl/crypto.h"
-#include "openssl/obj_mac.h"
-#include "openssl/safestack.h"
-#include <limits.h>
-#include <stddef.h>
-#include <string.h>
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #ifndef OPENSSL_NO_SRP
@@ -32,6 +24,14 @@
 #include <openssl/rand.h>
 #include <openssl/txt_db.h>
 #include <openssl/err.h>
+#include "openssl/bio.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/safestack.h"
+#include <limits.h>
+#include <stddef.h>
+#include <string.h>
 
 #define SRP_RANDOM_SALT_LEN 20
 #define MAX_LEN 2500

@@ -7,10 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "openssl/bio.h"
-#include "openssl/crypto.h"
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

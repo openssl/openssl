@@ -8,14 +8,6 @@
  */
 
 /* We need to use some deprecated APIs */
-#include "openssl/bn.h"
-#include "openssl/core.h"
-#include "openssl/core_dispatch.h"
-#include "openssl/ec.h"
-#include "openssl/obj_mac.h"
-#include "openssl/objects.h"
-#include "opt.h"
-#include <stdint.h>
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
@@ -48,6 +40,14 @@
 #include "crypto/evp.h"
 #include "fake_rsaprov.h"
 #include "fake_pipelineprov.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/ec.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "opt.h"
+#include <stdint.h>
 
 #ifndef OPENSSL_NO_DSA
 #include "helpers/predefined_dsaparams.h"

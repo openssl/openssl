@@ -12,13 +12,13 @@
  */
 
 /* SRP is deprecated, so we're going to have to use some deprecated APIs */
-#include "apps_ui.h"
-#include "openssl/crypto.h"
-#include "opt.h"
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/opensslconf.h>
 
+#include "apps_ui.h"
+#include "openssl/crypto.h"
+#include "opt.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
