@@ -9,6 +9,14 @@
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
+
+#ifndef OPENSSL_NO_DGRAM
+#include <stdio.h>
+#include <errno.h>
+
+#include "internal/time.h"
+#include "bio_local.h"
 #include "internal/bio.h"
 #include "internal/common.h"
 #include "internal/sockets.h"
@@ -24,14 +32,6 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#endif
-
-#include <stdio.h>
-#include <errno.h>
-
-#include "internal/time.h"
-#include "bio_local.h"
-#ifndef OPENSSL_NO_DGRAM
 
 #ifndef OPENSSL_NO_SCTP
 #include <netinet/sctp.h>
