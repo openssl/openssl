@@ -59,7 +59,7 @@ typedef int char_io(void *arg, const void *buf, int len);
 
 /*
  * This function handles display of strings, one character at a time. It is
- * passed an uint32_t for each character because it could come from 2 or
+ * passed a uint32_t for each character because it could come from 2 or
  * even 4 byte forms.
  */
 
