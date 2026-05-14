@@ -1,5 +1,11 @@
 # Make sure all tests have WRAP otherwise -lcmocka is not added.
 
+PROGRAMS{noinst}=crypto/bio/test_bio_addr
+SOURCE[crypto/bio/test_bio_addr]=crypto/bio/test_bio_addr.c
+INCLUDE[crypto/bio/test_bio_addr]=../../include ../../crypto/bio
+DEPEND[crypto/bio/test_bio_addr]=../../libcrypto.a
+WRAP[crypto/bio/test_bio_addr]=BIO_sock_init getnameinfo freeaddrinfo
+
 PROGRAMS{noinst}=crypto/bio/test_bss_fd
 SOURCE[crypto/bio/test_bss_fd]=crypto/bio/test_bss_fd.c
 INCLUDE[crypto/bio/test_bss_fd]=../../include ../../crypto/bio
