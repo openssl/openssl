@@ -13,15 +13,6 @@
 /* Test first part of SSL server handshake. */
 
 /* We need to use some deprecated APIs */
-#include "openssl/bio.h"
-#include "openssl/comp.h"
-#include "openssl/crypto.h"
-#include "openssl/evp.h"
-#include "openssl/pem.h"
-#include "openssl/safestack.h"
-#include "openssl/x509.h"
-#include <limits.h>
-#include <stdint.h>
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <time.h>
@@ -33,6 +24,15 @@
 #include <openssl/dh.h>
 #include <openssl/err.h>
 #include "fuzzer.h"
+#include "openssl/bio.h"
+#include "openssl/comp.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/pem.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
+#include <limits.h>
+#include <stdint.h>
 
 static const uint8_t kCertificateDER[] = {
     0x30,

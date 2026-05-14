@@ -8,16 +8,16 @@
  */
 
 /* Necessary for legacy RSA public key export */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
+#include <openssl/opensslconf.h>
+
 #include "apps_ui.h"
 #include "fmt.h"
 #include "openssl/crypto.h"
 #include "openssl/params.h"
 #include "opt.h"
 #include <assert.h>
-#define OPENSSL_SUPPRESS_DEPRECATED
-
-#include <openssl/opensslconf.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

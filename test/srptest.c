@@ -11,8 +11,6 @@
  * SRP is deprecated, so we're going to have to use some deprecated APIs in
  * order to test it.
  */
-#include "openssl/bn.h"
-#include "openssl/crypto.h"
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/opensslconf.h>
@@ -25,6 +23,8 @@
 #include <openssl/srp.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
 
 #define RANDOM_SIZE 32 /* use 256 bits on each side */
 

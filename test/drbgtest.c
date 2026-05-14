@@ -8,13 +8,6 @@
  */
 
 /* We need to use some deprecated APIs */
-#include "openssl/bio.h"
-#include "openssl/core_names.h"
-#include "openssl/params.h"
-#include "openssl/provider.h"
-#include <pthread.h>
-#include <stdlib.h>
-#include <time.h>
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <string.h>
@@ -30,6 +23,13 @@
 #include "../include/crypto/evp.h"
 #include "../providers/implementations/include/prov/drbg.h"
 #include "../crypto/evp/evp_local.h"
+#include "openssl/bio.h"
+#include "openssl/core_names.h"
+#include "openssl/params.h"
+#include "openssl/provider.h"
+#include <pthread.h>
+#include <stdlib.h>
+#include <time.h>
 
 #if defined(_WIN32)
 #include <windows.h>

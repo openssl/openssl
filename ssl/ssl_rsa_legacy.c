@@ -8,17 +8,17 @@
  */
 
 /* We need to use the deprecated RSA low level calls */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
+#include <openssl/err.h>
+#include <openssl/rsa.h>
+#include <openssl/ssl.h>
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/evp.h"
 #include "openssl/pem.h"
 #include "openssl/sslerr.h"
 #include "openssl/x509.h"
-#define OPENSSL_SUPPRESS_DEPRECATED
-
-#include <openssl/err.h>
-#include <openssl/rsa.h>
-#include <openssl/ssl.h>
 
 int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
 {

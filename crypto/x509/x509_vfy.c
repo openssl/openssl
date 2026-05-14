@@ -7,6 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+#include "internal/deprecated.h"
+
+#include <stdio.h>
+#include <time.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdint.h>
+#include <string.h>
+
 #include "crypto/asn1.h"
 #include "internal/common.h"
 #include "internal/nelem.h"
@@ -16,16 +26,6 @@
 #include "openssl/safestack.h"
 #include "openssl/x509_vfy.h"
 #include "openssl/x509err.h"
-#include <stdint.h>
-#include <string.h>
-#define OPENSSL_SUPPRESS_DEPRECATED
-#include "internal/deprecated.h"
-
-#include <stdio.h>
-#include <time.h>
-#include <errno.h>
-#include <limits.h>
-
 #include "crypto/ctype.h"
 #include "internal/cryptlib.h"
 #include <openssl/crypto.h>

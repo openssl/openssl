@@ -11,7 +11,6 @@
  * This file tests deprecated APIs. Therefore we need to suppress deprecation
  * warnings.
  */
-#include "openssl/crypto.h"
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/pem.h>
@@ -19,6 +18,7 @@
 #include <openssl/dh.h>
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
+#include "openssl/crypto.h"
 
 #include "testutil.h"
 

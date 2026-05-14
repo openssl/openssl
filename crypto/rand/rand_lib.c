@@ -8,6 +8,8 @@
  */
 
 /* We need to use some RAND deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include "openssl/crypto.h"
 #include "openssl/cryptoerr.h"
 #include "openssl/evp.h"
@@ -18,8 +20,6 @@
 #include "openssl/randerr.h"
 #include "openssl/safestack.h"
 #include <string.h>
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <openssl/err.h>
 #include <openssl/opensslconf.h>
 #include <openssl/core_names.h>

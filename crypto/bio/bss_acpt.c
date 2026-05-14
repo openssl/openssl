@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include "internal/bio.h"
 #include "internal/sockets.h"
 #include "openssl/bio.h"
@@ -17,8 +19,6 @@
 #include <limits.h>
 #include <string.h>
 #include <sys/socket.h>
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <stdio.h>
 #include <errno.h>
 #include "bio_local.h"
