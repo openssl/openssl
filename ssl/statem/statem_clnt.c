@@ -2358,6 +2358,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL_CONNECTION *s,
     const unsigned char *certstart, *certbytes;
     size_t chainidx;
     unsigned int context = 0;
+    unsigned char sha1_hash[SHA_DIGEST_LENGTH];
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     if (s->ext.server_cert_type == TLSEXT_cert_type_rpk)
@@ -2389,21 +2390,33 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL_CONNECTION *s,
         }
 
         certstart = certbytes;
-        x = X509_new_ex(sctx->libctx, sctx->propq);
+        x = ssl_ctx_find_handshake_cert(sctx, certstart, cert_len, sha1_hash);
         if (x == NULL) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, ERR_R_ASN1_LIB);
-            goto err;
-        }
-        if (d2i_X509(&x, (const unsigned char **)&certbytes,
-                cert_len)
-            == NULL) {
-            SSLfatal(s, SSL_AD_BAD_CERTIFICATE, ERR_R_ASN1_LIB);
-            goto err;
-        }
+            x = X509_new_ex(sctx->libctx, sctx->propq);
+            if (x == NULL) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, ERR_R_ASN1_LIB);
+                goto err;
+            }
+            if (d2i_X509(&x, (const unsigned char **)&certbytes,
+                    cert_len)
+                == NULL) {
+                SSLfatal(s, SSL_AD_BAD_CERTIFICATE, ERR_R_ASN1_LIB);
+                goto err;
+            }
 
-        if (certbytes != (certstart + cert_len)) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_CERT_LENGTH_MISMATCH);
-            goto err;
+            if (certbytes != (certstart + cert_len)) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_CERT_LENGTH_MISMATCH);
+                goto err;
+            }
+
+            /*
+             * Hash the wire DER starting at certstart -- d2i_X509() has
+             * advanced certbytes past the end of this cert into the next
+             * one (or past the end of the list), so passing certbytes
+             * here would hash the wrong bytes and the insert hash would
+             * never match a subsequent lookup hash.
+             */
+            x = ssl_ctx_add_handshake_cert(sctx, x, certstart, cert_len, sha1_hash);
         }
 
         if (SSL_CONNECTION_IS_TLS13(s)) {

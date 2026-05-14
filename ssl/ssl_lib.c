@@ -33,6 +33,7 @@
 #include "internal/to_hex.h"
 #include "internal/ssl_unwrap.h"
 #include "quic/quic_local.h"
+#include "internal/hashfunc.h"
 
 #ifndef OPENSSL_NO_SSLKEYLOG
 #include <sys/stat.h>
@@ -4207,6 +4208,11 @@ static BIO *get_sslkeylog_bio(const char *keylogfile)
 }
 #endif
 
+static int x509_hs_cmp(const X509_HS_CACHE_ENT *const *a, const X509_HS_CACHE_ENT *const *b)
+{
+    return memcmp((*a)->sha1_hash, (*b)->sha1_hash, SHA_DIGEST_LENGTH) == 0 ? 0 : -1;
+}
+
 SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     const SSL_METHOD *meth)
 {
@@ -4294,6 +4300,14 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     if (ret->cert_store == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
         goto err;
+    }
+
+    if (!SSL_CTX_is_server(ret)) {
+        ret->handshake_certs = sk_X509_HS_CACHE_ENT_new(x509_hs_cmp);
+        if (ret->handshake_certs == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+            goto err;
+        }
     }
 #ifndef OPENSSL_NO_CT
     ret->ctlog_store = CTLOG_STORE_new_ex(libctx, propq);
@@ -4554,6 +4568,13 @@ int SSL_CTX_up_ref(SSL_CTX *ctx)
     return ((i > 1) ? 1 : 0);
 }
 
+static void free_hs_cache_ent(X509_HS_CACHE_ENT *entry)
+{
+    X509_free(entry->cert);
+    OPENSSL_free(entry);
+    return;
+}
+
 void SSL_CTX_free(SSL_CTX *a)
 {
     int i;
@@ -4657,6 +4678,7 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->client_cert_type);
     OPENSSL_free(a->server_cert_type);
 
+    sk_X509_HS_CACHE_ENT_pop_free(a->handshake_certs, free_hs_cache_ent);
     CRYPTO_THREAD_lock_free(a->lock);
     CRYPTO_FREE_REF(&a->references);
 #ifdef TSAN_REQUIRES_LOCKING
@@ -4677,6 +4699,91 @@ void SSL_CTX_free(SSL_CTX *a)
 #endif
 
     OPENSSL_free(a);
+}
+
+X509 *ssl_ctx_find_handshake_cert(SSL_CTX *sctx, const unsigned char *certbytes,
+    unsigned long cert_len, unsigned char *sha1_hash)
+{
+    X509_HS_CACHE_ENT lookup;
+    int idx;
+    X509_HS_CACHE_ENT *find = NULL;
+    X509 *ret = NULL;
+
+    if (sctx->handshake_certs == NULL)
+        return NULL;
+
+    lookup.cert = NULL;
+    if (!EVP_Q_digest(sctx->libctx, "SHA1", NULL,
+            certbytes, cert_len, lookup.sha1_hash, NULL))
+        return NULL;
+
+    memcpy(sha1_hash, lookup.sha1_hash, SHA_DIGEST_LENGTH);
+    if (!CRYPTO_THREAD_read_lock(sctx->lock))
+        return NULL;
+    idx = sk_X509_HS_CACHE_ENT_find(sctx->handshake_certs, &lookup);
+    if (idx != -1) {
+        find = sk_X509_HS_CACHE_ENT_value(sctx->handshake_certs, idx);
+        if (find != NULL) {
+            X509_up_ref(find->cert);
+            ret = find->cert;
+        }
+    }
+    CRYPTO_THREAD_unlock(sctx->lock);
+    return ret;
+}
+
+X509 *ssl_ctx_add_handshake_cert(SSL_CTX *sctx, X509 *cert, const unsigned char *certbytes,
+    unsigned long cert_len, unsigned char *sha1_hash)
+{
+    X509_HS_CACHE_ENT *tmp, *del;
+    X509 *ret = cert;
+
+    if (sctx->handshake_certs == NULL)
+        return cert;
+
+    tmp = OPENSSL_malloc(sizeof(X509_HS_CACHE_ENT));
+    if (tmp == NULL)
+        return cert;
+    /*
+     * Force extension caching on the X509 now, while we still "own" it
+     * exclusively. From this point on the cached cert is treated as
+     * immutable by all readers (they only X509_up_ref it).
+     */
+    if (X509_check_purpose(cert, -1, 0) <= 0) {
+        OPENSSL_free(tmp);
+        return cert;
+    }
+
+    /*
+     * We had to compute the hash of the der string in the find routine, so
+     * we can reuse it here
+     */
+    memcpy(tmp->sha1_hash, sha1_hash, SHA_DIGEST_LENGTH);
+    tmp->cert = cert;
+    X509_up_ref(cert);
+
+    if (!CRYPTO_THREAD_write_lock(sctx->lock)) {
+        free_hs_cache_ent(tmp);
+        return cert;
+    }
+
+    if (sk_X509_HS_CACHE_ENT_num(sctx->handshake_certs) > 64) {
+        /*
+         * Evict the oldest entry (index 0). Deleting index 64 with
+         * num > 64 would remove the most-recently-pushed entry, which
+         * is the opposite of what we want.
+         */
+        del = sk_X509_HS_CACHE_ENT_delete(sctx->handshake_certs, 0);
+        if (del != NULL)
+            free_hs_cache_ent(del);
+    }
+    if (!sk_X509_HS_CACHE_ENT_push(sctx->handshake_certs, tmp)) {
+        free_hs_cache_ent(tmp);
+        ret = cert;
+    }
+
+    CRYPTO_THREAD_unlock(sctx->lock);
+    return ret;
 }
 
 void SSL_CTX_set_default_passwd_cb(SSL_CTX *ctx, pem_password_cb *cb)

@@ -815,6 +815,13 @@ typedef struct {
 #define OPENSSL_HAVE_TLS1PRF
 #endif
 
+typedef struct x509_hs_cache_entry_st {
+    unsigned char sha1_hash[SHA_DIGEST_LENGTH];
+    X509 *cert;
+} X509_HS_CACHE_ENT;
+
+DEFINE_STACK_OF(X509_HS_CACHE_ENT)
+
 struct ssl_ctx_st {
     OSSL_LIB_CTX *libctx;
 
@@ -826,6 +833,7 @@ struct ssl_ctx_st {
     STACK_OF(SSL_CIPHER) *tls13_ciphersuites;
     struct x509_store_st /* X509_STORE */ *cert_store;
     LHASH_OF(SSL_SESSION) *sessions;
+    STACK_OF(X509_HS_CACHE_ENT) *handshake_certs;
     EVP_MAC *hmac;
     EVP_MD *sha256;
     EVP_CIPHER *tktenc;
@@ -1229,6 +1237,11 @@ struct ssl_ctx_st {
     char *qlog_title; /* Session title for qlog */
 #endif
 };
+
+X509 *ssl_ctx_find_handshake_cert(SSL_CTX *sctx, const unsigned char *certbytes,
+    unsigned long cert_len, unsigned char *sha1_hash);
+X509 *ssl_ctx_add_handshake_cert(SSL_CTX *sctx, X509 *cert, const unsigned char *certbytes,
+    unsigned long cert_len, unsigned char *sha1_hash);
 
 typedef struct ossl_quic_tls_callbacks_st {
     int (*crypto_send_cb)(SSL *s, const unsigned char *buf, size_t buf_len,
