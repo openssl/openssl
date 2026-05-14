@@ -12,6 +12,7 @@
 #include "internal/cryptlib.h"
 #include "internal/unicode.h"
 #include <openssl/asn1.h>
+#include <openssl/byteorder.h>
 
 #include <crypto/asn1.h>
 
@@ -235,14 +236,12 @@ static int traverse_string(const unsigned char *p, int len, int inform,
             value = *p++;
             len--;
         } else if (inform == MBSTRING_BMP) {
-            value = *p++ << 8;
-            value |= *p++;
+            uint16_t tmp;
+            p = OPENSSL_load_u16_be(&tmp, p);
+            value = tmp;
             len -= 2;
         } else if (inform == MBSTRING_UNIV) {
-            value = ((uint32_t)*p++) << 24;
-            value |= ((uint32_t)*p++) << 16;
-            value |= *p++ << 8;
-            value |= *p++;
+            p = OPENSSL_load_u32_be(&value, p);
             len -= 4;
         } else {
             ret = ossl_utf8_getc_internal(p, len, &value);

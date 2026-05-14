@@ -13,6 +13,7 @@
 #include "internal/sizes.h"
 #include "internal/unicode.h"
 #include "crypto/asn1.h"
+#include <openssl/byteorder.h>
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
@@ -132,13 +133,13 @@ static int do_esc_char(uint32_t c, unsigned short flags, char *do_quotes,
  * appropriate.
  */
 
-static int do_buf(unsigned char *buf, int buflen,
+static int do_buf(const unsigned char *buf, int buflen,
     int type, unsigned short flags, char *quotes, char_io *io_ch,
     void *arg)
 {
     int i, outlen, len, charwidth;
     unsigned short orflags;
-    unsigned char *p, *q;
+    const unsigned char *p, *q;
     uint32_t c;
 
     p = buf;
@@ -164,6 +165,8 @@ static int do_buf(unsigned char *buf, int buflen,
     }
 
     while (p != q) {
+        uint16_t tmp;
+
         if (p == buf && flags & ASN1_STRFLGS_ESC_2253)
             orflags = CHARTYPE_FIRST_ESC_2253;
         else
@@ -171,15 +174,12 @@ static int do_buf(unsigned char *buf, int buflen,
 
         switch (charwidth) {
         case 4:
-            c = ((uint32_t)*p++) << 24;
-            c |= ((uint32_t)*p++) << 16;
-            c |= ((uint32_t)*p++) << 8;
-            c |= *p++;
+            p = OPENSSL_load_u32_be(&c, p);
             break;
 
         case 2:
-            c = ((uint32_t)*p++) << 8;
-            c |= *p++;
+            p = OPENSSL_load_u16_be(&tmp, p);
+            c = tmp;
             break;
 
         case 1:
