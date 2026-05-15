@@ -66,12 +66,14 @@ typedef enum OPTION_choice {
     OPT_TLS1_1,
     OPT_TLS1_2,
     OPT_TLS1_3,
+    OPT_TESTMODE,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS s_time_options[] = {
     OPT_SECTION("General"),
     { "help", OPT_HELP, '-', "Display this summary" },
+    { "testmode", OPT_TESTMODE, '-', "Run the s_time command in test mode" },
 
     OPT_SECTION("Connection"),
     { "connect", OPT_CONNECT, 's',
@@ -143,7 +145,7 @@ int s_time_main(int argc, char **argv)
     long bytes_read = 0, finishtime = 0;
     OPTION_CHOICE o;
     int min_version = 0, max_version = 0, ver, buf_len, fd;
-    int want_verify = 0;
+    int want_verify = 0, testmode = 0;
     size_t buf_size;
 
     meth = TLS_client_method();
@@ -239,6 +241,9 @@ int s_time_main(int argc, char **argv)
             min_version = TLS1_3_VERSION;
             max_version = TLS1_3_VERSION;
             break;
+        case OPT_TESTMODE:
+            testmode = 1;
+            break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
                 goto end;
@@ -287,7 +292,8 @@ int s_time_main(int argc, char **argv)
 
     if (!(perform & 1))
         goto next;
-    printf("Collecting connection statistics for %d seconds\n", maxtime);
+    if (!testmode)
+        printf("Collecting connection statistics for %d seconds\n", maxtime);
 
     /* Loop and time how long it takes to make connections */
 
@@ -295,7 +301,7 @@ int s_time_main(int argc, char **argv)
     finishtime = (long)time(NULL) + maxtime;
     tm_Time_F(START);
     for (;;) {
-        if (finishtime < (long)time(NULL))
+        if (testmode ? nConn >= 1 : finishtime < (long)time(NULL))
             break;
 
         if ((scon = doConnection(NULL, host, ctx)) == NULL)
@@ -345,7 +351,8 @@ next:
         ret = 0;
         goto end;
     }
-    printf("\n\nNow timing with session id reuse.\n");
+    if (!testmode)
+        printf("\n\nNow timing with session id reuse.\n");
 
     /* Get an SSL object so we can reuse the session id */
     if ((scon = doConnection(NULL, host, ctx)) == NULL) {
@@ -369,12 +376,13 @@ next:
 
     finishtime = (long)time(NULL) + maxtime;
 
-    printf("starting\n");
+    if (!testmode)
+        printf("starting\n");
     bytes_read = 0;
     tm_Time_F(START);
 
     for (;;) {
-        if (finishtime < (long)time(NULL))
+        if (testmode ? nConn >= 2 : finishtime < (long)time(NULL))
             break;
 
         if ((doConnection(scon, host, ctx)) == NULL)
