@@ -429,7 +429,8 @@ void OPENSSL_cpuid_setup(void)
             || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_N3)
             || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_V3_AE)
             || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_V3)
-            || MIDR_IMPLEMENTER(OPENSSL_arm_midr) == ARM_CPU_IMP_AMPERE))
+            || MIDR_IMPLEMENTER(OPENSSL_arm_midr) == ARM_CPU_IMP_AMPERE
+            || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_NVIDIA, NVIDIA_CPU_PART_OLYMPUS)))
         OPENSSL_armcap_P |= ARMV8_UNROLL8_EOR3;
 
     if ((OPENSSL_armcap_P & ARMV8_SHA3)
