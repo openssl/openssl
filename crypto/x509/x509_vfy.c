@@ -1200,6 +1200,16 @@ static int check_revocation(X509_STORE_CTX *ctx)
 
             /* the issuer certificate is the next in the chain */
             ctx->current_issuer = sk_X509_value(ctx->chain, i + 1);
+            if (ctx->current_issuer == NULL) {
+                /*
+                 * No issuer exists at i+1 — this is the partial-chain
+                 * trust anchor. OCSP requires an issuer to build the
+                 * CertID, so skip OCSP checking for this certificate.
+                 */
+                if ((ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) != 0)
+                    continue;
+                return verify_cb_ocsp(ctx, X509_V_ERR_OCSP_VERIFY_FAILED);
+            }
 
             ok = check_cert_ocsp_resp(ctx);
 
