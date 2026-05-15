@@ -2613,7 +2613,7 @@ static int test_ECX_PKCS8_v2_uses_pubkey(int i)
     if (testctx != NULL)
         return 1;
 
-    p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, kat->good_len);
+    p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, (long)kat->good_len);
     if (!TEST_ptr(p8inf))
         goto done;
 
@@ -2647,7 +2647,7 @@ static int test_ECX_PKCS8_v2_bad_pubkey_length(int i)
     if (testctx != NULL)
         return 1;
 
-    p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, kat->bad_len);
+    p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, (long)kat->bad_len);
     if (!TEST_ptr(p8inf))
         goto done;
 
