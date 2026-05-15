@@ -30,9 +30,10 @@
 #error "OpenSSL doesn't support large numbers on this platform"
 #endif
 
-#define OSSL_FN_HIGH_BIT_MASK (OSSL_FN_ULONG_C(1) << (OSSL_FN_BYTES * 8 - 1))
-#define OSSL_FN_LOW_HALF_MASK ((OSSL_FN_ULONG_C(1) << (OSSL_FN_BYTES / 2 * 8)) - 1)
-#define OSSL_FN_HIGH_HALF_MASK (OSSL_FN_LOW_HALF_MASK << (OSSL_FN_BYTES / 2 * 8))
+#define OSSL_FN_BITS (OSSL_FN_BYTES * 8)
+#define OSSL_FN_HIGH_BIT_MASK (OSSL_FN_ULONG_C(1) << (OSSL_FN_BITS - 1))
+#define OSSL_FN_LOW_HALF_MASK ((OSSL_FN_ULONG_C(1) << (OSSL_FN_BITS / 2)) - 1)
+#define OSSL_FN_HIGH_HALF_MASK (OSSL_FN_LOW_HALF_MASK << (OSSL_FN_BITS / 2))
 
 struct ossl_fn_st {
     /* Flag: alloced with OSSL_FN_new() or  OSSL_FN_secure_new() */
