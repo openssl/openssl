@@ -150,6 +150,16 @@ OpenSSL Releases
 
    *Norbert Pócs*
 
+ * Add client-side validation to reject session ticket lifetime hints exceeding
+   604800 seconds (7 days) in TLS 1.3 connections, as required by RFC 8446
+   Section 4.6.1 ("Clients MUST NOT cache tickets for longer than 7 days.").
+
+   When a client has to process a new session ticket `tls_process_new_session_ticket` with a `ticket_lifetime_hint`
+   value larger than 7 days (604800 seconds), the client will now reject it
+   with a fatal alert and the error `SSL_R_INVALID_TICKET_LIFETIME`.
+
+   *Abel Thomas*
+
 ### Changes between 3.6 and 4.0.0 [14 Apr 2026]
 
  * Added `-expected-rpks` option to the `openssl s_client`
