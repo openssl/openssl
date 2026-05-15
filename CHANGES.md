@@ -83,6 +83,14 @@ OpenSSL Releases
 
    *Bob Beck*
 
+ *  `ASN1_STRING_set()` and `ASN1_STRING_length()` have been
+    deprecated. The replacement functions `ASN1_STRING_set_data()` or
+    `ASN1_STRING_set_string()`, and `ASN1_STRING_length_ex()` should be
+    used in their place. This prepares the ASN1_STRING type to support
+    modern size_t length values in the future.
+
+    *Bob Beck*
+
  * `EVP_CIPHER_CTX_get_num()` and `EVP_CIPHER_CTX_set_num()' have been deprecated.
 
    Refer to ossl-migration-guide(7) for more info.
