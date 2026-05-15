@@ -1461,6 +1461,7 @@ end:
     return testresult;
 }
 
+#ifndef OSSL_NO_USABLE_TLS1_3
 /*
  * Test kTLS with SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER: retry SSL_write() after
  * SSL_ERROR_WANT_WRITE using a different buffer pointer (same content) and
@@ -1596,6 +1597,7 @@ end:
         close(sfd);
     return testresult;
 }
+#endif /* !defined(OSSL_NO_USABLE_TLS1_3) */
 
 static struct ktls_test_cipher {
     int tls_version;
