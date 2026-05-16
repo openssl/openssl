@@ -3554,7 +3554,7 @@ static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op,
         }
     }
 
-    /* TLS1.2 GOST sig algs could not be negotiated for the use in TLS1.3 */
+    /* TLS1.2 GOST sig algs cannot be negotiated for use in TLS1.3 */
     if ((lu->sig == NID_id_GostR3410_2012_256 || lu->sig == NID_id_GostR3410_2012_512)
         && (((s->server && SSL_CONNECTION_IS_TLS13(s)))
             || (!s->server

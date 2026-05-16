@@ -1356,7 +1356,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         *set++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_STREAM_MAC,
             &stream_mac);
 
-    if (tlstree)
+    if (tlstree != 0)
         *set++ = OSSL_PARAM_construct_uint32(OSSL_LIBSSL_RECORD_LAYER_PARAM_TLSTREE,
             &tlstree);
 
