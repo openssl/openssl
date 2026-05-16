@@ -472,13 +472,10 @@ within, the DER is a serialized encoding, suitable for sending over the
 network, writing to a file, and so on.
 
 B<d2i_I<TYPE>>() attempts to decode I<len> bytes at I<*ppin>.
-A NULL pointer is returned on error.
-
 When there is no error, a pointer to a B<I<TYPE>> object is returned and I<*ppin> is
 incremented to the byte following the parsed data.
-The caller retains ownership of the returned object and needs to free it when
-it is no longer needed, e.g. via X509_free() for X509 objects or
-DSA_SIG_free() for DSA_SIG objects.
+The caller owns the returned object and needs to free it when it is no longer needed, 
+e.g., via X509_free() for B<X509> objects.
 
 If either I<a> or I<*a> is NULL, then fresh storage is allocated for the
 returned object, and if I<a> is not NULL then I<*a> is set equal to the
