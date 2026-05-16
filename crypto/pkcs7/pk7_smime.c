@@ -218,6 +218,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
     int i, j = 0, k, ret = 0;
     BIO *p7bio = NULL;
     BIO *tmpin = NULL, *tmpout = NULL;
+    BIO *next = NULL;
     const PKCS7_CTX *p7_ctx;
 
     if (p7 == NULL) {
@@ -366,11 +367,11 @@ err:
         BIO_free(tmpout);
     X509_STORE_CTX_free(cert_ctx);
     OPENSSL_free(buf);
-    if (tmpin == indata) {
-        if (indata)
-            BIO_pop(p7bio);
+    while (p7bio != NULL && p7bio != indata) {
+        next = BIO_pop(p7bio);
+        BIO_free(p7bio);
+        p7bio = next;
     }
-    BIO_free_all(p7bio);
     sk_X509_free(signers);
     return ret;
 }
