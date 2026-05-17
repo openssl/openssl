@@ -56,7 +56,7 @@ __END__
 // up in Perl, and it is presented as pure assembly.
 
 
-#include "crypto/arm_arch.h"
+#include "arch/arm_arch.h"
 
 .text
 

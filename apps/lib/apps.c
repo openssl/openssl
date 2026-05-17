@@ -86,6 +86,22 @@ int app_init(long mesgwin)
 }
 #endif
 
+static int maybe_printf(BIO *bio, const char *format, ...)
+{
+    va_list args;
+    int ret = 0;
+
+    if (bio != NULL) {
+        va_start(args, format);
+
+        ret = BIO_vprintf(bio, format, args);
+
+        va_end(args);
+    }
+
+    return ret;
+}
+
 int ctx_set_verify_locations(SSL_CTX *ctx,
     const char *CAfile, int noCAfile,
     const char *CApath, int noCApath,
@@ -2447,42 +2463,132 @@ unsigned char *next_protos_parse(size_t *outlen, const char *in)
     return out;
 }
 
-int check_cert_attributes(BIO *bio, X509 *x, const char *checkhost,
-    const char *checkemail, const char *checkip,
-    int print)
+int check_cert_might_be_valid(BIO *bio, BIO *b_err, X509 *x, const char *checkhost,
+    const char *checkemail, const char *checkip)
 {
-    int valid_host = 0;
-    int valid_mail = 0;
-    int valid_ip = 0;
-    int ret = 1;
+    int ret = 0;
+    int error;
+    X509_STORE_CTX *ctx = NULL;
+    X509_STORE *store = NULL;
+    X509_VERIFY_PARAM *vpm = NULL;
 
-    if (x == NULL)
-        return 0;
-
-    if (checkhost != NULL) {
-        valid_host = X509_check_host(x, checkhost, 0, 0, NULL);
-        if (print)
-            BIO_printf(bio, "Hostname %s does%s match certificate\n",
-                checkhost, valid_host == 1 ? "" : " NOT");
-        ret = ret && valid_host > 0;
+    if (x == NULL) {
+        maybe_printf(b_err, "Internal error, NULL certificate\n");
+        goto err;
     }
 
-    if (checkemail != NULL) {
-        valid_mail = X509_check_email(x, checkemail, 0, 0);
-        if (print)
-            BIO_printf(bio, "Email %s does%s match certificate\n",
-                checkemail, valid_mail ? "" : " NOT");
-        ret = ret && valid_mail > 0;
+    if ((store = X509_STORE_new()) == NULL) {
+        maybe_printf(b_err, "Malloc failed or internal error\n");
+        goto err;
     }
 
-    if (checkip != NULL) {
-        valid_ip = X509_check_ip_asc(x, checkip, 0);
-        if (print)
-            BIO_printf(bio, "IP %s does%s match certificate\n",
-                checkip, valid_ip ? "" : " NOT");
-        ret = ret && valid_ip > 0;
+    if (!X509_STORE_add_cert(store, x)) {
+        maybe_printf(b_err, "Malloc failed or internal error\n");
+        goto err;
     }
 
+    if ((vpm = X509_STORE_get0_param(store)) == NULL) {
+        maybe_printf(b_err, "Malloc failed or internal error\n");
+        goto err;
+    }
+
+    if ((ctx = X509_STORE_CTX_new()) == NULL) {
+        maybe_printf(b_err, "Malloc failed or internal error\n");
+        goto err;
+    }
+
+    /*
+     * As this is "might verify":
+     *
+     * We don't care about the verification time.
+     * We are trusting ourselves.
+     * We are very liberal in what we allow.
+     *
+     * Needless to say these flags should normally not be used in a
+     * for real verification.
+     */
+    X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_NO_CHECK_TIME);
+    X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_PARTIAL_CHAIN);
+    X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_IGNORE_CRITICAL);
+    X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_ALLOW_PROXY_CERTS);
+    X509_VERIFY_PARAM_set_trust(vpm, X509_TRUST_OK_ANY_EKU);
+
+    if (!X509_VERIFY_PARAM_set1_ip_asc(vpm, checkip)) {
+        maybe_printf(b_err, "Invalid IP address: %s\n", checkip);
+        goto err;
+    }
+
+    if (!X509_VERIFY_PARAM_set1_host(vpm, checkhost, 0)) {
+        maybe_printf(b_err, "Invalid host name: %s\n", checkhost);
+        goto err;
+    }
+
+    if (!X509_VERIFY_PARAM_set1_email(vpm, checkemail, 0)) {
+        maybe_printf(b_err, "Invalid email address: %s\n", checkemail);
+        goto err;
+    }
+
+    if (!X509_VERIFY_PARAM_set1_ip_asc(vpm, checkip)) {
+        maybe_printf(b_err, "Invalid IP address: %s\n", checkip);
+        goto err;
+    }
+
+    if (!X509_STORE_CTX_init(ctx, store, x, NULL)) {
+        maybe_printf(b_err, "Malloc failed or internal error\n");
+        goto err;
+    }
+
+    /* We might be verifying for ANY purpose ... */
+    if (!X509_STORE_CTX_set_purpose(ctx, X509_PURPOSE_ANY)) {
+        maybe_printf(b_err, "Malloc failed or internal error\n");
+        goto err;
+    }
+
+    ret = X509_verify_cert(ctx);
+    error = X509_STORE_CTX_get_error(ctx);
+    if (!ret) {
+
+        maybe_printf(bio, "Certificate may not verify: error %s\n",
+            X509_verify_cert_error_string(error));
+
+        if (checkhost != NULL && error == X509_V_ERR_HOSTNAME_MISMATCH)
+            maybe_printf(bio, "Hostname %s does NOT match certificate\n",
+                checkhost);
+        else if (checkemail != NULL && error == X509_V_ERR_EMAIL_MISMATCH)
+            maybe_printf(bio, "Email %s does NOT match certificate\n",
+                checkemail);
+        else if (checkip != NULL && error == X509_V_ERR_IP_ADDRESS_MISMATCH)
+            maybe_printf(bio, "IP %s does NOT match certificate\n",
+                checkip);
+        else {
+            /* Originally, we only cared about the above failures */
+            /*
+             * Suppress trust rejection errors, we don't care, because
+             * we don't really know what this might be used for if
+             * this was for real.
+             */
+            if (error == X509_V_ERR_CERT_REJECTED) {
+                maybe_printf(bio, "Ignoring certificate rejection error\n");
+                ret = 1;
+            }
+        }
+    } else {
+        if (checkhost != NULL)
+            maybe_printf(bio, "Hostname %s does match certificate\n",
+                checkhost);
+        if (checkemail != NULL)
+            maybe_printf(bio, "Email %s does match certificate\n",
+                checkemail);
+        if (checkip != NULL)
+            maybe_printf(bio, "IP %s does match certificate\n",
+                checkip);
+    }
+    X509_STORE_CTX_cleanup(ctx);
+
+err:
+    ERR_print_errors(b_err);
+    X509_STORE_free(store);
+    X509_STORE_CTX_free(ctx);
     return ret;
 }
 

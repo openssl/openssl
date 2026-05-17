@@ -8,7 +8,7 @@
  */
 
 #include "crypto/bn.h"
-#include "crypto/s390x_arch.h"
+#include "arch/s390x_arch.h"
 
 #ifdef S390X_MOD_EXP
 

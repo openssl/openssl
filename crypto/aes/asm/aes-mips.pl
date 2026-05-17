@@ -107,7 +107,7 @@ my ($MSB,$LSB)=(0,3);	# automatically converted to little-endian
 $output and open STDOUT,">$output";
 
 $code.=<<___;
-#include "mips_arch.h"
+#include "arch/mips_arch.h"
 
 .text
 #if !defined(__mips_eabi) && (!defined(__vxworks) || defined(__pic__))

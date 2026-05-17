@@ -21,19 +21,19 @@
 #endif
 
 #if defined(__arm__) || defined(__arm) || defined(__aarch64__)
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 #define CPU_INFO_STR_LEN 128
 #elif defined(__powerpc__) || defined(__POWERPC__) || defined(_ARCH_PPC)
-#include "crypto/ppc_arch.h"
+#include "arch/ppc_arch.h"
 #define CPU_INFO_STR_LEN 128
 #elif defined(__sparcv9) || defined(__sparcv9__)
-#include "crypto/sparc_arch.h"
+#include "arch/sparc_arch.h"
 #define CPU_INFO_STR_LEN 128
 #elif defined(__s390__) || defined(__s390x__)
-#include "s390x_arch.h"
+#include "arch/s390x_arch.h"
 #define CPU_INFO_STR_LEN 2048
 #elif defined(__riscv)
-#include "crypto/riscv_arch.h"
+#include "arch/riscv_arch.h"
 #define CPU_INFO_STR_LEN 2048
 #else
 #define CPU_INFO_STR_LEN 256

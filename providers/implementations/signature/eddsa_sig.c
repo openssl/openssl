@@ -30,7 +30,7 @@
 #include "providers/implementations/signature/eddsa_sig.inc"
 
 #ifdef S390X_EC_ASM
-#include "s390x_arch.h"
+#include "arch/s390x_arch.h"
 
 #define S390X_CAN_SIGN(edtype)                                                    \
     ((OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_##edtype))   \

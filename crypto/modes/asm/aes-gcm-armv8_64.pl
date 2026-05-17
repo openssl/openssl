@@ -225,7 +225,7 @@ my $rk4v="v22";
 my $rk4d="d22";
 
 $code=<<___;
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 
 #if __ARM_MAX_ARCH__>=8
 ___

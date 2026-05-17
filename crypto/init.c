@@ -34,7 +34,7 @@
 #include "sslerr.h"
 
 #ifdef S390X_MOD_EXP
-#include "s390x_arch.h"
+#include "arch/s390x_arch.h"
 #endif
 
 static int stopped = 0;

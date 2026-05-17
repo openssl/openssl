@@ -117,7 +117,7 @@ QUIC_PORT *ossl_quic_port_new(const QUIC_PORT_ARGS *args)
     port->is_multi_conn = args->is_multi_conn;
     port->validate_addr = args->do_addr_validation;
     port->get_conn_user_ssl = args->get_conn_user_ssl;
-    port->user_ssl_arg = args->user_ssl_arg;
+    port->ql = args->ql;
 
     if (!port_init(port)) {
         OPENSSL_free(port);
@@ -492,7 +492,41 @@ SSL_CTX *ossl_quic_port_get_channel_ctx(QUIC_PORT *port)
  * ============================
  */
 
-static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
+/**
+ * @brief Create the inner TLS handshake layer for a QUIC channel.
+ *
+ * After a successful return:
+ *   - @c *user_sslp holds the user_ssl. The caller is expected to also
+ *     stash the returned @c tls in @c ch->tls so the channel can find its
+ *     inner TLS.
+ *   - @c qc->tls and @c qc->ch are both set, so a single
+ *     @c SSL_free(user_ssl) cascades through @c ossl_quic_free() ->
+ *     @c qc_cleanup() to free the inner TLS and the channel together.
+ *
+ * Failure semantics (returns @c NULL)
+ * -----------------------------------
+ *   - If the callback never returned a user_ssl (callback missing or it
+ *     returned @c NULL), nothing was allocated; @c *user_sslp is left
+ *     untouched and stays whatever the caller initialised it to.
+ *   - Otherwise, this function frees what it allocated and resets
+ *     @c *user_sslp to @c NULL before returning. The caller retains ownership
+ *     of @c ch on failure.
+ *
+ * @param port       Port supplying the channel @c SSL_CTX and the
+ *                   @c get_conn_user_ssl callback.
+ * @param ch         Channel that the new handshake layer is being attached
+ *                   to. Borrowed; on success the channel is shared with
+ *                   user_ssl via @c qc->ch.
+ * @param user_sslp  In/out parameter. On success, set to the user_ssl
+ *                   so the caller can later free the whole graph with
+ *                   @c SSL_free(*user_sslp). On failure, set to @c NULL
+ *                   if the function actually obtained and freed a
+ *                   user_ssl; otherwise left untouched.
+ *
+ * @return The inner TLS @c SSL_CONNECTION (also stored as @c qc->tls)
+ *         on success, or @c NULL on failure.
+ */
+static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch, SSL **user_sslp)
 {
     SSL *tls = NULL;
     SSL_CONNECTION *tls_conn = NULL;
@@ -506,34 +540,30 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
      */
     if (!ossl_assert(port->get_conn_user_ssl != NULL))
         return NULL;
-    user_ssl = port->get_conn_user_ssl(ch, port->user_ssl_arg);
+    user_ssl = port->get_conn_user_ssl(ch, port->ql);
     if (user_ssl == NULL)
         return NULL;
     qc = (QUIC_CONNECTION *)user_ssl;
-    ql = (QUIC_LISTENER *)port->user_ssl_arg;
+    ql = port->ql;
 
     /*
      * We expect the user_ssl to be newly created so it must not have an
      * existing qc->tls
      */
-    if (!ossl_assert(qc->tls == NULL)) {
-        SSL_free(user_ssl);
-        return NULL;
-    }
+    if (!ossl_assert(qc->tls == NULL))
+        goto err;
 
     tls = ossl_ssl_connection_new_int(port->channel_ctx, user_ssl, TLS_method());
-    qc->tls = tls;
-    if (tls == NULL || (tls_conn = SSL_CONNECTION_FROM_SSL(tls)) == NULL) {
-        SSL_free(user_ssl);
-        return NULL;
-    }
+    if (tls == NULL || (tls_conn = SSL_CONNECTION_FROM_SSL(tls)) == NULL)
+        goto err;
 
     if (ql != NULL && ql->obj.ssl.ctx->new_pending_conn_cb != NULL)
         if (!ql->obj.ssl.ctx->new_pending_conn_cb(ql->obj.ssl.ctx, user_ssl,
-                ql->obj.ssl.ctx->new_pending_conn_arg)) {
-            SSL_free(user_ssl);
-            return NULL;
-        }
+                ql->obj.ssl.ctx->new_pending_conn_arg))
+            goto err;
+    qc->tls = tls;
+    qc->ch = ch;
+    *user_sslp = user_ssl;
 
     /* Override the user_ssl of the inner connection. */
     tls_conn->s3.flags |= TLS1_FLAGS_QUIC | TLS1_FLAGS_QUIC_INTERNAL;
@@ -541,7 +571,15 @@ static SSL *port_new_handshake_layer(QUIC_PORT *port, QUIC_CHANNEL *ch)
     /* Restrict options derived from the SSL_CTX. */
     tls_conn->options &= OSSL_QUIC_PERMITTED_OPTIONS_CONN;
     tls_conn->pha_enabled = 0;
-    return tls;
+
+    return qc->tls;
+
+err:
+    SSL_free(tls);
+    SSL_free(user_ssl);
+    *user_sslp = NULL;
+
+    return NULL;
 }
 
 static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
@@ -549,6 +587,8 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
 {
     QUIC_CHANNEL_ARGS args = { 0 };
     QUIC_CHANNEL *ch;
+    SSL *user_ssl = NULL;
+    int ch_cleaned = 0;
 
     args.port = port;
     args.is_server = is_server;
@@ -592,11 +632,10 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
             /*
              * We're using the normal SSL_accept_connection_path
              */
-            ch->tls = port_new_handshake_layer(port, ch);
-            if (ch->tls == NULL) {
-                ossl_quic_channel_free(ch);
-                return NULL;
-            }
+            tls = port_new_handshake_layer(port, ch, &user_ssl);
+            if (tls == NULL)
+                goto err;
+            ch->tls = tls;
         } else {
             /*
              * We're deferring user ssl creation until SSL_listen_ex is called
@@ -611,10 +650,8 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
     ch->use_qlog = 1;
     if (ch->tls != NULL && ch->tls->ctx->qlog_title != NULL) {
         OPENSSL_free(ch->qlog_title);
-        if ((ch->qlog_title = OPENSSL_strdup(ch->tls->ctx->qlog_title)) == NULL) {
-            ossl_quic_channel_free(ch);
-            return NULL;
-        }
+        if ((ch->qlog_title = OPENSSL_strdup(ch->tls->ctx->qlog_title)) == NULL)
+            goto err;
     }
 #endif
 
@@ -622,12 +659,25 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
      * And finally init the channel struct
      */
     if (!ossl_quic_channel_init(ch)) {
-        OPENSSL_free(ch);
-        return NULL;
+        ch_cleaned = 1;
+        goto err;
     }
 
     ossl_qtx_set_bio(ch->qtx, port->net_wbio);
     return ch;
+
+err:
+    if (user_ssl != NULL)
+        ((QUIC_CONNECTION *)user_ssl)->ch = NULL;
+
+    if (ch_cleaned)
+        OPENSSL_free(ch);
+    else
+        ossl_quic_channel_free(ch);
+
+    SSL_free(user_ssl);
+
+    return NULL;
 }
 
 QUIC_CHANNEL *ossl_quic_port_create_outgoing(QUIC_PORT *port, SSL *tls)

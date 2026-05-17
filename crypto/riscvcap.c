@@ -15,7 +15,7 @@
 #include "internal/cryptlib.h"
 
 #define OPENSSL_RISCVCAP_IMPL
-#include "crypto/riscv_arch.h"
+#include "arch/riscv_arch.h"
 
 #ifdef OSSL_RISCV_HWPROBE
 #include <unistd.h>

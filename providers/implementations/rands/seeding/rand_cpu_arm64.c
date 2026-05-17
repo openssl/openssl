@@ -13,7 +13,7 @@
 #include "prov/seeding.h"
 
 #ifdef OPENSSL_RAND_SEED_RDCPU
-#include "crypto/arm_arch.h"
+#include "arch/arm_arch.h"
 
 size_t OPENSSL_rndrrs_bytes(unsigned char *buf, size_t len);
 

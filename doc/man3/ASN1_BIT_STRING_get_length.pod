@@ -27,11 +27,6 @@ ASN1_BIT_STRING_get_length - ASN1_BIT_STRING accessors
   int ASN1_BIT_STRING_check(const ASN1_BIT_STRING *a,
     const unsigned char *flags, int flags_len);
 
-  int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
-    BIT_STRING_BITNAME *tbl, int indent);
-  int ASN1_BIT_STRING_num_asc(const char *name, BIT_STRING_BITNAME *tbl);
-  int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name,
-    int value, BIT_STRING_BITNAME *tbl);
   int ASN1_BIT_STRING_get_length(const ASN1_BIT_STRING *bitstr,
     size_t *length, int *unused_bits);
   int ASN1_BIT_STRING_set1(ASN1_BIT_STRING *bitstr, const uint8_t *data,
@@ -42,6 +37,11 @@ hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
 see L<openssl_user_macros(7)>:
 
   int ASN1_BIT_STRING_set(ASN1_BIT_STRING *a, unsigned char *d, int length);
+  int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
+    BIT_STRING_BITNAME *tbl, int indent);
+  int ASN1_BIT_STRING_num_asc(const char *name, BIT_STRING_BITNAME *tbl);
+  int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name,
+    int value, BIT_STRING_BITNAME *tbl);
 
 =head1 DESCRIPTION
 
@@ -62,17 +62,6 @@ ASN1_BIT_STRING_check() checks if the I<a> bit string contains only bits
 specified by the I<flags> vector. I<flags_len> is the length of I<flags>
 in bytes.
 
-ASN1_BIT_STRING_name_print() prints the corresponding bit name specified
-in I<tbl> to I<out> based on the bit string I<bs>. I<indent> might be
-specified for a number of spaces to indent the line.
-
-ASN1_BIT_STRING_num_asc() searches for the provided I<name> in I<lname>
-and I<sname> fields of I<tbl>'s elements and returns the corresponding
-I<bitnum> field value in case there is a match found.
-
-ASN1_BIT_STRING_set_asc() sets the corresponding bit to I<name> in I<bs>
-based on the conversion table I<tbl>.
-
 ASN1_BIT_STRING_get_length() returns the number of octets in I<bitstr>
 containing bit values in I<length> and the number of unused bits in
 the last octet in I<unused_bits>. The value returned in
@@ -85,6 +74,29 @@ ASN1_BIT_STRING_set1() sets the type of I<bitstr> to
 I<V_ASN1_BIT_STRING> and its octets to the bits in the byte string
 I<data> of length I<length> octets, making sure that the last
 I<unused_bits> bits in the last byte are zero.
+
+ASN1_BIT_STRING_name_print() prints the corresponding bit name specified
+in I<tbl> to I<out> based on the bit string I<bs>. I<indent> might be
+specified for a number of spaces to indent the line. This function has
+been deprecated as of OpenSSL 4.1. For a replacement strategy, consider
+using a descriptive #define for the bit value, or if your application
+truly needs to do this with strings, implementing your own string to
+integer lookup table.
+
+ASN1_BIT_STRING_num_asc() searches for the provided I<name> in I<lname>
+and I<sname> fields of I<tbl>'s elements and returns the corresponding
+I<bitnum> field value in case there is a match found. This function has
+been deprecated as of OpenSSL 4.1. For a replacement strategy, consider
+using a descriptive #define for the bit value, or if your application
+truly needs to do this with strings, implementing your own string to
+integer lookup table.
+
+ASN1_BIT_STRING_set_asc() sets the corresponding bit to I<name> in I<bs>
+based on the conversion table I<tbl>.  This function has
+been deprecated as of OpenSSL 4.1. For a replacement strategy, consider
+using a descriptive #define for the bit value, or if your application
+truly needs to do this with strings, implementing your own string to
+integer lookup table.
 
 =head1 RETURN VALUES
 
@@ -126,6 +138,11 @@ added in OpenSSL version 4.0.
 
 ASN1_BIT_STRING_set() was deprecated in OpenSSL 4.1 in favour of
 ASN1_BIT_STRING_set1().
+ASN1_BIT_STRING_name_print() ASN1_BIT_STRING_num_asc(), and
+ASN1_BIT_STRING_set_asc(), Along with the BIT_STRING_BITNAME structure
+were present but undocumented in all versions of OpenSSL as public
+API.  They are unused by the library. They were documented and then
+deprecated in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

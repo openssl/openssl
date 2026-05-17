@@ -14,7 +14,7 @@
 #if defined(CMLL_ASM) && (defined(__sparc) || defined(__sparc__))
 
 /* Fujitsu SPARC64 X support */
-#include "crypto/sparc_arch.h"
+#include "arch/sparc_arch.h"
 
 #ifndef OPENSSL_NO_CAMELLIA
 #define SPARC_CMLL_CAPABLE (OPENSSL_sparcv9cap_P[1] & CFR_CAMELLIA)

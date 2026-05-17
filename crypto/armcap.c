@@ -23,7 +23,7 @@
 #else
 #include <unistd.h>
 #endif
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 #ifdef __aarch64__
 #include <stdint.h>
 #endif

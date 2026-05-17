@@ -97,7 +97,7 @@ $_n0="$num,#14*4";
 $_num="$num,#15*4";	$_bpend=$_num;
 
 $code=<<___;
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 
 #if defined(__thumb2__)
 .syntax	unified

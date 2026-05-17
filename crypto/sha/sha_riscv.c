@@ -12,7 +12,7 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/sha.h>
-#include "crypto/riscv_arch.h"
+#include "arch/riscv_arch.h"
 
 void sha256_block_data_order_zvkb_zvknha_or_zvknhb(void *ctx, const void *in,
     size_t num);

@@ -177,7 +177,7 @@ ___
 
 $code=<<___;
 #ifndef __KERNEL__
-# include "arm_arch.h"
+# include "arch/arm_arch.h"
 #else
 # define __ARM_ARCH__ __LINUX_ARM_ARCH__
 # define __ARM_MAX_ARCH__ 7

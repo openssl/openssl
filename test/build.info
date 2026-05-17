@@ -90,6 +90,10 @@ IF[{- !$disabled{tests} -}]
                      quic_newcid_test quic_srt_gen_test
   ENDIF
 
+  IF[{- !$disabled{quic} && !$disabled{qlog} -}]
+    PROGRAMS{noinst}=quic_memfail_test
+  ENDIF
+
   IF[{- !$disabled{qlog} -}]
     PROGRAMS{noinst}=json_test quic_qlog_test
   ENDIF
@@ -449,6 +453,12 @@ IF[{- !$disabled{tests} -}]
       SOURCE[quic_qlog_test]=quic_qlog_test.c
       INCLUDE[quic_qlog_test]=../include ../apps/include
       DEPEND[quic_qlog_test]=../libcrypto.a ../libssl.a libtestutil.a
+
+    IF[{- !$disabled{quic} -}]
+      SOURCE[quic_memfail_test]=quic_memfail_test.c
+      INCLUDE[quic_memfail_test]=../include ../apps/include
+      DEPEND[quic_memfail_test]=../libcrypto.a ../libssl.a libtestutil.a
+    ENDIF
   ENDIF
 
   SOURCE[asynctest]=asynctest.c

@@ -80,7 +80,7 @@ my @rhotates = ([  0,  1, 62, 28, 27 ],
                 [ 18,  2, 61, 56, 14 ]);
 
 $code.=<<___;
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 
 .rodata
 

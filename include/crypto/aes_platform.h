@@ -61,7 +61,7 @@ void AES_xts_decrypt(const unsigned char *inp, unsigned char *out, size_t len,
 
 #if defined(OPENSSL_CPUID_OBJ)
 #if (defined(__powerpc__) || defined(__POWERPC__) || defined(_ARCH_PPC))
-#include "crypto/ppc_arch.h"
+#include "arch/ppc_arch.h"
 #ifdef VPAES_ASM
 #define VPAES_CAPABLE (OPENSSL_ppccap_P & PPC_ALTIVEC)
 #endif
@@ -94,7 +94,7 @@ void gcm_ghash_p8(u64 Xi[2], const u128 Htable[16], const u8 *inp, size_t len);
 #endif /* PPC */
 
 #if (defined(__arm__) || defined(__arm) || defined(__aarch64__) || defined(_M_ARM64))
-#include "crypto/arm_arch.h"
+#include "arch/arm_arch.h"
 #if __ARM_MAX_ARCH__ >= 7
 #if defined(BSAES_ASM)
 #define BSAES_CAPABLE (OPENSSL_armcap_P & ARMV7_NEON)
@@ -172,7 +172,7 @@ void gcm_ghash_v8(u64 Xi[2], const u128 Htable[16], const u8 *inp, size_t len);
 #endif
 
 #if defined(__loongarch__) || defined(__loongarch64)
-#include "loongarch_arch.h"
+#include "arch/loongarch_arch.h"
 #if defined(VPAES_ASM)
 #define VPAES_CAPABLE (OPENSSL_loongarch_hwcap_P & LOONGARCH_HWCAP_LSX)
 #endif
@@ -299,7 +299,7 @@ void gcm_ghash_avx(u64 Xi[2], const u128 Htable[16], const u8 *in, size_t len);
 #elif defined(AES_ASM) && (defined(__sparc) || defined(__sparc__))
 
 /* Fujitsu SPARC64 X support */
-#include "crypto/sparc_arch.h"
+#include "arch/sparc_arch.h"
 
 #define SPARC_AES_CAPABLE (OPENSSL_sparcv9cap_P[1] & CFR_AES)
 #define HWAES_CAPABLE (OPENSSL_sparcv9cap_P[0] & SPARCV9_FJAESX)
@@ -369,7 +369,7 @@ void aes256_t4_xts_decrypt(const unsigned char *in, unsigned char *out,
 
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
 /* IBM S390X support */
-#include "s390x_arch.h"
+#include "arch/s390x_arch.h"
 
 /* Convert key size to function code: [16,24,32] -> [18,19,20]. */
 #define S390X_AES_FC(keylen) (S390X_AES_128 + ((((keylen) << 3) - 128) >> 6))
@@ -433,7 +433,7 @@ void aes256_t4_xts_decrypt(const unsigned char *in, unsigned char *out,
 #define S390X_AES_FC(keylen) (S390X_AES_128 + ((((keylen) << 3) - 128) >> 6))
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 /* RISC-V 64 support */
-#include "riscv_arch.h"
+#include "arch/riscv_arch.h"
 
 /* Zkne and Zknd extensions (scalar crypto AES). */
 int rv64i_zkne_set_encrypt_key(const unsigned char *userKey, const int bits,
@@ -509,7 +509,7 @@ void gcm_ghash_rv64i_zvkg(u64 Xi[2], const u128 Htable[16], const u8 *inp,
 
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
 /* RISC-V 32 support */
-#include "riscv_arch.h"
+#include "arch/riscv_arch.h"
 
 int rv32i_zkne_set_encrypt_key(const unsigned char *userKey, const int bits,
     AES_KEY *key);

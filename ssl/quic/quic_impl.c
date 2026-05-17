@@ -4655,9 +4655,8 @@ int ossl_quic_get_key_update_type(const SSL *s)
  *
  * @return Pointer to the SSL object on success, or NULL on failure.
  */
-static SSL *alloc_port_user_ssl(QUIC_CHANNEL *ch, void *arg)
+static SSL *alloc_port_user_ssl(QUIC_CHANNEL *ch, QUIC_LISTENER *ql)
 {
-    QUIC_LISTENER *ql = arg;
     QUIC_CONNECTION *qc = create_qc_from_incoming_conn(ql, ch);
 
     return (qc == NULL) ? NULL : &qc->obj.ssl;
@@ -4707,7 +4706,7 @@ SSL *ossl_quic_new_listener(SSL_CTX *ctx, uint64_t flags)
     port_args.channel_ctx = ctx;
     port_args.is_multi_conn = 1;
     port_args.get_conn_user_ssl = alloc_port_user_ssl;
-    port_args.user_ssl_arg = ql;
+    port_args.ql = ql;
     if ((flags & SSL_LISTENER_FLAG_NO_VALIDATE) == 0)
         port_args.do_addr_validation = 1;
     ql->port = ossl_quic_engine_create_port(ql->engine, &port_args);
@@ -4764,7 +4763,7 @@ SSL *ossl_quic_new_listener_from(SSL *ssl, uint64_t flags)
     port_args.channel_ctx = ssl->ctx;
     port_args.is_multi_conn = 1;
     port_args.get_conn_user_ssl = alloc_port_user_ssl;
-    port_args.user_ssl_arg = ql;
+    port_args.ql = ql;
     if ((flags & SSL_LISTENER_FLAG_NO_VALIDATE) == 0)
         port_args.do_addr_validation = 1;
     ql->port = ossl_quic_engine_create_port(ctx.qd->engine, &port_args);
@@ -5186,7 +5185,6 @@ static QUIC_CONNECTION *create_qc_from_incoming_conn(QUIC_LISTENER *ql, QUIC_CHA
 #if defined(OPENSSL_THREADS)
     qc->mutex = ql->mutex;
 #endif
-    qc->tls = ossl_quic_channel_get0_tls(ch);
     qc->started = 1;
     qc->as_server = 1;
     qc->as_server_state = 1;
@@ -5195,6 +5193,27 @@ static QUIC_CONNECTION *create_qc_from_incoming_conn(QUIC_LISTENER *ql, QUIC_CHA
     qc->incoming_stream_policy = SSL_INCOMING_STREAM_POLICY_AUTO;
     qc->last_error = SSL_ERROR_NONE;
     qc_update_reject_policy(qc);
+
+    /*
+     * Detach the channel from the freshly-built qc before handing it back.
+     *
+     * qc->ch was set to @p ch above so the in-function initialisers
+     * (e.g. qc_update_reject_policy()) can reach the channel during setup.
+     * Once setup is done we clear it again because, at this point, the qc
+     * does NOT yet own the channel: @p ch is still owned by the caller of
+     * port_new_handshake_layer(), which only commits ownership (by setting
+     * qc->ch = ch on the success path) after the rest of channel
+     * construction has succeeded.
+     *
+     * Leaving qc->ch set here would mean any error path that does
+     * SSL_free(user_ssl) before the commit point cascades into
+     * qc_cleanup() -> ossl_quic_channel_free(qc->ch) and frees a channel
+     * the caller is still using -- the use-after-free / double-free class
+     * of bug we hit before. Resetting to NULL makes SSL_free(user_ssl)
+     * safe at any point until the caller explicitly hands ch over.
+     */
+    qc->ch = NULL;
+
     return qc;
 
 err:

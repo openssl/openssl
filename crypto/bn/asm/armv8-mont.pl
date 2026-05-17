@@ -67,7 +67,7 @@ $n0="x4";	# const BN_ULONG *n0,
 $num="x5";	# int num);
 
 $code.=<<___;
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 #ifndef	__KERNEL__
 .extern OPENSSL_armv8_rsa_neonized
 .hidden OPENSSL_armv8_rsa_neonized

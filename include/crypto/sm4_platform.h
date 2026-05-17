@@ -13,7 +13,7 @@
 
 #if defined(OPENSSL_CPUID_OBJ)
 #if defined(__aarch64__) || defined(_M_ARM64)
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 extern unsigned int OPENSSL_arm_midr;
 static inline int vpsm4_capable(void)
 {
@@ -37,7 +37,7 @@ static inline int vpsm4_ex_capable(void)
 #define HWSM4_ctr32_encrypt_blocks sm4_v8_ctr32_encrypt_blocks
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 /* RV64 support */
-#include "riscv_arch.h"
+#include "arch/riscv_arch.h"
 /* Zvksed extension (vector crypto SM4). */
 int rv64i_zvksed_sm4_set_encrypt_key(const unsigned char *userKey,
     SM4_KEY *key);

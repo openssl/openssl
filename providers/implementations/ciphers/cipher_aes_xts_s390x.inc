@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "crypto/s390x_arch.h"
+#include "arch/s390x_arch.h"
 
 static OSSL_FUNC_cipher_encrypt_init_fn s390x_aes_xts_einit;
 static OSSL_FUNC_cipher_decrypt_init_fn s390x_aes_xts_dinit;

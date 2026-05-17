@@ -53,7 +53,7 @@ my ($rp,$ap,$bp,$bi,$a0,$a1,$a2,$a3,$t0,$t1,$t2,$t3,$poly1,$poly3,
 my ($acc6,$acc7)=($ap,$bp);	# used in __ecp_nistz256_sqr_mont
 
 $code.=<<___;
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 
 .rodata
 ___

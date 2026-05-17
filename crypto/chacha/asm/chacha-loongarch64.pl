@@ -46,7 +46,7 @@ open STDOUT,">$output";
 my ($out, $inp, $len, $key, $counter) = ($a0, $a1, $a2, $a3, $a4);
 
 $code .= <<EOF;
-#include "loongarch_arch.h"
+#include "arch/loongarch_arch.h"
 
 .text
 

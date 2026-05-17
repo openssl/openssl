@@ -10,11 +10,14 @@
 #include <string.h>
 
 #include <openssl/e_os2.h>
+#include <openssl/macros.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "internal/nelem.h"
 #include "testutil.h"
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_1)
+OSSL_BEGIN_ALLOW_DEPRECATED
 static const char *const names[] = {
     "a", "b", ".", "*", "@",
     ".a", "a.", ".b", "b.", ".*", "*.", "*@", "@*", "a@", "@a", "b@", "..",
@@ -227,6 +230,8 @@ static int set_altname_email(X509 *crt, const char *name)
 {
     return set_altname(crt, GEN_EMAIL, name, 0);
 }
+OSSL_END_ALLOW_DEPRECATED
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
 
 struct set_name_fn {
     int (*fn)(X509 *, const char *);
@@ -235,6 +240,8 @@ struct set_name_fn {
     int email;
 };
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_1)
+OSSL_BEGIN_ALLOW_DEPRECATED
 static const struct set_name_fn name_fns[] = {
     { set_cn1, "set CN", 1, 0 },
     { set_cn2, "set CN", 1, 0 },
@@ -358,6 +365,8 @@ static int call_run_cert(int i)
     }
     return failed == 0;
 }
+OSSL_END_ALLOW_DEPRECATED
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
 
 static struct gennamedata {
     const unsigned char der[22];
@@ -657,7 +666,9 @@ end:
 
 int setup_tests(void)
 {
+#if !defined(OPENSSL_NO_DEPRECATED_4_1)
     ADD_ALL_TESTS(call_run_cert, OSSL_NELEM(name_fns));
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
     ADD_TEST(test_GENERAL_NAME_cmp);
     return 1;
 }

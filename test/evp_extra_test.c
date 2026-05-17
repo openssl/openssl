@@ -6463,6 +6463,59 @@ err:
     return res;
 }
 
+static const char *iv_state_ciphers[] = {
+    "AES-256-GCM",
+#ifndef OPENSSL_NO_OCB
+    "AES-256-OCB",
+#endif
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+    "ChaCha20-Poly1305",
+#endif
+};
+
+/* Negative test for IV_STATE_FINISHED (avoid IV reuse) */
+static int test_iv_reuse(int idx)
+{
+    int outlen;
+    int res = 0;
+    unsigned char outbuf[64];
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *ciph = NULL;
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
+        goto err;
+
+    if (!TEST_ptr(ciph = EVP_CIPHER_fetch(testctx, iv_state_ciphers[idx],
+                      testpropq)))
+        goto err;
+
+    /* Use the cipher: Init, Update, Final. */
+    if (!TEST_true(EVP_EncryptInit_ex2(ctx, ciph, kGCMDefaultKey,
+            iGCMDefaultIV, NULL)))
+        goto err;
+    if (!TEST_true(EVP_EncryptUpdate(ctx, outbuf, &outlen, gcmDefaultPlaintext,
+            sizeof(gcmDefaultPlaintext))))
+        goto err;
+    if (!TEST_true(EVP_EncryptFinal_ex(ctx, outbuf, &outlen)))
+        goto err;
+
+    /* Without IV change, EncryptUpdate must be rejected */
+    ERR_set_mark();
+    if (!TEST_false(EVP_EncryptUpdate(ctx, outbuf, &outlen,
+            gcmDefaultPlaintext,
+            sizeof(gcmDefaultPlaintext)))) {
+        ERR_clear_last_mark();
+        goto err;
+    }
+    ERR_pop_to_mark();
+
+    res = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(ciph);
+    return res;
+}
+
 static const char *keylen_change_ciphers[] = {
 #ifndef OPENSSL_NO_BF
     "BF-ECB",
@@ -7960,6 +8013,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_final_no_tag, OSSL_NELEM(evp_final_no_tag));
 
     ADD_ALL_TESTS(test_ivlen_change, OSSL_NELEM(ivlen_change_ciphers));
+    ADD_ALL_TESTS(test_iv_reuse, OSSL_NELEM(iv_state_ciphers));
     if (OSSL_NELEM(keylen_change_ciphers) - 1 > 0)
         ADD_ALL_TESTS(test_keylen_change, OSSL_NELEM(keylen_change_ciphers) - 1);
 

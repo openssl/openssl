@@ -37,7 +37,7 @@ $code.=<<___;
 #ifndef __ASSEMBLER__
 # define __ASSEMBLER__ 1
 #endif
-#include "crypto/sparc_arch.h"
+#include "arch/sparc_arch.h"
 
 #define LOCALS	(STACK_BIAS+STACK_FRAME)
 #ifdef	__arch64__

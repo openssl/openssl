@@ -6,6 +6,7 @@ ossl_rcu_lock_new,
 ossl_rcu_lock_free, ossl_rcu_read_lock,
 ossl_rcu_read_unlock, ossl_rcu_write_lock,
 ossl_rcu_write_unlock, ossl_synchronize_rcu,
+ossl_rcu_cb_item_new, ossl_rcu_cb_item_free,
 ossl_rcu_call, ossl_rcu_deref,
 ossl_rcu_assign_ptr, ossl_rcu_uptr_deref,
 ossl_rcu_assign_uptr
@@ -19,7 +20,10 @@ ossl_rcu_assign_uptr
  void ossl_rcu_write_unlock(CRYPTO_RCU_LOCK *lock);
  void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock);
  void ossl_synchronize_rcu(CRYPTO_RCU_LOCK *lock);
- void ossl_rcu_call(CRYPTO_RCU_LOCK *lock, rcu_cb_fn cb, void *data);
+ CRYPTO_RCU_CB_ITEM *ossl_rcu_cb_item_new(void);
+ void ossl_rcu_cb_item_free(CRYPTO_RCU_CB_ITEM *item);
+ void ossl_rcu_call(CRYPTO_RCU_LOCK *lock, CRYPTO_RCU_CB_ITEM *item,
+                    rcu_cb_fn cb, void *data);
  void *ossl_rcu_deref(void **p);
  void ossl_rcu_uptr_deref(void **p);
  void ossl_rcu_assign_ptr(void **p, void **v);
@@ -96,10 +100,29 @@ the write side thread is safe to free.
 
 =item *
 
-ossl_rcu_call() enqueues a callback function to the lock, to be called
-when the next synchronization completes.  Note: It is not guaranteed that the
-thread which enqueued the callback will be the thread which executes the
-callback
+ossl_rcu_cb_item_new() allocates a callback item suitable for use with
+ossl_rcu_call().  Returns NULL on allocation failure.  The item is owned by
+the caller until it is passed to ossl_rcu_call(), at which point ownership
+transfers to the lock and the item must not be touched again by the caller.
+
+=item *
+
+ossl_rcu_cb_item_free() frees a callback item that was allocated by
+ossl_rcu_cb_item_new() but never passed to ossl_rcu_call().  Use this to
+release the item on the failure path of an operation that decided not to
+publish its update.
+
+=item *
+
+ossl_rcu_call() enqueues a callback function I<cb> to the lock, to be
+called with I<data> when the next synchronization completes.  The caller
+must provide a callback item I<item> previously obtained from
+ossl_rcu_cb_item_new().  After this call the lock owns the item and will
+free it after invoking the callback.  This function does not allocate and
+cannot fail, which lets callers allocate the item before performing any
+publish (assign_ptr) and bail cleanly if allocation fails.  Note: it is
+not guaranteed that the thread which enqueued the callback will be the
+thread which executes the callback.
 
 =item *
 
@@ -120,6 +143,9 @@ ossl_rcu_lock_free() frees an allocated RCU lock
 =head1 RETURN VALUES
 
 ossl_rcu_lock_new() returns a pointer to a newly created RCU lock structure.
+
+ossl_rcu_cb_item_new() returns a pointer to a newly created callback item,
+or NULL on allocation failure.
 
 ossl_rcu_deref() and ossl_rcu_uptr_deref() return the value pointed
 to by the passed in value v.
@@ -152,7 +178,7 @@ This example safely initializes and uses a lock.
 
  static void myinit(void)
  {
-     lock = ossl_rcu_lock_new(1);
+     lock = ossl_rcu_lock_new(1, NULL);
  }
 
  static int initlock(void)
@@ -162,10 +188,16 @@ This example safely initializes and uses a lock.
      return 1;
  }
 
- static void writer_thread()
+ static void free_old_foo(void *data)
+ {
+     OPENSSL_free(data);
+ }
+
+ static int writer_thread(void)
  {
     struct foo *newfoo;
     struct foo *oldfoo;
+    CRYPTO_RCU_CB_ITEM *cbi;
 
     initlock();
 
@@ -177,48 +209,60 @@ This example safely initializes and uses a lock.
      * 1) create a new shared object
      */
     newfoo = OPENSSL_zalloc(sizeof(struct foo));
+    if (newfoo == NULL)
+        return 0;
 
     /*
-     * acquire the write side lock
+     * 2) Pre allocate the rcu callback item before any publish.
+     */
+    cbi = ossl_rcu_cb_item_new();
+    if (cbi == NULL) {
+        OPENSSL_free(newfoo);
+        return 0;
+    }
+
+    /*
+     * 3) acquire the write side lock
      */
     ossl_rcu_write_lock(lock);
 
     /*
-     * 2) read the old pointer
+     * 4) read the old pointer
      */
     oldfoo = ossl_rcu_deref(&fooptr);
 
     /*
-     * 3) Copy the old pointer to the new object, and
+     * 5) Copy the old pointer to the new object, and
      *    make any needed adjustments
      */
     memcpy(newfoo, oldfoo, sizeof(struct foo));
     newfoo->aval++;
 
     /*
-     * 4) Update the shared pointer to the new value
+     * 6) Update the shared pointer to the new value
      */
     ossl_rcu_assign_ptr(&fooptr, &newfoo);
 
     /*
-     * 5) Release the write side lock
+     * 7) Schedule the old pointer to be freed when readers are done.
+     */
+    ossl_rcu_call(lock, cbi, free_old_foo, oldfoo);
+
+    /*
+     * 8) Release the write side lock
      */
     ossl_rcu_write_unlock(lock);
 
     /*
-     * 6) wait for any read side holds on the old data
-     *    to be released
+     * 9) wait for any read side holds on the old data
+     *    to be released, after which free_old_foo will run
      */
     ossl_synchronize_rcu(lock);
 
-    /*
-     * 7) free the old pointer, now that there are no
-     *    further readers
-     */
-    OPENSSL_free(oldfoo);
+    return 1;
  }
 
- static void reader_thread()
+ static void reader_thread(void)
  {
     struct foo *myfoo = NULL;
     int a;
@@ -249,7 +293,7 @@ L<crypto(7)>, L<openssl-threads(7)>.
 
 =head1 COPYRIGHT
 
-Copyright 2023-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2023-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

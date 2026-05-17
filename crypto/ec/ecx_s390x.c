@@ -15,7 +15,7 @@
 #include "ec_local.h"
 #include "curve448/curve448_local.h"
 #include "ecx_backend.h"
-#include "s390x_arch.h"
+#include "arch/s390x_arch.h"
 #include "internal/constant_time.h"
 
 static void s390x_x25519_mod_p(unsigned char u[32])

@@ -776,6 +776,22 @@ err:
     return testresult;
 }
 #endif /* !defined(OPENSSL_NO_CHACHA) */
+
+static int test_bio_dgram_mfail(void)
+{
+    BIO *bio;
+
+    MFAIL_start();
+    bio = BIO_new(BIO_s_dgram_mem());
+    MFAIL_end();
+
+    if (bio == NULL)
+        return 0;
+
+    BIO_free(bio);
+    return 1;
+}
+
 #endif /* !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK) */
 
 int setup_tests(void)
@@ -790,6 +806,7 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_CHACHA)
     ADD_ALL_TESTS(test_bio_dgram_pair, 3);
 #endif
+    ADD_MFAIL_TEST(test_bio_dgram_mfail);
 #endif
 
     return 1;

@@ -187,7 +187,7 @@ ___
 }
 
 $code=<<___;
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 
 #if defined(__thumb2__)
 .syntax	unified

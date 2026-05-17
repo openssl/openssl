@@ -190,7 +190,7 @@ ___
 }
 
 $code.=<<___;
-#include "arm_arch.h"
+#include "arch/arm_arch.h"
 #ifndef	__KERNEL__
 .extern	OPENSSL_armcap_P
 .hidden	OPENSSL_armcap_P

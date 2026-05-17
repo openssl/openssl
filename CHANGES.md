@@ -64,6 +64,12 @@ OpenSSL Releases
 
    *Shane Lontis*
 
+ * The functions `ASN1_BIT_STRING_name_print()`, `ASN1_BIT_STRING_num_asc(),
+   and `ASN1_BIT_STRING_set_asc()`, have been deprecated. Refer to the manual
+   pages for more information.
+
+   *Bob Beck*
+
  * The API functions `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`, and
    `CRYPTO_atomic_cmp_exch_ptr` have been added to libcrypto.
 
@@ -79,6 +85,13 @@ OpenSSL Releases
    use the existing buffer-based path.
 
    *John Claus*
+
+* 'X509_check_host()', 'X509_check_email()', 'X509_check_ip()', and 'X509_check_ip_asc()'
+   have been deprecated. Applications should migrate to setting a reference identifier
+   to check using 'X509_VERIFY_PARAM_set1_host()', 'X509_VERIFY_PARAM_set1_email()', or
+   X509_VERIFY_PARAM_set1_ip_asc()', and using 'X509_verify_cert()'.
+
+   *Bob Beck*
 
  * Added AVX2 optimized ML-DSA NTT operations on `x86_64`.
 

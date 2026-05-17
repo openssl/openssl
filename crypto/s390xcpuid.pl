@@ -26,7 +26,7 @@ $sp="%r15";
 $stdframe=16*$SIZE_T+4*8;
 
 $code=<<___;
-#include "s390x_arch.h"
+#include "arch/s390x_arch.h"
 
 .text
 

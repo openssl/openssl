@@ -690,13 +690,57 @@ err:
     DH_free(dh);
     return ret;
 }
-#endif /* OPENSSL_NO_DH */
+#endif /* OPENSSSL_NO_DH */
+
+#ifndef OPENSSL_NO_DSA
+static int ffc_params_copy_mfail(void)
+{
+    int ret = 0;
+    FFC_PARAMS params, copy;
+    BIGNUM *p = NULL, *q = NULL, *g = NULL;
+
+    ossl_ffc_params_init(&params);
+    ossl_ffc_params_init(&copy);
+
+    if (!TEST_ptr(p = BN_bin2bn(dsa_2048_224_sha256_p,
+                      sizeof(dsa_2048_224_sha256_p), NULL))
+        || !TEST_ptr(q = BN_bin2bn(dsa_2048_224_sha256_q,
+                         sizeof(dsa_2048_224_sha256_q), NULL))
+        || !TEST_ptr(g = BN_bin2bn(dsa_2048_224_sha256_g,
+                         sizeof(dsa_2048_224_sha256_g), NULL)))
+        goto err;
+
+    ossl_ffc_params_set0_pqg(&params, p, q, g);
+    p = q = g = NULL;
+    if (!TEST_true(ossl_ffc_params_set_seed(&params, dsa_2048_224_sha224_seed,
+            sizeof(dsa_2048_224_sha224_seed))))
+        goto err;
+
+    MFAIL_start();
+    ret = ossl_ffc_params_copy(&copy, &params);
+    MFAIL_end();
+
+    if (!ret)
+        goto err;
+
+    ret = 1;
+err:
+    ossl_ffc_params_cleanup(&params);
+    if (ret)
+        ossl_ffc_params_cleanup(&copy);
+    BN_free(p);
+    BN_free(q);
+    BN_free(g);
+    return ret;
+}
+#endif /* OPENSSL_NO_DSA */
 
 int setup_tests(void)
 {
 #ifndef OPENSSL_NO_DSA
     ADD_TEST(ffc_params_validate_pq_test);
     ADD_TEST(ffc_params_validate_g_unverified_test);
+    ADD_MFAIL_TEST(ffc_params_copy_mfail);
 #endif /* OPENSSL_NO_DSA */
 #ifndef OPENSSL_NO_DH
     ADD_TEST(ffc_params_gen_test);

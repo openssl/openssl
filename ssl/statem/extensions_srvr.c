@@ -1533,8 +1533,24 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         break;
     }
 
-    if (sess == NULL)
-        return 1;
+    if (sess == NULL) {
+        size_t j;
+
+        for (j = 0; j < s->ssl_pkey_num && !ssl_has_cert(s, (int)j); j++)
+            ;
+        if (j < s->ssl_pkey_num) {
+            /* A certificate exists. Fallback to a full handshake */
+            return 1;
+        }
+        /*
+         * decrypt_error here to keep the alert the same as if the binder
+         * failed. See RFC8446 Appendix E.6. Note we make no attempt to do this
+         * in constant time compared to verifying the binder. None of this code
+         * is constant time anyway.
+         */
+        SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_R_BAD_EXTENSION);
+        goto err;
+    }
 
     binderoffset = PACKET_data(pkt) - PACKET_msg_start(pkt);
     hashsize = EVP_MD_get_size(md);

@@ -53,7 +53,7 @@ $proxy->clientflags("-sess_out ".$session);
 $proxy->serverflags("-servername localhost");
 $proxy->sessionfile($session);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 6;
+plan tests => 7;
 ok(TLSProxy::Message->success(), "Initial connection");
 
 #Test 2: Attempt a resume with PSK not in last place. Should fail
@@ -122,7 +122,35 @@ $testtype = TOO_MANY_PSKS;
 $proxy->start();
 ok(TLSProxy::Message->success(), "Too many PSKs");
 
+my $proxy2 = TLSProxy::Proxy->new(
+    undef,
+    cmdstr(app(["openssl"]), display => 1),
+    undef, # Deliberately set to no_cert to force a PSK-only server
+    (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE}),
+    have_IPv6()
+);
+
+#Test 7: Attempt an invalid resume, with a server that can only do PSK.
+#        Should be treated the same as an invalid binder (decrypt_error)
+#        as per RFC8446 Appendix E.6
+$proxy2->clear();
+$proxy2->clientflags("-sess_in ".$session);
+$proxy2->serverflags("-psk ffeeddccbbaa99887766554433221100 -no_ticket");
+$proxy2->start() or die "Failed to start proxy2";
+ok(is_decode_error_server_alert(), "Bad PSK with no handshake fallback");
+
 unlink $session;
+
+sub is_decode_error_server_alert
+{
+    return 0 unless TLSProxy::Message->fail();
+
+    my $alert = TLSProxy::Message->alert();
+    return 1 if $alert->server()
+                && $alert->description()
+                   == TLSProxy::Message::AL_DESC_DECRYPT_ERROR;
+    return 0;
+}
 
 sub modify_psk_filter
 {

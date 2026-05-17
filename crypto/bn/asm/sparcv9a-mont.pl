@@ -129,7 +129,7 @@ $code=<<___;
 #ifndef __ASSEMBLER__
 # define __ASSEMBLER__ 1
 #endif
-#include "crypto/sparc_arch.h"
+#include "arch/sparc_arch.h"
 
 .section	".text",#alloc,#execinstr
 

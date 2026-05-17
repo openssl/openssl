@@ -82,7 +82,7 @@ $rem_4bit="%r14";
 $sp="%r15";
 
 $code.=<<___;
-#include "s390x_arch.h"
+#include "arch/s390x_arch.h"
 
 .text
 
