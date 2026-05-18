@@ -38,6 +38,47 @@ static char *privkey = NULL;
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_DTLS)
 
 /*
+ * Helper function to read data with retry logic for non-blocking DTLS sockets.
+ *
+ * With real UDP sockets in non-blocking mode, there can be a small delay
+ * between when a client sends data and when it arrives in the server's
+ * receive buffer. This helper retries SSL_read_ex() with small delays
+ * to handle this timing variability.
+ *
+ * Parameters:
+ *   ssl       - The SSL connection to read from
+ *   buf       - Buffer to read data into
+ *   bufsize   - Size of the buffer
+ *   readbytes - Output: number of bytes actually read
+ *   max_retries - Maximum number of retry attempts (default: 100)
+ *
+ * Returns: 1 on success, 0 on failure
+ */
+#define DTLS_READ_MAX_RETRIES 5
+
+static int dtls_read_with_retry(SSL *ssl, void *buf, size_t bufsize,
+    size_t *readbytes)
+{
+    int ret, err;
+    int retries = DTLS_READ_MAX_RETRIES;
+
+    do {
+        ret = SSL_read_ex(ssl, buf, bufsize, readbytes);
+        if (ret > 0)
+            return 1; /* Success */
+
+        err = SSL_get_error(ssl, ret);
+        if (err != SSL_ERROR_WANT_READ) {
+            TEST_error("SSL_read_ex failed with error %d", err);
+            return 0;
+        }
+    } while (--retries > 0);
+
+    TEST_error("SSL_read_ex failed to read after %d retries", DTLS_READ_MAX_RETRIES);
+    return 0;
+}
+
+/*
  * Test SSL_new_listener for DTLS.
  * Verifies that a DTLS listener can be created from a DTLS context.
  */
@@ -872,7 +913,7 @@ static int test_dtls13_connection_with_hrr(void)
         || !TEST_size_t_eq(written, sizeof(msg)))
         goto end;
 
-    if (!TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+    if (!TEST_true(dtls_read_with_retry(serverssl, buf, sizeof(buf), &readbytes))
         || !TEST_size_t_eq(readbytes, sizeof(msg))
         || !TEST_mem_eq(buf, readbytes, msg, sizeof(msg)))
         goto end;
@@ -1054,7 +1095,7 @@ static int test_dtls13_connection_without_hrr(void)
         || !TEST_size_t_eq(written, sizeof(msg)))
         goto end;
 
-    if (!TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+    if (!TEST_true(dtls_read_with_retry(serverssl, buf, sizeof(buf), &readbytes))
         || !TEST_size_t_eq(readbytes, sizeof(msg))
         || !TEST_mem_eq(buf, readbytes, msg, sizeof(msg)))
         goto end;
@@ -1327,7 +1368,7 @@ static int test_dtls_mixed_12_hvr_and_13_hrr(void)
         || !TEST_size_t_eq(written, sizeof(msg_12)))
         goto end;
     memset(buf, 0, sizeof(buf));
-    if (!TEST_true(SSL_read_ex(server_12, buf, sizeof(buf), &readbytes))
+    if (!TEST_true(dtls_read_with_retry(server_12, buf, sizeof(buf), &readbytes))
         || !TEST_size_t_eq(readbytes, sizeof(msg_12))
         || !TEST_mem_eq(buf, readbytes, msg_12, sizeof(msg_12)))
         goto end;
@@ -1337,7 +1378,7 @@ static int test_dtls_mixed_12_hvr_and_13_hrr(void)
         || !TEST_size_t_eq(written, sizeof(msg_13)))
         goto end;
     memset(buf, 0, sizeof(buf));
-    if (!TEST_true(SSL_read_ex(server_13, buf, sizeof(buf), &readbytes))
+    if (!TEST_true(dtls_read_with_retry(server_13, buf, sizeof(buf), &readbytes))
         || !TEST_size_t_eq(readbytes, sizeof(msg_13))
         || !TEST_mem_eq(buf, readbytes, msg_13, sizeof(msg_13)))
         goto end;
@@ -1687,7 +1728,7 @@ static int test_dtls_concurrent_clients_real_sockets(void)
 
     /* Server 1 reads from client 1 */
     memset(buf, 0, sizeof(buf));
-    if (!TEST_true(SSL_read_ex(server1, buf, sizeof(buf), &readbytes))
+    if (!TEST_true(dtls_read_with_retry(server1, buf, sizeof(buf), &readbytes))
         || !TEST_size_t_eq(readbytes, sizeof(msg1))
         || !TEST_mem_eq(buf, readbytes, msg1, sizeof(msg1))) {
         TEST_error("server1 read failed or data mismatch");
@@ -1697,7 +1738,7 @@ static int test_dtls_concurrent_clients_real_sockets(void)
 
     /* Server 2 reads from client 2 */
     memset(buf, 0, sizeof(buf));
-    if (!TEST_true(SSL_read_ex(server2, buf, sizeof(buf), &readbytes))
+    if (!TEST_true(dtls_read_with_retry(server2, buf, sizeof(buf), &readbytes))
         || !TEST_size_t_eq(readbytes, sizeof(msg2))
         || !TEST_mem_eq(buf, readbytes, msg2, sizeof(msg2))) {
         TEST_error("server2 read failed or data mismatch");
@@ -1721,7 +1762,7 @@ static int test_dtls_concurrent_clients_real_sockets(void)
 
     /* Client 1 receives reply */
     memset(buf, 0, sizeof(buf));
-    if (!TEST_true(SSL_read_ex(client1, buf, sizeof(buf), &readbytes))
+    if (!TEST_true(dtls_read_with_retry(client1, buf, sizeof(buf), &readbytes))
         || !TEST_size_t_eq(readbytes, sizeof(reply1))
         || !TEST_mem_eq(buf, readbytes, reply1, sizeof(reply1))) {
         TEST_error("client1 read reply failed or data mismatch");
@@ -1731,7 +1772,7 @@ static int test_dtls_concurrent_clients_real_sockets(void)
 
     /* Client 2 receives reply */
     memset(buf, 0, sizeof(buf));
-    if (!TEST_true(SSL_read_ex(client2, buf, sizeof(buf), &readbytes))
+    if (!TEST_true(dtls_read_with_retry(client2, buf, sizeof(buf), &readbytes))
         || !TEST_size_t_eq(readbytes, sizeof(reply2))
         || !TEST_mem_eq(buf, readbytes, reply2, sizeof(reply2))) {
         TEST_error("client2 read reply failed or data mismatch");
@@ -1934,7 +1975,7 @@ static int test_dtls12_connection_with_hvr(void)
         || !TEST_size_t_eq(written, sizeof(msg)))
         goto end;
 
-    if (!TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+    if (!TEST_true(dtls_read_with_retry(serverssl, buf, sizeof(buf), &readbytes))
         || !TEST_size_t_eq(readbytes, sizeof(msg))
         || !TEST_mem_eq(buf, readbytes, msg, sizeof(msg)))
         goto end;
@@ -2114,7 +2155,7 @@ static int test_dtls12_connection_without_hvr(void)
         || !TEST_size_t_eq(written, sizeof(msg)))
         goto end;
 
-    if (!TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+    if (!TEST_true(dtls_read_with_retry(serverssl, buf, sizeof(buf), &readbytes))
         || !TEST_size_t_eq(readbytes, sizeof(msg))
         || !TEST_mem_eq(buf, readbytes, msg, sizeof(msg)))
         goto end;
