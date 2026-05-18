@@ -290,6 +290,7 @@ static int test_handshake_secrets(void)
     SSL *ssl = NULL;
     SSL_CONNECTION *s;
     int ret = 0;
+    int sz;
     size_t hashsize;
     unsigned char out_master_secret[EVP_MAX_MD_SIZE];
     size_t master_secret_length;
@@ -328,7 +329,10 @@ static int test_handshake_secrets(void)
             handshake_secret, sizeof(handshake_secret)))
         goto err;
 
-    hashsize = EVP_MD_get_size(ssl_handshake_md(s));
+    sz = EVP_MD_get_size(ssl_handshake_md(s));
+    if (sz < 0)
+        goto err;
+    hashsize = (size_t)sz;
     if (!TEST_size_t_eq(sizeof(client_hts), hashsize))
         goto err;
     if (!TEST_size_t_eq(sizeof(client_hts_key), KEYLEN))
