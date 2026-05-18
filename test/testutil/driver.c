@@ -300,57 +300,83 @@ static double mfail_elapsed_secs(clock_t start)
     return (double)(clock() - start) / CLOCKS_PER_SEC;
 }
 
-static int mfail_should_skip(void)
-{
-    if (!mfail_is_installed())
-        return 1;
-    return mfail_env_skip_all();
-}
-
 static int mfail_run_test(const char *test_case_name,
     int (*test_fn)(void), int flags)
 {
-    int ret = 1;
+    int counting_ok = 1;
+    int injection_ok = 1;
+    int injections = 0;
+    int allocations = 0;
     int no_check = (flags & MFAIL_TEST_NO_CHECK) != 0;
     clock_t start = clock();
+
+    level += 4;
+    test_adjust_streams_tap_level(level);
+    test_printf_stdout("Subtest: %s\n", test_case_name);
+    test_printf_tapout("1..2\n");
+    test_flush_stdout();
+    test_flush_tapout();
 
     mfail_init(0, 0);
 
     while (mfail_has_next()) {
+        int phase = mfail_get_phase();
         int rv;
 
         ERR_clear_error();
         rv = test_fn();
 
-        if (mfail_was_triggered()) {
-            if (!no_check && !TEST_int_eq(rv, 0)) {
-                TEST_error("mfail test '%s': allocation failure at point %d "
-                           "not handled",
-                    test_case_name, mfail_get_point());
-                ret = 0;
+        if (phase == MFAIL_PHASE_COUNTING) {
+            allocations = mfail_get_count();
+            if (!TEST_int_eq(rv, 1)) {
+                TEST_error("mfail test '%s': counting iteration failed",
+                    test_case_name);
+                counting_ok = 0;
             }
-        } else if (mfail_get_mode() == MFAIL_MODE_SINGLE) {
-            TEST_info("mfail test '%s': point %d is beyond the last "
-                      "allocation point, test %s",
-                test_case_name, mfail_get_point(),
-                rv == 1 ? "succeeded" : "failed");
-        } else if (!TEST_int_eq(rv, 1)) {
-            TEST_error("mfail test '%s': no injection but test failed",
-                test_case_name);
-            ret = 0;
+            test_verdict(counting_ok, "1 - counting (%d allocations)",
+                allocations);
+            if (!counting_ok || !mfail_is_installed() || mfail_env_skip_all())
+                break;
+        } else {
+            injections++;
+            if (mfail_was_triggered()) {
+                if (!no_check && !TEST_int_eq(rv, 0)) {
+                    TEST_error("mfail test '%s': allocation failure at "
+                               "point %d not handled",
+                        test_case_name, mfail_get_point());
+                    injection_ok = 0;
+                }
+            } else if (mfail_get_mode() == MFAIL_MODE_SINGLE) {
+                test_printf_tapout(
+                    "# point %d is beyond the last allocation point\n",
+                    mfail_get_point());
+                test_flush_tapout();
+            } else if (!TEST_int_eq(rv, 1)) {
+                TEST_error("mfail test '%s': no injection but test failed",
+                    test_case_name);
+                injection_ok = 0;
+            }
         }
     }
 
-    if (ret != 0 && mfail_was_slow_skipped())
-        return TEST_skip("mfail test '%s': %d allocations exceeds slow "
-                         "threshold %d",
-            test_case_name, mfail_get_total(),
-            mfail_get_slow_threshold());
+    if (!counting_ok)
+        test_verdict(TEST_SKIP_CODE, "2 - injection (counting failed)");
+    else if (!mfail_is_installed())
+        test_verdict(TEST_SKIP_CODE, "2 - injection (mfail not installed)");
+    else if (mfail_env_skip_all())
+        test_verdict(TEST_SKIP_CODE, "2 - injection (mfail skip-all set)");
+    else if (mfail_was_slow_skipped())
+        test_verdict(TEST_SKIP_CODE,
+            "2 - injection (%d allocations exceeds slow threshold %d)",
+            allocations, mfail_get_slow_threshold());
+    else
+        test_verdict(injection_ok, "2 - injection (%d iterations, %.3fs)",
+            injections, mfail_elapsed_secs(start));
 
-    TEST_info("mfail test '%s': %d allocations, %d iterations, %.6f seconds",
-        test_case_name, mfail_get_total(), mfail_iterations(),
-        mfail_elapsed_secs(start));
-    return ret;
+    level -= 4;
+    test_adjust_streams_tap_level(level);
+
+    return counting_ok && injection_ok;
 }
 
 int run_tests(const char *test_prog_name)
@@ -409,11 +435,8 @@ int run_tests(const char *test_prog_name)
             set_test_title(all_tests[i].test_case_name);
             ERR_clear_error();
             if (all_tests[i].mfail)
-                if (mfail_should_skip())
-                    verdict = TEST_skip("mfail test skipped");
-                else
-                    verdict = mfail_run_test(all_tests[i].test_case_name,
-                        all_tests[i].test_fn, all_tests[i].mfail_flags);
+                verdict = mfail_run_test(all_tests[i].test_case_name,
+                    all_tests[i].test_fn, all_tests[i].mfail_flags);
             else
                 verdict = all_tests[i].test_fn();
             finalize(verdict != 0);
