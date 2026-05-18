@@ -42,39 +42,45 @@ static char *privkey = NULL;
  *
  * With real UDP sockets in non-blocking mode, there can be a small delay
  * between when a client sends data and when it arrives in the server's
- * receive buffer. This helper retries SSL_read_ex() with small delays
- * to handle this timing variability.
+ * receive buffer. This helper retries SSL_read_ex() to handle this timing
+ * variability.
  *
  * Parameters:
  *   ssl       - The SSL connection to read from
  *   buf       - Buffer to read data into
  *   bufsize   - Size of the buffer
  *   readbytes - Output: number of bytes actually read
- *   max_retries - Maximum number of retry attempts (default: 100)
  *
  * Returns: 1 on success, 0 on failure
  */
-#define DTLS_READ_MAX_RETRIES 5
+#define DTLS_READ_MAX_RETRIES 100
 
 static int dtls_read_with_retry(SSL *ssl, void *buf, size_t bufsize,
     size_t *readbytes)
 {
     int ret, err;
     int retries = DTLS_READ_MAX_RETRIES;
+    int attempts = 0;
 
     do {
+        attempts++;
         ret = SSL_read_ex(ssl, buf, bufsize, readbytes);
-        if (ret > 0)
+        if (ret > 0) {
+            if (attempts > 1)
+                TEST_info("SSL_read_ex succeeded after %d attempts", attempts);
             return 1; /* Success */
+        }
 
         err = SSL_get_error(ssl, ret);
         if (err != SSL_ERROR_WANT_READ) {
             TEST_error("SSL_read_ex failed with error %d", err);
             return 0;
         }
+
+        OSSL_sleep(1);
     } while (--retries > 0);
 
-    TEST_error("SSL_read_ex failed to read after %d retries", DTLS_READ_MAX_RETRIES);
+    TEST_error("SSL_read_ex failed to read after %d attempts", attempts);
     return 0;
 }
 
@@ -1076,6 +1082,9 @@ static int test_dtls13_connection_without_hrr(void)
 
         /* Try to accept a connection from the listener */
         serverssl = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
+
+        if (serverssl == NULL)
+            OSSL_sleep(1);
     }
 
     /*
@@ -2136,6 +2145,9 @@ static int test_dtls12_connection_without_hvr(void)
 
         /* Try to accept a connection from the listener */
         serverssl = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
+
+        if (serverssl == NULL)
+            OSSL_sleep(1);
     }
 
     /*
@@ -2356,6 +2368,9 @@ static int test_dtls_is_listener_on_accepted_connection(void)
         }
 
         serverssl = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
+
+        if (serverssl == NULL)
+            OSSL_sleep(1);
     }
 
     /* The accepted connection is NOT a listener */
@@ -2493,6 +2508,9 @@ static int test_dtls_get_peer_addr_after_accept(void)
         }
 
         serverssl = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
+
+        if (serverssl == NULL)
+            OSSL_sleep(1);
     }
 
     /* Now test SSL_get_peer_addr on the accepted connection */
@@ -2640,6 +2658,9 @@ static int test_dtls_queue_len_after_accept(void)
         }
 
         serverssl = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
+
+        if (serverssl == NULL)
+            OSSL_sleep(1);
     }
 
     /* After accepting, queue should be empty again */
