@@ -489,18 +489,20 @@ int ossl_cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
         }
         BIO_get_md_ctx(chain, &mtmp);
         OBJ_obj2txt(alg, sizeof(alg), mdoid, 0);
-        EVP_MD *md = EVP_MD_CTX_get0_md(mtmp);
+        const EVP_MD *md = EVP_MD_CTX_get0_md(mtmp);
 
-        if (md && EVP_MD_CTX_get_type(mtmp) == nid || OBJ_sn2nid(EVP_MD_CTX_get0_name(mtmp)) == nid
-            /*
-             * Workaround for broken implementations that use signature
-             * algorithm OID instead of digest.
-             */
-            || EVP_MD_get_pkey_type(md) == nid
-            /*
-             * Workground if there is no legacy function.
-             */
-            || EVP_MD_is_a(md, alg))
+        if (EVP_MD_CTX_get_type(mtmp) == nid
+            || OBJ_sn2nid(EVP_MD_CTX_get0_name(mtmp)) == nid
+            || (md != NULL
+                /*
+                 * Workaround for broken implementations that use signature
+                 * algorithm OID instead of digest.
+                 */
+                && (EVP_MD_get_pkey_type(md) == nid
+                    /*
+                     * Workaround if there is no legacy function.
+                     */
+                    || EVP_MD_is_a(md, alg))))
             return EVP_MD_CTX_copy_ex(mctx, mtmp);
         chain = BIO_next(chain);
     }
