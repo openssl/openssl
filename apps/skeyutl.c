@@ -106,7 +106,7 @@ int skeyutl_main(int argc, char **argv)
         skey = EVP_SKEY_generate(app_get0_libctx(),
             skeymgmt ? skeymgmt : EVP_CIPHER_name(cipher),
             app_get0_propq(), params);
-        OSSL_PARAM_free(params);
+        app_params_free(params);
         if (skey == NULL) {
             BIO_printf(bio_err, "Error creating opaque key for skeymgmt %s\n",
                 skeymgmt ? skeymgmt : EVP_CIPHER_name(cipher));
