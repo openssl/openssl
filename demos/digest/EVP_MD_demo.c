@@ -135,6 +135,7 @@ static int demonstrate_digest(void)
     const char *option_properties = NULL;
     EVP_MD *message_digest = NULL;
     EVP_MD_CTX *digest_context = NULL;
+    int sz = 0;
     unsigned int digest_length;
     unsigned char *digest_value = NULL;
     unsigned int j;
@@ -157,11 +158,12 @@ static int demonstrate_digest(void)
         goto cleanup;
     }
     /* Determine the length of the fetched digest type */
-    digest_length = EVP_MD_get_size(message_digest);
-    if (digest_length <= 0) {
+    sz = EVP_MD_get_size(message_digest);
+    if (sz <= 0) {
         fprintf(stderr, "EVP_MD_get_size returned invalid size.\n");
         goto cleanup;
     }
+    digest_length = (unsigned int)sz;
 
     digest_value = OPENSSL_malloc(digest_length);
     if (digest_value == NULL) {
