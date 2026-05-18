@@ -1,0 +1,179 @@
+=pod
+
+=head1 NAME
+
+ossl_pq_node_init, ossl_pq_node_in_queue,
+ossl_pq_new, ossl_pq_free, ossl_pq_pop_free,
+ossl_pq_reserve, ossl_pq_num,
+ossl_pq_push, ossl_pq_peek, ossl_pq_pop, ossl_pq_remove
+- intrusive binary-heap priority queue
+
+=head1 SYNOPSIS
+
+ #include "internal/pq.h"
+
+ typedef struct ossl_pq_st        OSSL_PQ;
+ typedef struct ossl_pq_node_st   OSSL_PQ_NODE;
+
+ #define OSSL_PQ_NOT_IN_QUEUE     ((size_t)-1)
+
+ void ossl_pq_node_init(OSSL_PQ_NODE *n);
+ int  ossl_pq_node_in_queue(const OSSL_PQ_NODE *n);
+
+ OSSL_PQ *ossl_pq_new(int (*cmp)(const OSSL_PQ_NODE *,
+                                 const OSSL_PQ_NODE *));
+ void     ossl_pq_free(OSSL_PQ *pq);
+ void     ossl_pq_pop_free(OSSL_PQ *pq, void (*freefunc)(OSSL_PQ_NODE *));
+ int      ossl_pq_reserve(OSSL_PQ *pq, size_t n);
+ size_t   ossl_pq_num(const OSSL_PQ *pq);
+
+ int           ossl_pq_push(OSSL_PQ *pq, OSSL_PQ_NODE *n);
+ OSSL_PQ_NODE *ossl_pq_peek(const OSSL_PQ *pq);
+ OSSL_PQ_NODE *ossl_pq_pop(OSSL_PQ *pq);
+ OSSL_PQ_NODE *ossl_pq_remove(OSSL_PQ *pq, OSSL_PQ_NODE *n);
+
+=head1 DESCRIPTION
+
+B<OSSL_PQ> is an intrusive binary-heap priority queue.  Each user
+element embeds a B<OSSL_PQ_NODE> field; the queue stores pointers to
+those embedded nodes and tracks each element's current heap position
+inside the node itself.  Compared with the type-parameterised
+B<DEFINE_PRIORITY_QUEUE_OF>(3) API it removes the per-type wrapper
+macros, the C<void *> casts, the parallel handle table, and the
+separate handle storage that callers previously kept alongside their
+data.  The trade-off is that callers must use
+L<CONTAINER_OF(3)|CONTAINER_OF_CONST(3)> to recover their containing
+struct from a B<OSSL_PQ_NODE> pointer returned by the API.
+
+The heap is a min-heap ordered by the user-supplied comparator
+I<cmp>, which is called to order two nodes and should return a
+negative value if the first compares less than the second, B<0> if
+they are equal, and a positive value otherwise.  Comparators
+typically use B<CONTAINER_OF> to reach the key field of the
+containing struct:
+
+ typedef struct foo_st {
+     uint64_t      key;
+     OSSL_PQ_NODE  pqn;
+ } FOO;
+
+ static int foo_cmp(const OSSL_PQ_NODE *a, const OSSL_PQ_NODE *b)
+ {
+     const FOO *fa = CONTAINER_OF(a, FOO, pqn);
+     const FOO *fb = CONTAINER_OF(b, FOO, pqn);
+     return fa->key < fb->key ? -1 : fa->key > fb->key;
+ }
+
+An element may belong to at most one queue at a time.  Re-pushing a
+node that is already enqueued is a programming error and is asserted
+in debug builds.  Callers must initialise the embedded
+B<OSSL_PQ_NODE> with B<ossl_pq_node_init>() (or otherwise arrange
+for I<posn> to be B<OSSL_PQ_NOT_IN_QUEUE>) before the first push.
+
+B<ossl_pq_node_init>() prepares I<n> for insertion by setting its
+internal position field to B<OSSL_PQ_NOT_IN_QUEUE>.  After
+B<ossl_pq_pop>() or B<ossl_pq_remove>() the same node may be pushed
+again without re-initialisation; the API maintains the invariant.
+
+B<ossl_pq_node_in_queue>() returns non-zero if I<n> currently
+belongs to a queue, zero otherwise.  It is a constant-time check
+against the in-node sentinel.
+
+B<ossl_pq_new>() allocates an empty priority queue using comparator
+I<cmp>.  It is an error for I<cmp> to be NULL.
+
+B<ossl_pq_free>() frees the I<pq> structure.  It does I<not> free
+any of the elements still in I<pq>.  After this call I<pq> is no
+longer valid.  Passing NULL is a no-op.
+
+B<ossl_pq_pop_free>() walks every element of I<pq> in heap-array
+order, calls I<freefunc>() on each, and then frees the queue
+itself.  Heap ordering is not preserved between callbacks (the queue
+is being torn down).  The node's I<posn> field is left untouched
+because I<freefunc>() is expected to release the containing struct.
+Passing NULL for I<pq> is a no-op.
+
+B<ossl_pq_reserve>() grows the underlying heap array so that the
+next I<n> calls to B<ossl_pq_push>() will not need to allocate.
+If I<n> is zero, no additional space is reserved.  On error I<pq>
+is unchanged.
+
+B<ossl_pq_num>() returns the number of elements currently in I<pq>,
+or B<0> if I<pq> is NULL.
+
+B<ossl_pq_push>() inserts I<n> into the priority queue I<pq>.  The
+caller must have initialised I<n> with B<ossl_pq_node_init>() (or
+recycled it from a previous B<ossl_pq_pop>() / B<ossl_pq_remove>()).
+Pushing a node that is already in any queue is a programming error.
+
+B<ossl_pq_peek>() returns a pointer to the smallest node in I<pq>
+without removing it, or NULL if I<pq> is empty.
+
+B<ossl_pq_pop>() returns the smallest node in I<pq> and removes it.
+After this call the returned node is detached and may be pushed
+into another queue.  Returns NULL if I<pq> is empty.
+
+B<ossl_pq_remove>() removes the specified I<n> from I<pq> and
+returns it.  The function operates on the node directly -- no
+separate handle is required.  Returns NULL if I<pq> is NULL, I<n>
+is NULL, or I<n> is not currently in I<pq>.  The detached-node
+check is safe provided the embedded B<OSSL_PQ_NODE> has been
+touched by a prior push on this queue or is zero-initialised;
+otherwise the behaviour is undefined.
+
+=head1 NOTES
+
+The queue performs O(1) peek, O(log n) push, pop and remove on a
+contiguous array of B<OSSL_PQ_NODE> pointers.  No callable
+operation traverses a chain of pointers, so the in-tree footprint
+is one allocation for the queue object plus one allocation for the
+node-pointer array; nodes themselves live in the caller's storage.
+
+This API replaces the older B<DEFINE_PRIORITY_QUEUE_OF>(3) family
+for new code.  Both APIs can coexist in the same binary -- they
+share no symbols.
+
+=head1 RETURN VALUES
+
+B<ossl_pq_node_init>() and B<ossl_pq_free>() and
+B<ossl_pq_pop_free>() do not return values.
+
+B<ossl_pq_node_in_queue>() returns B<1> if the node is currently
+enqueued, B<0> otherwise.
+
+B<ossl_pq_new>() returns an empty queue on success or NULL on
+allocation failure or if I<cmp> is NULL.
+
+B<ossl_pq_reserve>() returns B<1> on success, B<0> on allocation
+failure.
+
+B<ossl_pq_num>() returns the queue length, or B<0> if I<pq> is
+NULL.
+
+B<ossl_pq_push>() returns B<1> on success, B<0> on allocation
+failure or on a NULL I<pq>/I<n>.
+
+B<ossl_pq_peek>() and B<ossl_pq_pop>() return the smallest node, or
+NULL if the queue is empty (or I<pq> is NULL).
+
+B<ossl_pq_remove>() returns the removed node, or NULL if the node
+is not in I<pq>.
+
+=head1 SEE ALSO
+
+L<DEFINE_PRIORITY_QUEUE_OF(3)>.
+
+=head1 HISTORY
+
+The functions described here were added in OpenSSL 4.1.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
