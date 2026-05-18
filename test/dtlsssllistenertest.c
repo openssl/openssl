@@ -45,6 +45,10 @@ static char *privkey = NULL;
  * receive buffer. This helper retries SSL_read_ex() to handle this timing
  * variability.
  *
+ * In the CI pipeline MACOS seems to have the most difficulty reading
+ * the data. That is why we have to add the retry logic and sleep.
+ * Eventually the data is read successfully.
+ *
  * Parameters:
  *   ssl       - The SSL connection to read from
  *   buf       - Buffer to read data into
@@ -53,7 +57,7 @@ static char *privkey = NULL;
  *
  * Returns: 1 on success, 0 on failure
  */
-#define DTLS_READ_MAX_RETRIES 100
+#define DTLS_READ_MAX_RETRIES 20
 
 static int dtls_read_with_retry(SSL *ssl, void *buf, size_t bufsize,
     size_t *readbytes)
@@ -66,9 +70,7 @@ static int dtls_read_with_retry(SSL *ssl, void *buf, size_t bufsize,
         attempts++;
         ret = SSL_read_ex(ssl, buf, bufsize, readbytes);
         if (ret > 0) {
-            if (attempts > 1)
-                TEST_info("SSL_read_ex succeeded after %d attempts", attempts);
-            return 1; /* Success */
+            return 1;
         }
 
         err = SSL_get_error(ssl, ret);
@@ -1082,9 +1084,6 @@ static int test_dtls13_connection_without_hrr(void)
 
         /* Try to accept a connection from the listener */
         serverssl = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
-
-        if (serverssl == NULL)
-            OSSL_sleep(1);
     }
 
     /*
@@ -2145,9 +2144,6 @@ static int test_dtls12_connection_without_hvr(void)
 
         /* Try to accept a connection from the listener */
         serverssl = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
-
-        if (serverssl == NULL)
-            OSSL_sleep(1);
     }
 
     /*
@@ -2368,9 +2364,6 @@ static int test_dtls_is_listener_on_accepted_connection(void)
         }
 
         serverssl = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
-
-        if (serverssl == NULL)
-            OSSL_sleep(1);
     }
 
     /* The accepted connection is NOT a listener */
@@ -2508,9 +2501,6 @@ static int test_dtls_get_peer_addr_after_accept(void)
         }
 
         serverssl = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
-
-        if (serverssl == NULL)
-            OSSL_sleep(1);
     }
 
     /* Now test SSL_get_peer_addr on the accepted connection */
@@ -2658,9 +2648,6 @@ static int test_dtls_queue_len_after_accept(void)
         }
 
         serverssl = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
-
-        if (serverssl == NULL)
-            OSSL_sleep(1);
     }
 
     /* After accepting, queue should be empty again */
