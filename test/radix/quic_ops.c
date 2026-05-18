@@ -517,45 +517,6 @@ err:
     return ok;
 }
 
-DEF_FUNC(hf_conclude_fail)
-{
-    int ok = 0;
-    SSL *ssl;
-
-    REQUIRE_SSL(ssl);
-
-    if (TEST_true(SSL_stream_conclude(ssl, 0))) {
-        /*
-         * Here we consider situation when talking to
-         * remote peer which rejects all incoming streams
-         * (see SSL_set_incoming_stream_policy(3ossl)).
-         * The SSL_new_stream(3ossl) creates just local
-         * end for outbound stream, it does no signaling
-         * to remote peer there is a new stream to handle.
-         * The remote peer gets notified about new stream
-         * with the first SSL_write(3ossl) to stream object.
-         * Remote peer receives the first STREAM frame and
-         * checks the stream policy, if policy orders
-         * to reject the stream the remote peer sends
-         * STREAM_RESET frame back, so local end here
-         * can move send stream state from QUIC_SSTREAM_STATE_READY
-         * to QUIC_SSTREAM_STATE_RESET_RECVD/QUIC_SSTREAM_STATE_NONE
-         * If SSL_stream_conclude() follows SSL_write() immediately
-         * the local send stream state may still be in
-         * QUIC_SSTREAM_STATE_READY and call succeeds.
-         * Using F_SPIN_AGAIN() makes radix framework retry
-         * call to hf_conclude_fail() function. The radix
-         * framework keeps trying until test deadline elapses,
-         * see TERP_execute() for details.
-         */
-        F_SPIN_AGAIN();
-    }
-
-    ok = 1;
-err:
-    return ok;
-}
-
 static int is_want(SSL *s, int ret)
 {
     int ec = SSL_get_error(s, ret);

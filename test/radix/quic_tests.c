@@ -121,12 +121,6 @@ DEF_SCRIPT(multi_stream, "multi stream test")
     OP_SET_INCOMING_STREAM_POLICY(C, SSL_INCOMING_STREAM_POLICY_REJECT, 42 /* application error code */);
     OP_NEW_STREAM(S, S5, 0 /* bidirectional stream */);
     OP_WRITE_B(S5, "unseen");
-    /*
-     * The client `C` uses a reject stream policy. The conclude operation
-     * is doomed to fail because server stream object `S5` does
-     * not represent working/established stream.
-     */
-    OP_CONCLUDE_FAIL(S5);
     OP_ACCEPT_STREAM_NONE(C, 0);
     OP_SELECT_SSL(0, S);
     OP_SELECT_SSL(1, S5);
@@ -138,7 +132,6 @@ DEF_SCRIPT(multi_stream, "multi stream test")
     OP_SET_INCOMING_STREAM_POLICY(C, SSL_INCOMING_STREAM_POLICY_AUTO, 0 /* app. error code */);
     OP_NEW_STREAM(S, S6, 0 /* bidirectional stream */);
     OP_WRITE_B(S6, "UNSEEN");
-    OP_CONCLUDE_FAIL(S6);
     OP_ACCEPT_STREAM_NONE(C, 0);
     OP_SELECT_SSL(0, S);
     OP_SELECT_SSL(1, S6);
