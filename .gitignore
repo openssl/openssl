@@ -200,6 +200,7 @@ providers/implementations/rands/test_rng.inc
 /test/gost2814789t
 /test/ssltest_old
 /test/*test
+/test/*memfail
 /test/fips_aesavs
 /test/fips_desmovs
 /test/fips_dhvs
