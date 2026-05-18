@@ -24,8 +24,11 @@ DEFINE_PRIORITY_QUEUE_OF(size_t);
 
 static size_t num_rec_freed;
 
-static int size_t_compare(const size_t *a, const size_t *b)
+static int size_t_compare(const void *av, const void *bv)
 {
+    const size_t *a = av;
+    const size_t *b = bv;
+
     if (*a < *b)
         return -1;
     if (*a > *b)
@@ -33,17 +36,12 @@ static int size_t_compare(const size_t *a, const size_t *b)
     return 0;
 }
 
-static int qsort_size_t_compare(const void *a, const void *b)
-{
-    return size_t_compare((const size_t *)a, (const size_t *)b);
-}
-
 static int qsort_size_t_compare_rev(const void *a, const void *b)
 {
-    return size_t_compare((const size_t *)b, (const size_t *)a);
+    return size_t_compare(b, a);
 }
 
-static void free_checker(ossl_unused size_t *p)
+static void free_checker(ossl_unused void *p)
 {
     num_rec_freed++;
 }
@@ -72,7 +70,7 @@ static int test_size_t_priority_queue_int(int reserve, int order, int count,
     for (i = 0; i < count; i++)
         values[i] = random ? test_random() : (size_t)(count - i);
     memcpy(sorted, values, sizeof(*sorted) * count);
-    qsort(sorted, count, sizeof(*sorted), &qsort_size_t_compare);
+    qsort(sorted, count, sizeof(*sorted), &size_t_compare);
 
     if (order == 1)
         memcpy(values, sorted, sizeof(*values) * count);
@@ -105,7 +103,7 @@ static int test_size_t_priority_queue_int(int reserve, int order, int count,
             }
         }
         memcpy(sorted, values, sizeof(*sorted) * count);
-        qsort(sorted, count, sizeof(*sorted), &qsort_size_t_compare);
+        qsort(sorted, count, sizeof(*sorted), &size_t_compare);
     }
     for (i = 0; ossl_pqueue_size_t_peek(pq) != NULL; i++)
         if (!TEST_size_t_eq(*ossl_pqueue_size_t_peek(pq), sorted[i])
@@ -164,8 +162,11 @@ typedef struct info_st {
 
 DEFINE_PRIORITY_QUEUE_OF(INFO);
 
-static int cmp(const INFO *a, const INFO *b)
+static int cmp(const void *av, const void *bv)
 {
+    const INFO *a = av;
+    const INFO *b = bv;
+
     if (a->seq_num < b->seq_num)
         return -1;
     if (a->seq_num > b->seq_num)
