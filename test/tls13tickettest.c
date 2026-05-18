@@ -10,6 +10,7 @@
 #include <openssl/ssl.h>
 #include <openssl/ssl3.h>
 #include <openssl/tls1.h>
+#include "ssl/ssl_local.h"
 #include "internal/packet.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
@@ -47,6 +48,8 @@
  */
 #define CLIENT_VERSION_LEN 2
 #endif
+
+#define TICKET_KEYS_LENGTH (TLSEXT_KEYNAME_LENGTH + (2 * TLSEXT_TICK_KEY_LENGTH))
 
 struct stats {
     unsigned int tickets;
@@ -587,6 +590,68 @@ static int test_tls13_ticket_disable_server(void)
     return test;
 }
 
+/*
+ * Exercise the SSL_TICKET_NO_DECRYPT path in tls_parse_ctos_psk().
+ *
+ * Rotate ticket keys so that the previously issued ticket can no longer be
+ * decrypted. If session resumption fails due to a NO_DECRYPT, it falls back to
+ * a full handshake. In that case, ensure a new session ticket is issued.
+ */
+static int test_tls13_ticket_no_decrypt(void)
+{
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    unsigned char k1[TICKET_KEYS_LENGTH];
+    unsigned char k2[TICKET_KEYS_LENGTH];
+    int test;
+
+    memset(k1, 0xaa, sizeof(k1));
+    memset(k2, 0xbb, sizeof(k2));
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_int_eq(SSL_CTX_set_tlsext_ticket_keys(s, k1, sizeof(k1)), 1)
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, SSL_ERROR_NONE))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_uint_eq(initial.s.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.c.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.c.stats.tickets, 2)
+        && TEST_uint_eq(initial.s.stats.tickets, 2)
+        && TEST_uint_eq(initial.s.stats.ch_has_session_ticket, 1)
+        && TEST_uint_eq(initial.c.stats.ch_has_session_ticket, 1)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(initial.c.stats.sh_has_supported_versions, 1)
+        && TEST_uint_eq(initial.s.stats.sh_has_supported_versions, 1)
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        && TEST_int_eq(SSL_CTX_set_tlsext_ticket_keys(s, k2, sizeof(k2)), 1)
+        && TEST_true(tls_channel_init(c, s, &resumed))
+        && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, SSL_ERROR_NONE))
+        && TEST_false(SSL_session_reused(resumed.c.ssl))
+        && TEST_uint_eq(resumed.s.stats.nst_msgs, 2)
+        && TEST_uint_eq(resumed.c.stats.nst_msgs, 2)
+        && TEST_uint_eq(resumed.c.stats.tickets, 2)
+        && TEST_uint_eq(resumed.s.stats.tickets, 2)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(resumed.c.stats.sh_has_supported_versions, 1)
+        && TEST_uint_eq(resumed.s.stats.sh_has_supported_versions, 1);
+
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
 OPT_TEST_DECLARE_USAGE("\n")
 
 int setup_tests(void)
@@ -608,6 +673,7 @@ int setup_tests(void)
     ADD_TEST(test_tls13_ticket_initial_set_num_tickets_zero);
     ADD_TEST(test_tls13_ticket_resumed_set_num_tickets_zero);
     ADD_TEST(test_tls13_ticket_disable_server);
+    ADD_TEST(test_tls13_ticket_no_decrypt);
 
     return 1;
 }
