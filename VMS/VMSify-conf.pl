@@ -10,7 +10,7 @@
 use strict;
 use warnings;
 
-my @directory_vars = ( "dir", "certs", "crl_dir", "new_certs_dir" );
+my @directory_vars = ( "dir", "certs", "new_certs_dir" );
 my @file_vars = ( "database", "certificate", "serial", "crlnumber",
 		  "crl", "private_key", "RANDFILE" );
 while(<STDIN>) {

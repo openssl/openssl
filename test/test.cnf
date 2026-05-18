@@ -8,7 +8,6 @@ default_ca	= CA_default		# The default ca section
 
 dir		= ./demoCA		# Where everything is kept
 certs		= $dir/certs		# Where the issued certs are kept
-crl_dir		= $dir/crl		# Where the issued crl are kept
 database	= $dir/index.txt	# database index file.
 new_certs_dir	= $dir/new_certs	# default place for new certs.
 
