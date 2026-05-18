@@ -1298,6 +1298,7 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
 
     if (OCSP_response_status(resp) != OCSP_RESPONSE_STATUS_SUCCESSFUL) {
         OCSP_BASICRESP_free(bs);
+        bs = NULL;
         ret = X509_V_ERR_OCSP_RESP_INVALID;
         goto end;
     }
