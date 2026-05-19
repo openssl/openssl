@@ -13863,6 +13863,42 @@ static int alert_cb(SSL *s, unsigned char alert_code, void *arg)
     return 1;
 }
 
+/* Extension id reserved for private use by IANA */
+#define TEST_TLS_EXTENSION_ID 65282
+
+static int add_ext_cb_called = 0;
+static int parse_ext_cb_called = 0;
+
+static int add_old_ext(SSL *s, unsigned int ext_type,
+    const unsigned char **out, size_t *outlen,
+    int *al, void *add_arg)
+{
+    static const unsigned char data = 0xff;
+
+    add_ext_cb_called++;
+    *out = &data;
+    *outlen = 1;
+    return 1;
+}
+
+static void free_old_ext(SSL *s, unsigned int ext_type,
+    const unsigned char *out, void *add_arg)
+{
+    /* Do nothing */
+}
+
+static int parse_old_ext(SSL *s, unsigned int ext_type,
+    const unsigned char *in, size_t inlen,
+    int *al, void *parse_arg)
+{
+    parse_ext_cb_called++;
+    if (inlen != 1 || *in != 0xff) {
+        *al = SSL_AD_DECODE_ERROR;
+        return 0;
+    }
+    return 1;
+}
+
 /*
  * Test the QUIC TLS API
  * Test 0: Normal run
@@ -13917,9 +13953,30 @@ static int test_quic_tls(int idx)
         goto end;
 
     if (idx == 5) {
+        static int dummy = 1;
+
         if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(), NULL,
                 TLS1_3_VERSION, 0,
                 &sctx2, NULL, cert, privkey)))
+            goto end;
+
+        /*
+         * We add an old style custom extension to ensure that it gets correctly
+         * handled when we copy QUIC's connection specific custom extensions.
+         */
+        add_ext_cb_called = 0;
+        parse_ext_cb_called = 0;
+        if (!TEST_true(SSL_CTX_add_client_custom_ext(cctx,
+                TEST_TLS_EXTENSION_ID,
+                add_old_ext, free_old_ext, &dummy, parse_old_ext, &dummy)))
+            goto end;
+        if (!TEST_true(SSL_CTX_add_server_custom_ext(sctx,
+                TEST_TLS_EXTENSION_ID,
+                add_old_ext, free_old_ext, &dummy, parse_old_ext, &dummy)))
+            goto end;
+        if (!TEST_true(SSL_CTX_add_server_custom_ext(sctx2,
+                TEST_TLS_EXTENSION_ID,
+                add_old_ext, free_old_ext, &dummy, parse_old_ext, &dummy)))
             goto end;
 
         /* Set up SNI */
@@ -14010,6 +14067,18 @@ static int test_quic_tls(int idx)
         || !TEST_true(cdata.renc_level == OSSL_RECORD_PROTECTION_LEVEL_APPLICATION)
         || !TEST_true(cdata.wenc_level == OSSL_RECORD_PROTECTION_LEVEL_APPLICATION))
         goto end;
+
+    /*
+     * We only expect the add cb to have actually been called because we are
+     * using the old style callbacks that only apply to TLSv1.2. Since we are
+     * using TLSv1.3 here, the add will be called for the ClientHello but
+     * nothing else.
+     */
+    if (idx == 5) {
+        if (!TEST_int_eq(add_ext_cb_called, 1)
+            || !TEST_int_eq(parse_ext_cb_called, 0))
+            goto end;
+    }
 
     testresult = 1;
 end:
