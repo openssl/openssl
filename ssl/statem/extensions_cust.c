@@ -411,9 +411,6 @@ int custom_exts_copy_conn(custom_ext_methods *dst,
             if (methdst == NULL)
                 return 0;
 
-            for (i = 0; i < dst->meths_count; i++)
-                custom_ext_copy_old_cb(&methdst[i], &dst->meths[i], &err);
-
             dst->meths = methdst;
             methdst += dst->meths_count;
 
