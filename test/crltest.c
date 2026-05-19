@@ -81,6 +81,34 @@ static const char *kRoot[] = {
     NULL
 };
 
+static const char *kRoot2[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIID+TCCAuGgAwIBAgIBATANBgkqhkiG9w0BAQsFADCBizELMAkGA1UEBhMCVVMx\n",
+    "DzANBgNVBAgMBk5ldmFkYTENMAsGA1UEBwwEUmVubzEZMBcGA1UECgwQRXhhbXBs\n",
+    "ZSBBbHQgQ29ycDEeMBwGA1UECwwVQ2VydGlmaWNhdGUgQXV0aG9yaXR5MSEwHwYD\n",
+    "VQQDDBhFeGFtcGxlIEFsdCBDb3JwIFJvb3QgQ0EwHhcNMjYwMzEwMTIwMDAwWhcN\n",
+    "MzYwMzA3MTIwMDAwWjCBizELMAkGA1UEBhMCVVMxDzANBgNVBAgMBk5ldmFkYTEN\n",
+    "MAsGA1UEBwwEUmVubzEZMBcGA1UECgwQRXhhbXBsZSBBbHQgQ29ycDEeMBwGA1UE\n",
+    "CwwVQ2VydGlmaWNhdGUgQXV0aG9yaXR5MSEwHwYDVQQDDBhFeGFtcGxlIEFsdCBD\n",
+    "b3JwIFJvb3QgQ0EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDTXGOg\n",
+    "+elQT/IKNp8xbArzGmuwLlLMTc1UQNIGzYj8OZc8newhzwIiXltw0ifGYlTZV6Gv\n",
+    "xP/8V8Xwo0rroGpaizVtUmKwbKKzfisA4Ph3zGdGS2B6nOk1La1eZQJ46KkxabPY\n",
+    "4QHvZb4No0GKv0par2W/SfjOTl4Dw5hjmx6Q0lLAJVdkiFn+czyLyUZX7a8LdZWe\n",
+    "WTa24IOJWmNdbubre7U0u199gywuR9gCXP7vEb5vWz2xAQNB5B2JK3smt3QDm9Ob\n",
+    "6z/VKwa55rk1GVV8TDWrCZPj1VzdHKbjbmH9DnT1fyIibXE/o+gz5pgZq2XFTNp0\n",
+    "nKwAchvSxkGVK+cTAgMBAAGjZjBkMBIGA1UdEwEB/wQIMAYBAf8CAQAwDgYDVR0P\n",
+    "AQH/BAQDAgEGMB0GA1UdDgQWBBQPgimZbVczHuIhFVMrP0PefsYhazAfBgNVHSME\n",
+    "GDAWgBQPgimZbVczHuIhFVMrP0PefsYhazANBgkqhkiG9w0BAQsFAAOCAQEAD0Kx\n",
+    "6fKrMoOJd8NUAFPaAvtlMpu9cmFDEuIsoXN9waA3FkXeHd/tijktefexvZDz0s/F\n",
+    "sQBsW6rNOSeHteiROVRdBIm9sok0onA5LrHIXOeEF0CLJTk7RKrUfd8fbVxgEB8U\n",
+    "VpZjzpTcxES2BMy9qzFyj/lLsoqNBV1GqFVzZY7mTzsze6Xwi80uahIoANVf/wwk\n",
+    "Zq72Frquut7Ii0QrhExx++wRKZvSHN4T5eKu3se7m2s9Vmw2/dNGejKMp6pnlcCH\n",
+    "m97X57r4QWOX0BeLm7cp/FW7/4KMPdV4GkDJBWaI5i9ktPlO7MOKHmrKZSUW9xN2\n",
+    "D+feJXhQmaz8AcFA6Q==\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
 /* gitguardian:ignore */
 static const char *kRootPrivateKey[] = {
     "-----BEGIN PRIVATE KEY-----\n",
@@ -772,60 +800,210 @@ static const char *kCrlIDPWrongTag2[] = {
     NULL
 };
 
-/*
- * A well-formed CRL issued by kRoot (sha256WithRSAEncryption, inner and
- * outer signatureAlgorithm identical), used as the positive test case in
- * test_crl_sigalg_mismatch.
- */
-static const char *kCrlRootCA[] = {
+static const char *kIndirectCRLIssuer[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIECjCCAvKgAwIBAgICEAAwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVT\n",
+    "MRMwEQYDVQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUw\n",
+    "EwYDVQQKDAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhv\n",
+    "cml0eTEdMBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EwHhcNMjYwMzEwMTIw\n",
+    "MDAwWhcNMzYwMzA3MTIwMDAwWjCBnDELMAkGA1UEBhMCVVMxEzARBgNVBAgMCkNh\n",
+    "bGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xFTATBgNVBAoMDEV4YW1w\n",
+    "bGUgQ29ycDEeMBwGA1UECwwVQ2VydGlmaWNhdGUgQXV0aG9yaXR5MSkwJwYDVQQD\n",
+    "DCBFeGFtcGxlIENvcnAgSW5kaXJlY3QgQ1JMIElzc3VlcjCCASIwDQYJKoZIhvcN\n",
+    "AQEBBQADggEPADCCAQoCggEBAKgcYFF3+Z/A12AMb3P9Isl959u4QpX/fx4d+A38\n",
+    "8K8KmdzCAODNA6zjgRKfvhzZwF1sW+5DClcLC9dhClIsL+yNdLNbTm6L+ZZQoO39\n",
+    "3gExou+jKXMW1Ne8Z1U+g1QWVFmkGmrlcbl8zxx6QmAlKKr6LXQ8LryAzpJM7Fi7\n",
+    "IttC474U25PC1UWrWet/yfSWLWtcSIsj+Q+gKVIUMpUaM7thTfq9xRhLdoD5rFZG\n",
+    "crN4x5L7jx4lhf80k4lIdO5MmO84yFen5f1qvl824wtS3vfksXDAKBKZkhuz8tMd\n",
+    "UggD05zz7V9sa0NdqGC3Srw5O7CIKnGCkfs3UdMba62uxIMCAwEAAaNgMF4wDAYD\n",
+    "VR0TAQH/BAIwADAOBgNVHQ8BAf8EBAMCAQIwHQYDVR0OBBYEFF9mMI2VQ8+M0l6S\n",
+    "+cA1RMYGjxuaMB8GA1UdIwQYMBaAFP4UDhMbCWfLSg1L2k/z75C1Q9szMA0GCSqG\n",
+    "SIb3DQEBCwUAA4IBAQAJul5iFA3un8AyetqtY989Qd9IHKVNVJGrkwaLYPTkUXjb\n",
+    "iHt8NSPQqPMdCsvluIzAfxfH7Le5taiM0IUZhYXJyQSJenmV7jsNqA0VyUwqa85M\n",
+    "DfNDGuVyaUji+gHcgV1iQwDBBg2tu9RbOC+T7WnUGyBW7Ats2uVH47q9BcCqsNHZ\n",
+    "1WseFLfNsmaLXfZaI09MNX3b4S+dimdKucGmkspVNecRNY9ERHIpZUwQX/Q/UgaF\n",
+    "Oenex/WZQMXCa94fXXcE8F79s0JhLcWwYqg40UolCDuOM4awnJcNwEQAsawXjXjA\n",
+    "hiTorbY7SaLlB4v77XmnlZd4AaiWzMr0WlPf9dWN\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+static const char *kIndirectLeaf[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIE/zCCA+egAwIBAgICEAEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVT\n",
+    "MRMwEQYDVQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUw\n",
+    "EwYDVQQKDAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhv\n",
+    "cml0eTEdMBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EwHhcNMjYwMzEwMTIw\n",
+    "MDAwWhcNMjcwMzEwMTIwMDAwWjBvMQswCQYDVQQGEwJVUzETMBEGA1UECAwKQ2Fs\n",
+    "aWZvcm5pYTEVMBMGA1UECgwMRXhhbXBsZSBDb3JwMRUwEwYDVQQLDAxXZWIgU2Vy\n",
+    "dmljZXMxHTAbBgNVBAMMFGluZGlyZWN0LmV4YW1wbGUuY29tMIIBIjANBgkqhkiG\n",
+    "9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlb+pk71/ZyJEBwIrj/Z0eTOgysfNIikmkxg+\n",
+    "Fl1OEsX/2wYpvUm+y5mIDqjdVikMBzA0LfFlupG8d2zl46rbDDmClScP0lZAKsmD\n",
+    "AxSgAVnu0cAFKY9abF+SJkvn3XxlyhZKvd3eVDi4Tep4bC/fWMTvvm51nS5Ek3Ol\n",
+    "p6gTPFN/yoS6shOrIyiShJyINiXlhGNJP1+eDYdqordmD6AZOOeMSO/yXPbHNIn1\n",
+    "aa8T40wuUSHZr7ywNEK3K9ct9R6W76anZTO6lPENW+3IYABJZAMtDQyfo7MRv5Uv\n",
+    "hu5YY9MZ5/O52Zgkhw8vBMZ3W52r9CX4m3TwcBttrKVuLRBKmQIDAQABo4IBgTCC\n",
+    "AX0wDAYDVR0TAQH/BAIwADAOBgNVHQ8BAf8EBAMCBaAwHQYDVR0lBBYwFAYIKwYB\n",
+    "BQUHAwEGCCsGAQUFBwMCMB0GA1UdDgQWBBSezaxlDNqlAMxk4EkcLyTW/sV1hzAf\n",
+    "BgNVHSMEGDAWgBT+FA4TGwlny0oNS9pP8++QtUPbMzAfBgNVHREEGDAWghRpbmRp\n",
+    "cmVjdC5leGFtcGxlLmNvbTCB3AYDVR0fBIHUMIHRMIHOoCegJYYjaHR0cDovL2Ny\n",
+    "bC5leGFtcGxlLmNvbS9pbmRpcmVjdC5jcmyigaKkgZ8wgZwxCzAJBgNVBAYTAlVT\n",
+    "MRMwEQYDVQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUw\n",
+    "EwYDVQQKDAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhv\n",
+    "cml0eTEpMCcGA1UEAwwgRXhhbXBsZSBDb3JwIEluZGlyZWN0IENSTCBJc3N1ZXIw\n",
+    "DQYJKoZIhvcNAQELBQADggEBAB5FgdhZmD2BoeznN+rHg56JkbWV7cmvVH4O6ARn\n",
+    "ylSsWCJC4ovMnCZhR9mM0N74HAhcdH9REnHBGTTO3ldmMJBoPlZ0GaUUdVJbb03h\n",
+    "xrto+uBk1ixjuJcRR5qiXnR8uthLCyHKbRHy+ebYFKIlEeGAqfLTHkqUUHeZIFtu\n",
+    "p2WVCHsyEqx8gpSlHzg14e9ZaIbmRAgl8igmlq5FQo+Wi1fMnDk7L+rrXVNeZ7yC\n",
+    "iwgMEntM2omJRhVM/4xkYLICiBogdt8xCbM4yPy4ZOJzAdOTPnE/DsjY6p2Qyuqc\n",
+    "6w/LgbQGKdoAhj/+29YM1sGXUiem0OZj0Surm9XNr+NpBiM=\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+static const char *kCrlIndirect[] = {
     "-----BEGIN X509 CRL-----\n",
-    "MIIB2jCBwwIBATANBgkqhkiG9w0BAQsFADCBkDELMAkGA1UEBhMCVVMxEzARBgNV\n",
-    "BAgMCkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xFTATBgNVBAoM\n",
-    "DEV4YW1wbGUgQ29ycDEeMBwGA1UECwwVQ2VydGlmaWNhdGUgQXV0aG9yaXR5MR0w\n",
-    "GwYDVQQDDBRFeGFtcGxlIENvcnAgUm9vdCBDQRcNMjYwMTAxMDAwMDAwWhcNMjcw\n",
-    "MTAxMDAwMDAwWjANBgkqhkiG9w0BAQsFAAOCAQEAjLDGYBswRZpuaRh9qVXrP4i0\n",
-    "wttPikYZkkUk07/KU1zN6pS21Dqx1sEofrkqwRnKXq/hsoCz3sd7QFIv30v2iZwM\n",
-    "ioaksAjcGnaLqe8vuKVtIyiOpDSJR89l84BZr2I9+6osTYnPgroMHQ/7OUt+PKdE\n",
-    "1VAkA137tLMRw2qGPELdCyHA7LXr0gI6jeyLPLtb1blQrMzznp3y/trNWa+DKq6h\n",
-    "SflQrixmLeXTMBD/DDUd8Kj9HHmejbJNAsgaNHv9mtIhUVEspRM0020b3AeJyfTP\n",
-    "3oN/y4fgQ8q5v9i8lDbe8moCo+W0rS4ksWvB6SuYYj/NkUE4EtoIreSVtcz8JA==\n",
+    "MIICKjCCARICAQEwDQYJKoZIhvcNAQELBQAwgZwxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEp\n",
+    "MCcGA1UEAwwgRXhhbXBsZSBDb3JwIEluZGlyZWN0IENSTCBJc3N1ZXIXDTI2MDMx\n",
+    "MDA4MDAwMFoXDTI2MDYwODA4MDAwMFqgQTA/MB8GA1UdIwQYMBaAFF9mMI2VQ8+M\n",
+    "0l6S+cA1RMYGjxuaMA8GA1UdHAEB/wQFMAOEAf8wCwYDVR0UBAQCAhAAMA0GCSqG\n",
+    "SIb3DQEBCwUAA4IBAQA/WGgZvm/ojax+1oOSMG1626PgyIGOC0xcxMJDw/70JuYQ\n",
+    "mpSbUS6XIYUI+YlzgdHOl1HETV3nxLDYYb4e0CUxlREzurp/WZ2Zotxf7dN7JnDq\n",
+    "UgkDhjHEnlBcjX7MIJYfQcZCSKaxlRlgJvhPRD19e3n9nVRM7AMlR4rsBo5Iitmt\n",
+    "xj6hZ4TQBtSTud0RhT/DIs3g9ZoBGIziANZFVBPVIhxkFGzrnW4lweQi1N5TKnnv\n",
+    "6+d/JmRDeF6q7SLB/+4eQHbUUwxJdQRMkBVD4+eTumqhUfMxk6P11CPQlXCXmSjA\n",
+    "+PaHNFB8t+O/gVAQ7dWbLSlNB/lngQeMZGG0xLdP\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+static const char *kCrlIndirectRevoked[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIIC7TCCAdUCAQEwDQYJKoZIhvcNAQELBQAwgZwxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEp\n",
+    "MCcGA1UEAwwgRXhhbXBsZSBDb3JwIEluZGlyZWN0IENSTCBJc3N1ZXIXDTI2MDMx\n",
+    "MDA4MDAwMFoXDTI2MDYwODA4MDAwMFowgcAwgb0CAhABFw0yNjAzMDkxMjAwMDBa\n",
+    "MIGnMIGkBgNVHR0BAf8EgZkwgZakgZMwgZAxCzAJBgNVBAYTAlVTMRMwEQYDVQQI\n",
+    "DApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQKDAxF\n",
+    "eGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEdMBsG\n",
+    "A1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0GgQTA/MB8GA1UdIwQYMBaAFF9mMI2V\n",
+    "Q8+M0l6S+cA1RMYGjxuaMA8GA1UdHAEB/wQFMAOEAf8wCwYDVR0UBAQCAhABMA0G\n",
+    "CSqGSIb3DQEBCwUAA4IBAQBZsW13FmSxxDmAr5nzNg8IcRkP+IvoYEHfgUdpUD6A\n",
+    "A+T8Ktx62BNIv4lE6F5UsWCjUoF0iEpAGNoS3nArlTyWG0Nm2LYAKZcTUyjHAmVK\n",
+    "DxQR+l/nYFdWTLBzZroXLMmyelqQz8N+EaOwYTugA6U2DQHUraH2Fczb5S5Q3wx6\n",
+    "DcEkZwb3gkV0M4HG72KzrZvCB4JfXXgmSNwXIfnCoB6KC+OF9IK6aAzNS56iNGLo\n",
+    "+1DCyrIcNu0uny1I4VuZSPnbjjIPmAIKuJizw7ssazqmZ+6rq64LsFuoxqfM7YD2\n",
+    "cNGVq3tNAs3PTc4DtSStuGix8BCT1d1EgDcgBUD+yMf1\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+static const char *kIndirectCRLIssuerAlt[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIEBTCCAu2gAwIBAgICEAAwDQYJKoZIhvcNAQELBQAwgYsxCzAJBgNVBAYTAlVT\n",
+    "MQ8wDQYDVQQIDAZOZXZhZGExDTALBgNVBAcMBFJlbm8xGTAXBgNVBAoMEEV4YW1w\n",
+    "bGUgQWx0IENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEhMB8G\n",
+    "A1UEAwwYRXhhbXBsZSBBbHQgQ29ycCBSb290IENBMB4XDTI2MDMxMDEyMDAwMFoX\n",
+    "DTM2MDMwNzEyMDAwMFowgZwxCzAJBgNVBAYTAlVTMRMwEQYDVQQIDApDYWxpZm9y\n",
+    "bmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQKDAxFeGFtcGxlIENv\n",
+    "cnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEpMCcGA1UEAwwgRXhh\n",
+    "bXBsZSBDb3JwIEluZGlyZWN0IENSTCBJc3N1ZXIwggEiMA0GCSqGSIb3DQEBAQUA\n",
+    "A4IBDwAwggEKAoIBAQDghcroe445U41hW2KihlkXdvw3QnCzwhMyRf2qjQezP1Ld\n",
+    "Lp8vjIjTZebxEXXGj7xI9Sy9EJFsSfQ79KFjp4txsBSfDsty3NyWxmWnQ3Og/Q6Q\n",
+    "o9W6Rfjgc3pMLI5K2KDH7CXu0JMedu55aDWe/IIuSNVD+1CPmbEp1cMuI/Jw7G/M\n",
+    "uQPTXyx9hFWng7YFrzp1zHK9C9JvcYPFJlo/kmcXTbBTX9/9SUIcZC8xKJ3buSZW\n",
+    "9E3saex6ro4Qm5A3k0X9ijb6AevF6+LvRTkOwPUnSQ/hwE7ljsPdN6osue7pVnBS\n",
+    "ZdBLDcprxgy/Ywy3GJQCf4bpK4aKq/K9I/1Q/4JnAgMBAAGjYDBeMAwGA1UdEwEB\n",
+    "/wQCMAAwDgYDVR0PAQH/BAQDAgECMB0GA1UdDgQWBBRE+kGeIcb05GFAL/v6klEx\n",
+    "hAJyujAfBgNVHSMEGDAWgBQPgimZbVczHuIhFVMrP0PefsYhazANBgkqhkiG9w0B\n",
+    "AQsFAAOCAQEAZANoU9afzVHLaFEXhK7LAzoQxladrUTL/OFDDMzykKy2iK9FTCO7\n",
+    "nGwkjL0PvZi0rm9WJy7tWedLNwNNP7O3WulEoZjpxQTJCKk97UG3mIjQkkMiQ6Sx\n",
+    "E7UGMeZoSriKvPJc628ohj4Hux2pc1xpex1oay9ezQCFud+Bt4UUrxl3AlzlJfo2\n",
+    "TqOqgpKrTfkREeHdClaZD7Sz+SNmBQY6hj+asRPCFSsFb9SsbsaBePuyP6fp9BWO\n",
+    "JbiWY2aLBHt7V6k6pSkvb4E41PyoyQZydtB5Gq89X36UfMyik+tFi9ti0xKlgQSB\n",
+    "Jv1jcqUQRVcKt1J5ifxA/jw6eBn74FKLzA==\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+static const char *kCrlIndirectAlt[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICKjCCARICAQEwDQYJKoZIhvcNAQELBQAwgZwxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEp\n",
+    "MCcGA1UEAwwgRXhhbXBsZSBDb3JwIEluZGlyZWN0IENSTCBJc3N1ZXIXDTI2MDMx\n",
+    "MDA4MDAwMFoXDTI2MDYwODA4MDAwMFqgQTA/MB8GA1UdIwQYMBaAFET6QZ4hxvTk\n",
+    "YUAv+/qSUTGEAnK6MA8GA1UdHAEB/wQFMAOEAf8wCwYDVR0UBAQCAhAAMA0GCSqG\n",
+    "SIb3DQEBCwUAA4IBAQA2B0S+8aXt6N1DkdOY3tDq8oHYBkbeeYbLZICz021ZspYl\n",
+    "AMSVIJi4TI4qNyYkgJs9STdHcRbJ+cDadyTH4XkaAj/zQ1nahQ+9b/JzBu1AoWqJ\n",
+    "B/Ir05rxR7/S6nVbczCg5X0dTt9LJKjz45XyVkDN0JBZuTM5XXwOHJLUKpgMFGlh\n",
+    "0TTQqF4c5rmXHqec9lZa1HMHVRJD7b9r+UIl3+HrxXFCpE9WrxWko0M0S9ThGJgH\n",
+    "oJ8UPXEAm561Yu+AnRW9pRikz1bb5sgr6hxOYMaYQYcQiTIYNJQ6uJDiKgUBQeeI\n",
+    "jVGFE2NHs4m2vhunkfV2cEEmP4kLdLqf9GxXcxTl\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+static const char *kIndirectCRLIssuerNoChain[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIEGjCCAwKgAwIBAgICEAAwDQYJKoZIhvcNAQELBQAwgaAxCzAJBgNVBAYTAlVT\n",
+    "MRAwDgYDVQQIDAdXeW9taW5nMREwDwYDVQQHDAhDaGV5ZW5uZTEdMBsGA1UECgwU\n",
+    "RXhhbXBsZSBQaGFudG9tIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhv\n",
+    "cml0eTEtMCsGA1UEAwwkRXhhbXBsZSBQaGFudG9tIE1pc3NpbmcgSW50ZXJtZWRp\n",
+    "YXRlMB4XDTI2MDMxMDEyMDAwMFoXDTM2MDMwNzEyMDAwMFowgZwxCzAJBgNVBAYT\n",
+    "AlVTMRMwEQYDVQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2Nv\n",
+    "MRUwEwYDVQQKDAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1\n",
+    "dGhvcml0eTEpMCcGA1UEAwwgRXhhbXBsZSBDb3JwIEluZGlyZWN0IENSTCBJc3N1\n",
+    "ZXIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDNi3Mbkqrr+Pn+OSBr\n",
+    "PccsRxaCSnCk6hXZ9VgE+BH7S9WanAModTstcC4k/EIcbAhL4GbrV98QbGXEUHUd\n",
+    "HyAnauw4DoDrhWAXwB4miIaNOWMSusOA8SKiLOtDj3Y3gR02wCL9j43keUUSBXiJ\n",
+    "AXlemQjE27h8lR3kzr6ltyJpNx44X2LOm9H8PsvW1Axh600zBbxBHMZvNqOfnJIU\n",
+    "R7vNrcjzzMB8Vfxj+AafT3mmThgyjdreC+J5bUkLJ067BG71BdW19gxvSillD7qY\n",
+    "0jFJt5va70oqTbGc8DgQai/G+YhKLrySWOMuSOEdONvZ73IWhmW6xAfuY06kc+ZH\n",
+    "FmytAgMBAAGjYDBeMAwGA1UdEwEB/wQCMAAwDgYDVR0PAQH/BAQDAgECMB0GA1Ud\n",
+    "DgQWBBRFcWkLSgjT/PjhFRBOIMKtY2KVoDAfBgNVHSMEGDAWgBTYK7cenv3KqG8T\n",
+    "zwvh3DIrr8BIkzANBgkqhkiG9w0BAQsFAAOCAQEAnYV6G1ypPSK9XFVcFKBGft6u\n",
+    "uxbL/ld8pHaecd/9VtE+A6GT7haPlwM3ZJjfU8rNOHF0BbDOmIevcrjCsaMbdQ0y\n",
+    "KxAKxxGSHRljSbI286PotISOFghBR8RpZrWSLEXghGV5ixC6MJNGQoVZ2SF0OHlL\n",
+    "WXJsIXrUtEyx0ZtYegGxv8tb/RaJeOu1kKCQcvKerWhc64XOGkuLuCHQjvqtTM2A\n",
+    "BCtkcavwOytClDK2hdY1pOR0Y6ms5VUK25pnrTXy+apWQovCsGddNI32QIvghyki\n",
+    "UNZk/IB5jxCf+upO2/MzEFXievKg7qUOs68r/UiqDNRK43bYoNUYzlsQYE357A==\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+static const char *kCrlIndirectNoChain[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICKjCCARICAQEwDQYJKoZIhvcNAQELBQAwgZwxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEp\n",
+    "MCcGA1UEAwwgRXhhbXBsZSBDb3JwIEluZGlyZWN0IENSTCBJc3N1ZXIXDTI2MDMx\n",
+    "MDA4MDAwMFoXDTI2MDYwODA4MDAwMFqgQTA/MB8GA1UdIwQYMBaAFEVxaQtKCNP8\n",
+    "+OEVEE4gwq1jYpWgMA8GA1UdHAEB/wQFMAOEAf8wCwYDVR0UBAQCAhAAMA0GCSqG\n",
+    "SIb3DQEBCwUAA4IBAQDJVHfKcWzjq2/9V8R4LXDNUz+7YjiSUp4Qlb9hMFDpPhHO\n",
+    "pYRHZrWUom3tcTxG2Yfqc3hroMFGcepQxU32dCT2ZilDnv6UrIOyLjg6xG+4wIsE\n",
+    "V7MHEcleeGKpaSfEfzSwED7YYj0KuEK1w9qxP5tsUZGe49q2JiYPusi9zVjMdXeC\n",
+    "7Q8WN6ujoEeGlI1rWyUWeB/ZsV9n48ZVD5oCD1opYSR78tsGpQJNs6PuRdRDoejD\n",
+    "pOwgf2nyLnjwZG1ldO1g0S/e6D6H6YzINy9vgcFwLcb/QKZYHXU34EmBoD8bP4Ge\n",
+    "LhEwlP6qap/WGI5GZxQQbVVhqD+wSz/8zZ8xiXAN\n",
     "-----END X509 CRL-----\n",
     NULL
 };
 
 /*
- * kCrlMismatchedSigAlg is issued by kRoot with a deliberately inconsistent
- * pair of signatureAlgorithm fields: the inner (signed) copy inside
- * TBSCertList claims ecdsaWithSHA256, while the outer wrapper carries
- * sha256WithRSAEncryption -- and the actual signature is a valid RSA-SHA256
- * signature over that TBSCertList.  Without the inner/outer comparison,
- * X509_CRL_verify() would accept this CRL because the RSA signature checks
- * out.  RFC 5280 section 5.1.1.2 requires the two fields to be identical.
- */
-static const char *kCrlMismatchedSigAlg[] = {
-    "-----BEGIN X509 CRL-----\n",
-    "MIIB1zCBwAIBATAKBggqhkjOPQQDAjCBkDELMAkGA1UEBhMCVVMxEzARBgNVBAgM\n",
-    "CkNhbGlmb3JuaWExFjAUBgNVBAcMDVNhbiBGcmFuY2lzY28xFTATBgNVBAoMDEV4\n",
-    "YW1wbGUgQ29ycDEeMBwGA1UECwwVQ2VydGlmaWNhdGUgQXV0aG9yaXR5MR0wGwYD\n",
-    "VQQDDBRFeGFtcGxlIENvcnAgUm9vdCBDQRcNMjYwMTAxMDAwMDAwWhcNMjcwMTAx\n",
-    "MDAwMDAwWjANBgkqhkiG9w0BAQsFAAOCAQEAcle5SUuN1XIx5amjddTqDPyEm9pP\n",
-    "sNeBwR+TQi19pWHtQ5anr6PBIAxHC5uxhVpZDScZu0TlodWigo+1bfAJRyrIm/6+\n",
-    "AbmAyNC4txpNsOHgCFGW7q9T8OutaOhUw+jC6i3bxUQZ64L1sXuy2nZMzU19+Aro\n",
-    "TxSWYkIJg65SKwM/8ggyd5G7TXkv7w19+W/7Y9JV0c+kPueUZSgEGUG/GJF/Nrrc\n",
-    "TRfvqz7Qs9H9+hUiQl5K7tF9gj6aU3p1s1IZKR2x0lv4wDRUUgIjrvRzfQSGjhgf\n",
-    "6rBILI3EIxPN/PoZ3mHLYkhH5IyNj9R2GlMle52isNdW8BiNlePLx0/Jzg==\n",
-    "-----END X509 CRL-----\n",
-    NULL
-};
-
-/*
- * Verify |leaf| certificate (chained up to |root|).  |crls| if
- * not NULL, is a list of CRLs to include in the verification. It is
- * also free'd before returning, which is kinda yucky but convenient.
+ * Verify |leaf| certificate (chained up to |root|, optionally also |root2|).
+ * |crls|, if not NULL, is a list of CRLs to include in the verification. It
+ * is also free'd before returning, which is kinda yucky but convenient.
+ * |untrusted| sets the list of untrusted certs. |store_root| seeds X509_STORE
+ * with |root| (and |root2| if non-NULL).
  * Returns a value from X509_V_ERR_xxx or X509_V_OK.
  */
-static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
-    unsigned long flags, time_t verification_time)
+static int verify_ex(X509 *leaf, X509 *root, X509 *root2,
+    STACK_OF(X509) *untrusted, STACK_OF(X509_CRL) *crls,
+    unsigned long flags, time_t verification_time, int store_root)
 {
     X509_STORE_CTX *ctx = X509_STORE_CTX_new();
     X509_STORE *store = X509_STORE_new();
@@ -839,19 +1017,34 @@ static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
         || !TEST_ptr(roots))
         goto err;
 
-    /* Create a stack; upref the cert because we free it below. */
+    /* Create a stack; upref the certs because we free them below. */
     if (!TEST_true(X509_up_ref(root)))
         goto err;
     if (!TEST_true(sk_X509_push(roots, root))) {
         X509_free(root);
         goto err;
     }
-    if (!TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL)))
+    if (root2 != NULL) {
+        if (!TEST_true(X509_up_ref(root2)))
+            goto err;
+        if (!TEST_true(sk_X509_push(roots, root2))) {
+            X509_free(root2);
+            goto err;
+        }
+    }
+    if (store_root) {
+        if (!TEST_true(X509_STORE_add_cert(store, root)))
+            goto err;
+        if (root2 != NULL && !TEST_true(X509_STORE_add_cert(store, root2)))
+            goto err;
+    }
+    if (!TEST_true(X509_STORE_CTX_init(ctx, store, leaf, untrusted)))
         goto err;
     X509_STORE_CTX_set0_trusted_stack(ctx, roots);
     X509_STORE_CTX_set0_crls(ctx, crls);
     X509_VERIFY_PARAM_set_time(param, verification_time);
-    if (!TEST_long_eq((long)X509_VERIFY_PARAM_get_time(param), (long)verification_time))
+    if (!TEST_long_eq((long)X509_VERIFY_PARAM_get_time(param),
+            (long)verification_time))
         goto err;
     X509_VERIFY_PARAM_set_depth(param, 16);
     if (flags)
@@ -860,8 +1053,10 @@ static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
     param = NULL;
 
     ERR_clear_error();
+    MFAIL_start();
     status = X509_verify_cert(ctx) == 1 ? X509_V_OK
                                         : X509_STORE_CTX_get_error(ctx);
+    MFAIL_end();
 err:
     OSSL_STACK_OF_X509_free(roots);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
@@ -869,6 +1064,16 @@ err:
     X509_STORE_CTX_free(ctx);
     X509_STORE_free(store);
     return status;
+}
+
+/*
+ * Like verify_ex but not using any untrusted certs and does not store root and
+ * have root2.
+ */
+static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
+    unsigned long flags, time_t verification_time)
+{
+    return verify_ex(leaf, root, NULL, NULL, crls, flags, verification_time, 0);
 }
 
 /*
@@ -1482,6 +1687,134 @@ static int test_crl_extension_duplicate_serial(void)
     return test;
 }
 
+static int test_crl_indirect_mfail(void)
+{
+    X509 *root = NULL;
+    X509 *icrl_issuer = NULL;
+    X509 *leaf = NULL;
+    X509_CRL *crl = NULL;
+    STACK_OF(X509) *untrusted = NULL;
+    STACK_OF(X509_CRL) *crls = NULL;
+    unsigned long flags = X509_V_FLAG_CRL_CHECK
+        | X509_V_FLAG_EXTENDED_CRL_SUPPORT;
+    int test;
+
+    test = TEST_ptr(root = X509_from_strings(kRoot))
+        && TEST_ptr(icrl_issuer = X509_from_strings(kIndirectCRLIssuer))
+        && TEST_ptr(leaf = X509_from_strings(kIndirectLeaf))
+        && TEST_ptr(crl = CRL_from_strings(kCrlIndirect))
+        && TEST_ptr(untrusted = sk_X509_new_null())
+        && TEST_true(sk_X509_push(untrusted, icrl_issuer))
+        && TEST_ptr(crls = make_CRL_stack(crl, NULL));
+
+    if (test) {
+        test = verify_ex(leaf, root, NULL, untrusted, crls, flags, kVerify, 1)
+            == X509_V_OK;
+    }
+
+    sk_X509_free(untrusted);
+    X509_CRL_free(crl);
+    X509_free(icrl_issuer);
+    X509_free(leaf);
+    X509_free(root);
+    return test;
+}
+
+static int test_crl_indirect_revoked(void)
+{
+    X509 *root = NULL;
+    X509 *icrl_issuer = NULL;
+    X509 *leaf = NULL;
+    X509_CRL *crl = NULL;
+    STACK_OF(X509) *untrusted = NULL;
+    STACK_OF(X509_CRL) *crls;
+    unsigned long flags = X509_V_FLAG_CRL_CHECK
+        | X509_V_FLAG_EXTENDED_CRL_SUPPORT;
+    int test;
+
+    test = TEST_ptr(root = X509_from_strings(kRoot))
+        && TEST_ptr(icrl_issuer = X509_from_strings(kIndirectCRLIssuer))
+        && TEST_ptr(leaf = X509_from_strings(kIndirectLeaf))
+        && TEST_ptr(crl = CRL_from_strings(kCrlIndirectRevoked))
+        && TEST_ptr(untrusted = sk_X509_new_null())
+        && TEST_true(sk_X509_push(untrusted, icrl_issuer))
+        && TEST_ptr(crls = make_CRL_stack(crl, NULL))
+        && TEST_int_eq(verify_ex(leaf, root, NULL, untrusted, crls, flags, kVerify, 1),
+            X509_V_ERR_CERT_REVOKED);
+
+    sk_X509_free(untrusted);
+    X509_CRL_free(crl);
+    X509_free(icrl_issuer);
+    X509_free(leaf);
+    X509_free(root);
+    return test;
+}
+
+static int test_crl_indirect_wrong_ta(void)
+{
+    X509 *root = NULL;
+    X509 *root2 = NULL;
+    X509 *icrl_issuer = NULL;
+    X509 *leaf = NULL;
+    X509_CRL *crl = NULL;
+    STACK_OF(X509) *untrusted = NULL;
+    STACK_OF(X509_CRL) *crls;
+    unsigned long flags = X509_V_FLAG_CRL_CHECK
+        | X509_V_FLAG_EXTENDED_CRL_SUPPORT;
+    int test;
+
+    test = TEST_ptr(root = X509_from_strings(kRoot))
+        && TEST_ptr(root2 = X509_from_strings(kRoot2))
+        && TEST_ptr(icrl_issuer = X509_from_strings(kIndirectCRLIssuerAlt))
+        && TEST_ptr(leaf = X509_from_strings(kIndirectLeaf))
+        && TEST_ptr(crl = CRL_from_strings(kCrlIndirectAlt))
+        && TEST_ptr(untrusted = sk_X509_new_null())
+        && TEST_true(sk_X509_push(untrusted, icrl_issuer))
+        && TEST_ptr(crls = make_CRL_stack(crl, NULL))
+        && TEST_int_eq(verify_ex(leaf, root, root2, untrusted, crls, flags,
+                           kVerify, 1),
+            X509_V_ERR_CRL_PATH_VALIDATION_ERROR);
+
+    sk_X509_free(untrusted);
+    X509_CRL_free(crl);
+    X509_free(icrl_issuer);
+    X509_free(leaf);
+    X509_free(root2);
+    X509_free(root);
+    return test;
+}
+
+static int test_crl_indirect_no_chain(void)
+{
+    X509 *root = NULL;
+    X509 *icrl_issuer = NULL;
+    X509 *leaf = NULL;
+    X509_CRL *crl = NULL;
+    STACK_OF(X509) *untrusted = NULL;
+    STACK_OF(X509_CRL) *crls;
+    unsigned long flags = X509_V_FLAG_CRL_CHECK
+        | X509_V_FLAG_EXTENDED_CRL_SUPPORT;
+    int test;
+
+    test = TEST_ptr(root = X509_from_strings(kRoot))
+        && TEST_ptr(icrl_issuer = X509_from_strings(kIndirectCRLIssuerNoChain))
+        && TEST_ptr(leaf = X509_from_strings(kIndirectLeaf))
+        && TEST_ptr(crl = CRL_from_strings(kCrlIndirectNoChain))
+        && TEST_ptr(untrusted = sk_X509_new_null())
+        && TEST_true(sk_X509_push(untrusted, icrl_issuer))
+        && TEST_ptr(crls = make_CRL_stack(crl, NULL))
+        && TEST_int_eq(verify_ex(leaf, root, NULL, untrusted, crls, flags,
+                           kVerify, 1),
+            X509_V_ERR_CRL_PATH_VALIDATION_ERROR);
+
+    sk_X509_free(untrusted);
+    X509_CRL_free(crl);
+    X509_free(icrl_issuer);
+    X509_free(leaf);
+    X509_free(root);
+    return test;
+}
+
 static int test_crl_diff_mfail(void)
 {
     X509_CRL *base_crl = NULL, *newer_crl = NULL, *delta = NULL;
@@ -1580,6 +1913,10 @@ int setup_tests(void)
     ADD_TEST(test_crl_extension_duplicate);
     ADD_TEST(test_crl_extension_duplicate_entry);
     ADD_TEST(test_crl_extension_duplicate_serial);
+    ADD_MFAIL_NO_CHECK_TEST(test_crl_indirect_mfail);
+    ADD_TEST(test_crl_indirect_revoked);
+    ADD_TEST(test_crl_indirect_wrong_ta);
+    ADD_TEST(test_crl_indirect_no_chain);
     ADD_ALL_TESTS(test_reuse_crl, 6);
     ADD_MFAIL_TEST(test_crl_diff_mfail);
     ADD_TEST(test_crl_sigalg_mismatch);
