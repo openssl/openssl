@@ -399,7 +399,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
             s = OBJ_nid2sn(nid);
         if (s != NULL) {
             if (buf != NULL)
-                OPENSSL_strlcpy(buf, s, buf_len);
+                return (int)OPENSSL_strlcpy(buf, s, buf_len);
             return (int)strlen(s);
         }
     }
