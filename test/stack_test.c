@@ -29,17 +29,17 @@
 typedef struct {
     int n;
     char c;
-} SS;
+} TST_SS;
 
 typedef union {
     int n;
     char c;
-} SU;
+} TST_SU;
 
 DEFINE_SPECIAL_STACK_OF(sint, int)
 DEFINE_SPECIAL_STACK_OF_CONST(uchar, unsigned char)
-DEFINE_STACK_OF(SS)
-DEFINE_STACK_OF_CONST(SU)
+DEFINE_STACK_OF(TST_SS)
+DEFINE_STACK_OF_CONST(TST_SU)
 
 static int int_compare(const int *const *a, const int *const *b)
 {
@@ -325,16 +325,16 @@ end:
     return testresult;
 }
 
-static SS *SS_copy(const SS *p)
+static TST_SS *SS_copy(const TST_SS *p)
 {
-    SS *q = OPENSSL_malloc(sizeof(*q));
+    TST_SS *q = OPENSSL_malloc(sizeof(*q));
 
     if (q != NULL)
         memcpy(q, p, sizeof(*q));
     return q;
 }
 
-static void SS_free(SS *p)
+static void SS_free(TST_SS *p)
 {
     OPENSSL_free(p);
 }
@@ -351,9 +351,9 @@ static void string_free(char *p)
 
 static int test_SS_stack(void)
 {
-    STACK_OF(SS) *s = sk_SS_new_null();
-    STACK_OF(SS) *r = NULL;
-    SS *v[10], *p;
+    STACK_OF(TST_SS) *s = sk_TST_SS_new_null();
+    STACK_OF(TST_SS) *r = NULL;
+    TST_SS *v[10], *p;
     const int n = OSSL_NELEM(v);
     int i;
     int testresult = 0;
@@ -366,25 +366,25 @@ static int test_SS_stack(void)
             goto end;
         v[i]->n = i;
         v[i]->c = 'A' + i;
-        if (!TEST_int_eq(sk_SS_num(s), i)) {
+        if (!TEST_int_eq(sk_TST_SS_num(s), i)) {
             TEST_info("SS stack size %d", i);
             goto end;
         }
-        sk_SS_push(s, v[i]);
+        sk_TST_SS_push(s, v[i]);
     }
-    if (!TEST_int_eq(sk_SS_num(s), n))
+    if (!TEST_int_eq(sk_TST_SS_num(s), n))
         goto end;
 
     /* deepcopy */
-    r = sk_SS_deep_copy(NULL, &SS_copy, &SS_free);
-    if (sk_SS_num(r) != 0)
+    r = sk_TST_SS_deep_copy(NULL, &SS_copy, &SS_free);
+    if (sk_TST_SS_num(r) != 0)
         goto end;
-    sk_SS_free(r);
-    r = sk_SS_deep_copy(s, &SS_copy, &SS_free);
+    sk_TST_SS_free(r);
+    r = sk_TST_SS_deep_copy(s, &SS_copy, &SS_free);
     if (!TEST_ptr(r))
         goto end;
     for (i = 0; i < n; i++) {
-        p = sk_SS_value(r, i);
+        p = sk_TST_SS_value(r, i);
         if (!TEST_ptr_ne(p, v[i])) {
             TEST_info("SS deepcopy non-copy %d", i);
             goto end;
@@ -400,26 +400,26 @@ static int test_SS_stack(void)
     }
 
     /* pop_free - we rely on the malloc debug to catch the leak */
-    sk_SS_pop_free(r, &SS_free);
+    sk_TST_SS_pop_free(r, &SS_free);
     r = NULL;
 
     /* delete_ptr */
-    p = sk_SS_delete_ptr(s, v[3]);
+    p = sk_TST_SS_delete_ptr(s, v[3]);
     if (!TEST_ptr(p))
         goto end;
     SS_free(p);
-    if (!TEST_int_eq(sk_SS_num(s), n - 1))
+    if (!TEST_int_eq(sk_TST_SS_num(s), n - 1))
         goto end;
     for (i = 0; i < n - 1; i++)
-        if (!TEST_ptr_eq(sk_SS_value(s, i), v[i < 3 ? i : 1 + i])) {
+        if (!TEST_ptr_eq(sk_TST_SS_value(s, i), v[i < 3 ? i : 1 + i])) {
             TEST_info("SS delete ptr item %d", i);
             goto end;
         }
 
     testresult = 1;
 end:
-    sk_SS_pop_free(r, &SS_free);
-    sk_SS_pop_free(s, &SS_free);
+    sk_TST_SS_pop_free(r, &SS_free);
+    sk_TST_SS_pop_free(s, &SS_free);
     return testresult;
 }
 
@@ -474,8 +474,8 @@ end:
 
 static int test_SU_stack(void)
 {
-    STACK_OF(SU) *s = sk_SU_new_null();
-    SU v[10];
+    STACK_OF(TST_SU) *s = sk_TST_SU_new_null();
+    TST_SU v[10];
     const int n = OSSL_NELEM(v);
     int i;
     int testresult = 0;
@@ -486,25 +486,25 @@ static int test_SU_stack(void)
             v[i].n = i;
         else
             v[i].c = 'A' + i;
-        if (!TEST_int_eq(sk_SU_num(s), i)) {
+        if (!TEST_int_eq(sk_TST_SU_num(s), i)) {
             TEST_info("SU stack size %d", i);
             goto end;
         }
-        sk_SU_push(s, v + i);
+        sk_TST_SU_push(s, v + i);
     }
-    if (!TEST_int_eq(sk_SU_num(s), n))
+    if (!TEST_int_eq(sk_TST_SU_num(s), n))
         goto end;
 
     /* check the pointers are correct */
     for (i = 0; i < n; i++)
-        if (!TEST_ptr_eq(sk_SU_value(s, i), v + i)) {
+        if (!TEST_ptr_eq(sk_TST_SU_value(s, i), v + i)) {
             TEST_info("SU pointer check %d", i);
             goto end;
         }
 
     testresult = 1;
 end:
-    sk_SU_free(s);
+    sk_TST_SU_free(s);
     return testresult;
 }
 
