@@ -31,6 +31,17 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * s390x: Disable mod-expo offloading to a crypto card for small exponents.
+   Add a new keyword `cex_min_bits:<bits>` for the `OPENSSL_s390xcap`
+   environment variable to specify the minimum number of bits that the
+   exponent must have to offload the operation to the crypto card.
+   Operations with smaller exponents fall back to software calculation.
+   Mod-expo operations with small exponents are faster in software than
+   via the crypto card. The default minimum exponent size is 2048 bits,
+   but this can be changed via the `OPENSSL_s390xcap` environment variable.
+
+   *Ingo Franzki*
+
  * Fixed TLS 1.3 external PSK connections being wrongly rejected when
    the client sets a non-empty session ID context.
 
