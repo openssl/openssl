@@ -586,8 +586,6 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     { TLSEXT_SIGALG_ecdsa_secp384r1_sha384, TLSEXT_SIGALG_ecdsa_secp384r1_sha384_name },
     { TLSEXT_SIGALG_ecdsa_secp521r1_sha512, TLSEXT_SIGALG_ecdsa_secp521r1_sha512_name },
     { TLSEXT_SIGALG_ecdsa_sha224, TLSEXT_SIGALG_ecdsa_sha224_name },
-    { TLSEXT_SIGALG_ed25519, TLSEXT_SIGALG_ed25519_name },
-    { TLSEXT_SIGALG_ed448, TLSEXT_SIGALG_ed448_name },
     { TLSEXT_SIGALG_ecdsa_sha1, TLSEXT_SIGALG_ecdsa_sha1_name },
     { TLSEXT_SIGALG_rsa_pss_rsae_sha256, TLSEXT_SIGALG_rsa_pss_rsae_sha256_name },
     { TLSEXT_SIGALG_rsa_pss_rsae_sha384, TLSEXT_SIGALG_rsa_pss_rsae_sha384_name },
@@ -610,18 +608,15 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     { TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256, TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256_name },
     { TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512, TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512_name },
     { TLSEXT_SIGALG_gostr34102001_gostr3411, TLSEXT_SIGALG_gostr34102001_gostr3411_name },
+    { TLSEXT_SIGALG_sm2sig_sm3, TLSEXT_SIGALG_sm2sig_sm3_name },
+    { TLSEXT_SIGALG_ed25519, TLSEXT_SIGALG_ed25519_name },
+    { TLSEXT_SIGALG_ed448, TLSEXT_SIGALG_ed448_name },
     { TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256, TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256_name },
     { TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384, TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384_name },
     { TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512, TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512_name },
-    /*
-     * Well known sigalgs that we happen to know about, but only come from
-     * provider capability declarations (hence no macros for the
-     * codepoints/names)
-     */
-    { 0x0904, "mldsa44" },
-    { 0x0905, "mldsa65" },
-    { 0x0906, "mldsa87" },
-    { 0x0708, "sm2sig_sm3" },
+    { TLSEXT_SIGALG_mldsa44, TLSEXT_SIGALG_mldsa44_name },
+    { TLSEXT_SIGALG_mldsa65, TLSEXT_SIGALG_mldsa65_name },
+    { TLSEXT_SIGALG_mldsa87, TLSEXT_SIGALG_mldsa87_name },
 };
 
 static const ssl_trace_tbl ssl_ctype_tbl[] = {
