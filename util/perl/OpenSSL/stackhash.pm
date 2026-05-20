@@ -69,12 +69,25 @@ SKM_DEFINE_STACK_OF_INTERNAL(${nametype}, ${realtype}, ${plaintype})
 #define sk_${nametype}_find_all(sk, ptr, pnum) OPENSSL_sk_find_all(ossl_check_${nametype}_sk_type(sk), ossl_check_${nametype}_type(ptr), pnum)
 #define sk_${nametype}_sort(sk) OPENSSL_sk_sort(ossl_check_${nametype}_sk_type(sk))
 #define sk_${nametype}_is_sorted(sk) OPENSSL_sk_is_sorted(ossl_check_const_${nametype}_sk_type(sk))
-#define sk_${nametype}_dup(sk) ((STACK_OF(${nametype}) *)OPENSSL_sk_dup(ossl_check_const_${nametype}_sk_type(sk)))
+#define sk_${nametype}_dup(sk) \\
+    ((STACK_OF(${nametype}) *)OPENSSL_sk_set_thunks( \\
+        OPENSSL_sk_set_copy_thunks( \\
+            OPENSSL_sk_set_cmp_thunks( \\
+                OPENSSL_sk_dup(ossl_check_const_${nametype}_sk_type(sk)), \\
+                sk_${nametype}_cmpfunc_thunk), \\
+            sk_${nametype}_copyfunc_thunk), \\
+        sk_${nametype}_freefunc_thunk))
 #define sk_${nametype}_deep_copy(sk, copyfunc, freefunc) \\
-    ((STACK_OF(${nametype}) *)OPENSSL_sk_deep_copy( \\
-        ossl_check_const_${nametype}_sk_type(sk), \\
-        ossl_check_${nametype}_copyfunc_type(copyfunc), \\
-        ossl_check_${nametype}_freefunc_type(freefunc)))
+    ((STACK_OF(${nametype}) *)OPENSSL_sk_set_thunks( \\
+        OPENSSL_sk_set_copy_thunks( \\
+            OPENSSL_sk_set_cmp_thunks( \\
+                OPENSSL_sk_deep_copy( \\
+                    ossl_check_const_${nametype}_sk_type(sk), \\
+                    ossl_check_${nametype}_copyfunc_type(copyfunc), \\
+                    ossl_check_${nametype}_freefunc_type(freefunc)), \\
+                sk_${nametype}_cmpfunc_thunk), \\
+            sk_${nametype}_copyfunc_thunk), \\
+        sk_${nametype}_freefunc_thunk))
 #define sk_${nametype}_set_cmp_func(sk, cmp) ((sk_${nametype}_compfunc)OPENSSL_sk_set_cmp_func(ossl_check_${nametype}_sk_type(sk), ossl_check_${nametype}_compfunc_type(cmp)))
 END_MACROS
 
