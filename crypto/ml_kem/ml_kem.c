@@ -1537,7 +1537,8 @@ end:
  * The caller should only store private data in `priv` *after* a successful
  * (non-zero) return from this function.
  */
-static __owur int add_storage(scalar *pub, scalar *priv, int private, ML_KEM_KEY *key)
+static __owur int add_storage(scalar *pub, scalar *priv,
+    int private, int dup, ML_KEM_KEY *key)
 {
     int rank = key->vinfo->rank;
 
@@ -1552,9 +1553,11 @@ static __owur int add_storage(scalar *pub, scalar *priv, int private, ML_KEM_KEY
     }
 
     /*
-     * We're adding key material, set up rho and pkhash to point to the rho_pkhash buffer
+     * We're adding key material, set up rho and pkhash to point to the
+     * rho_pkhash buffer.  Zero the key hash when creating fresh keys.
      */
-    memset(key->rho_pkhash, 0, sizeof(key->rho_pkhash));
+    if (dup == 0)
+        memset(key->rho_pkhash, 0, sizeof(key->rho_pkhash));
     key->rho = key->rho_pkhash;
     key->pkhash = key->rho_pkhash + ML_KEM_RANDOM_BYTES;
     key->d = key->z = NULL;
@@ -1683,8 +1686,6 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
 {
     int ok = 0;
     ML_KEM_KEY *ret;
-    void *tmp_pub;
-    void *tmp_priv;
 
     if (key == NULL)
         return NULL;
@@ -1706,28 +1707,27 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
         selection = 0;
     else if (!ossl_ml_kem_have_prvkey(key))
         selection &= ~OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
+    else if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        selection &= ~OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
 
     switch (selection & OSSL_KEYMGMT_SELECT_KEYPAIR) {
     case 0:
         ok = 1;
         break;
     case OSSL_KEYMGMT_SELECT_PUBLIC_KEY:
-        ok = add_storage(OPENSSL_memdup(key->t, key->vinfo->puballoc), NULL, 0, ret);
+        ok = add_storage(OPENSSL_memdup(key->t, key->vinfo->puballoc), NULL, 0, 1, ret);
         break;
     case OSSL_KEYMGMT_SELECT_PRIVATE_KEY:
-        tmp_pub = OPENSSL_memdup(key->t, key->vinfo->puballoc);
-        if (tmp_pub == NULL)
-            break;
-        tmp_priv = OPENSSL_secure_malloc(key->vinfo->prvalloc);
-        if (tmp_priv == NULL) {
-            OPENSSL_free(tmp_pub);
-            break;
+        /* Frees both and returns 0 if either is NULL */
+        ok = add_storage(OPENSSL_memdup(key->t, key->vinfo->puballoc),
+            OPENSSL_secure_malloc(key->vinfo->prvalloc), 1, 1, ret);
+        if (ok) {
+            memcpy(ret->s, key->s, key->vinfo->prvalloc);
+
+            /* Duplicated keys retain |d|, if available */
+            if (key->d != NULL)
+                ret->d = ret->z + ML_KEM_RANDOM_BYTES;
         }
-        if ((ok = add_storage(tmp_pub, tmp_priv, 1, ret)) != 0)
-            memcpy(tmp_priv, key->s, key->vinfo->prvalloc);
-        /* Duplicated keys retain |d|, if available */
-        if (key->d != NULL)
-            ret->d = ret->z + ML_KEM_RANDOM_BYTES;
         break;
     }
 
@@ -1840,7 +1840,7 @@ int ossl_ml_kem_parse_public_key(const uint8_t *in, size_t len, ML_KEM_KEY *key)
         || (mdctx = EVP_MD_CTX_new()) == NULL)
         return 0;
 
-    if (add_storage(OPENSSL_malloc(vinfo->puballoc), NULL, 0, key))
+    if (add_storage(OPENSSL_malloc(vinfo->puballoc), NULL, 0, 0, key))
         ret = parse_pubkey(in, mdctx, key);
 
     if (!ret)
@@ -1869,7 +1869,7 @@ int ossl_ml_kem_parse_private_key(const uint8_t *in, size_t len,
         return 0;
 
     if (add_storage(OPENSSL_malloc(vinfo->puballoc),
-            OPENSSL_secure_malloc(vinfo->prvalloc), 1, key))
+            OPENSSL_secure_malloc(vinfo->prvalloc), 1, 0, key))
         ret = parse_prvkey(in, mdctx, key);
 
     if (!ret)
@@ -1918,7 +1918,7 @@ int ossl_ml_kem_genkey(uint8_t *pubenc, size_t publen, ML_KEM_KEY *key)
     CONSTTIME_SECRET(seed, ML_KEM_SEED_BYTES);
 
     if (add_storage(OPENSSL_malloc(vinfo->puballoc),
-            OPENSSL_secure_malloc(vinfo->prvalloc), 1, key))
+            OPENSSL_secure_malloc(vinfo->prvalloc), 1, 0, key))
         ret = genkey(seed, mdctx, pubenc, key);
     OPENSSL_cleanse(seed, sizeof(seed));
 
