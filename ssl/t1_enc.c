@@ -455,8 +455,16 @@ int tls1_export_keying_material(SSL_CONNECTION *s, unsigned char *out,
      * than passing separate values into the TLS PRF to ensure that the
      * concatenation of values does not create a prohibited label.
      */
+    if (llen > (SIZE_MAX - (SSL3_RANDOM_SIZE * 2))) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
     vallen = llen + SSL3_RANDOM_SIZE * 2;
     if (use_context) {
+        if (contextlen > (SIZE_MAX - 2)) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+            return 0;
+        }
         vallen += 2 + contextlen;
     }
 
