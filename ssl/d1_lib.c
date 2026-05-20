@@ -2379,4 +2379,102 @@ OSSL_TIME ossl_dtls_listener_get_pending_timeout(const SSL *s)
     dl = (const DTLS_LISTENER *)s;
     return dl->pending_timeout;
 }
+
+int ossl_dtls_listener_poll_events(SSL *s, uint64_t events, int do_tick,
+    uint64_t *revents)
+{
+    DTLS_LISTENER *dl;
+    uint64_t result = 0;
+
+    if (!ossl_assert(s->type == SSL_TYPE_DTLS_LISTENER))
+        return 0;
+
+    dl = (DTLS_LISTENER *)s;
+
+    if (do_tick)
+        ossl_dtls_tick(dl);
+
+    if ((events & SSL_POLL_EVENT_IC) != 0) {
+        if (SSL_get_accept_connection_queue_len(s) > 0)
+            result |= SSL_POLL_EVENT_IC;
+    }
+
+    if ((events & SSL_POLL_EVENT_R) != 0) {
+        BIO *rbio = SSL_get_rbio(s);
+        if (rbio != NULL && BIO_pending(rbio) > 0)
+            result |= SSL_POLL_EVENT_R;
+    }
+
+    *revents = result;
+    return 1;
+}
+
+int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
+    uint64_t *revents)
+{
+    SSL_CONNECTION *sc;
+    uint64_t result = 0;
+
+    sc = SSL_CONNECTION_FROM_SSL(s);
+    if (sc == NULL || sc->d1 == NULL)
+        return 0;
+
+    /*
+     * For DTLS connections that came from a listener, data arrives via
+     * URXEs injected by the listener's demux. When do_tick is set and
+     * we have a listener reference, pump the demux to get new data.
+     */
+    if (do_tick && sc->d1->listener != NULL) {
+        DTLS_LISTENER *dl = (DTLS_LISTENER *)sc->d1->listener;
+        ossl_dtls_tick(dl);
+    }
+
+    if ((events & SSL_POLL_EVENT_R) != 0) {
+        if (SSL_has_pending(s) || SSL_pending(s) > 0) {
+            result |= SSL_POLL_EVENT_R;
+        } else if (sc->d1->rx != NULL) {
+            /* Listener-based connection: check URXE queue */
+            if (!ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending))
+                result |= SSL_POLL_EVENT_R;
+        } else {
+            /*
+             * Standalone DTLS connection (not from a listener).
+             * Use select() on the underlying socket to check for readability.
+             */
+            BIO *rbio = SSL_get_rbio(s);
+            int fd = -1;
+
+            if (rbio != NULL)
+                fd = BIO_get_fd(rbio, NULL);
+
+            if (fd >= 0) {
+                fd_set rfds;
+                struct timeval tv;
+                int sel_ret;
+
+                FD_ZERO(&rfds);
+                FD_SET(fd, &rfds);
+                tv.tv_sec = 0;
+                tv.tv_usec = 0; /* Non-blocking check */
+
+                sel_ret = select(fd + 1, &rfds, NULL, NULL, &tv);
+                if (sel_ret > 0 && FD_ISSET(fd, &rfds))
+                    result |= SSL_POLL_EVENT_R;
+            }
+        }
+    }
+
+    if ((events & SSL_POLL_EVENT_W) != 0) {
+        result |= SSL_POLL_EVENT_W;
+    }
+
+    if ((events & (SSL_POLL_EVENT_EC | SSL_POLL_EVENT_F)) != 0) {
+        if (SSL_get_error(s, 0) == SSL_ERROR_SSL || SSL_get_shutdown(s) != 0)
+            result |= SSL_POLL_EVENT_EC;
+    }
+
+    *revents = result;
+    return 1;
+}
+
 #endif /* !OPENSSL_NO_DTLS && !OPENSSL_NO_SOCK */
