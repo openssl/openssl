@@ -617,6 +617,18 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     { TLSEXT_SIGALG_mldsa44, TLSEXT_SIGALG_mldsa44_name },
     { TLSEXT_SIGALG_mldsa65, TLSEXT_SIGALG_mldsa65_name },
     { TLSEXT_SIGALG_mldsa87, TLSEXT_SIGALG_mldsa87_name },
+    { TLSEXT_SIGALG_slhdsa_sha2_128s, TLSEXT_SIGALG_slhdsa_sha2_128s_name },
+    { TLSEXT_SIGALG_slhdsa_sha2_128f, TLSEXT_SIGALG_slhdsa_sha2_128f_name },
+    { TLSEXT_SIGALG_slhdsa_sha2_192s, TLSEXT_SIGALG_slhdsa_sha2_192s_name },
+    { TLSEXT_SIGALG_slhdsa_sha2_192f, TLSEXT_SIGALG_slhdsa_sha2_192f_name },
+    { TLSEXT_SIGALG_slhdsa_sha2_256s, TLSEXT_SIGALG_slhdsa_sha2_256s_name },
+    { TLSEXT_SIGALG_slhdsa_sha2_256f, TLSEXT_SIGALG_slhdsa_sha2_256f_name },
+    { TLSEXT_SIGALG_slhdsa_shake_128s, TLSEXT_SIGALG_slhdsa_shake_128s_name },
+    { TLSEXT_SIGALG_slhdsa_shake_128f, TLSEXT_SIGALG_slhdsa_shake_128f_name },
+    { TLSEXT_SIGALG_slhdsa_shake_192s, TLSEXT_SIGALG_slhdsa_shake_192s_name },
+    { TLSEXT_SIGALG_slhdsa_shake_192f, TLSEXT_SIGALG_slhdsa_shake_192f_name },
+    { TLSEXT_SIGALG_slhdsa_shake_256s, TLSEXT_SIGALG_slhdsa_shake_256s_name },
+    { TLSEXT_SIGALG_slhdsa_shake_256f, TLSEXT_SIGALG_slhdsa_shake_256f_name },
 };
 
 static const ssl_trace_tbl ssl_ctype_tbl[] = {

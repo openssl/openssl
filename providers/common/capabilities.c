@@ -281,7 +281,7 @@ static int tls_group_capability(OSSL_CALLBACK *cb, void *arg)
 
 /* --------------------------------------------------------------- */
 
-#if !defined(OPENSSL_NO_ML_DSA) \
+#if !defined(OPENSSL_NO_ML_DSA) || !defined(OPENSSL_NO_SLH_DSA) \
     || (!defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2) && !defined(OPENSSL_NO_SM3))
 
 typedef struct tls_sigalg_constants_st {
@@ -297,6 +297,18 @@ static const TLS_SIGALG_CONSTANTS sigalg_constants_list[] = {
     { TLSEXT_SIGALG_mldsa44, 128, TLS1_3_VERSION, 0, -1, -1 },
     { TLSEXT_SIGALG_mldsa65, 192, TLS1_3_VERSION, 0, -1, -1 },
     { TLSEXT_SIGALG_mldsa87, 256, TLS1_3_VERSION, 0, -1, -1 },
+    { TLSEXT_SIGALG_slhdsa_sha2_128s, 128, TLS1_3_VERSION, 0, -1, -1 },
+    { TLSEXT_SIGALG_slhdsa_sha2_128f, 128, TLS1_3_VERSION, 0, -1, -1 },
+    { TLSEXT_SIGALG_slhdsa_sha2_192s, 192, TLS1_3_VERSION, 0, -1, -1 },
+    { TLSEXT_SIGALG_slhdsa_sha2_192f, 192, TLS1_3_VERSION, 0, -1, -1 },
+    { TLSEXT_SIGALG_slhdsa_sha2_256s, 256, TLS1_3_VERSION, 0, -1, -1 },
+    { TLSEXT_SIGALG_slhdsa_sha2_256f, 256, TLS1_3_VERSION, 0, -1, -1 },
+    { TLSEXT_SIGALG_slhdsa_shake_128s, 128, TLS1_3_VERSION, 0, -1, -1 },
+    { TLSEXT_SIGALG_slhdsa_shake_128f, 128, TLS1_3_VERSION, 0, -1, -1 },
+    { TLSEXT_SIGALG_slhdsa_shake_192s, 192, TLS1_3_VERSION, 0, -1, -1 },
+    { TLSEXT_SIGALG_slhdsa_shake_192f, 192, TLS1_3_VERSION, 0, -1, -1 },
+    { TLSEXT_SIGALG_slhdsa_shake_256s, 256, TLS1_3_VERSION, 0, -1, -1 },
+    { TLSEXT_SIGALG_slhdsa_shake_256f, 256, TLS1_3_VERSION, 0, -1, -1 },
     { TLSEXT_SIGALG_sm2sig_sm3, 128, TLS1_3_VERSION, 0, -1, -1 },
 };
 
@@ -329,8 +341,22 @@ static const OSSL_PARAM param_sigalg_list[][10] = {
     TLS_SIGALG_ENTRY("mldsa65", "ML-DSA-65", "2.16.840.1.101.3.4.3.18", 1),
     TLS_SIGALG_ENTRY("mldsa87", "ML-DSA-87", "2.16.840.1.101.3.4.3.19", 2),
 #endif
+#ifndef OPENSSL_NO_SLH_DSA
+    TLS_SIGALG_ENTRY("slhdsa_sha2_128s", "SLH-DSA-SHA2-128s", "2.16.840.1.101.3.4.3.20", 3),
+    TLS_SIGALG_ENTRY("slhdsa_sha2_128f", "SLH-DSA-SHA2-128f", "2.16.840.1.101.3.4.3.21", 4),
+    TLS_SIGALG_ENTRY("slhdsa_sha2_192s", "SLH-DSA-SHA2-192s", "2.16.840.1.101.3.4.3.22", 5),
+    TLS_SIGALG_ENTRY("slhdsa_sha2_192f", "SLH-DSA-SHA2-192f", "2.16.840.1.101.3.4.3.23", 6),
+    TLS_SIGALG_ENTRY("slhdsa_sha2_256s", "SLH-DSA-SHA2-256s", "2.16.840.1.101.3.4.3.24", 7),
+    TLS_SIGALG_ENTRY("slhdsa_sha2_256f", "SLH-DSA-SHA2-256f", "2.16.840.1.101.3.4.3.25", 8),
+    TLS_SIGALG_ENTRY("slhdsa_shake_128s", "SLH-DSA-SHAKE-128s", "2.16.840.1.101.3.4.3.26", 9),
+    TLS_SIGALG_ENTRY("slhdsa_shake_128f", "SLH-DSA-SHAKE-128f", "2.16.840.1.101.3.4.3.27", 10),
+    TLS_SIGALG_ENTRY("slhdsa_shake_192s", "SLH-DSA-SHAKE-192s", "2.16.840.1.101.3.4.3.28", 11),
+    TLS_SIGALG_ENTRY("slhdsa_shake_192f", "SLH-DSA-SHAKE-192f", "2.16.840.1.101.3.4.3.29", 12),
+    TLS_SIGALG_ENTRY("slhdsa_shake_256s", "SLH-DSA-SHAKE-256s", "2.16.840.1.101.3.4.3.30", 13),
+    TLS_SIGALG_ENTRY("slhdsa_shake_256f", "SLH-DSA-SHAKE-256f", "2.16.840.1.101.3.4.3.31", 14),
+#endif
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2) && !defined(OPENSSL_NO_SM3)
-    TLS_SIGALG_ENTRY("sm2sig_sm3", "SM2", "1.2.156.10197.1 501", 3),
+    TLS_SIGALG_ENTRY("sm2sig_sm3", "SM2", "1.2.156.10197.1 501", 15),
 #endif
 };
 #endif
