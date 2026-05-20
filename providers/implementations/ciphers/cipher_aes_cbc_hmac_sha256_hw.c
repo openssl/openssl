@@ -116,7 +116,7 @@ typedef struct {
     const unsigned char *inp;
     unsigned char *out;
     int blocks;
-    u64 iv[2];
+    uint64_t iv[2];
 } CIPH_DESC;
 
 void sha256_multi_block(SHA256_MB_CTX *, const HASH_DESC *, int);
@@ -133,17 +133,17 @@ static size_t tls1_multi_block_encrypt(void *vctx,
     CIPH_DESC ciph_d[8];
     unsigned char storage[sizeof(SHA256_MB_CTX) + 32];
     union {
-        u64 q[16];
-        u32 d[32];
-        u8 c[128];
+        uint64_t q[16];
+        uint32_t d[32];
+        uint8_t c[128];
     } blocks[8];
     SHA256_MB_CTX *mctx;
     unsigned int frag, last, packlen, i;
     unsigned int x4 = 4 * n4x, minblocks, processed = 0;
     size_t ret = 0;
-    u8 *IVs;
+    uint8_t *IVs;
 #if defined(BSWAP8)
-    u64 seqnum;
+    uint64_t seqnum;
 #endif
 
     /* ask for IVs in bulk */
@@ -203,16 +203,16 @@ static size_t tls1_multi_block_encrypt(void *vctx,
         blocks[i].q[0] = BSWAP8(seqnum + i);
 #else
         for (carry = i, j = 8; j--;) {
-            blocks[i].c[j] = ((u8 *)sctx->md.data)[j] + carry;
+            blocks[i].c[j] = ((uint8_t *)sctx->md.data)[j] + carry;
             carry = (blocks[i].c[j] - carry) >> (sizeof(carry) * 8 - 1);
         }
 #endif
-        blocks[i].c[8] = ((u8 *)sctx->md.data)[8];
-        blocks[i].c[9] = ((u8 *)sctx->md.data)[9];
-        blocks[i].c[10] = ((u8 *)sctx->md.data)[10];
+        blocks[i].c[8] = ((uint8_t *)sctx->md.data)[8];
+        blocks[i].c[9] = ((uint8_t *)sctx->md.data)[9];
+        blocks[i].c[10] = ((uint8_t *)sctx->md.data)[10];
         /* fix length */
-        blocks[i].c[11] = (u8)(len >> 8);
-        blocks[i].c[12] = (u8)(len);
+        blocks[i].c[11] = (uint8_t)(len >> 8);
+        blocks[i].c[12] = (uint8_t)(len);
 
         memcpy(blocks[i].c + 13, hash_d[i].ptr, 64 - 13);
         hash_d[i].ptr += 64 - 13;
@@ -372,11 +372,11 @@ static size_t tls1_multi_block_encrypt(void *vctx,
         len += 16; /* account for explicit iv */
 
         /* arrange header */
-        out0[0] = ((u8 *)sctx->md.data)[8];
-        out0[1] = ((u8 *)sctx->md.data)[9];
-        out0[2] = ((u8 *)sctx->md.data)[10];
-        out0[3] = (u8)(len >> 8);
-        out0[4] = (u8)(len);
+        out0[0] = ((uint8_t *)sctx->md.data)[8];
+        out0[1] = ((uint8_t *)sctx->md.data)[9];
+        out0[2] = ((uint8_t *)sctx->md.data)[10];
+        out0[3] = (uint8_t)(len >> 8);
+        out0[4] = (uint8_t)(len);
 
         ret += len + 5;
         inp += frag;

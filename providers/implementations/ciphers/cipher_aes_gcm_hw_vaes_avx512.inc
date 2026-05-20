@@ -39,7 +39,7 @@ void ossl_aes_gcm_update_aad_avx512(void *gcm128ctx, const unsigned char *aad,
                                     size_t aadlen);
 void ossl_aes_gcm_finalize_avx512(void *gcm128ctx, unsigned int pblocklen);
 
-void ossl_gcm_gmult_avx512(u64 Xi[2], const void *gcm128ctx);
+void ossl_gcm_gmult_avx512(uint64_t Xi[2], const void *gcm128ctx);
 
 static int vaes_gcm_setkey(PROV_GCM_CTX *ctx, const unsigned char *key,
                            size_t keylen)
@@ -86,7 +86,7 @@ static int vaes_gcm_aadupdate(PROV_GCM_CTX *ctx,
                               size_t aad_len)
 {
     GCM128_CONTEXT *gcmctx = &ctx->gcm;
-    u64 alen = gcmctx->len.u[0];
+    uint64_t alen = gcmctx->len.u[0];
     unsigned int ares;
     size_t i, lenBlks;
 
@@ -146,7 +146,7 @@ static int vaes_gcm_cipherupdate(PROV_GCM_CTX *ctx, const unsigned char *in,
                                  size_t len, unsigned char *out)
 {
     GCM128_CONTEXT *gcmctx = &ctx->gcm;
-    u64 mlen = gcmctx->len.u[1];
+    uint64_t mlen = gcmctx->len.u[1];
 
     mlen += len;
     if (mlen > ((U64(1) << 36) - 32) || (mlen < len))

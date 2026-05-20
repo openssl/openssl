@@ -17,9 +17,9 @@
 /*
  * Calculate the number of binary trailing zero's in any given number
  */
-static u32 ocb_ntz(u64 n)
+static uint32_t ocb_ntz(uint64_t n)
 {
-    u32 cnt = 0;
+    uint32_t cnt = 0;
 
     /*
      * We do a right-to-left simple sequential search. This is surprisingly
@@ -263,7 +263,7 @@ int CRYPTO_ocb128_setiv(OCB128_CONTEXT *ctx, const unsigned char *iv,
 int CRYPTO_ocb128_aad(OCB128_CONTEXT *ctx, const unsigned char *aad,
     size_t len)
 {
-    u64 i, all_num_blocks;
+    uint64_t i, all_num_blocks;
     size_t num_blocks, last_len;
     OCB_BLOCK tmp;
 
@@ -325,7 +325,7 @@ int CRYPTO_ocb128_encrypt(OCB128_CONTEXT *ctx,
     const unsigned char *in, unsigned char *out,
     size_t len)
 {
-    u64 i, all_num_blocks;
+    uint64_t i, all_num_blocks;
     size_t num_blocks, last_len;
 
     /*
@@ -420,7 +420,7 @@ int CRYPTO_ocb128_decrypt(OCB128_CONTEXT *ctx,
     const unsigned char *in, unsigned char *out,
     size_t len)
 {
-    u64 i, all_num_blocks;
+    uint64_t i, all_num_blocks;
     size_t num_blocks, last_len;
 
     /*

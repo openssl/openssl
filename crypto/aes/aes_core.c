@@ -62,17 +62,17 @@
 
 typedef union {
     unsigned char b[8];
-    u32 w[2];
-    u64 d;
+    uint32_t w[2];
+    uint64_t d;
 } uni;
 
 /*
  * Compute w := (w * x) mod (x^8 + x^4 + x^3 + x^1 + 1)
  * Therefore the name "xtime".
  */
-static void XtimeWord(u32 *w)
+static void XtimeWord(uint32_t *w)
 {
-    u32 a, b;
+    uint32_t a, b;
 
     a = *w;
     b = a & 0x80808080u;
@@ -83,9 +83,9 @@ static void XtimeWord(u32 *w)
     *w = b;
 }
 
-static void XtimeLong(u64 *w)
+static void XtimeLong(uint64_t *w)
 {
-    u64 a, b;
+    uint64_t a, b;
 
     a = *w;
     b = a & U64(0x8080808080808080);
@@ -142,9 +142,9 @@ static void XtimeLong(u64 *w)
  *   return [b0,b1];
  * The non-linear multiplies (*) can be done in parallel at no extra cost.
  */
-static void SubWord(u32 *w)
+static void SubWord(uint32_t *w)
 {
-    u32 x, y, a1, a2, a3, a4, a5, a6;
+    uint32_t x, y, a1, a2, a3, a4, a5, a6;
 
     x = *w;
     y = ((x & 0xFEFEFEFEu) >> 1) | ((x & 0x01010101u) << 7);
@@ -233,9 +233,9 @@ static void SubWord(u32 *w)
     *w = x;
 }
 
-static void SubLong(u64 *w)
+static void SubLong(uint64_t *w)
 {
-    u64 x, y, a1, a2, a3, a4, a5, a6;
+    uint64_t x, y, a1, a2, a3, a4, a5, a6;
 
     x = *w;
     y = ((x & U64(0xFEFEFEFEFEFEFEFE)) >> 1) | ((x & U64(0x0101010101010101)) << 7);
@@ -327,9 +327,9 @@ static void SubLong(u64 *w)
 /*
  * This computes w := (S^-1 * (w + c))^-1
  */
-static void InvSubLong(u64 *w)
+static void InvSubLong(uint64_t *w)
 {
-    u64 x, y, a1, a2, a3, a4, a5, a6;
+    uint64_t x, y, a1, a2, a3, a4, a5, a6;
 
     x = *w;
     x ^= U64(0x6363636363636363);
@@ -422,7 +422,7 @@ static void InvSubLong(u64 *w)
     *w = x;
 }
 
-static void ShiftRows(u64 *state)
+static void ShiftRows(uint64_t *state)
 {
     unsigned char s[4];
     unsigned char *s0;
@@ -441,7 +441,7 @@ static void ShiftRows(u64 *state)
     }
 }
 
-static void InvShiftRows(u64 *state)
+static void InvShiftRows(uint64_t *state)
 {
     unsigned char s[4];
     unsigned char *s0;
@@ -460,7 +460,7 @@ static void InvShiftRows(u64 *state)
     }
 }
 
-static void MixColumns(u64 *state)
+static void MixColumns(uint64_t *state)
 {
     uni s1;
     uni s;
@@ -488,7 +488,7 @@ static void MixColumns(u64 *state)
     }
 }
 
-static void InvMixColumns(u64 *state)
+static void InvMixColumns(uint64_t *state)
 {
     uni s1;
     uni s;
@@ -524,16 +524,16 @@ static void InvMixColumns(u64 *state)
     }
 }
 
-static void AddRoundKey(u64 *state, const u64 *w)
+static void AddRoundKey(uint64_t *state, const uint64_t *w)
 {
     state[0] ^= w[0];
     state[1] ^= w[1];
 }
 
 static void Cipher(const unsigned char *in, unsigned char *out,
-    const u64 *w, int nr)
+    const uint64_t *w, int nr)
 {
-    u64 state[2];
+    uint64_t state[2];
     int i;
 
     memcpy(state, in, 16);
@@ -557,10 +557,10 @@ static void Cipher(const unsigned char *in, unsigned char *out,
 }
 
 static void InvCipher(const unsigned char *in, unsigned char *out,
-    const u64 *w, int nr)
+    const uint64_t *w, int nr)
 
 {
-    u64 state[2];
+    uint64_t state[2];
     int i;
 
     memcpy(state, in, 16);
@@ -583,7 +583,7 @@ static void InvCipher(const unsigned char *in, unsigned char *out,
     memcpy(out, state, 16);
 }
 
-static void RotWord(u32 *x)
+static void RotWord(uint32_t *x)
 {
     unsigned char *w0;
     unsigned char tmp;
@@ -596,12 +596,12 @@ static void RotWord(u32 *x)
     w0[3] = tmp;
 }
 
-static void KeyExpansion(const unsigned char *key, u64 *w,
+static void KeyExpansion(const unsigned char *key, uint64_t *w,
     int nr, int nk)
 {
-    u32 rcon;
+    uint32_t rcon;
     uni prev;
-    u32 temp;
+    uint32_t temp;
     int i, n;
 
     memcpy(w, key, nk * 4);
@@ -631,14 +631,14 @@ static void KeyExpansion(const unsigned char *key, u64 *w,
 int AES_set_encrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
-    u64 *rk;
+    uint64_t *rk;
 
     if (!userKey || !key)
         return -1;
     if (bits != 128 && bits != 192 && bits != 256)
         return -2;
 
-    rk = (u64 *)key->rd_key;
+    rk = (uint64_t *)key->rd_key;
 
     if (bits == 128)
         key->rounds = 10;
@@ -667,10 +667,10 @@ int AES_set_decrypt_key(const unsigned char *userKey, int bits,
 void AES_encrypt(const unsigned char *in, unsigned char *out,
     const AES_KEY *key)
 {
-    const u64 *rk;
+    const uint64_t *rk;
 
     assert(in && out && key);
-    rk = (u64 *)key->rd_key;
+    rk = (uint64_t *)key->rd_key;
 
     Cipher(in, out, rk, key->rounds);
 }
@@ -682,10 +682,10 @@ void AES_encrypt(const unsigned char *in, unsigned char *out,
 void AES_decrypt(const unsigned char *in, unsigned char *out,
     const AES_KEY *key)
 {
-    const u64 *rk;
+    const uint64_t *rk;
 
     assert(in && out && key);
-    rk = (u64 *)key->rd_key;
+    rk = (uint64_t *)key->rd_key;
 
     InvCipher(in, out, rk, key->rounds);
 }
@@ -703,7 +703,7 @@ Td3[x] = Si[x].[09, 0d, 0b, 0e];
 Td4[x] = Si[x].[01];
 */
 
-static const u32 Te0[256] = {
+static const uint32_t Te0[256] = {
     0xc66363a5U,
     0xf87c7c84U,
     0xee777799U,
@@ -961,7 +961,7 @@ static const u32 Te0[256] = {
     0x6dbbbbd6U,
     0x2c16163aU,
 };
-static const u32 Te1[256] = {
+static const uint32_t Te1[256] = {
     0xa5c66363U,
     0x84f87c7cU,
     0x99ee7777U,
@@ -1219,7 +1219,7 @@ static const u32 Te1[256] = {
     0xd66dbbbbU,
     0x3a2c1616U,
 };
-static const u32 Te2[256] = {
+static const uint32_t Te2[256] = {
     0x63a5c663U,
     0x7c84f87cU,
     0x7799ee77U,
@@ -1477,7 +1477,7 @@ static const u32 Te2[256] = {
     0xbbd66dbbU,
     0x163a2c16U,
 };
-static const u32 Te3[256] = {
+static const uint32_t Te3[256] = {
     0x6363a5c6U,
     0x7c7c84f8U,
     0x777799eeU,
@@ -1736,7 +1736,7 @@ static const u32 Te3[256] = {
     0x16163a2cU,
 };
 
-static const u32 Td0[256] = {
+static const uint32_t Td0[256] = {
     0x51f4a750U,
     0x7e416553U,
     0x1a17a4c3U,
@@ -1994,7 +1994,7 @@ static const u32 Td0[256] = {
     0x486c5c74U,
     0xd0b85742U,
 };
-static const u32 Td1[256] = {
+static const uint32_t Td1[256] = {
     0x5051f4a7U,
     0x537e4165U,
     0xc31a17a4U,
@@ -2252,7 +2252,7 @@ static const u32 Td1[256] = {
     0x74486c5cU,
     0x42d0b857U,
 };
-static const u32 Td2[256] = {
+static const uint32_t Td2[256] = {
     0xa75051f4U,
     0x65537e41U,
     0xa4c31a17U,
@@ -2510,7 +2510,7 @@ static const u32 Td2[256] = {
     0x5c74486cU,
     0x5742d0b8U,
 };
-static const u32 Td3[256] = {
+static const uint32_t Td3[256] = {
     0xf4a75051U,
     0x4165537eU,
     0x17a4c31aU,
@@ -2768,7 +2768,7 @@ static const u32 Td3[256] = {
     0x6c5c7448U,
     0xb85742d0U,
 };
-static const u8 Td4[256] = {
+static const uint8_t Td4[256] = {
     0x52U,
     0x09U,
     0x6aU,
@@ -3026,7 +3026,7 @@ static const u8 Td4[256] = {
     0x0cU,
     0x7dU,
 };
-static const u32 rcon[] = {
+static const uint32_t rcon[] = {
     0x01000000,
     0x02000000,
     0x04000000,
@@ -3046,9 +3046,9 @@ int AES_set_encrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
 
-    u32 *rk;
+    uint32_t *rk;
     int i = 0;
-    u32 temp;
+    uint32_t temp;
 
     if (!userKey || !key)
         return -1;
@@ -3129,9 +3129,9 @@ int AES_set_decrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
 
-    u32 *rk;
+    uint32_t *rk;
     int i, j, status;
-    u32 temp;
+    uint32_t temp;
 
     /* first, start with an encryption schedule */
     status = AES_set_encrypt_key(userKey, bits, key);
@@ -3174,8 +3174,8 @@ void AES_encrypt(const unsigned char *in, unsigned char *out,
     const AES_KEY *key)
 {
 
-    const u32 *rk;
-    u32 s0, s1, s2, s3, t0, t1, t2, t3;
+    const uint32_t *rk;
+    uint32_t s0, s1, s2, s3, t0, t1, t2, t3;
 #ifndef FULL_UNROLL
     int r;
 #endif /* ?FULL_UNROLL */
@@ -3306,8 +3306,8 @@ void AES_decrypt(const unsigned char *in, unsigned char *out,
     const AES_KEY *key)
 {
 
-    const u32 *rk;
-    u32 s0, s1, s2, s3, t0, t1, t2, t3;
+    const uint32_t *rk;
+    uint32_t s0, s1, s2, s3, t0, t1, t2, t3;
 #ifndef FULL_UNROLL
     int r;
 #endif /* ?FULL_UNROLL */
@@ -3420,19 +3420,19 @@ void AES_decrypt(const unsigned char *in, unsigned char *out,
      * apply last round and
      * map cipher state to byte array block:
      */
-    s0 = ((u32)Td4[(t0 >> 24)] << 24) ^ ((u32)Td4[(t3 >> 16) & 0xff] << 16) ^ ((u32)Td4[(t2 >> 8) & 0xff] << 8) ^ ((u32)Td4[(t1) & 0xff]) ^ rk[0];
+    s0 = ((uint32_t)Td4[(t0 >> 24)] << 24) ^ ((uint32_t)Td4[(t3 >> 16) & 0xff] << 16) ^ ((uint32_t)Td4[(t2 >> 8) & 0xff] << 8) ^ ((uint32_t)Td4[(t1) & 0xff]) ^ rk[0];
     PUTU32(out, s0);
-    s1 = ((u32)Td4[(t1 >> 24)] << 24) ^ ((u32)Td4[(t0 >> 16) & 0xff] << 16) ^ ((u32)Td4[(t3 >> 8) & 0xff] << 8) ^ ((u32)Td4[(t2) & 0xff]) ^ rk[1];
+    s1 = ((uint32_t)Td4[(t1 >> 24)] << 24) ^ ((uint32_t)Td4[(t0 >> 16) & 0xff] << 16) ^ ((uint32_t)Td4[(t3 >> 8) & 0xff] << 8) ^ ((uint32_t)Td4[(t2) & 0xff]) ^ rk[1];
     PUTU32(out + 4, s1);
-    s2 = ((u32)Td4[(t2 >> 24)] << 24) ^ ((u32)Td4[(t1 >> 16) & 0xff] << 16) ^ ((u32)Td4[(t0 >> 8) & 0xff] << 8) ^ ((u32)Td4[(t3) & 0xff]) ^ rk[2];
+    s2 = ((uint32_t)Td4[(t2 >> 24)] << 24) ^ ((uint32_t)Td4[(t1 >> 16) & 0xff] << 16) ^ ((uint32_t)Td4[(t0 >> 8) & 0xff] << 8) ^ ((uint32_t)Td4[(t3) & 0xff]) ^ rk[2];
     PUTU32(out + 8, s2);
-    s3 = ((u32)Td4[(t3 >> 24)] << 24) ^ ((u32)Td4[(t2 >> 16) & 0xff] << 16) ^ ((u32)Td4[(t1 >> 8) & 0xff] << 8) ^ ((u32)Td4[(t0) & 0xff]) ^ rk[3];
+    s3 = ((uint32_t)Td4[(t3 >> 24)] << 24) ^ ((uint32_t)Td4[(t2 >> 16) & 0xff] << 16) ^ ((uint32_t)Td4[(t1 >> 8) & 0xff] << 8) ^ ((uint32_t)Td4[(t0) & 0xff]) ^ rk[3];
     PUTU32(out + 12, s3);
 }
 
 #else /* AES_ASM */
 
-static const u8 Te4[256] = {
+static const uint8_t Te4[256] = {
     0x63U, 0x7cU, 0x77U, 0x7bU, 0xf2U, 0x6bU, 0x6fU, 0xc5U,
     0x30U, 0x01U, 0x67U, 0x2bU, 0xfeU, 0xd7U, 0xabU, 0x76U,
     0xcaU, 0x82U, 0xc9U, 0x7dU, 0xfaU, 0x59U, 0x47U, 0xf0U,
@@ -3466,7 +3466,7 @@ static const u8 Te4[256] = {
     0x8cU, 0xa1U, 0x89U, 0x0dU, 0xbfU, 0xe6U, 0x42U, 0x68U,
     0x41U, 0x99U, 0x2dU, 0x0fU, 0xb0U, 0x54U, 0xbbU, 0x16U
 };
-static const u32 rcon[] = {
+static const uint32_t rcon[] = {
     0x01000000,
     0x02000000,
     0x04000000,
@@ -3485,9 +3485,9 @@ static const u32 rcon[] = {
 int AES_set_encrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
-    u32 *rk;
+    uint32_t *rk;
     int i = 0;
-    u32 temp;
+    uint32_t temp;
 
     if (!userKey || !key)
         return -1;
@@ -3510,7 +3510,7 @@ int AES_set_encrypt_key(const unsigned char *userKey, int bits,
     if (bits == 128) {
         while (1) {
             temp = rk[3];
-            rk[4] = rk[0] ^ ((u32)Te4[(temp >> 16) & 0xff] << 24) ^ ((u32)Te4[(temp >> 8) & 0xff] << 16) ^ ((u32)Te4[(temp) & 0xff] << 8) ^ ((u32)Te4[(temp >> 24)]) ^ rcon[i];
+            rk[4] = rk[0] ^ ((uint32_t)Te4[(temp >> 16) & 0xff] << 24) ^ ((uint32_t)Te4[(temp >> 8) & 0xff] << 16) ^ ((uint32_t)Te4[(temp) & 0xff] << 8) ^ ((uint32_t)Te4[(temp >> 24)]) ^ rcon[i];
             rk[5] = rk[1] ^ rk[4];
             rk[6] = rk[2] ^ rk[5];
             rk[7] = rk[3] ^ rk[6];
@@ -3525,7 +3525,7 @@ int AES_set_encrypt_key(const unsigned char *userKey, int bits,
     if (bits == 192) {
         while (1) {
             temp = rk[5];
-            rk[6] = rk[0] ^ ((u32)Te4[(temp >> 16) & 0xff] << 24) ^ ((u32)Te4[(temp >> 8) & 0xff] << 16) ^ ((u32)Te4[(temp) & 0xff] << 8) ^ ((u32)Te4[(temp >> 24)]) ^ rcon[i];
+            rk[6] = rk[0] ^ ((uint32_t)Te4[(temp >> 16) & 0xff] << 24) ^ ((uint32_t)Te4[(temp >> 8) & 0xff] << 16) ^ ((uint32_t)Te4[(temp) & 0xff] << 8) ^ ((uint32_t)Te4[(temp >> 24)]) ^ rcon[i];
             rk[7] = rk[1] ^ rk[6];
             rk[8] = rk[2] ^ rk[7];
             rk[9] = rk[3] ^ rk[8];
@@ -3542,7 +3542,7 @@ int AES_set_encrypt_key(const unsigned char *userKey, int bits,
     if (bits == 256) {
         while (1) {
             temp = rk[7];
-            rk[8] = rk[0] ^ ((u32)Te4[(temp >> 16) & 0xff] << 24) ^ ((u32)Te4[(temp >> 8) & 0xff] << 16) ^ ((u32)Te4[(temp) & 0xff] << 8) ^ ((u32)Te4[(temp >> 24)]) ^ rcon[i];
+            rk[8] = rk[0] ^ ((uint32_t)Te4[(temp >> 16) & 0xff] << 24) ^ ((uint32_t)Te4[(temp >> 8) & 0xff] << 16) ^ ((uint32_t)Te4[(temp) & 0xff] << 8) ^ ((uint32_t)Te4[(temp >> 24)]) ^ rcon[i];
             rk[9] = rk[1] ^ rk[8];
             rk[10] = rk[2] ^ rk[9];
             rk[11] = rk[3] ^ rk[10];
@@ -3550,7 +3550,7 @@ int AES_set_encrypt_key(const unsigned char *userKey, int bits,
                 return 0;
             }
             temp = rk[11];
-            rk[12] = rk[4] ^ ((u32)Te4[(temp >> 24)] << 24) ^ ((u32)Te4[(temp >> 16) & 0xff] << 16) ^ ((u32)Te4[(temp >> 8) & 0xff] << 8) ^ ((u32)Te4[(temp) & 0xff]);
+            rk[12] = rk[4] ^ ((uint32_t)Te4[(temp >> 24)] << 24) ^ ((uint32_t)Te4[(temp >> 16) & 0xff] << 16) ^ ((uint32_t)Te4[(temp >> 8) & 0xff] << 8) ^ ((uint32_t)Te4[(temp) & 0xff]);
             rk[13] = rk[5] ^ rk[12];
             rk[14] = rk[6] ^ rk[13];
             rk[15] = rk[7] ^ rk[14];
@@ -3568,9 +3568,9 @@ int AES_set_decrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key)
 {
 
-    u32 *rk;
+    uint32_t *rk;
     int i, j, status;
-    u32 temp;
+    uint32_t temp;
 
     /* first, start with an encryption schedule */
     status = AES_set_encrypt_key(userKey, bits, key);
@@ -3598,7 +3598,7 @@ int AES_set_decrypt_key(const unsigned char *userKey, int bits,
     for (i = 1; i < (key->rounds); i++) {
         rk += 4;
         for (j = 0; j < 4; j++) {
-            u32 tp1, tp2, tp4, tp8, tp9, tpb, tpd, tpe, m;
+            uint32_t tp1, tp2, tp4, tp8, tp9, tpb, tpd, tpe, m;
 
             tp1 = rk[j];
             m = tp1 & 0x80808080;
