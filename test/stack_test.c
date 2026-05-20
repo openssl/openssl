@@ -344,9 +344,33 @@ static char *string_copy(const char *p)
     return OPENSSL_strdup(p);
 }
 
+static int string_cmp(const char *const *a, const char *const *b)
+{
+    return strcmp(*a, *b);
+}
+
 static void string_free(char *p)
 {
     OPENSSL_free(p);
+}
+
+static int push_string(STACK_OF(OPENSSL_STRING) *s, const char *str)
+{
+    char *p = OPENSSL_strdup(str);
+    int expected = sk_OPENSSL_STRING_num(s) + 1;
+    int pushed;
+
+    if (!TEST_ptr(p))
+        return 0;
+
+    pushed = sk_OPENSSL_STRING_push(s, p);
+    if (!TEST_int_eq(pushed, expected)) {
+        if (pushed <= 0)
+            OPENSSL_free(p);
+        return 0;
+    }
+
+    return 1;
 }
 
 static int test_SS_stack(void)
@@ -508,11 +532,88 @@ end:
     return testresult;
 }
 
+static int test_STRING_STACK_stack_ubsan(int idx)
+{
+    STACK_OF(OPENSSL_STRING) *s = NULL;
+    STACK_OF(OPENSSL_STRING) *t = NULL;
+    STACK_OF(OPENSSL_STRING) *u = NULL;
+    int testresult = 0;
+
+    switch (idx) {
+    case 0:
+        s = sk_OPENSSL_STRING_new_null();
+        break;
+    case 1:
+        s = sk_OPENSSL_STRING_new(string_cmp);
+        break;
+    case 2:
+        s = sk_OPENSSL_STRING_new_reserve(string_cmp, 2);
+        break;
+    case 3:
+        s = sk_OPENSSL_STRING_deep_copy(NULL, string_copy, string_free);
+        break;
+    case 4:
+        t = sk_OPENSSL_STRING_new(string_cmp);
+        if (!TEST_ptr(t))
+            goto end;
+        if (!push_string(t, "b")
+            || !push_string(t, "a"))
+            goto end;
+        s = sk_OPENSSL_STRING_dup(t);
+        if (s != NULL) {
+            sk_OPENSSL_STRING_free(t);
+            t = NULL;
+        }
+        break;
+    case 5:
+        t = sk_OPENSSL_STRING_deep_copy(NULL, string_copy, string_free);
+        if (!TEST_ptr(t))
+            goto end;
+        if (!push_string(t, "b")
+            || !push_string(t, "a"))
+            goto end;
+        s = sk_OPENSSL_STRING_deep_copy(t, string_copy, string_free);
+        break;
+    default:
+        goto end;
+    }
+    if (!TEST_ptr(s))
+        goto end;
+
+    if (idx < 4) {
+        if (!push_string(s, "b")
+            || !push_string(s, "a"))
+            goto end;
+    }
+
+    sk_OPENSSL_STRING_set_cmp_func(s, string_cmp);
+    sk_OPENSSL_STRING_sort(s);
+    if (!TEST_str_eq(sk_OPENSSL_STRING_value(s, 0), "a")
+        || !TEST_int_eq(sk_OPENSSL_STRING_find(s, "b"), 1))
+        goto end;
+
+    u = sk_OPENSSL_STRING_deep_copy(s, string_copy, string_free);
+    if (!TEST_ptr(u)
+        || !TEST_int_eq(sk_OPENSSL_STRING_num(u), 2)
+        || !TEST_ptr_ne(sk_OPENSSL_STRING_value(u, 0),
+            sk_OPENSSL_STRING_value(s, 0))
+        || !TEST_str_eq(sk_OPENSSL_STRING_value(u, 0), "a"))
+        goto end;
+
+    testresult = 1;
+end:
+    sk_OPENSSL_STRING_pop_free(u, string_free);
+    sk_OPENSSL_STRING_pop_free(s, string_free);
+    sk_OPENSSL_STRING_pop_free(t, string_free);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_int_stack, 4);
     ADD_ALL_TESTS(test_uchar_stack, 4);
     ADD_TEST(test_SS_stack);
+    ADD_ALL_TESTS(test_STRING_STACK_stack_ubsan, 6);
     ADD_TEST(test_SU_stack);
     ADD_MFAIL_TEST(test_OPENSSL_STRING_deep_copy_mfail);
     return 1;
