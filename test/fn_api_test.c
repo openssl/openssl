@@ -137,6 +137,16 @@ struct test_case_st {
 #define EXTENDED_LIMB_MINUS_ONE ((OSSL_FN_ULONG)-1)
 };
 
+struct mod_op_test_st {
+    const OSSL_FN_ULONG *a;
+    size_t a_size;
+    const OSSL_FN_ULONG *b;
+    size_t b_size;
+    const OSSL_FN_ULONG *m;
+    size_t m_size;
+    int n;
+};
+
 /* $num0 + $num0 == 0x10000000000000002 */
 static const OSSL_FN_ULONG ex_add_num0_num0[] = {
     OSSL_FN_ULONG64_C(0x00000000, 0x00000002),
@@ -2734,6 +2744,803 @@ err:
     return ret;
 }
 
+static struct mod_op_test_st test_mod_add_cases[] = {
+    { num0, LIMBSOF(num0), num1, LIMBSOF(num1), num2, LIMBSOF(num2), 0 },
+    { num2, LIMBSOF(num2), num3, LIMBSOF(num3), num2, LIMBSOF(num2), 0 },
+    { num4, LIMBSOF(num4), num0, LIMBSOF(num0), num3, LIMBSOF(num3), 0 },
+    { num5, LIMBSOF(num5), num5, LIMBSOF(num5), num6, LIMBSOF(num6), 0 },
+};
+
+static struct mod_op_test_st test_mod_sub_cases[] = {
+    { num0, LIMBSOF(num0), num1, LIMBSOF(num1), num2, LIMBSOF(num2), 0 },
+    { num3, LIMBSOF(num3), num2, LIMBSOF(num2), num2, LIMBSOF(num2), 0 },
+    { num3, LIMBSOF(num3), num3, LIMBSOF(num3), num2, LIMBSOF(num2), 0 },
+    { num5, LIMBSOF(num5), num4, LIMBSOF(num4), num6, LIMBSOF(num6), 0 },
+};
+
+static struct mod_op_test_st test_mod_mul_cases[] = {
+    { num0, LIMBSOF(num0), num1, LIMBSOF(num1), num2, LIMBSOF(num2), 0 },
+    { num2, LIMBSOF(num2), num3, LIMBSOF(num3), num2, LIMBSOF(num2), 0 },
+    { num0, LIMBSOF(num0), num0, LIMBSOF(num0), num3, LIMBSOF(num3), 0 },
+    { num5, LIMBSOF(num5), num5, LIMBSOF(num5), num6, LIMBSOF(num6), 0 },
+};
+
+static struct mod_op_test_st test_mod_sqr_cases[] = {
+    { num0, LIMBSOF(num0), NULL, 0, num2, LIMBSOF(num2), 0 },
+    { num2, LIMBSOF(num2), NULL, 0, num2, LIMBSOF(num2), 0 },
+    { num5, LIMBSOF(num5), NULL, 0, num6, LIMBSOF(num6), 0 },
+};
+
+static struct mod_op_test_st test_mod_lshift1_cases[] = {
+    { num0, LIMBSOF(num0), NULL, 0, num2, LIMBSOF(num2), 0 },
+    { num2, LIMBSOF(num2), NULL, 0, num3, LIMBSOF(num3), 0 },
+    { num5, LIMBSOF(num5), NULL, 0, num6, LIMBSOF(num6), 0 },
+};
+
+static struct mod_op_test_st test_mod_lshift_cases[] = {
+    { num0, LIMBSOF(num0), NULL, 0, num2, LIMBSOF(num2), 1 },
+    { num0, LIMBSOF(num0), NULL, 0, num2, LIMBSOF(num2), 3 },
+    { num2, LIMBSOF(num2), NULL, 0, num3, LIMBSOF(num3), 5 },
+    { num5, LIMBSOF(num5), NULL, 0, num6, LIMBSOF(num6), 7 },
+};
+
+static int test_mod_add(int i)
+{
+    struct mod_op_test_st *tc = &test_mod_add_cases[i];
+    size_t m_size = tc->m_size;
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN *fa = NULL, *fb = NULL, *fm = NULL;
+    OSSL_FN *r_gen = NULL, *r_quick = NULL, *expected = NULL;
+    OSSL_FN *tmp = NULL, *fa_red = NULL, *fb_red = NULL;
+    int ret = 0;
+    const OSSL_FN_ULONG *u_gen, *u_quick, *u_exp;
+
+    ctx = OSSL_FN_CTX_new(NULL, 4, 8, 8 * m_size + 8);
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    fa = OSSL_FN_new_limbs(m_size);
+    fb = OSSL_FN_new_limbs(m_size);
+    fm = OSSL_FN_new_limbs(m_size);
+    r_gen = OSSL_FN_new_limbs(m_size);
+    r_quick = OSSL_FN_new_limbs(m_size);
+    expected = OSSL_FN_new_limbs(m_size);
+    fa_red = OSSL_FN_new_limbs(m_size);
+    fb_red = OSSL_FN_new_limbs(m_size);
+    tmp = OSSL_FN_new_limbs(m_size + 1);
+    if (!TEST_ptr(fa) || !TEST_ptr(fb) || !TEST_ptr(fm)
+        || !TEST_ptr(r_gen) || !TEST_ptr(r_quick) || !TEST_ptr(expected)
+        || !TEST_ptr(fa_red) || !TEST_ptr(fb_red) || !TEST_ptr(tmp))
+        goto err;
+
+    if (!TEST_true(ossl_fn_set_words(fa, tc->a, tc->a_size))
+        || !TEST_true(ossl_fn_set_words(fb, tc->b, tc->b_size))
+        || !TEST_true(ossl_fn_set_words(fm, tc->m, tc->m_size)))
+        goto err;
+
+    /* expected = (a + b) mod m */
+    if (!TEST_true(OSSL_FN_add(tmp, fa, fb)))
+        goto err;
+    if (!TEST_true(OSSL_FN_mod(expected, tmp, fm, ctx)))
+        goto err;
+
+    /* general = mod_add(a, b, m, ctx) */
+    if (!TEST_true(OSSL_FN_mod_add(r_gen, fa, fb, fm, ctx)))
+        goto err;
+
+    /* reduce a and b for quick variant */
+    if (!TEST_true(OSSL_FN_mod(fa_red, fa, fm, ctx))
+        || !TEST_true(OSSL_FN_mod(fb_red, fb, fm, ctx)))
+        goto err;
+
+    /* quick = mod_add_quick(a_red, b_red, m) */
+    if (!TEST_true(OSSL_FN_mod_add_quick(r_quick, fa_red, fb_red, fm)))
+        goto err;
+
+    u_gen = ossl_fn_get_words(r_gen);
+    u_quick = ossl_fn_get_words(r_quick);
+    u_exp = ossl_fn_get_words(expected);
+
+    if (!TEST_mem_eq(u_gen, m_size * OSSL_FN_BYTES,
+            u_exp, m_size * OSSL_FN_BYTES))
+        goto err;
+    if (!TEST_mem_eq(u_quick, m_size * OSSL_FN_BYTES,
+            u_exp, m_size * OSSL_FN_BYTES))
+        goto err;
+    if (!TEST_mem_eq(u_gen, m_size * OSSL_FN_BYTES,
+            u_quick, m_size * OSSL_FN_BYTES))
+        goto err;
+
+    ret = 1;
+
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fb);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(r_gen);
+    OSSL_FN_free(r_quick);
+    OSSL_FN_free(expected);
+    OSSL_FN_free(fa_red);
+    OSSL_FN_free(fb_red);
+    OSSL_FN_free(tmp);
+    return ret;
+}
+
+static int test_mod_sub(int i)
+{
+    struct mod_op_test_st *tc = &test_mod_sub_cases[i];
+    size_t m_size = tc->m_size;
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN *fa = NULL, *fb = NULL, *fm = NULL;
+    OSSL_FN *r_gen = NULL, *r_quick = NULL, *expected = NULL;
+    OSSL_FN *tmp = NULL, *fa_red = NULL, *fb_red = NULL;
+    int ret = 0;
+    const OSSL_FN_ULONG *u_gen, *u_quick, *u_exp;
+
+    ctx = OSSL_FN_CTX_new(NULL, 4, 8, 8 * m_size + 8);
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    fa = OSSL_FN_new_limbs(m_size);
+    fb = OSSL_FN_new_limbs(m_size);
+    fm = OSSL_FN_new_limbs(m_size);
+    r_gen = OSSL_FN_new_limbs(m_size);
+    r_quick = OSSL_FN_new_limbs(m_size);
+    expected = OSSL_FN_new_limbs(m_size);
+    fa_red = OSSL_FN_new_limbs(m_size);
+    fb_red = OSSL_FN_new_limbs(m_size);
+    tmp = OSSL_FN_new_limbs(m_size);
+    if (!TEST_ptr(fa) || !TEST_ptr(fb) || !TEST_ptr(fm)
+        || !TEST_ptr(r_gen) || !TEST_ptr(r_quick) || !TEST_ptr(expected)
+        || !TEST_ptr(fa_red) || !TEST_ptr(fb_red) || !TEST_ptr(tmp))
+        goto err;
+
+    if (!TEST_true(ossl_fn_set_words(fa, tc->a, tc->a_size))
+        || !TEST_true(ossl_fn_set_words(fb, tc->b, tc->b_size))
+        || !TEST_true(ossl_fn_set_words(fm, tc->m, tc->m_size)))
+        goto err;
+
+    /* expected = (a - b) mod m */
+    if (!TEST_true(OSSL_FN_sub(tmp, fa, fb)))
+        goto err;
+    if (!TEST_true(OSSL_FN_mod(expected, tmp, fm, ctx)))
+        goto err;
+
+    /* general = mod_sub(a, b, m, ctx) */
+    if (!TEST_true(OSSL_FN_mod_sub(r_gen, fa, fb, fm, ctx)))
+        goto err;
+
+    /* reduce a and b for quick variant */
+    if (!TEST_true(OSSL_FN_mod(fa_red, fa, fm, ctx))
+        || !TEST_true(OSSL_FN_mod(fb_red, fb, fm, ctx)))
+        goto err;
+
+    /* quick = mod_sub_quick(a_red, b_red, m) */
+    if (!TEST_true(OSSL_FN_mod_sub_quick(r_quick, fa_red, fb_red, fm)))
+        goto err;
+
+    u_gen = ossl_fn_get_words(r_gen);
+    u_quick = ossl_fn_get_words(r_quick);
+    u_exp = ossl_fn_get_words(expected);
+
+    if (!TEST_mem_eq(u_gen, m_size * OSSL_FN_BYTES,
+            u_exp, m_size * OSSL_FN_BYTES))
+        goto err;
+    if (!TEST_mem_eq(u_quick, m_size * OSSL_FN_BYTES,
+            u_exp, m_size * OSSL_FN_BYTES))
+        goto err;
+    if (!TEST_mem_eq(u_gen, m_size * OSSL_FN_BYTES,
+            u_quick, m_size * OSSL_FN_BYTES))
+        goto err;
+
+    ret = 1;
+
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fb);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(r_gen);
+    OSSL_FN_free(r_quick);
+    OSSL_FN_free(expected);
+    OSSL_FN_free(fa_red);
+    OSSL_FN_free(fb_red);
+    OSSL_FN_free(tmp);
+    return ret;
+}
+
+static int test_mod_mul(int i)
+{
+    struct mod_op_test_st *tc = &test_mod_mul_cases[i];
+    size_t m_size = tc->m_size;
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN *fa = NULL, *fb = NULL, *fm = NULL;
+    OSSL_FN *r = NULL, *expected = NULL, *tmp = NULL;
+    int ret = 0;
+    const OSSL_FN_ULONG *u_r, *u_exp;
+
+    ctx = OSSL_FN_CTX_new(NULL, 4, 8, 8 * m_size + 8);
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    fa = OSSL_FN_new_limbs(m_size);
+    fb = OSSL_FN_new_limbs(m_size);
+    fm = OSSL_FN_new_limbs(m_size);
+    r = OSSL_FN_new_limbs(m_size);
+    expected = OSSL_FN_new_limbs(m_size);
+    tmp = OSSL_FN_new_limbs(m_size * 2);
+    if (!TEST_ptr(fa) || !TEST_ptr(fb) || !TEST_ptr(fm)
+        || !TEST_ptr(r) || !TEST_ptr(expected) || !TEST_ptr(tmp))
+        goto err;
+
+    if (!TEST_true(ossl_fn_set_words(fa, tc->a, tc->a_size))
+        || !TEST_true(ossl_fn_set_words(fb, tc->b, tc->b_size))
+        || !TEST_true(ossl_fn_set_words(fm, tc->m, tc->m_size)))
+        goto err;
+
+    /* expected = (a * b) mod m */
+    if (!TEST_true(OSSL_FN_mul(tmp, fa, fb, ctx)))
+        goto err;
+    if (!TEST_true(OSSL_FN_mod(expected, tmp, fm, ctx)))
+        goto err;
+
+    /* r = mod_mul(a, b, m, ctx) */
+    if (!TEST_true(OSSL_FN_mod_mul(r, fa, fb, fm, ctx)))
+        goto err;
+
+    u_r = ossl_fn_get_words(r);
+    u_exp = ossl_fn_get_words(expected);
+
+    if (!TEST_mem_eq(u_r, m_size * OSSL_FN_BYTES,
+            u_exp, m_size * OSSL_FN_BYTES))
+        goto err;
+
+    ret = 1;
+
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fb);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(r);
+    OSSL_FN_free(expected);
+    OSSL_FN_free(tmp);
+    return ret;
+}
+
+static int test_mod_sqr(int i)
+{
+    struct mod_op_test_st *tc = &test_mod_sqr_cases[i];
+    size_t m_size = tc->m_size;
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN *fa = NULL, *fm = NULL;
+    OSSL_FN *r = NULL, *expected = NULL, *tmp = NULL;
+    int ret = 0;
+    const OSSL_FN_ULONG *u_r, *u_exp;
+
+    ctx = OSSL_FN_CTX_new(NULL, 4, 8, 8 * m_size + 8);
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    fa = OSSL_FN_new_limbs(m_size);
+    fm = OSSL_FN_new_limbs(m_size);
+    r = OSSL_FN_new_limbs(m_size);
+    expected = OSSL_FN_new_limbs(m_size);
+    tmp = OSSL_FN_new_limbs(m_size * 2);
+    if (!TEST_ptr(fa) || !TEST_ptr(fm)
+        || !TEST_ptr(r) || !TEST_ptr(expected) || !TEST_ptr(tmp))
+        goto err;
+
+    if (!TEST_true(ossl_fn_set_words(fa, tc->a, tc->a_size))
+        || !TEST_true(ossl_fn_set_words(fm, tc->m, tc->m_size)))
+        goto err;
+
+    /* expected = (a * a) mod m */
+    if (!TEST_true(OSSL_FN_sqr(tmp, fa, ctx)))
+        goto err;
+    if (!TEST_true(OSSL_FN_mod(expected, tmp, fm, ctx)))
+        goto err;
+
+    /* r = mod_sqr(a, m, ctx) */
+    if (!TEST_true(OSSL_FN_mod_sqr(r, fa, fm, ctx)))
+        goto err;
+
+    u_r = ossl_fn_get_words(r);
+    u_exp = ossl_fn_get_words(expected);
+
+    if (!TEST_mem_eq(u_r, m_size * OSSL_FN_BYTES,
+            u_exp, m_size * OSSL_FN_BYTES))
+        goto err;
+
+    ret = 1;
+
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(r);
+    OSSL_FN_free(expected);
+    OSSL_FN_free(tmp);
+    return ret;
+}
+
+static int test_mod_lshift1(int i)
+{
+    struct mod_op_test_st *tc = &test_mod_lshift1_cases[i];
+    size_t m_size = tc->m_size;
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN *fa = NULL, *fm = NULL;
+    OSSL_FN *r_gen = NULL, *r_quick = NULL, *expected = NULL;
+    OSSL_FN *tmp = NULL, *fa_red = NULL;
+    int ret = 0;
+    const OSSL_FN_ULONG *u_gen, *u_quick, *u_exp;
+
+    ctx = OSSL_FN_CTX_new(NULL, 4, 8, 8 * m_size + 8);
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    fa = OSSL_FN_new_limbs(m_size);
+    fm = OSSL_FN_new_limbs(m_size);
+    r_gen = OSSL_FN_new_limbs(m_size);
+    r_quick = OSSL_FN_new_limbs(m_size);
+    expected = OSSL_FN_new_limbs(m_size);
+    tmp = OSSL_FN_new_limbs(m_size + 1);
+    fa_red = OSSL_FN_new_limbs(m_size);
+    if (!TEST_ptr(fa) || !TEST_ptr(fm)
+        || !TEST_ptr(r_gen) || !TEST_ptr(r_quick) || !TEST_ptr(expected)
+        || !TEST_ptr(tmp) || !TEST_ptr(fa_red))
+        goto err;
+
+    if (!TEST_true(ossl_fn_set_words(fa, tc->a, tc->a_size))
+        || !TEST_true(ossl_fn_set_words(fm, tc->m, tc->m_size)))
+        goto err;
+
+    /* expected = (a + a) mod m */
+    if (!TEST_true(OSSL_FN_add(tmp, fa, fa)))
+        goto err;
+    if (!TEST_true(OSSL_FN_mod(expected, tmp, fm, ctx)))
+        goto err;
+
+    /* general = mod_lshift1(a, m, ctx) */
+    if (!TEST_true(OSSL_FN_mod_lshift1(r_gen, fa, fm, ctx)))
+        goto err;
+
+    /* reduce a for quick variant */
+    if (!TEST_true(OSSL_FN_mod(fa_red, fa, fm, ctx)))
+        goto err;
+
+    /* quick = mod_lshift1_quick(a_red, m) */
+    if (!TEST_true(OSSL_FN_mod_lshift1_quick(r_quick, fa_red, fm)))
+        goto err;
+
+    u_gen = ossl_fn_get_words(r_gen);
+    u_quick = ossl_fn_get_words(r_quick);
+    u_exp = ossl_fn_get_words(expected);
+
+    if (!TEST_mem_eq(u_gen, m_size * OSSL_FN_BYTES,
+            u_exp, m_size * OSSL_FN_BYTES))
+        goto err;
+    if (!TEST_mem_eq(u_quick, m_size * OSSL_FN_BYTES,
+            u_exp, m_size * OSSL_FN_BYTES))
+        goto err;
+    if (!TEST_mem_eq(u_gen, m_size * OSSL_FN_BYTES,
+            u_quick, m_size * OSSL_FN_BYTES))
+        goto err;
+
+    ret = 1;
+
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(r_gen);
+    OSSL_FN_free(r_quick);
+    OSSL_FN_free(expected);
+    OSSL_FN_free(tmp);
+    OSSL_FN_free(fa_red);
+    return ret;
+}
+
+static int test_mod_lshift(int i)
+{
+    struct mod_op_test_st *tc = &test_mod_lshift_cases[i];
+    size_t m_size = tc->m_size;
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN *fa = NULL, *fm = NULL;
+    OSSL_FN *r_gen = NULL, *r_quick = NULL, *expected = NULL;
+    OSSL_FN *tmp = NULL, *fa_red = NULL, *pow2n = NULL;
+    OSSL_FN_ULONG pow2_word;
+    int ret = 0;
+    const OSSL_FN_ULONG *u_gen, *u_quick, *u_exp;
+
+    ctx = OSSL_FN_CTX_new(NULL, 4, 8, 8 * m_size + 8);
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    fa = OSSL_FN_new_limbs(m_size);
+    fm = OSSL_FN_new_limbs(m_size);
+    r_gen = OSSL_FN_new_limbs(m_size);
+    r_quick = OSSL_FN_new_limbs(m_size);
+    expected = OSSL_FN_new_limbs(m_size);
+    tmp = OSSL_FN_new_limbs(m_size + 1);
+    fa_red = OSSL_FN_new_limbs(m_size);
+    pow2n = OSSL_FN_new_limbs(1);
+    if (!TEST_ptr(fa) || !TEST_ptr(fm)
+        || !TEST_ptr(r_gen) || !TEST_ptr(r_quick) || !TEST_ptr(expected)
+        || !TEST_ptr(tmp) || !TEST_ptr(fa_red) || !TEST_ptr(pow2n))
+        goto err;
+
+    if (!TEST_true(ossl_fn_set_words(fa, tc->a, tc->a_size))
+        || !TEST_true(ossl_fn_set_words(fm, tc->m, tc->m_size)))
+        goto err;
+
+    pow2_word = ((OSSL_FN_ULONG)1) << tc->n;
+    if (!TEST_true(ossl_fn_set_words(pow2n, &pow2_word, 1)))
+        goto err;
+
+    /* expected = (a * 2^n) mod m */
+    if (!TEST_true(OSSL_FN_mul(tmp, fa, pow2n, ctx)))
+        goto err;
+    if (!TEST_true(OSSL_FN_mod(expected, tmp, fm, ctx)))
+        goto err;
+
+    /* general = mod_lshift(a, n, m, ctx) */
+    if (!TEST_true(OSSL_FN_mod_lshift(r_gen, fa, tc->n, fm, ctx)))
+        goto err;
+
+    /* reduce a for quick variant */
+    if (!TEST_true(OSSL_FN_mod(fa_red, fa, fm, ctx)))
+        goto err;
+
+    /* quick = mod_lshift_quick(a_red, n, m) */
+    if (!TEST_true(OSSL_FN_mod_lshift_quick(r_quick, fa_red, tc->n, fm)))
+        goto err;
+
+    u_gen = ossl_fn_get_words(r_gen);
+    u_quick = ossl_fn_get_words(r_quick);
+    u_exp = ossl_fn_get_words(expected);
+
+    if (!TEST_mem_eq(u_gen, m_size * OSSL_FN_BYTES,
+            u_exp, m_size * OSSL_FN_BYTES))
+        goto err;
+    if (!TEST_mem_eq(u_quick, m_size * OSSL_FN_BYTES,
+            u_exp, m_size * OSSL_FN_BYTES))
+        goto err;
+    if (!TEST_mem_eq(u_gen, m_size * OSSL_FN_BYTES,
+            u_quick, m_size * OSSL_FN_BYTES))
+        goto err;
+
+    ret = 1;
+
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(r_gen);
+    OSSL_FN_free(r_quick);
+    OSSL_FN_free(expected);
+    OSSL_FN_free(tmp);
+    OSSL_FN_free(fa_red);
+    OSSL_FN_free(pow2n);
+    return ret;
+}
+
+static const OSSL_FN_ULONG mod_secp128r1_p[] = {
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
+    OSSL_FN_ULONG64_C(0xfffffffd, 0xffffffff),
+};
+static const OSSL_FN_ULONG mod_secp128r1_a[] = {
+    OSSL_FN_ULONG64_C(0xffffffff, 0xfffffffc),
+    OSSL_FN_ULONG64_C(0xfffffff7, 0xffffffff),
+};
+static const OSSL_FN_ULONG mod_secp128r1_x2[] = {
+    OSSL_FN_ULONG64_C(0x7f04aa75, 0x6b2f9496),
+    OSSL_FN_ULONG64_C(0x74e2ecb0, 0x826a5208),
+};
+static const OSSL_FN_ULONG mod_secp128r1_x2_plus_a[] = {
+    OSSL_FN_ULONG64_C(0x7f04aa75, 0x6b2f9493),
+    OSSL_FN_ULONG64_C(0x74e2ecaa, 0x826a5208),
+};
+
+static const OSSL_FN_ULONG mod_sub_wide_a[] = {
+    OSSL_FN_ULONG_C(0x7),
+#if OSSL_FN_BYTES == 4
+    OSSL_FN_ULONG_C(0),
+#endif
+    OSSL_FN_ULONG_C(0x1),
+};
+static const OSSL_FN_ULONG mod_sub_wide_b[] = {
+    OSSL_FN_ULONG_C(0x1),
+};
+static const OSSL_FN_ULONG mod_sub_wide_m[] = {
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffc5),
+};
+static const OSSL_FN_ULONG mod_sub_wide_expected[] = {
+    OSSL_FN_ULONG_C(0x41),
+};
+static const OSSL_FN_ULONG mod_sub_negative_a[] = {
+    OSSL_FN_ULONG_C(0x1),
+};
+static const OSSL_FN_ULONG mod_sub_negative_b[] = {
+    OSSL_FN_ULONG_C(0x3),
+};
+static const OSSL_FN_ULONG mod_sub_negative_m[] = {
+    OSSL_FN_ULONG_C(0x5),
+};
+static const OSSL_FN_ULONG mod_sub_negative_expected[] = {
+    OSSL_FN_ULONG_C(0x3),
+};
+
+static int test_mod_quick_wide_operands(void)
+{
+    size_t m_size = LIMBSOF(mod_secp128r1_p);
+    size_t wide_size = m_size + 2;
+    OSSL_FN *fa = NULL, *fb = NULL, *fm = NULL;
+    OSSL_FN *r = NULL, *expected = NULL;
+    const OSSL_FN_ULONG *u_r = NULL, *u_exp = NULL;
+    int ret = 0;
+
+    fa = OSSL_FN_new_limbs(wide_size);
+    fb = OSSL_FN_new_limbs(m_size);
+    fm = OSSL_FN_new_limbs(m_size);
+    r = OSSL_FN_new_limbs(wide_size);
+    expected = OSSL_FN_new_limbs(wide_size);
+    if (!TEST_ptr(fa) || !TEST_ptr(fb) || !TEST_ptr(fm)
+        || !TEST_ptr(r) || !TEST_ptr(expected))
+        goto err;
+
+    if (!TEST_true(ossl_fn_set_words(fa, mod_secp128r1_x2,
+            LIMBSOF(mod_secp128r1_x2)))
+        || !TEST_true(ossl_fn_set_words(fb, mod_secp128r1_a,
+            LIMBSOF(mod_secp128r1_a)))
+        || !TEST_true(ossl_fn_set_words(fm, mod_secp128r1_p,
+            LIMBSOF(mod_secp128r1_p)))
+        || !TEST_true(ossl_fn_set_words(expected, mod_secp128r1_x2_plus_a,
+            LIMBSOF(mod_secp128r1_x2_plus_a)))
+        || !TEST_true(pollute(r, 0, wide_size))
+        || !TEST_true(OSSL_FN_mod_add_quick(r, fa, fb, fm)))
+        goto err;
+
+    u_r = ossl_fn_get_words(r);
+    u_exp = ossl_fn_get_words(expected);
+    if (!TEST_mem_eq(u_r, wide_size * OSSL_FN_BYTES,
+            u_exp, wide_size * OSSL_FN_BYTES))
+        goto err;
+
+    if (!TEST_true(ossl_fn_set_words(fa, mod_secp128r1_x2_plus_a,
+            LIMBSOF(mod_secp128r1_x2_plus_a)))
+        || !TEST_true(ossl_fn_set_words(expected, mod_secp128r1_x2,
+            LIMBSOF(mod_secp128r1_x2)))
+        || !TEST_true(pollute(r, 0, wide_size))
+        || !TEST_true(OSSL_FN_mod_sub_quick(r, fa, fb, fm)))
+        goto err;
+
+    u_r = ossl_fn_get_words(r);
+    u_exp = ossl_fn_get_words(expected);
+    if (!TEST_mem_eq(u_r, wide_size * OSSL_FN_BYTES,
+            u_exp, wide_size * OSSL_FN_BYTES))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fb);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(r);
+    OSSL_FN_free(expected);
+    return ret;
+}
+
+static int test_mod_sub_general_wide_operands(void)
+{
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN *fa = NULL, *fb = NULL, *fm = NULL;
+    OSSL_FN *r = NULL, *expected = NULL;
+    const OSSL_FN_ULONG *u_r = NULL, *u_exp = NULL;
+    int ret = 0;
+
+    ctx = OSSL_FN_CTX_new(NULL, 4, 8, 32);
+    fa = OSSL_FN_new_limbs(LIMBSOF(mod_sub_wide_a));
+    fb = OSSL_FN_new_limbs(LIMBSOF(mod_sub_wide_b));
+    fm = OSSL_FN_new_limbs(LIMBSOF(mod_sub_wide_m));
+    r = OSSL_FN_new_limbs(LIMBSOF(mod_sub_wide_m));
+    expected = OSSL_FN_new_limbs(LIMBSOF(mod_sub_wide_m));
+    if (!TEST_ptr(ctx) || !TEST_ptr(fa) || !TEST_ptr(fb) || !TEST_ptr(fm)
+        || !TEST_ptr(r) || !TEST_ptr(expected))
+        goto err;
+
+    if (!TEST_true(ossl_fn_set_words(fa, mod_sub_wide_a,
+            LIMBSOF(mod_sub_wide_a)))
+        || !TEST_true(ossl_fn_set_words(fb, mod_sub_wide_b,
+            LIMBSOF(mod_sub_wide_b)))
+        || !TEST_true(ossl_fn_set_words(fm, mod_sub_wide_m,
+            LIMBSOF(mod_sub_wide_m)))
+        || !TEST_true(ossl_fn_set_words(expected, mod_sub_wide_expected,
+            LIMBSOF(mod_sub_wide_expected)))
+        || !TEST_true(pollute(r, 0, LIMBSOF(mod_sub_wide_m)))
+        || !TEST_true(OSSL_FN_mod_sub(r, fa, fb, fm, ctx)))
+        goto err;
+
+    u_r = ossl_fn_get_words(r);
+    u_exp = ossl_fn_get_words(expected);
+    if (!TEST_mem_eq(u_r, LIMBSOF(mod_sub_wide_m) * OSSL_FN_BYTES,
+            u_exp, LIMBSOF(mod_sub_wide_m) * OSSL_FN_BYTES))
+        goto err;
+
+    if (!TEST_true(ossl_fn_set_words(fa, mod_sub_negative_a,
+            LIMBSOF(mod_sub_negative_a)))
+        || !TEST_true(ossl_fn_set_words(fb, mod_sub_negative_b,
+            LIMBSOF(mod_sub_negative_b)))
+        || !TEST_true(ossl_fn_set_words(fm, mod_sub_negative_m,
+            LIMBSOF(mod_sub_negative_m)))
+        || !TEST_true(ossl_fn_set_words(expected, mod_sub_negative_expected,
+            LIMBSOF(mod_sub_negative_expected)))
+        || !TEST_true(pollute(r, 0, LIMBSOF(mod_sub_negative_m)))
+        || !TEST_true(OSSL_FN_mod_sub(r, fa, fb, fm, ctx)))
+        goto err;
+
+    u_r = ossl_fn_get_words(r);
+    u_exp = ossl_fn_get_words(expected);
+    if (!TEST_mem_eq(u_r, LIMBSOF(mod_sub_negative_m) * OSSL_FN_BYTES,
+            u_exp, LIMBSOF(mod_sub_negative_m) * OSSL_FN_BYTES))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fb);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(r);
+    OSSL_FN_free(expected);
+    return ret;
+}
+
+static int test_mod_ops_result_size(int i)
+{
+    size_t m_size = LIMBSOF(num7);
+    size_t r_size = i == 0 ? m_size - 1 : i == 1 ? m_size
+                                                 : m_size + 2;
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN *fa = NULL, *fb = NULL, *fm = NULL, *expected = NULL;
+    OSSL_FN *r_gen = NULL, *r_quick = NULL, *tmp = NULL, *fa_red = NULL;
+    OSSL_FN *fb_red = NULL, *pow2n = NULL;
+    OSSL_FN_ULONG pow2_word = 1 << 7;
+    const OSSL_FN_ULONG *u_gen = NULL, *u_quick = NULL, *u_exp = NULL;
+    int ret = 0;
+
+    ctx = OSSL_FN_CTX_new(NULL, 6, 12, 16 * m_size + 16);
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    fa = OSSL_FN_new_limbs(m_size);
+    fb = OSSL_FN_new_limbs(m_size);
+    fm = OSSL_FN_new_limbs(m_size);
+    expected = OSSL_FN_new_limbs(r_size);
+    r_gen = OSSL_FN_new_limbs(r_size);
+    r_quick = OSSL_FN_new_limbs(r_size);
+    tmp = OSSL_FN_new_limbs(2 * m_size);
+    fa_red = OSSL_FN_new_limbs(m_size);
+    fb_red = OSSL_FN_new_limbs(m_size);
+    pow2n = OSSL_FN_new_limbs(1);
+    if (!TEST_ptr(fa) || !TEST_ptr(fb) || !TEST_ptr(fm)
+        || !TEST_ptr(expected) || !TEST_ptr(r_gen) || !TEST_ptr(r_quick)
+        || !TEST_ptr(tmp) || !TEST_ptr(fa_red) || !TEST_ptr(fb_red)
+        || !TEST_ptr(pow2n))
+        goto err;
+
+    if (!TEST_true(ossl_fn_set_words(fa, num5, LIMBSOF(num5)))
+        || !TEST_true(ossl_fn_set_words(fb, num5, LIMBSOF(num5)))
+        || !TEST_true(ossl_fn_set_words(fm, num7, LIMBSOF(num7)))
+        || !TEST_true(ossl_fn_set_words(pow2n, &pow2_word, 1)))
+        goto err;
+
+#define CHECK_MOD_OP_RESULT(opname)                                \
+    do {                                                           \
+        u_gen = ossl_fn_get_words(r_gen);                          \
+        u_quick = ossl_fn_get_words(r_quick);                      \
+        u_exp = ossl_fn_get_words(expected);                       \
+        if (!TEST_mem_eq(u_gen, r_size * OSSL_FN_BYTES,            \
+                u_exp, r_size * OSSL_FN_BYTES)) {                  \
+            TEST_note("%s general, r_size = %zu", opname, r_size); \
+            goto err;                                              \
+        }                                                          \
+        if (!TEST_mem_eq(u_quick, r_size * OSSL_FN_BYTES,          \
+                u_exp, r_size * OSSL_FN_BYTES)) {                  \
+            TEST_note("%s quick, r_size = %zu", opname, r_size);   \
+            goto err;                                              \
+        }                                                          \
+    } while (0)
+
+    if (!TEST_true(pollute(expected, 0, r_size))
+        || !TEST_true(pollute(r_gen, 0, r_size))
+        || !TEST_true(pollute(r_quick, 0, r_size))
+        || !TEST_true(OSSL_FN_add(tmp, fa, fb))
+        || !TEST_true(OSSL_FN_mod(expected, tmp, fm, ctx))
+        || !TEST_true(OSSL_FN_mod_add(r_gen, fa, fb, fm, ctx))
+        || !TEST_true(OSSL_FN_mod(fa_red, fa, fm, ctx))
+        || !TEST_true(OSSL_FN_mod(fb_red, fb, fm, ctx))
+        || !TEST_true(OSSL_FN_mod_add_quick(r_quick, fa_red, fb_red, fm)))
+        goto err;
+    CHECK_MOD_OP_RESULT("mod_add");
+
+    if (!TEST_true(ossl_fn_set_words(fa, num5, LIMBSOF(num5)))
+        || !TEST_true(ossl_fn_set_words(fb, num4, LIMBSOF(num4)))
+        || !TEST_true(pollute(expected, 0, r_size))
+        || !TEST_true(pollute(r_gen, 0, r_size))
+        || !TEST_true(pollute(r_quick, 0, r_size))
+        || !TEST_true(OSSL_FN_sub(tmp, fa, fb))
+        || !TEST_true(OSSL_FN_mod(expected, tmp, fm, ctx))
+        || !TEST_true(OSSL_FN_mod_sub(r_gen, fa, fb, fm, ctx))
+        || !TEST_true(OSSL_FN_mod(fa_red, fa, fm, ctx))
+        || !TEST_true(OSSL_FN_mod(fb_red, fb, fm, ctx))
+        || !TEST_true(OSSL_FN_mod_sub_quick(r_quick, fa_red, fb_red, fm)))
+        goto err;
+    CHECK_MOD_OP_RESULT("mod_sub");
+
+    if (!TEST_true(ossl_fn_set_words(fb, num5, LIMBSOF(num5)))
+        || !TEST_true(pollute(expected, 0, r_size))
+        || !TEST_true(pollute(r_gen, 0, r_size))
+        || !TEST_true(pollute(r_quick, 0, r_size))
+        || !TEST_true(OSSL_FN_mul(tmp, fa, fb, ctx))
+        || !TEST_true(OSSL_FN_mod(expected, tmp, fm, ctx))
+        || !TEST_true(OSSL_FN_mod_mul(r_gen, fa, fb, fm, ctx))
+        || !TEST_true(OSSL_FN_mod_mul(r_quick, fa, fb, fm, ctx)))
+        goto err;
+    CHECK_MOD_OP_RESULT("mod_mul");
+
+    if (!TEST_true(pollute(expected, 0, r_size))
+        || !TEST_true(pollute(r_gen, 0, r_size))
+        || !TEST_true(pollute(r_quick, 0, r_size))
+        || !TEST_true(OSSL_FN_sqr(tmp, fa, ctx))
+        || !TEST_true(OSSL_FN_mod(expected, tmp, fm, ctx))
+        || !TEST_true(OSSL_FN_mod_sqr(r_gen, fa, fm, ctx))
+        || !TEST_true(OSSL_FN_mod_sqr(r_quick, fa, fm, ctx)))
+        goto err;
+    CHECK_MOD_OP_RESULT("mod_sqr");
+
+    if (!TEST_true(pollute(expected, 0, r_size))
+        || !TEST_true(pollute(r_gen, 0, r_size))
+        || !TEST_true(pollute(r_quick, 0, r_size))
+        || !TEST_true(OSSL_FN_add(tmp, fa, fa))
+        || !TEST_true(OSSL_FN_mod(expected, tmp, fm, ctx))
+        || !TEST_true(OSSL_FN_mod_lshift1(r_gen, fa, fm, ctx))
+        || !TEST_true(OSSL_FN_mod(fa_red, fa, fm, ctx))
+        || !TEST_true(OSSL_FN_mod_lshift1_quick(r_quick, fa_red, fm)))
+        goto err;
+    CHECK_MOD_OP_RESULT("mod_lshift1");
+
+    if (!TEST_true(pollute(expected, 0, r_size))
+        || !TEST_true(pollute(r_gen, 0, r_size))
+        || !TEST_true(pollute(r_quick, 0, r_size))
+        || !TEST_true(OSSL_FN_mul(tmp, fa, pow2n, ctx))
+        || !TEST_true(OSSL_FN_mod(expected, tmp, fm, ctx))
+        || !TEST_true(OSSL_FN_mod_lshift(r_gen, fa, 7, fm, ctx))
+        || !TEST_true(OSSL_FN_mod(fa_red, fa, fm, ctx))
+        || !TEST_true(OSSL_FN_mod_lshift_quick(r_quick, fa_red, 7, fm)))
+        goto err;
+    CHECK_MOD_OP_RESULT("mod_lshift");
+
+#undef CHECK_MOD_OP_RESULT
+
+    ret = 1;
+
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fb);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(expected);
+    OSSL_FN_free(r_gen);
+    OSSL_FN_free(r_quick);
+    OSSL_FN_free(tmp);
+    OSSL_FN_free(fa_red);
+    OSSL_FN_free(fb_red);
+    OSSL_FN_free(pow2n);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 17);
@@ -2777,6 +3584,15 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_rand_range, OSSL_NELEM(range_words));
     ADD_TEST(test_rand_range_zero);
     ADD_TEST(test_rand_range_exactly_sized);
+    ADD_ALL_TESTS(test_mod_add, OSSL_NELEM(test_mod_add_cases));
+    ADD_ALL_TESTS(test_mod_sub, OSSL_NELEM(test_mod_sub_cases));
+    ADD_ALL_TESTS(test_mod_mul, OSSL_NELEM(test_mod_mul_cases));
+    ADD_ALL_TESTS(test_mod_sqr, OSSL_NELEM(test_mod_sqr_cases));
+    ADD_ALL_TESTS(test_mod_lshift1, OSSL_NELEM(test_mod_lshift1_cases));
+    ADD_ALL_TESTS(test_mod_lshift, OSSL_NELEM(test_mod_lshift_cases));
+    ADD_TEST(test_mod_quick_wide_operands);
+    ADD_TEST(test_mod_sub_general_wide_operands);
+    ADD_ALL_TESTS(test_mod_ops_result_size, 3);
 
     return 1;
 }
