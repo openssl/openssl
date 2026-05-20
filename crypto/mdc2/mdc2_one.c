@@ -14,8 +14,10 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/mdc2.h>
+
+#include "internal/cryptlib.h"
 
 unsigned char *MDC2(const unsigned char *d, size_t n, unsigned char *md)
 {

@@ -8,15 +8,17 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/core_dispatch.h>
+
 #include <openssl/buffer.h>
-#include <openssl/objects.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/pkcs12.h>
-#include <openssl/pem.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/encoder.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/pem.h>
+#include <openssl/pkcs12.h>
+#include <openssl/x509.h>
+
+#include "internal/cryptlib.h"
 
 static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder,
     int nid, const EVP_CIPHER *enc,

@@ -12,6 +12,7 @@
  */
 
 #include <openssl/asn1t.h>
+
 #include "crmf_local.h"
 
 ASN1_SEQUENCE(OSSL_CRMF_PRIVATEKEYINFO) = {

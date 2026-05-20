@@ -8,16 +8,19 @@
  */
 
 #include <openssl/crypto.h>
-#include "crypto/rand.h"
-#include "crypto/dso_conf.h"
-#include "internal/thread_once.h"
+
 #include "internal/cryptlib.h"
 #include "internal/e_os.h"
+#include "internal/thread_once.h"
+
+#include "crypto/dso_conf.h"
+#include "crypto/rand.h"
+
 #include "buildinf.h"
 
 #ifndef OPENSSL_NO_JITTER
-#include <stdio.h>
 #include <jitterentropy.h>
+#include <stdio.h>
 #endif
 
 #if defined(__arm__) || defined(__arm) || defined(__aarch64__)

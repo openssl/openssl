@@ -14,8 +14,9 @@
 
 #include <stddef.h>
 #include <unistd.h>
-#include <openssl/err.h>
+
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 
 #define STACKSIZE 32768
 

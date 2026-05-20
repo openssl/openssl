@@ -14,10 +14,12 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
 #include <openssl/objects.h>
+#include <openssl/rsa.h>
+
+#include "internal/cryptlib.h"
 #ifndef FIPS_MODULE
 #ifndef OPENSSL_NO_MD2
 #include <openssl/md2.h> /* uses MD2_DIGEST_LENGTH */
@@ -39,7 +41,9 @@
 #endif
 #endif
 #include <openssl/sha.h> /* uses SHA???_DIGEST_LENGTH */
+
 #include "crypto/rsa.h"
+
 #include "rsa_local.h"
 
 /*

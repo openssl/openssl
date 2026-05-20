@@ -14,14 +14,18 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
+
 #include <openssl/bn.h>
-#include <openssl/obj_mac.h>
 #include <openssl/core_names.h>
+#include <openssl/obj_mac.h>
+
+#include "internal/common.h"
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
-#include "internal/common.h"
-#include "crypto/evp.h"
+
 #include "crypto/dh.h"
+#include "crypto/evp.h"
+
 #include "dh_local.h"
 
 static DH *dh_new_intern(OSSL_LIB_CTX *libctx);

@@ -14,8 +14,8 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/crypto.h>
-#include <openssl/err.h>
 #include <openssl/ec.h>
+#include <openssl/err.h>
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 BIGNUM *EC_POINT_point2bn(const EC_GROUP *group,

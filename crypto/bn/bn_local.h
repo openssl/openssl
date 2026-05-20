@@ -11,8 +11,10 @@
 #define OSSL_CRYPTO_BN_LOCAL_H
 
 #include <openssl/opensslconf.h>
+
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
+
 #include "crypto/bn.h"
 
 /*

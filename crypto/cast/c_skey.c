@@ -14,6 +14,7 @@
 #include "internal/deprecated.h"
 
 #include <openssl/cast.h>
+
 #include "cast_local.h"
 #include "cast_s.h"
 

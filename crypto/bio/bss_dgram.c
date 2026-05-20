@@ -11,16 +11,17 @@
 #define _GNU_SOURCE
 #endif
 
-#include <stdio.h>
+#include "bio_local.h"
+
 #include <errno.h>
+#include <stdio.h>
 
 #include "internal/time.h"
-#include "bio_local.h"
 #ifndef OPENSSL_NO_DGRAM
 
 #ifndef OPENSSL_NO_SCTP
-#include <netinet/sctp.h>
 #include <fcntl.h>
+#include <netinet/sctp.h>
 #define OPENSSL_SCTP_DATA_CHUNK_TYPE 0x00
 #define OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE 0xc0
 #endif

@@ -8,11 +8,15 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include "crypto/x509.h"
+
+#include <openssl/bio.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
-#include <openssl/bio.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/x509.h"
+
 #include "ext_dat.h"
 
 static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,

@@ -9,16 +9,20 @@
 
 /* X509 v3 extension utilities */
 
-#include "internal/e_os.h"
-#include "internal/cryptlib.h"
 #include <stdio.h>
 #include <string.h>
-#include "crypto/ctype.h"
+
+#include <openssl/bn.h>
 #include <openssl/conf.h>
 #include <openssl/crypto.h>
 #include <openssl/x509v3.h>
+
+#include "internal/cryptlib.h"
+#include "internal/e_os.h"
+
+#include "crypto/ctype.h"
 #include "crypto/x509.h"
-#include <openssl/bn.h>
+
 #include "ext_dat.h"
 #include "x509_local.h"
 

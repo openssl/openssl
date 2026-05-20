@@ -8,9 +8,11 @@
  */
 
 #include <string.h>
+
 #include <openssl/crypto.h>
-#include "slh_dsa_local.h"
+
 #include "slh_dsa_key.h"
+#include "slh_dsa_local.h"
 
 /* k = 14, 17, 22, 33, 35 (number of trees) */
 #define SLH_MAX_K 35

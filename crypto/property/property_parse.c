@@ -8,17 +8,21 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <string.h>
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+
 #include <openssl/err.h>
-#include "internal/propertyerr.h"
-#include "internal/property.h"
-#include "internal/numbers.h"
-#include "crypto/ctype.h"
-#include "internal/nelem.h"
-#include "property_local.h"
+
 #include "internal/e_os.h"
+#include "internal/nelem.h"
+#include "internal/numbers.h"
+#include "internal/property.h"
+#include "internal/propertyerr.h"
+
+#include "crypto/ctype.h"
+
+#include "property_local.h"
 
 DEFINE_STACK_OF(OSSL_PROPERTY_DEFINITION)
 

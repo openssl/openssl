@@ -14,8 +14,9 @@
 #include "internal/deprecated.h"
 
 #include <openssl/blowfish.h>
-#include "bf_local.h"
 #include <openssl/opensslv.h>
+
+#include "bf_local.h"
 
 /*
  * Blowfish as implemented from 'Blowfish: Springer-Verlag paper' (From

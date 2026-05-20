@@ -8,15 +8,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <string.h>
-#include <openssl/params.h>
-#include <openssl/err.h>
-#include "internal/thread_once.h"
-#include "internal/numbers.h"
-#include "internal/endian.h"
 #include "internal/params.h"
-#include "internal/packet.h"
+
+#include <string.h>
+
+#include <openssl/err.h>
+#include <openssl/params.h>
+
 #include "internal/common.h"
+#include "internal/endian.h"
+#include "internal/numbers.h"
+#include "internal/packet.h"
+#include "internal/thread_once.h"
 
 /* Shortcuts for raising errors that are widely used */
 #define err_unsigned_negative \

@@ -7,18 +7,22 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include "crypto/ctype.h"
 #include <limits.h>
+#include <stdio.h>
+
+#include <openssl/asn1.h>
+#include <openssl/bn.h>
+#include <openssl/lhash.h>
+
 #include "internal/cryptlib.h"
 #include "internal/thread_once.h"
 #include "internal/tsan_assist.h"
-#include <openssl/lhash.h>
-#include <openssl/asn1.h>
-#include "crypto/asn1/asn1_local.h"
-#include "crypto/objects.h"
-#include <openssl/bn.h>
+
 #include "crypto/asn1.h"
+#include "crypto/asn1/asn1_local.h"
+#include "crypto/ctype.h"
+#include "crypto/objects.h"
+
 #include "obj_local.h"
 
 /* obj_dat.h is generated from objects.txt and obj_mac.{num,h} by obj_dat.pl */

@@ -8,13 +8,15 @@
  */
 
 #include <openssl/byteorder.h>
-#include "ml_dsa_local.h"
-#include "ml_dsa_vector.h"
-#include "ml_dsa_matrix.h"
-#include "ml_dsa_hash.h"
+
 #include "internal/constant_time.h"
-#include "internal/sha3.h"
 #include "internal/packet.h"
+#include "internal/sha3.h"
+
+#include "ml_dsa_hash.h"
+#include "ml_dsa_local.h"
+#include "ml_dsa_matrix.h"
+#include "ml_dsa_vector.h"
 
 #define SHAKE128_BLOCKSIZE SHA3_BLOCKSIZE(128)
 #define SHAKE256_BLOCKSIZE SHA3_BLOCKSIZE(256)

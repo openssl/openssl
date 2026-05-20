@@ -14,20 +14,21 @@
 #include "internal/deprecated.h"
 
 #include <openssl/core_names.h>
+#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/params.h>
-#include <openssl/err.h>
 #ifndef FIPS_MODULE
 #include <openssl/x509.h>
 #endif
-#include "crypto/bn.h"
-#include "crypto/ec.h"
-#include "ec_local.h"
 #include "internal/e_os.h"
 #include "internal/nelem.h"
 #include "internal/param_build_set.h"
 
+#include "crypto/bn.h"
+#include "crypto/ec.h"
 #include <crypto/asn1.h>
+
+#include "ec_local.h"
 
 /* Mapping between a flag and a name */
 static const OSSL_ITEM encoding_nameid_map[] = {

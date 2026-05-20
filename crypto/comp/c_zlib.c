@@ -10,12 +10,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/objects.h>
-#include "internal/comp.h"
+
 #include <openssl/err.h>
-#include "crypto/cryptlib.h"
+#include <openssl/objects.h>
+
 #include "internal/bio.h"
+#include "internal/comp.h"
 #include "internal/thread_once.h"
+
+#include "crypto/cryptlib.h"
+
 #include "comp_local.h"
 
 COMP_METHOD *COMP_zlib(void);

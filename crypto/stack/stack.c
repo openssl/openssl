@@ -7,13 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <errno.h>
 #include <stdio.h>
+
+#include <openssl/e_os2.h> /* For ossl_inline */
+#include <openssl/stack.h>
+
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "internal/safe_math.h"
-#include <openssl/stack.h>
-#include <errno.h>
-#include <openssl/e_os2.h> /* For ossl_inline */
 
 OSSL_SAFE_MATH_SIGNED(int, int)
 

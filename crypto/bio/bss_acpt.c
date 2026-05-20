@@ -9,9 +9,10 @@
 
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#include <stdio.h>
-#include <errno.h>
 #include "bio_local.h"
+
+#include <errno.h>
+#include <stdio.h>
 
 #ifndef OPENSSL_NO_SOCK
 

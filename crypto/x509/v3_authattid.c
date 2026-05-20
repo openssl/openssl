@@ -8,13 +8,14 @@
  */
 
 #include <openssl/asn1t.h>
-#include <openssl/x509v3.h>
-#include <crypto/x509_acert.h>
 #include <openssl/x509_acert.h>
-#include "crypto/asn1.h"
-#include "ext_dat.h"
+#include <openssl/x509v3.h>
 
+#include "crypto/asn1.h"
 #include <crypto/asn1.h>
+#include <crypto/x509_acert.h>
+
+#include "ext_dat.h"
 
 DECLARE_ASN1_ITEM(OSSL_ISSUER_SERIAL)
 

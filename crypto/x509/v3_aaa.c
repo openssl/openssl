@@ -8,9 +8,11 @@
  */
 
 #include <openssl/asn1t.h>
-#include <openssl/x509v3.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
+
 #include <crypto/x509.h>
+
 #include "ext_dat.h"
 
 ASN1_CHOICE(OSSL_ALLOWED_ATTRIBUTES_CHOICE) = {

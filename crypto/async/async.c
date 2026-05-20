@@ -16,12 +16,15 @@
 #undef _FORTIFY_SOURCE
 
 /* This must be the first #include file */
-#include "async_local.h"
-#include "internal/threads_common.h"
+#include <string.h>
 
 #include <openssl/err.h>
+
+#include "internal/threads_common.h"
+
 #include "crypto/cryptlib.h"
-#include <string.h>
+
+#include "async_local.h"
 
 #define ASYNC_JOB_RUNNING 0
 #define ASYNC_JOB_PAUSING 1

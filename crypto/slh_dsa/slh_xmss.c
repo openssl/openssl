@@ -8,8 +8,9 @@
  */
 
 #include <string.h>
-#include "slh_dsa_local.h"
+
 #include "slh_dsa_key.h"
+#include "slh_dsa_local.h"
 
 /**
  * @brief Compute the root Public key of a XMSS tree.

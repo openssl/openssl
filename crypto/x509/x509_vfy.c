@@ -10,25 +10,28 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 #include "internal/deprecated.h"
 
-#include <stdio.h>
-#include <time.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdio.h>
+#include <time.h>
 
-#include "crypto/ctype.h"
-#include "internal/cryptlib.h"
-#include <openssl/crypto.h>
-#include <openssl/buffer.h>
-#include <openssl/evp.h>
 #include <openssl/asn1.h>
+#include <openssl/buffer.h>
+#include <openssl/core_names.h>
+#include <openssl/crypto.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/ocsp.h>
+#include <openssl/posix_time.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include <openssl/ocsp.h>
-#include <openssl/objects.h>
-#include <openssl/posix_time.h>
-#include <openssl/core_names.h>
+
+#include "internal/cryptlib.h"
 #include "internal/dane.h"
+
+#include "crypto/ctype.h"
 #include "crypto/x509.h"
+
 #include "x509_local.h"
 
 /* CRL score values */

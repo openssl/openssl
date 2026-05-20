@@ -9,12 +9,15 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/safestack.h>
+
 #include <openssl/asn1.h>
-#include <openssl/objects.h>
 #include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/safestack.h>
 #include <openssl/x509.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/x509.h"
 
 OSSL_BEGIN_ALLOW_DEPRECATED

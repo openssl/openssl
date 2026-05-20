@@ -8,9 +8,12 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/asn1.h"
 
 int ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len)

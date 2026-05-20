@@ -8,8 +8,11 @@
  */
 
 #include <string.h> /* strlen */
+
 #include <openssl/crypto.h>
+
 #include "internal/cryptlib.h"
+
 #include "ec_local.h"
 
 /* the return value must be freed (using OPENSSL_free()) */

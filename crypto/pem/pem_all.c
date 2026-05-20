@@ -14,15 +14,18 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/bio.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/pkcs7.h>
-#include <openssl/pem.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
 #include <openssl/dh.h>
+#include <openssl/dsa.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
+#include <openssl/pkcs7.h>
+#include <openssl/rsa.h>
+#include <openssl/x509.h>
+
+#include "internal/cryptlib.h"
+
 #include "pem_local.h"
 
 static RSA *pkey_get_rsa(EVP_PKEY *key, RSA **rsa);

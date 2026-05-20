@@ -14,7 +14,9 @@
 #include "internal/deprecated.h"
 
 #include <openssl/sha.h> /* diverse SHA macros */
+
 #include "internal/sha3.h" /* KECCAK1600_WIDTH */
+
 #include "crypto/evp.h"
 
 static const EVP_MD sha1_md = {

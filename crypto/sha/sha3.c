@@ -7,8 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <string.h>
 #include "internal/sha3.h"
+
+#include <string.h>
+
 #include "internal/common.h"
 
 #if defined(__aarch64__) && defined(KECCAK1600_ASM)

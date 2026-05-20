@@ -13,6 +13,7 @@
 
 #include <openssl/ct.h>
 #include <openssl/err.h>
+
 #include "internal/time.h"
 
 #include "ct_local.h"

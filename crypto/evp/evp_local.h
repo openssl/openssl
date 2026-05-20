@@ -13,9 +13,9 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/evp.h>
 
-#include <crypto/evp.h>
-
 #include "internal/refcount.h"
+
+#include <crypto/evp.h>
 
 #define EVP_CTRL_RET_UNSUPPORTED -1
 
@@ -298,8 +298,8 @@ DEFINE_STACK_OF(EVP_PBE_CTL)
 
 int ossl_is_partially_overlapping(const void *ptr1, const void *ptr2, int len);
 
-#include <openssl/types.h>
 #include <openssl/core.h>
+#include <openssl/types.h>
 
 void *evp_generic_fetch(OSSL_LIB_CTX *ctx, int operation_id,
     const char *name, const char *properties,

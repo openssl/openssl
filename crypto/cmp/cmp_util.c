@@ -10,11 +10,13 @@
  */
 
 #include <string.h>
+
 #include <openssl/cmp_util.h>
-#include "cmp_local.h" /* just for decls of internal functions defined here */
 #include <openssl/cmperr.h>
 #include <openssl/err.h> /* should be implied by cmperr.h */
 #include <openssl/x509v3.h>
+
+#include "cmp_local.h" /* just for decls of internal functions defined here */
 
 /*
  * use trace API for CMP-specific logging, prefixed by "CMP " and severity

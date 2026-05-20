@@ -9,6 +9,7 @@
 
 #include <openssl/configuration.h>
 #include <openssl/thread.h>
+
 #include <internal/thread.h>
 
 uint32_t OSSL_get_thread_support_flags(void)

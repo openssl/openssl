@@ -11,20 +11,23 @@
 
 #include <stdio.h>
 #include <string.h>
+
 #include "internal/e_os.h" /* struct stat */
 #ifdef __TANDEM
-#include <sys/types.h> /* needed for stat.h */
 #include <sys/stat.h> /* struct stat */
+#include <sys/types.h> /* needed for stat.h */
 #endif
-#include "internal/cryptlib.h"
-#include "internal/o_dir.h"
-#include <openssl/lhash.h>
+#include <openssl/buffer.h>
 #include <openssl/conf.h>
 #include <openssl/conf_api.h>
-#include "conf_local.h"
-#include "conf_def.h"
-#include <openssl/buffer.h>
 #include <openssl/err.h>
+#include <openssl/lhash.h>
+
+#include "internal/cryptlib.h"
+#include "internal/o_dir.h"
+
+#include "conf_def.h"
+#include "conf_local.h"
 #ifndef OPENSSL_NO_POSIX_IO
 #include <sys/stat.h>
 #ifdef _WIN32

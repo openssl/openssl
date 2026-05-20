@@ -15,12 +15,15 @@
 #include "internal/deprecated.h"
 
 #include <string.h>
+
 #include <openssl/err.h>
 
 #include "internal/cryptlib.h"
-#include "crypto/bn.h"
-#include "ec_local.h"
 #include "internal/refcount.h"
+
+#include "crypto/bn.h"
+
+#include "ec_local.h"
 
 /*
  * This file implements the wNAF-based interleaving multi-exponentiation method

@@ -8,10 +8,13 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/objects.h>
-#include <openssl/ts.h>
 #include <openssl/pkcs7.h>
+#include <openssl/ts.h>
+
+#include "internal/cryptlib.h"
+
 #include "ts_local.h"
 
 int TS_RESP_set_status_info(TS_RESP *a, TS_STATUS_INFO *status_info)

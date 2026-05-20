@@ -8,24 +8,29 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <string.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <openssl/crypto.h>
-#include <openssl/provider.h>
 #include "internal/property.h"
-#include "internal/provider.h"
-#include "internal/hashtable.h"
-#include "internal/tsan_assist.h"
-#include "internal/list.h"
-#include "internal/hashfunc.h"
-#include "internal/time.h"
+
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <openssl/crypto.h>
 #include <openssl/lhash.h>
+#include <openssl/provider.h>
 #include <openssl/rand.h>
 #include <openssl/trace.h>
-#include "crypto/sparse_array.h"
-#include "property_local.h"
+
+#include "internal/hashfunc.h"
+#include "internal/hashtable.h"
+#include "internal/list.h"
+#include "internal/provider.h"
+#include "internal/time.h"
+#include "internal/tsan_assist.h"
+
 #include "crypto/context.h"
+#include "crypto/sparse_array.h"
+
+#include "property_local.h"
 
 /*
  * The shard count was determined through performance testing with the evp_fetch

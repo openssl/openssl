@@ -7,11 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"
-#include "internal/cryptlib.h"
-#include "internal/mem_alloc_utils.h"
-#include "crypto/cryptlib.h"
 #include <stdlib.h>
+
+#include "internal/cryptlib.h"
+#include "internal/e_os.h"
+#include "internal/mem_alloc_utils.h"
+
+#include "crypto/cryptlib.h"
 
 void *ossl_malloc_align(size_t num, size_t alignment, void **freeptr,
     const char *file, int line)

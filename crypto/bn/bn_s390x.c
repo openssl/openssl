@@ -8,17 +8,18 @@
  */
 
 #include "crypto/bn.h"
+
 #include "arch/s390x_arch.h"
 
 #ifdef S390X_MOD_EXP
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <asm/zcrypt.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 static int s390x_mod_exp_hw(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m)

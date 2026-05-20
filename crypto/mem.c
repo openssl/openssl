@@ -7,14 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"
-#include "internal/cryptlib.h"
-#include "internal/mem_alloc_utils.h"
-#include "crypto/cryptlib.h"
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
+
 #include <openssl/crypto.h>
+
+#include "internal/cryptlib.h"
+#include "internal/e_os.h"
+#include "internal/mem_alloc_utils.h"
+
+#include "crypto/cryptlib.h"
 
 /*
  * the following pointers may be changed as long as 'allow_customize' is set

@@ -13,8 +13,10 @@
  */
 #include "internal/deprecated.h"
 
-#include <string.h>
 #include "prov/md5_sha1.h"
+
+#include <string.h>
+
 #include <openssl/evp.h>
 
 int ossl_md5_sha1_init(MD5_SHA1_CTX *mctx)

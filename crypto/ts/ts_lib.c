@@ -8,12 +8,15 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/objects.h>
+
 #include <openssl/bn.h>
+#include <openssl/objects.h>
+#include <openssl/ts.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include <openssl/ts.h>
+
+#include "internal/cryptlib.h"
+
 #include "ts_local.h"
 
 int TS_ASN1_INTEGER_print_bio(BIO *bio, const ASN1_INTEGER *num)

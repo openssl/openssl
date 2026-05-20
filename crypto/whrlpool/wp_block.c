@@ -42,9 +42,11 @@
  */
 #include "internal/deprecated.h"
 
-#include "internal/cryptlib.h"
-#include "wp_local.h"
 #include <string.h>
+
+#include "internal/cryptlib.h"
+
+#include "wp_local.h"
 
 typedef unsigned char u8;
 #if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32)

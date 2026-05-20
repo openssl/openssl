@@ -14,8 +14,9 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include <openssl/opensslconf.h>
+
 #include <openssl/byteorder.h>
+#include <openssl/opensslconf.h>
 /*-
  * IMPLEMENTATION NOTES.
  *
@@ -54,10 +55,11 @@
 #include <string.h>
 
 #include <openssl/crypto.h>
-#include <openssl/sha.h>
 #include <openssl/opensslv.h>
+#include <openssl/sha.h>
 
 #include "internal/cryptlib.h"
+
 #include "crypto/sha.h"
 
 #if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64) || defined(__s390__) || defined(__s390x__) || defined(__aarch64__) || defined(SHA512_ASM)

@@ -8,9 +8,11 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/pkcs12.h>
 #include <openssl/trace.h>
+
+#include "internal/cryptlib.h"
 
 #include <crypto/asn1.h>
 

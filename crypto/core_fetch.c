@@ -11,8 +11,9 @@
 
 #include <openssl/core.h>
 #include <openssl/trace.h>
-#include "internal/cryptlib.h"
+
 #include "internal/core.h"
+#include "internal/cryptlib.h"
 #include "internal/property.h"
 #include "internal/provider.h"
 

@@ -13,9 +13,10 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/aes.h>
+
 #include "internal/cryptlib.h"
 
-#include <openssl/aes.h>
 #include "aes_local.h"
 
 /* XXX: probably some better way to do this */

@@ -9,12 +9,15 @@
 
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include "bio_local.h"
-#include "internal/cryptlib.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <openssl/err.h>
+
+#include "internal/cryptlib.h"
 
 long BIO_debug_callback_ex(BIO *bio, int cmd, const char *argp, size_t len,
     int argi, long argl, int ret, size_t *processed)

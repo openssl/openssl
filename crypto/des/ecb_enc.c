@@ -13,9 +13,10 @@
  */
 #include "internal/deprecated.h"
 
-#include "des_local.h"
-#include <openssl/opensslv.h>
 #include <openssl/bio.h>
+#include <openssl/opensslv.h>
+
+#include "des_local.h"
 
 const char *DES_options(void)
 {

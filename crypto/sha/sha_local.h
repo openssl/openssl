@@ -15,6 +15,7 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/sha.h>
+
 #include "internal/endian.h"
 
 #define DATA_ORDER_IS_BIG_ENDIAN

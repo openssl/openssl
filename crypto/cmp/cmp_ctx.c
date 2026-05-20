@@ -9,8 +9,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cmp_local.h"
 #include <openssl/ocsp.h> /* for OCSP_REVOKED_STATUS_* */
+
+#include "cmp_local.h"
 
 #define DEFINE_OSSL_CMP_CTX_get0(FIELD, TYPE) \
     DEFINE_OSSL_CMP_CTX_get0_NAME(FIELD, FIELD, TYPE)

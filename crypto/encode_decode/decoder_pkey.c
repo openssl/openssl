@@ -9,19 +9,22 @@
 
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
-#include <openssl/provider.h>
-#include <openssl/evp.h>
-#include <openssl/ui.h>
 #include <openssl/decoder.h>
+#include <openssl/evp.h>
+#include <openssl/provider.h>
 #include <openssl/safestack.h>
 #include <openssl/trace.h>
-#include "crypto/evp.h"
-#include "crypto/decoder.h"
-#include "crypto/evp/evp_local.h"
-#include "crypto/lhash.h"
-#include "encoder_local.h"
+#include <openssl/ui.h>
+
 #include "internal/namemap.h"
 #include "internal/sizes.h"
+
+#include "crypto/decoder.h"
+#include "crypto/evp.h"
+#include "crypto/evp/evp_local.h"
+#include "crypto/lhash.h"
+
+#include "encoder_local.h"
 
 int OSSL_DECODER_CTX_set_passphrase(OSSL_DECODER_CTX *ctx,
     const unsigned char *kstr,

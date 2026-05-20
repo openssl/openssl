@@ -8,8 +8,10 @@
  */
 
 #include <stdlib.h>
-#include "crypto/cryptlib.h"
+
 #include "internal/thread_once.h"
+
+#include "crypto/cryptlib.h"
 
 int ossl_do_ex_data_init(OSSL_LIB_CTX *ctx)
 {

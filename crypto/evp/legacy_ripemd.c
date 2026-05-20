@@ -14,6 +14,7 @@
 #include "internal/deprecated.h"
 
 #include <openssl/ripemd.h>
+
 #include "crypto/evp.h"
 
 static const EVP_MD ripemd160_md = {

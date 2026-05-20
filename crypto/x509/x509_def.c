@@ -8,11 +8,13 @@
  */
 
 #include <stdio.h>
-#include "internal/e_os.h"
-#include "internal/cryptlib.h"
-#include "internal/thread_once.h"
+
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
+
+#include "internal/cryptlib.h"
+#include "internal/e_os.h"
+#include "internal/thread_once.h"
 
 #if defined(_WIN32)
 

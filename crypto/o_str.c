@@ -7,14 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"
-#include <string.h>
 #include <limits.h>
+#include <string.h>
+
 #include <openssl/crypto.h>
-#include "crypto/ctype.h"
+
 #include "internal/cryptlib.h"
+#include "internal/e_os.h"
 #include "internal/thread_once.h"
 #include "internal/to_hex.h"
+
+#include "crypto/ctype.h"
 
 #define DEFAULT_SEPARATOR ':'
 #define CH_ZERO '\0'

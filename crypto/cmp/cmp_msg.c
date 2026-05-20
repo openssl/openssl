@@ -11,9 +11,9 @@
 
 /* CMP functions for PKIMessage construction */
 
-#include "cmp_local.h"
-
 #include <internal/cms.h> /* for ossl_cms_sign_encrypt() */
+
+#include "cmp_local.h"
 
 OSSL_CMP_MSG *OSSL_CMP_MSG_new(OSSL_LIB_CTX *libctx, const char *propq)
 {

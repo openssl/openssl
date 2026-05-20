@@ -1,8 +1,12 @@
-#include <openssl/evp.h>
-#include "internal/cryptlib.h"
-#include "crypto/evp.h"
-#include "evp_local.h"
 #include "enc_b64_scalar.h"
+
+#include <openssl/evp.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/evp.h"
+
+#include "evp_local.h"
 
 static const unsigned char base64_srp_bin2ascii_0[256] = {
     '0', '0', '0', '0', '1', '1', '1', '1', '2', '2', '2', '2', '3', '3', '3', '3',

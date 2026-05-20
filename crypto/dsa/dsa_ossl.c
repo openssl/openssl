@@ -14,13 +14,17 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include "crypto/bn.h"
+
+#include <openssl/asn1.h>
 #include <openssl/bn.h>
 #include <openssl/sha.h>
-#include "dsa_local.h"
-#include <openssl/asn1.h>
+
+#include "internal/cryptlib.h"
 #include "internal/deterministic_nonce.h"
+
+#include "crypto/bn.h"
+
+#include "dsa_local.h"
 
 #define MIN_DSA_SIGN_QBITS 128
 #define MAX_DSA_SIGN_RETRIES 8

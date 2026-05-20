@@ -51,10 +51,12 @@
  */
 
 #include <string.h>
-#include <internal/rcu.h>
-#include <internal/hashtable.h>
-#include <internal/hashfunc.h>
+
 #include <openssl/rand.h>
+
+#include <internal/hashfunc.h>
+#include <internal/hashtable.h>
+#include <internal/rcu.h>
 
 /*
  * gcc defines __SANITIZE_THREAD__

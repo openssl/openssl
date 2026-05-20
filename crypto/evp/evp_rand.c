@@ -9,16 +9,20 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
+
 #include <openssl/core.h>
 #include <openssl/core_names.h>
 #include <openssl/crypto.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+
+#include "internal/core.h"
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "internal/provider.h"
-#include "internal/core.h"
+
 #include "crypto/evp.h"
+
 #include "evp_local.h"
 
 struct evp_rand_st {

@@ -13,8 +13,9 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/opensslv.h>
 #include <openssl/camellia.h>
+#include <openssl/opensslv.h>
+
 #include "cmll_local.h"
 
 int Camellia_set_key(const unsigned char *userKey, int bits,

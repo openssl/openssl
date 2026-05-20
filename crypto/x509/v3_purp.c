@@ -8,15 +8,19 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include "internal/numbers.h"
-#include <openssl/x509v3.h>
+
 #include <openssl/x509_vfy.h>
-#include "crypto/x509.h"
-#include "internal/tsan_assist.h"
-#include "x509_local.h"
-#include "crypto/objects/obj_dat.h"
+#include <openssl/x509v3.h>
+
+#include "internal/cryptlib.h"
 #include "internal/hashfunc.h"
+#include "internal/numbers.h"
+#include "internal/tsan_assist.h"
+
+#include "crypto/objects/obj_dat.h"
+#include "crypto/x509.h"
+
+#include "x509_local.h"
 
 static int check_ssl_ca(const X509 *x);
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,

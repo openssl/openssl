@@ -11,11 +11,12 @@
 #define OSSL_LIBCRYPTO_CT_CT_LOCAL_H
 
 #include <stddef.h>
+
 #include <openssl/ct.h>
 #include <openssl/evp.h>
+#include <openssl/safestack.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include <openssl/safestack.h>
 
 /*
  * From RFC6962: opaque SerializedSCT<1..2^16-1>; struct { SerializedSCT

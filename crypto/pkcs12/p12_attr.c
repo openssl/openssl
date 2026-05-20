@@ -8,11 +8,14 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/pkcs12.h>
-#include "p12_local.h"
+
+#include "internal/cryptlib.h"
 
 #include <crypto/asn1.h>
+
+#include "p12_local.h"
 
 /* Add a local keyid to a safebag */
 

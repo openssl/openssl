@@ -8,10 +8,12 @@
  */
 
 #include <stdio.h>
-#include <openssl/crypto.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/conf.h>
+#include <openssl/crypto.h>
 #include <openssl/x509v3.h>
+
+#include "internal/cryptlib.h"
 
 /* Multi string module: add table entries from a given section */
 

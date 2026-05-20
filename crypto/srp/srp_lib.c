@@ -15,10 +15,12 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #ifndef OPENSSL_NO_SRP
-#include "internal/cryptlib.h"
+#include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <openssl/srp.h>
-#include <openssl/evp.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/bn_srp.h"
 
 /* calculate = SHA1(PAD(x) || PAD(y)) */

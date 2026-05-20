@@ -8,12 +8,15 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
+#include <openssl/buffer.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
-#include <openssl/buffer.h>
-#include "crypto/x509.h"
+
+#include "internal/cryptlib.h"
+
 #include "crypto/ctype.h"
+#include "crypto/x509.h"
 
 /*
  * Limit to ensure we don't overflow: much greater than

@@ -14,16 +14,20 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include <openssl/x509.h>
+
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
+#include <openssl/x509.h>
+
 #include "internal/cryptlib.h"
+#include "internal/ffc.h"
+
 #include "crypto/asn1.h"
 #include "crypto/dsa.h"
 #include "crypto/evp.h"
-#include "internal/ffc.h"
+
 #include "dsa_local.h"
 
 static int dsa_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)

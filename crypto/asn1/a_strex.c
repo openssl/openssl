@@ -7,17 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
-#include "internal/cryptlib.h"
-#include "internal/sizes.h"
-#include "internal/unicode.h"
-#include "crypto/asn1.h"
+
+#include <openssl/asn1.h>
 #include <openssl/byteorder.h>
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
-#include <openssl/asn1.h>
-#include <inttypes.h>
+
+#include "internal/cryptlib.h"
+#include "internal/sizes.h"
+#include "internal/unicode.h"
+
+#include "crypto/asn1.h"
 
 #include "charmap.h"
 

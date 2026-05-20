@@ -13,9 +13,10 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/rc4.h>
-#include "rc4_local.h"
 #include <openssl/opensslv.h>
+#include <openssl/rc4.h>
+
+#include "rc4_local.h"
 
 const char *RC4_options(void)
 {

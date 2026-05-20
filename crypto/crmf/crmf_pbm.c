@@ -11,12 +11,14 @@
  * CRMF implementation by Martin Peylo, Miikka Viljanen, and David von Oheimb.
  */
 
-#include "crmf_local.h"
-#include <openssl/rand.h> /* for RAND_bytes_ex() */
-#include "internal/sizes.h" /* for OSSL_MAX_NAME_SIZE */
 #include <openssl/err.h>
+#include <openssl/rand.h> /* for RAND_bytes_ex() */
+
+#include "internal/sizes.h" /* for OSSL_MAX_NAME_SIZE */
 
 #include <crypto/asn1.h>
+
+#include "crmf_local.h"
 
 /*-
  * creates and initializes OSSL_CRMF_PBMPARAMETER (section 4.4)

@@ -16,7 +16,9 @@
 
 #include <openssl/aes.h>
 #include <openssl/sha.h>
+
 #include "internal/cryptlib.h"
+
 #include "crypto/evp.h"
 
 #if defined(AES_ASM) && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))

@@ -7,9 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <errno.h>
-#include <openssl/err.h>
 #include "internal/time.h"
+
+#include <errno.h>
+
+#include <openssl/err.h>
+
 #include "internal/e_os.h"
 
 OSSL_TIME ossl_time_now(void)

@@ -8,8 +8,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "crypto/evp.h"
 #include "internal/sm3.h"
+
+#include "crypto/evp.h"
 
 static const EVP_MD sm3_md = {
     NID_sm3,

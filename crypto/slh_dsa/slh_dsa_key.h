@@ -15,9 +15,9 @@
 
 #include "crypto/slh_dsa.h"
 
-#include "slh_params.h"
 #include "slh_adrs.h"
 #include "slh_hash.h"
+#include "slh_params.h"
 
 #define SLH_DSA_MAX_N 32
 #define SLH_DSA_SK_SEED(key) ((key)->priv)

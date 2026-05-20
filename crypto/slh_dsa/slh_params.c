@@ -6,9 +6,11 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#include "slh_params.h"
+
 #include <stddef.h>
 #include <string.h>
-#include "slh_params.h"
+
 #include <openssl/obj_mac.h>
 
 /* H(), T() use this to calculate the number of zeros for security cat 3 & 5 */

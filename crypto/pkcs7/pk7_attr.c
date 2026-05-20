@@ -9,13 +9,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <openssl/bio.h>
+
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
+#include <openssl/bio.h>
+#include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
-#include <openssl/err.h>
 
 #include <crypto/asn1.h>
 

@@ -7,12 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 #include <stddef.h>
+
 #include <openssl/crypto.h>
-#include "slh_dsa_local.h"
-#include "slh_dsa_key.h"
 #include <openssl/evp.h>
 #include <openssl/sha.h>
+
 #include "crypto/evp.h"
+
+#include "slh_dsa_key.h"
+#include "slh_dsa_local.h"
 
 /**
  * @brief Create a SLH_DSA_HASH_CTX that contains parameters, functions, and

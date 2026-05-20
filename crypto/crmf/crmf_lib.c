@@ -26,11 +26,14 @@
  * cases increases its link count) in the parent and so both should be freed up.
  */
 
-#include "crmf_local.h"
 #include <openssl/asn1t.h>
+
 #include "internal/constant_time.h"
 #include "internal/sizes.h" /* for OSSL_MAX_NAME_SIZE */
+
 #include "crypto/x509.h" /* for ossl_x509_check_private_key() */
+
+#include "crmf_local.h"
 
 /*-
  * atyp = Attribute Type

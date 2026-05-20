@@ -8,8 +8,11 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/x509v3.h>
+
+#include "internal/cryptlib.h"
+
 #include "ext_dat.h"
 
 const X509V3_EXT_METHOD ossl_v3_crl_num = {

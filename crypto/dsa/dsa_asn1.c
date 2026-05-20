@@ -14,12 +14,16 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include "dsa_local.h"
+
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/rand.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/asn1_dsa.h"
+
+#include "dsa_local.h"
 
 /* Override the default free and new methods */
 static int dsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,

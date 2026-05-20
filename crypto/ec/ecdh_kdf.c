@@ -14,10 +14,12 @@
 #include "internal/deprecated.h"
 
 #include <string.h>
+
 #include <openssl/core_names.h>
 #include <openssl/ec.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
+
 #include "ec_local.h"
 
 /* Key derivation function from X9.63/SECG */

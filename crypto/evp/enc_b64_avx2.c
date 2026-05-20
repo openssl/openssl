@@ -1,8 +1,12 @@
-#include <openssl/evp.h>
-#include "enc_b64_scalar.h"
 #include "enc_b64_avx2.h"
+
+#include <openssl/evp.h>
+
 #include "internal/cryptlib.h"
+
 #include "crypto/evp.h"
+
+#include "enc_b64_scalar.h"
 #include "evp_local.h"
 
 #if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
@@ -43,10 +47,10 @@
  * Clang/MSVC will just ignore these pragmas.
  */
 
-#include <string.h>
 #include <immintrin.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 OPENSSL_TARGET_AVX2
 static __m256i lookup_pshufb_std(__m256i input)

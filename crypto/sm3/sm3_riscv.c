@@ -7,13 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
+
 #include "internal/sm3.h"
+
 #include "arch/riscv_arch.h"
-#include <stdio.h>
 
 void ossl_hwsm3_block_data_order_zvksh(SM3_CTX *c, const void *p, size_t num);
 void ossl_sm3_block_data_order(SM3_CTX *c, const void *p, size_t num);

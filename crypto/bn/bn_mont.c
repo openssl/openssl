@@ -14,6 +14,7 @@
  */
 
 #include "internal/cryptlib.h"
+
 #include "bn_local.h"
 
 #define MONT_WORD /* use the faster word-based algorithm */

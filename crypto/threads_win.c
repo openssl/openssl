@@ -16,11 +16,14 @@
 #include <assert.h>
 
 #include <openssl/crypto.h>
-#include <crypto/cryptlib.h>
+
 #include "internal/common.h"
+#include "internal/rcu.h"
 #include "internal/thread_arch.h"
 #include "internal/threads_common.h"
-#include "internal/rcu.h"
+
+#include <crypto/cryptlib.h>
+
 #include "rcu_internal.h"
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && defined(OPENSSL_SYS_WINDOWS)

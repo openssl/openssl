@@ -9,11 +9,14 @@
 
 #include <limits.h>
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/asn1.h>
-#include "asn1_local.h"
+
+#include "internal/cryptlib.h"
 
 #include <crypto/asn1.h>
+
+#include "asn1_local.h"
 
 #ifndef OPENSSL_NO_DEPRECATED_4_1
 int ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, int len)

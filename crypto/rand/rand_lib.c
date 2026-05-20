@@ -10,20 +10,22 @@
 /* We need to use some RAND deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/opensslconf.h>
-#include <openssl/core_names.h>
 #include <openssl/provider.h>
+
+#include "internal/common.h"
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
 #include "internal/thread_once.h"
 #include "internal/threads_common.h"
-#include "crypto/rand.h"
-#include "crypto/cryptlib.h"
-#include "rand_local.h"
+
 #include "crypto/context.h"
-#include "internal/provider.h"
-#include "internal/common.h"
+#include "crypto/cryptlib.h"
+#include "crypto/rand.h"
+
+#include "rand_local.h"
 
 /* clang-format off */
 #ifndef OPENSSL_DEFAULT_SEED_SRC
@@ -86,15 +88,19 @@ static RAND_GLOBAL *rand_get_global(OSSL_LIB_CTX *libctx)
 }
 
 #ifndef FIPS_MODULE
+#include <limits.h>
 #include <stdio.h>
 #include <time.h>
-#include <limits.h>
+
 #include <openssl/conf.h>
 #include <openssl/trace.h>
-#include "crypto/rand_pool.h"
-#include "prov/seeding.h"
+
 #include "internal/e_os.h"
 #include "internal/property.h"
+
+#include "crypto/rand_pool.h"
+
+#include "prov/seeding.h"
 
 /*
  * The default name for the random provider.

@@ -11,7 +11,9 @@
 #include <assert.h>
 #include <limits.h>
 #include <stdio.h>
+
 #include "internal/cryptlib.h"
+
 #include "bn_local.h"
 
 #ifndef OPENSSL_NO_EC2M

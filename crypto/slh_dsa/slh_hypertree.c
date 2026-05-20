@@ -8,8 +8,9 @@
  */
 
 #include <string.h>
-#include "slh_dsa_local.h"
+
 #include "slh_dsa_key.h"
+#include "slh_dsa_local.h"
 
 /**
  * @brief Generate a Hypertree Signature

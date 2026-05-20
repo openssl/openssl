@@ -15,11 +15,12 @@
  * For details on that implementation, see below (look for uppercase
  * "SECURE HEAP IMPLEMENTATION").
  */
-#include "internal/e_os.h"
+#include <string.h>
+
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 
-#include <string.h>
+#include "internal/e_os.h"
 
 #ifndef OPENSSL_NO_SECURE_MEMORY
 #if defined(_WIN32)
@@ -42,8 +43,8 @@ BOOL
 #endif
 #endif
 #endif
-#include <stdlib.h>
 #include <assert.h>
+#include <stdlib.h>
 #if defined(OPENSSL_SYS_UNIX)
 #include <unistd.h>
 #endif
@@ -60,13 +61,13 @@ BOOL
 #if defined(OPENSSL_SYS_LINUX)
 #include <sys/syscall.h>
 #if defined(SYS_mlock2)
-#include <linux/mman.h>
 #include <errno.h>
+#include <linux/mman.h>
 #endif
 #include <sys/param.h>
 #endif
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #endif
 #ifndef HAVE_MADVISE
 #if defined(MADV_DONTDUMP)
