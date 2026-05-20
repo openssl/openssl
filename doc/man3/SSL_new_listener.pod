@@ -378,7 +378,7 @@ These functions were added in OpenSSL 3.5.
 SSL_listen_ex() was added in OpenSSL 4.0.
 
 DTLS listener support (including B<SSL_LISTENER_FLAG_REQUIRE_HVR> and
-B<SSL_LISTENER_FLAG_REQUIRE_HRR> flags) was added in OpenSSL 3.5.
+B<SSL_LISTENER_FLAG_REQUIRE_HRR> flags) was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

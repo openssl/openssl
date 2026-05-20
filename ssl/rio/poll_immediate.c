@@ -158,11 +158,77 @@ static void postpoll_translation_cleanup_ssl_quic(SSL *ssl,
     if (ossl_quic_get_notifier_fd(ssl) != -1)
         ossl_quic_leave_blocking_section(ssl, wctx);
 }
+#endif /* OPENSSL_NO_QUIC */
 
+#ifndef OPENSSL_NO_DTLS
+static int poll_translate_ssl_dtls_listener(SSL *ssl,
+    RIO_POLL_BUILDER *rpb,
+    uint64_t events)
+{
+    BIO *rbio;
+    int fd;
+
+    rbio = SSL_get_rbio(ssl);
+    if (rbio == NULL)
+        return 0;
+
+    if (!BIO_get_fd(rbio, &fd) || fd < 0) {
+        ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
+            "DTLS listener requires a socket BIO for blocking poll");
+        return 0;
+    }
+
+    if (!ossl_rio_poll_builder_add_fd(rpb, fd, /*r=*/1, /*w=*/0))
+        return 0;
+
+    return 1;
+}
+
+static int poll_translate_ssl_dtls_conn(SSL *ssl,
+    RIO_POLL_BUILDER *rpb,
+    uint64_t events)
+{
+    BIO *rbio, *wbio;
+    int rfd = -1, wfd = -1;
+
+    if ((events & SSL_POLL_EVENT_R) != 0) {
+        rbio = SSL_get_rbio(ssl);
+        if (rbio != NULL)
+            BIO_get_fd(rbio, &rfd);
+    }
+
+    if ((events & SSL_POLL_EVENT_W) != 0) {
+        wbio = SSL_get_wbio(ssl);
+        if (wbio != NULL)
+            BIO_get_fd(wbio, &wfd);
+    }
+
+    /* If same FD for read and write, combine them */
+    if (rfd != -1 && wfd == rfd) {
+        if (!ossl_rio_poll_builder_add_fd(rpb, rfd, /*r=*/1, /*w=*/1))
+            return 0;
+    } else {
+        if (rfd != -1)
+            if (!ossl_rio_poll_builder_add_fd(rpb, rfd, /*r=*/1, /*w=*/0))
+                return 0;
+        if (wfd != -1)
+            if (!ossl_rio_poll_builder_add_fd(rpb, wfd, /*r=*/0, /*w=*/1))
+                return 0;
+    }
+
+    return 1;
+}
+#endif /* OPENSSL_NO_DTLS */
+
+#if !defined(OPENSSL_NO_QUIC) || !defined(OPENSSL_NO_DTLS)
 static void postpoll_translation_cleanup(SSL_POLL_ITEM *items,
     size_t num_items,
-    size_t stride,
-    QUIC_REACTOR_WAIT_CTX *wctx)
+    size_t stride
+#ifndef OPENSSL_NO_QUIC
+    ,
+    QUIC_REACTOR_WAIT_CTX *wctx
+#endif
+)
 {
     SSL_POLL_ITEM *item;
     SSL *ssl;
@@ -185,6 +251,13 @@ static void postpoll_translation_cleanup(SSL_POLL_ITEM *items,
                 postpoll_translation_cleanup_ssl_quic(ssl, wctx);
                 break;
 #endif
+
+#ifndef OPENSSL_NO_DTLS
+            case SSL_TYPE_DTLS_LISTENER:
+            case SSL_TYPE_SSL_CONNECTION:
+                break;
+#endif
+
             default:
                 break;
             }
@@ -198,7 +271,9 @@ static void postpoll_translation_cleanup(SSL_POLL_ITEM *items,
 static int poll_translate(SSL_POLL_ITEM *items,
     size_t num_items,
     size_t stride,
+#ifndef OPENSSL_NO_QUIC
     QUIC_REACTOR_WAIT_CTX *wctx,
+#endif
     RIO_POLL_BUILDER *rpb,
     OSSL_TIME *p_earliest_wakeup_deadline,
     int *abort_blocking,
@@ -209,8 +284,10 @@ static int poll_translate(SSL_POLL_ITEM *items,
     size_t result_count = 0;
     SSL *ssl;
     OSSL_TIME earliest_wakeup_deadline = ossl_time_infinite();
+#ifndef OPENSSL_NO_QUIC
     struct timeval timeout;
     int is_infinite = 0;
+#endif
     size_t i;
 
     for (i = 0; i < num_items; ++i) {
@@ -247,6 +324,22 @@ static int poll_translate(SSL_POLL_ITEM *items,
                 break;
 #endif
 
+#ifndef OPENSSL_NO_DTLS
+            case SSL_TYPE_DTLS_LISTENER:
+                if (!poll_translate_ssl_dtls_listener(ssl, rpb, item->events))
+                    FAIL_ITEM(i);
+                break;
+            case SSL_TYPE_SSL_CONNECTION:
+                if (SSL_is_dtls(ssl)) {
+                    if (!poll_translate_ssl_dtls_conn(ssl, rpb, item->events))
+                        FAIL_ITEM(i);
+                } else {
+                    ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
+                        "SSL_poll currently only supports DTLS listeners for DTLS connections");
+                }
+                break;
+#endif
+
             default:
                 ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
                     "SSL_poll currently only supports QUIC SSL "
@@ -272,7 +365,12 @@ static int poll_translate(SSL_POLL_ITEM *items,
 
 out:
     if (!ok)
-        postpoll_translation_cleanup(items, i, stride, wctx);
+        postpoll_translation_cleanup(items, i, stride
+#ifndef OPENSSL_NO_QUIC
+            ,
+            wctx
+#endif
+        );
 
     *p_earliest_wakeup_deadline = earliest_wakeup_deadline;
     *p_result_count = result_count;
@@ -287,7 +385,9 @@ static int poll_block(SSL_POLL_ITEM *items,
 {
     int ok = 0, abort_blocking = 0;
     RIO_POLL_BUILDER rpb;
+#ifndef OPENSSL_NO_QUIC
     QUIC_REACTOR_WAIT_CTX wctx;
+#endif
     OSSL_TIME earliest_wakeup_deadline;
 
     /*
@@ -311,10 +411,16 @@ static int poll_block(SSL_POLL_ITEM *items,
      *   TODO(QUIC POLLING): In the future we will do reverse translation here
      *   also to facilitate a more efficient readout.
      */
+#ifndef OPENSSL_NO_QUIC
     ossl_quic_reactor_wait_ctx_init(&wctx);
+#endif
     ossl_rio_poll_builder_init(&rpb);
 
-    if (!poll_translate(items, num_items, stride, &wctx, &rpb,
+    if (!poll_translate(items, num_items, stride,
+#ifndef OPENSSL_NO_QUIC
+            &wctx,
+#endif
+            &rpb,
             &earliest_wakeup_deadline,
             &abort_blocking,
             p_result_count))
@@ -328,11 +434,18 @@ static int poll_block(SSL_POLL_ITEM *items,
 
     ok = ossl_rio_poll_builder_poll(&rpb, earliest_wakeup_deadline);
 
-    postpoll_translation_cleanup(items, num_items, stride, &wctx);
+    postpoll_translation_cleanup(items, num_items, stride
+#ifndef OPENSSL_NO_QUIC
+        ,
+        &wctx
+#endif
+    );
 
 out:
     ossl_rio_poll_builder_cleanup(&rpb);
+#ifndef OPENSSL_NO_QUIC
     ossl_quic_reactor_wait_ctx_cleanup(&wctx);
+#endif
     return ok;
 }
 #endif
@@ -347,14 +460,14 @@ static int poll_readout(SSL_POLL_ITEM *items,
     size_t i, result_count = 0;
     SSL_POLL_ITEM *item;
     SSL *ssl;
-#ifndef OPENSSL_NO_QUIC
+#if !defined(OPENSSL_NO_QUIC) || !defined(OPENSSL_NO_DTLS)
     uint64_t events;
 #endif
     uint64_t revents;
 
     for (i = 0; i < num_items; ++i) {
         item = &ITEM_N(items, stride, i);
-#ifndef OPENSSL_NO_QUIC
+#if !defined(OPENSSL_NO_QUIC) || !defined(OPENSSL_NO_DTLS)
         events = item->events;
 #endif
         revents = 0;
@@ -381,10 +494,35 @@ static int poll_readout(SSL_POLL_ITEM *items,
                 break;
 #endif
 
+#ifndef OPENSSL_NO_DTLS
+            case SSL_TYPE_DTLS_LISTENER:
+                if (!ossl_dtls_listener_poll_events(ssl, events, do_tick, &revents))
+                    /* above call raises ERR */
+                    FAIL_ITEM(i);
+
+                if (revents != 0)
+                    ++result_count;
+                break;
+            case SSL_TYPE_SSL_CONNECTION:
+                if (SSL_is_dtls(ssl)) {
+                    if (!ossl_dtls_conn_poll_events(ssl, events, do_tick, &revents))
+                        /* above call raises ERR */
+                        FAIL_ITEM(i);
+
+                    if (revents != 0)
+                        ++result_count;
+                } else {
+                    /* TLS Connections not supported */
+                    ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
+                        "SSL_poll currently only supports QUIC and DTLS SSL objects");
+                    FAIL_ITEM(i);
+                }
+                break;
+#endif
+
             default:
                 ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
-                    "SSL_poll currently only supports QUIC SSL "
-                    "objects");
+                    "SSL_poll currently only supports QUIC and DTLS SSL objects");
                 FAIL_ITEM(i);
             }
             break;
@@ -462,7 +600,7 @@ int SSL_poll(SSL_POLL_ITEM *items,
          * point onwards.
          */
         do_tick = 1;
-#ifndef OPENSSL_NO_QUIC
+#if !defined(OPENSSL_NO_QUIC) || !defined(OPENSSL_NO_DTLS)
         if (!poll_block(items, num_items, stride, deadline, &result_count)) {
             ok = 0;
             goto out;

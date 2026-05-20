@@ -3022,6 +3022,12 @@ int ossl_dtls_listener_set_override_now_cb(SSL *s,
 int ossl_dtls_listener_set_pending_timeout(SSL *s, OSSL_TIME timeout);
 OSSL_TIME ossl_dtls_listener_get_pending_timeout(const SSL *s);
 
+/* DTLS poll event functions - used by SSL_poll() */
+int ossl_dtls_listener_poll_events(SSL *s, uint64_t events, int do_tick,
+    uint64_t *revents);
+int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
+    uint64_t *revents);
+
 __owur int tls1_new(SSL *s);
 void tls1_free(SSL *s);
 int tls1_clear(SSL *s);
